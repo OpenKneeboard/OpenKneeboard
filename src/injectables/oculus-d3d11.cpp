@@ -93,11 +93,7 @@ decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
 template <typename... T>
 void dprint(fmt::format_string<T...> fmt, T&&... args) {
 	auto str = fmt::format(fmt, std::forward<T>(args)...);
-	str += "\n";
-
-	AllocConsole();
-	auto handle = GetStdHandle(STD_ERROR_HANDLE);
-	WriteConsoleA(handle, str.data(), static_cast<DWORD>(str.length()), nullptr, NULL);
+	OutputDebugStringA(str.c_str());
 }
 
 void DetourUpdateAllThreads() {
