@@ -93,6 +93,7 @@ decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
 template <typename... T>
 void dprint(fmt::format_string<T...> fmt, T&&... args) {
 	auto str = fmt::format(fmt, std::forward<T>(args)...);
+	str = fmt::format("[injected-kneeboard] {}\n", str);
 	OutputDebugStringA(str.c_str());
 }
 
@@ -396,6 +397,23 @@ static ovrResult EndFrame_Hook_Impl(
 		} else {
 			dprint("Already at ovrMaxLayerCount without adding our layer");
 		}
+	}
+
+
+	// FIXME: REMOVE DEPTH BUFFER INFORMATION FOR DCS
+	std::vector<ovrLayerEyeFov> withoutDepthInformation;
+	for (auto i = 0; i < newLayers.size(); ++i) {
+		auto layer = newLayers.at(i);
+		if (layer->Type != ovrLayerType_EyeFovDepth) {
+			continue;
+		}
+
+		withoutDepthInformation.push_back({});
+		auto& newLayer = withoutDepthInformation[withoutDepthInformation.size() - 1];
+		memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
+		newLayer.Header.Type = ovrLayerType_EyeFov;
+
+		newLayers[i] = &newLayer.Header;
 	}
 
 	return nextImpl(
