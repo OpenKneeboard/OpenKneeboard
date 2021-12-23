@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.rh": "cpp",
+    "vector": "cpp",
+    "xtr1common": "cpp"
+  }
+}
