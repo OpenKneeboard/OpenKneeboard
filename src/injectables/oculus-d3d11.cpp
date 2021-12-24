@@ -40,15 +40,28 @@
 #include "YAVRK/SHM.h"
 #include "d3d11-offsets.h"
 
-static bool g_hooked_DX = false;
-static bool g_initialized = false;
-static ovrTextureSwapChain g_kneeboardSwapChain;
-static winrt::com_ptr<ID3D11Device> g_d3dDevice;
-static std::vector<winrt::com_ptr<ID3D11RenderTargetView>>
-  g_kneeboardRenderTargets;
+using YAVRK::SHM;
+using YAVRK::SHMHeader;
 
-static const int TEXTURE_WIDTH = 400;
-static const int TEXTURE_HEIGHT = 1200;
+static bool g_hooked_DX = false;
+static winrt::com_ptr<ID3D11Device> g_d3dDevice;
+
+class KneeboardRenderer {
+ private:
+  SHMHeader header;
+  bool initialized = false;
+  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> RenderTargets;
+ public:
+  ovrTextureSwapChain SwapChain;
+
+  KneeboardRenderer(ovrSession session, const SHMHeader& header);
+  bool isCompatibleWith(const SHMHeader& header) const {
+     return header.Version == YAVRK::IPC_VERSION && header.Width == this->header.Width && header.Height == this->header.Height;
+  }
+  bool Render(ovrSession session, const SHM& shm);
+};
+
+std::unique_ptr<KneeboardRenderer> g_Renderer;
 
 // Not documented, but defined in libovrrt64_1.dll
 // Got signature from Revive, and it matches ovr_SubmitFrame
@@ -96,49 +109,6 @@ void dprint(fmt::format_string<T...> fmt, T&&... args) {
   auto str = fmt::format(fmt, std::forward<T>(args)...);
   str = fmt::format("[injected-kneeboard] {}\n", str);
   OutputDebugStringA(str.c_str());
-}
-
-YAVRK::SHM* get_shm() {
-  static std::unique_ptr<YAVRK::SHM> instance;
-  if (instance) {
-    return instance.get();
-  }
-  instance.reset(new YAVRK::SHM());
-  instance->Header = {
-    .x = 0.0f,
-    .y = 0.5f,
-    .z = -0.25f,
-    .rx = 0.0f,
-    .ry = 0.0f,
-    .rz = 0.0f,
-    .Width = TEXTURE_WIDTH,
-    .Height = TEXTURE_HEIGHT,
-  };
-  instance->R8G8B8A8Data
-    = reinterpret_cast<std::byte*>(malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * 4));
-  // - the data format is RGBA
-  // - x64 is little-endian
-  // ... so our literals need to be in ABGR form.
-  std::uint32_t c1 = 0xff0000ff; // red
-  std::uint32_t c2 = 0xff00ff00; // green
-  std::uint32_t c3 = 0xffff0000; // blue
-  std::uint32_t c4 = 0xff000000; // black
-
-  for (auto i = 0; i < TEXTURE_HEIGHT; i++) {
-    for (auto j = 0; j < TEXTURE_WIDTH; j++) {
-      void* dest = &instance->R8G8B8A8Data[4 * ((i * TEXTURE_WIDTH) + j)];
-      if (i < TEXTURE_HEIGHT / 4) {
-        memcpy(dest, (void*)&c1, sizeof(c1));
-      } else if (i < TEXTURE_HEIGHT / 2) {
-        memcpy(dest, (void*)&c2, sizeof(c2));
-      } else if (i < 3 * TEXTURE_HEIGHT / 4) {
-        memcpy(dest, (void*)&c3, sizeof(c3));
-      } else {
-        memcpy(dest, (void*)&c4, sizeof(c4));
-      }
-    }
-  }
-  return instance.get();
 }
 
 void DetourUpdateAllThreads() {
@@ -271,30 +241,22 @@ static void hook_IDXGISwapChain_Present() {
 }
 
 static void unhook_IDXGISwapChain_Present() {
-  dprint("{}", __FUNCTION__);
+  if (!g_hooked_DX) {
+    return;
+  }
   auto ffp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   auto mfp = &HookedMethods::Hooked_IDXGISwapChain_Present;
   DetourTransactionBegin();
   DetourUpdateAllThreads();
   auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
-  dprint("{} detach {}", __FUNCTION__, err);
   err = DetourTransactionCommit();
-  dprint("{} commit {}", __FUNCTION__, err);
+  g_hooked_DX = false;
 }
 
-static bool KneeboardRenderInit(ovrSession session) {
-  if (g_initialized) {
-    return true;
-  }
-
-  if (!g_d3dDevice) {
-    hook_IDXGISwapChain_Present();
-    // Initialized by Hooked_ovrCreateTextureSwapChainDX
-    return false;
-  }
-  unhook_IDXGISwapChain_Present();
-
-  const auto& config = get_shm()->Header;
+KneeboardRenderer::KneeboardRenderer(
+  ovrSession session,
+  const SHMHeader& config)
+  : header(config) {
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
@@ -309,26 +271,25 @@ static bool KneeboardRenderInit(ovrSession session) {
   };
 
   auto ret = Real_ovr_CreateTextureSwapChainDX(
-    session, g_d3dDevice.get(), &kneeboardSCD, &g_kneeboardSwapChain);
+    session, g_d3dDevice.get(), &kneeboardSCD, &SwapChain);
   dprint("CreateSwapChain ret: {}", ret);
 
   int length = -1;
-  Real_ovr_GetTextureSwapChainLength(session, g_kneeboardSwapChain, &length);
+  Real_ovr_GetTextureSwapChainLength(session, SwapChain, &length);
   if (length < 1) {
     dprint(" - invalid swap chain length ({})", length);
-    return false;
+    return;
   }
   dprint(" - got swap chain length {}", length);
 
-  g_kneeboardRenderTargets.clear();
-  g_kneeboardRenderTargets.resize(length);
+  RenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
     ID3D11Texture2D* texture;// todo: smart ptr?
     auto res = Real_ovr_GetTextureSwapChainBufferDX(
-      session, g_kneeboardSwapChain, i, IID_PPV_ARGS(&texture));
+      session, SwapChain, i, IID_PPV_ARGS(&texture));
     if (res != 0) {
       dprint(" - failed to get swap chain buffer: {}", res);
-      return false;
+      return;
     }
 
     D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
@@ -337,21 +298,25 @@ static bool KneeboardRenderInit(ovrSession session) {
       .Texture2D = {.MipSlice = 0}};
 
     auto hr = g_d3dDevice->CreateRenderTargetView(
-      texture, &rtvd, g_kneeboardRenderTargets.at(i).put());
+      texture, &rtvd, RenderTargets.at(i).put());
     if (FAILED(hr)) {
       dprint(" - failed to create render target view");
-      return false;
+      return;
     }
   }
 
   dprint("{} completed", __FUNCTION__);
 
-  g_initialized = true;
-  return true;
+  initialized = true;
 }
 
-static bool KneeboardRender(ovrSession session) {
-  if (!KneeboardRenderInit(session)) {
+bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
+  if (!initialized) {
+    return false;
+  }
+  const auto config = shm.Header();
+  if (!isCompatibleWith(config)) {
+    dprint("Attempted to use an incompatible renderer");
     return false;
   }
   static bool firstRun = true;
@@ -364,7 +329,7 @@ static bool KneeboardRender(ovrSession session) {
 
   int index = -1;
   Real_ovr_GetTextureSwapChainCurrentIndex(
-    session, g_kneeboardSwapChain, &index);
+    session, SwapChain, &index);
   if (index < 0) {
     dprint(" - invalid swap chain index ({})", index);
     return false;
@@ -372,11 +337,9 @@ static bool KneeboardRender(ovrSession session) {
 
   winrt::com_ptr<ID3D11Texture2D> texture;
   Real_ovr_GetTextureSwapChainBufferDX(
-    session, g_kneeboardSwapChain, index, IID_PPV_ARGS(&texture));
+    session, SwapChain, index, IID_PPV_ARGS(&texture));
   winrt::com_ptr<ID3D11DeviceContext> context;
   g_d3dDevice->GetImmediateContext(context.put());
-  auto shm = get_shm();
-  const auto& config = shm->Header;
   D3D11_BOX box {
     .left = 0,
     .top = 0,
@@ -386,9 +349,14 @@ static bool KneeboardRender(ovrSession session) {
     .back = 1,
   };
   context->UpdateSubresource(
-    texture.get(), 0, &box, shm->R8G8B8A8Data, 4 * config.Width, 4 * config.Height);
+    texture.get(),
+    0,
+    &box,
+    shm.ImageData(),
+    4 * config.Width,
+    4 * config.Height);
 
-  auto ret = Real_ovr_CommitTextureSwapChain(session, g_kneeboardSwapChain);
+  auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
   if (ret) {
     dprint("Commit failed with {}", ret);
   }
@@ -400,6 +368,30 @@ static bool KneeboardRender(ovrSession session) {
   return true;
 }
 
+static bool RenderKneeboard(ovrSession session, const SHM& shm) {
+	if (!g_d3dDevice) {
+		hook_IDXGISwapChain_Present();
+		// Initialized by Hooked_ovrCreateTextureSwapChainDX
+		return false;
+	}
+	unhook_IDXGISwapChain_Present();
+
+  if (!shm) {
+    return false;
+  }
+
+  auto header = shm.Header();
+  if (header.Version != YAVRK::IPC_VERSION) {
+    return false;
+  }
+
+  if (!(g_Renderer && g_Renderer->isCompatibleWith(header))) {
+    g_Renderer.reset(new KneeboardRenderer(session, header));
+  }
+
+  return g_Renderer->Render(session, shm);
+}
+
 static ovrResult EndFrame_Hook_Impl(
   decltype(&ovr_EndFrame) nextImpl,
   ovrSession session,
@@ -407,16 +399,17 @@ static ovrResult EndFrame_Hook_Impl(
   const ovrViewScaleDesc* viewScaleDesc,
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount) {
-  if (!KneeboardRender(session)) {
+  SHM shm = SHM::MaybeGet();
+  if (!RenderKneeboard(session, shm)) {
     return nextImpl(
       session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
-  const auto& config = get_shm()->Header;
+  auto config = shm.Header();
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
   kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
-  kneeboardLayer.ColorTexture = g_kneeboardSwapChain;
+  kneeboardLayer.ColorTexture = g_Renderer->SwapChain;
   // all units are real-world meters
   // 15cm down from nose, 50cm away
   kneeboardLayer.QuadPoseCenter.Position = {.x = 0.0f, .y = -0.15f, .z = -0.5f};
@@ -531,7 +524,7 @@ bool hook_libovr_function(const char* name, T** funcPtrPtr, T* hook) {
   }
   auto err = DetourAttach((void**)funcPtrPtr, hook);
   if (!err) {
-    dprint("- Hooked {} at {:#010x}", name, (intptr_t)*funcPtrPtr);
+    dprint("- Hooked {} at {:#010x} -> {:#010x}", name, (intptr_t)*funcPtrPtr, (void*) hook);
     return true;
   }
 
@@ -567,6 +560,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     dprint("Detaching from process...");
     DetourTransactionBegin();
     DetourUpdateAllThreads();
+    g_Renderer.reset(nullptr);
 #define IT(x) DetourDetach(&(PVOID&)Real_##x, Hooked_##x);
     HOOKED_FUNCS
 #undef IT

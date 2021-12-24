@@ -1,4 +1,5 @@
-add_subdirectory("injectables")
+add_subdirectory(YAVRK)
+add_subdirectory(injectables)
 
-add_library(yavrk-shm INTERFACE)
-target_include_directories(yavrk-shm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+add_executable(demo-feeder demo-feeder.cpp)
+target_link_libraries(demo-feeder yavrk-shm)
