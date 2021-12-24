@@ -28,6 +28,7 @@ class SHM final {
  public:
   ~SHM();
   SHMHeader Header() const;
+  /// R8G8B8A8
   std::byte* ImageData() const;
   operator bool() const;
 
