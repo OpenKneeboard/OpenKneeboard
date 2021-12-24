@@ -24,6 +24,7 @@
 // https://github.com/GPUOpen-Tools/ocat used as reference; copyright notice
 // above reflects copyright notices in source material.
 
+#include <Extras/OVR_Math.h>
 #include <OVR_CAPI_D3D.H>
 #include <TlHelp32.h>
 #include <Unknwn.h>
@@ -51,12 +52,15 @@ class KneeboardRenderer {
   SHMHeader header;
   bool initialized = false;
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> RenderTargets;
+
  public:
   ovrTextureSwapChain SwapChain;
 
   KneeboardRenderer(ovrSession session, const SHMHeader& header);
   bool isCompatibleWith(const SHMHeader& header) const {
-     return header.Version == YAVRK::IPC_VERSION && header.Width == this->header.Width && header.Height == this->header.Height;
+    return header.Version == YAVRK::IPC_VERSION
+      && header.Width == this->header.Width
+      && header.Height == this->header.Height;
   }
   bool Render(ovrSession session, const SHM& shm);
 };
@@ -334,8 +338,7 @@ bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
   }
 
   int index = -1;
-  Real_ovr_GetTextureSwapChainCurrentIndex(
-    session, SwapChain, &index);
+  Real_ovr_GetTextureSwapChainCurrentIndex(session, SwapChain, &index);
   if (index < 0) {
     dprint(" - invalid swap chain index ({})", index);
     return false;
@@ -375,12 +378,12 @@ bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
 }
 
 static bool RenderKneeboard(ovrSession session, const SHM& shm) {
-	if (!g_d3dDevice) {
-		hook_IDXGISwapChain_Present();
-		// Initialized by Hooked_ovrCreateTextureSwapChainDX
-		return false;
-	}
-	unhook_IDXGISwapChain_Present();
+  if (!g_d3dDevice) {
+    hook_IDXGISwapChain_Present();
+    // Initialized by Hooked_ovrCreateTextureSwapChainDX
+    return false;
+  }
+  unhook_IDXGISwapChain_Present();
 
   if (!shm) {
     return false;
@@ -416,16 +419,14 @@ static ovrResult EndFrame_Hook_Impl(
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
   kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   kneeboardLayer.ColorTexture = g_Renderer->SwapChain;
-  // all units are real-world meters
-  // 15cm down from nose, 50cm away
-  kneeboardLayer.QuadPoseCenter.Position = {.x = 0.0f, .y = -0.15f, .z = -0.5f};
-  kneeboardLayer.QuadPoseCenter.Orientation
-    = {.x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f};
-  // on knee
-  // kneeboardLayer.QuadPoseCenter.Position = {.x = 0.0f, .y = 0.5f, .z =
-  // -0.25f};
-  // kneeboardLayer.QuadPoseCenter.Orientation
-  //  = {.x = 0.7071f, .y = 0.0f, .z = 0.0f, .w = 0.7071f};
+  kneeboardLayer.QuadPoseCenter.Position
+    = {.x = config.x, .y = config.y, .z = config.z};
+
+  OVR::Quatf orientation;
+  orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx);
+  orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
+  orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
+  kneeboardLayer.QuadPoseCenter.Orientation = orientation;
   kneeboardLayer.QuadSize = {.x = 0.2f, .y = 0.3f};
   kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
   kneeboardLayer.Viewport.Size = {.w = config.Width, .h = config.Height};

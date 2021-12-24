@@ -15,6 +15,8 @@ int main() {
 
   YAVRK::SHMHeader config {
     .Version = YAVRK::IPC_VERSION,
+    .y = -0.15,
+    .z = -0.5f,
     .Width = 400,
     .Height = 1200,
   };
