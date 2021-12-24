@@ -18,27 +18,29 @@ int main() {
     .Flags = YAVRK::Flags::HEADLOCKED | YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
     .y = -0.15,
     .z = -0.5f,
-    .Width = 400,
-    .Height = 1200,
+    .VirtualWidth = 0.2f,
+    .VirtualHeight = 0.3f,
+    .ImageWidth = 400,
+    .ImageHeight = 1200,
   };
   auto shm = YAVRK::SHM::GetOrCreate(config);
   int64_t frames = -1;
   do {
     frames++;
     uint32_t color;
-    for (auto y = 0; y < config.Height; y++) {
-      for (auto x = 0; x < config.Width; x++) {
-        if (y < config.Height/ 4) {
+    for (auto y = 0; y < config.ImageHeight; y++) {
+      for (auto x = 0; x < config.ImageWidth; x++) {
+        if (y < config.ImageHeight/ 4) {
           color = colors[frames % 4];
-        } else if (y < config.Height/ 2) {
+        } else if (y < config.ImageHeight/ 2) {
           color = colors[(frames + 1) % 4];
-        } else if (y < 3 * config.Height / 4) {
+        } else if (y < 3 * config.ImageHeight / 4) {
           color = colors[(frames + 2) % 4];
         } else {
           color = colors[(frames + 3) % 4];
         }
 
-        void* dest = &shm.ImageData()[4 * ((y * config.Width) + x)];
+        void* dest = &shm.ImageData()[4 * ((y * config.ImageWidth) + x)];
         memcpy(dest, (void*)&color, sizeof(color));
       }
     }

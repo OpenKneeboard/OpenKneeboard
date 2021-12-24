@@ -2,6 +2,9 @@
   "files.associations": {
     "*.rh": "cpp",
     "vector": "cpp",
-    "xtr1common": "cpp"
+    "xtr1common": "cpp",
+    "format": "cpp",
+    "list": "cpp",
+    "xstring": "cpp"
   }
 }

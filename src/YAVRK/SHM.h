@@ -18,7 +18,10 @@ struct SHMHeader {
   uint64_t Flags;
   float x, y, z;
   float rx, ry, rz;
-  uint16_t Width, Height;
+  // Meters
+  float VirtualWidth, VirtualHeight;
+  // Pixels
+  uint16_t ImageWidth, ImageHeight;
 };
 
 class SHM final {

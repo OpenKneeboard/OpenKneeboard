@@ -59,8 +59,8 @@ class KneeboardRenderer {
   KneeboardRenderer(ovrSession session, const SHMHeader& header);
   bool isCompatibleWith(const SHMHeader& header) const {
     return header.Version == YAVRK::IPC_VERSION
-      && header.Width == this->header.Width
-      && header.Height == this->header.Height;
+      && header.ImageWidth == this->header.ImageWidth
+      && header.ImageHeight == this->header.ImageHeight;
   }
   bool Render(ovrSession session, const SHM& shm);
 };
@@ -271,8 +271,8 @@ KneeboardRenderer::KneeboardRenderer(
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
     .ArraySize = 1,
-    .Width = config.Width,
-    .Height = config.Height,
+    .Width = config.ImageWidth,
+    .Height = config.ImageHeight,
     .MipLevels = 1,
     .SampleCount = 1,
     .StaticImage = false,
@@ -353,8 +353,8 @@ bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
     .left = 0,
     .top = 0,
     .front = 0,
-    .right = config.Width,
-    .bottom = config.Height,
+    .right = config.ImageWidth,
+    .bottom = config.ImageHeight,
     .back = 1,
   };
   context->UpdateSubresource(
@@ -362,8 +362,8 @@ bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
     0,
     &box,
     shm.ImageData(),
-    4 * config.Width,
-    4 * config.Height);
+    4 * config.ImageWidth,
+    4 * config.ImageHeight);
 
   auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
   if (ret) {
@@ -429,9 +429,9 @@ static ovrResult EndFrame_Hook_Impl(
   orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
   orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
   kneeboardLayer.QuadPoseCenter.Orientation = orientation;
-  kneeboardLayer.QuadSize = {.x = 0.2f, .y = 0.3f};
+  kneeboardLayer.QuadSize = {.x = config.VirtualWidth, .y = config.VirtualHeight };
   kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
-  kneeboardLayer.Viewport.Size = {.w = config.Width, .h = config.Height};
+  kneeboardLayer.Viewport.Size = {.w = config.ImageWidth, .h = config.ImageHeight};
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {

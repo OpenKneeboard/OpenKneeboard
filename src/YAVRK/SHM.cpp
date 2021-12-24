@@ -32,7 +32,7 @@ SHM::operator bool() const {
 
 SHM SHM::GetOrCreate(const SHMHeader& header) {
   const auto path = fmt::format("{}/{}", PREFIX, header.Version);
-  const auto dataSize = 4 * header.Width * header.Height;
+  const auto dataSize = 4 * header.ImageWidth * header.ImageHeight;
   const auto shmSize = sizeof(SHMHeader) + dataSize;
 
   HANDLE handle;
