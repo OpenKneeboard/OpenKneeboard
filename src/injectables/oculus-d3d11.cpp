@@ -249,7 +249,13 @@ static void unhook_IDXGISwapChain_Present() {
   DetourTransactionBegin();
   DetourUpdateAllThreads();
   auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
+  if (err) {
+    dprint(" - failed to detach IDXGISwapChain");
+  }
   err = DetourTransactionCommit();
+  if (err) {
+    dprint(" - failed to commit unhook IDXGISwapChain");
+  }
   g_hooked_DX = false;
 }
 
@@ -524,7 +530,7 @@ bool hook_libovr_function(const char* name, T** funcPtrPtr, T* hook) {
   }
   auto err = DetourAttach((void**)funcPtrPtr, hook);
   if (!err) {
-    dprint("- Hooked {} at {:#010x} -> {:#010x}", name, (intptr_t)*funcPtrPtr, (void*) hook);
+    dprint("- Hooked {} at {:#010x}", name, (intptr_t)*funcPtrPtr);
     return true;
   }
 
