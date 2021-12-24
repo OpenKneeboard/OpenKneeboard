@@ -417,7 +417,9 @@ static ovrResult EndFrame_Hook_Impl(
   auto config = shm.Header();
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
-  kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
+  if ((config.Flags & YAVRK::Flags::HEADLOCKED)) {
+    kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
+  }
   kneeboardLayer.ColorTexture = g_Renderer->SwapChain;
   kneeboardLayer.QuadPoseCenter.Position
     = {.x = config.x, .y = config.y, .z = config.z};
@@ -451,21 +453,22 @@ static ovrResult EndFrame_Hook_Impl(
     }
   }
 
-  // FIXME: REMOVE DEPTH BUFFER INFORMATION FOR DCS
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  for (auto i = 0; i < newLayers.size(); ++i) {
-    auto layer = newLayers.at(i);
-    if (layer->Type != ovrLayerType_EyeFovDepth) {
-      continue;
+  if ((shm.Header().Flags & YAVRK::Flags::DISCARD_DEPTH_INFORMATION)) {
+    for (auto i = 0; i < newLayers.size(); ++i) {
+      auto layer = newLayers.at(i);
+      if (layer->Type != ovrLayerType_EyeFovDepth) {
+        continue;
+      }
+
+      withoutDepthInformation.push_back({});
+      auto& newLayer
+        = withoutDepthInformation[withoutDepthInformation.size() - 1];
+      memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
+      newLayer.Header.Type = ovrLayerType_EyeFov;
+
+      newLayers[i] = &newLayer.Header;
     }
-
-    withoutDepthInformation.push_back({});
-    auto& newLayer
-      = withoutDepthInformation[withoutDepthInformation.size() - 1];
-    memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
-    newLayer.Header.Type = ovrLayerType_EyeFov;
-
-    newLayers[i] = &newLayer.Header;
   }
 
   return nextImpl(

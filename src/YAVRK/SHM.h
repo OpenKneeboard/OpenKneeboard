@@ -6,7 +6,12 @@
 #include <string>
 
 namespace YAVRK {
-static const uint32_t IPC_VERSION = 1;
+constexpr uint32_t IPC_VERSION = 1;
+
+namespace Flags {
+constexpr uint64_t HEADLOCKED = 1;
+constexpr uint64_t DISCARD_DEPTH_INFORMATION = 1 << 1;
+};// namespace Flags
 
 struct SHMHeader {
   uint32_t Version = 0;
@@ -25,6 +30,7 @@ class SHM final {
 
   static SHM GetOrCreate(const SHMHeader& header);
   static SHM MaybeGet();
+
  private:
   class Impl;
   std::shared_ptr<Impl> p;
