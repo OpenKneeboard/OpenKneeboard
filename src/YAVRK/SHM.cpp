@@ -96,4 +96,10 @@ std::byte* SHM::ImageData() const {
   return p->Data;
 }
 
+uint32_t SHM::ImageDataSize() const {
+  const auto& header = *p->Header;
+  return 4 * header.ImageWidth * header.ImageHeight;
+}
+
+
 }// namespace YAVRK

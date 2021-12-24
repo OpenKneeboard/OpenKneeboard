@@ -42,8 +42,8 @@ int main() {
   do {
     frames++;
     uint32_t color;
-    for (auto y = 0; y < config.ImageHeight; y++) {
-      for (auto x = 0; x < config.ImageWidth; x++) {
+    for (uint32_t y = 0; y < config.ImageHeight; y++) {
+      for (uint32_t x = 0; x < config.ImageWidth; x++) {
         if (y < config.ImageHeight / 4) {
           color = colors[frames % 4];
         } else if (y < config.ImageHeight / 2) {

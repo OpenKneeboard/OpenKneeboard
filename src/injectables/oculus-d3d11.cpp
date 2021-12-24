@@ -417,6 +417,7 @@ static ovrResult EndFrame_Hook_Impl(
   auto config = shm.Header();
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
+  kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
   if ((config.Flags & YAVRK::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   }

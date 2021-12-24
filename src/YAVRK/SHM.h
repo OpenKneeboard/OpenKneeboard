@@ -6,7 +6,7 @@
 #include <string>
 
 namespace YAVRK {
-constexpr uint32_t IPC_VERSION = 1;
+constexpr uint16_t IPC_VERSION = 1;
 
 namespace Flags {
 constexpr uint64_t HEADLOCKED = 1;
@@ -14,7 +14,7 @@ constexpr uint64_t DISCARD_DEPTH_INFORMATION = 1 << 1;
 };// namespace Flags
 
 struct SHMHeader {
-  uint32_t Version = 0;
+  uint16_t Version = 0;
   uint64_t Flags;
   float x, y, z;
   float rx, ry, rz;
@@ -30,6 +30,7 @@ class SHM final {
   SHMHeader Header() const;
   /// R8G8B8A8
   std::byte* ImageData() const;
+  uint32_t ImageDataSize() const;
   operator bool() const;
 
   static SHM GetOrCreate(const SHMHeader& header);
