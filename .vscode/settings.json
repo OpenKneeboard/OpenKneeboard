@@ -6,5 +6,6 @@
     "format": "cpp",
     "list": "cpp",
     "xstring": "cpp"
-  }
+  },
+  "cmake.configureOnOpen": true
 }

@@ -1,4 +1,4 @@
-#include "SHM.h"
+#include "YAVRK/shm.h"
 
 #include <Windows.h>
 #include <fmt/format.h>
@@ -23,6 +23,7 @@ class SHM::Impl {
 };
 
 namespace {
+// *****PLEASE***** change this if you fork or re-use this code
 const auto PREFIX = "com.fredemmott.yavrk";
 }
 
@@ -100,6 +101,5 @@ uint32_t SHM::ImageDataSize() const {
   const auto& header = *p->Header;
   return 4 * header.ImageWidth * header.ImageHeight;
 }
-
 
 }// namespace YAVRK

@@ -9,3 +9,6 @@ target_include_directories(oculus-sdk-headers INTERFACE ${CMAKE_CURRENT_SOURCE_D
 add_library(fmt INTERFACE)
 target_include_directories(fmt INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/fmt-8.0.1/include)
 target_compile_definitions(fmt INTERFACE "-DFMT_HEADER_ONLY")
+
+set(wxBUILD_SHARED OFF)
+add_subdirectory(wxWidgets-3.1.5 EXCLUDE_FROM_ALL)
