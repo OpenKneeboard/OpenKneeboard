@@ -31,7 +31,7 @@ int main() {
     .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
     .y = 0.5f,
     .z = -0.25f,
-    .rx = M_PI / 2,
+    .rx = float(M_PI / 2),
     .VirtualWidth = 0.2f,
     .VirtualHeight = 0.3f,
     .ImageWidth = 400,
@@ -42,8 +42,8 @@ int main() {
   do {
     frames++;
     uint32_t color;
-    for (uint32_t y = 0; y < config.ImageHeight; y++) {
-      for (uint32_t x = 0; x < config.ImageWidth; x++) {
+    for (uint16_t y = 0; y < config.ImageHeight; y++) {
+      for (uint16_t x = 0; x < config.ImageWidth; x++) {
         if (y < config.ImageHeight / 4) {
           color = colors[frames % 4];
         } else if (y < config.ImageHeight / 2) {
