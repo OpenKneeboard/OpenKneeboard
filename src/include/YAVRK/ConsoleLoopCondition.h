@@ -7,12 +7,11 @@ namespace YAVRK {
 
 class ConsoleLoopCondition final {
  public:
-  enum class EventType { SLEEP, EXIT };
   ConsoleLoopCondition();
   ~ConsoleLoopCondition();
 
-  EventType waitForSleepOrExit(
-    const std::chrono::steady_clock::duration& delay);
+  /// Returns false if sleep is interrupted
+  bool sleep(const std::chrono::steady_clock::duration& delay);
 
  private:
   class Impl;

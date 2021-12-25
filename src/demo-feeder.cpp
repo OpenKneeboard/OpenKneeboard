@@ -3,16 +3,16 @@
 
 #include <cmath>
 
-#include "YAVRK/SHM.h"
 #include "YAVRK/ConsoleLoopCondition.h"
+#include "YAVRK/SHM.h"
 
 int main() {
   using Pixel = YAVRK::SHM::Pixel;
   Pixel colors[] = {
-    { 0xff, 0x00, 0x00, 0xff }, // red
-    { 0x00, 0xff, 0x00, 0xff }, // green
-    { 0x00, 0x00, 0xff, 0xff }, // blue
-    { 0x00, 0x00, 0x00, 0xff }, // black
+    {0xff, 0x00, 0x00, 0xff},// red
+    {0x00, 0xff, 0x00, 0xff},// green
+    {0x00, 0x00, 0xff, 0xff},// blue
+    {0x00, 0x00, 0x00, 0xff},// black
   };
 
   YAVRK::SHM::Writer shm;
@@ -37,9 +37,10 @@ int main() {
     .ImageHeight = 1200,
   };
   uint64_t frames = -1;
-  YAVRK::ConsoleLoopCondition condition;
-  printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
+  printf("Feeding YAVRK - hit Ctrl-C to exit.\n");
   std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
+
+  YAVRK::ConsoleLoopCondition cliLoop;
   do {
     frames++;
     Pixel pixel;
@@ -60,7 +61,10 @@ int main() {
       }
     }
     shm.Update(config, pixels);
-  } while (condition.waitForSleepOrExit(std::chrono::seconds(1)) == YAVRK::ConsoleLoopCondition::EventType::SLEEP);
-  printf("Exit requested, cleaning up.\n");
+    if (!cliLoop.sleep(std::chrono::seconds(1))) {
+      break;
+    }
+  } while (true);
+  //printf("Exit requested, cleaning up.\n");
   return 0;
 }
