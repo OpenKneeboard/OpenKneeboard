@@ -54,6 +54,7 @@ int main() {
   };
   auto shm = YAVRK::SHM::GetOrCreate(config);
 
+  printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
   do {
     frame->CopyPixels(
       nullptr,
