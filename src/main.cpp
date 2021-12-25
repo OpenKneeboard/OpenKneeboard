@@ -36,7 +36,7 @@ class MainWindow final : public wxFrame {
     sizer->Add(notebook);
 
     auto tab = new TabWidget(
-      this,
+      notebook,
       std::make_shared<YAVRK::FolderTab>(
         "Local",
         L"C:\\Program Files\\Eagle Dynamics\\DCS World "
