@@ -22,6 +22,14 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxDefaultSize,
       wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER) {
+    auto menuBar = new wxMenuBar();
+    {
+      auto fileMenu = new wxMenu();
+      fileMenu->Append(wxID_EXIT, _T("E&xit"));
+      menuBar->Append(fileMenu, _("&File"));
+    }
+    SetMenuBar(menuBar);
+    
     auto sizer = new wxBoxSizer(wxVERTICAL);
     
     auto notebook = new wxNotebook(this, wxID_ANY);
@@ -38,7 +46,19 @@ class MainWindow final : public wxFrame {
 
     this->SetSizerAndFit(sizer);
   }
+
+  void OnExit(wxCommandEvent& ev) {
+    Close(true);
+  }
+
+  wxDECLARE_EVENT_TABLE();
 };
+
+// clang-format off
+wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
+  EVT_MENU(wxID_EXIT, MainWindow::OnExit)
+wxEND_EVENT_TABLE();
+// clang-format off
 
 class YAVRKApp final : public wxApp {
  public:
