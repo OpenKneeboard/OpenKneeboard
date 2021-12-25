@@ -18,14 +18,17 @@ TabWidget::TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>& tab)
   sizer->Add(p->Canvas);
 
   auto buttonBox = new wxPanel(this);
+  auto firstPage = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
   auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
   auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
+  firstPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->SetPageIndex(0); });
   previousPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->PreviousPage(); });
   nextPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->NextPage(); });
 
   auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-  buttonSizer->Add(previousPage);
+  buttonSizer->Add(firstPage);
   buttonSizer->AddStretchSpacer();
+  buttonSizer->Add(previousPage);
   buttonSizer->Add(nextPage);
   buttonBox->SetSizer(buttonSizer);
   sizer->Add(buttonBox, 0, wxEXPAND);
