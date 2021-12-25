@@ -52,6 +52,7 @@ class MainWindow final : public wxFrame {
     dc.Clear();
     auto config = shm.Header();
     wxImage image(config.ImageWidth, config.ImageHeight);
+    image.SetAlpha(nullptr, true);
     auto pixels = reinterpret_cast<R8G8B8A8*>(shm.ImageData());
     for (uint16_t y = 0; y < config.ImageHeight; ++y) {
       for (uint16_t x = 0; x < config.ImageWidth; ++x) {
