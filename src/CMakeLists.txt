@@ -39,8 +39,5 @@ target_link_libraries(yavrk PRIVATE wx::core wx::base yavrk-shm yavrk-tabs)
 add_executable(demo-feeder demo-feeder.cpp ConsoleLoopCondition.cpp)
 target_link_libraries(demo-feeder yavrk-shm)
 
-add_executable(kobuleti-feeder kobuleti-feeder.cpp ConsoleLoopCondition.cpp)
-target_link_libraries(kobuleti-feeder yavrk-shm)
-
 add_executable(test-viewer WIN32 test-viewer.cpp)
 target_link_libraries(test-viewer yavrk-shm wx::core wx::base)
