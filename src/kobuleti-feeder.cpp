@@ -42,7 +42,6 @@ int main() {
   UINT width, height;
   frame->GetSize(&width, &height);
 
-  YAVRK::SHM::Writer shm;
   YAVRK::SHM::Header config {
     .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
     .y = 0.5f,
@@ -56,8 +55,9 @@ int main() {
 
   printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
   using Pixel = YAVRK::SHM::Pixel;
-  YAVRK::ConsoleLoopCondition cliLoop;
   std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
+  YAVRK::ConsoleLoopCondition cliLoop;
+  YAVRK::SHM::Writer shm;
   do {
     frame->CopyPixels(
       nullptr,

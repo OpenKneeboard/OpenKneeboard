@@ -17,6 +17,7 @@ static const auto SHM_PREFIX = "com.fredemmott.yavrk";
 
 class Impl {
  public:
+  HANDLE Handle;
   void* Mapping;
   Header* Header;
   Pixel* Pixels;
@@ -24,7 +25,10 @@ class Impl {
   ~Impl() {
     if (IsFeeder) {
       Header->Flags &= ~Flags::FEEDER_ATTACHED;
+      FlushViewOfFile(Mapping, NULL);
     }
+    UnmapViewOfFile(Mapping);
+    CloseHandle(Handle);
   }
 };
 
@@ -37,12 +41,13 @@ Writer::Writer() {
     return;
   }
   void* mapping = MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, SHM_SIZE);
-  CloseHandle(handle);
   if (!mapping) {
+    CloseHandle(handle);
     return;
   }
 
   this->p.reset(new Impl {
+    .Handle = handle,
     .Mapping = mapping,
     .Header = reinterpret_cast<Header*>(mapping),
     .Pixels = &reinterpret_cast<Pixel*>(mapping)[sizeof(Header)],
@@ -61,12 +66,13 @@ Reader::Reader() {
     return;
   }
   void* mapping = MapViewOfFile(handle, FILE_MAP_READ, 0, 0, SHM_SIZE);
-  CloseHandle(handle);
   if (!mapping) {
+    CloseHandle(handle);
     return;
   }
 
   this->p.reset(new Impl {
+    .Handle = handle,
     .Mapping = mapping,
     .Header = reinterpret_cast<Header*>(mapping),
     .Pixels = &reinterpret_cast<Pixel*>(mapping)[sizeof(Header)],

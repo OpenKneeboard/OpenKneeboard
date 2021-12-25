@@ -1,12 +1,14 @@
 #include "YAVRK/ConsoleLoopCondition.h"
 
 #include <Windows.h>
+#include <objbase.h>
 
 namespace YAVRK {
 
 static HANDLE g_ExitEvent = INVALID_HANDLE_VALUE;
 
 static BOOL WINAPI ExitHandler(DWORD ignored) {
+  CoUninitialize();
   SetEvent(g_ExitEvent);
   return TRUE;
 }

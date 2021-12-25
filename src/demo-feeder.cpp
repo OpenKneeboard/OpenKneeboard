@@ -15,7 +15,6 @@ int main() {
     {0x00, 0x00, 0x00, 0xff},// black
   };
 
-  YAVRK::SHM::Writer shm;
   YAVRK::SHM::Header config {
     /* Headlocked
     .Flags = YAVRK::Flags::HEADLOCKED | YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
@@ -39,7 +38,7 @@ int main() {
   uint64_t frames = -1;
   printf("Feeding YAVRK - hit Ctrl-C to exit.\n");
   std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
-
+  YAVRK::SHM::Writer shm;
   YAVRK::ConsoleLoopCondition cliLoop;
   do {
     frames++;
@@ -61,10 +60,7 @@ int main() {
       }
     }
     shm.Update(config, pixels);
-    if (!cliLoop.sleep(std::chrono::seconds(1))) {
-      break;
-    }
-  } while (true);
-  //printf("Exit requested, cleaning up.\n");
+  } while (cliLoop.sleep(std::chrono::seconds(1)));
+  printf("Exit requested, cleaning up.\n");
   return 0;
 }
