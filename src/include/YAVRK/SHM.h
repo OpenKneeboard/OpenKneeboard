@@ -18,6 +18,7 @@ namespace YAVRK::SHM {
 #pragma pack(push)
 struct Header {
   static const uint32_t VERSION = 1;
+
   uint64_t Flags;
   float x, y, z;
   float rx, ry, rz;
@@ -25,6 +26,8 @@ struct Header {
   float VirtualWidth, VirtualHeight;
   // Pixels
   uint16_t ImageWidth, ImageHeight;
+
+  uint64_t SequenceNumber = 0;
 };
 struct Pixel {
   uint8_t r;

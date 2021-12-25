@@ -119,6 +119,7 @@ void Writer::Update(const Header& _header, const std::vector<Pixel>& pixels) {
   }
 
   header.Flags |= Flags::FEEDER_ATTACHED;
+  header.SequenceNumber = p->Header->SequenceNumber + 1;
 
   std::vector<std::byte> bytes(
     sizeof(Header) + (pixels.size() * sizeof(Pixel)));

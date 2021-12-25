@@ -14,6 +14,7 @@ class MainWindow final : public wxFrame {
   bool mFirstDetached = false;
   bool mHadData = false;
   YAVRK::SHM::Reader mSHM;
+  uint64_t mLastSequenceNumber = 0;
 
  public:
   MainWindow()
@@ -32,9 +33,20 @@ class MainWindow final : public wxFrame {
     }
     SetMenuBar(menuBar);
 
-    mTimer.Bind(wxEVT_TIMER, [this](auto) { this->Refresh(); });
+    mTimer.Bind(wxEVT_TIMER, [this](auto) { this->CheckForUpdate(); });
     mTimer.Start(100);
     this->Bind(wxEVT_ERASE_BACKGROUND, [this](auto) {});
+  }
+
+  void CheckForUpdate() {
+    auto shm = mSHM.MaybeGet();
+    if (!shm) {
+      return;
+    }
+    auto header = std::get<0>(*shm);
+    if (header.SequenceNumber != mLastSequenceNumber) {
+      Refresh();
+    }
   }
 
   void OnPaint(wxPaintEvent& ev) {
@@ -102,6 +114,7 @@ class MainWindow final : public wxFrame {
     };
 
     dc.DrawBitmap(scaled, origin);
+    mLastSequenceNumber = config.SequenceNumber;
   }
 
   void OnExit(wxCommandEvent& ev) {
