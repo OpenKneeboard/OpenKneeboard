@@ -3,9 +3,11 @@
 #include <Windows.h>
 #include <fmt/format.h>
 
+static const DWORD SHM_SIZE(1024*1024*8*sizeof(YAVRK::SHM::Pixel));
+
 namespace YAVRK {
 
-SHM::SHM(std::shared_ptr<Impl> p) : p(p) {
+SHM::SHM(const std::shared_ptr<Impl>& p) : p(p) {
 }
 
 SHM::~SHM() {
@@ -20,7 +22,6 @@ class SHM::Impl {
   bool IsFeeder;
   ~Impl() {
     if (IsFeeder) {
-       
       Header->Flags |= Flags::FEEDER_DETACHED;
     } else {
     }
@@ -32,7 +33,7 @@ class SHM::Impl {
 namespace {
 // *****PLEASE***** change this if you fork or re-use this code
 const auto PREFIX = "com.fredemmott.yavrk";
-}
+}// namespace
 
 SHM::operator bool() const {
   if (!p) {
@@ -55,7 +56,7 @@ SHM SHM::GetOrCreate(const SHMHeader& header) {
     NULL,
     PAGE_READWRITE,
     0,
-    (DWORD)shmSize,
+    SHM_SIZE,
     path.c_str());
   if (!handle) {
     return {nullptr};
@@ -80,7 +81,7 @@ SHM SHM::MaybeGet() {
     NULL,
     PAGE_READONLY,
     0,
-    1024 * 1024 * 10,
+    SHM_SIZE,
     path.c_str());
   if ((!handle) || GetLastError() != ERROR_ALREADY_EXISTS) {
     CloseHandle(handle);
@@ -89,7 +90,8 @@ SHM SHM::MaybeGet() {
 
   void* mapping = MapViewOfFile(handle, FILE_MAP_READ, 0, 0, 0);
   SHMHeader* header = reinterpret_cast<SHMHeader*>(mapping);
-  if (header->Version != IPC_VERSION || header->Flags & Flags::FEEDER_DETACHED) {
+  if (
+    header->Version != IPC_VERSION || header->Flags & Flags::FEEDER_DETACHED) {
     UnmapViewOfFile(mapping);
     CloseHandle(handle);
     return {nullptr};
@@ -108,11 +110,11 @@ SHMHeader SHM::Header() const {
   return *p->Header;
 }
 
-std::byte* SHM::ImageData() const {
+SHM::Pixel* SHM::ImageData() const {
   if (!p) {
     return nullptr;
   }
-  return p->Data;
+  return reinterpret_cast<Pixel*>(p->Data);
 }
 
 uint32_t SHM::ImageDataSize() const {
