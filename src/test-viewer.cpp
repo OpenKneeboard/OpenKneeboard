@@ -18,6 +18,8 @@ struct R8G8B8A8 {
 class MainWindow final : public wxFrame {
  private:
   wxTimer mTimer;
+  bool mFirstDetached = false;
+  bool mHadData = false;
 
  public:
   MainWindow()
@@ -43,13 +45,40 @@ class MainWindow final : public wxFrame {
 
   void OnPaint(wxPaintEvent& ev) {
     wxBufferedPaintDC dc(this);
-    dc.clear();
+    const auto clientSize = GetClientSize();
 
     auto shm = YAVRK::SHM::MaybeGet();
     if (!shm) {
-      // TODO: render error
+      if (!mHadData) {
+        dc.Clear();
+      } else if (mFirstDetached) {
+        mFirstDetached = false;
+        auto bm = dc.GetAsBitmap().ConvertToDisabled();
+        dc.DrawBitmap(bm, wxPoint{0, 0});
+      }
+      std::string message("No Feeder");
+      auto textSize = dc.GetTextExtent(message);
+      auto textOrigin = wxPoint {
+        (clientSize.GetWidth() - textSize.GetWidth()) / 2,
+        (clientSize.GetHeight() - textSize.GetHeight()) / 2};
+
+      dc.SetPen(wxPen(*wxBLACK, 2));
+      auto boxSize
+        = wxSize {textSize.GetWidth() + 20, textSize.GetHeight() + 20};
+      auto boxOrigin = wxPoint {
+        (clientSize.GetWidth() - boxSize.GetWidth()) / 2,
+        (clientSize.GetHeight() - boxSize.GetHeight()) / 2};
+
+      dc.SetBrush(*wxGREY_BRUSH);
+      dc.DrawRectangle(boxOrigin, boxSize);
+
+      dc.SetBrush(*wxBLACK_BRUSH);
+      dc.DrawText(message, textOrigin);
+
       return;
     }
+    mHadData = true;
+    mFirstDetached = true;
 
     dc.Clear();
     auto config = shm.Header();
@@ -64,9 +93,8 @@ class MainWindow final : public wxFrame {
       }
     }
 
-    const auto renderSize = GetClientSize();
-    const auto scalex = float(renderSize.GetWidth()) / config.ImageWidth;
-    const auto scaley = float(renderSize.GetHeight()) / config.ImageHeight;
+    const auto scalex = float(clientSize.GetWidth()) / config.ImageWidth;
+    const auto scaley = float(clientSize.GetHeight()) / config.ImageHeight;
     const auto scale = std::min(scalex, scaley);
     auto scaled = image.Scale(
       int(config.ImageWidth * scale),
@@ -74,8 +102,8 @@ class MainWindow final : public wxFrame {
       wxIMAGE_QUALITY_HIGH);
 
     wxPoint origin {
-      (renderSize.GetWidth() - scaled.GetWidth()) / 2,
-      (renderSize.GetHeight() - scaled.GetHeight()) / 2,
+      (clientSize.GetWidth() - scaled.GetWidth()) / 2,
+      (clientSize.GetHeight() - scaled.GetHeight()) / 2,
     };
 
     dc.DrawBitmap(scaled, origin);
