@@ -29,7 +29,7 @@ int main() {
     */
     /* On knee */
     .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
-    .y = 0.5,
+    .y = 0.5f,
     .z = -0.25f,
     .rx = M_PI / 2,
     .VirtualWidth = 0.2f,
