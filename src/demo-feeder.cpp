@@ -6,14 +6,12 @@
 #include "YAVRK/SHM.h"
 
 int main() {
-  // - the data format is RGBA
-  // - x64 is little-endian
-  // ... so our literals need to be in ABGR form.
-  std::uint32_t colors[] = {
-    0xff0000ff,// red
-    0xff00ff00,// green
-    0xffff0000,// blue
-    0xff000000,// black
+  using Pixel = YAVRK::SHM::Pixel;
+  Pixel colors[] = {
+    { 0xff, 0x00, 0x00, 0xff }, // red
+    { 0x00, 0xff, 0x00, 0xff }, // green
+    { 0x00, 0x00, 0xff, 0xff }, // blue
+    { 0x00, 0x00, 0x00, 0xff }, // black
   };
 
   YAVRK::SHMHeader config {
@@ -42,21 +40,21 @@ int main() {
   printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
   do {
     frames++;
-    uint32_t color;
+    Pixel pixel;
     for (uint16_t y = 0; y < config.ImageHeight; y++) {
       for (uint16_t x = 0; x < config.ImageWidth; x++) {
         if (y < config.ImageHeight / 4) {
-          color = colors[frames % 4];
+          pixel = colors[frames % 4];
         } else if (y < config.ImageHeight / 2) {
-          color = colors[(frames + 1) % 4];
+          pixel = colors[(frames + 1) % 4];
         } else if (y < 3 * config.ImageHeight / 4) {
-          color = colors[(frames + 2) % 4];
+          pixel = colors[(frames + 2) % 4];
         } else {
-          color = colors[(frames + 3) % 4];
+          pixel = colors[(frames + 3) % 4];
         }
 
-        void* dest = &shm.ImageData()[4 * ((y * config.ImageWidth) + x)];
-        memcpy(dest, (void*)&color, sizeof(color));
+        void* dest = &shm.ImageData()[((y * config.ImageWidth) + x)];
+        memcpy(dest, (void*)&pixel, sizeof(Pixel));
       }
     }
     Sleep(1000);
