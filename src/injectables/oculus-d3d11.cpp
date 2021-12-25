@@ -41,11 +41,17 @@
 #include "YAVRK/SHM.h"
 #include "d3d11-offsets.h"
 
-using YAVRK::SHM;
-using YAVRK::SHMHeader;
+using SHMHeader = YAVRK::SHM::Header;
+using SHMPixel = YAVRK::SHM::Pixel;
+using SHMPixels = std::vector<SHMPixel>;
+
+static_assert(sizeof(SHMPixel) == 4, "Expecting R8G8B8A8 for DirectX");
+static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
+static_assert(offsetof(SHMPixel, a) == 3, "Expected alpha to be last byte");
 
 static bool g_hooked_DX = false;
 static winrt::com_ptr<ID3D11Device> g_d3dDevice;
+static YAVRK::SHM::Reader g_SHM;
 
 class KneeboardRenderer {
  private:
@@ -58,11 +64,10 @@ class KneeboardRenderer {
 
   KneeboardRenderer(ovrSession session, const SHMHeader& header);
   bool isCompatibleWith(const SHMHeader& header) const {
-    return header.Version == YAVRK::IPC_VERSION
-      && header.ImageWidth == this->header.ImageWidth
+    return header.ImageWidth == this->header.ImageWidth
       && header.ImageHeight == this->header.ImageHeight;
   }
-  bool Render(ovrSession session, const SHM& shm);
+  bool Render(ovrSession session, const SHMHeader& header, const SHMPixels& pixels);
 };
 
 std::unique_ptr<KneeboardRenderer> g_Renderer;
@@ -320,11 +325,10 @@ KneeboardRenderer::KneeboardRenderer(
   initialized = true;
 }
 
-bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
+bool KneeboardRenderer::Render(ovrSession session, const SHMHeader& config, const SHMPixels& pixels) {
   if (!initialized) {
     return false;
   }
-  const auto config = shm.Header();
   if (!isCompatibleWith(config)) {
     dprint("Attempted to use an incompatible renderer");
     return false;
@@ -361,9 +365,9 @@ bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
     texture.get(),
     0,
     &box,
-    shm.ImageData(),
-    4 * config.ImageWidth,
-    4 * config.ImageHeight);
+    pixels.data(),
+    config.ImageWidth * sizeof(SHMPixel),
+    config.ImageHeight * sizeof(SHMPixel));
 
   auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
   if (ret) {
@@ -377,7 +381,7 @@ bool KneeboardRenderer::Render(ovrSession session, const SHM& shm) {
   return true;
 }
 
-static bool RenderKneeboard(ovrSession session, const SHM& shm) {
+static bool RenderKneeboard(ovrSession session, const SHMHeader& header, const SHMPixels& pixels) {
   if (!g_d3dDevice) {
     hook_IDXGISwapChain_Present();
     // Initialized by Hooked_ovrCreateTextureSwapChainDX
@@ -385,20 +389,11 @@ static bool RenderKneeboard(ovrSession session, const SHM& shm) {
   }
   unhook_IDXGISwapChain_Present();
 
-  if (!shm) {
-    return false;
-  }
-
-  auto header = shm.Header();
-  if (header.Version != YAVRK::IPC_VERSION) {
-    return false;
-  }
-
   if (!(g_Renderer && g_Renderer->isCompatibleWith(header))) {
     g_Renderer.reset(new KneeboardRenderer(session, header));
   }
 
-  return g_Renderer->Render(session, shm);
+  return g_Renderer->Render(session, header, pixels);
 }
 
 static ovrResult EndFrame_Hook_Impl(
@@ -408,13 +403,19 @@ static ovrResult EndFrame_Hook_Impl(
   const ovrViewScaleDesc* viewScaleDesc,
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount) {
-  SHM shm = SHM::MaybeGet();
-  if (!RenderKneeboard(session, shm)) {
+  auto shmData = g_SHM.MaybeGet();
+  if (!shmData) {
     return nextImpl(
       session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
-  auto config = shm.Header();
+  auto [config, pixels] = *shmData;
+
+  if (!RenderKneeboard(session, config, pixels)) {
+    return nextImpl(
+      session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+  }
+
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
   kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
@@ -430,9 +431,11 @@ static ovrResult EndFrame_Hook_Impl(
   orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
   orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
   kneeboardLayer.QuadPoseCenter.Orientation = orientation;
-  kneeboardLayer.QuadSize = {.x = config.VirtualWidth, .y = config.VirtualHeight };
+  kneeboardLayer.QuadSize
+    = {.x = config.VirtualWidth, .y = config.VirtualHeight};
   kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
-  kneeboardLayer.Viewport.Size = {.w = config.ImageWidth, .h = config.ImageHeight};
+  kneeboardLayer.Viewport.Size
+    = {.w = config.ImageWidth, .h = config.ImageHeight};
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {
@@ -455,7 +458,7 @@ static ovrResult EndFrame_Hook_Impl(
   }
 
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((shm.Header().Flags & YAVRK::Flags::DISCARD_DEPTH_INFORMATION)) {
+  if ((config.Flags & YAVRK::Flags::DISCARD_DEPTH_INFORMATION)) {
     for (auto i = 0; i < newLayers.size(); ++i) {
       auto layer = newLayers.at(i);
       if (layer->Type != ovrLayerType_EyeFovDepth) {

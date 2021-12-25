@@ -14,8 +14,8 @@ int main() {
     { 0x00, 0x00, 0x00, 0xff }, // black
   };
 
-  YAVRK::SHMHeader config {
-    .Version = YAVRK::IPC_VERSION,
+  YAVRK::SHM::Writer shm;
+  YAVRK::SHM::Header config {
     /* Headlocked
     .Flags = YAVRK::Flags::HEADLOCKED | YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
     .y = -0.15,
@@ -35,9 +35,9 @@ int main() {
     .ImageWidth = 400,
     .ImageHeight = 1200,
   };
-  auto shm = YAVRK::SHM::GetOrCreate(config);
-  int64_t frames = -1;
+  uint64_t frames = -1;
   printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
+  std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
   do {
     frames++;
     Pixel pixel;
@@ -53,10 +53,11 @@ int main() {
           pixel = colors[(frames + 3) % 4];
         }
 
-        void* dest = &shm.ImageData()[((y * config.ImageWidth) + x)];
+        void* dest = &pixels[((y * config.ImageWidth) + x)];
         memcpy(dest, (void*)&pixel, sizeof(Pixel));
       }
     }
+    shm.Update(config, pixels);
     Sleep(1000);
   } while (true);
   return 0;

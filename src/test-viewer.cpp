@@ -13,6 +13,7 @@ class MainWindow final : public wxFrame {
   wxTimer mTimer;
   bool mFirstDetached = false;
   bool mHadData = false;
+  YAVRK::SHM::Reader mSHM;
 
  public:
   MainWindow()
@@ -40,7 +41,7 @@ class MainWindow final : public wxFrame {
     wxBufferedPaintDC dc(this);
     const auto clientSize = GetClientSize();
 
-    auto shm = YAVRK::SHM::MaybeGet();
+    auto shm = mSHM.MaybeGet();
     if (!shm) {
       if (!mHadData) {
         dc.Clear();
@@ -73,17 +74,15 @@ class MainWindow final : public wxFrame {
     mHadData = true;
     mFirstDetached = true;
 
+    auto [config, pixels] = *shm;
+
     dc.Clear();
-    auto config = shm.Header();
     wxImage image(config.ImageWidth, config.ImageHeight);
     image.SetAlpha(nullptr, true);
 
-    using Pixel = YAVRK::SHM::Pixel;
-    std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
-    memcpy(reinterpret_cast<void*>(pixels.data()), shm.ImageData(), pixels.size() * sizeof(Pixel));
     for (uint16_t y = 0; y < config.ImageHeight; ++y) {
       for (uint16_t x = 0; x < config.ImageWidth; ++x) {
-        auto pixel = pixels[x + (y * config.ImageWidth)];
+        auto pixel = pixels.at(x + (y * config.ImageWidth));
         image.SetRGB(x, y, pixel.r, pixel.g, pixel.b);
         image.SetAlpha(x, y, pixel.a);
       }

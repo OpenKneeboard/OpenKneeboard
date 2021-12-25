@@ -41,26 +41,28 @@ int main() {
   UINT width, height;
   frame->GetSize(&width, &height);
 
-  YAVRK::SHMHeader config {
-    .Version = YAVRK::IPC_VERSION,
+  YAVRK::SHM::Writer shm;
+  YAVRK::SHM::Header config {
     .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
     .y = 0.5f,
     .z = -0.25f,
-    .rx = M_PI / 2,
+    .rx = float(M_PI) / 2,
     .VirtualWidth = 0.3f,
     .VirtualHeight = height * 0.3f / width,
     .ImageWidth = static_cast<uint16_t>(width),
     .ImageHeight = static_cast<uint16_t>(height),
   };
-  auto shm = YAVRK::SHM::GetOrCreate(config);
 
   printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
+  using Pixel = YAVRK::SHM::Pixel;
+  std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
   do {
     frame->CopyPixels(
       nullptr,
       4 * width,
-      shm.ImageDataSize(),
-      reinterpret_cast<BYTE*>(shm.ImageData()));
+      static_cast<UINT>(pixels.size() * sizeof(Pixel)),
+      reinterpret_cast<BYTE*>(pixels.data()));
+    shm.Update(config, pixels);
     Sleep(1000);
   } while (true);
   return 0;

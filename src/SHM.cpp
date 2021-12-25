@@ -3,26 +3,28 @@
 #include <Windows.h>
 #include <fmt/format.h>
 
-static const DWORD SHM_SIZE(1024*1024*8*sizeof(YAVRK::SHM::Pixel));
+namespace YAVRK::SHM {
 
-namespace YAVRK {
+using namespace YAVRK::Flags;
 
-SHM::SHM(const std::shared_ptr<Impl>& p) : p(p) {
-}
+static const DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
+static const DWORD MAX_IMAGE_BYTES = MAX_IMAGE_PX * sizeof(Pixel);
+static const DWORD SHM_SIZE = sizeof(Header) + MAX_IMAGE_BYTES;
+static constexpr uint64_t SHM_VERSION
+  = (uint64_t(Header::VERSION) << 32) | SHM_SIZE;
+// *****PLEASE***** change this if you fork or re-use this code
+static const auto SHM_PREFIX = "com.fredemmott.yavrk";
 
-SHM::~SHM() {
-}
-
-class SHM::Impl {
+class Impl {
  public:
   HANDLE Handle;
   void* Mapping;
-  SHMHeader* Header;
-  std::byte* Data;
+  Header* Header;
+  Pixel* Pixels;
   bool IsFeeder;
   ~Impl() {
     if (IsFeeder) {
-      Header->Flags |= Flags::FEEDER_DETACHED;
+      Header->Flags &= ~Flags::FEEDER_ATTACHED;
     } else {
     }
     UnmapViewOfFile(Mapping);
@@ -30,96 +32,101 @@ class SHM::Impl {
   }
 };
 
-namespace {
-// *****PLEASE***** change this if you fork or re-use this code
-const auto PREFIX = "com.fredemmott.yavrk";
-}// namespace
-
-SHM::operator bool() const {
-  if (!p) {
-    return false;
-  }
-  if ((p->Header->Flags & Flags::FEEDER_DETACHED)) {
-    return false;
-  }
-  return true;
-}
-
-SHM SHM::GetOrCreate(const SHMHeader& header) {
-  const auto path = fmt::format("{}/{}", PREFIX, header.Version);
-  const auto dataSize = 4 * header.ImageWidth * header.ImageHeight;
-  const auto shmSize = sizeof(SHMHeader) + dataSize;
-
+Writer::Writer() {
+  const auto path = fmt::format("{}/{:x}", SHM_PREFIX, SHM_VERSION);
   HANDLE handle;
   handle = CreateFileMappingA(
-    INVALID_HANDLE_VALUE,
-    NULL,
-    PAGE_READWRITE,
-    0,
-    SHM_SIZE,
-    path.c_str());
+    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
   if (!handle) {
-    return {nullptr};
+    return;
   }
-  void* mapping = MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, shmSize);
-  memcpy(mapping, &header, sizeof(SHMHeader));
+  void* mapping = MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, SHM_SIZE);
+  if (!mapping) {
+    return;
+  }
 
-  auto p = new Impl {
+  this->p.reset(new Impl {
     .Handle = handle,
     .Mapping = mapping,
-    .Header = reinterpret_cast<SHMHeader*>(mapping),
-    .Data = &reinterpret_cast<std::byte*>(mapping)[sizeof(SHMHeader)],
-    .IsFeeder = true};
-  return {std::shared_ptr<Impl>(p)};
+    .Header = reinterpret_cast<Header*>(mapping),
+    .Pixels = &reinterpret_cast<Pixel*>(mapping)[sizeof(Header)],
+    .IsFeeder = true});
 }
 
-SHM SHM::MaybeGet() {
-  const auto path = fmt::format("{}/{}", PREFIX, IPC_VERSION);
+Writer::~Writer() {
+}
+
+Reader::Reader() {
+  const auto path = fmt::format("{}/{:x}", SHM_PREFIX, SHM_VERSION);
   HANDLE handle;
   handle = CreateFileMappingA(
-    INVALID_HANDLE_VALUE,
-    NULL,
-    PAGE_READONLY,
-    0,
-    SHM_SIZE,
-    path.c_str());
-  if ((!handle) || GetLastError() != ERROR_ALREADY_EXISTS) {
+    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
+  if (!handle) {
+    return;
+  }
+  void* mapping = MapViewOfFile(handle, FILE_MAP_READ, 0, 0, SHM_SIZE);
+  if (!mapping) {
     CloseHandle(handle);
-    return {nullptr};
+    return;
   }
 
-  void* mapping = MapViewOfFile(handle, FILE_MAP_READ, 0, 0, 0);
-  SHMHeader* header = reinterpret_cast<SHMHeader*>(mapping);
-  if (
-    header->Version != IPC_VERSION || header->Flags & Flags::FEEDER_DETACHED) {
-    UnmapViewOfFile(mapping);
-    CloseHandle(handle);
-    return {nullptr};
-  }
-
-  auto p = new Impl {
+  this->p.reset(new Impl {
     .Handle = handle,
     .Mapping = mapping,
-    .Header = header,
-    .Data = &reinterpret_cast<std::byte*>(mapping)[sizeof(SHMHeader)],
-    .IsFeeder = false};
-  return {std::shared_ptr<Impl>(p)};
+    .Header = reinterpret_cast<Header*>(mapping),
+    .Pixels = &reinterpret_cast<Pixel*>(mapping)[sizeof(Header)],
+    .IsFeeder = false});
 }
 
-SHMHeader SHM::Header() const {
-  return *p->Header;
+Reader::~Reader() {
 }
 
-SHM::Pixel* SHM::ImageData() const {
-  if (!p) {
-    return nullptr;
+Reader::operator bool() const {
+  return p && (p->Header->Flags & Flags::FEEDER_ATTACHED);
+}
+
+Writer::operator bool() const {
+  return (bool)p;
+}
+
+std::optional<std::tuple<Header, std::vector<Pixel>>> Reader::MaybeGet() const {
+  if (!(*this)) {
+    return {};
   }
-  return reinterpret_cast<Pixel*>(p->Data);
+  std::vector<std::byte> snapshot(SHM_SIZE);
+  memcpy(reinterpret_cast<void*>(snapshot.data()), p->Mapping, SHM_SIZE);
+
+  Header header;
+  memcpy(reinterpret_cast<void*>(&header), snapshot.data(), sizeof(Header));
+
+  std::vector<Pixel> pixels(header.ImageHeight * header.ImageWidth);
+  memcpy(
+    reinterpret_cast<void*>(pixels.data()),
+    &snapshot.data()[sizeof(Header)],
+    pixels.size() * sizeof(Pixel));
+  return {{header, pixels}};
 }
 
-uint32_t SHM::ImageDataSize() const {
-  const auto& header = *p->Header;
-  return 4 * header.ImageWidth * header.ImageHeight;
+void Writer::Update(const Header& _header, const std::vector<Pixel>& pixels) {
+  Header header(_header);
+  if (!p) {
+    throw std::logic_error("Attempted to update invalid SHM");
+  }
+
+  if (pixels.size() != header.ImageWidth * header.ImageHeight) {
+    throw std::logic_error("Pixel array size does not match header");
+  }
+
+  header.Flags |= Flags::FEEDER_ATTACHED;
+
+  std::vector<std::byte> bytes(
+    sizeof(Header) + (pixels.size() * sizeof(Pixel)));
+  memcpy(reinterpret_cast<void*>(bytes.data()), &header, sizeof(Header));
+  memcpy(
+    reinterpret_cast<void*>(&bytes.data()[sizeof(Header)]),
+    pixels.data(),
+    pixels.size() * sizeof(Pixel));
+  memcpy(p->Mapping, bytes.data(), bytes.size());
 }
 
-}// namespace YAVRK
+}// namespace YAVRK::SHM

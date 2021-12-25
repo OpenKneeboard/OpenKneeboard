@@ -13,7 +13,7 @@
 class MainWindow final : public wxFrame {
  private:
   std::vector<TabWidget*> mTabs;
-  YAVRK::SHM mSHM;
+  YAVRK::SHM::Writer mSHM;
 
  public:
   MainWindow()
@@ -53,6 +53,10 @@ class MainWindow final : public wxFrame {
   }
 
   void UpdateSHM() {
+    if (!mSHM) {
+      return;
+    }
+
     auto image = mTabs[0]->GetImage();
     if (!image.IsOk()) {
       OutputDebugStringA("Invalid image :'(\n");
@@ -60,8 +64,7 @@ class MainWindow final : public wxFrame {
     }
 
     auto ratio = float(image.GetHeight()) / image.GetWidth();
-    YAVRK::SHMHeader header {
-      .Version = YAVRK::IPC_VERSION,
+    YAVRK::SHM::Header header {
       .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
       .y = 0.5f,
       .z = -0.25f,
@@ -71,9 +74,6 @@ class MainWindow final : public wxFrame {
       .ImageWidth = static_cast<uint16_t>(image.GetWidth()),
       .ImageHeight = static_cast<uint16_t>(image.GetHeight()),
     };
-    if (!mSHM) {
-      mSHM = YAVRK::SHM::GetOrCreate(header);
-    }
 
     using Pixel = YAVRK::SHM::Pixel;
 
@@ -89,7 +89,7 @@ class MainWindow final : public wxFrame {
       }
     }
 
-    memcpy(mSHM.ImageData(), pixels.data(), pixels.size() * sizeof(Pixel));
+    mSHM.Update(header, pixels);
   }
 
   void OnExit(wxCommandEvent& ev) {
