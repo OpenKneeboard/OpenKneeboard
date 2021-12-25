@@ -32,7 +32,7 @@ int main() {
     .rx = float(M_PI / 2),
     .VirtualWidth = 0.2f,
     .VirtualHeight = 0.3f,
-    .ImageWidth = 400,
+    .ImageWidth = 800,
     .ImageHeight = 1200,
   };
   uint64_t frames = -1;
