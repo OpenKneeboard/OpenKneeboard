@@ -24,6 +24,7 @@ class TabWidget final : public wxPanel {
     void SetPageIndex(uint16_t index);
     void NextPage();
     void PreviousPage();
+    std::shared_ptr<YAVRK::Tab> GetTab() const;
 
     wxDECLARE_EVENT_TABLE();
   private:

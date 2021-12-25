@@ -9,6 +9,9 @@
 #include "YAVRK/FolderTab.h"
 
 class MainWindow final : public wxFrame {
+ private:
+  std::vector<TabWidget*> mTabs;
+
  public:
   MainWindow()
     : wxFrame(
@@ -18,13 +21,28 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxDefaultSize,
       wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER) {
-    auto tab = std::make_shared<YAVRK::FolderTab>(
-      "Local",
-      L"C:\\Program Files\\Eagle Dynamics\\DCS World "
-      L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard");
+    auto tab = new TabWidget(
+      this,
+      std::make_shared<YAVRK::FolderTab>(
+        "Local",
+        L"C:\\Program Files\\Eagle Dynamics\\DCS World "
+        L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard"));
+    mTabs = {tab};
 
     auto sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(new TabWidget(this, tab));
+    sizer->Add(tab);
+
+    auto previousPage = new wxButton(this, wxID_ANY, _("&Previous Page"));
+    auto nextPage = new wxButton(this, wxID_ANY, _("&Next Page"));
+    previousPage->Bind(wxEVT_BUTTON, [=](auto) { tab->PreviousPage(); });
+    nextPage->Bind(wxEVT_BUTTON, [=](auto) { tab->NextPage(); });
+
+    auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+    buttonSizer->Add(previousPage);
+    buttonSizer->AddStretchSpacer();
+    buttonSizer->Add(nextPage);
+    sizer->Add(buttonSizer, wxEXPAND);
+
     this->SetSizerAndFit(sizer);
   }
 };

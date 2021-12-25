@@ -60,6 +60,7 @@ void TabWidget::SetPageIndex(uint16_t index) {
     return;
   }
   p->PageIndex = std::clamp(index, 0ui16, count);
+  Refresh();
 }
 
 void TabWidget::NextPage() {
@@ -72,6 +73,10 @@ void TabWidget::PreviousPage() {
     return;
   }
   SetPageIndex(current - 1);
+}
+
+std::shared_ptr<YAVRK::Tab> TabWidget::GetTab() const {
+  return p->Tab;
 }
 
 // clang-format off
