@@ -32,8 +32,9 @@ class MainWindow final : public wxFrame {
     auto sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(tab);
 
-    auto previousPage = new wxButton(this, wxID_ANY, _("&Previous Page"));
-    auto nextPage = new wxButton(this, wxID_ANY, _("&Next Page"));
+    auto buttonBox = new wxPanel(this);
+    auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
+    auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
     previousPage->Bind(wxEVT_BUTTON, [=](auto) { tab->PreviousPage(); });
     nextPage->Bind(wxEVT_BUTTON, [=](auto) { tab->NextPage(); });
 
@@ -41,7 +42,8 @@ class MainWindow final : public wxFrame {
     buttonSizer->Add(previousPage);
     buttonSizer->AddStretchSpacer();
     buttonSizer->Add(nextPage);
-    sizer->Add(buttonSizer, wxEXPAND);
+    buttonBox->SetSizer(buttonSizer);
+    sizer->Add(buttonBox, 0, wxEXPAND);
 
     this->SetSizerAndFit(sizer);
   }
