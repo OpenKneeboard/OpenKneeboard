@@ -29,5 +29,5 @@ target_link_libraries(demo-feeder yavrk-shm)
 add_executable(kobuleti-feeder kobuleti-feeder.cpp)
 target_link_libraries(kobuleti-feeder yavrk-shm)
 
-add_executable(yavrk WIN32 main.cpp TabWidget.cpp)
+add_executable(yavrk WIN32 main.cpp TabCanvasWidget.cpp)
 target_link_libraries(yavrk PRIVATE wx::core wx::base yavrk-shm yavrk-tabs)

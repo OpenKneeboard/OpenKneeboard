@@ -5,12 +5,12 @@
 
 #include <wx/frame.h>
 
-#include "TabWidget.h"
+#include "TabCanvasWidget.h"
 #include "YAVRK/FolderTab.h"
 
 class MainWindow final : public wxFrame {
  private:
-  std::vector<TabWidget*> mTabs;
+  std::vector<TabCanvasWidget*> mTabs;
 
  public:
   MainWindow()
@@ -21,7 +21,7 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxDefaultSize,
       wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER) {
-    auto tab = new TabWidget(
+    auto tab = new TabCanvasWidget(
       this,
       std::make_shared<YAVRK::FolderTab>(
         "Local",

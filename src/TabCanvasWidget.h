@@ -12,10 +12,10 @@ namespace YAVRK {
   class Tab;
 }
 
-class TabWidget final : public wxPanel {
+class TabCanvasWidget final : public wxPanel {
   public:
-    TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>&);
-    virtual ~TabWidget();
+    TabCanvasWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>&);
+    virtual ~TabCanvasWidget();
 
     void OnPaint(wxPaintEvent& ev);
     void OnEraseBackground(wxEraseEvent& ev);
