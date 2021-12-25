@@ -4,7 +4,6 @@
 #include <cmath>
 
 #include "YAVRK/SHM.h"
-#include "YAVRK/ConsoleLoopCondition.h"
 
 int main() {
   // - the data format is RGBA
@@ -40,7 +39,6 @@ int main() {
   };
   auto shm = YAVRK::SHM::GetOrCreate(config);
   int64_t frames = -1;
-  YAVRK::ConsoleLoopCondition condition;
   printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
   do {
     frames++;
@@ -61,7 +59,7 @@ int main() {
         memcpy(dest, (void*)&color, sizeof(color));
       }
     }
-  } while (condition.waitForSleepOrExit(std::chrono::seconds(1)) == YAVRK::ConsoleLoopCondition::EventType::SLEEP);
-  printf("Exit requested, cleaning up.\n");
+    Sleep(1000);
+  } while (true);
   return 0;
 }
