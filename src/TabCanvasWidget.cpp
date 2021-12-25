@@ -2,6 +2,8 @@
 
 #include "YAVRK/Tab.h"
 
+#include <wx/dcbuffer.h>
+
 class TabCanvasWidget::Impl final {
  public:
   std::shared_ptr<YAVRK::Tab> Tab;
@@ -34,14 +36,14 @@ void TabCanvasWidget::OnPaint(wxPaintEvent& ev) {
   }
 
   const auto imageSize = image.GetSize();
-  const auto widgetSize = this->GetSize();
-  const float xScale = (float)widgetSize.GetWidth() / imageSize.GetWidth();
-  const float yScale = (float)widgetSize.GetHeight() / imageSize.GetHeight();
+  const auto clientSize = this->GetSize();
+  const float xScale = (float)clientSize.GetWidth() / imageSize.GetWidth();
+  const float yScale = (float)clientSize.GetHeight() / imageSize.GetHeight();
   const auto scale = std::min(xScale, yScale);
   const auto scaled = image.Scale(
     (int)imageSize.GetWidth() * scale, (int)imageSize.GetHeight() * scale);
 
-  wxPaintDC dc(this);
+  wxBufferedPaintDC dc(this);
   dc.Clear();
   dc.DrawBitmap(scaled, wxPoint {0, 0});
 }

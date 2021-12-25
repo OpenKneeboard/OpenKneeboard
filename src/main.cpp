@@ -8,10 +8,12 @@
 
 #include "TabWidget.h"
 #include "YAVRK/FolderTab.h"
+#include "YAVRK/SHM.h"
 
 class MainWindow final : public wxFrame {
  private:
   std::vector<TabWidget*> mTabs;
+  YAVRK::SHM mSHM;
 
  public:
   MainWindow()
@@ -29,9 +31,9 @@ class MainWindow final : public wxFrame {
       menuBar->Append(fileMenu, _("&File"));
     }
     SetMenuBar(menuBar);
-    
+
     auto sizer = new wxBoxSizer(wxVERTICAL);
-    
+
     auto notebook = new wxNotebook(this, wxID_ANY);
     sizer->Add(notebook);
 
@@ -41,10 +43,53 @@ class MainWindow final : public wxFrame {
         "Local",
         L"C:\\Program Files\\Eagle Dynamics\\DCS World "
         L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard"));
+    tab->Bind(YAVRK_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());
 
     this->SetSizerAndFit(sizer);
+
+    UpdateSHM();
+  }
+
+  void UpdateSHM() {
+    auto image = mTabs[0]->GetImage();
+    if (!image.IsOk()) {
+      OutputDebugStringA("Invalid image :'(\n");
+      return;
+    }
+
+    auto ratio = float(image.GetHeight()) / image.GetWidth();
+    YAVRK::SHMHeader header {
+      .Version = YAVRK::IPC_VERSION,
+      .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
+      .y = 0.5f,
+      .z = -0.25f,
+      .rx = float(M_PI / 2),
+      .VirtualWidth = 0.5f / ratio,
+      .VirtualHeight = 0.5f,
+      .ImageWidth = static_cast<uint16_t>(image.GetWidth()),
+      .ImageHeight = static_cast<uint16_t>(image.GetHeight()),
+    };
+    if (!mSHM) {
+      mSHM = YAVRK::SHM::GetOrCreate(header);
+    }
+
+    using Pixel = YAVRK::SHM::Pixel;
+
+    std::vector<Pixel> pixels(image.GetWidth() * image.GetHeight());
+    for (int x = 0; x < image.GetWidth(); ++x) {
+      for (int y = 0; y < image.GetHeight(); ++y) {
+        pixels[x + (y * image.GetWidth())] = {
+          image.GetRed(x, y),
+          image.GetGreen(x, y),
+          image.GetBlue(x, y),
+          image.HasAlpha() ? image.GetAlpha(x, y) : 255ui8,
+        };
+      }
+    }
+
+    memcpy(mSHM.ImageData(), pixels.data(), pixels.size() * sizeof(Pixel));
   }
 
   void OnExit(wxCommandEvent& ev) {

@@ -3,6 +3,8 @@
 #include "TabCanvasWidget.h"
 #include "YAVRK/Tab.h"
 
+wxDEFINE_EVENT(YAVRK_PAGE_CHANGED, wxCommandEvent);
+
 class TabWidget::Impl final {
  public:
   std::shared_ptr<YAVRK::Tab> Tab;
@@ -21,9 +23,18 @@ TabWidget::TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>& tab)
   auto firstPage = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
   auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
   auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
-  firstPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->SetPageIndex(0); });
-  previousPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->PreviousPage(); });
-  nextPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->NextPage(); });
+  firstPage->Bind(wxEVT_BUTTON, [=](auto) {
+    canvas->SetPageIndex(0);
+    this->EmitPageChanged();
+  });
+  previousPage->Bind(wxEVT_BUTTON, [=](auto) {
+    canvas->PreviousPage();
+    this->EmitPageChanged();
+  });
+  nextPage->Bind(wxEVT_BUTTON, [=](auto) {
+    canvas->NextPage();
+    this->EmitPageChanged();
+  });
 
   auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
   buttonSizer->Add(firstPage);
@@ -34,6 +45,13 @@ TabWidget::TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>& tab)
   sizer->Add(buttonBox, 0, wxEXPAND);
 
   this->SetSizerAndFit(sizer);
+}
+
+void TabWidget::EmitPageChanged() {
+  wxCommandEvent event(YAVRK_PAGE_CHANGED, GetId());
+  event.SetEventObject(this);
+  event.SetInt(p->Canvas->GetPageIndex());
+  ProcessWindowEvent(event);
 }
 
 TabWidget::~TabWidget() {

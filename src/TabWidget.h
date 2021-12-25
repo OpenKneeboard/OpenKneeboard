@@ -11,6 +11,8 @@ namespace YAVRK {
   class Tab;
 }
 
+wxDECLARE_EVENT(YAVRK_PAGE_CHANGED, wxCommandEvent);
+
 class TabWidget final : public wxPanel {
   public:
     TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>&);
@@ -23,4 +25,6 @@ class TabWidget final : public wxPanel {
   private:
     class Impl;
     std::shared_ptr<Impl> p;
+
+    void EmitPageChanged();
 };
