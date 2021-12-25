@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "YAVRK/SHM.h"
+#include "YAVRK/ConsoleLoopCondition.h"
 
 int main() {
   using Pixel = YAVRK::SHM::Pixel;
@@ -36,6 +37,7 @@ int main() {
     .ImageHeight = 1200,
   };
   uint64_t frames = -1;
+  YAVRK::ConsoleLoopCondition condition;
   printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
   std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
   do {
@@ -58,7 +60,7 @@ int main() {
       }
     }
     shm.Update(config, pixels);
-    Sleep(1000);
-  } while (true);
+  } while (condition.waitForSleepOrExit(std::chrono::seconds(1)) == YAVRK::ConsoleLoopCondition::EventType::SLEEP);
+  printf("Exit requested, cleaning up.\n");
   return 0;
 }
