@@ -40,9 +40,15 @@ class MainWindow final : public wxFrame {
 
   void CheckForUpdate() {
     auto shm = mSHM.MaybeGet();
+    if (mFirstDetached && !shm) {
+      Refresh();
+      return;
+    }
+
     if (!shm) {
       return;
     }
+
     auto header = std::get<0>(*shm);
     if (header.SequenceNumber != mLastSequenceNumber) {
       Refresh();
