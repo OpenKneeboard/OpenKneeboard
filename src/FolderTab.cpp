@@ -5,6 +5,7 @@ class FolderTab::Impl final {
  public:
   std::filesystem::path Path;
   std::vector<wxImage> Pages = {};
+  std::vector<std::filesystem::path> PagePaths = {};
 };
 
 FolderTab::FolderTab(
@@ -19,6 +20,7 @@ FolderTab::~FolderTab() {
 
 void FolderTab::Reload() {
   p->Pages.clear();
+  p->PagePaths.clear();
   if (!std::filesystem::is_directory(p->Path)) {
     return;
   }
@@ -30,13 +32,9 @@ void FolderTab::Reload() {
     if (!wxImage::CanRead(wsPath)) {
       continue;
     }
-    wxImage page(wsPath);
-    if (!page.IsOk()) {
-      continue;
-    }
-
-    p->Pages.push_back(page);
+    p->PagePaths.push_back(wsPath);
   }
+  p->Pages.resize(p->PagePaths.size());
 }
 
 uint16_t FolderTab::GetPageCount() const {
@@ -47,7 +45,22 @@ wxImage FolderTab::RenderPage(uint16_t index) {
   if (index >= GetPageCount()) {
     return wxImage();
   }
-  return p->Pages.at(index);
+
+  auto image = p->Pages.at(index);
+  if (image.IsOk()) {
+    return image;
+  }
+
+  image.LoadFile(p->PagePaths.at(index).wstring());
+  if (image.IsOk()) {
+    p->Pages[index] = image;
+    return image;
+  }
+
+  p->Pages.erase(p->Pages.begin() + index);
+  p->PagePaths.erase(p->PagePaths.begin() + index);
+
+  return RenderPage(index);
 }
 
 void FolderTab::SetPath(const std::filesystem::path& path) {
