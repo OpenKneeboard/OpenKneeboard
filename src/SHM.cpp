@@ -10,6 +10,7 @@ SHM::SHM(std::shared_ptr<Impl> p) : p(p) {
 
 SHM::~SHM() {
 }
+
 class SHM::Impl {
  public:
   HANDLE Handle;
@@ -19,7 +20,9 @@ class SHM::Impl {
   bool IsFeeder;
   ~Impl() {
     if (IsFeeder) {
-      Header->Flags &= ~Flags::FEEDER_DETACHED;
+       
+      Header->Flags |= Flags::FEEDER_DETACHED;
+    } else {
     }
     UnmapViewOfFile(Mapping);
     CloseHandle(Handle);
@@ -106,6 +109,9 @@ SHMHeader SHM::Header() const {
 }
 
 std::byte* SHM::ImageData() const {
+  if (!p) {
+    return nullptr;
+  }
   return p->Data;
 }
 

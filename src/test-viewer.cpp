@@ -42,13 +42,15 @@ class MainWindow final : public wxFrame {
   }
 
   void OnPaint(wxPaintEvent& ev) {
+    wxBufferedPaintDC dc(this);
+    dc.clear();
+
     auto shm = YAVRK::SHM::MaybeGet();
     if (!shm) {
       // TODO: render error
       return;
     }
 
-    wxBufferedPaintDC dc(this);
     dc.Clear();
     auto config = shm.Header();
     wxImage image(config.ImageWidth, config.ImageHeight);
