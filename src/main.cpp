@@ -4,6 +4,7 @@
 #endif
 
 #include <wx/frame.h>
+#include <wx/notebook.h>
 
 #include "TabWidget.h"
 #include "YAVRK/FolderTab.h"
@@ -21,6 +22,11 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxDefaultSize,
       wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER) {
+    auto sizer = new wxBoxSizer(wxVERTICAL);
+    
+    auto notebook = new wxNotebook(this, wxID_ANY);
+    sizer->Add(notebook);
+
     auto tab = new TabWidget(
       this,
       std::make_shared<YAVRK::FolderTab>(
@@ -28,9 +34,7 @@ class MainWindow final : public wxFrame {
         L"C:\\Program Files\\Eagle Dynamics\\DCS World "
         L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard"));
     mTabs = {tab};
-
-    auto sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(tab);
+    notebook->AddPage(tab, tab->GetTab()->GetTitle());
 
     this->SetSizerAndFit(sizer);
   }
