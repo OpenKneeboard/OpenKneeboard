@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include "YAVRK/SHM.h"
+#include "YAVRK/ConsoleLoopCondition.h"
 
 #pragma comment(lib, "Windowscodecs.lib")
 #pragma comment(lib, "Windowsapp.lib")
@@ -55,6 +56,7 @@ int main() {
 
   printf("Acquired SHM, feeding YAVRK - hit Ctrl-C to exit.\n");
   using Pixel = YAVRK::SHM::Pixel;
+  YAVRK::ConsoleLoopCondition cliLoop;
   std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
   do {
     frame->CopyPixels(
@@ -63,7 +65,6 @@ int main() {
       static_cast<UINT>(pixels.size() * sizeof(Pixel)),
       reinterpret_cast<BYTE*>(pixels.data()));
     shm.Update(config, pixels);
-    Sleep(1000);
-  } while (true);
+  } while (cliLoop.sleep(std::chrono::minutes(1)));
   return 0;
 }
