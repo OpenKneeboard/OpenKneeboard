@@ -5,12 +5,12 @@
 
 #include <wx/frame.h>
 
-#include "TabCanvasWidget.h"
+#include "TabWidget.h"
 #include "YAVRK/FolderTab.h"
 
 class MainWindow final : public wxFrame {
  private:
-  std::vector<TabCanvasWidget*> mTabs;
+  std::vector<TabWidget*> mTabs;
 
  public:
   MainWindow()
@@ -21,7 +21,7 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxDefaultSize,
       wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER) {
-    auto tab = new TabCanvasWidget(
+    auto tab = new TabWidget(
       this,
       std::make_shared<YAVRK::FolderTab>(
         "Local",
@@ -31,19 +31,6 @@ class MainWindow final : public wxFrame {
 
     auto sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(tab);
-
-    auto buttonBox = new wxPanel(this);
-    auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
-    auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
-    previousPage->Bind(wxEVT_BUTTON, [=](auto) { tab->PreviousPage(); });
-    nextPage->Bind(wxEVT_BUTTON, [=](auto) { tab->NextPage(); });
-
-    auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-    buttonSizer->Add(previousPage);
-    buttonSizer->AddStretchSpacer();
-    buttonSizer->Add(nextPage);
-    buttonBox->SetSizer(buttonSizer);
-    sizer->Add(buttonBox, 0, wxEXPAND);
 
     this->SetSizerAndFit(sizer);
   }
