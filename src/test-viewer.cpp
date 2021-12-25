@@ -8,13 +8,6 @@
 
 #include "YAVRK/SHM.h"
 
-struct R8G8B8A8 {
-  unsigned char r;
-  unsigned char g;
-  unsigned char b;
-  unsigned char a;
-};
-
 class MainWindow final : public wxFrame {
  private:
   wxTimer mTimer;
@@ -84,7 +77,10 @@ class MainWindow final : public wxFrame {
     auto config = shm.Header();
     wxImage image(config.ImageWidth, config.ImageHeight);
     image.SetAlpha(nullptr, true);
-    auto pixels = reinterpret_cast<R8G8B8A8*>(shm.ImageData());
+
+    using Pixel = YAVRK::SHM::Pixel;
+    std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
+    memcpy(reinterpret_cast<void*>(pixels.data()), shm.ImageData(), pixels.size() * sizeof(Pixel));
     for (uint16_t y = 0; y < config.ImageHeight; ++y) {
       for (uint16_t x = 0; x < config.ImageWidth; ++x) {
         auto pixel = pixels[x + (y * config.ImageWidth)];
