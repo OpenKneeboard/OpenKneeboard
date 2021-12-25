@@ -16,7 +16,11 @@ class SHM::Impl {
   void* Mapping;
   SHMHeader* Header;
   std::byte* Data;
+  bool IsFeeder;
   ~Impl() {
+    if (IsFeeder) {
+      Header->Flags &= ~Flags::FEEDER_DETACHED;
+    }
     UnmapViewOfFile(Mapping);
     CloseHandle(Handle);
   }
@@ -28,7 +32,13 @@ const auto PREFIX = "com.fredemmott.yavrk";
 }
 
 SHM::operator bool() const {
-  return (bool)p;
+  if (!p) {
+    return false;
+  }
+  if ((p->Header->Flags & Flags::FEEDER_DETACHED)) {
+    return false;
+  }
+  return true;
 }
 
 SHM SHM::GetOrCreate(const SHMHeader& header) {
@@ -54,7 +64,8 @@ SHM SHM::GetOrCreate(const SHMHeader& header) {
     .Handle = handle,
     .Mapping = mapping,
     .Header = reinterpret_cast<SHMHeader*>(mapping),
-    .Data = &reinterpret_cast<std::byte*>(mapping)[sizeof(SHMHeader)]};
+    .Data = &reinterpret_cast<std::byte*>(mapping)[sizeof(SHMHeader)],
+    .IsFeeder = true};
   return {std::shared_ptr<Impl>(p)};
 }
 
@@ -75,7 +86,7 @@ SHM SHM::MaybeGet() {
 
   void* mapping = MapViewOfFile(handle, FILE_MAP_READ, 0, 0, 0);
   SHMHeader* header = reinterpret_cast<SHMHeader*>(mapping);
-  if (header->Version != IPC_VERSION) {
+  if (header->Version != IPC_VERSION || header->Flags & Flags::FEEDER_DETACHED) {
     UnmapViewOfFile(mapping);
     CloseHandle(handle);
     return {nullptr};
@@ -85,7 +96,8 @@ SHM SHM::MaybeGet() {
     .Handle = handle,
     .Mapping = mapping,
     .Header = header,
-    .Data = &reinterpret_cast<std::byte*>(mapping)[sizeof(SHMHeader)]};
+    .Data = &reinterpret_cast<std::byte*>(mapping)[sizeof(SHMHeader)],
+    .IsFeeder = false};
   return {std::shared_ptr<Impl>(p)};
 }
 

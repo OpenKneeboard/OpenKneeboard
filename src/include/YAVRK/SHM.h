@@ -11,6 +11,7 @@ constexpr uint16_t IPC_VERSION = 1;
 namespace Flags {
 constexpr uint64_t HEADLOCKED = 1;
 constexpr uint64_t DISCARD_DEPTH_INFORMATION = 1 << 1;
+constexpr uint64_t FEEDER_DETACHED = 1 << 2;
 };// namespace Flags
 
 struct SHMHeader {
