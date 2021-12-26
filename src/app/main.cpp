@@ -19,7 +19,6 @@
 
 using OpenKneeboard::dprint;
 using OpenKneeboard::dprintf;
-using namespace std::placeholders;
 
 class MainWindow final : public wxFrame {
  private:
@@ -38,8 +37,10 @@ class MainWindow final : public wxFrame {
     auto menuBar = new wxMenuBar();
     {
       auto fileMenu = new wxMenu();
-      fileMenu->Append(wxID_EXIT, _T("E&xit"));
       menuBar->Append(fileMenu, _("&File"));
+
+      fileMenu->Append(wxID_EXIT, _T("E&xit"));
+      Bind(wxEVT_MENU, &MainWindow::OnExit, this, wxID_EXIT);
     }
     SetMenuBar(menuBar);
 
@@ -54,7 +55,7 @@ class MainWindow final : public wxFrame {
         "Local",
         L"C:\\Program Files\\Eagle Dynamics\\DCS World "
         L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard"));
-    tab->Bind(okEVT_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
+    Bind(okEVT_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());
 
@@ -64,7 +65,7 @@ class MainWindow final : public wxFrame {
 
     auto listener = new okGameEventMailslotThread(this);
     listener->Run();
-    this->Bind(okEVT_GAME_EVENT, std::bind(&MainWindow::OnGameEvent, this, _1));
+    Bind(okEVT_GAME_EVENT, &MainWindow::OnGameEvent, this);
   }
 
   void OnGameEvent(wxThreadEvent& ev) {
@@ -114,15 +115,7 @@ class MainWindow final : public wxFrame {
   void OnExit(wxCommandEvent& ev) {
     Close(true);
   }
-
-  wxDECLARE_EVENT_TABLE();
 };
-
-// clang-format off
-wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
-  EVT_MENU(wxID_EXIT, MainWindow::OnExit)
-wxEND_EVENT_TABLE();
-// clang-format off
 
 class OpenKneeboardApp final : public wxApp {
  public:

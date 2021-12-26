@@ -25,6 +25,10 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxSize {768 / 2, 1024 / 2},
       wxDEFAULT_FRAME_STYLE) {
+    Bind(wxEVT_PAINT, &MainWindow::OnPaint, this);
+    Bind(wxEVT_ERASE_BACKGROUND, [this](auto) {
+      this->Close(true); }, wxID_EXIT);
+
     auto menuBar = new wxMenuBar();
     {
       auto fileMenu = new wxMenu();
@@ -33,9 +37,9 @@ class MainWindow final : public wxFrame {
     }
     SetMenuBar(menuBar);
 
-    mTimer.Bind(wxEVT_TIMER, [this](auto) { this->CheckForUpdate(); });
+    mTimer.Bind(wxEVT_TIMER, [this](auto) {
+      this->CheckForUpdate(); });
     mTimer.Start(100);
-    this->Bind(wxEVT_ERASE_BACKGROUND, [this](auto) {});
   }
 
   void CheckForUpdate() {
@@ -126,16 +130,7 @@ class MainWindow final : public wxFrame {
   void OnExit(wxCommandEvent& ev) {
     Close(true);
   }
-
-  wxDECLARE_EVENT_TABLE();
 };
-
-// clang-format off
-wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
-  EVT_PAINT(MainWindow::OnPaint)
-  EVT_MENU(wxID_EXIT, MainWindow::OnExit)
-wxEND_EVENT_TABLE();
-// clang-format off
 
 class TestViewApp final : public wxApp {
  public:

@@ -19,6 +19,8 @@ okTabCanvas::okTabCanvas(
     wxDefaultPosition,
     wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
     p(new Impl {.Tab = tab}) {
+  Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
+  Bind(wxEVT_ERASE_BACKGROUND, [](auto){/* ignore */});
 }
 
 okTabCanvas::~okTabCanvas() {
@@ -50,10 +52,6 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   dc.DrawBitmap(scaled, wxPoint {0, 0});
 }
 
-void okTabCanvas::OnEraseBackground(wxEraseEvent& ev) {
-  // intentionally empty
-}
-
 uint16_t okTabCanvas::GetPageIndex() const {
   return p->PageIndex;
 }
@@ -82,10 +80,3 @@ void okTabCanvas::PreviousPage() {
 std::shared_ptr<OpenKneeboard::Tab> okTabCanvas::GetTab() const {
   return p->Tab;
 }
-
-// clang-format off
-wxBEGIN_EVENT_TABLE(okTabCanvas, wxPanel)
-  EVT_PAINT(okTabCanvas::OnPaint)
-  EVT_ERASE_BACKGROUND(okTabCanvas::OnEraseBackground)
-wxEND_EVENT_TABLE();
-// clang-format on

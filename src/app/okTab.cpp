@@ -66,8 +66,3 @@ std::shared_ptr<OpenKneeboard::Tab> okTab::GetTab() const {
 wxImage okTab::GetImage() {
   return p->Tab->RenderPage(p->Canvas->GetPageIndex());
 }
-
-// clang-format off
-wxBEGIN_EVENT_TABLE(okTab, wxPanel)
-wxEND_EVENT_TABLE();
-// clang-format on

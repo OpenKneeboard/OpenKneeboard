@@ -20,9 +20,6 @@ class okTab final : public wxPanel {
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
   wxImage GetImage();
-
-  wxDECLARE_EVENT_TABLE();
-
  private:
   class Impl;
   std::shared_ptr<Impl> p;

@@ -25,9 +25,6 @@ class okTabCanvas final : public wxPanel {
   void NextPage();
   void PreviousPage();
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
-
-  wxDECLARE_EVENT_TABLE();
-
  private:
   class Impl;
   std::shared_ptr<Impl> p;
