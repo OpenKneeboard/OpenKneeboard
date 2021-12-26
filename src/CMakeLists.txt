@@ -21,12 +21,15 @@ target_link_libraries(openkneeboard-shm fmt headers)
 add_library(dprint STATIC dprint.cpp)
 target_link_libraries(dprint PUBLIC fmt headers)
 
+add_library(consolelib STATIC ConsoleLoopCondition.cpp)
+targeT_link_libraries(consolelib PUBLIC headers)
+
 ##### dlls we inject into other processes #####
 
 add_subdirectory(injectables)
 add_subdirectory(dcs)
 
-##### components of the GUI app #####
+##### tabs viewable in the kneeboard #####
 
 add_library(openkneeboard-tab-api STATIC Tab.cpp)
 target_link_libraries(openkneeboard-tab-api PUBLIC wx::core wx::base headers)
@@ -34,15 +37,7 @@ target_link_libraries(openkneeboard-tab-api PUBLIC wx::core wx::base headers)
 add_library(openkneeboard-tabs STATIC FolderTab.cpp)
 target_link_libraries(openkneeboard-tabs PUBLIC openkneeboard-tab-api)
 
-##### the gui app itself #####
+##### apps #####
 
-add_executable(openkneeboard WIN32 main.cpp TabCanvasWidget.cpp TabWidget.cpp GameEventNamedPipeListener.cpp)
-target_link_libraries(openkneeboard PRIVATE wx::core wx::base openkneeboard-shm openkneeboard-tabs dprint)
-
-##### debug/test apps #####
-
-add_executable(test-feeder test-feeder.cpp ConsoleLoopCondition.cpp)
-target_link_libraries(test-feeder openkneeboard-shm)
-
-add_executable(test-viewer WIN32 test-viewer.cpp)
-target_link_libraries(test-viewer openkneeboard-shm wx::core wx::base)
+add_subdirectory(app)
+add_subdirectory(utilities)
