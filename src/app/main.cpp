@@ -4,15 +4,17 @@
 #endif
 
 #include <wx/frame.h>
-#pragma warning (push)
+#pragma warning(push)
 // strcopy etc may be unsafe
-#pragma warning (disable: 4996)
+#pragma warning(disable : 4996)
 #include <wx/notebook.h>
-#pragma warning (pop)
+#pragma warning(pop)
+
+#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/dprint.h>
 
 #include "okGameEventNamedPipeThread.h"
-#include "OpenKneeboard/FolderTab.h"
-#include "OpenKneeboard/SHM.h"
 #include "okTab.h"
 
 class MainWindow final : public wxFrame {
@@ -48,7 +50,7 @@ class MainWindow final : public wxFrame {
         "Local",
         L"C:\\Program Files\\Eagle Dynamics\\DCS World "
         L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard"));
-    tab->Bind(OPENKNEEBOARD_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
+    tab->Bind(okEVT_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());
 
@@ -115,6 +117,9 @@ wxEND_EVENT_TABLE();
 class OpenKneeboardApp final : public wxApp {
  public:
   virtual bool OnInit() override {
+    OpenKneeboard::DPrintSettings::Set({
+      .Target = OpenKneeboard::DPrintSettings::Target::CONSOLE,
+    });
     wxInitAllImageHandlers();
     MainWindow* window = new MainWindow();
     window->Show();

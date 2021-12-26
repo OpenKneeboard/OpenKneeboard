@@ -3,7 +3,7 @@
 #include "OpenKneeboard/Tab.h"
 #include "okTabCanvas.h"
 
-wxDEFINE_EVENT(OPENKNEEBOARD_PAGE_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(okEVT_PAGE_CHANGED, wxCommandEvent);
 
 class okTab::Impl final {
  public:
@@ -50,7 +50,7 @@ okTab::okTab(
 }
 
 void okTab::EmitPageChanged() {
-  wxCommandEvent event(OPENKNEEBOARD_PAGE_CHANGED, GetId());
+  wxCommandEvent event(okEVT_PAGE_CHANGED, GetId());
   event.SetEventObject(this);
   event.SetInt(p->Canvas->GetPageIndex());
   ProcessWindowEvent(event);

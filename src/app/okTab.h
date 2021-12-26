@@ -11,7 +11,7 @@ namespace OpenKneeboard {
 class Tab;
 }
 
-wxDECLARE_EVENT(OPENKNEEBOARD_PAGE_CHANGED, wxCommandEvent);
+wxDECLARE_EVENT(okEVT_PAGE_CHANGED, wxCommandEvent);
 
 class okTab final : public wxPanel {
  public:
