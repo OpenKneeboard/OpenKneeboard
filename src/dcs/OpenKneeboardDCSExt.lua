@@ -3,7 +3,7 @@ function l(msg)
 end
 l("Init")
 
-package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath;
+package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath
 l("Loading DLL - search path: "..package.cpath)
 local status, ret = pcall(require, "OpenKneeboardDCSExt")
 if status then
@@ -39,11 +39,13 @@ function callbacks.onMissionLoadBegin()
   l("onMissionLoadBegin: "..DCS.getMissionName())
   local file = DCS.getMissionFilename()
   file = file:gsub("^.[/\\]+", lfs.currentdir())
-  state.mission = file;
+  state.mission = file
+  l("Mission: "..state.mission)
 
-  local mission = DCS.getCurrentMission();
+  local mission = DCS.getCurrentMission()
   if mission and mission.mission and mission.mission.theatre then
     state.terrain = mission.mission.theatre
+    l("Terrain: "..state.terrain)
   end
   sendState()
 end
@@ -55,8 +57,8 @@ function callbacks.onSimulationStart()
   if not selfData then
     return
   end
-  l("onSimulationStart in aircraft "..selfData.Name)
-  state.aircraft = selfData.name
+  state.aircraft = selfData.Name
+  l("Aircraft: "..state.aircraft)
   sendState()
 end
 

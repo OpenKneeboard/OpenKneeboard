@@ -43,7 +43,7 @@ wxThread::ExitCode okGameEventNamedPipeThread::Entry() {
     PIPE_UNLIMITED_INSTANCES,
     sizeof(buffer),
     0,
-    10000,
+    100,
     nullptr);
   if (!pipe) {
     dprint("No pipe!");
