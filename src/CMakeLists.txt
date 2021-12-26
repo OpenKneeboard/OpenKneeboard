@@ -41,8 +41,8 @@ target_link_libraries(openkneeboard PRIVATE wx::core wx::base openkneeboard-shm 
 
 ##### debug/test apps #####
 
-add_executable(demo-feeder demo-feeder.cpp ConsoleLoopCondition.cpp)
-target_link_libraries(demo-feeder openkneeboard-shm)
+add_executable(test-feeder test-feeder.cpp ConsoleLoopCondition.cpp)
+target_link_libraries(test-feeder openkneeboard-shm)
 
 add_executable(test-viewer WIN32 test-viewer.cpp)
 target_link_libraries(test-viewer openkneeboard-shm wx::core wx::base)
