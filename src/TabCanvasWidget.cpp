@@ -1,8 +1,8 @@
 #include "TabCanvasWidget.h"
 
-#include "OpenKneeboard/Tab.h"
-
 #include <wx/dcbuffer.h>
+
+#include "OpenKneeboard/Tab.h"
 
 class TabCanvasWidget::Impl final {
  public:
@@ -10,7 +10,9 @@ class TabCanvasWidget::Impl final {
   uint16_t PageIndex = 0;
 };
 
-TabCanvasWidget::TabCanvasWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>& tab)
+TabCanvasWidget::TabCanvasWidget(
+  wxWindow* parent,
+  const std::shared_ptr<OpenKneeboard::Tab>& tab)
   : wxPanel(
     parent,
     wxID_ANY,

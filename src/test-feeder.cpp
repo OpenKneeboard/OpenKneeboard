@@ -17,9 +17,8 @@ int main() {
 
   OpenKneeboard::SHM::Header config {
     /* Headlocked
-    .Flags = OpenKneeboard::Flags::HEADLOCKED | OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
-    .y = -0.15,
-    .z = -0.5f,
+    .Flags = OpenKneeboard::Flags::HEADLOCKED |
+    OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION, .y = -0.15, .z = -0.5f,
     .VirtualWidth = 0.2f,
     .VirtualHeight = 0.3f,
     .ImageWidth = 400,

@@ -10,7 +10,8 @@ class Tab::Impl final {
 Tab::Tab(const std::string& title) : p(new Impl {.Title = title}) {
 }
 
-Tab::~Tab() {}
+Tab::~Tab() {
+}
 
 std::string Tab::GetTitle() const {
   return p->Title;

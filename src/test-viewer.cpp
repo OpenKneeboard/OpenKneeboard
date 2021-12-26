@@ -66,7 +66,7 @@ class MainWindow final : public wxFrame {
       } else if (mFirstDetached) {
         mFirstDetached = false;
         auto bm = dc.GetAsBitmap().ConvertToDisabled();
-        dc.DrawBitmap(bm, wxPoint{0, 0});
+        dc.DrawBitmap(bm, wxPoint {0, 0});
       }
       std::string message("No Feeder");
       auto textSize = dc.GetTextExtent(message);

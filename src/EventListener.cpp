@@ -32,11 +32,11 @@ wxThread::ExitCode EventListener::Entry() {
     DWORD bytesRead;
     ConnectNamedPipe(pipe, nullptr);
     ReadFile(
-          pipe,
-          reinterpret_cast<void*>(buffer),
-          sizeof(buffer),
-          &bytesRead,
-          nullptr);
+      pipe,
+      reinterpret_cast<void*>(buffer),
+      sizeof(buffer),
+      &bytesRead,
+      nullptr);
     DisconnectNamedPipe(pipe);
 
     if (bytesRead == 0) {

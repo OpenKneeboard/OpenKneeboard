@@ -6,10 +6,10 @@
 #include <wx/frame.h>
 #include <wx/notebook.h>
 
-#include "TabWidget.h"
+#include "EventListener.h"
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/SHM.h"
-#include "EventListener.h"
+#include "TabWidget.h"
 
 class MainWindow final : public wxFrame {
  private:

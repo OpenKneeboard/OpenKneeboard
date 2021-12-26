@@ -1,7 +1,7 @@
 #include "TabWidget.h"
 
-#include "TabCanvasWidget.h"
 #include "OpenKneeboard/Tab.h"
+#include "TabCanvasWidget.h"
 
 wxDEFINE_EVENT(OPENKNEEBOARD_PAGE_CHANGED, wxCommandEvent);
 
@@ -11,7 +11,9 @@ class TabWidget::Impl final {
   TabCanvasWidget* Canvas;
 };
 
-TabWidget::TabWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>& tab)
+TabWidget::TabWidget(
+  wxWindow* parent,
+  const std::shared_ptr<OpenKneeboard::Tab>& tab)
   : wxPanel(parent), p(new Impl {.Tab = tab}) {
   p->Canvas = new TabCanvasWidget(this, tab);
   auto canvas = p->Canvas;

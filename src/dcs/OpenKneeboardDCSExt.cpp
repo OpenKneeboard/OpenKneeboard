@@ -31,8 +31,8 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  const auto message
-    = fmt::format("com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1));
+  const auto message = fmt::format(
+    "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1));
   const std::string value(lua_tostring(state, 2));
 
   std::string packet = fmt::format(
@@ -62,7 +62,8 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  auto written = WriteFile(pipe, packet.data(), packet.size(), nullptr, nullptr);
+  auto written
+    = WriteFile(pipe, packet.data(), packet.size(), nullptr, nullptr);
   auto err = GetLastError();
   CloseHandle(pipe);
   if (!written) {
@@ -74,7 +75,8 @@ static int SendToOpenKneeboard(lua_State* state) {
   return 0;
 }
 
-extern "C" int __declspec(dllexport) luaopen_OpenKneeboardDCSExt(lua_State* state) {
+extern "C" int __declspec(dllexport)
+  luaopen_OpenKneeboardDCSExt(lua_State* state) {
   OpenKneeboard::DPrintSettings::Set({
     .Prefix = "OpenKneeboard-DCSExt",
     .Target = OpenKneeboard::DPrintSettings::Target::DEBUG_STREAM,

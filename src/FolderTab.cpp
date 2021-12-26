@@ -24,7 +24,7 @@ void FolderTab::Reload() {
   if (!std::filesystem::is_directory(p->Path)) {
     return;
   }
-  for (auto& entry : std::filesystem::recursive_directory_iterator(p->Path)) {
+  for (auto& entry: std::filesystem::recursive_directory_iterator(p->Path)) {
     if (!entry.is_regular_file()) {
       continue;
     }

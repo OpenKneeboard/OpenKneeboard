@@ -38,9 +38,8 @@
 #include <functional>
 #include <vector>
 
-#include "OpenKneeboard/dprint.h"
 #include "OpenKneeboard/SHM.h"
-
+#include "OpenKneeboard/dprint.h"
 #include "d3d11-offsets.h"
 
 using SHMHeader = OpenKneeboard::SHM::Header;
@@ -70,7 +69,8 @@ class KneeboardRenderer {
     return header.ImageWidth == this->header.ImageWidth
       && header.ImageHeight == this->header.ImageHeight;
   }
-  bool Render(ovrSession session, const SHMHeader& header, const SHMPixels& pixels);
+  bool
+  Render(ovrSession session, const SHMHeader& header, const SHMPixels& pixels);
 };
 
 std::unique_ptr<KneeboardRenderer> g_Renderer;
@@ -224,7 +224,8 @@ static void hook_IDXGISwapChain_Present() {
     nullptr,
     nullptr);
   dprintf(" - got a temporary device at {:#010x}", (intptr_t)device.get());
-  dprintf(" - got a temporary SwapChain at {:#010x}", (intptr_t)swapchain.get());
+  dprintf(
+    " - got a temporary SwapChain at {:#010x}", (intptr_t)swapchain.get());
 
   auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   *fpp = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
@@ -321,7 +322,10 @@ KneeboardRenderer::KneeboardRenderer(
   initialized = true;
 }
 
-bool KneeboardRenderer::Render(ovrSession session, const SHMHeader& config, const SHMPixels& pixels) {
+bool KneeboardRenderer::Render(
+  ovrSession session,
+  const SHMHeader& config,
+  const SHMPixels& pixels) {
   if (!initialized) {
     return false;
   }
@@ -377,7 +381,10 @@ bool KneeboardRenderer::Render(ovrSession session, const SHMHeader& config, cons
   return true;
 }
 
-static bool RenderKneeboard(ovrSession session, const SHMHeader& header, const SHMPixels& pixels) {
+static bool RenderKneeboard(
+  ovrSession session,
+  const SHMHeader& header,
+  const SHMPixels& pixels) {
   if (!g_d3dDevice) {
     hook_IDXGISwapChain_Present();
     // Initialized by Hooked_ovrCreateTextureSwapChainDX
