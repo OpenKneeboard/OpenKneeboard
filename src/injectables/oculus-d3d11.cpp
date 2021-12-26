@@ -24,7 +24,6 @@
 // https://github.com/GPUOpen-Tools/ocat used as reference; copyright notice
 // above reflects copyright notices in source material.
 
-#include <Extras/OVR_Math.h>
 #include <OVR_CAPI_D3D.H>
 #include <TlHelp32.h>
 #include <Unknwn.h>
@@ -33,6 +32,12 @@
 #include <fmt/format.h>
 #include <windows.h>
 #include <winrt/base.h>
+
+#pragma warning(push)
+// lossy conversions (double -> T)
+#pragma warning(disable: 4244)
+#include <Extras/OVR_Math.h>
+#pragma warning(pop)
 
 #include <filesystem>
 #include <functional>

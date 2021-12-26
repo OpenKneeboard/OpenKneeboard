@@ -62,8 +62,8 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  auto written
-    = WriteFile(pipe, packet.data(), packet.size(), nullptr, nullptr);
+  auto written = WriteFile(
+    pipe, packet.data(), static_cast<DWORD>(packet.size()), nullptr, nullptr);
   auto err = GetLastError();
   CloseHandle(pipe);
   if (!written) {

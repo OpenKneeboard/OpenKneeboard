@@ -4,7 +4,11 @@
 #endif
 
 #include <wx/frame.h>
+#pragma warning (push)
+// strcopy etc may be unsafe
+#pragma warning (disable: 4996)
 #include <wx/notebook.h>
+#pragma warning (pop)
 
 #include "EventListener.h"
 #include "OpenKneeboard/FolderTab.h"
