@@ -1,10 +1,7 @@
-add_executable(
-  OpenKneeboard
-  WIN32
-  main.cpp TabCanvasWidget.cpp TabWidget.cpp GameEventNamedPipeListener.cpp)
+file(GLOB SOURCES CONFIGURE_DEPENDS "*.cpp")
+add_executable(OpenKneeboard WIN32 ${SOURCES})
 target_link_libraries(
   OpenKneeboard
-  PRIVATE
   wx::core
   wx::base
   openkneeboard-shm
