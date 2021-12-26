@@ -7,13 +7,13 @@
 #include <string>
 #include <vector>
 
-namespace YAVRK::Flags {
+namespace OpenKneeboard::Flags {
 constexpr uint64_t HEADLOCKED = 1;
 constexpr uint64_t DISCARD_DEPTH_INFORMATION = 1 << 1;
 constexpr uint64_t FEEDER_ATTACHED= 1 << 2;
-};// namespace YAVRK::Flags
+};// namespace OpenKneeboard::Flags
 
-namespace YAVRK::SHM {
+namespace OpenKneeboard::SHM {
 
 #pragma pack(push)
 struct Header {
@@ -63,4 +63,4 @@ class Reader final {
   std::shared_ptr<Impl> p;
 };
 
-}// namespace YAVRK::SHM
+}// namespace OpenKneeboard::SHM

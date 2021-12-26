@@ -5,7 +5,7 @@
 
 #include <wx/thread.h>
 
-wxDECLARE_EVENT(YAVRK_EVENT, wxCommandEvent);
+wxDECLARE_EVENT(OPENKNEEBOARD_EVENT, wxCommandEvent);
 
 class EventListener final : public wxThread {
  private:

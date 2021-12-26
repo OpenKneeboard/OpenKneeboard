@@ -1,11 +1,11 @@
 function l(msg)
-  log.write("YAVRK", log.INFO, msg)
+  log.write("OpenKneeboard", log.INFO, msg)
 end
 l("Init")
 
 package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath;
 l("Loading DLL - search path: "..package.cpath)
-local status, ret = pcall(require, "YAVRKDCSExt")
+local status, ret = pcall(require, "OpenKneeboardDCSExt")
 if status then
   l("DLL Loaded")
 else
@@ -13,7 +13,7 @@ else
   return
 end
 
-YAVRK = ret
+OpenKneeboard = ret
 
 local callbacks = {}
 
@@ -25,13 +25,13 @@ state = {
 
 function sendState()
   if state.aircraft then
-    YAVRK.send("Aircraft", state.aircraft)
+    OpenKneeboard.send("Aircraft", state.aircraft)
   end
   if state.mission then
-    YAVRK.send("Mission", state.mission)
+    OpenKneeboard.send("Mission", state.mission)
   end
   if state.terrain then
-    YAVRK.send("Terrain", state.terrain)
+    OpenKneeboard.send("Terrain", state.terrain)
   end
 end
 

@@ -1,9 +1,9 @@
-#include "YAVRK/ConsoleLoopCondition.h"
+#include "OpenKneeboard/ConsoleLoopCondition.h"
 
 #include <Windows.h>
 #include <objbase.h>
 
-namespace YAVRK {
+namespace OpenKneeboard {
 
 static HANDLE g_ExitEvent = INVALID_HANDLE_VALUE;
 
@@ -54,4 +54,4 @@ bool ConsoleLoopCondition::sleep(
   return true;
 }
 
-}// namespace YAVRK
+}// namespace OpenKneeboard

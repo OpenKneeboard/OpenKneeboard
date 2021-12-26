@@ -7,21 +7,21 @@
 #include <wx/notebook.h>
 
 #include "TabWidget.h"
-#include "YAVRK/FolderTab.h"
-#include "YAVRK/SHM.h"
+#include "OpenKneeboard/FolderTab.h"
+#include "OpenKneeboard/SHM.h"
 #include "EventListener.h"
 
 class MainWindow final : public wxFrame {
  private:
   std::vector<TabWidget*> mTabs;
-  YAVRK::SHM::Writer mSHM;
+  OpenKneeboard::SHM::Writer mSHM;
 
  public:
   MainWindow()
     : wxFrame(
       nullptr,
       wxID_ANY,
-      "YAVRK",
+      "OpenKneeboard",
       wxDefaultPosition,
       wxDefaultSize,
       wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER) {
@@ -40,11 +40,11 @@ class MainWindow final : public wxFrame {
 
     auto tab = new TabWidget(
       notebook,
-      std::make_shared<YAVRK::FolderTab>(
+      std::make_shared<OpenKneeboard::FolderTab>(
         "Local",
         L"C:\\Program Files\\Eagle Dynamics\\DCS World "
         L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard"));
-    tab->Bind(YAVRK_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
+    tab->Bind(OPENKNEEBOARD_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());
 
@@ -70,8 +70,8 @@ class MainWindow final : public wxFrame {
     }
 
     auto ratio = float(image.GetHeight()) / image.GetWidth();
-    YAVRK::SHM::Header header {
-      .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
+    OpenKneeboard::SHM::Header header {
+      .Flags = OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
       .y = 0.5f,
       .z = -0.25f,
       .rx = float(M_PI / 2),
@@ -81,7 +81,7 @@ class MainWindow final : public wxFrame {
       .ImageHeight = static_cast<uint16_t>(image.GetHeight()),
     };
 
-    using Pixel = YAVRK::SHM::Pixel;
+    using Pixel = OpenKneeboard::SHM::Pixel;
 
     std::vector<Pixel> pixels(image.GetWidth() * image.GetHeight());
     for (int x = 0; x < image.GetWidth(); ++x) {
@@ -111,7 +111,7 @@ wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
 wxEND_EVENT_TABLE();
 // clang-format off
 
-class YAVRKApp final : public wxApp {
+class OpenKneeboardApp final : public wxApp {
  public:
   virtual bool OnInit() override {
     wxInitAllImageHandlers();
@@ -121,4 +121,4 @@ class YAVRKApp final : public wxApp {
   }
 };
 
-wxIMPLEMENT_APP(YAVRKApp);
+wxIMPLEMENT_APP(OpenKneeboardApp);

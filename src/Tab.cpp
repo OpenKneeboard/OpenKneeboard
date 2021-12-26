@@ -1,6 +1,6 @@
-#include "YAVRK/Tab.h"
+#include "OpenKneeboard/Tab.h"
 
-namespace YAVRK {
+namespace OpenKneeboard {
 
 class Tab::Impl final {
  public:
@@ -19,4 +19,4 @@ std::string Tab::GetTitle() const {
 void Tab::Reload() {
 }
 
-}// namespace YAVRK
+}// namespace OpenKneeboard

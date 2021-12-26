@@ -2,9 +2,9 @@
 
 #include <filesystem>
 
-#include "YAVRK/Tab.h"
+#include "OpenKneeboard/Tab.h"
 
-namespace YAVRK {
+namespace OpenKneeboard {
 
 class FolderTab : public Tab {
  public:
@@ -22,4 +22,4 @@ class FolderTab : public Tab {
   class Impl;
   std::shared_ptr<Impl> p;
 };
-}// namespace YAVRK
+}// namespace OpenKneeboard

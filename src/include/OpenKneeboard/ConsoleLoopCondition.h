@@ -3,7 +3,7 @@
 #include <chrono>
 #include <memory>
 
-namespace YAVRK {
+namespace OpenKneeboard {
 
 class ConsoleLoopCondition final {
  public:
@@ -18,4 +18,4 @@ class ConsoleLoopCondition final {
   std::shared_ptr<Impl> p;
 };
 
-}// namespace YAVRK
+}// namespace OpenKneeboard

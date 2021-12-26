@@ -3,11 +3,11 @@
 
 #include <cmath>
 
-#include "YAVRK/ConsoleLoopCondition.h"
-#include "YAVRK/SHM.h"
+#include "OpenKneeboard/ConsoleLoopCondition.h"
+#include "OpenKneeboard/SHM.h"
 
 int main() {
-  using Pixel = YAVRK::SHM::Pixel;
+  using Pixel = OpenKneeboard::SHM::Pixel;
   Pixel colors[] = {
     {0xff, 0x00, 0x00, 0xff},// red
     {0x00, 0xff, 0x00, 0xff},// green
@@ -15,9 +15,9 @@ int main() {
     {0x00, 0x00, 0x00, 0xff},// black
   };
 
-  YAVRK::SHM::Header config {
+  OpenKneeboard::SHM::Header config {
     /* Headlocked
-    .Flags = YAVRK::Flags::HEADLOCKED | YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
+    .Flags = OpenKneeboard::Flags::HEADLOCKED | OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
     .y = -0.15,
     .z = -0.5f,
     .VirtualWidth = 0.2f,
@@ -26,7 +26,7 @@ int main() {
     .ImageHeight = 1200,
     */
     /* On knee */
-    .Flags = YAVRK::Flags::DISCARD_DEPTH_INFORMATION,
+    .Flags = OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
     .y = 0.5f,
     .z = -0.25f,
     .rx = float(M_PI / 2),
@@ -36,10 +36,10 @@ int main() {
     .ImageHeight = 1200,
   };
   uint64_t frames = -1;
-  printf("Feeding YAVRK - hit Ctrl-C to exit.\n");
+  printf("Feeding OpenKneeboard - hit Ctrl-C to exit.\n");
   std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
-  YAVRK::SHM::Writer shm;
-  YAVRK::ConsoleLoopCondition cliLoop;
+  OpenKneeboard::SHM::Writer shm;
+  OpenKneeboard::ConsoleLoopCondition cliLoop;
   do {
     frames++;
     Pixel pixel;

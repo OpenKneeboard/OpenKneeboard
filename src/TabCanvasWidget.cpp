@@ -1,21 +1,21 @@
 #include "TabCanvasWidget.h"
 
-#include "YAVRK/Tab.h"
+#include "OpenKneeboard/Tab.h"
 
 #include <wx/dcbuffer.h>
 
 class TabCanvasWidget::Impl final {
  public:
-  std::shared_ptr<YAVRK::Tab> Tab;
+  std::shared_ptr<OpenKneeboard::Tab> Tab;
   uint16_t PageIndex = 0;
 };
 
-TabCanvasWidget::TabCanvasWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>& tab)
+TabCanvasWidget::TabCanvasWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>& tab)
   : wxPanel(
     parent,
     wxID_ANY,
     wxDefaultPosition,
-    wxSize(YAVRK_TEXTURE_WIDTH / 2, YAVRK_TEXTURE_HEIGHT / 2)),
+    wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
     p(new Impl {.Tab = tab}) {
 }
 
@@ -77,7 +77,7 @@ void TabCanvasWidget::PreviousPage() {
   SetPageIndex(current - 1);
 }
 
-std::shared_ptr<YAVRK::Tab> TabCanvasWidget::GetTab() const {
+std::shared_ptr<OpenKneeboard::Tab> TabCanvasWidget::GetTab() const {
   return p->Tab;
 }
 

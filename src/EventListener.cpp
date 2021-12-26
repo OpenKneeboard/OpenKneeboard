@@ -2,9 +2,9 @@
 
 #include <Windows.h>
 
-#include "YAVRK/dprint.h"
+#include "OpenKneeboard/dprint.h"
 
-using YAVRK::dprint;
+using OpenKneeboard::dprint;
 
 EventListener::EventListener(wxFrame* parent) : wxThread(), mParent(parent) {
   OutputDebugStringA("Created event listener");
@@ -16,7 +16,7 @@ EventListener::~EventListener() {
 wxThread::ExitCode EventListener::Entry() {
   char buffer[1024];
   HANDLE pipe = CreateNamedPipeA(
-    "\\\\.\\pipe\\com.fredemmott.yavrk.events.v1",
+    "\\\\.\\pipe\\com.fredemmott.openkneeboard.events.v1",
     PIPE_ACCESS_INBOUND,
     PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
     PIPE_UNLIMITED_INSTANCES,

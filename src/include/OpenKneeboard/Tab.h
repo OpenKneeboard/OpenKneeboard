@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-namespace YAVRK {
+namespace OpenKneeboard {
 class Tab {
  public:
   Tab(const std::string& title);
@@ -25,4 +25,4 @@ class Tab {
   class Impl;
   std::shared_ptr<Impl> p;
 };
-}// namespace YAVRK
+}// namespace OpenKneeboard

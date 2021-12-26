@@ -7,18 +7,18 @@
 
 #include <memory>
 
-namespace YAVRK {
+namespace OpenKneeboard {
   class Tab;
 }
 
-wxDECLARE_EVENT(YAVRK_PAGE_CHANGED, wxCommandEvent);
+wxDECLARE_EVENT(OPENKNEEBOARD_PAGE_CHANGED, wxCommandEvent);
 
 class TabWidget final : public wxPanel {
   public:
-    TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>&);
+    TabWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
     virtual ~TabWidget();
 
-    std::shared_ptr<YAVRK::Tab> GetTab() const;
+    std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
     wxImage GetImage();
 
     wxDECLARE_EVENT_TABLE();

@@ -1,17 +1,17 @@
 #include "TabWidget.h"
 
 #include "TabCanvasWidget.h"
-#include "YAVRK/Tab.h"
+#include "OpenKneeboard/Tab.h"
 
-wxDEFINE_EVENT(YAVRK_PAGE_CHANGED, wxCommandEvent);
+wxDEFINE_EVENT(OPENKNEEBOARD_PAGE_CHANGED, wxCommandEvent);
 
 class TabWidget::Impl final {
  public:
-  std::shared_ptr<YAVRK::Tab> Tab;
+  std::shared_ptr<OpenKneeboard::Tab> Tab;
   TabCanvasWidget* Canvas;
 };
 
-TabWidget::TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>& tab)
+TabWidget::TabWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>& tab)
   : wxPanel(parent), p(new Impl {.Tab = tab}) {
   p->Canvas = new TabCanvasWidget(this, tab);
   auto canvas = p->Canvas;
@@ -48,7 +48,7 @@ TabWidget::TabWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>& tab)
 }
 
 void TabWidget::EmitPageChanged() {
-  wxCommandEvent event(YAVRK_PAGE_CHANGED, GetId());
+  wxCommandEvent event(OPENKNEEBOARD_PAGE_CHANGED, GetId());
   event.SetEventObject(this);
   event.SetInt(p->Canvas->GetPageIndex());
   ProcessWindowEvent(event);
@@ -57,7 +57,7 @@ void TabWidget::EmitPageChanged() {
 TabWidget::~TabWidget() {
 }
 
-std::shared_ptr<YAVRK::Tab> TabWidget::GetTab() const {
+std::shared_ptr<OpenKneeboard::Tab> TabWidget::GetTab() const {
   return p->Tab;
 }
 

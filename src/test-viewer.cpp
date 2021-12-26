@@ -6,14 +6,14 @@
 #include <wx/dcbuffer.h>
 #include <wx/frame.h>
 
-#include "YAVRK/SHM.h"
+#include "OpenKneeboard/SHM.h"
 
 class MainWindow final : public wxFrame {
  private:
   wxTimer mTimer;
   bool mFirstDetached = false;
   bool mHadData = false;
-  YAVRK::SHM::Reader mSHM;
+  OpenKneeboard::SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
 
  public:
@@ -21,7 +21,7 @@ class MainWindow final : public wxFrame {
     : wxFrame(
       nullptr,
       wxID_ANY,
-      "YAVRK Test Viewer",
+      "OpenKneeboard Test Viewer",
       wxDefaultPosition,
       wxSize {768 / 2, 1024 / 2},
       wxDEFAULT_FRAME_STYLE) {

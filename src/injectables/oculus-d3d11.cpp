@@ -38,15 +38,15 @@
 #include <functional>
 #include <vector>
 
-#include "YAVRK/dprint.h"
-#include "YAVRK/SHM.h"
+#include "OpenKneeboard/dprint.h"
+#include "OpenKneeboard/SHM.h"
 
 #include "d3d11-offsets.h"
 
-using SHMHeader = YAVRK::SHM::Header;
-using SHMPixel = YAVRK::SHM::Pixel;
+using SHMHeader = OpenKneeboard::SHM::Header;
+using SHMPixel = OpenKneeboard::SHM::Pixel;
 using SHMPixels = std::vector<SHMPixel>;
-using YAVRK::dprint;
+using OpenKneeboard::dprint;
 
 static_assert(sizeof(SHMPixel) == 4, "Expecting R8G8B8A8 for DirectX");
 static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
@@ -54,7 +54,7 @@ static_assert(offsetof(SHMPixel, a) == 3, "Expected alpha to be last byte");
 
 static bool g_hooked_DX = false;
 static winrt::com_ptr<ID3D11Device> g_d3dDevice;
-static YAVRK::SHM::Reader g_SHM;
+static OpenKneeboard::SHM::Reader g_SHM;
 
 class KneeboardRenderer {
  private:
@@ -415,7 +415,7 @@ static ovrResult EndFrame_Hook_Impl(
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
   kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
-  if ((config.Flags & YAVRK::Flags::HEADLOCKED)) {
+  if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   }
   kneeboardLayer.ColorTexture = g_Renderer->SwapChain;
@@ -454,7 +454,7 @@ static ovrResult EndFrame_Hook_Impl(
   }
 
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.Flags & YAVRK::Flags::DISCARD_DEPTH_INFORMATION)) {
+  if ((config.Flags & OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION)) {
     for (auto i = 0; i < newLayers.size(); ++i) {
       auto layer = newLayers.at(i);
       if (layer->Type != ovrLayerType_EyeFovDepth) {

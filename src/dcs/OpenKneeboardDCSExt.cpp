@@ -3,20 +3,20 @@
 
 #include <string>
 
-#include "YAVRK/dprint.h"
+#include "OpenKneeboard/dprint.h"
 
 extern "C" {
 #include <lauxlib.h>
 }
 
-using YAVRK::dprint;
+using OpenKneeboard::dprint;
 
 static void push_arg_error(lua_State* state) {
   lua_pushliteral(state, "2 string arguments are required\n");
   lua_error(state);
 }
 
-static int SendToYAVRK(lua_State* state) {
+static int SendToOpenKneeboard(lua_State* state) {
   int argc = lua_gettop(state);
   if (argc != 2) {
     OutputDebugStringA("Invalid argument count\n");
@@ -31,14 +31,14 @@ static int SendToYAVRK(lua_State* state) {
   }
 
   const auto message
-    = fmt::format("com.fredemmott.yavrk.dcsext/{}", lua_tostring(state, 1));
+    = fmt::format("com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1));
   const std::string value(lua_tostring(state, 2));
 
   std::string packet = fmt::format(
     "{:08x}!{}!{:08x}!{}!", message.size(), message, value.size(), value);
 
   HANDLE pipe = CreateFileA(
-    "\\\\.\\pipe\\com.fredemmott.yavrk.events.v1",
+    "\\\\.\\pipe\\com.fredemmott.openkneeboard.events.v1",
     GENERIC_WRITE,
     0,
     nullptr,
@@ -73,9 +73,9 @@ static int SendToYAVRK(lua_State* state) {
   return 0;
 }
 
-extern "C" int __declspec(dllexport) luaopen_YAVRKDCSExt(lua_State* state) {
+extern "C" int __declspec(dllexport) luaopen_OpenKneeboardDCSExt(lua_State* state) {
   lua_createtable(state, 0, 1);
-  lua_pushcfunction(state, &SendToYAVRK);
+  lua_pushcfunction(state, &SendToOpenKneeboard);
   lua_setfield(state, -2, "send");
   return 1;
 }

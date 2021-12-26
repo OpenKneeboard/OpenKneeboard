@@ -1,6 +1,6 @@
-#include "YAVRK/FolderTab.h"
+#include "OpenKneeboard/FolderTab.h"
 
-namespace YAVRK {
+namespace OpenKneeboard {
 class FolderTab::Impl final {
  public:
   std::filesystem::path Path;
@@ -68,4 +68,4 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
   Reload();
 }
 
-}// namespace YAVRK
+}// namespace OpenKneeboard

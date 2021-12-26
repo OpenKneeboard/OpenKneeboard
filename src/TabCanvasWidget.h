@@ -8,13 +8,13 @@
 
 #include <memory>
 
-namespace YAVRK {
+namespace OpenKneeboard {
   class Tab;
 }
 
 class TabCanvasWidget final : public wxPanel {
   public:
-    TabCanvasWidget(wxWindow* parent, const std::shared_ptr<YAVRK::Tab>&);
+    TabCanvasWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
     virtual ~TabCanvasWidget();
 
     void OnPaint(wxPaintEvent& ev);
@@ -24,7 +24,7 @@ class TabCanvasWidget final : public wxPanel {
     void SetPageIndex(uint16_t index);
     void NextPage();
     void PreviousPage();
-    std::shared_ptr<YAVRK::Tab> GetTab() const;
+    std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
 
     wxDECLARE_EVENT_TABLE();
   private:
