@@ -7,7 +7,7 @@ class Tab::Impl final {
   std::string Title;
 };
 
-Tab::Tab(const std::string& title) : p(new Impl {.Title = title}) {
+Tab::Tab(const wxString& title) : p(new Impl {.Title = title.ToStdString()}) {
 }
 
 Tab::~Tab() {
@@ -18,6 +18,9 @@ std::string Tab::GetTitle() const {
 }
 
 void Tab::Reload() {
+}
+
+void Tab::OnGameEvent(const GameEvent&) {
 }
 
 }// namespace OpenKneeboard

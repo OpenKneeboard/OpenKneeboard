@@ -8,7 +8,7 @@ namespace OpenKneeboard {
 
 class FolderTab : public Tab {
  public:
-  FolderTab(const std::string& title, const std::filesystem::path& path);
+  FolderTab(const wxString& title, const std::filesystem::path& path);
   virtual ~FolderTab();
 
   virtual void Reload() final override;

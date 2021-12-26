@@ -2,7 +2,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if (MSVC)
-  add_definitions("/Zc:__cplusplus" "/DUNICODE=1" "/DNOMINMAX" "/DWIN32_LEAN_AND_MEAN" "/await")
+  add_definitions(
+    "/Zc:__cplusplus"
+    "/DUNICODE=1"
+    "/DNOMINMAX"
+    "/DWIN32_LEAN_AND_MEAN"
+    "/await"
+    # Lots of legacy C functions are unsafe, and raise warnings in wxwidgets
+    "/wd4996")
 endif()
 
 add_compile_definitions(

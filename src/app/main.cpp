@@ -12,7 +12,7 @@
 
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/Games/DCS.h"
+#include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
 #include "okGameEventMailslotThread.h"

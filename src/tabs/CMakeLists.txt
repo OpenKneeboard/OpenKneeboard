@@ -1,6 +1,14 @@
-add_library(openkneeboard-tab-api STATIC Tab.cpp)
-target_include_directories(openkneeboard-tab-api PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(openkneeboard-tab-api PUBLIC wx::core wx::base)
+file(GLOB SOURCES CONFIGURE_DEPENDS "*.cpp")
 
-add_library(openkneeboard-tabs STATIC FolderTab.cpp)
-target_link_libraries(openkneeboard-tabs PUBLIC openkneeboard-tab-api)
+add_library(openkneeboard-tabs STATIC "${SOURCES}")
+target_include_directories(
+  openkneeboard-tabs
+  PUBLIC
+  "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(
+  openkneeboard-tabs
+  PUBLIC
+  wx::core
+  wx::base
+  games
+  gameevent)

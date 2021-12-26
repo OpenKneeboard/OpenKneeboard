@@ -1,7 +1,9 @@
-#include "OpenKneeboard\Games\DCS.h"
+#include "OpenKneeboard\Games\DCSWorld.h"
 
 #include <Windows.h>
 #include <fmt/format.h>
+
+#include "OpenKneeboard/dprint.h"
 
 namespace OpenKneeboard::Games {
 
@@ -34,4 +36,16 @@ std::string DCSWorld::GetOpenBetaPath() {
   return GetDCSPath("DCS World OpenBeta");
 }
 
-}// namespace OpenKneeboard::DCS
+std::string DCSWorld::GetNewestPath() {
+  auto path = GetOpenBetaPath();
+  if (path.empty()) {
+    path = GetStablePath();
+  }
+  if (path.empty()) {
+    dprint("Failed to find any DCS World installation path.");
+  }
+
+  return path;
+}
+
+}// namespace OpenKneeboard::Games

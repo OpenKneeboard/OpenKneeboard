@@ -9,7 +9,7 @@ class FolderTab::Impl final {
 };
 
 FolderTab::FolderTab(
-  const std::string& title,
+  const wxString& title,
   const std::filesystem::path& path)
   : Tab(title), p(new Impl {.Path = path}) {
   Reload();

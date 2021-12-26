@@ -10,14 +10,17 @@
 #include <string>
 
 namespace OpenKneeboard {
+struct GameEvent;
+
 class Tab {
  public:
-  Tab(const std::string& title);
+  Tab(const wxString& title);
   virtual ~Tab();
 
   std::string GetTitle() const;
 
   virtual void Reload();
+  virtual void OnGameEvent(const GameEvent&);
   virtual uint16_t GetPageCount() const = 0;
   virtual wxImage RenderPage(uint16_t index) = 0;
 
