@@ -12,3 +12,22 @@ target_compile_definitions(fmt INTERFACE "-DFMT_HEADER_ONLY")
 
 set(wxBUILD_SHARED OFF)
 add_subdirectory(wxWidgets-3.1.5 EXCLUDE_FROM_ALL)
+
+set(LUALIB_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lua-5.1.5/src")
+set(
+  LUALIB_SOURCES
+  lapi.c lcode.c ldebug.c ldo.c ldump.c lfunc.c lgc.c llex.c
+  lmem.c lobject.c lopcodes.c lparser.c lstate.c lstring.c
+  ltable.c ltm.c lundump.c lvm.c lzio.c
+  lauxlib.c lbaselib.c ldblib.c liolib.c lmathlib.c loslib.c
+  ltablib.c lstrlib.c loadlib.c linit.c)
+list(TRANSFORM LUALIB_SOURCES PREPEND "${LUALIB_SOURCE_DIR}/")
+
+add_library(lualib SHARED EXCLUDE_FROM_ALL ${LUALIB_SOURCES})
+target_compile_options(lualib PUBLIC "-DLUA_BUILD_AS_DLL")
+target_include_directories(lualib PUBLIC "${LUALIB_SOURCE_DIR}")
+set_target_properties(lualib
+  PROPERTIES
+  OUTPUT_NAME lua
+  OUTPUT_NAME_Debug luad
+)

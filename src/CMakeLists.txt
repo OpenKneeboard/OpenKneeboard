@@ -19,6 +19,7 @@ target_link_libraries(yavrk-shm fmt)
 ##### dlls we inject into other processes #####
 
 add_subdirectory(injectables)
+add_subdirectory(dcs)
 
 ##### components of the GUI app #####
 
@@ -31,7 +32,7 @@ target_link_libraries(yavrk-tabs PUBLIC yavrk-tab-api)
 
 ##### the gui app itself #####
 
-add_executable(yavrk WIN32 main.cpp TabCanvasWidget.cpp TabWidget.cpp)
+add_executable(yavrk WIN32 main.cpp TabCanvasWidget.cpp TabWidget.cpp EventListener.cpp)
 target_link_libraries(yavrk PRIVATE wx::core wx::base yavrk-shm yavrk-tabs)
 
 ##### debug/test apps #####
