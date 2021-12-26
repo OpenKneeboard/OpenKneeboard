@@ -10,6 +10,7 @@ extern "C" {
 }
 
 using OpenKneeboard::dprint;
+using OpenKneeboard::dprintf;
 
 static void push_arg_error(lua_State* state) {
   lua_pushliteral(state, "2 string arguments are required\n");
@@ -19,13 +20,13 @@ static void push_arg_error(lua_State* state) {
 static int SendToOpenKneeboard(lua_State* state) {
   int argc = lua_gettop(state);
   if (argc != 2) {
-    OutputDebugStringA("Invalid argument count\n");
+    dprint("Invalid argument count\n");
     push_arg_error(state);
     return 1;
   }
 
   if (!(lua_isstring(state, 1) && lua_isstring(state, 2))) {
-    OutputDebugStringA("Non-string args\n");
+    dprint("Non-string args\n");
     push_arg_error(state);
     return 1;
   }
@@ -74,6 +75,10 @@ static int SendToOpenKneeboard(lua_State* state) {
 }
 
 extern "C" int __declspec(dllexport) luaopen_OpenKneeboardDCSExt(lua_State* state) {
+  OpenKneeboard::DPrintSettings::Set({
+    .Prefix = "OpenKneeboard-DCSExt",
+    .Target = OpenKneeboard::DPrintSettings::Target::DEBUG_STREAM,
+  });
   lua_createtable(state, 0, 1);
   lua_pushcfunction(state, &SendToOpenKneeboard);
   lua_setfield(state, -2, "send");

@@ -10,11 +10,16 @@ add_definitions(
   "-DOPENKNEEBOARD_TEXTURE_HEIGHT=1024"
 )
 
+add_library(headers INTERFACE)
+target_include_directories(headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 ##### libraries shared between multiple apps/dlls #####
 
 add_library(openkneeboard-shm STATIC SHM.cpp)
-target_include_directories(openkneeboard-shm PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(openkneeboard-shm fmt)
+target_link_libraries(openkneeboard-shm fmt headers)
+
+add_library(dprint STATIC dprint.cpp)
+target_link_libraries(dprint PUBLIC fmt headers)
 
 ##### dlls we inject into other processes #####
 
@@ -24,8 +29,7 @@ add_subdirectory(dcs)
 ##### components of the GUI app #####
 
 add_library(openkneeboard-tab-api STATIC Tab.cpp)
-target_include_directories(openkneeboard-tab-api PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(openkneeboard-tab-api PUBLIC wx::core wx::base)
+target_link_libraries(openkneeboard-tab-api PUBLIC wx::core wx::base headers)
 
 add_library(openkneeboard-tabs STATIC FolderTab.cpp)
 target_link_libraries(openkneeboard-tabs PUBLIC openkneeboard-tab-api)
@@ -33,7 +37,7 @@ target_link_libraries(openkneeboard-tabs PUBLIC openkneeboard-tab-api)
 ##### the gui app itself #####
 
 add_executable(openkneeboard WIN32 main.cpp TabCanvasWidget.cpp TabWidget.cpp EventListener.cpp)
-target_link_libraries(openkneeboard PRIVATE wx::core wx::base openkneeboard-shm openkneeboard-tabs)
+target_link_libraries(openkneeboard PRIVATE wx::core wx::base openkneeboard-shm openkneeboard-tabs dprint)
 
 ##### debug/test apps #####
 

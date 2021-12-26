@@ -7,7 +7,6 @@
 using OpenKneeboard::dprint;
 
 EventListener::EventListener(wxFrame* parent) : wxThread(), mParent(parent) {
-  OutputDebugStringA("Created event listener");
 }
 
 EventListener::~EventListener() {

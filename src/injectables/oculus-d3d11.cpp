@@ -46,7 +46,7 @@
 using SHMHeader = OpenKneeboard::SHM::Header;
 using SHMPixel = OpenKneeboard::SHM::Pixel;
 using SHMPixels = std::vector<SHMPixel>;
-using OpenKneeboard::dprint;
+using OpenKneeboard::dprintf;
 
 static_assert(sizeof(SHMPixel) == 4, "Expecting R8G8B8A8 for DirectX");
 static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
@@ -126,7 +126,7 @@ void DetourUpdateAllThreads() {
   auto myProc = GetCurrentProcessId();
   auto myThread = GetCurrentThreadId();
   if (!Thread32First(snapshot, &thread)) {
-    dprint("Failed to find first thread");
+    dprintf("Failed to find first thread");
     return;
   }
 
@@ -155,7 +155,7 @@ class HookedMethods final {
     auto _this = reinterpret_cast<IDXGISwapChain*>(this);
     if (!g_d3dDevice) {
       _this->GetDevice(IID_PPV_ARGS(&g_d3dDevice));
-      dprint(
+      dprintf(
         "Got device at {:#010x} from {}",
         (intptr_t)g_d3dDevice.get(),
         __FUNCTION__);
@@ -169,12 +169,12 @@ bool find_function(T** funcPtrPtr, const char* lib, const char* name) {
   *funcPtrPtr = reinterpret_cast<T*>(DetourFindFunction(lib, name));
 
   if (*funcPtrPtr) {
-    dprint(
+    dprintf(
       "- Found {} at {:#010x}", name, reinterpret_cast<intptr_t>(*funcPtrPtr));
     return true;
   }
 
-  dprint(" - Failed to find {}", name);
+  dprintf(" - Failed to find {}", name);
   return false;
 }
 
@@ -209,7 +209,7 @@ static void hook_IDXGISwapChain_Present() {
   decltype(&D3D11CreateDeviceAndSwapChain) factory = nullptr;
   factory = reinterpret_cast<decltype(factory)>(
     DetourFindFunction("d3d11.dll", "D3D11CreateDeviceAndSwapChain"));
-  dprint("Creating temporary device and swap chain");
+  dprintf("Creating temporary device and swap chain");
   auto ret = factory(
     nullptr,
     D3D_DRIVER_TYPE_HARDWARE,
@@ -223,14 +223,14 @@ static void hook_IDXGISwapChain_Present() {
     device.put(),
     nullptr,
     nullptr);
-  dprint(" - got a temporary device at {:#010x}", (intptr_t)device.get());
-  dprint(" - got a temporary SwapChain at {:#010x}", (intptr_t)swapchain.get());
+  dprintf(" - got a temporary device at {:#010x}", (intptr_t)device.get());
+  dprintf(" - got a temporary SwapChain at {:#010x}", (intptr_t)swapchain.get());
 
   auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   *fpp = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
-  dprint(" - found IDXGISwapChain::Present at {:#010x}", (intptr_t)*fpp);
+  dprintf(" - found IDXGISwapChain::Present at {:#010x}", (intptr_t)*fpp);
   auto mfp = &HookedMethods::Hooked_IDXGISwapChain_Present;
-  dprint(
+  dprintf(
     "Hooking &{:#010x} to {:#010x}",
     (intptr_t)*fpp,
     (intptr_t) * (reinterpret_cast<void**>(&mfp)));
@@ -238,9 +238,9 @@ static void hook_IDXGISwapChain_Present() {
   DetourUpdateAllThreads();
   auto err = DetourAttach(fpp, *(reinterpret_cast<void**>(&mfp)));
   if (err == 0) {
-    dprint(" - hooked IDXGISwapChain::Present().");
+    dprintf(" - hooked IDXGISwapChain::Present().");
   } else {
-    dprint(" - failed to hook IDXGISwapChain::Present(): {}", err);
+    dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
   }
   DetourTransactionCommit();
 }
@@ -255,11 +255,11 @@ static void unhook_IDXGISwapChain_Present() {
   DetourUpdateAllThreads();
   auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
   if (err) {
-    dprint(" - failed to detach IDXGISwapChain");
+    dprintf(" - failed to detach IDXGISwapChain");
   }
   err = DetourTransactionCommit();
   if (err) {
-    dprint(" - failed to commit unhook IDXGISwapChain");
+    dprintf(" - failed to commit unhook IDXGISwapChain");
   }
   g_hooked_DX = false;
 }
@@ -283,15 +283,15 @@ KneeboardRenderer::KneeboardRenderer(
 
   auto ret = Real_ovr_CreateTextureSwapChainDX(
     session, g_d3dDevice.get(), &kneeboardSCD, &SwapChain);
-  dprint("CreateSwapChain ret: {}", ret);
+  dprintf("CreateSwapChain ret: {}", ret);
 
   int length = -1;
   Real_ovr_GetTextureSwapChainLength(session, SwapChain, &length);
   if (length < 1) {
-    dprint(" - invalid swap chain length ({})", length);
+    dprintf(" - invalid swap chain length ({})", length);
     return;
   }
-  dprint(" - got swap chain length {}", length);
+  dprintf(" - got swap chain length {}", length);
 
   RenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
@@ -299,7 +299,7 @@ KneeboardRenderer::KneeboardRenderer(
     auto res = Real_ovr_GetTextureSwapChainBufferDX(
       session, SwapChain, i, IID_PPV_ARGS(&texture));
     if (res != 0) {
-      dprint(" - failed to get swap chain buffer: {}", res);
+      dprintf(" - failed to get swap chain buffer: {}", res);
       return;
     }
 
@@ -311,12 +311,12 @@ KneeboardRenderer::KneeboardRenderer(
     auto hr = g_d3dDevice->CreateRenderTargetView(
       texture, &rtvd, RenderTargets.at(i).put());
     if (FAILED(hr)) {
-      dprint(" - failed to create render target view");
+      dprintf(" - failed to create render target view");
       return;
     }
   }
 
-  dprint("{} completed", __FUNCTION__);
+  dprintf("{} completed", __FUNCTION__);
 
   initialized = true;
 }
@@ -326,12 +326,12 @@ bool KneeboardRenderer::Render(ovrSession session, const SHMHeader& config, cons
     return false;
   }
   if (!isCompatibleWith(config)) {
-    dprint("Attempted to use an incompatible renderer");
+    dprintf("Attempted to use an incompatible renderer");
     return false;
   }
   static bool firstRun = true;
   if (firstRun) {
-    dprint(
+    dprintf(
       "{} with d3ddevice at {:#010x}",
       __FUNCTION__,
       (intptr_t)g_d3dDevice.get());
@@ -340,7 +340,7 @@ bool KneeboardRenderer::Render(ovrSession session, const SHMHeader& config, cons
   int index = -1;
   Real_ovr_GetTextureSwapChainCurrentIndex(session, SwapChain, &index);
   if (index < 0) {
-    dprint(" - invalid swap chain index ({})", index);
+    dprintf(" - invalid swap chain index ({})", index);
     return false;
   }
 
@@ -367,10 +367,10 @@ bool KneeboardRenderer::Render(ovrSession session, const SHMHeader& config, cons
 
   auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
   if (ret) {
-    dprint("Commit failed with {}", ret);
+    dprintf("Commit failed with {}", ret);
   }
   if (firstRun) {
-    dprint(" - success");
+    dprintf(" - success");
     firstRun = false;
   }
 
@@ -449,7 +449,7 @@ static ovrResult EndFrame_Hook_Impl(
     if (newLayers.size() < ovrMaxLayerCount) {
       newLayers.push_back(&kneeboardLayer.Header);
     } else {
-      dprint("Already at ovrMaxLayerCount without adding our layer");
+      dprintf("Already at ovrMaxLayerCount without adding our layer");
     }
   }
 
@@ -534,11 +534,11 @@ bool hook_libovr_function(const char* name, T** funcPtrPtr, T* hook) {
   }
   auto err = DetourAttach((void**)funcPtrPtr, hook);
   if (!err) {
-    dprint("- Hooked {} at {:#010x}", name, (intptr_t)*funcPtrPtr);
+    dprintf("- Hooked {} at {:#010x}", name, (intptr_t)*funcPtrPtr);
     return true;
   }
 
-  dprint(" - Failed to hook {}: {}", name, err);
+  dprintf(" - Failed to hook {}: {}", name, err);
   return false;
 }
 
@@ -551,7 +551,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   }
 
   if (dwReason == DLL_PROCESS_ATTACH) {
-    dprint("Attached to process.");
+    OpenKneeboard::DPrintSettings::Set({
+      .Prefix = "OpenKneeboard-Oculus-D3D11",
+      .Target = OpenKneeboard::DPrintSettings::Target::DEBUG_STREAM,
+    });
+    dprintf("Attached to process.");
     DetourRestoreAfterWith();
 
     DetourTransactionBegin();
@@ -565,9 +569,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     UNHOOKED_OVR_FUNCS
 #undef IT
     auto err = DetourTransactionCommit();
-    dprint("Installed hooks: {}", (int)err);
+    dprintf("Installed hooks: {}", (int)err);
   } else if (dwReason == DLL_PROCESS_DETACH) {
-    dprint("Detaching from process...");
+    dprintf("Detaching from process...");
     DetourTransactionBegin();
     DetourUpdateAllThreads();
     g_Renderer.reset(nullptr);
@@ -575,7 +579,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     HOOKED_FUNCS
 #undef IT
     DetourTransactionCommit();
-    dprint("Cleaned up Detours.");
+    dprintf("Cleaned up Detours.");
   }
   return TRUE;
 }

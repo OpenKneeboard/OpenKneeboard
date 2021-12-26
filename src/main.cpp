@@ -52,10 +52,8 @@ class MainWindow final : public wxFrame {
 
     UpdateSHM();
 
-  OutputDebugStringA("Creating thread\n");
     auto listener = new EventListener(this);
     listener->Run();
-    OutputDebugStringA("Started thread\n");
   }
 
   void UpdateSHM() {
@@ -65,7 +63,6 @@ class MainWindow final : public wxFrame {
 
     auto image = mTabs[0]->GetImage();
     if (!image.IsOk()) {
-      OutputDebugStringA("Invalid image :'(\n");
       return;
     }
 
