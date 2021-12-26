@@ -36,38 +36,10 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  winrt::file_handle handle {CreateFileA(
-    g_Path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, NULL)};
-  if (!handle) {
-    const auto err = fmt::format("Failed to open mailslot: {}", GetLastError());
-    dprint(err);
-    lua_pushstring(state, err.c_str());
-    lua_error(state);
-    return 1;
-  }
-
-  OpenKneeboard::GameEvent event {
+  (OpenKneeboard::GameEvent {
     .Name = fmt::format(
       "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1)),
-    .Value = lua_tostring(state, 2)};
-  const auto packet = event.Serialize();
-
-  if (!WriteFile(
-        handle.get(),
-        packet.data(),
-        static_cast<DWORD>(packet.size()),
-        nullptr,
-        nullptr)) {
-    const auto err
-      = fmt::format("Failed to write to mailslot: {}", GetLastError());
-    dprint(err);
-    lua_pushstring(state, err.c_str());
-    lua_error(state);
-    return 1;
-  }
-
-  dprintf(
-    "Wrote to mailslot: {}", reinterpret_cast<const char*>(packet.data()));
+    .Value = lua_tostring(state, 2)}).Send();
 
   return 0;
 }

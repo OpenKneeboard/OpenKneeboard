@@ -13,5 +13,6 @@ namespace OpenKneeboard {
 
     static GameEvent Unserialize(const std::vector<std::byte>& payload);
     std::vector<std::byte> Serialize() const;
+    void Send() const;
   };
 }

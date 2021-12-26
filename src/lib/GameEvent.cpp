@@ -1,11 +1,15 @@
 #include "OpenKneeboard\GameEvent.h"
 
-#include "OpenKneeboard/dprint.h"
+#include <Windows.h>
+#include <winrt/base.h>
 
 #include <charconv>
 #include <string_view>
 
-using OpenKneeboard::dprintf;
+#include "OpenKneeboard/dprint.h"
+
+static const char g_Path[]
+  = "\\\\.\\mailslot\\com.fredemmott.openkneeboard.events.v1";
 
 static uint32_t hex_to_ui32(const std::string_view& sv) {
   if (sv.empty()) {
@@ -55,7 +59,31 @@ std::vector<std::byte> GameEvent::Serialize() const {
   const auto str = fmt::format(
     "{:08x}!{}!{:08x}!{}!", Name.size(), Name, Value.size(), Value);
   const auto first = reinterpret_cast<const std::byte*>(str.data());
-  return { first, first + str.size() };
+  return {first, first + str.size()};
+}
+
+void GameEvent::Send() const {
+  winrt::file_handle handle {CreateFileA(
+    g_Path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, NULL)};
+  if (!handle) {
+    dprintf("Failed to open mailslot: {}", GetLastError());
+    return;
+  }
+  const auto packet = this->Serialize();
+
+  if (!WriteFile(
+        handle.get(),
+        packet.data(),
+        static_cast<DWORD>(packet.size()),
+        nullptr,
+        nullptr)) {
+    dprintf("Failed to write to mailslot: {}", GetLastError());
+    return;
+  }
+
+  dprintf(
+    "Wrote to mailslot: {}",
+    std::string(reinterpret_cast<const char*>(packet.data()), packet.size()));
 }
 
 }// namespace OpenKneeboard

@@ -70,6 +70,7 @@ class MainWindow final : public wxFrame {
 
   void OnGameEvent(wxThreadEvent& ev) {
     const auto payload = ev.GetPayload<GameEvent>();
+    dprintf("GameEvent: '{}' = '{}'", payload.Name, payload.Value);
     // TODO
   }
 
