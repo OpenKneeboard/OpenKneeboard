@@ -14,7 +14,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
 
-#include "okGameEventNamedPipeThread.h"
+#include "okGameEventMailslotThread.h"
 #include "okTab.h"
 
 class MainWindow final : public wxFrame {
@@ -58,7 +58,7 @@ class MainWindow final : public wxFrame {
 
     UpdateSHM();
 
-    auto listener = new okGameEventNamedPipeThread(this);
+    auto listener = new okGameEventMailslotThread(this);
     listener->Run();
   }
 

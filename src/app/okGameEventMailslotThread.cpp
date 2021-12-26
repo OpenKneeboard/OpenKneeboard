@@ -1,10 +1,12 @@
-#include "okGameEventNamedPipeThread.h"
+#include "okGameEventMailslotThread.h"
 
-#include <OpenKneeboard/dprint.h>
 #include <Windows.h>
+#include <winrt/base.h>
 
 #include <charconv>
 #include <string_view>
+
+#include "OpenKneeboard/dprint.h"
 
 using OpenKneeboard::dprint;
 using OpenKneeboard::dprintf;
@@ -27,62 +29,66 @@ wxDEFINE_EVENT(okEVT_GAME_EVENT, wxThreadEvent);
     continue; \
   }
 
-okGameEventNamedPipeThread::okGameEventNamedPipeThread(wxFrame* parent)
+okGameEventMailslotThread::okGameEventMailslotThread(wxFrame* parent)
   : wxThread(), mParent(parent) {
 }
 
-okGameEventNamedPipeThread::~okGameEventNamedPipeThread() {
+okGameEventMailslotThread::~okGameEventMailslotThread() {
 }
 
-wxThread::ExitCode okGameEventNamedPipeThread::Entry() {
-  char buffer[1024];
-  HANDLE pipe = CreateNamedPipeA(
-    "\\\\.\\pipe\\com.fredemmott.openkneeboard.events.v1",
-    PIPE_ACCESS_INBOUND,
-    PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-    PIPE_UNLIMITED_INSTANCES,
-    sizeof(buffer),
+wxThread::ExitCode okGameEventMailslotThread::Entry() {
+  winrt::file_handle handle {CreateMailslotA(
+    "\\\\.\\mailslot\\com.fredemmott.openkneeboard.events.v1",
     0,
-    100,
-    nullptr);
-  if (!pipe) {
-    dprint("No pipe!");
+    MAILSLOT_WAIT_FOREVER,
+    nullptr)};
+  if (!handle) {
+    dprint("Failed to create mailslot");
     return ExitCode(1);
   }
 
   dprint("Started listening for game events.");
 
   while (IsAlive()) {
+    DWORD unreadMessageCount = 0;
+    DWORD nextMessageSize = 0;
+    GetMailslotInfo(
+      handle.get(), nullptr, &nextMessageSize, &unreadMessageCount, nullptr);
+    if (unreadMessageCount == 0) {
+      this->Sleep(100);
+      continue;
+    }
+    std::vector<std::byte> buffer(nextMessageSize);
     DWORD bytesRead;
-    ConnectNamedPipe(pipe, nullptr);
-    ReadFile(
-      pipe,
-      reinterpret_cast<void*>(buffer),
-      sizeof(buffer),
-      &bytesRead,
-      nullptr);
-    DisconnectNamedPipe(pipe);
+    if (!ReadFile(
+          handle.get(),
+          reinterpret_cast<void*>(buffer.data()),
+          buffer.size(),
+          &bytesRead,
+          nullptr)) {
+      dprintf("GameEvent ReadFile failed: {}", GetLastError());
+      continue;
+    }
+    CHECK_PACKET(bytesRead == buffer.size());
 
     if (bytesRead == 0) {
-      dprint("No bytes");
       continue;
     }
 
     // "{:08x}!{}!{:08x}!{}!", name size, name, value size, value
-    const std::string packet(buffer, bytesRead);
+    const std::string_view packet(
+      reinterpret_cast<const char*>(buffer.data()), buffer.size());
     CHECK_PACKET(packet.ends_with("!"));
     CHECK_PACKET(packet.size() >= sizeof("12345678!!12345678!!") - 1);
 
-    const std::string_view pv(packet);
-
-    const auto nameLen = hex_to_ui32(pv.substr(0, 8));
+    const auto nameLen = hex_to_ui32(packet.substr(0, 8));
     CHECK_PACKET(packet.size() >= 8 + nameLen + 8 + 4);
     const uint32_t nameOffset = 9;
     const auto name = packet.substr(nameOffset, nameLen);
 
     const uint32_t valueLenOffset = nameOffset + nameLen + 1;
     CHECK_PACKET(packet.size() >= valueLenOffset + 10);
-    const auto valueLen = hex_to_ui32(pv.substr(valueLenOffset, 8));
+    const auto valueLen = hex_to_ui32(packet.substr(valueLenOffset, 8));
     const uint32_t valueOffset = valueLenOffset + 8 + 1;
     CHECK_PACKET(packet.size() == valueOffset + valueLen + 1);
     const auto value = packet.substr(valueOffset, valueLen);
@@ -90,7 +96,8 @@ wxThread::ExitCode okGameEventNamedPipeThread::Entry() {
     dprintf("Game Event: {}\n  {}", name, value);
 
     auto ev = new wxThreadEvent(okEVT_GAME_EVENT);
-    ev->SetPayload(Payload {.Name = name, .Value = value});
+    ev->SetPayload(
+      Payload {.Name = std::string(name), .Value = std::string(value)});
     wxQueueEvent(mParent, ev);
   }
 

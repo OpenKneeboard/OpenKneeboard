@@ -1,5 +1,6 @@
 #include <Windows.h>
 #include <fmt/format.h>
+#include <winrt/base.h>
 
 #include <string>
 
@@ -12,42 +13,12 @@ extern "C" {
 using OpenKneeboard::dprint;
 using OpenKneeboard::dprintf;
 
+static const char g_Path[]
+  = "\\\\.\\mailslot\\com.fredemmott.openkneeboard.events.v1";
+
 static void push_arg_error(lua_State* state) {
   lua_pushliteral(state, "2 string arguments are required\n");
   lua_error(state);
-}
-
-static HANDLE GetPipe() {
-  const char* path = "\\\\.\\pipe\\com.fredemmott.openkneeboard.events.v1";
-  HANDLE pipe = CreateFileA(
-    path,
-    GENERIC_WRITE,
-    0,
-    nullptr,
-    OPEN_EXISTING,
-    0,
-    NULL);
-  if (pipe == INVALID_HANDLE_VALUE) {
-    CloseHandle(pipe);
-    dprintf("Failed to open pipe: {}", GetLastError());
-    return pipe;
-  }
-
-  if (!WaitNamedPipeA(path, 10 /* ms */)) {
-    auto err = GetLastError();
-    CloseHandle(pipe);
-    dprintf("WaitNamedPipe failed: {}", err);
-    return INVALID_HANDLE_VALUE;
-  }
-
-  DWORD mode = PIPE_READMODE_MESSAGE;
-  if (!SetNamedPipeHandleState(pipe, &mode, nullptr, nullptr)) {
-    dprintf("Failed to set pipe state: {}", GetLastError());
-    CloseHandle(pipe);
-    return INVALID_HANDLE_VALUE;
-  }
-
-  return pipe;
 }
 
 static int SendToOpenKneeboard(lua_State* state) {
@@ -64,9 +35,12 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  auto pipe = GetPipe();
-  if (pipe == INVALID_HANDLE_VALUE) {
-    lua_pushliteral(state, "Failed to open pipe.");
+  winrt::file_handle handle {CreateFileA(
+    g_Path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, NULL)};
+  if (!handle) {
+    const auto err = fmt::format("Failed to open mailslot: {}", GetLastError());
+    dprint(err);
+    lua_pushstring(state, err.c_str());
     lua_error(state);
     return 1;
   }
@@ -78,18 +52,20 @@ static int SendToOpenKneeboard(lua_State* state) {
   std::string packet = fmt::format(
     "{:08x}!{}!{:08x}!{}!", message.size(), message, value.size(), value);
 
-  auto written = WriteFile(
-    pipe, packet.data(), static_cast<DWORD>(packet.size()), nullptr, nullptr);
-  auto err = GetLastError();
-  CloseHandle(pipe);
-
-  if (!written) {
-    auto msg = fmt::format("Failed to write: {}", err);
-    dprint(msg);
-    lua_pushstring(state, msg.c_str());
+  if (!WriteFile(
+        handle.get(),
+        packet.data(),
+        static_cast<DWORD>(packet.size()),
+        nullptr,
+        nullptr)) {
+    const auto err = fmt::format("Failed to write to mailslot: {}", GetLastError());
+    dprint(err);
+    lua_pushstring(state, err.c_str());
     lua_error(state);
     return 1;
   }
+
+  dprintf("Wrote to mailslot: {}", packet);
 
   return 0;
 }

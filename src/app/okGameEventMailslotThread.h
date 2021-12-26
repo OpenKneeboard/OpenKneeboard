@@ -7,7 +7,7 @@
 
 wxDECLARE_EVENT(okEVT_GAME_EVENT, wxThreadEvent);
 
-class okGameEventNamedPipeThread final : public wxThread {
+class okGameEventMailslotThread final : public wxThread {
  private:
   wxFrame* mParent;
 
@@ -16,8 +16,8 @@ class okGameEventNamedPipeThread final : public wxThread {
     std::string Name;
     std::string Value;
   };
-  okGameEventNamedPipeThread(wxFrame* parent);
-  ~okGameEventNamedPipeThread();
+  okGameEventMailslotThread(wxFrame* parent);
+  ~okGameEventMailslotThread();
 
  protected:
   virtual ExitCode Entry() override;
