@@ -7,13 +7,13 @@
 
 wxDECLARE_EVENT(OPENKNEEBOARD_EVENT, wxCommandEvent);
 
-class EventListener final : public wxThread {
+class GameEventNamedPipeListener final : public wxThread {
  private:
   wxFrame* mParent;
 
  public:
-  EventListener(wxFrame* parent);
-  ~EventListener();
+  GameEventNamedPipeListener(wxFrame* parent);
+  ~GameEventNamedPipeListener();
 
  protected:
   virtual ExitCode Entry() override;

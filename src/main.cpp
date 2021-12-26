@@ -10,7 +10,7 @@
 #include <wx/notebook.h>
 #pragma warning (pop)
 
-#include "EventListener.h"
+#include "GameEventNamedPipeListener.h"
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/SHM.h"
 #include "TabWidget.h"
@@ -56,7 +56,7 @@ class MainWindow final : public wxFrame {
 
     UpdateSHM();
 
-    auto listener = new EventListener(this);
+    auto listener = new GameEventNamedPipeListener(this);
     listener->Run();
   }
 

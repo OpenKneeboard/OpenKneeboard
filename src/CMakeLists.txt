@@ -36,7 +36,7 @@ target_link_libraries(openkneeboard-tabs PUBLIC openkneeboard-tab-api)
 
 ##### the gui app itself #####
 
-add_executable(openkneeboard WIN32 main.cpp TabCanvasWidget.cpp TabWidget.cpp EventListener.cpp)
+add_executable(openkneeboard WIN32 main.cpp TabCanvasWidget.cpp TabWidget.cpp GameEventNamedPipeListener.cpp)
 target_link_libraries(openkneeboard PRIVATE wx::core wx::base openkneeboard-shm openkneeboard-tabs dprint)
 
 ##### debug/test apps #####
