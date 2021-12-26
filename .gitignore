@@ -1,4 +1,1 @@
 /build/
-/third-party/*
-!/third-party/CMakeLists.txt
-!/third-party/*.cmake
