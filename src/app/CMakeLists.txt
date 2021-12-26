@@ -6,4 +6,5 @@ target_link_libraries(
   wx::base
   openkneeboard-shm
   openkneeboard-tabs
-  dprint)
+  dprint
+  games)

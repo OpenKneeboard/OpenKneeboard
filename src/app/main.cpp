@@ -14,6 +14,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
 
+#include "OpenKneeboard/Games/DCS.h"
 #include "okGameEventMailslotThread.h"
 #include "okTab.h"
 
@@ -120,9 +121,11 @@ class MainWindow final : public wxFrame {
 class OpenKneeboardApp final : public wxApp {
  public:
   virtual bool OnInit() override {
-    OpenKneeboard::DPrintSettings::Set({
-      .Target = OpenKneeboard::DPrintSettings::Target::CONSOLE,
-    });
+    using DCS = OpenKneeboard::Games::DCSWorld;
+    dprintf(
+      "DCS paths:\n  Stable: {}\n  Open Beta: {}",
+      DCS::GetStablePath(),
+      DCS::GetOpenBetaPath());
     wxInitAllImageHandlers();
     MainWindow* window = new MainWindow();
     window->Show();
