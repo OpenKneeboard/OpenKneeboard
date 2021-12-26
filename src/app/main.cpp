@@ -17,6 +17,10 @@
 #include "okGameEventMailslotThread.h"
 #include "okTab.h"
 
+using OpenKneeboard::dprint;
+using OpenKneeboard::dprintf;
+using namespace std::placeholders;
+
 class MainWindow final : public wxFrame {
  private:
   std::vector<okTab*> mTabs;
@@ -60,6 +64,12 @@ class MainWindow final : public wxFrame {
 
     auto listener = new okGameEventMailslotThread(this);
     listener->Run();
+    this->Bind(okEVT_GAME_EVENT, std::bind(&MainWindow::OnGameEvent, this, _1));
+  }
+
+  void OnGameEvent(wxThreadEvent& ev) {
+    const auto payload = ev.GetPayload<okGameEventMailslotThread::Payload>();
+    // TODO
   }
 
   void UpdateSHM() {

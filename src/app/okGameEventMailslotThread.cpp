@@ -95,10 +95,10 @@ wxThread::ExitCode okGameEventMailslotThread::Entry() {
 
     dprintf("Game Event: {}\n  {}", name, value);
 
-    auto ev = new wxThreadEvent(okEVT_GAME_EVENT);
-    ev->SetPayload(
+    wxThreadEvent ev(okEVT_GAME_EVENT);
+    ev.SetPayload(
       Payload {.Name = std::string(name), .Value = std::string(value)});
-    wxQueueEvent(mParent, ev);
+    wxQueueEvent(mParent, ev.Clone());
   }
 
   return ExitCode(0);
