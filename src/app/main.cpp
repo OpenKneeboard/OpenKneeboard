@@ -10,14 +10,14 @@
 #include <wx/notebook.h>
 #pragma warning (pop)
 
-#include "GameEventNamedPipeListener.h"
+#include "okGameEventNamedPipeThread.h"
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/SHM.h"
-#include "TabWidget.h"
+#include "okTab.h"
 
 class MainWindow final : public wxFrame {
  private:
-  std::vector<TabWidget*> mTabs;
+  std::vector<okTab*> mTabs;
   OpenKneeboard::SHM::Writer mSHM;
 
  public:
@@ -42,7 +42,7 @@ class MainWindow final : public wxFrame {
     auto notebook = new wxNotebook(this, wxID_ANY);
     sizer->Add(notebook);
 
-    auto tab = new TabWidget(
+    auto tab = new okTab(
       notebook,
       std::make_shared<OpenKneeboard::FolderTab>(
         "Local",
@@ -56,7 +56,7 @@ class MainWindow final : public wxFrame {
 
     UpdateSHM();
 
-    auto listener = new GameEventNamedPipeListener(this);
+    auto listener = new okGameEventNamedPipeThread(this);
     listener->Run();
   }
 

@@ -13,10 +13,10 @@ class Tab;
 
 wxDECLARE_EVENT(OPENKNEEBOARD_PAGE_CHANGED, wxCommandEvent);
 
-class TabWidget final : public wxPanel {
+class okTab final : public wxPanel {
  public:
-  TabWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
-  virtual ~TabWidget();
+  okTab(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
+  virtual ~okTab();
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
   wxImage GetImage();

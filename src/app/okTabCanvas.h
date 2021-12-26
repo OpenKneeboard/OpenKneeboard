@@ -12,10 +12,10 @@ namespace OpenKneeboard {
 class Tab;
 }
 
-class TabCanvasWidget final : public wxPanel {
+class okTabCanvas final : public wxPanel {
  public:
-  TabCanvasWidget(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
-  virtual ~TabCanvasWidget();
+  okTabCanvas(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
+  virtual ~okTabCanvas();
 
   void OnPaint(wxPaintEvent& ev);
   void OnEraseBackground(wxEraseEvent& ev);

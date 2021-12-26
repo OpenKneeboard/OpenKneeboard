@@ -1,16 +1,16 @@
-#include "TabCanvasWidget.h"
+#include "okTabCanvas.h"
 
 #include <wx/dcbuffer.h>
 
 #include "OpenKneeboard/Tab.h"
 
-class TabCanvasWidget::Impl final {
+class okTabCanvas::Impl final {
  public:
   std::shared_ptr<OpenKneeboard::Tab> Tab;
   uint16_t PageIndex = 0;
 };
 
-TabCanvasWidget::TabCanvasWidget(
+okTabCanvas::okTabCanvas(
   wxWindow* parent,
   const std::shared_ptr<OpenKneeboard::Tab>& tab)
   : wxPanel(
@@ -21,10 +21,10 @@ TabCanvasWidget::TabCanvasWidget(
     p(new Impl {.Tab = tab}) {
 }
 
-TabCanvasWidget::~TabCanvasWidget() {
+okTabCanvas::~okTabCanvas() {
 }
 
-void TabCanvasWidget::OnPaint(wxPaintEvent& ev) {
+void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   const auto count = p->Tab->GetPageCount();
   if (count == 0) {
     // TODO: render error thing;
@@ -50,15 +50,15 @@ void TabCanvasWidget::OnPaint(wxPaintEvent& ev) {
   dc.DrawBitmap(scaled, wxPoint {0, 0});
 }
 
-void TabCanvasWidget::OnEraseBackground(wxEraseEvent& ev) {
+void okTabCanvas::OnEraseBackground(wxEraseEvent& ev) {
   // intentionally empty
 }
 
-uint16_t TabCanvasWidget::GetPageIndex() const {
+uint16_t okTabCanvas::GetPageIndex() const {
   return p->PageIndex;
 }
 
-void TabCanvasWidget::SetPageIndex(uint16_t index) {
+void okTabCanvas::SetPageIndex(uint16_t index) {
   const auto count = p->Tab->GetPageCount();
   if (count == 0) {
     return;
@@ -67,11 +67,11 @@ void TabCanvasWidget::SetPageIndex(uint16_t index) {
   Refresh();
 }
 
-void TabCanvasWidget::NextPage() {
+void okTabCanvas::NextPage() {
   SetPageIndex(GetPageIndex() + 1);
 }
 
-void TabCanvasWidget::PreviousPage() {
+void okTabCanvas::PreviousPage() {
   const auto current = GetPageIndex();
   if (current == 0) {
     return;
@@ -79,13 +79,13 @@ void TabCanvasWidget::PreviousPage() {
   SetPageIndex(current - 1);
 }
 
-std::shared_ptr<OpenKneeboard::Tab> TabCanvasWidget::GetTab() const {
+std::shared_ptr<OpenKneeboard::Tab> okTabCanvas::GetTab() const {
   return p->Tab;
 }
 
 // clang-format off
-wxBEGIN_EVENT_TABLE(TabCanvasWidget, wxPanel)
-  EVT_PAINT(TabCanvasWidget::OnPaint)
-  EVT_ERASE_BACKGROUND(TabCanvasWidget::OnEraseBackground)
+wxBEGIN_EVENT_TABLE(okTabCanvas, wxPanel)
+  EVT_PAINT(okTabCanvas::OnPaint)
+  EVT_ERASE_BACKGROUND(okTabCanvas::OnEraseBackground)
 wxEND_EVENT_TABLE();
 // clang-format on

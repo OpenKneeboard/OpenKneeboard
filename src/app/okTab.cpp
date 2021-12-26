@@ -1,21 +1,21 @@
-#include "TabWidget.h"
+#include "okTab.h"
 
 #include "OpenKneeboard/Tab.h"
-#include "TabCanvasWidget.h"
+#include "okTabCanvas.h"
 
 wxDEFINE_EVENT(OPENKNEEBOARD_PAGE_CHANGED, wxCommandEvent);
 
-class TabWidget::Impl final {
+class okTab::Impl final {
  public:
   std::shared_ptr<OpenKneeboard::Tab> Tab;
-  TabCanvasWidget* Canvas;
+  okTabCanvas* Canvas;
 };
 
-TabWidget::TabWidget(
+okTab::okTab(
   wxWindow* parent,
   const std::shared_ptr<OpenKneeboard::Tab>& tab)
   : wxPanel(parent), p(new Impl {.Tab = tab}) {
-  p->Canvas = new TabCanvasWidget(this, tab);
+  p->Canvas = new okTabCanvas(this, tab);
   auto canvas = p->Canvas;
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
@@ -49,25 +49,25 @@ TabWidget::TabWidget(
   this->SetSizerAndFit(sizer);
 }
 
-void TabWidget::EmitPageChanged() {
+void okTab::EmitPageChanged() {
   wxCommandEvent event(OPENKNEEBOARD_PAGE_CHANGED, GetId());
   event.SetEventObject(this);
   event.SetInt(p->Canvas->GetPageIndex());
   ProcessWindowEvent(event);
 }
 
-TabWidget::~TabWidget() {
+okTab::~okTab() {
 }
 
-std::shared_ptr<OpenKneeboard::Tab> TabWidget::GetTab() const {
+std::shared_ptr<OpenKneeboard::Tab> okTab::GetTab() const {
   return p->Tab;
 }
 
-wxImage TabWidget::GetImage() {
+wxImage okTab::GetImage() {
   return p->Tab->RenderPage(p->Canvas->GetPageIndex());
 }
 
 // clang-format off
-wxBEGIN_EVENT_TABLE(TabWidget, wxPanel)
+wxBEGIN_EVENT_TABLE(okTab, wxPanel)
 wxEND_EVENT_TABLE();
 // clang-format on

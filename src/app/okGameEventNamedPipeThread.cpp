@@ -1,4 +1,4 @@
-#include "GameEventNamedPipeListener.h"
+#include "okGameEventNamedPipeThread.h"
 
 #include <Windows.h>
 
@@ -6,13 +6,13 @@
 
 using OpenKneeboard::dprint;
 
-GameEventNamedPipeListener::GameEventNamedPipeListener(wxFrame* parent) : wxThread(), mParent(parent) {
+okGameEventNamedPipeThread::okGameEventNamedPipeThread(wxFrame* parent) : wxThread(), mParent(parent) {
 }
 
-GameEventNamedPipeListener::~GameEventNamedPipeListener() {
+okGameEventNamedPipeThread::~okGameEventNamedPipeThread() {
 }
 
-wxThread::ExitCode GameEventNamedPipeListener::Entry() {
+wxThread::ExitCode okGameEventNamedPipeThread::Entry() {
   char buffer[1024];
   HANDLE pipe = CreateNamedPipeA(
     "\\\\.\\pipe\\com.fredemmott.openkneeboard.events.v1",
