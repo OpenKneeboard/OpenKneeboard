@@ -46,8 +46,6 @@ wxThread::ExitCode EventListener::Entry() {
     }
 
     buffer[bytesRead] = 0;
-
-    dprint("Read IPC event: {}", buffer);
   }
 
   return ExitCode(0);

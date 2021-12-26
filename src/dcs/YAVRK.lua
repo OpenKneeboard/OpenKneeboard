@@ -3,12 +3,6 @@ function l(msg)
 end
 l("Init")
 
---[[
-local source_file = debug.getinfo(1, "S").source
-local source_dir = source_file:gsub("[/\\]+[^/\\]+$", ""):gsub("/", "\\")
-
-package.cpath = source_dir.."\\?.dll;"..package.cpath
---]]
 package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath;
 l("Loading DLL - search path: "..package.cpath)
 local status, ret = pcall(require, "YAVRKDCSExt")
@@ -23,16 +17,35 @@ YAVRK = ret
 
 local callbacks = {}
 
+state = {
+  mission = nil,
+  aircraft = nil,
+  terrain = nil,
+}
+
+function sendState()
+  if state.aircraft then
+    YAVRK.send("Aircraft", state.aircraft)
+  end
+  if state.mission then
+    YAVRK.send("Mission", state.mission)
+  end
+  if state.terrain then
+    YAVRK.send("Terrain", state.terrain)
+  end
+end
+
 function callbacks.onMissionLoadBegin()
   l("onMissionLoadBegin: "..DCS.getMissionName())
   local file = DCS.getMissionFilename()
   file = file:gsub("^.[/\\]+", lfs.currentdir())
-  YAVRK.send("Mission", file)
+  state.mission = file;
 
   local mission = DCS.getCurrentMission();
   if mission and mission.mission and mission.mission.theatre then
-    YAVRK.send("Theatre", mission.mission.theatre)
+    state.terrain = mission.mission.theatre
   end
+  sendState()
 end
 
 function callbacks.onSimulationStart()
@@ -43,11 +56,21 @@ function callbacks.onSimulationStart()
     return
   end
   l("onSimulationStart in aircraft "..selfData.Name)
-  YAVRK.send("Aircraft", selfData.Name)
+  state.aircraft = selfData.name
+  sendState()
 end
 
 function callbacks.onGameEvent(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
   l("Game event: "..event)
+end
+
+lastUpdate = DCS.getModelTime()
+function callbacks.onSimulationFrame()
+  if DCS.getModelTime() < lastUpdate + 1 then
+    return
+  end
+  lastUpdate = DCS.getModelTime()
+  sendState()
 end
 
 DCS.setUserCallbacks(callbacks)

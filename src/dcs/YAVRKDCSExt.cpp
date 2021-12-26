@@ -17,7 +17,6 @@ static void push_arg_error(lua_State* state) {
 }
 
 static int SendToYAVRK(lua_State* state) {
-  OutputDebugStringA(__FUNCTION__);
   int argc = lua_gettop(state);
   if (argc != 2) {
     OutputDebugStringA("Invalid argument count\n");
@@ -38,8 +37,6 @@ static int SendToYAVRK(lua_State* state) {
   std::string packet = fmt::format(
     "{:08x}!{}!{:08x}!{}!", message.size(), message, value.size(), value);
 
-  OutputDebugStringA(packet.c_str());
-
   HANDLE pipe = CreateFileA(
     "\\\\.\\pipe\\com.fredemmott.yavrk.events.v1",
     GENERIC_WRITE,
@@ -50,7 +47,6 @@ static int SendToYAVRK(lua_State* state) {
     NULL);
   if (!pipe) {
     auto msg = fmt::format("Failed to open pipe: {}", GetLastError());
-    dprint("{}", msg);
     lua_pushstring(state, msg.c_str());
     lua_error(state);
     return 1;
@@ -59,7 +55,6 @@ static int SendToYAVRK(lua_State* state) {
   DWORD mode = PIPE_READMODE_MESSAGE;
   if (!SetNamedPipeHandleState(pipe, &mode, nullptr, nullptr)) {
     auto msg = fmt::format("Failed to set pipe state: {}", GetLastError());
-    dprint("{}", msg);
     CloseHandle(pipe);
     lua_pushstring(state, msg.c_str());
     lua_error(state);
@@ -71,17 +66,14 @@ static int SendToYAVRK(lua_State* state) {
   CloseHandle(pipe);
   if (!written) {
     auto msg = fmt::format("Failed to write: {}", err);
-    dprint("{}", msg);
     lua_pushstring(state, msg.c_str());
     lua_error(state);
   }
-  dprint("Sent to YAVRK.");
 
   return 0;
 }
 
 extern "C" int __declspec(dllexport) luaopen_YAVRKDCSExt(lua_State* state) {
-  OutputDebugStringA(__FUNCTION__);
   lua_createtable(state, 0, 1);
   lua_pushcfunction(state, &SendToYAVRK);
   lua_setfield(state, -2, "send");
