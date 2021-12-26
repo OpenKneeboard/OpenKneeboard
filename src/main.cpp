@@ -9,6 +9,7 @@
 #include "TabWidget.h"
 #include "YAVRK/FolderTab.h"
 #include "YAVRK/SHM.h"
+#include "EventListener.h"
 
 class MainWindow final : public wxFrame {
  private:
@@ -50,6 +51,11 @@ class MainWindow final : public wxFrame {
     this->SetSizerAndFit(sizer);
 
     UpdateSHM();
+
+  OutputDebugStringA("Creating thread\n");
+    auto listener = new EventListener(this);
+    listener->Run();
+    OutputDebugStringA("Started thread\n");
   }
 
   void UpdateSHM() {

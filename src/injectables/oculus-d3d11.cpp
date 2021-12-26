@@ -38,12 +38,15 @@
 #include <functional>
 #include <vector>
 
+#include "YAVRK/dprint.h"
 #include "YAVRK/SHM.h"
+
 #include "d3d11-offsets.h"
 
 using SHMHeader = YAVRK::SHM::Header;
 using SHMPixel = YAVRK::SHM::Pixel;
 using SHMPixels = std::vector<SHMPixel>;
+using YAVRK::dprint;
 
 static_assert(sizeof(SHMPixel) == 4, "Expecting R8G8B8A8 for DirectX");
 static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
@@ -112,13 +115,6 @@ REAL_FUNCS
 
 // methods
 decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
-
-template <typename... T>
-void dprint(fmt::format_string<T...> fmt, T&&... args) {
-  auto str = fmt::format(fmt, std::forward<T>(args)...);
-  str = fmt::format("[injected-kneeboard] {}\n", str);
-  OutputDebugStringA(str.c_str());
-}
 
 void DetourUpdateAllThreads() {
   auto snapshot

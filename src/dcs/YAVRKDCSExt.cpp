@@ -3,9 +3,13 @@
 
 #include <string>
 
+#include "YAVRK/dprint.h"
+
 extern "C" {
 #include <lauxlib.h>
 }
+
+using YAVRK::dprint;
 
 static void push_arg_error(lua_State* state) {
   lua_pushliteral(state, "2 string arguments are required\n");
@@ -36,19 +40,42 @@ static int SendToYAVRK(lua_State* state) {
 
   OutputDebugStringA(packet.c_str());
 
-  const auto success = CallNamedPipeA(
+  HANDLE pipe = CreateFileA(
     "\\\\.\\pipe\\com.fredemmott.yavrk.events.v1",
-    packet.data(),
-    DWORD(packet.size()),
+    GENERIC_WRITE,
+    0,
     nullptr,
-    NULL,
-    nullptr,
-    NMPWAIT_NOWAIT);
-  if (success) {
-    OutputDebugStringA("Sent to YAVRK.\n");
-  } else {
-    OutputDebugStringA("YAVRK unreachable.\n");
+    OPEN_EXISTING,
+    0,
+    NULL);
+  if (!pipe) {
+    auto msg = fmt::format("Failed to open pipe: {}", GetLastError());
+    dprint("{}", msg);
+    lua_pushstring(state, msg.c_str());
+    lua_error(state);
+    return 1;
   }
+
+  DWORD mode = PIPE_READMODE_MESSAGE;
+  if (!SetNamedPipeHandleState(pipe, &mode, nullptr, nullptr)) {
+    auto msg = fmt::format("Failed to set pipe state: {}", GetLastError());
+    dprint("{}", msg);
+    CloseHandle(pipe);
+    lua_pushstring(state, msg.c_str());
+    lua_error(state);
+    return 1;
+  }
+
+  auto written = WriteFile(pipe, packet.data(), packet.size(), nullptr, nullptr);
+  auto err = GetLastError();
+  CloseHandle(pipe);
+  if (!written) {
+    auto msg = fmt::format("Failed to write: {}", err);
+    dprint("{}", msg);
+    lua_pushstring(state, msg.c_str());
+    lua_error(state);
+  }
+  dprint("Sent to YAVRK.");
 
   return 0;
 }
