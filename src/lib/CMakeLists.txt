@@ -10,5 +10,8 @@ target_link_libraries(dprint PUBLIC fmt)
 target_link_libraries(dprint PUBLIC _libheaders)
 
 add_library(consolelib STATIC ConsoleLoopCondition.cpp)
-target_link_libraries(consolelib PUBLIC)
 target_link_libraries(consolelib PUBLIC _libheaders)
+
+add_library(gameevent STATIC GameEvent.cpp)
+target_link_libraries(gameevent PRIVATE fmt dprint)
+target_link_libraries(gameevent PUBLIC _libheaders)

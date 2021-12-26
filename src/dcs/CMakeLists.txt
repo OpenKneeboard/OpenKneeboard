@@ -3,4 +3,4 @@ target_include_directories(_dcsHeaders INTERFACE "${CMAKE_SOURCE_DIR}/src/includ
 
 add_library(OpenKneeboardDCSExt MODULE OpenKneeboardDCSExt.cpp)
 target_link_libraries(OpenKneeboardDCSExt PUBLIC lualib)
-target_link_libraries(OpenKneeboardDCSExt PRIVATE lualib fmt dprint _dcsHeaders)
+target_link_libraries(OpenKneeboardDCSExt PRIVATE lualib fmt dprint gameevent _dcsHeaders)

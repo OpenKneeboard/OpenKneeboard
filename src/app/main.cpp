@@ -10,16 +10,15 @@
 #include <wx/notebook.h>
 #pragma warning(pop)
 
-#include <OpenKneeboard/FolderTab.h>
-#include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/dprint.h>
-
+#include "OpenKneeboard/FolderTab.h"
+#include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/Games/DCS.h"
+#include "OpenKneeboard/SHM.h"
+#include "OpenKneeboard/dprint.h"
 #include "okGameEventMailslotThread.h"
 #include "okTab.h"
 
-using OpenKneeboard::dprint;
-using OpenKneeboard::dprintf;
+using namespace OpenKneeboard;
 
 class MainWindow final : public wxFrame {
  private:
@@ -70,7 +69,7 @@ class MainWindow final : public wxFrame {
   }
 
   void OnGameEvent(wxThreadEvent& ev) {
-    const auto payload = ev.GetPayload<okGameEventMailslotThread::Payload>();
+    const auto payload = ev.GetPayload<GameEvent>();
     // TODO
   }
 

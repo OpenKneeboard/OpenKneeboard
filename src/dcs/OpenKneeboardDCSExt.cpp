@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/dprint.h"
 
 extern "C" {
@@ -45,12 +46,11 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  const auto message = fmt::format(
-    "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1));
-  const std::string value(lua_tostring(state, 2));
-
-  std::string packet = fmt::format(
-    "{:08x}!{}!{:08x}!{}!", message.size(), message, value.size(), value);
+  OpenKneeboard::GameEvent event {
+    .Name = fmt::format(
+      "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1)),
+    .Value = lua_tostring(state, 2)};
+  const auto packet = event.Serialize();
 
   if (!WriteFile(
         handle.get(),
@@ -58,14 +58,16 @@ static int SendToOpenKneeboard(lua_State* state) {
         static_cast<DWORD>(packet.size()),
         nullptr,
         nullptr)) {
-    const auto err = fmt::format("Failed to write to mailslot: {}", GetLastError());
+    const auto err
+      = fmt::format("Failed to write to mailslot: {}", GetLastError());
     dprint(err);
     lua_pushstring(state, err.c_str());
     lua_error(state);
     return 1;
   }
 
-  dprintf("Wrote to mailslot: {}", packet);
+  dprintf(
+    "Wrote to mailslot: {}", reinterpret_cast<const char*>(packet.data()));
 
   return 0;
 }

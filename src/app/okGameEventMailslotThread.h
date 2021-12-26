@@ -12,10 +12,6 @@ class okGameEventMailslotThread final : public wxThread {
   wxFrame* mParent;
 
  public:
-  struct Payload {
-    std::string Name;
-    std::string Value;
-  };
   okGameEventMailslotThread(wxFrame* parent);
   ~okGameEventMailslotThread();
 
