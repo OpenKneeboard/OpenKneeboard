@@ -5,9 +5,10 @@ if (MSVC)
   add_definitions("/Zc:__cplusplus" "/DUNICODE=1" "/DNOMINMAX" "/DWIN32_LEAN_AND_MEAN" "/await")
 endif()
 
-add_definitions(
-  "-DOPENKNEEBOARD_TEXTURE_WIDTH=768"
-  "-DOPENKNEEBOARD_TEXTURE_HEIGHT=1024"
+add_compile_definitions(
+  "OPENKNEEBOARD_TEXTURE_WIDTH=768"
+  "OPENKNEEBOARD_TEXTURE_HEIGHT=1024"
+  "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
 )
 
 add_subdirectory(lib)
