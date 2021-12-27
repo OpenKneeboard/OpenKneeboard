@@ -15,3 +15,6 @@ target_link_libraries(consolelib PUBLIC _libheaders)
 add_library(gameevent STATIC GameEvent.cpp)
 target_link_libraries(gameevent PRIVATE fmt dprint)
 target_link_libraries(gameevent PUBLIC _libheaders)
+
+add_library(rendererror STATIC RenderError.cpp)
+target_link_libraries(rendererror PUBLIC wx::core wx::base _libheaders)

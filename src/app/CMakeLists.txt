@@ -8,4 +8,5 @@ target_link_libraries(
   openkneeboard-tabs
   dprint
   gameevent
-  games)
+  games
+  rendererror)

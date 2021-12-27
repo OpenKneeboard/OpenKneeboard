@@ -7,13 +7,16 @@
 #include <wx/frame.h>
 
 #include "OpenKneeboard/SHM.h"
+#include "OpenKneeboard/RenderError.h"
+
+using namespace OpenKneeboard;
 
 class MainWindow final : public wxFrame {
  private:
   wxTimer mTimer;
   bool mFirstDetached = false;
   bool mHadData = false;
-  OpenKneeboard::SHM::Reader mSHM;
+  SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
 
  public:
@@ -72,25 +75,7 @@ class MainWindow final : public wxFrame {
         auto bm = dc.GetAsBitmap().ConvertToDisabled();
         dc.DrawBitmap(bm, wxPoint {0, 0});
       }
-      std::string message("No Feeder");
-      auto textSize = dc.GetTextExtent(message);
-      auto textOrigin = wxPoint {
-        (clientSize.GetWidth() - textSize.GetWidth()) / 2,
-        (clientSize.GetHeight() - textSize.GetHeight()) / 2};
-
-      dc.SetPen(wxPen(*wxBLACK, 2));
-      auto boxSize
-        = wxSize {textSize.GetWidth() + 20, textSize.GetHeight() + 20};
-      auto boxOrigin = wxPoint {
-        (clientSize.GetWidth() - boxSize.GetWidth()) / 2,
-        (clientSize.GetHeight() - boxSize.GetHeight()) / 2};
-
-      dc.SetBrush(*wxGREY_BRUSH);
-      dc.DrawRectangle(boxOrigin, boxSize);
-
-      dc.SetBrush(*wxBLACK_BRUSH);
-      dc.DrawText(message, textOrigin);
-
+      RenderError(this->GetClientSize(), dc, "No Feeder");
       return;
     }
     mHadData = true;
