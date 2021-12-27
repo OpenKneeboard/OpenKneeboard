@@ -62,6 +62,7 @@ class MainWindow final : public wxFrame {
     for (auto tab: mTabs) {
       notebook->AddPage(tab, tab->GetTab()->GetTitle());
       tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
+      tab->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
     }
 
     this->SetSizerAndFit(sizer);
