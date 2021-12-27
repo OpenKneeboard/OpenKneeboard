@@ -55,7 +55,9 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   const float yScale = (float)clientSize.GetHeight() / imageSize.GetHeight();
   const auto scale = std::min(xScale, yScale);
   const auto scaled = image.Scale(
-    (int)imageSize.GetWidth() * scale, (int)imageSize.GetHeight() * scale);
+    (int)imageSize.GetWidth() * scale,
+    (int)imageSize.GetHeight() * scale,
+    wxIMAGE_QUALITY_HIGH);
 
   dc.DrawBitmap(scaled, wxPoint {0, 0});
 }
