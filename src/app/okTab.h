@@ -11,6 +11,8 @@ namespace OpenKneeboard {
 class Tab;
 }
 
+wxDECLARE_EVENT(okEVT_PAGE_CHANGED, wxCommandEvent);
+
 class okTab final : public wxPanel {
  public:
   okTab(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);

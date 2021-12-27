@@ -5,15 +5,17 @@
 
 wxDEFINE_EVENT(okEVT_PAGE_CHANGED, wxCommandEvent);
 
+using namespace OpenKneeboard;
+
 class okTab::Impl final {
  public:
-  std::shared_ptr<OpenKneeboard::Tab> Tab;
+  std::shared_ptr<Tab> Tab;
   okTabCanvas* Canvas;
 };
 
 okTab::okTab(
   wxWindow* parent,
-  const std::shared_ptr<OpenKneeboard::Tab>& tab)
+  const std::shared_ptr<Tab>& tab)
   : wxPanel(parent), p(new Impl {.Tab = tab}) {
   p->Canvas = new okTabCanvas(this, tab);
   auto canvas = p->Canvas;
@@ -60,7 +62,7 @@ void okTab::EmitPageChanged() {
 okTab::~okTab() {
 }
 
-std::shared_ptr<OpenKneeboard::Tab> okTab::GetTab() const {
+std::shared_ptr<Tab> okTab::GetTab() const {
   return p->Tab;
 }
 

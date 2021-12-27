@@ -4,15 +4,15 @@
 
 #include "OpenKneeboard/Tab.h"
 
+using namespace OpenKneeboard;
+
 class okTabCanvas::Impl final {
  public:
-  std::shared_ptr<OpenKneeboard::Tab> Tab;
+  std::shared_ptr<Tab> Tab;
   uint16_t PageIndex = 0;
 };
 
-okTabCanvas::okTabCanvas(
-  wxWindow* parent,
-  const std::shared_ptr<OpenKneeboard::Tab>& tab)
+okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
   : wxPanel(
     parent,
     wxID_ANY,
@@ -82,6 +82,6 @@ void okTabCanvas::PreviousPage() {
   SetPageIndex(current - 1);
 }
 
-std::shared_ptr<OpenKneeboard::Tab> okTabCanvas::GetTab() const {
+std::shared_ptr<Tab> okTabCanvas::GetTab() const {
   return p->Tab;
 }

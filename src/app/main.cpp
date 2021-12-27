@@ -27,6 +27,7 @@ class MainWindow final : public wxFrame {
  private:
   std::vector<okTab*> mTabs;
   OpenKneeboard::SHM::Writer mSHM;
+  int mCurrentTab = 0;
 
  public:
   MainWindow()
@@ -50,14 +51,18 @@ class MainWindow final : public wxFrame {
     auto sizer = new wxBoxSizer(wxVERTICAL);
 
     auto notebook = new wxNotebook(this, wxID_ANY);
+    notebook->Bind(
+      wxEVT_BOOKCTRL_PAGE_CHANGED, &MainWindow::OnTabChanged, this);
     sizer->Add(notebook);
 
-    auto testTab
-      = new okTab(notebook, std::make_shared<FolderTab>("Folder", Games::DCSWorld::GetOpenBetaPath() / "Mods/terrains/Caucasus/Kneeboard"));
-    auto aircraft
-      = new okTab(notebook, std::make_shared<DCSAircraftTab>());
-    auto terrain
-    = new okTab(notebook, std::make_shared<DCSTerrainTab>());
+    auto testTab = new okTab(
+      notebook,
+      std::make_shared<FolderTab>(
+        "Test Folder",
+        Games::DCSWorld::GetOpenBetaPath()
+          / "Mods/terrains/Caucasus/Kneeboard"));
+    auto aircraft = new okTab(notebook, std::make_shared<DCSAircraftTab>());
+    auto terrain = new okTab(notebook, std::make_shared<DCSTerrainTab>());
     mTabs = {testTab, aircraft, terrain};
     for (auto tab: mTabs) {
       notebook->AddPage(tab, tab->GetTab()->GetTitle());
@@ -74,6 +79,15 @@ class MainWindow final : public wxFrame {
     Bind(okEVT_GAME_EVENT, &MainWindow::OnGameEvent, this);
   }
 
+  void OnTabChanged(wxBookCtrlEvent& ev) {
+    const auto tab = ev.GetSelection();
+    if (tab == wxNOT_FOUND) {
+      return;
+    }
+    mCurrentTab = tab;
+    UpdateSHM();
+  }
+
   void OnGameEvent(wxThreadEvent& ev) {
     const auto ge = ev.GetPayload<GameEvent>();
     dprintf("GameEvent: '{}' = '{}'", ge.Name, ge.Value);
@@ -87,7 +101,7 @@ class MainWindow final : public wxFrame {
       return;
     }
 
-    auto image = mTabs[0]->GetImage();
+    auto image = mTabs.at(mCurrentTab)->GetImage();
     if (!image.IsOk()) {
       return;
     }
