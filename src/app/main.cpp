@@ -10,6 +10,7 @@
 #include <wx/notebook.h>
 #pragma warning(pop)
 
+#include "OpenKneeboard/DCSMissionTab.h"
 #include "OpenKneeboard/DCSTerrainTab.h"
 #include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
@@ -50,7 +51,7 @@ class MainWindow final : public wxFrame {
     sizer->Add(notebook);
 
     auto tab
-      = new okTab(notebook, std::make_shared<OpenKneeboard::DCSTerrainTab>());
+      = new okTab(notebook, std::make_shared<OpenKneeboard::DCSMissionTab>());
     tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());

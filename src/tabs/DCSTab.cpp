@@ -31,7 +31,7 @@ DCSTab::~DCSTab() {
 
 void DCSTab::OnGameEvent(const GameEvent& event) {
   if (event.Name == this->GetGameEventName()) {
-    p->CurrentConfig.Value;
+    p->CurrentConfig.Value = event.Value;
     Update();
     return;
   }

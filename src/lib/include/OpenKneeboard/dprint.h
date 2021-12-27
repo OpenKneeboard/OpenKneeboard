@@ -17,16 +17,13 @@ struct DPrintSettings {
     CONSOLE,
     // Use debugger or `dbgview` etc to view this
     DEBUG_STREAM,
+    // DEBUG_STREAM if release build, or if debugger attached;
+    // CONSOLE otherwise
+    DEFAULT
   };
-  static const Target DEFAULT_TARGET =
-#ifdef DEBUG
-    Target::CONSOLE;
-#else
-    Target::DEBUG_STREAM;
-#endif
 
   std::string Prefix = "OpenKneeboard";
-  Target Target = DEFAULT_TARGET;
+  Target Target = Target::DEFAULT;
 
   static void Set(const DPrintSettings&);
 };

@@ -7,13 +7,26 @@ namespace OpenKneeboard {
 static DPrintSettings g_Settings;
 
 void dprint(const std::string& message) {
-  if (g_Settings.Target == DPrintSettings::Target::DEBUG_STREAM) {
+  auto target = g_Settings.Target;
+  if (target == DPrintSettings::Target::DEFAULT) {
+#ifdef NDEBUG
+    target = DEBUG_STREAM;
+#else
+    if (IsDebuggerPresent()) {
+      target = DPrintSettings::Target::DEBUG_STREAM;
+    } else {
+      target = DPrintSettings::Target::CONSOLE;
+    }
+#endif;
+  }
+
+  if (target == DPrintSettings::Target::DEBUG_STREAM) {
     auto output = fmt::format("[{}] {}\n", g_Settings.Prefix, message);
     OutputDebugStringA(output.c_str());
     return;
   }
 
-  if (g_Settings.Target == DPrintSettings::Target::CONSOLE) {
+  if (target == DPrintSettings::Target::CONSOLE) {
     auto output = fmt::format("{}\n", message);
     AllocConsole();
     auto handle = GetStdHandle(STD_ERROR_HANDLE);
@@ -26,7 +39,10 @@ void dprint(const std::string& message) {
       static_cast<DWORD>(output.size()),
       nullptr,
       nullptr);
+    return;
   }
+
+  DebugBreak();
 }
 
 void DPrintSettings::Set(const DPrintSettings& settings) {
