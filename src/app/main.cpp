@@ -55,15 +55,17 @@ class MainWindow final : public wxFrame {
       wxEVT_BOOKCTRL_PAGE_CHANGED, &MainWindow::OnTabChanged, this);
     sizer->Add(notebook);
 
-    auto testTab = new okTab(
-      notebook,
-      std::make_shared<FolderTab>(
-        "Test Folder",
-        Games::DCSWorld::GetOpenBetaPath()
-          / "Mods/terrains/Caucasus/Kneeboard"));
-    auto aircraft = new okTab(notebook, std::make_shared<DCSAircraftTab>());
-    auto terrain = new okTab(notebook, std::make_shared<DCSTerrainTab>());
-    mTabs = {testTab, aircraft, terrain};
+    mTabs = {
+      new okTab(
+        notebook,
+        std::make_shared<FolderTab>(
+          "Test Folder",
+          Games::DCSWorld::GetOpenBetaPath()
+            / "Mods/terrains/Caucasus/Kneeboard")),
+      new okTab(notebook, std::make_shared<DCSMissionTab>()),
+      new okTab(notebook, std::make_shared<DCSAircraftTab>()),
+      new okTab(notebook, std::make_shared<DCSTerrainTab>()),
+    };
     for (auto tab: mTabs) {
       notebook->AddPage(tab, tab->GetTab()->GetTitle());
       tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
