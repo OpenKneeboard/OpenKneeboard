@@ -1,0 +1,58 @@
+#include "OpenKneeboard/DCSTab.h"
+
+#include <filesystem>
+
+#include "OpenKneeboard/GameEvent.h"
+#include "OpenKneeboard/Games/DCSWorld.h"
+#include "OpenKneeboard/dprint.h"
+
+using DCS = OpenKneeboard::Games::DCSWorld;
+
+namespace OpenKneeboard {
+
+class DCSTab::Impl final {
+ public:
+  struct Config final {
+    std::filesystem::path InstallPath;
+    std::string Value;
+    bool operator==(const Config&) const = default;
+  };
+
+  Config CurrentConfig;
+  Config LastValidConfig;
+};
+
+DCSTab::DCSTab(const wxString& title)
+  : FolderTab(title, {}), p(std::make_shared<Impl>()) {
+}
+
+void DCSTab::OnGameEvent(const GameEvent& event) {
+  if (event.Name == this->GetGameEventName()) {
+    p->CurrentConfig.Value;
+    Update();
+    return;
+  }
+
+  if (event.Name == DCS::EVT_INSTALL_PATH) {
+    p->CurrentConfig.InstallPath = std::filesystem::canonical(event.Value);
+    Update();
+    return;
+  }
+}
+
+void DCSTab::Update() {
+  auto c = p->CurrentConfig;
+  if (c == p->LastValidConfig) {
+    return;
+  }
+
+  if (c.InstallPath.empty()) {
+    return;
+  }
+
+  this->Update(c.InstallPath, c.Value);
+
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
+}
+
+}// namespace OpenKneeboard

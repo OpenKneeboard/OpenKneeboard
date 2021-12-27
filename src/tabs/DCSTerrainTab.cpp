@@ -10,52 +10,17 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {
 
-class DCSTerrainTab::Impl final {
- public:
-  struct Config final {
-    std::filesystem::path InstallPath;
-    std::string Terrain;
-    bool operator==(const Config&) const = default;
-  };
-
-  Config CurrentConfig;
-  Config LastValidConfig;
-};
-
 DCSTerrainTab::DCSTerrainTab()
-  : FolderTab(_("Local"), {}), p(std::make_shared<Impl>()) {
+  : DCSTab(_("Local")) {
 }
 
-void DCSTerrainTab::OnGameEvent(const GameEvent& event) {
-  if (event.Name == DCS::EVT_TERRAIN) {
-    p->CurrentConfig.Terrain = event.Value;
-    Update();
-    return;
-  }
-
-  if (event.Name == DCS::EVT_INSTALL_PATH) {
-    p->CurrentConfig.InstallPath = std::filesystem::canonical(event.Value);
-    Update();
-    return;
-  }
+const char* DCSTerrainTab::GetGameEventName() const {
+  return DCS::EVT_TERRAIN;
 }
 
-void DCSTerrainTab::Update() {
-  auto c = p->CurrentConfig;
-  if (c == p->LastValidConfig) {
-    return;
-  }
-
-  if (c.InstallPath.empty()) {
-    return;
-  }
-
-  auto path = c.InstallPath / "Mods" / "terrains" / c.Terrain / "Kneeboard";
-  dprintf("Loading terrain from {}", path.string());
-
+void DCSTerrainTab::Update(const std::filesystem::path& installPath, const std::string& value) {
+  auto path = installPath / "Mods" / "terrains" / value / "Kneeboard";
   this->SetPath(path);
-
-  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
 }
 
 }// namespace OpenKneeboard

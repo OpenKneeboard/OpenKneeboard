@@ -1,19 +1,16 @@
 #pragma once
 
-#include "OpenKneeboard/FolderTab.h"
+#include "OpenKneeboard/DCSTab.h"
 
 namespace OpenKneeboard {
 
-class DCSTerrainTab final : public FolderTab {
-  public:
-    DCSTerrainTab();
+class DCSTerrainTab final : public DCSTab {
+ public:
+  DCSTerrainTab();
 
-    virtual void OnGameEvent(const GameEvent&) override;
-  private:
-    class Impl;
-    std::shared_ptr<Impl> p;
-
-    void Update();
+ protected:
+  virtual const char* GetGameEventName() const override final;
+  virtual void Update(const std::filesystem::path&, const std::string&);
 };
 
-}
+}// namespace OpenKneeboard
