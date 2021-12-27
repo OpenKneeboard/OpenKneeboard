@@ -41,7 +41,8 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
     RenderError(this->GetClientSize(), dc, _("No Pages"));
     return;
   }
-  p->PageIndex = std::clamp(p->PageIndex, 0ui16, count);
+  p->PageIndex
+    = std::clamp(p->PageIndex, 0ui16, static_cast<uint16_t>(count - 1));
 
   auto image = p->Tab->RenderPage(p->PageIndex);
   if (!image.IsOk()) {
@@ -71,7 +72,7 @@ void okTabCanvas::SetPageIndex(uint16_t index) {
   if (count == 0) {
     return;
   }
-  p->PageIndex = std::clamp(index, 0ui16, count);
+  p->PageIndex = std::clamp(index, 0ui16, static_cast<uint16_t>(count - 1));
   Refresh();
 }
 

@@ -1,5 +1,7 @@
 #include "OpenKneeboard/FolderTab.h"
 
+#include "OpenKneeboard/dprint.h"
+
 namespace OpenKneeboard {
 class FolderTab::Impl final {
  public:
@@ -8,9 +10,7 @@ class FolderTab::Impl final {
   std::vector<std::filesystem::path> PagePaths = {};
 };
 
-FolderTab::FolderTab(
-  const wxString& title,
-  const std::filesystem::path& path)
+FolderTab::FolderTab(const wxString& title, const std::filesystem::path& path)
   : Tab(title), p(new Impl {.Path = path}) {
   Reload();
 }
@@ -43,6 +43,7 @@ uint16_t FolderTab::GetPageCount() const {
 
 wxImage FolderTab::RenderPage(uint16_t index) {
   if (index >= GetPageCount()) {
+    dprintf("Asked to render page >= pagecount in {}", __FILE__);
     return wxImage();
   }
 
@@ -56,6 +57,8 @@ wxImage FolderTab::RenderPage(uint16_t index) {
     p->Pages[index] = image;
     return image;
   }
+
+  dprintf("image invalid: {}", p->PagePaths.at(index).string());
 
   p->Pages.erase(p->Pages.begin() + index);
   p->PagePaths.erase(p->PagePaths.begin() + index);
