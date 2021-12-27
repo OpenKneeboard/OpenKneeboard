@@ -10,6 +10,7 @@
 #include <wx/notebook.h>
 #pragma warning(pop)
 
+#include "OpenKneeboard/DCSAircraftTab.h"
 #include "OpenKneeboard/DCSMissionTab.h"
 #include "OpenKneeboard/DCSTerrainTab.h"
 #include "OpenKneeboard/GameEvent.h"
@@ -51,7 +52,7 @@ class MainWindow final : public wxFrame {
     sizer->Add(notebook);
 
     auto tab
-      = new okTab(notebook, std::make_shared<OpenKneeboard::DCSMissionTab>());
+      = new okTab(notebook, std::make_shared<OpenKneeboard::DCSAircraftTab>());
     tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());
@@ -123,8 +124,8 @@ class OpenKneeboardApp final : public wxApp {
     using DCS = OpenKneeboard::Games::DCSWorld;
     dprintf(
       "DCS paths:\n  Stable: {}\n  Open Beta: {}",
-      DCS::GetStablePath(),
-      DCS::GetOpenBetaPath());
+      DCS::GetStablePath().string(),
+      DCS::GetOpenBetaPath().string());
     wxInitAllImageHandlers();
     MainWindow* window = new MainWindow();
     window->Show();

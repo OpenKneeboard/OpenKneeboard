@@ -1,5 +1,6 @@
 #include "OpenKneeboard\Games\DCSWorld.h"
 
+#include <ShlObj.h>
 #include <Windows.h>
 #include <fmt/format.h>
 
@@ -7,7 +8,7 @@
 
 namespace OpenKneeboard::Games {
 
-static std::string GetDCSPath(const char* lastSubKey) {
+static std::filesystem::path GetDCSPath(const char* lastSubKey) {
   const auto subkey = fmt::format("SOFTWARE\\Eagle Dynamics\\{}", lastSubKey);
   char buffer[MAX_PATH];
   DWORD length = sizeof(buffer);
@@ -25,27 +26,48 @@ static std::string GetDCSPath(const char* lastSubKey) {
     return {};
   }
 
-  return buffer;
+  return std::filesystem::canonical(std::filesystem::path(buffer));
 }
 
-std::string DCSWorld::GetStablePath() {
-  return GetDCSPath("DCS World");
-}
-
-std::string DCSWorld::GetOpenBetaPath() {
-  return GetDCSPath("DCS World OpenBeta");
-}
-
-std::string DCSWorld::GetNewestPath() {
-  auto path = GetOpenBetaPath();
-  if (path.empty()) {
-    path = GetStablePath();
+std::filesystem::path DCSWorld::GetStablePath() {
+  static std::filesystem::path sPath;
+  if (sPath.empty()) {
+    sPath = GetDCSPath("DCS World");
   }
-  if (path.empty()) {
-    dprint("Failed to find any DCS World installation path.");
+  return sPath;
+}
+
+std::filesystem::path DCSWorld::GetOpenBetaPath() {
+  static std::filesystem::path sPath;
+  if (sPath.empty()) {
+    sPath = GetDCSPath("DCS World OpenBeta");
+  }
+  return sPath;
+}
+
+std::filesystem::path DCSWorld::GetSavedGamesPath(
+  const std::filesystem::path& installPath) {
+  static std::filesystem::path sSavedGames;
+  if (sSavedGames.empty()) {
+    wchar_t* path = nullptr;
+    if (SHGetKnownFolderPath(FOLDERID_SavedGames, 0, NULL, &path) != S_OK) {
+      return {};
+    }
+    if (!path) {
+      return {};
+    }
+    sSavedGames = {std::wstring(path)};
   }
 
-  return path;
+  if (installPath == GetOpenBetaPath()) {
+    return sSavedGames / "DCS.openbeta";
+  }
+
+  if (installPath == GetStablePath()) {
+    return sSavedGames / "DCS";
+  }
+
+  return {};
 }
 
 }// namespace OpenKneeboard::Games
