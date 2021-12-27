@@ -26,8 +26,9 @@ class MainWindow final : public wxFrame {
       wxSize {768 / 2, 1024 / 2},
       wxDEFAULT_FRAME_STYLE) {
     Bind(wxEVT_PAINT, &MainWindow::OnPaint, this);
-    Bind(wxEVT_ERASE_BACKGROUND, [this](auto) {
-      this->Close(true); }, wxID_EXIT);
+    Bind(wxEVT_ERASE_BACKGROUND, [this](auto) {});
+    Bind(
+      wxEVT_MENU, [this](auto) { this->Close(true); }, wxID_EXIT);
 
     auto menuBar = new wxMenuBar();
     {
@@ -37,8 +38,7 @@ class MainWindow final : public wxFrame {
     }
     SetMenuBar(menuBar);
 
-    mTimer.Bind(wxEVT_TIMER, [this](auto) {
-      this->CheckForUpdate(); });
+    mTimer.Bind(wxEVT_TIMER, [this](auto) { this->CheckForUpdate(); });
     mTimer.Start(100);
   }
 
