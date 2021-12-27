@@ -31,16 +31,39 @@ okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
 okTabCanvas::~okTabCanvas() {
 }
 
+static void
+RenderError(const wxSize& clientSize, wxDC& dc, const wxString& message) {
+  auto textSize = dc.GetTextExtent(message);
+  auto textOrigin = wxPoint {
+    (clientSize.GetWidth() - textSize.GetWidth()) / 2,
+    (clientSize.GetHeight() - textSize.GetHeight()) / 2};
+  dc.SetPen(wxPen(*wxBLACK, 2));
+  auto boxSize = wxSize {textSize.GetWidth() + 20, textSize.GetHeight() + 20};
+  auto boxOrigin = wxPoint {
+    (clientSize.GetWidth() - boxSize.GetWidth()) / 2,
+    (clientSize.GetHeight() - boxSize.GetHeight()) / 2};
+
+  dc.SetBrush(*wxGREY_BRUSH);
+  dc.DrawRectangle(boxOrigin, boxSize);
+
+  dc.SetBrush(*wxBLACK_BRUSH);
+  dc.DrawText(message, textOrigin);
+}
+
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   const auto count = p->Tab->GetPageCount();
+  wxBufferedPaintDC dc(this);
+  dc.Clear();
+
   if (count == 0) {
-    // TODO: render error thing;
+    RenderError(this->GetClientSize(), dc, _("No Pages"));
     return;
   }
   p->PageIndex = std::clamp(p->PageIndex, 0ui16, count);
 
   auto image = p->Tab->RenderPage(p->PageIndex);
   if (!image.IsOk()) {
+    RenderError(this->GetClientSize(), dc, _("Invalid Page"));
     return;
   }
 
@@ -52,8 +75,6 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   const auto scaled = image.Scale(
     (int)imageSize.GetWidth() * scale, (int)imageSize.GetHeight() * scale);
 
-  wxBufferedPaintDC dc(this);
-  dc.Clear();
   dc.DrawBitmap(scaled, wxPoint {0, 0});
 }
 
