@@ -80,7 +80,11 @@
     "xmemory": "cpp",
     "xstddef": "cpp",
     "xtree": "cpp",
-    "xutility": "cpp"
+    "xutility": "cpp",
+    "any": "cpp",
+    "complex": "cpp",
+    "typeindex": "cpp",
+    "variant": "cpp"
   },
   "cmake.configureOnOpen": true
 }

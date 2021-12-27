@@ -1,14 +1,15 @@
 #pragma once
 
-#include "OpenKneeboard/FolderTab.h"
+#include "OpenKneeboard/Tab.h"
 
 #include <filesystem>
 
 namespace OpenKneeboard {
 
-class DCSTab : public FolderTab {
+class DCSTab : public Tab {
   public:
     DCSTab(const wxString& title);
+    virtual ~DCSTab();
 
     virtual void OnGameEvent(const GameEvent&) override final;
   protected:

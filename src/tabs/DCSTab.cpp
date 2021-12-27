@@ -23,7 +23,10 @@ class DCSTab::Impl final {
 };
 
 DCSTab::DCSTab(const wxString& title)
-  : FolderTab(title, {}), p(std::make_shared<Impl>()) {
+  : Tab(title), p(std::make_shared<Impl>()) {
+}
+
+DCSTab::~DCSTab() {
 }
 
 void DCSTab::OnGameEvent(const GameEvent& event) {
