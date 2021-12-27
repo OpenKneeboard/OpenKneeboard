@@ -22,6 +22,8 @@
 #include "okGameEventMailslotThread.h"
 #include "okTab.h"
 
+#include "okDirectInputPageController.h"
+
 using namespace OpenKneeboard;
 
 class MainWindow final : public wxFrame {
@@ -39,6 +41,7 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxDefaultSize,
       wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER) {
+    this->Bind(okEVT_GAME_EVENT, &MainWindow::OnGameEvent, this);
     auto menuBar = new wxMenuBar();
     {
       auto fileMenu = new wxMenu();
@@ -79,7 +82,11 @@ class MainWindow final : public wxFrame {
 
     auto listener = new okGameEventMailslotThread(this);
     listener->Run();
-    Bind(okEVT_GAME_EVENT, &MainWindow::OnGameEvent, this);
+
+    okDirectInputPageController dipc;
+    auto f = new wxFrame(this, wxID_ANY, _("Bindings"));
+    dipc.GetSettingsUI(f);
+    f->Show();
   }
 
   void OnTabChanged(wxBookCtrlEvent& ev) {
