@@ -10,7 +10,7 @@
 #include <wx/notebook.h>
 #pragma warning(pop)
 
-#include "OpenKneeboard/FolderTab.h"
+#include "OpenKneeboard/DCSTerrainTab.h"
 #include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/SHM.h"
@@ -49,12 +49,8 @@ class MainWindow final : public wxFrame {
     auto notebook = new wxNotebook(this, wxID_ANY);
     sizer->Add(notebook);
 
-    auto tab = new okTab(
-      notebook,
-      std::make_shared<OpenKneeboard::FolderTab>(
-        "Local",
-        L"C:\\Program Files\\Eagle Dynamics\\DCS World "
-        L"OpenBeta\\Mods\\terrains\\Caucasus\\Kneeboard"));
+    auto tab
+      = new okTab(notebook, std::make_shared<OpenKneeboard::DCSTerrainTab>());
     Bind(okEVT_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());
@@ -69,9 +65,11 @@ class MainWindow final : public wxFrame {
   }
 
   void OnGameEvent(wxThreadEvent& ev) {
-    const auto payload = ev.GetPayload<GameEvent>();
-    dprintf("GameEvent: '{}' = '{}'", payload.Name, payload.Value);
-    // TODO
+    const auto ge = ev.GetPayload<GameEvent>();
+    dprintf("GameEvent: '{}' = '{}'", ge.Name, ge.Value);
+    for (auto tab: mTabs) {
+      tab->GetTab()->OnGameEvent(ge);
+    }
   }
 
   void UpdateSHM() {

@@ -10,5 +10,6 @@ target_link_libraries(
   PUBLIC
   wx::core
   wx::base
+  dprint
   games
   gameevent)

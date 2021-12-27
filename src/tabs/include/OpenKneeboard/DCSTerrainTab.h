@@ -10,9 +10,10 @@ class DCSTerrainTab final : public FolderTab {
 
     virtual void OnGameEvent(const GameEvent&) override;
   private:
-    void LoadTerrain(const std::string& terrain);
+    class Impl;
+    std::shared_ptr<Impl> p;
 
-    std::string mTerrain;
+    void Update();
 };
 
 }

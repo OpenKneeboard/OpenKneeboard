@@ -36,10 +36,11 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  (OpenKneeboard::GameEvent {
+  auto ge = OpenKneeboard::GameEvent {
     .Name = fmt::format(
       "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1)),
-    .Value = lua_tostring(state, 2)}).Send();
+    .Value = lua_tostring(state, 2)};
+  ge.Send();
 
   return 0;
 }
