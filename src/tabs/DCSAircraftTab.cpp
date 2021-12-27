@@ -35,13 +35,9 @@ const char* DCSAircraftTab::GetGameEventName() const {
 
 void DCSAircraftTab::Update(
   const std::filesystem::path& installPath,
+  const std::filesystem::path& savedGamesPath,
   const std::string& aircraft) {
-
-  auto path = DCS::GetSavedGamesPath(installPath) / "KNEEBOARD" / aircraft;
-  if (!std::filesystem::is_directory(path)) {
-    return;
-  }
-
+  auto path = savedGamesPath / "KNEEBOARD" / aircraft;
   mDelegate->SetPath(path);
 }
 

@@ -25,6 +25,7 @@ state = {
 
 function sendState()
   OpenKneeboard.send("InstallPath", lfs.currentdir());
+  OpenKneeboard.send("SavedGamesPath", lfs.writedir());
   if state.aircraft then
     OpenKneeboard.send("Aircraft", state.aircraft)
   end

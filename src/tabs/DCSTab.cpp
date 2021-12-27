@@ -14,6 +14,7 @@ class DCSTab::Impl final {
  public:
   struct Config final {
     std::filesystem::path InstallPath;
+    std::filesystem::path SavedGamesPath;
     std::string Value;
     bool operator==(const Config&) const = default;
   };
@@ -41,6 +42,12 @@ void DCSTab::OnGameEvent(const GameEvent& event) {
     Update();
     return;
   }
+
+  if (event.Name == DCS::EVT_SAVED_GAMES_PATH) {
+    p->CurrentConfig.SavedGamesPath = std::filesystem::canonical(event.Value);
+    Update();
+    return;
+  }
 }
 
 void DCSTab::Update() {
@@ -53,7 +60,11 @@ void DCSTab::Update() {
     return;
   }
 
-  this->Update(c.InstallPath, c.Value);
+  if (c.SavedGamesPath.empty()) {
+    return;
+  }
+
+  this->Update(c.InstallPath, c.SavedGamesPath, c.Value);
 
   wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
 }

@@ -35,6 +35,7 @@ const char* DCSTerrainTab::GetGameEventName() const {
 
 void DCSTerrainTab::Update(
   const std::filesystem::path& installPath,
+  const std::filesystem::path& _savedGamesPath,
   const std::string& value) {
   auto path = installPath / "Mods" / "terrains" / value / "Kneeboard";
   mDelegate->SetPath(path);

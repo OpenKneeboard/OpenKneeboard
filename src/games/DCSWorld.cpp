@@ -1,6 +1,5 @@
 #include "OpenKneeboard\Games\DCSWorld.h"
 
-#include <ShlObj.h>
 #include <Windows.h>
 #include <fmt/format.h>
 
@@ -43,31 +42,6 @@ std::filesystem::path DCSWorld::GetOpenBetaPath() {
     sPath = GetDCSPath("DCS World OpenBeta");
   }
   return sPath;
-}
-
-std::filesystem::path DCSWorld::GetSavedGamesPath(
-  const std::filesystem::path& installPath) {
-  static std::filesystem::path sSavedGames;
-  if (sSavedGames.empty()) {
-    wchar_t* path = nullptr;
-    if (SHGetKnownFolderPath(FOLDERID_SavedGames, 0, NULL, &path) != S_OK) {
-      return {};
-    }
-    if (!path) {
-      return {};
-    }
-    sSavedGames = {std::wstring(path)};
-  }
-
-  if (installPath == GetOpenBetaPath()) {
-    return sSavedGames / "DCS.openbeta";
-  }
-
-  if (installPath == GetStablePath()) {
-    return sSavedGames / "DCS";
-  }
-
-  return {};
 }
 
 }// namespace OpenKneeboard::Games

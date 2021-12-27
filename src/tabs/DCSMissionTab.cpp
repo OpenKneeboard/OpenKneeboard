@@ -113,6 +113,7 @@ const char* DCSMissionTab::GetGameEventName() const {
 
 void DCSMissionTab::Update(
   const std::filesystem::path& _installPath,
+  const std::filesystem::path& _savedGamePath,
   const std::string& value) {
   dprintf("Mission: {}", value);
   auto mission = std::filesystem::canonical(value);

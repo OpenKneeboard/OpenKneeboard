@@ -15,8 +15,10 @@ class DCSMissionTab final : public DCSTab {
 
  protected:
   virtual const char* GetGameEventName() const override;
-  virtual void Update(const std::filesystem::path&, const std::string&)
-    override;
+  virtual void Update(
+    const std::filesystem::path&,
+    const std::filesystem::path&,
+    const std::string&) override;
 
  private:
   class Impl;
