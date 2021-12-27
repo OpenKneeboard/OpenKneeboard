@@ -18,6 +18,7 @@
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
+#include "OpenKneeboard/RenderError.h"
 #include "okGameEventMailslotThread.h"
 #include "okTab.h"
 
@@ -98,14 +99,30 @@ class MainWindow final : public wxFrame {
     }
   }
 
+  wxImage CreateErrorImage(const wxString& text) {
+    wxBitmap bm(768, 1024);
+    wxMemoryDC dc(bm);
+
+    dc.SetBrush(*wxWHITE_BRUSH);
+    dc.Clear();
+    RenderError(bm.GetSize(), dc, text);
+
+    return bm.ConvertToImage();
+  }
+
   void UpdateSHM() {
     if (!mSHM) {
       return;
     }
 
-    auto image = mTabs.at(mCurrentTab)->GetImage();
+    auto tab = mTabs.at(mCurrentTab);
+    auto image = tab->GetImage();
     if (!image.IsOk()) {
-      return;
+      if (tab->GetTab()->GetPageCount() == 0) {
+        image = CreateErrorImage(_("No Pages"));
+      } else {
+        image = CreateErrorImage(_("Invalid Page Image"));
+      }
     }
 
     auto ratio = float(image.GetHeight()) / image.GetWidth();

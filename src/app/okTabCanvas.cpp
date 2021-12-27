@@ -45,7 +45,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
 
   auto image = p->Tab->RenderPage(p->PageIndex);
   if (!image.IsOk()) {
-    RenderError(this->GetClientSize(), dc, _("Invalid Page"));
+    RenderError(this->GetClientSize(), dc, _("Invalid Page Image"));
     return;
   }
 
