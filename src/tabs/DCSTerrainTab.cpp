@@ -46,7 +46,7 @@ void DCSTerrainTab::Update() {
     return;
   }
 
-  if (c.InstallPath.empty() || c.Terrain.empty()) {
+  if (c.InstallPath.empty()) {
     return;
   }
 
