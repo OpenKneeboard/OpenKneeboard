@@ -20,8 +20,8 @@ add_compile_definitions(
 
 add_subdirectory(lib)
 
+add_subdirectory(dcs-hook)
 add_subdirectory(injectables)
-add_subdirectory(dcs)
 add_subdirectory(games)
 
 add_subdirectory(utilities)
