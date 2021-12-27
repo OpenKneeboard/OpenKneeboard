@@ -1,5 +1,7 @@
 #include "OpenKneeboard/Tab.h"
 
+wxDEFINE_EVENT(okEVT_TAB_UPDATED, wxCommandEvent);
+
 namespace OpenKneeboard {
 
 class Tab::Impl final {

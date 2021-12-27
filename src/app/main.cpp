@@ -51,7 +51,7 @@ class MainWindow final : public wxFrame {
 
     auto tab
       = new okTab(notebook, std::make_shared<OpenKneeboard::DCSTerrainTab>());
-    Bind(okEVT_PAGE_CHANGED, [=](auto) { this->UpdateSHM(); });
+    tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
     mTabs = {tab};
     notebook->AddPage(tab, tab->GetTab()->GetTitle());
 

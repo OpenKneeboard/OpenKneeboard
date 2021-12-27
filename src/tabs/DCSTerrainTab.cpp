@@ -54,6 +54,8 @@ void DCSTerrainTab::Update() {
   dprintf("Loading terrain from {}", path.string());
 
   this->SetPath(path);
+
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
 }
 
 }// namespace OpenKneeboard

@@ -19,8 +19,13 @@ okTabCanvas::okTabCanvas(
     wxDefaultPosition,
     wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
     p(new Impl {.Tab = tab}) {
+  tab->Bind(okEVT_TAB_UPDATED, [this](auto) {
+    p->PageIndex = 0;
+    this->Refresh();
+    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
+  });
   Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
-  Bind(wxEVT_ERASE_BACKGROUND, [](auto){/* ignore */});
+  Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
 }
 
 okTabCanvas::~okTabCanvas() {

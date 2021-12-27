@@ -9,10 +9,12 @@
 #include <memory>
 #include <string>
 
+wxDECLARE_EVENT(okEVT_TAB_UPDATED, wxCommandEvent);
+
 namespace OpenKneeboard {
 struct GameEvent;
 
-class Tab {
+class Tab : public wxEvtHandler {
  public:
   Tab(const wxString& title);
   virtual ~Tab();
@@ -23,7 +25,6 @@ class Tab {
   virtual void OnGameEvent(const GameEvent&);
   virtual uint16_t GetPageCount() const = 0;
   virtual wxImage RenderPage(uint16_t index) = 0;
-
  private:
   class Impl;
   std::shared_ptr<Impl> p;
