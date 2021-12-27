@@ -13,6 +13,7 @@
 #include "OpenKneeboard/DCSAircraftTab.h"
 #include "OpenKneeboard/DCSMissionTab.h"
 #include "OpenKneeboard/DCSTerrainTab.h"
+#include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/SHM.h"
@@ -51,11 +52,17 @@ class MainWindow final : public wxFrame {
     auto notebook = new wxNotebook(this, wxID_ANY);
     sizer->Add(notebook);
 
-    auto tab
-      = new okTab(notebook, std::make_shared<OpenKneeboard::DCSAircraftTab>());
-    tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
-    mTabs = {tab};
-    notebook->AddPage(tab, tab->GetTab()->GetTitle());
+    auto testTab
+      = new okTab(notebook, std::make_shared<FolderTab>("Folder", Games::DCSWorld::GetOpenBetaPath() / "Mods/terrains/Caucasus/Kneeboard"));
+    auto aircraft
+      = new okTab(notebook, std::make_shared<DCSAircraftTab>());
+    auto terrain
+    = new okTab(notebook, std::make_shared<DCSTerrainTab>());
+    mTabs = {testTab, aircraft, terrain};
+    for (auto tab: mTabs) {
+      notebook->AddPage(tab, tab->GetTab()->GetTitle());
+      tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
+    }
 
     this->SetSizerAndFit(sizer);
 
