@@ -25,6 +25,8 @@
 
 #include "okDirectInputController.h"
 
+#include "Settings.h"
+
 using namespace OpenKneeboard;
 
 class MainWindow final : public wxFrame {
@@ -33,6 +35,7 @@ class MainWindow final : public wxFrame {
   OpenKneeboard::SHM::Writer mSHM;
   wxNotebook* mNotebook;
   int mCurrentTab = 0;
+  Settings mSettings = Settings::Load();
 
  public:
   MainWindow()
@@ -80,7 +83,7 @@ class MainWindow final : public wxFrame {
     listener->Run();
 
     {
-      auto dipc = new okDirectInputController({/*config*/});
+      auto dipc = new okDirectInputController(mSettings.DirectInput);
       dipc->Bind(okEVT_PREVIOUS_TAB, &MainWindow::OnPreviousTab, this);
       dipc->Bind(okEVT_NEXT_TAB, &MainWindow::OnNextTab, this);
       dipc->Bind(okEVT_PREVIOUS_PAGE, &MainWindow::OnPreviousPage, this);
@@ -89,7 +92,8 @@ class MainWindow final : public wxFrame {
       auto dis = dipc->GetSettingsUI(f);
 
       dis->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-        dprintf("New settings:\n{}", dipc->GetSettings().dump(2));
+        this->mSettings.DirectInput = dipc->GetSettings();
+        mSettings.Save();
       });
       auto difs = new wxBoxSizer(wxVERTICAL);
       difs->Add(dis, 1, wxEXPAND);
