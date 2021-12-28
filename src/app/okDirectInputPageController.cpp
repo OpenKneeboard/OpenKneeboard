@@ -3,8 +3,11 @@
 #include <fmt/format.h>
 #include <winrt/base.h>
 #include <wx/gbsizer.h>
+#include <wx/scopeguard.h>
 
 #include "OpenKneeboard/dprint.h"
+
+#include "okEvents.h"
 
 using namespace OpenKneeboard;
 
@@ -47,8 +50,8 @@ DeviceInstances EnumDevices() {
 struct DIButtonEvent {
   bool Valid = false;
   DIDEVICEINSTANCE Instance;
-  uint8_t ButtonID;
-  bool ButtonState;
+  uint8_t ButtonIndex;
+  bool Pressed;
 
   operator bool() const {
     return Valid;
@@ -109,7 +112,7 @@ class DIButtonListener final : public wxEvtHandler {
     handles.push_back(mCancelHandle);
 
     auto result
-      = WaitForMultipleObjects(handles.size(), handles.data(), false, 10000000);
+      = WaitForMultipleObjects(handles.size(), handles.data(), false, 100);
     auto idx = result - WAIT_OBJECT_0;
     if (idx <= 0 || idx >= (handles.size() - 1)) {
       return {};
@@ -126,7 +129,7 @@ class DIButtonListener final : public wxEvtHandler {
         return {
           true,
           device.Instance,
-          static_cast<uint8_t>(i + 1),
+          static_cast<uint8_t>(i),
           (bool)(newState.rgbButtons[i] & (1 << 7))};
       }
     }
@@ -136,13 +139,13 @@ class DIButtonListener final : public wxEvtHandler {
 
 struct DIInputBinding {
   DIDEVICEINSTANCE Instance;
-  uint8_t Button;
+  uint8_t ButtonIndex;
   wxEventTypeTag<wxCommandEvent> EventType;
 };
 
 struct DIInputBindings {
-  std::vector<DIInputBinding> Bindings = {};
-  bool Enabled = true;
+  std::vector<DIInputBinding> Bindings;
+  wxEvtHandler* Hook = nullptr;
 };
 
 }// namespace
@@ -178,9 +181,13 @@ class okDirectInputThread final : public wxThread {
 class okDirectInputPageSettings final : public wxPanel {
  private:
   DeviceInstances mDevices;
+  std::shared_ptr<DIInputBindings> mBindings;
 
  public:
-  okDirectInputPageSettings(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
+  okDirectInputPageSettings(
+    wxWindow* parent,
+    const std::shared_ptr<DIInputBindings>& bindings)
+    : wxPanel(parent, wxID_ANY), mBindings(bindings) {
     mDevices = EnumDevices();
 
     auto sizer = new wxBoxSizer(wxVERTICAL);
@@ -254,29 +261,72 @@ class okDirectInputPageSettings final : public wxPanel {
     auto d = CreateBindInputDialog();
     auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
 
-    wxEvtHandler eh;
-    okDirectInputThread dit(&eh);
-    eh.Bind(okEVT_DI_BUTTON_EVENT, [=](wxThreadEvent& ev) {
-      ev.Skip();
+    wxON_BLOCK_EXIT_SET(mBindings->Hook, nullptr);
+    mBindings->Hook = this;
+
+    auto f = [=](wxThreadEvent& ev) {
       auto be = ev.GetPayload<DIButtonEvent>();
       if (be.Instance.guidInstance != device.guidInstance) {
         return;
       }
-      button->SetLabel(fmt::format(_("Button {:d}").ToStdString(), be.ButtonID));
+      button->SetLabel(
+        fmt::format(_("Button {:d}").ToStdString(), be.ButtonIndex));
+      mBindings->Bindings.push_back({.Instance = device, .EventType = okEVT_PREVIOUS_TAB});
       d->Close();
-    });
-    dit.Run();
-
+    };
+    this->Bind(okEVT_DI_BUTTON_EVENT, f);
     d->ShowModal();
-
-    dit.Pause();
+    this->Unbind(okEVT_DI_BUTTON_EVENT, f);
   }
 };
+
+class okDirectInputPageController::Impl final {
+ public:
+  std::shared_ptr<DIInputBindings> Bindings;
+  std::unique_ptr<okDirectInputThread> DirectInputThread;
+};
+
+okDirectInputPageController::okDirectInputPageController()
+  : p(std::make_shared<Impl>()) {
+  p->Bindings = std::make_shared<DIInputBindings>();
+  p->DirectInputThread = std::make_unique<okDirectInputThread>(this);
+  p->DirectInputThread->Run();
+  this->Bind(okEVT_DI_BUTTON_EVENT, &okDirectInputPageController::OnDIButtonEvent, this);
+}
+
+okDirectInputPageController::~okDirectInputPageController() {
+  p->DirectInputThread->Wait();
+}
+
+void okDirectInputPageController::OnDIButtonEvent(const wxThreadEvent& ev) {
+  if (p->Bindings->Hook) {
+    wxQueueEvent(p->Bindings->Hook, ev.Clone());
+    return;
+  }
+
+  auto be = ev.GetPayload<DIButtonEvent>();
+  if (!be.Pressed) {
+    // We act on keydown
+    return;
+  }
+
+  dprintf("DI Button: {} {}", wxString(be.Instance.tszInstanceName).ToStdString(), be.ButtonIndex);
+  for (auto& it: p->Bindings->Bindings) {
+    if (it.Instance.guidInstance != be.Instance.guidInstance) {
+      continue;
+    }
+    if (it.ButtonIndex != be.ButtonIndex) {
+      continue;
+    }
+    dprint("Dispatching binding");
+    wxQueueEvent(this, new wxCommandEvent(it.EventType));
+  }
+}
 
 wxString okDirectInputPageController::GetTitle() const {
   return _("DirectInput");
 }
 
-wxWindow* okDirectInputPageController::GetSettingsUI(wxWindow* parent) const {
-  return new okDirectInputPageSettings(parent);
+wxWindow* okDirectInputPageController::GetSettingsUI(wxWindow* parent) {
+  return new okDirectInputPageSettings(parent, p->Bindings);
 }

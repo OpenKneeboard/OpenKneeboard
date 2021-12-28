@@ -21,6 +21,7 @@
 #include "OpenKneeboard/RenderError.h"
 #include "okGameEventMailslotThread.h"
 #include "okTab.h"
+#include "okEvents.h"
 
 #include "okDirectInputPageController.h"
 
@@ -30,6 +31,7 @@ class MainWindow final : public wxFrame {
  private:
   std::vector<okTab*> mTabs;
   OpenKneeboard::SHM::Writer mSHM;
+  wxNotebook* mNotebook;
   int mCurrentTab = 0;
 
  public:
@@ -54,24 +56,24 @@ class MainWindow final : public wxFrame {
 
     auto sizer = new wxBoxSizer(wxVERTICAL);
 
-    auto notebook = new wxNotebook(this, wxID_ANY);
-    notebook->Bind(
+    mNotebook = new wxNotebook(this, wxID_ANY);
+    mNotebook->Bind(
       wxEVT_BOOKCTRL_PAGE_CHANGED, &MainWindow::OnTabChanged, this);
-    sizer->Add(notebook);
+    sizer->Add(mNotebook);
 
     mTabs = {
       new okTab(
-        notebook,
+        mNotebook,
         std::make_shared<FolderTab>(
           "Test Folder",
           Games::DCSWorld::GetOpenBetaPath()
             / "Mods/terrains/Caucasus/Kneeboard")),
-      new okTab(notebook, std::make_shared<DCSMissionTab>()),
-      new okTab(notebook, std::make_shared<DCSAircraftTab>()),
-      new okTab(notebook, std::make_shared<DCSTerrainTab>()),
+      new okTab(mNotebook, std::make_shared<DCSMissionTab>()),
+      new okTab(mNotebook, std::make_shared<DCSAircraftTab>()),
+      new okTab(mNotebook, std::make_shared<DCSTerrainTab>()),
     };
     for (auto tab: mTabs) {
-      notebook->AddPage(tab, tab->GetTab()->GetTitle());
+      mNotebook->AddPage(tab, tab->GetTab()->GetTitle());
       tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
       tab->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
     }
@@ -83,10 +85,19 @@ class MainWindow final : public wxFrame {
     auto listener = new okGameEventMailslotThread(this);
     listener->Run();
 
-    okDirectInputPageController dipc;
-    auto f = new wxFrame(this, wxID_ANY, _("Bindings"));
-    dipc.GetSettingsUI(f);
-    f->Show();
+    {
+      auto dipc = new okDirectInputPageController();
+      dipc->Bind(okEVT_PREVIOUS_TAB, &MainWindow::OnPreviousTab, this);
+      dipc->Bind(okEVT_NEXT_TAB, &MainWindow::OnNextTab, this);
+      dipc->Bind(okEVT_PREVIOUS_PAGE, &MainWindow::OnPreviousPage, this);
+      dipc->Bind(okEVT_NEXT_PAGE, &MainWindow::OnNextPage, this);
+      auto f = new wxFrame(this, wxID_ANY, _("Bindings"));
+      auto dis = dipc->GetSettingsUI(f);
+      auto difs = new wxBoxSizer(wxVERTICAL);
+      difs->Add(dis, 1, wxEXPAND);
+      f->SetSizerAndFit(difs);
+      f->Show();
+    }
   }
 
   void OnTabChanged(wxBookCtrlEvent& ev) {
@@ -163,6 +174,20 @@ class MainWindow final : public wxFrame {
 
   void OnExit(wxCommandEvent& ev) {
     Close(true);
+  }
+
+  void OnPreviousTab(wxCommandEvent& ev) {
+    mNotebook->AdvanceSelection(false);
+  }
+
+  void OnNextTab(wxCommandEvent& ev) {
+    mNotebook->AdvanceSelection(true);
+  }
+
+  void OnPreviousPage(wxCommandEvent& ev) {
+  }
+
+  void OnNextPage(wxCommandEvent& ev) {
   }
 };
 

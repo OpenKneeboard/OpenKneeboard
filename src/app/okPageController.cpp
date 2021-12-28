@@ -6,6 +6,6 @@ okPageController::okPageController() {
 okPageController::~okPageController() {
 }
 
-wxWindow* okPageController::GetSettingsUI(wxWindow* parent) const {
+wxWindow* okPageController::GetSettingsUI(wxWindow* parent) {
   return nullptr;
 }
