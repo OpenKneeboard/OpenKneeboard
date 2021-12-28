@@ -315,7 +315,6 @@ void okDirectInputPageController::OnDIButtonEvent(const wxThreadEvent& ev) {
     return;
   }
 
-    be.ButtonIndex);
   for (auto& it: p->Bindings->Bindings) {
     if (it.Instance.guidInstance != be.Instance.guidInstance) {
       continue;
