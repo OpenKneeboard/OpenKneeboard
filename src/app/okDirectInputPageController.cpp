@@ -181,6 +181,28 @@ class okDirectInputPageSettings final : public wxPanel {
  private:
   DeviceInstances mDevices;
   std::shared_ptr<DIInputBindings> mBindings;
+  struct DeviceButtons {
+    wxButton* PreviousTab = nullptr;
+    wxButton* NextTab = nullptr;
+    wxButton* PreviousPage = nullptr;
+    wxButton* NextPage = nullptr;
+    wxButton* Get(const wxEventTypeTag<wxCommandEvent>& evt) {
+      if (evt == okEVT_PREVIOUS_TAB) {
+        return PreviousTab;
+      }
+      if (evt == okEVT_NEXT_TAB) {
+        return NextTab;
+      }
+      if (evt == okEVT_PREVIOUS_PAGE) {
+        return PreviousPage;
+      }
+      if (evt == okEVT_NEXT_PAGE) {
+        return NextPage;
+      }
+      return nullptr;
+    }
+  };
+  std::vector<DeviceButtons> mDeviceButtons;
 
  public:
   okDirectInputPageSettings(
@@ -239,6 +261,13 @@ class okDirectInputPageSettings final : public wxPanel {
       nextPage->Bind(wxEVT_BUTTON, [=](auto& ev) {
         this->OnBind(ev, device, okEVT_NEXT_PAGE);
       });
+
+      mDeviceButtons.push_back({
+        .PreviousTab = previousTab,
+        .NextTab = nextTab,
+        .PreviousPage = previousPage,
+        .NextPage = nextPage,
+      });
     }
     grid->SetCols(5);
     panel->SetSizerAndFit(grid);
@@ -281,9 +310,37 @@ class okDirectInputPageSettings final : public wxPanel {
       if (be.Instance.guidInstance != device.guidInstance) {
         return;
       }
+
+      // clear any conflicting bindings
+      auto& bindings = this->mBindings->Bindings;
+      for (auto it = bindings.begin(); it != bindings.end();) {
+        if (it->Instance.guidInstance != device.guidInstance) {
+          ++it;
+          continue;
+        }
+
+        if (it->ButtonIndex != be.ButtonIndex && it->EventType != eventType) {
+          ++it;
+          continue;
+        }
+
+        for (auto i = 0; i < this->mDevices.size(); ++i) {
+          if (this->mDevices.at(i).guidInstance != device.guidInstance) {
+            continue;
+          }
+
+          auto button = this->mDeviceButtons.at(i).Get(it->EventType);
+          if (button) {
+            button->SetLabel(_("Bind"));
+          }
+          break;
+        }
+        it = bindings.erase(it);
+      }
+
       button->SetLabel(
         fmt::format(_("Button {:d}").ToStdString(), be.ButtonIndex + 1));
-      mBindings->Bindings.push_back(
+      bindings.push_back(
         {.Instance = device,
          .ButtonIndex = be.ButtonIndex,
          .EventType = eventType});
