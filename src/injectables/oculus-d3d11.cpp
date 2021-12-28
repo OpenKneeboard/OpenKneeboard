@@ -435,7 +435,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   if (dwReason == DLL_PROCESS_ATTACH) {
     OpenKneeboard::DPrintSettings::Set({
       .Prefix = "OpenKneeboard-Oculus-D3D11",
-      .Target = OpenKneeboard::DPrintSettings::Target::DEBUG_STREAM,
     });
     dprintf("Attached to process.");
     DetourRestoreAfterWith();
