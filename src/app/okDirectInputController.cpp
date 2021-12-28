@@ -423,7 +423,13 @@ okDirectInputController::okDirectInputController(
   this->Bind(
     okEVT_DI_BUTTON_EVENT, &okDirectInputController::OnDIButtonEvent, this);
 
-  auto settings = jsonSettings.get<JSONSettings>();
+  JSONSettings settings;
+  try {
+    jsonSettings.get_to(settings);
+  } catch (nlohmann::json::exception&) {
+    return;
+  }
+
   for (const auto& binding: settings.Bindings) {
     const auto& deviceName = settings.Devices.find(binding.Device);
     if (deviceName == settings.Devices.end()) {
