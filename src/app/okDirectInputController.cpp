@@ -181,6 +181,26 @@ class okDirectInputThread final : public wxThread {
 
 wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_BUTTON, wxCommandEvent);
 
+namespace {
+  struct JSONBinding final {
+    std::string Device;
+    uint8_t ButtonIndex;
+    std::string Action;
+  };
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONBinding, Device, ButtonIndex, Action);
+
+  struct JSONDevice {
+    std::string InstanceName;
+  };
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONDevice, InstanceName);
+
+  struct JSONSettings {
+    std::map<std::string, JSONDevice> Devices;
+    std::vector<JSONBinding> Bindings;
+  };
+  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices, Bindings);
+}
+
 class okDirectInputPageSettings final : public wxPanel {
  private:
   DeviceInstances mDevices;
@@ -439,8 +459,7 @@ wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
 }
 
 nlohmann::json okDirectInputController::GetSettings() const {
-  nlohmann::json bindings;
-  nlohmann::json devices;
+  JSONSettings settings;
 
   for (const auto& binding: p->Bindings->Bindings) {
     RPC_CSTR rpcUuid;
@@ -448,7 +467,7 @@ nlohmann::json okDirectInputController::GetSettings() const {
     const std::string uuid(reinterpret_cast<char*>(rpcUuid));
     RpcStringFreeA(&rpcUuid);
 
-    devices[uuid] = {{"InstanceName", binding.InstanceName}};
+    settings.Devices[uuid] = {binding.InstanceName};
     std::string action;
 #define ACTION(x) \
   if (binding.EventType == okEVT_##x) { \
@@ -463,14 +482,11 @@ nlohmann::json okDirectInputController::GetSettings() const {
       continue;
     }
 
-    bindings.push_back({
-      {"Device", uuid},
-      {"ButtonIndex", binding.ButtonIndex},
-      {"Action", action},
+    settings.Bindings.push_back({
+      .Device = uuid,
+      .ButtonIndex = binding.ButtonIndex,
+      .Action = action,
     });
   }
-  return {
-    {"Devices", devices},
-    {"Bindings", bindings},
-  };
+  return settings;
 }
