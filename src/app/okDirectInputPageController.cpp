@@ -242,24 +242,24 @@ class okDirectInputPageSettings final : public wxPanel {
       auto previousTab = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(previousTab, wxGBPosition(row, 1));
       previousTab->Bind(wxEVT_BUTTON, [=](auto& ev) {
-        this->OnBind(ev, i, okEVT_PREVIOUS_TAB);
+        this->OnBindButton(ev, i, okEVT_PREVIOUS_TAB);
       });
 
       auto nextTab = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(nextTab, wxGBPosition(row, 2));
       nextTab->Bind(
-        wxEVT_BUTTON, [=](auto& ev) { this->OnBind(ev, i, okEVT_NEXT_TAB); });
+        wxEVT_BUTTON, [=](auto& ev) { this->OnBindButton(ev, i, okEVT_NEXT_TAB); });
 
       auto previousPage = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(previousPage, wxGBPosition(row, 3));
       previousPage->Bind(wxEVT_BUTTON, [=](auto& ev) {
-        this->OnBind(ev, i, okEVT_PREVIOUS_PAGE);
+        this->OnBindButton(ev, i, okEVT_PREVIOUS_PAGE);
       });
 
       auto nextPage = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(nextPage, wxGBPosition(row, 4));
       nextPage->Bind(
-        wxEVT_BUTTON, [=](auto& ev) { this->OnBind(ev, i, okEVT_NEXT_PAGE); });
+        wxEVT_BUTTON, [=](auto& ev) { this->OnBindButton(ev, i, okEVT_NEXT_PAGE); });
 
       mDeviceButtons.push_back({
         .PreviousTab = previousTab,
@@ -305,7 +305,7 @@ class okDirectInputPageSettings final : public wxPanel {
     return d;
   }
 
-  void OnBind(
+  void OnBindButton(
     wxCommandEvent& ev,
     int deviceIndex,
     const wxEventTypeTag<wxCommandEvent>& eventType) {
