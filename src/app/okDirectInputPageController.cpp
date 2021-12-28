@@ -1,7 +1,8 @@
 #include "okDirectInputPageController.h"
 
 #include <winrt/base.h>
-#include <wx/listctrl.h>
+#include <wx/gbsizer.h>
+#include <wx/statline.h>
 
 #include "OpenKneeboard/dprint.h"
 
@@ -50,8 +51,8 @@ struct DIButtonEvent {
   bool ButtonState;
 
   operator bool() const {
-  return Valid;
-}
+    return Valid;
+  }
 };
 
 class DIButtonListener final : public wxEvtHandler {
@@ -166,32 +167,54 @@ class okDirectInputThread final : public wxThread {
 class okDirectInputPageSettings final : public wxPanel {
  private:
   DeviceInstances mDevices;
-  wxListView* mBindings;
 
  public:
   okDirectInputPageSettings(wxWindow* parent) : wxPanel(parent, wxID_ANY) {
+    mDevices = EnumDevices();
+
     auto sizer = new wxBoxSizer(wxVERTICAL);
 
-    mBindings = new wxListView(this, wxID_ANY);
-    sizer->Add(mBindings);
-    mBindings->AppendColumn(_("Device"));
-    mBindings->AppendColumn(_("Previous Tab"));
-    mBindings->AppendColumn(_("Next Tab"));
-    mBindings->AppendColumn(_("Previous Page"));
-    mBindings->AppendColumn(_("Next Page"));
-    mBindings->Bind(wxEVT_LIST_ITEM_ACTIVATED, &okDirectInputPageSettings::OnItemActivated, this);
+    auto panel = new wxPanel(this, wxID_ANY);
+    sizer->Add(panel, 0, wxEXPAND);
 
-    mDevices = EnumDevices();
-    for (int i = 0; i < mDevices.size(); ++i) {
-      const auto& device = mDevices.at(i);
-      mBindings->InsertItem(i, device.tszInstanceName);
+    auto grid = new wxGridBagSizer(5, 5);
+    grid->AddGrowableCol(0);
+
+    auto bold = GetFont().MakeBold();
+    for (const auto& column: {_("Device"), _("Previous Tab"), _("Next Tab"), _("Previous Page"), _("Next Page")}) {
+      auto label = new wxStaticText(
+        panel,
+        wxID_ANY,
+        column);
+      label->SetFont(bold);
+      grid->Add(label);
     }
 
-    this->SetSizerAndFit(sizer);
-  }
+    for (int i = 0; i < mDevices.size(); ++i) {
+      const auto& device = mDevices.at(i);
+      const auto row = i + 1; // headers
 
-  void OnItemActivated(const wxListEvent& ev) {
-    dprintf("Item activated: row {} column {}", ev.GetItem(), ev.GetColumn());
+      auto label = new wxStaticText(panel, wxID_ANY, device.tszInstanceName);
+      grid->Add(label, wxGBPosition(row, 0));
+
+      auto previousTab = new wxButton(panel, wxID_ANY, _("Bind"));
+      grid->Add(previousTab, wxGBPosition(row, 1));
+
+      auto nextTab = new wxButton(panel, wxID_ANY, _("Bind"));
+      grid->Add(nextTab, wxGBPosition(row, 2));
+
+      auto previousPage = new wxButton(panel, wxID_ANY, _("Bind"));
+      grid->Add(previousPage, wxGBPosition(row, 3));
+
+      auto nextPage = new wxButton(panel, wxID_ANY, _("Bind"));
+      grid->Add(nextPage, wxGBPosition(row, 4));
+    }
+    grid->SetCols(5);
+    panel->SetSizerAndFit(grid);
+
+    sizer->AddStretchSpacer();
+    this->SetSizerAndFit(sizer);
+    Refresh();
   }
 };
 
