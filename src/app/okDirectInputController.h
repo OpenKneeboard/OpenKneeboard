@@ -8,6 +8,7 @@
 // all 128 buttons, rather than just the first 32
 class okDirectInputController final : public okActivePageAndTabController {
  public:
+  okDirectInputController() = delete;
   okDirectInputController(const nlohmann::json& settings);
   virtual ~okDirectInputController();
   
