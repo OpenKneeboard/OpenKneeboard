@@ -22,6 +22,9 @@ class Impl {
   Header* Header;
   Pixel* Pixels;
   bool IsFeeder;
+  SHM::Header LatestHeader;
+  std::vector<Pixel> LatestPixels;
+
   ~Impl() {
     if (IsFeeder) {
       Header->Flags &= ~Flags::FEEDER_ATTACHED;
@@ -94,17 +97,25 @@ std::optional<std::tuple<Header, std::vector<Pixel>>> Reader::MaybeGet() const {
   if (!(*this)) {
     return {};
   }
+
+  if (p->LatestHeader.SequenceNumber == p->Header->SequenceNumber) {
+    return std::make_tuple(p->LatestHeader, p->LatestPixels);
+  }
+
+  auto& header = p->LatestHeader;
+  auto& pixels = p->LatestPixels;
+
   std::vector<std::byte> snapshot(SHM_SIZE);
   memcpy(reinterpret_cast<void*>(snapshot.data()), p->Mapping, SHM_SIZE);
 
-  Header header;
   memcpy(reinterpret_cast<void*>(&header), snapshot.data(), sizeof(Header));
 
-  std::vector<Pixel> pixels(header.ImageHeight * header.ImageWidth);
+  pixels.resize(header.ImageHeight * header.ImageWidth);
   memcpy(
     reinterpret_cast<void*>(pixels.data()),
     &snapshot.data()[sizeof(Header)],
     pixels.size() * sizeof(Pixel));
+
   return {{header, pixels}};
 }
 

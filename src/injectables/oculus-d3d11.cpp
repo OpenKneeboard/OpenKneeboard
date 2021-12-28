@@ -244,7 +244,7 @@ bool KneeboardRenderer::Render(
     &box,
     pixels.data(),
     config.ImageWidth * sizeof(SHMPixel),
-    config.ImageHeight * sizeof(SHMPixel));
+    0);
 
   auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
   if (ret) {
@@ -268,6 +268,7 @@ static bool RenderKneeboard(
   }
 
   if (!(g_Renderer && g_Renderer->isCompatibleWith(header))) {
+    dprint("Incompatible header change, resetting");
     g_Renderer.reset(new KneeboardRenderer(session, d3d, header));
   }
 
