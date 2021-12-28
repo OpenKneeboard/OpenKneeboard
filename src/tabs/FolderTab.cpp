@@ -43,7 +43,13 @@ uint16_t FolderTab::GetPageCount() const {
 
 wxImage FolderTab::RenderPage(uint16_t index) {
   if (index >= GetPageCount()) {
-    dprintf("Asked to render page >= pagecount in {}", __FILE__);
+    if (index != 0) {
+      dprintf(
+        "Asked to render page {} >= pagecount {} in {}",
+        index,
+        GetPageCount(),
+        __FILE__);
+    }
     return wxImage();
   }
 
