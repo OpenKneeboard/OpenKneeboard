@@ -51,13 +51,26 @@ class Writer final {
   std::shared_ptr<Impl> p;
 };
 
+class Snapshot final {
+  private:
+    std::shared_ptr<std::vector<std::byte>> mBytes;
+  public:
+    Snapshot();
+    Snapshot(std::vector<std::byte>&& bytes);
+
+    const Header* const GetHeader() const;
+    const Pixel* const GetPixels() const;
+
+    operator bool() const;
+};
+
 class Reader final {
  public:
   Reader();
   ~Reader();
 
   operator bool() const;
-  std::optional<std::tuple<Header, std::vector<Pixel>>> MaybeGet() const;
+  Snapshot MaybeGet() const;
 
  private:
   std::shared_ptr<Impl> p;

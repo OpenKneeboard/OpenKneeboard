@@ -15,6 +15,31 @@ static constexpr uint64_t SHM_VERSION
 // *****PLEASE***** change this if you fork or re-use this code
 static const auto SHM_PREFIX = "com.fredemmott.openkneeboard";
 
+Snapshot::Snapshot() {
+}
+
+Snapshot::Snapshot(std::vector<std::byte>&& bytes) {
+  mBytes = std::make_shared<std::vector<std::byte>>(std::move(bytes));
+}
+
+const Header* const Snapshot::GetHeader() const {
+  if (!mBytes) {
+    return nullptr;
+  }
+  return reinterpret_cast<const Header*>(mBytes->data());
+}
+
+const Pixel* const Snapshot::GetPixels() const {
+  if (!mBytes) {
+    return nullptr;
+  }
+  return reinterpret_cast<const Pixel*>(&mBytes->data()[sizeof(Header)]);
+}
+
+Snapshot::operator bool() const {
+  return (bool) mBytes;
+}
+
 class Impl {
  public:
   HANDLE Handle;
@@ -22,8 +47,8 @@ class Impl {
   Header* Header;
   Pixel* Pixels;
   bool IsFeeder;
-  SHM::Header LatestHeader;
-  std::vector<Pixel> LatestPixels;
+
+  Snapshot Latest;
 
   ~Impl() {
     if (IsFeeder) {
@@ -93,30 +118,24 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-std::optional<std::tuple<Header, std::vector<Pixel>>> Reader::MaybeGet() const {
+Snapshot Reader::MaybeGet() const {
   if (!(*this)) {
     return {};
   }
 
-  if (p->LatestHeader.SequenceNumber == p->Header->SequenceNumber) {
-    return std::make_tuple(p->LatestHeader, p->LatestPixels);
+  const auto snapshot = p->Latest;
+
+  if (snapshot) {
+    if (snapshot.GetHeader()->SequenceNumber == p->Header->SequenceNumber) {
+      return snapshot;
+    }
   }
 
-  auto& header = p->LatestHeader;
-  auto& pixels = p->LatestPixels;
+  std::vector<std::byte> buffer(SHM_SIZE);
+  memcpy(reinterpret_cast<void*>(buffer.data()), p->Mapping, SHM_SIZE);
+  p->Latest = Snapshot(std::move(buffer));
 
-  std::vector<std::byte> snapshot(SHM_SIZE);
-  memcpy(reinterpret_cast<void*>(snapshot.data()), p->Mapping, SHM_SIZE);
-
-  memcpy(reinterpret_cast<void*>(&header), snapshot.data(), sizeof(Header));
-
-  pixels.resize(header.ImageHeight * header.ImageWidth);
-  memcpy(
-    reinterpret_cast<void*>(pixels.data()),
-    &snapshot.data()[sizeof(Header)],
-    pixels.size() * sizeof(Pixel));
-
-  return {{header, pixels}};
+  return p->Latest;
 }
 
 void Writer::Update(const Header& _header, const std::vector<Pixel>& pixels) {

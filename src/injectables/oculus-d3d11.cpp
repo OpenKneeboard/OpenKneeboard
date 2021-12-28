@@ -1,4 +1,4 @@
-// Copyright 2016 Patrick Mours.All rights reserved.
+
 // Copyright(c) 2017 Advanced Micro Devices, Inc. All rights reserved.
 // Copyright(c) 2021-present Fred Emmott. All rights reserved.
 //
@@ -49,7 +49,6 @@
 
 using SHMHeader = OpenKneeboard::SHM::Header;
 using SHMPixel = OpenKneeboard::SHM::Pixel;
-using SHMPixels = std::vector<SHMPixel>;
 
 using namespace OpenKneeboard;
 
@@ -78,8 +77,7 @@ class KneeboardRenderer {
     return header.ImageWidth == mHeader.ImageWidth
       && header.ImageHeight == mHeader.ImageHeight;
   }
-  bool
-  Render(ovrSession session, const SHMHeader& header, const SHMPixels& pixels);
+  bool Render(ovrSession session, const SHM::Snapshot& snapshot);
 };
 
 std::unique_ptr<KneeboardRenderer> g_Renderer;
@@ -201,11 +199,13 @@ KneeboardRenderer::KneeboardRenderer(
 
 bool KneeboardRenderer::Render(
   ovrSession session,
-  const SHMHeader& config,
-  const SHMPixels& pixels) {
+  const SHM::Snapshot& snapshot) {
   if (!mInitialized) {
     return false;
   }
+
+  auto& config = *snapshot.GetHeader();
+
   if (!isCompatibleWith(config)) {
     dprintf("Attempted to use an incompatible renderer");
     return false;
@@ -242,7 +242,7 @@ bool KneeboardRenderer::Render(
     texture.get(),
     0,
     &box,
-    pixels.data(),
+    snapshot.GetPixels(),
     config.ImageWidth * sizeof(SHMPixel),
     0);
 
@@ -260,19 +260,22 @@ bool KneeboardRenderer::Render(
 
 static bool RenderKneeboard(
   ovrSession session,
-  const SHMHeader& header,
-  const SHMPixels& pixels) {
+  const SHM::Snapshot& snapshot) {
   auto d3d = g_d3dDevice.getOrHook();
   if (!d3d) {
     return false;
   }
 
-  if (!(g_Renderer && g_Renderer->isCompatibleWith(header))) {
-    dprint("Incompatible header change, resetting");
-    g_Renderer.reset(new KneeboardRenderer(session, d3d, header));
+  if (!snapshot) {
+    return false;
   }
 
-  return g_Renderer->Render(session, header, pixels);
+  if (!(g_Renderer && g_Renderer->isCompatibleWith(*snapshot.GetHeader()))) {
+    dprint("Incompatible header change, resetting");
+    g_Renderer.reset(new KneeboardRenderer(session, d3d, *snapshot.GetHeader()));
+  }
+
+  return g_Renderer->Render(session, snapshot);
 }
 
 static ovrResult EndFrame_Hook_Impl(
@@ -282,18 +285,18 @@ static ovrResult EndFrame_Hook_Impl(
   const ovrViewScaleDesc* viewScaleDesc,
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount) {
-  auto shmData = g_SHM.MaybeGet();
-  if (!shmData) {
+  auto snapshot = g_SHM.MaybeGet();
+  if (!snapshot) {
     return nextImpl(
       session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
-  auto [config, pixels] = *shmData;
-
-  if (!RenderKneeboard(session, config, pixels)) {
+  if (!RenderKneeboard(session, snapshot)) {
     return nextImpl(
       session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
+
+  const auto& config = *snapshot.GetHeader();
 
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;

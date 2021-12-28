@@ -46,18 +46,15 @@ class MainWindow final : public wxFrame {
   }
 
   void CheckForUpdate() {
-    auto shm = mSHM.MaybeGet();
-    if (mFirstDetached && !shm) {
-      Refresh();
+    auto snapshot = mSHM.MaybeGet();
+    if (!snapshot) {
+      if (mFirstDetached) {
+        Refresh();
+      }
       return;
     }
 
-    if (!shm) {
-      return;
-    }
-
-    auto header = std::get<0>(*shm);
-    if (header.SequenceNumber != mLastSequenceNumber) {
+    if (snapshot.GetHeader()->SequenceNumber != mLastSequenceNumber) {
       Refresh();
     }
   }
@@ -66,8 +63,8 @@ class MainWindow final : public wxFrame {
     wxBufferedPaintDC dc(this);
     const auto clientSize = GetClientSize();
 
-    auto shm = mSHM.MaybeGet();
-    if (!shm) {
+    auto snapshot = mSHM.MaybeGet();
+    if (!snapshot) {
       if (!mHadData) {
         dc.Clear();
       } else if (mFirstDetached) {
@@ -81,7 +78,8 @@ class MainWindow final : public wxFrame {
     mHadData = true;
     mFirstDetached = true;
 
-    auto [config, pixels] = *shm;
+    const auto& config = *snapshot.GetHeader();
+    const auto pixels = snapshot.GetPixels();
 
     dc.Clear();
     wxImage image(config.ImageWidth, config.ImageHeight);
@@ -89,7 +87,7 @@ class MainWindow final : public wxFrame {
 
     for (uint16_t y = 0; y < config.ImageHeight; ++y) {
       for (uint16_t x = 0; x < config.ImageWidth; ++x) {
-        auto pixel = pixels.at(x + (y * config.ImageWidth));
+        auto pixel = pixels[x + (y * config.ImageWidth)];
         image.SetRGB(x, y, pixel.r, pixel.g, pixel.b);
         image.SetAlpha(x, y, pixel.a);
       }
