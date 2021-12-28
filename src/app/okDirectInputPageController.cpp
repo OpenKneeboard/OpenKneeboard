@@ -6,7 +6,6 @@
 #include <wx/scopeguard.h>
 
 #include "OpenKneeboard/dprint.h"
-
 #include "okEvents.h"
 
 using namespace OpenKneeboard;
@@ -273,8 +272,11 @@ class okDirectInputPageSettings final : public wxPanel {
         return;
       }
       button->SetLabel(
-        fmt::format(_("Button {:d}").ToStdString(), be.ButtonIndex));
-      mBindings->Bindings.push_back({.Instance = device, .EventType = okEVT_PREVIOUS_TAB});
+        fmt::format(_("Button {:d}").ToStdString(), be.ButtonIndex + 1));
+      mBindings->Bindings.push_back(
+        {.Instance = device,
+         .ButtonIndex = be.ButtonIndex,
+         .EventType = okEVT_PREVIOUS_TAB});
       d->Close();
     };
     this->Bind(okEVT_DI_BUTTON_EVENT, f);
@@ -294,7 +296,8 @@ okDirectInputPageController::okDirectInputPageController()
   p->Bindings = std::make_shared<DIInputBindings>();
   p->DirectInputThread = std::make_unique<okDirectInputThread>(this);
   p->DirectInputThread->Run();
-  this->Bind(okEVT_DI_BUTTON_EVENT, &okDirectInputPageController::OnDIButtonEvent, this);
+  this->Bind(
+    okEVT_DI_BUTTON_EVENT, &okDirectInputPageController::OnDIButtonEvent, this);
 }
 
 okDirectInputPageController::~okDirectInputPageController() {
@@ -313,7 +316,10 @@ void okDirectInputPageController::OnDIButtonEvent(const wxThreadEvent& ev) {
     return;
   }
 
-  dprintf("DI Button: {} {}", wxString(be.Instance.tszInstanceName).ToStdString(), be.ButtonIndex);
+  dprintf(
+    "DI Button: {} {}",
+    wxString(be.Instance.tszInstanceName).ToStdString(),
+    be.ButtonIndex);
   for (auto& it: p->Bindings->Bindings) {
     if (it.Instance.guidInstance != be.Instance.guidInstance) {
       continue;
