@@ -150,7 +150,6 @@ struct DIInputBindings {
 }// namespace
 
 wxDEFINE_EVENT(okEVT_DI_BUTTON_EVENT, wxThreadEvent);
-
 class okDirectInputThread final : public wxThread {
  private:
   wxEvtHandler* mReceiver;
@@ -176,6 +175,8 @@ class okDirectInputThread final : public wxThread {
     return ExitCode(0);
   }
 };
+
+wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_EVENT, wxCommandEvent);
 
 class okDirectInputPageSettings final : public wxPanel {
  private:
@@ -241,26 +242,24 @@ class okDirectInputPageSettings final : public wxPanel {
       auto previousTab = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(previousTab, wxGBPosition(row, 1));
       previousTab->Bind(wxEVT_BUTTON, [=](auto& ev) {
-        this->OnBind(ev, device, okEVT_PREVIOUS_TAB);
+        this->OnBind(ev, i, okEVT_PREVIOUS_TAB);
       });
 
       auto nextTab = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(nextTab, wxGBPosition(row, 2));
-      nextTab->Bind(wxEVT_BUTTON, [=](auto& ev) {
-        this->OnBind(ev, device, okEVT_NEXT_TAB);
-      });
+      nextTab->Bind(
+        wxEVT_BUTTON, [=](auto& ev) { this->OnBind(ev, i, okEVT_NEXT_TAB); });
 
       auto previousPage = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(previousPage, wxGBPosition(row, 3));
       previousPage->Bind(wxEVT_BUTTON, [=](auto& ev) {
-        this->OnBind(ev, device, okEVT_PREVIOUS_PAGE);
+        this->OnBind(ev, i, okEVT_PREVIOUS_PAGE);
       });
 
       auto nextPage = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(nextPage, wxGBPosition(row, 4));
-      nextPage->Bind(wxEVT_BUTTON, [=](auto& ev) {
-        this->OnBind(ev, device, okEVT_NEXT_PAGE);
-      });
+      nextPage->Bind(
+        wxEVT_BUTTON, [=](auto& ev) { this->OnBind(ev, i, okEVT_NEXT_PAGE); });
 
       mDeviceButtons.push_back({
         .PreviousTab = previousTab,
@@ -278,7 +277,7 @@ class okDirectInputPageSettings final : public wxPanel {
   }
 
  private:
-  wxDialog* CreateBindInputDialog() {
+  wxDialog* CreateBindInputDialog(bool haveExistingBinding) {
     auto d = new wxDialog(this, wxID_ANY, _("Bind Inputs"));
 
     auto s = new wxBoxSizer(wxVERTICAL);
@@ -288,7 +287,18 @@ class okDirectInputPageSettings final : public wxPanel {
       0,
       wxALL,
       5);
-    s->Add(d->CreateButtonSizer(wxCANCEL | wxNO_DEFAULT), 0, wxALL, 5);
+    auto bs = d->CreateButtonSizer(wxCANCEL | wxNO_DEFAULT);
+    s->Add(bs, 0, wxALL, 5);
+
+    if (haveExistingBinding) {
+      auto clear = new wxButton(d, wxID_ANY, _("Clear"));
+      bs->Add(clear);
+
+      clear->Bind(wxEVT_BUTTON, [=](auto&) {
+        d->Close();
+        wxQueueEvent(d, new wxCommandEvent(okEVT_DI_CLEAR_BINDING_EVENT));
+      });
+    }
 
     d->SetSizerAndFit(s);
 
@@ -297,22 +307,38 @@ class okDirectInputPageSettings final : public wxPanel {
 
   void OnBind(
     wxCommandEvent& ev,
-    const DIDEVICEINSTANCE& device,
+    int deviceIndex,
     const wxEventTypeTag<wxCommandEvent>& eventType) {
-    auto d = CreateBindInputDialog();
     auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
+    auto& device = mDevices.at(deviceIndex);
+
+    auto& bindings = this->mBindings->Bindings;
+
+    // Used to implement a clear button
+    auto currentBinding = bindings.end();;
+    for (auto it = bindings.begin(); it != bindings.end(); ++it) {
+      if (it->Instance.guidInstance != device.guidInstance) {
+        continue;
+      }
+      if (it->EventType != eventType) {
+        continue;
+      }
+      currentBinding = it;
+      break;
+    }
+    auto d = CreateBindInputDialog(currentBinding != bindings.end());
 
     wxON_BLOCK_EXIT_SET(mBindings->Hook, nullptr);
     mBindings->Hook = this;
 
-    auto f = [=](wxThreadEvent& ev) {
+    auto f = [=, &bindings](wxThreadEvent& ev) {
       auto be = ev.GetPayload<DIButtonEvent>();
       if (be.Instance.guidInstance != device.guidInstance) {
         return;
       }
 
-      // clear any conflicting bindings
-      auto& bindings = this->mBindings->Bindings;
+      // Not using `currentBinding` as we need to clear both the
+      // current binding, and any other conflicting bindings
       for (auto it = bindings.begin(); it != bindings.end();) {
         if (it->Instance.guidInstance != device.guidInstance) {
           ++it;
@@ -324,16 +350,9 @@ class okDirectInputPageSettings final : public wxPanel {
           continue;
         }
 
-        for (auto i = 0; i < this->mDevices.size(); ++i) {
-          if (this->mDevices.at(i).guidInstance != device.guidInstance) {
-            continue;
-          }
-
-          auto button = this->mDeviceButtons.at(i).Get(it->EventType);
-          if (button) {
-            button->SetLabel(_("Bind"));
-          }
-          break;
+        auto button = this->mDeviceButtons.at(deviceIndex).Get(it->EventType);
+        if (button) {
+          button->SetLabel(_("Bind"));
         }
         it = bindings.erase(it);
       }
@@ -346,7 +365,15 @@ class okDirectInputPageSettings final : public wxPanel {
          .EventType = eventType});
       d->Close();
     };
+
     this->Bind(okEVT_DI_BUTTON_EVENT, f);
+    d->Bind(okEVT_DI_CLEAR_BINDING_EVENT, [=,&bindings](auto&) {
+      bindings.erase(currentBinding);
+      auto button = this->mDeviceButtons.at(deviceIndex).Get(eventType);
+      if (button) {
+        button->SetLabel(_("Bind"));
+      }
+    });
     d->ShowModal();
     this->Unbind(okEVT_DI_BUTTON_EVENT, f);
   }
