@@ -139,7 +139,8 @@ class DIButtonListener final : public wxEvtHandler {
 };
 
 struct DIInputBinding {
-  DIDEVICEINSTANCE Instance;
+  GUID InstanceGuid;
+  std::string InstanceName;
   uint8_t ButtonIndex;
   wxEventTypeTag<wxCommandEvent> EventType;
 };
@@ -322,7 +323,7 @@ class okDirectInputPageSettings final : public wxPanel {
     auto currentBinding = bindings.end();
     ;
     for (auto it = bindings.begin(); it != bindings.end(); ++it) {
-      if (it->Instance.guidInstance != device.guidInstance) {
+      if (it->InstanceGuid != device.guidInstance) {
         continue;
       }
       if (it->EventType != eventType) {
@@ -345,7 +346,7 @@ class okDirectInputPageSettings final : public wxPanel {
       // Not using `currentBinding` as we need to clear both the
       // current binding, and any other conflicting bindings
       for (auto it = bindings.begin(); it != bindings.end();) {
-        if (it->Instance.guidInstance != device.guidInstance) {
+        if (it->InstanceGuid != device.guidInstance) {
           ++it;
           continue;
         }
@@ -365,7 +366,8 @@ class okDirectInputPageSettings final : public wxPanel {
       button->SetLabel(
         fmt::format(_("Button {:d}").ToStdString(), be.ButtonIndex + 1));
       bindings.push_back(
-        {.Instance = device,
+        {.InstanceGuid = device.guidInstance,
+         .InstanceName = wxString(device.tszInstanceName).ToStdString(),
          .ButtonIndex = be.ButtonIndex,
          .EventType = eventType});
       wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
@@ -418,7 +420,7 @@ void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
   }
 
   for (auto& it: p->Bindings->Bindings) {
-    if (it.Instance.guidInstance != be.Instance.guidInstance) {
+    if (it.InstanceGuid != be.Instance.guidInstance) {
       continue;
     }
     if (it.ButtonIndex != be.ButtonIndex) {
@@ -439,15 +441,14 @@ wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
 nlohmann::json okDirectInputController::GetSettings() const {
   nlohmann::json bindings;
   nlohmann::json devices;
+
   for (const auto& binding: p->Bindings->Bindings) {
     RPC_CSTR rpcUuid;
-    UuidToStringA(&binding.Instance.guidInstance, &rpcUuid);
+    UuidToStringA(&binding.InstanceGuid, &rpcUuid);
     const std::string uuid(reinterpret_cast<char*>(rpcUuid));
     RpcStringFreeA(&rpcUuid);
 
-    devices[uuid] = {
-      {"InstanceName",
-       wxString(binding.Instance.tszInstanceName).ToStdString()}};
+    devices[uuid] = {{"InstanceName", binding.InstanceName}};
     std::string action;
 #define ACTION(x) \
   if (binding.EventType == okEVT_##x) { \
