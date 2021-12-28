@@ -80,7 +80,7 @@ class MainWindow final : public wxFrame {
     listener->Run();
 
     {
-      auto dipc = new okDirectInputController();
+      auto dipc = new okDirectInputController({/*config*/});
       dipc->Bind(okEVT_PREVIOUS_TAB, &MainWindow::OnPreviousTab, this);
       dipc->Bind(okEVT_NEXT_TAB, &MainWindow::OnNextTab, this);
       dipc->Bind(okEVT_PREVIOUS_PAGE, &MainWindow::OnPreviousPage, this);

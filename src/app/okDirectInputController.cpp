@@ -182,24 +182,24 @@ class okDirectInputThread final : public wxThread {
 wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_BUTTON, wxCommandEvent);
 
 namespace {
-  struct JSONBinding final {
-    std::string Device;
-    uint8_t ButtonIndex;
-    std::string Action;
-  };
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONBinding, Device, ButtonIndex, Action);
+struct JSONBinding final {
+  std::string Device;
+  uint8_t ButtonIndex;
+  std::string Action;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONBinding, Device, ButtonIndex, Action);
 
-  struct JSONDevice {
-    std::string InstanceName;
-  };
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONDevice, InstanceName);
+struct JSONDevice {
+  std::string InstanceName;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONDevice, InstanceName);
 
-  struct JSONSettings {
-    std::map<std::string, JSONDevice> Devices;
-    std::vector<JSONBinding> Bindings;
-  };
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices, Bindings);
-}
+struct JSONSettings {
+  std::map<std::string, JSONDevice> Devices;
+  std::vector<JSONBinding> Bindings;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices, Bindings);
+}// namespace
 
 class okDirectInputPageSettings final : public wxPanel {
  private:
@@ -414,13 +414,47 @@ class okDirectInputController::Impl final {
   std::unique_ptr<okDirectInputThread> DirectInputThread;
 };
 
-okDirectInputController::okDirectInputController()
+okDirectInputController::okDirectInputController(
+  const nlohmann::json& jsonSettings)
   : p(std::make_shared<Impl>()) {
   p->Bindings = std::make_shared<DIInputBindings>();
   p->DirectInputThread = std::make_unique<okDirectInputThread>(this);
   p->DirectInputThread->Run();
   this->Bind(
     okEVT_DI_BUTTON_EVENT, &okDirectInputController::OnDIButtonEvent, this);
+
+  auto settings = jsonSettings.get<JSONSettings>();
+  for (const auto& binding: settings.Bindings) {
+    const auto& deviceName = settings.Devices.find(binding.Device);
+    if (deviceName == settings.Devices.end()) {
+      continue;
+    }
+
+    std::optional<wxEventTypeTag<wxCommandEvent>> eventType;
+#define ACTION(x) \
+  if (binding.Action == #x) { \
+    eventType = okEVT_##x; \
+  }
+    ACTION(PREVIOUS_TAB);
+    ACTION(NEXT_TAB);
+    ACTION(PREVIOUS_PAGE);
+    ACTION(NEXT_PAGE);
+#undef ACTION
+    if (!eventType) {
+      continue;
+    }
+
+    UUID uuid;
+    UuidFromStringA(
+      reinterpret_cast<RPC_CSTR>(const_cast<char*>(binding.Device.c_str())),
+      &uuid);
+    p->Bindings->Bindings.push_back({
+      .InstanceGuid = uuid,
+      .InstanceName = deviceName->second.InstanceName,
+      .ButtonIndex = binding.ButtonIndex,
+      .EventType = *eventType,
+    });
+  }
 }
 
 okDirectInputController::~okDirectInputController() {
