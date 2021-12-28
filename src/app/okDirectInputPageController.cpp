@@ -86,6 +86,9 @@ class DIButtonListener final : public wxEvtHandler {
 
       device->SetEventNotification(event);
       device->SetDataFormat(&c_dfDIJoystick2);
+      device->SetCooperativeLevel(
+        static_cast<wxApp*>(wxApp::GetInstance())->GetTopWindow()->GetHandle(),
+        DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
       device->Acquire();
 
       DIJOYSTATE2 state;
