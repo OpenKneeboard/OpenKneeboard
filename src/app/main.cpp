@@ -185,9 +185,11 @@ class MainWindow final : public wxFrame {
   }
 
   void OnPreviousPage(wxCommandEvent& ev) {
+    mTabs[mCurrentTab]->PreviousPage();
   }
 
   void OnNextPage(wxCommandEvent& ev) {
+    mTabs[mCurrentTab]->NextPage();
   }
 };
 

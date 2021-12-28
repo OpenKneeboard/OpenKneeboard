@@ -69,3 +69,11 @@ std::shared_ptr<Tab> okTab::GetTab() const {
 wxImage okTab::GetImage() {
   return p->Tab->RenderPage(p->Canvas->GetPageIndex());
 }
+
+void okTab::PreviousPage() {
+  p->Canvas->PreviousPage();
+}
+
+void okTab::NextPage() {
+  p->Canvas->NextPage();
+}

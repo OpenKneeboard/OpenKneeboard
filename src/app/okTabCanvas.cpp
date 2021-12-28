@@ -73,6 +73,7 @@ void okTabCanvas::SetPageIndex(uint16_t index) {
     return;
   }
   p->PageIndex = std::clamp(index, 0ui16, static_cast<uint16_t>(count - 1));
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
   Refresh();
 }
 
