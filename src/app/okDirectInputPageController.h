@@ -13,6 +13,7 @@ class okDirectInputPageController final : public okPageController {
   
   virtual wxString GetTitle() const override;
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
+  virtual nlohmann::json GetSettings() const override;
  private:
   class Impl;
   std::shared_ptr<Impl> p;

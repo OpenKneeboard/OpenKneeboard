@@ -1,5 +1,6 @@
 #include "okDirectInputPageController.h"
 
+#include <Rpc.h>
 #include <fmt/format.h>
 #include <winrt/base.h>
 #include <wx/gbsizer.h>
@@ -12,6 +13,7 @@
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "Rpcrt4.lib")
 
 namespace {
 winrt::com_ptr<IDirectInput8> GetDI8() {
@@ -176,7 +178,7 @@ class okDirectInputThread final : public wxThread {
   }
 };
 
-wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_EVENT, wxCommandEvent);
+wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_BUTTON, wxCommandEvent);
 
 class okDirectInputPageSettings final : public wxPanel {
  private:
@@ -247,8 +249,9 @@ class okDirectInputPageSettings final : public wxPanel {
 
       auto nextTab = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(nextTab, wxGBPosition(row, 2));
-      nextTab->Bind(
-        wxEVT_BUTTON, [=](auto& ev) { this->OnBindButton(ev, i, okEVT_NEXT_TAB); });
+      nextTab->Bind(wxEVT_BUTTON, [=](auto& ev) {
+        this->OnBindButton(ev, i, okEVT_NEXT_TAB);
+      });
 
       auto previousPage = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(previousPage, wxGBPosition(row, 3));
@@ -258,8 +261,9 @@ class okDirectInputPageSettings final : public wxPanel {
 
       auto nextPage = new wxButton(panel, wxID_ANY, _("Bind"));
       grid->Add(nextPage, wxGBPosition(row, 4));
-      nextPage->Bind(
-        wxEVT_BUTTON, [=](auto& ev) { this->OnBindButton(ev, i, okEVT_NEXT_PAGE); });
+      nextPage->Bind(wxEVT_BUTTON, [=](auto& ev) {
+        this->OnBindButton(ev, i, okEVT_NEXT_PAGE);
+      });
 
       mDeviceButtons.push_back({
         .PreviousTab = previousTab,
@@ -296,7 +300,7 @@ class okDirectInputPageSettings final : public wxPanel {
 
       clear->Bind(wxEVT_BUTTON, [=](auto&) {
         d->Close();
-        wxQueueEvent(d, new wxCommandEvent(okEVT_DI_CLEAR_BINDING_EVENT));
+        wxQueueEvent(d, new wxCommandEvent(okEVT_DI_CLEAR_BINDING_BUTTON));
       });
     }
 
@@ -315,7 +319,8 @@ class okDirectInputPageSettings final : public wxPanel {
     auto& bindings = this->mBindings->Bindings;
 
     // Used to implement a clear button
-    auto currentBinding = bindings.end();;
+    auto currentBinding = bindings.end();
+    ;
     for (auto it = bindings.begin(); it != bindings.end(); ++it) {
       if (it->Instance.guidInstance != device.guidInstance) {
         continue;
@@ -363,16 +368,18 @@ class okDirectInputPageSettings final : public wxPanel {
         {.Instance = device,
          .ButtonIndex = be.ButtonIndex,
          .EventType = eventType});
+      wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
       d->Close();
     };
 
     this->Bind(okEVT_DI_BUTTON_EVENT, f);
-    d->Bind(okEVT_DI_CLEAR_BINDING_EVENT, [=,&bindings](auto&) {
+    d->Bind(okEVT_DI_CLEAR_BINDING_BUTTON, [=, &bindings](auto&) {
       bindings.erase(currentBinding);
       auto button = this->mDeviceButtons.at(deviceIndex).Get(eventType);
       if (button) {
         button->SetLabel(_("Bind"));
       }
+      wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
     });
     d->ShowModal();
     this->Unbind(okEVT_DI_BUTTON_EVENT, f);
@@ -427,4 +434,42 @@ wxString okDirectInputPageController::GetTitle() const {
 
 wxWindow* okDirectInputPageController::GetSettingsUI(wxWindow* parent) {
   return new okDirectInputPageSettings(parent, p->Bindings);
+}
+
+nlohmann::json okDirectInputPageController::GetSettings() const {
+  nlohmann::json bindings;
+  nlohmann::json devices;
+  for (const auto& binding: p->Bindings->Bindings) {
+    RPC_CSTR rpcUuid;
+    UuidToStringA(&binding.Instance.guidInstance, &rpcUuid);
+    const std::string uuid(reinterpret_cast<char*>(rpcUuid));
+    RpcStringFreeA(&rpcUuid);
+
+    devices[uuid] = {
+      {"InstanceName",
+       wxString(binding.Instance.tszInstanceName).ToStdString()}};
+    std::string action;
+#define ACTION(x) \
+  if (binding.EventType == okEVT_##x) { \
+    action = #x; \
+  }
+    ACTION(PREVIOUS_TAB);
+    ACTION(NEXT_TAB);
+    ACTION(PREVIOUS_PAGE);
+    ACTION(NEXT_PAGE);
+#undef ACTION
+    if (action.empty()) {
+      continue;
+    }
+
+    bindings.push_back({
+      {"Device", uuid},
+      {"ButtonIndex", binding.ButtonIndex},
+      {"Action", action},
+    });
+  }
+  return {
+    {"Devices", devices},
+    {"Bindings", bindings},
+  };
 }

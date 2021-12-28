@@ -6,6 +6,8 @@
 #endif
 #include <wx/image.h>
 
+#include <json.hpp>
+
 class okPageController : public wxEvtHandler {
   public:
     okPageController();
@@ -14,4 +16,5 @@ class okPageController : public wxEvtHandler {
     virtual wxString GetTitle() const = 0;
 
     virtual wxWindow* GetSettingsUI(wxWindow* parent);
+    virtual nlohmann::json GetSettings() const;
 };

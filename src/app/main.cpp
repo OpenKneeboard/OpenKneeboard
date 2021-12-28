@@ -62,12 +62,6 @@ class MainWindow final : public wxFrame {
     sizer->Add(mNotebook);
 
     mTabs = {
-      new okTab(
-        mNotebook,
-        std::make_shared<FolderTab>(
-          "Test Folder",
-          Games::DCSWorld::GetOpenBetaPath()
-            / "Mods/terrains/Caucasus/Kneeboard")),
       new okTab(mNotebook, std::make_shared<DCSMissionTab>()),
       new okTab(mNotebook, std::make_shared<DCSAircraftTab>()),
       new okTab(mNotebook, std::make_shared<DCSTerrainTab>()),
@@ -93,6 +87,10 @@ class MainWindow final : public wxFrame {
       dipc->Bind(okEVT_NEXT_PAGE, &MainWindow::OnNextPage, this);
       auto f = new wxFrame(this, wxID_ANY, _("Bindings"));
       auto dis = dipc->GetSettingsUI(f);
+
+      dis->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
+        dprintf("New settings:\n{}", dipc->GetSettings().dump(2));
+      });
       auto difs = new wxBoxSizer(wxVERTICAL);
       difs->Add(dis, 1, wxEXPAND);
       f->SetSizerAndFit(difs);

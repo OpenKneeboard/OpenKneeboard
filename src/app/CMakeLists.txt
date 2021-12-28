@@ -7,6 +7,7 @@ target_link_libraries(
   openkneeboard-shm
   openkneeboard-tabs
   dprint
+  json
   gameevent
   games
   rendererror)
