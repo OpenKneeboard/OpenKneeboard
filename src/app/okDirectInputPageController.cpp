@@ -1,8 +1,8 @@
 #include "okDirectInputPageController.h"
 
+#include <fmt/format.h>
 #include <winrt/base.h>
 #include <wx/gbsizer.h>
-#include <wx/statline.h>
 
 #include "OpenKneeboard/dprint.h"
 
@@ -62,10 +62,6 @@ class DIButtonListener final : public wxEvtHandler {
     winrt::com_ptr<IDirectInputDevice8> Device;
     DIJOYSTATE2 State = {};
     HANDLE EventHandle = INVALID_HANDLE_VALUE;
-
-    ~DeviceInfo() {
-      CloseHandle(EventHandle);
-    }
   };
   std::vector<DeviceInfo> mDevices;
   HANDLE mCancelHandle = INVALID_HANDLE_VALUE;
@@ -79,11 +75,6 @@ class DIButtonListener final : public wxEvtHandler {
       if (!device) {
         continue;
       }
-      device->SetDataFormat(&c_dfDIJoystick2);
-      device->Acquire();
-
-      DIJOYSTATE2 state;
-      device->GetDeviceState(sizeof(state), &state);
 
       HANDLE event {CreateEvent(nullptr, false, false, nullptr)};
       if (!event) {
@@ -91,6 +82,11 @@ class DIButtonListener final : public wxEvtHandler {
       }
 
       device->SetEventNotification(event);
+      device->SetDataFormat(&c_dfDIJoystick2);
+      device->Acquire();
+
+      DIJOYSTATE2 state;
+      device->GetDeviceState(sizeof(state), &state);
 
       mDevices.push_back({it, device, state, event});
     }
@@ -113,15 +109,16 @@ class DIButtonListener final : public wxEvtHandler {
     handles.push_back(mCancelHandle);
 
     auto result
-      = WaitForMultipleObjects(handles.size(), handles.data(), false, 100);
+      = WaitForMultipleObjects(handles.size(), handles.data(), false, 10000000);
     auto idx = result - WAIT_OBJECT_0;
-    if (idx < 0 || idx >= (handles.size() - 1)) {
+    if (idx <= 0 || idx >= (handles.size() - 1)) {
       return {};
     }
 
     auto& device = mDevices.at(idx);
     auto oldState = device.State;
     DIJOYSTATE2 newState;
+    device.Device->Poll();
     device.Device->GetDeviceState(sizeof(newState), &newState);
     for (uint8_t i = 0; i < 128; ++i) {
       if (oldState.rgbButtons[i] != newState.rgbButtons[i]) {
@@ -133,7 +130,19 @@ class DIButtonListener final : public wxEvtHandler {
           (bool)(newState.rgbButtons[i] & (1 << 7))};
       }
     }
+    return {};
   }
+};
+
+struct DIInputBinding {
+  DIDEVICEINSTANCE Instance;
+  uint8_t Button;
+  wxEventTypeTag<wxCommandEvent> EventType;
+};
+
+struct DIInputBindings {
+  std::vector<DIInputBinding> Bindings = {};
+  bool Enabled = true;
 };
 
 }// namespace
@@ -161,6 +170,8 @@ class okDirectInputThread final : public wxThread {
       ev.SetPayload(bi);
       wxQueueEvent(mReceiver, ev.Clone());
     }
+
+    return ExitCode(0);
   }
 };
 
@@ -181,23 +192,27 @@ class okDirectInputPageSettings final : public wxPanel {
     grid->AddGrowableCol(0);
 
     auto bold = GetFont().MakeBold();
-    for (const auto& column: {_("Device"), _("Previous Tab"), _("Next Tab"), _("Previous Page"), _("Next Page")}) {
-      auto label = new wxStaticText(
-        panel,
-        wxID_ANY,
-        column);
+    for (const auto& column:
+         {_("Device"),
+          _("Previous Tab"),
+          _("Next Tab"),
+          _("Previous Page"),
+          _("Next Page")}) {
+      auto label = new wxStaticText(panel, wxID_ANY, column);
       label->SetFont(bold);
       grid->Add(label);
     }
 
     for (int i = 0; i < mDevices.size(); ++i) {
       const auto& device = mDevices.at(i);
-      const auto row = i + 1; // headers
+      const auto row = i + 1;// headers
 
       auto label = new wxStaticText(panel, wxID_ANY, device.tszInstanceName);
       grid->Add(label, wxGBPosition(row, 0));
 
       auto previousTab = new wxButton(panel, wxID_ANY, _("Bind"));
+      previousTab->Bind(
+        wxEVT_BUTTON, [=](auto& ev) { this->OnBindPreviousTab(ev, device); });
       grid->Add(previousTab, wxGBPosition(row, 1));
 
       auto nextTab = new wxButton(panel, wxID_ANY, _("Bind"));
@@ -215,6 +230,46 @@ class okDirectInputPageSettings final : public wxPanel {
     sizer->AddStretchSpacer();
     this->SetSizerAndFit(sizer);
     Refresh();
+  }
+
+ private:
+  wxDialog* CreateBindInputDialog() {
+    auto d = new wxDialog(this, wxID_ANY, _("Bind Inputs"));
+
+    auto s = new wxBoxSizer(wxVERTICAL);
+
+    s->Add(
+      new wxStaticText(d, wxID_ANY, _("Press button to bind input...")),
+      0,
+      wxALL,
+      5);
+    s->Add(d->CreateButtonSizer(wxCANCEL | wxNO_DEFAULT), 0, wxALL, 5);
+
+    d->SetSizerAndFit(s);
+
+    return d;
+  }
+
+  void OnBindPreviousTab(wxCommandEvent& ev, const DIDEVICEINSTANCE& device) {
+    auto d = CreateBindInputDialog();
+    auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
+
+    wxEvtHandler eh;
+    okDirectInputThread dit(&eh);
+    eh.Bind(okEVT_DI_BUTTON_EVENT, [=](wxThreadEvent& ev) {
+      ev.Skip();
+      auto be = ev.GetPayload<DIButtonEvent>();
+      if (be.Instance.guidInstance != device.guidInstance) {
+        return;
+      }
+      button->SetLabel(fmt::format(_("Button {:d}").ToStdString(), be.ButtonID));
+      d->Close();
+    });
+    dit.Run();
+
+    d->ShowModal();
+
+    dit.Pause();
   }
 };
 
