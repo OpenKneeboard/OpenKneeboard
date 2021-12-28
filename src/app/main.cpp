@@ -23,7 +23,7 @@
 #include "okTab.h"
 #include "okEvents.h"
 
-#include "okDirectInputPageController.h"
+#include "okDirectInputController.h"
 
 using namespace OpenKneeboard;
 
@@ -80,7 +80,7 @@ class MainWindow final : public wxFrame {
     listener->Run();
 
     {
-      auto dipc = new okDirectInputPageController();
+      auto dipc = new okDirectInputController();
       dipc->Bind(okEVT_PREVIOUS_TAB, &MainWindow::OnPreviousTab, this);
       dipc->Bind(okEVT_NEXT_TAB, &MainWindow::OnNextTab, this);
       dipc->Bind(okEVT_PREVIOUS_PAGE, &MainWindow::OnPreviousPage, this);

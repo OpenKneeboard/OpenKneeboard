@@ -1,4 +1,4 @@
-#include "okDirectInputPageController.h"
+#include "okDirectInputController.h"
 
 #include <Rpc.h>
 #include <fmt/format.h>
@@ -386,26 +386,26 @@ class okDirectInputPageSettings final : public wxPanel {
   }
 };
 
-class okDirectInputPageController::Impl final {
+class okDirectInputController::Impl final {
  public:
   std::shared_ptr<DIInputBindings> Bindings;
   std::unique_ptr<okDirectInputThread> DirectInputThread;
 };
 
-okDirectInputPageController::okDirectInputPageController()
+okDirectInputController::okDirectInputController()
   : p(std::make_shared<Impl>()) {
   p->Bindings = std::make_shared<DIInputBindings>();
   p->DirectInputThread = std::make_unique<okDirectInputThread>(this);
   p->DirectInputThread->Run();
   this->Bind(
-    okEVT_DI_BUTTON_EVENT, &okDirectInputPageController::OnDIButtonEvent, this);
+    okEVT_DI_BUTTON_EVENT, &okDirectInputController::OnDIButtonEvent, this);
 }
 
-okDirectInputPageController::~okDirectInputPageController() {
+okDirectInputController::~okDirectInputController() {
   p->DirectInputThread->Wait();
 }
 
-void okDirectInputPageController::OnDIButtonEvent(const wxThreadEvent& ev) {
+void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
   if (p->Bindings->Hook) {
     wxQueueEvent(p->Bindings->Hook, ev.Clone());
     return;
@@ -428,15 +428,15 @@ void okDirectInputPageController::OnDIButtonEvent(const wxThreadEvent& ev) {
   }
 }
 
-wxString okDirectInputPageController::GetTitle() const {
+wxString okDirectInputController::GetTitle() const {
   return _("DirectInput");
 }
 
-wxWindow* okDirectInputPageController::GetSettingsUI(wxWindow* parent) {
+wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
   return new okDirectInputPageSettings(parent, p->Bindings);
 }
 
-nlohmann::json okDirectInputPageController::GetSettings() const {
+nlohmann::json okDirectInputController::GetSettings() const {
   nlohmann::json bindings;
   nlohmann::json devices;
   for (const auto& binding: p->Bindings->Bindings) {

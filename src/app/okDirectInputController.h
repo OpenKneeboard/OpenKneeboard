@@ -1,15 +1,15 @@
 #pragma once
 
-#include "okPageController.h"
+#include "okActivePageAndTabController.h"
 
 #include <memory>
 
 // Using DirectInput instead of wxJoystick so we can use
 // all 128 buttons, rather than just the first 32
-class okDirectInputPageController final : public okPageController {
+class okDirectInputController final : public okActivePageAndTabController {
  public:
-  okDirectInputPageController();
-  virtual ~okDirectInputPageController();
+  okDirectInputController();
+  virtual ~okDirectInputController();
   
   virtual wxString GetTitle() const override;
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
