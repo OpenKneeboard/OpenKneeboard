@@ -25,17 +25,17 @@
 // above reflects copyright notices in source material.
 
 #include <OVR_CAPI_D3D.H>
-#include <TlHelp32.h>
 #include <Unknwn.h>
 #include <d3d11.h>
-#include <detours.h>
 #include <fmt/format.h>
 #include <windows.h>
 #include <winrt/base.h>
 
+#include "detours-ext.h"
+
 #pragma warning(push)
 // lossy conversions (double -> T)
-#pragma warning(disable: 4244)
+#pragma warning(disable : 4244)
 #include <Extras/OVR_Math.h>
 #pragma warning(pop)
 
@@ -43,36 +43,40 @@
 #include <functional>
 #include <vector>
 
+#include "D3D11DeviceHook.h"
 #include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
-#include "d3d11-offsets.h"
 
 using SHMHeader = OpenKneeboard::SHM::Header;
 using SHMPixel = OpenKneeboard::SHM::Pixel;
 using SHMPixels = std::vector<SHMPixel>;
-using OpenKneeboard::dprintf;
+
+using namespace OpenKneeboard;
 
 static_assert(sizeof(SHMPixel) == 4, "Expecting R8G8B8A8 for DirectX");
 static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
 static_assert(offsetof(SHMPixel, a) == 3, "Expected alpha to be last byte");
 
-static bool g_hooked_DX = false;
-static winrt::com_ptr<ID3D11Device> g_d3dDevice;
-static OpenKneeboard::SHM::Reader g_SHM;
+static SHM::Reader g_SHM;
+static D3D11DeviceHook g_d3dDevice;
 
 class KneeboardRenderer {
  private:
-  SHMHeader header;
-  bool initialized = false;
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> RenderTargets;
+  SHMHeader mHeader;
+  bool mInitialized = false;
+  winrt::com_ptr<ID3D11Device> mD3dDevice;
+  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
 
  public:
   ovrTextureSwapChain SwapChain;
 
-  KneeboardRenderer(ovrSession session, const SHMHeader& header);
+  KneeboardRenderer(
+    ovrSession session,
+    const winrt::com_ptr<ID3D11Device>&,
+    const SHMHeader& header);
   bool isCompatibleWith(const SHMHeader& header) const {
-    return header.ImageWidth == this->header.ImageWidth
-      && header.ImageHeight == this->header.ImageHeight;
+    return header.ImageWidth == mHeader.ImageWidth
+      && header.ImageHeight == mHeader.ImageHeight;
   }
   bool
   Render(ovrSession session, const SHMHeader& header, const SHMPixels& pixels);
@@ -118,57 +122,6 @@ static_assert(std::same_as<decltype(ovr_EndFrame), decltype(ovr_SubmitFrame2)>);
 REAL_FUNCS
 #undef IT
 
-// methods
-decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
-
-void DetourUpdateAllThreads() {
-  auto snapshot
-    = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
-  THREADENTRY32 thread;
-  thread.dwSize = sizeof(thread);
-
-  DetourUpdateThread(GetCurrentThread());
-  auto myProc = GetCurrentProcessId();
-  auto myThread = GetCurrentThreadId();
-  if (!Thread32First(snapshot, &thread)) {
-    dprintf("Failed to find first thread");
-    return;
-  }
-
-  do {
-    if (!thread.th32ThreadID) {
-      continue;
-    }
-    if (thread.th32OwnerProcessID != myProc) {
-      // CreateToolhelp32Snapshot takes a process ID, but ignores it
-      continue;
-    }
-    if (thread.th32ThreadID == myThread) {
-      continue;
-    }
-
-    auto th = OpenThread(THREAD_ALL_ACCESS, false, thread.th32ThreadID);
-    DetourUpdateThread(th);
-  } while (Thread32Next(snapshot, &thread));
-}
-
-class HookedMethods final {
- public:
-  HRESULT __stdcall Hooked_IDXGISwapChain_Present(
-    UINT SyncInterval,
-    UINT Flags) {
-    auto _this = reinterpret_cast<IDXGISwapChain*>(this);
-    if (!g_d3dDevice) {
-      _this->GetDevice(IID_PPV_ARGS(&g_d3dDevice));
-      dprintf(
-        "Got device at {:#010x} from {}",
-        (intptr_t)g_d3dDevice.get(),
-        __FUNCTION__);
-    }
-    return std::invoke(Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
-  }
-};
-
 template <class T>
 bool find_function(T** funcPtrPtr, const char* lib, const char* name) {
   *funcPtrPtr = reinterpret_cast<T*>(DetourFindFunction(lib, name));
@@ -188,92 +141,11 @@ bool find_libovr_function(T** funcPtrPtr, const char* name) {
   return find_function(funcPtrPtr, "LibOVRRT64_1.dll", name);
 }
 
-static void hook_IDXGISwapChain_Present() {
-  if (g_hooked_DX) {
-    return;
-  }
-  g_hooked_DX = true;
-
-  DXGI_SWAP_CHAIN_DESC sd;
-  ZeroMemory(&sd, sizeof(sd));
-  sd.BufferCount = 1;
-  sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-  sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  sd.OutputWindow = GetForegroundWindow();
-  sd.SampleDesc.Count = 1;
-  sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-  sd.Windowed = TRUE;
-  sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-  sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-
-  D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
-
-  winrt::com_ptr<IDXGISwapChain> swapchain;
-  winrt::com_ptr<ID3D11Device> device;
-
-  decltype(&D3D11CreateDeviceAndSwapChain) factory = nullptr;
-  factory = reinterpret_cast<decltype(factory)>(
-    DetourFindFunction("d3d11.dll", "D3D11CreateDeviceAndSwapChain"));
-  dprintf("Creating temporary device and swap chain");
-  auto ret = factory(
-    nullptr,
-    D3D_DRIVER_TYPE_HARDWARE,
-    nullptr,
-    D3D11_CREATE_DEVICE_DEBUG,
-    &level,
-    1,
-    D3D11_SDK_VERSION,
-    &sd,
-    swapchain.put(),
-    device.put(),
-    nullptr,
-    nullptr);
-  dprintf(" - got a temporary device at {:#010x}", (intptr_t)device.get());
-  dprintf(
-    " - got a temporary SwapChain at {:#010x}", (intptr_t)swapchain.get());
-
-  auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
-  *fpp = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
-  dprintf(" - found IDXGISwapChain::Present at {:#010x}", (intptr_t)*fpp);
-  auto mfp = &HookedMethods::Hooked_IDXGISwapChain_Present;
-  dprintf(
-    "Hooking &{:#010x} to {:#010x}",
-    (intptr_t)*fpp,
-    (intptr_t) * (reinterpret_cast<void**>(&mfp)));
-  DetourTransactionBegin();
-  DetourUpdateAllThreads();
-  auto err = DetourAttach(fpp, *(reinterpret_cast<void**>(&mfp)));
-  if (err == 0) {
-    dprintf(" - hooked IDXGISwapChain::Present().");
-  } else {
-    dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
-  }
-  DetourTransactionCommit();
-}
-
-static void unhook_IDXGISwapChain_Present() {
-  if (!g_hooked_DX) {
-    return;
-  }
-  auto ffp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
-  auto mfp = &HookedMethods::Hooked_IDXGISwapChain_Present;
-  DetourTransactionBegin();
-  DetourUpdateAllThreads();
-  auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
-  if (err) {
-    dprintf(" - failed to detach IDXGISwapChain");
-  }
-  err = DetourTransactionCommit();
-  if (err) {
-    dprintf(" - failed to commit unhook IDXGISwapChain");
-  }
-  g_hooked_DX = false;
-}
-
 KneeboardRenderer::KneeboardRenderer(
   ovrSession session,
+  const winrt::com_ptr<ID3D11Device>& d3dDevice,
   const SHMHeader& config)
-  : header(config) {
+  : mHeader(config), mD3dDevice(d3dDevice) {
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
@@ -288,7 +160,7 @@ KneeboardRenderer::KneeboardRenderer(
   };
 
   auto ret = Real_ovr_CreateTextureSwapChainDX(
-    session, g_d3dDevice.get(), &kneeboardSCD, &SwapChain);
+    session, d3dDevice.get(), &kneeboardSCD, &SwapChain);
   dprintf("CreateSwapChain ret: {}", ret);
 
   int length = -1;
@@ -299,7 +171,7 @@ KneeboardRenderer::KneeboardRenderer(
   }
   dprintf(" - got swap chain length {}", length);
 
-  RenderTargets.resize(length);
+  mRenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
     ID3D11Texture2D* texture;// todo: smart ptr?
     auto res = Real_ovr_GetTextureSwapChainBufferDX(
@@ -314,8 +186,8 @@ KneeboardRenderer::KneeboardRenderer(
       .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
       .Texture2D = {.MipSlice = 0}};
 
-    auto hr = g_d3dDevice->CreateRenderTargetView(
-      texture, &rtvd, RenderTargets.at(i).put());
+    auto hr = d3dDevice->CreateRenderTargetView(
+      texture, &rtvd, mRenderTargets.at(i).put());
     if (FAILED(hr)) {
       dprintf(" - failed to create render target view");
       return;
@@ -324,14 +196,14 @@ KneeboardRenderer::KneeboardRenderer(
 
   dprintf("{} completed", __FUNCTION__);
 
-  initialized = true;
+  mInitialized = true;
 }
 
 bool KneeboardRenderer::Render(
   ovrSession session,
   const SHMHeader& config,
   const SHMPixels& pixels) {
-  if (!initialized) {
+  if (!mInitialized) {
     return false;
   }
   if (!isCompatibleWith(config)) {
@@ -343,7 +215,7 @@ bool KneeboardRenderer::Render(
     dprintf(
       "{} with d3ddevice at {:#010x}",
       __FUNCTION__,
-      (intptr_t)g_d3dDevice.get());
+      (intptr_t)mD3dDevice.get());
   }
 
   int index = -1;
@@ -357,7 +229,7 @@ bool KneeboardRenderer::Render(
   Real_ovr_GetTextureSwapChainBufferDX(
     session, SwapChain, index, IID_PPV_ARGS(&texture));
   winrt::com_ptr<ID3D11DeviceContext> context;
-  g_d3dDevice->GetImmediateContext(context.put());
+  mD3dDevice->GetImmediateContext(context.put());
   D3D11_BOX box {
     .left = 0,
     .top = 0,
@@ -390,15 +262,13 @@ static bool RenderKneeboard(
   ovrSession session,
   const SHMHeader& header,
   const SHMPixels& pixels) {
-  if (!g_d3dDevice) {
-    hook_IDXGISwapChain_Present();
-    // Initialized by Hooked_ovrCreateTextureSwapChainDX
+  auto d3d = g_d3dDevice.getOrHook();
+  if (!d3d) {
     return false;
   }
-  unhook_IDXGISwapChain_Present();
 
   if (!(g_Renderer && g_Renderer->isCompatibleWith(header))) {
-    g_Renderer.reset(new KneeboardRenderer(session, header));
+    g_Renderer.reset(new KneeboardRenderer(session, d3d, header));
   }
 
   return g_Renderer->Render(session, header, pixels);
@@ -591,6 +461,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     HOOKED_FUNCS
 #undef IT
     DetourTransactionCommit();
+    g_d3dDevice = {};
     dprintf("Cleaned up Detours.");
   }
   return TRUE;

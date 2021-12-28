@@ -147,7 +147,7 @@ class MainWindow final : public wxFrame {
 
     auto ratio = float(image.GetHeight()) / image.GetWidth();
     OpenKneeboard::SHM::Header header {
-      .Flags = OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
+      .Flags = {},//OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
       .y = 0.5f,
       .z = -0.25f,
       .rx = float(M_PI / 2),
