@@ -5,7 +5,6 @@
 #include <wx/gbsizer.h>
 #include <wx/scopeguard.h>
 
-#include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
 
 using namespace OpenKneeboard;
@@ -316,9 +315,6 @@ void okDirectInputPageController::OnDIButtonEvent(const wxThreadEvent& ev) {
     return;
   }
 
-  dprintf(
-    "DI Button: {} {}",
-    wxString(be.Instance.tszInstanceName).ToStdString(),
     be.ButtonIndex);
   for (auto& it: p->Bindings->Bindings) {
     if (it.Instance.guidInstance != be.Instance.guidInstance) {
@@ -327,7 +323,6 @@ void okDirectInputPageController::OnDIButtonEvent(const wxThreadEvent& ev) {
     if (it.ButtonIndex != be.ButtonIndex) {
       continue;
     }
-    dprint("Dispatching binding");
     wxQueueEvent(this, new wxCommandEvent(it.EventType));
   }
 }
