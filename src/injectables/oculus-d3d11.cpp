@@ -201,11 +201,9 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
     unsigned int layerCount,
     decltype(&ovr_EndFrame) next) override {
     auto snapshot = g_SHM.MaybeGet();
-    auto d3d = g_d3dDevice->MaybeGet();
     const auto& config = *snapshot.GetHeader();
     auto swapChain = GetSwapChain(session, config);
-    if (!(d3d && snapshot && swapChain
-          && Render(session, swapChain, snapshot))) {
+    if (!(snapshot && swapChain && Render(session, swapChain, snapshot))) {
       return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
     }
 
