@@ -33,11 +33,6 @@
 
 #include "detours-ext.h"
 
-#pragma warning(push)
-// lossy conversions (double -> T)
-#pragma warning(disable : 4244)
-#include <Extras/OVR_Math.h>
-#pragma warning(pop)
 
 #include <filesystem>
 #include <functional>
@@ -47,42 +42,37 @@
 #include "OculusFrameHook.h"
 #include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
+#include "OculusKneeboard.h"
 
 using SHMHeader = OpenKneeboard::SHM::Header;
 using SHMPixel = OpenKneeboard::SHM::Pixel;
 
 using namespace OpenKneeboard;
 
-static_assert(sizeof(SHMPixel) == 4, "Expecting R8G8B8A8 for DirectX");
-static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
-static_assert(offsetof(SHMPixel, a) == 3, "Expected alpha to be last byte");
-
-static SHM::Reader g_SHM;
 static std::unique_ptr<D3D11DeviceHook> g_d3dDevice;
 
-#define UNHOOKED_OVR_FUNCS \
-  /* We need the versions from the process, not whatever we had handy when \ \ \
-   * \ \ \ building */ \
-  IT(ovr_CreateTextureSwapChainDX) \
-  IT(ovr_GetTextureSwapChainLength) \
-  IT(ovr_GetTextureSwapChainBufferDX) \
-  IT(ovr_GetTextureSwapChainCurrentIndex) \
-  IT(ovr_CommitTextureSwapChain) \
-  IT(ovr_DestroyTextureSwapChain)
+// Used, but not hooked
+#define REAL_OVR_FUNCS \
+IT(ovr_CreateTextureSwapChainDX) \
+IT(ovr_GetTextureSwapChainLength) \
+IT(ovr_GetTextureSwapChainBufferDX) \
+IT(ovr_GetTextureSwapChainCurrentIndex) \
+IT(ovr_CommitTextureSwapChain) \
+IT(ovr_DestroyTextureSwapChain)
 
 #define IT(x) static decltype(&x) Real_##x = nullptr;
-UNHOOKED_OVR_FUNCS
+REAL_OVR_FUNCS
 #undef IT
 
-class OculusD3D11Kneeboard final : public OculusFrameHook {
- private:
+class OculusD3D11Kneeboard final : public OculusKneeboard {
+private:
   SHMHeader mHeader;
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
   ovrTextureSwapChain mSwapChain = nullptr;
 
-  ovrTextureSwapChain GetSwapChain(
+  virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,
-    const SHMHeader& config) {
+    const SHMHeader& config)  override {
     if (mSwapChain) {
       if (
         config.ImageWidth == mHeader.ImageWidth
@@ -127,7 +117,7 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
       D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
         .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
         .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-        .Texture2D = {.MipSlice = 0}};
+        .Texture2D = {.MipSlice = 0} };
 
       auto hr = d3d->CreateRenderTargetView(
         texture, &rtvd, mRenderTargets.at(i).put());
@@ -168,7 +158,7 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
       session, swapChain, index, IID_PPV_ARGS(&texture));
     winrt::com_ptr<ID3D11DeviceContext> context;
     d3d->GetImmediateContext(context.put());
-    D3D11_BOX box {
+    D3D11_BOX box{
       .left = 0,
       .top = 0,
       .front = 0,
@@ -176,6 +166,11 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
       .bottom = config.ImageHeight,
       .back = 1,
     };
+
+    static_assert(sizeof(SHMPixel) == 4, "Expecting R8G8B8A8 for DirectX");
+    static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
+    static_assert(offsetof(SHMPixel, a) == 3, "Expected alpha to be last byte");
+
     context->UpdateSubresource(
       texture.get(),
       0,
@@ -191,88 +186,6 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
 
     return true;
   }
-
- public:
-  virtual ovrResult onEndFrame(
-    ovrSession session,
-    long long frameIndex,
-    const ovrViewScaleDesc* viewScaleDesc,
-    ovrLayerHeader const* const* layerPtrList,
-    unsigned int layerCount,
-    decltype(&ovr_EndFrame) next) override {
-    auto snapshot = g_SHM.MaybeGet();
-    const auto& config = *snapshot.GetHeader();
-    auto swapChain = GetSwapChain(session, config);
-    if (!(snapshot && swapChain && Render(session, swapChain, snapshot))) {
-      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
-    }
-
-    ovrLayerQuad kneeboardLayer = {};
-    kneeboardLayer.Header.Type = ovrLayerType_Quad;
-    kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
-    if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
-      kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
-    }
-    kneeboardLayer.ColorTexture = swapChain;
-    kneeboardLayer.QuadPoseCenter.Position
-      = {.x = config.x, .y = config.y, .z = config.z};
-
-    OVR::Quatf orientation;
-    orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx);
-    orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
-    orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
-    kneeboardLayer.QuadPoseCenter.Orientation = orientation;
-    kneeboardLayer.QuadSize
-      = {.x = config.VirtualWidth, .y = config.VirtualHeight};
-    kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
-    kneeboardLayer.Viewport.Size
-      = {.w = config.ImageWidth, .h = config.ImageHeight};
-
-    std::vector<const ovrLayerHeader*> newLayers;
-    if (layerCount == 0) {
-      newLayers.push_back(&kneeboardLayer.Header);
-    } else if (layerCount < ovrMaxLayerCount) {
-      newLayers = {&layerPtrList[0], &layerPtrList[layerCount]};
-      newLayers.push_back(&kneeboardLayer.Header);
-    } else {
-      for (unsigned int i = 0; i < layerCount; ++i) {
-        if (layerPtrList[i]) {
-          newLayers.push_back(layerPtrList[i]);
-        }
-      }
-
-      if (newLayers.size() < ovrMaxLayerCount) {
-        newLayers.push_back(&kneeboardLayer.Header);
-      } else {
-        dprintf("Already at ovrMaxLayerCount without adding our layer");
-      }
-    }
-
-    std::vector<ovrLayerEyeFov> withoutDepthInformation;
-    if ((config.Flags & OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION)) {
-      for (auto i = 0; i < newLayers.size(); ++i) {
-        auto layer = newLayers.at(i);
-        if (layer->Type != ovrLayerType_EyeFovDepth) {
-          continue;
-        }
-
-        withoutDepthInformation.push_back({});
-        auto& newLayer
-          = withoutDepthInformation[withoutDepthInformation.size() - 1];
-        memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
-        newLayer.Header.Type = ovrLayerType_EyeFov;
-
-        newLayers[i] = &newLayer.Header;
-      }
-    }
-
-    return next(
-      session,
-      frameIndex,
-      viewScaleDesc,
-      newLayers.data(),
-      static_cast<unsigned int>(newLayers.size()));
-  }
 };
 static std::unique_ptr<OculusD3D11Kneeboard> g_renderer;
 
@@ -284,7 +197,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   if (dwReason == DLL_PROCESS_ATTACH) {
     OpenKneeboard::DPrintSettings::Set({
       .Prefix = "OpenKneeboard-Oculus-D3D11",
-    });
+      });
     dprintf("Attached to process.");
     DetourRestoreAfterWith();
 
@@ -295,11 +208,12 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 #define IT(x) \
   Real_##x = reinterpret_cast<decltype(&x)>( \
     DetourFindFunction("LibOVRRT64_1.dll", #x));
-    UNHOOKED_OVR_FUNCS
+    REAL_OVR_FUNCS
 #undef IT
-    auto err = DetourTransactionCommit();
+      auto err = DetourTransactionCommit();
     dprintf("Installed hooks: {}", (int)err);
-  } else if (dwReason == DLL_PROCESS_DETACH) {
+  }
+  else if (dwReason == DLL_PROCESS_DETACH) {
     dprintf("Detaching from process...");
     DetourTransactionBegin();
     DetourUpdateAllThreads();
