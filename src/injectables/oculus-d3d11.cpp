@@ -78,19 +78,19 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
  private:
   SHMHeader mHeader;
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
+  ovrTextureSwapChain mSwapChain = nullptr;
 
- public:
-  ovrTextureSwapChain SwapChain = nullptr;
-
-  bool isCompatibleWith(const SHMHeader& header) const {
-    return header.ImageWidth == mHeader.ImageWidth
-      && header.ImageHeight == mHeader.ImageHeight;
-  }
-
-  void Initialize(ovrSession session, const SHMHeader& config) {
-    if (SwapChain) {
-      Real_ovr_DestroyTextureSwapChain(session, SwapChain);
-      SwapChain = nullptr;
+  ovrTextureSwapChain GetSwapChain(
+    ovrSession session,
+    const SHMHeader& config) {
+    if (mSwapChain) {
+      if (
+        config.ImageWidth == mHeader.ImageWidth
+        && config.ImageHeight == mHeader.ImageHeight) {
+        return mSwapChain;
+      }
+      Real_ovr_DestroyTextureSwapChain(session, mSwapChain);
+      mSwapChain = nullptr;
     }
     mHeader = config;
 
@@ -110,19 +110,19 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
     auto d3d = g_d3dDevice->MaybeGet();
 
     Real_ovr_CreateTextureSwapChainDX(
-      session, d3d.get(), &kneeboardSCD, &SwapChain);
-    if (!SwapChain) {
-      return;
+      session, d3d.get(), &kneeboardSCD, &mSwapChain);
+    if (!mSwapChain) {
+      return nullptr;
     }
 
     int length = -1;
-    Real_ovr_GetTextureSwapChainLength(session, SwapChain, &length);
+    Real_ovr_GetTextureSwapChainLength(session, mSwapChain, &length);
 
     mRenderTargets.resize(length);
     for (int i = 0; i < length; ++i) {
       ID3D11Texture2D* texture;// todo: smart ptr?
       Real_ovr_GetTextureSwapChainBufferDX(
-        session, SwapChain, i, IID_PPV_ARGS(&texture));
+        session, mSwapChain, i, IID_PPV_ARGS(&texture));
 
       D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
         .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
@@ -133,21 +133,19 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
         texture, &rtvd, mRenderTargets.at(i).put());
       if (FAILED(hr)) {
         dprintf(" - failed to create render target view");
-        return;
+        return nullptr;
       }
     }
 
     dprintf("{} completed", __FUNCTION__);
+    return mSwapChain;
   }
 
-  bool Render(ovrSession session, const SHM::Snapshot& snapshot) {
-    auto& config = *snapshot.GetHeader();
-
-    if (!(SwapChain && isCompatibleWith(config))) {
-      Initialize(session, config);
-    }
-
-    if (!SwapChain) {
+  bool Render(
+    ovrSession session,
+    ovrTextureSwapChain swapChain,
+    const SHM::Snapshot& snapshot) {
+    if (!swapChain) {
       return false;
     }
 
@@ -156,8 +154,10 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
       return false;
     }
 
+    auto& config = *snapshot.GetHeader();
+
     int index = -1;
-    Real_ovr_GetTextureSwapChainCurrentIndex(session, SwapChain, &index);
+    Real_ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
     if (index < 0) {
       dprintf(" - invalid swap chain index ({})", index);
       return false;
@@ -165,7 +165,7 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
 
     winrt::com_ptr<ID3D11Texture2D> texture;
     Real_ovr_GetTextureSwapChainBufferDX(
-      session, SwapChain, index, IID_PPV_ARGS(&texture));
+      session, swapChain, index, IID_PPV_ARGS(&texture));
     winrt::com_ptr<ID3D11DeviceContext> context;
     d3d->GetImmediateContext(context.put());
     D3D11_BOX box {
@@ -184,7 +184,7 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
       config.ImageWidth * sizeof(SHMPixel),
       0);
 
-    auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
+    auto ret = Real_ovr_CommitTextureSwapChain(session, swapChain);
     if (ret) {
       dprintf("Commit failed with {}", ret);
     }
@@ -192,6 +192,7 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
     return true;
   }
 
+ public:
   virtual ovrResult onEndFrame(
     ovrSession session,
     long long frameIndex,
@@ -201,11 +202,12 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
     decltype(&ovr_EndFrame) next) override {
     auto snapshot = g_SHM.MaybeGet();
     auto d3d = g_d3dDevice->MaybeGet();
-    if (!(d3d && snapshot && Render(session, snapshot))) {
+    const auto& config = *snapshot.GetHeader();
+    auto swapChain = GetSwapChain(session, config);
+    if (!(d3d && snapshot && swapChain
+          && Render(session, swapChain, snapshot))) {
       return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
     }
-
-    const auto& config = *snapshot.GetHeader();
 
     ovrLayerQuad kneeboardLayer = {};
     kneeboardLayer.Header.Type = ovrLayerType_Quad;
@@ -213,7 +215,7 @@ class OculusD3D11Kneeboard final : public OculusFrameHook {
     if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
       kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
     }
-    kneeboardLayer.ColorTexture = SwapChain;
+    kneeboardLayer.ColorTexture = swapChain;
     kneeboardLayer.QuadPoseCenter.Position
       = {.x = config.x, .y = config.y, .z = config.z};
 
