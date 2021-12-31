@@ -2,8 +2,8 @@
 
 #include <OpenKneeboard/dprint.h>
 
-#include "detours-ext.h"
 #include "d3d11-offsets.h"
+#include "detours-ext.h"
 
 namespace OpenKneeboard {
 
@@ -32,37 +32,38 @@ class HookedMethods final {
 };
 
 void unhook_IDXGISwapChain_Present() {
-	if (!g_hookInstalled) {
-		return;
-	}
+  if (!g_hookInstalled) {
+    return;
+  }
 
   g_hookInstalled = false;
 
-	auto ffp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
-	auto mfp = &HookedMethods::Hooked_IDXGISwapChain_Present;
-	DetourTransactionBegin();
-	DetourUpdateAllThreads();
-	auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
-	if (err) {
-		dprintf(" - failed to detach IDXGISwapChain");
-	}
-	err = DetourTransactionCommit();
-	if (err) {
-		dprintf(" - failed to commit unhook IDXGISwapChain");
-	}
+  auto ffp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
+  auto mfp = &HookedMethods::Hooked_IDXGISwapChain_Present;
+  DetourTransactionBegin();
+  DetourUpdateAllThreads();
+  auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
+  if (err) {
+    dprintf(" - failed to detach IDXGISwapChain");
+  }
+  err = DetourTransactionCommit();
+  if (err) {
+    dprintf(" - failed to commit unhook IDXGISwapChain");
+  }
 }
-
 
 }// namespace
 
-winrt::com_ptr<ID3D11Device> D3D11DeviceHook::getOrHook() {
+D3D11DeviceHook::D3D11DeviceHook() {
+}
+
+winrt::com_ptr<ID3D11Device> D3D11DeviceHook::maybeGet() {
   if (g_d3dDevice) {
     return g_d3dDevice;
   }
   if (g_hookInstalled) {
     return nullptr;
   }
-
   g_hookInstalled = true;
 
   DXGI_SWAP_CHAIN_DESC sd;
@@ -121,7 +122,7 @@ winrt::com_ptr<ID3D11Device> D3D11DeviceHook::getOrHook() {
   }
   DetourTransactionCommit();
 
-  return {};
+  return nullptr;
 }
 
 D3D11DeviceHook::~D3D11DeviceHook() {

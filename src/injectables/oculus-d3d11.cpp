@@ -44,6 +44,7 @@
 #include <vector>
 
 #include "D3D11DeviceHook.h"
+#include "OculusFrameHook.h"
 #include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
 
@@ -57,21 +58,20 @@ static_assert(offsetof(SHMPixel, r) == 0, "Expected red to be first byte");
 static_assert(offsetof(SHMPixel, a) == 3, "Expected alpha to be last byte");
 
 static SHM::Reader g_SHM;
-static D3D11DeviceHook g_d3dDevice;
+static std::unique_ptr<D3D11DeviceHook> g_d3dDevice;
+static std::unique_ptr<OculusFrameHook> g_oculusFrameHook;
 
 class KneeboardRenderer {
  private:
   SHMHeader mHeader;
   bool mInitialized = false;
-  winrt::com_ptr<ID3D11Device> mD3dDevice;
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
 
  public:
-  ovrTextureSwapChain SwapChain;
+  ovrTextureSwapChain SwapChain = nullptr;
 
   KneeboardRenderer(
     ovrSession session,
-    const winrt::com_ptr<ID3D11Device>&,
     const SHMHeader& header);
   bool isCompatibleWith(const SHMHeader& header) const {
     return header.ImageWidth == mHeader.ImageWidth
@@ -82,29 +82,6 @@ class KneeboardRenderer {
 
 std::unique_ptr<KneeboardRenderer> g_Renderer;
 
-// Not documented, but defined in libovrrt64_1.dll
-// Got signature from Revive, and it matches ovr_SubmitFrame
-//
-// Some games (e.g. DCS World) call this directly
-OVR_PUBLIC_FUNCTION(ovrResult)
-ovr_SubmitFrame2(
-  ovrSession session,
-  long long frameIndex,
-  const ovrViewScaleDesc* viewScaleDesc,
-  ovrLayerHeader const* const* layerPtrList,
-  unsigned int layerCount);
-
-#define HOOKED_OVR_FUNCS \
-  /* Our main hook: render the kneeboard */ \
-  IT(ovr_EndFrame) \
-  IT(ovr_SubmitFrame) \
-  IT(ovr_SubmitFrame2)
-
-static_assert(std::same_as<decltype(ovr_EndFrame), decltype(ovr_SubmitFrame)>);
-static_assert(std::same_as<decltype(ovr_EndFrame), decltype(ovr_SubmitFrame2)>);
-
-#define HOOKED_FUNCS HOOKED_OVR_FUNCS
-
 #define UNHOOKED_OVR_FUNCS \
   /* We need the versions from the process, not whatever we had handy when \ \ \
    * \ \ \ building */ \
@@ -114,36 +91,14 @@ static_assert(std::same_as<decltype(ovr_EndFrame), decltype(ovr_SubmitFrame2)>);
   IT(ovr_GetTextureSwapChainCurrentIndex) \
   IT(ovr_CommitTextureSwapChain)
 
-#define REAL_FUNCS HOOKED_FUNCS UNHOOKED_OVR_FUNCS
-
-#define IT(x) decltype(&x) Real_##x = nullptr;
-REAL_FUNCS
+#define IT(x) static decltype(&x) Real_##x = nullptr;
+UNHOOKED_OVR_FUNCS
 #undef IT
-
-template <class T>
-bool find_function(T** funcPtrPtr, const char* lib, const char* name) {
-  *funcPtrPtr = reinterpret_cast<T*>(DetourFindFunction(lib, name));
-
-  if (*funcPtrPtr) {
-    dprintf(
-      "- Found {} at {:#010x}", name, reinterpret_cast<intptr_t>(*funcPtrPtr));
-    return true;
-  }
-
-  dprintf(" - Failed to find {}", name);
-  return false;
-}
-
-template <class T>
-bool find_libovr_function(T** funcPtrPtr, const char* name) {
-  return find_function(funcPtrPtr, "LibOVRRT64_1.dll", name);
-}
 
 KneeboardRenderer::KneeboardRenderer(
   ovrSession session,
-  const winrt::com_ptr<ID3D11Device>& d3dDevice,
   const SHMHeader& config)
-  : mHeader(config), mD3dDevice(d3dDevice) {
+  : mHeader(config) {
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
@@ -157,8 +112,10 @@ KneeboardRenderer::KneeboardRenderer(
     .BindFlags = ovrTextureBind_DX_RenderTarget,
   };
 
+  auto d3d = g_d3dDevice->maybeGet();
+
   auto ret = Real_ovr_CreateTextureSwapChainDX(
-    session, d3dDevice.get(), &kneeboardSCD, &SwapChain);
+    session, d3d.get(), &kneeboardSCD, &SwapChain);
   dprintf("CreateSwapChain ret: {}", ret);
 
   int length = -1;
@@ -184,7 +141,7 @@ KneeboardRenderer::KneeboardRenderer(
       .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
       .Texture2D = {.MipSlice = 0}};
 
-    auto hr = d3dDevice->CreateRenderTargetView(
+    auto hr = d3d->CreateRenderTargetView(
       texture, &rtvd, mRenderTargets.at(i).put());
     if (FAILED(hr)) {
       dprintf(" - failed to create render target view");
@@ -206,16 +163,18 @@ bool KneeboardRenderer::Render(
 
   auto& config = *snapshot.GetHeader();
 
+  auto d3d = g_d3dDevice->maybeGet();
+  if (!d3d) {
+    return false;
+  }
+
   if (!isCompatibleWith(config)) {
     dprintf("Attempted to use an incompatible renderer");
     return false;
   }
   static bool firstRun = true;
   if (firstRun) {
-    dprintf(
-      "{} with d3ddevice at {:#010x}",
-      __FUNCTION__,
-      (intptr_t)mD3dDevice.get());
+    dprintf("{} with d3ddevice at {:#010x}", __FUNCTION__, (intptr_t)d3d.get());
   }
 
   int index = -1;
@@ -229,7 +188,7 @@ bool KneeboardRenderer::Render(
   Real_ovr_GetTextureSwapChainBufferDX(
     session, SwapChain, index, IID_PPV_ARGS(&texture));
   winrt::com_ptr<ID3D11DeviceContext> context;
-  mD3dDevice->GetImmediateContext(context.put());
+  d3d->GetImmediateContext(context.put());
   D3D11_BOX box {
     .left = 0,
     .top = 0,
@@ -258,10 +217,8 @@ bool KneeboardRenderer::Render(
   return true;
 }
 
-static bool RenderKneeboard(
-  ovrSession session,
-  const SHM::Snapshot& snapshot) {
-  auto d3d = g_d3dDevice.getOrHook();
+static bool RenderKneeboard(ovrSession session, const SHM::Snapshot& snapshot) {
+  auto d3d = g_d3dDevice->maybeGet();
   if (!d3d) {
     return false;
   }
@@ -272,164 +229,100 @@ static bool RenderKneeboard(
 
   if (!(g_Renderer && g_Renderer->isCompatibleWith(*snapshot.GetHeader()))) {
     dprint("Incompatible header change, resetting");
-    g_Renderer.reset(new KneeboardRenderer(session, d3d, *snapshot.GetHeader()));
+    g_Renderer.reset(
+      new KneeboardRenderer(session, *snapshot.GetHeader()));
   }
 
   return g_Renderer->Render(session, snapshot);
 }
 
-static ovrResult EndFrame_Hook_Impl(
-  decltype(&ovr_EndFrame) nextImpl,
-  ovrSession session,
-  long long frameIndex,
-  const ovrViewScaleDesc* viewScaleDesc,
-  ovrLayerHeader const* const* layerPtrList,
-  unsigned int layerCount) {
-  auto snapshot = g_SHM.MaybeGet();
-  if (!snapshot) {
-    return nextImpl(
-      session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
-  }
-
-  if (!RenderKneeboard(session, snapshot)) {
-    return nextImpl(
-      session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
-  }
-
-  const auto& config = *snapshot.GetHeader();
-
-  ovrLayerQuad kneeboardLayer = {};
-  kneeboardLayer.Header.Type = ovrLayerType_Quad;
-  kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
-  if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
-    kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
-  }
-  kneeboardLayer.ColorTexture = g_Renderer->SwapChain;
-  kneeboardLayer.QuadPoseCenter.Position
-    = {.x = config.x, .y = config.y, .z = config.z};
-
-  OVR::Quatf orientation;
-  orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx);
-  orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
-  orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
-  kneeboardLayer.QuadPoseCenter.Orientation = orientation;
-  kneeboardLayer.QuadSize
-    = {.x = config.VirtualWidth, .y = config.VirtualHeight};
-  kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
-  kneeboardLayer.Viewport.Size
-    = {.w = config.ImageWidth, .h = config.ImageHeight};
-
-  std::vector<const ovrLayerHeader*> newLayers;
-  if (layerCount == 0) {
-    newLayers.push_back(&kneeboardLayer.Header);
-  } else if (layerCount < ovrMaxLayerCount) {
-    newLayers = {&layerPtrList[0], &layerPtrList[layerCount]};
-    newLayers.push_back(&kneeboardLayer.Header);
-  } else {
-    for (unsigned int i = 0; i < layerCount; ++i) {
-      if (layerPtrList[i]) {
-        newLayers.push_back(layerPtrList[i]);
-      }
+class OculusD3D11Hook final : public OculusFrameHook {
+ public:
+  virtual ovrResult onEndFrame(
+    ovrSession session,
+    long long frameIndex,
+    const ovrViewScaleDesc* viewScaleDesc,
+    ovrLayerHeader const* const* layerPtrList,
+    unsigned int layerCount,
+    decltype(&ovr_EndFrame) next) override {
+    auto snapshot = g_SHM.MaybeGet();
+    if (!snapshot) {
+      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
     }
 
-    if (newLayers.size() < ovrMaxLayerCount) {
+    if (!RenderKneeboard(session, snapshot)) {
+      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+    }
+
+    const auto& config = *snapshot.GetHeader();
+
+    ovrLayerQuad kneeboardLayer = {};
+    kneeboardLayer.Header.Type = ovrLayerType_Quad;
+    kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
+    if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
+      kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
+    }
+    kneeboardLayer.ColorTexture = g_Renderer->SwapChain;
+    kneeboardLayer.QuadPoseCenter.Position
+      = {.x = config.x, .y = config.y, .z = config.z};
+
+    OVR::Quatf orientation;
+    orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx);
+    orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
+    orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
+    kneeboardLayer.QuadPoseCenter.Orientation = orientation;
+    kneeboardLayer.QuadSize
+      = {.x = config.VirtualWidth, .y = config.VirtualHeight};
+    kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
+    kneeboardLayer.Viewport.Size
+      = {.w = config.ImageWidth, .h = config.ImageHeight};
+
+    std::vector<const ovrLayerHeader*> newLayers;
+    if (layerCount == 0) {
+      newLayers.push_back(&kneeboardLayer.Header);
+    } else if (layerCount < ovrMaxLayerCount) {
+      newLayers = {&layerPtrList[0], &layerPtrList[layerCount]};
       newLayers.push_back(&kneeboardLayer.Header);
     } else {
-      dprintf("Already at ovrMaxLayerCount without adding our layer");
-    }
-  }
-
-  std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.Flags & OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION)) {
-    for (auto i = 0; i < newLayers.size(); ++i) {
-      auto layer = newLayers.at(i);
-      if (layer->Type != ovrLayerType_EyeFovDepth) {
-        continue;
+      for (unsigned int i = 0; i < layerCount; ++i) {
+        if (layerPtrList[i]) {
+          newLayers.push_back(layerPtrList[i]);
+        }
       }
 
-      withoutDepthInformation.push_back({});
-      auto& newLayer
-        = withoutDepthInformation[withoutDepthInformation.size() - 1];
-      memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
-      newLayer.Header.Type = ovrLayerType_EyeFov;
-
-      newLayers[i] = &newLayer.Header;
+      if (newLayers.size() < ovrMaxLayerCount) {
+        newLayers.push_back(&kneeboardLayer.Header);
+      } else {
+        dprintf("Already at ovrMaxLayerCount without adding our layer");
+      }
     }
+
+    std::vector<ovrLayerEyeFov> withoutDepthInformation;
+    if ((config.Flags & OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION)) {
+      for (auto i = 0; i < newLayers.size(); ++i) {
+        auto layer = newLayers.at(i);
+        if (layer->Type != ovrLayerType_EyeFovDepth) {
+          continue;
+        }
+
+        withoutDepthInformation.push_back({});
+        auto& newLayer
+          = withoutDepthInformation[withoutDepthInformation.size() - 1];
+        memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
+        newLayer.Header.Type = ovrLayerType_EyeFov;
+
+        newLayers[i] = &newLayer.Header;
+      }
+    }
+
+    return next(
+      session,
+      frameIndex,
+      viewScaleDesc,
+      newLayers.data(),
+      static_cast<unsigned int>(newLayers.size()));
   }
-
-  return nextImpl(
-    session,
-    frameIndex,
-    viewScaleDesc,
-    newLayers.data(),
-    static_cast<unsigned int>(newLayers.size()));
-}
-
-OVR_PUBLIC_FUNCTION(ovrResult)
-Hooked_ovr_EndFrame(
-  ovrSession session,
-  long long frameIndex,
-  const ovrViewScaleDesc* viewScaleDesc,
-  ovrLayerHeader const* const* layerPtrList,
-  unsigned int layerCount) {
-  return EndFrame_Hook_Impl(
-    Real_ovr_EndFrame,
-    session,
-    frameIndex,
-    viewScaleDesc,
-    layerPtrList,
-    layerCount);
-}
-
-OVR_PUBLIC_FUNCTION(ovrResult)
-Hooked_ovr_SubmitFrame(
-  ovrSession session,
-  long long frameIndex,
-  const ovrViewScaleDesc* viewScaleDesc,
-  ovrLayerHeader const* const* layerPtrList,
-  unsigned int layerCount) {
-  return EndFrame_Hook_Impl(
-    Real_ovr_SubmitFrame,
-    session,
-    frameIndex,
-    viewScaleDesc,
-    layerPtrList,
-    layerCount);
-}
-
-OVR_PUBLIC_FUNCTION(ovrResult)
-Hooked_ovr_SubmitFrame2(
-  ovrSession session,
-  long long frameIndex,
-  const ovrViewScaleDesc* viewScaleDesc,
-  ovrLayerHeader const* const* layerPtrList,
-  unsigned int layerCount) {
-  return EndFrame_Hook_Impl(
-    Real_ovr_SubmitFrame2,
-    session,
-    frameIndex,
-    viewScaleDesc,
-    layerPtrList,
-    layerCount);
-}
-
-template <class T>
-bool hook_libovr_function(const char* name, T** funcPtrPtr, T* hook) {
-  if (!find_libovr_function(funcPtrPtr, name)) {
-    return false;
-  }
-  auto err = DetourAttach((void**)funcPtrPtr, hook);
-  if (!err) {
-    dprintf("- Hooked {} at {:#010x}", name, (intptr_t)*funcPtrPtr);
-    return true;
-  }
-
-  dprintf(" - Failed to hook {}: {}", name, err);
-  return false;
-}
-
-#define HOOK_LIBOVR_FUNCTION(name) \
-  hook_libovr_function(#name, &Real_##name, Hooked_##name)
+};
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   if (DetourIsHelperProcess()) {
@@ -445,9 +338,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
     DetourTransactionBegin();
     DetourUpdateAllThreads();
-#define IT(x) HOOK_LIBOVR_FUNCTION(x);
-    HOOKED_OVR_FUNCS
-#undef IT
+    g_oculusFrameHook = std::make_unique<OculusD3D11Hook>();
+    g_d3dDevice = std::make_unique<D3D11DeviceHook>();
 #define IT(x) \
   Real_##x = reinterpret_cast<decltype(&x)>( \
     DetourFindFunction("LibOVRRT64_1.dll", #x));
@@ -459,12 +351,10 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     dprintf("Detaching from process...");
     DetourTransactionBegin();
     DetourUpdateAllThreads();
-    g_Renderer.reset(nullptr);
-#define IT(x) DetourDetach(&(PVOID&)Real_##x, Hooked_##x);
-    HOOKED_FUNCS
-#undef IT
+    g_Renderer.reset();
+    g_oculusFrameHook.reset();
+    g_d3dDevice.reset();
     DetourTransactionCommit();
-    g_d3dDevice = {};
     dprintf("Cleaned up Detours.");
   }
   return TRUE;

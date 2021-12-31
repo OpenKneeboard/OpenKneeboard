@@ -7,8 +7,9 @@ namespace OpenKneeboard {
 
 class D3D11DeviceHook final {
   public:
+    D3D11DeviceHook();
     ~D3D11DeviceHook();
-    winrt::com_ptr<ID3D11Device> getOrHook();
+    winrt::com_ptr<ID3D11Device> maybeGet();
 };
 
 }
