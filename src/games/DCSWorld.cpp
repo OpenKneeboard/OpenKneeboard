@@ -44,4 +44,35 @@ std::filesystem::path DCSWorld::GetOpenBetaPath() {
   return sPath;
 }
 
+wxString DCSWorld::GetUserFriendlyName(
+  const std::filesystem::path& path) const {
+  if (path == GetOpenBetaPath()) {
+    return _("DCS World - Open Beta");
+  }
+  if (path == GetStablePath()) {
+    return _("DCS World - Stable");
+  }
+  return _("DCS World");
+}
+std::vector<std::filesystem::path> DCSWorld::GetInstalledPaths() const {
+  std::vector<std::filesystem::path> ret;
+  for (const auto& path: {
+         GetOpenBetaPath(),
+         GetStablePath(),
+       }) {
+    if (!std::filesystem::is_directory(path)) {
+      continue;
+    }
+    auto exe = path / "bin" / "DCS.exe";
+    if (std::filesystem::is_regular_file(exe)) {
+      ret.push_back(exe);
+    }
+  }
+  return ret;
+}
+
+bool DCSWorld::DiscardOculusDepthInformationDefault() const {
+  return true;
+}
+
 }// namespace OpenKneeboard::Games

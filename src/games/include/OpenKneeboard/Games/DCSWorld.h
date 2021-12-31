@@ -1,12 +1,18 @@
 #pragma once
 
+#include "OpenKneeboard/Game.h"
+
 #include <filesystem>
 #include <string>
 
 namespace OpenKneeboard::Games {
 
-class DCSWorld final {
+class DCSWorld final : public OpenKneeboard::Game {
  public:
+  wxString GetUserFriendlyName(const std::filesystem::path&) const override final;
+  virtual std::vector<std::filesystem::path> GetInstalledPaths() const override final;
+  virtual bool DiscardOculusDepthInformationDefault() const override final;
+
   static std::filesystem::path GetStablePath();
   static std::filesystem::path GetOpenBetaPath();
 
