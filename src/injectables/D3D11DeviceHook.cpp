@@ -40,16 +40,12 @@ void unhook_IDXGISwapChain_Present() {
 
   auto ffp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   auto mfp = &HookedMethods::Hooked_IDXGISwapChain_Present;
-  DetourTransactionBegin();
-  DetourUpdateAllThreads();
+  DetourTransactionPushBegin();
   auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
   if (err) {
     dprintf(" - failed to detach IDXGISwapChain");
   }
-  err = DetourTransactionCommit();
-  if (err) {
-    dprintf(" - failed to commit unhook IDXGISwapChain");
-  }
+  DetourTransactionPopCommit();
 }
 
 }// namespace
@@ -112,15 +108,14 @@ winrt::com_ptr<ID3D11Device> D3D11DeviceHook::MaybeGet() {
     "Hooking &{:#010x} to {:#010x}",
     (intptr_t)*fpp,
     (intptr_t) * (reinterpret_cast<void**>(&mfp)));
-  DetourTransactionBegin();
-  DetourUpdateAllThreads();
+  DetourTransactionPushBegin();
   auto err = DetourAttach(fpp, *(reinterpret_cast<void**>(&mfp)));
   if (err == 0) {
     dprintf(" - hooked IDXGISwapChain::Present().");
   } else {
     dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
   }
-  DetourTransactionCommit();
+  DetourTransactionPopCommit();
 
   return nullptr;
 }

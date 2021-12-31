@@ -201,8 +201,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     dprintf("Attached to process.");
     DetourRestoreAfterWith();
 
-    DetourTransactionBegin();
-    DetourUpdateAllThreads();
+    DetourTransactionPushBegin();
     g_d3dDevice = std::make_unique<D3D11DeviceHook>();
     g_renderer = std::make_unique<OculusD3D11Kneeboard>();
 #define IT(x) \
@@ -210,17 +209,15 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     DetourFindFunction("LibOVRRT64_1.dll", #x));
     REAL_OVR_FUNCS
 #undef IT
-      auto err = DetourTransactionCommit();
-    dprintf("Installed hooks: {}", (int)err);
+    DetourTransactionPopCommit();
+    dprint("Installed hooks.");
   }
   else if (dwReason == DLL_PROCESS_DETACH) {
     dprintf("Detaching from process...");
-    DetourTransactionBegin();
-    DetourUpdateAllThreads();
+    DetourTransactionPushBegin();
     g_renderer.reset();
     g_d3dDevice.reset();
-    DetourTransactionCommit();
-    dprintf("Cleaned up Detours.");
+    DetourTransactionPopCommit();
   }
   return TRUE;
 }

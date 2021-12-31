@@ -5,3 +5,5 @@
 #include <detours.h>
 
 void DetourUpdateAllThreads();
+void DetourTransactionPushBegin();
+void DetourTransactionPopCommit();

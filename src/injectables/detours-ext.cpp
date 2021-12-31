@@ -36,3 +36,22 @@ void DetourUpdateAllThreads() {
 		DetourUpdateThread(th);
 	} while (Thread32Next(snapshot, &thread));
 }
+
+static uint64_t g_TransactionDepth = 0;
+
+void DetourTransactionPushBegin() {
+	g_TransactionDepth++;
+	if (g_TransactionDepth > 1) {
+		return;
+	}	
+	DetourTransactionBegin();
+	DetourUpdateAllThreads();
+}
+
+void DetourTransactionPopCommit() {
+	g_TransactionDepth--;
+	if (g_TransactionDepth > 0) {
+		return;
+	}
+	DetourTransactionCommit();
+}

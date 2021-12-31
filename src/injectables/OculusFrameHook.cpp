@@ -43,18 +43,22 @@ OculusFrameHook::OculusFrameHook() {
   g_instance = this;
   const char* lib = "LibOVRRT64_1.dll";
 
+  DetourTransactionPushBegin();
 #define IT(x) \
   real_##x = reinterpret_cast<decltype(&x)>(DetourFindFunction(lib, #x)); \
   DetourAttach(reinterpret_cast<void**>(&real_##x), hooked_##x);
   HOOKED_ENDFRAME_FUNCS
 #undef IT
+  DetourTransactionPopCommit();
 }
 
 OculusFrameHook::~OculusFrameHook() {
   g_instance = nullptr;
+  DetourTransactionPushBegin();
 #define IT(x) DetourDetach(reinterpret_cast<void**>(&real_##x), hooked_##x);
   HOOKED_ENDFRAME_FUNCS
 #undef IT
+  DetourTransactionPopCommit();
 }
 
 }// namespace OpenKneeboard
