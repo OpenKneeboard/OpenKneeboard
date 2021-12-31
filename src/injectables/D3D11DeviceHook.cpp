@@ -57,7 +57,7 @@ void unhook_IDXGISwapChain_Present() {
 D3D11DeviceHook::D3D11DeviceHook() {
 }
 
-winrt::com_ptr<ID3D11Device> D3D11DeviceHook::maybeGet() {
+winrt::com_ptr<ID3D11Device> D3D11DeviceHook::MaybeGet() {
   if (g_d3dDevice) {
     return g_d3dDevice;
   }
