@@ -59,28 +59,6 @@ static_assert(offsetof(SHMPixel, a) == 3, "Expected alpha to be last byte");
 
 static SHM::Reader g_SHM;
 static std::unique_ptr<D3D11DeviceHook> g_d3dDevice;
-static std::unique_ptr<OculusFrameHook> g_oculusFrameHook;
-
-class KneeboardRenderer {
- private:
-  SHMHeader mHeader;
-  bool mInitialized = false;
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
-
- public:
-  ovrTextureSwapChain SwapChain = nullptr;
-
-  KneeboardRenderer(
-    ovrSession session,
-    const SHMHeader& header);
-  bool isCompatibleWith(const SHMHeader& header) const {
-    return header.ImageWidth == mHeader.ImageWidth
-      && header.ImageHeight == mHeader.ImageHeight;
-  }
-  bool Render(ovrSession session, const SHM::Snapshot& snapshot);
-};
-
-std::unique_ptr<KneeboardRenderer> g_Renderer;
 
 #define UNHOOKED_OVR_FUNCS \
   /* We need the versions from the process, not whatever we had handy when \ \ \
@@ -89,155 +67,131 @@ std::unique_ptr<KneeboardRenderer> g_Renderer;
   IT(ovr_GetTextureSwapChainLength) \
   IT(ovr_GetTextureSwapChainBufferDX) \
   IT(ovr_GetTextureSwapChainCurrentIndex) \
-  IT(ovr_CommitTextureSwapChain)
+  IT(ovr_CommitTextureSwapChain) \
+  IT(ovr_DestroyTextureSwapChain)
 
 #define IT(x) static decltype(&x) Real_##x = nullptr;
 UNHOOKED_OVR_FUNCS
 #undef IT
 
-KneeboardRenderer::KneeboardRenderer(
-  ovrSession session,
-  const SHMHeader& config)
-  : mHeader(config) {
-  ovrTextureSwapChainDesc kneeboardSCD = {
-    .Type = ovrTexture_2D,
-    .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
-    .ArraySize = 1,
-    .Width = config.ImageWidth,
-    .Height = config.ImageHeight,
-    .MipLevels = 1,
-    .SampleCount = 1,
-    .StaticImage = false,
-    .MiscFlags = ovrTextureMisc_AutoGenerateMips,
-    .BindFlags = ovrTextureBind_DX_RenderTarget,
-  };
+class OculusD3D11Kneeboard final : public OculusFrameHook {
+ private:
+  SHMHeader mHeader;
+  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
 
-  auto d3d = g_d3dDevice->maybeGet();
-
-  auto ret = Real_ovr_CreateTextureSwapChainDX(
-    session, d3d.get(), &kneeboardSCD, &SwapChain);
-  dprintf("CreateSwapChain ret: {}", ret);
-
-  int length = -1;
-  Real_ovr_GetTextureSwapChainLength(session, SwapChain, &length);
-  if (length < 1) {
-    dprintf(" - invalid swap chain length ({})", length);
-    return;
-  }
-  dprintf(" - got swap chain length {}", length);
-
-  mRenderTargets.resize(length);
-  for (int i = 0; i < length; ++i) {
-    ID3D11Texture2D* texture;// todo: smart ptr?
-    auto res = Real_ovr_GetTextureSwapChainBufferDX(
-      session, SwapChain, i, IID_PPV_ARGS(&texture));
-    if (res != 0) {
-      dprintf(" - failed to get swap chain buffer: {}", res);
-      return;
-    }
-
-    D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
-      .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-      .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-      .Texture2D = {.MipSlice = 0}};
-
-    auto hr = d3d->CreateRenderTargetView(
-      texture, &rtvd, mRenderTargets.at(i).put());
-    if (FAILED(hr)) {
-      dprintf(" - failed to create render target view");
-      return;
-    }
-  }
-
-  dprintf("{} completed", __FUNCTION__);
-
-  mInitialized = true;
-}
-
-bool KneeboardRenderer::Render(
-  ovrSession session,
-  const SHM::Snapshot& snapshot) {
-  if (!mInitialized) {
-    return false;
-  }
-
-  auto& config = *snapshot.GetHeader();
-
-  auto d3d = g_d3dDevice->maybeGet();
-  if (!d3d) {
-    return false;
-  }
-
-  if (!isCompatibleWith(config)) {
-    dprintf("Attempted to use an incompatible renderer");
-    return false;
-  }
-  static bool firstRun = true;
-  if (firstRun) {
-    dprintf("{} with d3ddevice at {:#010x}", __FUNCTION__, (intptr_t)d3d.get());
-  }
-
-  int index = -1;
-  Real_ovr_GetTextureSwapChainCurrentIndex(session, SwapChain, &index);
-  if (index < 0) {
-    dprintf(" - invalid swap chain index ({})", index);
-    return false;
-  }
-
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  Real_ovr_GetTextureSwapChainBufferDX(
-    session, SwapChain, index, IID_PPV_ARGS(&texture));
-  winrt::com_ptr<ID3D11DeviceContext> context;
-  d3d->GetImmediateContext(context.put());
-  D3D11_BOX box {
-    .left = 0,
-    .top = 0,
-    .front = 0,
-    .right = config.ImageWidth,
-    .bottom = config.ImageHeight,
-    .back = 1,
-  };
-  context->UpdateSubresource(
-    texture.get(),
-    0,
-    &box,
-    snapshot.GetPixels(),
-    config.ImageWidth * sizeof(SHMPixel),
-    0);
-
-  auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
-  if (ret) {
-    dprintf("Commit failed with {}", ret);
-  }
-  if (firstRun) {
-    dprintf(" - success");
-    firstRun = false;
-  }
-
-  return true;
-}
-
-static bool RenderKneeboard(ovrSession session, const SHM::Snapshot& snapshot) {
-  auto d3d = g_d3dDevice->maybeGet();
-  if (!d3d) {
-    return false;
-  }
-
-  if (!snapshot) {
-    return false;
-  }
-
-  if (!(g_Renderer && g_Renderer->isCompatibleWith(*snapshot.GetHeader()))) {
-    dprint("Incompatible header change, resetting");
-    g_Renderer.reset(
-      new KneeboardRenderer(session, *snapshot.GetHeader()));
-  }
-
-  return g_Renderer->Render(session, snapshot);
-}
-
-class OculusD3D11Hook final : public OculusFrameHook {
  public:
+  ovrTextureSwapChain SwapChain = nullptr;
+
+  bool isCompatibleWith(const SHMHeader& header) const {
+    return header.ImageWidth == mHeader.ImageWidth
+      && header.ImageHeight == mHeader.ImageHeight;
+  }
+
+  void Initialize(ovrSession session, const SHMHeader& config) {
+    if (SwapChain) {
+      Real_ovr_DestroyTextureSwapChain(session, SwapChain);
+      SwapChain = nullptr;
+    }
+    mHeader = config;
+
+    ovrTextureSwapChainDesc kneeboardSCD = {
+      .Type = ovrTexture_2D,
+      .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
+      .ArraySize = 1,
+      .Width = config.ImageWidth,
+      .Height = config.ImageHeight,
+      .MipLevels = 1,
+      .SampleCount = 1,
+      .StaticImage = false,
+      .MiscFlags = ovrTextureMisc_AutoGenerateMips,
+      .BindFlags = ovrTextureBind_DX_RenderTarget,
+    };
+
+    auto d3d = g_d3dDevice->MaybeGet();
+
+    Real_ovr_CreateTextureSwapChainDX(
+      session, d3d.get(), &kneeboardSCD, &SwapChain);
+    if (!SwapChain) {
+      return;
+    }
+
+    int length = -1;
+    Real_ovr_GetTextureSwapChainLength(session, SwapChain, &length);
+
+    mRenderTargets.resize(length);
+    for (int i = 0; i < length; ++i) {
+      ID3D11Texture2D* texture;// todo: smart ptr?
+      Real_ovr_GetTextureSwapChainBufferDX(
+        session, SwapChain, i, IID_PPV_ARGS(&texture));
+
+      D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
+        .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+        .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+        .Texture2D = {.MipSlice = 0}};
+
+      auto hr = d3d->CreateRenderTargetView(
+        texture, &rtvd, mRenderTargets.at(i).put());
+      if (FAILED(hr)) {
+        dprintf(" - failed to create render target view");
+        return;
+      }
+    }
+
+    dprintf("{} completed", __FUNCTION__);
+  }
+
+  bool Render(ovrSession session, const SHM::Snapshot& snapshot) {
+    auto& config = *snapshot.GetHeader();
+
+    if (!(SwapChain && isCompatibleWith(config))) {
+      Initialize(session, config);
+    }
+
+    if (!SwapChain) {
+      return false;
+    }
+
+    auto d3d = g_d3dDevice->MaybeGet();
+    if (!d3d) {
+      return false;
+    }
+
+    int index = -1;
+    Real_ovr_GetTextureSwapChainCurrentIndex(session, SwapChain, &index);
+    if (index < 0) {
+      dprintf(" - invalid swap chain index ({})", index);
+      return false;
+    }
+
+    winrt::com_ptr<ID3D11Texture2D> texture;
+    Real_ovr_GetTextureSwapChainBufferDX(
+      session, SwapChain, index, IID_PPV_ARGS(&texture));
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    d3d->GetImmediateContext(context.put());
+    D3D11_BOX box {
+      .left = 0,
+      .top = 0,
+      .front = 0,
+      .right = config.ImageWidth,
+      .bottom = config.ImageHeight,
+      .back = 1,
+    };
+    context->UpdateSubresource(
+      texture.get(),
+      0,
+      &box,
+      snapshot.GetPixels(),
+      config.ImageWidth * sizeof(SHMPixel),
+      0);
+
+    auto ret = Real_ovr_CommitTextureSwapChain(session, SwapChain);
+    if (ret) {
+      dprintf("Commit failed with {}", ret);
+    }
+
+    return true;
+  }
+
   virtual ovrResult onEndFrame(
     ovrSession session,
     long long frameIndex,
@@ -246,11 +200,8 @@ class OculusD3D11Hook final : public OculusFrameHook {
     unsigned int layerCount,
     decltype(&ovr_EndFrame) next) override {
     auto snapshot = g_SHM.MaybeGet();
-    if (!snapshot) {
-      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
-    }
-
-    if (!RenderKneeboard(session, snapshot)) {
+    auto d3d = g_d3dDevice->MaybeGet();
+    if (!(d3d && snapshot && Render(session, snapshot))) {
       return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
     }
 
@@ -262,7 +213,7 @@ class OculusD3D11Hook final : public OculusFrameHook {
     if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
       kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
     }
-    kneeboardLayer.ColorTexture = g_Renderer->SwapChain;
+    kneeboardLayer.ColorTexture = SwapChain;
     kneeboardLayer.QuadPoseCenter.Position
       = {.x = config.x, .y = config.y, .z = config.z};
 
@@ -323,6 +274,7 @@ class OculusD3D11Hook final : public OculusFrameHook {
       static_cast<unsigned int>(newLayers.size()));
   }
 };
+static std::unique_ptr<OculusD3D11Kneeboard> g_renderer;
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   if (DetourIsHelperProcess()) {
@@ -338,8 +290,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
     DetourTransactionBegin();
     DetourUpdateAllThreads();
-    g_oculusFrameHook = std::make_unique<OculusD3D11Hook>();
     g_d3dDevice = std::make_unique<D3D11DeviceHook>();
+    g_renderer = std::make_unique<OculusD3D11Kneeboard>();
 #define IT(x) \
   Real_##x = reinterpret_cast<decltype(&x)>( \
     DetourFindFunction("LibOVRRT64_1.dll", #x));
@@ -351,8 +303,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     dprintf("Detaching from process...");
     DetourTransactionBegin();
     DetourUpdateAllThreads();
-    g_Renderer.reset();
-    g_oculusFrameHook.reset();
+    g_renderer.reset();
     g_d3dDevice.reset();
     DetourTransactionCommit();
     dprintf("Cleaned up Detours.");
