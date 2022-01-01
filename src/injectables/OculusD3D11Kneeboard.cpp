@@ -46,6 +46,7 @@ OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
 ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   ovrSession session,
   const SHM::Header& config) {
+
   if (p->SwapChain) {
     const auto& prev = p->Header;
     if (
@@ -56,6 +57,12 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     real_ovr_DestroyTextureSwapChain(session, p->SwapChain);
     p->SwapChain = nullptr;
   }
+
+  auto d3d = p->D3D->MaybeGet();
+  if (!d3d) {
+    return nullptr;
+  }
+
   p->Header = config;
 
   ovrTextureSwapChainDesc kneeboardSCD = {
@@ -70,8 +77,6 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     .MiscFlags = ovrTextureMisc_AutoGenerateMips,
     .BindFlags = ovrTextureBind_DX_RenderTarget,
   };
-
-  auto d3d = p->D3D->MaybeGet();
 
   real_ovr_CreateTextureSwapChainDX(
     session, d3d.get(), &kneeboardSCD, &p->SwapChain);
@@ -115,6 +120,7 @@ bool OculusD3D11Kneeboard::Render(
 
   auto d3d = p->D3D->MaybeGet();
   if (!d3d) {
+    dprintf(" - no D3d - {}", __FUNCTION__);
     return false;
   }
 
