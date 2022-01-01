@@ -31,7 +31,30 @@ okGamesList::~okGamesList() {
 namespace {
 class okGameInstanceSettings : public wxPanel {
  public:
-  okGameInstanceSettings(wxWindow* parent, const GameInstance& instance) {
+  okGameInstanceSettings(wxWindow* parent, const GameInstance& game)
+    : wxPanel(parent, wxID_ANY) {
+    auto s = new wxGridSizer(2, 5, 5);
+
+    auto bold = GetFont().MakeBold();
+
+    {
+      auto label = new wxStaticText(this, wxID_ANY, _("Name"));
+      label->SetFont(bold);
+      s->Add(label);
+      s->Add(new wxStaticText(this, wxID_ANY, game.Name), 1);
+    }
+
+    {
+      auto label = new wxStaticText(this, wxID_ANY, _("Executable"));
+      label->SetFont(bold);
+      s->Add(label);
+      s->Add(new wxStaticText(this, wxID_ANY, game.Path.string()), 1);
+    }
+
+    s->AddStretchSpacer();
+    s->AddStretchSpacer();
+
+    SetSizerAndFit(s);
   }
 };
 }// namespace
