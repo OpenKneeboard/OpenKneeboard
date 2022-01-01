@@ -26,7 +26,8 @@ int main() {
     */
     /* On knee */
     .Flags = OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
-    .y = 0.5f,
+    .floorY = 0.6f,
+    .eyeY = -0.7f,
     .z = -0.25f,
     .rx = float(M_PI / 2),
     .VirtualWidth = 0.2f,

@@ -20,7 +20,7 @@ struct Header {
   static const uint32_t VERSION = 1;
 
   uint64_t Flags;
-  float x, y, z;
+  float x, floorY, eyeY, z;
   float rx, ry, rz;
   // Meters
   float VirtualWidth, VirtualHeight;

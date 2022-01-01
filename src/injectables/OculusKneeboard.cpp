@@ -14,10 +14,7 @@
 // clang-format on
 
 #define LIBOVR_FUNCS \
-  IT(ovr_GetTrackingOriginType) \
-  IT(ovr_GetTrackingState) \
-  IT(ovr_GetPredictedDisplayTime) \
-  IT(ovr_GetFloat)
+  IT(ovr_GetTrackingOriginType)
 
 #define IT(x) static decltype(&x) real_##x = nullptr;
 LIBOVR_FUNCS
@@ -59,17 +56,12 @@ ovrResult OculusKneeboard::onEndFrame(
   kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
   kneeboardLayer.ColorTexture = swapChain;
   kneeboardLayer.QuadPoseCenter.Position
-    = {.x = config.x, .y = config.y, .z = config.z};
+    = {.x = config.x, .y = config.floorY, .z = config.z};
 
   if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
-  } else if (
-    real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
-    auto state = real_ovr_GetTrackingState(
-      session, real_ovr_GetPredictedDisplayTime(session, frameIndex), false);
-    kneeboardLayer.QuadPoseCenter.Position.y = config.y
-      - real_ovr_GetFloat(session, OVR_KEY_EYE_HEIGHT, OVR_DEFAULT_EYE_HEIGHT)
-      - state.CalibratedOrigin.Position.y;
+  } else if (real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
+    kneeboardLayer.QuadPoseCenter.Position.y = config.eyeY;
   }
 
   OVR::Quatf orientation;
