@@ -16,4 +16,7 @@ class okGamesList final : public okConfigurableComponent {
     virtual ~okGamesList();
     virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
     virtual nlohmann::json GetSettings() const override;
+
+  private:
+    void OnSelectProcess(wxCommandEvent&);
 };
