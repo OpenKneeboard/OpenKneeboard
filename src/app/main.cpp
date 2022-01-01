@@ -16,16 +16,15 @@
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
+#include "OpenKneeboard/RenderError.h"
 #include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
-#include "OpenKneeboard/RenderError.h"
-#include "okGameEventMailslotThread.h"
-#include "okTab.h"
-#include "okEvents.h"
-
-#include "okDirectInputController.h"
-
 #include "Settings.h"
+#include "okDirectInputController.h"
+#include "okEvents.h"
+#include "okGameEventMailslotThread.h"
+#include "okGameInjectorThread.h"
+#include "okTab.h"
 
 using namespace OpenKneeboard;
 
@@ -100,6 +99,20 @@ class MainWindow final : public wxFrame {
       f->SetSizerAndFit(difs);
       f->Show();
     }
+
+    std::vector<std::shared_ptr<Game>> games { std::make_shared<Games::DCSWorld>() };
+    std::vector<GameInstance> instances;
+
+    for (const auto& game: games) {
+      for (const auto& path: game->GetInstalledPaths()) {
+        instances.push_back({path, game});
+      }
+    }
+
+   /* TODO: fix d3d injction in DCS world first
+    auto injector = new okGameInjectorThread(instances);
+    injector->Run();
+    */
   }
 
   void OnTabChanged(wxBookCtrlEvent& ev) {
@@ -147,7 +160,7 @@ class MainWindow final : public wxFrame {
 
     auto ratio = float(image.GetHeight()) / image.GetWidth();
     OpenKneeboard::SHM::Header header {
-      .Flags = {},//OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
+      .Flags = {},// OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
       .y = 0.5f,
       .z = -0.25f,
       .rx = float(M_PI / 2),

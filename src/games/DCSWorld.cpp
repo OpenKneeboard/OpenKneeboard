@@ -45,11 +45,12 @@ std::filesystem::path DCSWorld::GetOpenBetaPath() {
 }
 
 wxString DCSWorld::GetUserFriendlyName(
-  const std::filesystem::path& path) const {
-  if (path == GetOpenBetaPath()) {
+  const std::filesystem::path& _path) const {
+  const auto path = std::filesystem::canonical(_path);
+  if (path == GetOpenBetaPath() / "bin" / "DCS.exe") {
     return _("DCS World - Open Beta");
   }
-  if (path == GetStablePath()) {
+  if (path == GetStablePath() / "bin" / "DCS.exe") {
     return _("DCS World - Stable");
   }
   return _("DCS World");
