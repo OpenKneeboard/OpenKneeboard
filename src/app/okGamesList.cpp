@@ -1,5 +1,7 @@
 #include "okGamesList.h"
 
+#include <shellapi.h>
+#include <winrt/base.h>
 #include <wx/listbook.h>
 
 #include "OpenKneeboard/Games/DCSWorld.h"
@@ -57,15 +59,41 @@ class okGameInstanceSettings : public wxPanel {
     SetSizerAndFit(s);
   }
 };
+
+wxIcon GetIconFromExecutable(const std::filesystem::path& path) {
+  auto wpath = path.wstring();
+  HICON handle = ExtractIcon(GetModuleHandle(NULL), wpath.c_str(), 0);
+  if (!handle) {
+    return {};
+  }
+
+  wxIcon icon;
+  if (icon.CreateFromHICON(handle)) {
+    // `icon` now owns the handle
+    return icon;
+  }
+
+  DestroyIcon(handle);
+
+  return {};
+}
+
 }// namespace
 
 wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
   auto list = new wxListbook(parent, wxID_ANY);
   list->SetLabel(_("Games"));
   list->SetWindowStyleFlag(wxLB_LEFT);
+  auto imageList = new wxImageList(32, 32);
+  list->SetImageList(imageList);
 
   for (const auto& game: mInstances) {
-    list->AddPage(new okGameInstanceSettings(list, game), game.Name);
+    int imageIndex = -1;
+    auto ico = GetIconFromExecutable(game.Path);
+    if (ico.IsOk()) {
+      imageIndex = imageList->Add(ico);
+    }
+    list->AddPage(new okGameInstanceSettings(list, game), game.Name, false, imageIndex);
   }
 
   return list;
