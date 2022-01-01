@@ -1,12 +1,11 @@
 #include "okGameInjectorThread.h"
 
 #include <TlHelp32.h>
-#include <winrt/base.h>
 #include <detours.h>
-
-#include "OpenKneeboard/dprint.h"
+#include <winrt/base.h>
 
 #include "Injectables.h"
+#include "OpenKneeboard/dprint.h"
 
 using namespace OpenKneeboard;
 
@@ -25,6 +24,98 @@ okGameInjectorThread::okGameInjectorThread(
 okGameInjectorThread::~okGameInjectorThread() {
 }
 
+namespace {
+class DebugPrivileges final {
+ private:
+  winrt::handle mToken;
+  LUID mLuid;
+
+ public:
+  DebugPrivileges() {
+    if (!OpenProcessToken(
+          GetCurrentProcess(),
+          TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+          mToken.put())) {
+      dprint("Failed to open own process token");
+      return;
+    }
+
+    LookupPrivilegeValue(nullptr, SE_DEBUG_NAME, &mLuid);
+
+    TOKEN_PRIVILEGES privileges;
+    privileges.PrivilegeCount = 1;
+    privileges.Privileges[0].Luid = mLuid;
+    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    AdjustTokenPrivileges(
+      mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
+  }
+
+  ~DebugPrivileges() {
+    if (!mToken) {
+      return;
+    }
+    TOKEN_PRIVILEGES privileges;
+    privileges.PrivilegeCount = 1;
+    privileges.Privileges[0].Luid = mLuid;
+    privileges.Privileges[0].Attributes = SE_PRIVILEGE_REMOVED;
+    AdjustTokenPrivileges(
+      mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
+  }
+};
+bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
+  DebugPrivileges privileges;
+  const auto dll = std::filesystem::canonical(_dll);
+
+  winrt::handle process {OpenProcess(PROCESS_ALL_ACCESS, false, processId)};
+
+  if (!process) {
+    dprint("Failed to open process");
+    return false;
+  }
+
+  auto dllStr = dll.wstring();
+
+  const auto dllStrByteLen = (dllStr.size() + 1) * sizeof(wchar_t);
+  auto targetBuffer = VirtualAllocEx(
+    process.get(), nullptr, dllStrByteLen, MEM_COMMIT, PAGE_READWRITE);
+  if (!targetBuffer) {
+    return false;
+  }
+
+  wxON_BLOCK_EXIT0([=]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
+  WriteProcessMemory(
+    process.get(), targetBuffer, dllStr.c_str(), dllStrByteLen, nullptr);
+
+  auto kernel32 = GetModuleHandleA("Kernel32");
+  if (!kernel32) {
+    dprint("Failed to open kernel32");
+    return false;
+  }
+
+  auto loadLibraryW = reinterpret_cast<PTHREAD_START_ROUTINE>(
+    GetProcAddress(kernel32, "LoadLibraryW"));
+  if (!loadLibraryW) {
+    dprint("Failed to find loadLibraryW");
+    return false;
+  }
+
+  winrt::handle thread {CreateRemoteThread(
+    process.get(), nullptr, 0, loadLibraryW, targetBuffer, 0, nullptr)};
+
+  if (!thread) {
+    dprint("Failed to create remote thread");
+  }
+
+  WaitForSingleObject(thread.get(), INFINITE);
+  DWORD result = -1;
+  GetExitCodeThread(thread.get(), &result);
+  dprintf("Thread result: {}", result);
+
+  return true;
+}
+}// namespace
+
 wxThread::ExitCode okGameInjectorThread::Entry() {
   PROCESSENTRY32 process;
   process.dwSize = sizeof(process);
@@ -32,8 +123,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
   module.dwSize = sizeof(module);
   dprint("Looking for game processes...");
   while (IsAlive()) {
-    winrt::handle snapshot {
-      CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
+    winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
     if (!snapshot) {
       dprintf("CreateToolhelp32Snapshot failed in {}", __FILE__);
       return ExitCode(1);
@@ -47,7 +137,8 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
     }
 
     do {
-      winrt::handle processHandle { OpenProcess(PROCESS_ALL_ACCESS, false, process.th32ProcessID) };
+      winrt::handle processHandle {
+        OpenProcess(PROCESS_ALL_ACCESS, false, process.th32ProcessID)};
       if (!processHandle) {
         continue;
       }
@@ -64,10 +155,10 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
             friendly.ToStdString(),
             process.th32ProcessID,
             path.string());
-          // TODO: check for installed location
-          const char* dllPath = Injectables::Oculus_D3D11.BuildPath;
-          if (DetourUpdateProcessWithDll(processHandle.get(), &dllPath, 1)) {
+          if (InjectDll(
+                process.th32ProcessID, Injectables::Oculus_D3D11.BuildPath)) {
             dprint("Injected DLL.");
+            return ExitCode(0);
           } else {
             dprintf("Failed to inject DLL: {}", GetLastError());
           }

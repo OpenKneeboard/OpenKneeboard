@@ -109,10 +109,8 @@ class MainWindow final : public wxFrame {
       }
     }
 
-   /* TODO: fix d3d injction in DCS world first
     auto injector = new okGameInjectorThread(instances);
     injector->Run();
-    */
   }
 
   void OnTabChanged(wxBookCtrlEvent& ev) {
