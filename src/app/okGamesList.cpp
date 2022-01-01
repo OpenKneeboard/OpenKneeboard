@@ -3,6 +3,7 @@
 #include <shellapi.h>
 #include <winrt/base.h>
 #include <wx/listbook.h>
+#include <wx/gbsizer.h>
 
 #include "OpenKneeboard/Games/DCSWorld.h"
 
@@ -35,28 +36,30 @@ class okGameInstanceSettings : public wxPanel {
  public:
   okGameInstanceSettings(wxWindow* parent, const GameInstance& game)
     : wxPanel(parent, wxID_ANY) {
-    auto s = new wxGridSizer(2, 5, 5);
+    auto grid = new wxGridBagSizer(5, 5);
 
     auto bold = GetFont().MakeBold();
 
     {
       auto label = new wxStaticText(this, wxID_ANY, _("Name"));
       label->SetFont(bold);
-      s->Add(label);
-      s->Add(new wxStaticText(this, wxID_ANY, game.Name), 1);
+      grid->Add(label, wxGBPosition(0, 0));
+      grid->Add(new wxStaticText(this, wxID_ANY, game.Name), wxGBPosition(0, 1));
     }
 
     {
       auto label = new wxStaticText(this, wxID_ANY, _("Executable"));
       label->SetFont(bold);
-      s->Add(label);
-      s->Add(new wxStaticText(this, wxID_ANY, game.Path.string()), 1);
+      grid->Add(label, wxGBPosition(1, 0));
+      grid->Add(new wxStaticText(this, wxID_ANY, game.Path.string()), wxGBPosition(1, 1));
     }
 
-    s->AddStretchSpacer();
-    s->AddStretchSpacer();
+    grid->AddGrowableCol(1);
 
-    SetSizerAndFit(s);
+    auto s = new wxBoxSizer(wxVERTICAL);
+    s->Add(grid);
+    s->AddStretchSpacer();
+    this->SetSizerAndFit(s);
   }
 };
 
