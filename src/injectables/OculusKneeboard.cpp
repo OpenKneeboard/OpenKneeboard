@@ -24,9 +24,13 @@ namespace OpenKneeboard {
     unsigned int layerCount,
     decltype(&ovr_EndFrame) next) {
     auto snapshot = mSHM.MaybeGet();
+    if (!snapshot) {
+      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+    }
+
     const auto& config = *snapshot.GetHeader();
     auto swapChain = GetSwapChain(session, config);
-    if (!(snapshot && swapChain && Render(session, swapChain, snapshot))) {
+    if (!(swapChain && Render(session, swapChain, snapshot))) {
       return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
     }
 
