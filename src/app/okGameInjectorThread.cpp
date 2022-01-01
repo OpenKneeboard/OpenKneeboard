@@ -65,7 +65,8 @@ class DebugPrivileges final {
 };
 bool AlreadyInjected(DWORD processId, const std::filesystem::path& _dll) {
   auto dll = _dll.filename();
-  winrt::handle snapshot { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId) };
+  winrt::handle snapshot {
+    CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId)};
   MODULEENTRY32 module;
   module.dwSize = sizeof(module);
 
@@ -85,7 +86,8 @@ bool AlreadyInjected(DWORD processId, const std::filesystem::path& _dll) {
 bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
   const auto dll = std::filesystem::canonical(_dll);
   if (AlreadyInjected(processId, dll)) {
-    return true;
+    dprint("Asked to load a DLL that's already loaded");
+    return false;
   }
 
   DebugPrivileges privileges;
@@ -172,19 +174,24 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       for (const auto& game: p->Games) {
         if (path == game.Path) {
           auto friendly = game.Game->GetUserFriendlyName(game.Path);
+          auto dll = Injectables::Oculus_D3D11.BuildPath;
+          if (AlreadyInjected(process.th32ProcessID, dll)) {
+            continue;
+          }
 
           dprintf(
-            "Found '{}' process: {} {}",
+            "Found '{}' process to inject: {} {}",
             friendly.ToStdString(),
             process.th32ProcessID,
             path.string());
+
           if (InjectDll(
                 process.th32ProcessID, Injectables::Oculus_D3D11.BuildPath)) {
             dprint("Injected DLL.");
-            return ExitCode(0);
-          } else {
-            dprintf("Failed to inject DLL: {}", GetLastError());
+            continue;
           }
+
+          dprintf("Failed to inject DLL: {}", GetLastError());
         }
       }
     } while (Process32Next(snapshot.get(), &process));
