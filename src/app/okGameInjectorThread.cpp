@@ -63,9 +63,32 @@ class DebugPrivileges final {
       mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
   }
 };
+bool AlreadyInjected(DWORD processId, const std::filesystem::path& _dll) {
+  auto dll = _dll.filename();
+  winrt::handle snapshot { CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId) };
+  MODULEENTRY32 module;
+  module.dwSize = sizeof(module);
+
+  if (!Module32First(snapshot.get(), &module)) {
+    return false;
+  }
+
+  do {
+    if (dll == module.szModule) {
+      return true;
+    }
+
+  } while (Module32Next(snapshot.get(), &module));
+  return false;
+}
+
 bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
-  DebugPrivileges privileges;
   const auto dll = std::filesystem::canonical(_dll);
+  if (AlreadyInjected(processId, dll)) {
+    return true;
+  }
+
+  DebugPrivileges privileges;
 
   winrt::handle process {OpenProcess(PROCESS_ALL_ACCESS, false, processId)};
 
