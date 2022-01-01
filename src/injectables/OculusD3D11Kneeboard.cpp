@@ -87,6 +87,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   int length = -1;
   real_ovr_GetTextureSwapChainLength(session, p->SwapChain, &length);
 
+  p->RenderTargets.clear();
   p->RenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
     ID3D11Texture2D* texture;// todo: smart ptr?
