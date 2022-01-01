@@ -22,14 +22,15 @@
 #include "Settings.h"
 #include "okDirectInputController.h"
 #include "okEvents.h"
+#include "okGamesList.h"
 #include "okGameEventMailslotThread.h"
-#include "okGameInjectorThread.h"
 #include "okTab.h"
 
 using namespace OpenKneeboard;
 
 class MainWindow final : public wxFrame {
  private:
+  std::vector<okConfigurableComponent*> mConfigurables;
   std::vector<okTab*> mTabs;
   OpenKneeboard::SHM::Writer mSHM;
   wxNotebook* mNotebook;
@@ -51,8 +52,16 @@ class MainWindow final : public wxFrame {
       auto fileMenu = new wxMenu();
       menuBar->Append(fileMenu, _("&File"));
 
-      fileMenu->Append(wxID_EXIT, _T("E&xit"));
+      fileMenu->Append(wxID_EXIT, _("E&xit"));
       Bind(wxEVT_MENU, &MainWindow::OnExit, this, wxID_EXIT);
+    }
+    {
+      auto editMenu = new wxMenu();
+      menuBar->Append(editMenu, _("&Edit"));
+
+      auto settingsId = wxNewId();
+      editMenu->Append(settingsId, _("&Settings..."));
+      Bind(wxEVT_MENU, &MainWindow::OnShowSettings, this, settingsId);
     }
     SetMenuBar(menuBar);
 
@@ -82,35 +91,25 @@ class MainWindow final : public wxFrame {
     listener->Run();
 
     {
+      // TODO: settings
+      auto gl = new okGamesList(nlohmann::json {});
+      mConfigurables.push_back(gl);
+    }
+
+    {
       auto dipc = new okDirectInputController(mSettings.DirectInput);
+      mConfigurables.push_back(dipc);
+
       dipc->Bind(okEVT_PREVIOUS_TAB, &MainWindow::OnPreviousTab, this);
       dipc->Bind(okEVT_NEXT_TAB, &MainWindow::OnNextTab, this);
       dipc->Bind(okEVT_PREVIOUS_PAGE, &MainWindow::OnPreviousPage, this);
       dipc->Bind(okEVT_NEXT_PAGE, &MainWindow::OnNextPage, this);
-      auto f = new wxFrame(this, wxID_ANY, _("Bindings"));
-      auto dis = dipc->GetSettingsUI(f);
 
-      dis->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
+      dipc->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
         this->mSettings.DirectInput = dipc->GetSettings();
         mSettings.Save();
       });
-      auto difs = new wxBoxSizer(wxVERTICAL);
-      difs->Add(dis, 1, wxEXPAND);
-      f->SetSizerAndFit(difs);
-      f->Show();
     }
-
-    std::vector<std::shared_ptr<Game>> games { std::make_shared<Games::DCSWorld>() };
-    std::vector<GameInstance> instances;
-
-    for (const auto& game: games) {
-      for (const auto& path: game->GetInstalledPaths()) {
-        instances.push_back({path, game});
-      }
-    }
-
-    auto injector = new okGameInjectorThread(instances);
-    injector->Run();
   }
 
   void OnTabChanged(wxBookCtrlEvent& ev) {
@@ -188,6 +187,22 @@ class MainWindow final : public wxFrame {
 
   void OnExit(wxCommandEvent& ev) {
     Close(true);
+  }
+
+  void OnShowSettings(wxCommandEvent& ev) {
+    auto w = new wxFrame(this, wxID_ANY, _("Settings"));
+    auto s = new wxBoxSizer(wxVERTICAL);
+
+    auto nb = new wxNotebook(w, wxID_ANY);
+    s->Add(nb, 1, wxEXPAND);
+
+    for (auto& component: mConfigurables) {
+      auto ui = component->GetSettingsUI(nb);
+      nb->AddPage(ui, ui->GetLabel());
+    }
+
+    w->SetSizerAndFit(s);
+    w->Show(true);
   }
 
   void OnPreviousTab(wxCommandEvent& ev) {

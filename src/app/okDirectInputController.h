@@ -12,7 +12,6 @@ class okDirectInputController final : public okActivePageAndTabController {
   okDirectInputController(const nlohmann::json& settings);
   virtual ~okDirectInputController();
   
-  virtual wxString GetTitle() const override;
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const override;
  private:

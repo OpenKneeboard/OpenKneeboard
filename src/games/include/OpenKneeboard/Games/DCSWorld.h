@@ -9,6 +9,7 @@ namespace OpenKneeboard::Games {
 
 class DCSWorld final : public OpenKneeboard::Game {
  public:
+  const char* GetNameForConfigFile() const override;
   wxString GetUserFriendlyName(const std::filesystem::path&) const override final;
   virtual std::vector<std::filesystem::path> GetInstalledPaths() const override final;
   virtual bool DiscardOculusDepthInformationDefault() const override final;

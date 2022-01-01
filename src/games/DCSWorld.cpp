@@ -76,4 +76,8 @@ bool DCSWorld::DiscardOculusDepthInformationDefault() const {
   return true;
 }
 
+const char* DCSWorld::GetNameForConfigFile() const {
+  return "DCSWorld";
+}
+
 }// namespace OpenKneeboard::Games

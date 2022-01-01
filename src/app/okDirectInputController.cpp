@@ -249,6 +249,7 @@ class okDirectInputPageSettings final : public wxPanel {
     wxWindow* parent,
     const std::shared_ptr<DIInputBindings>& bindings)
     : wxPanel(parent, wxID_ANY), mBindings(bindings) {
+    this->SetLabel(_("DirectInput"));
     mDevices = EnumDevices();
 
     auto sizer = new wxBoxSizer(wxVERTICAL);
@@ -494,12 +495,12 @@ void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
   }
 }
 
-wxString okDirectInputController::GetTitle() const {
-  return _("DirectInput");
-}
-
 wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
-  return new okDirectInputPageSettings(parent, p->Bindings);
+  auto ret = new okDirectInputPageSettings(parent, p->Bindings);
+  ret->Bind(okEVT_SETTINGS_CHANGED, [this](auto& ev) {
+    wxQueueEvent(this, ev.Clone());
+  });
+  return ret;
 }
 
 nlohmann::json okDirectInputController::GetSettings() const {
