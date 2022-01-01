@@ -10,21 +10,18 @@
 #include <wx/notebook.h>
 #pragma warning(pop)
 
-#include "OpenKneeboard/DCSAircraftTab.h"
-#include "OpenKneeboard/DCSMissionTab.h"
-#include "OpenKneeboard/DCSTerrainTab.h"
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/RenderError.h"
 #include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
 #include "Settings.h"
 #include "okDirectInputController.h"
 #include "okEvents.h"
-#include "okGamesList.h"
 #include "okGameEventMailslotThread.h"
+#include "okGamesList.h"
 #include "okTab.h"
+#include "okTabsList.h"
 
 using namespace OpenKneeboard;
 
@@ -72,23 +69,24 @@ class MainWindow final : public wxFrame {
       wxEVT_BOOKCTRL_PAGE_CHANGED, &MainWindow::OnTabChanged, this);
     sizer->Add(mNotebook);
 
-    mTabs = {
-      new okTab(mNotebook, std::make_shared<DCSMissionTab>()),
-      new okTab(mNotebook, std::make_shared<DCSAircraftTab>()),
-      new okTab(mNotebook, std::make_shared<DCSTerrainTab>()),
-    };
-    for (auto tab: mTabs) {
-      mNotebook->AddPage(tab, tab->GetTab()->GetTitle());
-      tab->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
-      tab->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
+    auto listener = new okGameEventMailslotThread(this);
+    listener->Run();
+
+    {
+      // TODO: settings
+      auto tabs = new okTabsList(nlohmann::json {});
+      for (const auto& tab: tabs->GetTabs()) {
+        auto ui = new okTab(mNotebook, tab);
+        mNotebook->AddPage(ui, tab->GetTitle());
+        ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
+        ui->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
+        mTabs.push_back(ui);
+      }
     }
 
     this->SetSizerAndFit(sizer);
 
     UpdateSHM();
-
-    auto listener = new okGameEventMailslotThread(this);
-    listener->Run();
 
     {
       // TODO: settings
@@ -198,6 +196,9 @@ class MainWindow final : public wxFrame {
 
     for (auto& component: mConfigurables) {
       auto ui = component->GetSettingsUI(nb);
+      if (!ui) {
+        continue;
+      }
       nb->AddPage(ui, ui->GetLabel());
     }
 
@@ -225,11 +226,6 @@ class MainWindow final : public wxFrame {
 class OpenKneeboardApp final : public wxApp {
  public:
   virtual bool OnInit() override {
-    using DCS = OpenKneeboard::Games::DCSWorld;
-    dprintf(
-      "DCS paths:\n  Stable: {}\n  Open Beta: {}",
-      DCS::GetStablePath().string(),
-      DCS::GetOpenBetaPath().string());
     wxInitAllImageHandlers();
     MainWindow* window = new MainWindow();
     window->Show();
