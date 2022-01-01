@@ -8,9 +8,29 @@
 
 #include <OpenKneeboard/dprint.h>
 
+// clang-format off
+#include <windows.h>
+#include <detours.h>
+// clang-format on
+
+#define LIBOVR_FUNCS \
+  IT(ovr_GetTrackingOriginType) \
+  IT(ovr_GetTrackingState) \
+  IT(ovr_GetPredictedDisplayTime) \
+  IT(ovr_GetFloat)
+
+#define IT(x) static decltype(&x) real_##x = nullptr;
+LIBOVR_FUNCS
+#undef IT
+
 namespace OpenKneeboard {
 
   OculusKneeboard::OculusKneeboard() {
+#define IT(x) \
+  real_##x = reinterpret_cast<decltype(&x)>( \
+    DetourFindFunction("LibOVRRT64_1.dll", #x));
+  LIBOVR_FUNCS
+#undef IT
   }
 
   OculusKneeboard::~OculusKneeboard() {
@@ -37,12 +57,20 @@ namespace OpenKneeboard {
     ovrLayerQuad kneeboardLayer = {};
     kneeboardLayer.Header.Type = ovrLayerType_Quad;
     kneeboardLayer.Header.Flags = ovrLayerFlag_TextureOriginAtBottomLeft;
+  kneeboardLayer.ColorTexture = swapChain;
+  kneeboardLayer.QuadPoseCenter.Position
+    = {.x = config.x, .y = config.y, .z = config.z};
+
     if ((config.Flags & OpenKneeboard::Flags::HEADLOCKED)) {
       kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
+  } else if (
+    real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
+    auto state = real_ovr_GetTrackingState(
+      session, real_ovr_GetPredictedDisplayTime(session, frameIndex), false);
+    kneeboardLayer.QuadPoseCenter.Position.y = config.y
+      - real_ovr_GetFloat(session, OVR_KEY_EYE_HEIGHT, OVR_DEFAULT_EYE_HEIGHT)
+      - state.CalibratedOrigin.Position.y;
     }
-    kneeboardLayer.ColorTexture = swapChain;
-    kneeboardLayer.QuadPoseCenter.Position
-      = { .x = config.x, .y = config.y, .z = config.z };
 
     OVR::Quatf orientation;
     orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx);
