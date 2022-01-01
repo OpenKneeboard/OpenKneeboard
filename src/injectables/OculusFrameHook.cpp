@@ -24,7 +24,8 @@ static OculusFrameHook* g_instance = nullptr;
 #define IT(x) \
   static_assert(std::same_as<decltype(x), decltype(ovr_EndFrame)>); \
   static decltype(&x) real_##x = nullptr; \
-  OVR_PUBLIC_FUNCTION(ovrResult) hooked_##x( \
+  OVR_PUBLIC_FUNCTION(ovrResult) \
+  hooked_##x( \
     ovrSession session, \
     long long frameIndex, \
     const ovrViewScaleDesc* viewScaleDesc, \
@@ -50,15 +51,24 @@ OculusFrameHook::OculusFrameHook() {
   HOOKED_ENDFRAME_FUNCS
 #undef IT
   DetourTransactionPopCommit();
+  mHooked = true;
 }
 
-OculusFrameHook::~OculusFrameHook() {
-  g_instance = nullptr;
+void OculusFrameHook::Unhook() {
+  if (!mHooked) {
+    return;
+  }
+  mHooked = false;
   DetourTransactionPushBegin();
 #define IT(x) DetourDetach(reinterpret_cast<void**>(&real_##x), hooked_##x);
   HOOKED_ENDFRAME_FUNCS
 #undef IT
   DetourTransactionPopCommit();
+}
+
+OculusFrameHook::~OculusFrameHook() {
+  Unhook();
+  g_instance = nullptr;
 }
 
 }// namespace OpenKneeboard

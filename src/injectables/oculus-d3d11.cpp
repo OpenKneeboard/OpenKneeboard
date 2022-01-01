@@ -51,10 +51,17 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     DetourTransactionPopCommit();
     dprint("Installed hooks.");
   } else if (dwReason == DLL_PROCESS_DETACH) {
-    dprintf("Detaching from process...");
+    dprint("Detaching from process...");
     DetourTransactionPushBegin();
-    g_renderer.reset();
+    g_renderer->Unhook();
     DetourTransactionPopCommit();
+    dprint("Detached hooks, waiting for in-progress calls");
+    // If, for example, hooked_ovr_EndFrame was being called when we
+    // unhooked it, we need to let the current call finish.
+    Sleep(500);
+    dprint("Freeing resources");
+    g_renderer.reset();
+    dprint("Cleanup complete.");
   }
   return TRUE;
 }

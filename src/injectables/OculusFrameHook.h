@@ -6,9 +6,13 @@
 namespace OpenKneeboard {
 
 class OculusFrameHook {
+ private:
+  bool mHooked;
  public:
   OculusFrameHook();
   virtual ~OculusFrameHook();
+
+  void Unhook();
 
   virtual ovrResult onEndFrame(
     ovrSession session,
