@@ -29,14 +29,14 @@ class okMainWindow::Impl {
 };
 
 static wxImage CreateErrorImage(const wxString& text) {
-	wxBitmap bm(768, 1024);
-	wxMemoryDC dc(bm);
+  wxBitmap bm(768, 1024);
+  wxMemoryDC dc(bm);
 
-	dc.SetBrush(*wxWHITE_BRUSH);
-	dc.Clear();
-	RenderError(bm.GetSize(), dc, text);
+  dc.SetBrush(*wxWHITE_BRUSH);
+  dc.Clear();
+  RenderError(bm.GetSize(), dc, text);
 
-	return bm.ConvertToImage();
+  return bm.ConvertToImage();
 }
 
 okMainWindow::okMainWindow()
@@ -156,10 +156,12 @@ void okMainWindow::UpdateSHM() {
   auto ratio = float(image.GetHeight()) / image.GetWidth();
   SHM::Header header {
     .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
+    .x = 0.1f,
     .floorY = 0.6f,
     .eyeY = -0.7f,
-    .z = -0.25f,
-    .rx = float(M_PI / 2),
+    .z = -0.3f,
+    .rx = -float(2 * M_PI / 5),
+    .rz = -float(M_PI / 32),
     .VirtualWidth = 0.5f / ratio,
     .VirtualHeight = 0.5f,
     .ImageWidth = static_cast<uint16_t>(image.GetWidth()),
