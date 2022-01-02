@@ -14,6 +14,7 @@
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
+#include "okGameInjectorThread.h"
 #include "okSelectExecutableDialog.h"
 
 using namespace OpenKneeboard;
@@ -27,6 +28,9 @@ okGamesList::okGamesList(const nlohmann::json& config) {
     return;
   }
   LoadSettings(config);
+
+  mInjector = new okGameInjectorThread(this, mInstances);
+  mInjector->Run();
 }
 
 void okGamesList::LoadDefaultSettings() {
@@ -221,8 +225,10 @@ class okGamesList::SettingsUI final : public wxPanel {
 
 wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
   auto ret = new SettingsUI(parent, this);
-  ret->Bind(
-    okEVT_SETTINGS_CHANGED, [=](auto& ev) { wxQueueEvent(this, ev.Clone()); });
+  ret->Bind(okEVT_SETTINGS_CHANGED, [=](auto& ev) {
+    mInjector->SetGameInstances(mInstances);
+    wxQueueEvent(this, ev.Clone());
+  });
   return ret;
 }
 

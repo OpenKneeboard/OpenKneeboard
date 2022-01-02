@@ -5,11 +5,14 @@
 #include "GameInstance.h"
 #include "okConfigurableComponent.h"
 
+class okGameInjectorThread;
+
 class okGamesList final : public okConfigurableComponent {
  private:
   class SettingsUI;
   std::vector<std::shared_ptr<OpenKneeboard::Game>> mGames;
   std::vector<OpenKneeboard::GameInstance> mInstances;
+  okGameInjectorThread* mInjector = nullptr;
 
  private:
   void LoadDefaultSettings();

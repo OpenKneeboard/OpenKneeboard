@@ -4,24 +4,37 @@
 #include <detours.h>
 #include <winrt/base.h>
 
+#include <mutex>
+
 #include "Injectables.h"
 #include "OpenKneeboard/dprint.h"
+#include "okEvents.h"
 
 using namespace OpenKneeboard;
 
 class okGameInjectorThread::Impl final {
  public:
+  wxEvtHandler* Receiver;
   std::vector<GameInstance> Games;
+  std::mutex GamesMutex;
 };
 
 okGameInjectorThread::okGameInjectorThread(
+  wxEvtHandler* receiver,
   const std::vector<GameInstance>& games) {
   p.reset(new Impl {
+    .Receiver = receiver,
     .Games = games,
   });
 }
 
 okGameInjectorThread::~okGameInjectorThread() {
+}
+
+void okGameInjectorThread::SetGameInstances(
+  const std::vector<GameInstance>& games) {
+  std::scoped_lock lock(p->GamesMutex);
+  p->Games = games;
 }
 
 namespace {
@@ -63,6 +76,7 @@ class DebugPrivileges final {
       mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
   }
 };
+
 bool AlreadyInjected(DWORD processId, const std::filesystem::path& _dll) {
   auto dll = _dll.filename();
   winrt::handle snapshot {
@@ -154,12 +168,12 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       return ExitCode(1);
     }
 
-    dprint("Got game snapshot");
-
     if (!Process32First(snapshot.get(), &process)) {
       dprintf("Process32First failed: {}", GetLastError());
       return ExitCode(2);
     }
+
+    std::filesystem::path currentPath;
 
     do {
       winrt::handle processHandle {
@@ -171,12 +185,20 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       DWORD bufSize = sizeof(buf);
       QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
       const std::filesystem::path path(std::wstring(buf, bufSize));
+
+      std::scoped_lock lock(p->GamesMutex);
       for (const auto& game: p->Games) {
         if (path == game.Path) {
           auto friendly = game.Game->GetUserFriendlyName(game.Path);
           auto dll = Injectables::Oculus_D3D11.BuildPath;
           if (AlreadyInjected(process.th32ProcessID, dll)) {
-            continue;
+            if (path != currentPath) {
+              currentPath = path;
+              wxCommandEvent ev(okEVT_GAME_CHANGED);
+              ev.SetString(path.wstring());
+              wxQueueEvent(p->Receiver, ev.Clone());
+            }
+            break;
           }
 
           dprintf(
@@ -185,18 +207,27 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
             process.th32ProcessID,
             path.string());
 
-          if (InjectDll(
+          if (!InjectDll(
                 process.th32ProcessID, Injectables::Oculus_D3D11.BuildPath)) {
-            dprint("Injected DLL.");
-            continue;
+            currentPath = path;
+            dprintf("Failed to inject DLL: {}", GetLastError());
+            break;
           }
 
-          dprintf("Failed to inject DLL: {}", GetLastError());
+          if (path == currentPath) {
+            break;
+          }
+
+          currentPath = path;
+          wxCommandEvent ev(okEVT_GAME_CHANGED);
+          ev.SetString(path.wstring());
+          wxQueueEvent(p->Receiver, ev.Clone());
+          break;
         }
       }
     } while (Process32Next(snapshot.get(), &process));
 
-    wxThread::This()->Sleep(1000);
+    wxThread::This()->Sleep(200);
   }
   return ExitCode(0);
 }

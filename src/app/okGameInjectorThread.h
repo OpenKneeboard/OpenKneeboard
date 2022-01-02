@@ -12,8 +12,10 @@
 
 class okGameInjectorThread final : public wxThread {
  public:
-  okGameInjectorThread(const std::vector<OpenKneeboard::GameInstance>&);
+  okGameInjectorThread(wxEvtHandler* receiver, const std::vector<OpenKneeboard::GameInstance>&);
   ~okGameInjectorThread();
+
+  void SetGameInstances(const std::vector<OpenKneeboard::GameInstance>&);
 
  protected:
   virtual ExitCode Entry() override;

@@ -155,7 +155,7 @@ void okMainWindow::UpdateSHM() {
 
   auto ratio = float(image.GetHeight()) / image.GetWidth();
   OpenKneeboard::SHM::Header header {
-    .Flags = {},// OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
+    .Flags = OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
     .floorY = 0.6f,
     .eyeY = -0.7f,
     .z = -0.25f,
