@@ -8,9 +8,12 @@
 
 class okGamesList final : public okConfigurableComponent {
   private:
-    class Settings;
+    class SettingsUI;
     std::vector<std::shared_ptr<OpenKneeboard::Game>> mGames;
     std::vector<OpenKneeboard::GameInstance> mInstances;
+  private:
+    void LoadDefaultSettings();
+    void LoadSettings(const nlohmann::json&);
   public:
     okGamesList() = delete;
     okGamesList(const nlohmann::json& config);

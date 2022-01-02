@@ -89,8 +89,11 @@ class MainWindow final : public wxFrame {
     UpdateSHM();
 
     {
-      // TODO: settings
-      auto gl = new okGamesList(nlohmann::json {});
+      auto gl = new okGamesList(mSettings.Games);
+      gl->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
+        this->mSettings.Games = gl->GetSettings();
+        mSettings.Save();
+      });
       mConfigurables.push_back(gl);
     }
 

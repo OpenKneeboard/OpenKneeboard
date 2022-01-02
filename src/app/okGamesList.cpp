@@ -12,6 +12,7 @@
 #include "GenericGame.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/dprint.h"
+#include "okEvents.h"
 
 using namespace OpenKneeboard;
 
@@ -21,11 +22,14 @@ okGamesList::okGamesList(const nlohmann::json& config) {
   mGames
     = {std::make_shared<Games::DCSWorld>(), std::make_shared<GenericGame>()};
 
-  if (!config.is_null()) {
-    // TODO
+  if (config.is_null()) {
+    LoadDefaultSettings();
     return;
   }
+  LoadSettings(config);
+}
 
+void okGamesList::LoadDefaultSettings() {
   for (const auto& game: mGames) {
     for (const auto& path: game->GetInstalledPaths()) {
       mInstances.push_back({
@@ -181,7 +185,7 @@ class okSelectProcessDialog : public wxDialog {
 
 }// namespace
 
-class okGamesList::Settings final : public wxPanel {
+class okGamesList::SettingsUI final : public wxPanel {
  private:
   wxListbook* mList = nullptr;
   okGamesList* mGamesList = nullptr;
@@ -214,18 +218,19 @@ class okGamesList::Settings final : public wxPanel {
       dprintf("No dialog in {}", __FUNCTION__);
       return;
     }
+    wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
     dialog->Close();
   }
 
   void OnAddGame(wxCommandEvent& ev) {
     auto dialog = std::make_unique<okSelectProcessDialog>(
       nullptr, wxID_ANY, _("Select Game"));
-    dialog->Bind(okEVT_PATH_SELECTED, &Settings::OnPathSelect, this);
+    dialog->Bind(okEVT_PATH_SELECTED, &SettingsUI::OnPathSelect, this);
     dialog->ShowModal();
   }
 
  public:
-  Settings(wxWindow* parent, okGamesList* gamesList)
+  SettingsUI(wxWindow* parent, okGamesList* gamesList)
     : wxPanel(parent, wxID_ANY), mGamesList(gamesList) {
     this->SetLabel(_("Games"));
     mList = new wxListbook(this, wxID_ANY);
@@ -244,7 +249,7 @@ class okGamesList::Settings final : public wxPanel {
     }
 
     auto add = new wxButton(this, wxID_ANY, _("&Add Game"));
-    add->Bind(wxEVT_BUTTON, &Settings::OnAddGame, this);
+    add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddGame, this);
     auto remove = new wxButton(this, wxID_ANY, _("&Remove Game"));
 
     auto buttons = new wxBoxSizer(wxHORIZONTAL);
@@ -260,9 +265,25 @@ class okGamesList::Settings final : public wxPanel {
 };
 
 wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
-  return new Settings(parent, this);
+  auto ret = new SettingsUI(parent, this);
+  ret->Bind(okEVT_SETTINGS_CHANGED, [=](auto& ev) {
+    wxQueueEvent(this, ev.Clone());
+  });
+  return ret;
 }
 
 nlohmann::json okGamesList::GetSettings() const {
-  return {};
+  nlohmann::json games {};
+  for (const auto& game: mInstances) {
+    games.push_back(game.ToJson());
+  }
+  return { { "Configured", games }};
+}
+
+void okGamesList::LoadSettings(const nlohmann::json& config) {
+  auto list = config.at("Configured"); 
+
+  for (const auto& game: list) {
+    mInstances.push_back(GameInstance::FromJson(game, mGames));
+  }
 }
