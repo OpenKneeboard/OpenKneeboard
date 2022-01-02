@@ -1,8 +1,10 @@
 #include "okGamesList.h"
 
+#include <ShlObj.h>
 #include <TlHelp32.h>
 #include <shellapi.h>
 #include <winrt/base.h>
+#include <wx/filedlg.h>
 #include <wx/gbsizer.h>
 #include <wx/listbook.h>
 #include <wx/listctrl.h>
@@ -136,6 +138,43 @@ int wxCALLBACK compareProcessItems(wxIntPtr a, wxIntPtr b, wxIntPtr sortData) {
 class okSelectExecutableDialog : public wxDialog {
  private:
   wxListView* mList = nullptr;
+
+  void OnBrowseButton(wxCommandEvent&) {
+    wxFileDialog dialog(this, _("Choose Game"));
+    dialog.SetWildcard(_("Executables (*.exe)|*.exe"));
+    dialog.SetWindowStyle(wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+    wchar_t* buffer = nullptr;
+    if (
+      SHGetKnownFolderPath(FOLDERID_ProgramFiles, NULL, NULL, &buffer) == S_OK
+      && buffer) {
+      dialog.SetDirectory(wxString(buffer));
+    }
+
+    if (dialog.ShowModal() == wxID_CANCEL) {
+      return;
+    }
+
+    auto path = std::filesystem::canonical(dialog.GetPath().ToStdWstring());
+    dprintf("Raw path: {}", dialog.GetPath().ToStdString());
+    if (!std::filesystem::is_regular_file(path)) {
+      dprintf("Asked to use '{}', but is not a file", path.string());
+      return;
+    }
+    if (path.extension() != ".exe") {
+      dprintf(
+        "Asked to use '{}', but extension '{}' is not '.exe'",
+        path.string(),
+        path.extension().string());
+      return;
+    }
+
+    wxCommandEvent ev(okEVT_PATH_SELECTED);
+    ev.SetEventObject(this);
+    ev.SetString(path.wstring());
+    wxQueueEvent(this, ev.Clone());
+  }
+
   void OnChooseSelectedProcess(wxCommandEvent&) {
     auto index = mList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
     if (index == -1) {
@@ -156,9 +195,7 @@ class okSelectExecutableDialog : public wxDialog {
     const wxString& title)
     : wxDialog(parent, id, title) {
     mList = new wxListView(this, wxID_ANY);
-    mList->SetWindowStyle(
-      wxLC_REPORT | wxLC_SINGLE_SEL
-    );
+    mList->SetWindowStyle(wxLC_REPORT | wxLC_SINGLE_SEL);
     mList->AppendColumn(_("Name"));
     mList->AppendColumn(_("Path"));
     auto images = new wxImageList(16, 16);
@@ -203,22 +240,21 @@ class okSelectExecutableDialog : public wxDialog {
       this);
 
     auto buttons = new wxBoxSizer(wxHORIZONTAL);
+
     auto browse = new wxButton(this, wxID_ANY, _("&Browse..."));
     buttons->Add(browse);
+    browse->Bind(wxEVT_BUTTON, &okSelectExecutableDialog::OnBrowseButton, this);
+
     buttons->AddStretchSpacer();
+
     auto ok = new wxButton(this, wxID_ANY, _("&OK"));
-    ok->Bind(
-      wxEVT_BUTTON,
-      &okSelectExecutableDialog::OnChooseSelectedProcess,
-      this);
     buttons->Add(ok);
-    buttons->Add(new wxButton(this, wxID_CANCEL, _("&Cancel")));
-
-
+    ok->Bind(
+      wxEVT_BUTTON, &okSelectExecutableDialog::OnChooseSelectedProcess, this);
     ok->Disable();
-    mList->Bind(wxEVT_LIST_ITEM_SELECTED, [=](auto&) {
-      ok->Enable();
-    });
+    mList->Bind(wxEVT_LIST_ITEM_SELECTED, [=](auto&) { ok->Enable(); });
+
+    buttons->Add(new wxButton(this, wxID_CANCEL, _("&Cancel")));
 
     auto s = new wxBoxSizer(wxVERTICAL);
     s->Add(mList, 1);
@@ -268,7 +304,7 @@ class okGamesList::SettingsUI final : public wxPanel {
   }
 
   void OnAddGameButton(wxCommandEvent& ev) {
-    okSelectExecutableDialog dialog(nullptr, wxID_ANY, _("Select Game"));
+    okSelectExecutableDialog dialog(nullptr, wxID_ANY, _("Add Game"));
     dialog.Bind(okEVT_PATH_SELECTED, &SettingsUI::OnPathSelect, this);
     dialog.ShowModal();
   }

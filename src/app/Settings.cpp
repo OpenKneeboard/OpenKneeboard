@@ -11,7 +11,7 @@ static std::filesystem::path GetSettingsDirectoryPath() {
     return sPath;
   }
 
-  wchar_t* buffer;
+  wchar_t* buffer = nullptr;
   if (
     !SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &buffer) == S_OK
     && buffer) {
