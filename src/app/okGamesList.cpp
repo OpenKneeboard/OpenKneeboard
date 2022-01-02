@@ -6,6 +6,7 @@
 #include <wx/gbsizer.h>
 #include <wx/listbook.h>
 #include <wx/listctrl.h>
+#include <wx/msgdlg.h>
 
 #include <set>
 
@@ -46,9 +47,12 @@ okGamesList::~okGamesList() {
 
 namespace {
 class okGameInstanceSettings : public wxPanel {
+ private:
+  GameInstance mGame;
+
  public:
   okGameInstanceSettings(wxWindow* parent, const GameInstance& game)
-    : wxPanel(parent, wxID_ANY) {
+    : wxPanel(parent, wxID_ANY), mGame(game) {
     auto grid = new wxGridBagSizer(5, 5);
 
     auto bold = GetFont().MakeBold();
@@ -76,6 +80,10 @@ class okGameInstanceSettings : public wxPanel {
     s->Add(grid);
     s->AddStretchSpacer();
     this->SetSizerAndFit(s);
+  }
+
+  GameInstance GetGameInstance() const {
+    return mGame;
   }
 };
 
@@ -223,10 +231,45 @@ class okGamesList::SettingsUI final : public wxPanel {
   }
 
   void OnAddGameButton(wxCommandEvent& ev) {
-    auto dialog = std::make_unique<okSelectProcessDialog>(
-      nullptr, wxID_ANY, _("Select Game"));
-    dialog->Bind(okEVT_PATH_SELECTED, &SettingsUI::OnPathSelect, this);
-    dialog->ShowModal();
+    okSelectProcessDialog dialog(nullptr, wxID_ANY, _("Select Game"));
+    dialog.Bind(okEVT_PATH_SELECTED, &SettingsUI::OnPathSelect, this);
+    dialog.ShowModal();
+  }
+
+  void OnRemoveGameButton(wxCommandEvent& ev) {
+    auto page = mList->GetCurrentPage();
+    if (!page) {
+      return;
+    }
+    auto gameSettings = dynamic_cast<okGameInstanceSettings*>(page);
+    if (!gameSettings) {
+      dprint("Game list page is not an okGameInstanceSettings");
+      return;
+    }
+    auto game = gameSettings->GetGameInstance();
+
+    wxMessageDialog dialog(
+      nullptr,
+      fmt::format(
+        _("Are you sure you want to remove '{}'?").ToStdString(), game.Name),
+      _("Remove game?"),
+      wxYES_NO | wxNO_DEFAULT);
+    auto result = dialog.ShowModal();
+    if (result != wxID_YES) {
+      return;
+    }
+
+    mList->DeletePage(mList->GetSelection());
+
+    auto& instances = mGamesList->mInstances;
+    for (auto it = instances.begin(); it != instances.end(); ++it) {
+      if (it->Path != game.Path) {
+        continue;
+      }
+      instances.erase(it);
+      break;
+    }
+    wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
   }
 
  public:
@@ -251,6 +294,7 @@ class okGamesList::SettingsUI final : public wxPanel {
     auto add = new wxButton(this, wxID_ANY, _("&Add Game"));
     add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddGameButton, this);
     auto remove = new wxButton(this, wxID_ANY, _("&Remove Game"));
+    remove->Bind(wxEVT_BUTTON, &SettingsUI::OnRemoveGameButton, this);
 
     auto buttons = new wxBoxSizer(wxHORIZONTAL);
     buttons->Add(add);
@@ -266,9 +310,8 @@ class okGamesList::SettingsUI final : public wxPanel {
 
 wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
   auto ret = new SettingsUI(parent, this);
-  ret->Bind(okEVT_SETTINGS_CHANGED, [=](auto& ev) {
-    wxQueueEvent(this, ev.Clone());
-  });
+  ret->Bind(
+    okEVT_SETTINGS_CHANGED, [=](auto& ev) { wxQueueEvent(this, ev.Clone()); });
   return ret;
 }
 
@@ -277,11 +320,11 @@ nlohmann::json okGamesList::GetSettings() const {
   for (const auto& game: mInstances) {
     games.push_back(game.ToJson());
   }
-  return { { "Configured", games }};
+  return {{"Configured", games}};
 }
 
 void okGamesList::LoadSettings(const nlohmann::json& config) {
-  auto list = config.at("Configured"); 
+  auto list = config.at("Configured");
 
   for (const auto& game: list) {
     mInstances.push_back(GameInstance::FromJson(game, mGames));
