@@ -133,16 +133,37 @@ int wxCALLBACK compareProcessItems(wxIntPtr a, wxIntPtr b, wxIntPtr sortData) {
   return (at < bt) ? -1 : 1;
 }
 
-class okSelectProcessDialog : public wxDialog {
+class okSelectExecutableDialog : public wxDialog {
+ private:
+  wxListView* mList = nullptr;
+  void OnChooseSelectedProcess(wxCommandEvent&) {
+    auto index = mList->GetNextItem(-1, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED);
+    if (index == -1) {
+      return;
+    }
+
+    auto path = mList->GetItemText(index, 1);
+    auto ce = new wxCommandEvent(okEVT_PATH_SELECTED);
+    ce->SetEventObject(this);
+    ce->SetString(path);
+    wxQueueEvent(this, ce);
+  }
+
  public:
-  okSelectProcessDialog(wxWindow* parent, wxWindowID id, const wxString& title)
+  okSelectExecutableDialog(
+    wxWindow* parent,
+    wxWindowID id,
+    const wxString& title)
     : wxDialog(parent, id, title) {
-    auto list = new wxListView(this, wxID_ANY);
-    list->AppendColumn(_("Name"));
-    list->AppendColumn(_("Path"));
+    mList = new wxListView(this, wxID_ANY);
+    mList->SetWindowStyle(
+      wxLC_REPORT | wxLC_SINGLE_SEL
+    );
+    mList->AppendColumn(_("Name"));
+    mList->AppendColumn(_("Path"));
     auto images = new wxImageList(16, 16);
-    list->SetImageList(images, wxIMAGE_LIST_SMALL);
-    list->AssignImageList(images, wxIMAGE_LIST_NORMAL);
+    mList->SetImageList(images, wxIMAGE_LIST_SMALL);
+    mList->AssignImageList(images, wxIMAGE_LIST_NORMAL);
 
     winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
     PROCESSENTRY32 process;
@@ -159,35 +180,51 @@ class okSelectProcessDialog : public wxDialog {
       }
       seen.emplace(path);
 
-      auto row = list->GetItemCount();
+      auto row = mList->GetItemCount();
 
       auto icon = GetIconFromExecutable(path);
       if (icon.IsOk()) {
         auto idx = images->Add(icon);
-        list->InsertItem(row, path.stem().wstring(), idx);
+        mList->InsertItem(row, path.stem().wstring(), idx);
       } else {
-        list->InsertItem(row, path.stem().wstring(), -1);
+        mList->InsertItem(row, path.stem().wstring(), -1);
       }
-      list->SetItem(row, 1, path.wstring());
-      list->SetItemData(row, row);
+      mList->SetItem(row, 1, path.wstring());
+      mList->SetItemData(row, row);
     } while (Process32Next(snapshot.get(), &process));
 
-    list->SetColumnWidth(0, wxLIST_AUTOSIZE);
-    list->SetColumnWidth(1, wxLIST_AUTOSIZE);
-    list->SortItems(compareProcessItems, reinterpret_cast<wxIntPtr>(list));
+    mList->SetColumnWidth(0, wxLIST_AUTOSIZE);
+    mList->SetColumnWidth(1, wxLIST_AUTOSIZE);
+    mList->SortItems(compareProcessItems, reinterpret_cast<wxIntPtr>(mList));
+
+    mList->Bind(
+      wxEVT_LIST_ITEM_ACTIVATED,
+      &okSelectExecutableDialog::OnChooseSelectedProcess,
+      this);
+
+    auto buttons = new wxBoxSizer(wxHORIZONTAL);
+    auto browse = new wxButton(this, wxID_ANY, _("&Browse..."));
+    buttons->Add(browse);
+    buttons->AddStretchSpacer();
+    auto ok = new wxButton(this, wxID_ANY, _("&OK"));
+    ok->Bind(
+      wxEVT_BUTTON,
+      &okSelectExecutableDialog::OnChooseSelectedProcess,
+      this);
+    buttons->Add(ok);
+    buttons->Add(new wxButton(this, wxID_CANCEL, _("&Cancel")));
+
+
+    ok->Disable();
+    mList->Bind(wxEVT_LIST_ITEM_SELECTED, [=](auto&) {
+      ok->Enable();
+    });
 
     auto s = new wxBoxSizer(wxVERTICAL);
-    s->Add(list);
+    s->Add(mList, 1);
+    s->AddSpacer(5);
+    s->Add(buttons, 0, wxEXPAND);
     this->SetSizerAndFit(s);
-
-    list->Bind(wxEVT_LIST_ITEM_ACTIVATED, [=](wxListEvent& ev) {
-      auto item = ev.GetItem();
-      auto path = list->GetItemText(item.GetId(), 1);
-      auto ce = new wxCommandEvent(okEVT_PATH_SELECTED);
-      ce->SetEventObject(this);
-      ce->SetString(path);
-      wxQueueEvent(this, ce);
-    });
   }
 };
 
@@ -231,7 +268,7 @@ class okGamesList::SettingsUI final : public wxPanel {
   }
 
   void OnAddGameButton(wxCommandEvent& ev) {
-    okSelectProcessDialog dialog(nullptr, wxID_ANY, _("Select Game"));
+    okSelectExecutableDialog dialog(nullptr, wxID_ANY, _("Select Game"));
     dialog.Bind(okEVT_PATH_SELECTED, &SettingsUI::OnPathSelect, this);
     dialog.ShowModal();
   }
