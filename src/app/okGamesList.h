@@ -8,6 +8,7 @@
 
 class okGamesList final : public okConfigurableComponent {
   private:
+    class Settings;
     std::vector<std::shared_ptr<OpenKneeboard::Game>> mGames;
     std::vector<OpenKneeboard::GameInstance> mInstances;
   public:

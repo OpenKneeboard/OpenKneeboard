@@ -172,6 +172,7 @@ class okSelectProcessDialog : public wxDialog {
       auto item = ev.GetItem();
       auto path = list->GetItemText(item.GetId(), 1);
       auto ce = new wxCommandEvent(okEVT_PATH_SELECTED);
+      ce->SetEventObject(this);
       ce->SetString(path);
       wxQueueEvent(this, ce);
     });
@@ -180,71 +181,86 @@ class okSelectProcessDialog : public wxDialog {
 
 }// namespace
 
-wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
-  auto c = new wxPanel(parent, wxID_ANY);
-  c->SetLabel(_("Games"));
+class okGamesList::Settings final : public wxPanel {
+ private:
+  wxListbook* mList = nullptr;
+  okGamesList* mGamesList = nullptr;
 
-  auto list = new wxListbook(c, wxID_ANY);
-  list->SetWindowStyleFlag(wxLB_LEFT);
-  auto imageList = new wxImageList(32, 32);
-  list->AssignImageList(imageList);
-
-  for (const auto& game: mInstances) {
+  void OnPathSelect(wxCommandEvent& ev) {
+    auto path = std::filesystem::path(ev.GetString().ToStdWstring());
     int imageIndex = -1;
-    auto ico = GetIconFromExecutable(game.Path);
+    auto ico = GetIconFromExecutable(path);
+    auto imageList = mList->GetImageList();
     if (ico.IsOk()) {
       imageIndex = imageList->Add(ico);
     }
-    list->AddPage(
-      new okGameInstanceSettings(list, game), game.Name, false, imageIndex);
+    for (const auto& game: mGamesList->mGames) {
+      if (!game->MatchesPath(path)) {
+        continue;
+      }
+      GameInstance instance {
+        .Name = game->GetUserFriendlyName(path).ToStdString(),
+        .Path = path,
+        .Game = game};
+      mGamesList->mInstances.push_back(instance);
+      mList->AddPage(
+        new okGameInstanceSettings(mList, instance),
+        instance.Name,
+        false,
+        imageIndex);
+    }
+    auto dialog = dynamic_cast<wxDialog*>(ev.GetEventObject());
+    if (!dialog) {
+      dprintf("No dialog in {}", __FUNCTION__);
+      return;
+    }
+    dialog->Close();
   }
 
-  auto selectProcess = new wxButton(c, wxID_ANY, _("Add &Process"));
-  selectProcess->Bind(wxEVT_BUTTON, [=](auto&) {
-    auto dialog
-      = new okSelectProcessDialog(nullptr, wxID_ANY, _("Select Game"));
-    dialog->Bind(okEVT_PATH_SELECTED, [=](wxCommandEvent& ev) {
-      auto path = std::filesystem::path(ev.GetString().ToStdWstring());
+  void OnAddGame(wxCommandEvent& ev) {
+    auto dialog = std::make_unique<okSelectProcessDialog>(
+      nullptr, wxID_ANY, _("Select Game"));
+    dialog->Bind(okEVT_PATH_SELECTED, &Settings::OnPathSelect, this);
+    dialog->ShowModal();
+  }
+
+ public:
+  Settings(wxWindow* parent, okGamesList* gamesList)
+    : wxPanel(parent, wxID_ANY), mGamesList(gamesList) {
+    this->SetLabel(_("Games"));
+    mList = new wxListbook(this, wxID_ANY);
+    mList->SetWindowStyleFlag(wxLB_LEFT);
+    auto imageList = new wxImageList(32, 32);
+    mList->AssignImageList(imageList);
+
+    for (const auto& game: mGamesList->mInstances) {
       int imageIndex = -1;
-      auto ico = GetIconFromExecutable(path);
+      auto ico = GetIconFromExecutable(game.Path);
       if (ico.IsOk()) {
         imageIndex = imageList->Add(ico);
       }
-      for (const auto& game: mGames) {
-        if (!game->MatchesPath(path)) {
-          continue;
-        }
-        GameInstance instance {
-          .Name = game->GetUserFriendlyName(path).ToStdString(),
-          .Path = path,
-          .Game = game};
-        mInstances.push_back(instance);
-        list->AddPage(
-          new okGameInstanceSettings(list, instance),
-          instance.Name,
-          false,
-          imageIndex);
-      }
-      dialog->Close();
-    });
-    dialog->ShowModal();
-    delete dialog;
-  });
-  auto selectFile = new wxButton(c, wxID_ANY, _("Add &Executable"));
-  auto remove = new wxButton(c, wxID_ANY, _("&Remove Game"));
+      mList->AddPage(
+        new okGameInstanceSettings(mList, game), game.Name, false, imageIndex);
+    }
 
-  auto buttons = new wxBoxSizer(wxHORIZONTAL);
-  buttons->Add(selectProcess);
-  buttons->Add(selectFile);
-  buttons->AddStretchSpacer();
-  buttons->Add(remove);
+    auto add = new wxButton(this, wxID_ANY, _("&Add Game"));
+    add->Bind(wxEVT_BUTTON, &Settings::OnAddGame, this);
+    auto remove = new wxButton(this, wxID_ANY, _("&Remove Game"));
 
-  auto s = new wxBoxSizer(wxVERTICAL);
-  s->Add(list, 1, wxEXPAND | wxFIXED_MINSIZE, 5);
-  s->Add(buttons, 0, wxEXPAND, 5);
-  c->SetSizerAndFit(s);
+    auto buttons = new wxBoxSizer(wxHORIZONTAL);
+    buttons->Add(add);
+    buttons->AddStretchSpacer();
+    buttons->Add(remove);
 
-  return c;
+    auto s = new wxBoxSizer(wxVERTICAL);
+    s->Add(mList, 1, wxEXPAND | wxFIXED_MINSIZE, 5);
+    s->Add(buttons, 0, wxEXPAND, 5);
+    this->SetSizerAndFit(s);
+  }
+};
+
+wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
+  return new Settings(parent, this);
 }
 
 nlohmann::json okGamesList::GetSettings() const {
