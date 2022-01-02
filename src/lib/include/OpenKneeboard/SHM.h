@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace OpenKneeboard::Flags {
+namespace OpenKneeboard::SHM::Flags {
 constexpr uint64_t HEADLOCKED = 1;
 constexpr uint64_t DISCARD_DEPTH_INFORMATION = 1 << 1;
 constexpr uint64_t FEEDER_ATTACHED = 1 << 2;

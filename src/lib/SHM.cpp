@@ -5,8 +5,6 @@
 
 namespace OpenKneeboard::SHM {
 
-using namespace OpenKneeboard::Flags;
-
 static const DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
 static const DWORD MAX_IMAGE_BYTES = MAX_IMAGE_PX * sizeof(Pixel);
 static const DWORD SHM_SIZE = sizeof(Header) + MAX_IMAGE_BYTES;

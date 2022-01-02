@@ -154,8 +154,8 @@ void okMainWindow::UpdateSHM() {
   }
 
   auto ratio = float(image.GetHeight()) / image.GetWidth();
-  OpenKneeboard::SHM::Header header {
-    .Flags = OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
+  SHM::Header header {
+    .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
     .floorY = 0.6f,
     .eyeY = -0.7f,
     .z = -0.25f,
@@ -166,7 +166,7 @@ void okMainWindow::UpdateSHM() {
     .ImageHeight = static_cast<uint16_t>(image.GetHeight()),
   };
 
-  using Pixel = OpenKneeboard::SHM::Pixel;
+  using Pixel = SHM::Pixel;
 
   std::vector<Pixel> pixels(image.GetWidth() * image.GetHeight());
   for (int x = 0; x < image.GetWidth(); ++x) {

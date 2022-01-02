@@ -6,6 +6,8 @@
 #include "OpenKneeboard/ConsoleLoopCondition.h"
 #include "OpenKneeboard/SHM.h"
 
+using namespace OpenKneeboard;
+
 int main() {
   using Pixel = OpenKneeboard::SHM::Pixel;
   Pixel colors[] = {
@@ -15,7 +17,7 @@ int main() {
     {0x00, 0x00, 0x00, 0xff},// black
   };
 
-  OpenKneeboard::SHM::Header config {
+  SHM::Header config {
     /* Headlocked
     .Flags = OpenKneeboard::Flags::HEADLOCKED |
     OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION, .y = -0.15, .z = -0.5f,
@@ -25,7 +27,7 @@ int main() {
     .ImageHeight = 1200,
     */
     /* On knee */
-    .Flags = OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION,
+    .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
     .floorY = 0.6f,
     .eyeY = -0.7f,
     .z = -0.25f,
@@ -38,8 +40,8 @@ int main() {
   uint64_t frames = -1;
   printf("Feeding OpenKneeboard - hit Ctrl-C to exit.\n");
   std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
-  OpenKneeboard::SHM::Writer shm;
-  OpenKneeboard::ConsoleLoopCondition cliLoop;
+  SHM::Writer shm;
+  ConsoleLoopCondition cliLoop;
   do {
     frames++;
     Pixel pixel;
