@@ -198,11 +198,17 @@ class MainWindow final : public wxFrame {
     s->Add(nb, 1, wxEXPAND);
 
     for (auto& component: mConfigurables) {
-      auto ui = component->GetSettingsUI(nb);
+      auto p = new wxPanel(nb, wxID_ANY);
+      auto ui = component->GetSettingsUI(p);
       if (!ui) {
         continue;
       }
-      nb->AddPage(ui, ui->GetLabel());
+
+      auto ps = new wxBoxSizer(wxVERTICAL);
+      ps->Add(ui, 1, wxEXPAND, 5);
+      p->SetSizerAndFit(ps);
+
+      nb->AddPage(p, ui->GetLabel());
     }
 
     w->SetSizerAndFit(s);

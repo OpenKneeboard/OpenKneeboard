@@ -6,6 +6,7 @@
 #include <wx/gbsizer.h>
 #include <wx/listbook.h>
 #include <wx/listctrl.h>
+#include <wx/statline.h>
 #include <wx/msgdlg.h>
 
 #include "GenericGame.h"
@@ -185,19 +186,21 @@ class okGamesList::SettingsUI final : public wxPanel {
         new okGameInstanceSettings(mList, game), game.Name, false, imageIndex);
     }
 
-    auto add = new wxButton(this, wxID_ANY, _("&Add Game"));
+    auto add = new wxButton(this, wxID_ANY, _("&Add"));
     add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddGameButton, this);
-    auto remove = new wxButton(this, wxID_ANY, _("&Remove Game"));
+    auto remove = new wxButton(this, wxID_ANY, _("&Remove"));
     remove->Bind(wxEVT_BUTTON, &SettingsUI::OnRemoveGameButton, this);
 
-    auto buttons = new wxBoxSizer(wxHORIZONTAL);
-    buttons->Add(add);
-    buttons->AddStretchSpacer();
-    buttons->Add(remove);
-
-    auto s = new wxBoxSizer(wxVERTICAL);
+    auto s = new wxBoxSizer(wxHORIZONTAL);
     s->Add(mList, 1, wxEXPAND | wxFIXED_MINSIZE, 5);
+    s->Add(new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,wxLI_VERTICAL), 0, wxEXPAND, 5);
+
+    auto buttons = new wxBoxSizer(wxVERTICAL);
+    buttons->Add(add, 0, 0, 5);
+    buttons->Add(remove, 0, 0, 5);
+    buttons->AddStretchSpacer();
     s->Add(buttons, 0, wxEXPAND, 5);
+
     this->SetSizerAndFit(s);
   }
 };
