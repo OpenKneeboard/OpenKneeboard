@@ -6,8 +6,8 @@
 #include <wx/gbsizer.h>
 #include <wx/listbook.h>
 #include <wx/listctrl.h>
-#include <wx/statline.h>
 #include <wx/msgdlg.h>
+#include <wx/statline.h>
 
 #include "GenericGame.h"
 #include "GetIconFromExecutable.h"
@@ -71,6 +71,15 @@ class okGameInstanceSettings : public wxPanel {
       grid->Add(
         new wxStaticText(this, wxID_ANY, game.Path.string()),
         wxGBPosition(1, 1));
+    }
+
+    {
+      auto label = new wxStaticText(this, wxID_ANY, _("Type"));
+      label->SetFont(bold);
+      grid->Add(label, wxGBPosition(2, 0));
+      grid->Add(
+        new wxStaticText(this, wxID_ANY, game.Game->GetNameForConfigFile()),
+        wxGBPosition(2, 1));
     }
 
     grid->AddGrowableCol(1);
@@ -193,7 +202,12 @@ class okGamesList::SettingsUI final : public wxPanel {
 
     auto s = new wxBoxSizer(wxHORIZONTAL);
     s->Add(mList, 1, wxEXPAND | wxFIXED_MINSIZE, 5);
-    s->Add(new wxStaticLine(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,wxLI_VERTICAL), 0, wxEXPAND, 5);
+    s->Add(
+      new wxStaticLine(
+        this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL),
+      0,
+      wxEXPAND,
+      5);
 
     auto buttons = new wxBoxSizer(wxVERTICAL);
     buttons->Add(add, 0, 0, 5);
