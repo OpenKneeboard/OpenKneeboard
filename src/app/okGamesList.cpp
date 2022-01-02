@@ -65,7 +65,7 @@ class okGameInstanceSettings : public wxPanel {
     }
 
     {
-      auto label = new wxStaticText(this, wxID_ANY, _("Executable"));
+      auto label = new wxStaticText(this, wxID_ANY, _("Path"));
       label->SetFont(bold);
       grid->Add(label, wxGBPosition(1, 0));
       grid->Add(
