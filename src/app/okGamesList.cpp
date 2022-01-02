@@ -210,7 +210,7 @@ class okGamesList::SettingsUI final : public wxPanel {
       mList->AddPage(
         new okGameInstanceSettings(mList, instance),
         instance.Name,
-        false,
+        true,
         imageIndex);
     }
     auto dialog = dynamic_cast<wxDialog*>(ev.GetEventObject());
@@ -222,7 +222,7 @@ class okGamesList::SettingsUI final : public wxPanel {
     dialog->Close();
   }
 
-  void OnAddGame(wxCommandEvent& ev) {
+  void OnAddGameButton(wxCommandEvent& ev) {
     auto dialog = std::make_unique<okSelectProcessDialog>(
       nullptr, wxID_ANY, _("Select Game"));
     dialog->Bind(okEVT_PATH_SELECTED, &SettingsUI::OnPathSelect, this);
@@ -249,7 +249,7 @@ class okGamesList::SettingsUI final : public wxPanel {
     }
 
     auto add = new wxButton(this, wxID_ANY, _("&Add Game"));
-    add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddGame, this);
+    add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddGameButton, this);
     auto remove = new wxButton(this, wxID_ANY, _("&Remove Game"));
 
     auto buttons = new wxBoxSizer(wxHORIZONTAL);
