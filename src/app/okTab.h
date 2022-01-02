@@ -23,6 +23,7 @@ class okTab final : public wxPanel {
 
   void NextPage();
   void PreviousPage();
+
  private:
   class Impl;
   std::shared_ptr<Impl> p;

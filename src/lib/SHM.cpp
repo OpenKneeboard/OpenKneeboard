@@ -37,7 +37,7 @@ const Pixel* const Snapshot::GetPixels() const {
 }
 
 Snapshot::operator bool() const {
-  return (bool) mBytes;
+  return (bool)mBytes;
 }
 
 class Impl {

@@ -228,20 +228,26 @@ class okDirectInputPageSettings final : public wxPanel {
   };
   std::vector<DeviceButtons> mDeviceButtons;
 
-  wxButton* CreateBindButton(wxWindow* parent, int deviceIndex, const wxEventTypeTag<wxCommandEvent>& eventType) {
+  wxButton* CreateBindButton(
+    wxWindow* parent,
+    int deviceIndex,
+    const wxEventTypeTag<wxCommandEvent>& eventType) {
     const auto& device = mDevices.at(deviceIndex);
     auto label = _("Bind");
     for (auto binding: mBindings->Bindings) {
-      if (binding.InstanceGuid == device.guidInstance && binding.EventType == eventType) {
-        label = fmt::format(_("Button {}").ToStdString(), binding.ButtonIndex + 1);
+      if (
+        binding.InstanceGuid == device.guidInstance
+        && binding.EventType == eventType) {
+        label
+          = fmt::format(_("Button {}").ToStdString(), binding.ButtonIndex + 1);
         break;
       }
     }
-      auto button = new wxButton(parent, wxID_ANY, label);
-      button->Bind(wxEVT_BUTTON, [=](auto& ev) {
-        this->OnBindButton(ev, deviceIndex, eventType);
-      });
-      return button;
+    auto button = new wxButton(parent, wxID_ANY, label);
+    button->Bind(wxEVT_BUTTON, [=](auto& ev) {
+      this->OnBindButton(ev, deviceIndex, eventType);
+    });
+    return button;
   }
 
  public:

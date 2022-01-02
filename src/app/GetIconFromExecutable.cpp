@@ -5,21 +5,21 @@
 namespace OpenKneeboard {
 
 wxIcon GetIconFromExecutable(const std::filesystem::path& path) {
-	auto wpath = path.wstring();
-	HICON handle = ExtractIcon(GetModuleHandle(NULL), wpath.c_str(), 0);
-	if (!handle) {
-		return {};
-	}
+  auto wpath = path.wstring();
+  HICON handle = ExtractIcon(GetModuleHandle(NULL), wpath.c_str(), 0);
+  if (!handle) {
+    return {};
+  }
 
-	wxIcon icon;
-	if (icon.CreateFromHICON(handle)) {
-		// `icon` now owns the handle
-		return icon;
-	}
+  wxIcon icon;
+  if (icon.CreateFromHICON(handle)) {
+    // `icon` now owns the handle
+    return icon;
+  }
 
-	DestroyIcon(handle);
+  DestroyIcon(handle);
 
-	return {};
+  return {};
 }
 
-}
+}// namespace OpenKneeboard

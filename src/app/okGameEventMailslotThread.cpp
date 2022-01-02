@@ -3,8 +3,8 @@
 #include <Windows.h>
 #include <winrt/base.h>
 
-#include "OpenKneeboard/dprint.h"
 #include "OpenKneeboard/GameEvent.h"
+#include "OpenKneeboard/dprint.h"
 
 using namespace OpenKneeboard;
 

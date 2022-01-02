@@ -5,6 +5,7 @@
 #include <TlHelp32.h>
 #include <winrt/base.h>
 #include <wx/listctrl.h>
+
 #include <set>
 
 #include "GetIconFromExecutable.h"

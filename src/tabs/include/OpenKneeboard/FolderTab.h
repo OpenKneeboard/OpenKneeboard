@@ -13,7 +13,8 @@ class FolderTab : public Tab {
 
   virtual void Reload() final override;
   virtual uint16_t GetPageCount() const final override;
-  virtual wxImage RenderPage(uint16_t) final override;
+  virtual wxImage RenderPage(uint16_t)
+  final override;
 
   virtual void SetPath(const std::filesystem::path& path);
 

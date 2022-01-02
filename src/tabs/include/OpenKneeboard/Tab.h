@@ -25,6 +25,7 @@ class Tab : public wxEvtHandler {
   virtual void OnGameEvent(const GameEvent&);
   virtual uint16_t GetPageCount() const = 0;
   virtual wxImage RenderPage(uint16_t index) = 0;
+
  private:
   class Impl;
   std::shared_ptr<Impl> p;

@@ -52,16 +52,17 @@ class Writer final {
 };
 
 class Snapshot final {
-  private:
-    std::shared_ptr<std::vector<std::byte>> mBytes;
-  public:
-    Snapshot();
-    Snapshot(std::vector<std::byte>&& bytes);
+ private:
+  std::shared_ptr<std::vector<std::byte>> mBytes;
 
-    const Header* const GetHeader() const;
-    const Pixel* const GetPixels() const;
+ public:
+  Snapshot();
+  Snapshot(std::vector<std::byte>&& bytes);
 
-    operator bool() const;
+  const Header* const GetHeader() const;
+  const Pixel* const GetPixels() const;
+
+  operator bool() const;
 };
 
 class Reader final {

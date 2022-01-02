@@ -13,13 +13,13 @@ class okTab::Impl final {
   okTabCanvas* Canvas;
 };
 
-okTab::okTab(
-  wxWindow* parent,
-  const std::shared_ptr<Tab>& tab)
+okTab::okTab(wxWindow* parent, const std::shared_ptr<Tab>& tab)
   : wxPanel(parent), p(new Impl {.Tab = tab}) {
   p->Canvas = new okTabCanvas(this, tab);
   auto canvas = p->Canvas;
-  canvas->Bind(okEVT_TAB_UPDATED, [this](auto) { wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED)); });
+  canvas->Bind(okEVT_TAB_UPDATED, [this](auto) {
+    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
+  });
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
   sizer->Add(p->Canvas);
