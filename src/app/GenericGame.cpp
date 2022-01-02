@@ -2,6 +2,10 @@
 
 namespace OpenKneeboard {
 
+bool GenericGame::MatchesPath(const std::filesystem::path&) const {
+  return true;
+}
+
 std::vector<std::filesystem::path> GenericGame::GetInstalledPaths() const {
   return {};
 }
