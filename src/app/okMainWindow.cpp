@@ -2,6 +2,7 @@
 
 #include <wx/frame.h>
 #include <wx/notebook.h>
+#include <wx/rawbmp.h>
 
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/GameEvent.h"
@@ -144,14 +145,43 @@ void okMainWindow::UpdateSHM() {
   }
 
   auto tab = p->Tabs.at(p->CurrentTab);
-  auto image = tab->GetImage();
-  if (!image.IsOk()) {
+  auto content = tab->GetImage();
+  if (!content.IsOk()) {
     if (tab->GetTab()->GetPageCount() == 0) {
-      image = CreateErrorImage(_("No Pages"));
+      content = CreateErrorImage(_("No Pages"));
     } else {
-      image = CreateErrorImage(_("Invalid Page Image"));
+      content = CreateErrorImage(_("Invalid Page Image"));
     }
   }
+
+  wxSize headerSize(content.GetWidth(), int(content.GetHeight() * 0.1));
+  wxBitmap withUI(
+    content.GetWidth(), content.GetHeight() + headerSize.GetHeight(), 32);
+  {
+    wxMemoryDC dc(withUI);
+    dc.SetBrush(*wxLIGHT_GREY_BRUSH);
+    dc.SetPen(*wxTRANSPARENT_PEN);
+    dc.DrawRectangle(wxPoint(0, 0), headerSize);
+    dc.DrawBitmap(content, wxPoint(0, headerSize.GetY()));
+
+    wxFont font(
+      wxSize(0, headerSize.GetHeight() * 0.5),
+      wxFONTFAMILY_TELETYPE,
+      wxFONTSTYLE_NORMAL,
+      wxFONTWEIGHT_BOLD);
+    dc.SetFont(font);
+
+    auto title = tab->GetTab()->GetTitle();
+    auto titleSize = dc.GetTextExtent(title);
+    dc.DrawText(
+      title,
+      (headerSize.GetWidth() - titleSize.GetWidth()) / 2,
+      (headerSize.GetHeight() - titleSize.GetHeight()) / 2);
+  }
+
+  // Would prefer to use the bitmaps' native pixel data,
+  // but the alpha channel doesn't actually seem to be present
+  auto image = withUI.ConvertToImage();
 
   auto ratio = float(image.GetHeight()) / image.GetWidth();
   SHM::Header header {
@@ -170,15 +200,14 @@ void okMainWindow::UpdateSHM() {
   };
 
   using Pixel = SHM::Pixel;
-
-  std::vector<Pixel> pixels(image.GetWidth() * image.GetHeight());
-  for (int x = 0; x < image.GetWidth(); ++x) {
-    for (int y = 0; y < image.GetHeight(); ++y) {
+  std::vector<Pixel> pixels(withUI.GetWidth() * withUI.GetHeight());
+  for (int x = 0; x < withUI.GetWidth(); ++x) {
+    for (int y = 0; y < withUI.GetHeight(); ++y) {
       pixels[x + (y * image.GetWidth())] = {
         image.GetRed(x, y),
-        image.GetGreen(x, y),
         image.GetBlue(x, y),
-        image.HasAlpha() ? image.GetAlpha(x, y) : 255ui8,
+        image.GetGreen(x, y),
+        image.HasAlpha() ? image.GetAlpha(x, y) : 0xffui8,
       };
     }
   }
