@@ -6,7 +6,6 @@
 #endif
 
 #include <dinput.h>
-#include <winrt/base.h>
 
 #include "okDirectInputController.h"
 #include "okDirectInputController_DIBinding.h"
@@ -15,15 +14,13 @@ class okDirectInputController::SettingsUI final : public wxPanel {
  public:
   SettingsUI(
     wxWindow* parent,
-    const winrt::com_ptr<IDirectInput8>& di,
-    const std::shared_ptr<DIBindings>&
-      bindings);
+    const std::shared_ptr<SharedState>&);
   ~SettingsUI();
 
  private:
   struct DeviceButtons;
   std::vector<DIDEVICEINSTANCE> mDevices;
-  std::shared_ptr<DIBindings> mBindings;
+  std::shared_ptr<SharedState> mControllerState;
   std::vector<DeviceButtons> mDeviceButtons;
 
   wxButton* CreateBindButton(

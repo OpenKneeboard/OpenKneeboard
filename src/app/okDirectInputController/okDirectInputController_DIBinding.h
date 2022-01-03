@@ -15,8 +15,3 @@ struct okDirectInputController::DIBinding {
   uint8_t ButtonIndex;
   wxEventTypeTag<wxCommandEvent> EventType;
 };
-
-struct okDirectInputController::DIBindings {
-  std::vector<DIBinding> Bindings;
-  wxEvtHandler* Hook = nullptr;
-};

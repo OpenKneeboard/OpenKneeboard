@@ -23,8 +23,9 @@ class okDirectInputController final : public okActivePageAndTabController {
   class DIThread;
   class SettingsUI;
 
-  class Impl;
-  std::shared_ptr<Impl> p;
+  struct SharedState;
+  struct State;
+  std::shared_ptr<State> p;
 
   void OnDIButtonEvent(const wxThreadEvent&);
 };

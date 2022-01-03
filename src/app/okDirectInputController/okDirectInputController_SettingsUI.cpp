@@ -6,6 +6,7 @@
 
 #include "GetDirectInputDevices.h"
 #include "okDirectInputController_DIButtonEvent.h"
+#include "okDirectInputController_SharedState.h"
 #include "okEvents.h"
 
 using namespace OpenKneeboard;
@@ -40,7 +41,7 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
   const wxEventTypeTag<wxCommandEvent>& eventType) {
   const auto& device = mDevices.at(deviceIndex);
   auto label = _("Bind");
-  for (auto binding: mBindings->Bindings) {
+  for (auto binding: mControllerState->Bindings) {
     if (
       binding.InstanceGuid == device.guidInstance
       && binding.EventType == eventType) {
@@ -58,11 +59,10 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
 
 okDirectInputController::SettingsUI::SettingsUI(
   wxWindow* parent,
-  const winrt::com_ptr<IDirectInput8>& di,
-  const std::shared_ptr<DIBindings>& bindings)
-  : wxPanel(parent, wxID_ANY), mBindings(bindings) {
+  const std::shared_ptr<SharedState>& controllerState) 
+  : wxPanel(parent, wxID_ANY), mControllerState(controllerState) {
   this->SetLabel(_("DirectInput"));
-  mDevices = GetDirectInputDevices(di);
+  mDevices = GetDirectInputDevices(controllerState->DI8);
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -157,7 +157,7 @@ void okDirectInputController::SettingsUI::OnBindButton(
   auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
   auto& device = mDevices.at(deviceIndex);
 
-  auto& bindings = this->mBindings->Bindings;
+  auto& bindings = this->mControllerState->Bindings;
 
   // Used to implement a clear button
   auto currentBinding = bindings.end();
@@ -174,8 +174,8 @@ void okDirectInputController::SettingsUI::OnBindButton(
   }
   auto d = CreateBindInputDialog(currentBinding != bindings.end());
 
-  wxON_BLOCK_EXIT_SET(mBindings->Hook, nullptr);
-  mBindings->Hook = this;
+  wxON_BLOCK_EXIT_SET(mControllerState->Hook, nullptr);
+  mControllerState->Hook = this;
 
   auto f = [=, &bindings](wxThreadEvent& ev) {
     auto be = ev.GetPayload<DIButtonEvent>();

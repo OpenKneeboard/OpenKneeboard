@@ -10,6 +10,7 @@
 #include "okDirectInputController_DIButtonListener.h"
 #include "okDirectInputController_DIThread.h"
 #include "okDirectInputController_SettingsUI.h"
+#include "okDirectInputController_SharedState.h"
 #include "okEvents.h"
 
 #pragma comment(lib, "dinput8.lib")
@@ -38,16 +39,13 @@ struct JSONSettings {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices, Bindings);
 }// namespace
 
-class okDirectInputController::Impl final {
- public:
-  winrt::com_ptr<IDirectInput8> DI8;
-  std::shared_ptr<DIBindings> Bindings;
+struct okDirectInputController::State : public SharedState {
   std::unique_ptr<DIThread> DirectInputThread;
 };
 
 okDirectInputController::okDirectInputController(
   const nlohmann::json& jsonSettings)
-  : p(std::make_shared<Impl>()) {
+  : p(std::make_shared<State>()) {
   DirectInput8Create(
     GetModuleHandle(nullptr),
     DIRECTINPUT_VERSION,
@@ -55,7 +53,6 @@ okDirectInputController::okDirectInputController(
     p->DI8.put_void(),
     NULL);
 
-  p->Bindings = std::make_shared<DIBindings>();
   p->DirectInputThread = std::make_unique<DIThread>(this, p->DI8);
   p->DirectInputThread->Run();
 
@@ -92,7 +89,7 @@ okDirectInputController::okDirectInputController(
     UuidFromStringA(
       reinterpret_cast<RPC_CSTR>(const_cast<char*>(binding.Device.c_str())),
       &uuid);
-    p->Bindings->Bindings.push_back({
+    p->Bindings.push_back({
       .InstanceGuid = uuid,
       .InstanceName = deviceName->second.InstanceName,
       .ButtonIndex = binding.ButtonIndex,
@@ -106,8 +103,8 @@ okDirectInputController::~okDirectInputController() {
 }
 
 void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
-  if (p->Bindings->Hook) {
-    wxQueueEvent(p->Bindings->Hook, ev.Clone());
+  if (p->Hook) {
+    wxQueueEvent(p->Hook, ev.Clone());
     return;
   }
 
@@ -117,7 +114,7 @@ void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
     return;
   }
 
-  for (auto& it: p->Bindings->Bindings) {
+  for (auto& it: p->Bindings) {
     if (it.InstanceGuid != be.Instance.guidInstance) {
       continue;
     }
@@ -130,7 +127,7 @@ void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
 
 wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
   auto ret
-    = new okDirectInputController::SettingsUI(parent, p->DI8, p->Bindings);
+    = new okDirectInputController::SettingsUI(parent, p);
   ret->Bind(okEVT_SETTINGS_CHANGED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());
   });
@@ -140,7 +137,7 @@ wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
 nlohmann::json okDirectInputController::GetSettings() const {
   JSONSettings settings;
 
-  for (const auto& binding: p->Bindings->Bindings) {
+  for (const auto& binding: p->Bindings) {
     RPC_CSTR rpcUuid;
     UuidToStringA(&binding.InstanceGuid, &rpcUuid);
     const std::string uuid(reinterpret_cast<char*>(rpcUuid));
