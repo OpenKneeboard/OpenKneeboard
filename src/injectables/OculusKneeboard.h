@@ -9,6 +9,7 @@ namespace OpenKneeboard {
   class OculusKneeboard : public OculusFrameHook {
   private:
     SHM::Reader mSHM;
+    bool mZoomed = false;
   protected:
     OculusKneeboard();
     virtual ~OculusKneeboard();

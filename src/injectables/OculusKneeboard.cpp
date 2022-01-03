@@ -105,7 +105,8 @@ ovrResult OculusKneeboard::onEndFrame(
 
   if ((config.Flags & SHM::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
-  } else if (real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
+  } else if (
+    real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
     kneeboardLayer.QuadPoseCenter.Position.y = config.eyeY;
   }
 
@@ -114,19 +115,24 @@ ovrResult OculusKneeboard::onEndFrame(
   orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
   orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
   kneeboardLayer.QuadPoseCenter.Orientation = orientation;
-  kneeboardLayer.QuadSize
-    = {.x = config.VirtualWidth, .y = config.VirtualHeight};
+
   kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
   kneeboardLayer.Viewport.Size
     = {.w = config.ImageWidth, .h = config.ImageHeight};
 
+  const ovrVector2f normalSize(config.VirtualWidth, config.VirtualHeight);
+  const ovrVector2f zoomedSize(
+    config.VirtualWidth * config.ZoomScale,
+    config.VirtualHeight * config.ZoomScale);
+
   auto predictedTime = real_ovr_GetPredictedDisplayTime(session, frameIndex);
   auto state = real_ovr_GetTrackingState(session, predictedTime, false);
 
-  auto intersects = poseIntersectsWithRect(
+  mZoomed = poseIntersectsWithRect(
     state.HeadPose.ThePose,
     kneeboardLayer.QuadPoseCenter,
-    kneeboardLayer.QuadSize);
+    mZoomed ? zoomedSize : normalSize);
+  kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {
