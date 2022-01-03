@@ -21,6 +21,8 @@ class DCSTab::Impl final {
 
   Config CurrentConfig;
   Config LastValidConfig;
+
+  std::string LastValue;
 };
 
 DCSTab::DCSTab(const wxString& title)
@@ -64,8 +66,12 @@ void DCSTab::Update() {
     return;
   }
 
-  this->Update(c.InstallPath, c.SavedGamesPath, c.Value);
+  if (c.Value == p->LastValue) {
+    return;
+  }
+  p->LastValue = c.Value;
 
+  this->Update(c.InstallPath, c.SavedGamesPath, c.Value);
   wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
 }
 
