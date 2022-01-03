@@ -6,33 +6,10 @@
 #include <wx/listctrl.h>
 #include <wx/wupdlock.h>
 
-#include <concepts>
-
-#include "OpenKneeboard/DCSAircraftTab.h"
-#include "OpenKneeboard/DCSMissionTab.h"
-#include "OpenKneeboard/DCSRadioLogTab.h"
-#include "OpenKneeboard/DCSTerrainTab.h"
-#include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
 #include "okTabsList_SharedState.h"
-
-#define ZERO_CONFIG_TAB_TYPES \
-  IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
-  IT(_("DCS Mission Kneeboard"), DCSMission) \
-  IT(_("DCS Radio Log"), DCSRadioLog) \
-  IT(_("DCS Terrain Kneeboard"), DCSTerrain)
-
-#define TAB_TYPES \
-  IT(_("Folder"), Folder) \
-  ZERO_CONFIG_TAB_TYPES
-
-// If this fails, check that you included the header :)
-#define IT(_, type) \
-  static_assert( \
-    std::derived_from<OpenKneeboard::type##Tab, OpenKneeboard::Tab>);
-TAB_TYPES
-#undef IT
+#include "TabTypes.h"
 
 using namespace OpenKneeboard;
 
@@ -90,12 +67,6 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
 #undef IT
   };
 
-  enum {
-#define IT(_, key) IDX_##key,
-    TAB_TYPES
-#undef IT
-  };
-
   wxSingleChoiceDialog tabTypeDialog(
     this,
     _("What kind of tab do you want to add?"),
@@ -110,11 +81,11 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
   }
 
   switch (tabTypeDialog.GetSelection()) {
-    case IDX_Folder:
+    case TABTYPE_IDX_Folder:
       InsertFolderTab();
       return;
 #define IT(_, type) \
-  case IDX_##type: \
+  case TABTYPE_IDX_##type: \
     InsertTab(std::make_shared<type##Tab>()); \
     return;
       ZERO_CONFIG_TAB_TYPES
