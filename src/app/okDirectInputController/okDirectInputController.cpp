@@ -8,6 +8,7 @@
 #include "okDirectInputController_DIBinding.h"
 #include "okDirectInputController_DIButtonEvent.h"
 #include "okDirectInputController_DIButtonListener.h"
+#include "okDirectInputController_DIThread.h"
 #include "okDirectInputController_SettingsUI.h"
 #include "okEvents.h"
 
@@ -15,35 +16,7 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Rpcrt4.lib")
 
-using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
 using namespace OpenKneeboard;
-
-class okDirectInputController::DIThread final : public wxThread {
- private:
-  wxEvtHandler* mReceiver;
-  winrt::com_ptr<IDirectInput8> mDI;
-
- public:
-  DIThread(wxEvtHandler* receiver, const winrt::com_ptr<IDirectInput8>& di)
-    : wxThread(wxTHREAD_JOINABLE), mReceiver(receiver) {
-  }
-
- protected:
-  virtual ExitCode Entry() override {
-    auto listener = DIButtonListener(mDI, GetDirectInputDevices(mDI));
-    while (!this->TestDestroy()) {
-      DIButtonEvent bi = listener.Poll();
-      if (!bi) {
-        continue;
-      }
-      wxThreadEvent ev(okEVT_DI_BUTTON);
-      ev.SetPayload(bi);
-      wxQueueEvent(mReceiver, ev.Clone());
-    }
-
-    return ExitCode(0);
-  }
-};
 
 namespace {
 struct JSONBinding final {
