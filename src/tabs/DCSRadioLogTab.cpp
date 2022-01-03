@@ -44,6 +44,11 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
     return bitmap.ConvertToImage();
   }
 
+  if (mMessages.size() > rows) {
+    mMessages
+      = {mMessages.begin() + (mMessages.size() - rows), mMessages.end()};
+  }
+
   std::vector<std::string_view> lines;
   for (const auto& message: mMessages) {
     std::string_view remaining(message);
