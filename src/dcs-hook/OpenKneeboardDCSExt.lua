@@ -77,6 +77,10 @@ function callbacks.onSimulationFrame()
   sendState()
 end
 
+function callbacks.onRadioMessage(message, duration)
+  OpenKneeboard.send("RadioMessage", message)
+end
+
 DCS.setUserCallbacks(callbacks)
 
 l("Callbacks installed")
