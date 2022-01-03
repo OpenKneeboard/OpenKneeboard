@@ -98,7 +98,7 @@ ovrResult OculusKneeboard::onEndFrame(
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
   // TODO: set ovrLayerFlag_TextureOriginAtBottomLeft for OpenGL?
-  kneeboardLayer.Header.Flags = {};
+  kneeboardLayer.Header.Flags = {ovrLayerFlag_HighQuality};
   kneeboardLayer.ColorTexture = swapChain;
   kneeboardLayer.QuadPoseCenter.Position
     = {.x = config.x, .y = config.floorY, .z = config.z};
