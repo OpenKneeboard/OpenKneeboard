@@ -24,7 +24,8 @@ class okMainWindow::Impl {
   std::vector<okConfigurableComponent*> Configurables;
   std::vector<okTab*> Tabs;
   OpenKneeboard::SHM::Writer SHM;
-  wxNotebook* Notebook;
+  wxNotebook* Notebook = nullptr;
+  okTabsList* TabsList;
   int CurrentTab = 0;
   Settings Settings = ::Settings::Load();
 };
@@ -81,15 +82,10 @@ okMainWindow::okMainWindow()
   {
     // TODO: settings
     auto tabs = new okTabsList(nlohmann::json {});
+    p->TabsList = tabs;
     p->Configurables.push_back(tabs);
-
-    for (const auto& tab: tabs->GetTabs()) {
-      auto ui = new okTab(p->Notebook, tab);
-      p->Notebook->AddPage(ui, tab->GetTitle());
-      ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
-      ui->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
-      p->Tabs.push_back(ui);
-    }
+    UpdateTabs();
+    tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) { this->UpdateTabs(); });
   }
 
   this->SetSizerAndFit(sizer);
@@ -261,4 +257,47 @@ void okMainWindow::OnPreviousPage(wxCommandEvent& ev) {
 
 void okMainWindow::OnNextPage(wxCommandEvent& ev) {
   p->Tabs[p->CurrentTab]->NextPage();
+}
+
+void okMainWindow::UpdateTabs() {
+		auto tabs = p->TabsList->GetTabs();
+
+    for (auto it = p->Tabs.begin(); it != p->Tabs.end();) {
+      bool found = false;
+      auto ui = *it;
+      for (auto tab: tabs) {
+        if (ui->GetTab() == tab) {
+          found = true;
+          break;
+        }
+      }
+
+      if (found) {
+        ++it;
+        continue;
+      }
+
+      auto idx = it - p->Tabs.begin();
+      p->Notebook->DeletePage(idx);
+      it = p->Tabs.erase(it); 
+    }
+
+    for (auto tab: tabs) {
+      bool found = false;
+      for (auto ui: p->Tabs) {
+        if (ui->GetTab() == tab) {
+          found = true;
+          break;
+        }
+      }
+      if (found) {
+        continue;
+      }
+			auto ui = new okTab(p->Notebook, tab);
+			p->Notebook->AddPage(ui, tab->GetTitle());
+			ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
+			ui->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
+			p->Tabs.push_back(ui);
+		}
+
 }

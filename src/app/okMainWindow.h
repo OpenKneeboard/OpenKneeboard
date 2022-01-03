@@ -12,21 +12,25 @@
 class wxBookCtrlEvent;
 
 class okMainWindow final : public wxFrame {
- private:
-	class Impl;
-	std::unique_ptr<Impl> p;
  public:
 	okMainWindow();
 	virtual ~okMainWindow();
-private:
-	void OnTabChanged(wxBookCtrlEvent&);
-	void OnGameEvent(wxThreadEvent&);
+
+ private:
+	class Impl;
+	std::unique_ptr<Impl> p;
+
 	void OnExit(wxCommandEvent&);
+	void OnGameEvent(wxThreadEvent&);
 	void OnShowSettings(wxCommandEvent&);
+
 	void OnPreviousTab(wxCommandEvent&);
 	void OnNextTab(wxCommandEvent&);
 	void OnPreviousPage(wxCommandEvent&);
 	void OnNextPage(wxCommandEvent&);
 
+	void OnTabChanged(wxBookCtrlEvent&);
+
+	void UpdateTabs();
 	void UpdateSHM();
 };

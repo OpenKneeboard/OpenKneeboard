@@ -6,6 +6,7 @@
 #include "OpenKneeboard/DCSTerrainTab.h"
 #include "okTabsList_SettingsUI.h"
 #include "okTabsList_SharedState.h"
+#include "okEvents.h"
 
 using namespace OpenKneeboard;
 
@@ -29,7 +30,11 @@ std::vector<std::shared_ptr<Tab>> okTabsList::GetTabs() const {
 }
 
 wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
-  return new SettingsUI(parent, p);
+  auto ret = new SettingsUI(parent, p);
+  ret->Bind(okEVT_SETTINGS_CHANGED, [=](auto& ev) {
+    wxQueueEvent(this, ev.Clone());
+  });
+  return ret;
 }
 
 nlohmann::json okTabsList::GetSettings() const {
