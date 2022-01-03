@@ -26,7 +26,7 @@ class okMainWindow::Impl {
   OpenKneeboard::SHM::Writer SHM;
   wxNotebook* Notebook = nullptr;
   okTabsList* TabsList;
-  int CurrentTab = 0;
+  int CurrentTab = -1;
   Settings Settings = ::Settings::Load();
 };
 
@@ -140,6 +140,10 @@ void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
 
 void okMainWindow::UpdateSHM() {
   if (!p->SHM) {
+    return;
+  }
+
+  if (p->CurrentTab < 0) {
     return;
   }
 
@@ -262,43 +266,23 @@ void okMainWindow::OnNextPage(wxCommandEvent& ev) {
 void okMainWindow::UpdateTabs() {
   auto tabs = p->TabsList->GetTabs();
 
-  for (auto it = p->Tabs.begin(); it != p->Tabs.end();) {
-    bool found = false;
-    auto ui = *it;
-    for (auto tab: tabs) {
-      if (ui->GetTab() == tab) {
-        found = true;
-        break;
-      }
-    }
-
-    if (found) {
-      ++it;
-      continue;
-    }
-
-    auto idx = it - p->Tabs.begin();
-    p->Notebook->DeletePage(idx);
-    it = p->Tabs.erase(it);
-  }
+  auto selected = p->CurrentTab >= 0 ? p->Tabs[p->CurrentTab]->GetTab() : nullptr;
+  p->CurrentTab = tabs.empty() ? -1 : 0;
+  p->Tabs.clear();
+  p->Notebook->DeleteAllPages();
 
   for (auto tab: tabs) {
-    bool found = false;
-    for (auto ui: p->Tabs) {
-      if (ui->GetTab() == tab) {
-        found = true;
-        break;
-      }
+    if (selected == tab) {
+      p->CurrentTab = p->Notebook->GetPageCount();
     }
-    if (found) {
-      continue;
-    }
+
     auto ui = new okTab(p->Notebook, tab);
-    p->Notebook->AddPage(ui, tab->GetTitle());
+    p->Tabs.push_back(ui);
+
+    p->Notebook->AddPage(ui, tab->GetTitle(), selected == tab);
     ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
     ui->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
-    p->Tabs.push_back(ui);
   }
 
-  // TODO: reordering
+  UpdateSHM();
 }
