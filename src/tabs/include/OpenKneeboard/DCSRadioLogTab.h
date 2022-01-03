@@ -9,6 +9,7 @@ class FolderTab;
 class DCSRadioLogTab final : public DCSTab {
  private:
   std::vector<std::string> mMessages;
+  int mColumns = -1;
 
  public:
   DCSRadioLogTab();
@@ -24,6 +25,8 @@ class DCSRadioLogTab final : public DCSTab {
     const std::filesystem::path& installPath,
     const std::filesystem::path& savedGamesPath,
     const std::string& value) override;
+
+  virtual void OnSimulationStart() override;
 };
 
 }// namespace OpenKneeboard

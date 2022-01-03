@@ -35,6 +35,7 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
   auto metrics = dc.GetTextExtent("m");
   auto padding = metrics.GetHeight();
   const auto columns = (bitmap.GetWidth() - (2 * padding)) / metrics.GetWidth();
+  mColumns = columns;
   const auto rows = (bitmap.GetHeight() - (2 * padding)) / metrics.GetHeight();
 
   if (mMessages.empty()) {
@@ -94,6 +95,14 @@ void DCSRadioLogTab::Update(
   const std::filesystem::path& savedGamesPath,
   const std::string& value) {
   mMessages.push_back(value);
+}
+
+void DCSRadioLogTab::OnSimulationStart() {
+  if (mColumns <= 0 || mMessages.empty()) {
+    return;
+  }
+  mMessages.push_back(std::string(mColumns, '-'));
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
 }
 
 }// namespace OpenKneeboard
