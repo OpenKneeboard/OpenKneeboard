@@ -15,7 +15,6 @@ target_link_libraries(
   wx::base
   detours
   openkneeboard-shm
-  openkneeboard-tabs
   dprint
   json
   gameevent
@@ -28,5 +27,9 @@ foreach(SOURCE ${SOURCES})
   list(APPEND SOURCE_DIRS "${SOURCE_DIR}")
 endforeach()
 list(REMOVE_DUPLICATES SOURCE_DIRS)
-target_include_directories(OpenKneeboard PRIVATE ${SOURCE_DIRS})
+target_include_directories(
+  OpenKneeboard
+  PRIVATE
+  ${SOURCE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include)
   

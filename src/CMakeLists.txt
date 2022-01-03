@@ -25,6 +25,4 @@ add_subdirectory(injectables)
 add_subdirectory(games)
 
 add_subdirectory(utilities)
-
-add_subdirectory(tabs)
 add_subdirectory(app)
