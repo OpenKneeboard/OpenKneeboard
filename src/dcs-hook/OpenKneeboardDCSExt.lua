@@ -62,6 +62,7 @@ function callbacks.onSimulationStart()
   state.aircraft = selfData.Name
   l("Aircraft: "..state.aircraft)
   sendState()
+  OpenKneeboard.send("SimulationStart", "");
 end
 
 function callbacks.onGameEvent(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7)

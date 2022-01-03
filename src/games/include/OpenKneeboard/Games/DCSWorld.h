@@ -27,6 +27,8 @@ class DCSWorld final : public OpenKneeboard::Game {
     = "com.fredemmott.openkneeboard.dcsext/RadioMessage";
   static constexpr char EVT_SAVED_GAMES_PATH[]
     = "com.fredemmott.openkneeboard.dcsext/SavedGamesPath";
+  static constexpr char EVT_SIMULATION_START[]
+    = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
   static constexpr char EVT_TERRAIN[]
     = "com.fredemmott.openkneeboard.dcsext/Terrain";
 };

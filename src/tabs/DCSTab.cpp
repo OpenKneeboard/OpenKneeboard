@@ -50,6 +50,11 @@ void DCSTab::OnGameEvent(const GameEvent& event) {
     Update();
     return;
   }
+
+  if (event.Name == DCS::EVT_SIMULATION_START) {
+    this->OnSimulationStart();
+    return;
+  }
 }
 
 void DCSTab::Update() {
@@ -73,6 +78,9 @@ void DCSTab::Update() {
 
   this->Update(c.InstallPath, c.SavedGamesPath, c.Value);
   wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
+}
+
+void DCSTab::OnSimulationStart() {
 }
 
 }// namespace OpenKneeboard

@@ -21,6 +21,8 @@ class DCSTab : public Tab {
     const std::string& value)
     = 0;
 
+  virtual void OnSimulationStart();
+
  private:
   class Impl;
   std::shared_ptr<Impl> p;
