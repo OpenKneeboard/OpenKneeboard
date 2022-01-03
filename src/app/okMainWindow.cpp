@@ -81,12 +81,15 @@ okMainWindow::okMainWindow()
   listener->Run();
 
   {
-    // TODO: settings
-    auto tabs = new okTabsList(nlohmann::json {});
+    auto tabs = new okTabsList(p->Settings.Tabs);
     p->TabsList = tabs;
     p->Configurables.push_back(tabs);
     UpdateTabs();
-    tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) { this->UpdateTabs(); });
+    tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
+      this->p->Settings.Tabs = tabs->GetSettings();
+      p->Settings.Save();
+      this->UpdateTabs();
+    });
   }
 
   this->SetSizerAndFit(sizer);
