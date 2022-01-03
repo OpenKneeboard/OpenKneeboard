@@ -81,6 +81,17 @@ function callbacks.onRadioMessage(message, duration)
   OpenKneeboard.send("RadioMessage", message)
 end
 
+function callbacks.onShowMessage(message, duration)
+  OpenKneeboard.send("RadioMessage", "[show]"..message);
+end
+
+function callbacks.onTriggerMessage(message, duration, clearView)
+  if clearView then
+    return
+  end
+  OpenKneeboard.send("RadioMessage", ">> "..message);
+end
+
 DCS.setUserCallbacks(callbacks)
 
 l("Callbacks installed")
