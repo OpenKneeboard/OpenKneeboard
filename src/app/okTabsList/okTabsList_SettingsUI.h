@@ -13,5 +13,13 @@ class okTabsList::SettingsUI final : public wxPanel {
     std::shared_ptr<SharedState> s;
     wxListView* mList = nullptr;
 
-    void OnRemoveItem(wxCommandEvent&);
+    void OnRemoveTab(wxCommandEvent&);
+    void OnMoveTabUp(wxCommandEvent&);
+    void OnMoveTabDown(wxCommandEvent&);
+
+    enum class Direction {
+      UP,
+      DOWN,
+    };
+    void MoveTab(Direction);
 };
