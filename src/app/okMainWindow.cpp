@@ -3,6 +3,7 @@
 #include <wx/frame.h>
 #include <wx/notebook.h>
 #include <wx/rawbmp.h>
+#include <wx/wupdlock.h>
 
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/GameEvent.h"
@@ -265,8 +266,10 @@ void okMainWindow::OnNextPage(wxCommandEvent& ev) {
 
 void okMainWindow::UpdateTabs() {
   auto tabs = p->TabsList->GetTabs();
+  wxWindowUpdateLocker noUpdates(p->Notebook);
 
-  auto selected = p->CurrentTab >= 0 ? p->TabUIs[p->CurrentTab]->GetTab() : nullptr;
+  auto selected
+    = p->CurrentTab >= 0 ? p->TabUIs[p->CurrentTab]->GetTab() : nullptr;
   p->CurrentTab = tabs.empty() ? -1 : 0;
   p->TabUIs.clear();
   p->Notebook->DeleteAllPages();
