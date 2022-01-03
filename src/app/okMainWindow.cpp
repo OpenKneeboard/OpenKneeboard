@@ -260,44 +260,45 @@ void okMainWindow::OnNextPage(wxCommandEvent& ev) {
 }
 
 void okMainWindow::UpdateTabs() {
-		auto tabs = p->TabsList->GetTabs();
+  auto tabs = p->TabsList->GetTabs();
 
-    for (auto it = p->Tabs.begin(); it != p->Tabs.end();) {
-      bool found = false;
-      auto ui = *it;
-      for (auto tab: tabs) {
-        if (ui->GetTab() == tab) {
-          found = true;
-          break;
-        }
+  for (auto it = p->Tabs.begin(); it != p->Tabs.end();) {
+    bool found = false;
+    auto ui = *it;
+    for (auto tab: tabs) {
+      if (ui->GetTab() == tab) {
+        found = true;
+        break;
       }
-
-      if (found) {
-        ++it;
-        continue;
-      }
-
-      auto idx = it - p->Tabs.begin();
-      p->Notebook->DeletePage(idx);
-      it = p->Tabs.erase(it); 
     }
 
-    for (auto tab: tabs) {
-      bool found = false;
-      for (auto ui: p->Tabs) {
-        if (ui->GetTab() == tab) {
-          found = true;
-          break;
-        }
-      }
-      if (found) {
-        continue;
-      }
-			auto ui = new okTab(p->Notebook, tab);
-			p->Notebook->AddPage(ui, tab->GetTitle());
-			ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
-			ui->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
-			p->Tabs.push_back(ui);
-		}
+    if (found) {
+      ++it;
+      continue;
+    }
 
+    auto idx = it - p->Tabs.begin();
+    p->Notebook->DeletePage(idx);
+    it = p->Tabs.erase(it);
+  }
+
+  for (auto tab: tabs) {
+    bool found = false;
+    for (auto ui: p->Tabs) {
+      if (ui->GetTab() == tab) {
+        found = true;
+        break;
+      }
+    }
+    if (found) {
+      continue;
+    }
+    auto ui = new okTab(p->Notebook, tab);
+    p->Notebook->AddPage(ui, tab->GetTitle());
+    ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
+    ui->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
+    p->Tabs.push_back(ui);
+  }
+
+  // TODO: reordering
 }
