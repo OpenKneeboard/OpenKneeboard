@@ -1,10 +1,37 @@
 #include "okTabsList_SettingsUI.h"
 
+#include <wx/choicdlg.h>
 #include <wx/listctrl.h>
 #include <wx/wupdlock.h>
 
+#include <concepts>
+
+#include "OpenKneeboard/DCSAircraftTab.h"
+#include "OpenKneeboard/DCSMissionTab.h"
+#include "OpenKneeboard/DCSRadioLogTab.h"
+#include "OpenKneeboard/DCSTerrainTab.h"
+#include "OpenKneeboard/FolderTab.h"
 #include "okEvents.h"
 #include "okTabsList_SharedState.h"
+
+#define ZERO_CONFIG_TAB_TYPES \
+  IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
+  IT(_("DCS Mission Kneeboard"), DCSMission) \
+  IT(_("DCS Radio Log"), DCSRadioLog) \
+  IT(_("DCS Terrain Kneeboard"), DCSTerrain)
+
+#define TAB_TYPES \
+  IT(_("Folder"), Folder) \
+  ZERO_CONFIG_TAB_TYPES
+
+// If this fails, check that you included the header :)
+#define IT(_, type) \
+  static_assert( \
+    std::derived_from<OpenKneeboard::type##Tab, OpenKneeboard::Tab>);
+TAB_TYPES
+#undef IT
+
+using namespace OpenKneeboard;
 
 okTabsList::SettingsUI::SettingsUI(
   wxWindow* parent,
@@ -25,6 +52,7 @@ okTabsList::SettingsUI::SettingsUI(
   mList->SetColumnWidth(0, wxLIST_AUTOSIZE);
 
   auto add = new wxButton(this, wxID_ANY, _("&Add"));
+  add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddTab, this);
   auto remove = new wxButton(this, wxID_ANY, _("&Remove"));
   remove->Bind(wxEVT_BUTTON, &SettingsUI::OnRemoveTab, this);
   auto up = new wxButton(this, wxID_ANY, _("Move &Up"));
@@ -48,6 +76,48 @@ okTabsList::SettingsUI::SettingsUI(
 }
 
 okTabsList::SettingsUI::~SettingsUI() {
+}
+
+void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
+  ev.StopPropagation();
+
+  std::vector<wxString> choices = {
+#define IT(label, _) label,
+    TAB_TYPES
+#undef IT
+  };
+
+  enum {
+#define IT(_, key) IDX_##key,
+    TAB_TYPES
+#undef IT
+  };
+
+  wxSingleChoiceDialog tabTypeDialog(
+    this,
+    _("What kind of tab do you want to add?"),
+    _("Add Tab"),
+    choices.size(),
+    choices.data(),
+    nullptr,
+    wxCHOICEDLG_STYLE | wxOK | wxCANCEL);
+
+  if (tabTypeDialog.ShowModal() == wxID_CANCEL) {
+    return;
+  }
+
+  switch (tabTypeDialog.GetSelection()) {
+    case IDX_Folder:
+      // TODO
+      break;
+#define IT(_, type) \
+  case IDX_##type: \
+    InsertTab(std::make_shared<type##Tab>()); \
+    return;
+      ZERO_CONFIG_TAB_TYPES
+    default:
+      return;
+  }
 }
 
 void okTabsList::SettingsUI::OnRemoveTab(wxCommandEvent& ev) {
@@ -96,6 +166,21 @@ void okTabsList::SettingsUI::MoveTab(Direction direction) {
   mList->DeleteItem(index);
   index = mList->InsertItem(swapIndex, tab->GetTitle());
   mList->Select(index);
+
+  wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
+}
+
+void okTabsList::SettingsUI::InsertTab(const std::shared_ptr<Tab>& tab) {
+  auto insertAt = mList->GetFirstSelected();
+  if (insertAt == -1) {
+    insertAt = 0;
+  }
+
+  s->Tabs.insert(s->Tabs.begin() + insertAt, tab);
+
+  wxWindowUpdateLocker freezer(mList);
+  mList->InsertItem(insertAt, tab->GetTitle());
+  mList->Select(insertAt);
 
   wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
 }

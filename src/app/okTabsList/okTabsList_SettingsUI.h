@@ -13,7 +13,9 @@ class okTabsList::SettingsUI final : public wxPanel {
     std::shared_ptr<SharedState> s;
     wxListView* mList = nullptr;
 
+    void OnAddTab(wxCommandEvent&);
     void OnRemoveTab(wxCommandEvent&);
+
     void OnMoveTabUp(wxCommandEvent&);
     void OnMoveTabDown(wxCommandEvent&);
 
@@ -22,4 +24,6 @@ class okTabsList::SettingsUI final : public wxPanel {
       DOWN,
     };
     void MoveTab(Direction);
+
+    void InsertTab(const std::shared_ptr<OpenKneeboard::Tab>&);
 };
