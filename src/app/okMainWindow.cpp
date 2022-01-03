@@ -154,7 +154,7 @@ void okMainWindow::UpdateSHM() {
     }
   }
 
-  wxSize headerSize(content.GetWidth(), int(content.GetHeight() * 0.1));
+  wxSize headerSize(content.GetWidth(), int(content.GetHeight() * 0.05));
   wxBitmap withUI(
     content.GetWidth(), content.GetHeight() + headerSize.GetHeight(), 32);
   {
