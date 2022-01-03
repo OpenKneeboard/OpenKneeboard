@@ -6,7 +6,10 @@
 
 class okTabsList final : public okConfigurableComponent {
  private:
-  std::vector<std::shared_ptr<OpenKneeboard::Tab>> mTabs;
+  class SettingsUI;
+  struct SharedState;
+  struct State;
+  std::shared_ptr<State> p;
 
  public:
   okTabsList() = delete;

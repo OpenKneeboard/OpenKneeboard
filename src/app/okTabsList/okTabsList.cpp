@@ -4,11 +4,16 @@
 #include "OpenKneeboard/DCSMissionTab.h"
 #include "OpenKneeboard/DCSRadioLogTab.h"
 #include "OpenKneeboard/DCSTerrainTab.h"
+#include "okTabsList_SettingsUI.h"
+#include "okTabsList_SharedState.h"
 
 using namespace OpenKneeboard;
 
-okTabsList::okTabsList(const nlohmann::json& config) {
-  mTabs = {
+struct okTabsList::State final : public okTabsList::SharedState {};
+
+okTabsList::okTabsList(const nlohmann::json& config)
+  : p(std::make_shared<State>()) {
+  p->Tabs = {
     std::make_shared<DCSRadioLogTab>(),
     std::make_shared<DCSMissionTab>(),
     std::make_shared<DCSAircraftTab>(),
@@ -20,11 +25,11 @@ okTabsList::~okTabsList() {
 }
 
 std::vector<std::shared_ptr<Tab>> okTabsList::GetTabs() const {
-  return mTabs;
+  return p->Tabs;
 }
 
 wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
-  return nullptr;
+  return new SettingsUI(parent, p);
 }
 
 nlohmann::json okTabsList::GetSettings() const {

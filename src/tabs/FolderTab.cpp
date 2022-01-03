@@ -72,6 +72,10 @@ wxImage FolderTab::RenderPage(uint16_t index) {
   return RenderPage(index);
 }
 
+std::filesystem::path FolderTab::GetPath() const {
+  return p->Path;
+}
+
 void FolderTab::SetPath(const std::filesystem::path& path) {
   if (path == p->Path) {
     return;

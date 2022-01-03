@@ -81,6 +81,8 @@ okMainWindow::okMainWindow()
   {
     // TODO: settings
     auto tabs = new okTabsList(nlohmann::json {});
+    p->Configurables.push_back(tabs);
+
     for (const auto& tab: tabs->GetTabs()) {
       auto ui = new okTab(p->Notebook, tab);
       p->Notebook->AddPage(ui, tab->GetTitle());
@@ -96,11 +98,12 @@ okMainWindow::okMainWindow()
 
   {
     auto gl = new okGamesList(p->Settings.Games);
+    p->Configurables.push_back(gl);
+
     gl->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
       this->p->Settings.Games = gl->GetSettings();
       p->Settings.Save();
     });
-    p->Configurables.push_back(gl);
   }
 
   {
