@@ -5,4 +5,4 @@ add_executable(test-viewer WIN32 test-viewer.cpp)
 target_link_libraries(test-viewer openkneeboard-shm wx::core wx::base rendererror)
 
 add_executable(fake-dcs fake-dcs.cpp)
-target_link_libraries(fake-dcs games gameevent)
+target_link_libraries(fake-dcs fmt games gameevent)

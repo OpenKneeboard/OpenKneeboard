@@ -23,6 +23,8 @@ class DCSWorld final : public OpenKneeboard::Game {
     = "com.fredemmott.openkneeboard.dcsext/InstallPath";
   static constexpr char EVT_MISSION[]
     = "com.fredemmott.openkneeboard.dcsext/Mission";
+  static constexpr char EVT_RADIO_MESSAGE[]
+    = "com.fredemmott.openkneeboard.dcsext/RadioMessage";
   static constexpr char EVT_SAVED_GAMES_PATH[]
     = "com.fredemmott.openkneeboard.dcsext/SavedGamesPath";
   static constexpr char EVT_TERRAIN[]

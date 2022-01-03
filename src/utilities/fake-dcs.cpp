@@ -4,6 +4,8 @@
 #include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
 
+#include <fmt/format.h>
+
 using DCS = OpenKneeboard::Games::DCSWorld;
 using namespace OpenKneeboard;
 
@@ -30,6 +32,16 @@ int main() {
   (GameEvent {DCS::EVT_SAVED_GAMES_PATH, savedGamePath.string()}).Send();
   (GameEvent {DCS::EVT_AIRCRAFT, AIRCRAFT}).Send();
   (GameEvent {DCS::EVT_TERRAIN, TERRAIN}).Send();
+
+  for (auto i = 0; i < 5; ++i) {
+    auto message = fmt::format("{}a - single line", i);
+    (GameEvent { DCS::EVT_RADIO_MESSAGE, message }).Send();
+    message = fmt::format(
+      "{}b - multi line - 12345678901234567890123456789012345678901234567890"
+      "1234567890123456789012345678901234567890123456789012345678901234567890"
+      "1234567890123456789012345678901234567890123456789012345678901234567890", i);
+    (GameEvent { DCS::EVT_RADIO_MESSAGE, message }).Send();
+  }
 
   printf("Sent data.\n");
 
