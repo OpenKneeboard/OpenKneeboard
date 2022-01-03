@@ -26,4 +26,5 @@ class okTabsList::SettingsUI final : public wxPanel {
     void MoveTab(Direction);
 
     void InsertTab(const std::shared_ptr<OpenKneeboard::Tab>&);
+    void InsertFolderTab();
 };
