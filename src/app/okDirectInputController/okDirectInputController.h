@@ -16,6 +16,13 @@ class okDirectInputController final : public okActivePageAndTabController {
   virtual nlohmann::json GetSettings() const override;
 
  private:
+  struct DIBinding;
+  struct DIBindings;
+  struct DIButtonEvent;
+  class DIButtonListener;
+  class DIThread;
+  class SettingsUI;
+
   class Impl;
   std::shared_ptr<Impl> p;
 
