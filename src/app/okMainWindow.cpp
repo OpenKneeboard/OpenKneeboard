@@ -156,10 +156,10 @@ void okMainWindow::UpdateSHM() {
   auto ratio = float(image.GetHeight()) / image.GetWidth();
   SHM::Header header {
     .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
-    .x = 0.1f,
+    .x = 0.15f,
     .floorY = 0.6f,
     .eyeY = -0.7f,
-    .z = -0.3f,
+    .z = -0.4f,
     .rx = float(2 * M_PI / 5),
     .rz = float(M_PI / 32),
     .VirtualWidth = 0.25f / ratio,
