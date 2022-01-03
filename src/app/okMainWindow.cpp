@@ -22,10 +22,10 @@ using namespace OpenKneeboard;
 class okMainWindow::Impl {
  public:
   std::vector<okConfigurableComponent*> Configurables;
-  std::vector<okTab*> Tabs;
+  std::vector<okTab*> TabUIs;
   OpenKneeboard::SHM::Writer SHM;
   wxNotebook* Notebook = nullptr;
-  okTabsList* TabsList;
+  okTabsList* TabsList = nullptr;
   int CurrentTab = -1;
   Settings Settings = ::Settings::Load();
 };
@@ -133,7 +133,7 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
 void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
   const auto ge = ev.GetPayload<GameEvent>();
   dprintf("GameEvent: '{}' = '{}'", ge.Name, ge.Value);
-  for (auto tab: p->Tabs) {
+  for (auto tab: p->TabUIs) {
     tab->GetTab()->OnGameEvent(ge);
   }
 }
@@ -147,7 +147,7 @@ void okMainWindow::UpdateSHM() {
     return;
   }
 
-  auto tab = p->Tabs.at(p->CurrentTab);
+  auto tab = p->TabUIs.at(p->CurrentTab);
   auto content = tab->GetImage();
   if (!content.IsOk()) {
     if (tab->GetTab()->GetPageCount() == 0) {
@@ -256,19 +256,19 @@ void okMainWindow::OnNextTab(wxCommandEvent& ev) {
 }
 
 void okMainWindow::OnPreviousPage(wxCommandEvent& ev) {
-  p->Tabs[p->CurrentTab]->PreviousPage();
+  p->TabUIs[p->CurrentTab]->PreviousPage();
 }
 
 void okMainWindow::OnNextPage(wxCommandEvent& ev) {
-  p->Tabs[p->CurrentTab]->NextPage();
+  p->TabUIs[p->CurrentTab]->NextPage();
 }
 
 void okMainWindow::UpdateTabs() {
   auto tabs = p->TabsList->GetTabs();
 
-  auto selected = p->CurrentTab >= 0 ? p->Tabs[p->CurrentTab]->GetTab() : nullptr;
+  auto selected = p->CurrentTab >= 0 ? p->TabUIs[p->CurrentTab]->GetTab() : nullptr;
   p->CurrentTab = tabs.empty() ? -1 : 0;
-  p->Tabs.clear();
+  p->TabUIs.clear();
   p->Notebook->DeleteAllPages();
 
   for (auto tab: tabs) {
@@ -277,7 +277,7 @@ void okMainWindow::UpdateTabs() {
     }
 
     auto ui = new okTab(p->Notebook, tab);
-    p->Tabs.push_back(ui);
+    p->TabUIs.push_back(ui);
 
     p->Notebook->AddPage(ui, tab->GetTitle(), selected == tab);
     ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
