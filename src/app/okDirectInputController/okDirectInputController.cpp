@@ -7,6 +7,7 @@
 #include "GetDirectInputDevices.h"
 #include "okDirectInputController_DIBinding.h"
 #include "okDirectInputController_DIButtonEvent.h"
+#include "okDirectInputController_DIButtonListener.h"
 #include "okDirectInputController_SettingsUI.h"
 #include "okEvents.h"
 
@@ -17,98 +18,13 @@
 using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
 using namespace OpenKneeboard;
 
-class okDirectInputController::DIButtonListener final : public wxEvtHandler {
- private:
-  struct DeviceInfo {
-    DIDEVICEINSTANCE Instance;
-    winrt::com_ptr<IDirectInputDevice8> Device;
-    DIJOYSTATE2 State = {};
-    HANDLE EventHandle = INVALID_HANDLE_VALUE;
-  };
-  std::vector<DeviceInfo> mDevices;
-  HANDLE mCancelHandle = INVALID_HANDLE_VALUE;
-
- public:
-  DIButtonListener(
-    const winrt::com_ptr<IDirectInput8>& di,
-    const DeviceInstances& instances) {
-    for (const auto& it: instances) {
-      winrt::com_ptr<IDirectInputDevice8> device;
-      di->CreateDevice(it.guidInstance, device.put(), NULL);
-      if (!device) {
-        continue;
-      }
-
-      HANDLE event {CreateEvent(nullptr, false, false, nullptr)};
-      if (!event) {
-        continue;
-      }
-
-      device->SetEventNotification(event);
-      device->SetDataFormat(&c_dfDIJoystick2);
-      device->SetCooperativeLevel(
-        static_cast<wxApp*>(wxApp::GetInstance())->GetTopWindow()->GetHandle(),
-        DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
-      device->Acquire();
-
-      DIJOYSTATE2 state;
-      device->GetDeviceState(sizeof(state), &state);
-
-      mDevices.push_back({it, device, state, event});
-    }
-    mCancelHandle = CreateEvent(nullptr, false, false, nullptr);
-  }
-
-  ~DIButtonListener() {
-    CloseHandle(mCancelHandle);
-  }
-
-  void Cancel() {
-    SetEvent(mCancelHandle);
-  }
-
-  DIButtonEvent Poll() {
-    std::vector<HANDLE> handles;
-    for (const auto& it: mDevices) {
-      handles.push_back(it.EventHandle);
-    }
-    handles.push_back(mCancelHandle);
-
-    auto result
-      = WaitForMultipleObjects(handles.size(), handles.data(), false, 100);
-    auto idx = result - WAIT_OBJECT_0;
-    if (idx <= 0 || idx >= (handles.size() - 1)) {
-      return {};
-    }
-
-    auto& device = mDevices.at(idx);
-    auto oldState = device.State;
-    DIJOYSTATE2 newState;
-    device.Device->Poll();
-    device.Device->GetDeviceState(sizeof(newState), &newState);
-    for (uint8_t i = 0; i < 128; ++i) {
-      if (oldState.rgbButtons[i] != newState.rgbButtons[i]) {
-        device.State = newState;
-        return {
-          true,
-          device.Instance,
-          static_cast<uint8_t>(i),
-          (bool)(newState.rgbButtons[i] & (1 << 7))};
-      }
-    }
-    return {};
-  }
-};
-
 class okDirectInputController::DIThread final : public wxThread {
  private:
   wxEvtHandler* mReceiver;
   winrt::com_ptr<IDirectInput8> mDI;
 
  public:
-  DIThread(
-    wxEvtHandler* receiver,
-    const winrt::com_ptr<IDirectInput8>& di)
+  DIThread(wxEvtHandler* receiver, const winrt::com_ptr<IDirectInput8>& di)
     : wxThread(wxTHREAD_JOINABLE), mReceiver(receiver) {
   }
 
@@ -170,8 +86,7 @@ okDirectInputController::okDirectInputController(
   p->DirectInputThread = std::make_unique<DIThread>(this, p->DI8);
   p->DirectInputThread->Run();
 
-  this->Bind(
-    okEVT_DI_BUTTON, &okDirectInputController::OnDIButtonEvent, this);
+  this->Bind(okEVT_DI_BUTTON, &okDirectInputController::OnDIButtonEvent, this);
 
   JSONSettings settings;
   try {
