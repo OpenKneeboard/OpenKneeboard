@@ -9,7 +9,7 @@ using namespace OpenKneeboard;
 okDirectInputController::DIThread::DIThread(
   wxEvtHandler* receiver,
   const winrt::com_ptr<IDirectInput8>& di)
-  : wxThread(wxTHREAD_JOINABLE), mReceiver(receiver) {
+  : wxThread(wxTHREAD_JOINABLE), mReceiver(receiver), mDI(di) {
 }
 
 okDirectInputController::DIThread::~DIThread() {
