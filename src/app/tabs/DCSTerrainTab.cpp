@@ -6,6 +6,7 @@
 #include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/dprint.h"
+#include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;
 
@@ -13,6 +14,9 @@ namespace OpenKneeboard {
 
 DCSTerrainTab::DCSTerrainTab()
   : DCSTab(_("Theater")), mDelegate(std::make_shared<FolderTab>("", "")) {
+  mDelegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
+    wxQueueEvent(this, ev.Clone());
+  });
 }
 
 DCSTerrainTab::~DCSTerrainTab() {

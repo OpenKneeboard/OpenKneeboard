@@ -16,6 +16,7 @@ class DCSRadioLogTab final : public DCSTab {
 
   void PushMessage(const std::string& message);
   void LayoutMessages();
+  void PushPage();
  public:
   DCSRadioLogTab();
   virtual ~DCSRadioLogTab();

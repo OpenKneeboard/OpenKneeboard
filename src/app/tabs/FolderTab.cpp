@@ -1,6 +1,7 @@
 #include "OpenKneeboard/FolderTab.h"
 
 #include "OpenKneeboard/dprint.h"
+#include "okEvents.h"
 
 namespace OpenKneeboard {
 class FolderTab::Impl final {
@@ -35,6 +36,7 @@ void FolderTab::Reload() {
     p->PagePaths.push_back(wsPath);
   }
   p->Pages.resize(p->PagePaths.size());
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_FULLY_REPLACED));
 }
 
 uint16_t FolderTab::GetPageCount() const {
@@ -83,6 +85,5 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
   p->Path = path;
   Reload();
 }
-
 
 }// namespace OpenKneeboard

@@ -3,8 +3,6 @@
 #include "OpenKneeboard/Tab.h"
 #include "okTabCanvas.h"
 
-wxDEFINE_EVENT(okEVT_PAGE_CHANGED, wxCommandEvent);
-
 using namespace OpenKneeboard;
 
 class okTab::Impl final {
@@ -27,15 +25,12 @@ okTab::okTab(wxWindow* parent, const std::shared_ptr<Tab>& tab)
   auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
   firstPage->Bind(wxEVT_BUTTON, [=](auto) {
     canvas->SetPageIndex(0);
-    this->EmitPageChanged();
   });
   previousPage->Bind(wxEVT_BUTTON, [=](auto) {
     canvas->PreviousPage();
-    this->EmitPageChanged();
   });
   nextPage->Bind(wxEVT_BUTTON, [=](auto) {
     canvas->NextPage();
-    this->EmitPageChanged();
   });
 
   auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -47,13 +42,6 @@ okTab::okTab(wxWindow* parent, const std::shared_ptr<Tab>& tab)
   sizer->Add(buttonBox, 0, wxEXPAND);
 
   this->SetSizerAndFit(sizer);
-}
-
-void okTab::EmitPageChanged() {
-  wxCommandEvent event(okEVT_PAGE_CHANGED, GetId());
-  event.SetEventObject(this);
-  event.SetInt(p->Canvas->GetPageIndex());
-  ProcessWindowEvent(event);
 }
 
 okTab::~okTab() {

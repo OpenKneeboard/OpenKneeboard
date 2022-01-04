@@ -285,8 +285,7 @@ void okMainWindow::UpdateTabs() {
     p->TabUIs.push_back(ui);
 
     p->Notebook->AddPage(ui, tab->GetTitle(), selected == tab);
-    ui->Bind(okEVT_TAB_UPDATED, [this](auto) { this->UpdateSHM(); });
-    ui->Bind(okEVT_PAGE_CHANGED, [this](auto) { this->UpdateSHM(); });
+    ui->Bind(okEVT_TAB_NEEDS_REPAINT, [this](auto) { p->Notebook->Refresh(); this->UpdateSHM(); });
   }
 
   UpdateSHM();

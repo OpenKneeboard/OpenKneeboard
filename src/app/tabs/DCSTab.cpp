@@ -77,7 +77,6 @@ void DCSTab::Update() {
   p->LastValue = c.Value;
 
   this->Update(c.InstallPath, c.SavedGamesPath, c.Value);
-  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
 }
 
 void DCSTab::OnSimulationStart() {

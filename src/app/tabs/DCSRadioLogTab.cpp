@@ -3,6 +3,7 @@
 #include <fmt/format.h>
 
 #include "OpenKneeboard/Games/DCSWorld.h"
+#include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;
 
@@ -88,6 +89,23 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
 
 void DCSRadioLogTab::PushMessage(const std::string& message) {
   mMessages.push_back(message);
+  LayoutMessages();
+}
+
+void DCSRadioLogTab::PushPage() {
+  mCompletePages.push_back(mCurrentPageLines);
+  mCurrentPageLines.clear();
+
+  auto ev = new wxCommandEvent(okEVT_TAB_PAGE_APPENDED);
+
+  ev->SetEventObject(this);
+  // Value is the new page number; we're not subtracting 1 as
+  // there's about to be a new page with incomplete lines
+  ev->SetInt(mCompletePages.size());
+
+  wxQueueEvent(this, ev);
+  // Page numbers in the current page have changed too
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
 }
 
 void DCSRadioLogTab::LayoutMessages() {
@@ -128,8 +146,7 @@ void DCSRadioLogTab::LayoutMessages() {
       }
       for (const auto& line: messageLines) {
         if (pageLines.size() >= mRows) {
-          mCompletePages.push_back(pageLines);
-          pageLines.clear();
+          PushPage();
         }
         pageLines.push_back(std::string(line));
       }
@@ -142,15 +159,13 @@ void DCSRadioLogTab::LayoutMessages() {
       if (mRows - pageLines.size() >= 2) {
         pageLines.push_back({});
       } else {
-        mCompletePages.push_back(pageLines);
-        pageLines.clear();
+        PushPage();
       }
     }
 
     for (auto line: messageLines) {
       if (pageLines.size() >= mRows) {
-        mCompletePages.push_back(pageLines);
-        pageLines.clear();
+        PushPage();
       }
       pageLines.push_back(std::string(line));
     }
@@ -174,7 +189,6 @@ void DCSRadioLogTab::OnSimulationStart() {
     return;
   }
   PushMessage(std::string(mColumns, '-'));
-  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
 }
 
 }// namespace OpenKneeboard

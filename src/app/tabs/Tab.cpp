@@ -1,6 +1,6 @@
 #include "OpenKneeboard/Tab.h"
 
-wxDEFINE_EVENT(okEVT_TAB_UPDATED, wxCommandEvent);
+#include "okEvents.h"
 
 namespace OpenKneeboard {
 

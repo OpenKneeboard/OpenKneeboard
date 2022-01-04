@@ -5,8 +5,6 @@
 #include <memory>
 #include <string>
 
-wxDECLARE_EVENT(okEVT_TAB_UPDATED, wxCommandEvent);
-
 namespace OpenKneeboard {
 struct GameEvent;
 

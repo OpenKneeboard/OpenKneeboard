@@ -10,6 +10,7 @@
 #include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "OpenKneeboard/dprint.h"
+#include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;
 
@@ -88,6 +89,9 @@ class DCSMissionTab::Impl final {
 DCSMissionTab::DCSMissionTab()
   : DCSTab(_("Mission")), p(std::make_shared<Impl>()) {
   p->Delegate = std::make_unique<FolderTab>("", "");
+  p->Delegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
+    wxQueueEvent(this, ev.Clone());
+  });
 }
 
 DCSMissionTab::~DCSMissionTab() {

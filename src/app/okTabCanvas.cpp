@@ -4,6 +4,8 @@
 
 #include "OpenKneeboard/RenderError.h"
 #include "OpenKneeboard/Tab.h"
+#include "OpenKneeboard/dprint.h"
+#include "okEvents.h"
 
 using namespace OpenKneeboard;
 
@@ -20,13 +22,32 @@ okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
     wxDefaultPosition,
     wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
     p(new Impl {.Tab = tab}) {
-  tab->Bind(okEVT_TAB_UPDATED, [this](auto) {
-    p->PageIndex = 0;
-    this->Refresh();
-    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
-  });
   Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
   Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
+  tab->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto&) {
+    p->PageIndex = 0;
+    this->Refresh();
+    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_NEEDS_REPAINT));
+  });
+  tab->Bind(okEVT_TAB_PAGE_MODIFIED, [this](wxCommandEvent& ev) {
+    this->Refresh();
+    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_NEEDS_REPAINT));
+  });
+  tab->Bind(okEVT_TAB_PAGE_APPENDED, [this](wxCommandEvent& ev) {
+    auto tab = dynamic_cast<Tab*>(ev.GetEventObject());
+    if (!tab) {
+      return;
+    }
+    dprintf(
+      "Tab appended: {} {} {}",
+      tab->GetTitle(),
+      ev.GetInt(),
+      this->p->PageIndex);
+    if (ev.GetInt() != this->p->PageIndex + 1) {
+      return;
+    }
+    this->NextPage();
+  });
 }
 
 okTabCanvas::~okTabCanvas() {
@@ -73,8 +94,7 @@ void okTabCanvas::SetPageIndex(uint16_t index) {
     return;
   }
   p->PageIndex = std::clamp(index, 0ui16, static_cast<uint16_t>(count - 1));
-  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_UPDATED));
-  Refresh();
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_NEEDS_REPAINT));
 }
 
 void okTabCanvas::NextPage() {
