@@ -33,7 +33,7 @@ int main() {
   (GameEvent {DCS::EVT_AIRCRAFT, AIRCRAFT}).Send();
   (GameEvent {DCS::EVT_TERRAIN, TERRAIN}).Send();
 
-  for (auto i = 0; i < 5; ++i) {
+  for (auto i = 0; i < 15; ++i) {
     auto message = fmt::format("{}a - single line", i);
     (GameEvent { DCS::EVT_RADIO_MESSAGE, message }).Send();
     message = fmt::format(

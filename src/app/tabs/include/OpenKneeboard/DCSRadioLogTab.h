@@ -8,9 +8,14 @@ class FolderTab;
 
 class DCSRadioLogTab final : public DCSTab {
  private:
+  std::vector<std::vector<std::string>> mCompletePages;
+  std::vector<std::string> mCurrentPageLines;
   std::vector<std::string> mMessages;
   int mColumns = -1;
+  int mRows = -1;
 
+  void PushMessage(const std::string& message);
+  void LayoutMessages();
  public:
   DCSRadioLogTab();
   virtual ~DCSRadioLogTab();
