@@ -12,7 +12,7 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 namespace OpenKneeboard {
 
 DCSTerrainTab::DCSTerrainTab()
-  : DCSTab(_("Local")), mDelegate(std::make_shared<FolderTab>("", "")) {
+  : DCSTab(_("Theater")), mDelegate(std::make_shared<FolderTab>("", "")) {
 }
 
 DCSTerrainTab::~DCSTerrainTab() {
