@@ -24,8 +24,8 @@ okDirectInputController::DIButtonListener::DIButtonListener(
       continue;
     }
 
-    device->SetEventNotification(event);
     device->SetDataFormat(&c_dfDIJoystick2);
+    device->SetEventNotification(event);
     device->SetCooperativeLevel(
       static_cast<wxApp*>(wxApp::GetInstance())->GetTopWindow()->GetHandle(),
       DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
@@ -58,7 +58,7 @@ okDirectInputController::DIButtonListener::Poll() {
   auto result
     = WaitForMultipleObjects(handles.size(), handles.data(), false, 100);
   auto idx = result - WAIT_OBJECT_0;
-  if (idx <= 0 || idx >= (handles.size() - 1)) {
+  if (idx < 0 || idx >= (handles.size() - 1)) {
     return {};
   }
 
@@ -67,6 +67,10 @@ okDirectInputController::DIButtonListener::Poll() {
   DIJOYSTATE2 newState;
   device.Device->Poll();
   device.Device->GetDeviceState(sizeof(newState), &newState);
+  if (memcmp(oldState.rgbButtons, newState.rgbButtons, 128) == 0) {
+    return {};
+  }
+
   for (uint8_t i = 0; i < 128; ++i) {
     if (oldState.rgbButtons[i] != newState.rgbButtons[i]) {
       device.State = newState;
