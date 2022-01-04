@@ -25,4 +25,12 @@ void Tab::Reload() {
 void Tab::OnGameEvent(const GameEvent&) {
 }
 
+wxWindow* Tab::GetSettingsUI(wxWindow* parent) {
+  return nullptr;
+}
+
+nlohmann::json Tab::GetSettings() const {
+  return {};
+}
+
 }// namespace OpenKneeboard

@@ -45,6 +45,21 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
     ZERO_CONFIG_TAB_TYPES
 #undef IT
 
+    if (!tab.contains("Settings")) {
+      continue;
+    }
+
+#define IT(_, it) \
+  if (type == #it) { \
+    auto instance = it##Tab::FromSettings(title, tab.at("Settings")); \
+    if (instance) { \
+      p->Tabs.push_back(instance); \
+      continue; \
+    } \
+  }
+    CONFIGURABLE_TAB_TYPES
+#undef IT
+
     dprintf("Don't know how to load tab '{}' of type {}", title, type);
   }
 }
@@ -97,6 +112,13 @@ nlohmann::json okTabsList::GetSettings() const {
   }
     ZERO_CONFIG_TAB_TYPES
 #undef IT
+
+    auto settings = tab->GetSettings();
+    if (!settings.is_null()) {
+      savedTab.emplace("Settings", settings);
+      ret.push_back(savedTab);
+      continue;
+    }
 
     dprintf(
       "Ignoring tab '{}' of type {} as don't know how to save it.",

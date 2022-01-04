@@ -1,15 +1,13 @@
 #include "okTabsList_SettingsUI.h"
 
-#include <ShlObj.h>
 #include <wx/choicdlg.h>
-#include <wx/dirdlg.h>
 #include <wx/listctrl.h>
 #include <wx/wupdlock.h>
 
 #include "OpenKneeboard/dprint.h"
+#include "TabTypes.h"
 #include "okEvents.h"
 #include "okTabsList_SharedState.h"
-#include "TabTypes.h"
 
 using namespace OpenKneeboard;
 
@@ -81,14 +79,18 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
   }
 
   switch (tabTypeDialog.GetSelection()) {
-    case TABTYPE_IDX_Folder:
-      InsertFolderTab();
-      return;
 #define IT(_, type) \
   case TABTYPE_IDX_##type: \
     InsertTab(std::make_shared<type##Tab>()); \
     return;
-      ZERO_CONFIG_TAB_TYPES
+    ZERO_CONFIG_TAB_TYPES
+#undef IT
+#define IT(_, type) \
+  case TABTYPE_IDX_##type: \
+    InsertTab(type##Tab::Create(nullptr)); \
+    return;
+    CONFIGURABLE_TAB_TYPES
+#undef IT
     default:
       dprintf("Invalid tab type index: {}", tabTypeDialog.GetSelection());
       return;
@@ -146,6 +148,9 @@ void okTabsList::SettingsUI::MoveTab(Direction direction) {
 }
 
 void okTabsList::SettingsUI::InsertTab(const std::shared_ptr<Tab>& tab) {
+  if (!tab) {
+    return;
+  }
   auto insertAt = mList->GetFirstSelected();
   if (insertAt == -1) {
     insertAt = 0;
@@ -158,25 +163,4 @@ void okTabsList::SettingsUI::InsertTab(const std::shared_ptr<Tab>& tab) {
   mList->Select(insertAt);
 
   wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
-}
-
-void okTabsList::SettingsUI::InsertFolderTab() {
-  wxDirDialog dialog(
-    nullptr, _("Add Folder Tab"), {}, wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
-
-  wchar_t* userDir = nullptr;
-  if (SHGetKnownFolderPath(FOLDERID_Documents, NULL, NULL, &userDir) == S_OK) {
-    dialog.SetPath(userDir);
-  }
-
-  if (dialog.ShowModal() == wxID_CANCEL) {
-    return;
-  }
-
-  std::filesystem::path path(dialog.GetPath().ToStdWstring());
-  if (!std::filesystem::is_directory(path)) {
-    return;
-  }
-
-  InsertTab(std::make_shared<FolderTab>(path.stem().string(), path));
 }

@@ -96,7 +96,7 @@ okGamesList::SettingsUI::SettingsUI(wxWindow* parent, okGamesList* gamesList)
   auto imageList = new wxImageList(32, 32);
   mList->AssignImageList(imageList);
 
-  for (const auto& game: mGamesList->mInstances) {
+  for (auto game: mGamesList->mInstances) {
     int imageIndex = -1;
     auto ico = GetIconFromExecutable(game.Path);
     if (ico.IsOk()) {

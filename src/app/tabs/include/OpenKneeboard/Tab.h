@@ -1,10 +1,6 @@
 #pragma once
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-#include <wx/image.h>
+#include "okConfigurableComponent.h"
 
 #include <memory>
 #include <string>
@@ -14,7 +10,7 @@ wxDECLARE_EVENT(okEVT_TAB_UPDATED, wxCommandEvent);
 namespace OpenKneeboard {
 struct GameEvent;
 
-class Tab : public wxEvtHandler {
+class Tab : public okConfigurableComponent {
  public:
   Tab(const wxString& title);
   virtual ~Tab();
@@ -23,6 +19,10 @@ class Tab : public wxEvtHandler {
 
   virtual void Reload();
   virtual void OnGameEvent(const GameEvent&);
+
+  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
+  virtual nlohmann::json GetSettings() const override;
+
   virtual uint16_t GetPageCount() const = 0;
   virtual wxImage RenderPage(uint16_t index) = 0;
 

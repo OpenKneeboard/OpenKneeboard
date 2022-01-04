@@ -5,7 +5,6 @@
 #include <wx/rawbmp.h>
 #include <wx/wupdlock.h>
 
-#include "OpenKneeboard/FolderTab.h"
 #include "OpenKneeboard/GameEvent.h"
 #include "OpenKneeboard/RenderError.h"
 #include "OpenKneeboard/SHM.h"

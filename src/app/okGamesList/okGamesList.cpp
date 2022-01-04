@@ -14,9 +14,9 @@ okGamesList::okGamesList(const nlohmann::json& config) {
 
   if (config.is_null()) {
     LoadDefaultSettings();
-    return;
+  } else {
+    LoadSettings(config);
   }
-  LoadSettings(config);
 
   mInjector = new okGameInjectorThread(this, mInstances);
   mInjector->Run();
