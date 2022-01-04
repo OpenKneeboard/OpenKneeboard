@@ -88,5 +88,6 @@
     "random": "cpp",
     "valarray": "cpp"
   },
-  "cmake.configureOnOpen": true
+  "cmake.configureOnOpen": true,
+  "C_Cpp.default.cppStandard": "c++20"
 }
