@@ -211,8 +211,8 @@ void okMainWindow::UpdateSHM() {
     for (int y = 0; y < withUI.GetHeight(); ++y) {
       pixels[x + (y * image.GetWidth())] = {
         image.GetRed(x, y),
-        image.GetBlue(x, y),
         image.GetGreen(x, y),
+        image.GetBlue(x, y),
         image.HasAlpha() ? image.GetAlpha(x, y) : 0xffui8,
       };
     }
