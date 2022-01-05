@@ -34,10 +34,8 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
   wxBitmap bitmap(768, 1024);
   wxMemoryDC dc(bitmap);
 
-  wxFont font(
-    16, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-  font.SetEncoding(wxFONTENCODING_UTF8);
-  dc.SetFont(font);
+  dc.SetFont(
+    wxFont(16, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
   dc.SetBackground(*wxWHITE_BRUSH);
   dc.Clear();
 
