@@ -90,6 +90,7 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
 void DCSRadioLogTab::PushMessage(const std::string& message) {
   mMessages.push_back(message);
   LayoutMessages();
+  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
 }
 
 void DCSRadioLogTab::PushPage() {
