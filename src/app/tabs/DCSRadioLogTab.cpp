@@ -60,7 +60,7 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
   wxPoint point {padding, padding};
   auto y = metrics.GetHeight();
   for (const auto& line: lines) {
-    dc.DrawText(wxString(line.data(), line.size()), point);
+    dc.DrawText(wxString::FromUTF8(line.data(), line.size()), point);
     point.y += metrics.GetHeight();
   }
 
