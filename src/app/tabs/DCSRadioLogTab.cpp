@@ -34,7 +34,8 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
   wxBitmap bitmap(768, 1024);
   wxMemoryDC dc(bitmap);
 
-  wxFont font(16, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+  wxFont font(
+    16, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
   font.SetEncoding(wxFONTENCODING_UTF8);
   dc.SetFont(font);
   dc.SetBackground(*wxWHITE_BRUSH);
@@ -117,16 +118,16 @@ void DCSRadioLogTab::LayoutMessages() {
 
   auto& pageLines = mCurrentPageLines;
   for (const auto& message: mMessages) {
-    std::vector<std::string_view> messageLines;
+    std::vector<std::string> messageLines;
     std::string_view remaining(message);
     while (!remaining.empty()) {
       if (remaining.size() <= mColumns) {
-        messageLines.push_back(remaining);
+        messageLines.push_back(std::string(remaining));
         break;
       }
       auto space = remaining.find_last_of(" ", mColumns);
       if (space == remaining.npos) {
-        messageLines.push_back(remaining.substr(0, mColumns));
+        messageLines.push_back(std::string(remaining.substr(0, mColumns)));
         if (remaining.size() > mColumns) {
           remaining = remaining.substr(mColumns);
           continue;
@@ -134,7 +135,7 @@ void DCSRadioLogTab::LayoutMessages() {
         break;
       }
 
-      messageLines.push_back(remaining.substr(0, space));
+      messageLines.push_back(std::string(remaining.substr(0, space)));
       if (remaining.size() > space + 1) {
         remaining = remaining.substr(space + 1);
         continue;
@@ -157,20 +158,22 @@ void DCSRadioLogTab::LayoutMessages() {
 
     // If we reach here, we can fit the full message on one page. Now figure
     // out if we want a new page first.
-    if (!pageLines.empty()) {
-      if (mRows - pageLines.size() >= 2) {
-        pageLines.push_back({});
-      } else {
-        PushPage();
-      }
+    if (pageLines.empty()) {
+      pageLines = messageLines;
+      continue;
     }
 
-    for (auto line: messageLines) {
-      if (pageLines.size() >= mRows) {
-        PushPage();
-      }
-      pageLines.push_back(std::string(line));
+    if (mRows - pageLines.size() >= messageLines.size() + 1) {
+      pageLines.push_back({});
+      std::copy(
+        messageLines.begin(),
+        messageLines.end(),
+        std::back_inserter(pageLines));
+      continue;
     }
+
+    PushPage();
+    pageLines = messageLines;
   }
   mMessages.clear();
 }
