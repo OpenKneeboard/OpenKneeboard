@@ -111,9 +111,9 @@ ovrResult OculusKneeboard::onEndFrame(
   }
 
   OVR::Quatf orientation;
-  orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx, OVR::Rotate_CW);
-  orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry, OVR::Rotate_CW);
-  orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz, OVR::Rotate_CW);
+  orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx);
+  orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
+  orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
   kneeboardLayer.QuadPoseCenter.Orientation = orientation;
 
   kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};

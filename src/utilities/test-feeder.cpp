@@ -31,7 +31,7 @@ int main() {
     .floorY = 0.6f,
     .eyeY = -0.7f,
     .z = -0.25f,
-    .rx = float(M_PI / 2),
+    .rx = -float(M_PI / 2),
     .VirtualWidth = 0.2f,
     .VirtualHeight = 0.3f,
     .ImageWidth = 800,

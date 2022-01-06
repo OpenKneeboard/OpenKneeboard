@@ -72,9 +72,9 @@ void okOpenVR::Update(const SHM::Header& header, SHM::Pixel* pixels) {
   Eigen::Transform<float, 3, Eigen::AffineCompact, Eigen::RowMajor> t;
   t = Eigen::Translation3f(header.x, header.floorY, header.z)
     // Negate as we use clockwise angles for human-friendliness
-    * Eigen::AngleAxisf(-header.rx, Eigen::Vector3f::UnitX())
-    * Eigen::AngleAxisf(-header.ry, Eigen::Vector3f::UnitY())
-    * Eigen::AngleAxisf(-header.rz, Eigen::Vector3f::UnitZ());
+    * Eigen::AngleAxisf(header.rx, Eigen::Vector3f::UnitX())
+    * Eigen::AngleAxisf(header.ry, Eigen::Vector3f::UnitY())
+    * Eigen::AngleAxisf(header.rz, Eigen::Vector3f::UnitZ());
 
   overlay_check(overlay->SetOverlayTransformAbsolute(
     p->Overlay,
