@@ -5,6 +5,62 @@
 
 namespace OpenKneeboard::SHM {
 
+namespace {
+class Spinlock final {
+ private:
+  Header* mHeader = nullptr;
+
+ public:
+  enum FAILURE_BEHAVIOR {
+    ON_FAILURE_FORCE_UNLOCK,
+    ON_FAILURE_CREATE_FALSEY,
+    ON_FAILURE_THROW_EXCEPTION
+  };
+
+  Spinlock(Header* header, FAILURE_BEHAVIOR behavior) : mHeader(header) {
+    const auto bit = 3;
+    static_assert(Flags::LOCKED == 1 << bit);
+
+    for (int count = 1; count <= 1000; ++count) {
+      auto alreadyLocked = _interlockedbittestandset64(
+        reinterpret_cast<LONG64*>(&header->Flags), bit);
+      if (!alreadyLocked) {
+        return;
+      }
+      if (count % 10 == 0) {
+        YieldProcessor();
+      }
+      if (count % 100 == 0) {
+        Sleep(10 /* ms */);
+      }
+    }
+
+    if (behavior == ON_FAILURE_FORCE_UNLOCK) {
+      return;
+    }
+
+    if (behavior == ON_FAILURE_CREATE_FALSEY) {
+      mHeader = nullptr;
+      return;
+    }
+
+    throw new std::runtime_error("Failed to acquire spinlock");
+  }
+
+  operator bool() {
+    return (bool) mHeader;
+  }
+
+  ~Spinlock() {
+    if (!mHeader) {
+      return;
+    }
+
+    mHeader->Flags &= ~Flags::LOCKED;
+  }
+};
+}// namespace
+
 static const DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
 static const DWORD MAX_IMAGE_BYTES = MAX_IMAGE_PX * sizeof(Pixel);
 static const DWORD SHM_SIZE = sizeof(Header) + MAX_IMAGE_BYTES;
@@ -130,7 +186,13 @@ Snapshot Reader::MaybeGet() const {
   }
 
   std::vector<std::byte> buffer(SHM_SIZE);
+  {
+    Spinlock lock(p->Header, Spinlock::ON_FAILURE_CREATE_FALSEY);
+    if (!lock) {
+      return snapshot;
+    }
   memcpy(reinterpret_cast<void*>(buffer.data()), p->Mapping, SHM_SIZE);
+  }
   p->Latest = Snapshot(std::move(buffer));
 
   return p->Latest;
@@ -146,17 +208,15 @@ void Writer::Update(const Header& _header, const std::vector<Pixel>& pixels) {
     throw std::logic_error("Pixel array size does not match header");
   }
 
-  header.Flags |= Flags::FEEDER_ATTACHED;
+  header.Flags |= Flags::FEEDER_ATTACHED | Flags::LOCKED;
   header.SequenceNumber = p->Header->SequenceNumber + 1;
 
-  std::vector<std::byte> bytes(
-    sizeof(Header) + (pixels.size() * sizeof(Pixel)));
-  memcpy(reinterpret_cast<void*>(bytes.data()), &header, sizeof(Header));
+  Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);
+  memcpy(reinterpret_cast<void*>(p->Header), &header, sizeof(Header));
   memcpy(
-    reinterpret_cast<void*>(&bytes.data()[sizeof(Header)]),
+    reinterpret_cast<void*>(p->Pixels),
     pixels.data(),
     pixels.size() * sizeof(Pixel));
-  memcpy(p->Mapping, bytes.data(), bytes.size());
 }
 
 }// namespace OpenKneeboard::SHM
