@@ -161,8 +161,9 @@ void okMainWindow::UpdateSHM() {
   }
 
   wxSize headerSize(content.GetWidth(), int(content.GetHeight() * 0.05));
-  wxBitmap withUI(
-    content.GetWidth(), content.GetHeight() + headerSize.GetHeight(), 32);
+  const auto width = content.GetWidth();
+  const auto height = content.GetHeight() + headerSize.GetHeight();
+  wxBitmap withUI(width, height, 32);
   {
     wxMemoryDC dc(withUI);
     dc.SetBrush(*wxLIGHT_GREY_BRUSH);
@@ -185,11 +186,10 @@ void okMainWindow::UpdateSHM() {
       (headerSize.GetHeight() - titleSize.GetHeight()) / 2);
   }
 
-  // Would prefer to use the bitmaps' native pixel data,
-  // but the alpha channel doesn't actually seem to be present
-  auto image = withUI.ConvertToImage();
+  wxAlphaPixelData pixelData(withUI);
+  wxAlphaPixelData::Iterator pixelIt(pixelData);
 
-  auto ratio = float(image.GetHeight()) / image.GetWidth();
+  auto ratio = float(height) / width;
   SHM::Header header {
     .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
     .x = 0.15f,
@@ -201,20 +201,29 @@ void okMainWindow::UpdateSHM() {
     .VirtualWidth = 0.25f / ratio,
     .VirtualHeight = 0.25f,
     .ZoomScale = 2.0f,
-    .ImageWidth = static_cast<uint16_t>(image.GetWidth()),
-    .ImageHeight = static_cast<uint16_t>(image.GetHeight()),
+    .ImageWidth = static_cast<uint16_t>(width),
+    .ImageHeight = static_cast<uint16_t>(height),
   };
 
+  auto image = withUI.ConvertToImage();
+
   using Pixel = SHM::Pixel;
-  std::vector<Pixel> pixels(withUI.GetWidth() * withUI.GetHeight());
-  for (int x = 0; x < withUI.GetWidth(); ++x) {
-    for (int y = 0; y < withUI.GetHeight(); ++y) {
-      pixels[x + (y * image.GetWidth())] = {
-        image.GetRed(x, y),
-        image.GetGreen(x, y),
-        image.GetBlue(x, y),
-        image.HasAlpha() ? image.GetAlpha(x, y) : 0xffui8,
+  std::vector<Pixel> pixels(width * height);
+  auto pixelOut = &pixels[0];
+  for (int y = 0; y < height; ++y) {
+    pixelIt.MoveTo(pixelData, 0, y);
+    for (int x = 0; x < width; ++x) {
+      *pixelOut = {
+        pixelIt.Red(),
+        pixelIt.Green(),
+        pixelIt.Blue(),
+        // If we create a bitmap with an alpha channel, wxMemoryDC discards it,
+        // so the alpha is always 0. For now, make it opaque instead, perhaps
+        // add an option in the future.
+        0xff,
       };
+      pixelIt++;
+      pixelOut++;
     }
   }
 
