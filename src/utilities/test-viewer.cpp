@@ -56,6 +56,7 @@ class MainWindow final : public wxFrame {
 
     if (snapshot.GetHeader()->SequenceNumber != mLastSequenceNumber) {
       Refresh();
+      Update();
     }
   }
 

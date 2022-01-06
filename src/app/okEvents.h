@@ -20,7 +20,7 @@ wxDECLARE_EVENT(okEVT_GAME_CHANGED, wxCommandEvent);
  * - repainting the window/widget
  * - updating any other renderers, such as SHM or SteamVR.
  */
-wxDECLARE_EVENT(okEVT_TAB_NEEDS_REPAINT, wxCommandEvent);
+wxDECLARE_EVENT(okEVT_TAB_PIXELS_CHANGED, wxCommandEvent);
 
 /** The contents of a tab has been fully replaced.
  *
@@ -29,7 +29,7 @@ wxDECLARE_EVENT(okEVT_TAB_NEEDS_REPAINT, wxCommandEvent);
  * 
  * Reasonable responses for okTab and okTabCanvas include:
  * - resetting back to the first page
- * - emitting `okEVT_TAB_NEEDS_REPAINT`
+ * - emitting `okEVT_TAB_PIXELS_MODIFIED`
  */
 wxDECLARE_EVENT(okEVT_TAB_FULLY_REPLACED, wxCommandEvent);
 
@@ -39,7 +39,7 @@ wxDECLARE_EVENT(okEVT_TAB_FULLY_REPLACED, wxCommandEvent);
  * the current page.
  *
  * Reasonable responses for okTab and okTabCanvas include emitting
- * `okEVT_TAB_NEEDS_REPAINT`, but not changing the page number.
+ * `okEVT_TAB_PIXELS_MODIFIED`, but not changing the page number.
  */
 wxDECLARE_EVENT(okEVT_TAB_PAGE_MODIFIED, wxCommandEvent);
 

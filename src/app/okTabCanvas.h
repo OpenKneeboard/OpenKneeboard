@@ -29,4 +29,9 @@ class okTabCanvas final : public wxPanel {
  private:
   class Impl;
   std::shared_ptr<Impl> p;
+
+  void OnTabFullyReplaced(wxCommandEvent&);
+  void OnTabPageModified(wxCommandEvent&);
+  void OnTabPageAppended(wxCommandEvent&);
+  void OnPixelsChanged();
 };

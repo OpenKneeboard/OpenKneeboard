@@ -22,32 +22,12 @@ okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
     wxDefaultPosition,
     wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
     p(new Impl {.Tab = tab}) {
-  Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
-  Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
-  tab->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto&) {
-    p->PageIndex = 0;
-    this->Refresh();
-    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_NEEDS_REPAINT));
-  });
-  tab->Bind(okEVT_TAB_PAGE_MODIFIED, [this](wxCommandEvent& ev) {
-    this->Refresh();
-    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_NEEDS_REPAINT));
-  });
-  tab->Bind(okEVT_TAB_PAGE_APPENDED, [this](wxCommandEvent& ev) {
-    auto tab = dynamic_cast<Tab*>(ev.GetEventObject());
-    if (!tab) {
-      return;
-    }
-    dprintf(
-      "Tab appended: {} {} {}",
-      tab->GetTitle(),
-      ev.GetInt(),
-      this->p->PageIndex);
-    if (ev.GetInt() != this->p->PageIndex + 1) {
-      return;
-    }
-    this->NextPage();
-  });
+  this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
+  this->Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
+
+  tab->Bind(okEVT_TAB_FULLY_REPLACED, &okTabCanvas::OnTabFullyReplaced, this);
+  tab->Bind(okEVT_TAB_PAGE_MODIFIED, &okTabCanvas::OnTabPageModified, this);
+  tab->Bind(okEVT_TAB_PAGE_APPENDED, &okTabCanvas::OnTabPageAppended, this);
 }
 
 okTabCanvas::~okTabCanvas() {
@@ -94,7 +74,8 @@ void okTabCanvas::SetPageIndex(uint16_t index) {
     return;
   }
   p->PageIndex = std::clamp(index, 0ui16, static_cast<uint16_t>(count - 1));
-  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_NEEDS_REPAINT));
+
+  this->OnPixelsChanged();
 }
 
 void okTabCanvas::NextPage() {
@@ -111,4 +92,35 @@ void okTabCanvas::PreviousPage() {
 
 std::shared_ptr<Tab> okTabCanvas::GetTab() const {
   return p->Tab;
+}
+
+void okTabCanvas::OnTabFullyReplaced(wxCommandEvent&) {
+  p->PageIndex = 0;
+  this->OnPixelsChanged();
+}
+
+void okTabCanvas::OnTabPageModified(wxCommandEvent&) {
+  this->OnPixelsChanged();
+}
+
+void okTabCanvas::OnTabPageAppended(wxCommandEvent& ev) {
+  auto tab = dynamic_cast<Tab*>(ev.GetEventObject());
+  if (!tab) {
+    return;
+  }
+  dprintf(
+    "Tab appended: {} {} {}", tab->GetTitle(), ev.GetInt(), this->p->PageIndex);
+  if (ev.GetInt() != this->p->PageIndex + 1) {
+    return;
+  }
+  this->NextPage();
+}
+
+void okTabCanvas::OnPixelsChanged() {
+  auto ev = new wxCommandEvent(okEVT_TAB_PIXELS_CHANGED);
+  ev->SetEventObject(p->Tab.get());
+  wxQueueEvent(this, ev);
+
+  this->Refresh();
+  this->Update();
 }
