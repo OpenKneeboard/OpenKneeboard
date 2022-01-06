@@ -11,15 +11,17 @@ target_compile_definitions(
 
 target_link_libraries(
   OpenKneeboard
-  wx::core
-  wx::base
   detours
-  openkneeboard-shm
   dprint
-  json
+  eigen3
   gameevent
   games
-  rendererror)
+  json
+  openkneeboard-shm
+  openvr
+  rendererror
+  wx::base
+  wx::core)
 
 set(SOURCE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 foreach(SOURCE ${SOURCES})
@@ -32,4 +34,11 @@ target_include_directories(
   PRIVATE
   ${SOURCE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include)
-  
+
+add_custom_command(
+  TARGET OpenKneeboard POST_BUILD
+  COMMAND
+  ${CMAKE_COMMAND} -E copy 
+  "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
+  "$<TARGET_FILE_DIR:OpenKneeboard>"
+  COMMAND_EXPAND_LISTS)

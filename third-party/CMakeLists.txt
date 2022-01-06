@@ -1,7 +1,9 @@
 include(detours.cmake)
+include(eigen3.cmake)
 include(fmt.cmake)
 include(json.cmake)
 include(lualib.cmake)
+include(openvr.cmake)
 include(wxWidgets.cmake)
 
 add_library(oculus-sdk-headers INTERFACE)

@@ -16,6 +16,7 @@
 #include "okGamesList.h"
 #include "okTab.h"
 #include "okTabsList.h"
+#include "okOpenVR.h"
 
 using namespace OpenKneeboard;
 
@@ -23,6 +24,7 @@ class okMainWindow::Impl {
  public:
   std::vector<okConfigurableComponent*> Configurables;
   std::vector<okTab*> TabUIs;
+  std::unique_ptr<okOpenVR> OpenVR;
   OpenKneeboard::SHM::Writer SHM;
   wxNotebook* Notebook = nullptr;
   okTabsList* TabsList = nullptr;
@@ -228,6 +230,11 @@ void okMainWindow::UpdateSHM() {
   }
 
   p->SHM.Update(header, pixels);
+
+  if (!p->OpenVR) {
+    p->OpenVR = std::make_unique<okOpenVR>();
+  }
+  p->OpenVR->Update(header, pixels.data());
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {
