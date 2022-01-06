@@ -12,7 +12,6 @@ class okOpenVRThread::Impl final {
  public:
   vr::IVRSystem* VRSystem = nullptr;
   vr::VROverlayHandle_t Overlay {};
-  bool Zoomed = false;
   SHM::Reader SHM;
 
   ~Impl() {
@@ -67,19 +66,20 @@ void okOpenVRThread::Tick() {
     return;
   }
 
-  // Should probably call VR_Shutdown() here, but sometimes vrserver
-  // crashes, leading to this process cleanly exiting with 0, so
-  // just assume the call failed because VRServer went away and
-  // the handles we have are invalid
 #define CHECK(method, ...) \
   if (!overlay_check(overlay->method(__VA_ARGS__), #method)) { \
+    vr::VR_Shutdown(); \
     p->VRSystem = nullptr; \
     p->Overlay = {}; \
     return; \
   }
 
   if (!p->Overlay) {
-    CHECK(CreateOverlay, "OpenKneeboard", "OpenKneeboard", &p->Overlay);
+    CHECK(
+      CreateOverlay,
+      "com.fredemmott.OpenKneeboard",
+      "OpenKneeboard",
+      &p->Overlay);
     if (!p->Overlay) {
       return;
     }
@@ -99,10 +99,34 @@ void okOpenVRThread::Tick() {
     header.ImageHeight,
     4);
 
+  bool zoomed = false;
+  vr::TrackedDevicePose_t hmdPose {
+    .bPoseIsValid = false,
+    .bDeviceIsConnected = false,
+  };
+  p->VRSystem->GetDeviceToAbsoluteTrackingPose(
+    vr::TrackingUniverseStanding, 0, &hmdPose, 1);
+  if (hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid) {
+    Eigen::Matrix<float, 3, 4, Eigen::RowMajor> m(
+      &hmdPose.mDeviceToAbsoluteTracking.m[0][0]);
+    Eigen::Transform<float, 3, Eigen::AffineCompact, Eigen::RowMajor> t(m);
+    auto translation = t.translation();
+    auto rotation = t.rotation() * Eigen::Vector3f(0, 0, -1);
+
+    vr::VROverlayIntersectionParams_t params {
+      .vSource = {translation.x(), translation.y(), translation.z()},
+      .vDirection = {rotation.x(), rotation.y(), rotation.z()},
+      .eOrigin = vr::TrackingUniverseStanding,
+    };
+
+    vr::VROverlayIntersectionResults_t results;
+    zoomed = overlay->ComputeOverlayIntersection(p->Overlay, &params, &results);
+  }
+
   CHECK(
     SetOverlayWidthInMeters,
     p->Overlay,
-    header.VirtualWidth * (p->Zoomed ? header.ZoomScale : 1.0f));
+    header.VirtualWidth * (zoomed ? header.ZoomScale : 1.0f));
 
   Eigen::Transform<float, 3, Eigen::AffineCompact, Eigen::RowMajor> t;
   t = Eigen::Translation3f(header.x, header.floorY, header.z)
