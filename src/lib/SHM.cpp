@@ -48,7 +48,7 @@ class Spinlock final {
   }
 
   operator bool() {
-    return (bool) mHeader;
+    return (bool)mHeader;
   }
 
   ~Spinlock() {
@@ -97,9 +97,9 @@ Snapshot::operator bool() const {
 class Impl {
  public:
   HANDLE Handle;
-  void* Mapping;
-  Header* Header;
-  Pixel* Pixels;
+  std::byte* Mapping = nullptr;
+  Header* Header = nullptr;
+  Pixel* Pixels = nullptr;
   bool IsFeeder;
 
   Snapshot Latest;
@@ -122,7 +122,8 @@ Writer::Writer() {
   if (!handle) {
     return;
   }
-  void* mapping = MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, SHM_SIZE);
+  auto mapping = reinterpret_cast<std::byte*>(
+    MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, SHM_SIZE));
   if (!mapping) {
     CloseHandle(handle);
     return;
@@ -132,7 +133,7 @@ Writer::Writer() {
     .Handle = handle,
     .Mapping = mapping,
     .Header = reinterpret_cast<Header*>(mapping),
-    .Pixels = &reinterpret_cast<Pixel*>(mapping)[sizeof(Header)],
+    .Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]),
     .IsFeeder = true});
 }
 
@@ -147,7 +148,8 @@ Reader::Reader() {
   if (!handle) {
     return;
   }
-  void* mapping = MapViewOfFile(handle, FILE_MAP_READ, 0, 0, SHM_SIZE);
+  auto mapping = reinterpret_cast<std::byte*>(
+    MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, SHM_SIZE));
   if (!mapping) {
     CloseHandle(handle);
     return;
@@ -157,7 +159,7 @@ Reader::Reader() {
     .Handle = handle,
     .Mapping = mapping,
     .Header = reinterpret_cast<Header*>(mapping),
-    .Pixels = &reinterpret_cast<Pixel*>(mapping)[sizeof(Header)],
+    .Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]),
     .IsFeeder = false});
 }
 
@@ -179,10 +181,10 @@ Snapshot Reader::MaybeGet() const {
 
   const auto snapshot = p->Latest;
 
-  if (snapshot) {
-    if (snapshot.GetHeader()->SequenceNumber == p->Header->SequenceNumber) {
-      return snapshot;
-    }
+  if (
+    snapshot
+    && snapshot.GetHeader()->SequenceNumber == p->Header->SequenceNumber) {
+    return snapshot;
   }
 
   std::vector<std::byte> buffer(SHM_SIZE);
@@ -191,7 +193,7 @@ Snapshot Reader::MaybeGet() const {
     if (!lock) {
       return snapshot;
     }
-  memcpy(reinterpret_cast<void*>(buffer.data()), p->Mapping, SHM_SIZE);
+    memcpy(reinterpret_cast<void*>(buffer.data()), p->Mapping, SHM_SIZE);
   }
   p->Latest = Snapshot(std::move(buffer));
 
