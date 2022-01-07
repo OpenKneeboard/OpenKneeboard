@@ -11,9 +11,11 @@ using namespace OpenKneeboard;
 
 class okTabCanvas::Impl final {
  public:
-  winrt::com_ptr<ID2D1Factory> D2d;
   std::shared_ptr<Tab> Tab;
   uint16_t PageIndex = 0;
+
+  winrt::com_ptr<ID2D1Factory> D2d;
+  winrt::com_ptr<ID2D1HwndRenderTarget> RT;
 };
 
 okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
@@ -25,6 +27,7 @@ okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
     p(new Impl {.Tab = tab}) {
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
+  this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
 
   tab->Bind(okEVT_TAB_FULLY_REPLACED, &okTabCanvas::OnTabFullyReplaced, this);
   tab->Bind(okEVT_TAB_PAGE_MODIFIED, &okTabCanvas::OnTabPageModified, this);
@@ -32,6 +35,16 @@ okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
 }
 
 okTabCanvas::~okTabCanvas() {
+}
+
+void okTabCanvas::OnSize(wxSizeEvent& ev) {
+  if (!p->RT) {
+    return;
+  }
+
+  auto size = this->GetClientSize();
+  p->RT->Resize(
+    {static_cast<UINT>(size.GetWidth()), static_cast<UINT>(size.GetHeight())});
 }
 
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
@@ -54,28 +67,29 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
       p->D2d.put_void());
   }
 
-  auto rtp = D2D1::RenderTargetProperties(
-    D2D1_RENDER_TARGET_TYPE_DEFAULT,
-    D2D1_PIXEL_FORMAT {
-      DXGI_FORMAT_R8G8B8A8_UNORM,
-      D2D1_ALPHA_MODE_PREMULTIPLIED,
-    });
-  rtp.dpiX = 0;
-  rtp.dpiY = 0;
-
   const auto clientSize = GetClientSize();
-  auto hwndRtp = D2D1::HwndRenderTargetProperties(
-    this->GetHWND(),
-    {static_cast<UINT32>(clientSize.GetWidth()),
-     static_cast<UINT32>(clientSize.GetHeight())});
+  if (!p->RT) {
+    auto rtp = D2D1::RenderTargetProperties(
+      D2D1_RENDER_TARGET_TYPE_DEFAULT,
+      D2D1_PIXEL_FORMAT {
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        D2D1_ALPHA_MODE_PREMULTIPLIED,
+      });
+    rtp.dpiX = 0;
+    rtp.dpiY = 0;
 
-  winrt::com_ptr<ID2D1HwndRenderTarget> rt;
-  p->D2d->CreateHwndRenderTarget(&rtp, &hwndRtp, rt.put());
+    auto hwndRtp = D2D1::HwndRenderTargetProperties(
+      this->GetHWND(),
+      {static_cast<UINT32>(clientSize.GetWidth()),
+       static_cast<UINT32>(clientSize.GetHeight())});
 
-  rt->BeginDraw();
-  rt->SetTransform(D2D1::Matrix3x2F::Identity());
+    p->D2d->CreateHwndRenderTarget(&rtp, &hwndRtp, p->RT.put());
+  }
+
+  p->RT->BeginDraw();
+  p->RT->SetTransform(D2D1::Matrix3x2F::Identity());
   auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-  rt->Clear(D2D1_COLOR_F {
+  p->RT->Clear(D2D1_COLOR_F {
     bg.Red() / 255.0f,
     bg.Green() / 255.0f,
     bg.Blue() / 255.0f,
@@ -83,9 +97,9 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   });
   p->Tab->RenderPage(
     p->PageIndex,
-    rt,
+    p->RT,
     {0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight())});
-  rt->EndDraw();
+  p->RT->EndDraw();
 }
 
 uint16_t okTabCanvas::GetPageIndex() const {

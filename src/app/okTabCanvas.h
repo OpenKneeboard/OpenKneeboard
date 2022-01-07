@@ -17,6 +17,7 @@ class okTabCanvas final : public wxPanel {
   okTabCanvas(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
   virtual ~okTabCanvas();
 
+  void OnSize(wxSizeEvent& ev);
   void OnPaint(wxPaintEvent& ev);
   void OnEraseBackground(wxEraseEvent& ev);
 
