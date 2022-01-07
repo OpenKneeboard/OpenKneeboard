@@ -40,9 +40,10 @@ class MainWindow final : public wxFrame {
       wxSize {768 / 2, 1024 / 2},
       wxDEFAULT_FRAME_STYLE) {
     Bind(wxEVT_PAINT, &MainWindow::OnPaint, this);
-    Bind(wxEVT_ERASE_BACKGROUND, [this](auto) {});
+    Bind(wxEVT_ERASE_BACKGROUND, [this](auto&) {});
     Bind(
-      wxEVT_MENU, [this](auto) { this->Close(true); }, wxID_EXIT);
+      wxEVT_MENU, [this](auto&) { this->Close(true); }, wxID_EXIT);
+    Bind(wxEVT_SIZE, [this](auto&) { this->Refresh(); });
 
     auto menuBar = new wxMenuBar();
     {
