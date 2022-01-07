@@ -11,6 +11,7 @@ using namespace OpenKneeboard;
 
 class okTabCanvas::Impl final {
  public:
+  winrt::com_ptr<ID2D1Factory> D2d;
   std::shared_ptr<Tab> Tab;
   uint16_t PageIndex = 0;
 };
@@ -35,33 +36,56 @@ okTabCanvas::~okTabCanvas() {
 
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   const auto count = p->Tab->GetPageCount();
-  wxBufferedPaintDC dc(this);
-  dc.Clear();
+  wxPaintDC dc(this);
 
   if (count == 0) {
+    dc.Clear();
     RenderError(this->GetClientSize(), dc, _("No Pages"));
     return;
   }
+
   p->PageIndex
     = std::clamp(p->PageIndex, 0ui16, static_cast<uint16_t>(count - 1));
 
-  auto image = p->Tab->RenderPage(p->PageIndex);
-  if (!image.IsOk()) {
-    RenderError(this->GetClientSize(), dc, _("Invalid Page Image"));
-    return;
+  if (!p->D2d) {
+    D2D1CreateFactory(
+      D2D1_FACTORY_TYPE_SINGLE_THREADED,
+      __uuidof(ID2D1Factory),
+      p->D2d.put_void());
   }
 
-  const auto imageSize = image.GetSize();
-  const auto clientSize = this->GetSize();
-  const float xScale = (float)clientSize.GetWidth() / imageSize.GetWidth();
-  const float yScale = (float)clientSize.GetHeight() / imageSize.GetHeight();
-  const auto scale = std::min(xScale, yScale);
-  const auto scaled = image.Scale(
-    (int)imageSize.GetWidth() * scale,
-    (int)imageSize.GetHeight() * scale,
-    wxIMAGE_QUALITY_HIGH);
+  auto rtp = D2D1::RenderTargetProperties(
+    D2D1_RENDER_TARGET_TYPE_DEFAULT,
+    D2D1_PIXEL_FORMAT {
+      DXGI_FORMAT_R8G8B8A8_UNORM,
+      D2D1_ALPHA_MODE_PREMULTIPLIED,
+    });
+  rtp.dpiX = 0;
+  rtp.dpiY = 0;
 
-  dc.DrawBitmap(scaled, wxPoint {0, 0});
+  const auto clientSize = GetClientSize();
+  auto hwndRtp = D2D1::HwndRenderTargetProperties(
+    this->GetHWND(),
+    {static_cast<UINT32>(clientSize.GetWidth()),
+     static_cast<UINT32>(clientSize.GetHeight())});
+
+  winrt::com_ptr<ID2D1HwndRenderTarget> rt;
+  p->D2d->CreateHwndRenderTarget(&rtp, &hwndRtp, rt.put());
+
+  rt->BeginDraw();
+  rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+  rt->Clear(D2D1_COLOR_F {
+    bg.Red() / 255.0f,
+    bg.Green() / 255.0f,
+    bg.Blue() / 255.0f,
+    bg.Alpha() / 255.0f,
+  });
+  p->Tab->RenderPage(
+    p->PageIndex,
+    rt,
+    {0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight())});
+  rt->EndDraw();
 }
 
 uint16_t okTabCanvas::GetPageIndex() const {

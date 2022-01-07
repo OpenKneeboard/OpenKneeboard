@@ -51,10 +51,8 @@ okMainWindow::okMainWindow()
     wxDefaultSize,
     wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER),
     p(std::make_unique<Impl>()) {
-
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
-
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
   auto menuBar = new wxMenuBar();
@@ -145,6 +143,7 @@ void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
 }
 
 void okMainWindow::UpdateSHM() {
+#ifdef WIP
   if (!p->SHM) {
     return;
   }
@@ -231,6 +230,7 @@ void okMainWindow::UpdateSHM() {
   }
 
   p->SHM.Update(header, pixels);
+#endif
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {

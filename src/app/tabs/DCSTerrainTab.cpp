@@ -29,8 +29,12 @@ void DCSTerrainTab::Reload() {
 uint16_t DCSTerrainTab::GetPageCount() const {
   return mDelegate->GetPageCount();
 }
-wxImage DCSTerrainTab::RenderPage(uint16_t index) {
-  return mDelegate->RenderPage(index);
+
+void DCSTerrainTab::RenderPage(
+  uint16_t pageIndex,
+  const winrt::com_ptr<ID2D1RenderTarget>& target,
+  const D2D1_RECT_F& rect) {
+  mDelegate->RenderPage(pageIndex, target, rect);
 }
 
 const char* DCSTerrainTab::GetGameEventName() const {

@@ -23,15 +23,9 @@ okTab::okTab(wxWindow* parent, const std::shared_ptr<Tab>& tab)
   auto firstPage = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
   auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
   auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
-  firstPage->Bind(wxEVT_BUTTON, [=](auto) {
-    canvas->SetPageIndex(0);
-  });
-  previousPage->Bind(wxEVT_BUTTON, [=](auto) {
-    canvas->PreviousPage();
-  });
-  nextPage->Bind(wxEVT_BUTTON, [=](auto) {
-    canvas->NextPage();
-  });
+  firstPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->SetPageIndex(0); });
+  previousPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->PreviousPage(); });
+  nextPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->NextPage(); });
 
   auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
   buttonSizer->Add(firstPage);
@@ -51,8 +45,10 @@ std::shared_ptr<Tab> okTab::GetTab() const {
   return p->Tab;
 }
 
-wxImage okTab::GetImage() {
-  return p->Tab->RenderPage(p->Canvas->GetPageIndex());
+void okTab::Render(
+  const winrt::com_ptr<ID2D1RenderTarget>& target,
+  const D2D1_RECT_F& rect) {
+  return p->Tab->RenderPage(p->Canvas->GetPageIndex(), target, rect);
 }
 
 void okTab::PreviousPage() {

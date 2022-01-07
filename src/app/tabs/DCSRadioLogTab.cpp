@@ -30,7 +30,11 @@ uint16_t DCSRadioLogTab::GetPageCount() const {
   return mCompletePages.size() + 1;
 }
 
-wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
+void DCSRadioLogTab::RenderPage(
+  uint16_t pageIndex,
+  const winrt::com_ptr<ID2D1RenderTarget>& target,
+  const D2D1_RECT_F& rect) {
+#ifdef WIP
   wxBitmap bitmap(768, 1024);
   wxMemoryDC dc(bitmap);
 
@@ -85,6 +89,7 @@ wxImage DCSRadioLogTab::RenderPage(uint16_t index) {
   }
 
   return bitmap.ConvertToImage();
+#endif
 }
 
 void DCSRadioLogTab::PushMessage(const std::string& message) {

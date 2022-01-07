@@ -11,6 +11,7 @@ target_compile_definitions(
 
 target_link_libraries(
   OpenKneeboard
+  D2d1
   detours
   dprint
   eigen3

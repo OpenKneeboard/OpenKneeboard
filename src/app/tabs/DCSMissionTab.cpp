@@ -107,8 +107,11 @@ uint16_t DCSMissionTab::GetPageCount() const {
   return p->Delegate->GetPageCount();
 }
 
-wxImage DCSMissionTab::RenderPage(uint16_t index) {
-  return p->Delegate->RenderPage(index);
+void DCSMissionTab::RenderPage(
+  uint16_t pageIndex,
+  const winrt::com_ptr<ID2D1RenderTarget>& target,
+  const D2D1_RECT_F& rect) {
+  p->Delegate->RenderPage(pageIndex, target, rect);
 }
 
 const char* DCSMissionTab::GetGameEventName() const {

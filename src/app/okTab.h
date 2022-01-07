@@ -7,6 +7,9 @@
 
 #include <memory>
 
+#include <winrt/base.h>
+#include <d2d1.h>
+
 namespace OpenKneeboard {
 class Tab;
 }
@@ -17,7 +20,10 @@ class okTab final : public wxPanel {
   virtual ~okTab();
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
-  wxImage GetImage();
+
+  void Render(
+    const winrt::com_ptr<ID2D1RenderTarget>& target,
+    const D2D1_RECT_F& rect);
 
   void NextPage();
   void PreviousPage();

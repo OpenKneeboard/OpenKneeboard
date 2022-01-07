@@ -29,8 +29,12 @@ void DCSAircraftTab::Reload() {
 uint16_t DCSAircraftTab::GetPageCount() const {
   return mDelegate->GetPageCount();
 }
-wxImage DCSAircraftTab::RenderPage(uint16_t index) {
-  return mDelegate->RenderPage(index);
+
+void DCSAircraftTab::RenderPage(
+  uint16_t pageIndex,
+  const winrt::com_ptr<ID2D1RenderTarget>& target,
+  const D2D1_RECT_F& rect) {
+  mDelegate->RenderPage(pageIndex, target, rect);
 }
 
 const char* DCSAircraftTab::GetGameEventName() const {

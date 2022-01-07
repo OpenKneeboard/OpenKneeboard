@@ -1,9 +1,12 @@
 #pragma once
 
-#include "okConfigurableComponent.h"
+#include <D2d1.h>
+#include <winrt/base.h>
 
 #include <memory>
 #include <string>
+
+#include "okConfigurableComponent.h"
 
 namespace OpenKneeboard {
 struct GameEvent;
@@ -22,7 +25,11 @@ class Tab : public okConfigurableComponent {
   virtual nlohmann::json GetSettings() const override;
 
   virtual uint16_t GetPageCount() const = 0;
-  virtual wxImage RenderPage(uint16_t index) = 0;
+  virtual void RenderPage(
+    uint16_t pageIndex,
+    const winrt::com_ptr<ID2D1RenderTarget>& target,
+    const D2D1_RECT_F& rect)
+    = 0;
 
  private:
   class Impl;

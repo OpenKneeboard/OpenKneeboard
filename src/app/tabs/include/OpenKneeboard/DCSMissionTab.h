@@ -11,7 +11,10 @@ class DCSMissionTab final : public DCSTab {
 
   virtual void Reload() override;
   virtual uint16_t GetPageCount() const override;
-  virtual wxImage RenderPage(uint16_t index) override;
+  virtual void RenderPage(
+    uint16_t pageIndex,
+    const winrt::com_ptr<ID2D1RenderTarget>& target,
+    const D2D1_RECT_F& rect) final override;
 
  protected:
   virtual const char* GetGameEventName() const override;
