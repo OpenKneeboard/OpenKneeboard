@@ -61,18 +61,38 @@ uint16_t FolderTab::GetPageCount() const {
   return p->Pages.size();
 }
 
+static bool IsValidPageIndex(uint16_t index, uint16_t count) {
+  if (index < count) {
+    return true;
+  }
+
+  if (index > 0) {
+    dprintf("Asked for page {} >= pagecount {} in {}", index, count, __FILE__);
+  }
+
+  return false;
+}
+
+D2D1_SIZE_U FolderTab::GetPreferredPixelSize(uint16_t index) {
+  if (!IsValidPageIndex(index, GetPageCount())) {
+    return {};
+  }
+
+  auto& page = p->Pages.at(index);
+  if (!page) {
+    if (!p->LoadPage(index)) {
+      return {};
+    }
+  }
+
+  return {page.Width, page.Height};
+}
+
 void FolderTab::RenderPage(
   uint16_t index,
   const winrt::com_ptr<ID2D1RenderTarget>& rt,
   const D2D1_RECT_F& rect) {
-  if (index >= GetPageCount()) {
-    if (index != 0) {
-      dprintf(
-        "Asked to render page {} >= pagecount {} in {}",
-        index,
-        GetPageCount(),
-        __FILE__);
-    }
+  if (!IsValidPageIndex(index, GetPageCount())) {
     return;
   }
 

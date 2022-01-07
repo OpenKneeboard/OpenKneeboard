@@ -1,5 +1,7 @@
 #include "okMainWindow.h"
 
+#include <d2d1.h>
+#include <wincodec.h>
 #include <wx/frame.h>
 #include <wx/notebook.h>
 #include <wx/rawbmp.h>
@@ -29,6 +31,11 @@ class okMainWindow::Impl {
   okTabsList* TabsList = nullptr;
   int CurrentTab = -1;
   Settings Settings = ::Settings::Load();
+
+  winrt::com_ptr<IWICImagingFactory> Wicf;
+  winrt::com_ptr<IWICBitmap> WicBmp;
+  winrt::com_ptr<ID2D1Factory> D2d;
+  winrt::com_ptr<ID2D1RenderTarget> Rt;
 };
 
 static wxImage CreateErrorImage(const wxString& text) {
@@ -53,6 +60,11 @@ okMainWindow::okMainWindow()
     p(std::make_unique<Impl>()) {
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
+  p->Wicf = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
+  D2D1CreateFactory(
+    D2D1_FACTORY_TYPE_SINGLE_THREADED,
+    __uuidof(ID2D1Factory),
+    p->D2d.put_void());
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
   auto menuBar = new wxMenuBar();
@@ -143,7 +155,6 @@ void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
 }
 
 void okMainWindow::UpdateSHM() {
-#ifdef WIP
   if (!p->SHM) {
     return;
   }
@@ -153,6 +164,8 @@ void okMainWindow::UpdateSHM() {
   }
 
   auto tab = p->TabUIs.at(p->CurrentTab);
+// TODO: error messages
+#ifdef WIP
   auto content = tab->GetImage();
   if (!content.IsOk()) {
     if (tab->GetTab()->GetPageCount() == 0) {
@@ -161,7 +174,61 @@ void okMainWindow::UpdateSHM() {
       content = CreateErrorImage(_("Invalid Page Image"));
     }
   }
+#endif
+  auto pageSize = tab->GetPreferredPixelSize();
+  if (pageSize.width == 0 || pageSize.height == 0) {
+    // TODO: error message
+    return;
+  }
 
+  D2D1_SIZE_U headerSize {
+    pageSize.width,
+    static_cast<UINT>(pageSize.height * 0.05),
+  };
+  D2D1_SIZE_U canvasSize {
+    pageSize.width,
+    pageSize.height + headerSize.height,
+  };
+  // WIP: reusee p->WicBmp if size is compatible
+  p->WicBmp = nullptr;
+  p->Wicf->CreateBitmap(
+    canvasSize.width,
+    canvasSize.height,
+    GUID_WICPixelFormat32bppPBGRA,
+    WICBitmapCacheOnDemand,
+    p->WicBmp.put());
+  // WIP: reuse p->Rt if Wicbmp did not change
+  {
+    p->Rt = nullptr;
+    auto result = p->D2d->CreateWicBitmapRenderTarget(
+      p->WicBmp.get(),
+      D2D1::RenderTargetProperties(
+        D2D1_RENDER_TARGET_TYPE_DEFAULT,
+        D2D1_PIXEL_FORMAT {
+          DXGI_FORMAT_B8G8R8A8_UNORM,
+          D2D1_ALPHA_MODE_PREMULTIPLIED,
+        }),
+      p->Rt.put());
+    if (result != S_OK) {
+      dprintf("Failed to create bitmap render target: {}", result);
+      return;
+    }
+  }
+
+  p->Rt->BeginDraw();
+  p->Rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  p->Rt->Clear(D2D1_COLOR_F { 0.0f, 0.0f, 0.0f, 0.0f });
+  tab->Render(
+    p->Rt,
+    {
+      .left = 0.0f,
+      .top = float(headerSize.height),
+      .right = float(canvasSize.width),
+      .bottom = float(canvasSize.height),
+    });
+  p->Rt->EndDraw();
+
+#ifdef WIP
   wxSize headerSize(content.GetWidth(), int(content.GetHeight() * 0.05));
   const auto width = content.GetWidth();
   const auto height = content.GetHeight() + headerSize.GetHeight();
@@ -190,8 +257,10 @@ void okMainWindow::UpdateSHM() {
 
   wxAlphaPixelData pixelData(withUI);
   wxAlphaPixelData::Iterator pixelIt(pixelData);
+#endif
 
-  auto ratio = float(height) / width;
+  const auto ratio = float(canvasSize.width) / canvasSize.height;
+
   SHM::Header header {
     .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
     .x = 0.15f,
@@ -203,10 +272,21 @@ void okMainWindow::UpdateSHM() {
     .VirtualWidth = 0.25f / ratio,
     .VirtualHeight = 0.25f,
     .ZoomScale = 2.0f,
-    .ImageWidth = static_cast<uint16_t>(width),
-    .ImageHeight = static_cast<uint16_t>(height),
+    .ImageWidth = static_cast<uint16_t>(canvasSize.width),
+    .ImageHeight = static_cast<uint16_t>(canvasSize.height),
   };
 
+  using Pixel = SHM::Pixel;
+  std::vector<Pixel> pixels(canvasSize.width * canvasSize.height);
+  p->WicBmp->CopyPixels(
+    nullptr,
+    canvasSize.width * sizeof(Pixel),
+    pixels.size() * sizeof(Pixel),
+    reinterpret_cast<BYTE*>(pixels.data()));
+
+  p->SHM.Update(header, pixels);
+
+#ifdef WIP
   auto image = withUI.ConvertToImage();
 
   using Pixel = SHM::Pixel;
@@ -219,9 +299,9 @@ void okMainWindow::UpdateSHM() {
         pixelIt.Red(),
         pixelIt.Green(),
         pixelIt.Blue(),
-        // If we create a bitmap with an alpha channel, wxMemoryDC discards it,
-        // so the alpha is always 0. For now, make it opaque instead, perhaps
-        // add an option in the future.
+        // If we create a bitmap with an alpha channel, wxMemoryDC discards
+        // it, so the alpha is always 0. For now, make it opaque instead,
+        // perhaps add an option in the future.
         0xff,
       };
       pixelIt++;
@@ -229,7 +309,6 @@ void okMainWindow::UpdateSHM() {
     }
   }
 
-  p->SHM.Update(header, pixels);
 #endif
 }
 

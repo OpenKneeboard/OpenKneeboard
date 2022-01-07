@@ -24,6 +24,7 @@ class okTab final : public wxPanel {
   void Render(
     const winrt::com_ptr<ID2D1RenderTarget>& target,
     const D2D1_RECT_F& rect);
+  D2D1_SIZE_U GetPreferredPixelSize();
 
   void NextPage();
   void PreviousPage();

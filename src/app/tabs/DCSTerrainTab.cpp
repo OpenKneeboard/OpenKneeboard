@@ -37,6 +37,10 @@ void DCSTerrainTab::RenderPage(
   mDelegate->RenderPage(pageIndex, target, rect);
 }
 
+D2D1_SIZE_U DCSTerrainTab::GetPreferredPixelSize(uint16_t pageIndex) {
+  return mDelegate->GetPreferredPixelSize(pageIndex);
+}
+
 const char* DCSTerrainTab::GetGameEventName() const {
   return DCS::EVT_TERRAIN;
 }

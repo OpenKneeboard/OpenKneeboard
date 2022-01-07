@@ -30,6 +30,11 @@ uint16_t DCSRadioLogTab::GetPageCount() const {
   return mCompletePages.size() + 1;
 }
 
+D2D1_SIZE_U DCSRadioLogTab::GetPreferredPixelSize(uint16_t pageIndex) {
+  // WIP
+  return {};
+}
+
 void DCSRadioLogTab::RenderPage(
   uint16_t pageIndex,
   const winrt::com_ptr<ID2D1RenderTarget>& target,

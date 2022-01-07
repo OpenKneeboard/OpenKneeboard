@@ -114,6 +114,10 @@ void DCSMissionTab::RenderPage(
   p->Delegate->RenderPage(pageIndex, target, rect);
 }
 
+D2D1_SIZE_U DCSMissionTab::GetPreferredPixelSize(uint16_t pageIndex) {
+  return p->Delegate->GetPreferredPixelSize(pageIndex);
+}
+
 const char* DCSMissionTab::GetGameEventName() const {
   return DCS::EVT_MISSION;
 }

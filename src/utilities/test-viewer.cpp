@@ -117,10 +117,8 @@ class MainWindow final : public wxFrame {
         D2D1_RENDER_TARGET_TYPE_DEFAULT,
         D2D1_PIXEL_FORMAT {
           DXGI_FORMAT_R8G8B8A8_UNORM,
-          D2D1_ALPHA_MODE_PREMULTIPLIED,
+          D2D1_ALPHA_MODE_STRAIGHT,
         });
-      rtp.dpiX = 0;
-      rtp.dpiY = 0;
 
       auto hwndRtp = D2D1::HwndRenderTargetProperties(
         this->GetHWND(),

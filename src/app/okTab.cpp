@@ -51,6 +51,10 @@ void okTab::Render(
   return p->Tab->RenderPage(p->Canvas->GetPageIndex(), target, rect);
 }
 
+D2D1_SIZE_U okTab::GetPreferredPixelSize() {
+  return p->Tab->GetPreferredPixelSize(p->Canvas->GetPageIndex());
+}
+
 void okTab::PreviousPage() {
   p->Canvas->PreviousPage();
 }

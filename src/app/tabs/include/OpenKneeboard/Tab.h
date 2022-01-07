@@ -30,6 +30,7 @@ class Tab : public okConfigurableComponent {
     const winrt::com_ptr<ID2D1RenderTarget>& target,
     const D2D1_RECT_F& rect)
     = 0;
+  virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) = 0;
 
  private:
   class Impl;
