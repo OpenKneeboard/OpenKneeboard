@@ -3,11 +3,19 @@
 #include <wx/wx.h>
 #endif
 
+#include <D2d1.h>
+#include <unknwn.h>
+#include <wincodec.h>
+#include <winrt/base.h>
 #include <wx/dcbuffer.h>
 #include <wx/frame.h>
+#include <wx/graphics.h>
 
-#include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/RenderError.h"
+#include "OpenKneeboard/SHM.h"
+
+#pragma comment(lib, "D2d1.lib")
+#pragma comment(lib, "Windowscodecs.lib")
 
 using namespace OpenKneeboard;
 
@@ -18,6 +26,9 @@ class MainWindow final : public wxFrame {
   bool mHadData = false;
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
+
+  winrt::com_ptr<IWICImagingFactory> mWicf;
+  winrt::com_ptr<ID2D1Factory> mD2df;
 
  public:
   MainWindow()
@@ -61,11 +72,11 @@ class MainWindow final : public wxFrame {
   }
 
   void OnPaint(wxPaintEvent& ev) {
-    wxBufferedPaintDC dc(this);
     const auto clientSize = GetClientSize();
 
     auto snapshot = mSHM.MaybeGet();
     if (!snapshot) {
+      wxBufferedPaintDC dc(this);
       if (!mHadData) {
         dc.Clear();
       } else if (mFirstDetached) {
@@ -82,32 +93,83 @@ class MainWindow final : public wxFrame {
     const auto& config = *snapshot.GetHeader();
     const auto pixels = snapshot.GetPixels();
 
-    dc.Clear();
-    wxImage image(config.ImageWidth, config.ImageHeight);
-    image.SetAlpha(nullptr, true);
+    wxPaintDC dc(this);
 
-    for (uint16_t y = 0; y < config.ImageHeight; ++y) {
-      for (uint16_t x = 0; x < config.ImageWidth; ++x) {
-        auto pixel = pixels[x + (y * config.ImageWidth)];
-        image.SetRGB(x, y, pixel.r, pixel.g, pixel.b);
-        image.SetAlpha(x, y, pixel.a);
-      }
+    if (!mWicf) {
+      mWicf
+        = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
     }
+    winrt::com_ptr<IWICBitmap> wicBitmap;
+    mWicf->CreateBitmapFromMemory(
+      config.ImageWidth,
+      config.ImageHeight,
+      GUID_WICPixelFormat32bppRGBA,
+      config.ImageWidth * sizeof(SHM::Pixel),
+      config.ImageWidth * config.ImageHeight * sizeof(SHM::Pixel),
+      reinterpret_cast<BYTE*>(const_cast<SHM::Pixel*>(pixels)),
+      wicBitmap.put());
+
+    if (!mD2df) {
+      D2D1CreateFactory(
+        D2D1_FACTORY_TYPE_SINGLE_THREADED,
+        __uuidof(ID2D1Factory),
+        mD2df.put_void());
+    }
+
+    auto rtp = D2D1::RenderTargetProperties(
+      D2D1_RENDER_TARGET_TYPE_DEFAULT,
+      D2D1_PIXEL_FORMAT {
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        D2D1_ALPHA_MODE_PREMULTIPLIED,
+      });
+    rtp.dpiX = 0;
+    rtp.dpiY = 0;
+
+    D2D1_SIZE_U size {
+      static_cast<UINT32>(clientSize.GetWidth()),
+      static_cast<UINT32>(clientSize.GetHeight())};
+
+    auto hwndRtp = D2D1::HwndRenderTargetProperties(this->GetHWND(), size);
+
+    winrt::com_ptr<ID2D1HwndRenderTarget> rt;
+    mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, rt.put());
+
+    winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
+    rt->CreateBitmapFromWicBitmap(
+      wicBitmap.get(),
+      D2D1_BITMAP_PROPERTIES {
+        {DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
+      d2dBitmap.put());
+
+    rt->BeginDraw();
+    rt->SetTransform(D2D1::Matrix3x2F::Identity());
+
+    auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    rt->Clear(D2D1_COLOR_F {
+      bg.Red() / 255.0f,
+      bg.Green() / 255.0f,
+      bg.Blue() / 255.0f,
+      bg.Alpha() / 255.0f,
+    });
 
     const auto scalex = float(clientSize.GetWidth()) / config.ImageWidth;
     const auto scaley = float(clientSize.GetHeight()) / config.ImageHeight;
     const auto scale = std::min(scalex, scaley);
-    auto scaled = image.Scale(
-      int(config.ImageWidth * scale),
-      int(config.ImageHeight * scale),
-      wxIMAGE_QUALITY_HIGH);
+    const auto renderWidth = config.ImageWidth * scale;
+    const auto renderHeight = config.ImageHeight * scale;
 
-    wxPoint origin {
-      (clientSize.GetWidth() - scaled.GetWidth()) / 2,
-      (clientSize.GetHeight() - scaled.GetHeight()) / 2,
-    };
+    const auto renderLeft = (clientSize.GetWidth() - renderWidth) / 2;
+    const auto renderTop = (clientSize.GetHeight() - renderHeight) / 2;
+    D2D1_RECT_F pageRect {
+      renderLeft,
+      renderTop,
+      renderLeft + renderWidth,
+      renderTop + renderHeight};
 
-    dc.DrawBitmap(scaled, origin);
+    rt->DrawBitmap(
+      d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+    rt->EndDraw();
+
     mLastSequenceNumber = config.SequenceNumber;
   }
 
