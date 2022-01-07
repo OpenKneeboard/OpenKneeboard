@@ -2,7 +2,7 @@
 
 #include <wx/dcbuffer.h>
 
-#include "OpenKneeboard/RenderError.h"
+#include "OpenKneeboard/D2DErrorRenderer.h"
 #include "OpenKneeboard/Tab.h"
 #include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
@@ -16,6 +16,8 @@ class okTabCanvas::Impl final {
 
   winrt::com_ptr<ID2D1Factory> D2d;
   winrt::com_ptr<ID2D1HwndRenderTarget> RT;
+
+  std::unique_ptr<D2DErrorRenderer> ErrorRenderer;
 };
 
 okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
@@ -25,6 +27,12 @@ okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
     wxDefaultPosition,
     wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
     p(new Impl {.Tab = tab}) {
+  D2D1CreateFactory(
+    D2D1_FACTORY_TYPE_SINGLE_THREADED,
+    __uuidof(ID2D1Factory),
+    p->D2d.put_void());
+  p->ErrorRenderer = std::make_unique<D2DErrorRenderer>(p->D2d);
+
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
   this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
@@ -48,24 +56,7 @@ void okTabCanvas::OnSize(wxSizeEvent& ev) {
 }
 
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
-  const auto count = p->Tab->GetPageCount();
   wxPaintDC dc(this);
-
-  if (count == 0) {
-    dc.Clear();
-    RenderError(this->GetClientSize(), dc, _("No Pages"));
-    return;
-  }
-
-  p->PageIndex
-    = std::clamp(p->PageIndex, 0ui16, static_cast<uint16_t>(count - 1));
-
-  if (!p->D2d) {
-    D2D1CreateFactory(
-      D2D1_FACTORY_TYPE_SINGLE_THREADED,
-      __uuidof(ID2D1Factory),
-      p->D2d.put_void());
-  }
 
   const auto clientSize = GetClientSize();
   if (!p->RT) {
@@ -84,9 +75,12 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
        static_cast<UINT32>(clientSize.GetHeight())});
 
     p->D2d->CreateHwndRenderTarget(&rtp, &hwndRtp, p->RT.put());
+
+    p->ErrorRenderer->SetRenderTarget(p->RT);
   }
 
   p->RT->BeginDraw();
+  wxON_BLOCK_EXIT0([this]() { this->p->RT->EndDraw(); });
   p->RT->SetTransform(D2D1::Matrix3x2F::Identity());
   auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
   p->RT->Clear(D2D1_COLOR_F {
@@ -95,11 +89,24 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
     bg.Blue() / 255.0f,
     bg.Alpha() / 255.0f,
   });
+
+  const auto count = p->Tab->GetPageCount();
+  if (count == 0) {
+    p->ErrorRenderer->Render(
+      _("No Pages").ToStdWstring(),
+      {0.0f,
+       0.0f,
+       float(clientSize.GetWidth()),
+       float(clientSize.GetHeight())});
+    return;
+  }
+  p->PageIndex
+    = std::clamp(p->PageIndex, 0ui16, static_cast<uint16_t>(count - 1));
+
   p->Tab->RenderPage(
     p->PageIndex,
     p->RT,
     {0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight())});
-  p->RT->EndDraw();
 }
 
 uint16_t okTabCanvas::GetPageIndex() const {

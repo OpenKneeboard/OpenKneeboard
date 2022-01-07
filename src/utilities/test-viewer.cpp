@@ -10,7 +10,7 @@
 #include <wx/frame.h>
 #include <wx/graphics.h>
 
-#include "OpenKneeboard/RenderError.h"
+#include "OpenKneeboard/D2DErrorRenderer.h"
 #include "OpenKneeboard/SHM.h"
 
 #pragma comment(lib, "D2d1.lib")
@@ -21,12 +21,12 @@ class MainWindow final : public wxFrame {
  private:
   wxTimer mTimer;
   bool mFirstDetached = false;
-  bool mHadData = false;
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
 
   winrt::com_ptr<ID2D1Factory> mD2df;
   winrt::com_ptr<ID2D1HwndRenderTarget> mRt;
+  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
 
  public:
   MainWindow()
@@ -37,6 +37,12 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxSize {768 / 2, 1024 / 2},
       wxDEFAULT_FRAME_STYLE) {
+    D2D1CreateFactory(
+      D2D1_FACTORY_TYPE_SINGLE_THREADED,
+      __uuidof(ID2D1Factory),
+      mD2df.put_void());
+    mErrorRenderer = std::make_unique<D2DErrorRenderer>(mD2df);
+
     Bind(wxEVT_PAINT, &MainWindow::OnPaint, this);
     Bind(wxEVT_ERASE_BACKGROUND, [this](auto&) {});
     Bind(
@@ -84,34 +90,6 @@ class MainWindow final : public wxFrame {
   void OnPaint(wxPaintEvent& ev) {
     const auto clientSize = GetClientSize();
 
-    auto snapshot = mSHM.MaybeGet();
-    if (!snapshot) {
-      wxBufferedPaintDC dc(this);
-      if (!mHadData) {
-        dc.Clear();
-      } else if (mFirstDetached) {
-        mFirstDetached = false;
-        auto bm = dc.GetAsBitmap().ConvertToDisabled();
-        dc.DrawBitmap(bm, wxPoint {0, 0});
-      }
-      RenderError(this->GetClientSize(), dc, "No Feeder");
-      return;
-    }
-    mHadData = true;
-    mFirstDetached = true;
-
-    const auto& config = *snapshot.GetHeader();
-    const auto pixels = snapshot.GetPixels();
-
-    wxPaintDC dc(this);
-
-    if (!mD2df) {
-      D2D1CreateFactory(
-        D2D1_FACTORY_TYPE_SINGLE_THREADED,
-        __uuidof(ID2D1Factory),
-        mD2df.put_void());
-    }
-
     if (!mRt) {
       auto rtp = D2D1::RenderTargetProperties(
         D2D1_RENDER_TARGET_TYPE_DEFAULT,
@@ -126,7 +104,34 @@ class MainWindow final : public wxFrame {
          static_cast<UINT32>(clientSize.GetHeight())});
 
       mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, mRt.put());
+      mErrorRenderer->SetRenderTarget(mRt);
     }
+
+    wxPaintDC dc(this);
+    mRt->BeginDraw();
+    wxON_BLOCK_EXIT0([this]() { this->mRt->EndDraw(); });
+    mRt->SetTransform(D2D1::Matrix3x2F::Identity());
+
+		auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+		D2D1_COLOR_F bgColor {
+			wxBgColor.Red() / 255.0f,
+			wxBgColor.Green() / 255.0f,
+			wxBgColor.Blue() / 255.0f,
+			1.0f};
+    mRt->Clear(bgColor);
+
+    auto snapshot = mSHM.MaybeGet();
+    if (!snapshot) {
+      mErrorRenderer->Render(
+        _("No Feeder").ToStdWstring(),
+        { 0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight()) });
+      mFirstDetached = true;
+      return;
+    }
+    mFirstDetached = false;
+
+    const auto& config = *snapshot.GetHeader();
+    const auto pixels = snapshot.GetPixels();
 
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
     mRt->CreateBitmap(
@@ -136,17 +141,6 @@ class MainWindow final : public wxFrame {
       D2D1_BITMAP_PROPERTIES {
         {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}, 0, 0},
       d2dBitmap.put());
-
-    mRt->BeginDraw();
-    mRt->SetTransform(D2D1::Matrix3x2F::Identity());
-
-    auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    mRt->Clear(D2D1_COLOR_F {
-      bg.Red() / 255.0f,
-      bg.Green() / 255.0f,
-      bg.Blue() / 255.0f,
-      bg.Alpha() / 255.0f,
-    });
 
     const auto scalex = float(clientSize.GetWidth()) / config.ImageWidth;
     const auto scaley = float(clientSize.GetHeight()) / config.ImageHeight;

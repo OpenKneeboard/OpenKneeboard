@@ -20,11 +20,7 @@ class okTab final : public wxPanel {
   virtual ~okTab();
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
-
-  void Render(
-    const winrt::com_ptr<ID2D1RenderTarget>& target,
-    const D2D1_RECT_F& rect);
-  D2D1_SIZE_U GetPreferredPixelSize();
+  uint16_t GetPageIndex() const;
 
   void NextPage();
   void PreviousPage();

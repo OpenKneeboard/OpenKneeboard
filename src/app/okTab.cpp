@@ -45,15 +45,10 @@ std::shared_ptr<Tab> okTab::GetTab() const {
   return p->Tab;
 }
 
-void okTab::Render(
-  const winrt::com_ptr<ID2D1RenderTarget>& target,
-  const D2D1_RECT_F& rect) {
-  return p->Tab->RenderPage(p->Canvas->GetPageIndex(), target, rect);
+uint16_t okTab::GetPageIndex() const {
+  return p->Canvas->GetPageIndex();
 }
 
-D2D1_SIZE_U okTab::GetPreferredPixelSize() {
-  return p->Tab->GetPreferredPixelSize(p->Canvas->GetPageIndex());
-}
 
 void okTab::PreviousPage() {
   p->Canvas->PreviousPage();

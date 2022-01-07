@@ -16,5 +16,10 @@ add_library(gameevent STATIC GameEvent.cpp)
 target_link_libraries(gameevent PRIVATE fmt dprint)
 target_link_libraries(gameevent PUBLIC _libheaders)
 
-add_library(rendererror STATIC RenderError.cpp)
-target_link_libraries(rendererror PUBLIC wx::core wx::base _libheaders)
+add_library(openkneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
+target_link_libraries(
+  openkneeboard-D2DErrorRenderer
+  PUBLIC
+  D2d1
+  Dwrite
+  _libheaders)

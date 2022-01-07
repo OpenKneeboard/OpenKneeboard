@@ -19,8 +19,8 @@ target_link_libraries(
   games
   json
   openkneeboard-shm
+  openkneeboard-D2DErrorRenderer
   openvr
-  rendererror
   wx::base
   wx::core)
 

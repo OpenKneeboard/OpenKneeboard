@@ -1,15 +1,10 @@
 #include "okMainWindow.h"
 
-#include <d2d1.h>
-#include <wincodec.h>
 #include <wx/frame.h>
 #include <wx/notebook.h>
-#include <wx/rawbmp.h>
 #include <wx/wupdlock.h>
 
 #include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/RenderError.h"
-#include "OpenKneeboard/SHM.h"
 #include "OpenKneeboard/dprint.h"
 #include "Settings.h"
 #include "okDirectInputController.h"
@@ -17,6 +12,7 @@
 #include "okGameEventMailslotThread.h"
 #include "okGamesList.h"
 #include "okOpenVRThread.h"
+#include "okSHMRenderer.h"
 #include "okTab.h"
 #include "okTabsList.h"
 
@@ -26,28 +22,13 @@ class okMainWindow::Impl {
  public:
   std::vector<okConfigurableComponent*> Configurables;
   std::vector<okTab*> TabUIs;
-  OpenKneeboard::SHM::Writer SHM;
   wxNotebook* Notebook = nullptr;
   okTabsList* TabsList = nullptr;
   int CurrentTab = -1;
   Settings Settings = ::Settings::Load();
 
-  winrt::com_ptr<IWICImagingFactory> Wicf;
-  winrt::com_ptr<IWICBitmap> WicBmp;
-  winrt::com_ptr<ID2D1Factory> D2d;
-  winrt::com_ptr<ID2D1RenderTarget> Rt;
+  std::unique_ptr<okSHMRenderer> SHMRenderer;
 };
-
-static wxImage CreateErrorImage(const wxString& text) {
-  wxBitmap bm(768, 1024);
-  wxMemoryDC dc(bm);
-
-  dc.SetBrush(*wxWHITE_BRUSH);
-  dc.Clear();
-  RenderError(bm.GetSize(), dc, text);
-
-  return bm.ConvertToImage();
-}
 
 okMainWindow::okMainWindow()
   : wxFrame(
@@ -60,11 +41,7 @@ okMainWindow::okMainWindow()
     p(std::make_unique<Impl>()) {
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
-  p->Wicf = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
-  D2D1CreateFactory(
-    D2D1_FACTORY_TYPE_SINGLE_THREADED,
-    __uuidof(ID2D1Factory),
-    p->D2d.put_void());
+  p->SHMRenderer = std::make_unique<okSHMRenderer>();
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
   auto menuBar = new wxMenuBar();
@@ -155,147 +132,14 @@ void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
 }
 
 void okMainWindow::UpdateSHM() {
-  if (!p->SHM) {
-    return;
+  std::shared_ptr<Tab> tab;
+  unsigned int pageIndex = 0;
+  if (p->CurrentTab >= 0 && p->CurrentTab < p->TabUIs.size()) {
+    auto tabUI = p->TabUIs.at(p->CurrentTab);
+    tab = tabUI->GetTab();
+    pageIndex = tabUI->GetPageIndex();
   }
-
-  if (p->CurrentTab < 0) {
-    return;
-  }
-
-  auto tab = p->TabUIs.at(p->CurrentTab);
-// TODO: error messages
-#ifdef WIP
-  auto content = tab->GetImage();
-  if (!content.IsOk()) {
-    if (tab->GetTab()->GetPageCount() == 0) {
-      content = CreateErrorImage(_("No Pages"));
-    } else {
-      content = CreateErrorImage(_("Invalid Page Image"));
-    }
-  }
-#endif
-  auto pageSize = tab->GetPreferredPixelSize();
-  if (pageSize.width == 0 || pageSize.height == 0) {
-    // TODO: error message
-    return;
-  }
-
-  D2D1_SIZE_U headerSize {
-    pageSize.width,
-    static_cast<UINT>(pageSize.height * 0.05),
-  };
-  D2D1_SIZE_U canvasSize {
-    pageSize.width,
-    pageSize.height + headerSize.height,
-  };
-
-  if (p->WicBmp) {
-    UINT bmpWidth, bmpHeight;
-    p->WicBmp->GetSize(&bmpWidth, &bmpHeight);
-    if (bmpWidth != canvasSize.width || bmpHeight != canvasSize.height) {
-      p->WicBmp = nullptr;
-    }
-  }
-
-  if (!p->WicBmp) {
-    p->Wicf->CreateBitmap(
-      canvasSize.width,
-      canvasSize.height,
-      GUID_WICPixelFormat32bppPBGRA,
-      WICBitmapCacheOnDemand,
-      p->WicBmp.put());
-
-    p->Rt = nullptr;
-    auto result = p->D2d->CreateWicBitmapRenderTarget(
-      p->WicBmp.get(),
-      D2D1::RenderTargetProperties(
-        D2D1_RENDER_TARGET_TYPE_DEFAULT,
-        D2D1_PIXEL_FORMAT {
-          DXGI_FORMAT_B8G8R8A8_UNORM,
-          D2D1_ALPHA_MODE_PREMULTIPLIED,
-        }),
-      p->Rt.put());
-    if (result != S_OK) {
-      dprintf("Failed to create bitmap render target: {}", result);
-      return;
-    }
-  }
-
-  p->Rt->BeginDraw();
-  p->Rt->SetTransform(D2D1::Matrix3x2F::Identity());
-  p->Rt->Clear(D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 0.0f});
-  tab->Render(
-    p->Rt,
-    {
-      .left = 0.0f,
-      .top = float(headerSize.height),
-      .right = float(canvasSize.width),
-      .bottom = float(canvasSize.height),
-    });
-  p->Rt->EndDraw();
-
-#ifdef WIP
-  wxSize headerSize(content.GetWidth(), int(content.GetHeight() * 0.05));
-  const auto width = content.GetWidth();
-  const auto height = content.GetHeight() + headerSize.GetHeight();
-  wxBitmap withUI(width, height, 32);
-  {
-    wxMemoryDC dc(withUI);
-    dc.SetBrush(*wxLIGHT_GREY_BRUSH);
-    dc.SetPen(*wxTRANSPARENT_PEN);
-    dc.DrawRectangle(wxPoint(0, 0), headerSize);
-    dc.DrawBitmap(content, wxPoint(0, headerSize.GetY()));
-
-    wxFont font(
-      wxSize(0, headerSize.GetHeight() * 0.5),
-      wxFONTFAMILY_TELETYPE,
-      wxFONTSTYLE_NORMAL,
-      wxFONTWEIGHT_BOLD);
-    dc.SetFont(font);
-
-    auto title = tab->GetTab()->GetTitle();
-    auto titleSize = dc.GetTextExtent(title);
-    dc.DrawText(
-      title,
-      (headerSize.GetWidth() - titleSize.GetWidth()) / 2,
-      (headerSize.GetHeight() - titleSize.GetHeight()) / 2);
-  }
-
-  wxAlphaPixelData pixelData(withUI);
-  wxAlphaPixelData::Iterator pixelIt(pixelData);
-#endif
-
-  const auto ratio = float(canvasSize.width) / canvasSize.height;
-
-  SHM::Header header {
-    .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
-    .x = 0.15f,
-    .floorY = 0.6f,
-    .eyeY = -0.7f,
-    .z = -0.4f,
-    .rx = -float(2 * M_PI / 5),
-    .rz = -float(M_PI / 32),
-    .VirtualWidth = 0.25f / ratio,
-    .VirtualHeight = 0.25f,
-    .ZoomScale = 2.0f,
-    .ImageWidth = static_cast<uint16_t>(canvasSize.width),
-    .ImageHeight = static_cast<uint16_t>(canvasSize.height),
-  };
-
-  using Pixel = SHM::Pixel;
-  static_assert(sizeof(Pixel) == 4, "Expecting B8G8R8A8 for SHM");
-  static_assert(offsetof(Pixel, b) == 0, "Expected blue to be first byte");
-  static_assert(offsetof(Pixel, a) == 3, "Expected alpha to be last byte");
-
-  std::vector<Pixel> pixels(canvasSize.width * canvasSize.height);
-  p->WicBmp->CopyPixels(
-    nullptr,
-    canvasSize.width * sizeof(Pixel),
-    pixels.size() * sizeof(Pixel),
-    reinterpret_cast<BYTE*>(pixels.data()));
-
-  p->SHM.Update(header, pixels);
+  p->SHMRenderer->Render(tab, pageIndex);
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {
