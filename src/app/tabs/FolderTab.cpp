@@ -121,8 +121,8 @@ void FolderTab::RenderPage(
   const auto renderWidth = page.Width * scale;
   const auto renderHeight = page.Height * scale;
 
-  const auto renderLeft = rect.left + (targetWidth - renderWidth) / 2;
-  const auto renderTop = rect.top + (targetHeight - renderHeight) / 2;
+  const auto renderLeft = rect.left + ((targetWidth - renderWidth) / 2);
+  const auto renderTop = rect.top + ((targetHeight - renderHeight) / 2);
 
   rt->DrawBitmap(
     bmp.get(),
