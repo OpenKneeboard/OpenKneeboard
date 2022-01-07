@@ -67,7 +67,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
 
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
-    .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
+    .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
     .ArraySize = 1,
     .Width = config.ImageWidth,
     .Height = config.ImageHeight,
@@ -95,7 +95,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
       session, p->SwapChain, i, IID_PPV_ARGS(&texture));
 
     D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
-      .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
       .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
       .Texture2D = {.MipSlice = 0}};
 
@@ -148,8 +148,8 @@ bool OculusD3D11Kneeboard::Render(
     .back = 1,
   };
 
-  static_assert(sizeof(SHM::Pixel) == 4, "Expecting R8G8B8A8 for DirectX");
-  static_assert(offsetof(SHM::Pixel, r) == 0, "Expected red to be first byte");
+  static_assert(sizeof(SHM::Pixel) == 4, "Expecting B8G8R8A8 for DirectX");
+  static_assert(offsetof(SHM::Pixel, b) == 0, "Expected blue to be first byte");
   static_assert(offsetof(SHM::Pixel, a) == 3, "Expected alpha to be last byte");
 
   context->UpdateSubresource(

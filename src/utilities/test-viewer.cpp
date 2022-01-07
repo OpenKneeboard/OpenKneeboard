@@ -116,8 +116,8 @@ class MainWindow final : public wxFrame {
       auto rtp = D2D1::RenderTargetProperties(
         D2D1_RENDER_TARGET_TYPE_DEFAULT,
         D2D1_PIXEL_FORMAT {
-          DXGI_FORMAT_R8G8B8A8_UNORM,
-          D2D1_ALPHA_MODE_STRAIGHT,
+          DXGI_FORMAT_B8G8R8A8_UNORM,
+          D2D1_ALPHA_MODE_IGNORE,
         });
 
       auto hwndRtp = D2D1::HwndRenderTargetProperties(
@@ -134,7 +134,7 @@ class MainWindow final : public wxFrame {
       reinterpret_cast<const void*>(pixels),
       config.ImageWidth * sizeof(SHM::Pixel),
       D2D1_BITMAP_PROPERTIES {
-        {DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
+        {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}, 0, 0},
       d2dBitmap.put());
 
     mRt->BeginDraw();

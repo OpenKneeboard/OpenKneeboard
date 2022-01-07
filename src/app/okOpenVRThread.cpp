@@ -161,7 +161,7 @@ void okOpenVRThread::Tick() {
       .Height = header.ImageHeight,
       .MipLevels = 1,
       .ArraySize = 1,
-      .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
       .SampleDesc = {1, 0},
       .Usage = D3D11_USAGE_DEFAULT,
       .BindFlags = D3D11_BIND_RENDER_TARGET,
@@ -175,7 +175,7 @@ void okOpenVRThread::Tick() {
     }
 
     D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
-      .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
       .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
       .Texture2D = {.MipSlice = 0},
     };
@@ -188,8 +188,8 @@ void okOpenVRThread::Tick() {
     }
   }
 
-  static_assert(sizeof(SHM::Pixel) == 4, "Expecting R8G8B8A8 for DirectX");
-  static_assert(offsetof(SHM::Pixel, r) == 0, "Expected red to be first byte");
+  static_assert(sizeof(SHM::Pixel) == 4, "Expecting B8G8R8A8 for DirectX");
+  static_assert(offsetof(SHM::Pixel, b) == 0, "Expected blue to be first byte");
   static_assert(offsetof(SHM::Pixel, a) == 3, "Expected alpha to be last byte");
 
   {

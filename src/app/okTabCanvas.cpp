@@ -72,7 +72,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
     auto rtp = D2D1::RenderTargetProperties(
       D2D1_RENDER_TARGET_TYPE_DEFAULT,
       D2D1_PIXEL_FORMAT {
-        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_FORMAT_B8G8R8A8_UNORM,
         D2D1_ALPHA_MODE_PREMULTIPLIED,
       });
     rtp.dpiX = 0;

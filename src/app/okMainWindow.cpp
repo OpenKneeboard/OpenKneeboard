@@ -217,7 +217,7 @@ void okMainWindow::UpdateSHM() {
 
   p->Rt->BeginDraw();
   p->Rt->SetTransform(D2D1::Matrix3x2F::Identity());
-  p->Rt->Clear(D2D1_COLOR_F { 0.0f, 0.0f, 0.0f, 0.0f });
+  p->Rt->Clear(D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 0.0f});
   tab->Render(
     p->Rt,
     {
@@ -277,6 +277,10 @@ void okMainWindow::UpdateSHM() {
   };
 
   using Pixel = SHM::Pixel;
+  static_assert(sizeof(Pixel) == 4, "Expecting B8G8R8A8 for SHM");
+  static_assert(offsetof(Pixel, b) == 0, "Expected blue to be first byte");
+  static_assert(offsetof(Pixel, a) == 3, "Expected alpha to be last byte");
+
   std::vector<Pixel> pixels(canvasSize.width * canvasSize.height);
   p->WicBmp->CopyPixels(
     nullptr,
@@ -285,31 +289,6 @@ void okMainWindow::UpdateSHM() {
     reinterpret_cast<BYTE*>(pixels.data()));
 
   p->SHM.Update(header, pixels);
-
-#ifdef WIP
-  auto image = withUI.ConvertToImage();
-
-  using Pixel = SHM::Pixel;
-  std::vector<Pixel> pixels(width * height);
-  auto pixelOut = &pixels[0];
-  for (int y = 0; y < height; ++y) {
-    pixelIt.MoveTo(pixelData, 0, y);
-    for (int x = 0; x < width; ++x) {
-      *pixelOut = {
-        pixelIt.Red(),
-        pixelIt.Green(),
-        pixelIt.Blue(),
-        // If we create a bitmap with an alpha channel, wxMemoryDC discards
-        // it, so the alpha is always 0. For now, make it opaque instead,
-        // perhaps add an option in the future.
-        0xff,
-      };
-      pixelIt++;
-      pixelOut++;
-    }
-  }
-
-#endif
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {

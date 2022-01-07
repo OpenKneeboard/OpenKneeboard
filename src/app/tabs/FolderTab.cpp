@@ -109,7 +109,7 @@ void FolderTab::RenderPage(
     reinterpret_cast<const void*>(page.Pixels.data()),
     page.Width * 4,
     D2D1_BITMAP_PROPERTIES {
-      {DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
+      {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
     bmp.put());
 
   const auto targetWidth = rect.right - rect.left;
@@ -121,8 +121,8 @@ void FolderTab::RenderPage(
   const auto renderWidth = page.Width * scale;
   const auto renderHeight = page.Height * scale;
 
-  const auto renderLeft = (targetWidth - renderWidth) / 2;
-  const auto renderTop = (targetHeight - renderHeight) / 2;
+  const auto renderLeft = rect.left + (targetWidth - renderWidth) / 2;
+  const auto renderTop = rect.top + (targetHeight - renderHeight) / 2;
 
   rt->DrawBitmap(
     bmp.get(),
@@ -159,7 +159,7 @@ bool FolderTab::Impl::LoadPage(uint16_t index) {
   }
   converter->Initialize(
     frame.get(),
-    GUID_WICPixelFormat32bppRGBA,
+    GUID_WICPixelFormat32bppBGRA,
     WICBitmapDitherTypeNone,
     nullptr,
     0.0f,
@@ -170,7 +170,7 @@ bool FolderTab::Impl::LoadPage(uint16_t index) {
   auto& page = p->Pages.at(index);
   page.Width = width;
   page.Height = height;
-  page.Pixels.resize(width * height * 4 /* RGBA */);
+  page.Pixels.resize(width * height * 4 /* BGRA */);
   converter->CopyPixels(
     nullptr,
     width * 4,
