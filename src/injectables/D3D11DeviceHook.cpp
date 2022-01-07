@@ -87,7 +87,11 @@ winrt::com_ptr<ID3D11Device> D3D11DeviceHook::MaybeGet() {
     nullptr,
     D3D_DRIVER_TYPE_HARDWARE,
     nullptr,
+#ifdef DEBUG
     D3D11_CREATE_DEVICE_DEBUG,
+#else
+    0,
+#endif
     &level,
     1,
     D3D11_SDK_VERSION,

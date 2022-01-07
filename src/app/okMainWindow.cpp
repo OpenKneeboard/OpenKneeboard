@@ -24,7 +24,6 @@ class okMainWindow::Impl {
  public:
   std::vector<okConfigurableComponent*> Configurables;
   std::vector<okTab*> TabUIs;
-  std::unique_ptr<okOpenVRThread> OpenVR;
   OpenKneeboard::SHM::Writer SHM;
   wxNotebook* Notebook = nullptr;
   okTabsList* TabsList = nullptr;
@@ -53,8 +52,9 @@ okMainWindow::okMainWindow()
     wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER),
     p(std::make_unique<Impl>()) {
 
-  p->OpenVR = std::make_unique<okOpenVRThread>();
-  p->OpenVR->Run();
+  (new okOpenVRThread())->Run();
+  (new okGameEventMailslotThread(this))->Run();
+
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
   auto menuBar = new wxMenuBar();
@@ -81,9 +81,6 @@ okMainWindow::okMainWindow()
   p->Notebook->Bind(
     wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
   sizer->Add(p->Notebook);
-
-  auto listener = new okGameEventMailslotThread(this);
-  listener->Run();
 
   {
     auto tabs = new okTabsList(p->Settings.Tabs);
