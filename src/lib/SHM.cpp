@@ -211,9 +211,9 @@ void Writer::Update(const Header& _header, const std::vector<Pixel>& pixels) {
   }
 
   header.Flags |= Flags::FEEDER_ATTACHED | Flags::LOCKED;
-  header.SequenceNumber = p->Header->SequenceNumber + 1;
 
   Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);
+  header.SequenceNumber = p->Header->SequenceNumber + 1;
   memcpy(reinterpret_cast<void*>(p->Header), &header, sizeof(Header));
   memcpy(
     reinterpret_cast<void*>(p->Pixels),
