@@ -5,7 +5,6 @@
 
 #include <D2d1.h>
 #include <unknwn.h>
-#include <wincodec.h>
 #include <winrt/base.h>
 #include <wx/dcbuffer.h>
 #include <wx/frame.h>
@@ -15,7 +14,6 @@
 #include "OpenKneeboard/SHM.h"
 
 #pragma comment(lib, "D2d1.lib")
-#pragma comment(lib, "Windowscodecs.lib")
 
 using namespace OpenKneeboard;
 
@@ -27,7 +25,6 @@ class MainWindow final : public wxFrame {
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
 
-  winrt::com_ptr<IWICImagingFactory> mWicf;
   winrt::com_ptr<ID2D1Factory> mD2df;
 
  public:
@@ -96,20 +93,6 @@ class MainWindow final : public wxFrame {
 
     wxPaintDC dc(this);
 
-    if (!mWicf) {
-      mWicf
-        = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
-    }
-    winrt::com_ptr<IWICBitmap> wicBitmap;
-    mWicf->CreateBitmapFromMemory(
-      config.ImageWidth,
-      config.ImageHeight,
-      GUID_WICPixelFormat32bppRGBA,
-      config.ImageWidth * sizeof(SHM::Pixel),
-      config.ImageWidth * config.ImageHeight * sizeof(SHM::Pixel),
-      reinterpret_cast<BYTE*>(const_cast<SHM::Pixel*>(pixels)),
-      wicBitmap.put());
-
     if (!mD2df) {
       D2D1CreateFactory(
         D2D1_FACTORY_TYPE_SINGLE_THREADED,
@@ -126,18 +109,19 @@ class MainWindow final : public wxFrame {
     rtp.dpiX = 0;
     rtp.dpiY = 0;
 
-    D2D1_SIZE_U size {
-      static_cast<UINT32>(clientSize.GetWidth()),
-      static_cast<UINT32>(clientSize.GetHeight())};
-
-    auto hwndRtp = D2D1::HwndRenderTargetProperties(this->GetHWND(), size);
+    auto hwndRtp = D2D1::HwndRenderTargetProperties(
+      this->GetHWND(),
+      {static_cast<UINT32>(clientSize.GetWidth()),
+       static_cast<UINT32>(clientSize.GetHeight())});
 
     winrt::com_ptr<ID2D1HwndRenderTarget> rt;
     mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, rt.put());
 
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-    rt->CreateBitmapFromWicBitmap(
-      wicBitmap.get(),
+    rt->CreateBitmap(
+      {config.ImageWidth, config.ImageHeight},
+      reinterpret_cast<const void*>(pixels),
+      config.ImageWidth * sizeof(SHM::Pixel),
       D2D1_BITMAP_PROPERTIES {
         {DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
       d2dBitmap.put());
