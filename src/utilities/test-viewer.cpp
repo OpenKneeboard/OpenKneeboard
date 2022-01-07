@@ -26,6 +26,7 @@ class MainWindow final : public wxFrame {
   uint64_t mLastSequenceNumber = 0;
 
   winrt::com_ptr<ID2D1Factory> mD2df;
+  winrt::com_ptr<ID2D1HwndRenderTarget> mRt;
 
  public:
   MainWindow()
@@ -40,7 +41,7 @@ class MainWindow final : public wxFrame {
     Bind(wxEVT_ERASE_BACKGROUND, [this](auto&) {});
     Bind(
       wxEVT_MENU, [this](auto&) { this->Close(true); }, wxID_EXIT);
-    Bind(wxEVT_SIZE, [this](auto&) { this->Refresh(); });
+    Bind(wxEVT_SIZE, &MainWindow::OnSize, this);
 
     auto menuBar = new wxMenuBar();
     {
@@ -59,6 +60,7 @@ class MainWindow final : public wxFrame {
     if (!snapshot) {
       if (mFirstDetached) {
         Refresh();
+        Update();
       }
       return;
     }
@@ -67,6 +69,16 @@ class MainWindow final : public wxFrame {
       Refresh();
       Update();
     }
+  }
+
+  void OnSize(wxSizeEvent& ev) {
+    if (!this->mRt) {
+      return;
+    }
+    auto cs = this->GetClientSize();
+    this->mRt->Resize(
+      {static_cast<UINT>(cs.GetWidth()), static_cast<UINT>(cs.GetHeight())});
+    this->Refresh();
   }
 
   void OnPaint(wxPaintEvent& ev) {
@@ -100,25 +112,26 @@ class MainWindow final : public wxFrame {
         mD2df.put_void());
     }
 
-    auto rtp = D2D1::RenderTargetProperties(
-      D2D1_RENDER_TARGET_TYPE_DEFAULT,
-      D2D1_PIXEL_FORMAT {
-        DXGI_FORMAT_R8G8B8A8_UNORM,
-        D2D1_ALPHA_MODE_PREMULTIPLIED,
-      });
-    rtp.dpiX = 0;
-    rtp.dpiY = 0;
+    if (!mRt) {
+      auto rtp = D2D1::RenderTargetProperties(
+        D2D1_RENDER_TARGET_TYPE_DEFAULT,
+        D2D1_PIXEL_FORMAT {
+          DXGI_FORMAT_R8G8B8A8_UNORM,
+          D2D1_ALPHA_MODE_PREMULTIPLIED,
+        });
+      rtp.dpiX = 0;
+      rtp.dpiY = 0;
 
-    auto hwndRtp = D2D1::HwndRenderTargetProperties(
-      this->GetHWND(),
-      {static_cast<UINT32>(clientSize.GetWidth()),
-       static_cast<UINT32>(clientSize.GetHeight())});
+      auto hwndRtp = D2D1::HwndRenderTargetProperties(
+        this->GetHWND(),
+        {static_cast<UINT32>(clientSize.GetWidth()),
+         static_cast<UINT32>(clientSize.GetHeight())});
 
-    winrt::com_ptr<ID2D1HwndRenderTarget> rt;
-    mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, rt.put());
+      mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, mRt.put());
+    }
 
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-    rt->CreateBitmap(
+    mRt->CreateBitmap(
       {config.ImageWidth, config.ImageHeight},
       reinterpret_cast<const void*>(pixels),
       config.ImageWidth * sizeof(SHM::Pixel),
@@ -126,11 +139,11 @@ class MainWindow final : public wxFrame {
         {DXGI_FORMAT_R8G8B8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
       d2dBitmap.put());
 
-    rt->BeginDraw();
-    rt->SetTransform(D2D1::Matrix3x2F::Identity());
+    mRt->BeginDraw();
+    mRt->SetTransform(D2D1::Matrix3x2F::Identity());
 
     auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    rt->Clear(D2D1_COLOR_F {
+    mRt->Clear(D2D1_COLOR_F {
       bg.Red() / 255.0f,
       bg.Green() / 255.0f,
       bg.Blue() / 255.0f,
@@ -151,9 +164,9 @@ class MainWindow final : public wxFrame {
       renderLeft + renderWidth,
       renderTop + renderHeight};
 
-    rt->DrawBitmap(
+    mRt->DrawBitmap(
       d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
-    rt->EndDraw();
+    mRt->EndDraw();
 
     mLastSequenceNumber = config.SequenceNumber;
   }
