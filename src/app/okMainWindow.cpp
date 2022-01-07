@@ -189,16 +189,23 @@ void okMainWindow::UpdateSHM() {
     pageSize.width,
     pageSize.height + headerSize.height,
   };
-  // WIP: reusee p->WicBmp if size is compatible
-  p->WicBmp = nullptr;
-  p->Wicf->CreateBitmap(
-    canvasSize.width,
-    canvasSize.height,
-    GUID_WICPixelFormat32bppPBGRA,
-    WICBitmapCacheOnDemand,
-    p->WicBmp.put());
-  // WIP: reuse p->Rt if Wicbmp did not change
-  {
+
+  if (p->WicBmp) {
+    UINT bmpWidth, bmpHeight;
+    p->WicBmp->GetSize(&bmpWidth, &bmpHeight);
+    if (bmpWidth != canvasSize.width || bmpHeight != canvasSize.height) {
+      p->WicBmp = nullptr;
+    }
+  }
+
+  if (!p->WicBmp) {
+    p->Wicf->CreateBitmap(
+      canvasSize.width,
+      canvasSize.height,
+      GUID_WICPixelFormat32bppPBGRA,
+      WICBitmapCacheOnDemand,
+      p->WicBmp.put());
+
     p->Rt = nullptr;
     auto result = p->D2d->CreateWicBitmapRenderTarget(
       p->WicBmp.get(),
