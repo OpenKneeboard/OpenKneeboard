@@ -39,7 +39,7 @@ target_include_directories(
 add_custom_command(
   TARGET OpenKneeboard POST_BUILD
   COMMAND
-  ${CMAKE_COMMAND} -E copy 
+  ${CMAKE_COMMAND} -E copy_if_different
   "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
   "$<TARGET_FILE_DIR:OpenKneeboard>"
   COMMAND_EXPAND_LISTS)
