@@ -14,8 +14,13 @@ class DCSWorld final : public OpenKneeboard::Game {
   virtual std::vector<std::filesystem::path> GetInstalledPaths() const override final;
   virtual bool DiscardOculusDepthInformationDefault() const override final;
 
-  static std::filesystem::path GetStablePath();
-  static std::filesystem::path GetOpenBetaPath();
+  enum class Version {
+    STABLE,
+    OPEN_BETA
+  };
+
+  static std::filesystem::path GetInstalledPath(Version);
+  static std::filesystem::path GetSavedGamesPath(Version);
 
   static constexpr char EVT_AIRCRAFT[]
     = "com.fredemmott.openkneeboard.dcsext/Aircraft";
