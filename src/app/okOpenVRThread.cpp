@@ -254,7 +254,7 @@ wxThread::ExitCode okOpenVRThread::Entry() {
   }
 
   const auto inactiveSleepMS = 1000;
-  const auto frameSleepMS = 1000 / 30;
+  const auto frameSleepMS = 1000 / 90;
 
   while (IsAlive()) {
     if (!vr::VR_IsHmdPresent()) {
