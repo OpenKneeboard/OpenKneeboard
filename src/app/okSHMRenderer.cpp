@@ -119,7 +119,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
     return;
   }
 
-  const auto ratio = float(width) / height;
+  const auto ratio = float(height) / width;
 
   SHM::Header header {
     .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
