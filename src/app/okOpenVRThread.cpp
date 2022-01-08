@@ -1,5 +1,6 @@
 #include "okOpenVRThread.h"
 
+#include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
 #include <d3d11.h>
@@ -12,6 +13,9 @@
 #pragma comment(lib, "D3D11.lib")
 
 using namespace OpenKneeboard;
+
+using namespace DirectX;
+using namespace DirectX::SimpleMath;
 
 class okOpenVRThread::Impl final {
  public:
@@ -105,6 +109,7 @@ void okOpenVRThread::Tick() {
   p->VRSystem->GetDeviceToAbsoluteTrackingPose(
     vr::TrackingUniverseStanding, 0, &hmdPose, 1);
   if (hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid) {
+    // clang-format on
     Eigen::Matrix<float, 3, 4, Eigen::RowMajor> m(
       &hmdPose.mDeviceToAbsoluteTracking.m[0][0]);
     Eigen::Transform<float, 3, Eigen::AffineCompact, Eigen::RowMajor> t(m);
@@ -131,19 +136,22 @@ void okOpenVRThread::Tick() {
   }
   p->SequenceNumber = header.SequenceNumber;
 
+  // clang-format off
+  auto transform =
+    Matrix::CreateRotationX(header.rx)
+    * Matrix::CreateRotationY(header.ry)
+    * Matrix::CreateRotationZ(header.rz)
+    * Matrix::CreateTranslation(header.x, header.floorY, header.z);
+  // clang-format on
 
-  Eigen::Transform<float, 3, Eigen::AffineCompact, Eigen::RowMajor> t;
-  t = Eigen::Translation3f(header.x, header.floorY, header.z)
-    * Eigen::AngleAxisf(header.rx, Eigen::Vector3f::UnitX())
-    * Eigen::AngleAxisf(header.ry, Eigen::Vector3f::UnitY())
-    * Eigen::AngleAxisf(header.rz, Eigen::Vector3f::UnitZ());
+  auto transposed = transform.Transpose();
 
   CHECK(
     SetOverlayTransformAbsolute,
     p->Overlay,
     vr::TrackingUniverseStanding,
-    reinterpret_cast<const vr::HmdMatrix34_t*>(t.data()));
-  
+    reinterpret_cast<vr::HmdMatrix34_t*>(&transposed));
+
   // Using a Direct3D texture instead of SetOverlayRaw(), as SetOverlayRaw()
   // only works 200 times; SetOverlayTexture() keeps working 'forever'
 
