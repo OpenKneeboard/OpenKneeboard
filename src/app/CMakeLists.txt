@@ -15,7 +15,6 @@ target_link_libraries(
   directxtk
   detours
   dprint
-  eigen3
   gameevent
   games
   json

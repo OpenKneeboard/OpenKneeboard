@@ -8,8 +8,6 @@
 #include <openvr.h>
 #include <winrt/base.h>
 
-#include <Eigen/Geometry>
-
 #pragma comment(lib, "D3D11.lib")
 
 using namespace OpenKneeboard;
@@ -109,16 +107,25 @@ void okOpenVRThread::Tick() {
   p->VRSystem->GetDeviceToAbsoluteTrackingPose(
     vr::TrackingUniverseStanding, 0, &hmdPose, 1);
   if (hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid) {
+    const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
+    // clang-format off
+    Matrix m(
+      f[0][0], f[1][0], f[2][0], 0,
+      f[0][1], f[1][1], f[2][1], 0,
+      f[0][2], f[1][2], f[2][2], 0,
+      f[0][3], f[1][3], f[2][3], 1
+    );
     // clang-format on
-    Eigen::Matrix<float, 3, 4, Eigen::RowMajor> m(
-      &hmdPose.mDeviceToAbsoluteTracking.m[0][0]);
-    Eigen::Transform<float, 3, Eigen::AffineCompact, Eigen::RowMajor> t(m);
-    auto translation = t.translation();
-    auto rotation = t.rotation() * Eigen::Vector3f(0, 0, -1);
+
+    Vector3 scale;
+    Vector3 translation;
+    Quaternion rotationQuat;
+    m.Decompose(scale, rotationQuat, translation);
+    Vector3 rotation(Vector3::Transform(Vector3::Forward, rotationQuat));
 
     vr::VROverlayIntersectionParams_t params {
-      .vSource = {translation.x(), translation.y(), translation.z()},
-      .vDirection = {rotation.x(), rotation.y(), rotation.z()},
+      .vSource = {translation.x, translation.y, translation.z},
+      .vDirection = {rotation.x, rotation.y, rotation.z},
       .eOrigin = vr::TrackingUniverseStanding,
     };
 

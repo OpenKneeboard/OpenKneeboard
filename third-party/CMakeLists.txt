@@ -1,6 +1,5 @@
 include(detours.cmake)
 include(directxtk.cmake)
-include(eigen3.cmake)
 include(fmt.cmake)
 include(json.cmake)
 include(lualib.cmake)
