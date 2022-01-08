@@ -1,11 +1,5 @@
 #include "OculusKneeboard.h"
 
-#pragma warning(push)
-// lossy conversions (double -> T)
-#pragma warning(disable : 4244)
-#include <Extras/OVR_Math.h>
-#pragma warning(pop)
-
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -29,37 +23,38 @@ using namespace DirectX::SimpleMath;
 
 static bool poseIntersectsWithRect(
   const ovrPosef& pose,
-  const ovrPosef& rectCenter,
+  const Vector3& rectCenter,
+  const Quaternion& rectQuat,
   const ovrVector2f& rectSize) {
-  const auto rayOrigin = OVR::Vector3f(pose.Position);
-  const auto rayNormal = OVR::Quatf(pose.Orientation) * OVR::Vector3f(0, 0, -1);
-  const auto planeQuat = OVR::Quatf(rectCenter.Orientation);
-  const auto planeOrigin = OVR::Vector3f(rectCenter.Position);
-  const auto planeNormal = planeQuat * OVR::Vector3f(0, 0, 1);
+  const Quaternion rayQuat(
+    pose.Orientation.x,
+    pose.Orientation.y,
+    pose.Orientation.z,
+    pose.Orientation.w);
+  const Vector3 rayOrigin(pose.Position.x, pose.Position.y, pose.Position.z);
+  const Vector3 rayNormal(Vector3::Transform(Vector3::Forward, rayQuat));
+  const Ray ray(rayOrigin, rayNormal);
+
+  const Plane plane(rectCenter, Vector3::Transform(Vector3::Backward, rectQuat));
 
   // Does the ray intersect the infinite plane?
-  if (rayNormal.Dot(planeNormal) >= 0) {
+  float rayLength = 0;
+  if (!ray.Intersects(plane, rayLength)) {
     return false;
   }
 
   // Where does it intersect the infinite plane?
-  const auto rayOriginToPlaneOrigin = planeOrigin - rayOrigin;
-  const auto rayLength
-    = (planeOrigin - rayOrigin).Dot(planeNormal) / rayNormal.Dot(planeNormal);
   const auto worldPoint = rayOrigin + (rayNormal * rayLength);
 
-  /// Finally: is the intersection point within the rectangle?
-  const auto point = worldPoint - planeOrigin;
+  // Is that point within the rectangle?
+  const auto point = worldPoint - rectCenter;
 
-  const auto xVector = planeQuat * OVR::Vector3f(1, 0, 0);
-  const auto x = point.Dot(xVector);
-
+  const auto x = point.Dot(Vector3::Transform(Vector3::UnitX, rectQuat));
   if (abs(x) > rectSize.x / 2) {
     return false;
   }
 
-  const auto yVector = planeQuat * OVR::Vector3f(0, 1, 0);
-  const auto y = point.Dot(yVector);
+  const auto y = point.Dot(Vector3::Transform(Vector3::UnitY, rectQuat));
   if (abs(y) > rectSize.y / 2) {
     return false;
   }
@@ -103,15 +98,15 @@ ovrResult OculusKneeboard::onEndFrame(
   // TODO: set ovrLayerFlag_TextureOriginAtBottomLeft for OpenGL?
   kneeboardLayer.Header.Flags = {ovrLayerFlag_HighQuality};
   kneeboardLayer.ColorTexture = swapChain;
-  kneeboardLayer.QuadPoseCenter.Position
-    = {.x = config.x, .y = config.floorY, .z = config.z};
 
+  Vector3 position(config.x, config.floorY, config.z);
   if ((config.Flags & SHM::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
     real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
-    kneeboardLayer.QuadPoseCenter.Position.y = config.eyeY;
+    position.y = config.eyeY;
   }
+  kneeboardLayer.QuadPoseCenter.Position = {position.x, position.y, position.z};
 
   // clang-format off
   auto orientation =
@@ -137,7 +132,8 @@ ovrResult OculusKneeboard::onEndFrame(
 
   mZoomed = poseIntersectsWithRect(
     state.HeadPose.ThePose,
-    kneeboardLayer.QuadPoseCenter,
+    position,
+    orientation,
     mZoomed ? zoomedSize : normalSize);
   kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
 
