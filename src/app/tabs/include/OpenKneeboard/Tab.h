@@ -1,6 +1,6 @@
 #pragma once
 
-#include <D2d1.h>
+#include <d2d1.h>
 #include <winrt/base.h>
 
 #include <memory>

@@ -1,6 +1,11 @@
 #include "OpenKneeboard/DCSRadioLogTab.h"
 
+#include <Unknwn.h>
+#include <dwrite.h>
 #include <fmt/format.h>
+#include <fmt/xchar.h>
+
+#include <algorithm>
 
 #include "OpenKneeboard/Games/DCSWorld.h"
 #include "okEvents.h"
@@ -9,7 +14,35 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSRadioLogTab::DCSRadioLogTab() : DCSTab(_("Radio Log")) {
+class DCSRadioLogTab::Impl final {
+ private:
+  DCSRadioLogTab* mTab = nullptr;
+
+ public:
+  Impl() = delete;
+  Impl(DCSRadioLogTab* tab);
+  ~Impl();
+
+  std::vector<std::vector<std::wstring>> mCompletePages;
+  std::vector<std::wstring> mCurrentPageLines;
+  std::vector<std::wstring> mMessages;
+
+  float mPadding = -1.0f;
+  float mRowHeight = -1.0f;
+  int mColumns = -1;
+  int mRows = -1;
+
+  winrt::com_ptr<ID2D1Factory> mD2DF;
+  winrt::com_ptr<IDWriteFactory> mDWF;
+  winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+
+  void PushMessage(const std::string& message);
+  void LayoutMessages();
+  void PushPage();
+};
+
+DCSRadioLogTab::DCSRadioLogTab()
+  : DCSTab(_("Radio Log")), p(std::make_unique<Impl>(this)) {
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
@@ -19,123 +52,176 @@ void DCSRadioLogTab::Reload() {
 }
 
 uint16_t DCSRadioLogTab::GetPageCount() const {
-  if (mCompletePages.empty()) {
+  if (p->mCompletePages.empty()) {
     return 1;
   }
 
-  if (mCurrentPageLines.empty()) {
-    return mCompletePages.size();
+  if (p->mCurrentPageLines.empty()) {
+    return p->mCompletePages.size();
   }
 
-  return mCompletePages.size() + 1;
+  return p->mCompletePages.size() + 1;
 }
 
 D2D1_SIZE_U DCSRadioLogTab::GetPreferredPixelSize(uint16_t pageIndex) {
-  // WIP
-  return {};
+  // return {768, 1024};
+  // TODO: return to standard size. Using this to make sure we have an
+  // appropriate transform.
+  return {512, 1024};
 }
 
 void DCSRadioLogTab::RenderPage(
   uint16_t pageIndex,
-  const winrt::com_ptr<ID2D1RenderTarget>& target,
+  const winrt::com_ptr<ID2D1RenderTarget>& rt,
   const D2D1_RECT_F& rect) {
-#ifdef WIP
-  wxBitmap bitmap(768, 1024);
-  wxMemoryDC dc(bitmap);
+  p->LayoutMessages();
 
-  dc.SetFont(
-    wxFont(16, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-  dc.SetBackground(*wxWHITE_BRUSH);
-  dc.Clear();
+  const auto virtualSize = GetPreferredPixelSize(0);
+  const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
 
-  auto metrics = dc.GetTextExtent("m");
-  auto padding = metrics.GetHeight();
-  const auto columns = (bitmap.GetWidth() - (2 * padding)) / metrics.GetWidth();
-  mColumns = columns;
-  const auto rows
-    = (bitmap.GetHeight() - (2 * padding)) / metrics.GetHeight() - 2;
-  mRows = rows;
-  LayoutMessages();
+  const auto scaleX = canvasSize.width / virtualSize.width;
+  const auto scaleY = canvasSize.height / virtualSize.height;
+  const auto scale = std::min(scaleX, scaleY);
+  const D2D1_SIZE_F renderSize {
+    scale * virtualSize.width, scale * virtualSize.height};
 
-  if (mCurrentPageLines.empty()) {
-    dc.SetTextForeground(wxColor(0x55, 0x55, 0x55));
-    dc.DrawText(_("[waiting for radio messages]"), wxPoint(padding, padding));
-    return bitmap.ConvertToImage();
+  rt->SetTransform(
+    D2D1::Matrix3x2F::Scale(scale, scale)
+    * D2D1::Matrix3x2F::Translation(
+      rect.left + ((canvasSize.width - renderSize.width) / 2),
+      rect.top + ((canvasSize.height - renderSize.height) / 2)));
+
+  winrt::com_ptr<ID2D1SolidColorBrush> background;
+  winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> footerBrush;
+  rt->CreateSolidColorBrush({1.0f, 0.0f, 1.0f, 1.0f}, background.put());
+  rt->CreateSolidColorBrush({0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
+  rt->CreateSolidColorBrush({0.5f, 0.5f, 0.5f, 1.0f}, footerBrush.put());
+
+  rt->FillRectangle(
+    {0.0f,
+     0.0f,
+     static_cast<float>(virtualSize.width),
+     static_cast<float>(virtualSize.height)},
+    background.get());
+
+  auto textFormat = p->mTextFormat.get();
+  textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+  if (p->mCurrentPageLines.empty()) {
+    auto message = _("[waiting for radio messages]").ToStdWstring();
+    rt->DrawTextW(
+      message.data(),
+      static_cast<UINT32>(message.size()),
+      textFormat,
+      {p->mPadding, p->mPadding, canvasSize.width, canvasSize.height},
+      footerBrush.get());
+    return;
   }
+  const auto& lines = (pageIndex == p->mCompletePages.size())
+    ? p->mCurrentPageLines
+    : p->mCompletePages.at(pageIndex);
 
-  const auto& lines = index == mCompletePages.size() ? mCurrentPageLines
-                                                     : mCompletePages.at(index);
-
-  wxPoint point {padding, padding};
-  auto y = metrics.GetHeight();
+  D2D_POINT_2F point {p->mPadding, p->mPadding};
   for (const auto& line: lines) {
-    dc.DrawText(wxString::FromUTF8(line.data(), line.size()), point);
-    point.y += metrics.GetHeight();
+    rt->DrawTextW(
+      line.data(),
+      static_cast<UINT32>(line.size()),
+      textFormat,
+      {point.x, point.y, canvasSize.width, canvasSize.height},
+      textBrush.get());
+    point.y += p->mRowHeight;
   }
 
-  // Draw footer
-  dc.SetTextForeground(wxColor(0x77, 0x77, 0x77, 0xff));
-  y = bitmap.GetHeight() - (padding + metrics.GetHeight());
-  auto text
-    = fmt::format(_("Page {} of {}").ToStdString(), index + 1, GetPageCount());
-  metrics = dc.GetTextExtent(text);
+  point.y = virtualSize.height - (p->mRowHeight + p->mPadding);
 
-  dc.DrawText(text, (bitmap.GetWidth() - metrics.GetWidth()) / 2, y);
-
-  if (index > 0) {
-    text = "<<<<<";
-    dc.DrawText(text, padding, y);
+  if (pageIndex > 0) {
+    std::wstring text(L"<<<<<");
+    rt->DrawTextW(
+      text.data(),
+      static_cast<UINT32>(text.size()),
+      textFormat,
+      {p->mPadding,
+       point.y,
+       FLOAT(virtualSize.width),
+       FLOAT(virtualSize.height)},
+      footerBrush.get());
   }
 
-  if (index + 1 < GetPageCount()) {
-    text = ">>>>>";
-    metrics = dc.GetTextExtent(text);
-    dc.DrawText(text, bitmap.GetWidth() - (metrics.GetWidth() + padding), y);
+  {
+    auto text = fmt::format(
+      _("Page {} of {}").ToStdWstring(), pageIndex + 1, GetPageCount());
+
+    winrt::com_ptr<IDWriteTextLayout> layout;
+    DWRITE_TEXT_METRICS metrics;
+    p->mDWF->CreateTextLayout(
+      text.data(),
+      static_cast<UINT32>(text.size()),
+      textFormat,
+      virtualSize.width,
+      virtualSize.height,
+      layout.put());
+    layout->GetMetrics(&metrics);
+
+    point.x = (virtualSize.width - metrics.width) / 2;
+
+    rt->DrawTextLayout(point, layout.get(), footerBrush.get());
   }
 
-  return bitmap.ConvertToImage();
-#endif
+  if (pageIndex + 1 < GetPageCount()) {
+    textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+    std::wstring text(L">>>>>");
+    rt->DrawTextW(
+      text.data(),
+      static_cast<UINT32>(text.size()),
+      textFormat,
+      {p->mPadding,
+       point.y,
+       virtualSize.width - p->mPadding,
+       point.y + p->mRowHeight},
+      footerBrush.get());
+  }
 }
 
-void DCSRadioLogTab::PushMessage(const std::string& message) {
-  mMessages.push_back(message);
+void DCSRadioLogTab::Impl::PushMessage(const std::string& message) {
+  mMessages.push_back(
+    wxString::FromUTF8(message.data(), message.size()).ToStdWstring());
   LayoutMessages();
-  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
+  wxQueueEvent(mTab, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
 }
 
-void DCSRadioLogTab::PushPage() {
+void DCSRadioLogTab::Impl::PushPage() {
   mCompletePages.push_back(mCurrentPageLines);
   mCurrentPageLines.clear();
 
   auto ev = new wxCommandEvent(okEVT_TAB_PAGE_APPENDED);
 
-  ev->SetEventObject(this);
+  ev->SetEventObject(mTab);
   // Value is the new page number; we're not subtracting 1 as
   // there's about to be a new page with incomplete lines
   ev->SetInt(mCompletePages.size());
 
-  wxQueueEvent(this, ev);
+  wxQueueEvent(mTab, ev);
   // Page numbers in the current page have changed too
-  wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
+  wxQueueEvent(mTab, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
 }
 
-void DCSRadioLogTab::LayoutMessages() {
+void DCSRadioLogTab::Impl::LayoutMessages() {
   if (mRows <= 1 || mColumns <= 1) {
     return;
   }
 
   auto& pageLines = mCurrentPageLines;
   for (const auto& message: mMessages) {
-    std::vector<std::string> messageLines;
-    std::string_view remaining(message);
+    std::vector<std::wstring> messageLines;
+    std::wstring_view remaining(message);
     while (!remaining.empty()) {
       if (remaining.size() <= mColumns) {
-        messageLines.push_back(std::string(remaining));
+        messageLines.push_back(std::wstring(remaining));
         break;
       }
-      auto space = remaining.find_last_of(" ", mColumns);
+      auto space = remaining.find_last_of(L" ", mColumns);
       if (space == remaining.npos) {
-        messageLines.push_back(std::string(remaining.substr(0, mColumns)));
+        messageLines.push_back(std::wstring(remaining.substr(0, mColumns)));
         if (remaining.size() > mColumns) {
           remaining = remaining.substr(mColumns);
           continue;
@@ -143,7 +229,7 @@ void DCSRadioLogTab::LayoutMessages() {
         break;
       }
 
-      messageLines.push_back(std::string(remaining.substr(0, space)));
+      messageLines.push_back(std::wstring(remaining.substr(0, space)));
       if (remaining.size() > space + 1) {
         remaining = remaining.substr(space + 1);
         continue;
@@ -153,13 +239,13 @@ void DCSRadioLogTab::LayoutMessages() {
 
     if (messageLines.size() > mRows) {
       if (!pageLines.empty()) {
-        pageLines.push_back("");
+        pageLines.push_back({});
       }
       for (const auto& line: messageLines) {
         if (pageLines.size() >= mRows) {
           PushPage();
         }
-        pageLines.push_back(std::string(line));
+        pageLines.push_back(std::wstring(line));
       }
       continue;
     }
@@ -194,14 +280,45 @@ void DCSRadioLogTab::Update(
   const std::filesystem::path& installPath,
   const std::filesystem::path& savedGamesPath,
   const std::string& value) {
-  PushMessage(value);
+  p->PushMessage(value);
 }
 
 void DCSRadioLogTab::OnSimulationStart() {
-  if (mColumns <= 0 || mMessages.empty()) {
+  if (p->mColumns <= 0 || p->mMessages.empty()) {
     return;
   }
-  PushMessage(std::string(mColumns, '-'));
+  p->PushMessage(std::string(p->mColumns, '-'));
+}
+
+DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab) : mTab(tab) {
+  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2DF.put());
+  DWriteCreateFactory(
+    DWRITE_FACTORY_TYPE_SHARED,
+    __uuidof(IDWriteFactory),
+    reinterpret_cast<IUnknown**>(mDWF.put()));
+  mDWF->CreateTextFormat(
+    L"Courier New",
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    16.0f,
+    L"",
+    mTextFormat.put());
+
+  const auto size = tab->GetPreferredPixelSize(0);
+  winrt::com_ptr<IDWriteTextLayout> textLayout;
+  mDWF->CreateTextLayout(
+    L"m", 1, mTextFormat.get(), size.width, size.height, textLayout.put());
+  DWRITE_TEXT_METRICS metrics;
+  textLayout->GetMetrics(&metrics);
+
+  mPadding = mRowHeight = metrics.height;
+  mRows = static_cast<int>((size.height - (2 * mPadding)) / metrics.height) - 2;
+  mColumns = static_cast<int>((size.width - (2 * mPadding)) / metrics.width);
+}
+
+DCSRadioLogTab::Impl::~Impl() {
 }
 
 }// namespace OpenKneeboard

@@ -27,10 +27,7 @@ okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
     wxDefaultPosition,
     wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
     p(new Impl {.Tab = tab}) {
-  D2D1CreateFactory(
-    D2D1_FACTORY_TYPE_SINGLE_THREADED,
-    __uuidof(ID2D1Factory),
-    p->D2d.put_void());
+  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->D2d.put());
   p->ErrorRenderer = std::make_unique<D2DErrorRenderer>(p->D2d);
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);

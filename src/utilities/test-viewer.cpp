@@ -38,10 +38,7 @@ class MainWindow final : public wxFrame {
       wxDefaultPosition,
       wxSize {768 / 2, 1024 / 2},
       wxDEFAULT_FRAME_STYLE) {
-    D2D1CreateFactory(
-      D2D1_FACTORY_TYPE_SINGLE_THREADED,
-      __uuidof(ID2D1Factory),
-      mD2df.put_void());
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2df.put());
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mD2df);
 
     Bind(wxEVT_PAINT, &MainWindow::OnPaint, this);

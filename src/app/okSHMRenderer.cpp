@@ -153,10 +153,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
 
 okSHMRenderer::okSHMRenderer() : p(std::make_unique<Impl>()) {
   p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
-  D2D1CreateFactory(
-    D2D1_FACTORY_TYPE_SINGLE_THREADED,
-    __uuidof(ID2D1Factory),
-    p->mD2D.put_void());
+  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->mD2D.put());
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
@@ -208,8 +205,8 @@ void okSHMRenderer::Render(
     this->p->CopyPixelsToSHM();
   });
   p->mRt->Clear({0.0f, 0.0f, 0.0f, 0.0f});
-  p->mRt->SetTransform(D2D1::Matrix3x2F::Identity());
 
+  p->mRt->SetTransform(D2D1::Matrix3x2F::Identity());
   tab->RenderPage(
     pageIndex,
     p->mRt,
@@ -220,6 +217,7 @@ void okSHMRenderer::Render(
       .bottom = float(canvasSize.height),
     });
 
+  p->mRt->SetTransform(D2D1::Matrix3x2F::Identity());
   p->mRt->FillRectangle(
     {0.0f, 0.0f, float(headerSize.width), float(headerSize.height)},
     p->mHeaderBGBrush.get());
