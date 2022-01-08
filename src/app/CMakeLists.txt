@@ -37,11 +37,20 @@ target_include_directories(
   ${SOURCE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include)
 
+add_dependencies(
+  OpenKneeboard
+  openkneeboard-oculus-d3d11
+  openkneeboard-dcs-ext-dll
+  openkneeboard-dcs-ext-lua)
+
+
 add_custom_command(
   TARGET OpenKneeboard POST_BUILD
   COMMAND
   ${CMAKE_COMMAND} -E copy_if_different
   "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
   "$<TARGET_FILE:openkneeboard-oculus-d3d11>"
+  "$<TARGET_FILE:openkneeboard-dcs-ext-dll>"
+  "$<TARGET_FILE_DIR:openkneeboard-dcs-ext-dll>/$<TARGET_PROPERTY:openkneeboard-dcs-ext-lua,OUTPUT_NAME>"
   "$<TARGET_FILE_DIR:OpenKneeboard>"
   COMMAND_EXPAND_LISTS)
