@@ -10,7 +10,7 @@ void dprint(const std::string& message) {
   auto target = g_Settings.Target;
   if (target == DPrintSettings::Target::DEFAULT) {
 #ifdef NDEBUG
-    target = DEBUG_STREAM;
+    target = DPrintSettings::Target::DEBUG_STREAM;
 #else
     if (IsDebuggerPresent()) {
       target = DPrintSettings::Target::DEBUG_STREAM;
