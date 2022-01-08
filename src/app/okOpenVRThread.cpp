@@ -97,11 +97,6 @@ void okOpenVRThread::Tick() {
 
   const auto& header = *snapshot.GetHeader();
 
-  if (p->SequenceNumber == header.SequenceNumber) {
-    return;
-  }
-  p->SequenceNumber = header.SequenceNumber;
-
   bool zoomed = false;
   vr::TrackedDevicePose_t hmdPose {
     .bPoseIsValid = false,
@@ -130,6 +125,12 @@ void okOpenVRThread::Tick() {
     SetOverlayWidthInMeters,
     p->Overlay,
     header.VirtualWidth * (zoomed ? header.ZoomScale : 1.0f));
+
+  if (p->SequenceNumber == header.SequenceNumber) {
+    return;
+  }
+  p->SequenceNumber = header.SequenceNumber;
+
 
   Eigen::Transform<float, 3, Eigen::AffineCompact, Eigen::RowMajor> t;
   t = Eigen::Translation3f(header.x, header.floorY, header.z)
