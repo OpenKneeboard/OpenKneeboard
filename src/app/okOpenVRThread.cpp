@@ -117,11 +117,8 @@ void okOpenVRThread::Tick() {
     );
     // clang-format on
 
-    Vector3 scale;
-    Vector3 translation;
-    Quaternion rotationQuat;
-    m.Decompose(scale, rotationQuat, translation);
-    Vector3 rotation(Vector3::Transform(Vector3::Forward, rotationQuat));
+    auto translation = m.Translation();
+    auto rotation = Vector3::TransformNormal(Vector3::Forward, m);
 
     vr::VROverlayIntersectionParams_t params {
       .vSource = {translation.x, translation.y, translation.z},
