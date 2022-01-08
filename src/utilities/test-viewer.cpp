@@ -27,6 +27,7 @@ class MainWindow final : public wxFrame {
   winrt::com_ptr<ID2D1Factory> mD2df;
   winrt::com_ptr<ID2D1HwndRenderTarget> mRt;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+  winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
 
  public:
   MainWindow()
@@ -105,6 +106,11 @@ class MainWindow final : public wxFrame {
 
       mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, mRt.put());
       mErrorRenderer->SetRenderTarget(mRt);
+
+      mBackgroundBrush = nullptr;
+      mRt->CreateSolidColorBrush(
+        {1.0f, 0.0f, 1.0f, 1.0f},
+        reinterpret_cast<ID2D1SolidColorBrush**>(mBackgroundBrush.put()));
     }
 
     wxPaintDC dc(this);
@@ -112,19 +118,22 @@ class MainWindow final : public wxFrame {
     wxON_BLOCK_EXIT0([this]() { this->mRt->EndDraw(); });
     mRt->SetTransform(D2D1::Matrix3x2F::Identity());
 
-		auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-		D2D1_COLOR_F bgColor {
-			wxBgColor.Red() / 255.0f,
-			wxBgColor.Green() / 255.0f,
-			wxBgColor.Blue() / 255.0f,
-			1.0f};
+    auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    D2D1_COLOR_F bgColor {
+      wxBgColor.Red() / 255.0f,
+      wxBgColor.Green() / 255.0f,
+      wxBgColor.Blue() / 255.0f,
+      1.0f};
     mRt->Clear(bgColor);
 
     auto snapshot = mSHM.MaybeGet();
     if (!snapshot) {
       mErrorRenderer->Render(
         _("No Feeder").ToStdWstring(),
-        { 0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight()) });
+        {0.0f,
+         0.0f,
+         float(clientSize.GetWidth()),
+         float(clientSize.GetHeight())});
       mFirstDetached = true;
       return;
     }
@@ -139,7 +148,7 @@ class MainWindow final : public wxFrame {
       reinterpret_cast<const void*>(pixels),
       config.ImageWidth * sizeof(SHM::Pixel),
       D2D1_BITMAP_PROPERTIES {
-        {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}, 0, 0},
+        {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
       d2dBitmap.put());
 
     const auto scalex = float(clientSize.GetWidth()) / config.ImageWidth;
@@ -156,6 +165,7 @@ class MainWindow final : public wxFrame {
       renderLeft + renderWidth,
       renderTop + renderHeight};
 
+    mRt->FillRectangle(pageRect, mBackgroundBrush.get());
     mRt->DrawBitmap(
       d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
     mRt->EndDraw();

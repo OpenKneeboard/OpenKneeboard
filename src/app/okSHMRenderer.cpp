@@ -72,7 +72,7 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
   this->mErrorRenderer->SetRenderTarget(this->mRt);
 
   this->mRt->CreateSolidColorBrush(
-    {0.7f, 0.7f, 0.7f, 1.0f},
+    {0.7f, 0.7f, 0.7f, 0.5f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(this->mHeaderBGBrush.put()));
   this->mRt->CreateSolidColorBrush(
@@ -207,8 +207,8 @@ void okSHMRenderer::Render(
     this->p->mRt->EndDraw();
     this->p->CopyPixelsToSHM();
   });
+  p->mRt->Clear({0.0f, 0.0f, 0.0f, 0.0f});
   p->mRt->SetTransform(D2D1::Matrix3x2F::Identity());
-  p->mRt->Clear({1.0f, 0.0f, 1.0f, 1.0f});
 
   tab->RenderPage(
     pageIndex,
