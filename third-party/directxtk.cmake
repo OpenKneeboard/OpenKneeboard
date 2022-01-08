@@ -1,5 +1,4 @@
 include(ExternalProject)
-# TODO: switch to stable release once 4.x is out (https://github.com/microsoft/Detours/projects/1)
 ExternalProject_Add(
   directxtkBuild
   URL "https://github.com/microsoft/DirectXTK/archive/refs/tags/nov2021.zip"
