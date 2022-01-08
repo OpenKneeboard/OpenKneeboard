@@ -151,25 +151,22 @@ void DCSRadioLogTab::RenderPage(
     auto text = fmt::format(
       _("Page {} of {}").ToStdWstring(), pageIndex + 1, GetPageCount());
 
-    winrt::com_ptr<IDWriteTextLayout> layout;
-    DWRITE_TEXT_METRICS metrics;
-    p->mDWF->CreateTextLayout(
+    textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+    rt->DrawTextW(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      virtualSize.width,
-      virtualSize.height,
-      layout.put());
-    layout->GetMetrics(&metrics);
-
-    point.x = (virtualSize.width - metrics.width) / 2;
-
-    rt->DrawTextLayout(point, layout.get(), footerBrush.get());
+      {p->mPadding,
+       point.y,
+       virtualSize.width - p->mPadding,
+       point.y + p->mRowHeight},
+      footerBrush.get());
   }
 
   if (pageIndex + 1 < GetPageCount()) {
-    textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
     std::wstring text(L">>>>>");
+
+    textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
     rt->DrawTextW(
       text.data(),
       static_cast<UINT32>(text.size()),
