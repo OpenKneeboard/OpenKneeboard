@@ -1,0 +1,7 @@
+#include "RuntimeFiles.h"
+
+namespace OpenKneeboard::RuntimeFiles {
+
+const std::filesystem::path OCULUS_D3D11_DLL("$<TARGET_FILE_NAME:openkneeboard-oculus-d3d11>");
+
+}

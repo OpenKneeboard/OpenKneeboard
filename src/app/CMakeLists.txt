@@ -1,8 +1,8 @@
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "*.cpp")
 
-set(INJECTABLES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/Injectables.cpp")
-file(GENERATE OUTPUT "${INJECTABLES_CPP}" INPUT Injectables.cpp.in)
-add_executable(OpenKneeboard WIN32 ${SOURCES} ${INJECTABLES_CPP})
+set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
+file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
+add_executable(OpenKneeboard WIN32 ${SOURCES} ${RUNTIME_FILES_CPP})
 target_compile_definitions(
   OpenKneeboard
   PRIVATE
@@ -11,6 +11,7 @@ target_compile_definitions(
 
 target_link_libraries(
   OpenKneeboard
+  PRIVATE
   D2d1
   directxtk
   detours
@@ -41,5 +42,6 @@ add_custom_command(
   COMMAND
   ${CMAKE_COMMAND} -E copy_if_different
   "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
+  "$<TARGET_FILE:openkneeboard-oculus-d3d11>"
   "$<TARGET_FILE_DIR:OpenKneeboard>"
   COMMAND_EXPAND_LISTS)

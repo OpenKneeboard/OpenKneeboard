@@ -6,8 +6,8 @@
 
 #include <mutex>
 
-#include "Injectables.h"
 #include "OpenKneeboard/dprint.h"
+#include "RuntimeFiles.h"
 #include "okEvents.h"
 
 using namespace OpenKneeboard;
@@ -156,6 +156,12 @@ bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
 }// namespace
 
 wxThread::ExitCode okGameInjectorThread::Entry() {
+  wchar_t buf[MAX_PATH];
+  GetModuleFileNameW(NULL, buf, MAX_PATH);
+  const auto executablePath
+    = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
+  const auto oculusD3d11Dll = executablePath / RuntimeFiles::OCULUS_D3D11_DLL;
+
   PROCESSENTRY32 process;
   process.dwSize = sizeof(process);
   MODULEENTRY32 module;
@@ -181,7 +187,6 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       if (!processHandle) {
         continue;
       }
-      wchar_t buf[MAX_PATH];
       DWORD bufSize = sizeof(buf);
       QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
       const std::filesystem::path path(std::wstring(buf, bufSize));
@@ -189,8 +194,8 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       std::scoped_lock lock(p->GamesMutex);
       for (const auto& game: p->Games) {
         if (path == game.Path) {
-          auto friendly = game.Game->GetUserFriendlyName(game.Path);
-          auto dll = Injectables::Oculus_D3D11.BuildPath;
+          const auto friendly = game.Game->GetUserFriendlyName(game.Path);
+          const auto dll = oculusD3d11Dll;
           if (AlreadyInjected(process.th32ProcessID, dll)) {
             if (path != currentPath) {
               currentPath = path;
@@ -207,8 +212,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
             process.th32ProcessID,
             path.string());
 
-          if (!InjectDll(
-                process.th32ProcessID, Injectables::Oculus_D3D11.BuildPath)) {
+          if (!InjectDll(process.th32ProcessID, dll)) {
             currentPath = path;
             dprintf("Failed to inject DLL: {}", GetLastError());
             break;

@@ -1,9 +1,0 @@
-#include "Injectables.h"
-namespace OpenKneeboard::Injectables {
-
-const Injectable Oculus_D3D11 {
-  .Name = "$<TARGET_FILE_NAME:openkneeboard-oculus-d3d11>",
-  .BuildPath = "$<TARGET_FILE:openkneeboard-oculus-d3d11>",
-};
-
-}
