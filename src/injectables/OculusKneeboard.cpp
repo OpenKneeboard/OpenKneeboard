@@ -6,6 +6,7 @@
 #include <Extras/OVR_Math.h>
 #pragma warning(pop)
 
+#include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/dprint.h>
 
 // clang-format off
@@ -23,6 +24,8 @@ LIBOVR_FUNCS
 #undef IT
 
 using namespace OpenKneeboard;
+using namespace DirectX;
+using namespace DirectX::SimpleMath;
 
 static bool poseIntersectsWithRect(
   const ovrPosef& pose,
@@ -110,11 +113,15 @@ ovrResult OculusKneeboard::onEndFrame(
     kneeboardLayer.QuadPoseCenter.Position.y = config.eyeY;
   }
 
-  OVR::Quatf orientation;
-  orientation *= OVR::Quatf(OVR::Axis::Axis_X, config.rx);
-  orientation *= OVR::Quatf(OVR::Axis::Axis_Y, config.ry);
-  orientation *= OVR::Quatf(OVR::Axis::Axis_Z, config.rz);
-  kneeboardLayer.QuadPoseCenter.Orientation = orientation;
+  // clang-format off
+  auto orientation =
+    Quaternion::CreateFromAxisAngle(Vector3::UnitX, config.rx)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, config.ry)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, config.rz);
+  // clang-format on
+
+  kneeboardLayer.QuadPoseCenter.Orientation
+    = {orientation.x, orientation.y, orientation.z, orientation.w};
 
   kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
   kneeboardLayer.Viewport.Size
