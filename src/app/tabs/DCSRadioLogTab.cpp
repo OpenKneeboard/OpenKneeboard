@@ -19,6 +19,8 @@ class DCSRadioLogTab::Impl final {
   DCSRadioLogTab* mTab = nullptr;
 
  public:
+  static const int RENDER_SCALE = 1;
+
   Impl() = delete;
   Impl(DCSRadioLogTab* tab);
   ~Impl();
@@ -64,10 +66,7 @@ uint16_t DCSRadioLogTab::GetPageCount() const {
 }
 
 D2D1_SIZE_U DCSRadioLogTab::GetPreferredPixelSize(uint16_t pageIndex) {
-  // return {768, 1024};
-  // TODO: return to standard size. Using this to make sure we have an
-  // appropriate transform.
-  return {512, 1024};
+  return {768 * Impl::RENDER_SCALE, 1024 * Impl::RENDER_SCALE};
 }
 
 void DCSRadioLogTab::RenderPage(
@@ -94,7 +93,7 @@ void DCSRadioLogTab::RenderPage(
   winrt::com_ptr<ID2D1SolidColorBrush> background;
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> footerBrush;
-  rt->CreateSolidColorBrush({1.0f, 0.0f, 1.0f, 1.0f}, background.put());
+  rt->CreateSolidColorBrush({1.0f, 1.0f, 1.0f, 1.0f}, background.put());
   rt->CreateSolidColorBrush({0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
   rt->CreateSolidColorBrush({0.5f, 0.5f, 0.5f, 1.0f}, footerBrush.put());
 
@@ -297,12 +296,12 @@ DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab) : mTab(tab) {
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(mDWF.put()));
   mDWF->CreateTextFormat(
-    L"Courier New",
+    L"Consolas",
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    16.0f,
+    20.0f * RENDER_SCALE,
     L"",
     mTextFormat.put());
 

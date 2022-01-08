@@ -227,7 +227,7 @@ void okSHMRenderer::Render(
 
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
   p->mDWrite->CreateTextFormat(
-    L"Courier New",
+    L"Consolas",
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
     DWRITE_FONT_STYLE_NORMAL,
