@@ -107,10 +107,29 @@ class MainWindow final : public wxFrame {
       mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, mRt.put());
       mErrorRenderer->SetRenderTarget(mRt);
 
+      winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
+      SHM::Pixel pixels[20 * 20];
+      for (int x = 0; x < 20; x++) {
+        for (int y = 0; y < 20; y++) {
+          bool white = (x < 10 && y < 10) || (x >= 10 && y >= 10);
+          uint8_t value = white ? 0xff : 0xcc;
+          pixels[x + (20 * y)] = {value, value, value, 0xff};
+        }
+      }
+      mRt->CreateBitmap(
+        {20, 20},
+        reinterpret_cast<BYTE*>(pixels),
+        20 * sizeof(SHM::Pixel),
+        D2D1::BitmapProperties(D2D1::PixelFormat(
+          DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+        backgroundBitmap.put());
+
       mBackgroundBrush = nullptr;
-      mRt->CreateSolidColorBrush(
-        {1.0f, 0.0f, 1.0f, 1.0f},
-        reinterpret_cast<ID2D1SolidColorBrush**>(mBackgroundBrush.put()));
+      mRt->CreateBitmapBrush(
+        backgroundBitmap.get(),
+        D2D1::BitmapBrushProperties(
+          D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
+        reinterpret_cast<ID2D1BitmapBrush**>(mBackgroundBrush.put()));
     }
 
     wxPaintDC dc(this);
@@ -142,6 +161,15 @@ class MainWindow final : public wxFrame {
     const auto& config = *snapshot.GetHeader();
     const auto pixels = snapshot.GetPixels();
 
+    if (config.ImageWidth == 0 || config.ImageHeight == 0) {
+      mErrorRenderer->Render(
+        _("Invalid Image").ToStdWstring(),
+        {0.0f,
+         0.0f,
+         float(clientSize.GetWidth()),
+         float(clientSize.GetHeight())});
+    }
+
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
     mRt->CreateBitmap(
       {config.ImageWidth, config.ImageHeight},
@@ -165,10 +193,13 @@ class MainWindow final : public wxFrame {
       renderLeft + renderWidth,
       renderTop + renderHeight};
 
-    mRt->FillRectangle(pageRect, mBackgroundBrush.get());
+    auto bg = mBackgroundBrush;
+    // Align the top-left pixel of the brush
+    bg->SetTransform(
+      D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
+    mRt->FillRectangle(pageRect, bg.get());
     mRt->DrawBitmap(
       d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
-    mRt->EndDraw();
 
     mLastSequenceNumber = config.SequenceNumber;
   }
