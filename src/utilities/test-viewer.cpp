@@ -135,12 +135,11 @@ class MainWindow final : public wxFrame {
     mRt->SetTransform(D2D1::Matrix3x2F::Identity());
 
     auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    D2D1_COLOR_F bgColor {
-      wxBgColor.Red() / 255.0f,
-      wxBgColor.Green() / 255.0f,
-      wxBgColor.Blue() / 255.0f,
-      1.0f};
-    mRt->Clear(bgColor);
+    mRt->Clear(
+      {wxBgColor.Red() / 255.0f,
+       wxBgColor.Green() / 255.0f,
+       wxBgColor.Blue() / 255.0f,
+       1.0f});
 
     auto snapshot = mSHM.MaybeGet();
     if (!snapshot) {
@@ -166,6 +165,13 @@ class MainWindow final : public wxFrame {
          float(clientSize.GetWidth()),
          float(clientSize.GetHeight())});
     }
+
+    wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
+    mRt->Clear(
+      {wxBgColor.Red() / 255.0f,
+       wxBgColor.Green() / 255.0f,
+       wxBgColor.Blue() / 255.0f,
+       1.0f});
 
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
     mRt->CreateBitmap(

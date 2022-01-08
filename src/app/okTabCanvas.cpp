@@ -79,16 +79,17 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   p->RT->BeginDraw();
   wxON_BLOCK_EXIT0([this]() { this->p->RT->EndDraw(); });
   p->RT->SetTransform(D2D1::Matrix3x2F::Identity());
-  auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-  p->RT->Clear(D2D1_COLOR_F {
-    bg.Red() / 255.0f,
-    bg.Green() / 255.0f,
-    bg.Blue() / 255.0f,
-    bg.Alpha() / 255.0f,
-  });
 
   const auto count = p->Tab->GetPageCount();
   if (count == 0) {
+    auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+    p->RT->Clear(D2D1_COLOR_F {
+      bg.Red() / 255.0f,
+      bg.Green() / 255.0f,
+      bg.Blue() / 255.0f,
+      bg.Alpha() / 255.0f,
+    });
+    
     p->ErrorRenderer->Render(
       _("No Pages").ToStdWstring(),
       {0.0f,
@@ -97,6 +98,15 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
        float(clientSize.GetHeight())});
     return;
   }
+
+  auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
+  p->RT->Clear(D2D1_COLOR_F {
+    bg.Red() / 255.0f,
+    bg.Green() / 255.0f,
+    bg.Blue() / 255.0f,
+    bg.Alpha() / 255.0f,
+  });
+
   p->PageIndex
     = std::clamp(p->PageIndex, 0ui16, static_cast<uint16_t>(count - 1));
 
