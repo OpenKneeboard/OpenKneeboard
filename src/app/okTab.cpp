@@ -16,9 +16,6 @@ okTab::okTab(wxWindow* parent, const std::shared_ptr<Tab>& tab)
   p->Canvas = new okTabCanvas(this, tab);
   auto canvas = p->Canvas;
 
-  auto sizer = new wxBoxSizer(wxVERTICAL);
-  sizer->Add(p->Canvas);
-
   auto buttonBox = new wxPanel(this);
   auto firstPage = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
   auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
@@ -33,8 +30,10 @@ okTab::okTab(wxWindow* parent, const std::shared_ptr<Tab>& tab)
   buttonSizer->Add(previousPage);
   buttonSizer->Add(nextPage);
   buttonBox->SetSizer(buttonSizer);
-  sizer->Add(buttonBox, 0, wxEXPAND);
 
+  auto sizer = new wxBoxSizer(wxVERTICAL);
+  sizer->Add(p->Canvas, 1, wxEXPAND);
+  sizer->Add(buttonBox, 0, wxEXPAND);
   this->SetSizerAndFit(sizer);
 }
 

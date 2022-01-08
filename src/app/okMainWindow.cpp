@@ -31,14 +31,7 @@ class okMainWindow::Impl {
 };
 
 okMainWindow::okMainWindow()
-  : wxFrame(
-    nullptr,
-    wxID_ANY,
-    "OpenKneeboard",
-    wxDefaultPosition,
-    wxDefaultSize,
-    wxDEFAULT_FRAME_STYLE & ~wxRESIZE_BORDER),
-    p(std::make_unique<Impl>()) {
+  : wxFrame(nullptr, wxID_ANY, "OpenKneeboard"), p(std::make_unique<Impl>()) {
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
   p->SHMRenderer = std::make_unique<okSHMRenderer>();
@@ -62,12 +55,9 @@ okMainWindow::okMainWindow()
   }
   SetMenuBar(menuBar);
 
-  auto sizer = new wxBoxSizer(wxVERTICAL);
-
   p->Notebook = new wxNotebook(this, wxID_ANY);
   p->Notebook->Bind(
     wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
-  sizer->Add(p->Notebook);
 
   {
     auto tabs = new okTabsList(p->Settings.Tabs);
@@ -81,6 +71,8 @@ okMainWindow::okMainWindow()
     });
   }
 
+  auto sizer = new wxBoxSizer(wxVERTICAL);
+  sizer->Add(p->Notebook, 1, wxEXPAND);
   this->SetSizerAndFit(sizer);
 
   UpdateSHM();
