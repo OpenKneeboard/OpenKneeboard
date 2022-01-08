@@ -113,7 +113,10 @@ void DCSRadioLogTab::RenderPage(
       message.data(),
       static_cast<UINT32>(message.size()),
       textFormat,
-      {p->mPadding, p->mPadding, canvasSize.width, canvasSize.height},
+      {p->mPadding,
+       p->mPadding,
+       virtualSize.width - p->mPadding,
+       p->mPadding + p->mRowHeight},
       footerBrush.get());
     return;
   }
@@ -127,7 +130,7 @@ void DCSRadioLogTab::RenderPage(
       line.data(),
       static_cast<UINT32>(line.size()),
       textFormat,
-      {point.x, point.y, canvasSize.width, canvasSize.height},
+      {point.x, point.y, virtualSize.width - point.x, point.y + p->mRowHeight},
       textBrush.get());
     point.y += p->mRowHeight;
   }
