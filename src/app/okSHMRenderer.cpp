@@ -128,7 +128,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
     .eyeY = -0.7f,
     .z = -0.4f,
     .rx = -float(2 * M_PI / 5),
-    .rz = -float(M_PI / 32),
+    .ry = -float(M_PI / 32),
     .VirtualWidth = 0.25f / ratio,
     .VirtualHeight = 0.25f,
     .ZoomScale = 2.0f,
