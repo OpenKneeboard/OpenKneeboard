@@ -90,7 +90,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   p->RenderTargets.clear();
   p->RenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
-    ID3D11Texture2D* texture;// todo: smart ptr?
+    winrt::com_ptr<ID3D11Texture2D> texture;
     real_ovr_GetTextureSwapChainBufferDX(
       session, p->SwapChain, i, IID_PPV_ARGS(&texture));
 
@@ -100,7 +100,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
       .Texture2D = {.MipSlice = 0}};
 
     auto hr = d3d->CreateRenderTargetView(
-      texture, &rtvd, p->RenderTargets.at(i).put());
+      texture.get(), &rtvd, p->RenderTargets.at(i).put());
     if (FAILED(hr)) {
       dprintf(" - failed to create render target view");
       return nullptr;
