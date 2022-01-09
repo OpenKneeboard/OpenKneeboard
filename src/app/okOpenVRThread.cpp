@@ -17,16 +17,16 @@ using namespace DirectX::SimpleMath;
 
 class okOpenVRThread::Impl final {
  public:
-  vr::IVRSystem* VRSystem = nullptr;
-  vr::VROverlayHandle_t Overlay {};
-  SHM::Reader SHM;
-  winrt::com_ptr<ID3D11Device> D3D;
-  winrt::com_ptr<ID3D11Texture2D> Texture;
-  winrt::com_ptr<ID3D11RenderTargetView> RenderTargetView;
+  vr::IVRSystem* vrSystem = nullptr;
+  vr::VROverlayHandle_t overlay {};
+  SHM::Reader shm;
+  winrt::com_ptr<ID3D11Device> d3d;
+  winrt::com_ptr<ID3D11Texture2D> texture;
+  winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
   uint64_t sequenceNumber = 0;
 
   ~Impl() {
-    if (!VRSystem) {
+    if (!vrSystem) {
       return;
     }
     vr::VR_Shutdown();
@@ -51,18 +51,18 @@ static bool overlay_check(vr::EVROverlayError err, const char* method) {
 }
 
 void okOpenVRThread::Tick() {
-  if (!p->VRSystem) {
+  if (!p->vrSystem) {
     vr::EVRInitError err;
-    p->VRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
-    if (!p->VRSystem) {
+    p->vrSystem = vr::VR_Init(&err, vr::VRApplication_Background);
+    if (!p->vrSystem) {
       return;
     }
     dprint("Initialized OpenVR");
   }
 
-  if (!p->SHM) {
-    p->SHM = SHM::Reader();
-    if (!p->SHM) {
+  if (!p->shm) {
+    p->shm = SHM::Reader();
+    if (!p->shm) {
       return;
     }
   }
@@ -78,21 +78,21 @@ void okOpenVRThread::Tick() {
     return; \
   }
 
-  if (!p->Overlay) {
+  if (!p) {
     CHECK(
       CreateOverlay,
       "com.fredemmott.OpenKneeboard",
       "OpenKneeboard",
-      &p->Overlay);
-    if (!p->Overlay) {
+      &p->overlay);
+    if (!p->overlay) {
       return;
     }
 
     dprintf("Created OpenVR overlay");
-    CHECK(ShowOverlay, p->Overlay);
+    CHECK(ShowOverlay, p->overlay);
   }
 
-  auto snapshot = p->SHM.MaybeGet();
+  auto snapshot = p->shm.MaybeGet();
   if (!snapshot) {
     return;
   }
@@ -104,7 +104,7 @@ void okOpenVRThread::Tick() {
     .bPoseIsValid = false,
     .bDeviceIsConnected = false,
   };
-  p->VRSystem->GetDeviceToAbsoluteTrackingPose(
+  p->vrSystem->GetDeviceToAbsoluteTrackingPose(
     vr::TrackingUniverseStanding, 0, &hmdPose, 1);
   if (hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid) {
     const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
@@ -127,7 +127,7 @@ void okOpenVRThread::Tick() {
     };
 
     vr::VROverlayIntersectionResults_t results;
-    zoomed = overlay->ComputeOverlayIntersection(p->Overlay, &params, &results);
+    zoomed = overlay->ComputeOverlayIntersection(p->overlay, &params, &results);
   }
 
   const auto aspectRatio = float(header.imageWidth) / header.imageHeight;
@@ -135,7 +135,7 @@ void okOpenVRThread::Tick() {
 
   CHECK(
     SetOverlayWidthInMeters,
-    p->Overlay,
+    p->overlay,
     vrConf.height * aspectRatio * (zoomed ? vrConf.zoomScale : 1.0f));
 
   if (p->sequenceNumber == header.sequenceNumber) {
@@ -155,23 +155,23 @@ void okOpenVRThread::Tick() {
 
   CHECK(
     SetOverlayTransformAbsolute,
-    p->Overlay,
+    p->overlay,
     vr::TrackingUniverseStanding,
     reinterpret_cast<vr::HmdMatrix34_t*>(&transposed));
 
   // Using a Direct3D texture instead of SetOverlayRaw(), as SetOverlayRaw()
   // only works 200 times; SetOverlayTexture() keeps working 'forever'
 
-  auto previousTexture = p->Texture;
+  auto previousTexture = p->texture;
   if (previousTexture) {
     D3D11_TEXTURE2D_DESC desc;
     previousTexture->GetDesc(&desc);
     if (header.imageWidth != desc.Width || header.imageHeight != desc.Height) {
-      p->Texture = nullptr;
+      p->texture = nullptr;
     }
   }
 
-  if (!p->Texture) {
+  if (!p->texture) {
     D3D11_TEXTURE2D_DESC desc {
       .Width = header.imageWidth,
       .Height = header.imageHeight,
@@ -184,8 +184,8 @@ void okOpenVRThread::Tick() {
       .CPUAccessFlags = {},
       .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
     };
-    p->D3D->CreateTexture2D(&desc, nullptr, p->Texture.put());
-    if (!p->Texture) {
+    p->d3d->CreateTexture2D(&desc, nullptr, p->texture.put());
+    if (!p->texture) {
       dprint("Failed to create texture for OpenVR");
       return;
     }
@@ -195,10 +195,10 @@ void okOpenVRThread::Tick() {
       .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
       .Texture2D = {.MipSlice = 0},
     };
-    p->RenderTargetView = nullptr;
-    p->D3D->CreateRenderTargetView(
-      p->Texture.get(), &rtvd, p->RenderTargetView.put());
-    if (!p->RenderTargetView) {
+    p->renderTargetView = nullptr;
+    p->d3d->CreateRenderTargetView(
+      p->texture.get(), &rtvd, p->renderTargetView.put());
+    if (!p->renderTargetView) {
       dprint("Failed to create RenderTargetView for OpenVR");
       return;
     }
@@ -219,21 +219,21 @@ void okOpenVRThread::Tick() {
     };
 
     winrt::com_ptr<ID3D11DeviceContext> context;
-    p->D3D->GetImmediateContext(context.put());
+    p->d3d->GetImmediateContext(context.put());
 
     context->UpdateSubresource(
-      p->Texture.get(),
+      p->texture.get(),
       0,
       &box,
       snapshot.GetPixels(),
       header.imageWidth * sizeof(SHM::Pixel),
       0);
     vr::Texture_t vrt {
-      .handle = p->Texture.get(),
+      .handle = p->texture.get(),
       .eType = vr::TextureType_DirectX,
       .eColorSpace = vr::ColorSpace_Auto,
     };
-    CHECK(SetOverlayTexture, p->Overlay, &vrt);
+    CHECK(SetOverlayTexture, p->overlay, &vrt);
     context->Flush();
   }
 
@@ -259,11 +259,11 @@ wxThread::ExitCode okOpenVRThread::Entry() {
     &level,
     1,
     D3D11_SDK_VERSION,
-    p->D3D.put(),
+    p->d3d.put(),
     nullptr,
     nullptr);
 
-  if (!p->D3D) {
+  if (!p->d3d) {
     dprint("Shutting down OpenVR thread, failed to get D3D11 device");
     return {0};
   }
@@ -278,7 +278,7 @@ wxThread::ExitCode okOpenVRThread::Entry() {
     }
 
     this->Tick();
-    wxThread::This()->Sleep(p->VRSystem ? frameSleepMS : inactiveSleepMS);
+    wxThread::This()->Sleep(p->vrSystem ? frameSleepMS : inactiveSleepMS);
   }
 
   return {0};

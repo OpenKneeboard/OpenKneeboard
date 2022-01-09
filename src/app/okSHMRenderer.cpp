@@ -21,17 +21,17 @@ using namespace OpenKneeboard;
 
 class okSHMRenderer::Impl {
  public:
-  OpenKneeboard::SHM::Writer mSHM;
+  OpenKneeboard::SHM::Writer shm;
 
-  winrt::com_ptr<IWICImagingFactory> mWIC;
-  winrt::com_ptr<ID2D1Factory> mD2D;
-  winrt::com_ptr<IDWriteFactory> mDWrite;
-  winrt::com_ptr<IWICBitmap> mCanvas;
-  winrt::com_ptr<ID2D1RenderTarget> mRt;
-  winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
-  winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
+  winrt::com_ptr<IWICImagingFactory> wic;
+  winrt::com_ptr<ID2D1Factory> d2d;
+  winrt::com_ptr<IDWriteFactory> dwrite;
+  winrt::com_ptr<IWICBitmap> canvas;
+  winrt::com_ptr<ID2D1RenderTarget> rt;
+  winrt::com_ptr<ID2D1Brush> headerBGBrush;
+  winrt::com_ptr<ID2D1Brush> headerTextBrush;
 
-  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+  std::unique_ptr<D2DErrorRenderer> errorRenderer;
 
   void SetCanvasSize(const D2D1_SIZE_U& size);
   void RenderError(const wxString& error);
@@ -39,82 +39,82 @@ class okSHMRenderer::Impl {
 };
 
 void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
-  if (this->mCanvas) {
+  if (this->canvas) {
     UINT width, height;
-    this->mCanvas->GetSize(&width, &height);
+    this->canvas->GetSize(&width, &height);
     if (width == size.width && height == size.height) {
       return;
     }
-    this->mCanvas = nullptr;
+    this->canvas = nullptr;
   }
 
-  this->mWIC->CreateBitmap(
+  this->wic->CreateBitmap(
     size.width,
     size.height,
     GUID_WICPixelFormat32bppPBGRA,
     WICBitmapCacheOnDemand,
-    this->mCanvas.put());
+    this->canvas.put());
 
-  this->mRt = nullptr;
-  this->mHeaderBGBrush = nullptr;
-  this->mHeaderTextBrush = nullptr;
+  this->rt = nullptr;
+  this->headerBGBrush = nullptr;
+  this->headerTextBrush = nullptr;
 
-  this->mD2D->CreateWicBitmapRenderTarget(
-    this->mCanvas.get(),
+  this->d2d->CreateWicBitmapRenderTarget(
+    this->canvas.get(),
     D2D1::RenderTargetProperties(
       D2D1_RENDER_TARGET_TYPE_DEFAULT,
       D2D1_PIXEL_FORMAT {
         DXGI_FORMAT_B8G8R8A8_UNORM,
         D2D1_ALPHA_MODE_PREMULTIPLIED,
       }),
-    this->mRt.put());
+    this->rt.put());
 
-  this->mErrorRenderer->SetRenderTarget(this->mRt);
+  this->errorRenderer->SetRenderTarget(this->rt);
 
-  this->mRt->CreateSolidColorBrush(
+  this->rt->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.5f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(this->mHeaderBGBrush.put()));
-  this->mRt->CreateSolidColorBrush(
+    reinterpret_cast<ID2D1SolidColorBrush**>(this->headerBGBrush.put()));
+  this->rt->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(this->mHeaderTextBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(this->headerTextBrush.put()));
 }
 
 void okSHMRenderer::Impl::RenderError(const wxString& message) {
-  if (!this->mCanvas) {
+  if (!this->canvas) {
     this->SetCanvasSize({768, 1024});
   }
 
   UINT width, height;
-  this->mCanvas->GetSize(&width, &height);
+  this->canvas->GetSize(&width, &height);
 
   auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
 
-  this->mRt->BeginDraw();
-  this->mRt->SetTransform(D2D1::Matrix3x2F::Identity());
+  this->rt->BeginDraw();
+  this->rt->SetTransform(D2D1::Matrix3x2F::Identity());
 
-  this->mRt->Clear(D2D1_COLOR_F {
+  this->rt->Clear(D2D1_COLOR_F {
     bg.Red() / 255.0f,
     bg.Green() / 255.0f,
     bg.Blue() / 255.0f,
     bg.Alpha() / 255.0f,
   });
 
-  this->mErrorRenderer->Render(
+  this->errorRenderer->Render(
     message.ToStdWstring(), {0.0f, 0.0f, float(width), float(height)});
 
-  this->mRt->EndDraw();
+  this->rt->EndDraw();
   this->CopyPixelsToSHM();
 }
 
 void okSHMRenderer::Impl::CopyPixelsToSHM() {
-  if (!this->mSHM) {
+  if (!this->shm) {
     return;
   }
 
   UINT width, height;
-  this->mCanvas->GetSize(&width, &height);
+  this->canvas->GetSize(&width, &height);
   if (width == 0 || height == 0) {
     return;
   }
@@ -131,23 +131,23 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   static_assert(offsetof(Pixel, a) == 3, "Expected alpha to be last byte");
 
   std::vector<Pixel> pixels(width * height);
-  this->mCanvas->CopyPixels(
+  this->canvas->CopyPixels(
     nullptr,
     width * sizeof(Pixel),
     pixels.size() * sizeof(Pixel),
     reinterpret_cast<BYTE*>(pixels.data()));
 
-  this->mSHM.Update(header, pixels);
+  this->shm.Update(header, pixels);
 }
 
 okSHMRenderer::okSHMRenderer() : p(std::make_unique<Impl>()) {
-  p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->mD2D.put());
+  p->wic = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
+  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->d2d.put());
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(p->mDWrite.put()));
-  p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(p->mD2D);
+    reinterpret_cast<IUnknown**>(p->dwrite.put()));
+  p->errorRenderer = std::make_unique<D2DErrorRenderer>(p->d2d);
 }
 
 okSHMRenderer::~okSHMRenderer() {
@@ -188,17 +188,17 @@ void okSHMRenderer::Render(
   };
   p->SetCanvasSize(canvasSize);
 
-  p->mRt->BeginDraw();
+  p->rt->BeginDraw();
   wxON_BLOCK_EXIT0([this]() {
-    this->p->mRt->EndDraw();
+    this->p->rt->EndDraw();
     this->p->CopyPixelsToSHM();
   });
-  p->mRt->Clear({0.0f, 0.0f, 0.0f, 0.0f});
+  p->rt->Clear({0.0f, 0.0f, 0.0f, 0.0f});
 
-  p->mRt->SetTransform(D2D1::Matrix3x2F::Identity());
+  p->rt->SetTransform(D2D1::Matrix3x2F::Identity());
   tab->RenderPage(
     pageIndex,
-    p->mRt,
+    p->rt,
     {
       .left = 0.0f,
       .top = float(headerSize.height),
@@ -206,16 +206,16 @@ void okSHMRenderer::Render(
       .bottom = float(canvasSize.height),
     });
 
-  p->mRt->SetTransform(D2D1::Matrix3x2F::Identity());
-  p->mRt->FillRectangle(
+  p->rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  p->rt->FillRectangle(
     {0.0f, 0.0f, float(headerSize.width), float(headerSize.height)},
-    p->mHeaderBGBrush.get());
+    p->headerBGBrush.get());
 
   FLOAT dpix, dpiy;
-  p->mRt->GetDpi(&dpix, &dpiy);
+  p->rt->GetDpi(&dpix, &dpiy);
 
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
-  p->mDWrite->CreateTextFormat(
+  p->dwrite->CreateTextFormat(
     L"Consolas",
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
@@ -227,7 +227,7 @@ void okSHMRenderer::Render(
 
   auto title = wxString::FromUTF8(tab->GetTitle()).ToStdWstring();
   winrt::com_ptr<IDWriteTextLayout> headerLayout;
-  p->mDWrite->CreateTextLayout(
+  p->dwrite->CreateTextLayout(
     title.data(),
     static_cast<UINT32>(title.size()),
     headerFormat.get(),
@@ -238,9 +238,9 @@ void okSHMRenderer::Render(
   DWRITE_TEXT_METRICS metrics;
   headerLayout->GetMetrics(&metrics);
 
-  p->mRt->DrawTextLayout(
+  p->rt->DrawTextLayout(
     {(headerSize.width - metrics.width) / 2,
      (headerSize.height - metrics.height) / 2},
     headerLayout.get(),
-    p->mHeaderTextBrush.get());
+    p->headerTextBrush.get());
 }
