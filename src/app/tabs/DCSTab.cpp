@@ -142,25 +142,25 @@ DCSTab::~DCSTab() {
 }
 
 void DCSTab::OnGameEvent(const GameEvent& event) {
-  if (event.Name == this->GetGameEventName()) {
-    p->CurrentConfig.Value = event.Value;
+  if (event.name == this->GetGameEventName()) {
+    p->CurrentConfig.Value = event.value;
     Update();
     return;
   }
 
-  if (event.Name == DCS::EVT_INSTALL_PATH) {
-    p->CurrentConfig.InstallPath = std::filesystem::canonical(event.Value);
+  if (event.name == DCS::EVT_INSTALL_PATH) {
+    p->CurrentConfig.InstallPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
 
-  if (event.Name == DCS::EVT_SAVED_GAMES_PATH) {
-    p->CurrentConfig.SavedGamesPath = std::filesystem::canonical(event.Value);
+  if (event.name == DCS::EVT_SAVED_GAMES_PATH) {
+    p->CurrentConfig.SavedGamesPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
 
-  if (event.Name == DCS::EVT_SIMULATION_START) {
+  if (event.name == DCS::EVT_SIMULATION_START) {
     this->OnSimulationStart();
     return;
   }

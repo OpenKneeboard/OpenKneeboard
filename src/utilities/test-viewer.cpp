@@ -22,7 +22,7 @@ class MainWindow final : public wxFrame {
   wxTimer mTimer;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
-  uint64_t mLastSequenceNumber = 0;
+  uint64_t mLastsequenceNumber = 0;
 
   winrt::com_ptr<ID2D1Factory> mD2df;
   winrt::com_ptr<ID2D1HwndRenderTarget> mRt;
@@ -69,7 +69,7 @@ class MainWindow final : public wxFrame {
       return;
     }
 
-    if (snapshot.GetHeader()->SequenceNumber != mLastSequenceNumber) {
+    if (snapshot.GetHeader()->sequenceNumber != mLastsequenceNumber) {
       Refresh();
       Update();
     }
@@ -157,7 +157,7 @@ class MainWindow final : public wxFrame {
     const auto& config = *snapshot.GetHeader();
     const auto pixels = snapshot.GetPixels();
 
-    if (config.ImageWidth == 0 || config.ImageHeight == 0) {
+    if (config.imageWidth == 0 || config.imageHeight == 0) {
       mErrorRenderer->Render(
         _("Invalid Image").ToStdWstring(),
         {0.0f,
@@ -175,18 +175,18 @@ class MainWindow final : public wxFrame {
 
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
     mRt->CreateBitmap(
-      {config.ImageWidth, config.ImageHeight},
+      {config.imageWidth, config.imageHeight},
       reinterpret_cast<const void*>(pixels),
-      config.ImageWidth * sizeof(SHM::Pixel),
+      config.imageWidth * sizeof(SHM::Pixel),
       D2D1_BITMAP_PROPERTIES {
         {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
       d2dBitmap.put());
 
-    const auto scalex = float(clientSize.GetWidth()) / config.ImageWidth;
-    const auto scaley = float(clientSize.GetHeight()) / config.ImageHeight;
+    const auto scalex = float(clientSize.GetWidth()) / config.imageWidth;
+    const auto scaley = float(clientSize.GetHeight()) / config.imageHeight;
     const auto scale = std::min(scalex, scaley);
-    const auto renderWidth = config.ImageWidth * scale;
-    const auto renderHeight = config.ImageHeight * scale;
+    const auto renderWidth = config.imageWidth * scale;
+    const auto renderHeight = config.imageHeight * scale;
 
     const auto renderLeft = (clientSize.GetWidth() - renderWidth) / 2;
     const auto renderTop = (clientSize.GetHeight() - renderHeight) / 2;
@@ -204,7 +204,7 @@ class MainWindow final : public wxFrame {
     mRt->DrawBitmap(
       d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
-    mLastSequenceNumber = config.SequenceNumber;
+    mLastsequenceNumber = config.sequenceNumber;
   }
 
   void OnExit(wxCommandEvent& ev) {

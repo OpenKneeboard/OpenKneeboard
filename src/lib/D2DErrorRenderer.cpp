@@ -7,26 +7,26 @@ namespace OpenKneeboard {
 
 class D2DErrorRenderer::Impl final {
  public:
-  winrt::com_ptr<ID2D1Factory> D2df;
-  winrt::com_ptr<IDWriteFactory> Dwf;
+  winrt::com_ptr<ID2D1Factory> d2d;
+  winrt::com_ptr<IDWriteFactory> dwrite;
 
-  winrt::com_ptr<IDWriteTextFormat> TextFormat;
+  winrt::com_ptr<IDWriteTextFormat> textFormat;
 
-  winrt::com_ptr<ID2D1RenderTarget> Rt;
+  winrt::com_ptr<ID2D1RenderTarget> rt;
   struct {
-    winrt::com_ptr<ID2D1Brush> TextBrush;
-  } RtVar;
+    winrt::com_ptr<ID2D1Brush> textBrush;
+  } rtVar;
 };
 
 D2DErrorRenderer::D2DErrorRenderer(const winrt::com_ptr<ID2D1Factory>& d2df)
   : p(std::make_unique<Impl>()) {
-  p->D2df = d2df;
+  p->d2d = d2df;
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(p->Dwf.put()));
+    reinterpret_cast<IUnknown**>(p->dwrite.put()));
 
-  p->Dwf->CreateTextFormat(
+  p->dwrite->CreateTextFormat(
     L"Segoe UI",
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
@@ -34,22 +34,22 @@ D2DErrorRenderer::D2DErrorRenderer(const winrt::com_ptr<ID2D1Factory>& d2df)
     DWRITE_FONT_STRETCH_NORMAL,
     16.0f,
     L"",
-    p->TextFormat.put());
+    p->textFormat.put());
 }
 
 void D2DErrorRenderer::SetRenderTarget(
   const winrt::com_ptr<ID2D1RenderTarget>& rt) {
-  if (rt == p->Rt) {
+  if (rt == p->rt) {
     return;
   }
 
-  p->Rt = rt;
-  p->RtVar = {};
+  p->rt = rt;
+  p->rtVar = {};
 
   rt->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->RtVar.TextBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->rtVar.textBrush.put()));
 }
 
 D2DErrorRenderer::~D2DErrorRenderer() {
@@ -62,10 +62,10 @@ void D2DErrorRenderer::Render(
              canvasHeight = where.bottom - where.top;
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
-  p->Dwf->CreateTextLayout(
+  p->dwrite->CreateTextLayout(
     text.data(),
     static_cast<UINT32>(text.size()),
-    p->TextFormat.get(),
+    p->textFormat.get(),
     canvasWidth,
     canvasHeight,
     textLayout.put());
@@ -75,11 +75,11 @@ void D2DErrorRenderer::Render(
 
   const auto textWidth = metrics.width, textHeight = metrics.height;
 
-  p->Rt->DrawTextLayout(
+  p->rt->DrawTextLayout(
     {where.left + ((canvasWidth - textWidth) / 2),
      where.top + ((canvasHeight - textHeight) / 2)},
     textLayout.get(),
-    p->RtVar.TextBrush.get());
+    p->rtVar.textBrush.get());
 }
 
 }// namespace OpenKneeboard

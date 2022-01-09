@@ -25,40 +25,40 @@ int main() {
     .Flags = OpenKneeboard::Flags::HEADLOCKED |
     OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION, .y = -0.15, .z = -0.5f,
     .VirtualHeight = 0.25f,
-    .ImageWidth = 400,
-    .ImageHeight = 1200,
+    .imageWidth = 400,
+    .imageHeight = 1200,
     */
     /* On knee */
-    .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
-    .ImageWidth = 800,
-    .ImageHeight = 1200,
+    .flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
+    .imageWidth = 800,
+    .imageHeight = 1200,
   };
   uint64_t frames = -1;
   printf("Feeding OpenKneeboard - hit Ctrl-C to exit.\n");
-  std::vector<Pixel> pixels(config.ImageWidth * config.ImageHeight);
+  std::vector<Pixel> pixels(config.imageWidth * config.imageHeight);
   SHM::Writer shm;
   ConsoleLoopCondition cliLoop;
   do {
     frames++;
     Pixel pixel;
-    for (uint16_t y = 0; y < config.ImageHeight; y++) {
-      for (uint16_t x = 0; x < config.ImageWidth; x++) {
-        if (y < config.ImageHeight / 4) {
+    for (uint16_t y = 0; y < config.imageHeight; y++) {
+      for (uint16_t x = 0; x < config.imageWidth; x++) {
+        if (y < config.imageHeight / 4) {
           pixel = colors[frames % 4];
-        } else if (y < config.ImageHeight / 2) {
+        } else if (y < config.imageHeight / 2) {
           pixel = colors[(frames + 1) % 4];
-        } else if (y < 3 * config.ImageHeight / 4) {
+        } else if (y < 3 * config.imageHeight / 4) {
           pixel = colors[(frames + 2) % 4];
         } else {
           pixel = colors[(frames + 3) % 4];
         }
 
-        void* dest = &pixels[((y * config.ImageWidth) + x)];
+        void* dest = &pixels[((y * config.imageWidth) + x)];
         memcpy(dest, (void*)&pixel, sizeof(Pixel));
       }
     }
     shm.Update(config, pixels);
-  } while (cliLoop.sleep(std::chrono::seconds(1)));
+  } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");
   return 0;
 }

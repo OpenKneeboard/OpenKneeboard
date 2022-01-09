@@ -11,7 +11,7 @@ class ConsoleLoopCondition final {
   ~ConsoleLoopCondition();
 
   /// Returns false if sleep is interrupted
-  bool sleep(const std::chrono::steady_clock::duration& delay);
+  bool Sleep(const std::chrono::steady_clock::duration& delay);
 
  private:
   class Impl;

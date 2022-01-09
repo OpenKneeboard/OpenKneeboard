@@ -5,11 +5,11 @@
 
 namespace OpenKneeboard {
 
-static HANDLE g_ExitEvent = INVALID_HANDLE_VALUE;
+static HANDLE gExitEvent = INVALID_HANDLE_VALUE;
 
 static BOOL WINAPI ExitHandler(DWORD ignored) {
   CoUninitialize();
-  SetEvent(g_ExitEvent);
+  SetEvent(gExitEvent);
   return TRUE;
 }
 
@@ -19,7 +19,7 @@ class ConsoleLoopCondition::Impl final {
 };
 
 ConsoleLoopCondition::ConsoleLoopCondition() : p(std::make_shared<Impl>()) {
-  g_ExitEvent = CreateEvent(nullptr, false, false, nullptr);
+  gExitEvent = CreateEvent(nullptr, false, false, nullptr);
   p->TimerEvent = CreateWaitableTimer(nullptr, true, nullptr);
   SetConsoleCtrlHandler(&ExitHandler, true);
 }
@@ -27,7 +27,7 @@ ConsoleLoopCondition::ConsoleLoopCondition() : p(std::make_shared<Impl>()) {
 ConsoleLoopCondition::~ConsoleLoopCondition() {
   SetConsoleCtrlHandler(&ExitHandler, false);
   CloseHandle(p->TimerEvent);
-  CloseHandle(g_ExitEvent);
+  CloseHandle(gExitEvent);
 }
 
 namespace {
@@ -36,7 +36,7 @@ typedef std::chrono::
     FILETIME_RESOLUTION;
 }
 
-bool ConsoleLoopCondition::sleep(
+bool ConsoleLoopCondition::Sleep(
   const std::chrono::steady_clock::duration& delay) {
   int64_t expiration;
   GetSystemTimeAsFileTime((FILETIME*)&expiration);
@@ -44,10 +44,10 @@ bool ConsoleLoopCondition::sleep(
   SetWaitableTimer(
     p->TimerEvent, (LARGE_INTEGER*)&expiration, 0, nullptr, nullptr, false);
 
-  HANDLE handles[] = {g_ExitEvent, p->TimerEvent};
+  HANDLE handles[] = {gExitEvent, p->TimerEvent};
   auto res = WaitForMultipleObjects(
     sizeof(handles) / sizeof(handles[0]), handles, false, INFINITE);
-  if (handles[res - WAIT_OBJECT_0] == g_ExitEvent) {
+  if (handles[res - WAIT_OBJECT_0] == gExitEvent) {
     CancelWaitableTimer(p->TimerEvent);
     return false;
   }

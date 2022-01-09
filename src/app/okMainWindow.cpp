@@ -117,7 +117,7 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
 
 void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
   const auto ge = ev.GetPayload<GameEvent>();
-  dprintf("GameEvent: '{}' = '{}'", ge.Name, ge.Value);
+  dprintf("GameEvent: '{}' = '{}'", ge.name, ge.value);
   for (auto tab: p->TabUIs) {
     tab->GetTab()->OnGameEvent(ge);
   }

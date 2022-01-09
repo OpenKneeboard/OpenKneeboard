@@ -23,7 +23,7 @@ class okOpenVRThread::Impl final {
   winrt::com_ptr<ID3D11Device> D3D;
   winrt::com_ptr<ID3D11Texture2D> Texture;
   winrt::com_ptr<ID3D11RenderTargetView> RenderTargetView;
-  uint64_t SequenceNumber = 0;
+  uint64_t sequenceNumber = 0;
 
   ~Impl() {
     if (!VRSystem) {
@@ -130,18 +130,18 @@ void okOpenVRThread::Tick() {
     zoomed = overlay->ComputeOverlayIntersection(p->Overlay, &params, &results);
   }
 
-  const auto aspectRatio = float(header.ImageWidth) / header.ImageHeight;
-  const auto& vrConf = header.VRConfig;
+  const auto aspectRatio = float(header.imageWidth) / header.imageHeight;
+  const auto& vrConf = header.vr;
 
   CHECK(
     SetOverlayWidthInMeters,
     p->Overlay,
-    vrConf.VirtualHeight * aspectRatio * (zoomed ? vrConf.ZoomScale : 1.0f));
+    vrConf.height * aspectRatio * (zoomed ? vrConf.zoomScale : 1.0f));
 
-  if (p->SequenceNumber == header.SequenceNumber) {
+  if (p->sequenceNumber == header.sequenceNumber) {
     return;
   }
-  p->SequenceNumber = header.SequenceNumber;
+  p->sequenceNumber = header.sequenceNumber;
 
   // clang-format off
   auto transform =
@@ -166,15 +166,15 @@ void okOpenVRThread::Tick() {
   if (previousTexture) {
     D3D11_TEXTURE2D_DESC desc;
     previousTexture->GetDesc(&desc);
-    if (header.ImageWidth != desc.Width || header.ImageHeight != desc.Height) {
+    if (header.imageWidth != desc.Width || header.imageHeight != desc.Height) {
       p->Texture = nullptr;
     }
   }
 
   if (!p->Texture) {
     D3D11_TEXTURE2D_DESC desc {
-      .Width = header.ImageWidth,
-      .Height = header.ImageHeight,
+      .Width = header.imageWidth,
+      .Height = header.imageHeight,
       .MipLevels = 1,
       .ArraySize = 1,
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
@@ -213,8 +213,8 @@ void okOpenVRThread::Tick() {
       .left = 0,
       .top = 0,
       .front = 0,
-      .right = header.ImageWidth,
-      .bottom = header.ImageHeight,
+      .right = header.imageWidth,
+      .bottom = header.imageHeight,
       .back = 1,
     };
 
@@ -226,7 +226,7 @@ void okOpenVRThread::Tick() {
       0,
       &box,
       snapshot.GetPixels(),
-      header.ImageWidth * sizeof(SHM::Pixel),
+      header.imageWidth * sizeof(SHM::Pixel),
       0);
     vr::Texture_t vrt {
       .handle = p->Texture.get(),

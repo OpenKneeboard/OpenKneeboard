@@ -54,8 +54,8 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   if (p->swapChain) {
     const auto& prev = p->header;
     if (
-      config.ImageWidth == prev.ImageWidth
-      && config.ImageHeight == prev.ImageHeight) {
+      config.imageWidth == prev.imageWidth
+      && config.imageHeight == prev.imageHeight) {
       return p->swapChain;
     }
     real_ovr_DestroyTextureSwapChain(session, p->swapChain);
@@ -72,8 +72,8 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
     .ArraySize = 1,
-    .Width = config.ImageWidth,
-    .Height = config.ImageHeight,
+    .Width = config.imageWidth,
+    .Height = config.imageHeight,
     .MipLevels = 1,
     .SampleCount = 1,
     .StaticImage = false,
@@ -145,8 +145,8 @@ bool OculusD3D11Kneeboard::Render(
     .left = 0,
     .top = 0,
     .front = 0,
-    .right = config.ImageWidth,
-    .bottom = config.ImageHeight,
+    .right = config.imageWidth,
+    .bottom = config.imageHeight,
     .back = 1,
   };
 
@@ -159,7 +159,7 @@ bool OculusD3D11Kneeboard::Render(
     0,
     &box,
     snapshot.GetPixels(),
-    config.ImageWidth * sizeof(SHM::Pixel),
+    config.imageWidth * sizeof(SHM::Pixel),
     0);
 
   auto ret = real_ovr_CommitTextureSwapChain(session, swapChain);

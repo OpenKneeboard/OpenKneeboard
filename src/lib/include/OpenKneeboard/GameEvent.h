@@ -6,8 +6,8 @@
 
 namespace OpenKneeboard {
 struct GameEvent final {
-  std::string Name;
-  std::string Value;
+  std::string name;
+  std::string value;
 
   operator bool() const;
 

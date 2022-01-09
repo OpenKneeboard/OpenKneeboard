@@ -37,9 +37,9 @@ static int SendToOpenKneeboard(lua_State* state) {
   }
 
   auto ge = OpenKneeboard::GameEvent {
-    .Name = fmt::format(
+    fmt::format(
       "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1)),
-    .Value = lua_tostring(state, 2)};
+    lua_tostring(state, 2)};
   ge.Send();
 
   return 0;
@@ -48,7 +48,7 @@ static int SendToOpenKneeboard(lua_State* state) {
 extern "C" int __declspec(dllexport)
   luaopen_OpenKneeboardDCSExt(lua_State* state) {
   OpenKneeboard::DPrintSettings::Set({
-    .Prefix = "OpenKneeboard-DCSExt",
+    .prefix = "OpenKneeboard-DCSExt",
   });
   lua_createtable(state, 0, 1);
   lua_pushcfunction(state, &SendToOpenKneeboard);

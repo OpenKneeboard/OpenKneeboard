@@ -22,8 +22,8 @@ struct DPrintSettings {
     DEFAULT
   };
 
-  std::string Prefix = "OpenKneeboard";
-  Target Target = Target::DEFAULT;
+  std::string prefix = "OpenKneeboard";
+  Target target = Target::DEFAULT;
 
   static void Set(const DPrintSettings&);
 };

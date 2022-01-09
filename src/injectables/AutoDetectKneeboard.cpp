@@ -145,7 +145,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
 
   if (dwReason == DLL_PROCESS_ATTACH) {
     OpenKneeboard::DPrintSettings::Set({
-      .Prefix = "OpenKneeboard-Autodetect",
+      .prefix = "OpenKneeboard-Autodetect",
     });
     dprintf("Attached to process.");
     // Create a new thread to avoid limitations on what we can do from DllMain

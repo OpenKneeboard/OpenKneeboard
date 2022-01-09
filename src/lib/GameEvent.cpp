@@ -30,7 +30,7 @@ namespace OpenKneeboard {
   }
 
 GameEvent::operator bool() const {
-  return !(Name.empty() || Value.empty());
+  return !(name.empty() || value.empty());
 }
 
 GameEvent GameEvent::Unserialize(const std::vector<std::byte>& buffer) {
@@ -43,21 +43,21 @@ GameEvent GameEvent::Unserialize(const std::vector<std::byte>& buffer) {
   const auto nameLen = hex_to_ui32(packet.substr(0, 8));
   CHECK_PACKET(packet.size() >= 8 + nameLen + 8 + 4);
   const uint32_t nameOffset = 9;
-  const auto name = packet.substr(nameOffset, nameLen);
+  const std::string name(packet.substr(nameOffset, nameLen));
 
   const uint32_t valueLenOffset = nameOffset + nameLen + 1;
   CHECK_PACKET(packet.size() >= valueLenOffset + 10);
   const auto valueLen = hex_to_ui32(packet.substr(valueLenOffset, 8));
   const uint32_t valueOffset = valueLenOffset + 8 + 1;
   CHECK_PACKET(packet.size() == valueOffset + valueLen + 1);
-  const auto value = packet.substr(valueOffset, valueLen);
+  const std::string value(packet.substr(valueOffset, valueLen));
 
-  return {.Name = std::string(name), .Value = std::string(value)};
+  return {name, value};
 }
 
 std::vector<std::byte> GameEvent::Serialize() const {
   const auto str = fmt::format(
-    "{:08x}!{}!{:08x}!{}!", Name.size(), Name, Value.size(), Value);
+    "{:08x}!{}!{:08x}!{}!", name.size(), name, value.size(), value);
   const auto first = reinterpret_cast<const std::byte*>(str.data());
   return {first, first + str.size()};
 }

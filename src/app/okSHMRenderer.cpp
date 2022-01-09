@@ -120,9 +120,9 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   }
 
   SHM::Header header {
-    .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
-    .ImageWidth = static_cast<uint16_t>(width),
-    .ImageHeight = static_cast<uint16_t>(height),
+    .flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
+    .imageWidth = static_cast<uint16_t>(width),
+    .imageHeight = static_cast<uint16_t>(height),
   };
 
   using Pixel = SHM::Pixel;

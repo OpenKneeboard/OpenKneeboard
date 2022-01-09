@@ -16,11 +16,9 @@ class D2DErrorRenderer final {
   D2DErrorRenderer(const winrt::com_ptr<ID2D1Factory>& d2df);
   ~D2DErrorRenderer();
 
-void SetRenderTarget(const winrt::com_ptr<ID2D1RenderTarget>& rt);
+  void SetRenderTarget(const winrt::com_ptr<ID2D1RenderTarget>& rt);
 
-  void Render(
-    const std::wstring& text,
-    const D2D1_RECT_F& where);
+  void Render(const std::wstring& text, const D2D1_RECT_F& where);
 };
 
 }// namespace OpenKneeboard

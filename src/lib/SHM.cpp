@@ -23,7 +23,7 @@ class Spinlock final {
 
     for (int count = 1; count <= 1000; ++count) {
       auto alreadyLocked = _interlockedbittestandset64(
-        reinterpret_cast<LONG64*>(&header->Flags), bit);
+        reinterpret_cast<LONG64*>(&header->flags), bit);
       if (!alreadyLocked) {
         return;
       }
@@ -56,7 +56,7 @@ class Spinlock final {
       return;
     }
 
-    mHeader->Flags &= ~Flags::LOCKED;
+    mHeader->flags &= ~Flags::LOCKED;
   }
 };
 }// namespace
@@ -106,7 +106,7 @@ class Impl {
 
   ~Impl() {
     if (IsFeeder) {
-      Header->Flags &= ~Flags::FEEDER_ATTACHED;
+      Header->flags &= ~Flags::FEEDER_ATTACHED;
       FlushViewOfFile(Mapping, NULL);
     }
     UnmapViewOfFile(Mapping);
@@ -167,7 +167,7 @@ Reader::~Reader() {
 }
 
 Reader::operator bool() const {
-  return p && (p->Header->Flags & Flags::FEEDER_ATTACHED);
+  return p && (p->Header->flags & Flags::FEEDER_ATTACHED);
 }
 
 Writer::operator bool() const {
@@ -183,7 +183,7 @@ Snapshot Reader::MaybeGet() const {
 
   if (
     snapshot
-    && snapshot.GetHeader()->SequenceNumber == p->Header->SequenceNumber) {
+    && snapshot.GetHeader()->sequenceNumber == p->Header->sequenceNumber) {
     return snapshot;
   }
 
@@ -206,14 +206,14 @@ void Writer::Update(const Header& _header, const std::vector<Pixel>& pixels) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
 
-  if (pixels.size() != header.ImageWidth * header.ImageHeight) {
+  if (pixels.size() != header.imageWidth * header.imageHeight) {
     throw std::logic_error("Pixel array size does not match header");
   }
 
-  header.Flags |= Flags::FEEDER_ATTACHED | Flags::LOCKED;
+  header.flags |= Flags::FEEDER_ATTACHED | Flags::LOCKED;
 
   Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);
-  header.SequenceNumber = p->Header->SequenceNumber + 1;
+  header.sequenceNumber = p->Header->sequenceNumber + 1;
   memcpy(reinterpret_cast<void*>(p->Header), &header, sizeof(Header));
   memcpy(
     reinterpret_cast<void*>(p->Pixels),
