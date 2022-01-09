@@ -14,17 +14,17 @@ using namespace OpenKneeboard;
 
 class okGameInjectorThread::Impl final {
  public:
-  wxEvtHandler* Receiver;
-  std::vector<GameInstance> Games;
-  std::mutex GamesMutex;
+  wxEvtHandler* receiver;
+  std::vector<GameInstance> games;
+  std::mutex gamesMutex;
 };
 
 okGameInjectorThread::okGameInjectorThread(
   wxEvtHandler* receiver,
   const std::vector<GameInstance>& games) {
   p.reset(new Impl {
-    .Receiver = receiver,
-    .Games = games,
+    .receiver = receiver,
+    .games = games,
   });
 }
 
@@ -33,8 +33,8 @@ okGameInjectorThread::~okGameInjectorThread() {
 
 void okGameInjectorThread::SetGameInstances(
   const std::vector<GameInstance>& games) {
-  std::scoped_lock lock(p->GamesMutex);
-  p->Games = games;
+  std::scoped_lock lock(p->gamesMutex);
+  p->games = games;
 }
 
 namespace {
@@ -191,8 +191,8 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
       const std::filesystem::path path(std::wstring(buf, bufSize));
 
-      std::scoped_lock lock(p->GamesMutex);
-      for (const auto& game: p->Games) {
+      std::scoped_lock lock(p->gamesMutex);
+      for (const auto& game: p->games) {
         if (path == game.Path) {
           const auto friendly = game.Game->GetUserFriendlyName(game.Path);
           if (AlreadyInjected(process.th32ProcessID, injectedDll)) {
@@ -200,7 +200,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
               currentPath = path;
               wxCommandEvent ev(okEVT_GAME_CHANGED);
               ev.SetString(path.wstring());
-              wxQueueEvent(p->Receiver, ev.Clone());
+              wxQueueEvent(p->receiver, ev.Clone());
             }
             break;
           }
@@ -224,7 +224,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
           currentPath = path;
           wxCommandEvent ev(okEVT_GAME_CHANGED);
           ev.SetString(path.wstring());
-          wxQueueEvent(p->Receiver, ev.Clone());
+          wxQueueEvent(p->receiver, ev.Clone());
           break;
         }
       }

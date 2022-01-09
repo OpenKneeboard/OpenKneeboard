@@ -39,7 +39,7 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    p->Tabs.push_back(std::make_shared<it##Tab>()); \
+    p->tabs.push_back(std::make_shared<it##Tab>()); \
     continue; \
   }
     ZERO_CONFIG_TAB_TYPES
@@ -53,7 +53,7 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
   if (type == #it) { \
     auto instance = it##Tab::FromSettings(title, tab.at("Settings")); \
     if (instance) { \
-      p->Tabs.push_back(instance); \
+      p->tabs.push_back(instance); \
       continue; \
     } \
   }
@@ -65,7 +65,7 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 }
 
 void okTabsList::LoadDefaultConfig() {
-  p->Tabs = {
+  p->tabs = {
     std::make_shared<DCSRadioLogTab>(),
     std::make_shared<DCSMissionTab>(),
     std::make_shared<DCSAircraftTab>(),
@@ -74,7 +74,7 @@ void okTabsList::LoadDefaultConfig() {
 }
 
 std::vector<std::shared_ptr<Tab>> okTabsList::GetTabs() const {
-  return p->Tabs;
+  return p->tabs;
 }
 
 wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
@@ -87,7 +87,7 @@ wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
 nlohmann::json okTabsList::GetSettings() const {
   std::vector<nlohmann::json> ret;
 
-  for (const auto& tab: p->Tabs) {
+  for (const auto& tab: p->tabs) {
     std::string type;
 #define IT(_, it) \
   if (type.empty() && std::dynamic_pointer_cast<it##Tab>(tab)) { \

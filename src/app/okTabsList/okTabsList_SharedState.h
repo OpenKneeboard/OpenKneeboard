@@ -3,5 +3,5 @@
 #include "okTabsList.h"
 
 struct okTabsList::SharedState {
-  std::vector<std::shared_ptr<OpenKneeboard::Tab>> Tabs;
+  std::vector<std::shared_ptr<OpenKneeboard::Tab>> tabs;
 };

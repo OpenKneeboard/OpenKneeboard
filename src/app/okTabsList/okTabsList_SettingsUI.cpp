@@ -21,7 +21,7 @@ okTabsList::SettingsUI::SettingsUI(
   mList->SetWindowStyle(wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_NO_HEADER);
   mList->AppendColumn(_("Title"));
 
-  for (const auto& tab: state->Tabs) {
+  for (const auto& tab: state->tabs) {
     const auto row = mList->GetItemCount();
 
     mList->InsertItem(row, tab->GetTitle());
@@ -105,7 +105,7 @@ void okTabsList::SettingsUI::OnRemoveTab(wxCommandEvent& ev) {
     return;
   }
 
-  s->Tabs.erase(s->Tabs.begin() + index);
+  s->tabs.erase(s->tabs.begin() + index);
   mList->DeleteItem(index);
 
   wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
@@ -137,7 +137,7 @@ void okTabsList::SettingsUI::MoveTab(Direction direction) {
 
   wxWindowUpdateLocker freezer(mList);
 
-  auto& tabs = s->Tabs;
+  auto& tabs = s->tabs;
   auto tab = tabs.at(index);
   std::swap(tabs[index], tabs[swapIndex]);
   mList->DeleteItem(index);
@@ -156,7 +156,7 @@ void okTabsList::SettingsUI::InsertTab(const std::shared_ptr<Tab>& tab) {
     insertAt = 0;
   }
 
-  s->Tabs.insert(s->Tabs.begin() + insertAt, tab);
+  s->tabs.insert(s->tabs.begin() + insertAt, tab);
 
   wxWindowUpdateLocker freezer(mList);
   mList->InsertItem(insertAt, tab->GetTitle());
