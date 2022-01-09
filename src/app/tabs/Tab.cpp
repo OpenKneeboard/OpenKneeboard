@@ -6,17 +6,17 @@ namespace OpenKneeboard {
 
 class Tab::Impl final {
  public:
-  std::string Title;
+  std::string title;
 };
 
-Tab::Tab(const wxString& title) : p(new Impl {.Title = title.ToStdString()}) {
+Tab::Tab(const wxString& title) : p(new Impl {.title = title.ToStdString()}) {
 }
 
 Tab::~Tab() {
 }
 
 std::string Tab::GetTitle() const {
-  return p->Title;
+  return p->title;
 }
 
 void Tab::Reload() {

@@ -81,15 +81,15 @@ class ExtractedMission final {
 
 class DCSMissionTab::Impl final {
  public:
-  std::filesystem::path Mission;
-  std::unique_ptr<ExtractedMission> Extracted;
-  std::unique_ptr<FolderTab> Delegate;
+  std::filesystem::path mission;
+  std::unique_ptr<ExtractedMission> extracted;
+  std::unique_ptr<FolderTab> delegate;
 };
 
 DCSMissionTab::DCSMissionTab()
   : DCSTab(_("Mission")), p(std::make_shared<Impl>()) {
-  p->Delegate = std::make_unique<FolderTab>("", "");
-  p->Delegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
+  p->delegate = std::make_unique<FolderTab>("", "");
+  p->delegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());
   });
 }
@@ -98,24 +98,24 @@ DCSMissionTab::~DCSMissionTab() {
 }
 
 void DCSMissionTab::Reload() {
-  p->Extracted = std::make_unique<ExtractedMission>(p->Mission);
-  p->Delegate->SetPath(p->Extracted->GetExtractedPath());
-  p->Delegate->Reload();
+  p->extracted = std::make_unique<ExtractedMission>(p->mission);
+  p->delegate->SetPath(p->extracted->GetExtractedPath());
+  p->delegate->Reload();
 }
 
 uint16_t DCSMissionTab::GetPageCount() const {
-  return p->Delegate->GetPageCount();
+  return p->delegate->GetPageCount();
 }
 
 void DCSMissionTab::RenderPage(
   uint16_t pageIndex,
   const winrt::com_ptr<ID2D1RenderTarget>& target,
   const D2D1_RECT_F& rect) {
-  p->Delegate->RenderPage(pageIndex, target, rect);
+  p->delegate->RenderPage(pageIndex, target, rect);
 }
 
 D2D1_SIZE_U DCSMissionTab::GetPreferredPixelSize(uint16_t pageIndex) {
-  return p->Delegate->GetPreferredPixelSize(pageIndex);
+  return p->delegate->GetPreferredPixelSize(pageIndex);
 }
 
 const char* DCSMissionTab::GetGameEventName() const {
@@ -128,10 +128,10 @@ void DCSMissionTab::Update(
   const std::string& value) {
   dprintf("Mission: {}", value);
   auto mission = std::filesystem::canonical(value);
-  if (mission == p->Mission) {
+  if (mission == p->mission) {
     return;
   }
-  p->Mission = mission;
+  p->mission = mission;
   this->Reload();
 }
 

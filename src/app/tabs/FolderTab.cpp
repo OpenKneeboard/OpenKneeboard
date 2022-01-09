@@ -9,18 +9,19 @@ namespace OpenKneeboard {
 class FolderTab::Impl final {
  public:
   struct Page {
-    unsigned int Width = 0;
-    unsigned int Height = 0;
-    std::vector<std::byte> Pixels;
+    unsigned int width = 0;
+    unsigned int height = 0;
+    std::vector<std::byte> pixels;
 
     operator bool() const {
-      return !Pixels.empty();
+      return !pixels.empty();
     }
   };
-  winrt::com_ptr<IWICImagingFactory> Wicf;
-  std::filesystem::path Path;
-  std::vector<Page> Pages = {};
-  std::vector<std::filesystem::path> PagePaths = {};
+  winrt::com_ptr<IWICImagingFactory> wic;
+  std::filesystem::path path;
+  std::vector<Page> pages = {};
+  // TODO: make part of pages
+  std::vector<std::filesystem::path> pagePaths = {};
 
   bool LoadPage(uint16_t index);
 };
@@ -28,9 +29,9 @@ class FolderTab::Impl final {
 FolderTab::FolderTab(const wxString& title, const std::filesystem::path& path)
   : Tab(title),
     p(new Impl {
-      .Wicf
+      .wic
       = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
-      .Path = path}) {
+      .path = path}) {
   Reload();
 }
 
@@ -38,12 +39,12 @@ FolderTab::~FolderTab() {
 }
 
 void FolderTab::Reload() {
-  p->Pages.clear();
-  p->PagePaths.clear();
-  if (!std::filesystem::is_directory(p->Path)) {
+  p->pages.clear();
+  p->pagePaths.clear();
+  if (!std::filesystem::is_directory(p->path)) {
     return;
   }
-  for (auto& entry: std::filesystem::recursive_directory_iterator(p->Path)) {
+  for (auto& entry: std::filesystem::recursive_directory_iterator(p->path)) {
     if (!entry.is_regular_file()) {
       continue;
     }
@@ -51,14 +52,14 @@ void FolderTab::Reload() {
     if (!wxImage::CanRead(wsPath)) {
       continue;
     }
-    p->PagePaths.push_back(wsPath);
+    p->pagePaths.push_back(wsPath);
   }
-  p->Pages.resize(p->PagePaths.size());
+  p->pages.resize(p->pagePaths.size());
   wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_FULLY_REPLACED));
 }
 
 uint16_t FolderTab::GetPageCount() const {
-  return p->Pages.size();
+  return p->pages.size();
 }
 
 static bool IsValidPageIndex(uint16_t index, uint16_t count) {
@@ -78,14 +79,14 @@ D2D1_SIZE_U FolderTab::GetPreferredPixelSize(uint16_t index) {
     return {};
   }
 
-  auto& page = p->Pages.at(index);
+  auto& page = p->pages.at(index);
   if (!page) {
     if (!p->LoadPage(index)) {
       return {};
     }
   }
 
-  return {page.Width, page.Height};
+  return {page.width, page.height};
 }
 
 void FolderTab::RenderPage(
@@ -96,7 +97,7 @@ void FolderTab::RenderPage(
     return;
   }
 
-  auto& page = p->Pages.at(index);
+  auto& page = p->pages.at(index);
   if (!page) {
     if (!p->LoadPage(index)) {
       return;
@@ -105,21 +106,21 @@ void FolderTab::RenderPage(
 
   winrt::com_ptr<ID2D1Bitmap> bmp;
   rt->CreateBitmap(
-    {page.Width, page.Height},
-    reinterpret_cast<const void*>(page.Pixels.data()),
-    page.Width * 4,
+    {page.width, page.height},
+    reinterpret_cast<const void*>(page.pixels.data()),
+    page.width * 4,
     D2D1_BITMAP_PROPERTIES {
       {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
     bmp.put());
 
   const auto targetWidth = rect.right - rect.left;
   const auto targetHeight = rect.bottom - rect.top;
-  const auto scalex = float(targetWidth) / page.Width;
-  const auto scaley = float(targetHeight) / page.Height;
+  const auto scalex = float(targetWidth) / page.width;
+  const auto scaley = float(targetHeight) / page.height;
   const auto scale = std::min(scalex, scaley);
 
-  const auto renderWidth = page.Width * scale;
-  const auto renderHeight = page.Height * scale;
+  const auto renderWidth = page.width * scale;
+  const auto renderHeight = page.height * scale;
 
   const auto renderLeft = rect.left + ((targetWidth - renderWidth) / 2);
   const auto renderTop = rect.top + ((targetHeight - renderHeight) / 2);
@@ -135,8 +136,8 @@ bool FolderTab::Impl::LoadPage(uint16_t index) {
   winrt::com_ptr<IWICBitmapDecoder> decoder;
   auto p = this;
 
-  auto path = p->PagePaths.at(index).wstring();
-  p->Wicf->CreateDecoderFromFilename(
+  auto path = p->pagePaths.at(index).wstring();
+  p->wic->CreateDecoderFromFilename(
     path.c_str(),
     nullptr,
     GENERIC_READ,
@@ -153,7 +154,7 @@ bool FolderTab::Impl::LoadPage(uint16_t index) {
   }
 
   winrt::com_ptr<IWICFormatConverter> converter;
-  p->Wicf->CreateFormatConverter(converter.put());
+  p->wic->CreateFormatConverter(converter.put());
   if (!converter) {
     return false;
   }
@@ -167,28 +168,28 @@ bool FolderTab::Impl::LoadPage(uint16_t index) {
 
   UINT width, height;
   frame->GetSize(&width, &height);
-  auto& page = p->Pages.at(index);
-  page.Width = width;
-  page.Height = height;
-  page.Pixels.resize(width * height * 4 /* BGRA */);
+  auto& page = p->pages.at(index);
+  page.width = width;
+  page.height = height;
+  page.pixels.resize(width * height * 4 /* BGRA */);
   converter->CopyPixels(
     nullptr,
     width * 4,
-    page.Pixels.size(),
-    reinterpret_cast<BYTE*>(page.Pixels.data()));
+    page.pixels.size(),
+    reinterpret_cast<BYTE*>(page.pixels.data()));
 
   return true;
 }
 
 std::filesystem::path FolderTab::GetPath() const {
-  return p->Path;
+  return p->path;
 }
 
 void FolderTab::SetPath(const std::filesystem::path& path) {
-  if (path == p->Path) {
+  if (path == p->path) {
     return;
   }
-  p->Path = path;
+  p->path = path;
   Reload();
 }
 

@@ -121,16 +121,16 @@ namespace OpenKneeboard {
 class DCSTab::Impl final {
  public:
   struct Config final {
-    std::filesystem::path InstallPath;
-    std::filesystem::path SavedGamesPath;
-    std::string Value;
+    std::filesystem::path installPath;
+    std::filesystem::path savedGamesPath;
+    std::string value;
     bool operator==(const Config&) const = default;
   };
 
-  Config CurrentConfig;
-  Config LastValidConfig;
+  Config currentConfig;
+  Config lastValidConfig;
 
-  std::string LastValue;
+  std::string lastValue;
 };
 
 DCSTab::DCSTab(const wxString& title)
@@ -143,19 +143,19 @@ DCSTab::~DCSTab() {
 
 void DCSTab::OnGameEvent(const GameEvent& event) {
   if (event.name == this->GetGameEventName()) {
-    p->CurrentConfig.Value = event.value;
+    p->currentConfig.value = event.value;
     Update();
     return;
   }
 
   if (event.name == DCS::EVT_INSTALL_PATH) {
-    p->CurrentConfig.InstallPath = std::filesystem::canonical(event.value);
+    p->currentConfig.installPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
 
   if (event.name == DCS::EVT_SAVED_GAMES_PATH) {
-    p->CurrentConfig.SavedGamesPath = std::filesystem::canonical(event.value);
+    p->currentConfig.savedGamesPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
@@ -167,25 +167,25 @@ void DCSTab::OnGameEvent(const GameEvent& event) {
 }
 
 void DCSTab::Update() {
-  auto c = p->CurrentConfig;
-  if (c == p->LastValidConfig) {
+  auto c = p->currentConfig;
+  if (c == p->lastValidConfig) {
     return;
   }
 
-  if (c.InstallPath.empty()) {
+  if (c.installPath.empty()) {
     return;
   }
 
-  if (c.SavedGamesPath.empty()) {
+  if (c.savedGamesPath.empty()) {
     return;
   }
 
-  if (c.Value == p->LastValue) {
+  if (c.value == p->lastValue) {
     return;
   }
-  p->LastValue = c.Value;
+  p->lastValue = c.value;
 
-  this->Update(c.InstallPath, c.SavedGamesPath, c.Value);
+  this->Update(c.installPath, c.savedGamesPath, c.value);
 }
 
 void DCSTab::OnSimulationStart() {
