@@ -19,7 +19,7 @@ ovr_SubmitFrame2(
 
 namespace OpenKneeboard {
 
-static OculusFrameHook* g_instance = nullptr;
+static OculusFrameHook* gInstance = nullptr;
 
 #define IT(x) \
   static_assert(std::same_as<decltype(x), decltype(ovr_EndFrame)>); \
@@ -31,17 +31,17 @@ static OculusFrameHook* g_instance = nullptr;
     const ovrViewScaleDesc* viewScaleDesc, \
     ovrLayerHeader const* const* layerPtrList, \
     unsigned int layerCount) { \
-    if (!g_instance) { \
+    if (!gInstance) { \
       real_##x(session, frameIndex, viewScaleDesc, layerPtrList, layerCount); \
     } \
-    return g_instance->OnEndFrame( \
+    return gInstance->OnEndFrame( \
       session, frameIndex, viewScaleDesc, layerPtrList, layerCount, real_##x); \
   }
 HOOKED_ENDFRAME_FUNCS
 #undef IT
 
 OculusFrameHook::OculusFrameHook() {
-  g_instance = this;
+  gInstance = this;
   const char* lib = "LibOVRRT64_1.dll";
 
   DetourTransactionPushBegin();
@@ -68,7 +68,7 @@ void OculusFrameHook::Unhook() {
 
 OculusFrameHook::~OculusFrameHook() {
   Unhook();
-  g_instance = nullptr;
+  gInstance = nullptr;
 }
 
 }// namespace OpenKneeboard

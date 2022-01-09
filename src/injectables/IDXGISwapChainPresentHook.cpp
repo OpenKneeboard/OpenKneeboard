@@ -10,9 +10,9 @@ namespace OpenKneeboard {
 
 namespace {
 
-IDXGISwapChainPresentHook* g_hook = nullptr;
-bool g_hooked = false;
-uint16_t g_count = 0;
+IDXGISwapChainPresentHook* gHook = nullptr;
+bool gHooked = false;
+uint16_t gCount = 0;
 
 decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
 
@@ -24,21 +24,21 @@ class IDXGISwapChainPresentHook::Impl final {
     UINT SyncInterval,
     UINT Flags) {
     auto _this = reinterpret_cast<IDXGISwapChain*>(this);
-    if (!g_hook) {
+    if (!gHook) {
       return std::invoke(
         Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
     }
 
-    return g_hook->OnPresent(
+    return gHook->OnPresent(
       SyncInterval, Flags, _this, Real_IDXGISwapChain_Present);
   }
 };
 
 void IDXGISwapChainPresentHook::Unhook() {
-  if (!g_hooked) {
+  if (!gHooked) {
     return;
   }
-  g_hooked = false;
+  gHooked = false;
 
   auto ffp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   auto mfp = &Impl::Hooked_IDXGISwapChain_Present;
@@ -51,12 +51,12 @@ void IDXGISwapChainPresentHook::Unhook() {
 }
 
 IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
-  if (g_hook) {
+  if (gHook) {
     throw std::logic_error("Only one IDXGISwapChainPresentHook at a time!");
   }
 
-  g_hook = this;
-  g_hooked = true;
+  gHook = this;
+  gHooked = true;
 
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
@@ -123,12 +123,12 @@ IDXGISwapChainPresentHook::~IDXGISwapChainPresentHook() {
 }
 
 bool IDXGISwapChainPresentHook::IsHookInstalled() const {
-  return g_hooked;
+  return gHooked;
 }
 
 void IDXGISwapChainPresentHook::UnhookAndCleanup() {
   Unhook();
-  g_hook = nullptr;
+  gHook = nullptr;
 }
 
 }// namespace OpenKneeboard

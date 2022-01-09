@@ -32,7 +32,7 @@
 
 using namespace OpenKneeboard;
 
-static std::unique_ptr<OculusD3D11Kneeboard> g_renderer;
+static std::unique_ptr<OculusD3D11Kneeboard> gRenderer;
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   if (DetourIsHelperProcess()) {
@@ -47,20 +47,20 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
     DetourRestoreAfterWith();
 
     DetourTransactionPushBegin();
-    g_renderer = std::make_unique<OculusD3D11Kneeboard>();
+    gRenderer = std::make_unique<OculusD3D11Kneeboard>();
     DetourTransactionPopCommit();
     dprint("Installed hooks.");
   } else if (dwReason == DLL_PROCESS_DETACH) {
     dprint("Detaching from process...");
     DetourTransactionPushBegin();
-    g_renderer->Unhook();
+    gRenderer->Unhook();
     DetourTransactionPopCommit();
     dprint("Detached hooks, waiting for in-progress calls");
     // If, for example, hooked_ovr_EndFrame was being called when we
     // unhooked it, we need to let the current call finish.
     Sleep(500);
     dprint("Freeing resources");
-    g_renderer.reset();
+    gRenderer.reset();
     dprint("Cleanup complete.");
   }
   return TRUE;
