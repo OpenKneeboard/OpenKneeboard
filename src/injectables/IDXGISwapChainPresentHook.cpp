@@ -3,7 +3,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <winrt/base.h>
 
-#include "d3d11-offsets.h"
+#include "dxgi-offsets.h"
 #include "detours-ext.h"
 
 namespace OpenKneeboard {

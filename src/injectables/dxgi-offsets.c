@@ -1,4 +1,4 @@
-#include "d3d11-offsets.h"
+#include "dxgi-offsets.h"
 
 #include <dxgi.h>
 
