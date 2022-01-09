@@ -9,6 +9,7 @@ namespace OpenKneeboard {
 class FolderTab::Impl final {
  public:
   struct Page {
+    std::filesystem::path path;
     unsigned int width = 0;
     unsigned int height = 0;
     std::vector<std::byte> pixels;
@@ -20,8 +21,6 @@ class FolderTab::Impl final {
   winrt::com_ptr<IWICImagingFactory> wic;
   std::filesystem::path path;
   std::vector<Page> pages = {};
-  // TODO: make part of pages
-  std::vector<std::filesystem::path> pagePaths = {};
 
   bool LoadPage(uint16_t index);
 };
@@ -40,7 +39,6 @@ FolderTab::~FolderTab() {
 
 void FolderTab::Reload() {
   p->pages.clear();
-  p->pagePaths.clear();
   if (!std::filesystem::is_directory(p->path)) {
     return;
   }
@@ -52,9 +50,8 @@ void FolderTab::Reload() {
     if (!wxImage::CanRead(wsPath)) {
       continue;
     }
-    p->pagePaths.push_back(wsPath);
+    p->pages.push_back({.path = wsPath});
   }
-  p->pages.resize(p->pagePaths.size());
   wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_FULLY_REPLACED));
 }
 
@@ -136,7 +133,7 @@ bool FolderTab::Impl::LoadPage(uint16_t index) {
   winrt::com_ptr<IWICBitmapDecoder> decoder;
   auto p = this;
 
-  auto path = p->pagePaths.at(index).wstring();
+  auto path = p->pages.at(index).path.wstring();
   p->wic->CreateDecoderFromFilename(
     path.c_str(),
     nullptr,
