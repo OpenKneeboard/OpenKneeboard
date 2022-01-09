@@ -126,9 +126,12 @@ ovrResult OculusKneeboard::OnEndFrame(
   kneeboardLayer.Viewport.Size
     = {.w = config.ImageWidth, .h = config.ImageHeight};
 
-  const ovrVector2f normalSize(config.VirtualWidth, config.VirtualHeight);
+  const auto aspectRatio = float(config.ImageWidth) / config.ImageHeight;
+  const auto virtualWidth = aspectRatio * config.VirtualHeight;
+
+  const ovrVector2f normalSize(virtualWidth, config.VirtualHeight);
   const ovrVector2f zoomedSize(
-    config.VirtualWidth * config.ZoomScale,
+    virtualWidth * config.ZoomScale,
     config.VirtualHeight * config.ZoomScale);
 
   auto predictedTime = real_ovr_GetPredictedDisplayTime(session, frameIndex);

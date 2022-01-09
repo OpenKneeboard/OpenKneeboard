@@ -130,10 +130,12 @@ void okOpenVRThread::Tick() {
     zoomed = overlay->ComputeOverlayIntersection(p->Overlay, &params, &results);
   }
 
+  const auto aspectRatio = float(header.ImageWidth) / header.ImageHeight;
+
   CHECK(
     SetOverlayWidthInMeters,
     p->Overlay,
-    header.VirtualWidth * (zoomed ? header.ZoomScale : 1.0f));
+    header.VirtualHeight * aspectRatio * (zoomed ? header.ZoomScale : 1.0f));
 
   if (p->SequenceNumber == header.SequenceNumber) {
     return;

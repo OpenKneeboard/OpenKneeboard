@@ -25,8 +25,7 @@ struct Header {
   float x = 0.15f, floorY = 0.6f, eyeY = -0.7f, z = -0.4f;
   float rx = -2 * std::numbers::pi_v<float> / 5,
         ry = -std::numbers::pi_v<float> / 32, rz = 0.0f;
-  // Meters
-  float VirtualWidth, VirtualHeight;
+  float VirtualHeight = 0.25f;// Meters
   float ZoomScale = 2.0f;
   // Pixels
   uint16_t ImageWidth, ImageHeight;

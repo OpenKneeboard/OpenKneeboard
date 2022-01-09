@@ -24,15 +24,12 @@ int main() {
     /* Headlocked
     .Flags = OpenKneeboard::Flags::HEADLOCKED |
     OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION, .y = -0.15, .z = -0.5f,
-    .VirtualWidth = 0.2f,
-    .VirtualHeight = 0.3f,
+    .VirtualHeight = 0.25f,
     .ImageWidth = 400,
     .ImageHeight = 1200,
     */
     /* On knee */
     .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
-    .VirtualWidth = 0.2f,
-    .VirtualHeight = 0.3f,
     .ImageWidth = 800,
     .ImageHeight = 1200,
   };
