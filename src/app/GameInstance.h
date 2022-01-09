@@ -7,9 +7,9 @@
 
 namespace OpenKneeboard {
 struct GameInstance {
-  std::string Name;
-  std::filesystem::path Path;
-  std::shared_ptr<Game> Game;
+  std::string name;
+  std::filesystem::path path;
+  std::shared_ptr<Game> game;
 
   nlohmann::json ToJson() const;
   static GameInstance FromJson(

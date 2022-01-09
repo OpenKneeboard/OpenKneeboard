@@ -27,13 +27,13 @@ void okGamesList::SettingsUI::OnPathSelect(wxCommandEvent& ev) {
       continue;
     }
     GameInstance instance {
-      .Name = game->GetUserFriendlyName(path).ToStdString(),
-      .Path = path,
-      .Game = game};
+      .name = game->GetUserFriendlyName(path).ToStdString(),
+      .path = path,
+      .game = game};
     mGamesList->mInstances.push_back(instance);
     mList->AddPage(
       new okGameInstanceSettings(mList, instance),
-      instance.Name,
+      instance.name,
       true,
       imageIndex);
   }
@@ -67,7 +67,7 @@ void okGamesList::SettingsUI::OnRemoveGameButton(wxCommandEvent& ev) {
   wxMessageDialog dialog(
     nullptr,
     fmt::format(
-      _("Are you sure you want to remove '{}'?").ToStdString(), game.Name),
+      _("Are you sure you want to remove '{}'?").ToStdString(), game.name),
     _("Remove game?"),
     wxYES_NO | wxNO_DEFAULT);
   auto result = dialog.ShowModal();
@@ -79,7 +79,7 @@ void okGamesList::SettingsUI::OnRemoveGameButton(wxCommandEvent& ev) {
 
   auto& instances = mGamesList->mInstances;
   for (auto it = instances.begin(); it != instances.end(); ++it) {
-    if (it->Path != game.Path) {
+    if (it->path != game.path) {
       continue;
     }
     instances.erase(it);
@@ -98,12 +98,12 @@ okGamesList::SettingsUI::SettingsUI(wxWindow* parent, okGamesList* gamesList)
 
   for (auto game: mGamesList->mInstances) {
     int imageIndex = -1;
-    auto ico = GetIconFromExecutable(game.Path);
+    auto ico = GetIconFromExecutable(game.path);
     if (ico.IsOk()) {
       imageIndex = imageList->Add(ico);
     }
     mList->AddPage(
-      new okGameInstanceSettings(mList, game), game.Name, false, imageIndex);
+      new okGameInstanceSettings(mList, game), game.name, false, imageIndex);
   }
 
   auto add = new wxButton(this, wxID_ANY, _("&Add"));

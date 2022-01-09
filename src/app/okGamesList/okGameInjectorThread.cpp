@@ -193,40 +193,42 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
 
       std::scoped_lock lock(p->gamesMutex);
       for (const auto& game: p->games) {
-        if (path == game.Path) {
-          const auto friendly = game.Game->GetUserFriendlyName(game.Path);
-          if (AlreadyInjected(process.th32ProcessID, injectedDll)) {
-            if (path != currentPath) {
-              currentPath = path;
-              wxCommandEvent ev(okEVT_GAME_CHANGED);
-              ev.SetString(path.wstring());
-              wxQueueEvent(p->receiver, ev.Clone());
-            }
-            break;
-          }
+        if (path != game.path) {
+          continue;
+        }
 
-          dprintf(
-            "Found '{}' process to inject: {} {}",
-            friendly.ToStdString(),
-            process.th32ProcessID,
-            path.string());
-
-          if (!InjectDll(process.th32ProcessID, injectedDll)) {
+        const auto friendly = game.game->GetUserFriendlyName(path);
+        if (AlreadyInjected(process.th32ProcessID, injectedDll)) {
+          if (path != currentPath) {
             currentPath = path;
-            dprintf("Failed to inject DLL: {}", GetLastError());
-            break;
+            wxCommandEvent ev(okEVT_GAME_CHANGED);
+            ev.SetString(path.wstring());
+            wxQueueEvent(p->receiver, ev.Clone());
           }
-
-          if (path == currentPath) {
-            break;
-          }
-
-          currentPath = path;
-          wxCommandEvent ev(okEVT_GAME_CHANGED);
-          ev.SetString(path.wstring());
-          wxQueueEvent(p->receiver, ev.Clone());
           break;
         }
+
+        dprintf(
+          "Found '{}' process to inject: {} {}",
+          friendly.ToStdString(),
+          process.th32ProcessID,
+          path.string());
+
+        if (!InjectDll(process.th32ProcessID, injectedDll)) {
+          currentPath = path;
+          dprintf("Failed to inject DLL: {}", GetLastError());
+          break;
+        }
+
+        if (path == currentPath) {
+          break;
+        }
+
+        currentPath = path;
+        wxCommandEvent ev(okEVT_GAME_CHANGED);
+        ev.SetString(path.wstring());
+        wxQueueEvent(p->receiver, ev.Clone());
+        break;
       }
     } while (Process32Next(snapshot.get(), &process));
 

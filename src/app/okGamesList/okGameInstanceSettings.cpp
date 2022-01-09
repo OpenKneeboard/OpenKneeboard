@@ -16,7 +16,7 @@ okGameInstanceSettings::okGameInstanceSettings(
     auto label = new wxStaticText(this, wxID_ANY, _("Name"));
     label->SetFont(bold);
     grid->Add(label, wxGBPosition(0, 0));
-    grid->Add(new wxStaticText(this, wxID_ANY, game.Name), wxGBPosition(0, 1));
+    grid->Add(new wxStaticText(this, wxID_ANY, game.name), wxGBPosition(0, 1));
   }
 
   {
@@ -24,7 +24,7 @@ okGameInstanceSettings::okGameInstanceSettings(
     label->SetFont(bold);
     grid->Add(label, wxGBPosition(1, 0));
     grid->Add(
-      new wxStaticText(this, wxID_ANY, game.Path.string()), wxGBPosition(1, 1));
+      new wxStaticText(this, wxID_ANY, game.path.string()), wxGBPosition(1, 1));
   }
 
   {
@@ -32,7 +32,7 @@ okGameInstanceSettings::okGameInstanceSettings(
     label->SetFont(bold);
     grid->Add(label, wxGBPosition(2, 0));
     grid->Add(
-      new wxStaticText(this, wxID_ANY, game.Game->GetNameForConfigFile()),
+      new wxStaticText(this, wxID_ANY, game.game->GetNameForConfigFile()),
       wxGBPosition(2, 1));
   }
 

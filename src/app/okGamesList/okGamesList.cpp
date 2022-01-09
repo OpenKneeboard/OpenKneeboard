@@ -26,9 +26,9 @@ void okGamesList::LoadDefaultSettings() {
   for (const auto& game: mGames) {
     for (const auto& path: game->GetInstalledPaths()) {
       mInstances.push_back({
-        .Name = game->GetUserFriendlyName(path).ToStdString(),
-        .Path = path,
-        .Game = game,
+        .name = game->GetUserFriendlyName(path).ToStdString(),
+        .path = path,
+        .game = game,
       });
     }
   }

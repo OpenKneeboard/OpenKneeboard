@@ -6,9 +6,9 @@ namespace OpenKneeboard {
 
 nlohmann::json GameInstance::ToJson() const {
   return {
-    {"Name", this->Name},
-    {"Path", this->Path.string()},
-    {"Type", this->Game->GetNameForConfigFile()},
+    {"Name", this->name},
+    {"Path", this->path.string()},
+    {"Type", this->game->GetNameForConfigFile()},
   };
 }
 
@@ -20,9 +20,9 @@ GameInstance GameInstance::FromJson(
   for (const auto& game: games) {
     if (type == game->GetNameForConfigFile()) {
       return {
-        .Name = j.at("Name"),
-        .Path = std::filesystem::path(std::string(j.at("Path"))),
-        .Game = game,
+        .name = j.at("Name"),
+        .path = std::filesystem::path(std::string(j.at("Path"))),
+        .game = game,
       };
     }
   }
