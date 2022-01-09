@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <string>
 #include <vector>
@@ -12,7 +13,7 @@ constexpr uint64_t HEADLOCKED = 1;
 constexpr uint64_t DISCARD_DEPTH_INFORMATION = 1 << 1;
 constexpr uint64_t FEEDER_ATTACHED = 1 << 2;
 constexpr uint64_t LOCKED = 1 << 3;
-};// namespace OpenKneeboard::Flags
+};// namespace OpenKneeboard::SHM::Flags
 
 namespace OpenKneeboard::SHM {
 
@@ -20,9 +21,10 @@ namespace OpenKneeboard::SHM {
 struct Header {
   static const uint32_t VERSION = 1;
 
-  uint64_t Flags;
-  float x, floorY, eyeY, z;
-  float rx, ry, rz;
+  uint64_t Flags = 0;
+  float x = 0.15f, floorY = 0.6f, eyeY = -0.7f, z = -0.4f;
+  float rx = -2 * std::numbers::pi_v<float> / 5,
+        ry = -std::numbers::pi_v<float> / 32, rz = 0.0f;
   // Meters
   float VirtualWidth, VirtualHeight;
   float ZoomScale = 2.0f;

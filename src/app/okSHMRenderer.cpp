@@ -123,15 +123,8 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
 
   SHM::Header header {
     .Flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
-    .x = 0.15f,
-    .floorY = 0.6f,
-    .eyeY = -0.7f,
-    .z = -0.4f,
-    .rx = -float(2 * M_PI / 5),
-    .ry = -float(M_PI / 32),
     .VirtualWidth = 0.25f / ratio,
     .VirtualHeight = 0.25f,
-    .ZoomScale = 2.0f,
     .ImageWidth = static_cast<uint16_t>(width),
     .ImageHeight = static_cast<uint16_t>(height),
   };
