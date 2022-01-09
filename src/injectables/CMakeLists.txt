@@ -10,6 +10,7 @@ add_library(openkneeboard-d3d11-lib STATIC NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   openkneeboard-d3d11-lib
   PUBLIC
+	directxtk
   dxgi-hooks
   detours-ext
   dprint

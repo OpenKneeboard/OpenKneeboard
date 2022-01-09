@@ -1,20 +1,18 @@
 #include "NonVRD3D11Kneeboard.h"
 
+#include <DirectXTK/SpriteBatch.h>
+#include <DirectXTK/WICTextureLoader.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
-#include <d2d1.h>
 #include <winrt/base.h>
-#pragma comment(lib, "D2d1.lib")
 
 namespace OpenKneeboard {
 
 struct NonVRD3D11Kneeboard::Impl {
   SHM::Reader shm;
-  winrt::com_ptr<ID2D1Factory> d2d;
 };
 
 NonVRD3D11Kneeboard::NonVRD3D11Kneeboard() : p(std::make_unique<Impl>()) {
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->d2d.put());
 }
 
 NonVRD3D11Kneeboard::~NonVRD3D11Kneeboard() {
@@ -36,51 +34,39 @@ HRESULT NonVRD3D11Kneeboard::OnPresent(
 
   const auto& header = *shm.GetHeader();
 
-  {
-    winrt::com_ptr<ID3D11Texture2D> buffer;
-    swapChain->GetBuffer(0, IID_PPV_ARGS(buffer.put()));
-    if (!buffer) {
-      return std::invoke(next, swapChain, syncInterval, flags);
-    }
+  winrt::com_ptr<ID3D11Device> device;
+  swapChain->GetDevice(IID_PPV_ARGS(device.put()));
+  winrt::com_ptr<ID3D11DeviceContext> context;
+  device->GetImmediateContext(context.put());
 
-    auto surface = buffer.try_as<IDXGISurface>();
-    if (!surface) {
-      return std::invoke(next, swapChain, syncInterval, flags);
-    }
+  static_assert(sizeof(SHM::Pixel) == 4, "Expecting B8G8R8A8 for DirectX");
+  static_assert(offsetof(SHM::Pixel, b) == 0, "Expected blue to be first byte");
+  static_assert(offsetof(SHM::Pixel, a) == 3, "Expected alpha to be last byte");
+  winrt::com_ptr<ID3D11Texture2D> texture;
+  D3D11_TEXTURE2D_DESC desc {
+    .Width = header.imageWidth,
+    .Height = header.imageHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .SampleDesc = {1, 0},
+    .Usage = D3D11_USAGE_DEFAULT,
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
+    .CPUAccessFlags = {},
+    .MiscFlags = {},
+  };
+  D3D11_SUBRESOURCE_DATA initialData {
+    shm.GetPixels(), header.imageWidth * sizeof(SHM::Pixel), 0};
+  device->CreateTexture2D(&desc, &initialData, texture.put());
+  winrt::com_ptr<ID3D11ShaderResourceView> resourceView;
+  device->CreateShaderResourceView(texture.get(), nullptr, resourceView.put());
 
-    winrt::com_ptr<ID2D1RenderTarget> rt;
-    auto ret = p->d2d->CreateDxgiSurfaceRenderTarget(
-      surface.get(),
-      D2D1::RenderTargetProperties(
-        D2D1_RENDER_TARGET_TYPE_DEFAULT,
-        D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_IGNORE)),
-      rt.put());
-    if (ret != S_OK) {
-      dprintf("RT failed: {}", ret);
-      return std::invoke(next, swapChain, syncInterval, flags);
-    }
+  DirectX::SpriteBatch sprites(context.get());
+  sprites.Begin();
+  sprites.Draw(resourceView.get(), RECT {0, 0, 800, 600});
+  sprites.End();
 
-    static_assert(sizeof(SHM::Pixel) == 4, "Expected B8G8R8A8");
-    static_assert(offsetof(SHM::Pixel, b) == 0, "Expected B8G8R8A8");
-
-    winrt::com_ptr<ID2D1Bitmap> bitmap;
-    rt->CreateBitmap(
-      {header.imageWidth, header.imageHeight},
-      shm.GetPixels(),
-      header.imageWidth * sizeof(SHM::Pixel),
-      D2D1::BitmapProperties(D2D1::PixelFormat(
-        DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-      bitmap.put());
-
-    rt->BeginDraw();
-    rt->DrawBitmap(
-      bitmap.get(),
-      {0, 0, 500, 500},
-      1.5f,
-      D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
-    rt->EndDraw();
-  }
-
+  // TODO: spinlock with Unhook
   return std::invoke(next, swapChain, syncInterval, flags);
 }
 
