@@ -3,7 +3,7 @@ target_link_libraries(detours-ext PUBLIC detours dprint)
 
 add_library(openkneeboard-InjectedKneeboard STATIC InjectedKneeboard.cpp)
 
-add_library(d3d11-hooks STATIC d3d11-offsets.c D3D11DeviceHook.cpp IDXGISwapChainPresentHook.cpp)
+add_library(d3d11-hooks STATIC d3d11-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(d3d11-hooks PRIVATE detours-ext dprint)
 
 add_library(oculus-hooks STATIC OculusFrameHook.cpp OculusKneeboard.cpp)

@@ -1,10 +1,11 @@
 #pragma once
 
 #include "OculusKneeboard.h"
+#include "IDXGISwapChainPresentHook.h"
 
 namespace OpenKneeboard {
 
-class OculusD3D11Kneeboard final : public OculusKneeboard {
+class OculusD3D11Kneeboard final : public OculusKneeboard, private IDXGISwapChainPresentHook {
  public:
   OculusD3D11Kneeboard();
   virtual ~OculusD3D11Kneeboard();
@@ -12,6 +13,12 @@ class OculusD3D11Kneeboard final : public OculusKneeboard {
   virtual void Unhook() override;
 
  protected:
+  virtual HRESULT OnPresent(
+    UINT syncInterval,
+    UINT flags,
+    IDXGISwapChain* swapChain,
+    decltype(&IDXGISwapChain::Present) next) override;
+
   virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,
     const SHM::Header& config) override final;

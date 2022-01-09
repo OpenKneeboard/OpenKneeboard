@@ -3,8 +3,8 @@
 #include <OVR_CAPI_D3D.h>
 #include <d3d11.h>
 #include <detours.h>
+#include <winrt/base.h>
 
-#include "D3D11DeviceHook.h"
 #include "OpenKneeboard/dprint.h"
 
 // Used, but not hooked
@@ -27,12 +27,11 @@ class OculusD3D11Kneeboard::Impl final {
   SHM::Header Header;
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> RenderTargets;
   ovrTextureSwapChain SwapChain = nullptr;
-  std::unique_ptr<D3D11DeviceHook> D3D;
+  winrt::com_ptr<ID3D11Device> D3D = nullptr;
 };
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
   dprintf("{}", __FUNCTION__);
-  p->D3D = std::make_unique<D3D11DeviceHook>();
 
 #define IT(x) \
   real_##x = reinterpret_cast<decltype(&x)>( \
@@ -46,13 +45,12 @@ OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
 
 void OculusD3D11Kneeboard::Unhook() {
   OculusKneeboard::Unhook();
-  p->D3D->Unhook();
+  IDXGISwapChainPresentHook::Unhook();
 }
 
 ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   ovrSession session,
   const SHM::Header& config) {
-
   if (p->SwapChain) {
     const auto& prev = p->Header;
     if (
@@ -64,8 +62,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     p->SwapChain = nullptr;
   }
 
-  auto d3d = p->D3D->MaybeGet();
-  if (!d3d) {
+  if (!p->D3D) {
     return nullptr;
   }
 
@@ -85,7 +82,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   };
 
   real_ovr_CreateTextureSwapChainDX(
-    session, d3d.get(), &kneeboardSCD, &p->SwapChain);
+    session, p->D3D.get(), &kneeboardSCD, &p->SwapChain);
   if (!p->SwapChain) {
     return nullptr;
   }
@@ -105,7 +102,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
       .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
       .Texture2D = {.MipSlice = 0}};
 
-    auto hr = d3d->CreateRenderTargetView(
+    auto hr = p->D3D->CreateRenderTargetView(
       texture.get(), &rtvd, p->RenderTargets.at(i).put());
     if (FAILED(hr)) {
       dprintf(" - failed to create render target view");
@@ -125,9 +122,8 @@ bool OculusD3D11Kneeboard::Render(
     return false;
   }
 
-  auto d3d = p->D3D->MaybeGet();
-  if (!d3d) {
-    dprintf(" - no D3d - {}", __FUNCTION__);
+  if (!p->D3D) {
+    dprintf(" - no D3D - {}", __FUNCTION__);
     return false;
   }
 
@@ -144,7 +140,7 @@ bool OculusD3D11Kneeboard::Render(
   real_ovr_GetTextureSwapChainBufferDX(
     session, swapChain, index, IID_PPV_ARGS(&texture));
   winrt::com_ptr<ID3D11DeviceContext> context;
-  d3d->GetImmediateContext(context.put());
+  p->D3D->GetImmediateContext(context.put());
   D3D11_BOX box {
     .left = 0,
     .top = 0,
@@ -172,6 +168,22 @@ bool OculusD3D11Kneeboard::Render(
   }
 
   return true;
+}
+
+HRESULT OculusD3D11Kneeboard::OnPresent(
+  UINT syncInterval,
+  UINT flags,
+  IDXGISwapChain* swapChain,
+  decltype(&IDXGISwapChain::Present) next) {
+  if (!p->D3D) {
+    swapChain->GetDevice(IID_PPV_ARGS(p->D3D.put()));
+    if (!p->D3D) {
+      dprintf("Got a swapchain without a D3D11 device");
+    }
+  }
+  auto ret = std::invoke(next, swapChain, syncInterval, flags);
+  IDXGISwapChainPresentHook::UnhookAndCleanup();
+  return ret;
 }
 
 }// namespace OpenKneeboard
