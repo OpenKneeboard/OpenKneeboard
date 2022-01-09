@@ -1,5 +1,8 @@
 
+#include <Unknwn.h>
+#include <d3d12.h>
 #include <windows.h>
+#include <winrt/base.h>
 
 #include "IDXGISwapChainPresentHook.h"
 #include "InjectedKneeboard.h"
@@ -15,7 +18,8 @@ namespace OpenKneeboard {
 class AutoDetectKneeboard final : private OculusFrameHook,
                                   private IDXGISwapChainPresentHook {
  private:
-  const uint64_t FLAG_D3D11 = 1ui64 << 0;
+  const uint64_t FLAG_D3D11 = 1 << 0;
+  const uint64_t FLAG_D3D12 = 1 << 1;
   const uint64_t FLAG_OCULUS = 1ui64 << 32;
   const uint64_t FLAG_STEAMVR = 1ui64 << 33;
 
@@ -49,16 +53,37 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     return ret;
   }
 
+  void SetD3DFlags(IDXGISwapChain* swapChain) {
+    dprint("Found DXGI...");
+
+    winrt::com_ptr<ID3D11Device> d3d11;
+    swapChain->GetDevice(IID_PPV_ARGS(d3d11.put()));
+    if (d3d11) {
+      dprint("... found D3D11");
+      mFlags |= FLAG_D3D11;
+      return;
+    }
+
+    winrt::com_ptr<ID3D12Device> d3d12;
+    swapChain->GetDevice(IID_PPV_ARGS(d3d12.put()));
+    if (d3d12) {
+      dprint("... found D3D12");
+      mFlags |= FLAG_D3D12;
+      return;
+    }
+
+    dprint("... but couldn't figure out the DirectX version");
+  }
+
   virtual HRESULT OnPresent(
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,
     decltype(&IDXGISwapChain::Present) next) override {
     if (mFrames == 0) {
-      dprint("Detected D3D11");
+      SetD3DFlags(swapChain);
     }
     mFrames++;
-    mFlags |= FLAG_D3D11;
     auto ret = std::invoke(next, swapChain, syncInterval, flags);
 
     if (mFrames >= 2) {
@@ -84,7 +109,9 @@ class AutoDetectKneeboard final : private OculusFrameHook,
       return;
     }
 
-    dprintf("Don't know how to create a kneeboard from autodetection flags {:#b}", mFlags);
+    dprintf(
+      "Don't know how to create a kneeboard from autodetection flags {:#b}",
+      mFlags);
   }
 
   void CheckForSteamVR() {
