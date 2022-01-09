@@ -9,6 +9,8 @@ class OculusD3D11Kneeboard final : public OculusKneeboard {
   OculusD3D11Kneeboard();
   virtual ~OculusD3D11Kneeboard();
 
+  virtual void Unhook() override;
+
  protected:
   virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,

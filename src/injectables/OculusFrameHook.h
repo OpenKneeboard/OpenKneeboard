@@ -14,7 +14,7 @@ class OculusFrameHook {
 
   void Unhook();
 
-  virtual ovrResult onEndFrame(
+  virtual ovrResult OnEndFrame(
     ovrSession session,
     long long frameIndex,
     const ovrViewScaleDesc* viewScaleDesc,

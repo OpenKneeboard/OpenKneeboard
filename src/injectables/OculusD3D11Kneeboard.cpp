@@ -31,6 +31,7 @@ class OculusD3D11Kneeboard::Impl final {
 };
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
+  dprintf("{}", __FUNCTION__);
   p->D3D = std::make_unique<D3D11DeviceHook>();
 
 #define IT(x) \
@@ -41,6 +42,11 @@ OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
 }
 
 OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
+}
+
+void OculusD3D11Kneeboard::Unhook() {
+  OculusKneeboard::Unhook();
+  p->D3D->Unhook();
 }
 
 ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(

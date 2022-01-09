@@ -75,7 +75,11 @@ OculusKneeboard::OculusKneeboard() {
 OculusKneeboard::~OculusKneeboard() {
 }
 
-ovrResult OculusKneeboard::onEndFrame(
+void OculusKneeboard::Unhook() {
+  OculusFrameHook::Unhook();
+}
+
+ovrResult OculusKneeboard::OnEndFrame(
   ovrSession session,
   long long frameIndex,
   const ovrViewScaleDesc* viewScaleDesc,

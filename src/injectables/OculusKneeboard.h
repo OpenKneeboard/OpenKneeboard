@@ -1,12 +1,13 @@
 #pragma once
 
 #include "OculusFrameHook.h"
+#include "InjectedKneeboard.h"
 
 #include "OpenKneeboard/SHM.h"
 
 namespace OpenKneeboard {
 
-  class OculusKneeboard : public OculusFrameHook {
+  class OculusKneeboard : public OculusFrameHook, public InjectedKneeboard {
   private:
     SHM::Reader mSHM;
     bool mZoomed = false;
@@ -24,8 +25,10 @@ namespace OpenKneeboard {
       const SHM::Snapshot& snapshot)
       = 0;
 
+    virtual void Unhook() override;
+
   public:
-    virtual ovrResult onEndFrame(
+    virtual ovrResult OnEndFrame(
       ovrSession session,
       long long frameIndex,
       const ovrViewScaleDesc* viewScaleDesc,

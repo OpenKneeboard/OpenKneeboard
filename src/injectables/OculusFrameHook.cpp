@@ -34,7 +34,7 @@ static OculusFrameHook* g_instance = nullptr;
     if (!g_instance) { \
       real_##x(session, frameIndex, viewScaleDesc, layerPtrList, layerCount); \
     } \
-    return g_instance->onEndFrame( \
+    return g_instance->OnEndFrame( \
       session, frameIndex, viewScaleDesc, layerPtrList, layerCount, real_##x); \
   }
 HOOKED_ENDFRAME_FUNCS
