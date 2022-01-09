@@ -25,7 +25,7 @@ struct Header {
   float rx, ry, rz;
   // Meters
   float VirtualWidth, VirtualHeight;
-  float ZoomScale;
+  float ZoomScale = 2.0f;
   // Pixels
   uint16_t ImageWidth, ImageHeight;
 
