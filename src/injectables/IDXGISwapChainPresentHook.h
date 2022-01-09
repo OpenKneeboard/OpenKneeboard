@@ -23,7 +23,7 @@ class IDXGISwapChainPresentHook {
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,
-    decltype(&IDXGISwapChain::Present) next)
+    const decltype(&IDXGISwapChain::Present)& next)
     = 0;
 };
 

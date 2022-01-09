@@ -34,7 +34,7 @@ namespace OpenKneeboard {
       const ovrViewScaleDesc* viewScaleDesc,
       ovrLayerHeader const* const* layerPtrList,
       unsigned int layerCount,
-      decltype(&ovr_EndFrame) next) override final;
+      const decltype(&ovr_EndFrame)& next) override final;
   };
 
 }// namespace OpenKneeboard

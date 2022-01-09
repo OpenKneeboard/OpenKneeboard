@@ -20,7 +20,7 @@ class OculusFrameHook {
     const ovrViewScaleDesc* viewScaleDesc,
     ovrLayerHeader const* const* layerPtrList,
     unsigned int layerCount,
-    decltype(&ovr_EndFrame) next) = 0;
+    const decltype(&ovr_EndFrame)& next) = 0;
 };
 
 }// namespace OpenKneeboard

@@ -20,7 +20,7 @@ class NonVRD3D11Kneeboard final : public InjectedKneeboard,
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,
-    decltype(&IDXGISwapChain::Present) next) override;
+    const decltype(&IDXGISwapChain::Present)& next) override;
 
  private:
   struct Impl;

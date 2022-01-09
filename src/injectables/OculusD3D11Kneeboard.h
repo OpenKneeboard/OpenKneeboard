@@ -18,7 +18,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard,
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,
-    decltype(&IDXGISwapChain::Present) next) override;
+    const decltype(&IDXGISwapChain::Present)& next) override;
 
   virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,

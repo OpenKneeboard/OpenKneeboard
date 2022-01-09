@@ -174,7 +174,7 @@ HRESULT OculusD3D11Kneeboard::OnPresent(
   UINT syncInterval,
   UINT flags,
   IDXGISwapChain* swapChain,
-  decltype(&IDXGISwapChain::Present) next) {
+  const decltype(&IDXGISwapChain::Present)& next) {
   if (!p->d3d) {
     swapChain->GetDevice(IID_PPV_ARGS(p->d3d.put()));
     if (!p->d3d) {

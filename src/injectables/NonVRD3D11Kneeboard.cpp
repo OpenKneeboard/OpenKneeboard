@@ -26,7 +26,7 @@ HRESULT NonVRD3D11Kneeboard::OnPresent(
   UINT syncInterval,
   UINT flags,
   IDXGISwapChain* swapChain,
-  decltype(&IDXGISwapChain::Present) next) {
+  const decltype(&IDXGISwapChain::Present)& next) {
   auto shm = p->shm.MaybeGet();
   if (!shm) {
     return std::invoke(next, swapChain, syncInterval, flags);

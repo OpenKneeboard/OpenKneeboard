@@ -85,7 +85,7 @@ ovrResult OculusKneeboard::OnEndFrame(
   const ovrViewScaleDesc* viewScaleDesc,
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount,
-  decltype(&ovr_EndFrame) next) {
+  const decltype(&ovr_EndFrame)& next) {
   auto snapshot = mSHM.MaybeGet();
   if (!snapshot) {
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);

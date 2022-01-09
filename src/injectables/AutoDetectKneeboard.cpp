@@ -45,7 +45,7 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     const ovrViewScaleDesc* viewScaleDesc,
     ovrLayerHeader const* const* layerPtrList,
     unsigned int layerCount,
-    decltype(&ovr_EndFrame) next) override {
+    const decltype(&ovr_EndFrame)& next) override {
     dprint("Detected Oculus");
     mFlags |= FLAG_OCULUS;
     auto ret
@@ -80,7 +80,7 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,
-    decltype(&IDXGISwapChain::Present) next) override {
+    const decltype(&IDXGISwapChain::Present)& next) override {
     if (mFrames == 0) {
       SetD3DFlags(swapChain);
     }

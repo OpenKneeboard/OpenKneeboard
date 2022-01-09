@@ -31,14 +31,8 @@ BOOL InjectedDLLMain(
   } else if (dwReason == DLL_PROCESS_DETACH) {
     dprint("Detaching from process...");
     DetourTransactionPushBegin();
-    instance->Unhook();
-    DetourTransactionPopCommit();
-    dprint("Detached hooks, waiting for in-progress calls");
-    // If a hook function was in progress when we unhooked it, we need to let the
-    // current call finish
-    Sleep(500);
-    dprint("Freeing resources");
     instance.reset();
+    DetourTransactionPopCommit();
     dprint("Cleanup complete.");
   }
   return TRUE;
