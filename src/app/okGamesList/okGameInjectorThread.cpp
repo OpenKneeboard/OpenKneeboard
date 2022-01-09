@@ -160,7 +160,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
   GetModuleFileNameW(NULL, buf, MAX_PATH);
   const auto executablePath
     = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
-  const auto oculusD3d11Dll = executablePath / RuntimeFiles::OCULUS_D3D11_DLL;
+  const auto injectedDll = executablePath / RuntimeFiles::AUTODETECT_DLL;
 
   PROCESSENTRY32 process;
   process.dwSize = sizeof(process);
@@ -195,8 +195,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       for (const auto& game: p->Games) {
         if (path == game.Path) {
           const auto friendly = game.Game->GetUserFriendlyName(game.Path);
-          const auto dll = oculusD3d11Dll;
-          if (AlreadyInjected(process.th32ProcessID, dll)) {
+          if (AlreadyInjected(process.th32ProcessID, injectedDll)) {
             if (path != currentPath) {
               currentPath = path;
               wxCommandEvent ev(okEVT_GAME_CHANGED);
@@ -212,7 +211,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
             process.th32ProcessID,
             path.string());
 
-          if (!InjectDll(process.th32ProcessID, dll)) {
+          if (!InjectDll(process.th32ProcessID, injectedDll)) {
             currentPath = path;
             dprintf("Failed to inject DLL: {}", GetLastError());
             break;

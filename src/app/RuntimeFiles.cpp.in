@@ -8,6 +8,9 @@ const std::filesystem::path DCSWORLD_HOOK_DLL(
 const std::filesystem::path DCSWORLD_HOOK_LUA(
   "$<TARGET_PROPERTY:openkneeboard-dcs-ext-lua,OUTPUT_NAME>");
 
+const std::filesystem::path AUTODETECT_DLL(
+  "$<TARGET_FILE_NAME:openkneeboard-autodetect>");
+
 const std::filesystem::path OCULUS_D3D11_DLL(
   "$<TARGET_FILE_NAME:openkneeboard-oculus-d3d11>");
 
