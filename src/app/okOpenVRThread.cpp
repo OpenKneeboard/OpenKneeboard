@@ -131,11 +131,12 @@ void okOpenVRThread::Tick() {
   }
 
   const auto aspectRatio = float(header.ImageWidth) / header.ImageHeight;
+  const auto& vrConf = header.VRConfig;
 
   CHECK(
     SetOverlayWidthInMeters,
     p->Overlay,
-    header.VirtualHeight * aspectRatio * (zoomed ? header.ZoomScale : 1.0f));
+    vrConf.VirtualHeight * aspectRatio * (zoomed ? vrConf.ZoomScale : 1.0f));
 
   if (p->SequenceNumber == header.SequenceNumber) {
     return;
@@ -144,10 +145,10 @@ void okOpenVRThread::Tick() {
 
   // clang-format off
   auto transform =
-    Matrix::CreateRotationX(header.rx)
-    * Matrix::CreateRotationY(header.ry)
-    * Matrix::CreateRotationZ(header.rz)
-    * Matrix::CreateTranslation(header.x, header.floorY, header.z);
+    Matrix::CreateRotationX(vrConf.rx)
+    * Matrix::CreateRotationY(vrConf.ry)
+    * Matrix::CreateRotationZ(vrConf.rz)
+    * Matrix::CreateTranslation(vrConf.x, vrConf.floorY, vrConf.z);
   // clang-format on
 
   auto transposed = transform.Transpose();

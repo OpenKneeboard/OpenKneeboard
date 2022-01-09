@@ -18,20 +18,23 @@ constexpr uint64_t LOCKED = 1 << 3;
 namespace OpenKneeboard::SHM {
 
 #pragma pack(push)
-struct Header {
-  static const uint32_t VERSION = 1;
-
-  uint64_t Flags = 0;
+struct VRConfig {
   float x = 0.15f, floorY = 0.6f, eyeY = -0.7f, z = -0.4f;
   float rx = -2 * std::numbers::pi_v<float> / 5,
         ry = -std::numbers::pi_v<float> / 32, rz = 0.0f;
   float VirtualHeight = 0.25f;// Meters
   float ZoomScale = 2.0f;
-  // Pixels
-  uint16_t ImageWidth, ImageHeight;
-
-  uint64_t SequenceNumber = 0;
 };
+
+struct Header {
+  static const uint32_t VERSION = 1;
+  uint64_t SequenceNumber = 0;
+  uint64_t Flags = 0;
+  uint16_t ImageWidth, ImageHeight;// Pixels
+
+  VRConfig VRConfig;
+};
+
 struct Pixel {
   uint8_t b;
   uint8_t g;

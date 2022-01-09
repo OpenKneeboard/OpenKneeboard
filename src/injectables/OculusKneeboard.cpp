@@ -103,20 +103,21 @@ ovrResult OculusKneeboard::OnEndFrame(
   kneeboardLayer.Header.Flags = {ovrLayerFlag_HighQuality};
   kneeboardLayer.ColorTexture = swapChain;
 
-  Vector3 position(config.x, config.floorY, config.z);
+  const auto& vrConf = config.VRConfig;
+  Vector3 position(vrConf.x, vrConf.floorY, vrConf.z);
   if ((config.Flags & SHM::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
     real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
-    position.y = config.eyeY;
+    position.y = vrConf.eyeY;
   }
   kneeboardLayer.QuadPoseCenter.Position = {position.x, position.y, position.z};
 
   // clang-format off
   auto orientation =
-    Quaternion::CreateFromAxisAngle(Vector3::UnitX, config.rx)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, config.ry)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, config.rz);
+    Quaternion::CreateFromAxisAngle(Vector3::UnitX, vrConf.rx)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vrConf.ry)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vrConf.rz);
   // clang-format on
 
   kneeboardLayer.QuadPoseCenter.Orientation
@@ -127,12 +128,12 @@ ovrResult OculusKneeboard::OnEndFrame(
     = {.w = config.ImageWidth, .h = config.ImageHeight};
 
   const auto aspectRatio = float(config.ImageWidth) / config.ImageHeight;
-  const auto virtualWidth = aspectRatio * config.VirtualHeight;
+  const auto virtualWidth = aspectRatio * vrConf.VirtualHeight;
 
-  const ovrVector2f normalSize(virtualWidth, config.VirtualHeight);
+  const ovrVector2f normalSize(virtualWidth, vrConf.VirtualHeight);
   const ovrVector2f zoomedSize(
-    virtualWidth * config.ZoomScale,
-    config.VirtualHeight * config.ZoomScale);
+    virtualWidth * vrConf.ZoomScale,
+    vrConf.VirtualHeight * vrConf.ZoomScale);
 
   auto predictedTime = real_ovr_GetPredictedDisplayTime(session, frameIndex);
   auto state = real_ovr_GetTrackingState(session, predictedTime, false);
