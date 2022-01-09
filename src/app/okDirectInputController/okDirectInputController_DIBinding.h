@@ -10,8 +10,8 @@
 #include <guiddef.h>
 
 struct okDirectInputController::DIBinding {
-  GUID InstanceGuid;
-  std::string InstanceName;
-  uint8_t ButtonIndex;
-  wxEventTypeTag<wxCommandEvent> EventType;
+  GUID instanceGuid;
+  std::string instanceName;
+  uint8_t buttonIndex;
+  wxEventTypeTag<wxCommandEvent> eventType;
 };

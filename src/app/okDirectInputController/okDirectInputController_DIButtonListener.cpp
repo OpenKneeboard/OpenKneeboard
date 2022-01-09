@@ -3,10 +3,10 @@
 #include "okDirectInputController_DIButtonEvent.h"
 
 struct okDirectInputController::DIButtonListener::DeviceInfo {
-  DIDEVICEINSTANCE Instance;
-  winrt::com_ptr<IDirectInputDevice8> Device;
-  DIJOYSTATE2 State = {};
-  HANDLE EventHandle = INVALID_HANDLE_VALUE;
+  DIDEVICEINSTANCE instance;
+  winrt::com_ptr<IDirectInputDevice8> device;
+  DIJOYSTATE2 state = {};
+  HANDLE eventHandle = INVALID_HANDLE_VALUE;
 };
 
 okDirectInputController::DIButtonListener::DIButtonListener(
@@ -51,7 +51,7 @@ okDirectInputController::DIButtonEvent
 okDirectInputController::DIButtonListener::Poll() {
   std::vector<HANDLE> handles;
   for (const auto& it: mDevices) {
-    handles.push_back(it.EventHandle);
+    handles.push_back(it.eventHandle);
   }
   handles.push_back(mCancelHandle);
 
@@ -63,20 +63,20 @@ okDirectInputController::DIButtonListener::Poll() {
   }
 
   auto& device = mDevices.at(idx);
-  auto oldState = device.State;
+  auto oldState = device.state;
   DIJOYSTATE2 newState;
-  device.Device->Poll();
-  device.Device->GetDeviceState(sizeof(newState), &newState);
+  device.device->Poll();
+  device.device->GetDeviceState(sizeof(newState), &newState);
   if (memcmp(oldState.rgbButtons, newState.rgbButtons, 128) == 0) {
     return {};
   }
 
   for (uint8_t i = 0; i < 128; ++i) {
     if (oldState.rgbButtons[i] != newState.rgbButtons[i]) {
-      device.State = newState;
+      device.state = newState;
       return {
         true,
-        device.Instance,
+        device.instance,
         static_cast<uint8_t>(i),
         (bool)(newState.rgbButtons[i] & (1 << 7))};
     }

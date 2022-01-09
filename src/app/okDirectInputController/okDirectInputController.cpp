@@ -40,7 +40,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices, Bindings);
 }// namespace
 
 struct okDirectInputController::State : public SharedState {
-  std::unique_ptr<DIThread> DirectInputThread;
+  std::unique_ptr<DIThread> directInputThread;
 };
 
 okDirectInputController::okDirectInputController(
@@ -50,11 +50,11 @@ okDirectInputController::okDirectInputController(
     GetModuleHandle(nullptr),
     DIRECTINPUT_VERSION,
     IID_IDirectInput8,
-    p->DI8.put_void(),
+    p->di8.put_void(),
     NULL);
 
-  p->DirectInputThread = std::make_unique<DIThread>(this, p->DI8);
-  p->DirectInputThread->Run();
+  p->directInputThread = std::make_unique<DIThread>(this, p->di8);
+  p->directInputThread->Run();
 
   this->Bind(okEVT_DI_BUTTON, &okDirectInputController::OnDIButtonEvent, this);
 
@@ -89,39 +89,39 @@ okDirectInputController::okDirectInputController(
     UuidFromStringA(
       reinterpret_cast<RPC_CSTR>(const_cast<char*>(binding.Device.c_str())),
       &uuid);
-    p->Bindings.push_back({
-      .InstanceGuid = uuid,
-      .InstanceName = deviceName->second.InstanceName,
-      .ButtonIndex = binding.ButtonIndex,
-      .EventType = *eventType,
+    p->bindings.push_back({
+      .instanceGuid = uuid,
+      .instanceName = deviceName->second.InstanceName,
+      .buttonIndex = binding.ButtonIndex,
+      .eventType = *eventType,
     });
   }
 }
 
 okDirectInputController::~okDirectInputController() {
-  p->DirectInputThread->Wait();
+  p->directInputThread->Wait();
 }
 
 void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
-  if (p->Hook) {
-    wxQueueEvent(p->Hook, ev.Clone());
+  if (p->hook) {
+    wxQueueEvent(p->hook, ev.Clone());
     return;
   }
 
   auto be = ev.GetPayload<DIButtonEvent>();
-  if (!be.Pressed) {
+  if (!be.pressed) {
     // We act on keydown
     return;
   }
 
-  for (auto& it: p->Bindings) {
-    if (it.InstanceGuid != be.Instance.guidInstance) {
+  for (auto& it: p->bindings) {
+    if (it.instanceGuid != be.instance.guidInstance) {
       continue;
     }
-    if (it.ButtonIndex != be.ButtonIndex) {
+    if (it.buttonIndex != be.buttonIndex) {
       continue;
     }
-    wxQueueEvent(this, new wxCommandEvent(it.EventType));
+    wxQueueEvent(this, new wxCommandEvent(it.eventType));
   }
 }
 
@@ -137,16 +137,16 @@ wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
 nlohmann::json okDirectInputController::GetSettings() const {
   JSONSettings settings;
 
-  for (const auto& binding: p->Bindings) {
+  for (const auto& binding: p->bindings) {
     RPC_CSTR rpcUuid;
-    UuidToStringA(&binding.InstanceGuid, &rpcUuid);
+    UuidToStringA(&binding.instanceGuid, &rpcUuid);
     const std::string uuid(reinterpret_cast<char*>(rpcUuid));
     RpcStringFreeA(&rpcUuid);
 
-    settings.Devices[uuid] = {binding.InstanceName};
+    settings.Devices[uuid] = {binding.instanceName};
     std::string action;
 #define ACTION(x) \
-  if (binding.EventType == okEVT_##x) { \
+  if (binding.eventType == okEVT_##x) { \
     action = #x; \
   }
     ACTION(PREVIOUS_TAB);
@@ -160,7 +160,7 @@ nlohmann::json okDirectInputController::GetSettings() const {
 
     settings.Bindings.push_back({
       .Device = uuid,
-      .ButtonIndex = binding.ButtonIndex,
+      .ButtonIndex = binding.buttonIndex,
       .Action = action,
     });
   }

@@ -14,22 +14,23 @@ using namespace OpenKneeboard;
 wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_BUTTON, wxCommandEvent);
 
 struct okDirectInputController::SettingsUI::DeviceButtons {
-  wxButton* PreviousTab = nullptr;
-  wxButton* NextTab = nullptr;
-  wxButton* PreviousPage = nullptr;
-  wxButton* NextPage = nullptr;
+  wxButton* previousTab = nullptr;
+  wxButton* nextTab = nullptr;
+  wxButton* previousPage = nullptr;
+  wxButton* nextPage = nullptr;
+
   wxButton* Get(const wxEventTypeTag<wxCommandEvent>& evt) {
     if (evt == okEVT_PREVIOUS_TAB) {
-      return PreviousTab;
+      return previousTab;
     }
     if (evt == okEVT_NEXT_TAB) {
-      return NextTab;
+      return nextTab;
     }
     if (evt == okEVT_PREVIOUS_PAGE) {
-      return PreviousPage;
+      return previousPage;
     }
     if (evt == okEVT_NEXT_PAGE) {
-      return NextPage;
+      return nextPage;
     }
     return nullptr;
   }
@@ -41,12 +42,12 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
   const wxEventTypeTag<wxCommandEvent>& eventType) {
   const auto& device = mDevices.at(deviceIndex);
   auto label = _("Bind");
-  for (auto binding: mControllerState->Bindings) {
+  for (auto binding: mControllerState->bindings) {
     if (
-      binding.InstanceGuid == device.guidInstance
-      && binding.EventType == eventType) {
+      binding.instanceGuid == device.guidInstance
+      && binding.eventType == eventType) {
       label
-        = fmt::format(_("Button {}").ToStdString(), binding.ButtonIndex + 1);
+        = fmt::format(_("Button {}").ToStdString(), binding.buttonIndex + 1);
       break;
     }
   }
@@ -62,7 +63,7 @@ okDirectInputController::SettingsUI::SettingsUI(
   const std::shared_ptr<SharedState>& controllerState) 
   : wxPanel(parent, wxID_ANY), mControllerState(controllerState) {
   this->SetLabel(_("DirectInput"));
-  mDevices = GetDirectInputDevices(controllerState->DI8);
+  mDevices = GetDirectInputDevices(controllerState->di8);
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -104,10 +105,10 @@ okDirectInputController::SettingsUI::SettingsUI(
     grid->Add(nextPage, wxGBPosition(row, 4));
 
     mDeviceButtons.push_back({
-      .PreviousTab = previousTab,
-      .NextTab = nextTab,
-      .PreviousPage = previousPage,
-      .NextPage = nextPage,
+      .previousTab = previousTab,
+      .nextTab = nextTab,
+      .previousPage = previousPage,
+      .nextPage = nextPage,
     });
   }
   grid->SetCols(5);
@@ -157,16 +158,16 @@ void okDirectInputController::SettingsUI::OnBindButton(
   auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
   auto& device = mDevices.at(deviceIndex);
 
-  auto& bindings = this->mControllerState->Bindings;
+  auto& bindings = this->mControllerState->bindings;
 
   // Used to implement a clear button
   auto currentBinding = bindings.end();
   ;
   for (auto it = bindings.begin(); it != bindings.end(); ++it) {
-    if (it->InstanceGuid != device.guidInstance) {
+    if (it->instanceGuid != device.guidInstance) {
       continue;
     }
-    if (it->EventType != eventType) {
+    if (it->eventType != eventType) {
       continue;
     }
     currentBinding = it;
@@ -174,29 +175,29 @@ void okDirectInputController::SettingsUI::OnBindButton(
   }
   auto d = CreateBindInputDialog(currentBinding != bindings.end());
 
-  wxON_BLOCK_EXIT_SET(mControllerState->Hook, nullptr);
-  mControllerState->Hook = this;
+  wxON_BLOCK_EXIT_SET(mControllerState->hook, nullptr);
+  mControllerState->hook = this;
 
   auto f = [=, &bindings](wxThreadEvent& ev) {
     auto be = ev.GetPayload<DIButtonEvent>();
-    if (be.Instance.guidInstance != device.guidInstance) {
+    if (be.instance.guidInstance != device.guidInstance) {
       return;
     }
 
     // Not using `currentBinding` as we need to clear both the
     // current binding, and any other conflicting bindings
     for (auto it = bindings.begin(); it != bindings.end();) {
-      if (it->InstanceGuid != device.guidInstance) {
+      if (it->instanceGuid != device.guidInstance) {
         ++it;
         continue;
       }
 
-      if (it->ButtonIndex != be.ButtonIndex && it->EventType != eventType) {
+      if (it->buttonIndex != be.buttonIndex && it->eventType != eventType) {
         ++it;
         continue;
       }
 
-      auto button = this->mDeviceButtons.at(deviceIndex).Get(it->EventType);
+      auto button = this->mDeviceButtons.at(deviceIndex).Get(it->eventType);
       if (button) {
         button->SetLabel(_("Bind"));
       }
@@ -204,12 +205,12 @@ void okDirectInputController::SettingsUI::OnBindButton(
     }
 
     button->SetLabel(
-      fmt::format(_("Button {:d}").ToStdString(), be.ButtonIndex + 1));
+      fmt::format(_("Button {:d}").ToStdString(), be.buttonIndex + 1));
     bindings.push_back(
-      {.InstanceGuid = device.guidInstance,
-       .InstanceName = wxString(device.tszInstanceName).ToStdString(),
-       .ButtonIndex = be.ButtonIndex,
-       .EventType = eventType});
+      {.instanceGuid = device.guidInstance,
+       .instanceName = wxString(device.tszInstanceName).ToStdString(),
+       .buttonIndex = be.buttonIndex,
+       .eventType = eventType});
     wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
     d->Close();
   };
