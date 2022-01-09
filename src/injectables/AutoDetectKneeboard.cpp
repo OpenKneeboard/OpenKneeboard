@@ -5,6 +5,7 @@
 #include <winrt/base.h>
 
 #include "IDXGISwapChainPresentHook.h"
+#include "InjectedDLLMain.h"
 #include "InjectedKneeboard.h"
 #include "OculusD3D11Kneeboard.h"
 #include "OculusFrameHook.h"
@@ -123,11 +124,13 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   }
 };
 
+}// namespace OpenKneeboard
+
+namespace {
+
 std::unique_ptr<AutoDetectKneeboard> gInstance;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
-  DetourRestoreAfterWith();
-
   DetourTransactionPushBegin();
   gInstance = std::make_unique<AutoDetectKneeboard>();
   DetourTransactionPopCommit();
@@ -136,32 +139,14 @@ DWORD WINAPI ThreadEntry(LPVOID ignored) {
   return S_OK;
 }
 
-}// namespace OpenKneeboard
+}// namespace
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-  if (DetourIsHelperProcess()) {
-    return TRUE;
-  }
-
-  if (dwReason == DLL_PROCESS_ATTACH) {
-    OpenKneeboard::DPrintSettings::Set({
-      .prefix = "OpenKneeboard-Autodetect",
-    });
-    dprintf("Attached to process.");
-    // Create a new thread to avoid limitations on what we can do from DllMain
-    CreateThread(nullptr, 0, &ThreadEntry, nullptr, 0, nullptr);
-  } else if (dwReason == DLL_PROCESS_DETACH) {
-    dprint("Detaching from process...");
-    DetourTransactionPushBegin();
-    gInstance->Unhook();
-    DetourTransactionPopCommit();
-    dprint("Detached hooks, waiting for in-progress calls");
-    // If, for example, hooked_ovr_EndFrame was being called when we
-    // unhooked it, we need to let the current call finish.
-    Sleep(500);
-    dprint("Freeing resources");
-    gInstance.reset();
-    dprint("Cleanup complete.");
-  }
-  return TRUE;
+  return InjectedDLLMain(
+    "OpenKneeboard-Autodetect",
+    gInstance,
+    &ThreadEntry,
+    hinst,
+    dwReason,
+    reserved);
 }

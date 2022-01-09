@@ -26,42 +26,33 @@
 
 #include <windows.h>
 
+#include "InjectedDLLMain.h"
 #include "OculusD3D11Kneeboard.h"
 #include "OpenKneeboard/dprint.h"
 #include "detours-ext.h"
 
 using namespace OpenKneeboard;
 
-static std::unique_ptr<OculusD3D11Kneeboard> gRenderer;
+namespace {
+std::unique_ptr<OculusD3D11Kneeboard> gInstance;
+
+DWORD WINAPI ThreadEntry(LPVOID ignored) {
+  DetourTransactionPushBegin();
+  gInstance = std::make_unique<OculusD3D11Kneeboard>();
+  DetourTransactionPopCommit();
+  dprint("Installed hooks.");
+
+  return S_OK;
+}
+
+}// namespace
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-  if (DetourIsHelperProcess()) {
-    return TRUE;
-  }
-
-  if (dwReason == DLL_PROCESS_ATTACH) {
-    OpenKneeboard::DPrintSettings::Set({
-      .prefix = "OpenKneeboard-Oculus-D3D11",
-    });
-    dprintf("Attached to process.");
-    DetourRestoreAfterWith();
-
-    DetourTransactionPushBegin();
-    gRenderer = std::make_unique<OculusD3D11Kneeboard>();
-    DetourTransactionPopCommit();
-    dprint("Installed hooks.");
-  } else if (dwReason == DLL_PROCESS_DETACH) {
-    dprint("Detaching from process...");
-    DetourTransactionPushBegin();
-    gRenderer->Unhook();
-    DetourTransactionPopCommit();
-    dprint("Detached hooks, waiting for in-progress calls");
-    // If, for example, hooked_ovr_EndFrame was being called when we
-    // unhooked it, we need to let the current call finish.
-    Sleep(500);
-    dprint("Freeing resources");
-    gRenderer.reset();
-    dprint("Cleanup complete.");
-  }
-  return TRUE;
+  return InjectedDLLMain(
+    "OpenKneeboard-Oculus-D3D11",
+    gInstance,
+    &ThreadEntry,
+    hinst,
+    dwReason,
+    reserved);
 }
