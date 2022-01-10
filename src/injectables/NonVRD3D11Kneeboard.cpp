@@ -103,7 +103,8 @@ HRESULT NonVRD3D11Kneeboard::OnPresent(
   sprites.Begin();
   sprites.Draw(
     resourceView.get(),
-    RECT {left, top, left + renderWidth, top + renderHeight});
+    RECT {left, top, left + renderWidth, top + renderHeight},
+    DirectX::Colors::White * header.flat.opacity);
   sprites.End();
 
   return std::invoke(next, swapChain, syncInterval, flags);
