@@ -17,7 +17,7 @@ target_link_libraries(
 	openkneeboard-shm
 	directxtk)
 
-add_library(openkneeboard-nonvr-d3d11 MODULE nonvr-d3d11.cpp NonVRD3D11Kneeboard.cpp)
+add_library(openkneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   openkneeboard-nonvr-d3d11
   PRIVATE
@@ -28,11 +28,7 @@ target_link_libraries(
 	openkneeboard-shm
 	openkneeboard-InjectedKneeboard)
 
-add_library(
-  openkneeboard-oculus-d3d11
-  MODULE
-  oculus-d3d11.cpp
-  OculusD3D11Kneeboard.cpp)
+add_library(openkneeboard-oculus-d3d11 MODULE OculusD3D11Kneeboard.cpp)
 target_link_libraries(
   openkneeboard-oculus-d3d11
   PRIVATE

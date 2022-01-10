@@ -7,6 +7,8 @@
 #include <dxgi.h>
 #include <winrt/base.h>
 
+#include "InjectedDLLMain.h"
+
 namespace OpenKneeboard {
 
 struct NonVRD3D11Kneeboard::Impl {
@@ -111,3 +113,24 @@ HRESULT NonVRD3D11Kneeboard::OnPresent(
 }
 
 }// namespace OpenKneeboard
+
+using namespace OpenKneeboard;
+
+namespace {
+std::unique_ptr<NonVRD3D11Kneeboard> gInstance;
+
+DWORD WINAPI ThreadEntry(LPVOID ignored) {
+  DetourTransactionPushBegin();
+  gInstance = std::make_unique<NonVRD3D11Kneeboard>();
+  DetourTransactionPopCommit();
+  dprint("Installed hooks.");
+
+  return S_OK;
+}
+
+}// namespace
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  return InjectedDLLMain(
+    "OpenKneeboard-D3D11", gInstance, &ThreadEntry, hinst, dwReason, reserved);
+}

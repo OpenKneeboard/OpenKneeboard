@@ -6,6 +6,8 @@
 #include <detours.h>
 #include <winrt/base.h>
 
+#include "InjectedDLLMain.h"
+
 // Used, but not hooked
 #define REAL_OVR_FUNCS \
   IT(ovr_CreateTextureSwapChainDX) \
@@ -184,3 +186,29 @@ HRESULT OculusD3D11Kneeboard::OnPresent(
 }
 
 }// namespace OpenKneeboard
+
+using namespace OpenKneeboard;
+
+namespace {
+std::unique_ptr<OculusD3D11Kneeboard> gInstance;
+
+DWORD WINAPI ThreadEntry(LPVOID ignored) {
+  DetourTransactionPushBegin();
+  gInstance = std::make_unique<OculusD3D11Kneeboard>();
+  DetourTransactionPopCommit();
+  dprint("Installed hooks.");
+
+  return S_OK;
+}
+
+}// namespace
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  return InjectedDLLMain(
+    "OpenKneeboard-Oculus-D3D11",
+    gInstance,
+    &ThreadEntry,
+    hinst,
+    dwReason,
+    reserved);
+}
