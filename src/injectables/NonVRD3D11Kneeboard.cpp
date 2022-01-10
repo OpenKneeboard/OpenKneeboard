@@ -4,6 +4,7 @@
 #include <DirectXTK/WICTextureLoader.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
+#include <dxgi.h>
 #include <winrt/base.h>
 
 namespace OpenKneeboard {
@@ -61,12 +62,50 @@ HRESULT NonVRD3D11Kneeboard::OnPresent(
   winrt::com_ptr<ID3D11ShaderResourceView> resourceView;
   device->CreateShaderResourceView(texture.get(), nullptr, resourceView.put());
 
+  DXGI_SWAP_CHAIN_DESC scDesc;
+  swapChain->GetDesc(&scDesc);
+
+  const auto aspectRatio = float(header.imageWidth) / header.imageHeight;
+  const LONG canvasWidth = scDesc.BufferDesc.Width;
+  const LONG canvasHeight = scDesc.BufferDesc.Height;
+
+  const LONG renderHeight
+    = (static_cast<long>(canvasHeight) * header.flat.heightPercent) / 100;
+  const LONG renderWidth = std::lround(renderHeight * aspectRatio);
+
+  const auto padding = header.flat.paddingPixels;
+
+  LONG left = padding;
+  switch (header.flat.horizontalAlignment) {
+    case SHM::FlatConfig::HALIGN_LEFT:
+      break;
+    case SHM::FlatConfig::HALIGN_CENTER:
+      left = (canvasWidth - renderWidth) / 2;
+      break;
+    case SHM::FlatConfig::HALIGN_RIGHT:
+      left = canvasWidth - (renderWidth + padding);
+      break;
+  }
+
+  LONG top = padding;
+  switch (header.flat.verticalAlignment) {
+    case SHM::FlatConfig::VALIGN_TOP:
+      break;
+    case SHM::FlatConfig::VALIGN_MIDDLE:
+      top = (canvasHeight - renderHeight) / 2;
+      break;
+    case SHM::FlatConfig::VALIGN_BOTTOM:
+      top = canvasHeight - (renderHeight + padding);
+      break;
+  }
+
   DirectX::SpriteBatch sprites(context.get());
   sprites.Begin();
-  sprites.Draw(resourceView.get(), RECT {0, 0, 800, 600});
+  sprites.Draw(
+    resourceView.get(),
+    RECT {left, top, left + renderWidth, top + renderHeight});
   sprites.End();
 
-  // TODO: spinlock with Unhook
   return std::invoke(next, swapChain, syncInterval, flags);
 }
 

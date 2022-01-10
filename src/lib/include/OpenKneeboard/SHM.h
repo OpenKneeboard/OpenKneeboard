@@ -27,6 +27,25 @@ struct VRConfig {
   float zoomScale = 2.0f;
 };
 
+struct FlatConfig {
+  enum HorizontalAlignment{
+    HALIGN_LEFT,
+    HALIGN_CENTER,
+    HALIGN_RIGHT,
+  };
+  enum VerticalAlignment {
+    VALIGN_TOP,
+    VALIGN_MIDDLE,
+    VALIGN_BOTTOM,
+  };
+
+  uint8_t heightPercent = 60;
+  uint32_t paddingPixels = 10;
+
+  HorizontalAlignment horizontalAlignment = HALIGN_RIGHT;
+  VerticalAlignment verticalAlignment = VALIGN_MIDDLE;
+};
+
 struct Header {
   static const uint32_t VERSION = 1;
   uint64_t sequenceNumber = 0;
@@ -34,6 +53,7 @@ struct Header {
   uint16_t imageWidth, imageHeight;// Pixels
 
   VRConfig vr;
+  FlatConfig flat;
 };
 
 struct Pixel {
