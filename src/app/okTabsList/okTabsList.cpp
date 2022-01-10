@@ -1,10 +1,11 @@
 #include "okTabsList.h"
 
-#include "OpenKneeboard/DCSAircraftTab.h"
-#include "OpenKneeboard/DCSMissionTab.h"
-#include "OpenKneeboard/DCSRadioLogTab.h"
-#include "OpenKneeboard/DCSTerrainTab.h"
-#include "OpenKneeboard/dprint.h"
+#include <OpenKneeboard/DCSAircraftTab.h>
+#include <OpenKneeboard/DCSMissionTab.h>
+#include <OpenKneeboard/DCSRadioLogTab.h>
+#include <OpenKneeboard/DCSTerrainTab.h>
+#include <OpenKneeboard/dprint.h>
+
 #include "TabTypes.h"
 #include "okEvents.h"
 #include "okTabsList_SettingsUI.h"

@@ -126,8 +126,7 @@ void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
 }
 
 wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
-  auto ret
-    = new okDirectInputController::SettingsUI(parent, p);
+  auto ret = new okDirectInputController::SettingsUI(parent, p);
   ret->Bind(okEVT_SETTINGS_CHANGED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());
   });

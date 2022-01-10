@@ -1,11 +1,11 @@
-#include "OpenKneeboard/DCSAircraftTab.h"
+#include <OpenKneeboard/DCSAircraftTab.h>
+#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/dprint.h>
 
 #include <filesystem>
 
-#include "OpenKneeboard/FolderTab.h"
-#include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/Games/DCSWorld.h"
-#include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;
@@ -40,7 +40,6 @@ void DCSAircraftTab::RenderPage(
 D2D1_SIZE_U DCSAircraftTab::GetPreferredPixelSize(uint16_t pageIndex) {
   return mDelegate->GetPreferredPixelSize(pageIndex);
 }
-
 
 const char* DCSAircraftTab::GetGameEventName() const {
   return DCS::EVT_AIRCRAFT;

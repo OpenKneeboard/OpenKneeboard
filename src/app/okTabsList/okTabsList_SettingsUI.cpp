@@ -1,10 +1,10 @@
 #include "okTabsList_SettingsUI.h"
 
+#include <OpenKneeboard/dprint.h>
 #include <wx/choicdlg.h>
 #include <wx/listctrl.h>
 #include <wx/wupdlock.h>
 
-#include "OpenKneeboard/dprint.h"
 #include "TabTypes.h"
 #include "okEvents.h"
 #include "okTabsList_SharedState.h"

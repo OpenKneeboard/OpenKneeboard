@@ -1,12 +1,10 @@
-#include "OpenKneeboard\GameEvent.h"
-
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard\GameEvent.h>
 #include <Windows.h>
 #include <winrt/base.h>
 
 #include <charconv>
 #include <string_view>
-
-#include "OpenKneeboard/dprint.h"
 
 static const char g_Path[]
   = "\\\\.\\mailslot\\com.fredemmott.openkneeboard.events.v1";

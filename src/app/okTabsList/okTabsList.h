@@ -16,10 +16,10 @@ class okTabsList final : public okConfigurableComponent {
   virtual nlohmann::json GetSettings() const override;
 
  private:
-	class SettingsUI;
-	struct SharedState;
-	struct State;
-	std::shared_ptr<State> p;
+  class SettingsUI;
+  struct SharedState;
+  struct State;
+  std::shared_ptr<State> p;
 
   void LoadConfig(const nlohmann::json&);
   void LoadDefaultConfig();

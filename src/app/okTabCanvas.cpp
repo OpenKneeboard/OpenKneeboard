@@ -1,10 +1,10 @@
 #include "okTabCanvas.h"
 
+#include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/dprint.h>
 #include <wx/dcbuffer.h>
 
-#include "OpenKneeboard/D2DErrorRenderer.h"
-#include "OpenKneeboard/Tab.h"
-#include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
 
 using namespace OpenKneeboard;
@@ -89,7 +89,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
       bg.Blue() / 255.0f,
       bg.Alpha() / 255.0f,
     });
-    
+
     p->errorRenderer->Render(
       _("No Pages").ToStdWstring(),
       {0.0f,

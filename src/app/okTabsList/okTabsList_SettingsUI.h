@@ -6,25 +6,26 @@ class wxListEvent;
 class wxListView;
 
 class okTabsList::SettingsUI final : public wxPanel {
-  public:
-    SettingsUI(wxWindow* parent, const std::shared_ptr<SharedState>&);
-    virtual ~SettingsUI();
-  private:
-    std::shared_ptr<SharedState> s;
-    wxListView* mList = nullptr;
+ public:
+  SettingsUI(wxWindow* parent, const std::shared_ptr<SharedState>&);
+  virtual ~SettingsUI();
 
-    void OnAddTab(wxCommandEvent&);
-    void OnRemoveTab(wxCommandEvent&);
+ private:
+  std::shared_ptr<SharedState> s;
+  wxListView* mList = nullptr;
 
-    void OnMoveTabUp(wxCommandEvent&);
-    void OnMoveTabDown(wxCommandEvent&);
+  void OnAddTab(wxCommandEvent&);
+  void OnRemoveTab(wxCommandEvent&);
 
-    enum class Direction {
-      UP,
-      DOWN,
-    };
-    void MoveTab(Direction);
+  void OnMoveTabUp(wxCommandEvent&);
+  void OnMoveTabDown(wxCommandEvent&);
 
-    void InsertTab(const std::shared_ptr<OpenKneeboard::Tab>&);
-    void InsertFolderTab();
+  enum class Direction {
+    UP,
+    DOWN,
+  };
+  void MoveTab(Direction);
+
+  void InsertTab(const std::shared_ptr<OpenKneeboard::Tab>&);
+  void InsertFolderTab();
 };

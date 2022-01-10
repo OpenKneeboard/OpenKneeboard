@@ -1,11 +1,10 @@
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 #include <fmt/format.h>
 #include <winrt/base.h>
 
 #include <string>
-
-#include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/dprint.h"
 
 extern "C" {
 #include <lauxlib.h>

@@ -1,8 +1,7 @@
-#include "OpenKneeboard/FolderTab.h"
-
+#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
 
-#include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
 
 namespace OpenKneeboard {

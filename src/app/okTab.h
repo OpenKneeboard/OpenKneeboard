@@ -5,10 +5,10 @@
 #include <wx/wx.h>
 #endif
 
-#include <memory>
-
-#include <winrt/base.h>
 #include <d2d1.h>
+#include <winrt/base.h>
+
+#include <memory>
 
 namespace OpenKneeboard {
 class Tab;

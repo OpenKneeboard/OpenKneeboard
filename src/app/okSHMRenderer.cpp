@@ -5,17 +5,16 @@
 #include <wx/wx.h>
 #endif
 
+#include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/dprint.h>
 #include <Unknwn.h>
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <dwrite.h>
 #include <wincodec.h>
 #include <winrt/base.h>
-
-#include "OpenKneeboard/D2DErrorRenderer.h"
-#include "OpenKneeboard/SHM.h"
-#include "OpenKneeboard/Tab.h"
-#include "OpenKneeboard/dprint.h"
 
 using namespace OpenKneeboard;
 

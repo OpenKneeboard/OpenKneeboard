@@ -12,6 +12,7 @@ class wxListbook;
 class okGamesList::SettingsUI final : public wxPanel {
  public:
   SettingsUI(wxWindow* parent, okGamesList* gamesList);
+
  private:
   wxListbook* mList = nullptr;
   okGamesList* mGamesList = nullptr;

@@ -5,9 +5,9 @@
 #include <wx/wx.h>
 #endif
 
-#include "okDirectInputController.h"
-
 #include <guiddef.h>
+
+#include "okDirectInputController.h"
 
 struct okDirectInputController::DIBinding {
   GUID instanceGuid;

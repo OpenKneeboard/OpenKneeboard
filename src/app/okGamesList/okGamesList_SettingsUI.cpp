@@ -1,5 +1,6 @@
 #include "okGamesList_SettingsUI.h"
 
+#include <OpenKneeboard/dprint.h>
 #include <wx/filedlg.h>
 #include <wx/listbook.h>
 #include <wx/listctrl.h>
@@ -7,7 +8,6 @@
 #include <wx/statline.h>
 
 #include "GetIconFromExecutable.h"
-#include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
 #include "okGameInstanceSettings.h"
 #include "okSelectExecutableDialog.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "OpenKneeboard/DCSTab.h"
+#include <OpenKneeboard/DCSTab.h>
 
 namespace OpenKneeboard {
 

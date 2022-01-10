@@ -1,5 +1,4 @@
-#include "OpenKneeboard/shm.h"
-
+#include <OpenKneeboard/shm.h>
 #include <Windows.h>
 #include <fmt/format.h>
 

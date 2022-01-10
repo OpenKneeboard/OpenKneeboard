@@ -1,5 +1,4 @@
-#include "OpenKneeboard/ConsoleLoopCondition.h"
-
+#include <OpenKneeboard/ConsoleLoopCondition.h>
 #include <Windows.h>
 #include <objbase.h>
 

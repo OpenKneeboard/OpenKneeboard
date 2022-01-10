@@ -1,5 +1,7 @@
-#include "OpenKneeboard/DCSMissionTab.h"
-
+#include <OpenKneeboard/DCSMissionTab.h>
+#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 #include <wx/stdpaths.h>
 #include <wx/wfstream.h>
@@ -7,9 +9,6 @@
 
 #include <random>
 
-#include "OpenKneeboard/FolderTab.h"
-#include "OpenKneeboard/Games/DCSWorld.h"
-#include "OpenKneeboard/dprint.h"
 #include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;

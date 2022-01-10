@@ -1,8 +1,7 @@
 #include "detours-ext.h"
 
-#include <TlHelp32.h>
-
 #include <OpenKneeboard/dprint.h>
+#include <TlHelp32.h>
 
 using OpenKneeboard::dprintf;
 
@@ -43,7 +42,7 @@ void DetourTransactionPushBegin() {
   gTransactionDepth++;
   if (gTransactionDepth > 1) {
     return;
-  }	
+  }
   DetourTransactionBegin();
   DetourUpdateAllThreads();
 }

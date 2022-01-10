@@ -1,9 +1,9 @@
 #pragma once
 
+#include <OpenKneeboard/Game.h>
+
 #include <json.hpp>
 #include <memory>
-
-#include "OpenKneeboard/Game.h"
 
 namespace OpenKneeboard {
 struct GameInstance {

@@ -19,9 +19,9 @@ class okOpenVRThread final : public wxThread {
   okOpenVRThread();
   ~okOpenVRThread();
 
-  protected:
-    virtual ExitCode Entry() override;
+ protected:
+  virtual ExitCode Entry() override;
 
-  private:
-    void Tick();
+ private:
+  void Tick();
 };

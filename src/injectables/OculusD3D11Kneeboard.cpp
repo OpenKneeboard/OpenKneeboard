@@ -1,11 +1,10 @@
 #include "OculusD3D11Kneeboard.h"
 
 #include <OVR_CAPI_D3D.h>
+#include <OpenKneeboard/dprint.h>
 #include <d3d11.h>
 #include <detours.h>
 #include <winrt/base.h>
-
-#include "OpenKneeboard/dprint.h"
 
 // Used, but not hooked
 #define REAL_OVR_FUNCS \

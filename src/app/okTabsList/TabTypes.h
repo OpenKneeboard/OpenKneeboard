@@ -5,13 +5,13 @@
 #include <wx/wx.h>
 #endif
 
-#include <concepts>
+#include <OpenKneeboard/DCSAircraftTab.h>
+#include <OpenKneeboard/DCSMissionTab.h>
+#include <OpenKneeboard/DCSRadioLogTab.h>
+#include <OpenKneeboard/DCSTerrainTab.h>
+#include <OpenKneeboard/FolderTab.h>
 
-#include "OpenKneeboard/DCSAircraftTab.h"
-#include "OpenKneeboard/DCSMissionTab.h"
-#include "OpenKneeboard/DCSRadioLogTab.h"
-#include "OpenKneeboard/DCSTerrainTab.h"
-#include "OpenKneeboard/FolderTab.h"
+#include <concepts>
 
 class wxWindow;
 
@@ -71,8 +71,7 @@ concept tab_with_settings =
   && tab_with_interactive_creation<T>;
 // clang-format on
 
-#define IT(_, it) \
-  static_assert(tab_with_settings<it##Tab>);
+#define IT(_, it) static_assert(tab_with_settings<it##Tab>);
 CONFIGURABLE_TAB_TYPES
 #undef IT
 

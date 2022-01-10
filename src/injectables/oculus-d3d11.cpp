@@ -1,8 +1,8 @@
+#include <OpenKneeboard/dprint.h>
 #include <windows.h>
 
 #include "InjectedDLLMain.h"
 #include "OculusD3D11Kneeboard.h"
-#include "OpenKneeboard/dprint.h"
 #include "detours-ext.h"
 
 using namespace OpenKneeboard;

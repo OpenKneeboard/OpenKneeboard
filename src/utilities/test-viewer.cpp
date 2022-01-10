@@ -4,14 +4,13 @@
 #endif
 
 #include <D2d1.h>
+#include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/SHM.h>
 #include <unknwn.h>
 #include <winrt/base.h>
 #include <wx/dcbuffer.h>
 #include <wx/frame.h>
 #include <wx/graphics.h>
-
-#include "OpenKneeboard/D2DErrorRenderer.h"
-#include "OpenKneeboard/SHM.h"
 
 #pragma comment(lib, "D2d1.lib")
 

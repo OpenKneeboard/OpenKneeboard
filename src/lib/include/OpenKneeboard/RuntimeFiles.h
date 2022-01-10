@@ -11,4 +11,4 @@ extern const std::filesystem::path NON_VR_D3D11_DLL;
 extern const std::filesystem::path OCULUS_D3D11_DLL;
 extern const std::filesystem::path AUTODETECT_DLL;
 
-}
+}// namespace OpenKneeboard::RuntimeFiles

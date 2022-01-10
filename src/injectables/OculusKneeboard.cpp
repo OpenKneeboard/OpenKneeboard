@@ -35,7 +35,8 @@ static bool poseIntersectsWithRect(
   const Vector3 rayNormal(Vector3::Transform(Vector3::Forward, rayQuat));
   const Ray ray(rayOrigin, rayNormal);
 
-  const Plane plane(rectCenter, Vector3::Transform(Vector3::Backward, rectQuat));
+  const Plane plane(
+    rectCenter, Vector3::Transform(Vector3::Backward, rectQuat));
 
   // Does the ray intersect the infinite plane?
   float rayLength = 0;
@@ -133,8 +134,7 @@ ovrResult OculusKneeboard::OnEndFrame(
 
   const ovrVector2f normalSize(virtualWidth, virtualHeight);
   const ovrVector2f zoomedSize(
-    virtualWidth * vr.zoomScale,
-    virtualHeight * vr.zoomScale);
+    virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale);
 
   auto predictedTime = real_ovr_GetPredictedDisplayTime(session, frameIndex);
   auto state = real_ovr_GetTrackingState(session, predictedTime, false);

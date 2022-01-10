@@ -1,10 +1,10 @@
 #pragma once
 
-#include "okDirectInputController.h"
-
-#include <vector>
 #include <winrt/base.h>
 
+#include <vector>
+
+#include "okDirectInputController.h"
 #include "okDirectInputController_DIBinding.h"
 
 struct okDirectInputController::SharedState {

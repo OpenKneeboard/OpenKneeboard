@@ -1,5 +1,4 @@
-#include "OpenKneeboard/D2DErrorRenderer.h"
-
+#include <OpenKneeboard/D2DErrorRenderer.h>
 #include <Unknwn.h>
 #include <dwrite.h>
 

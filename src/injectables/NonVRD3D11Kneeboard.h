@@ -1,9 +1,9 @@
 #pragma once
 
+#include <memory>
+
 #include "IDXGISwapChainPresentHook.h"
 #include "InjectedKneeboard.h"
-
-#include <memory>
 
 namespace OpenKneeboard {
 

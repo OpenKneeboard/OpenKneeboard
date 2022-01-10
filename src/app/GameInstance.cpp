@@ -1,6 +1,6 @@
 #include "GameInstance.h"
 
-#include "OpenKneeboard/Game.h"
+#include <OpenKneeboard/Game.h>
 
 namespace OpenKneeboard {
 

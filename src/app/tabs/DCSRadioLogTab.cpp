@@ -1,5 +1,5 @@
-#include "OpenKneeboard/DCSRadioLogTab.h"
-
+#include <OpenKneeboard/DCSRadioLogTab.h>
+#include <OpenKneeboard/Games/DCSWorld.h>
 #include <Unknwn.h>
 #include <dwrite.h>
 #include <fmt/format.h>
@@ -7,7 +7,6 @@
 
 #include <algorithm>
 
-#include "OpenKneeboard/Games/DCSWorld.h"
 #include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;

@@ -3,8 +3,8 @@
 #include <OpenKneeboard/dprint.h>
 #include <winrt/base.h>
 
-#include "dxgi-offsets.h"
 #include "detours-ext.h"
+#include "dxgi-offsets.h"
 
 namespace OpenKneeboard {
 

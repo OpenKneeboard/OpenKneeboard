@@ -3,10 +3,9 @@
 #include <wx/wx.h>
 #endif
 
+#include <OpenKneeboard/FolderTab.h>
 #include <ShlObj.h>
 #include <wx/dirdlg.h>
-
-#include "OpenKneeboard/FolderTab.h"
 
 namespace OpenKneeboard {
 

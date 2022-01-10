@@ -1,5 +1,4 @@
-#include "OpenKneeboard/DCSTab.h"
-
+#include <OpenKneeboard/DCSTab.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/Games/DCSWorld.h>
 #include <OpenKneeboard/RuntimeFiles.h>

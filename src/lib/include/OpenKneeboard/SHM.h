@@ -28,7 +28,7 @@ struct VRConfig {
 };
 
 struct FlatConfig {
-  enum HorizontalAlignment{
+  enum HorizontalAlignment {
     HALIGN_LEFT,
     HALIGN_CENTER,
     HALIGN_RIGHT,

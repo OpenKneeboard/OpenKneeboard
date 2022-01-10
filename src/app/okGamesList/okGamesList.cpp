@@ -1,7 +1,8 @@
 #include "okGamesList.h"
 
+#include <OpenKneeboard/Games/DCSWorld.h>
+
 #include "GenericGame.h"
-#include "OpenKneeboard/Games/DCSWorld.h"
 #include "okEvents.h"
 #include "okGameInjectorThread.h"
 #include "okGamesList_SettingsUI.h"

@@ -1,4 +1,4 @@
-#include "OpenKneeboard/Tab.h"
+#include <OpenKneeboard/Tab.h>
 
 #include "okEvents.h"
 

@@ -1,10 +1,9 @@
 #define _USE_MATH_DEFINES
+#include <OpenKneeboard/ConsoleLoopCondition.h>
+#include <OpenKneeboard/SHM.h>
 #include <Windows.h>
 
 #include <cmath>
-
-#include "OpenKneeboard/ConsoleLoopCondition.h"
-#include "OpenKneeboard/SHM.h"
 
 using namespace OpenKneeboard;
 

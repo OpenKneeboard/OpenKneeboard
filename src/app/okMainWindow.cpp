@@ -1,11 +1,11 @@
 #include "okMainWindow.h"
 
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/dprint.h>
 #include <wx/frame.h>
 #include <wx/notebook.h>
 #include <wx/wupdlock.h>
 
-#include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/dprint.h"
 #include "Settings.h"
 #include "okDirectInputController.h"
 #include "okEvents.h"

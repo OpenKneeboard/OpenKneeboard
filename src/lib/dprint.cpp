@@ -1,5 +1,4 @@
-#include "OpenKneeboard/dprint.h"
-
+#include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 
 namespace OpenKneeboard {

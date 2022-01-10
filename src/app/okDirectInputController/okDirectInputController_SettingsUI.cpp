@@ -60,7 +60,7 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
 
 okDirectInputController::SettingsUI::SettingsUI(
   wxWindow* parent,
-  const std::shared_ptr<SharedState>& controllerState) 
+  const std::shared_ptr<SharedState>& controllerState)
   : wxPanel(parent, wxID_ANY), mControllerState(controllerState) {
   this->SetLabel(_("DirectInput"));
   mDevices = GetDirectInputDevices(controllerState->di8);

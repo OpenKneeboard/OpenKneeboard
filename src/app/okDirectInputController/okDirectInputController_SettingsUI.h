@@ -12,9 +12,7 @@
 
 class okDirectInputController::SettingsUI final : public wxPanel {
  public:
-  SettingsUI(
-    wxWindow* parent,
-    const std::shared_ptr<SharedState>&);
+  SettingsUI(wxWindow* parent, const std::shared_ptr<SharedState>&);
   ~SettingsUI();
 
  private:

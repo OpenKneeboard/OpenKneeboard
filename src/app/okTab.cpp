@@ -1,6 +1,7 @@
 #include "okTab.h"
 
-#include "OpenKneeboard/Tab.h"
+#include <OpenKneeboard/Tab.h>
+
 #include "okTabCanvas.h"
 
 using namespace OpenKneeboard;
@@ -47,7 +48,6 @@ std::shared_ptr<Tab> okTab::GetTab() const {
 uint16_t okTab::GetPageIndex() const {
   return p->canvas->GetPageIndex();
 }
-
 
 void okTab::PreviousPage() {
   p->canvas->PreviousPage();

@@ -1,10 +1,8 @@
-#include "OpenKneeboard\Games\DCSWorld.h"
-
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard\Games\DCSWorld.h>
 #include <ShlObj.h>
 #include <Windows.h>
 #include <fmt/format.h>
-
-#include "OpenKneeboard/dprint.h"
 
 namespace OpenKneeboard::Games {
 

@@ -26,7 +26,7 @@ wxDECLARE_EVENT(okEVT_TAB_PIXELS_CHANGED, wxCommandEvent);
  *
  * For example, `DCSMissionTab` should emit this when the current mission
  * changes.
- * 
+ *
  * Reasonable responses for okTab and okTabCanvas include:
  * - resetting back to the first page
  * - emitting `okEVT_TAB_PIXELS_MODIFIED`

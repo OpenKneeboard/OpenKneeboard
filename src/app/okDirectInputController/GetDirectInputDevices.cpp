@@ -14,10 +14,7 @@ DeviceInstances GetDirectInputDevices(
   const winrt::com_ptr<IDirectInput8>& di8) {
   DeviceInstances ret;
   di8->EnumDevices(
-    DI8DEVCLASS_GAMECTRL,
-    &EnumDeviceCallback,
-    &ret,
-    DIEDFL_ATTACHEDONLY);
+    DI8DEVCLASS_GAMECTRL, &EnumDeviceCallback, &ret, DIEDFL_ATTACHEDONLY);
   return ret;
 }
 

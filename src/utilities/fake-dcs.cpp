@@ -1,8 +1,6 @@
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/Games/DCSWorld.h>
 #include <Windows.h>
-
-#include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/Games/DCSWorld.h"
-
 #include <fmt/format.h>
 
 using DCS = OpenKneeboard::Games::DCSWorld;
@@ -25,12 +23,13 @@ int main() {
 
   for (auto i = 0; i < 15; ++i) {
     auto message = fmt::format("{}a - single line", i);
-    (GameEvent { DCS::EVT_RADIO_MESSAGE, message }).Send();
+    (GameEvent {DCS::EVT_RADIO_MESSAGE, message}).Send();
     message = fmt::format(
       "{}b - multi line - 12345678901234567890123456789012345678901234567890"
       "1234567890123456789012345678901234567890123456789012345678901234567890"
-      "1234567890123456789012345678901234567890123456789012345678901234567890", i);
-    (GameEvent { DCS::EVT_RADIO_MESSAGE, message }).Send();
+      "1234567890123456789012345678901234567890123456789012345678901234567890",
+      i);
+    (GameEvent {DCS::EVT_RADIO_MESSAGE, message}).Send();
   }
 
   printf("Sent data.\n");
