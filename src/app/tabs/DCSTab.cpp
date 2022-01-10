@@ -1,15 +1,14 @@
 #include "OpenKneeboard/DCSTab.h"
 
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/dprint.h>
 #include <fmt/xchar.h>
 #include <wx/msgdlg.h>
 
 #include <algorithm>
 #include <filesystem>
-
-#include "OpenKneeboard/GameEvent.h"
-#include "OpenKneeboard/Games/DCSWorld.h"
-#include "OpenKneeboard/dprint.h"
-#include "RuntimeFiles.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;
 using namespace OpenKneeboard;

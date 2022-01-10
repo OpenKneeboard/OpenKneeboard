@@ -1,8 +1,5 @@
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "*.cpp")
-
-set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
-file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
-add_executable(OpenKneeboard WIN32 ${SOURCES} ${RUNTIME_FILES_CPP})
+add_executable(OpenKneeboard WIN32 ${SOURCES})
 target_compile_definitions(
   OpenKneeboard
   PRIVATE
@@ -20,6 +17,7 @@ target_link_libraries(
   games
   json
   openkneeboard-shm
+  openkneeboard-runtime-files
   openkneeboard-D2DErrorRenderer
   openvr
   wx::base
@@ -51,6 +49,7 @@ add_custom_command(
   ${CMAKE_COMMAND} -E copy_if_different
   "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
   "$<TARGET_FILE:openkneeboard-autodetect>"
+  "$<TARGET_FILE:openkneeboard-d3d11>"
   "$<TARGET_FILE:openkneeboard-oculus-d3d11>"
   "$<TARGET_FILE:openkneeboard-dcs-ext-dll>"
   "$<TARGET_FILE_DIR:openkneeboard-dcs-ext-dll>/$<TARGET_PROPERTY:openkneeboard-dcs-ext-lua,OUTPUT_NAME>"

@@ -1,13 +1,13 @@
 #include "okGameInjectorThread.h"
 
+#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/dprint.h>
 #include <TlHelp32.h>
 #include <detours.h>
 #include <winrt/base.h>
 
 #include <mutex>
 
-#include "OpenKneeboard/dprint.h"
-#include "RuntimeFiles.h"
 #include "okEvents.h"
 
 using namespace OpenKneeboard;

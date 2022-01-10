@@ -6,17 +6,6 @@ add_library(openkneeboard-InjectedKneeboard STATIC InjectedKneeboard.cpp)
 add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(dxgi-hooks PRIVATE detours-ext dprint)
 
-add_library(openkneeboard-d3d11-lib STATIC NonVRD3D11Kneeboard.cpp)
-target_link_libraries(
-  openkneeboard-d3d11-lib
-  PUBLIC
-	directxtk
-  dxgi-hooks
-  detours-ext
-  dprint
-	openkneeboard-shm
-	openkneeboard-InjectedKneeboard)
-
 add_library(oculus-hooks STATIC OculusFrameHook.cpp OculusKneeboard.cpp)
 target_link_libraries(
 	oculus-hooks
@@ -28,34 +17,35 @@ target_link_libraries(
 	openkneeboard-shm
 	directxtk)
 
-add_library(
-  openkneeboard-d3d11
-  MODULE
-  nonvr-d3d11.cpp)
-target_link_libraries(openkneeboard-d3d11 PRIVATE openkneeboard-d3d11-lib)
-
-add_library(openkneeboard-oculus-d3d11-lib STATIC OculusD3D11Kneeboard.cpp)
+add_library(openkneeboard-d3d11 MODULE nonvr-d3d11.cpp NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
-  openkneeboard-oculus-d3d11-lib
-  PUBLIC
+  openkneeboard-d3d11
+  PRIVATE
+	directxtk
+  dxgi-hooks
+  detours-ext
+  dprint
+	openkneeboard-shm
+	openkneeboard-InjectedKneeboard)
+
+add_library(
+  openkneeboard-oculus-d3d11
+  MODULE
+  oculus-d3d11.cpp
+  OculusD3D11Kneeboard.cpp)
+target_link_libraries(
+  openkneeboard-oculus-d3d11
+  PRIVATE
   dxgi-hooks
   detours-ext
   dprint
   oculus-hooks
   oculus-sdk-headers)
 
-add_library(
-  openkneeboard-oculus-d3d11
-  MODULE
-  oculus-d3d11.cpp)
-target_link_libraries(openkneeboard-oculus-d3d11 PRIVATE openkneeboard-oculus-d3d11-lib)
-
-add_library(
-  openkneeboard-autodetect
-  MODULE
-  AutoDetectKneeboard.cpp)
+add_library(openkneeboard-autodetect MODULE AutoDetectKneeboard.cpp)
 target_link_libraries(
   openkneeboard-autodetect
   PRIVATE
-  openkneeboard-d3d11-lib
-  openkneeboard-oculus-d3d11-lib)
+  openkneeboard-runtime-files
+  dxgi-hooks
+  oculus-hooks)

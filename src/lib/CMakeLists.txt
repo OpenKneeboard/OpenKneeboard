@@ -1,6 +1,11 @@
 add_library(_libheaders INTERFACE)
 target_include_directories(_libheaders INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
+file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
+add_library(openkneeboard-runtime-files STATIC "${RUNTIME_FILES_CPP}")
+target_link_libraries(openkneeboard-runtime-files PUBLIC _libheaders)
+
 add_library(openkneeboard-shm STATIC SHM.cpp)
 target_link_libraries(openkneeboard-shm PRIVATE fmt)
 target_link_libraries(openkneeboard-shm PUBLIC _libheaders)

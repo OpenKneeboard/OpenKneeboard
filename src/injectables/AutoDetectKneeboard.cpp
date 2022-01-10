@@ -1,4 +1,6 @@
 
+#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/dprint.h>
 #include <Unknwn.h>
 #include <d3d12.h>
 #include <windows.h>
@@ -6,11 +8,7 @@
 
 #include "IDXGISwapChainPresentHook.h"
 #include "InjectedDLLMain.h"
-#include "InjectedKneeboard.h"
-#include "NonVRD3D11Kneeboard.h"
-#include "OculusD3D11Kneeboard.h"
 #include "OculusFrameHook.h"
-#include "OpenKneeboard/dprint.h"
 #include "detours-ext.h"
 
 using namespace OpenKneeboard;
@@ -25,18 +23,19 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   const uint64_t FLAG_OCULUS = 1ui64 << 32;
   const uint64_t FLAG_STEAMVR = 1ui64 << 33;
 
+  HMODULE mThisModule = nullptr;
   uint64_t mFlags = 0;
   uint64_t mFrames = 0;
 
-  std::unique_ptr<InjectedKneeboard> mNext;
-
  public:
+  AutoDetectKneeboard() = delete;
+
+  explicit AutoDetectKneeboard(HMODULE self) : mThisModule(self) {
+  }
+
   void Unhook() {
     OculusFrameHook::Unhook();
     IDXGISwapChainPresentHook::Unhook();
-    if (mNext) {
-      mNext->Unhook();
-    }
   }
 
  protected:
@@ -107,20 +106,33 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     }
 
     if (mFlags == (FLAG_D3D11 | FLAG_OCULUS)) {
-      dprint("!!!!! Creating OculusD3D11Kneeboard...");
-      mNext = std::make_unique<OculusD3D11Kneeboard>();
+      LoadNext(RuntimeFiles::OCULUS_D3D11_DLL);
       return;
     }
 
     if (mFlags == FLAG_D3D11) {
-      dprint("!!!!! Creating NonVRD3D11Kneeboard...");
-      mNext = std::make_unique<NonVRD3D11Kneeboard>();
+      LoadNext(RuntimeFiles::NON_VR_D3D11_DLL);
       return;
     }
 
     dprintf(
       "Don't know how to create a kneeboard from autodetection flags {:#b}",
       mFlags);
+  }
+
+  void LoadNext(const std::filesystem::path& _next) {
+    std::filesystem::path next(_next);
+    if (!next.is_absolute()) {
+      wchar_t buf[MAX_PATH];
+      GetModuleFileNameW(mThisModule, buf, MAX_PATH);
+      next = std::filesystem::path(buf).parent_path() / _next;
+    }
+    dprint("----- Loading next -----");
+    dprintf("  Next: {}", next.string());
+    auto wnext = next.wstring();
+    if (!LoadLibraryW(wnext.c_str())) {
+      dprintf("!!!!! Load failed: {:#x}", GetLastError());
+    }
   }
 
   void CheckForSteamVR() {
@@ -137,10 +149,11 @@ class AutoDetectKneeboard final : private OculusFrameHook,
 namespace {
 
 std::unique_ptr<AutoDetectKneeboard> gInstance;
+HMODULE gModule = nullptr;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
   DetourTransactionPushBegin();
-  gInstance = std::make_unique<AutoDetectKneeboard>();
+  gInstance = std::make_unique<AutoDetectKneeboard>(gModule);
   DetourTransactionPopCommit();
   dprint("Installed hooks.");
 
@@ -150,6 +163,7 @@ DWORD WINAPI ThreadEntry(LPVOID ignored) {
 }// namespace
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  gModule = hinst;
   return InjectedDLLMain(
     "OpenKneeboard-Autodetect",
     gInstance,
