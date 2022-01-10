@@ -31,8 +31,6 @@ class OculusD3D11Kneeboard::Impl final {
 };
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
-  dprintf("{}", __FUNCTION__);
-
 #define IT(x) \
   real_##x = reinterpret_cast<decltype(&x)>( \
     DetourFindFunction("LibOVRRT64_1.dll", #x));

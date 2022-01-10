@@ -7,6 +7,7 @@
 #include "IDXGISwapChainPresentHook.h"
 #include "InjectedDLLMain.h"
 #include "InjectedKneeboard.h"
+#include "NonVRD3D11Kneeboard.h"
 #include "OculusD3D11Kneeboard.h"
 #include "OculusFrameHook.h"
 #include "OpenKneeboard/dprint.h"
@@ -106,7 +107,14 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     }
 
     if (mFlags == (FLAG_D3D11 | FLAG_OCULUS)) {
+      dprint("!!!!! Creating OculusD3D11Kneeboard...");
       mNext = std::make_unique<OculusD3D11Kneeboard>();
+      return;
+    }
+
+    if (mFlags == FLAG_D3D11) {
+      dprint("!!!!! Creating NonVRD3D11Kneeboard...");
+      mNext = std::make_unique<NonVRD3D11Kneeboard>();
       return;
     }
 
