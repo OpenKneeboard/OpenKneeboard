@@ -2,11 +2,13 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
 #include <Unknwn.h>
+#include <d3d11.h>
 #include <d3d12.h>
 #include <windows.h>
 #include <winrt/base.h>
 
 #include "IDXGISwapChainPresentHook.h"
+#include "IVRCompositorSubmitHook.h"
 #include "InjectedDLLMain.h"
 #include "OculusFrameHook.h"
 #include "detours-ext.h"
@@ -16,7 +18,8 @@ using namespace OpenKneeboard;
 namespace OpenKneeboard {
 
 class AutoDetectKneeboard final : private OculusFrameHook,
-                                  private IDXGISwapChainPresentHook {
+                                  private IDXGISwapChainPresentHook,
+                                  private IVRCompositorSubmitHook {
  private:
   const uint64_t FLAG_D3D11 = 1 << 0;
   const uint64_t FLAG_D3D12 = 1 << 1;
@@ -36,17 +39,18 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   void Unhook() {
     OculusFrameHook::Unhook();
     IDXGISwapChainPresentHook::Unhook();
+    IVRCompositorSubmitHook::Unhook();
   }
 
  protected:
-  virtual ovrResult OnEndFrame(
+  virtual ovrResult OnOVREndFrame(
     ovrSession session,
     long long frameIndex,
     const ovrViewScaleDesc* viewScaleDesc,
     ovrLayerHeader const* const* layerPtrList,
     unsigned int layerCount,
     const decltype(&ovr_EndFrame)& next) override {
-    dprint("Detected Oculus");
+    dprint("Detected Oculus frame");
     mFlags |= FLAG_OCULUS;
     auto ret
       = next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
@@ -55,7 +59,7 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   }
 
   void SetD3DFlags(IDXGISwapChain* swapChain) {
-    dprint("Found DXGI...");
+    dprint("Detected DXGI frame...");
 
     winrt::com_ptr<ID3D11Device> d3d11;
     swapChain->GetDevice(IID_PPV_ARGS(d3d11.put()));
@@ -76,7 +80,7 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     dprint("... but couldn't figure out the DirectX version");
   }
 
-  virtual HRESULT OnPresent(
+  virtual HRESULT OnIDXGISwapChain_Present(
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,
@@ -94,11 +98,22 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     return ret;
   }
 
+  virtual vr::EVRCompositorError OnIVRCompositor_Submit(
+    vr::EVREye eEye,
+    const vr::Texture_t* pTexture,
+    const vr::VRTextureBounds_t* pBounds,
+    vr::EVRSubmitFlags nSubmitFlags,
+    vr::IVRCompositor* compositor,
+    const decltype(&vr::IVRCompositor::Submit)& next) override {
+    dprint("Detected SteamVR frame");
+    mFlags |= FLAG_STEAMVR;
+    IVRCompositorSubmitHook::Unhook();
+    return std::invoke(next, compositor, eEye, pTexture, pBounds, nSubmitFlags);
+  }
+
  private:
   void Next() {
     Unhook();
-
-    CheckForSteamVR();
 
     if ((mFlags & FLAG_STEAMVR)) {
       dprint("Doing nothing as SteamVR is in-process");
@@ -132,14 +147,6 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     auto wnext = next.wstring();
     if (!LoadLibraryW(wnext.c_str())) {
       dprintf("!!!!! Load failed: {:#x}", GetLastError());
-    }
-  }
-
-  void CheckForSteamVR() {
-    // Not using OpenVR as we would need to load openvr_api.dll in process
-    auto f = DetourFindFunction("vrclient_x64.dll", "VRClientCoreFactory");
-    if (f) {
-      mFlags |= FLAG_STEAMVR;
     }
   }
 };

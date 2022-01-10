@@ -17,6 +17,14 @@ target_link_libraries(
 	openkneeboard-shm
 	directxtk)
 
+add_library(openvr-hooks STATIC IVRCompositorSubmitHook.cpp)
+target_link_libraries(
+  openvr-hooks
+  PUBLIC
+  detours-ext
+  openvr-headers
+  openkneeboard-dprint)
+
 add_library(openkneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   openkneeboard-nonvr-d3d11
@@ -44,4 +52,5 @@ target_link_libraries(
   PRIVATE
   openkneeboard-runtime-files
   dxgi-hooks
-  oculus-hooks)
+  oculus-hooks
+  openvr-hooks)

@@ -14,7 +14,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard,
   virtual void Unhook() override;
 
  protected:
-  virtual HRESULT OnPresent(
+  virtual HRESULT OnIDXGISwapChain_Present(
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,

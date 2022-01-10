@@ -29,7 +29,7 @@ class OculusKneeboard : public OculusFrameHook, public InjectedKneeboard {
   virtual void Unhook() override;
 
  public:
-  virtual ovrResult OnEndFrame(
+  virtual ovrResult OnOVREndFrame(
     ovrSession session,
     long long frameIndex,
     const ovrViewScaleDesc* viewScaleDesc,

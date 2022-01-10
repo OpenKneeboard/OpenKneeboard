@@ -16,7 +16,7 @@ class NonVRD3D11Kneeboard final : public InjectedKneeboard,
   virtual void Unhook() override;
 
  protected:
-  virtual HRESULT OnPresent(
+  virtual HRESULT OnIDXGISwapChain_Present(
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,

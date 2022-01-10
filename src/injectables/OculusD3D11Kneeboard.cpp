@@ -169,7 +169,7 @@ bool OculusD3D11Kneeboard::Render(
   return true;
 }
 
-HRESULT OculusD3D11Kneeboard::OnPresent(
+HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
   UINT syncInterval,
   UINT flags,
   IDXGISwapChain* swapChain,

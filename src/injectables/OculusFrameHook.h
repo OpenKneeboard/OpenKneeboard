@@ -6,6 +6,16 @@
 
 namespace OpenKneeboard {
 
+/** Hook for `ovrEndFrame`/`ovrSubmitFrame`/`ovrSubmitFrame2`.
+ *
+ * These all have the same signature and serve a similar purpose. Each app
+ * should only use one of these - which one depends on which version of the
+ * SDK they're using, and if they're using the current best practices.
+ * 
+ * `OnOVREndFrame()` will be invoked for all of them, though the `next`
+ * parameter might be pointing at `ovrSubmitFrame` or `ovrSubmitFrame2` instead
+ * of `ovrEndFrame`.
+ */
 class OculusFrameHook {
  private:
   bool mHooked;
@@ -16,7 +26,7 @@ class OculusFrameHook {
 
   void Unhook();
 
-  virtual ovrResult OnEndFrame(
+  virtual ovrResult OnOVREndFrame(
     ovrSession session,
     long long frameIndex,
     const ovrViewScaleDesc* viewScaleDesc,

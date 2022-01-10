@@ -25,7 +25,7 @@ void NonVRD3D11Kneeboard::Unhook() {
   IDXGISwapChainPresentHook::Unhook();
 }
 
-HRESULT NonVRD3D11Kneeboard::OnPresent(
+HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   UINT syncInterval,
   UINT flags,
   IDXGISwapChain* swapChain,

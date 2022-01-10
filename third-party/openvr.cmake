@@ -11,12 +11,16 @@ ExternalProject_Add(
 
 ExternalProject_Get_property(openvrBuild SOURCE_DIR)
 
+add_library(openvr-headers INTERFACE)
+add_dependencies(openvr-headers openvrBuild)
+target_include_directories(openvr-headers INTERFACE "${SOURCE_DIR}/headers")
+
 add_library(openvr SHARED IMPORTED GLOBAL)
 add_dependencies(openvr openvrBuild)
 
-target_include_directories(openvr INTERFACE "${SOURCE_DIR}/headers")
 set_target_properties(
   openvr
   PROPERTIES
   IMPORTED_IMPLIB "${SOURCE_DIR}/lib/win64/openvr_api.lib"
   IMPORTED_LOCATION "${SOURCE_DIR}/bin/win64/openvr_api.dll")
+target_link_libraries(openvr INTERFACE openvr-headers)

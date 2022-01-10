@@ -1,9 +1,15 @@
 #pragma once
 
-#include <d3d11.h>
+#include <dxgi.h>
 
 namespace OpenKneeboard {
 
+/** Hook for IDXGISwapChain::Present().
+ *
+ * This is called in both D3D11 and D3D12 apps; to determine which is being
+ * used, check the type of `swapChain->GetDevice()` - it should be either an
+ * `ID3D11Device` or `ID3D12Device`.
+ */
 class IDXGISwapChainPresentHook {
  private:
   class Impl;
@@ -19,7 +25,7 @@ class IDXGISwapChainPresentHook {
  protected:
   bool IsHookInstalled() const;
 
-  virtual HRESULT OnPresent(
+  virtual HRESULT OnIDXGISwapChain_Present(
     UINT syncInterval,
     UINT flags,
     IDXGISwapChain* swapChain,

@@ -1,6 +1,7 @@
 #include "IDXGISwapChainPresentHook.h"
 
 #include <OpenKneeboard/dprint.h>
+#include <d3d11.h>
 #include <winrt/base.h>
 
 #include "detours-ext.h"
@@ -29,7 +30,7 @@ class IDXGISwapChainPresentHook::Impl final {
         Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
     }
 
-    return gHook->OnPresent(
+    return gHook->OnIDXGISwapChain_Present(
       SyncInterval, Flags, _this, Real_IDXGISwapChain_Present);
   }
 };
@@ -40,10 +41,10 @@ void IDXGISwapChainPresentHook::Unhook() {
   }
   gHooked = false;
 
-  auto ffp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
+  auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   auto mfp = &Impl::Hooked_IDXGISwapChain_Present;
   DetourTransactionPushBegin();
-  auto err = DetourDetach(ffp, *(reinterpret_cast<void**>(&mfp)));
+  auto err = DetourDetach(fpp, *(reinterpret_cast<void**>(&mfp)));
   if (err) {
     dprintf(" - failed to detach IDXGISwapChain");
   }
