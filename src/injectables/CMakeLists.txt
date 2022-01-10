@@ -17,9 +17,9 @@ target_link_libraries(
 	openkneeboard-shm
 	directxtk)
 
-add_library(openkneeboard-d3d11 MODULE nonvr-d3d11.cpp NonVRD3D11Kneeboard.cpp)
+add_library(openkneeboard-nonvr-d3d11 MODULE nonvr-d3d11.cpp NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
-  openkneeboard-d3d11
+  openkneeboard-nonvr-d3d11
   PRIVATE
 	directxtk
   dxgi-hooks

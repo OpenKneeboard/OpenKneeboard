@@ -49,7 +49,7 @@ add_custom_command(
   ${CMAKE_COMMAND} -E copy_if_different
   "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
   "$<TARGET_FILE:openkneeboard-autodetect>"
-  "$<TARGET_FILE:openkneeboard-d3d11>"
+  "$<TARGET_FILE:openkneeboard-nonvr-d3d11>"
   "$<TARGET_FILE:openkneeboard-oculus-d3d11>"
   "$<TARGET_FILE:openkneeboard-dcs-ext-dll>"
   "$<TARGET_FILE_DIR:openkneeboard-dcs-ext-dll>/$<TARGET_PROPERTY:openkneeboard-dcs-ext-lua,OUTPUT_NAME>"

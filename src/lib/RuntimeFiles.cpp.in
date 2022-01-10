@@ -12,7 +12,7 @@ const std::filesystem::path AUTODETECT_DLL(
   "$<TARGET_FILE_NAME:openkneeboard-autodetect>");
 
 const std::filesystem::path NON_VR_D3D11_DLL(
-  "$<TARGET_FILE_NAME:openkneeboard-d3d11>");
+  "$<TARGET_FILE_NAME:openkneeboard-nonvr-d3d11>");
 
 const std::filesystem::path OCULUS_D3D11_DLL(
   "$<TARGET_FILE_NAME:openkneeboard-oculus-d3d11>");
