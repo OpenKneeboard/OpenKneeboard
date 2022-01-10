@@ -1,10 +1,10 @@
 add_library(detours-ext STATIC detours-ext.cpp)
-target_link_libraries(detours-ext PUBLIC detours dprint)
+target_link_libraries(detours-ext PUBLIC detours openkneeboard-dprint)
 
 add_library(openkneeboard-InjectedKneeboard STATIC InjectedKneeboard.cpp)
 
 add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
-target_link_libraries(dxgi-hooks PRIVATE detours-ext dprint)
+target_link_libraries(dxgi-hooks PRIVATE detours-ext openkneeboard-dprint)
 
 add_library(oculus-hooks STATIC OculusFrameHook.cpp OculusKneeboard.cpp)
 target_link_libraries(
@@ -13,7 +13,7 @@ target_link_libraries(
 	detours-ext
 	oculus-sdk-headers
 	openkneeboard-InjectedKneeboard
-	dprint
+	openkneeboard-dprint
 	openkneeboard-shm
 	directxtk)
 
@@ -24,7 +24,7 @@ target_link_libraries(
 	directxtk
   dxgi-hooks
   detours-ext
-  dprint
+  openkneeboard-dprint
 	openkneeboard-shm
 	openkneeboard-InjectedKneeboard)
 
@@ -38,7 +38,7 @@ target_link_libraries(
   PRIVATE
   dxgi-hooks
   detours-ext
-  dprint
+  openkneeboard-dprint
   oculus-hooks
   oculus-sdk-headers)
 

@@ -12,8 +12,8 @@ target_link_libraries(
   D2d1
   directxtk
   detours
-  dprint
-  gameevent
+  openkneeboard-dprint
+  openkneeboard-gameevent
   games
   json
   openkneeboard-shm

@@ -1,5 +1,5 @@
 add_executable(test-feeder test-feeder.cpp)
-target_link_libraries(test-feeder openkneeboard-shm consolelib)
+target_link_libraries(test-feeder openkneeboard-shm openkneeboard-consolelib)
 
 add_executable(test-viewer WIN32 test-viewer.cpp)
 target_link_libraries(
@@ -10,4 +10,4 @@ target_link_libraries(
   wx::base)
 
 add_executable(fake-dcs fake-dcs.cpp)
-target_link_libraries(fake-dcs fmt games gameevent)
+target_link_libraries(fake-dcs fmt games openkneeboard-gameevent)
