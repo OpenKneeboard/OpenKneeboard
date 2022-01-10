@@ -41,7 +41,8 @@ struct FlatConfig {
 
   uint8_t heightPercent = 60;
   uint32_t paddingPixels = 10;
-  float opacity = 1.0f;
+  // In case it covers up menus etc
+  float opacity = 0.8f;
 
   HorizontalAlignment horizontalAlignment = HALIGN_RIGHT;
   VerticalAlignment verticalAlignment = VALIGN_MIDDLE;
