@@ -1,5 +1,7 @@
 #include "OculusFrameHook.h"
 
+#include <OpenKneeboard/dprint.h>
+
 #include "detours-ext.h"
 
 // Not declared in modern Oculus SDK headers, but used by some games (like DCS
@@ -43,6 +45,11 @@ HOOKED_ENDFRAME_FUNCS
 OculusFrameHook::OculusFrameHook() {
   gInstance = this;
   const char* lib = "LibOVRRT64_1.dll";
+
+  if (!GetModuleHandleA(lib)) {
+    dprintf("Did not find {}", lib);
+    return;
+  }
 
   DetourTransactionPushBegin();
 #define IT(x) \
