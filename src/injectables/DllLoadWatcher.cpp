@@ -10,8 +10,11 @@
 
 #include "detours-ext.h"
 
+// There's a header for this, but only in the DDK
 typedef const UNICODE_STRING* PCUNICODE_STRING;
 
+// Documented at https://docs.microsoft.com/en-us/windows/win32/devnotes/ldrregisterdllnotification
+// but there are no headers
 enum LDR_DLL_LOADED_NOTIFICATION_REASON {
   LDR_DLL_NOTIFICATION_REASON_LOADED = 1,
   LDR_DLL_NOTIFICATION_REASON_UNLOADED = 2
