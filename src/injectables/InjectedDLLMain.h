@@ -21,6 +21,7 @@ BOOL InjectedDLLMain(
 
   if (dwReason == DLL_PROCESS_ATTACH) {
     DetourRestoreAfterWith();
+    DisableThreadLibraryCalls(hinst);
 
     DPrintSettings::Set({.prefix = logPrefix});
     dprintf("Attached to process.");

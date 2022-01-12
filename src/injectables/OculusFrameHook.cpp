@@ -43,6 +43,7 @@ HOOKED_ENDFRAME_FUNCS
 #undef IT
 
 OculusFrameHook::OculusFrameHook() {
+  dprintf("{}:{}", __FUNCTION__, __LINE__);
   gInstance = this;
   const char* lib = "LibOVRRT64_1.dll";
 
@@ -51,13 +52,17 @@ OculusFrameHook::OculusFrameHook() {
     return;
   }
 
+  dprintf("{}:{}", __FUNCTION__, __LINE__);
   DetourTransactionPushBegin();
+  dprintf("{}:{}", __FUNCTION__, __LINE__);
 #define IT(x) \
   real_##x = reinterpret_cast<decltype(&x)>(DetourFindFunction(lib, #x)); \
   DetourAttach(reinterpret_cast<void**>(&real_##x), hooked_##x);
   HOOKED_ENDFRAME_FUNCS
 #undef IT
+  dprintf("{}:{}", __FUNCTION__, __LINE__);
   DetourTransactionPopCommit();
+  dprintf("{}:{}", __FUNCTION__, __LINE__);
   mHooked = true;
 }
 

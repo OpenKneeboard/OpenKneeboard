@@ -166,19 +166,43 @@ void* Find_SteamOverlay_IDXGI_SwapChain_Present() {
 
 class IDXGISwapChainPresentHook::Impl final {
  public:
+  static void InstallHook();
+
+
+  // TODO: move to private
   HRESULT __stdcall Hooked_IDXGISwapChain_Present(
     UINT SyncInterval,
-    UINT Flags) {
-    auto _this = reinterpret_cast<IDXGISwapChain*>(this);
-    if (!gHook) {
-      return std::invoke(
-        Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
-    }
+    UINT Flags);
+ private:
+  static void InstallSteamOverlayHook(void* steamHookAddress);
+  static void InstallVTableHook();
 
-    return gHook->OnIDXGISwapChain_Present(
-      SyncInterval, Flags, _this, Real_IDXGISwapChain_Present);
-  }
 };
+
+IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
+  dprint(__FUNCTION__);
+  if (gHook) {
+    throw std::logic_error("Only one IDXGISwapChainPresentHook at a time!");
+  }
+
+  gHook = this;
+  Impl::InstallHook();
+}
+
+IDXGISwapChainPresentHook::~IDXGISwapChainPresentHook() {
+  UnhookAndCleanup();
+}
+
+bool IDXGISwapChainPresentHook::IsHookInstalled() const {
+  return gHooked;
+}
+
+void IDXGISwapChainPresentHook::UnhookAndCleanup() {
+  Unhook();
+  if (gHook == this) {
+    gHook = nullptr;
+  }
+}
 
 void IDXGISwapChainPresentHook::Unhook() {
   if (!gHooked) {
@@ -196,23 +220,21 @@ void IDXGISwapChainPresentHook::Unhook() {
   DetourTransactionPopCommit();
 }
 
-IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
-  dprint(__FUNCTION__);
-  if (gHook) {
-    throw std::logic_error("Only one IDXGISwapChainPresentHook at a time!");
-  }
-
+void IDXGISwapChainPresentHook::Impl::InstallHook() {
   auto addr = Find_SteamOverlay_IDXGI_SwapChain_Present();
   if (addr) {
-    dprintf("Found Steam Overlay hook at {:#016x}", (int64_t)addr);
+    dprintf(
+      "Installing IDXGISwapChain::Present hook via Steam overlay at "
+      "{:#018x}...",
+      (int64_t)addr);
+    Impl::InstallSteamOverlayHook(addr);
     return;
-  } else {
-    dprint("Did not find Steam Overlay hook");
   }
+  dprint("Installing IDXGISwapChain::Present hook via VTable...");
+  Impl::InstallVTableHook();
+}
 
-  gHook = this;
-  gHooked = true;
-
+void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
@@ -258,32 +280,48 @@ IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
   auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   *fpp = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
   dprintf(" - found IDXGISwapChain::Present at {:#018x}", (intptr_t)*fpp);
-  auto mfp = &Impl::Hooked_IDXGISwapChain_Present;
-  dprintf(
-    "Hooking &{:#018x} to {:#018x}",
-    (intptr_t)*fpp,
-    (intptr_t) * (reinterpret_cast<void**>(&mfp)));
   DetourTransactionPushBegin();
-  auto err = DetourAttach(fpp, *(reinterpret_cast<void**>(&mfp)));
+  auto err = DetourAttach(
+    fpp, sudo_make_me_a_void_pointer(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprintf(" - hooked IDXGISwapChain::Present().");
   } else {
     dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
   }
   DetourTransactionPopCommit();
+  gHooked = true;
 }
 
-IDXGISwapChainPresentHook::~IDXGISwapChainPresentHook() {
-  UnhookAndCleanup();
+void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
+  void* steamHookAddress) {
+  auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
+  *fpp = steamHookAddress;
+  dprintf("Hooking Steam overlay at {:#018x}", (intptr_t)*fpp);
+  dprintf(
+    "Detour: {:#018x}",
+    (intptr_t)sudo_make_me_a_void_pointer(
+      &Impl::Hooked_IDXGISwapChain_Present));
+  DetourTransactionPushBegin();
+  auto err = DetourAttach(
+    fpp, sudo_make_me_a_void_pointer(&Impl::Hooked_IDXGISwapChain_Present));
+  if (err == 0) {
+    dprint(" - hooked Steam Overlay IDXGISwapChain::Present hook.");
+  } else {
+    dprintf(" - failed to hook Steam Overlay: {}", err);
+  }
+  DetourTransactionPopCommit();
+  gHooked = true;
 }
 
-bool IDXGISwapChainPresentHook::IsHookInstalled() const {
-  return gHooked;
-}
+HRESULT __stdcall IDXGISwapChainPresentHook::Impl::
+  Hooked_IDXGISwapChain_Present(UINT SyncInterval, UINT Flags) {
+  auto _this = reinterpret_cast<IDXGISwapChain*>(this);
+  if (!gHook) {
+    return std::invoke(Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
+  }
 
-void IDXGISwapChainPresentHook::UnhookAndCleanup() {
-  Unhook();
-  gHook = nullptr;
+  return gHook->OnIDXGISwapChain_Present(
+    SyncInterval, Flags, _this, Real_IDXGISwapChain_Present);
 }
 
 }// namespace OpenKneeboard

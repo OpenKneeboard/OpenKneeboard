@@ -17,18 +17,13 @@ namespace OpenKneeboard {
  * process.
  */
 class IVRCompositorSubmitHook {
- private:
-  struct Impl;
-  std::unique_ptr<Impl> p;
-
  public:
+  struct Impl;
   IVRCompositorSubmitHook();
   ~IVRCompositorSubmitHook();
   void Unhook();
 
  protected:
-  bool IsHookInstalled() const;
-
   virtual vr::EVRCompositorError OnIVRCompositor_Submit(
     vr::EVREye eEye,
     const vr::Texture_t* pTexture,
@@ -37,6 +32,9 @@ class IVRCompositorSubmitHook {
     vr::IVRCompositor* compositor,
     const decltype(&vr::IVRCompositor::Submit)& next)
     = 0;
+ private:
+  std::unique_ptr<Impl> p;
+
 };
 
 }// namespace OpenKneeboard

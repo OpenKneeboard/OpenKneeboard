@@ -89,13 +89,18 @@ class AutoDetectKneeboard final : private OculusFrameHook,
       SetD3DFlags(swapChain);
     }
     mFrames++;
-    auto ret = std::invoke(next, swapChain, syncInterval, flags);
 
-    if (mFrames >= 2) {
+    if (mFlags & FLAG_STEAMVR) {
+      dprintf("SteamVR enabled at frame {}", mFrames);
+      mFrames = 100;
+    }
+
+    if (mFrames >= 100) {
       IDXGISwapChainPresentHook::UnhookAndCleanup();
       Next();
     }
-    return ret;
+
+    return std::invoke(next, swapChain, syncInterval, flags);
   }
 
   virtual vr::EVRCompositorError OnIVRCompositor_Submit(
@@ -159,9 +164,7 @@ std::unique_ptr<AutoDetectKneeboard> gInstance;
 HMODULE gModule = nullptr;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
-  DetourTransactionPushBegin();
   gInstance = std::make_unique<AutoDetectKneeboard>(gModule);
-  DetourTransactionPopCommit();
   dprint("Installed hooks.");
 
   return S_OK;
