@@ -1,19 +1,19 @@
-add_library(openkneeboard-dcs-ext-dll MODULE OpenKneeboardDCSExt.cpp)
-target_link_libraries(openkneeboard-dcs-ext-dll PUBLIC lualib)
-target_link_libraries(openkneeboard-dcs-ext-dll PRIVATE lualib fmt openkneeboard-dprint openkneeboard-gameevent)
+add_library(OpenKneeboard-dcs-ext-dll MODULE OpenKneeboardDCSExt.cpp)
+target_link_libraries(OpenKneeboard-dcs-ext-dll PUBLIC lualib)
+target_link_libraries(OpenKneeboard-dcs-ext-dll PRIVATE lualib fmt OpenKneeboard-dprint OpenKneeboard-GameEvent)
 set_target_properties(
-  openkneeboard-dcs-ext-dll
+  OpenKneeboard-dcs-ext-dll
   PROPERTIES
   OUTPUT_NAME "OpenKneeboardDCSExt")
 
 set(LUA_FILE_NAME "OpenKneeboardDCSExt.lua")
-set(LUA_OUT_DIR "$<TARGET_FILE_DIR:openkneeboard-dcs-ext-dll>")
+set(LUA_OUT_DIR "$<TARGET_FILE_DIR:OpenKneeboard-dcs-ext-dll>")
 set(LUA_OUT_PATH "${LUA_OUT_DIR}/${LUA_FILE_NAME}")
 
-add_custom_target(openkneeboard-dcs-ext-lua ALL SOURCES "${LUA_FILE_NAME}")
+add_custom_target(OpenKneeboard-dcs-ext-lua ALL SOURCES "${LUA_FILE_NAME}")
 add_custom_command(
   TARGET
-  openkneeboard-dcs-ext-lua
+  OpenKneeboard-dcs-ext-lua
   POST_BUILD
   COMMAND
   ${CMAKE_COMMAND} -E copy_if_different
@@ -21,6 +21,6 @@ add_custom_command(
   "${LUA_OUT_PATH}")
 
 set_target_properties(
-  openkneeboard-dcs-ext-lua
+  OpenKneeboard-dcs-ext-lua
   PROPERTIES
   OUTPUT_NAME "${LUA_FILE_NAME}")

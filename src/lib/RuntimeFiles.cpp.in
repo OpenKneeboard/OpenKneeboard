@@ -3,18 +3,18 @@
 namespace OpenKneeboard::RuntimeFiles {
 
 const std::filesystem::path DCSWORLD_HOOK_DLL(
-  "$<TARGET_FILE_NAME:openkneeboard-dcs-ext-dll>");
+  "$<TARGET_FILE_NAME:OpenKneeboard-dcs-ext-dll>");
 
 const std::filesystem::path DCSWORLD_HOOK_LUA(
-  "$<TARGET_PROPERTY:openkneeboard-dcs-ext-lua,OUTPUT_NAME>");
+  "$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>");
 
 const std::filesystem::path AUTODETECT_DLL(
-  "$<TARGET_FILE_NAME:openkneeboard-autodetect>");
+  "$<TARGET_FILE_NAME:OpenKneeboard-autodetect>");
 
 const std::filesystem::path NON_VR_D3D11_DLL(
-  "$<TARGET_FILE_NAME:openkneeboard-nonvr-d3d11>");
+  "$<TARGET_FILE_NAME:OpenKneeboard-nonvr-d3d11>");
 
 const std::filesystem::path OCULUS_D3D11_DLL(
-  "$<TARGET_FILE_NAME:openkneeboard-oculus-d3d11>");
+  "$<TARGET_FILE_NAME:OpenKneeboard-oculus-d3d11>");
 
 }
