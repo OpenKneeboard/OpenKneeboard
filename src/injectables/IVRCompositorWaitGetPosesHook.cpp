@@ -200,11 +200,11 @@ IVRCompositorWaitGetPosesHook::Impl::Hooked_IVRCompositor_WaitGetPoses(
       unGamePoseArrayCount);
   }
   return gHook->OnIVRCompositor_WaitGetPoses(
+    this_,
     pRenderPoseArray,
     unRenderPoseArrayCount,
     pGamePoseArray,
     unGamePoseArrayCount,
-    this_,
     Real_IVRCompositor_WaitGetPoses);
 }
 

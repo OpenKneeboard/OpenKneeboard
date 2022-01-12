@@ -168,15 +168,14 @@ class IDXGISwapChainPresentHook::Impl final {
  public:
   static void InstallHook();
 
-
   // TODO: move to private
   HRESULT __stdcall Hooked_IDXGISwapChain_Present(
     UINT SyncInterval,
     UINT Flags);
+
  private:
   static void InstallSteamOverlayHook(void* steamHookAddress);
   static void InstallVTableHook();
-
 };
 
 IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
@@ -321,7 +320,7 @@ HRESULT __stdcall IDXGISwapChainPresentHook::Impl::
   }
 
   return gHook->OnIDXGISwapChain_Present(
-    SyncInterval, Flags, _this, Real_IDXGISwapChain_Present);
+    _this, SyncInterval, Flags, Real_IDXGISwapChain_Present);
 }
 
 }// namespace OpenKneeboard

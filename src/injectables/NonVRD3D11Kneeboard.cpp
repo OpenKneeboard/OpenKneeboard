@@ -26,9 +26,9 @@ void NonVRD3D11Kneeboard::Unhook() {
 }
 
 HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
+  IDXGISwapChain* swapChain,
   UINT syncInterval,
   UINT flags,
-  IDXGISwapChain* swapChain,
   const decltype(&IDXGISwapChain::Present)& next) {
   auto shm = p->shm.MaybeGet();
   if (!shm) {

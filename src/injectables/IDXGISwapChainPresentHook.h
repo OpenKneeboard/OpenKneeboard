@@ -26,9 +26,9 @@ class IDXGISwapChainPresentHook {
   bool IsHookInstalled() const;
 
   virtual HRESULT OnIDXGISwapChain_Present(
+    IDXGISwapChain* this_,
     UINT syncInterval,
     UINT flags,
-    IDXGISwapChain* swapChain,
     const decltype(&IDXGISwapChain::Present)& next)
     = 0;
 };

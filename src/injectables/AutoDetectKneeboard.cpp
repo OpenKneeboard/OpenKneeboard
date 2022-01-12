@@ -81,9 +81,9 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   }
 
   virtual HRESULT OnIDXGISwapChain_Present(
+    IDXGISwapChain* swapChain,
     UINT syncInterval,
     UINT flags,
-    IDXGISwapChain* swapChain,
     const decltype(&IDXGISwapChain::Present)& next) override {
     if (mFrames == 0) {
       SetD3DFlags(swapChain);
@@ -100,16 +100,22 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   }
 
   virtual vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
+    vr::IVRCompositor* compositor,
     vr::TrackedDevicePose_t* pRenderPoseArray,
     uint32_t unRenderPoseArrayCount,
     vr::TrackedDevicePose_t* pGamePoseArray,
     uint32_t unGamePoseArrayCount,
-    vr::IVRCompositor* compositor,
     const decltype(&vr::IVRCompositor::WaitGetPoses)& next) override {
     dprint("Detected SteamVR frame");
     mFlags |= FLAG_STEAMVR;
     IVRCompositorWaitGetPosesHook::Unhook();
-    return std::invoke(next, compositor, pRenderPoseArray, unRenderPoseArrayCount, pGamePoseArray, unGamePoseArrayCount);
+    return std::invoke(
+      next,
+      compositor,
+      pRenderPoseArray,
+      unRenderPoseArrayCount,
+      pGamePoseArray,
+      unGamePoseArrayCount);
   }
 
  private:

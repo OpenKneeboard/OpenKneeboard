@@ -25,11 +25,11 @@ class IVRCompositorWaitGetPosesHook {
 
  protected:
   virtual vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
+    vr::IVRCompositor* this_,
     vr::TrackedDevicePose_t* pRenderPoseArray,
     uint32_t unRenderPoseArrayCount,
     vr::TrackedDevicePose_t* pGamePoseArray,
     uint32_t unGamePoseArrayCount,
-    vr::IVRCompositor* compositor,
     const decltype(&vr::IVRCompositor::WaitGetPoses)& next)
     = 0;
 

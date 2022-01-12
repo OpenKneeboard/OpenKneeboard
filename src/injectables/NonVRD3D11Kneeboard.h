@@ -17,9 +17,9 @@ class NonVRD3D11Kneeboard final : public InjectedKneeboard,
 
  protected:
   virtual HRESULT OnIDXGISwapChain_Present(
+    IDXGISwapChain* this_,
     UINT syncInterval,
     UINT flags,
-    IDXGISwapChain* swapChain,
     const decltype(&IDXGISwapChain::Present)& next) override;
 
  private:

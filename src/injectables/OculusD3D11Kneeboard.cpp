@@ -170,9 +170,9 @@ bool OculusD3D11Kneeboard::Render(
 }
 
 HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
+  IDXGISwapChain* swapChain,
   UINT syncInterval,
   UINT flags,
-  IDXGISwapChain* swapChain,
   const decltype(&IDXGISwapChain::Present)& next) {
   if (!p->d3d) {
     swapChain->GetDevice(IID_PPV_ARGS(p->d3d.put()));
