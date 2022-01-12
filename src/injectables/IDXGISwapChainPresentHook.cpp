@@ -131,7 +131,7 @@ void* FindFuncPatternInModule(
   return addr;
 }
 
-void* Find_SteamOverlay_IDXGI_SwapChain_Present() {
+void* Find_SteamOverlay_IDXGISwapChain_Present() {
   // We're trying to find a non-exported function, so we need to try and figure
   // out where it is based on what it looks like.
   // clang-format off
@@ -220,7 +220,7 @@ void IDXGISwapChainPresentHook::Unhook() {
 }
 
 void IDXGISwapChainPresentHook::Impl::InstallHook() {
-  auto addr = Find_SteamOverlay_IDXGI_SwapChain_Present();
+  auto addr = Find_SteamOverlay_IDXGISwapChain_Present();
   if (addr) {
     dprintf(
       "Installing IDXGISwapChain::Present hook via Steam overlay at "
