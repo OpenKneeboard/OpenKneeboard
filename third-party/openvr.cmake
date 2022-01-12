@@ -10,6 +10,7 @@ ExternalProject_Add(
 )
 
 ExternalProject_Get_property(openvrBuild SOURCE_DIR)
+file(MAKE_DIRECTORY "${SOURCE_DIR}/headers")
 
 add_library(openvr-headers INTERFACE)
 add_dependencies(openvr-headers openvrBuild)
