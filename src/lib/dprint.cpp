@@ -7,25 +7,25 @@ static DPrintSettings gSettings;
 
 void dprint(const std::string& message) {
   auto target = gSettings.target;
+
   if (target == DPrintSettings::Target::DEFAULT) {
 #ifdef NDEBUG
     target = DPrintSettings::Target::DEBUG_STREAM;
 #else
-    if (IsDebuggerPresent()) {
-      target = DPrintSettings::Target::DEBUG_STREAM;
-    } else {
-      target = DPrintSettings::Target::CONSOLE;
-    }
+    target = DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM;
 #endif;
   }
 
-  if (target == DPrintSettings::Target::DEBUG_STREAM) {
+  if (
+    target == DPrintSettings::Target::DEBUG_STREAM
+    || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
     auto output = fmt::format("[{}] {}\n", gSettings.prefix, message);
     OutputDebugStringA(output.c_str());
-    return;
   }
 
-  if (target == DPrintSettings::Target::CONSOLE) {
+  if (
+    target == DPrintSettings::Target::CONSOLE
+    || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
     auto output = fmt::format("{}\n", message);
     AllocConsole();
     auto handle = GetStdHandle(STD_ERROR_HANDLE);
@@ -38,10 +38,7 @@ void dprint(const std::string& message) {
       static_cast<DWORD>(output.size()),
       nullptr,
       nullptr);
-    return;
   }
-
-  DebugBreak();
 }
 
 void DPrintSettings::Set(const DPrintSettings& settings) {

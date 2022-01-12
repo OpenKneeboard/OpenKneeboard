@@ -17,8 +17,8 @@ struct DPrintSettings {
     CONSOLE,
     // Use debugger or `dbgview` etc to view this
     DEBUG_STREAM,
-    // DEBUG_STREAM if release build, or if debugger attached;
-    // CONSOLE otherwise
+    CONSOLE_AND_DEBUG_STREAM,
+    // DEBUG_STREAM if release build, CONSOLE_AND_DEBUG_STREAM otherwise
     DEFAULT
   };
 
