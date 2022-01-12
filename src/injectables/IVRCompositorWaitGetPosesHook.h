@@ -16,25 +16,25 @@ namespace OpenKneeboard {
  * that API in the main OpenKneeboard application instead of in the game
  * process.
  */
-class IVRCompositorSubmitHook {
+class IVRCompositorWaitGetPosesHook {
  public:
   struct Impl;
-  IVRCompositorSubmitHook();
-  ~IVRCompositorSubmitHook();
+  IVRCompositorWaitGetPosesHook();
+  ~IVRCompositorWaitGetPosesHook();
   void Unhook();
 
  protected:
-  virtual vr::EVRCompositorError OnIVRCompositor_Submit(
-    vr::EVREye eEye,
-    const vr::Texture_t* pTexture,
-    const vr::VRTextureBounds_t* pBounds,
-    vr::EVRSubmitFlags nSubmitFlags,
+  virtual vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
+    vr::TrackedDevicePose_t* pRenderPoseArray,
+    uint32_t unRenderPoseArrayCount,
+    vr::TrackedDevicePose_t* pGamePoseArray,
+    uint32_t unGamePoseArrayCount,
     vr::IVRCompositor* compositor,
-    const decltype(&vr::IVRCompositor::Submit)& next)
+    const decltype(&vr::IVRCompositor::WaitGetPoses)& next)
     = 0;
+
  private:
   std::unique_ptr<Impl> p;
-
 };
 
 }// namespace OpenKneeboard

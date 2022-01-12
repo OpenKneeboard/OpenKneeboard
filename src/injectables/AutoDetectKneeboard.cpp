@@ -8,7 +8,7 @@
 #include <winrt/base.h>
 
 #include "IDXGISwapChainPresentHook.h"
-#include "IVRCompositorSubmitHook.h"
+#include "IVRCompositorWaitGetPosesHook.h"
 #include "InjectedDLLMain.h"
 #include "OculusFrameHook.h"
 #include "detours-ext.h"
@@ -19,7 +19,7 @@ namespace OpenKneeboard {
 
 class AutoDetectKneeboard final : private OculusFrameHook,
                                   private IDXGISwapChainPresentHook,
-                                  private IVRCompositorSubmitHook {
+                                  private IVRCompositorWaitGetPosesHook {
  private:
   const uint64_t FLAG_D3D11 = 1 << 0;
   const uint64_t FLAG_D3D12 = 1 << 1;
@@ -39,7 +39,7 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   void Unhook() {
     OculusFrameHook::Unhook();
     IDXGISwapChainPresentHook::Unhook();
-    IVRCompositorSubmitHook::Unhook();
+    IVRCompositorWaitGetPosesHook::Unhook();
   }
 
  protected:
@@ -90,12 +90,8 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     }
     mFrames++;
 
-    if (mFlags & FLAG_STEAMVR) {
-      dprintf("SteamVR enabled at frame {}", mFrames);
-      mFrames = 100;
-    }
-
-    if (mFrames >= 100) {
+    // Wait for anything else, e.g. SteamVR, Oculus, OpenVR
+    if (mFrames >= 30) {
       IDXGISwapChainPresentHook::UnhookAndCleanup();
       Next();
     }
@@ -103,17 +99,17 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     return std::invoke(next, swapChain, syncInterval, flags);
   }
 
-  virtual vr::EVRCompositorError OnIVRCompositor_Submit(
-    vr::EVREye eEye,
-    const vr::Texture_t* pTexture,
-    const vr::VRTextureBounds_t* pBounds,
-    vr::EVRSubmitFlags nSubmitFlags,
+  virtual vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
+    vr::TrackedDevicePose_t* pRenderPoseArray,
+    uint32_t unRenderPoseArrayCount,
+    vr::TrackedDevicePose_t* pGamePoseArray,
+    uint32_t unGamePoseArrayCount,
     vr::IVRCompositor* compositor,
-    const decltype(&vr::IVRCompositor::Submit)& next) override {
+    const decltype(&vr::IVRCompositor::WaitGetPoses)& next) override {
     dprint("Detected SteamVR frame");
     mFlags |= FLAG_STEAMVR;
-    IVRCompositorSubmitHook::Unhook();
-    return std::invoke(next, compositor, eEye, pTexture, pBounds, nSubmitFlags);
+    IVRCompositorWaitGetPosesHook::Unhook();
+    return std::invoke(next, compositor, pRenderPoseArray, unRenderPoseArrayCount, pGamePoseArray, unGamePoseArrayCount);
   }
 
  private:

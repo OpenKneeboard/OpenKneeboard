@@ -17,7 +17,7 @@ target_link_libraries(
 	openkneeboard-shm
 	directxtk)
 
-add_library(openvr-hooks STATIC IVRCompositorSubmitHook.cpp)
+add_library(openvr-hooks STATIC IVRCompositorWaitGetPosesHook.cpp)
 target_link_libraries(
   openvr-hooks
   PUBLIC

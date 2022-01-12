@@ -1,4 +1,4 @@
-#include "IVRCompositorSubmitHook.h"
+#include "IVRCompositorWaitGetPosesHook.h"
 
 #include <OpenKneeboard/dprint.h>
 
@@ -15,13 +15,11 @@ struct IVRCompositor_VTable {
   void* mSetTrackingSpace;
   void* mGetTrackingSpace;
   void* mWaitGetPoses;
-  void* mGetLastPoses;
-  void* mGetLastPoseForTrackedDeviceIndex;
-  void* mSubmit;
 };
 
-IVRCompositorSubmitHook* gHook = nullptr;
-decltype(&vr::IVRCompositor::Submit) Real_IVRCompositor_Submit = nullptr;
+IVRCompositorWaitGetPosesHook* gHook = nullptr;
+decltype(&vr::IVRCompositor::WaitGetPoses) Real_IVRCompositor_WaitGetPoses
+  = nullptr;
 decltype(&vr::VR_GetGenericInterface) Real_VR_GetGenericInterface = nullptr;
 
 class ScopedRWX {
@@ -46,7 +44,7 @@ class ScopedRWX {
 
 }// namespace
 
-struct IVRCompositorSubmitHook::Impl : public DllLoadWatcher {
+struct IVRCompositorWaitGetPosesHook::Impl : public DllLoadWatcher {
   Impl() : DllLoadWatcher("openvr_api.dll") {
   }
   ~Impl() {
@@ -55,11 +53,11 @@ struct IVRCompositorSubmitHook::Impl : public DllLoadWatcher {
 
   IVRCompositor_VTable* mVTable = nullptr;
 
-  vr::EVRCompositorError Hooked_IVRCompositor_Submit(
-    vr::EVREye eEye,
-    const vr::Texture_t* pTexture,
-    const vr::VRTextureBounds_t* pBounds,
-    vr::EVRSubmitFlags nSubmitFlags);
+  vr::EVRCompositorError Hooked_IVRCompositor_WaitGetPoses(
+    vr::TrackedDevicePose_t* pRenderPoseArray,
+    uint32_t unRenderPoseArrayCount,
+    vr::TrackedDevicePose_t* pGamePoseArray,
+    uint32_t unGamePoseArrayCount);
 
   void InstallHook();
   void Unhook();
@@ -74,12 +72,12 @@ struct IVRCompositorSubmitHook::Impl : public DllLoadWatcher {
   bool mHookedVRGetGenericInterface = false;
 };
 
-IVRCompositorSubmitHook::IVRCompositorSubmitHook()
+IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook()
   : p(std::make_unique<Impl>()) {
   dprint(__FUNCTION__);
   if (gHook) {
     dprintf("{}:{}", __FILE__, __LINE__);
-    throw std::logic_error("Can only have one IVRCompositorSubmitHook");
+    throw std::logic_error("Can only have one IVRCompositorWaitGetPosesHook");
   }
 
   gHook = this;
@@ -93,25 +91,26 @@ IVRCompositorSubmitHook::IVRCompositorSubmitHook()
   p->InstallHook();
 }
 
-void IVRCompositorSubmitHook::Impl::InstallCompositorHook(
+void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
   vr::IVRCompositor* compositor) {
   dprintf("Got an OpenVR compositor");
   mVTable = *reinterpret_cast<IVRCompositor_VTable**>(compositor);
-  *reinterpret_cast<void**>(&Real_IVRCompositor_Submit) = mVTable->mSubmit;
+  *reinterpret_cast<void**>(&Real_IVRCompositor_WaitGetPoses)
+    = mVTable->mWaitGetPoses;
 
-  dprintf("Found Submit at: {:#018x}", (uint64_t)mVTable->mSubmit);
+  dprintf("Found WaitGetPoses at: {:#018x}", (uint64_t)mVTable->mWaitGetPoses);
 
   // Just using Detours for locking
   DetourTransactionPushBegin();
   {
     ScopedRWX rwx(mVTable);
-    mVTable->mSubmit
-      = sudo_make_me_a_void_pointer(&Impl::Hooked_IVRCompositor_Submit);
+    mVTable->mWaitGetPoses
+      = sudo_make_me_a_void_pointer(&Impl::Hooked_IVRCompositor_WaitGetPoses);
   }
   DetourTransactionPopCommit();
 }
 
-IVRCompositorSubmitHook::~IVRCompositorSubmitHook() {
+IVRCompositorWaitGetPosesHook::~IVRCompositorWaitGetPosesHook() {
   Unhook();
 
   if (gHook == this) {
@@ -119,15 +118,15 @@ IVRCompositorSubmitHook::~IVRCompositorSubmitHook() {
   }
 }
 
-void IVRCompositorSubmitHook::Unhook() {
+void IVRCompositorWaitGetPosesHook::Unhook() {
   if (!p->mVTable) {
     return;
   }
   DetourTransactionPushBegin();
   {
     ScopedRWX rwx(p->mVTable);
-    p->mVTable->mSubmit
-      = sudo_make_me_a_void_pointer(Real_IVRCompositor_Submit);
+    p->mVTable->mWaitGetPoses
+      = sudo_make_me_a_void_pointer(Real_IVRCompositor_WaitGetPoses);
     p->mVTable = nullptr;
   }
   p->Unhook();
@@ -138,7 +137,7 @@ void IVRCompositorSubmitHook::Unhook() {
 
 namespace {
 
-IVRCompositorSubmitHook::Impl* gHookImpl = nullptr;
+IVRCompositorWaitGetPosesHook::Impl* gHookImpl = nullptr;
 
 void* VR_CALLTYPE Hooked_VR_GetGenericInterface(
   const char* pchInterfaceVersion,
@@ -159,7 +158,7 @@ void* VR_CALLTYPE Hooked_VR_GetGenericInterface(
 
 }// namespace
 
-void IVRCompositorSubmitHook::Impl::InstallVRGetGenericInterfaceHook() {
+void IVRCompositorWaitGetPosesHook::Impl::InstallVRGetGenericInterfaceHook() {
   mHookedVRGetGenericInterface = true;
   gHookImpl = this;
 
@@ -168,7 +167,7 @@ void IVRCompositorSubmitHook::Impl::InstallVRGetGenericInterfaceHook() {
   DetourTransactionPopCommit();
 }
 
-void IVRCompositorSubmitHook::Impl::Unhook() {
+void IVRCompositorWaitGetPosesHook::Impl::Unhook() {
   if (!mHookedVRGetGenericInterface) {
     return;
   }
@@ -183,24 +182,33 @@ void IVRCompositorSubmitHook::Impl::Unhook() {
     gHookImpl = nullptr;
   }
 }
+
 vr::EVRCompositorError
-IVRCompositorSubmitHook::Impl::Hooked_IVRCompositor_Submit(
-  vr::EVREye eEye,
-  const vr::Texture_t* pTexture,
-  const vr::VRTextureBounds_t* pBounds,
-  vr::EVRSubmitFlags nSubmitFlags) {
-  dprintf("{}", __FUNCTION__);
+IVRCompositorWaitGetPosesHook::Impl::Hooked_IVRCompositor_WaitGetPoses(
+  vr::TrackedDevicePose_t* pRenderPoseArray,
+  uint32_t unRenderPoseArrayCount,
+  vr::TrackedDevicePose_t* pGamePoseArray,
+  uint32_t unGamePoseArrayCount) {
   auto this_ = reinterpret_cast<vr::IVRCompositor*>(this);
   if (!gHook) {
     return std::invoke(
-      Real_IVRCompositor_Submit, this_, eEye, pTexture, pBounds, nSubmitFlags);
+      Real_IVRCompositor_WaitGetPoses,
+      this_,
+      pRenderPoseArray,
+      unRenderPoseArrayCount,
+      pGamePoseArray,
+      unGamePoseArrayCount);
   }
-
-  return gHook->OnIVRCompositor_Submit(
-    eEye, pTexture, pBounds, nSubmitFlags, this_, Real_IVRCompositor_Submit);
+  return gHook->OnIVRCompositor_WaitGetPoses(
+    pRenderPoseArray,
+    unRenderPoseArrayCount,
+    pGamePoseArray,
+    unGamePoseArrayCount,
+    this_,
+    Real_IVRCompositor_WaitGetPoses);
 }
 
-void IVRCompositorSubmitHook::Impl::InstallHook() {
+void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
   Real_VR_GetGenericInterface
     = reinterpret_cast<decltype(&vr::VR_GetGenericInterface)>(
       DetourFindFunction("openvr_api.dll", "VR_GetGenericInterface"));
@@ -224,7 +232,7 @@ void IVRCompositorSubmitHook::Impl::InstallHook() {
   this->InstallCompositorHook(compositor);
 }
 
-void IVRCompositorSubmitHook::Impl::OnDllLoad(const std::string& name) {
+void IVRCompositorWaitGetPosesHook::Impl::OnDllLoad(const std::string& name) {
   if (name != "openvr_api.dll") {
     return;
   }
