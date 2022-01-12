@@ -3,6 +3,14 @@ target_link_libraries(detours-ext PUBLIC detours openkneeboard-dprint)
 
 add_library(openkneeboard-InjectedKneeboard STATIC InjectedKneeboard.cpp)
 
+add_library(openkneeboard-DllLoadWatcher STATIC DllLoadWatcher.cpp)
+target_link_libraries(
+  openkneeboard-DllLoadWatcher
+  PRIVATE
+  detours-ext
+  openkneeboard-runtime-files
+  openkneeboard-dprint)
+
 add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(dxgi-hooks PRIVATE detours-ext openkneeboard-dprint)
 
@@ -22,6 +30,7 @@ target_link_libraries(
   openvr-hooks
   PUBLIC
   detours-ext
+  openkneeboard-DllLoadWatcher
   openvr-headers
   openkneeboard-dprint)
 
@@ -51,6 +60,7 @@ target_link_libraries(
   openkneeboard-autodetect
   PRIVATE
   openkneeboard-runtime-files
+  detours-ext
   dxgi-hooks
   oculus-hooks
   openvr-hooks)
