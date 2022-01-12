@@ -105,7 +105,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
   {
     ScopedRWX rwx(mVTable);
     mVTable->mWaitGetPoses
-      = sudo_make_me_a_void_pointer(&Impl::Hooked_IVRCompositor_WaitGetPoses);
+      = sudo_make_me_a<void*>(&Impl::Hooked_IVRCompositor_WaitGetPoses);
   }
   DetourTransactionPopCommit();
 }
@@ -126,7 +126,7 @@ void IVRCompositorWaitGetPosesHook::Unhook() {
   {
     ScopedRWX rwx(p->mVTable);
     p->mVTable->mWaitGetPoses
-      = sudo_make_me_a_void_pointer(Real_IVRCompositor_WaitGetPoses);
+      = sudo_make_me_a<void*>(Real_IVRCompositor_WaitGetPoses);
     p->mVTable = nullptr;
   }
   p->Unhook();

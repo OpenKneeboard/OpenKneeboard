@@ -281,7 +281,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   dprintf(" - found IDXGISwapChain::Present at {:#018x}", (intptr_t)*fpp);
   DetourTransactionPushBegin();
   auto err = DetourAttach(
-    fpp, sudo_make_me_a_void_pointer(&Impl::Hooked_IDXGISwapChain_Present));
+    fpp, sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprintf(" - hooked IDXGISwapChain::Present().");
   } else {
@@ -298,11 +298,11 @@ void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
   dprintf("Hooking Steam overlay at {:#018x}", (intptr_t)*fpp);
   dprintf(
     "Detour: {:#018x}",
-    (intptr_t)sudo_make_me_a_void_pointer(
+    (intptr_t)sudo_make_me_a<void*>(
       &Impl::Hooked_IDXGISwapChain_Present));
   DetourTransactionPushBegin();
   auto err = DetourAttach(
-    fpp, sudo_make_me_a_void_pointer(&Impl::Hooked_IDXGISwapChain_Present));
+    fpp, sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprint(" - hooked Steam Overlay IDXGISwapChain::Present hook.");
   } else {

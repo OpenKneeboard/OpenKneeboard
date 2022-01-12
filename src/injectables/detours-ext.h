@@ -17,12 +17,12 @@ void DetourTransactionPopCommit();
  *
  *    O RLY?
  */
-template <typename T>
-void* sudo_make_me_a_void_pointer(T any) {
+template <class TOut, class TIn>
+void* sudo_make_me_a(TIn in) {
   union {
-    T any;
-    void* pVoid;
+    TIn in;
+    TOut out;
   } u;
-  u.any = any;
-  return u.pVoid;
+  u.in = in;
+  return u.out;
 }
