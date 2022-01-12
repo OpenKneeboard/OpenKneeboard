@@ -96,21 +96,16 @@ DllLoadWatcher::~DllLoadWatcher() {
   f(p->mCookie);
 }
 
-namespace {
-struct ThreadArg {
-  void* mInstance = nullptr;
-  std::string mName;
-};
-}// namespace
-
 DWORD WINAPI DllLoadWatcher::Impl::NotificationThread(void* _arg) {
-  auto arg = reinterpret_cast<ThreadArg*>(_arg);
-  auto p = reinterpret_cast<Impl*>(arg->mInstance);
-  while (!GetModuleHandleA(arg->mName.c_str())) {
-    std::this_thread::yield();
-  }
-  p->mWatcher->OnDllLoad(arg->mName);
-  delete arg;
+  auto p = reinterpret_cast<Impl*>(_arg);
+
+  // While we know the desired library is in the process of being loaded,
+  // we need to wait until it's completely loaded.
+  //
+  // As LoadLibraryA internally locks, we can just call it again, at the
+  // cost of an extra incref+decref.
+  FreeLibrary(LoadLibraryA(p->mName.c_str()));
+  p->mWatcher->OnDllLoad(p->mName);
   return S_OK;
 }
 
@@ -130,8 +125,7 @@ void CALLBACK DllLoadWatcher::Impl::OnNotification(
   if (name != p->mName) {
     return;
   }
-  CreateThread(
-    nullptr, 0, &NotificationThread, new ThreadArg {p, name}, 0, nullptr);
+  CreateThread(nullptr, 0, &NotificationThread, p, 0, nullptr);
 }
 
 }// namespace OpenKneeboard
