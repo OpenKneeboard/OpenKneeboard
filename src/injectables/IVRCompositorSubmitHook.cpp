@@ -66,6 +66,7 @@ struct IVRCompositorSubmitHook::Impl : public DllLoadWatcher {
 
   void InstallCompositorHook(vr::IVRCompositor* compositor);
   void InstallVRGetGenericInterfaceHook();
+
  protected:
   virtual void OnDllLoad(const std::string& name) override;
 
@@ -108,7 +109,6 @@ void IVRCompositorSubmitHook::Impl::InstallCompositorHook(
       = sudo_make_me_a_void_pointer(&Impl::Hooked_IVRCompositor_Submit);
   }
   DetourTransactionPopCommit();
-  dprint("Hooked");
 }
 
 IVRCompositorSubmitHook::~IVRCompositorSubmitHook() {
@@ -228,8 +228,8 @@ void IVRCompositorSubmitHook::Impl::OnDllLoad(const std::string& name) {
   if (name != "openvr_api.dll") {
     return;
   }
-    dprint("openvr_api.dll loaded, installing hook...");
-    InstallHook();
+  dprint("openvr_api.dll loaded, installing hook...");
+  InstallHook();
 }
 
 }// namespace OpenKneeboard
