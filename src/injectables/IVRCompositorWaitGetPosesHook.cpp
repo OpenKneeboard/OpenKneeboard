@@ -236,7 +236,7 @@ void IVRCompositorWaitGetPosesHook::Impl::OnDllLoad(const std::string& name) {
   if (name != "openvr_api.dll") {
     return;
   }
-  dprint("openvr_api.dll loaded, installing hook...");
+  dprint("DLL openvr_api.dll was loaded, installing hook...");
   InstallHook();
 }
 
