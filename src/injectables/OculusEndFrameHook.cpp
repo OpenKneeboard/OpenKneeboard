@@ -1,4 +1,4 @@
-#include "OculusFrameHook.h"
+#include "OculusEndFrameHook.h"
 
 #include <OpenKneeboard/dprint.h>
 
@@ -21,7 +21,7 @@ ovr_SubmitFrame2(
 
 namespace OpenKneeboard {
 
-static OculusFrameHook* gInstance = nullptr;
+static OculusEndFrameHook* gInstance = nullptr;
 
 #define IT(x) \
   static_assert(std::same_as<decltype(x), decltype(ovr_EndFrame)>); \
@@ -42,7 +42,7 @@ static OculusFrameHook* gInstance = nullptr;
 HOOKED_ENDFRAME_FUNCS
 #undef IT
 
-OculusFrameHook::OculusFrameHook() {
+OculusEndFrameHook::OculusEndFrameHook() {
   dprintf("{}:{}", __FUNCTION__, __LINE__);
   gInstance = this;
   const char* lib = "LibOVRRT64_1.dll";
@@ -66,7 +66,7 @@ OculusFrameHook::OculusFrameHook() {
   mHooked = true;
 }
 
-void OculusFrameHook::Unhook() {
+void OculusEndFrameHook::Unhook() {
   if (!mHooked) {
     return;
   }
@@ -78,7 +78,7 @@ void OculusFrameHook::Unhook() {
   DetourTransactionPopCommit();
 }
 
-OculusFrameHook::~OculusFrameHook() {
+OculusEndFrameHook::~OculusEndFrameHook() {
   Unhook();
   gInstance = nullptr;
 }

@@ -16,13 +16,13 @@ namespace OpenKneeboard {
  * parameter might be pointing at `ovrSubmitFrame` or `ovrSubmitFrame2` instead
  * of `ovrEndFrame`.
  */
-class OculusFrameHook {
+class OculusEndFrameHook {
  private:
   bool mHooked;
 
  public:
-  OculusFrameHook();
-  virtual ~OculusFrameHook();
+  OculusEndFrameHook();
+  virtual ~OculusEndFrameHook();
 
   void Unhook();
 

@@ -6,7 +6,7 @@ add_library(openkneeboard-InjectedKneeboard STATIC InjectedKneeboard.cpp)
 add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(dxgi-hooks PRIVATE detours-ext openkneeboard-dprint)
 
-add_library(oculus-hooks STATIC OculusFrameHook.cpp OculusKneeboard.cpp)
+add_library(oculus-hooks STATIC OculusEndFrameHook.cpp OculusKneeboard.cpp)
 target_link_libraries(
 	oculus-hooks
 	PUBLIC

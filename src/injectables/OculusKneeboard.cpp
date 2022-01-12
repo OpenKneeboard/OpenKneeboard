@@ -77,7 +77,7 @@ OculusKneeboard::~OculusKneeboard() {
 }
 
 void OculusKneeboard::Unhook() {
-  OculusFrameHook::Unhook();
+  OculusEndFrameHook::Unhook();
 }
 
 ovrResult OculusKneeboard::OnOVREndFrame(

@@ -3,11 +3,11 @@
 #include <OpenKneeboard/SHM.h>
 
 #include "InjectedKneeboard.h"
-#include "OculusFrameHook.h"
+#include "OculusEndFrameHook.h"
 
 namespace OpenKneeboard {
 
-class OculusKneeboard : public OculusFrameHook, public InjectedKneeboard {
+class OculusKneeboard : public OculusEndFrameHook, public InjectedKneeboard {
  private:
   SHM::Reader mSHM;
   bool mZoomed = false;

@@ -10,14 +10,14 @@
 #include "IDXGISwapChainPresentHook.h"
 #include "IVRCompositorWaitGetPosesHook.h"
 #include "InjectedDLLMain.h"
-#include "OculusFrameHook.h"
+#include "OculusEndFrameHook.h"
 #include "detours-ext.h"
 
 using namespace OpenKneeboard;
 
 namespace OpenKneeboard {
 
-class AutoDetectKneeboard final : private OculusFrameHook,
+class AutoDetectKneeboard final : private OculusEndFrameHook,
                                   private IDXGISwapChainPresentHook,
                                   private IVRCompositorWaitGetPosesHook {
  private:
@@ -37,7 +37,7 @@ class AutoDetectKneeboard final : private OculusFrameHook,
   }
 
   void Unhook() {
-    OculusFrameHook::Unhook();
+    OculusEndFrameHook::Unhook();
     IDXGISwapChainPresentHook::Unhook();
     IVRCompositorWaitGetPosesHook::Unhook();
   }
@@ -54,7 +54,7 @@ class AutoDetectKneeboard final : private OculusFrameHook,
     mFlags |= FLAG_OCULUS;
     auto ret
       = next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
-    OculusFrameHook::Unhook();
+    OculusEndFrameHook::Unhook();
     return ret;
   }
 
