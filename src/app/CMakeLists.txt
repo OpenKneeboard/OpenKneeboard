@@ -35,23 +35,25 @@ target_include_directories(
   ${SOURCE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include)
 
-add_dependencies(
-  OpenKneeboard
-  OpenKneeboard-autodetect
-  OpenKneeboard-oculus-d3d11
-  OpenKneeboard-dcs-ext-dll
-  OpenKneeboard-dcs-ext-lua)
+set(
+  RUNTIME_FILES
+	"$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
+	"$<TARGET_FILE:OpenKneeboard-autodetect>"
+	"$<TARGET_FILE:OpenKneeboard-AutoInjectMarker>"
+	"$<TARGET_FILE:OpenKneeboard-nonvr-d3d11>"
+	"$<TARGET_FILE:OpenKneeboard-oculus-d3d11>"
+	"$<TARGET_FILE:OpenKneeboard-dcs-ext-dll>"
+	"$<TARGET_FILE_DIR:OpenKneeboard-dcs-ext-dll>/$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>"
+)
 
-
-add_custom_command(
-  TARGET OpenKneeboard POST_BUILD
+add_custom_target(
+  CopyRuntimeFiles
+  ALL
   COMMAND
   ${CMAKE_COMMAND} -E copy_if_different
-  "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
-  "$<TARGET_FILE:OpenKneeboard-autodetect>"
-  "$<TARGET_FILE:OpenKneeboard-nonvr-d3d11>"
-  "$<TARGET_FILE:OpenKneeboard-oculus-d3d11>"
-  "$<TARGET_FILE:OpenKneeboard-dcs-ext-dll>"
-  "$<TARGET_FILE_DIR:OpenKneeboard-dcs-ext-dll>/$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>"
+  ${RUNTIME_FILES}
   "$<TARGET_FILE_DIR:OpenKneeboard>"
-  COMMAND_EXPAND_LISTS)
+  &&
+  ${CMAKE_COMMAND} -E touch RuntimeFiles.stamp
+  COMMAND_EXPAND_LISTS
+  SOURCES ${RUNTIME_FILES})
