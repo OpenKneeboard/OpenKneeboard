@@ -100,7 +100,8 @@ bool AlreadyInjected(DWORD processId, const std::filesystem::path& _dll) {
 bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
   const auto dll = std::filesystem::canonical(_dll);
   if (AlreadyInjected(processId, dll)) {
-    dprint("Asked to load a DLL that's already loaded");
+    dprintf(
+      "Asked to load a DLL ({}) that's already loaded", dll.stem().string());
     return false;
   }
 
@@ -147,10 +148,6 @@ bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
   }
 
   WaitForSingleObject(thread.get(), INFINITE);
-  DWORD result = -1;
-  GetExitCodeThread(thread.get(), &result);
-  dprintf("Thread result: {}", result);
-
   return true;
 }
 }// namespace
@@ -160,7 +157,8 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
   GetModuleFileNameW(NULL, buf, MAX_PATH);
   const auto executablePath
     = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
-  const auto injectedDll = executablePath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
+  const auto injectedDll
+    = executablePath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
   const auto markerDll = executablePath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
 
   PROCESSENTRY32 process;
