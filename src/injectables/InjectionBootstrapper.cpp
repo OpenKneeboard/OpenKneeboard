@@ -17,7 +17,16 @@ using namespace OpenKneeboard;
 
 namespace OpenKneeboard {
 
-class AutoDetectKneeboard final : private OculusEndFrameHook,
+/** Figure out which kneeboard a process wants.
+ *
+ * Hook into various APIs, wait to see if they're used, and once we have enough
+ * frames, load a concrete kneeboard implementation and unload itself.
+ * 
+ * For example, if SteamVR is used, don't load anything. If only Oculus and
+ * D3D11 are used, load OpenKneeboard-oculus-d3d11.dll. "ONly D3D11" in case
+ * 11on12 is used.
+ */
+class InjectionBootstrapper final : private OculusEndFrameHook,
                                   private IDXGISwapChainPresentHook,
                                   private IVRCompositorWaitGetPosesHook {
  private:
@@ -31,15 +40,15 @@ class AutoDetectKneeboard final : private OculusEndFrameHook,
   uint64_t mFrames = 0;
 
  public:
-  AutoDetectKneeboard() = delete;
+  InjectionBootstrapper() = delete;
 
-  explicit AutoDetectKneeboard(HMODULE self) : mThisModule(self) {
+  explicit InjectionBootstrapper(HMODULE self) : mThisModule(self) {
     OculusEndFrameHook::InitWithVTable();
     IDXGISwapChainPresentHook::InitWithVTable();
     IVRCompositorWaitGetPosesHook::InitWithVTable();
   }
 
-  ~AutoDetectKneeboard() {
+  ~InjectionBootstrapper() {
     this->UninstallHook();
   }
 
@@ -145,7 +154,7 @@ class AutoDetectKneeboard final : private OculusEndFrameHook,
     }
 
     dprintf(
-      "Don't know how to create a kneeboard from autodetection flags {:#b}",
+      "Don't know how to create a kneeboard from INJECTION_BOOTSTRAPPERion flags {:#b}",
       mFlags);
   }
 
@@ -171,10 +180,10 @@ class AutoDetectKneeboard final : private OculusEndFrameHook,
   }
 };
 
-static std::unique_ptr<AutoDetectKneeboard> gInstance;
+static std::unique_ptr<InjectionBootstrapper> gInstance;
 static HMODULE gModule = nullptr;
 
-DWORD AutoDetectKneeboard::LoadNextThreadImpl(void* data) {
+DWORD InjectionBootstrapper::LoadNextThreadImpl(void* data) {
   gInstance.reset();
   auto path = reinterpret_cast<std::filesystem::path*>(data);
   dprintf("!!!! loading next: {}", path->string());
@@ -194,7 +203,7 @@ DWORD AutoDetectKneeboard::LoadNextThreadImpl(void* data) {
 namespace {
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
-  gInstance = std::make_unique<AutoDetectKneeboard>(gModule);
+  gInstance = std::make_unique<InjectionBootstrapper>(gModule);
   dprint("Installed hooks.");
 
   return S_OK;
@@ -205,7 +214,7 @@ DWORD WINAPI ThreadEntry(LPVOID ignored) {
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   gModule = hinst;
   return InjectedDLLMain(
-    "OpenKneeboard-Autodetect",
+    "OpenKneeboard-InjectionBootstrapper",
     gInstance,
     &ThreadEntry,
     hinst,

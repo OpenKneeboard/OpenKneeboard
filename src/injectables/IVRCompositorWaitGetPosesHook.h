@@ -8,10 +8,10 @@ namespace OpenKneeboard {
 
 /** Hook for OpenVR's `vr::VRCompositor()->Submit()`.
  *
- * This hook is used by `AutoDetectKneeboard` to see whether or not an
+ * This hook is used by `InjectionBootstrapper` to see whether or not an
  * application is actively using OpenVR, rather than just linking against it.
  *
- * If OpenVR usage is detected, `AutoDetectKneeboard` will not load any
+ * If OpenVR usage is detected, `InjectionBootstrapper` will not load any
  * kneeboard; as OpenVR directly supports separate overlay applications, we use
  * that API in the main OpenKneeboard application instead of in the game
  * process.

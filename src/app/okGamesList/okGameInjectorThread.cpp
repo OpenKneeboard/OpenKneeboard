@@ -160,7 +160,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
   GetModuleFileNameW(NULL, buf, MAX_PATH);
   const auto executablePath
     = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
-  const auto injectedDll = executablePath / RuntimeFiles::AUTODETECT_DLL;
+  const auto injectedDll = executablePath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
   const auto markerDll = executablePath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
 
   PROCESSENTRY32 process;

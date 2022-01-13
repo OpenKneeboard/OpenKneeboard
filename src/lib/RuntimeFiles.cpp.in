@@ -11,8 +11,8 @@ const std::filesystem::path DCSWORLD_HOOK_LUA(
 const std::filesystem::path AUTOINJECT_MARKER_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-AutoInjectMarker>");
 
-const std::filesystem::path AUTODETECT_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-autodetect>");
+const std::filesystem::path INJECTION_BOOTSTRAPPER_DLL(
+  "$<TARGET_FILE_NAME:OpenKneeboard-InjectionBootstrapper>");
 
 const std::filesystem::path NON_VR_D3D11_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-nonvr-d3d11>");

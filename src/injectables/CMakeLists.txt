@@ -64,9 +64,9 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-add_library(OpenKneeboard-autodetect MODULE AutoDetectKneeboard.cpp)
+add_library(OpenKneeboard-InjectionBootstrapper MODULE InjectionBootstrapper.cpp)
 target_link_libraries(
-  OpenKneeboard-autodetect
+  OpenKneeboard-InjectionBootstrapper
   PRIVATE
   OpenKneeboard-RuntimeFiles
   detours-ext
