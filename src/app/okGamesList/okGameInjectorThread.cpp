@@ -161,6 +161,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
   const auto executablePath
     = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
   const auto injectedDll = executablePath / RuntimeFiles::AUTODETECT_DLL;
+  const auto markerDll = executablePath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
 
   PROCESSENTRY32 process;
   process.dwSize = sizeof(process);
@@ -198,7 +199,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
         }
 
         const auto friendly = game.game->GetUserFriendlyName(path);
-        if (AlreadyInjected(process.th32ProcessID, injectedDll)) {
+        if (AlreadyInjected(process.th32ProcessID, markerDll)) {
           if (path != currentPath) {
             currentPath = path;
             wxCommandEvent ev(okEVT_GAME_CHANGED);
@@ -213,6 +214,8 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
           friendly.ToStdString(),
           process.th32ProcessID,
           path.string());
+
+        InjectDll(process.th32ProcessID, markerDll);
 
         if (!InjectDll(process.th32ProcessID, injectedDll)) {
           currentPath = path;
