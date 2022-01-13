@@ -15,7 +15,6 @@ namespace OpenKneeboard {
 namespace {
 
 IDXGISwapChainPresentHook* gHook = nullptr;
-bool gHooked = false;
 uint16_t gCount = 0;
 
 decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
@@ -164,7 +163,7 @@ void* Find_SteamOverlay_IDXGISwapChain_Present() {
 
 }// namespace
 
-class IDXGISwapChainPresentHook::Impl final {
+struct IDXGISwapChainPresentHook::Impl final {
  public:
   static void InstallHook();
 
@@ -179,44 +178,42 @@ class IDXGISwapChainPresentHook::Impl final {
 };
 
 IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
-  dprint(__FUNCTION__);
+  dprintf("{} {:#018x}", __FUNCTION__, (int64_t)this);
   if (gHook) {
     throw std::logic_error("Only one IDXGISwapChainPresentHook at a time!");
   }
 
   gHook = this;
+}
+
+void IDXGISwapChainPresentHook::InitWithVTable() {
   Impl::InstallHook();
 }
 
 IDXGISwapChainPresentHook::~IDXGISwapChainPresentHook() {
-  UnhookAndCleanup();
+  dprintf("{} {:#018x}", __FUNCTION__, (int64_t)this);
+  UninstallHook();
 }
 
-bool IDXGISwapChainPresentHook::IsHookInstalled() const {
-  return gHooked;
-}
-
-void IDXGISwapChainPresentHook::UnhookAndCleanup() {
-  Unhook();
-  if (gHook == this) {
-    gHook = nullptr;
-  }
-}
-
-void IDXGISwapChainPresentHook::Unhook() {
-  if (!gHooked) {
+void IDXGISwapChainPresentHook::UninstallHook() {
+  if (gHook != this) {
     return;
   }
-  gHooked = false;
 
-  auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
-  auto mfp = &Impl::Hooked_IDXGISwapChain_Present;
-  DetourTransactionPushBegin();
-  auto err = DetourDetach(fpp, *(reinterpret_cast<void**>(&mfp)));
-  if (err) {
-    dprintf(" - failed to detach IDXGISwapChain");
+  dprintf(
+    "{} - detaching {:#018x}",
+    __FUNCTION__,
+    (int64_t)&Real_IDXGISwapChain_Present);
+
+  {
+    DetourTransaction dt;
+    DetourDetach(
+      reinterpret_cast<void**>(&Real_IDXGISwapChain_Present),
+      sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   }
-  DetourTransactionPopCommit();
+  gHook = nullptr;
+
+  dprint("Detached IDXGISwapChain::Present hook");
 }
 
 void IDXGISwapChainPresentHook::Impl::InstallHook() {
@@ -234,6 +231,8 @@ void IDXGISwapChainPresentHook::Impl::InstallHook() {
 }
 
 void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
+  DetourTransaction dtAndConcurrencyBlock;
+
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
@@ -248,9 +247,13 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
 
   D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
 
-  winrt::com_ptr<IDXGISwapChain> swapchain;
   winrt::com_ptr<ID3D11Device> device;
+  winrt::com_ptr<IDXGISwapChain> swapchain;
 
+  UINT flags = 0;
+#ifdef DEBUG
+  flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
   decltype(&D3D11CreateDeviceAndSwapChain) factory = nullptr;
   factory = reinterpret_cast<decltype(factory)>(
     DetourFindFunction("d3d11.dll", "D3D11CreateDeviceAndSwapChain"));
@@ -259,11 +262,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
     nullptr,
     D3D_DRIVER_TYPE_HARDWARE,
     nullptr,
-#ifdef DEBUG
-    D3D11_CREATE_DEVICE_DEBUG,
-#else
-    0,
-#endif
+    flags,
     &level,
     1,
     D3D11_SDK_VERSION,
@@ -279,7 +278,6 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   *fpp = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
   dprintf(" - found IDXGISwapChain::Present at {:#018x}", (intptr_t)*fpp);
-  DetourTransactionPushBegin();
   auto err = DetourAttach(
     fpp, sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
@@ -287,8 +285,6 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   } else {
     dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
   }
-  DetourTransactionPopCommit();
-  gHooked = true;
 }
 
 void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
@@ -296,11 +292,7 @@ void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
   auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   *fpp = steamHookAddress;
   dprintf("Hooking Steam overlay at {:#018x}", (intptr_t)*fpp);
-  dprintf(
-    "Detour: {:#018x}",
-    (intptr_t)sudo_make_me_a<void*>(
-      &Impl::Hooked_IDXGISwapChain_Present));
-  DetourTransactionPushBegin();
+  DetourTransaction dt;
   auto err = DetourAttach(
     fpp, sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
@@ -308,15 +300,13 @@ void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
   } else {
     dprintf(" - failed to hook Steam Overlay: {}", err);
   }
-  DetourTransactionPopCommit();
-  gHooked = true;
 }
 
 HRESULT __stdcall IDXGISwapChainPresentHook::Impl::
   Hooked_IDXGISwapChain_Present(UINT SyncInterval, UINT Flags) {
   auto _this = reinterpret_cast<IDXGISwapChain*>(this);
   if (!gHook) {
-    return std::invoke(Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
+  return std::invoke(Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
   }
 
   return gHook->OnIDXGISwapChain_Present(

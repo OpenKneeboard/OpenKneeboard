@@ -1,5 +1,7 @@
 #include "DllLoadWatcher.h"
 
+#include "detours-ext.h"
+
 // clang-format off
 #include <Windows.h>
 #include <SubAuth.h>
@@ -13,7 +15,8 @@
 // There's a header for this, but only in the DDK
 typedef const UNICODE_STRING* PCUNICODE_STRING;
 
-// Documented at https://docs.microsoft.com/en-us/windows/win32/devnotes/ldrregisterdllnotification
+// Documented at
+// https://docs.microsoft.com/en-us/windows/win32/devnotes/ldrregisterdllnotification
 // but there are no headers
 enum LDR_DLL_LOADED_NOTIFICATION_REASON {
   LDR_DLL_NOTIFICATION_REASON_LOADED = 1,
@@ -77,17 +80,27 @@ DllLoadWatcher::DllLoadWatcher(const std::string& name)
   : p(std::make_unique<Impl>()) {
   p->mWatcher = this;
   p->mName = name;
+
+  // TODO: short-cut if it's already loaded
+
   auto f = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
     DetourFindFunction("Ntdll.dll", "LdrRegisterDllNotification"));
   if (!f) {
     dprintf("Failed to find LdrRegisterDllNotification");
     return;
   }
-  f(0, &Impl::OnNotification, reinterpret_cast<void*>(p.get()), &p->mCookie);
+  auto status = f(
+    0, &Impl::OnNotification, reinterpret_cast<void*>(p.get()), &p->mCookie);
+  if (status != STATUS_SUCCESS) {
+    dprintf("Failed to LdrRegisterDllNotification for {}: {}", name, status);
+    return;
+  }
+  dprintf("DllLoadWatcher++ {}", name);
 }
 
 DllLoadWatcher::~DllLoadWatcher() {
   if (!p->mCookie) {
+    dprintf("DllLoadWatcher!! - no cookie for {}", p->mName);
     return;
   }
   auto f = reinterpret_cast<decltype(&LdrUnregisterDllNotification)>(
@@ -96,7 +109,12 @@ DllLoadWatcher::~DllLoadWatcher() {
     dprintf("Failed to find LdrUnregisterDllNotification");
     return;
   }
-  f(p->mCookie);
+  auto status = f(p->mCookie);
+  if (status != STATUS_SUCCESS) {
+    dprintf("Failed to unload watcher for {}: {}", p->mName, status);
+    return;
+  }
+  dprintf("DllLoadWatcher-- {}", p->mName);
 }
 
 DWORD WINAPI DllLoadWatcher::Impl::NotificationThread(void* _arg) {
@@ -128,6 +146,7 @@ void CALLBACK DllLoadWatcher::Impl::OnNotification(
   if (name != p->mName) {
     return;
   }
+
   CreateThread(nullptr, 0, &NotificationThread, p, 0, nullptr);
 }
 

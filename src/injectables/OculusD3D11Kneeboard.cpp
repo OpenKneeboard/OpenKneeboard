@@ -32,6 +32,18 @@ class OculusD3D11Kneeboard::Impl final {
 };
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
+  dprintf("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
+  IDXGISwapChainPresentHook::InitWithVTable();
+  OculusKneeboard::InitWithVTable();
+}
+
+OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
+  dprintf("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
+  this->UninstallHook();
+}
+
+void OculusD3D11Kneeboard::OnOVREndFrameHookInstalled() {
+  OculusKneeboard::OnOVREndFrameHookInstalled();
 #define IT(x) \
   real_##x = reinterpret_cast<decltype(&x)>( \
     DetourFindFunction("LibOVRRT64_1.dll", #x));
@@ -39,12 +51,9 @@ OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
 #undef IT
 }
 
-OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
-}
-
-void OculusD3D11Kneeboard::Unhook() {
-  OculusKneeboard::Unhook();
-  IDXGISwapChainPresentHook::Unhook();
+void OculusD3D11Kneeboard::UninstallHook() {
+  OculusKneeboard::UninstallHook();
+  IDXGISwapChainPresentHook::UninstallHook();
 }
 
 ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
@@ -109,7 +118,6 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     }
   }
 
-  dprintf("{} completed", __FUNCTION__);
   return p->swapChain;
 }
 
@@ -180,8 +188,9 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
       dprintf("Got a swapchain without a D3D11 device");
     }
   }
+
   auto ret = std::invoke(next, swapChain, syncInterval, flags);
-  IDXGISwapChainPresentHook::UnhookAndCleanup();
+  IDXGISwapChainPresentHook::UninstallHook();
   return ret;
 }
 
@@ -193,11 +202,8 @@ namespace {
 std::unique_ptr<OculusD3D11Kneeboard> gInstance;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
-  DetourTransactionPushBegin();
   gInstance = std::make_unique<OculusD3D11Kneeboard>();
-  DetourTransactionPopCommit();
-  dprint("Installed hooks.");
-
+  dprintf(FMT_STRING("Kneeboard active at {:#018x}"), (intptr_t)gInstance.get());
   return S_OK;
 }
 

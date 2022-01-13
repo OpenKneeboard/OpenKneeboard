@@ -19,11 +19,14 @@ namespace OpenKneeboard {
 class IVRCompositorWaitGetPosesHook {
  public:
   struct Impl;
-  IVRCompositorWaitGetPosesHook();
   ~IVRCompositorWaitGetPosesHook();
-  void Unhook();
+  void UninstallHook();
 
  protected:
+  IVRCompositorWaitGetPosesHook();
+  /// Call this from your constructor
+  void InitWithVTable();
+
   virtual vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
     vr::IVRCompositor* this_,
     vr::TrackedDevicePose_t* pRenderPoseArray,

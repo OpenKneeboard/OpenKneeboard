@@ -3,17 +3,16 @@
 #include <memory>
 
 #include "IDXGISwapChainPresentHook.h"
-#include "InjectedKneeboard.h"
+#include "DllHook.h"
 
 namespace OpenKneeboard {
 
-class NonVRD3D11Kneeboard final : public InjectedKneeboard,
-                                  private IDXGISwapChainPresentHook {
+class NonVRD3D11Kneeboard final : private IDXGISwapChainPresentHook {
  public:
   NonVRD3D11Kneeboard();
   virtual ~NonVRD3D11Kneeboard();
 
-  virtual void Unhook() override;
+  void UninstallHook();
 
  protected:
   virtual HRESULT OnIDXGISwapChain_Present(

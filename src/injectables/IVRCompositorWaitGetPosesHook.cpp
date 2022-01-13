@@ -11,6 +11,8 @@ namespace OpenKneeboard {
 
 namespace {
 
+const char* MODULE_NAME = "openvr_api.dll";
+
 struct IVRCompositor_VTable {
   void* mSetTrackingSpace;
   void* mGetTrackingSpace;
@@ -45,10 +47,10 @@ class ScopedRWX {
 }// namespace
 
 struct IVRCompositorWaitGetPosesHook::Impl : public DllLoadWatcher {
-  Impl() : DllLoadWatcher("openvr_api.dll") {
+  Impl() : DllLoadWatcher(MODULE_NAME) {
   }
   ~Impl() {
-    Unhook();
+    UninstallHook();
   }
 
   IVRCompositor_VTable* mVTable = nullptr;
@@ -60,7 +62,7 @@ struct IVRCompositorWaitGetPosesHook::Impl : public DllLoadWatcher {
     uint32_t unGamePoseArrayCount);
 
   void InstallHook();
-  void Unhook();
+  void UninstallHook();
 
   void InstallCompositorHook(vr::IVRCompositor* compositor);
   void InstallVRGetGenericInterfaceHook();
@@ -75,14 +77,16 @@ struct IVRCompositorWaitGetPosesHook::Impl : public DllLoadWatcher {
 IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook()
   : p(std::make_unique<Impl>()) {
   dprint(__FUNCTION__);
+  }
+
+void IVRCompositorWaitGetPosesHook::InitWithVTable() {
   if (gHook) {
-    dprintf("{}:{}", __FILE__, __LINE__);
     throw std::logic_error("Can only have one IVRCompositorWaitGetPosesHook");
   }
 
   gHook = this;
 
-  if (!GetModuleHandleA("openvr_api.dll")) {
+  if (!GetModuleHandleA(MODULE_NAME)) {
     dprint("Did not find openvr_api.dll");
     return;
   }
@@ -100,37 +104,36 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
 
   dprintf("Found WaitGetPoses at: {:#018x}", (uint64_t)mVTable->mWaitGetPoses);
 
-  // Just using Detours for locking
-  DetourTransactionPushBegin();
   {
+    // Just using Detours for locking
+    DetourTransaction dt;
     ScopedRWX rwx(mVTable);
     mVTable->mWaitGetPoses
       = sudo_make_me_a<void*>(&Impl::Hooked_IVRCompositor_WaitGetPoses);
   }
-  DetourTransactionPopCommit();
 }
 
 IVRCompositorWaitGetPosesHook::~IVRCompositorWaitGetPosesHook() {
-  Unhook();
-
-  if (gHook == this) {
-    gHook = nullptr;
-  }
+  UninstallHook();
 }
 
-void IVRCompositorWaitGetPosesHook::Unhook() {
+void IVRCompositorWaitGetPosesHook::UninstallHook() {
+  if (gHook != this) {
+    return;
+  }
+
   if (!p->mVTable) {
     return;
   }
-  DetourTransactionPushBegin();
+
   {
+    DetourTransaction dt;
     ScopedRWX rwx(p->mVTable);
     p->mVTable->mWaitGetPoses
       = sudo_make_me_a<void*>(Real_IVRCompositor_WaitGetPoses);
     p->mVTable = nullptr;
+    p->UninstallHook();
   }
-  p->Unhook();
-  DetourTransactionPopCommit();
 
   gHook = nullptr;
 }
@@ -149,7 +152,7 @@ void* VR_CALLTYPE Hooked_VR_GetGenericInterface(
 
   if (std::string_view(pchInterfaceVersion).starts_with("IVRCompositor_")) {
     auto p = gHookImpl;
-    p->Unhook();
+    p->UninstallHook();
     p->InstallCompositorHook(reinterpret_cast<vr::IVRCompositor*>(ret));
   }
 
@@ -162,19 +165,19 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallVRGetGenericInterfaceHook() {
   mHookedVRGetGenericInterface = true;
   gHookImpl = this;
 
-  DetourTransactionPushBegin();
+  DetourTransaction dt;
   DetourAttach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
-  DetourTransactionPopCommit();
 }
 
-void IVRCompositorWaitGetPosesHook::Impl::Unhook() {
+void IVRCompositorWaitGetPosesHook::Impl::UninstallHook() {
   if (!mHookedVRGetGenericInterface) {
     return;
   }
 
-  DetourTransactionPushBegin();
-  DetourDetach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
-  DetourTransactionPopCommit();
+  {
+    DetourTransaction dt;
+    DetourDetach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
+  }
 
   mHookedVRGetGenericInterface = false;
 
@@ -211,7 +214,7 @@ IVRCompositorWaitGetPosesHook::Impl::Hooked_IVRCompositor_WaitGetPoses(
 void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
   Real_VR_GetGenericInterface
     = reinterpret_cast<decltype(&vr::VR_GetGenericInterface)>(
-      DetourFindFunction("openvr_api.dll", "VR_GetGenericInterface"));
+      DetourFindFunction(MODULE_NAME, "VR_GetGenericInterface"));
   if (Real_VR_GetGenericInterface) {
     dprintf("Found OpenVR API");
   } else {
@@ -233,7 +236,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::OnDllLoad(const std::string& name) {
-  if (name != "openvr_api.dll") {
+  if (name != MODULE_NAME) {
     return;
   }
   dprint("DLL openvr_api.dll was loaded, installing hook...");

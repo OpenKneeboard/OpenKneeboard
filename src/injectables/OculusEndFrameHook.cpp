@@ -2,6 +2,9 @@
 
 #include <OpenKneeboard/dprint.h>
 
+#include <stdexcept>
+
+#include "DllHook.h"
 #include "detours-ext.h"
 
 // Not declared in modern Oculus SDK headers, but used by some games (like DCS
@@ -21,66 +24,107 @@ ovr_SubmitFrame2(
 
 namespace OpenKneeboard {
 
-static OculusEndFrameHook* gInstance = nullptr;
+static const char* MODULE_NAME = "LibOVRRT64_1.dll";
+
+struct OculusEndFrameHook::Impl : public DllHook {
+  Impl(OculusEndFrameHook*);
+  ~Impl();
+
+  using DllHook::InitWithVTable;
+
+  virtual void InstallHook() override;
+
+ private:
+  static OculusEndFrameHook* gHook;
+  OculusEndFrameHook* mHook = nullptr;
 
 #define IT(x) \
   static_assert(std::same_as<decltype(x), decltype(ovr_EndFrame)>); \
-  static decltype(&x) real_##x = nullptr; \
-  OVR_PUBLIC_FUNCTION(ovrResult) \
-  hooked_##x( \
+  static decltype(&x) real_##x; \
+  static ovrResult __cdecl x##_hook( \
     ovrSession session, \
     long long frameIndex, \
     const ovrViewScaleDesc* viewScaleDesc, \
     ovrLayerHeader const* const* layerPtrList, \
     unsigned int layerCount) { \
-    if (!gInstance) { \
+    if (!gHook) { \
       real_##x(session, frameIndex, viewScaleDesc, layerPtrList, layerCount); \
     } \
-    return gInstance->OnOVREndFrame( \
+    return gHook->OnOVREndFrame( \
       session, frameIndex, viewScaleDesc, layerPtrList, layerCount, real_##x); \
-  }
+  } \
+  static_assert(std::same_as<decltype(&x), decltype(&x##_hook)>);
+  HOOKED_ENDFRAME_FUNCS
+#undef IT
+};
+
+OculusEndFrameHook* OculusEndFrameHook::Impl::gHook = nullptr;
+#define IT(x) decltype(&x) OculusEndFrameHook::Impl::real_##x = nullptr;
 HOOKED_ENDFRAME_FUNCS
 #undef IT
 
-OculusEndFrameHook::OculusEndFrameHook() {
-  dprintf("{}:{}", __FUNCTION__, __LINE__);
-  gInstance = this;
-  const char* lib = "LibOVRRT64_1.dll";
-
-  if (!GetModuleHandleA(lib)) {
-    dprintf("Did not find {}", lib);
-    return;
-  }
-
-  dprintf("{}:{}", __FUNCTION__, __LINE__);
-  DetourTransactionPushBegin();
-  dprintf("{}:{}", __FUNCTION__, __LINE__);
-#define IT(x) \
-  real_##x = reinterpret_cast<decltype(&x)>(DetourFindFunction(lib, #x)); \
-  DetourAttach(reinterpret_cast<void**>(&real_##x), hooked_##x);
-  HOOKED_ENDFRAME_FUNCS
-#undef IT
-  dprintf("{}:{}", __FUNCTION__, __LINE__);
-  DetourTransactionPopCommit();
-  dprintf("{}:{}", __FUNCTION__, __LINE__);
-  mHooked = true;
-}
-
-void OculusEndFrameHook::Unhook() {
-  if (!mHooked) {
-    return;
-  }
-  mHooked = false;
-  DetourTransactionPushBegin();
-#define IT(x) DetourDetach(reinterpret_cast<void**>(&real_##x), hooked_##x);
-  HOOKED_ENDFRAME_FUNCS
-#undef IT
-  DetourTransactionPopCommit();
+OculusEndFrameHook::OculusEndFrameHook() : p(std::make_unique<Impl>(this)) {
+  dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
 }
 
 OculusEndFrameHook::~OculusEndFrameHook() {
-  Unhook();
-  gInstance = nullptr;
+  // Must be called before any other stuff gets deallocated
+  this->UninstallHook();
+}
+
+void OculusEndFrameHook::InitWithVTable() {
+  p->InitWithVTable();
+}
+
+void OculusEndFrameHook::UninstallHook() {
+  p.reset();
+}
+
+void OculusEndFrameHook::OnOVREndFrameHookInstalled() {
+}
+
+OculusEndFrameHook::Impl::Impl(OculusEndFrameHook* hook)
+  : DllHook(MODULE_NAME), mHook(hook) {
+}
+
+void OculusEndFrameHook::Impl::InstallHook() {
+  if (gHook != nullptr) {
+    throw std::logic_error("Can only have one OculusEndFrameHook at a time");
+  }
+  gHook = mHook;
+
+  {
+    DetourTransaction dt;
+#define IT(x) \
+  real_##x \
+    = reinterpret_cast<decltype(&x)>(DetourFindFunction(MODULE_NAME, #x)); \
+  { \
+    auto err = DetourAttach(reinterpret_cast<void**>(&real_##x), x##_hook); \
+    if (err) { \
+      dprintf("Failed to attach to {}: {}", #x, err); \
+    } \
+  }
+    HOOKED_ENDFRAME_FUNCS
+#undef IT
+  }
+  dprint("Attached OculusEndFrameHook");
+
+  mHook->OnOVREndFrameHookInstalled();
+}
+
+OculusEndFrameHook::Impl::~Impl() {
+  if (gHook != mHook) {
+    return;
+  }
+
+  {
+    DetourTransaction dt;
+#define IT(x) DetourDetach(reinterpret_cast<void**>(&real_##x), x##_hook);
+    HOOKED_ENDFRAME_FUNCS
+#undef IT
+  }
+  gHook = nullptr;
+  dprint("Detached OculusEndFrameHook");
 }
 
 }// namespace OpenKneeboard

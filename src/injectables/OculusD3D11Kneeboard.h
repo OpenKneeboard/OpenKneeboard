@@ -11,9 +11,11 @@ class OculusD3D11Kneeboard final : public OculusKneeboard,
   OculusD3D11Kneeboard();
   virtual ~OculusD3D11Kneeboard();
 
-  virtual void Unhook() override;
+  virtual void UninstallHook() override;
 
  protected:
+  virtual void OnOVREndFrameHookInstalled() override;
+
   virtual HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,
     UINT syncInterval,
@@ -23,6 +25,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard,
   virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,
     const SHM::Header& config) override final;
+
   virtual bool Render(
     ovrSession session,
     ovrTextureSwapChain swapChain,

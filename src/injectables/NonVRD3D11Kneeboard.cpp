@@ -19,10 +19,11 @@ NonVRD3D11Kneeboard::NonVRD3D11Kneeboard() : p(std::make_unique<Impl>()) {
 }
 
 NonVRD3D11Kneeboard::~NonVRD3D11Kneeboard() {
+  this->UninstallHook();
 }
 
-void NonVRD3D11Kneeboard::Unhook() {
-  IDXGISwapChainPresentHook::Unhook();
+void NonVRD3D11Kneeboard::UninstallHook() {
+  IDXGISwapChainPresentHook::UninstallHook();
 }
 
 HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
@@ -120,9 +121,7 @@ namespace {
 std::unique_ptr<NonVRD3D11Kneeboard> gInstance;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
-  DetourTransactionPushBegin();
   gInstance = std::make_unique<NonVRD3D11Kneeboard>();
-  DetourTransactionPopCommit();
   dprint("Installed hooks.");
 
   return S_OK;

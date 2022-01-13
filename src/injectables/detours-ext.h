@@ -4,9 +4,17 @@
 #include <Windows.h>
 #include <detours.h>
 
-void DetourUpdateAllThreads();
-void DetourTransactionPushBegin();
-void DetourTransactionPopCommit();
+#include <memory>
+
+class DetourTransaction final {
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> p;
+
+ public:
+  DetourTransaction();
+  ~DetourTransaction();
+};
 
 /** "C++ does not support casting a member function pointer to a void*"
  *

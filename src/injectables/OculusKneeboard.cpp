@@ -66,19 +66,25 @@ static bool poseIntersectsWithRect(
 namespace OpenKneeboard {
 
 OculusKneeboard::OculusKneeboard() {
-#define IT(x) \
-  real_##x = reinterpret_cast<decltype(&x)>( \
-    DetourFindFunction("LibOVRRT64_1.dll", #x));
-  LIBOVR_FUNCS
-#undef IT
+  dprintf("{} {:#018x}", __FUNCTION__, (uint64_t) this); \
 }
 
 OculusKneeboard::~OculusKneeboard() {
+  this->UninstallHook();
 }
 
-void OculusKneeboard::Unhook() {
-  OculusEndFrameHook::Unhook();
+void OculusKneeboard::UninstallHook() {
+  OculusEndFrameHook::UninstallHook();
 }
+
+void OculusKneeboard::OnOVREndFrameHookInstalled() {
+#define IT(x) \
+	real_##x = reinterpret_cast<decltype(&x)>( \
+		DetourFindFunction("LibOVRRT64_1.dll", #x));
+	LIBOVR_FUNCS
+#undef IT
+}
+
 
 ovrResult OculusKneeboard::OnOVREndFrame(
   ovrSession session,

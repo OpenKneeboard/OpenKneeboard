@@ -2,6 +2,8 @@
 
 #include <dxgi.h>
 
+#include <memory>
+
 namespace OpenKneeboard {
 
 /** Hook for IDXGISwapChain::Present().
@@ -12,18 +14,17 @@ namespace OpenKneeboard {
  */
 class IDXGISwapChainPresentHook {
  private:
-  class Impl;
+  struct Impl;
+  std::unique_ptr<Impl> p;
 
  public:
-  IDXGISwapChainPresentHook();
   ~IDXGISwapChainPresentHook();
-  void Unhook();
-  // Unhook and remove all references to this instance
-  // This is unsafe unless you know that all calls will be from the same thread
-  void UnhookAndCleanup();
+
+  void UninstallHook();
 
  protected:
-  bool IsHookInstalled() const;
+  IDXGISwapChainPresentHook();
+  void InitWithVTable();
 
   virtual HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,
