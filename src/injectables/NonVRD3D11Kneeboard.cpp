@@ -16,6 +16,7 @@ struct NonVRD3D11Kneeboard::Impl {
 };
 
 NonVRD3D11Kneeboard::NonVRD3D11Kneeboard() : p(std::make_unique<Impl>()) {
+  IDXGISwapChainPresentHook::InitWithVTable();
 }
 
 NonVRD3D11Kneeboard::~NonVRD3D11Kneeboard() {
