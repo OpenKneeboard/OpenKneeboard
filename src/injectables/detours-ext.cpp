@@ -60,24 +60,18 @@ class RecursiveSpinlock final {
 };
 
 bool RecursiveSpinlock::TryLock() {
-  if (mFlag.test_and_set()) {
-    // Already held
-    return false;
-  }
-
   auto thisThread = GetCurrentThreadId();
-  if (mThreadId == 0) {
-    mThreadId = thisThread;
+  if (mFlag.test_and_set()) {
+    if (mThreadId != thisThread) {
+      return false;
+    }
     mDepth++;
     return true;
   }
 
-  if (mThreadId == thisThread) {
-    mDepth++;
-    return true;
-  }
-
-  return false;
+  mThreadId = thisThread;
+  mDepth++;
+  return true;
 }
 
 void RecursiveSpinlock::Lock() {
@@ -91,8 +85,8 @@ void RecursiveSpinlock::Lock() {
 void RecursiveSpinlock::Unlock() {
   if (--mDepth == 0) {
     mThreadId = 0;
+    mFlag.clear();
   }
-  mFlag.clear();
 }
 
 class RecursiveSpinlockGuard final {
@@ -140,21 +134,17 @@ DetourTransaction::DetourTransaction() : p(std::make_unique<Impl>()) {
 
   p->mThreadLock = std::move(guard);
   DetourTransactionBegin();
-  /* Tradeoff:
-   *
-   * - if we don't call `DetourUpdateThread()`, it will crash if a thread is
-   *   in the first 5 bytes of something we're modifying
-   * - if we do, we can deadlock: DetourUpdateThread() calls SuspendThread(),
-   *   and there's a load of stuff that every thread needs to do - e.g.
-   *   malloc can deadlock if a suspended thread has the lock.
-   * 
-   * Overall, things work better if we don't call DetourUpdateThread.
-   * 
   p->mThreads = GetAllThreads();
   for (auto handle: p->mThreads) {
-    DetourUpdateThread(handle);
+    // The thread may have finished since we got the list of threads; only
+    // tell detour to update it if it still exists.
+    //
+    // Otherwise, detours gets sad on commit: if it's not able to resume
+    // every thread, if gives up and stops trying to resume all the others
+    if (SuspendThread(handle) != (DWORD) -1) {
+      DetourUpdateThread(handle);
+    }
   }
-  */
   dprint("DetourTransaction++");
 }
 
@@ -169,6 +159,9 @@ DetourTransaction::~DetourTransaction() {
   }
   dprint("DetourTransaction--");
   for (auto handle: p->mThreads) {
+    // If any thread fails to resume (e.g. maybe it finished before Detours
+    // was able to suspend it), detours stops trying to resume any others
+    ResumeThread(handle);
     CloseHandle(handle);
   }
 }
