@@ -6,7 +6,10 @@
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <openvr.h>
+#include <psapi.h>
 #include <winrt/base.h>
+
+#include <filesystem>
 
 #pragma comment(lib, "D3D11.lib")
 
@@ -18,6 +21,7 @@ using namespace DirectX::SimpleMath;
 class okOpenVRThread::Impl final {
  private:
   winrt::com_ptr<ID3D11Device> mD3D;
+
  public:
   vr::IVRSystem* vrSystem = nullptr;
   vr::VROverlayHandle_t overlay {};
@@ -282,6 +286,35 @@ ID3D11Device* okOpenVRThread::Impl::D3D() {
   return mD3D.get();
 }
 
+static bool IsSteamVRRunning() {
+  // We 'should' just call `vr::VR_Init()` and check the result, but it leaks:
+  // https://github.com/ValveSoftware/openvr/issues/310
+  //
+  // Reproduced with OpenVR v1.16.8 and SteamVR v1.20.4 (latest as of 2022-01-13)
+  //
+  // Also reproduced with vr::VR_IsHmdPresent()
+  std::vector<DWORD> pids(1024 * 10);
+  DWORD neededBytes = pids.size() * sizeof(DWORD);
+  EnumProcesses(pids.data(), neededBytes, &neededBytes);
+  pids.resize(neededBytes / sizeof(DWORD));
+  wchar_t buf[MAX_PATH];
+  for (auto pid: pids) {
+    winrt::handle handle {
+      OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)};
+    if (!handle) {
+      continue;
+    }
+    DWORD length = MAX_PATH;
+    QueryFullProcessImageName(handle.get(), 0, buf, &length);
+    if (
+      std::filesystem::path(std::wstring_view(buf, length)).filename()
+      == "vrmonitor.exe") {
+      return true;
+    }
+  }
+  return false;
+}
+
 wxThread::ExitCode okOpenVRThread::Entry() {
   if (!vr::VR_IsRuntimeInstalled()) {
     dprint("Shutting down OpenVR thread, no runtime installed.");
@@ -297,7 +330,7 @@ wxThread::ExitCode okOpenVRThread::Entry() {
   const auto frameSleepMS = 1000 / 90;
 
   while (IsAlive()) {
-    if (!vr::VR_IsHmdPresent()) {
+    if (!IsSteamVRRunning()) {
       wxThread::This()->Sleep(inactiveSleepMS);
       continue;
     }
