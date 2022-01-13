@@ -16,11 +16,15 @@ using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 class okOpenVRThread::Impl final {
+ private:
+  winrt::com_ptr<ID3D11Device> mD3D;
  public:
   vr::IVRSystem* vrSystem = nullptr;
   vr::VROverlayHandle_t overlay {};
   SHM::Reader shm;
-  winrt::com_ptr<ID3D11Device> d3d;
+
+  ID3D11Device* D3D();
+
   winrt::com_ptr<ID3D11Texture2D> texture;
   winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
   uint64_t sequenceNumber = 0;
@@ -93,6 +97,16 @@ void okOpenVRThread::Tick() {
 
     dprintf("Created OpenVR overlay");
     CHECK(ShowOverlay, p->overlay);
+  }
+
+  vr::VREvent_t event;
+  while (overlay->PollNextOverlayEvent(p->overlay, &event, sizeof(event))) {
+    if (event.eventType == vr::VREvent_Quit) {
+      dprint("OpenVR shutting down, detaching");
+      p.reset();
+      p = std::make_unique<Impl>();
+      return;
+    }
   }
 
   auto snapshot = p->shm.MaybeGet();
@@ -174,6 +188,7 @@ void okOpenVRThread::Tick() {
     }
   }
 
+  auto d3d = p->D3D();
   if (!p->texture) {
     D3D11_TEXTURE2D_DESC desc {
       .Width = header.imageWidth,
@@ -187,7 +202,7 @@ void okOpenVRThread::Tick() {
       .CPUAccessFlags = {},
       .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
     };
-    p->d3d->CreateTexture2D(&desc, nullptr, p->texture.put());
+    d3d->CreateTexture2D(&desc, nullptr, p->texture.put());
     if (!p->texture) {
       dprint("Failed to create texture for OpenVR");
       return;
@@ -199,7 +214,7 @@ void okOpenVRThread::Tick() {
       .Texture2D = {.MipSlice = 0},
     };
     p->renderTargetView = nullptr;
-    p->d3d->CreateRenderTargetView(
+    d3d->CreateRenderTargetView(
       p->texture.get(), &rtvd, p->renderTargetView.put());
     if (!p->renderTargetView) {
       dprint("Failed to create RenderTargetView for OpenVR");
@@ -222,7 +237,7 @@ void okOpenVRThread::Tick() {
     };
 
     winrt::com_ptr<ID3D11DeviceContext> context;
-    p->d3d->GetImmediateContext(context.put());
+    d3d->GetImmediateContext(context.put());
 
     context->UpdateSubresource(
       p->texture.get(),
@@ -243,10 +258,9 @@ void okOpenVRThread::Tick() {
 #undef CHECK
 }
 
-wxThread::ExitCode okOpenVRThread::Entry() {
-  if (!vr::VR_IsRuntimeInstalled()) {
-    dprint("Shutting down OpenVR thread, no runtime installed.");
-    return {0};
+ID3D11Device* okOpenVRThread::Impl::D3D() {
+  if (mD3D) {
+    return mD3D.get();
   }
 
   D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
@@ -262,11 +276,19 @@ wxThread::ExitCode okOpenVRThread::Entry() {
     &level,
     1,
     D3D11_SDK_VERSION,
-    p->d3d.put(),
+    mD3D.put(),
     nullptr,
     nullptr);
+  return mD3D.get();
+}
 
-  if (!p->d3d) {
+wxThread::ExitCode okOpenVRThread::Entry() {
+  if (!vr::VR_IsRuntimeInstalled()) {
+    dprint("Shutting down OpenVR thread, no runtime installed.");
+    return {0};
+  }
+
+  if (!p->D3D()) {
     dprint("Shutting down OpenVR thread, failed to get D3D11 device");
     return {0};
   }
