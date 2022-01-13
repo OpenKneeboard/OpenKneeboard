@@ -72,13 +72,16 @@ void okOpenVRThread::Tick() {
     return;
   }
 
+  // reset before assign as we must call the old destructor before the new
+  // constructor
 #define CHECK(method, ...) \
   if (!overlay_check(overlay->method(__VA_ARGS__), #method)) { \
+    p.reset(); \
     p = std::make_unique<Impl>(); \
     return; \
   }
 
-  if (!p) {
+  if (!p->overlay) {
     CHECK(
       CreateOverlay,
       "com.fredemmott.OpenKneeboard",
