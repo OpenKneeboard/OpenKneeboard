@@ -27,7 +27,12 @@ void dprint(const std::string& message) {
     target == DPrintSettings::Target::CONSOLE
     || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
     auto output = fmt::format("{}\n", message);
-    AllocConsole();
+    if (AllocConsole()) {
+      // Gets detour trace working too :)
+      freopen("CONIN$", "r", stdin);
+      freopen("CONOUT$", "w", stdout);
+      freopen("CONOUT$", "w", stderr);
+    }
     auto handle = GetStdHandle(STD_ERROR_HANDLE);
     if (handle == INVALID_HANDLE_VALUE) {
       return;
