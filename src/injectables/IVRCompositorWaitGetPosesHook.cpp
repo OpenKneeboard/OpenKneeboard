@@ -4,7 +4,7 @@
 
 #include <stdexcept>
 
-#include "DllLoadWatcher.h"
+#include "DllHook.h"
 #include "detours-ext.h"
 
 namespace OpenKneeboard {
@@ -46,9 +46,12 @@ class ScopedRWX {
 
 }// namespace
 
-struct IVRCompositorWaitGetPosesHook::Impl : public DllLoadWatcher {
-  Impl() : DllLoadWatcher(MODULE_NAME) {
+struct IVRCompositorWaitGetPosesHook::Impl : public DllHook {
+  Impl() : DllHook(MODULE_NAME) {
   }
+
+  using DllHook::InitWithVTable;
+
   ~Impl() {
     UninstallHook();
   }
@@ -61,14 +64,11 @@ struct IVRCompositorWaitGetPosesHook::Impl : public DllLoadWatcher {
     vr::TrackedDevicePose_t* pGamePoseArray,
     uint32_t unGamePoseArrayCount);
 
-  void InstallHook();
+  virtual void InstallHook() override;
   void UninstallHook();
 
   void InstallCompositorHook(vr::IVRCompositor* compositor);
   void InstallVRGetGenericInterfaceHook();
-
- protected:
-  virtual void OnDllLoad(const std::string& name) override;
 
  private:
   bool mHookedVRGetGenericInterface = false;
@@ -77,7 +77,7 @@ struct IVRCompositorWaitGetPosesHook::Impl : public DllLoadWatcher {
 IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook()
   : p(std::make_unique<Impl>()) {
   dprint(__FUNCTION__);
-  }
+}
 
 void IVRCompositorWaitGetPosesHook::InitWithVTable() {
   if (gHook) {
@@ -85,14 +85,7 @@ void IVRCompositorWaitGetPosesHook::InitWithVTable() {
   }
 
   gHook = this;
-
-  if (!GetModuleHandleA(MODULE_NAME)) {
-    dprint("Did not find openvr_api.dll");
-    return;
-  }
-
-  dprint("Found openvr_api.dll, hooking");
-  p->InstallHook();
+  p->InitWithVTable();
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
@@ -233,14 +226,6 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
   }
 
   this->InstallCompositorHook(compositor);
-}
-
-void IVRCompositorWaitGetPosesHook::Impl::OnDllLoad(const std::string& name) {
-  if (name != MODULE_NAME) {
-    return;
-  }
-  dprint("DLL openvr_api.dll was loaded, installing hook...");
-  InstallHook();
 }
 
 }// namespace OpenKneeboard
