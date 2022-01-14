@@ -2,6 +2,7 @@
 
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
+#include <Psapi.h>
 #include <TlHelp32.h>
 #include <detours.h>
 #include <winrt/base.h>
@@ -77,29 +78,35 @@ class DebugPrivileges final {
   }
 };
 
-bool AlreadyInjected(DWORD processId, const std::filesystem::path& _dll) {
-  auto dll = _dll.filename();
-  winrt::handle snapshot {
-    CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processId)};
-  MODULEENTRY32 module;
-  module.dwSize = sizeof(module);
-
-  if (!Module32First(snapshot.get(), &module)) {
-    return false;
+bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
+  std::filesystem::path dll = std::filesystem::canonical(_dll);
+  DWORD neededBytes = 0;
+  EnumProcessModules(process, nullptr, 0, &neededBytes);
+  std::vector<HMODULE> modules(neededBytes / sizeof(HMODULE));
+  DWORD requestedBytes = neededBytes;
+  if (!EnumProcessModules(
+        process, modules.data(), requestedBytes, &neededBytes)) {
+    // Maybe a lie, but if we can't list modules, we definitely can't list them
+    return true;
+  }
+  if (neededBytes < requestedBytes) {
+    modules.resize(neededBytes / sizeof(HMODULE));
   }
 
-  do {
-    if (dll == module.szModule) {
+  wchar_t buf[MAX_PATH];
+  for (auto module: modules) {
+    auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
+    if (std::filesystem::canonical(std::wstring_view(buf, length)) == dll) {
       return true;
     }
+  }
 
-  } while (Module32Next(snapshot.get(), &module));
   return false;
 }
 
-bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
+bool InjectDll(HANDLE process, const std::filesystem::path& _dll) {
   const auto dll = std::filesystem::canonical(_dll);
-  if (AlreadyInjected(processId, dll)) {
+  if (AlreadyInjected(process, dll)) {
     dprintf(
       "Asked to load a DLL ({}) that's already loaded", dll.stem().string());
     return false;
@@ -107,25 +114,18 @@ bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
 
   DebugPrivileges privileges;
 
-  winrt::handle process {OpenProcess(PROCESS_ALL_ACCESS, false, processId)};
-
-  if (!process) {
-    dprint("Failed to open process");
-    return false;
-  }
-
   auto dllStr = dll.wstring();
 
   const auto dllStrByteLen = (dllStr.size() + 1) * sizeof(wchar_t);
   auto targetBuffer = VirtualAllocEx(
-    process.get(), nullptr, dllStrByteLen, MEM_COMMIT, PAGE_READWRITE);
+    process, nullptr, dllStrByteLen, MEM_COMMIT, PAGE_READWRITE);
   if (!targetBuffer) {
     return false;
   }
 
   wxON_BLOCK_EXIT0([=]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
   WriteProcessMemory(
-    process.get(), targetBuffer, dllStr.c_str(), dllStrByteLen, nullptr);
+    process, targetBuffer, dllStr.c_str(), dllStrByteLen, nullptr);
 
   auto kernel32 = GetModuleHandleA("Kernel32");
   if (!kernel32) {
@@ -141,13 +141,20 @@ bool InjectDll(DWORD processId, const std::filesystem::path& _dll) {
   }
 
   winrt::handle thread {CreateRemoteThread(
-    process.get(), nullptr, 0, loadLibraryW, targetBuffer, 0, nullptr)};
+    process, nullptr, 0, loadLibraryW, targetBuffer, 0, nullptr)};
 
   if (!thread) {
     dprint("Failed to create remote thread");
   }
 
   WaitForSingleObject(thread.get(), INFINITE);
+  DWORD loadLibraryReturn;
+  GetExitCodeThread(thread.get(), &loadLibraryReturn);
+  if (loadLibraryReturn == 0) {
+    dprintf("Injecting {} failed :'(", dll.string());
+  } else {
+    dprintf("Injected {}", dll.string());
+  }
   return true;
 }
 }// namespace
@@ -197,7 +204,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
         }
 
         const auto friendly = game.game->GetUserFriendlyName(path);
-        if (AlreadyInjected(process.th32ProcessID, markerDll)) {
+        if (AlreadyInjected(processHandle.get(), markerDll)) {
           if (path != currentPath) {
             currentPath = path;
             wxCommandEvent ev(okEVT_GAME_CHANGED);
@@ -208,14 +215,11 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
         }
 
         dprintf(
-          "Found '{}' process to inject: {} {}",
-          friendly.ToStdString(),
-          process.th32ProcessID,
-          path.string());
+          "Found '{}' - PID {}", friendly.ToStdString(), process.th32ProcessID);
 
-        InjectDll(process.th32ProcessID, markerDll);
+        InjectDll(processHandle.get(), markerDll);
 
-        if (!InjectDll(process.th32ProcessID, injectedDll)) {
+        if (!InjectDll(processHandle.get(), injectedDll)) {
           currentPath = path;
           dprintf("Failed to inject DLL: {}", GetLastError());
           break;
