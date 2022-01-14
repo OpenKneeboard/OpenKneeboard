@@ -86,7 +86,7 @@ bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
   DWORD requestedBytes = neededBytes;
   if (!EnumProcessModules(
         process, modules.data(), requestedBytes, &neededBytes)) {
-    // Maybe a lie, but if we can't list modules, we definitely can't list them
+    // Maybe a lie, but if we can't list modules, we definitely can't inject one
     return true;
   }
   if (neededBytes < requestedBytes) {
