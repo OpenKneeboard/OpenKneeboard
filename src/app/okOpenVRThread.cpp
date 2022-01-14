@@ -3,10 +3,10 @@
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
+#include <TlHelp32.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <openvr.h>
-#include <psapi.h>
 #include <winrt/base.h>
 
 #include <filesystem>
@@ -290,28 +290,25 @@ static bool IsSteamVRRunning() {
   // We 'should' just call `vr::VR_Init()` and check the result, but it leaks:
   // https://github.com/ValveSoftware/openvr/issues/310
   //
-  // Reproduced with OpenVR v1.16.8 and SteamVR v1.20.4 (latest as of 2022-01-13)
+  // Reproduced with OpenVR v1.16.8 and SteamVR v1.20.4 (latest as of
+  // 2022-01-13)
   //
   // Also reproduced with vr::VR_IsHmdPresent()
-  std::vector<DWORD> pids(1024 * 10);
-  DWORD neededBytes = pids.size() * sizeof(DWORD);
-  EnumProcesses(pids.data(), neededBytes, &neededBytes);
-  pids.resize(neededBytes / sizeof(DWORD));
-  wchar_t buf[MAX_PATH];
-  for (auto pid: pids) {
-    winrt::handle handle {
-      OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)};
-    if (!handle) {
-      continue;
-    }
-    DWORD length = MAX_PATH;
-    QueryFullProcessImageName(handle.get(), 0, buf, &length);
-    if (
-      std::filesystem::path(std::wstring_view(buf, length)).filename()
-      == "vrmonitor.exe") {
+  winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
+  if (!snapshot) {
+    dprint("Failed to get a snapshot");
+    return false;
+  }
+  PROCESSENTRY32 process;
+  process.dwSize = sizeof(process);
+  if (!Process32First(snapshot.get(), &process)) {
+    return false;
+  }
+  do {
+    if (std::wstring_view(process.szExeFile) == L"vrmonitor.exe") {
       return true;
     }
-  }
+  } while (Process32Next(snapshot.get(), &process));
   return false;
 }
 
