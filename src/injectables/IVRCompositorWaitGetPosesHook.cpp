@@ -2,6 +2,7 @@
 
 #include <OpenKneeboard/dprint.h>
 
+#include <bit>
 #include <stdexcept>
 
 #include "DllHook.h"
@@ -102,7 +103,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
     DetourTransaction dt;
     ScopedRWX rwx(mVTable);
     mVTable->mWaitGetPoses
-      = sudo_make_me_a<void*>(&Impl::Hooked_IVRCompositor_WaitGetPoses);
+      = std::bit_cast<void*>(&Impl::Hooked_IVRCompositor_WaitGetPoses);
   }
 }
 
@@ -123,7 +124,7 @@ void IVRCompositorWaitGetPosesHook::UninstallHook() {
     DetourTransaction dt;
     ScopedRWX rwx(p->mVTable);
     p->mVTable->mWaitGetPoses
-      = sudo_make_me_a<void*>(Real_IVRCompositor_WaitGetPoses);
+      = std::bit_cast<void*>(Real_IVRCompositor_WaitGetPoses);
     p->mVTable = nullptr;
     p->UninstallHook();
   }

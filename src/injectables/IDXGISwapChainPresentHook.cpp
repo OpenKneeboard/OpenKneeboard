@@ -5,6 +5,7 @@
 #include <psapi.h>
 #include <winrt/base.h>
 
+#include <bit>
 #include <utility>
 
 #include "detours-ext.h"
@@ -209,7 +210,7 @@ void IDXGISwapChainPresentHook::UninstallHook() {
     DetourTransaction dt;
     DetourDetach(
       reinterpret_cast<void**>(&Real_IDXGISwapChain_Present),
-      sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
+      std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   }
   gHook = nullptr;
 
@@ -279,7 +280,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   *fpp = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
   dprintf(" - found IDXGISwapChain::Present at {:#018x}", (intptr_t)*fpp);
   auto err = DetourAttach(
-    fpp, sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
+    fpp, std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprintf(" - hooked IDXGISwapChain::Present().");
   } else {
@@ -294,7 +295,7 @@ void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
   dprintf("Hooking Steam overlay at {:#018x}", (intptr_t)*fpp);
   DetourTransaction dt;
   auto err = DetourAttach(
-    fpp, sudo_make_me_a<void*>(&Impl::Hooked_IDXGISwapChain_Present));
+    fpp, std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprint(" - hooked Steam Overlay IDXGISwapChain::Present hook.");
   } else {
@@ -306,7 +307,7 @@ HRESULT __stdcall IDXGISwapChainPresentHook::Impl::
   Hooked_IDXGISwapChain_Present(UINT SyncInterval, UINT Flags) {
   auto _this = reinterpret_cast<IDXGISwapChain*>(this);
   if (!gHook) {
-  return std::invoke(Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
+    return std::invoke(Real_IDXGISwapChain_Present, _this, SyncInterval, Flags);
   }
 
   return gHook->OnIDXGISwapChain_Present(
