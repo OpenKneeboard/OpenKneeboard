@@ -155,7 +155,7 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
     }
 
     dprintf(
-      "Don't know how to create a kneeboard from INJECTION_BOOTSTRAPPERion flags {:#b}",
+      "Don't know how to create a kneeboard from detection flags {:#b}",
       mFlags);
     UnloadWithoutNext();
   }
