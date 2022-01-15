@@ -77,17 +77,16 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
   void SetD3DFlags(IDXGISwapChain* swapChain) {
     dprint("Detected DXGI frame...");
 
-    winrt::com_ptr<ID3D11Device> d3d11;
-    swapChain->GetDevice(IID_PPV_ARGS(d3d11.put()));
-    if (d3d11) {
+    winrt::com_ptr<IUnknown> device;
+    swapChain->GetDevice(IID_PPV_ARGS(device.put()));
+
+    if (device.try_as<ID3D11Device>()) {
       dprint("... found D3D11");
       mFlags |= FLAG_D3D11;
       return;
     }
 
-    winrt::com_ptr<ID3D12Device> d3d12;
-    swapChain->GetDevice(IID_PPV_ARGS(d3d12.put()));
-    if (d3d12) {
+    if (device.try_as<ID3D12Device>()) {
       dprint("... found D3D12");
       mFlags |= FLAG_D3D12;
       return;
