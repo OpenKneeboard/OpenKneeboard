@@ -198,6 +198,7 @@ static std::unique_ptr<InjectionBootstrapper> gInstance;
 static HMODULE gModule = nullptr;
 
 DWORD InjectionBootstrapper::UnloadWithoutNextThreadImpl(void* unused) {
+  gInstance.reset();
   dprintf("----- Unloading Bootstrapper ----");
   FreeLibraryAndExitThread(gModule, S_OK);
 
@@ -205,7 +206,6 @@ DWORD InjectionBootstrapper::UnloadWithoutNextThreadImpl(void* unused) {
 }
 
 DWORD InjectionBootstrapper::LoadNextThenUnloadThreadImpl(void* data) {
-  gInstance.reset();
   auto path = reinterpret_cast<std::filesystem::path*>(data);
   dprintf("!!!! loading next: {}", path->string());
   if (!LoadLibraryW(path->c_str())) {
