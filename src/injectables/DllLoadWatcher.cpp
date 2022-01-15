@@ -78,10 +78,12 @@ struct DllLoadWatcher::Impl {
 
 DllLoadWatcher::DllLoadWatcher(const std::string& name)
   : p(std::make_unique<Impl>()) {
+  if (GetModuleHandleA(name.c_str())) {
+    return;
+  }
+
   p->mWatcher = this;
   p->mName = name;
-
-  // TODO: short-cut if it's already loaded
 
   auto f = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
     DetourFindFunction("Ntdll.dll", "LdrRegisterDllNotification"));
