@@ -25,7 +25,7 @@ REAL_OVR_FUNCS
 
 class OculusD3D11Kneeboard::Impl final {
  public:
-  SHM::Config config;
+  SHM::Config lastConfig;
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> renderTargets;
   ovrTextureSwapChain swapChain = nullptr;
   winrt::com_ptr<ID3D11Device> d3d = nullptr;
@@ -60,7 +60,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   ovrSession session,
   const SHM::Config& config) {
   if (p->swapChain) {
-    const auto& prev = p->config;
+    const auto& prev = p->lastConfig;
     if (
       config.imageWidth == prev.imageWidth
       && config.imageHeight == prev.imageHeight) {
@@ -74,7 +74,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     return nullptr;
   }
 
-  p->config = config;
+  p->lastConfig = config;
 
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
