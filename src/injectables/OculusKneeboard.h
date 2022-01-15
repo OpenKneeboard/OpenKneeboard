@@ -7,10 +7,6 @@
 namespace OpenKneeboard {
 
 class OculusKneeboard : public OculusEndFrameHook {
- private:
-  SHM::Reader mSHM;
-  bool mZoomed = false;
-
  protected:
   OculusKneeboard();
   virtual ~OculusKneeboard();
@@ -27,7 +23,6 @@ class OculusKneeboard : public OculusEndFrameHook {
 
   virtual void UninstallHook();
 
- protected:
   virtual void OnOVREndFrameHookInstalled() override;
   virtual ovrResult OnOVREndFrame(
     ovrSession session,
@@ -36,6 +31,9 @@ class OculusKneeboard : public OculusEndFrameHook {
     ovrLayerHeader const* const* layerPtrList,
     unsigned int layerCount,
     const decltype(&ovr_EndFrame)& next) override final;
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> p;
 };
 
 }// namespace OpenKneeboard

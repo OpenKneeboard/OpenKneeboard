@@ -8,14 +8,7 @@
 #include <detours.h>
 // clang-format on
 
-#define LIBOVR_FUNCS \
-  IT(ovr_GetTrackingState) \
-  IT(ovr_GetPredictedDisplayTime) \
-  IT(ovr_GetTrackingOriginType)
-
-#define IT(x) static decltype(&x) real_##x = nullptr;
-LIBOVR_FUNCS
-#undef IT
+#include "OVRProxy.h"
 
 using namespace OpenKneeboard;
 using namespace DirectX;
@@ -65,7 +58,13 @@ static bool poseIntersectsWithRect(
 
 namespace OpenKneeboard {
 
-OculusKneeboard::OculusKneeboard() {
+struct OculusKneeboard::Impl {
+  SHM::Reader shm;
+  bool zoomed = false;
+  std::unique_ptr<OVRProxy> ovr;
+};
+
+OculusKneeboard::OculusKneeboard() : p(std::make_unique<Impl>()) {
   dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
 }
 
@@ -78,11 +77,7 @@ void OculusKneeboard::UninstallHook() {
 }
 
 void OculusKneeboard::OnOVREndFrameHookInstalled() {
-#define IT(x) \
-  real_##x = reinterpret_cast<decltype(&x)>( \
-    DetourFindFunction("LibOVRRT64_1.dll", #x));
-  LIBOVR_FUNCS
-#undef IT
+  p->ovr = std::make_unique<OVRProxy>();
 }
 
 ovrResult OculusKneeboard::OnOVREndFrame(
@@ -92,7 +87,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount,
   const decltype(&ovr_EndFrame)& next) {
-  auto snapshot = mSHM.MaybeGet();
+  auto snapshot = p->shm.MaybeGet();
   if (!snapshot) {
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
@@ -114,7 +109,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   if ((config.vr.flags & SHM::VRConfig::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
-    real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
+    p->ovr->ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
     position.y = vr.eyeY;
   }
   kneeboardLayer.QuadPoseCenter.Position = {position.x, position.y, position.z};
@@ -141,15 +136,15 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const ovrVector2f zoomedSize(
     virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale);
 
-  auto predictedTime = real_ovr_GetPredictedDisplayTime(session, frameIndex);
-  auto state = real_ovr_GetTrackingState(session, predictedTime, false);
+  auto predictedTime = p->ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
+  auto state = p->ovr->ovr_GetTrackingState(session, predictedTime, false);
 
-  mZoomed = poseIntersectsWithRect(
+  p->zoomed = poseIntersectsWithRect(
     state.HeadPose.ThePose,
     position,
     orientation,
-    mZoomed ? zoomedSize : normalSize);
-  kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
+    p->zoomed ? zoomedSize : normalSize);
+  kneeboardLayer.QuadSize = p->zoomed ? zoomedSize : normalSize;
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {

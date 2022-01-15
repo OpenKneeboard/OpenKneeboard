@@ -23,7 +23,12 @@ target_link_libraries(dxgi-hooks PRIVATE detours-ext OpenKneeboard-dprint)
 add_library(d3d12-hooks STATIC d3d12-offsets.c ID3D12CommandQueueExecuteCommandListsHook.cpp)
 target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint)
 
-add_library(oculus-hooks STATIC OculusEndFrameHook.cpp OculusKneeboard.cpp)
+add_library(
+  oculus-hooks
+  STATIC
+  OculusEndFrameHook.cpp
+  OculusKneeboard.cpp
+  OVRProxy.cpp)
 target_link_libraries(
 	oculus-hooks
 	PUBLIC
