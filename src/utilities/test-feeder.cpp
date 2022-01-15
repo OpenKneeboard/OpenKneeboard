@@ -19,7 +19,7 @@ int main() {
     //{0x00, 0x00, 0x00, 0x00},// fully transparent
   };
 
-  SHM::Header config {
+  SHM::Config config {
     /* Headlocked
     .Flags = OpenKneeboard::Flags::HEADLOCKED |
     OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION, .y = -0.15, .z = -0.5f,
@@ -28,9 +28,9 @@ int main() {
     .imageHeight = 1200,
     */
     /* On knee */
-    .flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
     .imageWidth = 800,
     .imageHeight = 1200,
+    .vr = {.flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION},
   };
   uint64_t frames = -1;
   printf("Feeding OpenKneeboard - hit Ctrl-C to exit.\n");

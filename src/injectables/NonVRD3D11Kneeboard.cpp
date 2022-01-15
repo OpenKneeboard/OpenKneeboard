@@ -37,7 +37,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     return std::invoke(next, swapChain, syncInterval, flags);
   }
 
-  const auto& header = *shm.GetHeader();
+  const auto& config = *shm.GetConfig();
 
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
@@ -49,8 +49,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   static_assert(offsetof(SHM::Pixel, a) == 3, "Expected alpha to be last byte");
   winrt::com_ptr<ID3D11Texture2D> texture;
   D3D11_TEXTURE2D_DESC desc {
-    .Width = header.imageWidth,
-    .Height = header.imageHeight,
+    .Width = config.imageWidth,
+    .Height = config.imageHeight,
     .MipLevels = 1,
     .ArraySize = 1,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -61,7 +61,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     .MiscFlags = {},
   };
   D3D11_SUBRESOURCE_DATA initialData {
-    shm.GetPixels(), header.imageWidth * sizeof(SHM::Pixel), 0};
+    shm.GetPixels(), config.imageWidth * sizeof(SHM::Pixel), 0};
   device->CreateTexture2D(&desc, &initialData, texture.put());
   winrt::com_ptr<ID3D11ShaderResourceView> resourceView;
   device->CreateShaderResourceView(texture.get(), nullptr, resourceView.put());
@@ -69,18 +69,18 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
 
-  const auto aspectRatio = float(header.imageWidth) / header.imageHeight;
+  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
   const LONG canvasWidth = scDesc.BufferDesc.Width;
   const LONG canvasHeight = scDesc.BufferDesc.Height;
 
   const LONG renderHeight
-    = (static_cast<long>(canvasHeight) * header.flat.heightPercent) / 100;
+    = (static_cast<long>(canvasHeight) * config.flat.heightPercent) / 100;
   const LONG renderWidth = std::lround(renderHeight * aspectRatio);
 
-  const auto padding = header.flat.paddingPixels;
+  const auto padding = config.flat.paddingPixels;
 
   LONG left = padding;
-  switch (header.flat.horizontalAlignment) {
+  switch (config.flat.horizontalAlignment) {
     case SHM::FlatConfig::HALIGN_LEFT:
       break;
     case SHM::FlatConfig::HALIGN_CENTER:
@@ -92,7 +92,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   LONG top = padding;
-  switch (header.flat.verticalAlignment) {
+  switch (config.flat.verticalAlignment) {
     case SHM::FlatConfig::VALIGN_TOP:
       break;
     case SHM::FlatConfig::VALIGN_MIDDLE:
@@ -108,7 +108,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   sprites.Draw(
     resourceView.get(),
     RECT {left, top, left + renderWidth, top + renderHeight},
-    DirectX::Colors::White * header.flat.opacity);
+    DirectX::Colors::White * config.flat.opacity);
   sprites.End();
 
   return std::invoke(next, swapChain, syncInterval, flags);

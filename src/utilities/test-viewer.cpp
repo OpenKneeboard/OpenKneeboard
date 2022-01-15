@@ -21,7 +21,7 @@ class MainWindow final : public wxFrame {
   wxTimer mTimer;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
-  uint64_t mLastsequenceNumber = 0;
+  uint64_t mLastSequenceNumber = 0;
 
   winrt::com_ptr<ID2D1Factory> mD2df;
   winrt::com_ptr<ID2D1HwndRenderTarget> mRt;
@@ -68,7 +68,7 @@ class MainWindow final : public wxFrame {
       return;
     }
 
-    if (snapshot.GetHeader()->sequenceNumber != mLastsequenceNumber) {
+    if (snapshot.GetSequenceNumber() != mLastSequenceNumber) {
       Refresh();
       Update();
     }
@@ -153,7 +153,7 @@ class MainWindow final : public wxFrame {
     }
     mFirstDetached = false;
 
-    const auto& config = *snapshot.GetHeader();
+    const auto& config = *snapshot.GetConfig();
     const auto pixels = snapshot.GetPixels();
 
     if (config.imageWidth == 0 || config.imageHeight == 0) {
@@ -203,7 +203,7 @@ class MainWindow final : public wxFrame {
     mRt->DrawBitmap(
       d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
-    mLastsequenceNumber = config.sequenceNumber;
+    mLastSequenceNumber = snapshot.GetSequenceNumber();
   }
 
   void OnExit(wxCommandEvent& ev) {

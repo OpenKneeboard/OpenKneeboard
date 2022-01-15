@@ -118,10 +118,10 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
     return;
   }
 
-  SHM::Header header {
-    .flags = SHM::Flags::DISCARD_DEPTH_INFORMATION,
+  SHM::Config config {
     .imageWidth = static_cast<uint16_t>(width),
     .imageHeight = static_cast<uint16_t>(height),
+    .vr = { .flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION },
   };
 
   using Pixel = SHM::Pixel;
@@ -136,7 +136,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
     pixels.size() * sizeof(Pixel),
     reinterpret_cast<BYTE*>(pixels.data()));
 
-  this->shm.Update(header, pixels);
+  this->shm.Update(config, pixels);
 }
 
 okSHMRenderer::okSHMRenderer() : p(std::make_unique<Impl>()) {

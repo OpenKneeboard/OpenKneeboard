@@ -24,7 +24,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard,
 
   virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,
-    const SHM::Header& config) override final;
+    const SHM::Config& config) override final;
 
   virtual bool Render(
     ovrSession session,

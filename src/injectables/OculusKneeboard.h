@@ -17,7 +17,7 @@ class OculusKneeboard : public OculusEndFrameHook {
 
   virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,
-    const SHM::Header& config)
+    const SHM::Config& config)
     = 0;
   virtual bool Render(
     ovrSession session,

@@ -66,7 +66,7 @@ static bool poseIntersectsWithRect(
 namespace OpenKneeboard {
 
 OculusKneeboard::OculusKneeboard() {
-  dprintf("{} {:#018x}", __FUNCTION__, (uint64_t) this); \
+  dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
 }
 
 OculusKneeboard::~OculusKneeboard() {
@@ -79,12 +79,11 @@ void OculusKneeboard::UninstallHook() {
 
 void OculusKneeboard::OnOVREndFrameHookInstalled() {
 #define IT(x) \
-	real_##x = reinterpret_cast<decltype(&x)>( \
-		DetourFindFunction("LibOVRRT64_1.dll", #x));
-	LIBOVR_FUNCS
+  real_##x = reinterpret_cast<decltype(&x)>( \
+    DetourFindFunction("LibOVRRT64_1.dll", #x));
+  LIBOVR_FUNCS
 #undef IT
 }
-
 
 ovrResult OculusKneeboard::OnOVREndFrame(
   ovrSession session,
@@ -98,7 +97,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
-  const auto& config = *snapshot.GetHeader();
+  const auto& config = *snapshot.GetConfig();
   auto swapChain = GetSwapChain(session, config);
   if (!(swapChain && Render(session, swapChain, snapshot))) {
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
@@ -112,7 +111,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
   const auto& vr = config.vr;
   Vector3 position(vr.x, vr.floorY, vr.z);
-  if ((config.flags & SHM::Flags::HEADLOCKED)) {
+  if ((config.vr.flags & SHM::VRConfig::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
     real_ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
@@ -173,7 +172,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   }
 
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.flags & SHM::Flags::DISCARD_DEPTH_INFORMATION)) {
+  if ((config.vr.flags & SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
     for (auto i = 0; i < newLayers.size(); ++i) {
       auto layer = newLayers.at(i);
       if (layer->Type != ovrLayerType_EyeFovDepth) {

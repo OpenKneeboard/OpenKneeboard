@@ -1,10 +1,44 @@
+#include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/shm.h>
 #include <Windows.h>
+#include <fmt/compile.h>
 #include <fmt/format.h>
+
+#include <bit>
+
+namespace OpenKneeboard::SHM {
+
+// *****PLEASE***** change this if you fork or re-use this code
+static constexpr auto PREFIX = "com.fredemmott.openkneeboard";
+
+enum class HeaderFlags : ULONG {
+  LOCKED = 1 << 0,
+  FEEDER_ATTACHED = 1 << 1,
+};
+
+#pragma pack(push)
+struct Header final {
+  static constexpr uint16_t VERSION = 1;
+
+  uint32_t sequenceNumber = 0;
+  HeaderFlags flags;
+  Config config;
+};
+#pragma pack(pop)
+
+}// namespace OpenKneeboard::SHM
+
+namespace OpenKneeboard {
+template <>
+struct is_bitflags<SHM::HeaderFlags> {
+  static constexpr bool value = true;
+};
+}// namespace OpenKneeboard
 
 namespace OpenKneeboard::SHM {
 
 namespace {
+
 class Spinlock final {
  private:
   Header* mHeader = nullptr;
@@ -17,12 +51,12 @@ class Spinlock final {
   };
 
   Spinlock(Header* header, FAILURE_BEHAVIOR behavior) : mHeader(header) {
-    const auto bit = 3;
-    static_assert(Flags::LOCKED == 1 << bit);
+    const auto bit = std::countr_zero(static_cast<ULONG>(HeaderFlags::LOCKED));
+    static_assert(static_cast<ULONG>(HeaderFlags::LOCKED) == 1 << bit);
 
     for (int count = 1; count <= 1000; ++count) {
-      auto alreadyLocked = _interlockedbittestandset64(
-        reinterpret_cast<LONG64*>(&header->flags), bit);
+      auto alreadyLocked
+        = _interlockedbittestandset(std::bit_cast<LONG*>(&header->flags), bit);
       if (!alreadyLocked) {
         return;
       }
@@ -55,18 +89,29 @@ class Spinlock final {
       return;
     }
 
-    mHeader->flags &= ~Flags::LOCKED;
+    mHeader->flags ^= HeaderFlags::LOCKED;
   }
 };
-}// namespace
 
-static const DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
-static const DWORD MAX_IMAGE_BYTES = MAX_IMAGE_PX * sizeof(Pixel);
-static const DWORD SHM_SIZE = sizeof(Header) + MAX_IMAGE_BYTES;
-static constexpr uint64_t SHM_VERSION
-  = (uint64_t(Header::VERSION) << 32) | SHM_SIZE;
-// *****PLEASE***** change this if you fork or re-use this code
-static const auto SHM_PREFIX = "com.fredemmott.openkneeboard";
+constexpr DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
+constexpr DWORD MAX_IMAGE_BYTES = MAX_IMAGE_PX * sizeof(Pixel);
+constexpr DWORD SHM_SIZE = sizeof(Header) + MAX_IMAGE_BYTES;
+
+constexpr auto SHMPath() {
+  char buf[255];
+  auto end = fmt::format_to(
+    buf,
+    FMT_COMPILE("{}/h{}-c{}-vrc{}-fc{}-s{:x}"),
+    PREFIX,
+    Header::VERSION,
+    Config::VERSION,
+    VRConfig::VERSION,
+    FlatConfig::VERSION,
+    SHM_SIZE);
+  return std::string(buf, end);
+}
+
+}// namespace
 
 Snapshot::Snapshot() {
 }
@@ -75,11 +120,18 @@ Snapshot::Snapshot(std::vector<std::byte>&& bytes) {
   mBytes = std::make_shared<std::vector<std::byte>>(std::move(bytes));
 }
 
-const Header* const Snapshot::GetHeader() const {
+uint32_t Snapshot::GetSequenceNumber() const {
+  if (!mBytes) {
+    return 0;
+  }
+  return reinterpret_cast<const Header*>(mBytes->data())->sequenceNumber;
+}
+
+const Config* const Snapshot::GetConfig() const {
   if (!mBytes) {
     return nullptr;
   }
-  return reinterpret_cast<const Header*>(mBytes->data());
+  return &reinterpret_cast<const Header*>(mBytes->data())->config;
 }
 
 const Pixel* const Snapshot::GetPixels() const {
@@ -105,7 +157,7 @@ class Impl {
 
   ~Impl() {
     if (IsFeeder) {
-      Header->flags &= ~Flags::FEEDER_ATTACHED;
+      Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
       FlushViewOfFile(Mapping, NULL);
     }
     UnmapViewOfFile(Mapping);
@@ -114,7 +166,8 @@ class Impl {
 };
 
 Writer::Writer() {
-  const auto path = fmt::format("{}/{:x}", SHM_PREFIX, SHM_VERSION);
+  const auto path = SHMPath();
+
   HANDLE handle;
   handle = CreateFileMappingA(
     INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
@@ -140,7 +193,7 @@ Writer::~Writer() {
 }
 
 Reader::Reader() {
-  const auto path = fmt::format("{}/{:x}", SHM_PREFIX, SHM_VERSION);
+  const auto path = SHMPath();
   HANDLE handle;
   handle = CreateFileMappingA(
     INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
@@ -166,7 +219,7 @@ Reader::~Reader() {
 }
 
 Reader::operator bool() const {
-  return p && (p->Header->flags & Flags::FEEDER_ATTACHED);
+  return p && (p->Header->flags & HeaderFlags::FEEDER_ATTACHED);
 }
 
 Writer::operator bool() const {
@@ -180,9 +233,7 @@ Snapshot Reader::MaybeGet() const {
 
   const auto snapshot = p->Latest;
 
-  if (
-    snapshot
-    && snapshot.GetHeader()->sequenceNumber == p->Header->sequenceNumber) {
+  if (snapshot && snapshot.GetSequenceNumber() == p->Header->sequenceNumber) {
     return snapshot;
   }
 
@@ -199,21 +250,20 @@ Snapshot Reader::MaybeGet() const {
   return p->Latest;
 }
 
-void Writer::Update(const Header& _header, const std::vector<Pixel>& pixels) {
-  Header header(_header);
+void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
 
-  if (pixels.size() != header.imageWidth * header.imageHeight) {
+  if (pixels.size() != config.imageWidth * config.imageHeight) {
     throw std::logic_error("Pixel array size does not match header");
   }
 
-  header.flags |= Flags::FEEDER_ATTACHED | Flags::LOCKED;
-
   Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);
-  header.sequenceNumber = p->Header->sequenceNumber + 1;
-  memcpy(reinterpret_cast<void*>(p->Header), &header, sizeof(Header));
+  p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
+  p->Header->sequenceNumber++;
+  p->Header->config = config;
+
   memcpy(
     reinterpret_cast<void*>(p->Pixels),
     pixels.data(),

@@ -118,7 +118,7 @@ void okOpenVRThread::Tick() {
     return;
   }
 
-  const auto& header = *snapshot.GetHeader();
+  const auto& config = *snapshot.GetConfig();
 
   bool zoomed = false;
   vr::TrackedDevicePose_t hmdPose {
@@ -151,18 +151,18 @@ void okOpenVRThread::Tick() {
     zoomed = overlay->ComputeOverlayIntersection(p->overlay, &params, &results);
   }
 
-  const auto aspectRatio = float(header.imageWidth) / header.imageHeight;
-  const auto& vrConf = header.vr;
+  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  const auto& vrConf = config.vr;
 
   CHECK(
     SetOverlayWidthInMeters,
     p->overlay,
     vrConf.height * aspectRatio * (zoomed ? vrConf.zoomScale : 1.0f));
 
-  if (p->sequenceNumber == header.sequenceNumber) {
+  if (p->sequenceNumber == snapshot.GetSequenceNumber()) {
     return;
   }
-  p->sequenceNumber = header.sequenceNumber;
+  p->sequenceNumber = snapshot.GetSequenceNumber();
 
   // clang-format off
   auto transform =
@@ -187,7 +187,7 @@ void okOpenVRThread::Tick() {
   if (previousTexture) {
     D3D11_TEXTURE2D_DESC desc;
     previousTexture->GetDesc(&desc);
-    if (header.imageWidth != desc.Width || header.imageHeight != desc.Height) {
+    if (config.imageWidth != desc.Width || config.imageHeight != desc.Height) {
       p->texture = nullptr;
     }
   }
@@ -195,8 +195,8 @@ void okOpenVRThread::Tick() {
   auto d3d = p->D3D();
   if (!p->texture) {
     D3D11_TEXTURE2D_DESC desc {
-      .Width = header.imageWidth,
-      .Height = header.imageHeight,
+      .Width = config.imageWidth,
+      .Height = config.imageHeight,
       .MipLevels = 1,
       .ArraySize = 1,
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
@@ -235,8 +235,8 @@ void okOpenVRThread::Tick() {
       .left = 0,
       .top = 0,
       .front = 0,
-      .right = header.imageWidth,
-      .bottom = header.imageHeight,
+      .right = config.imageWidth,
+      .bottom = config.imageHeight,
       .back = 1,
     };
 
@@ -248,7 +248,7 @@ void okOpenVRThread::Tick() {
       0,
       &box,
       snapshot.GetPixels(),
-      header.imageWidth * sizeof(SHM::Pixel),
+      config.imageWidth * sizeof(SHM::Pixel),
       0);
     vr::Texture_t vrt {
       .handle = p->texture.get(),
