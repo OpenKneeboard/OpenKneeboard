@@ -140,27 +140,42 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
 
     if ((mFlags & FLAG_STEAMVR)) {
       dprint("Doing nothing as SteamVR is in-process");
+      UnloadWithoutNext();
       return;
     }
 
     if (mFlags == (FLAG_D3D11 | FLAG_OCULUS)) {
-      LoadNext(RuntimeFiles::OCULUS_D3D11_DLL);
+      LoadNextThenUnload(RuntimeFiles::OCULUS_D3D11_DLL);
       return;
     }
 
     if (mFlags == FLAG_D3D11) {
-      LoadNext(RuntimeFiles::NON_VR_D3D11_DLL);
+      LoadNextThenUnload(RuntimeFiles::NON_VR_D3D11_DLL);
       return;
     }
 
     dprintf(
       "Don't know how to create a kneeboard from INJECTION_BOOTSTRAPPERion flags {:#b}",
       mFlags);
+    UnloadWithoutNext();
   }
 
-  static DWORD WINAPI LoadNextThreadImpl(void* data);
+  static DWORD WINAPI LoadNextThenUnloadThreadImpl(void* data);
+  static DWORD WINAPI UnloadWithoutNextThreadImpl(void* data);
 
-  void LoadNext(const std::filesystem::path& _next) {
+  void UnloadWithoutNext() {
+    this->UninstallHook();
+
+    CreateThread(
+      nullptr,
+      0,
+      &UnloadWithoutNextThreadImpl,
+      nullptr,
+      0,
+      nullptr);
+  }
+
+  void LoadNextThenUnload(const std::filesystem::path& _next) {
     this->UninstallHook();
 
     std::filesystem::path next(_next);
@@ -173,7 +188,7 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
     CreateThread(
       nullptr,
       0,
-      &LoadNextThreadImpl,
+      &LoadNextThenUnloadThreadImpl,
       new std::filesystem::path(next),
       0,
       nullptr);
@@ -183,7 +198,14 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
 static std::unique_ptr<InjectionBootstrapper> gInstance;
 static HMODULE gModule = nullptr;
 
-DWORD InjectionBootstrapper::LoadNextThreadImpl(void* data) {
+DWORD InjectionBootstrapper::UnloadWithoutNextThreadImpl(void* unused) {
+  dprintf("----- Unloading Bootstrapper ----");
+  FreeLibraryAndExitThread(gModule, S_OK);
+
+  return S_OK;
+}
+
+DWORD InjectionBootstrapper::LoadNextThenUnloadThreadImpl(void* data) {
   gInstance.reset();
   auto path = reinterpret_cast<std::filesystem::path*>(data);
   dprintf("!!!! loading next: {}", path->string());
@@ -192,10 +214,7 @@ DWORD InjectionBootstrapper::LoadNextThreadImpl(void* data) {
   }
   delete path;
 
-  dprintf("----- Unloading Bootstrapper ----");
-  FreeLibraryAndExitThread(gModule, S_OK);
-
-  return S_OK;
+  return UnloadWithoutNextThreadImpl(nullptr);
 }
 
 }// namespace OpenKneeboard
