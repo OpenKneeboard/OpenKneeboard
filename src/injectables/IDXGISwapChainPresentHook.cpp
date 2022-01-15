@@ -15,11 +15,6 @@ namespace OpenKneeboard {
 
 namespace {
 
-IDXGISwapChainPresentHook* gHook = nullptr;
-uint16_t gCount = 0;
-
-decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
-
 std::vector<std::pair<uint64_t, uint64_t>> ComputeFuncPatterns(
   const std::basic_string_view<unsigned char>& rawPattern) {
   std::vector<std::pair<uint64_t, uint64_t>> patterns;
@@ -161,6 +156,11 @@ void* Find_SteamOverlay_IDXGISwapChain_Present() {
   }
   return func;
 }
+
+IDXGISwapChainPresentHook* gHook = nullptr;
+
+decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
+
 
 }// namespace
 

@@ -20,6 +20,9 @@ target_link_libraries(
 add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(dxgi-hooks PRIVATE detours-ext OpenKneeboard-dprint)
 
+add_library(d3d12-hooks STATIC d3d12-offsets.c ID3D12CommandQueueExecuteCommandListsHook.cpp)
+target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint)
+
 add_library(oculus-hooks STATIC OculusEndFrameHook.cpp OculusKneeboard.cpp)
 target_link_libraries(
 	oculus-hooks
@@ -59,6 +62,16 @@ target_link_libraries(
   OpenKneeboard-oculus-d3d11
   PRIVATE
   dxgi-hooks
+  detours-ext
+  OpenKneeboard-dprint
+  oculus-hooks
+  oculus-sdk-headers)
+
+add_library(OpenKneeboard-oculus-d3d12 MODULE OculusD3D12Kneeboard.cpp)
+target_link_libraries(
+  OpenKneeboard-oculus-d3d12
+  PRIVATE
+  d3d12-hooks
   detours-ext
   OpenKneeboard-dprint
   oculus-hooks
