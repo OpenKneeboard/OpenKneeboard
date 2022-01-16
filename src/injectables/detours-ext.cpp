@@ -3,7 +3,6 @@
 #include <OpenKneeboard/dprint.h>
 #include <TlHelp32.h>
 
-#include <mutex>
 #include <vector>
 
 using namespace OpenKneeboard;
@@ -46,15 +45,14 @@ std::vector<HANDLE> GetAllThreads() {
 }// namespace
 
 struct DetourTransaction::Impl {
-  static std::mutex gMutex;
-  std::unique_lock<std::mutex> mLock;
+  static bool mActive;
   std::vector<HANDLE> mThreads;
   HANDLE mHeap;
 };
-std::mutex DetourTransaction::Impl::gMutex;
+bool DetourTransaction::Impl::mActive = false;
 
 DetourTransaction::DetourTransaction()
-  : p(std::make_unique<Impl>(std::unique_lock(Impl::gMutex))) {
+  : p(std::make_unique<Impl>()) {
   dprint("DetourTransaction++");
   // Must be called before we lock the heap
   p->mThreads = GetAllThreads();
@@ -62,6 +60,10 @@ DetourTransaction::DetourTransaction()
   // Make sure no other thread has the heap lock; if it does when we suspend
   // it, we're going to have a bad time, especially due to microsoft/detours#70
   p->mHeap = GetProcessHeap();
+  if (Impl::mActive) {
+    throw std::logic_error("DetourTransactions can't be nested");
+  }
+  Impl::mActive = true;
   HeapLock(p->mHeap);
   DetourTransactionBegin();
   for (auto it = p->mThreads.begin(); it != p->mThreads.end(); /* nothing */) {
@@ -88,6 +90,7 @@ DetourTransaction::~DetourTransaction() noexcept {
     ResumeThread(handle);
     CloseHandle(handle);
   }
+  Impl::mActive = false;
   HeapUnlock(p->mHeap);
   // We need to resume the threads before doing *anything* else:
   // dprint/dprintf can malloc/new, which will deadlock
