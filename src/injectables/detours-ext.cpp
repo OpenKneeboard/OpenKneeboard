@@ -49,17 +49,21 @@ struct DetourTransaction::Impl {
   static std::mutex gMutex;
   std::unique_lock<std::mutex> mLock;
   std::vector<HANDLE> mThreads;
+  HANDLE mHeap;
 };
 std::mutex DetourTransaction::Impl::gMutex;
 
 DetourTransaction::DetourTransaction()
   : p(std::make_unique<Impl>(std::unique_lock(Impl::gMutex))) {
   dprint("DetourTransaction++");
+  // Must be called before we lock the heap
+  p->mThreads = GetAllThreads();
+
   // Make sure no other thread has the heap lock; if it does when we suspend
   // it, we're going to have a bad time, especially due to microsoft/detours#70
-  HeapLock(GetProcessHeap());
+  p->mHeap = GetProcessHeap();
+  HeapLock(p->mHeap);
   DetourTransactionBegin();
-  p->mThreads = GetAllThreads();
   for (auto it = p->mThreads.begin(); it != p->mThreads.end(); /* nothing */) {
     auto handle = *it;
     // The thread may have finished since we got the list of threads; only
@@ -78,13 +82,13 @@ DetourTransaction::DetourTransaction()
 
 DetourTransaction::~DetourTransaction() noexcept {
   auto err = DetourTransactionCommit();
-  HeapUnlock(GetProcessHeap());
   for (auto handle: p->mThreads) {
     // While Detours resumed the threads, there is a 'suspend count', so we
     // need to also call resume
     ResumeThread(handle);
     CloseHandle(handle);
   }
+  HeapUnlock(p->mHeap);
   // We need to resume the threads before doing *anything* else:
   // dprint/dprintf can malloc/new, which will deadlock
   if (err) {
