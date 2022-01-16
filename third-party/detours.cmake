@@ -1,12 +1,8 @@
-set(LIB "lib.X64Release/detours.lib")
+set(DETOURS_CONFIG "$<IF:$<STREQUAL:$<CONFIG>,Debug>,Debug,Release>")
+set(LIB "lib.X64${DETOURS_CONFIG}/detours.lib")
 include(ExternalProject)
 
 # TODO: switch to stable release once 4.x is out (https://github.com/microsoft/Detours/projects/1)
-#
-# We are always using a release build as otherwise DETOURS_TRACE calls printf, which can deadlock if
-# a slept thread is using malloc/delete/new/free
-
-set(NO_NEW_OR_DELETE_PATCH "${CMAKE_CURRENT_SOURCE_DIR}/detours-0001-eliminates-possible-deadlock-related-to-memory-alloc.patch")
 ExternalProject_Add(
   detoursBuild
   GIT_REPOSITORY https://github.com/microsoft/Detours.git
@@ -14,13 +10,10 @@ ExternalProject_Add(
   WORKING_DIRECTORY "<SOURCE_DIR>/src"
   UPDATE_DISCONNECTED ON
   BUILD_BYPRODUCTS "<SOURCE_DIR>/${LIB}"
-  PATCH_COMMAND
-    git apply --reverse --check "${NO_NEW_OR_DELETE_PATCH}"
-      || git am "${NO_NEW_OR_DELETE_PATCH}"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
     ${CMAKE_COMMAND} -E env
-    "DETOURS_CONFIG=Release"
+    "DETOURS_CONFIG=${DETOURS_CONFIG}"
     nmake
   INSTALL_COMMAND ""
 

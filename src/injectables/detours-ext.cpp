@@ -55,11 +55,9 @@ std::mutex DetourTransaction::Impl::gMutex;
 DetourTransaction::DetourTransaction()
   : p(std::make_unique<Impl>(std::unique_lock(Impl::gMutex))) {
   dprint("DetourTransaction++");
-  /* AVOID ALL HEAP ACTIVITY BETWEEN THIS POINT AND THE DESTRUCTOR
-   *
-   * This includes things like `std::vector`s on the stack, as their elements
-   * are on the heap.
-   */
+  // Make sure no other thread has the heap lock; if it does when we suspend
+  // it, we're going to have a bad time, especially due to microsoft/detours#70
+  HeapLock(GetProcessHeap());
   DetourTransactionBegin();
   p->mThreads = GetAllThreads();
   for (auto it = p->mThreads.begin(); it != p->mThreads.end(); /* nothing */) {
@@ -80,6 +78,7 @@ DetourTransaction::DetourTransaction()
 
 DetourTransaction::~DetourTransaction() noexcept {
   auto err = DetourTransactionCommit();
+  HeapUnlock(GetProcessHeap());
   for (auto handle: p->mThreads) {
     // While Detours resumed the threads, there is a 'suspend count', so we
     // need to also call resume
