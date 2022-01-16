@@ -3,6 +3,7 @@ ExternalProject_Add(
   directxtkBuild
   URL "https://github.com/microsoft/DirectXTK/archive/refs/tags/nov2021.zip"
   URL_HASH "SHA256=d25e634b0e225ae572f82d0d27c97051b0069c6813d7be12453039a504dffeb8"
+  BUILD_BYPRODUCTS "<INSTALL_DIR>/$<CONFIG>/lib/DirectXTK.lib"
   CMAKE_ARGS
     -DBUILD_TOOLS=OFF
     -DBUILD_XAUDIO_WIN10=OFF
