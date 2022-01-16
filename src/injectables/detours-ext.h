@@ -7,6 +7,10 @@
 #include <memory>
 
 class DetourTransaction final {
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> p;
+
  public:
   DetourTransaction();
   ~DetourTransaction();
