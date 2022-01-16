@@ -6,7 +6,7 @@
 #include "d3d12-offsets.h"
 #include "detours-ext.h"
 
-#pragma comment(lib,"D3D12.lib")
+#pragma comment(lib, "D3D12.lib")
 
 namespace OpenKneeboard {
 
@@ -40,8 +40,6 @@ ID3D12CommandQueueExecuteCommandListsHook::
 }
 
 void ID3D12CommandQueueExecuteCommandListsHook::InitWithVTable() {
-  DetourTransaction dtAndConcurrencyBlock;
-
   winrt::com_ptr<ID3D12Device> device;
   D3D12CreateDevice(
     nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.put()));
@@ -59,7 +57,7 @@ void ID3D12CommandQueueExecuteCommandListsHook::InitWithVTable() {
   auto fpp
     = reinterpret_cast<void**>(&Real_ID3D12CommandQueue_ExecuteCommandLists);
   *fpp = VTable_Lookup_ID3D12CommandQueue_ExecuteCommandLists(cq.get());
-  auto err = DetourAttach(
+  auto err = DetourSingleAttach(
     fpp, std::bit_cast<void*>(&Impl::Hooked_ExecuteCommandLists));
   if (err == 0) {
     dprintf(" - hooked ID3D12CommandQueue::ExecuteCommandLists().");
@@ -74,8 +72,7 @@ void ID3D12CommandQueueExecuteCommandListsHook::UninstallHook() {
     return;
   }
 
-  DetourTransaction dt;
-  DetourDetach(
+  DetourSingleDetach(
     reinterpret_cast<void**>(&Real_ID3D12CommandQueue_ExecuteCommandLists),
     std::bit_cast<void*>(&Impl::Hooked_ExecuteCommandLists));
 }

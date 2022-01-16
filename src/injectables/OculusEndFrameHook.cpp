@@ -93,17 +93,16 @@ void OculusEndFrameHook::Impl::InstallHook() {
   }
   gHook = mHook;
 
-  {
-    DetourTransaction dt;
+  // Find outside of the transaction as DetourFindFunction calls LoadLibrary
 #define IT(x) \
   real_##x \
-    = reinterpret_cast<decltype(&x)>(DetourFindFunction(MODULE_NAME, #x)); \
-  { \
-    auto err = DetourAttach(reinterpret_cast<void**>(&real_##x), x##_hook); \
-    if (err) { \
-      dprintf("Failed to attach to {}: {}", #x, err); \
-    } \
-  }
+    = reinterpret_cast<decltype(&x)>(DetourFindFunction(MODULE_NAME, #x));
+  HOOKED_ENDFRAME_FUNCS
+#undef IT
+
+  {
+    DetourTransaction dt;
+#define IT(x) DetourAttach(reinterpret_cast<void**>(&real_##x), x##_hook);
     HOOKED_ENDFRAME_FUNCS
 #undef IT
   }

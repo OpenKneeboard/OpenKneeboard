@@ -161,7 +161,6 @@ IDXGISwapChainPresentHook* gHook = nullptr;
 
 decltype(&IDXGISwapChain::Present) Real_IDXGISwapChain_Present = nullptr;
 
-
 }// namespace
 
 struct IDXGISwapChainPresentHook::Impl final {
@@ -206,12 +205,9 @@ void IDXGISwapChainPresentHook::UninstallHook() {
     __FUNCTION__,
     (int64_t)&Real_IDXGISwapChain_Present);
 
-  {
-    DetourTransaction dt;
-    DetourDetach(
-      reinterpret_cast<void**>(&Real_IDXGISwapChain_Present),
-      std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
-  }
+  DetourSingleDetach(
+    reinterpret_cast<void**>(&Real_IDXGISwapChain_Present),
+    std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   gHook = nullptr;
 
   dprint("Detached IDXGISwapChain::Present hook");
@@ -232,8 +228,6 @@ void IDXGISwapChainPresentHook::Impl::InstallHook() {
 }
 
 void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
-  DetourTransaction dtAndConcurrencyBlock;
-
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
@@ -279,7 +273,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   *fpp = VTable_Lookup_IDXGISwapChain_Present(swapchain.get());
   dprintf(" - found IDXGISwapChain::Present at {:#018x}", (intptr_t)*fpp);
-  auto err = DetourAttach(
+  auto err = DetourSingleAttach(
     fpp, std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprintf(" - hooked IDXGISwapChain::Present().");
@@ -293,8 +287,7 @@ void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
   auto fpp = reinterpret_cast<void**>(&Real_IDXGISwapChain_Present);
   *fpp = steamHookAddress;
   dprintf("Hooking Steam overlay at {:#018x}", (intptr_t)*fpp);
-  DetourTransaction dt;
-  auto err = DetourAttach(
+  auto err = DetourSingleAttach(
     fpp, std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
     dprint(" - hooked Steam Overlay IDXGISwapChain::Present hook.");

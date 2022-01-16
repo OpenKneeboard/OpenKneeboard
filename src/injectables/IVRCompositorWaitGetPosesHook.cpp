@@ -99,8 +99,6 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
   dprintf("Found WaitGetPoses at: {:#018x}", (uint64_t)mVTable->mWaitGetPoses);
 
   {
-    // Just using Detours for locking
-    DetourTransaction dt;
     ScopedRWX rwx(mVTable);
     mVTable->mWaitGetPoses
       = std::bit_cast<void*>(&Impl::Hooked_IVRCompositor_WaitGetPoses);
@@ -121,7 +119,6 @@ void IVRCompositorWaitGetPosesHook::UninstallHook() {
   }
 
   {
-    DetourTransaction dt;
     ScopedRWX rwx(p->mVTable);
     p->mVTable->mWaitGetPoses
       = std::bit_cast<void*>(Real_IVRCompositor_WaitGetPoses);
@@ -159,8 +156,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallVRGetGenericInterfaceHook() {
   mHookedVRGetGenericInterface = true;
   gHookImpl = this;
 
-  DetourTransaction dt;
-  DetourAttach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
+  DetourSingleAttach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::UninstallHook() {
@@ -168,10 +164,7 @@ void IVRCompositorWaitGetPosesHook::Impl::UninstallHook() {
     return;
   }
 
-  {
-    DetourTransaction dt;
-    DetourDetach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
-  }
+  DetourSingleDetach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
 
   mHookedVRGetGenericInterface = false;
 
