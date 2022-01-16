@@ -11,7 +11,6 @@ target_link_libraries(
   PRIVATE
   D2d1
   directxtk
-  detours
   OpenKneeboard-dprint
   OpenKneeboard-GameEvent
   games
