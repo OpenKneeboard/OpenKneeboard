@@ -78,12 +78,14 @@ struct DllLoadWatcher::Impl {
 
 DllLoadWatcher::DllLoadWatcher(const std::string& name)
   : p(std::make_unique<Impl>()) {
-  if (GetModuleHandleA(name.c_str())) {
-    return;
-  }
-
   p->mWatcher = this;
   p->mName = name;
+}
+
+void DllLoadWatcher::InitWithVTable() {
+  if (GetModuleHandleA(p->mName.c_str())) {
+    return;
+  }
 
   auto f = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
     DetourFindFunction("Ntdll.dll", "LdrRegisterDllNotification"));
@@ -94,15 +96,16 @@ DllLoadWatcher::DllLoadWatcher(const std::string& name)
   auto status = f(
     0, &Impl::OnNotification, reinterpret_cast<void*>(p.get()), &p->mCookie);
   if (status != STATUS_SUCCESS) {
-    dprintf("Failed to LdrRegisterDllNotification for {}: {}", name, status);
+    dprintf(
+      "Failed to LdrRegisterDllNotification for {}: {}", p->mName, status);
     return;
   }
-  dprintf("DllLoadWatcher++ {}", name);
+  dprintf("DllLoadWatcher++ {}", p->mName);
 }
 
 DllLoadWatcher::~DllLoadWatcher() {
   if (!p->mCookie) {
-    dprintf("DllLoadWatcher!! - no cookie for {}", p->mName);
+    // We never installed the hook
     return;
   }
   auto f = reinterpret_cast<decltype(&LdrUnregisterDllNotification)>(

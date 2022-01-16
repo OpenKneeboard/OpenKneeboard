@@ -12,6 +12,7 @@ struct DllHook::Impl final : public DllLoadWatcher {
   DllHook* mHook = nullptr;
   std::string mName;
 
+  using DllLoadWatcher::InitWithVTable;
  protected:
   virtual void OnDllLoad(const std::string& name) override;
 };
@@ -25,13 +26,13 @@ void DllHook::Impl::OnDllLoad(const std::string& name) {
   mHook->InstallHook();
 }
 
-DllHook::DllHook(const char* name)
-  : p(std::make_unique<Impl>(this, name)) {
+DllHook::DllHook(const char* name) : p(std::make_unique<Impl>(this, name)) {
 }
 
 void DllHook::InitWithVTable() {
   if (!GetModuleHandleA(p->mName.c_str())) {
     dprintf("DLL '{}' not yet loaded, may install later", p->mName);
+    p->InitWithVTable();
     return;
   }
   dprintf("Installing hook for '{}'", p->mName);

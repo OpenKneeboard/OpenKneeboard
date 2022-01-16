@@ -11,10 +11,13 @@ class DllLoadWatcher {
   std::unique_ptr<Impl> p;
 
  public:
-  DllLoadWatcher(const std::string& name);
   virtual ~DllLoadWatcher();
 
  protected:
+  DllLoadWatcher(const std::string& name);
+  // Call from your constructor
+  void InitWithVTable();
+
   virtual void OnDllLoad(const std::string& name) = 0;
 };
 
