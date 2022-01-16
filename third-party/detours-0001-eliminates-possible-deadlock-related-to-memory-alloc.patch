@@ -1,0 +1,604 @@
+From a9b652937b3ae56f02badcdbdd2cb80b1ea5d829 Mon Sep 17 00:00:00 2001
+From: Adam Simon <adamosimoni@gmail.com>
+Date: Sat, 30 Oct 2021 15:27:45 +0200
+Subject: [PATCH] eliminates possible deadlock related to memory allocation on
+ global heap (https://github.com/microsoft/Detours/issues/70)
+
+---
+ src/creatwth.cpp |  12 +++---
+ src/detours.cpp  |  63 ++++++++++++++++++++++++-----
+ src/detours.h    | 103 +++++++++++++++++++++++++++++++++++++++++++++++
+ src/image.cpp    |  55 +++++++++++++------------
+ src/modules.cpp  |   2 +-
+ src/uimports.cpp |   6 +--
+ 6 files changed, 194 insertions(+), 47 deletions(-)
+
+diff --git a/src/creatwth.cpp b/src/creatwth.cpp
+index c2819af..29f3b64 100644
+--- a/src/creatwth.cpp
++++ b/src/creatwth.cpp
+@@ -1153,7 +1153,7 @@ VOID CALLBACK DetourFinishHelperProcess(_In_ HWND,
+         goto Cleanup;
+     }
+ 
+-    rlpDlls = new NOTHROW LPCSTR [s_pHelper->nDlls];
++    rlpDlls = DetourAllocArray<LPCSTR>(s_pHelper->nDlls);
+     cSize = s_pHelper->cb - sizeof(DETOUR_EXE_HELPER);
+     for (DWORD n = 0; n < s_pHelper->nDlls; n++) {
+         size_t cchDest = 0;
+@@ -1177,7 +1177,7 @@ VOID CALLBACK DetourFinishHelperProcess(_In_ HWND,
+ 
+   Cleanup:
+     if (rlpDlls != NULL) {
+-        delete[] rlpDlls;
++        DetourFreeArray(rlpDlls);
+         rlpDlls = NULL;
+     }
+ 
+@@ -1251,7 +1251,7 @@ BOOL WINAPI AllocExeHelper(_Out_ PDETOUR_EXE_HELPER *pHelper,
+         cSize += (DWORD)cchDest + 1;
+     }
+ 
+-    Helper = (PDETOUR_EXE_HELPER) new NOTHROW BYTE[sizeof(DETOUR_EXE_HELPER) + cSize];
++    Helper = (PDETOUR_EXE_HELPER)DetourAllocArray<BYTE>(sizeof(DETOUR_EXE_HELPER) + cSize);
+     if (Helper == NULL) {
+         goto Cleanup;
+     }
+@@ -1316,7 +1316,8 @@ BOOL WINAPI AllocExeHelper(_Out_ PDETOUR_EXE_HELPER *pHelper,
+ 
+   Cleanup:
+     if (Helper != NULL) {
+-        delete[] (PBYTE)Helper;
++        PBYTE helperBytes = (PBYTE)Helper;
++        DetourFreeArray(helperBytes);
+         Helper = NULL;
+     }
+     return Result;
+@@ -1326,7 +1327,8 @@ static
+ VOID WINAPI FreeExeHelper(PDETOUR_EXE_HELPER *pHelper)
+ {
+     if (*pHelper != NULL) {
+-        delete[] (PBYTE)*pHelper;
++        PBYTE helperBytes = (PBYTE)*pHelper;
++        DetourFreeArray(helperBytes);
+         *pHelper = NULL;
+     }
+ }
+diff --git a/src/detours.cpp b/src/detours.cpp
+index 954050f..663ec2c 100644
+--- a/src/detours.cpp
++++ b/src/detours.cpp
+@@ -12,6 +12,8 @@
+ #define DETOURS_INTERNAL
+ #include "detours.h"
+ 
++#include <new.h>
++
+ #if DETOURS_VERSION != 0x4c0c1   // 0xMAJORcMINORcPATCH
+ #error detours.h version mismatch
+ #endif
+@@ -1628,7 +1630,7 @@ LONG WINAPI DetourTransactionAbort()
+         }
+ 
+         DetourOperation *n = o->pNext;
+-        delete o;
++        DetourFree(o);
+         o = n;
+     }
+     s_pPendingOperations = NULL;
+@@ -1642,7 +1644,7 @@ LONG WINAPI DetourTransactionAbort()
+         ResumeThread(t->hThread);
+ 
+         DetourThread *n = t->pNext;
+-        delete t;
++        DetourFree(t);
+         t = n;
+     }
+     s_pPendingThreads = NULL;
+@@ -1913,7 +1915,7 @@ typedef ULONG_PTR DETOURS_EIP_TYPE;
+         }
+ 
+         DetourOperation *n = o->pNext;
+-        delete o;
++        DetourFree(o);
+         o = n;
+     }
+     s_pPendingOperations = NULL;
+@@ -1932,7 +1934,7 @@ typedef ULONG_PTR DETOURS_EIP_TYPE;
+         ResumeThread(t->hThread);
+ 
+         DetourThread *n = t->pNext;
+-        delete t;
++        DetourFree(t);
+         t = n;
+     }
+     s_pPendingThreads = NULL;
+@@ -1959,12 +1961,12 @@ LONG WINAPI DetourUpdateThread(_In_ HANDLE hThread)
+         return NO_ERROR;
+     }
+ 
+-    DetourThread *t = new NOTHROW DetourThread;
++    DetourThread *t = DetourAlloc<DetourThread>();
+     if (t == NULL) {
+         error = ERROR_NOT_ENOUGH_MEMORY;
+       fail:
+         if (t != NULL) {
+-            delete t;
++            DetourFree(t);
+             t = NULL;
+         }
+         s_nPendingError = error;
+@@ -2080,7 +2082,7 @@ LONG WINAPI DetourAttachEx(_Inout_ PVOID *ppPointer,
+         *ppRealDetour = pDetour;
+     }
+ 
+-    o = new NOTHROW DetourOperation;
++    o = DetourAlloc<DetourOperation>();
+     if (o == NULL) {
+         error = ERROR_NOT_ENOUGH_MEMORY;
+       fail:
+@@ -2095,7 +2097,7 @@ LONG WINAPI DetourAttachEx(_Inout_ PVOID *ppPointer,
+             }
+         }
+         if (o != NULL) {
+-            delete o;
++            DetourFree(o);
+             o = NULL;
+         }
+         if (ppRealDetour != NULL) {
+@@ -2382,7 +2384,7 @@ LONG WINAPI DetourDetach(_Inout_ PVOID *ppPointer,
+         return error;
+     }
+ 
+-    DetourOperation *o = new NOTHROW DetourOperation;
++    DetourOperation *o = DetourAlloc<DetourOperation>();
+     if (o == NULL) {
+         error = ERROR_NOT_ENOUGH_MEMORY;
+       fail:
+@@ -2390,7 +2392,7 @@ LONG WINAPI DetourDetach(_Inout_ PVOID *ppPointer,
+         DETOUR_BREAK();
+       stop:
+         if (o != NULL) {
+-            delete o;
++            DetourFree(o);
+             o = NULL;
+         }
+         s_ppPendingError = ppPointer;
+@@ -2594,4 +2596,45 @@ BOOL WINAPI DetourAreSameGuid(_In_ REFGUID left, _In_ REFGUID right)
+         left.Data4[7] == right.Data4[7];
+ }
+ 
++//////////////////////////////////////////////////////////////////////////////
++//
++
++static HANDLE s_hHeap = NULL;
++
++void DetourDestroyHeap()
++{
++    if (s_hHeap)
++    {
++        HeapDestroy(s_hHeap);
++        s_hHeap = NULL;
++    }
++}
++
++BOOL DetourCreateHeap(BOOL fAutoDestroy)
++{
++    BOOL bResult = FALSE;
++    if (s_hHeap == NULL)
++    {
++        s_hHeap = HeapCreate(0, 0, 0);
++        assert(s_hHeap);
++        if (s_hHeap != NULL)
++        {
++            if (fAutoDestroy)
++            {
++                atexit(DetourDestroyHeap);
++            }
++            bResult = TRUE;
++        }
++    }
++    return bResult;
++}
++
++inline HANDLE DetourGetHeap()
++{
++    assert(s_hHeap);
++    return s_hHeap;
++}
++
++static BOOL s_fAlreadyCreatedDetourHeap = DetourCreateHeap(TRUE);
++
+ //  End of File
+diff --git a/src/detours.h b/src/detours.h
+index 140da7a..c2a93d7 100644
+--- a/src/detours.h
++++ b/src/detours.h
+@@ -48,6 +48,7 @@
+ #include <intsafe.h>
+ #pragma warning(pop)
+ #endif
++#include <assert.h>
+ #include <crtdbg.h>
+ 
+ // Allow Detours to cleanly compile with the MingW toolchain.
+@@ -1213,6 +1214,108 @@ BOOL WINAPI DetourAreSameGuid(_In_ REFGUID left, _In_ REFGUID right);
+ }
+ #endif // __cplusplus
+ 
++//////////////////////////////////////////////////////////// Memory management APIs.
++
++inline HANDLE DetourGetHeap();
++
++template<class T>
++T* DetourAlloc()
++{
++    void* p = HeapAlloc(DetourGetHeap(), 0, sizeof(T));
++    assert(p);
++    if (!p)
++    {
++        return NULL;
++    }
++
++    return ::new(p) T;
++}
++
++template<class T, class P1>
++T* DetourAlloc(P1 p1)
++{
++    void* p = HeapAlloc(DetourGetHeap(), 0, sizeof(T));
++    assert(p);
++    if (!p)
++    {
++        return NULL;
++    }
++
++    return ::new(p) T(p1);
++}
++
++template<class T, class P1, class P2>
++T* DetourAlloc(P1 p1, P2 p2)
++{
++    void* p = HeapAlloc(DetourGetHeap(), 0, sizeof(T));
++    assert(p);
++    if (!p)
++    {
++        return NULL;
++    }
++
++    return ::new(p) T(p1, p2);
++}
++
++template<class T>
++void DetourFree(T*& p)
++{
++    size_t MemSize = HeapSize(DetourGetHeap(), 0, p);
++    assert(MemSize == sizeof(T));
++    if (MemSize != sizeof(T))
++    {
++        return;
++    }
++
++    p->~T();
++
++    HeapFree(DetourGetHeap(), 0, p);
++    p = NULL;
++}
++
++template<class T>
++T* DetourAllocArray(size_t _Size)
++{
++    T* p = (T*)HeapAlloc(DetourGetHeap(), 0, sizeof(T) * _Size);
++    assert(p);
++    if (!p)
++    {
++        return NULL;
++    }
++
++    for (size_t i = 0; i < _Size; i++)
++    {
++        ::new(&p[i]) T;
++    }
++
++    return p;
++}
++
++template<class T>
++void DetourFreeArray(T*& p)
++{
++    size_t MemSize = HeapSize(DetourGetHeap(), 0, p);
++    assert(MemSize > 0);
++    if (MemSize == 0)
++    {
++        return;
++    }
++    size_t _Size = MemSize / sizeof(T);
++    assert(_Size > 0);
++    if (_Size == 0)
++    {
++        return;
++    }
++
++    for (size_t i = 0; i < _Size; i++)
++    {
++        (&p[i])->~T();
++    }
++
++    HeapFree(DetourGetHeap(), 0, (LPVOID)p);
++    p = NULL;
++}
++
+ //////////////////////////////////////////////////////////////////////////////
+ 
+ #define MM_ALLOCATION_GRANULARITY 0x10000
+diff --git a/src/image.cpp b/src/image.cpp
+index 897df4e..9938b81 100644
+--- a/src/image.cpp
++++ b/src/image.cpp
+@@ -323,7 +323,7 @@ static LPCSTR DuplicateString(_In_ LPCSTR pszIn)
+         return NULL;
+     }
+ 
+-    PCHAR pszOut = new NOTHROW CHAR [cch + 1];
++    PCHAR pszOut = DetourAllocArray<CHAR>(cch + 1);
+     if (pszOut == NULL) {
+         SetLastError(ERROR_OUTOFMEMORY);
+         return NULL;
+@@ -331,7 +331,7 @@ static LPCSTR DuplicateString(_In_ LPCSTR pszIn)
+ 
+     hr = StringCchCopyA(pszOut, cch + 1, pszIn);
+     if (FAILED(hr)) {
+-        delete[] pszOut;
++        DetourFreeArray(pszOut);
+         return NULL;
+     }
+ 
+@@ -341,7 +341,7 @@ static LPCSTR DuplicateString(_In_ LPCSTR pszIn)
+ static VOID ReleaseString(_In_opt_ LPCSTR psz)
+ {
+     if (psz != NULL) {
+-        delete[] psz;
++        DetourFreeArray(psz);
+     }
+ }
+ 
+@@ -366,20 +366,20 @@ CImageImportFile::CImageImportFile()
+ CImageImportFile::~CImageImportFile()
+ {
+     if (m_pNextFile) {
+-        delete m_pNextFile;
++        DetourFree(m_pNextFile);
+         m_pNextFile = NULL;
+     }
+     if (m_pImportNames) {
+-        delete[] m_pImportNames;
++        DetourFreeArray(m_pImportNames);
+         m_pImportNames = NULL;
+         m_nImportNames = 0;
+     }
+     if (m_pszName) {
+-        delete[] m_pszName;
++        DetourFreeArray(m_pszName);
+         m_pszName = NULL;
+     }
+     if (m_pszOrig) {
+-        delete[] m_pszOrig;
++        DetourFreeArray(m_pszOrig);
+         m_pszOrig = NULL;
+     }
+ }
+@@ -396,11 +396,11 @@ CImageImportName::CImageImportName()
+ CImageImportName::~CImageImportName()
+ {
+     if (m_pszName) {
+-        delete[] m_pszName;
++        DetourFreeArray(m_pszName);
+         m_pszName = NULL;
+     }
+     if (m_pszOrig) {
+-        delete[] m_pszOrig;
++        DetourFreeArray(m_pszOrig);
+         m_pszOrig = NULL;
+     }
+ }
+@@ -422,7 +422,7 @@ CImageData::~CImageData()
+         m_pbData = NULL;
+     }
+     if (m_pbData) {
+-        delete[] m_pbData;
++        DetourFreeArray(m_pbData);
+         m_pbData = NULL;
+     }
+     m_cbData = 0;
+@@ -437,7 +437,7 @@ BOOL CImageData::SizeTo(DWORD cbData)
+         return TRUE;
+     }
+ 
+-    PBYTE pbNew = new NOTHROW BYTE [cbData];
++    PBYTE pbNew = DetourAllocArray<BYTE>(cbData);
+     if (pbNew == NULL) {
+         SetLastError(ERROR_OUTOFMEMORY);
+         return FALSE;
+@@ -446,7 +446,7 @@ BOOL CImageData::SizeTo(DWORD cbData)
+     if (m_pbData) {
+         CopyMemory(pbNew, m_pbData, m_cbData);
+         if (m_cbAlloc > 0) {
+-            delete[] m_pbData;
++            DetourFreeArray(m_pbData);
+         }
+         m_pbData = NULL;
+     }
+@@ -789,13 +789,13 @@ CImage::~CImage()
+ BOOL CImage::Close()
+ {
+     if (m_pImportFiles) {
+-        delete m_pImportFiles;
++        DetourFree(m_pImportFiles);
+         m_pImportFiles = NULL;
+         m_nImportFiles = 0;
+     }
+ 
+     if (m_pImageData) {
+-        delete m_pImageData;
++        DetourFree(m_pImageData);
+         m_pImageData = NULL;
+     }
+ 
+@@ -810,7 +810,7 @@ BOOL CImage::Close()
+     }
+ 
+     if (m_pbOutputBuffer) {
+-        delete[] m_pbOutputBuffer;
++        DetourFreeArray(m_pbOutputBuffer);
+         m_pbOutputBuffer = NULL;
+         m_cbOutputBuffer = 0;
+     }
+@@ -869,7 +869,7 @@ BOOL CImage::SizeOutputBuffer(DWORD cbData)
+         }
+         cbData = FileAlign(cbData);
+ 
+-        PBYTE pOutput = new NOTHROW BYTE [cbData];
++        PBYTE pOutput = DetourAllocArray<BYTE>(cbData);
+         if (pOutput == NULL) {
+             SetLastError(ERROR_OUTOFMEMORY);
+             return FALSE;
+@@ -878,7 +878,7 @@ BOOL CImage::SizeOutputBuffer(DWORD cbData)
+         if (m_pbOutputBuffer) {
+             CopyMemory(pOutput, m_pbOutputBuffer, m_cbOutputBuffer);
+ 
+-            delete[] m_pbOutputBuffer;
++            DetourFreeArray(m_pbOutputBuffer);
+             m_pbOutputBuffer = NULL;
+         }
+ 
+@@ -1150,7 +1150,7 @@ BOOL CImage::Read(HANDLE hFile)
+             goto fail;
+         }
+ 
+-        CImageImportFile *pImportFile = new NOTHROW CImageImportFile;
++        CImageImportFile *pImportFile = DetourAlloc<CImageImportFile>();
+         if (pImportFile == NULL) {
+             SetLastError(ERROR_OUTOFMEMORY);
+             goto fail;
+@@ -1210,7 +1210,7 @@ BOOL CImage::Read(HANDLE hFile)
+ 
+         if (pAddrThunk && nNames) {
+             pImportFile->m_nImportNames = nNames;
+-            pImportFile->m_pImportNames = new NOTHROW CImageImportName [nNames];
++            pImportFile->m_pImportNames = DetourAllocArray<CImageImportName>(nNames);
+             if (pImportFile->m_pImportNames == NULL) {
+                 SetLastError(ERROR_OUTOFMEMORY);
+                 goto fail;
+@@ -1320,7 +1320,7 @@ BOOL CImage::Read(HANDLE hFile)
+         }
+     }
+ 
+-    m_pImageData = new NOTHROW CImageData(pbData, cbData);
++    m_pImageData = DetourAlloc<CImageData>(pbData, cbData);
+     if (m_pImageData == NULL) {
+         SetLastError(ERROR_OUTOFMEMORY);
+     }
+@@ -1397,7 +1397,7 @@ BOOL CImage::CheckImportsNeeded(DWORD *pnTables, DWORD *pnThunks, DWORD *pnChars
+ //
+ CImageImportFile * CImage::NewByway(_In_ LPCSTR pszName)
+ {
+-    CImageImportFile *pImportFile = new NOTHROW CImageImportFile;
++    CImageImportFile *pImportFile = DetourAlloc<CImageImportFile>();
+     if (pImportFile == NULL) {
+         SetLastError(ERROR_OUTOFMEMORY);
+         goto fail;
+@@ -1422,7 +1422,7 @@ CImageImportFile * CImage::NewByway(_In_ LPCSTR pszName)
+ 
+ fail:
+     if (pImportFile) {
+-        delete pImportFile;
++        DetourFree(pImportFile);
+         pImportFile = NULL;
+     }
+     return NULL;
+@@ -1484,7 +1484,7 @@ BOOL CImage::EditImports(PVOID pContext,
+                 else {                                  // Delete Byway
+                     *ppLastFile = pImportFile->m_pNextFile;
+                     pImportFile->m_pNextFile = NULL;
+-                    delete pImportFile;
++                    DetourFree(pImportFile);
+                     m_nImportFiles--;
+                     continue;                           // Retry after delete.
+                 }
+@@ -1547,7 +1547,7 @@ BOOL CImage::EditImports(PVOID pContext,
+                         pImportName->m_nOrdinal = nOrdinal;
+ 
+                         if (pImportName->m_pszName != NULL) {
+-                            delete[] pImportName->m_pszName;
++                            DetourFreeArray(pImportName->m_pszName);
+                             pImportName->m_pszName = NULL;
+                         }
+                     }
+@@ -2031,15 +2031,14 @@ BOOL CImage::Write(HANDLE hFile)
+ //
+ PDETOUR_BINARY WINAPI DetourBinaryOpen(_In_ HANDLE hFile)
+ {
+-    Detour::CImage *pImage = new NOTHROW
+-        Detour::CImage;
++    Detour::CImage *pImage = DetourAlloc<Detour::CImage>();
+     if (pImage == NULL) {
+         SetLastError(ERROR_OUTOFMEMORY);
+         return FALSE;
+     }
+ 
+     if (!pImage->Read(hFile)) {
+-        delete pImage;
++        DetourFree(pImage);
+         return FALSE;
+     }
+ 
+@@ -2207,7 +2206,7 @@ BOOL WINAPI DetourBinaryClose(_In_ PDETOUR_BINARY pBinary)
+     }
+ 
+     BOOL bSuccess = pImage->Close();
+-    delete pImage;
++    DetourFree(pImage);
+     pImage = NULL;
+ 
+     return bSuccess;
+diff --git a/src/modules.cpp b/src/modules.cpp
+index 52fc2cf..daa0015 100644
+--- a/src/modules.cpp
++++ b/src/modules.cpp
+@@ -229,7 +229,7 @@ PVOID WINAPI DetourFindFunction(_In_ LPCSTR pszModule,
+     // and have to convert it to a wrapped [code pointer, global pointer].
+     //
+     PPLABEL_DESCRIPTOR pldEntry = (PPLABEL_DESCRIPTOR)DetourGetEntryPoint(hModule);
+-    PPLABEL_DESCRIPTOR pldSymbol = new PLABEL_DESCRIPTOR;
++    PPLABEL_DESCRIPTOR pldSymbol = DetourAlloc<PLABEL_DESCRIPTOR>();
+ 
+     pldSymbol->EntryPoint = symbol.Address;
+     pldSymbol->GlobalPointer = pldEntry->GlobalPointer;
+diff --git a/src/uimports.cpp b/src/uimports.cpp
+index ed43d65..89413fe 100644
+--- a/src/uimports.cpp
++++ b/src/uimports.cpp
+@@ -40,7 +40,7 @@ static BOOL UPDATE_IMPORTS_XX(HANDLE hProcess,
+ 
+       finish:
+         if (pbNew != NULL) {
+-            delete[] pbNew;
++            DetourFreeArray(pbNew);
+             pbNew = NULL;
+         }
+         return fSucceeded;
+@@ -178,9 +178,9 @@ static BOOL UPDATE_IMPORTS_XX(HANDLE hProcess,
+             goto finish;
+         }
+     }
+-    pbNew = new BYTE [cbNew];
++    pbNew = DetourAllocArray<BYTE>(cbNew);
+     if (pbNew == NULL) {
+-        DETOUR_TRACE(("new BYTE [cbNew] failed.\n"));
++        DETOUR_TRACE(("DetourAllocArray<BYTE>(cbNew) failed.\n"));
+         goto finish;
+     }
+     ZeroMemory(pbNew, cbNew);
+-- 
+2.34.1.windows.1
+

@@ -6,6 +6,9 @@ ExternalProject_Add(
   BUILD_IN_SOURCE ON
   WORKING_DIRECTORY "<SOURCE_DIR>/src"
   UPDATE_DISCONNECTED ON
+  PATCH_COMMAND
+    git apply --reverse --check "${NO_NEW_OR_DELETE_PATCH}"
+      || git am "${NO_NEW_OR_DELETE_PATCH}"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
     ${CMAKE_COMMAND} -E env
