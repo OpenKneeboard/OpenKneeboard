@@ -6,28 +6,29 @@ namespace OpenKneeboard {
 
 /// Specialize this for your enum class to enable operator overloads
 template <class T>
-struct is_bitflags {
-  static constexpr bool value = false;
-};
+  requires std::is_enum_v<T>
+constexpr bool is_bitflags_v = false;
 
 template <class T>
-concept bitflags = is_bitflags<T>::value;
+concept bitflags = std::is_enum_v<T> && is_bitflags_v<T>;
 
 /// Helper to allow (flags & Foo::Bar) pattern
-template<bitflags T>
+template <bitflags T>
 class CoerceableBitflags final {
-  private:
-   T value;
-  public:
-    constexpr CoerceableBitflags(T v): value(v) {}
+ private:
+  T value;
 
-    constexpr operator T() const {
-      return value;
-    }
+ public:
+  constexpr CoerceableBitflags(T v) : value(v) {
+  }
 
-    constexpr operator bool() const {
-      return static_cast<bool>(value);
-    }
+  constexpr operator T() const {
+    return value;
+  }
+
+  constexpr operator bool() const {
+    return static_cast<bool>(value);
+  }
 };
 
 template <bitflags T>

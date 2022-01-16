@@ -119,7 +119,5 @@ class Reader final {
 
 namespace OpenKneeboard {
   template<>
-  struct is_bitflags<SHM::VRConfig::Flags> {
-    static constexpr bool value = true;
-  };
+  constexpr bool is_bitflags_v<SHM::VRConfig::Flags> = true;
 }

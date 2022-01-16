@@ -30,9 +30,7 @@ struct Header final {
 
 namespace OpenKneeboard {
 template <>
-struct is_bitflags<SHM::HeaderFlags> {
-  static constexpr bool value = true;
-};
+constexpr bool is_bitflags_v<SHM::HeaderFlags> = true;
 }// namespace OpenKneeboard
 
 namespace OpenKneeboard::SHM {
