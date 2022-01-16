@@ -197,19 +197,29 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
 static std::unique_ptr<InjectionBootstrapper> gInstance;
 static HMODULE gModule = nullptr;
 
+static void CleanupHookInstance() {
+  if (gInstance) {
+    dprint("----- Cleaning up bootstrapper instance -----");
+    gInstance.reset();
+  }
+}
+
 DWORD InjectionBootstrapper::UnloadWithoutNextThreadImpl(void* unused) {
-  gInstance.reset();
-  dprintf("----- Unloading Bootstrapper ----");
+  CleanupHookInstance();
+
+  dprintf("----- Freeing bootstrapper DLL ----");
   FreeLibraryAndExitThread(gModule, S_OK);
 
   return S_OK;
 }
 
 DWORD InjectionBootstrapper::LoadNextThenUnloadThreadImpl(void* data) {
+  CleanupHookInstance();
+
   auto path = reinterpret_cast<std::filesystem::path*>(data);
-  dprintf("!!!! loading next: {}", path->string());
+  dprintf("----- Loading next: {} -----", path->string());
   if (!LoadLibraryW(path->c_str())) {
-    dprintf("!!!!! Load failed: {:#x}", GetLastError());
+    dprintf("----- Load failed: {:#x} -----", GetLastError());
   }
   delete path;
 
