@@ -6,10 +6,16 @@
 
 #include <memory>
 
-/** Suspend all other threads, and patch RIP.
+/** READ SAFETY WARNING - Suspend all other threads, and patch RIP.
  *
- * It is unsafe to call new/delete/malloc/free or many simialr functions
- * while an instance of this class exists.
+ * WARNING: while a `DetourTransaction` exists, pretty much any use of the heap
+ * can (and often will) deadlock.
+ * 
+ * This includes:
+ * - new/delete/malloc/free
+ * - on-stack objects with heap-allocated content (e.g. `std::vector`) going
+ *   out of scope
+ * - `printf`, `fmt::format`, `dprint` etc
  */
 class DetourTransaction final {
  private:
@@ -30,8 +36,8 @@ LONG DetourSingleAttach(void** ppPointer, void* pDetour);
 
 template<detours_function_pointer T>
 LONG DetourSingleAttach(T* ppPointer, T pDetour) {
-	return DetourSingleAttach(
-		reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));
+  return DetourSingleAttach(
+    reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));
 }
 
 /// Create a transaction, detach a single detour, and submit the transaction
@@ -39,6 +45,6 @@ LONG DetourSingleDetach(void** ppPointer, void* pDetour);
 
 template<detours_function_pointer T>
 LONG DetourSingleDetach(T* ppPointer, T pDetour) {
-	return DetourSingleDetach(
-		reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));
+  return DetourSingleDetach(
+    reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));
 }
