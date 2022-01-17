@@ -1,5 +1,8 @@
 #pragma once
 
+#include <d3d11.h>
+#include <winrt/base.h>
+
 #include "IDXGISwapChainPresentHook.h"
 #include "OculusKneeboard.h"
 
@@ -30,7 +33,10 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer,
     const SHM::Snapshot& snapshot) override final;
 
  private:
-  class Impl;
-  std::unique_ptr<Impl> p;
+  SHM::Config mLastConfig;
+  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
+  ovrTextureSwapChain mSwapChain = nullptr;
+  winrt::com_ptr<ID3D11Device> mD3D = nullptr;
+  std::unique_ptr<OculusKneeboard> mOculusKneeboard;
 };
 }// namespace OpenKneeboard
