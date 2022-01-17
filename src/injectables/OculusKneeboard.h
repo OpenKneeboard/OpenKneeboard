@@ -23,9 +23,7 @@ class OculusKneeboard {
     const SHM::Snapshot& snapshot)
     = 0;
 
-  virtual void UninstallHook();
-
-  virtual void OnOVREndFrameHookInstalled();
+  void UninstallHook();
  private:
   struct Impl;
   std::unique_ptr<Impl> p;

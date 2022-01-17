@@ -61,7 +61,6 @@ namespace OpenKneeboard {
 struct OculusKneeboard::Impl {
   SHM::Reader shm;
   bool zoomed = false;
-  std::unique_ptr<OVRProxy> ovr;
   std::unique_ptr<OculusEndFrameHook> endFrameHook;
 };
 
@@ -84,14 +83,8 @@ void OculusKneeboard::InitWithVTable() {
     return;
   }
   p->endFrameHook = OculusEndFrameHook::make_unique({
-    .onHookInstalled
-    = std::bind_front(&OculusKneeboard::OnOVREndFrameHookInstalled, this),
     .onEndFrame = std::bind_front(&OculusKneeboard::OnOVREndFrame, this),
   });
-}
-
-void OculusKneeboard::OnOVREndFrameHookInstalled() {
-  p->ovr = std::make_unique<OVRProxy>();
 }
 
 ovrResult OculusKneeboard::OnOVREndFrame(
@@ -112,6 +105,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
+  auto ovr = OVRProxy::Get();
+
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
   // TODO: set ovrLayerFlag_TextureOriginAtBottomLeft for OpenGL?
@@ -123,7 +118,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   if ((config.vr.flags & SHM::VRConfig::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
-    p->ovr->ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
+    ovr->ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
     position.y = vr.eyeY;
   }
   kneeboardLayer.QuadPoseCenter.Position = {position.x, position.y, position.z};
@@ -150,8 +145,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const ovrVector2f zoomedSize(
     virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale);
 
-  auto predictedTime = p->ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
-  auto state = p->ovr->ovr_GetTrackingState(session, predictedTime, false);
+  auto predictedTime = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
+  auto state = ovr->ovr_GetTrackingState(session, predictedTime, false);
 
   p->zoomed = poseIntersectsWithRect(
     state.HeadPose.ThePose,

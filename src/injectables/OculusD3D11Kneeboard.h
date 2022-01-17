@@ -5,17 +5,15 @@
 
 namespace OpenKneeboard {
 
-class OculusD3D11Kneeboard final : public OculusKneeboard,
+class OculusD3D11Kneeboard final : private OculusKneeboard,
                                    private IDXGISwapChainPresentHook {
  public:
   OculusD3D11Kneeboard();
   virtual ~OculusD3D11Kneeboard();
 
-  virtual void UninstallHook() override;
+  void UninstallHook();
 
  protected:
-  virtual void OnOVREndFrameHookInstalled() override;
-
   virtual HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,
     UINT syncInterval,

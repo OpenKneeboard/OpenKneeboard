@@ -17,7 +17,6 @@ class OculusD3D11Kneeboard::Impl final {
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> renderTargets;
   ovrTextureSwapChain swapChain = nullptr;
   winrt::com_ptr<ID3D11Device> d3d = nullptr;
-  std::unique_ptr<OVRProxy> ovr;
 };
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
@@ -31,11 +30,6 @@ OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
   this->UninstallHook();
 }
 
-void OculusD3D11Kneeboard::OnOVREndFrameHookInstalled() {
-  OculusKneeboard::OnOVREndFrameHookInstalled();
-  p->ovr = std::make_unique<OVRProxy>();
-}
-
 void OculusD3D11Kneeboard::UninstallHook() {
   OculusKneeboard::UninstallHook();
   IDXGISwapChainPresentHook::UninstallHook();
@@ -44,6 +38,7 @@ void OculusD3D11Kneeboard::UninstallHook() {
 ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   ovrSession session,
   const SHM::Config& config) {
+  auto ovr = OVRProxy::Get();
   if (p->swapChain) {
     const auto& prev = p->lastConfig;
     if (
@@ -51,7 +46,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
       && config.imageHeight == prev.imageHeight) {
       return p->swapChain;
     }
-    p->ovr->ovr_DestroyTextureSwapChain(session, p->swapChain);
+    ovr->ovr_DestroyTextureSwapChain(session, p->swapChain);
     p->swapChain = nullptr;
   }
 
@@ -74,20 +69,20 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     .BindFlags = ovrTextureBind_DX_RenderTarget,
   };
 
-  p->ovr->ovr_CreateTextureSwapChainDX(
+  ovr->ovr_CreateTextureSwapChainDX(
     session, p->d3d.get(), &kneeboardSCD, &p->swapChain);
   if (!p->swapChain) {
     return nullptr;
   }
 
   int length = -1;
-  p->ovr->ovr_GetTextureSwapChainLength(session, p->swapChain, &length);
+  ovr->ovr_GetTextureSwapChainLength(session, p->swapChain, &length);
 
   p->renderTargets.clear();
   p->renderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D11Texture2D> texture;
-    p->ovr->ovr_GetTextureSwapChainBufferDX(
+    ovr->ovr_GetTextureSwapChainBufferDX(
       session, p->swapChain, i, IID_PPV_ARGS(&texture));
 
     D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
@@ -119,17 +114,18 @@ bool OculusD3D11Kneeboard::Render(
     return false;
   }
 
+  auto ovr = OVRProxy::Get();
   auto& config = *snapshot.GetConfig();
 
   int index = -1;
-  p->ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
+  ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
   if (index < 0) {
     dprintf(" - invalid swap chain index ({})", index);
     return false;
   }
 
   winrt::com_ptr<ID3D11Texture2D> texture;
-  p->ovr->ovr_GetTextureSwapChainBufferDX(
+  ovr->ovr_GetTextureSwapChainBufferDX(
     session, swapChain, index, IID_PPV_ARGS(&texture));
   winrt::com_ptr<ID3D11DeviceContext> context;
   p->d3d->GetImmediateContext(context.put());
@@ -154,7 +150,7 @@ bool OculusD3D11Kneeboard::Render(
     config.imageWidth * sizeof(SHM::Pixel),
     0);
 
-  auto ret = p->ovr->ovr_CommitTextureSwapChain(session, swapChain);
+  auto ret = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (ret) {
     dprintf("Commit failed with {}", ret);
   }
