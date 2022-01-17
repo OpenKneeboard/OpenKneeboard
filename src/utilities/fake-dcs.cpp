@@ -7,9 +7,6 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 using namespace OpenKneeboard;
 
 int main() {
-  const char AIRCRAFT[] = "A-10C_2";
-  const char TERRAIN[] = "Caucasus";
-
   const auto savedGamePath = DCS::GetSavedGamesPath(DCS::Version::OPEN_BETA);
   const auto installPath = DCS::GetInstalledPath(DCS::Version::OPEN_BETA);
 
@@ -18,8 +15,8 @@ int main() {
 
   (GameEvent {DCS::EVT_INSTALL_PATH, installPath.string()}).Send();
   (GameEvent {DCS::EVT_SAVED_GAMES_PATH, savedGamePath.string()}).Send();
-  (GameEvent {DCS::EVT_AIRCRAFT, AIRCRAFT}).Send();
-  (GameEvent {DCS::EVT_TERRAIN, TERRAIN}).Send();
+  (GameEvent {DCS::EVT_AIRCRAFT, "A-10C_2"}).Send();
+  (GameEvent {DCS::EVT_TERRAIN, "Caucasus"}).Send();
 
   const std::vector<const char*> messages = {
     "Simple single line",
