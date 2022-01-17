@@ -20,7 +20,6 @@ struct IVRCompositor_VTable {
   void* mWaitGetPoses;
 };
 
-IVRCompositorWaitGetPosesHook* gHook = nullptr;
 decltype(&vr::IVRCompositor::WaitGetPoses) Real_IVRCompositor_WaitGetPoses
   = nullptr;
 decltype(&vr::VR_GetGenericInterface) Real_VR_GetGenericInterface = nullptr;
@@ -48,10 +47,14 @@ class ScopedRWX {
 }// namespace
 
 struct IVRCompositorWaitGetPosesHook::Impl : public DllHook {
-  Impl() : DllHook(MODULE_NAME) {
+  Impl(const Callbacks& callbacks)
+    : DllHook(MODULE_NAME), mCallbacks(callbacks) {
+    if (gInstance) {
+      throw std::logic_error(
+        "Only one IVRCompositorWaitGetPosesHook instance at a time");
+    }
+    this->InitWithVTable();
   }
-
-  using DllHook::InitWithVTable;
 
   ~Impl() {
     UninstallHook();
@@ -59,39 +62,41 @@ struct IVRCompositorWaitGetPosesHook::Impl : public DllHook {
 
   IVRCompositor_VTable* mVTable = nullptr;
 
-  vr::EVRCompositorError Hooked_IVRCompositor_WaitGetPoses(
-    vr::TrackedDevicePose_t* pRenderPoseArray,
-    uint32_t unRenderPoseArrayCount,
-    vr::TrackedDevicePose_t* pGamePoseArray,
-    uint32_t unGamePoseArrayCount);
-
   virtual void InstallHook() override;
   void UninstallHook();
 
   void InstallCompositorHook(vr::IVRCompositor* compositor);
   void InstallVRGetGenericInterfaceHook();
 
+  vr::EVRCompositorError Hooked_IVRCompositor_WaitGetPoses(
+    vr::TrackedDevicePose_t* pRenderPoseArray,
+    uint32_t unRenderPoseArrayCount,
+    vr::TrackedDevicePose_t* pGamePoseArray,
+    uint32_t unGamePoseArrayCount);
+
+  static void* VR_CALLTYPE Hooked_VR_GetGenericInterface(
+    const char* pchInterfaceVersion,
+    vr::EVRInitError* peError);
+
  private:
+  static Impl* gInstance;
+  Callbacks mCallbacks;
   bool mHookedVRGetGenericInterface = false;
 };
 
-IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook()
-  : p(std::make_unique<Impl>()) {
+IVRCompositorWaitGetPosesHook::Impl*
+  IVRCompositorWaitGetPosesHook::Impl::gInstance
+  = nullptr;
+
+IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook(
+  const Callbacks& callbacks)
+  : p(std::make_unique<Impl>(callbacks)) {
   dprint(__FUNCTION__);
-}
-
-void IVRCompositorWaitGetPosesHook::InitWithVTable() {
-  if (gHook) {
-    throw std::logic_error("Can only have one IVRCompositorWaitGetPosesHook");
-  }
-
-  gHook = this;
-  p->InitWithVTable();
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
   vr::IVRCompositor* compositor) {
-  dprintf("Got an OpenVR compositor");
+  dprint("Got an OpenVR compositor");
   mVTable = *reinterpret_cast<IVRCompositor_VTable**>(compositor);
   *reinterpret_cast<void**>(&Real_IVRCompositor_WaitGetPoses)
     = mVTable->mWaitGetPoses;
@@ -103,6 +108,8 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
     mVTable->mWaitGetPoses
       = std::bit_cast<void*>(&Impl::Hooked_IVRCompositor_WaitGetPoses);
   }
+
+  gInstance = this;
 }
 
 IVRCompositorWaitGetPosesHook::~IVRCompositorWaitGetPosesHook() {
@@ -110,39 +117,20 @@ IVRCompositorWaitGetPosesHook::~IVRCompositorWaitGetPosesHook() {
 }
 
 void IVRCompositorWaitGetPosesHook::UninstallHook() {
-  if (gHook != this) {
-    return;
-  }
-
-  if (!p->mVTable) {
-    return;
-  }
-
-  {
-    ScopedRWX rwx(p->mVTable);
-    p->mVTable->mWaitGetPoses
-      = std::bit_cast<void*>(Real_IVRCompositor_WaitGetPoses);
-    p->mVTable = nullptr;
-    p->UninstallHook();
-  }
-
-  gHook = nullptr;
+  p->UninstallHook();
 }
 
-namespace {
-
-IVRCompositorWaitGetPosesHook::Impl* gHookImpl = nullptr;
-
-void* VR_CALLTYPE Hooked_VR_GetGenericInterface(
+void* VR_CALLTYPE
+IVRCompositorWaitGetPosesHook::Impl::Hooked_VR_GetGenericInterface(
   const char* pchInterfaceVersion,
   vr::EVRInitError* peError) {
   auto ret = Real_VR_GetGenericInterface(pchInterfaceVersion, peError);
-  if (!gHookImpl) {
+  if (!gInstance) {
     return ret;
   }
 
   if (std::string_view(pchInterfaceVersion).starts_with("IVRCompositor_")) {
-    auto p = gHookImpl;
+    auto p = gInstance;
     p->UninstallHook();
     p->InstallCompositorHook(reinterpret_cast<vr::IVRCompositor*>(ret));
   }
@@ -150,27 +138,31 @@ void* VR_CALLTYPE Hooked_VR_GetGenericInterface(
   return ret;
 }
 
-}// namespace
-
 void IVRCompositorWaitGetPosesHook::Impl::InstallVRGetGenericInterfaceHook() {
   mHookedVRGetGenericInterface = true;
-  gHookImpl = this;
-
-  DetourSingleAttach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
+  DetourSingleAttach(
+    &Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::UninstallHook() {
-  if (!mHookedVRGetGenericInterface) {
+  if (gInstance != this) {
     return;
   }
 
-  DetourSingleDetach(&Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
-
-  mHookedVRGetGenericInterface = false;
-
-  if (gHookImpl == this) {
-    gHookImpl = nullptr;
+  if (mVTable) {
+    ScopedRWX rwx(mVTable);
+    mVTable->mWaitGetPoses
+      = std::bit_cast<void*>(Real_IVRCompositor_WaitGetPoses);
+    mVTable = nullptr;
   }
+
+  if (mHookedVRGetGenericInterface) {
+    DetourSingleDetach(
+      &Real_VR_GetGenericInterface, &Hooked_VR_GetGenericInterface);
+    mHookedVRGetGenericInterface = false;
+  }
+
+  gInstance = nullptr;
 }
 
 vr::EVRCompositorError
@@ -180,7 +172,7 @@ IVRCompositorWaitGetPosesHook::Impl::Hooked_IVRCompositor_WaitGetPoses(
   vr::TrackedDevicePose_t* pGamePoseArray,
   uint32_t unGamePoseArrayCount) {
   auto this_ = reinterpret_cast<vr::IVRCompositor*>(this);
-  if (!gHook) {
+  if (!(gInstance && gInstance->mCallbacks.onWaitGetPoses)) [[unlikely]] {
     return std::invoke(
       Real_IVRCompositor_WaitGetPoses,
       this_,
@@ -189,7 +181,7 @@ IVRCompositorWaitGetPosesHook::Impl::Hooked_IVRCompositor_WaitGetPoses(
       pGamePoseArray,
       unGamePoseArrayCount);
   }
-  return gHook->OnIVRCompositor_WaitGetPoses(
+  return gInstance->mCallbacks.onWaitGetPoses(
     this_,
     pRenderPoseArray,
     unRenderPoseArrayCount,
@@ -220,6 +212,9 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
   }
 
   this->InstallCompositorHook(compositor);
+  if (mCallbacks.onHookInstalled) {
+    mCallbacks.onHookInstalled();
+  }
 }
 
 }// namespace OpenKneeboard

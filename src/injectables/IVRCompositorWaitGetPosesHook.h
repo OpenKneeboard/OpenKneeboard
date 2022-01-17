@@ -2,6 +2,7 @@
 
 #include <openvr.h>
 
+#include <functional>
 #include <memory>
 
 namespace OpenKneeboard {
@@ -16,27 +17,28 @@ namespace OpenKneeboard {
  * that API in the main OpenKneeboard application instead of in the game
  * process.
  */
-class IVRCompositorWaitGetPosesHook {
+class IVRCompositorWaitGetPosesHook final {
  public:
-  struct Impl;
+  struct Callbacks {
+    std::function<void()> onHookInstalled;
+	std::function<vr::EVRCompositorError(
+		vr::IVRCompositor* this_,
+		vr::TrackedDevicePose_t* pRenderPoseArray,
+		uint32_t unRenderPoseArrayCount,
+		vr::TrackedDevicePose_t* pGamePoseArray,
+		uint32_t unGamePoseArrayCount,
+		const decltype(&vr::IVRCompositor::WaitGetPoses)& next)> onWaitGetPoses;
+  };
+  IVRCompositorWaitGetPosesHook(const Callbacks& callbacks);
   ~IVRCompositorWaitGetPosesHook();
   void UninstallHook();
 
- protected:
-  IVRCompositorWaitGetPosesHook();
-  /// Call this from your constructor
-  void InitWithVTable();
-
-  virtual vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
-    vr::IVRCompositor* this_,
-    vr::TrackedDevicePose_t* pRenderPoseArray,
-    uint32_t unRenderPoseArrayCount,
-    vr::TrackedDevicePose_t* pGamePoseArray,
-    uint32_t unGamePoseArrayCount,
-    const decltype(&vr::IVRCompositor::WaitGetPoses)& next)
-    = 0;
+  static inline auto make_unique(const Callbacks& cb) {
+    return std::make_unique<IVRCompositorWaitGetPosesHook>(cb);
+  }
 
  private:
+  struct Impl;
   std::unique_ptr<Impl> p;
 };
 

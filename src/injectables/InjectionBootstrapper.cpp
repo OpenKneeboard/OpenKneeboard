@@ -26,8 +26,7 @@ namespace OpenKneeboard {
  * D3D11 are used, load OpenKneeboard-oculus-d3d11.dll. "ONly D3D11" in case
  * 11on12 is used.
  */
-class InjectionBootstrapper final : private IDXGISwapChainPresentHook,
-                                    private IVRCompositorWaitGetPosesHook {
+class InjectionBootstrapper final : private IDXGISwapChainPresentHook {
  private:
   const uint64_t FLAG_D3D11 = 1 << 0;
   const uint64_t FLAG_D3D12 = 1 << 1;
@@ -38,18 +37,22 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook,
   uint64_t mFlags = 0;
   uint64_t mFrames = 0;
 
-  std::unique_ptr<OculusEndFrameHook> mOculusEndFrameHook;
+  std::unique_ptr<OculusEndFrameHook> mOculusHook;
+  std::unique_ptr<IVRCompositorWaitGetPosesHook> mOpenVRHook;
 
  public:
   InjectionBootstrapper() = delete;
 
   explicit InjectionBootstrapper(HMODULE self) : mThisModule(self) {
-    mOculusEndFrameHook = OculusEndFrameHook::make_unique({
+    mOculusHook = OculusEndFrameHook::make_unique({
       .onEndFrame
       = std::bind_front(&InjectionBootstrapper::OnOVREndFrame, this),
     });
+    mOpenVRHook = IVRCompositorWaitGetPosesHook::make_unique({
+      .onWaitGetPoses = std::bind_front(
+        &InjectionBootstrapper::OnIVRCompositor_WaitGetPoses, this),
+    });
     IDXGISwapChainPresentHook::InitWithVTable();
-    IVRCompositorWaitGetPosesHook::InitWithVTable();
   }
 
   ~InjectionBootstrapper() {
@@ -57,9 +60,9 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook,
   }
 
   void UninstallHook() {
-    mOculusEndFrameHook->UninstallHook();
+    mOculusHook->UninstallHook();
+    mOpenVRHook->UninstallHook();
     IDXGISwapChainPresentHook::UninstallHook();
-    IVRCompositorWaitGetPosesHook::UninstallHook();
   }
 
  protected:
@@ -72,7 +75,7 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook,
     const decltype(&ovr_EndFrame)& next) {
     dprint("Detected Oculus frame");
     mFlags |= FLAG_OCULUS;
-    mOculusEndFrameHook->UninstallHook();
+    mOculusHook->UninstallHook();
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
@@ -116,16 +119,16 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook,
     return std::invoke(next, swapChain, syncInterval, flags);
   }
 
-  virtual vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
+  vr::EVRCompositorError OnIVRCompositor_WaitGetPoses(
     vr::IVRCompositor* compositor,
     vr::TrackedDevicePose_t* pRenderPoseArray,
     uint32_t unRenderPoseArrayCount,
     vr::TrackedDevicePose_t* pGamePoseArray,
     uint32_t unGamePoseArrayCount,
-    const decltype(&vr::IVRCompositor::WaitGetPoses)& next) override {
+    const decltype(&vr::IVRCompositor::WaitGetPoses)& next) {
     dprint("Detected SteamVR frame");
     mFlags |= FLAG_STEAMVR;
-    IVRCompositorWaitGetPosesHook::UninstallHook();
+    mOpenVRHook->UninstallHook();
     return std::invoke(
       next,
       compositor,
