@@ -4,7 +4,7 @@
 
 namespace OpenKneeboard {
 
-void dprint(const std::string& s);
+void dprint(std::string_view s);
 
 template <typename... T>
 void dprintf(fmt::format_string<T...> fmt, T&&... args) {

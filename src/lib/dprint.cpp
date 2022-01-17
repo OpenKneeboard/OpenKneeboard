@@ -5,7 +5,7 @@ namespace OpenKneeboard {
 
 static DPrintSettings gSettings;
 
-void dprint(const std::string& message) {
+void dprint(std::string_view message) {
   auto target = gSettings.target;
 
   if (target == DPrintSettings::Target::DEFAULT) {
