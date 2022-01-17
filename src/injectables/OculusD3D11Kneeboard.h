@@ -8,8 +8,7 @@
 
 namespace OpenKneeboard {
 
-class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer,
-                                   private IDXGISwapChainPresentHook {
+class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
  public:
   OculusD3D11Kneeboard();
   virtual ~OculusD3D11Kneeboard();
@@ -17,12 +16,6 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer,
   void UninstallHook();
 
  protected:
-  virtual HRESULT OnIDXGISwapChain_Present(
-    IDXGISwapChain* this_,
-    UINT syncInterval,
-    UINT flags,
-    const decltype(&IDXGISwapChain::Present)& next) override;
-
   virtual ovrTextureSwapChain GetSwapChain(
     ovrSession session,
     const SHM::Config& config) override final;
@@ -37,6 +30,14 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer,
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
   ovrTextureSwapChain mSwapChain = nullptr;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
+
   std::unique_ptr<OculusKneeboard> mOculusKneeboard;
+  std::unique_ptr<IDXGISwapChainPresentHook> mDXGIHook;
+
+  HRESULT OnIDXGISwapChain_Present(
+    IDXGISwapChain* this_,
+    UINT syncInterval,
+    UINT flags,
+    const decltype(&IDXGISwapChain::Present)& next);
 };
 }// namespace OpenKneeboard

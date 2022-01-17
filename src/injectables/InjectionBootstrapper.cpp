@@ -26,7 +26,7 @@ namespace OpenKneeboard {
  * D3D11 are used, load OpenKneeboard-oculus-d3d11.dll. "ONly D3D11" in case
  * 11on12 is used.
  */
-class InjectionBootstrapper final : private IDXGISwapChainPresentHook {
+class InjectionBootstrapper final {
  private:
   const uint64_t FLAG_D3D11 = 1 << 0;
   const uint64_t FLAG_D3D12 = 1 << 1;
@@ -39,6 +39,7 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook {
 
   std::unique_ptr<OculusEndFrameHook> mOculusHook;
   std::unique_ptr<IVRCompositorWaitGetPosesHook> mOpenVRHook;
+  std::unique_ptr<IDXGISwapChainPresentHook> mDXGIHook;
 
  public:
   InjectionBootstrapper() = delete;
@@ -52,7 +53,9 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook {
       .onWaitGetPoses = std::bind_front(
         &InjectionBootstrapper::OnIVRCompositor_WaitGetPoses, this),
     });
-    IDXGISwapChainPresentHook::InitWithVTable();
+    mDXGIHook = IDXGISwapChainPresentHook::make_unique({
+      .onPresent = std::bind_front(&InjectionBootstrapper::OnIDXGISwapChain_Present, this),
+    });
   }
 
   ~InjectionBootstrapper() {
@@ -62,7 +65,7 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook {
   void UninstallHook() {
     mOculusHook->UninstallHook();
     mOpenVRHook->UninstallHook();
-    IDXGISwapChainPresentHook::UninstallHook();
+    mDXGIHook->UninstallHook();
   }
 
  protected:
@@ -100,11 +103,13 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook {
     dprint("... but couldn't figure out the DirectX version");
   }
 
-  virtual HRESULT OnIDXGISwapChain_Present(
+  HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* swapChain,
     UINT syncInterval,
     UINT flags,
-    const decltype(&IDXGISwapChain::Present)& next) override {
+    const decltype(&IDXGISwapChain::Present)& next) {
+    // FIXME
+    dprintf("stage2: {:#018x} {:#018x}", (intptr_t(swapChain)), std::bit_cast<intptr_t>(next));
     if (mFrames == 0) {
       SetD3DFlags(swapChain);
     }
@@ -112,7 +117,6 @@ class InjectionBootstrapper final : private IDXGISwapChainPresentHook {
 
     // Wait for anything else, e.g. SteamVR, Oculus, OpenVR
     if (mFrames >= 30) {
-      IDXGISwapChainPresentHook::UninstallHook();
       Next();
     }
 
@@ -199,6 +203,8 @@ static HMODULE gModule = nullptr;
 static void CleanupHookInstance() {
   if (gInstance) {
     dprint("----- Cleaning up bootstrapper instance -----");
+    gInstance->UninstallHook();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     gInstance.reset();
   }
 }

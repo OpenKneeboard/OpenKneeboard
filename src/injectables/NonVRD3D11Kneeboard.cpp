@@ -2,7 +2,6 @@
 
 #include <DirectXTK/SpriteBatch.h>
 #include <DirectXTK/WICTextureLoader.h>
-#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
 #include <dxgi.h>
 #include <winrt/base.h>
@@ -11,12 +10,11 @@
 
 namespace OpenKneeboard {
 
-struct NonVRD3D11Kneeboard::Impl {
-  SHM::Reader shm;
-};
-
-NonVRD3D11Kneeboard::NonVRD3D11Kneeboard() : p(std::make_unique<Impl>()) {
-  IDXGISwapChainPresentHook::InitWithVTable();
+NonVRD3D11Kneeboard::NonVRD3D11Kneeboard() {
+  mDXGIHook = IDXGISwapChainPresentHook::make_unique({
+    .onPresent
+    = std::bind_front(&NonVRD3D11Kneeboard::OnIDXGISwapChain_Present, this),
+  });
 }
 
 NonVRD3D11Kneeboard::~NonVRD3D11Kneeboard() {
@@ -24,7 +22,7 @@ NonVRD3D11Kneeboard::~NonVRD3D11Kneeboard() {
 }
 
 void NonVRD3D11Kneeboard::UninstallHook() {
-  IDXGISwapChainPresentHook::UninstallHook();
+  mDXGIHook->UninstallHook();
 }
 
 HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
@@ -32,7 +30,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   UINT syncInterval,
   UINT flags,
   const decltype(&IDXGISwapChain::Present)& next) {
-  auto shm = p->shm.MaybeGet();
+  auto shm = mSHM.MaybeGet();
   if (!shm) {
     return std::invoke(next, swapChain, syncInterval, flags);
   }

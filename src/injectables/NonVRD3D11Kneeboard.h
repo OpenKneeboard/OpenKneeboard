@@ -1,29 +1,30 @@
 #pragma once
 
+#include <OpenKneeboard/SHM.h>
+
 #include <memory>
 
-#include "IDXGISwapChainPresentHook.h"
 #include "DllHook.h"
+#include "IDXGISwapChainPresentHook.h"
 
 namespace OpenKneeboard {
 
-class NonVRD3D11Kneeboard final : private IDXGISwapChainPresentHook {
+class NonVRD3D11Kneeboard final {
  public:
   NonVRD3D11Kneeboard();
   virtual ~NonVRD3D11Kneeboard();
 
   void UninstallHook();
 
- protected:
-  virtual HRESULT OnIDXGISwapChain_Present(
+ private:
+  SHM::Reader mSHM;
+  std::unique_ptr<IDXGISwapChainPresentHook> mDXGIHook;
+
+  HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,
     UINT syncInterval,
     UINT flags,
-    const decltype(&IDXGISwapChain::Present)& next) override;
-
- private:
-  struct Impl;
-  std::unique_ptr<Impl> p;
+    const decltype(&IDXGISwapChain::Present)& next);
 };
 
 }// namespace OpenKneeboard
