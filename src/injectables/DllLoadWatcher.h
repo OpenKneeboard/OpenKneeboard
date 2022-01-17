@@ -1,24 +1,39 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 
 namespace OpenKneeboard {
 
-class DllLoadWatcher {
+/** Trigger a callback when a DLL is loaded.
+ *
+ * This has inherent race conditions, as another thread could
+ * load a library in between checking if it's present, and
+ * installing the hook.
+ * 
+ * Recommended usage is to make your `onDllLoaded` callback:
+ * - guard itself with a mutex
+ * - handle multiple calls
+ * - check if the DLL is loaded
+ */
+class DllLoadWatcher final {
+ public:
+  DllLoadWatcher(std::string_view name);
+  ~DllLoadWatcher();
+
+  bool IsDllLoaded() const;
+
+  struct Callbacks {
+    std::function<void()> onHookInstalled;
+    std::function<void()> onDllLoaded;
+  };
+
+  void InstallHook(const Callbacks&);
+  void UninstallHook();
  private:
   struct Impl;
   std::unique_ptr<Impl> p;
-
- public:
-  virtual ~DllLoadWatcher();
-
- protected:
-  DllLoadWatcher(const std::string& name);
-  // Call from your constructor
-  void InitWithVTable();
-
-  virtual void OnDllLoad(const std::string& name) = 0;
 };
 
 }// namespace OpenKneeboard

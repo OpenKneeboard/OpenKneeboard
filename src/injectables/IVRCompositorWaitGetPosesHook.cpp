@@ -3,9 +3,10 @@
 #include <OpenKneeboard/dprint.h>
 
 #include <bit>
+#include <mutex>
 #include <stdexcept>
 
-#include "DllHook.h"
+#include "DllLoadWatcher.h"
 #include "detours-ext.h"
 
 namespace OpenKneeboard {
@@ -46,23 +47,20 @@ class ScopedRWX {
 
 }// namespace
 
-struct IVRCompositorWaitGetPosesHook::Impl : public DllHook {
+struct IVRCompositorWaitGetPosesHook::Impl {
   Impl(const Callbacks& callbacks)
-    : DllHook(MODULE_NAME), mCallbacks(callbacks) {
-    if (gInstance) {
-      throw std::logic_error(
-        "Only one IVRCompositorWaitGetPosesHook instance at a time");
-    }
-    this->InitWithVTable();
+    : mLibOpenVR(MODULE_NAME), mCallbacks(callbacks) {
   }
 
   ~Impl() {
     UninstallHook();
   }
 
+  DllLoadWatcher mLibOpenVR {MODULE_NAME};
+
   IVRCompositor_VTable* mVTable = nullptr;
 
-  virtual void InstallHook() override;
+  void InstallHook();
   void UninstallHook();
 
   void InstallCompositorHook(vr::IVRCompositor* compositor);
@@ -82,6 +80,7 @@ struct IVRCompositorWaitGetPosesHook::Impl : public DllHook {
   static Impl* gInstance;
   Callbacks mCallbacks;
   bool mHookedVRGetGenericInterface = false;
+  std::mutex mInstallMutex;
 };
 
 IVRCompositorWaitGetPosesHook::Impl*
@@ -94,6 +93,7 @@ IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook() {
 
 void IVRCompositorWaitGetPosesHook::InstallHook(const Callbacks& callbacks) {
   p = std::make_unique<Impl>(callbacks);
+  p->InstallHook();
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(
@@ -151,6 +151,8 @@ void IVRCompositorWaitGetPosesHook::Impl::UninstallHook() {
     return;
   }
 
+  mLibOpenVR.UninstallHook();
+
   if (mVTable) {
     ScopedRWX rwx(mVTable);
     mVTable->mWaitGetPoses
@@ -193,6 +195,19 @@ IVRCompositorWaitGetPosesHook::Impl::Hooked_IVRCompositor_WaitGetPoses(
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
+  std::unique_lock lock(mInstallMutex);
+  if (gInstance == this) {
+    return;
+  }
+
+  if (gInstance) {
+    throw std::logic_error("Only one IVRCompositorWaitGetPoseHook at a time");
+  }
+
+  if (!mLibOpenVR.IsDllLoaded()) {
+    return;
+  }
+
   Real_VR_GetGenericInterface
     = reinterpret_cast<decltype(&vr::VR_GetGenericInterface)>(
       DetourFindFunction(MODULE_NAME, "VR_GetGenericInterface"));
@@ -202,6 +217,8 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
     dprintf("Did not find OpenVR API");
     return;
   }
+
+  gInstance = this;
 
   vr::EVRInitError vrError;
   auto compositor = reinterpret_cast<vr::IVRCompositor*>(

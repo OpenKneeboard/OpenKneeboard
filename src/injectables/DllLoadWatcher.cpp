@@ -64,7 +64,7 @@ NTSTATUS NTAPI LdrUnregisterDllNotification(_In_ PVOID Cookie);
 namespace OpenKneeboard {
 
 struct DllLoadWatcher::Impl {
-  DllLoadWatcher* mWatcher = nullptr;
+  Callbacks mCallbacks;
   void* mCookie = nullptr;
 
   std::string mName;
@@ -76,16 +76,21 @@ struct DllLoadWatcher::Impl {
   static DWORD WINAPI NotificationThread(void* arg);
 };
 
-DllLoadWatcher::DllLoadWatcher(const std::string& name)
+DllLoadWatcher::DllLoadWatcher(std::string_view name)
   : p(std::make_unique<Impl>()) {
-  p->mWatcher = this;
-  p->mName = name;
+  p->mName = std::string(name);
 }
 
-void DllLoadWatcher::InitWithVTable() {
-  if (GetModuleHandleA(p->mName.c_str())) {
-    return;
+bool DllLoadWatcher::IsDllLoaded() const {
+  return GetModuleHandleA(p->mName.c_str());
+}
+
+void DllLoadWatcher::InstallHook(const Callbacks& callbacks) {
+  if (!callbacks.onDllLoaded) {
+    throw std::logic_error("DLL load hook with no onDllLoaded callback?");
   }
+
+  p->mCallbacks = callbacks;
 
   auto f = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
     DetourFindFunction("Ntdll.dll", "LdrRegisterDllNotification"));
@@ -101,11 +106,18 @@ void DllLoadWatcher::InitWithVTable() {
     return;
   }
   dprintf("DllLoadWatcher++ {}", p->mName);
+  if (callbacks.onHookInstalled) {
+    callbacks.onHookInstalled();
+  }
 }
 
 DllLoadWatcher::~DllLoadWatcher() {
+  this->UninstallHook();
+}
+
+void DllLoadWatcher::UninstallHook() {
   if (!p->mCookie) {
-    // We never installed the hook
+    // We never installed the hook, or it's already uninstalled
     return;
   }
   auto f = reinterpret_cast<decltype(&LdrUnregisterDllNotification)>(
@@ -120,6 +132,7 @@ DllLoadWatcher::~DllLoadWatcher() {
     return;
   }
   dprintf("DllLoadWatcher-- {}", p->mName);
+  p->mCookie = nullptr;
 }
 
 DWORD WINAPI DllLoadWatcher::Impl::NotificationThread(void* _arg) {
@@ -131,7 +144,7 @@ DWORD WINAPI DllLoadWatcher::Impl::NotificationThread(void* _arg) {
   // As LoadLibraryA internally locks, we can just call it again, at the
   // cost of an extra incref+decref.
   FreeLibrary(LoadLibraryA(p->mName.c_str()));
-  p->mWatcher->OnDllLoad(p->mName);
+  p->mCallbacks.onDllLoaded();
   return S_OK;
 }
 

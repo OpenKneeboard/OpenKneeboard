@@ -4,7 +4,6 @@
 
 #include <memory>
 
-#include "DllHook.h"
 #include "IDXGISwapChainPresentHook.h"
 
 namespace OpenKneeboard {

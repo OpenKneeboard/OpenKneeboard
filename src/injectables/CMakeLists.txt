@@ -9,14 +9,6 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-dprint)
 
-add_library(OpenKneeboard-DllHook STATIC DllHook.cpp)
-target_link_libraries(
-  OpenKneeboard-DllHook
-  PRIVATE
-  OpenKneeboard-DllLoadWatcher
-  OpenKneeboard-dprint)
-
-
 add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(dxgi-hooks PRIVATE detours-ext OpenKneeboard-dprint)
 
@@ -30,14 +22,14 @@ add_library(
   OculusKneeboard.cpp
   OVRProxy.cpp)
 target_link_libraries(
-	oculus-hooks
-	PUBLIC
-	detours-ext
-	oculus-sdk-headers
-	OpenKneeboard-DllHook
-	OpenKneeboard-dprint
-	OpenKneeboard-SHM
-	directxtk)
+  oculus-hooks
+  PUBLIC
+  detours-ext
+  oculus-sdk-headers
+  OpenKneeboard-DllLoadWatcher
+  OpenKneeboard-dprint
+  OpenKneeboard-SHM
+  directxtk)
 
 add_library(openvr-hooks STATIC IVRCompositorWaitGetPosesHook.cpp)
 target_link_libraries(
@@ -55,12 +47,12 @@ add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
   PRIVATE
-	directxtk
+  directxtk
   dxgi-hooks
   detours-ext
   OpenKneeboard-dprint
-	OpenKneeboard-SHM
-	OpenKneeboard-DllHook)
+  OpenKneeboard-SHM
+  OpenKneeboard-DllLoadWatcher)
 
 add_library(OpenKneeboard-oculus-d3d11 MODULE OculusD3D11Kneeboard.cpp)
 target_link_libraries(

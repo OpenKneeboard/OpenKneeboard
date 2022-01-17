@@ -2,9 +2,10 @@
 
 #include <OpenKneeboard/dprint.h>
 
+#include <mutex>
 #include <stdexcept>
 
-#include "DllHook.h"
+#include "DllLoadWatcher.h"
 #include "detours-ext.h"
 
 // Not declared in modern Oculus SDK headers, but used by some games (like DCS
@@ -30,18 +31,18 @@ namespace OpenKneeboard {
 
 static const char* MODULE_NAME = "LibOVRRT64_1.dll";
 
-struct OculusEndFrameHook::Impl : public DllHook {
+struct OculusEndFrameHook::Impl {
   Impl(const Callbacks&);
   ~Impl();
 
-  using DllHook::InitWithVTable;
-
-  virtual void InstallHook() override;
+  void InstallHook();
   void UninstallHook();
 
  private:
   static Impl* gInstance;
+  DllLoadWatcher mLibOVR { MODULE_NAME };
   Callbacks mCallbacks;
+  std::mutex mInstallMutex;
 
 #define IT(x) \
   static decltype(&x) next_##x; \
@@ -64,7 +65,6 @@ OculusEndFrameHook::OculusEndFrameHook() {
 
 void OculusEndFrameHook::InstallHook(const Callbacks& cb) {
   p = std::make_unique<Impl>(cb);
-  p->InitWithVTable();
 }
 
 OculusEndFrameHook::~OculusEndFrameHook() {
@@ -79,14 +79,28 @@ void OculusEndFrameHook::UninstallHook() {
 }
 
 OculusEndFrameHook::Impl::Impl(const Callbacks& cb)
-  : DllHook(MODULE_NAME), mCallbacks(cb) {
+  : mLibOVR(MODULE_NAME), mCallbacks(cb) {
+  mLibOVR.InstallHook({
+    .onDllLoaded = std::bind_front(&Impl::InstallHook, this),
+  });
+  this->InstallHook();
+}
+
+void OculusEndFrameHook::Impl::InstallHook() {
+  std::unique_lock lock(mInstallMutex);
+  if (!mLibOVR.IsDllLoaded()) {
+    return;
+  }
+
+  if (gInstance == this) {
+    return;
+  }
+
   if (gInstance) {
     throw std::logic_error("Can only have one OculusEndFrameHook at a time");
   }
   gInstance = this;
-}
 
-void OculusEndFrameHook::Impl::InstallHook() {
   // Find outside of the transaction as DetourFindFunction calls LoadLibrary
 #define IT(x) \
   next_##x \
@@ -115,6 +129,7 @@ void OculusEndFrameHook::Impl::UninstallHook() {
   if (gInstance != this) {
     return;
   }
+  mLibOVR.UninstallHook();
 
   {
     DetourTransaction dt;
