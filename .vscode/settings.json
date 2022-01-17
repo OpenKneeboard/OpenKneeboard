@@ -86,7 +86,9 @@
     "typeindex": "cpp",
     "variant": "cpp",
     "random": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "mutex": "cpp",
+    "numbers": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",

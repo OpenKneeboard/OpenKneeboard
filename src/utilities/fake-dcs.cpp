@@ -21,15 +21,23 @@ int main() {
   (GameEvent {DCS::EVT_AIRCRAFT, AIRCRAFT}).Send();
   (GameEvent {DCS::EVT_TERRAIN, TERRAIN}).Send();
 
-  for (auto i = 0; i < 15; ++i) {
-    auto message = fmt::format("{}a - single line", i);
-    (GameEvent {DCS::EVT_RADIO_MESSAGE, message}).Send();
-    message = fmt::format(
-      "{}b - multi line - 12345678901234567890123456789012345678901234567890"
-      "1234567890123456789012345678901234567890123456789012345678901234567890"
-      "1234567890123456789012345678901234567890123456789012345678901234567890",
-      i);
-    (GameEvent {DCS::EVT_RADIO_MESSAGE, message}).Send();
+  const std::vector<const char*> messages = {
+    "Simple single line",
+    "Word wrap012345678901234567890123456789012345678901234567890"
+    "--34567890123456789012345678901234567890123456789012345678901234567890"
+    "--34567890123456789012345678901234567890123456789012345678901234567890",
+    "One Break\nMore",
+    "normal line",
+    "Two Break\n\nMore",
+    "normal line",
+    "Trailing break\n",
+    "normal line",
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    for (auto message: messages) {
+      (GameEvent {DCS::EVT_RADIO_MESSAGE, message}).Send();
+    }
   }
 
   printf("Sent data.\n");

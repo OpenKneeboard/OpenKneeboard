@@ -210,36 +210,54 @@ void DCSRadioLogTab::Impl::LayoutMessages() {
 
   auto& pageLines = mCurrentPageLines;
   for (const auto& message: mMessages) {
-    std::vector<std::wstring> messageLines;
+    std::vector<std::wstring_view> rawLines;
     std::wstring_view remaining(message);
     while (!remaining.empty()) {
-      if (remaining.size() <= mColumns) {
-        messageLines.push_back(std::wstring(remaining));
-        break;
-      }
-      auto space = remaining.find_last_of(L" ", mColumns);
-      if (space == remaining.npos) {
-        messageLines.push_back(std::wstring(remaining.substr(0, mColumns)));
-        if (remaining.size() > mColumns) {
-          remaining = remaining.substr(mColumns);
-          continue;
-        }
+      auto newline = remaining.find_first_of(L"\n");
+      if (newline == remaining.npos) {
+        rawLines.push_back(remaining);
         break;
       }
 
-      messageLines.push_back(std::wstring(remaining.substr(0, space)));
-      if (remaining.size() > space + 1) {
-        remaining = remaining.substr(space + 1);
-        continue;
+      rawLines.push_back(remaining.substr(0, newline));
+      if (remaining.size() <= newline) {
+        break;
       }
-      break;
+      remaining = remaining.substr(newline + 1);
     }
 
-    if (messageLines.size() > mRows) {
+    std::vector<std::wstring_view> wrappedLines;
+    for (auto remaining: rawLines) {
+      while (true) {
+        if (remaining.size() <= mColumns) {
+          wrappedLines.push_back(remaining);
+          break;
+        }
+
+        auto space = remaining.find_last_of(L" ", mColumns);
+        if (space != remaining.npos) {
+          wrappedLines.push_back(remaining.substr(0, space));
+          if (remaining.size() <= space) {
+            break;
+          }
+          remaining = remaining.substr(space + 1);
+          continue;
+        }
+
+        wrappedLines.push_back(remaining.substr(0, mColumns));
+        if (remaining.size() <= mColumns) {
+          break;
+        }
+        remaining = remaining.substr(mColumns);
+      }
+    }
+
+    if (wrappedLines.size() >= mRows) {
       if (!pageLines.empty()) {
         pageLines.push_back({});
       }
-      for (const auto& line: messageLines) {
+
+      for (const auto& line: wrappedLines) {
         if (pageLines.size() >= mRows) {
           PushPage();
         }
@@ -251,21 +269,18 @@ void DCSRadioLogTab::Impl::LayoutMessages() {
     // If we reach here, we can fit the full message on one page. Now figure
     // out if we want a new page first.
     if (pageLines.empty()) {
-      pageLines = messageLines;
-      continue;
-    }
-
-    if (mRows - pageLines.size() >= messageLines.size() + 1) {
+      // do nothing
+    } else if (mRows - pageLines.size() >= wrappedLines.size() + 1) {
+      // Add a blank line first
       pageLines.push_back({});
-      std::copy(
-        messageLines.begin(),
-        messageLines.end(),
-        std::back_inserter(pageLines));
-      continue;
+    } else {
+      // We need a new page
+      PushPage();
     }
 
-    PushPage();
-    pageLines = messageLines;
+    for (auto line: wrappedLines) {
+      pageLines.push_back(std::wstring(line));
+    }
   }
   mMessages.clear();
 }
