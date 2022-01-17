@@ -58,9 +58,12 @@ struct OculusEndFrameHook::Impl : public DllHook {
 
 OculusEndFrameHook::Impl* OculusEndFrameHook::Impl::gInstance = nullptr;
 
-OculusEndFrameHook::OculusEndFrameHook(const Callbacks& cb)
-  : p(std::make_unique<Impl>(cb)) {
-  dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
+OculusEndFrameHook::OculusEndFrameHook() {
+  dprint(__FUNCTION__);
+}
+
+void OculusEndFrameHook::InstallHook(const Callbacks& cb) {
+  p = std::make_unique<Impl>(cb);
   p->InitWithVTable();
 }
 
@@ -70,7 +73,9 @@ OculusEndFrameHook::~OculusEndFrameHook() {
 }
 
 void OculusEndFrameHook::UninstallHook() {
-  p->UninstallHook();
+  if (p) {
+    p->UninstallHook();
+  }
 }
 
 OculusEndFrameHook::Impl::Impl(const Callbacks& cb)
@@ -138,7 +143,8 @@ void OculusEndFrameHook::Impl::UninstallHook() {
         layerCount, \
         next_##x); \
     } \
-    return next_##x(session, frameIndex, viewScaleDesc, layerPtrList, layerCount); \
+    return next_##x( \
+      session, frameIndex, viewScaleDesc, layerPtrList, layerCount); \
   }
 HOOKED_ENDFRAME_FUNCS
 #undef IT

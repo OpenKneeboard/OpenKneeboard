@@ -166,7 +166,6 @@ struct IDXGISwapChainPresentHook::Impl {
 
   void UninstallHook();
 
-
  private:
   static Impl* gInstance;
   static decltype(&IDXGISwapChain::Present) Next_IDXGISwapChain_Present;
@@ -180,11 +179,18 @@ struct IDXGISwapChainPresentHook::Impl {
     UINT SyncInterval,
     UINT Flags);
 };
-IDXGISwapChainPresentHook::Impl* IDXGISwapChainPresentHook::Impl::gInstance = nullptr;
-decltype(&IDXGISwapChain::Present) IDXGISwapChainPresentHook::Impl::Next_IDXGISwapChain_Present = nullptr;
+IDXGISwapChainPresentHook::Impl* IDXGISwapChainPresentHook::Impl::gInstance
+  = nullptr;
+decltype(&IDXGISwapChain::Present)
+  IDXGISwapChainPresentHook::Impl::Next_IDXGISwapChain_Present
+  = nullptr;
 
-IDXGISwapChainPresentHook::IDXGISwapChainPresentHook(const Callbacks& cb)
-  : p(std::make_unique<Impl>(cb)) {
+IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
+  dprint(__FUNCTION__);
+}
+
+void IDXGISwapChainPresentHook::InstallHook(const Callbacks& cb){
+  p = std::make_unique<Impl>(cb);
 }
 
 IDXGISwapChainPresentHook::~IDXGISwapChainPresentHook() {
@@ -193,7 +199,9 @@ IDXGISwapChainPresentHook::~IDXGISwapChainPresentHook() {
 }
 
 void IDXGISwapChainPresentHook::UninstallHook() {
-  p->UninstallHook();
+  if (p) {
+    p->UninstallHook();
+  }
 }
 
 void IDXGISwapChainPresentHook::Impl::UninstallHook() {

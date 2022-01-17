@@ -88,10 +88,12 @@ IVRCompositorWaitGetPosesHook::Impl*
   IVRCompositorWaitGetPosesHook::Impl::gInstance
   = nullptr;
 
-IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook(
-  const Callbacks& callbacks)
-  : p(std::make_unique<Impl>(callbacks)) {
+IVRCompositorWaitGetPosesHook::IVRCompositorWaitGetPosesHook() {
   dprint(__FUNCTION__);
+}
+
+void IVRCompositorWaitGetPosesHook::InstallHook(const Callbacks& callbacks) {
+  p = std::make_unique<Impl>(callbacks);
 }
 
 void IVRCompositorWaitGetPosesHook::Impl::InstallCompositorHook(

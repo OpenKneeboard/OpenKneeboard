@@ -92,7 +92,8 @@ void OculusKneeboard::UninstallHook() {
 }
 
 OculusKneeboard::Impl::Impl(Renderer* renderer) : mRenderer(renderer) {
-  mEndFrameHook = OculusEndFrameHook::make_unique({
+  mEndFrameHook = std::make_unique<OculusEndFrameHook>();
+  mEndFrameHook->InstallHook({
     .onEndFrame = std::bind_front(&Impl::OnOVREndFrame, this),
   });
 }

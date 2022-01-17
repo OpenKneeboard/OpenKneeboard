@@ -23,6 +23,9 @@ class OculusEndFrameHook final {
   std::unique_ptr<Impl> p;
 
  public:
+  OculusEndFrameHook();
+  ~OculusEndFrameHook();
+
   struct Callbacks {
     std::function<void()> onHookInstalled;
     std::function<ovrResult(
@@ -34,18 +37,8 @@ class OculusEndFrameHook final {
       const decltype(&ovr_EndFrame)& next)>
       onEndFrame;
   };
-  OculusEndFrameHook(const Callbacks& callbacks);
-  ~OculusEndFrameHook();
 
-  inline static auto make_unique(const Callbacks& callbacks) {
-    return std::make_unique<OculusEndFrameHook>(callbacks);
-  }
-
-  /** Automatically called by the destructor.
-   *
-   * You might want to call this earlier if you want to uninstall the hook
-   * while the hook is potentially in use.
-   */
+  void InstallHook(const Callbacks&);
   void UninstallHook();
 };
 

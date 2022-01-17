@@ -45,16 +45,21 @@ class InjectionBootstrapper final {
   InjectionBootstrapper() = delete;
 
   explicit InjectionBootstrapper(HMODULE self) : mThisModule(self) {
-    mOculusHook = OculusEndFrameHook::make_unique({
+    mOculusHook = std::make_unique<OculusEndFrameHook>();
+    mOpenVRHook = std::make_unique<IVRCompositorWaitGetPosesHook>();
+    mDXGIHook = std::make_unique<IDXGISwapChainPresentHook>();
+
+    mOculusHook->InstallHook({
       .onEndFrame
       = std::bind_front(&InjectionBootstrapper::OnOVREndFrame, this),
     });
-    mOpenVRHook = IVRCompositorWaitGetPosesHook::make_unique({
+    mOpenVRHook->InstallHook({
       .onWaitGetPoses = std::bind_front(
         &InjectionBootstrapper::OnIVRCompositor_WaitGetPoses, this),
     });
-    mDXGIHook = IDXGISwapChainPresentHook::make_unique({
-      .onPresent = std::bind_front(&InjectionBootstrapper::OnIDXGISwapChain_Present, this),
+    mDXGIHook->InstallHook({
+      .onPresent
+      = std::bind_front(&InjectionBootstrapper::OnIDXGISwapChain_Present, this),
     });
   }
 
@@ -108,8 +113,6 @@ class InjectionBootstrapper final {
     UINT syncInterval,
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next) {
-    // FIXME
-    dprintf("stage2: {:#018x} {:#018x}", (intptr_t(swapChain)), std::bit_cast<intptr_t>(next));
     if (mFrames == 0) {
       SetD3DFlags(swapChain);
     }

@@ -15,6 +15,9 @@ namespace OpenKneeboard {
  */
 class IDXGISwapChainPresentHook final {
  public:
+  IDXGISwapChainPresentHook();
+  ~IDXGISwapChainPresentHook();
+
   struct Callbacks {
     std::function<void()> onHookInstalled;
     std::function<HRESULT(
@@ -24,14 +27,8 @@ class IDXGISwapChainPresentHook final {
       const decltype(&IDXGISwapChain::Present)& next)>
       onPresent;
   };
-  IDXGISwapChainPresentHook() = delete;
-  IDXGISwapChainPresentHook(const Callbacks& callbacks);
-  ~IDXGISwapChainPresentHook();
 
-  static inline auto make_unique(const Callbacks& callbacks) {
-    return std::make_unique<IDXGISwapChainPresentHook>(callbacks);
-  }
-
+  void InstallHook(const Callbacks& callbacks);
   void UninstallHook();
 
  private:

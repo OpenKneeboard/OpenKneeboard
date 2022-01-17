@@ -19,23 +19,23 @@ namespace OpenKneeboard {
  */
 class IVRCompositorWaitGetPosesHook final {
  public:
+  IVRCompositorWaitGetPosesHook();
+  ~IVRCompositorWaitGetPosesHook();
+
   struct Callbacks {
     std::function<void()> onHookInstalled;
-	std::function<vr::EVRCompositorError(
-		vr::IVRCompositor* this_,
-		vr::TrackedDevicePose_t* pRenderPoseArray,
-		uint32_t unRenderPoseArrayCount,
-		vr::TrackedDevicePose_t* pGamePoseArray,
-		uint32_t unGamePoseArrayCount,
-		const decltype(&vr::IVRCompositor::WaitGetPoses)& next)> onWaitGetPoses;
+    std::function<vr::EVRCompositorError(
+      vr::IVRCompositor* this_,
+      vr::TrackedDevicePose_t* pRenderPoseArray,
+      uint32_t unRenderPoseArrayCount,
+      vr::TrackedDevicePose_t* pGamePoseArray,
+      uint32_t unGamePoseArrayCount,
+      const decltype(&vr::IVRCompositor::WaitGetPoses)& next)>
+      onWaitGetPoses;
   };
-  IVRCompositorWaitGetPosesHook(const Callbacks& callbacks);
-  ~IVRCompositorWaitGetPosesHook();
-  void UninstallHook();
 
-  static inline auto make_unique(const Callbacks& cb) {
-    return std::make_unique<IVRCompositorWaitGetPosesHook>(cb);
-  }
+  void InstallHook(const Callbacks& cb);
+  void UninstallHook();
 
  private:
   struct Impl;
