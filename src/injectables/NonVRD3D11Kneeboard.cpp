@@ -11,8 +11,7 @@
 namespace OpenKneeboard {
 
 NonVRD3D11Kneeboard::NonVRD3D11Kneeboard() {
-  mDXGIHook = std::make_unique<IDXGISwapChainPresentHook>();
-  mDXGIHook->InstallHook({
+  mDXGIHook.InstallHook({
     .onPresent
     = std::bind_front(&NonVRD3D11Kneeboard::OnIDXGISwapChain_Present, this),
   });
@@ -23,7 +22,7 @@ NonVRD3D11Kneeboard::~NonVRD3D11Kneeboard() {
 }
 
 void NonVRD3D11Kneeboard::UninstallHook() {
-  mDXGIHook->UninstallHook();
+  mDXGIHook.UninstallHook();
 }
 
 HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(

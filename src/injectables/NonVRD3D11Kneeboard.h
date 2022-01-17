@@ -18,7 +18,7 @@ class NonVRD3D11Kneeboard final {
 
  private:
   SHM::Reader mSHM;
-  std::unique_ptr<IDXGISwapChainPresentHook> mDXGIHook;
+  IDXGISwapChainPresentHook mDXGIHook;
 
   HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,

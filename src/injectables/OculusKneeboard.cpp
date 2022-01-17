@@ -65,7 +65,7 @@ struct OculusKneeboard::Impl {
   bool mZoomed = false;
 
   SHM::Reader mSHM;
-  std::unique_ptr<OculusEndFrameHook> mEndFrameHook;
+  OculusEndFrameHook mEndFrameHook;
 
   ovrResult OnOVREndFrame(
     ovrSession session,
@@ -86,14 +86,11 @@ OculusKneeboard::~OculusKneeboard() {
 }
 
 void OculusKneeboard::UninstallHook() {
-  if (p->mEndFrameHook) {
-    p->mEndFrameHook->UninstallHook();
-  }
+  p->mEndFrameHook.UninstallHook();
 }
 
 OculusKneeboard::Impl::Impl(Renderer* renderer) : mRenderer(renderer) {
-  mEndFrameHook = std::make_unique<OculusEndFrameHook>();
-  mEndFrameHook->InstallHook({
+  mEndFrameHook.InstallHook({
     .onEndFrame = std::bind_front(&Impl::OnOVREndFrame, this),
   });
 }

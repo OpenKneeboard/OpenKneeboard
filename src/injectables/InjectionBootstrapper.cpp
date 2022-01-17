@@ -37,27 +37,23 @@ class InjectionBootstrapper final {
   uint64_t mFlags = 0;
   uint64_t mFrames = 0;
 
-  std::unique_ptr<OculusEndFrameHook> mOculusHook;
-  std::unique_ptr<IVRCompositorWaitGetPosesHook> mOpenVRHook;
-  std::unique_ptr<IDXGISwapChainPresentHook> mDXGIHook;
+  OculusEndFrameHook mOculusHook;
+  IVRCompositorWaitGetPosesHook mOpenVRHook;
+  IDXGISwapChainPresentHook mDXGIHook;
 
  public:
   InjectionBootstrapper() = delete;
 
   explicit InjectionBootstrapper(HMODULE self) : mThisModule(self) {
-    mOculusHook = std::make_unique<OculusEndFrameHook>();
-    mOpenVRHook = std::make_unique<IVRCompositorWaitGetPosesHook>();
-    mDXGIHook = std::make_unique<IDXGISwapChainPresentHook>();
-
-    mOculusHook->InstallHook({
+    mOculusHook.InstallHook({
       .onEndFrame
       = std::bind_front(&InjectionBootstrapper::OnOVREndFrame, this),
     });
-    mOpenVRHook->InstallHook({
+    mOpenVRHook.InstallHook({
       .onWaitGetPoses = std::bind_front(
         &InjectionBootstrapper::OnIVRCompositor_WaitGetPoses, this),
     });
-    mDXGIHook->InstallHook({
+    mDXGIHook.InstallHook({
       .onPresent
       = std::bind_front(&InjectionBootstrapper::OnIDXGISwapChain_Present, this),
     });
@@ -68,9 +64,9 @@ class InjectionBootstrapper final {
   }
 
   void UninstallHook() {
-    mOculusHook->UninstallHook();
-    mOpenVRHook->UninstallHook();
-    mDXGIHook->UninstallHook();
+    mOculusHook.UninstallHook();
+    mOpenVRHook.UninstallHook();
+    mDXGIHook.UninstallHook();
   }
 
  protected:
@@ -83,7 +79,7 @@ class InjectionBootstrapper final {
     const decltype(&ovr_EndFrame)& next) {
     dprint("Detected Oculus frame");
     mFlags |= FLAG_OCULUS;
-    mOculusHook->UninstallHook();
+    mOculusHook.UninstallHook();
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
@@ -135,7 +131,7 @@ class InjectionBootstrapper final {
     const decltype(&vr::IVRCompositor::WaitGetPoses)& next) {
     dprint("Detected SteamVR frame");
     mFlags |= FLAG_STEAMVR;
-    mOpenVRHook->UninstallHook();
+    mOpenVRHook.UninstallHook();
     return std::invoke(
       next,
       compositor,
