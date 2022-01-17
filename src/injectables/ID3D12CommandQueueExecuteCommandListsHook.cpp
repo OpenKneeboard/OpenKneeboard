@@ -11,7 +11,6 @@
 namespace OpenKneeboard {
 
 namespace {
-ID3D12CommandQueueExecuteCommandListsHook* gHook = nullptr;
 decltype(&ID3D12CommandQueue::ExecuteCommandLists)
   Real_ID3D12CommandQueue_ExecuteCommandLists
   = nullptr;
@@ -21,25 +20,46 @@ struct ID3D12CommandQueueExecuteCommandListsHook::Impl {
   virtual void __stdcall Hooked_ExecuteCommandLists(
     UINT NumCommandLists,
     ID3D12CommandList* const* ppCommandLists);
+
+  Impl(const Callbacks&);
+
+  void UninstallHook();
+
+ private:
+  Callbacks mCallbacks;
+  static Impl* gInstance;
 };
+ID3D12CommandQueueExecuteCommandListsHook::Impl*
+  ID3D12CommandQueueExecuteCommandListsHook::Impl::gInstance
+  = nullptr;
 
 ID3D12CommandQueueExecuteCommandListsHook::
   ID3D12CommandQueueExecuteCommandListsHook() {
-  dprintf("{} {:#018x}", __FUNCTION__, (int64_t)this);
-  if (gHook) {
-    throw std::logic_error(
-      "Only one ID3D12CommandQueueExecuteCommandList at a time!");
-  }
-  gHook = this;
 }
 
 ID3D12CommandQueueExecuteCommandListsHook::
   ~ID3D12CommandQueueExecuteCommandListsHook() {
-  dprintf("{} {:#018x}", __FUNCTION__, (int64_t)this);
   this->UninstallHook();
 }
 
-void ID3D12CommandQueueExecuteCommandListsHook::InitWithVTable() {
+void ID3D12CommandQueueExecuteCommandListsHook::InstallHook(
+  const Callbacks& cb) {
+  if (!cb.onExecuteCommandLists) {
+    throw std::logic_error(
+      "ID3D12CommandQueueExecuteCommandListsHook without onExecuteCommandLists "
+      "callback");
+  }
+  p = std::make_unique<Impl>(cb);
+}
+
+ID3D12CommandQueueExecuteCommandListsHook::Impl::Impl(const Callbacks& cb)
+  : mCallbacks(cb) {
+  if (gInstance) {
+    throw std::logic_error(
+      "Only one ID3D12CommandQueueExecuteCommandListsHook at a time");
+  }
+  gInstance = this;
+
   winrt::com_ptr<ID3D12Device> device;
   D3D12CreateDevice(
     nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.put()));
@@ -65,16 +85,27 @@ void ID3D12CommandQueueExecuteCommandListsHook::InitWithVTable() {
     dprintf(
       " - failed to hook ID3D12CommandQueue::ExecuteCommandLists(): {}", err);
   }
+
+  if (cb.onHookInstalled) {
+    cb.onHookInstalled();
+  }
 }
 
 void ID3D12CommandQueueExecuteCommandListsHook::UninstallHook() {
-  if (gHook != this) {
+  if (p) {
+    p->UninstallHook();
+  }
+}
+
+void ID3D12CommandQueueExecuteCommandListsHook::Impl::UninstallHook() {
+  if (gInstance != this) {
     return;
   }
 
   DetourSingleDetach(
     reinterpret_cast<void**>(&Real_ID3D12CommandQueue_ExecuteCommandLists),
     std::bit_cast<void*>(&Impl::Hooked_ExecuteCommandLists));
+  gInstance = nullptr;
 }
 
 void __stdcall ID3D12CommandQueueExecuteCommandListsHook::Impl::
@@ -82,8 +113,8 @@ void __stdcall ID3D12CommandQueueExecuteCommandListsHook::Impl::
     UINT NumCommandLists,
     ID3D12CommandList* const* ppCommandLists) {
   auto this_ = reinterpret_cast<ID3D12CommandQueue*>(this);
-  if (gHook) {
-    gHook->OnID3D12CommandQueue_ExecuteCommandLists(
+   if (gInstance) [[likely]] {
+    gInstance->mCallbacks.onExecuteCommandLists(
       this_,
       NumCommandLists,
       ppCommandLists,

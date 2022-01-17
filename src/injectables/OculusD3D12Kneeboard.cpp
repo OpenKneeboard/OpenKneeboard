@@ -2,10 +2,11 @@
 
 namespace OpenKneeboard {
 
-struct OculusD3D12Kneeboard::Impl {};
-
-OculusD3D12Kneeboard::OculusD3D12Kneeboard() : p(std::make_unique<Impl>()) {
-  ID3D12CommandQueueExecuteCommandListsHook::InitWithVTable();
+OculusD3D12Kneeboard::OculusD3D12Kneeboard() {
+  mExecuteCommandListsHook.InstallHook({
+    .onExecuteCommandLists = std::bind_front(
+      &OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists, this),
+  });
 }
 
 OculusD3D12Kneeboard::~OculusD3D12Kneeboard() {
@@ -13,7 +14,7 @@ OculusD3D12Kneeboard::~OculusD3D12Kneeboard() {
 }
 
 void OculusD3D12Kneeboard::UninstallHook() {
-  ID3D12CommandQueueExecuteCommandListsHook::UninstallHook();
+  mExecuteCommandListsHook.UninstallHook();
 }
 
 ovrTextureSwapChain OculusD3D12Kneeboard::GetSwapChain(
@@ -34,6 +35,8 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
   UINT NumCommandLists,
   ID3D12CommandList* const* ppCommandLists,
   const decltype(&ID3D12CommandQueue::ExecuteCommandLists)& next) {
+  // TODO: save the command queue
+  mExecuteCommandListsHook.UninstallHook();
   return std::invoke(next, this_, NumCommandLists, ppCommandLists);
 }
 

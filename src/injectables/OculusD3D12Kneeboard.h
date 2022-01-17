@@ -6,8 +6,7 @@
 namespace OpenKneeboard {
 
 class OculusD3D12Kneeboard final
-  : private OculusKneeboard::Renderer,
-    private ID3D12CommandQueueExecuteCommandListsHook {
+  : private OculusKneeboard::Renderer {
  public:
   OculusD3D12Kneeboard();
   virtual ~OculusD3D12Kneeboard();
@@ -24,14 +23,13 @@ class OculusD3D12Kneeboard final
     ovrTextureSwapChain swapChain,
     const SHM::Snapshot& snapshot) override;
 
-  virtual void OnID3D12CommandQueue_ExecuteCommandLists(
+  void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,
     UINT NumCommandLists,
     ID3D12CommandList* const* ppCommandLists,
-    const decltype(&ID3D12CommandQueue::ExecuteCommandLists)& next) override;
+    const decltype(&ID3D12CommandQueue::ExecuteCommandLists)& next);
 
  private:
-  struct Impl;
-  std::unique_ptr<Impl> p;
+  ID3D12CommandQueueExecuteCommandListsHook mExecuteCommandListsHook;
 };
 }// namespace OpenKneeboard
