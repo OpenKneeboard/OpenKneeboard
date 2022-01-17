@@ -6,9 +6,11 @@
 
 namespace OpenKneeboard {
 
-class OculusKneeboard : public OculusEndFrameHook {
+class OculusKneeboard {
  protected:
   OculusKneeboard();
+  void InitWithVTable();
+
   virtual ~OculusKneeboard();
 
   virtual ovrTextureSwapChain GetSwapChain(
@@ -23,17 +25,18 @@ class OculusKneeboard : public OculusEndFrameHook {
 
   virtual void UninstallHook();
 
-  virtual void OnOVREndFrameHookInstalled() override;
-  virtual ovrResult OnOVREndFrame(
-    ovrSession session,
-    long long frameIndex,
-    const ovrViewScaleDesc* viewScaleDesc,
-    ovrLayerHeader const* const* layerPtrList,
-    unsigned int layerCount,
-    const decltype(&ovr_EndFrame)& next) override final;
+  virtual void OnOVREndFrameHookInstalled();
  private:
   struct Impl;
   std::unique_ptr<Impl> p;
+
+	ovrResult OnOVREndFrame(
+		ovrSession session,
+		long long frameIndex,
+		const ovrViewScaleDesc* viewScaleDesc,
+		ovrLayerHeader const* const* layerPtrList,
+		unsigned int layerCount,
+		const decltype(&ovr_EndFrame)& next);
 };
 
 }// namespace OpenKneeboard

@@ -21,50 +21,47 @@ ovr_SubmitFrame2(
   IT(ovr_EndFrame) \
   IT(ovr_SubmitFrame) \
   IT(ovr_SubmitFrame2)
+#define IT(x) \
+  static_assert(std::same_as<decltype(x), decltype(ovr_EndFrame)>); \
+  HOOKED_ENDFRAME_FUNCS
+#undef IT
 
 namespace OpenKneeboard {
 
 static const char* MODULE_NAME = "LibOVRRT64_1.dll";
 
 struct OculusEndFrameHook::Impl : public DllHook {
-  Impl(OculusEndFrameHook*);
+  Impl(const Callbacks&);
   ~Impl();
 
   using DllHook::InitWithVTable;
 
   virtual void InstallHook() override;
+  void UninstallHook();
 
  private:
-  static OculusEndFrameHook* gHook;
-  OculusEndFrameHook* mHook = nullptr;
+  static Impl* gInstance;
+  Callbacks mCallbacks;
 
 #define IT(x) \
-  static_assert(std::same_as<decltype(x), decltype(ovr_EndFrame)>); \
-  static decltype(&x) real_##x; \
+  static decltype(&x) next_##x; \
   static ovrResult __cdecl x##_hook( \
     ovrSession session, \
     long long frameIndex, \
     const ovrViewScaleDesc* viewScaleDesc, \
     ovrLayerHeader const* const* layerPtrList, \
-    unsigned int layerCount) { \
-    if (!gHook) { \
-      real_##x(session, frameIndex, viewScaleDesc, layerPtrList, layerCount); \
-    } \
-    return gHook->OnOVREndFrame( \
-      session, frameIndex, viewScaleDesc, layerPtrList, layerCount, real_##x); \
-  } \
+    unsigned int layerCount); \
   static_assert(std::same_as<decltype(&x), decltype(&x##_hook)>);
   HOOKED_ENDFRAME_FUNCS
 #undef IT
 };
 
-OculusEndFrameHook* OculusEndFrameHook::Impl::gHook = nullptr;
-#define IT(x) decltype(&x) OculusEndFrameHook::Impl::real_##x = nullptr;
-HOOKED_ENDFRAME_FUNCS
-#undef IT
+OculusEndFrameHook::Impl* OculusEndFrameHook::Impl::gInstance = nullptr;
 
-OculusEndFrameHook::OculusEndFrameHook() : p(std::make_unique<Impl>(this)) {
+OculusEndFrameHook::OculusEndFrameHook(const Callbacks& cb)
+  : p(std::make_unique<Impl>(cb)) {
   dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
+  p->InitWithVTable();
 }
 
 OculusEndFrameHook::~OculusEndFrameHook() {
@@ -72,58 +69,78 @@ OculusEndFrameHook::~OculusEndFrameHook() {
   this->UninstallHook();
 }
 
-void OculusEndFrameHook::InitWithVTable() {
-  p->InitWithVTable();
-}
-
 void OculusEndFrameHook::UninstallHook() {
-  p.reset();
+  p->UninstallHook();
 }
 
-void OculusEndFrameHook::OnOVREndFrameHookInstalled() {
-}
-
-OculusEndFrameHook::Impl::Impl(OculusEndFrameHook* hook)
-  : DllHook(MODULE_NAME), mHook(hook) {
+OculusEndFrameHook::Impl::Impl(const Callbacks& cb)
+  : DllHook(MODULE_NAME), mCallbacks(cb) {
+  if (gInstance) {
+    throw std::logic_error("Can only have one OculusEndFrameHook at a time");
+  }
+  gInstance = this;
 }
 
 void OculusEndFrameHook::Impl::InstallHook() {
-  if (gHook != nullptr) {
-    throw std::logic_error("Can only have one OculusEndFrameHook at a time");
-  }
-  gHook = mHook;
-
   // Find outside of the transaction as DetourFindFunction calls LoadLibrary
 #define IT(x) \
-  real_##x \
+  next_##x \
     = reinterpret_cast<decltype(&x)>(DetourFindFunction(MODULE_NAME, #x));
   HOOKED_ENDFRAME_FUNCS
 #undef IT
 
   {
     DetourTransaction dt;
-#define IT(x) DetourAttach(reinterpret_cast<void**>(&real_##x), x##_hook);
+#define IT(x) DetourAttach(reinterpret_cast<void**>(&next_##x), x##_hook);
     HOOKED_ENDFRAME_FUNCS
 #undef IT
   }
   dprint("Attached OculusEndFrameHook");
 
-  mHook->OnOVREndFrameHookInstalled();
+  if (mCallbacks.onHookInstalled) {
+    mCallbacks.onHookInstalled();
+  }
 }
 
 OculusEndFrameHook::Impl::~Impl() {
-  if (gHook != mHook) {
+  this->UninstallHook();
+}
+
+void OculusEndFrameHook::Impl::UninstallHook() {
+  if (gInstance != this) {
     return;
   }
 
   {
     DetourTransaction dt;
-#define IT(x) DetourDetach(reinterpret_cast<void**>(&real_##x), x##_hook);
+#define IT(x) DetourDetach(reinterpret_cast<void**>(&next_##x), x##_hook);
     HOOKED_ENDFRAME_FUNCS
 #undef IT
   }
-  gHook = nullptr;
+  gInstance = nullptr;
   dprint("Detached OculusEndFrameHook");
 }
+
+#define IT(x) \
+  decltype(&x) OculusEndFrameHook::Impl::next_##x = nullptr; \
+  ovrResult OculusEndFrameHook::Impl::x##_hook( \
+    ovrSession session, \
+    long long frameIndex, \
+    const ovrViewScaleDesc* viewScaleDesc, \
+    ovrLayerHeader const* const* layerPtrList, \
+    unsigned int layerCount) { \
+    if (gInstance && gInstance->mCallbacks.onEndFrame) [[likely]] { \
+      return gInstance->mCallbacks.onEndFrame( \
+        session, \
+        frameIndex, \
+        viewScaleDesc, \
+        layerPtrList, \
+        layerCount, \
+        next_##x); \
+    } \
+    return next_##x(session, frameIndex, viewScaleDesc, layerPtrList, layerCount); \
+  }
+HOOKED_ENDFRAME_FUNCS
+#undef IT
 
 }// namespace OpenKneeboard

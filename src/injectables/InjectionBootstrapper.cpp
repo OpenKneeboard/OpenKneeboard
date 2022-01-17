@@ -21,14 +21,13 @@ namespace OpenKneeboard {
  *
  * Hook into various APIs, wait to see if they're used, and once we have enough
  * frames, load a concrete kneeboard implementation and unload itself.
- * 
+ *
  * For example, if SteamVR is used, don't load anything. If only Oculus and
  * D3D11 are used, load OpenKneeboard-oculus-d3d11.dll. "ONly D3D11" in case
  * 11on12 is used.
  */
-class InjectionBootstrapper final : private OculusEndFrameHook,
-                                  private IDXGISwapChainPresentHook,
-                                  private IVRCompositorWaitGetPosesHook {
+class InjectionBootstrapper final : private IDXGISwapChainPresentHook,
+                                    private IVRCompositorWaitGetPosesHook {
  private:
   const uint64_t FLAG_D3D11 = 1 << 0;
   const uint64_t FLAG_D3D12 = 1 << 1;
@@ -39,11 +38,16 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
   uint64_t mFlags = 0;
   uint64_t mFrames = 0;
 
+  std::unique_ptr<OculusEndFrameHook> mOculusEndFrameHook;
+
  public:
   InjectionBootstrapper() = delete;
 
   explicit InjectionBootstrapper(HMODULE self) : mThisModule(self) {
-    OculusEndFrameHook::InitWithVTable();
+    mOculusEndFrameHook = OculusEndFrameHook::make_unique({
+      .onEndFrame
+      = std::bind_front(&InjectionBootstrapper::OnOVREndFrame, this),
+    });
     IDXGISwapChainPresentHook::InitWithVTable();
     IVRCompositorWaitGetPosesHook::InitWithVTable();
   }
@@ -53,25 +57,23 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
   }
 
   void UninstallHook() {
-    OculusEndFrameHook::UninstallHook();
+    mOculusEndFrameHook->UninstallHook();
     IDXGISwapChainPresentHook::UninstallHook();
     IVRCompositorWaitGetPosesHook::UninstallHook();
   }
 
  protected:
-  virtual ovrResult OnOVREndFrame(
+  ovrResult OnOVREndFrame(
     ovrSession session,
     long long frameIndex,
     const ovrViewScaleDesc* viewScaleDesc,
     ovrLayerHeader const* const* layerPtrList,
     unsigned int layerCount,
-    const decltype(&ovr_EndFrame)& next) override {
+    const decltype(&ovr_EndFrame)& next) {
     dprint("Detected Oculus frame");
     mFlags |= FLAG_OCULUS;
-    auto ret
-      = next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
-    OculusEndFrameHook::UninstallHook();
-    return ret;
+    mOculusEndFrameHook->UninstallHook();
+    return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
   void SetD3DFlags(IDXGISwapChain* swapChain) {
@@ -165,13 +167,7 @@ class InjectionBootstrapper final : private OculusEndFrameHook,
   void UnloadWithoutNext() {
     this->UninstallHook();
 
-    CreateThread(
-      nullptr,
-      0,
-      &UnloadWithoutNextThreadImpl,
-      nullptr,
-      0,
-      nullptr);
+    CreateThread(nullptr, 0, &UnloadWithoutNextThreadImpl, nullptr, 0, nullptr);
   }
 
   void LoadNextThenUnload(const std::filesystem::path& _next) {
