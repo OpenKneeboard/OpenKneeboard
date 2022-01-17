@@ -6,7 +6,7 @@
 namespace OpenKneeboard {
 
 class OculusD3D12Kneeboard final
-  : private OculusKneeboard,
+  : private OculusKneeboard::Renderer,
     private ID3D12CommandQueueExecuteCommandListsHook {
  public:
   OculusD3D12Kneeboard();

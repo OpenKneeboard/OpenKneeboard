@@ -59,12 +59,25 @@ static bool poseIntersectsWithRect(
 namespace OpenKneeboard {
 
 struct OculusKneeboard::Impl {
-  SHM::Reader shm;
-  bool zoomed = false;
-  std::unique_ptr<OculusEndFrameHook> endFrameHook;
+  Impl(Renderer*);
+
+  Renderer* mRenderer = nullptr;
+  bool mZoomed = false;
+
+  SHM::Reader mSHM;
+  std::unique_ptr<OculusEndFrameHook> mEndFrameHook;
+
+  ovrResult OnOVREndFrame(
+    ovrSession session,
+    long long frameIndex,
+    const ovrViewScaleDesc* viewScaleDesc,
+    ovrLayerHeader const* const* layerPtrList,
+    unsigned int layerCount,
+    const decltype(&ovr_EndFrame)& next);
 };
 
-OculusKneeboard::OculusKneeboard() : p(std::make_unique<Impl>()) {
+OculusKneeboard::OculusKneeboard(Renderer* renderer)
+  : p(std::make_unique<Impl>(renderer)) {
   dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
 }
 
@@ -73,35 +86,32 @@ OculusKneeboard::~OculusKneeboard() {
 }
 
 void OculusKneeboard::UninstallHook() {
-  if (p->endFrameHook) {
-    p->endFrameHook->UninstallHook();
+  if (p->mEndFrameHook) {
+    p->mEndFrameHook->UninstallHook();
   }
 }
 
-void OculusKneeboard::InitWithVTable() {
-  if (p->endFrameHook) {
-    return;
-  }
-  p->endFrameHook = OculusEndFrameHook::make_unique({
-    .onEndFrame = std::bind_front(&OculusKneeboard::OnOVREndFrame, this),
+OculusKneeboard::Impl::Impl(Renderer* renderer) : mRenderer(renderer) {
+  mEndFrameHook = OculusEndFrameHook::make_unique({
+    .onEndFrame = std::bind_front(&Impl::OnOVREndFrame, this),
   });
 }
 
-ovrResult OculusKneeboard::OnOVREndFrame(
+ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   ovrSession session,
   long long frameIndex,
   const ovrViewScaleDesc* viewScaleDesc,
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount,
   const decltype(&ovr_EndFrame)& next) {
-  auto snapshot = p->shm.MaybeGet();
-  if (!snapshot) {
+  auto snapshot = mSHM.MaybeGet();
+  if (!(snapshot && mRenderer)) [[unlikely]] {
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
   const auto& config = *snapshot.GetConfig();
-  auto swapChain = GetSwapChain(session, config);
-  if (!(swapChain && Render(session, swapChain, snapshot))) {
+  auto swapChain = mRenderer->GetSwapChain(session, config);
+  if (!(swapChain && mRenderer->Render(session, swapChain, snapshot))) {
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
@@ -148,12 +158,12 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   auto predictedTime = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
   auto state = ovr->ovr_GetTrackingState(session, predictedTime, false);
 
-  p->zoomed = poseIntersectsWithRect(
+  mZoomed = poseIntersectsWithRect(
     state.HeadPose.ThePose,
     position,
     orientation,
-    p->zoomed ? zoomedSize : normalSize);
-  kneeboardLayer.QuadSize = p->zoomed ? zoomedSize : normalSize;
+    mZoomed ? zoomedSize : normalSize);
+  kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {

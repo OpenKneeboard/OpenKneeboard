@@ -5,7 +5,6 @@ namespace OpenKneeboard {
 struct OculusD3D12Kneeboard::Impl {};
 
 OculusD3D12Kneeboard::OculusD3D12Kneeboard() : p(std::make_unique<Impl>()) {
-  OculusKneeboard::InitWithVTable();
   ID3D12CommandQueueExecuteCommandListsHook::InitWithVTable();
 }
 
@@ -14,7 +13,6 @@ OculusD3D12Kneeboard::~OculusD3D12Kneeboard() {
 }
 
 void OculusD3D12Kneeboard::UninstallHook() {
-  OculusKneeboard::UninstallHook();
   ID3D12CommandQueueExecuteCommandListsHook::UninstallHook();
 }
 

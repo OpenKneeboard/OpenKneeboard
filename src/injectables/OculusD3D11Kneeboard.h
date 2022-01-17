@@ -5,7 +5,7 @@
 
 namespace OpenKneeboard {
 
-class OculusD3D11Kneeboard final : private OculusKneeboard,
+class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer,
                                    private IDXGISwapChainPresentHook {
  public:
   OculusD3D11Kneeboard();

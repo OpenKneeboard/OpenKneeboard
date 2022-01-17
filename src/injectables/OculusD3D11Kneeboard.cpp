@@ -17,12 +17,13 @@ class OculusD3D11Kneeboard::Impl final {
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> renderTargets;
   ovrTextureSwapChain swapChain = nullptr;
   winrt::com_ptr<ID3D11Device> d3d = nullptr;
+  std::unique_ptr<OculusKneeboard> oculusKneeboard;
 };
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() : p(std::make_unique<Impl>()) {
   dprintf("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
   IDXGISwapChainPresentHook::InitWithVTable();
-  OculusKneeboard::InitWithVTable();
+  p->oculusKneeboard = std::make_unique<OculusKneeboard>(this);
 }
 
 OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
@@ -31,7 +32,7 @@ OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
 }
 
 void OculusD3D11Kneeboard::UninstallHook() {
-  OculusKneeboard::UninstallHook();
+  p->oculusKneeboard->UninstallHook();
   IDXGISwapChainPresentHook::UninstallHook();
 }
 
