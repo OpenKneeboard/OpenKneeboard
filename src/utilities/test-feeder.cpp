@@ -9,8 +9,7 @@ using namespace OpenKneeboard;
 
 int main() {
   using Pixel = OpenKneeboard::SHM::Pixel;
-  static_assert(sizeof(Pixel) == 4, "Expected B8G8R8A8");
-  static_assert(offsetof(Pixel, b) == 0, "Expected B8G8R8A8");
+  static_assert(Pixel::IS_PREMULTIPLIED_B8G8R8A8);
   Pixel colors[] = {
     {0x00, 0x00, 0xff, 0xff},// red
     {0x00, 0xff, 0x00, 0xff},// green

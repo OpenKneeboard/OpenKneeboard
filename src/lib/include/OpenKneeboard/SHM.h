@@ -64,6 +64,7 @@ struct Config final {
 
 /// 32-bit BGRA with pre-multiplied alpha
 struct Pixel final {
+  static constexpr bool IS_PREMULTIPLIED_B8G8R8A8 = true;
   uint8_t b;
   uint8_t g;
   uint8_t r;

@@ -125,9 +125,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   };
 
   using Pixel = SHM::Pixel;
-  static_assert(sizeof(Pixel) == 4, "Expecting B8G8R8A8 for SHM");
-  static_assert(offsetof(Pixel, b) == 0, "Expected blue to be first byte");
-  static_assert(offsetof(Pixel, a) == 3, "Expected alpha to be last byte");
+  static_assert(Pixel::IS_PREMULTIPLIED_B8G8R8A8);
 
   std::vector<Pixel> pixels(width * height);
   this->canvas->CopyPixels(

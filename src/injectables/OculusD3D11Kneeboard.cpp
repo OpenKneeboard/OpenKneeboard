@@ -130,9 +130,7 @@ bool OculusD3D11Kneeboard::Render(
     .back = 1,
   };
 
-  static_assert(sizeof(SHM::Pixel) == 4, "Expecting B8G8R8A8 for DirectX");
-  static_assert(offsetof(SHM::Pixel, b) == 0, "Expected blue to be first byte");
-  static_assert(offsetof(SHM::Pixel, a) == 3, "Expected alpha to be last byte");
+  static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
 
   context->UpdateSubresource(
     texture.get(),

@@ -42,9 +42,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   winrt::com_ptr<ID3D11DeviceContext> context;
   device->GetImmediateContext(context.put());
 
-  static_assert(sizeof(SHM::Pixel) == 4, "Expecting B8G8R8A8 for DirectX");
-  static_assert(offsetof(SHM::Pixel, b) == 0, "Expected blue to be first byte");
-  static_assert(offsetof(SHM::Pixel, a) == 3, "Expected alpha to be last byte");
+  static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
   winrt::com_ptr<ID3D11Texture2D> texture;
   D3D11_TEXTURE2D_DESC desc {
     .Width = config.imageWidth,
