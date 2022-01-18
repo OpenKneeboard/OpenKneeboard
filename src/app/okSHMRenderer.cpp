@@ -27,14 +27,27 @@ class okSHMRenderer::Impl {
   winrt::com_ptr<IDWriteFactory> dwrite;
   winrt::com_ptr<IWICBitmap> canvas;
   winrt::com_ptr<ID2D1RenderTarget> rt;
+  winrt::com_ptr<ID2D1Brush> errorBGBrush;
   winrt::com_ptr<ID2D1Brush> headerBGBrush;
   winrt::com_ptr<ID2D1Brush> headerTextBrush;
 
   std::unique_ptr<D2DErrorRenderer> errorRenderer;
 
   void SetCanvasSize(const D2D1_SIZE_U& size);
-  void RenderError(const wxString& error);
+  void RenderError(const wxString& tabTitle, const wxString& message);
   void CopyPixelsToSHM();
+  void RenderWithChrome(
+    const wxString& tabTitle,
+    const D2D1_SIZE_U& preferredContentSize,
+    const std::function<
+      void(const winrt::com_ptr<ID2D1RenderTarget>&, const D2D1_RECT_F&)>&
+      contentRenderer);
+
+ private:
+  void RenderErrorImpl(
+    const wxString& message,
+    const winrt::com_ptr<ID2D1RenderTarget>&,
+    const D2D1_RECT_F&);
 };
 
 void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
@@ -80,31 +93,36 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
     reinterpret_cast<ID2D1SolidColorBrush**>(this->headerTextBrush.put()));
 }
 
-void okSHMRenderer::Impl::RenderError(const wxString& message) {
-  if (!this->canvas) {
-    this->SetCanvasSize({768, 1024});
-  }
+void okSHMRenderer::Impl::RenderError(
+  const wxString& tabTitle,
+  const wxString& message) {
+  this->RenderWithChrome(
+    tabTitle,
+    {768, 1024},
+    std::bind_front(&Impl::RenderErrorImpl, this, message));
+}
 
-  UINT width, height;
-  this->canvas->GetSize(&width, &height);
-
+void okSHMRenderer::Impl::RenderErrorImpl(
+  const wxString& message,
+  const winrt::com_ptr<ID2D1RenderTarget>& rt,
+  const D2D1_RECT_F& rect) {
   auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
 
-  this->rt->BeginDraw();
-  this->rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  rt->SetTransform(D2D1::Matrix3x2F::Identity());
 
-  this->rt->Clear(D2D1_COLOR_F {
-    bg.Red() / 255.0f,
-    bg.Green() / 255.0f,
-    bg.Blue() / 255.0f,
-    bg.Alpha() / 255.0f,
-  });
+  if (!errorBGBrush) {
+    rt->CreateSolidColorBrush(
+      {
+        bg.Red() / 255.0f,
+        bg.Green() / 255.0f,
+        bg.Blue() / 255.0f,
+        bg.Alpha() / 255.0f,
+      },
+      reinterpret_cast<ID2D1SolidColorBrush**>(errorBGBrush.put_void()));
+  }
+  rt->FillRectangle(rect, errorBGBrush.get());
 
-  this->errorRenderer->Render(
-    message.ToStdWstring(), {0.0f, 0.0f, float(width), float(height)});
-
-  this->rt->EndDraw();
-  this->CopyPixelsToSHM();
+  this->errorRenderer->Render(message.ToStdWstring(), rect);
 }
 
 void okSHMRenderer::Impl::CopyPixelsToSHM() {
@@ -121,7 +139,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   SHM::Config config {
     .imageWidth = static_cast<uint16_t>(width),
     .imageHeight = static_cast<uint16_t>(height),
-    .vr = { .flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION },
+    .vr = {.flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION},
   };
 
   using Pixel = SHM::Pixel;
@@ -154,27 +172,39 @@ void okSHMRenderer::Render(
   const std::shared_ptr<Tab>& tab,
   uint16_t pageIndex) {
   if (!tab) {
-    p->RenderError(_("No Kneeboard Tab"));
+    auto msg = _("No Tab");
+    p->RenderError(msg, msg);
     return;
   }
 
+  const auto title = tab->GetTitle();
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
-    p->RenderError(_("No Pages"));
+    p->RenderError(title, _("No Pages"));
     return;
   }
 
   if (pageIndex >= pageCount) {
-    p->RenderError(_("Invalid Page Number"));
+    p->RenderError(title, _("Invalid Page Number"));
     return;
   }
 
   const auto pageSize = tab->GetPreferredPixelSize(pageIndex);
   if (pageSize.width == 0 || pageSize.height == 0) {
-    p->RenderError(_("Invalid Page Size"));
+    p->RenderError(title, _("Invalid Page Size"));
     return;
   }
 
+  p->RenderWithChrome(
+    title, pageSize, std::bind_front(&Tab::RenderPage, tab, pageIndex));
+}
+
+void okSHMRenderer::Impl::RenderWithChrome(
+  const wxString& tabTitle,
+  const D2D1_SIZE_U& pageSize,
+  const std::function<
+    void(const winrt::com_ptr<ID2D1RenderTarget>&, const D2D1_RECT_F&)>&
+    renderContent) {
   const D2D1_SIZE_U headerSize {
     pageSize.width,
     static_cast<UINT>(pageSize.height * 0.05),
@@ -183,19 +213,18 @@ void okSHMRenderer::Render(
     pageSize.width,
     pageSize.height + headerSize.height,
   };
-  p->SetCanvasSize(canvasSize);
+  this->SetCanvasSize(canvasSize);
 
-  p->rt->BeginDraw();
+  this->rt->BeginDraw();
   wxON_BLOCK_EXIT0([this]() {
-    this->p->rt->EndDraw();
-    this->p->CopyPixelsToSHM();
+    this->rt->EndDraw();
+    this->CopyPixelsToSHM();
   });
-  p->rt->Clear({0.0f, 0.0f, 0.0f, 0.0f});
+  this->rt->Clear({0.0f, 0.0f, 0.0f, 0.0f});
 
-  p->rt->SetTransform(D2D1::Matrix3x2F::Identity());
-  tab->RenderPage(
-    pageIndex,
-    p->rt,
+  this->rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  renderContent(
+    this->rt,
     {
       .left = 0.0f,
       .top = float(headerSize.height),
@@ -203,16 +232,16 @@ void okSHMRenderer::Render(
       .bottom = float(canvasSize.height),
     });
 
-  p->rt->SetTransform(D2D1::Matrix3x2F::Identity());
-  p->rt->FillRectangle(
+  this->rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  this->rt->FillRectangle(
     {0.0f, 0.0f, float(headerSize.width), float(headerSize.height)},
-    p->headerBGBrush.get());
+    this->headerBGBrush.get());
 
   FLOAT dpix, dpiy;
-  p->rt->GetDpi(&dpix, &dpiy);
+  this->rt->GetDpi(&dpix, &dpiy);
 
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
-  p->dwrite->CreateTextFormat(
+  this->dwrite->CreateTextFormat(
     L"Consolas",
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
@@ -222,9 +251,9 @@ void okSHMRenderer::Render(
     L"",
     headerFormat.put());
 
-  auto title = wxString::FromUTF8(tab->GetTitle()).ToStdWstring();
+  auto title = tabTitle.ToStdWstring();
   winrt::com_ptr<IDWriteTextLayout> headerLayout;
-  p->dwrite->CreateTextLayout(
+  this->dwrite->CreateTextLayout(
     title.data(),
     static_cast<UINT32>(title.size()),
     headerFormat.get(),
@@ -235,9 +264,9 @@ void okSHMRenderer::Render(
   DWRITE_TEXT_METRICS metrics;
   headerLayout->GetMetrics(&metrics);
 
-  p->rt->DrawTextLayout(
+  this->rt->DrawTextLayout(
     {(headerSize.width - metrics.width) / 2,
      (headerSize.height - metrics.height) / 2},
     headerLayout.get(),
-    p->headerTextBrush.get());
+    this->headerTextBrush.get());
 }
