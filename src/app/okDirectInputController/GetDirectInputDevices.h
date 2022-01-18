@@ -9,5 +9,4 @@ namespace OpenKneeboard {
 
 std::vector<DIDEVICEINSTANCE> GetDirectInputDevices(
   const winrt::com_ptr<IDirectInput8>& di8);
-
 }
