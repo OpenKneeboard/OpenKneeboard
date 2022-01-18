@@ -11,7 +11,6 @@
 #include "OVRProxy.h"
 
 using namespace OpenKneeboard;
-using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 static bool poseIntersectsWithRect(

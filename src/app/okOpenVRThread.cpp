@@ -15,7 +15,6 @@
 
 using namespace OpenKneeboard;
 
-using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
 class okOpenVRThread::Impl final {
