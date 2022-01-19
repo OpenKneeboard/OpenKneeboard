@@ -148,10 +148,10 @@ class MainWindow final : public wxFrame {
          0.0f,
          float(clientSize.GetWidth()),
          float(clientSize.GetHeight())});
-      mFirstDetached = true;
+      mFirstDetached = false;
       return;
     }
-    mFirstDetached = false;
+    mFirstDetached = true;
 
     const auto& config = *snapshot.GetConfig();
     const auto pixels = snapshot.GetPixels();
