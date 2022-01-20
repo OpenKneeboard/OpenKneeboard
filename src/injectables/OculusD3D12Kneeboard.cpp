@@ -13,7 +13,7 @@ OculusD3D12Kneeboard::OculusD3D12Kneeboard() {
     .onExecuteCommandLists = std::bind_front(
       &OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists, this),
   });
-  mOculusKneeboard = std::make_unique<OculusKneeboard>(this);
+  mOculusKneeboard.InstallHook(this);
 }
 
 OculusD3D12Kneeboard::~OculusD3D12Kneeboard() {
@@ -22,7 +22,7 @@ OculusD3D12Kneeboard::~OculusD3D12Kneeboard() {
 
 void OculusD3D12Kneeboard::UninstallHook() {
   mExecuteCommandListsHook.UninstallHook();
-  mOculusKneeboard->UninstallHook();
+  mOculusKneeboard.UninstallHook();
 }
 
 ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(

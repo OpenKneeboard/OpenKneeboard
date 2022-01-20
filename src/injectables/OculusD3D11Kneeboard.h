@@ -29,7 +29,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
 
-  std::unique_ptr<OculusKneeboard> mOculusKneeboard;
+  OculusKneeboard mOculusKneeboard;
   IDXGISwapChainPresentHook mDXGIHook;
 
   HRESULT OnIDXGISwapChain_Present(

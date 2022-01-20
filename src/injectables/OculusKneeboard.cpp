@@ -83,8 +83,14 @@ struct OculusKneeboard::Impl {
   ovrTextureSwapChain mSwapChain = nullptr;
 };
 
-OculusKneeboard::OculusKneeboard(Renderer* renderer)
-  : p(std::make_unique<Impl>(renderer)) {
+OculusKneeboard::OculusKneeboard() {
+} 
+
+void OculusKneeboard::InstallHook(Renderer* renderer) {
+  if (p) {
+    throw std::logic_error("Can't install OculusKneeboard twice");
+  }
+  p = std::make_unique<Impl>(renderer);
   dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
 }
 
@@ -93,7 +99,9 @@ OculusKneeboard::~OculusKneeboard() {
 }
 
 void OculusKneeboard::UninstallHook() {
-  p->mEndFrameHook.UninstallHook();
+  if (p) {
+    p->mEndFrameHook.UninstallHook();
+  }
 }
 
 OculusKneeboard::Impl::Impl(Renderer* renderer) : mRenderer(renderer) {

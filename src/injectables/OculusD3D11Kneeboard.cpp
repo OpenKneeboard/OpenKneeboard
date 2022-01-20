@@ -10,7 +10,7 @@ namespace OpenKneeboard {
 
 OculusD3D11Kneeboard::OculusD3D11Kneeboard() {
   dprintf("{}, {:#018x}", __FUNCTION__, (uint64_t)this);
-  mOculusKneeboard = std::make_unique<OculusKneeboard>(this);
+  mOculusKneeboard.InstallHook(this);
   mDXGIHook.InstallHook({
     .onPresent
     = std::bind_front(&OculusD3D11Kneeboard::OnIDXGISwapChain_Present, this),
@@ -23,7 +23,7 @@ OculusD3D11Kneeboard::~OculusD3D11Kneeboard() {
 }
 
 void OculusD3D11Kneeboard::UninstallHook() {
-  mOculusKneeboard->UninstallHook();
+  mOculusKneeboard.UninstallHook();
   mDXGIHook.UninstallHook();
 }
 

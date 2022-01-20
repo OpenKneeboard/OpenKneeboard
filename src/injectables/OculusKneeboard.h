@@ -9,9 +9,10 @@ namespace OpenKneeboard {
 class OculusKneeboard final {
  public :
   class Renderer;
-  OculusKneeboard(Renderer* renderer);
+  OculusKneeboard();
   ~OculusKneeboard();
 
+  void InstallHook(Renderer* renderer);
   void UninstallHook();
 
  private:
