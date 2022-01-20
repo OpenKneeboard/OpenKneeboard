@@ -2,6 +2,7 @@
 
 #include <OpenKneeboard/dprint.h>
 
+#include "InjectedDLLMain.h"
 #include "OVRProxy.h"
 
 namespace OpenKneeboard {
@@ -143,3 +144,28 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
 }
 
 }// namespace OpenKneeboard
+
+using namespace OpenKneeboard;
+
+namespace {
+std::unique_ptr<OculusD3D12Kneeboard> gInstance;
+
+DWORD WINAPI ThreadEntry(LPVOID ignored) {
+  gInstance = std::make_unique<OculusD3D12Kneeboard>();
+  dprintf(
+    FMT_STRING("----- OculusD3D12Kneeboard active at {:#018x} -----"),
+    (intptr_t)gInstance.get());
+  return S_OK;
+}
+
+}// namespace
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  return InjectedDLLMain(
+    "OpenKneeboard-Oculus-D3D12",
+    gInstance,
+    &ThreadEntry,
+    hinst,
+    dwReason,
+    reserved);
+}
