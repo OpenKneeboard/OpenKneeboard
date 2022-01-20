@@ -28,6 +28,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   ovrSession session,
   const SHM::Config& config) {
   if (!(mCommandQueue && mDevice)) {
+    OPENKNEEBOARD_BREAK;
     return nullptr;
   }
 
@@ -52,12 +53,14 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   ovr->ovr_CreateTextureSwapChainDX(
     session, mCommandQueue.get(), &kneeboardSCD, &swapChain);
   if (!swapChain) {
+    OPENKNEEBOARD_BREAK;
     return nullptr;
   }
 
   int length = -1;
   ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
   if (length == -1) {
+    OPENKNEEBOARD_BREAK;
     return nullptr;
   }
 
@@ -65,17 +68,19 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   D3D12_DESCRIPTOR_HEAP_DESC dhDesc {
     .Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
     .NumDescriptors = static_cast<UINT>(length),
-    .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+    .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
     .NodeMask = 0,
   };
   mDevice->CreateDescriptorHeap(&dhDesc, IID_PPV_ARGS(mDescriptorHeap.put()));
   if (!mDescriptorHeap) {
+    dprintf("Failed to get descriptor heap: {:#x}", GetLastError());
+    OPENKNEEBOARD_BREAK;
     return nullptr;
   }
 
   auto heap = mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+  auto increment = mDevice->GetDescriptorHandleIncrementSize(dhDesc.Type);
 
-  mRenderTargetViews.clear();
   for (auto i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D12Resource> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
@@ -88,9 +93,8 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
     };
 
     auto dest = heap;
-    dest.ptr += i;
+    dest.ptr += (i * increment);
     mDevice->CreateRenderTargetView(texture.get(), &rtvDesc, dest);
-    mRenderTargetViews.push_back(dest);
   }
 
   return swapChain;
@@ -107,6 +111,7 @@ bool OculusD3D12Kneeboard::Render(
   ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
   if (index < 0) {
     dprintf(" - invalid swap chain index ({})", index);
+    OPENKNEEBOARD_BREAK;
     return false;
   }
 
@@ -114,6 +119,7 @@ bool OculusD3D12Kneeboard::Render(
   ovr->ovr_GetTextureSwapChainBufferDX(
     session, swapChain, index, IID_PPV_ARGS(texture.put()));
   if (!texture) {
+    OPENKNEEBOARD_BREAK;
     return false;
   }
 
@@ -137,6 +143,11 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
     mCommandQueue.attach(this_);
     mCommandQueue->AddRef();
     this_->GetDevice(IID_PPV_ARGS(mDevice.put()));
+    if (mCommandQueue && mDevice) {
+      dprint("Got a D3D12 device and command queue");
+    } else {
+      OPENKNEEBOARD_BREAK;
+    }
   }
 
   mExecuteCommandListsHook.UninstallHook();

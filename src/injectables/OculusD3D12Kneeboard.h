@@ -32,7 +32,6 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   winrt::com_ptr<ID3D12Device> mDevice;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
   winrt::com_ptr<ID3D12DescriptorHeap> mDescriptorHeap;
-  std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> mRenderTargetViews;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,
