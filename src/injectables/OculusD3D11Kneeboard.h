@@ -16,7 +16,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
   void UninstallHook();
 
  protected:
-  virtual ovrTextureSwapChain GetSwapChain(
+  virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
     const SHM::Config& config) override final;
 
@@ -26,9 +26,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     const SHM::Snapshot& snapshot) override final;
 
  private:
-  SHM::Config mLastConfig;
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
-  ovrTextureSwapChain mSwapChain = nullptr;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
 
   std::unique_ptr<OculusKneeboard> mOculusKneeboard;

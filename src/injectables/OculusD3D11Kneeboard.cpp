@@ -27,26 +27,11 @@ void OculusD3D11Kneeboard::UninstallHook() {
   mDXGIHook.UninstallHook();
 }
 
-ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
+ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   ovrSession session,
   const SHM::Config& config) {
   auto ovr = OVRProxy::Get();
-  if (mSwapChain) {
-    const auto& prev = mLastConfig;
-    if (
-      config.imageWidth == prev.imageWidth
-      && config.imageHeight == prev.imageHeight) {
-      return mSwapChain;
-    }
-    ovr->ovr_DestroyTextureSwapChain(session, mSwapChain);
-    mSwapChain = nullptr;
-  }
-
-  if (!mD3D) {
-    return nullptr;
-  }
-
-  mLastConfig = config;
+  ovrTextureSwapChain swapChain = nullptr;
 
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
@@ -62,20 +47,20 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
   };
 
   ovr->ovr_CreateTextureSwapChainDX(
-    session, mD3D.get(), &kneeboardSCD, &mSwapChain);
-  if (!mSwapChain) {
+    session, mD3D.get(), &kneeboardSCD, &swapChain);
+  if (!swapChain) {
     return nullptr;
   }
 
   int length = -1;
-  ovr->ovr_GetTextureSwapChainLength(session, mSwapChain, &length);
+  ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
 
   mRenderTargets.clear();
   mRenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D11Texture2D> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
-      session, mSwapChain, i, IID_PPV_ARGS(&texture));
+      session, swapChain, i, IID_PPV_ARGS(&texture));
 
     D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
@@ -90,7 +75,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::GetSwapChain(
     }
   }
 
-  return mSwapChain;
+  return swapChain;
 }
 
 bool OculusD3D11Kneeboard::Render(

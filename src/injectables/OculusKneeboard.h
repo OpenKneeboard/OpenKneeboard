@@ -21,7 +21,7 @@ class OculusKneeboard final {
 
 class OculusKneeboard::Renderer {
  public:
-  virtual ovrTextureSwapChain GetSwapChain(
+  virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
     const SHM::Config& config)
     = 0;
