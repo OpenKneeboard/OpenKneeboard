@@ -21,10 +21,8 @@ struct ID3D12CommandQueueExecuteCommandListsHook::Impl {
     UINT NumCommandLists,
     ID3D12CommandList* const* ppCommandLists);
 
-  Impl(const Callbacks&);
-
+  void InstallHook(const Callbacks&);
   void UninstallHook();
-
  private:
   Callbacks mCallbacks;
   static Impl* gInstance;
@@ -34,7 +32,8 @@ ID3D12CommandQueueExecuteCommandListsHook::Impl*
   = nullptr;
 
 ID3D12CommandQueueExecuteCommandListsHook::
-  ID3D12CommandQueueExecuteCommandListsHook() {
+  ID3D12CommandQueueExecuteCommandListsHook()
+  : p(std::make_unique<Impl>()) {
 }
 
 ID3D12CommandQueueExecuteCommandListsHook::
@@ -49,16 +48,17 @@ void ID3D12CommandQueueExecuteCommandListsHook::InstallHook(
       "ID3D12CommandQueueExecuteCommandListsHook without onExecuteCommandLists "
       "callback");
   }
-  p = std::make_unique<Impl>(cb);
+  p->InstallHook(cb);
 }
 
-ID3D12CommandQueueExecuteCommandListsHook::Impl::Impl(const Callbacks& cb)
-  : mCallbacks(cb) {
+void ID3D12CommandQueueExecuteCommandListsHook::Impl::InstallHook(
+  const Callbacks& cb) {
   if (gInstance) {
     throw std::logic_error(
       "Only one ID3D12CommandQueueExecuteCommandListsHook at a time");
   }
   gInstance = this;
+  mCallbacks = cb;
 
   winrt::com_ptr<ID3D12Device> device;
   D3D12CreateDevice(
@@ -92,9 +92,7 @@ ID3D12CommandQueueExecuteCommandListsHook::Impl::Impl(const Callbacks& cb)
 }
 
 void ID3D12CommandQueueExecuteCommandListsHook::UninstallHook() {
-  if (p) {
-    p->UninstallHook();
-  }
+  p->UninstallHook();
 }
 
 void ID3D12CommandQueueExecuteCommandListsHook::Impl::UninstallHook() {
