@@ -1,5 +1,7 @@
 #include "OculusD3D12Kneeboard.h"
 
+#include <OpenKneeboard/dprint.h>
+
 #include "OVRProxy.h"
 
 namespace OpenKneeboard {
@@ -30,6 +32,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
 
   ovrTextureSwapChain swapChain = nullptr;
 
+  static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
@@ -76,7 +79,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
     winrt::com_ptr<ID3D12Resource> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
-    
+
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc {
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
       .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
@@ -96,7 +99,32 @@ bool OculusD3D12Kneeboard::Render(
   ovrSession session,
   ovrTextureSwapChain swapChain,
   const SHM::Snapshot& snapshot) {
-  return false;
+  auto ovr = OVRProxy::Get();
+  const auto& config = *snapshot.GetConfig();
+
+  int index = -1;
+  ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
+  if (index < 0) {
+    dprintf(" - invalid swap chain index ({})", index);
+    return false;
+  }
+
+  winrt::com_ptr<ID3D12Resource> texture;
+  ovr->ovr_GetTextureSwapChainBufferDX(
+    session, swapChain, index, IID_PPV_ARGS(texture.put()));
+  if (!texture) {
+    return false;
+  }
+
+  void* textureData = nullptr;
+  texture->Map(0, nullptr, &textureData);
+  memcpy(
+    textureData,
+    snapshot.GetPixels(),
+    sizeof(SHM::Pixel) * config.imageHeight * config.imageWidth);
+  texture->Unmap(0, nullptr);
+
+  return true;
 }
 
 void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
