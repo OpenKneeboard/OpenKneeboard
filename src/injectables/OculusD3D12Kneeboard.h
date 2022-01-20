@@ -7,6 +7,10 @@
 #include "ID3D12CommandQueueExecuteCommandListsHook.h"
 #include "OculusKneeboard.h"
 
+namespace DirectX {
+  class ResourceUploadBatch;
+};
+
 namespace OpenKneeboard {
 
 class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
@@ -32,6 +36,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   winrt::com_ptr<ID3D12Device> mDevice;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
   winrt::com_ptr<ID3D12DescriptorHeap> mDescriptorHeap;
+  std::unique_ptr<DirectX::ResourceUploadBatch> mResourceUpload;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,

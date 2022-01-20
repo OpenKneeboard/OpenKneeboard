@@ -73,6 +73,7 @@ target_link_libraries(
   PRIVATE
   d3d12-hooks
   detours-ext
+  directxtk12
   OpenKneeboard-dprint
   OpenKneeboard-ScopedRWX
   oculus-hooks

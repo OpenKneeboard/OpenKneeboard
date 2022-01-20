@@ -1,5 +1,6 @@
 #include "OculusD3D12Kneeboard.h"
 
+#include <DirectXTK12/ResourceUploadBatch.h>
 #include <OpenKneeboard/dprint.h>
 
 #include "InjectedDLLMain.h"
@@ -123,13 +124,17 @@ bool OculusD3D12Kneeboard::Render(
     return false;
   }
 
-  void* textureData = nullptr;
-  texture->Map(0, nullptr, &textureData);
-  memcpy(
-    textureData,
-    snapshot.GetPixels(),
-    sizeof(SHM::Pixel) * config.imageHeight * config.imageWidth);
-  texture->Unmap(0, nullptr);
+  D3D12_SUBRESOURCE_DATA resourceData {
+    .pData = snapshot.GetPixels(),
+    .RowPitch = sizeof(SHM::Pixel) * config.imageWidth,
+    .SlicePitch = 0,
+  };
+
+  mResourceUpload->Begin();
+  mResourceUpload->Upload(texture.get(), 0, &resourceData, 1);
+  mResourceUpload->End(mCommandQueue.get()).wait();
+
+  ovr->ovr_CommitTextureSwapChain(session, swapChain);
 
   return true;
 }
@@ -148,6 +153,8 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
     } else {
       OPENKNEEBOARD_BREAK;
     }
+    mResourceUpload
+      = std::make_unique<DirectX::ResourceUploadBatch>(mDevice.get());
   }
 
   mExecuteCommandListsHook.UninstallHook();
