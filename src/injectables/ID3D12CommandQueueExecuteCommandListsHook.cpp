@@ -119,6 +119,7 @@ void __stdcall ID3D12CommandQueueExecuteCommandListsHook::Impl::
       NumCommandLists,
       ppCommandLists,
       Next_ID3D12CommandQueue_ExecuteCommandLists);
+    return;
   }
 
   std::invoke(
