@@ -7,6 +7,7 @@
 #include <stdexcept>
 
 #include "DllLoadWatcher.h"
+#include "ScopedRWX.h"
 #include "detours-ext.h"
 
 namespace OpenKneeboard {
@@ -24,26 +25,6 @@ struct IVRCompositor_VTable {
 decltype(&vr::IVRCompositor::WaitGetPoses) Real_IVRCompositor_WaitGetPoses
   = nullptr;
 decltype(&vr::VR_GetGenericInterface) Real_VR_GetGenericInterface = nullptr;
-
-class ScopedRWX {
-  MEMORY_BASIC_INFORMATION mMBI;
-  DWORD mOldProtection;
-
- public:
-  ScopedRWX(void* addr) {
-    VirtualQuery(addr, &mMBI, sizeof(mMBI));
-    VirtualProtect(
-      mMBI.BaseAddress,
-      mMBI.RegionSize,
-      PAGE_EXECUTE_READWRITE,
-      &mOldProtection);
-  }
-
-  ~ScopedRWX() {
-    DWORD rwx;
-    VirtualProtect(mMBI.BaseAddress, mMBI.RegionSize, mOldProtection, &rwx);
-  }
-};
 
 }// namespace
 
