@@ -64,7 +64,11 @@ DetourTransaction::DetourTransaction()
     throw std::logic_error("DetourTransactions can't be nested");
   }
   Impl::mActive = true;
-  HeapLock(p->mHeap);
+  if (!HeapLock(p->mHeap)) {
+    dprintf("Failed to lock heap: {:#x}", GetLastError());
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
   DetourTransactionBegin();
   for (auto it = p->mThreads.begin(); it != p->mThreads.end(); /* nothing */) {
     auto handle = *it;
@@ -91,7 +95,10 @@ DetourTransaction::~DetourTransaction() noexcept {
     CloseHandle(handle);
   }
   Impl::mActive = false;
-  HeapUnlock(p->mHeap);
+  if (!HeapUnlock(p->mHeap)) {
+    dprintf("Failed to unlock heap: {:#x}", GetLastError());
+    OPENKNEEBOARD_BREAK;
+  }
   // We need to resume the threads before doing *anything* else:
   // dprint/dprintf can malloc/new, which will deadlock
   if (err) {

@@ -127,6 +127,13 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount,
   const decltype(&ovr_EndFrame)& next) {
+
+  static bool sFirst = true;
+  if (sFirst) {
+    dprint(__FUNCTION__);
+    sFirst = false;
+  }
+
   auto snapshot = mSHM.MaybeGet();
   if (!(snapshot && mRenderer)) [[unlikely]] {
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);

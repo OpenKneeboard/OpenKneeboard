@@ -16,6 +16,7 @@ add_compile_definitions(
   "OPENKNEEBOARD_TEXTURE_WIDTH=768"
   "OPENKNEEBOARD_TEXTURE_HEIGHT=1024"
   "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
+  "OPENKNEEBOARD_BREAK=$<$<CONFIG:Debug>:__debugbreak()>"
 )
 
 add_subdirectory(lib)
