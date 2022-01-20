@@ -145,9 +145,18 @@ class InjectionBootstrapper final {
   void Next() {
     UninstallHook();
 
+    // Whatever APIs are in use, if SteamVR is one of them, the main app will
+    // use the OpenVR overlay API to render from that process, so we don't need
+    // to do anything here.
     if ((mFlags & FLAG_STEAMVR)) {
       dprint("Doing nothing as SteamVR is in-process");
       UnloadWithoutNext();
+      return;
+    }
+
+    // Not looking for an exact match because mixing D3D11 and D3D12 is common
+    if ((mFlags & FLAG_D3D12) && (mFlags & FLAG_OCULUS)) {
+      LoadNextThenUnload(RuntimeFiles::OCULUS_D3D12_DLL);
       return;
     }
 

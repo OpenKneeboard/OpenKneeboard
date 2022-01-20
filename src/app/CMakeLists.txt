@@ -44,6 +44,7 @@ add_custom_target(
 	"$<TARGET_FILE:OpenKneeboard-AutoInjectMarker>"
 	"$<TARGET_FILE:OpenKneeboard-nonvr-d3d11>"
 	"$<TARGET_FILE:OpenKneeboard-oculus-d3d11>"
+	"$<TARGET_FILE:OpenKneeboard-oculus-d3d12>"
 	"$<TARGET_FILE:OpenKneeboard-dcs-ext-dll>"
 	"$<TARGET_FILE_DIR:OpenKneeboard-dcs-ext-dll>/$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>"
   "$<TARGET_FILE_DIR:OpenKneeboard>"
