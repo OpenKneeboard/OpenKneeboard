@@ -12,12 +12,12 @@ namespace OpenKneeboard {
 
 namespace {
 decltype(&ID3D12CommandQueue::ExecuteCommandLists)
-  Real_ID3D12CommandQueue_ExecuteCommandLists
+  Next_ID3D12CommandQueue_ExecuteCommandLists
   = nullptr;
 }// namespace
 
 struct ID3D12CommandQueueExecuteCommandListsHook::Impl {
-  virtual void __stdcall Hooked_ExecuteCommandLists(
+  void __stdcall Hooked_ExecuteCommandLists(
     UINT NumCommandLists,
     ID3D12CommandList* const* ppCommandLists);
 
@@ -75,7 +75,7 @@ ID3D12CommandQueueExecuteCommandListsHook::Impl::Impl(const Callbacks& cb)
   device->CreateCommandQueue(&cqDesc, IID_PPV_ARGS(cq.put()));
 
   auto fpp
-    = reinterpret_cast<void**>(&Real_ID3D12CommandQueue_ExecuteCommandLists);
+    = reinterpret_cast<void**>(&Next_ID3D12CommandQueue_ExecuteCommandLists);
   *fpp = VTable_Lookup_ID3D12CommandQueue_ExecuteCommandLists(cq.get());
   auto err = DetourSingleAttach(
     fpp, std::bit_cast<void*>(&Impl::Hooked_ExecuteCommandLists));
@@ -103,7 +103,7 @@ void ID3D12CommandQueueExecuteCommandListsHook::Impl::UninstallHook() {
   }
 
   DetourSingleDetach(
-    reinterpret_cast<void**>(&Real_ID3D12CommandQueue_ExecuteCommandLists),
+    reinterpret_cast<void**>(&Next_ID3D12CommandQueue_ExecuteCommandLists),
     std::bit_cast<void*>(&Impl::Hooked_ExecuteCommandLists));
   gInstance = nullptr;
 }
@@ -113,16 +113,16 @@ void __stdcall ID3D12CommandQueueExecuteCommandListsHook::Impl::
     UINT NumCommandLists,
     ID3D12CommandList* const* ppCommandLists) {
   auto this_ = reinterpret_cast<ID3D12CommandQueue*>(this);
-   if (gInstance) [[likely]] {
+  if (gInstance) [[likely]] {
     gInstance->mCallbacks.onExecuteCommandLists(
       this_,
       NumCommandLists,
       ppCommandLists,
-      Real_ID3D12CommandQueue_ExecuteCommandLists);
+      Next_ID3D12CommandQueue_ExecuteCommandLists);
   }
 
   std::invoke(
-    Real_ID3D12CommandQueue_ExecuteCommandLists,
+    Next_ID3D12CommandQueue_ExecuteCommandLists,
     this_,
     NumCommandLists,
     ppCommandLists);

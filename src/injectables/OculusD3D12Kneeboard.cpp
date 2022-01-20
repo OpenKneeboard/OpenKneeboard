@@ -136,7 +136,7 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
   if (!mCommandQueue) {
     mCommandQueue.attach(this_);
     mCommandQueue->AddRef();
-    this_->GetDevice(IID_PPV_ARGS(mCommandQueue.put()));
+    this_->GetDevice(IID_PPV_ARGS(mDevice.put()));
   }
 
   mExecuteCommandListsHook.UninstallHook();
