@@ -40,8 +40,8 @@ add_custom_target(
   COMMAND
   ${CMAKE_COMMAND} -E copy_if_different
 	"$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
-	"$<TARGET_FILE:OpenKneeboard-InjectionBootstrapper>"
-	"$<TARGET_FILE:OpenKneeboard-AutoInjectMarker>"
+	"$<TARGET_FILE:OpenKneeboard-Injection-Bootstrapper>"
+	"$<TARGET_FILE:OpenKneeboard-AutoInject-Marker>"
 	"$<TARGET_FILE:OpenKneeboard-nonvr-d3d11>"
 	"$<TARGET_FILE:OpenKneeboard-oculus-d3d11>"
 	"$<TARGET_FILE:OpenKneeboard-oculus-d3d12>"

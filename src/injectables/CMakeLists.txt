@@ -44,7 +44,7 @@ target_link_libraries(
   OpenKneeboard-dprint)
 
 # This is a marker library that tells the main app not to inject the DLL
-add_library(OpenKneeboard-AutoInjectMarker SHARED AutoInjectMarker.cpp)
+add_library(OpenKneeboard-AutoInject-Marker SHARED AutoInjectMarker.cpp)
 
 add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
@@ -79,9 +79,9 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-add_library(OpenKneeboard-InjectionBootstrapper MODULE InjectionBootstrapper.cpp)
+add_library(OpenKneeboard-Injection-Bootstrapper MODULE InjectionBootstrapper.cpp)
 target_link_libraries(
-  OpenKneeboard-InjectionBootstrapper
+  OpenKneeboard-Injection-Bootstrapper
   PRIVATE
   OpenKneeboard-RuntimeFiles
   detours-ext
