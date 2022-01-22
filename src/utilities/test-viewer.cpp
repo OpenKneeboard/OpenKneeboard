@@ -6,6 +6,8 @@
 #include <D2d1.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/SHM.h>
+#include <d3d11.h>
+#include <dxgi1_2.h>
 #include <unknwn.h>
 #include <winrt/base.h>
 #include <wx/dcbuffer.h>
@@ -13,6 +15,8 @@
 #include <wx/graphics.h>
 
 #pragma comment(lib, "D2d1.lib")
+#pragma comment(lib, "DXGI.lib")
+#pragma comment(lib, "D3D11.lib")
 
 using namespace OpenKneeboard;
 
@@ -23,10 +27,13 @@ class MainWindow final : public wxFrame {
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
 
+  winrt::com_ptr<ID3D11Device> mD3d;
+  winrt::com_ptr<ID3D11DeviceContext> mD3dContext;
+  winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   winrt::com_ptr<ID2D1Factory> mD2df;
-  winrt::com_ptr<ID2D1HwndRenderTarget> mRt;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
+  winrt::com_ptr<IDXGIFactory2> mDXGI;
 
  public:
   MainWindow()
@@ -38,6 +45,24 @@ class MainWindow final : public wxFrame {
       wxSize {768 / 2, 1024 / 2},
       wxDEFAULT_FRAME_STYLE) {
     D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2df.put());
+    UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#ifdef DEBUG
+    d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+    auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
+    D3D11CreateDevice(
+      nullptr,
+      D3D_DRIVER_TYPE_HARDWARE,
+      nullptr,
+      d3dFlags,
+      &d3dLevel,
+      1,
+      D3D11_SDK_VERSION,
+      mD3d.put(),
+      nullptr,
+      mD3dContext.put());
+    CreateDXGIFactory(IID_PPV_ARGS(mDXGI.put()));
+
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mD2df);
 
     Bind(wxEVT_PAINT, &MainWindow::OnPaint, this);
@@ -74,35 +99,65 @@ class MainWindow final : public wxFrame {
     }
   }
 
-  void OnSize(wxSizeEvent& ev) {
-    if (!this->mRt) {
+  void initSwapChain() {
+    auto desiredSize = this->GetClientSize();
+    if (mSwapChain) {
+      DXGI_SWAP_CHAIN_DESC desc;
+      mSwapChain->GetDesc(&desc);
+      auto& mode = desc.BufferDesc;
+      if (
+        mode.Width == desiredSize.GetWidth()
+        && mode.Height == desiredSize.GetHeight()) {
+        return;
+      }
+      mode.Width = desiredSize.GetWidth();
+      mode.Height = desiredSize.GetHeight();
+      mSwapChain->ResizeTarget(&mode);
       return;
     }
-    auto cs = this->GetClientSize();
-    this->mRt->Resize(
-      {static_cast<UINT>(cs.GetWidth()), static_cast<UINT>(cs.GetHeight())});
+
+    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
+      .Width = static_cast<UINT>(desiredSize.GetWidth()),
+      .Height = static_cast<UINT>(desiredSize.GetHeight()),
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+      .SampleDesc = {1, 0},
+      .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+      .BufferCount = 2,
+      .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+      .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
+    };
+    mDXGI->CreateSwapChainForHwnd(
+      mD3d.get(),
+      this->GetHWND(),
+      &swapChainDesc,
+      nullptr,
+      nullptr,
+      mSwapChain.put());
+  }
+
+  void OnSize(wxSizeEvent& ev) {
+    this->initSwapChain();
     this->Refresh();
   }
 
   void OnPaint(wxPaintEvent& ev) {
+    this->initSwapChain();
     const auto clientSize = GetClientSize();
 
-    if (!mRt) {
-      auto rtp = D2D1::RenderTargetProperties(
-        D2D1_RENDER_TARGET_TYPE_DEFAULT,
-        D2D1_PIXEL_FORMAT {
-          DXGI_FORMAT_B8G8R8A8_UNORM,
-          D2D1_ALPHA_MODE_IGNORE,
-        });
+    winrt::com_ptr<IDXGISurface> surface;
+    mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
+    winrt::com_ptr<ID2D1RenderTarget> rt;
+    auto ret = mD2df->CreateDxgiSurfaceRenderTarget(
+      surface.get(),
+      {.type = D2D1_RENDER_TARGET_TYPE_HARDWARE,
+       .pixelFormat = {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
+      rt.put());
 
-      auto hwndRtp = D2D1::HwndRenderTargetProperties(
-        this->GetHWND(),
-        {static_cast<UINT32>(clientSize.GetWidth()),
-         static_cast<UINT32>(clientSize.GetHeight())});
+    mErrorRenderer->SetRenderTarget(rt);
 
-      mD2df->CreateHwndRenderTarget(&rtp, &hwndRtp, mRt.put());
-      mErrorRenderer->SetRenderTarget(mRt);
-
+    {
+      // TODO: don't recreate every frame?
       winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
       SHM::Pixel pixels[20 * 20];
       for (int x = 0; x < 20; x++) {
@@ -112,7 +167,7 @@ class MainWindow final : public wxFrame {
           pixels[x + (20 * y)] = {value, value, value, 0xff};
         }
       }
-      mRt->CreateBitmap(
+      rt->CreateBitmap(
         {20, 20},
         reinterpret_cast<BYTE*>(pixels),
         20 * sizeof(SHM::Pixel),
@@ -121,7 +176,7 @@ class MainWindow final : public wxFrame {
         backgroundBitmap.put());
 
       mBackgroundBrush = nullptr;
-      mRt->CreateBitmapBrush(
+      rt->CreateBitmapBrush(
         backgroundBitmap.get(),
         D2D1::BitmapBrushProperties(
           D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
@@ -129,12 +184,14 @@ class MainWindow final : public wxFrame {
     }
 
     wxPaintDC dc(this);
-    mRt->BeginDraw();
-    wxON_BLOCK_EXIT0([this]() { this->mRt->EndDraw(); });
-    mRt->SetTransform(D2D1::Matrix3x2F::Identity());
+    rt->BeginDraw();
+    wxON_BLOCK_EXIT0([&]() {
+      rt->EndDraw();
+      mSwapChain->Present(0, 0);
+    });
 
     auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    mRt->Clear(
+    rt->Clear(
       {wxBgColor.Red() / 255.0f,
        wxBgColor.Green() / 255.0f,
        wxBgColor.Blue() / 255.0f,
@@ -166,14 +223,14 @@ class MainWindow final : public wxFrame {
     }
 
     wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
-    mRt->Clear(
+    rt->Clear(
       {wxBgColor.Red() / 255.0f,
        wxBgColor.Green() / 255.0f,
        wxBgColor.Blue() / 255.0f,
        1.0f});
 
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-    mRt->CreateBitmap(
+    rt->CreateBitmap(
       {config.imageWidth, config.imageHeight},
       reinterpret_cast<const void*>(pixels),
       config.imageWidth * sizeof(SHM::Pixel),
@@ -199,8 +256,8 @@ class MainWindow final : public wxFrame {
     // Align the top-left pixel of the brush
     bg->SetTransform(
       D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
-    mRt->FillRectangle(pageRect, bg.get());
-    mRt->DrawBitmap(
+    rt->FillRectangle(pageRect, bg.get());
+    rt->DrawBitmap(
       d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
     mLastSequenceNumber = snapshot.GetSequenceNumber();
