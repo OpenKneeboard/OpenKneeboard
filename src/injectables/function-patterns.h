@@ -4,15 +4,20 @@
 
 namespace OpenKneeboard {
 
+struct BytePattern {
+  uint64_t value;
+  uint64_t mask;
+};
+
 /** Convert a pattern containing bytes or `?` into a bit pattern and
  * bit mask */
-std::vector<std::pair<uint64_t, uint64_t>> ComputeFunctionPatterns(
-  const std::basic_string_view<unsigned char>& rawPattern);
+std::vector<BytePattern> ComputeFunctionPatterns(
+  std::basic_string_view<unsigned char> rawPattern);
 
 /** Search for a pattern on a 16-byte-aligned offset in the specified
  * memory range. */
 void* FindFunctionPattern(
-  const std::vector<std::pair<uint64_t, uint64_t>>& allPatterns,
+  const std::vector<BytePattern>& allPatterns,
   void* _begin,
   void* _end);
 
@@ -20,7 +25,7 @@ void* FindFunctionPattern(
  * module/DLL. */
 void* FindFunctionPatternInModule(
   const char* moduleName,
-  const std::basic_string_view<unsigned char>& rawPattern,
+  std::basic_string_view<unsigned char> rawPattern,
   bool* foundMultiple);
 
 }// namespace OpenKneeboard

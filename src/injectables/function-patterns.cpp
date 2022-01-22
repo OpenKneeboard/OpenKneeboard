@@ -2,16 +2,16 @@
 
 #include <OpenKneeboard/dprint.h>
 
-// @clang-format off
+// clang-format off
 #include <Windows.h>
 #include <Psapi.h>
-// @clang-format on
+// clang-format on
 
 namespace OpenKneeboard {
 
-std::vector<std::pair<uint64_t, uint64_t>> ComputeFunctionPatterns(
-  const std::basic_string_view<unsigned char>& rawPattern) {
-  std::vector<std::pair<uint64_t, uint64_t>> patterns;
+std::vector<BytePattern> ComputeFunctionPatterns(
+  std::basic_string_view<unsigned char> rawPattern) {
+  std::vector<BytePattern> patterns;
   auto view(rawPattern);
   while (!view.empty()) {
     std::string pattern(8, '\0');
@@ -36,15 +36,15 @@ std::vector<std::pair<uint64_t, uint64_t>> ComputeFunctionPatterns(
     dprintf(
       FMT_STRING("{:016x} (mask {:016x})"),
       // TODO (C++23) std::byteswap
-      _byteswap_uint64(pattern.first),
-      _byteswap_uint64(pattern.second));
+      _byteswap_uint64(pattern.value),
+      _byteswap_uint64(pattern.mask));
   }
 
   return patterns;
 }
 
 void* FindFunctionPattern(
-  const std::vector<std::pair<uint64_t, uint64_t>>& allPatterns,
+  const std::vector<BytePattern>& allPatterns,
   void* _begin,
   void* _end) {
   auto begin = reinterpret_cast<uint64_t*>(_begin);
@@ -54,8 +54,8 @@ void* FindFunctionPattern(
     (uint64_t)begin,
     (uint64_t)end);
 
-  const uint64_t firstPattern = allPatterns.front().first,
-                 firstMask = allPatterns.front().second;
+  const uint64_t firstPattern = allPatterns.front().value,
+                 firstMask = allPatterns.front().mask;
   auto patterns = allPatterns;
   patterns.erase(patterns.begin());
   // Stack entries (including functions) are always aligned on 16-byte
@@ -71,7 +71,7 @@ void* FindFunctionPattern(
         return nullptr;
       }
 
-      if ((*it & pattern.second) != pattern.first) {
+      if ((*it & pattern.mask) != pattern.value) {
         goto FindFunctionPattern_NextBlock;
       }
     }
@@ -86,7 +86,7 @@ void* FindFunctionPattern(
 
 void* FindFunctionPatternInModule(
   const char* moduleName,
-  const std::basic_string_view<unsigned char>& rawPattern,
+  std::basic_string_view<unsigned char> rawPattern,
   bool* foundMultiple) {
   auto hModule = GetModuleHandleA(moduleName);
   if (!hModule) {
@@ -110,7 +110,7 @@ void* FindFunctionPatternInModule(
   }
 
   auto nextAddr = reinterpret_cast<uintptr_t>(addr)
-    + (pattern.size() * sizeof(pattern.front().first));
+    + (pattern.size() * sizeof(pattern.front().value));
   // 16-byte alignment for all stack addresses
   nextAddr -= (nextAddr % 16);
   begin = reinterpret_cast<void*>(nextAddr);
