@@ -1,7 +1,6 @@
 #include "NonVRD3D11Kneeboard.h"
 
 #include <DirectXTK/SpriteBatch.h>
-#include <DirectXTK/WICTextureLoader.h>
 #include <OpenKneeboard/dprint.h>
 #include <dxgi.h>
 #include <winrt/base.h>
@@ -39,28 +38,38 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
 
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
-  winrt::com_ptr<ID3D11DeviceContext> context;
-  device->GetImmediateContext(context.put());
+  if (device.get() != mDevice) {
+    mDevice = device.get();
+    mDeviceResources = {};
+    device->GetImmediateContext(mDeviceResources.mContext.put());
+    mDeviceResources.mSpriteBatch
+      = std::make_unique<DirectX::SpriteBatch>(mDeviceResources.mContext.get());
+  }
 
-  static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  D3D11_TEXTURE2D_DESC desc {
-    .Width = config.imageWidth,
-    .Height = config.imageHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .SampleDesc = {1, 0},
-    .Usage = D3D11_USAGE_DEFAULT,
-    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-    .CPUAccessFlags = {},
-    .MiscFlags = {},
-  };
-  D3D11_SUBRESOURCE_DATA initialData {
-    shm.GetPixels(), config.imageWidth * sizeof(SHM::Pixel), 0};
-  device->CreateTexture2D(&desc, &initialData, texture.put());
-  winrt::com_ptr<ID3D11ShaderResourceView> resourceView;
-  device->CreateShaderResourceView(texture.get(), nullptr, resourceView.put());
+  if (mDeviceResources.mLastSequenceNumber != shm.GetSequenceNumber()) {
+    mDeviceResources.mTexture = nullptr;
+    mDeviceResources.mResourceView = nullptr;
+
+    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+    D3D11_TEXTURE2D_DESC desc {
+      .Width = config.imageWidth,
+      .Height = config.imageHeight,
+      .MipLevels = 1,
+      .ArraySize = 1,
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+      .SampleDesc = {1, 0},
+      .Usage = D3D11_USAGE_DEFAULT,
+      .BindFlags = D3D11_BIND_SHADER_RESOURCE,
+    };
+    D3D11_SUBRESOURCE_DATA initialData {
+      shm.GetPixels(), config.imageWidth * sizeof(SHM::Pixel), 0};
+    device->CreateTexture2D(
+      &desc, &initialData, mDeviceResources.mTexture.put());
+    device->CreateShaderResourceView(
+      mDeviceResources.mTexture.get(),
+      nullptr,
+      mDeviceResources.mResourceView.put());
+  }
 
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
@@ -99,10 +108,10 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       break;
   }
 
-  DirectX::SpriteBatch sprites(context.get());
+  auto& sprites = *mDeviceResources.mSpriteBatch;
   sprites.Begin();
   sprites.Draw(
-    resourceView.get(),
+    mDeviceResources.mResourceView.get(),
     RECT {left, top, left + renderWidth, top + renderHeight},
     DirectX::Colors::White * config.flat.opacity);
   sprites.End();
