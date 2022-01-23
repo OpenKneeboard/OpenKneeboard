@@ -65,6 +65,7 @@ struct OculusKneeboard::Impl {
 
   SHM::Reader mSHM;
   OculusEndFrameHook mEndFrameHook;
+  uint64_t mLastSequenceNumber;
 
   ovrResult OnOVREndFrame(
     ovrSession session,
@@ -149,8 +150,16 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
 
   const auto& config = *snapshot.GetConfig();
   auto swapChain = this->GetSwapChain(session, config);
-  if (!(swapChain && mRenderer->Render(session, swapChain, snapshot))) {
-    return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+
+  if (!swapChain) {
+      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+  }
+
+  if (mLastSequenceNumber != snapshot.GetSequenceNumber() ){
+    if (!mRenderer->Render(session, swapChain, snapshot)) {
+      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+    }
+    mLastSequenceNumber = snapshot.GetSequenceNumber();
   }
 
   auto ovr = OVRProxy::Get();
