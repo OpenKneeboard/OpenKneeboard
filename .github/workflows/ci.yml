@@ -1,0 +1,24 @@
+name: Continuous Integration
+on: [push, pull_request]
+jobs:
+  build:
+    name: Build (${{matrix.config}})
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: source
+      - name: Make build directory
+        run: cmake -E make_directory build
+      - name: Configure
+        working-directory: build
+        run: cmake ${{github.workspace}}/source `
+      - name: Compile
+        working-directory: build
+        run: cmake --build . --config ${{matrix.config}} --parallel
+      - name: Install
+        working-directory: build
+        run: cmake --install . --config ${{matrix.config}}
+    strategy:
+      matrix:
+        config: [RelWithDebInfo, Debug]
