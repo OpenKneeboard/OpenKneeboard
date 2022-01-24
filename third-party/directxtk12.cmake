@@ -22,3 +22,11 @@ add_dependencies(directxtk12 directxtk12Build)
 ExternalProject_Get_property(directxtk12Build INSTALL_DIR)
 target_include_directories(directxtk12 INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
 target_link_libraries(directxtk12 INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/DirectXTK12.lib")
+
+ExternalProject_Get_property(directxtk12Build SOURCE_DIR)
+install(
+  FILES
+  "${SOURCE_DIR}/LICENSE"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-DirectXTK12"
+)

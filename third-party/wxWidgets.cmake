@@ -15,3 +15,23 @@ if(NOT wxwidgets_POPULATED)
   set(wxBUILD_SHARED OFF)
   add_subdirectory(${wxwidgets_SOURCE_DIR} ${wxwidgets_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
+
+install(
+  FILES
+  "${wxwidgets_SOURCE_DIR}/docs/licence.txt"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-wxWidgets.txt"
+)
+
+install(
+  FILES
+  "${wxwidgets_SOURCE_DIR}/docs/gpl.txt"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-wxWidgets-gpl.txt"
+)
+install(
+  FILES
+  "${wxwidgets_SOURCE_DIR}/docs/lgpl.txt"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-wxWidgets-lgpl.txt"
+)

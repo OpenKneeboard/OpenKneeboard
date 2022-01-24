@@ -2,7 +2,7 @@
 
 #include <OpenKneeboard/Game.h>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 #include <memory>
 
 namespace OpenKneeboard {

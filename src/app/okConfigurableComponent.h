@@ -5,7 +5,7 @@
 #include <wx/wx.h>
 #endif
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 /// Expected to raise okEVT_SETTINGS_CHANGED
 class okConfigurableComponent : public wxEvtHandler {

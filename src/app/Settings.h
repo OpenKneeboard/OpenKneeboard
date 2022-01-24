@@ -1,6 +1,6 @@
 #pragma once
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 struct Settings final {
   uint32_t Version = 1;

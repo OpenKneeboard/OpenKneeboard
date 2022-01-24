@@ -26,3 +26,10 @@ add_dependencies(detours detoursBuild)
 ExternalProject_Get_property(detoursBuild SOURCE_DIR)
 target_include_directories(detours INTERFACE ${SOURCE_DIR}/include)
 target_link_libraries(detours INTERFACE "${SOURCE_DIR}/${LIB}")
+
+install(
+  FILES
+  "${SOURCE_DIR}/LICENSE.md"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-Detours.md"
+)

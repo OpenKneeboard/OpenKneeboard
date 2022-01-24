@@ -12,3 +12,10 @@ if(NOT fmt_POPULATED)
   FetchContent_Populate(fmt)
   add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
+
+install(
+  FILES
+  "${fmt_SOURCE_DIR}/LICENSE.rst"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-fmt.rst"
+)

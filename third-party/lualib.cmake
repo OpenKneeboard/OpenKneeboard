@@ -31,3 +31,10 @@ if(NOT lua_POPULATED)
 		OUTPUT_NAME_Debug luad
 	)
 endif()
+
+install(
+  FILES
+  "${lua_SOURCE_DIR}/COPYRIGHT"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-lua"
+)

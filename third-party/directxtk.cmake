@@ -22,3 +22,11 @@ add_dependencies(directxtk directxtkBuild)
 ExternalProject_Get_property(directxtkBuild INSTALL_DIR)
 target_include_directories(directxtk INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
 target_link_libraries(directxtk INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/DirectXTK.lib")
+
+ExternalProject_Get_property(directxtkBuild SOURCE_DIR)
+install(
+  FILES
+  "${SOURCE_DIR}/LICENSE"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-DirectXTK"
+)

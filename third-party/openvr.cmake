@@ -27,3 +27,11 @@ set_target_properties(
   IMPORTED_IMPLIB "${SOURCE_DIR}/${LIB}"
   IMPORTED_LOCATION "${SOURCE_DIR}/bin/win64/openvr_api.dll")
 target_link_libraries(openvr INTERFACE openvr-headers)
+
+ExternalProject_Get_property(openvrBuild SOURCE_DIR)
+install(
+  FILES
+  "${SOURCE_DIR}/LICENSE"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-OpenVR"
+)
