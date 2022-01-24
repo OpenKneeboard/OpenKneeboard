@@ -6,3 +6,9 @@ project(com.fredemmott.openkneeboard VERSION 0.0.1 LANGUAGES CXX C)
 
 add_subdirectory("third-party")
 add_subdirectory("src")
+
+install(
+  FILES
+  LICENSE
+  gpl-2.0.txt
+  TYPE DOC)
