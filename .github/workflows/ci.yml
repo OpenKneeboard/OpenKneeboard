@@ -12,7 +12,7 @@ jobs:
         run: cmake -E make_directory build
       - name: Configure
         working-directory: build
-        run: cmake ${{github.workspace}}/source `
+        run: cmake ${{github.workspace}}/source
       - name: Compile
         working-directory: build
         run: cmake --build . --config ${{matrix.config}} --parallel
