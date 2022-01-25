@@ -2,6 +2,8 @@
 
 OpenKneeboard is an open source Kneeboard application, primarily aimed at virtual reality flight simulators, such as DCS World.
 
+![Screenshot of the main app](docs/internals/config-app.png)
+
 ## Current Status
 
 This is best thought of as a 'developer preview': it works for me, on my computer, but has not been significantly used by others. The settings UI and documentation are particularly lacking at present.
@@ -32,6 +34,63 @@ I am not able to respond to 1:1 requests for help via any means, including GitHu
 
 Windows 11 is untested, and I am unable to investigate any issues reported with OpenKneeboard on Windows 11.
 
+## Features
+
+### DirectInput Control
+
+Bind any of your device buttons (even if you have 128) to show/hide the kneeboard, previous tab, next tab, previous page, or next page.
+
+### Attach to running games
+
+Fits with your flow; no need to launch the games via OpenKneeboard, or to start OpenKneeboard first.
+
+### VR? Non-VR? Either works.
+
+![Non-VR Screenshot](docs/screenshots/non-vr.png)
+![VR Screenshot](docs/screenshots/theater.png)
+
+### VR Zoom
+
+Don't cloud your cockpit: goes out of the way when you're not looking at it.
+
+![Unzoomed ZR Screenshot](docs/screenshots/unzoomed-log.png)
+
+### DCS Radio Log
+
+A log of all radio messages that are shown by DCS World as text in the top left corner - there is no transcription. This is very useful for single player campaigns.
+
+![A screenshot of the radio log](docs/screenshots/log.png)
+
+Screenshot from [Baltic Dragon's excellent Iron Flag campaign for the A-10C II](https://www.baltic-dragon.net/copy-of-a-10-tew-3-0).
+
+### Categorized DCS Kneeboard
+
+Quickly jump between sections:
+
+#### Mission Tab
+
+![Mission Tab](docs/screenshots/mission.png)
+
+Screenshot from [Baltic Dragon's excellent Iron Flag campaign for the A-10C II](https://www.baltic-dragon.net/copy-of-a-10-tew-3-0).
+
+#### Aircraft Tab
+
+![Aircraft Tab](docs/screenshots/aircraft.png)
+
+Screenshot from [Goldwolf's DCS Reference Guide](https://www.digitalcombatsimulator.com/en/files/3318384/)
+
+#### Theater Tab
+
+Field info etc
+
+![Terrain Tab](docs/screenshots/theater.png)
+
+I believe these are currently only provided for the Caucasus and NTTR theaters.
+
+### Not *just* for DCS
+
+You can also add any other folder of images as another tab; this works great in DCS, or in other games.
+
 ## Supported Games
 
 - Non-VR: DirectX 11
@@ -41,16 +100,6 @@ Windows 11 is untested, and I am unable to investigate any issues reported with 
 I hope to expand this list in the future, especially for OpenXR.
 
 OpenKneeboard has been primarily tested with DCS: World via the Oculus SDK, using DirectX 11.
-
-## Features
-
-- DirectInput control: previous/next tab/page. Up to 128 buttons are supported ;)
-- Attach to running games; no need to launch the games via OpenKneeboard, or to start OpenKneeboard first.
-- Folder Tab: shows images from a folder. Recommended 3:4 aspect ratio
-- DCS Radio Log Tab: log of all radio messages that are shown by DCS World as text in the top left corner. There is no voice transcription. This is especially useful for single player campaigns.
-- DCS Mission Tab: any mission-specific kneeboard pages.
-- DCS Aircraft Tab: any aircraft-specific kneeboard pages.
-- DCS Terrain Tab: any terrain-specific kneeboard pages. I believe these are currently only available for Caucasus and Nevada
 
 ## Thanks
 
