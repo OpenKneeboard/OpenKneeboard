@@ -25,6 +25,13 @@ Support may be available from the community via:
 
 I am not able to respond to 1:1 requests for help via any means, including GitHub, Discord, Twitter, Reddit, or email.
 
+## Requirements
+
+- Up-to-date 64-bit Windows 10
+- A graphics card that supports Direct3D 11
+
+Windows 11 is untested, and I am unable to investigate any issues reported with OpenKneeboard on Windows 11.
+
 ## Supported Games
 
 - Non-VR: DirectX 11
