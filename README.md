@@ -31,6 +31,8 @@ I am not able to respond to 1:1 requests for help via any means, including GitHu
 - OpenVR: any
 - Oculus: DirectX 11, DirectX 12.
 
+I hope to expand this list in the future, especially for OpenXR.
+
 OpenKneeboard has been primarily tested with DCS: World via the Oculus SDK, using DirectX 11.
 
 ## Features
