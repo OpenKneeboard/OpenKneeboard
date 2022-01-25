@@ -34,11 +34,8 @@ target_include_directories(
   ${SOURCE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include)
 
-add_custom_target(
-  CopyRuntimeFiles
-  ALL
-  COMMAND
-  ${CMAKE_COMMAND} -E copy_if_different
+set(
+  RUNTIME_DLLS
 	"$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
 	"$<TARGET_FILE:OpenKneeboard-Injection-Bootstrapper>"
 	"$<TARGET_FILE:OpenKneeboard-AutoInject-Marker>"
@@ -47,7 +44,18 @@ add_custom_target(
 	"$<TARGET_FILE:OpenKneeboard-oculus-d3d12>"
 	"$<TARGET_FILE:OpenKneeboard-dcs-ext-dll>"
 	"$<TARGET_FILE_DIR:OpenKneeboard-dcs-ext-dll>/$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>"
+)
+
+add_custom_target(
+  CopyRuntimeFiles
+  ALL
+  COMMAND
+  ${CMAKE_COMMAND} -E copy_if_different
+	"${RUNTIME_DLLS}"
   "$<TARGET_FILE_DIR:OpenKneeboard>"
   &&
   ${CMAKE_COMMAND} -E touch RuntimeFiles.stamp
   COMMAND_EXPAND_LISTS)
+
+install(TARGETS OpenKneeboard)
+install(FILES "${RUNTIME_DLLS}" TYPE BIN)
