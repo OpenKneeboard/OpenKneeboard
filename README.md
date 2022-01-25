@@ -29,13 +29,14 @@ I am not able to respond to 1:1 requests for help via any means, including GitHu
 
 - Non-VR: DirectX 11
 - OpenVR: any
-- Oculus: DirectX 11, DirectX 12
+- Oculus: DirectX 11, DirectX 12.
 
 OpenKneeboard has been primarily tested with DCS: World via the Oculus SDK, using DirectX 11.
 
 ## Features
 
 - DirectInput control: previous/next tab/page. Up to 128 buttons are supported ;)
+- Attach to running games; no need to launch the games via OpenKneeboard, or to start OpenKneeboard first.
 - Folder Tab: shows images from a folder. Recommended 3:4 aspect ratio
 - DCS Radio Log Tab: log of all radio messages that are shown by DCS World as text in the top left corner. There is no voice transcription. This is especially useful for single player campaigns.
 - DCS Mission Tab: any mission-specific kneeboard pages.
