@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okDirectInputController_SettingsUI.h"
 
@@ -36,6 +37,7 @@ struct okDirectInputController::SettingsUI::DeviceButtons {
   wxButton* nextTab = nullptr;
   wxButton* previousPage = nullptr;
   wxButton* nextPage = nullptr;
+  wxButton* toggleVisibility = nullptr;
 
   wxButton* Get(const wxEventTypeTag<wxCommandEvent>& evt) {
     if (evt == okEVT_PREVIOUS_TAB) {
@@ -49,6 +51,9 @@ struct okDirectInputController::SettingsUI::DeviceButtons {
     }
     if (evt == okEVT_NEXT_PAGE) {
       return nextPage;
+    }
+    if (evt == okEVT_TOGGLE_VISIBILITY) {
+      return toggleVisibility;
     }
     return nullptr;
   }
@@ -94,6 +99,7 @@ okDirectInputController::SettingsUI::SettingsUI(
   auto bold = GetFont().MakeBold();
   for (const auto& column:
        {_("Device"),
+        _("Show/Hide"),
         _("Previous Tab"),
         _("Next Tab"),
         _("Previous Page"),
@@ -110,23 +116,27 @@ okDirectInputController::SettingsUI::SettingsUI(
     auto label = new wxStaticText(panel, wxID_ANY, device.tszInstanceName);
     grid->Add(label, wxGBPosition(row, 0));
 
+    auto toggleVisibility = CreateBindButton(panel, i, okEVT_TOGGLE_VISIBILITY);
+    grid->Add(toggleVisibility, wxGBPosition(row, 1));
+
     auto previousTab = CreateBindButton(panel, i, okEVT_PREVIOUS_TAB);
-    grid->Add(previousTab, wxGBPosition(row, 1));
+    grid->Add(previousTab, wxGBPosition(row, 2));
 
     auto nextTab = CreateBindButton(panel, i, okEVT_NEXT_TAB);
-    grid->Add(nextTab, wxGBPosition(row, 2));
+    grid->Add(nextTab, wxGBPosition(row, 3));
 
     auto previousPage = CreateBindButton(panel, i, okEVT_PREVIOUS_PAGE);
-    grid->Add(previousPage, wxGBPosition(row, 3));
+    grid->Add(previousPage, wxGBPosition(row, 4));
 
     auto nextPage = CreateBindButton(panel, i, okEVT_NEXT_PAGE);
-    grid->Add(nextPage, wxGBPosition(row, 4));
+    grid->Add(nextPage, wxGBPosition(row, 5));
 
     mDeviceButtons.push_back({
       .previousTab = previousTab,
       .nextTab = nextTab,
       .previousPage = previousPage,
       .nextPage = nextPage,
+      .toggleVisibility = toggleVisibility,
     });
   }
   grid->SetCols(5);

@@ -103,6 +103,10 @@ class Writer final {
   operator bool() const;
   void Update(const Config& config, const std::vector<Pixel>& pixels);
 
+  void Attach();
+  void Detach();
+  bool IsAttached() const;
+
  private:
   std::shared_ptr<Impl> p;
 };

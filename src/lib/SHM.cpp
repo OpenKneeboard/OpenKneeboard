@@ -203,6 +203,8 @@ Writer::Writer() {
     .Header = reinterpret_cast<Header*>(mapping),
     .Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]),
     .IsFeeder = true});
+
+  this->Attach();
 }
 
 Writer::~Writer() {
@@ -266,6 +268,20 @@ Snapshot Reader::MaybeGet() const {
   return p->Latest;
 }
 
+bool Writer::IsAttached() const {
+  return p->Header->flags & HeaderFlags::FEEDER_ATTACHED;
+}
+
+void Writer::Attach() {
+  p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
+  p->Header->sequenceNumber++;
+}
+
+void Writer::Detach() {
+  p->Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
+}
+
+
 void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
@@ -273,6 +289,10 @@ void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
 
   if (pixels.size() != config.imageWidth * config.imageHeight) {
     throw std::logic_error("Pixel array size does not match header");
+  }
+
+  if (!IsAttached()) {
+    return;
   }
 
   Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);

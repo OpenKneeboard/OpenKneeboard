@@ -186,6 +186,18 @@ okSHMRenderer::okSHMRenderer() : p(std::make_unique<Impl>()) {
 okSHMRenderer::~okSHMRenderer() {
 }
 
+bool okSHMRenderer::IsAttached() const {
+  return p->mSHM.IsAttached();
+}
+
+void okSHMRenderer::Attach() {
+  return p->mSHM.Attach();
+}
+
+void okSHMRenderer::Detach() {
+  return p->mSHM.Detach();
+}
+
 void okSHMRenderer::Render(
   const std::shared_ptr<Tab>& tab,
   uint16_t pageIndex) {

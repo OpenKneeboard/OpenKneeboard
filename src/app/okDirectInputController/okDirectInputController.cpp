@@ -98,6 +98,7 @@ okDirectInputController::okDirectInputController(
     ACTION(NEXT_TAB);
     ACTION(PREVIOUS_PAGE);
     ACTION(NEXT_PAGE);
+    ACTION(TOGGLE_VISIBILITY);
 #undef ACTION
     if (!eventType) {
       continue;
@@ -170,6 +171,7 @@ nlohmann::json okDirectInputController::GetSettings() const {
     ACTION(NEXT_TAB);
     ACTION(PREVIOUS_PAGE);
     ACTION(NEXT_PAGE);
+    ACTION(TOGGLE_VISIBILITY);
 #undef ACTION
     if (action.empty()) {
       continue;

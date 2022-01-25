@@ -113,6 +113,7 @@ okMainWindow::okMainWindow()
     dipc->Bind(okEVT_NEXT_TAB, &okMainWindow::OnNextTab, this);
     dipc->Bind(okEVT_PREVIOUS_PAGE, &okMainWindow::OnPreviousPage, this);
     dipc->Bind(okEVT_NEXT_PAGE, &okMainWindow::OnNextPage, this);
+    dipc->Bind(okEVT_TOGGLE_VISIBILITY, &okMainWindow::OnToggleVisibility, this);
 
     dipc->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
       this->p->settings.DirectInput = dipc->GetSettings();
@@ -181,20 +182,29 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
   w->Show(true);
 }
 
-void okMainWindow::OnPreviousTab(wxCommandEvent& ev) {
+void okMainWindow::OnPreviousTab(wxCommandEvent&) {
   p->notebook->AdvanceSelection(false);
 }
 
-void okMainWindow::OnNextTab(wxCommandEvent& ev) {
+void okMainWindow::OnNextTab(wxCommandEvent&) {
   p->notebook->AdvanceSelection(true);
 }
 
-void okMainWindow::OnPreviousPage(wxCommandEvent& ev) {
+void okMainWindow::OnPreviousPage(wxCommandEvent&) {
   p->tabUIs[p->currentTab]->PreviousPage();
 }
 
-void okMainWindow::OnNextPage(wxCommandEvent& ev) {
+void okMainWindow::OnNextPage(wxCommandEvent&) {
   p->tabUIs[p->currentTab]->NextPage();
+}
+
+void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
+  auto& shm = *p->shmRenderer;
+  if (shm.IsAttached()) {
+    shm.Detach();
+  } else {
+    shm.Attach();
+  }
 }
 
 void okMainWindow::UpdateTabs() {

@@ -46,6 +46,7 @@ class okMainWindow final : public wxFrame {
   void OnNextTab(wxCommandEvent&);
   void OnPreviousPage(wxCommandEvent&);
   void OnNextPage(wxCommandEvent&);
+  void OnToggleVisibility(wxCommandEvent&);
 
   void OnTabChanged(wxBookCtrlEvent&);
 

@@ -22,6 +22,7 @@ wxDEFINE_EVENT(okEVT_PREVIOUS_TAB, wxCommandEvent);
 wxDEFINE_EVENT(okEVT_NEXT_TAB, wxCommandEvent);
 wxDEFINE_EVENT(okEVT_PREVIOUS_PAGE, wxCommandEvent);
 wxDEFINE_EVENT(okEVT_NEXT_PAGE, wxCommandEvent);
+wxDEFINE_EVENT(okEVT_TOGGLE_VISIBILITY, wxCommandEvent);
 
 wxDEFINE_EVENT(okEVT_TAB_PIXELS_CHANGED, wxCommandEvent);
 
