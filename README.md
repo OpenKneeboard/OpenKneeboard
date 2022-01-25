@@ -34,6 +34,17 @@ I am not able to respond to 1:1 requests for help via any means, including GitHu
 
 Windows 11 is untested, and I am unable to investigate any issues reported with OpenKneeboard on Windows 11.
 
+## Getting Started
+
+1. Build it (see [Developer information](#developer-information))
+2. Run it
+3. It will automatically detect a DCS installation and prompt you to install the hooks
+4. Open settings
+5. Configure your bindings
+6. Add any other games and set up your tabs how you like them
+
+The hooks are optional, but are required for the DCS-specific tabs to work.
+
 ## Features
 
 ### DirectInput Control
@@ -99,7 +110,7 @@ You can also add any other folder of images as another tab; this works great in 
 
 I hope to expand this list in the future, especially for OpenXR.
 
-OpenKneeboard has been primarily tested with DCS: World via the Oculus SDK, using DirectX 11.
+OpenKneeboard has been primarily tested with DCS: World Open Beta via the Oculus SDK, using DirectX 11.
 
 ## Thanks
 
