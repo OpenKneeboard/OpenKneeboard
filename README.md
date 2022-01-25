@@ -6,6 +6,8 @@ OpenKneeboard is an open source Kneeboard application, primarily aimed at virtua
 
 This is best thought of as a 'developer preview': it works for me, on my computer, but has not been significantly used by others. The settings UI and documentation are particularly lacking at present.
 
+If you are not a C++ developer, you may want to use [VRK](https://forums.eagle.ru/topic/211308-vrk-a-virtual-reality-enabled-kneeboard-with-touch-and-ink-support) instead.
+
 ## WARNING: Anti-Cheat
 
 While OpenKneeboard is not a cheat, it does hook into the games rendering pipeline, which over-eager anti-cheat systems may consider suspicious. While this is similar to how other overlays work (e.g. Steam and Discord), it is possible that using OpenKneeboard may lead to an anti-cheat ban.
@@ -39,6 +41,13 @@ OpenKneeboard has been primarily tested with DCS: World via the Oculus SDK, usin
 - DCS Mission Tab: any mission-specific kneeboard pages.
 - DCS Aircraft Tab: any aircraft-specific kneeboard pages.
 - DCS Terrain Tab: any terrain-specific kneeboard pages. I believe these are currently only available for Caucasus and Nevada
+
+## Thanks
+
+- BeamRider for the [VRK](https://forums.eagle.ru/topic/211308-vrk-a-virtual-reality-enabled-kneeboard-with-touch-and-ink-support) project, for showing how useful an in-VR kneeboard is, and clear inspiration for OpenKneeboard.
+- [Benjamin Höglinger-Stelzer a.k.a. Nefarius](https://nefarius.at/) for the [Injector](https://github.com/nefarius/Injector) utility, which has been extremely useful for development.
+- Nefarius and the other members of the ViGEm Discord for lots of advice/feedback/information on DirectX and other aspects of Windows development.
+- [AMD GPUOpen's OCAT project](https://gpuopen.com/ocat/) for demonstrating overlay rendering in applications using the Oculus SDK.
 
 ## Developer Information
 
