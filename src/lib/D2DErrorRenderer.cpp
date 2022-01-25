@@ -62,6 +62,9 @@ void D2DErrorRenderer::SetRenderTarget(
 
   p->rt = rt;
   p->rtVar = {};
+  if (!rt) {
+    return;
+  }
 
   rt->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},

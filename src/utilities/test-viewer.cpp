@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
@@ -38,9 +39,8 @@
 
 using namespace OpenKneeboard;
 
-class MainWindow final : public wxFrame {
+class Canvas final : public wxWindow {
  private:
-  wxTimer mTimer;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
@@ -54,14 +54,7 @@ class MainWindow final : public wxFrame {
   winrt::com_ptr<IDXGIFactory2> mDXGI;
 
  public:
-  MainWindow()
-    : wxFrame(
-      nullptr,
-      wxID_ANY,
-      "OpenKneeboard Test Viewer",
-      wxDefaultPosition,
-      wxSize {768 / 2, 1024 / 2},
-      wxDEFAULT_FRAME_STYLE) {
+  Canvas(wxWindow* parent) : wxWindow(parent, wxID_ANY, wxDefaultPosition, { 768 / 2, 1024 / 2}) {
     D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2df.put());
     UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef DEBUG
@@ -83,22 +76,14 @@ class MainWindow final : public wxFrame {
 
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mD2df);
 
-    Bind(wxEVT_PAINT, &MainWindow::OnPaint, this);
+    Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
     Bind(wxEVT_ERASE_BACKGROUND, [this](auto&) {});
-    Bind(
-      wxEVT_MENU, [this](auto&) { this->Close(true); }, wxID_EXIT);
-    Bind(wxEVT_SIZE, &MainWindow::OnSize, this);
+    Bind(wxEVT_SIZE, &Canvas::OnSize, this);
+  }
 
-    auto menuBar = new wxMenuBar();
-    {
-      auto fileMenu = new wxMenu();
-      fileMenu->Append(wxID_EXIT, _T("E&xit"));
-      menuBar->Append(fileMenu, _("&File"));
-    }
-    SetMenuBar(menuBar);
-
-    mTimer.Bind(wxEVT_TIMER, [this](auto) { this->CheckForUpdate(); });
-    mTimer.Start(100);
+  void OnSize(wxSizeEvent& ev) {
+    Refresh();
+    Update();
   }
 
   void CheckForUpdate() {
@@ -128,9 +113,15 @@ class MainWindow final : public wxFrame {
         && mode.Height == desiredSize.GetHeight()) {
         return;
       }
-      mode.Width = desiredSize.GetWidth();
-      mode.Height = desiredSize.GetHeight();
-      mSwapChain->ResizeTarget(&mode);
+      mBackgroundBrush = nullptr;
+      mErrorRenderer->SetRenderTarget(nullptr);
+      mD3dContext->ClearState();
+      mSwapChain->ResizeBuffers(
+        desc.BufferCount,
+        desiredSize.x,
+        desiredSize.y,
+        mode.Format,
+        desc.Flags);
       return;
     }
 
@@ -154,11 +145,6 @@ class MainWindow final : public wxFrame {
       mSwapChain.put());
   }
 
-  void OnSize(wxSizeEvent& ev) {
-    this->initSwapChain();
-    this->Refresh();
-  }
-
   void OnPaint(wxPaintEvent& ev) {
     this->initSwapChain();
     const auto clientSize = GetClientSize();
@@ -174,8 +160,7 @@ class MainWindow final : public wxFrame {
 
     mErrorRenderer->SetRenderTarget(rt);
 
-    {
-      // TODO: don't recreate every frame?
+    if (!mBackgroundBrush) {
       winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
       SHM::Pixel pixels[20 * 20];
       for (int x = 0; x < 20; x++) {
@@ -264,21 +249,55 @@ class MainWindow final : public wxFrame {
 
     const auto renderLeft = (clientSize.GetWidth() - renderWidth) / 2;
     const auto renderTop = (clientSize.GetHeight() - renderHeight) / 2;
+    auto dpi = GetDpiForWindow(this->GetHWND());
     D2D1_RECT_F pageRect {
-      renderLeft,
-      renderTop,
-      renderLeft + renderWidth,
-      renderTop + renderHeight};
+      renderLeft * (dpi / 96.0f),
+      renderTop * (dpi / 96.0f),
+      (renderLeft + renderWidth) * (dpi / 96.0f),
+      (renderTop + renderHeight) * (dpi / 96.0f)};
 
     auto bg = mBackgroundBrush;
     // Align the top-left pixel of the brush
     bg->SetTransform(
       D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
     rt->FillRectangle(pageRect, bg.get());
+    rt->SetTransform(D2D1::IdentityMatrix());
     rt->DrawBitmap(
       d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
 
     mLastSequenceNumber = snapshot.GetSequenceNumber();
+  }
+};
+
+class MainWindow final : public wxFrame {
+ private:
+  wxTimer mTimer;
+
+ public:
+  MainWindow()
+    : wxFrame(
+      nullptr,
+      wxID_ANY,
+      "OpenKneeboard Test Viewer") {
+    auto menuBar = new wxMenuBar();
+    {
+      auto fileMenu = new wxMenu();
+      fileMenu->Append(wxID_EXIT, _T("E&xit"));
+      menuBar->Append(fileMenu, _("&File"));
+    }
+    SetMenuBar(menuBar);
+
+    auto canvas = new Canvas(this);
+
+    mTimer.Bind(wxEVT_TIMER, [canvas](auto) { canvas->CheckForUpdate(); });
+    mTimer.Start(100);
+
+    Bind(
+      wxEVT_MENU, [this](auto&) { this->Close(true); }, wxID_EXIT);
+
+    auto sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(canvas, 1, wxEXPAND);
+    this->SetSizerAndFit(sizer);
   }
 
   void OnExit(wxCommandEvent& ev) {
