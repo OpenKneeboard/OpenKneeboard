@@ -2,7 +2,7 @@
 
 OpenKneeboard is an open source Kneeboard application, primarily aimed at virtual reality flight simulators, such as DCS World.
 
-![Screenshot of the main app](docs/internals/config-app.png)
+![Screenshot of the main app](docs/screenshots/config-app.png)
 
 ## Current Status
 
