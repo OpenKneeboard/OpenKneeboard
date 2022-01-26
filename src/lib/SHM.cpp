@@ -182,17 +182,23 @@ class Impl {
   std::byte* Mapping = nullptr;
   Header* Header = nullptr;
   Pixel* Pixels = nullptr;
-  bool IsFeeder;
-
   Snapshot Latest;
 
   ~Impl() {
-    if (IsFeeder) {
-      Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
-      FlushViewOfFile(Mapping, NULL);
-    }
     UnmapViewOfFile(Mapping);
     CloseHandle(Handle);
+  }
+};
+
+class Writer::Impl : public SHM::Impl {
+ public:
+  using SHM::Impl::Impl;
+  bool IsAttached = false;
+  bool HaveFed = false;
+
+  ~Impl() {
+    Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
+    FlushViewOfFile(Mapping, NULL);
   }
 };
 
@@ -212,12 +218,11 @@ Writer::Writer() {
     return;
   }
 
-  this->p.reset(new Impl {
-    .Handle = handle,
-    .Mapping = mapping,
-    .Header = reinterpret_cast<Header*>(mapping),
-    .Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]),
-    .IsFeeder = true});
+  p = std::make_shared<Impl>();
+  p->Handle = handle;
+  p->Mapping = mapping;
+  p->Header = reinterpret_cast<Header*>(mapping);
+  p->Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]);
 
   this->Attach();
 }
@@ -245,7 +250,7 @@ Reader::Reader() {
     .Mapping = mapping,
     .Header = reinterpret_cast<Header*>(mapping),
     .Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]),
-    .IsFeeder = false});
+  });
 }
 
 Reader::~Reader() {
@@ -284,15 +289,22 @@ Snapshot Reader::MaybeGet() const {
 }
 
 bool Writer::IsAttached() const {
-  return p->Header->flags & HeaderFlags::FEEDER_ATTACHED;
+  return p->IsAttached;
 }
 
 void Writer::Attach() {
+  p->IsAttached = true;
+
+  if (!p->HaveFed) {
+    return;
+  }
+
   p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
   p->Header->sequenceNumber++;
 }
 
 void Writer::Detach() {
+  p->IsAttached = false;
   p->Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
 }
 
@@ -303,6 +315,10 @@ void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
 
   if (pixels.size() != config.imageWidth * config.imageHeight) {
     throw std::logic_error("Pixel array size does not match header");
+  }
+
+  if (config.imageWidth == 0 || config.imageHeight == 0) {
+    throw std::logic_error("Not feeding a 0-size image");
   }
 
   if (!IsAttached()) {
@@ -318,6 +334,7 @@ void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
     reinterpret_cast<void*>(p->Pixels),
     pixels.data(),
     pixels.size() * sizeof(Pixel));
+  p->HaveFed = true;
 }
 
 }// namespace OpenKneeboard::SHM

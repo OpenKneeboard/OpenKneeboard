@@ -111,6 +111,7 @@ class Writer final {
   bool IsAttached() const;
 
  private:
+  class Impl;
   std::shared_ptr<Impl> p;
 };
 

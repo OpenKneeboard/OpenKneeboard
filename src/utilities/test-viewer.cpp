@@ -219,12 +219,21 @@ class Canvas final : public wxWindow {
 
     if (config.imageWidth == 0 || config.imageHeight == 0) {
       mErrorRenderer->Render(
-        _("Invalid Image").ToStdWstring(),
+        _("No Image").ToStdWstring(),
         {0.0f,
          0.0f,
          float(clientSize.GetWidth()),
          float(clientSize.GetHeight())});
+      mFirstDetached = false;
+      return;
     }
+
+    auto textureName = SHM::SharedTextureName();
+    winrt::com_ptr<IDXGISurface> sharedSurface;
+    mD3d.as<ID3D11Device1>()->OpenSharedResourceByName(
+      textureName.c_str(),
+      DXGI_SHARED_RESOURCE_READ,
+      IID_PPV_ARGS(sharedSurface.put()));
 
     wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
     rt->Clear(
@@ -252,13 +261,6 @@ class Canvas final : public wxWindow {
       0,
       static_cast<FLOAT>(config.imageWidth),
       static_cast<FLOAT>(config.imageHeight)};
-
-    auto textureName = SHM::SharedTextureName();
-    winrt::com_ptr<IDXGISurface> sharedSurface;
-    mD3d.as<ID3D11Device1>()->OpenSharedResourceByName(
-      textureName.c_str(),
-      DXGI_SHARED_RESOURCE_READ,
-      IID_PPV_ARGS(sharedSurface.put()));
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
     static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
     D2D1_PIXEL_FORMAT pixelFormat {
