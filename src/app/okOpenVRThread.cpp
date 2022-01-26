@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okOpenVRThread.h"
 
@@ -46,8 +47,7 @@ class okOpenVRThread::Impl final {
 
   ID3D11Device* D3D();
 
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  winrt::com_ptr<ID3D11RenderTargetView> renderTargetView;
+  winrt::com_ptr<ID3D11Texture2D> sharedTexture;
   uint64_t sequenceNumber = 0;
 
   ~Impl() {
@@ -202,45 +202,32 @@ void okOpenVRThread::Tick() {
   // Using a Direct3D texture instead of SetOverlayRaw(), as SetOverlayRaw()
   // only works 200 times; SetOverlayTexture() keeps working 'forever'
 
-  auto previousTexture = p->texture;
+  auto previousTexture = p->sharedTexture;
   if (previousTexture) {
     D3D11_TEXTURE2D_DESC desc;
     previousTexture->GetDesc(&desc);
     if (config.imageWidth != desc.Width || config.imageHeight != desc.Height) {
-      p->texture = nullptr;
+      p->sharedTexture = nullptr;
     }
   }
 
   auto d3d = p->D3D();
-  if (!p->texture) {
+  if (!p->sharedTexture) {
     D3D11_TEXTURE2D_DESC desc {
       .Width = config.imageWidth,
       .Height = config.imageHeight,
       .MipLevels = 1,
       .ArraySize = 1,
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
       .SampleDesc = {1, 0},
       .Usage = D3D11_USAGE_DEFAULT,
-      .BindFlags = D3D11_BIND_RENDER_TARGET,
+      .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
       .CPUAccessFlags = {},
       .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
     };
-    d3d->CreateTexture2D(&desc, nullptr, p->texture.put());
-    if (!p->texture) {
-      dprint("Failed to create texture for OpenVR");
-      return;
-    }
-
-    D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-      .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-      .Texture2D = {.MipSlice = 0},
-    };
-    p->renderTargetView = nullptr;
-    d3d->CreateRenderTargetView(
-      p->texture.get(), &rtvd, p->renderTargetView.put());
-    if (!p->renderTargetView) {
-      dprint("Failed to create RenderTargetView for OpenVR");
+    d3d->CreateTexture2D(&desc, nullptr, p->sharedTexture.put());
+    if (!p->sharedTexture) {
+      dprint("Failed to create shared texture for OpenVR");
       return;
     }
   }
@@ -261,15 +248,20 @@ void okOpenVRThread::Tick() {
     d3d->GetImmediateContext(context.put());
 
     context->UpdateSubresource(
-      p->texture.get(),
+      p->sharedTexture.get(),
       0,
       &box,
       snapshot.GetPixels(),
       config.imageWidth * sizeof(SHM::Pixel),
       0);
+    // TODO: `GetSharedHandle()` is not recommended in modern code, but the
+    // replacement requires SHARED_NTHANDLE instead of SHARED. Get it working
+    // first, then see if the modern way works with SteamVR
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    p->sharedTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
     vr::Texture_t vrt {
-      .handle = p->texture.get(),
-      .eType = vr::TextureType_DirectX,
+      .handle = handle,
+      .eType = vr::TextureType_DXGISharedHandle,
       .eColorSpace = vr::ColorSpace_Auto,
     };
     CHECK(SetOverlayTexture, p->overlay, &vrt);
