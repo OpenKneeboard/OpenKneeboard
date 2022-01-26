@@ -2,22 +2,25 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if (MSVC)
-  add_definitions(
+  add_compile_options(
     "/Zc:__cplusplus"
-    "/DUNICODE=1"
-    "/DNOMINMAX"
-    "/DWIN32_LEAN_AND_MEAN"
     "/await"
     # Lots of legacy C functions are unsafe, and raise warnings in wxwidgets
     "/wd4996")
 endif()
 
 add_compile_definitions(
+  "UNICODE=1"
+  "NOMINMAX"
+  "WIN32_LEAN_AND_MEAN"
   "OPENKNEEBOARD_TEXTURE_WIDTH=768"
   "OPENKNEEBOARD_TEXTURE_HEIGHT=1024"
   "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
   "OPENKNEEBOARD_BREAK=$<$<CONFIG:Debug>:__debugbreak()>"
 )
+
+# Needed by c++/winrt in some environments/with some windows SDK versions
+link_libraries(WindowsApp.lib)
 
 add_subdirectory(lib)
 
