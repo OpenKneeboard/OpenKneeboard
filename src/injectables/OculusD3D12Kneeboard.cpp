@@ -54,7 +54,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
 
   ovrTextureSwapChain swapChain = nullptr;
 
-  static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,

@@ -40,6 +40,12 @@
 
 using namespace OpenKneeboard;
 
+#pragma pack(push)
+struct Pixel {
+  uint8_t b, g, r, a;
+};
+#pragma pack(pop)
+
 class Canvas final : public wxWindow {
  private:
   bool mFirstDetached = false;
@@ -127,7 +133,7 @@ class Canvas final : public wxWindow {
       return;
     }
 
-    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
       .Width = static_cast<UINT>(desiredSize.GetWidth()),
       .Height = static_cast<UINT>(desiredSize.GetHeight()),
@@ -164,7 +170,7 @@ class Canvas final : public wxWindow {
 
     if (!mBackgroundBrush) {
       winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
-      SHM::Pixel pixels[20 * 20];
+      Pixel pixels[20 * 20];
       for (int x = 0; x < 20; x++) {
         for (int y = 0; y < 20; y++) {
           bool white = (x < 10 && y < 10) || (x >= 10 && y >= 10);
@@ -175,7 +181,7 @@ class Canvas final : public wxWindow {
       rt->CreateBitmap(
         {20, 20},
         reinterpret_cast<BYTE*>(pixels),
-        20 * sizeof(SHM::Pixel),
+        20 * sizeof(Pixel),
         D2D1::BitmapProperties(D2D1::PixelFormat(
           DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
         backgroundBitmap.put());
@@ -262,7 +268,7 @@ class Canvas final : public wxWindow {
       static_cast<FLOAT>(config.imageWidth),
       static_cast<FLOAT>(config.imageHeight)};
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
     D2D1_PIXEL_FORMAT pixelFormat {
       DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED};
     D2D1_BITMAP_PROPERTIES bitmapProperties {

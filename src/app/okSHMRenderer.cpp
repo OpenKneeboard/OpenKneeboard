@@ -190,8 +190,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
     .imageHeight = static_cast<uint16_t>(mUsedSize.height),
     .vr = {.flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION},
   };
-  std::vector<SHM::Pixel> pixels(config.imageWidth * config.imageHeight);
-  mSHM.Update(config, pixels);
+  mSHM.Update(config);
 }
 
 okSHMRenderer::okSHMRenderer() : p(std::make_unique<Impl>()) {

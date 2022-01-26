@@ -113,8 +113,7 @@ class Spinlock final {
 };
 
 constexpr DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
-constexpr DWORD MAX_IMAGE_BYTES = MAX_IMAGE_PX * sizeof(Pixel);
-constexpr DWORD SHM_SIZE = sizeof(Header) + MAX_IMAGE_BYTES;
+constexpr DWORD SHM_SIZE = sizeof(Header);
 
 constexpr auto SHMPath() {
   char buf[255];
@@ -165,13 +164,6 @@ const Config* const Snapshot::GetConfig() const {
   return &reinterpret_cast<const Header*>(mBytes->data())->config;
 }
 
-const Pixel* const Snapshot::GetPixels() const {
-  if (!mBytes) {
-    return nullptr;
-  }
-  return reinterpret_cast<const Pixel*>(&mBytes->data()[sizeof(Header)]);
-}
-
 Snapshot::operator bool() const {
   return (bool)mBytes;
 }
@@ -181,7 +173,6 @@ class Impl {
   HANDLE Handle;
   std::byte* Mapping = nullptr;
   Header* Header = nullptr;
-  Pixel* Pixels = nullptr;
   Snapshot Latest;
 
   ~Impl() {
@@ -222,7 +213,6 @@ Writer::Writer() {
   p->Handle = handle;
   p->Mapping = mapping;
   p->Header = reinterpret_cast<Header*>(mapping);
-  p->Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]);
 
   this->Attach();
 }
@@ -249,7 +239,6 @@ Reader::Reader() {
     .Handle = handle,
     .Mapping = mapping,
     .Header = reinterpret_cast<Header*>(mapping),
-    .Pixels = reinterpret_cast<Pixel*>(&mapping[sizeof(Header)]),
   });
 }
 
@@ -308,13 +297,9 @@ void Writer::Detach() {
   p->Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
 }
 
-void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
+void Writer::Update(const Config& config) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
-  }
-
-  if (pixels.size() != config.imageWidth * config.imageHeight) {
-    throw std::logic_error("Pixel array size does not match header");
   }
 
   if (config.imageWidth == 0 || config.imageHeight == 0) {
@@ -329,12 +314,6 @@ void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
   p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
   p->Header->sequenceNumber++;
   p->Header->config = config;
-
-  memcpy(
-    reinterpret_cast<void*>(p->Pixels),
-    pixels.data(),
-    pixels.size() * sizeof(Pixel));
-  p->HaveFed = true;
 }
 
 }// namespace OpenKneeboard::SHM

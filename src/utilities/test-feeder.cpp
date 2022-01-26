@@ -34,6 +34,12 @@
 
 using namespace OpenKneeboard;
 
+#pragma pack(push)
+struct Pixel {
+  uint8_t b, g, r, a;
+};
+#pragma pack(pop)
+
 int main() {
   D2D1_COLOR_F colors[] = {
     {1.0f, 0.0f, 0.0f, 1.0f},// red
@@ -41,8 +47,6 @@ int main() {
     {0.0f, 0.0f, 1.0f, 1.0f},// blue
     {1.0f, 0.0f, 1.0f, 0.5f},// translucent magenta
   };
-  using Pixel = OpenKneeboard::SHM::Pixel;
-  static_assert(Pixel::IS_PREMULTIPLIED_B8G8R8A8);
 
   SHM::Config config {
     /* Headlocked
@@ -82,6 +86,7 @@ int main() {
     nullptr,
     context.put());
 
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
   winrt::com_ptr<ID3D11Texture2D> texture;
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = config.imageWidth,
@@ -154,7 +159,7 @@ int main() {
 
     context->Flush();
 
-    shm.Update(config, pixels);
+    shm.Update(config);
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");
   return 0;

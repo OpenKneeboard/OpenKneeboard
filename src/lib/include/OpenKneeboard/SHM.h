@@ -83,17 +83,6 @@ struct Config final {
   FlatConfig flat;
 };
 
-/// 32-bit BGRA with pre-multiplied alpha
-struct Pixel final {
-  static constexpr bool IS_PREMULTIPLIED_B8G8R8A8 = true;
-  uint8_t b;
-  uint8_t g;
-  uint8_t r;
-  uint8_t a;
-};
-static_assert(sizeof(Pixel) == 4);
-static_assert(offsetof(Pixel, b) == 0);
-static_assert(offsetof(Pixel, a) == 3);
 #pragma pack(pop)
 
 class Impl;
@@ -104,7 +93,7 @@ class Writer final {
   ~Writer();
 
   operator bool() const;
-  void Update(const Config& config, const std::vector<Pixel>& pixels);
+  void Update(const Config& config);
 
   void Attach();
   void Detach();
@@ -125,7 +114,6 @@ class Snapshot final {
 
   uint32_t GetSequenceNumber() const;
   const Config* const GetConfig() const;
-  const Pixel* const GetPixels() const;
 
   operator bool() const;
 };
