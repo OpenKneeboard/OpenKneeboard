@@ -26,6 +26,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/SHM.h>
 #include <d3d11.h>
+#include <d3d11_2.h>
 #include <dxgi1_2.h>
 #include <unknwn.h>
 #include <winrt/base.h>
@@ -54,7 +55,8 @@ class Canvas final : public wxWindow {
   winrt::com_ptr<IDXGIFactory2> mDXGI;
 
  public:
-  Canvas(wxWindow* parent) : wxWindow(parent, wxID_ANY, wxDefaultPosition, { 768 / 2, 1024 / 2}) {
+  Canvas(wxWindow* parent)
+    : wxWindow(parent, wxID_ANY, wxDefaultPosition, {768 / 2, 1024 / 2}) {
     D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2df.put());
     UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #ifdef DEBUG
@@ -214,7 +216,6 @@ class Canvas final : public wxWindow {
     mFirstDetached = true;
 
     const auto& config = *snapshot.GetConfig();
-    const auto pixels = snapshot.GetPixels();
 
     if (config.imageWidth == 0 || config.imageHeight == 0) {
       mErrorRenderer->Render(
@@ -232,15 +233,6 @@ class Canvas final : public wxWindow {
        wxBgColor.Blue() / 255.0f,
        1.0f});
 
-    winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-    rt->CreateBitmap(
-      {config.imageWidth, config.imageHeight},
-      reinterpret_cast<const void*>(pixels),
-      config.imageWidth * sizeof(SHM::Pixel),
-      D2D1_BITMAP_PROPERTIES {
-        {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
-      d2dBitmap.put());
-
     const auto scalex = float(clientSize.GetWidth()) / config.imageWidth;
     const auto scaley = float(clientSize.GetHeight()) / config.imageHeight;
     const auto scale = std::min(scalex, scaley);
@@ -255,6 +247,26 @@ class Canvas final : public wxWindow {
       renderTop * (dpi / 96.0f),
       (renderLeft + renderWidth) * (dpi / 96.0f),
       (renderTop + renderHeight) * (dpi / 96.0f)};
+
+    winrt::com_ptr<IDXGISurface> sharedSurface;
+    mD3d.as<ID3D11Device1>()->OpenSharedResourceByName(
+      L"Local\\OpenKneeboard",
+      DXGI_SHARED_RESOURCE_READ,
+      IID_PPV_ARGS(sharedSurface.put()));
+    winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
+    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+    D2D1_PIXEL_FORMAT pixelFormat {
+      DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED};
+    D2D1_BITMAP_PROPERTIES bitmapProperties {
+      .pixelFormat = pixelFormat,
+      .dpiX = static_cast<FLOAT>(dpi),
+      .dpiY = static_cast<FLOAT>(dpi),
+    };
+    auto csbRet = rt->CreateSharedBitmap(
+      _uuidof(IDXGISurface),
+      sharedSurface.get(),
+      &bitmapProperties,
+      d2dBitmap.put());
 
     auto bg = mBackgroundBrush;
     // Align the top-left pixel of the brush
@@ -274,11 +286,7 @@ class MainWindow final : public wxFrame {
   wxTimer mTimer;
 
  public:
-  MainWindow()
-    : wxFrame(
-      nullptr,
-      wxID_ANY,
-      "OpenKneeboard Test Viewer") {
+  MainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard Test Viewer") {
     auto menuBar = new wxMenuBar();
     {
       auto fileMenu = new wxMenu();

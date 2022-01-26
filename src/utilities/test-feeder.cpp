@@ -19,6 +19,7 @@
 #define _USE_MATH_DEFINES
 #include <D2D1.h>
 #include <D3d11.h>
+#include <dxgi1_2.h>
 #include <OpenKneeboard/ConsoleLoopCondition.h>
 #include <OpenKneeboard/SHM.h>
 #include <Windows.h>
@@ -89,12 +90,14 @@ int main() {
     .ArraySize = 1,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_RENDER_TARGET,
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
   };
   device->CreateTexture2D(&textureDesc, nullptr, texture.put());
   textureDesc.BindFlags = 0;
   textureDesc.Usage = D3D11_USAGE_STAGING;
   textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+  textureDesc.MiscFlags = {};
   device->CreateTexture2D(&textureDesc, nullptr, mappableTexture.put());
 
   winrt::com_ptr<ID3D11RenderTargetView> rt;
@@ -133,6 +136,9 @@ int main() {
   d2dRt->CreateSolidColorBrush(D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
 
   std::wstring message(L"This Way Up");
+
+  HANDLE sharedHandle = INVALID_HANDLE_VALUE;
+  texture.as<IDXGIResource1>()->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ, L"Local\\OpenKneeboard", &sharedHandle);
 
   do {
     frames++;
