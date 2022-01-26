@@ -254,9 +254,8 @@ void okOpenVRThread::Tick() {
       snapshot.GetPixels(),
       config.imageWidth * sizeof(SHM::Pixel),
       0);
-    // TODO: `GetSharedHandle()` is not recommended in modern code, but the
-    // replacement requires SHARED_NTHANDLE instead of SHARED. Get it working
-    // first, then see if the modern way works with SteamVR
+    // `GetSharedHandle()` is not recommended in modern code, but
+    // SteamVR doesn't seem to like the results of `CreateSharedHandle()`.
     HANDLE handle = INVALID_HANDLE_VALUE;
     p->sharedTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
     vr::Texture_t vrt {
