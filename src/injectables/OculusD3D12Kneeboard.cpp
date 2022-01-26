@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "OculusD3D12Kneeboard.h"
 
@@ -134,23 +135,64 @@ bool OculusD3D12Kneeboard::Render(
     return false;
   }
 
-  winrt::com_ptr<ID3D12Resource> texture;
+  winrt::com_ptr<ID3D12Resource> layerTexture;
   ovr->ovr_GetTextureSwapChainBufferDX(
-    session, swapChain, index, IID_PPV_ARGS(texture.put()));
-  if (!texture) {
+    session, swapChain, index, IID_PPV_ARGS(layerTexture.put()));
+  if (!layerTexture) {
     OPENKNEEBOARD_BREAK;
     return false;
   }
 
-  D3D12_SUBRESOURCE_DATA resourceData {
-    .pData = snapshot.GetPixels(),
-    .RowPitch = sizeof(SHM::Pixel) * config.imageWidth,
-    .SlicePitch = 0,
-  };
+  auto sharedTextureName = SHM::SharedTextureName();
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+  HANDLE sharedHandle = INVALID_HANDLE_VALUE;
+  auto oshbnRet = mDevice->OpenSharedHandleByName(
+    sharedTextureName.c_str(), GENERIC_ALL, &sharedHandle);
+  if (sharedHandle == INVALID_HANDLE_VALUE || !sharedHandle) {
+    return false;
+  }
 
-  mResourceUpload->Begin();
-  mResourceUpload->Upload(texture.get(), 0, &resourceData, 1);
-  mResourceUpload->End(mCommandQueue.get()).wait();
+  winrt::com_ptr<ID3D12Resource> sharedTexture;
+  auto oshRet = mDevice->OpenSharedHandle(
+    sharedHandle, IID_PPV_ARGS(sharedTexture.put()));
+  if (!sharedTexture) {
+    return false;
+  }
+
+  D3D12_TEXTURE_COPY_LOCATION dest {
+    .pResource = layerTexture.get(),
+    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+    .SubresourceIndex = 0,
+  };
+  D3D12_TEXTURE_COPY_LOCATION src {
+    .pResource = sharedTexture.get(),
+    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+    .SubresourceIndex = 0,
+  };
+  D3D12_BOX srcBox {0, 0, 0, config.imageWidth, config.imageHeight, 1};
+
+  // Recreate every time as it becomes read-only
+  winrt::com_ptr<ID3D12GraphicsCommandList1> commandList;
+  mDevice->CreateCommandList(
+    1,
+    mCommandQueue->GetDesc().Type,
+    mCommandAllocator.get(),
+    nullptr,
+    IID_PPV_ARGS(commandList.put()));
+  commandList->CopyTextureRegion(&dest, 0, 0, 0, &src, &srcBox);
+  commandList->Close();
+  auto list = static_cast<ID3D12CommandList*>(commandList.get());
+
+  auto event
+    = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+  winrt::com_ptr<ID3D12Fence> fence;
+  mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.put()));
+
+  mCommandQueue->ExecuteCommandLists(1, &list);
+  mCommandQueue->Signal(fence.get(), 1);
+  fence->SetEventOnCompletion(1, event);
+
+  WaitForSingleObject(event, INFINITE);
 
   ovr->ovr_CommitTextureSwapChain(session, swapChain);
 
@@ -171,8 +213,22 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
     } else {
       OPENKNEEBOARD_BREAK;
     }
-    mResourceUpload
-      = std::make_unique<DirectX::ResourceUploadBatch>(mDevice.get());
+
+    auto cqDesc = mCommandQueue->GetDesc();
+
+    switch (cqDesc.Type) {
+      case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+      case D3D12_COMMAND_LIST_TYPE_COPY:
+      case D3D12_COMMAND_LIST_TYPE_DIRECT:
+        // Command list supports COPY. All we need is COPY, but our command list
+        // must use the same type as the command queue
+        break;
+      default:
+        throw std::logic_error("Unsupported command queue type");
+    }
+
+    mDevice->CreateCommandAllocator(
+      cqDesc.Type, IID_PPV_ARGS(mCommandAllocator.put()));
   }
 
   mExecuteCommandListsHook.UninstallHook();

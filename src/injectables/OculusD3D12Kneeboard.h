@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
@@ -24,10 +25,6 @@
 
 #include "ID3D12CommandQueueExecuteCommandListsHook.h"
 #include "OculusKneeboard.h"
-
-namespace DirectX {
-  class ResourceUploadBatch;
-};
 
 namespace OpenKneeboard {
 
@@ -54,7 +51,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   winrt::com_ptr<ID3D12Device> mDevice;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
   winrt::com_ptr<ID3D12DescriptorHeap> mDescriptorHeap;
-  std::unique_ptr<DirectX::ResourceUploadBatch> mResourceUpload;
+  winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,
