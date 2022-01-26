@@ -247,6 +247,11 @@ class Canvas final : public wxWindow {
       renderTop * (dpi / 96.0f),
       (renderLeft + renderWidth) * (dpi / 96.0f),
       (renderTop + renderHeight) * (dpi / 96.0f)};
+    D2D1_RECT_F sourceRect {
+      0,
+      0,
+      static_cast<FLOAT>(config.imageWidth),
+      static_cast<FLOAT>(config.imageHeight)};
 
     auto textureName = SHM::SharedTextureName();
     winrt::com_ptr<IDXGISurface> sharedSurface;
@@ -276,7 +281,11 @@ class Canvas final : public wxWindow {
     rt->FillRectangle(pageRect, bg.get());
     rt->SetTransform(D2D1::IdentityMatrix());
     rt->DrawBitmap(
-      d2dBitmap.get(), &pageRect, 1.0f, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+      d2dBitmap.get(),
+      &pageRect,
+      1.0f,
+      D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+      &sourceRect);
 
     mLastSequenceNumber = snapshot.GetSequenceNumber();
   }
