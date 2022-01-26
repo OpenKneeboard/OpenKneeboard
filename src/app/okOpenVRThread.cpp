@@ -117,6 +117,8 @@ void okOpenVRThread::Tick() {
     }
 
     dprintf("Created OpenVR overlay");
+    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+    CHECK(SetOverlayFlag, p->overlay, vr::VROverlayFlags_IsPremultiplied, true);
     CHECK(ShowOverlay, p->overlay);
   }
 
