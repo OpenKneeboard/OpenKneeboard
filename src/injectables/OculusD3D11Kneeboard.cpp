@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "OculusD3D11Kneeboard.h"
 
@@ -112,6 +113,14 @@ bool OculusD3D11Kneeboard::Render(
   auto ovr = OVRProxy::Get();
   auto& config = *snapshot.GetConfig();
 
+  winrt::com_ptr<ID3D11Texture2D> sharedTexture;
+  auto sharedTextureName = SHM::SharedTextureName();
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+  mD3D1->OpenSharedResourceByName(
+    sharedTextureName.c_str(),
+    DXGI_SHARED_RESOURCE_READ,
+    IID_PPV_ARGS(sharedTexture.put()));
+
   int index = -1;
   ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
   if (index < 0) {
@@ -122,9 +131,10 @@ bool OculusD3D11Kneeboard::Render(
   winrt::com_ptr<ID3D11Texture2D> texture;
   ovr->ovr_GetTextureSwapChainBufferDX(
     session, swapChain, index, IID_PPV_ARGS(&texture));
+
   winrt::com_ptr<ID3D11DeviceContext> context;
   mD3D->GetImmediateContext(context.put());
-  D3D11_BOX box {
+  D3D11_BOX sourceBox {
     .left = 0,
     .top = 0,
     .front = 0,
@@ -133,15 +143,8 @@ bool OculusD3D11Kneeboard::Render(
     .back = 1,
   };
 
-  static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
-
-  context->UpdateSubresource(
-    texture.get(),
-    0,
-    &box,
-    snapshot.GetPixels(),
-    config.imageWidth * sizeof(SHM::Pixel),
-    0);
+  context->CopySubresourceRegion(
+    texture.get(), 0, 0, 0, 0, sharedTexture.get(), 0, &sourceBox);
 
   auto ret = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (ret) {
@@ -162,6 +165,7 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
       dprintf("Got a swapchain without a D3D11 device");
     }
   }
+  mD3D1 = mD3D.as<ID3D11Device1>();
 
   mDXGIHook.UninstallHook();
   return std::invoke(next, swapChain, syncInterval, flags);

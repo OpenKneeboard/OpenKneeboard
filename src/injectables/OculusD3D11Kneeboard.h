@@ -19,6 +19,7 @@
 #pragma once
 
 #include <d3d11.h>
+#include <d3d11_2.h>
 #include <winrt/base.h>
 
 #include "IDXGISwapChainPresentHook.h"
@@ -46,6 +47,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
  private:
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
+  winrt::com_ptr<ID3D11Device1> mD3D1 = nullptr;
 
   OculusKneeboard mOculusKneeboard;
   IDXGISwapChainPresentHook mDXGIHook;
