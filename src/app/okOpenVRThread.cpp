@@ -24,6 +24,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <TlHelp32.h>
 #include <d3d11.h>
+#include <d3d11_1.h>
 #include <dxgi1_2.h>
 #include <openvr.h>
 #include <winrt/base.h>
@@ -38,16 +39,16 @@ using namespace DirectX::SimpleMath;
 
 class okOpenVRThread::Impl final {
  private:
-  winrt::com_ptr<ID3D11Device> mD3D;
+  winrt::com_ptr<ID3D11Device1> mD3D;
 
  public:
   vr::IVRSystem* vrSystem = nullptr;
   vr::VROverlayHandle_t overlay {};
   SHM::Reader shm;
 
-  ID3D11Device* D3D();
+  ID3D11Device1* D3D();
 
-  winrt::com_ptr<ID3D11Texture2D> sharedTexture;
+  winrt::com_ptr<ID3D11Texture2D> openvrTexture;
   uint64_t sequenceNumber = 0;
 
   ~Impl() {
@@ -117,7 +118,7 @@ void okOpenVRThread::Tick() {
     }
 
     dprintf("Created OpenVR overlay");
-    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
     CHECK(SetOverlayFlag, p->overlay, vr::VROverlayFlags_IsPremultiplied, true);
     CHECK(ShowOverlay, p->overlay);
   }
@@ -202,17 +203,17 @@ void okOpenVRThread::Tick() {
   // Using a Direct3D texture instead of SetOverlayRaw(), as SetOverlayRaw()
   // only works 200 times; SetOverlayTexture() keeps working 'forever'
 
-  auto previousTexture = p->sharedTexture;
+  auto previousTexture = p->openvrTexture;
   if (previousTexture) {
     D3D11_TEXTURE2D_DESC desc;
     previousTexture->GetDesc(&desc);
     if (config.imageWidth != desc.Width || config.imageHeight != desc.Height) {
-      p->sharedTexture = nullptr;
+      p->openvrTexture = nullptr;
     }
   }
 
   auto d3d = p->D3D();
-  if (!p->sharedTexture) {
+  if (!p->openvrTexture) {
     D3D11_TEXTURE2D_DESC desc {
       .Width = config.imageWidth,
       .Height = config.imageHeight,
@@ -225,57 +226,67 @@ void okOpenVRThread::Tick() {
       .CPUAccessFlags = {},
       .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
     };
-    d3d->CreateTexture2D(&desc, nullptr, p->sharedTexture.put());
-    if (!p->sharedTexture) {
+    d3d->CreateTexture2D(&desc, nullptr, p->openvrTexture.put());
+    if (!p->openvrTexture) {
       dprint("Failed to create shared texture for OpenVR");
       return;
     }
   }
 
-  static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
+  // Copy the texture as for interoperability with other systems
+  // (e.g. DirectX12) we use SHARED_NTHANDLE, but SteamVR doesn't
+  // support that - so we need to use a second texture with different
+  // sharing parameters.
 
-  {
-    D3D11_BOX box {
-      .left = 0,
-      .top = 0,
-      .front = 0,
-      .right = config.imageWidth,
-      .bottom = config.imageHeight,
-      .back = 1,
-    };
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+  auto textureName = SHM::SharedTextureName();
+  winrt::com_ptr<ID3D11Texture2D> openKneeboardTexture;
+  d3d->OpenSharedResourceByName(
+    textureName.c_str(),
+    DXGI_SHARED_RESOURCE_READ,
+    IID_PPV_ARGS(openKneeboardTexture.put()));
 
-    winrt::com_ptr<ID3D11DeviceContext> context;
-    d3d->GetImmediateContext(context.put());
+  D3D11_BOX sourceBox {
+    .left = 0,
+    .top = 0,
+    .front = 0,
+    .right = config.imageWidth,
+    .bottom = config.imageHeight,
+    .back = 1,
+  };
 
-    context->UpdateSubresource(
-      p->sharedTexture.get(),
-      0,
-      &box,
-      snapshot.GetPixels(),
-      config.imageWidth * sizeof(SHM::Pixel),
-      0);
-    // `GetSharedHandle()` is not recommended in modern code, but
-    // SteamVR doesn't seem to like the results of `CreateSharedHandle()`.
-    HANDLE handle = INVALID_HANDLE_VALUE;
-    p->sharedTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
-    vr::Texture_t vrt {
-      .handle = handle,
-      .eType = vr::TextureType_DXGISharedHandle,
-      .eColorSpace = vr::ColorSpace_Auto,
-    };
-    CHECK(SetOverlayTexture, p->overlay, &vrt);
-    context->Flush();
-  }
+  winrt::com_ptr<ID3D11DeviceContext> context;
+  d3d->GetImmediateContext(context.put());
+  context->CopySubresourceRegion(
+    p->openvrTexture.get(),
+    0,
+    0,
+    0,
+    0,
+    openKneeboardTexture.get(),
+    0,
+    &sourceBox);
+  context->Flush();
+
+  HANDLE handle = INVALID_HANDLE_VALUE;
+  p->openvrTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
+  vr::Texture_t vrt {
+    .handle = handle,
+    .eType = vr::TextureType_DXGISharedHandle,
+    .eColorSpace = vr::ColorSpace_Auto,
+  };
+  CHECK(SetOverlayTexture, p->overlay, &vrt);
 
 #undef CHECK
 }
 
-ID3D11Device* okOpenVRThread::Impl::D3D() {
+ID3D11Device1* okOpenVRThread::Impl::D3D() {
   if (mD3D) {
     return mD3D.get();
   }
 
   D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
+  winrt::com_ptr<ID3D11Device> device;
   D3D11CreateDevice(
     nullptr,
     D3D_DRIVER_TYPE_HARDWARE,
@@ -288,9 +299,10 @@ ID3D11Device* okOpenVRThread::Impl::D3D() {
     &level,
     1,
     D3D11_SDK_VERSION,
-    mD3D.put(),
+    device.put(),
     nullptr,
     nullptr);
+  mD3D = device.as<ID3D11Device1>();
   return mD3D.get();
 }
 
