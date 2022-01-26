@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "NonVRD3D11Kneeboard.h"
 
@@ -68,21 +69,12 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     mDeviceResources.mTexture = nullptr;
     mDeviceResources.mResourceView = nullptr;
 
-    static_assert(SHM::Pixel::IS_PREMULTIPLIED_B8G8R8A8);
-    D3D11_TEXTURE2D_DESC desc {
-      .Width = config.imageWidth,
-      .Height = config.imageHeight,
-      .MipLevels = 1,
-      .ArraySize = 1,
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-      .SampleDesc = {1, 0},
-      .Usage = D3D11_USAGE_DEFAULT,
-      .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-    };
-    D3D11_SUBRESOURCE_DATA initialData {
-      shm.GetPixels(), config.imageWidth * sizeof(SHM::Pixel), 0};
-    device->CreateTexture2D(
-      &desc, &initialData, mDeviceResources.mTexture.put());
+    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+    auto textureName = SHM::SharedTextureName();
+    device.as<ID3D11Device1>()->OpenSharedResourceByName(
+      textureName.c_str(),
+      DXGI_SHARED_RESOURCE_READ,
+      IID_PPV_ARGS(mDeviceResources.mTexture.put()));
     device->CreateShaderResourceView(
       mDeviceResources.mTexture.get(),
       nullptr,
@@ -127,10 +119,18 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   auto& sprites = *mDeviceResources.mSpriteBatch;
+  RECT destRect {left, top, left + renderWidth, top + renderHeight};
+  RECT sourceRect {
+    0,
+    0,
+    config.imageWidth,
+    config.imageHeight,
+  };
   sprites.Begin();
   sprites.Draw(
     mDeviceResources.mResourceView.get(),
-    RECT {left, top, left + renderWidth, top + renderHeight},
+    destRect,
+    &sourceRect,
     DirectX::Colors::White * config.flat.opacity);
   sprites.End();
 
