@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okTabCanvas.h"
 
@@ -39,11 +40,7 @@ class okTabCanvas::Impl final {
 };
 
 okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
-  : wxPanel(
-    parent,
-    wxID_ANY,
-    wxDefaultPosition,
-    wxSize(OPENKNEEBOARD_TEXTURE_WIDTH / 2, OPENKNEEBOARD_TEXTURE_HEIGHT / 2)),
+  : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize {384, 512}),
     p(new Impl {.tab = tab}) {
   D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->d2d.put());
   p->errorRenderer = std::make_unique<D2DErrorRenderer>(p->d2d);

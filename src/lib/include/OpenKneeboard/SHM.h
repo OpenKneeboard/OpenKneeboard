@@ -30,6 +30,9 @@
 
 namespace OpenKneeboard::SHM {
 
+static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
+std::wstring SharedTextureName();
+
 #pragma pack(push)
 struct VRConfig {
   static constexpr uint16_t VERSION = 1;

@@ -132,7 +132,8 @@ int main() {
   std::wstring message(L"This Way Up");
 
   HANDLE sharedHandle = INVALID_HANDLE_VALUE;
-  texture.as<IDXGIResource1>()->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ, L"Local\\OpenKneeboard", &sharedHandle);
+  auto textureName = SHM::SharedTextureName();
+  texture.as<IDXGIResource1>()->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
 
   do {
     frames++;

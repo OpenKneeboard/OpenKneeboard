@@ -14,13 +14,15 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/shm.h>
 #include <Windows.h>
 #include <fmt/compile.h>
 #include <fmt/format.h>
+#include <fmt/xchar.h>
 
 #include <bit>
 
@@ -28,6 +30,7 @@ namespace OpenKneeboard::SHM {
 
 // *****PLEASE***** change this if you fork or re-use this code
 static constexpr auto PREFIX = "com.fredemmott.openkneeboard";
+static constexpr auto WPREFIX = L"com.fredemmott.openkneeboard";
 
 enum class HeaderFlags : ULONG {
   LOCKED = 1 << 0,
@@ -128,6 +131,18 @@ constexpr auto SHMPath() {
 }
 
 }// namespace
+
+std::wstring SharedTextureName() {
+  static std::wstring sCache;
+  if (sCache.empty()) {
+    sCache = fmt::format(
+      FMT_STRING(L"Local\\{}-texture-h{}-c{}"),
+      WPREFIX,
+      Header::VERSION,
+      Config::VERSION);
+  }
+  return sCache;
+}
 
 Snapshot::Snapshot() {
 }
@@ -280,7 +295,6 @@ void Writer::Attach() {
 void Writer::Detach() {
   p->Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
 }
-
 
 void Writer::Update(const Config& config, const std::vector<Pixel>& pixels) {
   if (!p) {

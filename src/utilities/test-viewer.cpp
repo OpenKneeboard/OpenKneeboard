@@ -248,9 +248,10 @@ class Canvas final : public wxWindow {
       (renderLeft + renderWidth) * (dpi / 96.0f),
       (renderTop + renderHeight) * (dpi / 96.0f)};
 
+    auto textureName = SHM::SharedTextureName();
     winrt::com_ptr<IDXGISurface> sharedSurface;
     mD3d.as<ID3D11Device1>()->OpenSharedResourceByName(
-      L"Local\\OpenKneeboard",
+      textureName.c_str(),
       DXGI_SHARED_RESOURCE_READ,
       IID_PPV_ARGS(sharedSurface.put()));
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;

@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okSHMRenderer.h"
 
@@ -30,11 +31,16 @@
 #include <Unknwn.h>
 #include <d2d1.h>
 #include <d2d1_1.h>
+#include <d3d11.h>
 #include <dwrite.h>
+#include <dxgi1_2.h>
 #include <wincodec.h>
 #include <winrt/base.h>
 
 using namespace OpenKneeboard;
+
+static constexpr auto TEXTURE_WIDTH = 3072;
+static constexpr auto TEXTURE_HEIGHT = 4096;
 
 class okSHMRenderer::Impl {
  public:
@@ -43,7 +49,12 @@ class okSHMRenderer::Impl {
   winrt::com_ptr<IWICImagingFactory> mWIC;
   winrt::com_ptr<ID2D1Factory> mD2D;
   winrt::com_ptr<IDWriteFactory> mDWrite;
-  winrt::com_ptr<IWICBitmap> mCanvas;
+  winrt::com_ptr<ID3D11Device> mD3D;
+  winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
+  winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
+  winrt::com_ptr<ID3D11Texture2D> mSharedTexture;
+  D2D1_SIZE_U mUsedSize;
+
   winrt::com_ptr<ID2D1RenderTarget> mRT;
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
@@ -69,34 +80,57 @@ class okSHMRenderer::Impl {
 };
 
 void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
-  if (mCanvas) {
-    UINT width, height;
-    mCanvas->GetSize(&width, &height);
-    if (width == size.width && height == size.height) {
-      return;
-    }
-    mCanvas = nullptr;
+  mUsedSize = size;
+  if (mSharedTexture) {
+    return;
   }
 
-  mWIC->CreateBitmap(
-    size.width,
-    size.height,
-    GUID_WICPixelFormat32bppPBGRA,
-    WICBitmapCacheOnDemand,
-    mCanvas.put());
+  UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#ifdef DEBUG
+  d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
 
-  mRT = nullptr;
-  mHeaderBGBrush = nullptr;
-  mHeaderTextBrush = nullptr;
+  D3D11CreateDevice(
+    nullptr,
+    D3D_DRIVER_TYPE_HARDWARE,
+    nullptr,
+    d3dFlags,
+    &d3dLevel,
+    1,
+    D3D11_SDK_VERSION,
+    mD3D.put(),
+    nullptr,
+    mD3DContext.put());
 
-  mD2D->CreateWicBitmapRenderTarget(
-    mCanvas.get(),
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+  D3D11_TEXTURE2D_DESC textureDesc {
+    .Width = TEXTURE_WIDTH,
+    .Height = TEXTURE_HEIGHT,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags
+    = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
+  };
+  mD3D->CreateTexture2D(&textureDesc, nullptr, mSharedTexture.put());
+  textureDesc.MiscFlags = {};
+  mD3D->CreateTexture2D(&textureDesc, nullptr, mCanvasTexture.put());
+
+  HANDLE sharedHandle = INVALID_HANDLE_VALUE;
+  auto textureName = SHM::SharedTextureName();
+  mSharedTexture.as<IDXGIResource1>()->CreateSharedHandle(
+    nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
+
+  auto surface = mCanvasTexture.as<IDXGISurface>();
+  auto rtRet = mD2D->CreateDxgiSurfaceRenderTarget(
+    surface.get(),
     D2D1::RenderTargetProperties(
-      D2D1_RENDER_TARGET_TYPE_DEFAULT,
-      D2D1_PIXEL_FORMAT {
-        DXGI_FORMAT_B8G8R8A8_UNORM,
-        D2D1_ALPHA_MODE_PREMULTIPLIED,
-      }),
+      D2D1_RENDER_TARGET_TYPE_HARDWARE,
+      D2D1::PixelFormat(
+        DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
     mRT.put());
 
   mErrorRenderer->SetRenderTarget(mRT);
@@ -148,28 +182,15 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
     return;
   }
 
-  UINT width, height;
-  mCanvas->GetSize(&width, &height);
-  if (width == 0 || height == 0) {
-    return;
-  }
+  mD3DContext->CopyResource(mSharedTexture.get(), mCanvasTexture.get());
+  mD3DContext->Flush();
 
   SHM::Config config {
-    .imageWidth = static_cast<uint16_t>(width),
-    .imageHeight = static_cast<uint16_t>(height),
+    .imageWidth = static_cast<uint16_t>(mUsedSize.width),
+    .imageHeight = static_cast<uint16_t>(mUsedSize.height),
     .vr = {.flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION},
   };
-
-  using Pixel = SHM::Pixel;
-  static_assert(Pixel::IS_PREMULTIPLIED_B8G8R8A8);
-
-  std::vector<Pixel> pixels(width * height);
-  mCanvas->CopyPixels(
-    nullptr,
-    width * sizeof(Pixel),
-    pixels.size() * sizeof(Pixel),
-    reinterpret_cast<BYTE*>(pixels.data()));
-
+  std::vector<SHM::Pixel> pixels(config.imageWidth * config.imageHeight);
   mSHM.Update(config, pixels);
 }
 
@@ -220,7 +241,9 @@ void okSHMRenderer::Render(
   }
 
   const auto pageSize = tab->GetPreferredPixelSize(pageIndex);
-  if (pageSize.width == 0 || pageSize.height == 0) {
+  if (
+    pageSize.width == 0 || pageSize.height == 0
+    || pageSize.width > TEXTURE_WIDTH || pageSize.height > TEXTURE_HEIGHT) {
     p->RenderError(title, _("Invalid Page Size"));
     return;
   }
