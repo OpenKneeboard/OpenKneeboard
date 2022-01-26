@@ -82,7 +82,7 @@ int main() {
     nullptr,
     context.put());
 
-  winrt::com_ptr<ID3D11Texture2D> texture, mappableTexture;
+  winrt::com_ptr<ID3D11Texture2D> texture;
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = config.imageWidth,
     .Height = config.imageHeight,
@@ -94,17 +94,11 @@ int main() {
     .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
   };
   device->CreateTexture2D(&textureDesc, nullptr, texture.put());
-  textureDesc.BindFlags = 0;
-  textureDesc.Usage = D3D11_USAGE_STAGING;
-  textureDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-  textureDesc.MiscFlags = {};
-  device->CreateTexture2D(&textureDesc, nullptr, mappableTexture.put());
 
   winrt::com_ptr<ID3D11RenderTargetView> rt;
   device->CreateRenderTargetView(texture.get(), nullptr, rt.put());
 
   auto surface = texture.as<IDXGISurface>();
-  auto mappableSurface = mappableTexture.as<IDXGISurface>();
 
   winrt::com_ptr<IDWriteFactory> dwrite;
   DWriteCreateFactory(
@@ -158,12 +152,6 @@ int main() {
     d2dRt->EndDraw();
 
     context->Flush();
-    context->CopyResource(mappableTexture.get(), texture.get());
-
-    DXGI_MAPPED_RECT mapped;
-    mappableSurface->Map(&mapped, DXGI_MAP_READ);
-    memcpy(pixels.data(), mapped.pBits, sizeof(SHM::Pixel) * pixels.size());
-    mappableSurface->Unmap();
 
     shm.Update(config, pixels);
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
