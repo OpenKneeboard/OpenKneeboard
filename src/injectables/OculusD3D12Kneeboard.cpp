@@ -25,6 +25,8 @@
 #include "InjectedDLLMain.h"
 #include "OVRProxy.h"
 
+#include <winrt/base.h>
+
 namespace OpenKneeboard {
 
 OculusD3D12Kneeboard::OculusD3D12Kneeboard() {
@@ -183,16 +185,15 @@ bool OculusD3D12Kneeboard::Render(
   commandList->Close();
   auto list = static_cast<ID3D12CommandList*>(commandList.get());
 
-  auto event
-    = CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE);
+  winrt::handle event { CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE) };
   winrt::com_ptr<ID3D12Fence> fence;
   mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.put()));
 
   mCommandQueue->ExecuteCommandLists(1, &list);
   mCommandQueue->Signal(fence.get(), 1);
-  fence->SetEventOnCompletion(1, event);
+  fence->SetEventOnCompletion(1, event.get());
 
-  WaitForSingleObject(event, INFINITE);
+  WaitForSingleObject(event.get(), INFINITE);
 
   ovr->ovr_CommitTextureSwapChain(session, swapChain);
 
