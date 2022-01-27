@@ -145,6 +145,7 @@ bool OculusD3D11Kneeboard::Render(
 
   context->CopySubresourceRegion(
     texture.get(), 0, 0, 0, 0, sharedTexture.get(), 0, &sourceBox);
+  context->Flush();
 
   auto ret = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (ret) {
