@@ -55,8 +55,10 @@ target_link_libraries(
 
 # This is a marker library that tells the main app not to inject the DLL
 add_library(OpenKneeboard-AutoInject-Marker SHARED AutoInjectMarker.cpp)
+sign_target(OpenKneeboard-AutoInjct-Marker)
 
 add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
+sign_target(OpenKneeboard-nonvr-d3d11)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
   PRIVATE
@@ -68,6 +70,7 @@ target_link_libraries(
   OpenKneeboard-DllLoadWatcher)
 
 add_library(OpenKneeboard-oculus-d3d11 MODULE OculusD3D11Kneeboard.cpp)
+sign_target(OpenKneeboard-oculus-d3d11)
 target_link_libraries(
   OpenKneeboard-oculus-d3d11
   PRIVATE
@@ -78,6 +81,7 @@ target_link_libraries(
   oculus-sdk-headers)
 
 add_library(OpenKneeboard-oculus-d3d12 MODULE OculusD3D12Kneeboard.cpp)
+sign_target(OpenKneeboard-oculus-d3d12)
 target_link_libraries(
   OpenKneeboard-oculus-d3d12
   PRIVATE
@@ -90,6 +94,7 @@ target_link_libraries(
   oculus-sdk-headers)
 
 add_library(OpenKneeboard-Injection-Bootstrapper MODULE InjectionBootstrapper.cpp)
+sign_target(OpenKneeboard-Injection-Bootstrapper)
 target_link_libraries(
   OpenKneeboard-Injection-Bootstrapper
   PRIVATE

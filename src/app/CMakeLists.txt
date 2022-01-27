@@ -5,6 +5,7 @@ target_compile_definitions(
   PRIVATE
   "DIRECTINPUT_VERSION=0x0800"
 )
+sign_target(OpenKneeboard)
 
 target_link_libraries(
   OpenKneeboard

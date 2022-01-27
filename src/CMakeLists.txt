@@ -20,6 +20,8 @@ add_compile_definitions(
 # Needed by c++/winrt in some environments/with some windows SDK versions
 link_libraries(WindowsApp.lib)
 
+include(sign_target.cmake)
+
 add_subdirectory(lib)
 
 add_subdirectory(dcs-hook)
