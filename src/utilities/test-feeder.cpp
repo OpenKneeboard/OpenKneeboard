@@ -131,6 +131,7 @@ int main() {
     D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)
 
   ), d2dRt.put());
+  d2dRt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
   d2dRt->CreateSolidColorBrush(D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
 

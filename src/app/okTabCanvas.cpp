@@ -87,6 +87,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
        static_cast<UINT32>(clientSize.GetHeight())});
 
     p->d2d->CreateHwndRenderTarget(&rtp, &hwndRtp, p->rt.put());
+    p->rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
     p->errorRenderer->SetRenderTarget(p->rt);
   }

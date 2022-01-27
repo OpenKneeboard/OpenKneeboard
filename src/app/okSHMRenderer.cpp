@@ -132,6 +132,7 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
       D2D1::PixelFormat(
         DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
     mRT.put());
+  mRT->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
   mErrorRenderer->SetRenderTarget(mRT);
 
