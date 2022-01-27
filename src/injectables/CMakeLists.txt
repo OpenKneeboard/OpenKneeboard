@@ -55,7 +55,7 @@ target_link_libraries(
 
 # This is a marker library that tells the main app not to inject the DLL
 add_library(OpenKneeboard-AutoInject-Marker SHARED AutoInjectMarker.cpp)
-sign_target(OpenKneeboard-AutoInjct-Marker)
+sign_target(OpenKneeboard-AutoInject-Marker)
 
 add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
 sign_target(OpenKneeboard-nonvr-d3d11)
