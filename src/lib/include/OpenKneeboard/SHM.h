@@ -14,11 +14,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
-#include "bitflags.h"
+#include <Windows.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -27,6 +28,8 @@
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "bitflags.h"
 
 namespace OpenKneeboard::SHM {
 
@@ -78,7 +81,7 @@ struct FlatConfig {
 struct Config final {
   static constexpr uint16_t VERSION = 1;
 
-  uint16_t imageWidth, imageHeight; // Pixels
+  uint16_t imageWidth, imageHeight;// Pixels
   VRConfig vr;
   FlatConfig flat;
 };
@@ -99,6 +102,9 @@ class Writer final {
   void Detach();
   bool IsAttached() const;
 
+  UINT GetPreviousTextureKey() const;
+  UINT GetNextTextureKey() const;
+
  private:
   class Impl;
   std::shared_ptr<Impl> p;
@@ -113,6 +119,7 @@ class Snapshot final {
   Snapshot(std::vector<std::byte>&& bytes);
 
   uint32_t GetSequenceNumber() const;
+  UINT GetTextureKey() const;
   const Config* const GetConfig() const;
 
   operator bool() const;
@@ -133,6 +140,6 @@ class Reader final {
 }// namespace OpenKneeboard::SHM
 
 namespace OpenKneeboard {
-  template<>
-  constexpr bool is_bitflags_v<SHM::VRConfig::Flags> = true;
+template <>
+constexpr bool is_bitflags_v<SHM::VRConfig::Flags> = true;
 }

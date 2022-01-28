@@ -126,6 +126,12 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     config.imageWidth,
     config.imageHeight,
   };
+
+  auto mutex = mDeviceResources.mTexture.as<IDXGIKeyedMutex>();
+  const auto key = shm.GetTextureKey();
+  if (mutex->AcquireSync(key, 10) != S_OK) {
+    return std::invoke(next, swapChain, syncInterval, flags);
+  }
   sprites.Begin();
   sprites.Draw(
     mDeviceResources.mResourceView.get(),
@@ -133,6 +139,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     &sourceRect,
     DirectX::Colors::White * config.flat.opacity);
   sprites.End();
+  mDeviceResources.mContext->Flush();
+  mutex->ReleaseSync(key);
 
   return std::invoke(next, swapChain, syncInterval, flags);
 }

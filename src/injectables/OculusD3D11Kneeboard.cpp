@@ -143,13 +143,19 @@ bool OculusD3D11Kneeboard::Render(
     .back = 1,
   };
 
+  auto mutex = sharedTexture.as<IDXGIKeyedMutex>();
+  const auto key = snapshot.GetTextureKey();
+  if (mutex->AcquireSync(key, 10) != S_OK) {
+    return false;
+  }
   context->CopySubresourceRegion(
     texture.get(), 0, 0, 0, 0, sharedTexture.get(), 0, &sourceBox);
   context->Flush();
+  mutex->ReleaseSync(key);
 
-  auto ret = ovr->ovr_CommitTextureSwapChain(session, swapChain);
-  if (ret) {
-    dprintf("Commit failed with {}", ret);
+  auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
+  if (error) {
+    dprintf("Commit failed with {}", error);
   }
 
   return true;

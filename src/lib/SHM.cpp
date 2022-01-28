@@ -129,6 +129,10 @@ constexpr auto SHMPath() {
   return std::string(buf, end);
 }
 
+UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
+  return (sequenceNumber % (std::numeric_limits<UINT>::max() - 1)) + 1;
+}
+
 }// namespace
 
 std::wstring SharedTextureName() {
@@ -155,6 +159,10 @@ uint32_t Snapshot::GetSequenceNumber() const {
     return 0;
   }
   return reinterpret_cast<const Header*>(mBytes->data())->sequenceNumber;
+}
+
+UINT Snapshot::GetTextureKey() const {
+  return GetTextureKeyFromSequenceNumber(GetSequenceNumber());
 }
 
 const Config* const Snapshot::GetConfig() const {
@@ -218,6 +226,14 @@ Writer::Writer() {
 }
 
 Writer::~Writer() {
+}
+
+UINT Writer::GetPreviousTextureKey() const {
+  return GetTextureKeyFromSequenceNumber(p->Header->sequenceNumber);
+}
+
+UINT Writer::GetNextTextureKey() const {
+  return GetTextureKeyFromSequenceNumber(p->Header->sequenceNumber + 1);
 }
 
 Reader::Reader() {
@@ -311,9 +327,9 @@ void Writer::Update(const Config& config) {
   }
 
   Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);
-  p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
-  p->Header->sequenceNumber++;
   p->Header->config = config;
+  p->Header->sequenceNumber++;
+  p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
 }
 
 }// namespace OpenKneeboard::SHM

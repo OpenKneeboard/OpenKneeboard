@@ -19,13 +19,13 @@
  */
 #include "OculusD3D12Kneeboard.h"
 
-#include <DirectXTK12/ResourceUploadBatch.h>
 #include <OpenKneeboard/dprint.h>
+#include <d3d11_1.h>
+#include <dxgi.h>
+#include <winrt/base.h>
 
 #include "InjectedDLLMain.h"
 #include "OVRProxy.h"
-
-#include <winrt/base.h>
 
 namespace OpenKneeboard {
 
@@ -137,63 +137,51 @@ bool OculusD3D12Kneeboard::Render(
     return false;
   }
 
-  winrt::com_ptr<ID3D12Resource> layerTexture;
+  winrt::com_ptr<ID3D12Resource> layerTexture12;
   ovr->ovr_GetTextureSwapChainBufferDX(
-    session, swapChain, index, IID_PPV_ARGS(layerTexture.put()));
-  if (!layerTexture) {
+    session, swapChain, index, IID_PPV_ARGS(layerTexture12.put()));
+  if (!layerTexture12) {
     OPENKNEEBOARD_BREAK;
     return false;
   }
 
+  // Use d3d11on12 so that we can get the KeyedMutex
   auto sharedTextureName = SHM::SharedTextureName();
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-  HANDLE sharedHandle = INVALID_HANDLE_VALUE;
-  auto oshbnRet = mDevice->OpenSharedHandleByName(
-    sharedTextureName.c_str(), GENERIC_ALL, &sharedHandle);
-  if (sharedHandle == INVALID_HANDLE_VALUE || !sharedHandle) {
+  winrt::com_ptr<ID3D11Texture2D> sharedTexture11;
+  m11on12.as<ID3D11Device1>()->OpenSharedResourceByName(
+    sharedTextureName.c_str(),
+    DXGI_SHARED_RESOURCE_READ,
+    IID_PPV_ARGS(sharedTexture11.put()));
+  auto mutex = sharedTexture11.as<IDXGIKeyedMutex>();
+
+  winrt::com_ptr<ID3D11Texture2D> layerTexture11;
+  D3D11_RESOURCE_FLAGS resourceFlags11 {};
+  m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
+    layerTexture12.get(),
+    &resourceFlags11,
+    D3D12_RESOURCE_STATE_COMMON,
+    D3D12_RESOURCE_STATE_COMMON,
+    IID_PPV_ARGS(layerTexture11.put()));
+
+  D3D11_BOX sourceBox {
+    .left = 0,
+    .top = 0,
+    .front = 0,
+    .right = config.imageWidth,
+    .bottom = config.imageHeight,
+    .back = 1,
+  };
+
+  const auto key = snapshot.GetTextureKey();
+  if (mutex->AcquireSync(key, 10) != S_OK) {
     return false;
   }
+  m11on12Context->CopySubresourceRegion(
+    layerTexture11.get(), 0, 0, 0, 0, sharedTexture11.get(), 0, &sourceBox);
+  m11on12Context->Flush();
 
-  winrt::com_ptr<ID3D12Resource> sharedTexture;
-  auto oshRet = mDevice->OpenSharedHandle(
-    sharedHandle, IID_PPV_ARGS(sharedTexture.put()));
-  if (!sharedTexture) {
-    return false;
-  }
-
-  D3D12_TEXTURE_COPY_LOCATION dest {
-    .pResource = layerTexture.get(),
-    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-    .SubresourceIndex = 0,
-  };
-  D3D12_TEXTURE_COPY_LOCATION src {
-    .pResource = sharedTexture.get(),
-    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-    .SubresourceIndex = 0,
-  };
-  D3D12_BOX srcBox {0, 0, 0, config.imageWidth, config.imageHeight, 1};
-
-  // Recreate every time as it becomes read-only
-  winrt::com_ptr<ID3D12GraphicsCommandList1> commandList;
-  mDevice->CreateCommandList(
-    1,
-    mCommandQueue->GetDesc().Type,
-    mCommandAllocator.get(),
-    nullptr,
-    IID_PPV_ARGS(commandList.put()));
-  commandList->CopyTextureRegion(&dest, 0, 0, 0, &src, &srcBox);
-  commandList->Close();
-  auto list = static_cast<ID3D12CommandList*>(commandList.get());
-
-  winrt::handle event { CreateEventEx(nullptr, nullptr, 0, EVENT_MODIFY_STATE | SYNCHRONIZE) };
-  winrt::com_ptr<ID3D12Fence> fence;
-  mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.put()));
-
-  mCommandQueue->ExecuteCommandLists(1, &list);
-  mCommandQueue->Signal(fence.get(), 1);
-  fence->SetEventOnCompletion(1, event.get());
-
-  WaitForSingleObject(event.get(), INFINITE);
+  mutex->ReleaseSync(key);
 
   ovr->ovr_CommitTextureSwapChain(session, swapChain);
 
@@ -230,6 +218,23 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
 
     mDevice->CreateCommandAllocator(
       cqDesc.Type, IID_PPV_ARGS(mCommandAllocator.put()));
+
+    // We need this as D3D12 does not appear to directly support IDXGIKeyedMutex
+    UINT flags = 0;
+#ifdef DEBUG
+    flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+    D3D11On12CreateDevice(
+      mDevice.get(),
+      flags,
+      nullptr,
+      0,
+      nullptr,
+      0,
+      1,
+      m11on12.put(),
+      m11on12Context.put(),
+      nullptr);
   }
 
   mExecuteCommandListsHook.UninstallHook();

@@ -54,6 +54,7 @@ class okSHMRenderer::Impl {
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
   winrt::com_ptr<ID3D11Texture2D> mSharedTexture;
   D2D1_SIZE_U mUsedSize;
+  UINT mNextTextureKey;
 
   winrt::com_ptr<ID2D1RenderTarget> mRT;
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
@@ -113,7 +114,7 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
     .SampleDesc = {1, 0},
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
     .MiscFlags
-    = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
+    = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
   };
   mD3D->CreateTexture2D(&textureDesc, nullptr, mSharedTexture.put());
   textureDesc.MiscFlags = {};
@@ -123,6 +124,7 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
   auto textureName = SHM::SharedTextureName();
   mSharedTexture.as<IDXGIResource1>()->CreateSharedHandle(
     nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
+  mNextTextureKey = 0;
 
   auto surface = mCanvasTexture.as<IDXGISurface>();
   auto rtRet = mD2D->CreateDxgiSurfaceRenderTarget(
@@ -183,8 +185,13 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
     return;
   }
 
+  mD3DContext->Flush();
+  auto mutex = mSharedTexture.as<IDXGIKeyedMutex>();
+  mutex->AcquireSync(mNextTextureKey, INFINITE);
   mD3DContext->CopyResource(mSharedTexture.get(), mCanvasTexture.get());
   mD3DContext->Flush();
+  mNextTextureKey = mSHM.GetNextTextureKey();
+  mutex->ReleaseSync(mNextTextureKey);
 
   SHM::Config config {
     .imageWidth = static_cast<uint16_t>(mUsedSize.width),
@@ -271,6 +278,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
   mRT->BeginDraw();
   wxON_BLOCK_EXIT0([this]() {
     mRT->EndDraw();
+    mRT->Flush();
     this->CopyPixelsToSHM();
   });
   mRT->Clear({0.0f, 0.0f, 0.0f, 0.0f});

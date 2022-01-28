@@ -19,7 +19,13 @@
  */
 #pragma once
 
+// clang-format off
+#include <Unknwn.h>
 #include <winrt/base.h>
+// clang-format on
+
+#include <d3d11on12.h>
+#include <d3d11.h>
 
 #include <vector>
 
@@ -49,6 +55,8 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   OculusKneeboard mOculusKneeboard;
 
   winrt::com_ptr<ID3D12Device> mDevice;
+  winrt::com_ptr<ID3D11Device> m11on12;
+  winrt::com_ptr<ID3D11DeviceContext> m11on12Context;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
   winrt::com_ptr<ID3D12DescriptorHeap> mDescriptorHeap;
   winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;

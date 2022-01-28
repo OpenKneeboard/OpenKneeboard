@@ -257,6 +257,11 @@ void okOpenVRThread::Tick() {
 
   winrt::com_ptr<ID3D11DeviceContext> context;
   d3d->GetImmediateContext(context.put());
+  auto mutex = openKneeboardTexture.as<IDXGIKeyedMutex>();
+  const auto key = snapshot.GetTextureKey();
+  if (mutex->AcquireSync(key, 10) != S_OK) {
+    return;
+  }
   context->CopySubresourceRegion(
     p->openvrTexture.get(),
     0,
@@ -267,6 +272,7 @@ void okOpenVRThread::Tick() {
     0,
     &sourceBox);
   context->Flush();
+  mutex->ReleaseSync(key);
 
   HANDLE handle = INVALID_HANDLE_VALUE;
   p->openvrTexture.as<IDXGIResource>()->GetSharedHandle(&handle);

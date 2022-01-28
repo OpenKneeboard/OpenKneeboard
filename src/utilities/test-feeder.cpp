@@ -96,7 +96,7 @@ int main() {
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .SampleDesc = {1, 0},
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
+    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
   };
   device->CreateTexture2D(&textureDesc, nullptr, texture.put());
 
@@ -141,9 +141,13 @@ int main() {
   auto textureName = SHM::SharedTextureName();
   texture.as<IDXGIResource1>()->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
 
+  auto mutex = texture.as<IDXGIKeyedMutex>();
+
+  UINT mutexKey = 0;
   do {
     frames++;
 
+    mutex->AcquireSync(mutexKey, INFINITE);
     d2dRt->BeginDraw();
     d2dRt->Clear(colors[frames % 4]);
     d2dRt->DrawTextW(
@@ -157,8 +161,9 @@ int main() {
         static_cast<float>(config.imageHeight)},
       textBrush.get());
     d2dRt->EndDraw();
-
     context->Flush();
+    mutexKey = shm.GetNextTextureKey();
+    mutex->ReleaseSync(mutexKey);
 
     shm.Update(config);
   } while (cliLoop.Sleep(std::chrono::seconds(1)));

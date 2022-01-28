@@ -288,12 +288,19 @@ class Canvas final : public wxWindow {
       D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
     rt->FillRectangle(pageRect, bg.get());
     rt->SetTransform(D2D1::IdentityMatrix());
+
+    auto mutex = sharedSurface.as<IDXGIKeyedMutex>();
+    if (mutex->AcquireSync(snapshot.GetTextureKey(), 10) != S_OK) {
+      return;
+    }
     rt->DrawBitmap(
       d2dBitmap.get(),
       &pageRect,
       1.0f,
       D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
       &sourceRect);
+    rt->Flush();
+    mutex->ReleaseSync(snapshot.GetTextureKey());
 
     mLastSequenceNumber = snapshot.GetSequenceNumber();
   }
