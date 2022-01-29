@@ -11,7 +11,6 @@ set(CPACK_PACKAGE_VENDOR "Fred Emmott")
 set(CPACK_WIX_UPGRADE_GUID "843c9331-0610-4ab1-9cf9-5305c896fb5b")
 set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_BINARY_DIR}/license.wix.txt")
 include(CPack)
-sign_target(package)
 
 if (MSVC)
   add_compile_options(
