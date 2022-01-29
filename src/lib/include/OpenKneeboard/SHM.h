@@ -43,6 +43,7 @@ struct VRConfig {
   enum class Flags : uint32_t {
     HEADLOCKED = 1 << 0,
     DISCARD_DEPTH_INFORMATION = 1 << 1,
+    PREFER_ROOMSCALE_POSITION = 1 << 2,
   };
 
   // Distances in meters, rotations in radians
@@ -52,7 +53,7 @@ struct VRConfig {
   float height = 0.25f;
   float zoomScale = 2.0f;
 
-  Flags flags;
+  Flags flags = Flags::DISCARD_DEPTH_INFORMATION;
 };
 
 struct FlatConfig {

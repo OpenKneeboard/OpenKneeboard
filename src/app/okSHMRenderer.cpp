@@ -196,7 +196,6 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   SHM::Config config {
     .imageWidth = static_cast<uint16_t>(mUsedSize.width),
     .imageHeight = static_cast<uint16_t>(mUsedSize.height),
-    .vr = {.flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION},
   };
   mSHM.Update(config);
 }

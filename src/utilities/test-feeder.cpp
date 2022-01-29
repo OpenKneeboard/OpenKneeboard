@@ -59,7 +59,6 @@ int main() {
     /* On knee */
     .imageWidth = 800,
     .imageHeight = 1200,
-    .vr = {.flags = SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION},
   };
   uint64_t frames = -1;
   printf("Feeding OpenKneeboard - hit Ctrl-C to exit.\n");

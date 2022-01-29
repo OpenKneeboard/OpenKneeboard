@@ -184,6 +184,12 @@ void okOpenVRThread::Tick() {
   }
   p->sequenceNumber = snapshot.GetSequenceNumber();
 
+  const bool roomscale
+    = vrConf.flags & SHM::VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
+  auto y = roomscale ? vrConf.floorY : vrConf.eyeY;
+  auto universe
+    = roomscale ? vr::TrackingUniverseStanding : vr::TrackingUniverseSeated;
+
   // clang-format off
   auto transform =
     Matrix::CreateRotationX(vrConf.rx)
