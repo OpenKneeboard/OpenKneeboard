@@ -212,7 +212,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       }
       DWORD bufSize = sizeof(buf);
       QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
-      const std::filesystem::path path(std::wstring(buf, bufSize));
+      auto path = std::filesystem::canonical(std::wstring(buf, bufSize));
 
       std::scoped_lock lock(p->gamesMutex);
       for (const auto& game: p->games) {
