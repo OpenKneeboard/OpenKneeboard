@@ -54,7 +54,7 @@ add_custom_target(
   BYPRODUCTS
   "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h"
   WORKING_DIRECTORY
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "${CMAKE_SOURCE_DIR}"
 )
 add_library(OpenKneeboard-version INTERFACE)
 add_dependencies(OpenKneeboard-version INTERFACE VersionHeader)
