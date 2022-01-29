@@ -40,3 +40,24 @@ target_link_libraries(
   D2d1
   Dwrite
   _libheaders)
+
+add_custom_target(
+  VersionHeader
+  COMMAND
+  ${CMAKE_COMMAND}
+  -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
+  -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
+  -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+  "-DINPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.h.in"
+  "-DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h"
+  "-P${CMAKE_CURRENT_SOURCE_DIR}/version.h.cmake"
+  BYPRODUCTS
+  "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h"
+)
+add_library(OpenKneeboard-version INTERFACE)
+add_dependencies(OpenKneeboard-version INTERFACE VersionHeader)
+target_include_directories(
+  OpenKneeboard-version
+  INTERFACE
+  "${CMAKE_CURRENT_BINARY_DIR}/include"
+)

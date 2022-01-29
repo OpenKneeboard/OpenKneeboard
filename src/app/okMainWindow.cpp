@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okMainWindow.h"
 
@@ -25,6 +26,7 @@
 #include <wx/wupdlock.h>
 
 #include "Settings.h"
+#include "okAboutBox.h"
 #include "okDirectInputController.h"
 #include "okEvents.h"
 #include "okGameEventMailslotThread.h"
@@ -71,6 +73,14 @@ okMainWindow::okMainWindow()
     editMenu->Append(settingsId, _("&Settings..."));
     Bind(wxEVT_MENU, &okMainWindow::OnShowSettings, this, settingsId);
   }
+  {
+    auto helpMenu = new wxMenu();
+    menuBar->Append(helpMenu, _("&Help"));
+
+    helpMenu->Append(wxID_ABOUT, _("&About"));
+    Bind(
+      wxEVT_MENU, [this](auto&) { okAboutBox(this); }, wxID_ABOUT);
+  }
   SetMenuBar(menuBar);
 
   p->notebook = new wxNotebook(this, wxID_ANY);
@@ -113,7 +123,8 @@ okMainWindow::okMainWindow()
     dipc->Bind(okEVT_NEXT_TAB, &okMainWindow::OnNextTab, this);
     dipc->Bind(okEVT_PREVIOUS_PAGE, &okMainWindow::OnPreviousPage, this);
     dipc->Bind(okEVT_NEXT_PAGE, &okMainWindow::OnNextPage, this);
-    dipc->Bind(okEVT_TOGGLE_VISIBILITY, &okMainWindow::OnToggleVisibility, this);
+    dipc->Bind(
+      okEVT_TOGGLE_VISIBILITY, &okMainWindow::OnToggleVisibility, this);
 
     dipc->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
       this->p->settings.DirectInput = dipc->GetSettings();

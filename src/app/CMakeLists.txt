@@ -20,6 +20,7 @@ target_link_libraries(
   OpenKneeboard-SHM
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-D2DErrorRenderer
+  OpenKneeboard-version
   openvr
   wx::base
   wx::core)
