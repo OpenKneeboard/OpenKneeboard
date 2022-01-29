@@ -25,12 +25,16 @@ jobs:
       - name: Install
         working-directory: build
         run: cmake --install . --config ${{matrix.config}} --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
-      - name: Upload Artifacts
+      - name: Upload Zips
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
+      - name: Create .msi
+        if: matrix.config == "RelWithDebInfo"
+        working-directory: build
+        run: cmake --build . --config ${{matrix.config}} --target package
     strategy:
       matrix:
         config: [RelWithDebInfo, Debug]
