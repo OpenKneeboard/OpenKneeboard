@@ -32,5 +32,7 @@ struct GameEvent final {
   static GameEvent Unserialize(const std::vector<std::byte>& payload);
   std::vector<std::byte> Serialize() const;
   void Send() const;
+
+  static const char* GetMailslotPath();
 };
 }// namespace OpenKneeboard

@@ -24,4 +24,7 @@ namespace OpenKneeboard {
 constexpr unsigned int TextureWidth = 4096;
 constexpr unsigned int TextureHeight = 4096;
 
+constexpr const char* ProjectNameA = "@CMAKE_PROJECT_NAME@";
+constexpr const wchar_t* ProjectNameW = L"@CMAKE_PROJECT_NAME@";
+
 }

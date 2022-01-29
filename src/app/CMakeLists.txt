@@ -12,6 +12,7 @@ target_link_libraries(
   PRIVATE
   D2d1
   directxtk
+  OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-GameEvent
   games

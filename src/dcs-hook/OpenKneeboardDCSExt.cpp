@@ -31,9 +31,6 @@ extern "C" {
 using OpenKneeboard::dprint;
 using OpenKneeboard::dprintf;
 
-static const char g_Path[]
-  = "\\\\.\\mailslot\\com.fredemmott.openkneeboard.events.v1";
-
 static void push_arg_error(lua_State* state) {
   lua_pushliteral(state, "2 string arguments are required\n");
   lua_error(state);

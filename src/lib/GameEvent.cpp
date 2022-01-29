@@ -14,18 +14,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard\GameEvent.h>
 #include <Windows.h>
 #include <winrt/base.h>
 
 #include <charconv>
 #include <string_view>
-
-static const char g_Path[]
-  = "\\\\.\\mailslot\\com.fredemmott.openkneeboard.events.v1";
 
 static uint32_t hex_to_ui32(const std::string_view& sv) {
   if (sv.empty()) {
@@ -80,7 +79,13 @@ std::vector<std::byte> GameEvent::Serialize() const {
 
 void GameEvent::Send() const {
   winrt::file_handle handle {CreateFileA(
-    g_Path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, NULL)};
+    GetMailslotPath(),
+    GENERIC_WRITE,
+    FILE_SHARE_READ,
+    nullptr,
+    OPEN_EXISTING,
+    0,
+    NULL)};
   if (!handle) {
     dprintf("Failed to open mailslot: {}", GetLastError());
     return;
@@ -101,5 +106,15 @@ void GameEvent::Send() const {
     "Wrote to mailslot: {}",
     std::string(reinterpret_cast<const char*>(packet.data()), packet.size()));
 }
+
+const char* GameEvent::GetMailslotPath() {
+	static std::string sPath;
+	if (sPath.empty()) {
+		sPath = fmt::format(
+			"\\\\.\\mailslot\\{}.events.v1", OpenKneeboard::ProjectNameA);
+	}
+	return sPath.c_str();
+}
+
 
 }// namespace OpenKneeboard

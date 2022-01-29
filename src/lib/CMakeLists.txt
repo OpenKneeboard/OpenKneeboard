@@ -1,13 +1,25 @@
 add_library(_libheaders INTERFACE)
 target_include_directories(_libheaders INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/config.h.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/config.h"
+  @ONLY
+)
+add_library(OpenKneeboard-config INTERFACE)
+target_include_directories(
+  OpenKneeboard-config
+  INTERFACE
+  ${CMAKE_CURRENT_BINARY_DIR}/include
+)
+
 set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
 file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
 add_library(OpenKneeboard-RuntimeFiles STATIC "${RUNTIME_FILES_CPP}")
 target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
 
 add_library(OpenKneeboard-SHM STATIC SHM.cpp)
-target_link_libraries(OpenKneeboard-SHM PRIVATE fmt)
+target_link_libraries(OpenKneeboard-SHM PRIVATE fmt OpenKneeboard-config)
 target_link_libraries(OpenKneeboard-SHM PUBLIC _libheaders)
 
 add_library(OpenKneeboard-dprint STATIC dprint.cpp)
@@ -18,7 +30,7 @@ add_library(OpenKneeboard-consolelib STATIC ConsoleLoopCondition.cpp)
 target_link_libraries(OpenKneeboard-consolelib PUBLIC _libheaders)
 
 add_library(OpenKneeboard-GameEvent STATIC GameEvent.cpp)
-target_link_libraries(OpenKneeboard-GameEvent PRIVATE fmt OpenKneeboard-dprint)
+target_link_libraries(OpenKneeboard-GameEvent PRIVATE fmt OpenKneeboard-config OpenKneeboard-dprint)
 target_link_libraries(OpenKneeboard-GameEvent PUBLIC _libheaders)
 
 add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)

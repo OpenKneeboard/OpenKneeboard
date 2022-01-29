@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/bitflags.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/shm.h>
 #include <Windows.h>
 #include <fmt/compile.h>
@@ -27,10 +28,6 @@
 #include <bit>
 
 namespace OpenKneeboard::SHM {
-
-// *****PLEASE***** change this if you fork or re-use this code
-static constexpr auto PREFIX = "com.fredemmott.openkneeboard";
-static constexpr auto WPREFIX = L"com.fredemmott.openkneeboard";
 
 enum class HeaderFlags : ULONG {
   LOCKED = 1 << 0,
@@ -120,7 +117,7 @@ constexpr auto SHMPath() {
   auto end = fmt::format_to(
     buf,
     FMT_COMPILE("{}/h{}-c{}-vrc{}-fc{}-s{:x}"),
-    PREFIX,
+    ProjectNameA,
     Header::VERSION,
     Config::VERSION,
     VRConfig::VERSION,
@@ -140,7 +137,7 @@ std::wstring SharedTextureName() {
   if (sCache.empty()) {
     sCache = fmt::format(
       FMT_STRING(L"Local\\{}-texture-h{}-c{}"),
-      WPREFIX,
+      ProjectNameW,
       Header::VERSION,
       Config::VERSION);
   }

@@ -111,7 +111,7 @@ void okOpenVRThread::Tick() {
   if (!p->overlay) {
     CHECK(
       CreateOverlay,
-      "com.fredemmott.OpenKneeboard",
+      ProjectNameA,
       "OpenKneeboard",
       &p->overlay);
     if (!p->overlay) {
