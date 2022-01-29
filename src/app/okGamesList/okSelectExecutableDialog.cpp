@@ -80,6 +80,7 @@ void okSelectExecutableDialog::OnBrowseButton(wxCommandEvent&) {
 
   auto path = std::filesystem::canonical(dialog.GetPath().ToStdWstring());
   dprintf("Raw path: {}", dialog.GetPath().ToStdString());
+  dprintf("Canonical path: {}", path.string());
   if (!std::filesystem::is_regular_file(path)) {
     dprintf("Asked to use '{}', but is not a file", path.string());
     return;
