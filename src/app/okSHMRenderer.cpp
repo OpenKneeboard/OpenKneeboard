@@ -27,6 +27,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <Unknwn.h>
 #include <d2d1.h>
@@ -38,9 +39,6 @@
 #include <winrt/base.h>
 
 using namespace OpenKneeboard;
-
-static constexpr auto TEXTURE_WIDTH = 3072;
-static constexpr auto TEXTURE_HEIGHT = 4096;
 
 class okSHMRenderer::Impl {
  public:
@@ -106,15 +104,15 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
 
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
   D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = TEXTURE_WIDTH,
-    .Height = TEXTURE_HEIGHT,
+    .Width = TextureWidth,
+    .Height = TextureHeight,
     .MipLevels = 1,
     .ArraySize = 1,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .SampleDesc = {1, 0},
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags
-    = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+      | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
   };
   mD3D->CreateTexture2D(&textureDesc, nullptr, mSharedTexture.put());
   textureDesc.MiscFlags = {};
@@ -249,7 +247,7 @@ void okSHMRenderer::Render(
   const auto pageSize = tab->GetPreferredPixelSize(pageIndex);
   if (
     pageSize.width == 0 || pageSize.height == 0
-    || pageSize.width > TEXTURE_WIDTH || pageSize.height > TEXTURE_HEIGHT) {
+    || pageSize.width > TextureWidth || pageSize.height > TextureHeight) {
     p->RenderError(title, _("Invalid Page Size"));
     return;
   }

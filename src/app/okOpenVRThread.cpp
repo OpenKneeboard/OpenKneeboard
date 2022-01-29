@@ -22,6 +22,7 @@
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/config.h>
 #include <TlHelp32.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
@@ -206,23 +207,11 @@ void okOpenVRThread::Tick() {
     vr::TrackingUniverseStanding,
     reinterpret_cast<vr::HmdMatrix34_t*>(&transposed));
 
-  // Using a Direct3D texture instead of SetOverlayRaw(), as SetOverlayRaw()
-  // only works 200 times; SetOverlayTexture() keeps working 'forever'
-
-  auto previousTexture = p->openvrTexture;
-  if (previousTexture) {
-    D3D11_TEXTURE2D_DESC desc;
-    previousTexture->GetDesc(&desc);
-    if (config.imageWidth != desc.Width || config.imageHeight != desc.Height) {
-      p->openvrTexture = nullptr;
-    }
-  }
-
   auto d3d = p->D3D();
   if (!p->openvrTexture) {
     D3D11_TEXTURE2D_DESC desc {
-      .Width = config.imageWidth,
-      .Height = config.imageHeight,
+      .Width = TextureWidth,
+      .Height = TextureHeight,
       .MipLevels = 1,
       .ArraySize = 1,
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -237,6 +226,14 @@ void okOpenVRThread::Tick() {
       dprint("Failed to create shared texture for OpenVR");
       return;
     }
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    p->openvrTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
+    vr::Texture_t vrt {
+      .handle = handle,
+      .eType = vr::TextureType_DXGISharedHandle,
+      .eColorSpace = vr::ColorSpace_Auto,
+    };
+    CHECK(SetOverlayTexture, p->overlay, &vrt);
   }
 
   // Copy the texture as for interoperability with other systems
@@ -252,15 +249,6 @@ void okOpenVRThread::Tick() {
     DXGI_SHARED_RESOURCE_READ,
     IID_PPV_ARGS(openKneeboardTexture.put()));
 
-  D3D11_BOX sourceBox {
-    .left = 0,
-    .top = 0,
-    .front = 0,
-    .right = config.imageWidth,
-    .bottom = config.imageHeight,
-    .back = 1,
-  };
-
   winrt::com_ptr<ID3D11DeviceContext> context;
   d3d->GetImmediateContext(context.put());
   auto mutex = openKneeboardTexture.as<IDXGIKeyedMutex>();
@@ -268,26 +256,17 @@ void okOpenVRThread::Tick() {
   if (mutex->AcquireSync(key, 10) != S_OK) {
     return;
   }
-  context->CopySubresourceRegion(
-    p->openvrTexture.get(),
-    0,
-    0,
-    0,
-    0,
-    openKneeboardTexture.get(),
-    0,
-    &sourceBox);
+  context->CopyResource(p->openvrTexture.get(), openKneeboardTexture.get());
   context->Flush();
   mutex->ReleaseSync(key);
 
-  HANDLE handle = INVALID_HANDLE_VALUE;
-  p->openvrTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
-  vr::Texture_t vrt {
-    .handle = handle,
-    .eType = vr::TextureType_DXGISharedHandle,
-    .eColorSpace = vr::ColorSpace_Auto,
+  vr::VRTextureBounds_t textureBounds {
+    0.0f, 0.0f,
+    static_cast<float>(config.imageWidth) / TextureWidth,
+    static_cast<float>(config.imageHeight) / TextureHeight,
   };
-  CHECK(SetOverlayTexture, p->overlay, &vrt);
+
+  CHECK(SetOverlayTextureBounds, p->overlay, &textureBounds);
 
 #undef CHECK
 }
