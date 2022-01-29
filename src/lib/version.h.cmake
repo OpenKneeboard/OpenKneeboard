@@ -20,7 +20,7 @@ string(
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 
 execute_process(
-  COMMAND git log -1 --format=%at
+  COMMAND git log -1 "--format=%at"
   OUTPUT_VARIABLE COMMIT_UNIX_TIMESTAMP
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -36,3 +36,5 @@ configure_file(
   ${OUTPUT_FILE}
   @ONLY
 )
+
+MESSAGE(STATUS "TIMESTAMP: <${COMMIT_UNIX_TIMESTAMP}>")
