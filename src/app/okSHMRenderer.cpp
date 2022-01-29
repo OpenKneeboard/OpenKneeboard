@@ -51,6 +51,7 @@ class okSHMRenderer::Impl {
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
   winrt::com_ptr<ID3D11Texture2D> mSharedTexture;
+  winrt::handle mSharedHandle;
   D2D1_SIZE_U mUsedSize;
   UINT mNextTextureKey;
 
@@ -118,10 +119,12 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
   textureDesc.MiscFlags = {};
   mD3D->CreateTexture2D(&textureDesc, nullptr, mCanvasTexture.put());
 
-  HANDLE sharedHandle = INVALID_HANDLE_VALUE;
   auto textureName = SHM::SharedTextureName();
   mSharedTexture.as<IDXGIResource1>()->CreateSharedHandle(
-    nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
+    nullptr,
+    DXGI_SHARED_RESOURCE_READ,
+    textureName.c_str(),
+    mSharedHandle.put());
   mNextTextureKey = 0;
 
   auto surface = mCanvasTexture.as<IDXGISurface>();
@@ -209,18 +212,9 @@ okSHMRenderer::okSHMRenderer() : p(std::make_unique<Impl>()) {
 }
 
 okSHMRenderer::~okSHMRenderer() {
-}
-
-bool okSHMRenderer::IsAttached() const {
-  return p->mSHM.IsAttached();
-}
-
-void okSHMRenderer::Attach() {
-  return p->mSHM.Attach();
-}
-
-void okSHMRenderer::Detach() {
-  return p->mSHM.Detach();
+  auto ctx = p->mD3DContext;
+  p = {};
+  ctx->Flush();
 }
 
 void okSHMRenderer::Render(
@@ -246,8 +240,8 @@ void okSHMRenderer::Render(
 
   const auto pageSize = tab->GetPreferredPixelSize(pageIndex);
   if (
-    pageSize.width == 0 || pageSize.height == 0
-    || pageSize.width > TextureWidth || pageSize.height > TextureHeight) {
+    pageSize.width == 0 || pageSize.height == 0 || pageSize.width > TextureWidth
+    || pageSize.height > TextureHeight) {
     p->RenderError(title, _("Invalid Page Size"));
     return;
   }

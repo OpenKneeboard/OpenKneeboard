@@ -189,7 +189,6 @@ class Impl {
 class Writer::Impl : public SHM::Impl {
  public:
   using SHM::Impl::Impl;
-  bool IsAttached = false;
   bool HaveFed = false;
 
   ~Impl() {
@@ -218,8 +217,6 @@ Writer::Writer() {
   p->Handle = handle;
   p->Mapping = mapping;
   p->Header = reinterpret_cast<Header*>(mapping);
-
-  this->Attach();
 }
 
 Writer::~Writer() {
@@ -290,26 +287,6 @@ Snapshot Reader::MaybeGet() const {
   return p->Latest;
 }
 
-bool Writer::IsAttached() const {
-  return p->IsAttached;
-}
-
-void Writer::Attach() {
-  p->IsAttached = true;
-
-  if (!p->HaveFed) {
-    return;
-  }
-
-  p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
-  p->Header->sequenceNumber++;
-}
-
-void Writer::Detach() {
-  p->IsAttached = false;
-  p->Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
-}
-
 void Writer::Update(const Config& config) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
@@ -317,10 +294,6 @@ void Writer::Update(const Config& config) {
 
   if (config.imageWidth == 0 || config.imageHeight == 0) {
     throw std::logic_error("Not feeding a 0-size image");
-  }
-
-  if (!IsAttached()) {
-    return;
   }
 
   Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);

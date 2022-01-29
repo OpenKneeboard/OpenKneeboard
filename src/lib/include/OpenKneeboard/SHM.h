@@ -99,10 +99,6 @@ class Writer final {
   operator bool() const;
   void Update(const Config& config);
 
-  void Attach();
-  void Detach();
-  bool IsAttached() const;
-
   UINT GetPreviousTextureKey() const;
   UINT GetNextTextureKey() const;
 

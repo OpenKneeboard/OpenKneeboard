@@ -154,6 +154,10 @@ void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
 }
 
 void okMainWindow::UpdateSHM() {
+  if (!p->shmRenderer) {
+    return;
+  }
+
   std::shared_ptr<Tab> tab;
   unsigned int pageIndex = 0;
   if (p->currentTab >= 0 && p->currentTab < p->tabUIs.size()) {
@@ -210,12 +214,13 @@ void okMainWindow::OnNextPage(wxCommandEvent&) {
 }
 
 void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
-  auto& shm = *p->shmRenderer;
-  if (shm.IsAttached()) {
-    shm.Detach();
-  } else {
-    shm.Attach();
+  if (p->shmRenderer) {
+    p->shmRenderer.reset();
+    return;
   }
+
+  p->shmRenderer = std::make_unique<okSHMRenderer>();
+  UpdateSHM();
 }
 
 void okMainWindow::UpdateTabs() {

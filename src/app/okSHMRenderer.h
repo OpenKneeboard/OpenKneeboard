@@ -36,8 +36,4 @@ class okSHMRenderer final {
   void Render(
     const std::shared_ptr<OpenKneeboard::Tab>& tab,
     uint16_t pageIndex);
-
-  bool IsAttached() const;
-  void Attach();
-  void Detach();
 };
