@@ -32,7 +32,7 @@ jobs:
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
       - name: Create .msi
-        if: matrix.config == "RelWithDebInfo"
+        if: matrix.config == 'RelWithDebInfo'
         working-directory: build
         run: cmake --build . --config ${{matrix.config}} --target package
     strategy:
