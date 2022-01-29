@@ -37,28 +37,39 @@ target_include_directories(
   ${SOURCE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include)
 
+install(TARGETS OpenKneeboard)
+install(FILES "$<TARGET_PDB_FILE:OpenKneeboard>" TYPE BIN COMPONENT DebugSymbols)
+
 set(
   RUNTIME_FILES
-	"$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
-	"$<TARGET_FILE:OpenKneeboard-Injection-Bootstrapper>"
-	"$<TARGET_FILE:OpenKneeboard-AutoInject-Marker>"
-	"$<TARGET_FILE:OpenKneeboard-nonvr-d3d11>"
-	"$<TARGET_FILE:OpenKneeboard-oculus-d3d11>"
-	"$<TARGET_FILE:OpenKneeboard-oculus-d3d12>"
-	"$<TARGET_FILE:OpenKneeboard-dcs-ext-dll>"
-	"${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
+  "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
+  "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
 )
+install(FILES "${RUNTIME_FILES}" TYPE BIN)
+
+set(
+	DLL_TARGETS
+	OpenKneeboard-Injection-Bootstrapper
+	OpenKneeboard-AutoInject-Marker
+	OpenKneeboard-nonvr-d3d11
+	OpenKneeboard-oculus-d3d11
+	OpenKneeboard-oculus-d3d12
+	OpenKneeboard-dcs-ext-dll
+)
+install(TARGETS ${DLL_TARGETS} LIBRARY DESTINATION bin)
+
+foreach(TARGET ${DLL_TARGETS})
+  list(APPEND RUNTIME_FILES "$<TARGET_FILE:${TARGET}>")
+  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
+endforeach()
 
 add_custom_target(
   CopyRuntimeFiles
   ALL
   COMMAND
   ${CMAKE_COMMAND} -E copy_if_different
-	"${RUNTIME_FILES}"
+  "${RUNTIME_FILES}"
   "$<TARGET_FILE_DIR:OpenKneeboard>"
   &&
   ${CMAKE_COMMAND} -E touch RuntimeFiles.stamp
   COMMAND_EXPAND_LISTS)
-
-install(TARGETS OpenKneeboard)
-install(FILES "${RUNTIME_FILES}" TYPE BIN)
