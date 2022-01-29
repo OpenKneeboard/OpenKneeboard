@@ -54,6 +54,7 @@ void okGamesList::SettingsUI::OnPathSelect(wxCommandEvent& ev) {
       instance.name,
       true,
       imageIndex);
+    break;
   }
   auto dialog = dynamic_cast<wxDialog*>(ev.GetEventObject());
   if (!dialog) {
