@@ -15,6 +15,7 @@ add_compile_definitions(
   "WIN32_LEAN_AND_MEAN"
   "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
   "OPENKNEEBOARD_BREAK=$<$<CONFIG:Debug>:__debugbreak()>"
+  "BUILD_CONFIG=\"$<CONFIG>\""
 )
 
 # Needed by c++/winrt in some environments/with some windows SDK versions

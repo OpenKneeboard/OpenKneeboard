@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <ctime>
+
 namespace OpenKneeboard::Version {
 
 constexpr unsigned int Major = @VERSION_MAJOR@;
@@ -26,6 +28,8 @@ constexpr unsigned int Minor = @VERSION_MINOR@;
 constexpr unsigned int Patch = @VERSION_PATCH@;
 
 constexpr const char* CommitID = "@COMMIT_ID@";
+// Didn't see a clean way to get this formatted by CMake as UTC :(
+constexpr const std::time_t CommitUnixTimestamp = @COMMIT_UNIX_TIMESTAMP@;
 constexpr const char* ModifiedFiles = "@MODIFIED_FILES@";
 constexpr bool HaveModifiedFiles = @DIRTY@;
 constexpr const char* BuildTimestamp = "@BUILD_TIMESTAMP@";

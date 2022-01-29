@@ -25,6 +25,7 @@
 #endif
 
 #include <OpenKneeboard/version.h>
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <wx/aboutdlg.h>
 
@@ -51,11 +52,24 @@ void okAboutBox(wxWindow* parent) {
 #endif
     ));
 
+  auto commitTime = *std::gmtime(&Version::CommitUnixTimestamp);
+
   std::string description = fmt::format(
-    "An open source kneeboard.\n\n"
-    "Built at: {}\n"
-    "Commit ID: {}",
+    FMT_STRING("An open source kneeboard.\n\n"
+               "Built at: {}\n"
+               "Build type: {}-{}\n"
+               "Commit at: {:%Y-%m-%dT%H:%M:%SZ}\n"
+               "Commit ID: {}\n"),
     Version::BuildTimestamp,
+    BUILD_CONFIG,
+#ifdef _WIN32
+#ifdef _WIN64
+    "Win64",
+#else
+    "Win32",
+#endif
+#endif
+    commitTime,
     Version::CommitID);
   if constexpr (Version::HaveModifiedFiles) {
     std::string files = Version::ModifiedFiles;

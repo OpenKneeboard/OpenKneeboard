@@ -19,6 +19,12 @@ string(
 
 string(TIMESTAMP BUILD_TIMESTAMP UTC)
 
+execute_process(
+  COMMAND git log -1 --format=%at
+  OUTPUT_VARIABLE COMMIT_UNIX_TIMESTAMP
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 if("${MODIFIED_FILES}" STREQUAL "")
   set(DIRTY "false")
 else()
