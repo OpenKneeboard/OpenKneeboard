@@ -43,17 +43,21 @@ class okOpenVRThread::Impl final {
   winrt::com_ptr<ID3D11Device1> mD3D;
 
  public:
-  vr::IVRSystem* vrSystem = nullptr;
-  vr::VROverlayHandle_t overlay {};
-  SHM::Reader shm;
+  vr::IVRSystem* mIVRSystem = nullptr;
+  vr::IVROverlay* mIVROverlay = nullptr;
+  vr::VROverlayHandle_t mOverlay {};
+  bool mZoomed = false;
+  SHM::Reader mSHM;
 
   ID3D11Device1* D3D();
 
-  winrt::com_ptr<ID3D11Texture2D> openvrTexture;
-  uint64_t sequenceNumber = 0;
+  winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
+  uint64_t mSequenceNumber = 0;
+  float mWidth = 0;
+  float mZoomedWidth = 0;
 
   ~Impl() {
-    if (!vrSystem) {
+    if (!mIVRSystem) {
       return;
     }
     vr::VR_Shutdown();
@@ -78,50 +82,54 @@ static bool overlay_check(vr::EVROverlayError err, const char* method) {
 }
 
 void okOpenVRThread::Tick() {
-  if (!p->vrSystem) {
+  if (!p->mIVRSystem) {
     vr::EVRInitError err;
-    p->vrSystem = vr::VR_Init(&err, vr::VRApplication_Background);
-    if (!p->vrSystem) {
+    p->mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
+    if (!p->mIVRSystem) {
       return;
     }
     dprint("Initialized OpenVR");
   }
 
-  if (!p->shm) {
-    p->shm = SHM::Reader();
-    if (!p->shm) {
+  if (!p->mSHM) {
+    p->mSHM = SHM::Reader();
+    if (!p->mSHM) {
       return;
     }
   }
 
-  auto overlay = vr::VROverlay();
-  if (!overlay) {
-    return;
+  if (!p->mIVROverlay) {
+    p->mIVROverlay = vr::VROverlay();
+    if (!p->mIVROverlay) {
+      return;
+    }
   }
 
   // reset before assign as we must call the old destructor before the new
   // constructor
 #define CHECK(method, ...) \
-  if (!overlay_check(overlay->method(__VA_ARGS__), #method)) { \
+  if (!overlay_check(p->mIVROverlay->method(__VA_ARGS__), #method)) { \
     p.reset(); \
     p = std::make_unique<Impl>(); \
     return; \
   }
 
-  if (!p->overlay) {
-    CHECK(CreateOverlay, ProjectNameA, "OpenKneeboard", &p->overlay);
-    if (!p->overlay) {
+  if (!p->mOverlay) {
+    CHECK(CreateOverlay, ProjectNameA, "OpenKneeboard", &p->mOverlay);
+    if (!p->mOverlay) {
       return;
     }
 
     dprintf("Created OpenVR overlay");
     static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-    CHECK(SetOverlayFlag, p->overlay, vr::VROverlayFlags_IsPremultiplied, true);
-    CHECK(ShowOverlay, p->overlay);
+    CHECK(
+      SetOverlayFlag, p->mOverlay, vr::VROverlayFlags_IsPremultiplied, true);
+    CHECK(ShowOverlay, p->mOverlay);
   }
 
   vr::VREvent_t event;
-  while (overlay->PollNextOverlayEvent(p->overlay, &event, sizeof(event))) {
+  while (
+    p->mIVROverlay->PollNextOverlayEvent(p->mOverlay, &event, sizeof(event))) {
     if (event.eventType == vr::VREvent_Quit) {
       dprint("OpenVR shutting down, detaching");
       p.reset();
@@ -130,12 +138,11 @@ void okOpenVRThread::Tick() {
     }
   }
 
-  bool zoomed = false;
   vr::TrackedDevicePose_t hmdPose {
     .bPoseIsValid = false,
     .bDeviceIsConnected = false,
   };
-  p->vrSystem->GetDeviceToAbsoluteTrackingPose(
+  p->mIVRSystem->GetDeviceToAbsoluteTrackingPose(
     vr::TrackingUniverseStanding, 0, &hmdPose, 1);
   if (hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid) {
     const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
@@ -158,14 +165,25 @@ void okOpenVRThread::Tick() {
     };
 
     vr::VROverlayIntersectionResults_t results;
-    zoomed = overlay->ComputeOverlayIntersection(p->overlay, &params, &results);
+    auto zoomed = p->mIVROverlay->ComputeOverlayIntersection(
+      p->mOverlay, &params, &results);
+
+    if (
+      zoomed != p->mZoomed
+      && p->mSequenceNumber == p->mSHM.GetSequenceNumber()) {
+      CHECK(
+        SetOverlayWidthInMeters,
+        p->mOverlay,
+        zoomed ? p->mZoomedWidth : p->mWidth);
+    }
+    p->mZoomed = zoomed;
   }
 
-  if (p->shm.GetSequenceNumber() == p->sequenceNumber) {
+  if (p->mSHM.GetSequenceNumber() == p->mSequenceNumber) {
     return;
   }
 
-  auto snapshot = p->shm.MaybeGet();
+  auto snapshot = p->mSHM.MaybeGet();
   if (!snapshot) {
     return;
   }
@@ -174,11 +192,13 @@ void okOpenVRThread::Tick() {
   const auto& vrConf = config.vr;
 
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  p->mWidth = vrConf.height * aspectRatio;
+  p->mZoomedWidth = p->mWidth * vrConf.zoomScale;
 
   CHECK(
     SetOverlayWidthInMeters,
-    p->overlay,
-    vrConf.height * aspectRatio * (zoomed ? vrConf.zoomScale : 1.0f));
+    p->mOverlay,
+    p->mZoomed ? p->mZoomedWidth : p->mWidth);
 
   const bool roomscale
     = vrConf.flags & SHM::VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
@@ -198,12 +218,12 @@ void okOpenVRThread::Tick() {
 
   CHECK(
     SetOverlayTransformAbsolute,
-    p->overlay,
+    p->mOverlay,
     vr::TrackingUniverseStanding,
     reinterpret_cast<vr::HmdMatrix34_t*>(&transposed));
 
   auto d3d = p->D3D();
-  if (!p->openvrTexture) {
+  if (!p->mOpenVRTexture) {
     D3D11_TEXTURE2D_DESC desc {
       .Width = TextureWidth,
       .Height = TextureHeight,
@@ -216,19 +236,19 @@ void okOpenVRThread::Tick() {
       .CPUAccessFlags = {},
       .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
     };
-    d3d->CreateTexture2D(&desc, nullptr, p->openvrTexture.put());
-    if (!p->openvrTexture) {
+    d3d->CreateTexture2D(&desc, nullptr, p->mOpenVRTexture.put());
+    if (!p->mOpenVRTexture) {
       dprint("Failed to create shared texture for OpenVR");
       return;
     }
     HANDLE handle = INVALID_HANDLE_VALUE;
-    p->openvrTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
+    p->mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(&handle);
     vr::Texture_t vrt {
       .handle = handle,
       .eType = vr::TextureType_DXGISharedHandle,
       .eColorSpace = vr::ColorSpace_Auto,
     };
-    CHECK(SetOverlayTexture, p->overlay, &vrt);
+    CHECK(SetOverlayTexture, p->mOverlay, &vrt);
   }
 
   // Copy the texture as for interoperability with other systems
@@ -245,7 +265,7 @@ void okOpenVRThread::Tick() {
 
   d3d->GetImmediateContext(context.put());
   context->CopyResource(
-    p->openvrTexture.get(), openKneeboardTexture.GetTexture());
+    p->mOpenVRTexture.get(), openKneeboardTexture.GetTexture());
   context->Flush();
 
   vr::VRTextureBounds_t textureBounds {
@@ -255,8 +275,8 @@ void okOpenVRThread::Tick() {
     static_cast<float>(config.imageHeight) / TextureHeight,
   };
 
-  CHECK(SetOverlayTextureBounds, p->overlay, &textureBounds);
-  p->sequenceNumber = snapshot.GetSequenceNumber();
+  CHECK(SetOverlayTextureBounds, p->mOverlay, &textureBounds);
+  p->mSequenceNumber = snapshot.GetSequenceNumber();
 
 #undef CHECK
 }
@@ -334,7 +354,7 @@ wxThread::ExitCode okOpenVRThread::Entry() {
     }
 
     this->Tick();
-    wxThread::This()->Sleep(p->vrSystem ? frameSleepMS : inactiveSleepMS);
+    wxThread::This()->Sleep(p->mIVRSystem ? frameSleepMS : inactiveSleepMS);
   }
 
   return {0};
