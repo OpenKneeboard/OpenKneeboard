@@ -21,8 +21,8 @@
 
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <TlHelp32.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
@@ -109,11 +109,7 @@ void okOpenVRThread::Tick() {
   }
 
   if (!p->overlay) {
-    CHECK(
-      CreateOverlay,
-      ProjectNameA,
-      "OpenKneeboard",
-      &p->overlay);
+    CHECK(CreateOverlay, ProjectNameA, "OpenKneeboard", &p->overlay);
     if (!p->overlay) {
       return;
     }
@@ -133,13 +129,6 @@ void okOpenVRThread::Tick() {
       return;
     }
   }
-
-  auto snapshot = p->shm.MaybeGet();
-  if (!snapshot) {
-    return;
-  }
-
-  const auto& config = *snapshot.GetConfig();
 
   bool zoomed = false;
   vr::TrackedDevicePose_t hmdPose {
@@ -172,18 +161,24 @@ void okOpenVRThread::Tick() {
     zoomed = overlay->ComputeOverlayIntersection(p->overlay, &params, &results);
   }
 
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  if (p->shm.GetSequenceNumber() == p->sequenceNumber) {
+    return;
+  }
+
+  auto snapshot = p->shm.MaybeGet();
+  if (!snapshot) {
+    return;
+  }
+
+  const auto config = snapshot.GetConfig();
   const auto& vrConf = config.vr;
+
+  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
 
   CHECK(
     SetOverlayWidthInMeters,
     p->overlay,
     vrConf.height * aspectRatio * (zoomed ? vrConf.zoomScale : 1.0f));
-
-  if (p->sequenceNumber == snapshot.GetSequenceNumber()) {
-    return;
-  }
-  p->sequenceNumber = snapshot.GetSequenceNumber();
 
   const bool roomscale
     = vrConf.flags & SHM::VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
@@ -242,31 +237,26 @@ void okOpenVRThread::Tick() {
   // sharing parameters.
 
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-  auto textureName = SHM::SharedTextureName();
-  winrt::com_ptr<ID3D11Texture2D> openKneeboardTexture;
-  d3d->OpenSharedResourceByName(
-    textureName.c_str(),
-    DXGI_SHARED_RESOURCE_READ,
-    IID_PPV_ARGS(openKneeboardTexture.put()));
-
-  winrt::com_ptr<ID3D11DeviceContext> context;
-  d3d->GetImmediateContext(context.put());
-  auto mutex = openKneeboardTexture.as<IDXGIKeyedMutex>();
-  const auto key = snapshot.GetTextureKey();
-  if (mutex->AcquireSync(key, 10) != S_OK) {
+  auto openKneeboardTexture = snapshot.GetSharedTexture(p->D3D());
+  if (!openKneeboardTexture) {
     return;
   }
-  context->CopyResource(p->openvrTexture.get(), openKneeboardTexture.get());
+  winrt::com_ptr<ID3D11DeviceContext> context;
+
+  d3d->GetImmediateContext(context.put());
+  context->CopyResource(
+    p->openvrTexture.get(), openKneeboardTexture.GetTexture());
   context->Flush();
-  mutex->ReleaseSync(key);
 
   vr::VRTextureBounds_t textureBounds {
-    0.0f, 0.0f,
+    0.0f,
+    0.0f,
     static_cast<float>(config.imageWidth) / TextureWidth,
     static_cast<float>(config.imageHeight) / TextureHeight,
   };
 
   CHECK(SetOverlayTextureBounds, p->overlay, &textureBounds);
+  p->sequenceNumber = snapshot.GetSequenceNumber();
 
 #undef CHECK
 }

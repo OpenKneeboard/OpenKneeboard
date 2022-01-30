@@ -127,7 +127,7 @@ bool OculusD3D12Kneeboard::Render(
   ovrTextureSwapChain swapChain,
   const SHM::Snapshot& snapshot) {
   auto ovr = OVRProxy::Get();
-  const auto& config = *snapshot.GetConfig();
+  const auto config = snapshot.GetConfig();
 
   int index = -1;
   ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);

@@ -95,8 +95,7 @@ class Canvas final : public wxWindow {
   }
 
   void CheckForUpdate() {
-    auto snapshot = mSHM.MaybeGet();
-    if (!snapshot) {
+    if (!mSHM) {
       if (mFirstDetached) {
         Refresh();
         Update();
@@ -104,13 +103,13 @@ class Canvas final : public wxWindow {
       return;
     }
 
-    if (snapshot.GetSequenceNumber() != mLastSequenceNumber) {
+    if (mSHM.GetSequenceNumber() != mLastSequenceNumber) {
       Refresh();
       Update();
     }
   }
 
-  void initSwapChain() {
+  void InitSwapChain() {
     auto desiredSize = this->GetClientSize();
     if (mSwapChain) {
       DXGI_SWAP_CHAIN_DESC desc;
@@ -154,7 +153,7 @@ class Canvas final : public wxWindow {
   }
 
   void OnPaint(wxPaintEvent& ev) {
-    this->initSwapChain();
+    this->InitSwapChain();
     const auto clientSize = GetClientSize();
 
     winrt::com_ptr<IDXGISurface> surface;
@@ -221,7 +220,7 @@ class Canvas final : public wxWindow {
     }
     mFirstDetached = true;
 
-    const auto& config = *snapshot.GetConfig();
+    const auto config = snapshot.GetConfig();
 
     if (config.imageWidth == 0 || config.imageHeight == 0) {
       mErrorRenderer->Render(
@@ -275,11 +274,8 @@ class Canvas final : public wxWindow {
       .dpiX = static_cast<FLOAT>(dpi),
       .dpiY = static_cast<FLOAT>(dpi),
     };
-    auto csbRet = rt->CreateSharedBitmap(
-      _uuidof(IDXGISurface),
-      sharedSurface,
-      &bitmapProperties,
-      d2dBitmap.put());
+    rt->CreateSharedBitmap(
+      _uuidof(IDXGISurface), sharedSurface, &bitmapProperties, d2dBitmap.put());
 
     auto bg = mBackgroundBrush;
     // Align the top-left pixel of the brush

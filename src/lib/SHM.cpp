@@ -21,10 +21,10 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/shm.h>
 #include <Windows.h>
-#include <fmt/compile.h>
-#include <fmt/format.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
+#include <fmt/compile.h>
+#include <fmt/format.h>
 #include <fmt/xchar.h>
 
 #include <bit>
@@ -146,7 +146,8 @@ std::wstring SharedTextureName() {
   return sCache;
 }
 
-SharedTexture::SharedTexture() {}
+SharedTexture::SharedTexture() {
+}
 
 SharedTexture::SharedTexture(const Header& header, ID3D11Device* d3d) {
   auto textureName = SHM::SharedTextureName();
@@ -203,34 +204,34 @@ IDXGISurface* SharedTexture::GetSurface() const {
 Snapshot::Snapshot() {
 }
 
-Snapshot::Snapshot(std::vector<std::byte>&& bytes) {
-  mBytes = std::make_shared<std::vector<std::byte>>(std::move(bytes));
+Snapshot::Snapshot(const Header& header) {
+  mHeader = std::make_unique<Header>(header);
+}
+
+Snapshot::~Snapshot() {
 }
 
 uint32_t Snapshot::GetSequenceNumber() const {
-  if (!mBytes) {
-    return 0;
-  }
-  return reinterpret_cast<const Header*>(mBytes->data())->sequenceNumber;
-}
-
-UINT Snapshot::GetTextureKey() const {
-  return GetTextureKeyFromSequenceNumber(GetSequenceNumber());
+  return mHeader->sequenceNumber;
 }
 
 SharedTexture Snapshot::GetSharedTexture(ID3D11Device* d3d) const {
-  return SharedTexture(*reinterpret_cast<const Header*>(mBytes->data()), d3d);
+  if (mHeader) {
+    return SharedTexture(*mHeader, d3d);
+  }
+  return {};
 }
 
-const Config* const Snapshot::GetConfig() const {
-  if (!mBytes) {
-    return nullptr;
+Config Snapshot::GetConfig() const {
+  if (!*this) {
+    return {};
   }
-  return &reinterpret_cast<const Header*>(mBytes->data())->config;
+  return mHeader->config;
 }
 
 Snapshot::operator bool() const {
-  return (bool)mBytes;
+  return mHeader && (mHeader->flags & HeaderFlags::FEEDER_ATTACHED)
+    && mHeader->config.imageWidth > 0 && mHeader->config.imageHeight > 0;
 }
 
 class Impl {
@@ -238,7 +239,6 @@ class Impl {
   HANDLE Handle;
   std::byte* Mapping = nullptr;
   Header* Header = nullptr;
-  Snapshot Latest;
 
   ~Impl() {
     UnmapViewOfFile(Mapping);
@@ -323,28 +323,20 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
+uint32_t Reader::GetSequenceNumber() const {
+  return p->Header->sequenceNumber;
+}
+
 Snapshot Reader::MaybeGet() const {
   if (!(*this)) {
     return {};
   }
 
-  const auto snapshot = p->Latest;
-
-  if (snapshot && snapshot.GetSequenceNumber() == p->Header->sequenceNumber) {
-    return snapshot;
+  Spinlock lock(p->Header, Spinlock::ON_FAILURE_CREATE_FALSEY);
+  if (!lock) {
+    return {};
   }
-
-  std::vector<std::byte> buffer(SHM_SIZE);
-  {
-    Spinlock lock(p->Header, Spinlock::ON_FAILURE_CREATE_FALSEY);
-    if (!lock) {
-      return snapshot;
-    }
-    memcpy(reinterpret_cast<void*>(buffer.data()), p->Mapping, SHM_SIZE);
-  }
-  p->Latest = Snapshot(std::move(buffer));
-
-  return p->Latest;
+  return Snapshot(*p->Header);
 }
 
 void Writer::Update(const Config& config) {

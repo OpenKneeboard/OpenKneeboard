@@ -48,12 +48,10 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   UINT syncInterval,
   UINT flags,
   const decltype(&IDXGISwapChain::Present)& next) {
-  auto shm = mSHM.MaybeGet();
-  if (!shm) {
-    return std::invoke(next, swapChain, syncInterval, flags);
+  auto passthrough = std::bind_front(next, swapChain, syncInterval, flags);
+  if (!mSHM) {
+    return passthrough();
   }
-
-  const auto& config = *shm.GetConfig();
 
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
@@ -65,19 +63,12 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       = std::make_unique<DirectX::SpriteBatch>(mDeviceResources.mContext.get());
   }
 
-  if (mDeviceResources.mLastSequenceNumber != shm.GetSequenceNumber()) {
-    mDeviceResources.mResourceView = nullptr;
-
-    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-    auto sharedTexture = shm.GetSharedTexture(mDevice);
-    if (!sharedTexture) {
-      return std::invoke(next, swapChain, syncInterval, flags);
-    }
-    device->CreateShaderResourceView(
-      sharedTexture.GetTexture(),
-      nullptr,
-      mDeviceResources.mResourceView.put());
+  auto snapshot = mSHM.MaybeGet();
+  if (!snapshot) {
+    return passthrough();
   }
+
+  const auto config = snapshot.GetConfig();
 
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
@@ -125,16 +116,24 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     config.imageHeight,
   };
 
+  auto sharedTexture = snapshot.GetSharedTexture(mDevice);
+  if (!sharedTexture) {
+    return passthrough();
+  }
+  winrt::com_ptr<ID3D11ShaderResourceView> resourceView;
+  mDevice->CreateShaderResourceView(
+    sharedTexture.GetTexture(), nullptr, resourceView.put());
+
   sprites.Begin();
   sprites.Draw(
-    mDeviceResources.mResourceView.get(),
+    resourceView.get(),
     destRect,
     &sourceRect,
     DirectX::Colors::White * config.flat.opacity);
   sprites.End();
   mDeviceResources.mContext->Flush();
 
-  return std::invoke(next, swapChain, syncInterval, flags);
+  return passthrough();
 }
 
 }// namespace OpenKneeboard

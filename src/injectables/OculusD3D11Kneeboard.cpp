@@ -111,7 +111,7 @@ bool OculusD3D11Kneeboard::Render(
   }
 
   auto ovr = OVRProxy::Get();
-  auto& config = *snapshot.GetConfig();
+  const auto config = snapshot.GetConfig();
 
   auto sharedTexture = snapshot.GetSharedTexture(mD3D.get());
   if (!sharedTexture) {

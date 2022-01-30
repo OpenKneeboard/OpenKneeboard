@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "OculusKneeboard.h"
 
@@ -83,7 +84,7 @@ struct OculusKneeboard::Impl {
 
   SHM::Reader mSHM;
   OculusEndFrameHook mEndFrameHook;
-  uint64_t mLastSequenceNumber;
+  uint32_t mLastSequenceNumber;
 
   ovrResult OnOVREndFrame(
     ovrSession session,
@@ -103,7 +104,7 @@ struct OculusKneeboard::Impl {
 };
 
 OculusKneeboard::OculusKneeboard() {
-} 
+}
 
 void OculusKneeboard::InstallHook(Renderer* renderer) {
   if (p) {
@@ -143,7 +144,6 @@ ovrTextureSwapChain OculusKneeboard::Impl::GetSwapChain(
     ovr->ovr_DestroyTextureSwapChain(session, mSwapChain);
   }
   mSwapChain = mRenderer->CreateSwapChain(session, config);
-  mLastConfig = config;
   return mSwapChain;
 }
 
@@ -154,39 +154,47 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount,
   const decltype(&ovr_EndFrame)& next) {
-
   static bool sFirst = true;
   if (sFirst) {
     dprint(__FUNCTION__);
     sFirst = false;
   }
+  auto passthrough = std::bind_front(
+    next, session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
 
-  auto snapshot = mSHM.MaybeGet();
-  if (!(snapshot && mRenderer)) [[unlikely]] {
-    return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+  if (!(mSHM && mRenderer)) [[unlikely]] {
+    return passthrough();
   }
 
-  const auto& config = *snapshot.GetConfig();
-  auto swapChain = this->GetSwapChain(session, config);
+  if (mLastSequenceNumber != mSHM.GetSequenceNumber() || !mSwapChain)
+    [[unlikely]] {
+    auto snapshot = mSHM.MaybeGet();
+    if (!snapshot) {
+      return passthrough();
+    }
+    const auto config = snapshot.GetConfig();
 
-  if (!swapChain) {
-      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
-  }
+    mSwapChain = this->GetSwapChain(session, config);
 
-  if (mLastSequenceNumber != snapshot.GetSequenceNumber() ){
-    if (!mRenderer->Render(session, swapChain, snapshot)) {
-      return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+    if (!mSwapChain) {
+      return passthrough();
+    }
+
+    if (!mRenderer->Render(session, mSwapChain, snapshot)) {
+      return passthrough();
     }
     mLastSequenceNumber = snapshot.GetSequenceNumber();
+    mLastConfig = config;
   }
 
   auto ovr = OVRProxy::Get();
+  auto config = mLastConfig;
 
   ovrLayerQuad kneeboardLayer = {};
   kneeboardLayer.Header.Type = ovrLayerType_Quad;
   // TODO: set ovrLayerFlag_TextureOriginAtBottomLeft for OpenGL?
   kneeboardLayer.Header.Flags = {ovrLayerFlag_HighQuality};
-  kneeboardLayer.ColorTexture = swapChain;
+  kneeboardLayer.ColorTexture = mSwapChain;
 
   const auto& vr = config.vr;
   Vector3 position(vr.x, vr.floorY, vr.z);

@@ -130,17 +130,16 @@ class SharedTexture final {
 };
 
 class Snapshot final {
- private:
-  std::shared_ptr<std::vector<std::byte>> mBytes;
-
+  private:
+  std::unique_ptr<Header> mHeader;
  public:
   Snapshot();
-  Snapshot(std::vector<std::byte>&& bytes);
+  Snapshot(const Header& header);
+  ~Snapshot();
 
   uint32_t GetSequenceNumber() const;
-  UINT GetTextureKey() const;
   SharedTexture GetSharedTexture(ID3D11Device*) const;
-  const Config* const GetConfig() const;
+  Config GetConfig() const;
 
   operator bool() const;
 };
@@ -152,6 +151,7 @@ class Reader final {
 
   operator bool() const;
   Snapshot MaybeGet() const;
+  uint32_t GetSequenceNumber() const;
 
  private:
   std::shared_ptr<Impl> p;
