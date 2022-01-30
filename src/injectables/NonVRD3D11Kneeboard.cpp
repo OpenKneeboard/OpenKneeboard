@@ -66,17 +66,15 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   if (mDeviceResources.mLastSequenceNumber != shm.GetSequenceNumber()) {
-    mDeviceResources.mTexture = nullptr;
     mDeviceResources.mResourceView = nullptr;
 
     static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-    auto textureName = SHM::SharedTextureName();
-    device.as<ID3D11Device1>()->OpenSharedResourceByName(
-      textureName.c_str(),
-      DXGI_SHARED_RESOURCE_READ,
-      IID_PPV_ARGS(mDeviceResources.mTexture.put()));
+    auto sharedTexture = shm.GetSharedTexture(mDevice);
+    if (!sharedTexture) {
+      return std::invoke(next, swapChain, syncInterval, flags);
+    }
     device->CreateShaderResourceView(
-      mDeviceResources.mTexture.get(),
+      sharedTexture.GetTexture(),
       nullptr,
       mDeviceResources.mResourceView.put());
   }
@@ -127,11 +125,6 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     config.imageHeight,
   };
 
-  auto mutex = mDeviceResources.mTexture.as<IDXGIKeyedMutex>();
-  const auto key = shm.GetTextureKey();
-  if (mutex->AcquireSync(key, 10) != S_OK) {
-    return std::invoke(next, swapChain, syncInterval, flags);
-  }
   sprites.Begin();
   sprites.Draw(
     mDeviceResources.mResourceView.get(),
@@ -140,7 +133,6 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     DirectX::Colors::White * config.flat.opacity);
   sprites.End();
   mDeviceResources.mContext->Flush();
-  mutex->ReleaseSync(key);
 
   return std::invoke(next, swapChain, syncInterval, flags);
 }

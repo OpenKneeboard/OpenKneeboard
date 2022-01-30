@@ -43,7 +43,6 @@ class NonVRD3D11Kneeboard final {
     winrt::com_ptr<ID3D11DeviceContext> mContext;
     std::unique_ptr<DirectX::SpriteBatch> mSpriteBatch;
 
-    winrt::com_ptr<ID3D11Texture2D> mTexture;
     winrt::com_ptr<ID3D11ShaderResourceView> mResourceView;
 
     uint64_t mLastSequenceNumber;

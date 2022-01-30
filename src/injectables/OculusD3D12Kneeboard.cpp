@@ -145,15 +145,11 @@ bool OculusD3D12Kneeboard::Render(
     return false;
   }
 
-  // Use d3d11on12 so that we can get the KeyedMutex
-  auto sharedTextureName = SHM::SharedTextureName();
-  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-  winrt::com_ptr<ID3D11Texture2D> sharedTexture11;
-  m11on12.as<ID3D11Device1>()->OpenSharedResourceByName(
-    sharedTextureName.c_str(),
-    DXGI_SHARED_RESOURCE_READ,
-    IID_PPV_ARGS(sharedTexture11.put()));
-  auto mutex = sharedTexture11.as<IDXGIKeyedMutex>();
+  auto sharedTexture = snapshot.GetSharedTexture(m11on12.get());
+  if (!sharedTexture) {
+    return false;
+  }
+  auto sharedTexture11 = sharedTexture.GetTexture();
 
   winrt::com_ptr<ID3D11Texture2D> layerTexture11;
   D3D11_RESOURCE_FLAGS resourceFlags11 {};
@@ -173,15 +169,9 @@ bool OculusD3D12Kneeboard::Render(
     .back = 1,
   };
 
-  const auto key = snapshot.GetTextureKey();
-  if (mutex->AcquireSync(key, 10) != S_OK) {
-    return false;
-  }
   m11on12Context->CopySubresourceRegion(
-    layerTexture11.get(), 0, 0, 0, 0, sharedTexture11.get(), 0, &sourceBox);
+    layerTexture11.get(), 0, 0, 0, 0, sharedTexture11, 0, &sourceBox);
   m11on12Context->Flush();
-
-  mutex->ReleaseSync(key);
 
   ovr->ovr_CommitTextureSwapChain(session, swapChain);
 

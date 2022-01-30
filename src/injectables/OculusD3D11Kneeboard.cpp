@@ -113,13 +113,10 @@ bool OculusD3D11Kneeboard::Render(
   auto ovr = OVRProxy::Get();
   auto& config = *snapshot.GetConfig();
 
-  winrt::com_ptr<ID3D11Texture2D> sharedTexture;
-  auto sharedTextureName = SHM::SharedTextureName();
-  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-  mD3D1->OpenSharedResourceByName(
-    sharedTextureName.c_str(),
-    DXGI_SHARED_RESOURCE_READ,
-    IID_PPV_ARGS(sharedTexture.put()));
+  auto sharedTexture = snapshot.GetSharedTexture(mD3D.get());
+  if (!sharedTexture) {
+    return false;
+  }
 
   int index = -1;
   ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
@@ -143,15 +140,9 @@ bool OculusD3D11Kneeboard::Render(
     .back = 1,
   };
 
-  auto mutex = sharedTexture.as<IDXGIKeyedMutex>();
-  const auto key = snapshot.GetTextureKey();
-  if (mutex->AcquireSync(key, 10) != S_OK) {
-    return false;
-  }
   context->CopySubresourceRegion(
-    texture.get(), 0, 0, 0, 0, sharedTexture.get(), 0, &sourceBox);
+    texture.get(), 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
   context->Flush();
-  mutex->ReleaseSync(key);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (error) {

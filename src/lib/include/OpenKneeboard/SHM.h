@@ -20,6 +20,9 @@
 #pragma once
 
 #include <Windows.h>
+#include <d3d11.h>
+#include <Unknwn.h>
+#include <winrt/base.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -32,6 +35,8 @@
 #include "bitflags.h"
 
 namespace OpenKneeboard::SHM {
+
+struct Header;
 
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
 std::wstring SharedTextureName();
@@ -107,6 +112,23 @@ class Writer final {
   std::shared_ptr<Impl> p;
 };
 
+class SharedTexture final {
+  public:
+    SharedTexture();
+    SharedTexture(const Header& header, ID3D11Device* d3d);
+    ~SharedTexture();
+
+    operator bool() const;
+    ID3D11Texture2D* GetTexture() const;
+    IDXGISurface* GetSurface() const;
+
+    SharedTexture(const SharedTexture&) = delete;
+    SharedTexture(SharedTexture&&) = delete;
+  private:
+    UINT mKey = 0;
+    winrt::com_ptr<ID3D11Texture2D> mTexture;
+};
+
 class Snapshot final {
  private:
   std::shared_ptr<std::vector<std::byte>> mBytes;
@@ -117,6 +139,7 @@ class Snapshot final {
 
   uint32_t GetSequenceNumber() const;
   UINT GetTextureKey() const;
+  SharedTexture GetSharedTexture(ID3D11Device*) const;
   const Config* const GetConfig() const;
 
   operator bool() const;

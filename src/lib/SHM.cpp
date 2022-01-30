@@ -23,6 +23,8 @@
 #include <Windows.h>
 #include <fmt/compile.h>
 #include <fmt/format.h>
+#include <d3d11_2.h>
+#include <dxgi1_2.h>
 #include <fmt/xchar.h>
 
 #include <bit>
@@ -144,6 +146,60 @@ std::wstring SharedTextureName() {
   return sCache;
 }
 
+SharedTexture::SharedTexture() {}
+
+SharedTexture::SharedTexture(const Header& header, ID3D11Device* d3d) {
+  auto textureName = SHM::SharedTextureName();
+  ID3D11Device1* d1 = nullptr;
+  d3d->QueryInterface(&d1);
+  if (!d1) {
+    return;
+  }
+
+  d1->OpenSharedResourceByName(
+    textureName.c_str(),
+    DXGI_SHARED_RESOURCE_READ,
+    IID_PPV_ARGS(mTexture.put()));
+  if (!mTexture) {
+    return;
+  }
+
+  auto mutex = mTexture.try_as<IDXGIKeyedMutex>();
+  if (!mutex) {
+    mTexture = nullptr;
+    return;
+  }
+
+  auto key = GetTextureKeyFromSequenceNumber(header.sequenceNumber);
+  if (mutex->AcquireSync(key, 100) != S_OK) {
+    mTexture = nullptr;
+    return;
+  }
+  mKey = key;
+}
+
+SharedTexture::~SharedTexture() {
+  if (mKey == 0) {
+    return;
+  }
+  auto mutex = mTexture.try_as<IDXGIKeyedMutex>();
+  if (mutex) {
+    mutex->ReleaseSync(mKey);
+  }
+}
+
+SharedTexture::operator bool() const {
+  return mKey != 0;
+}
+
+ID3D11Texture2D* SharedTexture::GetTexture() const {
+  return mTexture.get();
+}
+
+IDXGISurface* SharedTexture::GetSurface() const {
+  return mTexture.as<IDXGISurface>().get();
+}
+
 Snapshot::Snapshot() {
 }
 
@@ -160,6 +216,10 @@ uint32_t Snapshot::GetSequenceNumber() const {
 
 UINT Snapshot::GetTextureKey() const {
   return GetTextureKeyFromSequenceNumber(GetSequenceNumber());
+}
+
+SharedTexture Snapshot::GetSharedTexture(ID3D11Device* d3d) const {
+  return SharedTexture(*reinterpret_cast<const Header*>(mBytes->data()), d3d);
 }
 
 const Config* const Snapshot::GetConfig() const {

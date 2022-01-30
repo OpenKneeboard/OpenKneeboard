@@ -234,12 +234,11 @@ class Canvas final : public wxWindow {
       return;
     }
 
-    auto textureName = SHM::SharedTextureName();
-    winrt::com_ptr<IDXGISurface> sharedSurface;
-    mD3d.as<ID3D11Device1>()->OpenSharedResourceByName(
-      textureName.c_str(),
-      DXGI_SHARED_RESOURCE_READ,
-      IID_PPV_ARGS(sharedSurface.put()));
+    auto sharedTexture = snapshot.GetSharedTexture(mD3d.get());
+    if (!sharedTexture) {
+      return;
+    }
+    auto sharedSurface = sharedTexture.GetSurface();
 
     wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
     rt->Clear(
@@ -278,7 +277,7 @@ class Canvas final : public wxWindow {
     };
     auto csbRet = rt->CreateSharedBitmap(
       _uuidof(IDXGISurface),
-      sharedSurface.get(),
+      sharedSurface,
       &bitmapProperties,
       d2dBitmap.put());
 
@@ -289,10 +288,6 @@ class Canvas final : public wxWindow {
     rt->FillRectangle(pageRect, bg.get());
     rt->SetTransform(D2D1::IdentityMatrix());
 
-    auto mutex = sharedSurface.as<IDXGIKeyedMutex>();
-    if (mutex->AcquireSync(snapshot.GetTextureKey(), 10) != S_OK) {
-      return;
-    }
     rt->DrawBitmap(
       d2dBitmap.get(),
       &pageRect,
@@ -300,7 +295,6 @@ class Canvas final : public wxWindow {
       D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
       &sourceRect);
     rt->Flush();
-    mutex->ReleaseSync(snapshot.GetTextureKey());
 
     mLastSequenceNumber = snapshot.GetSequenceNumber();
   }

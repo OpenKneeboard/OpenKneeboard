@@ -19,7 +19,7 @@ add_library(OpenKneeboard-RuntimeFiles STATIC "${RUNTIME_FILES_CPP}")
 target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
 
 add_library(OpenKneeboard-SHM STATIC SHM.cpp)
-target_link_libraries(OpenKneeboard-SHM PRIVATE fmt OpenKneeboard-config)
+target_link_libraries(OpenKneeboard-SHM PRIVATE fmt OpenKneeboard-config OpenKneeboard-dprint)
 target_link_libraries(OpenKneeboard-SHM PUBLIC _libheaders)
 
 add_library(OpenKneeboard-dprint STATIC dprint.cpp)
