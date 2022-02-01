@@ -141,18 +141,29 @@ okMainWindow::~okMainWindow() {
 
 WXLRESULT
 okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
-  if (*p->tablet) {
-    const auto tabletMessage
-      = p->tablet->ProcessMessage(message, wParam, lParam);
-    auto state = p->tablet->GetState();
+  if (*p->tablet && p->tablet->ProcessMessage(message, wParam, lParam)) {
+    const auto state = p->tablet->GetState();
     if (state.active) {
-      p->shmRenderer->SetCursorPosition(state.x, state.y);
+      // TODO: make tablet rotation configurable.
+      // For now, assume tablet is rotated 90 degrees clockwise
+      auto tabletSize = p->tablet->GetSize();
+      auto x = tabletSize.height - state.y;
+      auto y = state.x;
+      std::swap(tabletSize.width, tabletSize.height);
+
+      const auto canvasSize = p->shmRenderer->GetCanvasSize();
+
+      // scale to the render canvas
+      const auto xScale = static_cast<float>(canvasSize.width) / tabletSize.width;
+      const auto yScale = static_cast<float>(canvasSize.height) / tabletSize.height;
+      const auto scale = std::max(xScale, yScale);
+      x *= scale;
+      y *= scale;
+      p->shmRenderer->SetCursorPosition(x, y);
     } else {
       p->shmRenderer->HideCursor();
     }
-    if (tabletMessage) {
-      UpdateSHM();
-    }
+    UpdateSHM();
   }
   return wxFrame::MSWWindowProc(message, wParam, lParam);
 }

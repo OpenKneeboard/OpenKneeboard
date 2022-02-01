@@ -19,6 +19,7 @@
 #pragma once
 
 #include <memory>
+#include <d2d1.h>
 
 namespace OpenKneeboard {
 class Tab;
@@ -35,6 +36,9 @@ class okSHMRenderer final {
 
   void SetCursorPosition(uint32_t x, uint32_t y);
   void HideCursor();
+
+  D2D1_SIZE_U GetCanvasSize() const;
+  D2D1_RECT_F GetClientRect() const;
 
   void Render(
     const std::shared_ptr<OpenKneeboard::Tab>& tab,

@@ -348,5 +348,14 @@ void okSHMRenderer::Impl::RenderWithChrome(
     static_cast<float>(mCursorPoint.y),
   };
 
+  mRT->SetTransform(D2D1::Matrix3x2F::Identity());
   mRT->DrawEllipse(D2D1::Ellipse(cursorPosition, 10, 10), mCursorBrush.get());
+}
+
+D2D1_SIZE_U okSHMRenderer::GetCanvasSize() const {
+  return p->mUsedSize;
+}
+
+D2D1_RECT_F okSHMRenderer::GetClientRect() const {
+  return p->mClientRect;
 }

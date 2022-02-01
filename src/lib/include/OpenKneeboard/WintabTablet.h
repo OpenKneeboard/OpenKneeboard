@@ -28,6 +28,9 @@ namespace OpenKneeboard {
 
 class WintabTablet final {
  public:
+  struct Size {
+    uint32_t width, height;
+  };
   struct State {
     bool active = false;
     uint32_t x, y;
@@ -39,7 +42,9 @@ class WintabTablet final {
   operator bool() const;
 
   bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
-  State GetState();
+
+  State GetState() const;
+  Size GetSize() const;
 
  private:
   struct Impl;

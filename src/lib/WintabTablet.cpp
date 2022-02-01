@@ -79,6 +79,7 @@ struct WintabTablet::Impl {
   ~Impl();
 
   State mState;
+  Size mSize;
   LibWintab mWintab;
   HCTX mCtx;
 };
@@ -89,12 +90,19 @@ WintabTablet::WintabTablet(HWND window) : p(std::make_unique<Impl>(window)) {
 WintabTablet::~WintabTablet() {
 }
 
-WintabTablet::State WintabTablet::GetState() {
+WintabTablet::State WintabTablet::GetState() const {
   if (!p) {
     return {};
   }
   return p->mState;
 }
+
+WintabTablet::Size WintabTablet::GetSize() const {
+  if (!p) {
+    return {};
+  }
+  return p->mSize;
+};
 
 WintabTablet::operator bool() const {
   return p && p->mCtx;
@@ -110,7 +118,7 @@ WintabTablet::Impl::Impl(HWND window) {
   logicalContext.lcPktData = PACKETDATA;
   logicalContext.lcMoveMask = PACKETDATA;
   logicalContext.lcPktMode = PACKETMODE;
-  logicalContext.lcOptions = CXO_MESSAGES | CXO_CSRMESSAGES;
+  logicalContext.lcOptions = CXO_MESSAGES;
 
   AXIS axis;
 
@@ -125,6 +133,10 @@ WintabTablet::Impl::Impl(HWND window) {
   logicalContext.lcInExtY = axis.axMax - axis.axMin;
   logicalContext.lcOutOrgY = 0;
   logicalContext.lcOutExtY = -logicalContext.lcInExtY;
+
+  mSize = {
+    static_cast<uint32_t>(logicalContext.lcOutExtX),
+    static_cast<uint32_t>(-logicalContext.lcOutExtY)};
 
   for (UINT i = 0, tag; mWintab.WTInfo(WTI_EXTENSIONS + i, EXT_TAG, &tag);
        ++i) {
@@ -156,6 +168,7 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     // high word indicates hardware events, low word indicates
     // context enter/leave
     p->mState.active = lParam & 0xffff;
+    dprintf("Proximity event: {}", p->mState.active);
     return true;
   }
 

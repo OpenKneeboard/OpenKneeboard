@@ -313,7 +313,7 @@ class MainWindow final : public wxFrame {
     auto canvas = new Canvas(this);
 
     mTimer.Bind(wxEVT_TIMER, [canvas](auto) { canvas->CheckForUpdate(); });
-    mTimer.Start(100);
+    mTimer.Start(1000 / 30);
 
     Bind(
       wxEVT_MENU, [this](auto&) { this->Close(true); }, wxID_EXIT);
