@@ -56,7 +56,7 @@ class okSHMRenderer::Impl {
   D2D1_RECT_F mClientRect;
   UINT mNextTextureKey;
   bool mHaveCursor = false;
-  D2D1_POINT_2U mCursorPoint;
+  D2D1_POINT_2F mCursorPoint;
 
   winrt::com_ptr<ID2D1RenderTarget> mRT;
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
@@ -225,7 +225,7 @@ okSHMRenderer::~okSHMRenderer() {
   ctx->Flush();
 }
 
-void okSHMRenderer::SetCursorPosition(uint32_t x, uint32_t y) {
+void okSHMRenderer::SetCursorPosition(float x, float y) {
   p->mCursorPoint = {x, y};
   p->mHaveCursor = true;
 }
@@ -343,13 +343,8 @@ void okSHMRenderer::Impl::RenderWithChrome(
     return;
   }
 
-  D2D1_POINT_2F cursorPosition {
-    static_cast<float>(mCursorPoint.x),
-    static_cast<float>(mCursorPoint.y),
-  };
-
   mRT->SetTransform(D2D1::Matrix3x2F::Identity());
-  mRT->DrawEllipse(D2D1::Ellipse(cursorPosition, 10, 10), mCursorBrush.get());
+  mRT->DrawEllipse(D2D1::Ellipse(mCursorPoint, 10, 10), mCursorBrush.get());
 }
 
 D2D1_SIZE_U okSHMRenderer::GetCanvasSize() const {

@@ -147,8 +147,8 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       // TODO: make tablet rotation configurable.
       // For now, assume tablet is rotated 90 degrees clockwise
       auto tabletSize = p->tablet->GetSize();
-      auto x = tabletSize.height - state.y;
-      auto y = state.x;
+      float x = tabletSize.height - state.y;
+      float y = state.x;
       std::swap(tabletSize.width, tabletSize.height);
 
       const auto canvasSize = p->shmRenderer->GetCanvasSize();

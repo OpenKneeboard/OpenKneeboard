@@ -34,7 +34,7 @@ class okSHMRenderer final {
   okSHMRenderer();
   ~okSHMRenderer();
 
-  void SetCursorPosition(uint32_t x, uint32_t y);
+  void SetCursorPosition(float x, float y);
   void HideCursor();
 
   D2D1_SIZE_U GetCanvasSize() const;
