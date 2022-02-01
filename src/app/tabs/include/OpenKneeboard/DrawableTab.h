@@ -17,42 +17,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Tab.h>
+#pragma once
 
-#include "okEvents.h"
+#include <OpenKneeboard/Tab.h>
 
 namespace OpenKneeboard {
 
-class Tab::Impl final {
+class DrawableTab : public Tab {
  public:
-  std::string title;
+  DrawableTab(const wxString& title);
+  virtual ~DrawableTab();
+
+  virtual void OnCursorEvent(const CursorEvent&) override;
+
+  virtual void RenderPage(
+    uint16_t pageIndex,
+    const winrt::com_ptr<ID2D1RenderTarget>& target,
+    const D2D1_RECT_F& rect) override final;
+
+ protected:
+  virtual void RenderPageContent(
+    uint16_t pageIndex,
+    const winrt::com_ptr<ID2D1RenderTarget>& target,
+    const D2D1_RECT_F& rect)
+    = 0;
+  private:
+   struct Impl;
+   std::shared_ptr<Impl> p;
 };
-
-Tab::Tab(const wxString& title) : p(new Impl {.title = title.ToStdString()}) {
-}
-
-Tab::~Tab() {
-}
-
-std::string Tab::GetTitle() const {
-  return p->title;
-}
-
-void Tab::Reload() {
-}
-
-void Tab::OnGameEvent(const GameEvent&) {
-}
-
-void Tab::OnCursorEvent(const CursorEvent&) {
-}
-
-wxWindow* Tab::GetSettingsUI(wxWindow* parent) {
-  return nullptr;
-}
-
-nlohmann::json Tab::GetSettings() const {
-  return {};
-}
 
 }// namespace OpenKneeboard

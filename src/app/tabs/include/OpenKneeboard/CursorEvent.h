@@ -17,42 +17,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Tab.h>
-
-#include "okEvents.h"
+#pragma once
 
 namespace OpenKneeboard {
-
-class Tab::Impl final {
- public:
-  std::string title;
+enum class CursorPositionState {
+  IN_CLIENT_RECT,
+  NOT_IN_CLIENT_RECT,
+};
+enum class CursorTouchState {
+  TOUCHING_SURFACE,
+  NEAR_SURFACE,
+  NOT_NEAR_SURFACE,
 };
 
-Tab::Tab(const wxString& title) : p(new Impl {.title = title.ToStdString()}) {
-}
-
-Tab::~Tab() {
-}
-
-std::string Tab::GetTitle() const {
-  return p->title;
-}
-
-void Tab::Reload() {
-}
-
-void Tab::OnGameEvent(const GameEvent&) {
-}
-
-void Tab::OnCursorEvent(const CursorEvent&) {
-}
-
-wxWindow* Tab::GetSettingsUI(wxWindow* parent) {
-  return nullptr;
-}
-
-nlohmann::json Tab::GetSettings() const {
-  return {};
-}
+struct CursorEvent {
+  CursorPositionState PositionState;
+  CursorTouchState TouchState;
+  float x, y;
+};
 
 }// namespace OpenKneeboard

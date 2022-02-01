@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
@@ -28,6 +29,7 @@
 
 namespace OpenKneeboard {
 struct GameEvent;
+struct CursorEvent;
 
 class Tab : public okConfigurableComponent {
  public:
@@ -49,6 +51,8 @@ class Tab : public okConfigurableComponent {
     const D2D1_RECT_F& rect)
     = 0;
   virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) = 0;
+
+  virtual void OnCursorEvent(const CursorEvent&);
 
  private:
   class Impl;
