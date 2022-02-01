@@ -28,7 +28,17 @@
 
 #include <memory>
 
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/WintabTablet.h>
+
+#include "okTab.h"
+#include "okTabsList.h"
+#include "okOpenVRThread.h"
+#include "okSHMRenderer.h"
+#include "Settings.h"
+
 class wxBookCtrlEvent;
+class wxNotebook;
 
 class okMainWindow final : public wxFrame {
  public:
@@ -40,9 +50,6 @@ class okMainWindow final : public wxFrame {
   MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) override;
 
  private:
-  class Impl;
-  std::unique_ptr<Impl> p;
-
   void OnExit(wxCommandEvent&);
   void OnGameEvent(wxThreadEvent&);
   void OnShowSettings(wxCommandEvent&);
@@ -57,4 +64,14 @@ class okMainWindow final : public wxFrame {
 
   void UpdateTabs();
   void UpdateSHM();
+
+  std::vector<okConfigurableComponent*> mConfigurables;
+  std::vector<okTab*> mTabUIs;
+  wxNotebook* mNotebook = nullptr;
+  okTabsList* mTabsList = nullptr;
+  int mCurrentTab = -1;
+  Settings mSettings = Settings::Load();
+
+  std::unique_ptr<okSHMRenderer> mSHMRenderer;
+  std::unique_ptr<OpenKneeboard::WintabTablet> mTablet;
 };
