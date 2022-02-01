@@ -22,7 +22,7 @@
 #include <DirectXTK/SpriteBatch.h>
 #include <OpenKneeboard/dprint.h>
 #include <dxgi.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include "InjectedDLLMain.h"
 

@@ -21,7 +21,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include <charconv>
 #include <string_view>

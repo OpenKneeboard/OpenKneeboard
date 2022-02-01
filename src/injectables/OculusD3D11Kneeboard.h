@@ -20,7 +20,7 @@
 
 #include <d3d11.h>
 #include <d3d11_2.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include "IDXGISwapChainPresentHook.h"
 #include "OculusKneeboard.h"

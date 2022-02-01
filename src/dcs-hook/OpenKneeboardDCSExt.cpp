@@ -20,7 +20,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 #include <fmt/format.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include <string>
 

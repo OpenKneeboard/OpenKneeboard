@@ -18,11 +18,7 @@
  */
 #pragma once
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-#include <wx/image.h>
+#include <shims/wx.h>
 
 wxDECLARE_EVENT(okEVT_PREVIOUS_TAB, wxCommandEvent);
 wxDECLARE_EVENT(okEVT_NEXT_TAB, wxCommandEvent);

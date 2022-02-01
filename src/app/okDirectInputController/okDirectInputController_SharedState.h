@@ -18,7 +18,7 @@
  */
 #pragma once
 
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include <vector>
 

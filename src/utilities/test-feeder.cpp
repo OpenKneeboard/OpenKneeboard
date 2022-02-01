@@ -24,7 +24,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <Windows.h>
 #include <dwrite.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include <cmath>
 

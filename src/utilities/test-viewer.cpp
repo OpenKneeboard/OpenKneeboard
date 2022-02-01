@@ -17,19 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
 #include <D2d1.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/SHM.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
-#include <unknwn.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
+#include <shims/wx.h>
 #include <wx/dcbuffer.h>
 #include <wx/frame.h>
 #include <wx/graphics.h>

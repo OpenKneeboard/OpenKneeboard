@@ -22,7 +22,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <d3d11_1.h>
 #include <dxgi.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include "InjectedDLLMain.h"
 #include "OVRProxy.h"

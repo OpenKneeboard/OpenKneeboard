@@ -19,16 +19,12 @@
  */
 #pragma once
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
-#include <Unknwn.h>
 #include <dxgi1_2.h>
-#include <winrt/base.h>
 
 #include <memory>
+
+#include "shims/winrt.h"
+#include <shims/wx.h>
 
 namespace OpenKneeboard {
 class Tab;

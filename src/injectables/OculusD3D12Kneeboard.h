@@ -19,13 +19,9 @@
  */
 #pragma once
 
-// clang-format off
-#include <Unknwn.h>
-#include <winrt/base.h>
-// clang-format on
-
-#include <d3d11on12.h>
 #include <d3d11.h>
+#include <d3d11on12.h>
+#include <shims/winrt.h>
 
 #include <vector>
 

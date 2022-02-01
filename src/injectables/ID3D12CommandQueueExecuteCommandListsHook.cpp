@@ -19,7 +19,7 @@
 #include "ID3D12CommandQueueExecuteCommandListsHook.h"
 
 #include <OpenKneeboard/dprint.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include "d3d12-offsets.h"
 #include "detours-ext.h"

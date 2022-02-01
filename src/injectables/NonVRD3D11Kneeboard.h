@@ -21,7 +21,7 @@
 
 #include <DirectXTK/SpriteBatch.h>
 #include <OpenKneeboard/SHM.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include <memory>
 

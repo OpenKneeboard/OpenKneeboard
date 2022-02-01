@@ -20,11 +20,10 @@
 
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
-#include <Unknwn.h>
 #include <d3d11.h>
 #include <d3d12.h>
+#include <shims/winrt.h>
 #include <windows.h>
-#include <winrt/base.h>
 
 #include <thread>
 

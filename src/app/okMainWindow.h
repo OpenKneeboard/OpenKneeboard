@@ -19,14 +19,10 @@
  */
 #pragma once
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <d3d11.h>
+#include <shims/wx.h>
 #include <wx/frame.h>
 
 #include <memory>

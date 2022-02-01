@@ -19,24 +19,19 @@
  */
 #include "okSHMRenderer.h"
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <Unknwn.h>
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <d3d11.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
+#include <shims/winrt.h>
+#include <shims/wx.h>
 #include <wincodec.h>
-#include <winrt/base.h>
 
 using namespace OpenKneeboard;
 
@@ -193,7 +188,8 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   mSHM.Update(config);
 }
 
-okSHMRenderer::okSHMRenderer(const winrt::com_ptr<ID3D11Device>& d3d) : p(std::make_unique<Impl>()) {
+okSHMRenderer::okSHMRenderer(const winrt::com_ptr<ID3D11Device>& d3d)
+  : p(std::make_unique<Impl>()) {
   p->mD3D = d3d;
   p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
   D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->mD2D.put());

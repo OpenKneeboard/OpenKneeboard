@@ -19,10 +19,7 @@
  */
 #include "okAboutBox.h"
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
+#include <shims/wx.h>
 
 #include <OpenKneeboard/version.h>
 #include <fmt/chrono.h>

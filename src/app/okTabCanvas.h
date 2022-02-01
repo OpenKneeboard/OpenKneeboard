@@ -19,13 +19,9 @@
  */
 #pragma once
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-#include <Unknwn.h>
 #include <dxgi1_2.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
+#include <shims/wx.h>
 #include <wx/image.h>
 
 #include <memory>
@@ -36,7 +32,10 @@ class Tab;
 
 class okTabCanvas final : public wxPanel {
  public:
-  okTabCanvas(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&, const winrt::com_ptr<IDXGIDevice2>&);
+  okTabCanvas(
+    wxWindow* parent,
+    const std::shared_ptr<OpenKneeboard::Tab>&,
+    const winrt::com_ptr<IDXGIDevice2>&);
   virtual ~okTabCanvas();
 
   void OnSize(wxSizeEvent& ev);

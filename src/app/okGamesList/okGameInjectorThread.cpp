@@ -22,7 +22,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <Psapi.h>
 #include <TlHelp32.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include <mutex>
 

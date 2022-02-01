@@ -18,10 +18,7 @@
  */
 #pragma once
 
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
+#include <shims/wx.h>
 
 #include <OpenKneeboard/DCSAircraftTab.h>
 #include <OpenKneeboard/DCSMissionTab.h>

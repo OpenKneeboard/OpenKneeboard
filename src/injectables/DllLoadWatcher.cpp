@@ -26,7 +26,7 @@
 // clang-format on
 
 #include <OpenKneeboard/dprint.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include "detours-ext.h"
 

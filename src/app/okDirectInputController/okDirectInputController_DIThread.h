@@ -19,7 +19,7 @@
 #pragma once
 
 #include <dinput.h>
-#include <winrt/base.h>
+#include <shims/winrt.h>
 
 #include "okDirectInputController.h"
 
