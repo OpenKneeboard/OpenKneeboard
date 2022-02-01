@@ -41,23 +41,23 @@ using namespace OpenKneeboard;
 
 class okMainWindow::Impl {
  public:
-  std::vector<okConfigurableComponent*> configurables;
-  std::vector<okTab*> tabUIs;
-  wxNotebook* notebook = nullptr;
-  okTabsList* tabsList = nullptr;
-  int currentTab = -1;
-  Settings settings = Settings::Load();
+  std::vector<okConfigurableComponent*> mConfigurables;
+  std::vector<okTab*> mTabUIs;
+  wxNotebook* mNotebook = nullptr;
+  okTabsList* mTabsList = nullptr;
+  int mCurrentTab = -1;
+  Settings mSettings = Settings::Load();
 
-  std::unique_ptr<okSHMRenderer> shmRenderer;
-  std::unique_ptr<WintabTablet> tablet;
+  std::unique_ptr<okSHMRenderer> mSHMRenderer;
+  std::unique_ptr<WintabTablet> mTablet;
 };
 
 okMainWindow::okMainWindow()
   : wxFrame(nullptr, wxID_ANY, "OpenKneeboard"), p(std::make_unique<Impl>()) {
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
-  p->shmRenderer = std::make_unique<okSHMRenderer>();
-  p->tablet = std::make_unique<WintabTablet>(this->GetHWND());
+  p->mSHMRenderer = std::make_unique<okSHMRenderer>();
+  p->mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
   auto menuBar = new wxMenuBar();
@@ -86,41 +86,41 @@ okMainWindow::okMainWindow()
   }
   SetMenuBar(menuBar);
 
-  p->notebook = new wxNotebook(this, wxID_ANY);
-  p->notebook->Bind(
+  p->mNotebook = new wxNotebook(this, wxID_ANY);
+  p->mNotebook->Bind(
     wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
 
   {
-    auto tabs = new okTabsList(p->settings.Tabs);
-    p->tabsList = tabs;
-    p->configurables.push_back(tabs);
+    auto tabs = new okTabsList(p->mSettings.Tabs);
+    p->mTabsList = tabs;
+    p->mConfigurables.push_back(tabs);
     UpdateTabs();
     tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-      this->p->settings.Tabs = tabs->GetSettings();
-      p->settings.Save();
+      this->p->mSettings.Tabs = tabs->GetSettings();
+      p->mSettings.Save();
       this->UpdateTabs();
     });
   }
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
-  sizer->Add(p->notebook, 1, wxEXPAND);
+  sizer->Add(p->mNotebook, 1, wxEXPAND);
   this->SetSizerAndFit(sizer);
 
   UpdateSHM();
 
   {
-    auto gl = new okGamesList(p->settings.Games);
-    p->configurables.push_back(gl);
+    auto gl = new okGamesList(p->mSettings.Games);
+    p->mConfigurables.push_back(gl);
 
     gl->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-      this->p->settings.Games = gl->GetSettings();
-      p->settings.Save();
+      this->p->mSettings.Games = gl->GetSettings();
+      p->mSettings.Save();
     });
   }
 
   {
-    auto dipc = new okDirectInputController(p->settings.DirectInput);
-    p->configurables.push_back(dipc);
+    auto dipc = new okDirectInputController(p->mSettings.DirectInput);
+    p->mConfigurables.push_back(dipc);
 
     dipc->Bind(okEVT_PREVIOUS_TAB, &okMainWindow::OnPreviousTab, this);
     dipc->Bind(okEVT_NEXT_TAB, &okMainWindow::OnNextTab, this);
@@ -130,8 +130,8 @@ okMainWindow::okMainWindow()
       okEVT_TOGGLE_VISIBILITY, &okMainWindow::OnToggleVisibility, this);
 
     dipc->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-      this->p->settings.DirectInput = dipc->GetSettings();
-      p->settings.Save();
+      this->p->mSettings.DirectInput = dipc->GetSettings();
+      p->mSettings.Save();
     });
   }
 }
@@ -141,27 +141,29 @@ okMainWindow::~okMainWindow() {
 
 WXLRESULT
 okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
-  if (*p->tablet && p->tablet->ProcessMessage(message, wParam, lParam)) {
-    const auto state = p->tablet->GetState();
+  if (*p->mTablet && p->mTablet->ProcessMessage(message, wParam, lParam)) {
+    const auto state = p->mTablet->GetState();
     if (state.active) {
       // TODO: make tablet rotation configurable.
       // For now, assume tablet is rotated 90 degrees clockwise
-      auto tabletSize = p->tablet->GetSize();
+      auto tabletSize = p->mTablet->GetSize();
       float x = tabletSize.height - state.y;
       float y = state.x;
       std::swap(tabletSize.width, tabletSize.height);
 
-      const auto canvasSize = p->shmRenderer->GetCanvasSize();
+      const auto canvasSize = p->mSHMRenderer->GetCanvasSize();
 
       // scale to the render canvas
-      const auto xScale = static_cast<float>(canvasSize.width) / tabletSize.width;
-      const auto yScale = static_cast<float>(canvasSize.height) / tabletSize.height;
+      const auto xScale
+        = static_cast<float>(canvasSize.width) / tabletSize.width;
+      const auto yScale
+        = static_cast<float>(canvasSize.height) / tabletSize.height;
       const auto scale = std::max(xScale, yScale);
       x *= scale;
       y *= scale;
-      p->shmRenderer->SetCursorPosition(x, y);
+      p->mSHMRenderer->SetCursorPosition(x, y);
     } else {
-      p->shmRenderer->HideCursor();
+      p->mSHMRenderer->HideCursor();
     }
     UpdateSHM();
   }
@@ -173,31 +175,31 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
   if (tab == wxNOT_FOUND) {
     return;
   }
-  p->currentTab = tab;
+  p->mCurrentTab = tab;
   UpdateSHM();
 }
 
 void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
   const auto ge = ev.GetPayload<GameEvent>();
   dprintf("GameEvent: '{}' = '{}'", ge.name, ge.value);
-  for (auto tab: p->tabUIs) {
+  for (auto tab: p->mTabUIs) {
     tab->GetTab()->OnGameEvent(ge);
   }
 }
 
 void okMainWindow::UpdateSHM() {
-  if (!p->shmRenderer) {
+  if (!p->mSHMRenderer) {
     return;
   }
 
   std::shared_ptr<Tab> tab;
   unsigned int pageIndex = 0;
-  if (p->currentTab >= 0 && p->currentTab < p->tabUIs.size()) {
-    auto tabUI = p->tabUIs.at(p->currentTab);
+  if (p->mCurrentTab >= 0 && p->mCurrentTab < p->mTabUIs.size()) {
+    auto tabUI = p->mTabUIs.at(p->mCurrentTab);
     tab = tabUI->GetTab();
     pageIndex = tabUI->GetPageIndex();
   }
-  p->shmRenderer->Render(tab, pageIndex);
+  p->mSHMRenderer->Render(tab, pageIndex);
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {
@@ -211,7 +213,7 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
   auto nb = new wxNotebook(w, wxID_ANY);
   s->Add(nb, 1, wxEXPAND);
 
-  for (auto& component: p->configurables) {
+  for (auto& component: p->mConfigurables) {
     auto p = new wxPanel(nb, wxID_ANY);
     auto ui = component->GetSettingsUI(p);
     if (!ui) {
@@ -230,50 +232,50 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
 }
 
 void okMainWindow::OnPreviousTab(wxCommandEvent&) {
-  p->notebook->AdvanceSelection(false);
+  p->mNotebook->AdvanceSelection(false);
 }
 
 void okMainWindow::OnNextTab(wxCommandEvent&) {
-  p->notebook->AdvanceSelection(true);
+  p->mNotebook->AdvanceSelection(true);
 }
 
 void okMainWindow::OnPreviousPage(wxCommandEvent&) {
-  p->tabUIs[p->currentTab]->PreviousPage();
+  p->mTabUIs[p->mCurrentTab]->PreviousPage();
 }
 
 void okMainWindow::OnNextPage(wxCommandEvent&) {
-  p->tabUIs[p->currentTab]->NextPage();
+  p->mTabUIs[p->mCurrentTab]->NextPage();
 }
 
 void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
-  if (p->shmRenderer) {
-    p->shmRenderer.reset();
+  if (p->mSHMRenderer) {
+    p->mSHMRenderer.reset();
     return;
   }
 
-  p->shmRenderer = std::make_unique<okSHMRenderer>();
+  p->mSHMRenderer = std::make_unique<okSHMRenderer>();
   UpdateSHM();
 }
 
 void okMainWindow::UpdateTabs() {
-  auto tabs = p->tabsList->GetTabs();
-  wxWindowUpdateLocker noUpdates(p->notebook);
+  auto tabs = p->mTabsList->GetTabs();
+  wxWindowUpdateLocker noUpdates(p->mNotebook);
 
   auto selected
-    = p->currentTab >= 0 ? p->tabUIs[p->currentTab]->GetTab() : nullptr;
-  p->currentTab = tabs.empty() ? -1 : 0;
-  p->tabUIs.clear();
-  p->notebook->DeleteAllPages();
+    = p->mCurrentTab >= 0 ? p->mTabUIs[p->mCurrentTab]->GetTab() : nullptr;
+  p->mCurrentTab = tabs.empty() ? -1 : 0;
+  p->mTabUIs.clear();
+  p->mNotebook->DeleteAllPages();
 
   for (auto tab: tabs) {
     if (selected == tab) {
-      p->currentTab = p->notebook->GetPageCount();
+      p->mCurrentTab = p->mNotebook->GetPageCount();
     }
 
-    auto ui = new okTab(p->notebook, tab);
-    p->tabUIs.push_back(ui);
+    auto ui = new okTab(p->mNotebook, tab);
+    p->mTabUIs.push_back(ui);
 
-    p->notebook->AddPage(ui, tab->GetTitle(), selected == tab);
+    p->mNotebook->AddPage(ui, tab->GetTitle(), selected == tab);
     ui->Bind(okEVT_TAB_PIXELS_CHANGED, [this](auto) { this->UpdateSHM(); });
   }
 
