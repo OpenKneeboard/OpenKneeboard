@@ -89,23 +89,7 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
     return;
   }
 
-  UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-#ifdef DEBUG
-  d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
-
-  D3D11CreateDevice(
-    nullptr,
-    D3D_DRIVER_TYPE_HARDWARE,
-    nullptr,
-    d3dFlags,
-    &d3dLevel,
-    1,
-    D3D11_SDK_VERSION,
-    mD3D.put(),
-    nullptr,
-    mD3DContext.put());
+  mD3D->GetImmediateContext(mD3DContext.put());
 
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
   D3D11_TEXTURE2D_DESC textureDesc {
@@ -209,7 +193,8 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   mSHM.Update(config);
 }
 
-okSHMRenderer::okSHMRenderer() : p(std::make_unique<Impl>()) {
+okSHMRenderer::okSHMRenderer(const winrt::com_ptr<ID3D11Device>& d3d) : p(std::make_unique<Impl>()) {
+  p->mD3D = d3d;
   p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
   D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->mD2D.put());
   DWriteCreateFactory(

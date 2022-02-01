@@ -24,18 +24,18 @@
 #include <wx/wx.h>
 #endif
 
+#include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/WintabTablet.h>
+#include <d3d11.h>
 #include <wx/frame.h>
 
 #include <memory>
 
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/WintabTablet.h>
-
-#include "okTab.h"
-#include "okTabsList.h"
+#include "Settings.h"
 #include "okOpenVRThread.h"
 #include "okSHMRenderer.h"
-#include "Settings.h"
+#include "okTab.h"
+#include "okTabsList.h"
 
 class wxBookCtrlEvent;
 class wxNotebook;
@@ -65,6 +65,7 @@ class okMainWindow final : public wxFrame {
   void UpdateTabs();
   void UpdateSHM();
 
+  winrt::com_ptr<ID3D11Device> mD3D;
   std::vector<okConfigurableComponent*> mConfigurables;
   std::vector<okTab*> mTabUIs;
   wxNotebook* mNotebook = nullptr;

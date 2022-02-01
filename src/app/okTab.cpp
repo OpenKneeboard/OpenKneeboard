@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okTab.h"
 
@@ -30,9 +31,12 @@ class okTab::Impl final {
   okTabCanvas* canvas;
 };
 
-okTab::okTab(wxWindow* parent, const std::shared_ptr<Tab>& tab)
+okTab::okTab(
+  wxWindow* parent,
+  const std::shared_ptr<Tab>& tab,
+  const winrt::com_ptr<IDXGIDevice2>& device)
   : wxPanel(parent), p(new Impl {.tab = tab}) {
-  p->canvas = new okTabCanvas(this, tab);
+  p->canvas = new okTabCanvas(this, tab, device);
   auto canvas = p->canvas;
 
   auto buttonBox = new wxPanel(this);

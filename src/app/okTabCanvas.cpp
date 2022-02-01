@@ -22,6 +22,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/dprint.h>
+#include <dxgi1_3.h>
 #include <wx/dcbuffer.h>
 
 #include "okEvents.h"
@@ -34,15 +35,21 @@ class okTabCanvas::Impl final {
   uint16_t pageIndex = 0;
 
   winrt::com_ptr<ID2D1Factory> d2d;
-  winrt::com_ptr<ID2D1HwndRenderTarget> rt;
+  winrt::com_ptr<IDXGIFactory2> dxgi;
+  winrt::com_ptr<IDXGIDevice2> device;
+  winrt::com_ptr<IDXGISwapChain1> swapChain;
 
   std::unique_ptr<D2DErrorRenderer> errorRenderer;
 };
 
-okTabCanvas::okTabCanvas(wxWindow* parent, const std::shared_ptr<Tab>& tab)
+okTabCanvas::okTabCanvas(
+  wxWindow* parent,
+  const std::shared_ptr<Tab>& tab,
+  const winrt::com_ptr<IDXGIDevice2>& device)
   : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize {384, 512}),
-    p(new Impl {.tab = tab}) {
+    p(new Impl {.tab = tab, .device = device}) {
   D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->d2d.put());
+  CreateDXGIFactory2(0, IID_PPV_ARGS(p->dxgi.put()));
   p->errorRenderer = std::make_unique<D2DErrorRenderer>(p->d2d);
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
@@ -58,48 +65,67 @@ okTabCanvas::~okTabCanvas() {
 }
 
 void okTabCanvas::OnSize(wxSizeEvent& ev) {
-  if (!p->rt) {
+  if (!p->swapChain) {
     return;
   }
-
   auto size = this->GetClientSize();
-  p->rt->Resize(
-    {static_cast<UINT>(size.GetWidth()), static_cast<UINT>(size.GetHeight())});
+  p->errorRenderer->SetRenderTarget(nullptr);
+  DXGI_SWAP_CHAIN_DESC desc;
+  p->swapChain->GetDesc(&desc);
+  p->swapChain->ResizeBuffers(
+    desc.BufferCount, size.x, size.y, desc.BufferDesc.Format, desc.Flags);
 }
 
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   wxPaintDC dc(this);
 
   const auto clientSize = GetClientSize();
-  if (!p->rt) {
-    auto rtp = D2D1::RenderTargetProperties(
-      D2D1_RENDER_TARGET_TYPE_DEFAULT,
-      D2D1_PIXEL_FORMAT {
-        DXGI_FORMAT_B8G8R8A8_UNORM,
-        D2D1_ALPHA_MODE_PREMULTIPLIED,
-      });
-    rtp.dpiX = 0;
-    rtp.dpiY = 0;
-
-    auto hwndRtp = D2D1::HwndRenderTargetProperties(
+  if (!p->swapChain) {
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+      .SampleDesc = {1, 0},
+      .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+      .BufferCount = 2,
+      .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+      .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
+    };
+    p->dxgi->CreateSwapChainForHwnd(
+      p->device.get(),
       this->GetHWND(),
-      {static_cast<UINT32>(clientSize.GetWidth()),
-       static_cast<UINT32>(clientSize.GetHeight())});
-
-    p->d2d->CreateHwndRenderTarget(&rtp, &hwndRtp, p->rt.put());
-    p->rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
-
-    p->errorRenderer->SetRenderTarget(p->rt);
+      &swapChainDesc,
+      nullptr,
+      nullptr,
+      p->swapChain.put());
   }
 
-  p->rt->BeginDraw();
-  wxON_BLOCK_EXIT0([this]() { this->p->rt->EndDraw(); });
-  p->rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  winrt::com_ptr<IDXGISurface> surface;
+  p->swapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
+  winrt::com_ptr<ID2D1RenderTarget> rt;
+
+  auto rtp = D2D1::RenderTargetProperties(
+    D2D1_RENDER_TARGET_TYPE_DEFAULT,
+    D2D1_PIXEL_FORMAT {
+      DXGI_FORMAT_B8G8R8A8_UNORM,
+      D2D1_ALPHA_MODE_PREMULTIPLIED,
+    });
+  rtp.dpiX = 0;
+  rtp.dpiY = 0;
+  p->d2d->CreateDxgiSurfaceRenderTarget(surface.get(), &rtp, rt.put());
+  rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+
+  p->errorRenderer->SetRenderTarget(rt);
+
+  rt->BeginDraw();
+  wxON_BLOCK_EXIT0([&]() {
+    rt->EndDraw();
+    p->swapChain->Present(0, 0);
+  });
+  rt->SetTransform(D2D1::Matrix3x2F::Identity());
 
   const auto count = p->tab->GetPageCount();
   if (count == 0) {
     auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    p->rt->Clear(D2D1_COLOR_F {
+    rt->Clear(D2D1_COLOR_F {
       bg.Red() / 255.0f,
       bg.Green() / 255.0f,
       bg.Blue() / 255.0f,
@@ -116,7 +142,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   }
 
   auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
-  p->rt->Clear(D2D1_COLOR_F {
+  rt->Clear(D2D1_COLOR_F {
     bg.Red() / 255.0f,
     bg.Green() / 255.0f,
     bg.Blue() / 255.0f,
@@ -128,7 +154,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
 
   p->tab->RenderPage(
     p->pageIndex,
-    p->rt,
+    rt,
     {0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight())});
 }
 

@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
@@ -23,7 +24,8 @@
 #include <wx/wx.h>
 #endif
 
-#include <d2d1.h>
+#include <Unknwn.h>
+#include <dxgi1_2.h>
 #include <winrt/base.h>
 
 #include <memory>
@@ -34,7 +36,10 @@ class Tab;
 
 class okTab final : public wxPanel {
  public:
-  okTab(wxWindow* parent, const std::shared_ptr<OpenKneeboard::Tab>&);
+  okTab(
+    wxWindow* parent,
+    const std::shared_ptr<OpenKneeboard::Tab>&,
+    const winrt::com_ptr<IDXGIDevice2>&);
   virtual ~okTab();
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
