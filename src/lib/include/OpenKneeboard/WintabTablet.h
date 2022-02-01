@@ -14,29 +14,36 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
+#include <Windows.h>
+
+#include <cstdint>
 #include <memory>
 
 namespace OpenKneeboard {
-class Tab;
-}
 
-class okSHMRenderer final {
- private:
-  class Impl;
-  std::unique_ptr<Impl> p;
-
+class WintabTablet final {
  public:
-  okSHMRenderer();
-  ~okSHMRenderer();
+  struct State {
+    bool active = false;
+    uint32_t x, y;
+  };
 
-  void SetCursorPosition(uint32_t x, uint32_t y);
-  void HideCursor();
+  WintabTablet(HWND window);
+  ~WintabTablet();
 
-  void Render(
-    const std::shared_ptr<OpenKneeboard::Tab>& tab,
-    uint16_t pageIndex);
+  operator bool() const;
+
+  bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
+  State GetState();
+
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> p;
 };
+
+};// namespace OpenKneeboard

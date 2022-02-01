@@ -53,12 +53,16 @@ class okSHMRenderer::Impl {
   winrt::com_ptr<ID3D11Texture2D> mSharedTexture;
   winrt::handle mSharedHandle;
   D2D1_SIZE_U mUsedSize;
+  D2D1_RECT_F mClientRect;
   UINT mNextTextureKey;
+  bool mHaveCursor = false;
+  D2D1_POINT_2U mCursorPoint;
 
   winrt::com_ptr<ID2D1RenderTarget> mRT;
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
+  winrt::com_ptr<ID2D1Brush> mCursorBrush;
 
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
 
@@ -147,6 +151,10 @@ void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderTextBrush.put()));
+  mRT->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 0.8f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(mCursorBrush.put()));
 }
 
 void okSHMRenderer::Impl::RenderError(
@@ -217,6 +225,15 @@ okSHMRenderer::~okSHMRenderer() {
   ctx->Flush();
 }
 
+void okSHMRenderer::SetCursorPosition(uint32_t x, uint32_t y) {
+  p->mCursorPoint = {x, y};
+  p->mHaveCursor = true;
+}
+
+void okSHMRenderer::HideCursor() {
+  p->mHaveCursor = false;
+}
+
 void okSHMRenderer::Render(
   const std::shared_ptr<Tab>& tab,
   uint16_t pageIndex) {
@@ -266,6 +283,13 @@ void okSHMRenderer::Impl::RenderWithChrome(
   };
   this->SetCanvasSize(canvasSize);
 
+  mClientRect = {
+    .left = 0.0f,
+    .top = static_cast<float>(headerSize.height),
+    .right = static_cast<float>(canvasSize.width),
+    .bottom = static_cast<float>(canvasSize.height),
+  };
+
   mRT->BeginDraw();
   wxON_BLOCK_EXIT0([this]() {
     mRT->EndDraw();
@@ -275,14 +299,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
   mRT->Clear({0.0f, 0.0f, 0.0f, 0.0f});
 
   mRT->SetTransform(D2D1::Matrix3x2F::Identity());
-  renderContent(
-    mRT,
-    {
-      .left = 0.0f,
-      .top = float(headerSize.height),
-      .right = float(canvasSize.width),
-      .bottom = float(canvasSize.height),
-    });
+  renderContent(mRT, mClientRect);
 
   mRT->SetTransform(D2D1::Matrix3x2F::Identity());
   mRT->FillRectangle(
@@ -321,4 +338,15 @@ void okSHMRenderer::Impl::RenderWithChrome(
      (headerSize.height - metrics.height) / 2},
     headerLayout.get(),
     mHeaderTextBrush.get());
+
+  if (!mHaveCursor) {
+    return;
+  }
+
+  D2D1_POINT_2F cursorPosition {
+    static_cast<float>(mCursorPoint.x),
+    static_cast<float>(mCursorPoint.y),
+  };
+
+  mRT->DrawEllipse(D2D1::Ellipse(cursorPosition, 10, 10), mCursorBrush.get());
 }

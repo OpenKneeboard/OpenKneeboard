@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
@@ -33,6 +34,10 @@ class okMainWindow final : public wxFrame {
  public:
   okMainWindow();
   virtual ~okMainWindow();
+
+ protected:
+  virtual WXLRESULT
+  MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) override;
 
  private:
   class Impl;

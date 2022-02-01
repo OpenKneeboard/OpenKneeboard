@@ -20,6 +20,7 @@
 #include "okMainWindow.h"
 
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/dprint.h>
 #include <wx/frame.h>
 #include <wx/notebook.h>
@@ -48,6 +49,7 @@ class okMainWindow::Impl {
   Settings settings = Settings::Load();
 
   std::unique_ptr<okSHMRenderer> shmRenderer;
+  std::unique_ptr<WintabTablet> tablet;
 };
 
 okMainWindow::okMainWindow()
@@ -55,6 +57,7 @@ okMainWindow::okMainWindow()
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
   p->shmRenderer = std::make_unique<okSHMRenderer>();
+  p->tablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
   auto menuBar = new wxMenuBar();
@@ -134,6 +137,24 @@ okMainWindow::okMainWindow()
 }
 
 okMainWindow::~okMainWindow() {
+}
+
+WXLRESULT
+okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
+  if (*p->tablet) {
+    const auto tabletMessage
+      = p->tablet->ProcessMessage(message, wParam, lParam);
+    auto state = p->tablet->GetState();
+    if (state.active) {
+      p->shmRenderer->SetCursorPosition(state.x, state.y);
+    } else {
+      p->shmRenderer->HideCursor();
+    }
+    if (tabletMessage) {
+      UpdateSHM();
+    }
+  }
+  return wxFrame::MSWWindowProc(message, wParam, lParam);
 }
 
 void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {

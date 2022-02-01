@@ -41,6 +41,15 @@ target_link_libraries(
   Dwrite
   _libheaders)
 
+add_library(OpenKneeboard-tablets STATIC WintabTablet.cpp)
+target_link_libraries(
+  OpenKneeboard-tablets
+  PRIVATE
+  _libheaders
+  wintab
+  OpenKneeboard-dprint
+)
+
 add_custom_target(
   VersionHeader
   COMMAND

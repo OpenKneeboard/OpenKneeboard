@@ -15,6 +15,7 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-GameEvent
+  OpenKneeboard-tablets
   games
   json
   OpenKneeboard-SHM
