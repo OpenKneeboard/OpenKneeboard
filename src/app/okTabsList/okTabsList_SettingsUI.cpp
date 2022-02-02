@@ -80,7 +80,7 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
 
   std::vector<wxString> choices = {
 #define IT(label, _) label,
-    TAB_TYPES
+    OPENKNEEBOARD_TAB_TYPES
 #undef IT
   };
 
@@ -100,22 +100,9 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
   switch (tabTypeDialog.GetSelection()) {
 #define IT(_, type) \
   case TABTYPE_IDX_##type: \
-    if constexpr (tab_with_default_constructor<type##Tab>) { \
-      InsertTab(std::make_shared<type##Tab>()); \
-      return; \
-    } \
-    if constexpr (tab_with_dxr_constructor<type##Tab>) { \
-      InsertTab(std::make_shared<type##Tab>(s->dxr)); \
-      return; \
-    } \
+    InsertTab(make_shared_tab<type##Tab>(nullptr, s->dxr)); \
     return;
-    ZERO_CONFIG_TAB_TYPES
-#undef IT
-#define IT(_, type) \
-  case TABTYPE_IDX_##type: \
-    InsertTab(type##Tab::Create(nullptr)); \
-    return;
-    CONFIGURABLE_TAB_TYPES
+    OPENKNEEBOARD_TAB_TYPES
 #undef IT
     default:
       dprintf("Invalid tab type index: {}", tabTypeDialog.GetSelection());

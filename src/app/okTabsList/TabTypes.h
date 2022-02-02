@@ -31,42 +31,29 @@
 
 class wxWindow;
 
-#define CONFIGURABLE_TAB_TYPES IT(_("Folder"), Folder)
-
-#define ZERO_CONFIG_TAB_TYPES \
+#define OPENKNEEBOARD_TAB_TYPES \
+  IT(_("Folder"), Folder) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \
   IT(_("DCS Radio Log"), DCSRadioLog) \
   IT(_("DCS Terrain Kneeboard"), DCSTerrain)
 
-#define TAB_TYPES \
-  CONFIGURABLE_TAB_TYPES \
-  ZERO_CONFIG_TAB_TYPES
-
 // If this fails, check that you included the header :)
 #define IT(_, type) \
   static_assert( \
     std::derived_from<OpenKneeboard::type##Tab, OpenKneeboard::Tab>);
-TAB_TYPES
-#undef IT
-
-#define IT(_, type) \
-  static_assert(std::invocable< \
-                decltype(OpenKneeboard::type##Tab::FromSettings), \
-                std::string, \
-                nlohmann::json>);
-CONFIGURABLE_TAB_TYPES
+OPENKNEEBOARD_TAB_TYPES
 #undef IT
 
 namespace OpenKneeboard {
 
-struct DXResources;
-
 enum {
 #define IT(_, key) TABTYPE_IDX_##key,
-  TAB_TYPES
+  OPENKNEEBOARD_TAB_TYPES
 #undef IT
 };
+
+struct DXResources;
 
 // clang-format off
 template<class T>
@@ -92,15 +79,77 @@ concept tab_with_interactive_creation =
   && requires (wxWindow* parent) {
     { T::Create(parent) } -> std::same_as<std::shared_ptr<T>>;
   };
-
-template<class T>
-concept tab_with_settings =
-  tab_instantiable_from_settings<T>
-  && tab_with_interactive_creation<T>;
 // clang-format on
 
-#define IT(_, it) static_assert(tab_with_settings<it##Tab>);
-CONFIGURABLE_TAB_TYPES
+/** Create a `shared_ptr<Tab>` with existing config */
+template <std::derived_from<Tab> T>
+std::shared_ptr<T> make_shared_tab(
+  const std::string& title,
+  const nlohmann::json& config,
+  const DXResources& dxr) {
+  if constexpr (tab_with_default_constructor<T>) {
+    return std::make_shared<T>();
+  }
+
+  if constexpr (tab_with_dxr_constructor<T>) {
+    return std::make_shared<T>(dxr);
+  }
+
+  if constexpr (tab_instantiable_from_settings<T>) {
+    return T::FromSettings(title, config);
+  }
+}
+
+/** Create a `shared_ptr<Tab>`, prompting the user for config if needed */
+template <std::derived_from<Tab> T>
+std::shared_ptr<T> make_shared_tab(wxWindow* parent, const DXResources& dxr) {
+  if constexpr (tab_with_default_constructor<T>) {
+    return std::make_shared<T>();
+  }
+
+  if constexpr (tab_with_dxr_constructor<T>) {
+    return std::make_shared<T>(dxr);
+  }
+
+  if constexpr (tab_with_interactive_creation<T>) {
+    return T::Create(parent);
+  }
+}
+
+namespace Detail {
+// clang-format off
+template<class T>
+concept tab_loadable_from_config =
+requires (
+  const std::string& title,
+  const nlohmann::json& config,
+  const DXResources& dxr
+) {
+  { make_shared_tab<T>(title, config, dxr) }
+    -> std::same_as<std::shared_ptr<T>>;
+};
+
+// clang-format on
+#define IT(_, type) static_assert(tab_loadable_from_config<type##Tab>);
+OPENKNEEBOARD_TAB_TYPES
 #undef IT
+
+// clang-format off
+template<class T>
+concept tab_createable_through_ui =
+requires (
+  wxWindow* parent,
+  const DXResources& dxr
+) {
+  { make_shared_tab<T>(parent, dxr) }
+    -> std::same_as<std::shared_ptr<T>>;
+};
+// clang-format on
+
+#define IT(_, type) static_assert(tab_createable_through_ui<type##Tab>);
+OPENKNEEBOARD_TAB_TYPES
+#undef IT
+
+}// namespace Detail
 
 }// namespace OpenKneeboard

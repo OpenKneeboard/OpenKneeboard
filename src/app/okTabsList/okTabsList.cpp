@@ -58,37 +58,21 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
     const std::string title = tab.at("Title");
     const std::string type = tab.at("Type");
 
-#define IT(_, it) \
-  if (type == #it) { \
-    if constexpr (tab_with_default_constructor<it##Tab>) { \
-      p->tabs.push_back(std::make_shared<it##Tab>()); \
-      continue; \
-    } \
-    if constexpr (tab_with_dxr_constructor<it##Tab>) { \
-      p->tabs.push_back(std::make_shared<it##Tab>(p->dxr)); \
-      continue; \
-    } \
-    continue; \
-  }
-    ZERO_CONFIG_TAB_TYPES
-#undef IT
-
-    if (!tab.contains("Settings")) {
-      continue;
+    nlohmann::json settings;
+    if (tab.contains("Settings")) {
+      settings = tab.at("Settings");
     }
 
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance = it##Tab::FromSettings(title, tab.at("Settings")); \
+    auto instance = make_shared_tab<it##Tab>(title, settings, p->dxr); \
     if (instance) { \
       p->tabs.push_back(instance); \
       continue; \
     } \
   }
-    CONFIGURABLE_TAB_TYPES
+    OPENKNEEBOARD_TAB_TYPES
 #undef IT
-
-    dprintf("Don't know how to load tab '{}' of type {}", title, type);
   }
 }
 
@@ -121,7 +105,7 @@ nlohmann::json okTabsList::GetSettings() const {
   if (type.empty() && std::dynamic_pointer_cast<it##Tab>(tab)) { \
     type = #it; \
   }
-    TAB_TYPES
+    OPENKNEEBOARD_TAB_TYPES
 #undef IT
     if (type.empty()) {
       dprintf("Unknown type for tab {}", tab->GetTitle());
@@ -133,25 +117,12 @@ nlohmann::json okTabsList::GetSettings() const {
       {"Title", tab->GetTitle()},
     };
 
-#define IT(_, it) \
-  if (type == #it) { \
-    ret.push_back(savedTab); \
-    continue; \
-  }
-    ZERO_CONFIG_TAB_TYPES
-#undef IT
-
     auto settings = tab->GetSettings();
     if (!settings.is_null()) {
       savedTab.emplace("Settings", settings);
-      ret.push_back(savedTab);
-      continue;
     }
-
-    dprintf(
-      "Ignoring tab '{}' of type {} as don't know how to save it.",
-      tab->GetTitle(),
-      type);
+    ret.push_back(savedTab);
+    continue;
   }
 
   return ret;
