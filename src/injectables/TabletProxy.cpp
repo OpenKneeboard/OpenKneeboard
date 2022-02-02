@@ -41,15 +41,15 @@ class TabletProxy final {
 
   static WNDPROC mWindowProc;
   static HWND mTargetWindow;
-  static HWND mFeederWindow;
+  static SHM::Reader mSHM;
   static std::unique_ptr<WintabTablet> mTablet;
 
   static LRESULT CALLBACK
   HookedWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
+SHM::Reader TabletProxy::mSHM;
 WNDPROC TabletProxy::mWindowProc;
-HWND TabletProxy::mFeederWindow;
 HWND TabletProxy::mTargetWindow;
 std::unique_ptr<WintabTablet> TabletProxy::mTablet;
 
@@ -78,16 +78,6 @@ void TabletProxy::Initialize() {
   auto titleLen = GetWindowTextA(mTargetWindow, title, sizeof(title));
   dprintf("Main window: {}", std::string_view(title, titleLen));
 
-  SHM::Reader shm;
-  auto snapshot = shm.MaybeGet();
-  if (!snapshot) {
-    return;
-  }
-  mFeederWindow = snapshot.GetConfig().feederWindow;
-  if (!mFeederWindow) {
-    return;
-  }
-
   mTablet = std::make_unique<WintabTablet>(mTargetWindow);
   if (!*mTablet) {
     return;
@@ -111,7 +101,11 @@ LRESULT TabletProxy::HookedWindowProc(
   WPARAM wParam,
   LPARAM lParam) {
   if (hwnd == mTargetWindow && mTablet->CanProcessMessage(uMsg)) {
-    SendNotifyMessage(mFeederWindow, uMsg, wParam, lParam);
+    auto snapshot = mSHM.MaybeGet();
+    if (snapshot && snapshot.GetConfig().feederWindow) {
+      SendNotifyMessage(
+        snapshot.GetConfig().feederWindow, uMsg, wParam, lParam);
+    }
     return S_OK;
   }
 
