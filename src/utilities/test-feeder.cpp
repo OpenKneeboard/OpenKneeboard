@@ -38,10 +38,10 @@
 using namespace OpenKneeboard;
 
 struct SharedTextureResources {
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  winrt::com_ptr<ID2D1RenderTarget> rt;
-  winrt::com_ptr<IDXGIKeyedMutex> mutex;
-  UINT mutexKey = 0;
+  winrt::com_ptr<ID3D11Texture2D> mTexture;
+  winrt::com_ptr<ID2D1RenderTarget> mRT;
+  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
+  UINT mMutexKey = 0;
 };
 
 int main() {
@@ -126,9 +126,9 @@ int main() {
   };
   for (auto i = 0; i < TextureCount; ++i) {
     auto& it = resources.at(i);
-    device->CreateTexture2D(&textureDesc, nullptr, it.texture.put());
+    device->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
 
-    auto surface = it.texture.as<IDXGISurface>();
+    auto surface = it.mTexture.as<IDXGISurface>();
     d2d->CreateDxgiSurfaceRenderTarget(
       surface.get(),
       D2D1::RenderTargetProperties(
@@ -137,20 +137,20 @@ int main() {
           DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)
 
           ),
-      it.rt.put());
-    it.rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+      it.mRT.put());
+    it.mRT->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
     if (!textBrush) {
-      it.rt->CreateSolidColorBrush(
+      it.mRT->CreateSolidColorBrush(
         D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
     }
 
     HANDLE sharedHandle = INVALID_HANDLE_VALUE;
     auto textureName = SHM::SharedTextureName(i);
-    it.texture.as<IDXGIResource1>()->CreateSharedHandle(
+    it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
       nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
 
-    it.mutex = it.texture.as<IDXGIKeyedMutex>();
+    it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
   }
 
   do {
@@ -158,12 +158,12 @@ int main() {
 
     auto& it = resources.at(shm.GetNextTextureIndex());
 
-    it.mutex->AcquireSync(it.mutexKey, INFINITE);
-    it.rt->BeginDraw();
-    it.rt->Clear(colors[frames % 4]);
+    it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
+    it.mRT->BeginDraw();
+    it.mRT->Clear(colors[frames % 4]);
 
     std::wstring message(L"This Way Up");
-    it.rt->DrawTextW(
+    it.mRT->DrawTextW(
       message.data(),
       static_cast<UINT32>(message.length()),
       textFormat.get(),
@@ -173,13 +173,13 @@ int main() {
         static_cast<float>(config.imageWidth),
         static_cast<float>(config.imageHeight)},
       textBrush.get());
-    it.rt->EndDraw();
+    it.mRT->EndDraw();
     context->Flush();
-    it.mutexKey = shm.GetNextTextureKey();
-    it.mutex->ReleaseSync(it.mutexKey);
+    it.mMutexKey = shm.GetNextTextureKey();
+    it.mMutex->ReleaseSync(it.mMutexKey);
 
     auto idx = shm.GetNextTextureIndex();
-    auto key = it.mutexKey;
+    auto key = it.mMutexKey;
     shm.Update(config);
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");
