@@ -273,7 +273,10 @@ void okSHMRenderer::Impl::RenderWithChrome(
 
   mRT->BeginDraw();
   wxON_BLOCK_EXIT0([this]() {
-    mRT->EndDraw();
+    auto err = mRT->EndDraw();
+    if (err) {
+      OPENKNEEBOARD_BREAK;
+    }
     mRT->Flush();
     this->CopyPixelsToSHM();
   });
