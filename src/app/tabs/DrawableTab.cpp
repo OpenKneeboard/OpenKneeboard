@@ -23,6 +23,8 @@
 #include <d2d1_1.h>
 #include <d3d11_2.h>
 
+#include <algorithm>
+
 namespace OpenKneeboard {
 
 struct DrawableTab::Impl {
@@ -71,9 +73,11 @@ void DrawableTab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   }
 
   const auto scale = p->mPages.at(pageIndex).mScale;
+  const auto pressure = 0.25 + std::clamp(event.pressure - 0.25, 0.0, 0.75);
+  const auto radius = 20 * pressure;
   rt->BeginDraw();
   rt->FillEllipse(
-    D2D1::Ellipse({event.x * scale, event.y * scale}, 5, 5),
+    D2D1::Ellipse({event.x * scale, event.y * scale}, radius, radius),
     p->mCursorBrush.get());
   rt->EndDraw();
 }
@@ -134,8 +138,8 @@ winrt::com_ptr<ID2D1RenderTarget> DrawableTab::Impl::GetSurfaceRenderTarget(
   const auto scaleY = static_cast<float>(TextureHeight) / contentPixels.height;
   page.mScale = std::min(scaleX, scaleY);
   D2D1_SIZE_U surfaceSize {
-    std::lround(contentPixels.width * page.mScale),
-    std::lround(contentPixels.height * page.mScale),
+    static_cast<UINT32>(std::lround(contentPixels.width * page.mScale)),
+    static_cast<UINT32>(std::lround(contentPixels.height * page.mScale)),
   };
 
   D3D11_TEXTURE2D_DESC textureDesc {
