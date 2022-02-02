@@ -129,9 +129,9 @@ void FolderTab::RenderPage(
 
   const auto targetWidth = rect.right - rect.left;
   const auto targetHeight = rect.bottom - rect.top;
-  const auto scalex = float(targetWidth) / page.width;
-  const auto scaley = float(targetHeight) / page.height;
-  const auto scale = std::min(scalex, scaley);
+  const auto scaleX = float(targetWidth) / page.width;
+  const auto scaleY = float(targetHeight) / page.height;
+  const auto scale = std::min(scaleX, scaleY);
 
   const auto renderWidth = page.width * scale;
   const auto renderHeight = page.height * scale;

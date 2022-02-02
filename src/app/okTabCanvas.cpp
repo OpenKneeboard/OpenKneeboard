@@ -171,10 +171,26 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   p->pageIndex
     = std::clamp(p->pageIndex, 0ui16, static_cast<uint16_t>(count - 1));
 
+  auto contentSize = p->tab->GetPreferredPixelSize(p->pageIndex);
+
+  const auto scaleX = static_cast<float>(clientSize.x) / contentSize.width;
+  const auto scaleY = static_cast<float>(clientSize.y) / contentSize.height;
+  const auto scale = std::min(scaleX, scaleY);
+  
+  const D2D1_SIZE_F scaledContentSize = { contentSize.width * scale, contentSize.height * scale };
+  const auto padX = (clientSize.x - scaledContentSize.width) / 2;
+  const auto padY = (clientSize.y - scaledContentSize.height) / 2;
+  const D2D1_RECT_F contentRect = {
+    .left = padX,
+    .top = padY,
+    .right = clientSize.x - padX,
+    .bottom = clientSize.y - padY,
+  };
+
   p->tab->RenderPage(
     p->pageIndex,
     rt,
-    {0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight())});
+    contentRect);
 
   if (!p->haveCursor) {
     return;
@@ -186,15 +202,6 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
       D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), brush.put());
     p->cursorBrush = brush.as<ID2D1Brush>();
   }
-
-  auto contentSize = p->tab->GetPreferredPixelSize(p->pageIndex);
-  // our cursor coordinates fit within contentSize, and apply to the
-  // contentRect, but we don't want to just use a transform to make them fit, as
-  // we want to keep the cursor the same size regardless of the resolution of
-  // the current content.
-  const auto scaleX = static_cast<float>(clientSize.x) / contentSize.width;
-  const auto scaleY = static_cast<float>(clientSize.y) / contentSize.height;
-  const auto scale = std::min(scaleX, scaleY);
 
   auto point = p->cursorPoint;
   point.x *= scale;
