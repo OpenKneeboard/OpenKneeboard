@@ -105,6 +105,7 @@ target_link_libraries(
   openvr-hooks)
 
 add_library(OpenKneeboard-TabletProxy MODULE TabletProxy.cpp)
+sign_target(OpenKneeboard-TabletProxy)
 target_link_libraries(
   OpenKneeboard-TabletProxy
   PRIVATE
