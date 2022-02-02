@@ -26,6 +26,7 @@
 #include <dxgi1_3.h>
 #include <wx/dcbuffer.h>
 
+#include "DXResources.h"
 #include "okEvents.h"
 
 using namespace OpenKneeboard;
@@ -50,11 +51,13 @@ class okTabCanvas::Impl final {
 okTabCanvas::okTabCanvas(
   wxWindow* parent,
   const std::shared_ptr<Tab>& tab,
-  const winrt::com_ptr<IDXGIDevice2>& device)
+  const DXResources& dxr)
   : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize {384, 512}),
-    p(new Impl {.tab = tab, .device = device}) {
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->d2d.put());
-  CreateDXGIFactory2(0, IID_PPV_ARGS(p->dxgi.put()));
+    p(new Impl {
+      .tab = tab,
+      .d2d = dxr.mD2DFactory,
+      .dxgi = dxr.mDXGIFactory,
+      .device = dxr.mD3DDevice.as<IDXGIDevice2>()}) {
   p->errorRenderer = std::make_unique<D2DErrorRenderer>(p->d2d);
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
@@ -176,8 +179,9 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   const auto scaleX = static_cast<float>(clientSize.x) / contentSize.width;
   const auto scaleY = static_cast<float>(clientSize.y) / contentSize.height;
   const auto scale = std::min(scaleX, scaleY);
-  
-  const D2D1_SIZE_F scaledContentSize = { contentSize.width * scale, contentSize.height * scale };
+
+  const D2D1_SIZE_F scaledContentSize
+    = {contentSize.width * scale, contentSize.height * scale};
   const auto padX = (clientSize.x - scaledContentSize.width) / 2;
   const auto padY = (clientSize.y - scaledContentSize.height) / 2;
   const D2D1_RECT_F contentRect = {
@@ -187,10 +191,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
     .bottom = clientSize.y - padY,
   };
 
-  p->tab->RenderPage(
-    p->pageIndex,
-    rt,
-    contentRect);
+  p->tab->RenderPage(p->pageIndex, rt, contentRect);
 
   if (!p->haveCursor) {
     return;

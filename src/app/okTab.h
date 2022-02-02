@@ -20,23 +20,23 @@
 #pragma once
 
 #include <dxgi1_2.h>
-
-#include <memory>
-
 #include <shims/winrt.h>
 #include <shims/wx.h>
 
+#include <memory>
+
 namespace OpenKneeboard {
 struct CursorEvent;
+struct DXResources;
 class Tab;
-}
+}// namespace OpenKneeboard
 
 class okTab final : public wxPanel {
  public:
   okTab(
     wxWindow* parent,
     const std::shared_ptr<OpenKneeboard::Tab>&,
-    const winrt::com_ptr<IDXGIDevice2>&);
+    const OpenKneeboard::DXResources&);
   virtual ~okTab();
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;

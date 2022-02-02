@@ -20,10 +20,10 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DrawableTab.h>
 #include <OpenKneeboard/config.h>
-#include <d2d1_1.h>
-#include <d3d11_2.h>
 
 #include <algorithm>
+
+#include "DXResources.h"
 
 namespace OpenKneeboard {
 
@@ -47,10 +47,9 @@ struct DrawableTab::Impl {
     const D2D1_SIZE_U& contentPixels);
 };
 
-DrawableTab::DrawableTab(const winrt::com_ptr<IDXGIDevice2>& dxgi)
-  : p(std::make_shared<Impl>()) {
-  p->mDevice = dxgi;
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->mD2D.put());
+DrawableTab::DrawableTab(const DXResources& dxr) : p(std::make_shared<Impl>()) {
+  p->mDevice = dxr.mDXGIDevice;
+  p->mD2D = dxr.mD2DFactory;
 }
 
 DrawableTab::~DrawableTab() {
@@ -128,10 +127,7 @@ void DrawableTab::RenderPage(
 
   renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
   renderTarget.as<ID2D1DeviceContext>()->DrawBitmap(
-    bitmap.get(),
-    rect,
-    1.0f,
-    D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
+    bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
 winrt::com_ptr<ID2D1RenderTarget> DrawableTab::Impl::GetSurfaceRenderTarget(

@@ -21,7 +21,9 @@
 
 #include "okTabsList.h"
 
+#include "DXResources.h"
+
 struct okTabsList::SharedState {
   std::vector<std::shared_ptr<OpenKneeboard::Tab>> tabs;
-  winrt::com_ptr<IDXGIDevice2> dxgi;
+  OpenKneeboard::DXResources dxr;
 };

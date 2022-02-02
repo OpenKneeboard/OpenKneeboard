@@ -28,6 +28,7 @@
 
 namespace OpenKneeboard {
 struct CursorEvent;
+struct DXResources;
 class Tab;
 }// namespace OpenKneeboard
 
@@ -36,7 +37,7 @@ class okTabCanvas final : public wxPanel {
   okTabCanvas(
     wxWindow* parent,
     const std::shared_ptr<OpenKneeboard::Tab>&,
-    const winrt::com_ptr<IDXGIDevice2>&);
+    const OpenKneeboard::DXResources&);
   virtual ~okTabCanvas();
 
   void OnSize(wxSizeEvent& ev);

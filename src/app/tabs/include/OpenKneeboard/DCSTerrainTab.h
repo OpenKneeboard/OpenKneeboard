@@ -23,11 +23,12 @@
 
 namespace OpenKneeboard {
 
+struct DXResources;
 class FolderTab;
 
 class DCSTerrainTab final : public DCSTab, public DrawableTab {
  public:
-  DCSTerrainTab(const winrt::com_ptr<IDXGIDevice2>&);
+  DCSTerrainTab(const DXResources&);
   virtual ~DCSTerrainTab();
 
   virtual void Reload() override;

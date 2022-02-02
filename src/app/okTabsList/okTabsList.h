@@ -20,17 +20,20 @@
 #pragma once
 
 #include <OpenKneeboard/Tab.h>
-#include <dxgi1_3.h>
 #include <shims/winrt.h>
 
 #include "okConfigurableComponent.h"
+
+namespace OpenKneeboard {
+  struct DXResources;
+}
 
 class okTabsList final : public okConfigurableComponent {
  public:
   okTabsList() = delete;
   okTabsList(
     const nlohmann::json& config,
-    const winrt::com_ptr<IDXGIDevice2>& device);
+    const OpenKneeboard::DXResources&);
 
   std::vector<std::shared_ptr<OpenKneeboard::Tab>> GetTabs() const;
 

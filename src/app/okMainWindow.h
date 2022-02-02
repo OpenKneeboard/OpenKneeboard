@@ -22,12 +22,12 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
-#include <d3d11.h>
 #include <shims/wx.h>
 #include <wx/frame.h>
 
 #include <memory>
 
+#include "DXResources.h"
 #include "Settings.h"
 #include "okOpenVRThread.h"
 #include "okSHMRenderer.h"
@@ -62,7 +62,7 @@ class okMainWindow final : public wxFrame {
   void UpdateTabs();
   void UpdateSHM();
 
-  winrt::com_ptr<ID3D11Device> mD3D;
+  OpenKneeboard::DXResources mDXResources;
   std::vector<okConfigurableComponent*> mConfigurables;
   std::vector<okTab*> mTabUIs;
   wxNotebook* mNotebook = nullptr;

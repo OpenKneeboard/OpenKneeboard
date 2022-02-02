@@ -104,8 +104,8 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
       InsertTab(std::make_shared<type##Tab>()); \
       return; \
     } \
-    if constexpr (tab_with_dxgi_constructor<type##Tab>) { \
-      InsertTab(std::make_shared<type##Tab>(s->dxgi)); \
+    if constexpr (tab_with_dxr_constructor<type##Tab>) { \
+      InsertTab(std::make_shared<type##Tab>(s->dxr)); \
       return; \
     } \
     return;

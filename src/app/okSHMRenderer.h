@@ -26,6 +26,7 @@
 #include <memory>
 
 namespace OpenKneeboard {
+struct DXResources;
 class Tab;
 }
 
@@ -36,7 +37,7 @@ class okSHMRenderer final {
 
  public:
   okSHMRenderer() = delete;
-  okSHMRenderer(const winrt::com_ptr<ID3D11Device>& d3d);
+  okSHMRenderer(const OpenKneeboard::DXResources&);
   ~okSHMRenderer();
 
   void SetCursorPosition(float x, float y);

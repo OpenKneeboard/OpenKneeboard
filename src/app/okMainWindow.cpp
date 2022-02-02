@@ -35,27 +35,11 @@
 using namespace OpenKneeboard;
 
 okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
-  UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-#ifdef DEBUG
-  d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
-
-  D3D11CreateDevice(
-    nullptr,
-    D3D_DRIVER_TYPE_HARDWARE,
-    nullptr,
-    d3dFlags,
-    &d3dLevel,
-    1,
-    D3D11_SDK_VERSION,
-    mD3D.put(),
-    nullptr,
-    nullptr);
+  mDXResources = DXResources::Create();
 
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
-  mSHMRenderer = std::make_unique<okSHMRenderer>(mD3D);
+  mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources);
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
@@ -90,7 +74,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
 
   {
-    auto tabs = new okTabsList(mSettings.Tabs, mD3D.as<IDXGIDevice2>());
+    auto tabs = new okTabsList(mSettings.Tabs, mDXResources);
     mTabsList = tabs;
     mConfigurables.push_back(tabs);
     UpdateTabs();
@@ -282,7 +266,7 @@ void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
     return;
   }
 
-  mSHMRenderer = std::make_unique<okSHMRenderer>(mD3D);
+  mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources);
   UpdateSHM();
 }
 
@@ -295,13 +279,12 @@ void okMainWindow::UpdateTabs() {
   mTabUIs.clear();
   mNotebook->DeleteAllPages();
 
-  auto dxgiDevice = mD3D.as<IDXGIDevice2>();
   for (auto tab: tabs) {
     if (selected == tab) {
       mCurrentTab = mNotebook->GetPageCount();
     }
 
-    auto ui = new okTab(mNotebook, tab, dxgiDevice);
+    auto ui = new okTab(mNotebook, tab, mDXResources);
     mTabUIs.push_back(ui);
 
     mNotebook->AddPage(ui, tab->GetTitle(), selected == tab);

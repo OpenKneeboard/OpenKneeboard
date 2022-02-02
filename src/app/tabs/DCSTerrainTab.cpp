@@ -31,9 +31,9 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSTerrainTab::DCSTerrainTab(const winrt::com_ptr<IDXGIDevice2>& dxgi)
+DCSTerrainTab::DCSTerrainTab(const DXResources& dxr)
   : Tab(_("Theater")),
-    DrawableTab(dxgi),
+    DrawableTab(dxr),
     mDelegate(std::make_shared<FolderTab>("", "")) {
   mDelegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());

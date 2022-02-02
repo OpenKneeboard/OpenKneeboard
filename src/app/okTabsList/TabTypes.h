@@ -29,7 +29,6 @@
 
 #include <concepts>
 
-struct IDXGIDevice2;
 class wxWindow;
 
 #define CONFIGURABLE_TAB_TYPES IT(_("Folder"), Folder)
@@ -61,6 +60,8 @@ CONFIGURABLE_TAB_TYPES
 
 namespace OpenKneeboard {
 
+struct DXResources;
+
 enum {
 #define IT(_, key) TABTYPE_IDX_##key,
   TAB_TYPES
@@ -74,9 +75,9 @@ concept tab_with_default_constructor =
   && std::is_default_constructible_v<T>;
 
 template<class T>
-concept tab_with_dxgi_constructor =
+concept tab_with_dxr_constructor =
   std::derived_from<T, Tab>
-  && std::is_constructible_v<T, winrt::com_ptr<IDXGIDevice2>>;
+  && std::is_constructible_v<T, const DXResources&>;
 
 template<class T>
 concept tab_instantiable_from_settings =

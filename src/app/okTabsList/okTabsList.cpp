@@ -32,14 +32,11 @@
 
 using namespace OpenKneeboard;
 
-struct okTabsList::State final : public okTabsList::SharedState {
-};
+struct okTabsList::State final : public okTabsList::SharedState {};
 
-okTabsList::okTabsList(
-  const nlohmann::json& config,
-  const winrt::com_ptr<IDXGIDevice2>& dxgi)
+okTabsList::okTabsList(const nlohmann::json& config, const DXResources& dxr)
   : p(std::make_shared<State>()) {
-  p->dxgi = dxgi;
+  p->dxr = dxr;
   if (config.is_null()) {
     LoadDefaultConfig();
   } else {
@@ -63,13 +60,13 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    if constexpr(tab_with_default_constructor<it##Tab>) { \
+    if constexpr (tab_with_default_constructor<it##Tab>) { \
       p->tabs.push_back(std::make_shared<it##Tab>()); \
       continue; \
     } \
-    if constexpr(tab_with_dxgi_constructor<it##Tab>) { \
-      p->tabs.push_back(std::make_shared<it##Tab>(p->dxgi)); \
-      continue;\
+    if constexpr (tab_with_dxr_constructor<it##Tab>) { \
+      p->tabs.push_back(std::make_shared<it##Tab>(p->dxr)); \
+      continue; \
     } \
     continue; \
   }
@@ -100,7 +97,7 @@ void okTabsList::LoadDefaultConfig() {
     std::make_shared<DCSRadioLogTab>(),
     std::make_shared<DCSMissionTab>(),
     std::make_shared<DCSAircraftTab>(),
-    std::make_shared<DCSTerrainTab>(p->dxgi),
+    std::make_shared<DCSTerrainTab>(p->dxr),
   };
 }
 

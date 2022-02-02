@@ -33,6 +33,8 @@
 #include <shims/wx.h>
 #include <wincodec.h>
 
+#include "DXResources.h"
+
 using namespace OpenKneeboard;
 
 class okSHMRenderer::Impl {
@@ -188,11 +190,11 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   mSHM.Update(config);
 }
 
-okSHMRenderer::okSHMRenderer(const winrt::com_ptr<ID3D11Device>& d3d)
+okSHMRenderer::okSHMRenderer(const DXResources& dxr)
   : p(std::make_unique<Impl>()) {
-  p->mD3D = d3d;
+  p->mD3D = dxr.mD3DDevice;
+  p->mD2D = dxr.mD2DFactory;
   p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, p->mD2D.put());
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
