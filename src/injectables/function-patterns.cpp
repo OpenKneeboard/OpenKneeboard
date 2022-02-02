@@ -52,7 +52,7 @@ std::vector<BytePattern> ComputeFunctionPatterns(
   dprint("Code search pattern:");
   for (auto& pattern: patterns) {
     dprintf(
-      FMT_STRING("{:016x} (mask {:016x})"),
+      "{:016x} (mask {:016x})",
       // TODO (C++23) std::byteswap
       _byteswap_uint64(pattern.value),
       _byteswap_uint64(pattern.mask));
@@ -68,7 +68,7 @@ void* FindFunctionPattern(
   auto begin = reinterpret_cast<uint64_t*>(_begin);
   auto end = reinterpret_cast<uint64_t*>(_end);
   dprintf(
-    FMT_STRING("Code search range: {:#018x}-{:#018x}"),
+    "Code search range: {:#018x}-{:#018x}",
     (uint64_t)begin,
     (uint64_t)end);
 

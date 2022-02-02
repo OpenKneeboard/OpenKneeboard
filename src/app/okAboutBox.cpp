@@ -19,11 +19,10 @@
  */
 #include "okAboutBox.h"
 
-#include <shims/wx.h>
-
 #include <OpenKneeboard/version.h>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
+#include <shims/wx.h>
 #include <wx/aboutdlg.h>
 
 using namespace OpenKneeboard;
@@ -52,11 +51,11 @@ void okAboutBox(wxWindow* parent) {
   auto commitTime = *std::gmtime(&Version::CommitUnixTimestamp);
 
   std::string description = fmt::format(
-    FMT_STRING("An open source kneeboard.\n\n"
-               "Built at: {}\n"
-               "Build type: {}-{}\n"
-               "Commit at: {:%Y-%m-%dT%H:%M:%SZ}\n"
-               "Commit ID: {}\n"),
+    "An open source kneeboard.\n\n"
+    "Built at: {}\n"
+    "Build type: {}-{}\n"
+    "Commit at: {:%Y-%m-%dT%H:%M:%SZ}\n"
+    "Commit ID: {}\n",
     Version::BuildTimestamp,
     BUILD_CONFIG,
 #ifdef _WIN32

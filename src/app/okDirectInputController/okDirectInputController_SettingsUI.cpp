@@ -70,7 +70,7 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
       binding.instanceGuid == device.guidInstance
       && binding.eventType == eventType) {
       label
-        = fmt::format(_("Button {}").ToStdString(), binding.buttonIndex + 1);
+        = fmt::format(fmt::runtime(_("Button {}").ToStdString()), binding.buttonIndex + 1);
       break;
     }
   }
@@ -233,7 +233,7 @@ void okDirectInputController::SettingsUI::OnBindButton(
     }
 
     button->SetLabel(
-      fmt::format(_("Button {:d}").ToStdString(), be.buttonIndex + 1));
+      fmt::format(fmt::runtime(_("Button {:d}").ToStdString()), be.buttonIndex + 1));
     bindings.push_back(
       {.instanceGuid = device.guidInstance,
        .instanceName = wxString(device.tszInstanceName).ToStdString(),

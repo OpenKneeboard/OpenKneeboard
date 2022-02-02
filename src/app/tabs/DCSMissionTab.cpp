@@ -65,7 +65,7 @@ class ExtractedMission final {
     }
     wxZipInputStream zis(ifs);
     if (!zis.IsOk()) {
-      dprintf("Can't read {} as zip");
+      dprintf("Can't read {} as zip", zip.string());
       return;
     }
 
@@ -104,7 +104,7 @@ class DCSMissionTab::Impl final {
 };
 
 DCSMissionTab::DCSMissionTab()
-  : DCSTab(_("Mission")), p(std::make_shared<Impl>()) {
+  : Tab(_("Mission")), p(std::make_shared<Impl>()) {
   p->delegate = std::make_unique<FolderTab>("", "");
   p->delegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());

@@ -2,8 +2,8 @@ include(FetchContent)
 
 FetchContent_Declare(
   fmt
-  URL https://github.com/fmtlib/fmt/releases/download/8.0.1/fmt-8.0.1.zip
-  URL_HASH "SHA256=a627a56eab9554fc1e5dd9a623d0768583b3a383ff70a4312ba68f94c9d415bf"
+  URL https://github.com/fmtlib/fmt/releases/download/8.1.1/fmt-8.1.1.zip
+  URL_HASH "SHA256=23778bad8edba12d76e4075da06db591f3b0e3c6c04928ced4a7282ca3400e5d"
 )
 
 FetchContent_GetProperties(fmt)

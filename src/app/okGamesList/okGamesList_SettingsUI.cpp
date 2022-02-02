@@ -86,7 +86,7 @@ void okGamesList::SettingsUI::OnRemoveGameButton(wxCommandEvent& ev) {
   wxMessageDialog dialog(
     nullptr,
     fmt::format(
-      _("Are you sure you want to remove '{}'?").ToStdString(), game.name),
+      fmt::runtime(_("Are you sure you want to remove '{}'?").ToStdString()), game.name),
     _("Remove game?"),
     wxYES_NO | wxNO_DEFAULT);
   auto result = dialog.ShowModal();
