@@ -14,16 +14,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #define _USE_MATH_DEFINES
 #include <D2D1.h>
 #include <D3d11.h>
-#include <dxgi1_2.h>
 #include <OpenKneeboard/ConsoleLoopCondition.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 #include <dwrite.h>
+#include <dxgi1_2.h>
 #include <shims/winrt.h>
 
 #include <cmath>
@@ -34,11 +37,13 @@
 
 using namespace OpenKneeboard;
 
-#pragma pack(push)
-struct Pixel {
-  uint8_t b, g, r, a;
+struct SharedTextureResources {
+  winrt::com_ptr<ID3D11Texture2D> texture;
+  winrt::com_ptr<ID3D11RenderTargetView> rtD3d;
+  winrt::com_ptr<ID2D1RenderTarget> rtD2d;
+  winrt::com_ptr<IDXGIKeyedMutex> mutex;
+  UINT mutexKey = 0;
 };
-#pragma pack(pop)
 
 int main() {
   D2D1_COLOR_F colors[] = {
@@ -62,7 +67,6 @@ int main() {
   };
   uint64_t frames = -1;
   printf("Feeding OpenKneeboard - hit Ctrl-C to exit.\n");
-  std::vector<Pixel> pixels(config.imageWidth * config.imageHeight);
   SHM::Writer shm;
   ConsoleLoopCondition cliLoop;
 
@@ -85,25 +89,6 @@ int main() {
     nullptr,
     context.put());
 
-  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = config.imageWidth,
-    .Height = config.imageHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
-  };
-  device->CreateTexture2D(&textureDesc, nullptr, texture.put());
-
-  winrt::com_ptr<ID3D11RenderTargetView> rt;
-  device->CreateRenderTargetView(texture.get(), nullptr, rt.put());
-
-  auto surface = texture.as<IDXGISurface>();
-
   winrt::com_ptr<IDWriteFactory> dwrite;
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
@@ -124,32 +109,65 @@ int main() {
 
   winrt::com_ptr<ID2D1Factory> d2d;
   D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2d.put());
-  winrt::com_ptr<ID2D1RenderTarget> d2dRt;
-  auto ret = d2d->CreateDxgiSurfaceRenderTarget(surface.get(), D2D1::RenderTargetProperties(
-    D2D1_RENDER_TARGET_TYPE_HARDWARE,
-    D2D1::PixelFormat(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)
 
-  ), d2dRt.put());
-  d2dRt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
-  d2dRt->CreateSolidColorBrush(D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
 
-  std::wstring message(L"This Way Up");
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+  std::array<SharedTextureResources, TextureCount> resources;
+  D3D11_TEXTURE2D_DESC textureDesc {
+    .Width = config.imageWidth,
+    .Height = config.imageHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+      | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+  };
+  for (auto i = 0; i < TextureCount; ++i) {
+    auto& it = resources.at(i);
+    device->CreateTexture2D(&textureDesc, nullptr, it.texture.put());
 
-  HANDLE sharedHandle = INVALID_HANDLE_VALUE;
-  auto textureName = SHM::SharedTextureName();
-  texture.as<IDXGIResource1>()->CreateSharedHandle(nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
+    winrt::com_ptr<ID3D11RenderTargetView> rt;
+    device->CreateRenderTargetView(it.texture.get(), nullptr, it.rtD3d.put());
 
-  auto mutex = texture.as<IDXGIKeyedMutex>();
+    auto surface = it.texture.as<IDXGISurface>();
+    d2d->CreateDxgiSurfaceRenderTarget(
+      surface.get(),
+      D2D1::RenderTargetProperties(
+        D2D1_RENDER_TARGET_TYPE_HARDWARE,
+        D2D1::PixelFormat(
+          DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)
 
-  UINT mutexKey = 0;
+          ),
+      it.rtD2d.put());
+    it.rtD2d->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+
+    if (!textBrush) {
+      it.rtD2d->CreateSolidColorBrush(
+        D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
+    }
+
+    HANDLE sharedHandle = INVALID_HANDLE_VALUE;
+    auto textureName = SHM::SharedTextureName(i);
+    it.texture.as<IDXGIResource1>()->CreateSharedHandle(
+      nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
+
+    it.mutex = it.texture.as<IDXGIKeyedMutex>();
+  }
+
   do {
     frames++;
 
-    mutex->AcquireSync(mutexKey, INFINITE);
-    d2dRt->BeginDraw();
-    d2dRt->Clear(colors[frames % 4]);
-    d2dRt->DrawTextW(
+    auto& it = resources.at(shm.GetNextTextureIndex());
+
+    it.mutex->AcquireSync(it.mutexKey, INFINITE);
+    it.rtD2d->BeginDraw();
+    it.rtD2d->Clear(colors[frames % 4]);
+
+    std::wstring message(L"This Way Up");
+    it.rtD2d->DrawTextW(
       message.data(),
       static_cast<UINT32>(message.length()),
       textFormat.get(),
@@ -159,11 +177,13 @@ int main() {
         static_cast<float>(config.imageWidth),
         static_cast<float>(config.imageHeight)},
       textBrush.get());
-    d2dRt->EndDraw();
+    it.rtD2d->EndDraw();
     context->Flush();
-    mutexKey = shm.GetNextTextureKey();
-    mutex->ReleaseSync(mutexKey);
+    it.mutexKey = shm.GetNextTextureKey();
+    it.mutex->ReleaseSync(it.mutexKey);
 
+    auto idx = shm.GetNextTextureIndex();
+    auto key = it.mutexKey;
     shm.Update(config);
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");

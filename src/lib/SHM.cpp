@@ -134,23 +134,20 @@ UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
 
 }// namespace
 
-std::wstring SharedTextureName() {
-  static std::wstring sCache;
-  if (sCache.empty()) {
-    sCache = fmt::format(
-      L"Local\\{}-texture-h{}-c{}",
-      ProjectNameW,
-      Header::VERSION,
-      Config::VERSION);
-  }
-  return sCache;
+std::wstring SharedTextureName(uint32_t sequenceNumber) {
+  return fmt::format(
+    L"Local\\{}-texture-h{}-c{}-{}",
+    ProjectNameW,
+    Header::VERSION,
+    Config::VERSION,
+    sequenceNumber % TextureCount);
 }
 
 SharedTexture::SharedTexture() {
 }
 
 SharedTexture::SharedTexture(const Header& header, ID3D11Device* d3d) {
-  auto textureName = SHM::SharedTextureName();
+  auto textureName = SHM::SharedTextureName(header.sequenceNumber);
   ID3D11Device1* d1 = nullptr;
   d3d->QueryInterface(&d1);
   if (!d1) {
@@ -172,8 +169,9 @@ SharedTexture::SharedTexture(const Header& header, ID3D11Device* d3d) {
   }
 
   auto key = GetTextureKeyFromSequenceNumber(header.sequenceNumber);
-  if (mutex->AcquireSync(key, 100) != S_OK) {
+  if (mutex->AcquireSync(key, 10) != S_OK) {
     mTexture = nullptr;
+    OPENKNEEBOARD_BREAK;
     return;
   }
   mKey = key;
@@ -288,6 +286,10 @@ UINT Writer::GetPreviousTextureKey() const {
 
 UINT Writer::GetNextTextureKey() const {
   return GetTextureKeyFromSequenceNumber(p->Header->sequenceNumber + 1);
+}
+
+UINT Writer::GetNextTextureIndex() const {
+  return (p->Header->sequenceNumber + 1) % TextureCount;
 }
 
 Reader::Reader() {

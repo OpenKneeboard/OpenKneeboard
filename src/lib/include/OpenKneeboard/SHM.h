@@ -38,7 +38,7 @@ namespace OpenKneeboard::SHM {
 struct Header;
 
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
-std::wstring SharedTextureName();
+std::wstring SharedTextureName(uint32_t sequenceNumber);
 
 #pragma pack(push)
 struct VRConfig {
@@ -105,6 +105,7 @@ class Writer final {
 
   UINT GetPreviousTextureKey() const;
   UINT GetNextTextureKey() const;
+  UINT GetNextTextureIndex() const;
 
  private:
   class Impl;

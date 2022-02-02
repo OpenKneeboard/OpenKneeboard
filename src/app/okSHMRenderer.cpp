@@ -37,6 +37,17 @@
 
 using namespace OpenKneeboard;
 
+namespace {
+
+struct SharedTextureResources {
+  winrt::com_ptr<ID3D11Texture2D> mTexture;
+  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
+  winrt::handle mHandle;
+  UINT mMutexKey = 0;
+};
+
+}// namespace
+
 class okSHMRenderer::Impl {
  public:
   OpenKneeboard::SHM::Writer mSHM;
@@ -47,15 +58,14 @@ class okSHMRenderer::Impl {
   winrt::com_ptr<ID3D11Device> mD3D;
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
-  winrt::com_ptr<ID3D11Texture2D> mSharedTexture;
-  winrt::handle mSharedHandle;
+  winrt::com_ptr<ID2D1RenderTarget> mRT;
   D2D1_SIZE_U mUsedSize;
   D2D1_RECT_F mClientRect;
-  UINT mNextTextureKey;
   bool mHaveCursor = false;
   D2D1_POINT_2F mCursorPoint;
 
-  winrt::com_ptr<ID2D1RenderTarget> mRT;
+  std::array<SharedTextureResources, TextureCount> mResources;
+
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
@@ -82,60 +92,6 @@ class okSHMRenderer::Impl {
 
 void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
   mUsedSize = size;
-  if (mSharedTexture) {
-    return;
-  }
-
-  mD3D->GetImmediateContext(mD3DContext.put());
-
-  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-  D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = TextureWidth,
-    .Height = TextureHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
-      | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
-  };
-  mD3D->CreateTexture2D(&textureDesc, nullptr, mSharedTexture.put());
-  textureDesc.MiscFlags = {};
-  mD3D->CreateTexture2D(&textureDesc, nullptr, mCanvasTexture.put());
-
-  auto textureName = SHM::SharedTextureName();
-  mSharedTexture.as<IDXGIResource1>()->CreateSharedHandle(
-    nullptr,
-    DXGI_SHARED_RESOURCE_READ,
-    textureName.c_str(),
-    mSharedHandle.put());
-  mNextTextureKey = 0;
-
-  auto surface = mCanvasTexture.as<IDXGISurface>();
-  auto rtRet = mD2D->CreateDxgiSurfaceRenderTarget(
-    surface.get(),
-    D2D1::RenderTargetProperties(
-      D2D1_RENDER_TARGET_TYPE_HARDWARE,
-      D2D1::PixelFormat(
-        DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-    mRT.put());
-  mRT->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
-
-  mErrorRenderer->SetRenderTarget(mRT);
-
-  mRT->CreateSolidColorBrush(
-    {0.7f, 0.7f, 0.7f, 0.5f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderBGBrush.put()));
-  mRT->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderTextBrush.put()));
-  mRT->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 0.8f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mCursorBrush.put()));
 }
 
 void okSHMRenderer::Impl::RenderError(
@@ -176,12 +132,14 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   }
 
   mD3DContext->Flush();
-  auto mutex = mSharedTexture.as<IDXGIKeyedMutex>();
-  mutex->AcquireSync(mNextTextureKey, INFINITE);
-  mD3DContext->CopyResource(mSharedTexture.get(), mCanvasTexture.get());
+
+  auto& it = mResources.at(mSHM.GetNextTextureIndex());
+
+  it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
+  mD3DContext->CopyResource(it.mTexture.get(), mCanvasTexture.get());
   mD3DContext->Flush();
-  mNextTextureKey = mSHM.GetNextTextureKey();
-  mutex->ReleaseSync(mNextTextureKey);
+  it.mMutexKey = mSHM.GetNextTextureKey();
+  it.mMutex->ReleaseSync(it.mMutexKey);
 
   SHM::Config config {
     .imageWidth = static_cast<uint16_t>(mUsedSize.width),
@@ -200,6 +158,61 @@ okSHMRenderer::okSHMRenderer(const DXResources& dxr)
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(p->mDWrite.put()));
   p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(p->mD2D);
+
+  p->mD3D->GetImmediateContext(p->mD3DContext.put());
+
+  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+  D3D11_TEXTURE2D_DESC textureDesc {
+    .Width = TextureWidth,
+    .Height = TextureHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags = 0,
+  };
+  p->mD3D->CreateTexture2D(&textureDesc, nullptr, p->mCanvasTexture.put());
+
+  textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+    | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+  for (auto i = 0; i < TextureCount; ++i) {
+    auto& it = p->mResources.at(i);
+
+    p->mD3D->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
+    auto textureName = SHM::SharedTextureName(i);
+    it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+      nullptr,
+      DXGI_SHARED_RESOURCE_READ,
+      textureName.c_str(),
+      it.mHandle.put());
+    it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
+  }
+
+  auto surface = p->mCanvasTexture.as<IDXGISurface>();
+  p->mD2D->CreateDxgiSurfaceRenderTarget(
+    surface.get(),
+    D2D1::RenderTargetProperties(
+      D2D1_RENDER_TARGET_TYPE_HARDWARE,
+      D2D1::PixelFormat(
+        DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+    p->mRT.put());
+  p->mRT->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+
+  p->mErrorRenderer->SetRenderTarget(p->mRT);
+
+  p->mRT->CreateSolidColorBrush(
+    {0.7f, 0.7f, 0.7f, 0.5f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->mHeaderBGBrush.put()));
+  p->mRT->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 1.0f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->mHeaderTextBrush.put()));
+  p->mRT->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 0.8f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->mCursorBrush.put()));
 }
 
 okSHMRenderer::~okSHMRenderer() {
