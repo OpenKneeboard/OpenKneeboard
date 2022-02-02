@@ -28,12 +28,12 @@ namespace OpenKneeboard {
 
 class WintabTablet final {
  public:
-  struct Size {
-    uint32_t width, height;
+  struct Limits {
+    uint32_t x, y, pressure;
   };
   struct State {
     bool active = false;
-    uint32_t x, y;
+    uint32_t x, y, pressure;
   };
 
   WintabTablet(HWND window);
@@ -44,7 +44,7 @@ class WintabTablet final {
   bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
 
   State GetState() const;
-  Size GetSize() const;
+  Limits GetLimits() const;
 
  private:
   struct Impl;

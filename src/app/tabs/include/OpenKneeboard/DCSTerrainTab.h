@@ -19,25 +19,27 @@
 #pragma once
 
 #include <OpenKneeboard/DCSTab.h>
+#include <OpenKneeboard/DrawableTab.h>
 
 namespace OpenKneeboard {
 
 class FolderTab;
 
-class DCSTerrainTab final : public DCSTab {
+class DCSTerrainTab final : public DCSTab, public DrawableTab {
  public:
-  DCSTerrainTab();
+  DCSTerrainTab(const winrt::com_ptr<IDXGIDevice2>&);
   virtual ~DCSTerrainTab();
 
   virtual void Reload() override;
   virtual uint16_t GetPageCount() const override;
-  virtual void RenderPage(
+
+ protected:
+  virtual void RenderPageContent(
     uint16_t pageIndex,
     const winrt::com_ptr<ID2D1RenderTarget>& target,
     const D2D1_RECT_F& rect) final override;
   virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) override;
 
- protected:
   virtual const char* GetGameEventName() const override;
   virtual void Update(
     const std::filesystem::path&,

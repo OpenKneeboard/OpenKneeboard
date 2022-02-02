@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okTabsList_SettingsUI.h"
 
@@ -99,7 +100,14 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
   switch (tabTypeDialog.GetSelection()) {
 #define IT(_, type) \
   case TABTYPE_IDX_##type: \
-    InsertTab(std::make_shared<type##Tab>()); \
+    if constexpr (tab_with_default_constructor<type##Tab>) { \
+      InsertTab(std::make_shared<type##Tab>()); \
+      return; \
+    } \
+    if constexpr (tab_with_dxgi_constructor<type##Tab>) { \
+      InsertTab(std::make_shared<type##Tab>(s->dxgi)); \
+      return; \
+    } \
     return;
     ZERO_CONFIG_TAB_TYPES
 #undef IT

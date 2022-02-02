@@ -24,9 +24,9 @@
 
 namespace OpenKneeboard {
 
-class DCSTab : public Tab {
+class DCSTab : public virtual Tab {
  public:
-  DCSTab(const wxString& title);
+  DCSTab();
   virtual ~DCSTab();
 
   virtual void OnGameEvent(const GameEvent&) override final;

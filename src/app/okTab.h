@@ -23,10 +23,11 @@
 
 #include <memory>
 
-#include "shims/winrt.h"
+#include <shims/winrt.h>
 #include <shims/wx.h>
 
 namespace OpenKneeboard {
+struct CursorEvent;
 class Tab;
 }
 
@@ -40,6 +41,8 @@ class okTab final : public wxPanel {
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
   uint16_t GetPageIndex() const;
+
+  void OnCursorEvent(const OpenKneeboard::CursorEvent& event);
 
   void NextPage();
   void PreviousPage();

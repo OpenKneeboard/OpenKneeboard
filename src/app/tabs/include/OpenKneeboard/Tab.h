@@ -52,7 +52,7 @@ class Tab : public okConfigurableComponent {
     = 0;
   virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) = 0;
 
-  virtual void OnCursorEvent(const CursorEvent&);
+  virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex);
 
  private:
   class Impl;

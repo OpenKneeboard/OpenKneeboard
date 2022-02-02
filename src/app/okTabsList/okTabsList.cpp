@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okTabsList.h"
 
@@ -31,10 +32,14 @@
 
 using namespace OpenKneeboard;
 
-struct okTabsList::State final : public okTabsList::SharedState {};
+struct okTabsList::State final : public okTabsList::SharedState {
+};
 
-okTabsList::okTabsList(const nlohmann::json& config)
+okTabsList::okTabsList(
+  const nlohmann::json& config,
+  const winrt::com_ptr<IDXGIDevice2>& dxgi)
   : p(std::make_shared<State>()) {
+  p->dxgi = dxgi;
   if (config.is_null()) {
     LoadDefaultConfig();
   } else {
@@ -58,7 +63,14 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    p->tabs.push_back(std::make_shared<it##Tab>()); \
+    if constexpr(tab_with_default_constructor<it##Tab>) { \
+      p->tabs.push_back(std::make_shared<it##Tab>()); \
+      continue; \
+    } \
+    if constexpr(tab_with_dxgi_constructor<it##Tab>) { \
+      p->tabs.push_back(std::make_shared<it##Tab>(p->dxgi)); \
+      continue;\
+    } \
     continue; \
   }
     ZERO_CONFIG_TAB_TYPES
@@ -88,7 +100,7 @@ void okTabsList::LoadDefaultConfig() {
     std::make_shared<DCSRadioLogTab>(),
     std::make_shared<DCSMissionTab>(),
     std::make_shared<DCSAircraftTab>(),
-    std::make_shared<DCSTerrainTab>(),
+    std::make_shared<DCSTerrainTab>(p->dxgi),
   };
 }
 

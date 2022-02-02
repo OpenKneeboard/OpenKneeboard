@@ -14,20 +14,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
-
-#include <shims/wx.h>
 
 #include <OpenKneeboard/DCSAircraftTab.h>
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/FolderTab.h>
+#include <shims/winrt.h>
+#include <shims/wx.h>
 
 #include <concepts>
 
+struct IDXGIDevice2;
 class wxWindow;
 
 #define CONFIGURABLE_TAB_TYPES IT(_("Folder"), Folder)
@@ -66,6 +68,16 @@ enum {
 };
 
 // clang-format off
+template<class T>
+concept tab_with_default_constructor =
+  std::derived_from<T, Tab>
+  && std::is_default_constructible_v<T>;
+
+template<class T>
+concept tab_with_dxgi_constructor =
+  std::derived_from<T, Tab>
+  && std::is_constructible_v<T, winrt::com_ptr<IDXGIDevice2>>;
+
 template<class T>
 concept tab_instantiable_from_settings =
   std::derived_from<T, Tab>

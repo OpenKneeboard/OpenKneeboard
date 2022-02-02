@@ -19,6 +19,7 @@
  */
 #include "okTabCanvas.h"
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/dprint.h>
@@ -40,6 +41,10 @@ class okTabCanvas::Impl final {
   winrt::com_ptr<IDXGISwapChain1> swapChain;
 
   std::unique_ptr<D2DErrorRenderer> errorRenderer;
+
+  bool haveCursor = false;
+  D2D1_POINT_2F cursorPoint;
+  winrt::com_ptr<ID2D1Brush> cursorBrush;
 };
 
 okTabCanvas::okTabCanvas(
@@ -74,6 +79,17 @@ void okTabCanvas::OnSize(wxSizeEvent& ev) {
   p->swapChain->GetDesc(&desc);
   p->swapChain->ResizeBuffers(
     desc.BufferCount, size.x, size.y, desc.BufferDesc.Format, desc.Flags);
+}
+
+void okTabCanvas::OnCursorEvent(const CursorEvent& ev) {
+  if (p->pageIndex < p->tab->GetPageCount()) {
+    p->tab->OnCursorEvent(ev, p->pageIndex);
+  }
+  p->haveCursor = ev.TouchState != CursorTouchState::NOT_NEAR_SURFACE;
+  p->cursorPoint = {ev.x, ev.y};
+
+  Refresh();
+  Update();
 }
 
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
@@ -117,7 +133,10 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
 
   rt->BeginDraw();
   wxON_BLOCK_EXIT0([&]() {
-    rt->EndDraw();
+    auto ret = rt->EndDraw();
+    if (ret != S_OK) {
+      OPENKNEEBOARD_BREAK;
+    }
     p->swapChain->Present(0, 0);
   });
   rt->SetTransform(D2D1::Matrix3x2F::Identity());
@@ -156,6 +175,36 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
     p->pageIndex,
     rt,
     {0.0f, 0.0f, float(clientSize.GetWidth()), float(clientSize.GetHeight())});
+
+  if (!p->haveCursor) {
+    return;
+  }
+
+  if (!p->cursorBrush) {
+    winrt::com_ptr<ID2D1SolidColorBrush> brush;
+    rt->CreateSolidColorBrush(
+      D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), brush.put());
+    p->cursorBrush = brush.as<ID2D1Brush>();
+  }
+
+  auto contentSize = p->tab->GetPreferredPixelSize(p->pageIndex);
+  // our cursor coordinates fit within contentSize, and apply to the
+  // contentRect, but we don't want to just use a transform to make them fit, as
+  // we want to keep the cursor the same size regardless of the resolution of
+  // the current content.
+  const auto scaleX = static_cast<float>(clientSize.x) / contentSize.width;
+  const auto scaleY = static_cast<float>(clientSize.y) / contentSize.height;
+  const auto scale = std::min(scaleX, scaleY);
+
+  auto point = p->cursorPoint;
+  point.x *= scale;
+  point.y *= scale;
+
+  point.x += (clientSize.x - (contentSize.width * scale)) / 2;
+  point.y += (clientSize.y - (contentSize.height * scale)) / 2;
+
+  rt->SetTransform(D2D1::Matrix3x2F::Identity());
+  rt->DrawEllipse(D2D1::Ellipse(point, 5, 5), p->cursorBrush.get());
 }
 
 uint16_t okTabCanvas::GetPageIndex() const {

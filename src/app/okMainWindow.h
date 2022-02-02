@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <d3d11.h>

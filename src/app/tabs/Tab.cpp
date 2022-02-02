@@ -44,7 +44,7 @@ void Tab::Reload() {
 void Tab::OnGameEvent(const GameEvent&) {
 }
 
-void Tab::OnCursorEvent(const CursorEvent&) {
+void Tab::OnCursorEvent(const CursorEvent&, uint16_t pageIndex) {
 }
 
 wxWindow* Tab::GetSettingsUI(wxWindow* parent) {

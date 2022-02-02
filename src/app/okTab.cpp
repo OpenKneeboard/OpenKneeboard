@@ -71,6 +71,10 @@ uint16_t okTab::GetPageIndex() const {
   return p->canvas->GetPageIndex();
 }
 
+void okTab::OnCursorEvent(const CursorEvent& ev) {
+  p->canvas->OnCursorEvent(ev);
+}
+
 void okTab::PreviousPage() {
   p->canvas->PreviousPage();
 }

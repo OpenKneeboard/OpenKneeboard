@@ -27,8 +27,9 @@
 #include <memory>
 
 namespace OpenKneeboard {
+struct CursorEvent;
 class Tab;
-}
+}// namespace OpenKneeboard
 
 class okTabCanvas final : public wxPanel {
  public:
@@ -41,6 +42,7 @@ class okTabCanvas final : public wxPanel {
   void OnSize(wxSizeEvent& ev);
   void OnPaint(wxPaintEvent& ev);
   void OnEraseBackground(wxEraseEvent& ev);
+  void OnCursorEvent(const OpenKneeboard::CursorEvent&);
 
   uint16_t GetPageIndex() const;
   void SetPageIndex(uint16_t index);

@@ -24,6 +24,8 @@
 #include <wx/notebook.h>
 #include <wx/wupdlock.h>
 
+#include <limits>
+
 #include "okAboutBox.h"
 #include "okDirectInputController.h"
 #include "okEvents.h"
@@ -88,7 +90,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
 
   {
-    auto tabs = new okTabsList(mSettings.Tabs);
+    auto tabs = new okTabsList(mSettings.Tabs, mD3D.as<IDXGIDevice2>());
     mTabsList = tabs;
     mConfigurables.push_back(tabs);
     UpdateTabs();
@@ -143,24 +145,54 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
     if (state.active) {
       // TODO: make tablet rotation configurable.
       // For now, assume tablet is rotated 90 degrees clockwise
-      auto tabletSize = mTablet->GetSize();
-      float x = tabletSize.height - state.y;
+      auto tabletLimits = mTablet->GetLimits();
+      float x = tabletLimits.y - state.y;
       float y = state.x;
-      std::swap(tabletSize.width, tabletSize.height);
+      std::swap(tabletLimits.x, tabletLimits.y);
 
       const auto canvasSize = mSHMRenderer->GetCanvasSize();
 
       // scale to the render canvas
-      const auto xScale
-        = static_cast<float>(canvasSize.width) / tabletSize.width;
+      const auto xScale = static_cast<float>(canvasSize.width) / tabletLimits.x;
       const auto yScale
-        = static_cast<float>(canvasSize.height) / tabletSize.height;
+        = static_cast<float>(canvasSize.height) / tabletLimits.y;
       const auto scale = std::max(xScale, yScale);
       x *= scale;
       y *= scale;
       mSHMRenderer->SetCursorPosition(x, y);
+
+      if (mCurrentTab >= 0) {
+        const auto pressure
+          = static_cast<float>(state.pressure) / tabletLimits.pressure;
+
+        const auto clientRect = mSHMRenderer->GetClientRect();
+        CursorEvent event {
+          .TouchState = pressure >= std::numeric_limits<float>::epsilon()
+            ? CursorTouchState::TOUCHING_SURFACE
+            : CursorTouchState::NEAR_SURFACE,
+          .x = x - clientRect.left,
+          .y = y - clientRect.top,
+          .pressure = pressure,
+        };
+
+        if (
+          x >= clientRect.left && x <= clientRect.right && y >= clientRect.top
+          && y <= clientRect.bottom) {
+          event.PositionState = CursorPositionState::IN_CLIENT_RECT;
+        } else {
+          event.PositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
+        }
+
+        mTabUIs.at(mCurrentTab)->OnCursorEvent(event);
+      }
     } else {
       mSHMRenderer->HideCursor();
+      if (mCurrentTab >= 0) {
+        mTabUIs.at(mCurrentTab)
+          ->OnCursorEvent(
+            {.PositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
+             .TouchState = CursorTouchState::NOT_NEAR_SURFACE});
+      }
     }
     UpdateSHM();
   }

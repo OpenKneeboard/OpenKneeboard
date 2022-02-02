@@ -14,18 +14,23 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
 #include <OpenKneeboard/Tab.h>
+#include <dxgi1_3.h>
+#include <shims/winrt.h>
 
 #include "okConfigurableComponent.h"
 
 class okTabsList final : public okConfigurableComponent {
  public:
   okTabsList() = delete;
-  okTabsList(const nlohmann::json& config);
+  okTabsList(
+    const nlohmann::json& config,
+    const winrt::com_ptr<IDXGIDevice2>& device);
 
   std::vector<std::shared_ptr<OpenKneeboard::Tab>> GetTabs() const;
 

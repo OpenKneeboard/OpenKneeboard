@@ -31,7 +31,7 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 namespace OpenKneeboard {
 
 DCSAircraftTab::DCSAircraftTab()
-  : DCSTab(_("Aircraft")), mDelegate(std::make_shared<FolderTab>("", "")) {
+  : Tab(_("Aircraft")), mDelegate(std::make_shared<FolderTab>("", "")) {
   mDelegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());
   });

@@ -33,7 +33,7 @@ enum class CursorTouchState {
 struct CursorEvent {
   CursorPositionState PositionState;
   CursorTouchState TouchState;
-  float x, y;
+  float x, y, pressure;
 };
 
 }// namespace OpenKneeboard

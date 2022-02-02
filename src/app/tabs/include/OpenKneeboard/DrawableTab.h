@@ -20,15 +20,17 @@
 #pragma once
 
 #include <OpenKneeboard/Tab.h>
+#include <shims/winrt.h>
+#include <dxgi1_2.h>
 
 namespace OpenKneeboard {
 
-class DrawableTab : public Tab {
+class DrawableTab : public virtual Tab {
  public:
-  DrawableTab(const wxString& title);
+  DrawableTab(const winrt::com_ptr<IDXGIDevice2>&);
   virtual ~DrawableTab();
 
-  virtual void OnCursorEvent(const CursorEvent&) override;
+  virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
 
   virtual void RenderPage(
     uint16_t pageIndex,
@@ -36,6 +38,8 @@ class DrawableTab : public Tab {
     const D2D1_RECT_F& rect) override final;
 
  protected:
+  void ClearDrawings();
+
   virtual void RenderPageContent(
     uint16_t pageIndex,
     const winrt::com_ptr<ID2D1RenderTarget>& target,

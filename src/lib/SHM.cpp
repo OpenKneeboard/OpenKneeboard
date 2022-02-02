@@ -138,7 +138,7 @@ std::wstring SharedTextureName() {
   static std::wstring sCache;
   if (sCache.empty()) {
     sCache = fmt::format(
-      FMT_STRING(L"Local\\{}-texture-h{}-c{}"),
+      L"Local\\{}-texture-h{}-c{}",
       ProjectNameW,
       Header::VERSION,
       Config::VERSION);

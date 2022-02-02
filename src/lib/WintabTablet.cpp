@@ -18,7 +18,7 @@
  * USA.
  */
 
-#define PACKETDATA (PK_X | PK_Y | PK_BUTTONS)
+#define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE)
 #define PACKETMODE 0
 
 #include <OpenKneeboard/WintabTablet.h>
@@ -79,7 +79,7 @@ struct WintabTablet::Impl {
   ~Impl();
 
   State mState;
-  Size mSize;
+  Limits mLimits;
   LibWintab mWintab;
   HCTX mCtx;
 };
@@ -97,11 +97,11 @@ WintabTablet::State WintabTablet::GetState() const {
   return p->mState;
 }
 
-WintabTablet::Size WintabTablet::GetSize() const {
+WintabTablet::Limits WintabTablet::GetLimits() const {
   if (!p) {
     return {};
   }
-  return p->mSize;
+  return p->mLimits;
 };
 
 WintabTablet::operator bool() const {
@@ -134,9 +134,13 @@ WintabTablet::Impl::Impl(HWND window) {
   logicalContext.lcOutOrgY = 0;
   logicalContext.lcOutExtY = -logicalContext.lcInExtY;
 
-  mSize = {
-    static_cast<uint32_t>(logicalContext.lcOutExtX),
-    static_cast<uint32_t>(-logicalContext.lcOutExtY)};
+  mWintab.WTInfoW(WTI_DEVICES, DVC_NPRESSURE, &axis);
+
+  mLimits = {
+    .x = static_cast<uint32_t>(logicalContext.lcOutExtX),
+    .y = static_cast<uint32_t>(-logicalContext.lcOutExtY),
+    .pressure = static_cast<uint32_t>(axis.axMax),
+  };
 
   for (UINT i = 0, tag; mWintab.WTInfo(WTI_EXTENSIONS + i, EXT_TAG, &tag);
        ++i) {
@@ -168,7 +172,6 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     // high word indicates hardware events, low word indicates
     // context enter/leave
     p->mState.active = lParam & 0xffff;
-    dprintf("Proximity event: {}", p->mState.active);
     return true;
   }
 
@@ -179,6 +182,7 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     }
     p->mState.x = packet.pkX;
     p->mState.y = packet.pkY;
+    p->mState.pressure = packet.pkNormalPressure;
     return true;
   }
 
