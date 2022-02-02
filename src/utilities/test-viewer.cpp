@@ -85,22 +85,19 @@ class Canvas final : public wxWindow {
   }
 
   void OnSize(wxSizeEvent& ev) {
-    Refresh();
-    Update();
+    PaintNow();
   }
 
   void CheckForUpdate() {
     if (!mSHM) {
       if (mFirstDetached) {
-        Refresh();
-        Update();
+        PaintNow();
       }
       return;
     }
 
     if (mSHM.GetSequenceNumber() != mLastSequenceNumber) {
-      Refresh();
-      Update();
+      PaintNow();
     }
   }
 
@@ -148,6 +145,11 @@ class Canvas final : public wxWindow {
   }
 
   void OnPaint(wxPaintEvent& ev) {
+    wxPaintDC dc(this);
+    PaintNow();
+  }
+
+  void PaintNow() {
     this->InitSwapChain();
     const auto clientSize = GetClientSize();
 
@@ -188,7 +190,6 @@ class Canvas final : public wxWindow {
         reinterpret_cast<ID2D1BitmapBrush**>(mBackgroundBrush.put()));
     }
 
-    wxPaintDC dc(this);
     bool present = true;
     rt->BeginDraw();
     wxON_BLOCK_EXIT0([&]() {
@@ -312,7 +313,7 @@ class MainWindow final : public wxFrame {
     auto canvas = new Canvas(this);
 
     mTimer.Bind(wxEVT_TIMER, [canvas](auto) { canvas->CheckForUpdate(); });
-    mTimer.Start(1000 / 30);
+    mTimer.Start(1000 / 60);
 
     Bind(
       wxEVT_MENU, [this](auto&) { this->Close(true); }, wxID_EXIT);
