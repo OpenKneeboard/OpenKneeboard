@@ -77,7 +77,7 @@ void DrawableTab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   }
 
   const auto scale = p->mPages.at(pageIndex).mScale;
-  const auto pressure = 0.25 + std::clamp(event.pressure - 0.25, 0.0, 0.75);
+  const auto pressure = 0.10 + std::clamp(event.pressure - 0.10, 0.0, 0.90);
   const auto radius = 20 * pressure;
   const auto x = event.x * scale;
   const auto y = event.y * scale;
