@@ -26,6 +26,11 @@
 
 namespace OpenKneeboard {
 
+/** Work around for the lack of background access in the wintab API.
+ *
+ * When injected, this DLL will forward wintab events back to the OpenKneeboard
+ * window.
+ */
 class TabletProxy final {
  public:
   TabletProxy();
