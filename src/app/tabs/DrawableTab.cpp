@@ -39,6 +39,9 @@ struct DrawableTab::Impl {
   std::vector<Page> mPages;
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
 
+  bool mHavePreviousPoint = false;
+  D2D1_POINT_2F mPreviousPoint;
+
   winrt::com_ptr<ID2D1RenderTarget> GetSurfaceRenderTarget(
     uint16_t index,
     const D2D1_SIZE_U& contentPixels);
@@ -57,6 +60,7 @@ void DrawableTab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   if (
     event.TouchState != CursorTouchState::TOUCHING_SURFACE
     || event.PositionState != CursorPositionState::IN_CLIENT_RECT) {
+    p->mHavePreviousPoint = false;
     return;
   }
 
@@ -75,11 +79,16 @@ void DrawableTab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   const auto scale = p->mPages.at(pageIndex).mScale;
   const auto pressure = 0.25 + std::clamp(event.pressure - 0.25, 0.0, 0.75);
   const auto radius = 20 * pressure;
+  const auto x = event.x * scale;
+  const auto y = event.y * scale;
   rt->BeginDraw();
-  rt->FillEllipse(
-    D2D1::Ellipse({event.x * scale, event.y * scale}, radius, radius),
-    p->mCursorBrush.get());
+  if (p->mHavePreviousPoint) {
+    rt->DrawLine(p->mPreviousPoint, {x, y}, p->mCursorBrush.get(), radius * 2);
+  }
+  rt->FillEllipse(D2D1::Ellipse({x, y}, radius, radius), p->mCursorBrush.get());
   rt->EndDraw();
+  p->mHavePreviousPoint = true;
+  p->mPreviousPoint = {x, y};
 }
 
 void DrawableTab::ClearDrawings() {
@@ -118,7 +127,11 @@ void DrawableTab::RenderPage(
   }
 
   renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-  renderTarget->DrawBitmap(bitmap.get(), rect);
+  renderTarget.as<ID2D1DeviceContext>()->DrawBitmap(
+    bitmap.get(),
+    rect,
+    1.0f,
+    D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
 winrt::com_ptr<ID2D1RenderTarget> DrawableTab::Impl::GetSurfaceRenderTarget(
