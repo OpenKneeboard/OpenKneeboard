@@ -189,10 +189,13 @@ class Canvas final : public wxWindow {
     }
 
     wxPaintDC dc(this);
+    bool present = true;
     rt->BeginDraw();
     wxON_BLOCK_EXIT0([&]() {
       rt->EndDraw();
-      mSwapChain->Present(0, 0);
+      if (present) {
+        mSwapChain->Present(0, 0);
+      }
     });
 
     auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
@@ -230,6 +233,7 @@ class Canvas final : public wxWindow {
 
     auto sharedTexture = snapshot.GetSharedTexture(mD3d.get());
     if (!sharedTexture) {
+      present = false;
       return;
     }
     auto sharedSurface = sharedTexture.GetSurface();
