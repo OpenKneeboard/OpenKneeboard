@@ -86,6 +86,7 @@ struct FlatConfig {
 struct Config final {
   static constexpr uint16_t VERSION = 1;
 
+  HWND feederWindow { 0 };
   uint16_t imageWidth, imageHeight;// Pixels
   VRConfig vr;
   FlatConfig flat;

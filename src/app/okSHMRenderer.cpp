@@ -50,6 +50,7 @@ struct SharedTextureResources {
 
 class okSHMRenderer::Impl {
  public:
+  HWND mFeederWindow;
   OpenKneeboard::SHM::Writer mSHM;
 
   winrt::com_ptr<IWICImagingFactory> mWIC;
@@ -142,14 +143,16 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   it.mMutex->ReleaseSync(it.mMutexKey);
 
   SHM::Config config {
+    .feederWindow = mFeederWindow,
     .imageWidth = static_cast<uint16_t>(mUsedSize.width),
     .imageHeight = static_cast<uint16_t>(mUsedSize.height),
   };
   mSHM.Update(config);
 }
 
-okSHMRenderer::okSHMRenderer(const DXResources& dxr)
+okSHMRenderer::okSHMRenderer(HWND feederWindow, const DXResources& dxr)
   : p(std::make_unique<Impl>()) {
+  p->mFeederWindow = feederWindow;
   p->mD3D = dxr.mD3DDevice;
   p->mD2D = dxr.mD2DFactory;
   p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);

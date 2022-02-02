@@ -39,7 +39,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
 
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
-  mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources);
+  mSHMRenderer = std::make_unique<okSHMRenderer>(this->GetHWND(), mDXResources);
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
@@ -266,7 +266,7 @@ void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
     return;
   }
 
-  mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources);
+  mSHMRenderer = std::make_unique<okSHMRenderer>(this->GetHWND(), mDXResources);
   UpdateSHM();
 }
 

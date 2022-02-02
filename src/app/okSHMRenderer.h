@@ -28,7 +28,7 @@
 namespace OpenKneeboard {
 struct DXResources;
 class Tab;
-}
+}// namespace OpenKneeboard
 
 class okSHMRenderer final {
  private:
@@ -37,7 +37,7 @@ class okSHMRenderer final {
 
  public:
   okSHMRenderer() = delete;
-  okSHMRenderer(const OpenKneeboard::DXResources&);
+  okSHMRenderer(HWND feederWindow, const OpenKneeboard::DXResources&);
   ~okSHMRenderer();
 
   void SetCursorPosition(float x, float y);

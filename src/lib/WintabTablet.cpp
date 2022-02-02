@@ -167,6 +167,10 @@ WintabTablet::Impl::~Impl() {
   mWintab.WTClose(mCtx);
 }
 
+bool WintabTablet::CanProcessMessage(UINT message) const {
+  return message == WT_PROXIMITY || message == WT_PACKET;
+}
+
 bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
   if (message == WT_PROXIMITY) {
     // high word indicates hardware events, low word indicates
@@ -177,7 +181,8 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
 
   if (message == WT_PACKET) {
     PACKET packet;
-    if (!p->mWintab.WTPacket(p->mCtx, static_cast<UINT>(wParam), &packet)) {
+    auto ctx = reinterpret_cast<HCTX>(lParam);
+    if (!p->mWintab.WTPacket(ctx, static_cast<UINT>(wParam), &packet)) {
       return false;
     }
     p->mState.x = packet.pkX;

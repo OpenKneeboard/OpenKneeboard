@@ -103,3 +103,12 @@ target_link_libraries(
   dxgi-hooks
   oculus-hooks
   openvr-hooks)
+
+add_library(OpenKneeboard-TabletProxy MODULE TabletProxy.cpp)
+target_link_libraries(
+  OpenKneeboard-TabletProxy
+  PRIVATE
+  detours-ext
+  OpenKneeboard-dprint
+  OpenKneeboard-SHM
+  OpenKneeboard-tablets)
