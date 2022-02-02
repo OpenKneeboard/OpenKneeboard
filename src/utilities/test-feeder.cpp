@@ -39,8 +39,7 @@ using namespace OpenKneeboard;
 
 struct SharedTextureResources {
   winrt::com_ptr<ID3D11Texture2D> texture;
-  winrt::com_ptr<ID3D11RenderTargetView> rtD3d;
-  winrt::com_ptr<ID2D1RenderTarget> rtD2d;
+  winrt::com_ptr<ID2D1RenderTarget> rt;
   winrt::com_ptr<IDXGIKeyedMutex> mutex;
   UINT mutexKey = 0;
 };
@@ -129,9 +128,6 @@ int main() {
     auto& it = resources.at(i);
     device->CreateTexture2D(&textureDesc, nullptr, it.texture.put());
 
-    winrt::com_ptr<ID3D11RenderTargetView> rt;
-    device->CreateRenderTargetView(it.texture.get(), nullptr, it.rtD3d.put());
-
     auto surface = it.texture.as<IDXGISurface>();
     d2d->CreateDxgiSurfaceRenderTarget(
       surface.get(),
@@ -141,11 +137,11 @@ int main() {
           DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)
 
           ),
-      it.rtD2d.put());
-    it.rtD2d->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+      it.rt.put());
+    it.rt->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
     if (!textBrush) {
-      it.rtD2d->CreateSolidColorBrush(
+      it.rt->CreateSolidColorBrush(
         D2D1_COLOR_F {0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
     }
 
@@ -163,11 +159,11 @@ int main() {
     auto& it = resources.at(shm.GetNextTextureIndex());
 
     it.mutex->AcquireSync(it.mutexKey, INFINITE);
-    it.rtD2d->BeginDraw();
-    it.rtD2d->Clear(colors[frames % 4]);
+    it.rt->BeginDraw();
+    it.rt->Clear(colors[frames % 4]);
 
     std::wstring message(L"This Way Up");
-    it.rtD2d->DrawTextW(
+    it.rt->DrawTextW(
       message.data(),
       static_cast<UINT32>(message.length()),
       textFormat.get(),
@@ -177,7 +173,7 @@ int main() {
         static_cast<float>(config.imageWidth),
         static_cast<float>(config.imageHeight)},
       textBrush.get());
-    it.rtD2d->EndDraw();
+    it.rt->EndDraw();
     context->Flush();
     it.mutexKey = shm.GetNextTextureKey();
     it.mutex->ReleaseSync(it.mutexKey);
