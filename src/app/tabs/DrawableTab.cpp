@@ -32,6 +32,7 @@ struct DrawableTab::Impl {
     winrt::com_ptr<ID3D11Texture2D> mTexture;
     winrt::com_ptr<ID2D1RenderTarget> mRenderTarget;
     winrt::com_ptr<ID2D1Bitmap> mBitmap;
+    float mScale;
   };
   std::vector<Page> mPages;
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
@@ -68,9 +69,12 @@ void DrawableTab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
     rt->CreateSolidColorBrush(
       D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), p->mCursorBrush.put());
   }
+
+  const auto scale = p->mPages.at(pageIndex).mScale;
   rt->BeginDraw();
   rt->FillEllipse(
-    D2D1::Ellipse({event.x, event.y}, 5, 5), p->mCursorBrush.get());
+    D2D1::Ellipse({event.x * scale, event.y * scale}, 5, 5),
+    p->mCursorBrush.get());
   rt->EndDraw();
 }
 
@@ -100,12 +104,16 @@ void DrawableTab::RenderPage(
       = {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED},
     };
     auto err = renderTarget->CreateSharedBitmap(
-      _uuidof(IDXGISurface), page.mTexture.as<IDXGISurface>().get(), &bitmapProps, bitmap.put());
+      _uuidof(IDXGISurface),
+      page.mTexture.as<IDXGISurface>().get(),
+      &bitmapProps,
+      bitmap.put());
     if (err) {
       OPENKNEEBOARD_BREAK;
     }
   }
 
+  renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
   renderTarget->DrawBitmap(bitmap.get(), rect);
 }
 
@@ -122,17 +130,13 @@ winrt::com_ptr<ID2D1RenderTarget> DrawableTab::Impl::GetSurfaceRenderTarget(
     return renderTarget;
   }
 
-  const auto aspectRatio
-    = static_cast<float>(contentPixels.width) / contentPixels.height;
-  const auto targetAspectRatio
-    = static_cast<float>(TextureWidth) / TextureHeight;
-  D2D1_SIZE_U surfaceSize {TextureWidth, TextureHeight};
-  if (aspectRatio > targetAspectRatio) {
-    // Page is fatter/shorter than the target; fill width, reduce height
-    surfaceSize.height = std::lround(TextureWidth / aspectRatio);
-  } else if (aspectRatio < targetAspectRatio) {
-    surfaceSize.width = std::lround(TextureHeight * aspectRatio);
-  }
+  const auto scaleX = static_cast<float>(TextureWidth) / contentPixels.width;
+  const auto scaleY = static_cast<float>(TextureHeight) / contentPixels.height;
+  page.mScale = std::min(scaleX, scaleY);
+  D2D1_SIZE_U surfaceSize {
+    std::lround(contentPixels.width * page.mScale),
+    std::lround(contentPixels.height * page.mScale),
+  };
 
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = surfaceSize.width,
@@ -146,7 +150,8 @@ winrt::com_ptr<ID2D1RenderTarget> DrawableTab::Impl::GetSurfaceRenderTarget(
   };
 
   auto& texture = page.mTexture;
-  mDevice.as<ID3D11Device>()->CreateTexture2D(&textureDesc, nullptr, texture.put());
+  mDevice.as<ID3D11Device>()->CreateTexture2D(
+    &textureDesc, nullptr, texture.put());
 
   mD2D->CreateDxgiSurfaceRenderTarget(
     texture.as<IDXGISurface>().get(),
