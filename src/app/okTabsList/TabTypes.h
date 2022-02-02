@@ -57,16 +57,6 @@ struct DXResources;
 
 // clang-format off
 template<class T>
-concept tab_with_default_constructor =
-  std::derived_from<T, Tab>
-  && std::is_default_constructible_v<T>;
-
-template<class T>
-concept tab_with_dxr_constructor =
-  std::derived_from<T, Tab>
-  && std::is_constructible_v<T, const DXResources&>;
-
-template<class T>
 concept tab_instantiable_from_settings =
   std::derived_from<T, Tab>
   && requires (std::string title, nlohmann::json config) {
@@ -87,11 +77,11 @@ std::shared_ptr<T> make_shared_tab(
   const std::string& title,
   const nlohmann::json& config,
   const DXResources& dxr) {
-  if constexpr (tab_with_default_constructor<T>) {
+  if constexpr (std::default_initializable<T>) {
     return std::make_shared<T>();
   }
 
-  if constexpr (tab_with_dxr_constructor<T>) {
+  if constexpr (std::constructible_from<T, DXResources>) {
     return std::make_shared<T>(dxr);
   }
 
@@ -103,11 +93,11 @@ std::shared_ptr<T> make_shared_tab(
 /** Create a `shared_ptr<Tab>`, prompting the user for config if needed */
 template <std::derived_from<Tab> T>
 std::shared_ptr<T> make_shared_tab(wxWindow* parent, const DXResources& dxr) {
-  if constexpr (tab_with_default_constructor<T>) {
+  if constexpr (std::default_initializable<T>) {
     return std::make_shared<T>();
   }
 
-  if constexpr (tab_with_dxr_constructor<T>) {
+  if constexpr (std::constructible_from<T, DXResources>) {
     return std::make_shared<T>(dxr);
   }
 
