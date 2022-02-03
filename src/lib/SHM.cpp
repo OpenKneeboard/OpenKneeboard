@@ -171,7 +171,6 @@ SharedTexture::SharedTexture(const Header& header, ID3D11Device* d3d) {
   auto key = GetTextureKeyFromSequenceNumber(header.sequenceNumber);
   if (mutex->AcquireSync(key, 10) != S_OK) {
     mTexture = nullptr;
-    OPENKNEEBOARD_BREAK;
     return;
   }
   mKey = key;
