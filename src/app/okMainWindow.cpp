@@ -151,7 +151,7 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
 
         const auto clientRect = mSHMRenderer->GetClientRect();
         CursorEvent event {
-          .TouchState = pressure >= std::numeric_limits<float>::epsilon()
+          .TouchState = (state.buttons & 1)
             ? CursorTouchState::TOUCHING_SURFACE
             : CursorTouchState::NEAR_SURFACE,
           .x = x - clientRect.left,
