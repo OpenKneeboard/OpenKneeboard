@@ -346,7 +346,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
   }
 
   mRT->SetTransform(D2D1::Matrix3x2F::Identity());
-  mRT->DrawEllipse(D2D1::Ellipse(mCursorPoint, 10, 10), mCursorBrush.get());
+  mRT->DrawEllipse(D2D1::Ellipse(mCursorPoint, 2, 2), mCursorBrush.get());
 }
 
 D2D1_SIZE_U okSHMRenderer::GetCanvasSize() const {

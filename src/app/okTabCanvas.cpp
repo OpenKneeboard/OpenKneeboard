@@ -212,7 +212,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   point.y += (clientSize.y - (contentSize.height * scale)) / 2;
 
   rt->SetTransform(D2D1::Matrix3x2F::Identity());
-  rt->DrawEllipse(D2D1::Ellipse(point, 5, 5), p->cursorBrush.get());
+  rt->DrawEllipse(D2D1::Ellipse(point, 2, 2), p->cursorBrush.get());
 }
 
 uint16_t okTabCanvas::GetPageIndex() const {
