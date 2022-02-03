@@ -107,7 +107,7 @@ class Spinlock final {
       return;
     }
 
-    mHeader->flags ^= HeaderFlags::LOCKED;
+    mHeader->flags &= ~HeaderFlags::LOCKED;
   }
 };
 
@@ -249,7 +249,7 @@ class Writer::Impl : public SHM::Impl {
   bool HaveFed = false;
 
   ~Impl() {
-    Header->flags ^= HeaderFlags::FEEDER_ATTACHED;
+    Header->flags &= ~HeaderFlags::FEEDER_ATTACHED;
     FlushViewOfFile(Mapping, NULL);
   }
 };

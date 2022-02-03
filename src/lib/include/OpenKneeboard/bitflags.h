@@ -84,9 +84,4 @@ constexpr T& operator&=(T& a, const T& b) {
   return a = (a & b);
 }
 
-template <bitflags T>
-constexpr T& operator^=(T& a, const T& b) {
-  return a = (a ^ b);
-}
-
 }// namespace OpenKneeboard
