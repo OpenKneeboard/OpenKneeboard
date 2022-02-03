@@ -57,89 +57,43 @@ struct DXResources;
 
 // clang-format off
 template<class T>
-concept tab_instantiable_from_settings =
-  std::derived_from<T, Tab>
-  && requires (std::string title, nlohmann::json config) {
-    { T::FromSettings(title, config) } -> std::same_as<std::shared_ptr<T>>;
-  };
-
-template<class T>
 concept tab_with_interactive_creation =
   std::derived_from<T, Tab>
-  && requires (wxWindow* parent) {
-    { T::Create(parent) } -> std::same_as<std::shared_ptr<T>>;
+  && requires (wxWindow* parent, DXResources dxr) {
+    { T::Create(parent, dxr) } -> std::same_as<std::shared_ptr<T>>;
   };
 // clang-format on
 
 /** Create a `shared_ptr<Tab>` with existing config */
 template <std::derived_from<Tab> T>
-std::shared_ptr<T> make_shared_tab(
+std::shared_ptr<T> load_tab(
+  const DXResources& dxr,
   const std::string& title,
-  const nlohmann::json& config,
-  const DXResources& dxr) {
-  if constexpr (std::default_initializable<T>) {
-    return std::make_shared<T>();
-  }
+  const nlohmann::json& config) {
 
   if constexpr (std::constructible_from<T, DXResources>) {
     return std::make_shared<T>(dxr);
   }
 
-  if constexpr (tab_instantiable_from_settings<T>) {
-    return T::FromSettings(title, config);
+  if constexpr (std::constructible_from<T, DXResources, std::string>) {
+    return std::make_shared<T>(dxr, title);
+  }
+
+  if constexpr (std::constructible_from<T, DXResources, std::string, nlohmann::json>) {
+    return std::make_shared<T>(dxr, title, config);
   }
 }
 
 /** Create a `shared_ptr<Tab>`, prompting the user for config if needed */
 template <std::derived_from<Tab> T>
-std::shared_ptr<T> make_shared_tab(wxWindow* parent, const DXResources& dxr) {
-  if constexpr (std::default_initializable<T>) {
-    return std::make_shared<T>();
-  }
-
+std::shared_ptr<T> create_tab(wxWindow* parent, const DXResources& dxr) {
   if constexpr (std::constructible_from<T, DXResources>) {
     return std::make_shared<T>(dxr);
   }
 
   if constexpr (tab_with_interactive_creation<T>) {
-    return T::Create(parent);
+    return T::Create(parent, dxr);
   }
 }
-
-namespace Detail {
-// clang-format off
-template<class T>
-concept tab_loadable_from_config =
-requires (
-  const std::string& title,
-  const nlohmann::json& config,
-  const DXResources& dxr
-) {
-  { make_shared_tab<T>(title, config, dxr) }
-    -> std::same_as<std::shared_ptr<T>>;
-};
-
-// clang-format on
-#define IT(_, type) static_assert(tab_loadable_from_config<type##Tab>);
-OPENKNEEBOARD_TAB_TYPES
-#undef IT
-
-// clang-format off
-template<class T>
-concept tab_createable_through_ui =
-requires (
-  wxWindow* parent,
-  const DXResources& dxr
-) {
-  { make_shared_tab<T>(parent, dxr) }
-    -> std::same_as<std::shared_ptr<T>>;
-};
-// clang-format on
-
-#define IT(_, type) static_assert(tab_createable_through_ui<type##Tab>);
-OPENKNEEBOARD_TAB_TYPES
-#undef IT
-
-}// namespace Detail
 
 }// namespace OpenKneeboard

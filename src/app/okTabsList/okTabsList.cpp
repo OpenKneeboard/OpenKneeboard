@@ -65,7 +65,7 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance = make_shared_tab<it##Tab>(title, settings, p->dxr); \
+    auto instance = load_tab<it##Tab>(p->dxr, title, settings); \
     if (instance) { \
       p->tabs.push_back(instance); \
       continue; \
@@ -78,9 +78,9 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 
 void okTabsList::LoadDefaultConfig() {
   p->tabs = {
-    std::make_shared<DCSRadioLogTab>(),
-    std::make_shared<DCSMissionTab>(),
-    std::make_shared<DCSAircraftTab>(),
+    std::make_shared<DCSRadioLogTab>(p->dxr),
+    std::make_shared<DCSMissionTab>(p->dxr),
+    std::make_shared<DCSAircraftTab>(p->dxr),
     std::make_shared<DCSTerrainTab>(p->dxr),
   };
 }

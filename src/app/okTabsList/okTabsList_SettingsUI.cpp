@@ -100,7 +100,7 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
   switch (tabTypeDialog.GetSelection()) {
 #define IT(_, type) \
   case TABTYPE_IDX_##type: \
-    InsertTab(make_shared_tab<type##Tab>(nullptr, s->dxr)); \
+    InsertTab(create_tab<type##Tab>(nullptr, s->dxr)); \
     return;
     OPENKNEEBOARD_TAB_TYPES
 #undef IT

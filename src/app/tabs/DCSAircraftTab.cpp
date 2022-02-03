@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <OpenKneeboard/DCSAircraftTab.h>
 #include <OpenKneeboard/FolderTab.h>
@@ -30,8 +31,10 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSAircraftTab::DCSAircraftTab()
-  : Tab(_("Aircraft")), mDelegate(std::make_shared<FolderTab>("", "")) {
+DCSAircraftTab::DCSAircraftTab(const DXResources& dxr)
+  : DCSTab(dxr, _("Aircraft")),
+    mDelegate(
+      std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
   mDelegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());
   });
@@ -48,7 +51,7 @@ uint16_t DCSAircraftTab::GetPageCount() const {
   return mDelegate->GetPageCount();
 }
 
-void DCSAircraftTab::RenderPage(
+void DCSAircraftTab::RenderPageContent(
   uint16_t pageIndex,
   const winrt::com_ptr<ID2D1RenderTarget>& target,
   const D2D1_RECT_F& rect) {

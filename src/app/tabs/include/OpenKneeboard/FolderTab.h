@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
@@ -28,26 +29,34 @@ namespace OpenKneeboard {
 
 class FolderTab : public Tab {
  public:
-  FolderTab(const wxString& title, const std::filesystem::path& path);
+  FolderTab(
+    const DXResources&,
+    const wxString& title,
+    const std::filesystem::path& path);
+  explicit FolderTab(
+    const DXResources&,
+    const wxString& title,
+    const nlohmann::json&);
   virtual ~FolderTab();
 
-  static std::shared_ptr<FolderTab> FromSettings(
-    const std::string& title,
-    const nlohmann::json&);
-  static std::shared_ptr<FolderTab> Create(wxWindow* parent);
+  static std::shared_ptr<FolderTab> Create(
+    wxWindow* parent,
+    const DXResources&);
 
   virtual nlohmann::json GetSettings() const final override;
 
   virtual void Reload() final override;
   virtual uint16_t GetPageCount() const final override;
-  virtual void RenderPage(
-    uint16_t pageIndex,
-    const winrt::com_ptr<ID2D1RenderTarget>& target,
-    const D2D1_RECT_F& rect) final override;
   virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) final override;
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
+
+ protected:
+  virtual void RenderPageContent(
+    uint16_t pageIndex,
+    const winrt::com_ptr<ID2D1RenderTarget>& target,
+    const D2D1_RECT_F& rect) final override;
 
  private:
   class Impl;

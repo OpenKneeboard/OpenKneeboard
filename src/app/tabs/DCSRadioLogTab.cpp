@@ -61,8 +61,8 @@ class DCSRadioLogTab::Impl final {
   void PushPage();
 };
 
-DCSRadioLogTab::DCSRadioLogTab()
-  : Tab(_("Radio Log")), p(std::make_unique<Impl>(this)) {
+DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
+  : DCSTab(dxr, _("Radio Log")), p(std::make_unique<Impl>(this)) {
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
@@ -87,7 +87,7 @@ D2D1_SIZE_U DCSRadioLogTab::GetPreferredPixelSize(uint16_t pageIndex) {
   return {768 * Impl::RENDER_SCALE, 1024 * Impl::RENDER_SCALE};
 }
 
-void DCSRadioLogTab::RenderPage(
+void DCSRadioLogTab::RenderPageContent(
   uint16_t pageIndex,
   const winrt::com_ptr<ID2D1RenderTarget>& rt,
   const D2D1_RECT_F& rect) {

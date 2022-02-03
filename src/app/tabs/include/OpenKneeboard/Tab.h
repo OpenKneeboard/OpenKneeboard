@@ -30,10 +30,12 @@
 namespace OpenKneeboard {
 struct GameEvent;
 struct CursorEvent;
+struct DXResources;
 
 class Tab : public okConfigurableComponent {
  public:
-  Tab(const wxString& title);
+  Tab() = delete;
+  Tab(const DXResources&, const wxString& title);
   virtual ~Tab();
 
   std::string GetTitle() const;
@@ -45,14 +47,22 @@ class Tab : public okConfigurableComponent {
   virtual nlohmann::json GetSettings() const override;
 
   virtual uint16_t GetPageCount() const = 0;
-  virtual void RenderPage(
+  virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) = 0;
+  void RenderPage(
+    uint16_t pageIndex,
+    const winrt::com_ptr<ID2D1RenderTarget>& target,
+    const D2D1_RECT_F& rect);
+
+  virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex);
+
+ protected:
+  void ClearDrawings();
+
+  virtual void RenderPageContent(
     uint16_t pageIndex,
     const winrt::com_ptr<ID2D1RenderTarget>& target,
     const D2D1_RECT_F& rect)
     = 0;
-  virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) = 0;
-
-  virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex);
 
  private:
   class Impl;

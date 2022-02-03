@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/dprint.h>
@@ -42,8 +43,11 @@ class FolderTab::Impl final {
   bool LoadPage(uint16_t index);
 };
 
-FolderTab::FolderTab(const wxString& title, const std::filesystem::path& path)
-  : Tab(title),
+FolderTab::FolderTab(
+  const DXResources& dxr,
+  const wxString& title,
+  const std::filesystem::path& path)
+  : Tab(dxr, title),
     p(new Impl {
       .wic
       = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
@@ -103,7 +107,7 @@ D2D1_SIZE_U FolderTab::GetPreferredPixelSize(uint16_t index) {
   return {page.width, page.height};
 }
 
-void FolderTab::RenderPage(
+void FolderTab::RenderPageContent(
   uint16_t index,
   const winrt::com_ptr<ID2D1RenderTarget>& rt,
   const D2D1_RECT_F& rect) {

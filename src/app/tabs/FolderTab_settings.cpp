@@ -14,23 +14,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
-#include <shims/wx.h>
-
 #include <OpenKneeboard/FolderTab.h>
 #include <ShlObj.h>
+#include <shims/wx.h>
 #include <wx/dirdlg.h>
 
 namespace OpenKneeboard {
 
-std::shared_ptr<FolderTab> FolderTab::FromSettings(
-  const std::string& title,
-  const nlohmann::json& settings) {
-  return std::make_shared<FolderTab>(title, settings.at("Path"));
+FolderTab::FolderTab(
+  const DXResources& dxr,
+  const wxString& title,
+  const nlohmann::json& settings)
+  : FolderTab(
+    dxr,
+    title,
+    std::filesystem::path(settings.at("Path").get<std::string>())) {
 }
 
-std::shared_ptr<FolderTab> FolderTab::Create(wxWindow* parent) {
+std::shared_ptr<FolderTab> FolderTab::Create(
+  wxWindow* parent,
+  const DXResources& dxr) {
   wxDirDialog dialog(
     parent, _("Add Folder Tab"), {}, wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
 
@@ -48,7 +54,7 @@ std::shared_ptr<FolderTab> FolderTab::Create(wxWindow* parent) {
     return nullptr;
   }
 
-  return std::make_shared<FolderTab>(path.stem().string(), path);
+  return std::make_shared<FolderTab>(dxr, path.stem().string(), path);
 }
 
 nlohmann::json FolderTab::GetSettings() const {

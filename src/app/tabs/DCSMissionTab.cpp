@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/FolderTab.h>
@@ -103,9 +104,10 @@ class DCSMissionTab::Impl final {
   std::unique_ptr<FolderTab> delegate;
 };
 
-DCSMissionTab::DCSMissionTab()
-  : Tab(_("Mission")), p(std::make_shared<Impl>()) {
-  p->delegate = std::make_unique<FolderTab>("", "");
+DCSMissionTab::DCSMissionTab(const DXResources& dxr)
+  : DCSTab(dxr, _("Mission")), p(std::make_shared<Impl>()) {
+  p->delegate
+    = std::make_unique<FolderTab>(dxr, wxString {}, std::filesystem::path {});
   p->delegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());
   });
@@ -124,7 +126,7 @@ uint16_t DCSMissionTab::GetPageCount() const {
   return p->delegate->GetPageCount();
 }
 
-void DCSMissionTab::RenderPage(
+void DCSMissionTab::RenderPageContent(
   uint16_t pageIndex,
   const winrt::com_ptr<ID2D1RenderTarget>& target,
   const D2D1_RECT_F& rect) {

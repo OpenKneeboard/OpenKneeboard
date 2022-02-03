@@ -19,14 +19,12 @@
 #pragma once
 
 #include <OpenKneeboard/DCSTab.h>
-#include <OpenKneeboard/DrawableTab.h>
 
 namespace OpenKneeboard {
 
-struct DXResources;
 class FolderTab;
 
-class DCSTerrainTab final : public DCSTab, public DrawableTab {
+class DCSTerrainTab final : public DCSTab {
  public:
   DCSTerrainTab(const DXResources&);
   virtual ~DCSTerrainTab();
