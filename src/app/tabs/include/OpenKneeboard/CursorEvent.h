@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <cstdint>
+
 namespace OpenKneeboard {
 enum class CursorPositionState {
   IN_CLIENT_RECT,
@@ -34,6 +36,7 @@ struct CursorEvent {
   CursorPositionState PositionState;
   CursorTouchState TouchState;
   float x, y, pressure;
+  uint32_t buttons;
 };
 
 }// namespace OpenKneeboard

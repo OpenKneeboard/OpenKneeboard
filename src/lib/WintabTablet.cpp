@@ -119,6 +119,8 @@ WintabTablet::Impl::Impl(HWND window) {
   logicalContext.lcMoveMask = PACKETDATA;
   logicalContext.lcPktMode = PACKETMODE;
   logicalContext.lcOptions = CXO_MESSAGES;
+  logicalContext.lcBtnDnMask = ~0;
+  logicalContext.lcBtnUpMask = ~0;
 
   AXIS axis;
 
@@ -188,6 +190,7 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     p->mState.x = packet.pkX;
     p->mState.y = packet.pkY;
     p->mState.pressure = packet.pkNormalPressure;
+    p->mState.buttons = packet.pkButtons;
     return true;
   }
 

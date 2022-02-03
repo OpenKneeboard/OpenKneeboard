@@ -157,6 +157,7 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
           .x = x - clientRect.left,
           .y = y - clientRect.top,
           .pressure = pressure,
+          .buttons = state.buttons,
         };
 
         if (
