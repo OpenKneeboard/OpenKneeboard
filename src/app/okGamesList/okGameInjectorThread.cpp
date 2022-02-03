@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okGameInjectorThread.h"
 
@@ -174,6 +175,15 @@ bool InjectDll(HANDLE process, const std::filesystem::path& _dll) {
   }
   return true;
 }
+
+bool HaveWintab() {
+  // Don't bother installing wintab support if the user doesn't have any
+  // wintab drivers installed
+  auto wintab = LoadLibraryA("Wintab32.dll");
+  FreeLibrary(wintab);
+  return (bool)wintab;
+}
+
 }// namespace
 
 wxThread::ExitCode okGameInjectorThread::Entry() {
@@ -184,6 +194,9 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
   const auto injectedDll
     = executablePath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
   const auto markerDll = executablePath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
+  const auto tabletProxyDll = executablePath / RuntimeFiles::TABLET_PROXY_DLL;
+
+  const auto installTabletProxy = HaveWintab();
 
   PROCESSENTRY32 process;
   process.dwSize = sizeof(process);
@@ -235,6 +248,10 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
           "Found '{}' - PID {}", friendly.ToStdString(), process.th32ProcessID);
 
         InjectDll(processHandle.get(), markerDll);
+
+        if (installTabletProxy) {
+          InjectDll(processHandle.get(), tabletProxyDll);
+        }
 
         if (!InjectDll(processHandle.get(), injectedDll)) {
           currentPath = path;

@@ -52,6 +52,7 @@ set(
 	DLL_TARGETS
 	OpenKneeboard-Injection-Bootstrapper
 	OpenKneeboard-AutoInject-Marker
+  OpenKneeboard-TabletProxy
 	OpenKneeboard-nonvr-d3d11
 	OpenKneeboard-oculus-d3d11
 	OpenKneeboard-oculus-d3d12

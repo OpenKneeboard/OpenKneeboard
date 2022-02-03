@@ -22,6 +22,8 @@
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 
+#include <functional>
+
 #include "InjectedDLLMain.h"
 
 namespace OpenKneeboard {
@@ -41,8 +43,12 @@ class TabletProxy final {
 
  private:
   void Initialize();
+  void Detach();
+  void WatchForEnvironmentChanges(std::stop_token);
+
   static HWND FindMainWindow();
   bool mInitialized = false;
+  std::jthread mWatchThread;
 
   static WNDPROC mWindowProc;
   static HWND mTargetWindow;
@@ -60,14 +66,18 @@ std::unique_ptr<WintabTablet> TabletProxy::mTablet;
 
 TabletProxy::TabletProxy() {
   Initialize();
+
+  mWatchThread
+    = {std::bind_front(&TabletProxy::WatchForEnvironmentChanges, this)};
 }
 
 TabletProxy::~TabletProxy() {
-  if (!mInitialized) {
-    return;
+  mWatchThread.request_stop();
+  if (mWatchThread.joinable()) {
+    mWatchThread.join();
   }
-  SetWindowLongPtr(
-    mTargetWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mWindowProc));
+
+  Detach();
 }
 
 void TabletProxy::Initialize() {
@@ -98,6 +108,35 @@ void TabletProxy::Initialize() {
     return;
   }
   mInitialized = true;
+}
+
+void TabletProxy::WatchForEnvironmentChanges(std::stop_token stop) {
+  while (!(mInitialized || stop.stop_requested())) {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    Initialize();
+  }
+  // Maybe we previously attached to a splash screen
+  while (!stop.stop_requested()) {
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    if (FindMainWindow() == mTargetWindow) {
+      continue;
+    }
+    Detach();
+    Initialize();
+  }
+}
+
+void TabletProxy::Detach() {
+  if (!mInitialized) {
+    return;
+  }
+
+  SetWindowLongPtr(
+    mTargetWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mWindowProc));
+  mTargetWindow = {};
+  mWindowProc = {};
+  mTablet = {};
+  mInitialized = false;
 }
 
 LRESULT TabletProxy::HookedWindowProc(
@@ -163,6 +202,7 @@ DWORD WINAPI ThreadEntry(LPVOID ignored) {
   dprint("Installed Tablet Proxy");
   return S_OK;
 }
+
 }// namespace
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {

@@ -14,6 +14,9 @@ const std::filesystem::path AUTOINJECT_MARKER_DLL(
 const std::filesystem::path INJECTION_BOOTSTRAPPER_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-Injection-Bootstrapper>");
 
+const std::filesystem::path TABLET_PROXY_DLL(
+  "$<TARGET_FILE_NAME:OpenKneeboard-TabletProxy>");
+
 const std::filesystem::path NON_VR_D3D11_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-nonvr-d3d11>");
 
