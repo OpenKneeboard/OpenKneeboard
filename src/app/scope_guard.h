@@ -14,27 +14,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
-#include <shims/wx.h>
+#pragma once
 
-#include "okMainWindow.h"
+#include <functional>
 
-class OpenKneeboardApp final : public wxApp {
+namespace OpenKneeboard {
+
+/// Alternative to wxScopeGuard that doesn't swallow exceptions
+class scope_guard final {
+ private:
+  std::function<void()> mCallback;
+
  public:
-  virtual bool OnInit() override {
-    wxInitAllImageHandlers();
-    (new okMainWindow())->Show();
-    return true;
-  }
+  scope_guard(std::function<void()> f);
+  ~scope_guard();
 
-  virtual bool OnExceptionInMainLoop() override {
-    throw;
-  }
-
-  virtual void OnUnhandledException() override {
-    throw;
-  }
+  scope_guard(const scope_guard& other) = delete;
+  scope_guard& operator=(const scope_guard&) = delete;
 };
 
-wxIMPLEMENT_APP(OpenKneeboardApp);
+}// namespace OpenKneeboard

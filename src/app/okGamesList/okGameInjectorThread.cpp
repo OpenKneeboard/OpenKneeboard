@@ -28,6 +28,7 @@
 #include <mutex>
 
 #include "okEvents.h"
+#include "scope_guard.h"
 
 using namespace OpenKneeboard;
 
@@ -141,7 +142,8 @@ bool InjectDll(HANDLE process, const std::filesystem::path& _dll) {
     return false;
   }
 
-  wxON_BLOCK_EXIT0([=]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
+  const auto cleanup
+    = scope_guard([&]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
   WriteProcessMemory(
     process, targetBuffer, dllStr.c_str(), dllStrByteLen, nullptr);
 
