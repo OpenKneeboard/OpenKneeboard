@@ -151,13 +151,13 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
 
         const auto clientRect = mSHMRenderer->GetClientRect();
         CursorEvent event {
-          .TouchState = (state.buttons & 1)
+          .TouchState = (state.penButtons & 1)
             ? CursorTouchState::TOUCHING_SURFACE
             : CursorTouchState::NEAR_SURFACE,
           .x = x - clientRect.left,
           .y = y - clientRect.top,
           .pressure = pressure,
-          .buttons = state.buttons,
+          .buttons = state.penButtons,
         };
 
         if (

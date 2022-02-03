@@ -33,7 +33,8 @@ class WintabTablet final {
   };
   struct State {
     bool active = false;
-    uint32_t x, y, pressure, buttons;
+    uint32_t x = 0, y = 0, pressure = 0;
+    uint16_t penButtons = 0, tabletButtons = 0;
   };
 
   WintabTablet(HWND window);

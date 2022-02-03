@@ -18,14 +18,15 @@
  * USA.
  */
 
-#define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE)
-#define PACKETMODE 0
 
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/dprint.h>
 
 // clang-format off
 #include <wintab/WINTAB.h>
+#define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE)
+#define PACKETMODE 0
+#define PACKETEXPKEYS PKEXT_ABSOLUTE
 #include <wintab/PKTDEF.h>
 // clang-format on
 
@@ -170,7 +171,8 @@ WintabTablet::Impl::~Impl() {
 }
 
 bool WintabTablet::CanProcessMessage(UINT message) const {
-  return message == WT_PROXIMITY || message == WT_PACKET;
+  return message == WT_PROXIMITY || message == WT_PACKET
+    || message == WT_PACKETEXT;
 }
 
 bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
@@ -181,6 +183,10 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     return true;
   }
 
+  // Use the context from the param instead of our stored context so we
+  // can also handle messages forwarded from another window/process,
+  // e.g. the game :)
+
   if (message == WT_PACKET) {
     PACKET packet;
     auto ctx = reinterpret_cast<HCTX>(lParam);
@@ -190,7 +196,22 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     p->mState.x = packet.pkX;
     p->mState.y = packet.pkY;
     p->mState.pressure = packet.pkNormalPressure;
-    p->mState.buttons = packet.pkButtons;
+    p->mState.penButtons = packet.pkButtons;
+    return true;
+  }
+
+  if (message == WT_PACKETEXT) {
+    PACKETEXT packet;
+    auto ctx = reinterpret_cast<HCTX>(lParam);
+    if (!p->mWintab.WTPacket(ctx, static_cast<UINT>(wParam), &packet)) {
+      return false;
+    }
+    const uint16_t mask = 1ui16 << packet.pkExpKeys.nControl;
+    if (packet.pkExpKeys.nState) {
+      p->mState.tabletButtons |= mask;
+    } else {
+      p->mState.tabletButtons &= ~mask;
+    }
     return true;
   }
 
