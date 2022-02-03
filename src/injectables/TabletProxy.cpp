@@ -23,6 +23,8 @@
 #include <Windows.h>
 
 #include <functional>
+#include <stop_token>
+#include <thread>
 
 #include "InjectedDLLMain.h"
 
