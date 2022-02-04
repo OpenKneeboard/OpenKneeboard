@@ -31,8 +31,7 @@ add_compile_definitions(
   "BUILD_CONFIG=\"$<CONFIG>\""
 )
 
-# Needed by c++/winrt in some environments/with some windows SDK versions
-link_libraries(WindowsApp.lib)
+link_libraries(cppwinrt)
 
 add_subdirectory(lib)
 
