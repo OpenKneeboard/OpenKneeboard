@@ -99,16 +99,16 @@ class ExtractedMission final {
 
 class DCSMissionTab::Impl final {
  public:
-  std::filesystem::path mission;
-  std::unique_ptr<ExtractedMission> extracted;
-  std::unique_ptr<FolderTab> delegate;
+  std::filesystem::path mMission;
+  std::unique_ptr<ExtractedMission> mExtracted;
+  std::unique_ptr<FolderTab> mDelegate;
 };
 
 DCSMissionTab::DCSMissionTab(const DXResources& dxr)
   : DCSTab(dxr, _("Mission")), p(std::make_shared<Impl>()) {
-  p->delegate
+  p->mDelegate
     = std::make_unique<FolderTab>(dxr, wxString {}, std::filesystem::path {});
-  p->delegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
+  p->mDelegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
     wxQueueEvent(this, ev.Clone());
   });
 }
@@ -117,23 +117,23 @@ DCSMissionTab::~DCSMissionTab() {
 }
 
 void DCSMissionTab::Reload() {
-  p->extracted = std::make_unique<ExtractedMission>(p->mission);
-  p->delegate->SetPath(p->extracted->GetExtractedPath());
-  p->delegate->Reload();
+  p->mExtracted = std::make_unique<ExtractedMission>(p->mMission);
+  p->mDelegate->SetPath(p->mExtracted->GetExtractedPath());
+  p->mDelegate->Reload();
 }
 
 uint16_t DCSMissionTab::GetPageCount() const {
-  return p->delegate->GetPageCount();
+  return p->mDelegate->GetPageCount();
 }
 
 void DCSMissionTab::RenderPageContent(
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  p->delegate->RenderPage(pageIndex, rect);
+  p->mDelegate->RenderPage(pageIndex, rect);
 }
 
 D2D1_SIZE_U DCSMissionTab::GetPreferredPixelSize(uint16_t pageIndex) {
-  return p->delegate->GetPreferredPixelSize(pageIndex);
+  return p->mDelegate->GetPreferredPixelSize(pageIndex);
 }
 
 const char* DCSMissionTab::GetGameEventName() const {
@@ -146,10 +146,10 @@ void DCSMissionTab::Update(
   const std::string& value) {
   dprintf("Mission: {}", value);
   auto mission = std::filesystem::canonical(value);
-  if (mission == p->mission) {
+  if (mission == p->mMission) {
     return;
   }
-  p->mission = mission;
+  p->mMission = mission;
   this->Reload();
 }
 

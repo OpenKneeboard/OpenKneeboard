@@ -138,16 +138,16 @@ namespace OpenKneeboard {
 class DCSTab::Impl final {
  public:
   struct Config final {
-    std::filesystem::path installPath;
-    std::filesystem::path savedGamesPath;
-    std::string value;
+    std::filesystem::path mInstallPath;
+    std::filesystem::path mSavedGamesPath;
+    std::string mValue;
     bool operator==(const Config&) const = default;
   };
 
-  Config currentConfig;
-  Config lastValidConfig;
+  Config mCurrentConfig;
+  Config mLastValidConfig;
 
-  std::string lastValue;
+  std::string mLastValue;
 };
 
 DCSTab::DCSTab(const DXResources& dxr, const wxString& title)
@@ -160,19 +160,19 @@ DCSTab::~DCSTab() {
 
 void DCSTab::OnGameEvent(const GameEvent& event) {
   if (event.name == this->GetGameEventName()) {
-    p->currentConfig.value = event.value;
+    p->mCurrentConfig.mValue = event.value;
     Update();
     return;
   }
 
   if (event.name == DCS::EVT_INSTALL_PATH) {
-    p->currentConfig.installPath = std::filesystem::canonical(event.value);
+    p->mCurrentConfig.mInstallPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
 
   if (event.name == DCS::EVT_SAVED_GAMES_PATH) {
-    p->currentConfig.savedGamesPath = std::filesystem::canonical(event.value);
+    p->mCurrentConfig.mSavedGamesPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
@@ -184,25 +184,25 @@ void DCSTab::OnGameEvent(const GameEvent& event) {
 }
 
 void DCSTab::Update() {
-  auto c = p->currentConfig;
-  if (c == p->lastValidConfig) {
+  auto c = p->mCurrentConfig;
+  if (c == p->mLastValidConfig) {
     return;
   }
 
-  if (c.installPath.empty()) {
+  if (c.mInstallPath.empty()) {
     return;
   }
 
-  if (c.savedGamesPath.empty()) {
+  if (c.mSavedGamesPath.empty()) {
     return;
   }
 
-  if (c.value == p->lastValue) {
+  if (c.mValue == p->mLastValue) {
     return;
   }
-  p->lastValue = c.value;
+  p->mLastValue = c.mValue;
 
-  this->Update(c.installPath, c.savedGamesPath, c.value);
+  this->Update(c.mInstallPath, c.mSavedGamesPath, c.mValue);
 }
 
 void DCSTab::OnSimulationStart() {

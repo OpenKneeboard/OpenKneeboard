@@ -233,24 +233,24 @@ Snapshot::operator bool() const {
 
 class Impl {
  public:
-  HANDLE Handle;
-  std::byte* Mapping = nullptr;
-  Header* Header = nullptr;
+  HANDLE mHandle;
+  std::byte* mMapping = nullptr;
+  Header* mHeader = nullptr;
 
   ~Impl() {
-    UnmapViewOfFile(Mapping);
-    CloseHandle(Handle);
+    UnmapViewOfFile(mMapping);
+    CloseHandle(mHandle);
   }
 };
 
 class Writer::Impl : public SHM::Impl {
  public:
   using SHM::Impl::Impl;
-  bool HaveFed = false;
+  bool mHaveFed = false;
 
   ~Impl() {
-    Header->flags &= ~HeaderFlags::FEEDER_ATTACHED;
-    FlushViewOfFile(Mapping, NULL);
+    mHeader->flags &= ~HeaderFlags::FEEDER_ATTACHED;
+    FlushViewOfFile(mMapping, NULL);
   }
 };
 
@@ -271,24 +271,24 @@ Writer::Writer() {
   }
 
   p = std::make_shared<Impl>();
-  p->Handle = handle;
-  p->Mapping = mapping;
-  p->Header = reinterpret_cast<Header*>(mapping);
+  p->mHandle = handle;
+  p->mMapping = mapping;
+  p->mHeader = reinterpret_cast<Header*>(mapping);
 }
 
 Writer::~Writer() {
 }
 
 UINT Writer::GetPreviousTextureKey() const {
-  return GetTextureKeyFromSequenceNumber(p->Header->sequenceNumber);
+  return GetTextureKeyFromSequenceNumber(p->mHeader->sequenceNumber);
 }
 
 UINT Writer::GetNextTextureKey() const {
-  return GetTextureKeyFromSequenceNumber(p->Header->sequenceNumber + 1);
+  return GetTextureKeyFromSequenceNumber(p->mHeader->sequenceNumber + 1);
 }
 
 UINT Writer::GetNextTextureIndex() const {
-  return (p->Header->sequenceNumber + 1) % TextureCount;
+  return (p->mHeader->sequenceNumber + 1) % TextureCount;
 }
 
 Reader::Reader() {
@@ -307,9 +307,9 @@ Reader::Reader() {
   }
 
   this->p.reset(new Impl {
-    .Handle = handle,
-    .Mapping = mapping,
-    .Header = reinterpret_cast<Header*>(mapping),
+    .mHandle = handle,
+    .mMapping = mapping,
+    .mHeader = reinterpret_cast<Header*>(mapping),
   });
 }
 
@@ -317,7 +317,7 @@ Reader::~Reader() {
 }
 
 Reader::operator bool() const {
-  return p && (p->Header->flags & HeaderFlags::FEEDER_ATTACHED);
+  return p && (p->mHeader->flags & HeaderFlags::FEEDER_ATTACHED);
 }
 
 Writer::operator bool() const {
@@ -325,7 +325,7 @@ Writer::operator bool() const {
 }
 
 uint32_t Reader::GetSequenceNumber() const {
-  return p->Header->sequenceNumber;
+  return p->mHeader->sequenceNumber;
 }
 
 Snapshot Reader::MaybeGet() const {
@@ -333,11 +333,11 @@ Snapshot Reader::MaybeGet() const {
     return {};
   }
 
-  Spinlock lock(p->Header, Spinlock::ON_FAILURE_CREATE_FALSEY);
+  Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_CREATE_FALSEY);
   if (!lock) {
     return {};
   }
-  return Snapshot(*p->Header);
+  return Snapshot(*p->mHeader);
 }
 
 void Writer::Update(const Config& config) {
@@ -349,10 +349,10 @@ void Writer::Update(const Config& config) {
     throw std::logic_error("Not feeding a 0-size image");
   }
 
-  Spinlock lock(p->Header, Spinlock::ON_FAILURE_FORCE_UNLOCK);
-  p->Header->config = config;
-  p->Header->sequenceNumber++;
-  p->Header->flags |= HeaderFlags::FEEDER_ATTACHED;
+  Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_FORCE_UNLOCK);
+  p->mHeader->config = config;
+  p->mHeader->sequenceNumber++;
+  p->mHeader->flags |= HeaderFlags::FEEDER_ATTACHED;
 }
 
 }// namespace OpenKneeboard::SHM

@@ -27,17 +27,17 @@ using namespace OpenKneeboard;
 
 class okTab::Impl final {
  public:
-  std::shared_ptr<Tab> tab;
-  okTabCanvas* canvas;
+  std::shared_ptr<Tab> mTab;
+  okTabCanvas* mCanvas;
 };
 
 okTab::okTab(
   wxWindow* parent,
   const DXResources& dxr,
   const std::shared_ptr<Tab>& tab)
-  : wxPanel(parent), p(new Impl {.tab = tab}) {
-  p->canvas = new okTabCanvas(this, dxr, tab);
-  auto canvas = p->canvas;
+  : wxPanel(parent), p(new Impl {.mTab = tab}) {
+  p->mCanvas = new okTabCanvas(this, dxr, tab);
+  auto canvas = p->mCanvas;
 
   auto buttonBox = new wxPanel(this);
   auto firstPage = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
@@ -55,7 +55,7 @@ okTab::okTab(
   buttonBox->SetSizer(buttonSizer);
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
-  sizer->Add(p->canvas, 1, wxEXPAND);
+  sizer->Add(p->mCanvas, 1, wxEXPAND);
   sizer->Add(buttonBox, 0, wxEXPAND);
   this->SetSizerAndFit(sizer);
 }
@@ -64,21 +64,21 @@ okTab::~okTab() {
 }
 
 std::shared_ptr<Tab> okTab::GetTab() const {
-  return p->tab;
+  return p->mTab;
 }
 
 uint16_t okTab::GetPageIndex() const {
-  return p->canvas->GetPageIndex();
+  return p->mCanvas->GetPageIndex();
 }
 
 void okTab::OnCursorEvent(const CursorEvent& ev) {
-  p->canvas->OnCursorEvent(ev);
+  p->mCanvas->OnCursorEvent(ev);
 }
 
 void okTab::PreviousPage() {
-  p->canvas->PreviousPage();
+  p->mCanvas->PreviousPage();
 }
 
 void okTab::NextPage() {
-  p->canvas->NextPage();
+  p->mCanvas->NextPage();
 }

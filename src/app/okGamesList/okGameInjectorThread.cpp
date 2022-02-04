@@ -34,17 +34,17 @@ using namespace OpenKneeboard;
 
 class okGameInjectorThread::Impl final {
  public:
-  wxEvtHandler* receiver;
-  std::vector<GameInstance> games;
-  std::mutex gamesMutex;
+  wxEvtHandler* mReceiver;
+  std::vector<GameInstance> mGames;
+  std::mutex mGamesMutex;
 };
 
 okGameInjectorThread::okGameInjectorThread(
   wxEvtHandler* receiver,
   const std::vector<GameInstance>& games) {
   p.reset(new Impl {
-    .receiver = receiver,
-    .games = games,
+    .mReceiver = receiver,
+    .mGames = games,
   });
 }
 
@@ -53,8 +53,8 @@ okGameInjectorThread::~okGameInjectorThread() {
 
 void okGameInjectorThread::SetGameInstances(
   const std::vector<GameInstance>& games) {
-  std::scoped_lock lock(p->gamesMutex);
-  p->games = games;
+  std::scoped_lock lock(p->mGamesMutex);
+  p->mGames = games;
 }
 
 namespace {
@@ -229,8 +229,8 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
       auto path = std::filesystem::canonical(std::wstring(buf, bufSize));
 
-      std::scoped_lock lock(p->gamesMutex);
-      for (const auto& game: p->games) {
+      std::scoped_lock lock(p->mGamesMutex);
+      for (const auto& game: p->mGames) {
         if (path != game.path) {
           continue;
         }
@@ -241,7 +241,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
             currentPath = path;
             wxCommandEvent ev(okEVT_GAME_CHANGED);
             ev.SetString(path.wstring());
-            wxQueueEvent(p->receiver, ev.Clone());
+            wxQueueEvent(p->mReceiver, ev.Clone());
           }
           break;
         }
@@ -268,7 +268,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
         currentPath = path;
         wxCommandEvent ev(okEVT_GAME_CHANGED);
         ev.SetString(path.wstring());
-        wxQueueEvent(p->receiver, ev.Clone());
+        wxQueueEvent(p->mReceiver, ev.Clone());
         break;
       }
     } while (Process32Next(snapshot.get(), &process));

@@ -32,18 +32,18 @@ static BOOL WINAPI ExitHandler(DWORD ignored) {
 
 class ConsoleLoopCondition::Impl final {
  public:
-  HANDLE TimerEvent = nullptr;
+  HANDLE mTimerEvent = nullptr;
 };
 
 ConsoleLoopCondition::ConsoleLoopCondition() : p(std::make_shared<Impl>()) {
   gExitEvent = CreateEvent(nullptr, false, false, nullptr);
-  p->TimerEvent = CreateWaitableTimer(nullptr, true, nullptr);
+  p->mTimerEvent = CreateWaitableTimer(nullptr, true, nullptr);
   SetConsoleCtrlHandler(&ExitHandler, true);
 }
 
 ConsoleLoopCondition::~ConsoleLoopCondition() {
   SetConsoleCtrlHandler(&ExitHandler, false);
-  CloseHandle(p->TimerEvent);
+  CloseHandle(p->mTimerEvent);
   CloseHandle(gExitEvent);
 }
 
@@ -59,13 +59,13 @@ bool ConsoleLoopCondition::Sleep(
   GetSystemTimeAsFileTime((FILETIME*)&expiration);
   expiration += std::chrono::duration_cast<FILETIME_RESOLUTION>(delay).count();
   SetWaitableTimer(
-    p->TimerEvent, (LARGE_INTEGER*)&expiration, 0, nullptr, nullptr, false);
+    p->mTimerEvent, (LARGE_INTEGER*)&expiration, 0, nullptr, nullptr, false);
 
-  HANDLE handles[] = {gExitEvent, p->TimerEvent};
+  HANDLE handles[] = {gExitEvent, p->mTimerEvent};
   auto res = WaitForMultipleObjects(
     sizeof(handles) / sizeof(handles[0]), handles, false, INFINITE);
   if (handles[res - WAIT_OBJECT_0] == gExitEvent) {
-    CancelWaitableTimer(p->TimerEvent);
+    CancelWaitableTimer(p->mTimerEvent);
     return false;
   }
   return true;
