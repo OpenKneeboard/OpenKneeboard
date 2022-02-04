@@ -19,6 +19,7 @@ target_link_libraries(cppwinrt INTERFACE WindowsApp.lib)
 ExternalProject_Get_property(cppwinrtBuild BINARY_DIR)
 target_include_directories(cppwinrt INTERFACE "${BINARY_DIR}/include")
 
+ExternalProject_Get_property(cppwinrtBuild SOURCE_DIR)
 install(
   FILES
   "${SOURCE_DIR}/LICENSE"
