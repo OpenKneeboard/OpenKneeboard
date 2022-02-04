@@ -1,5 +1,4 @@
 include(detours.cmake)
-include(cppwinrt.cmake)
 include(directxtk.cmake)
 include(directxtk12.cmake)
 include(fmt.cmake)

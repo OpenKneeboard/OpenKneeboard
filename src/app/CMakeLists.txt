@@ -11,6 +11,9 @@ target_link_libraries(
   OpenKneeboard
   PRIVATE
   D2d1
+  directxtk
+  games
+  json
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-tablets
@@ -20,10 +23,6 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-version
-  cppwinrt
-  directxtk
-  games
-  json
   openvr
   wx::base
   wx::core)
@@ -51,14 +50,14 @@ set(
 install(FILES "${RUNTIME_FILES}" TYPE BIN)
 
 set(
-  DLL_TARGETS
-  OpenKneeboard-Injection-Bootstrapper
-  OpenKneeboard-AutoInject-Marker
+	DLL_TARGETS
+	OpenKneeboard-Injection-Bootstrapper
+	OpenKneeboard-AutoInject-Marker
   OpenKneeboard-TabletProxy
-  OpenKneeboard-nonvr-d3d11
-  OpenKneeboard-oculus-d3d11
-  OpenKneeboard-oculus-d3d12
-  OpenKneeboard-dcs-ext-dll
+	OpenKneeboard-nonvr-d3d11
+	OpenKneeboard-oculus-d3d11
+	OpenKneeboard-oculus-d3d12
+	OpenKneeboard-dcs-ext-dll
 )
 install(TARGETS ${DLL_TARGETS} LIBRARY DESTINATION bin)
 

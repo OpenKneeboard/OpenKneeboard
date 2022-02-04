@@ -15,6 +15,7 @@ include(CPack)
 if (MSVC)
   add_compile_options(
     "/Zc:__cplusplus"
+    "/await"
     # Lots of legacy C functions are unsafe, and raise warnings in wxwidgets
     "/wd4996"
     # Basically expected when you do diamond inheritance that isn't entirely pure virtuals
