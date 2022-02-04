@@ -21,11 +21,13 @@
 #include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
 
+#include <OpenKneeboard/DXResources.h>
 #include "okEvents.h"
 
 namespace OpenKneeboard {
 class FolderTab::Impl final {
  public:
+  // TODO: naming consistency
   struct Page {
     std::filesystem::path path;
     unsigned int width = 0;
@@ -36,6 +38,7 @@ class FolderTab::Impl final {
       return !pixels.empty();
     }
   };
+  DXResources dxr;
   winrt::com_ptr<IWICImagingFactory> wic;
   std::filesystem::path path;
   std::vector<Page> pages = {};
@@ -49,6 +52,7 @@ FolderTab::FolderTab(
   const std::filesystem::path& path)
   : Tab(dxr, title),
     p(new Impl {
+      .dxr = dxr,
       .wic
       = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
       .path = path}) {
@@ -107,10 +111,7 @@ D2D1_SIZE_U FolderTab::GetPreferredPixelSize(uint16_t index) {
   return {page.width, page.height};
 }
 
-void FolderTab::RenderPageContent(
-  uint16_t index,
-  const winrt::com_ptr<ID2D1RenderTarget>& rt,
-  const D2D1_RECT_F& rect) {
+void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
   if (!IsValidPageIndex(index, GetPageCount())) {
     return;
   }
@@ -123,7 +124,8 @@ void FolderTab::RenderPageContent(
   }
 
   winrt::com_ptr<ID2D1Bitmap> bmp;
-  rt->CreateBitmap(
+  auto ctx = p->dxr.mD2DDeviceContext;
+  ctx->CreateBitmap(
     {page.width, page.height},
     reinterpret_cast<const void*>(page.pixels.data()),
     page.width * 4,
@@ -143,11 +145,11 @@ void FolderTab::RenderPageContent(
   const auto renderLeft = rect.left + ((targetWidth - renderWidth) / 2);
   const auto renderTop = rect.top + ((targetHeight - renderHeight) / 2);
 
-  rt->DrawBitmap(
+  ctx->DrawBitmap(
     bmp.get(),
     {renderLeft, renderTop, renderLeft + renderWidth, renderTop + renderHeight},
     1.0f,
-    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR);
+    D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
 bool FolderTab::Impl::LoadPage(uint16_t index) {

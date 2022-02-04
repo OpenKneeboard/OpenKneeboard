@@ -26,6 +26,7 @@
 
 #include <algorithm>
 
+#include <OpenKneeboard/DXResources.h>
 #include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;
@@ -52,7 +53,7 @@ class DCSRadioLogTab::Impl final {
   int mColumns = -1;
   int mRows = -1;
 
-  winrt::com_ptr<ID2D1Factory> mD2DF;
+  DXResources mDXR;
   winrt::com_ptr<IDWriteFactory> mDWF;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
 
@@ -63,6 +64,7 @@ class DCSRadioLogTab::Impl final {
 
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
   : DCSTab(dxr, _("Radio Log")), p(std::make_unique<Impl>(this)) {
+    p->mDXR = dxr;
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
@@ -89,7 +91,6 @@ D2D1_SIZE_U DCSRadioLogTab::GetPreferredPixelSize(uint16_t pageIndex) {
 
 void DCSRadioLogTab::RenderPageContent(
   uint16_t pageIndex,
-  const winrt::com_ptr<ID2D1RenderTarget>& rt,
   const D2D1_RECT_F& rect) {
   p->LayoutMessages();
 
@@ -102,7 +103,8 @@ void DCSRadioLogTab::RenderPageContent(
   const D2D1_SIZE_F renderSize {
     scale * virtualSize.width, scale * virtualSize.height};
 
-  rt->SetTransform(
+  auto ctx = p->mDXR.mD2DDeviceContext;
+  ctx->SetTransform(
     D2D1::Matrix3x2F::Scale(scale, scale)
     * D2D1::Matrix3x2F::Translation(
       rect.left + ((canvasSize.width - renderSize.width) / 2),
@@ -111,11 +113,11 @@ void DCSRadioLogTab::RenderPageContent(
   winrt::com_ptr<ID2D1SolidColorBrush> background;
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> footerBrush;
-  rt->CreateSolidColorBrush({1.0f, 1.0f, 1.0f, 1.0f}, background.put());
-  rt->CreateSolidColorBrush({0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
-  rt->CreateSolidColorBrush({0.5f, 0.5f, 0.5f, 1.0f}, footerBrush.put());
+  ctx->CreateSolidColorBrush({1.0f, 1.0f, 1.0f, 1.0f}, background.put());
+  ctx->CreateSolidColorBrush({0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
+  ctx->CreateSolidColorBrush({0.5f, 0.5f, 0.5f, 1.0f}, footerBrush.put());
 
-  rt->FillRectangle(
+  ctx->FillRectangle(
     {0.0f,
      0.0f,
      static_cast<float>(virtualSize.width),
@@ -126,7 +128,7 @@ void DCSRadioLogTab::RenderPageContent(
   textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
   if (p->mCurrentPageLines.empty()) {
     auto message = _("[waiting for radio messages]").ToStdWstring();
-    rt->DrawTextW(
+    ctx->DrawTextW(
       message.data(),
       static_cast<UINT32>(message.size()),
       textFormat,
@@ -143,7 +145,7 @@ void DCSRadioLogTab::RenderPageContent(
 
   D2D_POINT_2F point {p->mPadding, p->mPadding};
   for (const auto& line: lines) {
-    rt->DrawTextW(
+    ctx->DrawTextW(
       line.data(),
       static_cast<UINT32>(line.size()),
       textFormat,
@@ -156,7 +158,7 @@ void DCSRadioLogTab::RenderPageContent(
 
   if (pageIndex > 0) {
     std::wstring text(L"<<<<<");
-    rt->DrawTextW(
+    ctx->DrawTextW(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
@@ -172,7 +174,7 @@ void DCSRadioLogTab::RenderPageContent(
       _("Page {} of {}").ToStdWstring(), pageIndex + 1, GetPageCount());
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-    rt->DrawTextW(
+    ctx->DrawTextW(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
@@ -187,7 +189,7 @@ void DCSRadioLogTab::RenderPageContent(
     std::wstring text(L">>>>>");
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-    rt->DrawTextW(
+    ctx->DrawTextW(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
@@ -323,7 +325,6 @@ void DCSRadioLogTab::OnSimulationStart() {
 }
 
 DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab) : mTab(tab) {
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2DF.put());
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),

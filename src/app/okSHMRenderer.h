@@ -37,7 +37,7 @@ class okSHMRenderer final {
 
  public:
   okSHMRenderer() = delete;
-  okSHMRenderer(HWND feederWindow, const OpenKneeboard::DXResources&);
+  okSHMRenderer(const OpenKneeboard::DXResources&, HWND feederWindow);
   ~okSHMRenderer();
 
   void SetCursorPosition(float x, float y);

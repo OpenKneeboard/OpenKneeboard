@@ -40,6 +40,8 @@ namespace OpenKneeboard {
 struct DXResources {
   winrt::com_ptr<ID3D11Device2> mD3DDevice;
   winrt::com_ptr<IDXGIDevice2> mDXGIDevice;
+  winrt::com_ptr<ID2D1Device> mD2DDevice;
+  winrt::com_ptr<ID2D1DeviceContext> mD2DDeviceContext;
 
   winrt::com_ptr<ID2D1Factory> mD2DFactory;
   winrt::com_ptr<IDXGIFactory2> mDXGIFactory;

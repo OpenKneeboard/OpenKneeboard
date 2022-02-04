@@ -37,7 +37,6 @@ class DCSAircraftTab final : public DCSTab {
   virtual const char* GetGameEventName() const override;
   virtual void RenderPageContent(
     uint16_t pageIndex,
-    const winrt::com_ptr<ID2D1RenderTarget>& target,
     const D2D1_RECT_F& rect) override;
   virtual void Update(
     const std::filesystem::path&,

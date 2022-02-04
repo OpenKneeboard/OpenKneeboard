@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <Unknwn.h>
@@ -22,22 +23,19 @@
 
 namespace OpenKneeboard {
 
-class D2DErrorRenderer::Impl final {
- public:
-  winrt::com_ptr<ID2D1Factory> d2d;
+// TODO: naming conventions
+struct D2DErrorRenderer::Impl final {
+  winrt::com_ptr<ID2D1DeviceContext> ctx;
   winrt::com_ptr<IDWriteFactory> dwrite;
-
   winrt::com_ptr<IDWriteTextFormat> textFormat;
-
-  winrt::com_ptr<ID2D1RenderTarget> rt;
-  struct {
-    winrt::com_ptr<ID2D1Brush> textBrush;
-  } rtVar;
+  winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
 };
 
-D2DErrorRenderer::D2DErrorRenderer(const winrt::com_ptr<ID2D1Factory>& d2df)
+D2DErrorRenderer::D2DErrorRenderer(
+  const winrt::com_ptr<ID2D1DeviceContext>& ctx)
   : p(std::make_unique<Impl>()) {
-  p->d2d = d2df;
+  p->ctx = ctx;
+
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
@@ -52,24 +50,11 @@ D2DErrorRenderer::D2DErrorRenderer(const winrt::com_ptr<ID2D1Factory>& d2df)
     16.0f,
     L"",
     p->textFormat.put());
-}
 
-void D2DErrorRenderer::SetRenderTarget(
-  const winrt::com_ptr<ID2D1RenderTarget>& rt) {
-  if (rt == p->rt) {
-    return;
-  }
-
-  p->rt = rt;
-  p->rtVar = {};
-  if (!rt) {
-    return;
-  }
-
-  rt->CreateSolidColorBrush(
+  ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->rtVar.textBrush.put()));
+    p->textBrush.put());
 }
 
 D2DErrorRenderer::~D2DErrorRenderer() {
@@ -95,11 +80,11 @@ void D2DErrorRenderer::Render(
 
   const auto textWidth = metrics.width, textHeight = metrics.height;
 
-  p->rt->DrawTextLayout(
+  p->ctx->DrawTextLayout(
     {where.left + ((canvasWidth - textWidth) / 2),
      where.top + ((canvasHeight - textHeight) / 2)},
     textLayout.get(),
-    p->rtVar.textBrush.get());
+    p->textBrush.get());
 }
 
 }// namespace OpenKneeboard

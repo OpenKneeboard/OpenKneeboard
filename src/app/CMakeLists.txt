@@ -12,12 +12,13 @@ target_link_libraries(
   PRIVATE
   D2d1
   directxtk
-  OpenKneeboard-config
-  OpenKneeboard-dprint
-  OpenKneeboard-GameEvent
-  OpenKneeboard-tablets
   games
   json
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+  OpenKneeboard-tablets
+  OpenKneeboard-DXResources
+  OpenKneeboard-GameEvent
   OpenKneeboard-SHM
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-D2DErrorRenderer

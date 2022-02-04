@@ -19,6 +19,7 @@
  */
 #include <D2d1.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/SHM.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
@@ -47,37 +48,17 @@ class Canvas final : public wxWindow {
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
 
-  winrt::com_ptr<ID3D11Device> mD3d;
-  winrt::com_ptr<ID3D11DeviceContext> mD3dContext;
+  DXResources mDXR;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
-  winrt::com_ptr<ID2D1Factory> mD2df;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
-  winrt::com_ptr<IDXGIFactory2> mDXGI;
 
  public:
   Canvas(wxWindow* parent)
     : wxWindow(parent, wxID_ANY, wxDefaultPosition, {768 / 2, 1024 / 2}) {
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2df.put());
-    UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-#ifdef DEBUG
-    d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-    auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
-    D3D11CreateDevice(
-      nullptr,
-      D3D_DRIVER_TYPE_HARDWARE,
-      nullptr,
-      d3dFlags,
-      &d3dLevel,
-      1,
-      D3D11_SDK_VERSION,
-      mD3d.put(),
-      nullptr,
-      mD3dContext.put());
-    CreateDXGIFactory(IID_PPV_ARGS(mDXGI.put()));
+    mDXR = DXResources::Create();
 
-    mErrorRenderer = std::make_unique<D2DErrorRenderer>(mD2df);
+    mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext);
 
     Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
     Bind(wxEVT_ERASE_BACKGROUND, [this](auto&) {});
@@ -113,8 +94,7 @@ class Canvas final : public wxWindow {
         return;
       }
       mBackgroundBrush = nullptr;
-      mErrorRenderer->SetRenderTarget(nullptr);
-      mD3dContext->ClearState();
+      mDXR.mD2DDeviceContext->SetTarget(nullptr);
       mSwapChain->ResizeBuffers(
         desc.BufferCount,
         desiredSize.x,
@@ -135,8 +115,8 @@ class Canvas final : public wxWindow {
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
       .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
     };
-    mDXGI->CreateSwapChainForHwnd(
-      mD3d.get(),
+    mDXR.mDXGIFactory->CreateSwapChainForHwnd(
+      mDXR.mD3DDevice.get(),
       this->GetHWND(),
       &swapChainDesc,
       nullptr,
@@ -155,14 +135,11 @@ class Canvas final : public wxWindow {
 
     winrt::com_ptr<IDXGISurface> surface;
     mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
-    winrt::com_ptr<ID2D1RenderTarget> rt;
-    auto ret = mD2df->CreateDxgiSurfaceRenderTarget(
-      surface.get(),
-      {.type = D2D1_RENDER_TARGET_TYPE_HARDWARE,
-       .pixelFormat = {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
-      rt.put());
-
-    mErrorRenderer->SetRenderTarget(rt);
+    auto ctx = mDXR.mD2DDeviceContext;
+    winrt::com_ptr<ID2D1Bitmap1> bitmap;
+    winrt::check_hresult(
+      ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
+    ctx->SetTarget(bitmap.get());
 
     if (!mBackgroundBrush) {
       winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
@@ -174,7 +151,7 @@ class Canvas final : public wxWindow {
           pixels[x + (20 * y)] = {value, value, value, 0xff};
         }
       }
-      rt->CreateBitmap(
+      ctx->CreateBitmap(
         {20, 20},
         reinterpret_cast<BYTE*>(pixels),
         20 * sizeof(Pixel),
@@ -183,7 +160,7 @@ class Canvas final : public wxWindow {
         backgroundBitmap.put());
 
       mBackgroundBrush = nullptr;
-      rt->CreateBitmapBrush(
+      ctx->CreateBitmapBrush(
         backgroundBitmap.get(),
         D2D1::BitmapBrushProperties(
           D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
@@ -191,16 +168,16 @@ class Canvas final : public wxWindow {
     }
 
     bool present = true;
-    rt->BeginDraw();
+    ctx->BeginDraw();
     wxON_BLOCK_EXIT0([&]() {
-      rt->EndDraw();
+      ctx->EndDraw();
       if (present) {
         mSwapChain->Present(0, 0);
       }
     });
 
     auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    rt->Clear(
+    ctx->Clear(
       {wxBgColor.Red() / 255.0f,
        wxBgColor.Green() / 255.0f,
        wxBgColor.Blue() / 255.0f,
@@ -232,7 +209,7 @@ class Canvas final : public wxWindow {
       return;
     }
 
-    auto sharedTexture = snapshot.GetSharedTexture(mD3d.get());
+    auto sharedTexture = snapshot.GetSharedTexture(mDXR.mD3DDevice.get());
     if (!sharedTexture) {
       present = false;
       return;
@@ -240,7 +217,7 @@ class Canvas final : public wxWindow {
     auto sharedSurface = sharedTexture.GetSurface();
 
     wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
-    rt->Clear(
+    ctx->Clear(
       {wxBgColor.Red() / 255.0f,
        wxBgColor.Green() / 255.0f,
        wxBgColor.Blue() / 255.0f,
@@ -274,23 +251,23 @@ class Canvas final : public wxWindow {
       .dpiX = static_cast<FLOAT>(dpi),
       .dpiY = static_cast<FLOAT>(dpi),
     };
-    rt->CreateSharedBitmap(
+    ctx->CreateSharedBitmap(
       _uuidof(IDXGISurface), sharedSurface, &bitmapProperties, d2dBitmap.put());
 
     auto bg = mBackgroundBrush;
     // Align the top-left pixel of the brush
     bg->SetTransform(
       D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
-    rt->FillRectangle(pageRect, bg.get());
-    rt->SetTransform(D2D1::IdentityMatrix());
+    ctx->FillRectangle(pageRect, bg.get());
+    ctx->SetTransform(D2D1::IdentityMatrix());
 
-    rt->DrawBitmap(
+    ctx->DrawBitmap(
       d2dBitmap.get(),
       &pageRect,
       1.0f,
-      D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+      D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
       &sourceRect);
-    rt->Flush();
+    ctx->Flush();
 
     mLastSequenceNumber = snapshot.GetSequenceNumber();
   }

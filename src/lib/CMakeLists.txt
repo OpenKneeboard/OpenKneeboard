@@ -13,6 +13,9 @@ target_include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
+add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
+target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
+
 set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
 file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
 add_library(OpenKneeboard-RuntimeFiles STATIC "${RUNTIME_FILES_CPP}")

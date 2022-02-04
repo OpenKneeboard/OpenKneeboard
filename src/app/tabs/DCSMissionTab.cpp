@@ -128,9 +128,8 @@ uint16_t DCSMissionTab::GetPageCount() const {
 
 void DCSMissionTab::RenderPageContent(
   uint16_t pageIndex,
-  const winrt::com_ptr<ID2D1RenderTarget>& target,
   const D2D1_RECT_F& rect) {
-  p->delegate->RenderPage(pageIndex, target, rect);
+  p->delegate->RenderPage(pageIndex, rect);
 }
 
 D2D1_SIZE_U DCSMissionTab::GetPreferredPixelSize(uint16_t pageIndex) {

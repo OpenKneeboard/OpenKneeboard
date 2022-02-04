@@ -53,9 +53,8 @@ uint16_t DCSTerrainTab::GetPageCount() const {
 
 void DCSTerrainTab::RenderPageContent(
   uint16_t pageIndex,
-  const winrt::com_ptr<ID2D1RenderTarget>& target,
   const D2D1_RECT_F& rect) {
-  mDelegate->RenderPage(pageIndex, target, rect);
+  mDelegate->RenderPage(pageIndex, rect);
 }
 
 D2D1_SIZE_U DCSTerrainTab::GetPreferredPixelSize(uint16_t pageIndex) {

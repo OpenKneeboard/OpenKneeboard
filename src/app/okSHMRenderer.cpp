@@ -20,6 +20,7 @@
 #include "okSHMRenderer.h"
 
 #include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/config.h>
@@ -33,7 +34,7 @@
 #include <shims/wx.h>
 #include <wincodec.h>
 
-#include "DXResources.h"
+#include "scope_guard.h"
 
 using namespace OpenKneeboard;
 
@@ -52,14 +53,14 @@ class okSHMRenderer::Impl {
  public:
   HWND mFeederWindow;
   OpenKneeboard::SHM::Writer mSHM;
+  DXResources mDXR;
 
   winrt::com_ptr<IWICImagingFactory> mWIC;
-  winrt::com_ptr<ID2D1Factory> mD2D;
   winrt::com_ptr<IDWriteFactory> mDWrite;
-  winrt::com_ptr<ID3D11Device> mD3D;
+  // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
-  winrt::com_ptr<ID2D1RenderTarget> mRT;
+  winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
   D2D1_SIZE_U mUsedSize;
   D2D1_RECT_F mClientRect;
   bool mHaveCursor = false;
@@ -80,15 +81,10 @@ class okSHMRenderer::Impl {
   void RenderWithChrome(
     const wxString& tabTitle,
     const D2D1_SIZE_U& preferredContentSize,
-    const std::function<
-      void(const winrt::com_ptr<ID2D1RenderTarget>&, const D2D1_RECT_F&)>&
-      contentRenderer);
+    const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
 
  private:
-  void RenderErrorImpl(
-    const wxString& message,
-    const winrt::com_ptr<ID2D1RenderTarget>&,
-    const D2D1_RECT_F&);
+  void RenderErrorImpl(const wxString& message, const D2D1_RECT_F&);
 };
 
 void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
@@ -106,23 +102,10 @@ void okSHMRenderer::Impl::RenderError(
 
 void okSHMRenderer::Impl::RenderErrorImpl(
   const wxString& message,
-  const winrt::com_ptr<ID2D1RenderTarget>& rt,
   const D2D1_RECT_F& rect) {
-  auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-
-  rt->SetTransform(D2D1::Matrix3x2F::Identity());
-
-  if (!mErrorBGBrush) {
-    rt->CreateSolidColorBrush(
-      {
-        bg.Red() / 255.0f,
-        bg.Green() / 255.0f,
-        bg.Blue() / 255.0f,
-        bg.Alpha() / 255.0f,
-      },
-      reinterpret_cast<ID2D1SolidColorBrush**>(mErrorBGBrush.put()));
-  }
-  rt->FillRectangle(rect, mErrorBGBrush.get());
+  auto ctx = mDXR.mD2DDeviceContext;
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  ctx->FillRectangle(rect, mErrorBGBrush.get());
 
   mErrorRenderer->Render(message.ToStdWstring(), rect);
 }
@@ -150,19 +133,18 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   mSHM.Update(config);
 }
 
-okSHMRenderer::okSHMRenderer(HWND feederWindow, const DXResources& dxr)
+okSHMRenderer::okSHMRenderer(const DXResources& dxr, HWND feederWindow)
   : p(std::make_unique<Impl>()) {
   p->mFeederWindow = feederWindow;
-  p->mD3D = dxr.mD3DDevice;
-  p->mD2D = dxr.mD2DFactory;
+  p->mDXR = dxr;
   p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(p->mDWrite.put()));
-  p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(p->mD2D);
+  p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
 
-  p->mD3D->GetImmediateContext(p->mD3DContext.put());
+  dxr.mD3DDevice->GetImmediateContext(p->mD3DContext.put());
 
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
   D3D11_TEXTURE2D_DESC textureDesc {
@@ -175,14 +157,19 @@ okSHMRenderer::okSHMRenderer(HWND feederWindow, const DXResources& dxr)
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
     .MiscFlags = 0,
   };
-  p->mD3D->CreateTexture2D(&textureDesc, nullptr, p->mCanvasTexture.put());
+  winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
+    &textureDesc, nullptr, p->mCanvasTexture.put()));
+  winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+    p->mCanvasTexture.as<IDXGISurface>().get(),
+    nullptr,
+    p->mCanvasBitmap.put()));
 
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
   for (auto i = 0; i < TextureCount; ++i) {
     auto& it = p->mResources.at(i);
 
-    p->mD3D->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
+    dxr.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
     auto textureName = SHM::SharedTextureName(i);
     it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
       nullptr,
@@ -192,30 +179,30 @@ okSHMRenderer::okSHMRenderer(HWND feederWindow, const DXResources& dxr)
     it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
   }
 
-  auto surface = p->mCanvasTexture.as<IDXGISurface>();
-  p->mD2D->CreateDxgiSurfaceRenderTarget(
-    surface.get(),
-    D2D1::RenderTargetProperties(
-      D2D1_RENDER_TARGET_TYPE_HARDWARE,
-      D2D1::PixelFormat(
-        DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-    p->mRT.put());
-  p->mRT->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+  auto ctx = dxr.mD2DDeviceContext;
 
-  p->mErrorRenderer->SetRenderTarget(p->mRT);
-
-  p->mRT->CreateSolidColorBrush(
+  ctx->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.5f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mHeaderBGBrush.put()));
-  p->mRT->CreateSolidColorBrush(
+  ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mHeaderTextBrush.put()));
-  p->mRT->CreateSolidColorBrush(
+  ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 0.8f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mCursorBrush.put()));
+
+  auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+  ctx->CreateSolidColorBrush(
+    {
+      bg.Red() / 255.0f,
+      bg.Green() / 255.0f,
+      bg.Blue() / 255.0f,
+      bg.Alpha() / 255.0f,
+    },
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 }
 
 okSHMRenderer::~okSHMRenderer() {
@@ -269,9 +256,7 @@ void okSHMRenderer::Render(
 void okSHMRenderer::Impl::RenderWithChrome(
   const wxString& tabTitle,
   const D2D1_SIZE_U& pageSize,
-  const std::function<
-    void(const winrt::com_ptr<ID2D1RenderTarget>&, const D2D1_RECT_F&)>&
-    renderContent) {
+  const std::function<void(const D2D1_RECT_F&)>& renderContent) {
   const D2D1_SIZE_U headerSize {
     pageSize.width,
     static_cast<UINT>(pageSize.height * 0.05),
@@ -289,27 +274,26 @@ void okSHMRenderer::Impl::RenderWithChrome(
     .bottom = static_cast<float>(canvasSize.height),
   };
 
-  mRT->BeginDraw();
-  wxON_BLOCK_EXIT0([this]() {
-    auto err = mRT->EndDraw();
-    if (err) {
-      OPENKNEEBOARD_BREAK;
-    }
-    mRT->Flush();
+  auto ctx = mDXR.mD2DDeviceContext;
+  ctx->SetTarget(mCanvasBitmap.get());
+
+  ctx->BeginDraw();
+  const auto cleanup = scope_guard([&ctx, this]() {
+    winrt::check_hresult(ctx->EndDraw());
     this->CopyPixelsToSHM();
   });
-  mRT->Clear({0.0f, 0.0f, 0.0f, 0.0f});
+  ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
 
-  mRT->SetTransform(D2D1::Matrix3x2F::Identity());
-  renderContent(mRT, mClientRect);
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  renderContent(mClientRect);
 
-  mRT->SetTransform(D2D1::Matrix3x2F::Identity());
-  mRT->FillRectangle(
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  ctx->FillRectangle(
     {0.0f, 0.0f, float(headerSize.width), float(headerSize.height)},
     mHeaderBGBrush.get());
 
   FLOAT dpix, dpiy;
-  mRT->GetDpi(&dpix, &dpiy);
+  ctx->GetDpi(&dpix, &dpiy);
 
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
   mDWrite->CreateTextFormat(
@@ -335,7 +319,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
   DWRITE_TEXT_METRICS metrics;
   headerLayout->GetMetrics(&metrics);
 
-  mRT->DrawTextLayout(
+  ctx->DrawTextLayout(
     {(headerSize.width - metrics.width) / 2,
      (headerSize.height - metrics.height) / 2},
     headerLayout.get(),
@@ -345,8 +329,8 @@ void okSHMRenderer::Impl::RenderWithChrome(
     return;
   }
 
-  mRT->SetTransform(D2D1::Matrix3x2F::Identity());
-  mRT->DrawEllipse(D2D1::Ellipse(mCursorPoint, 2, 2), mCursorBrush.get());
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  ctx->DrawEllipse(D2D1::Ellipse(mCursorPoint, 2, 2), mCursorBrush.get());
 }
 
 D2D1_SIZE_U okSHMRenderer::GetCanvasSize() const {

@@ -27,7 +27,7 @@
 
 #include <memory>
 
-#include "DXResources.h"
+#include <OpenKneeboard/DXResources.h>
 #include "Settings.h"
 #include "okOpenVRThread.h"
 #include "okSHMRenderer.h"

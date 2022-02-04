@@ -33,10 +33,10 @@ class okTab::Impl final {
 
 okTab::okTab(
   wxWindow* parent,
-  const std::shared_ptr<Tab>& tab,
-  const DXResources& dxr)
+  const DXResources& dxr,
+  const std::shared_ptr<Tab>& tab)
   : wxPanel(parent), p(new Impl {.tab = tab}) {
-  p->canvas = new okTabCanvas(this, tab, dxr);
+  p->canvas = new okTabCanvas(this, dxr, tab);
   auto canvas = p->canvas;
 
   auto buttonBox = new wxPanel(this);

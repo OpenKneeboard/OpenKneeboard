@@ -35,8 +35,8 @@ class okTab final : public wxPanel {
  public:
   okTab(
     wxWindow* parent,
-    const std::shared_ptr<OpenKneeboard::Tab>&,
-    const OpenKneeboard::DXResources&);
+    const OpenKneeboard::DXResources&,
+    const std::shared_ptr<OpenKneeboard::Tab>&);
   virtual ~okTab();
 
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;

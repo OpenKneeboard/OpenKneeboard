@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "DXResources.h"
+#include <OpenKneeboard/DXResources.h>
 
 namespace OpenKneeboard {
 
@@ -33,7 +33,7 @@ DXResources DXResources::Create() {
   auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
 
   winrt::com_ptr<ID3D11Device> d3d;
-  D3D11CreateDevice(
+  winrt::check_hresult(D3D11CreateDevice(
     nullptr,
     D3D_DRIVER_TYPE_HARDWARE,
     nullptr,
@@ -43,12 +43,33 @@ DXResources DXResources::Create() {
     D3D11_SDK_VERSION,
     d3d.put(),
     nullptr,
-    nullptr);
+    nullptr));
   ret.mD3DDevice = d3d.as<ID3D11Device2>();
   ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
 
-  D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, ret.mD2DFactory.put());
-  CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret.mDXGIFactory.put()));
+  winrt::check_hresult(D2D1CreateFactory(
+    D2D1_FACTORY_TYPE_SINGLE_THREADED, ret.mD2DFactory.put()));
+  winrt::check_hresult(
+    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret.mDXGIFactory.put())));
+
+  D2D1_DEBUG_LEVEL d2dDebug = D2D1_DEBUG_LEVEL_NONE;
+#ifdef DEBUG
+  d2dDebug = D2D1_DEBUG_LEVEL_INFORMATION;
+#endif
+  winrt::check_hresult(D2D1CreateDevice(
+    ret.mDXGIDevice.get(),
+    D2D1::CreationProperties(
+      D2D1_THREADING_MODE_SINGLE_THREADED,
+      d2dDebug,
+      D2D1_DEVICE_CONTEXT_OPTIONS_NONE),
+    ret.mD2DDevice.put()));
+
+  winrt::check_hresult(ret.mD2DDevice->CreateDeviceContext(
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ret.mD2DDeviceContext.put()));
+  // Subpixel antialiasing assumes text is aligned on pixel boundaries;
+  // this isn't the case for OpenKneeboard
+  ret.mD2DDeviceContext->SetTextAntialiasMode(
+    D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
   return ret;
 }

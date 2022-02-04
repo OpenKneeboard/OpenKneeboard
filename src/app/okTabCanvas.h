@@ -36,8 +36,8 @@ class okTabCanvas final : public wxPanel {
  public:
   okTabCanvas(
     wxWindow* parent,
-    const std::shared_ptr<OpenKneeboard::Tab>&,
-    const OpenKneeboard::DXResources&);
+    const OpenKneeboard::DXResources&,
+    const std::shared_ptr<OpenKneeboard::Tab>&);
   virtual ~okTabCanvas();
 
   void OnSize(wxSizeEvent& ev);
@@ -52,7 +52,7 @@ class okTabCanvas final : public wxPanel {
   std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
 
  private:
-  class Impl;
+  struct Impl;
   std::shared_ptr<Impl> p;
 
   void OnTabFullyReplaced(wxCommandEvent&);
