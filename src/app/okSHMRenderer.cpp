@@ -242,9 +242,7 @@ void okSHMRenderer::Render(
   }
 
   const auto pageSize = tab->GetPreferredPixelSize(pageIndex);
-  if (
-    pageSize.width == 0 || pageSize.height == 0 || pageSize.width > TextureWidth
-    || pageSize.height > TextureHeight) {
+  if (pageSize.width == 0 || pageSize.height == 0) {
     p->RenderError(title, _("Invalid Page Size"));
     return;
   }
@@ -255,15 +253,25 @@ void okSHMRenderer::Render(
 
 void okSHMRenderer::Impl::RenderWithChrome(
   const wxString& tabTitle,
-  const D2D1_SIZE_U& pageSize,
+  const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
+
+  const auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
+
+  const auto scaleX = static_cast<float>(TextureWidth) / preferredContentSize.width;
+  const auto scaleY = static_cast<float>(TextureHeight) / (totalHeightRatio * preferredContentSize.height);
+  const auto scale = std::min(scaleX, scaleY);
+  const D2D1_SIZE_U contentSize {
+    static_cast<UINT>(preferredContentSize.width * scale),
+    static_cast<UINT>(preferredContentSize.height * scale),
+  };
   const D2D1_SIZE_U headerSize {
-    pageSize.width,
-    static_cast<UINT>(pageSize.height * 0.05),
+    contentSize.width,
+    static_cast<UINT>(contentSize.height * (HeaderPercent / 100.0f)),
   };
   const D2D1_SIZE_U canvasSize {
-    pageSize.width,
-    pageSize.height + headerSize.height,
+    contentSize.width,
+    contentSize.height + headerSize.height,
   };
   this->SetCanvasSize(canvasSize);
 
