@@ -23,25 +23,24 @@
 
 namespace OpenKneeboard {
 
-// TODO: naming conventions
 struct D2DErrorRenderer::Impl final {
-  winrt::com_ptr<ID2D1DeviceContext> ctx;
-  winrt::com_ptr<IDWriteFactory> dwrite;
-  winrt::com_ptr<IDWriteTextFormat> textFormat;
-  winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
+  winrt::com_ptr<ID2D1DeviceContext> mCTX;
+  winrt::com_ptr<IDWriteFactory> mDWrite;
+  winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+  winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 };
 
 D2DErrorRenderer::D2DErrorRenderer(
   const winrt::com_ptr<ID2D1DeviceContext>& ctx)
   : p(std::make_unique<Impl>()) {
-  p->ctx = ctx;
+  p->mCTX = ctx;
 
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(p->dwrite.put()));
+    reinterpret_cast<IUnknown**>(p->mDWrite.put()));
 
-  p->dwrite->CreateTextFormat(
+  p->mDWrite->CreateTextFormat(
     L"Segoe UI",
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
@@ -49,12 +48,12 @@ D2DErrorRenderer::D2DErrorRenderer(
     DWRITE_FONT_STRETCH_NORMAL,
     16.0f,
     L"",
-    p->textFormat.put());
+    p->mTextFormat.put());
 
   ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
-    p->textBrush.put());
+    p->mTextBrush.put());
 }
 
 D2DErrorRenderer::~D2DErrorRenderer() {
@@ -67,10 +66,10 @@ void D2DErrorRenderer::Render(
              canvasHeight = where.bottom - where.top;
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
-  p->dwrite->CreateTextLayout(
+  p->mDWrite->CreateTextLayout(
     text.data(),
     static_cast<UINT32>(text.size()),
-    p->textFormat.get(),
+    p->mTextFormat.get(),
     canvasWidth,
     canvasHeight,
     textLayout.put());
@@ -80,11 +79,11 @@ void D2DErrorRenderer::Render(
 
   const auto textWidth = metrics.width, textHeight = metrics.height;
 
-  p->ctx->DrawTextLayout(
+  p->mCTX->DrawTextLayout(
     {where.left + ((canvasWidth - textWidth) / 2),
      where.top + ((canvasHeight - textHeight) / 2)},
     textLayout.get(),
-    p->textBrush.get());
+    p->mTextBrush.get());
 }
 
 }// namespace OpenKneeboard
