@@ -29,20 +29,15 @@ class FolderTab::Impl final {
  public:
   struct Page {
     std::filesystem::path mPath;
-    unsigned int mWidth = 0;
-    unsigned int mHeight = 0;
-    std::vector<std::byte> mPixels;
-
-    operator bool() const {
-      return !mPixels.empty();
-    }
+    winrt::com_ptr<IWICBitmapSource> mWICBitmap;
   };
+
   DXResources mDXR;
   winrt::com_ptr<IWICImagingFactory> mWIC;
   std::filesystem::path mPath;
   std::vector<Page> mPages = {};
 
-  bool LoadPage(uint16_t index);
+  winrt::com_ptr<IWICBitmapSource> GetPageBitmap(uint16_t index);
 };
 
 FolderTab::FolderTab(
@@ -100,14 +95,14 @@ D2D1_SIZE_U FolderTab::GetPreferredPixelSize(uint16_t index) {
     return {};
   }
 
-  auto& page = p->mPages.at(index);
-  if (!page) {
-    if (!p->LoadPage(index)) {
-      return {};
-    }
+  auto bitmap = p->GetPageBitmap(index);
+  if (!bitmap) {
+    return {};
   }
+  UINT width, height;
+  winrt::check_hresult(bitmap->GetSize(&width, &height));
 
-  return {page.mWidth, page.mHeight};
+  return {width, height};
 }
 
 void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
@@ -115,89 +110,82 @@ void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
     return;
   }
 
-  auto& page = p->mPages.at(index);
-  if (!page) {
-    if (!p->LoadPage(index)) {
-      return;
-    }
+  auto wicBitmap = p->GetPageBitmap(index);
+  if (!wicBitmap) {
+    return;
   }
+  UINT pageWidth, pageHeight;
+  winrt::check_hresult(wicBitmap->GetSize(&pageWidth, &pageHeight));
 
-  winrt::com_ptr<ID2D1Bitmap> bmp;
+  winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
   auto ctx = p->mDXR.mD2DDeviceContext;
-  ctx->CreateBitmap(
-    {page.mWidth, page.mHeight},
-    reinterpret_cast<const void*>(page.mPixels.data()),
-    page.mWidth * 4,
-    D2D1_BITMAP_PROPERTIES {
-      {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}, 0, 0},
-    bmp.put());
+  ctx->CreateBitmapFromWicBitmap(wicBitmap.get(), d2dBitmap.put());
+
 
   const auto targetWidth = rect.right - rect.left;
   const auto targetHeight = rect.bottom - rect.top;
-  const auto scaleX = float(targetWidth) / page.mWidth;
-  const auto scaleY = float(targetHeight) / page.mHeight;
+  const auto scaleX = float(targetWidth) / pageWidth;
+  const auto scaleY = float(targetHeight) / pageHeight;
   const auto scale = std::min(scaleX, scaleY);
 
-  const auto renderWidth = page.mWidth * scale;
-  const auto renderHeight = page.mHeight * scale;
+  const auto renderWidth = pageWidth * scale;
+  const auto renderHeight = pageHeight * scale;
 
   const auto renderLeft = rect.left + ((targetWidth - renderWidth) / 2);
   const auto renderTop = rect.top + ((targetHeight - renderHeight) / 2);
 
   ctx->DrawBitmap(
-    bmp.get(),
+    d2dBitmap.get(),
     {renderLeft, renderTop, renderLeft + renderWidth, renderTop + renderHeight},
     1.0f,
     D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
-bool FolderTab::Impl::LoadPage(uint16_t index) {
-  winrt::com_ptr<IWICBitmapDecoder> decoder;
-  auto p = this;
+winrt::com_ptr<IWICBitmapSource> FolderTab::Impl::GetPageBitmap(uint16_t index) {
+  if (index >= mPages.size()) {
+    return {};
+  }
 
-  auto path = p->mPages.at(index).mPath.wstring();
-  p->mWIC->CreateDecoderFromFilename(
+  auto& page = mPages.at(index);
+  if (page.mWICBitmap) {
+    return page.mWICBitmap;
+  }
+
+
+  winrt::com_ptr<IWICBitmapDecoder> decoder;
+
+  auto path = page.mPath.wstring();
+  mWIC->CreateDecoderFromFilename(
     path.c_str(),
     nullptr,
     GENERIC_READ,
     WICDecodeMetadataCacheOnLoad,
     decoder.put());
   if (!decoder) {
-    return false;
+    return {};
   }
 
   winrt::com_ptr<IWICBitmapFrameDecode> frame;
   decoder->GetFrame(0, frame.put());
   if (!frame) {
-    return false;
+    return {};
   }
 
   winrt::com_ptr<IWICFormatConverter> converter;
-  p->mWIC->CreateFormatConverter(converter.put());
+  mWIC->CreateFormatConverter(converter.put());
   if (!converter) {
-    return false;
+    return {};
   }
   converter->Initialize(
     frame.get(),
-    GUID_WICPixelFormat32bppBGRA,
+    GUID_WICPixelFormat32bppPBGRA,
     WICBitmapDitherTypeNone,
     nullptr,
     0.0f,
     WICBitmapPaletteTypeMedianCut);
 
-  UINT width, height;
-  frame->GetSize(&width, &height);
-  auto& page = p->mPages.at(index);
-  page.mWidth = width;
-  page.mHeight = height;
-  page.mPixels.resize(width * height * 4 /* BGRA */);
-  converter->CopyPixels(
-    nullptr,
-    width * 4,
-    page.mPixels.size(),
-    reinterpret_cast<BYTE*>(page.mPixels.data()));
-
-  return true;
+  page.mWICBitmap = converter;
+  return page.mWICBitmap;
 }
 
 std::filesystem::path FolderTab::GetPath() const {
