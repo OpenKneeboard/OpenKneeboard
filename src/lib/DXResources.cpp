@@ -48,7 +48,7 @@ DXResources DXResources::Create() {
   ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
 
   winrt::check_hresult(D2D1CreateFactory(
-    D2D1_FACTORY_TYPE_SINGLE_THREADED, ret.mD2DFactory.put()));
+    D2D1_FACTORY_TYPE_MULTI_THREADED, ret.mD2DFactory.put()));
   winrt::check_hresult(
     CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret.mDXGIFactory.put())));
 
@@ -59,7 +59,7 @@ DXResources DXResources::Create() {
   winrt::check_hresult(D2D1CreateDevice(
     ret.mDXGIDevice.get(),
     D2D1::CreationProperties(
-      D2D1_THREADING_MODE_SINGLE_THREADED,
+      D2D1_THREADING_MODE_MULTI_THREADED,
       d2dDebug,
       D2D1_DEVICE_CONTEXT_OPTIONS_NONE),
     ret.mD2DDevice.put()));

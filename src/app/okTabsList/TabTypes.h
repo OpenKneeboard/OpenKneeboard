@@ -24,6 +24,7 @@
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/PDFTab.h>
 #include <shims/winrt.h>
 #include <shims/wx.h>
 
@@ -33,6 +34,7 @@ class wxWindow;
 
 #define OPENKNEEBOARD_TAB_TYPES \
   IT(_("Folder"), Folder) \
+  IT(_("PDF"), PDF) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \
   IT(_("DCS Radio Log"), DCSRadioLog) \

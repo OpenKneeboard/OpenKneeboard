@@ -236,7 +236,7 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
 
     auto ps = new wxBoxSizer(wxVERTICAL);
     ps->Add(ui, 1, wxEXPAND, 5);
-    SetSizerAndFit(ps);
+    p->SetSizerAndFit(ps);
 
     nb->AddPage(p, ui->GetLabel());
   }
