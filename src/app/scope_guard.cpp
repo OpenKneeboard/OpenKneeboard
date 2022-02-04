@@ -24,7 +24,8 @@ namespace OpenKneeboard {
 scope_guard::scope_guard(std::function<void()> f) : mCallback(f) {
 }
 
-scope_guard::~scope_guard() {
+// Destructors can't/shouldn't throw; if the callback throws, terminate.
+scope_guard::~scope_guard() noexcept {
   mCallback();
 }
 
