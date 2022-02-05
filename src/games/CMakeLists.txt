@@ -1,9 +1,8 @@
-
 add_library(
-  games
+  OpenKneeboard-games
   STATIC
   Game.cpp
   DCSWorld.cpp)
-target_include_directories(games PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(games PUBLIC wx::core wx::base)
-target_link_libraries(games PRIVATE fmt OpenKneeboard-dprint)
+target_include_directories(OpenKneeboard-games PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(OpenKneeboard-games PUBLIC wx::core wx::base)
+target_link_libraries(OpenKneeboard-games PRIVATE fmt OpenKneeboard-dprint)

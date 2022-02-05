@@ -1,3 +1,12 @@
+add_executable(test-gameevent-feeder test-gameevent-feeder.cpp)
+target_link_libraries(
+  test-gameevent-feeder
+  OpenKneeboard-GameEvent
+  OpenKneeboard-consolelib
+  OpenKneeboard-games
+  fmt
+)
+
 add_executable(test-feeder test-feeder.cpp)
 target_link_libraries(
   test-feeder
@@ -18,4 +27,4 @@ target_link_libraries(
 )
 
 add_executable(fake-dcs fake-dcs.cpp)
-target_link_libraries(fake-dcs fmt games OpenKneeboard-GameEvent)
+target_link_libraries(fake-dcs fmt OpenKneeboard-games OpenKneeboard-GameEvent)
