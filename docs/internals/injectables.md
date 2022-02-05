@@ -17,7 +17,7 @@ game's behavior so that the game renders the overlay.
 ## Special Injectables
 
 The vast majority of the injected DLLs in OpenKneeboard are renderers, however
-there are two special ones:
+there are a small number of special ones:
 
 ### OpenKneeboard-AutoInject-Marker
 
@@ -49,6 +49,17 @@ any other APIs, it will load `OpenKneeboard-nonvr-d3d11`.
 If both Direct3D 11 and Direct3D 12 are detected, Direct3D 12 takes priority:
 it is likely that the game is a Direct3D 12 application using
 https://docs.microsoft.com/en-us/windows/win32/direct3d12/direct3d-11-on-12
+
+## OpenKneeboard-TabletProxy
+
+Wintab (the Wacom graphics tablet API) doesn't allow 'background' access - i.e.
+there is not a supported way for OpenKneeboard to read from the graphics tablet
+when the foreground window belongs to another app (e.g. DCS).
+
+To work around this, if a Wintab tablet is detected, OpenKneeboard injects
+`OpenKneeboard-TabletProxy` into the target process, which will forward Wintab
+messages back to OpenKneeboard. In effect, both the game and OpenKneeboard
+processes are connected to the tablet.
 
 ## Developer Workflow
 
