@@ -289,7 +289,7 @@ void okTabCanvas::OnPixelsChanged() {
 }
 
 void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
-  ev.StopPropagation();
+  ev.Skip();
 
   if (GetPageIndex() >= p->mTab->GetPageCount()) {
     return;
@@ -317,6 +317,7 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
 }
 
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
+  ev.Skip();
   this->OnCursorEvent({
     .mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
     .mTouchState = CursorTouchState::NOT_NEAR_SURFACE,
