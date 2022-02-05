@@ -1,5 +1,5 @@
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "*.cpp")
-add_executable(OpenKneeboard WIN32 ${SOURCES})
+add_executable(OpenKneeboard WIN32 ${SOURCES} OpenKneeboard.rc)
 target_compile_definitions(
   OpenKneeboard
   PRIVATE

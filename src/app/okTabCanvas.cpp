@@ -53,11 +53,17 @@ okTabCanvas::okTabCanvas(
   const std::shared_ptr<Tab>& tab)
   : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize {384, 512}),
     p(new Impl {.mTab = tab, .mDXR = dxr}) {
+  // We handle the mouse cursor as if it were a graphics tablet pen
+  this->SetCursor(wxCURSOR_BLANK);
+
   p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
   this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
+
+  this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
+  this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
 
   tab->Bind(okEVT_TAB_FULLY_REPLACED, &okTabCanvas::OnTabFullyReplaced, this);
   tab->Bind(okEVT_TAB_PAGE_MODIFIED, &okTabCanvas::OnTabPageModified, this);
@@ -166,35 +172,23 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   p->mPageIndex
     = std::clamp(p->mPageIndex, 0ui16, static_cast<uint16_t>(count - 1));
 
-  auto contentSize = p->mTab->GetPreferredPixelSize(p->mPageIndex);
+  const auto pageMetrics = GetPageMetrics();
 
-  const auto scaleX = static_cast<float>(clientSize.x) / contentSize.width;
-  const auto scaleY = static_cast<float>(clientSize.y) / contentSize.height;
-  const auto scale = std::min(scaleX, scaleY);
-
-  const D2D1_SIZE_F scaledContentSize
-    = {contentSize.width * scale, contentSize.height * scale};
-  const auto padX = (clientSize.x - scaledContentSize.width) / 2;
-  const auto padY = (clientSize.y - scaledContentSize.height) / 2;
-  const D2D1_RECT_F contentRect = {
-    .left = padX,
-    .top = padY,
-    .right = clientSize.x - padX,
-    .bottom = clientSize.y - padY,
-  };
-
-  p->mTab->RenderPage(p->mPageIndex, contentRect);
+  p->mTab->RenderPage(p->mPageIndex, pageMetrics.mRect);
 
   if (!p->mHaveCursor) {
     return;
   }
 
+  const auto scale = pageMetrics.mScale;
+  const auto pageSize = pageMetrics.mSize;
+
   auto point = p->mCursorPoint;
   point.x *= scale;
   point.y *= scale;
 
-  point.x += (clientSize.x - (contentSize.width * scale)) / 2;
-  point.y += (clientSize.y - (contentSize.height * scale)) / 2;
+  point.x += (clientSize.x - pageSize.width) / 2;
+  point.y += (clientSize.y - pageSize.height) / 2;
 
   const auto cursorRadius = clientSize.y / CursorRadiusDivisor;
   const auto cursorStroke = clientSize.y / CursorStrokeDivisor;
@@ -203,6 +197,31 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
     D2D1::Ellipse(point, cursorRadius, cursorRadius),
     p->mCursorBrush.get(),
     cursorStroke);
+}
+
+okTabCanvas::PageMetrics okTabCanvas::GetPageMetrics() const {
+  if (p->mPageIndex >= p->mTab->GetPageCount()) {
+    return {};
+  }
+  const auto clientSize = GetClientSize();
+  const auto preferredSize = p->mTab->GetPreferredPixelSize(p->mPageIndex);
+
+  const auto scaleX = static_cast<float>(clientSize.x) / preferredSize.width;
+  const auto scaleY = static_cast<float>(clientSize.y) / preferredSize.height;
+  const auto scale = std::min(scaleX, scaleY);
+
+  const D2D1_SIZE_F pageSize {
+    preferredSize.width * scale, preferredSize.height * scale};
+  const auto padX = (clientSize.x - pageSize.width) / 2;
+  const auto padY = (clientSize.y - pageSize.height) / 2;
+  const D2D1_RECT_F pageRect {
+    .left = padX,
+    .top = padY,
+    .right = clientSize.x - padX,
+    .bottom = clientSize.y - padY,
+  };
+
+  return {pageRect, pageSize, scale};
 }
 
 uint16_t okTabCanvas::GetPageIndex() const {
@@ -267,4 +286,39 @@ void okTabCanvas::OnPixelsChanged() {
 
   this->Refresh();
   this->Update();
+}
+
+void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
+  ev.StopPropagation();
+
+  if (GetPageIndex() >= p->mTab->GetPageCount()) {
+    return;
+  }
+
+  const auto metrics = GetPageMetrics();
+
+  auto x = ev.GetX() / metrics.mScale;
+  auto y = ev.GetY() / metrics.mScale;
+
+  const bool leftClick = ev.ButtonIsDown(wxMOUSE_BTN_LEFT);
+  const bool rightClick = ev.ButtonIsDown(wxMOUSE_BTN_RIGHT);
+
+  this->OnCursorEvent({
+    .PositionState = CursorPositionState::IN_CLIENT_RECT,
+    .TouchState
+    = (leftClick || rightClick)
+      ? CursorTouchState::TOUCHING_SURFACE
+      : CursorTouchState::NEAR_SURFACE,
+    .x = x,
+    .y = y,
+    .pressure = rightClick ? 0.8f : 0.0f,
+    .buttons = rightClick ? (1ui32 << 1) : 1ui32,
+  });
+}
+
+void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
+  this->OnCursorEvent({
+    .PositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
+    .TouchState = CursorTouchState::NOT_NEAR_SURFACE,
+  });
 }

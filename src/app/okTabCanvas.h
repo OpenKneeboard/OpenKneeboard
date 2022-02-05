@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <d2d1_2.h>
 #include <dxgi1_2.h>
 #include <shims/winrt.h>
 #include <shims/wx.h>
@@ -54,6 +55,16 @@ class okTabCanvas final : public wxPanel {
  private:
   struct Impl;
   std::shared_ptr<Impl> p;
+
+  struct PageMetrics {
+    D2D1_RECT_F mRect;
+    D2D1_SIZE_F mSize;
+    float mScale;
+  };
+  PageMetrics GetPageMetrics() const;
+
+  void OnMouseMove(wxMouseEvent&);
+  void OnMouseLeave(wxMouseEvent&);
 
   void OnTabFullyReplaced(wxCommandEvent&);
   void OnTabPageModified(wxCommandEvent&);

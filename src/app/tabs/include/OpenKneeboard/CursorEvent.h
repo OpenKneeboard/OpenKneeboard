@@ -32,11 +32,12 @@ enum class CursorTouchState {
   NOT_NEAR_SURFACE,
 };
 
+// TODO: naming conventions
 struct CursorEvent {
   CursorPositionState PositionState;
   CursorTouchState TouchState;
-  float x, y, pressure;
-  uint32_t buttons;
+  float x = 0, y = 0, pressure = 0;
+  uint32_t buttons = 0;
 };
 
 }// namespace OpenKneeboard

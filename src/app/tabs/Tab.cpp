@@ -93,7 +93,7 @@ void Tab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
     return;
   }
   // ignore tip button - any other pen button == erase
-  const bool erasing = event.buttons ^ 1;
+  const bool erasing = event.buttons & ~1;
 
   auto surface
     = p->GetDrawingSurface(pageIndex, this->GetPreferredPixelSize(pageIndex));
