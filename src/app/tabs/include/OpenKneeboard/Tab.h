@@ -54,6 +54,8 @@ class Tab : public okConfigurableComponent {
 
   virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex);
 
+  virtual std::shared_ptr<Tab> GetNavigationTab(const D2D1_SIZE_U&);
+
  protected:
   void ClearDrawings();
 

@@ -71,6 +71,11 @@ DXResources DXResources::Create() {
   ret.mD2DDeviceContext->SetTextAntialiasMode(
     D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
+  winrt::check_hresult(DWriteCreateFactory(
+    DWRITE_FACTORY_TYPE_SHARED,
+    __uuidof(IDWriteFactory),
+    reinterpret_cast<IUnknown**>(ret.mDWriteFactory.put())));
+
   return ret;
 }
 

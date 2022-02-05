@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/DCSRadioLogTab.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Games/DCSWorld.h>
 #include <Unknwn.h>
 #include <dwrite.h>
@@ -26,7 +27,6 @@
 
 #include <algorithm>
 
-#include <OpenKneeboard/DXResources.h>
 #include "okEvents.h"
 
 using DCS = OpenKneeboard::Games::DCSWorld;
@@ -41,7 +41,7 @@ class DCSRadioLogTab::Impl final {
   static const int RENDER_SCALE = 1;
 
   Impl() = delete;
-  Impl(DCSRadioLogTab* tab);
+  Impl(DCSRadioLogTab* tab, const DXResources& dxr);
   ~Impl();
 
   std::vector<std::vector<std::wstring>> mCompletePages;
@@ -54,7 +54,6 @@ class DCSRadioLogTab::Impl final {
   int mRows = -1;
 
   DXResources mDXR;
-  winrt::com_ptr<IDWriteFactory> mDWF;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
 
   void PushMessage(const std::string& message);
@@ -63,8 +62,7 @@ class DCSRadioLogTab::Impl final {
 };
 
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
-  : DCSTab(dxr, _("Radio Log")), p(std::make_unique<Impl>(this)) {
-    p->mDXR = dxr;
+  : DCSTab(dxr, _("Radio Log")), p(std::make_unique<Impl>(this, dxr)) {
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
@@ -324,12 +322,10 @@ void DCSRadioLogTab::OnSimulationStart() {
   p->PushMessage(std::string(p->mColumns, '-'));
 }
 
-DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab) : mTab(tab) {
-  DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
-    __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(mDWF.put()));
-  mDWF->CreateTextFormat(
+DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab, const DXResources& dxr)
+  : mTab(tab), mDXR(dxr) {
+  auto dwf = mDXR.mDWriteFactory;
+  dwf->CreateTextFormat(
     L"Consolas",
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
@@ -341,7 +337,7 @@ DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab) : mTab(tab) {
 
   const auto size = tab->GetPreferredPixelSize(0);
   winrt::com_ptr<IDWriteTextLayout> textLayout;
-  mDWF->CreateTextLayout(
+  dwf->CreateTextLayout(
     L"m", 1, mTextFormat.get(), size.width, size.height, textLayout.put());
   DWRITE_TEXT_METRICS metrics;
   textLayout->GetMetrics(&metrics);

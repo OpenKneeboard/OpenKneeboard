@@ -73,4 +73,8 @@ void DCSTerrainTab::Update(
   mDelegate->SetPath(path);
 }
 
+std::shared_ptr<Tab> DCSTerrainTab::GetNavigationTab(const D2D1_SIZE_U& size) {
+  return mDelegate->GetNavigationTab(size);
+}
+
 }// namespace OpenKneeboard

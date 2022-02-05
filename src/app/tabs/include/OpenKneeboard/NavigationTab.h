@@ -19,35 +19,50 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DCSTab.h>
+#include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Tab.h>
 
 namespace OpenKneeboard {
 
-class FolderTab;
-
-class DCSTerrainTab final : public DCSTab {
+class NavigationTab final : public Tab {
  public:
-  DCSTerrainTab(const DXResources&);
-  virtual ~DCSTerrainTab();
+  struct Entry {
+    std::wstring mName;
+    uint16_t mPageIndex;
+  };
 
-  virtual void Reload() override;
+  NavigationTab(
+    const DXResources&,
+    const D2D1_SIZE_U& preferredSize,
+    const std::vector<Entry>& entries);
+  ~NavigationTab();
+
   virtual uint16_t GetPageCount() const override;
-
   virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) override;
-  virtual std::shared_ptr<Tab> GetNavigationTab(const D2D1_SIZE_U&) override;
+  virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
 
  protected:
   virtual void RenderPageContent(uint16_t pageIndex, const D2D1_RECT_F& rect)
-    final override;
-
-  virtual const char* GetGameEventName() const override;
-  virtual void Update(
-    const std::filesystem::path&,
-    const std::filesystem::path&,
-    const std::string&) override;
+    override;
 
  private:
-  std::shared_ptr<FolderTab> mDelegate;
+  DXResources mDXR;
+  D2D1_SIZE_U mPreferredSize;
+
+  struct EntryImpl {
+    std::wstring mName;
+    uint16_t mPageIndex;
+    D2D1_RECT_F mRect;
+  };
+  std::vector<std::vector<EntryImpl>> mEntries;
+
+  D2D1_POINT_2F mCursorPoint;
+
+  winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+  winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 };
 
 }// namespace OpenKneeboard

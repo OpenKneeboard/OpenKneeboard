@@ -21,6 +21,7 @@
 
 #include <d2d1_2.h>
 #include <d3d11_2.h>
+#include <dwrite.h>
 #include <dxgi1_3.h>
 #include <shims/winrt.h>
 
@@ -45,6 +46,7 @@ struct DXResources {
 
   winrt::com_ptr<ID2D1Factory> mD2DFactory;
   winrt::com_ptr<IDXGIFactory2> mDXGIFactory;
+  winrt::com_ptr<IDWriteFactory> mDWriteFactory;
 
   static DXResources Create();
 };

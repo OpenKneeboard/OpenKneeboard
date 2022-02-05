@@ -17,11 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
 
-#include <OpenKneeboard/DXResources.h>
 #include "okEvents.h"
 
 namespace OpenKneeboard {
@@ -121,7 +122,6 @@ void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
   auto ctx = p->mDXR.mD2DDeviceContext;
   ctx->CreateBitmapFromWicBitmap(wicBitmap.get(), d2dBitmap.put());
 
-
   const auto targetWidth = rect.right - rect.left;
   const auto targetHeight = rect.bottom - rect.top;
   const auto scaleX = float(targetWidth) / pageWidth;
@@ -141,7 +141,8 @@ void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
     D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
-winrt::com_ptr<IWICBitmapSource> FolderTab::Impl::GetPageBitmap(uint16_t index) {
+winrt::com_ptr<IWICBitmapSource> FolderTab::Impl::GetPageBitmap(
+  uint16_t index) {
   if (index >= mPages.size()) {
     return {};
   }
@@ -150,7 +151,6 @@ winrt::com_ptr<IWICBitmapSource> FolderTab::Impl::GetPageBitmap(uint16_t index) 
   if (page.mWICBitmap) {
     return page.mWICBitmap;
   }
-
 
   winrt::com_ptr<IWICBitmapDecoder> decoder;
 
@@ -198,6 +198,18 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
   }
   p->mPath = path;
   Reload();
+}
+
+std::shared_ptr<Tab> FolderTab::GetNavigationTab(const D2D1_SIZE_U& preferredSize) {
+  std::vector<NavigationTab::Entry> entries;
+
+  for (uint16_t i = 0; i < p->mPages.size(); ++i) {
+    entries.push_back({
+      p->mPages.at(i).mPath.stem(),
+      i});
+  }
+
+  return std::make_shared<NavigationTab>(p->mDXR, preferredSize, entries);
 }
 
 }// namespace OpenKneeboard

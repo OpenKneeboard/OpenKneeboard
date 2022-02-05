@@ -190,4 +190,8 @@ void Tab::RenderPage(
     bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
+std::shared_ptr<Tab> Tab::GetNavigationTab(const D2D1_SIZE_U&) {
+  return {};
+}
+
 }// namespace OpenKneeboard

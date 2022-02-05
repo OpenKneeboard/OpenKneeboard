@@ -52,6 +52,8 @@ class FolderTab : public Tab {
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
 
+  virtual std::shared_ptr<Tab> GetNavigationTab(const D2D1_SIZE_U&) override;
+
  protected:
   virtual void RenderPageContent(
     uint16_t pageIndex,
