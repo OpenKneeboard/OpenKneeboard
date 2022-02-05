@@ -49,12 +49,12 @@ PDFTab::PDFTab(
   const wxString& title,
   const std::filesystem::path& path)
   : Tab(dxr, title), p(new Impl {.mDXR = dxr, .mPath = path}) {
-  Reload();
-
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), p->mBackgroundBrush.put()));
+
+  Reload();
 }
 
 PDFTab::~PDFTab() {
