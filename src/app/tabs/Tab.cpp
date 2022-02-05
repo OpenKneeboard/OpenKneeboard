@@ -87,13 +87,13 @@ nlohmann::json Tab::GetSettings() const {
 
 void Tab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   if (
-    event.TouchState != CursorTouchState::TOUCHING_SURFACE
-    || event.PositionState != CursorPositionState::IN_CLIENT_RECT) {
+    event.mTouchState != CursorTouchState::TOUCHING_SURFACE
+    || event.mPositionState != CursorPositionState::IN_CLIENT_RECT) {
     p->mHaveCursor = false;
     return;
   }
   // ignore tip button - any other pen button == erase
-  const bool erasing = event.buttons & ~1;
+  const bool erasing = event.mButtons & ~1;
 
   auto surface
     = p->GetDrawingSurface(pageIndex, this->GetPreferredPixelSize(pageIndex));
@@ -104,10 +104,10 @@ void Tab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
 
   const auto scale = p->mDrawings.at(pageIndex).mScale;
   const auto pressure
-    = 0.10 + (std::clamp(event.pressure - 0.50, 0.0, 0.50) * 0.9);
+    = 0.10 + (std::clamp(event.mPressure - 0.50, 0.0, 0.50) * 0.9);
   const auto radius = 20 * pressure * (erasing ? 10 : 1);
-  const auto x = event.x * scale;
-  const auto y = event.y * scale;
+  const auto x = event.mX * scale;
+  const auto y = event.mY * scale;
   const auto brush = erasing ? p->mEraser : p->mBrush;
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());

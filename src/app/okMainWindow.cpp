@@ -157,21 +157,21 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
         const auto contentScale
           = contentSize.width / (clientRect.right - clientRect.left);
         CursorEvent event {
-          .TouchState = (state.penButtons & 1)
+          .mTouchState = (state.penButtons & 1)
             ? CursorTouchState::TOUCHING_SURFACE
             : CursorTouchState::NEAR_SURFACE,
-          .x = contentScale * (x - clientRect.left),
-          .y = contentScale * (y - clientRect.top),
-          .pressure = pressure,
-          .buttons = state.penButtons,
+          .mX = contentScale * (x - clientRect.left),
+          .mY = contentScale * (y - clientRect.top),
+          .mPressure = pressure,
+          .mButtons = state.penButtons,
         };
 
         if (
           x >= clientRect.left && x <= clientRect.right && y >= clientRect.top
           && y <= clientRect.bottom) {
-          event.PositionState = CursorPositionState::IN_CLIENT_RECT;
+          event.mPositionState = CursorPositionState::IN_CLIENT_RECT;
         } else {
-          event.PositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
+          event.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
         }
 
         mTabUIs.at(mCurrentTab)->OnCursorEvent(event);
@@ -181,8 +181,8 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       if (mCurrentTab >= 0) {
         mTabUIs.at(mCurrentTab)
           ->OnCursorEvent(
-            {.PositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
-             .TouchState = CursorTouchState::NOT_NEAR_SURFACE});
+            {.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
+             .mTouchState = CursorTouchState::NOT_NEAR_SURFACE});
       }
     }
     UpdateSHM();

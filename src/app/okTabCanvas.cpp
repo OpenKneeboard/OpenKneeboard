@@ -98,8 +98,8 @@ void okTabCanvas::OnCursorEvent(const CursorEvent& ev) {
   if (p->mPageIndex < p->mTab->GetPageCount()) {
     p->mTab->OnCursorEvent(ev, p->mPageIndex);
   }
-  p->mHaveCursor = ev.TouchState != CursorTouchState::NOT_NEAR_SURFACE;
-  p->mCursorPoint = {ev.x, ev.y};
+  p->mHaveCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
+  p->mCursorPoint = {ev.mX, ev.mY};
 
   Refresh();
   Update();
@@ -304,21 +304,21 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
   const bool rightClick = ev.ButtonIsDown(wxMOUSE_BTN_RIGHT);
 
   this->OnCursorEvent({
-    .PositionState = CursorPositionState::IN_CLIENT_RECT,
-    .TouchState
+    .mPositionState = CursorPositionState::IN_CLIENT_RECT,
+    .mTouchState
     = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE
       : CursorTouchState::NEAR_SURFACE,
-    .x = x,
-    .y = y,
-    .pressure = rightClick ? 0.8f : 0.0f,
-    .buttons = rightClick ? (1ui32 << 1) : 1ui32,
+    .mX = x,
+    .mY = y,
+    .mPressure = rightClick ? 0.8f : 0.0f,
+    .mButtons = rightClick ? (1ui32 << 1) : 1ui32,
   });
 }
 
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
   this->OnCursorEvent({
-    .PositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
-    .TouchState = CursorTouchState::NOT_NEAR_SURFACE,
+    .mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
+    .mTouchState = CursorTouchState::NOT_NEAR_SURFACE,
   });
 }
