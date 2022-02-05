@@ -255,11 +255,12 @@ void okSHMRenderer::Impl::RenderWithChrome(
   const wxString& tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
-
   const auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
 
-  const auto scaleX = static_cast<float>(TextureWidth) / preferredContentSize.width;
-  const auto scaleY = static_cast<float>(TextureHeight) / (totalHeightRatio * preferredContentSize.height);
+  const auto scaleX
+    = static_cast<float>(TextureWidth) / preferredContentSize.width;
+  const auto scaleY = static_cast<float>(TextureHeight)
+    / (totalHeightRatio * preferredContentSize.height);
   const auto scale = std::min(scaleX, scaleY);
   const D2D1_SIZE_U contentSize {
     static_cast<UINT>(preferredContentSize.width * scale),
@@ -337,8 +338,13 @@ void okSHMRenderer::Impl::RenderWithChrome(
     return;
   }
 
+  const auto cursorRadius = contentSize.height / CursorRadiusDivisor;
+  const auto cursorStroke = contentSize.height / CursorStrokeDivisor;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  ctx->DrawEllipse(D2D1::Ellipse(mCursorPoint, 2, 2), mCursorBrush.get());
+  ctx->DrawEllipse(
+    D2D1::Ellipse(mCursorPoint, cursorRadius, cursorRadius),
+    mCursorBrush.get(),
+    cursorStroke);
 }
 
 D2D1_SIZE_U okSHMRenderer::GetCanvasSize() const {

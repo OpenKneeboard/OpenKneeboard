@@ -146,16 +146,22 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       mSHMRenderer->SetCursorPosition(x, y);
 
       if (mCurrentTab >= 0) {
+        auto tabUI = mTabUIs.at(mCurrentTab);
+        auto tab = tabUI->GetTab();
+        auto contentSize = tab->GetPreferredPixelSize(tabUI->GetPageIndex());
+
         const auto pressure
           = static_cast<float>(state.pressure) / tabletLimits.pressure;
 
         const auto clientRect = mSHMRenderer->GetClientRect();
+        const auto contentScale
+          = contentSize.width / (clientRect.right - clientRect.left);
         CursorEvent event {
           .TouchState = (state.penButtons & 1)
             ? CursorTouchState::TOUCHING_SURFACE
             : CursorTouchState::NEAR_SURFACE,
-          .x = x - clientRect.left,
-          .y = y - clientRect.top,
+          .x = contentScale * (x - clientRect.left),
+          .y = contentScale * (y - clientRect.top),
           .pressure = pressure,
           .buttons = state.penButtons,
         };

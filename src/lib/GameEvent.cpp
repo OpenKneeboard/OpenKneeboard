@@ -36,6 +36,22 @@ static uint32_t hex_to_ui32(const std::string_view& sv) {
   return value;
 }
 
+static winrt::file_handle gMailslotHandle;
+
+static bool OpenMailslotHandle() {
+  if (!gMailslotHandle) {
+    gMailslotHandle = {CreateFileA(
+      OpenKneeboard::GameEvent::GetMailslotPath(),
+      GENERIC_WRITE,
+      FILE_SHARE_READ,
+      nullptr,
+      OPEN_EXISTING,
+      0,
+      NULL)};
+  }
+  return (bool)gMailslotHandle;
+}
+
 namespace OpenKneeboard {
 
 #define CHECK_PACKET(condition) \
@@ -78,43 +94,40 @@ std::vector<std::byte> GameEvent::Serialize() const {
 }
 
 void GameEvent::Send() const {
-  winrt::file_handle handle {CreateFileA(
-    GetMailslotPath(),
-    GENERIC_WRITE,
-    FILE_SHARE_READ,
-    nullptr,
-    OPEN_EXISTING,
-    0,
-    NULL)};
-  if (!handle) {
-    dprintf("Failed to open mailslot: {}", GetLastError());
+  if (!OpenMailslotHandle()) {
     return;
   }
   const auto packet = this->Serialize();
 
-  if (!WriteFile(
-        handle.get(),
+  if (WriteFile(
+        gMailslotHandle.get(),
         packet.data(),
         static_cast<DWORD>(packet.size()),
         nullptr,
         nullptr)) {
-    dprintf("Failed to write to mailslot: {}", GetLastError());
     return;
   }
+  gMailslotHandle.close();
+  gMailslotHandle = {};
 
-  dprintf(
-    "Wrote to mailslot: {}",
-    std::string(reinterpret_cast<const char*>(packet.data()), packet.size()));
+  if (!OpenMailslotHandle()) {
+    return;
+  }
+  WriteFile(
+    gMailslotHandle.get(),
+    packet.data(),
+    static_cast<DWORD>(packet.size()),
+    nullptr,
+    nullptr);
 }
 
 const char* GameEvent::GetMailslotPath() {
-	static std::string sPath;
-	if (sPath.empty()) {
-		sPath = fmt::format(
-			"\\\\.\\mailslot\\{}.events.v1", OpenKneeboard::ProjectNameA);
-	}
-	return sPath.c_str();
+  static std::string sPath;
+  if (sPath.empty()) {
+    sPath = fmt::format(
+      "\\\\.\\mailslot\\{}.events.v1", OpenKneeboard::ProjectNameA);
+  }
+  return sPath.c_str();
 }
-
 
 }// namespace OpenKneeboard

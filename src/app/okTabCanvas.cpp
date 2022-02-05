@@ -23,6 +23,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <dxgi1_3.h>
 #include <wx/dcbuffer.h>
@@ -195,8 +196,13 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   point.x += (clientSize.x - (contentSize.width * scale)) / 2;
   point.y += (clientSize.y - (contentSize.height * scale)) / 2;
 
+  const auto cursorRadius = clientSize.y / CursorRadiusDivisor;
+  const auto cursorStroke = clientSize.y / CursorStrokeDivisor;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  ctx->DrawEllipse(D2D1::Ellipse(point, 2, 2), p->mCursorBrush.get());
+  ctx->DrawEllipse(
+    D2D1::Ellipse(point, cursorRadius, cursorRadius),
+    p->mCursorBrush.get(),
+    cursorStroke);
 }
 
 uint16_t okTabCanvas::GetPageIndex() const {

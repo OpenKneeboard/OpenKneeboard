@@ -25,6 +25,9 @@ constexpr unsigned int TextureCount = 2;
 constexpr unsigned int TextureWidth = 2048;
 constexpr unsigned int TextureHeight = 2048;
 
+constexpr float CursorRadiusDivisor = 200.0f;
+constexpr float CursorStrokeDivisor = CursorRadiusDivisor * 5;
+
 const unsigned int HeaderPercent = 5;
 
 constexpr const char* ProjectNameA = "@CMAKE_PROJECT_NAME@";
