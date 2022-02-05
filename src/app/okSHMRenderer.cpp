@@ -56,7 +56,6 @@ class okSHMRenderer::Impl {
   DXResources mDXR;
 
   winrt::com_ptr<IWICImagingFactory> mWIC;
-  winrt::com_ptr<IDWriteFactory> mDWrite;
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
@@ -138,10 +137,6 @@ okSHMRenderer::okSHMRenderer(const DXResources& dxr, HWND feederWindow)
   p->mFeederWindow = feederWindow;
   p->mDXR = dxr;
   p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
-  DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
-    __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(p->mDWrite.put()));
   p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
 
   dxr.mD3DDevice->GetImmediateContext(p->mD3DContext.put());
@@ -255,6 +250,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
   const wxString& tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
+
   const auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
 
   const auto scaleX
@@ -305,7 +301,8 @@ void okSHMRenderer::Impl::RenderWithChrome(
   ctx->GetDpi(&dpix, &dpiy);
 
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
-  mDWrite->CreateTextFormat(
+  auto dwf = mDXR.mDWriteFactory;
+  dwf->CreateTextFormat(
     L"Consolas",
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
@@ -317,7 +314,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
 
   auto title = tabTitle.ToStdWstring();
   winrt::com_ptr<IDWriteTextLayout> headerLayout;
-  mDWrite->CreateTextLayout(
+  dwf->CreateTextLayout(
     title.data(),
     static_cast<UINT32>(title.size()),
     headerFormat.get(),
