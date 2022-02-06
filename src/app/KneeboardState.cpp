@@ -183,6 +183,7 @@ void KneeboardState::UpdateLayout() {
   };
 
   evNeedsRepaintEvent();
+  evFlushEvent();
 }
 
 const D2D1_SIZE_U& KneeboardState::GetCanvasSize() const {

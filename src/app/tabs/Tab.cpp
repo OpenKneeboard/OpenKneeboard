@@ -187,7 +187,7 @@ void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->DrawBitmap(
-    bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
+    bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
 std::shared_ptr<Tab> Tab::GetNavigationTab(const D2D1_SIZE_U&) {

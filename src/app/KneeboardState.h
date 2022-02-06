@@ -59,6 +59,7 @@ class KneeboardState final : private EventReceiver {
   bool HaveCursor() const;
   D2D1_POINT_2F GetCursorPoint() const;
 
+  Event<> evFlushEvent;
   Event<> evNeedsRepaintEvent;
   Event<const CursorEvent&> evCursorEvent;
 

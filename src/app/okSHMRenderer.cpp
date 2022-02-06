@@ -172,7 +172,7 @@ okSHMRenderer::okSHMRenderer(
       it.mHandle.put());
     it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
 
-    kneeboard->evNeedsRepaintEvent.AddHandler(
+    kneeboard->evFlushEvent.AddHandler(
       this, [this]() { EnqueueFrame(); });
   }
 

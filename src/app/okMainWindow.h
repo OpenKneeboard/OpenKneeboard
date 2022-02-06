@@ -73,4 +73,8 @@ class okMainWindow final : public wxFrame,
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
   std::unique_ptr<okSHMRenderer> mSHMRenderer;
   std::unique_ptr<OpenKneeboard::WintabTablet> mTablet;
+
+  std::vector<OpenKneeboard::CursorEvent> mBufferedCursorEvents;
+  void FlushCursorEvents();
+  wxTimer mCursorEventTimer;
 };

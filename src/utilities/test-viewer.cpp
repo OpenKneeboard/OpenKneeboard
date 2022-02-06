@@ -265,7 +265,7 @@ class Canvas final : public wxWindow {
       d2dBitmap.get(),
       &pageRect,
       1.0f,
-      D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC,
+      D2D1_INTERPOLATION_MODE_DEFINITION_ANISOTROPIC,
       &sourceRect);
     ctx->Flush();
 

@@ -19,6 +19,7 @@
  */
 #include "okMainWindow.h"
 
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <wx/frame.h>
 #include <wx/notebook.h>
@@ -46,6 +47,11 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mSHMRenderer = std::make_unique<okSHMRenderer>(
     mDXResources, mKneeboard, this->GetHWND());
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
+  if (*mTablet) {
+    mCursorEventTimer.Bind(
+      wxEVT_TIMER, [this](auto&){ this->FlushCursorEvents(); });
+    mCursorEventTimer.Start(1000 / CursorRenderHz);
+  }
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::PostGameEvent, this);
   auto menuBar = new wxMenuBar();
@@ -182,12 +188,24 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
         event.mPositionState = CursorPositionState::NOT_IN_CONTENT_RECT;
       }
 
-      mKneeboard->evCursorEvent(event);
+      mBufferedCursorEvents.push_back(event);
     } else {
-      mKneeboard->evCursorEvent({});
+      mBufferedCursorEvents.push_back({});
     }
   }
   return wxFrame::MSWWindowProc(message, wParam, lParam);
+}
+
+void okMainWindow::FlushCursorEvents() {
+  if (mBufferedCursorEvents.empty()) {
+    return;
+  }
+
+  for (const auto& event: mBufferedCursorEvents) {
+    mKneeboard->evCursorEvent(event);
+  }
+  mBufferedCursorEvents.clear();
+  mKneeboard->evFlushEvent();
 }
 
 void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {

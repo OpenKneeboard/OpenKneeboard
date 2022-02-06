@@ -132,7 +132,7 @@ void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
     bitmap.get(),
     {renderLeft, renderTop, renderLeft + renderWidth, renderTop + renderHeight},
     1.0f,
-    D2D1_INTERPOLATION_MODE_LINEAR);
+    D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
 winrt::com_ptr<ID2D1Bitmap> FolderTab::Impl::GetPageBitmap(uint16_t index) {

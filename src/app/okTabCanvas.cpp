@@ -51,12 +51,9 @@ okTabCanvas::okTabCanvas(
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto&) { /* ignore */ });
-  this->Bind(wxEVT_IDLE, [this](auto&) {
-    if (this->mFramePending && this->IsShownOnScreen()) {
-      this->PaintNow();
-    }
-  });
   this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
+  this->Bind(wxEVT_IDLE, [this](auto&) { this->FlushFrame(); });
+  kneeboard->evFlushEvent.AddHandler(this, std::bind_front(&okTabCanvas::FlushFrame, this));
 
   this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
   this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
@@ -82,8 +79,6 @@ okTabCanvas::okTabCanvas(
     nullptr,
     nullptr,
     mSwapChain.put()));
-
-  mFrameTimer.Bind(wxEVT_TIMER, [this](auto&) { this->PaintNow(); });
 }
 
 okTabCanvas::~okTabCanvas() {
@@ -248,4 +243,10 @@ void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
 
 void okTabCanvas::EnqueueFrame() {
   mFramePending = true;
+}
+
+void okTabCanvas::FlushFrame() {
+  if (mFramePending) {
+    PaintNow();
+  }
 }
