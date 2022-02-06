@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <type_traits>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -87,6 +88,33 @@ class EventReceiver {
     uint64_t mToken;
   };
   std::vector<SenderInfo> mSenders;
+
+  // `std::type_identity_t` makes the compiler infer `Args` from the event, then
+  // match the handler, instead of attempting to infer `Args from both.
+  template <class... Args>
+  void AddEventListener(
+    Event<Args...>& event,
+    const std::type_identity_t<EventHandler<Args...>>& handler);
+  template <class... Args>
+  void AddEventListener(
+    Event<Args...>& event,
+    std::type_identity_t<Event<Args...>>& forwardAs);
+  template <class... Args>
+  void AddEventListener(
+    Event<Args...>& event,
+    const std::function<void()>& handler);
+
+  template <class... EventArgs, class Func, class First, class... Rest>
+  void AddEventListener(
+    Event<EventArgs...>& event,
+    Func f,
+    First&& first,
+    Rest&&... rest) {
+    AddEventListener(
+      event,
+      std::bind_front(
+        f, std::forward<First>(first), std::forward<Rest>(rest)...));
+  }
 };
 
 template <class... Args>
@@ -123,6 +151,27 @@ Event<Args...>::~Event() {
       }
     }
   }
+}
+
+template <class... Args>
+void EventReceiver::AddEventListener(
+  Event<Args...>& event,
+  const std::type_identity_t<EventHandler<Args...>>& handler) {
+  event.AddHandler(this, handler);
+}
+
+template <class... Args>
+void EventReceiver::AddEventListener(
+  Event<Args...>& event,
+  const std::function<void()>& handler) {
+  event.AddHandler(this, [handler](Args...) { handler(); });
+}
+
+template <class... Args>
+void EventReceiver::AddEventListener(
+  Event<Args...>& event,
+  std::type_identity_t<Event<Args...>>& forwardTo) {
+  event.AddHandler(this, [&](Args... args) { forwardTo(args...); });
 }
 
 }// namespace OpenKneeboard

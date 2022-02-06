@@ -31,12 +31,11 @@ namespace OpenKneeboard {
 
 TabState::TabState(const std::shared_ptr<Tab>& tab)
   : mRootTab(tab), mRootTabPage(0) {
-  tab->evNeedsRepaintEvent.AddHandler(
-    this, [=]() { this->evNeedsRepaintEvent(); });
-  tab->evFullyReplacedEvent.AddHandler(
-    this, std::bind_front(&TabState::OnTabFullyReplaced, this));
-  tab->evPageAppendedEvent.AddHandler(
-    this, std::bind_front(&TabState::OnTabPageAppended, this));
+  AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  AddEventListener(
+    tab->evFullyReplacedEvent, &TabState::OnTabFullyReplaced, this);
+  AddEventListener(
+    tab->evPageAppendedEvent, &TabState::OnTabPageAppended, this);
 }
 
 TabState::~TabState() {

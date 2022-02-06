@@ -172,8 +172,7 @@ okSHMRenderer::okSHMRenderer(
       it.mHandle.put());
     it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
 
-    kneeboard->evFlushEvent.AddHandler(
-      this, [this]() { EnqueueFrame(); });
+    AddEventListener(kneeboard->evFlushEvent, [this]() { EnqueueFrame(); });
   }
 
   auto ctx = dxr.mD2DDeviceContext;

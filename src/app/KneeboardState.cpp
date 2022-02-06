@@ -30,8 +30,7 @@
 namespace OpenKneeboard {
 
 KneeboardState::KneeboardState() {
-  evCursorEvent.AddHandler(
-    this, std::bind_front(&KneeboardState::OnCursorEvent, this));
+  AddEventListener(evCursorEvent, &KneeboardState::OnCursorEvent, this);
   UpdateLayout();
 }
 
@@ -50,7 +49,7 @@ void KneeboardState::SetTabs(
     if (std::find(mTabs.begin(), mTabs.end(), tab) != mTabs.end()) {
       continue;
     }
-    tab->evNeedsRepaintEvent.AddHandler(this, [=]() {
+    AddEventListener(tab->evNeedsRepaintEvent, [=]() {
       if (tab == this->GetCurrentTab()) {
         this->evNeedsRepaintEvent();
       }

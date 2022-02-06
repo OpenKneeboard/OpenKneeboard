@@ -22,6 +22,7 @@
 #include "okEvents.h"
 
 okConfigurableComponent::okConfigurableComponent() {
-  evSettingsChangedEvent.AddHandler(
-    this, [=]() { wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED)); });
+  AddEventListener(evSettingsChangedEvent, [=]() {
+    wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
+  });
 }

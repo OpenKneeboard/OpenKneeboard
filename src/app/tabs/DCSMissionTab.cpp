@@ -108,8 +108,8 @@ DCSMissionTab::DCSMissionTab(const DXResources& dxr)
   : DCSTab(dxr, _("Mission")), p(std::make_shared<Impl>()) {
   p->mDelegate
     = std::make_unique<FolderTab>(dxr, wxString {}, std::filesystem::path {});
-  p->mDelegate->evFullyReplacedEvent.AddHandler(
-    this, [=](){ this->evFullyReplacedEvent(); });
+  AddEventListener(
+    p->mDelegate->evFullyReplacedEvent, this->evFullyReplacedEvent);
 }
 
 DCSMissionTab::~DCSMissionTab() {

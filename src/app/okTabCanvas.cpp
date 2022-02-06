@@ -53,15 +53,13 @@ okTabCanvas::okTabCanvas(
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto&) { /* ignore */ });
   this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
   this->Bind(wxEVT_IDLE, [this](auto&) { this->FlushFrame(); });
-  kneeboard->evFlushEvent.AddHandler(
-    this, std::bind_front(&okTabCanvas::FlushFrame, this));
 
   this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
   this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
 
-  tab->evNeedsRepaintEvent.AddHandler(this, [=]() { this->EnqueueFrame(); });
-  kneeboard->evCursorEvent.AddHandler(
-    this, [=](auto) { this->EnqueueFrame(); });
+  AddEventListener(tab->evNeedsRepaintEvent, &okTabCanvas::EnqueueFrame, this);
+  AddEventListener(kneeboard->evCursorEvent, &okTabCanvas::EnqueueFrame, this);
+  AddEventListener(kneeboard->evFlushEvent, &okTabCanvas::FlushFrame, this);
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mCursorBrush.put()));
@@ -82,14 +80,13 @@ okTabCanvas::okTabCanvas(
     mSwapChain.put()));
 
   mCursorEventTimer.Bind(
-    wxEVT_TIMER, [this](auto&) {
-      this->FlushCursorEvents();
-    }
-  );
+    wxEVT_TIMER, [this](auto&) { this->FlushCursorEvents(); });
 
   auto mouseCursorHz = 60;
   DEVMODEA devMode;
-  if (EnumDisplaySettingsA(nullptr, 0, &devMode) && devMode.dmDisplayFrequency > 1) {
+  if (
+    EnumDisplaySettingsA(nullptr, 0, &devMode)
+    && devMode.dmDisplayFrequency > 1) {
     mouseCursorHz = devMode.dmDisplayFrequency;
   }
   mCursorEventTimer.Start(1000 / mouseCursorHz);
