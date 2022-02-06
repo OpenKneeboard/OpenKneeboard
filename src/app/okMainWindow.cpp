@@ -224,6 +224,7 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
 void okMainWindow::PostGameEvent(wxThreadEvent& ev) {
   const auto ge = ev.GetPayload<GameEvent>();
   mKneeboard->PostGameEvent(ge);
+  mKneeboard->evFlushEvent();
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {
