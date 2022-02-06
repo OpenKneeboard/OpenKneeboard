@@ -34,6 +34,7 @@
 #include <shims/wx.h>
 #include <wincodec.h>
 
+#include "KneeboardState.h"
 #include "scope_guard.h"
 
 using namespace OpenKneeboard;
@@ -55,15 +56,12 @@ class okSHMRenderer::Impl {
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
 
-  winrt::com_ptr<IWICImagingFactory> mWIC;
+  std::shared_ptr<KneeboardState> mKneeboard;
+
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
   winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
-  D2D1_SIZE_U mUsedSize;
-  D2D1_RECT_F mClientRect;
-  bool mHaveCursor = false;
-  D2D1_POINT_2F mCursorPoint;
 
   std::array<SharedTextureResources, TextureCount> mResources;
 
@@ -74,7 +72,6 @@ class okSHMRenderer::Impl {
 
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
 
-  void SetCanvasSize(const D2D1_SIZE_U& size);
   void RenderError(const wxString& tabTitle, const wxString& message);
   void CopyPixelsToSHM();
   void RenderWithChrome(
@@ -85,10 +82,6 @@ class okSHMRenderer::Impl {
  private:
   void RenderErrorImpl(const wxString& message, const D2D1_RECT_F&);
 };
-
-void okSHMRenderer::Impl::SetCanvasSize(const D2D1_SIZE_U& size) {
-  mUsedSize = size;
-}
 
 void okSHMRenderer::Impl::RenderError(
   const wxString& tabTitle,
@@ -124,19 +117,24 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   it.mMutexKey = mSHM.GetNextTextureKey();
   it.mMutex->ReleaseSync(it.mMutexKey);
 
+  auto usedSize = mKneeboard->GetCanvasSize();
+
   SHM::Config config {
     .feederWindow = mFeederWindow,
-    .imageWidth = static_cast<uint16_t>(mUsedSize.width),
-    .imageHeight = static_cast<uint16_t>(mUsedSize.height),
+    .imageWidth = static_cast<uint16_t>(usedSize.width),
+    .imageHeight = static_cast<uint16_t>(usedSize.height),
   };
   mSHM.Update(config);
 }
 
-okSHMRenderer::okSHMRenderer(const DXResources& dxr, HWND feederWindow)
+okSHMRenderer::okSHMRenderer(
+  const DXResources& dxr,
+  const std::shared_ptr<KneeboardState>& kneeboard,
+  HWND feederWindow)
   : p(std::make_unique<Impl>()) {
   p->mFeederWindow = feederWindow;
   p->mDXR = dxr;
-  p->mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
+  p->mKneeboard = kneeboard;
   p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
 
   dxr.mD3DDevice->GetImmediateContext(p->mD3DContext.put());
@@ -206,15 +204,6 @@ okSHMRenderer::~okSHMRenderer() {
   ctx->Flush();
 }
 
-void okSHMRenderer::SetCursorPosition(float x, float y) {
-  p->mCursorPoint = {x, y};
-  p->mHaveCursor = true;
-}
-
-void okSHMRenderer::HideCursor() {
-  p->mHaveCursor = false;
-}
-
 void okSHMRenderer::Render(
   const std::shared_ptr<Tab>& tab,
   uint16_t pageIndex) {
@@ -250,35 +239,6 @@ void okSHMRenderer::Impl::RenderWithChrome(
   const wxString& tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
-
-  const auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
-
-  const auto scaleX
-    = static_cast<float>(TextureWidth) / preferredContentSize.width;
-  const auto scaleY = static_cast<float>(TextureHeight)
-    / (totalHeightRatio * preferredContentSize.height);
-  const auto scale = std::min(scaleX, scaleY);
-  const D2D1_SIZE_U contentSize {
-    static_cast<UINT>(preferredContentSize.width * scale),
-    static_cast<UINT>(preferredContentSize.height * scale),
-  };
-  const D2D1_SIZE_U headerSize {
-    contentSize.width,
-    static_cast<UINT>(contentSize.height * (HeaderPercent / 100.0f)),
-  };
-  const D2D1_SIZE_U canvasSize {
-    contentSize.width,
-    contentSize.height + headerSize.height,
-  };
-  this->SetCanvasSize(canvasSize);
-
-  mClientRect = {
-    .left = 0.0f,
-    .top = static_cast<float>(headerSize.height),
-    .right = static_cast<float>(canvasSize.width),
-    .bottom = static_cast<float>(canvasSize.height),
-  };
-
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTarget(mCanvasBitmap.get());
 
@@ -290,12 +250,17 @@ void okSHMRenderer::Impl::RenderWithChrome(
   ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  renderContent(mClientRect);
+  renderContent(mKneeboard->GetContentRenderRect());
+
+  const auto headerRect = mKneeboard->GetHeaderRenderRect();
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  ctx->FillRectangle(
-    {0.0f, 0.0f, float(headerSize.width), float(headerSize.height)},
-    mHeaderBGBrush.get());
+  ctx->FillRectangle(headerRect, mHeaderBGBrush.get());
+
+  const D2D1_SIZE_F headerSize {
+    headerRect.right - headerRect.left,
+    headerRect.bottom - headerRect.top,
+  };
 
   FLOAT dpix, dpiy;
   ctx->GetDpi(&dpix, &dpiy);
@@ -331,23 +296,29 @@ void okSHMRenderer::Impl::RenderWithChrome(
     headerLayout.get(),
     mHeaderTextBrush.get());
 
-  if (!mHaveCursor) {
+  if (!mKneeboard->HaveCursor()) {
     return;
   }
+
+  const auto contentRect = mKneeboard->GetContentRenderRect();
+  const D2D1_SIZE_F contentSize = {
+    contentRect.right - contentRect.left,
+    contentRect.bottom - contentRect.top,
+  };
+  const auto contentNativeSize = mKneeboard->GetContentNativeSize();
+  const auto scale = contentSize.height / contentNativeSize.height;
+
+  auto cursorPoint = mKneeboard->GetCursorPoint();
+  cursorPoint.x *= scale;
+  cursorPoint.y *= scale;
+  cursorPoint.x += contentRect.left;
+  cursorPoint.y += contentRect.top;
 
   const auto cursorRadius = contentSize.height / CursorRadiusDivisor;
   const auto cursorStroke = contentSize.height / CursorStrokeDivisor;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->DrawEllipse(
-    D2D1::Ellipse(mCursorPoint, cursorRadius, cursorRadius),
+    D2D1::Ellipse(cursorPoint, cursorRadius, cursorRadius),
     mCursorBrush.get(),
     cursorStroke);
-}
-
-D2D1_SIZE_U okSHMRenderer::GetCanvasSize() const {
-  return p->mUsedSize;
-}
-
-D2D1_RECT_F okSHMRenderer::GetClientRect() const {
-  return p->mClientRect;
 }

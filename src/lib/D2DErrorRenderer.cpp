@@ -51,9 +51,7 @@ D2DErrorRenderer::D2DErrorRenderer(
     p->mTextFormat.put());
 
   ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    p->mTextBrush.put());
+    {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), p->mTextBrush.put());
 }
 
 D2DErrorRenderer::~D2DErrorRenderer() {
@@ -66,13 +64,13 @@ void D2DErrorRenderer::Render(
              canvasHeight = where.bottom - where.top;
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
-  p->mDWrite->CreateTextLayout(
+  winrt::check_hresult(p->mDWrite->CreateTextLayout(
     text.data(),
     static_cast<UINT32>(text.size()),
     p->mTextFormat.get(),
     canvasWidth,
     canvasHeight,
-    textLayout.put());
+    textLayout.put()));
 
   DWRITE_TEXT_METRICS metrics;
   textLayout->GetMetrics(&metrics);

@@ -30,6 +30,7 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState() {
 	evCursorEvent.AddHandler(this, std::bind_front(&KneeboardState::OnCursorEvent, this));
+	UpdateLayout();
 }
 
 KneeboardState::~KneeboardState() {
@@ -135,7 +136,7 @@ void KneeboardState::UpdateLayout() {
 
   mContentNativeSize = { 768, 1024 };
   auto tab = GetCurrentTab();
-  if (tab) {
+  if (tab && tab->GetPageCount() > 0) {
     mContentNativeSize = tab->GetNativeContentSize();
   }
 

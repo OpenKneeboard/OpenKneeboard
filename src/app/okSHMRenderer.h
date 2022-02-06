@@ -27,6 +27,7 @@
 
 namespace OpenKneeboard {
 struct DXResources;
+class KneeboardState;
 class Tab;
 }// namespace OpenKneeboard
 
@@ -37,14 +38,11 @@ class okSHMRenderer final {
 
  public:
   okSHMRenderer() = delete;
-  okSHMRenderer(const OpenKneeboard::DXResources&, HWND feederWindow);
+  okSHMRenderer(
+    const OpenKneeboard::DXResources&,
+    const std::shared_ptr<OpenKneeboard::KneeboardState>&,
+    HWND feederWindow);
   ~okSHMRenderer();
-
-  void SetCursorPosition(float x, float y);
-  void HideCursor();
-
-  D2D1_SIZE_U GetCanvasSize() const;
-  D2D1_RECT_F GetClientRect() const;
 
   void Render(
     const std::shared_ptr<OpenKneeboard::Tab>& tab,
