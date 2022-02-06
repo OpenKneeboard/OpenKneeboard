@@ -50,7 +50,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   if (*mTablet) {
     mCursorEventTimer.Bind(
       wxEVT_TIMER, [this](auto&){ this->FlushCursorEvents(); });
-    mCursorEventTimer.Start(1000 / CursorRenderHz);
+    mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
   }
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::PostGameEvent, this);
@@ -205,6 +205,7 @@ void okMainWindow::FlushCursorEvents() {
     mKneeboard->evCursorEvent(event);
   }
   mBufferedCursorEvents.clear();
+
   mKneeboard->evFlushEvent();
 }
 

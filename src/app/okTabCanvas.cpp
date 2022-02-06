@@ -53,7 +53,8 @@ okTabCanvas::okTabCanvas(
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto&) { /* ignore */ });
   this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
   this->Bind(wxEVT_IDLE, [this](auto&) { this->FlushFrame(); });
-  kneeboard->evFlushEvent.AddHandler(this, std::bind_front(&okTabCanvas::FlushFrame, this));
+  kneeboard->evFlushEvent.AddHandler(
+    this, std::bind_front(&okTabCanvas::FlushFrame, this));
 
   this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
   this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
@@ -79,6 +80,19 @@ okTabCanvas::okTabCanvas(
     nullptr,
     nullptr,
     mSwapChain.put()));
+
+  mCursorEventTimer.Bind(
+    wxEVT_TIMER, [this](auto&) {
+      this->FlushCursorEvents();
+    }
+  );
+
+  auto mouseCursorHz = 60;
+  DEVMODEA devMode;
+  if (EnumDisplaySettingsA(nullptr, 0, &devMode) && devMode.dmDisplayFrequency > 1) {
+    mouseCursorHz = devMode.dmDisplayFrequency;
+  }
+  mCursorEventTimer.Start(1000 / mouseCursorHz);
 }
 
 okTabCanvas::~okTabCanvas() {
@@ -224,7 +238,7 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
   const bool leftClick = ev.ButtonIsDown(wxMOUSE_BTN_LEFT);
   const bool rightClick = ev.ButtonIsDown(wxMOUSE_BTN_RIGHT);
 
-  mKneeboardState->evCursorEvent({
+  mBufferedCursorEvents.push_back({
     .mPositionState = positionState,
     .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE
@@ -234,6 +248,19 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
     .mPressure = rightClick ? 0.8f : 0.0f,
     .mButtons = rightClick ? (1ui32 << 1) : 1ui32,
   });
+}
+
+void okTabCanvas::FlushCursorEvents() {
+  if (mBufferedCursorEvents.empty()) {
+    return;
+  }
+
+  for (const auto& ev: mBufferedCursorEvents) {
+    mKneeboardState->evCursorEvent(ev);
+  }
+  mBufferedCursorEvents.clear();
+
+  mKneeboardState->evFlushEvent();
 }
 
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {

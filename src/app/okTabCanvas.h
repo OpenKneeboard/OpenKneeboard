@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <d2d1_2.h>
 #include <dxgi1_2.h>
@@ -76,4 +77,8 @@ class okTabCanvas final : public wxPanel, private OpenKneeboard::EventReceiver {
   void OnMouseLeave(wxMouseEvent&);
 
   void OnPixelsChanged(wxCommandEvent&);
+
+  std::vector<OpenKneeboard::CursorEvent> mBufferedCursorEvents;
+  void FlushCursorEvents();
+  wxTimer mCursorEventTimer;
 };
