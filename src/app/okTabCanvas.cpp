@@ -244,8 +244,5 @@ void okTabCanvas::EnqueueFrame() {
   if (!this->IsShownOnScreen()) {
     return;
   }
-  if (mFrameTimer.IsRunning()) {
-    return;
-  }
-  mFrameTimer.StartOnce(1000 / FPSLimit);
+  PaintNow();
 }
