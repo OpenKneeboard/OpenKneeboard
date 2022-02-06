@@ -152,10 +152,14 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       const auto scaleX = static_cast<float>(canvasSize.width) / tabletLimits.x;
       const auto scaleY
         = static_cast<float>(canvasSize.height) / tabletLimits.y;
-      const auto scale = std::min(scaleX, scaleY);
+      // in most cases, we use `std::min` - that would be for fitting the tablet
+      // in the canvas bounds, but we want to fit the canvas in the tablet, so
+      // doing the opposite
+      const auto scale = std::max(scaleX, scaleY);
 
       x *= scale;
       y *= scale;
+
 
       // 2. translate to content origgin
 
