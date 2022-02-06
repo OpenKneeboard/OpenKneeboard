@@ -50,7 +50,12 @@ okTabCanvas::okTabCanvas(
   mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
-  this->Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
+  this->Bind(wxEVT_ERASE_BACKGROUND, [](auto&) { /* ignore */ });
+  this->Bind(wxEVT_IDLE, [this](auto&) {
+    if (this->mFramePending && this->IsShownOnScreen()) {
+      this->PaintNow();
+    }
+  });
   this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
 
   this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
@@ -103,6 +108,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
 }
 
 void okTabCanvas::PaintNow() {
+  mFramePending = false;
   const auto clientSize = GetClientSize();
 
   winrt::com_ptr<IDXGISurface> surface;
@@ -241,8 +247,5 @@ void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
 }
 
 void okTabCanvas::EnqueueFrame() {
-  if (!this->IsShownOnScreen()) {
-    return;
-  }
-  PaintNow();
+  mFramePending = true;
 }

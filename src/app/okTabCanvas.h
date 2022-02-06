@@ -51,8 +51,6 @@ class okTabCanvas final : public wxPanel, private OpenKneeboard::EventReceiver {
   void OnPaint(wxPaintEvent& ev);
   void OnEraseBackground(wxEraseEvent& ev);
 
-  void PaintNow();
-
   wxTimer mFrameTimer;
   OpenKneeboard::DXResources mDXR;
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboardState;
@@ -70,7 +68,10 @@ class okTabCanvas final : public wxPanel, private OpenKneeboard::EventReceiver {
   };
   PageMetrics GetPageMetrics() const;
 
+  bool mFramePending = false;
   void EnqueueFrame();
+  void PaintNow();
+
 
   void OnMouseMove(wxMouseEvent&);
   void OnMouseLeave(wxMouseEvent&);
