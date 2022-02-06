@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <shims/wx.h>
@@ -27,7 +28,7 @@
 
 #include <memory>
 
-#include <OpenKneeboard/DXResources.h>
+#include "Events.h"
 #include "Settings.h"
 #include "okOpenVRThread.h"
 #include "okSHMRenderer.h"
@@ -37,7 +38,12 @@
 class wxBookCtrlEvent;
 class wxNotebook;
 
-class okMainWindow final : public wxFrame {
+namespace OpenKneeboard {
+class KneeboardState;
+}
+
+class okMainWindow final : public wxFrame,
+                           private OpenKneeboard::EventReceiver {
  public:
   okMainWindow();
   virtual ~okMainWindow();
@@ -48,13 +54,11 @@ class okMainWindow final : public wxFrame {
 
  private:
   void OnExit(wxCommandEvent&);
-  void OnGameEvent(wxThreadEvent&);
+  void PostGameEvent(wxThreadEvent&);
   void OnShowSettings(wxCommandEvent&);
 
   void OnPreviousTab(wxCommandEvent&);
   void OnNextTab(wxCommandEvent&);
-  void OnPreviousPage(wxCommandEvent&);
-  void OnNextPage(wxCommandEvent&);
   void OnToggleVisibility(wxCommandEvent&);
 
   void OnTabChanged(wxBookCtrlEvent&);
@@ -64,12 +68,10 @@ class okMainWindow final : public wxFrame {
 
   OpenKneeboard::DXResources mDXResources;
   std::vector<okConfigurableComponent*> mConfigurables;
-  std::vector<okTab*> mTabUIs;
   wxNotebook* mNotebook = nullptr;
-  okTabsList* mTabsList = nullptr;
-  int mCurrentTab = -1;
   Settings mSettings = Settings::Load();
 
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
   std::unique_ptr<okSHMRenderer> mSHMRenderer;
   std::unique_ptr<OpenKneeboard::WintabTablet> mTablet;
 };

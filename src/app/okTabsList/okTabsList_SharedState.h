@@ -19,11 +19,15 @@
  */
 #pragma once
 
-#include "okTabsList.h"
-
 #include <OpenKneeboard/DXResources.h>
 
+#include "okTabsList.h"
+
+namespace OpenKneeboard {
+class KneeboardState;
+}
+
 struct okTabsList::SharedState {
-  std::vector<std::shared_ptr<OpenKneeboard::Tab>> tabs;
-  OpenKneeboard::DXResources dxr;
+  OpenKneeboard::DXResources mDXR;
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };

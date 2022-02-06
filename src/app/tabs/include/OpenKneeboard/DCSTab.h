@@ -22,6 +22,8 @@
 
 #include <filesystem>
 
+class wxString;
+
 namespace OpenKneeboard {
 
 class DCSTab : public Tab {
@@ -29,7 +31,7 @@ class DCSTab : public Tab {
   DCSTab(const DXResources&, const wxString& title);
   virtual ~DCSTab();
 
-  virtual void OnGameEvent(const GameEvent&) override final;
+  virtual void PostGameEvent(const GameEvent&) override final;
 
  protected:
   virtual const char* GetGameEventName() const = 0;

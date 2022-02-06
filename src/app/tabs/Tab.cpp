@@ -18,11 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
-#include <OpenKneeboard/DXResources.h>
 #include "okEvents.h"
 #include "scope_guard.h"
 
@@ -70,7 +70,7 @@ std::string Tab::GetTitle() const {
 void Tab::Reload() {
 }
 
-void Tab::OnGameEvent(const GameEvent&) {
+void Tab::PostGameEvent(const GameEvent&) {
 }
 
 void Tab::ClearDrawings() {
@@ -85,7 +85,7 @@ nlohmann::json Tab::GetSettings() const {
   return {};
 }
 
-void Tab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
+void Tab::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   if (
     event.mTouchState != CursorTouchState::TOUCHING_SURFACE
     || event.mPositionState != CursorPositionState::IN_CLIENT_RECT) {
@@ -114,10 +114,6 @@ void Tab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   ctx->BeginDraw();
   ctx->SetPrimitiveBlend(
     erasing ? D2D1_PRIMITIVE_BLEND_COPY : D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
-  auto cleanup = scope_guard([&]() {
-    ctx->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
-    winrt::check_hresult(ctx->EndDraw());
-  });
 
   if (p->mHaveCursor) {
     ctx->DrawLine(p->mCursorPoint, {x, y}, brush.get(), radius * 2);
@@ -125,6 +121,10 @@ void Tab::OnCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   ctx->FillEllipse(D2D1::Ellipse({x, y}, radius, radius), brush.get());
   p->mHaveCursor = true;
   p->mCursorPoint = {x, y};
+  ctx->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+  winrt::check_hresult(ctx->EndDraw());
+
+  this->evNeedsRepaintEvent();
 }
 
 winrt::com_ptr<IDXGISurface> Tab::Impl::GetDrawingSurface(
@@ -165,9 +165,7 @@ winrt::com_ptr<IDXGISurface> Tab::Impl::GetDrawingSurface(
   return page.mSurface;
 }
 
-void Tab::RenderPage(
-  uint16_t pageIndex,
-  const D2D1_RECT_F& rect) {
+void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
   RenderPageContent(pageIndex, rect);
 
   if (pageIndex >= p->mDrawings.size()) {

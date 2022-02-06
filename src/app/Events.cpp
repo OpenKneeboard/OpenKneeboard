@@ -17,27 +17,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <dxgi1_2.h>
-#include <shims/winrt.h>
-#include <shims/wx.h>
-
-#include <memory>
+#include "Events.h"
 
 namespace OpenKneeboard {
-struct CursorEvent;
-struct DXResources;
-class KneeboardState;
-class TabState;
-}// namespace OpenKneeboard
 
-class okTab final : public wxPanel {
- public:
-  okTab(
-    wxWindow* parent,
-    const OpenKneeboard::DXResources&,
-    const std::shared_ptr<OpenKneeboard::KneeboardState>&,
-    const std::shared_ptr<OpenKneeboard::TabState>&);
-  virtual ~okTab();
-};
+void EventBase::Add(EventReceiver* receiver, uint64_t token) {
+  receiver->mSenders.push_back({this, token});
+}
+
+EventReceiver::EventReceiver() {
+}
+
+EventReceiver::~EventReceiver() {
+  for (const auto& sender: mSenders) {
+    sender.mEvent->RemoveHandler(sender.mToken);
+  }
+}
+
+}

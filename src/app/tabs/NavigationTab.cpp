@@ -96,7 +96,7 @@ D2D1_SIZE_U NavigationTab::GetPreferredPixelSize(uint16_t) {
   return mPreferredSize;
 }
 
-void NavigationTab::OnCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
+void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   mCursorPoint = {ev.mX, ev.mY};
 }
 

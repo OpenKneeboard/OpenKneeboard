@@ -35,9 +35,8 @@ DCSAircraftTab::DCSAircraftTab(const DXResources& dxr)
   : DCSTab(dxr, _("Aircraft")),
     mDelegate(
       std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
-  mDelegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
-    wxQueueEvent(this, ev.Clone());
-  });
+  mDelegate->evFullyReplacedEvent.AddHandler(
+    this, [this]() { this->evFullyReplacedEvent(); });
 }
 
 DCSAircraftTab::~DCSAircraftTab() {

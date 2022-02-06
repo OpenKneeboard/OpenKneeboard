@@ -33,8 +33,8 @@ enum class CursorTouchState {
 };
 
 struct CursorEvent {
-  CursorPositionState mPositionState;
-  CursorTouchState mTouchState;
+  CursorPositionState mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
+  CursorTouchState mTouchState = CursorTouchState::NOT_NEAR_SURFACE;
   float mX = 0, mY = 0, mPressure = 0;
   uint32_t mButtons = 0;
 };

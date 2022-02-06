@@ -158,7 +158,7 @@ DCSTab::DCSTab(const DXResources& dxr, const wxString& title)
 DCSTab::~DCSTab() {
 }
 
-void DCSTab::OnGameEvent(const GameEvent& event) {
+void DCSTab::PostGameEvent(const GameEvent& event) {
   if (event.name == this->GetGameEventName()) {
     p->mCurrentConfig.mValue = event.value;
     Update();

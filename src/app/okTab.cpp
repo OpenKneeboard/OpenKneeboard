@@ -21,31 +21,26 @@
 
 #include <OpenKneeboard/Tab.h>
 
+#include "TabState.h"
 #include "okTabCanvas.h"
 
 using namespace OpenKneeboard;
 
-class okTab::Impl final {
- public:
-  std::shared_ptr<Tab> mTab;
-  okTabCanvas* mCanvas;
-};
-
 okTab::okTab(
   wxWindow* parent,
   const DXResources& dxr,
-  const std::shared_ptr<Tab>& tab)
-  : wxPanel(parent), p(new Impl {.mTab = tab}) {
-  p->mCanvas = new okTabCanvas(this, dxr, tab);
-  auto canvas = p->mCanvas;
+  const std::shared_ptr<KneeboardState>& kneeboardState,
+  const std::shared_ptr<TabState>& tabState)
+  : wxPanel(parent) {
+  auto canvas = new okTabCanvas(this, dxr, kneeboardState, tabState);
 
   auto buttonBox = new wxPanel(this);
   auto firstPage = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
   auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
   auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
-  firstPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->SetPageIndex(0); });
-  previousPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->PreviousPage(); });
-  nextPage->Bind(wxEVT_BUTTON, [=](auto) { canvas->NextPage(); });
+  firstPage->Bind(wxEVT_BUTTON, [=](auto&) { tabState->SetPageIndex(0); });
+  previousPage->Bind(wxEVT_BUTTON, [=](auto&) { tabState->PreviousPage(); });
+  nextPage->Bind(wxEVT_BUTTON, [=](auto&) { tabState->NextPage(); });
 
   auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
   buttonSizer->Add(firstPage);
@@ -55,30 +50,10 @@ okTab::okTab(
   buttonBox->SetSizer(buttonSizer);
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
-  sizer->Add(p->mCanvas, 1, wxEXPAND);
+  sizer->Add(canvas, 1, wxEXPAND);
   sizer->Add(buttonBox, 0, wxEXPAND);
   this->SetSizerAndFit(sizer);
 }
 
 okTab::~okTab() {
-}
-
-std::shared_ptr<Tab> okTab::GetTab() const {
-  return p->mTab;
-}
-
-uint16_t okTab::GetPageIndex() const {
-  return p->mCanvas->GetPageIndex();
-}
-
-void okTab::OnCursorEvent(const CursorEvent& ev) {
-  p->mCanvas->OnCursorEvent(ev);
-}
-
-void okTab::PreviousPage() {
-  p->mCanvas->PreviousPage();
-}
-
-void okTab::NextPage() {
-  p->mCanvas->NextPage();
 }

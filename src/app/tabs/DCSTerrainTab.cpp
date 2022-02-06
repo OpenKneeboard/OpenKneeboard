@@ -35,9 +35,8 @@ DCSTerrainTab::DCSTerrainTab(const DXResources& dxr)
   : DCSTab(dxr, _("Theater")),
     mDelegate(
       std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
-  mDelegate->Bind(okEVT_TAB_FULLY_REPLACED, [this](auto& ev) {
-    wxQueueEvent(this, ev.Clone());
-  });
+  mDelegate->evFullyReplacedEvent.AddHandler(
+    this, [this]() { this->evFullyReplacedEvent(); });
 }
 
 DCSTerrainTab::~DCSTerrainTab() {

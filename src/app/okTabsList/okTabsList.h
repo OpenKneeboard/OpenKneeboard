@@ -26,16 +26,16 @@
 
 namespace OpenKneeboard {
   struct DXResources;
+  class KneeboardState;
 }
 
 class okTabsList final : public okConfigurableComponent {
  public:
   okTabsList() = delete;
   okTabsList(
-    const nlohmann::json& config,
-    const OpenKneeboard::DXResources&);
-
-  std::vector<std::shared_ptr<OpenKneeboard::Tab>> GetTabs() const;
+    const OpenKneeboard::DXResources&,
+    const std::shared_ptr<OpenKneeboard::KneeboardState>& kneeboard,
+    const nlohmann::json& config);
 
   virtual ~okTabsList();
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;

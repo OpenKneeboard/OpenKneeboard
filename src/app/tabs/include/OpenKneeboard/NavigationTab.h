@@ -40,7 +40,7 @@ class NavigationTab final : public Tab {
 
   virtual uint16_t GetPageCount() const override;
   virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) override;
-  virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
+  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
 
  protected:
   virtual void RenderPageContent(uint16_t pageIndex, const D2D1_RECT_F& rect)

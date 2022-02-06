@@ -19,13 +19,18 @@
  */
 #pragma once
 
-#include <nlohmann/json.hpp>
-
 #include <shims/wx.h>
 
-/// Expected to raise okEVT_SETTINGS_CHANGED
-class okConfigurableComponent : public wxEvtHandler {
+#include <nlohmann/json.hpp>
+
+#include "Events.h"
+
+class okConfigurableComponent : public wxEvtHandler,
+                                protected OpenKneeboard::EventReceiver {
  public:
+  okConfigurableComponent();
   virtual wxWindow* GetSettingsUI(wxWindow* parent) = 0;
   virtual nlohmann::json GetSettings() const = 0;
+
+  OpenKneeboard::Event<> evSettingsChangedEvent;
 };

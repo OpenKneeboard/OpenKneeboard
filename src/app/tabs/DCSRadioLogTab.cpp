@@ -203,23 +203,15 @@ void DCSRadioLogTab::Impl::PushMessage(const std::string& message) {
   mMessages.push_back(
     wxString::FromUTF8(message.data(), message.size()).ToStdWstring());
   LayoutMessages();
-  wxQueueEvent(mTab, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
+  mTab->evNeedsRepaintEvent();
 }
 
 void DCSRadioLogTab::Impl::PushPage() {
   mCompletePages.push_back(mCurrentPageLines);
   mCurrentPageLines.clear();
 
-  auto ev = new wxCommandEvent(okEVT_TAB_PAGE_APPENDED);
-
-  ev->SetEventObject(mTab);
-  // Value is the new page number; we're not subtracting 1 as
-  // there's about to be a new page with incomplete lines
-  ev->SetInt(mCompletePages.size());
-
-  wxQueueEvent(mTab, ev);
-  // Page numbers in the current page have changed too
-  wxQueueEvent(mTab, new wxCommandEvent(okEVT_TAB_PAGE_MODIFIED));
+  mTab->evPageAppendedEvent();
+  mTab->evNeedsRepaintEvent();
 }
 
 void DCSRadioLogTab::Impl::LayoutMessages() {

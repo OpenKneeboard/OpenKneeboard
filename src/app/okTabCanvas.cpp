@@ -28,35 +28,26 @@
 #include <dxgi1_3.h>
 #include <wx/dcbuffer.h>
 
+#include "KneeboardState.h"
+#include "TabState.h"
 #include "okEvents.h"
 #include "scope_guard.h"
 
 using namespace OpenKneeboard;
 
-struct okTabCanvas::Impl final {
-  std::shared_ptr<Tab> mTab;
-  uint16_t mPageIndex = 0;
-
-  DXResources mDXR;
-  winrt::com_ptr<IDXGISwapChain1> mSwapChain;
-
-  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
-
-  bool mHaveCursor = false;
-  D2D1_POINT_2F mCursorPoint;
-  winrt::com_ptr<ID2D1Brush> mCursorBrush;
-};
-
 okTabCanvas::okTabCanvas(
   wxWindow* parent,
   const DXResources& dxr,
-  const std::shared_ptr<Tab>& tab)
+  const std::shared_ptr<KneeboardState>& kneeboard,
+  const std::shared_ptr<TabState>& tab)
   : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize {384, 512}),
-    p(new Impl {.mTab = tab, .mDXR = dxr}) {
+    mDXR(dxr),
+    mKneeboardState(kneeboard),
+    mTabState(tab) {
   // We handle the mouse cursor as if it were a graphics tablet pen
   this->SetCursor(wxCURSOR_BLANK);
 
-  p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
+  mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto) { /* ignore */ });
@@ -65,72 +56,57 @@ okTabCanvas::okTabCanvas(
   this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
   this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
 
-  tab->Bind(okEVT_TAB_FULLY_REPLACED, &okTabCanvas::OnTabFullyReplaced, this);
-  tab->Bind(okEVT_TAB_PAGE_MODIFIED, &okTabCanvas::OnTabPageModified, this);
-  tab->Bind(okEVT_TAB_PAGE_APPENDED, &okTabCanvas::OnTabPageAppended, this);
+  tab->evNeedsRepaintEvent.AddHandler(this, [=]() {
+    this->Refresh();
+  });
+  kneeboard->evCursorEvent.AddHandler(this, [=](auto) {
+    this->Refresh();
+  });
 
-  winrt::com_ptr<ID2D1SolidColorBrush> brush;
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), brush.put()));
-  p->mCursorBrush = brush;
+    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mCursorBrush.put()));
+  DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .SampleDesc = {1, 0},
+    .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+    .BufferCount = 2,
+    .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+    .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
+  };
+  winrt::check_hresult(mDXR.mDXGIFactory->CreateSwapChainForHwnd(
+    mDXR.mDXGIDevice.get(),
+    this->GetHWND(),
+    &swapChainDesc,
+    nullptr,
+    nullptr,
+    mSwapChain.put()));
 }
 
 okTabCanvas::~okTabCanvas() {
 }
 
 void okTabCanvas::OnSize(wxSizeEvent& ev) {
-  if (!p->mSwapChain) {
-    return;
-  }
-
   auto size = this->GetClientSize();
   DXGI_SWAP_CHAIN_DESC desc;
-  p->mSwapChain->GetDesc(&desc);
+  mSwapChain->GetDesc(&desc);
 
   winrt::com_ptr<ID2D1Image> oldTarget;
-  p->mDXR.mD2DDeviceContext->SetTarget(nullptr);
+  mDXR.mD2DDeviceContext->SetTarget(nullptr);
 
-  winrt::check_hresult(p->mSwapChain->ResizeBuffers(
+  winrt::check_hresult(mSwapChain->ResizeBuffers(
     desc.BufferCount, size.x, size.y, desc.BufferDesc.Format, desc.Flags));
 }
 
-void okTabCanvas::OnCursorEvent(const CursorEvent& ev) {
-  if (p->mPageIndex < p->mTab->GetPageCount()) {
-    p->mTab->OnCursorEvent(ev, p->mPageIndex);
-  }
-  p->mHaveCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
-  p->mCursorPoint = {ev.mX, ev.mY};
-
-  Refresh();
-  Update();
-}
-
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
+  ev.Skip();
   wxPaintDC dc(this);
 
   const auto clientSize = GetClientSize();
-  if (!p->mSwapChain) {
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-      .SampleDesc = {1, 0},
-      .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
-      .BufferCount = 2,
-      .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
-      .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
-    };
-    p->mDXR.mDXGIFactory->CreateSwapChainForHwnd(
-      p->mDXR.mDXGIDevice.get(),
-      this->GetHWND(),
-      &swapChainDesc,
-      nullptr,
-      nullptr,
-      p->mSwapChain.put());
-  }
 
   winrt::com_ptr<IDXGISurface> surface;
-  p->mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
+  mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
   winrt::com_ptr<ID2D1Bitmap1> bitmap;
-  auto ctx = p->mDXR.mD2DDeviceContext;
+  auto ctx = mDXR.mD2DDeviceContext;
   winrt::check_hresult(
     ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
   ctx->SetTarget(bitmap.get());
@@ -138,11 +114,11 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   ctx->BeginDraw();
   const auto cleanup = scope_guard([&]() {
     winrt::check_hresult(ctx->EndDraw());
-    winrt::check_hresult(p->mSwapChain->Present(0, 0));
+    winrt::check_hresult(mSwapChain->Present(0, 0));
   });
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
-  const auto count = p->mTab->GetPageCount();
+  const auto count = mTabState->GetPageCount();
   if (count == 0) {
     auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
     ctx->Clear(D2D1_COLOR_F {
@@ -152,7 +128,7 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
       bg.Alpha() / 255.0f,
     });
 
-    p->mErrorRenderer->Render(
+    mErrorRenderer->Render(
       _("No Pages").ToStdWstring(),
       {0.0f,
        0.0f,
@@ -169,144 +145,84 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
     bg.Alpha() / 255.0f,
   });
 
-  p->mPageIndex
-    = std::clamp(p->mPageIndex, 0ui16, static_cast<uint16_t>(count - 1));
-
   const auto pageMetrics = GetPageMetrics();
 
-  p->mTab->RenderPage(p->mPageIndex, pageMetrics.mRect);
+  mTabState->GetTab()->RenderPage(mTabState->GetPageIndex(), pageMetrics.mRenderRect);
 
-  if (!p->mHaveCursor) {
+  if (!mKneeboardState->HaveCursor()) {
     return;
   }
 
-  const auto scale = pageMetrics.mScale;
-  const auto pageSize = pageMetrics.mSize;
-
-  auto point = p->mCursorPoint;
-  point.x *= scale;
-  point.y *= scale;
-
-  point.x += (clientSize.x - pageSize.width) / 2;
-  point.y += (clientSize.y - pageSize.height) / 2;
-
-  const auto cursorRadius = clientSize.y / CursorRadiusDivisor;
-  const auto cursorStroke = clientSize.y / CursorStrokeDivisor;
+  const auto cursorRadius
+    = pageMetrics.mRenderSize.height / CursorRadiusDivisor;
+  const auto cursorStroke
+    = pageMetrics.mRenderSize.height / CursorStrokeDivisor;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  auto point = mKneeboardState->GetCursorPoint();
+  point.x *= pageMetrics.mScale;
+  point.y *= pageMetrics.mScale;
+  point.x += pageMetrics.mRenderRect.left;
+  point.y += pageMetrics.mRenderRect.top;
   ctx->DrawEllipse(
     D2D1::Ellipse(point, cursorRadius, cursorRadius),
-    p->mCursorBrush.get(),
+    mCursorBrush.get(),
     cursorStroke);
 }
 
 okTabCanvas::PageMetrics okTabCanvas::GetPageMetrics() const {
-  if (p->mPageIndex >= p->mTab->GetPageCount()) {
-    return {};
-  }
   const auto clientSize = GetClientSize();
-  const auto preferredSize = p->mTab->GetPreferredPixelSize(p->mPageIndex);
+  const auto contentNativeSize = mTabState->GetNativeContentSize();
 
-  const auto scaleX = static_cast<float>(clientSize.x) / preferredSize.width;
-  const auto scaleY = static_cast<float>(clientSize.y) / preferredSize.height;
+  const auto scaleX
+    = static_cast<float>(clientSize.x) / contentNativeSize.width;
+  const auto scaleY
+    = static_cast<float>(clientSize.y) / contentNativeSize.height;
   const auto scale = std::min(scaleX, scaleY);
 
-  const D2D1_SIZE_F pageSize {
-    preferredSize.width * scale, preferredSize.height * scale};
-  const auto padX = (clientSize.x - pageSize.width) / 2;
-  const auto padY = (clientSize.y - pageSize.height) / 2;
-  const D2D1_RECT_F pageRect {
+  const D2D1_SIZE_F contentRenderSize {
+    contentNativeSize.width * scale, contentNativeSize.height * scale};
+  const auto padX = (clientSize.x - contentRenderSize.width) / 2;
+  const auto padY = (clientSize.y - contentRenderSize.height) / 2;
+
+  const D2D1_RECT_F contentRenderRect {
     .left = padX,
     .top = padY,
     .right = clientSize.x - padX,
     .bottom = clientSize.y - padY,
   };
 
-  return {pageRect, pageSize, scale};
+  return {contentNativeSize, contentRenderRect, contentRenderSize, scale};
 }
 
-uint16_t okTabCanvas::GetPageIndex() const {
-  return p->mPageIndex;
-}
-
-void okTabCanvas::SetPageIndex(uint16_t index) {
-  const auto count = p->mTab->GetPageCount();
-  if (count == 0) {
-    return;
-  }
-  p->mPageIndex = std::clamp(index, 0ui16, static_cast<uint16_t>(count - 1));
-
-  this->OnPixelsChanged();
-}
-
-void okTabCanvas::NextPage() {
-  SetPageIndex(GetPageIndex() + 1);
-}
-
-void okTabCanvas::PreviousPage() {
-  const auto current = GetPageIndex();
-  if (current == 0) {
-    return;
-  }
-  SetPageIndex(current - 1);
-}
-
-std::shared_ptr<Tab> okTabCanvas::GetTab() const {
-  return p->mTab;
-}
-
-void okTabCanvas::OnTabFullyReplaced(wxCommandEvent&) {
-  p->mPageIndex = 0;
-  this->OnPixelsChanged();
-}
-
-void okTabCanvas::OnTabPageModified(wxCommandEvent&) {
-  this->OnPixelsChanged();
-}
-
-void okTabCanvas::OnTabPageAppended(wxCommandEvent& ev) {
-  auto tab = dynamic_cast<Tab*>(ev.GetEventObject());
-  if (!tab) {
-    return;
-  }
-  dprintf(
-    "Tab appended: {} {} {}",
-    tab->GetTitle(),
-    ev.GetInt(),
-    this->p->mPageIndex);
-  if (ev.GetInt() != this->p->mPageIndex + 1) {
-    return;
-  }
-  this->NextPage();
-}
-
-void okTabCanvas::OnPixelsChanged() {
-  auto ev = new wxCommandEvent(okEVT_TAB_PIXELS_CHANGED);
-  ev->SetEventObject(p->mTab.get());
-  wxQueueEvent(this, ev);
-
+void okTabCanvas::OnPixelsChanged(wxCommandEvent&) {
   this->Refresh();
-  this->Update();
 }
 
 void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
   ev.Skip();
 
-  if (GetPageIndex() >= p->mTab->GetPageCount()) {
-    return;
-  }
-
   const auto metrics = GetPageMetrics();
 
-  auto x = ev.GetX() / metrics.mScale;
-  auto y = ev.GetY() / metrics.mScale;
+  float x = ev.GetX();
+  float y = ev.GetY();
+
+  auto positionState
+    = (x >= metrics.mRenderRect.left && x <= metrics.mRenderRect.right
+       && y >= metrics.mRenderRect.top && y <= metrics.mRenderRect.bottom)
+    ? CursorPositionState::IN_CLIENT_RECT
+    : CursorPositionState::NOT_IN_CLIENT_RECT;
+
+  x -= metrics.mRenderRect.left;
+  y -= metrics.mRenderRect.top;
+  x /= metrics.mScale;
+  y /= metrics.mScale;
 
   const bool leftClick = ev.ButtonIsDown(wxMOUSE_BTN_LEFT);
   const bool rightClick = ev.ButtonIsDown(wxMOUSE_BTN_RIGHT);
 
-  this->OnCursorEvent({
-    .mPositionState = CursorPositionState::IN_CLIENT_RECT,
-    .mTouchState
-    = (leftClick || rightClick)
+  mKneeboardState->evCursorEvent({
+    .mPositionState = positionState,
+    .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE
       : CursorTouchState::NEAR_SURFACE,
     .mX = x,
@@ -318,8 +234,5 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
 
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
   ev.Skip();
-  this->OnCursorEvent({
-    .mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
-    .mTouchState = CursorTouchState::NOT_NEAR_SURFACE,
-  });
+  mKneeboardState->evCursorEvent({});
 }

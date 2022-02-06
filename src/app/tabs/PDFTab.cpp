@@ -64,7 +64,7 @@ void PDFTab::Reload() {
   std::thread([=]() {
     auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
     p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
-    wxQueueEvent(this, new wxCommandEvent(okEVT_TAB_FULLY_REPLACED));
+    evFullyReplacedEvent();
   }).detach();
 }
 

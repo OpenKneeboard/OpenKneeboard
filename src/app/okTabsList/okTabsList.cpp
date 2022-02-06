@@ -25,6 +25,8 @@
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/dprint.h>
 
+#include "KneeboardState.h"
+#include "TabState.h"
 #include "TabTypes.h"
 #include "okEvents.h"
 #include "okTabsList_SettingsUI.h"
@@ -34,9 +36,14 @@ using namespace OpenKneeboard;
 
 struct okTabsList::State final : public okTabsList::SharedState {};
 
-okTabsList::okTabsList(const nlohmann::json& config, const DXResources& dxr)
+okTabsList::okTabsList(
+  const DXResources& dxr,
+  const std::shared_ptr<KneeboardState>& kneeboard,
+  const nlohmann::json& config)
   : p(std::make_shared<State>()) {
-  p->dxr = dxr;
+  p->mDXR = dxr;
+  p->mKneeboard = kneeboard;
+
   if (config.is_null()) {
     LoadDefaultConfig();
   } else {
@@ -65,9 +72,9 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance = load_tab<it##Tab>(p->dxr, title, settings); \
+    auto instance = load_tab<it##Tab>(p->mDXR, title, settings); \
     if (instance) { \
-      p->tabs.push_back(instance); \
+      p->mKneeboard->AppendTab(std::make_shared<TabState>(instance)); \
       continue; \
     } \
   }
@@ -77,16 +84,12 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 }
 
 void okTabsList::LoadDefaultConfig() {
-  p->tabs = {
-    std::make_shared<DCSRadioLogTab>(p->dxr),
-    std::make_shared<DCSMissionTab>(p->dxr),
-    std::make_shared<DCSAircraftTab>(p->dxr),
-    std::make_shared<DCSTerrainTab>(p->dxr),
-  };
-}
-
-std::vector<std::shared_ptr<Tab>> okTabsList::GetTabs() const {
-  return p->tabs;
+  p->mKneeboard->SetTabs({
+    TabState::make_shared<DCSRadioLogTab>(p->mDXR),
+    TabState::make_shared<DCSMissionTab>(p->mDXR),
+    TabState::make_shared<DCSAircraftTab>(p->mDXR),
+    TabState::make_shared<DCSTerrainTab>(p->mDXR),
+  });
 }
 
 wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
@@ -99,8 +102,9 @@ wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
 nlohmann::json okTabsList::GetSettings() const {
   std::vector<nlohmann::json> ret;
 
-  for (const auto& tab: p->tabs) {
+  for (const auto& tabState: p->mKneeboard->GetTabs()) {
     std::string type;
+    auto tab = tabState->GetRootTab();
 #define IT(_, it) \
   if (type.empty() && std::dynamic_pointer_cast<it##Tab>(tab)) { \
     type = #it; \

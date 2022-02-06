@@ -24,8 +24,11 @@
 #include <wx/notebook.h>
 #include <wx/wupdlock.h>
 
+#include <functional>
 #include <limits>
 
+#include "KneeboardState.h"
+#include "TabState.h"
 #include "okAboutBox.h"
 #include "okDirectInputController.h"
 #include "okEvents.h"
@@ -36,13 +39,14 @@ using namespace OpenKneeboard;
 
 okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mDXResources = DXResources::Create();
+  mKneeboard = std::make_shared<KneeboardState>();
 
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
   mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources, this->GetHWND());
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
-  this->Bind(okEVT_GAME_EVENT, &okMainWindow::OnGameEvent, this);
+  this->Bind(okEVT_GAME_EVENT, &okMainWindow::PostGameEvent, this);
   auto menuBar = new wxMenuBar();
   {
     auto fileMenu = new wxMenu();
@@ -74,8 +78,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
 
   {
-    auto tabs = new okTabsList(mSettings.Tabs, mDXResources);
-    mTabsList = tabs;
+    auto tabs = new okTabsList(mDXResources, mKneeboard, mSettings.Tabs);
     mConfigurables.push_back(tabs);
     UpdateTabs();
     tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
@@ -107,8 +110,9 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
 
     dipc->Bind(okEVT_PREVIOUS_TAB, &okMainWindow::OnPreviousTab, this);
     dipc->Bind(okEVT_NEXT_TAB, &okMainWindow::OnNextTab, this);
-    dipc->Bind(okEVT_PREVIOUS_PAGE, &okMainWindow::OnPreviousPage, this);
-    dipc->Bind(okEVT_NEXT_PAGE, &okMainWindow::OnNextPage, this);
+    // TODO: make okDirectInputController directly act on mKneeboardState
+    dipc->Bind(okEVT_PREVIOUS_PAGE, [=](auto&) { mKneeboard->PreviousPage(); });
+    dipc->Bind(okEVT_NEXT_PAGE, [=](auto&) { mKneeboard->NextPage(); });
     dipc->Bind(
       okEVT_TOGGLE_VISIBILITY, &okMainWindow::OnToggleVisibility, this);
 
@@ -134,7 +138,7 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       float y = state.x;
       std::swap(tabletLimits.x, tabletLimits.y);
 
-      const auto canvasSize = mSHMRenderer->GetCanvasSize();
+      const auto canvasSize = mKneeboard->GetCanvasSize();
 
       // scale to the render canvas
       const auto xScale = static_cast<float>(canvasSize.width) / tabletLimits.x;
@@ -145,45 +149,33 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       y *= scale;
       mSHMRenderer->SetCursorPosition(x, y);
 
-      if (mCurrentTab >= 0) {
-        auto tabUI = mTabUIs.at(mCurrentTab);
-        auto tab = tabUI->GetTab();
-        auto contentSize = tab->GetPreferredPixelSize(tabUI->GetPageIndex());
+      // scale to the content
+      const auto contentNativeSize = mKneeboard->GetContentNativeSize();
+      const auto contentRenderRect = mKneeboard->GetContentRenderRect();
+      const auto contentScale = contentNativeSize.width
+        / (contentRenderRect.right - contentRenderRect.left);
+      CursorEvent event {
+        .mTouchState = (state.penButtons & 1)
+          ? CursorTouchState::TOUCHING_SURFACE
+          : CursorTouchState::NEAR_SURFACE,
+        .mX = contentScale * (x - contentRenderRect.left),
+        .mY = contentScale * (y - contentRenderRect.top),
+        .mPressure = static_cast<float>(state.pressure) / tabletLimits.pressure,
+        .mButtons = state.penButtons,
+      };
 
-        const auto pressure
-          = static_cast<float>(state.pressure) / tabletLimits.pressure;
-
-        const auto clientRect = mSHMRenderer->GetClientRect();
-        const auto contentScale
-          = contentSize.width / (clientRect.right - clientRect.left);
-        CursorEvent event {
-          .mTouchState = (state.penButtons & 1)
-            ? CursorTouchState::TOUCHING_SURFACE
-            : CursorTouchState::NEAR_SURFACE,
-          .mX = contentScale * (x - clientRect.left),
-          .mY = contentScale * (y - clientRect.top),
-          .mPressure = pressure,
-          .mButtons = state.penButtons,
-        };
-
-        if (
-          x >= clientRect.left && x <= clientRect.right && y >= clientRect.top
-          && y <= clientRect.bottom) {
-          event.mPositionState = CursorPositionState::IN_CLIENT_RECT;
-        } else {
-          event.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
-        }
-
-        mTabUIs.at(mCurrentTab)->OnCursorEvent(event);
+      if (
+        x >= contentRenderRect.left && x <= contentRenderRect.right
+        && y >= contentRenderRect.top && y <= contentRenderRect.bottom) {
+        event.mPositionState = CursorPositionState::IN_CLIENT_RECT;
+      } else {
+        event.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
       }
+
+      mKneeboard->evCursorEvent(event);
     } else {
       mSHMRenderer->HideCursor();
-      if (mCurrentTab >= 0) {
-        mTabUIs.at(mCurrentTab)
-          ->OnCursorEvent(
-            {.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT,
-             .mTouchState = CursorTouchState::NOT_NEAR_SURFACE});
-      }
+      mKneeboard->evCursorEvent({});
     }
     UpdateSHM();
   }
@@ -195,16 +187,13 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
   if (tab == wxNOT_FOUND) {
     return;
   }
-  mCurrentTab = tab;
+  mKneeboard->SetTabIndex(tab);
   UpdateSHM();
 }
 
-void okMainWindow::OnGameEvent(wxThreadEvent& ev) {
+void okMainWindow::PostGameEvent(wxThreadEvent& ev) {
   const auto ge = ev.GetPayload<GameEvent>();
-  dprintf("GameEvent: '{}' = '{}'", ge.name, ge.value);
-  for (auto tab: mTabUIs) {
-    tab->GetTab()->OnGameEvent(ge);
-  }
+  mKneeboard->PostGameEvent(ge);
 }
 
 void okMainWindow::UpdateSHM() {
@@ -212,14 +201,15 @@ void okMainWindow::UpdateSHM() {
     return;
   }
 
+  // FIXME: doesn't belong here, okSHMRenderer should watch for KneeboardState
+  // eventsKneeboardState eventsKneeboardState eventsKneeboardState events
   std::shared_ptr<Tab> tab;
-  unsigned int pageIndex = 0;
-  if (mCurrentTab >= 0 && mCurrentTab < mTabUIs.size()) {
-    auto tabUI = mTabUIs.at(mCurrentTab);
-    tab = tabUI->GetTab();
-    pageIndex = tabUI->GetPageIndex();
+  const auto tabState = mKneeboard->GetCurrentTab();
+  if (tabState) {
+    mSHMRenderer->Render(tabState->GetTab(), tabState->GetPageIndex());
+  } else {
+    mSHMRenderer->Render(nullptr, 0);
   }
-  mSHMRenderer->Render(tab, pageIndex);
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {
@@ -259,14 +249,6 @@ void okMainWindow::OnNextTab(wxCommandEvent&) {
   mNotebook->AdvanceSelection(true);
 }
 
-void okMainWindow::OnPreviousPage(wxCommandEvent&) {
-  mTabUIs[mCurrentTab]->PreviousPage();
-}
-
-void okMainWindow::OnNextPage(wxCommandEvent&) {
-  mTabUIs[mCurrentTab]->NextPage();
-}
-
 void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
   if (mSHMRenderer) {
     mSHMRenderer.reset();
@@ -278,25 +260,17 @@ void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
 }
 
 void okMainWindow::UpdateTabs() {
-  auto tabs = mTabsList->GetTabs();
   wxWindowUpdateLocker noUpdates(mNotebook);
 
-  auto selected = mCurrentTab >= 0 ? mTabUIs[mCurrentTab]->GetTab() : nullptr;
-  mCurrentTab = tabs.empty() ? -1 : 0;
-  mTabUIs.clear();
   mNotebook->DeleteAllPages();
 
-  for (auto tab: tabs) {
-    if (selected == tab) {
-      mCurrentTab = mNotebook->GetPageCount();
-    }
+  auto selected = mKneeboard->GetCurrentTab();
 
-    auto ui = new okTab(mNotebook, mDXResources, tab);
-    mTabUIs.push_back(ui);
-
-    mNotebook->AddPage(ui, tab->GetTitle(), selected == tab);
-    ui->Bind(okEVT_TAB_PIXELS_CHANGED, [this](auto) { this->UpdateSHM(); });
+  for (auto tabState: mKneeboard->GetTabs()) {
+    auto ui = new okTab(mNotebook, mDXResources, mKneeboard, tabState);
+    mNotebook->AddPage(
+      ui, tabState->GetRootTab()->GetTitle(), selected == tabState);
+    tabState->evNeedsRepaintEvent.AddHandler(
+      this, std::bind_front(&okMainWindow::UpdateSHM, this));
   }
-
-  UpdateSHM();
 }

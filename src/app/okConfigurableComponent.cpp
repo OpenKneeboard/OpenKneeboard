@@ -17,27 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
+#include "okConfigurableComponent.h"
 
-#include <dxgi1_2.h>
-#include <shims/winrt.h>
-#include <shims/wx.h>
+#include "okEvents.h"
 
-#include <memory>
-
-namespace OpenKneeboard {
-struct CursorEvent;
-struct DXResources;
-class KneeboardState;
-class TabState;
-}// namespace OpenKneeboard
-
-class okTab final : public wxPanel {
- public:
-  okTab(
-    wxWindow* parent,
-    const OpenKneeboard::DXResources&,
-    const std::shared_ptr<OpenKneeboard::KneeboardState>&,
-    const std::shared_ptr<OpenKneeboard::TabState>&);
-  virtual ~okTab();
-};
+okConfigurableComponent::okConfigurableComponent() {
+  evSettingsChangedEvent.AddHandler(
+    this, [=]() { wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED)); });
+}

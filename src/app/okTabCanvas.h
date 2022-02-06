@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
 #include <d2d1_2.h>
 #include <dxgi1_2.h>
 #include <shims/winrt.h>
@@ -27,38 +28,41 @@
 
 #include <memory>
 
+#include "Events.h"
+
 namespace OpenKneeboard {
 struct CursorEvent;
-struct DXResources;
-class Tab;
+class D2DErrorRenderer;
+class KneeboardState;
+class TabState;
 }// namespace OpenKneeboard
 
-class okTabCanvas final : public wxPanel {
+class okTabCanvas final : public wxPanel, private OpenKneeboard::EventReceiver {
  public:
   okTabCanvas(
     wxWindow* parent,
     const OpenKneeboard::DXResources&,
-    const std::shared_ptr<OpenKneeboard::Tab>&);
+    const std::shared_ptr<OpenKneeboard::KneeboardState>&,
+    const std::shared_ptr<OpenKneeboard::TabState>&);
   virtual ~okTabCanvas();
 
+ private:
   void OnSize(wxSizeEvent& ev);
   void OnPaint(wxPaintEvent& ev);
   void OnEraseBackground(wxEraseEvent& ev);
-  void OnCursorEvent(const OpenKneeboard::CursorEvent&);
 
-  uint16_t GetPageIndex() const;
-  void SetPageIndex(uint16_t index);
-  void NextPage();
-  void PreviousPage();
-  std::shared_ptr<OpenKneeboard::Tab> GetTab() const;
+  OpenKneeboard::DXResources mDXR;
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboardState;
+  std::shared_ptr<OpenKneeboard::TabState> mTabState;
 
- private:
-  struct Impl;
-  std::shared_ptr<Impl> p;
+  winrt::com_ptr<IDXGISwapChain1> mSwapChain;
+  winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
+  std::unique_ptr<OpenKneeboard::D2DErrorRenderer> mErrorRenderer;
 
   struct PageMetrics {
-    D2D1_RECT_F mRect;
-    D2D1_SIZE_F mSize;
+    D2D1_SIZE_U mNativeSize;
+    D2D1_RECT_F mRenderRect;
+    D2D1_SIZE_F mRenderSize;
     float mScale;
   };
   PageMetrics GetPageMetrics() const;
@@ -66,8 +70,5 @@ class okTabCanvas final : public wxPanel {
   void OnMouseMove(wxMouseEvent&);
   void OnMouseLeave(wxMouseEvent&);
 
-  void OnTabFullyReplaced(wxCommandEvent&);
-  void OnTabPageModified(wxCommandEvent&);
-  void OnTabPageAppended(wxCommandEvent&);
-  void OnPixelsChanged();
+  void OnPixelsChanged(wxCommandEvent&);
 };

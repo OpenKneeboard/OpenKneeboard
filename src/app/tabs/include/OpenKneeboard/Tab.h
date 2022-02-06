@@ -26,6 +26,9 @@
 #include <string>
 
 #include "okConfigurableComponent.h"
+#include "Events.h"
+
+class wxString;
 
 namespace OpenKneeboard {
 struct GameEvent;
@@ -41,7 +44,6 @@ class Tab : public okConfigurableComponent {
   std::string GetTitle() const;
 
   virtual void Reload();
-  virtual void OnGameEvent(const GameEvent&);
 
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const override;
@@ -52,9 +54,14 @@ class Tab : public okConfigurableComponent {
     uint16_t pageIndex,
     const D2D1_RECT_F& rect);
 
-  virtual void OnCursorEvent(const CursorEvent&, uint16_t pageIndex);
+  virtual void PostGameEvent(const GameEvent&);
+  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex);
 
   virtual std::shared_ptr<Tab> GetNavigationTab(const D2D1_SIZE_U&);
+
+  Event<> evNeedsRepaintEvent;
+  Event<> evFullyReplacedEvent;
+  Event<> evPageAppendedEvent;
 
  protected:
   void ClearDrawings();
