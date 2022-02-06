@@ -77,10 +77,7 @@ uint16_t DCSRadioLogTab::GetPageCount() const {
     return 1;
   }
 
-  if (p->mCurrentPageLines.empty()) {
-    return p->mCompletePages.size();
-  }
-
+  // We only push a complete page when there's content (or about to be)
   return p->mCompletePages.size() + 1;
 }
 
