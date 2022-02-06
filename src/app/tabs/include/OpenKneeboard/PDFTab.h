@@ -43,7 +43,7 @@ class PDFTab final : public Tab {
 
   virtual void Reload() final override;
   virtual uint16_t GetPageCount() const final override;
-  virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) final override;
+  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) final override;
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);

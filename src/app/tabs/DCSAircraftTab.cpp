@@ -56,8 +56,8 @@ void DCSAircraftTab::RenderPageContent(
   mDelegate->RenderPage(pageIndex, rect);
 }
 
-D2D1_SIZE_U DCSAircraftTab::GetPreferredPixelSize(uint16_t pageIndex) {
-  return mDelegate->GetPreferredPixelSize(pageIndex);
+D2D1_SIZE_U DCSAircraftTab::GetNativeContentSize(uint16_t pageIndex) {
+  return mDelegate->GetNativeContentSize(pageIndex);
 }
 
 const char* DCSAircraftTab::GetGameEventName() const {

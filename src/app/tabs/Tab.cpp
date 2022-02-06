@@ -95,7 +95,7 @@ void Tab::FlushCursorEvents() {
 				drawing = true;
 				ctx->BeginDraw();
 				ctx->SetTarget(
-					GetDrawingSurface(pageIndex, this->GetPreferredPixelSize(pageIndex)));
+					GetDrawingSurface(pageIndex, this->GetNativeContentSize(pageIndex)));
 			}
 
       // ignore tip button - any other pen button == erase

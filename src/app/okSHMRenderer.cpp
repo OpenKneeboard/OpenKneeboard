@@ -229,7 +229,7 @@ void okSHMRenderer::Render(
     return;
   }
 
-  const auto pageSize = tab->GetPreferredPixelSize(pageIndex);
+  const auto pageSize = tab->GetNativeContentSize(pageIndex);
   if (pageSize.width == 0 || pageSize.height == 0) {
     p->RenderError(title, _("Invalid Page Size"));
     return;

@@ -53,7 +53,7 @@ NavigationTab::NavigationTab(
   const auto rowHeight = 1.5f * metrics.height;
   const auto padding = rowHeight / 2;
 
-  const auto size = this->GetPreferredPixelSize(0);
+  const auto size = this->GetNativeContentSize(0);
   const D2D1_RECT_F topRect {
     .left = padding,
     .top = padding,
@@ -92,7 +92,7 @@ uint16_t NavigationTab::GetPageCount() const {
   return mEntries.size();
 }
 
-D2D1_SIZE_U NavigationTab::GetPreferredPixelSize(uint16_t) {
+D2D1_SIZE_U NavigationTab::GetNativeContentSize(uint16_t) {
   return mPreferredSize;
 }
 

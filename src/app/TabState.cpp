@@ -107,7 +107,7 @@ void TabState::OnTabPageAppended() {
 }
 
 D2D1_SIZE_U TabState::GetNativeContentSize() const {
-  return GetTab()->GetPreferredPixelSize(GetPageIndex());
+  return GetTab()->GetNativeContentSize(GetPageIndex());
 }
 
 }// namespace OpenKneeboard

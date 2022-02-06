@@ -50,7 +50,7 @@ class Tab : public okConfigurableComponent {
   virtual nlohmann::json GetSettings() const override;
 
   virtual uint16_t GetPageCount() const = 0;
-  virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) = 0;
+  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) = 0;
   void RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect);
 
   virtual void PostGameEvent(const GameEvent&);

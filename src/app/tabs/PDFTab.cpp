@@ -75,7 +75,7 @@ uint16_t PDFTab::GetPageCount() const {
   return 0;
 }
 
-D2D1_SIZE_U PDFTab::GetPreferredPixelSize(uint16_t index) {
+D2D1_SIZE_U PDFTab::GetNativeContentSize(uint16_t index) {
   if (index >= GetPageCount()) {
     return {};
   }

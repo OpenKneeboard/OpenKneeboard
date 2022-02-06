@@ -131,8 +131,8 @@ void DCSMissionTab::RenderPageContent(
   p->mDelegate->RenderPage(pageIndex, rect);
 }
 
-D2D1_SIZE_U DCSMissionTab::GetPreferredPixelSize(uint16_t pageIndex) {
-  return p->mDelegate->GetPreferredPixelSize(pageIndex);
+D2D1_SIZE_U DCSMissionTab::GetNativeContentSize(uint16_t pageIndex) {
+  return p->mDelegate->GetNativeContentSize(pageIndex);
 }
 
 const char* DCSMissionTab::GetGameEventName() const {

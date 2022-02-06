@@ -84,7 +84,7 @@ uint16_t DCSRadioLogTab::GetPageCount() const {
   return p->mCompletePages.size() + 1;
 }
 
-D2D1_SIZE_U DCSRadioLogTab::GetPreferredPixelSize(uint16_t pageIndex) {
+D2D1_SIZE_U DCSRadioLogTab::GetNativeContentSize(uint16_t pageIndex) {
   return {768 * Impl::RENDER_SCALE, 1024 * Impl::RENDER_SCALE};
 }
 
@@ -92,7 +92,7 @@ void DCSRadioLogTab::RenderPageContent(
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
 
-  const auto virtualSize = GetPreferredPixelSize(0);
+  const auto virtualSize = GetNativeContentSize(0);
   const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
 
   const auto scaleX = canvasSize.width / virtualSize.width;
@@ -325,7 +325,7 @@ DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab, const DXResources& dxr)
     L"",
     mTextFormat.put());
 
-  const auto size = tab->GetPreferredPixelSize(0);
+  const auto size = tab->GetNativeContentSize(0);
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   dwf->CreateTextLayout(
     L"m", 1, mTextFormat.get(), size.width, size.height, textLayout.put());

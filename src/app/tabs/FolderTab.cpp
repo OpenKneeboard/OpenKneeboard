@@ -91,7 +91,7 @@ static bool IsValidPageIndex(uint16_t index, uint16_t count) {
   return false;
 }
 
-D2D1_SIZE_U FolderTab::GetPreferredPixelSize(uint16_t index) {
+D2D1_SIZE_U FolderTab::GetNativeContentSize(uint16_t index) {
   if (!IsValidPageIndex(index, GetPageCount())) {
     return {};
   }
