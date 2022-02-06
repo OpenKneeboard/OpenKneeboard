@@ -20,6 +20,7 @@
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/dprint.h>
 #include <Unknwn.h>
 #include <dwrite.h>
 #include <fmt/format.h>
@@ -90,7 +91,6 @@ D2D1_SIZE_U DCSRadioLogTab::GetPreferredPixelSize(uint16_t pageIndex) {
 void DCSRadioLogTab::RenderPageContent(
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  p->LayoutMessages();
 
   const auto virtualSize = GetPreferredPixelSize(0);
   const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
@@ -137,7 +137,7 @@ void DCSRadioLogTab::RenderPageContent(
       footerBrush.get());
     return;
   }
-  const auto& lines = (pageIndex == p->mCompletePages.size())
+  const auto lines = (pageIndex == p->mCompletePages.size())
     ? p->mCurrentPageLines
     : p->mCompletePages.at(pageIndex);
 
@@ -200,8 +200,7 @@ void DCSRadioLogTab::RenderPageContent(
 }
 
 void DCSRadioLogTab::Impl::PushMessage(const std::string& message) {
-  mMessages.push_back(
-    wxString::FromUTF8(message.data(), message.size()).ToStdWstring());
+  mMessages.push_back(std::wstring(winrt::to_hstring(message)));
   LayoutMessages();
   mTab->evNeedsRepaintEvent();
 }
@@ -219,7 +218,6 @@ void DCSRadioLogTab::Impl::LayoutMessages() {
     return;
   }
 
-  auto& pageLines = mCurrentPageLines;
   for (const auto& message: mMessages) {
     std::vector<std::wstring_view> rawLines;
     std::wstring_view remaining(message);
@@ -264,33 +262,33 @@ void DCSRadioLogTab::Impl::LayoutMessages() {
     }
 
     if (wrappedLines.size() >= mRows) {
-      if (!pageLines.empty()) {
-        pageLines.push_back({});
+      if (!mCurrentPageLines.empty()) {
+        mCurrentPageLines.push_back({});
       }
 
       for (const auto& line: wrappedLines) {
-        if (pageLines.size() >= mRows) {
+        if (mCurrentPageLines.size() >= mRows) {
           PushPage();
         }
-        pageLines.push_back(std::wstring(line));
+        mCurrentPageLines.push_back(std::wstring(line));
       }
       continue;
     }
 
     // If we reach here, we can fit the full message on one page. Now figure
     // out if we want a new page first.
-    if (pageLines.empty()) {
+    if (mCurrentPageLines.empty()) {
       // do nothing
-    } else if (mRows - pageLines.size() >= wrappedLines.size() + 1) {
+    } else if (mRows - mCurrentPageLines.size() >= wrappedLines.size() + 1) {
       // Add a blank line first
-      pageLines.push_back({});
+      mCurrentPageLines.push_back({});
     } else {
       // We need a new page
       PushPage();
     }
 
     for (auto line: wrappedLines) {
-      pageLines.push_back(std::wstring(line));
+      mCurrentPageLines.push_back(std::wstring(line));
     }
   }
   mMessages.clear();
