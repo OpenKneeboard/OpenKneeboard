@@ -23,8 +23,8 @@
 
 namespace OpenKneeboard {
 enum class CursorPositionState {
-  IN_CLIENT_RECT,
-  NOT_IN_CLIENT_RECT,
+  IN_CONTENT_RECT,
+  NOT_IN_CONTENT_RECT,
 };
 enum class CursorTouchState {
   TOUCHING_SURFACE,
@@ -33,7 +33,7 @@ enum class CursorTouchState {
 };
 
 struct CursorEvent {
-  CursorPositionState mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
+  CursorPositionState mPositionState = CursorPositionState::NOT_IN_CONTENT_RECT;
   CursorTouchState mTouchState = CursorTouchState::NOT_NEAR_SURFACE;
   float mX = 0, mY = 0, mPressure = 0;
   uint32_t mButtons = 0;

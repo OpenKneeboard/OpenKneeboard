@@ -86,7 +86,7 @@ void Tab::FlushCursorEvents() {
     for (const auto& event: page.mBufferedEvents) {
       if (
         event.mTouchState != CursorTouchState::TOUCHING_SURFACE
-        || event.mPositionState != CursorPositionState::IN_CLIENT_RECT) {
+        || event.mPositionState != CursorPositionState::IN_CONTENT_RECT) {
         page.mHaveCursor = false;
         continue;
       }

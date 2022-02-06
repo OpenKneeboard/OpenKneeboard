@@ -177,9 +177,9 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       if (
         x >= 0 && x <= contentNativeSize.width && y >= 0
         && y <= contentNativeSize.height) {
-        event.mPositionState = CursorPositionState::IN_CLIENT_RECT;
+        event.mPositionState = CursorPositionState::IN_CONTENT_RECT;
       } else {
-        event.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
+        event.mPositionState = CursorPositionState::NOT_IN_CONTENT_RECT;
       }
 
       mKneeboard->evCursorEvent(event);

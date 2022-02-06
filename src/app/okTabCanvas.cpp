@@ -218,8 +218,8 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
   auto positionState
     = (x >= metrics.mRenderRect.left && x <= metrics.mRenderRect.right
        && y >= metrics.mRenderRect.top && y <= metrics.mRenderRect.bottom)
-    ? CursorPositionState::IN_CLIENT_RECT
-    : CursorPositionState::NOT_IN_CLIENT_RECT;
+    ? CursorPositionState::IN_CONTENT_RECT
+    : CursorPositionState::NOT_IN_CONTENT_RECT;
 
   x -= metrics.mRenderRect.left;
   y -= metrics.mRenderRect.top;
