@@ -25,13 +25,15 @@
 
 #include <memory>
 
+#include "Events.h"
+
 namespace OpenKneeboard {
 struct DXResources;
 class KneeboardState;
 class Tab;
 }// namespace OpenKneeboard
 
-class okSHMRenderer final {
+class okSHMRenderer final : private OpenKneeboard::EventReceiver {
  private:
   class Impl;
   std::unique_ptr<Impl> p;
@@ -44,6 +46,8 @@ class okSHMRenderer final {
     HWND feederWindow);
   ~okSHMRenderer();
 
+  private:
+  void EnqueueFrame();
   void Render(
     const std::shared_ptr<OpenKneeboard::Tab>& tab,
     uint16_t pageIndex);

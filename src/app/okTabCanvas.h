@@ -54,7 +54,6 @@ class okTabCanvas final : public wxPanel, private OpenKneeboard::EventReceiver {
   void PaintNow();
 
   wxTimer mFrameTimer;
-
   OpenKneeboard::DXResources mDXR;
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboardState;
   std::shared_ptr<OpenKneeboard::TabState> mTabState;

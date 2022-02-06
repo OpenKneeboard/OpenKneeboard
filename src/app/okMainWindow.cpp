@@ -92,8 +92,6 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   sizer->Add(mNotebook, 1, wxEXPAND);
   this->SetSizerAndFit(sizer);
 
-  UpdateSHM();
-
   {
     auto gl = new okGamesList(mSettings.Games);
     mConfigurables.push_back(gl);
@@ -138,19 +136,38 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       float y = state.x;
       std::swap(tabletLimits.x, tabletLimits.y);
 
-      const auto canvasSize = mKneeboard->GetCanvasSize();
+      // Cursor events use content coordinates, but as as the content isn't at
+      // the origin, we need a few transformations:
 
-      // scale to the content
-      const auto contentNativeSize = mKneeboard->GetContentNativeSize();
+      // 1. scale to canvas size
+      auto canvasSize = mKneeboard->GetCanvasSize();
+
+      const auto scaleX = static_cast<float>(canvasSize.width) / tabletLimits.x;
+      const auto scaleY = static_cast<float>(canvasSize.height) / tabletLimits.y;
+      const auto scale = std::min(scaleX, scaleY);
+
+      x *= scale;
+      y *= scale;
+
+      // 2. translate to content origgin
+
       const auto contentRenderRect = mKneeboard->GetContentRenderRect();
+      x -= contentRenderRect.left;
+      y -= contentRenderRect.top;
+
+      // 3. scale to content size;
+      const auto contentNativeSize = mKneeboard->GetContentNativeSize();
       const auto contentScale = contentNativeSize.width
         / (contentRenderRect.right - contentRenderRect.left);
+      x *= contentScale;
+      y *= contentScale;
+
       CursorEvent event {
         .mTouchState = (state.penButtons & 1)
           ? CursorTouchState::TOUCHING_SURFACE
           : CursorTouchState::NEAR_SURFACE,
-        .mX = contentScale * (x - contentRenderRect.left),
-        .mY = contentScale * (y - contentRenderRect.top),
+        .mX = x,
+        .mY = y,
         .mPressure = static_cast<float>(state.pressure) / tabletLimits.pressure,
         .mButtons = state.penButtons,
       };
@@ -163,12 +180,10 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
         event.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
       }
 
-      printf("Event\n");
       mKneeboard->evCursorEvent(event);
     } else {
       mKneeboard->evCursorEvent({});
     }
-    UpdateSHM();
   }
   return wxFrame::MSWWindowProc(message, wParam, lParam);
 }
@@ -179,28 +194,11 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
     return;
   }
   mKneeboard->SetTabIndex(tab);
-  UpdateSHM();
 }
 
 void okMainWindow::PostGameEvent(wxThreadEvent& ev) {
   const auto ge = ev.GetPayload<GameEvent>();
   mKneeboard->PostGameEvent(ge);
-}
-
-void okMainWindow::UpdateSHM() {
-  if (!mSHMRenderer) {
-    return;
-  }
-
-  // FIXME: doesn't belong here, okSHMRenderer should watch for KneeboardState
-  // eventsKneeboardState eventsKneeboardState eventsKneeboardState events
-  std::shared_ptr<Tab> tab;
-  const auto tabState = mKneeboard->GetCurrentTab();
-  if (tabState) {
-    mSHMRenderer->Render(tabState->GetTab(), tabState->GetPageIndex());
-  } else {
-    mSHMRenderer->Render(nullptr, 0);
-  }
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {
@@ -247,7 +245,6 @@ void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
   }
 
   mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources, mKneeboard, this->GetHWND());
-  UpdateSHM();
 }
 
 void okMainWindow::UpdateTabs() {
@@ -261,7 +258,5 @@ void okMainWindow::UpdateTabs() {
     auto ui = new okTab(mNotebook, mDXResources, mKneeboard, tabState);
     mNotebook->AddPage(
       ui, tabState->GetRootTab()->GetTitle(), selected == tabState);
-    tabState->evNeedsRepaintEvent.AddHandler(
-      this, std::bind_front(&okMainWindow::UpdateSHM, this));
   }
 }

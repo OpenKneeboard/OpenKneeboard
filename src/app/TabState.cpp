@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <shims/wx.h>
 #include <wx/event.h>
 
@@ -108,6 +109,5 @@ void TabState::OnTabPageAppended() {
 D2D1_SIZE_U TabState::GetNativeContentSize() const {
   return GetTab()->GetPreferredPixelSize(GetPageIndex());
 }
-
 
 }// namespace OpenKneeboard

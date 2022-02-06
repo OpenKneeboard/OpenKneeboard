@@ -35,6 +35,7 @@
 #include <wincodec.h>
 
 #include "KneeboardState.h"
+#include "TabState.h"
 #include "scope_guard.h"
 
 using namespace OpenKneeboard;
@@ -170,6 +171,9 @@ okSHMRenderer::okSHMRenderer(
       textureName.c_str(),
       it.mHandle.put());
     it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
+
+    kneeboard->evNeedsRepaintEvent.AddHandler(
+      this, [this]() { EnqueueFrame(); });
   }
 
   auto ctx = dxr.mD2DDeviceContext;
@@ -321,4 +325,9 @@ void okSHMRenderer::Impl::RenderWithChrome(
     D2D1::Ellipse(cursorPoint, cursorRadius, cursorRadius),
     mCursorBrush.get(),
     cursorStroke);
+}
+
+void okSHMRenderer::EnqueueFrame() {
+  auto tabState = this->p->mKneeboard->GetCurrentTab();
+  this->Render(tabState->GetTab(), tabState->GetPageIndex());
 }

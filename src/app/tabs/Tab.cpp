@@ -40,11 +40,12 @@ class Tab::Impl final {
 
   struct Drawing {
     winrt::com_ptr<IDXGISurface> mSurface;
+    winrt::com_ptr<ID2D1Bitmap1> mBitmap;
     float mScale;
   };
   std::vector<Drawing> mDrawings;
 
-  winrt::com_ptr<IDXGISurface> GetDrawingSurface(
+  ID2D1Bitmap* GetDrawingSurface(
     uint16_t index,
     const D2D1_SIZE_U& contentPixels);
 };
@@ -95,12 +96,9 @@ void Tab::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   // ignore tip button - any other pen button == erase
   const bool erasing = event.mButtons & ~1;
 
-  auto surface
-    = p->GetDrawingSurface(pageIndex, this->GetPreferredPixelSize(pageIndex));
   auto ctx = p->mDXR.mD2DDeviceContext;
-  winrt::com_ptr<ID2D1Bitmap1> bitmap;
-  ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put());
-  ctx->SetTarget(bitmap.get());
+  ctx->SetTarget(
+    p->GetDrawingSurface(pageIndex, this->GetPreferredPixelSize(pageIndex)));
 
   const auto scale = p->mDrawings.at(pageIndex).mScale;
   const auto pressure
@@ -127,7 +125,7 @@ void Tab::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   this->evNeedsRepaintEvent();
 }
 
-winrt::com_ptr<IDXGISurface> Tab::Impl::GetDrawingSurface(
+ID2D1Bitmap* Tab::Impl::GetDrawingSurface(
   uint16_t index,
   const D2D1_SIZE_U& contentPixels) {
   if (index >= mDrawings.size()) {
@@ -135,8 +133,8 @@ winrt::com_ptr<IDXGISurface> Tab::Impl::GetDrawingSurface(
   }
 
   auto& page = mDrawings.at(index);
-  if (page.mSurface) {
-    return page.mSurface;
+  if (page.mBitmap) {
+    return page.mBitmap.get();
   }
 
   const auto scaleX = static_cast<float>(TextureWidth) / contentPixels.width;
@@ -162,27 +160,28 @@ winrt::com_ptr<IDXGISurface> Tab::Impl::GetDrawingSurface(
   winrt::check_hresult(
     mDXR.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, texture.put()));
   page.mSurface = texture.as<IDXGISurface>();
-  return page.mSurface;
+
+  mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+    page.mSurface.get(), nullptr, page.mBitmap.put());
+
+  return page.mBitmap.get();
 }
 
 void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
-  RenderPageContent(pageIndex, rect);
+  this->RenderPageContent(pageIndex, rect);
 
   if (pageIndex >= p->mDrawings.size()) {
     return;
   }
 
   auto& page = p->mDrawings.at(pageIndex);
-  auto& surface = page.mSurface;
+  auto bitmap = page.mBitmap;
 
-  if (!surface) {
+  if (!bitmap) {
     return;
   }
 
   auto ctx = p->mDXR.mD2DDeviceContext;
-  winrt::com_ptr<ID2D1Bitmap1> bitmap;
-  ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put());
-
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->DrawBitmap(
     bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);

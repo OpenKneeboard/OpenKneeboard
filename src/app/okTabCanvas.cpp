@@ -55,7 +55,6 @@ okTabCanvas::okTabCanvas(
 
   this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
   this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
-  mFrameTimer.Bind(wxEVT_TIMER, [&](auto) { this->PaintNow(); });
 
   tab->evNeedsRepaintEvent.AddHandler(this, [=]() { this->EnqueueFrame(); });
   kneeboard->evCursorEvent.AddHandler(
@@ -78,6 +77,8 @@ okTabCanvas::okTabCanvas(
     nullptr,
     nullptr,
     mSwapChain.put()));
+
+  mFrameTimer.Bind(wxEVT_TIMER, [this](auto&) { this->PaintNow(); });
 }
 
 okTabCanvas::~okTabCanvas() {
@@ -240,11 +241,11 @@ void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
 }
 
 void okTabCanvas::EnqueueFrame() {
-  if (mFrameTimer.IsRunning()) {
-    return;
-  }
   if (!this->IsShownOnScreen()) {
     return;
   }
-  mFrameTimer.StartOnce(1000 / FPSCap);
+  if (mFrameTimer.IsRunning()) {
+    return;
+  }
+  mFrameTimer.StartOnce(1000 / FPSLimit);
 }

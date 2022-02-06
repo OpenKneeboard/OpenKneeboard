@@ -64,7 +64,6 @@ class okMainWindow final : public wxFrame,
   void OnTabChanged(wxBookCtrlEvent&);
 
   void UpdateTabs();
-  void UpdateSHM();
 
   OpenKneeboard::DXResources mDXResources;
   std::vector<okConfigurableComponent*> mConfigurables;
