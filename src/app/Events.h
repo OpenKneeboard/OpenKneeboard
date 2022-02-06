@@ -49,16 +49,17 @@ class EventBase {
  */
 template <class... Args>
 class Event final : public EventBase {
+  friend class EventReceiver;
  public:
   Event() = default;
   Event(const Event<Args...>&) = delete;
   Event& operator=(const Event<Args...>&) = delete;
   ~Event();
 
-  void AddHandler(EventReceiver*, const EventHandler<Args...>&);
-  void operator()(Args... args);
+  void operator()(Args&&... args);
 
  protected:
+  void AddHandler(EventReceiver*, const EventHandler<Args...>&);
   virtual void RemoveHandler(uint64_t token) override;
 
  private:
@@ -132,9 +133,9 @@ void Event<Args...>::RemoveHandler(uint64_t token) {
 }
 
 template <class... Args>
-void Event<Args...>::operator()(Args... args) {
+void Event<Args...>::operator()(Args&&... args) {
   for (const auto& [token, info]: mReceivers) {
-    info.mFunc(args...);
+    info.mFunc(std::forward<Args>(args)...);
   }
 }
 
