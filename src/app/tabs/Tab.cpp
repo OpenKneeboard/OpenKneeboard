@@ -102,9 +102,8 @@ void Tab::FlushCursorEvents() {
       const bool erasing = event.mButtons & ~1;
 
       const auto scale = mDrawings.at(pageIndex).mScale;
-      const auto pressure
-        = 0.10 + (std::clamp(event.mPressure - 0.50, 0.0, 0.50) * 0.9);
-      const auto radius = 20 * pressure * (erasing ? 10 : 1);
+      const auto pressure = std::clamp(event.mPressure - 0.40, 0.0, 0.60) * 15;
+      const auto radius = 1 + (pressure * (erasing ? 2 : 1));
       const auto x = event.mX * scale;
       const auto y = event.mY * scale;
       const auto brush = erasing ? mEraser : mBrush;
@@ -187,7 +186,7 @@ void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->DrawBitmap(
-    bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_ANISOTROPIC);
+    bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
 std::shared_ptr<Tab> Tab::GetNavigationTab(const D2D1_SIZE_U&) {
