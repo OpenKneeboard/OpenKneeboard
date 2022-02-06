@@ -55,13 +55,11 @@ okTabCanvas::okTabCanvas(
 
   this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
   this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
+  mFrameTimer.Bind(wxEVT_TIMER, [&](auto) { this->PaintNow(); });
 
-  tab->evNeedsRepaintEvent.AddHandler(this, [=]() {
-    this->Refresh();
-  });
-  kneeboard->evCursorEvent.AddHandler(this, [=](auto) {
-    this->Refresh();
-  });
+  tab->evNeedsRepaintEvent.AddHandler(this, [=]() { this->EnqueueFrame(); });
+  kneeboard->evCursorEvent.AddHandler(
+    this, [=](auto) { this->EnqueueFrame(); });
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mCursorBrush.put()));
@@ -100,7 +98,10 @@ void okTabCanvas::OnSize(wxSizeEvent& ev) {
 void okTabCanvas::OnPaint(wxPaintEvent& ev) {
   ev.Skip();
   wxPaintDC dc(this);
+  PaintNow();
+}
 
+void okTabCanvas::PaintNow() {
   const auto clientSize = GetClientSize();
 
   winrt::com_ptr<IDXGISurface> surface;
@@ -147,7 +148,8 @@ void okTabCanvas::OnPaint(wxPaintEvent& ev) {
 
   const auto pageMetrics = GetPageMetrics();
 
-  mTabState->GetTab()->RenderPage(mTabState->GetPageIndex(), pageMetrics.mRenderRect);
+  mTabState->GetTab()->RenderPage(
+    mTabState->GetPageIndex(), pageMetrics.mRenderRect);
 
   if (!mKneeboardState->HaveCursor()) {
     return;
@@ -235,4 +237,14 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
   ev.Skip();
   mKneeboardState->evCursorEvent({});
+}
+
+void okTabCanvas::EnqueueFrame() {
+  if (mFrameTimer.IsRunning()) {
+    return;
+  }
+  if (!this->IsShownOnScreen()) {
+    return;
+  }
+  mFrameTimer.StartOnce(1000 / FPSCap);
 }

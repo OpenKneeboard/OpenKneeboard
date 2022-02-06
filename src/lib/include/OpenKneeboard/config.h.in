@@ -21,6 +21,8 @@
 
 namespace OpenKneeboard {
 
+constexpr unsigned int FPSCap = 30;
+
 constexpr unsigned int TextureCount = 2;
 constexpr unsigned int TextureWidth = 2048;
 constexpr unsigned int TextureHeight = 2048;
