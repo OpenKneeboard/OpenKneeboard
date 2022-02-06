@@ -43,7 +43,8 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
 
   (new okOpenVRThread())->Run();
   (new okGameEventMailslotThread(this))->Run();
-  mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources, mKneeboard, this->GetHWND());
+  mSHMRenderer = std::make_unique<okSHMRenderer>(
+    mDXResources, mKneeboard, this->GetHWND());
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::PostGameEvent, this);
@@ -143,7 +144,8 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       auto canvasSize = mKneeboard->GetCanvasSize();
 
       const auto scaleX = static_cast<float>(canvasSize.width) / tabletLimits.x;
-      const auto scaleY = static_cast<float>(canvasSize.height) / tabletLimits.y;
+      const auto scaleY
+        = static_cast<float>(canvasSize.height) / tabletLimits.y;
       const auto scale = std::min(scaleX, scaleY);
 
       x *= scale;
@@ -173,8 +175,8 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       };
 
       if (
-        x >= contentRenderRect.left && x <= contentRenderRect.right
-        && y >= contentRenderRect.top && y <= contentRenderRect.bottom) {
+        x >= 0 && x <= contentNativeSize.width && y >= 0
+        && y <= contentNativeSize.height) {
         event.mPositionState = CursorPositionState::IN_CLIENT_RECT;
       } else {
         event.mPositionState = CursorPositionState::NOT_IN_CLIENT_RECT;
@@ -244,7 +246,8 @@ void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
     return;
   }
 
-  mSHMRenderer = std::make_unique<okSHMRenderer>(mDXResources, mKneeboard, this->GetHWND());
+  mSHMRenderer = std::make_unique<okSHMRenderer>(
+    mDXResources, mKneeboard, this->GetHWND());
 }
 
 void okMainWindow::UpdateTabs() {
