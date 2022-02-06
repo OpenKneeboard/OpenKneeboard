@@ -28,44 +28,24 @@
 
 namespace OpenKneeboard {
 
-class Tab::Impl final {
- public:
-  DXResources mDXR;
-  std::string mTitle;
-
-  winrt::com_ptr<ID2D1SolidColorBrush> mBrush;
-  winrt::com_ptr<ID2D1SolidColorBrush> mEraser;
-  bool mHaveCursor = false;
-  D2D1_POINT_2F mCursorPoint;
-
-  struct Drawing {
-    winrt::com_ptr<IDXGISurface> mSurface;
-    winrt::com_ptr<ID2D1Bitmap1> mBitmap;
-    float mScale;
-  };
-  std::vector<Drawing> mDrawings;
-
-  ID2D1Bitmap* GetDrawingSurface(
-    uint16_t index,
-    const D2D1_SIZE_U& contentPixels);
-};
-
-Tab::Tab(const DXResources& dxr, const wxString& title)
-  : p(std::make_unique<Impl>()) {
-  p->mDXR = dxr;
-  p->mTitle = title;
+Tab::Tab(const DXResources& dxr, const wxString& title) {
+  mDXR = dxr;
+  mTitle = title;
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), p->mBrush.put()));
+    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBrush.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), p->mEraser.put()));
+    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), mEraser.put()));
+
+  mDXR.mD2DDevice->CreateDeviceContext(
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
 }
 
 Tab::~Tab() {
 }
 
 std::string Tab::GetTitle() const {
-  return p->mTitle;
+  return mTitle;
 }
 
 void Tab::Reload() {
@@ -75,7 +55,7 @@ void Tab::PostGameEvent(const GameEvent&) {
 }
 
 void Tab::ClearDrawings() {
-  p->mDrawings.clear();
+  mDrawings.clear();
 }
 
 wxWindow* Tab::GetSettingsUI(wxWindow* parent) {
@@ -87,49 +67,71 @@ nlohmann::json Tab::GetSettings() const {
 }
 
 void Tab::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
-  if (
-    event.mTouchState != CursorTouchState::TOUCHING_SURFACE
-    || event.mPositionState != CursorPositionState::IN_CLIENT_RECT) {
-    p->mHaveCursor = false;
-    return;
+  if (pageIndex >= mDrawings.size()) {
+    mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
   }
-  // ignore tip button - any other pen button == erase
-  const bool erasing = event.mButtons & ~1;
-
-  auto ctx = p->mDXR.mD2DDeviceContext;
-  ctx->SetTarget(
-    p->GetDrawingSurface(pageIndex, this->GetPreferredPixelSize(pageIndex)));
-
-  const auto scale = p->mDrawings.at(pageIndex).mScale;
-  const auto pressure
-    = 0.10 + (std::clamp(event.mPressure - 0.50, 0.0, 0.50) * 0.9);
-  const auto radius = 20 * pressure * (erasing ? 10 : 1);
-  const auto x = event.mX * scale;
-  const auto y = event.mY * scale;
-  const auto brush = erasing ? p->mEraser : p->mBrush;
-
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  ctx->BeginDraw();
-  ctx->SetPrimitiveBlend(
-    erasing ? D2D1_PRIMITIVE_BLEND_COPY : D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
-
-  if (p->mHaveCursor) {
-    ctx->DrawLine(p->mCursorPoint, {x, y}, brush.get(), radius * 2);
-  }
-  ctx->FillEllipse(D2D1::Ellipse({x, y}, radius, radius), brush.get());
-  p->mHaveCursor = true;
-  p->mCursorPoint = {x, y};
-  ctx->SetPrimitiveBlend(D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
-  winrt::check_hresult(ctx->EndDraw());
-
+  mDrawings.at(pageIndex).mBufferedEvents.push_back(event);
   this->evNeedsRepaintEvent();
 }
 
-ID2D1Bitmap* Tab::Impl::GetDrawingSurface(
+void Tab::FlushCursorEvents() {
+  auto ctx = mDrawingContext;
+
+  for (auto pageIndex = 0; pageIndex < mDrawings.size(); ++pageIndex) {
+    auto& page = mDrawings.at(pageIndex);
+    if (page.mBufferedEvents.empty()) {
+      continue;
+    }
+    bool drawing = false;
+    for (const auto& event: page.mBufferedEvents) {
+      if (
+        event.mTouchState != CursorTouchState::TOUCHING_SURFACE
+        || event.mPositionState != CursorPositionState::IN_CLIENT_RECT) {
+        page.mHaveCursor = false;
+        continue;
+      }
+
+			if (!drawing) {
+				drawing = true;
+				ctx->BeginDraw();
+				ctx->SetTarget(
+					GetDrawingSurface(pageIndex, this->GetPreferredPixelSize(pageIndex)));
+			}
+
+      // ignore tip button - any other pen button == erase
+      const bool erasing = event.mButtons & ~1;
+
+      const auto scale = mDrawings.at(pageIndex).mScale;
+      const auto pressure
+        = 0.10 + (std::clamp(event.mPressure - 0.50, 0.0, 0.50) * 0.9);
+      const auto radius = 20 * pressure * (erasing ? 10 : 1);
+      const auto x = event.mX * scale;
+      const auto y = event.mY * scale;
+      const auto brush = erasing ? mEraser : mBrush;
+
+      ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+      ctx->SetPrimitiveBlend(
+        erasing ? D2D1_PRIMITIVE_BLEND_COPY : D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+
+      if (page.mHaveCursor) {
+        ctx->DrawLine(page.mCursorPoint, {x, y}, brush.get(), radius * 2);
+      }
+      ctx->FillEllipse(D2D1::Ellipse({x, y}, radius, radius), brush.get());
+      page.mHaveCursor = true;
+      page.mCursorPoint = {x, y};
+    }
+    if (drawing) {
+      winrt::check_hresult(ctx->EndDraw());
+    }
+    page.mBufferedEvents.clear();
+  }
+}
+
+ID2D1Bitmap* Tab::GetDrawingSurface(
   uint16_t index,
   const D2D1_SIZE_U& contentPixels) {
   if (index >= mDrawings.size()) {
-    mDrawings.resize(index + 1);
+    mDrawings.resize(std::max<uint16_t>(index + 1, GetPageCount()));
   }
 
   auto& page = mDrawings.at(index);
@@ -168,20 +170,21 @@ ID2D1Bitmap* Tab::Impl::GetDrawingSurface(
 }
 
 void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
+  FlushCursorEvents();
   this->RenderPageContent(pageIndex, rect);
 
-  if (pageIndex >= p->mDrawings.size()) {
+  if (pageIndex >= mDrawings.size()) {
     return;
   }
 
-  auto& page = p->mDrawings.at(pageIndex);
+  auto& page = mDrawings.at(pageIndex);
   auto bitmap = page.mBitmap;
 
   if (!bitmap) {
     return;
   }
 
-  auto ctx = p->mDXR.mD2DDeviceContext;
+  auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->DrawBitmap(
     bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);

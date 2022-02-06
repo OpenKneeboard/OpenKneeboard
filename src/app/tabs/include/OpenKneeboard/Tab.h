@@ -19,14 +19,15 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
 #include <d2d1.h>
 #include <shims/winrt.h>
 
 #include <memory>
 #include <string>
 
-#include "okConfigurableComponent.h"
 #include "Events.h"
+#include "okConfigurableComponent.h"
 
 class wxString;
 
@@ -50,9 +51,7 @@ class Tab : public okConfigurableComponent {
 
   virtual uint16_t GetPageCount() const = 0;
   virtual D2D1_SIZE_U GetPreferredPixelSize(uint16_t pageIndex) = 0;
-  void RenderPage(
-    uint16_t pageIndex,
-    const D2D1_RECT_F& rect);
+  void RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect);
 
   virtual void PostGameEvent(const GameEvent&);
   virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex);
@@ -66,13 +65,31 @@ class Tab : public okConfigurableComponent {
  protected:
   void ClearDrawings();
 
-  virtual void RenderPageContent(
-    uint16_t pageIndex,
-    const D2D1_RECT_F& rect)
+  virtual void RenderPageContent(uint16_t pageIndex, const D2D1_RECT_F& rect)
     = 0;
 
  private:
-  class Impl;
-  std::shared_ptr<Impl> p;
+  DXResources mDXR;
+  std::string mTitle;
+
+  winrt::com_ptr<ID2D1SolidColorBrush> mBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mEraser;
+
+  struct Drawing {
+    winrt::com_ptr<IDXGISurface> mSurface;
+    winrt::com_ptr<ID2D1Bitmap1> mBitmap;
+    float mScale;
+    std::vector<CursorEvent> mBufferedEvents;
+    bool mHaveCursor = false;
+    D2D1_POINT_2F mCursorPoint;
+  };
+  winrt::com_ptr<ID2D1DeviceContext> mDrawingContext;
+  std::vector<Drawing> mDrawings;
+
+  ID2D1Bitmap* GetDrawingSurface(
+    uint16_t index,
+    const D2D1_SIZE_U& contentPixels);
+
+  void FlushCursorEvents();
 };
 }// namespace OpenKneeboard
