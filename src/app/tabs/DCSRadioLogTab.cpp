@@ -137,7 +137,7 @@ void DCSRadioLogTab::RenderPageContent(
       footerBrush.get());
     return;
   }
-  const auto lines = (pageIndex == p->mCompletePages.size())
+  const auto& lines = (pageIndex == p->mCompletePages.size())
     ? p->mCurrentPageLines
     : p->mCompletePages.at(pageIndex);
 
