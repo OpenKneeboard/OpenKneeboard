@@ -262,7 +262,7 @@ void okTabCanvas::FlushCursorEvents() {
 
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
   ev.Skip();
-  mKneeboardState->evCursorEvent({});
+  mBufferedCursorEvents.push_back({});
 }
 
 void okTabCanvas::EnqueueFrame() {
