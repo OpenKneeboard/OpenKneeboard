@@ -194,15 +194,19 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
   Reload();
 }
 
-std::shared_ptr<Tab> FolderTab::GetNavigationTab(
-  const D2D1_SIZE_U& preferredSize) {
+bool FolderTab::SupportsNavigation() const {
+  return true;
+}
+
+std::shared_ptr<Tab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
   std::vector<NavigationTab::Entry> entries;
 
   for (uint16_t i = 0; i < p->mPages.size(); ++i) {
     entries.push_back({p->mPages.at(i).mPath.stem(), i});
   }
 
-  return std::make_shared<NavigationTab>(p->mDXR, preferredSize, entries);
+  return std::make_shared<NavigationTab>(
+    p->mDXR, this->GetNativeContentSize(currentPage), entries);
 }
 
 }// namespace OpenKneeboard

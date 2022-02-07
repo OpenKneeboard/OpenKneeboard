@@ -34,7 +34,7 @@ class DCSTerrainTab final : public DCSTab {
   virtual uint16_t GetPageCount() const override;
 
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
-  virtual std::shared_ptr<Tab> GetNavigationTab(const D2D1_SIZE_U&) override;
+  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t) override;
 
  protected:
   virtual void RenderPageContent(uint16_t pageIndex, const D2D1_RECT_F& rect)

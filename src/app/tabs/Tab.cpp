@@ -192,7 +192,11 @@ void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
     bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }
 
-std::shared_ptr<Tab> Tab::GetNavigationTab(const D2D1_SIZE_U&) {
+bool Tab::SupportsNavigation() const {
+  return false;
+}
+
+std::shared_ptr<Tab> Tab::CreateNavigationTab(uint16_t) {
   return {};
 }
 

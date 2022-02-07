@@ -56,12 +56,12 @@ class Tab : public okConfigurableComponent {
   virtual void PostGameEvent(const GameEvent&);
   virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex);
 
-  virtual std::shared_ptr<Tab> GetNavigationTab(const D2D1_SIZE_U&);
-
   Event<> evNeedsRepaintEvent;
   Event<> evFullyReplacedEvent;
   Event<> evPageAppendedEvent;
 
+  virtual bool SupportsNavigation() const;
+  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t currentPageIndex);
  protected:
   void ClearDrawings();
 
