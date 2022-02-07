@@ -172,7 +172,7 @@ okSHMRenderer::okSHMRenderer(
       it.mHandle.put());
     it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
 
-    AddEventListener(kneeboard->evFlushEvent, [this]() { EnqueueFrame(); });
+    AddEventListener(kneeboard->evFlushEvent, [this]() { RenderNow(); });
   }
 
   auto ctx = dxr.mD2DDeviceContext;
@@ -199,6 +199,8 @@ okSHMRenderer::okSHMRenderer(
       bg.Alpha() / 255.0f,
     },
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
+
+  this->RenderNow();
 }
 
 okSHMRenderer::~okSHMRenderer() {
@@ -326,7 +328,10 @@ void okSHMRenderer::Impl::RenderWithChrome(
     cursorStroke);
 }
 
-void okSHMRenderer::EnqueueFrame() {
+void okSHMRenderer::RenderNow() {
   auto tabState = this->p->mKneeboard->GetCurrentTab();
+  if (!tabState) {
+    return;
+  }
   this->Render(tabState->GetTab(), tabState->GetPageIndex());
 }

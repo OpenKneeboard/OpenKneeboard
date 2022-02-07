@@ -47,7 +47,7 @@ class okSHMRenderer final : private OpenKneeboard::EventReceiver {
   ~okSHMRenderer();
 
   private:
-  void EnqueueFrame();
+  void RenderNow();
   void Render(
     const std::shared_ptr<OpenKneeboard::Tab>& tab,
     uint16_t pageIndex);
