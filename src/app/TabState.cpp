@@ -19,6 +19,7 @@
  */
 #include "TabState.h"
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -104,6 +105,54 @@ void TabState::OnTabPageAppended() {
 
 D2D1_SIZE_U TabState::GetNativeContentSize() const {
   return GetTab()->GetNativeContentSize(GetPageIndex());
+}
+
+TabMode TabState::GetTabMode() const {
+  return mTabMode;
+}
+
+bool TabState::SupportsTabMode(TabMode mode) const {
+  switch (mode) {
+    case TabMode::NORMAL:
+      return true;
+    case TabMode::NAVIGATION:
+      return mRootTab->SupportsNavigation();
+  }
+  // above switch should be exhaustive
+  OPENKNEEBOARD_BREAK;
+  return false;
+}
+
+bool TabState::SetTabMode(TabMode mode) {
+  if (mTabMode == mode || !SupportsTabMode(mode)) {
+    // Shouldn't have been called
+    OPENKNEEBOARD_BREAK;
+    return false;
+  }
+
+  this->GetTab()->PostCursorEvent({}, this->GetPageIndex());
+
+  mTabMode = mode;
+  mActiveSubTab = nullptr;
+  mActiveSubTabPage = 0;
+
+  switch (mode) {
+    case TabMode::NORMAL:
+      break;
+    case TabMode::NAVIGATION:
+      mActiveSubTab = mRootTab->CreateNavigationTab(mRootTabPage);
+      break;
+  }
+
+  if (mode != TabMode::NORMAL && !mActiveSubTab) {
+    // Switch should have been exhaustive
+    OPENKNEEBOARD_BREAK;
+  }
+
+  evPageChangedEvent();
+  evNeedsRepaintEvent();
+
+  return true;
 }
 
 }// namespace OpenKneeboard

@@ -34,6 +34,11 @@ namespace OpenKneeboard {
 struct CursorEvent;
 class Tab;
 
+enum class TabMode {
+  NORMAL,
+  NAVIGATION,
+};
+
 class TabState final : private EventReceiver {
  public:
   TabState(const std::shared_ptr<Tab>&);
@@ -65,6 +70,10 @@ class TabState final : private EventReceiver {
   Event<CursorEvent> evCursorEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evPageChangedEvent;
+
+  TabMode GetTabMode() const;
+  bool SupportsTabMode(TabMode) const;
+  bool SetTabMode(TabMode);
  private:
   std::shared_ptr<Tab> mRootTab;
   uint16_t mRootTabPage;
@@ -72,6 +81,8 @@ class TabState final : private EventReceiver {
   // For now, just navigation views, maybe more later
   std::shared_ptr<Tab> mActiveSubTab;
   uint16_t mActiveSubTabPage;
+
+  TabMode mTabMode = TabMode::NORMAL;
 
   void OnTabFullyReplaced();
   void OnTabPageAppended();
