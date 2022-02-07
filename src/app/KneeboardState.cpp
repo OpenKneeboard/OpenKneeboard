@@ -54,6 +54,8 @@ void KneeboardState::SetTabs(
         this->evNeedsRepaintEvent();
       }
     });
+    AddEventListener(
+      tab->evPageChangedEvent, &KneeboardState::UpdateLayout, this);
   }
 
   mTabs = tabs;

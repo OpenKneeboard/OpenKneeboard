@@ -73,6 +73,7 @@ void TabState::SetPageIndex(uint16_t page) {
   }
 
   evNeedsRepaintEvent();
+  evPageChangedEvent();
 }
 
 void TabState::NextPage() {
@@ -91,17 +92,13 @@ void TabState::OnTabFullyReplaced() {
   if (!mActiveSubTab) {
     evNeedsRepaintEvent();
   }
+  evPageChangedEvent();
 }
 
 void TabState::OnTabPageAppended() {
   const auto count = mRootTab->GetPageCount();
-  if (mRootTabPage != count - 2) {
-    return;
-  }
-
-  mRootTabPage++;
-  if (!mActiveSubTab) {
-    evNeedsRepaintEvent();
+  if (mRootTabPage == count - 2) {
+    NextPage();
   }
 }
 
