@@ -49,9 +49,16 @@ void okTab::InitUI(
   auto canvas = new okTabCanvas(this, dxr, kneeboard, mState);
 
   auto buttonBox = new wxPanel(this);
+  mNormalModeButton = new wxButton(buttonBox, wxID_ANY, _("&Exit Navigation"));
+  mNavigationModeButton = new wxButton(buttonBox, wxID_ANY, _("&Contents"));
   mFirstPageButton = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
   mPreviousPageButton = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
   mNextPageButton = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
+
+  mNormalModeButton->Bind(wxEVT_BUTTON, [=](auto&) {
+    mState->SetTabMode(TabMode::NORMAL); });
+  mNavigationModeButton->Bind(wxEVT_BUTTON, [=](auto&) {
+    mState->SetTabMode(TabMode::NAVIGATION); });
   mFirstPageButton->Bind(wxEVT_BUTTON, [=](auto&) { mState->SetPageIndex(0); });
   mPreviousPageButton->Bind(
     wxEVT_BUTTON, [=](auto&) { mState->PreviousPage(); });
@@ -59,6 +66,8 @@ void okTab::InitUI(
 
   auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
   buttonSizer->Add(mFirstPageButton);
+  buttonSizer->Add(mNormalModeButton);
+  buttonSizer->Add(mNavigationModeButton);
   buttonSizer->AddStretchSpacer();
   buttonSizer->Add(mPreviousPageButton);
   buttonSizer->Add(mNextPageButton);
@@ -76,4 +85,8 @@ void okTab::UpdateButtonStates() {
   mFirstPageButton->Enable(pageIndex > 0);
   mPreviousPageButton->Enable(pageIndex > 0);
   mNextPageButton->Enable(pageIndex + 1 < mState->GetPageCount());
+
+  mNavigationModeButton->Enable(mState->SupportsTabMode(TabMode::NAVIGATION) && mState->GetPageCount() > 1);
+  mNormalModeButton->Show(mState->GetTabMode() != TabMode::NORMAL);
+  mNavigationModeButton->Show(mState->GetTabMode() == TabMode::NORMAL);
 }
