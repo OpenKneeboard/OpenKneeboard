@@ -102,8 +102,11 @@ void Tab::FlushCursorEvents() {
       const bool erasing = event.mButtons & ~1;
 
       const auto scale = mDrawings.at(pageIndex).mScale;
-      const auto pressure = std::clamp(event.mPressure - 0.40, 0.0, 0.60) * 15;
-      const auto radius = 1 + (pressure * (erasing ? 2 : 1));
+      const auto pressure = std::clamp(event.mPressure - 0.40, 0.0, 0.60);
+      auto radius = 1 + (pressure * 15);
+      if (erasing) {
+        radius *= 10;
+      }
       const auto x = event.mX * scale;
       const auto y = event.mY * scale;
       const auto brush = erasing ? mEraser : mBrush;
