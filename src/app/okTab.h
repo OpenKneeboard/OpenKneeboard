@@ -25,6 +25,8 @@
 
 #include <memory>
 
+#include "Events.h"
+
 namespace OpenKneeboard {
 struct CursorEvent;
 struct DXResources;
@@ -32,7 +34,7 @@ class KneeboardState;
 class TabState;
 }// namespace OpenKneeboard
 
-class okTab final : public wxPanel {
+class okTab final : public wxPanel, private OpenKneeboard::EventReceiver {
  public:
   okTab(
     wxWindow* parent,
@@ -40,4 +42,13 @@ class okTab final : public wxPanel {
     const std::shared_ptr<OpenKneeboard::KneeboardState>&,
     const std::shared_ptr<OpenKneeboard::TabState>&);
   virtual ~okTab();
+
+ private:
+  std::shared_ptr<OpenKneeboard::TabState> mState;
+
+  wxButton* mFirstPageButton = nullptr;
+  wxButton* mPreviousPageButton = nullptr;
+  wxButton* mNextPageButton = nullptr;
+
+  void UpdateButtonStates();
 };

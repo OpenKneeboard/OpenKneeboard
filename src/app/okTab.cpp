@@ -20,6 +20,7 @@
 #include "okTab.h"
 
 #include <OpenKneeboard/Tab.h>
+#include <wx/wupdlock.h>
 
 #include "TabState.h"
 #include "okTabCanvas.h"
@@ -31,29 +32,43 @@ okTab::okTab(
   const DXResources& dxr,
   const std::shared_ptr<KneeboardState>& kneeboardState,
   const std::shared_ptr<TabState>& tabState)
-  : wxPanel(parent) {
+  : wxPanel(parent), mState(tabState) {
   auto canvas = new okTabCanvas(this, dxr, kneeboardState, tabState);
 
   auto buttonBox = new wxPanel(this);
-  auto firstPage = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
-  auto previousPage = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
-  auto nextPage = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
-  firstPage->Bind(wxEVT_BUTTON, [=](auto&) { tabState->SetPageIndex(0); });
-  previousPage->Bind(wxEVT_BUTTON, [=](auto&) { tabState->PreviousPage(); });
-  nextPage->Bind(wxEVT_BUTTON, [=](auto&) { tabState->NextPage(); });
+  mFirstPageButton = new wxButton(buttonBox, wxID_ANY, _("F&irst Page"));
+  mPreviousPageButton = new wxButton(buttonBox, wxID_ANY, _("&Previous Page"));
+  mNextPageButton = new wxButton(buttonBox, wxID_ANY, _("&Next Page"));
+  mFirstPageButton->Bind(
+    wxEVT_BUTTON, [=](auto&) { tabState->SetPageIndex(0); });
+  mPreviousPageButton->Bind(
+    wxEVT_BUTTON, [=](auto&) { tabState->PreviousPage(); });
+  mNextPageButton->Bind(wxEVT_BUTTON, [=](auto&) { tabState->NextPage(); });
 
   auto buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-  buttonSizer->Add(firstPage);
+  buttonSizer->Add(mFirstPageButton);
   buttonSizer->AddStretchSpacer();
-  buttonSizer->Add(previousPage);
-  buttonSizer->Add(nextPage);
+  buttonSizer->Add(mPreviousPageButton);
+  buttonSizer->Add(mNextPageButton);
   buttonBox->SetSizer(buttonSizer);
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
   sizer->Add(canvas, 1, wxEXPAND);
   sizer->Add(buttonBox, 0, wxEXPAND);
   this->SetSizerAndFit(sizer);
+
+  AddEventListener(
+    tabState->evPageChangedEvent, &okTab::UpdateButtonStates, this);
+  UpdateButtonStates();
 }
 
 okTab::~okTab() {
+}
+
+void okTab::UpdateButtonStates() {
+  wxWindowUpdateLocker lock(this);
+  const auto pageIndex = mState->GetPageIndex();
+  mFirstPageButton->Enable(pageIndex > 0);
+  mPreviousPageButton->Enable(pageIndex > 0);
+  mNextPageButton->Enable(pageIndex + 1 < mState->GetPageCount());
 }

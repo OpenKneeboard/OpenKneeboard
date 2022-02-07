@@ -65,7 +65,6 @@ class TabState final : private EventReceiver {
   Event<CursorEvent> evCursorEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evPageChangedEvent;
-
  private:
   std::shared_ptr<Tab> mRootTab;
   uint16_t mRootTabPage;
