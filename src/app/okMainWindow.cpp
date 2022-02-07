@@ -41,63 +41,23 @@ using namespace OpenKneeboard;
 okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mDXResources = DXResources::Create();
   mKneeboard = std::make_shared<KneeboardState>();
-
-  (new okOpenVRThread())->Run();
-  (new okGameEventMailslotThread(this))->Run();
   mSHMRenderer = std::make_unique<okSHMRenderer>(
     mDXResources, mKneeboard, this->GetHWND());
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
-  if (*mTablet) {
-    mCursorEventTimer.Bind(
-      wxEVT_TIMER, [this](auto&){ this->FlushCursorEvents(); });
-    mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
-  }
+
+  InitUI();
+
+	if (*mTablet) {
+		mCursorEventTimer.Bind(
+			wxEVT_TIMER, [this](auto&){ this->FlushCursorEvents(); });
+		mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
+	}
+
+  (new okOpenVRThread())->Run();
+  (new okGameEventMailslotThread(this))->Run();
+
 
   this->Bind(okEVT_GAME_EVENT, &okMainWindow::PostGameEvent, this);
-  auto menuBar = new wxMenuBar();
-  {
-    auto fileMenu = new wxMenu();
-    menuBar->Append(fileMenu, _("&File"));
-
-    fileMenu->Append(wxID_EXIT, _("E&xit"));
-    Bind(wxEVT_MENU, &okMainWindow::OnExit, this, wxID_EXIT);
-  }
-  {
-    auto editMenu = new wxMenu();
-    menuBar->Append(editMenu, _("&Edit"));
-
-    auto settingsId = wxNewId();
-    editMenu->Append(settingsId, _("&Settings..."));
-    Bind(wxEVT_MENU, &okMainWindow::OnShowSettings, this, settingsId);
-  }
-  {
-    auto helpMenu = new wxMenu();
-    menuBar->Append(helpMenu, _("&Help"));
-
-    helpMenu->Append(wxID_ABOUT, _("&About"));
-    Bind(
-      wxEVT_MENU, [this](auto&) { okAboutBox(this); }, wxID_ABOUT);
-  }
-  SetMenuBar(menuBar);
-
-  mNotebook = new wxNotebook(this, wxID_ANY);
-  mNotebook->Bind(
-    wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
-
-  {
-    auto tabs = new okTabsList(mDXResources, mKneeboard, mSettings.Tabs);
-    mConfigurables.push_back(tabs);
-    UpdateTabs();
-    tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-      this->mSettings.Tabs = tabs->GetSettings();
-      mSettings.Save();
-      this->UpdateTabs();
-    });
-  }
-
-  auto sizer = new wxBoxSizer(wxVERTICAL);
-  sizer->Add(mNotebook, 1, wxEXPAND);
-  this->SetSizerAndFit(sizer);
 
   {
     auto gl = new okGamesList(mSettings.Games);
@@ -286,4 +246,52 @@ void okMainWindow::UpdateTabs() {
     mNotebook->AddPage(
       ui, tabState->GetRootTab()->GetTitle(), selected == tabState);
   }
+}
+
+void okMainWindow::InitUI() {
+  auto menuBar = new wxMenuBar();
+  {
+    auto fileMenu = new wxMenu();
+    menuBar->Append(fileMenu, _("&File"));
+
+    fileMenu->Append(wxID_EXIT, _("E&xit"));
+    Bind(wxEVT_MENU, &okMainWindow::OnExit, this, wxID_EXIT);
+  }
+  {
+    auto editMenu = new wxMenu();
+    menuBar->Append(editMenu, _("&Edit"));
+
+    auto settingsId = wxNewId();
+    editMenu->Append(settingsId, _("&Settings..."));
+    Bind(wxEVT_MENU, &okMainWindow::OnShowSettings, this, settingsId);
+  }
+  {
+    auto helpMenu = new wxMenu();
+    menuBar->Append(helpMenu, _("&Help"));
+
+    helpMenu->Append(wxID_ABOUT, _("&About"));
+    Bind(
+      wxEVT_MENU, [this](auto&) { okAboutBox(this); }, wxID_ABOUT);
+  }
+  SetMenuBar(menuBar);
+
+  mNotebook = new wxNotebook(this, wxID_ANY);
+  mNotebook->Bind(
+    wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
+
+  {
+    auto tabs = new okTabsList(mDXResources, mKneeboard, mSettings.Tabs);
+    mConfigurables.push_back(tabs);
+    UpdateTabs();
+    tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
+      this->mSettings.Tabs = tabs->GetSettings();
+      mSettings.Save();
+      this->UpdateTabs();
+    });
+  }
+
+  auto sizer = new wxBoxSizer(wxVERTICAL);
+  sizer->Add(mNotebook, 1, wxEXPAND);
+  this->SetSizerAndFit(sizer);
+
 }

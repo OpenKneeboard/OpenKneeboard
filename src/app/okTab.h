@@ -46,9 +46,12 @@ class okTab final : public wxPanel, private OpenKneeboard::EventReceiver {
  private:
   std::shared_ptr<OpenKneeboard::TabState> mState;
 
+  void UpdateButtonStates();
+
+  void InitUI(
+    const OpenKneeboard::DXResources&,
+    const std::shared_ptr<OpenKneeboard::KneeboardState>&);
   wxButton* mFirstPageButton = nullptr;
   wxButton* mPreviousPageButton = nullptr;
   wxButton* mNextPageButton = nullptr;
-
-  void UpdateButtonStates();
 };

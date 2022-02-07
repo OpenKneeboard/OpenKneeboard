@@ -77,4 +77,6 @@ class okMainWindow final : public wxFrame,
   std::vector<OpenKneeboard::CursorEvent> mBufferedCursorEvents;
   void FlushCursorEvents();
   wxTimer mCursorEventTimer;
+
+  void InitUI();
 };
