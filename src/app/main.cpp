@@ -27,14 +27,6 @@ class OpenKneeboardApp final : public wxApp {
     (new okMainWindow())->Show();
     return true;
   }
-
-  virtual bool OnExceptionInMainLoop() override {
-    throw;
-  }
-
-  virtual void OnUnhandledException() override {
-    throw;
-  }
 };
 
 wxIMPLEMENT_APP(OpenKneeboardApp);

@@ -7,6 +7,8 @@ FetchContent_Declare(
   URL_HASH "SHA1=69e4dcf9be7cad0261ee5874064a8747a5585aaa"
 )
 
+set(wxUSE_EXCEPTIONS OFF)
+
 FetchContent_GetProperties(wxwidgets)
 
 if(NOT wxwidgets_POPULATED)
