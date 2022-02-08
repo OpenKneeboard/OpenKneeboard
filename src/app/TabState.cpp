@@ -145,6 +145,13 @@ bool TabState::SetTabMode(TabMode mode) {
       break;
     case TabMode::NAVIGATION:
       mActiveSubTab = mRootTab->CreateNavigationTab(mRootTabPage);
+      AddEventListener(
+        mActiveSubTab->evPageChangeRequestedEvent,
+        [this](uint16_t newPage) {
+          mRootTabPage = newPage;
+          SetTabMode(TabMode::NORMAL);
+        }
+      );
       break;
   }
 

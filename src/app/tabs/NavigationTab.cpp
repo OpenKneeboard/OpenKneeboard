@@ -19,6 +19,7 @@
  */
 
 #include <OpenKneeboard/NavigationTab.h>
+#include <OpenKneeboard/dprint.h>
 
 namespace OpenKneeboard {
 
@@ -104,13 +105,78 @@ D2D1_SIZE_U NavigationTab::GetNativeContentSize(uint16_t) {
 
 void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   mCursorPoint = {ev.mX, ev.mY};
+
+  // We only care about touch start and end
+
+  // moving with button pressed: no state change
+  if (
+    ev.mTouchState == CursorTouchState::TOUCHING_SURFACE
+    && mButtonState != ButtonState::NOT_PRESSED) {
+      dprint("Move, pressed, no change");
+    return;
+  }
+
+  // moving without button pressed, no state change
+  if (
+    ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
+    && mButtonState == ButtonState::NOT_PRESSED) {
+      dprint("Move, not pressed, no change");
+    return;
+  }
+
+  // touch end, but touch start wasn't on a button
+  if (
+    ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
+    && mButtonState == ButtonState::PRESSING_INACTIVE_AREA) {
+    mButtonState = ButtonState::NOT_PRESSED;
+      dprint("Release, wasn't in button");
+    return;
+  }
+
+  bool matched = false;
+  uint16_t matchedIndex;
+  uint16_t matchedPage;
+  const auto& entries = mEntries.at(pageIndex);
+  for (uint16_t i = 0; i < entries.size(); ++i) {
+    const auto& r = entries.at(i).mRect;
+    if (
+      ev.mX >= r.left && ev.mX <= r.right && ev.mY >= r.top
+      && ev.mY <= r.bottom) {
+      matched = true;
+      matchedIndex = i;
+      matchedPage = entries.at(i).mPageIndex;
+      break;
+    }
+  }
+
+  // touch start
+  if (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
+    if (matched) {
+      mActiveButton = matchedIndex;
+      mButtonState = ButtonState::PRESSING_BUTTON;
+    } else {
+      mButtonState = ButtonState::PRESSING_INACTIVE_AREA;
+    }
+    return;
+  }
+
+  mButtonState = ButtonState::NOT_PRESSED;
+
+  // touch release, but not on the same button
+  if ((!matched) || matchedIndex != mActiveButton) {
+    return;
+  }
+
+  // touch release, on the same button
+  evPageChangeRequestedEvent(matchedPage);
 }
 
 void NavigationTab::RenderPageContent(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& canvasRect) {
-  const auto scale = (canvasRect.bottom - canvasRect.top) / mPreferredSize.height;
+  const auto scale
+    = (canvasRect.bottom - canvasRect.top) / mPreferredSize.height;
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->FillRectangle(canvasRect, mBackgroundBrush.get());
@@ -129,13 +195,24 @@ void NavigationTab::RenderPageContent(
   for (int i = 0; i < pageEntries.size(); ++i) {
     const auto& entry = pageEntries.at(i);
     const auto& rect = entry.mRect;
-    const bool hover
-      = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    bool hover = false;
+
+    switch (mButtonState) {
+      case ButtonState::NOT_PRESSED:
+        hover = x >= rect.left && x <= rect.right && y >= rect.top
+          && y <= rect.bottom;
+        break;
+      case ButtonState::PRESSING_BUTTON:
+        hover = (i == mActiveButton);
+        break;
+      case ButtonState::PRESSING_INACTIVE_AREA:
+        break;
+    }
+
     if (hover) {
       hoverPage = i;
       ctx->FillRectangle(rect, mHighlightBrush.get());
-      ctx->FillRectangle(
-        mPreviewMetrics.mRects.at(i), mBackgroundBrush.get());
+      ctx->FillRectangle(mPreviewMetrics.mRects.at(i), mBackgroundBrush.get());
     }
   }
 

@@ -23,6 +23,8 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Tab.h>
 
+#include <limits>
+
 #include "CachedLayer.h"
 
 namespace OpenKneeboard {
@@ -63,6 +65,14 @@ class NavigationTab final : public Tab {
     D2D1_RECT_F mRect;
   };
   std::vector<std::vector<EntryImpl>> mEntries;
+
+  enum class ButtonState {
+    NOT_PRESSED,
+    PRESSING_BUTTON,
+    PRESSING_INACTIVE_AREA,
+  };
+  ButtonState mButtonState = ButtonState::NOT_PRESSED;
+  uint16_t mActiveButton;
 
   D2D1_POINT_2F mCursorPoint;
 

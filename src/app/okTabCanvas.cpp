@@ -54,7 +54,14 @@ okTabCanvas::okTabCanvas(
   this->Bind(wxEVT_SIZE, &okTabCanvas::OnSize, this);
   this->Bind(wxEVT_IDLE, [this](auto&) { this->FlushFrame(); });
 
-  this->Bind(wxEVT_MOTION, &okTabCanvas::OnMouseMove, this);
+  for (auto event:
+       {wxEVT_MOTION,
+        wxEVT_LEFT_DOWN,
+        wxEVT_LEFT_UP,
+        wxEVT_RIGHT_DOWN,
+        wxEVT_RIGHT_UP}) {
+    this->Bind(event, &okTabCanvas::OnMouseMove, this);
+  }
   this->Bind(wxEVT_LEAVE_WINDOW, &okTabCanvas::OnMouseLeave, this);
 
   AddEventListener(tab->evNeedsRepaintEvent, &okTabCanvas::EnqueueFrame, this);
@@ -162,8 +169,7 @@ void okTabCanvas::PaintNow() {
   const auto pageMetrics = GetPageMetrics();
 
   mTabState->GetTab()->RenderPage(
-    ctx.get(),
-    mTabState->GetPageIndex(), pageMetrics.mRenderRect);
+    ctx.get(), mTabState->GetPageIndex(), pageMetrics.mRenderRect);
 
   if (!mKneeboardState->HaveCursor()) {
     return;

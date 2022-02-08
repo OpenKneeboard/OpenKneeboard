@@ -59,6 +59,7 @@ class Tab : public okConfigurableComponent {
   Event<> evNeedsRepaintEvent;
   Event<> evFullyReplacedEvent;
   Event<> evPageAppendedEvent;
+  Event<uint16_t> evPageChangeRequestedEvent;
 
   virtual bool SupportsNavigation() const;
   virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t currentPageIndex);

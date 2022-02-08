@@ -56,7 +56,7 @@ class Event final : public EventBase {
   Event& operator=(const Event<Args...>&) = delete;
   ~Event();
 
-  void operator()(Args&&... args);
+  void operator()(Args... args);
 
  protected:
   void AddHandler(EventReceiver*, const EventHandler<Args...>&);
@@ -133,9 +133,9 @@ void Event<Args...>::RemoveHandler(uint64_t token) {
 }
 
 template <class... Args>
-void Event<Args...>::operator()(Args&&... args) {
+void Event<Args...>::operator()(Args... args) {
   for (const auto& [token, info]: mReceivers) {
-    info.mFunc(std::forward<Args>(args)...);
+    info.mFunc(args...);
   }
 }
 
