@@ -50,9 +50,10 @@ uint16_t DCSTerrainTab::GetPageCount() const {
 }
 
 void DCSTerrainTab::RenderPageContent(
+  ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  mDelegate->RenderPage(pageIndex, rect);
+  mDelegate->RenderPage(ctx, pageIndex, rect);
 }
 
 D2D1_SIZE_U DCSTerrainTab::GetNativeContentSize(uint16_t pageIndex) {

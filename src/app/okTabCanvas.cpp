@@ -162,6 +162,7 @@ void okTabCanvas::PaintNow() {
   const auto pageMetrics = GetPageMetrics();
 
   mTabState->GetTab()->RenderPage(
+    ctx.get(),
     mTabState->GetPageIndex(), pageMetrics.mRenderRect);
 
   if (!mKneeboardState->HaveCursor()) {

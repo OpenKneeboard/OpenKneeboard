@@ -237,7 +237,10 @@ void okSHMRenderer::Render(
   }
 
   p->RenderWithChrome(
-    title, pageSize, std::bind_front(&Tab::RenderPage, tab, pageIndex));
+    title,
+    pageSize,
+    std::bind_front(
+      &Tab::RenderPage, tab, p->mDXR.mD2DDeviceContext.get(), pageIndex));
 }
 
 void okSHMRenderer::Impl::RenderWithChrome(

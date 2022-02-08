@@ -86,6 +86,7 @@ D2D1_SIZE_U DCSRadioLogTab::GetNativeContentSize(uint16_t pageIndex) {
 }
 
 void DCSRadioLogTab::RenderPageContent(
+  ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
 
@@ -98,7 +99,6 @@ void DCSRadioLogTab::RenderPageContent(
   const D2D1_SIZE_F renderSize {
     scale * virtualSize.width, scale * virtualSize.height};
 
-  auto ctx = p->mDXR.mD2DDeviceContext;
   ctx->SetTransform(
     D2D1::Matrix3x2F::Scale(scale, scale)
     * D2D1::Matrix3x2F::Translation(

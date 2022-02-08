@@ -51,7 +51,7 @@ class Tab : public okConfigurableComponent {
 
   virtual uint16_t GetPageCount() const = 0;
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) = 0;
-  void RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect);
+  void RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect);
 
   virtual void PostGameEvent(const GameEvent&);
   virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex);
@@ -65,7 +65,7 @@ class Tab : public okConfigurableComponent {
  protected:
   void ClearDrawings();
 
-  virtual void RenderPageContent(uint16_t pageIndex, const D2D1_RECT_F& rect)
+  virtual void RenderPageContent(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
     = 0;
 
  private:

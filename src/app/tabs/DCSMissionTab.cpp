@@ -126,9 +126,10 @@ uint16_t DCSMissionTab::GetPageCount() const {
 }
 
 void DCSMissionTab::RenderPageContent(
+  ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  p->mDelegate->RenderPage(pageIndex, rect);
+  p->mDelegate->RenderPage(ctx, pageIndex, rect);
 }
 
 D2D1_SIZE_U DCSMissionTab::GetNativeContentSize(uint16_t pageIndex) {

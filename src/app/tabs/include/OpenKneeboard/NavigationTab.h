@@ -23,6 +23,8 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Tab.h>
 
+#include "CachedLayer.h"
+
 namespace OpenKneeboard {
 
 class NavigationTab final : public Tab {
@@ -34,8 +36,9 @@ class NavigationTab final : public Tab {
 
   NavigationTab(
     const DXResources&,
-    const D2D1_SIZE_U& preferredSize,
-    const std::vector<Entry>& entries);
+    Tab* rootTab,
+    const std::vector<Entry>& entries,
+    const D2D1_SIZE_U& preferredSize);
   ~NavigationTab();
 
   virtual uint16_t GetPageCount() const override;
@@ -43,12 +46,16 @@ class NavigationTab final : public Tab {
   virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
 
  protected:
-  virtual void RenderPageContent(uint16_t pageIndex, const D2D1_RECT_F& rect)
-    override;
+  virtual void RenderPageContent(
+    ID2D1DeviceContext*,
+    uint16_t pageIndex,
+    const D2D1_RECT_F& rect) override;
 
  private:
   DXResources mDXR;
+  Tab* mRootTab;
   D2D1_SIZE_U mPreferredSize;
+  CachedLayer mPreviewLayer;
 
   struct EntryImpl {
     std::wstring mName;
@@ -63,6 +70,21 @@ class NavigationTab final : public Tab {
   winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
+
+  uint16_t mPreviewMetricsPage = ~0ui16;
+  struct {
+    float mBleed;
+    float mStroke;
+    float mHeight;
+    std::vector<D2D1_RECT_F> mRects;
+  } mPreviewMetrics;
+
+  void RenderPreviewLayer(
+    uint16_t pageIndex,
+    ID2D1DeviceContext* ctx,
+    const D2D1_SIZE_U& size);
+
+  static constexpr auto PaddingRatio = 1.5f;
 };
 
 }// namespace OpenKneeboard

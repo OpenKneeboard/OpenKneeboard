@@ -14,37 +14,38 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
-#include "DCSTab.h"
+#include <d2d1_2.h>
+#include <shims/winrt.h>
+
+#include <functional>
 
 namespace OpenKneeboard {
 
-class DCSMissionTab final : public DCSTab {
+struct DXResources;
+
+class CachedLayer final {
  public:
-  DCSMissionTab(const DXResources&);
-  virtual ~DCSMissionTab();
+  CachedLayer(const DXResources&);
+  ~CachedLayer();
 
-  virtual void Reload() override;
-  virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
-
- protected:
-  virtual void RenderPageContent(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F& rect) final override;
-  virtual const char* GetGameEventName() const override;
-  virtual void Update(
-    const std::filesystem::path&,
-    const std::filesystem::path&,
-    const std::string&) override;
+  void Render(
+    const D2D1_RECT_F& where,
+    const D2D1_SIZE_U& nativeSize,
+    uint16_t cacheKey,
+    ID2D1DeviceContext* ctx,
+    std::function<void(ID2D1DeviceContext*, const D2D1_SIZE_U&)> impl);
 
  private:
-  class Impl;
-  std::shared_ptr<Impl> p;
+  uint16_t mKey = ~0ui16;
+
+  winrt::com_ptr<ID2D1DeviceContext> mCacheContext;
+  D2D1_SIZE_U mCacheSize;
+  winrt::com_ptr<ID2D1Bitmap1> mCache;
 };
 
 }// namespace OpenKneeboard

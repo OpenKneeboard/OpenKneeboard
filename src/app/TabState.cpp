@@ -99,7 +99,11 @@ void TabState::OnTabFullyReplaced() {
 void TabState::OnTabPageAppended() {
   const auto count = mRootTab->GetPageCount();
   if (mRootTabPage == count - 2) {
-    NextPage();
+    if (mActiveSubTab) {
+      mRootTabPage++;
+    } else {
+      NextPage();
+    }
   }
 }
 

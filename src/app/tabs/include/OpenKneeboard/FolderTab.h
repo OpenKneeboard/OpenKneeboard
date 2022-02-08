@@ -56,8 +56,10 @@ class FolderTab : public Tab {
   virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t) override;
 
  protected:
-  virtual void RenderPageContent(uint16_t pageIndex, const D2D1_RECT_F& rect)
-    final override;
+  virtual void RenderPageContent(
+    ID2D1DeviceContext*,
+    uint16_t pageIndex,
+    const D2D1_RECT_F& rect) final override;
 
  private:
   class Impl;

@@ -111,7 +111,6 @@ void Tab::FlushCursorEvents() {
       const auto y = event.mY * scale;
       const auto brush = erasing ? mEraser : mBrush;
 
-      ctx->SetTransform(D2D1::Matrix3x2F::Identity());
       ctx->SetPrimitiveBlend(
         erasing ? D2D1_PRIMITIVE_BLEND_COPY : D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
 
@@ -171,9 +170,9 @@ ID2D1Bitmap* Tab::GetDrawingSurface(
   return page.mBitmap.get();
 }
 
-void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
+void Tab::RenderPage(ID2D1DeviceContext* ctx, uint16_t pageIndex, const D2D1_RECT_F& rect) {
   FlushCursorEvents();
-  this->RenderPageContent(pageIndex, rect);
+  this->RenderPageContent(ctx, pageIndex, rect);
 
   if (pageIndex >= mDrawings.size()) {
     return;
@@ -186,8 +185,6 @@ void Tab::RenderPage(uint16_t pageIndex, const D2D1_RECT_F& rect) {
     return;
   }
 
-  auto ctx = mDXR.mD2DDeviceContext;
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->DrawBitmap(
     bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
 }

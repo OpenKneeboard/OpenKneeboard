@@ -104,7 +104,10 @@ D2D1_SIZE_U FolderTab::GetNativeContentSize(uint16_t index) {
   return bitmap->GetPixelSize();
 }
 
-void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
+void FolderTab::RenderPageContent(
+  ID2D1DeviceContext* ctx,
+  uint16_t index,
+  const D2D1_RECT_F& rect) {
   if (!IsValidPageIndex(index, GetPageCount())) {
     return;
   }
@@ -114,7 +117,6 @@ void FolderTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
     return;
   }
   const auto pageSize = bitmap->GetPixelSize();
-  auto ctx = p->mDXR.mD2DDeviceContext;
 
   const auto targetWidth = rect.right - rect.left;
   const auto targetHeight = rect.bottom - rect.top;
@@ -206,7 +208,7 @@ std::shared_ptr<Tab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
   }
 
   return std::make_shared<NavigationTab>(
-    p->mDXR, this->GetNativeContentSize(currentPage), entries);
+    p->mDXR, this, entries, this->GetNativeContentSize(currentPage));
 }
 
 }// namespace OpenKneeboard

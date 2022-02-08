@@ -83,7 +83,10 @@ D2D1_SIZE_U PDFTab::GetNativeContentSize(uint16_t index) {
   return {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)};
 }
 
-void PDFTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
+void PDFTab::RenderPageContent(
+  ID2D1DeviceContext* ctx,
+  uint16_t index,
+  const D2D1_RECT_F& rect) {
   if (index >= GetPageCount()) {
     return;
   }
@@ -91,7 +94,6 @@ void PDFTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
   auto page = p->mPDFDocument.GetPage(index);
   auto size = page.Size();
 
-  auto ctx = p->mDXR.mD2DDeviceContext;
   ctx->FillRectangle(rect, p->mBackgroundBrush.get());
 
   PDF_RENDER_PARAMS params {
@@ -102,7 +104,7 @@ void PDFTab::RenderPageContent(uint16_t index, const D2D1_RECT_F& rect) {
   ctx->SetTransform(D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
 
   winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
-    winrt::get_unknown(page), ctx.get(), &params));
+    winrt::get_unknown(page), ctx, &params));
   return;
 }
 
