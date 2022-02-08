@@ -26,9 +26,10 @@ class wxString;
 
 namespace OpenKneeboard {
 
-class DCSTab : public Tab {
+class DCSTab : public virtual Tab {
  public:
-  DCSTab(const DXResources&, const wxString& title);
+  DCSTab() = delete;
+  DCSTab(const DXResources&);
   virtual ~DCSTab();
 
   virtual void PostGameEvent(const GameEvent&) override final;

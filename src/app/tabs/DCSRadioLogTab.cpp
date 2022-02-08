@@ -63,7 +63,7 @@ class DCSRadioLogTab::Impl final {
 };
 
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
-  : DCSTab(dxr, _("Radio Log")), p(std::make_unique<Impl>(this, dxr)) {
+  : Tab(dxr, _("Radio Log")), DCSTab(dxr), p(std::make_unique<Impl>(this, dxr)) {
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {

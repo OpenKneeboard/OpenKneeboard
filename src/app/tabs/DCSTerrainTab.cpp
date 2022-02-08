@@ -32,7 +32,8 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 namespace OpenKneeboard {
 
 DCSTerrainTab::DCSTerrainTab(const DXResources& dxr)
-  : DCSTab(dxr, _("Theater")),
+  : Tab(dxr, _("Theater")),
+    DCSTab(dxr),
     mDelegate(
       std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
   AddEventListener(mDelegate->evFullyReplacedEvent, this->evFullyReplacedEvent);

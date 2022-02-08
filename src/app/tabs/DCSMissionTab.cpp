@@ -105,7 +105,7 @@ class DCSMissionTab::Impl final {
 };
 
 DCSMissionTab::DCSMissionTab(const DXResources& dxr)
-  : DCSTab(dxr, _("Mission")), p(std::make_shared<Impl>()) {
+  : Tab(dxr, _("Mission")), DCSTab(dxr), p(std::make_shared<Impl>()) {
   p->mDelegate
     = std::make_unique<FolderTab>(dxr, wxString {}, std::filesystem::path {});
   AddEventListener(

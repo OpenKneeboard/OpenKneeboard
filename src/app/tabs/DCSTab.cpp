@@ -150,8 +150,7 @@ class DCSTab::Impl final {
   std::string mLastValue;
 };
 
-DCSTab::DCSTab(const DXResources& dxr, const wxString& title)
-  : Tab(dxr, title), p(std::make_shared<Impl>()) {
+DCSTab::DCSTab(const DXResources& dxr) : p(std::make_shared<Impl>()) {
   InstallHooks();
 }
 
