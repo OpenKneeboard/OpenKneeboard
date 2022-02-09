@@ -25,11 +25,12 @@
 
 #include "Tab.h"
 #include "TabWithDoodles.h"
+#include "TabWithNavigation.h"
 #include "okConfigurableComponent.h"
 
 namespace OpenKneeboard {
 
-class PDFTab final : public TabWithDoodles, public okConfigurableComponent {
+class PDFTab final : public TabWithDoodles, public TabWithNavigation, public okConfigurableComponent {
  public:
   explicit PDFTab(
     const DXResources&,
@@ -53,6 +54,9 @@ class PDFTab final : public TabWithDoodles, public okConfigurableComponent {
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
+
+  virtual bool IsNavigationAvailable() const override;
+  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t pageIndex) override;
 
  protected:
   virtual void RenderPageContent(

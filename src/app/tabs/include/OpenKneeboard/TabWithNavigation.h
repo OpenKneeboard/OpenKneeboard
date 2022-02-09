@@ -25,6 +25,7 @@ namespace OpenKneeboard {
 
 class TabWithNavigation : public virtual Tab {
  public:
+  virtual bool IsNavigationAvailable() const = 0;
   virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t pageIndex) = 0;
 };
 

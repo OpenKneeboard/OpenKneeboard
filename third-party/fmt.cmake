@@ -17,5 +17,5 @@ install(
   FILES
   "${fmt_SOURCE_DIR}/LICENSE.rst"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-fmt.rst"
+  RENAME "LICENSE-ThirdParty-fmt.txt"
 )

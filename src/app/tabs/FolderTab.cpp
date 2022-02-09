@@ -198,6 +198,10 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
   Reload();
 }
 
+bool FolderTab::IsNavigationAvailable() const {
+  return p->mPages.size();
+}
+
 std::shared_ptr<Tab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
   std::vector<NavigationTab::Entry> entries;
 

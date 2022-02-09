@@ -59,6 +59,7 @@ class FolderTab : public TabWithDoodles,
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
 
+  virtual bool IsNavigationAvailable() const override;
   virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t) override;
 
  protected:

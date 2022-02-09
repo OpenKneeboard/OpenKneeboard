@@ -62,7 +62,7 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
       continue;
     }
 
-    const std::string title = tab.at("Title");
+    const std::wstring title = tab.at("Title");
     const std::string type = tab.at("Type");
 
     nlohmann::json settings;

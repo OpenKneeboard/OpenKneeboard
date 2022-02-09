@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFTab.h>
 #include <OpenKneeboard/dprint.h>
 #include <shims/winrt.h>
@@ -26,9 +27,12 @@
 #include <winrt/windows.foundation.h>
 #include <winrt/windows.storage.h>
 
+#include <qpdf/QPDF.hh>
+#include <qpdf/QPDFOutlineDocumentHelper.hh>
+#include <qpdf/QPDFPageDocumentHelper.hh>
 #include <thread>
 
-#include "okEvents.h"
+#include <inttypes.h>
 
 using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
@@ -42,6 +46,8 @@ struct PDFTab::Impl final {
   IPdfDocument mPDFDocument;
   winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
   winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
+
+  std::vector<NavigationTab::Entry> mBookmarks;
 };
 
 PDFTab::PDFTab(
@@ -64,12 +70,72 @@ std::wstring PDFTab::GetTitle() const {
   return p->mPath.stem().wstring();
 }
 
+namespace {
+
+std::map<QPDFObjGen, uint16_t> GetPageMap(QPDF& pdf) {
+  std::map<QPDFObjGen, uint16_t> pageMap;
+  QPDFPageDocumentHelper pdh(pdf);
+
+  uint16_t pageNumber = 0;
+  for (auto& page: pdh.getAllPages()) {
+    auto object = page.getObjectHandle();
+    auto gen = object.getObjGen();
+    pageMap.emplace(page.getObjectHandle().getObjGen(), pageNumber++);
+  }
+
+  return pageMap;
+}
+
+std::vector<NavigationTab::Entry> GetNavigationEntries(
+  std::map<QPDFObjGen, uint16_t>& pageMap,
+  std::vector<QPDFOutlineObjectHelper>& outlines) {
+  std::vector<NavigationTab::Entry> entries;
+
+  for (auto& outline: outlines) {
+    auto page = outline.getDestPage();
+    auto key = page.getObjGen();
+    if (!pageMap.contains(key)) {
+      continue;
+    }
+    entries.push_back({
+      .mName = std::wstring(winrt::to_hstring(outline.getTitle())),
+      .mPageIndex = pageMap.at(key),
+    });
+
+    auto kids = outline.getKids();
+    auto kidEntries = GetNavigationEntries(pageMap, kids);
+    if (kidEntries.empty()) {
+      continue;
+    }
+    entries.reserve(entries.size() + kidEntries.size());
+    std::copy(
+      kidEntries.begin(), kidEntries.end(), std::back_inserter(entries));
+  }
+
+  return entries;
+}
+
+}// namespace
+
 void PDFTab::Reload() {
+  p->mBookmarks.clear();
   std::thread([=]() {
     auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
     p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
     evFullyReplacedEvent();
   }).detach();
+
+  const auto pathStr = p->mPath.string();
+  QPDF qpdf;
+  qpdf.processFile(pathStr.c_str());
+  QPDFOutlineDocumentHelper odh(qpdf);
+  if (!odh.hasOutlines()) {
+    return;
+  }
+
+  auto pageMap = GetPageMap(qpdf);
+  auto outlines = odh.getTopLevelOutlines();
+  p->mBookmarks = GetNavigationEntries(pageMap, outlines);
 }
 
 uint16_t PDFTab::GetPageCount() const {
@@ -122,6 +188,15 @@ void PDFTab::SetPath(const std::filesystem::path& path) {
   }
   p->mPath = path;
   Reload();
+}
+
+bool PDFTab::IsNavigationAvailable() const {
+  return p->mBookmarks.size() > 1;
+}
+
+std::shared_ptr<Tab> PDFTab::CreateNavigationTab(uint16_t pageIndex) {
+  return std::make_shared<NavigationTab>(
+    p->mDXR, this, p->mBookmarks, this->GetNativeContentSize(pageIndex));
 }
 
 }// namespace OpenKneeboard

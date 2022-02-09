@@ -73,6 +73,10 @@ template <class T>
 class TabWithNavigationDelegate : public virtual TabWithNavigation,
                                   public virtual TabWithDelegateBase<T> {
  public:
+  virtual bool IsNavigationAvailable() const {
+    return this->GetDelegate()->IsNavigationAvailable();
+  }
+
   virtual std::shared_ptr<Tab> CreateNavigationTab(
     uint16_t pageIndex) override {
     return this->GetDelegate()->CreateNavigationTab(pageIndex);

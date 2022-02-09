@@ -24,6 +24,7 @@ target_link_libraries(
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-version
   openvr
+  qpdf
   wx::base
   wx::core)
 

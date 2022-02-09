@@ -70,7 +70,7 @@ concept tab_with_interactive_creation =
 template <std::derived_from<Tab> T>
 std::shared_ptr<T> load_tab(
   const DXResources& dxr,
-  const std::string& title,
+  const std::wstring& title,
   const nlohmann::json& config) {
 
   if constexpr (std::constructible_from<T, DXResources>) {
