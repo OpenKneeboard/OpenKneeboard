@@ -32,6 +32,9 @@ NavigationTab::NavigationTab(
     mRootTab(rootTab),
     mPreferredSize(preferredSize),
     mPreviewLayer(dxr) {
+
+  const auto entriesPerPage = std::min(static_cast<size_t>(20), entries.size());
+
   auto dwf = mDXR.mDWriteFactory;
   dwf->CreateTextFormat(
     L"Segoe UI",
@@ -39,9 +42,15 @@ NavigationTab::NavigationTab(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    15.0f,
+    preferredSize.height / (3.0f * (entriesPerPage + 1)),
     L"",
     mTextFormat.put());
+  winrt::com_ptr<IDWriteInlineObject> ellipsis;
+  dwf->CreateEllipsisTrimmingSign(mTextFormat.get(), ellipsis.put());
+  DWRITE_TRIMMING trimming {
+    .granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER };
+  mTextFormat->SetTrimming(&trimming, ellipsis.get());
+
 
   mDXR.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), mBackgroundBrush.put());
@@ -61,9 +70,9 @@ NavigationTab::NavigationTab(
   const auto size = this->GetNativeContentSize(0);
   const D2D1_RECT_F topRect {
     .left = padding,
-    .top = padding / 2,
+    .top = 2 * padding,
     .right = preferredSize.width - padding,
-    .bottom = padding + rowHeight,
+    .bottom = (2 * padding) + rowHeight,
   };
   auto rect = topRect;
   mEntries.push_back({});
@@ -80,7 +89,7 @@ NavigationTab::NavigationTab(
     rect.top = rect.bottom + padding;
     rect.bottom = rect.top + rowHeight;
 
-    if (rect.bottom > size.height) {
+    if (rect.bottom + padding > size.height) {
       mEntries.push_back({});
       pageEntries = &mEntries.back();
       rect = topRect;
