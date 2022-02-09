@@ -23,6 +23,8 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
 #include <fmt/xchar.h>
+#include <shims/winrt.h>
+#include <shims/wx.h>
 #include <wx/msgdlg.h>
 
 #include <algorithm>
@@ -135,43 +137,25 @@ static void InstallHooks() {
 
 namespace OpenKneeboard {
 
-class DCSTab::Impl final {
- public:
-  struct Config final {
-    std::filesystem::path mInstallPath;
-    std::filesystem::path mSavedGamesPath;
-    std::string mValue;
-    bool operator==(const Config&) const = default;
-  };
-
-  Config mCurrentConfig;
-  Config mLastValidConfig;
-
-  std::string mLastValue;
-};
-
-DCSTab::DCSTab(const DXResources& dxr) : p(std::make_shared<Impl>()) {
+DCSTab::DCSTab() {
   InstallHooks();
-}
-
-DCSTab::~DCSTab() {
 }
 
 void DCSTab::PostGameEvent(const GameEvent& event) {
   if (event.name == this->GetGameEventName()) {
-    p->mCurrentConfig.mValue = event.value;
+    mCurrentConfig.mValue = event.value;
     Update();
     return;
   }
 
   if (event.name == DCS::EVT_INSTALL_PATH) {
-    p->mCurrentConfig.mInstallPath = std::filesystem::canonical(event.value);
+    mCurrentConfig.mInstallPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
 
   if (event.name == DCS::EVT_SAVED_GAMES_PATH) {
-    p->mCurrentConfig.mSavedGamesPath = std::filesystem::canonical(event.value);
+    mCurrentConfig.mSavedGamesPath = std::filesystem::canonical(event.value);
     Update();
     return;
   }
@@ -183,8 +167,8 @@ void DCSTab::PostGameEvent(const GameEvent& event) {
 }
 
 void DCSTab::Update() {
-  auto c = p->mCurrentConfig;
-  if (c == p->mLastValidConfig) {
+  auto c = mCurrentConfig;
+  if (c == mLastValidConfig) {
     return;
   }
 
@@ -196,10 +180,10 @@ void DCSTab::Update() {
     return;
   }
 
-  if (c.mValue == p->mLastValue) {
+  if (c.mValue == mLastValue) {
     return;
   }
-  p->mLastValue = c.mValue;
+  mLastValue = c.mValue;
 
   this->Update(c.mInstallPath, c.mSavedGamesPath, c.mValue);
 }

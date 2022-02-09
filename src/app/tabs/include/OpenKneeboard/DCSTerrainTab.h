@@ -19,37 +19,25 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DCSTab.h>
+#include "DCSTab.h"
+#include "FolderTab.h"
+#include "TabWithDelegate.h"
 
 namespace OpenKneeboard {
 
 class FolderTab;
 
-class DCSTerrainTab final : public DCSTab {
+class DCSTerrainTab final : public DCSTab,
+                            public TabWithDelegate<FolderTab> {
  public:
   DCSTerrainTab(const DXResources&);
-  virtual ~DCSTerrainTab();
-
-  virtual void Reload() override;
-  virtual uint16_t GetPageCount() const override;
-
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
-  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t) override;
-
+  virtual std::wstring GetTitle() const override;
  protected:
-  virtual void RenderPageContent(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F& rect) final override;
-
   virtual const char* GetGameEventName() const override;
   virtual void Update(
     const std::filesystem::path&,
     const std::filesystem::path&,
     const std::string&) override;
-
- private:
-  std::shared_ptr<FolderTab> mDelegate;
 };
 
 }// namespace OpenKneeboard

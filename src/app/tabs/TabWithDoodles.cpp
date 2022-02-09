@@ -19,7 +19,7 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabWithDoodles.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -28,9 +28,8 @@
 
 namespace OpenKneeboard {
 
-Tab::Tab(const DXResources& dxr, const wxString& title) {
+TabWithDoodles::TabWithDoodles(const DXResources& dxr) {
   mDXR = dxr;
-  mTitle = title;
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBrush.put()));
@@ -41,32 +40,10 @@ Tab::Tab(const DXResources& dxr, const wxString& title) {
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
 }
 
-Tab::~Tab() {
+TabWithDoodles::~TabWithDoodles() {
 }
 
-std::string Tab::GetTitle() const {
-  return mTitle;
-}
-
-void Tab::Reload() {
-}
-
-void Tab::PostGameEvent(const GameEvent&) {
-}
-
-void Tab::ClearDrawings() {
-  mDrawings.clear();
-}
-
-wxWindow* Tab::GetSettingsUI(wxWindow* parent) {
-  return nullptr;
-}
-
-nlohmann::json Tab::GetSettings() const {
-  return {};
-}
-
-void Tab::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
+void TabWithDoodles::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   if (pageIndex >= mDrawings.size()) {
     mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
   }
@@ -74,7 +51,7 @@ void Tab::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
   this->evNeedsRepaintEvent();
 }
 
-void Tab::FlushCursorEvents() {
+void TabWithDoodles::FlushCursorEvents() {
   auto ctx = mDrawingContext;
 
   for (auto pageIndex = 0; pageIndex < mDrawings.size(); ++pageIndex) {
@@ -91,12 +68,12 @@ void Tab::FlushCursorEvents() {
         continue;
       }
 
-			if (!drawing) {
-				drawing = true;
-				ctx->BeginDraw();
-				ctx->SetTarget(
-					GetDrawingSurface(pageIndex, this->GetNativeContentSize(pageIndex)));
-			}
+      if (!drawing) {
+        drawing = true;
+        ctx->BeginDraw();
+        ctx->SetTarget(
+          GetDrawingSurface(pageIndex, this->GetNativeContentSize(pageIndex)));
+      }
 
       // ignore tip button - any other pen button == erase
       const bool erasing = event.mButtons & ~1;
@@ -128,7 +105,7 @@ void Tab::FlushCursorEvents() {
   }
 }
 
-ID2D1Bitmap* Tab::GetDrawingSurface(
+ID2D1Bitmap* TabWithDoodles::GetDrawingSurface(
   uint16_t index,
   const D2D1_SIZE_U& contentPixels) {
   if (index >= mDrawings.size()) {
@@ -170,9 +147,10 @@ ID2D1Bitmap* Tab::GetDrawingSurface(
   return page.mBitmap.get();
 }
 
-void Tab::RenderPage(ID2D1DeviceContext* ctx, uint16_t pageIndex, const D2D1_RECT_F& rect) {
+void TabWithDoodles::RenderPage(ID2D1DeviceContext* ctx, uint16_t pageIndex, const D2D1_RECT_F& rect) {
   FlushCursorEvents();
   this->RenderPageContent(ctx, pageIndex, rect);
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
   if (pageIndex >= mDrawings.size()) {
     return;
@@ -187,14 +165,6 @@ void Tab::RenderPage(ID2D1DeviceContext* ctx, uint16_t pageIndex, const D2D1_REC
 
   ctx->DrawBitmap(
     bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
-}
-
-bool Tab::SupportsNavigation() const {
-  return false;
-}
-
-std::shared_ptr<Tab> Tab::CreateNavigationTab(uint16_t) {
-  return {};
 }
 
 }// namespace OpenKneeboard

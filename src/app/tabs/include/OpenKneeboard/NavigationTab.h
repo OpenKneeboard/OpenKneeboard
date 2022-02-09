@@ -21,15 +21,15 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/Tab.h>
 
 #include <limits>
 
 #include "CachedLayer.h"
+#include "TabWithCursorEvents.h"
 
 namespace OpenKneeboard {
 
-class NavigationTab final : public Tab {
+class NavigationTab final : public TabWithCursorEvents {
  public:
   struct Entry {
     std::wstring mName;
@@ -43,15 +43,17 @@ class NavigationTab final : public Tab {
     const D2D1_SIZE_U& preferredSize);
   ~NavigationTab();
 
+  virtual std::wstring GetTitle() const override;
+  virtual void Reload() override;
+
   virtual uint16_t GetPageCount() const override;
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
-  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
-
- protected:
-  virtual void RenderPageContent(
+  virtual void RenderPage(
     ID2D1DeviceContext*,
     uint16_t pageIndex,
     const D2D1_RECT_F& rect) override;
+
+  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
 
  private:
   DXResources mDXR;

@@ -32,33 +32,17 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 namespace OpenKneeboard {
 
 DCSAircraftTab::DCSAircraftTab(const DXResources& dxr)
-  : Tab(dxr, _("Aircraft")),
-    DCSTab(dxr),
-    mDelegate(
-      std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
-  AddEventListener(mDelegate->evFullyReplacedEvent, this->evFullyReplacedEvent);
+  : TabWithDelegate(
+    std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
 }
 
-DCSAircraftTab::~DCSAircraftTab() {
-}
-
-void DCSAircraftTab::Reload() {
-  mDelegate->Reload();
-}
-
-uint16_t DCSAircraftTab::GetPageCount() const {
-  return mDelegate->GetPageCount();
-}
-
-void DCSAircraftTab::RenderPageContent(
-  ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
-  const D2D1_RECT_F& rect) {
-  mDelegate->RenderPage(ctx, pageIndex, rect);
-}
-
-D2D1_SIZE_U DCSAircraftTab::GetNativeContentSize(uint16_t pageIndex) {
-  return mDelegate->GetNativeContentSize(pageIndex);
+std::wstring DCSAircraftTab::GetTitle() const {
+  static std::wstring sCache;
+  if (!sCache.empty()) [[likely]] {
+    return sCache;
+  }
+  sCache = _("Aircraft").ToStdWstring();
+  return sCache;
 }
 
 const char* DCSAircraftTab::GetGameEventName() const {
@@ -70,7 +54,7 @@ void DCSAircraftTab::Update(
   const std::filesystem::path& savedGamesPath,
   const std::string& aircraft) {
   auto path = savedGamesPath / "KNEEBOARD" / aircraft;
-  mDelegate->SetPath(path);
+  this->GetDelegate()->SetPath(path);
 }
 
 }// namespace OpenKneeboard

@@ -196,7 +196,7 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     p->mState.x = packet.pkX;
     p->mState.y = packet.pkY;
     p->mState.pressure = packet.pkNormalPressure;
-    p->mState.penButtons = packet.pkButtons;
+    p->mState.penButtons = static_cast<uint16_t>(packet.pkButtons);
     return true;
   }
 

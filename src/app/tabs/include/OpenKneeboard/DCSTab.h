@@ -14,11 +14,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
-#include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabWithGameEvents.h>
 
 #include <filesystem>
 
@@ -26,13 +27,10 @@ class wxString;
 
 namespace OpenKneeboard {
 
-class DCSTab : public virtual Tab {
+class DCSTab : public virtual TabWithGameEvents {
  public:
-  DCSTab() = delete;
-  DCSTab(const DXResources&);
-  virtual ~DCSTab();
-
-  virtual void PostGameEvent(const GameEvent&) override final;
+  DCSTab();
+  virtual void PostGameEvent(const GameEvent&) override;
 
  protected:
   virtual const char* GetGameEventName() const = 0;
@@ -45,8 +43,17 @@ class DCSTab : public virtual Tab {
   virtual void OnSimulationStart();
 
  private:
-  class Impl;
-  std::shared_ptr<Impl> p;
+  struct Config final {
+    std::filesystem::path mInstallPath;
+    std::filesystem::path mSavedGamesPath;
+    std::string mValue;
+    bool operator==(const Config&) const = default;
+  };
+
+  Config mCurrentConfig;
+  Config mLastValidConfig;
+
+  std::string mLastValue;
 
   void Update();
 };

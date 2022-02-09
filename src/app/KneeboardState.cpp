@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabWithGameEvents.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -216,7 +217,11 @@ void KneeboardState::OnCursorEvent(const CursorEvent& ev) {
 
 void KneeboardState::PostGameEvent(const GameEvent& ev) {
   for (auto tab: mTabs) {
-    tab->GetRootTab()->PostGameEvent(ev);
+    auto receiver
+      = std::dynamic_pointer_cast<TabWithGameEvents>(tab->GetRootTab());
+    if (receiver) {
+      receiver->PostGameEvent(ev);
+    }
   }
 }
 

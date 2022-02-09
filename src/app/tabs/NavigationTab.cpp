@@ -28,8 +28,7 @@ NavigationTab::NavigationTab(
   Tab* rootTab,
   const std::vector<Entry>& entries,
   const D2D1_SIZE_U& preferredSize)
-  : Tab(dxr, {}),
-    mDXR(dxr),
+  : mDXR(dxr),
     mRootTab(rootTab),
     mPreferredSize(preferredSize),
     mPreviewLayer(dxr) {
@@ -95,8 +94,12 @@ NavigationTab::NavigationTab(
 NavigationTab::~NavigationTab() {
 }
 
+std::wstring NavigationTab::GetTitle() const {
+  return mRootTab->GetTitle();
+}
+
 uint16_t NavigationTab::GetPageCount() const {
-  return mEntries.size();
+  return static_cast<uint16_t>(mEntries.size());
 }
 
 D2D1_SIZE_U NavigationTab::GetNativeContentSize(uint16_t) {
@@ -112,7 +115,7 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   if (
     ev.mTouchState == CursorTouchState::TOUCHING_SURFACE
     && mButtonState != ButtonState::NOT_PRESSED) {
-      dprint("Move, pressed, no change");
+    dprint("Move, pressed, no change");
     return;
   }
 
@@ -120,7 +123,7 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   if (
     ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
     && mButtonState == ButtonState::NOT_PRESSED) {
-      dprint("Move, not pressed, no change");
+    dprint("Move, not pressed, no change");
     return;
   }
 
@@ -129,7 +132,7 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
     ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
     && mButtonState == ButtonState::PRESSING_INACTIVE_AREA) {
     mButtonState = ButtonState::NOT_PRESSED;
-      dprint("Release, wasn't in button");
+    dprint("Release, wasn't in button");
     return;
   }
 
@@ -171,7 +174,7 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   evPageChangeRequestedEvent(matchedPage);
 }
 
-void NavigationTab::RenderPageContent(
+void NavigationTab::RenderPage(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& canvasRect) {
@@ -244,7 +247,7 @@ void NavigationTab::RenderPageContent(
     rect.left = maxRight + mPreviewMetrics.mBleed;
     ctx->DrawTextW(
       entry.mName.data(),
-      entry.mName.length(),
+      static_cast<UINT32>(entry.mName.length()),
       mTextFormat.get(),
       rect,
       mTextBrush.get(),
@@ -267,7 +270,7 @@ void NavigationTab::RenderPreviewLayer(
   const auto& first = pageEntries.front();
 
   // just a little less than the padding
-  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.2;
+  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.2f;
   // arbitrary LGTM value
   m.mStroke = m.mBleed * 0.3f;
   m.mHeight = (first.mRect.bottom - first.mRect.top) + (m.mBleed * 2);
@@ -280,13 +283,16 @@ void NavigationTab::RenderPreviewLayer(
     const auto width = nativeSize.width * scale;
 
     auto& rect = m.mRects.at(i);
-    rect.left = entry.mRect.left + (m.mStroke * 1.25);
+    rect.left = entry.mRect.left + (m.mStroke * 1.25f);
     rect.top = entry.mRect.top - m.mBleed;
     rect.right = rect.left + width;
     rect.bottom = entry.mRect.bottom + m.mBleed;
 
     mRootTab->RenderPage(ctx, entry.mPageIndex, rect);
   }
+}
+
+void NavigationTab::Reload() {
 }
 
 }// namespace OpenKneeboard

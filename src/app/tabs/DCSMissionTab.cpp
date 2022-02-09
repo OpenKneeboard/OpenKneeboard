@@ -34,8 +34,7 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {
 
-namespace {
-class ExtractedMission final {
+class DCSMissionTab::ExtractedMission final {
  private:
   std::filesystem::path mTempDir;
 
@@ -95,45 +94,28 @@ class ExtractedMission final {
     return mTempDir;
   }
 };
-}// namespace
-
-class DCSMissionTab::Impl final {
- public:
-  std::filesystem::path mMission;
-  std::unique_ptr<ExtractedMission> mExtracted;
-  std::unique_ptr<FolderTab> mDelegate;
-};
 
 DCSMissionTab::DCSMissionTab(const DXResources& dxr)
-  : Tab(dxr, _("Mission")), DCSTab(dxr), p(std::make_shared<Impl>()) {
-  p->mDelegate
-    = std::make_unique<FolderTab>(dxr, wxString {}, std::filesystem::path {});
-  AddEventListener(
-    p->mDelegate->evFullyReplacedEvent, this->evFullyReplacedEvent);
+  : TabWithDelegate(
+    std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
 }
 
 DCSMissionTab::~DCSMissionTab() {
 }
 
+std::wstring DCSMissionTab::GetTitle() const {
+  static std::wstring sCache;
+  if (!sCache.empty()) [[likely]] {
+    return sCache;
+  }
+  sCache = _("Mission").ToStdWstring();
+  return sCache;
+}
+
 void DCSMissionTab::Reload() {
-  p->mExtracted = std::make_unique<ExtractedMission>(p->mMission);
-  p->mDelegate->SetPath(p->mExtracted->GetExtractedPath());
-  p->mDelegate->Reload();
-}
-
-uint16_t DCSMissionTab::GetPageCount() const {
-  return p->mDelegate->GetPageCount();
-}
-
-void DCSMissionTab::RenderPageContent(
-  ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
-  const D2D1_RECT_F& rect) {
-  p->mDelegate->RenderPage(ctx, pageIndex, rect);
-}
-
-D2D1_SIZE_U DCSMissionTab::GetNativeContentSize(uint16_t pageIndex) {
-  return p->mDelegate->GetNativeContentSize(pageIndex);
+  mExtracted = std::make_unique<ExtractedMission>(mMission);
+  GetDelegate()->SetPath(mExtracted->GetExtractedPath());
+  GetDelegate()->Reload();
 }
 
 const char* DCSMissionTab::GetGameEventName() const {
@@ -144,12 +126,12 @@ void DCSMissionTab::Update(
   const std::filesystem::path& _installPath,
   const std::filesystem::path& _savedGamePath,
   const std::string& value) {
-  dprintf("Mission: {}", value);
   auto mission = std::filesystem::canonical(value);
-  if (mission == p->mMission) {
+
+  if (mission == mMission) {
     return;
   }
-  p->mMission = mission;
+  mMission = mission;
   this->Reload();
 }
 

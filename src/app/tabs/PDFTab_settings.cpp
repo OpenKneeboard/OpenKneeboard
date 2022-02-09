@@ -64,4 +64,8 @@ nlohmann::json PDFTab::GetSettings() const {
   return {{"Path", GetPath().string()}};
 }
 
+wxWindow* PDFTab::GetSettingsUI(wxWindow* parent) {
+  return nullptr;
+}
+
 }// namespace OpenKneeboard

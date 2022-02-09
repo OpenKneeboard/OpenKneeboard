@@ -14,28 +14,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
 #include "DCSTab.h"
+#include "FolderTab.h"
+#include "TabWithDelegate.h"
 
 namespace OpenKneeboard {
 
-class DCSMissionTab final : public DCSTab {
+class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
  public:
   DCSMissionTab(const DXResources&);
   virtual ~DCSMissionTab();
+  virtual std::wstring GetTitle() const override;
 
   virtual void Reload() override;
-  virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
 
  protected:
-  virtual void RenderPageContent(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F& rect) final override;
   virtual const char* GetGameEventName() const override;
   virtual void Update(
     const std::filesystem::path&,
@@ -43,8 +41,10 @@ class DCSMissionTab final : public DCSTab {
     const std::string&) override;
 
  private:
-  class Impl;
-  std::shared_ptr<Impl> p;
+  class ExtractedMission;
+
+  std::filesystem::path mMission;
+  std::unique_ptr<ExtractedMission> mExtracted;
 };
 
 }// namespace OpenKneeboard

@@ -112,7 +112,7 @@ nlohmann::json okTabsList::GetSettings() const {
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
     if (type.empty()) {
-      dprintf("Unknown type for tab {}", tab->GetTitle());
+      dprintf(L"Unknown type for tab {}", tab->GetTitle());
       continue;
     }
 
@@ -121,9 +121,12 @@ nlohmann::json okTabsList::GetSettings() const {
       {"Title", tab->GetTitle()},
     };
 
-    auto settings = tab->GetSettings();
-    if (!settings.is_null()) {
-      savedTab.emplace("Settings", settings);
+    auto withSettings = std::dynamic_pointer_cast<okConfigurableComponent>(tab);
+    if (withSettings) {
+      auto settings = withSettings->GetSettings();
+      if (!settings.is_null()) {
+        savedTab.emplace("Settings", settings);
+      }
     }
     ret.push_back(savedTab);
     continue;

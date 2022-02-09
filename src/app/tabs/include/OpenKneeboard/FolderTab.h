@@ -19,15 +19,20 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Tab.h>
-
 #include <filesystem>
+
+#include "Tab.h"
+#include "TabWithDoodles.h"
+#include "TabWithNavigation.h"
+#include "okConfigurableComponent.h"
 
 class wxWindow;
 
 namespace OpenKneeboard {
 
-class FolderTab : public Tab {
+class FolderTab : public TabWithDoodles,
+                  public TabWithNavigation,
+                  public okConfigurableComponent {
  public:
   FolderTab(
     const DXResources&,
@@ -38,11 +43,13 @@ class FolderTab : public Tab {
     const wxString& title,
     const nlohmann::json&);
   virtual ~FolderTab();
+  virtual std::wstring GetTitle() const override;
 
   static std::shared_ptr<FolderTab> Create(
     wxWindow* parent,
     const DXResources&);
 
+  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const final override;
 
   virtual void Reload() final override;
@@ -52,7 +59,6 @@ class FolderTab : public Tab {
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
 
-  virtual bool SupportsNavigation() const override;
   virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t) override;
 
  protected:

@@ -19,11 +19,19 @@
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 
+#include <shims/winrt.h>
+
 namespace OpenKneeboard {
 
 static DPrintSettings gSettings;
+static std::wstring gPrefixW;
 
 void dprint(std::string_view message) {
+  auto w = winrt::to_hstring(message);
+  dprint(w);
+}
+
+void dprint(std::wstring_view message) {
   auto target = gSettings.target;
 
   if (target == DPrintSettings::Target::DEFAULT) {
@@ -37,14 +45,14 @@ void dprint(std::string_view message) {
   if (
     target == DPrintSettings::Target::DEBUG_STREAM
     || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
-    auto output = fmt::format("[{}] {}\n", gSettings.prefix, message);
-    OutputDebugStringA(output.c_str());
+    auto output = fmt::format(L"[{}] {}\n", gPrefixW, message);
+    OutputDebugStringW(output.c_str());
   }
 
   if (
     target == DPrintSettings::Target::CONSOLE
     || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
-    auto output = fmt::format("{}\n", message);
+    auto output = fmt::format(L"{}\n", message);
     if (AllocConsole()) {
       // Gets detour trace working too :)
       freopen("CONIN$", "r", stdin);
@@ -55,7 +63,7 @@ void dprint(std::string_view message) {
     if (handle == INVALID_HANDLE_VALUE) {
       return;
     }
-    WriteConsoleA(
+    WriteConsoleW(
       handle,
       output.c_str(),
       static_cast<DWORD>(output.size()),
@@ -66,6 +74,7 @@ void dprint(std::string_view message) {
 
 void DPrintSettings::Set(const DPrintSettings& settings) {
   gSettings = settings;
+  gPrefixW = std::wstring(winrt::to_hstring(settings.prefix));
 }
 
 }// namespace OpenKneeboard

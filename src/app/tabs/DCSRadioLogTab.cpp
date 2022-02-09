@@ -63,10 +63,19 @@ class DCSRadioLogTab::Impl final {
 };
 
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
-  : Tab(dxr, _("Radio Log")), DCSTab(dxr), p(std::make_unique<Impl>(this, dxr)) {
+  : TabWithDoodles(dxr), p(std::make_unique<Impl>(this, dxr)) {
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
+}
+
+std::wstring DCSRadioLogTab::GetTitle() const {
+  static std::wstring sCache;
+  if (!sCache.empty()) [[likely]] {
+    return sCache;
+  }
+  sCache = _("Radio Log").ToStdWstring();
+  return sCache;
 }
 
 void DCSRadioLogTab::Reload() {
@@ -89,7 +98,6 @@ void DCSRadioLogTab::RenderPageContent(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-
   const auto virtualSize = GetNativeContentSize(0);
   const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
 

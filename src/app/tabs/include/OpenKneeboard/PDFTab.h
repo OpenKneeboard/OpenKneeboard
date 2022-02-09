@@ -19,14 +19,17 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Tab.h>
 #include <shims/wx.h>
 
 #include <filesystem>
 
+#include "Tab.h"
+#include "TabWithDoodles.h"
+#include "okConfigurableComponent.h"
+
 namespace OpenKneeboard {
 
-class PDFTab final : public Tab {
+class PDFTab final : public TabWithDoodles, public okConfigurableComponent {
  public:
   explicit PDFTab(
     const DXResources&,
@@ -38,8 +41,11 @@ class PDFTab final : public Tab {
     const nlohmann::json&);
   virtual ~PDFTab();
 
+  virtual std::wstring GetTitle() const override;
+
   static std::shared_ptr<PDFTab> Create(wxWindow* parent, const DXResources&);
-  virtual nlohmann::json GetSettings() const final override;
+  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
+  virtual nlohmann::json GetSettings() const override;
 
   virtual void Reload() final override;
   virtual uint16_t GetPageCount() const final override;

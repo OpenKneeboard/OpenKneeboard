@@ -32,33 +32,17 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 namespace OpenKneeboard {
 
 DCSTerrainTab::DCSTerrainTab(const DXResources& dxr)
-  : Tab(dxr, _("Theater")),
-    DCSTab(dxr),
-    mDelegate(
-      std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
-  AddEventListener(mDelegate->evFullyReplacedEvent, this->evFullyReplacedEvent);
+  : TabWithDelegate(
+    std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
 }
 
-DCSTerrainTab::~DCSTerrainTab() {
-}
-
-void DCSTerrainTab::Reload() {
-  mDelegate->Reload();
-}
-
-uint16_t DCSTerrainTab::GetPageCount() const {
-  return mDelegate->GetPageCount();
-}
-
-void DCSTerrainTab::RenderPageContent(
-  ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
-  const D2D1_RECT_F& rect) {
-  mDelegate->RenderPage(ctx, pageIndex, rect);
-}
-
-D2D1_SIZE_U DCSTerrainTab::GetNativeContentSize(uint16_t pageIndex) {
-  return mDelegate->GetNativeContentSize(pageIndex);
+std::wstring DCSTerrainTab::GetTitle() const {
+  static std::wstring sCache;
+  if (!sCache.empty()) [[likely]] {
+    return sCache;
+  }
+  sCache = _("Theater").ToStdWstring();
+  return sCache;
 }
 
 const char* DCSTerrainTab::GetGameEventName() const {
@@ -70,11 +54,7 @@ void DCSTerrainTab::Update(
   const std::filesystem::path& _savedGamesPath,
   const std::string& value) {
   auto path = installPath / "Mods" / "terrains" / value / "Kneeboard";
-  mDelegate->SetPath(path);
-}
-
-std::shared_ptr<Tab> DCSTerrainTab::CreateNavigationTab(uint16_t page) {
-  return mDelegate->CreateNavigationTab(page);
+  this->GetDelegate()->SetPath(path);
 }
 
 }// namespace OpenKneeboard

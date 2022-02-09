@@ -19,78 +19,28 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
-#include <d2d1.h>
-#include <shims/winrt.h>
+#include <d2d1_1.h>
 
-#include <memory>
 #include <string>
 
 #include "Events.h"
-#include "okConfigurableComponent.h"
 
 class wxString;
 
 namespace OpenKneeboard {
-struct GameEvent;
-struct CursorEvent;
-struct DXResources;
 
-class Tab : public okConfigurableComponent {
+class Tab {
  public:
-  Tab() = delete;
-  Tab(const DXResources&, const wxString& title);
-  virtual ~Tab();
-
-  std::string GetTitle() const;
-
-  virtual void Reload();
-
-  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
-  virtual nlohmann::json GetSettings() const override;
+  virtual std::wstring GetTitle() const = 0 ;
+  virtual void Reload() = 0;
 
   virtual uint16_t GetPageCount() const = 0;
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) = 0;
-  void RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect);
-
-  virtual void PostGameEvent(const GameEvent&);
-  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex);
+  virtual void RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect) = 0;
 
   Event<> evNeedsRepaintEvent;
   Event<> evFullyReplacedEvent;
   Event<> evPageAppendedEvent;
   Event<uint16_t> evPageChangeRequestedEvent;
-
-  virtual bool SupportsNavigation() const;
-  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t currentPageIndex);
- protected:
-  void ClearDrawings();
-
-  virtual void RenderPageContent(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
-    = 0;
-
- private:
-  DXResources mDXR;
-  std::string mTitle;
-
-  winrt::com_ptr<ID2D1SolidColorBrush> mBrush;
-  winrt::com_ptr<ID2D1SolidColorBrush> mEraser;
-
-  struct Drawing {
-    winrt::com_ptr<IDXGISurface> mSurface;
-    winrt::com_ptr<ID2D1Bitmap1> mBitmap;
-    float mScale;
-    std::vector<CursorEvent> mBufferedEvents;
-    bool mHaveCursor = false;
-    D2D1_POINT_2F mCursorPoint;
-  };
-  winrt::com_ptr<ID2D1DeviceContext> mDrawingContext;
-  std::vector<Drawing> mDrawings;
-
-  ID2D1Bitmap* GetDrawingSurface(
-    uint16_t index,
-    const D2D1_SIZE_U& contentPixels);
-
-  void FlushCursorEvents();
 };
 }// namespace OpenKneeboard

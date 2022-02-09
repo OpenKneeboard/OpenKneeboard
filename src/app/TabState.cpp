@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabWithCursorEvents.h>
+#include <OpenKneeboard/TabWithNavigation.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <shims/wx.h>
@@ -55,7 +57,11 @@ uint16_t TabState::GetPageIndex() const {
 }
 
 void TabState::PostCursorEvent(const CursorEvent& ev) {
-  this->GetTab()->PostCursorEvent(ev, this->GetPageIndex());
+  auto receiver
+    = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
+  if (receiver) {
+    receiver->PostCursorEvent(ev, this->GetPageIndex());
+  }
 }
 
 uint16_t TabState::GetPageCount() const {
@@ -120,7 +126,7 @@ bool TabState::SupportsTabMode(TabMode mode) const {
     case TabMode::NORMAL:
       return true;
     case TabMode::NAVIGATION:
-      return mRootTab->SupportsNavigation();
+      return (bool)std::dynamic_pointer_cast<TabWithNavigation>(mRootTab);
   }
   // above switch should be exhaustive
   OPENKNEEBOARD_BREAK;
@@ -134,7 +140,11 @@ bool TabState::SetTabMode(TabMode mode) {
     return false;
   }
 
-  this->GetTab()->PostCursorEvent({}, this->GetPageIndex());
+  auto receiver
+    = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
+  if (receiver) {
+    receiver->PostCursorEvent({}, this->GetPageIndex());
+  }
 
   mTabMode = mode;
   mActiveSubTab = nullptr;
@@ -144,14 +154,13 @@ bool TabState::SetTabMode(TabMode mode) {
     case TabMode::NORMAL:
       break;
     case TabMode::NAVIGATION:
-      mActiveSubTab = mRootTab->CreateNavigationTab(mRootTabPage);
+      mActiveSubTab = std::dynamic_pointer_cast<TabWithNavigation>(mRootTab)
+                        ->CreateNavigationTab(mRootTabPage);
       AddEventListener(
-        mActiveSubTab->evPageChangeRequestedEvent,
-        [this](uint16_t newPage) {
+        mActiveSubTab->evPageChangeRequestedEvent, [this](uint16_t newPage) {
           mRootTabPage = newPage;
           SetTabMode(TabMode::NORMAL);
-        }
-      );
+        });
       break;
   }
 

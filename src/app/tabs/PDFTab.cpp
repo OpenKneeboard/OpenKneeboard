@@ -48,7 +48,7 @@ PDFTab::PDFTab(
   const DXResources& dxr,
   const wxString& title,
   const std::filesystem::path& path)
-  : Tab(dxr, title), p(new Impl {.mDXR = dxr, .mPath = path}) {
+  : TabWithDoodles(dxr), p(new Impl {.mDXR = dxr, .mPath = path}) {
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
@@ -58,6 +58,10 @@ PDFTab::PDFTab(
 }
 
 PDFTab::~PDFTab() {
+}
+
+std::wstring PDFTab::GetTitle() const {
+  return p->mPath.stem().wstring();
 }
 
 void PDFTab::Reload() {

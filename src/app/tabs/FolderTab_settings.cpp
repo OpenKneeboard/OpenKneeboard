@@ -61,4 +61,8 @@ nlohmann::json FolderTab::GetSettings() const {
   return {{"Path", GetPath().string()}};
 }
 
+wxWindow* FolderTab::GetSettingsUI(wxWindow* parent) {
+  return nullptr;
+}
+
 }// namespace OpenKneeboard

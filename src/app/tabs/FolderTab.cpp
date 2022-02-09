@@ -45,16 +45,18 @@ FolderTab::FolderTab(
   const DXResources& dxr,
   const wxString& title,
   const std::filesystem::path& path)
-  : Tab(dxr, title),
-    p(new Impl {
-      .mDXR = dxr,
-      .mWIC
-      = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
-      .mPath = path}) {
+  : TabWithDoodles(dxr), p(new Impl {
+    .mDXR = dxr,
+    .mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
+    .mPath = path}) {
   Reload();
 }
 
 FolderTab::~FolderTab() {
+}
+
+std::wstring FolderTab::GetTitle() const {
+  return p->mPath.filename().wstring();
 }
 
 void FolderTab::Reload() {
@@ -194,10 +196,6 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
   }
   p->mPath = path;
   Reload();
-}
-
-bool FolderTab::SupportsNavigation() const {
-  return true;
 }
 
 std::shared_ptr<Tab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
