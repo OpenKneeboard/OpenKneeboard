@@ -28,7 +28,7 @@
 
 namespace OpenKneeboard {
 
-TabWithDoodles::TabWithDoodles(const DXResources& dxr) {
+TabWithDoodles::TabWithDoodles(const DXResources& dxr) : mContentLayer(dxr) {
   mDXR = dxr;
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
@@ -38,12 +38,15 @@ TabWithDoodles::TabWithDoodles(const DXResources& dxr) {
 
   mDXR.mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
+  AddEventListener(this->evNeedsRepaintEvent, [=]() { mContentLayer.Reset(); });
 }
 
 TabWithDoodles::~TabWithDoodles() {
 }
 
-void TabWithDoodles::PostCursorEvent(const CursorEvent& event, uint16_t pageIndex) {
+void TabWithDoodles::PostCursorEvent(
+  const CursorEvent& event,
+  uint16_t pageIndex) {
   if (pageIndex >= mDrawings.size()) {
     mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
   }
@@ -147,9 +150,28 @@ ID2D1Bitmap* TabWithDoodles::GetDrawingSurface(
   return page.mBitmap.get();
 }
 
-void TabWithDoodles::RenderPage(ID2D1DeviceContext* ctx, uint16_t pageIndex, const D2D1_RECT_F& rect) {
+void TabWithDoodles::RenderPage(
+  ID2D1DeviceContext* ctx,
+  uint16_t pageIndex,
+  const D2D1_RECT_F& rect) {
   FlushCursorEvents();
-  this->RenderPageContent(ctx, pageIndex, rect);
+
+  const auto nativeSize = this->GetNativeContentSize(pageIndex);
+  mContentLayer.Render(
+    rect,
+    nativeSize,
+    pageIndex,
+    ctx,
+    [&](ID2D1DeviceContext* ctx, const D2D1_SIZE_U& size) {
+      this->RenderPageContent(
+        ctx,
+        pageIndex,
+        {0.0f,
+         0.f,
+         static_cast<FLOAT>(size.width),
+         static_cast<FLOAT>(size.height)});
+    });
+
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
   if (pageIndex >= mDrawings.size()) {

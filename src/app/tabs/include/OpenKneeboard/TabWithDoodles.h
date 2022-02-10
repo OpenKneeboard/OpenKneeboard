@@ -19,20 +19,22 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DXResources.h>
 #include <d2d1.h>
 #include <shims/winrt.h>
 
 #include <memory>
 
+#include "CachedLayer.h"
 #include "TabWithCursorEvents.h"
 
 class wxString;
 
 namespace OpenKneeboard {
 
-class TabWithDoodles : public virtual TabWithCursorEvents {
+class TabWithDoodles : public virtual TabWithCursorEvents,
+                       private EventReceiver {
  public:
   TabWithDoodles(const DXResources&);
   virtual ~TabWithDoodles();
@@ -53,6 +55,7 @@ class TabWithDoodles : public virtual TabWithCursorEvents {
  private:
   DXResources mDXR;
 
+  CachedLayer mContentLayer;
   winrt::com_ptr<ID2D1SolidColorBrush> mBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mEraser;
 
