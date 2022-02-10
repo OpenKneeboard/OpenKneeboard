@@ -39,6 +39,7 @@ class CachedLayer final {
     uint16_t cacheKey,
     ID2D1DeviceContext* ctx,
     std::function<void(ID2D1DeviceContext*, const D2D1_SIZE_U&)> impl);
+  void Reset();
 
  private:
   uint16_t mKey = ~0ui16;

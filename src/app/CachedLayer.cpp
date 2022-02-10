@@ -63,4 +63,9 @@ void CachedLayer::Render(
   mKey = cacheKey;
 }
 
+void CachedLayer::Reset() {
+  mKey = ~0ui16;
+  mCache = nullptr;
+}
+
 }// namespace OpenKneeboard
