@@ -19,6 +19,7 @@
  */
 #include "okSHMRenderer.h"
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/SHM.h>
@@ -69,9 +70,16 @@ class okSHMRenderer::Impl {
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
+  winrt::com_ptr<ID2D1Brush> mButtonBrush;
+  winrt::com_ptr<ID2D1Brush> mHoverButtonBrush;
+  winrt::com_ptr<ID2D1Brush> mActiveButtonBrush;
   winrt::com_ptr<ID2D1Brush> mCursorBrush;
 
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+
+  bool mCursorTouching = false;
+  bool mCursorTouchOnNavButton;
+  D2D1_RECT_F mNavButton;
 
   void RenderError(const wxString& tabTitle, const wxString& message);
   void CopyPixelsToSHM();
@@ -79,6 +87,8 @@ class okSHMRenderer::Impl {
     const wxString& tabTitle,
     const D2D1_SIZE_U& preferredContentSize,
     const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
+
+  void OnCursorEvent(const CursorEvent&);
 
  private:
   void RenderErrorImpl(const wxString& message, const D2D1_RECT_F&);
@@ -171,8 +181,6 @@ okSHMRenderer::okSHMRenderer(
       textureName.c_str(),
       it.mHandle.put());
     it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
-
-    AddEventListener(kneeboard->evFlushEvent, [this]() { RenderNow(); });
   }
 
   auto ctx = dxr.mD2DDeviceContext;
@@ -189,6 +197,18 @@ okSHMRenderer::okSHMRenderer(
     {0.0f, 0.0f, 0.0f, 0.8f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mCursorBrush.put()));
+  ctx->CreateSolidColorBrush(
+    {0.4f, 0.4f, 0.4f, 1.0f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->mButtonBrush.put()));
+  ctx->CreateSolidColorBrush(
+    {0.0f, 0.8f, 1.0f, 1.0f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->mHoverButtonBrush.put()));
+  ctx->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 1.0f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(p->mActiveButtonBrush.put()));
 
   auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
   ctx->CreateSolidColorBrush(
@@ -200,6 +220,8 @@ okSHMRenderer::okSHMRenderer(
     },
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 
+  AddEventListener(kneeboard->evFlushEvent, [this]() { RenderNow(); });
+  AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());
   this->RenderNow();
 }
 
@@ -304,6 +326,57 @@ void okSHMRenderer::Impl::RenderWithChrome(
     headerLayout.get(),
     mHeaderTextBrush.get());
 
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  auto cursorPoint = mKneeboard->GetCursorCanvasPoint();
+
+  const auto tab = mKneeboard->GetCurrentTab();
+  if (tab->SupportsTabMode(TabMode::NAVIGATION)) {
+    const auto buttonHeight = headerSize.height * 0.75f;
+    const auto margin = (headerSize.height - buttonHeight) / 2.0f;
+
+    mNavButton = {
+      2 * margin,
+      margin,
+      buttonHeight + (2 * margin),
+      buttonHeight + margin,
+    };
+
+    ID2D1Brush* brush = mButtonBrush.get();
+    if (
+      cursorPoint.x >= mNavButton.left && cursorPoint.x <= mNavButton.right
+      && cursorPoint.y >= mNavButton.top
+      && cursorPoint.y <= mNavButton.bottom) {
+      brush = mHoverButtonBrush.get();
+    } else if (tab->GetTabMode() == TabMode::NAVIGATION) {
+      brush = mActiveButtonBrush.get();
+    }
+
+    const auto strokeWidth = buttonHeight / 15;
+
+    ctx->DrawRoundedRectangle(
+      D2D1::RoundedRect(mNavButton, buttonHeight / 4, buttonHeight / 4),
+      brush,
+      strokeWidth);
+
+    // Half a stroke width on top and bottom
+    const auto innerHeight = buttonHeight - strokeWidth;
+    const auto step = innerHeight / 4;
+    const auto padding = (strokeWidth / 2) + step;
+    D2D1_POINT_2F left {
+      mNavButton.left + padding,
+      mNavButton.top + padding,
+    };
+    D2D1_POINT_2F right {
+      mNavButton.right - padding,
+      mNavButton.top + padding,
+    };
+    for (auto i = 0; i <= 2; ++i) {
+      ctx->DrawLine(left, right, brush, step / 2);
+      left.y += step;
+      right.y += step;
+    }
+  }
+
   if (!mKneeboard->HaveCursor()) {
     return;
   }
@@ -313,22 +386,54 @@ void okSHMRenderer::Impl::RenderWithChrome(
     contentRect.right - contentRect.left,
     contentRect.bottom - contentRect.top,
   };
-  const auto contentNativeSize = mKneeboard->GetContentNativeSize();
-  const auto scale = contentSize.height / contentNativeSize.height;
-
-  auto cursorPoint = mKneeboard->GetCursorPoint();
-  cursorPoint.x *= scale;
-  cursorPoint.y *= scale;
-  cursorPoint.x += contentRect.left;
-  cursorPoint.y += contentRect.top;
 
   const auto cursorRadius = contentSize.height / CursorRadiusDivisor;
   const auto cursorStroke = contentSize.height / CursorStrokeDivisor;
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->DrawEllipse(
     D2D1::Ellipse(cursorPoint, cursorRadius, cursorRadius),
     mCursorBrush.get(),
     cursorStroke);
+}
+
+void okSHMRenderer::Impl::OnCursorEvent(const CursorEvent& ev) {
+  const auto tab = mKneeboard->GetCurrentTab();
+  if (!tab->SupportsTabMode(TabMode::NAVIGATION)) {
+    return;
+  }
+  if (mCursorTouching && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
+    return;
+  }
+  if (
+    (!mCursorTouching)
+    && ev.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
+    return;
+  }
+
+  // touch state change
+  mCursorTouching = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
+
+  const auto point = mKneeboard->GetCursorCanvasPoint({ev.mX, ev.mY});
+  const auto pointInNavButton = point.x >= mNavButton.left
+    && point.x <= mNavButton.right && point.y >= mNavButton.left
+    && point.y <= mNavButton.right;
+
+  if (mCursorTouching) {
+    // Touch start
+    mCursorTouchOnNavButton = pointInNavButton;
+    return;
+  }
+
+  // Touch end
+  if (!mCursorTouchOnNavButton) {
+    return;
+  }
+  if (pointInNavButton) {
+    if (tab->GetTabMode() == TabMode::NAVIGATION) {
+      tab->SetTabMode(TabMode::NORMAL);
+    } else {
+      tab->SetTabMode(TabMode::NAVIGATION);
+    }
+  }
 }
 
 void okSHMRenderer::RenderNow() {

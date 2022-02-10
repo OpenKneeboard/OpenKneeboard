@@ -233,4 +233,26 @@ D2D1_POINT_2F KneeboardState::GetCursorPoint() const {
   return mCursorPoint;
 }
 
+D2D1_POINT_2F KneeboardState::GetCursorCanvasPoint() const {
+  return this->GetCursorCanvasPoint(this->GetCursorPoint());
+}
+
+D2D1_POINT_2F KneeboardState::GetCursorCanvasPoint(
+  const D2D1_POINT_2F& contentPoint) const {
+  const auto contentRect = this->GetContentRenderRect();
+  const D2D1_SIZE_F contentSize = {
+    contentRect.right - contentRect.left,
+    contentRect.bottom - contentRect.top,
+  };
+  const auto contentNativeSize = this->GetContentNativeSize();
+  const auto scale = contentSize.height / contentNativeSize.height;
+
+  auto cursorPoint = contentPoint;
+  cursorPoint.x *= scale;
+  cursorPoint.y *= scale;
+  cursorPoint.x += contentRect.left;
+  cursorPoint.y += contentRect.top;
+  return cursorPoint;
+}
+
 }// namespace OpenKneeboard
