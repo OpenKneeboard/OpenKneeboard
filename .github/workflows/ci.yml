@@ -22,7 +22,7 @@ jobs:
       - name: Compile
         working-directory: build
         run: cmake --build . --config ${{matrix.config}} --parallel
-      - name: Install
+      - name: Install Default Components
         working-directory: build
         shell: pwsh
         run:
@@ -30,20 +30,24 @@ jobs:
             --config ${{matrix.config}} `
             --component Unspecified `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
-          cmake --install . `
-            --config ${{matrix.config}} `
-            --component DebugSymbols `
-            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
       - name: Upload Executable Zips
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
+      - name: Install Debug SymbolsComponents
+        working-directory: build
+        shell: pwsh
+        run:
+          cmake --install . `
+            --config ${{matrix.config}} `
+            --component Symbols `
+            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
       - name: Upload Debug Symbol Zips
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}
+          name: OpenKneeboard-${{matrix.config}}-Symbols
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
     strategy:
