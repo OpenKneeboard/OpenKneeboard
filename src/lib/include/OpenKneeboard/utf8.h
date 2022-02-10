@@ -88,16 +88,14 @@ class utf8_string final : public std::string {
     return utf8_string_view(static_cast<std::string_view>(*this));
   }
 
-  template <class T>
   // clang-format off
+  template <class T>
   requires (
     std::convertible_to<utf8_string_view, T>
     && !std::same_as<utf8_string_view, std::decay_t<T>>
   )
   // clang-format on
-  operator T () const
-  
-  {
+  operator T() const {
     return static_cast<utf8_string_view>(*this);
   }
 };
