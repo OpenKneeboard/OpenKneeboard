@@ -21,6 +21,9 @@
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFTab.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/config.h>
+
+#include <inttypes.h>
 #include <shims/winrt.h>
 #include <windows.data.pdf.interop.h>
 #include <winrt/windows.data.pdf.h>
@@ -31,8 +34,6 @@
 #include <qpdf/QPDFOutlineDocumentHelper.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <thread>
-
-#include <inttypes.h>
 
 using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
@@ -121,21 +122,21 @@ void PDFTab::Reload() {
   p->mBookmarks.clear();
   std::thread([this] {
     std::thread loadRenderer {[this] {
-    auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
-    p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
+      auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
+      p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
     }};
     std::thread loadBookmarks {[this] {
-  const auto pathStr = p->mPath.string();
-  QPDF qpdf;
-  qpdf.processFile(pathStr.c_str());
-  QPDFOutlineDocumentHelper odh(qpdf);
-  if (!odh.hasOutlines()) {
-    return;
-  }
+      const auto pathStr = p->mPath.string();
+      QPDF qpdf;
+      qpdf.processFile(pathStr.c_str());
+      QPDFOutlineDocumentHelper odh(qpdf);
+      if (!odh.hasOutlines()) {
+        return;
+      }
 
-  auto pageMap = GetPageMap(qpdf);
-  auto outlines = odh.getTopLevelOutlines();
-  p->mBookmarks = GetNavigationEntries(pageMap, outlines);
+      auto pageMap = GetPageMap(qpdf);
+      auto outlines = odh.getTopLevelOutlines();
+      p->mBookmarks = GetNavigationEntries(pageMap, outlines);
     }};
     loadRenderer.join();
     loadBookmarks.join();
@@ -155,6 +156,13 @@ D2D1_SIZE_U PDFTab::GetNativeContentSize(uint16_t index) {
     return {};
   }
   auto size = p->mPDFDocument.GetPage(index).Size();
+  // scale to fit to get higher quality text rendering
+  const auto scaleX = TextureWidth / size.Width;
+  const auto scaleY = TextureHeight / size.Height;
+  const auto scale = std::min(scaleX, scaleY);
+  size.Width *= scale;
+  size.Height *= scale;
+
   return {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)};
 }
 
