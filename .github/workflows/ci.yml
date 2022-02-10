@@ -24,13 +24,28 @@ jobs:
         run: cmake --build . --config ${{matrix.config}} --parallel
       - name: Install
         working-directory: build
-        run: cmake --install . --config ${{matrix.config}} --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
-      - name: Upload Zips
+        shell: pwsh
+        run:
+          cmake --install . `
+            --config ${{matrix.config}} `
+            --component Unspecified `
+            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
+          cmake --install . `
+            --config ${{matrix.config}} `
+            --component DebugSymbols `
+            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
+      - name: Upload Executable Zips
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
+      - name: Upload Debug Symbol Zips
+        uses: actions/upload-artifact@v2
+        with:
+          name: OpenKneeboard-${{matrix.config}}
+          path:
+            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
     strategy:
       matrix:
         config: [RelWithDebInfo, Debug]
