@@ -125,6 +125,9 @@ NavigationTab::NavigationTab(
       }
     }
   }
+  if (mEntries.back().empty()) {
+    mEntries.pop_back();
+  }
 }
 
 NavigationTab::~NavigationTab() {
