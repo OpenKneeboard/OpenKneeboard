@@ -77,3 +77,5 @@ add_custom_target(
   &&
   ${CMAKE_COMMAND} -E touch RuntimeFiles.stamp
   COMMAND_EXPAND_LISTS)
+
+include(InstallRequiredSystemLibraries)
