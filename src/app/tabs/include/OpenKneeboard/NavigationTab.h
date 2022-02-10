@@ -61,10 +61,12 @@ class NavigationTab final : public TabWithCursorEvents {
   D2D1_SIZE_U mPreferredSize;
   CachedLayer mPreviewLayer;
 
+  uint16_t mRenderColumns;
   struct EntryImpl {
     std::wstring mName;
     uint16_t mPageIndex;
     D2D1_RECT_F mRect;
+    uint16_t mRenderColumn;
   };
   std::vector<std::vector<EntryImpl>> mEntries;
 
@@ -79,8 +81,11 @@ class NavigationTab final : public TabWithCursorEvents {
   D2D1_POINT_2F mCursorPoint;
 
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+  winrt::com_ptr<IDWriteTextFormat> mPageNumberTextFormat;
   winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mInactiveBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mPreviewOutlineBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 
   uint16_t mPreviewMetricsPage = ~0ui16;

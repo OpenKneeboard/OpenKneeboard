@@ -20,6 +20,7 @@
 
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/dprint.h>
+#include <shims/wx.h>
 
 namespace OpenKneeboard {
 
@@ -32,32 +33,57 @@ NavigationTab::NavigationTab(
     mRootTab(rootTab),
     mPreferredSize(preferredSize),
     mPreviewLayer(dxr) {
-
-  const auto entriesPerPage = std::min(static_cast<size_t>(20), entries.size());
+  const auto columns = entries.size() >= 10 ? std::max(
+                         1ui32,
+                         static_cast<uint32_t>(
+                           (preferredSize.width * 1.5f) / preferredSize.height))
+                                            : 1;
+  const auto entriesPerPage
+    = std::min<size_t>(std::max<size_t>(20, 10 * columns), entries.size());
+  const auto entriesPerColumn = entriesPerPage / columns;
+  mRenderColumns = columns;
 
   auto dwf = mDXR.mDWriteFactory;
-  dwf->CreateTextFormat(
+  winrt::check_hresult(dwf->CreateTextFormat(
     L"Segoe UI",
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    preferredSize.height / (3.0f * (entriesPerPage + 1)),
+    preferredSize.height / (3.0f * (entriesPerColumn + 1)),
     L"",
-    mTextFormat.put());
+    mTextFormat.put()));
+
+  mTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+  mTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
   winrt::com_ptr<IDWriteInlineObject> ellipsis;
   dwf->CreateEllipsisTrimmingSign(mTextFormat.get(), ellipsis.put());
   DWRITE_TRIMMING trimming {
-    .granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER };
+    .granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER};
   mTextFormat->SetTrimming(&trimming, ellipsis.get());
 
+  winrt::check_hresult(dwf->CreateTextFormat(
+    L"Segoe UI",
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    mTextFormat->GetFontSize() / 2,
+    L"",
+    mPageNumberTextFormat.put()));
+  mPageNumberTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+  mPageNumberTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
 
   mDXR.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), mBackgroundBrush.put());
   mDXR.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0), mHighlightBrush.put());
+    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), mHighlightBrush.put());
+  mDXR.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.95f, 0.95f, 0.95f, 1.0f), mInactiveBrush.put());
   mDXR.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mTextBrush.put());
+  mPreviewOutlineBrush = mTextBrush;
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   dwf->CreateTextLayout(
@@ -71,33 +97,34 @@ NavigationTab::NavigationTab(
   const D2D1_RECT_F topRect {
     .left = padding,
     .top = 2 * padding,
-    .right = preferredSize.width - padding,
+    .right = (preferredSize.width / columns) - padding,
     .bottom = (2 * padding) + rowHeight,
   };
   auto rect = topRect;
   mEntries.push_back({});
 
   auto pageEntries = &mEntries.at(0);
+  uint16_t column = 0;
 
   for (const auto& entry: entries) {
-    pageEntries->push_back({
-      entry.mName,
-      entry.mPageIndex,
-      rect,
-    });
+    pageEntries->push_back({entry.mName, entry.mPageIndex, rect, column});
 
     rect.top = rect.bottom + padding;
     rect.bottom = rect.top + rowHeight;
 
     if (rect.bottom + padding > size.height) {
-      mEntries.push_back({});
-      pageEntries = &mEntries.back();
+      column = (column + 1) % columns;
       rect = topRect;
+      if (column == 0) {
+        mEntries.push_back({});
+        pageEntries = &mEntries.back();
+      } else {
+        const auto translateX = column * (preferredSize.width / columns);
+        rect.left += translateX;
+        rect.right += translateX;
+      }
     }
   }
-
-  mTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  mTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 }
 
 NavigationTab::~NavigationTab() {
@@ -124,7 +151,6 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   if (
     ev.mTouchState == CursorTouchState::TOUCHING_SURFACE
     && mButtonState != ButtonState::NOT_PRESSED) {
-    dprint("Move, pressed, no change");
     return;
   }
 
@@ -132,7 +158,6 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   if (
     ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
     && mButtonState == ButtonState::NOT_PRESSED) {
-    dprint("Move, not pressed, no change");
     return;
   }
 
@@ -141,7 +166,6 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
     ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
     && mButtonState == ButtonState::PRESSING_INACTIVE_AREA) {
     mButtonState = ButtonState::NOT_PRESSED;
-    dprint("Release, wasn't in button");
     return;
   }
 
@@ -225,6 +249,8 @@ void NavigationTab::RenderPage(
       hoverPage = i;
       ctx->FillRectangle(rect, mHighlightBrush.get());
       ctx->FillRectangle(mPreviewMetrics.mRects.at(i), mBackgroundBrush.get());
+    } else {
+      ctx->FillRectangle(rect, mInactiveBrush.get());
     }
   }
 
@@ -238,22 +264,27 @@ void NavigationTab::RenderPage(
     ctx,
     std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageIndex));
 
-  float maxRight = pageEntries.front().mRect.left;
+  std::vector<float> columnPreviewRightEdge(mRenderColumns);
   for (auto i = 0; i < pageEntries.size(); ++i) {
     const auto& entry = pageEntries.at(i);
     const auto& previewRect = mPreviewMetrics.mRects.at(i);
-    if (previewRect.right > maxRight) {
-      maxRight = previewRect.right;
+    auto& rightEdge = columnPreviewRightEdge.at(entry.mRenderColumn);
+    if (previewRect.right > rightEdge) {
+      rightEdge = previewRect.right;
     }
     if (hoverPage == i) {
       ctx->DrawRectangle(
         previewRect, mHighlightBrush.get(), mPreviewMetrics.mStroke);
+    } else {
+      ctx->DrawRectangle(
+        previewRect, mPreviewOutlineBrush.get(), mPreviewMetrics.mStroke / 2);
     }
   }
 
   for (const auto& entry: pageEntries) {
     auto rect = entry.mRect;
-    rect.left = maxRight + mPreviewMetrics.mBleed;
+    rect.left
+      = columnPreviewRightEdge.at(entry.mRenderColumn) + mPreviewMetrics.mBleed;
     ctx->DrawTextW(
       entry.mName.data(),
       static_cast<UINT32>(entry.mName.length()),
@@ -262,6 +293,19 @@ void NavigationTab::RenderPage(
       mTextBrush.get(),
       D2D1_DRAW_TEXT_OPTIONS_NO_SNAP | D2D1_DRAW_TEXT_OPTIONS_CLIP);
   }
+
+  auto message = fmt::format(
+    _("Page {} of {}").ToStdWstring(), pageIndex + 1, mEntries.size());
+  ctx->DrawTextW(
+    message.data(),
+    static_cast<UINT32>(message.length()),
+    mPageNumberTextFormat.get(),
+    {0.0f,
+     0.0f,
+     static_cast<FLOAT>(mPreferredSize.width),
+     static_cast<FLOAT>(mPreferredSize.height) - mPreviewMetrics.mBleed},
+    mTextBrush.get(),
+    D2D1_DRAW_TEXT_OPTIONS_NO_SNAP);
 }
 
 void NavigationTab::RenderPreviewLayer(
@@ -279,7 +323,7 @@ void NavigationTab::RenderPreviewLayer(
   const auto& first = pageEntries.front();
 
   // just a little less than the padding
-  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.2f;
+  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.1f;
   // arbitrary LGTM value
   m.mStroke = m.mBleed * 0.3f;
   m.mHeight = (first.mRect.bottom - first.mRect.top) + (m.mBleed * 2);
@@ -292,7 +336,7 @@ void NavigationTab::RenderPreviewLayer(
     const auto width = nativeSize.width * scale;
 
     auto& rect = m.mRects.at(i);
-    rect.left = entry.mRect.left + (m.mStroke * 1.25f);
+    rect.left = entry.mRect.left + m.mBleed;
     rect.top = entry.mRect.top - m.mBleed;
     rect.right = rect.left + width;
     rect.bottom = entry.mRect.bottom + m.mBleed;
