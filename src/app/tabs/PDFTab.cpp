@@ -119,12 +119,12 @@ std::vector<NavigationTab::Entry> GetNavigationEntries(
 
 void PDFTab::Reload() {
   p->mBookmarks.clear();
-  std::thread([=]() {
+  std::thread([this] {
+    std::thread loadRenderer {[this] {
     auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
     p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
-    evFullyReplacedEvent();
-  }).detach();
-
+    }};
+    std::thread loadBookmarks {[this] {
   const auto pathStr = p->mPath.string();
   QPDF qpdf;
   qpdf.processFile(pathStr.c_str());
@@ -136,6 +136,11 @@ void PDFTab::Reload() {
   auto pageMap = GetPageMap(qpdf);
   auto outlines = odh.getTopLevelOutlines();
   p->mBookmarks = GetNavigationEntries(pageMap, outlines);
+    }};
+    loadRenderer.join();
+    loadBookmarks.join();
+    this->evFullyReplacedEvent.EmitFromMainThread();
+  }).detach();
 }
 
 uint16_t PDFTab::GetPageCount() const {
@@ -175,7 +180,10 @@ void PDFTab::RenderPageContent(
 
   winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
     winrt::get_unknown(page), ctx, &params));
-  return;
+  // `RenderPageToDeviceContext()` starts a multi-threaded job, but needs
+  // the `page` pointer to stay valid until it has finished - so, flush to
+  // get everthing in the direct2d queue done.
+  winrt::check_hresult(ctx->Flush());
 }
 
 std::filesystem::path PDFTab::GetPath() const {
