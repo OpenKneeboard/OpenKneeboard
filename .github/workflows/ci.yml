@@ -36,15 +36,15 @@ jobs:
           name: OpenKneeboard-${{matrix.config}}
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
-      - name: Install Debug SymbolsComponents
+      - name: Install Debug Symbols
         working-directory: build
         shell: pwsh
         run:
           cmake --install . `
             --config ${{matrix.config}} `
-            --component Symbols `
+            --component DebugSymbols `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
-      - name: Upload Debug Symbol Zips
+      - name: Upload Symbol Zips
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}-Symbols
