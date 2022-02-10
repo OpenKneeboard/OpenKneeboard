@@ -19,6 +19,8 @@
  */
 #include "Events.h"
 
+#include <shims/wx.h>
+
 namespace OpenKneeboard {
 
 void EventBase::Add(EventReceiver* receiver, uint64_t token) {
@@ -34,4 +36,8 @@ EventReceiver::~EventReceiver() {
   }
 }
 
+void EventBase::EnqueueForMainThread(std::function<void()> f) {
+  wxApp::GetMainTopWindow()->GetEventHandler()->CallAfter(f);
 }
+
+}// namespace OpenKneeboard

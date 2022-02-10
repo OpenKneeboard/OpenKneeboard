@@ -39,6 +39,7 @@ class EventBase {
   friend class EventReceiver;
 
  protected:
+  static void EnqueueForMainThread(std::function<void()>);
   void Add(EventReceiver*, uint64_t);
   virtual void RemoveHandler(uint64_t token) = 0;
 };
@@ -50,6 +51,7 @@ class EventBase {
 template <class... Args>
 class Event final : public EventBase {
   friend class EventReceiver;
+
  public:
   Event() = default;
   Event(const Event<Args...>&) = delete;
@@ -57,6 +59,7 @@ class Event final : public EventBase {
   ~Event();
 
   void operator()(Args... args);
+  void EmitFromMainThread(Args... args);
 
  protected:
   void AddHandler(EventReceiver*, const EventHandler<Args...>&);
@@ -137,6 +140,11 @@ void Event<Args...>::operator()(Args... args) {
   for (const auto& [token, info]: mReceivers) {
     info.mFunc(args...);
   }
+}
+
+template <class... Args>
+void Event<Args...>::EmitFromMainThread(Args... args) {
+  EventBase::EnqueueForMainThread([=]() { (*this)(args...); });
 }
 
 template <class... Args>
