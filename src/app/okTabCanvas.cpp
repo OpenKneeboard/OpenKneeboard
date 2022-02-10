@@ -150,7 +150,7 @@ void okTabCanvas::PaintNow() {
     });
 
     mErrorRenderer->Render(
-      _("No Pages").ToStdWstring(),
+      _("No Pages"),
       {0.0f,
        0.0f,
        float(clientSize.GetWidth()),

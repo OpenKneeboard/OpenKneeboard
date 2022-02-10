@@ -21,6 +21,7 @@
 
 #include <d2d1_1.h>
 #include <shims/winrt.h>
+#include <OpenKneeboard/utf8.h>
 
 #include <memory>
 
@@ -36,7 +37,7 @@ class D2DErrorRenderer final {
   D2DErrorRenderer() = delete;
   ~D2DErrorRenderer();
 
-  void Render(const std::wstring& text, const D2D1_RECT_F& where);
+  void Render(utf8_string_view text, const D2D1_RECT_F& where);
 };
 
 }// namespace OpenKneeboard

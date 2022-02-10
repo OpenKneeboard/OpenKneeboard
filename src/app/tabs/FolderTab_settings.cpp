@@ -26,7 +26,7 @@ namespace OpenKneeboard {
 
 FolderTab::FolderTab(
   const DXResources& dxr,
-  const wxString& title,
+  utf8_string_view title,
   const nlohmann::json& settings)
   : FolderTab(
     dxr,
@@ -54,11 +54,11 @@ std::shared_ptr<FolderTab> FolderTab::Create(
     return nullptr;
   }
 
-  return std::make_shared<FolderTab>(dxr, path.stem().string(), path);
+  return std::make_shared<FolderTab>(dxr, path.stem(), path);
 }
 
 nlohmann::json FolderTab::GetSettings() const {
-  return {{"Path", GetPath().string()}};
+  return {{"Path", to_utf8(GetPath())}};
 }
 
 wxWindow* FolderTab::GetSettingsUI(wxWindow* parent) {

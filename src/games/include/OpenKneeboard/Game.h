@@ -33,7 +33,7 @@ class Game {
   virtual bool MatchesPath(const std::filesystem::path&) const;
 
   virtual const char* GetNameForConfigFile() const = 0;
-  virtual wxString GetUserFriendlyName(const std::filesystem::path&) const = 0;
+  virtual std::string GetUserFriendlyName(const std::filesystem::path&) const = 0;
   virtual std::vector<std::filesystem::path> GetInstalledPaths() const = 0;
   virtual bool DiscardOculusDepthInformationDefault() const;
 };

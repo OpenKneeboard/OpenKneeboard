@@ -35,12 +35,12 @@ int main() {
   do {
     (GameEvent {
        .name = DCS::EVT_SAVED_GAMES_PATH,
-       .value = DCS::GetSavedGamesPath(DCS::Version::OPEN_BETA).string(),
+       .value = DCS::GetSavedGamesPath(DCS::Version::OPEN_BETA),
      })
       .Send();
     (GameEvent {
        .name = DCS::EVT_INSTALL_PATH,
-       .value = DCS::GetInstalledPath(DCS::Version::OPEN_BETA).string(),
+       .value = DCS::GetInstalledPath(DCS::Version::OPEN_BETA),
      })
       .Send();
     (GameEvent {

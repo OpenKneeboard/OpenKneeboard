@@ -76,7 +76,7 @@ static bool FilesDiffer(
   return !equal;
 }
 
-static void InstallHooks(DCS::Version version, const wxString& label) {
+static void InstallHooks(DCS::Version version, utf8_string_view label) {
   const auto baseDir = DCS::GetSavedGamesPath(version);
   if (!std::filesystem::is_directory(baseDir)) {
     return;
@@ -92,27 +92,31 @@ static void InstallHooks(DCS::Version version, const wxString& label) {
   const auto dllSource = exeDir / RuntimeFiles::DCSWORLD_HOOK_DLL;
   const auto luaSource = exeDir / RuntimeFiles::DCSWORLD_HOOK_LUA;
 
-  std::wstring message;
+  std::string message;
   if (!(std::filesystem::exists(dllDest) && std::filesystem::exists(luaDest))) {
     message = fmt::format(
-      _("Required hooks aren't installed for {}; would you like to install "
-        "them?")
-        .ToStdWstring(),
-      label.ToStdWstring());
+      fmt::runtime(
+        _("Required hooks aren't installed for {}; would you like to install "
+          "them?")
+          .utf8_string()),
+      label);
   } else if (
     FilesDiffer(dllSource, dllDest) || FilesDiffer(luaSource, luaDest)) {
     message = fmt::format(
-      _("Hooks for {} are out of date; would you like to update "
-        "them?")
-        .ToStdWstring(),
-      label.ToStdWstring());
+      fmt::runtime(_("Hooks for {} are out of date; would you like to update "
+                     "them?")
+                     .utf8_string()),
+      label);
   } else {
     // Installed and equal
     return;
   }
 
   wxMessageDialog dialog(
-    nullptr, message, "OpenKneeboard", wxOK | wxCANCEL | wxICON_WARNING);
+    nullptr,
+    wxString::FromUTF8(message),
+    "OpenKneeboard",
+    wxOK | wxCANCEL | wxICON_WARNING);
   if (dialog.ShowModal() != wxID_OK) {
     return;
   }

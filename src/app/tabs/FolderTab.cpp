@@ -43,7 +43,7 @@ class FolderTab::Impl final {
 
 FolderTab::FolderTab(
   const DXResources& dxr,
-  const wxString& title,
+  utf8_string_view /* title */,
   const std::filesystem::path& path)
   : TabWithDoodles(dxr), p(new Impl {
     .mDXR = dxr,
@@ -55,8 +55,8 @@ FolderTab::FolderTab(
 FolderTab::~FolderTab() {
 }
 
-std::wstring FolderTab::GetTitle() const {
-  return p->mPath.filename().wstring();
+utf8_string FolderTab::GetTitle() const {
+  return p->mPath.filename();
 }
 
 void FolderTab::Reload() {

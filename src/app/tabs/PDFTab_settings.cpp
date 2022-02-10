@@ -26,7 +26,7 @@ namespace OpenKneeboard {
 
 PDFTab::PDFTab(
   const DXResources& dxr,
-  const wxString& title,
+  utf8_string_view title,
   const nlohmann::json& settings)
   : PDFTab(
     dxr,
@@ -57,11 +57,11 @@ std::shared_ptr<PDFTab> PDFTab::Create(
     return nullptr;
   }
 
-  return std::make_shared<PDFTab>(dxr, path.stem().string(), path);
+  return std::make_shared<PDFTab>(dxr, path.stem(), path);
 }
 
 nlohmann::json PDFTab::GetSettings() const {
-  return {{"Path", GetPath().string()}};
+  return {{"Path", to_utf8(GetPath())}};
 }
 
 wxWindow* PDFTab::GetSettingsUI(wxWindow* parent) {

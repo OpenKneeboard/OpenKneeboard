@@ -19,6 +19,7 @@
 #include "okGamesList_SettingsUI.h"
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/utf8.h>
 #include <wx/filedlg.h>
 #include <wx/listbook.h>
 #include <wx/listctrl.h>
@@ -45,7 +46,7 @@ void okGamesList::SettingsUI::OnPathSelect(wxCommandEvent& ev) {
       continue;
     }
     GameInstance instance {
-      .name = game->GetUserFriendlyName(path).ToStdString(),
+      .name = game->GetUserFriendlyName(path),
       .path = path,
       .game = game};
     mGamesList->mInstances.push_back(instance);

@@ -33,16 +33,11 @@ namespace OpenKneeboard {
 
 DCSAircraftTab::DCSAircraftTab(const DXResources& dxr)
   : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
+    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
 }
 
-std::wstring DCSAircraftTab::GetTitle() const {
-  static std::wstring sCache;
-  if (!sCache.empty()) [[likely]] {
-    return sCache;
-  }
-  sCache = _("Aircraft").ToStdWstring();
-  return sCache;
+utf8_string DCSAircraftTab::GetTitle() const {
+  return _("Aircraft");
 }
 
 const char* DCSAircraftTab::GetGameEventName() const {
@@ -52,7 +47,7 @@ const char* DCSAircraftTab::GetGameEventName() const {
 void DCSAircraftTab::Update(
   const std::filesystem::path& installPath,
   const std::filesystem::path& savedGamesPath,
-  const std::string& aircraft) {
+  utf8_string_view aircraft) {
   auto path = savedGamesPath / "KNEEBOARD" / aircraft;
   this->GetDelegate()->SetPath(path);
 }

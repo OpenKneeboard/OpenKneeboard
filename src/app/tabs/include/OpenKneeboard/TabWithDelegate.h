@@ -32,7 +32,7 @@ namespace OpenKneeboard {
 template <std::derived_from<Tab> T>
 class TabWithDelegateBase : public virtual Tab {
  public:
-  virtual std::wstring GetTitle() const override {
+  virtual utf8_string GetTitle() const override {
     return this->GetDelegate()->GetTitle();
   }
 

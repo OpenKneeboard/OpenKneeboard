@@ -20,9 +20,9 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFTab.h>
-#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/config.h>
-
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/utf8.h>
 #include <inttypes.h>
 #include <shims/winrt.h>
 #include <windows.data.pdf.interop.h>
@@ -53,7 +53,7 @@ struct PDFTab::Impl final {
 
 PDFTab::PDFTab(
   const DXResources& dxr,
-  const wxString& title,
+  utf8_string_view /* title */,
   const std::filesystem::path& path)
   : TabWithDoodles(dxr), p(new Impl {.mDXR = dxr, .mPath = path}) {
   winrt::check_hresult(
@@ -67,8 +67,8 @@ PDFTab::PDFTab(
 PDFTab::~PDFTab() {
 }
 
-std::wstring PDFTab::GetTitle() const {
-  return p->mPath.stem().wstring();
+utf8_string PDFTab::GetTitle() const {
+  return p->mPath.stem();
 }
 
 namespace {
@@ -99,7 +99,7 @@ std::vector<NavigationTab::Entry> GetNavigationEntries(
       continue;
     }
     entries.push_back({
-      .mName = std::wstring(winrt::to_hstring(outline.getTitle())),
+      .mName = outline.getTitle(),
       .mPageIndex = pageMap.at(key),
     });
 
@@ -126,7 +126,7 @@ void PDFTab::Reload() {
       p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
     }};
     std::thread loadBookmarks {[this] {
-      const auto pathStr = p->mPath.string();
+      const auto pathStr = to_utf8(p->mPath);
       QPDF qpdf;
       qpdf.processFile(pathStr.c_str());
       QPDFOutlineDocumentHelper odh(qpdf);

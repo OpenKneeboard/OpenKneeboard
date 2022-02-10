@@ -18,14 +18,16 @@
  */
 #pragma once
 
+#include <OpenKneeboard/utf8.h>
+
 #include <cstddef>
 #include <string>
 #include <vector>
 
 namespace OpenKneeboard {
 struct GameEvent final {
-  std::string name;
-  std::string value;
+  utf8_string name;
+  utf8_string value;
 
   operator bool() const;
 

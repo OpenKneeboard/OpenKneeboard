@@ -30,14 +30,14 @@ class FolderTab;
 class DCSAircraftTab final : public DCSTab, public TabWithDelegate<FolderTab> {
  public:
   DCSAircraftTab(const DXResources&);
-  virtual std::wstring GetTitle() const override;
+  virtual utf8_string GetTitle() const override;
 
  protected:
   virtual const char* GetGameEventName() const override;
   virtual void Update(
     const std::filesystem::path&,
     const std::filesystem::path&,
-    const std::string&) override;
+    utf8_string_view) override;
 };
 
 }// namespace OpenKneeboard

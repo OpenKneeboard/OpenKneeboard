@@ -107,7 +107,8 @@ NavigationTab::NavigationTab(
   uint16_t column = 0;
 
   for (const auto& entry: entries) {
-    pageEntries->push_back({entry.mName, entry.mPageIndex, rect, column});
+    pageEntries->push_back(
+      {winrt::to_hstring(entry.mName), entry.mPageIndex, rect, column});
 
     rect.top = rect.bottom + padding;
     rect.bottom = rect.top + rowHeight;
@@ -133,7 +134,7 @@ NavigationTab::NavigationTab(
 NavigationTab::~NavigationTab() {
 }
 
-std::wstring NavigationTab::GetTitle() const {
+utf8_string NavigationTab::GetTitle() const {
   return mRootTab->GetTitle();
 }
 
@@ -290,7 +291,7 @@ void NavigationTab::RenderPage(
       = columnPreviewRightEdge.at(entry.mRenderColumn) + mPreviewMetrics.mBleed;
     ctx->DrawTextW(
       entry.mName.data(),
-      static_cast<UINT32>(entry.mName.length()),
+      static_cast<UINT32>(entry.mName.size()),
       mTextFormat.get(),
       rect,
       mTextBrush.get(),
@@ -301,7 +302,7 @@ void NavigationTab::RenderPage(
     _("Page {} of {}").ToStdWstring(), pageIndex + 1, mEntries.size());
   ctx->DrawTextW(
     message.data(),
-    static_cast<UINT32>(message.length()),
+    static_cast<UINT32>(message.size()),
     mPageNumberTextFormat.get(),
     {0.0f,
      0.0f,

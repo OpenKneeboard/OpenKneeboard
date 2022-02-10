@@ -29,8 +29,6 @@
 #include "CachedLayer.h"
 #include "TabWithCursorEvents.h"
 
-class wxString;
-
 namespace OpenKneeboard {
 
 class TabWithDoodles : public virtual TabWithCursorEvents,

@@ -23,8 +23,6 @@
 
 #include <filesystem>
 
-class wxString;
-
 namespace OpenKneeboard {
 
 class DCSTab : public virtual TabWithGameEvents {
@@ -37,7 +35,7 @@ class DCSTab : public virtual TabWithGameEvents {
   virtual void Update(
     const std::filesystem::path& installPath,
     const std::filesystem::path& savedGamesPath,
-    const std::string& value)
+    utf8_string_view value)
     = 0;
 
   virtual void OnSimulationStart();
@@ -46,7 +44,7 @@ class DCSTab : public virtual TabWithGameEvents {
   struct Config final {
     std::filesystem::path mInstallPath;
     std::filesystem::path mSavedGamesPath;
-    std::string mValue;
+    utf8_string mValue;
     bool operator==(const Config&) const = default;
   };
 

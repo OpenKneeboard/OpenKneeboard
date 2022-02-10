@@ -60,7 +60,7 @@ static std::filesystem::path GetFullPathFromPID(DWORD pid) {
     return {};
   }
 
-  return std::wstring(&path[0], pathLen);
+  return std::wstring_view(&path[0], pathLen);
 }
 
 void okSelectExecutableDialog::OnBrowseButton(wxCommandEvent&) {

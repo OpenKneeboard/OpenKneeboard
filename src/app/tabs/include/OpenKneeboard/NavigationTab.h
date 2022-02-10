@@ -32,7 +32,7 @@ namespace OpenKneeboard {
 class NavigationTab final : public TabWithCursorEvents {
  public:
   struct Entry {
-    std::wstring mName;
+    utf8_string mName;
     uint16_t mPageIndex;
   };
 
@@ -43,7 +43,7 @@ class NavigationTab final : public TabWithCursorEvents {
     const D2D1_SIZE_U& preferredSize);
   ~NavigationTab();
 
-  virtual std::wstring GetTitle() const override;
+  virtual utf8_string GetTitle() const override;
   virtual void Reload() override;
 
   virtual uint16_t GetPageCount() const override;
@@ -63,7 +63,7 @@ class NavigationTab final : public TabWithCursorEvents {
 
   uint16_t mRenderColumns;
   struct EntryImpl {
-    std::wstring mName;
+    winrt::hstring mName;
     uint16_t mPageIndex;
     D2D1_RECT_F mRect;
     uint16_t mRenderColumn;

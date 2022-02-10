@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "Settings.h"
 
@@ -36,7 +37,7 @@ static std::filesystem::path GetSettingsDirectoryPath() {
     return {};
   }
 
-  sPath = std::filesystem::path(std::wstring(buffer)) / "OpenKneeboard";
+  sPath = std::filesystem::path(std::wstring_view(buffer)) / "OpenKneeboard";
   std::filesystem::create_directories(sPath);
   return sPath;
 }

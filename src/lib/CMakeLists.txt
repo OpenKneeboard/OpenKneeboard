@@ -13,6 +13,14 @@ target_include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
+
+add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
+target_link_libraries(
+	OpenKneeboard-UTF8
+	PRIVATE
+	_libheaders
+	cppwinrt)
+
 add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
 target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
 
@@ -34,13 +42,14 @@ target_link_libraries(OpenKneeboard-consolelib PUBLIC _libheaders)
 
 add_library(OpenKneeboard-GameEvent STATIC GameEvent.cpp)
 target_link_libraries(OpenKneeboard-GameEvent PRIVATE fmt OpenKneeboard-config OpenKneeboard-dprint)
-target_link_libraries(OpenKneeboard-GameEvent PUBLIC _libheaders)
+target_link_libraries(OpenKneeboard-GameEvent PUBLIC _libheaders OpenKneeboard-UTF8)
 
 add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
 target_link_libraries(
   OpenKneeboard-D2DErrorRenderer
   PUBLIC
   D2d1
+  OpenKneeboard-UTF8
   Dwrite
   _libheaders)
 

@@ -16,27 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "GenericGame.h"
+#pragma once
 
 #include <OpenKneeboard/utf8.h>
+#include <shims/wx.h>
 
 namespace OpenKneeboard {
 
-bool GenericGame::MatchesPath(const std::filesystem::path&) const {
-  return true;
+std::string to_utf8(const wxString& in) {
+  return in.utf8_string();
 }
 
-std::vector<std::filesystem::path> GenericGame::GetInstalledPaths() const {
-  return {};
 }
-
-std::string GenericGame::GetUserFriendlyName(
-  const std::filesystem::path& path) const {
-  return to_utf8(path.stem());
-}
-
-const char* GenericGame::GetNameForConfigFile() const {
-  return "Generic";
-}
-
-}// namespace OpenKneeboard

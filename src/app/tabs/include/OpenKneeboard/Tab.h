@@ -19,24 +19,25 @@
  */
 #pragma once
 
+#include <OpenKneeboard/utf8.h>
 #include <d2d1_1.h>
 
 #include <string>
 
 #include "Events.h"
 
-class wxString;
-
 namespace OpenKneeboard {
 
 class Tab {
  public:
-  virtual std::wstring GetTitle() const = 0 ;
+  virtual utf8_string GetTitle() const = 0;
   virtual void Reload() = 0;
 
   virtual uint16_t GetPageCount() const = 0;
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) = 0;
-  virtual void RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect) = 0;
+  virtual void
+  RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
+    = 0;
 
   Event<> evNeedsRepaintEvent;
   Event<> evFullyReplacedEvent;

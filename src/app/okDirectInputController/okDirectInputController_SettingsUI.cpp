@@ -19,6 +19,7 @@
  */
 #include "okDirectInputController_SettingsUI.h"
 
+#include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
 #include <wx/gbsizer.h>
 #include <wx/scopeguard.h>
@@ -69,8 +70,8 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
     if (
       binding.instanceGuid == device.guidInstance
       && binding.eventType == eventType) {
-      label
-        = fmt::format(fmt::runtime(_("Button {}").ToStdString()), binding.buttonIndex + 1);
+      label = fmt::format(
+        fmt::runtime(_("Button {}").ToStdString()), binding.buttonIndex + 1);
       break;
     }
   }
@@ -232,11 +233,11 @@ void okDirectInputController::SettingsUI::OnBindButton(
       it = bindings.erase(it);
     }
 
-    button->SetLabel(
-      fmt::format(fmt::runtime(_("Button {:d}").ToStdString()), be.buttonIndex + 1));
+    button->SetLabel(fmt::format(
+      fmt::runtime(_("Button {:d}").ToStdString()), be.buttonIndex + 1));
     bindings.push_back(
       {.instanceGuid = device.guidInstance,
-       .instanceName = wxString(device.tszInstanceName).ToStdString(),
+       .instanceName = to_utf8(device.tszInstanceName),
        .buttonIndex = be.buttonIndex,
        .eventType = eventType});
     wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));

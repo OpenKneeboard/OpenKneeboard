@@ -42,7 +42,7 @@ okGameInstanceSettings::okGameInstanceSettings(
     label->SetFont(bold);
     grid->Add(label, wxGBPosition(1, 0));
     grid->Add(
-      new wxStaticText(this, wxID_ANY, game.path.string()), wxGBPosition(1, 1));
+      new wxStaticText(this, wxID_ANY, game.path.wstring()), wxGBPosition(1, 1));
   }
 
   {

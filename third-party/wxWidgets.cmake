@@ -15,6 +15,7 @@ if(NOT wxwidgets_POPULATED)
   FetchContent_Populate(wxwidgets)
 
   set(wxBUILD_SHARED OFF)
+  set(wxUSE_UNSAFE_WXSTRING_CONV OFF)
   add_subdirectory(${wxwidgets_SOURCE_DIR} ${wxwidgets_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 

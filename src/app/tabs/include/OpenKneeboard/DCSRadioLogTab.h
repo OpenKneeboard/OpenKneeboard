@@ -35,7 +35,7 @@ class DCSRadioLogTab final : public DCSTab,
  public:
   DCSRadioLogTab(const DXResources&);
   virtual ~DCSRadioLogTab();
-  virtual std::wstring GetTitle() const override;
+  virtual utf8_string GetTitle() const override;
 
   virtual void Reload() override;
   virtual uint16_t GetPageCount() const override;
@@ -51,7 +51,7 @@ class DCSRadioLogTab final : public DCSTab,
   virtual void Update(
     const std::filesystem::path& installPath,
     const std::filesystem::path& savedGamesPath,
-    const std::string& value) override;
+    utf8_string_view value) override;
 
   virtual void OnSimulationStart() override;
 };

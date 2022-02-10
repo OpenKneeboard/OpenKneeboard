@@ -29,7 +29,7 @@ class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
  public:
   DCSMissionTab(const DXResources&);
   virtual ~DCSMissionTab();
-  virtual std::wstring GetTitle() const override;
+  virtual utf8_string GetTitle() const override;
 
   virtual void Reload() override;
 
@@ -38,7 +38,7 @@ class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
   virtual void Update(
     const std::filesystem::path&,
     const std::filesystem::path&,
-    const std::string&) override;
+    utf8_string_view) override;
 
  private:
   class ExtractedMission;

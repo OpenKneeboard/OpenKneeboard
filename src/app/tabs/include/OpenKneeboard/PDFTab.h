@@ -34,15 +34,15 @@ class PDFTab final : public TabWithDoodles, public TabWithNavigation, public okC
  public:
   explicit PDFTab(
     const DXResources&,
-    const wxString& title,
+    utf8_string_view title,
     const std::filesystem::path& path);
   explicit PDFTab(
     const DXResources&,
-    const wxString& title,
+    utf8_string_view title,
     const nlohmann::json&);
   virtual ~PDFTab();
 
-  virtual std::wstring GetTitle() const override;
+  virtual utf8_string GetTitle() const override;
 
   static std::shared_ptr<PDFTab> Create(wxWindow* parent, const DXResources&);
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;

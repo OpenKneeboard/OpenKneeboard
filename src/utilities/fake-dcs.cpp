@@ -18,6 +18,7 @@
  */
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/utf8.h>
 #include <Windows.h>
 #include <fmt/format.h>
 
@@ -31,8 +32,8 @@ int main() {
   printf(
     "DCS: %S\nSaved Games: %S\n", installPath.c_str(), savedGamePath.c_str());
 
-  (GameEvent {DCS::EVT_INSTALL_PATH, installPath.string()}).Send();
-  (GameEvent {DCS::EVT_SAVED_GAMES_PATH, savedGamePath.string()}).Send();
+  (GameEvent {DCS::EVT_INSTALL_PATH, to_utf8(installPath)}).Send();
+  (GameEvent {DCS::EVT_SAVED_GAMES_PATH, to_utf8(savedGamePath)}).Send();
   (GameEvent {DCS::EVT_AIRCRAFT, "A-10C_2"}).Send();
   (GameEvent {DCS::EVT_TERRAIN, "Caucasus"}).Send();
 

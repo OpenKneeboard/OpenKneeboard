@@ -33,16 +33,11 @@ namespace OpenKneeboard {
 
 DCSTerrainTab::DCSTerrainTab(const DXResources& dxr)
   : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
+    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
 }
 
-std::wstring DCSTerrainTab::GetTitle() const {
-  static std::wstring sCache;
-  if (!sCache.empty()) [[likely]] {
-    return sCache;
-  }
-  sCache = _("Theater").ToStdWstring();
-  return sCache;
+utf8_string DCSTerrainTab::GetTitle() const {
+  return _("Theater");
 }
 
 const char* DCSTerrainTab::GetGameEventName() const {
@@ -52,7 +47,7 @@ const char* DCSTerrainTab::GetGameEventName() const {
 void DCSTerrainTab::Update(
   const std::filesystem::path& installPath,
   const std::filesystem::path& _savedGamesPath,
-  const std::string& value) {
+  utf8_string_view value) {
   auto path = installPath / "Mods" / "terrains" / value / "Kneeboard";
   this->GetDelegate()->SetPath(path);
 }

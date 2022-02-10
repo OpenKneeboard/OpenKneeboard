@@ -227,7 +227,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       }
       DWORD bufSize = sizeof(buf);
       QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
-      auto path = std::filesystem::canonical(std::wstring(buf, bufSize));
+      auto path = std::filesystem::canonical(std::wstring_view(buf, bufSize));
 
       std::scoped_lock lock(p->mGamesMutex);
       for (const auto& game: p->mGames) {
@@ -247,7 +247,7 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
         }
 
         dprintf(
-          "Found '{}' - PID {}", friendly.ToStdString(), process.th32ProcessID);
+          "Found '{}' - PID {}", friendly, process.th32ProcessID);
 
         InjectDll(processHandle.get(), markerDll);
 

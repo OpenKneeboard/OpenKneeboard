@@ -24,8 +24,10 @@ endif()
 
 add_compile_definitions(
   "UNICODE=1"
+  "_UNICODE=1"
   "NOMINMAX"
   "WIN32_LEAN_AND_MEAN"
+  "wxNO_UNSAFE_WXSTRING_CONV=1"
   "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
   "OPENKNEEBOARD_BREAK=$<$<CONFIG:Debug>:__debugbreak()>"
   "BUILD_CONFIG=\"$<CONFIG>\""

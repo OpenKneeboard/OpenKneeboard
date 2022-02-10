@@ -58,10 +58,12 @@ D2DErrorRenderer::~D2DErrorRenderer() {
 }
 
 void D2DErrorRenderer::Render(
-  const std::wstring& text,
+  utf8_string_view utf8,
   const D2D1_RECT_F& where) {
   const auto canvasWidth = where.right - where.left,
              canvasHeight = where.bottom - where.top;
+  
+  auto text = winrt::to_hstring(utf8);
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   winrt::check_hresult(p->mDWrite->CreateTextLayout(

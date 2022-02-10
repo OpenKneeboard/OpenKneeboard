@@ -57,7 +57,7 @@ class DCSRadioLogTab::Impl final {
   DXResources mDXR;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
 
-  void PushMessage(const std::string& message);
+  void PushMessage(utf8_string_view message);
   void LayoutMessages();
   void PushPage();
 };
@@ -69,13 +69,8 @@ DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
 DCSRadioLogTab::~DCSRadioLogTab() {
 }
 
-std::wstring DCSRadioLogTab::GetTitle() const {
-  static std::wstring sCache;
-  if (!sCache.empty()) [[likely]] {
-    return sCache;
-  }
-  sCache = _("Radio Log").ToStdWstring();
-  return sCache;
+utf8_string DCSRadioLogTab::GetTitle() const {
+  return _("Radio Log");
 }
 
 void DCSRadioLogTab::Reload() {
@@ -160,7 +155,7 @@ void DCSRadioLogTab::RenderPageContent(
   point.y = virtualSize.height - (p->mRowHeight + p->mPadding);
 
   if (pageIndex > 0) {
-    std::wstring text(L"<<<<<");
+    std::wstring_view text(L"<<<<<");
     ctx->DrawTextW(
       text.data(),
       static_cast<UINT32>(text.size()),
@@ -189,7 +184,7 @@ void DCSRadioLogTab::RenderPageContent(
   }
 
   if (pageIndex + 1 < GetPageCount()) {
-    std::wstring text(L">>>>>");
+    std::wstring_view text(L">>>>>");
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
     ctx->DrawTextW(
@@ -204,7 +199,7 @@ void DCSRadioLogTab::RenderPageContent(
   }
 }
 
-void DCSRadioLogTab::Impl::PushMessage(const std::string& message) {
+void DCSRadioLogTab::Impl::PushMessage(utf8_string_view message) {
   mMessages.push_back(std::wstring(winrt::to_hstring(message)));
   LayoutMessages();
   mTab->evNeedsRepaintEvent();
@@ -306,7 +301,7 @@ const char* DCSRadioLogTab::GetGameEventName() const {
 void DCSRadioLogTab::Update(
   const std::filesystem::path& installPath,
   const std::filesystem::path& savedGamesPath,
-  const std::string& value) {
+  utf8_string_view value) {
   p->PushMessage(value);
 }
 

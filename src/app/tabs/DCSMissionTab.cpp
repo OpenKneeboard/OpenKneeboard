@@ -58,7 +58,7 @@ class DCSMissionTab::ExtractedMission final {
           zip.stem().string());
     std::filesystem::create_directories(mTempDir);
 
-    wxFileInputStream ifs(zip.string());
+    wxFileInputStream ifs(zip.wstring());
     if (!ifs.IsOk()) {
       dprintf("Can't open file {}", zip.string());
       return;
@@ -77,11 +77,11 @@ class DCSMissionTab::ExtractedMission final {
       }
       auto path = mTempDir / name.substr(prefix.size());
       {
-        wxFileOutputStream out(path.string());
+        wxFileOutputStream out(path.wstring());
         zis.Read(out);
       }
-      if (!wxImage::CanRead(path.string())) {
-        std::filesystem::remove(path.string());
+      if (!wxImage::CanRead(path.wstring())) {
+        std::filesystem::remove(path);
       }
     }
   }
@@ -97,19 +97,14 @@ class DCSMissionTab::ExtractedMission final {
 
 DCSMissionTab::DCSMissionTab(const DXResources& dxr)
   : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, wxString {}, std::filesystem::path {})) {
+    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
 }
 
 DCSMissionTab::~DCSMissionTab() {
 }
 
-std::wstring DCSMissionTab::GetTitle() const {
-  static std::wstring sCache;
-  if (!sCache.empty()) [[likely]] {
-    return sCache;
-  }
-  sCache = _("Mission").ToStdWstring();
-  return sCache;
+utf8_string DCSMissionTab::GetTitle() const {
+  return _("Mission");
 }
 
 void DCSMissionTab::Reload() {
@@ -125,7 +120,7 @@ const char* DCSMissionTab::GetGameEventName() const {
 void DCSMissionTab::Update(
   const std::filesystem::path& _installPath,
   const std::filesystem::path& _savedGamePath,
-  const std::string& value) {
+  utf8_string_view value) {
   auto mission = std::filesystem::canonical(value);
 
   if (mission == mMission) {

@@ -36,14 +36,14 @@ class FolderTab : public TabWithDoodles,
  public:
   FolderTab(
     const DXResources&,
-    const wxString& title,
+    utf8_string_view title,
     const std::filesystem::path& path);
   explicit FolderTab(
     const DXResources&,
-    const wxString& title,
+    utf8_string_view title,
     const nlohmann::json&);
   virtual ~FolderTab();
-  virtual std::wstring GetTitle() const override;
+  virtual utf8_string GetTitle() const override;
 
   static std::shared_ptr<FolderTab> Create(
     wxWindow* parent,

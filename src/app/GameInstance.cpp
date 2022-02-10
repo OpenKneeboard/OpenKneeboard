@@ -19,13 +19,14 @@
 #include "GameInstance.h"
 
 #include <OpenKneeboard/Game.h>
+#include <OpenKneeboard/utf8.h>
 
 namespace OpenKneeboard {
 
 nlohmann::json GameInstance::ToJson() const {
   return {
     {"Name", this->name},
-    {"Path", this->path.string()},
+    {"Path", to_utf8(this->path)},
     {"Type", this->game->GetNameForConfigFile()},
   };
 }

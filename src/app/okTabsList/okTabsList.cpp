@@ -62,7 +62,7 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
       continue;
     }
 
-    const std::wstring title = tab.at("Title");
+    const std::string title = tab.at("Title");
     const std::string type = tab.at("Type");
 
     nlohmann::json settings;
@@ -112,7 +112,7 @@ nlohmann::json okTabsList::GetSettings() const {
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
     if (type.empty()) {
-      dprintf(L"Unknown type for tab {}", tab->GetTitle());
+      dprintf("Unknown type for tab {}", tab->GetTitle());
       continue;
     }
 

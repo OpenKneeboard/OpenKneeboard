@@ -14,10 +14,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
+#include <OpenKneeboard/Games/DCSWorld.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard\Games\DCSWorld.h>
+#include <OpenKneeboard/utf8.h>
 #include <ShlObj.h>
 #include <Windows.h>
 #include <fmt/format.h>
@@ -55,7 +57,7 @@ static std::filesystem::path GetSavedGamesPath() {
   if (
     SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &buffer) == S_OK
     && buffer) {
-    sPath = std::filesystem::canonical(std::wstring(buffer));
+    sPath = std::filesystem::canonical(std::wstring_view(buffer));
   }
   return sPath;
 }
@@ -80,17 +82,18 @@ std::filesystem::path DCSWorld::GetSavedGamesPath(Version version) {
   return {};
 }
 
-wxString DCSWorld::GetUserFriendlyName(
+std::string DCSWorld::GetUserFriendlyName(
   const std::filesystem::path& _path) const {
   const auto path = std::filesystem::canonical(_path);
   if (path == GetInstalledPath(Version::OPEN_BETA) / "bin" / "DCS.exe") {
-    return _("DCS World - Open Beta");
+    return _("DCS World - Open Beta").utf8_string();
   }
   if (path == GetInstalledPath(Version::STABLE) / "bin" / "DCS.exe") {
-    return _("DCS World - Stable");
+    return _("DCS World - Stable").utf8_string();
   }
-  return _("DCS World");
+  return _("DCS World").utf8_string();
 }
+
 std::vector<std::filesystem::path> DCSWorld::GetInstalledPaths() const {
   std::vector<std::filesystem::path> ret;
   for (const auto& path: {

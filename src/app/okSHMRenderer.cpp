@@ -81,22 +81,22 @@ class okSHMRenderer::Impl {
   bool mCursorTouchOnNavButton;
   D2D1_RECT_F mNavButton;
 
-  void RenderError(const wxString& tabTitle, const wxString& message);
+  void RenderError(utf8_string_view tabTitle, utf8_string_view message);
   void CopyPixelsToSHM();
   void RenderWithChrome(
-    const wxString& tabTitle,
+    const std::string_view tabTitle,
     const D2D1_SIZE_U& preferredContentSize,
     const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
 
   void OnCursorEvent(const CursorEvent&);
 
  private:
-  void RenderErrorImpl(const wxString& message, const D2D1_RECT_F&);
+  void RenderErrorImpl(utf8_string_view message, const D2D1_RECT_F&);
 };
 
 void okSHMRenderer::Impl::RenderError(
-  const wxString& tabTitle,
-  const wxString& message) {
+  utf8_string_view tabTitle,
+  utf8_string_view message) {
   this->RenderWithChrome(
     tabTitle,
     {768, 1024},
@@ -104,13 +104,13 @@ void okSHMRenderer::Impl::RenderError(
 }
 
 void okSHMRenderer::Impl::RenderErrorImpl(
-  const wxString& message,
+  utf8_string_view message,
   const D2D1_RECT_F& rect) {
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->FillRectangle(rect, mErrorBGBrush.get());
 
-  mErrorRenderer->Render(message.ToStdWstring(), rect);
+  mErrorRenderer->Render(message, rect);
 }
 
 void okSHMRenderer::Impl::CopyPixelsToSHM() {
@@ -266,7 +266,7 @@ void okSHMRenderer::Render(
 }
 
 void okSHMRenderer::Impl::RenderWithChrome(
-  const wxString& tabTitle,
+  std::string_view tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
   auto ctx = mDXR.mD2DDeviceContext;
@@ -307,7 +307,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
     L"",
     headerFormat.put());
 
-  auto title = tabTitle.ToStdWstring();
+  auto title = winrt::to_hstring(tabTitle);
   winrt::com_ptr<IDWriteTextLayout> headerLayout;
   dwf->CreateTextLayout(
     title.data(),
