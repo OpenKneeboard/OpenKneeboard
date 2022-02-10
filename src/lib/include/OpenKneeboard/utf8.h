@@ -84,6 +84,9 @@ class utf8_string final : public std::string {
   utf8_string(T in) : std::string(to_utf8(in)) {
   }
 
+  explicit constexpr utf8_string(utf8_string_view in) : std::string(in) {
+  }
+
   constexpr operator utf8_string_view() const {
     return utf8_string_view(static_cast<std::string_view>(*this));
   }
