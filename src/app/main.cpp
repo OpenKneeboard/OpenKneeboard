@@ -20,9 +20,27 @@
 
 #include "okMainWindow.h"
 
+#include <OpenKneeboard/SHM.h>
+
 class OpenKneeboardApp final : public wxApp {
  public:
   virtual bool OnInit() override {
+    {
+      // If already running, make the other instance active.
+      //
+      // There's more common ways to do this, but given we already have the SHM
+      // and the SHM has a handy HWND, might as well use that.
+      OpenKneeboard::SHM::Reader shm;
+      if (shm) {
+        auto snapshot = shm.MaybeGet();
+        if (snapshot && snapshot.GetConfig().feederWindow) {
+          ShowWindow(snapshot.GetConfig().feederWindow, SW_SHOWNORMAL);
+          SetForegroundWindow(snapshot.GetConfig().feederWindow);
+          return false;
+        }
+      }
+    }
+
     wxInitAllImageHandlers();
     (new okMainWindow())->Show();
     return true;
