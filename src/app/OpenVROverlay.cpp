@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okOpenVRThread.h"
+#include "OpenVROverlay.h"
 
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
@@ -31,14 +31,15 @@
 #include <shims/winrt.h>
 
 #include <filesystem>
+#include <thread>
 
 #pragma comment(lib, "D3D11.lib")
 
-using namespace OpenKneeboard;
-
 using namespace DirectX::SimpleMath;
 
-class okOpenVRThread::Impl final {
+namespace OpenKneeboard {
+
+class OpenVROverlay::Impl final {
  private:
   winrt::com_ptr<ID3D11Device1> mD3D;
 
@@ -64,10 +65,10 @@ class okOpenVRThread::Impl final {
   }
 };
 
-okOpenVRThread::okOpenVRThread() : p(std::make_unique<Impl>()) {
+OpenVROverlay::OpenVROverlay() : p(std::make_unique<Impl>()) {
 }
 
-okOpenVRThread::~okOpenVRThread() {
+OpenVROverlay::~OpenVROverlay() {
 }
 
 static bool overlay_check(vr::EVROverlayError err, const char* method) {
@@ -81,7 +82,7 @@ static bool overlay_check(vr::EVROverlayError err, const char* method) {
   return false;
 }
 
-void okOpenVRThread::Tick() {
+void OpenVROverlay::Tick() {
   if (!p->mIVRSystem) {
     vr::EVRInitError err;
     p->mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
@@ -281,7 +282,7 @@ void okOpenVRThread::Tick() {
 #undef CHECK
 }
 
-ID3D11Device1* okOpenVRThread::Impl::D3D() {
+ID3D11Device1* OpenVROverlay::Impl::D3D() {
   if (mD3D) {
     return mD3D.get();
   }
@@ -333,29 +334,33 @@ static bool IsSteamVRRunning() {
   return false;
 }
 
-wxThread::ExitCode okOpenVRThread::Entry() {
+bool OpenVROverlay::Run(std::stop_token stopToken) {
   if (!vr::VR_IsRuntimeInstalled()) {
-    dprint("Shutting down OpenVR thread, no runtime installed.");
-    return {0};
+    dprint("Stopping OpenVR support, no runtime installed.");
+    return true;
   }
 
   if (!p->D3D()) {
-    dprint("Shutting down OpenVR thread, failed to get D3D11 device");
-    return {0};
+    dprint("Stopping OpenVR support, failed to get D3D11 device");
+    return false;
   }
 
-  const auto inactiveSleepMS = 1000;
-  const auto frameSleepMS = 1000 / 90;
+  const auto inactiveSleep = std::chrono::seconds(1);
+  const auto frameSleep = std::chrono::milliseconds(1000 / 90);
 
-  while (IsAlive()) {
+  dprint("Initializing OpenVR support");
+
+  while (!stopToken.stop_requested()) {
     if (!IsSteamVRRunning()) {
-      wxThread::This()->Sleep(inactiveSleepMS);
+      std::this_thread::sleep_for(inactiveSleep);
       continue;
     }
 
     this->Tick();
-    wxThread::This()->Sleep(p->mIVRSystem ? frameSleepMS : inactiveSleepMS);
+    std::this_thread::sleep_for(p->mIVRSystem ? frameSleep : inactiveSleep);
   }
 
-  return {0};
+  return true;
 }
+
+}// namespace OpenKneeboard

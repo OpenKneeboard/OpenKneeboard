@@ -17,47 +17,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okGameInjectorThread.h"
+#include "GameInjector.h"
+
+// clang-format off
+#include <Windows.h>
+#include <TlHelp32.h>
+#include <Psapi.h>
+// clang-format on
 
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
-#include <Psapi.h>
-#include <TlHelp32.h>
 #include <shims/winrt.h>
 
+#include <chrono>
 #include <mutex>
+#include <thread>
 
-#include "okEvents.h"
+#include "GameInstance.h"
 #include "scope_guard.h"
+
+namespace {
 
 using namespace OpenKneeboard;
 
-class okGameInjectorThread::Impl final {
- public:
-  wxEvtHandler* mReceiver;
-  std::vector<GameInstance> mGames;
-  std::mutex mGamesMutex;
-};
-
-okGameInjectorThread::okGameInjectorThread(
-  wxEvtHandler* receiver,
-  const std::vector<GameInstance>& games) {
-  p.reset(new Impl {
-    .mReceiver = receiver,
-    .mGames = games,
-  });
-}
-
-okGameInjectorThread::~okGameInjectorThread() {
-}
-
-void okGameInjectorThread::SetGameInstances(
-  const std::vector<GameInstance>& games) {
-  std::scoped_lock lock(p->mGamesMutex);
-  p->mGames = games;
-}
-
-namespace {
 class DebugPrivileges final {
  private:
   winrt::handle mToken;
@@ -188,7 +170,14 @@ bool HaveWintab() {
 
 }// namespace
 
-wxThread::ExitCode okGameInjectorThread::Entry() {
+namespace OpenKneeboard {
+
+void GameInjector::SetGameInstances(const std::vector<GameInstance>& games) {
+  std::scoped_lock lock(mGamesMutex);
+  mGames = games;
+}
+
+bool GameInjector::Run(std::stop_token stopToken) {
   wchar_t buf[MAX_PATH];
   GetModuleFileNameW(NULL, buf, MAX_PATH);
   const auto executablePath
@@ -204,17 +193,17 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
   process.dwSize = sizeof(process);
   MODULEENTRY32 module;
   module.dwSize = sizeof(module);
-  dprint("Looking for game processes...");
-  while (IsAlive()) {
+  dprint("Watching for game processes");
+  while (!stopToken.stop_requested()) {
     winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
     if (!snapshot) {
       dprintf("CreateToolhelp32Snapshot failed in {}", __FILE__);
-      return ExitCode(1);
+      return false;
     }
 
     if (!Process32First(snapshot.get(), &process)) {
       dprintf("Process32First failed: {}", GetLastError());
-      return ExitCode(2);
+      return false;
     }
 
     std::filesystem::path currentPath;
@@ -229,25 +218,21 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
       QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
       auto path = std::filesystem::canonical(std::wstring_view(buf, bufSize));
 
-      std::scoped_lock lock(p->mGamesMutex);
-      for (const auto& game: p->mGames) {
+      std::scoped_lock lock(mGamesMutex);
+      for (const auto& game: mGames) {
         if (path != game.path) {
           continue;
         }
 
         const auto friendly = game.game->GetUserFriendlyName(path);
+        if (path != currentPath) {
+          evGameChanged.EmitFromMainThread(game);
+        }
         if (AlreadyInjected(processHandle.get(), markerDll)) {
-          if (path != currentPath) {
-            currentPath = path;
-            wxCommandEvent ev(okEVT_GAME_CHANGED);
-            ev.SetString(path.wstring());
-            wxQueueEvent(p->mReceiver, ev.Clone());
-          }
           break;
         }
 
-        dprintf(
-          "Found '{}' - PID {}", friendly, process.th32ProcessID);
+        dprintf("Found '{}' - PID {}", friendly, process.th32ProcessID);
 
         InjectDll(processHandle.get(), markerDll);
 
@@ -266,14 +251,13 @@ wxThread::ExitCode okGameInjectorThread::Entry() {
         }
 
         currentPath = path;
-        wxCommandEvent ev(okEVT_GAME_CHANGED);
-        ev.SetString(path.wstring());
-        wxQueueEvent(p->mReceiver, ev.Clone());
         break;
       }
     } while (Process32Next(snapshot.get(), &process));
 
-    wxThread::This()->Sleep(200);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
-  return ExitCode(0);
+  return true;
 }
+
+}// namespace OpenKneeboard

@@ -17,50 +17,43 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okGameEventMailslotThread.h"
+#include "GameEventServer.h"
 
-#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 #include <shims/winrt.h>
 
-using namespace OpenKneeboard;
+#include <thread>
 
-wxDEFINE_EVENT(okEVT_GAME_EVENT, wxThreadEvent);
+namespace OpenKneeboard {
 
-okGameEventMailslotThread::okGameEventMailslotThread(wxFrame* parent)
-  : wxThread(), mParent(parent) {
-}
-
-okGameEventMailslotThread::~okGameEventMailslotThread() {
-}
-
-wxThread::ExitCode okGameEventMailslotThread::Entry() {
+bool GameEventServer::Run(std::stop_token stopToken) {
   winrt::file_handle handle {CreateMailslotA(
     GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr)};
   if (!handle) {
-    dprint("Failed to create mailslot");
-    return ExitCode(1);
+    dprint("Failed to create GameEvent mailslot");
+    return false;
   }
 
-  dprint("Started listening for game events.");
+  dprint("Started listening for game events");
 
-  while (IsAlive()) {
+  while (!stopToken.stop_requested()) {
     DWORD unreadMessageCount = 0;
     DWORD nextMessageSize = 0;
     GetMailslotInfo(
       handle.get(), nullptr, &nextMessageSize, &unreadMessageCount, nullptr);
     if (unreadMessageCount == 0) {
-      this->Sleep(100);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
       continue;
     }
+
     std::vector<std::byte> buffer(nextMessageSize);
     DWORD bytesRead;
     if (!ReadFile(
           handle.get(),
           reinterpret_cast<void*>(buffer.data()),
-          buffer.size(),
+          static_cast<DWORD>(buffer.size()),
           &bytesRead,
           nullptr)) {
       dprintf("GameEvent ReadFile failed: {}", GetLastError());
@@ -71,12 +64,10 @@ wxThread::ExitCode okGameEventMailslotThread::Entry() {
       continue;
     }
 
-    auto ge = GameEvent::Unserialize(buffer);
-
-    wxThreadEvent ev(okEVT_GAME_EVENT);
-    ev.SetPayload(ge);
-    wxQueueEvent(mParent, ev.Clone());
+    evGameEvent.EmitFromMainThread(GameEvent::Unserialize(buffer));
   }
 
-  return ExitCode(0);
+  return true;
+}
+
 }

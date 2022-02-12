@@ -14,15 +14,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "okGamesList.h"
 
 #include <OpenKneeboard/Games/DCSWorld.h>
 
+#include "GameInjector.h"
 #include "GenericGame.h"
 #include "okEvents.h"
-#include "okGameInjectorThread.h"
 #include "okGamesList_SettingsUI.h"
 
 using namespace OpenKneeboard;
@@ -37,8 +38,11 @@ okGamesList::okGamesList(const nlohmann::json& config) {
     LoadSettings(config);
   }
 
-  mInjector = new okGameInjectorThread(this, mInstances);
-  mInjector->Run();
+  mInjector = std::make_unique<GameInjector>();
+  AddEventListener(mInjector->evGameChanged, this->evGameChanged);
+  mInjectorThread = std::jthread([this](std::stop_token stopToken) {
+    mInjector->Run(stopToken);
+  });
 }
 
 void okGamesList::LoadDefaultSettings() {

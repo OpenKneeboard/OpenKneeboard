@@ -14,24 +14,24 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
-#include <shims/wx.h>
+#include <OpenKneeboard/GameEvent.h>
 
-#include <wx/thread.h>
+#include <stop_token>
 
-wxDECLARE_EVENT(okEVT_GAME_EVENT, wxThreadEvent);
+#include "Events.h"
 
-class okGameEventMailslotThread final : public wxThread {
- private:
-  wxFrame* mParent;
+namespace OpenKneeboard {
 
+class GameEventServer final {
  public:
-  okGameEventMailslotThread(wxFrame* parent);
-  ~okGameEventMailslotThread();
+  Event<GameEvent> evGameEvent;
 
- protected:
-  virtual ExitCode Entry() override;
+  bool Run(std::stop_token);
 };
+
+}

@@ -14,25 +14,31 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
 #include <OpenKneeboard/Game.h>
 
+#include <thread>
+
+#include "Events.h"
 #include "GameInstance.h"
 #include "okConfigurableComponent.h"
 
-class okGameInjectorThread;
+namespace OpenKneeboard {
+class GameInjector;
+}
 
 class okGamesList final : public okConfigurableComponent {
  private:
   class SettingsUI;
   std::vector<std::shared_ptr<OpenKneeboard::Game>> mGames;
   std::vector<OpenKneeboard::GameInstance> mInstances;
-  okGameInjectorThread* mInjector = nullptr;
+  std::unique_ptr<OpenKneeboard::GameInjector> mInjector;
+  std::jthread mInjectorThread;
 
- private:
   void LoadDefaultSettings();
   void LoadSettings(const nlohmann::json&);
 
@@ -42,4 +48,6 @@ class okGamesList final : public okConfigurableComponent {
   virtual ~okGamesList();
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const override;
+
+  OpenKneeboard::Event<OpenKneeboard::GameInstance> evGameChanged;
 };

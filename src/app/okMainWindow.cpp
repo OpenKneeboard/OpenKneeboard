@@ -28,12 +28,13 @@
 #include <functional>
 #include <limits>
 
+#include "GameEventServer.h"
 #include "KneeboardState.h"
+#include "OpenVROverlay.h"
 #include "TabState.h"
 #include "okAboutBox.h"
 #include "okDirectInputController.h"
 #include "okEvents.h"
-#include "okGameEventMailslotThread.h"
 #include "okGamesList.h"
 
 using namespace OpenKneeboard;
@@ -47,17 +48,20 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
 
   InitUI();
 
-	if (*mTablet) {
-		mCursorEventTimer.Bind(
-			wxEVT_TIMER, [this](auto&){ this->FlushCursorEvents(); });
-		mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
-	}
+  if (*mTablet) {
+    mCursorEventTimer.Bind(
+      wxEVT_TIMER, [this](auto&) { this->FlushCursorEvents(); });
+    mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
+  }
 
-  (new okOpenVRThread())->Run();
-  (new okGameEventMailslotThread(this))->Run();
-
-
-  this->Bind(okEVT_GAME_EVENT, &okMainWindow::PostGameEvent, this);
+  mOpenVRThread = std::jthread(
+    [](std::stop_token stopToken) { OpenVROverlay().Run(stopToken); });
+  mGameEventThread = std::jthread([this](std::stop_token stopToken) {
+    GameEventServer server;
+    this->AddEventListener(
+      server.evGameEvent, &okMainWindow::PostGameEvent, this);
+    server.Run(stopToken);
+  });
 
   {
     auto gl = new okGamesList(mSettings.Games);
@@ -120,7 +124,6 @@ okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
       x *= scale;
       y *= scale;
 
-
       // 2. translate to content origgin
 
       const auto contentRenderRect = mKneeboard->GetContentRenderRect();
@@ -181,8 +184,7 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
   mKneeboard->SetTabIndex(tab);
 }
 
-void okMainWindow::PostGameEvent(wxThreadEvent& ev) {
-  const auto ge = ev.GetPayload<GameEvent>();
+void okMainWindow::PostGameEvent(const GameEvent& ge) {
   mKneeboard->PostGameEvent(ge);
   mKneeboard->evFlushEvent();
 }
@@ -293,5 +295,4 @@ void okMainWindow::InitUI() {
   auto sizer = new wxBoxSizer(wxVERTICAL);
   sizer->Add(mNotebook, 1, wxEXPAND);
   this->SetSizerAndFit(sizer);
-
 }

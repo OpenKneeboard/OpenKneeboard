@@ -21,16 +21,15 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <shims/wx.h>
 #include <wx/frame.h>
 
 #include <memory>
+#include <thread>
 
 #include "Events.h"
 #include "Settings.h"
-#include "okOpenVRThread.h"
 #include "okSHMRenderer.h"
 #include "okTab.h"
 #include "okTabsList.h"
@@ -39,6 +38,7 @@ class wxBookCtrlEvent;
 class wxNotebook;
 
 namespace OpenKneeboard {
+struct GameEvent;
 class KneeboardState;
 }
 
@@ -54,7 +54,7 @@ class okMainWindow final : public wxFrame,
 
  private:
   void OnExit(wxCommandEvent&);
-  void PostGameEvent(wxThreadEvent&);
+  void PostGameEvent(const OpenKneeboard::GameEvent&);
   void OnShowSettings(wxCommandEvent&);
 
   void OnPreviousTab(wxCommandEvent&);
@@ -77,6 +77,9 @@ class okMainWindow final : public wxFrame,
   std::vector<OpenKneeboard::CursorEvent> mBufferedCursorEvents;
   void FlushCursorEvents();
   wxTimer mCursorEventTimer;
+
+  std::jthread mGameEventThread;
+  std::jthread mOpenVRThread;
 
   void InitUI();
 };

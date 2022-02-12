@@ -74,11 +74,6 @@ TabletProxy::TabletProxy() {
 }
 
 TabletProxy::~TabletProxy() {
-  mWatchThread.request_stop();
-  if (mWatchThread.joinable()) {
-    mWatchThread.join();
-  }
-
   Detach();
 }
 

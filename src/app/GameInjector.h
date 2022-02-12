@@ -19,24 +19,27 @@
  */
 #pragma once
 
-#include <shims/wx.h>
-#include <wx/thread.h>
-
+#include <stop_token>
 #include <memory>
+#include <mutex>
 #include <vector>
 
-class okOpenVRThread final : public wxThread {
- private:
-  class Impl;
-  std::unique_ptr<Impl> p;
+#include "Events.h"
 
+namespace OpenKneeboard {
+
+struct GameInstance;
+
+class GameInjector final {
  public:
-  okOpenVRThread();
-  ~okOpenVRThread();
+  bool Run(std::stop_token);
 
- protected:
-  virtual ExitCode Entry() override;
+  Event<GameInstance> evGameChanged;
+  void SetGameInstances(const std::vector<GameInstance>&);
 
  private:
-  void Tick();
+  std::vector<GameInstance> mGames;
+  std::mutex mGamesMutex;
 };
+
+}
