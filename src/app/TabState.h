@@ -27,8 +27,6 @@
 
 #include "Events.h"
 
-class wxCommandEvent;
-
 namespace OpenKneeboard {
 
 struct CursorEvent;

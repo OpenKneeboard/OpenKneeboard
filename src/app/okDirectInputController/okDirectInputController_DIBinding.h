@@ -18,8 +18,6 @@
  */
 #pragma once
 
-#include <shims/wx.h>
-
 #include <guiddef.h>
 
 #include "okDirectInputController.h"

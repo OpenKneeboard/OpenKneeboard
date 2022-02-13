@@ -25,10 +25,6 @@
 #include <OpenKneeboard/TabWithNavigation.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <shims/wx.h>
-#include <wx/event.h>
-
-#include "okEvents.h"
 
 namespace OpenKneeboard {
 
