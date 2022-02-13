@@ -40,36 +40,33 @@ struct okDirectInputController::SettingsUI::DeviceButtons {
   wxButton* nextPage = nullptr;
   wxButton* toggleVisibility = nullptr;
 
-  wxButton* Get(const wxEventTypeTag<wxCommandEvent>& evt) {
-    if (evt == okEVT_PREVIOUS_TAB) {
-      return previousTab;
+  wxButton* Get(OpenKneeboard::UserAction action) {
+    switch (action) {
+      case UserAction::PREVIOUS_TAB:
+        return previousTab;
+      case UserAction::NEXT_TAB:
+        return nextTab;
+      case UserAction::PREVIOUS_PAGE:
+        return previousPage;
+      case UserAction::NEXT_PAGE:
+        return nextPage;
+      case UserAction::TOGGLE_VISIBILITY:
+        return toggleVisibility;
     }
-    if (evt == okEVT_NEXT_TAB) {
-      return nextTab;
-    }
-    if (evt == okEVT_PREVIOUS_PAGE) {
-      return previousPage;
-    }
-    if (evt == okEVT_NEXT_PAGE) {
-      return nextPage;
-    }
-    if (evt == okEVT_TOGGLE_VISIBILITY) {
-      return toggleVisibility;
-    }
+    OPENKNEEBOARD_BREAK;
     return nullptr;
-  }
+  };
 };
 
 wxButton* okDirectInputController::SettingsUI::CreateBindButton(
   wxWindow* parent,
   int deviceIndex,
-  const wxEventTypeTag<wxCommandEvent>& eventType) {
+  UserAction action) {
   const auto& device = mDevices.at(deviceIndex);
   auto label = _("Bind");
   for (auto binding: mControllerState->bindings) {
     if (
-      binding.instanceGuid == device.guidInstance
-      && binding.eventType == eventType) {
+      binding.instanceGuid == device.guidInstance && binding.action == action) {
       label = fmt::format(
         fmt::runtime(_("Button {}").ToStdString()), binding.buttonIndex + 1);
       break;
@@ -77,7 +74,7 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
   }
   auto button = new wxButton(parent, wxID_ANY, label);
   button->Bind(wxEVT_BUTTON, [=](auto& ev) {
-    this->OnBindButton(ev, deviceIndex, eventType);
+    this->OnBindButton(ev, deviceIndex, action);
   });
   return button;
 }
@@ -117,19 +114,19 @@ okDirectInputController::SettingsUI::SettingsUI(
     auto label = new wxStaticText(panel, wxID_ANY, device.tszInstanceName);
     grid->Add(label, wxGBPosition(row, 0));
 
-    auto toggleVisibility = CreateBindButton(panel, i, okEVT_TOGGLE_VISIBILITY);
+    auto toggleVisibility = CreateBindButton(panel, i, UserAction::TOGGLE_VISIBILITY);
     grid->Add(toggleVisibility, wxGBPosition(row, 1));
 
-    auto previousTab = CreateBindButton(panel, i, okEVT_PREVIOUS_TAB);
+    auto previousTab = CreateBindButton(panel, i, UserAction::PREVIOUS_TAB);
     grid->Add(previousTab, wxGBPosition(row, 2));
 
-    auto nextTab = CreateBindButton(panel, i, okEVT_NEXT_TAB);
+    auto nextTab = CreateBindButton(panel, i, UserAction::NEXT_TAB);
     grid->Add(nextTab, wxGBPosition(row, 3));
 
-    auto previousPage = CreateBindButton(panel, i, okEVT_PREVIOUS_PAGE);
+    auto previousPage = CreateBindButton(panel, i, UserAction::PREVIOUS_PAGE);
     grid->Add(previousPage, wxGBPosition(row, 4));
 
-    auto nextPage = CreateBindButton(panel, i, okEVT_NEXT_PAGE);
+    auto nextPage = CreateBindButton(panel, i, UserAction::NEXT_PAGE);
     grid->Add(nextPage, wxGBPosition(row, 5));
 
     mDeviceButtons.push_back({
@@ -183,7 +180,7 @@ wxDialog* okDirectInputController::SettingsUI::CreateBindInputDialog(
 void okDirectInputController::SettingsUI::OnBindButton(
   wxCommandEvent& ev,
   int deviceIndex,
-  const wxEventTypeTag<wxCommandEvent>& eventType) {
+  UserAction action) {
   auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
   auto& device = mDevices.at(deviceIndex);
 
@@ -196,7 +193,7 @@ void okDirectInputController::SettingsUI::OnBindButton(
     if (it->instanceGuid != device.guidInstance) {
       continue;
     }
-    if (it->eventType != eventType) {
+    if (it->action != action) {
       continue;
     }
     currentBinding = it;
@@ -205,10 +202,7 @@ void okDirectInputController::SettingsUI::OnBindButton(
   auto d = CreateBindInputDialog(currentBinding != bindings.end());
 
   wxON_BLOCK_EXIT_SET(mControllerState->hook, nullptr);
-  mControllerState->hook = this;
-
-  auto f = [=, &bindings](wxThreadEvent& ev) {
-    auto be = ev.GetPayload<DIButtonEvent>();
+  mControllerState->hook = [=, &bindings](const DIButtonEvent& be) {
     if (be.instance.guidInstance != device.guidInstance) {
       return;
     }
@@ -221,12 +215,12 @@ void okDirectInputController::SettingsUI::OnBindButton(
         continue;
       }
 
-      if (it->buttonIndex != be.buttonIndex && it->eventType != eventType) {
+      if (it->buttonIndex != be.buttonIndex && it->action != action) {
         ++it;
         continue;
       }
 
-      auto button = this->mDeviceButtons.at(deviceIndex).Get(it->eventType);
+      auto button = this->mDeviceButtons.at(deviceIndex).Get(it->action);
       if (button) {
         button->SetLabel(_("Bind"));
       }
@@ -239,20 +233,18 @@ void okDirectInputController::SettingsUI::OnBindButton(
       {.instanceGuid = device.guidInstance,
        .instanceName = to_utf8(device.tszInstanceName),
        .buttonIndex = be.buttonIndex,
-       .eventType = eventType});
+       .action = action});
     wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
     d->Close();
   };
 
-  this->Bind(okEVT_DI_BUTTON, f);
   d->Bind(okEVT_DI_CLEAR_BINDING_BUTTON, [=, &bindings](auto&) {
     bindings.erase(currentBinding);
-    auto button = this->mDeviceButtons.at(deviceIndex).Get(eventType);
+    auto button = this->mDeviceButtons.at(deviceIndex).Get(action);
     if (button) {
       button->SetLabel(_("Bind"));
     }
     wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
   });
   d->ShowModal();
-  this->Unbind(okEVT_DI_BUTTON, f);
 }

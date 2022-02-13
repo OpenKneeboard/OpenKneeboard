@@ -57,9 +57,7 @@ class okMainWindow final : public wxFrame,
   void PostGameEvent(const OpenKneeboard::GameEvent&);
   void OnShowSettings(wxCommandEvent&);
 
-  void OnPreviousTab(wxCommandEvent&);
-  void OnNextTab(wxCommandEvent&);
-  void OnToggleVisibility(wxCommandEvent&);
+  void OnToggleVisibility();
 
   void OnTabChanged(wxBookCtrlEvent&);
 

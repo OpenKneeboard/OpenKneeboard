@@ -77,13 +77,30 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     auto dipc = new okDirectInputController(mSettings.DirectInput);
     mConfigurables.push_back(dipc);
 
-    dipc->Bind(okEVT_PREVIOUS_TAB, &okMainWindow::OnPreviousTab, this);
-    dipc->Bind(okEVT_NEXT_TAB, &okMainWindow::OnNextTab, this);
-    // TODO: make okDirectInputController directly act on mKneeboardState
-    dipc->Bind(okEVT_PREVIOUS_PAGE, [=](auto&) { mKneeboard->PreviousPage(); });
-    dipc->Bind(okEVT_NEXT_PAGE, [=](auto&) { mKneeboard->NextPage(); });
-    dipc->Bind(
-      okEVT_TOGGLE_VISIBILITY, &okMainWindow::OnToggleVisibility, this);
+    AddEventListener(
+      dipc->evUserAction,
+      [=](UserAction action) {
+        switch(action) {
+          case UserAction::PREVIOUS_TAB:
+            mNotebook->AdvanceSelection(false);
+            return;
+          case UserAction::NEXT_TAB:
+            mNotebook->AdvanceSelection(true);
+            return;
+          case UserAction::PREVIOUS_PAGE:
+            mKneeboard->PreviousPage();
+            return;
+          case UserAction::NEXT_PAGE:
+            mKneeboard->NextPage();
+            return;
+          case UserAction::TOGGLE_VISIBILITY:
+            this->OnToggleVisibility();
+            return;
+        }
+        OPENKNEEBOARD_BREAK;
+        return;
+      }
+    );
 
     dipc->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
       this->mSettings.DirectInput = dipc->GetSettings();
@@ -218,15 +235,7 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
   w->Show(true);
 }
 
-void okMainWindow::OnPreviousTab(wxCommandEvent&) {
-  mNotebook->AdvanceSelection(false);
-}
-
-void okMainWindow::OnNextTab(wxCommandEvent&) {
-  mNotebook->AdvanceSelection(true);
-}
-
-void okMainWindow::OnToggleVisibility(wxCommandEvent&) {
+void okMainWindow::OnToggleVisibility() {
   if (mSHMRenderer) {
     mSHMRenderer.reset();
     return;

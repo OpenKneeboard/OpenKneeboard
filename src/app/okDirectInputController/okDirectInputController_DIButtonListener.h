@@ -20,21 +20,23 @@
 
 #include <dinput.h>
 #include <shims/winrt.h>
+#include <stop_token>
 
 #include "okDirectInputController.h"
+#include "Events.h"
 
-class okDirectInputController::DIButtonListener final : public wxEvtHandler {
+class okDirectInputController::DIButtonListener final {
  public:
   DIButtonListener(
     const winrt::com_ptr<IDirectInput8>& di,
     const std::vector<DIDEVICEINSTANCE>& instances);
   ~DIButtonListener();
-  void Cancel();
 
-  DIButtonEvent Poll();
+  OpenKneeboard::Event<DIButtonEvent> evButtonEvent;
+
+  void Run(std::stop_token);
 
  private:
   struct DeviceInfo;
   std::vector<DeviceInfo> mDevices;
-  HANDLE mCancelHandle = INVALID_HANDLE_VALUE;
 };

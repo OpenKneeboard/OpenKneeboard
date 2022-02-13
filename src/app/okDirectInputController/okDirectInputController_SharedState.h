@@ -24,9 +24,10 @@
 
 #include "okDirectInputController.h"
 #include "okDirectInputController_DIBinding.h"
+#include "okDirectInputController_DIButtonEvent.h"
 
 struct okDirectInputController::SharedState {
   winrt::com_ptr<IDirectInput8> di8;
   std::vector<DIBinding> bindings;
-  wxEvtHandler* hook = nullptr;
+  std::function<void(const DIButtonEvent&)> hook;
 };

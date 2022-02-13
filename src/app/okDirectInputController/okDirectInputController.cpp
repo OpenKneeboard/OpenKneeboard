@@ -23,11 +23,12 @@
 #include <dinput.h>
 #include <shims/winrt.h>
 
+#include <thread>
+
 #include "GetDirectInputDevices.h"
 #include "okDirectInputController_DIBinding.h"
 #include "okDirectInputController_DIButtonEvent.h"
 #include "okDirectInputController_DIButtonListener.h"
-#include "okDirectInputController_DIThread.h"
 #include "okDirectInputController_SettingsUI.h"
 #include "okDirectInputController_SharedState.h"
 #include "okEvents.h"
@@ -59,7 +60,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices, Bindings);
 }// namespace
 
 struct okDirectInputController::State : public SharedState {
-  std::unique_ptr<DIThread> directInputThread;
+  std::jthread mDIThread;
 };
 
 okDirectInputController::okDirectInputController(
@@ -72,10 +73,15 @@ okDirectInputController::okDirectInputController(
     p->di8.put_void(),
     NULL);
 
-  p->directInputThread = std::make_unique<DIThread>(this, p->di8);
-  p->directInputThread->Run();
-
-  this->Bind(okEVT_DI_BUTTON, &okDirectInputController::OnDIButtonEvent, this);
+  p->mDIThread = std::jthread([=](std::stop_token stopToken) {
+    DIButtonListener listener(p->di8, GetDirectInputDevices(p->di8));
+    this->AddEventListener(
+      listener.evButtonEvent,
+      &okDirectInputController::OnDIButtonEvent,
+      this
+    );
+    listener.Run(stopToken);
+  });
 
   JSONSettings settings;
   try {
@@ -90,10 +96,10 @@ okDirectInputController::okDirectInputController(
       continue;
     }
 
-    std::optional<wxEventTypeTag<wxCommandEvent>> eventType;
+    std::optional<UserAction> action;
 #define ACTION(x) \
   if (binding.Action == #x) { \
-    eventType = okEVT_##x; \
+    action = UserAction::x; \
   }
     ACTION(PREVIOUS_TAB);
     ACTION(NEXT_TAB);
@@ -101,7 +107,7 @@ okDirectInputController::okDirectInputController(
     ACTION(NEXT_PAGE);
     ACTION(TOGGLE_VISIBILITY);
 #undef ACTION
-    if (!eventType) {
+    if (!action) {
       continue;
     }
 
@@ -113,22 +119,20 @@ okDirectInputController::okDirectInputController(
       .instanceGuid = uuid,
       .instanceName = deviceName->second.InstanceName,
       .buttonIndex = binding.ButtonIndex,
-      .eventType = *eventType,
+      .action = *action,
     });
   }
 }
 
 okDirectInputController::~okDirectInputController() {
-  p->directInputThread->Wait();
 }
 
-void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
+void okDirectInputController::OnDIButtonEvent(const DIButtonEvent& be) {
   if (p->hook) {
-    wxQueueEvent(p->hook, ev.Clone());
+    p->hook(be);
     return;
   }
 
-  auto be = ev.GetPayload<DIButtonEvent>();
   if (!be.pressed) {
     // We act on keydown
     return;
@@ -141,7 +145,7 @@ void okDirectInputController::OnDIButtonEvent(const wxThreadEvent& ev) {
     if (it.buttonIndex != be.buttonIndex) {
       continue;
     }
-    wxQueueEvent(this, new wxCommandEvent(it.eventType));
+    evUserAction(it.action);
   }
 }
 
@@ -165,7 +169,7 @@ nlohmann::json okDirectInputController::GetSettings() const {
     settings.Devices[uuid] = {binding.instanceName};
     std::string action;
 #define ACTION(x) \
-  if (binding.eventType == okEVT_##x) { \
+  if (binding.action == UserAction::x) { \
     action = #x; \
   }
     ACTION(PREVIOUS_TAB);

@@ -28,5 +28,5 @@ struct okDirectInputController::DIBinding {
   GUID instanceGuid;
   std::string instanceName;
   uint8_t buttonIndex;
-  wxEventTypeTag<wxCommandEvent> eventType;
+  OpenKneeboard::UserAction action;
 };

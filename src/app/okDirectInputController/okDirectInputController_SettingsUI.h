@@ -39,12 +39,12 @@ class okDirectInputController::SettingsUI final : public wxPanel {
   wxButton* CreateBindButton(
     wxWindow* parent,
     int deviceIndex,
-    const wxEventTypeTag<wxCommandEvent>& eventType);
+    OpenKneeboard::UserAction action);
 
   wxDialog* CreateBindInputDialog(bool haveExistingBinding);
 
   void OnBindButton(
     wxCommandEvent& ev,
     int deviceIndex,
-    const wxEventTypeTag<wxCommandEvent>& eventType);
+    OpenKneeboard::UserAction action);
 };

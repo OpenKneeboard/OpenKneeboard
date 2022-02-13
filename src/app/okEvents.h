@@ -20,10 +20,4 @@
 
 #include <shims/wx.h>
 
-wxDECLARE_EVENT(okEVT_PREVIOUS_TAB, wxCommandEvent);
-wxDECLARE_EVENT(okEVT_NEXT_TAB, wxCommandEvent);
-wxDECLARE_EVENT(okEVT_PREVIOUS_PAGE, wxCommandEvent);
-wxDECLARE_EVENT(okEVT_NEXT_PAGE, wxCommandEvent);
-wxDECLARE_EVENT(okEVT_TOGGLE_VISIBILITY, wxCommandEvent);
-
 wxDECLARE_EVENT(okEVT_SETTINGS_CHANGED, wxCommandEvent);

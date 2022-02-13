@@ -14,17 +14,28 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
 #include <memory>
 
-#include "okActivePageAndTabController.h"
+#include "okConfigurableComponent.h"
+
+namespace OpenKneeboard {
+enum class UserAction {
+  PREVIOUS_TAB,
+  NEXT_TAB,
+  PREVIOUS_PAGE,
+  NEXT_PAGE,
+  TOGGLE_VISIBILITY
+};
+}
 
 // Using DirectInput instead of wxJoystick so we can use
 // all 128 buttons, rather than just the first 32
-class okDirectInputController final : public okActivePageAndTabController {
+class okDirectInputController final : public okConfigurableComponent {
  public:
   okDirectInputController() = delete;
   okDirectInputController(const nlohmann::json& settings);
@@ -33,17 +44,18 @@ class okDirectInputController final : public okActivePageAndTabController {
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const override;
 
+  OpenKneeboard::Event<OpenKneeboard::UserAction> evUserAction;
+
  private:
   struct DIBinding;
   struct DIBindings;
   struct DIButtonEvent;
   class DIButtonListener;
-  class DIThread;
   class SettingsUI;
 
   struct SharedState;
   struct State;
   std::shared_ptr<State> p;
 
-  void OnDIButtonEvent(const wxThreadEvent&);
+  void OnDIButtonEvent(const DIButtonEvent&);
 };
