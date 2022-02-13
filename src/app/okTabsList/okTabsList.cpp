@@ -121,7 +121,7 @@ nlohmann::json okTabsList::GetSettings() const {
       {"Title", tab->GetTitle()},
     };
 
-    auto withSettings = std::dynamic_pointer_cast<okConfigurableComponent>(tab);
+    auto withSettings = std::dynamic_pointer_cast<TabWithSettings>(tab);
     if (withSettings) {
       auto settings = withSettings->GetSettings();
       if (!settings.is_null()) {

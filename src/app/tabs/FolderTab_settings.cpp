@@ -22,6 +22,8 @@
 #include <shims/wx.h>
 #include <wx/dirdlg.h>
 
+#include <nlohmann/json.hpp>
+
 namespace OpenKneeboard {
 
 FolderTab::FolderTab(
@@ -59,10 +61,6 @@ std::shared_ptr<FolderTab> FolderTab::Create(
 
 nlohmann::json FolderTab::GetSettings() const {
   return {{"Path", to_utf8(GetPath())}};
-}
-
-wxWindow* FolderTab::GetSettingsUI(wxWindow* parent) {
-  return nullptr;
 }
 
 }// namespace OpenKneeboard

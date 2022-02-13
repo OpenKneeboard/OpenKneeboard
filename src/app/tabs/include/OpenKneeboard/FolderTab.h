@@ -24,15 +24,15 @@
 #include "Tab.h"
 #include "TabWithDoodles.h"
 #include "TabWithNavigation.h"
-#include "okConfigurableComponent.h"
+#include "TabWithSettings.h"
 
 class wxWindow;
 
 namespace OpenKneeboard {
 
-class FolderTab : public TabWithDoodles,
-                  public TabWithNavigation,
-                  public okConfigurableComponent {
+class FolderTab final : public TabWithDoodles,
+                        public TabWithNavigation,
+                        public TabWithSettings {
  public:
   FolderTab(
     const DXResources&,
@@ -49,7 +49,6 @@ class FolderTab : public TabWithDoodles,
     wxWindow* parent,
     const DXResources&);
 
-  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const final override;
 
   virtual void Reload() final override;

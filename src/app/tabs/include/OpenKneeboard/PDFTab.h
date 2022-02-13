@@ -26,11 +26,13 @@
 #include "Tab.h"
 #include "TabWithDoodles.h"
 #include "TabWithNavigation.h"
-#include "okConfigurableComponent.h"
+#include "TabWithSettings.h"
 
 namespace OpenKneeboard {
 
-class PDFTab final : public TabWithDoodles, public TabWithNavigation, public okConfigurableComponent {
+class PDFTab final : public TabWithDoodles,
+                     public TabWithNavigation,
+                     public TabWithSettings {
  public:
   explicit PDFTab(
     const DXResources&,
@@ -45,7 +47,6 @@ class PDFTab final : public TabWithDoodles, public TabWithNavigation, public okC
   virtual utf8_string GetTitle() const override;
 
   static std::shared_ptr<PDFTab> Create(wxWindow* parent, const DXResources&);
-  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const override;
 
   virtual void Reload() final override;

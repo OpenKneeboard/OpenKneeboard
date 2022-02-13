@@ -22,6 +22,8 @@
 #include <shims/wx.h>
 #include <wx/filedlg.h>
 
+#include <nlohmann/json.hpp>
+
 namespace OpenKneeboard {
 
 PDFTab::PDFTab(
@@ -62,10 +64,6 @@ std::shared_ptr<PDFTab> PDFTab::Create(
 
 nlohmann::json PDFTab::GetSettings() const {
   return {{"Path", to_utf8(GetPath())}};
-}
-
-wxWindow* PDFTab::GetSettingsUI(wxWindow* parent) {
-  return nullptr;
 }
 
 }// namespace OpenKneeboard
