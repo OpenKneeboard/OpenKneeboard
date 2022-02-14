@@ -28,10 +28,9 @@ static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
   return DIENUM_CONTINUE;
 }
 
-DeviceInstances GetDirectInputDevices(
-  const winrt::com_ptr<IDirectInput8>& di8) {
+DeviceInstances GetDirectInputDevices(IDirectInput8W* di) {
   DeviceInstances ret;
-  di8->EnumDevices(
+  di->EnumDevices(
     DI8DEVCLASS_GAMECTRL, &EnumDeviceCallback, &ret, DIEDFL_ATTACHEDONLY);
   return ret;
 }

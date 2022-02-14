@@ -25,15 +25,15 @@
 #include "okDirectInputController.h"
 #include "okDirectInputController_DIBinding.h"
 
-class okDirectInputController::SettingsUI final : public wxPanel {
+class okDirectInputSettings final : public wxPanel {
  public:
-  SettingsUI(wxWindow* parent, const std::shared_ptr<SharedState>&);
-  ~SettingsUI();
+  okDirectInputSettings(wxWindow* parent, okDirectInputController* diController);
+  ~okDirectInputSettings();
 
  private:
   struct DeviceButtons;
+  okDirectInputController* mDIController;
   std::vector<DIDEVICEINSTANCE> mDevices;
-  std::shared_ptr<SharedState> mControllerState;
   std::vector<DeviceButtons> mDeviceButtons;
 
   wxButton* CreateBindButton(

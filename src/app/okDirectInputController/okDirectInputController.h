@@ -19,9 +19,12 @@
  */
 #pragma once
 
+#include <shims/winrt.h>
 #include <memory>
 
 #include "okConfigurableComponent.h"
+
+struct IDirectInput8W;
 
 namespace OpenKneeboard {
 enum class UserAction {
@@ -37,6 +40,10 @@ enum class UserAction {
 // all 128 buttons, rather than just the first 32
 class okDirectInputController final : public okConfigurableComponent {
  public:
+  struct DIBinding;
+  struct DIButtonEvent;
+  class DIButtonListener;
+
   okDirectInputController() = delete;
   okDirectInputController(const nlohmann::json& settings);
   virtual ~okDirectInputController();
@@ -46,16 +53,19 @@ class okDirectInputController final : public okConfigurableComponent {
 
   OpenKneeboard::Event<OpenKneeboard::UserAction> evUserAction;
 
- private:
-  struct DIBinding;
-  struct DIBindings;
-  struct DIButtonEvent;
-  class DIButtonListener;
-  class SettingsUI;
+  IDirectInput8W* GetDirectInput() const;
+  std::vector<DIBinding> GetBindings() const;
+  void SetBindings(const std::vector<DIBinding>&);
 
-  struct SharedState;
-  struct State;
-  std::shared_ptr<State> p;
+  void SetHook(std::function<void(const DIButtonEvent&)>);
+
+ private:
+
+  winrt::com_ptr<IDirectInput8W> mDI8;
+  std::vector<DIBinding> mBindings;
+  std::function<void(const DIButtonEvent&)> mHook;
+
+  std::jthread mDIThread;
 
   void OnDIButtonEvent(const DIButtonEvent&);
 };

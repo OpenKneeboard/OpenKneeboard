@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okDirectInputController_SettingsUI.h"
+#include "okDirectInputSettings.h"
 
 #include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
@@ -26,14 +26,14 @@
 
 #include "GetDirectInputDevices.h"
 #include "okDirectInputController_DIButtonEvent.h"
-#include "okDirectInputController_SharedState.h"
 #include "okEvents.h"
+#include "scope_guard.h"
 
 using namespace OpenKneeboard;
 
 wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_BUTTON, wxCommandEvent);
 
-struct okDirectInputController::SettingsUI::DeviceButtons {
+struct okDirectInputSettings::DeviceButtons {
   wxButton* previousTab = nullptr;
   wxButton* nextTab = nullptr;
   wxButton* previousPage = nullptr;
@@ -58,13 +58,13 @@ struct okDirectInputController::SettingsUI::DeviceButtons {
   };
 };
 
-wxButton* okDirectInputController::SettingsUI::CreateBindButton(
+wxButton* okDirectInputSettings::CreateBindButton(
   wxWindow* parent,
   int deviceIndex,
   UserAction action) {
   const auto& device = mDevices.at(deviceIndex);
   auto label = _("Bind");
-  for (auto binding: mControllerState->bindings) {
+  for (auto binding: mDIController->GetBindings()) {
     if (
       binding.instanceGuid == device.guidInstance && binding.action == action) {
       label = fmt::format(
@@ -79,12 +79,12 @@ wxButton* okDirectInputController::SettingsUI::CreateBindButton(
   return button;
 }
 
-okDirectInputController::SettingsUI::SettingsUI(
+okDirectInputSettings::okDirectInputSettings(
   wxWindow* parent,
-  const std::shared_ptr<SharedState>& controllerState)
-  : wxPanel(parent, wxID_ANY), mControllerState(controllerState) {
+  okDirectInputController* controller)
+  : wxPanel(parent, wxID_ANY), mDIController(controller) {
   this->SetLabel(_("DirectInput"));
-  mDevices = GetDirectInputDevices(controllerState->di8);
+  mDevices = GetDirectInputDevices(controller->GetDirectInput());
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -114,7 +114,8 @@ okDirectInputController::SettingsUI::SettingsUI(
     auto label = new wxStaticText(panel, wxID_ANY, device.tszInstanceName);
     grid->Add(label, wxGBPosition(row, 0));
 
-    auto toggleVisibility = CreateBindButton(panel, i, UserAction::TOGGLE_VISIBILITY);
+    auto toggleVisibility
+      = CreateBindButton(panel, i, UserAction::TOGGLE_VISIBILITY);
     grid->Add(toggleVisibility, wxGBPosition(row, 1));
 
     auto previousTab = CreateBindButton(panel, i, UserAction::PREVIOUS_TAB);
@@ -145,10 +146,10 @@ okDirectInputController::SettingsUI::SettingsUI(
   Refresh();
 }
 
-okDirectInputController::SettingsUI::~SettingsUI() {
+okDirectInputSettings::~okDirectInputSettings() {
 }
 
-wxDialog* okDirectInputController::SettingsUI::CreateBindInputDialog(
+wxDialog* okDirectInputSettings::CreateBindInputDialog(
   bool haveExistingBinding) {
   auto d = new wxDialog(this, wxID_ANY, _("Bind Inputs"));
 
@@ -177,18 +178,19 @@ wxDialog* okDirectInputController::SettingsUI::CreateBindInputDialog(
   return d;
 }
 
-void okDirectInputController::SettingsUI::OnBindButton(
+void okDirectInputSettings::OnBindButton(
   wxCommandEvent& ev,
   int deviceIndex,
   UserAction action) {
   auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
   auto& device = mDevices.at(deviceIndex);
 
-  auto& bindings = this->mControllerState->bindings;
+  auto bindings = mDIController->GetBindings();
+  const auto setBindings
+    = scope_guard([&]() { mDIController->SetBindings(bindings); });
 
   // Used to implement a clear button
   auto currentBinding = bindings.end();
-  ;
   for (auto it = bindings.begin(); it != bindings.end(); ++it) {
     if (it->instanceGuid != device.guidInstance) {
       continue;
@@ -201,8 +203,8 @@ void okDirectInputController::SettingsUI::OnBindButton(
   }
   auto d = CreateBindInputDialog(currentBinding != bindings.end());
 
-  wxON_BLOCK_EXIT_SET(mControllerState->hook, nullptr);
-  mControllerState->hook = [=, &bindings](const DIButtonEvent& be) {
+  auto unhook = scope_guard([=] { mDIController->SetHook(nullptr); });
+  mDIController->SetHook([=, &bindings](const okDirectInputController::DIButtonEvent& be) {
     if (be.instance.guidInstance != device.guidInstance) {
       return;
     }
@@ -236,7 +238,7 @@ void okDirectInputController::SettingsUI::OnBindButton(
        .action = action});
     wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
     d->Close();
-  };
+  });
 
   d->Bind(okEVT_DI_CLEAR_BINDING_BUTTON, [=, &bindings](auto&) {
     bindings.erase(currentBinding);
