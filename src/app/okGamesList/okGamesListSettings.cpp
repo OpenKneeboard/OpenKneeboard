@@ -14,9 +14,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
-#include "okGamesList_SettingsUI.h"
+#include "okGamesListSettings.h"
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
@@ -29,11 +30,12 @@
 #include "GetIconFromExecutable.h"
 #include "okEvents.h"
 #include "okGameInstanceSettings.h"
+#include "okGamesList.h"
 #include "okSelectExecutableDialog.h"
 
 using namespace OpenKneeboard;
 
-void okGamesList::SettingsUI::OnPathSelect(wxCommandEvent& ev) {
+void okGamesListSettings::OnPathSelect(wxCommandEvent& ev) {
   auto path = std::filesystem::path(ev.GetString().ToStdWstring());
   int imageIndex = -1;
   auto ico = GetIconFromExecutable(path);
@@ -41,15 +43,15 @@ void okGamesList::SettingsUI::OnPathSelect(wxCommandEvent& ev) {
   if (ico.IsOk()) {
     imageIndex = imageList->Add(ico);
   }
-  for (const auto& game: mGamesList->mGames) {
+  for (const auto& game: mGamesList->GetGames()) {
     if (!game->MatchesPath(path)) {
       continue;
     }
     GameInstance instance {
-      .name = game->GetUserFriendlyName(path),
-      .path = path,
-      .game = game};
-    mGamesList->mInstances.push_back(instance);
+      .name = game->GetUserFriendlyName(path), .path = path, .game = game};
+    auto instances = mGamesList->GetGameInstances();
+    instances.push_back(instance);
+    mGamesList->SetGameInstances(instances);
     mList->AddPage(
       new okGameInstanceSettings(mList, instance),
       instance.name,
@@ -66,13 +68,13 @@ void okGamesList::SettingsUI::OnPathSelect(wxCommandEvent& ev) {
   dialog->Close();
 }
 
-void okGamesList::SettingsUI::OnAddGameButton(wxCommandEvent& ev) {
+void okGamesListSettings::OnAddGameButton(wxCommandEvent& ev) {
   okSelectExecutableDialog dialog(nullptr, wxID_ANY, _("Add Game"));
-  dialog.Bind(okEVT_PATH_SELECTED, &SettingsUI::OnPathSelect, this);
+  dialog.Bind(okEVT_PATH_SELECTED, &okGamesListSettings::OnPathSelect, this);
   dialog.ShowModal();
 }
 
-void okGamesList::SettingsUI::OnRemoveGameButton(wxCommandEvent& ev) {
+void okGamesListSettings::OnRemoveGameButton(wxCommandEvent& ev) {
   auto page = mList->GetCurrentPage();
   if (!page) {
     return;
@@ -87,7 +89,8 @@ void okGamesList::SettingsUI::OnRemoveGameButton(wxCommandEvent& ev) {
   wxMessageDialog dialog(
     nullptr,
     fmt::format(
-      fmt::runtime(_("Are you sure you want to remove '{}'?").ToStdString()), game.name),
+      fmt::runtime(_("Are you sure you want to remove '{}'?").ToStdString()),
+      game.name),
     _("Remove game?"),
     wxYES_NO | wxNO_DEFAULT);
   auto result = dialog.ShowModal();
@@ -97,18 +100,21 @@ void okGamesList::SettingsUI::OnRemoveGameButton(wxCommandEvent& ev) {
 
   mList->DeletePage(mList->GetSelection());
 
-  auto& instances = mGamesList->mInstances;
+  auto instances = mGamesList->GetGameInstances();
   for (auto it = instances.begin(); it != instances.end(); ++it) {
     if (it->path != game.path) {
       continue;
     }
     instances.erase(it);
+    mGamesList->SetGameInstances(instances);
     break;
   }
   wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
 }
 
-okGamesList::SettingsUI::SettingsUI(wxWindow* parent, okGamesList* gamesList)
+okGamesListSettings::okGamesListSettings(
+  wxWindow* parent,
+  okGamesList* gamesList)
   : wxPanel(parent, wxID_ANY), mGamesList(gamesList) {
   this->SetLabel(_("Games"));
   mList = new wxListbook(this, wxID_ANY);
@@ -116,7 +122,7 @@ okGamesList::SettingsUI::SettingsUI(wxWindow* parent, okGamesList* gamesList)
   auto imageList = new wxImageList(32, 32);
   mList->AssignImageList(imageList);
 
-  for (auto game: mGamesList->mInstances) {
+  for (const auto& game: mGamesList->GetGameInstances()) {
     int imageIndex = -1;
     auto ico = GetIconFromExecutable(game.path);
     if (ico.IsOk()) {
@@ -127,9 +133,9 @@ okGamesList::SettingsUI::SettingsUI(wxWindow* parent, okGamesList* gamesList)
   }
 
   auto add = new wxButton(this, wxID_ANY, _("&Add"));
-  add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddGameButton, this);
+  add->Bind(wxEVT_BUTTON, &okGamesListSettings::OnAddGameButton, this);
   auto remove = new wxButton(this, wxID_ANY, _("&Remove"));
-  remove->Bind(wxEVT_BUTTON, &SettingsUI::OnRemoveGameButton, this);
+  remove->Bind(wxEVT_BUTTON, &okGamesListSettings::OnRemoveGameButton, this);
 
   auto s = new wxBoxSizer(wxHORIZONTAL);
   s->Add(mList, 1, wxEXPAND | wxFIXED_MINSIZE, 5);

@@ -33,7 +33,6 @@ class GameInjector;
 
 class okGamesList final : public okConfigurableComponent {
  private:
-  class SettingsUI;
   std::vector<std::shared_ptr<OpenKneeboard::Game>> mGames;
   std::vector<OpenKneeboard::GameInstance> mInstances;
   std::unique_ptr<OpenKneeboard::GameInjector> mInjector;
@@ -48,6 +47,10 @@ class okGamesList final : public okConfigurableComponent {
   virtual ~okGamesList();
   virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
   virtual nlohmann::json GetSettings() const override;
+
+  std::vector<std::shared_ptr<OpenKneeboard::Game>> GetGames() const;
+  std::vector<OpenKneeboard::GameInstance> GetGameInstances() const;
+  void SetGameInstances(const std::vector<OpenKneeboard::GameInstance>&);
 
   OpenKneeboard::Event<OpenKneeboard::GameInstance> evGameChanged;
 };

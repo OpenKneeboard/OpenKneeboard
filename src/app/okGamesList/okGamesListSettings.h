@@ -20,13 +20,12 @@
 
 #include <shims/wx.h>
 
-#include "okGamesList.h"
-
 class wxListbook;
+class okGamesList;
 
-class okGamesList::SettingsUI final : public wxPanel {
+class okGamesListSettings final : public wxPanel {
  public:
-  SettingsUI(wxWindow* parent, okGamesList* gamesList);
+  okGamesListSettings(wxWindow* parent, okGamesList* gamesList);
 
  private:
   wxListbook* mList = nullptr;

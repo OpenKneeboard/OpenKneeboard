@@ -24,7 +24,7 @@
 #include "GameInjector.h"
 #include "GenericGame.h"
 #include "okEvents.h"
-#include "okGamesList_SettingsUI.h"
+#include "okGamesListSettings.h"
 
 using namespace OpenKneeboard;
 
@@ -61,9 +61,8 @@ okGamesList::~okGamesList() {
 }
 
 wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
-  auto ret = new SettingsUI(parent, this);
+  auto ret = new okGamesListSettings(parent, this);
   ret->Bind(okEVT_SETTINGS_CHANGED, [=](auto& ev) {
-    mInjector->SetGameInstances(mInstances);
     wxQueueEvent(this, ev.Clone());
   });
   return ret;
@@ -83,4 +82,17 @@ void okGamesList::LoadSettings(const nlohmann::json& config) {
   for (const auto& game: list) {
     mInstances.push_back(GameInstance::FromJson(game, mGames));
   }
+}
+
+std::vector<std::shared_ptr<OpenKneeboard::Game>> okGamesList::GetGames() const {
+  return mGames;
+}
+
+std::vector<OpenKneeboard::GameInstance> okGamesList::GetGameInstances() const {
+  return mInstances;
+}
+
+void okGamesList::SetGameInstances(const std::vector<OpenKneeboard::GameInstance>& instances) {
+  mInstances = instances;
+  mInjector->SetGameInstances(mInstances);
 }
