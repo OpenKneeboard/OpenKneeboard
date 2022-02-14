@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okTabsList_SettingsUI.h"
+#include "okTabsListSettings.h"
 
 #include <OpenKneeboard/dprint.h>
 #include <wx/choicdlg.h>
@@ -28,21 +28,21 @@
 #include "TabState.h"
 #include "TabTypes.h"
 #include "okEvents.h"
-#include "okTabsList_SharedState.h"
 
 using namespace OpenKneeboard;
 
-okTabsList::SettingsUI::SettingsUI(
+okTabsListSettings::okTabsListSettings(
   wxWindow* parent,
-  const std::shared_ptr<SharedState>& state)
-  : wxPanel(parent, wxID_ANY), s(state) {
+  const DXResources& dxr,
+  const std::shared_ptr<KneeboardState> kneeboard)
+  : wxPanel(parent, wxID_ANY), mDXR(dxr), mKneeboard(kneeboard) {
   this->SetLabel(_("Tabs"));
 
   mList = new wxListView(this, wxID_ANY);
   mList->SetWindowStyle(wxLC_REPORT | wxLC_SINGLE_SEL | wxLC_NO_HEADER);
   mList->AppendColumn(_("Title"));
 
-  for (const auto& tabState: state->mKneeboard->GetTabs()) {
+  for (const auto& tabState: mKneeboard->GetTabs()) {
     const auto row = mList->GetItemCount();
 
     mList->InsertItem(row, tabState->GetRootTab()->GetTitle());
@@ -51,13 +51,13 @@ okTabsList::SettingsUI::SettingsUI(
   mList->SetColumnWidth(0, wxLIST_AUTOSIZE);
 
   auto add = new wxButton(this, wxID_ANY, _("&Add"));
-  add->Bind(wxEVT_BUTTON, &SettingsUI::OnAddTab, this);
+  add->Bind(wxEVT_BUTTON, &okTabsListSettings::OnAddTab, this);
   auto remove = new wxButton(this, wxID_ANY, _("&Remove"));
-  remove->Bind(wxEVT_BUTTON, &SettingsUI::OnRemoveTab, this);
+  remove->Bind(wxEVT_BUTTON, &okTabsListSettings::OnRemoveTab, this);
   auto up = new wxButton(this, wxID_ANY, _("Move &Up"));
-  up->Bind(wxEVT_BUTTON, &SettingsUI::OnMoveTabUp, this);
+  up->Bind(wxEVT_BUTTON, &okTabsListSettings::OnMoveTabUp, this);
  auto down = new wxButton(this, wxID_ANY, _("Move &Down"));
-  down->Bind(wxEVT_BUTTON, &SettingsUI::OnMoveTabDown, this);
+  down->Bind(wxEVT_BUTTON, &okTabsListSettings::OnMoveTabDown, this);
 
   auto buttons = new wxBoxSizer(wxVERTICAL);
   buttons->Add(add, 0, 0, 5);
@@ -74,10 +74,10 @@ okTabsList::SettingsUI::SettingsUI(
   this->SetSizerAndFit(s);
 }
 
-okTabsList::SettingsUI::~SettingsUI() {
+okTabsListSettings::~okTabsListSettings() {
 }
 
-void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
+void okTabsListSettings::OnAddTab(wxCommandEvent& ev) {
   ev.StopPropagation();
 
   std::vector<wxString> choices = {
@@ -102,7 +102,7 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
   switch (tabTypeDialog.GetSelection()) {
 #define IT(_, type) \
   case TABTYPE_IDX_##type: \
-    InsertTab(create_tab<type##Tab>(nullptr, s->mDXR)); \
+    InsertTab(create_tab<type##Tab>(nullptr, mDXR)); \
     return;
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
@@ -112,7 +112,7 @@ void okTabsList::SettingsUI::OnAddTab(wxCommandEvent& ev) {
   }
 }
 
-void okTabsList::SettingsUI::OnRemoveTab(wxCommandEvent& ev) {
+void okTabsListSettings::OnRemoveTab(wxCommandEvent& ev) {
   ev.StopPropagation();
 
   auto index = mList->GetFirstSelected();
@@ -120,25 +120,25 @@ void okTabsList::SettingsUI::OnRemoveTab(wxCommandEvent& ev) {
     return;
   }
 
-  s->mKneeboard->RemoveTab(index);
+  mKneeboard->RemoveTab(index);
   mList->DeleteItem(index);
 
   wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
 }
 
-void okTabsList::SettingsUI::OnMoveTabUp(wxCommandEvent& ev) {
+void okTabsListSettings::OnMoveTabUp(wxCommandEvent& ev) {
   ev.StopPropagation();
 
   MoveTab(Direction::UP);
 }
 
-void okTabsList::SettingsUI::OnMoveTabDown(wxCommandEvent& ev) {
+void okTabsListSettings::OnMoveTabDown(wxCommandEvent& ev) {
   ev.StopPropagation();
 
   MoveTab(Direction::DOWN);
 }
 
-void okTabsList::SettingsUI::MoveTab(Direction direction) {
+void okTabsListSettings::MoveTab(Direction direction) {
   const auto index = mList->GetFirstSelected();
 
   if (index == -1) {
@@ -152,7 +152,7 @@ void okTabsList::SettingsUI::MoveTab(Direction direction) {
 
   wxWindowUpdateLocker freezer(mList);
 
-  auto tabs = s->mKneeboard->GetTabs();
+  auto tabs = mKneeboard->GetTabs();
   auto tabState = tabs.at(index);
 
   std::swap(tabs[index], tabs[swapIndex]);
@@ -162,12 +162,12 @@ void okTabsList::SettingsUI::MoveTab(Direction direction) {
 
   mList->Select(swapIndex);
 
-  s->mKneeboard->SetTabs(tabs);
+  mKneeboard->SetTabs(tabs);
 
   wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
 }
 
-void okTabsList::SettingsUI::InsertTab(const std::shared_ptr<Tab>& tab) {
+void okTabsListSettings::InsertTab(const std::shared_ptr<Tab>& tab) {
   if (!tab) {
     return;
   }
@@ -180,7 +180,7 @@ void okTabsList::SettingsUI::InsertTab(const std::shared_ptr<Tab>& tab) {
   mList->InsertItem(insertAt, tab->GetTitle());
   mList->Select(insertAt);
   
-  s->mKneeboard->InsertTab(insertAt, std::make_shared<TabState>(tab));
+  mKneeboard->InsertTab(insertAt, std::make_shared<TabState>(tab));
 
   wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
 }

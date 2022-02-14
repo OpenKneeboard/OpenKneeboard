@@ -29,20 +29,15 @@
 #include "TabState.h"
 #include "TabTypes.h"
 #include "okEvents.h"
-#include "okTabsList_SettingsUI.h"
-#include "okTabsList_SharedState.h"
+#include "okTabsListSettings.h"
 
 using namespace OpenKneeboard;
-
-struct okTabsList::State final : public okTabsList::SharedState {};
 
 okTabsList::okTabsList(
   const DXResources& dxr,
   const std::shared_ptr<KneeboardState>& kneeboard,
   const nlohmann::json& config)
-  : p(std::make_shared<State>()) {
-  p->mDXR = dxr;
-  p->mKneeboard = kneeboard;
+  : mDXR(dxr), mKneeboard(kneeboard) {
 
   if (config.is_null()) {
     LoadDefaultConfig();
@@ -72,9 +67,9 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance = load_tab<it##Tab>(p->mDXR, title, settings); \
+    auto instance = load_tab<it##Tab>(mDXR, title, settings); \
     if (instance) { \
-      p->mKneeboard->AppendTab(std::make_shared<TabState>(instance)); \
+      mKneeboard->AppendTab(std::make_shared<TabState>(instance)); \
       continue; \
     } \
   }
@@ -84,16 +79,16 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
 }
 
 void okTabsList::LoadDefaultConfig() {
-  p->mKneeboard->SetTabs({
-    TabState::make_shared<DCSRadioLogTab>(p->mDXR),
-    TabState::make_shared<DCSMissionTab>(p->mDXR),
-    TabState::make_shared<DCSAircraftTab>(p->mDXR),
-    TabState::make_shared<DCSTerrainTab>(p->mDXR),
+  mKneeboard->SetTabs({
+    TabState::make_shared<DCSRadioLogTab>(mDXR),
+    TabState::make_shared<DCSMissionTab>(mDXR),
+    TabState::make_shared<DCSAircraftTab>(mDXR),
+    TabState::make_shared<DCSTerrainTab>(mDXR),
   });
 }
 
 wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
-  auto ret = new SettingsUI(parent, p);
+  auto ret = new okTabsListSettings(parent, mDXR, mKneeboard);
   ret->Bind(
     okEVT_SETTINGS_CHANGED, [=](auto& ev) { wxQueueEvent(this, ev.Clone()); });
   return ret;
@@ -102,7 +97,7 @@ wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
 nlohmann::json okTabsList::GetSettings() const {
   std::vector<nlohmann::json> ret;
 
-  for (const auto& tabState: p->mKneeboard->GetTabs()) {
+  for (const auto& tabState: mKneeboard->GetTabs()) {
     std::string type;
     auto tab = tabState->GetRootTab();
 #define IT(_, it) \

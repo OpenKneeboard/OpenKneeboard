@@ -19,14 +19,14 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Tab.h>
 #include <shims/winrt.h>
 
 #include "okConfigurableComponent.h"
 
 namespace OpenKneeboard {
-  struct DXResources;
-  class KneeboardState;
+class KneeboardState;
 }
 
 class okTabsList final : public okConfigurableComponent {
@@ -43,9 +43,8 @@ class okTabsList final : public okConfigurableComponent {
 
  private:
   class SettingsUI;
-  struct SharedState;
-  struct State;
-  std::shared_ptr<State> p;
+  OpenKneeboard::DXResources mDXR;
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
   void LoadConfig(const nlohmann::json&);
   void LoadDefaultConfig();

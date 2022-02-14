@@ -23,13 +23,17 @@
 class wxListEvent;
 class wxListView;
 
-class okTabsList::SettingsUI final : public wxPanel {
+class okTabsListSettings final : public wxPanel {
  public:
-  SettingsUI(wxWindow* parent, const std::shared_ptr<SharedState>&);
-  virtual ~SettingsUI();
+  okTabsListSettings(
+    wxWindow* parent,
+    const OpenKneeboard::DXResources& dxr,
+    std::shared_ptr<OpenKneeboard::KneeboardState> kneeboard);
+  virtual ~okTabsListSettings();
 
  private:
-  std::shared_ptr<SharedState> s;
+  OpenKneeboard::DXResources mDXR;
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
   wxListView* mList = nullptr;
 
   void OnAddTab(wxCommandEvent&);
