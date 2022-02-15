@@ -14,20 +14,21 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
-
-#include <shims/winrt.h>
 
 #include <dinput.h>
 
 #include <cstdint>
 
-#include "okDirectInputController.h"
+namespace OpenKneeboard {
 
-struct okDirectInputController::DIButtonEvent {
+struct DirectInputButtonEvent {
   DIDEVICEINSTANCE instance;
   uint8_t buttonIndex;
   bool pressed;
 };
+
+}// namespace OpenKneeboard

@@ -16,27 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#pragma once
+#include <OpenKneeboard/GetDirectInputDevices.h>
 
-#include <dinput.h>
-#include <shims/winrt.h>
-#include <stop_token>
+using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
 
-#include "okDirectInputController.h"
-#include "Events.h"
+namespace OpenKneeboard {
 
-class okDirectInputController::DIButtonListener final {
- public:
-  DIButtonListener(
-    const winrt::com_ptr<IDirectInput8>& di,
-    const std::vector<DIDEVICEINSTANCE>& instances);
-  ~DIButtonListener();
+static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
+  auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
+  devices.push_back(*inst);
+  return DIENUM_CONTINUE;
+}
 
-  OpenKneeboard::Event<DIButtonEvent> evButtonEvent;
+DeviceInstances GetDirectInputDevices(IDirectInput8W* di) {
+  DeviceInstances ret;
+  di->EnumDevices(
+    DI8DEVCLASS_GAMECTRL, &EnumDeviceCallback, &ret, DIEDFL_ATTACHEDONLY);
+  return ret;
+}
 
-  void Run(std::stop_token);
-
- private:
-  struct DeviceInfo;
-  std::vector<DeviceInfo> mDevices;
-};
+}// namespace OpenKneeboard

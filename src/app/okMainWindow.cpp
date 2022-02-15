@@ -33,7 +33,7 @@
 #include "OpenVROverlay.h"
 #include "TabState.h"
 #include "okAboutBox.h"
-#include "okDirectInputController.h"
+#include <OpenKneeboard/DirectInputAdapter.h>
 #include "okDirectInputSettings.h"
 #include "okGamesList.h"
 #include "okGamesListSettings.h"
@@ -50,7 +50,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
 
   mGamesList = std::make_unique<okGamesList>(mSettings.Games);
   mDirectInput
-    = std::make_unique<okDirectInputController>(mSettings.DirectInput);
+    = std::make_unique<DirectInputAdapter>(mSettings.DirectInput);
   mTabsList = std::make_unique<okTabsList>(mDXR, mKneeboard, mSettings.Tabs);
 
   mOpenVRThread = std::jthread(

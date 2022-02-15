@@ -22,21 +22,20 @@
 #include <dinput.h>
 #include <shims/wx.h>
 
-#include "okDirectInputController.h"
-#include "okDirectInputController_DIBinding.h"
+#include <OpenKneeboard/DirectInputAdapter.h>
 
 class okDirectInputSettings final : public wxPanel {
  public:
   okDirectInputSettings(
     wxWindow* parent,
-    okDirectInputController* diController);
+    OpenKneeboard::DirectInputAdapter* diController);
   ~okDirectInputSettings();
 
   OpenKneeboard::Event<> evSettingsChangedEvent;
 
  private:
   struct DeviceButtons;
-  okDirectInputController* mDIController;
+  OpenKneeboard::DirectInputAdapter* mDIController;
   std::vector<DIDEVICEINSTANCE> mDevices;
   std::vector<DeviceButtons> mDeviceButtons;
 

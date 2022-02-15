@@ -14,18 +14,21 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
- * USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #pragma once
 
-#include <dinput.h>
-#include <shims/winrt.h>
-
-#include <vector>
+#include <guiddef.h>
+#include <string>
+#include "UserAction.h"
 
 namespace OpenKneeboard {
 
-std::vector<DIDEVICEINSTANCE> GetDirectInputDevices(IDirectInput8W* di);
+struct DirectInputBinding {
+  GUID instanceGuid;
+  std::string instanceName;
+  uint8_t buttonIndex;
+  OpenKneeboard::UserAction action;
+};
 
 }

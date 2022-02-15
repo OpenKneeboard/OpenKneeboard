@@ -14,17 +14,18 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
-#include <guiddef.h>
-
-#include "okDirectInputController.h"
-
-struct okDirectInputController::DIBinding {
-  GUID instanceGuid;
-  std::string instanceName;
-  uint8_t buttonIndex;
-  OpenKneeboard::UserAction action;
+namespace OpenKneeboard {
+enum class UserAction {
+  PREVIOUS_TAB,
+  NEXT_TAB,
+  PREVIOUS_PAGE,
+  NEXT_PAGE,
+  TOGGLE_VISIBILITY
 };
+
+}

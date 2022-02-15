@@ -25,47 +25,41 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include "Events.h"
+#include "UserAction.h"
 
 struct IDirectInput8W;
 
 namespace OpenKneeboard {
-enum class UserAction {
-  PREVIOUS_TAB,
-  NEXT_TAB,
-  PREVIOUS_PAGE,
-  NEXT_PAGE,
-  TOGGLE_VISIBILITY
-};
-}
+
+struct DirectInputBinding;
+struct DirectInputButtonEvent;
 
 // Using DirectInput instead of wxJoystick so we can use
 // all 128 buttons, rather than just the first 32
-class okDirectInputController final : private OpenKneeboard::EventReceiver {
+class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
  public:
-  struct DIBinding;
-  struct DIButtonEvent;
-  class DIButtonListener;
-
-  okDirectInputController() = delete;
-  okDirectInputController(const nlohmann::json& settings);
-  virtual ~okDirectInputController();
+  DirectInputAdapter() = delete;
+  DirectInputAdapter(const nlohmann::json& settings);
+  virtual ~DirectInputAdapter();
 
   virtual nlohmann::json GetSettings() const;
 
   OpenKneeboard::Event<OpenKneeboard::UserAction> evUserAction;
 
   IDirectInput8W* GetDirectInput() const;
-  std::vector<DIBinding> GetBindings() const;
-  void SetBindings(const std::vector<DIBinding>&);
+  std::vector<DirectInputBinding> GetBindings() const;
+  void SetBindings(const std::vector<DirectInputBinding>&);
 
-  void SetHook(std::function<void(const DIButtonEvent&)>);
+  void SetHook(std::function<void(const DirectInputButtonEvent&)>);
 
  private:
   winrt::com_ptr<IDirectInput8W> mDI8;
-  std::vector<DIBinding> mBindings;
-  std::function<void(const DIButtonEvent&)> mHook;
+  std::vector<DirectInputBinding> mBindings;
+  std::function<void(const DirectInputButtonEvent&)> mHook;
 
   std::jthread mDIThread;
 
-  void OnDIButtonEvent(const DIButtonEvent&);
+  void OnDirectInputButtonEvent(const DirectInputButtonEvent&);
 };
+
+}// namespace OpenKneeboard

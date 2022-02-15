@@ -17,8 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okDirectInputController.h"
-
+#include <OpenKneeboard/DirectInputAdapter.h>
+#include <OpenKneeboard/DirectInputBinding.h>
+#include <OpenKneeboard/DirectInputButtonEvent.h>
+#include <OpenKneeboard/DirectInputListener.h>
+#include <OpenKneeboard/GetDirectInputDevices.h>
 #include <Rpc.h>
 #include <dinput.h>
 #include <shims/winrt.h>
@@ -26,10 +29,6 @@
 #include <nlohmann/json.hpp>
 #include <thread>
 
-#include "GetDirectInputDevices.h"
-#include "okDirectInputController_DIBinding.h"
-#include "okDirectInputController_DIButtonEvent.h"
-#include "okDirectInputController_DIButtonListener.h"
 #include "okDirectInputSettings.h"
 
 #pragma comment(lib, "dinput8.lib")
@@ -58,8 +57,9 @@ struct JSONSettings {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices, Bindings);
 }// namespace
 
-okDirectInputController::okDirectInputController(
-  const nlohmann::json& jsonSettings) {
+namespace OpenKneeboard {
+
+DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings) {
   winrt::check_hresult(DirectInput8Create(
     GetModuleHandle(nullptr),
     DIRECTINPUT_VERSION,
@@ -68,9 +68,9 @@ okDirectInputController::okDirectInputController(
     NULL));
 
   mDIThread = std::jthread([=](std::stop_token stopToken) {
-    DIButtonListener listener(mDI8, GetDirectInputDevices(mDI8.get()));
+    DirectInputListener listener(mDI8, GetDirectInputDevices(mDI8.get()));
     this->AddEventListener(
-      listener.evButtonEvent, &okDirectInputController::OnDIButtonEvent, this);
+      listener.evButtonEvent, &DirectInputAdapter::OnDirectInputButtonEvent, this);
     listener.Run(stopToken);
   });
 
@@ -115,10 +115,10 @@ okDirectInputController::okDirectInputController(
   }
 }
 
-okDirectInputController::~okDirectInputController() {
+DirectInputAdapter::~DirectInputAdapter() {
 }
 
-void okDirectInputController::OnDIButtonEvent(const DIButtonEvent& be) {
+void DirectInputAdapter::OnDirectInputButtonEvent(const DirectInputButtonEvent& be) {
   if (mHook) {
     mHook(be);
     return;
@@ -140,26 +140,24 @@ void okDirectInputController::OnDIButtonEvent(const DIButtonEvent& be) {
   }
 }
 
-IDirectInput8W* okDirectInputController::GetDirectInput() const {
+IDirectInput8W* DirectInputAdapter::GetDirectInput() const {
   return mDI8.get();
 }
 
-std::vector<okDirectInputController::DIBinding>
-okDirectInputController::GetBindings() const {
+std::vector<DirectInputBinding> DirectInputAdapter::GetBindings() const {
   return mBindings;
 }
 
-void okDirectInputController::SetBindings(
-  const std::vector<DIBinding>& bindings) {
+void DirectInputAdapter::SetBindings(const std::vector<DirectInputBinding>& bindings) {
   mBindings = bindings;
 }
 
-void okDirectInputController::SetHook(
-  std::function<void(const DIButtonEvent&)> hook) {
+void DirectInputAdapter::SetHook(
+  std::function<void(const DirectInputButtonEvent&)> hook) {
   mHook = hook;
 }
 
-nlohmann::json okDirectInputController::GetSettings() const {
+nlohmann::json DirectInputAdapter::GetSettings() const {
   JSONSettings settings;
 
   for (const auto& binding: mBindings) {
@@ -192,3 +190,5 @@ nlohmann::json okDirectInputController::GetSettings() const {
   }
   return settings;
 }
+
+}// namespace OpenKneeboard

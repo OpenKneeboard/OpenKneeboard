@@ -27,7 +27,8 @@ target_link_libraries(
   openvr
   qpdf
   wx::base
-  wx::core)
+  wx::core
+)
 
 set(SOURCE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 foreach(SOURCE ${SOURCES})
@@ -39,7 +40,9 @@ target_include_directories(
   OpenKneeboard
   PRIVATE
   ${SOURCE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include)
+  ${CMAKE_CURRENT_SOURCE_DIR}/DirectInput/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include
+)
 
 install(TARGETS OpenKneeboard)
 install(FILES "$<TARGET_PDB_FILE:OpenKneeboard>" TYPE BIN COMPONENT DebugSymbols)

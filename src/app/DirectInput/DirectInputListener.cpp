@@ -17,52 +17,52 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okDirectInputController_DIButtonListener.h"
-
-#include "okDirectInputController_DIButtonEvent.h"
-
+#include <OpenKneeboard/DirectInputButtonEvent.h>
+#include <OpenKneeboard/DirectInputListener.h>
 #include <shims/wx.h>
 
-struct okDirectInputController::DIButtonListener::DeviceInfo {
+namespace OpenKneeboard {
+
+struct DirectInputListener::DeviceInfo {
   DIDEVICEINSTANCE instance;
   winrt::com_ptr<IDirectInputDevice8> device;
   DIJOYSTATE2 state = {};
   HANDLE eventHandle = INVALID_HANDLE_VALUE;
 };
 
-okDirectInputController::DIButtonListener::DIButtonListener(
+DirectInputListener::DirectInputListener(
   const winrt::com_ptr<IDirectInput8>& di,
   const std::vector<DIDEVICEINSTANCE>& instances) {
   for (const auto& it: instances) {
-  winrt::com_ptr<IDirectInputDevice8> device;
-  di->CreateDevice(it.guidInstance, device.put(), NULL);
-  if (!device) {
-    continue;
-  }
+    winrt::com_ptr<IDirectInputDevice8> device;
+    di->CreateDevice(it.guidInstance, device.put(), NULL);
+    if (!device) {
+      continue;
+    }
 
-  HANDLE event {CreateEvent(nullptr, false, false, nullptr)};
-  if (!event) {
-    continue;
-  }
+    HANDLE event {CreateEvent(nullptr, false, false, nullptr)};
+    if (!event) {
+      continue;
+    }
 
-  device->SetDataFormat(&c_dfDIJoystick2);
-  device->SetEventNotification(event);
-  device->SetCooperativeLevel(
-    static_cast<wxApp*>(wxApp::GetInstance())->GetTopWindow()->GetHandle(),
-    DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
-  device->Acquire();
+    device->SetDataFormat(&c_dfDIJoystick2);
+    device->SetEventNotification(event);
+    device->SetCooperativeLevel(
+      static_cast<wxApp*>(wxApp::GetInstance())->GetTopWindow()->GetHandle(),
+      DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
+    device->Acquire();
 
-  DIJOYSTATE2 state;
-  device->GetDeviceState(sizeof(state), &state);
+    DIJOYSTATE2 state;
+    device->GetDeviceState(sizeof(state), &state);
 
-  mDevices.push_back({it, device, state, event});
+    mDevices.push_back({it, device, state, event});
   }
 }
 
-okDirectInputController::DIButtonListener::~DIButtonListener() {
+DirectInputListener::~DirectInputListener() {
 }
 
-void okDirectInputController::DIButtonListener::Run(std::stop_token stopToken) {
+void DirectInputListener::Run(std::stop_token stopToken) {
   winrt::handle cancelHandle {CreateEvent(nullptr, false, false, nullptr)};
 
   std::stop_callback stopEvent(
@@ -103,3 +103,5 @@ void okDirectInputController::DIButtonListener::Run(std::stop_token stopToken) {
     }
   }
 }
+
+}// namespace OpenKneeboard

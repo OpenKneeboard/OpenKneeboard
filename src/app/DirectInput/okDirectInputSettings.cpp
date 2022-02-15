@@ -19,13 +19,14 @@
  */
 #include "okDirectInputSettings.h"
 
+#include <OpenKneeboard/DirectInputBinding.h>
+#include <OpenKneeboard/DirectInputButtonEvent.h>
+#include <OpenKneeboard/GetDirectInputDevices.h>
 #include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
 #include <wx/gbsizer.h>
 #include <wx/scopeguard.h>
 
-#include "GetDirectInputDevices.h"
-#include "okDirectInputController_DIButtonEvent.h"
 #include "scope_guard.h"
 
 using namespace OpenKneeboard;
@@ -80,7 +81,7 @@ wxButton* okDirectInputSettings::CreateBindButton(
 
 okDirectInputSettings::okDirectInputSettings(
   wxWindow* parent,
-  okDirectInputController* controller)
+  DirectInputAdapter* controller)
   : wxPanel(parent, wxID_ANY), mDIController(controller) {
   this->SetLabel(_("DirectInput"));
   mDevices = GetDirectInputDevices(controller->GetDirectInput());
@@ -201,7 +202,7 @@ void okDirectInputSettings::OnBindButton(
   auto d = CreateBindInputDialog(currentBinding != bindings.end());
 
   auto unhook = scope_guard([=] { mDIController->SetHook(nullptr); });
-  mDIController->SetHook([=, &bindings](const okDirectInputController::DIButtonEvent& be) {
+  mDIController->SetHook([=, &bindings](const DirectInputButtonEvent& be) {
     if (be.instance.guidInstance != device.guidInstance) {
       return;
     }

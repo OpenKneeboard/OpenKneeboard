@@ -14,25 +14,17 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
-#include "GetDirectInputDevices.h"
+#pragma once
 
-using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
+#include <dinput.h>
+
+#include <vector>
 
 namespace OpenKneeboard {
 
-static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
-  auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
-  devices.push_back(*inst);
-  return DIENUM_CONTINUE;
-}
+std::vector<DIDEVICEINSTANCE> GetDirectInputDevices(IDirectInput8W* di);
 
-DeviceInstances GetDirectInputDevices(IDirectInput8W* di) {
-  DeviceInstances ret;
-  di->EnumDevices(
-    DI8DEVCLASS_GAMECTRL, &EnumDeviceCallback, &ret, DIEDFL_ATTACHEDONLY);
-  return ret;
 }
-
-}// namespace OpenKneeboard
