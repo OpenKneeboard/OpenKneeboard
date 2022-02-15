@@ -19,21 +19,12 @@
  */
 #include "Events.h"
 
+#include <shims/wx.h>
+
 namespace OpenKneeboard {
 
-void EventBase::Add(EventReceiver* receiver, uint64_t token) {
-  receiver->mSenders.push_back({this, token});
-}
-
-EventReceiver::EventReceiver() {
-}
-
-EventReceiver::~EventReceiver() {
-  while (!mSenders.empty()) {
-    auto sender = mSenders.back();
-    mSenders.pop_back();
-    sender.mEvent->RemoveHandler(sender.mToken);
-  }
+void EventBase::EnqueueForMainThread(std::function<void()> f) {
+  wxApp::GetMainTopWindow()->GetEventHandler()->CallAfter(f);
 }
 
 }// namespace OpenKneeboard

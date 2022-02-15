@@ -21,23 +21,21 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Tab.h>
-#include <shims/winrt.h>
 
 #include <nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
 class KneeboardState;
-}
 
-class okTabsList final {
+class TabsList final {
  public:
-  okTabsList() = delete;
-  okTabsList(
+  TabsList() = delete;
+  TabsList(
     const OpenKneeboard::DXResources&,
     const std::shared_ptr<OpenKneeboard::KneeboardState>& kneeboard,
     const nlohmann::json& config);
 
-  virtual ~okTabsList();
+  virtual ~TabsList();
   virtual nlohmann::json GetSettings() const;
 
  private:
@@ -48,3 +46,5 @@ class okTabsList final {
   void LoadConfig(const nlohmann::json&);
   void LoadDefaultConfig();
 };
+
+}// namespace OpenKneeboard

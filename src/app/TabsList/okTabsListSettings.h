@@ -19,12 +19,18 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
 #include <shims/wx.h>
 
-#include "okTabsList.h"
+#include "Events.h"
 
 class wxListEvent;
 class wxListView;
+
+namespace OpenKneeboard {
+class KneeboardState;
+class Tab;
+}
 
 class okTabsListSettings final : public wxPanel {
  public:

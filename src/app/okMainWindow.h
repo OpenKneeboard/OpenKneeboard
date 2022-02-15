@@ -32,18 +32,16 @@
 #include "Settings.h"
 #include "okSHMRenderer.h"
 #include "okTab.h"
-#include "okTabsList.h"
 
 class wxBookCtrlEvent;
 class wxNotebook;
-
-class okTabsList;
 
 namespace OpenKneeboard {
 struct GameEvent;
 class DirectInputAdapter;
 class GamesList;
 class KneeboardState;
+class TabsList;
 }// namespace OpenKneeboard
 
 class okMainWindow final : public wxFrame,
@@ -71,9 +69,9 @@ class okMainWindow final : public wxFrame,
   wxNotebook* mNotebook = nullptr;
   Settings mSettings = Settings::Load();
 
-  std::unique_ptr<okTabsList> mTabsList;
   std::unique_ptr<OpenKneeboard::DirectInputAdapter> mDirectInput;
   std::unique_ptr<OpenKneeboard::GamesList> mGamesList;
+  std::unique_ptr<OpenKneeboard::TabsList> mTabsList;
 
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
   std::unique_ptr<okSHMRenderer> mSHMRenderer;

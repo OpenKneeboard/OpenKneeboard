@@ -17,12 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okTabsList.h"
-
 #include <OpenKneeboard/DCSAircraftTab.h>
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
+#include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <nlohmann/json.hpp>
@@ -31,9 +30,9 @@
 #include "TabState.h"
 #include "TabTypes.h"
 
-using namespace OpenKneeboard;
+namespace OpenKneeboard {
 
-okTabsList::okTabsList(
+TabsList::TabsList(
   const DXResources& dxr,
   const std::shared_ptr<KneeboardState>& kneeboard,
   const nlohmann::json& config)
@@ -45,10 +44,10 @@ okTabsList::okTabsList(
   }
 }
 
-okTabsList::~okTabsList() {
+TabsList::~TabsList() {
 }
 
-void okTabsList::LoadConfig(const nlohmann::json& config) {
+void TabsList::LoadConfig(const nlohmann::json& config) {
   std::vector<nlohmann::json> tabs = config;
 
   for (const auto& tab: tabs) {
@@ -77,7 +76,7 @@ void okTabsList::LoadConfig(const nlohmann::json& config) {
   }
 }
 
-void okTabsList::LoadDefaultConfig() {
+void TabsList::LoadDefaultConfig() {
   mKneeboard->SetTabs({
     TabState::make_shared<DCSRadioLogTab>(mDXR),
     TabState::make_shared<DCSMissionTab>(mDXR),
@@ -86,7 +85,7 @@ void okTabsList::LoadDefaultConfig() {
   });
 }
 
-nlohmann::json okTabsList::GetSettings() const {
+nlohmann::json TabsList::GetSettings() const {
   std::vector<nlohmann::json> ret;
 
   for (const auto& tabState: mKneeboard->GetTabs()) {
@@ -121,3 +120,5 @@ nlohmann::json okTabsList::GetSettings() const {
 
   return ret;
 }
+
+}// namespace OpenKneeboard
