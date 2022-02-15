@@ -21,6 +21,8 @@
 
 #include "okDirectInputController_DIButtonEvent.h"
 
+#include <shims/wx.h>
+
 struct okDirectInputController::DIButtonListener::DeviceInfo {
   DIDEVICEINSTANCE instance;
   winrt::com_ptr<IDirectInputDevice8> device;

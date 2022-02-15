@@ -23,7 +23,8 @@
 #include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
 
-#include "okEvents.h"
+// TODO: stop using wxImage::CanRead
+#include <shims/wx.h>
 
 namespace OpenKneeboard {
 class FolderTab::Impl final {

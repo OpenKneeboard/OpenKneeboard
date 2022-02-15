@@ -28,8 +28,6 @@
 
 #include <random>
 
-#include "okEvents.h"
-
 using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {

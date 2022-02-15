@@ -26,7 +26,6 @@
 #include <OpenKneeboard/dprint.h>
 
 #include "TabState.h"
-#include "okEvents.h"
 
 namespace OpenKneeboard {
 

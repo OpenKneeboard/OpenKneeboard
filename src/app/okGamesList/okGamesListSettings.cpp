@@ -28,7 +28,6 @@
 #include <wx/statline.h>
 
 #include "GetIconFromExecutable.h"
-#include "okEvents.h"
 #include "okGameInstanceSettings.h"
 #include "okGamesList.h"
 #include "okSelectExecutableDialog.h"
@@ -64,7 +63,7 @@ void okGamesListSettings::OnPathSelect(wxCommandEvent& ev) {
     dprintf("No dialog in {}", __FUNCTION__);
     return;
   }
-  wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
+  this->evSettingsChangedEvent();
   dialog->Close();
 }
 
@@ -109,7 +108,7 @@ void okGamesListSettings::OnRemoveGameButton(wxCommandEvent& ev) {
     mGamesList->SetGameInstances(instances);
     break;
   }
-  wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
+  this->evSettingsChangedEvent();
 }
 
 okGamesListSettings::okGamesListSettings(

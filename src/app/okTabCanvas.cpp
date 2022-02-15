@@ -30,7 +30,6 @@
 
 #include "KneeboardState.h"
 #include "TabState.h"
-#include "okEvents.h"
 #include "scope_guard.h"
 
 using namespace OpenKneeboard;

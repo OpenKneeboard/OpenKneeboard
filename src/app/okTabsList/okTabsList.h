@@ -23,13 +23,13 @@
 #include <OpenKneeboard/Tab.h>
 #include <shims/winrt.h>
 
-#include "okConfigurableComponent.h"
+#include <nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
 class KneeboardState;
 }
 
-class okTabsList final : public okConfigurableComponent {
+class okTabsList final {
  public:
   okTabsList() = delete;
   okTabsList(
@@ -38,8 +38,7 @@ class okTabsList final : public okConfigurableComponent {
     const nlohmann::json& config);
 
   virtual ~okTabsList();
-  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
-  virtual nlohmann::json GetSettings() const override;
+  virtual nlohmann::json GetSettings() const;
 
  private:
   class SettingsUI;

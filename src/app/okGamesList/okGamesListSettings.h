@@ -20,12 +20,16 @@
 
 #include <shims/wx.h>
 
+#include "Events.h"
+
 class wxListbook;
 class okGamesList;
 
 class okGamesListSettings final : public wxPanel {
  public:
   okGamesListSettings(wxWindow* parent, okGamesList* gamesList);
+
+  OpenKneeboard::Event<> evSettingsChangedEvent;
 
  private:
   wxListbook* mList = nullptr;

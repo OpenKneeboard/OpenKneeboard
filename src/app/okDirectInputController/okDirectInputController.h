@@ -20,9 +20,11 @@
 #pragma once
 
 #include <shims/winrt.h>
-#include <memory>
 
-#include "okConfigurableComponent.h"
+#include <memory>
+#include <nlohmann/json_fwd.hpp>
+
+#include "Events.h"
 
 struct IDirectInput8W;
 
@@ -38,7 +40,7 @@ enum class UserAction {
 
 // Using DirectInput instead of wxJoystick so we can use
 // all 128 buttons, rather than just the first 32
-class okDirectInputController final : public okConfigurableComponent {
+class okDirectInputController final : private OpenKneeboard::EventReceiver {
  public:
   struct DIBinding;
   struct DIButtonEvent;
@@ -48,8 +50,7 @@ class okDirectInputController final : public okConfigurableComponent {
   okDirectInputController(const nlohmann::json& settings);
   virtual ~okDirectInputController();
 
-  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
-  virtual nlohmann::json GetSettings() const override;
+  virtual nlohmann::json GetSettings() const;
 
   OpenKneeboard::Event<OpenKneeboard::UserAction> evUserAction;
 
@@ -60,7 +61,6 @@ class okDirectInputController final : public okConfigurableComponent {
   void SetHook(std::function<void(const DIButtonEvent&)>);
 
  private:
-
   winrt::com_ptr<IDirectInput8W> mDI8;
   std::vector<DIBinding> mBindings;
   std::function<void(const DIButtonEvent&)> mHook;

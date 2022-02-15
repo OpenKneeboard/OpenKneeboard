@@ -25,13 +25,12 @@
 
 #include "Events.h"
 #include "GameInstance.h"
-#include "okConfigurableComponent.h"
 
 namespace OpenKneeboard {
 class GameInjector;
 }
 
-class okGamesList final : public okConfigurableComponent {
+class okGamesList final : private OpenKneeboard::EventReceiver {
  private:
   std::vector<std::shared_ptr<OpenKneeboard::Game>> mGames;
   std::vector<OpenKneeboard::GameInstance> mInstances;
@@ -45,8 +44,7 @@ class okGamesList final : public okConfigurableComponent {
   okGamesList() = delete;
   okGamesList(const nlohmann::json& config);
   virtual ~okGamesList();
-  virtual wxWindow* GetSettingsUI(wxWindow* parent) override;
-  virtual nlohmann::json GetSettings() const override;
+  virtual nlohmann::json GetSettings() const;
 
   std::vector<std::shared_ptr<OpenKneeboard::Game>> GetGames() const;
   std::vector<OpenKneeboard::GameInstance> GetGameInstances() const;

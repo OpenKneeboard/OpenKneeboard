@@ -31,7 +31,9 @@ EventReceiver::EventReceiver() {
 }
 
 EventReceiver::~EventReceiver() {
-  for (const auto& sender: mSenders) {
+  while (!mSenders.empty()) {
+    auto sender = mSenders.back();
+    mSenders.pop_back();
     sender.mEvent->RemoveHandler(sender.mToken);
   }
 }

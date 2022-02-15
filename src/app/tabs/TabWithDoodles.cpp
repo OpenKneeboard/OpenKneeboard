@@ -23,7 +23,6 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
-#include "okEvents.h"
 #include "scope_guard.h"
 
 namespace OpenKneeboard {

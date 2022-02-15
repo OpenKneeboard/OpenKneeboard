@@ -23,6 +23,7 @@
 #include <dinput.h>
 #include <shims/winrt.h>
 
+#include <nlohmann/json.hpp>
 #include <thread>
 
 #include "GetDirectInputDevices.h"
@@ -30,7 +31,6 @@
 #include "okDirectInputController_DIButtonEvent.h"
 #include "okDirectInputController_DIButtonListener.h"
 #include "okDirectInputSettings.h"
-#include "okEvents.h"
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -157,14 +157,6 @@ void okDirectInputController::SetBindings(
 void okDirectInputController::SetHook(
   std::function<void(const DIButtonEvent&)> hook) {
   mHook = hook;
-}
-
-wxWindow* okDirectInputController::GetSettingsUI(wxWindow* parent) {
-  auto ret = new okDirectInputSettings(parent, this);
-  ret->Bind(okEVT_SETTINGS_CHANGED, [this](auto& ev) {
-    wxQueueEvent(this, ev.Clone());
-  });
-  return ret;
 }
 
 nlohmann::json okDirectInputController::GetSettings() const {

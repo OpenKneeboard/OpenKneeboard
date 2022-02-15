@@ -28,7 +28,6 @@
 #include <set>
 
 #include "GetIconFromExecutable.h"
-#include "okEvents.h"
 
 wxDEFINE_EVENT(okEVT_PATH_SELECTED, wxCommandEvent);
 

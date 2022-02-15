@@ -25,8 +25,6 @@
 
 #include <filesystem>
 
-#include "okEvents.h"
-
 using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {

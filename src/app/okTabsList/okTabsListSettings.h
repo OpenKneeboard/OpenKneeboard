@@ -14,9 +14,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
+
+#include <shims/wx.h>
 
 #include "okTabsList.h"
 
@@ -28,8 +31,10 @@ class okTabsListSettings final : public wxPanel {
   okTabsListSettings(
     wxWindow* parent,
     const OpenKneeboard::DXResources& dxr,
-    std::shared_ptr<OpenKneeboard::KneeboardState> kneeboard);
+    const std::shared_ptr<OpenKneeboard::KneeboardState>& kneeboard);
   virtual ~okTabsListSettings();
+
+  OpenKneeboard::Event<> evSettingsChangedEvent;
 
  private:
   OpenKneeboard::DXResources mDXR;

@@ -27,14 +27,13 @@
 #include "KneeboardState.h"
 #include "TabState.h"
 #include "TabTypes.h"
-#include "okEvents.h"
 
 using namespace OpenKneeboard;
 
 okTabsListSettings::okTabsListSettings(
   wxWindow* parent,
   const DXResources& dxr,
-  const std::shared_ptr<KneeboardState> kneeboard)
+  const std::shared_ptr<KneeboardState>& kneeboard)
   : wxPanel(parent, wxID_ANY), mDXR(dxr), mKneeboard(kneeboard) {
   this->SetLabel(_("Tabs"));
 
@@ -56,7 +55,7 @@ okTabsListSettings::okTabsListSettings(
   remove->Bind(wxEVT_BUTTON, &okTabsListSettings::OnRemoveTab, this);
   auto up = new wxButton(this, wxID_ANY, _("Move &Up"));
   up->Bind(wxEVT_BUTTON, &okTabsListSettings::OnMoveTabUp, this);
- auto down = new wxButton(this, wxID_ANY, _("Move &Down"));
+  auto down = new wxButton(this, wxID_ANY, _("Move &Down"));
   down->Bind(wxEVT_BUTTON, &okTabsListSettings::OnMoveTabDown, this);
 
   auto buttons = new wxBoxSizer(wxVERTICAL);
@@ -123,7 +122,7 @@ void okTabsListSettings::OnRemoveTab(wxCommandEvent& ev) {
   mKneeboard->RemoveTab(index);
   mList->DeleteItem(index);
 
-  wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
+  this->evSettingsChangedEvent();
 }
 
 void okTabsListSettings::OnMoveTabUp(wxCommandEvent& ev) {
@@ -164,7 +163,7 @@ void okTabsListSettings::MoveTab(Direction direction) {
 
   mKneeboard->SetTabs(tabs);
 
-  wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
+  this->evSettingsChangedEvent();
 }
 
 void okTabsListSettings::InsertTab(const std::shared_ptr<Tab>& tab) {
@@ -179,8 +178,8 @@ void okTabsListSettings::InsertTab(const std::shared_ptr<Tab>& tab) {
   wxWindowUpdateLocker freezer(mList);
   mList->InsertItem(insertAt, tab->GetTitle());
   mList->Select(insertAt);
-  
+
   mKneeboard->InsertTab(insertAt, std::make_shared<TabState>(tab));
 
-  wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED));
+  this->evSettingsChangedEvent();
 }

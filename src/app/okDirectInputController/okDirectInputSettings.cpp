@@ -26,7 +26,6 @@
 
 #include "GetDirectInputDevices.h"
 #include "okDirectInputController_DIButtonEvent.h"
-#include "okEvents.h"
 #include "scope_guard.h"
 
 using namespace OpenKneeboard;
@@ -186,8 +185,6 @@ void okDirectInputSettings::OnBindButton(
   auto& device = mDevices.at(deviceIndex);
 
   auto bindings = mDIController->GetBindings();
-  const auto setBindings
-    = scope_guard([&]() { mDIController->SetBindings(bindings); });
 
   // Used to implement a clear button
   auto currentBinding = bindings.end();
@@ -236,7 +233,8 @@ void okDirectInputSettings::OnBindButton(
        .instanceName = to_utf8(device.tszInstanceName),
        .buttonIndex = be.buttonIndex,
        .action = action});
-    wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
+    mDIController->SetBindings(bindings);
+    this->evSettingsChangedEvent();
     d->Close();
   });
 
@@ -246,7 +244,8 @@ void okDirectInputSettings::OnBindButton(
     if (button) {
       button->SetLabel(_("Bind"));
     }
-    wxQueueEvent(this, new wxCommandEvent(okEVT_SETTINGS_CHANGED, wxID_ANY));
+    mDIController->SetBindings(bindings);
+    this->evSettingsChangedEvent();
   });
   d->ShowModal();
 }

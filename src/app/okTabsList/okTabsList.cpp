@@ -25,11 +25,11 @@
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <nlohmann/json.hpp>
+
 #include "KneeboardState.h"
 #include "TabState.h"
 #include "TabTypes.h"
-#include "okEvents.h"
-#include "okTabsListSettings.h"
 
 using namespace OpenKneeboard;
 
@@ -38,7 +38,6 @@ okTabsList::okTabsList(
   const std::shared_ptr<KneeboardState>& kneeboard,
   const nlohmann::json& config)
   : mDXR(dxr), mKneeboard(kneeboard) {
-
   if (config.is_null()) {
     LoadDefaultConfig();
   } else {
@@ -85,13 +84,6 @@ void okTabsList::LoadDefaultConfig() {
     TabState::make_shared<DCSAircraftTab>(mDXR),
     TabState::make_shared<DCSTerrainTab>(mDXR),
   });
-}
-
-wxWindow* okTabsList::GetSettingsUI(wxWindow* parent) {
-  auto ret = new okTabsListSettings(parent, mDXR, mKneeboard);
-  ret->Bind(
-    okEVT_SETTINGS_CHANGED, [=](auto& ev) { wxQueueEvent(this, ev.Clone()); });
-  return ret;
 }
 
 nlohmann::json okTabsList::GetSettings() const {

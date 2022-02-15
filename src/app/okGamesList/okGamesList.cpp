@@ -23,7 +23,6 @@
 
 #include "GameInjector.h"
 #include "GenericGame.h"
-#include "okEvents.h"
 #include "okGamesListSettings.h"
 
 using namespace OpenKneeboard;
@@ -58,14 +57,6 @@ void okGamesList::LoadDefaultSettings() {
 }
 
 okGamesList::~okGamesList() {
-}
-
-wxWindow* okGamesList::GetSettingsUI(wxWindow* parent) {
-  auto ret = new okGamesListSettings(parent, this);
-  ret->Bind(okEVT_SETTINGS_CHANGED, [=](auto& ev) {
-    wxQueueEvent(this, ev.Clone());
-  });
-  return ret;
 }
 
 nlohmann::json okGamesList::GetSettings() const {

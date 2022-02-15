@@ -34,25 +34,24 @@
 #include "TabState.h"
 #include "okAboutBox.h"
 #include "okDirectInputController.h"
-#include "okEvents.h"
+#include "okDirectInputSettings.h"
 #include "okGamesList.h"
+#include "okGamesListSettings.h"
+#include "okTabsListSettings.h"
 
 using namespace OpenKneeboard;
 
 okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
-  mDXResources = DXResources::Create();
+  mDXR = DXResources::Create();
   mKneeboard = std::make_shared<KneeboardState>();
-  mSHMRenderer = std::make_unique<okSHMRenderer>(
-    mDXResources, mKneeboard, this->GetHWND());
+  mSHMRenderer
+    = std::make_unique<okSHMRenderer>(mDXR, mKneeboard, this->GetHWND());
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
-  InitUI();
-
-  if (*mTablet) {
-    mCursorEventTimer.Bind(
-      wxEVT_TIMER, [this](auto&) { this->FlushCursorEvents(); });
-    mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
-  }
+  mGamesList = std::make_unique<okGamesList>(mSettings.Games);
+  mDirectInput
+    = std::make_unique<okDirectInputController>(mSettings.DirectInput);
+  mTabsList = std::make_unique<okTabsList>(mDXR, mKneeboard, mSettings.Tabs);
 
   mOpenVRThread = std::jthread(
     [](std::stop_token stopToken) { OpenVROverlay().Run(stopToken); });
@@ -63,50 +62,35 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     server.Run(stopToken);
   });
 
-  {
-    auto gl = new okGamesList(mSettings.Games);
-    mConfigurables.push_back(gl);
+  InitUI();
 
-    gl->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-      this->mSettings.Games = gl->GetSettings();
-      mSettings.Save();
-    });
+  if (*mTablet) {
+    mCursorEventTimer.Bind(
+      wxEVT_TIMER, [this](auto&) { this->FlushCursorEvents(); });
+    mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
   }
 
-  {
-    auto dipc = new okDirectInputController(mSettings.DirectInput);
-    mConfigurables.push_back(dipc);
-
-    AddEventListener(
-      dipc->evUserAction,
-      [=](UserAction action) {
-        switch(action) {
-          case UserAction::PREVIOUS_TAB:
-            mNotebook->AdvanceSelection(false);
-            return;
-          case UserAction::NEXT_TAB:
-            mNotebook->AdvanceSelection(true);
-            return;
-          case UserAction::PREVIOUS_PAGE:
-            mKneeboard->PreviousPage();
-            return;
-          case UserAction::NEXT_PAGE:
-            mKneeboard->NextPage();
-            return;
-          case UserAction::TOGGLE_VISIBILITY:
-            this->OnToggleVisibility();
-            return;
-        }
-        OPENKNEEBOARD_BREAK;
+  AddEventListener(mDirectInput->evUserAction, [=](UserAction action) {
+    switch (action) {
+      case UserAction::PREVIOUS_TAB:
+        mNotebook->AdvanceSelection(false);
         return;
-      }
-    );
-
-    dipc->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-      this->mSettings.DirectInput = dipc->GetSettings();
-      mSettings.Save();
-    });
-  }
+      case UserAction::NEXT_TAB:
+        mNotebook->AdvanceSelection(true);
+        return;
+      case UserAction::PREVIOUS_PAGE:
+        mKneeboard->PreviousPage();
+        return;
+      case UserAction::NEXT_PAGE:
+        mKneeboard->NextPage();
+        return;
+      case UserAction::TOGGLE_VISIBILITY:
+        this->OnToggleVisibility();
+        return;
+    }
+    OPENKNEEBOARD_BREAK;
+    return;
+  });
 }
 
 okMainWindow::~okMainWindow() {
@@ -211,15 +195,43 @@ void okMainWindow::OnExit(wxCommandEvent& ev) {
 }
 
 void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
+  const std::vector<std::function<wxWindow*(wxWindow*)>> factories {
+    [&](wxWindow* p) {
+      auto it = new okTabsListSettings(p, mDXR, mKneeboard);
+      AddEventListener(it->evSettingsChangedEvent, [&] {
+        mSettings.Tabs = mTabsList->GetSettings();
+        mSettings.Save();
+        this->UpdateTabs();
+      });
+      return it;
+    },
+    [&](wxWindow* p) {
+      auto it = new okGamesListSettings(p, mGamesList.get());
+      AddEventListener(it->evSettingsChangedEvent, [&] {
+        mSettings.Games = mGamesList->GetSettings();
+        mSettings.Save();
+      });
+      return it;
+    },
+    [&](wxWindow* p) {
+      auto it = new okDirectInputSettings(p, mDirectInput.get());
+      AddEventListener(it->evSettingsChangedEvent, [&] {
+        mSettings.DirectInput = mDirectInput->GetSettings();
+        mSettings.Save();
+      });
+      return it;
+    },
+  };
+
   auto w = new wxFrame(this, wxID_ANY, _("Settings"));
   auto s = new wxBoxSizer(wxVERTICAL);
 
   auto nb = new wxNotebook(w, wxID_ANY);
   s->Add(nb, 1, wxEXPAND);
 
-  for (auto& component: mConfigurables) {
+  for (const auto& factory: factories) {
     auto p = new wxPanel(nb, wxID_ANY);
-    auto ui = component->GetSettingsUI(p);
+    auto ui = factory(p);
     if (!ui) {
       continue;
     }
@@ -241,8 +253,8 @@ void okMainWindow::OnToggleVisibility() {
     return;
   }
 
-  mSHMRenderer = std::make_unique<okSHMRenderer>(
-    mDXResources, mKneeboard, this->GetHWND());
+  mSHMRenderer
+    = std::make_unique<okSHMRenderer>(mDXR, mKneeboard, this->GetHWND());
 }
 
 void okMainWindow::UpdateTabs() {
@@ -253,7 +265,7 @@ void okMainWindow::UpdateTabs() {
   auto selected = mKneeboard->GetCurrentTab();
 
   for (auto tabState: mKneeboard->GetTabs()) {
-    auto ui = new okTab(mNotebook, mDXResources, mKneeboard, tabState);
+    auto ui = new okTab(mNotebook, mDXR, mKneeboard, tabState);
     mNotebook->AddPage(
       ui, tabState->GetRootTab()->GetTitle(), selected == tabState);
   }
@@ -289,17 +301,7 @@ void okMainWindow::InitUI() {
   mNotebook = new wxNotebook(this, wxID_ANY);
   mNotebook->Bind(
     wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
-
-  {
-    auto tabs = new okTabsList(mDXResources, mKneeboard, mSettings.Tabs);
-    mConfigurables.push_back(tabs);
-    UpdateTabs();
-    tabs->Bind(okEVT_SETTINGS_CHANGED, [=](auto&) {
-      this->mSettings.Tabs = tabs->GetSettings();
-      mSettings.Save();
-      this->UpdateTabs();
-    });
-  }
+  this->UpdateTabs();
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
   sizer->Add(mNotebook, 1, wxEXPAND);
