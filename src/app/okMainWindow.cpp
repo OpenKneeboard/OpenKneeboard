@@ -19,6 +19,8 @@
  */
 #include "okMainWindow.h"
 
+#include <OpenKneeboard/DirectInputAdapter.h>
+#include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <wx/frame.h>
@@ -33,9 +35,7 @@
 #include "OpenVROverlay.h"
 #include "TabState.h"
 #include "okAboutBox.h"
-#include <OpenKneeboard/DirectInputAdapter.h>
 #include "okDirectInputSettings.h"
-#include "okGamesList.h"
 #include "okGamesListSettings.h"
 #include "okTabsListSettings.h"
 
@@ -48,9 +48,8 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     = std::make_unique<okSHMRenderer>(mDXR, mKneeboard, this->GetHWND());
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
-  mGamesList = std::make_unique<okGamesList>(mSettings.Games);
-  mDirectInput
-    = std::make_unique<DirectInputAdapter>(mSettings.DirectInput);
+  mGamesList = std::make_unique<GamesList>(mSettings.Games);
+  mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInput);
   mTabsList = std::make_unique<okTabsList>(mDXR, mKneeboard, mSettings.Tabs);
 
   mOpenVRThread = std::jthread(

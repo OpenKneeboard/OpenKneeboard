@@ -20,22 +20,15 @@
 
 #include <shims/wx.h>
 
-#include "Events.h"
+#include <OpenKneeboard/GameInstance.h>
 
-class wxListbook;
-class okGamesList;
-
-class okGamesListSettings final : public wxPanel {
- public:
-  okGamesListSettings(wxWindow* parent, okGamesList* gamesList);
-
-  OpenKneeboard::Event<> evSettingsChangedEvent;
-
+class okGameInstanceSettings : public wxPanel {
  private:
-  wxListbook* mList = nullptr;
-  okGamesList* mGamesList = nullptr;
+  OpenKneeboard::GameInstance mGame;
 
-  void OnPathSelect(wxCommandEvent& ev);
-  void OnAddGameButton(wxCommandEvent& ev);
-  void OnRemoveGameButton(wxCommandEvent& ev);
+ public:
+  okGameInstanceSettings(
+    wxWindow* parent,
+    const OpenKneeboard::GameInstance& game);
+  OpenKneeboard::GameInstance GetGameInstance() const;
 };

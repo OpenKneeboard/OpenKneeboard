@@ -41,6 +41,7 @@ target_include_directories(
   PRIVATE
   ${SOURCE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/DirectInput/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/GamesList/include
   ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include
 )
 

@@ -19,6 +19,7 @@
  */
 #include "okGamesListSettings.h"
 
+#include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
 #include <wx/filedlg.h>
@@ -29,7 +30,6 @@
 
 #include "GetIconFromExecutable.h"
 #include "okGameInstanceSettings.h"
-#include "okGamesList.h"
 #include "okSelectExecutableDialog.h"
 
 using namespace OpenKneeboard;
@@ -113,7 +113,7 @@ void okGamesListSettings::OnRemoveGameButton(wxCommandEvent& ev) {
 
 okGamesListSettings::okGamesListSettings(
   wxWindow* parent,
-  okGamesList* gamesList)
+  GamesList* gamesList)
   : wxPanel(parent, wxID_ANY), mGamesList(gamesList) {
   this->SetLabel(_("Games"));
   mList = new wxListbook(this, wxID_ANY);

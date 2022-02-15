@@ -17,14 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "GameInjector.h"
-
 // clang-format off
 #include <Windows.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
 // clang-format on
 
+#include <OpenKneeboard/GameInjector.h>
+#include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
 #include <shims/winrt.h>
@@ -33,7 +33,6 @@
 #include <mutex>
 #include <thread>
 
-#include "GameInstance.h"
 #include "scope_guard.h"
 
 namespace {

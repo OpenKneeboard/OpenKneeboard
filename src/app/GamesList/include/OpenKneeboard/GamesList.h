@@ -28,27 +28,28 @@
 
 namespace OpenKneeboard {
 class GameInjector;
-}
 
-class okGamesList final : private OpenKneeboard::EventReceiver {
+class GamesList final : private EventReceiver {
  private:
-  std::vector<std::shared_ptr<OpenKneeboard::Game>> mGames;
-  std::vector<OpenKneeboard::GameInstance> mInstances;
-  std::unique_ptr<OpenKneeboard::GameInjector> mInjector;
+  std::vector<std::shared_ptr<Game>> mGames;
+  std::vector<GameInstance> mInstances;
+  std::unique_ptr<GameInjector> mInjector;
   std::jthread mInjectorThread;
 
   void LoadDefaultSettings();
   void LoadSettings(const nlohmann::json&);
 
  public:
-  okGamesList() = delete;
-  okGamesList(const nlohmann::json& config);
-  virtual ~okGamesList();
+  GamesList() = delete;
+  GamesList(const nlohmann::json& config);
+  virtual ~GamesList();
   virtual nlohmann::json GetSettings() const;
 
-  std::vector<std::shared_ptr<OpenKneeboard::Game>> GetGames() const;
-  std::vector<OpenKneeboard::GameInstance> GetGameInstances() const;
-  void SetGameInstances(const std::vector<OpenKneeboard::GameInstance>&);
+  std::vector<std::shared_ptr<Game>> GetGames() const;
+  std::vector<GameInstance> GetGameInstances() const;
+  void SetGameInstances(const std::vector<GameInstance>&);
 
-  OpenKneeboard::Event<OpenKneeboard::GameInstance> evGameChanged;
+  OpenKneeboard::Event<GameInstance> evGameChanged;
 };
+
+}

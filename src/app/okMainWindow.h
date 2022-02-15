@@ -38,11 +38,11 @@ class wxBookCtrlEvent;
 class wxNotebook;
 
 class okTabsList;
-class okGamesList;
 
 namespace OpenKneeboard {
 struct GameEvent;
 class DirectInputAdapter;
+class GamesList;
 class KneeboardState;
 }// namespace OpenKneeboard
 
@@ -72,8 +72,8 @@ class okMainWindow final : public wxFrame,
   Settings mSettings = Settings::Load();
 
   std::unique_ptr<okTabsList> mTabsList;
-  std::unique_ptr<okGamesList> mGamesList;
   std::unique_ptr<OpenKneeboard::DirectInputAdapter> mDirectInput;
+  std::unique_ptr<OpenKneeboard::GamesList> mGamesList;
 
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
   std::unique_ptr<okSHMRenderer> mSHMRenderer;

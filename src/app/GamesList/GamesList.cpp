@@ -17,17 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okGamesList.h"
-
+#include <OpenKneeboard/GameInjector.h>
 #include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/Games/GenericGame.h>
+#include <OpenKneeboard/GamesList.h>
 
-#include "GameInjector.h"
-#include "GenericGame.h"
-#include "okGamesListSettings.h"
-
-using namespace OpenKneeboard;
-
-okGamesList::okGamesList(const nlohmann::json& config) {
+namespace OpenKneeboard {
+GamesList::GamesList(const nlohmann::json& config) {
   mGames
     = {std::make_shared<Games::DCSWorld>(), std::make_shared<GenericGame>()};
 
@@ -39,12 +35,11 @@ okGamesList::okGamesList(const nlohmann::json& config) {
 
   mInjector = std::make_unique<GameInjector>();
   AddEventListener(mInjector->evGameChanged, this->evGameChanged);
-  mInjectorThread = std::jthread([this](std::stop_token stopToken) {
-    mInjector->Run(stopToken);
-  });
+  mInjectorThread = std::jthread(
+    [this](std::stop_token stopToken) { mInjector->Run(stopToken); });
 }
 
-void okGamesList::LoadDefaultSettings() {
+void GamesList::LoadDefaultSettings() {
   for (const auto& game: mGames) {
     for (const auto& path: game->GetInstalledPaths()) {
       mInstances.push_back({
@@ -56,10 +51,10 @@ void okGamesList::LoadDefaultSettings() {
   }
 }
 
-okGamesList::~okGamesList() {
+GamesList::~GamesList() {
 }
 
-nlohmann::json okGamesList::GetSettings() const {
+nlohmann::json GamesList::GetSettings() const {
   nlohmann::json games {};
   for (const auto& game: mInstances) {
     games.push_back(game.ToJson());
@@ -67,7 +62,7 @@ nlohmann::json okGamesList::GetSettings() const {
   return {{"Configured", games}};
 }
 
-void okGamesList::LoadSettings(const nlohmann::json& config) {
+void GamesList::LoadSettings(const nlohmann::json& config) {
   auto list = config.at("Configured");
 
   for (const auto& game: list) {
@@ -75,15 +70,18 @@ void okGamesList::LoadSettings(const nlohmann::json& config) {
   }
 }
 
-std::vector<std::shared_ptr<OpenKneeboard::Game>> okGamesList::GetGames() const {
+std::vector<std::shared_ptr<OpenKneeboard::Game>> GamesList::GetGames() const {
   return mGames;
 }
 
-std::vector<OpenKneeboard::GameInstance> okGamesList::GetGameInstances() const {
+std::vector<OpenKneeboard::GameInstance> GamesList::GetGameInstances() const {
   return mInstances;
 }
 
-void okGamesList::SetGameInstances(const std::vector<OpenKneeboard::GameInstance>& instances) {
+void GamesList::SetGameInstances(
+  const std::vector<OpenKneeboard::GameInstance>& instances) {
   mInstances = instances;
   mInjector->SetGameInstances(mInstances);
 }
+
+}// namespace OpenKneeboard
