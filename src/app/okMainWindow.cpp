@@ -32,6 +32,7 @@
 #include <limits>
 
 #include "GameEventServer.h"
+#include "InterprocessRenderer.h"
 #include "KneeboardState.h"
 #include "OpenVROverlay.h"
 #include "TabState.h"
@@ -46,7 +47,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mDXR = DXResources::Create();
   mKneeboard = std::make_shared<KneeboardState>();
   mSHMRenderer
-    = std::make_unique<okSHMRenderer>(mDXR, mKneeboard, this->GetHWND());
+    = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
@@ -254,7 +255,7 @@ void okMainWindow::OnToggleVisibility() {
   }
 
   mSHMRenderer
-    = std::make_unique<okSHMRenderer>(mDXR, mKneeboard, this->GetHWND());
+    = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
 }
 
 void okMainWindow::UpdateTabs() {

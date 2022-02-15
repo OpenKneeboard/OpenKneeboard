@@ -79,7 +79,7 @@ The `okTabCanvas` widget maintains a swap chain (set of buffers) for rendering
 to the main app window, and when needed by the app, instructs tabs to render
 to one of the back buffers, then presents it to the window.
 
-The `okSHMRenderer` class maintains a single 'canvas' buffer, and multiple shared buffers that are accessible by other processses (and injectables in those processes). It instructs tabs to render to the canvas buffer, and when
+The `InterprocessRenderer` class maintains a single 'canvas' buffer, and multiple shared buffers that are accessible by other processses (and injectables in those processes). It instructs tabs to render to the canvas buffer, and when
 complete, it copies the canvas to the next shared buffer, and updates the
 shared memory configuration to let renderers know there is a new frame.
 

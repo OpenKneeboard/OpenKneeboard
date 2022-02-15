@@ -31,24 +31,23 @@ namespace OpenKneeboard {
 struct DXResources;
 class KneeboardState;
 class Tab;
-}// namespace OpenKneeboard
 
-class okSHMRenderer final : private OpenKneeboard::EventReceiver {
+class InterprocessRenderer final : private EventReceiver {
  private:
   class Impl;
   std::unique_ptr<Impl> p;
 
  public:
-  okSHMRenderer() = delete;
-  okSHMRenderer(
-    const OpenKneeboard::DXResources&,
-    const std::shared_ptr<OpenKneeboard::KneeboardState>&,
+  InterprocessRenderer() = delete;
+  InterprocessRenderer(
+    const DXResources&,
+    const std::shared_ptr<KneeboardState>&,
     HWND feederWindow);
-  ~okSHMRenderer();
+  ~InterprocessRenderer();
 
-  private:
+ private:
   void RenderNow();
-  void Render(
-    const std::shared_ptr<OpenKneeboard::Tab>& tab,
-    uint16_t pageIndex);
+  void Render(const std::shared_ptr<Tab>& tab, uint16_t pageIndex);
 };
+
+}// namespace OpenKneeboard

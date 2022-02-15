@@ -30,7 +30,6 @@
 
 #include "Events.h"
 #include "Settings.h"
-#include "okSHMRenderer.h"
 #include "okTab.h"
 
 class wxBookCtrlEvent;
@@ -40,6 +39,7 @@ namespace OpenKneeboard {
 struct GameEvent;
 class DirectInputAdapter;
 class GamesList;
+class InterprocessRenderer;
 class KneeboardState;
 class TabsList;
 }// namespace OpenKneeboard
@@ -74,7 +74,7 @@ class okMainWindow final : public wxFrame,
   std::unique_ptr<OpenKneeboard::TabsList> mTabsList;
 
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
-  std::unique_ptr<okSHMRenderer> mSHMRenderer;
+  std::unique_ptr<OpenKneeboard::InterprocessRenderer> mSHMRenderer;
   std::unique_ptr<OpenKneeboard::WintabTablet> mTablet;
 
   std::vector<OpenKneeboard::CursorEvent> mBufferedCursorEvents;

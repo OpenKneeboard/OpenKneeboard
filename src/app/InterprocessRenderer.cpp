@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okSHMRenderer.h"
+#include "InterprocessRenderer.h"
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
@@ -52,7 +52,9 @@ struct SharedTextureResources {
 
 }// namespace
 
-class okSHMRenderer::Impl {
+namespace OpenKneeboard {
+
+class InterprocessRenderer::Impl {
  public:
   HWND mFeederWindow;
   OpenKneeboard::SHM::Writer mSHM;
@@ -94,7 +96,7 @@ class okSHMRenderer::Impl {
   void RenderErrorImpl(utf8_string_view message, const D2D1_RECT_F&);
 };
 
-void okSHMRenderer::Impl::RenderError(
+void InterprocessRenderer::Impl::RenderError(
   utf8_string_view tabTitle,
   utf8_string_view message) {
   this->RenderWithChrome(
@@ -103,7 +105,7 @@ void okSHMRenderer::Impl::RenderError(
     std::bind_front(&Impl::RenderErrorImpl, this, message));
 }
 
-void okSHMRenderer::Impl::RenderErrorImpl(
+void InterprocessRenderer::Impl::RenderErrorImpl(
   utf8_string_view message,
   const D2D1_RECT_F& rect) {
   auto ctx = mDXR.mD2DDeviceContext;
@@ -113,7 +115,7 @@ void okSHMRenderer::Impl::RenderErrorImpl(
   mErrorRenderer->Render(message, rect);
 }
 
-void okSHMRenderer::Impl::CopyPixelsToSHM() {
+void InterprocessRenderer::Impl::CopyPixelsToSHM() {
   if (!mSHM) {
     return;
   }
@@ -138,7 +140,7 @@ void okSHMRenderer::Impl::CopyPixelsToSHM() {
   mSHM.Update(config);
 }
 
-okSHMRenderer::okSHMRenderer(
+InterprocessRenderer::InterprocessRenderer(
   const DXResources& dxr,
   const std::shared_ptr<KneeboardState>& kneeboard,
   HWND feederWindow)
@@ -225,13 +227,13 @@ okSHMRenderer::okSHMRenderer(
   this->RenderNow();
 }
 
-okSHMRenderer::~okSHMRenderer() {
+InterprocessRenderer::~InterprocessRenderer() {
   auto ctx = p->mD3DContext;
   p = {};
   ctx->Flush();
 }
 
-void okSHMRenderer::Render(
+void InterprocessRenderer::Render(
   const std::shared_ptr<Tab>& tab,
   uint16_t pageIndex) {
   if (!tab) {
@@ -265,7 +267,7 @@ void okSHMRenderer::Render(
       &Tab::RenderPage, tab, p->mDXR.mD2DDeviceContext.get(), pageIndex));
 }
 
-void okSHMRenderer::Impl::RenderWithChrome(
+void InterprocessRenderer::Impl::RenderWithChrome(
   std::string_view tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
@@ -395,7 +397,7 @@ void okSHMRenderer::Impl::RenderWithChrome(
     cursorStroke);
 }
 
-void okSHMRenderer::Impl::OnCursorEvent(const CursorEvent& ev) {
+void InterprocessRenderer::Impl::OnCursorEvent(const CursorEvent& ev) {
   const auto tab = mKneeboard->GetCurrentTab();
   if (!tab->SupportsTabMode(TabMode::NAVIGATION)) {
     return;
@@ -436,10 +438,12 @@ void okSHMRenderer::Impl::OnCursorEvent(const CursorEvent& ev) {
   }
 }
 
-void okSHMRenderer::RenderNow() {
+void InterprocessRenderer::RenderNow() {
   auto tabState = this->p->mKneeboard->GetCurrentTab();
   if (!tabState) {
     return;
   }
   this->Render(tabState->GetTab(), tabState->GetPageIndex());
 }
+
+}// namespace OpenKneeboard
