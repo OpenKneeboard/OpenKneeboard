@@ -35,6 +35,7 @@ class wxBookCtrlEvent;
 class wxNotebook;
 
 namespace OpenKneeboard {
+enum class UserAction;
 struct GameEvent;
 class DirectInputAdapter;
 class GamesList;
@@ -58,6 +59,7 @@ class okMainWindow final : public wxFrame,
   void OnToggleVisibility();
 
   void OnTabChanged(wxBookCtrlEvent&);
+  void OnUserAction(OpenKneeboard::UserAction);
 
   void UpdateTabs();
 

@@ -22,7 +22,7 @@
 #include <Windows.h>
 
 #include <memory>
-#include <nlohmann/json_fwd.hpp>
+#include <nlohmann/json.hpp>
 #include <thread>
 #include <tuple>
 #include <vector>
@@ -38,19 +38,18 @@ class KneeboardState;
 class WintabTablet;
 class TabletInputDevice;
 
-class TabletInputAdapter final {
+class TabletInputAdapter final : private EventReceiver {
  public:
   TabletInputAdapter() = delete;
   TabletInputAdapter(
     HWND,
-    const std::shared_ptr<KneeboardState>&/*,
-    const nlohmann::json& settings*/);
+    const std::shared_ptr<KneeboardState>&,
+    const nlohmann::json& settings);
   ~TabletInputAdapter();
 
-  /*
-    nlohmann::json GetSettings() const;
-    Event<> evSettingsChangedEvent;
-    */
+  nlohmann::json GetSettings() const;
+  Event<> evSettingsChangedEvent;
+
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
   Event<UserAction> evUserActionEvent;
@@ -58,6 +57,7 @@ class TabletInputAdapter final {
  private:
   HWND mWindow;
   std::shared_ptr<KneeboardState> mKneeboard;
+  const nlohmann::json mInitialSettings;
   std::unique_ptr<WintabTablet> mTablet;
   std::shared_ptr<TabletInputDevice> mDevice;
   WNDPROC mPreviousWndProc;

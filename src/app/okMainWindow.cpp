@@ -21,8 +21,9 @@
 
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
+#include <OpenKneeboard/TabsList.h>
+#include <OpenKneeboard/UserInputDevice.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <wx/frame.h>
@@ -38,9 +39,9 @@
 #include "OpenVROverlay.h"
 #include "TabState.h"
 #include "okAboutBox.h"
-#include "okUserInputSettings.h"
 #include "okGamesListSettings.h"
 #include "okTabsListSettings.h"
+#include "okUserInputSettings.h"
 
 using namespace OpenKneeboard;
 
@@ -52,8 +53,14 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInputV2);
-  mTabletInput = std::make_unique<TabletInputAdapter>(this->GetHWND(), mKneeboard);
+  mTabletInput = std::make_unique<TabletInputAdapter>(
+    this->GetHWND(), mKneeboard, mSettings.TabletInput);
   mTabsList = std::make_unique<TabsList>(mDXR, mKneeboard, mSettings.Tabs);
+
+  AddEventListener(
+    mDirectInput->evUserActionEvent, &okMainWindow::OnUserAction, this);
+  AddEventListener(
+    mTabletInput->evUserActionEvent, &okMainWindow::OnUserAction, this);
 
   mOpenVRThread = std::jthread(
     [](std::stop_token stopToken) { OpenVROverlay().Run(stopToken); });
@@ -65,31 +72,30 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   });
 
   InitUI();
-
-  AddEventListener(mDirectInput->evUserActionEvent, [=](UserAction action) {
-    switch (action) {
-      case UserAction::PREVIOUS_TAB:
-        mNotebook->AdvanceSelection(false);
-        return;
-      case UserAction::NEXT_TAB:
-        mNotebook->AdvanceSelection(true);
-        return;
-      case UserAction::PREVIOUS_PAGE:
-        mKneeboard->PreviousPage();
-        return;
-      case UserAction::NEXT_PAGE:
-        mKneeboard->NextPage();
-        return;
-      case UserAction::TOGGLE_VISIBILITY:
-        this->OnToggleVisibility();
-        return;
-    }
-    OPENKNEEBOARD_BREAK;
-    return;
-  });
 }
 
 okMainWindow::~okMainWindow() {
+}
+
+void okMainWindow::OnUserAction(UserAction action) {
+  switch (action) {
+    case UserAction::PREVIOUS_TAB:
+      mNotebook->AdvanceSelection(false);
+      return;
+    case UserAction::NEXT_TAB:
+      mNotebook->AdvanceSelection(true);
+      return;
+    case UserAction::PREVIOUS_PAGE:
+      mKneeboard->PreviousPage();
+      return;
+    case UserAction::NEXT_PAGE:
+      mKneeboard->NextPage();
+      return;
+    case UserAction::TOGGLE_VISIBILITY:
+      this->OnToggleVisibility();
+      return;
+  }
+  OPENKNEEBOARD_BREAK;
 }
 
 void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
@@ -129,9 +135,18 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
       return it;
     },
     [&](wxWindow* p) {
-      auto it = new okUserInputSettings(p, mDirectInput->GetDevices());
+      std::vector<std::shared_ptr<UserInputDevice>> devices;
+      for (const auto& subDevices:
+           {mTabletInput->GetDevices(), mDirectInput->GetDevices()}) {
+        devices.reserve(devices.size() + subDevices.size());
+        for (const auto& device: subDevices) {
+          devices.push_back(device);
+        }
+      }
+      auto it = new okUserInputSettings(p, devices);
       AddEventListener(it->evSettingsChangedEvent, [&] {
         mSettings.DirectInputV2 = mDirectInput->GetSettings();
+        mSettings.TabletInput = mTabletInput->GetSettings();
         mSettings.Save();
       });
       return it;

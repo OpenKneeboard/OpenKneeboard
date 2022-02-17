@@ -21,26 +21,50 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabletInputDevice.h>
+#include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <bit>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-#include <bit>
+#include <unordered_map>
+#include <unordered_set>
 
 #include "KneeboardState.h"
 #include "UserAction.h"
 
 namespace OpenKneeboard {
 
-static TabletInputAdapter* gInstance = nullptr;
+namespace {
+
+TabletInputAdapter* gInstance = nullptr;
+
+struct JSONButtonBinding {
+  std::unordered_set<uint64_t> Buttons;
+  UserAction Action;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONButtonBinding, Buttons, Action);
+struct JSONDevice {
+  std::string ID;
+  std::string Name;
+  std::vector<JSONButtonBinding> ExpressKeyBindings;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONDevice, ID, Name, ExpressKeyBindings);
+struct JSONSettings {
+  std::unordered_map<std::string, JSONDevice> Devices;
+};
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices);
+
+}// namespace
 
 TabletInputAdapter::TabletInputAdapter(
   HWND window,
-  const std::shared_ptr<KneeboardState>& kneeboard/*,
-  const nlohmann::json& jsonSettings*/)
-  : mWindow(window), mKneeboard(kneeboard) {
+  const std::shared_ptr<KneeboardState>& kneeboard,
+  const nlohmann::json& jsonSettings)
+  : mWindow(window), mKneeboard(kneeboard), mInitialSettings(jsonSettings) {
   if (gInstance != nullptr) {
     throw std::logic_error("There can only be one TabletInputAdapter");
   }
@@ -61,6 +85,27 @@ TabletInputAdapter::TabletInputAdapter(
 
   mDevice = std::make_shared<TabletInputDevice>(
     mTablet->GetDeviceName(), mTablet->GetDeviceID());
+
+  JSONSettings settings;
+  if (!jsonSettings.is_null()) {
+    jsonSettings.get_to(settings);
+  }
+  if (settings.Devices.contains(mTablet->GetDeviceID())) {
+    std::vector<UserInputButtonBinding> bindings;
+    for (const auto& binding:
+         settings.Devices.at(mTablet->GetDeviceID()).ExpressKeyBindings) {
+      bindings.push_back({
+        mDevice,
+        binding.Buttons,
+        binding.Action,
+      });
+    }
+    mDevice->SetButtonBindings(bindings);
+  }
+
+  AddEventListener(
+    mDevice->evBindingsChangedEvent, this->evSettingsChangedEvent);
+  AddEventListener(mDevice->evUserActionEvent, this->evUserActionEvent);
 
   mFlushThread = {[=](std::stop_token stopToken) {
     const auto interval
@@ -116,12 +161,16 @@ void TabletInputAdapter::ProcessTabletMessage(
   if (state.tabletButtons != mTabletButtons) {
     const uint16_t changedMask = state.tabletButtons ^ mTabletButtons;
     const bool pressed = state.tabletButtons & changedMask;
-    const auto buttonIndex = std::countr_zero(changedMask);
+    const uint64_t buttonIndex = std::countr_zero(changedMask);
     mTabletButtons = state.tabletButtons;
 
-    dprintf("{} expresskey {}", pressed ? "Pressed" : "Released", buttonIndex);
+    mDevice->evButtonEvent({
+      mDevice,
+      buttonIndex,
+      pressed,
+    });
+    return;
   }
-
 
   if (state.active) {
     // TODO: make tablet rotation configurable.
@@ -183,6 +232,40 @@ void TabletInputAdapter::ProcessTabletMessage(
   }
   // Flush later
   mHaveUnflushedEvents = true;
+}
+
+nlohmann::json TabletInputAdapter::GetSettings() const {
+  if (!mDevice) {
+    return mInitialSettings;
+  }
+
+  JSONSettings settings;
+  if (!mInitialSettings.is_null()) {
+    mInitialSettings.get_to(settings);
+  }
+
+  const auto id = mDevice->GetID();
+  if (settings.Devices.contains(id)) {
+    settings.Devices.erase(id);
+  }
+  if (mDevice->GetButtonBindings().empty()) {
+    return settings;
+  }
+
+  std::vector<JSONButtonBinding> expressKeyBindings;
+  for (const auto& binding: mDevice->GetButtonBindings()) {
+    expressKeyBindings.push_back({
+      .Buttons = binding.GetButtonIDs(),
+      .Action = binding.GetAction(),
+    });
+  }
+  settings.Devices[id] = {
+    .ID = id,
+    .Name = mDevice->GetName(),
+    .ExpressKeyBindings = expressKeyBindings,
+  };
+
+  return settings;
 }
 
 }// namespace OpenKneeboard

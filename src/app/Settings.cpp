@@ -81,6 +81,9 @@ void from_json(const nlohmann::json& j, Settings& s) {
   if (j.contains("DirectInputV2")) {
     s.DirectInputV2 = j.at("DirectInputV2");
   }
+  if (j.contains("TabletInput")) {
+    s.TabletInput = j.at("TabletInput");
+  }
 }
 
 void to_json(nlohmann::json& j, const Settings& s) {
@@ -88,6 +91,7 @@ void to_json(nlohmann::json& j, const Settings& s) {
     {"Games", s.Games},
     {"Tabs", s.Tabs},
     {"DirectInputV2", s.DirectInputV2},
+    {"TabletInput", s.TabletInput},
   };
 }
 

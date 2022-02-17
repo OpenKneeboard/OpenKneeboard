@@ -120,20 +120,14 @@ nlohmann::json DirectInputAdapter::GetSettings() const {
 
   for (const auto& device: mDevices) {
     const auto deviceID = device->GetID();
+    if (settings.Devices.contains(deviceID)) {
+      settings.Devices.erase(deviceID);
+    }
+
     if (device->GetButtonBindings().empty()) {
-      if (settings.Devices.contains(deviceID)) {
-        settings.Devices.erase(deviceID);
-      }
       continue;
     }
 
-    if (!settings.Devices.contains(deviceID)) {
-      settings.Devices[deviceID] = {
-        .ID = deviceID,
-        .Name = device->GetName(),
-        .Kind = "GameController",
-      };
-    }
 
     std::vector<JSONButtonBinding> buttonBindings;
     for (const auto& binding: device->GetButtonBindings()) {
@@ -142,7 +136,13 @@ nlohmann::json DirectInputAdapter::GetSettings() const {
         .Action = binding.GetAction(),
       });
     }
-    settings.Devices[deviceID].ButtonBindings = buttonBindings;
+
+		settings.Devices[deviceID] = {
+			.ID = deviceID,
+			.Name = device->GetName(),
+			.Kind = "GameController",
+      .ButtonBindings = buttonBindings,
+		};
   }
   return settings;
 }

@@ -27,6 +27,7 @@ struct Settings final {
   uint32_t Version = 1;
 
   nlohmann::json DirectInputV2;
+  nlohmann::json TabletInput;
   nlohmann::json Games;
   nlohmann::json Tabs;
 
