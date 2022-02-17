@@ -175,8 +175,9 @@ std::string WintabTablet::GetDeviceName() const {
   }
 
   std::wstring buf;
-  buf.resize(p->mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, nullptr));
-  p->mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, buf.data());
+  buf.resize(p->mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, nullptr) / sizeof(wchar_t));
+  const auto actualSize = p->mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, buf.data());
+  buf.resize((actualSize / sizeof(wchar_t)) - 1);
   return to_utf8(buf);
 }
 
@@ -186,8 +187,9 @@ std::string WintabTablet::GetDeviceID() const {
   }
 
   std::wstring buf;
-  buf.resize(p->mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, nullptr));
-  p->mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, buf.data());
+  buf.resize(p->mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, nullptr)/ sizeof(wchar_t));
+  const auto actualSize = p->mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, buf.data());
+  buf.resize((actualSize / sizeof(wchar_t)) - 1);
   return to_utf8(buf);
 }
 
