@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/TabsList.h>
+#include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <wx/frame.h>
@@ -48,10 +49,10 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mKneeboard = std::make_shared<KneeboardState>();
   mSHMRenderer
     = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
-  mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInputV2);
+  mTabletInput = std::make_unique<TabletInputAdapter>(this->GetHWND(), mKneeboard);
   mTabsList = std::make_unique<TabsList>(mDXR, mKneeboard, mSettings.Tabs);
 
   mOpenVRThread = std::jthread(
@@ -64,12 +65,6 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   });
 
   InitUI();
-
-  if (*mTablet) {
-    mCursorEventTimer.Bind(
-      wxEVT_TIMER, [this](auto&) { this->FlushCursorEvents(); });
-    mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
-  }
 
   AddEventListener(mDirectInput->evUserActionEvent, [=](UserAction action) {
     switch (action) {
@@ -95,87 +90,6 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
 }
 
 okMainWindow::~okMainWindow() {
-}
-
-WXLRESULT
-okMainWindow::MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) {
-  if (*mTablet && mTablet->ProcessMessage(message, wParam, lParam)) {
-    const auto state = mTablet->GetState();
-    if (state.active) {
-      // TODO: make tablet rotation configurable.
-      // For now, assume tablet is rotated 90 degrees clockwise
-      auto tabletLimits = mTablet->GetLimits();
-      float x = tabletLimits.y - state.y;
-      float y = state.x;
-      std::swap(tabletLimits.x, tabletLimits.y);
-
-      // Cursor events use content coordinates, but as as the content isn't at
-      // the origin, we need a few transformations:
-
-      // 1. scale to canvas size
-      auto canvasSize = mKneeboard->GetCanvasSize();
-
-      const auto scaleX = static_cast<float>(canvasSize.width) / tabletLimits.x;
-      const auto scaleY
-        = static_cast<float>(canvasSize.height) / tabletLimits.y;
-      // in most cases, we use `std::min` - that would be for fitting the tablet
-      // in the canvas bounds, but we want to fit the canvas in the tablet, so
-      // doing the opposite
-      const auto scale = std::max(scaleX, scaleY);
-
-      x *= scale;
-      y *= scale;
-
-      // 2. translate to content origgin
-
-      const auto contentRenderRect = mKneeboard->GetContentRenderRect();
-      x -= contentRenderRect.left;
-      y -= contentRenderRect.top;
-
-      // 3. scale to content size;
-      const auto contentNativeSize = mKneeboard->GetContentNativeSize();
-      const auto contentScale = contentNativeSize.width
-        / (contentRenderRect.right - contentRenderRect.left);
-      x *= contentScale;
-      y *= contentScale;
-
-      CursorEvent event {
-        .mTouchState = (state.penButtons & 1)
-          ? CursorTouchState::TOUCHING_SURFACE
-          : CursorTouchState::NEAR_SURFACE,
-        .mX = x,
-        .mY = y,
-        .mPressure = static_cast<float>(state.pressure) / tabletLimits.pressure,
-        .mButtons = state.penButtons,
-      };
-
-      if (
-        x >= 0 && x <= contentNativeSize.width && y >= 0
-        && y <= contentNativeSize.height) {
-        event.mPositionState = CursorPositionState::IN_CONTENT_RECT;
-      } else {
-        event.mPositionState = CursorPositionState::NOT_IN_CONTENT_RECT;
-      }
-
-      mBufferedCursorEvents.push_back(event);
-    } else {
-      mBufferedCursorEvents.push_back({});
-    }
-  }
-  return wxFrame::MSWWindowProc(message, wParam, lParam);
-}
-
-void okMainWindow::FlushCursorEvents() {
-  if (mBufferedCursorEvents.empty()) {
-    return;
-  }
-
-  for (const auto& event: mBufferedCursorEvents) {
-    mKneeboard->evCursorEvent(event);
-  }
-  mBufferedCursorEvents.clear();
-
-  mKneeboard->evFlushEvent();
 }
 
 void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {

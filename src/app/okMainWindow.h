@@ -21,7 +21,6 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/WintabTablet.h>
 #include <shims/wx.h>
 #include <wx/frame.h>
 
@@ -42,6 +41,7 @@ class GamesList;
 class InterprocessRenderer;
 class KneeboardState;
 class TabsList;
+class TabletInputAdapter;
 }// namespace OpenKneeboard
 
 class okMainWindow final : public wxFrame,
@@ -49,10 +49,6 @@ class okMainWindow final : public wxFrame,
  public:
   okMainWindow();
   virtual ~okMainWindow();
-
- protected:
-  virtual WXLRESULT
-  MSWWindowProc(WXUINT message, WXWPARAM wParam, WXLPARAM lParam) override;
 
  private:
   void OnExit(wxCommandEvent&);
@@ -70,16 +66,12 @@ class okMainWindow final : public wxFrame,
   OpenKneeboard::Settings mSettings = OpenKneeboard::Settings::Load();
 
   std::unique_ptr<OpenKneeboard::DirectInputAdapter> mDirectInput;
+  std::unique_ptr<OpenKneeboard::TabletInputAdapter> mTabletInput;
   std::unique_ptr<OpenKneeboard::GamesList> mGamesList;
   std::unique_ptr<OpenKneeboard::TabsList> mTabsList;
 
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
   std::unique_ptr<OpenKneeboard::InterprocessRenderer> mSHMRenderer;
-  std::unique_ptr<OpenKneeboard::WintabTablet> mTablet;
-
-  std::vector<OpenKneeboard::CursorEvent> mBufferedCursorEvents;
-  void FlushCursorEvents();
-  wxTimer mCursorEventTimer;
 
   std::jthread mGameEventThread;
   std::jthread mOpenVRThread;
