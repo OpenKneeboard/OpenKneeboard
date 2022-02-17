@@ -36,6 +36,7 @@ class UserInputDevice;
 struct CursorEvent;
 class KneeboardState;
 class WintabTablet;
+class TabletInputDevice;
 
 class TabletInputAdapter final {
  public:
@@ -48,9 +49,9 @@ class TabletInputAdapter final {
 
   /*
     nlohmann::json GetSettings() const;
-    std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
     Event<> evSettingsChangedEvent;
     */
+  std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
   Event<UserAction> evUserActionEvent;
 
@@ -58,8 +59,10 @@ class TabletInputAdapter final {
   HWND mWindow;
   std::shared_ptr<KneeboardState> mKneeboard;
   std::unique_ptr<WintabTablet> mTablet;
+  std::shared_ptr<TabletInputDevice> mDevice;
   WNDPROC mPreviousWndProc;
   std::jthread mFlushThread;
+  uint16_t mTabletButtons = 0;
 
   bool mHaveUnflushedEvents = false;
 

@@ -20,12 +20,14 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
-#include <OpenKneeboard/UserInputDevice.h>
+#include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <bit>
 
 #include "KneeboardState.h"
 #include "UserAction.h"
@@ -56,6 +58,9 @@ TabletInputAdapter::TabletInputAdapter(
   if (!mPreviousWndProc) {
     return;
   }
+
+  mDevice = std::make_shared<TabletInputDevice>(
+    mTablet->GetDeviceName(), mTablet->GetDeviceID());
 
   mFlushThread = {[=](std::stop_token stopToken) {
     const auto interval
@@ -88,6 +93,17 @@ LRESULT CALLBACK TabletInputAdapter::WindowProc(
     gInstance->mPreviousWndProc, hwnd, uMsg, wParam, lParam);
 }
 
+std::vector<std::shared_ptr<UserInputDevice>> TabletInputAdapter::GetDevices()
+  const {
+  if (!mDevice) {
+    return {};
+  }
+
+  std::vector<std::shared_ptr<UserInputDevice>> out;
+  out.push_back(std::static_pointer_cast<UserInputDevice>(mDevice));
+  return out;
+}
+
 void TabletInputAdapter::ProcessTabletMessage(
   UINT uMsg,
   WPARAM wParam,
@@ -97,6 +113,16 @@ void TabletInputAdapter::ProcessTabletMessage(
   }
 
   const auto state = mTablet->GetState();
+  if (state.tabletButtons != mTabletButtons) {
+    const uint16_t changedMask = state.tabletButtons ^ mTabletButtons;
+    const bool pressed = state.tabletButtons & changedMask;
+    const auto buttonIndex = std::countr_zero(changedMask);
+    mTabletButtons = state.tabletButtons;
+
+    dprintf("{} expresskey {}", pressed ? "Pressed" : "Released", buttonIndex);
+  }
+
+
   if (state.active) {
     // TODO: make tablet rotation configurable.
     // For now, assume tablet is rotated 90 degrees clockwise
