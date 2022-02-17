@@ -20,6 +20,7 @@
 
 
 #include <OpenKneeboard/WintabTablet.h>
+#include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/dprint.h>
 
 // clang-format off
@@ -165,6 +166,29 @@ WintabTablet::Impl::Impl(HWND window) {
     return;
   }
   dprint("Opened wintab tablet");
+
+}
+
+std::string WintabTablet::GetDeviceName() const {
+  if (!p->mWintab) {
+    return {};
+  }
+
+  std::wstring buf;
+  buf.resize(p->mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, nullptr));
+  p->mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, buf.data());
+  return to_utf8(buf);
+}
+
+std::string WintabTablet::GetDeviceID() const {
+  if (!p->mWintab) {
+    return {};
+  }
+
+  std::wstring buf;
+  buf.resize(p->mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, nullptr));
+  p->mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, buf.data());
+  return to_utf8(buf);
 }
 
 WintabTablet::Impl::~Impl() {

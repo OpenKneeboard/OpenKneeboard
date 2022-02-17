@@ -23,6 +23,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 namespace OpenKneeboard {
 
@@ -48,6 +49,9 @@ class WintabTablet final {
 
   State GetState() const;
   Limits GetLimits() const;
+
+  std::string GetDeviceName() const;
+  std::string GetDeviceID() const;
 
  private:
   struct Impl;

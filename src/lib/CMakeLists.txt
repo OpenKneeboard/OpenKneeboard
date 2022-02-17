@@ -60,6 +60,7 @@ target_link_libraries(
   _libheaders
   wintab
   OpenKneeboard-dprint
+  OpenKneeboard-UTF8
 )
 
 add_custom_target(

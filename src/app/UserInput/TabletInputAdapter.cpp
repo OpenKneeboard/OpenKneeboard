@@ -101,8 +101,8 @@ void TabletInputAdapter::ProcessTabletMessage(
     // TODO: make tablet rotation configurable.
     // For now, assume tablet is rotated 90 degrees clockwise
     auto tabletLimits = mTablet->GetLimits();
-    float x = tabletLimits.y - state.y;
-    float y = state.x;
+    auto x = static_cast<float>(tabletLimits.y - state.y);
+    auto y = static_cast<float>(state.x);
     std::swap(tabletLimits.x, tabletLimits.y);
 
     // Cursor events use content coordinates, but as as the content isn't at
