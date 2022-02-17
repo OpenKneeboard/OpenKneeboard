@@ -14,16 +14,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
 #include <nlohmann/json.hpp>
 
+namespace OpenKneeboard {
+
 struct Settings final {
   uint32_t Version = 1;
 
-  nlohmann::json DirectInput;
+  nlohmann::json DirectInputV2;
   nlohmann::json Games;
   nlohmann::json Tabs;
 
@@ -31,4 +34,7 @@ struct Settings final {
   void Save();
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Settings, Version, DirectInput, Games, Tabs);
+void from_json(const nlohmann::json&, Settings&);
+void to_json(nlohmann::json&, const Settings&);
+
+}

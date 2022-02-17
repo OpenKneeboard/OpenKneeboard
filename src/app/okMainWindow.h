@@ -67,7 +67,7 @@ class okMainWindow final : public wxFrame,
 
   OpenKneeboard::DXResources mDXR;
   wxNotebook* mNotebook = nullptr;
-  Settings mSettings = Settings::Load();
+  OpenKneeboard::Settings mSettings = OpenKneeboard::Settings::Load();
 
   std::unique_ptr<OpenKneeboard::DirectInputAdapter> mDirectInput;
   std::unique_ptr<OpenKneeboard::GamesList> mGamesList;

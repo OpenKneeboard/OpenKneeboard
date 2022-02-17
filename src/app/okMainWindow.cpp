@@ -37,7 +37,7 @@
 #include "OpenVROverlay.h"
 #include "TabState.h"
 #include "okAboutBox.h"
-#include "okDirectInputSettings.h"
+#include "okUserInputSettings.h"
 #include "okGamesListSettings.h"
 #include "okTabsListSettings.h"
 
@@ -51,7 +51,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mTablet = std::make_unique<WintabTablet>(this->GetHWND());
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
-  mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInput);
+  mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInputV2);
   mTabsList = std::make_unique<TabsList>(mDXR, mKneeboard, mSettings.Tabs);
 
   mOpenVRThread = std::jthread(
@@ -71,7 +71,7 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     mCursorEventTimer.Start(1000 / TabletCursorRenderHz);
   }
 
-  AddEventListener(mDirectInput->evUserAction, [=](UserAction action) {
+  AddEventListener(mDirectInput->evUserActionEvent, [=](UserAction action) {
     switch (action) {
       case UserAction::PREVIOUS_TAB:
         mNotebook->AdvanceSelection(false);
@@ -215,9 +215,9 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
       return it;
     },
     [&](wxWindow* p) {
-      auto it = new okDirectInputSettings(p, mDirectInput.get());
+      auto it = new okUserInputSettings(p, mDirectInput->GetDevices());
       AddEventListener(it->evSettingsChangedEvent, [&] {
-        mSettings.DirectInput = mDirectInput->GetSettings();
+        mSettings.DirectInputV2 = mDirectInput->GetSettings();
         mSettings.Save();
       });
       return it;

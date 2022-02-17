@@ -20,34 +20,28 @@
 #pragma once
 
 #include <dinput.h>
-#include <shims/wx.h>
+#include <shims/winrt.h>
 
-#include <OpenKneeboard/DirectInputAdapter.h>
+#include <stop_token>
 
-class okDirectInputSettings final : public wxPanel {
+#include "Events.h"
+
+namespace OpenKneeboard {
+
+class DirectInputDevice;
+
+class DirectInputListener final {
  public:
-  okDirectInputSettings(
-    wxWindow* parent,
-    OpenKneeboard::DirectInputAdapter* diController);
-  ~okDirectInputSettings();
+  DirectInputListener(
+    const winrt::com_ptr<IDirectInput8>& di,
+    const std::vector<std::shared_ptr<DirectInputDevice>>& devices);
+  ~DirectInputListener();
 
-  OpenKneeboard::Event<> evSettingsChangedEvent;
+  void Run(std::stop_token);
 
  private:
-  struct DeviceButtons;
-  OpenKneeboard::DirectInputAdapter* mDIController;
-  std::vector<DIDEVICEINSTANCE> mDevices;
-  std::vector<DeviceButtons> mDeviceButtons;
-
-  wxButton* CreateBindButton(
-    wxWindow* parent,
-    int deviceIndex,
-    OpenKneeboard::UserAction action);
-
-  wxDialog* CreateBindInputDialog(bool haveExistingBinding);
-
-  void OnBindButton(
-    wxCommandEvent& ev,
-    int deviceIndex,
-    OpenKneeboard::UserAction action);
+  struct DeviceInfo;
+  std::vector<DeviceInfo> mDevices;
 };
+
+}// namespace OpenKneeboard

@@ -40,7 +40,7 @@ target_include_directories(
   OpenKneeboard
   PRIVATE
   ${SOURCE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/DirectInput/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/UserInput/include
   ${CMAKE_CURRENT_SOURCE_DIR}/GamesList/include
   ${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include
   ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include

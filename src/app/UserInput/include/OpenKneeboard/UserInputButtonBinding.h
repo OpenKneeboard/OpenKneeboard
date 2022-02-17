@@ -14,21 +14,36 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
-#include <guiddef.h>
-#include <string>
+#include <memory>
+#include <unordered_set>
+
 #include "UserAction.h"
 
 namespace OpenKneeboard {
 
-struct DirectInputBinding {
-  GUID instanceGuid;
-  std::string instanceName;
-  uint8_t buttonIndex;
-  OpenKneeboard::UserAction action;
+class UserInputDevice;
+
+class UserInputButtonBinding final {
+ public:
+  UserInputButtonBinding(
+    std::shared_ptr<UserInputDevice> device,
+    std::unordered_set<uint64_t> buttons,
+    UserAction action);
+  ~UserInputButtonBinding();
+
+  UserInputDevice* GetDevice() const;
+  std::unordered_set<uint64_t> GetButtonIDs() const;
+  UserAction GetAction() const;
+
+ private:
+  std::shared_ptr<UserInputDevice> mDevice;
+  std::unordered_set<uint64_t> mButtons;
+  UserAction mAction;
 };
 
-}
+}// namespace OpenKneeboard

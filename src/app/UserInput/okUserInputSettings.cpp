@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "okDirectInputSettings.h"
+#include "okUserInputSettings.h"
 
-#include <OpenKneeboard/DirectInputBinding.h>
-#include <OpenKneeboard/DirectInputButtonEvent.h>
-#include <OpenKneeboard/GetDirectInputDevices.h>
+#include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/UserInputButtonEvent.h>
+#include <OpenKneeboard/UserInputDevice.h>
 #include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
 #include <wx/gbsizer.h>
@@ -31,9 +31,9 @@
 
 using namespace OpenKneeboard;
 
-wxDEFINE_EVENT(okEVT_DI_CLEAR_BINDING_BUTTON, wxCommandEvent);
+wxDEFINE_EVENT(okEVT_CLEAR_BINDING_BUTTON, wxCommandEvent);
 
-struct okDirectInputSettings::DeviceButtons {
+struct okUserInputSettings::DeviceButtons {
   wxButton* previousTab = nullptr;
   wxButton* nextTab = nullptr;
   wxButton* previousPage = nullptr;
@@ -58,33 +58,31 @@ struct okDirectInputSettings::DeviceButtons {
   };
 };
 
-wxButton* okDirectInputSettings::CreateBindButton(
+wxButton* okUserInputSettings::CreateBindButton(
   wxWindow* parent,
   int deviceIndex,
-  UserAction action) {
+  UserAction buttonAction) {
   const auto& device = mDevices.at(deviceIndex);
-  auto label = _("Bind");
-  for (auto binding: mDIController->GetBindings()) {
-    if (
-      binding.instanceGuid == device.guidInstance && binding.action == action) {
-      label = fmt::format(
-        fmt::runtime(_("Button {}").ToStdString()), binding.buttonIndex + 1);
-      break;
+  std::string label = to_utf8(_("Bind"));
+  for (auto binding: device->GetButtonBindings()) {
+    if (binding.GetAction() != buttonAction) {
+      continue;
     }
+    label = device->GetButtonComboDescription(binding.GetButtonIDs());
+    break;
   }
   auto button = new wxButton(parent, wxID_ANY, label);
   button->Bind(wxEVT_BUTTON, [=](auto& ev) {
-    this->OnBindButton(ev, deviceIndex, action);
+    this->OnBindButton(ev, deviceIndex, buttonAction);
   });
   return button;
 }
 
-okDirectInputSettings::okDirectInputSettings(
+okUserInputSettings::okUserInputSettings(
   wxWindow* parent,
-  DirectInputAdapter* controller)
-  : wxPanel(parent, wxID_ANY), mDIController(controller) {
+  const std::vector<std::shared_ptr<UserInputDevice>>& devices)
+  : wxPanel(parent, wxID_ANY), mDevices(devices) {
   this->SetLabel(_("DirectInput"));
-  mDevices = GetDirectInputDevices(controller->GetDirectInput());
 
   auto sizer = new wxBoxSizer(wxVERTICAL);
 
@@ -111,7 +109,8 @@ okDirectInputSettings::okDirectInputSettings(
     const auto& device = mDevices.at(i);
     const auto row = i + 1;// headers
 
-    auto label = new wxStaticText(panel, wxID_ANY, device.tszInstanceName);
+    auto label = new wxStaticText(
+      panel, wxID_ANY, wxString::FromUTF8(device->GetName()));
     grid->Add(label, wxGBPosition(row, 0));
 
     auto toggleVisibility
@@ -146,17 +145,16 @@ okDirectInputSettings::okDirectInputSettings(
   Refresh();
 }
 
-okDirectInputSettings::~okDirectInputSettings() {
+okUserInputSettings::~okUserInputSettings() {
 }
 
-wxDialog* okDirectInputSettings::CreateBindInputDialog(
-  bool haveExistingBinding) {
+wxDialog* okUserInputSettings::CreateBindInputDialog(bool haveExistingBinding) {
   auto d = new wxDialog(this, wxID_ANY, _("Bind Inputs"));
 
   auto s = new wxBoxSizer(wxVERTICAL);
 
   s->Add(
-    new wxStaticText(d, wxID_ANY, _("Press button to bind input...")),
+    new wxStaticText(d, wxID_ANY, _("Press and release buttons to bind input...")),
     0,
     wxALL,
     5);
@@ -169,7 +167,7 @@ wxDialog* okDirectInputSettings::CreateBindInputDialog(
 
     clear->Bind(wxEVT_BUTTON, [=](auto&) {
       d->Close();
-      wxQueueEvent(d, new wxCommandEvent(okEVT_DI_CLEAR_BINDING_BUTTON));
+      wxQueueEvent(d, new wxCommandEvent(okEVT_CLEAR_BINDING_BUTTON));
     });
   }
 
@@ -178,22 +176,19 @@ wxDialog* okDirectInputSettings::CreateBindInputDialog(
   return d;
 }
 
-void okDirectInputSettings::OnBindButton(
+void okUserInputSettings::OnBindButton(
   wxCommandEvent& ev,
   int deviceIndex,
   UserAction action) {
   auto button = dynamic_cast<wxButton*>(ev.GetEventObject());
   auto& device = mDevices.at(deviceIndex);
 
-  auto bindings = mDIController->GetBindings();
+  auto bindings = device->GetButtonBindings();
 
   // Used to implement a clear button
   auto currentBinding = bindings.end();
   for (auto it = bindings.begin(); it != bindings.end(); ++it) {
-    if (it->instanceGuid != device.guidInstance) {
-      continue;
-    }
-    if (it->action != action) {
+    if (it->GetAction() != action) {
       continue;
     }
     currentBinding = it;
@@ -201,52 +196,66 @@ void okDirectInputSettings::OnBindButton(
   }
   auto d = CreateBindInputDialog(currentBinding != bindings.end());
 
-  auto unhook = scope_guard([=] { mDIController->SetHook(nullptr); });
-  mDIController->SetHook([=, &bindings](const DirectInputButtonEvent& be) {
-    if (be.instance.guidInstance != device.guidInstance) {
-      return;
-    }
+  auto unhook = scope_guard([=] { device->evButtonEvent.PopHook(); });
+  std::unordered_set<uint64_t> buttonState;
+  device->evButtonEvent.PushHook(std::bind_front(
+    &okUserInputSettings::OnBindButtonEvent,
+    this,
+    d,
+    deviceIndex,
+    action,
+    &buttonState));
 
-    // Not using `currentBinding` as we need to clear both the
-    // current binding, and any other conflicting bindings
-    for (auto it = bindings.begin(); it != bindings.end();) {
-      if (it->instanceGuid != device.guidInstance) {
-        ++it;
-        continue;
-      }
-
-      if (it->buttonIndex != be.buttonIndex && it->action != action) {
-        ++it;
-        continue;
-      }
-
-      auto button = this->mDeviceButtons.at(deviceIndex).Get(it->action);
-      if (button) {
-        button->SetLabel(_("Bind"));
-      }
-      it = bindings.erase(it);
-    }
-
-    button->SetLabel(fmt::format(
-      fmt::runtime(_("Button {:d}").ToStdString()), be.buttonIndex + 1));
-    bindings.push_back(
-      {.instanceGuid = device.guidInstance,
-       .instanceName = to_utf8(device.tszInstanceName),
-       .buttonIndex = be.buttonIndex,
-       .action = action});
-    mDIController->SetBindings(bindings);
-    this->evSettingsChangedEvent();
-    d->Close();
-  });
-
-  d->Bind(okEVT_DI_CLEAR_BINDING_BUTTON, [=, &bindings](auto&) {
+  d->Bind(okEVT_CLEAR_BINDING_BUTTON, [=, &bindings](auto&) {
     bindings.erase(currentBinding);
     auto button = this->mDeviceButtons.at(deviceIndex).Get(action);
     if (button) {
       button->SetLabel(_("Bind"));
     }
-    mDIController->SetBindings(bindings);
+    device->SetButtonBindings(bindings);
     this->evSettingsChangedEvent();
   });
   d->ShowModal();
+}
+
+EventBase::HookResult okUserInputSettings::OnBindButtonEvent(
+  wxDialog* dialog,
+  int deviceIndex,
+  UserAction bindAction,
+  std::unordered_set<uint64_t>* buttonState,
+  const UserInputButtonEvent& event) {
+  auto device = mDevices.at(deviceIndex);
+  auto bindings = device->GetButtonBindings();
+
+  if (event.IsPressed()) {
+    buttonState->insert(event.GetButtonID());
+    return EventBase::HookResult::STOP_PROPAGATION;
+  }
+
+  // Erase existing 
+  for (auto it = bindings.begin(); it != bindings.end();) {
+    if (it->GetButtonIDs() != *buttonState && it->GetAction() != bindAction) {
+      ++it;
+      continue;
+    }
+
+    auto button = this->mDeviceButtons.at(deviceIndex).Get(it->GetAction());
+    if (button) {
+      button->SetLabel(_("Bind"));
+    }
+    it = bindings.erase(it);
+  }
+
+  auto button = mDeviceButtons.at(deviceIndex).Get(bindAction);
+
+  button->SetLabel(device->GetButtonComboDescription(*buttonState));
+  bindings.push_back({
+    device,
+    *buttonState,
+    bindAction});
+  device->SetButtonBindings(bindings);
+  this->evSettingsChangedEvent();
+  dialog->Close();
+
+  return EventBase::HookResult::STOP_PROPAGATION;
 }

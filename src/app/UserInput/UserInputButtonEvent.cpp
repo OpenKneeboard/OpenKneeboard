@@ -17,32 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <dinput.h>
-#include <shims/winrt.h>
-
-#include <stop_token>
-
-#include "DirectInputButtonEvent.h"
-#include "Events.h"
+#include <OpenKneeboard/UserInputButtonEvent.h>
+#include <OpenKneeboard/UserInputDevice.h>
 
 namespace OpenKneeboard {
 
-class DirectInputListener final {
- public:
-  DirectInputListener(
-    const winrt::com_ptr<IDirectInput8>& di,
-    const std::vector<DIDEVICEINSTANCE>& instances);
-  ~DirectInputListener();
+UserInputButtonEvent::UserInputButtonEvent(
+  std::shared_ptr<UserInputDevice> device,
+  uint64_t buttonID,
+  bool pressed)
+  : mDevice(device), mButtonID(buttonID), mPressed(pressed) {
+}
 
-  OpenKneeboard::Event<DirectInputButtonEvent> evButtonEvent;
+UserInputButtonEvent::~UserInputButtonEvent() {
+}
 
-  void Run(std::stop_token);
+UserInputDevice* UserInputButtonEvent::GetDevice() const {
+  return mDevice.get();
+}
 
- private:
-  struct DeviceInfo;
-  std::vector<DeviceInfo> mDevices;
-};
+uint64_t UserInputButtonEvent::GetButtonID() const {
+  return mButtonID;
+}
+
+bool UserInputButtonEvent::IsPressed() const {
+  return mPressed;
+}
 
 }// namespace OpenKneeboard

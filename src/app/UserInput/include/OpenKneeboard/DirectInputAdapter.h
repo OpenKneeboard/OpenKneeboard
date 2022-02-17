@@ -19,16 +19,40 @@
  */
 #pragma once
 
-#include <dinput.h>
+#include <shims/winrt.h>
 
-#include <cstdint>
+#include <memory>
+#include <nlohmann/json.hpp>
+
+#include "Events.h"
+#include "UserAction.h"
+
+struct IDirectInput8W;
 
 namespace OpenKneeboard {
 
-struct DirectInputButtonEvent {
-  DIDEVICEINSTANCE instance;
-  uint8_t buttonIndex;
-  bool pressed;
+class DirectInputDevice;
+class UserInputButtonBinding;
+class UserInputDevice;
+
+class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
+ public:
+  DirectInputAdapter() = delete;
+  DirectInputAdapter(const nlohmann::json& settings);
+  ~DirectInputAdapter();
+
+  nlohmann::json GetSettings() const;
+  std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
+
+
+  Event<UserAction> evUserActionEvent;
+  Event<> evSettingsChangedEvent;
+ private:
+  winrt::com_ptr<IDirectInput8W> mDI8;
+  std::vector<std::shared_ptr<DirectInputDevice>> mDevices;
+  std::jthread mDIThread;
+
+  const nlohmann::json mInitialSettings;
 };
 
 }// namespace OpenKneeboard

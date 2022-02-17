@@ -21,6 +21,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <list>
 #include <map>
 #include <type_traits>
 #include <vector>
@@ -37,6 +38,11 @@ class Event;
 
 class EventBase {
   friend class EventReceiver;
+ public:
+  enum class HookResult {
+    ALLOW_PROPAGATION,
+    STOP_PROPAGATION,
+  };
 
  protected:
   static void EnqueueForMainThread(std::function<void()>);
@@ -53,6 +59,8 @@ class Event final : public EventBase {
   friend class EventReceiver;
 
  public:
+  using Hook = std::function<HookResult(Args...)>;
+
   Event() = default;
   Event(const Event<Args...>&) = delete;
   Event& operator=(const Event<Args...>&) = delete;
@@ -60,6 +68,9 @@ class Event final : public EventBase {
 
   void operator()(Args... args);
   void EmitFromMainThread(Args... args);
+
+  void PushHook(Hook);
+  void PopHook();
 
  protected:
   void AddHandler(EventReceiver*, const EventHandler<Args...>&);
@@ -72,6 +83,7 @@ class Event final : public EventBase {
   };
   uint64_t mNextToken = 0;
   std::unordered_map<uint64_t, ReceiverInfo> mReceivers;
+  std::list<Hook> mHooks;
 };
 
 class EventReceiver {
@@ -137,6 +149,11 @@ void Event<Args...>::RemoveHandler(uint64_t token) {
 
 template <class... Args>
 void Event<Args...>::operator()(Args... args) {
+  for (const auto& hook: mHooks) {
+    if (hook(args...) == HookResult::STOP_PROPAGATION) {
+      return;
+    }
+  }
   for (const auto& [token, info]: mReceivers) {
     info.mFunc(args...);
   }
@@ -160,6 +177,16 @@ Event<Args...>::~Event() {
       }
     }
   }
+}
+
+template <class... Args>
+void Event<Args...>::PushHook(Hook hook) {
+  mHooks.push_front(hook);
+}
+
+template <class... Args>
+void Event<Args...>::PopHook() {
+  mHooks.pop_front();
 }
 
 template <class... Args>

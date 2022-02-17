@@ -17,25 +17,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DirectInputButtonEvent.h>
+#include <OpenKneeboard/DirectInputDevice.h>
 #include <OpenKneeboard/DirectInputListener.h>
+#include <OpenKneeboard/UserInputButtonEvent.h>
 #include <shims/wx.h>
 
 namespace OpenKneeboard {
 
 struct DirectInputListener::DeviceInfo {
-  DIDEVICEINSTANCE instance;
-  winrt::com_ptr<IDirectInputDevice8> device;
-  DIJOYSTATE2 state = {};
-  HANDLE eventHandle = INVALID_HANDLE_VALUE;
+  std::shared_ptr<DirectInputDevice> mDevice;
+  winrt::com_ptr<IDirectInputDevice8> mDIDevice;
+  DIJOYSTATE2 mState = {};
+  HANDLE mEventHandle = INVALID_HANDLE_VALUE;
 };
 
 DirectInputListener::DirectInputListener(
   const winrt::com_ptr<IDirectInput8>& di,
-  const std::vector<DIDEVICEINSTANCE>& instances) {
-  for (const auto& it: instances) {
+  const std::vector<std::shared_ptr<DirectInputDevice>>& devices) {
+  for (const auto& it: devices) {
     winrt::com_ptr<IDirectInputDevice8> device;
-    di->CreateDevice(it.guidInstance, device.put(), NULL);
+    di->CreateDevice(
+      it->GetDIDeviceInstance().guidInstance, device.put(), NULL);
     if (!device) {
       continue;
     }
@@ -70,7 +72,7 @@ void DirectInputListener::Run(std::stop_token stopToken) {
 
   std::vector<HANDLE> handles;
   for (const auto& it: mDevices) {
-    handles.push_back(it.eventHandle);
+    handles.push_back(it.mEventHandle);
   }
   handles.push_back(cancelHandle.get());
 
@@ -83,21 +85,21 @@ void DirectInputListener::Run(std::stop_token stopToken) {
     }
 
     auto& device = mDevices.at(idx);
-    auto oldState = device.state;
+    auto oldState = device.mState;
     DIJOYSTATE2 newState;
-    device.device->Poll();
-    device.device->GetDeviceState(sizeof(newState), &newState);
+    device.mDIDevice->Poll();
+    device.mDIDevice->GetDeviceState(sizeof(newState), &newState);
     if (memcmp(oldState.rgbButtons, newState.rgbButtons, 128) == 0) {
       continue;
     }
 
     for (uint8_t i = 0; i < 128; ++i) {
       if (oldState.rgbButtons[i] != newState.rgbButtons[i]) {
-        device.state = newState;
-        evButtonEvent.EmitFromMainThread({
-          device.instance,
-          static_cast<uint8_t>(i),
-          (bool)(newState.rgbButtons[i] & (1 << 7)),
+        device.mState = newState;
+        device.mDevice->evButtonEvent.EmitFromMainThread({
+          device.mDevice,
+          static_cast<uint64_t>(i),
+          static_cast<bool>(newState.rgbButtons[i] & (1 << 7)),
         });
       }
     }

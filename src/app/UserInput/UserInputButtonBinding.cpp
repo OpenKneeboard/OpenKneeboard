@@ -17,27 +17,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <nlohmann/json.hpp>
+#include <OpenKneeboard/UserInputButtonEvent.h>
+#include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/UserInputDevice.h>
 
 namespace OpenKneeboard {
-enum class UserAction {
-  PREVIOUS_TAB,
-  NEXT_TAB,
-  PREVIOUS_PAGE,
-  NEXT_PAGE,
-  TOGGLE_VISIBILITY
-};
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  UserAction,
-  {
-    {UserAction::PREVIOUS_TAB, "PREVIOUS_TAB"},
-    {UserAction::NEXT_TAB, "NEXT_TAB"},
-    {UserAction::PREVIOUS_PAGE, "PREVIOUS_PAGE"},
-    {UserAction::NEXT_PAGE, "NEXT_PAGE"},
-    {UserAction::TOGGLE_VISIBILITY, "TOGGLE_VISIBILITY"},
-  })
+UserInputButtonBinding::UserInputButtonBinding(
+  std::shared_ptr<UserInputDevice> device,
+  std::unordered_set<uint64_t> buttons,
+  UserAction action
+): mDevice(device), mButtons(buttons), mAction(action) {
+}
+
+UserInputButtonBinding::~UserInputButtonBinding() {
+}
+
+UserInputDevice* UserInputButtonBinding::GetDevice() const {
+  return mDevice.get();
+}
+
+std::unordered_set<uint64_t> UserInputButtonBinding::GetButtonIDs() const {
+  return mButtons;
+}
+
+UserAction UserInputButtonBinding::GetAction() const {
+  return mAction;
+}
 
 }// namespace OpenKneeboard

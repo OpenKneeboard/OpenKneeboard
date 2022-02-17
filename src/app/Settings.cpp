@@ -24,6 +24,8 @@
 #include <filesystem>
 #include <fstream>
 
+namespace OpenKneeboard {
+
 static std::filesystem::path GetSettingsDirectoryPath() {
   static std::filesystem::path sPath;
   if (!sPath.empty()) {
@@ -71,3 +73,22 @@ void Settings::Save() {
   std::ofstream f(path.c_str());
   f << std::setw(2) << j << std::endl;
 }
+
+void from_json(const nlohmann::json& j, Settings& s) {
+  s.Games = j.at("Games");
+  s.Tabs = j.at("Tabs");
+
+  if (j.contains("DirectInputV2")) {
+    s.DirectInputV2 = j.at("DirectInputV2");
+  }
+}
+
+void to_json(nlohmann::json& j, const Settings& s) {
+  j = {
+    {"Games", s.Games},
+    {"Tabs", s.Tabs},
+    {"DirectInputV2", s.DirectInputV2},
+  };
+}
+
+}// namespace OpenKneeboard
