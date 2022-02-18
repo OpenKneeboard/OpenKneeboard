@@ -106,10 +106,6 @@ WintabTablet::Limits WintabTablet::GetLimits() const {
   return p->mLimits;
 };
 
-WintabTablet::operator bool() const {
-  return this->IsValid();
-}
-
 bool WintabTablet::IsValid() const {
   return p && p->mCtx;
 }

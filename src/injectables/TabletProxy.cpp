@@ -91,7 +91,7 @@ void TabletProxy::Initialize() {
   dprintf("Main window: {}", std::string_view(title, titleLen));
 
   mTablet = std::make_unique<WintabTablet>(mTargetWindow);
-  if (!*mTablet) {
+  if (!mTablet->IsValid()) {
     return;
   }
 

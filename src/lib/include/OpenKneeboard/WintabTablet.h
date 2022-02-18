@@ -41,7 +41,6 @@ class WintabTablet final {
   WintabTablet(HWND window);
   ~WintabTablet();
 
-  operator bool() const;
   bool IsValid() const;
 
   bool CanProcessMessage(UINT message) const;
