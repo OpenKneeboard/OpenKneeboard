@@ -200,15 +200,15 @@ void DCSRadioLogTab::RenderPageContent(
 void DCSRadioLogTab::Impl::PushMessage(utf8_string_view message) {
   mMessages.push_back(utf8_string(message));
   LayoutMessages();
-  mTab->evNeedsRepaintEvent();
+  mTab->evNeedsRepaintEvent.Emit();
 }
 
 void DCSRadioLogTab::Impl::PushPage() {
   mCompletePages.push_back(mCurrentPageLines);
   mCurrentPageLines.clear();
 
-  mTab->evPageAppendedEvent();
-  mTab->evNeedsRepaintEvent();
+  mTab->evPageAppendedEvent.Emit();
+  mTab->evNeedsRepaintEvent.Emit();
 }
 
 void DCSRadioLogTab::Impl::LayoutMessages() {

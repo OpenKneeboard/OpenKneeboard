@@ -259,11 +259,11 @@ void okTabCanvas::FlushCursorEvents() {
   }
 
   for (const auto& ev: mBufferedCursorEvents) {
-    mKneeboardState->evCursorEvent(ev);
+    mKneeboardState->evCursorEvent.Emit(ev);
   }
   mBufferedCursorEvents.clear();
 
-  mKneeboardState->evFlushEvent();
+  mKneeboardState->evFlushEvent.Emit();
 }
 
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {

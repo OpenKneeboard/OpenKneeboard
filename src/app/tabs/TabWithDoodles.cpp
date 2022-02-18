@@ -50,7 +50,7 @@ void TabWithDoodles::PostCursorEvent(
     mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
   }
   mDrawings.at(pageIndex).mBufferedEvents.push_back(event);
-  this->evNeedsRepaintEvent();
+  this->evNeedsRepaintEvent.Emit();
 }
 
 void TabWithDoodles::FlushCursorEvents() {

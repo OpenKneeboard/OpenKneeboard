@@ -214,7 +214,7 @@ void okUserInputSettings::OnBindButton(
       button->SetLabel(_("Bind"));
     }
     device->SetButtonBindings(bindings);
-    this->evSettingsChangedEvent();
+    this->evSettingsChangedEvent.Emit();
   });
   d->ShowModal();
 }
@@ -253,7 +253,7 @@ EventBase::HookResult okUserInputSettings::OnBindButtonEvent(
     wxString::FromUTF8(device->GetButtonComboDescription(*buttonState)));
   bindings.push_back({device, *buttonState, bindAction});
   device->SetButtonBindings(bindings);
-  this->evSettingsChangedEvent();
+  this->evSettingsChangedEvent.Emit();
   dialog->Close();
 
   return EventBase::HookResult::STOP_PROPAGATION;

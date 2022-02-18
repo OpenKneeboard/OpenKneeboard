@@ -208,7 +208,7 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   }
 
   // touch release, on the same button
-  evPageChangeRequestedEvent(matchedPage);
+  evPageChangeRequestedEvent.Emit(matchedPage);
 }
 
 void NavigationTab::RenderPage(

@@ -51,7 +51,7 @@ void KneeboardState::SetTabs(
     }
     AddEventListener(tab->evNeedsRepaintEvent, [=]() {
       if (tab == this->GetCurrentTab()) {
-        this->evNeedsRepaintEvent();
+        this->evNeedsRepaintEvent.Emit();
       }
     });
     AddEventListener(
@@ -183,8 +183,8 @@ void KneeboardState::UpdateLayout() {
     .bottom = mHeaderRenderRect.bottom + contentRenderSize.height,
   };
 
-  evNeedsRepaintEvent();
-  evFlushEvent();
+  evNeedsRepaintEvent.Emit();
+  evFlushEvent.Emit();
 }
 
 const D2D1_SIZE_U& KneeboardState::GetCanvasSize() const {
@@ -211,7 +211,7 @@ void KneeboardState::OnCursorEvent(const CursorEvent& ev) {
     mCurrentTab->PostCursorEvent(ev);
   }
 
-  evNeedsRepaintEvent();
+  evNeedsRepaintEvent.Emit();
 }
 
 void KneeboardState::PostGameEvent(const GameEvent& ev) {

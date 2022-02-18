@@ -75,8 +75,8 @@ void TabState::SetPageIndex(uint16_t page) {
     mRootTabPage = page;
   }
 
-  evNeedsRepaintEvent();
-  evPageChangedEvent();
+  evNeedsRepaintEvent.Emit();
+  evPageChangedEvent.Emit();
 }
 
 void TabState::NextPage() {
@@ -93,9 +93,9 @@ void TabState::PreviousPage() {
 void TabState::OnTabFullyReplaced() {
   mRootTabPage = 0;
   if (!mActiveSubTab) {
-    evNeedsRepaintEvent();
+    evNeedsRepaintEvent.Emit();
   }
-  evPageChangedEvent();
+  evPageChangedEvent.Emit();
 }
 
 void TabState::OnTabPageAppended() {
@@ -165,8 +165,8 @@ bool TabState::SetTabMode(TabMode mode) {
     OPENKNEEBOARD_BREAK;
   }
 
-  evPageChangedEvent();
-  evNeedsRepaintEvent();
+  evPageChangedEvent.Emit();
+  evNeedsRepaintEvent.Emit();
 
   return true;
 }

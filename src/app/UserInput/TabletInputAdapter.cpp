@@ -164,7 +164,7 @@ void TabletInputAdapter::ProcessTabletMessage(
     const uint64_t buttonIndex = std::countr_zero(changedMask);
     mTabletButtons = state.tabletButtons;
 
-    mDevice->evButtonEvent({
+    mDevice->evButtonEvent.Emit({
       mDevice,
       buttonIndex,
       pressed,
@@ -226,9 +226,9 @@ void TabletInputAdapter::ProcessTabletMessage(
       event.mPositionState = CursorPositionState::NOT_IN_CONTENT_RECT;
     }
 
-    mKneeboard->evCursorEvent(event);
+    mKneeboard->evCursorEvent.Emit(event);
   } else {
-    mKneeboard->evCursorEvent({});
+    mKneeboard->evCursorEvent.Emit({});
   }
   // Flush later
   mHaveUnflushedEvents = true;

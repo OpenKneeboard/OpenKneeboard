@@ -63,7 +63,7 @@ void okGamesListSettings::OnPathSelect(wxCommandEvent& ev) {
     dprintf("No dialog in {}", __FUNCTION__);
     return;
   }
-  this->evSettingsChangedEvent();
+  this->evSettingsChangedEvent.Emit();
   dialog->Close();
 }
 
@@ -108,7 +108,7 @@ void okGamesListSettings::OnRemoveGameButton(wxCommandEvent& ev) {
     mGamesList->SetGameInstances(instances);
     break;
   }
-  this->evSettingsChangedEvent();
+  this->evSettingsChangedEvent.Emit();
 }
 
 okGamesListSettings::okGamesListSettings(

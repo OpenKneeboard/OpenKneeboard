@@ -122,7 +122,7 @@ void okTabsListSettings::OnRemoveTab(wxCommandEvent& ev) {
   mKneeboard->RemoveTab(index);
   mList->DeleteItem(index);
 
-  this->evSettingsChangedEvent();
+  this->evSettingsChangedEvent.Emit();
 }
 
 void okTabsListSettings::OnMoveTabUp(wxCommandEvent& ev) {
@@ -163,7 +163,7 @@ void okTabsListSettings::MoveTab(Direction direction) {
 
   mKneeboard->SetTabs(tabs);
 
-  this->evSettingsChangedEvent();
+  this->evSettingsChangedEvent.Emit();
 }
 
 void okTabsListSettings::InsertTab(const std::shared_ptr<Tab>& tab) {
@@ -181,5 +181,5 @@ void okTabsListSettings::InsertTab(const std::shared_ptr<Tab>& tab) {
 
   mKneeboard->InsertTab(insertAt, std::make_shared<TabState>(tab));
 
-  this->evSettingsChangedEvent();
+  this->evSettingsChangedEvent.Emit();
 }

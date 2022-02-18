@@ -66,7 +66,7 @@ class Event final : public EventBase {
   Event& operator=(const Event<Args...>&) = delete;
   ~Event();
 
-  void operator()(Args... args);
+  void Emit(Args... args);
   void EmitFromMainThread(Args... args);
 
   void PushHook(Hook);
@@ -148,7 +148,7 @@ void Event<Args...>::RemoveHandler(uint64_t token) {
 }
 
 template <class... Args>
-void Event<Args...>::operator()(Args... args) {
+void Event<Args...>::Emit(Args... args) {
   for (const auto& hook: mHooks) {
     if (hook(args...) == HookResult::STOP_PROPAGATION) {
       return;
@@ -161,7 +161,7 @@ void Event<Args...>::operator()(Args... args) {
 
 template <class... Args>
 void Event<Args...>::EmitFromMainThread(Args... args) {
-  EventBase::EnqueueForMainThread([=]() { (*this)(args...); });
+  EventBase::EnqueueForMainThread([=]() { this->Emit(args...); });
 }
 
 template <class... Args>
@@ -207,7 +207,7 @@ template <class... Args>
 void EventReceiver::AddEventListener(
   Event<Args...>& event,
   std::type_identity_t<Event<Args...>>& forwardTo) {
-  event.AddHandler(this, [&](Args... args) { forwardTo(args...); });
+  event.AddHandler(this, [&](Args... args) { forwardTo.Emit(args...); });
 }
 
 }// namespace OpenKneeboard

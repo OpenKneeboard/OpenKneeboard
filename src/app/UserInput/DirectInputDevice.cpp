@@ -288,7 +288,7 @@ std::vector<UserInputButtonBinding> DirectInputDevice::GetButtonBindings()
 void DirectInputDevice::SetButtonBindings(
   const std::vector<UserInputButtonBinding>& bindings) {
   mButtonBindings = bindings;
-  evBindingsChangedEvent();
+  evBindingsChangedEvent.Emit();
 }
 
 DIDEVICEINSTANCEW DirectInputDevice::GetDIDeviceInstance() const {

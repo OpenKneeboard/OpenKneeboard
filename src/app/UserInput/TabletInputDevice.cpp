@@ -70,7 +70,7 @@ std::vector<UserInputButtonBinding> TabletInputDevice::GetButtonBindings()
 void TabletInputDevice::SetButtonBindings(
   const std::vector<UserInputButtonBinding>& bindings) {
   mButtonBindings = bindings;
-  evBindingsChangedEvent();
+  evBindingsChangedEvent.Emit();
 }
 
 }// namespace OpenKneeboard

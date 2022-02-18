@@ -75,7 +75,7 @@ void FolderTab::Reload() {
     }
     p->mPages.push_back({.mPath = wsPath});
   }
-  evFullyReplacedEvent();
+  evFullyReplacedEvent.Emit();
 }
 
 uint16_t FolderTab::GetPageCount() const {

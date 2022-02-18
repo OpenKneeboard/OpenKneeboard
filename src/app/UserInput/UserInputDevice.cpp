@@ -53,7 +53,7 @@ void UserInputDevice::OnButtonEvent(UserInputButtonEvent ev) {
         goto NEXT_BINDING;
       }
     }
-    evUserActionEvent(binding.GetAction());
+    evUserActionEvent.Emit(binding.GetAction());
     return;
   NEXT_BINDING:
     continue;// need a statement after label

@@ -108,7 +108,7 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
 
 void okMainWindow::PostGameEvent(const GameEvent& ge) {
   mKneeboard->PostGameEvent(ge);
-  mKneeboard->evFlushEvent();
+  mKneeboard->evFlushEvent.Emit();
 }
 
 void okMainWindow::OnExit(wxCommandEvent& ev) {
