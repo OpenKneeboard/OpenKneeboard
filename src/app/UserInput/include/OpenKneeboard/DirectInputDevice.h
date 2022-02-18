@@ -46,6 +46,8 @@ class DirectInputDevice final : public UserInputDevice {
  private:
   DIDEVICEINSTANCEW mDevice;
   std::vector<UserInputButtonBinding> mButtonBindings;
+
+  std::string GetButtonLabel(uint64_t button) const;
 };
 
 }// namespace OpenKneeboard

@@ -71,7 +71,7 @@ wxButton* okUserInputSettings::CreateBindButton(
     label = device->GetButtonComboDescription(binding.GetButtonIDs());
     break;
   }
-  auto button = new wxButton(parent, wxID_ANY, label);
+  auto button = new wxButton(parent, wxID_ANY, wxString::FromUTF8(label));
   button->Bind(wxEVT_BUTTON, [=](auto& ev) {
     this->OnBindButton(ev, deviceIndex, buttonAction);
   });
@@ -154,7 +154,8 @@ wxDialog* okUserInputSettings::CreateBindInputDialog(bool haveExistingBinding) {
   auto s = new wxBoxSizer(wxVERTICAL);
 
   s->Add(
-    new wxStaticText(d, wxID_ANY, _("Press and release buttons to bind input...")),
+    new wxStaticText(
+      d, wxID_ANY, _("Press and release buttons to bind input...")),
     0,
     wxALL,
     5);
@@ -232,7 +233,7 @@ EventBase::HookResult okUserInputSettings::OnBindButtonEvent(
     return EventBase::HookResult::STOP_PROPAGATION;
   }
 
-  // Erase existing 
+  // Erase existing
   for (auto it = bindings.begin(); it != bindings.end();) {
     if (it->GetButtonIDs() != *buttonState && it->GetAction() != bindAction) {
       ++it;
@@ -248,11 +249,9 @@ EventBase::HookResult okUserInputSettings::OnBindButtonEvent(
 
   auto button = mDeviceButtons.at(deviceIndex).Get(bindAction);
 
-  button->SetLabel(device->GetButtonComboDescription(*buttonState));
-  bindings.push_back({
-    device,
-    *buttonState,
-    bindAction});
+  button->SetLabel(
+    wxString::FromUTF8(device->GetButtonComboDescription(*buttonState)));
+  bindings.push_back({device, *buttonState, bindAction});
   device->SetButtonBindings(bindings);
   this->evSettingsChangedEvent();
   dialog->Close();

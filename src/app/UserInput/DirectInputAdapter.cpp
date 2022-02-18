@@ -79,7 +79,8 @@ DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
     auto device = std::make_shared<DirectInputDevice>(diDeviceInstance);
     AddEventListener(device->evUserActionEvent, this->evUserActionEvent);
-    AddEventListener(device->evBindingsChangedEvent, this->evSettingsChangedEvent);
+    AddEventListener(
+      device->evBindingsChangedEvent, this->evSettingsChangedEvent);
     if (settings.Devices.contains(device->GetID())) {
       std::vector<UserInputButtonBinding> bindings;
       for (const auto& binding:
@@ -104,7 +105,8 @@ DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
 DirectInputAdapter::~DirectInputAdapter() {
 }
 
-std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices() const {
+std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
+  const {
   std::vector<std::shared_ptr<UserInputDevice>> devices;
   for (const auto& device: mDevices) {
     devices.push_back(std::static_pointer_cast<UserInputDevice>(device));
@@ -128,7 +130,6 @@ nlohmann::json DirectInputAdapter::GetSettings() const {
       continue;
     }
 
-
     std::vector<JSONButtonBinding> buttonBindings;
     for (const auto& binding: device->GetButtonBindings()) {
       buttonBindings.push_back({
@@ -137,12 +138,17 @@ nlohmann::json DirectInputAdapter::GetSettings() const {
       });
     }
 
-		settings.Devices[deviceID] = {
-			.ID = deviceID,
-			.Name = device->GetName(),
-			.Kind = "GameController",
+    const auto kind
+      = (device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD
+      ? "Keyboard"
+      : "GameController";
+
+    settings.Devices[deviceID] = {
+      .ID = deviceID,
+      .Name = device->GetName(),
+      .Kind = kind,
       .ButtonBindings = buttonBindings,
-		};
+    };
   }
   return settings;
 }

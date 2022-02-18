@@ -20,15 +20,18 @@
 #include <OpenKneeboard/DirectInputDevice.h>
 #include <OpenKneeboard/DirectInputListener.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
+#include <OpenKneeboard/dprint.h>
 #include <shims/wx.h>
+
+#include <array>
 
 namespace OpenKneeboard {
 
 struct DirectInputListener::DeviceInfo {
   std::shared_ptr<DirectInputDevice> mDevice;
   winrt::com_ptr<IDirectInputDevice8> mDIDevice;
-  DIJOYSTATE2 mState = {};
   HANDLE mEventHandle = INVALID_HANDLE_VALUE;
+  std::array<unsigned char, 256> mState;
 };
 
 DirectInputListener::DirectInputListener(
@@ -47,17 +50,32 @@ DirectInputListener::DirectInputListener(
       continue;
     }
 
-    device->SetDataFormat(&c_dfDIJoystick2);
-    device->SetEventNotification(event);
-    device->SetCooperativeLevel(
-      static_cast<wxApp*>(wxApp::GetInstance())->GetTopWindow()->GetHandle(),
-      DISCL_BACKGROUND | DISCL_NONEXCLUSIVE);
-    device->Acquire();
+    std::array<unsigned char, 256> state {};
 
-    DIJOYSTATE2 state;
-    device->GetDeviceState(sizeof(state), &state);
+    if ((it->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
+      winrt::check_hresult(device->SetDataFormat(&c_dfDIKeyboard));
+    } else {
+      winrt::check_hresult(device->SetDataFormat(&c_dfDIJoystick2));
+    }
 
-    mDevices.push_back({it, device, state, event});
+    winrt::check_hresult(device->SetEventNotification(event));
+    winrt::check_hresult(
+      device->SetCooperativeLevel(NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE));
+    winrt::check_hresult(device->Acquire());
+
+    if ((it->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
+      winrt::check_hresult(device->GetDeviceState(state.size(), state.data()));
+    } else {
+      DIJOYSTATE2 joyState;
+      winrt::check_hresult(device->GetDeviceState(sizeof(joyState), &joyState));
+      ::memcpy(state.data(), joyState.rgbButtons, 128);
+    }
+    mDevices.push_back({
+      .mDevice = it,
+      .mDIDevice = device,
+      .mEventHandle = event,
+      .mState = state,
+    });
   }
 }
 
@@ -86,20 +104,27 @@ void DirectInputListener::Run(std::stop_token stopToken) {
 
     auto& device = mDevices.at(idx);
     auto oldState = device.mState;
-    DIJOYSTATE2 newState;
+    decltype(oldState) newState {};
     device.mDIDevice->Poll();
-    device.mDIDevice->GetDeviceState(sizeof(newState), &newState);
-    if (memcmp(oldState.rgbButtons, newState.rgbButtons, 128) == 0) {
+    if ((device.mDevice->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
+      device.mDIDevice->GetDeviceState(sizeof(newState), &newState);
+    } else {
+      DIJOYSTATE2 joyState;
+      device.mDIDevice->GetDeviceState(sizeof(joyState), &joyState);
+      ::memcpy(newState.data(), joyState.rgbButtons, 128);
+    }
+    if (::memcmp(oldState.data(), newState.data(), sizeof(newState)) == 0) {
       continue;
     }
 
-    for (uint8_t i = 0; i < 128; ++i) {
-      if (oldState.rgbButtons[i] != newState.rgbButtons[i]) {
-        device.mState = newState;
+    device.mState = newState;
+
+    for (uint64_t i = 0; i < newState.size(); ++i) {
+      if (oldState[i] != newState[i]) {
         device.mDevice->evButtonEvent.EmitFromMainThread({
           device.mDevice,
-          static_cast<uint64_t>(i),
-          static_cast<bool>(newState.rgbButtons[i] & (1 << 7)),
+          i,
+          static_cast<bool>(newState[i] & (1 << 7)),
         });
       }
     }

@@ -23,15 +23,18 @@ using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
 namespace OpenKneeboard {
 
 static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
-  auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
-  devices.push_back(*inst);
+  auto devType = inst->dwDevType & 0xff;
+  if (devType == DI8DEVTYPE_JOYSTICK || devType == DI8DEVTYPE_GAMEPAD || devType == DI8DEVTYPE_FLIGHT || devType == DI8DEVTYPE_KEYBOARD) {
+    auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
+    devices.push_back(*inst);
+  }
   return DIENUM_CONTINUE;
 }
 
 DeviceInstances GetDirectInputDevices(IDirectInput8W* di) {
   DeviceInstances ret;
   di->EnumDevices(
-    DI8DEVCLASS_GAMECTRL, &EnumDeviceCallback, &ret, DIEDFL_ATTACHEDONLY);
+    DI8DEVCLASS_ALL, &EnumDeviceCallback, &ret, DIEDFL_ATTACHEDONLY);
   return ret;
 }
 
