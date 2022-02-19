@@ -202,6 +202,8 @@ void okMainWindow::UpdateTabs() {
 }
 
 void okMainWindow::InitUI() {
+  SetIcon(wxIcon("appIcon"));
+
   auto menuBar = new wxMenuBar();
   {
     auto fileMenu = new wxMenu();
