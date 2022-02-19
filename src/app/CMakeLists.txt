@@ -88,3 +88,4 @@ include(InstallRequiredSystemLibraries)
 
 set(MANIFEST_PROJECT_VERSION "${CMAKE_PROJECT_VERSION}.0")
 configure_file(appxmanifest.xml.in "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml" DESTINATION .)
