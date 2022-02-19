@@ -54,6 +54,8 @@ Wintab-compatible graphics tablets are optionally supported; OpenKneeboard has b
 * [Huion instructions](docs/huion.md)
 * [Wacom instructions](docs/wacom.md)
 
+Write down 9-lines, do quick sketches, and use PDF bookmarks/tables of contents.
+
 ### DirectInput Joystick and Keyboard Support
 
 Bind any of your device buttons (even if you have 128) to show/hide the kneeboard, previous tab, next tab, previous page, or next page.
@@ -73,9 +75,23 @@ Don't cloud your cockpit: goes out of the way when you're not looking at it.
 
 ![Unzoomed ZR Screenshot](docs/screenshots/unzoomed-log.png)
 
-## PDF Files
+### PDF Files
 
-Add any PDF to your Kneeboard; if you have a wintab-compatible tablet, quickly jump to the page you want in PDFs that include bookmarks, such as Chuck's Guides and the DCS Manuals.
+Add any PDF to your kneeboard:
+
+![Screenshot of Chuck's A10C guide](docs/screenshots/chuck-pdf.png)
+
+Screenshot from [Chuck's A10C guide](https://www.mudspike.com/chucks-guides-dcs-a-10c-warthog/)
+
+### PDF Table of Contents/Bookmarks
+
+If you have a wintab-compatible tablet, quickly jump to the page you want:
+
+![Screenshot of Chuck's A10C guide bookmarks](docs/screenshots/chuck-pdf-bookmarks.png)
+
+Screenshot from [Chuck's A10C guide](https://www.mudspike.com/chucks-guides-dcs-a-10c-warthog/)
+
+This requires that the PDF includes a computer-readable table of contents (PDF bookmarks).
 
 ### DCS Radio Log
 
