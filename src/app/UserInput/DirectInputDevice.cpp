@@ -128,7 +128,7 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
     case DIK_GRAVE:
       return "`";
     case DIK_LSHIFT:
-      return "L⇧";
+      return "LShift";
     case DIK_BACKSLASH:
       return "\\";
     case DIK_Z:
@@ -152,7 +152,7 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
     case DIK_SLASH:
       return "/";
     case DIK_RSHIFT:
-      return "R⇧";
+      return "RShift";
     case DIK_MULTIPLY:
       return "NP*";
     case DIK_LMENU:
