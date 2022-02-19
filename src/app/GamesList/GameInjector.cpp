@@ -22,6 +22,7 @@
 #include <TlHelp32.h>
 #include <ShlObj.h>
 #include <Psapi.h>
+#include <appmodel.h>
 // clang-format on
 
 #include <OpenKneeboard/GameInjector.h>
@@ -86,17 +87,29 @@ static std::filesystem::path GetInjectablesPath() {
     return sPath;
   }
 
-  // App data directory is not readable by other apps if using msix installer, so copy
-  // out
-  wchar_t* ref = nullptr;
-  winrt::check_hresult(SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &ref));
-  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard";
-  std::filesystem::create_directories(sPath);
-
   wchar_t buf[MAX_PATH];
   GetModuleFileNameW(NULL, buf, MAX_PATH);
   const auto executablePath
     = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
+
+  UINT32 packageNameLength = MAX_PATH;
+  if (
+    GetCurrentPackageFullName(&packageNameLength, buf)
+    == APPMODEL_ERROR_NO_PACKAGE) {
+    // Not running from an installed package, can use inject DLLs directly from
+    // our executable directory
+    sPath = executablePath;
+    return sPath;
+  }
+
+  // App data directory is not readable by other apps if using msix installer,
+  // so if we pass a DLL in the app directory to `LoadLibraryW` in another
+  // process, it will fail. Copy them out to a readable directory.
+  wchar_t* ref = nullptr;
+  winrt::check_hresult(
+    SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &ref));
+  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard";
+  std::filesystem::create_directories(sPath);
 
   for (const auto& entry: std::filesystem::directory_iterator(executablePath)) {
     if (!entry.is_regular_file()) {
@@ -110,7 +123,10 @@ static std::filesystem::path GetInjectablesPath() {
       continue;
     }
     try {
-      std::filesystem::copy(path, sPath / path.filename(), std::filesystem::copy_options::overwrite_existing);
+      std::filesystem::copy(
+        path,
+        sPath / path.filename(),
+        std::filesystem::copy_options::overwrite_existing);
     } catch (std::filesystem::filesystem_error& e) {
       dprintf("Injectable DLL copy failed: {}", e.what());
     }
@@ -220,8 +236,7 @@ bool GameInjector::Run(std::stop_token stopToken) {
   wchar_t buf[MAX_PATH];
   GetModuleFileNameW(NULL, buf, MAX_PATH);
   const auto dllPath = GetInjectablesPath();
-  const auto injectedDll
-    = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
+  const auto injectedDll = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
   const auto markerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
   const auto tabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
 
