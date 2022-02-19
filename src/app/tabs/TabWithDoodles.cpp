@@ -37,10 +37,16 @@ TabWithDoodles::TabWithDoodles(const DXResources& dxr) : mContentLayer(dxr) {
 
   mDXR.mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
-  AddEventListener(this->evNeedsRepaintEvent, [=]() { mContentLayer.Reset(); });
+
+  AddEventListener(
+    this->evFullyReplacedEvent, &TabWithDoodles::ClearContentCache, this);
 }
 
 TabWithDoodles::~TabWithDoodles() {
+}
+
+void TabWithDoodles::ClearContentCache() {
+  mContentLayer.Reset();
 }
 
 void TabWithDoodles::PostCursorEvent(

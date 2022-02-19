@@ -54,6 +54,8 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
     uint16_t pageIndex,
     const D2D1_RECT_F&);
 
+  void ClearContentCache();
+
  private:
   DXResources mDXR;
 
