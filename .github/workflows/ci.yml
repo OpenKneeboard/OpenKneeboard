@@ -38,7 +38,7 @@ jobs:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
       - name: Create MSIX
         shell: pwsh
-        run:
+        run: |
           $kitsRoot = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots" -Name KitsRoot10).KitsRoot10
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
