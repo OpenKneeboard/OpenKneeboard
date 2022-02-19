@@ -39,38 +39,6 @@ using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Storage;
 
-namespace OpenKneeboard {
-struct PDFTab::Impl final {
-  DXResources mDXR;
-  std::filesystem::path mPath;
-
-  IPdfDocument mPDFDocument;
-  winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
-  winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
-
-  std::vector<NavigationTab::Entry> mBookmarks;
-};
-
-PDFTab::PDFTab(
-  const DXResources& dxr,
-  utf8_string_view /* title */,
-  const std::filesystem::path& path)
-  : TabWithDoodles(dxr), p(new Impl {.mDXR = dxr, .mPath = path}) {
-  winrt::check_hresult(
-    PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), p->mBackgroundBrush.put()));
-
-  Reload();
-}
-
-PDFTab::~PDFTab() {
-}
-
-utf8_string PDFTab::GetTitle() const {
-  return p->mPath.stem();
-}
-
 namespace {
 
 struct InternalLink {
@@ -83,6 +51,51 @@ struct PageData {
   QPDFObjectHandle::Rectangle mRect;
   std::vector<InternalLink> mInternalLinks;
 };
+
+struct NormalizedLink {
+  uint16_t mDestinationPageIndex;
+  D2D1_RECT_F mRect;
+};
+
+}// namespace
+
+namespace OpenKneeboard {
+struct PDFTab::Impl final {
+  DXResources mDXR;
+  std::filesystem::path mPath;
+
+  IPdfDocument mPDFDocument;
+  winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
+  winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
+
+  std::vector<NavigationTab::Entry> mBookmarks;
+  std::unordered_map<uint16_t, std::vector<NormalizedLink>> mLinks;
+};
+
+PDFTab::PDFTab(
+  const DXResources& dxr,
+  utf8_string_view /* title */,
+  const std::filesystem::path& path)
+  : TabWithDoodles(dxr), p(new Impl {.mDXR = dxr, .mPath = path}) {
+  winrt::check_hresult(
+    PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
+  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), p->mBackgroundBrush.put()));
+  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), p->mHighlightBrush.put()));
+
+  Reload();
+}
+
+PDFTab::~PDFTab() {
+}
+
+utf8_string PDFTab::GetTitle() const {
+  return p->mPath.stem();
+}
+
+namespace {
 
 std::map<QPDFObjGen, PageData> WalkPages(QPDF& pdf) {
   std::map<QPDFObjGen, PageData> pageMap;
@@ -164,6 +177,41 @@ void PDFTab::Reload() {
       auto pageData = WalkPages(qpdf);
       auto outlines = odh.getTopLevelOutlines();
       p->mBookmarks = GetNavigationEntries(pageData, outlines);
+
+      for (const auto& [_handle, page]: pageData) {
+        if (page.mInternalLinks.empty()) {
+          continue;
+        }
+        // PDF origin is bottom left, DirectX is top left
+        const auto pageWidth
+          = static_cast<float>(page.mRect.urx - page.mRect.llx);
+        const auto pageHeight
+          = static_cast<float>(page.mRect.ury - page.mRect.lly);
+
+        std::vector<NormalizedLink> links;
+        for (const auto& pdfLink: page.mInternalLinks) {
+          if (!pageData.contains(pdfLink.mDestinationPage)) {
+            continue;
+          }
+          // Convert coordinates here :)
+          links.push_back(
+            {pageData.at(pdfLink.mDestinationPage).mPageIndex,
+             D2D1_RECT_F {
+               .left = static_cast<float>(pdfLink.mRect.llx - page.mRect.llx)
+                 / pageWidth,
+               .top = 1.0f
+                 - (static_cast<float>(pdfLink.mRect.ury - page.mRect.lly)
+                    / pageHeight),
+               .right
+               = static_cast<float>(pdfLink.mRect.urx - pdfLink.mRect.llx)
+                 / pageWidth,
+               .bottom = 1.0f
+                 - (static_cast<float>(pdfLink.mRect.lly - page.mRect.lly)
+                    / pageHeight),
+             }});
+        }
+        p->mLinks.emplace(page.mPageIndex, links);
+      }
     }};
     loadRenderer.join();
     loadBookmarks.join();
@@ -215,9 +263,33 @@ void PDFTab::RenderPageContent(
 
   winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
     winrt::get_unknown(page), ctx, &params));
+
+// TODO: add a "RenderMutableOverlays" or similar to `TabWithDoodles`
+// for now, just show we have the rects in the right place
+// TODO: only do this on hover
+#ifdef _DEBUG
+  if (p->mLinks.contains(index)) {
+    const auto& links = p->mLinks.at(index);
+    for (const auto& link: links) {
+      const auto& rect = link.mRect;
+      ctx->DrawRoundedRectangle(
+        D2D1::RoundedRect(
+          {
+            rect.left * params.DestinationWidth,
+            rect.top * params.DestinationHeight,
+            rect.right * params.DestinationWidth,
+            rect.bottom * params.DestinationHeight,
+          },
+          params.DestinationHeight * 0.01f,
+          params.DestinationHeight * 0.01f),
+        p->mHighlightBrush.get());
+    }
+  }
+#endif
+
   // `RenderPageToDeviceContext()` starts a multi-threaded job, but needs
   // the `page` pointer to stay valid until it has finished - so, flush to
-  // get everthing in the direct2d queue done.
+  // get everything in the direct2d queue done.
   winrt::check_hresult(ctx->Flush());
 }
 
