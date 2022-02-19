@@ -254,6 +254,22 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
       return "Insert";
     case DIK_DELETE:
       return "Delete";
+    case 0x68:
+      return "F17";
+    case 0x69:
+      return "F18";
+    case 0x6a:
+      return "F19";
+    case 0x6b:
+      return "F20";
+    case 0x6c:
+      return "F21";
+    case 0x6d:
+      return "F22";
+    case 0x6e:
+      return "F23";
+    case 0x76:
+      return "F24";
     default:
       return fmt::format("{:#x}", button);
   }
