@@ -91,7 +91,7 @@ If you have a wintab-compatible tablet, quickly jump to the page you want:
 
 Screenshot from [Chuck's A10C guide](https://www.mudspike.com/chucks-guides-dcs-a-10c-warthog/)
 
-This requires that the PDF includes a computer-readable table of contents (PDF bookmarks).
+Both PDF bookmarks (sidebar table of contents) and links in the pages are supported.
 
 ### DCS Radio Log
 
