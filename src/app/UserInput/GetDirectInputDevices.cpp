@@ -14,9 +14,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <OpenKneeboard/GetDirectInputDevices.h>
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/utf8.h>
 
 using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
 
@@ -24,9 +27,18 @@ namespace OpenKneeboard {
 
 static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
   auto devType = inst->dwDevType & 0xff;
-  if (devType == DI8DEVTYPE_JOYSTICK || devType == DI8DEVTYPE_GAMEPAD || devType == DI8DEVTYPE_FLIGHT || devType == DI8DEVTYPE_KEYBOARD) {
+  // vjoystick devices self-report as 6DOF 1st-person controllers
+  if (
+    devType == DI8DEVTYPE_JOYSTICK || devType == DI8DEVTYPE_GAMEPAD
+    || devType == DI8DEVTYPE_FLIGHT || devType == DI8DEVTYPE_1STPERSON
+    || devType == DI8DEVTYPE_KEYBOARD) {
     auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
     devices.push_back(*inst);
+  } else {
+    dprintf(
+      "Skipping DirectInput device '{}' with filtered device type {:#010x}",
+      to_utf8(inst->tszInstanceName),
+      inst->dwDevType);
   }
   return DIENUM_CONTINUE;
 }
