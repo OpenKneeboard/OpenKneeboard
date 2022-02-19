@@ -121,8 +121,10 @@ bool TabState::SupportsTabMode(TabMode mode) const {
   switch (mode) {
     case TabMode::NORMAL:
       return true;
-    case TabMode::NAVIGATION:
-      return (bool)std::dynamic_pointer_cast<TabWithNavigation>(mRootTab);
+    case TabMode::NAVIGATION: {
+      auto nav = std::dynamic_pointer_cast<TabWithNavigation>(mRootTab);
+      return nav && nav->IsNavigationAvailable();
+    }
   }
   // above switch should be exhaustive
   OPENKNEEBOARD_BREAK;
