@@ -56,9 +56,23 @@ jobs:
       - name: Upload MSIX
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}.msix
+          name: OpenKneeboard-${{matrix.config}}.msix.zip
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
+      - name: Install remote control apps
+        working-directory: build
+        shell: pwsh
+        run:
+          cmake --install . `
+            --config ${{matrix.config}} `
+            --component RemoteControl `
+            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-RemoteControl
+      - name: Upload remote control zip
+        uses: actions/upload-artifact@v2
+        with:
+          name: OpenKneeboard-${{matrix.config}}-RemoteControl.zip
+          path:
+            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-RemoteControl/bin
       - name: Install Debug Symbols
         working-directory: build
         shell: pwsh

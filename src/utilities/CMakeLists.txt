@@ -28,3 +28,27 @@ target_link_libraries(
 
 add_executable(fake-dcs fake-dcs.cpp)
 target_link_libraries(fake-dcs fmt OpenKneeboard-games OpenKneeboard-GameEvent)
+
+# Mostly to workaround Huion driver limitations, but maybe also useful for
+# StreamDeck
+set(
+  SIMPLE_REMOTE_ACTIONS
+  TOGGLE_VISIBILITY
+  PREVIOUS_TAB
+  NEXT_TAB
+  PREVIOUS_PAGE
+  NEXT_PAGE
+)
+foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
+  set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
+  add_executable("${TARGET}" WIN32 simple-remote.cpp)
+  target_compile_definitions(
+    "${TARGET}"
+    PUBLIC
+    "REMOTE_ACTION=${REMOTE_ACTION}"
+  )
+  target_link_libraries("${TARGET}" OpenKneeboard-GameEvent)
+  sign_target("${TARGET}")
+  install(TARGETS "${TARGET}" COMPONENT RemoteControl)
+  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
+endforeach()

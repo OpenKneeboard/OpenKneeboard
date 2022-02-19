@@ -19,26 +19,22 @@
  */
 #pragma once
 
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/GameEvent.h>
 
-#include <cstddef>
-#include <string>
-#include <vector>
+using OpenKneeboard::GameEvent;
 
-namespace OpenKneeboard {
-struct GameEvent final {
-  utf8_string name;
-  utf8_string value;
+#define STRINGIFY_INNER(x) #x
+#define STRINGIFY(x) STRINGIFY_INNER(x)
 
-  operator bool() const;
+#include <Windows.h>
 
-  static GameEvent Unserialize(const std::vector<std::byte>& payload);
-  std::vector<std::byte> Serialize() const;
-  void Send() const;
-
-  static const char* GetMailslotPath();
-
-  static constexpr char EVT_REMOTE_USER_ACTION[]
-    = "com.fredemmott.openkneeboard/RemoteUserAction";
-};
-}// namespace OpenKneeboard
+// We only need a standard `main()` function, but using wWinMain prevents
+// a window/task bar entry from temporarily appearing
+int WINAPI wWinMain(
+  HINSTANCE hInstance,
+  HINSTANCE hPrevInstance,
+  PWSTR pCmdLine,
+  int nCmdShow) {
+  GameEvent(GameEvent::EVT_REMOTE_USER_ACTION, STRINGIFY(REMOTE_ACTION)).Send();
+  return 0;
+}

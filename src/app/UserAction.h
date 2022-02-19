@@ -22,22 +22,22 @@
 #include <nlohmann/json.hpp>
 
 namespace OpenKneeboard {
+
+#define OPENKNEEBOARD_USER_ACTIONS \
+  IT(PREVIOUS_TAB) \
+  IT(NEXT_TAB) \
+  IT(PREVIOUS_PAGE) \
+  IT(NEXT_PAGE) \
+  IT(TOGGLE_VISIBILITY)
+
 enum class UserAction {
-  PREVIOUS_TAB,
-  NEXT_TAB,
-  PREVIOUS_PAGE,
-  NEXT_PAGE,
-  TOGGLE_VISIBILITY
+#define IT(x) x,
+  OPENKNEEBOARD_USER_ACTIONS
+#undef IT
 };
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  UserAction,
-  {
-    {UserAction::PREVIOUS_TAB, "PREVIOUS_TAB"},
-    {UserAction::NEXT_TAB, "NEXT_TAB"},
-    {UserAction::PREVIOUS_PAGE, "PREVIOUS_PAGE"},
-    {UserAction::NEXT_PAGE, "NEXT_PAGE"},
-    {UserAction::TOGGLE_VISIBILITY, "TOGGLE_VISIBILITY"},
-  })
+#define IT(ACTION) {UserAction::ACTION, #ACTION},
+NLOHMANN_JSON_SERIALIZE_ENUM(UserAction, {OPENKNEEBOARD_USER_ACTIONS})
+#undef IT
 
 }// namespace OpenKneeboard

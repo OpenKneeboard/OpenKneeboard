@@ -107,6 +107,17 @@ void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
 }
 
 void okMainWindow::PostGameEvent(const GameEvent& ge) {
+  if (ge.name == GameEvent::EVT_REMOTE_USER_ACTION) {
+#define IT(ACTION) \
+  if (ge.value == #ACTION) { \
+    OnUserAction(UserAction::ACTION); \
+    return; \
+  }
+    OPENKNEEBOARD_USER_ACTIONS
+#undef IT
+    return;
+  }
+
   mKneeboard->PostGameEvent(ge);
   mKneeboard->evFlushEvent.Emit();
 }
