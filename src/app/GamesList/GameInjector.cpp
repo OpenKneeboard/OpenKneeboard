@@ -20,6 +20,7 @@
 // clang-format off
 #include <Windows.h>
 #include <TlHelp32.h>
+#include <ShlObj.h>
 #include <Psapi.h>
 // clang-format on
 
@@ -27,6 +28,7 @@
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/version.h>
 #include <shims/winrt.h>
 
 #include <chrono>
@@ -77,6 +79,44 @@ class DebugPrivileges final {
       mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
   }
 };
+
+static std::filesystem::path GetInjectablesPath() {
+  static std::filesystem::path sPath;
+  if (!sPath.empty()) {
+    return sPath;
+  }
+
+  // App data directory is not readable by other apps if using msix installer, so copy
+  // out
+  wchar_t* ref = nullptr;
+  winrt::check_hresult(SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &ref));
+  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard";
+  std::filesystem::create_directories(sPath);
+
+  wchar_t buf[MAX_PATH];
+  GetModuleFileNameW(NULL, buf, MAX_PATH);
+  const auto executablePath
+    = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
+
+  for (const auto& entry: std::filesystem::directory_iterator(executablePath)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    const auto path = entry.path();
+    if (path.extension() != ".dll") {
+      continue;
+    }
+    if (!path.stem().string().starts_with("OpenKneeboard-")) {
+      continue;
+    }
+    try {
+      std::filesystem::copy(path, sPath / path.filename(), std::filesystem::copy_options::overwrite_existing);
+    } catch (std::filesystem::filesystem_error& e) {
+      dprintf("Injectable DLL copy failed: {}", e.what());
+    }
+  }
+  return sPath;
+}
 
 bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
   std::filesystem::path dll = std::filesystem::canonical(_dll);
@@ -179,12 +219,11 @@ void GameInjector::SetGameInstances(const std::vector<GameInstance>& games) {
 bool GameInjector::Run(std::stop_token stopToken) {
   wchar_t buf[MAX_PATH];
   GetModuleFileNameW(NULL, buf, MAX_PATH);
-  const auto executablePath
-    = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
+  const auto dllPath = GetInjectablesPath();
   const auto injectedDll
-    = executablePath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
-  const auto markerDll = executablePath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
-  const auto tabletProxyDll = executablePath / RuntimeFiles::TABLET_PROXY_DLL;
+    = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
+  const auto markerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
+  const auto tabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
 
   const auto installTabletProxy = HaveWintab();
 

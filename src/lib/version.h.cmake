@@ -31,6 +31,14 @@ else()
   set(DIRTY "true")
 endif()
 
+string(
+  UUID
+  BUILD_UUID
+  NAMESPACE "dd953fce-2b7e-4334-86d9-bb151ebe5208"
+  NAME "${COMMIT_ID}-${BUILD_TIMESTAMP}"
+  TYPE SHA1
+)
+
 configure_file(
   ${INPUT_FILE}
   ${OUTPUT_FILE}

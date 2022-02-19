@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity
+    Name="FredEmmott.Self.OpenKneeboard"
+    Version="@MANIFEST_PROJECT_VERSION@"
+    Publisher="CN=Frederick Emmott, O=Frederick Emmott, L=East Palo Alto, S=California, C=US"
+    ProcessorArchitecture="x64" />
+  <Properties>
+     <DisplayName>OpenKneeboard</DisplayName>
+     <PublisherDisplayName>Fred Emmott</PublisherDisplayName>
+     <Description>An open source kneeboard</Description>
+     <Logo>share/logo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+  <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.15063.0" MaxVersionTested="10.0.19044.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="OpenKneeboard" Executable="bin\OpenKneeboard.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+	BackgroundColor="#464646"
+	DisplayName="OpenKneeboard"
+	Square150x150Logo="share\logo.png"
+	Square44x44Logo="share\logo.png"
+	Description="An open source kneeboard" />
+    </Application>
+   </Applications>
+  </Package>

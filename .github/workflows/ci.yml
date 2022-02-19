@@ -33,9 +33,27 @@ jobs:
       - name: Upload Executable Zips
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}
+          name: OpenKneeboard-${{matrix.config}}.zip
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
+      - name: Create MSIX
+        shell: pwsh
+        run:
+          makeappx.exe `
+            pack `
+            /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
+            /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
+          signtool.exe `
+            sign `
+            /fd SHA256 `
+            /f ${{runner.temp}}/MyCert.pfx" `
+            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
+      - name: Upload MSIX
+        uses: actions/upload-artifact@v2
+        with:
+          name: OpenKneeboard-${{matrix.config}}.msix
+          path:
+            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
       - name: Install Debug Symbols
         working-directory: build
         shell: pwsh
@@ -47,7 +65,7 @@ jobs:
       - name: Upload Symbol Zips
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}-Symbols
+          name: OpenKneeboard-${{matrix.config}}-Symbols.zip
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
     strategy:

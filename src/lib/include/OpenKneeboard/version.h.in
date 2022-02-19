@@ -33,5 +33,6 @@ constexpr const std::time_t CommitUnixTimestamp = @COMMIT_UNIX_TIMESTAMP@;
 constexpr const char* ModifiedFiles = "@MODIFIED_FILES@";
 constexpr bool HaveModifiedFiles = @DIRTY@;
 constexpr const char* BuildTimestamp = "@BUILD_TIMESTAMP@";
+constexpr const char* BuildUUID = "@BUILD_UUID@";
 
 }

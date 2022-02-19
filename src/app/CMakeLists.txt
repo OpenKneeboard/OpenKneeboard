@@ -85,3 +85,6 @@ add_custom_target(
   COMMAND_EXPAND_LISTS)
 
 include(InstallRequiredSystemLibraries)
+
+set(MANIFEST_PROJECT_VERSION "${CMAKE_PROJECT_VERSION}.0")
+configure_file(appxmanifest.xml.in "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml")
