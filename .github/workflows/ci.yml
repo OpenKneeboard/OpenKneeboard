@@ -43,12 +43,12 @@ jobs:
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
 
-          $kitBin\makeappx.exe `
+          & "$kitBin\makeappx.exe" `
             pack `
             /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
             /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
 
-          $kitBin\signtool.exe `
+          & "$kitBin\signtool.exe" `
             sign `
             /fd SHA256 `
             /f "${{runner.temp}}/MyCert.pfx" `
