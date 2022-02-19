@@ -1,5 +1,5 @@
-if(DEFINED ENV{GITHUB_RUN_ID})
-  set(VERSION_BUILD $ENV{GITHUB_RUN_ID})
+if(DEFINED ENV{GITHUB_RUN_NUMBER})
+  set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
 else()
   execute_process(
     COMMAND git rev-list --count HEAD

@@ -31,8 +31,8 @@ else()
   set(DIRTY "true")
 endif()
 
-if(DEFINED ENV{GITHUB_RUN_ID})
-  set(VERSION_BUILD $ENV{GITHUB_RUN_ID})
+if(DEFINED ENV{GITHUB_RUN_NUMBER})
+  set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
   set(IS_GITHUB_ACTIONS_BUILD "true")
 else()
   execute_process(
