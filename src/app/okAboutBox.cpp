@@ -19,6 +19,12 @@
  */
 #include "okAboutBox.h"
 
+// clang-format off
+#include <Windows.h>
+#include <appmodel.h>
+// clang-format on
+
+#include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
@@ -35,12 +41,14 @@ void okAboutBox(wxWindow* parent) {
   std::string_view commitID(Version::CommitID);
 
   info.SetVersion(fmt::format(
-    "v{}.{}.{}-{}{}{}",
+    "v{}.{}.{}.{}-{}{}{}{}",
     Version::Major,
     Version::Minor,
     Version::Patch,
+    Version::Build,
     commitID.substr(commitID.length() - 6),
     Version::HaveModifiedFiles ? "-dirty" : "",
+    Version::IsGithubActionsBuild ? "" : "-notCI",
 #ifdef DEBUG
     "-debug"
 #else
@@ -50,12 +58,22 @@ void okAboutBox(wxWindow* parent) {
 
   auto commitTime = *std::gmtime(&Version::CommitUnixTimestamp);
 
+  UINT32 packageNameLen = MAX_PATH;
+  wchar_t packageName[MAX_PATH];
+  if (
+    GetCurrentPackageFullName(&packageNameLen, packageName) != ERROR_SUCCESS) {
+    packageNameLen = 0;
+  }
+
   std::string description = fmt::format(
     "An open source kneeboard.\n\n"
+    "Package: {}\n"
     "Built at: {}\n"
     "Build type: {}-{}\n"
     "Commit at: {:%Y-%m-%dT%H:%M:%SZ}\n"
     "Commit ID: {}\n",
+    packageNameLen ? to_utf8(std::wstring_view(packageName, packageNameLen))
+                   : "Unpackaged.",
     Version::BuildTimestamp,
     BUILD_CONFIG,
 #ifdef _WIN32

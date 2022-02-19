@@ -31,13 +31,17 @@ else()
   set(DIRTY "true")
 endif()
 
-string(
-  UUID
-  BUILD_UUID
-  NAMESPACE "dd953fce-2b7e-4334-86d9-bb151ebe5208"
-  NAME "${COMMIT_ID}-${BUILD_TIMESTAMP}"
-  TYPE SHA1
-)
+if(DEFINED ENV{GITHUB_RUN_ID})
+  set(VERSION_BUILD $ENV{GITHUB_RUN_ID})
+  set(IS_GITHUB_ACTIONS_BUILD "true")
+else()
+  execute_process(
+    COMMAND git rev-list --count HEAD
+    OUTPUT_VARIABLE VERSION_BUILD
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  set(IS_GITHUB_ACTIONS_BUILD "false")
+endif()
 
 configure_file(
   ${INPUT_FILE}

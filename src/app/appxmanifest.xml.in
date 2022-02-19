@@ -5,7 +5,7 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
   <Identity
     Name="FredEmmott.Self.OpenKneeboard"
-    Version="@MANIFEST_PROJECT_VERSION@"
+    Version="@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@.@VERSION_BUILD@"
     Publisher="CN=Frederick Emmott, O=Frederick Emmott, L=East Palo Alto, S=California, C=US"
     ProcessorArchitecture="x64" />
   <Properties>

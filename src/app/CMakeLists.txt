@@ -86,6 +86,19 @@ add_custom_target(
 
 include(InstallRequiredSystemLibraries)
 
-set(MANIFEST_PROJECT_VERSION "${CMAKE_PROJECT_VERSION}.0")
-configure_file(appxmanifest.xml.in "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml")
+add_custom_target(
+  AppxManifest
+  COMMAND
+  ${CMAKE_COMMAND}
+  -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
+  -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
+  -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+  "-DINPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/appxmanifest.xml.in"
+  "-DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml"
+  "-P${CMAKE_CURRENT_SOURCE_DIR}/appxmanifest.xml.cmake"
+  BYPRODUCTS
+  "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml"
+  WORKING_DIRECTORY
+  "${CMAKE_SOURCE_DIR}"
+)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml" DESTINATION .)
