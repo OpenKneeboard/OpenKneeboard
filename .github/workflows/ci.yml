@@ -39,14 +39,19 @@ jobs:
       - name: Create MSIX
         shell: pwsh
         run:
-          makeappx.exe `
+          $kitsRoot = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots" -Name KitsRoot10).KitsRoot10
+          $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
+          $kitBin = "$kitDir\x64"
+
+          $kitBin\makeappx.exe `
             pack `
             /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
             /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
-          signtool.exe `
+
+          $kitBin\signtool.exe `
             sign `
             /fd SHA256 `
-            /f ${{runner.temp}}/MyCert.pfx" `
+            /f "${{runner.temp}}/MyCert.pfx" `
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
       - name: Upload MSIX
         uses: actions/upload-artifact@v2
