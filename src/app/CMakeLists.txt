@@ -88,6 +88,7 @@ include(InstallRequiredSystemLibraries)
 
 add_custom_target(
   AppxManifest
+  ALL
   COMMAND
   ${CMAKE_COMMAND}
   -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
