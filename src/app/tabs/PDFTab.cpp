@@ -73,38 +73,68 @@ utf8_string PDFTab::GetTitle() const {
 
 namespace {
 
-std::map<QPDFObjGen, uint16_t> GetPageMap(QPDF& pdf) {
-  std::map<QPDFObjGen, uint16_t> pageMap;
+struct InternalLink {
+  QPDFObjectHandle::Rectangle mRect;
+  QPDFObjGen mDestinationPage;
+};
+
+struct PageData {
+  uint16_t mPageIndex;
+  QPDFObjectHandle::Rectangle mRect;
+  std::vector<InternalLink> mInternalLinks;
+};
+
+std::map<QPDFObjGen, PageData> WalkPages(QPDF& pdf) {
+  std::map<QPDFObjGen, PageData> pageMap;
   QPDFPageDocumentHelper pdh(pdf);
 
   uint16_t pageNumber = 0;
   for (auto& page: pdh.getAllPages()) {
-    auto object = page.getObjectHandle();
-    auto gen = object.getObjGen();
-    pageMap.emplace(page.getObjectHandle().getObjGen(), pageNumber++);
+    // Useful references:
+    // - ij7-rups
+    // -
+    // https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
+    std::vector<InternalLink> links;
+    for (auto& annotation: page.getAnnotations("/Link")) {
+      auto aoh = annotation.getObjectHandle();
+      if (!aoh.hasKey("/Dest")) {
+        continue;
+      }
+      auto dest = aoh.getKey("/Dest");
+      auto destPage = dest.getArrayItem(0).getObjGen();
+      auto linkRect = annotation.getRect();
+      links.push_back({
+        annotation.getRect(),
+        destPage,
+      });
+    }
+
+    pageMap.emplace(
+      page.getObjectHandle().getObjGen(),
+      PageData {pageNumber++, page.getTrimBox().getArrayAsRectangle(), links});
   }
 
   return pageMap;
 }
 
 std::vector<NavigationTab::Entry> GetNavigationEntries(
-  std::map<QPDFObjGen, uint16_t>& pageMap,
+  const std::map<QPDFObjGen, PageData>& pageData,
   std::vector<QPDFOutlineObjectHelper>& outlines) {
   std::vector<NavigationTab::Entry> entries;
 
   for (auto& outline: outlines) {
     auto page = outline.getDestPage();
     auto key = page.getObjGen();
-    if (!pageMap.contains(key)) {
+    if (!pageData.contains(key)) {
       continue;
     }
-    entries.push_back({
+    entries.push_back(NavigationTab::Entry {
       .mName = outline.getTitle(),
-      .mPageIndex = pageMap.at(key),
+      .mPageIndex = pageData.at(key).mPageIndex,
     });
 
     auto kids = outline.getKids();
-    auto kidEntries = GetNavigationEntries(pageMap, kids);
+    auto kidEntries = GetNavigationEntries(pageData, kids);
     if (kidEntries.empty()) {
       continue;
     }
@@ -130,13 +160,10 @@ void PDFTab::Reload() {
       QPDF qpdf;
       qpdf.processFile(pathStr.c_str());
       QPDFOutlineDocumentHelper odh(qpdf);
-      if (!odh.hasOutlines()) {
-        return;
-      }
 
-      auto pageMap = GetPageMap(qpdf);
+      auto pageData = WalkPages(qpdf);
       auto outlines = odh.getTopLevelOutlines();
-      p->mBookmarks = GetNavigationEntries(pageMap, outlines);
+      p->mBookmarks = GetNavigationEntries(pageData, outlines);
     }};
     loadRenderer.join();
     loadBookmarks.join();
