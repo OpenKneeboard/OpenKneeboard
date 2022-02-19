@@ -173,19 +173,23 @@ void TabWithDoodles::RenderPage(
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
-  if (pageIndex >= mDrawings.size()) {
-    return;
+  if (pageIndex < mDrawings.size()) {
+    auto& page = mDrawings.at(pageIndex);
+    auto bitmap = page.mBitmap;
+
+    if (bitmap) {
+      ctx->DrawBitmap(
+        bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
+    }
   }
 
-  auto& page = mDrawings.at(pageIndex);
-  auto bitmap = page.mBitmap;
+  this->RenderOverDoodles(ctx, pageIndex, rect);
+}
 
-  if (!bitmap) {
-    return;
-  }
-
-  ctx->DrawBitmap(
-    bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
+void TabWithDoodles::RenderOverDoodles(
+  ID2D1DeviceContext*,
+  uint16_t pageIndex,
+  const D2D1_RECT_F&) {
 }
 
 }// namespace OpenKneeboard

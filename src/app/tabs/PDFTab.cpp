@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFTab.h>
@@ -57,6 +58,13 @@ struct NormalizedLink {
   D2D1_RECT_F mRect;
 };
 
+enum class CursorLinkState {
+  OUTSIDE_HYPERLINK,
+  IN_HYPERLINK,
+  PRESSED_IN_HYPERLINK,
+  PRESSED_OUTSIDE_HYPERLINK,
+};
+
 }// namespace
 
 namespace OpenKneeboard {
@@ -71,6 +79,9 @@ struct PDFTab::Impl final {
 
   std::vector<NavigationTab::Entry> mBookmarks;
   std::unordered_map<uint16_t, std::vector<NormalizedLink>> mLinks;
+
+  CursorLinkState mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
+  NormalizedLink mActiveLink;
 };
 
 PDFTab::PDFTab(
@@ -264,33 +275,98 @@ void PDFTab::RenderPageContent(
   winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
     winrt::get_unknown(page), ctx, &params));
 
-// TODO: add a "RenderMutableOverlays" or similar to `TabWithDoodles`
-// for now, just show we have the rects in the right place
-// TODO: only do this on hover
-#ifdef _DEBUG
-  if (p->mLinks.contains(index)) {
-    const auto& links = p->mLinks.at(index);
-    for (const auto& link: links) {
-      const auto& rect = link.mRect;
-      ctx->DrawRoundedRectangle(
-        D2D1::RoundedRect(
-          {
-            rect.left * params.DestinationWidth,
-            rect.top * params.DestinationHeight,
-            rect.right * params.DestinationWidth,
-            rect.bottom * params.DestinationHeight,
-          },
-          params.DestinationHeight * 0.01f,
-          params.DestinationHeight * 0.01f),
-        p->mHighlightBrush.get());
-    }
-  }
-#endif
-
   // `RenderPageToDeviceContext()` starts a multi-threaded job, but needs
   // the `page` pointer to stay valid until it has finished - so, flush to
   // get everything in the direct2d queue done.
   winrt::check_hresult(ctx->Flush());
+}
+
+void PDFTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
+  if (!p->mLinks.contains(pageIndex)) {
+    p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
+    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+    return;
+  }
+  const auto contentRect = this->GetNativeContentSize(pageIndex);
+  const auto x = ev.mX / contentRect.width;
+  const auto y = ev.mY / contentRect.height;
+
+  bool haveHoverLink = false;
+  NormalizedLink hoverLink;
+  for (const auto& link: p->mLinks.at(pageIndex)) {
+    const auto& linkRect = link.mRect;
+    if (
+      x >= linkRect.left && x <= linkRect.right && y >= linkRect.top
+      && y <= linkRect.bottom) {
+      haveHoverLink = true;
+      hoverLink = link;
+      break;
+    }
+  }
+
+  if (ev.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
+    if (
+      p->mLinkState == CursorLinkState::PRESSED_IN_HYPERLINK
+      && x >= p->mActiveLink.mRect.left && x <= p->mActiveLink.mRect.right
+      && y >= p->mActiveLink.mRect.top && y <= p->mActiveLink.mRect.bottom) {
+      this->evPageChangeRequestedEvent.Emit(
+        p->mActiveLink.mDestinationPageIndex);
+    }
+
+    if (haveHoverLink) {
+      p->mActiveLink = hoverLink;
+      p->mLinkState = CursorLinkState::IN_HYPERLINK;
+    } else {
+      p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
+    }
+    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+    evNeedsRepaintEvent.Emit();
+    return;
+  }
+
+  // Touching surface
+
+  if (p->mLinkState == CursorLinkState::PRESSED_IN_HYPERLINK) {
+    return;
+  }
+
+  if (p->mLinkState == CursorLinkState::PRESSED_OUTSIDE_HYPERLINK) {
+    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+    return;
+  }
+
+  if (haveHoverLink) {
+    p->mActiveLink = hoverLink;
+    p->mLinkState = CursorLinkState::PRESSED_IN_HYPERLINK;
+    evNeedsRepaintEvent.Emit();
+  } else {
+    p->mLinkState = CursorLinkState::PRESSED_OUTSIDE_HYPERLINK;
+    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+  }
+}
+
+void PDFTab::RenderOverDoodles(
+  ID2D1DeviceContext* ctx,
+  uint16_t pageIndex,
+  const D2D1_RECT_F& contentRect) {
+  if (
+    p->mLinkState == CursorLinkState::OUTSIDE_HYPERLINK
+    || p->mLinkState == CursorLinkState::PRESSED_OUTSIDE_HYPERLINK) {
+    return;
+  }
+
+  const auto contentWidth = contentRect.right - contentRect.left;
+  const auto contentHeight = contentRect.bottom - contentRect.top;
+
+  const D2D1_RECT_F rect {
+    (p->mActiveLink.mRect.left * contentWidth) + contentRect.left,
+    (p->mActiveLink.mRect.top * contentHeight) + contentRect.top,
+    (p->mActiveLink.mRect.right * contentWidth) + contentRect.left,
+    (p->mActiveLink.mRect.bottom * contentHeight) + contentRect.top,
+  };
+  const auto radius = contentHeight * 0.005f;
+  ctx->DrawRoundedRectangle(
+    D2D1::RoundedRect(rect, radius, radius), p->mHighlightBrush.get());
 }
 
 std::filesystem::path PDFTab::GetPath() const {

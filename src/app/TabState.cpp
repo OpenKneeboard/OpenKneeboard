@@ -35,6 +35,8 @@ TabState::TabState(const std::shared_ptr<Tab>& tab)
     tab->evFullyReplacedEvent, &TabState::OnTabFullyReplaced, this);
   AddEventListener(
     tab->evPageAppendedEvent, &TabState::OnTabPageAppended, this);
+  AddEventListener(
+    tab->evPageChangeRequestedEvent, &TabState::SetPageIndex, this);
 }
 
 TabState::~TabState() {
@@ -75,6 +77,8 @@ void TabState::SetPageIndex(uint16_t page) {
     mRootTabPage = page;
   }
 
+  this->PostCursorEvent({});
+  
   evNeedsRepaintEvent.Emit();
   evPageChangedEvent.Emit();
 }

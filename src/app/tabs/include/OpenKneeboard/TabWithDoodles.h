@@ -47,8 +47,12 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
   virtual void RenderPageContent(
     ID2D1DeviceContext*,
     uint16_t pageIndex,
-    const D2D1_RECT_F& rect)
+    const D2D1_RECT_F&)
     = 0;
+  virtual void RenderOverDoodles(
+    ID2D1DeviceContext*,
+    uint16_t pageIndex,
+    const D2D1_RECT_F&);
 
  private:
   DXResources mDXR;
