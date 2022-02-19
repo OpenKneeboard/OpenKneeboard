@@ -29,7 +29,7 @@ I am not able to respond to 1:1 requests for help via any means, including GitHu
 
 ## Requirements
 
-- Up-to-date 64-bit Windows 10
+- 64-bit Windows 10, Fall Creators Update (version 1709 or 10.0.16299) or newer
 - A graphics card that supports Direct3D 11
 
 Windows 11 is untested, and I am unable to investigate any issues reported with OpenKneeboard on Windows 11.
@@ -47,7 +47,14 @@ The hooks are optional, but are required for the DCS-specific tabs to work.
 
 ## Features
 
-### DirectInput Control
+### Graphics Tablet Support
+
+Wintab-compatible graphics tablets are optionally supported; OpenKneeboard has been tested with Wacom Intuos S and Huion H640P tablets.
+
+* [Huion instructions](docs/huion.md)
+* [Wacom instructions](docs/wacom.md)
+
+### DirectInput Joystick and Keyboard Support
 
 Bind any of your device buttons (even if you have 128) to show/hide the kneeboard, previous tab, next tab, previous page, or next page.
 
@@ -66,9 +73,13 @@ Don't cloud your cockpit: goes out of the way when you're not looking at it.
 
 ![Unzoomed ZR Screenshot](docs/screenshots/unzoomed-log.png)
 
+## PDF Files
+
+Add any PDF to your Kneeboard; if you have a wintab-compatible tablet, quickly jump to the page you want in PDFs that include bookmarks, such as Chuck's Guides and the DCS Manuals.
+
 ### DCS Radio Log
 
-A log of all radio messages that are shown by DCS World as text in the top left corner - there is no transcription. This is very useful for single player campaigns.
+A log of all radio messages that are shown by DCS World as text in the top left corner - there is no transcription. This is very useful for single player campaigns and close air support.
 
 ![A screenshot of the radio log](docs/screenshots/log.png)
 
