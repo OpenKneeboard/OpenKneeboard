@@ -364,9 +364,9 @@ void PDFTab::RenderOverDoodles(
     (p->mActiveLink.mRect.right * contentWidth) + contentRect.left,
     (p->mActiveLink.mRect.bottom * contentHeight) + contentRect.top,
   };
-  const auto radius = contentHeight * 0.005f;
+  const auto radius = contentHeight * 0.006f;
   ctx->DrawRoundedRectangle(
-    D2D1::RoundedRect(rect, radius, radius), p->mHighlightBrush.get());
+    D2D1::RoundedRect(rect, radius, radius), p->mHighlightBrush.get(), radius / 3);
 }
 
 std::filesystem::path PDFTab::GetPath() const {
