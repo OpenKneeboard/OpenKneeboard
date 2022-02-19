@@ -19,4 +19,4 @@ also need these settings:
 
 You can then assign the buttons to actions in Edit -> Settings in the app:
 
-![screenshot of settings page with 'wacom tablet' option](screenshots/wacom-tablet-settings.png)
+![screenshot of settings page with 'wacom tablet' option](screenshots/wacom-expresskey-bindings.png)
