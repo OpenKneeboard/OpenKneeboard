@@ -33,7 +33,7 @@ jobs:
       - name: Upload Executable Zips
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}.zip
+          name: OpenKneeboard-${{matrix.config}}
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
       - name: Create MSIX
@@ -56,7 +56,7 @@ jobs:
       - name: Upload MSIX
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}.msix.zip
+          name: OpenKneeboard-${{matrix.config}}.msix
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
       - name: Install remote control apps
@@ -70,7 +70,7 @@ jobs:
       - name: Upload remote control zip
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}-RemoteControl.zip
+          name: OpenKneeboard-${{matrix.config}}-RemoteControl
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-RemoteControl/bin
       - name: Install Debug Symbols
@@ -84,7 +84,7 @@ jobs:
       - name: Upload Symbol Zips
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}-Symbols.zip
+          name: OpenKneeboard-${{matrix.config}}-Symbols
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
     strategy:
