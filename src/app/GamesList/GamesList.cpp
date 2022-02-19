@@ -49,6 +49,7 @@ void GamesList::LoadDefaultSettings() {
       });
     }
   }
+  mInjector->SetGameInstances(mInstances);
 }
 
 GamesList::~GamesList() {
@@ -68,6 +69,8 @@ void GamesList::LoadSettings(const nlohmann::json& config) {
   for (const auto& game: list) {
     mInstances.push_back(GameInstance::FromJson(game, mGames));
   }
+
+  mInjector->SetGameInstances(mInstances);
 }
 
 std::vector<std::shared_ptr<OpenKneeboard::Game>> GamesList::GetGames() const {
