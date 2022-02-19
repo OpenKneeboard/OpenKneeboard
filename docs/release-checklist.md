@@ -7,8 +7,9 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 * SteamVR
 * Oculus: DX11 and DX12
 * Non-VR: DX11
-* Wacom tablet: drawing, erasing, PDF navigation
-* Huion tablet: drawing, erasing, PDF navigation
+* Wacom tablet: drawing, erasing, PDF navigation, expresskeys
+* Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
+* Drawing perf/feel while in VR
 * XBox controller
 * Physical joystick/throttle
 * VJoy controller
