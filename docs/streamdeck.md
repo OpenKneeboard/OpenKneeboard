@@ -4,7 +4,7 @@ A StreamDeck can be used for basic control, e.g. selectinging pages and tabs, or
 
 ## HotKeys
 
-Use the System -> HotKey StreamDeck action, and assign a keystroke combination that does not conflict with anything else you're using keystrokes for (including your in-game keybinds).
+Use the 'System' -> 'HotKey' StreamDeck action, then assign a keystroke combination that does not conflict with anything else you're using keystrokes for (including your in-game keybinds).
 
 F17-24 are particularly useful for this, as they do not exist on most keyboards, fully supported by DirectInput,  and are rarely used by other software:
 
@@ -22,6 +22,6 @@ The `OpenKneeboard-RelWithDebInfo-RemoteControl` zip from [the latest release](h
 
 ![OpenKneeboard-Remote-PREVIOUS_PAGE.exe, -NEXT_PAGE.exe, -NEXT_TAB.exe, etc](screenshots/remote-controls.png)
 
-Use the System -> Open StreamDeck application, and browse to the application you want; for example, if you want a StreamDeck key to move to the next kneeboard page, select `OpenKneeboard-RemoteControl-NEXT_PAGE.exe`:
+Use the 'System' -> 'Open' StreamDeck action, then browse to the application you want. For example, if you want a StreamDeck key to move to the next kneeboard page, select `OpenKneeboard-RemoteControl-NEXT_PAGE.exe`:
 
 ![Screenshot of Elgato software with Next Page remote control](screenshots/streamdeck-open.png)
