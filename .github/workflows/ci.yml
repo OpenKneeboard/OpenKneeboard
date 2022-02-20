@@ -100,7 +100,7 @@ jobs:
         with:
           path: source
       - name: Generate release notes
-        run: sed 's/@TAG@/${{github.ref_name}}/g' source/.github/workflows/ci/release_notes.md > ${{runner.temp}}/release_notes.md
+        run: sed 's/@TAG@/${{github.ref_name}}/g' source/.github/workflows/release_notes.md > ${{runner.temp}}/release_notes.md
       - name: Download build artifacts
         uses: actions/download-artifact@v2
         with:

@@ -83,7 +83,7 @@ Add any PDF to your kneeboard:
 
 Screenshot from [Chuck's A10C guide](https://www.mudspike.com/chucks-guides-dcs-a-10c-warthog/)
 
-### PDF Table of Contents/Bookmarks
+### PDF Navigation
 
 If you have a wintab-compatible tablet, quickly jump to the page you want:
 
@@ -91,7 +91,9 @@ If you have a wintab-compatible tablet, quickly jump to the page you want:
 
 Screenshot from [Chuck's A10C guide](https://www.mudspike.com/chucks-guides-dcs-a-10c-warthog/)
 
-Both PDF bookmarks (sidebar table of contents) and links in the pages are supported.
+If a PDF file contains bookmarks (often shown as a table of contents in the sidebar, you can jump to sections by clicking the 'Navigation' button in OpenKneeboard, or the 'menu' icon shown in-game with your graphics tablet pen.
+
+Internals links in PDFs (e.g. in the table of contents in the first few pages) can also be 'clicked' with a graphics tablet pen.
 
 ### DCS Radio Log
 
