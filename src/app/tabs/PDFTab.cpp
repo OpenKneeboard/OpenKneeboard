@@ -174,6 +174,9 @@ std::vector<NavigationTab::Entry> GetNavigationEntries(
 
 void PDFTab::Reload() {
   p->mBookmarks.clear();
+  if (!std::filesystem::is_regular_file(p->mPath)) {
+    return;
+  }
   std::thread([this] {
     std::thread loadRenderer {[this] {
       auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
