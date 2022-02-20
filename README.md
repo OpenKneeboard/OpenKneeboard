@@ -6,9 +6,7 @@ OpenKneeboard is an open source Kneeboard application, primarily aimed at virtua
 
 ## Current Status
 
-This is best thought of as a 'developer preview': it works for me, on my computer, but has not been significantly used by others. The settings UI and documentation are particularly lacking at present.
-
-If you are not a C++ developer, you may want to use [VRK](https://forums.eagle.ru/topic/211308-vrk-a-virtual-reality-enabled-kneeboard-with-touch-and-ink-support) instead.
+OpenKneeboard is relatively new, and not yet widely tested; consider it 'early access' :p
 
 ## WARNING: Anti-Cheat
 
@@ -36,14 +34,20 @@ Windows 11 is untested, and I am unable to investigate any issues reported with 
 
 ## Getting Started
 
-1. Build it (see [Developer information](#developer-information))
-2. Run it
+1. Download [the latest release](https://github.com/fredemmott/OpenKneeboard/releases/latest)
+2. Install it; the installer will offer to launch OpenKneeboard when finished.
 3. It will automatically detect a DCS installation and prompt you to install the hooks
 4. Open settings
 5. Configure your bindings
 6. Add any other games and set up your tabs how you like them
 
 The hooks are optional, but are required for the DCS-specific tabs to work.
+
+You might also be interested in the documentation for:
+
+* [Huion tablet users](docs/huion.md)
+* [StreamDeck users](docs/streamdeck.md)
+* [Wacom tablet users](docs/wacom.md)
 
 ## Features
 
