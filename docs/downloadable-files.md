@@ -7,6 +7,8 @@ Everything is built twice, and available in two forms:
 * RelWithDebInfo - **fast, good for users**
 * Debug - **slow, primarily for developers**; contains extra safety checks and verbose logging. The safety checks do not make it more likely to work, but if there is a problem, they easier to find out why it doesn't work.
 
+Files attached to releases are always RelWithDebInfo, and do not include RelWithDebInfo in the name.
+
 Within these categories, there are several files:
 * `OpenKneeboard[-Version]-(RelWithDebInfo|Debug).msix`: A Windows App package installer. This is probably what you want. It contains the main OpenKneeboard application and everything it depends on.
 * `OpenKneeboard[-Version]-(RelWithDebInfo|Debug)-RemoteControl`: Executables for controlling OpenKneeboard, e.g. switching pages/tabs. These are useful for integrating with other applications, like the Huion drivers or Elgato's StreamDeck software.

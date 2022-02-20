@@ -111,7 +111,7 @@ jobs:
         working-directory: ${{runner.temp}}/artifacts
       - name: Create zip files
         run: |
-          for CONFIG in Debug RelWithDebInfo; do
+          for CONFIG in RelWithDebInfo; do
             for ZIP_ARTIFACT in "" "-RemoteControl" "-Symbols"; do
               (
                 cd ${{runner.temp}}/artifacts/OpenKneeboard-${CONFIG}${ZIP_ARTIFACT}
@@ -131,42 +131,6 @@ jobs:
           tag_name: ${{github.ref_name}}
           draft: true
           body_path: ${{runner.temp}}/release_notes.md
-      - name: Attach -Debug.msix
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/artifacts/OpenKneeboard-Debug.msix/OpenKneeboard-Debug.msix
-          asset_name: zzz_OpenKneeboard-${{github.ref_name}}-Debug.msix
-          asset_content_type: application/msix
-      - name: Attach -Debug.zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Debug.zip
-          asset_name: zzz_OpenKneeboard-${{github.ref_name}}-Debug.zip
-          asset_content_type: application/zip
-      - name: Attach -Debug-RemoteControl.zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Debug-RemoteControl.zip
-          asset_name: zzz_OpenKneeboard-${{github.ref_name}}-Debug-RemoteControl.zip
-          asset_content_type: application/zip
-      - name: Attach -Debug-Symbols.zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Debug-Symbols.zip
-          asset_name: zzz_OpenKneeboard-${{github.ref_name}}-Debug-Symbols.zip
-          asset_content_type: application/zip
       - name: Attach -RelWithDebInfo.msix
         uses: actions/upload-release-asset@v1
         env:
@@ -174,7 +138,7 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo.msix/OpenKneeboard-RelWithDebInfo.msix
-          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo.msix
+          asset_name: OpenKneeboard-${{github.ref_name}}.msix
           asset_content_type: application/msix
       - name: Attach -RelWithDebInfo.zip
         uses: actions/upload-release-asset@v1
@@ -183,7 +147,7 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo.zip
-          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}.zip
           asset_content_type: application/zip
       - name: Attach -RelWithDebInfo-RemoteControl.zip
         uses: actions/upload-release-asset@v1
@@ -192,7 +156,7 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-RemoteControl.zip
-          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-RemoteControl.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-RemoteControl.zip
           asset_content_type: application/zip
       - name: Attach -RelWithDebInfo-Symbols.zip
         uses: actions/upload-release-asset@v1
@@ -201,5 +165,5 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-Symbols.zip
-          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-Symbols.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-Symbols.zip
           asset_content_type: application/zip
