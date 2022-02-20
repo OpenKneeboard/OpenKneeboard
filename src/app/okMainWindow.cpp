@@ -48,7 +48,7 @@ using namespace OpenKneeboard;
 okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mDXR = DXResources::Create();
   mKneeboard = std::make_shared<KneeboardState>();
-  mSHMRenderer
+  mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
@@ -189,12 +189,12 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
 }
 
 void okMainWindow::OnToggleVisibility() {
-  if (mSHMRenderer) {
-    mSHMRenderer.reset();
+  if (mInterprocessRenderer) {
+    mInterprocessRenderer.reset();
     return;
   }
 
-  mSHMRenderer
+  mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
 }
 

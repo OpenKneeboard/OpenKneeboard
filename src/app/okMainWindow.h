@@ -73,7 +73,7 @@ class okMainWindow final : public wxFrame,
   std::unique_ptr<OpenKneeboard::TabsList> mTabsList;
 
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
-  std::unique_ptr<OpenKneeboard::InterprocessRenderer> mSHMRenderer;
+  std::unique_ptr<OpenKneeboard::InterprocessRenderer> mInterprocessRenderer;
 
   std::jthread mGameEventThread;
   std::jthread mOpenVRThread;
