@@ -1,4 +1,4 @@
-Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/fredemmott/.OpenKneeboard/releases/latest)
+Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/fredemmott/OpenKneeboard/releases/latest)
 
 You probably want to download the main installer, `OpenKneeboard-@TAG@.msix`- see [docs/downloadable-files.md](https://github.com/fredemmott/OpenKneeboard/blob/@TAG@/docs/downloadable-files.md) for more information on the available files.
 
