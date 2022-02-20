@@ -51,6 +51,7 @@ install(FILES "$<TARGET_PDB_FILE:OpenKneeboard>" TYPE BIN COMPONENT DebugSymbols
 
 set(
   RUNTIME_FILES
+  "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
 )
 install(FILES "${RUNTIME_FILES}" TYPE BIN)
@@ -82,8 +83,6 @@ add_custom_target(
   &&
   ${CMAKE_COMMAND} -E touch RuntimeFiles.stamp
   COMMAND_EXPAND_LISTS)
-
-include(InstallRequiredSystemLibraries)
 
 set(GENERATED_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/appxmanifest.xml")
 add_custom_target(
