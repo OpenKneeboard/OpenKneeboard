@@ -50,6 +50,8 @@ jobs:
 
           & "$kitBin\signtool.exe" `
             sign `
+            /td SHA256 `
+            /t http://timestamp.digicert.com `
             /fd SHA256 `
             /f "${{runner.temp}}/MyCert.pfx" `
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix

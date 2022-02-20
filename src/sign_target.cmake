@@ -24,6 +24,7 @@ function(sign_target TARGET)
       ARGS
       sign
       ${SIGNTOOL_KEY_ARGS}
+      /td SHA256
       /t http://timestamp.digicert.com
       /fd SHA256
       "$<TARGET_FILE:${TARGET}>"
