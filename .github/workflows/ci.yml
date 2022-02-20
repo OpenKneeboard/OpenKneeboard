@@ -93,7 +93,7 @@ jobs:
   release:
     name: Prepare Draft Release
     runs-on: ubuntu-latest
-    if: github.ref_type == "tag"
+    if: github.ref_type == 'tag'
     needs: [build]
     steps:
       - uses: actions/checkout@v2
