@@ -90,3 +90,27 @@ jobs:
     strategy:
       matrix:
         config: [RelWithDebInfo, Debug]
+  release:
+    name: Prepare Draft Release
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          path: source
+      - name: Generate draft release notes
+        run: sed "s/@TAG@/${GITHUB_REF_NAME}" source/.github/workflows/ci/release_notes.md > ${{runner.temp}}/release_notes.md
+      - name: Download build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: ${{runner.temp}}/artifacts
+      - name: Display downloaded files
+        run: ls -R
+        working-directory: ${{runner.temp}}/artifacts
+      - name: Create zip files
+        run: |
+          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-Debug.zip ${{runner.temp}}/artifacts/OpenKneeboard-Debug
+          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-Debug-RemoteControl.zip ${{runner.temp}}/artifacts/OpenKneeboard-Debug-RemoteControl
+          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-Debug-Symbols.zip ${{runner.temp}}/artifacts/OpenKneeboard-Debug-Symbols
+          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-RelWithDebInfo.zip ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo
+          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-RelWithDebInfo-RemoteControl.zip ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo-RemoteControl
+          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-RelWithDebInfo-Symbols.zip ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo-Symbols
