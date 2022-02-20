@@ -93,13 +93,14 @@ jobs:
   release:
     name: Prepare Draft Release
     runs-on: ubuntu-latest
+    if: github.ref_type == "tag"
     needs: [build]
     steps:
       - uses: actions/checkout@v2
         with:
           path: source
-      - name: Generate draft release notes
-        run: sed "s/@TAG@/${GITHUB_REF_NAME}/g" source/.github/workflows/ci/release_notes.md > ${{runner.temp}}/release_notes.md
+      - name: Generate release notes
+        run: sed 's/@TAG@/${{github.ref_name}}/g' source/.github/workflows/ci/release_notes.md > ${{runner.temp}}/release_notes.md
       - name: Download build artifacts
         uses: actions/download-artifact@v2
         with:
@@ -109,9 +110,92 @@ jobs:
         working-directory: ${{runner.temp}}/artifacts
       - name: Create zip files
         run: |
-          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-Debug.zip ${{runner.temp}}/artifacts/OpenKneeboard-Debug
-          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-Debug-RemoteControl.zip ${{runner.temp}}/artifacts/OpenKneeboard-Debug-RemoteControl
-          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-Debug-Symbols.zip ${{runner.temp}}/artifacts/OpenKneeboard-Debug-Symbols
-          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-RelWithDebInfo.zip ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo
-          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-RelWithDebInfo-RemoteControl.zip ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo-RemoteControl
-          zip --junk-paths OpenKneeboard-${GITHUB_REF_NAME}-RelWithDebInfo-Symbols.zip ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo-Symbols
+          for CONFIG in Debug RelWithDebInfo; do
+            for ZIP_ARTIFACT in "" "-RemoteControl" "-Symbols"; do
+              zip --junk-paths \
+                "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-${CONFIG}${ZIP_ARTIFACT}.zip" \
+                "${{runner.temp}}/artifacts/OpenKneeboard-Debug${ZIP_ARTIFACT}"
+            done
+          done
+      - name: Create draft release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_name: Release ${{github.ref_name}}
+          tag_name: ${{github.ref_name}
+          draft: true
+          body_path: ${{runner.temp}}/release_notes.md
+      - name: Attach -Debug.msix
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/artifacts/OpenKneeboard-Debug.msix/OpenKneeboard-Debug.msix
+          asset_name: OpenKneeboard-${{github.ref_name}}-Debug.msix
+          asset_content_type: application/msix
+      - name: Attach -Debug.zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Debug.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-Debug.zip
+          asset_content_type: application/zip
+      - name: Attach -Debug-RemoteControl.zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Debug-RemoteControl.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-Debug-RemoteControl.zip
+          asset_content_type: application/zip
+      - name: Attach -Debug-Symbols.zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Debug-Symbols.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-Debug-Symbols.zip
+          asset_content_type: application/zip
+      - name: Attach -RelWithDebInfo.msix
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo.msix/OpenKneeboard-RelWithDebInfo.msix
+          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo.msix
+          asset_content_type: application/msix
+      - name: Attach -RelWithDebInfo.zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo.zip
+          asset_content_type: application/zip
+      - name: Attach -RelWithDebInfo-RemoteControl.zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-RemoteControl.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-RemoteControl.zip
+          asset_content_type: application/zip
+      - name: Attach -RelWithDebInfo-Symbols.zip
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-Symbols.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-Symbols.zip
+          asset_content_type: application/zip
