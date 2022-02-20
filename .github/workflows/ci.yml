@@ -92,6 +92,7 @@ jobs:
         config: [RelWithDebInfo, Debug]
   release:
     name: Prepare Draft Release
+    runs-on: ubuntu-latest
     needs: [build]
     steps:
       - uses: actions/checkout@v2
