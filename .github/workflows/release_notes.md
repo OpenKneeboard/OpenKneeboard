@@ -7,3 +7,5 @@ Please start with [the README](https://github.com/fredemmott/OpenKneeboard/blob/
 - [Huion tablet users](https://github.com/fredemmott/OpenKneeboard/blob/@TAG@/docs/huion.md)
 - [StreamDeck users](https://github.com/fredemmott/OpenKneeboard/blob/@TAG@/docs/streamdeck.md)
 - [Wacom tablet users](https://github.com/fredemmott/OpenKneeboard/blob/@TAG@/docs/wacom.md)
+
+If you need help, see [Getting Help](https://github.com/fredemmott/OpenKneeboard#getting-help) in the README.
