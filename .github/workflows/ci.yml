@@ -113,7 +113,7 @@ jobs:
           for CONFIG in Debug RelWithDebInfo; do
             for ZIP_ARTIFACT in "" "-RemoteControl" "-Symbols"; do
               (
-                cd ${{runner.temp}}/artifacts/OpenKneeboard-${{CONFIG}}${ZIP_ARTIFACT}
+                cd ${{runner.temp}}/artifacts/OpenKneeboard-${CONFIG}${ZIP_ARTIFACT}
                 zip -r \
                   "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-${CONFIG}${ZIP_ARTIFACT}.zip" \
                   ./
