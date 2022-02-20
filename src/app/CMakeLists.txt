@@ -51,7 +51,6 @@ install(FILES "$<TARGET_PDB_FILE:OpenKneeboard>" TYPE BIN COMPONENT DebugSymbols
 
 set(
   RUNTIME_FILES
-  "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
 )
 install(FILES "${RUNTIME_FILES}" TYPE BIN)
@@ -86,6 +85,7 @@ add_custom_target(
 
 include(InstallRequiredSystemLibraries)
 
+set(GENERATED_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/appxmanifest.xml")
 add_custom_target(
   AppxManifest
   ALL
@@ -94,12 +94,13 @@ add_custom_target(
   -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
   -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
   -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+  -DVCLIBS_EXTRA="$<$<CONFIG:Debug>:.Debug>"
   "-DINPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/appxmanifest.xml.in"
-  "-DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml"
+  "-DOUTPUT_FILE=${GENERATED_MANIFEST}"
   "-P${CMAKE_CURRENT_SOURCE_DIR}/appxmanifest.xml.cmake"
   BYPRODUCTS
-  "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml"
+  "${GENERATED_MANIFEST}"
   WORKING_DIRECTORY
   "${CMAKE_SOURCE_DIR}"
 )
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/appxmanifest.xml" DESTINATION .)
+install(FILES "${GENERATED_MANIFEST}" DESTINATION .)

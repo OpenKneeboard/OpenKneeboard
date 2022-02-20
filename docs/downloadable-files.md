@@ -12,3 +12,5 @@ Within these categories, there are several files:
 * `OpenKneeboard[-Version]-(RelWithDebInfo|Debug)-RemoteControl`: Executables for controlling OpenKneeboard, e.g. switching pages/tabs. These are useful for integrating with other applications, like the Huion drivers or Elgato's StreamDeck software.
 * `OpenKneeboard[-Version]-(RelWithDebInfo|Debug)`: The same executables as the `.msix`, but in a `.zip` file. Not really needed - use this if you prefer not to use installers.
 * `OpenKneeboard[-Version]-(RelWithDebInfo|Debug)-Symbols`: Extra files that are useful for debugging crashes. For example, they can be used to translate things like 'crashed at `0x12345678` to 'crashed in `some_function()` at line 123 of `somefile.cpp`'.
+
+If using the zips, you will also need to install the Visual C++ 2022 runtime libraries.

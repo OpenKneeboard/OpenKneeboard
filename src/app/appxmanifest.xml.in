@@ -18,7 +18,8 @@
     <Resource Language="en-us" />
   </Resources>
   <Dependencies>
-  <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.18363.0" MaxVersionTested="10.0.19044.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.18363.0" MaxVersionTested="10.0.19044.0" />
+    <PackageDependency Name="Microsoft.VCLibs@VCLIBS_EXTRA@.140.00.Desktop" MinVersion="14.0.30035.0"/>
   </Dependencies>
   <Capabilities>
     <rescap:Capability Name="runFullTrust"/>
