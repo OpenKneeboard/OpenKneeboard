@@ -178,11 +178,11 @@ void PDFTab::Reload() {
     return;
   }
   std::thread([this] {
-    std::thread loadRenderer {[this] {
+    std::jthread loadRenderer {[this] {
       auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
       p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
     }};
-    std::thread loadBookmarks {[this] {
+    std::jthread loadBookmarks {[this] {
       const auto pathStr = to_utf8(p->mPath);
       QPDF qpdf;
       qpdf.processFile(pathStr.c_str());

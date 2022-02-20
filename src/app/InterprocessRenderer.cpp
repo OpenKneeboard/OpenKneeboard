@@ -222,7 +222,7 @@ InterprocessRenderer::InterprocessRenderer(
     },
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 
-  AddEventListener(kneeboard->evFlushEvent, [this]() { RenderNow(); });
+  AddEventListener(kneeboard->evFlushEvent, &InterprocessRenderer::RenderNow, this);
   AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());
   this->RenderNow();
 }
