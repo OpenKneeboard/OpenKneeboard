@@ -18,6 +18,7 @@
  */
 #include "okGameInstanceSettings.h"
 
+#include <OpenKneeboard/utf8.h>
 #include <wx/gbsizer.h>
 
 using namespace OpenKneeboard;

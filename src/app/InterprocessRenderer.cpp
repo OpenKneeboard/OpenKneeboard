@@ -34,7 +34,6 @@
 #include <dwrite.h>
 #include <dxgi1_2.h>
 #include <shims/winrt.h>
-#include <shims/wx.h>
 #include <wincodec.h>
 
 #include "KneeboardState.h"

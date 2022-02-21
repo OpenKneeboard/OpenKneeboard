@@ -94,12 +94,12 @@ std::string DCSWorld::GetUserFriendlyName(
   const std::filesystem::path& _path) const {
   const auto path = std::filesystem::canonical(_path);
   if (path == GetInstalledPath(Version::OPEN_BETA) / "bin" / "DCS.exe") {
-    return _("DCS World - Open Beta").utf8_string();
+    return _("DCS World - Open Beta");
   }
   if (path == GetInstalledPath(Version::STABLE) / "bin" / "DCS.exe") {
-    return _("DCS World - Stable").utf8_string();
+    return _("DCS World - Stable");
   }
-  return _("DCS World").utf8_string();
+  return _("DCS World");
 }
 
 std::vector<std::filesystem::path> DCSWorld::GetInstalledPaths() const {

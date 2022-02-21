@@ -21,7 +21,6 @@
 #include <OpenKneeboard/DirectInputListener.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/dprint.h>
-#include <shims/wx.h>
 
 #include <array>
 

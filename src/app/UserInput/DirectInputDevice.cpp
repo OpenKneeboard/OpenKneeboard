@@ -24,7 +24,6 @@
 #include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
 #include <shims/winrt.h>
-#include <shims/wx.h>
 
 namespace OpenKneeboard {
 
@@ -278,12 +277,12 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
 std::string DirectInputDevice::GetButtonComboDescription(
   const std::unordered_set<uint64_t>& ids) const {
   if (ids.empty()) {
-    return _("None").utf8_string();
+    return _("None");
   }
   if (ids.size() == 1) {
     auto label = (mDevice.dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD
       ? "{}"
-      : _("Button {}").utf8_string();
+      : _("Button {}");
     return fmt::format(fmt::runtime(label), GetButtonLabel(*ids.begin()));
   }
   std::string out;

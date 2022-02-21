@@ -22,9 +22,12 @@
 #include <OpenKneeboard/Games/DCSWorld.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
+#include <shims/wx.h>
 #include <wx/stdpaths.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
+
+// wxTODO: use Windows.Storage.Decompression instead of wxWidgets
 
 #include <random>
 

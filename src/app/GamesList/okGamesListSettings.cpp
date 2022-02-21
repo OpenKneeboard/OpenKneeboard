@@ -88,8 +88,7 @@ void okGamesListSettings::OnRemoveGameButton(wxCommandEvent& ev) {
   wxMessageDialog dialog(
     nullptr,
     fmt::format(
-      fmt::runtime(_("Are you sure you want to remove '{}'?").ToStdString()),
-      game.name),
+      fmt::runtime(_("Are you sure you want to remove '{}'?")), game.name),
     _("Remove game?"),
     wxYES_NO | wxNO_DEFAULT);
   auto result = dialog.ShowModal();
@@ -111,9 +110,7 @@ void okGamesListSettings::OnRemoveGameButton(wxCommandEvent& ev) {
   this->evSettingsChangedEvent.Emit();
 }
 
-okGamesListSettings::okGamesListSettings(
-  wxWindow* parent,
-  GamesList* gamesList)
+okGamesListSettings::okGamesListSettings(wxWindow* parent, GamesList* gamesList)
   : wxPanel(parent, wxID_ANY), mGamesList(gamesList) {
   this->SetLabel(_("Games"));
   mList = new wxListbook(this, wxID_ANY);

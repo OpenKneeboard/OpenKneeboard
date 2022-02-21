@@ -35,6 +35,17 @@ class wxString;
 
 namespace OpenKneeboard {
 
+/// Translation marker
+inline std::string TranslateString(std::string_view in) {
+  return std::string(in);
+}
+
+#ifdef _
+#undef _
+#endif
+
+#define _(x) (::OpenKneeboard::TranslateString(x))
+
 class utf8_string_view;
 class utf8_string;
 

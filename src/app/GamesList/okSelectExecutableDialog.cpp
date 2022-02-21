@@ -20,6 +20,7 @@
 #include "okSelectExecutableDialog.h"
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/utf8.h>
 #include <ShlObj.h>
 #include <TlHelp32.h>
 #include <shims/winrt.h>

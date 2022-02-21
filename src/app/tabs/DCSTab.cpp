@@ -97,15 +97,13 @@ static void InstallHooks(DCS::Version version, utf8_string_view label) {
     message = fmt::format(
       fmt::runtime(
         _("Required hooks aren't installed for {}; would you like to install "
-          "them?")
-          .utf8_string()),
+          "them?")),
       label);
   } else if (
     FilesDiffer(dllSource, dllDest) || FilesDiffer(luaSource, luaDest)) {
     message = fmt::format(
       fmt::runtime(_("Hooks for {} are out of date; would you like to update "
-                     "them?")
-                     .utf8_string()),
+                     "them?")),
       label);
   } else {
     // Installed and equal
