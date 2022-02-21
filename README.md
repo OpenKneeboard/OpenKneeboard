@@ -36,12 +36,13 @@ Windows 11 is untested, and I am unable to investigate any issues reported with 
 
 1. Download [the latest release](https://github.com/fredemmott/OpenKneeboard/releases/latest)
 2. Install it; the installer will offer to launch OpenKneeboard when finished.
-3. It will automatically detect a DCS installation and prompt you to install the hooks
+3. Install the DCS hooks if prompted
 4. Open settings
-5. Configure your bindings
-6. Add any other games and set up your tabs how you like them
+5. Add DCS to the 'Games' tab if it was not automatically added
+6. Configure your bindings
+7. Add any other games and set up your tabs how you like them
 
-The hooks are optional, but are required for the DCS-specific tabs to work.
+The hooks are optional, but are required for the DCS-specific tabs to work. If your DCS 'Saved Games' is not either `Saved Games\DCS` or `Saved Games\DCS.openbeta`, download the `.zip` file as well, and copy `OpenKneeboardDCSExt.lua` and `OpenKneeboardDCSExt.dll` from the `bin` subfolder of that zip to `YOUR_DCS_SAVEDGAMES_DIRECTORY\Scripts\Hooks` - if it doesn't already exist, create that folder first.
 
 You might also be interested in the documentation for:
 
