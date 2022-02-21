@@ -2,17 +2,19 @@
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
   <Identity
     Name="FredEmmott.Self.OpenKneeboard"
     Version="@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@.@VERSION_BUILD@"
     Publisher="CN=Frederick Emmott, O=Frederick Emmott, L=East Palo Alto, S=California, C=US"
-    ProcessorArchitecture="x64" />
+    ProcessorArchitecture="x64"
+  />
   <Properties>
-     <DisplayName>OpenKneeboard</DisplayName>
-     <PublisherDisplayName>Fred Emmott</PublisherDisplayName>
-     <Description>An open source kneeboard</Description>
-     <Logo>share/logo.png</Logo>
+    <DisplayName>OpenKneeboard</DisplayName>
+    <PublisherDisplayName>Fred Emmott</PublisherDisplayName>
+    <Description>An open source kneeboard</Description>
+    <Logo>share/logo.png</Logo>
   </Properties>
   <Resources>
     <Resource Language="en-us" />
@@ -27,11 +29,15 @@
   <Applications>
     <Application Id="OpenKneeboard" Executable="bin\OpenKneeboard.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-	BackgroundColor="#464646"
-	DisplayName="OpenKneeboard"
-	Square150x150Logo="share\logo.png"
-	Square44x44Logo="share\logo.png"
-	Description="An open source kneeboard" />
+        BackgroundColor="#464646"
+        DisplayName="OpenKneeboard"
+        Square150x150Logo="share\logo.png"
+        Square44x44Logo="share\logo.png"
+        Description="An open source kneeboard"
+      />
+      <uap7:Properties>
+        <uap8:ActiveCodePage>UTF-8</uap8:ActiveCodePage>
+      </uap7:Properties>
     </Application>
-   </Applications>
-  </Package>
+  </Applications>
+</Package>
