@@ -23,19 +23,22 @@
 #include <ShlObj.h>
 #include <Windows.h>
 #include <fmt/format.h>
+#include <shims/winrt.h>
 
 namespace OpenKneeboard::Games {
 
 static std::filesystem::path GetDCSPath(const char* lastSubKey) {
   const auto subkey = fmt::format("SOFTWARE\\Eagle Dynamics\\{}", lastSubKey);
-  char buffer[MAX_PATH];
-  DWORD length = sizeof(buffer);
+  const auto wSubKey = winrt::to_hstring(subkey);
+
+  wchar_t buffer[MAX_PATH];
+  DWORD length = sizeof(buffer) * sizeof(buffer[0]);
 
   if (
-    RegGetValueA(
+    RegGetValueW(
       HKEY_CURRENT_USER,
-      subkey.c_str(),
-      "Path",
+      wSubKey.c_str(),
+      L"Path",
       RRF_RT_REG_SZ,
       nullptr,
       reinterpret_cast<void*>(buffer),
@@ -44,7 +47,12 @@ static std::filesystem::path GetDCSPath(const char* lastSubKey) {
     return {};
   }
 
-  return std::filesystem::canonical(std::filesystem::path(buffer));
+  const auto path = std::filesystem::path(std::wstring_view(buffer, length / sizeof(buffer[0])));
+  if (!std::filesystem::is_directory(path)) {
+    return {};
+  }
+
+  return std::filesystem::canonical(path);
 }
 
 static std::filesystem::path GetSavedGamesPath() {
