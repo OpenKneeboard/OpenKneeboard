@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include "scope_guard.h"
+#include <OpenKneeboard/scope_guard.h>
 
 namespace OpenKneeboard {
 

@@ -53,6 +53,12 @@ target_link_libraries(
   Dwrite
   _libheaders)
 
+add_library(OpenKneeboard-scope_guard STATIC scope_guard.cpp)
+target_link_libraries(
+  OpenKneeboard-scope_guard
+  PUBLIC
+  _libheaders)
+
 add_library(OpenKneeboard-tablets STATIC WintabTablet.cpp)
 target_link_libraries(
   OpenKneeboard-tablets

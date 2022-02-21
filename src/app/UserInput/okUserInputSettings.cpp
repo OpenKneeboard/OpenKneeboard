@@ -27,7 +27,7 @@
 #include <wx/gbsizer.h>
 #include <wx/scopeguard.h>
 
-#include "scope_guard.h"
+#include <OpenKneeboard/scope_guard.h>
 
 using namespace OpenKneeboard;
 

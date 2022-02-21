@@ -36,7 +36,7 @@
 #include <mutex>
 #include <thread>
 
-#include "scope_guard.h"
+#include <OpenKneeboard/scope_guard.h>
 
 namespace {
 

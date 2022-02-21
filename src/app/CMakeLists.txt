@@ -17,6 +17,7 @@ target_link_libraries(
   OpenKneeboard-DXResources
   OpenKneeboard-GameEvent
   OpenKneeboard-RuntimeFiles
+  OpenKneeboard-scope_guard
   OpenKneeboard-SHM
   OpenKneeboard-UTF8
   OpenKneeboard-config

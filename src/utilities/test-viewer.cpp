@@ -21,14 +21,14 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
 #include <shims/winrt.h>
-#include <shims/wx.h>
-#include <wx/dcbuffer.h>
-#include <wx/frame.h>
-#include <wx/graphics.h>
+
+#include <memory>
+#include <type_traits>
 
 #pragma comment(lib, "D2d1.lib")
 #pragma comment(lib, "DXGI.lib")
@@ -42,7 +42,7 @@ struct Pixel {
 };
 #pragma pack(pop)
 
-class Canvas final : public wxWindow {
+class TestViewerWindow final {
  private:
   bool mFirstDetached = false;
   SHM::Reader mSHM;
@@ -53,20 +53,44 @@ class Canvas final : public wxWindow {
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
 
+  HWND mHwnd;
+
+  static TestViewerWindow* gInstance;
+  static LRESULT CALLBACK
+  WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
  public:
-  Canvas(wxWindow* parent)
-    : wxWindow(parent, wxID_ANY, wxDefaultPosition, {768 / 2, 1024 / 2}) {
+  TestViewerWindow(HINSTANCE instance) {
+    gInstance = this;
+    const wchar_t CLASS_NAME[] = L"OpenKneeboard Test Viewer";
+    WNDCLASS wc {
+      .lpfnWndProc = WindowProc,
+      .hInstance = instance,
+      .lpszClassName = CLASS_NAME,
+    };
+    RegisterClass(&wc);
+    mHwnd = CreateWindowExW(
+      0,
+      CLASS_NAME,
+      L"OpenKneeboard Test Viewer",
+      WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT,
+      CW_USEDEFAULT,
+      768 / 2,
+      1024 / 2,
+      NULL,
+      NULL,
+      instance,
+      nullptr);
+    SetTimer(mHwnd, /* id = */ 1, 1000 / 60, nullptr);
+
     mDXR = DXResources::Create();
 
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext);
-
-    Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
-    Bind(wxEVT_ERASE_BACKGROUND, [this](auto&) {});
-    Bind(wxEVT_SIZE, &Canvas::OnSize, this);
   }
 
-  void OnSize(wxSizeEvent& ev) {
-    PaintNow();
+  HWND GetHWND() const {
+    return mHwnd;
   }
 
   void CheckForUpdate() {
@@ -82,23 +106,30 @@ class Canvas final : public wxWindow {
     }
   }
 
+  D2D1_SIZE_U GetClientSize() const {
+    RECT clientRect;
+    GetClientRect(mHwnd, &clientRect);
+    return {
+      static_cast<UINT>(clientRect.right - clientRect.left),
+      static_cast<UINT>(clientRect.bottom - clientRect.top),
+    };
+  }
+
   void InitSwapChain() {
-    auto desiredSize = this->GetClientSize();
+    const auto clientSize = this->GetClientSize();
     if (mSwapChain) {
       DXGI_SWAP_CHAIN_DESC desc;
       mSwapChain->GetDesc(&desc);
       auto& mode = desc.BufferDesc;
-      if (
-        mode.Width == desiredSize.GetWidth()
-        && mode.Height == desiredSize.GetHeight()) {
+      if (mode.Width == clientSize.width && mode.Height == clientSize.height) {
         return;
       }
       mBackgroundBrush = nullptr;
       mDXR.mD2DDeviceContext->SetTarget(nullptr);
       mSwapChain->ResizeBuffers(
         desc.BufferCount,
-        desiredSize.x,
-        desiredSize.y,
+        clientSize.width,
+        clientSize.height,
         mode.Format,
         desc.Flags);
       return;
@@ -106,8 +137,8 @@ class Canvas final : public wxWindow {
 
     static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
-      .Width = static_cast<UINT>(desiredSize.GetWidth()),
-      .Height = static_cast<UINT>(desiredSize.GetHeight()),
+      .Width = clientSize.width,
+      .Height = clientSize.height,
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
       .SampleDesc = {1, 0},
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
@@ -117,16 +148,32 @@ class Canvas final : public wxWindow {
     };
     mDXR.mDXGIFactory->CreateSwapChainForHwnd(
       mDXR.mD3DDevice.get(),
-      this->GetHWND(),
+      mHwnd,
       &swapChainDesc,
       nullptr,
       nullptr,
       mSwapChain.put());
   }
 
-  void OnPaint(wxPaintEvent& ev) {
-    wxPaintDC dc(this);
+  void OnPaint() {
+    PAINTSTRUCT ps;
+    BeginPaint(mHwnd, &ps);
     PaintNow();
+    EndPaint(mHwnd, &ps);
+  }
+
+  static D2D1_COLOR_F GetSystemColor(int index) {
+    auto color = ::GetSysColor(index);
+    return {
+      GetRValue(color) / 255.0f,
+      GetGValue(color) / 255.0f,
+      GetBValue(color) / 255.0f,
+      1.0f,
+    };
+  }
+
+  void OnResize(const D2D1_SIZE_U&) {
+    this->PaintNow();
   }
 
   void PaintNow() {
@@ -169,28 +216,20 @@ class Canvas final : public wxWindow {
 
     bool present = true;
     ctx->BeginDraw();
-    wxON_BLOCK_EXIT0([&]() {
+    auto cleanup = scope_guard([&] {
       ctx->EndDraw();
       if (present) {
         mSwapChain->Present(0, 0);
       }
     });
 
-    auto wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    ctx->Clear(
-      {wxBgColor.Red() / 255.0f,
-       wxBgColor.Green() / 255.0f,
-       wxBgColor.Blue() / 255.0f,
-       1.0f});
+    ctx->Clear(GetSystemColor(COLOR_WINDOW));
 
     auto snapshot = mSHM.MaybeGet();
     if (!snapshot) {
       mErrorRenderer->Render(
-        _("No Feeder").ToStdWstring(),
-        {0.0f,
-         0.0f,
-         float(clientSize.GetWidth()),
-         float(clientSize.GetHeight())});
+        L"No Feeder",
+        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       mFirstDetached = false;
       return;
     }
@@ -200,11 +239,8 @@ class Canvas final : public wxWindow {
 
     if (config.imageWidth == 0 || config.imageHeight == 0) {
       mErrorRenderer->Render(
-        _("No Image").ToStdWstring(),
-        {0.0f,
-         0.0f,
-         float(clientSize.GetWidth()),
-         float(clientSize.GetHeight())});
+        "No Image",
+        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       mFirstDetached = false;
       return;
     }
@@ -216,21 +252,16 @@ class Canvas final : public wxWindow {
     }
     auto sharedSurface = sharedTexture.GetSurface();
 
-    wxBgColor = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
-    ctx->Clear(
-      {wxBgColor.Red() / 255.0f,
-       wxBgColor.Green() / 255.0f,
-       wxBgColor.Blue() / 255.0f,
-       1.0f});
+    ctx->Clear(GetSystemColor(COLOR_WINDOWFRAME));
 
-    const auto scalex = float(clientSize.GetWidth()) / config.imageWidth;
-    const auto scaley = float(clientSize.GetHeight()) / config.imageHeight;
+    const auto scalex = float(clientSize.width) / config.imageWidth;
+    const auto scaley = float(clientSize.height) / config.imageHeight;
     const auto scale = std::min(scalex, scaley);
     const auto renderWidth = config.imageWidth * scale;
     const auto renderHeight = config.imageHeight * scale;
 
-    const auto renderLeft = (clientSize.GetWidth() - renderWidth) / 2;
-    const auto renderTop = (clientSize.GetHeight() - renderHeight) / 2;
+    const auto renderLeft = (clientSize.width - renderWidth) / 2;
+    const auto renderTop = (clientSize.height - renderHeight) / 2;
     auto dpi = GetDpiForWindow(this->GetHWND());
     D2D1_RECT_F pageRect {
       renderLeft * (dpi / 96.0f),
@@ -273,46 +304,43 @@ class Canvas final : public wxWindow {
   }
 };
 
-class MainWindow final : public wxFrame {
- private:
-  wxTimer mTimer;
+TestViewerWindow* TestViewerWindow::gInstance = nullptr;
 
- public:
-  MainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard Test Viewer") {
-    auto menuBar = new wxMenuBar();
-    {
-      auto fileMenu = new wxMenu();
-      fileMenu->Append(wxID_EXIT, _T("E&xit"));
-      menuBar->Append(fileMenu, _("&File"));
-    }
-    SetMenuBar(menuBar);
+LRESULT CALLBACK
+TestViewerWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+  switch (uMsg) {
+    case WM_PAINT:
+      gInstance->OnPaint();
+      return 0;
+    case WM_TIMER:
+      gInstance->CheckForUpdate();
+      return 0;
+    case WM_SIZE:
+      gInstance->OnResize({
+        .width = LOWORD(lParam),
+        .height = HIWORD(lParam),
+      });
+      return 0;
+    case WM_CLOSE:
+      PostQuitMessage(0);
+      return DefWindowProc(hWnd, uMsg, wParam, lParam);
+  }
+  return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
 
-    auto canvas = new Canvas(this);
+int WINAPI wWinMain(
+  HINSTANCE hInstance,
+  HINSTANCE hPrevInstance,
+  PWSTR pCmdLine,
+  int nCmdShow) {
+  TestViewerWindow window(hInstance);
+  ShowWindow(window.GetHWND(), nCmdShow);
 
-    mTimer.Bind(wxEVT_TIMER, [canvas](auto) { canvas->CheckForUpdate(); });
-    mTimer.Start(1000 / 60);
-
-    Bind(
-      wxEVT_MENU, [this](auto&) { this->Close(true); }, wxID_EXIT);
-
-    auto sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(canvas, 1, wxEXPAND);
-    this->SetSizerAndFit(sizer);
+  MSG msg = {};
+  while (GetMessage(&msg, NULL, 0, 0) > 0) {
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
   }
 
-  void OnExit(wxCommandEvent& ev) {
-    Close(true);
-  }
-};
-
-class TestViewApp final : public wxApp {
- public:
-  virtual bool OnInit() override {
-    wxInitAllImageHandlers();
-    MainWindow* window = new MainWindow();
-    window->Show();
-    return true;
-  }
-};
-
-wxIMPLEMENT_APP(TestViewApp);
+  return 0;
+}

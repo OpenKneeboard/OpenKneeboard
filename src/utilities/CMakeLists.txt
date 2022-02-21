@@ -22,8 +22,7 @@ target_link_libraries(
   OpenKneeboard-DXResources
   OpenKneeboard-SHM
   OpenKneeboard-D2DErrorRenderer
-  wx::core
-  wx::base
+  OpenKneeboard-scope_guard
 )
 
 add_executable(fake-dcs fake-dcs.cpp)
