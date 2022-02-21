@@ -48,10 +48,17 @@ void UserInputDevice::OnButtonEvent(UserInputButtonEvent ev) {
     if (buttons.size() < boundButtons.size()) {
       continue;
     }
-    for (auto button: buttons) {
-      if (!boundButtons.contains(button)) {
+    bool foundReleasedButton = false;
+    for (auto button: boundButtons) {
+      if (button == ev.GetButtonID()) {
+        foundReleasedButton = true;
+      }
+      if (!buttons.contains(button)) {
         goto NEXT_BINDING;
       }
+    }
+    if (!foundReleasedButton) {
+      continue;
     }
     evUserActionEvent.Emit(binding.GetAction());
     return;
