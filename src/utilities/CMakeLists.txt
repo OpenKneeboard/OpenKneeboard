@@ -19,9 +19,10 @@ target_link_libraries(
 add_executable(test-viewer WIN32 test-viewer.cpp)
 target_link_libraries(
   test-viewer
-  OpenKneeboard-DXResources
-  OpenKneeboard-SHM
   OpenKneeboard-D2DErrorRenderer
+  OpenKneeboard-DXResources
+  OpenKneeboard-GetSystemColor
+  OpenKneeboard-SHM
   OpenKneeboard-scope_guard
 )
 

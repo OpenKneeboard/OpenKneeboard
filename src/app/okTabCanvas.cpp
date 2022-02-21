@@ -22,15 +22,16 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <dxgi1_3.h>
 #include <wx/dcbuffer.h>
 
 #include "KneeboardState.h"
 #include "TabState.h"
-#include <OpenKneeboard/scope_guard.h>
 
 using namespace OpenKneeboard;
 
@@ -140,13 +141,7 @@ void okTabCanvas::PaintNow() {
 
   const auto count = mTabState->GetPageCount();
   if (count == 0) {
-    auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
-    ctx->Clear(D2D1_COLOR_F {
-      bg.Red() / 255.0f,
-      bg.Green() / 255.0f,
-      bg.Blue() / 255.0f,
-      bg.Alpha() / 255.0f,
-    });
+    ctx->Clear(GetSystemColor(COLOR_WINDOW));
 
     mErrorRenderer->Render(
       _("No Pages"),
@@ -157,13 +152,7 @@ void okTabCanvas::PaintNow() {
     return;
   }
 
-  auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWFRAME);
-  ctx->Clear(D2D1_COLOR_F {
-    bg.Red() / 255.0f,
-    bg.Green() / 255.0f,
-    bg.Blue() / 255.0f,
-    bg.Alpha() / 255.0f,
-  });
+  ctx->Clear(GetSystemColor(COLOR_WINDOWFRAME));
 
   const auto pageMetrics = GetPageMetrics();
 

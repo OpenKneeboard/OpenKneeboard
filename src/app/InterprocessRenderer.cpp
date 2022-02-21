@@ -22,10 +22,12 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <d3d11.h>
@@ -37,7 +39,6 @@
 
 #include "KneeboardState.h"
 #include "TabState.h"
-#include <OpenKneeboard/scope_guard.h>
 
 using namespace OpenKneeboard;
 
@@ -212,17 +213,12 @@ InterprocessRenderer::InterprocessRenderer(
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mActiveButtonBrush.put()));
 
-  auto bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
   ctx->CreateSolidColorBrush(
-    {
-      bg.Red() / 255.0f,
-      bg.Green() / 255.0f,
-      bg.Blue() / 255.0f,
-      bg.Alpha() / 255.0f,
-    },
+    GetSystemColor(COLOR_WINDOW),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 
-  AddEventListener(kneeboard->evFlushEvent, &InterprocessRenderer::RenderNow, this);
+  AddEventListener(
+    kneeboard->evFlushEvent, &InterprocessRenderer::RenderNow, this);
   AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());
   this->RenderNow();
 }

@@ -20,6 +20,7 @@
 #include <D2d1.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <d3d11.h>
@@ -162,16 +163,6 @@ class TestViewerWindow final {
     EndPaint(mHwnd, &ps);
   }
 
-  static D2D1_COLOR_F GetSystemColor(int index) {
-    auto color = ::GetSysColor(index);
-    return {
-      GetRValue(color) / 255.0f,
-      GetGValue(color) / 255.0f,
-      GetBValue(color) / 255.0f,
-      1.0f,
-    };
-  }
-
   void OnResize(const D2D1_SIZE_U&) {
     this->PaintNow();
   }
@@ -306,8 +297,11 @@ class TestViewerWindow final {
 
 TestViewerWindow* TestViewerWindow::gInstance = nullptr;
 
-LRESULT CALLBACK
-TestViewerWindow::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK TestViewerWindow::WindowProc(
+  HWND hWnd,
+  UINT uMsg,
+  WPARAM wParam,
+  LPARAM lParam) {
   switch (uMsg) {
     case WM_PAINT:
       gInstance->OnPaint();

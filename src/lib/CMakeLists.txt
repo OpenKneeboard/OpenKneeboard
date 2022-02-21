@@ -13,6 +13,11 @@ target_include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
+add_library(OpenKneeboard-GetSystemColor STATIC GetSystemColor.cpp)
+target_link_libraries(
+	OpenKneeboard-GetSystemColor
+	PUBLIC
+  _libheaders)
 
 add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
 target_link_libraries(
