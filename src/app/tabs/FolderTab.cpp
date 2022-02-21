@@ -76,7 +76,8 @@ bool FolderTab::CanOpenFile(const std::filesystem::path& path) const {
 
 void FolderTab::Reload() {
   p->mPages.clear();
-  if (!std::filesystem::is_directory(p->mPath)) {
+  if (p->mPath.empty() || !std::filesystem::is_directory(p->mPath)) {
+    evFullyReplacedEvent.Emit();
     return;
   }
   for (auto& entry: std::filesystem::recursive_directory_iterator(p->mPath)) {

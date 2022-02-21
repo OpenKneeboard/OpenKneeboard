@@ -102,6 +102,7 @@ DCSMissionTab::DCSMissionTab(const DXResources& dxr)
 }
 
 DCSMissionTab::~DCSMissionTab() {
+  GetDelegate()->SetPath({});
 }
 
 utf8_string DCSMissionTab::GetTitle() const {
