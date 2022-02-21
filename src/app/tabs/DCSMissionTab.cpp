@@ -46,7 +46,7 @@ class DCSMissionTab::ExtractedMission final {
   ExtractedMission() {
   }
 
-  ExtractedMission(const std::filesystem::path& zip) {
+  ExtractedMission(FolderTab* delegate, const std::filesystem::path& zip) {
     std::random_device randDevice;
     std::uniform_int_distribution<uint64_t> randDist;
 
@@ -81,7 +81,7 @@ class DCSMissionTab::ExtractedMission final {
         wxFileOutputStream out(path.wstring());
         zis.Read(out);
       }
-      if (!wxImage::CanRead(path.wstring())) {
+      if (!delegate->CanOpenFile(path)) {
         std::filesystem::remove(path);
       }
     }
@@ -109,7 +109,7 @@ utf8_string DCSMissionTab::GetTitle() const {
 }
 
 void DCSMissionTab::Reload() {
-  mExtracted = std::make_unique<ExtractedMission>(mMission);
+  mExtracted = std::make_unique<ExtractedMission>(GetDelegate(), mMission);
   GetDelegate()->SetPath(mExtracted->GetExtractedPath());
   GetDelegate()->Reload();
 }

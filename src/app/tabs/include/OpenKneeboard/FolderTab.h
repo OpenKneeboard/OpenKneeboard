@@ -61,6 +61,8 @@ class FolderTab final : public TabWithDoodles,
   virtual bool IsNavigationAvailable() const override;
   virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t) override;
 
+  bool CanOpenFile(const std::filesystem::path&) const;
+
  protected:
   virtual void RenderPageContent(
     ID2D1DeviceContext*,

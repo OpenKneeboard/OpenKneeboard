@@ -23,9 +23,6 @@
 #include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
 
-// TODO: stop using wxImage::CanRead
-#include <shims/wx.h>
-
 namespace OpenKneeboard {
 class FolderTab::Impl final {
  public:
@@ -46,10 +43,12 @@ FolderTab::FolderTab(
   const DXResources& dxr,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : TabWithDoodles(dxr), p(new Impl {
-    .mDXR = dxr,
-    .mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
-    .mPath = path}) {
+  : TabWithDoodles(dxr),
+    p(new Impl {
+      .mDXR = dxr,
+      .mWIC
+      = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
+      .mPath = path}) {
   Reload();
 }
 
@@ -60,20 +59,31 @@ utf8_string FolderTab::GetTitle() const {
   return p->mPath.filename();
 }
 
+bool FolderTab::CanOpenFile(const std::filesystem::path& path) const {
+  if (!std::filesystem::is_regular_file(path)) {
+    return false;
+  }
+  auto wsPath = path.wstring();
+  winrt::com_ptr<IWICBitmapDecoder> decoder;
+  p->mWIC->CreateDecoderFromFilename(
+    wsPath.c_str(),
+    nullptr,
+    GENERIC_READ,
+    WICDecodeMetadataCacheOnLoad,
+    decoder.put());
+  return static_cast<bool>(decoder);
+}
+
 void FolderTab::Reload() {
   p->mPages.clear();
   if (!std::filesystem::is_directory(p->mPath)) {
     return;
   }
   for (auto& entry: std::filesystem::recursive_directory_iterator(p->mPath)) {
-    if (!entry.is_regular_file()) {
+    if (!this->CanOpenFile(entry.path())) {
       continue;
     }
-    auto wsPath = entry.path().wstring();
-    if (!wxImage::CanRead(wsPath)) {
-      continue;
-    }
-    p->mPages.push_back({.mPath = wsPath});
+    p->mPages.push_back({.mPath = entry.path()});
   }
   evFullyReplacedEvent.Emit();
 }
