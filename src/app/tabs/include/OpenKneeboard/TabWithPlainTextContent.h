@@ -19,38 +19,45 @@
  */
 #pragma once
 
-#include "DCSTab.h"
-#include "TabWithDoodles.h"
-#include "TabWithPlainTextContent.h"
+#include "Tab.h"
 
 namespace OpenKneeboard {
 
-class FolderTab;
-
-class DCSRadioLogTab final : public DCSTab,
-                             public TabWithDoodles,
-                             public TabWithPlainTextContent {
+class TabWithPlainTextContent : virtual public Tab {
  public:
-  DCSRadioLogTab(const DXResources&);
-  virtual ~DCSRadioLogTab();
-  virtual utf8_string GetTitle() const override;
+  TabWithPlainTextContent(const DXResources&);
+  virtual ~TabWithPlainTextContent();
+
+  virtual void Reload() override;
   virtual uint16_t GetPageCount() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
 
  protected:
-  virtual void RenderPageContent(
+  virtual utf8_string GetPlaceholderText() const = 0;
+
+  void RenderPlainTextContent(
     ID2D1DeviceContext*,
     uint16_t pageIndex,
-    const D2D1_RECT_F& rect) override;
+    const D2D1_RECT_F& rect);
+  void PushMessage(utf8_string_view message);
+  void PushFullWidthSeparator();
+ private:
+  static constexpr int RENDER_SCALE = 1;
 
-  virtual utf8_string GetPlaceholderText() const override;
+  std::vector<std::vector<winrt::hstring>> mCompletePages;
+  std::vector<winrt::hstring> mCurrentPageLines;
+  std::vector<utf8_string> mMessages;
 
-  virtual const char* GetGameEventName() const override;
-  virtual void Update(
-    const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath,
-    utf8_string_view value) override;
+  float mPadding = -1.0f;
+  float mRowHeight = -1.0f;
+  int mColumns = -1;
+  int mRows = -1;
 
-  virtual void OnSimulationStart() override;
+  DXResources mDXR;
+  winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+
+  void LayoutMessages();
+  void PushPage();
 };
 
 }// namespace OpenKneeboard
