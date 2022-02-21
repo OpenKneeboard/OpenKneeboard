@@ -19,39 +19,52 @@
  */
 #pragma once
 
-#include "DCSTab.h"
+#include <shims/wx.h>
+
+#include <filesystem>
+
+#include "Tab.h"
 #include "TabWithDoodles.h"
 #include "TabWithPlainTextContent.h"
+#include "TabWithSettings.h"
 
 namespace OpenKneeboard {
 
-class FolderTab;
-
-class DCSRadioLogTab final : public DCSTab,
-                             public TabWithDoodles,
-                             public TabWithPlainTextContent {
+class TextFileTab final : public TabWithDoodles,
+                          public TabWithPlainTextContent,
+                          public TabWithSettings {
  public:
-  DCSRadioLogTab(const DXResources&);
-  virtual ~DCSRadioLogTab();
+  explicit TextFileTab(
+    const DXResources&,
+    utf8_string_view title,
+    const std::filesystem::path& path);
+  explicit TextFileTab(
+    const DXResources&,
+    utf8_string_view title,
+    const nlohmann::json&);
+  virtual ~TextFileTab();
+
   virtual utf8_string GetTitle() const override;
-  virtual uint16_t GetPageCount() const override;
   virtual void Reload() override;
+
+  static std::shared_ptr<TextFileTab> Create(
+    wxWindow* parent,
+    const DXResources&);
+  virtual nlohmann::json GetSettings() const override;
+
+  std::filesystem::path GetPath() const;
+  virtual void SetPath(const std::filesystem::path& path);
 
  protected:
   virtual void RenderPageContent(
     ID2D1DeviceContext*,
     uint16_t pageIndex,
-    const D2D1_RECT_F& rect) override;
+    const D2D1_RECT_F& rect) final override;
 
   virtual utf8_string GetPlaceholderText() const override;
 
-  virtual const char* GetGameEventName() const override;
-  virtual void Update(
-    const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath,
-    utf8_string_view value) override;
-
-  virtual void OnSimulationStart() override;
+ private:
+  std::filesystem::path mPath;
 };
 
 }// namespace OpenKneeboard

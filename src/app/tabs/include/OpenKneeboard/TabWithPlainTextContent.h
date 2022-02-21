@@ -28,7 +28,6 @@ class TabWithPlainTextContent : virtual public Tab {
   TabWithPlainTextContent(const DXResources&);
   virtual ~TabWithPlainTextContent();
 
-  virtual void Reload() override;
   virtual uint16_t GetPageCount() const override;
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
 
@@ -39,6 +38,8 @@ class TabWithPlainTextContent : virtual public Tab {
     ID2D1DeviceContext*,
     uint16_t pageIndex,
     const D2D1_RECT_F& rect);
+  void ClearText();
+  void SetText(utf8_string_view text);
   void PushMessage(utf8_string_view message);
   void PushFullWidthSeparator();
  private:

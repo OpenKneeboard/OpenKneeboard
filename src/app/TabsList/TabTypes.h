@@ -25,6 +25,7 @@
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/PDFTab.h>
+#include <OpenKneeboard/TextFileTab.h>
 #include <shims/winrt.h>
 #include <shims/wx.h>
 
@@ -35,6 +36,7 @@ class wxWindow;
 #define OPENKNEEBOARD_TAB_TYPES \
   IT(_("Folder"), Folder) \
   IT(_("PDF"), PDF) \
+  IT(_("Text File"), TextFile) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \
   IT(_("DCS Radio Log"), DCSRadioLog) \
@@ -72,7 +74,6 @@ std::shared_ptr<T> load_tab(
   const DXResources& dxr,
   const std::string& title,
   const nlohmann::json& config) {
-
   if constexpr (std::constructible_from<T, DXResources>) {
     return std::make_shared<T>(dxr);
   }
@@ -81,7 +82,8 @@ std::shared_ptr<T> load_tab(
     return std::make_shared<T>(dxr, title);
   }
 
-  if constexpr (std::constructible_from<T, DXResources, std::string, nlohmann::json>) {
+  if constexpr (
+    std::constructible_from<T, DXResources, std::string, nlohmann::json>) {
     return std::make_shared<T>(dxr, title, config);
   }
 }

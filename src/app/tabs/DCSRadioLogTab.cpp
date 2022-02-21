@@ -68,4 +68,8 @@ utf8_string DCSRadioLogTab::GetPlaceholderText() const {
   return _("[waiting for radio messages]");
 }
 
+void DCSRadioLogTab::Reload() {
+  this->ClearText();
+}
+
 }// namespace OpenKneeboard

@@ -58,9 +58,6 @@ TabWithPlainTextContent::TabWithPlainTextContent(const DXResources& dxr)
 TabWithPlainTextContent::~TabWithPlainTextContent() {
 }
 
-void TabWithPlainTextContent::Reload() {
-}
-
 uint16_t TabWithPlainTextContent::GetPageCount() const {
   if (mCompletePages.empty() && mCurrentPageLines.empty()) {
     return 0;
@@ -172,6 +169,19 @@ void TabWithPlainTextContent::RenderPlainTextContent(
       {mPadding, point.y, virtualSize.width - mPadding, point.y + mRowHeight},
       footerBrush.get());
   }
+}
+
+void TabWithPlainTextContent::ClearText() {
+  mMessages.clear();
+  mCompletePages.clear();
+  this->evFullyReplacedEvent.Emit();
+}
+
+void TabWithPlainTextContent::SetText(utf8_string_view text) {
+  mMessages.clear();
+  mCompletePages.clear();
+  this->PushMessage(text);
+  this->evFullyReplacedEvent.Emit();
 }
 
 void TabWithPlainTextContent::PushMessage(utf8_string_view message) {
