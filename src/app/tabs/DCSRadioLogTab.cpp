@@ -32,36 +32,30 @@ using DCS = OpenKneeboard::Games::DCSWorld;
 
 namespace OpenKneeboard {
 
-class DCSRadioLogTab::Impl final {
- private:
-  DCSRadioLogTab* mTab = nullptr;
-
- public:
-  static const int RENDER_SCALE = 1;
-
-  Impl() = delete;
-  Impl(DCSRadioLogTab* tab, const DXResources& dxr);
-  ~Impl();
-
-  std::vector<std::vector<winrt::hstring>> mCompletePages;
-  std::vector<winrt::hstring> mCurrentPageLines;
-  std::vector<utf8_string> mMessages;
-
-  float mPadding = -1.0f;
-  float mRowHeight = -1.0f;
-  int mColumns = -1;
-  int mRows = -1;
-
-  DXResources mDXR;
-  winrt::com_ptr<IDWriteTextFormat> mTextFormat;
-
-  void PushMessage(utf8_string_view message);
-  void LayoutMessages();
-  void PushPage();
-};
-
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
-  : TabWithDoodles(dxr), p(std::make_unique<Impl>(this, dxr)) {
+  : mDXR(dxr), TabWithDoodles(dxr) {
+  auto dwf = mDXR.mDWriteFactory;
+  dwf->CreateTextFormat(
+    L"Consolas",
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    20.0f * RENDER_SCALE,
+    L"",
+    mTextFormat.put());
+
+  const auto size = this->GetNativeContentSize(0);
+  winrt::com_ptr<IDWriteTextLayout> textLayout;
+  dwf->CreateTextLayout(
+    L"m", 1, mTextFormat.get(), size.width, size.height, textLayout.put());
+  DWRITE_TEXT_METRICS metrics;
+  textLayout->GetMetrics(&metrics);
+
+  mPadding = mRowHeight = metrics.height;
+  mRows = static_cast<int>((size.height - (2 * mPadding)) / metrics.height) - 2;
+  mColumns = static_cast<int>((size.width - (2 * mPadding)) / metrics.width);
+
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
@@ -75,16 +69,16 @@ void DCSRadioLogTab::Reload() {
 }
 
 uint16_t DCSRadioLogTab::GetPageCount() const {
-  if (p->mCompletePages.empty()) {
+  if (mCompletePages.empty()) {
     return 1;
   }
 
   // We only push a complete page when there's content (or about to be)
-  return p->mCompletePages.size() + 1;
+  return mCompletePages.size() + 1;
 }
 
 D2D1_SIZE_U DCSRadioLogTab::GetNativeContentSize(uint16_t pageIndex) {
-  return {768 * Impl::RENDER_SCALE, 1024 * Impl::RENDER_SCALE};
+  return {768 * RENDER_SCALE, 1024 * RENDER_SCALE};
 }
 
 void DCSRadioLogTab::RenderPageContent(
@@ -120,37 +114,37 @@ void DCSRadioLogTab::RenderPageContent(
      static_cast<float>(virtualSize.height)},
     background.get());
 
-  auto textFormat = p->mTextFormat.get();
+  auto textFormat = mTextFormat.get();
   textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-  if (p->mCurrentPageLines.empty()) {
+  if (mCurrentPageLines.empty()) {
     auto message = _("[waiting for radio messages]").ToStdWstring();
     ctx->DrawTextW(
       message.data(),
       static_cast<UINT32>(message.size()),
       textFormat,
-      {p->mPadding,
-       p->mPadding,
-       virtualSize.width - p->mPadding,
-       p->mPadding + p->mRowHeight},
+      {mPadding,
+       mPadding,
+       virtualSize.width - mPadding,
+       mPadding + mRowHeight},
       footerBrush.get());
     return;
   }
-  const auto& lines = (pageIndex == p->mCompletePages.size())
-    ? p->mCurrentPageLines
-    : p->mCompletePages.at(pageIndex);
+  const auto& lines = (pageIndex == mCompletePages.size())
+    ? mCurrentPageLines
+    : mCompletePages.at(pageIndex);
 
-  D2D_POINT_2F point {p->mPadding, p->mPadding};
+  D2D_POINT_2F point {mPadding, mPadding};
   for (const auto& line: lines) {
     ctx->DrawTextW(
       line.data(),
       static_cast<UINT32>(line.size()),
       textFormat,
-      {point.x, point.y, virtualSize.width - point.x, point.y + p->mRowHeight},
+      {point.x, point.y, virtualSize.width - point.x, point.y + mRowHeight},
       textBrush.get());
-    point.y += p->mRowHeight;
+    point.y += mRowHeight;
   }
 
-  point.y = virtualSize.height - (p->mRowHeight + p->mPadding);
+  point.y = virtualSize.height - (mRowHeight + mPadding);
 
   if (pageIndex > 0) {
     std::wstring_view text(L"<<<<<");
@@ -158,7 +152,7 @@ void DCSRadioLogTab::RenderPageContent(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      {p->mPadding,
+      {mPadding,
        point.y,
        FLOAT(virtualSize.width),
        FLOAT(virtualSize.height)},
@@ -174,10 +168,10 @@ void DCSRadioLogTab::RenderPageContent(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      {p->mPadding,
+      {mPadding,
        point.y,
-       virtualSize.width - p->mPadding,
-       point.y + p->mRowHeight},
+       virtualSize.width - mPadding,
+       point.y + mRowHeight},
       footerBrush.get());
   }
 
@@ -189,29 +183,28 @@ void DCSRadioLogTab::RenderPageContent(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      {p->mPadding,
+      {mPadding,
        point.y,
-       virtualSize.width - p->mPadding,
-       point.y + p->mRowHeight},
+       virtualSize.width - mPadding,
+       point.y + mRowHeight},
       footerBrush.get());
   }
 }
 
-void DCSRadioLogTab::Impl::PushMessage(utf8_string_view message) {
-  mTab->ClearContentCache();
+void DCSRadioLogTab::PushMessage(utf8_string_view message) {
+  this->ClearContentCache();
   mMessages.push_back(utf8_string(message));
   LayoutMessages();
-  mTab->evNeedsRepaintEvent.Emit();
+  this->evNeedsRepaintEvent.Emit();
 }
 
-void DCSRadioLogTab::Impl::PushPage() {
+void DCSRadioLogTab::PushPage() {
   mCompletePages.push_back(mCurrentPageLines);
   mCurrentPageLines.clear();
-
-  mTab->evPageAppendedEvent.Emit();
+  this->evPageAppendedEvent.Emit();
 }
 
-void DCSRadioLogTab::Impl::LayoutMessages() {
+void DCSRadioLogTab::LayoutMessages() {
   if (mRows <= 1 || mColumns <= 1) {
     return;
   }
@@ -300,42 +293,14 @@ void DCSRadioLogTab::Update(
   const std::filesystem::path& installPath,
   const std::filesystem::path& savedGamesPath,
   utf8_string_view value) {
-  p->PushMessage(value);
+  this->PushMessage(value);
 }
 
 void DCSRadioLogTab::OnSimulationStart() {
-  if (p->mColumns <= 0 || p->mMessages.empty()) {
+  if (mColumns <= 0 || mMessages.empty()) {
     return;
   }
-  p->PushMessage(std::string(p->mColumns, '-'));
-}
-
-DCSRadioLogTab::Impl::Impl(DCSRadioLogTab* tab, const DXResources& dxr)
-  : mTab(tab), mDXR(dxr) {
-  auto dwf = mDXR.mDWriteFactory;
-  dwf->CreateTextFormat(
-    L"Consolas",
-    nullptr,
-    DWRITE_FONT_WEIGHT_NORMAL,
-    DWRITE_FONT_STYLE_NORMAL,
-    DWRITE_FONT_STRETCH_NORMAL,
-    20.0f * RENDER_SCALE,
-    L"",
-    mTextFormat.put());
-
-  const auto size = tab->GetNativeContentSize(0);
-  winrt::com_ptr<IDWriteTextLayout> textLayout;
-  dwf->CreateTextLayout(
-    L"m", 1, mTextFormat.get(), size.width, size.height, textLayout.put());
-  DWRITE_TEXT_METRICS metrics;
-  textLayout->GetMetrics(&metrics);
-
-  mPadding = mRowHeight = metrics.height;
-  mRows = static_cast<int>((size.height - (2 * mPadding)) / metrics.height) - 2;
-  mColumns = static_cast<int>((size.width - (2 * mPadding)) / metrics.width);
-}
-
-DCSRadioLogTab::Impl::~Impl() {
+  this->PushMessage(std::string(mColumns, '-'));
 }
 
 }// namespace OpenKneeboard

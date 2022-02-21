@@ -26,12 +26,7 @@ namespace OpenKneeboard {
 
 class FolderTab;
 
-class DCSRadioLogTab final : public DCSTab,
-                             public TabWithDoodles {
- private:
-  class Impl;
-  std::unique_ptr<Impl> p;
-
+class DCSRadioLogTab final : public DCSTab, public TabWithDoodles {
  public:
   DCSRadioLogTab(const DXResources&);
   virtual ~DCSRadioLogTab();
@@ -47,6 +42,8 @@ class DCSRadioLogTab final : public DCSTab,
     uint16_t pageIndex,
     const D2D1_RECT_F& rect) override;
 
+  void PushMessage(utf8_string_view message);
+
   virtual const char* GetGameEventName() const override;
   virtual void Update(
     const std::filesystem::path& installPath,
@@ -54,6 +51,24 @@ class DCSRadioLogTab final : public DCSTab,
     utf8_string_view value) override;
 
   virtual void OnSimulationStart() override;
+
+ private:
+  static constexpr int RENDER_SCALE = 1;
+
+  std::vector<std::vector<winrt::hstring>> mCompletePages;
+  std::vector<winrt::hstring> mCurrentPageLines;
+  std::vector<utf8_string> mMessages;
+
+  float mPadding = -1.0f;
+  float mRowHeight = -1.0f;
+  int mColumns = -1;
+  int mRows = -1;
+
+  DXResources mDXR;
+  winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+
+  void LayoutMessages();
+  void PushPage();
 };
 
 }// namespace OpenKneeboard
