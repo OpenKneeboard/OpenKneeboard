@@ -30,3 +30,5 @@ install(
   TYPE DOC
   RENAME "LICENSE-ThirdParty-DirectXTK"
 )
+
+add_library(ThirdParty::DirectXTK ALIAS directxtk)

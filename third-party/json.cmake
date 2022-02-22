@@ -26,3 +26,5 @@ install(
   TYPE DOC
   RENAME "LICENSE-ThirdParty-JSON_for_Modern_CPP"
 )
+
+add_library(ThirdParty::JSON ALIAS json)

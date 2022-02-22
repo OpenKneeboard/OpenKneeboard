@@ -21,14 +21,12 @@
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/Games/DCSWorld.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
-#include <shims/wx.h>
-#include <wx/stdpaths.h>
-#include <wx/wfstream.h>
-#include <wx/zipstrm.h>
+#include <zip.h>
 
-// wxTODO: use Windows.Storage.Decompression instead of wxWidgets
-
+#include <array>
+#include <fstream>
 #include <random>
 
 using DCS = OpenKneeboard::Games::DCSWorld;
@@ -46,44 +44,69 @@ class DCSMissionTab::ExtractedMission final {
   ExtractedMission() {
   }
 
-  ExtractedMission(FolderTab* delegate, const std::filesystem::path& zip) {
+  ExtractedMission(FolderTab* delegate, const std::filesystem::path& zipPath) {
     std::random_device randDevice;
     std::uniform_int_distribution<uint64_t> randDist;
 
-    mTempDir
-      = std::filesystem::path(wxStandardPaths::Get().GetTempDir().ToStdString())
+    wchar_t tempDir[MAX_PATH];
+    auto tempDirLen = GetTempPathW(MAX_PATH, tempDir);
+
+    mTempDir = std::filesystem::path(std::wstring_view(tempDir, tempDirLen))
       / fmt::format(
-          "OpenKneeboard-{}-{:016x}-{}",
-          static_cast<uint32_t>(GetCurrentProcessId()),
-          randDist(randDevice),
-          zip.stem().string());
+                 "OpenKneeboard-{}-{:016x}-{}",
+                 static_cast<uint32_t>(GetCurrentProcessId()),
+                 randDist(randDevice),
+                 zipPath.stem().string());
     std::filesystem::create_directories(mTempDir);
-
-    wxFileInputStream ifs(zip.wstring());
-    if (!ifs.IsOk()) {
-      dprintf("Can't open file {}", zip.string());
+    int err = 0;
+    auto zipPathString = zipPath.string();
+    auto zip = zip_open(zipPathString.c_str(), 0, &err);
+    if (err) {
+      dprintf("Failed to open zip '{}': {}", zipPathString, err);
       return;
     }
-    wxZipInputStream zis(ifs);
-    if (!zis.IsOk()) {
-      dprintf("Can't read {} as zip", zip.string());
-      return;
-    }
+    auto closeZip = scope_guard([=] { zip_close(zip); });
 
-    const std::string prefix = "KNEEBOARD\\IMAGES\\";
-    while (auto entry = zis.GetNextEntry()) {
-      auto name = entry->GetName().ToStdString();
+    // Zip file format specifies `/` as a directory separator, not backslash,
+    // and libzip respects this, even on windows.
+    const std::string_view prefix {"KNEEBOARD/IMAGES/"};
+    // 4k limit for all stack variables
+    auto fileBuffer = std::make_unique<std::array<char, 1024 * 1024>>();
+    for (auto i = 0; i < zip_get_num_entries(zip, 0); i++) {
+      zip_stat_t zstat;
+      if (zip_stat_index(zip, i, 0, &zstat) != 0) {
+        continue;
+      }
+      std::string_view name(zstat.name);
+      if (name.ends_with('/')) {
+        continue;
+      }
       if (!name.starts_with(prefix)) {
         continue;
       }
-      auto path = mTempDir / name.substr(prefix.size());
-      {
-        wxFileOutputStream out(path.wstring());
-        zis.Read(out);
+
+      auto zipFile = zip_fopen_index(zip, i, 0);
+      if (!zipFile) {
+        dprintf("Failed to open zip index {}", i);
+        continue;
       }
-      if (!delegate->CanOpenFile(path)) {
-        std::filesystem::remove(path);
+      auto closeZipFile = scope_guard([=] { zip_fclose(zipFile); });
+
+      const auto filePath = mTempDir / name.substr(prefix.length());
+      std::filesystem::create_directories(filePath.parent_path());
+      std::ofstream file(filePath, std::ios::binary);
+
+      size_t toCopy = zstat.size;
+      while (toCopy > 0) {
+        size_t toWrite
+          = zip_fread(zipFile, fileBuffer->data(), fileBuffer->size());
+        if (toWrite <= 0) {
+          break;
+        }
+        file << std::string_view(fileBuffer->data(), toWrite);
+        toCopy -= toWrite;
       }
+      file.flush();
     }
   }
 

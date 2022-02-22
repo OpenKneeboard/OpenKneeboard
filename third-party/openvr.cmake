@@ -35,3 +35,5 @@ install(
   TYPE DOC
   RENAME "LICENSE-ThirdParty-OpenVR"
 )
+
+add_library(ThirdParty::OpenVR ALIAS openvr)

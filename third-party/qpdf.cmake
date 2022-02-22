@@ -93,3 +93,5 @@ install(
   TYPE DOC
   RENAME "LICENSE-ThirdParty-qpdf.txt"
 )
+
+add_library(ThirdParty::QPDF ALIAS qpdf)

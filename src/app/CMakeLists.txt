@@ -11,8 +11,6 @@ target_link_libraries(
   OpenKneeboard
   PRIVATE
   D2d1
-  directxtk
-  json
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-DXResources
   OpenKneeboard-GameEvent
@@ -26,8 +24,11 @@ target_link_libraries(
   OpenKneeboard-games
   OpenKneeboard-tablets
   OpenKneeboard-version
-  openvr
-  qpdf
+  ThirdParty::DirectXTK
+  ThirdParty::JSON
+  ThirdParty::OpenVR
+  ThirdParty::QPDF
+  ThirdParty::LibZip
   wx::base
   wx::core
 )
