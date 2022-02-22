@@ -58,7 +58,8 @@ class okMainWindow final : public wxFrame,
 
   void OnToggleVisibility();
 
-  void OnTabChanged(wxBookCtrlEvent&);
+  void OnNotebookTabChanged(wxBookCtrlEvent&);
+  void OnTabChanged(uint8_t tabIndex);
   void OnUserAction(OpenKneeboard::UserAction);
 
   void UpdateTabs();

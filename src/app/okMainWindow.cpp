@@ -48,6 +48,8 @@ using namespace OpenKneeboard;
 okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mDXR = DXResources::Create();
   mKneeboard = std::make_shared<KneeboardState>();
+  AddEventListener(
+    mKneeboard->evCurrentTabChangedEvent, &okMainWindow::OnTabChanged, this);
   mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
 
@@ -80,10 +82,10 @@ okMainWindow::~okMainWindow() {
 void okMainWindow::OnUserAction(UserAction action) {
   switch (action) {
     case UserAction::PREVIOUS_TAB:
-      mNotebook->AdvanceSelection(false);
+      mKneeboard->PreviousTab();
       return;
     case UserAction::NEXT_TAB:
-      mNotebook->AdvanceSelection(true);
+      mKneeboard->NextTab();
       return;
     case UserAction::PREVIOUS_PAGE:
       mKneeboard->PreviousPage();
@@ -98,12 +100,19 @@ void okMainWindow::OnUserAction(UserAction action) {
   OPENKNEEBOARD_BREAK;
 }
 
-void okMainWindow::OnTabChanged(wxBookCtrlEvent& ev) {
+void okMainWindow::OnNotebookTabChanged(wxBookCtrlEvent& ev) {
   const auto tab = ev.GetSelection();
   if (tab == wxNOT_FOUND) {
     return;
   }
   mKneeboard->SetTabIndex(tab);
+}
+
+void okMainWindow::OnTabChanged(uint8_t tabIndex) {
+  if (mNotebook->GetSelection() == tabIndex) {
+    return;
+  }
+  mNotebook->SetSelection(tabIndex);
 }
 
 void okMainWindow::PostGameEvent(const GameEvent& ge) {
@@ -243,7 +252,7 @@ void okMainWindow::InitUI() {
 
   mNotebook = new wxNotebook(this, wxID_ANY);
   mNotebook->Bind(
-    wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnTabChanged, this);
+    wxEVT_BOOKCTRL_PAGE_CHANGED, &okMainWindow::OnNotebookTabChanged, this);
   this->UpdateTabs();
 
   auto sizer = new wxBoxSizer(wxVERTICAL);

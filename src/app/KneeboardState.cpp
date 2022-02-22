@@ -118,11 +118,30 @@ void KneeboardState::SetTabIndex(uint8_t index) {
   if (index >= mTabs.size()) {
     return;
   }
+  if (mCurrentTab == mTabs.at(index)) {
+    return;
+  }
   if (mCurrentTab) {
     mCurrentTab->PostCursorEvent({});
   }
   mCurrentTab = mTabs.at(index);
   UpdateLayout();
+  evCurrentTabChangedEvent.Emit(index);
+}
+
+void KneeboardState::PreviousTab() {
+  const auto current = GetTabIndex();
+  if (current > 0) {
+    SetTabIndex(current - 1);
+  }
+}
+
+void KneeboardState::NextTab() {
+  const auto current = GetTabIndex();
+  const auto count = GetTabs().size();
+  if (current + 1 < count) {
+    SetTabIndex(current + 1);
+  }
 }
 
 std::shared_ptr<TabState> KneeboardState::GetCurrentTab() const {

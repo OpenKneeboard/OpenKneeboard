@@ -21,10 +21,10 @@
 
 #include <d2d1.h>
 
-#include "Events.h"
-
 #include <memory>
 #include <vector>
+
+#include "Events.h"
 
 namespace OpenKneeboard {
 
@@ -46,6 +46,8 @@ class KneeboardState final : private EventReceiver {
   std::shared_ptr<TabState> GetCurrentTab() const;
   uint8_t GetTabIndex() const;
   void SetTabIndex(uint8_t);
+  void PreviousTab();
+  void NextTab();
 
   void NextPage();
   void PreviousPage();
@@ -61,11 +63,13 @@ class KneeboardState final : private EventReceiver {
   D2D1_POINT_2F GetCursorCanvasPoint() const;
   D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F&) const;
 
+  Event<uint8_t> evCurrentTabChangedEvent;
   Event<> evFlushEvent;
   Event<> evNeedsRepaintEvent;
   Event<const CursorEvent&> evCursorEvent;
 
   void PostGameEvent(const GameEvent&);
+
  private:
   std::vector<std::shared_ptr<TabState>> mTabs;
   std::shared_ptr<TabState> mCurrentTab = nullptr;
