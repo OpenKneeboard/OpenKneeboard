@@ -19,32 +19,65 @@
  */
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
+#include <Psapi.h>
 #include <shims/wx.h>
 
+#include <filesystem>
+
 #include "okMainWindow.h"
+
+static bool ActivateExistingInstance() {
+  // If already running, make the other instance active.
+  //
+  // There's more common ways to do this, but given we already have the SHM
+  // and the SHM has a handy HWND, might as well use that.
+  OpenKneeboard::SHM::Reader shm;
+  if (!shm) {
+    return false;
+  }
+  auto snapshot = shm.MaybeGet();
+  if (!snapshot) {
+    return false;
+  }
+  const auto hwnd = snapshot.GetConfig().feederWindow;
+  if (!hwnd) {
+    return false;
+  }
+  DWORD processID = 0;
+  GetWindowThreadProcessId(hwnd, &processID);
+  if (!processID) {
+    return false;
+  }
+  winrt::handle processHandle {
+    OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID)};
+  if (!processHandle) {
+    return false;
+  }
+  wchar_t processName[MAX_PATH];
+  auto processNameLen
+    = GetProcessImageFileNameW(processHandle.get(), processName, MAX_PATH);
+  const auto processStem
+    = std::filesystem::path(std::wstring_view(processName, processNameLen))
+        .stem();
+  processNameLen = GetModuleFileNameW(NULL, processName, MAX_PATH);
+  const auto thisProcessStem
+    = std::filesystem::path(std::wstring_view(processName, processNameLen))
+        .stem();
+  if (processStem != thisProcessStem) {
+    return false;
+  }
+  return ShowWindow(hwnd, SW_SHOWNORMAL) && SetForegroundWindow(hwnd);
+}
 
 class OpenKneeboardApp final : public wxApp {
  public:
   virtual bool OnInit() override {
-    {
-      OpenKneeboard::DPrintSettings::Set({
-        .prefix = "OpenKneeboard",
-      });
-
-      // If already running, make the other instance active.
-      //
-      // There's more common ways to do this, but given we already have the SHM
-      // and the SHM has a handy HWND, might as well use that.
-      OpenKneeboard::SHM::Reader shm;
-      if (shm) {
-        auto snapshot = shm.MaybeGet();
-        if (snapshot && snapshot.GetConfig().feederWindow) {
-          ShowWindow(snapshot.GetConfig().feederWindow, SW_SHOWNORMAL);
-          SetForegroundWindow(snapshot.GetConfig().feederWindow);
-          return false;
-        }
-      }
+    if (ActivateExistingInstance()) {
+      return false;
     }
+    OpenKneeboard::DPrintSettings::Set({
+      .prefix = "OpenKneeboard",
+    });
 
     wxInitAllImageHandlers();
     (new okMainWindow())->Show();
