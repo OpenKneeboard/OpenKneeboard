@@ -24,7 +24,7 @@ target_link_libraries(
 	OpenKneeboard-UTF8
 	PRIVATE
 	_libheaders
-	cppwinrt)
+)
 
 add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
 target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)

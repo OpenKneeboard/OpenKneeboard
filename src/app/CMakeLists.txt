@@ -1,56 +1,5 @@
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "*.cpp")
-add_executable(OpenKneeboard WIN32 ${SOURCES} OpenKneeboard.rc)
-target_compile_definitions(
-  OpenKneeboard
-  PRIVATE
-  "DIRECTINPUT_VERSION=0x0800"
-)
-sign_target(OpenKneeboard)
-
-target_link_libraries(
-  OpenKneeboard
-  PRIVATE
-  D2d1
-  OpenKneeboard-D2DErrorRenderer
-  OpenKneeboard-DXResources
-  OpenKneeboard-GameEvent
-  OpenKneeboard-GetSystemColor
-  OpenKneeboard-RuntimeFiles
-  OpenKneeboard-scope_guard
-  OpenKneeboard-SHM
-  OpenKneeboard-UTF8
-  OpenKneeboard-config
-  OpenKneeboard-dprint
-  OpenKneeboard-games
-  OpenKneeboard-tablets
-  OpenKneeboard-version
-  ThirdParty::DirectXTK
-  ThirdParty::JSON
-  ThirdParty::OpenVR
-  ThirdParty::QPDF
-  ThirdParty::LibZip
-  wx::base
-  wx::core
-)
-
-set(SOURCE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
-foreach(SOURCE ${SOURCES})
-  get_filename_component(SOURCE_DIR ${SOURCE} DIRECTORY)
-  list(APPEND SOURCE_DIRS "${SOURCE_DIR}")
-endforeach()
-list(REMOVE_DUPLICATES SOURCE_DIRS)
-target_include_directories(
-  OpenKneeboard
-  PRIVATE
-  ${SOURCE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}/UserInput/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/GamesList/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/tabs/include
-)
-
-install(TARGETS OpenKneeboard)
-install(FILES "$<TARGET_PDB_FILE:OpenKneeboard>" TYPE BIN COMPONENT DebugSymbols)
+add_subdirectory(app-common)
+add_subdirectory(app-wx)
 
 set(
   RUNTIME_FILES
