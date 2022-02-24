@@ -46,6 +46,7 @@ App::App() {
         auto errorMessage = e.Message();
         __debugbreak();
       }
+      throw;
     });
 #endif
 }

@@ -108,11 +108,11 @@ void InterprocessRenderer::Impl::RenderError(
 void InterprocessRenderer::Impl::RenderErrorImpl(
   utf8_string_view message,
   const D2D1_RECT_F& rect) {
-  auto ctx = mDXR.mD2DDeviceContext;
+  auto ctx = mDXR.mD2DDeviceContext.get();
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->FillRectangle(rect, mErrorBGBrush.get());
 
-  mErrorRenderer->Render(message, rect);
+  mErrorRenderer->Render(ctx, message, rect);
 }
 
 void InterprocessRenderer::Impl::CopyPixelsToSHM() {
@@ -148,7 +148,8 @@ InterprocessRenderer::InterprocessRenderer(
   p->mFeederWindow = feederWindow;
   p->mDXR = dxr;
   p->mKneeboard = kneeboard;
-  p->mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
+  p->mErrorRenderer
+    = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
 
   dxr.mD3DDevice->GetImmediateContext(p->mD3DContext.put());
 
@@ -217,9 +218,8 @@ InterprocessRenderer::InterprocessRenderer(
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 
   AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());
-  AddEventListener(kneeboard->evNeedsRepaintEvent, [this]() {
-    p->mNeedsRepaint = true;
-  });
+  AddEventListener(
+    kneeboard->evNeedsRepaintEvent, [this]() { p->mNeedsRepaint = true; });
   this->RenderNow();
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {

@@ -33,11 +33,11 @@ class D2DErrorRenderer final {
   std::unique_ptr<Impl> p;
 
  public:
-  D2DErrorRenderer(const winrt::com_ptr<ID2D1DeviceContext>& ctx);
+  D2DErrorRenderer(ID2D1DeviceContext* ctx);
   D2DErrorRenderer() = delete;
   ~D2DErrorRenderer();
 
-  void Render(utf8_string_view text, const D2D1_RECT_F& where);
+  void Render(ID2D1DeviceContext*, utf8_string_view text, const D2D1_RECT_F& where);
 };
 
 }// namespace OpenKneeboard

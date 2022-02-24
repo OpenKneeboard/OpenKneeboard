@@ -18,20 +18,20 @@
  * USA.
  */
 #pragma once
+#include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/Events.h>
 #include <d2d1.h>
 #include <dxgi1_2.h>
 
-#include <vector>
 #include <memory>
-
-#include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/Events.h>
+#include <vector>
 
 #include "TabPage.g.h"
 
 namespace OpenKneeboard {
+class D2DErrorRenderer;
 class TabState;
-}
+}// namespace OpenKneeboard
 
 using namespace winrt::Microsoft::UI::Dispatching;
 using namespace winrt::Microsoft::UI::Input;
@@ -51,11 +51,13 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
  private:
   std::shared_ptr<TabState> mState;
+  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+  winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
 
-  DispatcherQueueController mDQC{ nullptr };
-  InputPointerSource mInputPointerSource { nullptr };
+  DispatcherQueueController mDQC {nullptr};
+  InputPointerSource mInputPointerSource {nullptr};
   void InitializePointerSource();
   void QueuePointerPoint(const PointerPoint&);
 

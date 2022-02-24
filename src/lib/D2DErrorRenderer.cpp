@@ -24,31 +24,17 @@
 namespace OpenKneeboard {
 
 struct D2DErrorRenderer::Impl final {
-  winrt::com_ptr<ID2D1DeviceContext> mCTX;
   winrt::com_ptr<IDWriteFactory> mDWrite;
-  winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 };
 
-D2DErrorRenderer::D2DErrorRenderer(
-  const winrt::com_ptr<ID2D1DeviceContext>& ctx)
+D2DErrorRenderer::D2DErrorRenderer(ID2D1DeviceContext* ctx)
   : p(std::make_unique<Impl>()) {
-  p->mCTX = ctx;
-
   DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(p->mDWrite.put()));
 
-  p->mDWrite->CreateTextFormat(
-    L"Segoe UI",
-    nullptr,
-    DWRITE_FONT_WEIGHT_NORMAL,
-    DWRITE_FONT_STYLE_NORMAL,
-    DWRITE_FONT_STRETCH_NORMAL,
-    16.0f,
-    L"",
-    p->mTextFormat.put());
 
   ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), p->mTextBrush.put());
@@ -58,18 +44,32 @@ D2DErrorRenderer::~D2DErrorRenderer() {
 }
 
 void D2DErrorRenderer::Render(
+  ID2D1DeviceContext* ctx,
   utf8_string_view utf8,
   const D2D1_RECT_F& where) {
   const auto canvasWidth = where.right - where.left,
              canvasHeight = where.bottom - where.top;
-  
+
   auto text = winrt::to_hstring(utf8);
+
+  winrt::com_ptr<IDWriteTextFormat> textFormat;
+
+	p->mDWrite->CreateTextFormat(
+		L"Segoe UI",
+		nullptr,
+		DWRITE_FONT_WEIGHT_NORMAL,
+		DWRITE_FONT_STYLE_NORMAL,
+		DWRITE_FONT_STRETCH_NORMAL,
+		canvasHeight * 0.05f,
+		L"",
+		textFormat.put());
+
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   winrt::check_hresult(p->mDWrite->CreateTextLayout(
     text.data(),
     static_cast<UINT32>(text.size()),
-    p->mTextFormat.get(),
+    textFormat.get(),
     canvasWidth,
     canvasHeight,
     textLayout.put()));
@@ -79,7 +79,7 @@ void D2DErrorRenderer::Render(
 
   const auto textWidth = metrics.width, textHeight = metrics.height;
 
-  p->mCTX->DrawTextLayout(
+  ctx->DrawTextLayout(
     {where.left + ((canvasWidth - textWidth) / 2),
      where.top + ((canvasHeight - textHeight) / 2)},
     textLayout.get(),

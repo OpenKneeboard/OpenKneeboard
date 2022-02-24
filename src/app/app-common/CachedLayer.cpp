@@ -56,7 +56,12 @@ void CachedLayer::Render(
   mCacheContext->SetTarget(mCache.get());
   mCacheContext->BeginDraw();
   mCacheContext->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
-  impl(mCacheContext.get(), nativeSize);
+  try {
+    impl(mCacheContext.get(), nativeSize);
+  } catch (...) {
+    winrt::check_hresult(mCacheContext->EndDraw());
+    throw;
+  }
   winrt::check_hresult(mCacheContext->EndDraw());
 
   ctx->DrawBitmap(mCache.get(), where);

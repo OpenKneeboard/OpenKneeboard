@@ -87,7 +87,8 @@ class TestViewerWindow final {
 
     mDXR = DXResources::Create();
 
-    mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext);
+    mErrorRenderer
+      = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext.get());
   }
 
   HWND GetHWND() const {
@@ -219,6 +220,7 @@ class TestViewerWindow final {
     auto snapshot = mSHM.MaybeGet();
     if (!snapshot) {
       mErrorRenderer->Render(
+        ctx.get(),
         L"No Feeder",
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       mFirstDetached = false;
@@ -230,6 +232,7 @@ class TestViewerWindow final {
 
     if (config.imageWidth == 0 || config.imageHeight == 0) {
       mErrorRenderer->Render(
+        ctx.get(),
         "No Image",
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       mFirstDetached = false;

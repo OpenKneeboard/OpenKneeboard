@@ -24,10 +24,12 @@
 // clang-format on
 
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <microsoft.ui.xaml.media.dxinterop.h>
 
 #include "Globals.h"
@@ -48,6 +50,11 @@ TabPage::TabPage() {
     color.B / 255.0f,
     color.A / 255.0f,
   };
+
+  winrt::check_hresult(gDXResources.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mCursorBrush.put()));
+  mErrorRenderer
+    = std::make_unique<D2DErrorRenderer>(gDXResources.mD2DDeviceContext.get());
 
   this->InitializePointerSource();
   AddEventListener(gKneeboard->evFrameTimerEvent, [this]() {
@@ -105,8 +112,6 @@ void TabPage::OnSizeChanged(
 }
 
 void TabPage::ResizeSwapChain() {
-  gDXResources.mD2DDeviceContext->SetTarget(nullptr);
-
   DXGI_SWAP_CHAIN_DESC desc;
   winrt::check_hresult(mSwapChain->GetDesc(&desc));
   winrt::check_hresult(mSwapChain->ResizeBuffers(
@@ -154,16 +159,28 @@ void TabPage::PaintNow() {
     ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
   ctx->SetTarget(bitmap.get());
   ctx->BeginDraw();
+  const auto cleanup = scope_guard([ctx, this]() {
+    ctx->EndDraw();
+    ctx->SetTarget(nullptr);
+    mSwapChain->Present(0, 0);
+    mNeedsFrame = false;
+  });
   ctx->Clear(mBackgroundColor);
-  mState->GetTab()->RenderPage(
-    ctx, mState->GetPageIndex(), metrics.mRenderRect);
-  ctx->EndDraw();
-  mSwapChain->Present(0, 0);
-  mNeedsFrame = false;
+  auto tab = mState->GetTab().get();
+  if (tab->GetPageCount()) {
+    tab->RenderPage(ctx, mState->GetPageIndex(), metrics.mRenderRect);
+  } else {
+    mErrorRenderer->Render(ctx, _("No Pages"), metrics.mRenderRect);
+  }
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
-  const auto contentNativeSize = mState->GetNativeContentSize();
+  const auto contentNativeSize = mState->GetPageCount() == 0 ?
+    D2D1_SIZE_U {
+      static_cast<UINT>(mCanvasSize.width),
+      static_cast<UINT>(mCanvasSize.height),
+    }
+  : mState->GetNativeContentSize();
 
   const auto scaleX = mCanvasSize.width / contentNativeSize.width;
   const auto scaleY = mCanvasSize.height / contentNativeSize.height;

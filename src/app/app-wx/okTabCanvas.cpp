@@ -47,7 +47,7 @@ okTabCanvas::okTabCanvas(
   // We handle the mouse cursor as if it were a graphics tablet pen
   this->SetCursor(wxCURSOR_BLANK);
 
-  mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext);
+  mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
 
   this->Bind(wxEVT_PAINT, &okTabCanvas::OnPaint, this);
   this->Bind(wxEVT_ERASE_BACKGROUND, [](auto&) { /* ignore */ });
@@ -113,7 +113,7 @@ void okTabCanvas::PaintNow() {
   winrt::com_ptr<IDXGISurface> surface;
   mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
   winrt::com_ptr<ID2D1Bitmap1> bitmap;
-  auto ctx = mDXR.mD2DDeviceContext;
+  auto ctx = mDXR.mD2DDeviceContext.get();
   winrt::check_hresult(
     ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
   ctx->SetTarget(bitmap.get());
@@ -130,6 +130,7 @@ void okTabCanvas::PaintNow() {
     ctx->Clear(GetSystemColor(COLOR_WINDOW));
 
     mErrorRenderer->Render(
+      ctx,
       _("No Pages"),
       {0.0f,
        0.0f,
@@ -143,7 +144,7 @@ void okTabCanvas::PaintNow() {
   const auto pageMetrics = GetPageMetrics();
 
   mTabState->GetTab()->RenderPage(
-    ctx.get(), mTabState->GetPageIndex(), pageMetrics.mRenderRect);
+    ctx, mTabState->GetPageIndex(), pageMetrics.mRenderRect);
 
   if (!mKneeboardState->HaveCursor()) {
     return;
