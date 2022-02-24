@@ -77,8 +77,4 @@ class okTabCanvas final : public wxPanel, private OpenKneeboard::EventReceiver {
   void OnMouseLeave(wxMouseEvent&);
 
   void OnPixelsChanged(wxCommandEvent&);
-
-  std::vector<OpenKneeboard::CursorEvent> mBufferedCursorEvents;
-  void FlushCursorEvents();
-  wxTimer mCursorEventTimer;
 };

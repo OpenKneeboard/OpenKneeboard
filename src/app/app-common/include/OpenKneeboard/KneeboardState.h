@@ -75,9 +75,9 @@ class KneeboardState final : private EventReceiver {
   D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F&) const;
 
   Event<uint8_t> evCurrentTabChangedEvent;
-  Event<> evFlushEvent;
   Event<> evNeedsRepaintEvent;
   Event<const CursorEvent&> evCursorEvent;
+  Event<> evFrameTimerEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;  
 

@@ -23,7 +23,6 @@
 
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -61,10 +60,7 @@ class TabletInputAdapter final : private EventReceiver {
   std::unique_ptr<WintabTablet> mTablet;
   std::shared_ptr<TabletInputDevice> mDevice;
   WNDPROC mPreviousWndProc;
-  std::jthread mFlushThread;
   uint16_t mTabletButtons = 0;
-
-  bool mHaveUnflushedEvents = false;
 
   void ProcessTabletMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 

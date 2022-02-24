@@ -28,6 +28,6 @@ class KneeboardState;
 
 extern std::shared_ptr<KneeboardState> gKneeboard;
 extern DXResources gDXResources;
-extern winrt::weak_ref<winrt::Microsoft::UI::Dispatching::DispatcherQueue> gUIThreadDispatcherQueue;
+extern winrt::Microsoft::UI::Dispatching::DispatcherQueue gUIThreadDispatcherQueue;
 
 }// namespace OpenKneeboard

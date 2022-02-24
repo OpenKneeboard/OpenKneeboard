@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/UserInputDevice.h>
@@ -30,13 +32,10 @@
 #include <wx/notebook.h>
 #include <wx/wupdlock.h>
 
-#include "InstallDCSHooks.h"
-
 #include <functional>
 #include <limits>
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/TabState.h>
+#include "InstallDCSHooks.h"
 #include "okAboutBox.h"
 #include "okGamesListSettings.h"
 #include "okTabsListSettings.h"
@@ -51,6 +50,10 @@ okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
     mKneeboard->evCurrentTabChangedEvent, &okMainWindow::OnTabChanged, this);
 
   InitUI();
+
+  mFrameTimer.Bind(
+    wxEVT_TIMER, [this](auto&) { mKneeboard->evFrameTimerEvent.Emit(); });
+  mFrameTimer.Start(1000 / 60);
 }
 
 okMainWindow::~okMainWindow() {
@@ -77,9 +80,7 @@ void okMainWindow::OnExit(wxCommandEvent& ev) {
 
 void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
   const std::vector<std::function<wxWindow*(wxWindow*)>> factories {
-    [&](wxWindow* p) {
-      return new okTabsListSettings(p, mDXR, mKneeboard);
-    },
+    [&](wxWindow* p) { return new okTabsListSettings(p, mDXR, mKneeboard); },
     [&](wxWindow* p) {
       auto gamesList = mKneeboard->GetGamesList();
       return new okGamesListSettings(p, gamesList);

@@ -50,7 +50,7 @@ MainWindow::MainWindow() {
     auto ref = get_strong();
     winrt::check_hresult(ref.as<IWindowNative>()->get_WindowHandle(&mHwnd));
   }
-  gUIThreadDispatcherQueue = winrt::make_weak(DispatcherQueue());
+  gUIThreadDispatcherQueue = DispatcherQueue();
   gDXResources = DXResources::Create();
   gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);
 
@@ -66,6 +66,13 @@ MainWindow::MainWindow() {
 
   AddEventListener(
     gKneeboard->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+
+  // TODO: add to globals as 'game loop' thread
+  mDQC = DispatcherQueueController::CreateOnDedicatedThread();
+  mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
+  mFrameTimer.Interval(std::chrono::milliseconds(1000 / 60));
+  mFrameTimer.Tick([=](auto&, auto&) { gKneeboard->evFrameTimerEvent.Emit(); });
+  mFrameTimer.Start();
 
   // TODO: install DCS hooks
 }

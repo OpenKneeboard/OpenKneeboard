@@ -238,7 +238,6 @@ void KneeboardState::UpdateLayout() {
   };
 
   evNeedsRepaintEvent.Emit();
-  evFlushEvent.Emit();
 }
 
 const D2D1_SIZE_U& KneeboardState::GetCanvasSize() const {
@@ -309,7 +308,6 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
       receiver->PostGameEvent(ev);
     }
   }
-  evFlushEvent.Emit();
 }
 
 bool KneeboardState::HaveCursor() const {

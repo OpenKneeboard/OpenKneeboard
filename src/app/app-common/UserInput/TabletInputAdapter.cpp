@@ -106,18 +106,6 @@ TabletInputAdapter::TabletInputAdapter(
   AddEventListener(
     mDevice->evBindingsChangedEvent, this->evSettingsChangedEvent);
   AddEventListener(mDevice->evUserActionEvent, this->evUserActionEvent);
-
-  mFlushThread = {[=](std::stop_token stopToken) {
-    const auto interval
-      = std::chrono::milliseconds(1000) / TabletCursorRenderHz;
-    while (!stopToken.stop_requested()) {
-      if (this->mHaveUnflushedEvents) {
-        this->mHaveUnflushedEvents = false;
-        this->mKneeboard->evFlushEvent.EmitFromMainThread();
-      }
-      std::this_thread::sleep_for(interval);
-    }
-  }};
 }
 
 TabletInputAdapter::~TabletInputAdapter() {
@@ -230,8 +218,6 @@ void TabletInputAdapter::ProcessTabletMessage(
   } else {
     mKneeboard->evCursorEvent.Emit({});
   }
-  // Flush later
-  mHaveUnflushedEvents = true;
 }
 
 nlohmann::json TabletInputAdapter::GetSettings() const {

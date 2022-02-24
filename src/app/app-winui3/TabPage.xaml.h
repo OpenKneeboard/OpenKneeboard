@@ -33,6 +33,8 @@ namespace OpenKneeboard {
 class TabState;
 }
 
+using namespace winrt::Microsoft::UI::Dispatching;
+using namespace winrt::Microsoft::UI::Input;
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Input;
 using namespace winrt::Microsoft::UI::Xaml::Navigation;
@@ -45,21 +47,24 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   void OnNavigatedTo(const NavigationEventArgs&);
   void OnSizeChanged(const IInspectable&, const SizeChangedEventArgs&);
-  void OnPointerEvent(const IInspectable&, const PointerRoutedEventArgs&);
+  void OnPointerEvent(const IInspectable&, const PointerEventArgs&);
 
  private:
   std::shared_ptr<TabState> mState;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
 
-  winrt::Microsoft::UI::Dispatching::DispatcherQueueTimer mCursorTimer { DispatcherQueue().CreateTimer() };
-  std::vector<CursorEvent> mCursorEvents;
-  void QueuePointerPoint(const winrt::Microsoft::UI::Input::PointerPoint&);
-  void FlushCursorEvents();
+  DispatcherQueueController mDQC{ nullptr };
+  InputPointerSource mInputPointerSource { nullptr };
+  void InitializePointerSource();
+  void QueuePointerPoint(const PointerPoint&);
 
   void SetTab(const std::shared_ptr<TabState>&);
   void InitializeSwapChain();
   void ResizeSwapChain();
+
+  bool mNeedsFrame = true;
+  void PaintLater();
   void PaintNow();
 
   D2D1_SIZE_F mCanvasSize;

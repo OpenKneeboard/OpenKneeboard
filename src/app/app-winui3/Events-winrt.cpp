@@ -28,7 +28,7 @@
 namespace OpenKneeboard {
 
 void EventBase::EnqueueForMainThread(std::function<void()> f) {
-  auto dispatcher = gUIThreadDispatcherQueue.get();
+  auto dispatcher = gUIThreadDispatcherQueue;
   if (!dispatcher) {
     return;
   }

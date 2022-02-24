@@ -66,7 +66,6 @@ okTabCanvas::okTabCanvas(
 
   AddEventListener(tab->evNeedsRepaintEvent, &okTabCanvas::EnqueueFrame, this);
   AddEventListener(kneeboard->evCursorEvent, &okTabCanvas::EnqueueFrame, this);
-  AddEventListener(kneeboard->evFlushEvent, &okTabCanvas::FlushFrame, this);
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mCursorBrush.put()));
@@ -85,18 +84,6 @@ okTabCanvas::okTabCanvas(
     nullptr,
     nullptr,
     mSwapChain.put()));
-
-  mCursorEventTimer.Bind(
-    wxEVT_TIMER, [this](auto&) { this->FlushCursorEvents(); });
-
-  auto mouseCursorHz = 60;
-  DEVMODEA devMode;
-  if (
-    EnumDisplaySettingsA(nullptr, 0, &devMode)
-    && devMode.dmDisplayFrequency > 1) {
-    mouseCursorHz = devMode.dmDisplayFrequency;
-  }
-  mCursorEventTimer.Start(1000 / mouseCursorHz);
 }
 
 okTabCanvas::~okTabCanvas() {
@@ -229,7 +216,7 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
   const bool leftClick = ev.ButtonIsDown(wxMOUSE_BTN_LEFT);
   const bool rightClick = ev.ButtonIsDown(wxMOUSE_BTN_RIGHT);
 
-  mBufferedCursorEvents.push_back({
+  mKneeboardState->evCursorEvent.Emit({
     .mPositionState = positionState,
     .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE
@@ -241,22 +228,9 @@ void okTabCanvas::OnMouseMove(wxMouseEvent& ev) {
   });
 }
 
-void okTabCanvas::FlushCursorEvents() {
-  if (mBufferedCursorEvents.empty()) {
-    return;
-  }
-
-  for (const auto& ev: mBufferedCursorEvents) {
-    mKneeboardState->evCursorEvent.Emit(ev);
-  }
-  mBufferedCursorEvents.clear();
-
-  mKneeboardState->evFlushEvent.Emit();
-}
-
 void okTabCanvas::OnMouseLeave(wxMouseEvent& ev) {
   ev.Skip();
-  mBufferedCursorEvents.push_back({});
+  mKneeboardState->evCursorEvent.Emit({});
 }
 
 void okTabCanvas::EnqueueFrame() {

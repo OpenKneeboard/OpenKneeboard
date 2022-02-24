@@ -63,6 +63,7 @@ class okMainWindow final : public wxFrame,
 
   OpenKneeboard::DXResources mDXR;
   wxNotebook* mNotebook = nullptr;
+  wxTimer mFrameTimer;
   OpenKneeboard::Settings mSettings = OpenKneeboard::Settings::Load();
 
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;

@@ -49,23 +49,27 @@ TabPage::TabPage() {
     color.A / 255.0f,
   };
 
-  mCursorTimer.Interval(std::chrono::milliseconds(1000 / 30));
-  mCursorTimer.Tick([=](auto&, auto&) { this->FlushCursorEvents(); });
-  mCursorTimer.Start();
+  this->InitializePointerSource();
+  AddEventListener(gKneeboard->evFrameTimerEvent, [this]() {
+    if (mNeedsFrame) {
+      PaintNow();
+    }
+  });
 }
 
 TabPage::~TabPage() {
 }
 
-void TabPage::FlushCursorEvents() {
-  if (mCursorEvents.empty()) {
-    return;
-  }
-  for (const auto& event: mCursorEvents) {
-    gKneeboard->evCursorEvent.Emit(event);
-  }
-  mCursorEvents.clear();
-  gKneeboard->evFlushEvent.Emit();
+void TabPage::InitializePointerSource() {
+  mDQC = DispatcherQueueController::CreateOnDedicatedThread();
+  mDQC.DispatcherQueue().TryEnqueue([this]() {
+    mInputPointerSource = this->Canvas().CreateCoreIndependentInputSource(
+      InputPointerSourceDeviceKinds::Mouse | InputPointerSourceDeviceKinds::Pen
+      | InputPointerSourceDeviceKinds::Touch);
+    mInputPointerSource.PointerMoved({this, &TabPage::OnPointerEvent});
+    mInputPointerSource.PointerPressed({this, &TabPage::OnPointerEvent});
+    mInputPointerSource.PointerReleased({this, &TabPage::OnPointerEvent});
+  });
 }
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) {
@@ -81,7 +85,7 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) {
 
 void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
   mState = state;
-  AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintNow, this);
+  AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 }
 
 void TabPage::OnSizeChanged(
@@ -97,7 +101,7 @@ void TabPage::OnSizeChanged(
   } else {
     InitializeSwapChain();
   }
-  PaintNow();
+  PaintLater();
 }
 
 void TabPage::ResizeSwapChain() {
@@ -132,7 +136,14 @@ void TabPage::InitializeSwapChain() {
   Canvas().as<ISwapChainPanelNative>()->SetSwapChain(mSwapChain.get());
 }
 
+void TabPage::PaintLater() {
+  mNeedsFrame = true;
+}
+
 void TabPage::PaintNow() {
+  if (!mSwapChain) {
+    return;
+  }
   auto metrics = GetPageMetrics();
 
   auto ctx = gDXResources.mD2DDeviceContext.get();
@@ -148,6 +159,7 @@ void TabPage::PaintNow() {
     ctx, mState->GetPageIndex(), metrics.mRenderRect);
   ctx->EndDraw();
   mSwapChain->Present(0, 0);
+  mNeedsFrame = false;
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
@@ -174,13 +186,15 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
 
 void TabPage::OnPointerEvent(
   const IInspectable&,
-  const PointerRoutedEventArgs& args) {
-
-  auto pp = args.GetCurrentPoint(Canvas());
+  const PointerEventArgs& args) {
+  for (auto pp: args.GetIntermediatePoints()) {
+    this->QueuePointerPoint(pp);
+  }
+  auto pp = args.CurrentPoint();
   this->QueuePointerPoint(pp);
 }
 
-void TabPage::QueuePointerPoint(const winrt::Microsoft::UI::Input::PointerPoint& pp) {
+void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   const auto metrics = GetPageMetrics();
   auto x = static_cast<FLOAT>(pp.Position().X);
   auto y = static_cast<FLOAT>(pp.Position().Y);
@@ -201,7 +215,7 @@ void TabPage::QueuePointerPoint(const winrt::Microsoft::UI::Input::PointerPoint&
   const bool leftClick = ppp.IsLeftButtonPressed();
   const bool rightClick = ppp.IsRightButtonPressed();
 
-  mCursorEvents.push_back({
+  gKneeboard->evCursorEvent.Emit({
     .mPositionState = positionState,
     .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE

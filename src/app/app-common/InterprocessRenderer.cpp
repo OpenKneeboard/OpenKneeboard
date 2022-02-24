@@ -22,8 +22,10 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -34,9 +36,6 @@
 #include <dxgi1_2.h>
 #include <shims/winrt.h>
 #include <wincodec.h>
-
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/TabState.h>
 
 using namespace OpenKneeboard;
 
@@ -60,6 +59,8 @@ class InterprocessRenderer::Impl {
   DXResources mDXR;
 
   KneeboardState* mKneeboard = nullptr;
+
+  bool mNeedsRepaint = true;
 
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
@@ -215,10 +216,17 @@ InterprocessRenderer::InterprocessRenderer(
     GetSystemColor(COLOR_WINDOW),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 
-  AddEventListener(
-    kneeboard->evFlushEvent, &InterprocessRenderer::RenderNow, this);
   AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());
+  AddEventListener(kneeboard->evNeedsRepaintEvent, [this]() {
+    p->mNeedsRepaint = true;
+  });
   this->RenderNow();
+
+  AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
+    if (p->mNeedsRepaint) {
+      RenderNow();
+    }
+  });
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
@@ -438,6 +446,7 @@ void InterprocessRenderer::RenderNow() {
     return;
   }
   this->Render(tabState->GetTab(), tabState->GetPageIndex());
+  p->mNeedsRepaint = false;
 }
 
 }// namespace OpenKneeboard

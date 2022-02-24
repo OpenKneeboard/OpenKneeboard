@@ -25,6 +25,7 @@
 
 #include "MainWindow.g.h"
 
+using namespace winrt::Microsoft::UI::Dispatching;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -41,6 +42,9 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   NavigationViewItem mTabSettingsItem;
   NavigationViewItem mGameSettingsItem;
   NavigationViewItem mBindingSettingsItem;
+
+  DispatcherQueueController mDQC{ nullptr };
+  DispatcherQueueTimer mFrameTimer { nullptr };
 
   void OnTabChanged();
 };

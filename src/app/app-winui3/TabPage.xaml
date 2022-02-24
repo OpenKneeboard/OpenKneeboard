@@ -11,8 +11,5 @@
     x:Name="Canvas"
     Margin="12"
     SizeChanged="OnSizeChanged"
-    PointerMoved="OnPointerEvent"
-    PointerPressed="OnPointerEvent"
-    PointerReleased="OnPointerEvent"
   />
 </Page>
