@@ -18,7 +18,7 @@ install(
   FILES
   "${SOURCE_DIR}/LICENSE"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-cppwinrt.txt"
+  RENAME "LICENSE-ThirdParty-Windows-Implementation-Library.txt"
 )
 
 set(NUGET_WINDOWS_IMPLEMENTATION_LIBRARY_PATH "${SOURCE_DIR}" PARENT_SCOPE)

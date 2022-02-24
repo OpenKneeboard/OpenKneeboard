@@ -16,9 +16,9 @@ ExternalProject_Get_property(WindowsAppSDKNuget SOURCE_DIR)
 
 install(
   FILES
-  "${SOURCE_DIR}/LICENSE"
+  "${SOURCE_DIR}/license.txt"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-cppwinrt.txt"
+  RENAME "LICENSE-ThirdParty-Windows-App-SDK.txt"
 )
 
 set(NUGET_WINDOWS_APP_SDK_PATH "${SOURCE_DIR}" PARENT_SCOPE)
