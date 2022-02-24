@@ -19,3 +19,4 @@ install(
   TYPE DOC
   RENAME "LICENSE-ThirdParty-fmt.txt"
 )
+add_library(ThirdParty::fmt ALIAS fmt)

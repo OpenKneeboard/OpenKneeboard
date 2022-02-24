@@ -13,3 +13,5 @@ add_library(zlib INTERFACE)
 add_dependencies(zlib zlibBuild)
 target_link_libraries(zlib INTERFACE "${INSTALL_DIR}/lib/zlibstatic$<$<CONFIG:Debug>:d>.lib")
 target_include_directories(zlib INTERFACE "${INSTALL_DIR}/include")
+
+add_library(ThirdParty::ZLib ALIAS zlib)

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 # Require that targets exist
 cmake_policy(SET CMP0079 NEW)
 
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+
 project(com.fredemmott.openkneeboard VERSION 0.1.3 LANGUAGES CXX C)
 
 add_subdirectory("third-party")

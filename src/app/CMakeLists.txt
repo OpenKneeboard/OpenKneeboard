@@ -55,3 +55,18 @@ add_custom_target(
   "${CMAKE_SOURCE_DIR}"
 )
 install(FILES "${GENERATED_MANIFEST}" DESTINATION .)
+
+add_subdirectory(app-winui3)
+
+add_custom_target(
+	CopyRuntimeFiles-WinUI3
+	ALL
+	COMMAND
+  "${CMAKE_COMMAND}" -E make_directory
+	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
+  &&
+	${CMAKE_COMMAND} -E copy_if_different
+	"${RUNTIME_FILES}"
+	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
+	COMMAND_EXPAND_LISTS)
+add_dependencies(OpenKneeboard-App-WinUI3 CopyRuntimeFiles-WinUI3)

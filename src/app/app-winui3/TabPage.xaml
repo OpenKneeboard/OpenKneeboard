@@ -1,0 +1,18 @@
+﻿<Page
+  x:Class="OpenKneeboardApp.TabPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:OpenKneeboardApp"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d"
+  Background="{ThemeResource SystemChromeLowColor}">
+  <SwapChainPanel
+    x:Name="Canvas"
+    Margin="12"
+    SizeChanged="OnSizeChanged"
+    PointerMoved="OnPointerEvent"
+    PointerPressed="OnPointerEvent"
+    PointerReleased="OnPointerEvent"
+  />
+</Page>

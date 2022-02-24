@@ -16,3 +16,5 @@ add_library(libjpegTurbo INTERFACE)
 add_dependencies(libjpegTurbo libjpegTurboBuild)
 target_link_libraries(libjpegTurbo INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/jpeg-static.lib")
 target_include_directories(libjpegTurbo INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
+
+add_library(ThirdParty::LibJpeg ALIAS libjpegTurbo)

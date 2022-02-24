@@ -34,7 +34,8 @@ add_compile_definitions(
   "BUILD_CONFIG=\"$<CONFIG>\""
 )
 
-link_libraries(cppwinrt)
+# Always link this so we never accidentally use the SDK version
+link_libraries(NuGet::CppWinRT::Base)
 
 add_subdirectory(lib)
 

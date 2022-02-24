@@ -1,0 +1,18 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug - WinUI App",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "src/app/app-winui3/msbuild-out-Debug/OpenKneeboardApp.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${config:cmake.buildDirectory}",
+      "environment": [],
+    }
+  ]
+}
