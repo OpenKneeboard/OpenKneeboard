@@ -21,14 +21,12 @@
 
 namespace OpenKneeboard {
 
-constexpr unsigned int TabletCursorRenderHz = 30;
-
 constexpr unsigned int TextureCount = 2;
 constexpr unsigned int TextureWidth = 2048;
 constexpr unsigned int TextureHeight = 2048;
 
-constexpr float CursorRadiusDivisor = 200.0f;
-constexpr float CursorStrokeDivisor = CursorRadiusDivisor * 5;
+constexpr float CursorRadiusDivisor = 400.0f;
+constexpr float CursorStrokeDivisor = CursorRadiusDivisor * 3;
 
 const unsigned int HeaderPercent = 5;
 
