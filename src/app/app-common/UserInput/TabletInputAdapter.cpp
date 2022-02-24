@@ -62,7 +62,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices);
 
 TabletInputAdapter::TabletInputAdapter(
   HWND window,
-  const std::shared_ptr<KneeboardState>& kneeboard,
+  KneeboardState* kneeboard,
   const nlohmann::json& jsonSettings)
   : mWindow(window), mKneeboard(kneeboard), mInitialSettings(jsonSettings) {
   if (gInstance != nullptr) {

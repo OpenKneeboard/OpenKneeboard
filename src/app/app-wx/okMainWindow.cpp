@@ -35,10 +35,7 @@
 #include <functional>
 #include <limits>
 
-#include <OpenKneeboard/GameEventServer.h>
-#include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/OpenVROverlay.h>
 #include <OpenKneeboard/TabState.h>
 #include "okAboutBox.h"
 #include "okGamesListSettings.h"
@@ -49,57 +46,14 @@ using namespace OpenKneeboard;
 
 okMainWindow::okMainWindow() : wxFrame(nullptr, wxID_ANY, "OpenKneeboard") {
   mDXR = DXResources::Create();
-  mKneeboard = std::make_shared<KneeboardState>();
+  mKneeboard = std::make_shared<KneeboardState>(this->GetHWND(), mDXR);
   AddEventListener(
     mKneeboard->evCurrentTabChangedEvent, &okMainWindow::OnTabChanged, this);
-  mInterprocessRenderer
-    = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
-
-  mGamesList = std::make_unique<GamesList>(mSettings.Games);
-  mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInputV2);
-  mTabletInput = std::make_unique<TabletInputAdapter>(
-    this->GetHWND(), mKneeboard, mSettings.TabletInput);
-  mTabsList = std::make_unique<TabsList>(mDXR, mKneeboard, mSettings.Tabs);
-
-  AddEventListener(
-    mDirectInput->evUserActionEvent, &okMainWindow::OnUserAction, this);
-  AddEventListener(
-    mTabletInput->evUserActionEvent, &okMainWindow::OnUserAction, this);
-
-  mOpenVRThread = std::jthread(
-    [](std::stop_token stopToken) { OpenVROverlay().Run(stopToken); });
-  mGameEventThread = std::jthread([this](std::stop_token stopToken) {
-    GameEventServer server;
-    this->AddEventListener(
-      server.evGameEvent, &okMainWindow::PostGameEvent, this);
-    server.Run(stopToken);
-  });
 
   InitUI();
 }
 
 okMainWindow::~okMainWindow() {
-}
-
-void okMainWindow::OnUserAction(UserAction action) {
-  switch (action) {
-    case UserAction::PREVIOUS_TAB:
-      mKneeboard->PreviousTab();
-      return;
-    case UserAction::NEXT_TAB:
-      mKneeboard->NextTab();
-      return;
-    case UserAction::PREVIOUS_PAGE:
-      mKneeboard->PreviousPage();
-      return;
-    case UserAction::NEXT_PAGE:
-      mKneeboard->NextPage();
-      return;
-    case UserAction::TOGGLE_VISIBILITY:
-      this->OnToggleVisibility();
-      return;
-  }
-  OPENKNEEBOARD_BREAK;
 }
 
 void okMainWindow::OnNotebookTabChanged(wxBookCtrlEvent& ev) {
@@ -117,22 +71,6 @@ void okMainWindow::OnTabChanged(uint8_t tabIndex) {
   mNotebook->SetSelection(tabIndex);
 }
 
-void okMainWindow::PostGameEvent(const GameEvent& ge) {
-  if (ge.name == GameEvent::EVT_REMOTE_USER_ACTION) {
-#define IT(ACTION) \
-  if (ge.value == #ACTION) { \
-    OnUserAction(UserAction::ACTION); \
-    return; \
-  }
-    OPENKNEEBOARD_USER_ACTIONS
-#undef IT
-    return;
-  }
-
-  mKneeboard->PostGameEvent(ge);
-  mKneeboard->evFlushEvent.Emit();
-}
-
 void okMainWindow::OnExit(wxCommandEvent& ev) {
   Close(true);
 }
@@ -140,38 +78,14 @@ void okMainWindow::OnExit(wxCommandEvent& ev) {
 void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
   const std::vector<std::function<wxWindow*(wxWindow*)>> factories {
     [&](wxWindow* p) {
-      auto it = new okTabsListSettings(p, mDXR, mKneeboard);
-      AddEventListener(it->evSettingsChangedEvent, [&] {
-        mSettings.Tabs = mTabsList->GetSettings();
-        mSettings.Save();
-        this->UpdateTabs();
-      });
-      return it;
+      return new okTabsListSettings(p, mDXR, mKneeboard);
     },
     [&](wxWindow* p) {
-      auto it = new okGamesListSettings(p, mGamesList.get());
-      AddEventListener(it->evSettingsChangedEvent, [&] {
-        mSettings.Games = mGamesList->GetSettings();
-        mSettings.Save();
-      });
-      return it;
+      auto gamesList = mKneeboard->GetGamesList();
+      return new okGamesListSettings(p, gamesList);
     },
     [&](wxWindow* p) {
-      std::vector<std::shared_ptr<UserInputDevice>> devices;
-      for (const auto& subDevices:
-           {mTabletInput->GetDevices(), mDirectInput->GetDevices()}) {
-        devices.reserve(devices.size() + subDevices.size());
-        for (const auto& device: subDevices) {
-          devices.push_back(device);
-        }
-      }
-      auto it = new okUserInputSettings(p, devices);
-      AddEventListener(it->evSettingsChangedEvent, [&] {
-        mSettings.DirectInputV2 = mDirectInput->GetSettings();
-        mSettings.TabletInput = mTabletInput->GetSettings();
-        mSettings.Save();
-      });
-      return it;
+      return new okUserInputSettings(p, mKneeboard->GetInputDevices());
     },
   };
 
@@ -197,16 +111,6 @@ void okMainWindow::OnShowSettings(wxCommandEvent& ev) {
 
   w->SetSizerAndFit(s);
   w->Show(true);
-}
-
-void okMainWindow::OnToggleVisibility() {
-  if (mInterprocessRenderer) {
-    mInterprocessRenderer.reset();
-    return;
-  }
-
-  mInterprocessRenderer
-    = std::make_unique<InterprocessRenderer>(mDXR, mKneeboard, this->GetHWND());
 }
 
 void okMainWindow::UpdateTabs() {

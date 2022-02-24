@@ -19,22 +19,32 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Settings.h>
 #include <d2d1.h>
 
+#include <thread>
 #include <memory>
 #include <vector>
 
-#include <OpenKneeboard/Events.h>
-
 namespace OpenKneeboard {
 
+enum class UserAction;
 struct CursorEvent;
 struct GameEvent;
+class DirectInputAdapter;
+class GamesList;
+class InterprocessRenderer;
 class TabState;
+class TabletInputAdapter;
+class TabsList;
+class UserInputDevice;
 
 class KneeboardState final : private EventReceiver {
  public:
-  KneeboardState();
+  KneeboardState() = delete;
+  KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
   std::vector<std::shared_ptr<TabState>> GetTabs() const;
@@ -46,6 +56,7 @@ class KneeboardState final : private EventReceiver {
   std::shared_ptr<TabState> GetCurrentTab() const;
   uint8_t GetTabIndex() const;
   void SetTabIndex(uint8_t);
+  void SetTabID(uint64_t);
   void PreviousTab();
   void NextTab();
 
@@ -68,11 +79,19 @@ class KneeboardState final : private EventReceiver {
   Event<> evNeedsRepaintEvent;
   Event<const CursorEvent&> evCursorEvent;
 
-  void PostGameEvent(const GameEvent&);
+  std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;  
+
+  GamesList* GetGamesList() const;
+
+  void SaveSettings();
 
  private:
+  HWND mMainWindow;
+  DXResources mDXResources;
+  Settings mSettings {Settings::Load()};
+
   std::vector<std::shared_ptr<TabState>> mTabs;
-  std::shared_ptr<TabState> mCurrentTab = nullptr;
+  std::shared_ptr<TabState> mCurrentTab;
 
   D2D1_SIZE_U mCanvasSize;
   D2D1_SIZE_U mContentNativeSize;
@@ -82,9 +101,20 @@ class KneeboardState final : private EventReceiver {
   bool mHaveCursor = false;
   D2D1_POINT_2F mCursorPoint;
 
+  std::unique_ptr<GamesList> mGamesList;
+  std::unique_ptr<TabsList> mTabsList;
+  std::unique_ptr<InterprocessRenderer> mInterprocessRenderer;
+  std::unique_ptr<DirectInputAdapter> mDirectInput;
+  std::unique_ptr<TabletInputAdapter> mTabletInput;
+
+  std::jthread mGameEventThread;
+  std::jthread mOpenVRThread;
+
   void UpdateLayout();
 
   void OnCursorEvent(const CursorEvent& ev);
+  void OnUserAction(UserAction);
+  void OnGameEvent(const GameEvent&);
 };
 
 }// namespace OpenKneeboard

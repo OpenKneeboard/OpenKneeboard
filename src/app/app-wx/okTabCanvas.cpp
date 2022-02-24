@@ -107,7 +107,6 @@ void okTabCanvas::OnSize(wxSizeEvent& ev) {
   DXGI_SWAP_CHAIN_DESC desc;
   mSwapChain->GetDesc(&desc);
 
-  winrt::com_ptr<ID2D1Image> oldTarget;
   mDXR.mD2DDeviceContext->SetTarget(nullptr);
 
   winrt::check_hresult(mSwapChain->ResizeBuffers(

@@ -59,7 +59,7 @@ class InterprocessRenderer::Impl {
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
 
-  std::shared_ptr<KneeboardState> mKneeboard;
+  KneeboardState* mKneeboard = nullptr;
 
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
@@ -140,9 +140,9 @@ void InterprocessRenderer::Impl::CopyPixelsToSHM() {
 }
 
 InterprocessRenderer::InterprocessRenderer(
+  HWND feederWindow,
   const DXResources& dxr,
-  const std::shared_ptr<KneeboardState>& kneeboard,
-  HWND feederWindow)
+  KneeboardState* kneeboard)
   : p(std::make_unique<Impl>()) {
   p->mFeederWindow = feederWindow;
   p->mDXR = dxr;

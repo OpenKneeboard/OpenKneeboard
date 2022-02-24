@@ -39,10 +39,8 @@ enum class UserAction;
 struct GameEvent;
 class DirectInputAdapter;
 class GamesList;
-class InterprocessRenderer;
 class KneeboardState;
 class TabsList;
-class TabletInputAdapter;
 }// namespace OpenKneeboard
 
 class okMainWindow final : public wxFrame,
@@ -60,7 +58,6 @@ class okMainWindow final : public wxFrame,
 
   void OnNotebookTabChanged(wxBookCtrlEvent&);
   void OnTabChanged(uint8_t tabIndex);
-  void OnUserAction(OpenKneeboard::UserAction);
 
   void UpdateTabs();
 
@@ -68,16 +65,7 @@ class okMainWindow final : public wxFrame,
   wxNotebook* mNotebook = nullptr;
   OpenKneeboard::Settings mSettings = OpenKneeboard::Settings::Load();
 
-  std::unique_ptr<OpenKneeboard::DirectInputAdapter> mDirectInput;
-  std::unique_ptr<OpenKneeboard::TabletInputAdapter> mTabletInput;
-  std::unique_ptr<OpenKneeboard::GamesList> mGamesList;
-  std::unique_ptr<OpenKneeboard::TabsList> mTabsList;
-
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
-  std::unique_ptr<OpenKneeboard::InterprocessRenderer> mInterprocessRenderer;
-
-  std::jthread mGameEventThread;
-  std::jthread mOpenVRThread;
 
   void InitUI();
 };

@@ -37,3 +37,5 @@ target_include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include
 	${CMAKE_CURRENT_SOURCE_DIR}/tabs/include
 )
+
+add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)

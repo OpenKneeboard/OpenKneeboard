@@ -18,18 +18,56 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DirectInputAdapter.h>
+#include <OpenKneeboard/GameEventServer.h>
+#include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
+#include <OpenKneeboard/TabletInputAdapter.h>
+#include <OpenKneeboard/TabsList.h>
+#include <OpenKneeboard/OpenVROverlay.h>
+#include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
-#include <OpenKneeboard/TabState.h>
-
 namespace OpenKneeboard {
 
-KneeboardState::KneeboardState() {
+KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
+  : mMainWindow(hwnd), mDXResources(dxr) {
   AddEventListener(evCursorEvent, &KneeboardState::OnCursorEvent, this);
+
+  mGamesList = std::make_unique<GamesList>(mSettings.Games);
+  AddEventListener(mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+  mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.Tabs);
+  mInterprocessRenderer
+    = std::make_unique<InterprocessRenderer>(hwnd, mDXResources, this);
+
+  mTabletInput
+    = std::make_unique<TabletInputAdapter>(hwnd, this, mSettings.TabletInput);
+  AddEventListener(
+    mTabletInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
+  AddEventListener(
+    mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+
+  mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInputV2);
+  AddEventListener(
+    mDirectInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
+  AddEventListener(
+    mDirectInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+
+  mGameEventThread = std::jthread([this](std::stop_token stopToken) {
+    GameEventServer server;
+    this->AddEventListener(
+      server.evGameEvent, &KneeboardState::OnGameEvent, this);
+    server.Run(stopToken);
+  });
+
+  mOpenVRThread = std::jthread(
+    [](std::stop_token stopToken) { OpenVROverlay().Run(stopToken); });
+
   UpdateLayout();
 }
 
@@ -58,6 +96,7 @@ void KneeboardState::SetTabs(
   }
 
   mTabs = tabs;
+  SaveSettings();
 
   auto it = std::find(tabs.begin(), tabs.end(), mCurrentTab);
   if (it == tabs.end()) {
@@ -69,11 +108,9 @@ void KneeboardState::SetTabs(
 void KneeboardState::InsertTab(
   uint8_t index,
   const std::shared_ptr<TabState>& tab) {
-  mTabs.insert(mTabs.begin() + index, tab);
-  if (!mCurrentTab) {
-    mCurrentTab = tab;
-    UpdateLayout();
-  }
+  auto tabs = mTabs;
+  tabs.insert(mTabs.begin() + index, tab);
+  SetTabs(tabs);
 }
 
 void KneeboardState::AppendTab(const std::shared_ptr<TabState>& tab) {
@@ -87,22 +124,9 @@ void KneeboardState::RemoveTab(uint8_t index) {
     return;
   }
 
-  const bool wasSelected = (mTabs.at(index) == mCurrentTab);
-  mTabs.erase(mTabs.begin() + index);
-
-  if (!wasSelected) {
-    return;
-  }
-
-  if (index < mTabs.size()) {
-    mCurrentTab = mTabs.at(index);
-  } else if (!mTabs.empty()) {
-    mCurrentTab = mTabs.front();
-  } else {
-    mCurrentTab = {};
-  }
-
-  UpdateLayout();
+  auto tabs = mTabs;
+  tabs.erase(tabs.begin() + index);
+  SetTabs(tabs);
 }
 
 uint8_t KneeboardState::GetTabIndex() const {
@@ -110,7 +134,7 @@ uint8_t KneeboardState::GetTabIndex() const {
   if (it == mTabs.end()) {
     return 0;
   }
-  return it - mTabs.begin();
+  return static_cast<uint8_t>(it - mTabs.begin());
 }
 
 void KneeboardState::SetTabIndex(uint8_t index) {
@@ -126,6 +150,18 @@ void KneeboardState::SetTabIndex(uint8_t index) {
   mCurrentTab = mTabs.at(index);
   UpdateLayout();
   evCurrentTabChangedEvent.Emit(index);
+}
+
+void KneeboardState::SetTabID(uint64_t id) {
+  if (mCurrentTab && mCurrentTab->GetInstanceID() == id) {
+    return;
+  }
+  for (uint8_t i = 0; i < mTabs.size(); ++i) {
+    if (mTabs.at(i)->GetInstanceID() == id) {
+      SetTabIndex(i);
+      return;
+    }
+  }
 }
 
 void KneeboardState::PreviousTab() {
@@ -232,7 +268,42 @@ void KneeboardState::OnCursorEvent(const CursorEvent& ev) {
   evNeedsRepaintEvent.Emit();
 }
 
-void KneeboardState::PostGameEvent(const GameEvent& ev) {
+void KneeboardState::OnUserAction(UserAction action) {
+  switch (action) {
+    case UserAction::TOGGLE_VISIBILITY:
+      if (mInterprocessRenderer) {
+        mInterprocessRenderer.reset();
+      } else {
+        mInterprocessRenderer = std::make_unique<InterprocessRenderer>(
+          mMainWindow, mDXResources, this);
+      }
+      return;
+    case UserAction::PREVIOUS_TAB:
+      this->PreviousTab();
+      return;
+    case UserAction::NEXT_TAB:
+      this->NextTab();
+      return;
+    case UserAction::PREVIOUS_PAGE:
+      this->PreviousPage();
+      return;
+    case UserAction::NEXT_PAGE:
+      this->NextPage();
+      return;
+  }
+  OPENKNEEBOARD_BREAK;
+}
+
+void KneeboardState::OnGameEvent(const GameEvent& ev) {
+  if (ev.name == GameEvent::EVT_REMOTE_USER_ACTION) {
+#define IT(ACTION) \
+  if (ev.value == #ACTION) { \
+    OnUserAction(UserAction::ACTION); \
+    return; \
+  }
+    OPENKNEEBOARD_USER_ACTIONS
+#undef IT
+  }
   for (auto tab: mTabs) {
     auto receiver
       = std::dynamic_pointer_cast<TabWithGameEvents>(tab->GetRootTab());
@@ -240,6 +311,7 @@ void KneeboardState::PostGameEvent(const GameEvent& ev) {
       receiver->PostGameEvent(ev);
     }
   }
+  evFlushEvent.Emit();
 }
 
 bool KneeboardState::HaveCursor() const {
@@ -270,6 +342,39 @@ D2D1_POINT_2F KneeboardState::GetCursorCanvasPoint(
   cursorPoint.x += contentRect.left;
   cursorPoint.y += contentRect.top;
   return cursorPoint;
+}
+
+std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
+  const {
+  std::vector<std::shared_ptr<UserInputDevice>> devices;
+  for (const auto& subDevices:
+       {mTabletInput->GetDevices(), mDirectInput->GetDevices()}) {
+    devices.reserve(devices.size() + subDevices.size());
+    for (const auto& device: subDevices) {
+      devices.push_back(device);
+    }
+  }
+  return devices;
+}
+
+void KneeboardState::SaveSettings() {
+  if (mGamesList) {
+    mSettings.Games = mGamesList->GetSettings();
+  }
+  if (mTabsList) {
+    mSettings.Tabs = mTabsList->GetSettings();
+  }
+  if (mTabletInput) {
+    mSettings.TabletInput = mTabletInput->GetSettings();
+  }
+  if (mDirectInput) {
+    mSettings.DirectInputV2 = mDirectInput->GetSettings();
+  }
+  mSettings.Save();
+}
+
+GamesList* KneeboardState::GetGamesList() const {
+  return mGamesList.get();
 }
 
 }// namespace OpenKneeboard

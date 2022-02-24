@@ -41,6 +41,7 @@ class TabState final : private EventReceiver {
  public:
   TabState(const std::shared_ptr<Tab>&);
   ~TabState();
+  uint64_t GetInstanceID() const;
 
   template <std::derived_from<Tab> T, class... Args>
   static std::shared_ptr<TabState> make_shared(Args... args) {
@@ -74,6 +75,8 @@ class TabState final : private EventReceiver {
   bool SupportsTabMode(TabMode) const;
   bool SetTabMode(TabMode);
  private:
+  static uint64_t gNextID;
+  uint64_t mInstanceID;
   std::shared_ptr<Tab> mRootTab;
   uint16_t mRootTabPage;
 

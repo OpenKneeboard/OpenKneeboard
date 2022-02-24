@@ -43,7 +43,7 @@ class TabletInputAdapter final : private EventReceiver {
   TabletInputAdapter() = delete;
   TabletInputAdapter(
     HWND,
-    const std::shared_ptr<KneeboardState>&,
+    KneeboardState*,
     const nlohmann::json& settings);
   ~TabletInputAdapter();
 
@@ -56,7 +56,7 @@ class TabletInputAdapter final : private EventReceiver {
 
  private:
   HWND mWindow;
-  std::shared_ptr<KneeboardState> mKneeboard;
+  KneeboardState* mKneeboard;
   const nlohmann::json mInitialSettings;
   std::unique_ptr<WintabTablet> mTablet;
   std::shared_ptr<TabletInputDevice> mDevice;

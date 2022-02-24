@@ -31,17 +31,15 @@ class TabsList final {
  public:
   TabsList() = delete;
   TabsList(
-    const OpenKneeboard::DXResources&,
-    const std::shared_ptr<OpenKneeboard::KneeboardState>& kneeboard,
+    const DXResources&,
+    KneeboardState* kneeboard,
     const nlohmann::json& config);
 
   virtual ~TabsList();
   virtual nlohmann::json GetSettings() const;
-
  private:
-  class SettingsUI;
-  OpenKneeboard::DXResources mDXR;
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  DXResources mDXR;
+  KneeboardState* mKneeboard;
 
   void LoadConfig(const nlohmann::json&);
   void LoadDefaultConfig();

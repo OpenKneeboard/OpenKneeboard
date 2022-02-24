@@ -50,6 +50,7 @@ class GamesList final : private EventReceiver {
   void SetGameInstances(const std::vector<GameInstance>&);
 
   OpenKneeboard::Event<GameInstance> evGameChanged;
+  OpenKneeboard::Event<> evSettingsChangedEvent;
 };
 
 }

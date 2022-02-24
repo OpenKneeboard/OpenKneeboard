@@ -83,6 +83,7 @@ void GamesList::SetGameInstances(
   const std::vector<OpenKneeboard::GameInstance>& instances) {
   mInstances = instances;
   mInjector->SetGameInstances(mInstances);
+  this->evSettingsChangedEvent.Emit();
 }
 
 }// namespace OpenKneeboard

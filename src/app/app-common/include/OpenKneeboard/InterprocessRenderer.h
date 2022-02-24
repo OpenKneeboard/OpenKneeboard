@@ -40,9 +40,9 @@ class InterprocessRenderer final : private EventReceiver {
  public:
   InterprocessRenderer() = delete;
   InterprocessRenderer(
+    HWND feederWindow,
     const DXResources&,
-    const std::shared_ptr<KneeboardState>&,
-    HWND feederWindow);
+    KneeboardState*);
   ~InterprocessRenderer();
 
  private:
