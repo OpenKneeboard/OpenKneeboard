@@ -63,6 +63,14 @@ TabPage::TabPage() {
       PaintNow();
     }
   });
+  AddEventListener(gKneeboard->evCursorEvent, [this](const auto& ev) {
+    if (ev.mSource == CursorSource::WINDOW_POINTER) {
+      mDrawCursor = false;
+    } else {
+      mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
+      PaintLater();
+    }
+  });
 }
 
 TabPage::~TabPage() {
@@ -174,7 +182,7 @@ void TabPage::PaintNow() {
     mErrorRenderer->Render(ctx, _("No Pages"), metrics.mRenderRect);
   }
 
-  if (!gKneeboard->HaveCursor()) {
+  if (!mDrawCursor) {
     return;
   }
   const auto cursorRadius
@@ -252,6 +260,7 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   const bool rightClick = ppp.IsRightButtonPressed();
 
   gKneeboard->evCursorEvent.Emit({
+    .mSource = CursorSource::WINDOW_POINTER,
     .mPositionState = positionState,
     .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE

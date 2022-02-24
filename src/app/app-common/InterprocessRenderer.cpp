@@ -400,6 +400,7 @@ void InterprocessRenderer::Impl::RenderWithChrome(
 }
 
 void InterprocessRenderer::Impl::OnCursorEvent(const CursorEvent& ev) {
+  mNeedsRepaint = true;
   const auto tab = mKneeboard->GetCurrentTab();
   if (!tab->SupportsTabMode(TabMode::NAVIGATION)) {
     return;

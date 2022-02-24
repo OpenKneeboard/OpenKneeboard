@@ -58,6 +58,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   DispatcherQueueController mDQC {nullptr};
   InputPointerSource mInputPointerSource {nullptr};
+  bool mDrawCursor = false;
   void InitializePointerSource();
   void QueuePointerPoint(const PointerPoint&);
 
