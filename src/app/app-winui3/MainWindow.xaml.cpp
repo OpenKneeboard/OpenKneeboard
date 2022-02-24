@@ -66,6 +66,8 @@ MainWindow::MainWindow() {
 
   AddEventListener(
     gKneeboard->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+
+  // TODO: install DCS hooks
 }
 
 MainWindow::~MainWindow() {

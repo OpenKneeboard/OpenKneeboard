@@ -17,9 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+// clang-format off
 #include "pch.h"
+// clang-format on
 
 #include "App.xaml.h"
+
+#include <OpenKneeboard/dprint.h>
+
 #include "MainWindow.xaml.h"
 
 using namespace winrt;
@@ -30,29 +35,27 @@ using namespace Microsoft::UI::Xaml::Navigation;
 using namespace OpenKneeboardApp::implementation;
 using namespace OpenKneeboardApp;
 
-App::App()
-{
-    InitializeComponent();
+App::App() {
+  InitializeComponent();
 
-#if defined _DEBUG && !defined DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION
-    UnhandledException([this](IInspectable const&, UnhandledExceptionEventArgs const& e)
-    {
-        if (IsDebuggerPresent())
-        {
-            auto errorMessage = e.Message();
-            __debugbreak();
-        }
+#if defined _DEBUG \
+  && !defined DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION
+  UnhandledException(
+    [this](IInspectable const&, UnhandledExceptionEventArgs const& e) {
+      if (IsDebuggerPresent()) {
+        auto errorMessage = e.Message();
+        __debugbreak();
+      }
     });
 #endif
 }
 
-/// <summary>
-/// Invoked when the application is launched normally by the end user.  Other entry points
-/// will be used such as when the application is launched to open a specific file.
-/// </summary>
-/// <param name="e">Details about the launch request and process.</param>
-void App::OnLaunched(LaunchActivatedEventArgs const&)
-{
-    window = make<MainWindow>();
-    window.Activate();
+void App::OnLaunched(LaunchActivatedEventArgs const&) {
+  // TODO: activate existing instance (if WinUI doesn't do that for me?)
+  OpenKneeboard::DPrintSettings::Set({
+    .prefix = "OpenKneeboard-WinUI3",
+  });
+
+  window = make<MainWindow>();
+  window.Activate();
 }
