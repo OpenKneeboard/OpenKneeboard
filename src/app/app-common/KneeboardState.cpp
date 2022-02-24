@@ -264,8 +264,6 @@ void KneeboardState::OnCursorEvent(const CursorEvent& ev) {
   if (mCurrentTab) {
     mCurrentTab->PostCursorEvent(ev);
   }
-
-  evNeedsRepaintEvent.Emit();
 }
 
 void KneeboardState::OnUserAction(UserAction action) {

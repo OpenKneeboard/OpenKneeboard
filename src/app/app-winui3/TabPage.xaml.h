@@ -21,8 +21,10 @@
 #include <d2d1.h>
 #include <dxgi1_2.h>
 
+#include <vector>
 #include <memory>
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Events.h>
 
 #include "TabPage.g.h"
@@ -49,6 +51,11 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   std::shared_ptr<TabState> mState;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
+
+  winrt::Microsoft::UI::Dispatching::DispatcherQueueTimer mCursorTimer { DispatcherQueue().CreateTimer() };
+  std::vector<CursorEvent> mCursorEvents;
+  void QueuePointerPoint(const winrt::Microsoft::UI::Input::PointerPoint&);
+  void FlushCursorEvents();
 
   void SetTab(const std::shared_ptr<TabState>&);
   void InitializeSwapChain();

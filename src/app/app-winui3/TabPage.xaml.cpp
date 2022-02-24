@@ -23,9 +23,11 @@
 #include "TabPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.media.dxinterop.h>
 
 #include "Globals.h"
@@ -46,9 +48,24 @@ TabPage::TabPage() {
     color.B / 255.0f,
     color.A / 255.0f,
   };
+
+  mCursorTimer.Interval(std::chrono::milliseconds(1000 / 30));
+  mCursorTimer.Tick([=](auto&, auto&) { this->FlushCursorEvents(); });
+  mCursorTimer.Start();
 }
 
 TabPage::~TabPage() {
+}
+
+void TabPage::FlushCursorEvents() {
+  if (mCursorEvents.empty()) {
+    return;
+  }
+  for (const auto& event: mCursorEvents) {
+    gKneeboard->evCursorEvent.Emit(event);
+  }
+  mCursorEvents.clear();
+  gKneeboard->evFlushEvent.Emit();
 }
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) {
@@ -90,8 +107,8 @@ void TabPage::ResizeSwapChain() {
   winrt::check_hresult(mSwapChain->GetDesc(&desc));
   winrt::check_hresult(mSwapChain->ResizeBuffers(
     desc.BufferCount,
-    mCanvasSize.width * Canvas().CompositionScaleX(),
-    mCanvasSize.height * Canvas().CompositionScaleY(),
+    static_cast<UINT>(mCanvasSize.width * Canvas().CompositionScaleX()),
+    static_cast<UINT>(mCanvasSize.height * Canvas().CompositionScaleY()),
     desc.BufferDesc.Format,
     desc.Flags));
 }
@@ -158,6 +175,42 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
 void TabPage::OnPointerEvent(
   const IInspectable&,
   const PointerRoutedEventArgs& args) {
+
+  auto pp = args.GetCurrentPoint(Canvas());
+  this->QueuePointerPoint(pp);
+}
+
+void TabPage::QueuePointerPoint(const winrt::Microsoft::UI::Input::PointerPoint& pp) {
+  const auto metrics = GetPageMetrics();
+  auto x = static_cast<FLOAT>(pp.Position().X);
+  auto y = static_cast<FLOAT>(pp.Position().Y);
+
+  auto positionState
+    = (x >= metrics.mRenderRect.left && x <= metrics.mRenderRect.right
+       && y >= metrics.mRenderRect.top && y <= metrics.mRenderRect.bottom)
+    ? CursorPositionState::IN_CONTENT_RECT
+    : CursorPositionState::NOT_IN_CONTENT_RECT;
+
+  x -= metrics.mRenderRect.left;
+  y -= metrics.mRenderRect.top;
+  x /= metrics.mScale;
+  y /= metrics.mScale;
+
+  auto ppp = pp.Properties();
+
+  const bool leftClick = ppp.IsLeftButtonPressed();
+  const bool rightClick = ppp.IsRightButtonPressed();
+
+  mCursorEvents.push_back({
+    .mPositionState = positionState,
+    .mTouchState = (leftClick || rightClick)
+      ? CursorTouchState::TOUCHING_SURFACE
+      : CursorTouchState::NEAR_SURFACE,
+    .mX = x,
+    .mY = y,
+    .mPressure = rightClick ? 0.8f : 0.0f,
+    .mButtons = rightClick ? (1ui32 << 1) : 1ui32,
+  });
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
