@@ -28,6 +28,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <microsoft.ui.xaml.media.dxinterop.h>
@@ -172,6 +173,24 @@ void TabPage::PaintNow() {
   } else {
     mErrorRenderer->Render(ctx, _("No Pages"), metrics.mRenderRect);
   }
+
+  if (!gKneeboard->HaveCursor()) {
+    return;
+  }
+  const auto cursorRadius
+    = metrics.mRenderSize.height / CursorRadiusDivisor;
+  const auto cursorStroke
+    = metrics.mRenderSize.height / CursorStrokeDivisor;
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  auto point = gKneeboard->GetCursorPoint();
+  point.x *= metrics.mScale;
+  point.y *= metrics.mScale;
+  point.x += metrics.mRenderRect.left;
+  point.y += metrics.mRenderRect.top;
+  ctx->DrawEllipse(
+    D2D1::Ellipse(point, cursorRadius, cursorRadius),
+    mCursorBrush.get(),
+    cursorStroke);
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
