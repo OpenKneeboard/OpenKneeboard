@@ -11,6 +11,7 @@
     <StackPanel Orientation="Vertical" Margin="12">
       <TextBlock Style="{StaticResource TitleTextBlockStyle}">OpenKneeboard</TextBlock>
       <TextBlock x:Name="DetailsText" />
+      <Button Content="Copy" Click="OnCopyClick" Margin="0,12,0,0" />
     </StackPanel>
   </Grid>
 </Page>

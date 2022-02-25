@@ -19,14 +19,23 @@
  */
 #pragma once
 
-#include "AboutPage.g.h"
+// clang-format off
+#include "pch.h"
+// clang-format on
 
+#include <string>
+
+#include "AboutPage.g.h"
 
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct AboutPage : AboutPageT<AboutPage> {
   AboutPage();
+  void OnCopyClick(const IInspectable&, const RoutedEventArgs&);
+
+ private:
+  std::string mData;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

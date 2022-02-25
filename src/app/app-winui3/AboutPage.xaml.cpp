@@ -30,6 +30,8 @@
 #include <fmt/format.h>
 #include <time.h>
 
+#include <winrt/Windows.ApplicationModel.DataTransfer.h>
+
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -71,7 +73,7 @@ AboutPage::AboutPage() {
     "Package: {}\n"
     "Built at: {}\n"
     "Build type: {}-{}\n"
-    "Commit at: {:%Y-%m-%dT%H:%M:%SZ}\n"
+    "Commited at: {:%Y-%m-%dT%H:%M:%SZ}\n"
     "Commit ID: {}\n",
     version,
     packageNameLen ? to_utf8(std::wstring_view(packageName, packageNameLen))
@@ -92,6 +94,14 @@ AboutPage::AboutPage() {
     details += "\nModified files:\n" + files;
   }
   DetailsText().Text(winrt::to_hstring(details));
+
+  mData = "OpenKneeboard\n"+details;
+}
+
+void AboutPage::OnCopyClick(const IInspectable&, const RoutedEventArgs&) {
+  Windows::ApplicationModel::DataTransfer::DataPackage package;
+  package.SetText(winrt::to_hstring(mData));
+  Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
