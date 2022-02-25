@@ -46,8 +46,11 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   ~TabPage();
 
   void OnNavigatedTo(const NavigationEventArgs&);
-  void OnSizeChanged(const IInspectable&, const SizeChangedEventArgs&);
+  void OnCanvasSizeChanged(const IInspectable&, const SizeChangedEventArgs&);
   void OnPointerEvent(const IInspectable&, const PointerEventArgs&);
+  void OnFirstPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
+  void OnPreviousPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
+  void OnNextPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
 
  private:
   std::shared_ptr<TabState> mState;
@@ -55,6 +58,9 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
+
+  void UpdateButtons();
+
 
   DispatcherQueueController mDQC {nullptr};
   InputPointerSource mInputPointerSource {nullptr};

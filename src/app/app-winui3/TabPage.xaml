@@ -7,9 +7,20 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeLowColor}">
-  <SwapChainPanel
-    x:Name="Canvas"
-    Margin="12"
-    SizeChanged="OnSizeChanged"
-  />
+  <Grid RowDefinitions="Auto,*">
+    <CommandBar Grid.Row="0">
+      <AppBarToggleButton Icon="List" Label="Contents" x:Name="ContentsButton" />
+      <AppBarButton Icon="Previous" Label="First Page" x:Name="FirstPageButton" Click="OnFirstPageButtonClicked" />
+      <AppBarButton Icon="Back" Label="Previous Page" x:Name="PreviousPageButton" Click="OnPreviousPageButtonClicked" />
+      <AppBarButton Icon="Forward" Label="Next Page" x:Name="NextPageButton" Click="OnNextPageButtonClicked" />
+    </CommandBar>
+
+    <SwapChainPanel
+      x:Name="Canvas"
+      Margin="12"
+      SizeChanged="OnCanvasSizeChanged"
+      Grid.Row="1"
+    >
+    </SwapChainPanel>
+  </Grid>
 </Page>

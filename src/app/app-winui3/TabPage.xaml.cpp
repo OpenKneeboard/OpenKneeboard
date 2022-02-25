@@ -102,12 +102,28 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) {
 void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
   mState = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
+  AddEventListener(state->evPageChangedEvent, &TabPage::UpdateButtons, this);
+  this->UpdateButtons();
 }
 
-void TabPage::OnSizeChanged(
+void TabPage::UpdateButtons() {
+  ContentsButton().IsEnabled(mState->SupportsTabMode(TabMode::NAVIGATION));
+  ContentsButton().IsChecked(mState->GetTabMode() == TabMode::NAVIGATION);
+
+  const auto index = mState->GetPageIndex();  
+  FirstPageButton().IsEnabled(index > 0);
+  PreviousPageButton().IsEnabled(index > 0);
+  NextPageButton().IsEnabled(index + 1 < mState->GetPageCount());
+}
+
+void TabPage::OnCanvasSizeChanged(
   const IInspectable&,
   const SizeChangedEventArgs& args) {
   auto size = args.NewSize();
+  if (size.Width < 1 || size.Height < 1) {
+    mSwapChain = nullptr;
+    return;
+  }
   mCanvasSize = {
     static_cast<FLOAT>(size.Width),
     static_cast<FLOAT>(size.Height),
@@ -185,10 +201,8 @@ void TabPage::PaintNow() {
   if (!mDrawCursor) {
     return;
   }
-  const auto cursorRadius
-    = metrics.mRenderSize.height / CursorRadiusDivisor;
-  const auto cursorStroke
-    = metrics.mRenderSize.height / CursorStrokeDivisor;
+  const auto cursorRadius = metrics.mRenderSize.height / CursorRadiusDivisor;
+  const auto cursorStroke = metrics.mRenderSize.height / CursorStrokeDivisor;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   auto point = gKneeboard->GetCursorPoint();
   point.x *= metrics.mScale;
@@ -270,6 +284,18 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     .mPressure = rightClick ? 0.8f : 0.0f,
     .mButtons = rightClick ? (1ui32 << 1) : 1ui32,
   });
+}
+
+void TabPage::OnFirstPageButtonClicked(const IInspectable&, const RoutedEventArgs&) {
+  mState->SetPageIndex(0);
+}
+
+void TabPage::OnPreviousPageButtonClicked(const IInspectable&, const RoutedEventArgs&) {
+  mState->PreviousPage();
+}
+
+void TabPage::OnNextPageButtonClicked(const IInspectable&, const RoutedEventArgs&) {
+  mState->NextPage();
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
