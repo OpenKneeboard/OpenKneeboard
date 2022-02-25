@@ -45,11 +45,17 @@ namespace winrt::OpenKneeboardApp::implementation {
 MainWindow::MainWindow() {
   InitializeComponent();
   Title(L"OpenKneeboard");
+  // See:
+  // * https://docs.microsoft.com/en-us/windows/winui/api/microsoft.ui.xaml.window.settitlebar
+  // * https://docs.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
+  ExtendsContentIntoTitleBar(true);
+  SetTitleBar(AppTitleBar());
 
   {
     auto ref = get_strong();
     winrt::check_hresult(ref.as<IWindowNative>()->get_WindowHandle(&mHwnd));
   }
+
   gUIThreadDispatcherQueue = DispatcherQueue();
   gDXResources = DXResources::Create();
   gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);

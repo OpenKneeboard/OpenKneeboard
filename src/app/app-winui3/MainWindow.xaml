@@ -7,15 +7,56 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   >
+  <!--
+    So, this is not the 'right' way to do a modern title bar with a navigation view,
+    however the 'right' way doesn't appear to be possible at the moment:
 
-  <NavigationView
-    IsSettingsVisible="True"
-    ItemInvoked="OnNavigationItemInvoked"
-    Background="{ThemeResource SystemChromeMediumColor}"
-    x:Name="Navigation">
-    <NavigationView.FooterMenuItems>
-      <NavigationViewItem Content="About" Icon="Help" x:Name="AboutNavItem" />
-    </NavigationView.FooterMenuItems>
-    <Frame x:Name="Frame" Background="{ThemeResource SystemChromeLowColor}" />
-  </NavigationView>
+    What I'm doing:
+    * Define a title bar control with text, and margin for the controls
+    * Set it as the title bar
+
+    What I should be doing:
+    * Set the pane title on the navigation view
+    * Use the pane title area as the title bar
+
+    However, this currently makes min/max/close unclickable:
+
+    https://github.com/microsoft/microsoft-ui-xaml/issues/6519
+  -->
+  <Grid RowDefinitions="Auto,*">
+     <Grid
+     x:Name="AppTitleBar"
+     Margin="0,0,120,0"
+     Height="40"
+     Grid.Row="0"
+      Background="{ThemeResource SystemChromeMediumColor}">
+      <!--<Image
+        Source="Images/WindowIcon.png"
+        HorizontalAlignment="Left" 
+        Width="16" Height="16" 
+        Margin="8,0"
+      />-->
+      <TextBlock
+        x:Name="AppTitleTextBlock"
+        Text="OpenKneeboard"
+        TextWrapping="NoWrap"
+        Style="{StaticResource CaptionTextBlockStyle}" 
+        VerticalAlignment="Center"
+        Margin="12,0,0,0"
+      />
+      <!--With icon: Margin="28,0,0,0"-->
+    </Grid>
+    <NavigationView
+      Grid.Row="1"
+      IsBackButtonVisible="Collapsed"
+      IsSettingsVisible="True"
+      ItemInvoked="OnNavigationItemInvoked"
+      Background="{ThemeResource SystemChromeMediumColor}"
+      x:Name="Navigation">
+      <NavigationView.FooterMenuItems>
+        <NavigationViewItem Content="About" Icon="Help" x:Name="AboutNavItem" />
+      </NavigationView.FooterMenuItems>
+      <Frame x:Name="Frame" Background="{ThemeResource SystemChromeLowColor}" />
+    </NavigationView>
+  </Grid>
 </Window>
