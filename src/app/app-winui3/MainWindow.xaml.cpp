@@ -1,4 +1,4 @@
-﻿/*
+/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -102,10 +102,10 @@ void MainWindow::OnTabChanged() {
   this->Frame().Navigate(xaml_typename<TabPage>(), winrt::box_value(id));
 }
 
-void MainWindow::OnNavigationSelectionChanged(
+void MainWindow::OnNavigationItemInvoked(
   const IInspectable&,
-  const NavigationViewSelectionChangedEventArgs& args) {
-  auto item = args.SelectedItem().try_as<NavigationViewItem>();
+  const NavigationViewItemInvokedEventArgs& args) {
+  auto item = args.InvokedItemContainer().try_as<NavigationViewItem>();
   if (!item) {
     return;
   }

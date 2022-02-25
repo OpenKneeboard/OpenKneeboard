@@ -9,7 +9,7 @@
 
   <NavigationView
     IsSettingsVisible="True"
-    SelectionChanged="OnNavigationSelectionChanged"
+    ItemInvoked="OnNavigationItemInvoked"
     x:Name="Navigation">
     <NavigationView.FooterMenuItems>
       <NavigationViewItem Content="About" Icon="Help" x:Name="AboutNavItem" />

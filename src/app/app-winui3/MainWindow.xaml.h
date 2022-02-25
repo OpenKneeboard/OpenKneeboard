@@ -33,9 +33,9 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   MainWindow();
   ~MainWindow();
 
-  void OnNavigationSelectionChanged(
+  void OnNavigationItemInvoked(
     const IInspectable& sender,
-    const NavigationViewSelectionChangedEventArgs& args);
+    const NavigationViewItemInvokedEventArgs& args);
 
  private:
   HWND mHwnd;
