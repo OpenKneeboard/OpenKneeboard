@@ -77,12 +77,12 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <ClCompile>
-      <PreprocessorDefinitions>BUILD_CONFIG=Debug;OPENKNEEBOARD_BREAK=__debugbreak();DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BUILD_CONFIG="Debug";OPENKNEEBOARD_BREAK=__debugbreak();DEBUG;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
     <ClCompile>
-      <PreprocessorDefinitions>BUILD_CONFIG=RelWithDebInfo;OPENKNEEBOARD_BREAK;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BUILD_CONFIG="RelWithDebInfo";OPENKNEEBOARD_BREAK;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -104,11 +104,15 @@
     <ClInclude Include="TabPage.xaml.h">
       <DependentUpon>TabPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="AboutPage.xaml.h">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="TabPage.xaml" />
+    <Page Include="AboutPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -125,6 +129,9 @@
     <ClCompile Include="TabPage.xaml.cpp">
       <DependentUpon>TabPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="AboutPage.xaml.cpp">
+      <DependentUpon>AboutPage.xaml</DependentUpon>
+    </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -139,6 +146,10 @@
     <Midl Include="TabPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>TabPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="AboutPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>AboutPage.xaml</DependentUpon>
     </Midl>
   </ItemGroup>
   <ItemGroup>

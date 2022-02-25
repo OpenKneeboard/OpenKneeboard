@@ -1,4 +1,4 @@
-/*
+﻿/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -109,11 +109,25 @@ void MainWindow::OnNavigationItemInvoked(
   if (!item) {
     return;
   }
+
+  if (item == AboutNavItem()) {
+    Frame().Navigate(xaml_typename<AboutPage>());
+    return;
+  }
+
   auto tag = item.Tag();
   if (!tag) {
     return;
   }
-  gKneeboard->SetTabID(winrt::unbox_value<uint64_t>(tag));
+
+  const auto tabID = winrt::unbox_value<uint64_t>(tag);
+
+  if (tabID == gKneeboard->GetCurrentTab()->GetInstanceID()) {
+    Frame().Navigate(xaml_typename<TabPage>(), tag);
+    return;
+  }
+
+  gKneeboard->SetTabID(tabID);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
