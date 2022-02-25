@@ -128,6 +128,7 @@ void TabPage::OnCanvasSizeChanged(
     static_cast<FLOAT>(size.Width),
     static_cast<FLOAT>(size.Height),
   };
+  std::scoped_lock lock(mSwapChainMutex);
   if (mSwapChain) {
     ResizeSwapChain();
   } else {
@@ -177,6 +178,8 @@ void TabPage::PaintNow() {
   auto metrics = GetPageMetrics();
 
   auto ctx = gDXResources.mD2DDeviceContext.get();
+
+  std::scoped_lock lock(mSwapChainMutex);
   winrt::com_ptr<IDXGISurface> surface;
   winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put())));
   winrt::com_ptr<ID2D1Bitmap1> bitmap;

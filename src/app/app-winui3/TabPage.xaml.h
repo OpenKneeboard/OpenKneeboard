@@ -24,6 +24,7 @@
 #include <dxgi1_2.h>
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "TabPage.g.h"
@@ -64,6 +65,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   DispatcherQueueController mDQC {nullptr};
   InputPointerSource mInputPointerSource {nullptr};
+  std::mutex mSwapChainMutex;
   bool mDrawCursor = false;
   void InitializePointerSource();
   void QueuePointerPoint(const PointerPoint&);
