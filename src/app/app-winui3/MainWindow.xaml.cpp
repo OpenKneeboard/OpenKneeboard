@@ -84,6 +84,7 @@ MainWindow::MainWindow() {
 }
 
 MainWindow::~MainWindow() {
+  mFrameTimer.Stop();
   gKneeboard = {};
   gDXResources = {};
 }
