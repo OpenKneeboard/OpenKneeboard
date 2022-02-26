@@ -149,7 +149,9 @@ void Event<Args...>::RemoveHandler(uint64_t token) {
 
 template <class... Args>
 void Event<Args...>::Emit(Args... args) {
-  for (const auto& hook: mHooks) {
+  // Copy in case one is erased while we're running
+  auto hooks = mHooks;
+  for (const auto& hook: hooks) {
     if (hook(args...) == HookResult::STOP_PROPAGATION) {
       return;
     }

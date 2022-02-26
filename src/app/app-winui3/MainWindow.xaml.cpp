@@ -111,6 +111,12 @@ void MainWindow::OnTabChanged() {
 void MainWindow::OnNavigationItemInvoked(
   const IInspectable&,
   const NavigationViewItemInvokedEventArgs& args) {
+
+  if (args.IsSettingsInvoked()) {
+    Frame().Navigate(xaml_typename<SettingsPage>());
+    return;
+  }
+
   auto item = args.InvokedItemContainer().try_as<NavigationViewItem>();
   if (!item) {
     return;

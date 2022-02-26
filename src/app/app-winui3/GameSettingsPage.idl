@@ -1,0 +1,17 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass GameSettingsPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        GameSettingsPage();
+    }
+
+    [default_interface]
+    runtimeclass GameInstanceData
+    {
+        GameInstanceData();
+        Microsoft.UI.Xaml.Media.Imaging.BitmapSource Icon;
+        String Name;
+        String Path;
+    }
+}

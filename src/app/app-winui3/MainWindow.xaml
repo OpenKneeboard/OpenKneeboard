@@ -14,6 +14,7 @@
     What I'm doing:
     * Define a title bar control with text, and margin for the controls
     * Set it as the title bar
+    * Define a two-row layout
 
     What I should be doing:
     * Set the pane title on the navigation view
@@ -24,11 +25,11 @@
     https://github.com/microsoft/microsoft-ui-xaml/issues/6519
   -->
   <Grid RowDefinitions="Auto,*">
-     <Grid
-     x:Name="AppTitleBar"
-     Margin="0,0,120,0"
-     Height="40"
-     Grid.Row="0"
+    <Grid
+      x:Name="AppTitleBar"
+      Margin="0,0,120,0"
+      Height="36"
+      Grid.Row="0"
       Background="{ThemeResource SystemChromeMediumColor}">
       <!--<Image
         Source="Images/WindowIcon.png"
@@ -50,6 +51,7 @@
       Grid.Row="1"
       IsBackButtonVisible="Collapsed"
       IsSettingsVisible="True"
+      IsTitleBarAutoPaddingEnabled="False"
       ItemInvoked="OnNavigationItemInvoked"
       Background="{ThemeResource SystemChromeMediumColor}"
       x:Name="Navigation">

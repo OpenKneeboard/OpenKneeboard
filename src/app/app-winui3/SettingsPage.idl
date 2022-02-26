@@ -1,0 +1,25 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass SettingsPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        SettingsPage();
+    }
+
+    enum SettingsSubpageID {
+        Games,
+        Tabs,
+        Bindings,
+    };
+
+    [default_interface]
+    [contentproperty("Description")]
+    runtimeclass SettingsSubpageData
+    {
+        SettingsSubpageData();
+        SettingsSubpageID ID;
+        String Glyph;
+        String Title;
+        String Description;
+    }
+}

@@ -88,7 +88,8 @@
     "random": "cpp",
     "valarray": "cpp",
     "mutex": "cpp",
-    "numbers": "cpp"
+    "numbers": "cpp",
+    "*.idl": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",

@@ -101,18 +101,26 @@
     <ClInclude Include="MainWindow.xaml.h">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="TabPage.xaml.h">
-      <DependentUpon>TabPage.xaml</DependentUpon>
-    </ClInclude>
     <ClInclude Include="AboutPage.xaml.h">
       <DependentUpon>AboutPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="GameSettingsPage.xaml.h">
+      <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="SettingsPage.xaml.h">
+      <DependentUpon>SettingsPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="TabPage.xaml.h">
+      <DependentUpon>TabPage.xaml</DependentUpon>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
     <Page Include="MainWindow.xaml" />
-    <Page Include="TabPage.xaml" />
     <Page Include="AboutPage.xaml" />
+    <Page Include="GameSettingsPage.xaml" />
+    <Page Include="SettingsPage.xaml" />
+    <Page Include="TabPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -126,11 +134,17 @@
     <ClCompile Include="MainWindow.xaml.cpp">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="TabPage.xaml.cpp">
-      <DependentUpon>TabPage.xaml</DependentUpon>
-    </ClCompile>
     <ClCompile Include="AboutPage.xaml.cpp">
       <DependentUpon>AboutPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="GameSettingsPage.xaml.cpp">
+      <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="SettingsPage.xaml.cpp">
+      <DependentUpon>SettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="TabPage.xaml.cpp">
+      <DependentUpon>TabPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
@@ -143,39 +157,28 @@
       <SubType>Code</SubType>
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </Midl>
-    <Midl Include="TabPage.idl">
-      <SubType>Code</SubType>
-      <DependentUpon>TabPage.xaml</DependentUpon>
-    </Midl>
     <Midl Include="AboutPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>AboutPage.xaml</DependentUpon>
     </Midl>
+    <Midl Include="GameSettingsPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="SettingsPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>SettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="TabPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>TabPage.xaml</DependentUpon>
+    </Midl>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="readme.txt">
-      <DeploymentContent>false</DeploymentContent>
-    </Text>
-  </ItemGroup>
-  <!--
-  <ItemGroup>
-    <Image Include="Assets\LockScreenLogo.scale-200.png" />
-    <Image Include="Assets\SplashScreen.scale-200.png" />
-    <Image Include="Assets\Square150x150Logo.scale-200.png" />
-    <Image Include="Assets\Square44x44Logo.scale-200.png" />
-    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-    <Image Include="Assets\StoreLogo.png" />
-    <Image Include="Assets\Wide310x150Logo.scale-200.png" />
-  </ItemGroup>
-  -->
   <!-- Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
        Tools extension to be activated for this project even if the Windows App SDK Nuget
        package has not yet been restored -->
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnablePreviewMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
