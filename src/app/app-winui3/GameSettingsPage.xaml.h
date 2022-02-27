@@ -26,18 +26,27 @@
 
 #include <OpenKneeboard/GameInstance.h>
 
-struct IWICImagingFactory;
+#include <filesystem>
+
+namespace OpenKneeboard {
+  class ExecutableIconFactory;
+}
 
 using namespace OpenKneeboard;
+
+using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
   GameSettingsPage();
   ~GameSettingsPage();
+
+  winrt::fire_and_forget AddRunningProcess(const IInspectable&, const RoutedEventArgs&);
   private:
-   BitmapSource GetIconFromExecutable(const std::filesystem::path&);
-   winrt::com_ptr<IWICImagingFactory> mWIC;
+   std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
+   void UpdateGames();
+   void AddPath(const std::filesystem::path&);
 };
 
 struct GameInstanceData : GameInstanceDataT<GameInstanceData> {

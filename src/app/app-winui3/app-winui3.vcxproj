@@ -107,6 +107,9 @@
     <ClInclude Include="GameSettingsPage.xaml.h">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="ProcessListPage.xaml.h">
+      <DependentUpon>ProcessListPage.xaml</DependentUpon>
+    </ClInclude>
     <ClInclude Include="SettingsPage.xaml.h">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </ClInclude>
@@ -119,6 +122,7 @@
     <Page Include="MainWindow.xaml" />
     <Page Include="AboutPage.xaml" />
     <Page Include="GameSettingsPage.xaml" />
+    <Page Include="ProcessListPage.xaml" />
     <Page Include="SettingsPage.xaml" />
     <Page Include="TabPage.xaml" />
   </ItemGroup>
@@ -127,6 +131,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Events-winrt.cpp" />
+    <ClCompile Include="ExecutableIconFactory.cpp" />
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="App.xaml.cpp">
       <DependentUpon>App.xaml</DependentUpon>
@@ -139,6 +144,9 @@
     </ClCompile>
     <ClCompile Include="GameSettingsPage.xaml.cpp">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="ProcessListPage.xaml.cpp">
+      <DependentUpon>ProcessListPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="SettingsPage.xaml.cpp">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
@@ -164,6 +172,10 @@
     <Midl Include="GameSettingsPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="ProcessListPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>ProcessListPage.xaml</DependentUpon>
     </Midl>
     <Midl Include="SettingsPage.idl">
       <SubType>Code</SubType>

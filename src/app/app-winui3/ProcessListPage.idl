@@ -1,0 +1,10 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass ProcessListPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        ProcessListPage();
+        String SelectedPath { get; };
+        event Windows.Foundation.EventHandler<String> SelectionChanged;
+    }
+}

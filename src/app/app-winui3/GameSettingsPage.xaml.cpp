@@ -28,20 +28,25 @@
 
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <wincodec.h>
+#include <OpenKneeboard/utf8.h>
 
 #include <algorithm>
 
+#include "ExecutableIconFactory.h"
 #include "Globals.h"
 
 using namespace winrt::Windows::Foundation::Collections;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
 GameSettingsPage::GameSettingsPage() {
   InitializeComponent();
-  mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
+  mIconFactory = std::make_unique<ExecutableIconFactory>();
+  UpdateGames();
+}
 
+void GameSettingsPage::UpdateGames() {
   auto games = gKneeboard->GetGamesList()->GetGameInstances();
   std::sort(games.begin(), games.end(), [](auto& a, auto& b) {
     return a.name < b.name;
@@ -50,7 +55,7 @@ GameSettingsPage::GameSettingsPage() {
     winrt::single_threaded_vector<IInspectable>()};
   for (const auto& game: games) {
     auto winrtGame = winrt::make<GameInstanceData>();
-    winrtGame.Icon(GetIconFromExecutable(game.path));
+    winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game.path));
     winrtGame.Name(winrt::to_hstring(game.name));
     winrtGame.Path(game.path.wstring());
     winrtGames.Append(winrtGame);
@@ -61,26 +66,56 @@ GameSettingsPage::GameSettingsPage() {
 GameSettingsPage::~GameSettingsPage() {
 }
 
-BitmapSource GameSettingsPage::GetIconFromExecutable(
-  const std::filesystem::path& path) {
-  auto wpath = path.wstring();
-  HICON handle = ExtractIcon(GetModuleHandle(NULL), wpath.c_str(), 0);
-  if (!handle) {
-    handle = LoadIconW(NULL, IDI_APPLICATION);
-  }
-  winrt::com_ptr<IWICBitmap> wicBitmap;
-  winrt::check_hresult(mWIC->CreateBitmapFromHICON(handle, wicBitmap.put()));
-  UINT width, height;
-  wicBitmap->GetSize(&width, &height);
-  DestroyIcon(handle);
+winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
+  const IInspectable&,
+  const RoutedEventArgs&) {
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
 
-  WriteableBitmap xamlBitmap(width, height);
-  wicBitmap->CopyPixels(
-    nullptr,
-    width * 4,
-    height * width * 4,
-    reinterpret_cast<BYTE*>(xamlBitmap.PixelBuffer().data()));
-  return xamlBitmap;
+  ::winrt::OpenKneeboardApp::ProcessListPage processList;
+  dialog.Title(winrt::box_value(winrt::to_hstring(_("Select a Game"))));
+  dialog.Content(processList);
+
+  dialog.IsPrimaryButtonEnabled(false);
+  dialog.PrimaryButtonText(winrt::to_hstring(_("Add")));
+  dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  processList.SelectionChanged(
+    [&](auto&, auto&) { dialog.IsPrimaryButtonEnabled(true); });
+
+  auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    return;
+  }
+
+  auto path = processList.SelectedPath();
+  if (path.empty()) {
+    return;
+  }
+
+  this->AddPath(std::wstring_view {path});
+}
+
+void GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
+  std::filesystem::path path = std::filesystem::canonical(rawPath);
+
+  auto gamesList = gKneeboard->GetGamesList();
+  for (auto game: gamesList->GetGames()) {
+    if (!game->MatchesPath(path)) {
+      continue;
+    }
+    GameInstance instance {
+      .name = game->GetUserFriendlyName(path),
+      .path = path,
+      .game = game,
+    };
+    auto instances = gamesList->GetGameInstances();
+    instances.push_back(instance);
+    gamesList->SetGameInstances(instances);
+    this->UpdateGames();
+    return;
+  }
 }
 
 GameInstanceData::GameInstanceData() {

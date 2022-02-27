@@ -9,7 +9,25 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Grid Margin="0,0,0,16" RowDefinitions="Auto,*">
     <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
-      <AppBarButton Icon="Add" Label="Add"/>
+      <AppBarButton Icon="Add" Label="Add a Game">
+        <AppBarButton.Flyout>
+          <MenuFlyout>
+            <MenuFlyoutItem
+              Click="AddRunningProcess"
+              Text="Add a game that's running">
+              <MenuFlyoutItem.Icon>
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE768;"/>
+              </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Text="Add an exe file">
+              <MenuFlyoutItem.Icon>
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
+              </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+
+          </MenuFlyout>
+        </AppBarButton.Flyout>
+      </AppBarButton>
     </CommandBar>
     <ListView Grid.Row="1" x:Name="List" SelectionMode="None">
       <ListView.ItemTemplate>
