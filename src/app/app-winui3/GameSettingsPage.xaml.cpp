@@ -29,6 +29,7 @@
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/utf8.h>
+#include <fmt/format.h>
 
 #include <algorithm>
 
@@ -56,7 +57,7 @@ void GameSettingsPage::UpdateGames() {
   for (const auto& game: games) {
     auto winrtGame = winrt::make<GameInstanceData>();
     winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game.path));
-    winrtGame.Name(winrt::to_hstring(game.name));
+    winrtGame.Name(to_hstring(game.name));
     winrtGame.Path(game.path.wstring());
     winrtGames.Append(winrtGame);
   }
@@ -73,12 +74,12 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
   dialog.XamlRoot(this->XamlRoot());
 
   ::winrt::OpenKneeboardApp::ProcessListPage processList;
-  dialog.Title(winrt::box_value(winrt::to_hstring(_("Select a Game"))));
+  dialog.Title(winrt::box_value(to_hstring(_("Select a Game"))));
   dialog.Content(processList);
 
   dialog.IsPrimaryButtonEnabled(false);
-  dialog.PrimaryButtonText(winrt::to_hstring(_("Add")));
-  dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
+  dialog.PrimaryButtonText(to_hstring(_("Add")));
+  dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
   processList.SelectionChanged(
@@ -95,6 +96,41 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
   }
 
   this->AddPath(std::wstring_view {path});
+}
+
+winrt::fire_and_forget GameSettingsPage::RemoveGame(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+
+  auto path = std::filesystem::canonical(
+    std::wstring_view {unbox_value<hstring>(sender.as<Button>().Tag())});
+  auto gamesList = gKneeboard->GetGamesList();
+  auto instances = gamesList->GetGameInstances();
+  auto it = std::find_if(
+    instances.begin(), instances.end(), [&](auto x) { return x.path == path; });
+  if (it == instances.end()) {
+    co_return;
+  }
+
+  dialog.Title(box_value(to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), it->name))));
+  dialog.Content(box_value(to_hstring(fmt::format(
+    fmt::runtime(_("Do you want OpenKneeboard to stop integrating with {}?")),
+    it->name))));
+
+  dialog.PrimaryButtonText(to_hstring(_("Yes")));
+  dialog.CloseButtonText(to_hstring(_("No")));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    return;
+  }
+
+  instances.erase(it);
+  gamesList->SetGameInstances(instances);
+  UpdateGames();
 }
 
 void GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {

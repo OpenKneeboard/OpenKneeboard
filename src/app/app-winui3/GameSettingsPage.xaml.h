@@ -43,6 +43,7 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
   ~GameSettingsPage();
 
   winrt::fire_and_forget AddRunningProcess(const IInspectable&, const RoutedEventArgs&);
+  winrt::fire_and_forget RemoveGame(const IInspectable&, const RoutedEventArgs&);
   private:
    std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
    void UpdateGames();

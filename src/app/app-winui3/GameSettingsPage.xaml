@@ -54,7 +54,7 @@
             </Expander.Header>
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock Grid.Column="0" Text="{x:Bind Path}" />
-              <Button Grid.Column="1">
+              <Button Grid.Column="1" Tag="{x:Bind Path}" Click="RemoveGame">
                 <SymbolIcon Symbol="Delete" />
               </Button>
             </Grid>

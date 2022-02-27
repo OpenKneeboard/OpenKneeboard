@@ -8,7 +8,7 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Grid>
-    <ListView x:Name="List" SelectionMode="Single" SelectionChanged="OnListSelectionChanged" Width="800">
+    <ListView x:Name="List" SelectionMode="Single" SelectionChanged="OnListSelectionChanged">
       <ListView.ItemTemplate>
         <DataTemplate x:DataType="local:GameInstanceData">
           <Grid ColumnDefinitions="Auto,*" Margin="8">
