@@ -74,7 +74,6 @@ ProcessListPage::ProcessListPage() {
     GameInstanceData game;
     game.Path(path.wstring());
     game.Icon(iconFactory.CreateXamlBitmapSource(path));
-    // TODO: fetch window name instead
     game.Name(path.stem().wstring());
 
     games.push_back(game);
