@@ -115,7 +115,6 @@ void MainWindow::OnTabChanged() {
 void MainWindow::OnNavigationItemInvoked(
   const IInspectable&,
   const NavigationViewItemInvokedEventArgs& args) {
-
   if (args.IsSettingsInvoked()) {
     Frame().Navigate(xaml_typename<SettingsPage>());
     return;
@@ -144,6 +143,12 @@ void MainWindow::OnNavigationItemInvoked(
   }
 
   gKneeboard->SetTabID(tabID);
+}
+
+void MainWindow::OnBackClick(
+  const IInspectable&,
+  const RoutedEventArgs&) {
+  Frame().GoBack();
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

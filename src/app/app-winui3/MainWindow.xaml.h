@@ -26,6 +26,7 @@
 #include "MainWindow.g.h"
 
 using namespace winrt::Microsoft::UI::Dispatching;
+using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -36,6 +37,9 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   void OnNavigationItemInvoked(
     const IInspectable& sender,
     const NavigationViewItemInvokedEventArgs& args);
+  void OnBackClick(
+    const IInspectable& sender,
+    const RoutedEventArgs& args);
 
  private:
   HWND mHwnd;
