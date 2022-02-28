@@ -54,6 +54,7 @@ MainWindow::MainWindow() {
   {
     auto ref = get_strong();
     winrt::check_hresult(ref.as<IWindowNative>()->get_WindowHandle(&mHwnd));
+    gMainWindow = mHwnd;
   }
 
   gUIThreadDispatcherQueue = DispatcherQueue();
@@ -88,6 +89,7 @@ MainWindow::~MainWindow() {
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
   gKneeboard = {};
   gDXResources = {};
+  gMainWindow = {};
 }
 
 void MainWindow::OnTabChanged() {

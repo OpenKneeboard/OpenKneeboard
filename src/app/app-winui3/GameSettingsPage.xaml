@@ -19,7 +19,7 @@
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE768;"/>
               </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
-            <MenuFlyoutItem Text="Add an exe file">
+            <MenuFlyoutItem Text="Add an exe file" Click="AddExe">
               <MenuFlyoutItem.Icon>
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
               </MenuFlyoutItem.Icon>

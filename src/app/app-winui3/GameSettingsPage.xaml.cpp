@@ -30,6 +30,9 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
+#include <microsoft.ui.xaml.window.h>
+#include <shobjidl.h>
+#include <winrt/windows.storage.pickers.h>
 
 #include <algorithm>
 
@@ -98,6 +101,26 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
   this->AddPath(std::wstring_view {path});
 }
 
+winrt::fire_and_forget GameSettingsPage::AddExe(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  auto picker = Windows::Storage::Pickers::FileOpenPicker();
+  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
+  picker.SettingsIdentifier(L"openkneeboard/addGameExe");
+  picker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::ComputerFolder);
+  picker.FileTypeFilter().Append(L".exe");
+  auto file = co_await picker.PickSingleFileAsync();
+  if (!file) {
+    return;
+  }
+  auto path = file.Path();
+  if (path.empty()) {
+    return;
+  }
+
+  AddPath(std::wstring_view { path });
+}
+
 winrt::fire_and_forget GameSettingsPage::RemoveGame(
   const IInspectable& sender,
   const RoutedEventArgs&) {
@@ -114,7 +137,8 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
     co_return;
   }
 
-  dialog.Title(box_value(to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), it->name))));
+  dialog.Title(box_value(
+    to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), it->name))));
   dialog.Content(box_value(to_hstring(fmt::format(
     fmt::runtime(_("Do you want OpenKneeboard to stop integrating with {}?")),
     it->name))));
@@ -134,6 +158,13 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
 }
 
 void GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
+  if (rawPath.empty()) {
+    return;
+  }
+  if (!std::filesystem::is_regular_file(rawPath)) {
+    return;
+  }
+
   std::filesystem::path path = std::filesystem::canonical(rawPath);
 
   auto gamesList = gKneeboard->GetGamesList();

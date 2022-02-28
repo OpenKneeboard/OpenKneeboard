@@ -27,6 +27,7 @@
 
 namespace OpenKneeboard {
 
+HWND gMainWindow {};
 std::shared_ptr<KneeboardState> gKneeboard;
 DXResources gDXResources;
 winrt::Microsoft::UI::Dispatching::DispatcherQueue gUIThreadDispatcherQueue { nullptr };
