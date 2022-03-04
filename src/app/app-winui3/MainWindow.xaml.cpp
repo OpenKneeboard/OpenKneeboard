@@ -28,6 +28,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/windows.ui.xaml.interop.h>
 
@@ -81,15 +82,27 @@ MainWindow::MainWindow() {
   mFrameTimer.Tick([=](auto&, auto&) { gKneeboard->evFrameTimerEvent.Emit(); });
   mFrameTimer.Start();
 
+  this->Closed({this, &MainWindow::OnClosed});
+
   // TODO: install DCS hooks
 }
 
 MainWindow::~MainWindow() {
-  mFrameTimer.Stop();
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
   gKneeboard = {};
   gDXResources = {};
   gMainWindow = {};
+}
+
+winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
+  const IInspectable&,
+  const WindowEventArgs&) {
+  dprint("Stopping frame timer...");
+  mFrameTimer.Stop();
+  mFrameTimer = { nullptr };
+  dprint("Stopping dispatch queue...");
+  co_await mDQC.ShutdownQueueAsync();
+  mDQC = { nullptr };
+  dprint("Frame thread shutdown.");
 }
 
 void MainWindow::OnTabChanged() {
@@ -145,9 +158,7 @@ void MainWindow::OnNavigationItemInvoked(
   gKneeboard->SetTabID(tabID);
 }
 
-void MainWindow::OnBackClick(
-  const IInspectable&,
-  const RoutedEventArgs&) {
+void MainWindow::OnBackClick(const IInspectable&, const RoutedEventArgs&) {
   Frame().GoBack();
 }
 

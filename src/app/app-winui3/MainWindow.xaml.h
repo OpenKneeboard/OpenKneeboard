@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+
 #include <memory>
 #include <thread>
 
@@ -37,9 +38,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   void OnNavigationItemInvoked(
     const IInspectable& sender,
     const NavigationViewItemInvokedEventArgs& args);
-  void OnBackClick(
-    const IInspectable& sender,
-    const RoutedEventArgs& args);
+  void OnBackClick(const IInspectable& sender, const RoutedEventArgs& args);
 
  private:
   HWND mHwnd;
@@ -47,10 +46,14 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   NavigationViewItem mGameSettingsItem;
   NavigationViewItem mBindingSettingsItem;
 
-  DispatcherQueueController mDQC{ nullptr };
-  DispatcherQueueTimer mFrameTimer { nullptr };
+  DispatcherQueueController mDQC {nullptr};
+  DispatcherQueueTimer mFrameTimer {nullptr};
 
   void OnTabChanged();
+
+  winrt::Windows::Foundation::IAsyncAction OnClosed(
+    const IInspectable&,
+    const WindowEventArgs&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 
