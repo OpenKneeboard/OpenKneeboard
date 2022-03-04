@@ -1,0 +1,16 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass TabSettingsPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        TabSettingsPage();
+    }
+
+    [default_interface]
+    runtimeclass TabData
+    {
+        TabData();
+        UInt64 UniqueID;
+        String Title;
+    }
+}

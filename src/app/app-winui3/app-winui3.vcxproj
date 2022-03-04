@@ -66,7 +66,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
       <WarningLevel>Level4</WarningLevel>
-      <AdditionalOptions>%(AdditionalOptions) /bigobj /await</AdditionalOptions>
+      <AdditionalOptions>%(AdditionalOptions) /bigobj /await /wd4250</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PreprocessorDefinitions>UNICODE=1;_UNICODE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CMakeIncludeDirs);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -116,6 +116,9 @@
     <ClInclude Include="TabPage.xaml.h">
       <DependentUpon>TabPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="TabSettingsPage.xaml.h">
+      <DependentUpon>TabSettingsPage.xaml</DependentUpon>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
@@ -125,6 +128,7 @@
     <Page Include="ProcessListPage.xaml" />
     <Page Include="SettingsPage.xaml" />
     <Page Include="TabPage.xaml" />
+    <Page Include="TabSettingsPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -153,6 +157,9 @@
     </ClCompile>
     <ClCompile Include="TabPage.xaml.cpp">
       <DependentUpon>TabPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="TabSettingsPage.xaml.cpp">
+      <DependentUpon>TabSettingsPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
@@ -184,6 +191,10 @@
     <Midl Include="TabPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>TabPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="TabSettingsPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>TabSettingsPage.xaml</DependentUpon>
     </Midl>
   </ItemGroup>
   <!-- Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
