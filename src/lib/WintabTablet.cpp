@@ -130,13 +130,21 @@ WintabTablet::Impl::Impl(HWND window) {
   logicalContext.lcInOrgX = axis.axMin;
   logicalContext.lcInExtX = axis.axMax - axis.axMin;
   logicalContext.lcOutOrgX = 0;
-  logicalContext.lcOutExtX = logicalContext.lcInExtX;
+  // From https://github.com/Wacom-Developer/wacom-device-kit-windows/blob/d2bc78fe79d442a3d398f750357e46effbca1daa/Wintab%20CAD%20Test/SampleCode/CadTest.cpp#L223-L231
+  //
+  // This prevents outputted display-tablet coordinates
+	// range from being mapped to full desktop, which
+	// causes problems in multi-screen set-ups. Ie, without this
+	// then the tablet coord. range is mapped to full desktop, intead
+	// of only the display tablet active area.
+  logicalContext.lcOutExtX = axis.axMax - axis.axMin + 2;;
 
   mWintab.WTInfoW(WTI_DEVICES, DVC_Y, &axis);
   logicalContext.lcInOrgY = axis.axMin;
   logicalContext.lcInExtY = axis.axMax - axis.axMin;
   logicalContext.lcOutOrgY = 0;
-  logicalContext.lcOutExtY = -logicalContext.lcInExtY;
+  // same trick as above
+	logicalContext.lcOutExtY = -(axis.axMax - axis.axMin + 1);
 
   mWintab.WTInfoW(WTI_DEVICES, DVC_NPRESSURE, &axis);
 
