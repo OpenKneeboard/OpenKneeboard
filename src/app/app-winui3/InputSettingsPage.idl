@@ -1,0 +1,8 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass InputSettingsPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        InputSettingsPage();
+    }
+}

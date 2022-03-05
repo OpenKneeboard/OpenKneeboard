@@ -62,7 +62,7 @@
       <local:SettingsSubpageData ID="Tabs" Glyph="&#xF571;" Title="Tabs">
         Add, remove, and re-order sections in your kneeboard.
       </local:SettingsSubpageData>
-      <local:SettingsSubpageData ID="Bindings" Glyph="&#xE961;" Title="Bindings">
+      <local:SettingsSubpageData ID="Input" Glyph="&#xE961;" Title="Input">
         Control your kneeboard with your keyboard, joystick, or graphics tablet buttons.
       </local:SettingsSubpageData>
     </GridView.Items>

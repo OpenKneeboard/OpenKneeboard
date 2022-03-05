@@ -107,6 +107,9 @@
     <ClInclude Include="GameSettingsPage.xaml.h">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="InputSettingsPage.xaml.h">
+      <DependentUpon>InputSettingsPage.xaml</DependentUpon>
+    </ClInclude>
     <ClInclude Include="ProcessListPage.xaml.h">
       <DependentUpon>ProcessListPage.xaml</DependentUpon>
     </ClInclude>
@@ -125,6 +128,7 @@
     <Page Include="MainWindow.xaml" />
     <Page Include="AboutPage.xaml" />
     <Page Include="GameSettingsPage.xaml" />
+    <Page Include="InputSettingsPage.xaml" />
     <Page Include="ProcessListPage.xaml" />
     <Page Include="SettingsPage.xaml" />
     <Page Include="TabPage.xaml" />
@@ -148,6 +152,9 @@
     </ClCompile>
     <ClCompile Include="GameSettingsPage.xaml.cpp">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="InputSettingsPage.xaml.cpp">
+      <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="ProcessListPage.xaml.cpp">
       <DependentUpon>ProcessListPage.xaml</DependentUpon>
@@ -179,6 +186,10 @@
     <Midl Include="GameSettingsPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="InputSettingsPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </Midl>
     <Midl Include="ProcessListPage.idl">
       <SubType>Code</SubType>

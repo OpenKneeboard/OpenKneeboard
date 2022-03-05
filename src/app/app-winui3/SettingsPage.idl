@@ -9,7 +9,7 @@ namespace OpenKneeboardApp
     enum SettingsSubpageID {
         Games,
         Tabs,
-        Bindings,
+        Input,
     };
 
     [default_interface]
