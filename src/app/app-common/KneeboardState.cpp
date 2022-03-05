@@ -103,6 +103,7 @@ void KneeboardState::SetTabs(
     mCurrentTab = tabs.empty() ? nullptr : tabs.front();
   }
   UpdateLayout();
+  evTabsChangedEvent.Emit();
 }
 
 void KneeboardState::InsertTab(
