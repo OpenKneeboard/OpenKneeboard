@@ -50,6 +50,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   DispatcherQueueTimer mFrameTimer {nullptr};
 
   void OnTabChanged();
+  void OnTabsChanged();
 
   winrt::Windows::Foundation::IAsyncAction OnClosed(
     const IInspectable&,

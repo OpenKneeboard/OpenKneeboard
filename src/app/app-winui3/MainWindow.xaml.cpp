@@ -62,18 +62,13 @@ MainWindow::MainWindow() {
   gDXResources = DXResources::Create();
   gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);
 
-  auto navItems = this->Navigation().MenuItems();
-  for (auto tab: gKneeboard->GetTabs()) {
-    muxc::NavigationViewItem item;
-    item.Content(
-      winrt::box_value(winrt::to_hstring(tab->GetTab()->GetTitle())));
-    item.Tag(winrt::box_value(tab->GetInstanceID()));
-    navItems.Append(item);
-  }
+  OnTabsChanged();
   OnTabChanged();
 
   AddEventListener(
     gKneeboard->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+  AddEventListener(
+    gKneeboard->evTabsChangedEvent, &MainWindow::OnTabsChanged, this);
 
   // TODO: add to globals as 'game loop' thread
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
@@ -123,6 +118,18 @@ void MainWindow::OnTabChanged() {
     }
   }
   this->Frame().Navigate(xaml_typename<TabPage>(), winrt::box_value(id));
+}
+
+void MainWindow::OnTabsChanged() {
+  auto navItems = this->Navigation().MenuItems();
+  navItems.Clear();
+  for (auto tab: gKneeboard->GetTabs()) {
+    muxc::NavigationViewItem item;
+    item.Content(
+      winrt::box_value(winrt::to_hstring(tab->GetTab()->GetTitle())));
+    item.Tag(winrt::box_value(tab->GetInstanceID()));
+    navItems.Append(item);
+  }
 }
 
 void MainWindow::OnNavigationItemInvoked(
