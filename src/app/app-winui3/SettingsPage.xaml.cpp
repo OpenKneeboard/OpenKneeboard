@@ -43,6 +43,9 @@ void SettingsPage::OnItemClick(const IInspectable&, const ItemClickEventArgs& ar
     case SettingsSubpageID::Games:
       Frame().Navigate(xaml_typename<GameSettingsPage>());
       return;
+    case SettingsSubpageID::Input:
+      Frame().Navigate(xaml_typename<InputSettingsPage>());
+      return;
   }
 
 }
