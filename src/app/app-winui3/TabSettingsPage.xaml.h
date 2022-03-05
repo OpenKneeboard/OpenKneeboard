@@ -27,14 +27,26 @@
 
 #include <string>
 
+namespace OpenKneeboard {
+  class Tab;
+  enum class TabType;
+}
+
+
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   TabSettingsPage();
 
-  fire_and_forget AddTab(const IInspectable&, const RoutedEventArgs&);
+  void CreateTab(const IInspectable&, const RoutedEventArgs&);
  private:
+  template<class T>
+  fire_and_forget CreateFileBasedTab(hstring filenameExtension);
+  template<class T>
+  fire_and_forget CreateFolderBasedTab();
+
+  void AddTab(const std::shared_ptr<OpenKneeboard::Tab>&);
   std::string mData;
 };
 
