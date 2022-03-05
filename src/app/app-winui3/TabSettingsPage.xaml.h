@@ -40,6 +40,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   TabSettingsPage();
 
   void CreateTab(const IInspectable&, const RoutedEventArgs&);
+  fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
  private:
   template<class T>
   fire_and_forget CreateFileBasedTab(hstring filenameExtension);

@@ -63,6 +63,44 @@ TabSettingsPage::TabSettingsPage() {
 #undef IT
 }
 
+fire_and_forget TabSettingsPage::RemoveTab(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  auto uniqueID = unbox_value<uint64_t>(sender.as<Button>().Tag());
+  auto tabs = gKneeboard->GetTabs();
+  auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& tabState) {
+    return tabState->GetInstanceID() == uniqueID;
+  });
+  if (it == tabs.end()) {
+    co_return;
+  }
+  auto& tabState = *it;
+  auto tab = tabState->GetRootTab();
+
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(
+    to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), tab->GetTitle()))));
+  dialog.Content(box_value(to_hstring(fmt::format(
+    fmt::runtime(_("Do you want to remove the '{}' tab?")), tab->GetTitle()))));
+
+  dialog.PrimaryButtonText(to_hstring(_("Yes")));
+  dialog.CloseButtonText(to_hstring(_("No")));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  auto idx = static_cast<uint8_t>(it - tabs.begin());
+  List()
+    .ItemsSource()
+    .as<Windows::Foundation::Collections::IVector<IInspectable>>()
+    .RemoveAt(idx);
+  gKneeboard->RemoveTab(idx);
+}
+
 void TabSettingsPage::CreateTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {

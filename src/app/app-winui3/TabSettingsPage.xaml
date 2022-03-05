@@ -38,7 +38,7 @@
 							Text="{x:Bind Title}"
 							VerticalAlignment="Center"
 						/>
-            <Button Grid.Column="1" Tag="{x:Bind UniqueID}">
+            <Button Grid.Column="1" Tag="{x:Bind UniqueID}" Click="RemoveTab">
               <SymbolIcon Symbol="Delete" />
             </Button>
           </Grid>
