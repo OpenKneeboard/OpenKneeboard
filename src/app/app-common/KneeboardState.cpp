@@ -109,7 +109,7 @@ void KneeboardState::InsertTab(
   uint8_t index,
   const std::shared_ptr<TabState>& tab) {
   auto tabs = mTabs;
-  tabs.insert(mTabs.begin() + index, tab);
+  tabs.insert(tabs.begin() + index, tab);
   SetTabs(tabs);
 }
 
