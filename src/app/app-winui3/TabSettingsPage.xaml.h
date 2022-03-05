@@ -29,6 +29,7 @@
 
 namespace OpenKneeboard {
   class Tab;
+  class TabState;
   enum class TabType;
 }
 
@@ -41,6 +42,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
 
   void CreateTab(const IInspectable&, const RoutedEventArgs&);
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
+  void OnTabsChanged(const IInspectable&, const Windows::Foundation::Collections::IVectorChangedEventArgs&);
  private:
   template<class T>
   fire_and_forget CreateFileBasedTab(hstring filenameExtension);

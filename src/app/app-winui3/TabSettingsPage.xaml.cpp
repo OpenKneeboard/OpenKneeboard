@@ -28,7 +28,7 @@
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/TabTypes.h>
-#include <fmt/format.h>
+#include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/windows.storage.pickers.h>
@@ -51,6 +51,7 @@ TabSettingsPage::TabSettingsPage() {
     tabs.Append(winrtTab);
   }
   List().ItemsSource(tabs);
+  tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
 
   auto tabTypes = AddTabFlyout().Items();
 #define IT(label, name) \
@@ -94,11 +95,11 @@ fire_and_forget TabSettingsPage::RemoveTab(
   }
 
   auto idx = static_cast<uint8_t>(it - tabs.begin());
+  gKneeboard->RemoveTab(idx);
   List()
     .ItemsSource()
     .as<Windows::Foundation::Collections::IVector<IInspectable>>()
     .RemoveAt(idx);
-  gKneeboard->RemoveTab(idx);
 }
 
 void TabSettingsPage::CreateTab(
@@ -196,6 +197,35 @@ void TabSettingsPage::AddTab(const std::shared_ptr<Tab>& tab) {
     .ItemsSource()
     .as<Windows::Foundation::Collections::IVector<IInspectable>>()
     .InsertAt(idx, winrtTab);
+}
+
+void TabSettingsPage::OnTabsChanged(
+  const IInspectable&,
+  const Windows::Foundation::Collections::IVectorChangedEventArgs&) {
+  // For add/remove, the kneeboard state is updated first, but for reorder,
+  // the ListView is the source of truth.
+  //
+  // Reorders are two-step: a remove and an insert
+  auto items = List()
+                 .ItemsSource()
+                 .as<Windows::Foundation::Collections::IVector<IInspectable>>();
+  auto tabs = gKneeboard->GetTabs();
+  if (items.Size() != tabs.size()) {
+    // ignore the deletion ...
+    return;
+  }
+  // ... but act on the insert :)
+
+  std::vector<std::shared_ptr<TabState>> reorderedTabs;
+  for (auto item: items) {
+    auto id = item.as<TabData>()->UniqueID();
+    auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) { return it->GetInstanceID() == id; });
+    if (it == tabs.end()) {
+      continue;
+    }
+    reorderedTabs.push_back(*it);
+  }
+  gKneeboard->SetTabs(reorderedTabs);
 }
 
 hstring TabData::Title() {
