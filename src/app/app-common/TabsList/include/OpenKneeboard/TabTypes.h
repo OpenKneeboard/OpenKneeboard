@@ -56,6 +56,12 @@ enum {
 #undef IT
 };
 
+enum class TabType {
+#define IT(_, key) key = TABTYPE_IDX_##key,
+  OPENKNEEBOARD_TAB_TYPES
+#undef IT
+};
+
 struct DXResources;
 
 // clang-format off
