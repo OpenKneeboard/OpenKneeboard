@@ -91,6 +91,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Manifest Include="app.manifest" />
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
