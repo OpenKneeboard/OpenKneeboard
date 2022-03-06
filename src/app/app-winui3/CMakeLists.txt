@@ -14,28 +14,61 @@ string(
   "$<TARGET_PROPERTY:OpenKneeboard-App-Common,INCLUDE_DIRECTORIES>"
 )
 
-string(
-  JOIN ";" LIBRARIES
-  "$<TARGET_FILE:OpenKneeboard::App::Common>"
-  "$<TARGET_FILE:OpenKneeboard-D2DErrorRenderer>"
-  "$<TARGET_FILE:OpenKneeboard-DXResources>"
-  "$<TARGET_FILE:OpenKneeboard-GameEvent>"
-  "$<TARGET_FILE:OpenKneeboard-GetSystemColor>"
-  "$<TARGET_FILE:OpenKneeboard-RuntimeFiles>"
-  "$<TARGET_FILE:OpenKneeboard-SHM>"
-  "$<TARGET_FILE:OpenKneeboard-UTF8>"
-  "$<TARGET_FILE:OpenKneeboard-dprint>"
-  "$<TARGET_FILE:OpenKneeboard-games>"
-  "$<TARGET_FILE:OpenKneeboard-scope_guard>"
-  "$<TARGET_FILE:OpenKneeboard-tablets>"
-  "$<TARGET_FILE:ThirdParty::fmt>"
-  "$<TARGET_FILE:ThirdParty::QPDF>"
-  "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_IMPLIB>>"
-  "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::DirectXTK,INTERFACE_LINK_LIBRARIES>>"
-  "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::LibJpeg,INTERFACE_LINK_LIBRARIES>>"
-  "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::LibZip,INTERFACE_LINK_LIBRARIES>>"
-  "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::ZLib,INTERFACE_LINK_LIBRARIES>>"
+set(
+  TARGET_FILE_LIBRARIES
+  OpenKneeboard::App::Common
+  OpenKneeboard-D2DErrorRenderer
+  OpenKneeboard-DXResources
+  OpenKneeboard-GameEvent
+  OpenKneeboard-GetSystemColor
+  OpenKneeboard-RuntimeFiles
+  OpenKneeboard-SHM
+  OpenKneeboard-UTF8
+  OpenKneeboard-dprint
+  OpenKneeboard-games
+  OpenKneeboard-scope_guard
+  OpenKneeboard-tablets
+  ThirdParty::fmt
+  ThirdParty::QPDF
 )
+
+set(IMPORTED_IMPLIB_LIBRARIES ThirdParty::OpenVR)
+
+set(
+  INTERFACE_LIBRARIES
+  ThirdParty::DirectXTK
+  ThirdParty::LibJpeg
+  ThirdParty::LibZip
+  ThirdParty::ZLib
+)
+
+set(LIBRARY_DEPENDENCIES)
+set(LIBRARY_PATHS)
+
+foreach(TARGET ${TARGET_FILE_LIBRARIES})
+  list(APPEND LIBRARY_DEPENDENCIES "${TARGET}")
+  list(APPEND LIBRARY_PATHS "$<TARGET_FILE:${TARGET}>")
+endforeach()
+
+foreach(TARGET ${IMPORTED_IMPLIB_LIBRARIES})
+  list(APPEND LIBRARY_DEPENDENCIES "${TARGET}")
+  list(
+    APPEND
+    LIBRARY_PATHS
+    "$<GENEX_EVAL:$<TARGET_PROPERTY:${TARGET},IMPORTED_IMPLIB>>"
+  )
+endforeach()
+
+foreach(TARGET ${INTERFACE_LIBRARIES})
+  list(APPEND LIBRARY_DEPENDENCIES "${TARGET}")
+  list(
+    APPEND
+    LIBRARY_PATHS
+    "$<GENEX_EVAL:$<TARGET_PROPERTY:${TARGET},INTERFACE_LINK_LIBRARIES>>"
+  )
+endforeach()
+
+string(JOIN ";" LIBRARY_PATHS ${LIBRARY_PATHS})
 
 add_custom_target(
   OpenKneeboard-App-WinUI3
@@ -47,7 +80,7 @@ add_custom_target(
   "-p:Platform=x64"
 
   "-p:CMakeIncludeDirs=\"$<SHELL_PATH:${INCLUDE_DIRS}>\""
-  "-p:CMakeLinkLibs=\"$<SHELL_PATH:${LIBRARIES}>\""
+  "-p:CMakeLinkLibs=\"$<SHELL_PATH:${LIBRARY_PATHS}>\""
 
   "-p:NUGET_CPPWINRT_PATH=${NUGET_CPPWINRT_PATH}" 
   "-p:NUGET_WINDOWS_APP_SDK_PATH=${NUGET_WINDOWS_APP_SDK_PATH}" 
@@ -67,6 +100,7 @@ add_custom_target(
   WindowsAppSDKNuget
   WindowsSDKBuildToolsNuget
 )
+add_dependencies(OpenKneeboard-App-WinUI3 ${LIBRARY_DEPENDENCIES})
 
 set(OPENKNEEBOARD_WINUI3_APP_BUILD_DIR "${MSBUILD_OUTPUT_PATH}" PARENT_SCOPE)
 

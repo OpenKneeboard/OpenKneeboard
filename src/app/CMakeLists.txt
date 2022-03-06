@@ -1,10 +1,11 @@
 add_subdirectory(app-common)
-add_subdirectory(app-wx)
+add_subdirectory(app-winui3)
 
 set(
   RUNTIME_FILES
-  "$<TARGET_RUNTIME_DLLS:OpenKneeboard>"
+
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
+  "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>>"
 )
 install(FILES "${RUNTIME_FILES}" TYPE BIN)
 
@@ -26,15 +27,20 @@ foreach(TARGET ${DLL_TARGETS})
 endforeach()
 
 add_custom_target(
-  CopyRuntimeFiles
-  ALL
-  COMMAND
-  ${CMAKE_COMMAND} -E copy_if_different
-  "${RUNTIME_FILES}"
-  "$<TARGET_FILE_DIR:OpenKneeboard>"
-  &&
-  ${CMAKE_COMMAND} -E touch RuntimeFiles.stamp
-  COMMAND_EXPAND_LISTS)
+	CopyRuntimeFiles
+	ALL
+	COMMAND
+	"${CMAKE_COMMAND}" -E make_directory
+	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
+	'&&
+	${CMAKE_COMMAND} -E copy_if_different
+	"${RUNTIME_FILES}"
+	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
+	COMMAND_EXPAND_LISTS
+)
+add_dependencies(CopyRuntimeFiles ThirdParty::OpenVR)
+add_dependencies(OpenKneeboard-App-WinUI3 CopyRuntimeFiles)
+
 
 set(GENERATED_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/appxmanifest.xml")
 add_custom_target(
@@ -55,18 +61,3 @@ add_custom_target(
   "${CMAKE_SOURCE_DIR}"
 )
 install(FILES "${GENERATED_MANIFEST}" DESTINATION .)
-
-add_subdirectory(app-winui3)
-
-add_custom_target(
-	CopyRuntimeFiles-WinUI3
-	ALL
-	COMMAND
-  "${CMAKE_COMMAND}" -E make_directory
-	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
-  &&
-	${CMAKE_COMMAND} -E copy_if_different
-	"${RUNTIME_FILES}"
-	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
-	COMMAND_EXPAND_LISTS)
-add_dependencies(OpenKneeboard-App-WinUI3 CopyRuntimeFiles-WinUI3)
