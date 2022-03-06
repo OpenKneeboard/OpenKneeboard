@@ -39,6 +39,7 @@ string(
 
 add_custom_target(
   OpenKneeboard-App-WinUI3
+  ALL
   COMMAND
   "${CMAKE_VS_MSBUILD_COMMAND}"
   "${CMAKE_CURRENT_SOURCE_DIR}\\app-winui3.vcxproj"
