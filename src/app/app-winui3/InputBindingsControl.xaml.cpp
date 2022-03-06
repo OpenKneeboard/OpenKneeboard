@@ -26,29 +26,43 @@
 
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/UserInputDevice.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
+#include <microsoft.ui.xaml.window.h>
+#include <shobjidl.h>
 
 #include "Globals.h"
 
 namespace winrt::OpenKneeboardApp::implementation {
 InputBindingsControl::InputBindingsControl() {
   this->InitializeComponent();
+
+  ToggleVisibilityBindButton().Click([this](auto&, auto&) {
+    this->PromptForBinding(UserAction::TOGGLE_VISIBILITY);
+  });
+  PreviousPageBindButton().Click([this](auto&, auto&) {
+    this->PromptForBinding(UserAction::PREVIOUS_PAGE);
+  });
+  NextPageBindButton().Click(
+    [this](auto&, auto&) { this->PromptForBinding(UserAction::NEXT_PAGE); });
+  PreviousTabBindButton().Click(
+    [this](auto&, auto&) { this->PromptForBinding(UserAction::PREVIOUS_TAB); });
+  NextTabBindButton().Click(
+    [this](auto&, auto&) { this->PromptForBinding(UserAction::NEXT_TAB); });
+
   ToggleVisibilityClearButton().Click([this](auto&, auto&) {
     this->ClearBinding(UserAction::TOGGLE_VISIBILITY);
   });
-  PreviousPageClearButton().Click([this](auto&, auto&) {
-    this->ClearBinding(UserAction::PREVIOUS_PAGE);
-  });
-  NextPageClearButton().Click([this](auto&, auto&) {
-    this->ClearBinding(UserAction::NEXT_PAGE);
-  });
-  PreviousTabClearButton().Click([this](auto&, auto&) {
-    this->ClearBinding(UserAction::PREVIOUS_TAB);
-  });
-  NextTabClearButton().Click([this](auto&, auto&) {
-    this->ClearBinding(UserAction::NEXT_TAB);
-  });
+  PreviousPageClearButton().Click(
+    [this](auto&, auto&) { this->ClearBinding(UserAction::PREVIOUS_PAGE); });
+  NextPageClearButton().Click(
+    [this](auto&, auto&) { this->ClearBinding(UserAction::NEXT_PAGE); });
+  PreviousTabClearButton().Click(
+    [this](auto&, auto&) { this->ClearBinding(UserAction::PREVIOUS_TAB); });
+  NextTabClearButton().Click(
+    [this](auto&, auto&) { this->ClearBinding(UserAction::NEXT_TAB); });
 }
 
 InputBindingsControl::~InputBindingsControl() {
@@ -70,6 +84,58 @@ void InputBindingsControl::DeviceID(const hstring& value) {
       return;
     }
   }
+}
+
+fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(to_hstring(_("Bind Buttons"))));
+  dialog.Content(
+    box_value(to_hstring(_("Press then release buttons to bind input"))));
+  dialog.CloseButtonText(to_hstring(_("Cancel")));
+
+  auto unhook = scope_guard([=] { mDevice->evButtonEvent.PopHook(); });
+  std::unordered_set<uint64_t> pressedButtons;
+  bool cancelled = true;
+  mDevice->evButtonEvent.PushHook([&](const UserInputButtonEvent& ev) {
+    if (ev.IsPressed()) {
+      pressedButtons.insert(ev.GetButtonID());
+      return EventBase::HookResult::STOP_PROPAGATION;
+    }
+    cancelled = false;
+    dialog.Hide();
+    return EventBase::HookResult::STOP_PROPAGATION;
+  });
+  co_await dialog.ShowAsync();
+  if (cancelled) {
+    return;
+  }
+
+  auto bindings = mDevice->GetButtonBindings();
+  auto sameAction = std::ranges::find_if(
+    bindings, [=](const auto& it) { return it.GetAction() == action; });
+  if (sameAction != bindings.end()) {
+    bindings.erase(sameAction);
+  }
+  while (true) {
+    auto conflictingButtons
+      = std::ranges::find_if(bindings, [&](const auto& it) {
+          for (auto button: it.GetButtonIDs()) {
+            if (!pressedButtons.contains(button)) {
+              return false;
+            }
+          }
+          return true;
+        });
+    if (conflictingButtons == bindings.end()) {
+      break;
+    }
+    bindings.erase(conflictingButtons);
+  }
+
+  bindings.push_back({mDevice, pressedButtons, action});
+  mDevice->SetButtonBindings(bindings);
+  UpdateUI();  
 }
 
 void InputBindingsControl::ClearBinding(UserAction action) {
