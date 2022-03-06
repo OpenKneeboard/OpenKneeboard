@@ -11,38 +11,68 @@
     RowDefinitions="auto,auto,auto,auto,auto"
     ColumnSpacing="4"
     RowSpacing="8">
-    <TextBlock Grid.Column="0" Grid.Row="0" Style="{StaticResource BodyStrongTextBlockStyle}">
+    <TextBlock Grid.Column="0" Grid.Row="0" Style="{StaticResource BodyTextBlockStyle}">
       Show/hide
     </TextBlock>
-    <TextBlock Grid.Column="1" Grid.Row="0" x:Name="ToggleVisibilityLabel" HorizontalAlignment="Center" />
+    <TextBlock
+      Grid.Column="1"
+      Grid.Row="0"
+      x:Name="ToggleVisibilityLabel"
+      HorizontalAlignment="Center"
+      Foreground="{ThemeResource TextFillColorSecondary}"
+    />
     <Button Grid.Column="2" Grid.Row="0" x:Name="ToggleVisibilityBindButton">Bind</Button>
     <Button Grid.Column="3" Grid.Row="0" x:Name="ToggleVisibilityClearButton">Clear Binding</Button>
 
-    <TextBlock Grid.Column="0" Grid.Row="1" Style="{StaticResource BodyStrongTextBlockStyle}">
+    <TextBlock Grid.Column="0" Grid.Row="1" Style="{StaticResource BodyTextBlockStyle}">
       Previous tab
     </TextBlock>
-    <TextBlock Grid.Column="1" Grid.Row="1" x:Name="PreviousTabLabel" HorizontalAlignment="Center"/>
+    <TextBlock
+      Grid.Column="1"
+      Grid.Row="1"
+      x:Name="PreviousTabLabel"
+      HorizontalAlignment="Center"
+      Foreground="{ThemeResource TextFillColorSecondary}"
+    />
     <Button Grid.Column="2" Grid.Row="1" x:Name="PreviousTabBindButton">Bind</Button>
     <Button Grid.Column="3" Grid.Row="1" x:Name="PreviousTabClearButton">Clear Binding</Button>
 
-    <TextBlock Grid.Column="0" Grid.Row="2" Style="{StaticResource BodyStrongTextBlockStyle}">
+    <TextBlock Grid.Column="0" Grid.Row="2" Style="{StaticResource BodyTextBlockStyle}">
       Next tab
     </TextBlock>
-    <TextBlock Grid.Column="1" Grid.Row="2" x:Name="NextTabLabel" HorizontalAlignment="Center"/>
+    <TextBlock
+      Grid.Column="1"
+      Grid.Row="2"
+      x:Name="NextTabLabel"
+      HorizontalAlignment="Center"
+      Foreground="{ThemeResource TextFillColorSecondary}"
+    />
     <Button Grid.Column="2" Grid.Row="2" x:Name="NextTabBindButton">Bind</Button>
     <Button Grid.Column="3" Grid.Row="2" x:Name="NextTabClearButton">Clear Binding</Button>
 
-    <TextBlock Grid.Column="0" Grid.Row="3" Style="{StaticResource BodyStrongTextBlockStyle}">
+    <TextBlock Grid.Column="0" Grid.Row="3" Style="{StaticResource BodyTextBlockStyle}">
       Previous page
     </TextBlock>
-    <TextBlock Grid.Column="1" Grid.Row="3" x:Name="PreviousPageLabel" HorizontalAlignment="Center"/>
+    <TextBlock
+      Grid.Column="1"
+      Grid.Row="3"
+      x:Name="PreviousPageLabel"
+      HorizontalAlignment="Center"
+      Foreground="{ThemeResource TextFillColorSecondary}"
+    />
     <Button Grid.Column="2" Grid.Row="3" x:Name="PreviousPageBindButton">Bind</Button>
     <Button Grid.Column="3" Grid.Row="3" x:Name="PreviousPageClearButton">Clear Binding</Button>
 
-    <TextBlock Grid.Column="0" Grid.Row="4" Style="{StaticResource BodyStrongTextBlockStyle}">
+    <TextBlock Grid.Column="0" Grid.Row="4" Style="{StaticResource BodyTextBlockStyle}">
       Next page
     </TextBlock>
-    <TextBlock Grid.Column="1" Grid.Row="4" x:Name="NextPageLabel" HorizontalAlignment="Center"/>
+    <TextBlock
+      Grid.Column="1"
+      Grid.Row="4"
+      x:Name="NextPageLabel"
+      HorizontalAlignment="Center"
+      Foreground="{ThemeResource TextFillColorSecondary}"
+    />
     <Button Grid.Column="2" Grid.Row="4" x:Name="NextPageBindButton">Bind</Button>
     <Button Grid.Column="3" Grid.Row="4" x:Name="NextPageClearButton">Clear Binding</Button>
   </Grid>

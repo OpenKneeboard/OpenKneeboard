@@ -8,7 +8,6 @@
       <ResourceDictionary.MergedDictionaries>
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
       </ResourceDictionary.MergedDictionaries>
-      <SolidColorBrush x:Key="Background" Color="Red" />
       <SolidColorBrush x:Key="WindowCaptionBackground" Color="{ThemeResource SystemChromeMediumColor}" />
       <SolidColorBrush x:Key="WindowCaptionBackgroundDisabled" Color="{ThemeResource SystemChromeMediumColor}" />
       <SolidColorBrush x:Key="WindowCaptionForeground" Color="{ThemeResource SystemBaseHighColor}" />
