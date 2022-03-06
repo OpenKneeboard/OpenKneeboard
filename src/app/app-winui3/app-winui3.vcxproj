@@ -107,6 +107,9 @@
     <ClInclude Include="GameSettingsPage.xaml.h">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="InputBindingsControl.xaml.h">
+      <DependentUpon>InputBindingsControl.xaml</DependentUpon>
+    </ClInclude>
     <ClInclude Include="InputSettingsPage.xaml.h">
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </ClInclude>
@@ -128,6 +131,7 @@
     <Page Include="MainWindow.xaml" />
     <Page Include="AboutPage.xaml" />
     <Page Include="GameSettingsPage.xaml" />
+    <Page Include="InputBindingsControl.xaml" />
     <Page Include="InputSettingsPage.xaml" />
     <Page Include="ProcessListPage.xaml" />
     <Page Include="SettingsPage.xaml" />
@@ -152,6 +156,9 @@
     </ClCompile>
     <ClCompile Include="GameSettingsPage.xaml.cpp">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="InputBindingsControl.xaml.cpp">
+      <DependentUpon>InputBindingsControl.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="InputSettingsPage.xaml.cpp">
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
@@ -186,6 +193,10 @@
     <Midl Include="GameSettingsPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="InputBindingsControl.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>InputBindingsControl.xaml</DependentUpon>
     </Midl>
     <Midl Include="InputSettingsPage.idl">
       <SubType>Code</SubType>

@@ -1,0 +1,9 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass InputBindingsControl: Microsoft.UI.Xaml.Controls.UserControl
+    {
+        InputBindingsControl();
+        String DeviceID();
+    }
+}

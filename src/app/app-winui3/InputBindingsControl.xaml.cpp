@@ -18,22 +18,20 @@
  * USA.
  */
 #pragma once
-
 // clang-format off
 #include "pch.h"
-#include "InputSettingsPage.g.h"
-// clang-format on
+#include "InputBindingsControl.xaml.h"
+#include "InputBindingsControl.g.cpp"
+// clang-format on 
 
-#include <string>
+namespace winrt::OpenKneeboardApp::implementation
+{
+    InputBindingsControl::InputBindingsControl() {
+        InitializeComponent();
+    }
 
-using namespace winrt::Microsoft::UI::Xaml;
-
-namespace winrt::OpenKneeboardApp::implementation {
-struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
-  InputSettingsPage();
-};
-}// namespace winrt::OpenKneeboardApp::implementation
-namespace winrt::OpenKneeboardApp::factory_implementation {
-struct InputSettingsPage
-  : InputSettingsPageT<InputSettingsPage, implementation::InputSettingsPage> {};
-}// namespace winrt::OpenKneeboardApp::factory_implementation
+    hstring InputBindingsControl::DeviceID()
+    {
+        throw hresult_not_implemented();
+    }
+}

@@ -21,19 +21,21 @@
 
 // clang-format off
 #include "pch.h"
-#include "InputSettingsPage.g.h"
-// clang-format on
+#include "InputBindingsControl.g.h"
+// clang-format off
 
-#include <string>
+namespace winrt::OpenKneeboardApp::implementation
+{
+    struct InputBindingsControl : InputBindingsControlT<InputBindingsControl>
+    {
+        InputBindingsControl();
 
-using namespace winrt::Microsoft::UI::Xaml;
-
-namespace winrt::OpenKneeboardApp::implementation {
-struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
-  InputSettingsPage();
-};
-}// namespace winrt::OpenKneeboardApp::implementation
-namespace winrt::OpenKneeboardApp::factory_implementation {
-struct InputSettingsPage
-  : InputSettingsPageT<InputSettingsPage, implementation::InputSettingsPage> {};
-}// namespace winrt::OpenKneeboardApp::factory_implementation
+        hstring DeviceID();
+    };
+}
+namespace winrt::OpenKneeboardApp::factory_implementation
+{
+    struct InputBindingsControl : InputBindingsControlT<InputBindingsControl, implementation::InputBindingsControl>
+    {
+    };
+}
