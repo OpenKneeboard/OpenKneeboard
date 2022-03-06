@@ -7,22 +7,38 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
-  <ScrollViewer VerticalScrollMode="Auto">
-    <ItemsRepeater ItemsSource="{x:Bind Devices}">
-      <ItemsRepeater.Layout>
-        <StackLayout Orientation="Vertical" />
-      </ItemsRepeater.Layout>
-      <ItemsRepeater.ItemTemplate>
-        <DataTemplate x:DataType="local:InputDeviceUIData">
-          <StackPanel Orientation="Vertical">
-            <TextBlock
-              Text="{x:Bind Name}"
-              Style="{StaticResource TitleTextBlockStyle}"
-            />
-            <local:InputBindingsControl />
-          </StackPanel>
-        </DataTemplate>
-      </ItemsRepeater.ItemTemplate>
-    </ItemsRepeater>
+  <ScrollViewer VerticalScrollMode="Auto" Padding="24">
+    <Grid RowDefinitions="Auto,*">
+      <TextBlock
+        Grid.Row="0"
+        Style="{StaticResource TitleTextBlockStyle}"
+        Text="Input Settings"
+        Margin="0,0,0,8"
+      />
+      <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Devices}">
+        <ItemsRepeater.Layout>
+          <StackLayout Orientation="Vertical" Spacing="24" />
+        </ItemsRepeater.Layout>
+        <ItemsRepeater.ItemTemplate>
+          <DataTemplate x:DataType="local:InputDeviceUIData">
+            <StackPanel Orientation="Vertical">
+              <TextBlock
+                Text="{x:Bind Name}"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Margin="0,0,0,16"
+              />
+              <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                CornerRadius="4"
+                BorderThickness="1"
+                Padding="8">
+                <local:InputBindingsControl />
+              </Grid>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsRepeater.ItemTemplate>
+      </ItemsRepeater>
+    </Grid>
   </ScrollViewer>
 </Page>
