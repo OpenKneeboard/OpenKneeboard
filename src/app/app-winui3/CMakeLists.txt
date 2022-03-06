@@ -69,3 +69,21 @@ add_custom_target(
 )
 
 set(OPENKNEEBOARD_WINUI3_APP_BUILD_DIR "${MSBUILD_OUTPUT_PATH}" PARENT_SCOPE)
+
+install(
+  FILES
+  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.exe"
+  "${MSBUILD_OUTPUT_PATH}/Microsoft.WindowsAppRuntime.Bootstrap.dll"
+  # Binary XAML
+  "${MSBUILD_OUTPUT_PATH}/AboutPage.xbf"
+  "${MSBUILD_OUTPUT_PATH}/App.xbf"
+  "${MSBUILD_OUTPUT_PATH}/GameSettingsPage.xbf"
+  "${MSBUILD_OUTPUT_PATH}/InputBindingsControl.xbf"
+  "${MSBUILD_OUTPUT_PATH}/InputSettingsPage.xbf"
+  "${MSBUILD_OUTPUT_PATH}/MainWindow.xbf"
+  "${MSBUILD_OUTPUT_PATH}/ProcessListPage.xbf"
+  "${MSBUILD_OUTPUT_PATH}/SettingsPage.xbf"
+  "${MSBUILD_OUTPUT_PATH}/TabPage.xbf"
+  "${MSBUILD_OUTPUT_PATH}/TabSettingsPage.xbf"
+  TYPE BIN
+)
