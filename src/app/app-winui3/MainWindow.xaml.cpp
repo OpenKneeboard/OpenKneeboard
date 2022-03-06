@@ -83,8 +83,6 @@ MainWindow::MainWindow() {
 }
 
 MainWindow::~MainWindow() {
-  gKneeboard.reset();
-  gDXResources = {};
   gMainWindow = {};
 }
 

@@ -7,16 +7,22 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
-  <Grid>
+  <ScrollViewer VerticalScrollMode="Auto">
     <ItemsRepeater ItemsSource="{x:Bind Devices}">
       <ItemsRepeater.Layout>
         <StackLayout Orientation="Vertical" />
       </ItemsRepeater.Layout>
       <ItemsRepeater.ItemTemplate>
         <DataTemplate x:DataType="local:InputDeviceUIData">
-          <local:InputBindingsControl />
+          <StackPanel Orientation="Vertical">
+            <TextBlock
+              Text="{x:Bind Name}"
+              Style="{StaticResource TitleTextBlockStyle}"
+            />
+            <local:InputBindingsControl />
+          </StackPanel>
         </DataTemplate>
       </ItemsRepeater.ItemTemplate>
     </ItemsRepeater>
-  </Grid>
+  </ScrollViewer>
 </Page>
