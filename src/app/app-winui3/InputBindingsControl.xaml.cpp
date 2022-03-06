@@ -34,6 +34,21 @@
 namespace winrt::OpenKneeboardApp::implementation {
 InputBindingsControl::InputBindingsControl() {
   this->InitializeComponent();
+  ToggleVisibilityClearButton().Click([this](auto&, auto&) {
+    this->ClearBinding(UserAction::TOGGLE_VISIBILITY);
+  });
+  PreviousPageClearButton().Click([this](auto&, auto&) {
+    this->ClearBinding(UserAction::PREVIOUS_PAGE);
+  });
+  NextPageClearButton().Click([this](auto&, auto&) {
+    this->ClearBinding(UserAction::NEXT_PAGE);
+  });
+  PreviousTabClearButton().Click([this](auto&, auto&) {
+    this->ClearBinding(UserAction::PREVIOUS_TAB);
+  });
+  NextTabClearButton().Click([this](auto&, auto&) {
+    this->ClearBinding(UserAction::NEXT_TAB);
+  });
 }
 
 InputBindingsControl::~InputBindingsControl() {
@@ -55,6 +70,19 @@ void InputBindingsControl::DeviceID(const hstring& value) {
       return;
     }
   }
+}
+
+void InputBindingsControl::ClearBinding(UserAction action) {
+  auto bindings = mDevice->GetButtonBindings();
+  auto it = std::ranges::find_if(
+    bindings, [=](const auto& it) { return it.GetAction() == action; });
+  if (it == bindings.end()) {
+    return;
+  }
+
+  bindings.erase(it);
+  mDevice->SetButtonBindings(bindings);
+  UpdateUI();
 }
 
 void InputBindingsControl::UpdateUI() {
@@ -94,7 +122,7 @@ void InputBindingsControl::UpdateUI(
   auto it = std::ranges::find_if(
     bindings, [=](auto& it) { return it.GetAction() == action; });
   if (it == bindings.end()) {
-    label.Text(to_hstring(_("Not Bound")));
+    label.Text(to_hstring(_("not bound")));
     clearButton.IsEnabled(false);
     return;
   }

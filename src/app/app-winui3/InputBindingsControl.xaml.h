@@ -41,6 +41,8 @@ struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
   void DeviceID(const hstring&);
 
  private:
+  void ClearBinding(UserAction);
+
   void UpdateUI();
   void UpdateUI(
     UserAction,
