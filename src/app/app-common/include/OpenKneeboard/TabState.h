@@ -75,7 +75,7 @@ class TabState final : private EventReceiver {
   bool SupportsTabMode(TabMode) const;
   bool SetTabMode(TabMode);
  private:
-  static uint64_t gNextID;
+  static uint64_t sNextID;
   uint64_t mInstanceID;
   std::shared_ptr<Tab> mRootTab;
   uint16_t mRootTabPage;

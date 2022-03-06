@@ -28,10 +28,10 @@
 
 namespace OpenKneeboard {
 
-uint64_t TabState::gNextID = 0;
+uint64_t TabState::sNextID = 1;
 
 TabState::TabState(const std::shared_ptr<Tab>& tab)
-  : mInstanceID(++gNextID), mRootTab(tab), mRootTabPage(0) {
+  : mInstanceID(++sNextID), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     tab->evFullyReplacedEvent, &TabState::OnTabFullyReplaced, this);
