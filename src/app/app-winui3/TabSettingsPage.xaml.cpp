@@ -123,9 +123,10 @@ void TabSettingsPage::CreateTab(
     if constexpr (std::constructible_from<type##Tab, DXResources>) { \
       AddTab(std::make_shared<type##Tab>(gDXResources)); \
       return; \
+    } else { \
+      throw std::logic_error( \
+        fmt::format("Don't know how to construct {}Tab", #type)); \
     } \
-    throw std::logic_error( \
-      fmt::format("Don't know how to construct {}Tab", #type)); \
   }
   OPENKNEEBOARD_TAB_TYPES
 #undef IT

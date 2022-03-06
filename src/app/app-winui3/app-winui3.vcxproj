@@ -68,7 +68,7 @@
       <WarningLevel>Level4</WarningLevel>
       <AdditionalOptions>%(AdditionalOptions) /bigobj /await /wd4250</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <PreprocessorDefinitions>UNICODE=1;_UNICODE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>UNICODE=1;_UNICODE=1;DISABLE_XAML_GENERATED_MAIN=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(CMakeIncludeDirs);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>

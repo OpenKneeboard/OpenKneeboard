@@ -19,11 +19,14 @@
  */
 // clang-format off
 #include "pch.h"
+#include "App.xaml.h"
 // clang-format on
 
-#include "App.xaml.h"
-
+#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
+#include <Psapi.h>
+
+#include <filesystem>
 
 #include "MainWindow.xaml.h"
 
@@ -52,11 +55,81 @@ App::App() {
 }
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) {
-  // TODO: activate existing instance (if WinUI doesn't do that for me?)
+  window = make<MainWindow>();
+  window.Activate();
+}
+
+static bool ActivateExistingInstance() {
+  // If already running, make the other instance active.
+  //
+  // There's more common ways to do this, but given we already have the SHM
+  // and the SHM has a handy HWND, might as well use that.
+  OpenKneeboard::SHM::Reader shm;
+  if (!shm) {
+    return false;
+  }
+  auto snapshot = shm.MaybeGet();
+  if (!snapshot) {
+    return false;
+  }
+  const auto hwnd = snapshot.GetConfig().feederWindow;
+  if (!hwnd) {
+    return false;
+  }
+  DWORD processID = 0;
+  GetWindowThreadProcessId(hwnd, &processID);
+  if (!processID) {
+    return false;
+  }
+  winrt::handle processHandle {
+    OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID)};
+  if (!processHandle) {
+    return false;
+  }
+  wchar_t processName[MAX_PATH];
+  auto processNameLen
+    = GetProcessImageFileNameW(processHandle.get(), processName, MAX_PATH);
+  const auto processStem
+    = std::filesystem::path(std::wstring_view(processName, processNameLen))
+        .stem();
+  processNameLen = GetModuleFileNameW(NULL, processName, MAX_PATH);
+  const auto thisProcessStem
+    = std::filesystem::path(std::wstring_view(processName, processNameLen))
+        .stem();
+  if (processStem != thisProcessStem) {
+    return false;
+  }
+  return ShowWindow(hwnd, SW_SHOWNORMAL) && SetForegroundWindow(hwnd);
+}
+
+int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   OpenKneeboard::DPrintSettings::Set({
     .prefix = "OpenKneeboard-WinUI3",
   });
 
-  window = make<MainWindow>();
-  window.Activate();
+  if (ActivateExistingInstance()) {
+    return 0;
+  }
+
+  {
+    void(WINAPI * pfnXamlCheckProcessRequirements)();
+    auto module = ::LoadLibrary(L"Microsoft.ui.xaml.dll");
+    if (module) {
+      pfnXamlCheckProcessRequirements
+        = reinterpret_cast<decltype(pfnXamlCheckProcessRequirements)>(
+          GetProcAddress(module, "XamlCheckProcessRequirements"));
+      if (pfnXamlCheckProcessRequirements) {
+        (*pfnXamlCheckProcessRequirements)();
+      }
+
+      ::FreeLibrary(module);
+    }
+  }
+
+  winrt::init_apartment(winrt::apartment_type::single_threaded);
+  ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
+    ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
+  });
+
+  return 0;
 }
