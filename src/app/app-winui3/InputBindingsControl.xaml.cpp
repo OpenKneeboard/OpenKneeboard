@@ -22,16 +22,18 @@
 #include "pch.h"
 #include "InputBindingsControl.xaml.h"
 #include "InputBindingsControl.g.cpp"
-// clang-format on 
+// clang-format on
 
-namespace winrt::OpenKneeboardApp::implementation
-{
-    InputBindingsControl::InputBindingsControl() {
-        InitializeComponent();
-    }
-
-    hstring InputBindingsControl::DeviceID()
-    {
-        throw hresult_not_implemented();
-    }
+namespace winrt::OpenKneeboardApp::implementation {
+InputBindingsControl::InputBindingsControl() {
+  InitializeComponent();
 }
+
+hstring InputBindingsControl::DeviceID() {
+  throw hresult_not_implemented();
+}
+
+void InputBindingsControl::DeviceID(const hstring&) {
+  throw hresult_not_implemented();
+}
+}// namespace winrt::OpenKneeboardApp::implementation

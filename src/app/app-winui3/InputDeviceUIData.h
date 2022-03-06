@@ -21,19 +21,24 @@
 
 // clang-format off
 #include "pch.h"
-#include "InputBindingsControl.g.h"
+#include "InputDeviceUIData.g.h"
 // clang-format on
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
-  InputBindingsControl();
+struct InputDeviceUIData : InputDeviceUIDataT<InputDeviceUIData> {
+  InputDeviceUIData() = default;
 
+  hstring Name();
+  void Name(const hstring& value);
   hstring DeviceID();
-  void DeviceID(const hstring&);
+  void DeviceID(const hstring& value);
+
+ private:
+  hstring mName;
+  hstring mDeviceID;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
-struct InputBindingsControl : InputBindingsControlT<
-                                InputBindingsControl,
-                                implementation::InputBindingsControl> {};
+struct InputDeviceUIData
+  : InputDeviceUIDataT<InputDeviceUIData, implementation::InputDeviceUIData> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation

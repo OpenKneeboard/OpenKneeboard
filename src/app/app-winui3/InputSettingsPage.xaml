@@ -8,6 +8,15 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Grid>
-    <local:InputBindingsControl />
+    <ItemsRepeater ItemsSource="{x:Bind Devices}">
+      <ItemsRepeater.Layout>
+        <StackLayout Orientation="Vertical" />
+      </ItemsRepeater.Layout>
+      <ItemsRepeater.ItemTemplate>
+        <DataTemplate x:DataType="local:InputDeviceUIData">
+          <local:InputBindingsControl />
+        </DataTemplate>
+      </ItemsRepeater.ItemTemplate>
+    </ItemsRepeater>
   </Grid>
 </Page>

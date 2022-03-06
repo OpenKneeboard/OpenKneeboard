@@ -27,10 +27,12 @@
 #include <string>
 
 using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
   InputSettingsPage();
+  IVector<IInspectable> Devices();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

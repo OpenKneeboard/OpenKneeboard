@@ -17,23 +17,23 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
 // clang-format off
 #include "pch.h"
-#include "InputBindingsControl.g.h"
+#include "InputDeviceUIData.h"
+#include "InputDeviceUIData.g.cpp"
 // clang-format on
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
-  InputBindingsControl();
-
-  hstring DeviceID();
-  void DeviceID(const hstring&);
-};
+hstring InputDeviceUIData::Name() {
+  return mName;
+}
+void InputDeviceUIData::Name(const hstring& value) {
+  mName = value;
+}
+hstring InputDeviceUIData::DeviceID() {
+  return mDeviceID;
+}
+void InputDeviceUIData::DeviceID(const hstring& value) {
+  mDeviceID = value;
+}
 }// namespace winrt::OpenKneeboardApp::implementation
-namespace winrt::OpenKneeboardApp::factory_implementation {
-struct InputBindingsControl : InputBindingsControlT<
-                                InputBindingsControl,
-                                implementation::InputBindingsControl> {};
-}// namespace winrt::OpenKneeboardApp::factory_implementation

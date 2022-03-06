@@ -23,10 +23,28 @@
 #include "InputSettingsPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/UserInputDevice.h>
+
+#include "Globals.h"
+
+using namespace OpenKneeboard;
+
 namespace winrt::OpenKneeboardApp::implementation {
 
 InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
+}
+
+IVector<IInspectable> InputSettingsPage::Devices() {
+  auto devices {winrt::single_threaded_vector<IInspectable>()};
+  for (const auto& device: gKneeboard->GetInputDevices()) {
+    auto deviceData = OpenKneeboardApp::InputDeviceUIData();
+    deviceData.Name(to_hstring(device->GetName()));
+    deviceData.DeviceID(to_hstring(device->GetID()));
+    devices.Append(deviceData);
+  }
+  return devices;
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

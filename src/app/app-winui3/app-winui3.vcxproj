@@ -110,6 +110,9 @@
     <ClInclude Include="InputBindingsControl.xaml.h">
       <DependentUpon>InputBindingsControl.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="InputDeviceUIData.h">
+      <DependentUpon>InputSettingsPage.idl</DependentUpon>
+    </ClInclude>
     <ClInclude Include="InputSettingsPage.xaml.h">
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </ClInclude>
@@ -159,6 +162,9 @@
     </ClCompile>
     <ClCompile Include="InputBindingsControl.xaml.cpp">
       <DependentUpon>InputBindingsControl.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="InputDeviceUIData.cpp">
+      <DependentUpon>InputSettingsPage.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="InputSettingsPage.xaml.cpp">
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
