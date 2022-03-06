@@ -22,7 +22,7 @@
 
 #include "GameSettingsPage.xaml.h"
 
-#include "GameInstanceData.g.cpp"
+#include "GameInstanceUIData.g.cpp"
 #include "GameSettingsPage.g.cpp"
 // clang-format on
 
@@ -58,7 +58,7 @@ void GameSettingsPage::UpdateGames() {
   IVector<IInspectable> winrtGames {
     winrt::single_threaded_vector<IInspectable>()};
   for (const auto& game: games) {
-    auto winrtGame = winrt::make<GameInstanceData>();
+    auto winrtGame = winrt::make<GameInstanceUIData>();
     winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game.path));
     winrtGame.Name(to_hstring(game.name));
     winrtGame.Path(game.path.wstring());
@@ -185,30 +185,30 @@ void GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
   }
 }
 
-GameInstanceData::GameInstanceData() {
+GameInstanceUIData::GameInstanceUIData() {
 }
 
-BitmapSource GameInstanceData::Icon() {
+BitmapSource GameInstanceUIData::Icon() {
   return mIcon;
 }
 
-void GameInstanceData::Icon(const BitmapSource& value) {
+void GameInstanceUIData::Icon(const BitmapSource& value) {
   mIcon = value;
 }
 
-hstring GameInstanceData::Name() {
+hstring GameInstanceUIData::Name() {
   return mName;
 }
 
-void GameInstanceData::Name(const hstring& value) {
+void GameInstanceUIData::Name(const hstring& value) {
   mName = value;
 }
 
-hstring GameInstanceData::Path() {
+hstring GameInstanceUIData::Path() {
   return mPath;
 }
 
-void GameInstanceData::Path(const hstring& value) {
+void GameInstanceUIData::Path(const hstring& value) {
   mPath = value;
 }
 

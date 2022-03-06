@@ -20,7 +20,7 @@
 // clang-format off
 #include "pch.h"
 #include "TabSettingsPage.xaml.h"
-#include "TabData.g.cpp"
+#include "TabUIData.g.cpp"
 #include "TabSettingsPage.g.cpp"
 // clang-format on
 
@@ -45,7 +45,7 @@ TabSettingsPage::TabSettingsPage() {
 
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
   for (const auto& tabState: gKneeboard->GetTabs()) {
-    auto winrtTab = winrt::make<TabData>();
+    auto winrtTab = winrt::make<TabUIData>();
     winrtTab.Title(to_hstring(tabState->GetRootTab()->GetTitle()));
     winrtTab.UniqueID(tabState->GetInstanceID());
     tabs.Append(winrtTab);
@@ -190,7 +190,7 @@ void TabSettingsPage::AddTab(const std::shared_ptr<Tab>& tab) {
   auto tabState = std::make_shared<TabState>(tab);
   gKneeboard->InsertTab(static_cast<uint8_t>(idx), tabState);
 
-  auto winrtTab = winrt::make<TabData>();
+  auto winrtTab = winrt::make<TabUIData>();
   winrtTab.Title(to_hstring(tab->GetTitle()));
   winrtTab.UniqueID(tabState->GetInstanceID());
   List()
@@ -218,7 +218,7 @@ void TabSettingsPage::OnTabsChanged(
 
   std::vector<std::shared_ptr<TabState>> reorderedTabs;
   for (auto item: items) {
-    auto id = item.as<TabData>()->UniqueID();
+    auto id = item.as<TabUIData>()->UniqueID();
     auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) { return it->GetInstanceID() == id; });
     if (it == tabs.end()) {
       continue;
@@ -228,19 +228,19 @@ void TabSettingsPage::OnTabsChanged(
   gKneeboard->SetTabs(reorderedTabs);
 }
 
-hstring TabData::Title() {
+hstring TabUIData::Title() {
   return mTitle;
 }
 
-void TabData::Title(hstring value) {
+void TabUIData::Title(hstring value) {
   mTitle = value;
 }
 
-uint64_t TabData::UniqueID() {
+uint64_t TabUIData::UniqueID() {
   return mUniqueID;
 }
 
-void TabData::UniqueID(uint64_t value) {
+void TabUIData::UniqueID(uint64_t value) {
   mUniqueID = value;
 }
 

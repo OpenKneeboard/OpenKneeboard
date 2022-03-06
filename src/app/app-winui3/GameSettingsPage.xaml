@@ -31,7 +31,7 @@
     </CommandBar>
     <ListView Grid.Row="1" x:Name="List" SelectionMode="None">
       <ListView.ItemTemplate>
-        <DataTemplate x:DataType="local:GameInstanceData">
+        <DataTemplate x:DataType="local:GameInstanceUIData">
           <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
             <Expander.Header>
               <Grid ColumnDefinitions="Auto,*">

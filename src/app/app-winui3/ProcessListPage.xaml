@@ -10,7 +10,7 @@
   <Grid>
     <ListView x:Name="List" SelectionMode="Single" SelectionChanged="OnListSelectionChanged">
       <ListView.ItemTemplate>
-        <DataTemplate x:DataType="local:GameInstanceData">
+        <DataTemplate x:DataType="local:GameInstanceUIData">
           <Grid ColumnDefinitions="Auto,*" Margin="8">
             <Grid
               Grid.Column="0"

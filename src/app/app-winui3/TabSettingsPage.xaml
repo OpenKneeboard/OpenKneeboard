@@ -24,7 +24,7 @@
       CanReorderItems="True"
       AllowDrop="True">
       <ListView.ItemTemplate>
-        <DataTemplate x:DataType="local:TabData">
+        <DataTemplate x:DataType="local:TabUIData">
           <Grid
             ColumnDefinitions="*,Auto"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"

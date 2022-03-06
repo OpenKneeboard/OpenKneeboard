@@ -21,7 +21,7 @@
 
 // clang-format off
 #include "pch.h"
-#include "TabData.g.h"
+#include "TabUIData.g.h"
 #include "TabSettingsPage.g.h"
 // clang-format on
 
@@ -53,8 +53,8 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   std::string mData;
 };
 
-struct TabData : TabDataT<TabData> {
-  TabData() = default;
+struct TabUIData : TabUIDataT<TabUIData> {
+  TabUIData() = default;
 
   hstring Title();
   void Title(hstring);
@@ -72,5 +72,5 @@ namespace winrt::OpenKneeboardApp::factory_implementation {
 struct TabSettingsPage
   : TabSettingsPageT<TabSettingsPage, implementation::TabSettingsPage> {};
 
-struct TabData : TabDataT<TabData, implementation::TabData> {};
+struct TabUIData : TabUIDataT<TabUIData, implementation::TabUIData> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation

@@ -21,7 +21,7 @@
 // clang-format off
 #include "pch.h"
 #include "GameSettingsPage.g.h"
-#include "GameInstanceData.g.h"
+#include "GameInstanceUIData.g.h"
 // clang-format on
 
 #include <OpenKneeboard/GameInstance.h>
@@ -51,8 +51,8 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
    void AddPath(const std::filesystem::path&);
 };
 
-struct GameInstanceData : GameInstanceDataT<GameInstanceData> {
-  GameInstanceData();
+struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
+  GameInstanceUIData();
 
   BitmapSource Icon();
   void Icon(const BitmapSource&);
@@ -71,6 +71,6 @@ namespace winrt::OpenKneeboardApp::factory_implementation {
 struct GameSettingsPage
   : GameSettingsPageT<GameSettingsPage, implementation::GameSettingsPage> {};
 
-struct GameInstanceData
-  : GameInstanceDataT<GameInstanceData, implementation::GameInstanceData> {};
+struct GameInstanceUIData
+  : GameInstanceUIDataT<GameInstanceUIData, implementation::GameInstanceUIData> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation

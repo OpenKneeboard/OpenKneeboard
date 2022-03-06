@@ -61,7 +61,7 @@ ProcessListPage::ProcessListPage() {
   process.dwSize = sizeof(process);
   Process32First(snapshot.get(), &process);
   std::set<std::filesystem::path> seen;
-  std::vector<GameInstanceData> games;
+  std::vector<GameInstanceUIData> games;
   do {
     auto path = GetFullPathFromPID(process.th32ProcessID);
     if (path.empty()) {
@@ -71,7 +71,7 @@ ProcessListPage::ProcessListPage() {
       continue;
     }
     seen.emplace(path);
-    GameInstanceData game;
+    GameInstanceUIData game;
     game.Path(path.wstring());
     game.Icon(iconFactory.CreateXamlBitmapSource(path));
     game.Name(path.stem().wstring());
@@ -102,7 +102,7 @@ void ProcessListPage::OnListSelectionChanged(const IInspectable&, const Selectio
   if (args.AddedItems().Size() == 0) {
     mSelectedPath = {};
   } else {
-    auto selected = args.AddedItems().GetAt(0).as<GameInstanceData>();
+    auto selected = args.AddedItems().GetAt(0).as<GameInstanceUIData>();
     mSelectedPath = selected.Path();
   }
   mSelectionChangedEvent(*this, mSelectedPath);
