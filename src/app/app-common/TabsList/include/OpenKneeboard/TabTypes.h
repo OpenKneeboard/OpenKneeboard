@@ -30,8 +30,6 @@
 
 #include <concepts>
 
-class wxWindow;
-
 #define OPENKNEEBOARD_TAB_TYPES \
   IT(_("Folder"), Folder) \
   IT(_("PDF"), PDF) \
@@ -64,15 +62,6 @@ enum class TabType {
 
 struct DXResources;
 
-// clang-format off
-template<class T>
-concept tab_with_interactive_creation =
-  std::derived_from<T, Tab>
-  && requires (wxWindow* parent, DXResources dxr) {
-    { T::Create(parent, dxr) } -> std::same_as<std::shared_ptr<T>>;
-  };
-// clang-format on
-
 /** Create a `shared_ptr<Tab>` with existing config */
 template <std::derived_from<Tab> T>
 std::shared_ptr<T> load_tab(
@@ -90,18 +79,6 @@ std::shared_ptr<T> load_tab(
   if constexpr (
     std::constructible_from<T, DXResources, std::string, nlohmann::json>) {
     return std::make_shared<T>(dxr, title, config);
-  }
-}
-
-/** Create a `shared_ptr<Tab>`, prompting the user for config if needed */
-template <std::derived_from<Tab> T>
-std::shared_ptr<T> create_tab(wxWindow* parent, const DXResources& dxr) {
-  if constexpr (std::constructible_from<T, DXResources>) {
-    return std::make_shared<T>(dxr);
-  }
-
-  if constexpr (tab_with_interactive_creation<T>) {
-    return T::Create(parent, dxr);
   }
 }
 

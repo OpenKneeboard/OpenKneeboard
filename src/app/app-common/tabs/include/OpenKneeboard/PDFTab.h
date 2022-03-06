@@ -26,8 +26,6 @@
 #include "TabWithNavigation.h"
 #include "TabWithSettings.h"
 
-class wxWindow;
-
 namespace OpenKneeboard {
 
 class PDFTab final : public TabWithDoodles,
@@ -46,7 +44,6 @@ class PDFTab final : public TabWithDoodles,
 
   virtual utf8_string GetTitle() const override;
 
-  static std::shared_ptr<PDFTab> Create(wxWindow* parent, const DXResources&);
   virtual nlohmann::json GetSettings() const override;
 
   virtual void Reload() final override;

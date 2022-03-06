@@ -26,8 +26,6 @@
 #include "TabWithPlainTextContent.h"
 #include "TabWithSettings.h"
 
-class wxWindow;
-
 namespace OpenKneeboard {
 
 class TextFileTab final : public TabWithDoodles,
@@ -47,9 +45,6 @@ class TextFileTab final : public TabWithDoodles,
   virtual utf8_string GetTitle() const override;
   virtual void Reload() override;
 
-  static std::shared_ptr<TextFileTab> Create(
-    wxWindow* parent,
-    const DXResources&);
   virtual nlohmann::json GetSettings() const override;
 
   std::filesystem::path GetPath() const;

@@ -24,8 +24,6 @@
 #include <string>
 #include <type_traits>
 
-class wxString;
-
 /** This file exists to workaround the fact that `std::u8string`
  * and `char8_t` are not widely supported as of early 2022.
  *
@@ -65,7 +63,6 @@ std::string to_utf8(std::wstring_view);
 std::string to_utf8(const wchar_t*);
 
 std::string to_utf8(const std::filesystem::path&);
-std::string to_utf8(const wxString&);
 
 class utf8_string_view final {
  private:

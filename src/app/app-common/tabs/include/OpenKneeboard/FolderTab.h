@@ -26,8 +26,6 @@
 #include "TabWithNavigation.h"
 #include "TabWithSettings.h"
 
-class wxWindow;
-
 namespace OpenKneeboard {
 
 class FolderTab final : public TabWithDoodles,
@@ -44,10 +42,6 @@ class FolderTab final : public TabWithDoodles,
     const nlohmann::json&);
   virtual ~FolderTab();
   virtual utf8_string GetTitle() const override;
-
-  static std::shared_ptr<FolderTab> Create(
-    wxWindow* parent,
-    const DXResources&);
 
   virtual nlohmann::json GetSettings() const final override;
 
