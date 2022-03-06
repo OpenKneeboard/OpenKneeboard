@@ -33,7 +33,7 @@
                 CornerRadius="4"
                 BorderThickness="1"
                 Padding="8">
-                <local:InputBindingsControl />
+                <local:InputBindingsControl DeviceID="{x:Bind DeviceID}" />
               </Grid>
             </StackPanel>
           </DataTemplate>

@@ -24,16 +24,85 @@
 #include "InputBindingsControl.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/UserInputDevice.h>
+#include <OpenKneeboard/utf8.h>
+
+#include "Globals.h"
+
 namespace winrt::OpenKneeboardApp::implementation {
 InputBindingsControl::InputBindingsControl() {
-  InitializeComponent();
+  this->InitializeComponent();
+}
+
+InputBindingsControl::~InputBindingsControl() {
 }
 
 hstring InputBindingsControl::DeviceID() {
-  throw hresult_not_implemented();
+  return mDeviceID;
 }
 
-void InputBindingsControl::DeviceID(const hstring&) {
-  throw hresult_not_implemented();
+void InputBindingsControl::DeviceID(const hstring& value) {
+  mDeviceID = value;
+  auto id = to_string(value);
+
+  mDevice.reset();
+  for (const auto& device: gKneeboard->GetInputDevices()) {
+    if (device->GetID() == id) {
+      mDevice = device;
+      this->UpdateUI();
+      return;
+    }
+  }
 }
+
+void InputBindingsControl::UpdateUI() {
+  UpdateUI(
+    UserAction::TOGGLE_VISIBILITY,
+    ToggleVisibilityLabel(),
+    ToggleVisibilityBindButton(),
+    ToggleVisibilityClearButton());
+  UpdateUI(
+    UserAction::PREVIOUS_PAGE,
+    PreviousPageLabel(),
+    PreviousPageBindButton(),
+    PreviousPageClearButton());
+  UpdateUI(
+    UserAction::NEXT_PAGE,
+    NextPageLabel(),
+    NextPageBindButton(),
+    NextPageClearButton());
+  UpdateUI(
+    UserAction::PREVIOUS_TAB,
+    PreviousTabLabel(),
+    PreviousTabBindButton(),
+    PreviousTabClearButton());
+  UpdateUI(
+    UserAction::NEXT_TAB,
+    NextTabLabel(),
+    NextTabBindButton(),
+    NextTabClearButton());
+}
+
+void InputBindingsControl::UpdateUI(
+  UserAction action,
+  TextBlock label,
+  Button bindButton,
+  Button clearButton) {
+  auto bindings = mDevice->GetButtonBindings();
+  auto it = std::ranges::find_if(
+    bindings, [=](auto& it) { return it.GetAction() == action; });
+  if (it == bindings.end()) {
+    label.Text(to_hstring(_("Not Bound")));
+    clearButton.IsEnabled(false);
+    return;
+  }
+
+  clearButton.IsEnabled(true);
+  const auto& binding = *it;
+  label.Text(
+    to_hstring(mDevice->GetButtonComboDescription(binding.GetButtonIDs())));
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation
