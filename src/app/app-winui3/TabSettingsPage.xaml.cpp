@@ -47,7 +47,7 @@ TabSettingsPage::TabSettingsPage() {
   for (const auto& tabState: gKneeboard->GetTabs()) {
     auto winrtTab = winrt::make<TabUIData>();
     winrtTab.Title(to_hstring(tabState->GetRootTab()->GetTitle()));
-    winrtTab.UniqueID(tabState->GetInstanceID());
+    winrtTab.InstanceID(tabState->GetInstanceID());
     tabs.Append(winrtTab);
   }
   List().ItemsSource(tabs);
@@ -67,10 +67,10 @@ TabSettingsPage::TabSettingsPage() {
 fire_and_forget TabSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
-  auto uniqueID = unbox_value<uint64_t>(sender.as<Button>().Tag());
+  auto InstanceID = unbox_value<uint64_t>(sender.as<Button>().Tag());
   auto tabs = gKneeboard->GetTabs();
   auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& tabState) {
-    return tabState->GetInstanceID() == uniqueID;
+    return tabState->GetInstanceID() == InstanceID;
   });
   if (it == tabs.end()) {
     co_return;
@@ -192,7 +192,7 @@ void TabSettingsPage::AddTab(const std::shared_ptr<Tab>& tab) {
 
   auto winrtTab = winrt::make<TabUIData>();
   winrtTab.Title(to_hstring(tab->GetTitle()));
-  winrtTab.UniqueID(tabState->GetInstanceID());
+  winrtTab.InstanceID(tabState->GetInstanceID());
   List()
     .ItemsSource()
     .as<Windows::Foundation::Collections::IVector<IInspectable>>()
@@ -218,7 +218,7 @@ void TabSettingsPage::OnTabsChanged(
 
   std::vector<std::shared_ptr<TabState>> reorderedTabs;
   for (auto item: items) {
-    auto id = item.as<TabUIData>()->UniqueID();
+    auto id = item.as<TabUIData>()->InstanceID();
     auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) { return it->GetInstanceID() == id; });
     if (it == tabs.end()) {
       continue;
@@ -236,12 +236,12 @@ void TabUIData::Title(hstring value) {
   mTitle = value;
 }
 
-uint64_t TabUIData::UniqueID() {
-  return mUniqueID;
+uint64_t TabUIData::InstanceID() {
+  return mInstanceID;
 }
 
-void TabUIData::UniqueID(uint64_t value) {
-  mUniqueID = value;
+void TabUIData::InstanceID(uint64_t value) {
+  mInstanceID = value;
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

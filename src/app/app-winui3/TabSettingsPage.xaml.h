@@ -59,12 +59,12 @@ struct TabUIData : TabUIDataT<TabUIData> {
   hstring Title();
   void Title(hstring);
 
-  uint64_t UniqueID();
-  void UniqueID(uint64_t);
+  uint64_t InstanceID();
+  void InstanceID(uint64_t);
 
  private:
   hstring mTitle;
-  uint64_t mUniqueID {~0ui64};
+  uint64_t mInstanceID {~0ui64};
 };
 
 }// namespace winrt::OpenKneeboardApp::implementation

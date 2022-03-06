@@ -10,7 +10,7 @@ namespace OpenKneeboardApp
     runtimeclass TabUIData
     {
         TabUIData();
-        UInt64 UniqueID;
+        UInt64 InstanceID;
         String Title;
     }
 }
