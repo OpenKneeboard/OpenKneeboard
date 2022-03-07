@@ -6,6 +6,7 @@
   <PropertyGroup Label="Globals">
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
+    <WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
     <MinimalCoreWin>true</MinimalCoreWin>
     <ProjectGuid>{04bc6019-1a8c-486a-b2e9-6599ba0e7592}</ProjectGuid>
     <ProjectName>OpenKneeboardApp</ProjectName>

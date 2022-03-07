@@ -25,6 +25,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
 #include <Psapi.h>
+#include <appmodel.h>
 
 #include <filesystem>
 
@@ -37,6 +38,10 @@ using namespace Microsoft::UI::Xaml::Controls;
 using namespace Microsoft::UI::Xaml::Navigation;
 using namespace OpenKneeboardApp::implementation;
 using namespace OpenKneeboardApp;
+using namespace OpenKneeboard;
+
+#include <WindowsAppSDK-VersionInfo.h>
+#include <mddbootstrap.h>
 
 App::App() {
   InitializeComponent();
@@ -103,12 +108,24 @@ static bool ActivateExistingInstance() {
 }
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
-  OpenKneeboard::DPrintSettings::Set({
+  DPrintSettings::Set({
     .prefix = "OpenKneeboard-WinUI3",
   });
 
   if (ActivateExistingInstance()) {
     return 0;
+  }
+
+  UINT32 packageNameLen = MAX_PATH;
+  wchar_t packageName[MAX_PATH];
+  const bool isPackaged
+    = GetCurrentPackageFullName(&packageNameLen, packageName) == ERROR_SUCCESS;
+  if (!isPackaged) {
+    PACKAGE_VERSION minimumVersion {WINDOWSAPPSDK_RUNTIME_VERSION_UINT64};
+    winrt::check_hresult(MddBootstrapInitialize(
+      WINDOWSAPPSDK_RELEASE_MAJORMINOR,
+      WINDOWSAPPSDK_RELEASE_VERSION_TAG_W,
+      minimumVersion));
   }
 
   {
@@ -130,6 +147,10 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
+
+  if (!isPackaged) {
+    MddBootstrapShutdown();
+  }
 
   return 0;
 }
