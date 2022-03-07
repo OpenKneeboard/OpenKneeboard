@@ -29,7 +29,6 @@
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <time.h>
-
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 
 using namespace OpenKneeboard;
@@ -63,7 +62,9 @@ AboutPage::AboutPage() {
   UINT32 packageNameLen = MAX_PATH;
   wchar_t packageName[MAX_PATH];
   if (
-    GetCurrentPackageFullName(&packageNameLen, packageName) != ERROR_SUCCESS) {
+    GetCurrentPackageFullName(&packageNameLen, packageName) == ERROR_SUCCESS) {
+    packageNameLen -= 1;// null terminator
+  } else {
     packageNameLen = 0;
   }
 
@@ -95,7 +96,7 @@ AboutPage::AboutPage() {
   }
   DetailsText().Text(winrt::to_hstring(details));
 
-  mData = "OpenKneeboard\n"+details;
+  mData = "OpenKneeboard\n" + details;
 }
 
 void AboutPage::OnCopyClick(const IInspectable&, const RoutedEventArgs&) {
