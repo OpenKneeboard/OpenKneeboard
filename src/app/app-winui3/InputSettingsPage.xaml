@@ -7,6 +7,63 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
+  <Page.Resources>
+    <!-- Generic Device Settings -->
+    <DataTemplate x:Key="GenericDeviceTemplate" x:DataType="local:InputDeviceUIData">
+      <StackPanel Orientation="Vertical">
+        <TextBlock
+          Text="{x:Bind Name}"
+          Style="{StaticResource SubtitleTextBlockStyle}"
+          Margin="0,0,0,16"
+        />
+        <Grid
+          Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+          CornerRadius="4"
+          BorderThickness="1"
+          Padding="8">
+          <local:InputBindingsControl DeviceID="{x:Bind DeviceID}" />
+        </Grid>
+      </StackPanel>
+    </DataTemplate>
+    <!-- Tablet Device Settings -->
+    <DataTemplate x:Key="TabletDeviceTemplate" x:DataType="local:TabletInputDeviceUIData">
+      <StackPanel Orientation="Vertical">
+        <TextBlock
+          Text="{x:Bind Name}"
+          Style="{StaticResource SubtitleTextBlockStyle}"
+          Margin="0,0,0,16"
+        />
+        <Grid
+          Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+          CornerRadius="4"
+          BorderThickness="1"
+          Padding="8"
+          Margin="0,0,0,8">
+          <ComboBox
+            Header="Orientation"
+            x:Name="OrientationRadioButtons"
+            SelectedIndex="{x:Bind Orientation}"
+            Tag="{x:Bind DeviceID}"
+            SelectionChanged="OnOrientationChanged">
+            <x:String>No Rotation</x:String>
+            <x:String>Rotated 90° Clockwise</x:String>
+            <x:String>Rotated 180°</x:String>
+            <x:String>Rotated 90° Counter-Clockwise</x:String>
+          </ComboBox>
+        </Grid>
+        <Grid
+          Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+          CornerRadius="4"
+          BorderThickness="1"
+          Padding="8">
+          <local:InputBindingsControl DeviceID="{x:Bind DeviceID}" />
+        </Grid>
+      </StackPanel>
+    </DataTemplate>
+  </Page.Resources>
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
     <Grid RowDefinitions="Auto,*">
       <TextBlock
@@ -20,23 +77,10 @@
           <StackLayout Orientation="Vertical" Spacing="24" />
         </ItemsRepeater.Layout>
         <ItemsRepeater.ItemTemplate>
-          <DataTemplate x:DataType="local:InputDeviceUIData">
-            <StackPanel Orientation="Vertical">
-              <TextBlock
-                Text="{x:Bind Name}"
-                Style="{StaticResource SubtitleTextBlockStyle}"
-                Margin="0,0,0,16"
-              />
-              <Grid
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                CornerRadius="4"
-                BorderThickness="1"
-                Padding="8">
-                <local:InputBindingsControl DeviceID="{x:Bind DeviceID}" />
-              </Grid>
-            </StackPanel>
-          </DataTemplate>
+          <local:InputDeviceUIDataTemplateSelector
+            GenericDevice="{StaticResource GenericDeviceTemplate}"
+            TabletDevice="{StaticResource TabletDeviceTemplate}"
+          />
         </ItemsRepeater.ItemTemplate>
       </ItemsRepeater>
     </Grid>

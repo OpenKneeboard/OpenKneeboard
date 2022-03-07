@@ -19,13 +19,33 @@
  */
 #pragma once
 
+#include <nlohmann/json.hpp>
+
 #include "UserInputDevice.h"
 
 namespace OpenKneeboard {
 
+enum class TabletOrientation {
+  Normal,
+  RotateCW90,
+  RotateCW180,
+  RotateCW270,
+};
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  TabletOrientation,
+  {
+    {TabletOrientation::Normal, "Normal"},
+    {TabletOrientation::RotateCW90, "RotateCW90"},
+    {TabletOrientation::RotateCW180, "RotateCW180"},
+    {TabletOrientation::RotateCW270, "RotateCCW270"},
+  })
+
 class TabletInputDevice final : public UserInputDevice {
  public:
-  TabletInputDevice(const std::string& name, const std::string& id);
+  TabletInputDevice(
+    const std::string& name,
+    const std::string& id,
+    TabletOrientation);
   ~TabletInputDevice();
 
   virtual std::string GetName() const override;
@@ -39,10 +59,16 @@ class TabletInputDevice final : public UserInputDevice {
     const std::vector<UserInputButtonBinding>&) override;
 
   Event<> evBindingsChangedEvent;
+
+  TabletOrientation GetOrientation() const;
+  void SetOrientation(TabletOrientation);
+  Event<TabletOrientation> evOrientationChangedEvent;
+
  private:
   std::string mName;
   std::string mID;
   std::vector<UserInputButtonBinding> mButtonBindings;
+  TabletOrientation mOrientation;
 };
 
 }// namespace OpenKneeboard

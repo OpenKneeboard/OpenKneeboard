@@ -24,6 +24,7 @@
 // clang-format on
 
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserInputDevice.h>
 
 #include "Globals.h"
@@ -39,12 +40,38 @@ InputSettingsPage::InputSettingsPage() {
 IVector<IInspectable> InputSettingsPage::Devices() {
   auto devices {winrt::single_threaded_vector<IInspectable>()};
   for (const auto& device: gKneeboard->GetInputDevices()) {
-    auto deviceData = OpenKneeboardApp::InputDeviceUIData();
+    OpenKneeboardApp::InputDeviceUIData deviceData {nullptr};
+    auto tablet = std::dynamic_pointer_cast<TabletInputDevice>(device);
+    if (tablet) {
+      auto tabletData = OpenKneeboardApp::TabletInputDeviceUIData {};
+      tabletData.Orientation(static_cast<uint8_t>(tablet->GetOrientation()));
+      deviceData = tabletData;
+    } else {
+      deviceData = OpenKneeboardApp::InputDeviceUIData {};
+    }
     deviceData.Name(to_hstring(device->GetName()));
     deviceData.DeviceID(to_hstring(device->GetID()));
     devices.Append(deviceData);
   }
   return devices;
+}
+
+void InputSettingsPage::OnOrientationChanged(
+  const IInspectable& sender,
+  const SelectionChangedEventArgs&) {
+  auto combo = sender.as<ComboBox>();
+  auto deviceID = to_string(unbox_value<hstring>(combo.Tag()));
+
+  auto devices = gKneeboard->GetInputDevices();
+  auto it = std::ranges::find_if(
+    devices, [&](auto it) { return it->GetID() == deviceID; });
+  if (it == devices.end()) {
+    return;
+  }
+  auto& device = *it;
+
+  std::dynamic_pointer_cast<TabletInputDevice>(device)->SetOrientation(
+    static_cast<TabletOrientation>(combo.SelectedIndex()));
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

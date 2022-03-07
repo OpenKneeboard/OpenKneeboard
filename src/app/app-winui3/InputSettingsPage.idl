@@ -1,10 +1,23 @@
 namespace OpenKneeboardApp
 {
     [default_interface]
-    runtimeclass InputDeviceUIData {
+    unsealed runtimeclass InputDeviceUIData {
         InputDeviceUIData();
         String Name;
         String DeviceID;
+    }
+
+    [default_interface]
+    runtimeclass TabletInputDeviceUIData: InputDeviceUIData {
+        TabletInputDeviceUIData();
+        UInt8 Orientation;
+    };
+
+    [default_interface]
+    runtimeclass InputDeviceUIDataTemplateSelector : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
+        InputDeviceUIDataTemplateSelector();
+        Microsoft.UI.Xaml.DataTemplate GenericDevice;
+        Microsoft.UI.Xaml.DataTemplate TabletDevice;
     }
 
     [default_interface]

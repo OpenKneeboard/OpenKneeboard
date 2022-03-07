@@ -28,8 +28,9 @@ namespace OpenKneeboard {
 
 TabletInputDevice::TabletInputDevice(
   const std::string& name,
-  const std::string& id)
-  : mName(name), mID(id) {
+  const std::string& id,
+  TabletOrientation orientation)
+  : mName(name), mID(id), mOrientation(orientation) {
 }
 
 TabletInputDevice::~TabletInputDevice() {
@@ -70,6 +71,15 @@ void TabletInputDevice::SetButtonBindings(
   const std::vector<UserInputButtonBinding>& bindings) {
   mButtonBindings = bindings;
   evBindingsChangedEvent.Emit();
+}
+
+TabletOrientation TabletInputDevice::GetOrientation() const {
+  return mOrientation;
+}
+
+void TabletInputDevice::SetOrientation(TabletOrientation value) {
+  mOrientation = value;
+  evOrientationChangedEvent.Emit(value);
 }
 
 }// namespace OpenKneeboard

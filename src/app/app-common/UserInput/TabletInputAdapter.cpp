@@ -19,8 +19,10 @@
  */
 
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabletInputDevice.h>
+#include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
@@ -32,9 +34,6 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/UserAction.h>
 
 namespace OpenKneeboard {
 
@@ -51,8 +50,28 @@ struct JSONDevice {
   std::string ID;
   std::string Name;
   std::vector<JSONButtonBinding> ExpressKeyBindings;
+  TabletOrientation Orientation {TabletOrientation::RotateCW90};
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONDevice, ID, Name, ExpressKeyBindings);
+
+void to_json(nlohmann::json& j, const JSONDevice& device) {
+  j = {
+    {"ID", device.ID},
+    {"Name", device.Name},
+    {"ExpressKeyBindings", device.ExpressKeyBindings},
+    {"Orientation", device.Orientation},
+  };
+}
+
+void from_json(const nlohmann::json& j, JSONDevice& device) {
+  device.ID = j.at("ID");
+  device.Name = j.at("Name");
+  device.ExpressKeyBindings = j.at("ExpressKeyBindings");
+
+  if (j.contains("Orientation")) {
+    device.Orientation = j.at("Orientation");
+  }
+}
+
 struct JSONSettings {
   std::unordered_map<std::string, JSONDevice> Devices;
 };
@@ -84,16 +103,20 @@ TabletInputAdapter::TabletInputAdapter(
   }
 
   mDevice = std::make_shared<TabletInputDevice>(
-    mTablet->GetDeviceName(), mTablet->GetDeviceID());
+    mTablet->GetDeviceName(),
+    mTablet->GetDeviceID(),
+    TabletOrientation::RotateCW90);
 
   JSONSettings settings;
   if (!jsonSettings.is_null()) {
     jsonSettings.get_to(settings);
   }
+
   if (settings.Devices.contains(mTablet->GetDeviceID())) {
+    auto& jsonDevice = settings.Devices.at(mTablet->GetDeviceID());
+    mDevice->SetOrientation(jsonDevice.Orientation);
     std::vector<UserInputButtonBinding> bindings;
-    for (const auto& binding:
-         settings.Devices.at(mTablet->GetDeviceID()).ExpressKeyBindings) {
+    for (const auto& binding: jsonDevice.ExpressKeyBindings) {
       bindings.push_back({
         mDevice,
         binding.Buttons,
@@ -105,6 +128,9 @@ TabletInputAdapter::TabletInputAdapter(
 
   AddEventListener(
     mDevice->evBindingsChangedEvent, this->evSettingsChangedEvent);
+  AddEventListener(mDevice->evOrientationChangedEvent, [this]() {
+    this->evSettingsChangedEvent.Emit();
+  });
   AddEventListener(mDevice->evUserActionEvent, this->evUserActionEvent);
 }
 
@@ -161,12 +187,29 @@ void TabletInputAdapter::ProcessTabletMessage(
   }
 
   if (state.active) {
-    // TODO: make tablet rotation configurable.
-    // For now, assume tablet is rotated 90 degrees clockwise
     auto tabletLimits = mTablet->GetLimits();
-    auto x = static_cast<float>(tabletLimits.y - state.y);
-    auto y = static_cast<float>(state.x);
-    std::swap(tabletLimits.x, tabletLimits.y);
+
+    float x, y;
+    switch (mDevice->GetOrientation()) {
+      case TabletOrientation::Normal:
+        x = static_cast<float>(state.x);
+        y = static_cast<float>(state.y);
+        break;
+      case TabletOrientation::RotateCW90:
+        x = static_cast<float>(tabletLimits.y - state.y);
+        y = static_cast<float>(state.x);
+        std::swap(tabletLimits.x, tabletLimits.y);
+        break;
+      case TabletOrientation::RotateCW180:
+        x = static_cast<float>(tabletLimits.x - state.x);
+        y = static_cast<float>(tabletLimits.y - state.y);
+        break;
+      case TabletOrientation::RotateCW270:
+        x = static_cast<float>(state.y);
+        y = static_cast<float>(tabletLimits.x - state.x);
+        std::swap(tabletLimits.x, tabletLimits.y);
+        break;
+    }
 
     // Cursor events use content coordinates, but as as the content isn't at
     // the origin, we need a few transformations:
@@ -234,9 +277,6 @@ nlohmann::json TabletInputAdapter::GetSettings() const {
   if (settings.Devices.contains(id)) {
     settings.Devices.erase(id);
   }
-  if (mDevice->GetButtonBindings().empty()) {
-    return settings;
-  }
 
   std::vector<JSONButtonBinding> expressKeyBindings;
   for (const auto& binding: mDevice->GetButtonBindings()) {
@@ -249,6 +289,7 @@ nlohmann::json TabletInputAdapter::GetSettings() const {
     .ID = id,
     .Name = mDevice->GetName(),
     .ExpressKeyBindings = expressKeyBindings,
+    .Orientation = mDevice->GetOrientation(),
   };
 
   return settings;
