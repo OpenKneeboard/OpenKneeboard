@@ -32,7 +32,7 @@ add_custom_target(
 	COMMAND
 	"${CMAKE_COMMAND}" -E make_directory
 	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
-	'&&
+	&&
 	${CMAKE_COMMAND} -E copy_if_different
 	"${RUNTIME_FILES}"
 	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
