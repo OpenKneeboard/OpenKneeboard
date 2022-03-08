@@ -85,24 +85,24 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
 
   LONG left = padding;
   switch (config.flat.horizontalAlignment) {
-    case SHM::FlatConfig::HALIGN_LEFT:
+    case FlatConfig::HALIGN_LEFT:
       break;
-    case SHM::FlatConfig::HALIGN_CENTER:
+    case FlatConfig::HALIGN_CENTER:
       left = (canvasWidth - renderWidth) / 2;
       break;
-    case SHM::FlatConfig::HALIGN_RIGHT:
+    case FlatConfig::HALIGN_RIGHT:
       left = canvasWidth - (renderWidth + padding);
       break;
   }
 
   LONG top = padding;
   switch (config.flat.verticalAlignment) {
-    case SHM::FlatConfig::VALIGN_TOP:
+    case FlatConfig::VALIGN_TOP:
       break;
-    case SHM::FlatConfig::VALIGN_MIDDLE:
+    case FlatConfig::VALIGN_MIDDLE:
       top = (canvasHeight - renderHeight) / 2;
       break;
-    case SHM::FlatConfig::VALIGN_BOTTOM:
+    case FlatConfig::VALIGN_BOTTOM:
       top = canvasHeight - (renderHeight + padding);
       break;
   }

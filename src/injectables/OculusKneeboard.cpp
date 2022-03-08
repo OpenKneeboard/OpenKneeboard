@@ -198,7 +198,7 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
 
   const auto& vr = config.vr;
   Vector3 position(vr.x, vr.floorY, vr.z);
-  if ((config.vr.flags & SHM::VRConfig::Flags::HEADLOCKED)) {
+  if ((config.vr.flags & VRConfig::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
     ovr->ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
@@ -259,7 +259,7 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   }
 
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.vr.flags & SHM::VRConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
+  if ((config.vr.flags & VRConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
     for (auto i = 0; i < newLayers.size(); ++i) {
       auto layer = newLayers.at(i);
       if (layer->Type != ovrLayerType_EyeFovDepth) {

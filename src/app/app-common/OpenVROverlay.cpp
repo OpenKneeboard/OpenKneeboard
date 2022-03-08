@@ -201,7 +201,7 @@ void OpenVROverlay::Tick() {
     p->mZoomed ? p->mZoomedWidth : p->mWidth);
 
   const bool roomscale
-    = vrConf.flags & SHM::VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
+    = vrConf.flags & VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
   auto y = roomscale ? vrConf.floorY : vrConf.eyeY;
   auto universe
     = roomscale ? vr::TrackingUniverseStanding : vr::TrackingUniverseSeated;
