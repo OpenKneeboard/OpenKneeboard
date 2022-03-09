@@ -121,20 +121,32 @@
     <ClInclude Include="NonVRSettingsPage.xaml.h">
       <DependentUpon>NonVRSettingsPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="MetersNumberFormatter.h">
+      <DependentUpon>MetersNumberFormatter.idl</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="MetersValueConverter.h">
+      <DependentUpon>MetersValueConverter.idl</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="MultiplierValueConverter.h">
+      <DependentUpon>MultiplierValueConverter.idl</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="PercentValueConverter.h">
+      <DependentUpon>PercentValueConverter.idl</DependentUpon>
+    </ClInclude>
     <ClInclude Include="ProcessListPage.xaml.h">
       <DependentUpon>ProcessListPage.xaml</DependentUpon>
     </ClInclude>
     <ClInclude Include="SettingsPage.xaml.h">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </ClInclude>
-    <ClInclude Include="PercentValueConverter.h">
-      <DependentUpon>NonVRSettingsPage.idl</DependentUpon>
-    </ClInclude>
     <ClInclude Include="TabPage.xaml.h">
       <DependentUpon>TabPage.xaml</DependentUpon>
     </ClInclude>
     <ClInclude Include="TabSettingsPage.xaml.h">
       <DependentUpon>TabSettingsPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="VRSettingsPage.xaml.h">
+      <DependentUpon>VRSettingsPage.xaml</DependentUpon>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -149,6 +161,7 @@
     <Page Include="SettingsPage.xaml" />
     <Page Include="TabPage.xaml" />
     <Page Include="TabSettingsPage.xaml" />
+    <Page Include="VRSettingsPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -178,8 +191,20 @@
     <ClCompile Include="InputSettingsPage.xaml.cpp">
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="MetersNumberFormatter.cpp">
+      <DependentUpon>MetersNumberFormatter.idl</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="MetersValueConverter.cpp">
+      <DependentUpon>MetersValueConverter.idl</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="MultiplierValueConverter.cpp">
+      <DependentUpon>MultiplierValueConverter.idl</DependentUpon>
+    </ClCompile>
     <ClCompile Include="NonVRSettingsPage.xaml.cpp">
       <DependentUpon>NonVRSettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="PercentValueConverter.cpp">
+      <DependentUpon>PercentValueConverter.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="ProcessListPage.xaml.cpp">
       <DependentUpon>ProcessListPage.xaml</DependentUpon>
@@ -187,14 +212,14 @@
     <ClCompile Include="SettingsPage.xaml.cpp">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="PercentValueConverter.cpp">
-      <DependentUpon>NonVRSettingsPage.idl</DependentUpon>
-    </ClCompile>
     <ClCompile Include="TabPage.xaml.cpp">
       <DependentUpon>TabPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="TabSettingsPage.xaml.cpp">
       <DependentUpon>TabSettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="VRSettingsPage.xaml.cpp">
+      <DependentUpon>VRSettingsPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
@@ -223,9 +248,21 @@
       <SubType>Code</SubType>
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </Midl>
+    <Midl Include="MetersNumberFormatter.idl">
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="MetersValueConverter.idl">
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="MultiplierValueConverter.idl">
+      <SubType>Code</SubType>
+    </Midl>
     <Midl Include="NonVRSettingsPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>NonVRSettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="PercentValueConverter.idl">
+      <SubType>Code</SubType>
     </Midl>
     <Midl Include="ProcessListPage.idl">
       <SubType>Code</SubType>
@@ -242,6 +279,10 @@
     <Midl Include="TabSettingsPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>TabSettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="VRSettingsPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>VRSettingsPage.xaml</DependentUpon>
     </Midl>
   </ItemGroup>
   <!-- Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging

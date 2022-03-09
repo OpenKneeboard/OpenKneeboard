@@ -1,0 +1,8 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass MultiplierValueConverter: Microsoft.UI.Xaml.Data.IValueConverter
+    {
+        MultiplierValueConverter();
+    }
+}

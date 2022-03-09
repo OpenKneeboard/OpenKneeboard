@@ -1,0 +1,8 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass MetersNumberFormatter: Windows.Globalization.NumberFormatting.INumberFormatter2, Windows.Globalization.NumberFormatting.INumberParser
+    {
+        MetersNumberFormatter();
+    }
+}

@@ -1,12 +1,6 @@
 namespace OpenKneeboardApp
 {
     [default_interface]
-    runtimeclass PercentValueConverter: Microsoft.UI.Xaml.Data.IValueConverter
-    {
-        PercentValueConverter();
-    }
-
-    [default_interface]
     runtimeclass NonVRSettingsPage: Microsoft.UI.Xaml.Controls.Page, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         NonVRSettingsPage();

@@ -24,6 +24,10 @@
 
 #include "bitflags.h"
 
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+#include <nlohmann/json_fwd.hpp>
+#endif
+
 namespace OpenKneeboard {
 
 #pragma pack(push)
@@ -49,5 +53,14 @@ struct VRConfig {
 
 template <>
 constexpr bool is_bitflags_v<VRConfig::Flags> = true;
+
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+// not using the macros because they use `x`, but we're
+// dealing with coordinates so have an `x`. We'll also
+// likely want custom functions anyway to deal with older
+// configs when we add new fields.
+void from_json(const nlohmann::json& j, VRConfig& vrc); 
+void to_json(nlohmann::json&j, const VRConfig& vrc);
+#endif
 
 }// namespace OpenKneeboard

@@ -18,7 +18,6 @@
  * USA.
  */
 #include <OpenKneeboard/Settings.h>
-
 #include <ShlObj.h>
 
 #include <filesystem>
@@ -84,6 +83,12 @@ void from_json(const nlohmann::json& j, Settings& s) {
   if (j.contains("TabletInput")) {
     s.TabletInput = j.at("TabletInput");
   }
+  if (j.contains("NonVR")) {
+    s.NonVR = j.at("NonVR");
+  }
+  if (j.contains("VR")) {
+    s.VR = j.at("VR");
+  }
 }
 
 void to_json(nlohmann::json& j, const Settings& s) {
@@ -93,6 +98,7 @@ void to_json(nlohmann::json& j, const Settings& s) {
     {"DirectInputV2", s.DirectInputV2},
     {"TabletInput", s.TabletInput},
     {"NonVR", s.NonVR},
+    {"VR", s.VR},
   };
 }
 

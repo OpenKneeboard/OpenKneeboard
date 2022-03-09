@@ -38,12 +38,15 @@ NonVRSettingsPage::NonVRSettingsPage() {
   this->InitializeComponent();
 }
 
-fire_and_forget NonVRSettingsPage::RestoreDefaults(const IInspectable&, const RoutedEventArgs&) {
+fire_and_forget NonVRSettingsPage::RestoreDefaults(
+  const IInspectable&,
+  const RoutedEventArgs&) {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
   dialog.Content(
-    box_value(to_hstring(_("Do you want to restore the default non-VR settings?"))));
+    box_value(to_hstring(_("Do you want to restore the default non-VR "
+                           "settings, removing your preferences?"))));
   dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Close);
@@ -58,11 +61,15 @@ fire_and_forget NonVRSettingsPage::RestoreDefaults(const IInspectable&, const Ro
     return;
   }
 
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardHeightPercent"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardPaddingPixels"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"KneeboardHeightPercent"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"KneeboardPaddingPixels"));
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardOpacity"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardHorizontalPlacement"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardVerticalPlacement"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"KneeboardHorizontalPlacement"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"KneeboardVerticalPlacement"));
 }
 
 uint8_t NonVRSettingsPage::KneeboardHeightPercent() {

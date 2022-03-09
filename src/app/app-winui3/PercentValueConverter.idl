@@ -1,0 +1,8 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass PercentValueConverter: Microsoft.UI.Xaml.Data.IValueConverter
+    {
+        PercentValueConverter();
+    }
+}

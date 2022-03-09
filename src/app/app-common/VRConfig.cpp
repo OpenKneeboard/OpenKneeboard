@@ -17,27 +17,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
+#include <OpenKneeboard/VRConfig.h>
 
 #include <nlohmann/json.hpp>
 
 namespace OpenKneeboard {
-
-struct Settings final {
-  uint32_t Version = 1;
-
-  nlohmann::json DirectInputV2;
-  nlohmann::json TabletInput;
-  nlohmann::json Games;
-  nlohmann::json Tabs;
-  nlohmann::json NonVR;
-  nlohmann::json VR;
-
-  static Settings Load();
-  void Save();
-};
-
-void from_json(const nlohmann::json&, Settings&);
-void to_json(nlohmann::json&, const Settings&);
-
+void from_json(const nlohmann::json& j, VRConfig& vrc) {
+  vrc.x = j.at("x");
+  vrc.eyeY = j.at("eyeY");
+  vrc.floorY = j.at("floorY");
+  vrc.z = j.at("z");
+  vrc.rx = j.at("rx");
+  vrc.ry = j.at("ry");
+  vrc.rz = j.at("ry");
+  vrc.height = j.at("height");
+  vrc.zoomScale = j.at("zoomScale");
 }
+
+void to_json(nlohmann::json& j, const VRConfig& vrc) {
+  j = {
+    {"x", vrc.x},
+    {"eyeY", vrc.eyeY},
+    {"floorY", vrc.floorY},
+    {"z", vrc.z},
+    {"rx", vrc.rx},
+    {"ry", vrc.ry},
+    {"rz", vrc.rz},
+    {"height", vrc.height},
+    {"zoomScale", vrc.zoomScale},
+  };
+}
+}// namespace OpenKneeboard
