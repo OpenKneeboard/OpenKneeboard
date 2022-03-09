@@ -8,6 +8,7 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
+    <local:MetersNumberFormatter x:Key="MetersFormatter" />
   </Page.Resources>
   <Grid RowDefinitions="Auto,Auto" Margin="16">
     <Grid
@@ -53,11 +54,39 @@
             Value="{x:Bind KneeboardHeight}"
             SmallChange="0.01"
             LargeChange="0.05"
-            SpinButtonPlacementMode="Inline">
-            <NumberBox.NumberFormatter>
-              <local:MetersNumberFormatter x:Key="MetersFormatter" />
-            </NumberBox.NumberFormatter>
-          </NumberBox>
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*">
+          <NumberBox
+            Header="Vertical position from seated eye level in meters"
+            Value="{x:Bind KneeboardEyeY}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*">
+          <NumberBox
+            Header="Left-right position in meters"
+            Value="{x:Bind KneeboardX}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*">
+          <NumberBox
+            Header="Front-back position in meters"
+            Value="{x:Bind KneeboardZ}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
         </Grid>
       </StackPanel>
     </Grid>

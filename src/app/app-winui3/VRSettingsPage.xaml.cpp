@@ -115,12 +115,14 @@ void VRSettingsPage::KneeboardFloorY(float value) {
 }
 
 float VRSettingsPage::KneeboardZ() {
-  return gKneeboard->GetVRConfig().z;
+  // 3D standard right-hand-coordinate system is that -z is forwards;
+  // most users expect the opposite.
+  return -gKneeboard->GetVRConfig().z;
 }
 
 void VRSettingsPage::KneeboardZ(float value) {
   auto config = gKneeboard->GetVRConfig();
-  config.z = value;
+  config.z = -value;
   gKneeboard->SetVRConfig(config);
 }
 
