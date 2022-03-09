@@ -10,6 +10,8 @@ namespace OpenKneeboardApp
         Games,
         Tabs,
         Input,
+        VRConfig,
+        NonVRConfig,
     };
 
     [default_interface]

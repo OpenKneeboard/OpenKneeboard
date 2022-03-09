@@ -20,6 +20,8 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/FlatConfig.h>
+#include <OpenKneeboard/VRConfig.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/Settings.h>
 #include <d2d1.h>
@@ -84,6 +86,11 @@ class KneeboardState final : private EventReceiver {
 
   GamesList* GetGamesList() const;
 
+  FlatConfig GetFlatConfig() const;
+  void SetFlatConfig(const FlatConfig&);
+  VRConfig GetVRConfig() const;
+  void SetVRConfig(const VRConfig&);
+
   void SaveSettings();
 
  private:
@@ -110,6 +117,9 @@ class KneeboardState final : private EventReceiver {
 
   std::jthread mGameEventThread;
   std::jthread mOpenVRThread;
+
+  VRConfig mVRConfig;
+  FlatConfig mFlatConfig;
 
   void UpdateLayout();
 

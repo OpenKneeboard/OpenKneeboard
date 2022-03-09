@@ -118,11 +118,17 @@
     <ClInclude Include="InputSettingsPage.xaml.h">
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="NonVRSettingsPage.xaml.h">
+      <DependentUpon>NonVRSettingsPage.xaml</DependentUpon>
+    </ClInclude>
     <ClInclude Include="ProcessListPage.xaml.h">
       <DependentUpon>ProcessListPage.xaml</DependentUpon>
     </ClInclude>
     <ClInclude Include="SettingsPage.xaml.h">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="PercentValueConverter.h">
+      <DependentUpon>NonVRSettingsPage.idl</DependentUpon>
     </ClInclude>
     <ClInclude Include="TabPage.xaml.h">
       <DependentUpon>TabPage.xaml</DependentUpon>
@@ -138,6 +144,7 @@
     <Page Include="GameSettingsPage.xaml" />
     <Page Include="InputBindingsControl.xaml" />
     <Page Include="InputSettingsPage.xaml" />
+    <Page Include="NonVRSettingsPage.xaml" />
     <Page Include="ProcessListPage.xaml" />
     <Page Include="SettingsPage.xaml" />
     <Page Include="TabPage.xaml" />
@@ -171,11 +178,17 @@
     <ClCompile Include="InputSettingsPage.xaml.cpp">
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="NonVRSettingsPage.xaml.cpp">
+      <DependentUpon>NonVRSettingsPage.xaml</DependentUpon>
+    </ClCompile>
     <ClCompile Include="ProcessListPage.xaml.cpp">
       <DependentUpon>ProcessListPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="SettingsPage.xaml.cpp">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="PercentValueConverter.cpp">
+      <DependentUpon>NonVRSettingsPage.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="TabPage.xaml.cpp">
       <DependentUpon>TabPage.xaml</DependentUpon>
@@ -209,6 +222,10 @@
     <Midl Include="InputSettingsPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="NonVRSettingsPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>NonVRSettingsPage.xaml</DependentUpon>
     </Midl>
     <Midl Include="ProcessListPage.idl">
       <SubType>Code</SubType>

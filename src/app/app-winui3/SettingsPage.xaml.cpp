@@ -46,6 +46,9 @@ void SettingsPage::OnItemClick(const IInspectable&, const ItemClickEventArgs& ar
     case SettingsSubpageID::Input:
       Frame().Navigate(xaml_typename<InputSettingsPage>());
       return;
+    case SettingsSubpageID::NonVRConfig:
+      Frame().Navigate(xaml_typename<NonVRSettingsPage>());
+      return;
   }
 
 }

@@ -22,6 +22,10 @@
 #include <cstdint>
 #include <numbers>
 
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+#include <nlohmann/json.hpp>
+#endif
+
 namespace OpenKneeboard {
 
 #pragma pack(push)
@@ -48,5 +52,36 @@ struct FlatConfig {
   VerticalAlignment verticalAlignment = VALIGN_MIDDLE;
 };
 #pragma pack(pop)
+
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+	FlatConfig,
+	heightPercent,
+	paddingPixels,
+	opacity,
+	horizontalAlignment,
+	verticalAlignment
+);
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+	FlatConfig::HorizontalAlignment,
+	{
+		{FlatConfig::HALIGN_LEFT, "Left"},
+		{FlatConfig::HALIGN_CENTER, "Center"},
+		{FlatConfig::HALIGN_RIGHT, "Right"},
+	}
+);
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+	FlatConfig::VerticalAlignment,
+	{
+		{FlatConfig::VALIGN_TOP, "Top"},
+		{FlatConfig::VALIGN_MIDDLE, "Middle"},
+		{FlatConfig::VALIGN_BOTTOM, "Bottom"},
+	}
+);
+
+#endif
 
 }// namespace OpenKneeboard

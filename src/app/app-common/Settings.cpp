@@ -92,6 +92,7 @@ void to_json(nlohmann::json& j, const Settings& s) {
     {"Tabs", s.Tabs},
     {"DirectInputV2", s.DirectInputV2},
     {"TabletInput", s.TabletInput},
+    {"NonVR", s.NonVR},
   };
 }
 

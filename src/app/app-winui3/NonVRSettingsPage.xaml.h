@@ -18,52 +18,40 @@
  * USA.
  */
 #pragma once
-
 // clang-format off
 #include "pch.h"
-#include "SettingsPage.g.h"
-#include "SettingsSubpageData.g.h"
+#include "NonVRSettingsPage.g.h"
 // clang-format on
 
-#include <string>
-
 using namespace winrt::Microsoft::UI::Xaml;
-using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
+struct NonVRSettingsPage : NonVRSettingsPageT<NonVRSettingsPage> {
+  NonVRSettingsPage();
 
-struct SettingsPage : SettingsPageT<SettingsPage> {
-  SettingsPage();
-  void OnItemClick(const IInspectable&, const ItemClickEventArgs&);
+  fire_and_forget RestoreDefaults(const IInspectable&, const RoutedEventArgs&);
+
+  uint8_t KneeboardHeightPercent();
+  void KneeboardHeightPercent(uint8_t value);
+  uint32_t KneeboardPaddingPixels();
+  void KneeboardPaddingPixels(uint32_t value);
+  float KneeboardOpacity();
+  void KneeboardOpacity(float value);
+  uint8_t KneeboardHorizontalPlacement();
+  void KneeboardHorizontalPlacement(uint8_t value);
+  uint8_t KneeboardVerticalPlacement();
+  void KneeboardVerticalPlacement(uint8_t value);
+
+  winrt::event_token PropertyChanged(
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+      handler);
+  void PropertyChanged(winrt::event_token const& token) noexcept;
+
+  private:
+    winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler> mPropertyChangedEvent;
 };
-
-struct SettingsSubpageData : SettingsSubpageDataT<SettingsSubpageData> {
-  SettingsSubpageData() = default;
-
-  SettingsSubpageID ID();
-  void ID(SettingsSubpageID value);
-
-  hstring Glyph();
-  void Glyph(hstring const& value);
-
-  hstring Title();
-  void Title(hstring const& value);
-
-  hstring Description();
-  void Description(hstring const& value);
-
- private:
-  hstring mGlyph;
-  hstring mTitle;
-  hstring mDescription;
-  SettingsSubpageID mID;
-};
-
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
-struct SettingsPage
-  : SettingsPageT<SettingsPage, implementation::SettingsPage> {};
-struct SettingsSubpageData : SettingsSubpageDataT<
-                               SettingsSubpageData,
-                               implementation::SettingsSubpageData> {};
+struct NonVRSettingsPage
+  : NonVRSettingsPageT<NonVRSettingsPage, implementation::NonVRSettingsPage> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation

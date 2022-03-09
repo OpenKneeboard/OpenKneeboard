@@ -81,7 +81,7 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
   dialog.Content(processList);
 
   dialog.IsPrimaryButtonEnabled(false);
-  dialog.PrimaryButtonText(to_hstring(_("Add")));
+  dialog.PrimaryButtonText(to_hstring(_("Add Game")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
   dialog.DefaultButton(ContentDialogButton::Primary);
 

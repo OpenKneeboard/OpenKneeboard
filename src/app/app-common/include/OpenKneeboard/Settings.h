@@ -30,6 +30,7 @@ struct Settings final {
   nlohmann::json TabletInput;
   nlohmann::json Games;
   nlohmann::json Tabs;
+  nlohmann::json NonVR;
 
   static Settings Load();
   void Save();

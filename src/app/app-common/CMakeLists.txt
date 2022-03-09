@@ -4,6 +4,7 @@ target_compile_definitions(
 	OpenKneeboard-App-Common
 	PUBLIC
 	"DIRECTINPUT_VERSION=0x0800"
+	"OPENKNEEBOARD_JSON_SERIALIZE=1"
 )
 target_link_libraries(
 	OpenKneeboard-App-Common

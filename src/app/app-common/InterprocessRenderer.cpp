@@ -136,6 +136,8 @@ void InterprocessRenderer::Impl::CopyPixelsToSHM() {
     .feederWindow = mFeederWindow,
     .imageWidth = static_cast<uint16_t>(usedSize.width),
     .imageHeight = static_cast<uint16_t>(usedSize.height),
+    .vr = mKneeboard->GetVRConfig(),
+    .flat = mKneeboard->GetFlatConfig(),
   };
   mSHM.Update(config);
 }

@@ -23,12 +23,12 @@
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/OpenVROverlay.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabsList.h>
-#include <OpenKneeboard/OpenVROverlay.h>
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -40,7 +40,8 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   AddEventListener(evCursorEvent, &KneeboardState::OnCursorEvent, this);
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
-  AddEventListener(mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+  AddEventListener(
+    mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
   mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.Tabs);
   mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(hwnd, mDXResources, this);
@@ -354,6 +355,30 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
+FlatConfig KneeboardState::GetFlatConfig() const {
+  return mFlatConfig;
+}
+
+void KneeboardState::SetFlatConfig(const FlatConfig& value) {
+  mFlatConfig = value;
+  this->SaveSettings();
+  this->evNeedsRepaintEvent.Emit();
+}
+
+VRConfig KneeboardState::GetVRConfig() const {
+  return mVRConfig;
+}
+
+void KneeboardState::SetVRConfig(const VRConfig& value) {
+  mVRConfig = value;
+  this->SaveSettings();
+  this->evNeedsRepaintEvent.Emit();
+}
+
+GamesList* KneeboardState::GetGamesList() const {
+  return mGamesList.get();
+}
+
 void KneeboardState::SaveSettings() {
   if (mGamesList) {
     mSettings.Games = mGamesList->GetSettings();
@@ -367,11 +392,11 @@ void KneeboardState::SaveSettings() {
   if (mDirectInput) {
     mSettings.DirectInputV2 = mDirectInput->GetSettings();
   }
+
+  mSettings.NonVR = mFlatConfig;
+
   mSettings.Save();
 }
 
-GamesList* KneeboardState::GetGamesList() const {
-  return mGamesList.get();
-}
 
 }// namespace OpenKneeboard
