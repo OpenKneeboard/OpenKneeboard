@@ -1,18 +1,9 @@
 if(WIN32)
-  get_filename_component(
-    WINDOWS_10_KITS_ROOT
-    "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]"
-    ABSOLUTE CACHE
-  )
-  set(WINDOWS_10_KIT_DIR "${WINDOWS_10_KITS_ROOT}/bin/${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}" CACHE PATH "Current Windows 10 kit directory")
-  set(SIGNTOOL_KEY_ARGS "" CACHE STRING "Key arguments for signtool.exe - separate with ';'")
-  find_program(
+  # Use the nuget version to be certain it's new enough to support
+  # https://docs.microsoft.com/en-us/windows/msix/package/persistent-identity
+  set(
     SIGNTOOL_EXE
-    signtool
-    PATHS
-    "${WINDOWS_10_KIT_DIR}/x64"
-    "${WINDOWS_10_KIT_DIR}/x86"
-    DOC "Path to signtool.exe if SIGNTOOL_KEY_ARGS is set"
+    "${NUGET_WINDOWS_SDK_BUILD_TOOLS_PATH}/bin/${NUGET_WINDOWS_SDK_BUILD_TOOLS_COMPATIBILITY_VERSION}/x64/signtool.exe"
   )
 endif()
 function(sign_target TARGET)
@@ -27,6 +18,8 @@ function(sign_target TARGET)
       /t http://timestamp.digicert.com
       /fd SHA256
       "$<TARGET_FILE:${TARGET}>"
+      DEPENDS
+      WindowsSDKBuildToolsNuget
     )
   endif()
 endfunction()

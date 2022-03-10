@@ -1,5 +1,8 @@
 include(ExternalProject)
 
+# Used in internal folder paths, doesn't necessarily match the actual version
+set(NUGET_WINDOWS_SDK_BUILD_TOOLS_COMPATIBILITY_VERSION 10.0.22000.0 PARENT_SCOPE)
+
 ExternalProject_Add(
 	WindowsSDKBuildToolsNuget
 	URL "https://www.nuget.org/api/v2/package/Microsoft.Windows.SDK.BuildTools/10.0.22000.197"
