@@ -126,33 +126,41 @@ void VRSettingsPage::KneeboardZ(float value) {
   gKneeboard->SetVRConfig(config);
 }
 
+static inline float RadiansToDegrees(float radians) {
+  return radians * 180 / std::numbers::pi_v<float>;
+}
+
+static inline float DegreesToRadians(float degrees) {
+  return degrees * std::numbers::pi_v<float> / 180;
+}
+
 float VRSettingsPage::KneeboardRX() {
-  return gKneeboard->GetVRConfig().rx * 180 / std::numbers::pi_v<float>;
+  return -RadiansToDegrees(gKneeboard->GetVRConfig().rx);
 }
 
 void VRSettingsPage::KneeboardRX(float value) {
   auto config = gKneeboard->GetVRConfig();
-  config.rx = value * std::numbers::pi_v<float> / 180;
+  config.rx = -DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardRY() {
-  return gKneeboard->GetVRConfig().ry * 180 / std::numbers::pi_v<float>;
+  return -RadiansToDegrees(gKneeboard->GetVRConfig().ry);
 }
 
 void VRSettingsPage::KneeboardRY(float value) {
   auto config = gKneeboard->GetVRConfig();
-  config.ry = value * std::numbers::pi_v<float> / 180;
+  config.ry = -DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardRZ() {
-  return gKneeboard->GetVRConfig().rz * 180 / std::numbers::pi_v<float>;
+  return RadiansToDegrees(gKneeboard->GetVRConfig().rz);
 }
 
 void VRSettingsPage::KneeboardRZ(float value) {
   auto config = gKneeboard->GetVRConfig();
-  config.rz = value * std::numbers::pi_v<float> / 180;
+  config.rz = DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
 }
 

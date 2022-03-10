@@ -39,6 +39,13 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mMainWindow(hwnd), mDXResources(dxr) {
   AddEventListener(evCursorEvent, &KneeboardState::OnCursorEvent, this);
 
+  if (!mSettings.NonVR.is_null()) {
+    mFlatConfig = mSettings.NonVR;
+  }
+  if (!mSettings.NonVR.is_null()) {
+    mVRConfig = mSettings.VR;
+  }
+
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
@@ -394,6 +401,7 @@ void KneeboardState::SaveSettings() {
   }
 
   mSettings.NonVR = mFlatConfig;
+  mSettings.VR = mVRConfig;
 
   mSettings.Save();
 }

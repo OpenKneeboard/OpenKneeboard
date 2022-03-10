@@ -1,8 +1,0 @@
-namespace OpenKneeboardApp
-{
-    [default_interface]
-    runtimeclass MetersValueConverter: Microsoft.UI.Xaml.Data.IValueConverter
-    {
-        MetersValueConverter();
-    }
-}

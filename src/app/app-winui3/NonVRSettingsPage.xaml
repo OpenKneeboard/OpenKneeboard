@@ -7,6 +7,9 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
+  <Page.Resources>
+    <local:PercentValueConverter x:Key="PercentConverter" />
+  </Page.Resources>
   <Grid RowDefinitions="Auto,Auto" Margin="16">
     <Grid
       Grid.Row="0"
@@ -34,17 +37,15 @@
       x:DefaultBindMode="TwoWay">
       <StackPanel Spacing="12">
         <Slider
-          Header="Kneeboard height as percentage of the window height"
+          Header="Kneeboard height, as a percentage of the window height"
           Value="{x:Bind KneeboardHeightPercent}"
           TickPlacement="Outside"
-          TickFrequency="10">
-          <Slider.ThumbToolTipValueConverter>
-            <local:PercentValueConverter />
-          </Slider.ThumbToolTipValueConverter>
-        </Slider>
+          TickFrequency="10"
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+        />
         <Grid ColumnDefinitions="Auto,*">
           <NumberBox
-            Header="Minimum distance from window edge in pixels"
+            Header="Minimum distance from window edge, in pixels"
             Value="{x:Bind KneeboardPaddingPixels}"
             SpinButtonPlacementMode="Inline"
             SmallChange="1"
@@ -54,8 +55,11 @@
         <Slider
           Header="Opacity"
           Value="{x:Bind KneeboardOpacity}"
-          Maximum="1"
-          StepFrequency="0.05"
+          Maximum="100"
+          StepFrequency="5"
+          TickPlacement="Outside"
+          TickFrequency="10"
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
         />
         <RadioButtons
           SelectedIndex="{x:Bind KneeboardVerticalPlacement}"

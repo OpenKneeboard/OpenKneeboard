@@ -20,13 +20,12 @@
 #pragma once
 // clang-format off
 #include "pch.h"
-#include "MetersValueConverter.g.h"
+#include "DegreesValueConverter.g.h"
 // clang-format on
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct MetersValueConverter
-  : MetersValueConverterT<MetersValueConverter> {
-  MetersValueConverter() = default;
+struct DegreesValueConverter : DegreesValueConverterT<DegreesValueConverter> {
+  DegreesValueConverter() = default;
 
   winrt::Windows::Foundation::IInspectable Convert(
     winrt::Windows::Foundation::IInspectable const& value,
@@ -41,8 +40,7 @@ struct MetersValueConverter
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
-struct MetersValueConverter : MetersValueConverterT<
-                                    MetersValueConverter,
-                                    implementation::MetersValueConverter> {
-};
+struct DegreesValueConverter : DegreesValueConverterT<
+                                 DegreesValueConverter,
+                                 implementation::DegreesValueConverter> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation

@@ -19,23 +19,23 @@
  */
 // clang-format off
 #include "pch.h"
-#include "MetersValueConverter.h"
-#include "MetersValueConverter.g.cpp"
+#include "DegreesValueConverter.h"
+#include "DegreesValueConverter.g.cpp"
 // clang-format on
 
 #include <fmt/format.h>
 
 namespace winrt::OpenKneeboardApp::implementation {
-winrt::Windows::Foundation::IInspectable MetersValueConverter::Convert(
+winrt::Windows::Foundation::IInspectable DegreesValueConverter::Convert(
   winrt::Windows::Foundation::IInspectable const& value,
   winrt::Windows::UI::Xaml::Interop::TypeName const& targetType,
   winrt::Windows::Foundation::IInspectable const& parameter,
   hstring const& language) {
   return box_value(
-    to_hstring(fmt::format("{:0.2f}m", unbox_value<double>(value))));
+    to_hstring(fmt::format("{}°", std::lround(unbox_value<double>(value)))));
 }
 
-winrt::Windows::Foundation::IInspectable MetersValueConverter::ConvertBack(
+winrt::Windows::Foundation::IInspectable DegreesValueConverter::ConvertBack(
   winrt::Windows::Foundation::IInspectable const& value,
   winrt::Windows::UI::Xaml::Interop::TypeName const& targetType,
   winrt::Windows::Foundation::IInspectable const& parameter,

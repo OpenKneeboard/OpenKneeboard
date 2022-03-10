@@ -106,6 +106,9 @@
     <ClInclude Include="AboutPage.xaml.h">
       <DependentUpon>AboutPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="DegreesValueConverter.h">
+      <DependentUpon>DegreesValueConverter.idl</DependentUpon>
+    </ClInclude>
     <ClInclude Include="GameSettingsPage.xaml.h">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
     </ClInclude>
@@ -123,9 +126,6 @@
     </ClInclude>
     <ClInclude Include="MetersNumberFormatter.h">
       <DependentUpon>MetersNumberFormatter.idl</DependentUpon>
-    </ClInclude>
-    <ClInclude Include="MetersValueConverter.h">
-      <DependentUpon>MetersValueConverter.idl</DependentUpon>
     </ClInclude>
     <ClInclude Include="MultiplierValueConverter.h">
       <DependentUpon>MultiplierValueConverter.idl</DependentUpon>
@@ -179,6 +179,9 @@
     <ClCompile Include="AboutPage.xaml.cpp">
       <DependentUpon>AboutPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="DegreesValueConverter.cpp">
+      <DependentUpon>DegreesValueConverter.idl</DependentUpon>
+    </ClCompile>
     <ClCompile Include="GameSettingsPage.xaml.cpp">
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
     </ClCompile>
@@ -193,9 +196,6 @@
     </ClCompile>
     <ClCompile Include="MetersNumberFormatter.cpp">
       <DependentUpon>MetersNumberFormatter.idl</DependentUpon>
-    </ClCompile>
-    <ClCompile Include="MetersValueConverter.cpp">
-      <DependentUpon>MetersValueConverter.idl</DependentUpon>
     </ClCompile>
     <ClCompile Include="MultiplierValueConverter.cpp">
       <DependentUpon>MultiplierValueConverter.idl</DependentUpon>
@@ -236,6 +236,9 @@
       <SubType>Code</SubType>
       <DependentUpon>AboutPage.xaml</DependentUpon>
     </Midl>
+    <Midl Include="DegreesValueConverter.idl">
+      <SubType>Code</SubType>
+    </Midl>
     <Midl Include="GameSettingsPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>GameSettingsPage.xaml</DependentUpon>
@@ -249,9 +252,6 @@
       <DependentUpon>InputSettingsPage.xaml</DependentUpon>
     </Midl>
     <Midl Include="MetersNumberFormatter.idl">
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="MetersValueConverter.idl">
       <SubType>Code</SubType>
     </Midl>
     <Midl Include="MultiplierValueConverter.idl">

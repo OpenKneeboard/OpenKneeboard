@@ -93,12 +93,12 @@ void NonVRSettingsPage::KneeboardPaddingPixels(uint32_t value) {
 }
 
 float NonVRSettingsPage::KneeboardOpacity() {
-  return gKneeboard->GetFlatConfig().opacity;
+  return gKneeboard->GetFlatConfig().opacity * 100;
 }
 
 void NonVRSettingsPage::KneeboardOpacity(float value) {
   auto config = gKneeboard->GetFlatConfig();
-  config.opacity = value;
+  config.opacity = value / 100;
   gKneeboard->SetFlatConfig(config);
 }
 

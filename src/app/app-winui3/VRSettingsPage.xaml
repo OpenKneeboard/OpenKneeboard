@@ -9,6 +9,7 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
     <local:MetersNumberFormatter x:Key="MetersFormatter" />
+    <local:DegreesValueConverter x:Key="DegreesConverter" />
   </Page.Resources>
   <Grid RowDefinitions="Auto,Auto" Margin="16">
     <Grid
@@ -50,7 +51,7 @@
         </Slider>
         <Grid ColumnDefinitions="Auto,*">
           <NumberBox
-            Header="Kneeboard height in meters"
+            Header="Kneeboard height, in meters"
             Value="{x:Bind KneeboardHeight}"
             SmallChange="0.01"
             LargeChange="0.05"
@@ -60,7 +61,7 @@
         </Grid>
         <Grid ColumnDefinitions="Auto,*">
           <NumberBox
-            Header="Vertical position from seated eye level in meters"
+            Header="Vertical position from seated eye level, in meters"
             Value="{x:Bind KneeboardEyeY}"
             SmallChange="0.01"
             LargeChange="0.05"
@@ -70,7 +71,7 @@
         </Grid>
         <Grid ColumnDefinitions="Auto,*">
           <NumberBox
-            Header="Left-right position in meters"
+            Header="Left-to-right position, in meters"
             Value="{x:Bind KneeboardX}"
             SmallChange="0.01"
             LargeChange="0.05"
@@ -80,12 +81,56 @@
         </Grid>
         <Grid ColumnDefinitions="Auto,*">
           <NumberBox
-            Header="Front-back position in meters"
+            Header="Forward position, in meters"
             Value="{x:Bind KneeboardZ}"
             SmallChange="0.01"
             LargeChange="0.05"
             SpinButtonPlacementMode="Inline"
             NumberFormatter="{StaticResource MetersFormatter}"
+          />
+        </Grid>
+        <Grid
+          ColumnDefinitions="Auto,*"
+          RowDefinitions="Auto,Auto">
+          <Slider
+            Grid.Column="0"
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Header="Pitch in degrees"
+            Value="{x:Bind KneeboardRX}"
+            Orientation="Vertical"
+            TickPlacement="Outside"
+            TickFrequency="45"
+            StepFrequency="1"
+            Minimum="-180"
+            Maximum="180"
+            Height="200"
+            Margin="0,0,20,0"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          />
+          <Slider
+            Grid.Column="1"
+            Grid.Row="0"
+            Header="Roll in degrees"
+            Value="{x:Bind KneeboardRZ}"
+            TickPlacement="Outside"
+            TickFrequency="45"
+            StepFrequency="1"
+            Minimum="-180"
+            Maximum="180"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          />
+          <Slider
+            Grid.Column="1"
+            Grid.Row="1"
+            Header="Yaw in degrees"
+            Value="{x:Bind KneeboardRY}"
+            TickPlacement="Outside"
+            TickFrequency="45"
+            StepFrequency="1"
+            Minimum="-180"
+            Maximum="180"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
           />
         </Grid>
       </StackPanel>
