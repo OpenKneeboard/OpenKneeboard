@@ -104,20 +104,19 @@ add_dependencies(OpenKneeboard-App-WinUI3 ${LIBRARY_DEPENDENCIES})
 
 set(OPENKNEEBOARD_WINUI3_APP_BUILD_DIR "${MSBUILD_OUTPUT_PATH}" PARENT_SCOPE)
 
+file(GLOB XAML_FILES CONFIGURE_DEPENDS "*.xaml")
+set(XBF_FILES)
+foreach(XAML_FILE ${XAML_FILES})
+  get_filename_component(BASENAME "${XAML_FILE}" NAME_WLE)
+  list(APPEND XBF_FILES "${MSBUILD_OUTPUT_PATH}/${BASENAME}.xbf")
+endforeach()
+message(STATUS "XAML_FILES ${XAML_FILES}")
+message(STATUS "XBF_FILES ${XBF_FILES}")
+
 install(
   FILES
   "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.exe"
   "${MSBUILD_OUTPUT_PATH}/Microsoft.WindowsAppRuntime.Bootstrap.dll"
-  # Binary XAML
-  "${MSBUILD_OUTPUT_PATH}/AboutPage.xbf"
-  "${MSBUILD_OUTPUT_PATH}/App.xbf"
-  "${MSBUILD_OUTPUT_PATH}/GameSettingsPage.xbf"
-  "${MSBUILD_OUTPUT_PATH}/InputBindingsControl.xbf"
-  "${MSBUILD_OUTPUT_PATH}/InputSettingsPage.xbf"
-  "${MSBUILD_OUTPUT_PATH}/MainWindow.xbf"
-  "${MSBUILD_OUTPUT_PATH}/ProcessListPage.xbf"
-  "${MSBUILD_OUTPUT_PATH}/SettingsPage.xbf"
-  "${MSBUILD_OUTPUT_PATH}/TabPage.xbf"
-  "${MSBUILD_OUTPUT_PATH}/TabSettingsPage.xbf"
+  ${XBF_FILES}
   TYPE BIN
 )
