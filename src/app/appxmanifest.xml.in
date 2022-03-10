@@ -8,7 +8,7 @@
   <Identity
     Name="FredEmmott.Self.OpenKneeboard"
     Version="@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@.@VERSION_BUILD@"
-    Publisher="CN=Frederick Emmott, O=Frederick Emmott, L=East Palo Alto, S=California, C=US"
+    Publisher="CN=Frederick Emmott, O=Frederick Emmott, L=Austin, S=Texas, C=US"
     ProcessorArchitecture="x64"
   />
   <Properties>
