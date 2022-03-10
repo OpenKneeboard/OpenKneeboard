@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Publisher
+  xmlns="http://schemas.microsoft.com/appx/publisherbridging/2021"
+  Old="CN=Frederick Emmott, O=Frederick Emmott, L=East Palo Alto, S=California, C=US"
+  New="CN=Frederick Emmott, O=Frederick Emmott, L=Austin, S=Texas, C=US"
+/>

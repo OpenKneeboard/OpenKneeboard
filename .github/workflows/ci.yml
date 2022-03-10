@@ -39,7 +39,7 @@ jobs:
       - name: Create MSIX
         shell: pwsh
         run: |
-          $kitsRoot = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Kits\Installed Roots" -Name KitsRoot10).KitsRoot10
+          $kitsRoot = "build\third-party\WindowsSDKBuildToolsNuget-prefix\src\WindowsSDKBuildToolsNuget"
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
 
@@ -53,6 +53,7 @@ jobs:
             /t http://timestamp.digicert.com `
             /fd SHA256 `
             /f "${{runner.temp}}/MyCert.pfx" `
+            /pb "${{github.workspace}}/source/src/app/artifacts/artifacts.txt"
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
       - name: Upload MSIX
         uses: actions/upload-artifact@v2
