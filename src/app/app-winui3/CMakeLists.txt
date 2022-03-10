@@ -110,8 +110,6 @@ foreach(XAML_FILE ${XAML_FILES})
   get_filename_component(BASENAME "${XAML_FILE}" NAME_WLE)
   list(APPEND XBF_FILES "${MSBUILD_OUTPUT_PATH}/${BASENAME}.xbf")
 endforeach()
-message(STATUS "XAML_FILES ${XAML_FILES}")
-message(STATUS "XBF_FILES ${XBF_FILES}")
 
 install(
   FILES
