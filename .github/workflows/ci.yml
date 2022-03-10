@@ -46,14 +46,14 @@ jobs:
           & "$kitBin\makeappx.exe" `
             pack `
             /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
-            /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
+            /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix `
+            /pb "${{github.workspace}}/source/src/app/artifacts/artifacts.txt"
 
           & "$kitBin\signtool.exe" `
             sign `
             /t http://timestamp.digicert.com `
             /fd SHA256 `
             /f "${{runner.temp}}/MyCert.pfx" `
-            /pb "${{github.workspace}}/source/src/app/artifacts/artifacts.txt"
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
       - name: Upload MSIX
         uses: actions/upload-artifact@v2
