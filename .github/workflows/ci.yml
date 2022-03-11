@@ -43,11 +43,13 @@ jobs:
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
 
+          copy "${{github.workspace}}/source/src/app/artifacts"/* .
+
           & "$kitBin\makeappx.exe" `
             pack `
             /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
             /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix `
-            /pb "${{github.workspace}}/source/src/app/artifacts/artifacts.txt"
+            /pb artifacts.txt"
 
           & "$kitBin\signtool.exe" `
             sign `
