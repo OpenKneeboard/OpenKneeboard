@@ -29,7 +29,7 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
   vrc.z = j.at("z");
   vrc.rx = j.at("rx");
   vrc.ry = j.at("ry");
-  vrc.rz = j.at("ry");
+  vrc.rz = j.at("rz");
   vrc.height = j.at("height");
   vrc.zoomScale = j.at("zoomScale");
 }
