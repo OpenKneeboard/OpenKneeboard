@@ -200,12 +200,6 @@ void OpenVROverlay::Tick() {
     p->mOverlay,
     p->mZoomed ? p->mZoomedWidth : p->mWidth);
 
-  const bool roomscale
-    = vrConf.flags & VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
-  auto y = roomscale ? vrConf.floorY : vrConf.eyeY;
-  auto universe
-    = roomscale ? vr::TrackingUniverseStanding : vr::TrackingUniverseSeated;
-
   // clang-format off
   auto transform =
     Matrix::CreateRotationX(vrConf.rx)
