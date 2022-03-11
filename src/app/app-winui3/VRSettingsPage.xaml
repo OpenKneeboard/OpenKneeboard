@@ -66,35 +66,38 @@
         BorderThickness="1"
         Padding="8"
         Spacing="12">
-        <NumberBox
-          Header="Vertical distance from seated eye level, in meters"
-          Value="{x:Bind KneeboardEyeY}"
-          SmallChange="0.01"
-          LargeChange="0.05"
-          SpinButtonPlacementMode="Inline"
-          NumberFormatter="{StaticResource MetersFormatter}"
-        />
-        <NumberBox
-          Header="Vertical distance from floor level, in meters"
-          Value="{x:Bind KneeboardFloorY}"
-          SmallChange="0.01"
-          LargeChange="0.05"
-          SpinButtonPlacementMode="Inline"
-          NumberFormatter="{StaticResource MetersFormatter}"
-        />
-				<TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
-					For SteamVR, the vertical position of the kneeboard is always based
-					on the floor level.
-					<LineBreak />
-					<LineBreak />
-					For the Oculus SDK, it varies by game: most cockpit-based games and
-					games that were designed for the original Rift use a calibrated seated
-					eye level, but newer 'roomscale' games tend to use the floor level
-					instead.
-				</TextBlock>
-
+        <Grid ColumnDefinitions="Auto,Auto,*">
+          <NumberBox
+            Header="Vertical distance from seated eye level, in meters"
+            Value="{x:Bind KneeboardEyeY}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
+          <NumberBox
+            Grid.Column="1"
+            Margin="20,0,0,0"
+            Header="Vertical distance from floor level, in meters"
+            Value="{x:Bind KneeboardFloorY}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
+        </Grid>
+        <TextBlock
+          Style="{ThemeResource CaptionTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorSecondary}">
+          For SteamVR, the vertical position of the kneeboard is always based
+          on the floor level.
+          <LineBreak />
+          <LineBreak />
+          For the Oculus SDK, it varies by game: most cockpit-based games and
+          games that were designed for the original Rift use a calibrated seated
+          eye level, but newer 'roomscale' games tend to use the floor level
+          instead.
+        </TextBlock>
       </StackPanel>
       <Grid
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
