@@ -17,4 +17,5 @@ ExternalProject_Add(
 
 ExternalProject_Get_property(WindowsSDKBuildToolsNuget SOURCE_DIR)
 
+get_filename_component(SOURCE_DIR "${SOURCE_DIR}" ABSOLUTE)
 set(NUGET_WINDOWS_SDK_BUILD_TOOLS_PATH "${SOURCE_DIR}" PARENT_SCOPE)
