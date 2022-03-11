@@ -49,7 +49,7 @@ jobs:
             pack `
             /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
             /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix `
-            /pb artifacts.txt"
+            /pb artifacts.txt
 
           & "$kitBin\signtool.exe" `
             sign `
