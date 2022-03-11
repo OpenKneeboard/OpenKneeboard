@@ -18,7 +18,7 @@ jobs:
         working-directory: build
         run: |
           cmake ${{github.workspace}}/source `
-            "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}/MyCert.pfx" `
+            "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}\MyCert.pfx" `
       - name: Compile
         working-directory: build
         run: cmake --build . --config ${{matrix.config}} --parallel
@@ -55,8 +55,8 @@ jobs:
             sign `
             /t http://timestamp.digicert.com `
             /fd SHA256 `
-            /f "${{runner.temp}}/MyCert.pfx" `
-            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
+            /f "${{runner.temp}}\MyCert.pfx" `
+            ${{runner.temp}}\OpenKneeboard-${{matrix.config}}.msix
       - name: Upload MSIX
         uses: actions/upload-artifact@v2
         with:
