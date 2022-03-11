@@ -95,12 +95,12 @@ void VRSettingsPage::KneeboardX(float value) {
 }
 
 float VRSettingsPage::KneeboardEyeY() {
-  return gKneeboard->GetVRConfig().eyeY;
+  return -gKneeboard->GetVRConfig().eyeY;
 }
 
 void VRSettingsPage::KneeboardEyeY(float value) {
   auto config = gKneeboard->GetVRConfig();
-  config.eyeY = value;
+  config.eyeY = -value;
   gKneeboard->SetVRConfig(config);
 }
 
@@ -135,12 +135,12 @@ static inline float DegreesToRadians(float degrees) {
 }
 
 float VRSettingsPage::KneeboardRX() {
-  return -RadiansToDegrees(gKneeboard->GetVRConfig().rx);
+  return RadiansToDegrees(gKneeboard->GetVRConfig().rx);
 }
 
 void VRSettingsPage::KneeboardRX(float value) {
   auto config = gKneeboard->GetVRConfig();
-  config.rx = -DegreesToRadians(value);
+  config.rx = DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
 }
 
@@ -155,12 +155,12 @@ void VRSettingsPage::KneeboardRY(float value) {
 }
 
 float VRSettingsPage::KneeboardRZ() {
-  return RadiansToDegrees(gKneeboard->GetVRConfig().rz);
+  return -RadiansToDegrees(gKneeboard->GetVRConfig().rz);
 }
 
 void VRSettingsPage::KneeboardRZ(float value) {
   auto config = gKneeboard->GetVRConfig();
-  config.rz = DegreesToRadians(value);
+  config.rz = -DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
 }
 

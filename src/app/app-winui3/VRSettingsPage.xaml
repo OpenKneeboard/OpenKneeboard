@@ -11,129 +11,164 @@
     <local:MetersNumberFormatter x:Key="MetersFormatter" />
     <local:DegreesValueConverter x:Key="DegreesConverter" />
   </Page.Resources>
-  <Grid RowDefinitions="Auto,Auto" Margin="16">
-    <Grid
-      Grid.Row="0"
-      ColumnDefinitions="*, Auto"
-      Margin="0,0,0,8">
-      <TextBlock
-        Grid.Column="0"
-        Text="Virtual Reality Settings"
-        Style="{StaticResource TitleTextBlockStyle}"
-        Margin="0,0,0,8"
-      />
-      <Button
-        Grid.Column="1"
-        Content="Restore defaults"
-        Click="RestoreDefaults"
-      />
-    </Grid>
-    <Grid
-      Grid.Row="1"
-      Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-      CornerRadius="4"
-      BorderThickness="1"
-      Padding="8"
-      x:DefaultBindMode="TwoWay">
-      <StackPanel Spacing="12">
-        <Slider
-          Header="Zoom multiplier when looking at kneeboard"
-          Value="{x:Bind KneeboardZoomScale}"
-          TickPlacement="Outside"
-          TickFrequency="0.5"
-          StepFrequency="0.25"
-          Maximum="4"
-          Minimum="1.0">
-          <Slider.ThumbToolTipValueConverter>
-            <local:MultiplierValueConverter />
-          </Slider.ThumbToolTipValueConverter>
-        </Slider>
-        <Grid ColumnDefinitions="Auto,*">
-          <NumberBox
-            Header="Kneeboard height, in meters"
-            Value="{x:Bind KneeboardHeight}"
-            SmallChange="0.01"
-            LargeChange="0.05"
-            SpinButtonPlacementMode="Inline"
-            NumberFormatter="{StaticResource MetersFormatter}"
-          />
-        </Grid>
-        <Grid ColumnDefinitions="Auto,*">
-          <NumberBox
-            Header="Vertical position from seated eye level, in meters"
-            Value="{x:Bind KneeboardEyeY}"
-            SmallChange="0.01"
-            LargeChange="0.05"
-            SpinButtonPlacementMode="Inline"
-            NumberFormatter="{StaticResource MetersFormatter}"
-          />
-        </Grid>
-        <Grid ColumnDefinitions="Auto,*">
-          <NumberBox
-            Header="Left-to-right position, in meters"
-            Value="{x:Bind KneeboardX}"
-            SmallChange="0.01"
-            LargeChange="0.05"
-            SpinButtonPlacementMode="Inline"
-            NumberFormatter="{StaticResource MetersFormatter}"
-          />
-        </Grid>
-        <Grid ColumnDefinitions="Auto,*">
-          <NumberBox
-            Header="Forward position, in meters"
-            Value="{x:Bind KneeboardZ}"
-            SmallChange="0.01"
-            LargeChange="0.05"
-            SpinButtonPlacementMode="Inline"
-            NumberFormatter="{StaticResource MetersFormatter}"
-          />
-        </Grid>
-        <Grid
-          ColumnDefinitions="Auto,*"
-          RowDefinitions="Auto,Auto">
+  <ScrollViewer>
+    <StackPanel Margin="16" Spacing="8" x:DefaultBindMode="TwoWay">
+      <Grid
+        ColumnDefinitions="*, Auto"
+        Margin="0,0,0,8">
+        <TextBlock
+          Grid.Column="0"
+          Text="Virtual Reality Settings"
+          Style="{StaticResource TitleTextBlockStyle}"
+          Margin="0,0,0,8"
+        />
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreDefaults"
+        />
+      </Grid>
+      <Grid
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <StackPanel Spacing="12">
           <Slider
-            Grid.Column="0"
-            Grid.Row="0"
-            Grid.RowSpan="2"
-            Header="Pitch in degrees"
-            Value="{x:Bind KneeboardRX}"
-            Orientation="Vertical"
+            Header="Zoom level when looking at kneeboard"
+            Value="{x:Bind KneeboardZoomScale}"
             TickPlacement="Outside"
-            TickFrequency="45"
-            StepFrequency="1"
-            Minimum="-180"
-            Maximum="180"
-            Height="200"
-            Margin="0,0,20,0"
-            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
-          />
-          <Slider
-            Grid.Column="1"
-            Grid.Row="0"
-            Header="Roll in degrees"
-            Value="{x:Bind KneeboardRZ}"
-            TickPlacement="Outside"
-            TickFrequency="45"
-            StepFrequency="1"
-            Minimum="-180"
-            Maximum="180"
-            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
-          />
-          <Slider
-            Grid.Column="1"
-            Grid.Row="1"
-            Header="Yaw in degrees"
-            Value="{x:Bind KneeboardRY}"
-            TickPlacement="Outside"
-            TickFrequency="45"
-            StepFrequency="1"
-            Minimum="-180"
-            Maximum="180"
-            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
-          />
-        </Grid>
+            TickFrequency="0.5"
+            StepFrequency="0.25"
+            Maximum="4"
+            Minimum="1.0">
+            <Slider.ThumbToolTipValueConverter>
+              <local:MultiplierValueConverter />
+            </Slider.ThumbToolTipValueConverter>
+          </Slider>
+          <Grid ColumnDefinitions="Auto,*">
+            <NumberBox
+              Header="Kneeboard size, in meters"
+              Value="{x:Bind KneeboardHeight}"
+              SmallChange="0.01"
+              LargeChange="0.05"
+              SpinButtonPlacementMode="Inline"
+              NumberFormatter="{StaticResource MetersFormatter}"
+            />
+          </Grid>
+        </StackPanel>
+      </Grid>
+      <StackPanel
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <NumberBox
+          Header="Vertical distance from seated eye level, in meters"
+          Value="{x:Bind KneeboardEyeY}"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+        />
+        <NumberBox
+          Header="Vertical distance from floor level, in meters"
+          Value="{x:Bind KneeboardFloorY}"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+        />
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+					For SteamVR, the vertical position of the kneeboard is always based
+					on the floor level.
+					<LineBreak />
+					<LineBreak />
+					For the Oculus SDK, it varies by game: most cockpit-based games and
+					games that were designed for the original Rift use a calibrated seated
+					eye level, but newer 'roomscale' games tend to use the floor level
+					instead.
+				</TextBlock>
+
       </StackPanel>
-    </Grid>
-  </Grid>
+      <Grid
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="Auto,*">
+            <NumberBox
+              Header="Left-to-right position, in meters"
+              Value="{x:Bind KneeboardX}"
+              SmallChange="0.01"
+              LargeChange="0.05"
+              SpinButtonPlacementMode="Inline"
+              NumberFormatter="{StaticResource MetersFormatter}"
+            />
+          </Grid>
+          <Grid ColumnDefinitions="Auto,*">
+            <NumberBox
+              Header="Forward position, in meters"
+              Value="{x:Bind KneeboardZ}"
+              SmallChange="0.01"
+              LargeChange="0.05"
+              SpinButtonPlacementMode="Inline"
+              NumberFormatter="{StaticResource MetersFormatter}"
+            />
+          </Grid>
+          <Grid
+            ColumnDefinitions="Auto,*"
+            RowDefinitions="Auto,Auto">
+            <Slider
+              Grid.Column="0"
+              Grid.Row="0"
+              Grid.RowSpan="2"
+              Header="Pitch in degrees"
+              Value="{x:Bind KneeboardRX}"
+              Orientation="Vertical"
+              TickPlacement="Outside"
+              TickFrequency="45"
+              StepFrequency="1"
+              Minimum="-180"
+              Maximum="180"
+              Height="200"
+              Margin="0,0,20,0"
+              ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+            />
+            <Slider
+              Grid.Column="1"
+              Grid.Row="0"
+              Header="Roll in degrees"
+              Value="{x:Bind KneeboardRZ}"
+              TickPlacement="Outside"
+              TickFrequency="45"
+              StepFrequency="1"
+              Minimum="-180"
+              Maximum="180"
+              ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+            />
+            <Slider
+              Grid.Column="1"
+              Grid.Row="1"
+              Header="Yaw in degrees"
+              Value="{x:Bind KneeboardRY}"
+              TickPlacement="Outside"
+              TickFrequency="45"
+              StepFrequency="1"
+              Minimum="-180"
+              Maximum="180"
+              ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+            />
+          </Grid>
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
 </Page>
