@@ -43,7 +43,7 @@ jobs:
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
 
-          copy "${{github.workspace}}/source/src/app/artifacts"/* .
+          Copy-Item -Path ${{github.workspace}}\source\src\app\artifacts\* -Destination $(Get-Location)
 
           & "$kitBin\makeappx.exe" `
             pack `
