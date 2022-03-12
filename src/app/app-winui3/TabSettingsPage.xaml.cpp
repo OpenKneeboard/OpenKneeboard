@@ -67,10 +67,10 @@ TabSettingsPage::TabSettingsPage() {
 fire_and_forget TabSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
-  auto InstanceID = unbox_value<uint64_t>(sender.as<Button>().Tag());
+  auto instanceID = unbox_value<uint64_t>(sender.as<Button>().Tag());
   auto tabs = gKneeboard->GetTabs();
   auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& tabState) {
-    return tabState->GetInstanceID() == InstanceID;
+    return tabState->GetInstanceID() == instanceID;
   });
   if (it == tabs.end()) {
     co_return;

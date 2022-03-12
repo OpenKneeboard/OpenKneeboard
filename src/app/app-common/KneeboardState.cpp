@@ -88,6 +88,9 @@ std::vector<std::shared_ptr<TabState>> KneeboardState::GetTabs() const {
 
 void KneeboardState::SetTabs(
   const std::vector<std::shared_ptr<TabState>>& tabs) {
+  if (std::ranges::equal(tabs, mTabs)) {
+    return;
+  }
   auto oldTab = mCurrentTab;
 
   for (const auto& tab: tabs) {
