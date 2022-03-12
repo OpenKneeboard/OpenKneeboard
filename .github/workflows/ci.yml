@@ -44,17 +44,19 @@ jobs:
           $kitBin = "$kitDir\x64"
 
           Copy-Item -Path ${{github.workspace}}\source\src\app\artifacts\* -Destination $(Get-Location)
+
+          Push-Location ${{runner.temp}}\OpenKneeboard-${{matrix.config}}
           
           & "$kitBin\makepri.exe" `
             createconfig `
-            /cf ${{runner.temp}}\OpenKneeboard-${{matrix.config}}\priconfig.xml `
+            /cf priconfig.xml `
             /dq lang-en-US 
 
           & "$kitBin\makepri.exe" `
             new /o `
-            /cf ${{runner.temp}}\OpenKneeboard-${{matrix.config}}\priconfig.xml `
-            /mn ${{runner.temp}}\OpenKneeboard-${{matrix.config}}\appxmanifest.xml `
-            /pr ${{runner.temp}}\OpenKneeboard-${{matrix.config}} 
+            /cf priconfig.xml `
+            /mn appxmanifest.xml `
+            /pr .
 
           & "$kitBin\makeappx.exe" `
             pack `
