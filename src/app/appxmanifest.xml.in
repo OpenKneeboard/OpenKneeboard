@@ -15,7 +15,7 @@
     <DisplayName>OpenKneeboard</DisplayName>
     <PublisherDisplayName>Fred Emmott</PublisherDisplayName>
     <Description>An open source kneeboard</Description>
-    <Logo>share/OpenKneeboard_Logos_Icon_Color.svg</Logo>
+    <Logo>share/logo-256x256.png</Logo>
   </Properties>
   <Resources>
     <Resource Language="en-us" />
