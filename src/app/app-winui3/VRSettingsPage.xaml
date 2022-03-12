@@ -10,6 +10,7 @@
   <Page.Resources>
     <local:MetersNumberFormatter x:Key="MetersFormatter" />
     <local:DegreesValueConverter x:Key="DegreesConverter" />
+    <local:MultiplierValueConverter x:Key="MultiplierConverter" />
   </Page.Resources>
   <ScrollViewer>
     <StackPanel Margin="16" Spacing="8" x:DefaultBindMode="TwoWay">
@@ -35,6 +36,16 @@
         BorderThickness="1"
         Padding="8">
         <StackPanel Spacing="12">
+					<Grid ColumnDefinitions="Auto,*">
+						<NumberBox
+							Header="Kneeboard size, in meters"
+							Value="{x:Bind KneeboardHeight}"
+							SmallChange="0.01"
+							LargeChange="0.05"
+							SpinButtonPlacementMode="Inline"
+							NumberFormatter="{StaticResource MetersFormatter}"
+						/>
+					</Grid>
           <Slider
             Header="Zoom level when looking at kneeboard"
             Value="{x:Bind KneeboardZoomScale}"
@@ -42,21 +53,29 @@
             TickFrequency="0.5"
             StepFrequency="0.25"
             Maximum="4"
-            Minimum="1.0">
-            <Slider.ThumbToolTipValueConverter>
-              <local:MultiplierValueConverter />
-            </Slider.ThumbToolTipValueConverter>
-          </Slider>
-          <Grid ColumnDefinitions="Auto,*">
-            <NumberBox
-              Header="Kneeboard size, in meters"
-              Value="{x:Bind KneeboardHeight}"
-              SmallChange="0.01"
-              LargeChange="0.05"
-              SpinButtonPlacementMode="Inline"
-              NumberFormatter="{StaticResource MetersFormatter}"
-            />
-          </Grid>
+            Minimum="1.0"
+            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+          />
+          <Slider
+            Header="Horizontal size of zoom gaze target"
+            Value="{x:Bind KneeboardGazeTargetHorizontalScale}"
+            TickPlacement="Outside"
+            TickFrequency="0.5"
+            StepFrequency="0.25"
+            Maximum="4"
+            Minimum="0"
+            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+          />
+          <Slider
+            Header="Vertical size of zoom gaze target"
+            Value="{x:Bind KneeboardGazeTargetVerticalScale}"
+            TickPlacement="Outside"
+            TickFrequency="0.5"
+            StepFrequency="0.25"
+            Maximum="4"
+            Minimum="0"
+            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+          />
         </StackPanel>
       </Grid>
       <StackPanel

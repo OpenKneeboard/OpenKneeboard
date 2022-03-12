@@ -32,7 +32,7 @@ namespace OpenKneeboard {
 
 #pragma pack(push)
 struct VRConfig {
-  static constexpr uint16_t VERSION = 1;
+  static constexpr uint16_t VERSION = 2;
 
   enum class Flags : uint32_t {
     HEADLOCKED = 1 << 0,
@@ -47,6 +47,9 @@ struct VRConfig {
   float height = 0.25f;
   float zoomScale = 2.0f;
 
+  float gazeTargetVerticalScale = 1.0f;
+  float gazeTargetHorizontalScale = 1.0f;
+
   Flags flags = Flags::DISCARD_DEPTH_INFORMATION;
 };
 #pragma pack(pop)
@@ -59,8 +62,8 @@ constexpr bool is_bitflags_v<VRConfig::Flags> = true;
 // dealing with coordinates so have an `x`. We'll also
 // likely want custom functions anyway to deal with older
 // configs when we add new fields.
-void from_json(const nlohmann::json& j, VRConfig& vrc); 
-void to_json(nlohmann::json&j, const VRConfig& vrc);
+void from_json(const nlohmann::json& j, VRConfig& vrc);
+void to_json(nlohmann::json& j, const VRConfig& vrc);
 #endif
 
 }// namespace OpenKneeboard

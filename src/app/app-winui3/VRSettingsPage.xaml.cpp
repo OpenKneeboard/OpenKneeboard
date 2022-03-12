@@ -63,6 +63,7 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
     return;
   }
 
+  // Tell the XAML UI elements to update to the new values
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardX"));
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardEyeY"));
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardFloorY"));
@@ -72,6 +73,10 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardRZ"));
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardHeight"));
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardZoomScale"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"KneeboardGazeTargetHorizontalScale"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"KneeboardGazeTargetVerticalScale"));
 }
 
 winrt::event_token VRSettingsPage::PropertyChanged(
@@ -181,6 +186,26 @@ float VRSettingsPage::KneeboardZoomScale() {
 void VRSettingsPage::KneeboardZoomScale(float value) {
   auto config = gKneeboard->GetVRConfig();
   config.zoomScale = value;
+  gKneeboard->SetVRConfig(config);
+}
+
+float VRSettingsPage::KneeboardGazeTargetHorizontalScale() {
+  return gKneeboard->GetVRConfig().gazeTargetHorizontalScale;
+}
+
+void VRSettingsPage::KneeboardGazeTargetHorizontalScale(float value) {
+  auto config = gKneeboard->GetVRConfig();
+  config.gazeTargetHorizontalScale = value;
+  gKneeboard->SetVRConfig(config);
+}
+
+float VRSettingsPage::KneeboardGazeTargetVerticalScale() {
+  return gKneeboard->GetVRConfig().gazeTargetVerticalScale;
+}
+
+void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
+  auto config = gKneeboard->GetVRConfig();
+  config.gazeTargetVerticalScale = value;
   gKneeboard->SetVRConfig(config);
 }
 

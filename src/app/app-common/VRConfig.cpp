@@ -32,6 +32,12 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
   vrc.rz = j.at("rz");
   vrc.height = j.at("height");
   vrc.zoomScale = j.at("zoomScale");
+
+  if (j.contains("gazeTargetScale")) {
+    auto scale = j.at("gazeTargetScale");
+    vrc.gazeTargetHorizontalScale = scale.at("horizontal");
+    vrc.gazeTargetVerticalScale = scale.at("vertical");
+  }
 }
 
 void to_json(nlohmann::json& j, const VRConfig& vrc) {
@@ -45,6 +51,13 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"rz", vrc.rz},
     {"height", vrc.height},
     {"zoomScale", vrc.zoomScale},
+    {
+      "gazeTargetScale",
+      {
+        {"horizontal", vrc.gazeTargetHorizontalScale},
+        {"vertical", vrc.gazeTargetVerticalScale},
+      },
+    },
   };
 }
 }// namespace OpenKneeboard

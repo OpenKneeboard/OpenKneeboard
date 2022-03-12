@@ -49,6 +49,10 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   void KneeboardHeight(float value);
   float KneeboardZoomScale();
   void KneeboardZoomScale(float value);
+  float KneeboardGazeTargetHorizontalScale();
+  void KneeboardGazeTargetHorizontalScale(float value);
+  float KneeboardGazeTargetVerticalScale();
+  void KneeboardGazeTargetVerticalScale(float value);
 
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&

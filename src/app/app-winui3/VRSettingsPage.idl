@@ -15,5 +15,8 @@ namespace OpenKneeboardApp
         Single KneeboardRX;
         Single KneeboardRY;
         Single KneeboardRZ;
+
+        Single KneeboardGazeTargetHorizontalScale;
+        Single KneeboardGazeTargetVerticalScale;
     }
 }

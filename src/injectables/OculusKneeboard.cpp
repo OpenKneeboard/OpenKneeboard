@@ -231,12 +231,17 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   auto predictedTime = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
   auto state = ovr->ovr_GetTrackingState(session, predictedTime, false);
 
+  kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
+
   mZoomed = poseIntersectsWithRect(
     state.HeadPose.ThePose,
     position,
     orientation,
-    mZoomed ? zoomedSize : normalSize);
-  kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
+    {
+      .x = kneeboardLayer.QuadSize.x * vr.gazeTargetHorizontalScale,
+      .y = kneeboardLayer.QuadSize.y * vr.gazeTargetVerticalScale,
+    }
+  );
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {
