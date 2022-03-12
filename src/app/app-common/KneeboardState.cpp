@@ -180,6 +180,8 @@ void KneeboardState::PreviousTab() {
   const auto current = GetTabIndex();
   if (current > 0) {
     SetTabIndex(current - 1);
+  } else {
+    SetTabIndex(mTabs.size() - 1);
   }
 }
 
@@ -188,6 +190,8 @@ void KneeboardState::NextTab() {
   const auto count = GetTabs().size();
   if (current + 1 < count) {
     SetTabIndex(current + 1);
+  } else {
+    SetTabIndex(0);
   }
 }
 
