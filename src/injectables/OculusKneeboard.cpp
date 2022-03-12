@@ -20,6 +20,7 @@
 #include "OculusKneeboard.h"
 
 #include <DirectXTK/SimpleMath.h>
+#include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/dprint.h>
 
 // clang-format off
@@ -32,46 +33,19 @@
 using namespace OpenKneeboard;
 using namespace DirectX::SimpleMath;
 
-static bool poseIntersectsWithRect(
+static bool poseIntersectsRect(
   const ovrPosef& pose,
   const Vector3& rectCenter,
   const Quaternion& rectQuat,
-  const ovrVector2f& rectSize) {
+  const Vector2& rectSize) {
   const Quaternion rayQuat(
     pose.Orientation.x,
     pose.Orientation.y,
     pose.Orientation.z,
     pose.Orientation.w);
   const Vector3 rayOrigin(pose.Position.x, pose.Position.y, pose.Position.z);
-  const Vector3 rayNormal(Vector3::Transform(Vector3::Forward, rayQuat));
-  const Ray ray(rayOrigin, rayNormal);
 
-  const Plane plane(
-    rectCenter, Vector3::Transform(Vector3::Backward, rectQuat));
-
-  // Does the ray intersect the infinite plane?
-  float rayLength = 0;
-  if (!ray.Intersects(plane, rayLength)) {
-    return false;
-  }
-
-  // Where does it intersect the infinite plane?
-  const auto worldPoint = rayOrigin + (rayNormal * rayLength);
-
-  // Is that point within the rectangle?
-  const auto point = worldPoint - rectCenter;
-
-  const auto x = point.Dot(Vector3::Transform(Vector3::UnitX, rectQuat));
-  if (abs(x) > rectSize.x / 2) {
-    return false;
-  }
-
-  const auto y = point.Dot(Vector3::Transform(Vector3::UnitY, rectQuat));
-  if (abs(y) > rectSize.y / 2) {
-    return false;
-  }
-
-  return true;
+  return RayIntersectsRect(rayOrigin, rayQuat, rectCenter, rectQuat, rectSize);
 }
 
 namespace OpenKneeboard {
@@ -233,15 +207,14 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
 
   kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
 
-  mZoomed = poseIntersectsWithRect(
+  mZoomed = poseIntersectsRect(
     state.HeadPose.ThePose,
     position,
     orientation,
     {
-      .x = kneeboardLayer.QuadSize.x * vr.gazeTargetHorizontalScale,
-      .y = kneeboardLayer.QuadSize.y * vr.gazeTargetVerticalScale,
-    }
-  );
+      kneeboardLayer.QuadSize.x * vr.gazeTargetHorizontalScale,
+      kneeboardLayer.QuadSize.y * vr.gazeTargetVerticalScale,
+    });
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {

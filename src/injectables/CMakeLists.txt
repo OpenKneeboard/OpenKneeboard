@@ -40,6 +40,7 @@ target_link_libraries(
   oculus-sdk-headers
   OpenKneeboard-DllLoadWatcher
   OpenKneeboard-dprint
+  OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
   directxtk)
 

@@ -58,6 +58,13 @@ target_link_libraries(
   Dwrite
   _libheaders)
 
+add_library(OpenKneeboard-RayIntersectsRect STATIC RayIntersectsRect.cpp)
+target_link_libraries(
+  OpenKneeboard-RayIntersectsRect
+  PUBLIC
+  _libheaders
+  ThirdParty::DirectXTK)
+
 add_library(OpenKneeboard-scope_guard STATIC scope_guard.cpp)
 target_link_libraries(
   OpenKneeboard-scope_guard
