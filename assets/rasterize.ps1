@@ -17,7 +17,7 @@ function Create-Png {
   )
 
   magick convert `
-    -background none `
+    -background white `
     "$(Get-Location)\OpenKneeboard_Logos_Icon_Color.svg" `
     -trim `
     -resize $Size `
