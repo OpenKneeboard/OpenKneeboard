@@ -127,7 +127,7 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
 
-  auto path = std::filesystem::canonical(
+  auto path = std::filesystem::weakly_canonical(
     std::wstring_view {unbox_value<hstring>(sender.as<Button>().Tag())});
   auto gamesList = gKneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
