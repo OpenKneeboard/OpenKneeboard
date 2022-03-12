@@ -1,7 +1,6 @@
+file(GLOB PNG_FILES CONFIGURE_DEPENDS "*.png")
 install(
   FILES
-  logo-44x44.png
-  logo-150x150.png
-  logo-300x300.png
+  ${PNG_FILES}
   TYPE DATA
 )

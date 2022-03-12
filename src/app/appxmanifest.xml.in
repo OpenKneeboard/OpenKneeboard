@@ -15,10 +15,14 @@
     <DisplayName>OpenKneeboard</DisplayName>
     <PublisherDisplayName>Fred Emmott</PublisherDisplayName>
     <Description>An open source kneeboard</Description>
-    <Logo>share/logo-transparent-48x48.png</Logo>
+    <Logo>share\logo-44x44.png</Logo>
   </Properties>
   <Resources>
     <Resource Language="en-us" />
+    <Resource uap:Scale="125"/>
+    <Resource uap:Scale="150"/>
+    <Resource uap:Scale="200"/>
+    <Resource uap:Scale="400"/>
   </Resources>
   <Dependencies>
     <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.18363.0" MaxVersionTested="10.0.19044.0" />
@@ -33,9 +37,10 @@
       <uap:VisualElements
         BackgroundColor="#464646"
         DisplayName="OpenKneeboard"
-        Square150x150Logo="share/logo-white-150x150.png"
-        Square44x44Logo="share/logo-white-44x44.png"
+        Square150x150Logo="share\logo-150x150.png"
+        Square44x44Logo="share\logo-44x44.png"
         Description="An open source kneeboard"
+        BackgroundColor="White"
       />
       <uap7:Properties>
         <uap8:ActiveCodePage>UTF-8</uap8:ActiveCodePage>
