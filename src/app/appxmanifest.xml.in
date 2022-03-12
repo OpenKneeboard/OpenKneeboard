@@ -40,7 +40,6 @@
         Square150x150Logo="share\logo-150x150.png"
         Square44x44Logo="share\logo-44x44.png"
         Description="An open source kneeboard"
-        BackgroundColor="White"
       />
       <uap7:Properties>
         <uap8:ActiveCodePage>UTF-8</uap8:ActiveCodePage>
