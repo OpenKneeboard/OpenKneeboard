@@ -19,6 +19,7 @@
  */
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/OpenVROverlay.h>
+#include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -138,6 +139,18 @@ void OpenVROverlay::Tick() {
     }
   }
 
+  auto snapshot = p->mSHM.MaybeGet();
+  if (!snapshot) {
+    return;
+  }
+
+  const auto config = snapshot.GetConfig();
+  const auto& vrConf = config.vr;
+
+  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  p->mWidth = vrConf.height * aspectRatio;
+  p->mZoomedWidth = p->mWidth * vrConf.zoomScale;
+
   vr::TrackedDevicePose_t hmdPose {
     .bPoseIsValid = false,
     .bDeviceIsConnected = false,
@@ -155,50 +168,35 @@ void OpenVROverlay::Tick() {
     );
     // clang-format on
 
-    auto translation = m.Translation();
-    auto rotation = Vector3::TransformNormal(Vector3::Forward, m);
+    Vector3 hmdPosition {m.Translation()};
+    Quaternion hmdOrientation {Quaternion::CreateFromRotationMatrix(m)};
 
-    vr::VROverlayIntersectionParams_t params {
-      .vSource = {translation.x, translation.y, translation.z},
-      .vDirection = {rotation.x, rotation.y, rotation.z},
-      .eOrigin = vr::TrackingUniverseStanding,
-    };
-
-    vr::VROverlayIntersectionResults_t results;
-    auto zoomed = p->mIVROverlay->ComputeOverlayIntersection(
-      p->mOverlay, &params, &results);
-
-    if (
-      zoomed != p->mZoomed
-      && p->mSequenceNumber == p->mSHM.GetSequenceNumber()) {
-      CHECK(
-        SetOverlayWidthInMeters,
-        p->mOverlay,
-        zoomed ? p->mZoomedWidth : p->mWidth);
-    }
-    p->mZoomed = zoomed;
+    Vector3 rectPosition {vrConf.x, vrConf.floorY, vrConf.z};
+    auto rectOrientation
+      = Quaternion::CreateFromAxisAngle(Vector3::UnitX, vrConf.rx)
+      * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vrConf.ry)
+      * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vrConf.rz);
+    
+    p->mZoomed = RayIntersectsRect(
+      hmdPosition,
+      hmdOrientation,
+      rectPosition,
+      rectOrientation,
+      {
+        (p->mZoomed ? p->mZoomedWidth : p->mWidth) * vrConf.gazeTargetHorizontalScale,
+        vrConf.height * (p->mZoomed ? vrConf.zoomScale : 1) * vrConf.gazeTargetVerticalScale
+      }
+    );
   }
-
-  if (p->mSHM.GetSequenceNumber() == p->mSequenceNumber) {
-    return;
-  }
-
-  auto snapshot = p->mSHM.MaybeGet();
-  if (!snapshot) {
-    return;
-  }
-
-  const auto config = snapshot.GetConfig();
-  const auto& vrConf = config.vr;
-
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  p->mWidth = vrConf.height * aspectRatio;
-  p->mZoomedWidth = p->mWidth * vrConf.zoomScale;
 
   CHECK(
     SetOverlayWidthInMeters,
     p->mOverlay,
     p->mZoomed ? p->mZoomedWidth : p->mWidth);
+
+  if (p->mSequenceNumber == snapshot.GetSequenceNumber()) {
+    return;
+  }
 
   // clang-format off
   auto transform =

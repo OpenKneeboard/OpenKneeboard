@@ -21,6 +21,7 @@ set(
   OpenKneeboard-DXResources
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
+  OpenKneeboard-RayIntersectsRect
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-SHM
   OpenKneeboard-UTF8

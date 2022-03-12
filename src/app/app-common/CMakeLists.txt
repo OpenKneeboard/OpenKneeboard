@@ -14,6 +14,7 @@ target_link_libraries(
 	OpenKneeboard-DXResources
 	OpenKneeboard-GameEvent
 	OpenKneeboard-GetSystemColor
+	OpenKneeboard-RayIntersectsRect
 	OpenKneeboard-RuntimeFiles
 	OpenKneeboard-scope_guard
 	OpenKneeboard-SHM
