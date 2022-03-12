@@ -71,6 +71,7 @@ AboutPage::AboutPage() {
   auto details = fmt::format(
     "Version {}\n\n"
     "Copyright (C) 2021-2022 Fred Emmott.\n\n"
+    "With thanks to Paul 'Greywolf' Wittingham for the logo and banner artwork.\n\n"
     "Package: {}\n"
     "Built at: {}\n"
     "Build type: {}-{}\n"

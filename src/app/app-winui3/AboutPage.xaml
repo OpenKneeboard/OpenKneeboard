@@ -7,11 +7,11 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
-  <Grid>
+  <ScrollViewer>
     <StackPanel Orientation="Vertical" Margin="12">
-      <TextBlock Style="{StaticResource TitleTextBlockStyle}">OpenKneeboard</TextBlock>
-      <TextBlock x:Name="DetailsText" />
+      <TextBlock Style="{ThemeResource TitleTextBlockStyle}">OpenKneeboard</TextBlock>
+      <TextBlock Style="{ThemeResource BodyTextBlockStyle}" x:Name="DetailsText" />
       <Button Content="Copy" Click="OnCopyClick" Margin="0,12,0,0" />
     </StackPanel>
-  </Grid>
+  </ScrollViewer>
 </Page>

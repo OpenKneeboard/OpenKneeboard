@@ -58,6 +58,24 @@ MainWindow::MainWindow() {
     gMainWindow = mHwnd;
   }
 
+  auto bigIcon = LoadImageW(
+    GetModuleHandleW(nullptr),
+    L"appIcon",
+    IMAGE_ICON,
+    GetSystemMetrics(SM_CXICON),
+    GetSystemMetrics(SM_CYICON),
+    0);
+  SendMessage(mHwnd, WM_SETICON, ICON_BIG, reinterpret_cast<LPARAM>(bigIcon));
+  auto smallIcon = LoadImageW(
+    GetModuleHandleW(nullptr),
+    L"appIcon",
+    IMAGE_ICON,
+    GetSystemMetrics(SM_CXSMICON),
+    GetSystemMetrics(SM_CYSMICON),
+    0);
+  SendMessage(
+    mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
+
   gUIThreadDispatcherQueue = DispatcherQueue();
   gDXResources = DXResources::Create();
   gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);
@@ -91,10 +109,10 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const WindowEventArgs&) {
   dprint("Stopping frame timer...");
   mFrameTimer.Stop();
-  mFrameTimer = { nullptr };
+  mFrameTimer = {nullptr};
   dprint("Stopping dispatch queue...");
   co_await mDQC.ShutdownQueueAsync();
-  mDQC = { nullptr };
+  mDQC = {nullptr};
   dprint("Frame thread shutdown.");
 }
 
