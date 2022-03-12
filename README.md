@@ -148,7 +148,7 @@ OpenKneeboard has been primarily tested with DCS: World Open Beta via the Oculus
 
 ## Thanks
 
-- Paul 'Greywolf" Wittingham for the logo and banner artwork.
+- Paul 'Goldwolf" Whittingham for the logo and banner artwork.
 - BeamRider for the [VRK](https://forums.eagle.ru/topic/211308-vrk-a-virtual-reality-enabled-kneeboard-with-touch-and-ink-support) project, for showing how useful an in-VR kneeboard is, and clear inspiration for OpenKneeboard.
 - [Benjamin Höglinger-Stelzer a.k.a. Nefarius](https://nefarius.at/) for the [Injector](https://github.com/nefarius/Injector) utility, which has been extremely useful for development.
 - Nefarius and the other members of the ViGEm Discord for lots of advice/feedback/information on DirectX, Detours, and other aspects of Windows development.

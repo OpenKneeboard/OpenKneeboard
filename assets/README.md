@@ -1,1 +1,1 @@
-Many thanks to Paul "Goldwolf" Wittingham for the awesome artwork :)
+Many thanks to Paul "Goldwolf" Whittingham for the awesome artwork :)
