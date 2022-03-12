@@ -176,23 +176,31 @@ void OpenVROverlay::Tick() {
       = Quaternion::CreateFromAxisAngle(Vector3::UnitX, vrConf.rx)
       * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vrConf.ry)
       * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vrConf.rz);
-    
-    p->mZoomed = RayIntersectsRect(
+
+    auto zoomed = RayIntersectsRect(
       hmdPosition,
       hmdOrientation,
       rectPosition,
       rectOrientation,
-      {
-        (p->mZoomed ? p->mZoomedWidth : p->mWidth) * vrConf.gazeTargetHorizontalScale,
-        vrConf.height * (p->mZoomed ? vrConf.zoomScale : 1) * vrConf.gazeTargetVerticalScale
-      }
-    );
-  }
+      {(p->mZoomed ? p->mZoomedWidth : p->mWidth)
+         * vrConf.gazeTargetHorizontalScale,
+       vrConf.height * (p->mZoomed ? vrConf.zoomScale : 1)
+         * vrConf.gazeTargetVerticalScale});
 
-  CHECK(
-    SetOverlayWidthInMeters,
-    p->mOverlay,
-    p->mZoomed ? p->mZoomedWidth : p->mWidth);
+    if (
+      zoomed == p->mZoomed
+      && p->mSequenceNumber == snapshot.GetSequenceNumber()) {
+      return;
+    }
+
+    if (zoomed != p->mZoomed || p->mSequenceNumber == 0) {
+      p->mZoomed = zoomed;
+      CHECK(
+        SetOverlayWidthInMeters,
+        p->mOverlay,
+        p->mZoomed ? p->mZoomedWidth : p->mWidth);
+    }
+  }
 
   if (p->mSequenceNumber == snapshot.GetSequenceNumber()) {
     return;
