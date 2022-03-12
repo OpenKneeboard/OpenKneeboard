@@ -25,14 +25,6 @@ function Create-Png {
     $FileName
 }
 
-# See:
-# - https://docs.microsoft.com/en-us/uwp/schemas/appxpackage/uapmanifestschema/element-uap-visualelements
-# - https://docs.microsoft.com/en-us/previous-versions/windows/apps/hh831183(v=win.10)
-
-Create-Png 150x150 logo-150x150.scale-100.png
-Create-Png 375x375 logo-150x150.scale-250.png
-
-Create-Png 44x44 logo-44x44.scale-100.png
-Create-Png 110x110 logo-44x44.scale-250.png
-
+Create-Png 44x44 logo-44x44.png
+Create-Png 150x150 logo-150x150.png
 Create-Png 300x300 logo-300x300.png
