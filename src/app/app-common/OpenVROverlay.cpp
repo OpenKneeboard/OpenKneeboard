@@ -48,6 +48,7 @@ class OpenVROverlay::Impl final {
   vr::IVROverlay* mIVROverlay = nullptr;
   vr::VROverlayHandle_t mOverlay {};
   bool mZoomed = false;
+  bool mVisible = true;
   SHM::Reader mSHM;
 
   ID3D11Device1* D3D();
@@ -92,13 +93,6 @@ void OpenVROverlay::Tick() {
     dprint("Initialized OpenVR");
   }
 
-  if (!p->mSHM) {
-    p->mSHM = SHM::Reader();
-    if (!p->mSHM) {
-      return;
-    }
-  }
-
   if (!p->mIVROverlay) {
     p->mIVROverlay = vr::VROverlay();
     if (!p->mIVROverlay) {
@@ -141,7 +135,16 @@ void OpenVROverlay::Tick() {
 
   auto snapshot = p->mSHM.MaybeGet();
   if (!snapshot) {
+    if (p->mVisible) {
+      p->mIVROverlay->HideOverlay(p->mOverlay);
+      p->mVisible = false;
+    }
     return;
+  }
+
+  if (!p->mVisible) {
+    p->mVisible = true;
+    p->mIVROverlay->ShowOverlay(p->mOverlay);
   }
 
   const auto config = snapshot.GetConfig();
