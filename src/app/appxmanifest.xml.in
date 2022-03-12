@@ -15,7 +15,7 @@
     <DisplayName>OpenKneeboard</DisplayName>
     <PublisherDisplayName>Fred Emmott</PublisherDisplayName>
     <Description>An open source kneeboard</Description>
-    <Logo>share/logo-300x300.png</Logo>
+    <Logo>share/logo-transparent-48x48.png</Logo>
   </Properties>
   <Resources>
     <Resource Language="en-us" />
@@ -33,8 +33,8 @@
       <uap:VisualElements
         BackgroundColor="#464646"
         DisplayName="OpenKneeboard"
-        Square150x150Logo="share/logo-150x150.png"
-        Square44x44Logo="share/logo-44x44.png"
+        Square150x150Logo="share/logo-white-150x150.png"
+        Square44x44Logo="share/logo-white-44x44.png"
         Description="An open source kneeboard"
       />
       <uap7:Properties>

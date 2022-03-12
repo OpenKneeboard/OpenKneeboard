@@ -14,11 +14,12 @@ magick convert `
 function Create-Png {
   param (
     $Size,
+    $Background,
     $FileName
   )
 
   magick convert `
-    -background white `
+    -background $Background `
     "$(Get-Location)\OpenKneeboard_Logos_Icon_Color.svg" `
     -gravity center `
     -trim `
@@ -27,6 +28,7 @@ function Create-Png {
     $FileName
 }
 
-Create-Png 44x44 logo-44x44.png
-Create-Png 150x150 logo-150x150.png
-Create-Png 300x300 logo-300x300.png
+Create-Png 48x48 none logo-transparent-48x48.png
+
+Create-Png 44x44 white logo-white-44x44.png
+Create-Png 150x150 white logo-white-150x150.png
