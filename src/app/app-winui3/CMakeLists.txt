@@ -119,3 +119,9 @@ install(
   ${XBF_FILES}
   TYPE BIN
 )
+install(
+  FILES
+  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.pdb"
+  TYPE BIN
+  COMPONENT DebugSymbols
+)
