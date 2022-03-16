@@ -23,6 +23,7 @@
 #include <shims/winrt.h>
 
 #include <functional>
+#include <mutex>
 
 namespace OpenKneeboard {
 
@@ -47,6 +48,7 @@ class CachedLayer final {
   winrt::com_ptr<ID2D1DeviceContext> mCacheContext;
   D2D1_SIZE_U mCacheSize;
   winrt::com_ptr<ID2D1Bitmap1> mCache;
+  std::mutex mCacheMutex;
 };
 
 }// namespace OpenKneeboard
