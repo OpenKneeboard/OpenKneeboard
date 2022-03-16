@@ -322,13 +322,11 @@ void InterprocessRenderer::Impl::RenderWithChrome(
     float(headerSize.width),
     float(headerSize.height),
     headerLayout.put());
-
-  DWRITE_TEXT_METRICS metrics;
-  headerLayout->GetMetrics(&metrics);
+  headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+  headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
   ctx->DrawTextLayout(
-    {(headerSize.width - metrics.width) / 2,
-     (headerSize.height - metrics.height) / 2},
+    {0.0f, 0.0f},
     headerLayout.get(),
     mHeaderTextBrush.get());
 
