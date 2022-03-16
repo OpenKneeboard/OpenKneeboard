@@ -9,6 +9,7 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 * Non-VR: DX11
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys
 * Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
+* Variable aspect ratios
 * Drawing perf/feel while in VR
 * XBox controller
 * Physical joystick/throttle
@@ -21,6 +22,8 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
   * Mission kneeboard
   * Radio log
   * Theater kneeboard (only in Caucasus and NTTR)
+* DCS: restart mission
+* DCS: switch to a different campaign
 
 ## Releasing
 
