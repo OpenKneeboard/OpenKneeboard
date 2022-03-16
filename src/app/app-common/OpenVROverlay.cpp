@@ -54,9 +54,10 @@ class OpenVROverlay::Impl final {
   ID3D11Device1* D3D();
 
   winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
-  uint64_t mSequenceNumber = 0;
-  float mWidth = 0;
+  uint64_t mSequenceNumber = ~(0ui64);
+  float mUnzoomedWidth = 0;
   float mZoomedWidth = 0;
+  float mActualWidth = 0;
 
   ~Impl() {
     if (!mIVRSystem) {
@@ -151,8 +152,8 @@ void OpenVROverlay::Tick() {
   const auto& vrConf = config.vr;
 
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  p->mWidth = vrConf.height * aspectRatio;
-  p->mZoomedWidth = p->mWidth * vrConf.zoomScale;
+  p->mUnzoomedWidth = vrConf.height * aspectRatio;
+  p->mZoomedWidth = p->mUnzoomedWidth * vrConf.zoomScale;
 
   vr::TrackedDevicePose_t hmdPose {
     .bPoseIsValid = false,
@@ -180,28 +181,20 @@ void OpenVROverlay::Tick() {
       * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vrConf.ry)
       * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vrConf.rz);
 
-    auto zoomed = RayIntersectsRect(
+    const auto zoomed = RayIntersectsRect(
       hmdPosition,
       hmdOrientation,
       rectPosition,
       rectOrientation,
-      {(p->mZoomed ? p->mZoomedWidth : p->mWidth)
+      {(p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth)
          * vrConf.gazeTargetHorizontalScale,
        vrConf.height * (p->mZoomed ? vrConf.zoomScale : 1)
          * vrConf.gazeTargetVerticalScale});
 
-    if (
-      zoomed == p->mZoomed
-      && p->mSequenceNumber == snapshot.GetSequenceNumber()) {
-      return;
-    }
-
-    if (zoomed != p->mZoomed || p->mSequenceNumber == 0) {
-      p->mZoomed = zoomed;
-      CHECK(
-        SetOverlayWidthInMeters,
-        p->mOverlay,
-        p->mZoomed ? p->mZoomedWidth : p->mWidth);
+    const auto desiredWidth = p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth;
+    if (desiredWidth != p->mActualWidth) {
+      CHECK(SetOverlayWidthInMeters, p->mOverlay, desiredWidth);
+      p->mActualWidth = desiredWidth;
     }
   }
 
