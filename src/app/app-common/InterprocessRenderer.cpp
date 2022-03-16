@@ -332,6 +332,31 @@ void InterprocessRenderer::Impl::RenderWithChrome(
     headerLayout.get(),
     mHeaderTextBrush.get());
 
+#ifdef DEBUG
+  auto frameText = fmt::format(L"Frame {}", mSHM.GetNextSequenceNumber());
+  headerFormat = nullptr;
+  dwf->CreateTextFormat(
+    L"Consolas",
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    0.67 * (headerSize.height * 96) / (2 * dpiy),
+    L"",
+    headerFormat.put());
+  headerLayout = nullptr;
+  dwf->CreateTextLayout(
+    frameText.data(),
+    static_cast<UINT32>(frameText.size()),
+    headerFormat.get(),
+    float(headerSize.width),
+    float(headerSize.height),
+    headerLayout.put());
+  headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+  headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+  ctx->DrawTextLayout({0.0f, 0.0f}, headerLayout.get(), mHeaderTextBrush.get());
+#endif
+
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   auto cursorPoint = mKneeboard->GetCursorCanvasPoint();
 

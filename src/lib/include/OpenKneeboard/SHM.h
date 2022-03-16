@@ -66,6 +66,8 @@ class Writer final {
   UINT GetNextTextureKey() const;
   UINT GetNextTextureIndex() const;
 
+  uint32_t GetNextSequenceNumber() const;
+
  private:
   class Impl;
   std::shared_ptr<Impl> p;

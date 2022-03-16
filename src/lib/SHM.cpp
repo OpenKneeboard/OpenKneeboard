@@ -291,6 +291,10 @@ UINT Writer::GetNextTextureIndex() const {
   return (p->mHeader->sequenceNumber + 1) % TextureCount;
 }
 
+uint32_t Writer::GetNextSequenceNumber() const {
+  return p->mHeader->sequenceNumber + 1;
+}
+
 Reader::Reader() {
   const auto path = SHMPath();
   HANDLE handle;
