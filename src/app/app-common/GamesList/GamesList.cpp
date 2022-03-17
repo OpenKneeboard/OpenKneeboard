@@ -22,6 +22,8 @@
 #include <OpenKneeboard/Games/GenericGame.h>
 #include <OpenKneeboard/GamesList.h>
 
+#include <windows.h>
+
 namespace OpenKneeboard {
 GamesList::GamesList(const nlohmann::json& config) {
   mGames
@@ -36,8 +38,10 @@ GamesList::GamesList(const nlohmann::json& config) {
   mInjector = std::make_unique<GameInjector>();
   mInjector->SetGameInstances(mInstances);
   AddEventListener(mInjector->evGameChanged, this->evGameChanged);
-  mInjectorThread = std::jthread(
-    [this](std::stop_token stopToken) { mInjector->Run(stopToken); });
+  mInjectorThread = std::jthread([this](std::stop_token stopToken) {
+    SetThreadDescription(GetCurrentThread(), L"GameInjector Thread");
+    mInjector->Run(stopToken);
+  });
 }
 
 void GamesList::LoadDefaultSettings() {

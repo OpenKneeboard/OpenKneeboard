@@ -194,11 +194,14 @@ void PDFTab::Reload() {
     return;
   }
   std::thread([this] {
+    SetThreadDescription(GetCurrentThread(), L"PDFTab Master Loader Thread");
     std::jthread loadRenderer {[this] {
+      SetThreadDescription(GetCurrentThread(), L"PDFTab PdfDocument Thread");
       auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
       p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
     }};
     std::jthread loadBookmarks {[this] {
+      SetThreadDescription(GetCurrentThread(), L"PDFTab QPDF Thread");
       const auto pathStr = to_utf8(p->mPath);
       QPDF qpdf;
       qpdf.processFile(pathStr.c_str());

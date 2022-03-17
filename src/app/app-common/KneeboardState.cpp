@@ -67,14 +67,17 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mDirectInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
 
   mGameEventThread = std::jthread([this](std::stop_token stopToken) {
+    SetThreadDescription(GetCurrentThread(), L"GameEvent Thread");
     GameEventServer server;
     this->AddEventListener(
       server.evGameEvent, &KneeboardState::OnGameEvent, this);
     server.Run(stopToken);
   });
 
-  mOpenVRThread = std::jthread(
-    [](std::stop_token stopToken) { OpenVROverlay().Run(stopToken); });
+  mOpenVRThread = std::jthread([](std::stop_token stopToken) {
+    SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
+    OpenVROverlay().Run(stopToken);
+  });
 
   UpdateLayout();
 }
@@ -412,6 +415,5 @@ void KneeboardState::SaveSettings() {
 
   mSettings.Save();
 }
-
 
 }// namespace OpenKneeboard

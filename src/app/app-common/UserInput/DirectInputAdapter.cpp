@@ -95,6 +95,7 @@ DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
   }
 
   mDIThread = std::jthread([=](std::stop_token stopToken) {
+    SetThreadDescription(GetCurrentThread(), L"DirectInput Thread");
     DirectInputListener listener(mDI8, mDevices);
     listener.Run(stopToken);
   });
