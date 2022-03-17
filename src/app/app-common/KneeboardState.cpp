@@ -225,6 +225,10 @@ void KneeboardState::UpdateLayout() {
     mContentNativeSize = tab->GetNativeContentSize();
   }
 
+  if (mContentNativeSize.width == 0 || mContentNativeSize.height == 0) {
+    mContentNativeSize = { 768, 1024 };
+  }
+
   const auto scaleX
     = static_cast<float>(TextureWidth) / mContentNativeSize.width;
   const auto scaleY = static_cast<float>(TextureHeight)
