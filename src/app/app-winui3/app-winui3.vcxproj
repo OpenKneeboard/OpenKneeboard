@@ -92,7 +92,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Manifest Include="app.manifest" />
-    <ResourceCompile Include="Resource.rc" />
+    <ResourceCompile AdditionalIncludeDirectories="$(VERSION_RC_DIRECTORY)" Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

@@ -81,23 +81,29 @@ target_link_libraries(
   OpenKneeboard-UTF8
 )
 
+set(VERSION_HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h")
+set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
+set(VERSION_RC_FILE "${VERSION_RC_FILE}" PARENT_SCOPE)
 add_custom_target(
-  VersionHeader
+  OpenKneeboard-version-sources
   COMMAND
   ${CMAKE_COMMAND}
   -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
   -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
   -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
-  "-DINPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.h.in"
-  "-DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h"
+  "-DINPUT_HEADER_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.h.in"
+  "-DOUTPUT_HEADER_FILE=${VERSION_HEADER_FILE}"
+  "-DINPUT_RC_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.rc.in"
+  "-DOUTPUT_RC_FILE=${VERSION_RC_FILE}"
   "-P${CMAKE_CURRENT_SOURCE_DIR}/version.h.cmake"
   BYPRODUCTS
-  "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h"
+  "${VERSION_HEADER_FILE}"
+  "${VERSION_RC_FILE}"
   WORKING_DIRECTORY
   "${CMAKE_SOURCE_DIR}"
 )
 add_library(OpenKneeboard-version INTERFACE)
-add_dependencies(OpenKneeboard-version INTERFACE VersionHeader)
+add_dependencies(OpenKneeboard-version INTERFACE OpenKneeboard-version-sources)
 target_include_directories(
   OpenKneeboard-version
   INTERFACE

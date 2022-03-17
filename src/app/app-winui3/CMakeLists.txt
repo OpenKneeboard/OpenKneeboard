@@ -71,6 +71,8 @@ endforeach()
 
 string(JOIN ";" LIBRARY_PATHS ${LIBRARY_PATHS})
 
+get_filename_component(VERSION_RC_DIRECTORY "${VERSION_RC_FILE}" DIRECTORY)
+
 add_custom_target(
   OpenKneeboard-App-WinUI3
   ALL
@@ -82,6 +84,7 @@ add_custom_target(
 
   "-p:CMakeIncludeDirs=\"$<SHELL_PATH:${INCLUDE_DIRS}>\""
   "-p:CMakeLinkLibs=\"$<SHELL_PATH:${LIBRARY_PATHS}>\""
+  "-p:VERSION_RC_DIRECTORY=\"$<SHELL_PATH:${VERSION_RC_DIRECTORY}>\""
 
   "-p:NUGET_CPPWINRT_PATH=${NUGET_CPPWINRT_PATH}" 
   "-p:NUGET_WINDOWS_APP_SDK_PATH=${NUGET_WINDOWS_APP_SDK_PATH}" 
@@ -100,8 +103,9 @@ add_custom_target(
   WindowsImplementationLibraryNuget
   WindowsAppSDKNuget
   WindowsSDKBuildToolsNuget
+  ${VERSION_RC_FILE}
+  ${LIBRARY_DEPENDENCIES}
 )
-add_dependencies(OpenKneeboard-App-WinUI3 ${LIBRARY_DEPENDENCIES})
 
 set(OPENKNEEBOARD_WINUI3_APP_BUILD_DIR "${MSBUILD_OUTPUT_PATH}" PARENT_SCOPE)
 

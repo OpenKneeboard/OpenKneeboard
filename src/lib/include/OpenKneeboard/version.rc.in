@@ -1,0 +1,33 @@
+#include <verrsrc.h>
+
+#define VER_FILEVERSION             @VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_PATCH@,@VERSION_BUILD@
+#define VER_FILEVERSION_STR         "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@.@VERSION_BUILD@\0"
+
+#define VER_PRODUCTVERSION          @VERSION_MAJOR@,@VERSION_MINOR@,@VERSION_PATCH@,@VERSION_BUILD@
+#define VER_PRODUCTVERSION_STR      "@VERSION_MAJOR@.@VERSION_MINOR@.@VERSION_PATCH@.@VERSION_BUILD@\0"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     VER_FILEVERSION
+PRODUCTVERSION  VER_PRODUCTVERSION
+FILEOS          VOS__WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "Frederick Emmott\0"
+            VALUE "FileDescription",  "OpenKneeboard\0"
+            VALUE "FileVersion",      VER_FILEVERSION_STR
+            VALUE "LegalCopyright",   "\xa9 Frederick Emmott\0"
+            VALUE "OriginalFilename", "OpenKneeboardApp.exe\0"
+            VALUE "ProductName",      "OpenKneeboard\0"
+            VALUE "ProductVersion",   VER_PRODUCTVERSION_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END

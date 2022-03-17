@@ -44,7 +44,13 @@ else()
 endif()
 
 configure_file(
-  ${INPUT_FILE}
-  ${OUTPUT_FILE}
+  ${INPUT_HEADER_FILE}
+  ${OUTPUT_HEADER_FILE}
+  @ONLY
+)
+
+configure_file(
+  ${INPUT_RC_FILE}
+  ${OUTPUT_RC_FILE}
   @ONLY
 )
