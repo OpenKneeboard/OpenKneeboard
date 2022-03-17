@@ -59,6 +59,8 @@ class OpenVROverlay::Impl final {
   float mZoomedWidth = 0;
   float mActualWidth = 0;
 
+  bool IsZoomed(const VRConfig& vrConf) const;
+
   ~Impl() {
     if (!mIVRSystem) {
       return;
@@ -155,47 +157,11 @@ void OpenVROverlay::Tick() {
   p->mUnzoomedWidth = vrConf.height * aspectRatio;
   p->mZoomedWidth = p->mUnzoomedWidth * vrConf.zoomScale;
 
-  vr::TrackedDevicePose_t hmdPose {
-    .bPoseIsValid = false,
-    .bDeviceIsConnected = false,
-  };
-  p->mIVRSystem->GetDeviceToAbsoluteTrackingPose(
-    vr::TrackingUniverseStanding, 0, &hmdPose, 1);
-  if (hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid) {
-    const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
-    // clang-format off
-    Matrix m(
-      f[0][0], f[1][0], f[2][0], 0,
-      f[0][1], f[1][1], f[2][1], 0,
-      f[0][2], f[1][2], f[2][2], 0,
-      f[0][3], f[1][3], f[2][3], 1
-    );
-    // clang-format on
-
-    Vector3 hmdPosition {m.Translation()};
-    Quaternion hmdOrientation {Quaternion::CreateFromRotationMatrix(m)};
-
-    Vector3 rectPosition {vrConf.x, vrConf.floorY, vrConf.z};
-    auto rectOrientation
-      = Quaternion::CreateFromAxisAngle(Vector3::UnitX, vrConf.rx)
-      * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vrConf.ry)
-      * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vrConf.rz);
-
-    const auto zoomed = RayIntersectsRect(
-      hmdPosition,
-      hmdOrientation,
-      rectPosition,
-      rectOrientation,
-      {(p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth)
-         * vrConf.gazeTargetHorizontalScale,
-       vrConf.height * (p->mZoomed ? vrConf.zoomScale : 1)
-         * vrConf.gazeTargetVerticalScale});
-
-    const auto desiredWidth = p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth;
-    if (desiredWidth != p->mActualWidth) {
-      CHECK(SetOverlayWidthInMeters, p->mOverlay, desiredWidth);
-      p->mActualWidth = desiredWidth;
-    }
+  p->mZoomed = p->IsZoomed(vrConf);
+  const auto desiredWidth = p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth;
+  if (desiredWidth != p->mActualWidth) {
+    CHECK(SetOverlayWidthInMeters, p->mOverlay, desiredWidth);
+    p->mActualWidth = desiredWidth;
   }
 
   if (p->mSequenceNumber == snapshot.GetSequenceNumber()) {
@@ -275,6 +241,54 @@ void OpenVROverlay::Tick() {
   p->mSequenceNumber = snapshot.GetSequenceNumber();
 
 #undef CHECK
+}
+
+bool OpenVROverlay::Impl::IsZoomed(const VRConfig& vrConf) const {
+  const auto zoomScale = vrConf.zoomScale;
+  if (
+    zoomScale < 1.1 || vrConf.gazeTargetHorizontalScale < 0.1
+    || vrConf.gazeTargetVerticalScale < 0.1) {
+    return false;
+  }
+
+  vr::TrackedDevicePose_t hmdPose {
+    .bPoseIsValid = false,
+    .bDeviceIsConnected = false,
+  };
+  mIVRSystem->GetDeviceToAbsoluteTrackingPose(
+    vr::TrackingUniverseStanding, 0, &hmdPose, 1);
+  if (!(hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid)) {
+    return false;
+  }
+
+  const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
+  // clang-format off
+  Matrix m(
+    f[0][0], f[1][0], f[2][0], 0,
+    f[0][1], f[1][1], f[2][1], 0,
+    f[0][2], f[1][2], f[2][2], 0,
+    f[0][3], f[1][3], f[2][3], 1
+  );
+  // clang-format on
+
+  Vector3 hmdPosition {m.Translation()};
+  Quaternion hmdOrientation {Quaternion::CreateFromRotationMatrix(m)};
+
+  Vector3 rectPosition {vrConf.x, vrConf.floorY, vrConf.z};
+  auto rectOrientation
+    = Quaternion::CreateFromAxisAngle(Vector3::UnitX, vrConf.rx)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vrConf.ry)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vrConf.rz);
+
+  return RayIntersectsRect(
+    hmdPosition,
+    hmdOrientation,
+    rectPosition,
+    rectOrientation,
+    {(mZoomed ? mZoomedWidth : mUnzoomedWidth)
+       * vrConf.gazeTargetHorizontalScale,
+     vrConf.height * (mZoomed ? zoomScale : 1)
+       * vrConf.gazeTargetVerticalScale});
 }
 
 ID3D11Device1* OpenVROverlay::Impl::D3D() {
