@@ -233,8 +233,6 @@ void GameInjector::SetGameInstances(const std::vector<GameInstance>& games) {
 }
 
 bool GameInjector::Run(std::stop_token stopToken) {
-  wchar_t buf[MAX_PATH];
-  GetModuleFileNameW(NULL, buf, MAX_PATH);
   const auto dllPath = GetInjectablesPath();
   const auto injectedDll = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
   const auto markerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
@@ -267,8 +265,14 @@ bool GameInjector::Run(std::stop_token stopToken) {
       if (!processHandle) {
         continue;
       }
+      wchar_t buf[MAX_PATH];
       DWORD bufSize = sizeof(buf);
-      QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize);
+      if (!QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize)) {
+        continue;
+      }
+      if (bufSize < 0 || bufSize > sizeof(buf)) {
+        continue;
+      }
       auto path = std::filesystem::canonical(std::wstring_view(buf, bufSize));
 
       std::scoped_lock lock(mGamesMutex);
