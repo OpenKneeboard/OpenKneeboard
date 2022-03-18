@@ -47,7 +47,8 @@ static std::filesystem::path GetDCSPath(const char* lastSubKey) {
     return {};
   }
 
-  const auto path = std::filesystem::path(std::wstring_view(buffer, length / sizeof(buffer[0])));
+  const auto path = std::filesystem::path(
+    std::wstring_view(buffer, length / sizeof(buffer[0])));
   if (!std::filesystem::is_directory(path)) {
     return {};
   }
@@ -68,6 +69,10 @@ static std::filesystem::path GetSavedGamesPath() {
     sPath = std::filesystem::canonical(std::wstring_view(buffer));
   }
   return sPath;
+}
+
+bool DCSWorld::MatchesPath(const std::filesystem::path& path) const {
+  return path.filename() == "DCS.exe";
 }
 
 std::filesystem::path DCSWorld::GetInstalledPath(Version version) {
