@@ -65,7 +65,7 @@ class FolderTab final : public TabWithDoodles,
 
  private:
   class Impl;
-  std::shared_ptr<Impl> p;
+  std::unique_ptr<Impl> p;
 };
 
 }// namespace OpenKneeboard

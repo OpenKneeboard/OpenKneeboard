@@ -106,7 +106,7 @@ void FolderTab::Reload() {
 }
 
 uint16_t FolderTab::GetPageCount() const {
-  return p->mPages.size();
+  return static_cast<uint16_t>(p->mPages.size());
 }
 
 static bool IsValidPageIndex(uint16_t index, uint16_t count) {
@@ -209,8 +209,46 @@ winrt::com_ptr<ID2D1Bitmap> FolderTab::Impl::GetPageBitmap(uint16_t index) {
     0.0f,
     WICBitmapPaletteTypeMedianCut);
 
-  winrt::check_hresult(mDXR.mD2DDeviceContext->CreateBitmapFromWicBitmap(
-    converter.get(), page.mBitmap.put()));
+  /* `CreateBitmapFromWicBitmap` creates a Direct2D bitmap that refers to
+   * - and retains a reference to - the existing WIC bitmap.
+   *
+   * This means that Direct2D/Direct3D indirectly keep a reference to an
+   * object that keeps an open file alive; releasing the internal references
+   * is not enough to close the file - we need to also wait for Direct2D/3D to
+   * finish.
+   *
+   * This is problematic if this `FolderTab` is pointing at a temporary folder
+   * if we later want to delete the temporary folder: even after calling
+   * `SetPath({})`, DirectX may still hold references to the Direct2D bitmap,
+   * and in turn the WIC bitmap and open file.
+   *
+   * The simplest way to deal with this problem is to do an immediate on-GPU
+   * copy of the pixel data from the WIC-referencing bitmap to an independent
+   * bitmap - then the WIC bitmap can immediately be freed, and is never
+   * referenced (or kept alive) by the D3D11 render pipeline.
+   */
+  winrt::com_ptr<ID2D1Bitmap> sharedBitmap;
+  mDXR.mD2DDeviceContext->CreateBitmapFromWicBitmap(
+    converter.get(), sharedBitmap.put());
+  if (!sharedBitmap) {
+    return {};
+  }
+
+  winrt::check_hresult(mDXR.mD2DDeviceContext->CreateBitmap(
+    sharedBitmap->GetPixelSize(),
+    D2D1_BITMAP_PROPERTIES {
+      .pixelFormat = {
+        .format = DXGI_FORMAT_B8G8R8A8_UNORM,
+        .alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED,
+      },
+    },
+    page.mBitmap.put()));
+
+  if (!page.mBitmap) {
+    return {};
+  }
+  page.mBitmap->CopyFromBitmap(nullptr, sharedBitmap.get(), nullptr);
+
   return page.mBitmap;
 }
 
