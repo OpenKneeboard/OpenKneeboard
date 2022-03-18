@@ -22,6 +22,8 @@
 #include "pch.h"
 #include "GameSettingsPage.g.h"
 #include "GameInstanceUIData.g.h"
+#include "DCSWorldInstanceUIData.g.h"
+#include "GameInstanceUIDataTemplateSelector.g.h"
 // clang-format on
 
 #include <OpenKneeboard/GameInstance.h>
@@ -29,26 +31,42 @@
 #include <filesystem>
 
 namespace OpenKneeboard {
-  class ExecutableIconFactory;
+class ExecutableIconFactory;
 }
 
 using namespace OpenKneeboard;
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
+using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
   GameSettingsPage();
   ~GameSettingsPage();
 
-  winrt::fire_and_forget AddRunningProcess(const IInspectable&, const RoutedEventArgs&);
-  winrt::fire_and_forget RemoveGame(const IInspectable&, const RoutedEventArgs&);
+  winrt::fire_and_forget AddRunningProcess(
+    const IInspectable&,
+    const RoutedEventArgs&);
+  winrt::fire_and_forget RemoveGame(
+    const IInspectable&,
+    const RoutedEventArgs&);
   winrt::fire_and_forget AddExe(const IInspectable&, const RoutedEventArgs&);
-  private:
-   std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
-   void UpdateGames();
-   void AddPath(const std::filesystem::path&);
+
+  IVector<IInspectable> Games();
+
+	winrt::event_token PropertyChanged(
+		winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+			handler);
+	void PropertyChanged(winrt::event_token const& token) noexcept;
+
+ private:
+  void UpdateGames();
+  void AddPath(const std::filesystem::path&);
+
+  std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
+  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
+    mPropertyChangedEvent;
 };
 
 struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
@@ -60,17 +78,60 @@ struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
   void Name(const hstring&);
   hstring Path();
   void Path(const hstring&);
+  hstring Type();
+  void Type(const hstring&);
 
  private:
-  BitmapSource mIcon { nullptr };
+  BitmapSource mIcon {nullptr};
   hstring mName;
   hstring mPath;
+  hstring mType;
 };
+
+struct DCSWorldInstanceUIData
+  : DCSWorldInstanceUIDataT<
+      DCSWorldInstanceUIData,
+      OpenKneeboardApp::implementation::GameInstanceUIData> {
+  DCSWorldInstanceUIData() = default;
+
+  hstring SavedGamesPath();
+  void SavedGamesPath(const hstring&);
+ private:
+  hstring mSavedGamesPath;
+};
+
+struct GameInstanceUIDataTemplateSelector
+  : GameInstanceUIDataTemplateSelectorT<GameInstanceUIDataTemplateSelector> {
+  GameInstanceUIDataTemplateSelector() = default;
+
+  DataTemplate GenericGame();
+  void GenericGame(const DataTemplate&);
+  DataTemplate DCSWorld();
+  void DCSWorld(const DataTemplate&);
+
+  DataTemplate SelectTemplateCore(const IInspectable&);
+  DataTemplate SelectTemplateCore(const IInspectable&, const DependencyObject&);
+
+ private:
+  DataTemplate mGenericGame;
+  DataTemplate mDCSWorld;
+};
+
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
 struct GameSettingsPage
   : GameSettingsPageT<GameSettingsPage, implementation::GameSettingsPage> {};
 
-struct GameInstanceUIData
-  : GameInstanceUIDataT<GameInstanceUIData, implementation::GameInstanceUIData> {};
+struct GameInstanceUIData : GameInstanceUIDataT<
+                              GameInstanceUIData,
+                              implementation::GameInstanceUIData> {};
+
+struct DCSWorldInstanceUIData : DCSWorldInstanceUIDataT<
+                                  DCSWorldInstanceUIData,
+                                  implementation::DCSWorldInstanceUIData> {};
+
+struct GameInstanceUIDataTemplateSelector
+  : GameInstanceUIDataTemplateSelectorT<
+      GameInstanceUIDataTemplateSelector,
+      implementation::GameInstanceUIDataTemplateSelector> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation

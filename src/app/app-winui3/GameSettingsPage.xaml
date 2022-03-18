@@ -7,6 +7,77 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
+  <Page.Resources>
+    <!-- Generic Games -->
+    <DataTemplate x:Key="GenericGameTemplate" x:DataType="local:GameInstanceUIData">
+      <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+        <Expander.Header>
+          <Grid ColumnDefinitions="Auto,*">
+            <Grid
+              Grid.Column="0"
+              Margin="0,8,8,8"
+              Height="48"
+              Width="48"
+              CornerRadius="8"
+              Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+              <Image Height="32" Width="32" Source="{x:Bind Icon}" />
+            </Grid>
+            <TextBlock
+              Grid.Column="1"
+              Style="{StaticResource BodyStrongTextBlockStyle}"
+              Text="{x:Bind Name}"
+              VerticalAlignment="Center"
+            />
+          </Grid>
+        </Expander.Header>
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8">
+          <Button Grid.Row="0" Grid.Column="2" Tag="{x:Bind Path}" Click="RemoveGame">
+            <SymbolIcon Symbol="Delete" />
+          </Button>
+          <TextBlock Grid.Row="0" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Type:</TextBlock>
+          <TextBlock Grid.Row="0" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Type}" />
+          <TextBlock Grid.Row="1" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Path:</TextBlock>
+          <TextBlock Grid.Row="1" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Path}" />
+        </Grid>
+      </Expander>
+    </DataTemplate>
+    <!-- DCS World -->
+    <DataTemplate x:Key="DCSWorldTemplate" x:DataType="local:DCSWorldInstanceUIData">
+      <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+        <Expander.Header>
+          <Grid ColumnDefinitions="Auto,*">
+            <Grid
+              Grid.Column="0"
+              Grid.RowSpan="2"
+              Margin="0,8,8,8"
+              Height="48"
+              Width="48"
+              CornerRadius="8"
+              Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+              <Image Height="32" Width="32" Source="{x:Bind Icon}" />
+            </Grid>
+            <TextBlock
+              Grid.Column="1"
+              Style="{StaticResource BodyStrongTextBlockStyle}"
+              Text="{x:Bind Name}"
+              VerticalAlignment="Center"
+            />
+          </Grid>
+        </Expander.Header>
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+          <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" Tag="{x:Bind Path}" Click="RemoveGame">
+            <SymbolIcon Symbol="Delete" />
+          </Button>
+          <TextBlock Grid.Row="0" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Type:</TextBlock>
+          <TextBlock Grid.Row="0" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Type}" />
+          <TextBlock Grid.Row="1" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Path:</TextBlock>
+          <TextBlock Grid.Row="1" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Path}" />
+          <TextBlock Grid.Row="2" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Saved Games:</TextBlock>
+          <TextBlock Grid.Row="2" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind SavedGamesPath}" />
+        </Grid>
+      </Expander>
+    </DataTemplate>
+  </Page.Resources>
   <Grid Margin="0,0,0,16" RowDefinitions="Auto,*">
     <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
       <AppBarButton Icon="Add" Label="Add a Game">
@@ -24,43 +95,20 @@
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
               </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
-
           </MenuFlyout>
         </AppBarButton.Flyout>
       </AppBarButton>
     </CommandBar>
-    <ListView Grid.Row="1" x:Name="List" SelectionMode="None">
-      <ListView.ItemTemplate>
-        <DataTemplate x:DataType="local:GameInstanceUIData">
-          <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-            <Expander.Header>
-              <Grid ColumnDefinitions="Auto,*">
-                <Grid
-                  Grid.Column="0"
-                  Margin="0,8,8,8"
-                  Height="48"
-                  Width="48"
-                  CornerRadius="8"
-                  Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-                  <Image Height="32" Width="32" Source="{x:Bind Icon}" />
-                </Grid>
-                <TextBlock
-                  Grid.Column="1"
-                  Style="{StaticResource BodyStrongTextBlockStyle}"
-                  Text="{x:Bind Name}"
-                  VerticalAlignment="Center"
-                />
-              </Grid>
-            </Expander.Header>
-            <Grid ColumnDefinitions="*,Auto">
-              <TextBlock Grid.Column="0" Text="{x:Bind Path}" />
-              <Button Grid.Column="1" Tag="{x:Bind Path}" Click="RemoveGame">
-                <SymbolIcon Symbol="Delete" />
-              </Button>
-            </Grid>
-          </Expander>
-        </DataTemplate>
-      </ListView.ItemTemplate>
-    </ListView>
+    <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Games}" Margin="8,8,8,8">
+      <ItemsRepeater.Layout>
+        <StackLayout Orientation="Vertical" Spacing="24" />
+      </ItemsRepeater.Layout>
+      <ItemsRepeater.ItemTemplate>
+        <local:GameInstanceUIDataTemplateSelector
+          GenericGame="{StaticResource GenericGameTemplate}"
+          DCSWorld="{StaticResource DCSWorldTemplate}"
+        />
+      </ItemsRepeater.ItemTemplate>
+    </ItemsRepeater>
   </Grid>
 </Page>

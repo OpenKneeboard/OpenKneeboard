@@ -19,10 +19,10 @@
  */
 #include <OpenKneeboard/DCSTab.h>
 #include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/dprint.h>
 
-using DCS = OpenKneeboard::Games::DCSWorld;
+using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 

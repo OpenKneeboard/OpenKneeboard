@@ -18,15 +18,15 @@
  * USA.
  */
 #include <OpenKneeboard/GameInjector.h>
-#include <OpenKneeboard/Games/DCSWorld.h>
-#include <OpenKneeboard/Games/GenericGame.h>
+#include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/GenericGame.h>
 #include <OpenKneeboard/GamesList.h>
 #include <windows.h>
 
 namespace OpenKneeboard {
 GamesList::GamesList(const nlohmann::json& config) {
   mGames
-    = {std::make_shared<Games::DCSWorld>(), std::make_shared<GenericGame>()};
+    = {std::make_shared<DCSWorld>(), std::make_shared<GenericGame>()};
 
   if (config.is_null()) {
     LoadDefaultSettings();

@@ -19,7 +19,7 @@
  */
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/FolderTab.h>
-#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
@@ -29,7 +29,7 @@
 #include <fstream>
 #include <random>
 
-using DCS = OpenKneeboard::Games::DCSWorld;
+using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 

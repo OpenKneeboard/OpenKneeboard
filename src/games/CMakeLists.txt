@@ -2,6 +2,7 @@ add_library(
   OpenKneeboard-games
   STATIC
   DCSWorld.cpp
+  DCSWorldInstance.cpp
   Game.cpp
   GenericGame.cpp
   GameInstance.cpp

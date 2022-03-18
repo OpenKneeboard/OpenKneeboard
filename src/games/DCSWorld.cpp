@@ -17,7 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/DCSWorldInstance.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
 #include <ShlObj.h>
@@ -25,7 +26,7 @@
 #include <fmt/format.h>
 #include <shims/winrt.h>
 
-namespace OpenKneeboard::Games {
+namespace OpenKneeboard {
 
 static std::filesystem::path GetDCSPath(const char* lastSubKey) {
   const auto subkey = fmt::format("SOFTWARE\\Eagle Dynamics\\{}", lastSubKey);
@@ -88,9 +89,9 @@ std::filesystem::path DCSWorld::GetInstalledPath(Version version) {
 std::filesystem::path DCSWorld::GetSavedGamesPath(Version version) {
   switch (version) {
     case Version::OPEN_BETA:
-      return Games::GetSavedGamesPath() / "DCS.openbeta";
+      return OpenKneeboard::GetSavedGamesPath() / "DCS.openbeta";
     case Version::STABLE:
-      return Games::GetSavedGamesPath() / "DCS";
+      return OpenKneeboard::GetSavedGamesPath() / "DCS";
   }
   return {};
 }
@@ -132,4 +133,15 @@ const char* DCSWorld::GetNameForConfigFile() const {
   return "DCSWorld";
 }
 
-}// namespace OpenKneeboard::Games
+std::shared_ptr<GameInstance> DCSWorld::CreateGameInstance(
+  const std::filesystem::path& path) {
+  return std::make_shared<DCSWorldInstance>(
+    this->GetUserFriendlyName(path), path, this->shared_from_this());
+}
+
+std::shared_ptr<GameInstance> DCSWorld::CreateGameInstance(
+  const nlohmann::json& j) {
+  return std::make_shared<DCSWorldInstance>(j, this->shared_from_this());
+}
+
+}// namespace OpenKneeboard

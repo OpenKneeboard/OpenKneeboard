@@ -17,12 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 #include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/utf8.h>
 #include <Windows.h>
 #include <fmt/format.h>
 
-using DCS = OpenKneeboard::Games::DCSWorld;
+using DCS = OpenKneeboard::DCSWorld;
 using namespace OpenKneeboard;
 
 int main() {

@@ -17,38 +17,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DCSAircraftTab.h>
-#include <OpenKneeboard/FolderTab.h>
-#include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/dprint.h>
+#pragma once
 
-#include <filesystem>
-
-
-using DCS = OpenKneeboard::DCSWorld;
+#include <OpenKneeboard/GameInstance.h>
 
 namespace OpenKneeboard {
 
-DCSAircraftTab::DCSAircraftTab(const DXResources& dxr)
-  : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
-}
+struct DCSWorldInstance : public GameInstance {
+  DCSWorldInstance() = delete;
+  DCSWorldInstance(const DCSWorldInstance&) = delete;
+  DCSWorldInstance(DCSWorldInstance&&) = delete;
 
-utf8_string DCSAircraftTab::GetTitle() const {
-  return _("Aircraft");
-}
+  DCSWorldInstance(
+    const nlohmann::json& json,
+    const std::shared_ptr<Game>& game);
+  DCSWorldInstance(
+    const std::string& name,
+    const std::filesystem::path& path,
+    const std::shared_ptr<Game>& game);
 
-const char* DCSAircraftTab::GetGameEventName() const {
-  return DCS::EVT_AIRCRAFT;
-}
+  std::filesystem::path mSavedGamesPath;
 
-void DCSAircraftTab::Update(
-  const std::filesystem::path& installPath,
-  const std::filesystem::path& savedGamesPath,
-  utf8_string_view aircraft) {
-  auto path = savedGamesPath / "KNEEBOARD" / aircraft;
-  this->GetDelegate()->SetPath(path);
-}
+  virtual nlohmann::json ToJson() const;
+};
 
 }// namespace OpenKneeboard

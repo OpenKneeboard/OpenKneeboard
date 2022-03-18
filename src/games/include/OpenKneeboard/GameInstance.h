@@ -27,7 +27,10 @@
 namespace OpenKneeboard {
 
 struct GameInstance {
-  GameInstance() = default;
+  GameInstance() = delete;
+  GameInstance(const GameInstance&) = delete;
+  GameInstance(GameInstance&&) = delete;
+
   GameInstance(
     const nlohmann::json& json,
     const std::shared_ptr<Game>& game);

@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
 
 #include <filesystem>
@@ -58,7 +58,7 @@ class DCSTab : public virtual TabWithGameEvents {
 
   static void InstallHooks();
   static void InstallHooks(
-    Games::DCSWorld::Version version,
+    DCSWorld::Version version,
     utf8_string_view label);
 };
 

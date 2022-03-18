@@ -19,7 +19,7 @@
  */
 #include <OpenKneeboard/ConsoleLoopCondition.h>
 #include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/Games/DCSWorld.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <Windows.h>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
@@ -27,7 +27,7 @@
 #include <chrono>
 
 using namespace OpenKneeboard;
-using DCS = OpenKneeboard::Games::DCSWorld;
+using DCS = OpenKneeboard::DCSWorld;
 
 int main() {
   printf("Feeding GameEvents to OpenKneeboard - hit Ctrl-C to exit.\n");

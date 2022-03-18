@@ -24,8 +24,11 @@
 
 #include "GameInstanceUIData.g.cpp"
 #include "GameSettingsPage.g.cpp"
+#include "DCSWorldInstanceUIData.g.cpp"
+#include "GameInstanceUIDataTemplateSelector.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/DCSWorldInstance.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/utf8.h>
@@ -51,20 +54,39 @@ GameSettingsPage::GameSettingsPage() {
 }
 
 void GameSettingsPage::UpdateGames() {
+  if (!mPropertyChangedEvent) {
+    return;
+  }
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Devices"));
+}
+
+IVector<IInspectable> GameSettingsPage::Games() {
   auto games = gKneeboard->GetGamesList()->GetGameInstances();
   std::sort(games.begin(), games.end(), [](auto& a, auto& b) {
     return a->mName < b->mName;
   });
   IVector<IInspectable> winrtGames {
     winrt::single_threaded_vector<IInspectable>()};
+
   for (const auto& game: games) {
-    auto winrtGame = winrt::make<GameInstanceUIData>();
+    OpenKneeboardApp::GameInstanceUIData winrtGame {nullptr};
+
+    auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
+    if (dcs) {
+      auto winrtDCS = winrt::make<DCSWorldInstanceUIData>();
+      winrtDCS.SavedGamesPath(to_hstring(dcs->mSavedGamesPath.string()));
+      winrtGame = winrtDCS;
+    } else {
+      winrtGame = winrt::make<GameInstanceUIData>();
+    }
     winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mPath));
     winrtGame.Name(to_hstring(game->mName));
     winrtGame.Path(game->mPath.wstring());
+    winrtGame.Type(to_hstring(game->mGame->GetNameForConfigFile()));
     winrtGames.Append(winrtGame);
   }
-  List().ItemsSource(winrtGames);
+
+  return winrtGames;
 }
 
 GameSettingsPage::~GameSettingsPage() {
@@ -132,8 +154,9 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
     std::wstring_view {unbox_value<hstring>(sender.as<Button>().Tag())});
   auto gamesList = gKneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
-  auto it = std::find_if(
-    instances.begin(), instances.end(), [&](auto& x) { return x->mPath == path; });
+  auto it = std::find_if(instances.begin(), instances.end(), [&](auto& x) {
+    return x->mPath == path;
+  });
   if (it == instances.end()) {
     co_return;
   }
@@ -209,6 +232,64 @@ hstring GameInstanceUIData::Path() {
 
 void GameInstanceUIData::Path(const hstring& value) {
   mPath = value;
+}
+
+hstring GameInstanceUIData::Type() {
+  return mType;
+}
+
+void GameInstanceUIData::Type(const hstring& value) {
+  mType = value;
+}
+
+hstring DCSWorldInstanceUIData::SavedGamesPath() {
+  return mSavedGamesPath;
+}
+
+void DCSWorldInstanceUIData::SavedGamesPath(const hstring& value) {
+  mSavedGamesPath = value;
+}
+
+DataTemplate GameInstanceUIDataTemplateSelector::GenericGame() {
+  return mGenericGame;
+}
+
+void GameInstanceUIDataTemplateSelector::GenericGame(
+  const DataTemplate& value) {
+  mGenericGame = value;
+}
+
+DataTemplate GameInstanceUIDataTemplateSelector::DCSWorld() {
+  return mDCSWorld;
+}
+
+void GameInstanceUIDataTemplateSelector::DCSWorld(const DataTemplate& value) {
+  mDCSWorld = value;
+}
+
+DataTemplate GameInstanceUIDataTemplateSelector::SelectTemplateCore(
+  const IInspectable& item) {
+  if (item.try_as<winrt::OpenKneeboardApp::DCSWorldInstanceUIData>()) {
+    return mDCSWorld;
+  }
+
+  return mGenericGame;
+}
+
+DataTemplate GameInstanceUIDataTemplateSelector::SelectTemplateCore(
+  const IInspectable& item,
+  const DependencyObject&) {
+  return this->SelectTemplateCore(item);
+}
+
+winrt::event_token GameSettingsPage::PropertyChanged(
+  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+    handler) {
+  return mPropertyChangedEvent.add(handler);
+}
+
+void GameSettingsPage::PropertyChanged(winrt::event_token const& token) noexcept {
+  mPropertyChangedEvent.remove(token);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
