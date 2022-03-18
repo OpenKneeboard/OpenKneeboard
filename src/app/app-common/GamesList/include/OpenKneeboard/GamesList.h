@@ -24,7 +24,7 @@
 #include <thread>
 
 #include <OpenKneeboard/Events.h>
-#include "GameInstance.h"
+#include <OpenKneeboard/GameInstance.h>
 
 namespace OpenKneeboard {
 class GameInjector;
