@@ -77,6 +77,10 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
     *this, PropertyChangedEventArgs(L"KneeboardGazeTargetHorizontalScale"));
   mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"KneeboardGazeTargetVerticalScale"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"TrackingUniverse"));
+  mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"DiscardOculusDepthInformation"));
 }
 
 winrt::event_token VRSettingsPage::PropertyChanged(
@@ -206,6 +210,44 @@ float VRSettingsPage::KneeboardGazeTargetVerticalScale() {
 void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
   auto config = gKneeboard->GetVRConfig();
   config.gazeTargetVerticalScale = value;
+  gKneeboard->SetVRConfig(config);
+}
+
+uint32_t VRSettingsPage::TrackingUniverse() {
+  if (
+    gKneeboard->GetVRConfig().flags
+    & VRConfig::Flags::PREFER_ROOMSCALE_POSITION) {
+    return 0;
+  }
+  return 1;
+}
+
+void VRSettingsPage::TrackingUniverse(uint32_t universe) {
+  auto config = gKneeboard->GetVRConfig();
+  switch(universe) {
+    case 0:
+      config.flags |= VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
+      break;
+    case 1:
+      config.flags &= ~VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
+      break;
+  }
+  gKneeboard->SetVRConfig(config);
+}
+
+bool VRSettingsPage::DiscardOculusDepthInformation() {
+  return (
+    gKneeboard->GetVRConfig().flags
+    & VRConfig::Flags::DISCARD_DEPTH_INFORMATION);
+}
+
+void VRSettingsPage::DiscardOculusDepthInformation(bool discard) {
+  auto config = gKneeboard->GetVRConfig();
+  if (discard) {
+    config.flags |= VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+  } else {
+    config.flags &= ~VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+  }
   gKneeboard->SetVRConfig(config);
 }
 

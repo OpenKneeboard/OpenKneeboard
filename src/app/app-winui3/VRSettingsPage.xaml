@@ -36,16 +36,38 @@
         BorderThickness="1"
         Padding="8">
         <StackPanel Spacing="12">
-					<Grid ColumnDefinitions="Auto,*">
-						<NumberBox
-							Header="Kneeboard size, in meters"
-							Value="{x:Bind KneeboardHeight}"
-							SmallChange="0.01"
-							LargeChange="0.05"
-							SpinButtonPlacementMode="Inline"
-							NumberFormatter="{StaticResource MetersFormatter}"
-						/>
-					</Grid>
+					<ToggleSwitch
+						Header="Discard Oculus SDK depth information - required for DCS World"
+						OnContent="On"
+						OffContent="Off"
+						IsOn="{x:Bind DiscardOculusDepthInformation}"
+					/>
+          <RadioButtons
+            Header="SteamVR tracking system"
+            SelectedIndex="{x:Bind TrackingUniverse}"
+            MaxColumns="2">
+            <x:String>Roomscale</x:String>
+            <x:String>Seated</x:String>
+          </RadioButtons>
+        </StackPanel>
+      </Grid>
+      <Grid
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="Auto,*">
+            <NumberBox
+              Header="Kneeboard size, in meters"
+              Value="{x:Bind KneeboardHeight}"
+              SmallChange="0.01"
+              LargeChange="0.05"
+              SpinButtonPlacementMode="Inline"
+              NumberFormatter="{StaticResource MetersFormatter}"
+            />
+          </Grid>
           <Slider
             Header="Zoom level when looking at kneeboard"
             Value="{x:Bind KneeboardZoomScale}"

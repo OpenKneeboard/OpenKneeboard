@@ -50,7 +50,9 @@ struct VRConfig {
   float gazeTargetVerticalScale = 1.0f;
   float gazeTargetHorizontalScale = 1.0f;
 
-  Flags flags = Flags::DISCARD_DEPTH_INFORMATION;
+  Flags flags = static_cast<Flags>(
+    static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
+    | static_cast<uint32_t>(Flags::PREFER_ROOMSCALE_POSITION));
 };
 #pragma pack(pop)
 

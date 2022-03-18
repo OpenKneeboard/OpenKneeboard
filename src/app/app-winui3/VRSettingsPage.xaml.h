@@ -54,6 +54,12 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   float KneeboardGazeTargetVerticalScale();
   void KneeboardGazeTargetVerticalScale(float value);
 
+  uint32_t TrackingUniverse();
+  void TrackingUniverse(uint32_t);
+
+  bool DiscardOculusDepthInformation();
+  void DiscardOculusDepthInformation(bool value);
+
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
       handler);
