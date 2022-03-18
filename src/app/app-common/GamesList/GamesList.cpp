@@ -21,7 +21,6 @@
 #include <OpenKneeboard/Games/DCSWorld.h>
 #include <OpenKneeboard/Games/GenericGame.h>
 #include <OpenKneeboard/GamesList.h>
-
 #include <windows.h>
 
 namespace OpenKneeboard {
@@ -47,11 +46,7 @@ GamesList::GamesList(const nlohmann::json& config) {
 void GamesList::LoadDefaultSettings() {
   for (const auto& game: mGames) {
     for (const auto& path: game->GetInstalledPaths()) {
-      mInstances.push_back({
-        .name = game->GetUserFriendlyName(path),
-        .path = path,
-        .game = game,
-      });
+      mInstances.push_back(game->CreateGameInstance(path));
     }
   }
 }
@@ -62,7 +57,7 @@ GamesList::~GamesList() {
 nlohmann::json GamesList::GetSettings() const {
   nlohmann::json games {};
   for (const auto& game: mInstances) {
-    games.push_back(game.ToJson());
+    games.push_back(game->ToJson());
   }
   return {{"Configured", games}};
 }
@@ -70,21 +65,29 @@ nlohmann::json GamesList::GetSettings() const {
 void GamesList::LoadSettings(const nlohmann::json& config) {
   auto list = config.at("Configured");
 
-  for (const auto& game: list) {
-    mInstances.push_back(GameInstance::FromJson(game, mGames));
+  for (const auto& instance: list) {
+    const std::string type = instance.at("Type");
+    for (auto& game: mGames) {
+      if (game->GetNameForConfigFile() == type) {
+        mInstances.push_back(game->CreateGameInstance(instance));
+        goto NEXT_INSTANCE;
+      }
+    }
+  NEXT_INSTANCE:
+    continue;// need statement after label
   }
 }
 
-std::vector<std::shared_ptr<OpenKneeboard::Game>> GamesList::GetGames() const {
+std::vector<std::shared_ptr<Game>> GamesList::GetGames() const {
   return mGames;
 }
 
-std::vector<OpenKneeboard::GameInstance> GamesList::GetGameInstances() const {
+std::vector<std::shared_ptr<GameInstance>> GamesList::GetGameInstances() const {
   return mInstances;
 }
 
 void GamesList::SetGameInstances(
-  const std::vector<OpenKneeboard::GameInstance>& instances) {
+  const std::vector<std::shared_ptr<GameInstance>>& instances) {
   mInstances = instances;
   mInjector->SetGameInstances(mInstances);
   this->evSettingsChangedEvent.Emit();

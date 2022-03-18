@@ -25,27 +25,25 @@ namespace OpenKneeboard {
 
 nlohmann::json GameInstance::ToJson() const {
   return {
-    {"Name", this->name},
-    {"Path", to_utf8(this->path)},
-    {"Type", this->game->GetNameForConfigFile()},
+    {"Name", this->mName},
+    {"Path", to_utf8(this->mPath)},
+    {"Type", this->mGame->GetNameForConfigFile()},
   };
 }
 
-GameInstance GameInstance::FromJson(
+GameInstance::GameInstance(
   const nlohmann::json& j,
-  const std::vector<std::shared_ptr<OpenKneeboard::Game>>& games) {
-  std::string type = j.at("Type");
+  const std::shared_ptr<Game>& game) {
+  mName = j.at("Name");
+  mPath = std::filesystem::path(std::string(j.at("Path")));
+  mGame = game;
+}
 
-  for (const auto& game: games) {
-    if (type == game->GetNameForConfigFile()) {
-      return {
-        .name = j.at("Name"),
-        .path = std::filesystem::path(std::string(j.at("Path"))),
-        .game = game,
-      };
-    }
-  }
-  return {};
+GameInstance::GameInstance(
+  const std::string& name,
+  const std::filesystem::path& path,
+  const std::shared_ptr<Game>& game)
+  : mName(name), mPath(path), mGame(game) {
 }
 
 }// namespace OpenKneeboard

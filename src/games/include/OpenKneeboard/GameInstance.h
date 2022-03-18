@@ -14,24 +14,32 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
 #include <OpenKneeboard/Game.h>
 
-#include <nlohmann/json.hpp>
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace OpenKneeboard {
-struct GameInstance {
-  std::string name;
-  std::filesystem::path path;
-  std::shared_ptr<Game> game;
 
-  nlohmann::json ToJson() const;
-  static GameInstance FromJson(
-    const nlohmann::json&,
-    const std::vector<std::shared_ptr<OpenKneeboard::Game>>&);
+struct GameInstance {
+  GameInstance() = default;
+  GameInstance(
+    const nlohmann::json& json,
+    const std::shared_ptr<Game>& game);
+  GameInstance(
+    const std::string& name,
+    const std::filesystem::path& path,
+    const std::shared_ptr<Game>& game);
+
+  std::string mName;
+  std::filesystem::path mPath;
+  std::shared_ptr<Game> mGame;
+
+  virtual nlohmann::json ToJson() const;
 };
 };// namespace OpenKneeboard

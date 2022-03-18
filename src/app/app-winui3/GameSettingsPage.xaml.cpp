@@ -53,15 +53,15 @@ GameSettingsPage::GameSettingsPage() {
 void GameSettingsPage::UpdateGames() {
   auto games = gKneeboard->GetGamesList()->GetGameInstances();
   std::sort(games.begin(), games.end(), [](auto& a, auto& b) {
-    return a.name < b.name;
+    return a->mName < b->mName;
   });
   IVector<IInspectable> winrtGames {
     winrt::single_threaded_vector<IInspectable>()};
   for (const auto& game: games) {
     auto winrtGame = winrt::make<GameInstanceUIData>();
-    winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game.path));
-    winrtGame.Name(to_hstring(game.name));
-    winrtGame.Path(game.path.wstring());
+    winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mPath));
+    winrtGame.Name(to_hstring(game->mName));
+    winrtGame.Path(game->mPath.wstring());
     winrtGames.Append(winrtGame);
   }
   List().ItemsSource(winrtGames);
@@ -107,7 +107,8 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
   auto picker = Windows::Storage::Pickers::FileOpenPicker();
   picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
   picker.SettingsIdentifier(L"openkneeboard/addGameExe");
-  picker.SuggestedStartLocation(Windows::Storage::Pickers::PickerLocationId::ComputerFolder);
+  picker.SuggestedStartLocation(
+    Windows::Storage::Pickers::PickerLocationId::ComputerFolder);
   picker.FileTypeFilter().Append(L".exe");
   auto file = co_await picker.PickSingleFileAsync();
   if (!file) {
@@ -118,7 +119,7 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
     return;
   }
 
-  AddPath(std::wstring_view { path });
+  AddPath(std::wstring_view {path});
 }
 
 winrt::fire_and_forget GameSettingsPage::RemoveGame(
@@ -132,16 +133,18 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
   auto gamesList = gKneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
   auto it = std::find_if(
-    instances.begin(), instances.end(), [&](auto x) { return x.path == path; });
+    instances.begin(), instances.end(), [&](auto& x) { return x->mPath == path; });
   if (it == instances.end()) {
     co_return;
   }
 
+  auto instance = *it;
+
   dialog.Title(box_value(
-    to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), it->name))));
+    to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), instance->mName))));
   dialog.Content(box_value(to_hstring(fmt::format(
     fmt::runtime(_("Do you want OpenKneeboard to stop integrating with {}?")),
-    it->name))));
+    instance->mName))));
 
   dialog.PrimaryButtonText(to_hstring(_("Yes")));
   dialog.CloseButtonText(to_hstring(_("No")));
@@ -172,11 +175,7 @@ void GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
     if (!game->MatchesPath(path)) {
       continue;
     }
-    GameInstance instance {
-      .name = game->GetUserFriendlyName(path),
-      .path = path,
-      .game = game,
-    };
+    auto instance = game->CreateGameInstance(path);
     auto instances = gamesList->GetGameInstances();
     instances.push_back(instance);
     gamesList->SetGameInstances(instances);

@@ -227,7 +227,7 @@ bool HaveWintab() {
 
 namespace OpenKneeboard {
 
-void GameInjector::SetGameInstances(const std::vector<GameInstance>& games) {
+void GameInjector::SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>& games) {
   std::scoped_lock lock(mGamesMutex);
   mGames = games;
 }
@@ -277,11 +277,11 @@ bool GameInjector::Run(std::stop_token stopToken) {
 
       std::scoped_lock lock(mGamesMutex);
       for (const auto& game: mGames) {
-        if (path != game.path) {
+        if (path != game->mPath) {
           continue;
         }
 
-        const auto friendly = game.game->GetUserFriendlyName(path);
+        const auto friendly = game->mGame->GetUserFriendlyName(path);
         if (path != currentPath) {
           evGameChanged.EmitFromMainThread(game);
         }

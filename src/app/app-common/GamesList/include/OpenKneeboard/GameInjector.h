@@ -19,12 +19,12 @@
  */
 #pragma once
 
-#include <stop_token>
+#include <OpenKneeboard/Events.h>
+
 #include <memory>
 #include <mutex>
+#include <stop_token>
 #include <vector>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 
@@ -34,12 +34,12 @@ class GameInjector final {
  public:
   bool Run(std::stop_token);
 
-  Event<GameInstance> evGameChanged;
-  void SetGameInstances(const std::vector<GameInstance>&);
+  Event<std::shared_ptr<GameInstance>> evGameChanged;
+  void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
  private:
-  std::vector<GameInstance> mGames;
+  std::vector<std::shared_ptr<GameInstance>> mGames;
   std::mutex mGamesMutex;
 };
 
-}
+}// namespace OpenKneeboard

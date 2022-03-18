@@ -32,7 +32,7 @@ class GameInjector;
 class GamesList final : private EventReceiver {
  private:
   std::vector<std::shared_ptr<Game>> mGames;
-  std::vector<GameInstance> mInstances;
+  std::vector<std::shared_ptr<GameInstance>> mInstances;
   std::unique_ptr<GameInjector> mInjector;
   std::jthread mInjectorThread;
 
@@ -46,10 +46,10 @@ class GamesList final : private EventReceiver {
   virtual nlohmann::json GetSettings() const;
 
   std::vector<std::shared_ptr<Game>> GetGames() const;
-  std::vector<GameInstance> GetGameInstances() const;
-  void SetGameInstances(const std::vector<GameInstance>&);
+  std::vector<std::shared_ptr<GameInstance>> GetGameInstances() const;
+  void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
-  OpenKneeboard::Event<GameInstance> evGameChanged;
+  OpenKneeboard::Event<std::shared_ptr<GameInstance>> evGameChanged;
   OpenKneeboard::Event<> evSettingsChangedEvent;
 };
 

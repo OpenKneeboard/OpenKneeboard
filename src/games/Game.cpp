@@ -14,9 +14,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include <OpenKneeboard/Game.h>
+#include <OpenKneeboard/GameInstance.h>
 
 namespace OpenKneeboard {
 
@@ -38,6 +40,17 @@ bool Game::MatchesPath(const std::filesystem::path& _path) const {
 
 bool Game::DiscardOculusDepthInformationDefault() const {
   return false;
+}
+
+std::shared_ptr<GameInstance> Game::CreateGameInstance(
+  const std::filesystem::path& path) {
+  return std::make_shared<GameInstance>(
+    this->GetUserFriendlyName(path), path, this->shared_from_this());
+}
+
+std::shared_ptr<GameInstance> Game::CreateGameInstance(
+  const nlohmann::json& j) {
+  return std::make_shared<GameInstance>(j, this->shared_from_this());
 }
 
 }// namespace OpenKneeboard
