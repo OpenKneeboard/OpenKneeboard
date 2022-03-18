@@ -90,20 +90,13 @@ void TabState::SetPageIndex(uint16_t page) {
 }
 
 void TabState::NextPage() {
-  const auto next = GetPageIndex() + 1;
-  if (next < GetPageCount()) {
-    SetPageIndex(next);
-  } else {
-    SetPageIndex(0);
-  }
+  SetPageIndex(GetPageIndex() + 1);
 }
 
 void TabState::PreviousPage() {
   const auto page = GetPageIndex();
   if (page > 0) {
     SetPageIndex(page - 1);
-  } else {
-    SetPageIndex(GetPageCount() - 1);
   }
 }
 
