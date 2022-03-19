@@ -31,7 +31,13 @@
           </Grid>
         </Expander.Header>
         <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8">
-          <Button Grid.Row="0" Grid.Column="2" Tag="{x:Bind Path}" Click="RemoveGame">
+          <Button
+            Grid.Row="0"
+            Grid.Column="2"
+            Grid.RowSpan="2"
+            VerticalAlignment="Top"
+            Tag="{x:Bind Path}"
+            Click="RemoveGame">
             <SymbolIcon Symbol="Delete" />
           </Button>
           <TextBlock Grid.Row="0" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Type:</TextBlock>
@@ -65,7 +71,13 @@
           </Grid>
         </Expander.Header>
         <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
-          <Button Grid.Row="0" Grid.Column="2" Grid.RowSpan="3" Tag="{x:Bind Path}" Click="RemoveGame">
+          <Button
+            Grid.Row="0"
+            Grid.Column="2"
+            Grid.RowSpan="3"
+            VerticalAlignment="Top"
+            Tag="{x:Bind Path}"
+            Click="RemoveGame">
             <SymbolIcon Symbol="Delete" />
           </Button>
           <TextBlock Grid.Row="0" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Type:</TextBlock>
@@ -99,7 +111,7 @@
         </AppBarButton.Flyout>
       </AppBarButton>
     </CommandBar>
-    <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Games}" Margin="8,8,8,8">
+    <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Games, Mode=OneWay}" Margin="8,8,8,8">
       <ItemsRepeater.Layout>
         <StackLayout Orientation="Vertical" Spacing="24" />
       </ItemsRepeater.Layout>

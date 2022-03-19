@@ -58,7 +58,7 @@ void GameSettingsPage::UpdateGames() {
   if (!mPropertyChangedEvent) {
     return;
   }
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Devices"));
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Games"));
 }
 
 IVector<IInspectable> GameSettingsPage::Games() {
