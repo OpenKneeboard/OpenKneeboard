@@ -193,47 +193,6 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
   UpdateGames();
 }
 
-enum class DCSSavedGamesSelectionTrigger {
-  IMPLICIT,// Explain first
-  EXPLICIT,// Just do it
-};
-
-static winrt::Windows::Foundation::IAsyncOperation<winrt::hstring>
-AskForDCSSavedGamesFolder(
-  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
-  DCSSavedGamesSelectionTrigger trigger) {
-  if (trigger == DCSSavedGamesSelectionTrigger::IMPLICIT) {
-    ContentDialog dialog;
-    dialog.XamlRoot(xamlRoot);
-    dialog.Title(box_value(to_hstring(_("DCS Saved Games Location"))));
-    dialog.Content(
-      box_value(to_hstring(_("We couldn't find your DCS saved games folder; "
-                             "would you like to set it now? "
-                             "This is required for the DCS tabs to work."))));
-    dialog.PrimaryButtonText(to_hstring(_("Choose Saved Games Folder")));
-    dialog.CloseButtonText(to_hstring(_("Not Now")));
-    dialog.DefaultButton(ContentDialogButton::Primary);
-
-    if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
-      co_return {};
-    }
-  }
-
-  auto picker = Windows::Storage::Pickers::FolderPicker();
-  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
-  picker.SettingsIdentifier(L"chooseDCSSavedGames");
-  picker.FileTypeFilter().Append(L"*");
-  picker.SuggestedStartLocation(
-    Windows::Storage::Pickers::PickerLocationId::DocumentsLibrary);
-
-  auto folder = co_await picker.PickSingleFolderAsync();
-  if (!folder) {
-    co_return {};
-  }
-
-  co_return folder.Path();
-}
-
 winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
   const IInspectable& sender,
   const RoutedEventArgs&) {
@@ -243,7 +202,7 @@ winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
     co_return;
   }
 
-  hstring stringPath = co_await AskForDCSSavedGamesFolder(
+  hstring stringPath = co_await ChooseDCSSavedGamesFolder(
     this->XamlRoot(), DCSSavedGamesSelectionTrigger::EXPLICIT);
 
   if (stringPath.empty()) {
@@ -280,7 +239,7 @@ winrt::fire_and_forget GameSettingsPage::AddPath(
     auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(instance);
     if (dcs) {
       if (dcs->mSavedGamesPath.empty()) {
-        winrt::hstring stringPath = co_await AskForDCSSavedGamesFolder(
+        winrt::hstring stringPath = co_await ChooseDCSSavedGamesFolder(
           this->XamlRoot(), DCSSavedGamesSelectionTrigger::IMPLICIT);
         if (!stringPath.empty()) {
           dcs->mSavedGamesPath

@@ -20,17 +20,24 @@
 
 // clang-format off
 #include "pch.h"
-// clang-format on
-
 #include "CheckDCSHooks.h"
+// clang-format on
 
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
+#include <microsoft.ui.xaml.window.h>
+#include <shobjidl.h>
 #include <winrt/microsoft.ui.xaml.controls.h>
+#include <winrt/windows.storage.pickers.h>
+
+#include <algorithm>
+
+#include "Globals.h"
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt;
 
 namespace OpenKneeboard {
 
@@ -171,9 +178,8 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
           std::filesystem::copy_options::overwrite_existing,
           ec)) {
       dialog.Content(winrt::box_value(winrt::to_hstring(fmt::format(
-        fmt::runtime(
-          _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
-            "close DCS, and try again.")),
+        fmt::runtime(_("Failed to write to {}: {} ({:#x}) - if DCS is running, "
+                       "close DCS, and try again.")),
         to_utf8(luaDest),
         ec.message(),
         ec.value()))));
@@ -186,9 +192,8 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
           std::filesystem::copy_options::overwrite_existing,
           ec)) {
       dialog.Content(winrt::box_value(winrt::to_hstring(fmt::format(
-        fmt::runtime(
-          _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
-            "close DCS, and try again.")),
+        fmt::runtime(_("Failed to write to {}: {} ({:#x}) - if DCS is running, "
+                       "close DCS, and try again.")),
         to_utf8(luaDest),
         ec.message(),
         ec.value()))));
@@ -197,6 +202,42 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
 
     co_return;
   } while (true);
+}
+
+winrt::Windows::Foundation::IAsyncOperation<winrt::hstring>
+ChooseDCSSavedGamesFolder(
+  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
+  DCSSavedGamesSelectionTrigger trigger) {
+  if (trigger == DCSSavedGamesSelectionTrigger::IMPLICIT) {
+    ContentDialog dialog;
+    dialog.XamlRoot(xamlRoot);
+    dialog.Title(box_value(to_hstring(_("DCS Saved Games Location"))));
+    dialog.Content(
+      box_value(to_hstring(_("We couldn't find your DCS saved games folder; "
+                             "would you like to set it now? "
+                             "This is required for the DCS tabs to work."))));
+    dialog.PrimaryButtonText(to_hstring(_("Choose Saved Games Folder")));
+    dialog.CloseButtonText(to_hstring(_("Not Now")));
+    dialog.DefaultButton(ContentDialogButton::Primary);
+
+    if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+      co_return {};
+    }
+  }
+
+  auto picker = Windows::Storage::Pickers::FolderPicker();
+  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
+  picker.SettingsIdentifier(L"chooseDCSSavedGames");
+  picker.FileTypeFilter().Append(L"*");
+  picker.SuggestedStartLocation(
+    Windows::Storage::Pickers::PickerLocationId::DocumentsLibrary);
+
+  auto folder = co_await picker.PickSingleFolderAsync();
+  if (!folder) {
+    co_return {};
+  }
+
+  co_return folder.Path();
 }
 
 }// namespace OpenKneeboard

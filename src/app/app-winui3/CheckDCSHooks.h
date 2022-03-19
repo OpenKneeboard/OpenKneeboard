@@ -36,4 +36,21 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   const winrt::Microsoft::UI::Xaml::XamlRoot& root,
   const std::filesystem::path& savedGamesPath);
 
-}
+enum class DCSSavedGamesSelectionTrigger {
+  /** User has not explicitly asked to choose a saved games location,
+   * but we couldn't infer it.
+   *
+   * For example, when adding DCS, or on first run. Explain first
+   * before asking them to pick a folder.
+   */
+  IMPLICIT,
+  /** User has explicitly asked to pick a folder, no need to explain */
+  EXPLICIT,
+};
+
+winrt::Windows::Foundation::IAsyncOperation<winrt::hstring>
+ChooseDCSSavedGamesFolder(
+  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
+  DCSSavedGamesSelectionTrigger trigger);
+
+}// namespace OpenKneeboard
