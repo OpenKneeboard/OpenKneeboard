@@ -34,7 +34,8 @@ int WINAPI wWinMain(
   PWSTR pCmdLine,
   int nCmdShow) {
   // Find with PowerShell: `Get-AppxPackage *OpenKneeboard*`
-  constexpr auto packageFamilyName = L"FredEmmott.Self.OpenKneeboard_w37azjcpfhqfc";
+  constexpr auto packageFamilyName = L"FredEmmott.Self.OpenKneeboard_qvw5xrmsm8j1t";
+
   winrt::Windows::Management::Deployment::PackageManager pm;
   for (const auto& package: pm.FindPackagesForUser({})) {
     if (package.Id().FamilyName() != packageFamilyName) {
