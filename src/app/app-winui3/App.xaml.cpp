@@ -22,12 +22,20 @@
 #include "App.xaml.h"
 // clang-format on
 
+#include <OpenKneeboard/DCSWorldInstance.h>
+#include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/dprint.h>
 #include <Psapi.h>
 #include <appmodel.h>
 
+#include <set>
 #include <filesystem>
+
+#include "CheckDCSHooks.h"
+#include "Globals.h"
+
 
 #include "MainWindow.xaml.h"
 
@@ -61,6 +69,28 @@ App::App() {
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) {
   window = make<MainWindow>();
+
+  window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
+    [=](auto&, auto&) -> winrt::fire_and_forget {
+
+  std::set<std::filesystem::path> dcsSavedGamesPaths;
+  for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
+    auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
+    if (!dcs) {
+      continue;
+    }
+    const auto path = dcs->mSavedGamesPath;
+    if (!dcsSavedGamesPaths.contains(path)) {
+      dcsSavedGamesPaths.emplace(path);
+    }
+  }
+
+  auto root = window.Content().XamlRoot();
+  for (const auto& path: dcsSavedGamesPaths) {
+    co_await CheckDCSHooks(root, path);
+  }
+    });
+
   window.Activate();
 }
 

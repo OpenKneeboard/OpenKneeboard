@@ -96,8 +96,6 @@ MainWindow::MainWindow() {
   mFrameTimer.Start();
 
   this->Closed({this, &MainWindow::OnClosed});
-
-  // TODO: install DCS hooks
 }
 
 MainWindow::~MainWindow() {

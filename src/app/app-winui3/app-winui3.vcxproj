@@ -95,6 +95,7 @@
     <ResourceCompile AdditionalIncludeDirectories="$(VERSION_RC_DIRECTORY)" Include="Resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CheckDCSHooks.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="App.xaml.h">
@@ -167,6 +168,7 @@
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="CheckDCSHooks.cpp" />
     <ClCompile Include="Events-winrt.cpp" />
     <ClCompile Include="ExecutableIconFactory.cpp" />
     <ClCompile Include="Globals.cpp" />
