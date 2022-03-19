@@ -70,19 +70,31 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) {
 
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
     [=](auto&, auto&) -> winrt::fire_and_forget {
+      auto root = window.Content().XamlRoot();
+
       std::set<std::filesystem::path> dcsSavedGamesPaths;
       for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
         auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
         if (!dcs) {
           continue;
         }
-        const auto path = dcs->mSavedGamesPath;
+        auto& path = dcs->mSavedGamesPath;
+        if (path.empty()) {
+          auto stringPath = co_await ChooseDCSSavedGamesFolder(
+            root,
+            DCSSavedGamesSelectionTrigger::IMPLICIT);
+          if (stringPath.empty()) {
+            continue;
+          }
+          path = std::filesystem::canonical(std::wstring_view { stringPath });
+          gKneeboard->SaveSettings();
+        }
+
         if (!dcsSavedGamesPaths.contains(path)) {
           dcsSavedGamesPaths.emplace(path);
         }
       }
 
-      auto root = window.Content().XamlRoot();
       for (const auto& path: dcsSavedGamesPaths) {
         co_await CheckDCSHooks(root, path);
       }
