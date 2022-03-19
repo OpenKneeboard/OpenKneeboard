@@ -184,7 +184,41 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
   UpdateGames();
 }
 
-winrt::fire_and_forget GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
+static winrt::Windows::Foundation::IAsyncOperation<winrt::hstring>
+AskForDCSSavedGamesFolder(
+  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot) {
+  ContentDialog dialog;
+  dialog.XamlRoot(xamlRoot);
+  dialog.Title(box_value(to_hstring(_("DCS Saved Games Location"))));
+  dialog.Content(
+    box_value(to_hstring(_("We couldn't find your DCS saved games folder; "
+                           "would you like to set it now? "
+                           "This is required for the DCS tabs to work."))));
+  dialog.PrimaryButtonText(to_hstring(_("Choose Saved Games Folder")));
+  dialog.CloseButtonText(to_hstring(_("Not Now")));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+    co_return {};
+  }
+
+  auto picker = Windows::Storage::Pickers::FolderPicker();
+  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
+  picker.SettingsIdentifier(L"chooseDCSSavedGames");
+  picker.FileTypeFilter().Append(L"*");
+  picker.SuggestedStartLocation(
+    Windows::Storage::Pickers::PickerLocationId::DocumentsLibrary);
+
+  auto folder = co_await picker.PickSingleFolderAsync();
+  if (!folder) {
+    co_return {};
+  }
+
+  co_return folder.Path();
+}
+
+winrt::fire_and_forget GameSettingsPage::AddPath(
+  const std::filesystem::path& rawPath) {
   if (rawPath.empty()) {
     co_return;
   }
@@ -202,8 +236,18 @@ winrt::fire_and_forget GameSettingsPage::AddPath(const std::filesystem::path& ra
     auto instance = game->CreateGameInstance(path);
 
     auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(instance);
-    if (dcs && !dcs->mSavedGamesPath.empty()) {
-      co_await CheckDCSHooks(this->XamlRoot(), dcs->mSavedGamesPath);
+    if (dcs) {
+      if (dcs->mSavedGamesPath.empty()) {
+        winrt::hstring stringPath = co_await AskForDCSSavedGamesFolder(this->XamlRoot());
+        if (!stringPath.empty()) {
+          dcs->mSavedGamesPath
+            = std::filesystem::canonical(std::wstring_view {stringPath});
+        }
+      }
+
+      if (!dcs->mSavedGamesPath.empty()) {
+        co_await CheckDCSHooks(this->XamlRoot(), dcs->mSavedGamesPath);
+      }
     }
 
     auto instances = gamesList->GetGameInstances();
@@ -295,7 +339,8 @@ winrt::event_token GameSettingsPage::PropertyChanged(
   return mPropertyChangedEvent.add(handler);
 }
 
-void GameSettingsPage::PropertyChanged(winrt::event_token const& token) noexcept {
+void GameSettingsPage::PropertyChanged(
+  winrt::event_token const& token) noexcept {
   mPropertyChangedEvent.remove(token);
 }
 
