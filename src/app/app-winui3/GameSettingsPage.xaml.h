@@ -52,6 +52,7 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
     const IInspectable&,
     const RoutedEventArgs&);
   winrt::fire_and_forget AddExe(const IInspectable&, const RoutedEventArgs&);
+  winrt::fire_and_forget ChangeDCSSavedGamesPath(const IInspectable&, const RoutedEventArgs&);
 
   IVector<IInspectable> Games();
 
@@ -72,6 +73,9 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
 struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
   GameInstanceUIData();
 
+  uint64_t InstanceID();
+  void InstanceID(uint64_t);
+
   BitmapSource Icon();
   void Icon(const BitmapSource&);
   hstring Name();
@@ -83,6 +87,7 @@ struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
 
  private:
   BitmapSource mIcon {nullptr};
+  uint64_t mInstanceID;
   hstring mName;
   hstring mPath;
   hstring mType;

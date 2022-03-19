@@ -12,6 +12,7 @@ namespace OpenKneeboardApp
     {
         GameInstanceUIData();
         Microsoft.UI.Xaml.Media.Imaging.BitmapSource Icon;
+        UInt64 InstanceID;
         String Name;
         String Path;
         String Type;

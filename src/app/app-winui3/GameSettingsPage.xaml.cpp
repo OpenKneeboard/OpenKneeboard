@@ -45,6 +45,7 @@
 
 using namespace winrt::Windows::Foundation::Collections;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Microsoft::UI::Xaml::Controls::Primitives;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
@@ -63,9 +64,8 @@ void GameSettingsPage::UpdateGames() {
 
 IVector<IInspectable> GameSettingsPage::Games() {
   auto games = gKneeboard->GetGamesList()->GetGameInstances();
-  std::sort(games.begin(), games.end(), [](auto& a, auto& b) {
-    return a->mName < b->mName;
-  });
+  std::ranges::sort(
+    games, [](auto& a, auto& b) { return a->mName < b->mName; });
   IVector<IInspectable> winrtGames {
     winrt::single_threaded_vector<IInspectable>()};
 
@@ -80,6 +80,7 @@ IVector<IInspectable> GameSettingsPage::Games() {
     } else {
       winrtGame = winrt::make<GameInstanceUIData>();
     }
+    winrtGame.InstanceID(game->mInstanceID);
     winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mPath));
     winrtGame.Name(to_hstring(game->mName));
     winrtGame.Path(game->mPath.wstring());
@@ -145,25 +146,31 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
   AddPath(std::wstring_view {path});
 }
 
-winrt::fire_and_forget GameSettingsPage::RemoveGame(
-  const IInspectable& sender,
-  const RoutedEventArgs&) {
-  ContentDialog dialog;
-  dialog.XamlRoot(this->XamlRoot());
+static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
+  const IInspectable& sender) {
+  const auto instanceID = unbox_value<uint64_t>(sender.as<ButtonBase>().Tag());
 
-  auto path = std::filesystem::weakly_canonical(
-    std::wstring_view {unbox_value<hstring>(sender.as<Button>().Tag())});
   auto gamesList = gKneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
   auto it = std::find_if(instances.begin(), instances.end(), [&](auto& x) {
-    return x->mPath == path;
+    return x->mInstanceID == instanceID;
   });
   if (it == instances.end()) {
+    return {};
+  }
+  return *it;
+}
+
+winrt::fire_and_forget GameSettingsPage::RemoveGame(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  auto instance = GetGameInstanceFromSender(sender);
+  if (!instance) {
     co_return;
   }
 
-  auto instance = *it;
-
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(
     to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), instance->mName))));
   dialog.Content(box_value(to_hstring(fmt::format(
@@ -179,27 +186,37 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
     return;
   }
 
-  instances.erase(it);
+  auto gamesList = gKneeboard->GetGamesList();
+  auto instances = gamesList->GetGameInstances();
+  instances.erase(std::ranges::find(instances, instance));
   gamesList->SetGameInstances(instances);
   UpdateGames();
 }
 
+enum class DCSSavedGamesSelectionTrigger {
+  IMPLICIT,// Explain first
+  EXPLICIT,// Just do it
+};
+
 static winrt::Windows::Foundation::IAsyncOperation<winrt::hstring>
 AskForDCSSavedGamesFolder(
-  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot) {
-  ContentDialog dialog;
-  dialog.XamlRoot(xamlRoot);
-  dialog.Title(box_value(to_hstring(_("DCS Saved Games Location"))));
-  dialog.Content(
-    box_value(to_hstring(_("We couldn't find your DCS saved games folder; "
-                           "would you like to set it now? "
-                           "This is required for the DCS tabs to work."))));
-  dialog.PrimaryButtonText(to_hstring(_("Choose Saved Games Folder")));
-  dialog.CloseButtonText(to_hstring(_("Not Now")));
-  dialog.DefaultButton(ContentDialogButton::Primary);
+  const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
+  DCSSavedGamesSelectionTrigger trigger) {
+  if (trigger == DCSSavedGamesSelectionTrigger::IMPLICIT) {
+    ContentDialog dialog;
+    dialog.XamlRoot(xamlRoot);
+    dialog.Title(box_value(to_hstring(_("DCS Saved Games Location"))));
+    dialog.Content(
+      box_value(to_hstring(_("We couldn't find your DCS saved games folder; "
+                             "would you like to set it now? "
+                             "This is required for the DCS tabs to work."))));
+    dialog.PrimaryButtonText(to_hstring(_("Choose Saved Games Folder")));
+    dialog.CloseButtonText(to_hstring(_("Not Now")));
+    dialog.DefaultButton(ContentDialogButton::Primary);
 
-  if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
-    co_return {};
+    if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+      co_return {};
+    }
   }
 
   auto picker = Windows::Storage::Pickers::FolderPicker();
@@ -215,6 +232,31 @@ AskForDCSSavedGamesFolder(
   }
 
   co_return folder.Path();
+}
+
+winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  auto instance = std::dynamic_pointer_cast<DCSWorldInstance>(
+    GetGameInstanceFromSender(sender));
+  if (!instance) {
+    co_return;
+  }
+
+  hstring stringPath = co_await AskForDCSSavedGamesFolder(
+    this->XamlRoot(), DCSSavedGamesSelectionTrigger::EXPLICIT);
+
+  if (stringPath.empty()) {
+    co_return;
+  }
+
+  instance->mSavedGamesPath
+    = std::filesystem::canonical(std::wstring_view {stringPath});
+
+  CheckDCSHooks(this->XamlRoot(), instance->mSavedGamesPath);
+
+  gKneeboard->SaveSettings();
+  UpdateGames();
 }
 
 winrt::fire_and_forget GameSettingsPage::AddPath(
@@ -238,7 +280,8 @@ winrt::fire_and_forget GameSettingsPage::AddPath(
     auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(instance);
     if (dcs) {
       if (dcs->mSavedGamesPath.empty()) {
-        winrt::hstring stringPath = co_await AskForDCSSavedGamesFolder(this->XamlRoot());
+        winrt::hstring stringPath = co_await AskForDCSSavedGamesFolder(
+          this->XamlRoot(), DCSSavedGamesSelectionTrigger::IMPLICIT);
         if (!stringPath.empty()) {
           dcs->mSavedGamesPath
             = std::filesystem::canonical(std::wstring_view {stringPath});
@@ -267,6 +310,14 @@ BitmapSource GameInstanceUIData::Icon() {
 
 void GameInstanceUIData::Icon(const BitmapSource& value) {
   mIcon = value;
+}
+
+uint64_t GameInstanceUIData::InstanceID() {
+  return mInstanceID;
+}
+
+void GameInstanceUIData::InstanceID(uint64_t value) {
+  mInstanceID = value;
 }
 
 hstring GameInstanceUIData::Name() {

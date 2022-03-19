@@ -39,6 +39,8 @@ struct GameInstance {
     const std::filesystem::path& path,
     const std::shared_ptr<Game>& game);
 
+  const uint64_t mInstanceID;
+
   std::string mName;
   std::filesystem::path mPath;
   std::shared_ptr<Game> mGame;

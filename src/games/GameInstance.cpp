@@ -31,9 +31,12 @@ nlohmann::json GameInstance::ToJson() const {
   };
 }
 
+static uint64_t gNextInstanceID = 1;
+
 GameInstance::GameInstance(
   const nlohmann::json& j,
-  const std::shared_ptr<Game>& game) {
+  const std::shared_ptr<Game>& game)
+  : mInstanceID(gNextInstanceID++) {
   mName = j.at("Name");
   mPath = std::filesystem::path(std::string(j.at("Path")));
   mGame = game;
@@ -43,7 +46,7 @@ GameInstance::GameInstance(
   const std::string& name,
   const std::filesystem::path& path,
   const std::shared_ptr<Game>& game)
-  : mName(name), mPath(path), mGame(game) {
+  : mInstanceID(gNextInstanceID++), mName(name), mPath(path), mGame(game) {
 }
 
 }// namespace OpenKneeboard

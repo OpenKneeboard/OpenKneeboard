@@ -36,7 +36,7 @@
             Grid.Column="2"
             Grid.RowSpan="2"
             VerticalAlignment="Top"
-            Tag="{x:Bind Path}"
+            Tag="{x:Bind InstanceID}"
             Click="RemoveGame">
             <SymbolIcon Symbol="Delete" />
           </Button>
@@ -70,13 +70,13 @@
             />
           </Grid>
         </Expander.Header>
-        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8">
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
           <Button
             Grid.Row="0"
             Grid.Column="2"
             Grid.RowSpan="3"
             VerticalAlignment="Top"
-            Tag="{x:Bind Path}"
+            Tag="{x:Bind InstanceID}"
             Click="RemoveGame">
             <SymbolIcon Symbol="Delete" />
           </Button>
@@ -84,8 +84,19 @@
           <TextBlock Grid.Row="0" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Type}" />
           <TextBlock Grid.Row="1" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Path:</TextBlock>
           <TextBlock Grid.Row="1" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Path}" />
-          <TextBlock Grid.Row="2" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Saved Games:</TextBlock>
-          <TextBlock Grid.Row="2" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind SavedGamesPath}" />
+          <TextBlock
+            Grid.Row="2" Grid.Column="0"
+            VerticalAlignment="Center"
+            Style="{ThemeResource BodyStrongTextBlockStyle}">
+            Saved Games:
+          </TextBlock>
+          <HyperlinkButton
+            Grid.Row="2" Grid.Column="1"
+            VerticalAlignment="Center"
+            Tag="{x:Bind InstanceID}"
+            Content="{x:Bind SavedGamesPath}"
+            Click="ChangeDCSSavedGamesPath"
+          />
         </Grid>
       </Expander>
     </DataTemplate>
