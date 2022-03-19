@@ -94,7 +94,6 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
     box_value(to_hstring(_("Press then release buttons to bind input"))));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
 
-  auto unhook = scope_guard([=] { mDevice->evButtonEvent.PopHook(); });
   std::unordered_set<uint64_t> pressedButtons;
   bool cancelled = true;
   mDevice->evButtonEvent.PushHook([&](const UserInputButtonEvent& ev) {
@@ -106,7 +105,10 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
     dialog.Hide();
     return EventBase::HookResult::STOP_PROPAGATION;
   });
-  co_await dialog.ShowAsync();
+  {
+    auto unhook = scope_guard([=] { mDevice->evButtonEvent.PopHook(); });
+    co_await dialog.ShowAsync();
+  }
   if (cancelled) {
     return;
   }
