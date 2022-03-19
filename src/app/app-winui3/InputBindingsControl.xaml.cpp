@@ -39,8 +39,13 @@ namespace winrt::OpenKneeboardApp::implementation {
 InputBindingsControl::InputBindingsControl() {
   this->InitializeComponent();
 
+  ///// bind buttons /////
+
   ToggleVisibilityBindButton().Click([this](auto&, auto&) {
     this->PromptForBinding(UserAction::TOGGLE_VISIBILITY);
+  });
+  ToggleForceZoomBindButton().Click([this](auto&, auto&) {
+    this->PromptForBinding(UserAction::TOGGLE_FORCE_ZOOM);
   });
   PreviousPageBindButton().Click([this](auto&, auto&) {
     this->PromptForBinding(UserAction::PREVIOUS_PAGE);
@@ -52,8 +57,13 @@ InputBindingsControl::InputBindingsControl() {
   NextTabBindButton().Click(
     [this](auto&, auto&) { this->PromptForBinding(UserAction::NEXT_TAB); });
 
+  ///// clear buttons /////
+
   ToggleVisibilityClearButton().Click([this](auto&, auto&) {
     this->ClearBinding(UserAction::TOGGLE_VISIBILITY);
+  });
+  ToggleForceZoomClearButton().Click([this](auto&, auto&) {
+    this->ClearBinding(UserAction::TOGGLE_FORCE_ZOOM);
   });
   PreviousPageClearButton().Click(
     [this](auto&, auto&) { this->ClearBinding(UserAction::PREVIOUS_PAGE); });
@@ -137,7 +147,7 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
 
   bindings.push_back({mDevice, pressedButtons, action});
   mDevice->SetButtonBindings(bindings);
-  UpdateUI();  
+  UpdateUI();
 }
 
 void InputBindingsControl::ClearBinding(UserAction action) {
@@ -159,6 +169,11 @@ void InputBindingsControl::UpdateUI() {
     ToggleVisibilityLabel(),
     ToggleVisibilityBindButton(),
     ToggleVisibilityClearButton());
+  UpdateUI(
+    UserAction::TOGGLE_FORCE_ZOOM,
+    ToggleForceZoomLabel(),
+    ToggleForceZoomBindButton(),
+    ToggleForceZoomClearButton());
   UpdateUI(
     UserAction::PREVIOUS_PAGE,
     PreviousPageLabel(),

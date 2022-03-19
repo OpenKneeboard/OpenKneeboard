@@ -306,6 +306,17 @@ void KneeboardState::OnUserAction(UserAction action) {
     case UserAction::NEXT_PAGE:
       this->NextPage();
       return;
+    case UserAction::TOGGLE_FORCE_ZOOM: {
+      auto& flags = this->mVRConfig.flags;
+      if (flags & VRConfig::Flags::FORCE_ZOOM) {
+        flags &= ~VRConfig::Flags::FORCE_ZOOM;
+      } else {
+        flags |= VRConfig::Flags::FORCE_ZOOM;
+      }
+      this->SaveSettings();
+      this->evNeedsRepaintEvent.Emit();
+      return;
+    }
   }
   OPENKNEEBOARD_BREAK;
 }

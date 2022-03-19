@@ -62,6 +62,14 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
       vrc.flags &= ~VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
     }
   }
+
+  if (j.contains("enableGazeZoom")) {
+    if (j.at("enableGazeZoom").get<bool>()) {
+      vrc.flags |= VRConfig::Flags::GAZE_ZOOM;
+    } else {
+      vrc.flags &= ~VRConfig::Flags::GAZE_ZOOM;
+    }
+  }
 }
 
 void to_json(nlohmann::json& j, const VRConfig& vrc) {
@@ -87,6 +95,8 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
         {"vertical", vrc.gazeTargetVerticalScale},
       },
     },
+    {"enableGazeZoom",
+     static_cast<bool>(vrc.flags & VRConfig::Flags::GAZE_ZOOM)},
   };
 }
 }// namespace OpenKneeboard

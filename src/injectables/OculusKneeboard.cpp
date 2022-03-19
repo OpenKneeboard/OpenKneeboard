@@ -202,7 +202,11 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   const ovrVector2f zoomedSize(
     virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale);
 
-  if (
+  if (vr.flags & VRConfig::Flags::FORCE_ZOOM) {
+    mZoomed = true;
+  } else if (!(vr.flags & VRConfig::Flags::GAZE_ZOOM)) {
+    mZoomed = false;
+  } else if (
     vr.zoomScale < 1.1 || vr.gazeTargetHorizontalScale < 0.1
     || vr.gazeTargetVerticalScale < 0.1) {
     mZoomed = false;

@@ -78,6 +78,8 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"KneeboardGazeTargetVerticalScale"));
   mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"GazeZoomEnabled"));
+  mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"TrackingUniverse"));
   mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"DiscardOculusDepthInformation"));
@@ -257,6 +259,22 @@ void VRSettingsPage::DiscardOculusDepthInformation(bool discard) {
     config.flags |= VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
   } else {
     config.flags &= ~VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+  }
+  gKneeboard->SetVRConfig(config);
+}
+
+bool VRSettingsPage::GazeZoomEnabled() {
+  return (
+    gKneeboard->GetVRConfig().flags
+    & VRConfig::Flags::GAZE_ZOOM);
+}
+
+void VRSettingsPage::GazeZoomEnabled(bool enabled) {
+  auto config = gKneeboard->GetVRConfig();
+  if (enabled) {
+    config.flags |= VRConfig::Flags::GAZE_ZOOM;
+  } else {
+    config.flags &= ~VRConfig::Flags::GAZE_ZOOM;
   }
   gKneeboard->SetVRConfig(config);
 }

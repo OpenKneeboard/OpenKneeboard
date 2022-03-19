@@ -250,6 +250,12 @@ void OpenVROverlay::Tick() {
 }
 
 bool OpenVROverlay::Impl::IsZoomed(const VRConfig& vrConf) const {
+  if (vrConf.flags & VRConfig::Flags::FORCE_ZOOM) {
+    return true;
+  }
+  if (!(vrConf.flags & VRConfig::Flags::GAZE_ZOOM)) {
+    return false;
+  }
   const auto zoomScale = vrConf.zoomScale;
   if (
     zoomScale < 1.1 || vrConf.gazeTargetHorizontalScale < 0.1

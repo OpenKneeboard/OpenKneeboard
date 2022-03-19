@@ -57,6 +57,9 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   uint32_t TrackingUniverse();
   void TrackingUniverse(uint32_t);
 
+  bool GazeZoomEnabled();
+  void GazeZoomEnabled(bool);
+
   bool DiscardOculusDepthInformation();
   void DiscardOculusDepthInformation(bool value);
 

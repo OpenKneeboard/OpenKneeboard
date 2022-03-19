@@ -37,6 +37,12 @@
         Padding="8">
         <StackPanel Spacing="12">
 					<ToggleSwitch
+						Header="Gaze-based zoom"
+						OnContent="On"
+						OffContent="Off"
+						IsOn="{x:Bind GazeZoomEnabled}"
+					/>
+					<ToggleSwitch
 						Header="Discard Oculus SDK depth information - required for DCS World"
 						OnContent="On"
 						OffContent="Off"
