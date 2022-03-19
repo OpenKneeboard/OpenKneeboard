@@ -51,6 +51,14 @@ TabPage::TabPage() {
     color.B / 255.0f,
     color.A / 255.0f,
   };
+  brush = {nullptr};
+  brush
+    = Foreground().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
+  color = brush.Color();
+
+  winrt::check_hresult(gDXResources.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f),
+    mForegroundBrush.put()));
 
   winrt::check_hresult(gDXResources.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mCursorBrush.put()));
@@ -110,7 +118,7 @@ void TabPage::UpdateButtons() {
   ContentsButton().IsEnabled(mState->SupportsTabMode(TabMode::NAVIGATION));
   ContentsButton().IsChecked(mState->GetTabMode() == TabMode::NAVIGATION);
 
-  const auto index = mState->GetPageIndex();  
+  const auto index = mState->GetPageIndex();
   FirstPageButton().IsEnabled(index > 0);
   PreviousPageButton().IsEnabled(index > 0);
   NextPageButton().IsEnabled(index + 1 < mState->GetPageCount());
@@ -198,7 +206,7 @@ void TabPage::PaintNow() {
   if (tab->GetPageCount()) {
     tab->RenderPage(ctx, mState->GetPageIndex(), metrics.mRenderRect);
   } else {
-    mErrorRenderer->Render(ctx, _("No Pages"), metrics.mRenderRect);
+    mErrorRenderer->Render(ctx, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
   }
 
   if (!mDrawCursor) {
@@ -289,15 +297,21 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   });
 }
 
-void TabPage::OnFirstPageButtonClicked(const IInspectable&, const RoutedEventArgs&) {
+void TabPage::OnFirstPageButtonClicked(
+  const IInspectable&,
+  const RoutedEventArgs&) {
   mState->SetPageIndex(0);
 }
 
-void TabPage::OnPreviousPageButtonClicked(const IInspectable&, const RoutedEventArgs&) {
+void TabPage::OnPreviousPageButtonClicked(
+  const IInspectable&,
+  const RoutedEventArgs&) {
   mState->PreviousPage();
 }
 
-void TabPage::OnNextPageButtonClicked(const IInspectable&, const RoutedEventArgs&) {
+void TabPage::OnNextPageButtonClicked(
+  const IInspectable&,
+  const RoutedEventArgs&) {
   mState->NextPage();
 }
 

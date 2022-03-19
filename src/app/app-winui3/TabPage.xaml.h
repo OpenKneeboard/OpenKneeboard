@@ -59,6 +59,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
+  winrt::com_ptr<ID2D1SolidColorBrush> mForegroundBrush;
 
   void UpdateButtons();
 
