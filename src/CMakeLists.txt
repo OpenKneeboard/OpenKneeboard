@@ -16,7 +16,7 @@ if (MSVC)
   add_compile_options(
     "/Zc:__cplusplus"
     "/await"
-    # Lots of legacy C functions are unsafe, and raise warnings in wxwidgets
+    # Lots of legacy C functions are unsafe, and raise warnings in third-party code
     "/wd4996"
     # Basically expected when you do diamond inheritance that isn't entirely pure virtuals
     "/wd4250")

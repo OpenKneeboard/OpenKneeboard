@@ -48,13 +48,17 @@ mailslots allow zero-config one-way communication without connection management.
 
 ## The main app: `src/app/`
 
-This is a wxWidgets app; it has several functions:
+This is a WinUI3 app; it has several functions:
 - provide a configuration UI
 - provide an out-of-game preview
 - directly function as a kneeboard on a non-VR multi-monitor setup
 - watch for configured game processes, and load injectable DLLs into them as needed
 - render the kneeboard to a DXGI shared texture for injectable renderers to use
 - act as a SteamVR overlay
+
+`src/app/app-common` contains UI-agnostic components; `src/app/app-winui3` contains
+the UI. These may be merged in the future - this structure exists because there
+was previously also an `app-wx` using wxWidgets.
 
 ### Tab Types: `src/app/tabs`
 

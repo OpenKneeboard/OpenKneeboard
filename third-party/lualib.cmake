@@ -8,7 +8,7 @@ FetchContent_Declare(
   URL_HASH "SHA1=b3882111ad02ecc6b972f8c1241647905cb2e3fc"
 )
 
-FetchContent_GetProperties(wxwidgets)
+FetchContent_GetProperties(lua)
 
 if(NOT lua_POPULATED)
   FetchContent_Populate(lua)

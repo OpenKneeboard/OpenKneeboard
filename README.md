@@ -161,7 +161,7 @@ OpenKneeboard has been primarily tested with DCS: World Open Beta via the Oculus
 - This project is written in C++20
 - It is built with CMake
 - It is primarily developed with Visual Studio Code, using the compilers from Visual Studio 2022. Only the 'Build Tools for Visual Studio 2022' package is required, but 'Community Edition' or better also work fine.
-- The UI is built with wxWidgets
+- The UI is built with WinUI3, which currently requires msbuild instead of pure CMake.
 
 For details on some internals, see [docs/internals/](docs/internals/).
 

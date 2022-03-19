@@ -50,10 +50,7 @@ class EventBase {
   virtual void RemoveHandler(uint64_t token) = 0;
 };
 
-/** a 1:n event.
- *
- * wxWidgets are 1:1 events
- */
+/** a 1:n event. */
 template <class... Args>
 class Event final : public EventBase {
   friend class EventReceiver;
