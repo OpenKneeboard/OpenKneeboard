@@ -33,7 +33,7 @@
 namespace OpenKneeboard {
 
 winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
-  winrt::Microsoft::UI::Xaml::XamlRoot& root,
+  const winrt::Microsoft::UI::Xaml::XamlRoot& root,
   const std::filesystem::path& savedGamesPath);
 
 }

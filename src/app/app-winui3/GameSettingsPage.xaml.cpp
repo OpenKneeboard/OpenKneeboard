@@ -39,6 +39,7 @@
 
 #include <algorithm>
 
+#include "CheckDCSHooks.h"
 #include "ExecutableIconFactory.h"
 #include "Globals.h"
 
@@ -183,12 +184,12 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
   UpdateGames();
 }
 
-void GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
+winrt::fire_and_forget GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
   if (rawPath.empty()) {
-    return;
+    co_return;
   }
   if (!std::filesystem::is_regular_file(rawPath)) {
-    return;
+    co_return;
   }
 
   std::filesystem::path path = std::filesystem::canonical(rawPath);
@@ -199,11 +200,17 @@ void GameSettingsPage::AddPath(const std::filesystem::path& rawPath) {
       continue;
     }
     auto instance = game->CreateGameInstance(path);
+
+    auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(instance);
+    if (dcs && !dcs->mSavedGamesPath.empty()) {
+      co_await CheckDCSHooks(this->XamlRoot(), dcs->mSavedGamesPath);
+    }
+
     auto instances = gamesList->GetGameInstances();
     instances.push_back(instance);
     gamesList->SetGameInstances(instances);
     this->UpdateGames();
-    return;
+    co_return;
   }
 }
 

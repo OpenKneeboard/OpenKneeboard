@@ -62,7 +62,7 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
 
  private:
   void UpdateGames();
-  void AddPath(const std::filesystem::path&);
+  fire_and_forget AddPath(const std::filesystem::path&);
 
   std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
   winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
