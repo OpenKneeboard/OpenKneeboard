@@ -30,13 +30,11 @@
 #include <Psapi.h>
 #include <appmodel.h>
 
-#include <set>
 #include <filesystem>
+#include <set>
 
 #include "CheckDCSHooks.h"
 #include "Globals.h"
-
-
 #include "MainWindow.xaml.h"
 
 using namespace winrt;
@@ -72,23 +70,22 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) {
 
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
     [=](auto&, auto&) -> winrt::fire_and_forget {
+      std::set<std::filesystem::path> dcsSavedGamesPaths;
+      for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
+        auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
+        if (!dcs) {
+          continue;
+        }
+        const auto path = dcs->mSavedGamesPath;
+        if (!dcsSavedGamesPaths.contains(path)) {
+          dcsSavedGamesPaths.emplace(path);
+        }
+      }
 
-  std::set<std::filesystem::path> dcsSavedGamesPaths;
-  for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
-    auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
-    if (!dcs) {
-      continue;
-    }
-    const auto path = dcs->mSavedGamesPath;
-    if (!dcsSavedGamesPaths.contains(path)) {
-      dcsSavedGamesPaths.emplace(path);
-    }
-  }
-
-  auto root = window.Content().XamlRoot();
-  for (const auto& path: dcsSavedGamesPaths) {
-    co_await CheckDCSHooks(root, path);
-  }
+      auto root = window.Content().XamlRoot();
+      for (const auto& path: dcsSavedGamesPaths) {
+        co_await CheckDCSHooks(root, path);
+      }
     });
 
   window.Activate();
