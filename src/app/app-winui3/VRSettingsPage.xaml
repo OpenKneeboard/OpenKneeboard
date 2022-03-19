@@ -180,6 +180,7 @@
               TickPlacement="Outside"
               TickFrequency="45"
               StepFrequency="1"
+              IsDirectionReversed="True"
               Minimum="-180"
               Maximum="180"
               Height="200"

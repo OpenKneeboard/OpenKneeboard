@@ -144,12 +144,22 @@ static inline float DegreesToRadians(float degrees) {
 }
 
 float VRSettingsPage::KneeboardRX() {
-  return RadiansToDegrees(gKneeboard->GetVRConfig().rx);
+  auto raw = RadiansToDegrees(gKneeboard->GetVRConfig().rx) + 90;
+  if (raw < 0) {
+    raw += 360.0f;
+  } if (raw >= 360.0f) {
+    raw -= 360.0f;
+  }
+  return raw <= 180 ? raw : -(360 - raw);
 }
 
-void VRSettingsPage::KneeboardRX(float value) {
+void VRSettingsPage::KneeboardRX(float degrees) {
+  degrees -= 90;
+  if (degrees < 0) {
+    degrees += 360;
+  }
   auto config = gKneeboard->GetVRConfig();
-  config.rx = DegreesToRadians(value);
+  config.rx = DegreesToRadians(degrees <= 180 ? degrees : -(360 - degrees));
   gKneeboard->SetVRConfig(config);
 }
 
