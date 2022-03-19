@@ -124,7 +124,7 @@
     </CommandBar>
     <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Games, Mode=OneWay}" Margin="8,8,8,8">
       <ItemsRepeater.Layout>
-        <StackLayout Orientation="Vertical" Spacing="24" />
+        <StackLayout Orientation="Vertical" Spacing="8" />
       </ItemsRepeater.Layout>
       <ItemsRepeater.ItemTemplate>
         <local:GameInstanceUIDataTemplateSelector
