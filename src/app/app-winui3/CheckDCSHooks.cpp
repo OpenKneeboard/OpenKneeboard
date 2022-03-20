@@ -160,7 +160,7 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
       co_return;
     }
     dialog.PrimaryButtonText(winrt::to_hstring(_("Retry")));
-    dialog.CancelButtonText(winrt::to_hstring(_("Cancel")));
+    dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
 
     std::error_code ec;
     if (!(std::filesystem::is_directory(hooksDir)
