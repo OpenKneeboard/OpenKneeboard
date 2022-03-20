@@ -134,7 +134,7 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   ContentDialog dialog;
   dialog.XamlRoot(root);
   dialog.Title(winrt::box_value(winrt::to_hstring(_("DCS Hooks"))));
-  dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
+  dialog.CloseButtonText(winrt::to_hstring(_("Not Now")));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
   if (state == NOT_INSTALLED) {
@@ -160,6 +160,7 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
       co_return;
     }
     dialog.PrimaryButtonText(winrt::to_hstring(_("Retry")));
+    dialog.CancelButtonText(winrt::to_hstring(_("Cancel")));
 
     std::error_code ec;
     if (!(std::filesystem::is_directory(hooksDir)
