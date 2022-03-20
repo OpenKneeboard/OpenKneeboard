@@ -49,8 +49,10 @@ MainWindow::MainWindow() {
   // See:
   // * https://docs.microsoft.com/en-us/windows/winui/api/microsoft.ui.xaml.window.settitlebar
   // * https://docs.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
-  ExtendsContentIntoTitleBar(true);
-  SetTitleBar(AppTitleBar());
+  //
+  // Broken by Windows App Runtime 1.0.1 update: https://github.com/microsoft/microsoft-ui-xaml/issues/6859
+  //ExtendsContentIntoTitleBar(true);
+  //SetTitleBar(AppTitleBar());
 
   {
     auto ref = get_strong();

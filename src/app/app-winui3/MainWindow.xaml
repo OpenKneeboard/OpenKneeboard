@@ -26,7 +26,7 @@
   -->
   <Grid RowDefinitions="Auto,*">
     <Grid
-      Margin="0,0,120,0"
+      Margin="0,0,0,0"
       Height="36"
       Grid.Row="0"
       ColumnDefinitions="Auto,*"
