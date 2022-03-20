@@ -297,6 +297,18 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   });
 }
 
+void TabPage::EnableNavigationMode(
+  const IInspectable&,
+  const RoutedEventArgs&) {
+  mState->SetTabMode(TabMode::NAVIGATION);
+}
+
+void TabPage::DisableNavigationMode(
+  const IInspectable&,
+  const RoutedEventArgs&) {
+  mState->SetTabMode(TabMode::NORMAL);
+}
+
 void TabPage::OnFirstPageButtonClicked(
   const IInspectable&,
   const RoutedEventArgs&) {

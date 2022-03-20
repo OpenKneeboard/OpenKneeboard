@@ -53,6 +53,9 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void OnPreviousPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
   void OnNextPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
 
+  void EnableNavigationMode(const IInspectable&, const RoutedEventArgs&);
+  void DisableNavigationMode(const IInspectable&, const RoutedEventArgs&);
+
  private:
   std::shared_ptr<TabState> mState;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;

@@ -10,7 +10,7 @@
   Foreground="{ThemeResource TextFillColorPrimary}">
   <Grid RowDefinitions="Auto,*">
     <CommandBar Grid.Row="0">
-      <AppBarToggleButton Icon="List" Label="Contents" x:Name="ContentsButton" />
+      <AppBarToggleButton Icon="List" Label="Contents" x:Name="ContentsButton" Checked="EnableNavigationMode" Unchecked="DisableNavigationMode" />
       <AppBarButton Icon="Previous" Label="First Page" x:Name="FirstPageButton" Click="OnFirstPageButtonClicked" />
       <AppBarButton
         Label="Previous Page"
