@@ -17,10 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/TabState.h>
-
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/TabWithCursorEvents.h>
 #include <OpenKneeboard/TabWithNavigation.h>
 #include <OpenKneeboard/config.h>
@@ -84,7 +83,7 @@ void TabState::SetPageIndex(uint16_t page) {
   }
 
   this->PostCursorEvent({});
-  
+
   evNeedsRepaintEvent.Emit();
   evPageChangedEvent.Emit();
 }
@@ -169,6 +168,8 @@ bool TabState::SetTabMode(TabMode mode) {
           mRootTabPage = newPage;
           SetTabMode(TabMode::NORMAL);
         });
+      AddEventListener(
+        mActiveSubTab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
       break;
   }
 

@@ -146,6 +146,7 @@ D2D1_SIZE_U NavigationTab::GetNativeContentSize(uint16_t) {
 }
 
 void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
+  evNeedsRepaintEvent.Emit();
   mCursorPoint = {ev.mX, ev.mY};
 
   // We only care about touch start and end
