@@ -14,13 +14,16 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-dprint)
 
+add_library(OpenKneeboard-FindMainWindow STATIC FindMainWindow.cpp)
+
 add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(
   dxgi-hooks
   PRIVATE
   detours-ext
   OpenKneeboard-dprint
-  OpenKneeboard-function-patterns)
+  OpenKneeboard-function-patterns
+  OpenKneeboard-FindMainWindow)
 
 add_library(d3d12-hooks STATIC d3d12-offsets.c ID3D12CommandQueueExecuteCommandListsHook.cpp)
 target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint)
@@ -111,5 +114,6 @@ target_link_libraries(
   PRIVATE
   detours-ext
   OpenKneeboard-dprint
+  OpenKneeboard-FindMainWindow
   OpenKneeboard-SHM
   OpenKneeboard-tablets)

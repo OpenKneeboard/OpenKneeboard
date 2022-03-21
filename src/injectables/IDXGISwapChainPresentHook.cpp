@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "IDXGISwapChainPresentHook.h"
 
@@ -26,6 +27,7 @@
 #include <bit>
 #include <utility>
 
+#include "FindMainWindow.h"
 #include "detours-ext.h"
 #include "dxgi-offsets.h"
 #include "function-patterns.h"
@@ -97,7 +99,7 @@ IDXGISwapChainPresentHook::IDXGISwapChainPresentHook() {
   dprint(__FUNCTION__);
 }
 
-void IDXGISwapChainPresentHook::InstallHook(const Callbacks& cb){
+void IDXGISwapChainPresentHook::InstallHook(const Callbacks& cb) {
   p = std::make_unique<Impl>(cb);
 }
 
@@ -155,7 +157,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   sd.BufferCount = 1;
   sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
   sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-  sd.OutputWindow = GetForegroundWindow();
+  sd.OutputWindow = FindMainWindow();
   sd.SampleDesc.Count = 1;
   sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
   sd.Windowed = TRUE;

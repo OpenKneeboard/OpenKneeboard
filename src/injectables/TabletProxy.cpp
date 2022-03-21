@@ -26,6 +26,7 @@
 #include <stop_token>
 #include <thread>
 
+#include "FindMainWindow.h"
 #include "InjectedDLLMain.h"
 
 namespace OpenKneeboard {
@@ -48,7 +49,6 @@ class TabletProxy final {
   void Detach();
   void WatchForEnvironmentChanges(std::stop_token);
 
-  static HWND FindMainWindow();
   bool mInitialized = false;
   std::jthread mWatchThread;
 
@@ -151,39 +151,6 @@ LRESULT TabletProxy::HookedWindowProc(
   }
 
   return CallWindowProc(mWindowProc, hwnd, uMsg, wParam, lParam);
-}
-
-static BOOL CALLBACK FindMainWindowCallback(HWND handle, LPARAM param) {
-  DWORD windowProcess = 0;
-  GetWindowThreadProcessId(handle, &windowProcess);
-  if (windowProcess != GetCurrentProcessId()) {
-    return TRUE;
-  }
-
-  if (GetWindow(handle, GW_OWNER) != (HWND)0) {
-    return TRUE;
-  }
-
-  if (!IsWindowVisible(handle)) {
-    return TRUE;
-  }
-
-  // In general, console windows can be main windows, but:
-  // - never relevant for a graphics tablet
-  // - debug builds of OpenKneeboard often create console windows for debug
-  // messages
-  if (handle == GetConsoleWindow()) {
-    return TRUE;
-  }
-
-  *reinterpret_cast<HWND*>(param) = handle;
-  return FALSE;
-}
-
-HWND TabletProxy::FindMainWindow() {
-  HWND ret {0};
-  EnumWindows(&FindMainWindowCallback, reinterpret_cast<LPARAM>(&ret));
-  return ret;
 }
 
 }// namespace OpenKneeboard
