@@ -29,14 +29,13 @@
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/version.h>
 #include <shims/winrt.h>
 
 #include <chrono>
 #include <mutex>
 #include <thread>
-
-#include <OpenKneeboard/scope_guard.h>
 
 namespace {
 
@@ -136,6 +135,7 @@ static std::filesystem::path GetInjectablesPath() {
 
 bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
   std::filesystem::path dll = std::filesystem::canonical(_dll);
+
   DWORD neededBytes = 0;
   EnumProcessModules(process, nullptr, 0, &neededBytes);
   std::vector<HMODULE> modules(neededBytes / sizeof(HMODULE));
@@ -227,16 +227,22 @@ bool HaveWintab() {
 
 namespace OpenKneeboard {
 
-void GameInjector::SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>& games) {
+void GameInjector::SetGameInstances(
+  const std::vector<std::shared_ptr<GameInstance>>& games) {
   std::scoped_lock lock(mGamesMutex);
   mGames = games;
 }
 
 bool GameInjector::Run(std::stop_token stopToken) {
   const auto dllPath = GetInjectablesPath();
-  const auto injectedDll = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
   const auto markerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
   const auto tabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
+
+  const auto overlayAutoDetectDll
+    = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
+  const auto overlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
+  const auto overlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
+  const auto overlayOculusD3D12Dll = dllPath / RuntimeFiles::OCULUS_D3D12_DLL;
 
   const auto installTabletProxy = HaveWintab();
 
@@ -285,21 +291,58 @@ bool GameInjector::Run(std::stop_token stopToken) {
         if (path != currentPath) {
           evGameChanged.EmitFromMainThread(game);
         }
+
         if (AlreadyInjected(processHandle.get(), markerDll)) {
           break;
         }
 
         dprintf("Found '{}' - PID {}", friendly, process.th32ProcessID);
-
         InjectDll(processHandle.get(), markerDll);
 
         if (installTabletProxy) {
           InjectDll(processHandle.get(), tabletProxyDll);
         }
 
-        if (!InjectDll(processHandle.get(), injectedDll)) {
+        std::filesystem::path overlayDll;
+        switch (game->mOverlayAPI) {
+          case OverlayAPI::SteamVR:
+            currentPath = path;
+            dprint("SteamVR forced, not injecting any overlay DLL");
+            goto NEXT_PROCESS;
+          case OverlayAPI::AutoDetect:
+            overlayDll = overlayAutoDetectDll;
+            break;
+          case OverlayAPI::NonVRD3D11:
+            overlayDll = overlayNonVRD3D11Dll;
+            break;
+          case OverlayAPI::OculusD3D11:
+            overlayDll = overlayOculusD3D11Dll;
+            break;
+          case OverlayAPI::OculusD3D12:
+            overlayDll = overlayOculusD3D12Dll;
+            break;
+          default:
+            dprintf(
+              "Unhandled OverlayAPI: {}",
+              static_cast<std::underlying_type_t<OverlayAPI>>(
+                game->mOverlayAPI));
+            OPENKNEEBOARD_BREAK;
+            goto NEXT_PROCESS;
+        }
+
+        if (
+          overlayDll.empty() && std::filesystem::is_regular_file(overlayDll)) {
+          dprintf(
+            "No DLL for OverlayAPI value: {}",
+            static_cast<std::underlying_type_t<OverlayAPI>>(game->mOverlayAPI));
+          OPENKNEEBOARD_BREAK;
+          continue;
+        }
+
+        if (!InjectDll(processHandle.get(), overlayDll)) {
           currentPath = path;
-          dprintf("Failed to inject DLL: {}", GetLastError());
+          dprintf(
+            "Failed to inject DLL {}: {}", overlayDll.string(), GetLastError());
           break;
         }
 
@@ -310,6 +353,8 @@ bool GameInjector::Run(std::stop_token stopToken) {
         currentPath = path;
         break;
       }
+    NEXT_PROCESS:
+      continue;
     } while (Process32Next(snapshot.get(), &process));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));

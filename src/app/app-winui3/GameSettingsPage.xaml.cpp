@@ -85,6 +85,8 @@ IVector<IInspectable> GameSettingsPage::Games() {
     winrtGame.Name(to_hstring(game->mName));
     winrtGame.Path(game->mPath.wstring());
     winrtGame.Type(to_hstring(game->mGame->GetNameForConfigFile()));
+    winrtGame.OverlayAPI(static_cast<uint8_t>(game->mOverlayAPI));
+
     winrtGames.Append(winrtGame);
   }
 
@@ -148,7 +150,7 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
 
 static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
   const IInspectable& sender) {
-  const auto instanceID = unbox_value<uint64_t>(sender.as<ButtonBase>().Tag());
+  const auto instanceID = unbox_value<uint64_t>(sender.as<FrameworkElement>().Tag());
 
   auto gamesList = gKneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
@@ -156,9 +158,28 @@ static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
     return x->mInstanceID == instanceID;
   });
   if (it == instances.end()) {
+    OPENKNEEBOARD_BREAK;
     return {};
   }
   return *it;
+}
+
+void GameSettingsPage::OnOverlayAPIChanged(
+  const IInspectable& sender,
+  const SelectionChangedEventArgs&) {
+  const auto instance = GetGameInstanceFromSender(sender);
+
+  if (!instance) {
+    return;
+  }
+
+  const auto newAPI = static_cast<OverlayAPI>(sender.as<ComboBox>().SelectedIndex());
+  if (instance->mOverlayAPI == newAPI) {
+    return;
+  }
+
+  instance->mOverlayAPI = newAPI;
+  gKneeboard->SaveSettings();
 }
 
 winrt::fire_and_forget GameSettingsPage::RemoveGame(
@@ -301,6 +322,14 @@ hstring GameInstanceUIData::Type() {
 
 void GameInstanceUIData::Type(const hstring& value) {
   mType = value;
+}
+
+uint8_t GameInstanceUIData::OverlayAPI() {
+  return mOverlayAPI;
+}
+
+void GameInstanceUIData::OverlayAPI(uint8_t value) {
+  mOverlayAPI = value;
 }
 
 hstring DCSWorldInstanceUIData::SavedGamesPath() {

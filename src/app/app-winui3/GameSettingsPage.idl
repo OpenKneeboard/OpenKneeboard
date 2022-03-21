@@ -16,6 +16,7 @@ namespace OpenKneeboardApp
         String Name;
         String Path;
         String Type;
+        UInt8 OverlayAPI;
     }
 
     [default_interface]

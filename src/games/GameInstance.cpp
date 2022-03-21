@@ -28,6 +28,7 @@ nlohmann::json GameInstance::ToJson() const {
     {"Name", this->mName},
     {"Path", to_utf8(this->mPath)},
     {"Type", this->mGame->GetNameForConfigFile()},
+    {"OverlayAPI", this->mOverlayAPI},
   };
 }
 
@@ -40,6 +41,9 @@ GameInstance::GameInstance(
   mName = j.at("Name");
   mPath = std::filesystem::path(std::string(j.at("Path")));
   mGame = game;
+  if (j.contains("OverlayAPI")) {
+    mOverlayAPI = j.at("OverlayAPI");
+  }
 }
 
 GameInstance::GameInstance(

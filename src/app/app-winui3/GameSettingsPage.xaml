@@ -70,7 +70,7 @@
             />
           </Grid>
         </Expander.Header>
-        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+        <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
           <Button
             Grid.Row="0"
             Grid.Column="2"
@@ -84,14 +84,26 @@
           <TextBlock Grid.Row="0" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Type}" />
           <TextBlock Grid.Row="1" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}">Path:</TextBlock>
           <TextBlock Grid.Row="1" Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind Path}" />
+          <TextBlock Grid.Row="2" Grid.Column="0" Style="{ThemeResource BodyStrongTextBlockStyle}" VerticalAlignment="Center">Rendering API:</TextBlock>
+          <ComboBox
+            Grid.Row="2" Grid.Column="1"
+            Tag="{x:Bind InstanceID}"
+            SelectedIndex="{x:Bind OverlayAPI}"
+            SelectionChanged="OnOverlayAPIChanged">
+            <x:String>Auto-detect</x:String>
+            <x:String>SteamVR</x:String>
+            <x:String>Oculus + Direct3D 11</x:String>
+            <x:String>Oculus + Direct3D 12</x:String>
+            <x:String>Direct3D 11 (Non-VR)</x:String>
+          </ComboBox>
           <TextBlock
-            Grid.Row="2" Grid.Column="0"
+            Grid.Row="3" Grid.Column="0"
             VerticalAlignment="Center"
             Style="{ThemeResource BodyStrongTextBlockStyle}">
             Saved Games:
           </TextBlock>
           <HyperlinkButton
-            Grid.Row="2" Grid.Column="1"
+            Grid.Row="3" Grid.Column="1"
             VerticalAlignment="Center"
             Tag="{x:Bind InstanceID}"
             Content="{x:Bind SavedGamesPath}"

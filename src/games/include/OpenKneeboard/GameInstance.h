@@ -26,14 +26,30 @@
 
 namespace OpenKneeboard {
 
+// This must match the values in the Game Settings UI
+#define OPENKNEEBOARD_OVERLAY_APIS \
+  IT(AutoDetect) \
+  IT(SteamVR) \
+  IT(OculusD3D11) \
+  IT(OculusD3D12) \
+  IT(NonVRD3D11)
+
+enum class OverlayAPI {
+#define IT(x) x,
+  OPENKNEEBOARD_OVERLAY_APIS
+#undef IT
+};
+
+#define IT(x) {OverlayAPI::x, #x},
+NLOHMANN_JSON_SERIALIZE_ENUM(OverlayAPI, {OPENKNEEBOARD_OVERLAY_APIS});
+#undef IT
+
 struct GameInstance {
   GameInstance() = delete;
   GameInstance(const GameInstance&) = delete;
   GameInstance(GameInstance&&) = delete;
 
-  GameInstance(
-    const nlohmann::json& json,
-    const std::shared_ptr<Game>& game);
+  GameInstance(const nlohmann::json& json, const std::shared_ptr<Game>& game);
   GameInstance(
     const std::string& name,
     const std::filesystem::path& path,
@@ -43,6 +59,7 @@ struct GameInstance {
 
   std::string mName;
   std::filesystem::path mPath;
+  OverlayAPI mOverlayAPI {OverlayAPI::AutoDetect};
   std::shared_ptr<Game> mGame;
 
   virtual nlohmann::json ToJson() const;

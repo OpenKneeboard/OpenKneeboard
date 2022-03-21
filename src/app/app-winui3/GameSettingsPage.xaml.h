@@ -37,6 +37,7 @@ class ExecutableIconFactory;
 using namespace OpenKneeboard;
 
 using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 using namespace winrt::Windows::Foundation::Collections;
 
@@ -55,6 +56,8 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
   winrt::fire_and_forget ChangeDCSSavedGamesPath(const IInspectable&, const RoutedEventArgs&);
 
   IVector<IInspectable> Games();
+
+  void OnOverlayAPIChanged(const IInspectable&, const SelectionChangedEventArgs&);
 
 	winrt::event_token PropertyChanged(
 		winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
@@ -84,6 +87,8 @@ struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
   void Path(const hstring&);
   hstring Type();
   void Type(const hstring&);
+  uint8_t OverlayAPI();
+  void OverlayAPI(uint8_t);
 
  private:
   BitmapSource mIcon {nullptr};
@@ -91,6 +96,7 @@ struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {
   hstring mName;
   hstring mPath;
   hstring mType;
+  uint8_t mOverlayAPI;
 };
 
 struct DCSWorldInstanceUIData
