@@ -66,9 +66,9 @@ static bool FilesDiffer(
     FILE_ATTRIBUTE_NORMAL,
     NULL)};
 
-  winrt::handle afm {
+  winrt::file_handle afm {
     CreateFileMappingW(ah.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
-  winrt::handle bfm {
+  winrt::file_handle bfm {
     CreateFileMappingW(bh.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
 
   auto av = reinterpret_cast<std::byte*>(
@@ -76,7 +76,7 @@ static bool FilesDiffer(
   auto bv = reinterpret_cast<std::byte*>(
     MapViewOfFile(bfm.get(), FILE_MAP_READ, 0, 0, 0));
 
-  auto equal = std::equal(av, av + size, bv, bv + size);
+  const auto equal = std::equal(av, av + size, bv, bv + size);
 
   UnmapViewOfFile(av);
   UnmapViewOfFile(bv);
