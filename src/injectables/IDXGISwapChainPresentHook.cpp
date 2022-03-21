@@ -175,7 +175,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   factory = reinterpret_cast<decltype(factory)>(
     DetourFindFunction("d3d11.dll", "D3D11CreateDeviceAndSwapChain"));
   dprintf("Creating temporary device and swap chain");
-  auto ret = factory(
+  auto createDeviceAndSwapChainResult = factory(
     nullptr,
     D3D_DRIVER_TYPE_HARDWARE,
     nullptr,
@@ -188,6 +188,11 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
     device.put(),
     nullptr,
     nullptr);
+  if (device && swapchain) {
+    dprintf(" - failed to get D3D11 device and swapchain: {:#x}\n", createDeviceAndSwapChainResult);
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
   dprintf(" - got a temporary device at {:#018x}", (intptr_t)device.get());
   dprintf(
     " - got a temporary SwapChain at {:#018x}", (intptr_t)swapchain.get());
