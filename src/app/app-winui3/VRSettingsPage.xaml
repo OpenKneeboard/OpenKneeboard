@@ -52,7 +52,7 @@
             Header="SteamVR tracking system"
             SelectedIndex="{x:Bind TrackingUniverse}"
             MaxColumns="2">
-            <x:String>Roomscale</x:String>
+            <x:String>Roomscale (usually best)</x:String>
             <x:String>Seated</x:String>
           </RadioButtons>
         </StackPanel>
