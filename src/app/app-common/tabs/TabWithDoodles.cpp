@@ -39,7 +39,11 @@ TabWithDoodles::TabWithDoodles(const DXResources& dxr) : mContentLayer(dxr) {
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
 
   AddEventListener(
-    this->evFullyReplacedEvent, &TabWithDoodles::ClearContentCache, this);
+    this->evFullyReplacedEvent, [this]() {
+      this->ClearContentCache();
+      this->ClearDoodles();
+    }
+  );
 }
 
 TabWithDoodles::~TabWithDoodles() {
@@ -47,6 +51,10 @@ TabWithDoodles::~TabWithDoodles() {
 
 void TabWithDoodles::ClearContentCache() {
   mContentLayer.Reset();
+}
+
+void TabWithDoodles::ClearDoodles() {
+  mDrawings.clear();
 }
 
 void TabWithDoodles::PostCursorEvent(
@@ -89,7 +97,7 @@ void TabWithDoodles::FlushCursorEvents() {
       const bool erasing = event.mButtons & ~1;
 
       const auto scale = mDrawings.at(pageIndex).mScale;
-      const auto pressure = std::clamp(event.mPressure - 0.40, 0.0, 0.60);
+      const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
       auto radius = 1 + (pressure * 15);
       if (erasing) {
         radius *= 10;

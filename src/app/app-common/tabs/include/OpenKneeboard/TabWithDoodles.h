@@ -55,6 +55,7 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
     const D2D1_RECT_F&);
 
   void ClearContentCache();
+  void ClearDoodles();
 
  private:
   DXResources mDXR;
