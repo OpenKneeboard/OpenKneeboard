@@ -188,8 +188,12 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
     device.put(),
     nullptr,
     nullptr);
-  if (device && swapchain) {
-    dprintf(" - failed to get D3D11 device and swapchain: {:#x}\n", createDeviceAndSwapChainResult);
+  if (!(device && swapchain)) {
+    auto error = winrt::hresult_error(createDeviceAndSwapChainResult);
+    dprintf(
+      " - failed to get D3D11 device and swapchain: {} - {}\n",
+      error.code(),
+      winrt::to_string(error.message()));
     OPENKNEEBOARD_BREAK;
     return;
   }
