@@ -48,13 +48,6 @@
 						OffContent="Off"
 						IsOn="{x:Bind DiscardOculusDepthInformation}"
 					/>
-          <RadioButtons
-            Header="SteamVR tracking system"
-            SelectedIndex="{x:Bind TrackingUniverse}"
-            MaxColumns="2">
-            <x:String>Roomscale (usually best)</x:String>
-            <x:String>Seated</x:String>
-          </RadioButtons>
         </StackPanel>
       </Grid>
       <Grid

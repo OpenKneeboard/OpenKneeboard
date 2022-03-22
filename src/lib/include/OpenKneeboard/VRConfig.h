@@ -37,7 +37,7 @@ struct VRConfig {
   enum class Flags : uint32_t {
     HEADLOCKED = 1 << 0,
     DISCARD_DEPTH_INFORMATION = 1 << 1,
-    PREFER_ROOMSCALE_POSITION = 1 << 2,
+    // PREFER_ROOMSCALE_POSITION = 1 << 2,
     GAZE_ZOOM = 1 << 3,
     FORCE_ZOOM = 1 << 4,
   };
@@ -54,7 +54,6 @@ struct VRConfig {
 
   Flags flags = static_cast<Flags>(
     static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
-    | static_cast<uint32_t>(Flags::PREFER_ROOMSCALE_POSITION)
     | static_cast<uint32_t>(Flags::GAZE_ZOOM));
 };
 #pragma pack(pop)

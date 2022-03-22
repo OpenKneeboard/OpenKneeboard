@@ -86,12 +86,6 @@ static bool overlay_check(vr::EVROverlayError err, const char* method) {
   return false;
 }
 
-static inline vr::TrackingUniverseOrigin GetUniverse(const VRConfig& vr) {
-  return (vr.flags & VRConfig::Flags::PREFER_ROOMSCALE_POSITION)
-    ? vr::TrackingUniverseStanding
-    : vr::TrackingUniverseSeated;
-}
-
 void OpenVROverlay::Tick() {
   if (!p->mIVRSystem) {
     vr::EVRInitError err;
@@ -187,7 +181,7 @@ void OpenVROverlay::Tick() {
   CHECK(
     SetOverlayTransformAbsolute,
     p->mOverlay,
-    GetUniverse(vrConf),
+    vr::TrackingUniverseStanding,
     reinterpret_cast<vr::HmdMatrix34_t*>(&transposed));
 
   auto d3d = p->D3D();
@@ -268,7 +262,7 @@ bool OpenVROverlay::Impl::IsZoomed(const VRConfig& vrConf) const {
     .bDeviceIsConnected = false,
   };
   mIVRSystem->GetDeviceToAbsoluteTrackingPose(
-    GetUniverse(vrConf), 0, &hmdPose, 1);
+    vr::TrackingUniverseStanding, 0, &hmdPose, 1);
   if (!(hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid)) {
     return false;
   }

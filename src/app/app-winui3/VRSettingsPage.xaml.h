@@ -54,9 +54,6 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   float KneeboardGazeTargetVerticalScale();
   void KneeboardGazeTargetVerticalScale(float value);
 
-  uint32_t TrackingUniverse();
-  void TrackingUniverse(uint32_t);
-
   bool GazeZoomEnabled();
   void GazeZoomEnabled(bool);
 

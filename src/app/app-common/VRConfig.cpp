@@ -47,14 +47,6 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
     }
   }
 
-  if (j.contains("preferRoomscale")) {
-    if (j.at("preferRoomscale").get<bool>()) {
-      vrc.flags |= VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
-    } else {
-      vrc.flags &= ~VRConfig::Flags::PREFER_ROOMSCALE_POSITION;
-    }
-  }
-
   if (j.contains("discardOculusDepthInformation")) {
     if (j.at("discardOculusDepthInformation").get<bool>()) {
       vrc.flags |= VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
@@ -84,8 +76,6 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"height", vrc.height},
     {"zoomScale", vrc.zoomScale},
     {"headLocked", static_cast<bool>(vrc.flags & VRConfig::Flags::HEADLOCKED)},
-    {"preferRoomscale",
-     static_cast<bool>(vrc.flags & VRConfig::Flags::PREFER_ROOMSCALE_POSITION)},
     {"discardOculusDepthInformation",
      static_cast<bool>(vrc.flags & VRConfig::Flags::DISCARD_DEPTH_INFORMATION)},
     {

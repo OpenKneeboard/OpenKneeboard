@@ -19,7 +19,6 @@ namespace OpenKneeboardApp
         Single KneeboardGazeTargetHorizontalScale;
         Single KneeboardGazeTargetVerticalScale;
 
-        Int32 TrackingUniverse;
         Boolean GazeZoomEnabled;
         Boolean DiscardOculusDepthInformation;
     }
