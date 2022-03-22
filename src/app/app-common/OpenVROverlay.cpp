@@ -381,6 +381,9 @@ bool OpenVROverlay::Run(std::stop_token stopToken) {
     std::this_thread::sleep_for(p->mIVRSystem ? frameSleep : inactiveSleep);
   }
 
+  // Free resources in the same thread we allocated them
+  p.reset();
+
   return true;
 }
 
