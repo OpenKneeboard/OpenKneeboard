@@ -114,6 +114,9 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   co_await mDQC.ShutdownQueueAsync();
   mDQC = {nullptr};
   dprint("Frame thread shutdown.");
+
+  gKneeboard = {};
+  gDXResources = {};
 }
 
 void MainWindow::OnTabChanged() {
