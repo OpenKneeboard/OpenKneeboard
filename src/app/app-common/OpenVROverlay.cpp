@@ -185,15 +185,12 @@ void OpenVROverlay::Tick() {
 
   auto d3d = p->D3D();
   if (!p->mOpenVRTexture) {
-    // If this fails, we need to copy the texture via something like DirectXTK
-    // BasicPostProcessor instead of doing a raw GPU memory copy
-    static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_R8G8B8A8_UNORM);
     D3D11_TEXTURE2D_DESC desc {
       .Width = TextureWidth,
       .Height = TextureHeight,
       .MipLevels = 1,
       .ArraySize = 1,
-      .Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+      .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
       .SampleDesc = {1, 0},
       .Usage = D3D11_USAGE_DEFAULT,
       .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,

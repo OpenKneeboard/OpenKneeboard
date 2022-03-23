@@ -38,8 +38,8 @@ namespace OpenKneeboard::SHM {
 
 struct Header;
 
-static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT = DXGI_FORMAT_R8G8B8A8_UNORM;
-static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_R8G8B8A8 = true;
+static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT = DXGI_FORMAT_B8G8R8A8_UNORM;
+static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
 std::wstring SharedTextureName(uint32_t sequenceNumber);
