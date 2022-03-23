@@ -20,25 +20,54 @@
 #include <OpenKneeboard/GetDirectInputDevices.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
+#include <hidusage.h>
 
 using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
 
 namespace OpenKneeboard {
 
+static bool IsGameController(LPCDIDEVICEINSTANCE inst) {
+  switch (inst->wUsagePage) {
+    case HID_USAGE_PAGE_GENERIC:
+      switch (inst->wUsage) {
+        case HID_USAGE_GENERIC_GAMEPAD:
+        case HID_USAGE_GENERIC_JOYSTICK:
+          return true;
+        default:
+          return false;
+      }
+    case HID_USAGE_PAGE_SIMULATION:
+      switch (inst->wUsage) {
+        case HID_USAGE_SIMULATION_FLIGHT_SIMULATION_DEVICE:
+        case HID_USAGE_SIMULATION_FLIGHT_CONTROL_STICK:
+        case HID_USAGE_SIMULATION_FLIGHT_COMMUNICATIONS:
+        case HID_USAGE_SIMULATION_COLLECTIVE_CONTROL:
+        case HID_USAGE_SIMULATION_CYCLIC_CONTROL:
+        case HID_USAGE_SIMULATION_FLIGHT_YOKE:
+        case HID_USAGE_SIMULATION_AIRPLANE_SIMULATION_DEVICE:
+        case HID_USAGE_SIMULATION_HELICOPTER_SIMULATION_DEVICE:
+          return true;
+        default:
+          return false;
+      }
+  }
+  return false;
+}
+
 static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
   auto devType = inst->dwDevType & 0xff;
   // vjoystick devices self-report as 6DOF 1st-person controllers
-  if (
-    devType == DI8DEVTYPE_JOYSTICK || devType == DI8DEVTYPE_GAMEPAD
-    || devType == DI8DEVTYPE_FLIGHT || devType == DI8DEVTYPE_1STPERSON
-    || devType == DI8DEVTYPE_KEYBOARD) {
+  if (devType == DI8DEVTYPE_KEYBOARD || IsGameController(inst)) {
     auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
     devices.push_back(*inst);
   } else {
     dprintf(
-      "Skipping DirectInput device '{}' with filtered device type {:#010x}",
+      "Skipping DirectInput device '{}' with filtered device type {:#010x} "
+      "{:#010x} {:#010x}",
       to_utf8(inst->tszInstanceName),
-      inst->dwDevType);
+      inst->dwDevType,
+      inst->wUsagePage,
+      inst->wUsage);
   }
   return DIENUM_CONTINUE;
 }
