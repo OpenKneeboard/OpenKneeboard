@@ -155,7 +155,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
-  sd.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+  sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
   sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
   sd.OutputWindow = FindMainWindow();
   sd.SampleDesc.Count = 1;
@@ -163,6 +163,13 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   sd.Windowed = TRUE;
   sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
   sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+
+  if (!sd.OutputWindow) {
+    for (int i = 0; i < 30 && !sd.OutputWindow; i++) {
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      sd.OutputWindow = FindMainWindow();
+    }
+  }
 
   D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
 

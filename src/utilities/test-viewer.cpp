@@ -137,7 +137,6 @@ class TestViewerWindow final {
       return;
     }
 
-    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
       .Width = clientSize.width,
       .Height = clientSize.height,
@@ -146,7 +145,7 @@ class TestViewerWindow final {
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
       .BufferCount = 2,
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
-      .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
+      .AlphaMode = DXGI_ALPHA_MODE_IGNORE, // HWND swap chain can't have alpha
     };
     mDXR.mDXGIFactory->CreateSwapChainForHwnd(
       mDXR.mD3DDevice.get(),
@@ -268,11 +267,10 @@ class TestViewerWindow final {
       static_cast<FLOAT>(config.imageWidth),
       static_cast<FLOAT>(config.imageHeight)};
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
-    D2D1_PIXEL_FORMAT pixelFormat {
-      DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED};
+    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
     D2D1_BITMAP_PROPERTIES bitmapProperties {
-      .pixelFormat = pixelFormat,
+      .pixelFormat
+      = {SHM::SHARED_TEXTURE_PIXEL_FORMAT, D2D1_ALPHA_MODE_PREMULTIPLIED,},
       .dpiX = static_cast<FLOAT>(dpi),
       .dpiY = static_cast<FLOAT>(dpi),
     };

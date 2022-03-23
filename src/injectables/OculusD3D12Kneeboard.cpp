@@ -56,10 +56,9 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
 
   ovrTextureSwapChain swapChain = nullptr;
 
-  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
-    .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
     .ArraySize = 1,
     .Width = config.imageWidth,
     .Height = config.imageHeight,
@@ -109,7 +108,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
 
     D3D12_RENDER_TARGET_VIEW_DESC rtvDesc {
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+      .Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
       .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
       .Texture2D = {},
     };

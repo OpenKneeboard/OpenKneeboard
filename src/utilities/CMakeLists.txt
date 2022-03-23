@@ -14,6 +14,7 @@ target_link_libraries(
   OpenKneeboard-consolelib
   OpenKneeboard-dprint
   OpenKneeboard-SHM
+  ThirdParty::DirectXTK
 )
 
 add_executable(test-viewer WIN32 test-viewer.cpp)

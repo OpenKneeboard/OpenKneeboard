@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <DirectXTK/PostProcess.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
@@ -43,6 +44,7 @@ namespace {
 
 struct SharedTextureResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
+  winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
   winrt::com_ptr<IDXGIKeyedMutex> mMutex;
   winrt::handle mHandle;
   UINT mMutexKey = 0;
@@ -65,6 +67,7 @@ class InterprocessRenderer::Impl {
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
+  winrt::com_ptr<ID3D11ShaderResourceView> mCanvasSRV;
   winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
 
   std::array<SharedTextureResources, TextureCount> mResources;
@@ -124,8 +127,16 @@ void InterprocessRenderer::Impl::CopyPixelsToSHM() {
 
   auto& it = mResources.at(mSHM.GetNextTextureIndex());
 
+  DirectX::BasicPostProcess pixelFormatConverter(mDXR.mD3DDevice.get());
+  pixelFormatConverter.SetEffect(DirectX::BasicPostProcess::Copy);
+  pixelFormatConverter.SetSourceTexture(mCanvasSRV.get());
+
   it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
-  mD3DContext->CopyResource(it.mTexture.get(), mCanvasTexture.get());
+  auto rtv = it.mTextureRTV.get();
+  D3D11_VIEWPORT viewport { 0, 0, TextureWidth, TextureHeight, 0, 1 };
+  mD3DContext->RSSetViewports(1, &viewport);
+  mD3DContext->OMSetRenderTargets(1, &rtv, nullptr);
+  pixelFormatConverter.Process(mD3DContext.get());
   mD3DContext->Flush();
   it.mMutexKey = mSHM.GetNextTextureKey();
   it.mMutex->ReleaseSync(it.mMutexKey);
@@ -155,19 +166,21 @@ InterprocessRenderer::InterprocessRenderer(
 
   dxr.mD3DDevice->GetImmediateContext(p->mD3DContext.put());
 
-  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = TextureWidth,
     .Height = TextureHeight,
     .MipLevels = 1,
     .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
     .SampleDesc = {1, 0},
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
     .MiscFlags = 0,
   };
   winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
     &textureDesc, nullptr, p->mCanvasTexture.put()));
+  winrt::check_hresult(dxr.mD3DDevice->CreateShaderResourceView(
+    p->mCanvasTexture.get(), nullptr, p->mCanvasSRV.put()));
+
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
     p->mCanvasTexture.as<IDXGISurface>().get(),
     nullptr,
@@ -175,10 +188,18 @@ InterprocessRenderer::InterprocessRenderer(
 
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+
+  D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {
+    .Format = textureDesc.Format,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
   for (auto i = 0; i < TextureCount; ++i) {
     auto& it = p->mResources.at(i);
 
     dxr.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
+    dxr.mD3DDevice->CreateRenderTargetView(
+      it.mTexture.get(), &rtvDesc, it.mTextureRTV.put());
     auto textureName = SHM::SharedTextureName(i);
     it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
       nullptr,
@@ -325,10 +346,7 @@ void InterprocessRenderer::Impl::RenderWithChrome(
   headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  ctx->DrawTextLayout(
-    {0.0f, 0.0f},
-    headerLayout.get(),
-    mHeaderTextBrush.get());
+  ctx->DrawTextLayout({0.0f, 0.0f}, headerLayout.get(), mHeaderTextBrush.get());
 
 #ifdef DEBUG
   auto frameText = fmt::format(L"Frame {}", mSHM.GetNextSequenceNumber());
