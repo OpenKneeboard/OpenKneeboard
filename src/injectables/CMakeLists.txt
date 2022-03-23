@@ -96,6 +96,17 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
+add_library(
+  OpenKneeboard-OpenXR
+  MODULE
+  OpenXRKneeboard.cpp
+)
+target_link_libraries(
+  OpenKneeboard-OpenXR
+  PRIVATE
+  ThirdParty::OpenXR
+)
+
 add_library(OpenKneeboard-Injection-Bootstrapper MODULE InjectionBootstrapper.cpp)
 sign_target(OpenKneeboard-Injection-Bootstrapper)
 target_link_libraries(
