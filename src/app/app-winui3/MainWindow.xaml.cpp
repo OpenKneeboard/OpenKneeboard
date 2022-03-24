@@ -50,9 +50,10 @@ MainWindow::MainWindow() {
   // * https://docs.microsoft.com/en-us/windows/winui/api/microsoft.ui.xaml.window.settitlebar
   // * https://docs.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
   //
-  // Broken by Windows App Runtime 1.0.1 update: https://github.com/microsoft/microsoft-ui-xaml/issues/6859
-  //ExtendsContentIntoTitleBar(true);
-  //SetTitleBar(AppTitleBar());
+  // Broken by Windows App Runtime 1.0.1 update:
+  // https://github.com/microsoft/microsoft-ui-xaml/issues/6859
+  // ExtendsContentIntoTitleBar(true);
+  // SetTitleBar(AppTitleBar());
 
   {
     auto ref = get_strong();
@@ -97,6 +98,19 @@ MainWindow::MainWindow() {
   mFrameTimer.Tick([=](auto&, auto&) { gKneeboard->evFrameTimerEvent.Emit(); });
   mFrameTimer.Start();
 
+  auto settings = gKneeboard->GetAppSettings();
+  if (settings.mWindowRect) {
+    auto rect = *settings.mWindowRect;
+    SetWindowPos(
+      mHwnd,
+      NULL,
+      rect.left,
+      rect.top,
+      rect.right - rect.left,
+      rect.bottom - rect.top,
+      0);
+  }
+
   this->Closed({this, &MainWindow::OnClosed});
 }
 
@@ -107,6 +121,12 @@ MainWindow::~MainWindow() {
 winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) {
+  RECT windowRect;
+  GetWindowRect(mHwnd, &windowRect);
+  auto settings = gKneeboard->GetAppSettings();
+  settings.mWindowRect = windowRect;
+  gKneeboard->SetAppSettings(settings);
+
   dprint("Stopping frame timer...");
   mFrameTimer.Stop();
   mFrameTimer = {nullptr};

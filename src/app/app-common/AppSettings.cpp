@@ -17,28 +17,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <nlohmann/json.hpp>
+#include <OpenKneeboard/AppSettings.h>
 
 namespace OpenKneeboard {
 
-struct Settings final {
-  uint32_t Version = 1;
+void from_json(const nlohmann::json& j, AppSettings& as) {
+  if (j.is_null()) {
+    return;
+  }
 
-  nlohmann::json DirectInputV2;
-  nlohmann::json TabletInput;
-  nlohmann::json Games;
-  nlohmann::json Tabs;
-  nlohmann::json NonVR;
-  nlohmann::json VR;
-  nlohmann::json App;
-
-  static Settings Load();
-  void Save();
-};
-
-void from_json(const nlohmann::json&, Settings&);
-void to_json(nlohmann::json&, const Settings&);
-
+  auto jrect = j.at("WindowPosition");
+  RECT rect;
+  rect.left = jrect.at("Left");
+  rect.top = jrect.at("Top");
+  rect.right = jrect.at("Width") + rect.left;
+  rect.bottom = jrect.at("Height") + rect.top;
+  as.mWindowRect = rect;
 }
+
+void to_json(nlohmann::json& j, const AppSettings& as) {
+  if (as.mWindowRect) {
+    nlohmann::json rect;
+    rect["Left"] = as.mWindowRect->left;
+    rect["Top"] = as.mWindowRect->top;
+    rect["Width"] = as.mWindowRect->right - as.mWindowRect->left;
+    rect["Height"] = as.mWindowRect->bottom - as.mWindowRect->top;
+    j["WindowPosition"] = rect;
+  }
+}
+
+}// namespace OpenKneeboard

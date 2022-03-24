@@ -45,6 +45,9 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   if (!mSettings.NonVR.is_null()) {
     mVRConfig = mSettings.VR;
   }
+  if (!mSettings.App.is_null()) {
+    mAppSettings = mSettings.App;
+  }
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
@@ -403,6 +406,15 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
   this->evNeedsRepaintEvent.Emit();
 }
 
+AppSettings KneeboardState::GetAppSettings() const {
+  return mAppSettings;
+}
+
+void KneeboardState::SetAppSettings(const AppSettings& value) {
+  mAppSettings = value;
+  this->SaveSettings();
+}
+
 GamesList* KneeboardState::GetGamesList() const {
   return mGamesList.get();
 }
@@ -423,6 +435,7 @@ void KneeboardState::SaveSettings() {
 
   mSettings.NonVR = mFlatConfig;
   mSettings.VR = mVRConfig;
+  mSettings.App = mAppSettings;
 
   mSettings.Save();
 }

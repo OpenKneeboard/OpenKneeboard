@@ -24,6 +24,7 @@
 #include <OpenKneeboard/VRConfig.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/Settings.h>
+#include <OpenKneeboard/AppSettings.h>
 #include <d2d1.h>
 
 #include <thread>
@@ -90,6 +91,8 @@ class KneeboardState final : private EventReceiver {
   void SetFlatConfig(const FlatConfig&);
   VRConfig GetVRConfig() const;
   void SetVRConfig(const VRConfig&);
+  AppSettings GetAppSettings() const;
+  void SetAppSettings(const AppSettings&);
 
   void SaveSettings();
 
@@ -120,6 +123,7 @@ class KneeboardState final : private EventReceiver {
 
   VRConfig mVRConfig;
   FlatConfig mFlatConfig;
+  AppSettings mAppSettings;
 
   void UpdateLayout();
 

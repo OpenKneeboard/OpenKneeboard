@@ -19,26 +19,18 @@
  */
 #pragma once
 
+#include <windows.h>
+
 #include <nlohmann/json.hpp>
+#include <optional>
 
 namespace OpenKneeboard {
 
-struct Settings final {
-  uint32_t Version = 1;
-
-  nlohmann::json DirectInputV2;
-  nlohmann::json TabletInput;
-  nlohmann::json Games;
-  nlohmann::json Tabs;
-  nlohmann::json NonVR;
-  nlohmann::json VR;
-  nlohmann::json App;
-
-  static Settings Load();
-  void Save();
+struct AppSettings final {
+  std::optional<RECT> mWindowRect;
 };
 
-void from_json(const nlohmann::json&, Settings&);
-void to_json(nlohmann::json&, const Settings&);
+void from_json(const nlohmann::json&, AppSettings&);
+void to_json(nlohmann::json&, const AppSettings&);
 
-}
+}// namespace OpenKneeboard
