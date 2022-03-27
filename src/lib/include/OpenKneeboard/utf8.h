@@ -61,7 +61,6 @@ constexpr std::string_view to_utf8(const char* in) {
 std::string to_utf8(const std::wstring&);
 std::string to_utf8(std::wstring_view);
 std::string to_utf8(const wchar_t*);
-
 std::string to_utf8(const std::filesystem::path&);
 
 class utf8_string_view final {
@@ -112,3 +111,19 @@ class utf8_string final : public std::string {
 };
 
 }// namespace OpenKneeboard
+
+#include <nlohmann/json.hpp>
+
+namespace std::filesystem {
+  void from_json(const nlohmann::json&, std::filesystem::path&);
+  void to_json(nlohmann::json&, const std::filesystem::path&);
+}
+
+namespace std {
+  void from_json(const nlohmann::json&, std::wstring&) = delete;
+  void to_json(nlohmann::json&, const std::wstring&) = delete;
+  void from_json(const nlohmann::json&, std::wstring_view&) = delete;
+  void to_json(nlohmann::json&, const std::wstring_view&) = delete;
+  void from_json(const nlohmann::json&, wchar_t*)= delete;
+  void to_json(nlohmann::json&, const wchar_t*) = delete;
+}

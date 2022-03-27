@@ -21,14 +21,13 @@
 #include <OpenKneeboard/DCSWorldInstance.h>
 #include <OpenKneeboard/Game.h>
 #include <OpenKneeboard/utf8.h>
-
 #include <shims/winrt.h>
 
 namespace OpenKneeboard {
 
 nlohmann::json DCSWorldInstance::ToJson() const {
   auto j = GameInstance::ToJson();
-  j["SavedGamesPath"] = to_utf8(this->mSavedGamesPath);
+  j["SavedGamesPath"] = this->mSavedGamesPath;
   return j;
 }
 
@@ -72,8 +71,7 @@ DCSWorldInstance::DCSWorldInstance(
   const std::shared_ptr<Game>& game)
   : GameInstance(j, game) {
   if (j.contains("SavedGamesPath")) {
-    mSavedGamesPath = std::filesystem::path(
-      std::wstring_view(winrt::to_hstring(j.at("SavedGamesPath"))));
+    mSavedGamesPath = j.at("SavedGamesPath").get<std::filesystem::path>();
   } else {
     mSavedGamesPath = InferSavedGamesPath(mPath);
   }

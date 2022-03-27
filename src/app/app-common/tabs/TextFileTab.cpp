@@ -38,17 +38,14 @@ TextFileTab::TextFileTab(
   const DXResources& dxr,
   utf8_string_view title,
   const nlohmann::json& settings)
-  : TextFileTab(
-    dxr,
-    title,
-    std::filesystem::path(settings.at("Path").get<std::string>())) {
+  : TextFileTab(dxr, title, settings.at("Path").get<std::filesystem::path>()) {
 }
 
 TextFileTab::~TextFileTab() {
 }
 
 nlohmann::json TextFileTab::GetSettings() const {
-  return {{"Path", to_utf8(GetPath())}};
+  return {{"Path", GetPath()}};
 }
 
 utf8_string TextFileTab::GetTitle() const {

@@ -25,7 +25,7 @@
 namespace OpenKneeboard {
 
 std::string to_utf8(const std::filesystem::path& in) {
-  return to_utf8(in.wstring());
+  return winrt::to_string(in.wstring());
 }
 
 std::string to_utf8(const std::wstring& in) {
@@ -45,3 +45,12 @@ utf8_string_view::operator std::filesystem::path() const {
 }
 
 }// namespace OpenKneeboard
+
+namespace std::filesystem {
+void from_json(const nlohmann::json& j, std::filesystem::path& p) {
+  p = static_cast<std::wstring_view>(winrt::to_hstring(j.get<std::string>()));
+}
+void to_json(nlohmann::json& j, const std::filesystem::path& p) {
+  j = winrt::to_string(p.wstring());
+}
+}// namespace std::filesystem

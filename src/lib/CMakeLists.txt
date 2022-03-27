@@ -25,6 +25,11 @@ target_link_libraries(
 	PRIVATE
 	_libheaders
 )
+target_link_libraries(
+	OpenKneeboard-UTF8
+	PUBLIC
+  ThirdParty::JSON
+)
 
 add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
 target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)

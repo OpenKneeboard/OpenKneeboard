@@ -58,17 +58,14 @@ FolderTab::FolderTab(
   const DXResources& dxr,
   utf8_string_view title,
   const nlohmann::json& settings)
-  : FolderTab(
-    dxr,
-    title,
-    std::filesystem::path(settings.at("Path").get<std::string>())) {
+  : FolderTab(dxr, title, settings.at("Path").get<std::filesystem::path>()) {
 }
 
 FolderTab::~FolderTab() {
 }
 
 nlohmann::json FolderTab::GetSettings() const {
-  return {{"Path", to_utf8(GetPath())}};
+  return {{"Path", GetPath()}};
 }
 
 utf8_string FolderTab::GetTitle() const {

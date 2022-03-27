@@ -31,11 +31,11 @@
 #include <winrt/windows.foundation.h>
 #include <winrt/windows.storage.h>
 
+#include <nlohmann/json.hpp>
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFOutlineDocumentHelper.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <thread>
-#include <nlohmann/json.hpp>
 
 using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
@@ -101,21 +101,17 @@ PDFTab::PDFTab(
 }
 
 PDFTab::PDFTab(
-	const DXResources& dxr,
-	utf8_string_view title,
-	const nlohmann::json& settings)
-	: PDFTab(
-		dxr,
-		title,
-		std::filesystem::path(settings.at("Path").get<std::string>())) {
+  const DXResources& dxr,
+  utf8_string_view title,
+  const nlohmann::json& settings)
+  : PDFTab(dxr, title, settings.at("Path").get<std::filesystem::path>()) {
 }
-
 
 PDFTab::~PDFTab() {
 }
 
 nlohmann::json PDFTab::GetSettings() const {
-  return {{"Path", to_utf8(GetPath())}};
+  return {{"Path", GetPath()}};
 }
 
 utf8_string PDFTab::GetTitle() const {
@@ -388,7 +384,9 @@ void PDFTab::RenderOverDoodles(
   };
   const auto radius = contentHeight * 0.006f;
   ctx->DrawRoundedRectangle(
-    D2D1::RoundedRect(rect, radius, radius), p->mHighlightBrush.get(), radius / 3);
+    D2D1::RoundedRect(rect, radius, radius),
+    p->mHighlightBrush.get(),
+    radius / 3);
 }
 
 std::filesystem::path PDFTab::GetPath() const {
