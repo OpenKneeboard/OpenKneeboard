@@ -153,7 +153,7 @@ XrResult xrCreateApiLayerInstance(
 #define IT(x) \
   if ( \
     gOpenXR.xrGetInstanceProcAddr( \
-      *instance, #x, reinterpret_cat<PFN_xrVoidFunction*>(&gOpenXR.x)) \
+      *instance, #x, reinterpret_cast<PFN_xrVoidFunction*>(&gOpenXR.x)) \
     != XR_SUCCESS) { \
     return XR_ERROR_INITIALIZATION_FAILED; \
   }
