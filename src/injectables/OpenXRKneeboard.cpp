@@ -28,15 +28,58 @@
 #include <openxr/openxr_platform.h>
 
 namespace OpenKneeboard {
+
 const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
 
-static PFN_xrGetInstanceProcAddr gNextXrGetInstanceProcAddr = nullptr;
+#define NEEDED_OPENXR_FUNCS \
+  IT(xrCreateSession) \
+  IT(xrEndFrame) \
+  IT(xrCreateSwapchain)
 
-class OpenXRKneeboard {};
+static struct {
+  PFN_xrGetInstanceProcAddr xrGetInstanceProcAddr {nullptr};
+#define IT(x) PFN_##x x {nullptr};
+  NEEDED_OPENXR_FUNCS
+#undef IT
+} gOpenXR;
+
+class OpenXRKneeboard {
+ public:
+  virtual ~OpenXRKneeboard();
+  XrResult xrEndFrame(
+    XrSession session,
+    const XrFrameEndInfo* frameEndInfo,
+    PFN_xrEndFrame next);
+
+ private:
+  XrSwapchain mSwapChain = nullptr;
+};
+
 class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
  public:
-  OpenXRD3D11Kneeboard(ID3D11Device*) {};
+  OpenXRD3D11Kneeboard(ID3D11Device*);
+  ~OpenXRD3D11Kneeboard();
+
+ private:
+  ID3D11Device* mDevice = nullptr;
 };
+
+OpenXRKneeboard::~OpenXRKneeboard() {
+}
+
+OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(ID3D11Device* device)
+  : mDevice(device) {
+}
+
+OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
+}
+
+XrResult OpenXRKneeboard::xrEndFrame(
+  XrSession session,
+  const XrFrameEndInfo* frameEndInfo,
+  PFN_xrEndFrame next) {
+  return next(session, frameEndInfo);
+}
 
 static std::unique_ptr<OpenXRKneeboard> gKneeboard;
 
@@ -57,18 +100,6 @@ XrResult xrCreateSession(
   const XrSessionCreateInfo* createInfo,
   XrSession* session) {
   static PFN_xrCreateSession sNext = nullptr;
-  if (!sNext) {
-    if (
-      gNextXrGetInstanceProcAddr(
-        instance,
-        "xrCreateSession",
-        reinterpret_cast<PFN_xrVoidFunction*>(&sNext))
-      != XR_SUCCESS) {
-      sNext = nullptr;
-      return XR_ERROR_INITIALIZATION_FAILED;
-    }
-  }
-
   auto d3d11 = findInXrNextChain<XrGraphicsBindingD3D11KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
@@ -76,18 +107,32 @@ XrResult xrCreateSession(
   }
   // TODO: D3D12
 
-  return sNext(instance, createInfo, session);
+  return gOpenXR.xrCreateSession(instance, createInfo, session);
+}
+
+XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) {
+  if (gKneeboard) {
+    return gKneeboard->xrEndFrame(session, frameEndInfo, gOpenXR.xrEndFrame);
+  }
+  return gOpenXR.xrEndFrame(session, frameEndInfo);
 }
 
 XrResult xrGetInstanceProcAddr(
   XrInstance instance,
-  const char* name,
+  const char* name_cstr,
   PFN_xrVoidFunction* function) {
-  if (name == std::string_view("xrCreateSession")) {
+  std::string_view name {name_cstr};
+
+  if (name == "xrCreateSession") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateSession);
     return XR_SUCCESS;
   }
-  return gNextXrGetInstanceProcAddr(instance, name, function);
+  if (name == "xrEndFrame") {
+    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
+    return XR_SUCCESS;
+  }
+
+  return gOpenXR.xrGetInstanceProcAddr(instance, name_cstr, function);
 }
 
 XrResult xrCreateApiLayerInstance(
@@ -95,12 +140,27 @@ XrResult xrCreateApiLayerInstance(
   const struct XrApiLayerCreateInfo* layerInfo,
   XrInstance* instance) {
   // TODO: check version fields etc in layerInfo
-  gNextXrGetInstanceProcAddr = layerInfo->nextInfo->nextGetInstanceProcAddr;
+  gOpenXR.xrGetInstanceProcAddr = layerInfo->nextInfo->nextGetInstanceProcAddr;
 
   XrApiLayerCreateInfo nextLayerInfo = *layerInfo;
   nextLayerInfo.nextInfo = layerInfo->nextInfo->next;
-  return layerInfo->nextInfo->nextCreateApiLayerInstance(
+  auto nextResult = layerInfo->nextInfo->nextCreateApiLayerInstance(
     info, &nextLayerInfo, instance);
+  if (nextResult != XR_SUCCESS) {
+    return nextResult;
+  }
+
+#define IT(x) \
+  if ( \
+    gOpenXR.xrGetInstanceProcAddr( \
+      *instance, #x, reinterpret_cat<PFN_xrVoidFunction*>(&gOpenXR.x)) \
+    != XR_SUCCESS) { \
+    return XR_ERROR_INITIALIZATION_FAILED; \
+  }
+  NEEDED_OPENXR_FUNCS
+#undef IT
+
+  return XR_SUCCESS;
 }
 
 }// namespace OpenKneeboard

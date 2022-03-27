@@ -105,6 +105,8 @@ target_link_libraries(
   OpenKneeboard-OpenXR
   PRIVATE
   ThirdParty::OpenXR
+  OpenKneeboard-shims
+  NuGet::CppWinRT::Base
 )
 
 add_library(OpenKneeboard-Injection-Bootstrapper MODULE InjectionBootstrapper.cpp)

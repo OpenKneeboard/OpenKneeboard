@@ -109,3 +109,10 @@ target_include_directories(
   INTERFACE
   "${CMAKE_CURRENT_BINARY_DIR}/include"
 )
+
+add_library(OpenKneeboard-shims INTERFACE)
+target_include_directories(
+  OpenKneeboard-shims
+  INTERFACE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
