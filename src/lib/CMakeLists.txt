@@ -69,6 +69,10 @@ target_link_libraries(
   PUBLIC
   _libheaders
   ThirdParty::DirectXTK)
+target_link_libraries(
+  OpenKneeboard-RayIntersectsRect
+  PRIVATE
+  OpenKneeboard-dprint)
 
 add_library(OpenKneeboard-scope_guard STATIC scope_guard.cpp)
 target_link_libraries(

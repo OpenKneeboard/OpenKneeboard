@@ -44,6 +44,7 @@ class OpenVROverlay::Impl final {
   winrt::com_ptr<ID3D11Device1> mD3D;
 
  public:
+  uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
   vr::VROverlayHandle_t mOverlay {};
@@ -62,8 +63,8 @@ class OpenVROverlay::Impl final {
   int64_t mRecenterCount = 0;
   Matrix mRecenter = Matrix::Identity;
 
-  bool IsZoomed(const SHM::Snapshot&) const;
-  Matrix GetHMDTransform(const SHM::Snapshot&) const;
+  bool IsZoomed(const VRConfig&, const Matrix& overlayTransform) const;
+  Matrix GetHMDTransform() const;
 
   ~Impl() {
     if (!mIVRSystem) {
@@ -142,6 +143,8 @@ void OpenVROverlay::Tick() {
     }
   }
 
+  p->mFrameCounter++;
+
   auto snapshot = p->mSHM.MaybeGet();
   if (!snapshot) {
     if (p->mVisible) {
@@ -159,23 +162,8 @@ void OpenVROverlay::Tick() {
   const auto config = snapshot.GetConfig();
   const auto& vrConf = config.vr;
 
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  p->mUnzoomedWidth = vrConf.height * aspectRatio;
-  p->mZoomedWidth = p->mUnzoomedWidth * vrConf.zoomScale;
-
-  p->mZoomed = p->IsZoomed(snapshot);
-  const auto desiredWidth = p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth;
-  if (desiredWidth != p->mActualWidth) {
-    CHECK(SetOverlayWidthInMeters, p->mOverlay, desiredWidth);
-    p->mActualWidth = desiredWidth;
-  }
-
-  if (p->mSequenceNumber == snapshot.GetSequenceNumber()) {
-    return;
-  }
-
   if (vrConf.recenterCount != p->mRecenterCount) {
-    auto m = p->GetHMDTransform(snapshot);
+    auto m = p->GetHMDTransform();
 
     auto translation = m.Translation();
     translation.y = 0;// Keep using floor level
@@ -193,6 +181,21 @@ void OpenVROverlay::Tick() {
     * Matrix::CreateTranslation(vrConf.x, vrConf.floorY, vrConf.z)
     * p->mRecenter;
   // clang-format on
+
+  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  p->mUnzoomedWidth = vrConf.height * aspectRatio;
+  p->mZoomedWidth = p->mUnzoomedWidth * vrConf.zoomScale;
+
+  p->mZoomed = p->IsZoomed(vrConf, transform);
+  const auto desiredWidth = p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth;
+  if (desiredWidth != p->mActualWidth) {
+    CHECK(SetOverlayWidthInMeters, p->mOverlay, desiredWidth);
+    p->mActualWidth = desiredWidth;
+  }
+
+  if (p->mSequenceNumber == snapshot.GetSequenceNumber()) {
+    return;
+  }
 
   auto transposed = transform.Transpose();
 
@@ -260,8 +263,9 @@ void OpenVROverlay::Tick() {
 #undef CHECK
 }
 
-bool OpenVROverlay::Impl::IsZoomed(const SHM::Snapshot& snapshot) const {
-  auto vrConf = snapshot.GetConfig().vr;
+bool OpenVROverlay::Impl::IsZoomed(
+  const VRConfig& vrConf,
+  const Matrix& overlayTransform) const {
   if (vrConf.flags & VRConfig::Flags::FORCE_ZOOM) {
     return true;
   }
@@ -275,34 +279,27 @@ bool OpenVROverlay::Impl::IsZoomed(const SHM::Snapshot& snapshot) const {
     return false;
   }
 
-  auto m = GetHMDTransform(snapshot);
+  auto m = GetHMDTransform();
 
   Vector3 hmdPosition {m.Translation()};
   Quaternion hmdOrientation {Quaternion::CreateFromRotationMatrix(m)};
 
-  Vector3 rectPosition {vrConf.x, vrConf.floorY, vrConf.z};
-  auto rectOrientation
-    = Quaternion::CreateFromAxisAngle(Vector3::UnitX, vrConf.rx)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vrConf.ry)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vrConf.rz);
-
   return RayIntersectsRect(
     hmdPosition,
     hmdOrientation,
-    rectPosition,
-    rectOrientation,
+    overlayTransform.Translation(),
+    Quaternion::CreateFromRotationMatrix(overlayTransform),
     {(mZoomed ? mZoomedWidth : mUnzoomedWidth)
        * vrConf.gazeTargetHorizontalScale,
      vrConf.height * (mZoomed ? zoomScale : 1)
        * vrConf.gazeTargetVerticalScale});
 }
 
-Matrix OpenVROverlay::Impl::GetHMDTransform(
-  const SHM::Snapshot& snapshot) const {
+Matrix OpenVROverlay::Impl::GetHMDTransform() const {
   static uint64_t sCacheKey = ~(0ui64);
   static Matrix sCache {};
 
-  if (sCacheKey == snapshot.GetSequenceNumber()) {
+  if (this->mFrameCounter == sCacheKey) {
     return sCache;
   }
 
@@ -325,7 +322,7 @@ Matrix OpenVROverlay::Impl::GetHMDTransform(
     f[0][3], f[1][3], f[2][3], 1
   };
   // clang-format on
-  sCacheKey = snapshot.GetSequenceNumber();
+  sCacheKey = mFrameCounter;
   return sCache;
 }
 
