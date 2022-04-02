@@ -32,7 +32,7 @@ namespace OpenKneeboard {
 
 #pragma pack(push)
 struct VRConfig {
-  static constexpr uint16_t VERSION = 2;
+  static constexpr uint16_t VERSION = 3;
 
   enum class Flags : uint32_t {
     HEADLOCKED = 1 << 0,
@@ -48,6 +48,9 @@ struct VRConfig {
         ry = -std::numbers::pi_v<float> / 32, rz = 0.0f;
   float height = 0.25f;
   float zoomScale = 2.0f;
+
+  // Increment every time binding is pressed
+  uint64_t recenterCount = 0;
 
   float gazeTargetVerticalScale = 1.0f;
   float gazeTargetHorizontalScale = 1.0f;

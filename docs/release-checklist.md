@@ -5,6 +5,7 @@
 Test all of these with the `RelWithDebInfo` msix package, as it's the most restricted form of installation.
 
 * SteamVR
+  * Gaze zoom before and after recentering
 * Oculus: DX11 and DX12
 * Non-VR: DX11
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys

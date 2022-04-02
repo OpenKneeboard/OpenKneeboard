@@ -29,7 +29,8 @@ namespace OpenKneeboard {
   IT(PREVIOUS_PAGE) \
   IT(NEXT_PAGE) \
   IT(TOGGLE_VISIBILITY) \
-  IT(TOGGLE_FORCE_ZOOM)
+  IT(TOGGLE_FORCE_ZOOM) \
+  IT(RECENTER_VR)
 
 enum class UserAction {
 #define IT(x) x,

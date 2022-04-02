@@ -59,7 +59,11 @@ class OpenVROverlay::Impl final {
   float mZoomedWidth = 0;
   float mActualWidth = 0;
 
-  bool IsZoomed(const VRConfig& vrConf) const;
+  int64_t mRecenterCount = 0;
+  Matrix mRecenter = Matrix::Identity;
+
+  bool IsZoomed(const SHM::Snapshot&) const;
+  Matrix GetHMDTransform(const SHM::Snapshot&) const;
 
   ~Impl() {
     if (!mIVRSystem) {
@@ -120,7 +124,10 @@ void OpenVROverlay::Tick() {
 
     dprintf("Created OpenVR overlay");
     CHECK(
-      SetOverlayFlag, p->mOverlay, vr::VROverlayFlags_IsPremultiplied, SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
+      SetOverlayFlag,
+      p->mOverlay,
+      vr::VROverlayFlags_IsPremultiplied,
+      SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
     CHECK(ShowOverlay, p->mOverlay);
   }
 
@@ -156,7 +163,7 @@ void OpenVROverlay::Tick() {
   p->mUnzoomedWidth = vrConf.height * aspectRatio;
   p->mZoomedWidth = p->mUnzoomedWidth * vrConf.zoomScale;
 
-  p->mZoomed = p->IsZoomed(vrConf);
+  p->mZoomed = p->IsZoomed(snapshot);
   const auto desiredWidth = p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth;
   if (desiredWidth != p->mActualWidth) {
     CHECK(SetOverlayWidthInMeters, p->mOverlay, desiredWidth);
@@ -167,12 +174,24 @@ void OpenVROverlay::Tick() {
     return;
   }
 
+  if (vrConf.recenterCount != p->mRecenterCount) {
+    auto m = p->GetHMDTransform(snapshot);
+
+    auto translation = m.Translation();
+    translation.y = 0;// Keep using floor level
+
+    // Don't adjust pitch or roll - only rotate left-right yaw
+    p->mRecenter = Matrix::CreateRotationY(m.ToEuler().y)
+      * Matrix::CreateTranslation(translation);
+
+    p->mRecenterCount = vrConf.recenterCount;
+  }
+
   // clang-format off
   auto transform =
-    Matrix::CreateRotationX(vrConf.rx)
-    * Matrix::CreateRotationY(vrConf.ry)
-    * Matrix::CreateRotationZ(vrConf.rz)
-    * Matrix::CreateTranslation(vrConf.x, vrConf.floorY, vrConf.z);
+    Matrix::CreateFromYawPitchRoll({vrConf.rx, vrConf.ry, vrConf.rz})
+    * Matrix::CreateTranslation(vrConf.x, vrConf.floorY, vrConf.z)
+    * p->mRecenter;
   // clang-format on
 
   auto transposed = transform.Transpose();
@@ -241,7 +260,8 @@ void OpenVROverlay::Tick() {
 #undef CHECK
 }
 
-bool OpenVROverlay::Impl::IsZoomed(const VRConfig& vrConf) const {
+bool OpenVROverlay::Impl::IsZoomed(const SHM::Snapshot& snapshot) const {
+  auto vrConf = snapshot.GetConfig().vr;
   if (vrConf.flags & VRConfig::Flags::FORCE_ZOOM) {
     return true;
   }
@@ -255,25 +275,7 @@ bool OpenVROverlay::Impl::IsZoomed(const VRConfig& vrConf) const {
     return false;
   }
 
-  vr::TrackedDevicePose_t hmdPose {
-    .bPoseIsValid = false,
-    .bDeviceIsConnected = false,
-  };
-  mIVRSystem->GetDeviceToAbsoluteTrackingPose(
-    vr::TrackingUniverseStanding, 0, &hmdPose, 1);
-  if (!(hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid)) {
-    return false;
-  }
-
-  const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
-  // clang-format off
-  Matrix m(
-    f[0][0], f[1][0], f[2][0], 0,
-    f[0][1], f[1][1], f[2][1], 0,
-    f[0][2], f[1][2], f[2][2], 0,
-    f[0][3], f[1][3], f[2][3], 1
-  );
-  // clang-format on
+  auto m = GetHMDTransform(snapshot);
 
   Vector3 hmdPosition {m.Translation()};
   Quaternion hmdOrientation {Quaternion::CreateFromRotationMatrix(m)};
@@ -293,6 +295,38 @@ bool OpenVROverlay::Impl::IsZoomed(const VRConfig& vrConf) const {
        * vrConf.gazeTargetHorizontalScale,
      vrConf.height * (mZoomed ? zoomScale : 1)
        * vrConf.gazeTargetVerticalScale});
+}
+
+Matrix OpenVROverlay::Impl::GetHMDTransform(
+  const SHM::Snapshot& snapshot) const {
+  static uint64_t sCacheKey = ~(0ui64);
+  static Matrix sCache {};
+
+  if (sCacheKey == snapshot.GetSequenceNumber()) {
+    return sCache;
+  }
+
+  vr::TrackedDevicePose_t hmdPose {
+    .bPoseIsValid = false,
+    .bDeviceIsConnected = false,
+  };
+  mIVRSystem->GetDeviceToAbsoluteTrackingPose(
+    vr::TrackingUniverseStanding, 0, &hmdPose, 1);
+  if (!(hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid)) {
+    return Matrix::Identity;
+  }
+
+  const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
+  // clang-format off
+  sCache = {
+    f[0][0], f[1][0], f[2][0], 0,
+    f[0][1], f[1][1], f[2][1], 0,
+    f[0][2], f[1][2], f[2][2], 0,
+    f[0][3], f[1][3], f[2][3], 1
+  };
+  // clang-format on
+  sCacheKey = snapshot.GetSequenceNumber();
+  return sCache;
 }
 
 ID3D11Device1* OpenVROverlay::Impl::D3D() {

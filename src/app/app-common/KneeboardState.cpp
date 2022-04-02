@@ -320,6 +320,10 @@ void KneeboardState::OnUserAction(UserAction action) {
       this->evNeedsRepaintEvent.Emit();
       return;
     }
+    case UserAction::RECENTER_VR:
+      this->mVRConfig.recenterCount++;
+      this->evNeedsRepaintEvent.Emit();
+      return;
   }
   OPENKNEEBOARD_BREAK;
 }

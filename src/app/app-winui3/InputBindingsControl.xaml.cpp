@@ -47,6 +47,8 @@ InputBindingsControl::InputBindingsControl() {
   ToggleForceZoomBindButton().Click([this](auto&, auto&) {
     this->PromptForBinding(UserAction::TOGGLE_FORCE_ZOOM);
   });
+  RecenterVRBindButton().Click(
+    [this](auto&, auto&) { this->PromptForBinding(UserAction::RECENTER_VR); });
   PreviousPageBindButton().Click([this](auto&, auto&) {
     this->PromptForBinding(UserAction::PREVIOUS_PAGE);
   });
@@ -65,6 +67,8 @@ InputBindingsControl::InputBindingsControl() {
   ToggleForceZoomClearButton().Click([this](auto&, auto&) {
     this->ClearBinding(UserAction::TOGGLE_FORCE_ZOOM);
   });
+  RecenterVRClearButton().Click(
+    [this](auto&, auto&) { this->ClearBinding(UserAction::RECENTER_VR); });
   PreviousPageClearButton().Click(
     [this](auto&, auto&) { this->ClearBinding(UserAction::PREVIOUS_PAGE); });
   NextPageClearButton().Click(
@@ -174,6 +178,11 @@ void InputBindingsControl::UpdateUI() {
     ToggleForceZoomLabel(),
     ToggleForceZoomBindButton(),
     ToggleForceZoomClearButton());
+  UpdateUI(
+    UserAction::RECENTER_VR,
+    RecenterVRLabel(),
+    RecenterVRBindButton(),
+    RecenterVRClearButton());
   UpdateUI(
     UserAction::PREVIOUS_PAGE,
     PreviousPageLabel(),
