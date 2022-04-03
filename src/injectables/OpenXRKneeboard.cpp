@@ -17,12 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/config.h>
 #include <d3d11.h>
 #include <loader_interfaces.h>
 #include <openxr/openxr.h>
+#include <shims/winrt.h>
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #define XR_USE_GRAPHICS_API_D3D11
 #include <openxr/openxr_platform.h>
@@ -34,7 +37,9 @@ const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
 #define NEEDED_OPENXR_FUNCS \
   IT(xrCreateSession) \
   IT(xrEndFrame) \
-  IT(xrCreateSwapchain)
+  IT(xrCreateSwapchain) \
+  IT(xrEnumerateSwapchainImages) \
+  IT(xrDestroySwapchain)
 
 static struct {
   PFN_xrGetInstanceProcAddr xrGetInstanceProcAddr {nullptr};
@@ -46,10 +51,10 @@ static struct {
 class OpenXRKneeboard {
  public:
   virtual ~OpenXRKneeboard();
-  XrResult xrEndFrame(
+  virtual XrResult xrEndFrame(
     XrSession session,
-    const XrFrameEndInfo* frameEndInfo,
-    PFN_xrEndFrame next);
+    const XrFrameEndInfo* frameEndInfo)
+    = 0;
 
  private:
   XrSwapchain mSwapChain = nullptr;
@@ -57,28 +62,93 @@ class OpenXRKneeboard {
 
 class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
  public:
-  OpenXRD3D11Kneeboard(ID3D11Device*);
+  OpenXRD3D11Kneeboard(XrSession, ID3D11Device*);
   ~OpenXRD3D11Kneeboard();
+
+  virtual XrResult xrEndFrame(
+    XrSession session,
+    const XrFrameEndInfo* frameEndInfo) override;
 
  private:
   ID3D11Device* mDevice = nullptr;
+  XrSwapchain mSwapchain = nullptr;
+  std::vector<winrt::com_ptr<ID3D11Texture2D>> mTextures;
 };
 
 OpenXRKneeboard::~OpenXRKneeboard() {
 }
 
-OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(ID3D11Device* device)
+OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
+  XrSession session,
+  ID3D11Device* device)
   : mDevice(device) {
+  XrSwapchainCreateInfo swapchainInfo {
+    .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
+    .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
+      | XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT
+      | XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT,
+    .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+    .sampleCount = 1,
+    .width = TextureWidth,
+    .height = TextureHeight,
+    .faceCount = 1,
+    .arraySize = 1,
+    .mipCount = 1,
+  };
+  if (
+    gOpenXR.xrCreateSwapchain(session, &swapchainInfo, &mSwapchain)
+    != XR_SUCCESS) {
+    mSwapchain = nullptr;
+    return;
+  }
+
+  uint32_t imageCount = 0;
+  gOpenXR.xrEnumerateSwapchainImages(mSwapchain, 0, &imageCount, nullptr);
+  if (imageCount == 0) {
+    return;
+  }
+
+  std::vector<XrSwapchainImageD3D11KHR> images(imageCount);
+  if (
+    gOpenXR.xrEnumerateSwapchainImages(
+      mSwapchain,
+      imageCount,
+      &imageCount,
+      reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data()))
+    != XR_SUCCESS) {
+    gOpenXR.xrDestroySwapchain(mSwapchain);
+    mSwapchain = nullptr;
+    return;
+  }
+
+  if (images.at(0).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
+    OPENKNEEBOARD_BREAK;
+    gOpenXR.xrDestroySwapchain(mSwapchain);
+    mSwapchain = nullptr;
+    return;
+  }
+
+  for (auto i = 0; i < imageCount; ++i) {
+#ifdef DEBUG
+    if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
+      OPENKNEEBOARD_BREAK;
+    }
+#endif
+    mTextures.at(i).copy_from(images.at(i).texture);
+  }
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
 }
 
-XrResult OpenXRKneeboard::xrEndFrame(
+XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   XrSession session,
-  const XrFrameEndInfo* frameEndInfo,
-  PFN_xrEndFrame next) {
-  return next(session, frameEndInfo);
+  const XrFrameEndInfo* frameEndInfo) {
+  if (!mSwapchain) {
+    return gOpenXR.xrEndFrame(session, frameEndInfo);
+  }
+
+  return gOpenXR.xrEndFrame(session, frameEndInfo);
 }
 
 static std::unique_ptr<OpenXRKneeboard> gKneeboard;
@@ -100,19 +170,26 @@ XrResult xrCreateSession(
   const XrSessionCreateInfo* createInfo,
   XrSession* session) {
   static PFN_xrCreateSession sNext = nullptr;
+
+  auto nextResult = gOpenXR.xrCreateSession(instance, createInfo, session);
+  if (nextResult != XR_SUCCESS) {
+    return nextResult;
+  }
+
   auto d3d11 = findInXrNextChain<XrGraphicsBindingD3D11KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
-    gKneeboard = std::make_unique<OpenXRD3D11Kneeboard>(d3d11->device);
+    gKneeboard
+      = std::make_unique<OpenXRD3D11Kneeboard>(*session, d3d11->device);
   }
   // TODO: D3D12
 
-  return gOpenXR.xrCreateSession(instance, createInfo, session);
+  return XR_SUCCESS;
 }
 
 XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) {
   if (gKneeboard) {
-    return gKneeboard->xrEndFrame(session, frameEndInfo, gOpenXR.xrEndFrame);
+    return gKneeboard->xrEndFrame(session, frameEndInfo);
   }
   return gOpenXR.xrEndFrame(session, frameEndInfo);
 }
