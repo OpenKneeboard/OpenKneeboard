@@ -262,12 +262,10 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   }
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
-  /*FIXME
   std::copy(
     frameEndInfo->layers,
     &frameEndInfo->layers[frameEndInfo->layerCount],
     std::back_inserter(nextLayers));
-    */
 
   const auto& vr = config.vr;
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
