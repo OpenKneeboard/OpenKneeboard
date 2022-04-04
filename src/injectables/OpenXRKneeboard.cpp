@@ -48,6 +48,7 @@ const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
   IT(xrEnumerateSwapchainImages) \
   IT(xrAcquireSwapchainImage) \
   IT(xrReleaseSwapchainImage) \
+  IT(xrWaitSwapchainImage) \
   IT(xrDestroySwapchain) \
   IT(xrCreateReferenceSpace) \
   IT(xrDestroySpace)
@@ -114,10 +115,11 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   }
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
-    .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
-      | XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT
+    .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT
+      | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
+      | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT
       | XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT,
-    .format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+    .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
     .sampleCount = 1,
     .width = TextureWidth,
     .height = TextureHeight,
@@ -194,6 +196,10 @@ OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
 XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
+  if (frameEndInfo->layerCount == 0) {
+    return gOpenXR.xrEndFrame(session, frameEndInfo);
+  }
+
   auto snapshot = mSHM.MaybeGet();
   if (!mSwapchain) {
     dprint("Missing swapchain");
@@ -203,45 +209,65 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     dprint("Missing snapshot");
     return gOpenXR.xrEndFrame(session, frameEndInfo);
   }
+  auto config = snapshot.GetConfig();
 
-  auto sharedTexture = snapshot.GetSharedTexture(mDevice);
-  if (!sharedTexture) {
-    dprint("Failed to get shared texture");
+  uint32_t textureIndex;
+  auto nextResult
+    = gOpenXR.xrAcquireSwapchainImage(mSwapchain, nullptr, &textureIndex);
+  if (nextResult != XR_SUCCESS) {
+    dprintf("Failed to acquire swapchain image: {}", nextResult);
     return gOpenXR.xrEndFrame(session, frameEndInfo);
   }
 
-  uint32_t textureIndex;
-  if (
-    gOpenXR.xrAcquireSwapchainImage(mSwapchain, nullptr, &textureIndex)
-    != XR_SUCCESS) {
-    dprint("Failed to acquire swapchain image");
+  XrSwapchainImageWaitInfo waitInfo {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+    .timeout = XR_INFINITE_DURATION,
+  };
+  nextResult = gOpenXR.xrWaitSwapchainImage(mSwapchain, &waitInfo);
+  if (nextResult != XR_SUCCESS) {
+    dprintf("Failed to wait for swapchain image: {}", nextResult);
+    nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+    if (nextResult != XR_SUCCESS) {
+      dprintf("Failed to release swapchain image: {}", nextResult);
+    }
     return gOpenXR.xrEndFrame(session, frameEndInfo);
   }
 
   auto texture = mTextures.at(textureIndex).get();
 
-  winrt::com_ptr<ID3D11DeviceContext> context;
-  mDevice->GetImmediateContext(context.put());
+  {
+    auto sharedTexture = snapshot.GetSharedTexture(mDevice);
+    if (!sharedTexture) {
+      dprint("Failed to get shared texture");
+      return gOpenXR.xrEndFrame(session, frameEndInfo);
+    }
 
-  auto config = snapshot.GetConfig();
-  D3D11_BOX sourceBox {
-    .left = 0,
-    .top = 0,
-    .front = 0,
-    .right = config.imageWidth,
-    .bottom = config.imageHeight,
-    .back = 1,
-  };
-  context->CopySubresourceRegion(
-    texture, 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
-  context->Flush();
-  gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    mDevice->GetImmediateContext(context.put());
+    D3D11_BOX sourceBox {
+      .left = 0,
+      .top = 0,
+      .front = 0,
+      .right = config.imageWidth,
+      .bottom = config.imageHeight,
+      .back = 1,
+    };
+    context->CopySubresourceRegion(
+      texture, 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
+    context->Flush();
+  }
+  nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+  if (nextResult != XR_SUCCESS) {
+    dprintf("Failed to release swapchain: {}", nextResult);
+  }
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
+  /*FIXME
   std::copy(
     frameEndInfo->layers,
     &frameEndInfo->layers[frameEndInfo->layerCount],
     std::back_inserter(nextLayers));
+    */
 
   const auto& vr = config.vr;
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
@@ -264,8 +290,7 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   XrCompositionLayerQuad layer {
     .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
     .next = nullptr,
-    .layerFlags = XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT
-      | XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT,
+    .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT,
     .space = mSpace,
     .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
     .subImage = {
@@ -274,13 +299,13 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
         {0, 0},
         {static_cast<int32_t>(config.imageWidth), static_cast<int32_t>(config.imageHeight)},
       },
-      .imageArrayIndex = textureIndex,
+      .imageArrayIndex = 0,
     },
     .pose = {
-      .orientation = {quat.x, quat.y, quat.z, quat.w },
-      .position = { vr.x, vr.floorY, vr.z },
+      .orientation = { 0, 0, 0, 1 },
+      .position = { 0, 1, 0 },
     },
-    .size = size,
+    .size = {1, 1},
   };
   nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
 
@@ -288,9 +313,11 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   nextFrameEndInfo.layers = nextLayers.data();
   nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
 
-  dprint("Passing to next");
-
-  return gOpenXR.xrEndFrame(session, &nextFrameEndInfo);
+  nextResult = gOpenXR.xrEndFrame(session, &nextFrameEndInfo);
+  if (nextResult != XR_SUCCESS) {
+    OPENKNEEBOARD_BREAK;
+  }
+  return nextResult;
 }
 
 static std::unique_ptr<OpenXRKneeboard> gKneeboard;

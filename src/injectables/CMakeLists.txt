@@ -108,6 +108,7 @@ target_link_libraries(
   ThirdParty::DirectXTK
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-scope_guard
   OpenKneeboard-shims
   OpenKneeboard-SHM
   NuGet::CppWinRT::Base
