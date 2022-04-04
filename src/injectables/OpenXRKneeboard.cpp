@@ -203,11 +203,11 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
 
   auto snapshot = mSHM.MaybeGet();
   if (!mSwapchain) {
-    dprint("Missing swapchain");
+    throw std::logic_error("Missing swapchain");
     return gOpenXR.xrEndFrame(session, frameEndInfo);
   }
   if (!snapshot) {
-    dprint("Missing snapshot");
+    // Don't spam: expected, if OpenKneeboard isn't running
     return gOpenXR.xrEndFrame(session, frameEndInfo);
   }
   auto config = snapshot.GetConfig();
