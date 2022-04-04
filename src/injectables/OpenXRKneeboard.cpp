@@ -43,6 +43,7 @@ const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
 
 #define NEEDED_OPENXR_FUNCS \
   IT(xrCreateSession) \
+  IT(xrDestroySession) \
   IT(xrEndFrame) \
   IT(xrCreateSwapchain) \
   IT(xrEnumerateSwapchainImages) \
@@ -356,6 +357,11 @@ XrResult xrCreateSession(
   return XR_SUCCESS;
 }
 
+XrResult xrDestroySession(XrSession session) {
+  gKneeboard.reset();
+  return gOpenXR.xrDestroySession(session);
+}
+
 XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) {
   if (gKneeboard) {
     return gKneeboard->xrEndFrame(session, frameEndInfo);
@@ -371,6 +377,10 @@ XrResult xrGetInstanceProcAddr(
 
   if (name == "xrCreateSession") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateSession);
+    return XR_SUCCESS;
+  }
+  if (name == "xrDestroySession") {
+    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrDestroySession);
     return XR_SUCCESS;
   }
   if (name == "xrEndFrame") {
