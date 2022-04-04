@@ -302,10 +302,10 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
       .imageArrayIndex = 0,
     },
     .pose = {
-      .orientation = { 0, 0, 0, 1 },
-      .position = { 0, 1, 0 },
+      .orientation = { quat.x, quat.y, quat.z, quat.w },
+      .position = { vr.x, vr.eyeY, vr.z },
     },
-    .size = {1, 1},
+    .size = size,
   };
   nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
 
