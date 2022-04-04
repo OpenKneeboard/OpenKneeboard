@@ -51,6 +51,7 @@ struct DPrintSettings {
 
   std::string prefix = "OpenKneeboard";
   Target target = Target::DEFAULT;
+  Target prefixTarget = Target::DEFAULT;
 
   static void Set(const DPrintSettings&);
 };

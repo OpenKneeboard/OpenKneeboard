@@ -52,7 +52,13 @@ void dprint(std::wstring_view message) {
   if (
     target == DPrintSettings::Target::CONSOLE
     || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
-    auto output = fmt::format(L"{}\n", message);
+    std::wstring output;
+    if (gSettings.prefixTarget == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
+      output = fmt::format(L"[{}] {}\n", gPrefixW, message);
+    } else {
+      output = fmt::format(L"{}\n", message);
+    }
+
     if (AllocConsole()) {
       // Gets detour trace working too :)
       freopen("CONIN$", "r", stdin);

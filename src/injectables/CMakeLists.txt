@@ -107,6 +107,7 @@ target_link_libraries(
   ThirdParty::OpenXR
   ThirdParty::DirectXTK
   OpenKneeboard-config
+  OpenKneeboard-dprint
   OpenKneeboard-shims
   OpenKneeboard-SHM
   NuGet::CppWinRT::Base
