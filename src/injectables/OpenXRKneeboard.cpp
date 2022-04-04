@@ -17,18 +17,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <DirectXTK/SimpleMath.h>
+#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <d3d11.h>
 #include <loader_interfaces.h>
 #include <openxr/openxr.h>
 #include <shims/winrt.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
 
 #define XR_USE_GRAPHICS_API_D3D11
 #include <openxr/openxr_platform.h>
+
+using namespace DirectX::SimpleMath;
 
 namespace OpenKneeboard {
 
@@ -39,7 +45,11 @@ const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
   IT(xrEndFrame) \
   IT(xrCreateSwapchain) \
   IT(xrEnumerateSwapchainImages) \
-  IT(xrDestroySwapchain)
+  IT(xrAcquireSwapchainImage) \
+  IT(xrReleaseSwapchainImage) \
+  IT(xrDestroySwapchain) \
+  IT(xrCreateReferenceSpace) \
+  IT(xrDestroySpace)
 
 static struct {
   PFN_xrGetInstanceProcAddr xrGetInstanceProcAddr {nullptr};
@@ -70,8 +80,10 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const XrFrameEndInfo* frameEndInfo) override;
 
  private:
+  SHM::Reader mSHM;
   ID3D11Device* mDevice = nullptr;
   XrSwapchain mSwapchain = nullptr;
+  XrSpace mSpace = nullptr;
   std::vector<winrt::com_ptr<ID3D11Texture2D>> mTextures;
 };
 
@@ -82,6 +94,16 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   XrSession session,
   ID3D11Device* device)
   : mDevice(device) {
+  XrReferenceSpaceCreateInfo referenceSpace {
+    .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
+    .next = nullptr,
+    .referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL,
+  };
+  if (
+    gOpenXR.xrCreateReferenceSpace(session, &referenceSpace, &mSpace)
+    != XR_SUCCESS) {
+    return;
+  }
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
@@ -128,7 +150,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
     return;
   }
 
-  for (auto i = 0; i < imageCount; ++i) {
+  for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
     if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
       OPENKNEEBOARD_BREAK;
@@ -139,16 +161,110 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
+  if (mSpace) {
+    gOpenXR.xrDestroySpace(mSpace);
+  }
+  if (mSwapchain) {
+    gOpenXR.xrDestroySwapchain(mSwapchain);
+  }
 }
 
 XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
-  if (!mSwapchain) {
+  auto snapshot = mSHM.MaybeGet();
+  if (!(mSwapchain && snapshot)) {
     return gOpenXR.xrEndFrame(session, frameEndInfo);
   }
 
-  return gOpenXR.xrEndFrame(session, frameEndInfo);
+  auto sharedTexture = snapshot.GetSharedTexture(mDevice);
+  if (!sharedTexture) {
+    return gOpenXR.xrEndFrame(session, frameEndInfo);
+  }
+
+  uint32_t textureIndex;
+  if (
+    gOpenXR.xrAcquireSwapchainImage(mSwapchain, nullptr, &textureIndex)
+    != XR_SUCCESS) {
+    return gOpenXR.xrEndFrame(session, frameEndInfo);
+  }
+
+  auto texture = mTextures.at(textureIndex).get();
+
+  winrt::com_ptr<ID3D11DeviceContext> context;
+  mDevice->GetImmediateContext(context.put());
+
+  auto config = snapshot.GetConfig();
+  D3D11_BOX sourceBox {
+    .left = 0,
+    .top = 0,
+    .front = 0,
+    .right = config.imageWidth,
+    .bottom = config.imageHeight,
+    .back = 1,
+  };
+  context->CopySubresourceRegion(
+    texture, 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
+  context->Flush();
+  gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+
+  std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
+  std::copy(
+    frameEndInfo->layers,
+    &frameEndInfo->layers[frameEndInfo->layerCount],
+    std::back_inserter(nextLayers));
+
+  const auto& vr = config.vr;
+  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  const auto virtualHeight = vr.height;
+  const auto virtualWidth = aspectRatio * vr.height;
+
+  // Using a variable to easily substitute zoom later
+  const XrExtent2Df size {virtualWidth, virtualHeight};
+
+  auto quat = Quaternion::CreateFromYawPitchRoll({
+    vr.rx,
+    vr.ry,
+    vr.rz,
+  });
+
+  static_assert(
+    SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
+    "Use premultiplied alpha in shared texture, or pass "
+    "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
+  XrCompositionLayerQuad layer {
+    .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
+    .next = nullptr,
+    .layerFlags = XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT
+      | XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT,
+    .space = mSpace,
+    .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
+    .subImage = {
+      .swapchain = mSwapchain,
+      .imageRect = {
+        { 0, 0},
+        {static_cast<int32_t>(config.imageWidth), static_cast<int32_t>(config.imageHeight)},
+      },
+      .imageArrayIndex = textureIndex,
+    },
+    .pose = {
+      .orientation = {
+        .x = quat.x,
+        .y = quat.y,
+        .z = quat.z,
+        .w = quat.w,
+      },
+      .position = { vr.x, vr.floorY, vr.z },
+    },
+    .size = size,
+  };
+  nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
+
+  XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
+  nextFrameEndInfo.layers = nextLayers.data();
+  nextFrameEndInfo.layerCount = nextLayers.size();
+
+  return gOpenXR.xrEndFrame(session, &nextFrameEndInfo);
 }
 
 static std::unique_ptr<OpenXRKneeboard> gKneeboard;
