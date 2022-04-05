@@ -326,6 +326,7 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to release swapchain: {}", nextResult);
   }
+  this->mSequenceNumber = snapshot.GetSequenceNumber();
 }
 
 static std::unique_ptr<OpenXRKneeboard> gKneeboard;
