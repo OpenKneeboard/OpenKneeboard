@@ -68,9 +68,6 @@ class OpenXRKneeboard {
     XrSession session,
     const XrFrameEndInfo* frameEndInfo)
     = 0;
-
- private:
-  XrSwapchain mSwapChain = nullptr;
 };
 
 class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
@@ -83,10 +80,14 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const XrFrameEndInfo* frameEndInfo) override;
 
  private:
+  void Render(const SHM::Snapshot&);
+
   SHM::Reader mSHM;
   ID3D11Device* mDevice = nullptr;
   XrSwapchain mSwapchain = nullptr;
   XrSpace mSpace = nullptr;
+  uint64_t mSequenceNumber = ~(0ui64);
+
   std::vector<winrt::com_ptr<ID3D11Texture2D>> mTextures;
 };
 
@@ -212,54 +213,8 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   }
   auto config = snapshot.GetConfig();
 
-  uint32_t textureIndex;
-  auto nextResult
-    = gOpenXR.xrAcquireSwapchainImage(mSwapchain, nullptr, &textureIndex);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to acquire swapchain image: {}", nextResult);
-    return gOpenXR.xrEndFrame(session, frameEndInfo);
-  }
-
-  XrSwapchainImageWaitInfo waitInfo {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = XR_INFINITE_DURATION,
-  };
-  nextResult = gOpenXR.xrWaitSwapchainImage(mSwapchain, &waitInfo);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to wait for swapchain image: {}", nextResult);
-    nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
-    if (nextResult != XR_SUCCESS) {
-      dprintf("Failed to release swapchain image: {}", nextResult);
-    }
-    return gOpenXR.xrEndFrame(session, frameEndInfo);
-  }
-
-  auto texture = mTextures.at(textureIndex).get();
-
-  {
-    auto sharedTexture = snapshot.GetSharedTexture(mDevice);
-    if (!sharedTexture) {
-      dprint("Failed to get shared texture");
-      return gOpenXR.xrEndFrame(session, frameEndInfo);
-    }
-
-    winrt::com_ptr<ID3D11DeviceContext> context;
-    mDevice->GetImmediateContext(context.put());
-    D3D11_BOX sourceBox {
-      .left = 0,
-      .top = 0,
-      .front = 0,
-      .right = config.imageWidth,
-      .bottom = config.imageHeight,
-      .back = 1,
-    };
-    context->CopySubresourceRegion(
-      texture, 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
-    context->Flush();
-  }
-  nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to release swapchain: {}", nextResult);
+  if (snapshot.GetSequenceNumber() != mSequenceNumber) {
+    this->Render(snapshot);
   }
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
@@ -312,11 +267,64 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   nextFrameEndInfo.layers = nextLayers.data();
   nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
 
-  nextResult = gOpenXR.xrEndFrame(session, &nextFrameEndInfo);
+  auto nextResult = gOpenXR.xrEndFrame(session, &nextFrameEndInfo);
   if (nextResult != XR_SUCCESS) {
     OPENKNEEBOARD_BREAK;
   }
   return nextResult;
+}
+
+void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
+  auto config = snapshot.GetConfig();
+  uint32_t textureIndex;
+  auto nextResult
+    = gOpenXR.xrAcquireSwapchainImage(mSwapchain, nullptr, &textureIndex);
+  if (nextResult != XR_SUCCESS) {
+    dprintf("Failed to acquire swapchain image: {}", nextResult);
+    return;
+  }
+
+  XrSwapchainImageWaitInfo waitInfo {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+    .timeout = XR_INFINITE_DURATION,
+  };
+  nextResult = gOpenXR.xrWaitSwapchainImage(mSwapchain, &waitInfo);
+  if (nextResult != XR_SUCCESS) {
+    dprintf("Failed to wait for swapchain image: {}", nextResult);
+    nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+    if (nextResult != XR_SUCCESS) {
+      dprintf("Failed to release swapchain image: {}", nextResult);
+    }
+    return;
+  }
+
+  auto texture = mTextures.at(textureIndex).get();
+
+  {
+    auto sharedTexture = snapshot.GetSharedTexture(mDevice);
+    if (!sharedTexture) {
+      dprint("Failed to get shared texture");
+      return;
+    }
+
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    mDevice->GetImmediateContext(context.put());
+    D3D11_BOX sourceBox {
+      .left = 0,
+      .top = 0,
+      .front = 0,
+      .right = config.imageWidth,
+      .bottom = config.imageHeight,
+      .back = 1,
+    };
+    context->CopySubresourceRegion(
+      texture, 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
+    context->Flush();
+  }
+  nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+  if (nextResult != XR_SUCCESS) {
+    dprintf("Failed to release swapchain: {}", nextResult);
+  }
 }
 
 static std::unique_ptr<OpenXRKneeboard> gKneeboard;
