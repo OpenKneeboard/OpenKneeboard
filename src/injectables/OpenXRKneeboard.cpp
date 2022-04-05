@@ -185,7 +185,7 @@ XrExtent2Df OpenXRKneeboard::GetSize(
 
   mZoomed = RayIntersectsRect(
     {pos.x, pos.y, pos.z},
-    {quat.x, quat.y, quat.z, quat.z},
+    {quat.x, quat.y, quat.z, quat.w},
     {vr.x, vr.eyeY, vr.z},
     Quaternion::CreateFromYawPitchRoll({vr.rx, vr.ry, vr.rz}),
     mZoomed
