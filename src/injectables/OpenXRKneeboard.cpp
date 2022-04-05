@@ -18,6 +18,7 @@
  * USA.
  */
 #include <DirectXTK/SimpleMath.h>
+#include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -52,7 +53,8 @@ const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
   IT(xrWaitSwapchainImage) \
   IT(xrDestroySwapchain) \
   IT(xrCreateReferenceSpace) \
-  IT(xrDestroySpace)
+  IT(xrDestroySpace) \
+  IT(xrLocateSpace)
 
 static struct {
   PFN_xrGetInstanceProcAddr xrGetInstanceProcAddr {nullptr};
@@ -63,11 +65,20 @@ static struct {
 
 class OpenXRKneeboard {
  public:
+  OpenXRKneeboard() = delete;
+  OpenXRKneeboard(XrSession);
   virtual ~OpenXRKneeboard();
   virtual XrResult xrEndFrame(
     XrSession session,
     const XrFrameEndInfo* frameEndInfo)
     = 0;
+
+ protected:
+  XrExtent2Df GetSize(const SHM::Config&, const VRConfig&, XrTime displayTime);
+
+  bool mZoomed = false;
+  XrSpace mLocalSpace = nullptr;
+  XrSpace mViewSpace = nullptr;
 };
 
 class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
@@ -85,19 +96,12 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   SHM::Reader mSHM;
   ID3D11Device* mDevice = nullptr;
   XrSwapchain mSwapchain = nullptr;
-  XrSpace mSpace = nullptr;
   uint64_t mSequenceNumber = ~(0ui64);
 
   std::vector<winrt::com_ptr<ID3D11Texture2D>> mTextures;
 };
 
-OpenXRKneeboard::~OpenXRKneeboard() {
-}
-
-OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
-  XrSession session,
-  ID3D11Device* device)
-  : mDevice(device) {
+OpenXRKneeboard::OpenXRKneeboard(XrSession session) {
   dprintf("{}", __FUNCTION__);
   XrReferenceSpaceCreateInfo referenceSpace {
     .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
@@ -110,11 +114,91 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   };
 
   XrResult nextResult
-    = gOpenXR.xrCreateReferenceSpace(session, &referenceSpace, &mSpace);
+    = gOpenXR.xrCreateReferenceSpace(session, &referenceSpace, &mLocalSpace);
   if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to create reference space: {}", nextResult);
+    dprintf("Failed to create LOCAL reference space: {}", nextResult);
     return;
   }
+
+  referenceSpace.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
+  nextResult
+    = gOpenXR.xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace);
+  if (nextResult != XR_SUCCESS) {
+    dprintf("Failed to create VIEW reference space: {}", nextResult);
+    return;
+  }
+}
+
+OpenXRKneeboard::~OpenXRKneeboard() {
+  if (mLocalSpace) {
+    gOpenXR.xrDestroySpace(mLocalSpace);
+  }
+  if (mViewSpace) {
+    gOpenXR.xrDestroySpace(mViewSpace);
+  }
+}
+
+XrExtent2Df OpenXRKneeboard::GetSize(
+  const SHM::Config& config,
+  const VRConfig& vr,
+  XrTime displayTime) {
+  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  const auto virtualHeight = vr.height;
+  const auto virtualWidth = aspectRatio * vr.height;
+
+  XrExtent2Df normalSize {virtualWidth, virtualHeight};
+  XrExtent2Df zoomedSize {
+    virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale};
+
+  if (vr.flags & VRConfig::Flags::FORCE_ZOOM) {
+    mZoomed = true;
+    return zoomedSize;
+  }
+  if (!(vr.flags & VRConfig::Flags::GAZE_ZOOM)) {
+    mZoomed = false;
+    return normalSize;
+  }
+  if (
+    vr.zoomScale < 1.1 || vr.gazeTargetHorizontalScale < 0.1
+    || vr.gazeTargetVerticalScale < 0.1) {
+    mZoomed = false;
+    return normalSize;
+  }
+
+  XrSpaceLocation location {.type = XR_TYPE_SPACE_LOCATION};
+  if (
+    gOpenXR.xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location)
+    != XR_SUCCESS) {
+    mZoomed = false;
+    return normalSize;
+  }
+
+  const auto desiredFlags = XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
+    | XR_SPACE_LOCATION_POSITION_VALID_BIT;
+  if ((location.locationFlags & desiredFlags) != desiredFlags) {
+    mZoomed = false;
+    return normalSize;
+  }
+
+  auto pos = location.pose.position;
+  auto quat = location.pose.orientation;
+
+  mZoomed = RayIntersectsRect(
+    {pos.x, pos.y, pos.z},
+    {quat.x, quat.y, quat.z, quat.z},
+    {vr.x, vr.eyeY, vr.z},
+    Quaternion::CreateFromYawPitchRoll({vr.rx, vr.ry, vr.rz}),
+    mZoomed
+      ? Vector2 {virtualWidth * vr.gazeTargetHorizontalScale, virtualHeight * vr.gazeTargetVerticalScale}
+      : Vector2 {virtualWidth, virtualHeight});
+  return mZoomed ? zoomedSize : normalSize;
+}
+
+OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
+  XrSession session,
+  ID3D11Device* device)
+  : OpenXRKneeboard(session), mDevice(device) {
+  dprintf("{}", __FUNCTION__);
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT
@@ -129,7 +213,8 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
     .arraySize = 1,
     .mipCount = 1,
   };
-  nextResult = gOpenXR.xrCreateSwapchain(session, &swapchainInfo, &mSwapchain);
+  auto nextResult
+    = gOpenXR.xrCreateSwapchain(session, &swapchainInfo, &mSwapchain);
   if (nextResult != XR_SUCCESS) {
     mSwapchain = nullptr;
     dprintf("Failed to create swapchain: {}", nextResult);
@@ -187,9 +272,6 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
   dprintf("{}", __FUNCTION__);
-  if (mSpace) {
-    gOpenXR.xrDestroySpace(mSpace);
-  }
   if (mSwapchain) {
     gOpenXR.xrDestroySwapchain(mSwapchain);
   }
@@ -228,8 +310,9 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   const auto virtualHeight = vr.height;
   const auto virtualWidth = aspectRatio * vr.height;
 
-  // Using a variable to easily substitute zoom later
-  const XrExtent2Df size {virtualWidth, virtualHeight};
+  const XrExtent2Df normalSize {virtualWidth, virtualHeight};
+  const XrExtent2Df zoomedSize {
+    virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale};
 
   auto quat = Quaternion::CreateFromYawPitchRoll({
     vr.rx,
@@ -246,7 +329,7 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     .next = nullptr,
     .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
       | XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT,
-    .space = mSpace,
+    .space = mLocalSpace,
     .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
     .subImage = {
       .swapchain = mSwapchain,
@@ -260,7 +343,7 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
       .orientation = { quat.x, quat.y, quat.z, quat.w },
       .position = { vr.x, vr.eyeY, vr.z },
     },
-    .size = size,
+    .size = this->GetSize(config, vr, frameEndInfo->displayTime),
   };
   nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
 
