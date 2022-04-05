@@ -226,13 +226,16 @@ InterprocessRenderer::InterprocessRenderer(
   this->RenderNow();
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
-    if (p->mNeedsRepaint) {
+    if (p && p->mNeedsRepaint) {
       RenderNow();
     }
   });
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
+  if (!p) {
+    return;
+  }
   auto ctx = p->mD3DContext;
   p = {};
   ctx->Flush();
