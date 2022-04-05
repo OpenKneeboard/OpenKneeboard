@@ -412,7 +412,12 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
   this->mSequenceNumber = snapshot.GetSequenceNumber();
 }
 
-static std::unique_ptr<OpenXRKneeboard> gKneeboard;
+// Don't use a unique_ptr as on process exit, windows doesn't clean these up in
+// a useful order, and Microsoft recommend just leaking resources on
+// thread/process exit
+//
+// In this case, it leads to an infinite hang on ^C
+static OpenXRKneeboard* gKneeboard = nullptr;
 
 template <class T>
 static const T* findInXrNextChain(XrStructureType type, const void* next) {
@@ -440,8 +445,10 @@ XrResult xrCreateSession(
   auto d3d11 = findInXrNextChain<XrGraphicsBindingD3D11KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
-    gKneeboard
-      = std::make_unique<OpenXRD3D11Kneeboard>(*session, d3d11->device);
+    if (gKneeboard) {
+      return XR_ERROR_INITIALIZATION_FAILED;
+    }
+    gKneeboard = new OpenXRD3D11Kneeboard(*session, d3d11->device);
     return XR_SUCCESS;
   }
 
@@ -451,7 +458,8 @@ XrResult xrCreateSession(
 }
 
 XrResult xrDestroySession(XrSession session) {
-  gKneeboard.reset();
+  delete gKneeboard;
+  gKneeboard = nullptr;
   return gOpenXR.xrDestroySession(session);
 }
 
