@@ -115,6 +115,8 @@ target_link_libraries(
   NuGet::CppWinRT::Base
 )
 
+install(FILES OpenKneeboard-OpenXR.json TYPE BIN)
+
 add_library(OpenKneeboard-Injection-Bootstrapper MODULE InjectionBootstrapper.cpp)
 sign_target(OpenKneeboard-Injection-Bootstrapper)
 target_link_libraries(

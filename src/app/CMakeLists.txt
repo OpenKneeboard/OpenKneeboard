@@ -17,6 +17,7 @@ set(
   OpenKneeboard-nonvr-d3d11
   OpenKneeboard-oculus-d3d11
   OpenKneeboard-oculus-d3d12
+  OpenKneeboard-OpenXR
   OpenKneeboard-dcs-ext-dll
 )
 install(TARGETS ${DLL_TARGETS} LIBRARY DESTINATION bin)
