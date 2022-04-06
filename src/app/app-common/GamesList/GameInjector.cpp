@@ -309,6 +309,10 @@ bool GameInjector::Run(std::stop_token stopToken) {
             currentPath = path;
             dprint("SteamVR forced, not injecting any overlay DLL");
             goto NEXT_PROCESS;
+          case OverlayAPI::OpenXR:
+            currentPath = path;
+            dprint("OpenXR forced, not injecting any overlay DLL");
+            goto NEXT_PROCESS;
           case OverlayAPI::AutoDetect:
             overlayDll = overlayAutoDetectDll;
             break;

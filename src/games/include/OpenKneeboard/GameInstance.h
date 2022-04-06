@@ -30,6 +30,7 @@ namespace OpenKneeboard {
 #define OPENKNEEBOARD_OVERLAY_APIS \
   IT(AutoDetect) \
   IT(SteamVR) \
+  IT(OpenXR) \
   IT(OculusD3D11) \
   IT(OculusD3D12) \
   IT(NonVRD3D11)

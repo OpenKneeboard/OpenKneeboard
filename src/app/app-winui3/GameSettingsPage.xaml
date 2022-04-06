@@ -54,6 +54,7 @@
               SelectionChanged="OnOverlayAPIChanged">
               <x:String>Auto-detect</x:String>
               <x:String>SteamVR</x:String>
+              <x:String>OpenXR</x:String>
               <x:String>Oculus + Direct3D 11</x:String>
               <x:String>Oculus + Direct3D 12</x:String>
               <x:String>Direct3D 11 (Non-VR)</x:String>
