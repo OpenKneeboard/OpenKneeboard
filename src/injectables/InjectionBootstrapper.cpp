@@ -135,7 +135,7 @@ class InjectionBootstrapper final {
     mFrames++;
 
     // Wait for anything else, e.g. SteamVR, Oculus, OpenVR
-    if (mFrames >= 30) {
+    if (mFrames >= 100) {
       Next();
     }
 
