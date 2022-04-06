@@ -101,6 +101,7 @@ add_library(
   MODULE
   OpenXRKneeboard.cpp
 )
+sign_target(OpenKneeboard-OpenXR)
 target_link_libraries(
   OpenKneeboard-OpenXR
   PRIVATE
