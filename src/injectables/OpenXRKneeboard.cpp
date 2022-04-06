@@ -40,6 +40,11 @@ using namespace DirectX::SimpleMath;
 
 namespace OpenKneeboard {
 
+static constexpr XrPosef XR_POSEF_IDENTITY {
+  .orientation = {0.0f, 0.0f, 0.0f, 1.0f},
+  .position = {0.0f, 0.0f, 0.0f},
+};
+
 const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
 
 #define NEEDED_OPENXR_FUNCS \
@@ -74,11 +79,17 @@ class OpenXRKneeboard {
     = 0;
 
  protected:
-  XrExtent2Df GetSize(const SHM::Config&, const VRConfig&, XrTime displayTime);
+  XrPosef GetHMDPose(XrTime displayTime);
+  XrExtent2Df
+  GetSize(const SHM::Config&, const Matrix& kneeboardPose, XrTime displayTime);
+  void Recenter(XrTime displayTime);
 
   bool mZoomed = false;
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;
+
+  int64_t mRecenterCount = 0;
+  Matrix mRecenter = Matrix::Identity;
 };
 
 class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
@@ -107,10 +118,7 @@ OpenXRKneeboard::OpenXRKneeboard(XrSession session) {
     .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
     .next = nullptr,
     .referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL,
-    .poseInReferenceSpace = {
-      {0.0f, 0.0f, 0.0f, 1.0f},
-      {0.0f, 0.0f, 0.0f},
-    },
+    .poseInReferenceSpace = XR_POSEF_IDENTITY,
   };
 
   XrResult nextResult
@@ -138,10 +146,37 @@ OpenXRKneeboard::~OpenXRKneeboard() {
   }
 }
 
+XrPosef OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
+  static XrPosef sCache = XR_POSEF_IDENTITY;
+  static XrTime sCacheKey {};
+  if (displayTime == sCacheKey) {
+    return sCache;
+  }
+
+  XrSpaceLocation location {.type = XR_TYPE_SPACE_LOCATION};
+  if (
+    gOpenXR.xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location)
+    != XR_SUCCESS) {
+    return XR_POSEF_IDENTITY;
+  }
+
+  const auto desiredFlags = XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
+    | XR_SPACE_LOCATION_POSITION_VALID_BIT;
+  if ((location.locationFlags & desiredFlags) != desiredFlags) {
+    return XR_POSEF_IDENTITY;
+  }
+
+  sCache = location.pose;
+  sCacheKey = displayTime;
+  return sCache;
+}
+
 XrExtent2Df OpenXRKneeboard::GetSize(
   const SHM::Config& config,
-  const VRConfig& vr,
+  const Matrix& kneeboardPose,
   XrTime displayTime) {
+  const auto& vr = config.vr;
+
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
   const auto virtualHeight = vr.height;
   const auto virtualWidth = aspectRatio * vr.height;
@@ -165,33 +200,42 @@ XrExtent2Df OpenXRKneeboard::GetSize(
     return normalSize;
   }
 
-  XrSpaceLocation location {.type = XR_TYPE_SPACE_LOCATION};
-  if (
-    gOpenXR.xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location)
-    != XR_SUCCESS) {
-    mZoomed = false;
-    return normalSize;
-  }
+  const auto hmdPose = this->GetHMDPose(displayTime);
 
-  const auto desiredFlags = XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
-    | XR_SPACE_LOCATION_POSITION_VALID_BIT;
-  if ((location.locationFlags & desiredFlags) != desiredFlags) {
-    mZoomed = false;
-    return normalSize;
-  }
-
-  auto pos = location.pose.position;
-  auto quat = location.pose.orientation;
+  const auto& pos = hmdPose.position;
+  const auto& quat = hmdPose.orientation;
 
   mZoomed = RayIntersectsRect(
     {pos.x, pos.y, pos.z},
     {quat.x, quat.y, quat.z, quat.w},
-    {vr.x, vr.eyeY, vr.z},
-    Quaternion::CreateFromYawPitchRoll({vr.rx, vr.ry, vr.rz}),
+    kneeboardPose.Translation(),
+    Quaternion::CreateFromRotationMatrix(kneeboardPose),
     mZoomed
       ? Vector2 {virtualWidth * vr.gazeTargetHorizontalScale, virtualHeight * vr.gazeTargetVerticalScale}
       : Vector2 {virtualWidth, virtualHeight});
   return mZoomed ? zoomedSize : normalSize;
+}
+
+void OpenXRKneeboard::Recenter(XrTime displayTime) {
+  auto hmd = this->GetHMDPose(displayTime);
+
+  auto& pos = hmd.position;
+  pos.y = 0;// don't adjust floor level
+  Quaternion quat {
+    hmd.orientation.x,
+    hmd.orientation.y,
+    hmd.orientation.z,
+    hmd.orientation.w,
+  };
+
+  // We're only going to respect ry (yaw) as we want the new
+  // center to remain gravity-aligned
+
+  // clang-format off
+  mRecenter =
+    Matrix::CreateRotationY(quat.ToEuler().y) 
+    * Matrix::CreateTranslation({pos.x, pos.y, pos.z});
+  // clang-format on
 }
 
 OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
@@ -277,6 +321,16 @@ OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
   }
 }
 
+static XrPosef xrPoseFromSimpleMathMatrix(const Matrix& m) {
+  const auto pos = m.Translation();
+  const auto quat = Quaternion::CreateFromRotationMatrix(m);
+
+  return XrPosef {
+    .orientation = {quat.x, quat.y, quat.z, quat.w},
+    .position = {pos.x, pos.y, pos.z},
+  };
+}
+
 XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
@@ -299,13 +353,18 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     this->Render(snapshot);
   }
 
+  const auto& vr = config.vr;
+  if (vr.recenterCount != mRecenterCount) {
+    this->Recenter(frameEndInfo->displayTime);
+    mRecenterCount = vr.recenterCount;
+  }
+
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   std::copy(
     frameEndInfo->layers,
     &frameEndInfo->layers[frameEndInfo->layerCount],
     std::back_inserter(nextLayers));
 
-  const auto& vr = config.vr;
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
   const auto virtualHeight = vr.height;
   const auto virtualWidth = aspectRatio * vr.height;
@@ -314,11 +373,12 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   const XrExtent2Df zoomedSize {
     virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale};
 
-  auto quat = Quaternion::CreateFromYawPitchRoll({
-    vr.rx,
-    vr.ry,
-    vr.rz,
-  });
+  // clang-format off
+  auto kneeboardPose =
+    Matrix::CreateFromYawPitchRoll({vr.rx, vr.ry, vr.rz})
+    * Matrix::CreateTranslation({vr.x, vr.eyeY, vr.z})
+    * mRecenter;
+  // clang-format on
 
   static_assert(
     SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
@@ -339,11 +399,8 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
       },
       .imageArrayIndex = 0,
     },
-    .pose = {
-      .orientation = { quat.x, quat.y, quat.z, quat.w },
-      .position = { vr.x, vr.eyeY, vr.z },
-    },
-    .size = this->GetSize(config, vr, frameEndInfo->displayTime),
+    .pose = xrPoseFromSimpleMathMatrix(kneeboardPose),
+    .size = this->GetSize(config, kneeboardPose, frameEndInfo->displayTime),
   };
   nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
 
@@ -412,8 +469,8 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
   this->mSequenceNumber = snapshot.GetSequenceNumber();
 }
 
-// Don't use a unique_ptr as on process exit, windows doesn't clean these up in
-// a useful order, and Microsoft recommend just leaking resources on
+// Don't use a unique_ptr as on process exit, windows doesn't clean these up
+// in a useful order, and Microsoft recommend just leaking resources on
 // thread/process exit
 //
 // In this case, it leads to an infinite hang on ^C

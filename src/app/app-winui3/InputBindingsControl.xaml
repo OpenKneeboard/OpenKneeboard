@@ -38,7 +38,7 @@
     <Button Grid.Column="3" Grid.Row="1" x:Name="ToggleForceZoomClearButton">Clear Binding</Button>
 
     <TextBlock Grid.Column="0" Grid.Row="2" Style="{StaticResource BodyTextBlockStyle}">
-      Recenter SteamVR
+      Recenter SteamVR or OpenXR
     </TextBlock>
     <TextBlock
       Grid.Column="1"
