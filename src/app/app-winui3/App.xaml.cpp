@@ -125,10 +125,9 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     return 0;
   }
 
-  UINT32 packageNameLen = MAX_PATH;
-  wchar_t packageName[MAX_PATH];
+  UINT32 packageNameLen { 0 };
   const bool isPackaged
-    = GetCurrentPackageFullName(&packageNameLen, packageName) == ERROR_SUCCESS;
+    = GetCurrentPackageFullName(&packageNameLen, nullptr) == ERROR_INSUFFICIENT_BUFFER;
   if (!isPackaged) {
     PACKAGE_VERSION minimumVersion {WINDOWSAPPSDK_RUNTIME_VERSION_UINT64};
     winrt::check_hresult(MddBootstrapInitialize(
