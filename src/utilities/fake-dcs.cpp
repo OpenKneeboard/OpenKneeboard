@@ -42,6 +42,8 @@ int main() {
     "wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap"
     " wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap"
     " wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap wrap",
+    "tab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\t"
+    "tab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\ttab\t",
     "Word wrap012345678901234567890123456789012345678901234567890"
     "--34567890123456789012345678901234567890123456789012345678901234567890"
     "--34567890123456789012345678901234567890123456789012345678901234567890",
