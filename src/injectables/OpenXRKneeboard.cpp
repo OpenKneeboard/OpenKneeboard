@@ -326,7 +326,7 @@ static XrPosef xrPoseFromSimpleMathMatrix(const Matrix& m) {
   const auto quat = Quaternion::CreateFromRotationMatrix(m);
 
   return XrPosef {
-    .orientation = {quat.x, quat.y, quat.z, quat.w},
+    .orientation = {.x = quat.x, .y = quat.y, .z = quat.z, .w = quat.w},
     .position = {pos.x, pos.y, pos.z},
   };
 }
@@ -375,7 +375,9 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
 
   // clang-format off
   auto kneeboardPose =
-    Matrix::CreateFromYawPitchRoll({vr.rx, vr.ry, vr.rz})
+    Matrix::CreateRotationX(vr.rx)
+    * Matrix::CreateRotationY(vr.ry)
+    * Matrix::CreateRotationZ(vr.rz)
     * Matrix::CreateTranslation({vr.x, vr.eyeY, vr.z})
     * mRecenter;
   // clang-format on

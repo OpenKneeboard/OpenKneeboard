@@ -177,7 +177,9 @@ void OpenVROverlay::Tick() {
 
   // clang-format off
   auto transform =
-    Matrix::CreateFromYawPitchRoll({vrConf.rx, vrConf.ry, vrConf.rz})
+    Matrix::CreateRotationX(vrConf.rx)
+    * Matrix::CreateRotationY(vrConf.ry)
+    * Matrix::CreateRotationZ(vrConf.rz)
     * Matrix::CreateTranslation(vrConf.x, vrConf.floorY, vrConf.z)
     * p->mRecenter;
   // clang-format on
