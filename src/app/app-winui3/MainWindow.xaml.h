@@ -42,6 +42,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
 
  private:
   HWND mHwnd;
+  winrt::handle mHwndFile;
   NavigationViewItem mTabSettingsItem;
   NavigationViewItem mGameSettingsItem;
   NavigationViewItem mBindingSettingsItem;

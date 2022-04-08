@@ -26,6 +26,7 @@
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <Psapi.h>
 #include <appmodel.h>
@@ -81,12 +82,11 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) {
         auto& path = dcs->mSavedGamesPath;
         if (path.empty()) {
           auto stringPath = co_await ChooseDCSSavedGamesFolder(
-            root,
-            DCSSavedGamesSelectionTrigger::IMPLICIT);
+            root, DCSSavedGamesSelectionTrigger::IMPLICIT);
           if (stringPath.empty()) {
             continue;
           }
-          path = std::filesystem::canonical(std::wstring_view { stringPath });
+          path = std::filesystem::canonical(std::wstring_view {stringPath});
           gKneeboard->SaveSettings();
         }
 
@@ -103,55 +103,25 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) {
   window.Activate();
 }
 
-static bool ActivateExistingInstance() {
-  // If already running, make the other instance active.
-  //
-  // There's more common ways to do this, but given we already have the SHM
-  // and the SHM has a handy HWND, might as well use that.
-  OpenKneeboard::SHM::Reader shm;
-  if (!shm) {
-    return false;
-  }
-  auto snapshot = shm.MaybeGet();
-  if (!snapshot) {
-    return false;
-  }
-  const auto hwnd = snapshot.GetConfig().feederWindow;
-  if (!hwnd) {
-    return false;
-  }
-  DWORD processID = 0;
-  GetWindowThreadProcessId(hwnd, &processID);
-  if (!processID) {
-    return false;
-  }
-  winrt::handle processHandle {
-    OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID)};
-  if (!processHandle) {
-    return false;
-  }
-  wchar_t processName[MAX_PATH];
-  auto processNameLen
-    = GetProcessImageFileNameW(processHandle.get(), processName, MAX_PATH);
-  const auto processStem
-    = std::filesystem::path(std::wstring_view(processName, processNameLen))
-        .stem();
-  processNameLen = GetModuleFileNameW(NULL, processName, MAX_PATH);
-  const auto thisProcessStem
-    = std::filesystem::path(std::wstring_view(processName, processNameLen))
-        .stem();
-  if (processStem != thisProcessStem) {
-    return false;
-  }
-  return ShowWindow(hwnd, SW_SHOWNORMAL) && SetForegroundWindow(hwnd);
-}
-
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   DPrintSettings::Set({
     .prefix = "OpenKneeboard-WinUI3",
   });
 
-  if (ActivateExistingInstance()) {
+  winrt::handle mutex {
+    CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
+  if (GetLastError() == ERROR_ALREADY_EXISTS) {
+    auto name = fmt::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectNameW);
+    winrt::handle hwndFile {
+      OpenFileMapping(PAGE_READWRITE, FALSE, name.c_str())};
+    if (!hwndFile) {
+      return 1;
+    }
+    void* mapping
+      = MapViewOfFile(hwndFile.get(), FILE_MAP_READ, 0, 0, sizeof(HWND));
+    auto hwnd = *reinterpret_cast<HWND*>(mapping);
+    UnmapViewOfFile(mapping);
+    ShowWindow(hwnd, SW_SHOWNORMAL) && SetForegroundWindow(hwnd);
     return 0;
   }
 

@@ -28,6 +28,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/windows.ui.xaml.interop.h>
@@ -112,6 +113,24 @@ MainWindow::MainWindow() {
   }
 
   this->Closed({this, &MainWindow::OnClosed});
+
+  auto hwndMappingName = fmt::format(L"Local\\{}.hwnd", ProjectNameW);
+  // Initially leak for the duration of the app
+  mHwndFile.attach(CreateFileMappingW(
+    INVALID_HANDLE_VALUE,
+    nullptr,
+    PAGE_READWRITE,
+    sizeof(HWND),
+    sizeof(HWND),
+    hwndMappingName.c_str()));
+  if (!mHwndFile) {
+    dprint("Failed to open hwnd file");
+    return;
+  }
+  void* mapping
+    = MapViewOfFile(mHwndFile.get(), FILE_MAP_WRITE, 0, 0, sizeof(HWND));
+  *reinterpret_cast<HWND*>(mapping) = mHwnd;
+  UnmapViewOfFile(mapping);
 }
 
 MainWindow::~MainWindow() {
