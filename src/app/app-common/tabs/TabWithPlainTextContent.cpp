@@ -200,7 +200,19 @@ void TabWithPlainTextContent::LayoutMessages() {
     return;
   }
 
-  for (const auto& message: mMessages) {
+  for (auto message: mMessages) {
+    // tabs are variable width, and everything else here
+    // assumes that all characters are the same width.
+    //
+    // Expand them
+    while(true) {
+      auto pos = message.find_first_of("\t");
+      if (pos == message.npos) {
+        break;
+      }
+      message.replace(pos, 1, "    ");
+    }
+
     std::vector<std::string_view> rawLines;
     std::string_view remaining(message);
     while (!remaining.empty()) {
