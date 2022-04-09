@@ -134,34 +134,12 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   ContentDialog dialog;
   dialog.XamlRoot(root);
   dialog.Title(winrt::box_value(winrt::to_hstring(_("DCS Hooks"))));
-  dialog.CloseButtonText(winrt::to_hstring(_("Not Now")));
   dialog.DefaultButton(ContentDialogButton::Primary);
+  dialog.PrimaryButtonText(winrt::to_hstring(_("Retry")));
+  dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
 
-  if (state == NOT_INSTALLED) {
-    dialog.Content(winrt::box_value(winrt::to_hstring(fmt::format(
-      fmt::runtime("DCS hooks aren't installed in {}; would you like to "
-                   "install them now?"),
-      to_utf8(savedGamesPath)))));
-    dialog.PrimaryButtonText(winrt::to_hstring(_("Install DCS Hooks")));
-  } else {
-    if (state != OUT_OF_DATE) {
-      throw std::logic_error("Unexpected hook state");
-    }
-    dialog.Content(winrt::box_value(winrt::to_hstring(fmt::format(
-      fmt::runtime(
-        "Hooks in {} are out of date; would you like to update them now?"),
-      to_utf8(savedGamesPath)))));
-    dialog.PrimaryButtonText(winrt::to_hstring(_("Update DCS Hooks")));
-  }
 
   do {
-    auto result = co_await dialog.ShowAsync();
-    if (result != ContentDialogResult::Primary) {
-      co_return;
-    }
-    dialog.PrimaryButtonText(winrt::to_hstring(_("Retry")));
-    dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
-
     std::error_code ec;
     if (!(std::filesystem::is_directory(hooksDir)
           || std::filesystem::create_directories(hooksDir, ec))) {
