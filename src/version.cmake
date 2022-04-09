@@ -25,6 +25,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+
 if("${MODIFIED_FILES}" STREQUAL "")
   set(DIRTY "false")
 else()
@@ -34,6 +35,7 @@ endif()
 if(DEFINED ENV{GITHUB_RUN_NUMBER})
   set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
   set(IS_GITHUB_ACTIONS_BUILD "true")
+  set(VERSION_BUILD_STR "${VERSION_BUILD}-gha")
 else()
   execute_process(
     COMMAND git rev-list --count HEAD
@@ -41,16 +43,21 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   set(IS_GITHUB_ACTIONS_BUILD "false")
+  set(VERSION_BUILD_STR "${VERSION_BUILD}-local")
 endif()
 
-configure_file(
-  ${INPUT_HEADER_FILE}
-  ${OUTPUT_HEADER_FILE}
-  @ONLY
-)
+if(INPUT_HEADER_FILE)
+  configure_file(
+    ${INPUT_HEADER_FILE}
+    ${OUTPUT_HEADER_FILE}
+    @ONLY
+  )
+endif ()
 
-configure_file(
-  ${INPUT_RC_FILE}
-  ${OUTPUT_RC_FILE}
-  @ONLY
-)
+if(INPUT_RC_FILE)
+  configure_file(
+    ${INPUT_RC_FILE}
+    ${OUTPUT_RC_FILE}
+    @ONLY
+  )
+endif()

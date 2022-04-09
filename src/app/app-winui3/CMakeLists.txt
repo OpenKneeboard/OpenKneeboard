@@ -71,6 +71,13 @@ endforeach()
 
 string(JOIN ";" LIBRARY_PATHS ${LIBRARY_PATHS})
 
+set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
+create_version_rc(
+  OpenKneeboard-App-WinUI3_version-rc
+  OpenKneeboard-App-WinUI3
+  OpenKneeboardApp.exe
+  ${VERSION_RC_FILE}
+)
 get_filename_component(VERSION_RC_DIRECTORY "${VERSION_RC_FILE}" DIRECTORY)
 
 add_custom_target(

@@ -92,8 +92,6 @@ target_link_libraries(
 )
 
 set(VERSION_HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h")
-set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
-set(VERSION_RC_FILE "${VERSION_RC_FILE}" PARENT_SCOPE)
 add_custom_target(
   OpenKneeboard-version-sources
   COMMAND
@@ -103,12 +101,9 @@ add_custom_target(
   -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
   "-DINPUT_HEADER_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.h.in"
   "-DOUTPUT_HEADER_FILE=${VERSION_HEADER_FILE}"
-  "-DINPUT_RC_FILE=${CMAKE_CURRENT_SOURCE_DIR}/include/OpenKneeboard/version.rc.in"
-  "-DOUTPUT_RC_FILE=${VERSION_RC_FILE}"
-  "-P${CMAKE_CURRENT_SOURCE_DIR}/version.h.cmake"
+  "-P${CMAKE_CURRENT_SOURCE_DIR}/../version.cmake"
   BYPRODUCTS
   "${VERSION_HEADER_FILE}"
-  "${VERSION_RC_FILE}"
   WORKING_DIRECTORY
   "${CMAKE_SOURCE_DIR}"
 )

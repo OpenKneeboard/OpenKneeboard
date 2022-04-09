@@ -1,3 +1,8 @@
+function(add_module_library TARGET)
+  add_library(${TARGET} MODULE ${ARGN})
+  add_version_rc(${TARGET} ${TARGET}.dll)
+  sign_target(${TARGET})
+endfunction()
 add_library(detours-ext STATIC detours-ext.cpp)
 target_link_libraries(detours-ext PUBLIC detours OpenKneeboard-dprint)
 
@@ -58,11 +63,9 @@ target_link_libraries(
   OpenKneeboard-dprint)
 
 # This is a marker library that tells the main app not to inject the DLL
-add_library(OpenKneeboard-AutoInject-Marker SHARED AutoInjectMarker.cpp)
-sign_target(OpenKneeboard-AutoInject-Marker)
+add_module_library(OpenKneeboard-AutoInject-Marker AutoInjectMarker.cpp)
 
-add_library(OpenKneeboard-nonvr-d3d11 MODULE NonVRD3D11Kneeboard.cpp)
-sign_target(OpenKneeboard-nonvr-d3d11)
+add_module_library(OpenKneeboard-nonvr-d3d11 NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
   PRIVATE
@@ -73,8 +76,7 @@ target_link_libraries(
   OpenKneeboard-SHM
   OpenKneeboard-DllLoadWatcher)
 
-add_library(OpenKneeboard-oculus-d3d11 MODULE OculusD3D11Kneeboard.cpp)
-sign_target(OpenKneeboard-oculus-d3d11)
+add_module_library(OpenKneeboard-oculus-d3d11 OculusD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-oculus-d3d11
   PRIVATE
@@ -84,8 +86,7 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-add_library(OpenKneeboard-oculus-d3d12 MODULE OculusD3D12Kneeboard.cpp)
-sign_target(OpenKneeboard-oculus-d3d12)
+add_module_library(OpenKneeboard-oculus-d3d12 OculusD3D12Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-oculus-d3d12
   PRIVATE
@@ -96,12 +97,10 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-add_library(
+add_module_library(
   OpenKneeboard-OpenXR
-  MODULE
   OpenXRKneeboard.cpp
 )
-sign_target(OpenKneeboard-OpenXR)
 target_link_libraries(
   OpenKneeboard-OpenXR
   PRIVATE
@@ -118,8 +117,7 @@ target_link_libraries(
 
 install(FILES OpenKneeboard-OpenXR.json TYPE BIN)
 
-add_library(OpenKneeboard-Injection-Bootstrapper MODULE InjectionBootstrapper.cpp)
-sign_target(OpenKneeboard-Injection-Bootstrapper)
+add_module_library(OpenKneeboard-Injection-Bootstrapper InjectionBootstrapper.cpp)
 target_link_libraries(
   OpenKneeboard-Injection-Bootstrapper
   PRIVATE
@@ -129,8 +127,7 @@ target_link_libraries(
   oculus-hooks
   openvr-hooks)
 
-add_library(OpenKneeboard-TabletProxy MODULE TabletProxy.cpp)
-sign_target(OpenKneeboard-TabletProxy)
+add_module_library(OpenKneeboard-TabletProxy TabletProxy.cpp)
 target_link_libraries(
   OpenKneeboard-TabletProxy
   PRIVATE
