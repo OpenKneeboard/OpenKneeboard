@@ -33,11 +33,10 @@ class DCSTerrainTab final : public DCSTab,
   DCSTerrainTab(const DXResources&);
   virtual utf8_string GetTitle() const override;
  protected:
-  virtual const char* GetGameEventName() const override;
-  virtual void Update(
+  virtual void OnGameEvent(
+    const GameEvent&,
     const std::filesystem::path&,
-    const std::filesystem::path&,
-    utf8_string_view) override;
+    const std::filesystem::path&) override;
 };
 
 }// namespace OpenKneeboard

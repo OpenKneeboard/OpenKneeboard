@@ -39,15 +39,15 @@ utf8_string DCSAircraftTab::GetTitle() const {
   return _("Aircraft");
 }
 
-const char* DCSAircraftTab::GetGameEventName() const {
-  return DCS::EVT_AIRCRAFT;
-}
-
-void DCSAircraftTab::Update(
+void DCSAircraftTab::OnGameEvent(
+  const GameEvent& event,
   const std::filesystem::path& installPath,
-  const std::filesystem::path& savedGamesPath,
-  utf8_string_view aircraft) {
-  auto path = savedGamesPath / "KNEEBOARD" / aircraft;
+  const std::filesystem::path& savedGamesPath) {
+  if (event.name != DCS::EVT_AIRCRAFT) {
+    return;
+  }
+
+  auto path = savedGamesPath / "KNEEBOARD" / event.value;
   this->GetDelegate()->SetPath(path);
 }
 

@@ -30,53 +30,17 @@ DCSTab::DCSTab() {
 }
 
 void DCSTab::PostGameEvent(const GameEvent& event) {
-  if (event.name == this->GetGameEventName()) {
-    mCurrentConfig.mValue = event.value;
-    Update();
-    return;
-  }
-
   if (event.name == DCS::EVT_INSTALL_PATH) {
-    mCurrentConfig.mInstallPath = std::filesystem::canonical(event.value);
-    Update();
-    return;
+    mInstallPath = std::filesystem::canonical(event.value);
   }
 
   if (event.name == DCS::EVT_SAVED_GAMES_PATH) {
-    mCurrentConfig.mSavedGamesPath = std::filesystem::canonical(event.value);
-    Update();
-    return;
+    mSavedGamesPath = std::filesystem::canonical(event.value);
   }
 
-  if (event.name == DCS::EVT_SIMULATION_START) {
-    this->OnSimulationStart();
-    return;
+  if (!(mInstallPath.empty() || mSavedGamesPath.empty())) {
+    OnGameEvent(event, mInstallPath, mSavedGamesPath);
   }
-}
-
-void DCSTab::Update() {
-  auto c = mCurrentConfig;
-  if (c == mLastValidConfig) {
-    return;
-  }
-
-  if (c.mInstallPath.empty()) {
-    return;
-  }
-
-  if (c.mSavedGamesPath.empty()) {
-    return;
-  }
-
-  if (c.mValue == mLastValue) {
-    return;
-  }
-  mLastValue = c.mValue;
-
-  this->Update(c.mInstallPath, c.mSavedGamesPath, c.mValue);
-}
-
-void DCSTab::OnSimulationStart() {
 }
 
 }// namespace OpenKneeboard

@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/GameEvent.h>
 
 using DCS = OpenKneeboard::DCSWorld;
 
@@ -48,20 +49,22 @@ void DCSRadioLogTab::RenderPageContent(
   TabWithPlainTextContent::RenderPlainTextContent(ctx, pageIndex, rect);
 }
 
-const char* DCSRadioLogTab::GetGameEventName() const {
-  return DCS::EVT_RADIO_MESSAGE;
-}
 
-void DCSRadioLogTab::Update(
+void DCSRadioLogTab::OnGameEvent(
+  const GameEvent& event,
   const std::filesystem::path& installPath,
-  const std::filesystem::path& savedGamesPath,
-  utf8_string_view value) {
-  this->ClearContentCache();
-  this->PushMessage(value);
-}
+  const std::filesystem::path& savedGamesPath) {
+  if (event.name == DCS::EVT_SIMULATION_START) {
+    this->PushFullWidthSeparator();
+    return;
+  }
 
-void DCSRadioLogTab::OnSimulationStart() {
-  this->PushFullWidthSeparator();
+  if (event.name != DCS::EVT_RADIO_MESSAGE) {
+    return;
+  }
+
+  this->ClearContentCache();
+  this->PushMessage(event.value);
 }
 
 utf8_string DCSRadioLogTab::GetPlaceholderText() const {

@@ -18,8 +18,9 @@
  * USA.
  */
 #include <OpenKneeboard/DCSMissionTab.h>
-#include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
@@ -138,15 +139,15 @@ void DCSMissionTab::Reload() {
   GetDelegate()->Reload();
 }
 
-const char* DCSMissionTab::GetGameEventName() const {
-  return DCS::EVT_MISSION;
-}
-
-void DCSMissionTab::Update(
+void DCSMissionTab::OnGameEvent(
+  const GameEvent& event,
   const std::filesystem::path& _installPath,
-  const std::filesystem::path& _savedGamePath,
-  utf8_string_view value) {
-  auto mission = std::filesystem::canonical(value);
+  const std::filesystem::path& _savedGamePath) {
+  if (event.name != DCS::EVT_MISSION) {
+    return;
+  }
+
+  auto mission = std::filesystem::canonical(event.value);
 
   if (mission == mMission) {
     return;

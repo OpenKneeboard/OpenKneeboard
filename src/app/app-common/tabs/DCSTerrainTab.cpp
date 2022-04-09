@@ -18,9 +18,9 @@
  * USA.
  */
 #include <OpenKneeboard/DCSTerrainTab.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <filesystem>
@@ -38,15 +38,15 @@ utf8_string DCSTerrainTab::GetTitle() const {
   return _("Theater");
 }
 
-const char* DCSTerrainTab::GetGameEventName() const {
-  return DCS::EVT_TERRAIN;
-}
-
-void DCSTerrainTab::Update(
+void DCSTerrainTab::OnGameEvent(
+  const GameEvent& event,
   const std::filesystem::path& installPath,
-  const std::filesystem::path& _savedGamesPath,
-  utf8_string_view value) {
-  auto path = installPath / "Mods" / "terrains" / value / "Kneeboard";
+  const std::filesystem::path& _savedGamesPath) {
+  if (event.name != DCS::EVT_TERRAIN) {
+    return;
+  }
+
+  auto path = installPath / "Mods" / "terrains" / event.value / "Kneeboard";
   this->GetDelegate()->SetPath(path);
 }
 

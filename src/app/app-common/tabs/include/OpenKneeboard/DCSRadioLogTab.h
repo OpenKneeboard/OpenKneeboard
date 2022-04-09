@@ -45,13 +45,10 @@ class DCSRadioLogTab final : public DCSTab,
 
   virtual utf8_string GetPlaceholderText() const override;
 
-  virtual const char* GetGameEventName() const override;
-  virtual void Update(
+  virtual void OnGameEvent(
+    const GameEvent&,
     const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath,
-    utf8_string_view value) override;
-
-  virtual void OnSimulationStart() override;
+    const std::filesystem::path& savedGamesPath) override;
 };
 
 }// namespace OpenKneeboard

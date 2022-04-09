@@ -29,37 +29,16 @@ namespace OpenKneeboard {
 class DCSTab : public virtual TabWithGameEvents {
  public:
   DCSTab();
-  virtual void PostGameEvent(const GameEvent&) override;
+  virtual void PostGameEvent(const GameEvent&) override final;
 
  protected:
-  virtual const char* GetGameEventName() const = 0;
-  virtual void Update(
+  virtual void OnGameEvent(const GameEvent&,
     const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath,
-    utf8_string_view value)
-    = 0;
-
-  virtual void OnSimulationStart();
+    const std::filesystem::path& savedGamesPath) = 0;
 
  private:
-  struct Config final {
-    std::filesystem::path mInstallPath;
-    std::filesystem::path mSavedGamesPath;
-    utf8_string mValue;
-    bool operator==(const Config&) const = default;
-  };
-
-  Config mCurrentConfig;
-  Config mLastValidConfig;
-
-  std::string mLastValue;
-
-  void Update();
-
-  static void InstallHooks();
-  static void InstallHooks(
-    DCSWorld::Version version,
-    utf8_string_view label);
+  std::filesystem::path mInstallPath;
+  std::filesystem::path mSavedGamesPath;
 };
 
 }// namespace OpenKneeboard

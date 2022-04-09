@@ -34,11 +34,10 @@ class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
   virtual void Reload() override;
 
  protected:
-  virtual const char* GetGameEventName() const override;
-  virtual void Update(
+  virtual void OnGameEvent(
+    const GameEvent&,
     const std::filesystem::path&,
-    const std::filesystem::path&,
-    utf8_string_view) override;
+    const std::filesystem::path&) override;
 
  private:
   class ExtractedMission;
