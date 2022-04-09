@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:desktop6="http://schemas.microsoft.com/appx/manifest/desktop/windows10/6"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap7="http://schemas.microsoft.com/appx/manifest/uap/windows10/7"
   xmlns:uap8="http://schemas.microsoft.com/appx/manifest/uap/windows10/8"
@@ -16,6 +17,19 @@
     <PublisherDisplayName>Fred Emmott</PublisherDisplayName>
     <Description>An open source kneeboard</Description>
     <Logo>share\logo-44x44.png</Logo>
+
+    <!--
+      We need to make shared DLLs accessible outside of the package, e.g. to OpenXR
+
+      By default, writes are intercepted, but it's a bit flakey.
+
+      For Windows 10 1903 ('May 2019') or above, entirely disable this virtualization
+
+      https://docs.microsoft.com/en-us/windows/msix/desktop/flexible-virtualization
+    -->
+    <desktop6:RegistryWriteVirtualization>disabled</desktop6:RegistryWriteVirtualization>
+    <desktop6:FileSystemWriteVirtualization>disabled</desktop6:FileSystemWriteVirtualization>
+
   </Properties>
   <Resources>
     <Resource Language="en-us" />
@@ -30,7 +44,8 @@
     <PackageDependency Name="Microsoft.WindowsAppRuntime.1.0" MinVersion="0.318.928.0" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" />
   </Dependencies>
   <Capabilities>
-    <rescap:Capability Name="runFullTrust"/>
+    <rescap:Capability Name="runFullTrust" />
+    <rescap:Capability Name="unvirtualizedResources" />
   </Capabilities>
   <Applications>
     <Application Id="OpenKneeboard" Executable="bin\OpenKneeboardApp.exe" EntryPoint="Windows.FullTrustApplication">

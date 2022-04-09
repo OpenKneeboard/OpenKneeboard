@@ -58,7 +58,7 @@ std::filesystem::path GetDirectory() {
   wchar_t* ref = nullptr;
   winrt::check_hresult(
     SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &ref));
-  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard";
+  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard" / "Shared";
   std::filesystem::create_directories(sPath);
 
 #define IT(file) \
