@@ -65,6 +65,12 @@ function(add_version_rc TARGET ORIGINAL_FILENAME)
   target_sources("${TARGET}" PRIVATE "${VERSION_RC_FILE}")
 endfunction()
 
+function(add_module_library TARGET)
+	add_library(${TARGET} MODULE ${ARGN})
+	add_version_rc(${TARGET} ${TARGET}.dll)
+	sign_target(${TARGET})
+endfunction()
+
 add_subdirectory(lib)
 
 add_subdirectory(dcs-hook)

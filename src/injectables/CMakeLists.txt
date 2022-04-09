@@ -1,8 +1,3 @@
-function(add_module_library TARGET)
-  add_library(${TARGET} MODULE ${ARGN})
-  add_version_rc(${TARGET} ${TARGET}.dll)
-  sign_target(${TARGET})
-endfunction()
 add_library(detours-ext STATIC detours-ext.cpp)
 target_link_libraries(detours-ext PUBLIC detours OpenKneeboard-dprint)
 
