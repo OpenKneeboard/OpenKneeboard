@@ -23,6 +23,9 @@
 #include "CheckDCSHooks.h"
 // clang-format on
 
+#include <OpenKneeboard/DCSWorldInstance.h>
+#include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/utf8.h>
 #include <fmt/format.h>
@@ -32,6 +35,8 @@
 #include <winrt/windows.storage.pickers.h>
 
 #include <algorithm>
+#include <filesystem>
+#include <set>
 
 #include "Globals.h"
 
@@ -138,7 +143,6 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   dialog.PrimaryButtonText(winrt::to_hstring(_("Retry")));
   dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
 
-
   do {
     std::error_code ec;
     if (!(std::filesystem::is_directory(hooksDir)
@@ -217,6 +221,35 @@ ChooseDCSSavedGamesFolder(
   }
 
   co_return folder.Path();
+}
+
+winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
+  const XamlRoot& root) {
+  std::set<std::filesystem::path> dcsSavedGamesPaths;
+  for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
+    auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
+    if (!dcs) {
+      continue;
+    }
+    auto& path = dcs->mSavedGamesPath;
+    if (path.empty()) {
+      auto stringPath = co_await ChooseDCSSavedGamesFolder(
+        root, DCSSavedGamesSelectionTrigger::IMPLICIT);
+      if (stringPath.empty()) {
+        continue;
+      }
+      path = std::filesystem::canonical(std::wstring_view {stringPath});
+      gKneeboard->SaveSettings();
+    }
+
+    if (!dcsSavedGamesPaths.contains(path)) {
+      dcsSavedGamesPaths.emplace(path);
+    }
+  }
+
+  for (const auto& path: dcsSavedGamesPaths) {
+    co_await CheckDCSHooks(root, path);
+  }
 }
 
 }// namespace OpenKneeboard

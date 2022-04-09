@@ -26,4 +26,9 @@ const std::filesystem::path OCULUS_D3D11_DLL(
 const std::filesystem::path OCULUS_D3D12_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-oculus-d3d12>");
 
+const std::filesystem::path OPENXR_DLL(
+  "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR>");
+
+const std::filesystem::path OPENXR_JSON("OpenKneeboard-OpenXR.json");
+
 }

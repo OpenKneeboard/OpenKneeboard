@@ -36,8 +36,9 @@ target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
 
 set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
 file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
-add_library(OpenKneeboard-RuntimeFiles STATIC "${RUNTIME_FILES_CPP}")
+add_library(OpenKneeboard-RuntimeFiles STATIC "${RUNTIME_FILES_CPP}" RuntimeFilesGetDirectory.cpp)
 target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
+target_link_libraries(OpenKneeboard-RuntimeFiles PRIVATE OpenKneeboard-dprint)
 
 add_library(OpenKneeboard-SHM STATIC SHM.cpp)
 target_link_libraries(OpenKneeboard-SHM PRIVATE fmt OpenKneeboard-config OpenKneeboard-dprint)

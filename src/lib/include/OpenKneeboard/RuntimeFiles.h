@@ -22,15 +22,22 @@
 
 namespace OpenKneeboard::RuntimeFiles {
 
-extern const std::filesystem::path DCSWORLD_HOOK_DLL;
-extern const std::filesystem::path DCSWORLD_HOOK_LUA;
+#define OPENKNEEBOARD_RUNTIME_FILES \
+  IT(DCSWORLD_HOOK_DLL) \
+  IT(DCSWORLD_HOOK_LUA) \
+  IT(AUTOINJECT_MARKER_DLL) \
+  IT(INJECTION_BOOTSTRAPPER_DLL) \
+  IT(TABLET_PROXY_DLL) \
+  IT(NON_VR_D3D11_DLL) \
+  IT(OCULUS_D3D11_DLL) \
+  IT(OCULUS_D3D12_DLL) \
+  IT(OPENXR_DLL) \
+  IT(OPENXR_JSON)
 
-extern const std::filesystem::path AUTOINJECT_MARKER_DLL;
-extern const std::filesystem::path INJECTION_BOOTSTRAPPER_DLL;
-extern const std::filesystem::path TABLET_PROXY_DLL;
+#define IT(x) extern const std::filesystem::path x;
+OPENKNEEBOARD_RUNTIME_FILES
+#undef IT
 
-extern const std::filesystem::path NON_VR_D3D11_DLL;
-extern const std::filesystem::path OCULUS_D3D11_DLL;
-extern const std::filesystem::path OCULUS_D3D12_DLL;
+std::filesystem::path GetDirectory();
 
 }// namespace OpenKneeboard::RuntimeFiles

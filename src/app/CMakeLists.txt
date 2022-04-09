@@ -5,6 +5,7 @@ set(
   RUNTIME_FILES
 
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
+  "${CMAKE_SOURCE_DIR}/src/injectables/OpenKneeboard-OpenXR.json"
   "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>>"
 )
 install(FILES "${RUNTIME_FILES}" TYPE BIN)

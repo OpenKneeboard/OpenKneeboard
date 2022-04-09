@@ -80,59 +80,6 @@ class DebugPrivileges final {
   }
 };
 
-static std::filesystem::path GetInjectablesPath() {
-  static std::filesystem::path sPath;
-  if (!sPath.empty()) {
-    return sPath;
-  }
-
-  wchar_t buf[MAX_PATH];
-  GetModuleFileNameW(NULL, buf, MAX_PATH);
-  const auto executablePath
-    = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
-
-  UINT32 packageNameLength = MAX_PATH;
-  if (
-    GetCurrentPackageFullName(&packageNameLength, buf)
-    == APPMODEL_ERROR_NO_PACKAGE) {
-    // Not running from an installed package, can use inject DLLs directly from
-    // our executable directory
-    sPath = executablePath;
-    return sPath;
-  }
-
-  // App data directory is not readable by other apps if using msix installer,
-  // so if we pass a DLL in the app directory to `LoadLibraryW` in another
-  // process, it will fail. Copy them out to a readable directory.
-  wchar_t* ref = nullptr;
-  winrt::check_hresult(
-    SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &ref));
-  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard";
-  std::filesystem::create_directories(sPath);
-
-  for (const auto& entry: std::filesystem::directory_iterator(executablePath)) {
-    if (!entry.is_regular_file()) {
-      continue;
-    }
-    const auto path = entry.path();
-    if (path.extension() != ".dll") {
-      continue;
-    }
-    if (!path.stem().string().starts_with("OpenKneeboard-")) {
-      continue;
-    }
-    try {
-      std::filesystem::copy(
-        path,
-        sPath / path.filename(),
-        std::filesystem::copy_options::overwrite_existing);
-    } catch (std::filesystem::filesystem_error& e) {
-      dprintf("Injectable DLL copy failed: {}", e.what());
-    }
-  }
-  return sPath;
-}
-
 bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
   std::filesystem::path dll = std::filesystem::canonical(_dll);
 
@@ -234,7 +181,7 @@ void GameInjector::SetGameInstances(
 }
 
 bool GameInjector::Run(std::stop_token stopToken) {
-  const auto dllPath = GetInjectablesPath();
+  const auto dllPath = RuntimeFiles::GetDirectory();
   const auto markerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
   const auto tabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
 

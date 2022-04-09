@@ -22,9 +22,7 @@
 #include "App.xaml.h"
 // clang-format on
 
-#include <OpenKneeboard/DCSWorldInstance.h>
-#include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -66,39 +64,80 @@ App::App() {
 #endif
 }
 
+static void InstallOpenXRLayer() {
+  HKEY openXRKey {0};
+  RegCreateKeyExW(
+    HKEY_CURRENT_USER,
+    L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
+    0,
+    nullptr,
+    0,
+    KEY_ALL_ACCESS,
+    nullptr,
+    &openXRKey,
+    nullptr);
+  if (!openXRKey) {
+    dprint("Failed to open or create HKCU OpenXR key");
+    return;
+  }
+  auto jsonPath = std::filesystem::canonical(
+                    RuntimeFiles::GetDirectory() / RuntimeFiles::OPENXR_JSON)
+                    .wstring();
+  DWORD disabled = 0;
+  if (
+    RegQueryValueExW(
+      openXRKey, jsonPath.c_str(), NULL, nullptr, nullptr, nullptr)
+    == ERROR_FILE_NOT_FOUND) {
+    RegSetValueExW(
+      openXRKey,
+      jsonPath.c_str(),
+      0,
+      REG_DWORD,
+      reinterpret_cast<const BYTE*>(&disabled),
+      sizeof(disabled));
+  }
+
+  // https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits
+  std::wstring valueNameBuffer(16383, L'x');
+  DWORD valueSize = valueNameBuffer.size();
+  DWORD valueIndex {0};
+  disabled = 1;
+  while (RegEnumValueW(
+           openXRKey,
+           valueIndex++,
+           valueNameBuffer.data(),
+           &valueSize,
+           nullptr,
+           nullptr,
+           nullptr,
+           nullptr)
+         == ERROR_SUCCESS) {
+    std::wstring valueName = valueNameBuffer.substr(0, valueSize);
+    valueSize = valueNameBuffer.size();
+
+    if (
+      valueName.ends_with(RuntimeFiles::OPENXR_JSON.filename().wstring())
+      && valueName != jsonPath) {
+      RegSetValueExW(
+        openXRKey,
+        valueName.c_str(),
+        0,
+        REG_DWORD,
+        reinterpret_cast<const BYTE*>(&disabled),
+        sizeof(disabled));
+    }
+  }
+  RegCloseKey(openXRKey);
+}
+
 void App::OnLaunched(LaunchActivatedEventArgs const&) {
   window = make<MainWindow>();
 
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
     [=](auto&, auto&) -> winrt::fire_and_forget {
-      auto root = window.Content().XamlRoot();
-
-      std::set<std::filesystem::path> dcsSavedGamesPaths;
-      for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
-        auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
-        if (!dcs) {
-          continue;
-        }
-        auto& path = dcs->mSavedGamesPath;
-        if (path.empty()) {
-          auto stringPath = co_await ChooseDCSSavedGamesFolder(
-            root, DCSSavedGamesSelectionTrigger::IMPLICIT);
-          if (stringPath.empty()) {
-            continue;
-          }
-          path = std::filesystem::canonical(std::wstring_view {stringPath});
-          gKneeboard->SaveSettings();
-        }
-
-        if (!dcsSavedGamesPaths.contains(path)) {
-          dcsSavedGamesPaths.emplace(path);
-        }
-      }
-
-      for (const auto& path: dcsSavedGamesPaths) {
-        co_await CheckDCSHooks(root, path);
-      }
+      co_await CheckAllDCSHooks(window.Content().XamlRoot());
     });
+  InstallOpenXRLayer();
 
   window.Activate();
 }
@@ -125,9 +164,9 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     return 0;
   }
 
-  UINT32 packageNameLen { 0 };
-  const bool isPackaged
-    = GetCurrentPackageFullName(&packageNameLen, nullptr) == ERROR_INSUFFICIENT_BUFFER;
+  UINT32 packageNameLen {0};
+  const bool isPackaged = GetCurrentPackageFullName(&packageNameLen, nullptr)
+    == ERROR_INSUFFICIENT_BUFFER;
   if (!isPackaged) {
     PACKAGE_VERSION minimumVersion {WINDOWSAPPSDK_RUNTIME_VERSION_UINT64};
     winrt::check_hresult(MddBootstrapInitialize(
