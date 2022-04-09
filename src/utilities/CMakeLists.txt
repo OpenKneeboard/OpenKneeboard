@@ -58,3 +58,14 @@ foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   install(TARGETS "${TARGET}" COMPONENT RemoteControl)
   install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
 endforeach()
+
+add_executable(OpenKneeboard-OpenXR-RegisterLayer WIN32 openxr-register-layer.cpp)
+target_link_libraries(
+  OpenKneeboard-OpenXR-RegisterLayer 
+  PRIVATE
+  OpenKneeboard-RuntimeFiles
+  OpenKneeboard-dprint
+)
+sign_target(OpenKneeboard-OpenXR-RegisterLayer)
+install(TARGETS OpenKneeboard-OpenXR-RegisterLayer)
+install(FILES "$<TARGET_PDB_FILE:OpenKneeboard-OpenXR-RegisterLayer>" TYPE BIN COMPONENT DebugSymbols)

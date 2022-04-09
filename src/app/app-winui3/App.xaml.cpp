@@ -64,71 +64,45 @@ App::App() {
 #endif
 }
 
-static void InstallOpenXRLayer() {
-  HKEY openXRKey {0};
-  RegCreateKeyExW(
-    HKEY_CURRENT_USER,
-    L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
+static void InstallOpenXRLayerInUnsandboxedSubprocess() {
+  auto layerPath = RuntimeFiles::GetDirectory().wstring();
+  auto exePath = (RuntimeFiles::GetDirectory() / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER).wstring();
+
+  auto commandLine
+    = fmt::format(L"\"{}\" \"{}\"", exePath, layerPath);
+  commandLine.reserve(32767);
+
+  STARTUPINFOEXW startupInfo {};
+  startupInfo.StartupInfo.cb = sizeof(startupInfo);
+  SIZE_T attributeListSize;
+  InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeListSize);
+  startupInfo.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(
+    HeapAlloc(GetProcessHeap(), 0, attributeListSize));
+  DWORD policy = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
+  UpdateProcThreadAttribute(
+    startupInfo.lpAttributeList,
     0,
+    PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
+    &policy,
+    sizeof(policy),
     nullptr,
-    0,
-    KEY_ALL_ACCESS,
-    nullptr,
-    &openXRKey,
     nullptr);
-  if (!openXRKey) {
-    dprint("Failed to open or create HKCU OpenXR key");
-    return;
-  }
-  auto jsonPath = std::filesystem::canonical(
-                    RuntimeFiles::GetDirectory() / RuntimeFiles::OPENXR_JSON)
-                    .wstring();
-  DWORD disabled = 0;
-  if (
-    RegQueryValueExW(
-      openXRKey, jsonPath.c_str(), NULL, nullptr, nullptr, nullptr)
-    == ERROR_FILE_NOT_FOUND) {
-    RegSetValueExW(
-      openXRKey,
-      jsonPath.c_str(),
-      0,
-      REG_DWORD,
-      reinterpret_cast<const BYTE*>(&disabled),
-      sizeof(disabled));
-  }
 
-  // https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits
-  std::wstring valueNameBuffer(16383, L'x');
-  DWORD valueSize = valueNameBuffer.size();
-  DWORD valueIndex {0};
-  disabled = 1;
-  while (RegEnumValueW(
-           openXRKey,
-           valueIndex++,
-           valueNameBuffer.data(),
-           &valueSize,
-           nullptr,
-           nullptr,
-           nullptr,
-           nullptr)
-         == ERROR_SUCCESS) {
-    std::wstring valueName = valueNameBuffer.substr(0, valueSize);
-    valueSize = valueNameBuffer.size();
+  PROCESS_INFORMATION procInfo {};
 
-    if (
-      valueName.ends_with(RuntimeFiles::OPENXR_JSON.filename().wstring())
-      && valueName != jsonPath) {
-      RegSetValueExW(
-        openXRKey,
-        valueName.c_str(),
-        0,
-        REG_DWORD,
-        reinterpret_cast<const BYTE*>(&disabled),
-        sizeof(disabled));
-    }
-  }
-  RegCloseKey(openXRKey);
+  CreateProcessW(
+    exePath.c_str(),
+    commandLine.data(),
+    nullptr,
+    nullptr,
+    FALSE,
+    0,
+    nullptr,
+    nullptr,
+    reinterpret_cast<LPSTARTUPINFOW>(&startupInfo),
+    &procInfo);
 }
+
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) {
   window = make<MainWindow>();
@@ -137,7 +111,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) {
     [=](auto&, auto&) -> winrt::fire_and_forget {
       co_await CheckAllDCSHooks(window.Content().XamlRoot());
     });
-  InstallOpenXRLayer();
+  InstallOpenXRLayerInUnsandboxedSubprocess();
 
   window.Activate();
 }
