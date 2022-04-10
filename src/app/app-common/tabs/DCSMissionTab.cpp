@@ -36,6 +36,7 @@ namespace OpenKneeboard {
 
 class DCSMissionTab::ExtractedMission final {
  private:
+  std::filesystem::path mZipPath;
   std::filesystem::path mTempDir;
 
  public:
@@ -45,7 +46,7 @@ class DCSMissionTab::ExtractedMission final {
   ExtractedMission() {
   }
 
-  ExtractedMission(FolderTab* delegate, const std::filesystem::path& zipPath) {
+  ExtractedMission(const std::filesystem::path& zipPath) : mZipPath(zipPath) {
     std::random_device randDevice;
     std::uniform_int_distribution<uint64_t> randDist;
 
@@ -70,7 +71,7 @@ class DCSMissionTab::ExtractedMission final {
 
     // Zip file format specifies `/` as a directory separator, not backslash,
     // and libzip respects this, even on windows.
-    const std::string_view prefix {"KNEEBOARD/IMAGES/"};
+    const std::string_view prefix {"KNEEBOARD/"};
     // 4k limit for all stack variables
     auto fileBuffer = std::make_unique<std::array<char, 1024 * 1024>>();
     for (auto i = 0; i < zip_get_num_entries(zip, 0); i++) {
@@ -93,7 +94,7 @@ class DCSMissionTab::ExtractedMission final {
       }
       auto closeZipFile = scope_guard([=] { zip_fclose(zipFile); });
 
-      const auto filePath = mTempDir / name.substr(prefix.length());
+      const auto filePath = mTempDir / name;
       std::filesystem::create_directories(filePath.parent_path());
       std::ofstream file(filePath, std::ios::binary);
 
@@ -115,6 +116,10 @@ class DCSMissionTab::ExtractedMission final {
     std::filesystem::remove_all(mTempDir);
   }
 
+  std::filesystem::path GetZipPath() const {
+    return mZipPath;
+  }
+
   std::filesystem::path GetExtractedPath() const {
     return mTempDir;
   }
@@ -134,25 +139,36 @@ utf8_string DCSMissionTab::GetTitle() const {
 }
 
 void DCSMissionTab::Reload() {
-  mExtracted = std::make_unique<ExtractedMission>(GetDelegate(), mMission);
-  GetDelegate()->SetPath(mExtracted->GetExtractedPath());
-  GetDelegate()->Reload();
+  if ((!mExtracted) || mExtracted->GetZipPath() != mMission) {
+    mExtracted = std::make_unique<ExtractedMission>(mMission);
+  }
+  auto root = mExtracted->GetExtractedPath();
+  if ((!mAircraft.empty()) && std::filesystem::exists(root / "KNEEBOARD" / mAircraft / "IMAGES")) {
+    GetDelegate()->SetPath(root / "KNEEBOARD" / mAircraft / "IMAGES");
+  } else {
+    GetDelegate()->SetPath(root / "KNEEBOARD" / "IMAGES");
+  }
 }
 
 void DCSMissionTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& _installPath,
   const std::filesystem::path& _savedGamePath) {
-  if (event.name != DCS::EVT_MISSION) {
+  if (event.name == DCS::EVT_MISSION) {
+    auto mission = std::filesystem::canonical(event.value);
+    if (mission == mMission) {
+      return;
+    }
+    mMission = mission;
+  } else if (event.name == DCS::EVT_AIRCRAFT) {
+    if (event.value == mAircraft) {
+      return;
+    }
+    mAircraft = event.value;
+  } else {
     return;
   }
 
-  auto mission = std::filesystem::canonical(event.value);
-
-  if (mission == mMission) {
-    return;
-  }
-  mMission = mission;
   this->Reload();
 }
 
