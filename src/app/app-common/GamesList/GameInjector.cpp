@@ -213,12 +213,7 @@ bool GameInjector::Run(std::stop_token stopToken) {
     std::filesystem::path currentPath;
 
     do {
-      winrt::handle processHandle {
-        OpenProcess(PROCESS_ALL_ACCESS, false, process.th32ProcessID)};
-      if (!processHandle) {
-        continue;
-      }
-
+      winrt::handle processHandle;
       std::filesystem::path fullPath;
 
       std::scoped_lock lock(mGamesMutex);
@@ -227,7 +222,13 @@ bool GameInjector::Run(std::stop_token stopToken) {
           continue;
         }
 
-        if (fullPath.empty()) {
+        if (!processHandle) {
+          processHandle.attach(
+            OpenProcess(PROCESS_ALL_ACCESS, false, process.th32ProcessID));
+          if (!processHandle) {
+            goto NEXT_PROCESS;
+          }
+
           wchar_t buf[MAX_PATH];
           DWORD bufSize = sizeof(buf);
           if (!QueryFullProcessImageNameW(
