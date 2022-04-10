@@ -94,12 +94,12 @@ bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll) {
     modules.resize(neededBytes / sizeof(HMODULE));
   }
 
+  auto dllBaseName = dll.filename().wstring();
+
   wchar_t buf[MAX_PATH];
   for (auto module: modules) {
-    auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
-    if (
-      std::filesystem::path(std::wstring_view(buf, length)).filename()
-      == dll.filename()) {
+    auto length = GetModuleBaseNameW(process, module, buf, MAX_PATH);
+    if (std::wstring_view(buf, length) == dllBaseName) {
       return true;
     }
   }
