@@ -80,9 +80,7 @@ class DebugPrivileges final {
   }
 };
 
-bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
-  std::filesystem::path dll = std::filesystem::canonical(_dll);
-
+bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll) {
   DWORD neededBytes = 0;
   EnumProcessModules(process, nullptr, 0, &neededBytes);
   std::vector<HMODULE> modules(neededBytes / sizeof(HMODULE));
@@ -99,7 +97,9 @@ bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
   wchar_t buf[MAX_PATH];
   for (auto module: modules) {
     auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
-    if (std::filesystem::canonical(std::wstring_view(buf, length)) == dll) {
+    if (
+      std::filesystem::path(std::wstring_view(buf, length)).filename()
+      == dll.filename()) {
       return true;
     }
   }
@@ -218,24 +218,35 @@ bool GameInjector::Run(std::stop_token stopToken) {
       if (!processHandle) {
         continue;
       }
-      wchar_t buf[MAX_PATH];
-      DWORD bufSize = sizeof(buf);
-      if (!QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize)) {
-        continue;
-      }
-      if (bufSize < 0 || bufSize > sizeof(buf)) {
-        continue;
-      }
-      auto path = std::filesystem::canonical(std::wstring_view(buf, bufSize));
+
+      std::filesystem::path fullPath;
 
       std::scoped_lock lock(mGamesMutex);
       for (const auto& game: mGames) {
-        if (path != game->mPath) {
+        if (game->mPath.filename() != process.szExeFile) {
           continue;
         }
 
-        const auto friendly = game->mGame->GetUserFriendlyName(path);
-        if (path != currentPath) {
+        if (fullPath.empty()) {
+          wchar_t buf[MAX_PATH];
+          DWORD bufSize = sizeof(buf);
+          if (!QueryFullProcessImageNameW(
+                processHandle.get(), 0, buf, &bufSize)) {
+            continue;
+          }
+          if (bufSize < 0 || bufSize > sizeof(buf)) {
+            continue;
+          }
+          fullPath
+            = std::filesystem::canonical(std::wstring_view(buf, bufSize));
+        }
+
+        if (fullPath != game->mPath) {
+          continue;
+        }
+
+        const auto friendly = game->mGame->GetUserFriendlyName(fullPath);
+        if (fullPath != currentPath) {
           evGameChanged.EmitFromMainThread(game);
         }
 
@@ -253,11 +264,11 @@ bool GameInjector::Run(std::stop_token stopToken) {
         std::filesystem::path overlayDll;
         switch (game->mOverlayAPI) {
           case OverlayAPI::SteamVR:
-            currentPath = path;
+            currentPath = fullPath;
             dprint("SteamVR forced, not injecting any overlay DLL");
             goto NEXT_PROCESS;
           case OverlayAPI::OpenXR:
-            currentPath = path;
+            currentPath = fullPath;
             dprint("OpenXR forced, not injecting any overlay DLL");
             goto NEXT_PROCESS;
           case OverlayAPI::AutoDetect:
@@ -291,17 +302,13 @@ bool GameInjector::Run(std::stop_token stopToken) {
         }
 
         if (!InjectDll(processHandle.get(), overlayDll)) {
-          currentPath = path;
+          currentPath = fullPath;
           dprintf(
             "Failed to inject DLL {}: {}", overlayDll.string(), GetLastError());
           break;
         }
 
-        if (path == currentPath) {
-          break;
-        }
-
-        currentPath = path;
+        currentPath = fullPath;
         break;
       }
     NEXT_PROCESS:
