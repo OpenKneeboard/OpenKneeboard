@@ -20,10 +20,13 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <Windows.h>
 
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <stop_token>
+#include <string>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -32,14 +35,23 @@ struct GameInstance;
 
 class GameInjector final {
  public:
+  GameInjector();
   bool Run(std::stop_token);
 
   Event<std::shared_ptr<GameInstance>> evGameChanged;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
  private:
+  void CheckProcess(DWORD processID, std::wstring_view exeBaseName);
   std::vector<std::shared_ptr<GameInstance>> mGames;
   std::mutex mGamesMutex;
+
+  std::filesystem::path mMarkerDll;
+  std::filesystem::path mTabletProxyDll;
+  std::filesystem::path mOverlayAutoDetectDll;
+  std::filesystem::path mOverlayNonVRD3D11Dll;
+  std::filesystem::path mOverlayOculusD3D11Dll;
+  std::filesystem::path mOverlayOculusD3D12Dll;
 };
 
 }// namespace OpenKneeboard
