@@ -250,7 +250,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
       | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
       | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT
       | XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT,
-    .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .sampleCount = 1,
     .width = TextureWidth,
     .height = TextureHeight,
