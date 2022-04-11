@@ -225,7 +225,7 @@ void KneeboardState::UpdateLayout() {
   }
 
   if (mContentNativeSize.width == 0 || mContentNativeSize.height == 0) {
-    mContentNativeSize = { 768, 1024 };
+    mContentNativeSize = {768, 1024};
   }
 
   const auto scaleX
@@ -442,6 +442,13 @@ void KneeboardState::SaveSettings() {
   mSettings.App = mAppSettings;
 
   mSettings.Save();
+}
+
+DoodleSettings* KneeboardState::GetDoodleSettings() {
+  auto ds = new DoodleSettings();
+  return ds;
+}
+void KneeboardState::SetDoodleSettings(const DoodleSettings&) {
 }
 
 }// namespace OpenKneeboard

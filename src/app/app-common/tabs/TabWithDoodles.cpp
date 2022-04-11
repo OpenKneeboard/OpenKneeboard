@@ -22,7 +22,6 @@
 #include <OpenKneeboard/TabWithDoodles.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-
 #include <OpenKneeboard/scope_guard.h>
 
 namespace OpenKneeboard {
@@ -38,12 +37,10 @@ TabWithDoodles::TabWithDoodles(const DXResources& dxr) : mContentLayer(dxr) {
   mDXR.mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
 
-  AddEventListener(
-    this->evFullyReplacedEvent, [this]() {
-      this->ClearContentCache();
-      this->ClearDoodles();
-    }
-  );
+  AddEventListener(this->evFullyReplacedEvent, [this]() {
+    this->ClearContentCache();
+    this->ClearDoodles();
+  });
 }
 
 TabWithDoodles::~TabWithDoodles() {
@@ -97,11 +94,20 @@ void TabWithDoodles::FlushCursorEvents() {
       const bool erasing = event.mButtons & ~1;
 
       const auto scale = mDrawings.at(pageIndex).mScale;
+
+      auto ds = GetKneeboardState()->GetDoodleSettings();
+      auto draw_radius = ds->GetDrawRadius();
+      auto erase_radius = ds->GetEraseRadius();
+      auto fixed_draw = ds->GetFixedDraw();
+      auto fixed_erase = ds->GetFixedErase();
+
       const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
-      auto radius = 1 + (pressure * 15);
+
+      auto radius = fixed_draw ? draw_radius : 1 + (pressure * draw_radius);
       if (erasing) {
-        radius *= 10;
+        radius = fixed_erase ? erase_radius : 1 + (pressure * erase_radius);
       }
+
       const auto x = event.mX * scale;
       const auto y = event.mY * scale;
       const auto brush = erasing ? mEraser : mBrush;

@@ -19,16 +19,17 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/FlatConfig.h>
-#include <OpenKneeboard/VRConfig.h>
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/AppSettings.h>
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/DoodleSettings.h>
+#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/FlatConfig.h>
+#include <OpenKneeboard/Settings.h>
+#include <OpenKneeboard/VRConfig.h>
 #include <d2d1.h>
 
-#include <thread>
 #include <memory>
+#include <thread>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -83,7 +84,7 @@ class KneeboardState final : private EventReceiver {
   Event<> evFrameTimerEvent;
   Event<> evTabsChangedEvent;
 
-  std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;  
+  std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 
   GamesList* GetGamesList() const;
 
@@ -93,6 +94,9 @@ class KneeboardState final : private EventReceiver {
   void SetVRConfig(const VRConfig&);
   AppSettings GetAppSettings() const;
   void SetAppSettings(const AppSettings&);
+
+  DoodleSettings* GetDoodleSettings();
+  void SetDoodleSettings(const DoodleSettings&);
 
   void SaveSettings();
 
