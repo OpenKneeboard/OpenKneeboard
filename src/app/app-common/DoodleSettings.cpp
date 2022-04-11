@@ -4,7 +4,7 @@ namespace OpenKneeboard {
 
 DoodleSettings::DoodleSettings() {
   DrawRadius = 15;
-  EraseRadius = 150;
+  EraseRadius = 50;
   FixedDraw = false;
   FixedErase = true;
 }
