@@ -246,10 +246,6 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   dprintf("{}", __FUNCTION__);
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
-    .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT
-      | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
-      | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT
-      | XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT,
     .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
     .sampleCount = 1,
     .width = TextureWidth,
