@@ -211,9 +211,12 @@ XrExtent2Df OpenXRKneeboard::GetSize(
     {quat.x, quat.y, quat.z, quat.w},
     kneeboardPose.Translation(),
     Quaternion::CreateFromRotationMatrix(kneeboardPose),
-    mZoomed
-      ? Vector2 {virtualWidth * vr.gazeTargetHorizontalScale, virtualHeight * vr.gazeTargetVerticalScale}
-      : Vector2 {virtualWidth, virtualHeight});
+    Vector2 {
+      virtualWidth * vr.gazeTargetHorizontalScale
+        * (mZoomed ? vr.zoomScale : 1.0f),
+      virtualHeight * vr.gazeTargetVerticalScale
+        * (mZoomed ? vr.zoomScale : 1.0f),
+    });
   return mZoomed ? zoomedSize : normalSize;
 }
 
