@@ -1,4 +1,4 @@
-﻿/*
+/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -101,7 +101,7 @@ static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
   if (!exceptionPointers) {
     ::RtlCaptureContext(&exceptionContext);
     exceptionRecord.ExceptionCode = STATUS_BREAKPOINT;
-    fakeExceptionPointers = { &exceptionRecord, &exceptionContext };
+    fakeExceptionPointers = {&exceptionRecord, &exceptionContext};
     exceptionInfo.ExceptionPointers = &fakeExceptionPointers;
   }
 
