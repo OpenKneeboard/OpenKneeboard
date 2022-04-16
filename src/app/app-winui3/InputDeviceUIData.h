@@ -51,21 +51,10 @@ struct TabletInputDeviceUIData
   uint8_t Orientation();
   void Orientation(uint8_t value);
 
-  bool FixedWriteRadius();
-  void FixedWriteRadius(bool value);
-  bool FixedEraseRadius();
-  void FixedEraseRadius(bool value);
-  float EraseRadius();
-  void EraseRadius(float value);
-  float WriteRadius();
-  void WriteRadius(float value);
+
 
  private:
   uint8_t mOrientation {0};
-  float mWriteRadius {15};
-  float mEraseRadius {150};
-  bool mFixedEraseRadius {true};
-  bool mFixedWriteRadius {false};
 };
 
 struct InputDeviceUIDataTemplateSelector

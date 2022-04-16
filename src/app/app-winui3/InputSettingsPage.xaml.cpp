@@ -37,6 +37,17 @@ InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
 }
 
+winrt::event_token InputSettingsPage::PropertyChanged(
+  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+    handler) {
+  return mPropertyChangedEvent.add(handler);
+}
+
+void InputSettingsPage::PropertyChanged(
+  winrt::event_token const& token) noexcept {
+  mPropertyChangedEvent.remove(token);
+}
+
 IVector<IInspectable> InputSettingsPage::Devices() {
   auto devices {winrt::single_threaded_vector<IInspectable>()};
   for (const auto& device: gKneeboard->GetInputDevices()) {
@@ -72,6 +83,39 @@ void InputSettingsPage::OnOrientationChanged(
 
   std::dynamic_pointer_cast<TabletInputDevice>(device)->SetOrientation(
     static_cast<TabletOrientation>(combo.SelectedIndex()));
+}
+
+bool InputSettingsPage::FixedWriteRadius() {
+  return gKneeboard->GetDoodleSettings().FixedDraw;
+}
+void InputSettingsPage::FixedWriteRadius(bool value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.FixedDraw = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+bool InputSettingsPage::FixedEraseRadius() {
+  return gKneeboard->GetDoodleSettings().FixedErase;
+}
+void InputSettingsPage::FixedEraseRadius(bool value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.FixedErase = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+unsigned int InputSettingsPage::EraseRadius() {
+  return gKneeboard->GetDoodleSettings().EraseRadius;
+}
+void InputSettingsPage::EraseRadius(unsigned int value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.EraseRadius = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+unsigned int InputSettingsPage::WriteRadius() {
+  return gKneeboard->GetDoodleSettings().DrawRadius;
+}
+void InputSettingsPage::WriteRadius(unsigned int value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.DrawRadius = value;
+  gKneeboard->SetDoodleSettings(ds);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

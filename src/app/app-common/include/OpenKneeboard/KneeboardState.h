@@ -94,8 +94,7 @@ class KneeboardState final : private EventReceiver {
   void SetVRConfig(const VRConfig&);
   AppSettings GetAppSettings() const;
   void SetAppSettings(const AppSettings&);
-
-  DoodleSettings* GetDoodleSettings();
+  DoodleSettings GetDoodleSettings();
   void SetDoodleSettings(const DoodleSettings&);
 
   void SaveSettings();
@@ -128,6 +127,7 @@ class KneeboardState final : private EventReceiver {
   VRConfig mVRConfig;
   FlatConfig mFlatConfig;
   AppSettings mAppSettings;
+  DoodleSettings mDoodleSettings;
 
   void UpdateLayout();
 

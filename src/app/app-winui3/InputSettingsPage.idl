@@ -8,10 +8,6 @@ namespace OpenKneeboardApp {
   [default_interface] runtimeclass TabletInputDeviceUIData : InputDeviceUIData {
   TabletInputDeviceUIData();
   UInt8 Orientation;
-  Boolean FixedWriteRadius;
-  Boolean FixedEraseRadius;
-  Single WriteRadius;
-  Single EraseRadius;
 };
 
 [default_interface] runtimeclass InputDeviceUIDataTemplateSelector
@@ -22,11 +18,16 @@ namespace OpenKneeboardApp {
 }
 
 [default_interface] runtimeclass InputSettingsPage
-  : Microsoft.UI.Xaml.Controls.Page {
+  : Microsoft.UI.Xaml.Controls.Page,
+  Microsoft.UI.Xaml.Data.INotifyPropertyChanged {
   InputSettingsPage();
   Windows.Foundation.Collections.IVector<IInspectable> Devices {
     get;
   };
+  Boolean FixedWriteRadius;
+  Boolean FixedEraseRadius;
+  UInt32 WriteRadius;
+  UInt32 EraseRadius;
 }
 
 }// namespace OpenKneeboardApp

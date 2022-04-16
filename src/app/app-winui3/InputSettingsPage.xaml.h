@@ -34,7 +34,27 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
   InputSettingsPage();
   IVector<IInspectable> Devices();
-  void OnOrientationChanged(const IInspectable&, const SelectionChangedEventArgs&);
+  void OnOrientationChanged(
+    const IInspectable&,
+    const SelectionChangedEventArgs&);
+
+  bool FixedWriteRadius();
+  void FixedWriteRadius(bool value);
+  bool FixedEraseRadius();
+  void FixedEraseRadius(bool value);
+  unsigned int EraseRadius();
+  void EraseRadius(unsigned int value);
+  unsigned int WriteRadius();
+  void WriteRadius(unsigned int value);
+
+  winrt::event_token PropertyChanged(
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+      handler);
+  void PropertyChanged(winrt::event_token const& token) noexcept;
+
+ private:
+  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
+    mPropertyChangedEvent;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

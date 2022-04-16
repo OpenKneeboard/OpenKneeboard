@@ -48,31 +48,6 @@ void TabletInputDeviceUIData::Orientation(uint8_t value) {
   mOrientation = value;
 }
 
-bool TabletInputDeviceUIData::FixedWriteRadius() {
-  return mFixedWriteRadius;
-}
-void TabletInputDeviceUIData::FixedWriteRadius(bool value) {
-  mFixedWriteRadius = value;
-}
-bool TabletInputDeviceUIData::FixedEraseRadius() {
-  return mFixedEraseRadius;
-}
-void TabletInputDeviceUIData::FixedEraseRadius(bool value) {
-  mFixedEraseRadius = value;
-}
-float TabletInputDeviceUIData::EraseRadius() {
-  return mEraseRadius;
-}
-void TabletInputDeviceUIData::EraseRadius(float value) {
-  mEraseRadius = value;
-}
-float TabletInputDeviceUIData::WriteRadius() {
-  return mWriteRadius;
-}
-void TabletInputDeviceUIData::WriteRadius(float value) {
-  mWriteRadius = value;
-}
-
 DataTemplate InputDeviceUIDataTemplateSelector::GenericDevice() {
   return mGenericDevice;
 }
