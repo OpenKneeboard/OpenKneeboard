@@ -119,6 +119,10 @@ static DCSHookInstallState GetHookInstallState(
 winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   const XamlRoot& root,
   const std::filesystem::path& savedGamesPath) {
+  if (!std::filesystem::exists(savedGamesPath)) {
+    co_return;
+  }
+
   const auto hooksDir = savedGamesPath / "Scripts" / "Hooks";
   wchar_t buffer[MAX_PATH];
   auto length = GetModuleFileNameW(NULL, buffer, MAX_PATH);
