@@ -19,14 +19,15 @@
  */
 #pragma once
 
+#include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <d2d1.h>
 #include <shims/winrt.h>
 
 #include <memory>
+#include <mutex>
 
-#include <OpenKneeboard/CachedLayer.h>
 #include "TabWithCursorEvents.h"
 
 namespace OpenKneeboard {
@@ -44,10 +45,8 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
   virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
 
  protected:
-  virtual void RenderPageContent(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F&)
+  virtual void
+  RenderPageContent(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F&)
     = 0;
   virtual void RenderOverDoodles(
     ID2D1DeviceContext*,
@@ -73,6 +72,7 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
     D2D1_POINT_2F mCursorPoint;
   };
   winrt::com_ptr<ID2D1DeviceContext> mDrawingContext;
+  std::mutex mBufferedEventsMutex;
   std::vector<Drawing> mDrawings;
 
   ID2D1Bitmap* GetDrawingSurface(

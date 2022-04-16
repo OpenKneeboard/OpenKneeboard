@@ -22,7 +22,6 @@
 #include <OpenKneeboard/TabWithDoodles.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-
 #include <OpenKneeboard/scope_guard.h>
 
 namespace OpenKneeboard {
@@ -38,12 +37,10 @@ TabWithDoodles::TabWithDoodles(const DXResources& dxr) : mContentLayer(dxr) {
   mDXR.mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
 
-  AddEventListener(
-    this->evFullyReplacedEvent, [this]() {
-      this->ClearContentCache();
-      this->ClearDoodles();
-    }
-  );
+  AddEventListener(this->evFullyReplacedEvent, [this]() {
+    this->ClearContentCache();
+    this->ClearDoodles();
+  });
 }
 
 TabWithDoodles::~TabWithDoodles() {
@@ -60,6 +57,7 @@ void TabWithDoodles::ClearDoodles() {
 void TabWithDoodles::PostCursorEvent(
   const CursorEvent& event,
   uint16_t pageIndex) {
+  std::scoped_lock lock(mBufferedEventsMutex);
   if (pageIndex >= mDrawings.size()) {
     mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
   }
@@ -71,12 +69,14 @@ void TabWithDoodles::PostCursorEvent(
 
 void TabWithDoodles::FlushCursorEvents() {
   auto ctx = mDrawingContext;
+  std::scoped_lock lock(mBufferedEventsMutex);
 
   for (auto pageIndex = 0; pageIndex < mDrawings.size(); ++pageIndex) {
     auto& page = mDrawings.at(pageIndex);
     if (page.mBufferedEvents.empty()) {
       continue;
     }
+
     bool drawing = false;
     for (const auto& event: page.mBufferedEvents) {
       if (
