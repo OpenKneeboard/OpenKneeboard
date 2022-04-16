@@ -14,7 +14,15 @@ This feature requires recent Huion drivers.
 3. Install the latest driver from Huion
 
 ## Tablet acts a mouse in-game
+## Pen buttons don't work in-game
+## "Press keys" don't work in-game
 
 1. Make sure the game is listed in OpenKneeboard's settings
 2. Make sure your drivers are up to date
 3. If the game is running as administrator, OpenKneeboard must also run as administrator
+4. Either make sure both the pen and button settings are set for all applications, or set them both for OpenKneeboard and the game
+
+## Only a small area of the tablet works
+
+* Set rotation to 0 in the Huion app; use OpenKneeboard's setting instead
+* In the Huion app, set the work area to "All Displays" (especially for WMR headsets)
