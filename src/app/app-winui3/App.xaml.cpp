@@ -1,4 +1,4 @@
-/*
+﻿/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -155,8 +155,8 @@ static void InstallOpenXRLayerInUnsandboxedSubprocess() {
   startupInfo.StartupInfo.cb = sizeof(startupInfo);
   SIZE_T attributeListSize;
   InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeListSize);
-  startupInfo.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(
-    HeapAlloc(GetProcessHeap(), 0, attributeListSize));
+  startupInfo.lpAttributeList
+    = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(malloc(attributeListSize));
   DWORD policy = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
   UpdateProcThreadAttribute(
     startupInfo.lpAttributeList,
@@ -180,6 +180,7 @@ static void InstallOpenXRLayerInUnsandboxedSubprocess() {
     nullptr,
     reinterpret_cast<LPSTARTUPINFOW>(&startupInfo),
     &procInfo);
+  free(startupInfo.lpAttributeList);
 }
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
