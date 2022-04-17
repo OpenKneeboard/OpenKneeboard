@@ -85,23 +85,29 @@ void InputSettingsPage::OnOrientationChanged(
     static_cast<TabletOrientation>(combo.SelectedIndex()));
 }
 
+// inverted here for UI clarity
 bool InputSettingsPage::FixedWriteRadius() {
-  return gKneeboard->GetDoodleSettings().fixedDraw;
+  bool value = gKneeboard->GetDoodleSettings().fixedDraw;
+  return !value;
 }
 
+// inverted here for UI clarity
 void InputSettingsPage::FixedWriteRadius(bool value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.fixedDraw = value;
+  ds.fixedDraw = !value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
+// inverted here for UI clarity
 bool InputSettingsPage::FixedEraseRadius() {
-  return gKneeboard->GetDoodleSettings().fixedErase;
+  bool value = gKneeboard->GetDoodleSettings().fixedErase;
+  return !value;
 }
 
+// inverted here for UI clarity
 void InputSettingsPage::FixedEraseRadius(bool value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.fixedErase = value;
+  ds.fixedErase = !value;
   gKneeboard->SetDoodleSettings(ds);
 }
 

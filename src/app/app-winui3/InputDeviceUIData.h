@@ -51,8 +51,6 @@ struct TabletInputDeviceUIData
   uint8_t Orientation();
   void Orientation(uint8_t value);
 
-
-
  private:
   uint8_t mOrientation {0};
 };

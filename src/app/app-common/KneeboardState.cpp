@@ -454,6 +454,7 @@ DoodleSettings KneeboardState::GetDoodleSettings() {
 
 void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
   mDoodleSettings = value;
+  this->SaveSettings();
 }
 
 }// namespace OpenKneeboard
