@@ -73,7 +73,7 @@ class TestViewerWindow final {
     mHwnd = CreateWindowExW(
       0,
       CLASS_NAME,
-      L"OpenKneeboard Test Viewer",
+      L"OpenKneeboard Viewer",
       WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT,
       CW_USEDEFAULT,
