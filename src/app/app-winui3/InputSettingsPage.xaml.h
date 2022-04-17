@@ -42,10 +42,10 @@ struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
   void FixedWriteRadius(bool value);
   bool FixedEraseRadius();
   void FixedEraseRadius(bool value);
-  unsigned int EraseRadius();
-  void EraseRadius(unsigned int value);
-  unsigned int WriteRadius();
-  void WriteRadius(unsigned int value);
+  uint32_t EraseRadius();
+  void EraseRadius(uint32_t value);
+  uint32_t WriteRadius();
+  void WriteRadius(uint32_t value);
 
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&

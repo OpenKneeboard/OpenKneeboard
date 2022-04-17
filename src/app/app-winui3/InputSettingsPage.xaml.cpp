@@ -86,35 +86,41 @@ void InputSettingsPage::OnOrientationChanged(
 }
 
 bool InputSettingsPage::FixedWriteRadius() {
-  return gKneeboard->GetDoodleSettings().FixedDraw;
+  return gKneeboard->GetDoodleSettings().fixedDraw;
 }
+
 void InputSettingsPage::FixedWriteRadius(bool value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.FixedDraw = value;
+  ds.fixedDraw = value;
   gKneeboard->SetDoodleSettings(ds);
 }
+
 bool InputSettingsPage::FixedEraseRadius() {
-  return gKneeboard->GetDoodleSettings().FixedErase;
+  return gKneeboard->GetDoodleSettings().fixedErase;
 }
+
 void InputSettingsPage::FixedEraseRadius(bool value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.FixedErase = value;
+  ds.fixedErase = value;
   gKneeboard->SetDoodleSettings(ds);
 }
-unsigned int InputSettingsPage::EraseRadius() {
-  return gKneeboard->GetDoodleSettings().EraseRadius;
+
+uint32_t InputSettingsPage::EraseRadius() {
+  return gKneeboard->GetDoodleSettings().eraseRadius;
 }
-void InputSettingsPage::EraseRadius(unsigned int value) {
+void InputSettingsPage::EraseRadius(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.EraseRadius = value;
+  ds.eraseRadius = value;
   gKneeboard->SetDoodleSettings(ds);
 }
-unsigned int InputSettingsPage::WriteRadius() {
-  return gKneeboard->GetDoodleSettings().DrawRadius;
+
+uint32_t InputSettingsPage::WriteRadius() {
+  return gKneeboard->GetDoodleSettings().drawRadius;
 }
-void InputSettingsPage::WriteRadius(unsigned int value) {
+
+void InputSettingsPage::WriteRadius(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.DrawRadius = value;
+  ds.drawRadius = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 

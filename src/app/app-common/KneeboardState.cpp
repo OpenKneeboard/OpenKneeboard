@@ -451,6 +451,7 @@ void KneeboardState::SaveSettings() {
 DoodleSettings KneeboardState::GetDoodleSettings() {
   return mDoodleSettings;
 }
+
 void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
   mDoodleSettings = value;
 }

@@ -1,14 +1,14 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
 struct DoodleSettings final {
-  uint32_t DrawRadius = 50;
-  uint32_t EraseRadius = 150;
-  bool FixedDraw = false;
-  bool FixedErase = true;
-  // TODO: stroke colour?
+  uint32_t drawRadius = 50;
+  uint32_t eraseRadius = 150;
+  bool fixedDraw = false;
+  bool fixedErase = true;
+  // TODO: stroke color?
 };
 
 void from_json(const nlohmann::json&, DoodleSettings&);

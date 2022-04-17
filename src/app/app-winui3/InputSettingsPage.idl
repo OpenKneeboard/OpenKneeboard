@@ -1,33 +1,35 @@
-namespace OpenKneeboardApp {
-[default_interface] unsealed runtimeclass InputDeviceUIData {
-  InputDeviceUIData();
-  String Name;
-  String DeviceID;
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    unsealed runtimeclass InputDeviceUIData {
+        InputDeviceUIData();
+        String Name;
+        String DeviceID;
+    }
+
+    [default_interface]
+    runtimeclass TabletInputDeviceUIData: InputDeviceUIData {
+        TabletInputDeviceUIData();
+        UInt8 Orientation;
+    };
+
+    [default_interface]
+    runtimeclass InputDeviceUIDataTemplateSelector : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
+        InputDeviceUIDataTemplateSelector();
+        Microsoft.UI.Xaml.DataTemplate GenericDevice;
+        Microsoft.UI.Xaml.DataTemplate TabletDevice;
+    }
+
+    [default_interface]
+    runtimeclass InputSettingsPage: Microsoft.UI.Xaml.Controls.Page,
+                                    Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        InputSettingsPage();
+        Windows.Foundation.Collections.IVector<IInspectable> Devices { get; };
+        Boolean FixedWriteRadius;
+        Boolean FixedEraseRadius;
+        UInt32 WriteRadius;
+        UInt32 EraseRadius;
+    }
+
 }
-
-  [default_interface] runtimeclass TabletInputDeviceUIData : InputDeviceUIData {
-  TabletInputDeviceUIData();
-  UInt8 Orientation;
-};
-
-[default_interface] runtimeclass InputDeviceUIDataTemplateSelector
-  : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
-  InputDeviceUIDataTemplateSelector();
-  Microsoft.UI.Xaml.DataTemplate GenericDevice;
-  Microsoft.UI.Xaml.DataTemplate TabletDevice;
-}
-
-[default_interface] runtimeclass InputSettingsPage
-  : Microsoft.UI.Xaml.Controls.Page,
-  Microsoft.UI.Xaml.Data.INotifyPropertyChanged {
-  InputSettingsPage();
-  Windows.Foundation.Collections.IVector<IInspectable> Devices {
-    get;
-  };
-  Boolean FixedWriteRadius;
-  Boolean FixedEraseRadius;
-  UInt32 WriteRadius;
-  UInt32 EraseRadius;
-}
-
-}// namespace OpenKneeboardApp

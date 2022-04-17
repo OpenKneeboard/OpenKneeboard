@@ -106,7 +106,8 @@ void to_json(nlohmann::json& j, const Settings& s) {
     {"NonVR", s.NonVR},
     {"VR", s.VR},
     {"App", s.App},
-    {"Doodle", s.Doodle}};
+    {"Doodle", s.Doodle},
+  };
 }
 
 }// namespace OpenKneeboard
