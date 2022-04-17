@@ -37,7 +37,6 @@
       Margin="12"
       SizeChanged="OnCanvasSizeChanged"
       Grid.Row="1"
-    >
-    </SwapChainPanel>
+    />
   </Grid>
 </Page>
