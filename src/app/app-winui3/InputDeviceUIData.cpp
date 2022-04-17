@@ -61,8 +61,7 @@ DataTemplate InputDeviceUIDataTemplateSelector::TabletDevice() {
   return mTabletDevice;
 }
 
-void InputDeviceUIDataTemplateSelector::TabletDevice(
-  const DataTemplate& value) {
+void InputDeviceUIDataTemplateSelector::TabletDevice(const DataTemplate& value) {
   mTabletDevice = value;
 }
 
