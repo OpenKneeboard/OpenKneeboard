@@ -54,6 +54,8 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   float KneeboardGazeTargetVerticalScale();
   void KneeboardGazeTargetVerticalScale(float value);
 
+  bool SteamVREnabled();
+  void SteamVREnabled(bool);
   bool GazeZoomEnabled();
   void GazeZoomEnabled(bool);
 

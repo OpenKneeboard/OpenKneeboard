@@ -80,10 +80,9 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     server.Run(stopToken);
   });
 
-  mOpenVRThread = std::jthread([](std::stop_token stopToken) {
-    SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
-    OpenVROverlay().Run(stopToken);
-  });
+  if (mVRConfig.mEnableSteamVR) {
+    this->StartOpenVRThread();
+  }
 
   UpdateLayout();
 }
@@ -313,18 +312,18 @@ void KneeboardState::OnUserAction(UserAction action) {
       this->NextPage();
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
-      auto& flags = this->mVRConfig.flags;
-      if (flags & VRConfig::Flags::FORCE_ZOOM) {
-        flags &= ~VRConfig::Flags::FORCE_ZOOM;
+      auto& flags = this->mVRConfig.mFlags;
+      if (flags & VRRenderConfig::Flags::FORCE_ZOOM) {
+        flags &= ~VRRenderConfig::Flags::FORCE_ZOOM;
       } else {
-        flags |= VRConfig::Flags::FORCE_ZOOM;
+        flags |= VRRenderConfig::Flags::FORCE_ZOOM;
       }
       this->SaveSettings();
       this->evNeedsRepaintEvent.Emit();
       return;
     }
     case UserAction::RECENTER_VR:
-      this->mVRConfig.recenterCount++;
+      this->mVRConfig.mRecenterCount++;
       this->evNeedsRepaintEvent.Emit();
       return;
   }
@@ -408,6 +407,13 @@ VRConfig KneeboardState::GetVRConfig() const {
 }
 
 void KneeboardState::SetVRConfig(const VRConfig& value) {
+  if (value.mEnableSteamVR != mVRConfig.mEnableSteamVR) {
+    if (!value.mEnableSteamVR) {
+      mOpenVRThread.request_stop();
+    } else {
+      this->StartOpenVRThread();
+    }
+  }
   mVRConfig = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
@@ -455,6 +461,13 @@ DoodleSettings KneeboardState::GetDoodleSettings() {
 void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
   mDoodleSettings = value;
   this->SaveSettings();
+}
+
+void KneeboardState::StartOpenVRThread() {
+  mOpenVRThread = std::jthread([](std::stop_token stopToken) {
+    SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
+    OpenVROverlay().Run(stopToken);
+  });
 }
 
 }// namespace OpenKneeboard

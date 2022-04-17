@@ -31,7 +31,7 @@
 namespace OpenKneeboard {
 
 #pragma pack(push)
-struct VRConfig {
+struct VRRenderConfig {
   static constexpr uint16_t VERSION = 3;
 
   enum class Flags : uint32_t {
@@ -43,26 +43,30 @@ struct VRConfig {
   };
 
   // Distances in meters, rotations in radians
-  float x = 0.15f, floorY = 0.6f, eyeY = -0.7f, z = -0.4f;
-  float rx = -2 * std::numbers::pi_v<float> / 5,
-        ry = -std::numbers::pi_v<float> / 32, rz = 0.0f;
-  float height = 0.25f;
-  float zoomScale = 2.0f;
+  float mX = 0.15f, mFloorY = 0.6f, mEyeY = -0.7f, mZ = -0.4f;
+  float mRX = -2 * std::numbers::pi_v<float> / 5,
+        mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
+  float mHeight = 0.25f;
+  float mZoomScale = 2.0f;
 
   // Increment every time binding is pressed
-  uint64_t recenterCount = 0;
+  uint64_t mRecenterCount = 0;
 
-  float gazeTargetVerticalScale = 1.0f;
-  float gazeTargetHorizontalScale = 1.0f;
+  float mGazeTargetVerticalScale = 1.0f;
+  float mGazeTargetHorizontalScale = 1.0f;
 
-  Flags flags = static_cast<Flags>(
+  Flags mFlags = static_cast<Flags>(
     static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
     | static_cast<uint32_t>(Flags::GAZE_ZOOM));
 };
 #pragma pack(pop)
 
+struct VRConfig : public VRRenderConfig {
+  bool mEnableSteamVR = true;
+};
+
 template <>
-constexpr bool is_bitflags_v<VRConfig::Flags> = true;
+constexpr bool is_bitflags_v<VRRenderConfig::Flags> = true;
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 // not using the macros because they use `x`, but we're

@@ -50,7 +50,7 @@ struct Config final {
 
   HWND feederWindow {0};
   uint16_t imageWidth, imageHeight;// Pixels
-  VRConfig vr;
+  VRRenderConfig vr;
   FlatConfig flat;
 };
 #pragma pack(pop)

@@ -94,17 +94,20 @@ bool FolderTab::CanOpenFile(const std::filesystem::path& path) const {
 }
 
 void FolderTab::Reload() {
-  p->mPages.clear();
   if (p->mPath.empty() || !std::filesystem::is_directory(p->mPath)) {
+    p->mPages.clear();
     evFullyReplacedEvent.Emit();
     return;
   }
+
+  std::vector<Impl::Page> pages;
   for (auto& entry: std::filesystem::recursive_directory_iterator(p->mPath)) {
     if (!this->CanOpenFile(entry.path())) {
       continue;
     }
-    p->mPages.push_back({.mPath = entry.path()});
+    pages.push_back({.mPath = entry.path()});
   }
+  p->mPages = pages;
   evFullyReplacedEvent.Emit();
 }
 

@@ -134,6 +134,8 @@ class KneeboardState final : private EventReceiver {
   void OnCursorEvent(const CursorEvent& ev);
   void OnUserAction(UserAction);
   void OnGameEvent(const GameEvent&);
+
+  void StartOpenVRThread();
 };
 
 }// namespace OpenKneeboard

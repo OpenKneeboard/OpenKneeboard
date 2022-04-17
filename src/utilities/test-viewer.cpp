@@ -26,6 +26,8 @@
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
+#include <fmt/format.h>
+#include <fmt/xchar.h>
 #include <shims/winrt.h>
 
 #include <memory>
@@ -45,14 +47,26 @@ struct Pixel {
 
 class TestViewerWindow final {
  private:
+  bool mStreamerMode = false;
+  bool mShowPerformanceInformation = false;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
+
+  D2D1_COLOR_F mWindowColor;
+  D2D1_COLOR_F mStreamerModeWindowColor;
+  D2D1_COLOR_F mWindowFrameColor;
+  D2D1_COLOR_F mStreamerModeWindowFrameColor;
+
+  winrt::com_ptr<ID2D1SolidColorBrush> mOverlayBackground;
+  winrt::com_ptr<ID2D1SolidColorBrush> mOverlayForeground;
+  winrt::com_ptr<IDWriteTextFormat> mOverlayTextFormat;
 
   DXResources mDXR;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mStreamerModeBackgroundBrush;
 
   HWND mHwnd;
 
@@ -73,7 +87,7 @@ class TestViewerWindow final {
     mHwnd = CreateWindowExW(
       0,
       CLASS_NAME,
-      L"OpenKneeboard Test Viewer",
+      L"OpenKneeboard Viewer",
       WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT,
       CW_USEDEFAULT,
@@ -89,6 +103,24 @@ class TestViewerWindow final {
 
     mErrorRenderer
       = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext.get());
+    mWindowColor = GetSystemColor(COLOR_WINDOW);
+    mWindowFrameColor = GetSystemColor(COLOR_WINDOWFRAME);
+    mStreamerModeWindowColor = D2D1::ColorF(1.0f, 0.0f, 1.0f, 1.0f);
+    mStreamerModeWindowFrameColor = mStreamerModeWindowColor;
+
+    mDXR.mD2DDeviceContext->CreateSolidColorBrush(
+      D2D1::ColorF(0.0f, 0.0f, 0.f, 0.8f), mOverlayBackground.put());
+    mDXR.mD2DDeviceContext->CreateSolidColorBrush(
+      D2D1::ColorF(1.0f, 1.0f, 1.f, 1.0f), mOverlayForeground.put());
+    mDXR.mDWriteFactory->CreateTextFormat(
+      L"Courier New",
+      nullptr,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      16.0f,
+      L"",
+      mOverlayTextFormat.put());
   }
 
   HWND GetHWND() const {
@@ -145,7 +177,7 @@ class TestViewerWindow final {
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
       .BufferCount = 2,
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
-      .AlphaMode = DXGI_ALPHA_MODE_IGNORE, // HWND swap chain can't have alpha
+      .AlphaMode = DXGI_ALPHA_MODE_IGNORE,// HWND swap chain can't have alpha
     };
     mDXR.mDXGIFactory->CreateSwapChainForHwnd(
       mDXR.mD3DDevice.get(),
@@ -167,17 +199,73 @@ class TestViewerWindow final {
     this->PaintNow();
   }
 
+  void OnKeyUp(uint64_t vkk) {
+    switch (vkk) {
+      case 'S':
+        mStreamerMode = !mStreamerMode;
+        this->PaintNow();
+        return;
+      case 'P':
+        mShowPerformanceInformation = !mShowPerformanceInformation;
+        this->PaintNow();
+        return;
+    }
+  }
+
   void PaintNow() {
     this->InitSwapChain();
-    const auto clientSize = GetClientSize();
 
     winrt::com_ptr<IDXGISurface> surface;
+
     mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
-    auto ctx = mDXR.mD2DDeviceContext;
+    auto ctx = mDXR.mD2DDeviceContext.get();
     winrt::com_ptr<ID2D1Bitmap1> bitmap;
     winrt::check_hresult(
       ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
     ctx->SetTarget(bitmap.get());
+
+		ctx->BeginDraw();
+		auto cleanup = scope_guard([&] {
+			ctx->EndDraw();
+			mSwapChain->Present(0, 0);
+		});
+
+    this->PaintContent(ctx);
+
+    if (mShowPerformanceInformation) {
+      this->PaintPerformanceInformation(ctx);
+    }
+  }
+
+  void PaintPerformanceInformation(ID2D1DeviceContext* ctx) {
+    const auto clientSize = GetClientSize();
+    const auto text = fmt::format(L"Frame #{}", mSHM.GetSequenceNumber());
+    winrt::com_ptr<IDWriteTextLayout> layout;
+    mDXR.mDWriteFactory->CreateTextLayout(
+      text.data(),
+      text.size(),
+      mOverlayTextFormat.get(),
+      static_cast<FLOAT>(clientSize.width),
+      static_cast<FLOAT>(clientSize.height),
+      layout.put());
+    layout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+    layout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+
+    DWRITE_TEXT_METRICS metrics;
+    layout->GetMetrics(&metrics);
+
+    ctx->FillRectangle(
+      D2D1::RectF(
+        metrics.left,
+        metrics.top,
+        metrics.left + metrics.width,
+        metrics.top + metrics.height),
+      mOverlayBackground.get());
+    ctx->DrawTextLayout({0.0f, 0.0f}, layout.get(), mOverlayForeground.get());
+  }
+
+  void PaintContent(ID2D1DeviceContext* ctx) {
+    const auto clientSize = GetClientSize();
 
     if (!mBackgroundBrush) {
       winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
@@ -203,25 +291,23 @@ class TestViewerWindow final {
         D2D1::BitmapBrushProperties(
           D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
         reinterpret_cast<ID2D1BitmapBrush**>(mBackgroundBrush.put()));
+
+      ctx->CreateSolidColorBrush(
+        D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f),
+        reinterpret_cast<ID2D1SolidColorBrush**>(
+          mStreamerModeBackgroundBrush.put()));
     }
 
-    bool present = true;
-    ctx->BeginDraw();
-    auto cleanup = scope_guard([&] {
-      ctx->EndDraw();
-      if (present) {
-        mSwapChain->Present(0, 0);
-      }
-    });
-
-    ctx->Clear(GetSystemColor(COLOR_WINDOW));
+    ctx->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
     auto snapshot = mSHM.MaybeGet();
     if (!snapshot) {
-      mErrorRenderer->Render(
-        ctx.get(),
-        L"No Feeder",
-        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
+      if (!mStreamerMode) {
+        mErrorRenderer->Render(
+          ctx,
+          L"No Feeder",
+          {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
+      }
       mFirstDetached = false;
       return;
     }
@@ -231,7 +317,7 @@ class TestViewerWindow final {
 
     if (config.imageWidth == 0 || config.imageHeight == 0) {
       mErrorRenderer->Render(
-        ctx.get(),
+        ctx,
         "No Image",
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       mFirstDetached = false;
@@ -240,12 +326,12 @@ class TestViewerWindow final {
 
     auto sharedTexture = snapshot.GetSharedTexture(mDXR.mD3DDevice.get());
     if (!sharedTexture) {
-      present = false;
       return;
     }
     auto sharedSurface = sharedTexture.GetSurface();
 
-    ctx->Clear(GetSystemColor(COLOR_WINDOWFRAME));
+    ctx->Clear(
+      mStreamerMode ? mStreamerModeWindowFrameColor : mWindowFrameColor);
 
     const auto scalex = float(clientSize.width) / config.imageWidth;
     const auto scaley = float(clientSize.height) / config.imageHeight;
@@ -277,11 +363,12 @@ class TestViewerWindow final {
     ctx->CreateSharedBitmap(
       _uuidof(IDXGISurface), sharedSurface, &bitmapProperties, d2dBitmap.put());
 
-    auto bg = mBackgroundBrush;
+    auto bg = mStreamerMode ? mStreamerModeBackgroundBrush.get()
+                            : mBackgroundBrush.get();
     // Align the top-left pixel of the brush
     bg->SetTransform(
       D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
-    ctx->FillRectangle(pageRect, bg.get());
+    ctx->FillRectangle(pageRect, bg);
     ctx->SetTransform(D2D1::IdentityMatrix());
 
     ctx->DrawBitmap(
@@ -316,6 +403,9 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
         .height = HIWORD(lParam),
       });
       return 0;
+    case WM_KEYUP:
+      gInstance->OnKeyUp(wParam);
+      return DefWindowProc(hWnd, uMsg, wParam, lParam);
     case WM_CLOSE:
       PostQuitMessage(0);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);

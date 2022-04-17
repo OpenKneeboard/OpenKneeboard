@@ -179,24 +179,24 @@ XrExtent2Df OpenXRKneeboard::GetSize(
   const auto& vr = config.vr;
 
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  const auto virtualHeight = vr.height;
-  const auto virtualWidth = aspectRatio * vr.height;
+  const auto virtualHeight = vr.mHeight;
+  const auto virtualWidth = aspectRatio * vr.mHeight;
 
   XrExtent2Df normalSize {virtualWidth, virtualHeight};
   XrExtent2Df zoomedSize {
-    virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale};
+    virtualWidth * vr.mZoomScale, virtualHeight * vr.mZoomScale};
 
-  if (vr.flags & VRConfig::Flags::FORCE_ZOOM) {
+  if (vr.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
     mZoomed = true;
     return zoomedSize;
   }
-  if (!(vr.flags & VRConfig::Flags::GAZE_ZOOM)) {
+  if (!(vr.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)) {
     mZoomed = false;
     return normalSize;
   }
   if (
-    vr.zoomScale < 1.1 || vr.gazeTargetHorizontalScale < 0.1
-    || vr.gazeTargetVerticalScale < 0.1) {
+    vr.mZoomScale < 1.1 || vr.mGazeTargetHorizontalScale < 0.1
+    || vr.mGazeTargetVerticalScale < 0.1) {
     mZoomed = false;
     return normalSize;
   }
@@ -212,10 +212,10 @@ XrExtent2Df OpenXRKneeboard::GetSize(
     kneeboardPose.Translation(),
     Quaternion::CreateFromRotationMatrix(kneeboardPose),
     Vector2 {
-      virtualWidth * vr.gazeTargetHorizontalScale
-        * (mZoomed ? vr.zoomScale : 1.0f),
-      virtualHeight * vr.gazeTargetVerticalScale
-        * (mZoomed ? vr.zoomScale : 1.0f),
+      virtualWidth * vr.mGazeTargetHorizontalScale
+        * (mZoomed ? vr.mZoomScale : 1.0f),
+      virtualHeight * vr.mGazeTargetVerticalScale
+        * (mZoomed ? vr.mZoomScale : 1.0f),
     });
   return mZoomed ? zoomedSize : normalSize;
 }
@@ -354,9 +354,9 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   }
 
   const auto& vr = config.vr;
-  if (vr.recenterCount != mRecenterCount) {
+  if (vr.mRecenterCount != mRecenterCount) {
     this->Recenter(frameEndInfo->displayTime);
-    mRecenterCount = vr.recenterCount;
+    mRecenterCount = vr.mRecenterCount;
   }
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
@@ -366,19 +366,19 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     std::back_inserter(nextLayers));
 
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  const auto virtualHeight = vr.height;
-  const auto virtualWidth = aspectRatio * vr.height;
+  const auto virtualHeight = vr.mHeight;
+  const auto virtualWidth = aspectRatio * vr.mHeight;
 
   const XrExtent2Df normalSize {virtualWidth, virtualHeight};
   const XrExtent2Df zoomedSize {
-    virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale};
+    virtualWidth * vr.mZoomScale, virtualHeight * vr.mZoomScale};
 
   // clang-format off
   auto kneeboardPose =
-    Matrix::CreateRotationX(vr.rx)
-    * Matrix::CreateRotationY(vr.ry)
-    * Matrix::CreateRotationZ(vr.rz)
-    * Matrix::CreateTranslation({vr.x, vr.eyeY, vr.z})
+    Matrix::CreateRotationX(vr.mRX)
+    * Matrix::CreateRotationY(vr.mRY)
+    * Matrix::CreateRotationZ(vr.mRZ)
+    * Matrix::CreateTranslation({vr.mX, vr.mEyeY, vr.mZ})
     * mRecenter;
   // clang-format on
 

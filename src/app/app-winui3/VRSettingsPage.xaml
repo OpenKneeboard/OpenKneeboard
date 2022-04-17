@@ -48,6 +48,12 @@
 						OffContent="Off"
 						IsOn="{x:Bind DiscardOculusDepthInformation}"
 					/>
+          <ToggleSwitch
+            Header="SteamVR Support"
+            OnContent="Enabled"
+            OffContent="Disabled"
+            IsOn="{x:Bind SteamVREnabled}"
+          />
         </StackPanel>
       </Grid>
       <Grid

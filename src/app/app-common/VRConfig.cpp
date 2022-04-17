@@ -23,70 +23,77 @@
 
 namespace OpenKneeboard {
 void from_json(const nlohmann::json& j, VRConfig& vrc) {
-  vrc.x = j.at("x");
-  vrc.eyeY = j.at("eyeY");
-  vrc.floorY = j.at("floorY");
-  vrc.z = j.at("z");
-  vrc.rx = j.at("rx");
-  vrc.ry = j.at("ry");
-  vrc.rz = j.at("rz");
-  vrc.height = j.at("height");
-  vrc.zoomScale = j.at("zoomScale");
+  vrc.mX = j.at("x");
+  vrc.mEyeY = j.at("eyeY");
+  vrc.mFloorY = j.at("floorY");
+  vrc.mZ = j.at("z");
+  vrc.mRX = j.at("rx");
+  vrc.mRY = j.at("ry");
+  vrc.mRZ = j.at("rz");
+  vrc.mHeight = j.at("height");
+  vrc.mZoomScale = j.at("zoomScale");
 
   if (j.contains("gazeTargetScale")) {
     auto scale = j.at("gazeTargetScale");
-    vrc.gazeTargetHorizontalScale = scale.at("horizontal");
-    vrc.gazeTargetVerticalScale = scale.at("vertical");
+    vrc.mGazeTargetHorizontalScale = scale.at("horizontal");
+    vrc.mGazeTargetVerticalScale = scale.at("vertical");
   }
 
   if (j.contains("headLocked")) {
     if (j.at("headLocked").get<bool>()) {
-      vrc.flags |= VRConfig::Flags::HEADLOCKED;
+      vrc.mFlags |= VRRenderConfig::Flags::HEADLOCKED;
     } else {
-      vrc.flags &= ~VRConfig::Flags::HEADLOCKED;
+      vrc.mFlags &= ~VRRenderConfig::Flags::HEADLOCKED;
     }
   }
 
   if (j.contains("discardOculusDepthInformation")) {
     if (j.at("discardOculusDepthInformation").get<bool>()) {
-      vrc.flags |= VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+      vrc.mFlags |= VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
     } else {
-      vrc.flags &= ~VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+      vrc.mFlags &= ~VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
     }
   }
 
   if (j.contains("enableGazeZoom")) {
     if (j.at("enableGazeZoom").get<bool>()) {
-      vrc.flags |= VRConfig::Flags::GAZE_ZOOM;
+      vrc.mFlags |= VRRenderConfig::Flags::GAZE_ZOOM;
     } else {
-      vrc.flags &= ~VRConfig::Flags::GAZE_ZOOM;
+      vrc.mFlags &= ~VRRenderConfig::Flags::GAZE_ZOOM;
     }
+  }
+
+  if (j.contains("enableSteamVR")) {
+    vrc.mEnableSteamVR = j.at("enableSteamVR").get<bool>();
   }
 }
 
 void to_json(nlohmann::json& j, const VRConfig& vrc) {
   j = {
-    {"x", vrc.x},
-    {"eyeY", vrc.eyeY},
-    {"floorY", vrc.floorY},
-    {"z", vrc.z},
-    {"rx", vrc.rx},
-    {"ry", vrc.ry},
-    {"rz", vrc.rz},
-    {"height", vrc.height},
-    {"zoomScale", vrc.zoomScale},
-    {"headLocked", static_cast<bool>(vrc.flags & VRConfig::Flags::HEADLOCKED)},
+    {"x", vrc.mX},
+    {"eyeY", vrc.mEyeY},
+    {"floorY", vrc.mFloorY},
+    {"z", vrc.mZ},
+    {"rx", vrc.mRX},
+    {"ry", vrc.mRY},
+    {"rz", vrc.mRZ},
+    {"height", vrc.mHeight},
+    {"zoomScale", vrc.mZoomScale},
+    {"headLocked",
+     static_cast<bool>(vrc.mFlags & VRRenderConfig::Flags::HEADLOCKED)},
     {"discardOculusDepthInformation",
-     static_cast<bool>(vrc.flags & VRConfig::Flags::DISCARD_DEPTH_INFORMATION)},
+     static_cast<bool>(
+       vrc.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)},
     {
       "gazeTargetScale",
       {
-        {"horizontal", vrc.gazeTargetHorizontalScale},
-        {"vertical", vrc.gazeTargetVerticalScale},
+        {"horizontal", vrc.mGazeTargetHorizontalScale},
+        {"vertical", vrc.mGazeTargetVerticalScale},
       },
     },
     {"enableGazeZoom",
-     static_cast<bool>(vrc.flags & VRConfig::Flags::GAZE_ZOOM)},
+     static_cast<bool>(vrc.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)},
+    {"enableSteamVR", vrc.mEnableSteamVR},
   };
 }
 }// namespace OpenKneeboard

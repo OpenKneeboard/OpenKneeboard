@@ -264,6 +264,10 @@ void TabPage::OnPointerEvent(
 }
 
 void TabPage::QueuePointerPoint(const PointerPoint& pp) {
+  auto kneeboard = gKneeboard; // increment ref count
+  if (!kneeboard) {
+    return;
+  }
   const auto metrics = GetPageMetrics();
   auto x = static_cast<FLOAT>(pp.Position().X);
   auto y = static_cast<FLOAT>(pp.Position().Y);
@@ -306,7 +310,13 @@ void TabPage::EnableNavigationMode(
 void TabPage::DisableNavigationMode(
   const IInspectable&,
   const RoutedEventArgs&) {
-  mState->SetTabMode(TabMode::NORMAL);
+  // If navigation is disabled via some other method such as selecting a page
+  // to navigate to, the toolbar button for navigation mode will be
+  // programatically unchecked, which triggers the event handler, which means
+  // that it will be called even when navigation mode has already been disabled.
+  if (mState->GetTabMode() == TabMode::NAVIGATION) {
+    mState->SetTabMode(TabMode::NORMAL);
+  }
 }
 
 void TabPage::OnFirstPageButtonClicked(
