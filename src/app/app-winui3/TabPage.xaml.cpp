@@ -264,6 +264,10 @@ void TabPage::OnPointerEvent(
 }
 
 void TabPage::QueuePointerPoint(const PointerPoint& pp) {
+  auto kneeboard = gKneeboard; // increment ref count
+  if (!kneeboard) {
+    return;
+  }
   const auto metrics = GetPageMetrics();
   auto x = static_cast<FLOAT>(pp.Position().X);
   auto y = static_cast<FLOAT>(pp.Position().Y);

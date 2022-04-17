@@ -32,7 +32,14 @@ void EventBase::EnqueueForMainThread(std::function<void()> f) {
   if (!dispatcher) {
     return;
   }
-  dispatcher.TryEnqueue(f);
+  dispatcher.TryEnqueue([f]() {
+    // increment refcount
+    auto kneeboard = gKneeboard;
+    if (!kneeboard) {
+      return;
+    }
+    f();
+  });
 }
 
 }// namespace OpenKneeboard
