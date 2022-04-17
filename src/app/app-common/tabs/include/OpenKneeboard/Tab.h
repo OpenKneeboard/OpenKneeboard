@@ -20,7 +20,6 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/utf8.h>
 #include <d2d1_1.h>
 
@@ -39,19 +38,9 @@ class Tab {
   RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
     = 0;
 
-  void SetKneeboardState(KneeboardState* kbs_ptr) {
-    pKbs = kbs_ptr;
-  }
-  KneeboardState* GetKneeboardState() {
-    return pKbs;
-  }
-
   Event<> evNeedsRepaintEvent;
   Event<> evFullyReplacedEvent;
   Event<> evPageAppendedEvent;
   Event<uint16_t> evPageChangeRequestedEvent;
-
- private:
-  KneeboardState* pKbs;
 };
 }// namespace OpenKneeboard

@@ -64,10 +64,9 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance = load_tab<it##Tab>(mDXR, title, settings); \
+    auto instance = load_tab<it##Tab>(mDXR, mKneeboard, title, settings); \
     if (instance) { \
       mKneeboard->AppendTab(std::make_shared<TabState>(instance)); \
-      instance->SetKneeboardState(mKneeboard); \
       continue; \
     } \
   }
@@ -77,11 +76,12 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
 }
 
 void TabsList::LoadDefaultConfig() {
+  auto kbs = mKneeboard;
   mKneeboard->SetTabs({
-    TabState::make_shared<DCSRadioLogTab>(mDXR),
-    TabState::make_shared<DCSMissionTab>(mDXR),
-    TabState::make_shared<DCSAircraftTab>(mDXR),
-    TabState::make_shared<DCSTerrainTab>(mDXR),
+    TabState::make_shared<DCSRadioLogTab>(mDXR, mKneeboard),
+    TabState::make_shared<DCSMissionTab>(mDXR, mKneeboard),
+    TabState::make_shared<DCSAircraftTab>(mDXR, mKneeboard),
+    TabState::make_shared<DCSTerrainTab>(mDXR, mKneeboard),
   });
 }
 

@@ -25,8 +25,8 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr)
-  : TabWithDoodles(dxr), TabWithPlainTextContent(dxr) {
+DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
+  : TabWithDoodles(dxr, kbs), TabWithPlainTextContent(dxr) {
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
@@ -48,7 +48,6 @@ void DCSRadioLogTab::RenderPageContent(
   const D2D1_RECT_F& rect) {
   TabWithPlainTextContent::RenderPlainTextContent(ctx, pageIndex, rect);
 }
-
 
 void DCSRadioLogTab::OnGameEvent(
   const GameEvent& event,

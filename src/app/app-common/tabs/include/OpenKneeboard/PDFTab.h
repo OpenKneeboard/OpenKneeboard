@@ -34,10 +34,12 @@ class PDFTab final : public TabWithDoodles,
  public:
   explicit PDFTab(
     const DXResources&,
+    KneeboardState*,
     utf8_string_view title,
     const std::filesystem::path& path);
   explicit PDFTab(
     const DXResources&,
+    KneeboardState*,
     utf8_string_view title,
     const nlohmann::json&);
   virtual ~PDFTab();

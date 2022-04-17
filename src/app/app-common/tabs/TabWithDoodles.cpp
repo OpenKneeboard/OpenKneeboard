@@ -26,8 +26,10 @@
 
 namespace OpenKneeboard {
 
-TabWithDoodles::TabWithDoodles(const DXResources& dxr) : mContentLayer(dxr) {
+TabWithDoodles::TabWithDoodles(const DXResources& dxr, KneeboardState* kbs)
+  : mContentLayer(dxr) {
   mDXR = dxr;
+  mKneeboard = kbs;
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBrush.put()));
@@ -212,6 +214,10 @@ void TabWithDoodles::RenderOverDoodles(
   ID2D1DeviceContext*,
   uint16_t pageIndex,
   const D2D1_RECT_F&) {
+}
+
+KneeboardState* TabWithDoodles::GetKneeboardState() {
+  return mKneeboard;
 }
 
 }// namespace OpenKneeboard

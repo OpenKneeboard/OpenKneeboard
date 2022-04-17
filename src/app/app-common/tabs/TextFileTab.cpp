@@ -26,9 +26,10 @@ namespace OpenKneeboard {
 
 TextFileTab::TextFileTab(
   const DXResources& dxr,
+  KneeboardState* kbs,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : mPath(path), TabWithDoodles(dxr), TabWithPlainTextContent(dxr) {
+  : mPath(path), TabWithDoodles(dxr, kbs), TabWithPlainTextContent(dxr) {
   this->evPageAppendedEvent.PushHook(
     [] { return EventBase::HookResult::STOP_PROPAGATION; });
   Reload();
@@ -36,9 +37,14 @@ TextFileTab::TextFileTab(
 
 TextFileTab::TextFileTab(
   const DXResources& dxr,
+  KneeboardState* kbs,
   utf8_string_view title,
   const nlohmann::json& settings)
-  : TextFileTab(dxr, title, settings.at("Path").get<std::filesystem::path>()) {
+  : TextFileTab(
+    dxr,
+    kbs,
+    title,
+    settings.at("Path").get<std::filesystem::path>()) {
 }
 
 TextFileTab::~TextFileTab() {

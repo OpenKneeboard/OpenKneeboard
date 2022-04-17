@@ -120,9 +120,9 @@ class DCSMissionTab::ExtractedMission final {
   }
 };
 
-DCSMissionTab::DCSMissionTab(const DXResources& dxr)
+DCSMissionTab::DCSMissionTab(const DXResources& dxr, KneeboardState* kbs)
   : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
+    std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
 }
 
 DCSMissionTab::~DCSMissionTab() {
