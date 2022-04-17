@@ -329,6 +329,9 @@ Writer::operator bool() const {
 }
 
 uint32_t Reader::GetSequenceNumber() const {
+  if (!(p && p->mHeader)) {
+    return 0;
+  }
   return p->mHeader->sequenceNumber;
 }
 

@@ -33,6 +33,7 @@ target_link_libraries(
   OpenKneeboard-GetSystemColor
   OpenKneeboard-SHM
   OpenKneeboard-scope_guard
+  ThirdParty::fmt
 )
 
 add_executable(fake-dcs fake-dcs.cpp)
