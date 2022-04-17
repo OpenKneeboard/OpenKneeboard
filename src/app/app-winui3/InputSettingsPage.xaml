@@ -65,14 +65,13 @@
     </DataTemplate>
   </Page.Resources>
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
-    <Grid RowDefinitions="Auto,*">
+    <StackPanel Orientation="Vertical">
       <TextBlock
-        Grid.Row="0"
         Style="{StaticResource TitleTextBlockStyle}"
         Text="Input Settings"
         Margin="0,0,0,8"
       />
-      <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Devices}">
+      <ItemsRepeater ItemsSource="{x:Bind Devices}">
         <ItemsRepeater.Layout>
           <StackLayout Orientation="Vertical" Spacing="24" />
         </ItemsRepeater.Layout>
@@ -83,6 +82,6 @@
           />
         </ItemsRepeater.ItemTemplate>
       </ItemsRepeater>
-    </Grid>
+    </StackPanel>
   </ScrollViewer>
 </Page>
