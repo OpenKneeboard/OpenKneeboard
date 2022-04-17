@@ -83,7 +83,7 @@
         Padding="8"
         Margin="0,0,0,8">
         <Slider 
-          Header="Pen Stroke Size" 
+          Header="Pen stroke size" 
           Value="{x:Bind WriteRadius, Mode=TwoWay}" 
           TickPlacement="Outside" 
           TickFrequency="10" 
@@ -91,12 +91,12 @@
           Maximum="100" 
           Minimum="1.0" />
         <ToggleSwitch 
-          Header="Pressure-sensitive Pen Stroke Size" 
+          Header="Pressure-sensitive pen stroke size" 
           OnContent="On" 
           OffContent="Off" 
           IsOn="{x:Bind FixedWriteRadius, Mode=TwoWay}" />
         <Slider 
-          Header="Erase Size" 
+          Header="Erase size" 
           Value="{x:Bind EraseRadius, Mode=TwoWay}" 
           TickPlacement="Outside" 
           TickFrequency="10" 
@@ -104,7 +104,7 @@
           Maximum="200" 
           Minimum="1.0" />
         <ToggleSwitch 
-          Header="Pressure-sensitive Erase Stroke Size" 
+          Header="Pressure-sensitive erase stroke size" 
           OnContent="On"
           OffContent="Off"
           IsOn="{x:Bind FixedEraseRadius, Mode=TwoWay}" />
