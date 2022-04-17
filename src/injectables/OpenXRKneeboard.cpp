@@ -48,6 +48,7 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
 const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
 
 #define NEEDED_OPENXR_FUNCS \
+  IT(xrDestroyInstance) \
   IT(xrCreateSession) \
   IT(xrDestroySession) \
   IT(xrEndFrame) \
@@ -66,7 +67,7 @@ static struct {
 #define IT(x) PFN_##x x {nullptr};
   NEEDED_OPENXR_FUNCS
 #undef IT
-} gOpenXR;
+} gNext;
 
 class OpenXRKneeboard {
  public:
@@ -122,7 +123,7 @@ OpenXRKneeboard::OpenXRKneeboard(XrSession session) {
   };
 
   XrResult nextResult
-    = gOpenXR.xrCreateReferenceSpace(session, &referenceSpace, &mLocalSpace);
+    = gNext.xrCreateReferenceSpace(session, &referenceSpace, &mLocalSpace);
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to create LOCAL reference space: {}", nextResult);
     return;
@@ -130,7 +131,7 @@ OpenXRKneeboard::OpenXRKneeboard(XrSession session) {
 
   referenceSpace.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
   nextResult
-    = gOpenXR.xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace);
+    = gNext.xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace);
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to create VIEW reference space: {}", nextResult);
     return;
@@ -139,10 +140,10 @@ OpenXRKneeboard::OpenXRKneeboard(XrSession session) {
 
 OpenXRKneeboard::~OpenXRKneeboard() {
   if (mLocalSpace) {
-    gOpenXR.xrDestroySpace(mLocalSpace);
+    gNext.xrDestroySpace(mLocalSpace);
   }
   if (mViewSpace) {
-    gOpenXR.xrDestroySpace(mViewSpace);
+    gNext.xrDestroySpace(mViewSpace);
   }
 }
 
@@ -155,7 +156,7 @@ XrPosef OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
 
   XrSpaceLocation location {.type = XR_TYPE_SPACE_LOCATION};
   if (
-    gOpenXR.xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location)
+    gNext.xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location)
     != XR_SUCCESS) {
     return XR_POSEF_IDENTITY;
   }
@@ -210,9 +211,12 @@ XrExtent2Df OpenXRKneeboard::GetSize(
     {quat.x, quat.y, quat.z, quat.w},
     kneeboardPose.Translation(),
     Quaternion::CreateFromRotationMatrix(kneeboardPose),
-    mZoomed
-      ? Vector2 {virtualWidth * vr.gazeTargetHorizontalScale, virtualHeight * vr.gazeTargetVerticalScale}
-      : Vector2 {virtualWidth, virtualHeight});
+    Vector2 {
+      virtualWidth * vr.gazeTargetHorizontalScale
+        * (mZoomed ? vr.zoomScale : 1.0f),
+      virtualHeight * vr.gazeTargetVerticalScale
+        * (mZoomed ? vr.zoomScale : 1.0f),
+    });
   return mZoomed ? zoomedSize : normalSize;
 }
 
@@ -245,10 +249,6 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   dprintf("{}", __FUNCTION__);
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
-    .usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT
-      | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
-      | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT
-      | XR_SWAPCHAIN_USAGE_TRANSFER_SRC_BIT,
     .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
     .sampleCount = 1,
     .width = TextureWidth,
@@ -258,7 +258,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
     .mipCount = 1,
   };
   auto nextResult
-    = gOpenXR.xrCreateSwapchain(session, &swapchainInfo, &mSwapchain);
+    = gNext.xrCreateSwapchain(session, &swapchainInfo, &mSwapchain);
   if (nextResult != XR_SUCCESS) {
     mSwapchain = nullptr;
     dprintf("Failed to create swapchain: {}", nextResult);
@@ -267,7 +267,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
 
   uint32_t imageCount = 0;
   nextResult
-    = gOpenXR.xrEnumerateSwapchainImages(mSwapchain, 0, &imageCount, nullptr);
+    = gNext.xrEnumerateSwapchainImages(mSwapchain, 0, &imageCount, nullptr);
   if (imageCount == 0 || nextResult != XR_SUCCESS) {
     dprintf("No images in swapchain: {}", nextResult);
     return;
@@ -281,14 +281,14 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
     XrSwapchainImageD3D11KHR {
       .type = XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR,
     });
-  nextResult = gOpenXR.xrEnumerateSwapchainImages(
+  nextResult = gNext.xrEnumerateSwapchainImages(
     mSwapchain,
     imageCount,
     &imageCount,
     reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data()));
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to enumerate images in swapchain: {}", nextResult);
-    gOpenXR.xrDestroySwapchain(mSwapchain);
+    gNext.xrDestroySwapchain(mSwapchain);
     mSwapchain = nullptr;
     return;
   }
@@ -296,7 +296,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   if (images.at(0).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
     dprint("Swap chain is not a D3D11 swapchain");
     OPENKNEEBOARD_BREAK;
-    gOpenXR.xrDestroySwapchain(mSwapchain);
+    gNext.xrDestroySwapchain(mSwapchain);
     mSwapchain = nullptr;
     return;
   }
@@ -317,7 +317,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
   dprintf("{}", __FUNCTION__);
   if (mSwapchain) {
-    gOpenXR.xrDestroySwapchain(mSwapchain);
+    gNext.xrDestroySwapchain(mSwapchain);
   }
 }
 
@@ -335,17 +335,17 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
   if (frameEndInfo->layerCount == 0) {
-    return gOpenXR.xrEndFrame(session, frameEndInfo);
+    return gNext.xrEndFrame(session, frameEndInfo);
   }
 
   auto snapshot = mSHM.MaybeGet();
   if (!mSwapchain) {
     throw std::logic_error("Missing swapchain");
-    return gOpenXR.xrEndFrame(session, frameEndInfo);
+    return gNext.xrEndFrame(session, frameEndInfo);
   }
   if (!snapshot) {
     // Don't spam: expected, if OpenKneeboard isn't running
-    return gOpenXR.xrEndFrame(session, frameEndInfo);
+    return gNext.xrEndFrame(session, frameEndInfo);
   }
   auto config = snapshot.GetConfig();
 
@@ -410,7 +410,7 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   nextFrameEndInfo.layers = nextLayers.data();
   nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
 
-  auto nextResult = gOpenXR.xrEndFrame(session, &nextFrameEndInfo);
+  auto nextResult = gNext.xrEndFrame(session, &nextFrameEndInfo);
   if (nextResult != XR_SUCCESS) {
     OPENKNEEBOARD_BREAK;
   }
@@ -421,7 +421,7 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
   auto config = snapshot.GetConfig();
   uint32_t textureIndex;
   auto nextResult
-    = gOpenXR.xrAcquireSwapchainImage(mSwapchain, nullptr, &textureIndex);
+    = gNext.xrAcquireSwapchainImage(mSwapchain, nullptr, &textureIndex);
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to acquire swapchain image: {}", nextResult);
     return;
@@ -431,10 +431,10 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
     .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
     .timeout = XR_INFINITE_DURATION,
   };
-  nextResult = gOpenXR.xrWaitSwapchainImage(mSwapchain, &waitInfo);
+  nextResult = gNext.xrWaitSwapchainImage(mSwapchain, &waitInfo);
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to wait for swapchain image: {}", nextResult);
-    nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+    nextResult = gNext.xrReleaseSwapchainImage(mSwapchain, nullptr);
     if (nextResult != XR_SUCCESS) {
       dprintf("Failed to release swapchain image: {}", nextResult);
     }
@@ -464,7 +464,7 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
       texture, 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
     context->Flush();
   }
-  nextResult = gOpenXR.xrReleaseSwapchainImage(mSwapchain, nullptr);
+  nextResult = gNext.xrReleaseSwapchainImage(mSwapchain, nullptr);
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to release swapchain: {}", nextResult);
   }
@@ -496,17 +496,19 @@ XrResult xrCreateSession(
   XrSession* session) {
   static PFN_xrCreateSession sNext = nullptr;
 
-  auto nextResult = gOpenXR.xrCreateSession(instance, createInfo, session);
+  auto nextResult = gNext.xrCreateSession(instance, createInfo, session);
   if (nextResult != XR_SUCCESS) {
     return nextResult;
+  }
+
+  if (gKneeboard) {
+    dprint("Already have a kneeboard, refusing to initialize twice");
+    return XR_ERROR_INITIALIZATION_FAILED;
   }
 
   auto d3d11 = findInXrNextChain<XrGraphicsBindingD3D11KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
-    if (gKneeboard) {
-      return XR_ERROR_INITIALIZATION_FAILED;
-    }
     gKneeboard = new OpenXRD3D11Kneeboard(*session, d3d11->device);
     return XR_SUCCESS;
   }
@@ -519,14 +521,20 @@ XrResult xrCreateSession(
 XrResult xrDestroySession(XrSession session) {
   delete gKneeboard;
   gKneeboard = nullptr;
-  return gOpenXR.xrDestroySession(session);
+  return gNext.xrDestroySession(session);
+}
+
+XrResult xrDestroyInstance(XrInstance instance) {
+  delete gKneeboard;
+  gKneeboard = nullptr;
+  return gNext.xrDestroyInstance(instance);
 }
 
 XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) {
   if (gKneeboard) {
     return gKneeboard->xrEndFrame(session, frameEndInfo);
   }
-  return gOpenXR.xrEndFrame(session, frameEndInfo);
+  return gNext.xrEndFrame(session, frameEndInfo);
 }
 
 XrResult xrGetInstanceProcAddr(
@@ -543,12 +551,16 @@ XrResult xrGetInstanceProcAddr(
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrDestroySession);
     return XR_SUCCESS;
   }
+  if (name == "xrDestroyInstance") {
+    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrDestroyInstance);
+    return XR_SUCCESS;
+  }
   if (name == "xrEndFrame") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
     return XR_SUCCESS;
   }
 
-  return gOpenXR.xrGetInstanceProcAddr(instance, name_cstr, function);
+  return gNext.xrGetInstanceProcAddr(instance, name_cstr, function);
 }
 
 XrResult xrCreateApiLayerInstance(
@@ -557,7 +569,7 @@ XrResult xrCreateApiLayerInstance(
   XrInstance* instance) {
   dprintf("{}", __FUNCTION__);
   // TODO: check version fields etc in layerInfo
-  gOpenXR.xrGetInstanceProcAddr = layerInfo->nextInfo->nextGetInstanceProcAddr;
+  gNext.xrGetInstanceProcAddr = layerInfo->nextInfo->nextGetInstanceProcAddr;
 
   XrApiLayerCreateInfo nextLayerInfo = *layerInfo;
   nextLayerInfo.nextInfo = layerInfo->nextInfo->next;
@@ -570,8 +582,8 @@ XrResult xrCreateApiLayerInstance(
 
 #define IT(x) \
   if ( \
-    gOpenXR.xrGetInstanceProcAddr( \
-      *instance, #x, reinterpret_cast<PFN_xrVoidFunction*>(&gOpenXR.x)) \
+    gNext.xrGetInstanceProcAddr( \
+      *instance, #x, reinterpret_cast<PFN_xrVoidFunction*>(&gNext.x)) \
     != XR_SUCCESS) { \
     return XR_ERROR_INITIALIZATION_FAILED; \
   }
@@ -595,6 +607,7 @@ XrResult __declspec(dllexport) XRAPI_CALL
     XrNegotiateApiLayerRequest* apiLayerRequest) {
   DPrintSettings::Set({
     .prefix = "OpenKneeboard-OpenXR",
+    .target = DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM,
     .prefixTarget = DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM,
   });
   dprintf("{}", __FUNCTION__);

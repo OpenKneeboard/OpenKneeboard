@@ -21,17 +21,23 @@
 
 namespace OpenKneeboard {
 
+static constexpr auto WindowPositionKey {"WindowPositionV2"};
+
 void from_json(const nlohmann::json& j, AppSettings& as) {
   if (j.is_null()) {
     return;
   }
 
-  auto jrect = j.at("WindowPosition");
+  if (!j.contains(WindowPositionKey)) {
+    return;
+  }
+
+  auto jrect = j.at(WindowPositionKey);
   RECT rect;
   rect.left = jrect.at("Left");
   rect.top = jrect.at("Top");
-  rect.right = jrect.at("Width") + rect.left;
-  rect.bottom = jrect.at("Height") + rect.top;
+  rect.right = jrect.at("Right");
+  rect.bottom = jrect.at("Bottom");
   as.mWindowRect = rect;
 }
 
@@ -40,9 +46,9 @@ void to_json(nlohmann::json& j, const AppSettings& as) {
     nlohmann::json rect;
     rect["Left"] = as.mWindowRect->left;
     rect["Top"] = as.mWindowRect->top;
-    rect["Width"] = as.mWindowRect->right - as.mWindowRect->left;
-    rect["Height"] = as.mWindowRect->bottom - as.mWindowRect->top;
-    j["WindowPosition"] = rect;
+    rect["Right"] = as.mWindowRect->right;
+    rect["Bottom"] = as.mWindowRect->bottom;
+    j[WindowPositionKey] = rect;
   }
 }
 

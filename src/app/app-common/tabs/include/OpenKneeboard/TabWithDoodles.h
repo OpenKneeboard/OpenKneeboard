@@ -27,6 +27,7 @@
 #include <shims/winrt.h>
 
 #include <memory>
+#include <mutex>
 
 #include "TabWithCursorEvents.h"
 
@@ -74,6 +75,7 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
     D2D1_POINT_2F mCursorPoint;
   };
   winrt::com_ptr<ID2D1DeviceContext> mDrawingContext;
+  std::mutex mBufferedEventsMutex;
   std::vector<Drawing> mDrawings;
   KneeboardState* mKneeboard;
 

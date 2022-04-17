@@ -26,6 +26,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/utf8.h>
 
+#include <cmath>
 #include <numbers>
 
 #include "Globals.h"
@@ -98,6 +99,9 @@ float VRSettingsPage::KneeboardX() {
 }
 
 void VRSettingsPage::KneeboardX(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.x = value;
   gKneeboard->SetVRConfig(config);
@@ -108,6 +112,9 @@ float VRSettingsPage::KneeboardEyeY() {
 }
 
 void VRSettingsPage::KneeboardEyeY(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.eyeY = -value;
   gKneeboard->SetVRConfig(config);
@@ -118,6 +125,9 @@ float VRSettingsPage::KneeboardFloorY() {
 }
 
 void VRSettingsPage::KneeboardFloorY(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.floorY = value;
   gKneeboard->SetVRConfig(config);
@@ -130,6 +140,9 @@ float VRSettingsPage::KneeboardZ() {
 }
 
 void VRSettingsPage::KneeboardZ(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.z = -value;
   gKneeboard->SetVRConfig(config);
@@ -168,6 +181,9 @@ float VRSettingsPage::KneeboardRY() {
 }
 
 void VRSettingsPage::KneeboardRY(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.ry = -DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
@@ -178,6 +194,9 @@ float VRSettingsPage::KneeboardRZ() {
 }
 
 void VRSettingsPage::KneeboardRZ(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.rz = -DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
@@ -188,6 +207,9 @@ float VRSettingsPage::KneeboardHeight() {
 }
 
 void VRSettingsPage::KneeboardHeight(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.height = value;
   gKneeboard->SetVRConfig(config);
@@ -198,6 +220,9 @@ float VRSettingsPage::KneeboardZoomScale() {
 }
 
 void VRSettingsPage::KneeboardZoomScale(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.zoomScale = value;
   gKneeboard->SetVRConfig(config);
@@ -208,6 +233,9 @@ float VRSettingsPage::KneeboardGazeTargetHorizontalScale() {
 }
 
 void VRSettingsPage::KneeboardGazeTargetHorizontalScale(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.gazeTargetHorizontalScale = value;
   gKneeboard->SetVRConfig(config);
@@ -218,6 +246,9 @@ float VRSettingsPage::KneeboardGazeTargetVerticalScale() {
 }
 
 void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetVRConfig();
   config.gazeTargetVerticalScale = value;
   gKneeboard->SetVRConfig(config);

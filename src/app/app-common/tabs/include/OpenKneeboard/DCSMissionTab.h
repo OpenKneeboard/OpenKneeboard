@@ -43,6 +43,7 @@ class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
   class ExtractedMission;
 
   std::filesystem::path mMission;
+  std::string mAircraft;
   std::unique_ptr<ExtractedMission> mExtracted;
 };
 

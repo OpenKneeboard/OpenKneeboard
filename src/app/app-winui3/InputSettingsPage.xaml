@@ -65,52 +65,51 @@
     </DataTemplate>
   </Page.Resources>
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
-    <Grid RowDefinitions="Auto,*">
-      <StackPanel Grid.Row="0">
-        <TextBlock 
-          Style="{StaticResource TitleTextBlockStyle}" 
-          Text="Input Settings" 
-          Margin="0,0,0,8" />
-        <TextBlock 
-          Text="Pen" 
-          Style="{StaticResource SubtitleTextBlockStyle}" 
-          Margin="0,0,0,16" />
-        <StackPanel 
-          Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
-          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
-          CornerRadius="4"
-          BorderThickness="1"
-          Padding="8"
-          Margin="0,0,0,8">
-          <Slider 
-            Header="Write Radius" 
-            Value="{x:Bind WriteRadius, Mode=TwoWay}" 
-            TickPlacement="Outside" 
-            TickFrequency="10" 
-            StepFrequency="1" 
-            Maximum="100" 
-            Minimum="1.0" />
-          <ToggleSwitch 
-            Header="Fixed Write Radius" 
-            OnContent="On" 
-            OffContent="Off" 
-            IsOn="{x:Bind FixedWriteRadius, Mode=TwoWay}" />
-          <Slider 
-            Header="Erase Radius" 
-            Value="{x:Bind EraseRadius, Mode=TwoWay}" 
-            TickPlacement="Outside" 
-            TickFrequency="10" 
-            StepFrequency="1" 
-            Maximum="200" 
-            Minimum="1.0" />
-          <ToggleSwitch 
-            Header="Fixed Erase Radius" 
-            OnContent="On"
-            OffContent="Off"
-            IsOn="{x:Bind FixedEraseRadius, Mode=TwoWay}" />
-        </StackPanel>
+    <StackPanel Orientation="Vertical">
+      <TextBlock
+        Style="{StaticResource TitleTextBlockStyle}"
+        Text="Input Settings"
+        Margin="0,0,0,8"
+      />
+      <TextBlock 
+        Text="Pen" 
+        Style="{StaticResource SubtitleTextBlockStyle}" 
+        Margin="0,0,0,16" />
+      <StackPanel 
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Margin="0,0,0,8">
+        <Slider 
+          Header="Write Radius" 
+          Value="{x:Bind WriteRadius, Mode=TwoWay}" 
+          TickPlacement="Outside" 
+          TickFrequency="10" 
+          StepFrequency="1" 
+          Maximum="100" 
+          Minimum="1.0" />
+        <ToggleSwitch 
+          Header="Fixed Write Radius" 
+          OnContent="On" 
+          OffContent="Off" 
+          IsOn="{x:Bind FixedWriteRadius, Mode=TwoWay}" />
+        <Slider 
+          Header="Erase Radius" 
+          Value="{x:Bind EraseRadius, Mode=TwoWay}" 
+          TickPlacement="Outside" 
+          TickFrequency="10" 
+          StepFrequency="1" 
+          Maximum="200" 
+          Minimum="1.0" />
+        <ToggleSwitch 
+          Header="Fixed Erase Radius" 
+          OnContent="On"
+          OffContent="Off"
+          IsOn="{x:Bind FixedEraseRadius, Mode=TwoWay}" />
       </StackPanel>
-      <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind Devices}">
+      <ItemsRepeater ItemsSource="{x:Bind Devices}">
         <ItemsRepeater.Layout>
           <StackLayout Orientation="Vertical" Spacing="24" />
         </ItemsRepeater.Layout>
@@ -121,6 +120,6 @@
           />
         </ItemsRepeater.ItemTemplate>
       </ItemsRepeater>
-    </Grid>
+    </StackPanel>
   </ScrollViewer>
 </Page>

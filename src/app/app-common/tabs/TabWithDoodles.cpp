@@ -59,6 +59,7 @@ void TabWithDoodles::ClearDoodles() {
 void TabWithDoodles::PostCursorEvent(
   const CursorEvent& event,
   uint16_t pageIndex) {
+  std::scoped_lock lock(mBufferedEventsMutex);
   if (pageIndex >= mDrawings.size()) {
     mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
   }
@@ -70,12 +71,14 @@ void TabWithDoodles::PostCursorEvent(
 
 void TabWithDoodles::FlushCursorEvents() {
   auto ctx = mDrawingContext;
+  std::scoped_lock lock(mBufferedEventsMutex);
 
   for (auto pageIndex = 0; pageIndex < mDrawings.size(); ++pageIndex) {
     auto& page = mDrawings.at(pageIndex);
     if (page.mBufferedEvents.empty()) {
       continue;
     }
+
     bool drawing = false;
     for (const auto& event: page.mBufferedEvents) {
       if (

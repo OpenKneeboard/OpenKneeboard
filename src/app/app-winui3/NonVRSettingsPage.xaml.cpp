@@ -97,6 +97,9 @@ float NonVRSettingsPage::KneeboardOpacity() {
 }
 
 void NonVRSettingsPage::KneeboardOpacity(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
   auto config = gKneeboard->GetFlatConfig();
   config.opacity = value / 100;
   gKneeboard->SetFlatConfig(config);

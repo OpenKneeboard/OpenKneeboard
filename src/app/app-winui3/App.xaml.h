@@ -21,15 +21,14 @@
 
 #include "App.xaml.g.h"
 
-namespace winrt::OpenKneeboardApp::implementation
-{
-    struct App : AppT<App>
-    {
-        App();
+namespace winrt::OpenKneeboardApp::implementation {
+struct App : AppT<App> {
+  App();
 
-        void OnLaunched(Microsoft::UI::Xaml::LaunchActivatedEventArgs const&);
+  void OnLaunched(
+    Microsoft::UI::Xaml::LaunchActivatedEventArgs const&) noexcept;
 
-    private:
-        winrt::Microsoft::UI::Xaml::Window window{ nullptr };
-    };
-}
+ private:
+  winrt::Microsoft::UI::Xaml::Window window {nullptr};
+};
+}// namespace winrt::OpenKneeboardApp::implementation

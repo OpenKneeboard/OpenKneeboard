@@ -80,9 +80,7 @@ class DebugPrivileges final {
   }
 };
 
-bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
-  std::filesystem::path dll = std::filesystem::canonical(_dll);
-
+bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll) {
   DWORD neededBytes = 0;
   EnumProcessModules(process, nullptr, 0, &neededBytes);
   std::vector<HMODULE> modules(neededBytes / sizeof(HMODULE));
@@ -96,10 +94,12 @@ bool AlreadyInjected(HANDLE process, const std::filesystem::path& _dll) {
     modules.resize(neededBytes / sizeof(HMODULE));
   }
 
+  auto dllBaseName = dll.filename().wstring();
+
   wchar_t buf[MAX_PATH];
   for (auto module: modules) {
-    auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
-    if (std::filesystem::canonical(std::wstring_view(buf, length)) == dll) {
+    auto length = GetModuleBaseNameW(process, module, buf, MAX_PATH);
+    if (std::wstring_view(buf, length) == dllBaseName) {
       return true;
     }
   }
@@ -174,6 +174,17 @@ bool HaveWintab() {
 
 namespace OpenKneeboard {
 
+GameInjector::GameInjector() {
+  const auto dllPath = RuntimeFiles::GetDirectory();
+  mMarkerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
+  mTabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
+
+  mOverlayAutoDetectDll = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
+  mOverlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
+  mOverlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
+  mOverlayOculusD3D12Dll = dllPath / RuntimeFiles::OCULUS_D3D12_DLL;
+}
+
 void GameInjector::SetGameInstances(
   const std::vector<std::shared_ptr<GameInstance>>& games) {
   std::scoped_lock lock(mGamesMutex);
@@ -181,18 +192,6 @@ void GameInjector::SetGameInstances(
 }
 
 bool GameInjector::Run(std::stop_token stopToken) {
-  const auto dllPath = RuntimeFiles::GetDirectory();
-  const auto markerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
-  const auto tabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
-
-  const auto overlayAutoDetectDll
-    = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
-  const auto overlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
-  const auto overlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
-  const auto overlayOculusD3D12Dll = dllPath / RuntimeFiles::OCULUS_D3D12_DLL;
-
-  const auto installTabletProxy = HaveWintab();
-
   PROCESSENTRY32 process;
   process.dwSize = sizeof(process);
   MODULEENTRY32 module;
@@ -210,107 +209,103 @@ bool GameInjector::Run(std::stop_token stopToken) {
       return false;
     }
 
-    std::filesystem::path currentPath;
-
     do {
-      winrt::handle processHandle {
-        OpenProcess(PROCESS_ALL_ACCESS, false, process.th32ProcessID)};
-      if (!processHandle) {
-        continue;
-      }
-      wchar_t buf[MAX_PATH];
-      DWORD bufSize = sizeof(buf);
-      if (!QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize)) {
-        continue;
-      }
-      if (bufSize < 0 || bufSize > sizeof(buf)) {
-        continue;
-      }
-      auto path = std::filesystem::canonical(std::wstring_view(buf, bufSize));
-
-      std::scoped_lock lock(mGamesMutex);
-      for (const auto& game: mGames) {
-        if (path != game->mPath) {
-          continue;
-        }
-
-        const auto friendly = game->mGame->GetUserFriendlyName(path);
-        if (path != currentPath) {
-          evGameChanged.EmitFromMainThread(game);
-        }
-
-        if (AlreadyInjected(processHandle.get(), markerDll)) {
-          break;
-        }
-
-        dprintf("Found '{}' - PID {}", friendly, process.th32ProcessID);
-        InjectDll(processHandle.get(), markerDll);
-
-        if (installTabletProxy) {
-          InjectDll(processHandle.get(), tabletProxyDll);
-        }
-
-        std::filesystem::path overlayDll;
-        switch (game->mOverlayAPI) {
-          case OverlayAPI::SteamVR:
-            currentPath = path;
-            dprint("SteamVR forced, not injecting any overlay DLL");
-            goto NEXT_PROCESS;
-          case OverlayAPI::OpenXR:
-            currentPath = path;
-            dprint("OpenXR forced, not injecting any overlay DLL");
-            goto NEXT_PROCESS;
-          case OverlayAPI::AutoDetect:
-            overlayDll = overlayAutoDetectDll;
-            break;
-          case OverlayAPI::NonVRD3D11:
-            overlayDll = overlayNonVRD3D11Dll;
-            break;
-          case OverlayAPI::OculusD3D11:
-            overlayDll = overlayOculusD3D11Dll;
-            break;
-          case OverlayAPI::OculusD3D12:
-            overlayDll = overlayOculusD3D12Dll;
-            break;
-          default:
-            dprintf(
-              "Unhandled OverlayAPI: {}",
-              static_cast<std::underlying_type_t<OverlayAPI>>(
-                game->mOverlayAPI));
-            OPENKNEEBOARD_BREAK;
-            goto NEXT_PROCESS;
-        }
-
-        if (
-          overlayDll.empty() && std::filesystem::is_regular_file(overlayDll)) {
-          dprintf(
-            "No DLL for OverlayAPI value: {}",
-            static_cast<std::underlying_type_t<OverlayAPI>>(game->mOverlayAPI));
-          OPENKNEEBOARD_BREAK;
-          continue;
-        }
-
-        if (!InjectDll(processHandle.get(), overlayDll)) {
-          currentPath = path;
-          dprintf(
-            "Failed to inject DLL {}: {}", overlayDll.string(), GetLastError());
-          break;
-        }
-
-        if (path == currentPath) {
-          break;
-        }
-
-        currentPath = path;
-        break;
-      }
-    NEXT_PROCESS:
-      continue;
+      CheckProcess(process.th32ProcessID, process.szExeFile);
     } while (Process32Next(snapshot.get(), &process));
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
   return true;
+}
+
+void GameInjector::CheckProcess(
+  DWORD processID,
+  std::wstring_view exeBaseName) {
+  winrt::handle processHandle;
+  std::filesystem::path fullPath;
+
+  std::scoped_lock lock(mGamesMutex);
+  for (const auto& game: mGames) {
+    if (game->mPath.filename() != exeBaseName) {
+      continue;
+    }
+
+    if (!processHandle) {
+      processHandle.attach(OpenProcess(PROCESS_ALL_ACCESS, false, processID));
+      if (!processHandle) {
+        return;
+      }
+
+      wchar_t buf[MAX_PATH];
+      DWORD bufSize = sizeof(buf);
+      if (!QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize)) {
+        return;
+      }
+      if (bufSize < 0 || bufSize > sizeof(buf)) {
+        return;
+      }
+      fullPath = std::filesystem::canonical(std::wstring_view(buf, bufSize));
+    }
+
+    if (fullPath != game->mPath) {
+      continue;
+    }
+
+    const auto friendly = game->mGame->GetUserFriendlyName(fullPath);
+
+    if (AlreadyInjected(processHandle.get(), mMarkerDll)) {
+      break;
+    }
+
+    dprintf("Found '{}' - PID {}", friendly, processID);
+    InjectDll(processHandle.get(), mMarkerDll);
+
+    if (HaveWintab()) {
+      InjectDll(processHandle.get(), mTabletProxyDll);
+    }
+
+    std::filesystem::path overlayDll;
+    switch (game->mOverlayAPI) {
+      case OverlayAPI::SteamVR:
+        dprint("SteamVR forced, not injecting any overlay DLL");
+        return;
+      case OverlayAPI::OpenXR:
+        dprint("OpenXR forced, not injecting any overlay DLL");
+        return;
+      case OverlayAPI::AutoDetect:
+        overlayDll = mOverlayAutoDetectDll;
+        break;
+      case OverlayAPI::NonVRD3D11:
+        overlayDll = mOverlayNonVRD3D11Dll;
+        break;
+      case OverlayAPI::OculusD3D11:
+        overlayDll = mOverlayOculusD3D11Dll;
+        break;
+      case OverlayAPI::OculusD3D12:
+        overlayDll = mOverlayOculusD3D12Dll;
+        break;
+      default:
+        dprintf(
+          "Unhandled OverlayAPI: {}",
+          static_cast<std::underlying_type_t<OverlayAPI>>(game->mOverlayAPI));
+        OPENKNEEBOARD_BREAK;
+        return;
+    }
+
+    if (overlayDll.empty() && std::filesystem::is_regular_file(overlayDll)) {
+      dprintf(
+        "No DLL for OverlayAPI value: {}",
+        static_cast<std::underlying_type_t<OverlayAPI>>(game->mOverlayAPI));
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
+
+    if (!InjectDll(processHandle.get(), overlayDll)) {
+      dprintf(
+        "Failed to inject DLL {}: {}", overlayDll.string(), GetLastError());
+      return;
+    }
+  }
 }
 
 }// namespace OpenKneeboard

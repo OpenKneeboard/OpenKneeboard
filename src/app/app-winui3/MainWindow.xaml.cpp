@@ -140,11 +140,12 @@ MainWindow::~MainWindow() {
 winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) {
-  RECT windowRect;
-  GetWindowRect(mHwnd, &windowRect);
-  auto settings = gKneeboard->GetAppSettings();
-  settings.mWindowRect = windowRect;
-  gKneeboard->SetAppSettings(settings);
+  RECT windowRect {};
+  if (GetWindowRect(mHwnd, &windowRect)) {
+    auto settings = gKneeboard->GetAppSettings();
+    settings.mWindowRect = windowRect;
+    gKneeboard->SetAppSettings(settings);
+  }
 
   dprint("Stopping frame timer...");
   mFrameTimer.Stop();

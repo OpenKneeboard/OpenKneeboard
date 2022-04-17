@@ -22,13 +22,20 @@
 #include "App.xaml.h"
 // clang-format on
 
+#include <Dbghelp.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/version.h>
 #include <Psapi.h>
+#include <ShlObj.h>
 #include <appmodel.h>
+#include <fmt/chrono.h>
+#include <signal.h>
 
+#include <chrono>
+#include <exception>
 #include <filesystem>
 #include <set>
 
@@ -48,11 +55,82 @@ using namespace OpenKneeboard;
 #include <WindowsAppSDK-VersionInfo.h>
 #include <mddbootstrap.h>
 
+#pragma comment(lib, "Dbghelp.lib")
+
+static std::filesystem::path gDumpDirectory;
+static bool gDumped = false;
+
+static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
+  if (gDumped) {
+    return;
+  }
+  gDumped = true;
+#ifdef DEBUG
+  if (IsDebuggerPresent()) {
+    __debugbreak();
+  }
+#endif
+  const auto processId = GetCurrentProcessId();
+
+  auto fileName = fmt::format(
+    L"OpenKneeboard-{:%Y%m%dT%H%M%S}-{}.{}.{}.{}-{}.dmp",
+    std::chrono::system_clock::now(),
+    Version::Major,
+    Version::Minor,
+    Version::Patch,
+    Version::Build,
+    processId);
+  auto filePath = (gDumpDirectory / fileName).wstring();
+  winrt::handle dumpFile {CreateFileW(
+    filePath.c_str(),
+    GENERIC_READ | GENERIC_WRITE,
+    0,
+    nullptr,
+    CREATE_ALWAYS,
+    FILE_ATTRIBUTE_NORMAL,
+    NULL)};
+  MINIDUMP_EXCEPTION_INFORMATION exceptionInfo {
+    .ThreadId = GetCurrentThreadId(),
+    .ExceptionPointers = exceptionPointers,
+    .ClientPointers /* exception in debugger target */ = false,
+  };
+
+  EXCEPTION_RECORD exceptionRecord {};
+  CONTEXT exceptionContext {};
+  EXCEPTION_POINTERS fakeExceptionPointers;
+  if (!exceptionPointers) {
+    ::RtlCaptureContext(&exceptionContext);
+    exceptionRecord.ExceptionCode = STATUS_BREAKPOINT;
+    fakeExceptionPointers = {&exceptionRecord, &exceptionContext};
+    exceptionInfo.ExceptionPointers = &fakeExceptionPointers;
+  }
+
+  MiniDumpWriteDump(
+    GetCurrentProcess(),
+    processId,
+    dumpFile.get(),
+    static_cast<MINIDUMP_TYPE>(
+      MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithProcessThreadData
+      | MiniDumpWithUnloadedModules | MiniDumpWithThreadInfo),
+    &exceptionInfo,
+    /* user stream = */ nullptr,
+    /* callback = */ nullptr);
+}
+
+LONG __callback WINAPI
+OnUnhandledException(LPEXCEPTION_POINTERS exceptionPointers) {
+  CreateDump(exceptionPointers);
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static void OnTerminate() {
+  CreateDump(nullptr);
+  abort();
+}
+
 App::App() {
   InitializeComponent();
-
-#if defined _DEBUG \
-  && !defined DISABLE_XAML_GENERATED_BREAK_ON_UNHANDLED_EXCEPTION
+#ifdef DEBUG
   UnhandledException(
     [this](IInspectable const&, UnhandledExceptionEventArgs const& e) {
       if (IsDebuggerPresent()) {
@@ -66,18 +144,19 @@ App::App() {
 
 static void InstallOpenXRLayerInUnsandboxedSubprocess() {
   auto layerPath = RuntimeFiles::GetDirectory().wstring();
-  auto exePath = (RuntimeFiles::GetDirectory() / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER).wstring();
+  auto exePath = (RuntimeFiles::GetDirectory()
+                  / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER)
+                   .wstring();
 
-  auto commandLine
-    = fmt::format(L"\"{}\" \"{}\"", exePath, layerPath);
+  auto commandLine = fmt::format(L"\"{}\" \"{}\"", exePath, layerPath);
   commandLine.reserve(32767);
 
   STARTUPINFOEXW startupInfo {};
   startupInfo.StartupInfo.cb = sizeof(startupInfo);
   SIZE_T attributeListSize;
   InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeListSize);
-  startupInfo.lpAttributeList = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(
-    HeapAlloc(GetProcessHeap(), 0, attributeListSize));
+  startupInfo.lpAttributeList
+    = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(malloc(attributeListSize));
   DWORD policy = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
   UpdateProcThreadAttribute(
     startupInfo.lpAttributeList,
@@ -101,22 +180,30 @@ static void InstallOpenXRLayerInUnsandboxedSubprocess() {
     nullptr,
     reinterpret_cast<LPSTARTUPINFOW>(&startupInfo),
     &procInfo);
+  free(startupInfo.lpAttributeList);
 }
 
-
-void App::OnLaunched(LaunchActivatedEventArgs const&) {
+void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window = make<MainWindow>();
 
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
-    [=](auto&, auto&) -> winrt::fire_and_forget {
+    [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
       co_await CheckAllDCSHooks(window.Content().XamlRoot());
     });
   InstallOpenXRLayerInUnsandboxedSubprocess();
-
   window.Activate();
 }
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
+  wchar_t* savedGamesBuffer = nullptr;
+  winrt::check_hresult(
+    SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &savedGamesBuffer));
+  gDumpDirectory = std::filesystem::path {std::wstring_view {savedGamesBuffer}}
+    / "OpenKneeboard";
+  std::filesystem::create_directories(gDumpDirectory);
+  SetUnhandledExceptionFilter(&OnUnhandledException);
+  set_terminate(&OnTerminate);
+
   DPrintSettings::Set({
     .prefix = "OpenKneeboard-WinUI3",
   });
