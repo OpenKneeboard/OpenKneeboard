@@ -45,14 +45,21 @@ struct Pixel {
 
 class TestViewerWindow final {
  private:
+  bool mStreamerMode = false;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
   uint64_t mLastSequenceNumber = 0;
+
+  D2D1_COLOR_F mWindowColor;
+  D2D1_COLOR_F mStreamerModeWindowColor;
+  D2D1_COLOR_F mWindowFrameColor;
+  D2D1_COLOR_F mStreamerModeWindowFrameColor;
 
   DXResources mDXR;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mStreamerModeBackgroundBrush;
 
   HWND mHwnd;
 
@@ -89,6 +96,10 @@ class TestViewerWindow final {
 
     mErrorRenderer
       = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext.get());
+    mWindowColor = GetSystemColor(COLOR_WINDOW);
+    mWindowFrameColor = GetSystemColor(COLOR_WINDOWFRAME);
+    mStreamerModeWindowColor = D2D1::ColorF(1.0f, 0.0f, 1.0f, 1.0f);
+    mStreamerModeWindowFrameColor = mStreamerModeWindowColor;
   }
 
   HWND GetHWND() const {
@@ -145,7 +156,7 @@ class TestViewerWindow final {
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
       .BufferCount = 2,
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
-      .AlphaMode = DXGI_ALPHA_MODE_IGNORE, // HWND swap chain can't have alpha
+      .AlphaMode = DXGI_ALPHA_MODE_IGNORE,// HWND swap chain can't have alpha
     };
     mDXR.mDXGIFactory->CreateSwapChainForHwnd(
       mDXR.mD3DDevice.get(),
@@ -165,6 +176,14 @@ class TestViewerWindow final {
 
   void OnResize(const D2D1_SIZE_U&) {
     this->PaintNow();
+  }
+
+  void OnKeyUp(uint64_t vkk) {
+    if (vkk == 'S') {
+      mStreamerMode = !mStreamerMode;
+      this->PaintNow();
+      return;
+    }
   }
 
   void PaintNow() {
@@ -203,6 +222,11 @@ class TestViewerWindow final {
         D2D1::BitmapBrushProperties(
           D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
         reinterpret_cast<ID2D1BitmapBrush**>(mBackgroundBrush.put()));
+
+      ctx->CreateSolidColorBrush(
+        D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f),
+        reinterpret_cast<ID2D1SolidColorBrush**>(
+          mStreamerModeBackgroundBrush.put()));
     }
 
     bool present = true;
@@ -214,14 +238,16 @@ class TestViewerWindow final {
       }
     });
 
-    ctx->Clear(GetSystemColor(COLOR_WINDOW));
+    ctx->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
     auto snapshot = mSHM.MaybeGet();
     if (!snapshot) {
-      mErrorRenderer->Render(
-        ctx.get(),
-        L"No Feeder",
-        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
+      if (!mStreamerMode) {
+        mErrorRenderer->Render(
+          ctx.get(),
+          L"No Feeder",
+          {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
+      }
       mFirstDetached = false;
       return;
     }
@@ -245,7 +271,8 @@ class TestViewerWindow final {
     }
     auto sharedSurface = sharedTexture.GetSurface();
 
-    ctx->Clear(GetSystemColor(COLOR_WINDOWFRAME));
+    ctx->Clear(
+      mStreamerMode ? mStreamerModeWindowFrameColor : mWindowFrameColor);
 
     const auto scalex = float(clientSize.width) / config.imageWidth;
     const auto scaley = float(clientSize.height) / config.imageHeight;
@@ -277,11 +304,12 @@ class TestViewerWindow final {
     ctx->CreateSharedBitmap(
       _uuidof(IDXGISurface), sharedSurface, &bitmapProperties, d2dBitmap.put());
 
-    auto bg = mBackgroundBrush;
+    auto bg = mStreamerMode ? mStreamerModeBackgroundBrush.get()
+                            : mBackgroundBrush.get();
     // Align the top-left pixel of the brush
     bg->SetTransform(
       D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
-    ctx->FillRectangle(pageRect, bg.get());
+    ctx->FillRectangle(pageRect, bg);
     ctx->SetTransform(D2D1::IdentityMatrix());
 
     ctx->DrawBitmap(
@@ -316,6 +344,9 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
         .height = HIWORD(lParam),
       });
       return 0;
+    case WM_KEYUP:
+      gInstance->OnKeyUp(wParam);
+      return DefWindowProc(hWnd, uMsg, wParam, lParam);
     case WM_CLOSE:
       PostQuitMessage(0);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);
