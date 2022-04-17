@@ -162,7 +162,7 @@ void OpenVROverlay::Tick() {
   const auto config = snapshot.GetConfig();
   const auto& vrConf = config.vr;
 
-  if (vrConf.recenterCount != p->mRecenterCount) {
+  if (vrConf.mRecenterCount != p->mRecenterCount) {
     auto m = p->GetHMDTransform();
 
     auto translation = m.Translation();
@@ -172,21 +172,21 @@ void OpenVROverlay::Tick() {
     p->mRecenter = Matrix::CreateRotationY(m.ToEuler().y)
       * Matrix::CreateTranslation(translation);
 
-    p->mRecenterCount = vrConf.recenterCount;
+    p->mRecenterCount = vrConf.mRecenterCount;
   }
 
   // clang-format off
   auto transform =
-    Matrix::CreateRotationX(vrConf.rx)
-    * Matrix::CreateRotationY(vrConf.ry)
-    * Matrix::CreateRotationZ(vrConf.rz)
-    * Matrix::CreateTranslation(vrConf.x, vrConf.floorY, vrConf.z)
+    Matrix::CreateRotationX(vrConf.mRX)
+    * Matrix::CreateRotationY(vrConf.mRY)
+    * Matrix::CreateRotationZ(vrConf.mRZ)
+    * Matrix::CreateTranslation(vrConf.mX, vrConf.mFloorY, vrConf.mZ)
     * p->mRecenter;
   // clang-format on
 
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  p->mUnzoomedWidth = vrConf.height * aspectRatio;
-  p->mZoomedWidth = p->mUnzoomedWidth * vrConf.zoomScale;
+  p->mUnzoomedWidth = vrConf.mHeight * aspectRatio;
+  p->mZoomedWidth = p->mUnzoomedWidth * vrConf.mZoomScale;
 
   p->mZoomed = p->IsZoomed(vrConf, transform);
   const auto desiredWidth = p->mZoomed ? p->mZoomedWidth : p->mUnzoomedWidth;
@@ -268,16 +268,16 @@ void OpenVROverlay::Tick() {
 bool OpenVROverlay::Impl::IsZoomed(
   const VRRenderConfig& vrConf,
   const Matrix& overlayTransform) const {
-  if (vrConf.flags & VRRenderConfig::Flags::FORCE_ZOOM) {
+  if (vrConf.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
     return true;
   }
-  if (!(vrConf.flags & VRRenderConfig::Flags::GAZE_ZOOM)) {
+  if (!(vrConf.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)) {
     return false;
   }
-  const auto zoomScale = vrConf.zoomScale;
+  const auto zoomScale = vrConf.mZoomScale;
   if (
-    zoomScale < 1.1 || vrConf.gazeTargetHorizontalScale < 0.1
-    || vrConf.gazeTargetVerticalScale < 0.1) {
+    zoomScale < 1.1 || vrConf.mGazeTargetHorizontalScale < 0.1
+    || vrConf.mGazeTargetVerticalScale < 0.1) {
     return false;
   }
 
@@ -292,9 +292,9 @@ bool OpenVROverlay::Impl::IsZoomed(
     overlayTransform.Translation(),
     Quaternion::CreateFromRotationMatrix(overlayTransform),
     {(mZoomed ? mZoomedWidth : mUnzoomedWidth)
-       * vrConf.gazeTargetHorizontalScale,
-     vrConf.height * (mZoomed ? zoomScale : 1)
-       * vrConf.gazeTargetVerticalScale});
+       * vrConf.mGazeTargetHorizontalScale,
+     vrConf.mHeight * (mZoomed ? zoomScale : 1)
+       * vrConf.mGazeTargetVerticalScale});
 }
 
 Matrix OpenVROverlay::Impl::GetHMDTransform() const {

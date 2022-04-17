@@ -171,20 +171,20 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   kneeboardLayer.ColorTexture = mSwapChain;
 
   const auto& vr = config.vr;
-  Vector3 position(vr.x, vr.floorY, vr.z);
-  if ((config.vr.flags & VRRenderConfig::Flags::HEADLOCKED)) {
+  Vector3 position(vr.mX, vr.mFloorY, vr.mZ);
+  if ((config.vr.mFlags & VRRenderConfig::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
     ovr->ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
-    position.y = vr.eyeY;
+    position.y = vr.mEyeY;
   }
   kneeboardLayer.QuadPoseCenter.Position = {position.x, position.y, position.z};
 
   // clang-format off
   auto orientation =
-    Quaternion::CreateFromAxisAngle(Vector3::UnitX, vr.rx)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vr.ry)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vr.rz);
+    Quaternion::CreateFromAxisAngle(Vector3::UnitX, vr.mRX)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vr.mRY)
+    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vr.mRZ);
   // clang-format on
 
   kneeboardLayer.QuadPoseCenter.Orientation
@@ -195,20 +195,20 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
     = {.w = config.imageWidth, .h = config.imageHeight};
 
   const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  const auto virtualHeight = vr.height;
-  const auto virtualWidth = aspectRatio * vr.height;
+  const auto virtualHeight = vr.mHeight;
+  const auto virtualWidth = aspectRatio * vr.mHeight;
 
   const ovrVector2f normalSize(virtualWidth, virtualHeight);
   const ovrVector2f zoomedSize(
-    virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale);
+    virtualWidth * vr.mZoomScale, virtualHeight * vr.mZoomScale);
 
-  if (vr.flags & VRRenderConfig::Flags::FORCE_ZOOM) {
+  if (vr.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
     mZoomed = true;
-  } else if (!(vr.flags & VRRenderConfig::Flags::GAZE_ZOOM)) {
+  } else if (!(vr.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)) {
     mZoomed = false;
   } else if (
-    vr.zoomScale < 1.1 || vr.gazeTargetHorizontalScale < 0.1
-    || vr.gazeTargetVerticalScale < 0.1) {
+    vr.mZoomScale < 1.1 || vr.mGazeTargetHorizontalScale < 0.1
+    || vr.mGazeTargetVerticalScale < 0.1) {
     mZoomed = false;
   } else {
     const auto predictedTime
@@ -221,8 +221,8 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
       position,
       orientation,
       {
-        currentSize.x * vr.gazeTargetHorizontalScale,
-        currentSize.y * vr.gazeTargetVerticalScale,
+        currentSize.x * vr.mGazeTargetHorizontalScale,
+        currentSize.y * vr.mGazeTargetVerticalScale,
       });
   }
 
@@ -249,7 +249,7 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   }
 
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.vr.flags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
+  if ((config.vr.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
     for (auto i = 0; i < newLayers.size(); ++i) {
       auto layer = newLayers.at(i);
       if (layer->Type != ovrLayerType_EyeFovDepth) {

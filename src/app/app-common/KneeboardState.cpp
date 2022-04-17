@@ -77,7 +77,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     server.Run(stopToken);
   });
 
-  if (mVRConfig.enableSteamVR) {
+  if (mVRConfig.mEnableSteamVR) {
     this->StartOpenVRThread();
   }
 
@@ -309,7 +309,7 @@ void KneeboardState::OnUserAction(UserAction action) {
       this->NextPage();
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
-      auto& flags = this->mVRConfig.flags;
+      auto& flags = this->mVRConfig.mFlags;
       if (flags & VRRenderConfig::Flags::FORCE_ZOOM) {
         flags &= ~VRRenderConfig::Flags::FORCE_ZOOM;
       } else {
@@ -320,7 +320,7 @@ void KneeboardState::OnUserAction(UserAction action) {
       return;
     }
     case UserAction::RECENTER_VR:
-      this->mVRConfig.recenterCount++;
+      this->mVRConfig.mRecenterCount++;
       this->evNeedsRepaintEvent.Emit();
       return;
   }
@@ -404,8 +404,8 @@ VRConfig KneeboardState::GetVRConfig() const {
 }
 
 void KneeboardState::SetVRConfig(const VRConfig& value) {
-  if (value.enableSteamVR != mVRConfig.enableSteamVR) {
-    if (!value.enableSteamVR) {
+  if (value.mEnableSteamVR != mVRConfig.mEnableSteamVR) {
+    if (!value.mEnableSteamVR) {
       mOpenVRThread.request_stop();
     } else {
       this->StartOpenVRThread();
