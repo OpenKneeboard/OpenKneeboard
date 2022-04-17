@@ -31,7 +31,7 @@
 namespace OpenKneeboard {
 
 #pragma pack(push)
-struct VRConfig {
+struct VRRenderConfig {
   static constexpr uint16_t VERSION = 3;
 
   enum class Flags : uint32_t {
@@ -60,9 +60,12 @@ struct VRConfig {
     | static_cast<uint32_t>(Flags::GAZE_ZOOM));
 };
 #pragma pack(pop)
+struct VRConfig : public VRRenderConfig {
+  bool enableSteamVR = true;
+};
 
 template <>
-constexpr bool is_bitflags_v<VRConfig::Flags> = true;
+constexpr bool is_bitflags_v<VRRenderConfig::Flags> = true;
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 // not using the macros because they use `x`, but we're

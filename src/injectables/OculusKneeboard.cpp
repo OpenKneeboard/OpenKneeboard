@@ -172,7 +172,7 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
 
   const auto& vr = config.vr;
   Vector3 position(vr.x, vr.floorY, vr.z);
-  if ((config.vr.flags & VRConfig::Flags::HEADLOCKED)) {
+  if ((config.vr.flags & VRRenderConfig::Flags::HEADLOCKED)) {
     kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
   } else if (
     ovr->ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
@@ -202,9 +202,9 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   const ovrVector2f zoomedSize(
     virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale);
 
-  if (vr.flags & VRConfig::Flags::FORCE_ZOOM) {
+  if (vr.flags & VRRenderConfig::Flags::FORCE_ZOOM) {
     mZoomed = true;
-  } else if (!(vr.flags & VRConfig::Flags::GAZE_ZOOM)) {
+  } else if (!(vr.flags & VRRenderConfig::Flags::GAZE_ZOOM)) {
     mZoomed = false;
   } else if (
     vr.zoomScale < 1.1 || vr.gazeTargetHorizontalScale < 0.1
@@ -249,7 +249,7 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   }
 
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.vr.flags & VRConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
+  if ((config.vr.flags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
     for (auto i = 0; i < newLayers.size(); ++i) {
       auto layer = newLayers.at(i);
       if (layer->Type != ovrLayerType_EyeFovDepth) {

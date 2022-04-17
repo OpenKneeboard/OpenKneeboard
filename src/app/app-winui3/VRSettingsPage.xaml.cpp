@@ -79,6 +79,8 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"KneeboardGazeTargetVerticalScale"));
   mPropertyChangedEvent(
+    *this, PropertyChangedEventArgs(L"SteamVREnabled"));
+  mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"GazeZoomEnabled"));
   mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"DiscardOculusDepthInformation"));
@@ -257,31 +259,41 @@ void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
 bool VRSettingsPage::DiscardOculusDepthInformation() {
   return (
     gKneeboard->GetVRConfig().flags
-    & VRConfig::Flags::DISCARD_DEPTH_INFORMATION);
+    & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION);
 }
 
 void VRSettingsPage::DiscardOculusDepthInformation(bool discard) {
   auto config = gKneeboard->GetVRConfig();
   if (discard) {
-    config.flags |= VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+    config.flags |= VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
   } else {
-    config.flags &= ~VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+    config.flags &= ~VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
   }
+  gKneeboard->SetVRConfig(config);
+}
+
+bool VRSettingsPage::SteamVREnabled() {
+  return gKneeboard->GetVRConfig().enableSteamVR;
+}
+
+void VRSettingsPage::SteamVREnabled(bool enabled) {
+  auto config = gKneeboard->GetVRConfig();
+  config.enableSteamVR = enabled;
   gKneeboard->SetVRConfig(config);
 }
 
 bool VRSettingsPage::GazeZoomEnabled() {
   return (
     gKneeboard->GetVRConfig().flags
-    & VRConfig::Flags::GAZE_ZOOM);
+    & VRRenderConfig::Flags::GAZE_ZOOM);
 }
 
 void VRSettingsPage::GazeZoomEnabled(bool enabled) {
   auto config = gKneeboard->GetVRConfig();
   if (enabled) {
-    config.flags |= VRConfig::Flags::GAZE_ZOOM;
+    config.flags |= VRRenderConfig::Flags::GAZE_ZOOM;
   } else {
-    config.flags &= ~VRConfig::Flags::GAZE_ZOOM;
+    config.flags &= ~VRRenderConfig::Flags::GAZE_ZOOM;
   }
   gKneeboard->SetVRConfig(config);
 }

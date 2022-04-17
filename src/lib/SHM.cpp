@@ -122,7 +122,7 @@ constexpr auto SHMPath() {
     ProjectNameA,
     Header::VERSION,
     Config::VERSION,
-    VRConfig::VERSION,
+    VRRenderConfig::VERSION,
     FlatConfig::VERSION,
     SHM_SIZE);
   return std::string(buf, end);

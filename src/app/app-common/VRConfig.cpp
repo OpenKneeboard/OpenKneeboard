@@ -41,26 +41,30 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
 
   if (j.contains("headLocked")) {
     if (j.at("headLocked").get<bool>()) {
-      vrc.flags |= VRConfig::Flags::HEADLOCKED;
+      vrc.flags |= VRRenderConfig::Flags::HEADLOCKED;
     } else {
-      vrc.flags &= ~VRConfig::Flags::HEADLOCKED;
+      vrc.flags &= ~VRRenderConfig::Flags::HEADLOCKED;
     }
   }
 
   if (j.contains("discardOculusDepthInformation")) {
     if (j.at("discardOculusDepthInformation").get<bool>()) {
-      vrc.flags |= VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+      vrc.flags |= VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
     } else {
-      vrc.flags &= ~VRConfig::Flags::DISCARD_DEPTH_INFORMATION;
+      vrc.flags &= ~VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
     }
   }
 
   if (j.contains("enableGazeZoom")) {
     if (j.at("enableGazeZoom").get<bool>()) {
-      vrc.flags |= VRConfig::Flags::GAZE_ZOOM;
+      vrc.flags |= VRRenderConfig::Flags::GAZE_ZOOM;
     } else {
-      vrc.flags &= ~VRConfig::Flags::GAZE_ZOOM;
+      vrc.flags &= ~VRRenderConfig::Flags::GAZE_ZOOM;
     }
+  }
+
+  if (j.contains("enableSteamVR")) {
+    vrc.enableSteamVR = j.at("enableSteamVR").get<bool>();
   }
 }
 
@@ -75,9 +79,11 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"rz", vrc.rz},
     {"height", vrc.height},
     {"zoomScale", vrc.zoomScale},
-    {"headLocked", static_cast<bool>(vrc.flags & VRConfig::Flags::HEADLOCKED)},
+    {"headLocked",
+     static_cast<bool>(vrc.flags & VRRenderConfig::Flags::HEADLOCKED)},
     {"discardOculusDepthInformation",
-     static_cast<bool>(vrc.flags & VRConfig::Flags::DISCARD_DEPTH_INFORMATION)},
+     static_cast<bool>(
+       vrc.flags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)},
     {
       "gazeTargetScale",
       {
@@ -86,7 +92,8 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
       },
     },
     {"enableGazeZoom",
-     static_cast<bool>(vrc.flags & VRConfig::Flags::GAZE_ZOOM)},
+     static_cast<bool>(vrc.flags & VRRenderConfig::Flags::GAZE_ZOOM)},
+    {"enableSteamVR", vrc.enableSteamVR},
   };
 }
 }// namespace OpenKneeboard

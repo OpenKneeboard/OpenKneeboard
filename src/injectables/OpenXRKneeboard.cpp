@@ -186,11 +186,11 @@ XrExtent2Df OpenXRKneeboard::GetSize(
   XrExtent2Df zoomedSize {
     virtualWidth * vr.zoomScale, virtualHeight * vr.zoomScale};
 
-  if (vr.flags & VRConfig::Flags::FORCE_ZOOM) {
+  if (vr.flags & VRRenderConfig::Flags::FORCE_ZOOM) {
     mZoomed = true;
     return zoomedSize;
   }
-  if (!(vr.flags & VRConfig::Flags::GAZE_ZOOM)) {
+  if (!(vr.flags & VRRenderConfig::Flags::GAZE_ZOOM)) {
     mZoomed = false;
     return normalSize;
   }

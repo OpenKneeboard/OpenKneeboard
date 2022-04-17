@@ -19,6 +19,7 @@ namespace OpenKneeboardApp
         Single KneeboardGazeTargetHorizontalScale;
         Single KneeboardGazeTargetVerticalScale;
 
+        Boolean SteamVREnabled;
         Boolean GazeZoomEnabled;
         Boolean DiscardOculusDepthInformation;
     }

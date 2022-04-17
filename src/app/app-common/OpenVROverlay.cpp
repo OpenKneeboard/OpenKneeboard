@@ -63,7 +63,7 @@ class OpenVROverlay::Impl final {
   int64_t mRecenterCount = 0;
   Matrix mRecenter = Matrix::Identity;
 
-  bool IsZoomed(const VRConfig&, const Matrix& overlayTransform) const;
+  bool IsZoomed(const VRRenderConfig&, const Matrix& overlayTransform) const;
   Matrix GetHMDTransform() const;
 
   ~Impl() {
@@ -266,12 +266,12 @@ void OpenVROverlay::Tick() {
 }
 
 bool OpenVROverlay::Impl::IsZoomed(
-  const VRConfig& vrConf,
+  const VRRenderConfig& vrConf,
   const Matrix& overlayTransform) const {
-  if (vrConf.flags & VRConfig::Flags::FORCE_ZOOM) {
+  if (vrConf.flags & VRRenderConfig::Flags::FORCE_ZOOM) {
     return true;
   }
-  if (!(vrConf.flags & VRConfig::Flags::GAZE_ZOOM)) {
+  if (!(vrConf.flags & VRRenderConfig::Flags::GAZE_ZOOM)) {
     return false;
   }
   const auto zoomScale = vrConf.zoomScale;
@@ -405,6 +405,7 @@ bool OpenVROverlay::Run(std::stop_token stopToken) {
     this->Tick();
     std::this_thread::sleep_for(p->mIVRSystem ? frameSleep : inactiveSleep);
   }
+  dprint("Shutting down OpenVR support - stop requested");
 
   // Free resources in the same thread we allocated them
   p.reset();

@@ -77,10 +77,9 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     server.Run(stopToken);
   });
 
-  mOpenVRThread = std::jthread([](std::stop_token stopToken) {
-    SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
-    OpenVROverlay().Run(stopToken);
-  });
+  if (mVRConfig.enableSteamVR) {
+    this->StartOpenVRThread();
+  }
 
   UpdateLayout();
 }
@@ -225,7 +224,7 @@ void KneeboardState::UpdateLayout() {
   }
 
   if (mContentNativeSize.width == 0 || mContentNativeSize.height == 0) {
-    mContentNativeSize = { 768, 1024 };
+    mContentNativeSize = {768, 1024};
   }
 
   const auto scaleX
@@ -311,10 +310,10 @@ void KneeboardState::OnUserAction(UserAction action) {
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
       auto& flags = this->mVRConfig.flags;
-      if (flags & VRConfig::Flags::FORCE_ZOOM) {
-        flags &= ~VRConfig::Flags::FORCE_ZOOM;
+      if (flags & VRRenderConfig::Flags::FORCE_ZOOM) {
+        flags &= ~VRRenderConfig::Flags::FORCE_ZOOM;
       } else {
-        flags |= VRConfig::Flags::FORCE_ZOOM;
+        flags |= VRRenderConfig::Flags::FORCE_ZOOM;
       }
       this->SaveSettings();
       this->evNeedsRepaintEvent.Emit();
@@ -405,6 +404,13 @@ VRConfig KneeboardState::GetVRConfig() const {
 }
 
 void KneeboardState::SetVRConfig(const VRConfig& value) {
+  if (value.enableSteamVR != mVRConfig.enableSteamVR) {
+    if (!value.enableSteamVR) {
+      mOpenVRThread.request_stop();
+    } else {
+      this->StartOpenVRThread();
+    }
+  }
   mVRConfig = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
@@ -442,6 +448,13 @@ void KneeboardState::SaveSettings() {
   mSettings.App = mAppSettings;
 
   mSettings.Save();
+}
+
+void KneeboardState::StartOpenVRThread() {
+  mOpenVRThread = std::jthread([](std::stop_token stopToken) {
+    SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
+    OpenVROverlay().Run(stopToken);
+  });
 }
 
 }// namespace OpenKneeboard
