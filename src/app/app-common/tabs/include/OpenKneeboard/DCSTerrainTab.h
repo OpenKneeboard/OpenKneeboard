@@ -27,11 +27,11 @@ namespace OpenKneeboard {
 
 class FolderTab;
 
-class DCSTerrainTab final : public DCSTab,
-                            public TabWithDelegate<FolderTab> {
+class DCSTerrainTab final : public DCSTab, public TabWithDelegate<FolderTab> {
  public:
-  DCSTerrainTab(const DXResources&);
+  DCSTerrainTab(const DXResources&, KneeboardState*);
   virtual utf8_string GetTitle() const override;
+
  protected:
   virtual void OnGameEvent(
     const GameEvent&,

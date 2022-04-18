@@ -22,6 +22,7 @@
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <d2d1.h>
 #include <shims/winrt.h>
 
@@ -35,7 +36,7 @@ namespace OpenKneeboard {
 class TabWithDoodles : public virtual TabWithCursorEvents,
                        private EventReceiver {
  public:
-  TabWithDoodles(const DXResources&);
+  TabWithDoodles(const DXResources&, KneeboardState*);
   virtual ~TabWithDoodles();
 
   virtual void RenderPage(
@@ -56,6 +57,8 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
   void ClearContentCache();
   void ClearDoodles();
 
+  KneeboardState* GetKneeboardState();
+
  private:
   DXResources mDXR;
 
@@ -74,6 +77,7 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
   winrt::com_ptr<ID2D1DeviceContext> mDrawingContext;
   std::mutex mBufferedEventsMutex;
   std::vector<Drawing> mDrawings;
+  KneeboardState* mKneeboard;
 
   ID2D1Bitmap* GetDrawingSurface(
     uint16_t index,

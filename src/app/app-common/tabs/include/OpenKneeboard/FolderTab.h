@@ -34,10 +34,12 @@ class FolderTab final : public TabWithDoodles,
  public:
   FolderTab(
     const DXResources&,
+    KneeboardState*,
     utf8_string_view title,
     const std::filesystem::path& path);
   explicit FolderTab(
     const DXResources&,
+    KneeboardState*,
     utf8_string_view title,
     const nlohmann::json&);
   virtual ~FolderTab();

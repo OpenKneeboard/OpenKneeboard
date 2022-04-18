@@ -26,8 +26,10 @@
 
 namespace OpenKneeboard {
 
-TabWithDoodles::TabWithDoodles(const DXResources& dxr) : mContentLayer(dxr) {
+TabWithDoodles::TabWithDoodles(const DXResources& dxr, KneeboardState* kbs)
+  : mContentLayer(dxr) {
   mDXR = dxr;
+  mKneeboard = kbs;
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBrush.put()));
@@ -97,11 +99,20 @@ void TabWithDoodles::FlushCursorEvents() {
       const bool erasing = event.mButtons & ~1;
 
       const auto scale = mDrawings.at(pageIndex).mScale;
+
+      auto ds = GetKneeboardState()->GetDoodleSettings();
+      auto drawRadius = ds.drawRadius;
+      auto eraseRadius = ds.eraseRadius;
+      auto fixedDraw = ds.fixedDraw;
+      auto fixedErase = ds.fixedErase;
+
       const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
-      auto radius = 1 + (pressure * 15);
+
+      auto radius = fixedDraw ? drawRadius : 1 + (pressure * drawRadius);
       if (erasing) {
-        radius *= 10;
+        radius = fixedErase ? eraseRadius : 1 + (pressure * eraseRadius);
       }
+
       const auto x = event.mX * scale;
       const auto y = event.mY * scale;
       const auto brush = erasing ? mEraser : mBrush;
@@ -206,6 +217,10 @@ void TabWithDoodles::RenderOverDoodles(
   ID2D1DeviceContext*,
   uint16_t pageIndex,
   const D2D1_RECT_F&) {
+}
+
+KneeboardState* TabWithDoodles::GetKneeboardState() {
+  return mKneeboard;
 }
 
 }// namespace OpenKneeboard

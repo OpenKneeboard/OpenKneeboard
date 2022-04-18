@@ -37,6 +37,17 @@ InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
 }
 
+winrt::event_token InputSettingsPage::PropertyChanged(
+  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+    handler) {
+  return mPropertyChangedEvent.add(handler);
+}
+
+void InputSettingsPage::PropertyChanged(
+  winrt::event_token const& token) noexcept {
+  mPropertyChangedEvent.remove(token);
+}
+
 IVector<IInspectable> InputSettingsPage::Devices() {
   auto devices {winrt::single_threaded_vector<IInspectable>()};
   for (const auto& device: gKneeboard->GetInputDevices()) {
@@ -72,6 +83,51 @@ void InputSettingsPage::OnOrientationChanged(
 
   std::dynamic_pointer_cast<TabletInputDevice>(device)->SetOrientation(
     static_cast<TabletOrientation>(combo.SelectedIndex()));
+}
+
+// inverted here for UI clarity
+bool InputSettingsPage::FixedWriteRadius() {
+  bool value = gKneeboard->GetDoodleSettings().fixedDraw;
+  return !value;
+}
+
+// inverted here for UI clarity
+void InputSettingsPage::FixedWriteRadius(bool value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.fixedDraw = !value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+
+// inverted here for UI clarity
+bool InputSettingsPage::FixedEraseRadius() {
+  bool value = gKneeboard->GetDoodleSettings().fixedErase;
+  return !value;
+}
+
+// inverted here for UI clarity
+void InputSettingsPage::FixedEraseRadius(bool value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.fixedErase = !value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+
+uint32_t InputSettingsPage::EraseRadius() {
+  return gKneeboard->GetDoodleSettings().eraseRadius;
+}
+void InputSettingsPage::EraseRadius(uint32_t value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.eraseRadius = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+
+uint32_t InputSettingsPage::WriteRadius() {
+  return gKneeboard->GetDoodleSettings().drawRadius;
+}
+
+void InputSettingsPage::WriteRadius(uint32_t value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.drawRadius = value;
+  gKneeboard->SetDoodleSettings(ds);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

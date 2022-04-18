@@ -34,10 +34,12 @@ class TextFileTab final : public TabWithDoodles,
  public:
   explicit TextFileTab(
     const DXResources&,
+    KneeboardState*,
     utf8_string_view title,
     const std::filesystem::path& path);
   explicit TextFileTab(
     const DXResources&,
+    KneeboardState*,
     utf8_string_view title,
     const nlohmann::json&);
   virtual ~TextFileTab();

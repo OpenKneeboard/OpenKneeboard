@@ -33,6 +33,7 @@ struct Settings final {
   nlohmann::json NonVR;
   nlohmann::json VR;
   nlohmann::json App;
+  nlohmann::json Doodle;
 
   static Settings Load();
   void Save();
@@ -41,4 +42,4 @@ struct Settings final {
 void from_json(const nlohmann::json&, Settings&);
 void to_json(nlohmann::json&, const Settings&);
 
-}
+}// namespace OpenKneeboard

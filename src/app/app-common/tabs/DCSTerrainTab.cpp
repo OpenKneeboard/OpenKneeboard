@@ -29,9 +29,9 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSTerrainTab::DCSTerrainTab(const DXResources& dxr)
+DCSTerrainTab::DCSTerrainTab(const DXResources& dxr, KneeboardState* kbs)
   : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
+    std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
 }
 
 utf8_string DCSTerrainTab::GetTitle() const {

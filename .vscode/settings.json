@@ -89,11 +89,15 @@
     "valarray": "cpp",
     "mutex": "cpp",
     "numbers": "cpp",
-    "*.idl": "cpp",
+    // removed as inconsistent formatting.
+    // "*.idl": "cpp",
     "condition_variable": "cpp",
     "future": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "[xml]": {
+    "editor.formatOnSave": false
+  }
 }

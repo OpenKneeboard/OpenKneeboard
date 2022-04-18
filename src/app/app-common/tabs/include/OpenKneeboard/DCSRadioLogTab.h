@@ -31,7 +31,7 @@ class DCSRadioLogTab final : public DCSTab,
                              public TabWithDoodles,
                              public TabWithPlainTextContent {
  public:
-  DCSRadioLogTab(const DXResources&);
+  DCSRadioLogTab(const DXResources&, KneeboardState*);
   virtual ~DCSRadioLogTab();
   virtual utf8_string GetTitle() const override;
   virtual uint16_t GetPageCount() const override;

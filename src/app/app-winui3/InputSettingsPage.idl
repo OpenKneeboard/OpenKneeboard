@@ -21,10 +21,15 @@ namespace OpenKneeboardApp
     }
 
     [default_interface]
-    runtimeclass InputSettingsPage: Microsoft.UI.Xaml.Controls.Page
+    runtimeclass InputSettingsPage: Microsoft.UI.Xaml.Controls.Page,
+                                    Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         InputSettingsPage();
         Windows.Foundation.Collections.IVector<IInspectable> Devices { get; };
+        Boolean FixedWriteRadius;
+        Boolean FixedEraseRadius;
+        UInt32 WriteRadius;
+        UInt32 EraseRadius;
     }
 
 }

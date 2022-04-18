@@ -87,9 +87,10 @@ struct PDFTab::Impl final {
 
 PDFTab::PDFTab(
   const DXResources& dxr,
+  KneeboardState* kbs,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : TabWithDoodles(dxr), p(new Impl {.mDXR = dxr, .mPath = path}) {
+  : TabWithDoodles(dxr, kbs), p(new Impl {.mDXR = dxr, .mPath = path}) {
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
@@ -102,9 +103,10 @@ PDFTab::PDFTab(
 
 PDFTab::PDFTab(
   const DXResources& dxr,
+  KneeboardState* kbs,
   utf8_string_view title,
   const nlohmann::json& settings)
-  : PDFTab(dxr, title, settings.at("Path").get<std::filesystem::path>()) {
+  : PDFTab(dxr, kbs, title, settings.at("Path").get<std::filesystem::path>()) {
 }
 
 PDFTab::~PDFTab() {

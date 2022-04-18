@@ -92,6 +92,9 @@ void from_json(const nlohmann::json& j, Settings& s) {
   if (j.contains("App")) {
     s.App = j.at("App");
   }
+  if (j.contains("Doodle")) {
+    s.Doodle = j.at("Doodle");
+  }
 }
 
 void to_json(nlohmann::json& j, const Settings& s) {
@@ -103,6 +106,7 @@ void to_json(nlohmann::json& j, const Settings& s) {
     {"NonVR", s.NonVR},
     {"VR", s.VR},
     {"App", s.App},
+    {"Doodle", s.Doodle},
   };
 }
 

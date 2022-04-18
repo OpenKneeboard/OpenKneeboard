@@ -19,12 +19,11 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/utf8.h>
 #include <d2d1_1.h>
 
 #include <string>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 

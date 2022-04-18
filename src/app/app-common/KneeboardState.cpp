@@ -48,6 +48,9 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   if (!mSettings.App.is_null()) {
     mAppSettings = mSettings.App;
   }
+  if (!mSettings.Doodle.is_null()) {
+    mDoodleSettings = mSettings.Doodle;
+  }
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
@@ -446,8 +449,18 @@ void KneeboardState::SaveSettings() {
   mSettings.NonVR = mFlatConfig;
   mSettings.VR = mVRConfig;
   mSettings.App = mAppSettings;
+  mSettings.Doodle = mDoodleSettings;
 
   mSettings.Save();
+}
+
+DoodleSettings KneeboardState::GetDoodleSettings() {
+  return mDoodleSettings;
+}
+
+void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
+  mDoodleSettings = value;
+  this->SaveSettings();
 }
 
 void KneeboardState::StartOpenVRThread() {
