@@ -99,5 +99,8 @@
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "[xml]": {
     "editor.formatOnSave": false
+  },
+  "[cpp]": {
+    "editor.formatOnSave": true
   }
 }
