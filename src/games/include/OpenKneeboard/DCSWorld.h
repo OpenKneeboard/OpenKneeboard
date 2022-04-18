@@ -41,10 +41,10 @@ class DCSWorld final : public OpenKneeboard::Game {
   static std::filesystem::path GetSavedGamesPath(Version);
   virtual bool MatchesPath(const std::filesystem::path&) const override;
 
-	virtual std::shared_ptr<GameInstance> CreateGameInstance(
-		const std::filesystem::path&) override;
-	virtual std::shared_ptr<GameInstance> CreateGameInstance(
-		const nlohmann::json&) override;
+  virtual std::shared_ptr<GameInstance> CreateGameInstance(
+    const std::filesystem::path&) override;
+  virtual std::shared_ptr<GameInstance> CreateGameInstance(
+    const nlohmann::json&) override;
 
   static constexpr char EVT_AIRCRAFT[]
     = "com.fredemmott.openkneeboard.dcsext/Aircraft";
@@ -60,6 +60,8 @@ class DCSWorld final : public OpenKneeboard::Game {
     = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
   static constexpr char EVT_TERRAIN[]
     = "com.fredemmott.openkneeboard.dcsext/Terrain";
+  static constexpr char EVT_PLAYER_CHANGE_SLOT[]
+    = "com.fredemmott.openkneeboard.dcsext/PlayerChangeSlot";
 };
 
 }// namespace OpenKneeboard::Games
