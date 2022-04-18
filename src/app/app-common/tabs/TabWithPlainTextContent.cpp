@@ -89,10 +89,14 @@ void TabWithPlainTextContent::RenderPlainTextContent(
       rect.left + ((canvasSize.width - renderSize.width) / 2),
       rect.top + ((canvasSize.height - renderSize.height) / 2)));
 
+  // TODO: kneeboardstate isn't available here...
+  // need to get opacity from it. Hardcoded for now
+  float bg_opacity = 1.0f;
+
   winrt::com_ptr<ID2D1SolidColorBrush> background;
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> footerBrush;
-  ctx->CreateSolidColorBrush({1.0f, 1.0f, 1.0f, 1.0f}, background.put());
+  ctx->CreateSolidColorBrush({1.0f, 1.0f, 1.0f, bg_opacity}, background.put());
   ctx->CreateSolidColorBrush({0.0f, 0.0f, 0.0f, 1.0f}, textBrush.put());
   ctx->CreateSolidColorBrush({0.5f, 0.5f, 0.5f, 1.0f}, footerBrush.put());
 

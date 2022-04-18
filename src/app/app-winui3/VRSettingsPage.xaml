@@ -63,6 +63,36 @@
         BorderThickness="1"
         Padding="8">
         <StackPanel Spacing="12">
+          <Slider
+            Header="Kneeboard opacity"
+            Value="{x:Bind BaseOpacity}"
+            TickPlacement="Outside"
+            TickFrequency="0.1"
+            StepFrequency="0.05"
+            Maximum="1"
+            Minimum="0.1"
+            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+          />
+          <Slider
+            Header="Opacity when zoomed"
+            Value="{x:Bind GazeBaseOpacity}"
+            TickPlacement="Outside"
+            TickFrequency="0.1"
+            StepFrequency="0.05"
+            Maximum="1"
+            Minimum="0.1"
+            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+            IsEnabled="False"
+          />
+        </StackPanel>
+      </Grid>
+      <Grid
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <StackPanel Spacing="12">
           <Grid ColumnDefinitions="Auto,*">
             <NumberBox
               Header="Kneeboard size, in meters"

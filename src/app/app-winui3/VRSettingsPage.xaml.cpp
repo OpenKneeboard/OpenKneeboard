@@ -298,4 +298,24 @@ void VRSettingsPage::GazeZoomEnabled(bool enabled) {
   gKneeboard->SetVRConfig(config);
 }
 
+float VRSettingsPage::BaseOpacity() {
+  return gKneeboard->GetVRConfig().mBaseOpacity;
+}
+
+void VRSettingsPage::BaseOpacity(float value) {
+  auto config = gKneeboard->GetVRConfig();
+  config.mBaseOpacity = value;
+  gKneeboard->SetVRConfig(config);
+}
+
+float VRSettingsPage::GazeBaseOpacity() {
+  return gKneeboard->GetVRConfig().mGazeBaseOpacity;
+}
+
+void VRSettingsPage::GazeBaseOpacity(float value) {
+  auto config = gKneeboard->GetVRConfig();
+  config.mGazeBaseOpacity = value;
+  gKneeboard->SetVRConfig(config);
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation

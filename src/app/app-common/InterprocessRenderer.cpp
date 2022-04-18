@@ -190,6 +190,7 @@ InterprocessRenderer::InterprocessRenderer(
   }
 
   auto ctx = dxr.mD2DDeviceContext;
+  const auto vrconfig = kneeboard->GetVRConfig();
 
   ctx->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.5f},
@@ -217,7 +218,7 @@ InterprocessRenderer::InterprocessRenderer(
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mActiveButtonBrush.put()));
 
   ctx->CreateSolidColorBrush(
-    GetSystemColor(COLOR_WINDOW),
+    {0.0f, 0.0f, 0.0f, vrconfig.mBaseOpacity},
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 
   AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());

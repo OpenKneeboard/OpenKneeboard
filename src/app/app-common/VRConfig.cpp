@@ -66,6 +66,14 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
   if (j.contains("enableSteamVR")) {
     vrc.mEnableSteamVR = j.at("enableSteamVR").get<bool>();
   }
+
+  if (j.contains("baseOpacity")) {
+    vrc.mBaseOpacity = j.at("baseOpacity");
+  }
+
+  if (j.contains("gazeBaseOpacity")) {
+    vrc.mGazeBaseOpacity = j.at("gazeBaseOpacity");
+  }
 }
 
 void to_json(nlohmann::json& j, const VRConfig& vrc) {
@@ -94,6 +102,8 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"enableGazeZoom",
      static_cast<bool>(vrc.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)},
     {"enableSteamVR", vrc.mEnableSteamVR},
+    {"baseOpacity", vrc.mBaseOpacity},
+    {"gazeBaseOpacity", vrc.mGazeBaseOpacity},
   };
 }
 }// namespace OpenKneeboard

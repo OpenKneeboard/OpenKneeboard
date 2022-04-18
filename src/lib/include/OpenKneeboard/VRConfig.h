@@ -58,6 +58,11 @@ struct VRRenderConfig {
   Flags mFlags = static_cast<Flags>(
     static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
     | static_cast<uint32_t>(Flags::GAZE_ZOOM));
+
+  float mBaseOpacity = 1.0f;
+  // Fitted for but not with - need a way to get whether this is zoomed or not,
+  // seems to be handled at the OpenXR level.
+  float mGazeBaseOpacity = 1.0f;
 };
 #pragma pack(pop)
 
