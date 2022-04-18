@@ -38,6 +38,7 @@ class Event;
 
 class EventBase {
   friend class EventReceiver;
+
  public:
   enum class HookResult {
     ALLOW_PROPAGATION,

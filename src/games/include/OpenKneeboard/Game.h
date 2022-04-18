@@ -41,10 +41,9 @@ class Game : public std::enable_shared_from_this<Game> {
   virtual std::vector<std::filesystem::path> GetInstalledPaths() const = 0;
   virtual bool DiscardOculusDepthInformationDefault() const;
 
-	virtual std::shared_ptr<GameInstance> CreateGameInstance(
-		const std::filesystem::path&);
-	virtual std::shared_ptr<GameInstance> CreateGameInstance(
-		const nlohmann::json&);
-
+  virtual std::shared_ptr<GameInstance> CreateGameInstance(
+    const std::filesystem::path&);
+  virtual std::shared_ptr<GameInstance> CreateGameInstance(
+    const nlohmann::json&);
 };
 }// namespace OpenKneeboard

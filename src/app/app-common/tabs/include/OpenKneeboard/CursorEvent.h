@@ -31,10 +31,7 @@ enum class CursorTouchState {
   NEAR_SURFACE,
   NOT_NEAR_SURFACE,
 };
-enum class CursorSource {
-  WINDOW_POINTER,
-  OTHER
-};
+enum class CursorSource { WINDOW_POINTER, OTHER };
 
 struct CursorEvent {
   CursorSource mSource = CursorSource::OTHER;

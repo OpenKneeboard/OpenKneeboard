@@ -19,11 +19,10 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/GameEvent.h>
 
 #include <stop_token>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 
@@ -34,4 +33,4 @@ class GameEventServer final {
   bool Run(std::stop_token);
 };
 
-}
+}// namespace OpenKneeboard

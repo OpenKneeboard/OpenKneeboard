@@ -30,7 +30,9 @@ SettingsPage::SettingsPage() {
   InitializeComponent();
 }
 
-void SettingsPage::OnItemClick(const IInspectable&, const ItemClickEventArgs& args) {
+void SettingsPage::OnItemClick(
+  const IInspectable&,
+  const ItemClickEventArgs& args) {
   auto item = args.ClickedItem();
   if (!item) {
     return;
@@ -53,7 +55,6 @@ void SettingsPage::OnItemClick(const IInspectable&, const ItemClickEventArgs& ar
       Frame().Navigate(xaml_typename<VRSettingsPage>());
       return;
   }
-
 }
 
 hstring SettingsSubpageData::Title() {

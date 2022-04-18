@@ -115,15 +115,15 @@ class utf8_string final : public std::string {
 #include <nlohmann/json.hpp>
 
 namespace std::filesystem {
-  void from_json(const nlohmann::json&, std::filesystem::path&);
-  void to_json(nlohmann::json&, const std::filesystem::path&);
-}
+void from_json(const nlohmann::json&, std::filesystem::path&);
+void to_json(nlohmann::json&, const std::filesystem::path&);
+}// namespace std::filesystem
 
 namespace std {
-  void from_json(const nlohmann::json&, std::wstring&) = delete;
-  void to_json(nlohmann::json&, const std::wstring&) = delete;
-  void from_json(const nlohmann::json&, std::wstring_view&) = delete;
-  void to_json(nlohmann::json&, const std::wstring_view&) = delete;
-  void from_json(const nlohmann::json&, wchar_t*)= delete;
-  void to_json(nlohmann::json&, const wchar_t*) = delete;
-}
+void from_json(const nlohmann::json&, std::wstring&) = delete;
+void to_json(nlohmann::json&, const std::wstring&) = delete;
+void from_json(const nlohmann::json&, std::wstring_view&) = delete;
+void to_json(nlohmann::json&, const std::wstring_view&) = delete;
+void from_json(const nlohmann::json&, wchar_t*) = delete;
+void to_json(nlohmann::json&, const wchar_t*) = delete;
+}// namespace std

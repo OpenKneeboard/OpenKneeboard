@@ -67,6 +67,10 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
     vrc.mEnableSteamVR = j.at("enableSteamVR").get<bool>();
   }
 
+  if (j.contains("openXRMode")) {
+    vrc.mOpenXRMode = j.at("openXRMode").get<OpenXRMode>();
+  }
+
   if (j.contains("baseOpacity")) {
     vrc.mBaseOpacity = j.at("baseOpacity");
   }
@@ -102,6 +106,7 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"enableGazeZoom",
      static_cast<bool>(vrc.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)},
     {"enableSteamVR", vrc.mEnableSteamVR},
+    {"openXRMode", vrc.mOpenXRMode},
     {"baseOpacity", vrc.mBaseOpacity},
     {"gazeBaseOpacity", vrc.mGazeBaseOpacity},
   };

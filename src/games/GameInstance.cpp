@@ -20,7 +20,6 @@
 #include <OpenKneeboard/Game.h>
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/utf8.h>
-
 #include <shims/winrt.h>
 
 namespace OpenKneeboard {
@@ -41,7 +40,8 @@ GameInstance::GameInstance(
   const std::shared_ptr<Game>& game)
   : mInstanceID(gNextInstanceID++) {
   mName = j.at("Name");
-  mPath = std::filesystem::path(std::wstring_view(winrt::to_hstring(j.at("Path"))));
+  mPath
+    = std::filesystem::path(std::wstring_view(winrt::to_hstring(j.at("Path"))));
   mGame = game;
   if (j.contains("OverlayAPI")) {
     mOverlayAPI = j.at("OverlayAPI");

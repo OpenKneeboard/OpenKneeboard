@@ -47,8 +47,9 @@ struct NonVRSettingsPage : NonVRSettingsPageT<NonVRSettingsPage> {
       handler);
   void PropertyChanged(winrt::event_token const& token) noexcept;
 
-  private:
-    winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler> mPropertyChangedEvent;
+ private:
+  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
+    mPropertyChangedEvent;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

@@ -20,19 +20,18 @@
 #pragma once
 
 #include <OpenKneeboard/GetSystemColor.h>
-
 #include <Windows.h>
 
 namespace OpenKneeboard {
 
 D2D1_COLOR_F GetSystemColor(int index) {
-    auto color = ::GetSysColor(index);
-    return {
-      GetRValue(color) / 255.0f,
-      GetGValue(color) / 255.0f,
-      GetBValue(color) / 255.0f,
-      1.0f,
-    };
+  auto color = ::GetSysColor(index);
+  return {
+    GetRValue(color) / 255.0f,
+    GetGValue(color) / 255.0f,
+    GetBValue(color) / 255.0f,
+    1.0f,
+  };
 }
 
 }// namespace OpenKneeboard

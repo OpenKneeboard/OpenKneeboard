@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
@@ -28,7 +29,7 @@
  *
  * WARNING: while a `DetourTransaction` exists, pretty much any use of the heap
  * can (and often will) deadlock.
- * 
+ *
  * This includes:
  * - new/delete/malloc/free
  * - on-stack objects with heap-allocated content (e.g. `std::vector`) going
@@ -45,14 +46,13 @@ class DetourTransaction final {
   ~DetourTransaction() noexcept;
 };
 
-template<class T>
-concept detours_function_pointer =
-DetoursIsFunctionPointer<T>::value;
+template <class T>
+concept detours_function_pointer = DetoursIsFunctionPointer<T>::value;
 
 /// Create a transaction, attach a single detour, and submit the transaction
 LONG DetourSingleAttach(void** ppPointer, void* pDetour);
 
-template<detours_function_pointer T>
+template <detours_function_pointer T>
 LONG DetourSingleAttach(T* ppPointer, T pDetour) {
   return DetourSingleAttach(
     reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));
@@ -61,7 +61,7 @@ LONG DetourSingleAttach(T* ppPointer, T pDetour) {
 /// Create a transaction, detach a single detour, and submit the transaction
 LONG DetourSingleDetach(void** ppPointer, void* pDetour);
 
-template<detours_function_pointer T>
+template <detours_function_pointer T>
 LONG DetourSingleDetach(T* ppPointer, T pDetour) {
   return DetourSingleDetach(
     reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));

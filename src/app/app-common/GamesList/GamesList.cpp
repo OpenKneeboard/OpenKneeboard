@@ -17,16 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/GameInjector.h>
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/GenericGame.h>
+#include <OpenKneeboard/GameInjector.h>
 #include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/GenericGame.h>
 #include <windows.h>
 
 namespace OpenKneeboard {
 GamesList::GamesList(const nlohmann::json& config) {
-  mGames
-    = {std::make_shared<DCSWorld>(), std::make_shared<GenericGame>()};
+  mGames = {std::make_shared<DCSWorld>(), std::make_shared<GenericGame>()};
 
   if (config.is_null()) {
     LoadDefaultSettings();

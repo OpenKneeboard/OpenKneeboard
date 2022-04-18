@@ -36,11 +36,14 @@ struct ProcessListPage : ProcessListPageT<ProcessListPage> {
     winrt::Windows::Foundation::EventHandler<hstring> const& handler);
   void SelectionChanged(winrt::event_token const& token) noexcept;
 
-  void OnListSelectionChanged(const IInspectable&, const SelectionChangedEventArgs&);
+  void OnListSelectionChanged(
+    const IInspectable&,
+    const SelectionChangedEventArgs&);
 
-  private:
-    winrt::event<Windows::Foundation::EventHandler<hstring>> mSelectionChangedEvent;
-    hstring mSelectedPath;
+ private:
+  winrt::event<Windows::Foundation::EventHandler<hstring>>
+    mSelectionChangedEvent;
+  hstring mSelectedPath;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 

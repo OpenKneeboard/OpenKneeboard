@@ -79,10 +79,7 @@ void D2DErrorRenderer::Render(
   textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  ctx->DrawTextLayout(
-    {0.0f, 0.0f},
-    textLayout.get(),
-    brush);
+  ctx->DrawTextLayout({0.0f, 0.0f}, textLayout.get(), brush);
 }
 
 }// namespace OpenKneeboard

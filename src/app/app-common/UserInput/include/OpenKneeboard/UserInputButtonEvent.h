@@ -37,10 +37,11 @@ class UserInputButtonEvent final {
   UserInputDevice* GetDevice() const;
   uint64_t GetButtonID() const;
   bool IsPressed() const;
-  private:
-    std::shared_ptr<UserInputDevice> mDevice;
-    int64_t mButtonID;
-    bool mPressed;
+
+ private:
+  std::shared_ptr<UserInputDevice> mDevice;
+  int64_t mButtonID;
+  bool mPressed;
 };
 
 }// namespace OpenKneeboard

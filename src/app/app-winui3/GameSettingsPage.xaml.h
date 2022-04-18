@@ -53,16 +53,20 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
     const IInspectable&,
     const RoutedEventArgs&);
   winrt::fire_and_forget AddExe(const IInspectable&, const RoutedEventArgs&);
-  winrt::fire_and_forget ChangeDCSSavedGamesPath(const IInspectable&, const RoutedEventArgs&);
+  winrt::fire_and_forget ChangeDCSSavedGamesPath(
+    const IInspectable&,
+    const RoutedEventArgs&);
 
   IVector<IInspectable> Games();
 
-  void OnOverlayAPIChanged(const IInspectable&, const SelectionChangedEventArgs&);
+  void OnOverlayAPIChanged(
+    const IInspectable&,
+    const SelectionChangedEventArgs&);
 
-	winrt::event_token PropertyChanged(
-		winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-			handler);
-	void PropertyChanged(winrt::event_token const& token) noexcept;
+  winrt::event_token PropertyChanged(
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+      handler);
+  void PropertyChanged(winrt::event_token const& token) noexcept;
 
  private:
   void UpdateGames();
@@ -107,6 +111,7 @@ struct DCSWorldInstanceUIData
 
   hstring SavedGamesPath();
   void SavedGamesPath(const hstring&);
+
  private:
   hstring mSavedGamesPath;
 };

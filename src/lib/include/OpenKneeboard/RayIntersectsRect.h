@@ -28,7 +28,6 @@ bool RayIntersectsRect(
   const DirectX::SimpleMath::Quaternion& rayOrientation,
   const DirectX::SimpleMath::Vector3& rectCenter,
   const DirectX::SimpleMath::Quaternion& rectOrientation,
-  const DirectX::SimpleMath::Vector2& rectSize
-);
+  const DirectX::SimpleMath::Vector2& rectSize);
 
 }

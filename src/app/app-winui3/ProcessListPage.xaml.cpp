@@ -98,7 +98,9 @@ hstring ProcessListPage::SelectedPath() {
   return mSelectedPath;
 }
 
-void ProcessListPage::OnListSelectionChanged(const IInspectable&, const SelectionChangedEventArgs& args) {
+void ProcessListPage::OnListSelectionChanged(
+  const IInspectable&,
+  const SelectionChangedEventArgs& args) {
   if (args.AddedItems().Size() == 0) {
     mSelectedPath = {};
   } else {
