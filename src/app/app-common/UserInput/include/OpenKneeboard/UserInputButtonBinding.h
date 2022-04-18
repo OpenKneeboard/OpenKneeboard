@@ -19,10 +19,10 @@
  */
 #pragma once
 
+#include <OpenKneeboard/UserAction.h>
+
 #include <memory>
 #include <unordered_set>
-
-#include <OpenKneeboard/UserAction.h>
 
 namespace OpenKneeboard {
 

@@ -18,8 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/DCSTab.h>
-#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 
 using DCS = OpenKneeboard::DCSWorld;

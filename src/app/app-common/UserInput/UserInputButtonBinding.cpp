@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/UserInputDevice.h>
 
 namespace OpenKneeboard {
@@ -26,8 +26,8 @@ namespace OpenKneeboard {
 UserInputButtonBinding::UserInputButtonBinding(
   std::shared_ptr<UserInputDevice> device,
   std::unordered_set<uint64_t> buttons,
-  UserAction action
-): mDevice(device), mButtons(buttons), mAction(action) {
+  UserAction action)
+  : mDevice(device), mButtons(buttons), mAction(action) {
 }
 
 UserInputButtonBinding::~UserInputButtonBinding() {

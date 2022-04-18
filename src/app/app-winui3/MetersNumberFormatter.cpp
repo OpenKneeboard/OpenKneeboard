@@ -55,7 +55,7 @@ MetersNumberFormatter::ParseDouble(hstring const& text) {
   if (!std::regex_match(str, match, std::regex("^([0-9.]+)m?$"))) {
     return {};
   }
-  return { std::stod(match[1].str()) };
+  return {std::stod(match[1].str())};
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

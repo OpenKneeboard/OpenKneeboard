@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #pragma once
 
@@ -29,7 +30,7 @@ namespace OpenKneeboard {
  * This has inherent race conditions, as another thread could
  * load a library in between checking if it's present, and
  * installing the hook.
- * 
+ *
  * Recommended usage is to make your `onDllLoaded` callback:
  * - guard itself with a mutex
  * - handle multiple calls
@@ -49,6 +50,7 @@ class DllLoadWatcher final {
 
   void InstallHook(const Callbacks&);
   void UninstallHook();
+
  private:
   struct Impl;
   std::unique_ptr<Impl> p;

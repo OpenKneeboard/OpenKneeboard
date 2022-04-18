@@ -29,6 +29,7 @@ class KneeboardState;
 extern HWND gMainWindow;
 extern std::shared_ptr<KneeboardState> gKneeboard;
 extern DXResources gDXResources;
-extern winrt::Microsoft::UI::Dispatching::DispatcherQueue gUIThreadDispatcherQueue;
+extern winrt::Microsoft::UI::Dispatching::DispatcherQueue
+  gUIThreadDispatcherQueue;
 
 }// namespace OpenKneeboard

@@ -222,7 +222,9 @@ void TabSettingsPage::OnTabsChanged(
   std::vector<std::shared_ptr<TabState>> reorderedTabs;
   for (auto item: items) {
     auto id = item.as<TabUIData>()->InstanceID();
-    auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) { return it->GetInstanceID() == id; });
+    auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) {
+      return it->GetInstanceID() == id;
+    });
     if (it == tabs.end()) {
       continue;
     }

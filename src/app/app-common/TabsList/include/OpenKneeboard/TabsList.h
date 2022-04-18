@@ -37,6 +37,7 @@ class TabsList final {
 
   virtual ~TabsList();
   virtual nlohmann::json GetSettings() const;
+
  private:
   DXResources mDXR;
   KneeboardState* mKneeboard;

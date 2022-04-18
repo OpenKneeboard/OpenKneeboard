@@ -25,9 +25,9 @@
 // clang-format on
 
 namespace OpenKneeboard {
-  class UserInputDevice;
-  enum class UserAction;
-}
+class UserInputDevice;
+enum class UserAction;
+}// namespace OpenKneeboard
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -45,12 +45,8 @@ struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
   void ClearBinding(UserAction);
 
   void UpdateUI();
-  void UpdateUI(
-    UserAction,
-    TextBlock label,
-    Button bindButton,
-    Button ClearButton
-  );
+  void
+  UpdateUI(UserAction, TextBlock label, Button bindButton, Button ClearButton);
 
   hstring mDeviceID;
   std::shared_ptr<UserInputDevice> mDevice;

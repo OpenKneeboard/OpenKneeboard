@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "function-patterns.h"
 
@@ -68,9 +69,7 @@ void* FindFunctionPattern(
   auto begin = reinterpret_cast<uint64_t*>(_begin);
   auto end = reinterpret_cast<uint64_t*>(_end);
   dprintf(
-    "Code search range: {:#018x}-{:#018x}",
-    (uint64_t)begin,
-    (uint64_t)end);
+    "Code search range: {:#018x}-{:#018x}", (uint64_t)begin, (uint64_t)end);
 
   const uint64_t firstPattern = allPatterns.front().value,
                  firstMask = allPatterns.front().mask;

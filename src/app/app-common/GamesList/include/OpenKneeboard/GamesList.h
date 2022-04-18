@@ -19,12 +19,11 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/Game.h>
+#include <OpenKneeboard/GameInstance.h>
 
 #include <thread>
-
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/GameInstance.h>
 
 namespace OpenKneeboard {
 class GameInjector;
@@ -53,4 +52,4 @@ class GamesList final : private EventReceiver {
   OpenKneeboard::Event<> evSettingsChangedEvent;
 };
 
-}
+}// namespace OpenKneeboard

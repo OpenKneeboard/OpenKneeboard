@@ -3,8 +3,9 @@
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
  *
- * This program is free software; you can redistribute it and/or * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; version 2.
+ * This program is free software; you can redistribute it and/or * modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; version 2.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,14 +18,13 @@
  * USA.
  */
 
-#include <winrt/base.h>
-#include <winrt/windows.applicationmodel.h>
-#include <winrt/windows.applicationmodel.core.h>
-#include <winrt/windows.foundation.h>
-#include <winrt/windows.foundation.collections.h>
-#include <winrt/windows.management.deployment.h>
-
 #include <Windows.h>
+#include <winrt/base.h>
+#include <winrt/windows.applicationmodel.core.h>
+#include <winrt/windows.applicationmodel.h>
+#include <winrt/windows.foundation.collections.h>
+#include <winrt/windows.foundation.h>
+#include <winrt/windows.management.deployment.h>
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
@@ -34,7 +34,8 @@ int WINAPI wWinMain(
   PWSTR pCmdLine,
   int nCmdShow) {
   // Find with PowerShell: `Get-AppxPackage *OpenKneeboard*`
-  constexpr auto packageFamilyName = L"FredEmmott.Self.OpenKneeboard_qvw5xrmsm8j1t";
+  constexpr auto packageFamilyName
+    = L"FredEmmott.Self.OpenKneeboard_qvw5xrmsm8j1t";
 
   winrt::Windows::Management::Deployment::PackageManager pm;
   for (const auto& package: pm.FindPackagesForUser({})) {

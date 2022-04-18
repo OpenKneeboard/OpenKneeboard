@@ -105,7 +105,9 @@ void DirectInputListener::Run(std::stop_token stopToken) {
     auto oldState = device.mState;
     decltype(oldState) newState {};
     device.mDIDevice->Poll();
-    if ((device.mDevice->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
+    if (
+      (device.mDevice->GetDIDeviceInstance().dwDevType & 0xff)
+      == DI8DEVTYPE_KEYBOARD) {
       device.mDIDevice->GetDeviceState(sizeof(newState), &newState);
     } else {
       DIJOYSTATE2 joyState;

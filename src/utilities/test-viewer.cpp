@@ -224,11 +224,11 @@ class TestViewerWindow final {
       ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
     ctx->SetTarget(bitmap.get());
 
-		ctx->BeginDraw();
-		auto cleanup = scope_guard([&] {
-			ctx->EndDraw();
-			mSwapChain->Present(0, 0);
-		});
+    ctx->BeginDraw();
+    auto cleanup = scope_guard([&] {
+      ctx->EndDraw();
+      mSwapChain->Present(0, 0);
+    });
 
     this->PaintContent(ctx);
 

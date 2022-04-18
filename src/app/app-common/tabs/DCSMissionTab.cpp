@@ -143,7 +143,9 @@ void DCSMissionTab::Reload() {
     mExtracted = std::make_unique<ExtractedMission>(mMission);
   }
   auto root = mExtracted->GetExtractedPath();
-  if ((!mAircraft.empty()) && std::filesystem::exists(root / "KNEEBOARD" / mAircraft / "IMAGES")) {
+  if (
+    (!mAircraft.empty())
+    && std::filesystem::exists(root / "KNEEBOARD" / mAircraft / "IMAGES")) {
     GetDelegate()->SetPath(root / "KNEEBOARD" / mAircraft / "IMAGES");
   } else {
     GetDelegate()->SetPath(root / "KNEEBOARD" / "IMAGES");

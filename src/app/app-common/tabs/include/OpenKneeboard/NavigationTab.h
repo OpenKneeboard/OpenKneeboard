@@ -19,12 +19,12 @@
  */
 #pragma once
 
+#include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 
 #include <limits>
 
-#include <OpenKneeboard/CachedLayer.h>
 #include "TabWithCursorEvents.h"
 
 namespace OpenKneeboard {

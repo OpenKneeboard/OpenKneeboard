@@ -57,7 +57,8 @@ TabPage::TabPage() {
   color = brush.Color();
 
   winrt::check_hresult(gDXResources.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f),
+    D2D1::ColorF(
+      color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f),
     mForegroundBrush.put()));
 
   winrt::check_hresult(gDXResources.mD2DDeviceContext->CreateSolidColorBrush(
@@ -206,7 +207,8 @@ void TabPage::PaintNow() {
   if (tab->GetPageCount()) {
     tab->RenderPage(ctx, mState->GetPageIndex(), metrics.mRenderRect);
   } else {
-    mErrorRenderer->Render(ctx, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
+    mErrorRenderer->Render(
+      ctx, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
   }
 
   if (!mDrawCursor) {
@@ -264,7 +266,7 @@ void TabPage::OnPointerEvent(
 }
 
 void TabPage::QueuePointerPoint(const PointerPoint& pp) {
-  auto kneeboard = gKneeboard; // increment ref count
+  auto kneeboard = gKneeboard;// increment ref count
   if (!kneeboard) {
     return;
   }

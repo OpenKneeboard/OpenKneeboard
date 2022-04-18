@@ -19,13 +19,12 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <d2d1.h>
 
 #include <concepts>
 #include <memory>
 #include <vector>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 
@@ -74,6 +73,7 @@ class TabState final : private EventReceiver {
   TabMode GetTabMode() const;
   bool SupportsTabMode(TabMode) const;
   bool SetTabMode(TabMode);
+
  private:
   static uint64_t sNextID;
   uint64_t mInstanceID;

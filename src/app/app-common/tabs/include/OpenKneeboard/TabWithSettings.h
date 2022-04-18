@@ -19,9 +19,9 @@
  */
 #pragma once
 
-#include "Tab.h"
-
 #include <nlohmann/json_fwd.hpp>
+
+#include "Tab.h"
 
 namespace OpenKneeboard {
 

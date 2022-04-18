@@ -19,13 +19,12 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <d2d1.h>
 #include <d3d11.h>
 #include <shims/winrt.h>
 
 #include <memory>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 struct DXResources;
@@ -39,10 +38,7 @@ class InterprocessRenderer final : private EventReceiver {
 
  public:
   InterprocessRenderer() = delete;
-  InterprocessRenderer(
-    HWND feederWindow,
-    const DXResources&,
-    KneeboardState*);
+  InterprocessRenderer(HWND feederWindow, const DXResources&, KneeboardState*);
   ~InterprocessRenderer();
 
  private:

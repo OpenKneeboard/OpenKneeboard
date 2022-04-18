@@ -40,4 +40,4 @@ class OpenVROverlay final {
   void Tick();
 };
 
-}
+}// namespace OpenKneeboard
