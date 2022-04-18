@@ -31,8 +31,10 @@ struct MetersNumberFormatter : MetersNumberFormatterT<MetersNumberFormatter> {
   hstring FormatDouble(double value);
 
   winrt::Windows::Foundation::IReference<int64_t> ParseInt(hstring const& text);
-  winrt::Windows::Foundation::IReference<uint64_t> ParseUInt(hstring const& text);
-  winrt::Windows::Foundation::IReference<double> ParseDouble(hstring const& text);
+  winrt::Windows::Foundation::IReference<uint64_t> ParseUInt(
+    hstring const& text);
+  winrt::Windows::Foundation::IReference<double> ParseDouble(
+    hstring const& text);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

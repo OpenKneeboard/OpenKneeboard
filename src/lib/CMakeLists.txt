@@ -15,19 +15,19 @@ target_include_directories(
 
 add_library(OpenKneeboard-GetSystemColor STATIC GetSystemColor.cpp)
 target_link_libraries(
-	OpenKneeboard-GetSystemColor
-	PUBLIC
+  OpenKneeboard-GetSystemColor
+  PUBLIC
   _libheaders)
 
 add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
 target_link_libraries(
-	OpenKneeboard-UTF8
-	PRIVATE
-	_libheaders
+  OpenKneeboard-UTF8
+  PRIVATE
+  _libheaders
 )
 target_link_libraries(
-	OpenKneeboard-UTF8
-	PUBLIC
+  OpenKneeboard-UTF8
+  PUBLIC
   ThirdParty::JSON
 )
 
@@ -120,4 +120,18 @@ target_include_directories(
   OpenKneeboard-shims
   INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+add_library(OpenKneeboard-OpenXRMode STATIC OpenXRMode.cpp)
+target_link_libraries(
+	OpenKneeboard-OpenXRMode
+	PUBLIC
+	ThirdParty::JSON
+  _libheaders
+)
+target_link_libraries(
+  OpenKneeboard-OpenXRMode
+  PRIVATE
+  OpenKneeboard-RuntimeFiles
+  ThirdParty::fmt
 )

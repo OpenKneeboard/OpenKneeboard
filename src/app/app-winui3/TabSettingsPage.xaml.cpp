@@ -155,7 +155,8 @@ fire_and_forget TabSettingsPage::CreateFileBasedTab(hstring fileExtension) {
   const auto path = std::filesystem::canonical(std::wstring_view {stringPath});
   const auto title = path.stem();
 
-  this->AddTab(std::make_shared<T>(gDXResources, title, path));
+  this->AddTab(
+    std::make_shared<T>(gDXResources, gKneeboard.get(), title, path));
 }
 
 template <class T>
@@ -179,7 +180,8 @@ fire_and_forget TabSettingsPage::CreateFolderBasedTab() {
   const auto path = std::filesystem::canonical(std::wstring_view {stringPath});
   const auto title = path.stem();
 
-  this->AddTab(std::make_shared<T>(gDXResources, title, path));
+  this->AddTab(
+    std::make_shared<T>(gDXResources, gKneeboard.get(), title, path));
   co_return;
 }
 
@@ -220,7 +222,9 @@ void TabSettingsPage::OnTabsChanged(
   std::vector<std::shared_ptr<TabState>> reorderedTabs;
   for (auto item: items) {
     auto id = item.as<TabUIData>()->InstanceID();
-    auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) { return it->GetInstanceID() == id; });
+    auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) {
+      return it->GetInstanceID() == id;
+    });
     if (it == tabs.end()) {
       continue;
     }

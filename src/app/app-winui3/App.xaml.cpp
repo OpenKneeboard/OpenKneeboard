@@ -142,47 +142,6 @@ App::App() {
 #endif
 }
 
-static void InstallOpenXRLayerInUnsandboxedSubprocess() {
-  auto layerPath = RuntimeFiles::GetDirectory().wstring();
-  auto exePath = (RuntimeFiles::GetDirectory()
-                  / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER)
-                   .wstring();
-
-  auto commandLine = fmt::format(L"\"{}\" \"{}\"", exePath, layerPath);
-  commandLine.reserve(32767);
-
-  STARTUPINFOEXW startupInfo {};
-  startupInfo.StartupInfo.cb = sizeof(startupInfo);
-  SIZE_T attributeListSize;
-  InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeListSize);
-  startupInfo.lpAttributeList
-    = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(malloc(attributeListSize));
-  DWORD policy = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
-  UpdateProcThreadAttribute(
-    startupInfo.lpAttributeList,
-    0,
-    PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
-    &policy,
-    sizeof(policy),
-    nullptr,
-    nullptr);
-
-  PROCESS_INFORMATION procInfo {};
-
-  CreateProcessW(
-    exePath.c_str(),
-    commandLine.data(),
-    nullptr,
-    nullptr,
-    FALSE,
-    0,
-    nullptr,
-    nullptr,
-    reinterpret_cast<LPSTARTUPINFOW>(&startupInfo),
-    &procInfo);
-  free(startupInfo.lpAttributeList);
-}
-
 void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window = make<MainWindow>();
 
@@ -190,7 +149,6 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
     [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
       co_await CheckAllDCSHooks(window.Content().XamlRoot());
     });
-  InstallOpenXRLayerInUnsandboxedSubprocess();
   window.Activate();
 }
 

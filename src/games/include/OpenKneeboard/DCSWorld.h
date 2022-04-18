@@ -64,4 +64,4 @@ class DCSWorld final : public OpenKneeboard::Game {
     = "com.fredemmott.openkneeboard.dcsext/PlayerChangeSlot";
 };
 
-}// namespace OpenKneeboard::Games
+}// namespace OpenKneeboard

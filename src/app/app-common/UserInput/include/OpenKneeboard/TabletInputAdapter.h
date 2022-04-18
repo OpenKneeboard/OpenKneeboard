@@ -19,14 +19,13 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <Windows.h>
 
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <tuple>
 #include <vector>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 
@@ -40,10 +39,7 @@ class TabletInputDevice;
 class TabletInputAdapter final : private EventReceiver {
  public:
   TabletInputAdapter() = delete;
-  TabletInputAdapter(
-    HWND,
-    KneeboardState*,
-    const nlohmann::json& settings);
+  TabletInputAdapter(HWND, KneeboardState*, const nlohmann::json& settings);
   ~TabletInputAdapter();
 
   nlohmann::json GetSettings() const;

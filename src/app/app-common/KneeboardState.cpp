@@ -24,6 +24,7 @@
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenVROverlay.h>
+#include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
@@ -47,6 +48,9 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   }
   if (!mSettings.App.is_null()) {
     mAppSettings = mSettings.App;
+  }
+  if (!mSettings.Doodle.is_null()) {
+    mDoodleSettings = mSettings.Doodle;
   }
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
@@ -80,6 +84,8 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   if (mVRConfig.mEnableSteamVR) {
     this->StartOpenVRThread();
   }
+
+  SetOpenXRModeWithHelperProcess(mVRConfig.mOpenXRMode);
 
   UpdateLayout();
 }
@@ -446,8 +452,18 @@ void KneeboardState::SaveSettings() {
   mSettings.NonVR = mFlatConfig;
   mSettings.VR = mVRConfig;
   mSettings.App = mAppSettings;
+  mSettings.Doodle = mDoodleSettings;
 
   mSettings.Save();
+}
+
+DoodleSettings KneeboardState::GetDoodleSettings() {
+  return mDoodleSettings;
+}
+
+void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
+  mDoodleSettings = value;
+  this->SaveSettings();
 }
 
 void KneeboardState::StartOpenVRThread() {

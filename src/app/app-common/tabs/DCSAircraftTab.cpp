@@ -18,21 +18,20 @@
  * USA.
  */
 #include <OpenKneeboard/DCSAircraftTab.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <filesystem>
-
 
 using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSAircraftTab::DCSAircraftTab(const DXResources& dxr)
+DCSAircraftTab::DCSAircraftTab(const DXResources& dxr, KneeboardState* kbs)
   : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
+    std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
 }
 
 utf8_string DCSAircraftTab::GetTitle() const {

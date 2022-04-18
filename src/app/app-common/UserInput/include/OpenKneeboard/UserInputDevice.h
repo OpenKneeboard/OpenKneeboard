@@ -19,10 +19,10 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
+
 #include <string>
 #include <unordered_set>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 

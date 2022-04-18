@@ -19,13 +19,12 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/UserAction.h>
 #include <shims/winrt.h>
 
 #include <memory>
 #include <nlohmann/json.hpp>
-
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/UserAction.h>
 
 struct IDirectInput8W;
 
@@ -44,9 +43,9 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
   nlohmann::json GetSettings() const;
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
-
   Event<UserAction> evUserActionEvent;
   Event<> evSettingsChangedEvent;
+
  private:
   winrt::com_ptr<IDirectInput8W> mDI8;
   std::vector<std::shared_ptr<DirectInputDevice>> mDevices;

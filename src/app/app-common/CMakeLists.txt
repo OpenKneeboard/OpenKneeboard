@@ -18,6 +18,7 @@ target_link_libraries(
 	OpenKneeboard-RuntimeFiles
 	OpenKneeboard-scope_guard
 	OpenKneeboard-SHM
+	OpenKneeboard-OpenXRMode
 	OpenKneeboard-UTF8
 	OpenKneeboard-config
 	OpenKneeboard-dprint

@@ -66,19 +66,29 @@ struct DXResources;
 template <std::derived_from<Tab> T>
 std::shared_ptr<T> load_tab(
   const DXResources& dxr,
+  KneeboardState* kbs,
   const std::string& title,
   const nlohmann::json& config) {
   if constexpr (std::constructible_from<T, DXResources>) {
     return std::make_shared<T>(dxr);
   }
 
-  if constexpr (std::constructible_from<T, DXResources, std::string>) {
-    return std::make_shared<T>(dxr, title);
+  if constexpr (std::constructible_from<T, DXResources, KneeboardState*>) {
+    return std::make_shared<T>(dxr, kbs);
   }
 
   if constexpr (
-    std::constructible_from<T, DXResources, std::string, nlohmann::json>) {
-    return std::make_shared<T>(dxr, title, config);
+    std::constructible_from<T, DXResources, KneeboardState*, std::string>) {
+    return std::make_shared<T>(dxr, kbs, title);
+  }
+
+  if constexpr (std::constructible_from<
+                  T,
+                  DXResources,
+                  KneeboardState*,
+                  std::string,
+                  nlohmann::json>) {
+    return std::make_shared<T>(dxr, kbs, title, config);
   }
 }
 

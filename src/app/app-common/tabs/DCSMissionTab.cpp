@@ -125,9 +125,9 @@ class DCSMissionTab::ExtractedMission final {
   }
 };
 
-DCSMissionTab::DCSMissionTab(const DXResources& dxr)
+DCSMissionTab::DCSMissionTab(const DXResources& dxr, KneeboardState* kbs)
   : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, "", std::filesystem::path {})) {
+    std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
 }
 
 DCSMissionTab::~DCSMissionTab() {
@@ -143,7 +143,9 @@ void DCSMissionTab::Reload() {
     mExtracted = std::make_unique<ExtractedMission>(mMission);
   }
   auto root = mExtracted->GetExtractedPath();
-  if ((!mAircraft.empty()) && std::filesystem::exists(root / "KNEEBOARD" / mAircraft / "IMAGES")) {
+  if (
+    (!mAircraft.empty())
+    && std::filesystem::exists(root / "KNEEBOARD" / mAircraft / "IMAGES")) {
     GetDelegate()->SetPath(root / "KNEEBOARD" / mAircraft / "IMAGES");
   } else {
     GetDelegate()->SetPath(root / "KNEEBOARD" / "IMAGES");

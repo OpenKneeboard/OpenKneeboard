@@ -19,12 +19,11 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <dinput.h>
 #include <shims/winrt.h>
 
 #include <stop_token>
-
-#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 

@@ -42,6 +42,7 @@ class TabWithPlainTextContent : virtual public Tab {
   void SetText(utf8_string_view text);
   void PushMessage(utf8_string_view message);
   void PushFullWidthSeparator();
+
  private:
   static constexpr int RENDER_SCALE = 1;
 

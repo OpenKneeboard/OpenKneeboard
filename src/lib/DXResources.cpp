@@ -47,8 +47,8 @@ DXResources DXResources::Create() {
   ret.mD3DDevice = d3d.as<ID3D11Device2>();
   ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
 
-  winrt::check_hresult(D2D1CreateFactory(
-    D2D1_FACTORY_TYPE_MULTI_THREADED, ret.mD2DFactory.put()));
+  winrt::check_hresult(
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, ret.mD2DFactory.put()));
   winrt::check_hresult(
     CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret.mDXGIFactory.put())));
 

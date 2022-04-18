@@ -43,9 +43,10 @@ class FolderTab::Impl final {
 
 FolderTab::FolderTab(
   const DXResources& dxr,
+  KneeboardState* kbs,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : TabWithDoodles(dxr),
+  : TabWithDoodles(dxr, kbs),
     p(new Impl {
       .mDXR = dxr,
       .mWIC
@@ -56,9 +57,14 @@ FolderTab::FolderTab(
 
 FolderTab::FolderTab(
   const DXResources& dxr,
+  KneeboardState* kbs,
   utf8_string_view title,
   const nlohmann::json& settings)
-  : FolderTab(dxr, title, settings.at("Path").get<std::filesystem::path>()) {
+  : FolderTab(
+    dxr,
+    kbs,
+    title,
+    settings.at("Path").get<std::filesystem::path>()) {
 }
 
 FolderTab::~FolderTab() {

@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
  */
 #include "detours-ext.h"
 
@@ -69,8 +70,7 @@ struct DetourTransaction::Impl {
 };
 bool DetourTransaction::Impl::mActive = false;
 
-DetourTransaction::DetourTransaction()
-  : p(std::make_unique<Impl>()) {
+DetourTransaction::DetourTransaction() : p(std::make_unique<Impl>()) {
   dprint("DetourTransaction++");
   // Must be called before we lock the heap
   p->mThreads = GetAllThreads();

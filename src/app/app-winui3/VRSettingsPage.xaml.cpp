@@ -78,10 +78,8 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
     *this, PropertyChangedEventArgs(L"KneeboardGazeTargetHorizontalScale"));
   mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"KneeboardGazeTargetVerticalScale"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"SteamVREnabled"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"GazeZoomEnabled"));
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"SteamVREnabled"));
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"GazeZoomEnabled"));
   mPropertyChangedEvent(
     *this, PropertyChangedEventArgs(L"DiscardOculusDepthInformation"));
 }
@@ -162,7 +160,8 @@ float VRSettingsPage::KneeboardRX() {
   auto raw = RadiansToDegrees(gKneeboard->GetVRConfig().mRX) + 90;
   if (raw < 0) {
     raw += 360.0f;
-  } if (raw >= 360.0f) {
+  }
+  if (raw >= 360.0f) {
     raw -= 360.0f;
   }
   return raw <= 180 ? raw : -(360 - raw);
@@ -283,9 +282,7 @@ void VRSettingsPage::SteamVREnabled(bool enabled) {
 }
 
 bool VRSettingsPage::GazeZoomEnabled() {
-  return (
-    gKneeboard->GetVRConfig().mFlags
-    & VRRenderConfig::Flags::GAZE_ZOOM);
+  return (gKneeboard->GetVRConfig().mFlags & VRRenderConfig::Flags::GAZE_ZOOM);
 }
 
 void VRSettingsPage::GazeZoomEnabled(bool enabled) {

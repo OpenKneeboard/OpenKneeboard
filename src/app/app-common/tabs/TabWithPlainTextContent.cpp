@@ -205,7 +205,7 @@ void TabWithPlainTextContent::LayoutMessages() {
     // assumes that all characters are the same width.
     //
     // Expand them
-    while(true) {
+    while (true) {
       auto pos = message.find_first_of("\t");
       if (pos == message.npos) {
         break;

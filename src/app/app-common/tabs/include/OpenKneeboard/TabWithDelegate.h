@@ -19,10 +19,11 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
+
 #include <concepts>
 #include <type_traits>
 
-#include <OpenKneeboard/Events.h>
 #include "Tab.h"
 #include "TabWithDoodles.h"
 #include "TabWithNavigation.h"

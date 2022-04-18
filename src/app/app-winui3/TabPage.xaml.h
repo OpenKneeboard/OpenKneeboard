@@ -66,7 +66,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   void UpdateButtons();
 
-
   DispatcherQueueController mDQC {nullptr};
   InputPointerSource mInputPointerSource {nullptr};
   std::mutex mSwapChainMutex;

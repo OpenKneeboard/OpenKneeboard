@@ -32,9 +32,11 @@ class DCSTab : public virtual TabWithGameEvents {
   virtual void PostGameEvent(const GameEvent&) override final;
 
  protected:
-  virtual void OnGameEvent(const GameEvent&,
+  virtual void OnGameEvent(
+    const GameEvent&,
     const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath) = 0;
+    const std::filesystem::path& savedGamesPath)
+    = 0;
 
  private:
   std::filesystem::path mInstallPath;

@@ -150,7 +150,8 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
 
 static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
   const IInspectable& sender) {
-  const auto instanceID = unbox_value<uint64_t>(sender.as<FrameworkElement>().Tag());
+  const auto instanceID
+    = unbox_value<uint64_t>(sender.as<FrameworkElement>().Tag());
 
   auto gamesList = gKneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
@@ -173,7 +174,8 @@ void GameSettingsPage::OnOverlayAPIChanged(
     return;
   }
 
-  const auto newAPI = static_cast<OverlayAPI>(sender.as<ComboBox>().SelectedIndex());
+  const auto newAPI
+    = static_cast<OverlayAPI>(sender.as<ComboBox>().SelectedIndex());
   if (instance->mOverlayAPI == newAPI) {
     return;
   }

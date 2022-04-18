@@ -19,9 +19,9 @@
  */
 #pragma once
 
+#include <OpenKneeboard/utf8.h>
 #include <d2d1_1.h>
 #include <shims/winrt.h>
-#include <OpenKneeboard/utf8.h>
 
 #include <memory>
 

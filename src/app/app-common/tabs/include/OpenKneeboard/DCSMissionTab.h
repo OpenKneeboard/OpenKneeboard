@@ -27,7 +27,7 @@ namespace OpenKneeboard {
 
 class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
  public:
-  DCSMissionTab(const DXResources&);
+  DCSMissionTab(const DXResources&, KneeboardState*);
   virtual ~DCSMissionTab();
   virtual utf8_string GetTitle() const override;
 

@@ -18,8 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/ConsoleLoopCondition.h>
-#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/GameEvent.h>
 #include <Windows.h>
 #include <fmt/chrono.h>
 #include <fmt/format.h>

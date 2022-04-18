@@ -21,14 +21,13 @@
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/TabTypes.h>
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <nlohmann/json.hpp>
-
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/TabState.h>
-#include <OpenKneeboard/TabTypes.h>
 
 namespace OpenKneeboard {
 
@@ -65,7 +64,7 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
 
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance = load_tab<it##Tab>(mDXR, title, settings); \
+    auto instance = load_tab<it##Tab>(mDXR, mKneeboard, title, settings); \
     if (instance) { \
       mKneeboard->AppendTab(std::make_shared<TabState>(instance)); \
       continue; \
@@ -77,11 +76,12 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
 }
 
 void TabsList::LoadDefaultConfig() {
+  auto kbs = mKneeboard;
   mKneeboard->SetTabs({
-    TabState::make_shared<DCSRadioLogTab>(mDXR),
-    TabState::make_shared<DCSMissionTab>(mDXR),
-    TabState::make_shared<DCSAircraftTab>(mDXR),
-    TabState::make_shared<DCSTerrainTab>(mDXR),
+    TabState::make_shared<DCSRadioLogTab>(mDXR, mKneeboard),
+    TabState::make_shared<DCSMissionTab>(mDXR, mKneeboard),
+    TabState::make_shared<DCSAircraftTab>(mDXR, mKneeboard),
+    TabState::make_shared<DCSTerrainTab>(mDXR, mKneeboard),
   });
 }
 

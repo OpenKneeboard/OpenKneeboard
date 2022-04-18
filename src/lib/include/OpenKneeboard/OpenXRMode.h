@@ -19,34 +19,30 @@
  */
 #pragma once
 
-#include <d3d12.h>
+#include <filesystem>
 
-#include <functional>
-#include <memory>
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+// Using json.hpp instead of json_fwd.hpp for the enum macro
+#include <nlohmann/json.hpp>
+#endif
 
 namespace OpenKneeboard {
 
-class ID3D12CommandQueueExecuteCommandListsHook final {
- private:
-  struct Impl;
-  std::unique_ptr<Impl> p;
-
- public:
-  ID3D12CommandQueueExecuteCommandListsHook();
-  ~ID3D12CommandQueueExecuteCommandListsHook();
-
-  struct Callbacks {
-    std::function<void()> onHookInstalled;
-    std::function<void(
-      ID3D12CommandQueue* this_,
-      UINT NumCommandLists,
-      ID3D12CommandList* const* ppCommandLists,
-      const decltype(&ID3D12CommandQueue::ExecuteCommandLists)& next)>
-      onExecuteCommandLists;
-  };
-
-  void InstallHook(const Callbacks&);
-  void UninstallHook();
+enum class OpenXRMode {
+  Disabled,
+  CurrentUser,
 };
+
+void SetOpenXRModeWithHelperProcess(OpenXRMode);
+// void SetOpenXRMode(OpenXRMode, const std::filesystem::path& json);
+
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  OpenXRMode,
+  {
+    {OpenXRMode::Disabled, "Disabled"},
+    {OpenXRMode::CurrentUser, "EnabledForCurrentUser"},
+  })
+#endif
 
 }// namespace OpenKneeboard
