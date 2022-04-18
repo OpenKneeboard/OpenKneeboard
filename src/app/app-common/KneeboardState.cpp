@@ -24,6 +24,7 @@
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenVROverlay.h>
+#include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
@@ -83,6 +84,8 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   if (mVRConfig.mEnableSteamVR) {
     this->StartOpenVRThread();
   }
+
+  SetOpenXRModeWithHelperProcess(mVRConfig.mOpenXRMode);
 
   UpdateLayout();
 }

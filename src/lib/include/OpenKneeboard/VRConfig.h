@@ -22,6 +22,7 @@
 #include <cstdint>
 #include <numbers>
 
+#include "OpenXRMode.h"
 #include "bitflags.h"
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
@@ -63,6 +64,7 @@ struct VRRenderConfig {
 
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
+  OpenXRMode mOpenXRMode = OpenXRMode::CurrentUser;
 };
 
 template <>
