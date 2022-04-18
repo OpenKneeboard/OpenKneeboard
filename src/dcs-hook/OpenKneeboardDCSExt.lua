@@ -57,17 +57,36 @@ end
 
 function callbacks.onMissionLoadBegin()
   l("onMissionLoadBegin: "..DCS.getMissionName())
-  local file = DCS.getMissionFilename()
-  file = file:gsub("^.[/\\]+", lfs.currentdir())
-  state.mission = file
-  l("Mission: "..state.mission)
+  if DCS.isMultiplayer() then
+    l("Mission: is multiplayer: ")
+    -- search for the right track:
+    local mpTrackPath = lfs.writedir() .. "\\Tracks\\Multiplayer";
+    found = {}
+    for entry in lfs.dir(mpTrackPath) do
+      if string.find(entry, DCS.getMissionName()) then
+        l("Found: " .. entry)
+        table.insert(found, entry)
+      end
+    end
+    table.sort(found)
+    if #found > 0 then
+      l("Setting Mission: " .. found[#found])
+      state.mission = mpTrackPath .. "\\" .. found[#found]
+      sendState()
+    end
+  else 
+    local file = DCS.getMissionFilename()
+    file = file:gsub("^.[/\\]+", lfs.currentdir())
+    state.mission = file
+    l("Mission: "..state.mission)
 
-  local mission = DCS.getCurrentMission()
-  if mission and mission.mission and mission.mission.theatre then
-    state.terrain = mission.mission.theatre
-    l("Terrain: "..state.terrain)
+    local mission = DCS.getCurrentMission()
+    if mission and mission.mission and mission.mission.theatre then
+      state.terrain = mission.mission.theatre
+      l("Terrain: "..state.terrain)
+    end
+    sendState()
   end
-  sendState()
 end
 
 function callbacks.onSimulationStart()
