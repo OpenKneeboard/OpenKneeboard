@@ -72,21 +72,19 @@ function callbacks.onMissionLoadBegin()
     if #found > 0 then
       l("Setting Mission: " .. found[#found])
       state.mission = mpTrackPath .. "\\" .. found[#found]
-      sendState()
     end
   else 
     local file = DCS.getMissionFilename()
     file = file:gsub("^.[/\\]+", lfs.currentdir())
     state.mission = file
     l("Mission: "..state.mission)
-
-    local mission = DCS.getCurrentMission()
-    if mission and mission.mission and mission.mission.theatre then
-      state.terrain = mission.mission.theatre
-      l("Terrain: "..state.terrain)
-    end
-    sendState()
   end
+  local mission = DCS.getCurrentMission()
+  if mission and mission.mission and mission.mission.theatre then
+    state.terrain = mission.mission.theatre
+    l("Terrain: "..state.terrain)
+  end
+  sendState()
 end
 
 function callbacks.onSimulationStart()
