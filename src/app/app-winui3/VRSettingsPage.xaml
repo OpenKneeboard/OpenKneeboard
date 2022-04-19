@@ -49,13 +49,13 @@
 						IsOn="{x:Bind DiscardOculusDepthInformation}"
 					/>
           <ToggleSwitch
-            Header="SteamVR Support"
+            Header="SteamVR support"
             OnContent="Enabled"
             OffContent="Disabled"
             IsOn="{x:Bind SteamVREnabled}"
           />
           <ComboBox
-            Header="OpenXR Support"
+            Header="OpenXR support"
             SelectedIndex="{x:Bind OpenXRMode}">
             <x:String>Disabled</x:String>
             <x:String>Enabled for the current user</x:String>
