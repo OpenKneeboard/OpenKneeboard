@@ -24,6 +24,7 @@
 // clang-format on
 
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <cmath>
@@ -292,6 +293,16 @@ void VRSettingsPage::GazeZoomEnabled(bool enabled) {
   } else {
     config.mFlags &= ~VRRenderConfig::Flags::GAZE_ZOOM;
   }
+  gKneeboard->SetVRConfig(config);
+}
+
+uint8_t VRSettingsPage::OpenXRMode() {
+  return static_cast<uint8_t>(gKneeboard->GetVRConfig().mOpenXRMode);
+}
+
+void VRSettingsPage::OpenXRMode(uint8_t value) {
+  auto config = gKneeboard->GetVRConfig();
+  config.mOpenXRMode = static_cast<OpenKneeboard::OpenXRMode>(value);
   gKneeboard->SetVRConfig(config);
 }
 

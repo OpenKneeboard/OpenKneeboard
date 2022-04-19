@@ -62,9 +62,9 @@ foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   target_link_libraries("${TARGET}" OpenKneeboard-GameEvent)
 endforeach()
 
-add_released_utility(OpenKneeboard-OpenXR-RegisterLayer WIN32 openxr-register-layer.cpp)
+add_released_utility(OpenKneeboard-OpenXR-Helper WIN32 openxr-helper.cpp)
 target_link_libraries(
-  OpenKneeboard-OpenXR-RegisterLayer 
+  OpenKneeboard-OpenXR-Helper 
   PRIVATE
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-dprint

@@ -32,5 +32,5 @@ const std::filesystem::path OPENXR_DLL(
 const std::filesystem::path OPENXR_JSON("OpenKneeboard-OpenXR.json");
 
 const std::filesystem::path OPENXR_REGISTER_LAYER_HELPER(
-  "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR-RegisterLayer>");
+  "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR-Helper>");
 }

@@ -24,20 +24,22 @@
  * If done from the main process, the registry write will be app-specific.
  */
 
+#include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
 #include <shellapi.h>
 
 #include <filesystem>
+#include <functional>
 #include <string>
 
 using namespace OpenKneeboard;
 
-static void InstallOpenXRLayer(const std::filesystem::path& directory) {
+static HKEY OpenOrCreateImplicitLayerRegistryKey(HKEY root) {
   HKEY openXRKey {0};
   RegCreateKeyExW(
-    HKEY_CURRENT_USER,
+    root,
     L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
     0,
     nullptr,
@@ -46,32 +48,22 @@ static void InstallOpenXRLayer(const std::filesystem::path& directory) {
     nullptr,
     &openXRKey,
     nullptr);
+  return openXRKey;
+}
+
+static void DisableOpenXRLayers(
+  HKEY root,
+  std::function<bool(std::wstring_view)> predicate) {
+  auto openXRKey = OpenOrCreateImplicitLayerRegistryKey(root);
   if (!openXRKey) {
-    dprint("Failed to open or create HKCU OpenXR key");
     return;
-  }
-  auto jsonPath
-    = std::filesystem::canonical(directory / RuntimeFiles::OPENXR_JSON)
-        .wstring();
-  DWORD disabled = 0;
-  if (
-    RegQueryValueExW(
-      openXRKey, jsonPath.c_str(), NULL, nullptr, nullptr, nullptr)
-    == ERROR_FILE_NOT_FOUND) {
-    RegSetValueExW(
-      openXRKey,
-      jsonPath.c_str(),
-      0,
-      REG_DWORD,
-      reinterpret_cast<const BYTE*>(&disabled),
-      sizeof(disabled));
   }
 
   // https://docs.microsoft.com/en-us/windows/win32/sysinfo/registry-element-size-limits
   std::wstring valueNameBuffer(16383, L'x');
   DWORD valueSize = valueNameBuffer.size();
   DWORD valueIndex {0};
-  disabled = 1;
+  DWORD disabled = 1;
   while (RegEnumValueW(
            openXRKey,
            valueIndex++,
@@ -85,9 +77,7 @@ static void InstallOpenXRLayer(const std::filesystem::path& directory) {
     std::wstring valueName = valueNameBuffer.substr(0, valueSize);
     valueSize = valueNameBuffer.size();
 
-    if (
-      valueName.ends_with(RuntimeFiles::OPENXR_JSON.filename().wstring())
-      && valueName != jsonPath) {
+    if (predicate(valueName)) {
       RegSetValueExW(
         openXRKey,
         valueName.c_str(),
@@ -97,22 +87,83 @@ static void InstallOpenXRLayer(const std::filesystem::path& directory) {
         sizeof(disabled));
     }
   }
+
+  RegCloseKey(openXRKey);
+}
+
+static void DisableOpenXRLayer(
+  HKEY root,
+  const std::filesystem::path& directory) {
+  auto jsonPath
+    = std::filesystem::canonical(directory / RuntimeFiles::OPENXR_JSON)
+        .wstring();
+
+  DisableOpenXRLayers(root, [jsonPath](std::wstring_view layerPath) {
+    return layerPath == jsonPath;
+  });
+}
+
+static void EnableOpenXRLayer(
+  HKEY root,
+  const std::filesystem::path& directory) {
+  auto openXRKey = OpenOrCreateImplicitLayerRegistryKey(root);
+  if (!openXRKey) {
+    dprint("Failed to open or create OpenXR key");
+    return;
+  }
+
+  const auto jsonFile = RuntimeFiles::OPENXR_JSON.filename().wstring();
+  auto jsonPath
+    = std::filesystem::canonical(directory / RuntimeFiles::OPENXR_JSON)
+        .wstring();
+  DisableOpenXRLayers(root, [jsonFile, jsonPath](std::wstring_view layerPath) {
+    return layerPath != jsonPath && layerPath.ends_with(jsonFile);
+  });
+
+  DWORD disabled = 0;
+  RegSetValueExW(
+    openXRKey,
+    jsonPath.c_str(),
+    0,
+    REG_DWORD,
+    reinterpret_cast<const BYTE*>(&disabled),
+    sizeof(disabled));
+
   RegCloseKey(openXRKey);
 }
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   DPrintSettings::Set({
-    .prefix = "OpenKneeboard-OpenXR-RegisterLayer",
+    .prefix = "OpenKneeboard-OpenXR-Helper",
   });
   int argc = 0;
   auto argv = CommandLineToArgvW(commandLine, &argc);
-  if (argc != 1) {
+  if (argc != 2) {
     dprintf("Invalid arguments ({}):", argc);
     for (int i = 0; i < argc; ++i) {
       dprintf(L"argv[{}]: {}", i, argv[i]);
     }
+    return 1;
   }
-  dprintf(L"Registering OpenXR layer at {}", argv[0]);
-  InstallOpenXRLayer(std::wstring_view(argv[0]));
-  return 0;
+  dprintf(L"OpenXR: {} -> {}", argv[0], argv[1]);
+  const auto command = std::wstring_view(argv[0]);
+  const auto path = std::wstring_view(argv[1]);
+  if (command == L"disable-HKCU") {
+    DisableOpenXRLayer(HKEY_CURRENT_USER, path);
+    return 0;
+  }
+  if (command == L"disable-HKLM") {
+    DisableOpenXRLayer(HKEY_LOCAL_MACHINE, path);
+    return 0;
+  }
+  if (command == L"enable-HKCU") {
+    EnableOpenXRLayer(HKEY_CURRENT_USER, path);
+    return 0;
+  }
+  if (command == L"enable-HKLM") {
+    EnableOpenXRLayer(HKEY_LOCAL_MACHINE, path);
+    return 0;
+  }
+  dprintf(L"Invalid command: {}", command);
+  return 1;
 }
