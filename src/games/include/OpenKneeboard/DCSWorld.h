@@ -60,8 +60,6 @@ class DCSWorld final : public OpenKneeboard::Game {
     = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
   static constexpr char EVT_TERRAIN[]
     = "com.fredemmott.openkneeboard.dcsext/Terrain";
-  static constexpr char EVT_PLAYER_CHANGE_SLOT[]
-    = "com.fredemmott.openkneeboard.dcsext/PlayerChangeSlot";
 };
 
 }// namespace OpenKneeboard

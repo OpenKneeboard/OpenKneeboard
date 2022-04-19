@@ -42,9 +42,7 @@ void DCSAircraftTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& installPath,
   const std::filesystem::path& savedGamesPath) {
-  if (
-    event.name != DCS::EVT_AIRCRAFT
-    && event.name != DCS::EVT_PLAYER_CHANGE_SLOT) {
+  if (event.name != DCS::EVT_AIRCRAFT) {
     return;
   }
 

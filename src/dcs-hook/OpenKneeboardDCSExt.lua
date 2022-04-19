@@ -104,8 +104,8 @@ function callbacks.onPlayerChangeSlot(id)
 	if id == net.get_my_player_id() then
     local slotid = net.get_player_info(id, 'slot')
     state.aircraft = DCS.getUnitProperty(slotid, DCS.UNIT_TYPE)
-    l("Aircraft (onPlayerChangeSlot): "..state.aircraft)
-    OpenKneeboard.send("PlayerChangeSlot", state.aircraft);
+    l("Aircraft (onPlayerChangeSlot): " .. state.aircraft)
+    OpenKneeboard.send("Aircraft", state.aircraft);
 	end
 end
 
