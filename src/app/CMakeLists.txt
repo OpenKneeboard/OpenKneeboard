@@ -3,7 +3,7 @@ add_subdirectory(app-winui3)
 
 set(
   RUNTIME_FILES
-  "$<TARGET_FILE:OpenKneeboard-OpenXR-RegisterLayer>"
+  "$<TARGET_FILE:OpenKneeboard-OpenXR-Helper>"
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
   "${CMAKE_SOURCE_DIR}/src/injectables/OpenKneeboard-OpenXR.json"
   "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>>"
