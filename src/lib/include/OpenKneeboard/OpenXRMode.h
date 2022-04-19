@@ -20,6 +20,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 // Using json.hpp instead of json_fwd.hpp for the enum macro
@@ -31,10 +32,10 @@ namespace OpenKneeboard {
 enum class OpenXRMode {
   Disabled,
   CurrentUser,
+  AllUsers,
 };
 
-void SetOpenXRModeWithHelperProcess(OpenXRMode);
-// void SetOpenXRMode(OpenXRMode, const std::filesystem::path& json);
+void SetOpenXRModeWithHelperProcess(OpenXRMode newMode, std::optional<OpenXRMode> oldMode = {});
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 NLOHMANN_JSON_SERIALIZE_ENUM(
@@ -42,6 +43,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   {
     {OpenXRMode::Disabled, "Disabled"},
     {OpenXRMode::CurrentUser, "EnabledForCurrentUser"},
+    {OpenXRMode::AllUsers, "EnabledForAllUsers"},
   })
 #endif
 

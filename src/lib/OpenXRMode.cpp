@@ -19,59 +19,105 @@
  */
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/dprint.h>
 #include <fmt/format.h>
 #include <fmt/xchar.h>
+#include <shims/winrt.h>
 
 // clang-format off
 #include <Windows.h>
 #include <Psapi.h>
+#include <shellapi.h>
 // clang-format on
 
 namespace OpenKneeboard {
 
-void SetOpenXRModeWithHelperProcess(OpenXRMode mode) {
-  if (mode == OpenXRMode::Disabled) {
-    return;// TODO
-  }
+namespace {
+enum class RunAs {
+  CurrentUser,
+  Administrator,
+};
 
+void LaunchAndWaitForOpenXRHelperSubprocess(
+  RunAs runas,
+  std::wstring_view command) {
   auto layerPath = RuntimeFiles::GetDirectory().wstring();
   auto exePath = (RuntimeFiles::GetDirectory()
                   / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER)
                    .wstring();
 
-  auto commandLine = fmt::format(L"\"{}\" \"{}\"", exePath, layerPath);
-  commandLine.reserve(32767);
+  auto commandLine = fmt::format(L"{} \"{}\"", command, layerPath);
 
-  STARTUPINFOEXW startupInfo {};
-  startupInfo.StartupInfo.cb = sizeof(startupInfo);
-  SIZE_T attributeListSize;
-  InitializeProcThreadAttributeList(nullptr, 1, 0, &attributeListSize);
-  startupInfo.lpAttributeList
-    = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(malloc(attributeListSize));
-  DWORD policy = PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
-  UpdateProcThreadAttribute(
-    startupInfo.lpAttributeList,
-    0,
-    PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY,
-    &policy,
-    sizeof(policy),
-    nullptr,
-    nullptr);
+  SHELLEXECUTEINFOW shellExecuteInfo {
+    .cbSize = sizeof(SHELLEXECUTEINFOW),
+    .fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC | SEE_MASK_NO_CONSOLE,
+    .lpVerb = runas == RunAs::CurrentUser ? L"open" : L"runas",
+    .lpFile = exePath.c_str(),
+    .lpParameters = commandLine.c_str(),
+  };
 
-  PROCESS_INFORMATION procInfo {};
+  if (!ShellExecuteExW(&shellExecuteInfo)) {
+    auto error = GetLastError();
+    dprintf("Failed to spawn subprocess: {}", error);
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
 
-  CreateProcessW(
-    exePath.c_str(),
-    commandLine.data(),
-    nullptr,
-    nullptr,
-    FALSE,
-    0,
-    nullptr,
-    nullptr,
-    reinterpret_cast<LPSTARTUPINFOW>(&startupInfo),
-    &procInfo);
-  free(startupInfo.lpAttributeList);
+  if (!shellExecuteInfo.hProcess) {
+    dprint("No process handle");
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  winrt::handle handle {shellExecuteInfo.hProcess};
+  dprint("Waiting for OpenXR helper...");
+  WaitForSingleObject(handle.get(), INFINITE);
+  dprint("OpenXR helper returned.");
+}
+
+void SetOpenXRModeWithHelperProcessImpl(
+  OpenXRMode mode,
+  std::optional<OpenXRMode> oldMode) {
+  if (oldMode && mode != *oldMode) {
+    switch (*oldMode) {
+      case OpenXRMode::Disabled:
+        break;
+      case OpenXRMode::CurrentUser:
+        LaunchAndWaitForOpenXRHelperSubprocess(
+          RunAs::CurrentUser, L"disable-HKCU");
+        break;
+      case OpenXRMode::AllUsers:
+        LaunchAndWaitForOpenXRHelperSubprocess(
+          RunAs::Administrator, L"disable-HKLM");
+        break;
+    }
+  }
+
+  switch (mode) {
+    case OpenXRMode::Disabled:
+      break;
+    case OpenXRMode::CurrentUser:
+      LaunchAndWaitForOpenXRHelperSubprocess(
+        RunAs::CurrentUser, L"enable-HKCU");
+      break;
+    case OpenXRMode::AllUsers:
+      LaunchAndWaitForOpenXRHelperSubprocess(
+        RunAs::Administrator, L"enable-HKLM");
+      break;
+  }
+}
+
+}// namespace
+
+void SetOpenXRModeWithHelperProcess(
+  OpenXRMode mode,
+  std::optional<OpenXRMode> oldMode) {
+  // If we're disabling in HKLM and enabling in HKCU, we want to
+  // run the elevated process first, but don't want to block the UI thread on
+  // UAC, so use a background thread.
+  std::thread([=]() {
+    SetOpenXRModeWithHelperProcessImpl(mode, oldMode);
+  }).detach();
 }
 
 }// namespace OpenKneeboard

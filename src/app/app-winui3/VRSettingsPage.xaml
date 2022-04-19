@@ -54,6 +54,13 @@
             OffContent="Disabled"
             IsOn="{x:Bind SteamVREnabled}"
           />
+          <ComboBox
+            Header="OpenXR Support"
+            SelectedIndex="{x:Bind OpenXRMode}">
+            <x:String>Disabled</x:String>
+            <x:String>Enabled for you</x:String>
+            <x:String>Enabled for all users</x:String>
+          </ComboBox>
         </StackPanel>
       </Grid>
       <Grid

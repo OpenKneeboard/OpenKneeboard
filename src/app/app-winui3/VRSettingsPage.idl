@@ -22,5 +22,7 @@ namespace OpenKneeboardApp
         Boolean SteamVREnabled;
         Boolean GazeZoomEnabled;
         Boolean DiscardOculusDepthInformation;
+
+        UInt8 OpenXRMode;
     }
 }

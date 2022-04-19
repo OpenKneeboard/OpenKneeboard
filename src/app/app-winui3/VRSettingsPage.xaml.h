@@ -59,6 +59,9 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   bool GazeZoomEnabled();
   void GazeZoomEnabled(bool);
 
+  uint8_t OpenXRMode();
+  void OpenXRMode(uint8_t);
+
   bool DiscardOculusDepthInformation();
   void DiscardOculusDepthInformation(bool value);
 

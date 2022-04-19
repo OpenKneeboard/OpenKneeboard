@@ -417,6 +417,11 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
       this->StartOpenVRThread();
     }
   }
+
+  if (value.mOpenXRMode != mVRConfig.mOpenXRMode) {
+    SetOpenXRModeWithHelperProcess(value.mOpenXRMode, {mVRConfig.mOpenXRMode});
+  }
+
   mVRConfig = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
