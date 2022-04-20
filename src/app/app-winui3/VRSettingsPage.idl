@@ -26,6 +26,5 @@ namespace OpenKneeboardApp
         UInt8 OpenXRMode;
 
         Single BaseOpacity;
-        Single GazeBaseOpacity;
     }
 }

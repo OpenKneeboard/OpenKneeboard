@@ -316,14 +316,4 @@ void VRSettingsPage::BaseOpacity(float value) {
   gKneeboard->SetVRConfig(config);
 }
 
-float VRSettingsPage::GazeBaseOpacity() {
-  return gKneeboard->GetVRConfig().mGazeBaseOpacity;
-}
-
-void VRSettingsPage::GazeBaseOpacity(float value) {
-  auto config = gKneeboard->GetVRConfig();
-  config.mGazeBaseOpacity = value;
-  gKneeboard->SetVRConfig(config);
-}
-
 }// namespace winrt::OpenKneeboardApp::implementation

@@ -67,8 +67,6 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
 
   float BaseOpacity();
   void BaseOpacity(float value);
-  float GazeBaseOpacity();
-  void GazeBaseOpacity(float value);
 
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&

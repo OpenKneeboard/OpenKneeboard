@@ -123,22 +123,22 @@ void InterprocessRenderer::Impl::CopyPixelsToSHM() {
   }
 
   // redraw the whole bitmap with global opacity applied:
-  auto mD2DContext = mDXR.mD2DDeviceContext;
+  auto D2DContext = mDXR.mD2DDeviceContext;
   auto vrconfig = mKneeboard->GetVRConfig();
 
-  mD2DContext->SetTarget(mCanvasFinalBitmap.get());
-  mD2DContext->BeginDraw();
-  mD2DContext->Clear({0.0f, 0.0f, 0.0f, 0.0f});
+  D2DContext->SetTarget(mCanvasFinalBitmap.get());
+  D2DContext->BeginDraw();
+  D2DContext->Clear({0.0f, 0.0f, 0.0f, 0.0f});
   D2D1_RECT_F rect = {
     .left = 0.0f, .top = 0.0f, .right = TextureWidth, .bottom = TextureHeight};
-  mD2DContext->DrawBitmap(
+  D2DContext->DrawBitmap(
     mCanvasBitmap.get(),
     rect,
     vrconfig.mBaseOpacity,
     D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
     rect);
-  mD2DContext->EndDraw();
-  mD2DContext->Flush();
+  D2DContext->EndDraw();
+  D2DContext->Flush();
   // end redraw with opacity;
 
   mD3DContext->Flush();

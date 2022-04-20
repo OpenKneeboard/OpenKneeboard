@@ -80,17 +80,6 @@
             Minimum="0.1"
             ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
           />
-          <Slider
-            Header="Opacity when zoomed"
-            Value="{x:Bind GazeBaseOpacity}"
-            TickPlacement="Outside"
-            TickFrequency="0.1"
-            StepFrequency="0.05"
-            Maximum="1"
-            Minimum="0.1"
-            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
-            IsEnabled="False"
-          />
         </StackPanel>
       </Grid>
       <Grid
