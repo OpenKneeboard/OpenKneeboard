@@ -65,7 +65,9 @@ class InterprocessRenderer::Impl {
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
+  winrt::com_ptr<ID3D11Texture2D> mCanvasFinalTexture;
   winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
+  winrt::com_ptr<ID2D1Bitmap1> mCanvasFinalBitmap;
 
   std::array<SharedTextureResources, TextureCount> mResources;
 
@@ -120,12 +122,31 @@ void InterprocessRenderer::Impl::CopyPixelsToSHM() {
     return;
   }
 
+  // redraw the whole bitmap with global opacity applied:
+  auto mD2DContext = mDXR.mD2DDeviceContext;
+  auto vrconfig = mKneeboard->GetVRConfig();
+
+  mD2DContext->SetTarget(mCanvasFinalBitmap.get());
+  mD2DContext->BeginDraw();
+  mD2DContext->Clear({0.0f, 0.0f, 0.0f, 0.0f});
+  D2D1_RECT_F rect = {
+    .left = 0.0f, .top = 0.0f, .right = TextureWidth, .bottom = TextureHeight};
+  mD2DContext->DrawBitmap(
+    mCanvasBitmap.get(),
+    rect,
+    vrconfig.mBaseOpacity,
+    D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+    rect);
+  mD2DContext->EndDraw();
+  mD2DContext->Flush();
+  // end redraw with opacity;
+
   mD3DContext->Flush();
 
   auto& it = mResources.at(mSHM.GetNextTextureIndex());
 
   it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
-  mD3DContext->CopyResource(it.mTexture.get(), mCanvasTexture.get());
+  mD3DContext->CopyResource(it.mTexture.get(), mCanvasFinalTexture.get());
   mD3DContext->Flush();
   it.mMutexKey = mSHM.GetNextTextureKey();
   it.mMutex->ReleaseSync(it.mMutexKey);
@@ -173,6 +194,14 @@ InterprocessRenderer::InterprocessRenderer(
     nullptr,
     p->mCanvasBitmap.put()));
 
+  winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
+    &textureDesc, nullptr, p->mCanvasFinalTexture.put()));
+
+  winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+    p->mCanvasFinalTexture.as<IDXGISurface>().get(),
+    nullptr,
+    p->mCanvasFinalBitmap.put()));
+
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
@@ -216,9 +245,8 @@ InterprocessRenderer::InterprocessRenderer(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mActiveButtonBrush.put()));
-
   ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, vrconfig.mBaseOpacity},
+    GetSystemColor(COLOR_WINDOW),
     reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
 
   AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());

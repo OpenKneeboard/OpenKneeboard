@@ -166,12 +166,10 @@ void FolderTab::RenderPageContent(
   const auto renderLeft = rect.left + ((targetWidth - renderWidth) / 2);
   const auto renderTop = rect.top + ((targetHeight - renderHeight) / 2);
 
-  const auto vrconfig = GetKneeboardState()->GetVRConfig();
-
   ctx->DrawBitmap(
     bitmap.get(),
     {renderLeft, renderTop, renderLeft + renderWidth, renderTop + renderHeight},
-    vrconfig.mBaseOpacity,
+    1.0f,
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
