@@ -66,23 +66,24 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   }
 
   // Tell the XAML UI elements to update to the new values
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardX"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardEyeY"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardFloorY"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardZ"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardRX"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardRY"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardRZ"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardHeight"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardZoomScale"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"KneeboardGazeTargetHorizontalScale"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"KneeboardGazeTargetVerticalScale"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"SteamVREnabled"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"GazeZoomEnabled"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"DiscardOculusDepthInformation"));
+  for (auto prop: {
+         L"KneeboardX",
+         L"KneeboardEyeY",
+         L"KneeboardFloorY",
+         L"KneeboardZ",
+         L"KneeboardRX",
+         L"KneeboardRY",
+         L"KneeboardRZ",
+         L"KneeboardHeight",
+         L"KneeboardZoomScale",
+         L"KneeboardGazeTargetHorizontalScale",
+         L"KneeboardGazeTargetVerticalScale",
+         L"SteamVREnabled",
+         L"GazeZoomEnabled",
+         L"DiscardOculusDepthInformation",
+       }) {
+    mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
+  }
 }
 
 winrt::event_token VRSettingsPage::PropertyChanged(

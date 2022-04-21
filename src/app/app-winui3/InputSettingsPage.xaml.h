@@ -48,6 +48,8 @@ struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
   uint32_t EraseSensitivity();
   void EraseSensitivity(uint32_t value);
 
+  void RestoreDoodleDefaults(const IInspectable&, const IInspectable&);
+
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
       handler);

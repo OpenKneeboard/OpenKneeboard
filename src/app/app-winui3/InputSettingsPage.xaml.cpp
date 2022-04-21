@@ -125,4 +125,19 @@ void InputSettingsPage::EraseSensitivity(uint32_t value) {
   gKneeboard->SetDoodleSettings(ds);
 }
 
+void InputSettingsPage::RestoreDoodleDefaults(
+  const IInspectable&,
+  const IInspectable&) {
+  gKneeboard->SetDoodleSettings({});
+
+  for (auto prop: {
+         L"MinimumPenRadius",
+         L"PenSensitivity",
+         L"MinimumEraseRadius",
+         L"EraseSensitivity",
+       }) {
+    mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
+  }
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation

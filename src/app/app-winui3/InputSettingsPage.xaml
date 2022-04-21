@@ -71,10 +71,19 @@
         Text="Input Settings"
         Margin="0,0,0,8"
       />
-      <TextBlock 
-        Text="Pen" 
-        Style="{StaticResource SubtitleTextBlockStyle}" 
-        Margin="0,0,0,16" />
+      <Grid ColumnDefinitions="*, Auto">
+        <TextBlock 
+          Grid.Column="0"
+          Text="Drawing" 
+          Style="{StaticResource SubtitleTextBlockStyle}" 
+          Margin="0,0,0,16"
+        />
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreDoodleDefaults"
+        />
+      </Grid>
       <StackPanel 
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
