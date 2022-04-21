@@ -4,10 +4,10 @@
 
 namespace OpenKneeboard {
 struct DoodleSettings final {
-  uint32_t drawRadius = 50;
-  uint32_t eraseRadius = 150;
-  bool fixedDraw = false;
-  bool fixedErase = true;
+  uint32_t minimumPenRadius = 1;
+  uint32_t minimumEraseRadius = 10;
+  uint32_t penSensitivity = 15;
+  uint32_t eraseSensitivity = 150;
   // TODO: stroke color?
 };
 

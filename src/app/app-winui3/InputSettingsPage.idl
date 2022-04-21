@@ -26,10 +26,10 @@ namespace OpenKneeboardApp
     {
         InputSettingsPage();
         Windows.Foundation.Collections.IVector<IInspectable> Devices { get; };
-        Boolean FixedWriteRadius;
-        Boolean FixedEraseRadius;
-        UInt32 WriteRadius;
-        UInt32 EraseRadius;
+        UInt32 MinimumPenRadius;
+        UInt32 MinimumEraseRadius;
+        UInt32 PenSensitivity;
+        UInt32 EraseSensitivity;
     }
 
 }

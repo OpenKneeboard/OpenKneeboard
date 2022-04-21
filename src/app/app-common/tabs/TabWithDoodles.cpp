@@ -100,18 +100,14 @@ void TabWithDoodles::FlushCursorEvents() {
 
       const auto scale = mDrawings.at(pageIndex).mScale;
 
-      auto ds = GetKneeboardState()->GetDoodleSettings();
-      auto drawRadius = ds.drawRadius;
-      auto eraseRadius = ds.eraseRadius;
-      auto fixedDraw = ds.fixedDraw;
-      auto fixedErase = ds.fixedErase;
-
       const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
 
-      auto radius = fixedDraw ? drawRadius : 1 + (pressure * drawRadius);
-      if (erasing) {
-        radius = fixedErase ? eraseRadius : 1 + (pressure * eraseRadius);
-      }
+      auto ds = GetKneeboardState()->GetDoodleSettings();
+      const auto minimum
+        = erasing ? ds.minimumEraseRadius : ds.minimumPenRadius;
+      const auto sensitivity
+        = erasing ? ds.eraseSensitivity : ds.penSensitivity;
+      auto radius = minimum + (sensitivity * pressure);
 
       const auto x = event.mX * scale;
       const auto y = event.mY * scale;

@@ -85,48 +85,43 @@ void InputSettingsPage::OnOrientationChanged(
     static_cast<TabletOrientation>(combo.SelectedIndex()));
 }
 
-// inverted here for UI clarity
-bool InputSettingsPage::FixedWriteRadius() {
-  bool value = gKneeboard->GetDoodleSettings().fixedDraw;
-  return !value;
+uint32_t InputSettingsPage::MinimumPenRadius() {
+  return gKneeboard->GetDoodleSettings().minimumPenRadius;
 }
 
-// inverted here for UI clarity
-void InputSettingsPage::FixedWriteRadius(bool value) {
+void InputSettingsPage::MinimumPenRadius(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.fixedDraw = !value;
+  ds.minimumPenRadius = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
-// inverted here for UI clarity
-bool InputSettingsPage::FixedEraseRadius() {
-  bool value = gKneeboard->GetDoodleSettings().fixedErase;
-  return !value;
+uint32_t InputSettingsPage::PenSensitivity() {
+  return gKneeboard->GetDoodleSettings().penSensitivity;
 }
 
-// inverted here for UI clarity
-void InputSettingsPage::FixedEraseRadius(bool value) {
+void InputSettingsPage::PenSensitivity(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.fixedErase = !value;
+  ds.penSensitivity = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
-uint32_t InputSettingsPage::EraseRadius() {
-  return gKneeboard->GetDoodleSettings().eraseRadius;
+uint32_t InputSettingsPage::MinimumEraseRadius() {
+  return gKneeboard->GetDoodleSettings().minimumEraseRadius;
 }
-void InputSettingsPage::EraseRadius(uint32_t value) {
+
+void InputSettingsPage::MinimumEraseRadius(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.eraseRadius = value;
+  ds.minimumEraseRadius = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
-uint32_t InputSettingsPage::WriteRadius() {
-  return gKneeboard->GetDoodleSettings().drawRadius;
+uint32_t InputSettingsPage::EraseSensitivity() {
+  return gKneeboard->GetDoodleSettings().eraseSensitivity;
 }
 
-void InputSettingsPage::WriteRadius(uint32_t value) {
+void InputSettingsPage::EraseSensitivity(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.drawRadius = value;
+  ds.eraseSensitivity = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
