@@ -498,6 +498,7 @@ XrResult xrCreateSession(
 
   auto nextResult = gNext.xrCreateSession(instance, createInfo, session);
   if (nextResult != XR_SUCCESS) {
+    dprint("next xrCreateSession failed");
     return nextResult;
   }
 
