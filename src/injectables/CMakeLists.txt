@@ -77,6 +77,7 @@ target_link_libraries(
   PRIVATE
   dxgi-hooks
   detours-ext
+  OpenKneeboard-config
   OpenKneeboard-dprint
   oculus-hooks
   oculus-sdk-headers)
@@ -87,6 +88,7 @@ target_link_libraries(
   PRIVATE
   d3d12-hooks
   detours-ext
+  OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-ScopedRWX
   oculus-hooks

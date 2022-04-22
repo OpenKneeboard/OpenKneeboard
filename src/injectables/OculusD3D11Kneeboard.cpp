@@ -20,6 +20,7 @@
 #include "OculusD3D11Kneeboard.h"
 
 #include <OVR_CAPI_D3D.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 #include "InjectedDLLMain.h"
@@ -46,9 +47,7 @@ void OculusD3D11Kneeboard::UninstallHook() {
   mDXGIHook.UninstallHook();
 }
 
-ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
-  ovrSession session,
-  const SHM::Config& config) {
+ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(ovrSession session) {
   auto ovr = OVRProxy::Get();
   ovrTextureSwapChain swapChain = nullptr;
 
@@ -57,8 +56,8 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
     .ArraySize = 1,
-    .Width = config.imageWidth,
-    .Height = config.imageHeight,
+    .Width = TextureWidth,
+    .Height = TextureHeight,
     .MipLevels = 1,
     .SampleCount = 1,
     .StaticImage = false,

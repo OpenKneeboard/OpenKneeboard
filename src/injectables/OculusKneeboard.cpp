@@ -68,9 +68,7 @@ struct OculusKneeboard::Impl {
     unsigned int layerCount,
     const decltype(&ovr_EndFrame)& next);
 
-  ovrTextureSwapChain GetSwapChain(
-    ovrSession session,
-    const SHM::Config& config);
+  ovrTextureSwapChain GetSwapChain(ovrSession session);
 
  private:
   SHM::Config mLastConfig;
@@ -104,20 +102,12 @@ OculusKneeboard::Impl::Impl(Renderer* renderer) : mRenderer(renderer) {
   });
 }
 
-ovrTextureSwapChain OculusKneeboard::Impl::GetSwapChain(
-  ovrSession session,
-  const SHM::Config& config) {
-  auto ovr = OVRProxy::Get();
+ovrTextureSwapChain OculusKneeboard::Impl::GetSwapChain(ovrSession session) {
   if (mSwapChain) {
-    if (
-      config.imageWidth == mLastConfig.imageWidth
-      && config.imageHeight == mLastConfig.imageHeight) {
-      return mSwapChain;
-    }
-
-    ovr->ovr_DestroyTextureSwapChain(session, mSwapChain);
+    return mSwapChain;
   }
-  mSwapChain = mRenderer->CreateSwapChain(session, config);
+
+  mSwapChain = mRenderer->CreateSwapChain(session);
   return mSwapChain;
 }
 
@@ -148,7 +138,7 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
     }
     const auto config = snapshot.GetConfig();
 
-    mSwapChain = this->GetSwapChain(session, config);
+    mSwapChain = this->GetSwapChain(session);
 
     if (!mSwapChain) {
       return passthrough();
