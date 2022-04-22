@@ -22,10 +22,11 @@
 #include <OpenKneeboard/SHM.h>
 
 #include "OculusEndFrameHook.h"
+#include "VRKneeboard.h"
 
 namespace OpenKneeboard {
 
-class OculusKneeboard final {
+class OculusKneeboard final : private VRKneeboard<double> {
  public:
   class Renderer;
   OculusKneeboard();
@@ -34,9 +35,26 @@ class OculusKneeboard final {
   void InstallHook(Renderer* renderer);
   void UninstallHook();
 
+ protected:
+  Pose GetHMDPose(double predictedTime) override;
+  YOrigin GetYOrigin() override;
+
  private:
-  struct Impl;
-  std::unique_ptr<Impl> p;
+  ovrTextureSwapChain mSwapChain = nullptr;
+  ovrSession mSession = nullptr;
+  Renderer* mRenderer = nullptr;
+  SHM::Reader mSHM;
+  OculusEndFrameHook mEndFrameHook;
+
+  ovrResult OnOVREndFrame(
+    ovrSession session,
+    long long frameIndex,
+    const ovrViewScaleDesc* viewScaleDesc,
+    ovrLayerHeader const* const* layerPtrList,
+    unsigned int layerCount,
+    const decltype(&ovr_EndFrame)& next);
+
+  static ovrPosef GetOvrPosef(const Pose&);
 };
 
 class OculusKneeboard::Renderer {

@@ -40,7 +40,13 @@ class VRKneeboard {
     Quaternion mOrientation {};
   };
 
+  enum class YOrigin {
+    FLOOR_LEVEL,
+    EYE_LEVEL,
+  };
+
   virtual Pose GetHMDPose(TDisplayTime) = 0;
+  virtual YOrigin GetYOrigin() = 0;
 
   Pose GetKneeboardPose(const VRRenderConfig& vr, TDisplayTime displayTime) {
     this->Recenter(vr, displayTime);
@@ -49,7 +55,9 @@ class VRKneeboard {
       Matrix::CreateRotationX(vr.mRX)
       * Matrix::CreateRotationY(vr.mRY)
       * Matrix::CreateRotationZ(vr.mRZ)
-      * Matrix::CreateTranslation({vr.mX, vr.mEyeY, vr.mZ})
+      * Matrix::CreateTranslation({
+        vr.mX,
+        this->GetYOrigin() == YOrigin::EYE_LEVEL ? vr.mEyeY : vr.mFloorY, vr.mZ})
       * mRecenter;
     // clang-format on
     return {

@@ -36,7 +36,7 @@ struct VRRenderConfig {
   static constexpr uint16_t VERSION = 3;
 
   enum class Flags : uint32_t {
-    HEADLOCKED = 1 << 0,
+    // HEADLOCKED = 1 << 0,
     DISCARD_DEPTH_INFORMATION = 1 << 1,
     // PREFER_ROOMSCALE_POSITION = 1 << 2,
     GAZE_ZOOM = 1 << 3,

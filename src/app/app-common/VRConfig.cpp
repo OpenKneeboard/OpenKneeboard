@@ -39,14 +39,6 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
     vrc.mGazeTargetVerticalScale = scale.at("vertical");
   }
 
-  if (j.contains("headLocked")) {
-    if (j.at("headLocked").get<bool>()) {
-      vrc.mFlags |= VRRenderConfig::Flags::HEADLOCKED;
-    } else {
-      vrc.mFlags &= ~VRRenderConfig::Flags::HEADLOCKED;
-    }
-  }
-
   if (j.contains("discardOculusDepthInformation")) {
     if (j.at("discardOculusDepthInformation").get<bool>()) {
       vrc.mFlags |= VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
@@ -83,8 +75,6 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"rz", vrc.mRZ},
     {"height", vrc.mHeight},
     {"zoomScale", vrc.mZoomScale},
-    {"headLocked",
-     static_cast<bool>(vrc.mFlags & VRRenderConfig::Flags::HEADLOCKED)},
     {"discardOculusDepthInformation",
      static_cast<bool>(
        vrc.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)},

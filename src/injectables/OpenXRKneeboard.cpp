@@ -79,6 +79,7 @@ class OpenXRKneeboard : public VRKneeboard<XrTime> {
 
  protected:
   Pose GetHMDPose(XrTime displayTime) override;
+  YOrigin GetYOrigin() override;
   static XrPosef GetXrPosef(const Pose& pose);
 
   XrSpace mLocalSpace = nullptr;
@@ -166,6 +167,10 @@ OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
   };
   sCacheKey = displayTime;
   return sCache;
+}
+
+OpenXRKneeboard::YOrigin OpenXRKneeboard::GetYOrigin() {
+  return YOrigin::EYE_LEVEL;
 }
 
 XrPosef OpenXRKneeboard::GetXrPosef(const Pose& pose) {
