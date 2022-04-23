@@ -11,3 +11,7 @@ If this does not solve the problem, try unplugging any graphics tablets (e.g. Wa
 - Reset OpenKneeboard's VR settings to defaults
 - Try binding a button to 'Recenter' in OpenKneeboard's Input settings; it usually works best to to use the same keys/buttons as you use for in-game VR recenter
 - If the game is running as administrator, you must run OpenKneeboard as administrator.
+
+## Kneeboard Is Visible In SteamVR, But Not OpenXR
+
+Select "Enable for all users" for OpenXR, in OpenKneeboard's VR settings page.
