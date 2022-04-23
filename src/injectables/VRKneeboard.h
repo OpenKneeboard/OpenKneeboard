@@ -132,9 +132,9 @@ class VRKneeboard {
     auto quat = hmd.mOrientation;
 
     // clang-format off
-		mRecenter =
-			Matrix::CreateRotationY(quat.ToEuler().y) 
-			* Matrix::CreateTranslation({pos.x, pos.y, pos.z});
+    mRecenter =
+      Matrix::CreateRotationY(quat.ToEuler().y) 
+      * Matrix::CreateTranslation({pos.x, pos.y, pos.z});
     // clang-format on
 
     mRecenterCount = vr.mRecenterCount;
