@@ -37,8 +37,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
  protected:
   virtual ovrTextureSwapChain CreateSwapChain(
-    ovrSession session,
-    const SHM::Config& config) override final;
+    ovrSession session) override final;
 
   virtual bool Render(
     ovrSession session,

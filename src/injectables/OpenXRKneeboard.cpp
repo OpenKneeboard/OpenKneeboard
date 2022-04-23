@@ -17,12 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <DirectXTK/SimpleMath.h>
-#include <OpenKneeboard/RayIntersectsRect.h>
-#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
 #include <d3d11.h>
 #include <loader_interfaces.h>
 #include <openxr/openxr.h>
@@ -32,6 +28,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "VRKneeboard.h"
 
 #define XR_USE_GRAPHICS_API_D3D11
 #include <openxr/openxr_platform.h>
@@ -69,7 +67,7 @@ static struct {
 #undef IT
 } gNext;
 
-class OpenXRKneeboard {
+class OpenXRKneeboard : public VRKneeboard<XrTime> {
  public:
   OpenXRKneeboard() = delete;
   OpenXRKneeboard(XrSession);
@@ -80,17 +78,12 @@ class OpenXRKneeboard {
     = 0;
 
  protected:
-  XrPosef GetHMDPose(XrTime displayTime);
-  XrExtent2Df
-  GetSize(const SHM::Config&, const Matrix& kneeboardPose, XrTime displayTime);
-  void Recenter(XrTime displayTime);
+  Pose GetHMDPose(XrTime displayTime) override;
+  YOrigin GetYOrigin() override;
+  static XrPosef GetXrPosef(const Pose& pose);
 
-  bool mZoomed = false;
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;
-
-  int64_t mRecenterCount = 0;
-  Matrix mRecenter = Matrix::Identity;
 };
 
 class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
@@ -108,7 +101,6 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   SHM::Reader mSHM;
   ID3D11Device* mDevice = nullptr;
   XrSwapchain mSwapchain = nullptr;
-  uint64_t mSequenceNumber = ~(0ui64);
 
   std::vector<winrt::com_ptr<ID3D11Texture2D>> mTextures;
 };
@@ -147,8 +139,8 @@ OpenXRKneeboard::~OpenXRKneeboard() {
   }
 }
 
-XrPosef OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
-  static XrPosef sCache = XR_POSEF_IDENTITY;
+OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
+  static Pose sCache {};
   static XrTime sCacheKey {};
   if (displayTime == sCacheKey) {
     return sCache;
@@ -158,88 +150,36 @@ XrPosef OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
   if (
     gNext.xrLocateSpace(mViewSpace, mLocalSpace, displayTime, &location)
     != XR_SUCCESS) {
-    return XR_POSEF_IDENTITY;
+    return {};
   }
 
   const auto desiredFlags = XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
     | XR_SPACE_LOCATION_POSITION_VALID_BIT;
   if ((location.locationFlags & desiredFlags) != desiredFlags) {
-    return XR_POSEF_IDENTITY;
+    return {};
   }
 
-  sCache = location.pose;
+  const auto& p = location.pose.position;
+  const auto& o = location.pose.orientation;
+  sCache = {
+    .mPosition = {p.x, p.y, p.z},
+    .mOrientation = {o.x, o.y, o.z, o.w},
+  };
   sCacheKey = displayTime;
   return sCache;
 }
 
-XrExtent2Df OpenXRKneeboard::GetSize(
-  const SHM::Config& config,
-  const Matrix& kneeboardPose,
-  XrTime displayTime) {
-  const auto& vr = config.vr;
-
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  const auto virtualHeight = vr.mHeight;
-  const auto virtualWidth = aspectRatio * vr.mHeight;
-
-  XrExtent2Df normalSize {virtualWidth, virtualHeight};
-  XrExtent2Df zoomedSize {
-    virtualWidth * vr.mZoomScale, virtualHeight * vr.mZoomScale};
-
-  if (vr.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
-    mZoomed = true;
-    return zoomedSize;
-  }
-  if (!(vr.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)) {
-    mZoomed = false;
-    return normalSize;
-  }
-  if (
-    vr.mZoomScale < 1.1 || vr.mGazeTargetHorizontalScale < 0.1
-    || vr.mGazeTargetVerticalScale < 0.1) {
-    mZoomed = false;
-    return normalSize;
-  }
-
-  const auto hmdPose = this->GetHMDPose(displayTime);
-
-  const auto& pos = hmdPose.position;
-  const auto& quat = hmdPose.orientation;
-
-  mZoomed = RayIntersectsRect(
-    {pos.x, pos.y, pos.z},
-    {quat.x, quat.y, quat.z, quat.w},
-    kneeboardPose.Translation(),
-    Quaternion::CreateFromRotationMatrix(kneeboardPose),
-    Vector2 {
-      virtualWidth * vr.mGazeTargetHorizontalScale
-        * (mZoomed ? vr.mZoomScale : 1.0f),
-      virtualHeight * vr.mGazeTargetVerticalScale
-        * (mZoomed ? vr.mZoomScale : 1.0f),
-    });
-  return mZoomed ? zoomedSize : normalSize;
+OpenXRKneeboard::YOrigin OpenXRKneeboard::GetYOrigin() {
+  return YOrigin::EYE_LEVEL;
 }
 
-void OpenXRKneeboard::Recenter(XrTime displayTime) {
-  auto hmd = this->GetHMDPose(displayTime);
-
-  auto& pos = hmd.position;
-  pos.y = 0;// don't adjust floor level
-  Quaternion quat {
-    hmd.orientation.x,
-    hmd.orientation.y,
-    hmd.orientation.z,
-    hmd.orientation.w,
+XrPosef OpenXRKneeboard::GetXrPosef(const Pose& pose) {
+  const auto& p = pose.mPosition;
+  const auto& o = pose.mOrientation;
+  return {
+    .orientation = {o.x, o.y, o.z, o.w},
+    .position = {p.x, p.y, p.z},
   };
-
-  // We're only going to respect ry (yaw) as we want the new
-  // center to remain gravity-aligned
-
-  // clang-format off
-  mRecenter =
-    Matrix::CreateRotationY(quat.ToEuler().y) 
-    * Matrix::CreateTranslation({pos.x, pos.y, pos.z});
-  // clang-format on
 }
 
 OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
@@ -321,16 +261,6 @@ OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
   }
 }
 
-static XrPosef xrPoseFromSimpleMathMatrix(const Matrix& m) {
-  const auto pos = m.Translation();
-  const auto quat = Quaternion::CreateFromRotationMatrix(m);
-
-  return XrPosef {
-    .orientation = {.x = quat.x, .y = quat.y, .z = quat.z, .w = quat.w},
-    .position = {pos.x, pos.y, pos.z},
-  };
-}
-
 XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
@@ -347,40 +277,22 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     // Don't spam: expected, if OpenKneeboard isn't running
     return gNext.xrEndFrame(session, frameEndInfo);
   }
+
+  this->Render(snapshot);
   auto config = snapshot.GetConfig();
 
-  if (snapshot.GetSequenceNumber() != mSequenceNumber) {
-    this->Render(snapshot);
-  }
+  const auto displayTime = frameEndInfo->displayTime;
 
   const auto& vr = config.vr;
-  if (vr.mRecenterCount != mRecenterCount) {
-    this->Recenter(frameEndInfo->displayTime);
-    mRecenterCount = vr.mRecenterCount;
-  }
+  const auto kneeboardPose = this->GetKneeboardPose(vr, displayTime);
+  const auto kneeboardSize
+    = this->GetKneeboardSize(config, kneeboardPose, displayTime);
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   std::copy(
     frameEndInfo->layers,
     &frameEndInfo->layers[frameEndInfo->layerCount],
     std::back_inserter(nextLayers));
-
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  const auto virtualHeight = vr.mHeight;
-  const auto virtualWidth = aspectRatio * vr.mHeight;
-
-  const XrExtent2Df normalSize {virtualWidth, virtualHeight};
-  const XrExtent2Df zoomedSize {
-    virtualWidth * vr.mZoomScale, virtualHeight * vr.mZoomScale};
-
-  // clang-format off
-  auto kneeboardPose =
-    Matrix::CreateRotationX(vr.mRX)
-    * Matrix::CreateRotationY(vr.mRY)
-    * Matrix::CreateRotationZ(vr.mRZ)
-    * Matrix::CreateTranslation({vr.mX, vr.mEyeY, vr.mZ})
-    * mRecenter;
-  // clang-format on
 
   static_assert(
     SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
@@ -401,8 +313,8 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
       },
       .imageArrayIndex = 0,
     },
-    .pose = xrPoseFromSimpleMathMatrix(kneeboardPose),
-    .size = this->GetSize(config, kneeboardPose, frameEndInfo->displayTime),
+    .pose = this->GetXrPosef(kneeboardPose),
+    .size = { kneeboardSize.x, kneeboardSize.y },
   };
   nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
 
@@ -418,6 +330,11 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
 }
 
 void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
+  static uint64_t sSequenceNumber = ~(0ui64);
+  if (snapshot.GetSequenceNumber() == sSequenceNumber) {
+    return;
+  }
+
   auto config = snapshot.GetConfig();
   uint32_t textureIndex;
   auto nextResult
@@ -468,7 +385,7 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to release swapchain: {}", nextResult);
   }
-  this->mSequenceNumber = snapshot.GetSequenceNumber();
+  sSequenceNumber = snapshot.GetSequenceNumber();
 }
 
 // Don't use a unique_ptr as on process exit, windows doesn't clean these up
@@ -498,6 +415,7 @@ XrResult xrCreateSession(
 
   auto nextResult = gNext.xrCreateSession(instance, createInfo, session);
   if (nextResult != XR_SUCCESS) {
+    dprint("next xrCreateSession failed");
     return nextResult;
   }
 

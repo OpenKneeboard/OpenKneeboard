@@ -38,14 +38,17 @@ struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
     const IInspectable&,
     const SelectionChangedEventArgs&);
 
-  bool FixedWriteRadius();
-  void FixedWriteRadius(bool value);
-  bool FixedEraseRadius();
-  void FixedEraseRadius(bool value);
-  uint32_t EraseRadius();
-  void EraseRadius(uint32_t value);
-  uint32_t WriteRadius();
-  void WriteRadius(uint32_t value);
+  uint32_t MinimumPenRadius();
+  void MinimumPenRadius(uint32_t value);
+  uint32_t PenSensitivity();
+  void PenSensitivity(uint32_t value);
+
+  uint32_t MinimumEraseRadius();
+  void MinimumEraseRadius(uint32_t value);
+  uint32_t EraseSensitivity();
+  void EraseSensitivity(uint32_t value);
+
+  void RestoreDoodleDefaults(const IInspectable&, const IInspectable&);
 
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&

@@ -19,8 +19,6 @@
  */
 #include "OculusKneeboard.h"
 
-#include <DirectXTK/SimpleMath.h>
-#include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/dprint.h>
 
 // clang-format off
@@ -30,106 +28,65 @@
 
 #include "OVRProxy.h"
 
-using namespace OpenKneeboard;
 using namespace DirectX::SimpleMath;
 
-static bool poseIntersectsRect(
-  const ovrPosef& pose,
-  const Vector3& rectCenter,
-  const Quaternion& rectQuat,
-  const Vector2& rectSize) {
-  const Quaternion rayQuat(
-    pose.Orientation.x,
-    pose.Orientation.y,
-    pose.Orientation.z,
-    pose.Orientation.w);
-  const Vector3 rayOrigin(pose.Position.x, pose.Position.y, pose.Position.z);
-
-  return RayIntersectsRect(rayOrigin, rayQuat, rectCenter, rectQuat, rectSize);
-}
-
 namespace OpenKneeboard {
-
-struct OculusKneeboard::Impl {
-  Impl(Renderer*);
-
-  Renderer* mRenderer = nullptr;
-  bool mZoomed = false;
-
-  SHM::Reader mSHM;
-  OculusEndFrameHook mEndFrameHook;
-  uint32_t mLastSequenceNumber;
-
-  ovrResult OnOVREndFrame(
-    ovrSession session,
-    long long frameIndex,
-    const ovrViewScaleDesc* viewScaleDesc,
-    ovrLayerHeader const* const* layerPtrList,
-    unsigned int layerCount,
-    const decltype(&ovr_EndFrame)& next);
-
-  ovrTextureSwapChain GetSwapChain(
-    ovrSession session,
-    const SHM::Config& config);
-
- private:
-  SHM::Config mLastConfig;
-  ovrTextureSwapChain mSwapChain = nullptr;
-};
 
 OculusKneeboard::OculusKneeboard() {
 }
 
 void OculusKneeboard::InstallHook(Renderer* renderer) {
-  if (p) {
-    throw std::logic_error("Can't install OculusKneeboard twice");
-  }
-  p = std::make_unique<Impl>(renderer);
   dprintf("{} {:#018x}", __FUNCTION__, (uint64_t)this);
+  mRenderer = renderer;
+  mEndFrameHook.InstallHook({
+    .onEndFrame = std::bind_front(&OculusKneeboard::OnOVREndFrame, this),
+  });
 }
 
 OculusKneeboard::~OculusKneeboard() {
   this->UninstallHook();
+  if (mRenderer) {
+    delete mRenderer;
+  }
 }
 
 void OculusKneeboard::UninstallHook() {
-  if (p) {
-    p->mEndFrameHook.UninstallHook();
-  }
+  mEndFrameHook.UninstallHook();
 }
 
-OculusKneeboard::Impl::Impl(Renderer* renderer) : mRenderer(renderer) {
-  mEndFrameHook.InstallHook({
-    .onEndFrame = std::bind_front(&Impl::OnOVREndFrame, this),
-  });
-}
-
-ovrTextureSwapChain OculusKneeboard::Impl::GetSwapChain(
-  ovrSession session,
-  const SHM::Config& config) {
+OculusKneeboard::Pose OculusKneeboard::GetHMDPose(double predictedTime) {
   auto ovr = OVRProxy::Get();
-  if (mSwapChain) {
-    if (
-      config.imageWidth == mLastConfig.imageWidth
-      && config.imageHeight == mLastConfig.imageHeight) {
-      return mSwapChain;
-    }
+  const auto state = ovr->ovr_GetTrackingState(mSession, predictedTime, false);
+  const auto& p = state.HeadPose.ThePose.Position;
+  const auto& o = state.HeadPose.ThePose.Orientation;
 
-    ovr->ovr_DestroyTextureSwapChain(session, mSwapChain);
-  }
-  mSwapChain = mRenderer->CreateSwapChain(session, config);
-  return mSwapChain;
+  return {
+    .mPosition = {p.x, p.y, p.z},
+    .mOrientation = {o.x, o.y, o.z, o.w},
+  };
 }
 
-ovrResult OculusKneeboard::Impl::OnOVREndFrame(
+OculusKneeboard::YOrigin OculusKneeboard::GetYOrigin() {
+  if (
+    OVRProxy::Get()->ovr_GetTrackingOriginType(mSession)
+    == ovrTrackingOrigin_EyeLevel) {
+    return YOrigin::EYE_LEVEL;
+  }
+  return YOrigin::FLOOR_LEVEL;
+}
+
+ovrResult OculusKneeboard::OnOVREndFrame(
   ovrSession session,
   long long frameIndex,
   const ovrViewScaleDesc* viewScaleDesc,
   ovrLayerHeader const* const* layerPtrList,
   unsigned int layerCount,
   const decltype(&ovr_EndFrame)& next) {
+  mSession = session;
+
   static bool sFirst = true;
   if (sFirst) {
+    OPENKNEEBOARD_BREAK;
     dprint(__FUNCTION__);
     sFirst = false;
   }
@@ -139,94 +96,50 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
   if (!(mSHM && mRenderer)) [[unlikely]] {
     return passthrough();
   }
+  auto snapshot = mSHM.MaybeGet();
+  if (!snapshot) {
+    return passthrough();
+  }
+  const auto config = snapshot.GetConfig();
 
-  if (mLastSequenceNumber != mSHM.GetSequenceNumber() || !mSwapChain)
-    [[unlikely]] {
-    auto snapshot = mSHM.MaybeGet();
-    if (!snapshot) {
+  if (!mSwapChain) [[unlikely]] {
+    if (!mRenderer) [[unlikely]] {
+      OPENKNEEBOARD_BREAK;
       return passthrough();
     }
-    const auto config = snapshot.GetConfig();
-
-    mSwapChain = this->GetSwapChain(session, config);
+    mSwapChain = mRenderer->CreateSwapChain(session);
 
     if (!mSwapChain) {
       return passthrough();
     }
+  }
 
-    if (!mRenderer->Render(session, mSwapChain, snapshot)) {
-      return passthrough();
-    }
-    mLastSequenceNumber = snapshot.GetSequenceNumber();
-    mLastConfig = config;
+  if (!mRenderer->Render(session, mSwapChain, snapshot)) [[unlikely]] {
+    return passthrough();
   }
 
   auto ovr = OVRProxy::Get();
-  auto config = mLastConfig;
-
-  ovrLayerQuad kneeboardLayer = {};
-  kneeboardLayer.Header.Type = ovrLayerType_Quad;
-  // TODO: set ovrLayerFlag_TextureOriginAtBottomLeft for OpenGL?
-  kneeboardLayer.Header.Flags = {ovrLayerFlag_HighQuality};
-  kneeboardLayer.ColorTexture = mSwapChain;
+  const auto predictedTime
+    = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
 
   const auto& vr = config.vr;
-  Vector3 position(vr.mX, vr.mFloorY, vr.mZ);
-  if ((config.vr.mFlags & VRRenderConfig::Flags::HEADLOCKED)) {
-    kneeboardLayer.Header.Flags |= ovrLayerFlag_HeadLocked;
-  } else if (
-    ovr->ovr_GetTrackingOriginType(session) == ovrTrackingOrigin_EyeLevel) {
-    position.y = vr.mEyeY;
-  }
-  kneeboardLayer.QuadPoseCenter.Position = {position.x, position.y, position.z};
+  const auto kneeboardPose = this->GetKneeboardPose(vr, predictedTime);
+  const auto kneeboardSize
+    = this->GetKneeboardSize(config, kneeboardPose, predictedTime);
 
-  // clang-format off
-  auto orientation =
-    Quaternion::CreateFromAxisAngle(Vector3::UnitX, vr.mRX)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitY, vr.mRY)
-    * Quaternion::CreateFromAxisAngle(Vector3::UnitZ, vr.mRZ);
-  // clang-format on
-
-  kneeboardLayer.QuadPoseCenter.Orientation
-    = {orientation.x, orientation.y, orientation.z, orientation.w};
-
-  kneeboardLayer.Viewport.Pos = {.x = 0, .y = 0};
-  kneeboardLayer.Viewport.Size
-    = {.w = config.imageWidth, .h = config.imageHeight};
-
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  const auto virtualHeight = vr.mHeight;
-  const auto virtualWidth = aspectRatio * vr.mHeight;
-
-  const ovrVector2f normalSize(virtualWidth, virtualHeight);
-  const ovrVector2f zoomedSize(
-    virtualWidth * vr.mZoomScale, virtualHeight * vr.mZoomScale);
-
-  if (vr.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
-    mZoomed = true;
-  } else if (!(vr.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)) {
-    mZoomed = false;
-  } else if (
-    vr.mZoomScale < 1.1 || vr.mGazeTargetHorizontalScale < 0.1
-    || vr.mGazeTargetVerticalScale < 0.1) {
-    mZoomed = false;
-  } else {
-    const auto predictedTime
-      = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
-    const auto currentSize = mZoomed ? zoomedSize : normalSize;
-    const auto state = ovr->ovr_GetTrackingState(session, predictedTime, false);
-
-    mZoomed = poseIntersectsRect(
-      state.HeadPose.ThePose,
-      position,
-      orientation,
-      {
-        currentSize.x * vr.mGazeTargetHorizontalScale,
-        currentSize.y * vr.mGazeTargetVerticalScale,
-      });
-  }
-
-  kneeboardLayer.QuadSize = mZoomed ? zoomedSize : normalSize;
+  ovrLayerQuad kneeboardLayer {
+    .Header = { 
+      .Type = ovrLayerType_Quad,
+      .Flags = {ovrLayerFlag_HighQuality},
+    },
+    .ColorTexture = mSwapChain,
+    .Viewport = {
+      .Pos = {0, 0},
+      .Size = { config.imageWidth, config.imageHeight },
+    },
+    .QuadPoseCenter = GetOvrPosef(kneeboardPose),
+    .QuadSize = { kneeboardSize.x, kneeboardSize.y }
+  };
 
   std::vector<const ovrLayerHeader*> newLayers;
   if (layerCount == 0) {
@@ -272,6 +185,15 @@ ovrResult OculusKneeboard::Impl::OnOVREndFrame(
     viewScaleDesc,
     newLayers.data(),
     static_cast<unsigned int>(newLayers.size()));
+}
+
+ovrPosef OculusKneeboard::GetOvrPosef(const Pose& pose) {
+  const auto& p = pose.mPosition;
+  const auto& o = pose.mOrientation;
+  return {
+    .Orientation = {o.x, o.y, o.z, o.w},
+    .Position = {p.x, p.y, p.z},
+  };
 }
 
 }// namespace OpenKneeboard

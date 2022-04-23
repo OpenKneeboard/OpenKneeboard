@@ -37,9 +37,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
 
   void UninstallHook();
 
-  virtual ovrTextureSwapChain CreateSwapChain(
-    ovrSession session,
-    const SHM::Config& config) override;
+  virtual ovrTextureSwapChain CreateSwapChain(ovrSession session) override;
 
   virtual bool Render(
     ovrSession session,

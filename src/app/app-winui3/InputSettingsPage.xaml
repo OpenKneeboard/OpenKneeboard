@@ -71,10 +71,19 @@
         Text="Input Settings"
         Margin="0,0,0,8"
       />
-      <TextBlock 
-        Text="Pen" 
-        Style="{StaticResource SubtitleTextBlockStyle}" 
-        Margin="0,0,0,16" />
+      <Grid ColumnDefinitions="*, Auto">
+        <TextBlock 
+          Grid.Column="0"
+          Text="Drawing" 
+          Style="{StaticResource SubtitleTextBlockStyle}" 
+          Margin="0,0,0,16"
+        />
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreDoodleDefaults"
+        />
+      </Grid>
       <StackPanel 
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
@@ -83,31 +92,41 @@
         Padding="8"
         Margin="0,0,0,8">
         <Slider 
-          Header="Pen stroke size" 
-          Value="{x:Bind WriteRadius, Mode=TwoWay}" 
+          Header="Minimum pen stroke size" 
+          Value="{x:Bind MinimumPenRadius, Mode=TwoWay}" 
           TickPlacement="Outside" 
-          TickFrequency="10" 
+          TickFrequency="5" 
           StepFrequency="1" 
-          Maximum="100" 
-          Minimum="1.0" />
-        <ToggleSwitch 
-          Header="Pressure-sensitive pen stroke size" 
-          OnContent="On" 
-          OffContent="Off" 
-          IsOn="{x:Bind FixedWriteRadius, Mode=TwoWay}" />
+          Maximum="50" 
+          Minimum="0"
+        />
         <Slider 
-          Header="Erase size" 
-          Value="{x:Bind EraseRadius, Mode=TwoWay}" 
+          Header="Pen sensitivity"
+          Value="{x:Bind PenSensitivity, Mode=TwoWay}" 
           TickPlacement="Outside" 
-          TickFrequency="10" 
+          TickFrequency="5" 
           StepFrequency="1" 
-          Maximum="200" 
-          Minimum="1.0" />
-        <ToggleSwitch 
-          Header="Pressure-sensitive erase stroke size" 
-          OnContent="On"
-          OffContent="Off"
-          IsOn="{x:Bind FixedEraseRadius, Mode=TwoWay}" />
+          Maximum="50" 
+          Minimum="0"
+        />
+        <Slider 
+          Header="Minimum eraser size"
+          Value="{x:Bind MinimumEraseRadius, Mode=TwoWay}" 
+          TickPlacement="Outside" 
+          TickFrequency="50" 
+          StepFrequency="1" 
+          Maximum="300" 
+          Minimum="0.0"
+        />
+        <Slider 
+          Header="Eraser sensitivity"
+          Value="{x:Bind EraseSensitivity, Mode=TwoWay}" 
+          TickPlacement="Outside" 
+          TickFrequency="100" 
+          StepFrequency="1" 
+          Maximum="500" 
+          Minimum="1.0"
+        />
       </StackPanel>
       <ItemsRepeater ItemsSource="{x:Bind Devices}">
         <ItemsRepeater.Layout>
