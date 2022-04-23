@@ -65,6 +65,7 @@ class OpenVRKneeboard::Impl final {
 
   bool IsZoomed(const VRRenderConfig&, const Matrix& overlayTransform) const;
   Matrix GetHMDTransform() const;
+  void Tick();
 
   ~Impl() {
     if (!mIVRSystem) {

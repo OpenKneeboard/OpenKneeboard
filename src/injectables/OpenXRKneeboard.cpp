@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/VRKneeboard.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <d3d11.h>
@@ -28,8 +29,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "VRKneeboard.h"
 
 #define XR_USE_GRAPHICS_API_D3D11
 #include <openxr/openxr_platform.h>

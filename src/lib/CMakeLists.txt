@@ -91,6 +91,16 @@ target_link_libraries(
   OpenKneeboard-UTF8
 )
 
+add_library(OpenKneeboard-VRKneeboard INTERFACE)
+target_link_libraries(
+  OpenKneeboard-VRKneeboard
+  INTERFACE
+  _libheaders
+  ThirdParty::DirectXTK
+  OpenKneeboard-RayIntersectsRect
+  OpenKneeboard-SHM
+)
+
 set(VERSION_HEADER_FILE "${CMAKE_CURRENT_BINARY_DIR}/include/OpenKneeboard/version.h")
 add_custom_target(
   OpenKneeboard-version-sources
@@ -124,9 +134,9 @@ target_include_directories(
 
 add_library(OpenKneeboard-OpenXRMode STATIC OpenXRMode.cpp)
 target_link_libraries(
-	OpenKneeboard-OpenXRMode
-	PUBLIC
-	ThirdParty::JSON
+  OpenKneeboard-OpenXRMode
+  PUBLIC
+  ThirdParty::JSON
   _libheaders
 )
 target_link_libraries(

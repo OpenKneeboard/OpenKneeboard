@@ -20,9 +20,9 @@
 #pragma once
 
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/VRKneeboard.h>
 
 #include "OculusEndFrameHook.h"
-#include "VRKneeboard.h"
 
 namespace OpenKneeboard {
 
