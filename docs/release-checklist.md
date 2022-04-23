@@ -7,6 +7,7 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 * SteamVR
   * Gaze zoom before and after recentering
 * Oculus: DX11 and DX12
+* OpenXR: DX11
 * Non-VR: DX11
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys
 * Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
