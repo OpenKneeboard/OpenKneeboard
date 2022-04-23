@@ -21,6 +21,7 @@
 
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/VRKneeboard.h>
 #include <d3d11_1.h>
 #include <openvr.h>
 #include <shims/winrt.h>
@@ -31,15 +32,20 @@
 
 namespace OpenKneeboard {
 
-class OpenVRKneeboard final {
+class OpenVRKneeboard final : private VRKneeboard<float> {
  public:
   OpenVRKneeboard();
   ~OpenVRKneeboard();
 
   bool Run(std::stop_token);
 
+ protected:
+  Pose GetHMDPose(float) override;
+  YOrigin GetYOrigin() override;
+
  private:
   using Matrix = DirectX::SimpleMath::Matrix;
+  float GetDisplayTime();
   bool InitializeOpenVR();
   void Tick();
   void Reset();
@@ -49,21 +55,11 @@ class OpenVRKneeboard final {
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
   vr::VROverlayHandle_t mOverlay {};
-  bool mZoomed = false;
   bool mVisible = true;
   SHM::Reader mSHM;
 
   winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
   uint64_t mSequenceNumber = ~(0ui64);
-  float mUnzoomedWidth = 0;
-  float mZoomedWidth = 0;
-  float mActualWidth = 0;
-
-  int64_t mRecenterCount = 0;
-  Matrix mRecenter = Matrix::Identity;
-
-  bool IsZoomed(const VRRenderConfig&, const Matrix& overlayTransform) const;
-  Matrix GetHMDTransform() const;
 };
 
 }// namespace OpenKneeboard

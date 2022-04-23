@@ -148,10 +148,11 @@ bool OpenVRKneeboard::InitializeOpenVR() {
   return true;
 }
 
+float OpenVRKneeboard::GetDisplayTime() {
+  return 0.0f;// FIXME
+}
+
 void OpenVRKneeboard::Tick() {
-  if (!this->InitializeOpenVR()) {
-    return;
-  }
 #define CHECK(method, ...) \
   if (!overlay_check(mIVROverlay->method(__VA_ARGS__), #method)) { \
     this->Reset(); \
@@ -184,52 +185,27 @@ void OpenVRKneeboard::Tick() {
   }
 
   const auto config = snapshot.GetConfig();
-  const auto& vrConf = config.vr;
+  const auto& vr = config.vr;
 
-  if (vrConf.mRecenterCount != mRecenterCount) {
-    auto m = GetHMDTransform();
+  const auto displayTime = this->GetDisplayTime();
+  const auto pose = this->GetKneeboardPose(vr, displayTime);
+  const auto size = this->GetKneeboardSize(config, pose, displayTime);
 
-    auto translation = m.Translation();
-    translation.y = 0;// Keep using floor level
+  CHECK(SetOverlayWidthInMeters, mOverlay, size.x);
 
-    // Don't adjust pitch or roll - only rotate left-right yaw
-    mRecenter = Matrix::CreateRotationY(m.ToEuler().y)
-      * Matrix::CreateTranslation(translation);
-
-    mRecenterCount = vrConf.mRecenterCount;
-  }
-
+  // Transpose to fit OpenVR's in-memory layout
   // clang-format off
-  auto transform =
-    Matrix::CreateRotationX(vrConf.mRX)
-    * Matrix::CreateRotationY(vrConf.mRY)
-    * Matrix::CreateRotationZ(vrConf.mRZ)
-    * Matrix::CreateTranslation(vrConf.mX, vrConf.mFloorY, vrConf.mZ)
-    * mRecenter;
+  const auto transform = (
+    Matrix::CreateFromQuaternion(pose.mOrientation)
+    * Matrix::CreateTranslation(pose.mPosition)
+  ).Transpose();
   // clang-format on
-
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
-  mUnzoomedWidth = vrConf.mHeight * aspectRatio;
-  mZoomedWidth = mUnzoomedWidth * vrConf.mZoomScale;
-
-  mZoomed = IsZoomed(vrConf, transform);
-  const auto desiredWidth = mZoomed ? mZoomedWidth : mUnzoomedWidth;
-  if (desiredWidth != mActualWidth) {
-    CHECK(SetOverlayWidthInMeters, mOverlay, desiredWidth);
-    mActualWidth = desiredWidth;
-  }
-
-  if (mSequenceNumber == snapshot.GetSequenceNumber()) {
-    return;
-  }
-
-  auto transposed = transform.Transpose();
 
   CHECK(
     SetOverlayTransformAbsolute,
     mOverlay,
     vr::TrackingUniverseStanding,
-    reinterpret_cast<vr::HmdMatrix34_t*>(&transposed));
+    reinterpret_cast<const vr::HmdMatrix34_t*>(&transform));
 
   // Copy the texture as for interoperability with other systems
   // (e.g. DirectX12) we use SHARED_NTHANDLE, but SteamVR doesn't
@@ -260,41 +236,15 @@ void OpenVRKneeboard::Tick() {
 #undef CHECK
 }
 
-bool OpenVRKneeboard::IsZoomed(
-  const VRRenderConfig& vrConf,
-  const Matrix& overlayTransform) const {
-  if (vrConf.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
-    return true;
-  }
-  if (!(vrConf.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)) {
-    return false;
-  }
-  const auto zoomScale = vrConf.mZoomScale;
-  if (
-    zoomScale < 1.1 || vrConf.mGazeTargetHorizontalScale < 0.1
-    || vrConf.mGazeTargetVerticalScale < 0.1) {
-    return false;
-  }
-
-  auto m = GetHMDTransform();
-
-  Vector3 hmdPosition {m.Translation()};
-  Quaternion hmdOrientation {Quaternion::CreateFromRotationMatrix(m)};
-
-  return RayIntersectsRect(
-    hmdPosition,
-    hmdOrientation,
-    overlayTransform.Translation(),
-    Quaternion::CreateFromRotationMatrix(overlayTransform),
-    {(mZoomed ? mZoomedWidth : mUnzoomedWidth)
-       * vrConf.mGazeTargetHorizontalScale,
-     vrConf.mHeight * (mZoomed ? zoomScale : 1)
-       * vrConf.mGazeTargetVerticalScale});
+OpenVRKneeboard::YOrigin OpenVRKneeboard::GetYOrigin() {
+  // Always use floor level due to
+  // https://github.com/ValveSoftware/openvr/issues/830
+  return YOrigin::FLOOR_LEVEL;
 }
 
-Matrix OpenVRKneeboard::GetHMDTransform() const {
+OpenVRKneeboard::Pose OpenVRKneeboard::GetHMDPose(float displayTime) {
   static uint64_t sCacheKey = ~(0ui64);
-  static Matrix sCache {};
+  static Pose sCache {};
 
   if (this->mFrameCounter == sCacheKey) {
     return sCache;
@@ -305,23 +255,27 @@ Matrix OpenVRKneeboard::GetHMDTransform() const {
     .bDeviceIsConnected = false,
   };
   mIVRSystem->GetDeviceToAbsoluteTrackingPose(
-    vr::TrackingUniverseStanding, 0, &hmdPose, 1);
+    vr::TrackingUniverseStanding, displayTime, &hmdPose, 1);
   if (!(hmdPose.bDeviceIsConnected && hmdPose.bPoseIsValid)) {
-    return Matrix::Identity;
+    return {};
   }
 
   const auto& f = hmdPose.mDeviceToAbsoluteTracking.m;
   // clang-format off
-  sCache = {
+  Matrix m {
     f[0][0], f[1][0], f[2][0], 0,
     f[0][1], f[1][1], f[2][1], 0,
     f[0][2], f[1][2], f[2][2], 0,
     f[0][3], f[1][3], f[2][3], 1
   };
   // clang-format on
+  sCache = {
+    .mPosition = m.Translation(),
+    .mOrientation = Quaternion::CreateFromRotationMatrix(m),
+  };
   sCacheKey = mFrameCounter;
   return sCache;
-}
+}// namespace OpenKneeboard
 
 static bool IsSteamVRRunning() {
   // We 'should' just call `vr::VR_Init()` and check the result, but it leaks:
@@ -371,7 +325,9 @@ bool OpenVRKneeboard::Run(std::stop_token stopToken) {
       continue;
     }
 
-    this->Tick();
+    if (this->InitializeOpenVR()) {
+      this->Tick();
+    }
     std::this_thread::sleep_for(mIVRSystem ? frameSleep : inactiveSleep);
   }
   dprint("Shutting down OpenVR support - stop requested");
