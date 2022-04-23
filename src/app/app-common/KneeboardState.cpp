@@ -23,7 +23,7 @@
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/OpenVROverlay.h>
+#include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
@@ -474,7 +474,7 @@ void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
 void KneeboardState::StartOpenVRThread() {
   mOpenVRThread = std::jthread([](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
-    OpenVROverlay().Run(stopToken);
+    OpenVRKneeboard().Run(stopToken);
   });
 }
 

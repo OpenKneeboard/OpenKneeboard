@@ -25,14 +25,14 @@
 
 namespace OpenKneeboard {
 
-class OpenVROverlay final {
+class OpenVRKneeboard final {
  private:
   class Impl;
   std::unique_ptr<Impl> p;
 
  public:
-  OpenVROverlay();
-  ~OpenVROverlay();
+  OpenVRKneeboard();
+  ~OpenVRKneeboard();
 
   bool Run(std::stop_token);
 

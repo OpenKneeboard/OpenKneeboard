@@ -18,7 +18,7 @@
  * USA.
  */
 #include <DirectXTK/SimpleMath.h>
-#include <OpenKneeboard/OpenVROverlay.h>
+#include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
@@ -39,7 +39,7 @@ using namespace DirectX::SimpleMath;
 
 namespace OpenKneeboard {
 
-class OpenVROverlay::Impl final {
+class OpenVRKneeboard::Impl final {
  private:
   winrt::com_ptr<ID3D11Device1> mD3D;
 
@@ -74,10 +74,10 @@ class OpenVROverlay::Impl final {
   }
 };
 
-OpenVROverlay::OpenVROverlay() : p(std::make_unique<Impl>()) {
+OpenVRKneeboard::OpenVRKneeboard() : p(std::make_unique<Impl>()) {
 }
 
-OpenVROverlay::~OpenVROverlay() {
+OpenVRKneeboard::~OpenVRKneeboard() {
 }
 
 static bool overlay_check(vr::EVROverlayError err, const char* method) {
@@ -91,7 +91,7 @@ static bool overlay_check(vr::EVROverlayError err, const char* method) {
   return false;
 }
 
-void OpenVROverlay::Tick() {
+void OpenVRKneeboard::Tick() {
   if (!p->mIVRSystem) {
     vr::EVRInitError err;
     p->mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
@@ -265,7 +265,7 @@ void OpenVROverlay::Tick() {
 #undef CHECK
 }
 
-bool OpenVROverlay::Impl::IsZoomed(
+bool OpenVRKneeboard::Impl::IsZoomed(
   const VRRenderConfig& vrConf,
   const Matrix& overlayTransform) const {
   if (vrConf.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
@@ -297,7 +297,7 @@ bool OpenVROverlay::Impl::IsZoomed(
        * vrConf.mGazeTargetVerticalScale});
 }
 
-Matrix OpenVROverlay::Impl::GetHMDTransform() const {
+Matrix OpenVRKneeboard::Impl::GetHMDTransform() const {
   static uint64_t sCacheKey = ~(0ui64);
   static Matrix sCache {};
 
@@ -328,7 +328,7 @@ Matrix OpenVROverlay::Impl::GetHMDTransform() const {
   return sCache;
 }
 
-ID3D11Device1* OpenVROverlay::Impl::D3D() {
+ID3D11Device1* OpenVRKneeboard::Impl::D3D() {
   if (mD3D) {
     return mD3D.get();
   }
@@ -380,7 +380,7 @@ static bool IsSteamVRRunning() {
   return false;
 }
 
-bool OpenVROverlay::Run(std::stop_token stopToken) {
+bool OpenVRKneeboard::Run(std::stop_token stopToken) {
   if (!vr::VR_IsRuntimeInstalled()) {
     dprint("Stopping OpenVR support, no runtime installed.");
     return true;
