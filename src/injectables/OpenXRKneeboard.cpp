@@ -524,8 +524,6 @@ XrResult __declspec(dllexport) XRAPI_CALL
     XrNegotiateApiLayerRequest* apiLayerRequest) {
   DPrintSettings::Set({
     .prefix = "OpenKneeboard-OpenXR",
-    .target = DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM,
-    .prefixTarget = DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM,
   });
   dprintf("{}", __FUNCTION__);
 
