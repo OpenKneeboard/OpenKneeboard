@@ -120,8 +120,11 @@ void TabSettingsPage::CreateTab(
   }
 #define IT(_, type) \
   if (tabType == TabType::type) { \
-    if constexpr (std::constructible_from<type##Tab, DXResources>) { \
-      AddTab(std::make_shared<type##Tab>(gDXResources)); \
+    if constexpr (std::constructible_from< \
+                    type##Tab, \
+                    DXResources, \
+                    KneeboardState*>) { \
+      AddTab(std::make_shared<type##Tab>(gDXResources, gKneeboard.get())); \
       return; \
     } else { \
       throw std::logic_error( \
