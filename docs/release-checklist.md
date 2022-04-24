@@ -16,7 +16,7 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 * XBox controller
 * Physical joystick/throttle
 * VJoy controller
-* adding, removing, reordering tabs
+* adding, removing, reordering tabs, including DCS tabs
 * adding, removing games
 * finding DCS from empty games list
 * DCS integration test utilities: `fake-dcs.exe` and `test-gameevent-feeder.exe`
