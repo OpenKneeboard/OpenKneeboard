@@ -104,7 +104,7 @@ fire_and_forget TabSettingsPage::RemoveTab(
 
 void TabSettingsPage::CreateTab(
   const IInspectable& sender,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   auto tabType = static_cast<TabType>(
     unbox_value<uint64_t>(sender.as<MenuFlyoutItem>().Tag()));
   switch (tabType) {
