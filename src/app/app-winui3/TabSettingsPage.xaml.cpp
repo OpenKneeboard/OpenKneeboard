@@ -207,7 +207,7 @@ void TabSettingsPage::AddTab(const std::shared_ptr<Tab>& tab) {
 
 void TabSettingsPage::OnTabsChanged(
   const IInspectable&,
-  const Windows::Foundation::Collections::IVectorChangedEventArgs&) {
+  const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept {
   // For add/remove, the kneeboard state is updated first, but for reorder,
   // the ListView is the source of truth.
   //

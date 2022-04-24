@@ -48,20 +48,22 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
 
   winrt::fire_and_forget AddRunningProcess(
     const IInspectable&,
-    const RoutedEventArgs&);
+    const RoutedEventArgs&) noexcept;
   winrt::fire_and_forget RemoveGame(
     const IInspectable&,
-    const RoutedEventArgs&);
-  winrt::fire_and_forget AddExe(const IInspectable&, const RoutedEventArgs&);
+    const RoutedEventArgs&) noexcept;
+  winrt::fire_and_forget AddExe(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
   winrt::fire_and_forget ChangeDCSSavedGamesPath(
     const IInspectable&,
-    const RoutedEventArgs&);
+    const RoutedEventArgs&) noexcept;
 
-  IVector<IInspectable> Games();
+  IVector<IInspectable> Games() noexcept;
 
   void OnOverlayAPIChanged(
     const IInspectable&,
-    const SelectionChangedEventArgs&);
+    const SelectionChangedEventArgs&) noexcept;
 
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
@@ -109,8 +111,8 @@ struct DCSWorldInstanceUIData
       OpenKneeboardApp::implementation::GameInstanceUIData> {
   DCSWorldInstanceUIData() = default;
 
-  hstring SavedGamesPath();
-  void SavedGamesPath(const hstring&);
+  hstring SavedGamesPath() noexcept;
+  void SavedGamesPath(const hstring&) noexcept;
 
  private:
   hstring mSavedGamesPath;

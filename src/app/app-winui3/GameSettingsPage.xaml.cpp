@@ -62,7 +62,7 @@ void GameSettingsPage::UpdateGames() {
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Games"));
 }
 
-IVector<IInspectable> GameSettingsPage::Games() {
+IVector<IInspectable> GameSettingsPage::Games() noexcept {
   auto games = gKneeboard->GetGamesList()->GetGameInstances();
   std::ranges::sort(
     games, [](auto& a, auto& b) { return a->mName < b->mName; });
@@ -98,7 +98,7 @@ GameSettingsPage::~GameSettingsPage() {
 
 winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
 
@@ -129,7 +129,7 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
 
 winrt::fire_and_forget GameSettingsPage::AddExe(
   const IInspectable& sender,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   auto picker = Windows::Storage::Pickers::FileOpenPicker();
   picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
   picker.SettingsIdentifier(L"openkneeboard/addGameExe");
@@ -149,7 +149,7 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
 }
 
 static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
-  const IInspectable& sender) {
+  const IInspectable& sender) noexcept {
   const auto instanceID
     = unbox_value<uint64_t>(sender.as<FrameworkElement>().Tag());
 
@@ -167,7 +167,7 @@ static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
 
 void GameSettingsPage::OnOverlayAPIChanged(
   const IInspectable& sender,
-  const SelectionChangedEventArgs&) {
+  const SelectionChangedEventArgs&) noexcept {
   const auto instance = GetGameInstanceFromSender(sender);
 
   if (!instance) {
@@ -186,7 +186,7 @@ void GameSettingsPage::OnOverlayAPIChanged(
 
 winrt::fire_and_forget GameSettingsPage::RemoveGame(
   const IInspectable& sender,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   auto instance = GetGameInstanceFromSender(sender);
   if (!instance) {
     co_return;
@@ -218,7 +218,7 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
 
 winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
   const IInspectable& sender,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   auto instance = std::dynamic_pointer_cast<DCSWorldInstance>(
     GetGameInstanceFromSender(sender));
   if (!instance) {
@@ -334,11 +334,11 @@ void GameInstanceUIData::OverlayAPI(uint8_t value) {
   mOverlayAPI = value;
 }
 
-hstring DCSWorldInstanceUIData::SavedGamesPath() {
+hstring DCSWorldInstanceUIData::SavedGamesPath() noexcept {
   return mSavedGamesPath;
 }
 
-void DCSWorldInstanceUIData::SavedGamesPath(const hstring& value) {
+void DCSWorldInstanceUIData::SavedGamesPath(const hstring& value) noexcept {
   mSavedGamesPath = value;
 }
 

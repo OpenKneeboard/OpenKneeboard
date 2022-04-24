@@ -97,7 +97,7 @@ void TabPage::InitializePointerSource() {
   });
 }
 
-void TabPage::OnNavigatedTo(const NavigationEventArgs& args) {
+void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   const auto id = winrt::unbox_value<uint64_t>(args.Parameter());
   for (auto tab: gKneeboard->GetTabs()) {
     if (tab->GetInstanceID() != id) {
@@ -127,7 +127,7 @@ void TabPage::UpdateButtons() {
 
 void TabPage::OnCanvasSizeChanged(
   const IInspectable&,
-  const SizeChangedEventArgs& args) {
+  const SizeChangedEventArgs& args) noexcept {
   auto size = args.NewSize();
   if (size.Width < 1 || size.Height < 1) {
     mSwapChain = nullptr;
@@ -257,7 +257,7 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
 
 void TabPage::OnPointerEvent(
   const IInspectable&,
-  const PointerEventArgs& args) {
+  const PointerEventArgs& args) noexcept {
   for (auto pp: args.GetIntermediatePoints()) {
     this->QueuePointerPoint(pp);
   }
@@ -305,13 +305,13 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
 
 void TabPage::EnableNavigationMode(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   mState->SetTabMode(TabMode::NAVIGATION);
 }
 
 void TabPage::DisableNavigationMode(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   // If navigation is disabled via some other method such as selecting a page
   // to navigate to, the toolbar button for navigation mode will be
   // programatically unchecked, which triggers the event handler, which means
@@ -323,19 +323,19 @@ void TabPage::DisableNavigationMode(
 
 void TabPage::OnFirstPageButtonClicked(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   mState->SetPageIndex(0);
 }
 
 void TabPage::OnPreviousPageButtonClicked(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   mState->PreviousPage();
 }
 
 void TabPage::OnNextPageButtonClicked(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   mState->NextPage();
 }
 

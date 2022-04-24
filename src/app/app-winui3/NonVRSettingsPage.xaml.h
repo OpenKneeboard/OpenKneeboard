@@ -29,7 +29,9 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct NonVRSettingsPage : NonVRSettingsPageT<NonVRSettingsPage> {
   NonVRSettingsPage();
 
-  fire_and_forget RestoreDefaults(const IInspectable&, const RoutedEventArgs&);
+  fire_and_forget RestoreDefaults(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
 
   uint8_t KneeboardHeightPercent();
   void KneeboardHeightPercent(uint8_t value);

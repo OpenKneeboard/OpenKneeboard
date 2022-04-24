@@ -32,7 +32,7 @@ using namespace winrt::Microsoft::UI::Xaml;
 namespace winrt::OpenKneeboardApp::implementation {
 struct AboutPage : AboutPageT<AboutPage> {
   AboutPage();
-  void OnCopyClick(const IInspectable&, const RoutedEventArgs&);
+  void OnCopyClick(const IInspectable&, const RoutedEventArgs&) noexcept;
 
  private:
   std::string mData;

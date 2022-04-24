@@ -32,7 +32,7 @@ SettingsPage::SettingsPage() {
 
 void SettingsPage::OnItemClick(
   const IInspectable&,
-  const ItemClickEventArgs& args) {
+  const ItemClickEventArgs& args) noexcept {
   auto item = args.ClickedItem();
   if (!item) {
     return;

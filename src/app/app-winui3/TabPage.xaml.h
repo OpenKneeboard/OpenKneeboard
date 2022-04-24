@@ -46,15 +46,27 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   TabPage();
   ~TabPage();
 
-  void OnNavigatedTo(const NavigationEventArgs&);
-  void OnCanvasSizeChanged(const IInspectable&, const SizeChangedEventArgs&);
-  void OnPointerEvent(const IInspectable&, const PointerEventArgs&);
-  void OnFirstPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
-  void OnPreviousPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
-  void OnNextPageButtonClicked(const IInspectable&, const RoutedEventArgs&);
+  void OnNavigatedTo(const NavigationEventArgs&) noexcept;
+  void OnCanvasSizeChanged(
+    const IInspectable&,
+    const SizeChangedEventArgs&) noexcept;
+  void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
+  void OnFirstPageButtonClicked(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+  void OnPreviousPageButtonClicked(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+  void OnNextPageButtonClicked(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
 
-  void EnableNavigationMode(const IInspectable&, const RoutedEventArgs&);
-  void DisableNavigationMode(const IInspectable&, const RoutedEventArgs&);
+  void EnableNavigationMode(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+  void DisableNavigationMode(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
 
  private:
   std::shared_ptr<TabState> mState;

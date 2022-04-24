@@ -94,13 +94,13 @@ ProcessListPage::ProcessListPage() {
 ProcessListPage::~ProcessListPage() {
 }
 
-hstring ProcessListPage::SelectedPath() {
+hstring ProcessListPage::SelectedPath() noexcept {
   return mSelectedPath;
 }
 
 void ProcessListPage::OnListSelectionChanged(
   const IInspectable&,
-  const SelectionChangedEventArgs& args) {
+  const SelectionChangedEventArgs& args) noexcept {
   if (args.AddedItems().Size() == 0) {
     mSelectedPath = {};
   } else {
@@ -111,7 +111,7 @@ void ProcessListPage::OnListSelectionChanged(
 }
 
 winrt::event_token ProcessListPage::SelectionChanged(
-  winrt::Windows::Foundation::EventHandler<hstring> const& handler) {
+  winrt::Windows::Foundation::EventHandler<hstring> const& handler) noexcept {
   return mSelectionChangedEvent.add(handler);
 }
 

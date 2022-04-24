@@ -44,7 +44,7 @@ VRSettingsPage::VRSettingsPage() {
 
 fire_and_forget VRSettingsPage::RestoreDefaults(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));

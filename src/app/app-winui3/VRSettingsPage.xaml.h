@@ -29,7 +29,9 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   VRSettingsPage();
 
-  fire_and_forget RestoreDefaults(const IInspectable&, const RoutedEventArgs&);
+  fire_and_forget RestoreDefaults(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
 
   float KneeboardX();
   void KneeboardX(float value);

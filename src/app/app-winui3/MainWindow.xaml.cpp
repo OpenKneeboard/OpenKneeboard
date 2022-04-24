@@ -193,7 +193,7 @@ void MainWindow::OnTabsChanged() {
 
 void MainWindow::OnNavigationItemInvoked(
   const IInspectable&,
-  const NavigationViewItemInvokedEventArgs& args) {
+  const NavigationViewItemInvokedEventArgs& args) noexcept {
   if (args.IsSettingsInvoked()) {
     Frame().Navigate(xaml_typename<SettingsPage>());
     return;
@@ -224,7 +224,9 @@ void MainWindow::OnNavigationItemInvoked(
   gKneeboard->SetTabID(tabID);
 }
 
-void MainWindow::OnBackClick(const IInspectable&, const RoutedEventArgs&) {
+void MainWindow::OnBackClick(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
   Frame().GoBack();
 }
 

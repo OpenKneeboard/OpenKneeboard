@@ -33,7 +33,7 @@ using namespace winrt::Windows::Foundation::Collections;
 namespace winrt::OpenKneeboardApp::implementation {
 struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
   InputSettingsPage();
-  IVector<IInspectable> Devices();
+  IVector<IInspectable> Devices() noexcept;
   void OnOrientationChanged(
     const IInspectable&,
     const SelectionChangedEventArgs&);
@@ -48,7 +48,7 @@ struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
   uint32_t EraseSensitivity();
   void EraseSensitivity(uint32_t value);
 
-  void RestoreDoodleDefaults(const IInspectable&, const IInspectable&);
+  void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
 
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&

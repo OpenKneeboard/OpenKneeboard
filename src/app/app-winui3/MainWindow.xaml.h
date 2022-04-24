@@ -37,8 +37,10 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
 
   void OnNavigationItemInvoked(
     const IInspectable& sender,
-    const NavigationViewItemInvokedEventArgs& args);
-  void OnBackClick(const IInspectable& sender, const RoutedEventArgs& args);
+    const NavigationViewItemInvokedEventArgs& args) noexcept;
+  void OnBackClick(
+    const IInspectable& sender,
+    const RoutedEventArgs& args) noexcept;
 
  private:
   HWND mHwnd;

@@ -40,7 +40,7 @@ NonVRSettingsPage::NonVRSettingsPage() {
 
 fire_and_forget NonVRSettingsPage::RestoreDefaults(
   const IInspectable&,
-  const RoutedEventArgs&) {
+  const RoutedEventArgs&) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
   dialog.Title(box_value(to_hstring(_("Restore defaults?"))));

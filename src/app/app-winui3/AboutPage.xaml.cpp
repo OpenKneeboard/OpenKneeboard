@@ -101,7 +101,7 @@ AboutPage::AboutPage() {
   mData = "OpenKneeboard\n" + details;
 }
 
-void AboutPage::OnCopyClick(const IInspectable&, const RoutedEventArgs&) {
+void AboutPage::OnCopyClick(const IInspectable&, const RoutedEventArgs&) noexcept {
   Windows::ApplicationModel::DataTransfer::DataPackage package;
   package.SetText(winrt::to_hstring(mData));
   Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);

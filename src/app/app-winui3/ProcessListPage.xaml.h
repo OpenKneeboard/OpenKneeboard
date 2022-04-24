@@ -31,14 +31,14 @@ struct ProcessListPage : ProcessListPageT<ProcessListPage> {
   ProcessListPage();
   ~ProcessListPage();
 
-  hstring SelectedPath();
+  hstring SelectedPath() noexcept;
   winrt::event_token SelectionChanged(
-    winrt::Windows::Foundation::EventHandler<hstring> const& handler);
+    winrt::Windows::Foundation::EventHandler<hstring> const& handler) noexcept;
   void SelectionChanged(winrt::event_token const& token) noexcept;
 
   void OnListSelectionChanged(
     const IInspectable&,
-    const SelectionChangedEventArgs&);
+    const SelectionChangedEventArgs&) noexcept;
 
  private:
   winrt::event<Windows::Foundation::EventHandler<hstring>>

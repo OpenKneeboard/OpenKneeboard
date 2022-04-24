@@ -43,7 +43,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
   void OnTabsChanged(
     const IInspectable&,
-    const Windows::Foundation::Collections::IVectorChangedEventArgs&);
+    const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
 
  private:
   template <class T>

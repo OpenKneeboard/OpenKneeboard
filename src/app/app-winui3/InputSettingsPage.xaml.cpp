@@ -48,7 +48,7 @@ void InputSettingsPage::PropertyChanged(
   mPropertyChangedEvent.remove(token);
 }
 
-IVector<IInspectable> InputSettingsPage::Devices() {
+IVector<IInspectable> InputSettingsPage::Devices() noexcept {
   auto devices {winrt::single_threaded_vector<IInspectable>()};
   for (const auto& device: gKneeboard->GetInputDevices()) {
     OpenKneeboardApp::InputDeviceUIData deviceData {nullptr};
@@ -127,7 +127,7 @@ void InputSettingsPage::EraseSensitivity(uint32_t value) {
 
 void InputSettingsPage::RestoreDoodleDefaults(
   const IInspectable&,
-  const IInspectable&) {
+  const IInspectable&) noexcept {
   gKneeboard->SetDoodleSettings({});
 
   for (auto prop: {
