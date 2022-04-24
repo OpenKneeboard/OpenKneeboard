@@ -100,6 +100,7 @@ class TestViewerWindow final {
     SetTimer(mHwnd, /* id = */ 1, 1000 / 60, nullptr);
 
     mDXR = DXResources::Create();
+    mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
     mErrorRenderer
       = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext.get());
@@ -336,8 +337,8 @@ class TestViewerWindow final {
     const auto scalex = float(clientSize.width) / config.imageWidth;
     const auto scaley = float(clientSize.height) / config.imageHeight;
     const auto scale = std::min(scalex, scaley);
-    const auto renderWidth = config.imageWidth * scale;
-    const auto renderHeight = config.imageHeight * scale;
+    const auto renderWidth = static_cast<uint32_t>(config.imageWidth * scale);
+    const auto renderHeight = static_cast<uint32_t>(config.imageHeight * scale);
 
     const auto renderLeft = (clientSize.width - renderWidth) / 2;
     const auto renderTop = (clientSize.height - renderHeight) / 2;
@@ -368,6 +369,7 @@ class TestViewerWindow final {
     // Align the top-left pixel of the brush
     bg->SetTransform(
       D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
+
     ctx->FillRectangle(pageRect, bg);
     ctx->SetTransform(D2D1::IdentityMatrix());
 
