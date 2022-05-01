@@ -178,8 +178,8 @@ bool TabState::SetTabMode(TabMode mode) {
     OPENKNEEBOARD_BREAK;
   }
 
-  evPageChangedEvent.Emit();
-  evNeedsRepaintEvent.Emit();
+  evPageChangedEvent.EmitFromMainThread();
+  evNeedsRepaintEvent.EmitFromMainThread();
 
   return true;
 }
