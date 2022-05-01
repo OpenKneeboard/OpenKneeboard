@@ -27,16 +27,17 @@ NavigationTab::NavigationTab(
   const DXResources& dxr,
   Tab* rootTab,
   const std::vector<Entry>& entries,
-  const D2D1_SIZE_U& preferredSize)
+  const D2D1_SIZE_U& _ignoredPreferredSize)
   : mDXR(dxr),
     mRootTab(rootTab),
-    mPreferredSize(preferredSize),
+    mPreferredSize({1024, 768}),
     mPreviewLayer(dxr) {
-  const auto columns = entries.size() >= 10 ? std::max(
-                         1ui32,
-                         static_cast<uint32_t>(
-                           (preferredSize.width * 1.5f) / preferredSize.height))
-                                            : 1;
+  const auto columns = entries.size() >= 10
+    ? std::max(
+      1ui32,
+      static_cast<uint32_t>(
+        (mPreferredSize.width * 1.5f) / mPreferredSize.height))
+    : 1;
   const auto entriesPerPage
     = std::min<size_t>(std::max<size_t>(20, 10 * columns), entries.size());
   const auto entriesPerColumn = entriesPerPage / columns;
@@ -49,7 +50,7 @@ NavigationTab::NavigationTab(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    preferredSize.height / (3.0f * (entriesPerColumn + 1)),
+    mPreferredSize.height / (3.0f * (entriesPerColumn + 1)),
     L"",
     mTextFormat.put()));
 
@@ -96,7 +97,7 @@ NavigationTab::NavigationTab(
   const D2D1_RECT_F topRect {
     .left = padding,
     .top = 2 * padding,
-    .right = (preferredSize.width / columns) - padding,
+    .right = (mPreferredSize.width / columns) - padding,
     .bottom = (2 * padding) + rowHeight,
   };
   auto rect = topRect;
@@ -119,7 +120,7 @@ NavigationTab::NavigationTab(
         mEntries.push_back({});
         pageEntries = &mEntries.back();
       } else {
-        const auto translateX = column * (preferredSize.width / columns);
+        const auto translateX = column * (mPreferredSize.width / columns);
         rect.left += translateX;
         rect.right += translateX;
       }
