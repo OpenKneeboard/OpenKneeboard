@@ -208,6 +208,14 @@ void PDFTab::Reload() {
       auto pageData = WalkPages(qpdf);
       auto outlines = odh.getTopLevelOutlines();
       p->mBookmarks = GetNavigationEntries(pageData, outlines);
+      if (p->mBookmarks.size() < 2) {
+        p->mBookmarks.clear();
+        const auto pageCount = p->mPDFDocument.PageCount();
+        for (uint16_t i = 0; i < pageCount; ++i) {
+          p->mBookmarks.push_back(
+            {fmt::format(fmt::runtime(_("Page {}")), i + 1), i});
+        }
+      }
 
       for (const auto& [_handle, page]: pageData) {
         if (page.mInternalLinks.empty()) {
@@ -404,7 +412,7 @@ void PDFTab::SetPath(const std::filesystem::path& path) {
 }
 
 bool PDFTab::IsNavigationAvailable() const {
-  return p->mBookmarks.size() > 1;
+  return p->mBookmarks.size() > 1 || this->GetPageCount() > 2;
 }
 
 std::shared_ptr<Tab> PDFTab::CreateNavigationTab(uint16_t pageIndex) {
