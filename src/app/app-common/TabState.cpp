@@ -142,8 +142,6 @@ bool TabState::SupportsTabMode(TabMode mode) const {
 
 bool TabState::SetTabMode(TabMode mode) {
   if (mTabMode == mode || !SupportsTabMode(mode)) {
-    // Shouldn't have been called
-    OPENKNEEBOARD_BREAK;
     return false;
   }
 
