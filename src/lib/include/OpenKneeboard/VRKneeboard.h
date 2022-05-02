@@ -37,17 +37,28 @@ class VRKneeboard {
     Quaternion mOrientation {};
   };
 
-  struct Sizes {
-    Vector2 mNormalSize;
-    Vector2 mZoomedSize;
-  };
-
   enum class YOrigin {
     FLOOR_LEVEL,
     EYE_LEVEL,
   };
 
   virtual YOrigin GetYOrigin() = 0;
+
+  struct RenderParameters {
+    Pose mKneeboardPose;
+    Vector2 mKneeboardSize;
+  };
+
+  RenderParameters GetRenderParameters(const SHM::Config&, const Pose& hmdPose);
+
+ private:
+  struct Sizes {
+    Vector2 mNormalSize;
+    Vector2 mZoomedSize;
+  };
+
+  uint64_t mRecenterCount = 0;
+  Matrix mRecenter = Matrix::Identity;
 
   Pose GetKneeboardPose(const VRRenderConfig& vr, const Pose& hmdPose);
 
@@ -59,10 +70,6 @@ class VRKneeboard {
     const SHM::Config& config,
     const Pose& hmdPose,
     const Pose& kneeboardPose);
-
- private:
-  uint64_t mRecenterCount = 0;
-  Matrix mRecenter = Matrix::Identity;
 
   bool IsGazeEnabled(const VRRenderConfig& vr);
   Sizes GetSizes(const SHM::Config& config) const;

@@ -281,14 +281,8 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   auto config = snapshot.GetConfig();
 
   const auto displayTime = frameEndInfo->displayTime;
-
-  const auto& vr = config.vr;
-  const auto hmdPose = this->GetHMDPose(displayTime);
-  const auto kneeboardPose = this->GetKneeboardPose(vr, hmdPose);
-  const auto isLookingAtKneeboard
-    = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
-  const auto kneeboardSize
-    = this->GetKneeboardSize(config, isLookingAtKneeboard);
+  const auto renderParams
+    = this->GetRenderParameters(config, this->GetHMDPose(displayTime));
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   std::copy(
@@ -315,8 +309,8 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
       },
       .imageArrayIndex = 0,
     },
-    .pose = this->GetXrPosef(kneeboardPose),
-    .size = { kneeboardSize.x, kneeboardSize.y },
+    .pose = this->GetXrPosef(renderParams.mKneeboardPose),
+    .size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
   };
   nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
 

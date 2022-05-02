@@ -122,13 +122,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
 
-  const auto& vr = config.vr;
-  const auto hmdPose = this->GetHMDPose(predictedTime);
-  const auto kneeboardPose = this->GetKneeboardPose(vr, hmdPose);
-  const auto isLookingAtKneeboard
-    = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
-  const auto kneeboardSize
-    = this->GetKneeboardSize(config, isLookingAtKneeboard);
+  const auto renderParams
+    = this->GetRenderParameters(config, this->GetHMDPose(predictedTime));
 
   ovrLayerQuad kneeboardLayer {
     .Header = { 
@@ -140,8 +135,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       .Pos = {0, 0},
       .Size = { config.imageWidth, config.imageHeight },
     },
-    .QuadPoseCenter = GetOvrPosef(kneeboardPose),
-    .QuadSize = { kneeboardSize.x, kneeboardSize.y }
+    .QuadPoseCenter = GetOvrPosef(renderParams.mKneeboardPose),
+    .QuadSize = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y }
   };
 
   std::vector<const ovrLayerHeader*> newLayers;

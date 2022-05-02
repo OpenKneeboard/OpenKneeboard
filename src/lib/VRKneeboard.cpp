@@ -106,6 +106,20 @@ void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
   mRecenterCount = vr.mRecenterCount;
 }
 
+VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
+  const SHM::Config& config,
+  const Pose& hmdPose) {
+  const auto kneeboardPose = this->GetKneeboardPose(config.vr, hmdPose);
+  const auto isLookingAtKneeboard
+    = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
+  const auto kneeboardSize
+    = this->GetKneeboardSize(config, isLookingAtKneeboard);
+  return {
+    .mKneeboardPose = kneeboardPose,
+    .mKneeboardSize = kneeboardSize,
+  };
+}
+
 bool VRKneeboard::IsLookingAtKneeboard(
   const SHM::Config& config,
   const Pose& hmdPose,

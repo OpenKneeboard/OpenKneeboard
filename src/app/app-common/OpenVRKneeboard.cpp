@@ -185,22 +185,17 @@ void OpenVRKneeboard::Tick() {
   }
 
   const auto config = snapshot.GetConfig();
-  const auto& vr = config.vr;
-
   const auto displayTime = this->GetDisplayTime();
-  const auto hmdPose = this->GetHMDPose(displayTime);
-  const auto kneeboardPose = this->GetKneeboardPose(vr, hmdPose);
-  const auto isLookingAtKneeboard
-    = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
-  const auto size = this->GetKneeboardSize(config, isLookingAtKneeboard);
+  const auto renderParams
+    = this->GetRenderParameters(config, this->GetHMDPose(displayTime));
 
-  CHECK(SetOverlayWidthInMeters, mOverlay, size.x);
+  CHECK(SetOverlayWidthInMeters, mOverlay, renderParams.mKneeboardSize.x);
 
   // Transpose to fit OpenVR's in-memory layout
   // clang-format off
   const auto transform = (
-    Matrix::CreateFromQuaternion(kneeboardPose.mOrientation)
-    * Matrix::CreateTranslation(kneeboardPose.mPosition)
+    Matrix::CreateFromQuaternion(renderParams.mKneeboardPose.mOrientation)
+    * Matrix::CreateTranslation(renderParams.mKneeboardPose.mPosition)
   ).Transpose();
   // clang-format on
 
