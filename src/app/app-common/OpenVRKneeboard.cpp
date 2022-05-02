@@ -190,7 +190,9 @@ void OpenVRKneeboard::Tick() {
   const auto displayTime = this->GetDisplayTime();
   const auto hmdPose = this->GetHMDPose(displayTime);
   const auto kneeboardPose = this->GetKneeboardPose(vr, hmdPose);
-  const auto size = this->GetKneeboardSize(config, hmdPose, kneeboardPose);
+  const auto isLookingAtKneeboard
+    = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
+  const auto size = this->GetKneeboardSize(config, isLookingAtKneeboard);
 
   CHECK(SetOverlayWidthInMeters, mOverlay, size.x);
 

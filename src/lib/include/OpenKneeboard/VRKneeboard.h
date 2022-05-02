@@ -53,6 +53,10 @@ class VRKneeboard {
 
   Vector2 GetKneeboardSize(
     const SHM::Config& config,
+    bool isLookingAtKneeboard);
+
+  bool IsLookingAtKneeboard(
+    const SHM::Config& config,
     const Pose& hmdPose,
     const Pose& kneeboardPose);
 
@@ -64,11 +68,6 @@ class VRKneeboard {
   Sizes GetSizes(const SHM::Config& config) const;
 
   void Recenter(const VRRenderConfig& vr, const Pose& hmdPose);
-
-  bool IsLookingAtKneeboard(
-    const SHM::Config& config,
-    const Pose& hmdPose,
-    const Pose& kneeboardPose);
 };
 
 }// namespace OpenKneeboard

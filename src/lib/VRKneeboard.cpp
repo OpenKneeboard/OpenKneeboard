@@ -46,15 +46,12 @@ VRKneeboard::Pose VRKneeboard::GetKneeboardPose(
 
 Vector2 VRKneeboard::GetKneeboardSize(
   const SHM::Config& config,
-  const Pose& hmdPose,
-  const Pose& kneeboardPose) {
+  bool isLookingAtKneeboard) {
   const auto sizes = this->GetSizes(config);
   if (!this->IsGazeEnabled(config.vr)) {
     return sizes.mNormalSize;
   }
-  return this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose)
-    ? sizes.mZoomedSize
-    : sizes.mNormalSize;
+  return isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
 }
 
 bool VRKneeboard::IsGazeEnabled(const VRRenderConfig& vr) {

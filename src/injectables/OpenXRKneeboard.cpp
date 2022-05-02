@@ -285,8 +285,10 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   const auto& vr = config.vr;
   const auto hmdPose = this->GetHMDPose(displayTime);
   const auto kneeboardPose = this->GetKneeboardPose(vr, hmdPose);
+  const auto isLookingAtKneeboard
+    = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
   const auto kneeboardSize
-    = this->GetKneeboardSize(config, hmdPose, kneeboardPose);
+    = this->GetKneeboardSize(config, isLookingAtKneeboard);
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   std::copy(
