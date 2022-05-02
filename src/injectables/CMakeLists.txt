@@ -45,6 +45,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
+  OpenKneeboard-VRKneeboard
   directxtk)
 
 add_library(openvr-hooks STATIC IVRCompositorWaitGetPosesHook.cpp)
@@ -109,6 +110,7 @@ target_link_libraries(
   OpenKneeboard-scope_guard
   OpenKneeboard-shims
   OpenKneeboard-SHM
+  OpenKneeboard-VRKneeboard
   NuGet::CppWinRT::Base
 )
 

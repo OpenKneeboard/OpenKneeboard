@@ -23,6 +23,7 @@ set(
   OpenKneeboard-GetSystemColor
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-OpenXRMode
+  OpenKneeboard-VRKneeboard
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-SHM
   OpenKneeboard-UTF8

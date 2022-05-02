@@ -91,10 +91,10 @@ target_link_libraries(
   OpenKneeboard-UTF8
 )
 
-add_library(OpenKneeboard-VRKneeboard INTERFACE)
+add_library(OpenKneeboard-VRKneeboard STATIC VRKneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-VRKneeboard
-  INTERFACE
+  PUBLIC
   _libheaders
   ThirdParty::DirectXTK
   OpenKneeboard-RayIntersectsRect
