@@ -27,7 +27,6 @@
 
 namespace OpenKneeboard {
 
-template <class TDisplayTime>
 class VRKneeboard {
  protected:
   using Matrix = DirectX::SimpleMath::Matrix;
@@ -45,11 +44,10 @@ class VRKneeboard {
     EYE_LEVEL,
   };
 
-  virtual Pose GetHMDPose(TDisplayTime) = 0;
   virtual YOrigin GetYOrigin() = 0;
 
-  Pose GetKneeboardPose(const VRRenderConfig& vr, TDisplayTime displayTime) {
-    this->Recenter(vr, displayTime);
+  Pose GetKneeboardPose(const VRRenderConfig& vr, const Pose& hmdPose) {
+    this->Recenter(vr, hmdPose);
     // clang-format off
     auto matrix =
       Matrix::CreateRotationX(vr.mRX)
@@ -68,13 +66,12 @@ class VRKneeboard {
 
   Vector2 GetKneeboardSize(
     const SHM::Config& config,
-    const Pose& kneeboardPose,
-    TDisplayTime displayTime) {
+    const Pose& hmdPose,
+    const Pose& kneeboardPose) {
     const auto sizes = this->GetSizes(config);
     if (!this->IsGazeEnabled(config.vr)) {
       return sizes.mNormalSize;
     }
-    auto hmdPose = this->GetHMDPose(displayTime);
     return this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose)
       ? sizes.mZoomedSize
       : sizes.mNormalSize;
@@ -117,19 +114,18 @@ class VRKneeboard {
     };
   }
 
-  void Recenter(const VRRenderConfig& vr, TDisplayTime displayTime) {
+  void Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
     if (vr.mRecenterCount == mRecenterCount) {
       return;
     }
 
-    auto hmd = this->GetHMDPose(displayTime);
-    auto& pos = hmd.mPosition;
+    auto pos = hmdPose.mPosition;
     pos.y = 0;// don't adjust floor level
 
     // We're only going to respect ry (yaw) as we want the new
     // center to remain gravity-aligned
 
-    auto quat = hmd.mOrientation;
+    auto quat = hmdPose.mOrientation;
 
     // clang-format off
     mRecenter =

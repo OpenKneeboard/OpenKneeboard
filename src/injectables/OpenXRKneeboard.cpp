@@ -66,7 +66,7 @@ static struct {
 #undef IT
 } gNext;
 
-class OpenXRKneeboard : public VRKneeboard<XrTime> {
+class OpenXRKneeboard : public VRKneeboard {
  public:
   OpenXRKneeboard() = delete;
   OpenXRKneeboard(XrSession);
@@ -77,7 +77,7 @@ class OpenXRKneeboard : public VRKneeboard<XrTime> {
     = 0;
 
  protected:
-  Pose GetHMDPose(XrTime displayTime) override;
+  Pose GetHMDPose(XrTime displayTime);
   YOrigin GetYOrigin() override;
   static XrPosef GetXrPosef(const Pose& pose);
 
@@ -283,9 +283,10 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   const auto displayTime = frameEndInfo->displayTime;
 
   const auto& vr = config.vr;
-  const auto kneeboardPose = this->GetKneeboardPose(vr, displayTime);
+  const auto hmdPose = this->GetHMDPose(displayTime);
+  const auto kneeboardPose = this->GetKneeboardPose(vr, hmdPose);
   const auto kneeboardSize
-    = this->GetKneeboardSize(config, kneeboardPose, displayTime);
+    = this->GetKneeboardSize(config, hmdPose, kneeboardPose);
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   std::copy(

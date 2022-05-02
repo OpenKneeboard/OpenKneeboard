@@ -123,9 +123,10 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
 
   const auto& vr = config.vr;
-  const auto kneeboardPose = this->GetKneeboardPose(vr, predictedTime);
+  const auto hmdPose = this->GetHMDPose(predictedTime);
+  const auto kneeboardPose = this->GetKneeboardPose(vr, hmdPose);
   const auto kneeboardSize
-    = this->GetKneeboardSize(config, kneeboardPose, predictedTime);
+    = this->GetKneeboardSize(config, hmdPose, kneeboardPose);
 
   ovrLayerQuad kneeboardLayer {
     .Header = { 

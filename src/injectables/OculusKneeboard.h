@@ -26,7 +26,7 @@
 
 namespace OpenKneeboard {
 
-class OculusKneeboard final : private VRKneeboard<double> {
+class OculusKneeboard final : private VRKneeboard {
  public:
   class Renderer;
   OculusKneeboard();
@@ -36,7 +36,7 @@ class OculusKneeboard final : private VRKneeboard<double> {
   void UninstallHook();
 
  protected:
-  Pose GetHMDPose(double predictedTime) override;
+  Pose GetHMDPose(double predictedTime);
   YOrigin GetYOrigin() override;
 
  private:

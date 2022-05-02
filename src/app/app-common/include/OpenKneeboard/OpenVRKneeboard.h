@@ -32,7 +32,7 @@
 
 namespace OpenKneeboard {
 
-class OpenVRKneeboard final : private VRKneeboard<float> {
+class OpenVRKneeboard final : private VRKneeboard {
  public:
   OpenVRKneeboard();
   ~OpenVRKneeboard();
@@ -40,7 +40,7 @@ class OpenVRKneeboard final : private VRKneeboard<float> {
   bool Run(std::stop_token);
 
  protected:
-  Pose GetHMDPose(float) override;
+  Pose GetHMDPose(float);
   YOrigin GetYOrigin() override;
 
  private:
