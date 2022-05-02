@@ -55,6 +55,10 @@ Vector2 VRKneeboard::GetKneeboardSize(
 }
 
 bool VRKneeboard::IsGazeEnabled(const VRRenderConfig& vr) {
+  if (std::abs(vr.mGazeOpacity - vr.mNormalOpacity) >= 0.01f) {
+    return true;
+  }
+
   if (vr.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
     return false;
   }

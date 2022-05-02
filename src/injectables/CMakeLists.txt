@@ -105,13 +105,14 @@ target_link_libraries(
   PRIVATE
   ThirdParty::OpenXR
   ThirdParty::DirectXTK
-  OpenKneeboard-config
-  OpenKneeboard-dprint
+  OpenKneeboard-D3D11
   OpenKneeboard-RayIntersectsRect
-  OpenKneeboard-scope_guard
-  OpenKneeboard-shims
   OpenKneeboard-SHM
   OpenKneeboard-VRKneeboard
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+  OpenKneeboard-scope_guard
+  OpenKneeboard-shims
   NuGet::CppWinRT::Base
 )
 

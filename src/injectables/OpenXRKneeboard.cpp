@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/VRKneeboard.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -95,13 +96,13 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const XrFrameEndInfo* frameEndInfo) override;
 
  private:
-  void Render(const SHM::Snapshot&);
+  void Render(const SHM::Snapshot&, const VRKneeboard::RenderParameters&);
 
   SHM::Reader mSHM;
   ID3D11Device* mDevice = nullptr;
   XrSwapchain mSwapchain = nullptr;
 
-  std::vector<winrt::com_ptr<ID3D11Texture2D>> mTextures;
+  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargetViews;
 };
 
 OpenXRKneeboard::OpenXRKneeboard(XrSession session) {
@@ -188,6 +189,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   dprintf("{}", __FUNCTION__);
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
+    .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
     .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
     .sampleCount = 1,
     .width = TextureWidth,
@@ -240,14 +242,20 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
     return;
   }
 
-  mTextures.resize(imageCount);
+  mRenderTargetViews.resize(imageCount);
+  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
     if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
       OPENKNEEBOARD_BREAK;
     }
 #endif
-    mTextures.at(i).copy_from(images.at(i).texture);
+    winrt::check_hresult(mDevice->CreateRenderTargetView(
+      images.at(i).texture, &rtvd, mRenderTargetViews.at(i).put()));
   }
 
   dprint("Initialized kneeboard");
@@ -277,12 +285,12 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     return gNext.xrEndFrame(session, frameEndInfo);
   }
 
-  this->Render(snapshot);
   auto config = snapshot.GetConfig();
 
   const auto displayTime = frameEndInfo->displayTime;
   const auto renderParams
     = this->GetRenderParameters(config, this->GetHMDPose(displayTime));
+  this->Render(snapshot, renderParams);
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   std::copy(
@@ -325,9 +333,14 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   return nextResult;
 }
 
-void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
+void OpenXRD3D11Kneeboard::Render(
+  const SHM::Snapshot& snapshot,
+  const VRKneeboard::RenderParameters& params) {
   static uint64_t sSequenceNumber = ~(0ui64);
-  if (snapshot.GetSequenceNumber() == sSequenceNumber) {
+  static float sOpacity = 1.0f;
+  if (
+    snapshot.GetSequenceNumber() == sSequenceNumber
+    && params.mKneeboardOpacity == sOpacity) {
     return;
   }
 
@@ -354,28 +367,17 @@ void OpenXRD3D11Kneeboard::Render(const SHM::Snapshot& snapshot) {
     return;
   }
 
-  auto texture = mTextures.at(textureIndex).get();
-
   {
     auto sharedTexture = snapshot.GetSharedTexture(mDevice);
     if (!sharedTexture) {
       dprint("Failed to get shared texture");
       return;
     }
-
-    winrt::com_ptr<ID3D11DeviceContext> context;
-    mDevice->GetImmediateContext(context.put());
-    D3D11_BOX sourceBox {
-      .left = 0,
-      .top = 0,
-      .front = 0,
-      .right = config.imageWidth,
-      .bottom = config.imageHeight,
-      .back = 1,
-    };
-    context->CopySubresourceRegion(
-      texture, 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
-    context->Flush();
+    D3D11::CopyTextureWithOpacity(
+      mDevice,
+      sharedTexture.GetShaderResourceView(),
+      mRenderTargetViews.at(textureIndex).get(),
+      params.mKneeboardOpacity);
   }
   nextResult = gNext.xrReleaseSwapchainImage(mSwapchain, nullptr);
   if (nextResult != XR_SUCCESS) {
