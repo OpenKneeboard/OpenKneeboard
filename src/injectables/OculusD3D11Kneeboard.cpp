@@ -20,6 +20,7 @@
 #include "OculusD3D11Kneeboard.h"
 
 #include <OVR_CAPI_D3D.h>
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -100,7 +101,8 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(ovrSession session) {
 bool OculusD3D11Kneeboard::Render(
   ovrSession session,
   ovrTextureSwapChain swapChain,
-  const SHM::Snapshot& snapshot) {
+  const SHM::Snapshot& snapshot,
+  const VRKneeboard::RenderParameters& params) {
   if (!swapChain) {
     return false;
   }
@@ -125,24 +127,11 @@ bool OculusD3D11Kneeboard::Render(
     return false;
   }
 
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  ovr->ovr_GetTextureSwapChainBufferDX(
-    session, swapChain, index, IID_PPV_ARGS(&texture));
-
-  winrt::com_ptr<ID3D11DeviceContext> context;
-  mD3D->GetImmediateContext(context.put());
-  D3D11_BOX sourceBox {
-    .left = 0,
-    .top = 0,
-    .front = 0,
-    .right = config.imageWidth,
-    .bottom = config.imageHeight,
-    .back = 1,
-  };
-
-  context->CopySubresourceRegion(
-    texture.get(), 0, 0, 0, 0, sharedTexture.GetTexture(), 0, &sourceBox);
-  context->Flush();
+  D3D11::CopyTextureWithOpacity(
+    mD3D.get(),
+    sharedTexture.GetShaderResourceView(),
+    mRenderTargets.at(index).get(),
+    params.mKneeboardOpacity);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (error) {

@@ -134,20 +134,24 @@ UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
 
 }// namespace
 
-std::wstring SharedTextureName(uint32_t sequenceNumber) {
-  return fmt::format(
-    L"Local\\{}-texture-h{}-c{}-{}",
-    ProjectNameW,
-    Header::VERSION,
-    Config::VERSION,
-    sequenceNumber % TextureCount);
-}
+struct TextureReadResources {
+  winrt::com_ptr<ID3D11Texture2D> mTexture;
+  winrt::com_ptr<IDXGISurface> mSurface;
+  winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
+  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
 
-SharedTexture::SharedTexture() {
-}
+  void Populate(ID3D11Device* d3d, uint32_t sequenceNumber);
+};
 
-SharedTexture::SharedTexture(const Header& header, ID3D11Device* d3d) {
-  auto textureName = SHM::SharedTextureName(header.sequenceNumber);
+void TextureReadResources::Populate(
+  ID3D11Device* d3d,
+  uint32_t sequenceNumber) {
+  if (mTexture) {
+    return;
+  }
+
+  auto textureName = SHM::SharedTextureName(sequenceNumber);
+
   ID3D11Device1* d1 = nullptr;
   d3d->QueryInterface(&d1);
   if (!d1) {
@@ -162,15 +166,34 @@ SharedTexture::SharedTexture(const Header& header, ID3D11Device* d3d) {
     return;
   }
 
-  auto mutex = mTexture.try_as<IDXGIKeyedMutex>();
-  if (!mutex) {
-    mTexture = nullptr;
-    return;
-  }
+  mSurface = mTexture.as<IDXGISurface>();
+  mMutex = mTexture.as<IDXGIKeyedMutex>();
 
+  d1->CreateShaderResourceView(
+    mTexture.get(), nullptr, mShaderResourceView.put());
+}
+
+std::wstring SharedTextureName(uint32_t sequenceNumber) {
+  return fmt::format(
+    L"Local\\{}-texture-h{}-c{}-{}",
+    ProjectNameW,
+    Header::VERSION,
+    Config::VERSION,
+    sequenceNumber % TextureCount);
+}
+
+SharedTexture::SharedTexture() {
+}
+
+SharedTexture::SharedTexture(
+  const Header& header,
+  ID3D11Device* d3d,
+  TextureReadResources* r)
+  : mResources(r) {
+  r->Populate(d3d, header.sequenceNumber);
   auto key = GetTextureKeyFromSequenceNumber(header.sequenceNumber);
-  if (mutex->AcquireSync(key, 10) != S_OK) {
-    mTexture = nullptr;
+  if (r->mMutex->AcquireSync(key, 10) != S_OK) {
+    mResources = nullptr;
     return;
   }
   mKey = key;
@@ -180,28 +203,33 @@ SharedTexture::~SharedTexture() {
   if (mKey == 0) {
     return;
   }
-  auto mutex = mTexture.try_as<IDXGIKeyedMutex>();
-  if (mutex) {
-    mutex->ReleaseSync(mKey);
+  if (!mResources) {
+    return;
   }
+  mResources->mMutex->ReleaseSync(mKey);
 }
 
 SharedTexture::operator bool() const {
-  return mKey != 0;
+  return mResources && mKey != 0;
 }
 
 ID3D11Texture2D* SharedTexture::GetTexture() const {
-  return mTexture.get();
+  return mResources->mTexture.get();
 }
 
 IDXGISurface* SharedTexture::GetSurface() const {
-  return mTexture.as<IDXGISurface>().get();
+  return mResources->mSurface.get();
+}
+
+ID3D11ShaderResourceView* SharedTexture::GetShaderResourceView() const {
+  return mResources->mShaderResourceView.get();
 }
 
 Snapshot::Snapshot() {
 }
 
-Snapshot::Snapshot(const Header& header) {
+Snapshot::Snapshot(const Header& header, TextureReadResources* r)
+  : mResources(r) {
   mHeader = std::make_unique<Header>(header);
 }
 
@@ -214,7 +242,7 @@ uint32_t Snapshot::GetSequenceNumber() const {
 
 SharedTexture Snapshot::GetSharedTexture(ID3D11Device* d3d) const {
   if (mHeader) {
-    return SharedTexture(*mHeader, d3d);
+    return SharedTexture(*mHeader, d3d, mResources);
   }
   return {};
 }
@@ -295,6 +323,11 @@ uint32_t Writer::GetNextSequenceNumber() const {
   return p->mHeader->sequenceNumber + 1;
 }
 
+class Reader::Impl : public SHM::Impl {
+ public:
+  std::vector<TextureReadResources> mResources;
+};
+
 Reader::Reader() {
   const auto path = SHMPath();
   HANDLE handle;
@@ -310,11 +343,11 @@ Reader::Reader() {
     return;
   }
 
-  this->p.reset(new Impl {
-    .mHandle = handle,
-    .mMapping = mapping,
-    .mHeader = reinterpret_cast<Header*>(mapping),
-  });
+  this->p = std::make_shared<Impl>();
+  p->mHandle = handle;
+  p->mMapping = mapping;
+  p->mHeader = reinterpret_cast<Header*>(mapping);
+  p->mResources = {TextureCount};
 }
 
 Reader::~Reader() {
@@ -336,15 +369,13 @@ uint32_t Reader::GetSequenceNumber() const {
 }
 
 Snapshot Reader::MaybeGet() const {
-  if (!(*this)) {
-    return {};
-  }
-
   Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_CREATE_FALSEY);
   if (!lock) {
     return {};
   }
-  return Snapshot(*p->mHeader);
+
+  return Snapshot(
+    *p->mHeader, &p->mResources.at(p->mHeader->sequenceNumber % TextureCount));
 }
 
 void Writer::Update(const Config& config) {

@@ -33,7 +33,7 @@ namespace OpenKneeboard {
 
 #pragma pack(push)
 struct VRRenderConfig {
-  static constexpr uint16_t VERSION = 3;
+  static constexpr uint16_t VERSION = 4;
 
   enum class Flags : uint32_t {
     // HEADLOCKED = 1 << 0,
@@ -59,6 +59,9 @@ struct VRRenderConfig {
   Flags mFlags = static_cast<Flags>(
     static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
     | static_cast<uint32_t>(Flags::GAZE_ZOOM));
+
+  float mNormalOpacity = 0.1f;
+  float mGazeOpacity = 0.5f;
 };
 #pragma pack(pop)
 

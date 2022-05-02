@@ -86,7 +86,6 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
   static bool sFirst = true;
   if (sFirst) {
-    OPENKNEEBOARD_BREAK;
     dprint(__FUNCTION__);
     sFirst = false;
   }
@@ -114,16 +113,16 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     }
   }
 
-  if (!mRenderer->Render(session, mSwapChain, snapshot)) [[unlikely]] {
-    return passthrough();
-  }
-
   auto ovr = OVRProxy::Get();
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
-
   const auto renderParams
     = this->GetRenderParameters(config, this->GetHMDPose(predictedTime));
+
+  if (!mRenderer->Render(session, mSwapChain, snapshot, renderParams))
+    [[unlikely]] {
+    return passthrough();
+  }
 
   ovrLayerQuad kneeboardLayer {
     .Header = { 

@@ -42,7 +42,8 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
   virtual bool Render(
     ovrSession session,
     ovrTextureSwapChain swapChain,
-    const SHM::Snapshot& snapshot) override final;
+    const SHM::Snapshot& snapshot,
+    const VRKneeboard::RenderParameters&) override final;
 
  private:
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;

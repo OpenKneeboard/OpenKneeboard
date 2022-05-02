@@ -77,31 +77,38 @@ class Writer final {
   std::shared_ptr<Impl> p;
 };
 
+struct TextureReadResources;
+
 class SharedTexture final {
  public:
   SharedTexture();
-  SharedTexture(const Header& header, ID3D11Device* d3d);
+  SharedTexture(
+    const Header& header,
+    ID3D11Device* d3d,
+    TextureReadResources* r);
   ~SharedTexture();
 
   operator bool() const;
   ID3D11Texture2D* GetTexture() const;
   IDXGISurface* GetSurface() const;
+  ID3D11ShaderResourceView* GetShaderResourceView() const;
 
   SharedTexture(const SharedTexture&) = delete;
   SharedTexture(SharedTexture&&) = delete;
 
  private:
   UINT mKey = 0;
-  winrt::com_ptr<ID3D11Texture2D> mTexture;
+  TextureReadResources* mResources = nullptr;
 };
 
 class Snapshot final {
  private:
   std::unique_ptr<Header> mHeader;
+  TextureReadResources* mResources;
 
  public:
   Snapshot();
-  Snapshot(const Header& header);
+  Snapshot(const Header& header, TextureReadResources*);
   ~Snapshot();
 
   uint32_t GetSequenceNumber() const;
@@ -121,6 +128,7 @@ class Reader final {
   uint32_t GetSequenceNumber() const;
 
  private:
+  class Impl;
   std::shared_ptr<Impl> p;
 };
 

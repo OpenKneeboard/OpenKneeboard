@@ -63,7 +63,8 @@ class OculusKneeboard::Renderer {
   virtual bool Render(
     ovrSession session,
     ovrTextureSwapChain swapChain,
-    const SHM::Snapshot& snapshot)
+    const SHM::Snapshot& snapshot,
+    const VRKneeboard::RenderParameters&)
     = 0;
 };
 

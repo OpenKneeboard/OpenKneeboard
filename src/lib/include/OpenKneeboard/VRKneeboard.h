@@ -26,7 +26,7 @@
 namespace OpenKneeboard {
 
 class VRKneeboard {
- protected:
+ public:
   using Matrix = DirectX::SimpleMath::Matrix;
   using Quaternion = DirectX::SimpleMath::Quaternion;
   using Vector2 = DirectX::SimpleMath::Vector2;
@@ -37,17 +37,19 @@ class VRKneeboard {
     Quaternion mOrientation {};
   };
 
+  struct RenderParameters {
+    Pose mKneeboardPose;
+    Vector2 mKneeboardSize;
+    float mKneeboardOpacity;
+  };
+
+ protected:
   enum class YOrigin {
     FLOOR_LEVEL,
     EYE_LEVEL,
   };
 
   virtual YOrigin GetYOrigin() = 0;
-
-  struct RenderParameters {
-    Pose mKneeboardPose;
-    Vector2 mKneeboardSize;
-  };
 
   RenderParameters GetRenderParameters(const SHM::Config&, const Pose& hmdPose);
 

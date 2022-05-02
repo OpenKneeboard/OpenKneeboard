@@ -112,11 +112,11 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
   const auto kneeboardPose = this->GetKneeboardPose(config.vr, hmdPose);
   const auto isLookingAtKneeboard
     = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
-  const auto kneeboardSize
-    = this->GetKneeboardSize(config, isLookingAtKneeboard);
   return {
     .mKneeboardPose = kneeboardPose,
-    .mKneeboardSize = kneeboardSize,
+    .mKneeboardSize = this->GetKneeboardSize(config, isLookingAtKneeboard),
+    .mKneeboardOpacity
+    = isLookingAtKneeboard ? config.vr.mGazeOpacity : config.vr.mNormalOpacity,
   };
 }
 

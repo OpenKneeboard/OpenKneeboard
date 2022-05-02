@@ -123,7 +123,8 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(ovrSession session) {
 bool OculusD3D12Kneeboard::Render(
   ovrSession session,
   ovrTextureSwapChain swapChain,
-  const SHM::Snapshot& snapshot) {
+  const SHM::Snapshot& snapshot,
+  const VRKneeboard::RenderParameters&) {
   auto ovr = OVRProxy::Get();
   const auto config = snapshot.GetConfig();
 

@@ -31,6 +31,18 @@ target_link_libraries(
   ThirdParty::JSON
 )
 
+add_library(OpenKneeboard-D3D11 STATIC D3D11.cpp)
+target_link_libraries(
+  OpenKneeboard-D3D11
+  PUBLIC
+  _libheaders
+)
+target_link_libraries(
+  OpenKneeboard-D3D11
+  PRIVATE
+  ThirdParty::DirectXTK
+)
+
 add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
 target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
 

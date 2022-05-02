@@ -80,6 +80,7 @@ target_link_libraries(
   detours-ext
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-D3D11
   oculus-hooks
   oculus-sdk-headers)
 

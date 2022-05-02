@@ -42,7 +42,8 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   virtual bool Render(
     ovrSession session,
     ovrTextureSwapChain swapChain,
-    const SHM::Snapshot& snapshot) override;
+    const SHM::Snapshot& snapshot,
+    const VRKneeboard::RenderParameters&) override final;
 
  private:
   ID3D12CommandQueueExecuteCommandListsHook mExecuteCommandListsHook;
