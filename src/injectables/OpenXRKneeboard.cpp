@@ -244,7 +244,7 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
 
   mRenderTargetViews.resize(imageCount);
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };
