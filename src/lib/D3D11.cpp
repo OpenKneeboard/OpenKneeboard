@@ -19,6 +19,7 @@
  */
 #include <DirectXTK/SpriteBatch.h>
 #include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/config.h>
 #include <shims/winrt.h>
 
 namespace OpenKneeboard::D3D11 {
@@ -30,8 +31,17 @@ void CopyTextureWithTint(
   DirectX::FXMVECTOR tint) {
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
-  ctx->ClearRenderTargetView(dest, DirectX::Colors::Transparent);
+  D3D11_VIEWPORT viewport {
+    0.0f,
+    0.0f,
+    static_cast<FLOAT>(TextureWidth),
+    static_cast<FLOAT>(TextureHeight),
+    0.0f,
+    1.0f,
+  };
+  ctx->RSSetViewports(1, &viewport);
   ctx->OMSetRenderTargets(1, &dest, nullptr);
+
   DirectX::SpriteBatch sprites(ctx.get());
   sprites.Begin();
   sprites.Draw(source, DirectX::XMFLOAT2 {0.0f, 0.0f}, tint);

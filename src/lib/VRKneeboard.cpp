@@ -111,8 +111,9 @@ void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
 }
 
 VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
-  const SHM::Config& config,
+  const SHM::Snapshot& snapshot,
   const Pose& hmdPose) {
+  auto config = snapshot.GetConfig();
   const auto kneeboardPose = this->GetKneeboardPose(config.vr, hmdPose);
   const auto isLookingAtKneeboard
     = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
@@ -121,6 +122,8 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
     .mKneeboardSize = this->GetKneeboardSize(config, isLookingAtKneeboard),
     .mKneeboardOpacity
     = isLookingAtKneeboard ? config.vr.mGazeOpacity : config.vr.mNormalOpacity,
+    .mCacheKey = snapshot.GetSequenceNumber()
+      ^ ((isLookingAtKneeboard ? 1ui64 : 0ui64) << 63),
   };
 }
 

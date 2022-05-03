@@ -41,6 +41,7 @@ class VRKneeboard {
     Pose mKneeboardPose;
     Vector2 mKneeboardSize;
     float mKneeboardOpacity;
+    uint64_t mCacheKey;
   };
 
  protected:
@@ -51,7 +52,9 @@ class VRKneeboard {
 
   virtual YOrigin GetYOrigin() = 0;
 
-  RenderParameters GetRenderParameters(const SHM::Config&, const Pose& hmdPose);
+  RenderParameters GetRenderParameters(
+    const SHM::Snapshot&,
+    const Pose& hmdPose);
 
  private:
   struct Sizes {

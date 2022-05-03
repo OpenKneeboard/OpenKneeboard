@@ -18,6 +18,7 @@ set(
   TARGET_FILE_LIBRARIES
   OpenKneeboard::App::Common
   OpenKneeboard-D2DErrorRenderer
+  OpenKneeboard-D3D11
   OpenKneeboard-DXResources
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor

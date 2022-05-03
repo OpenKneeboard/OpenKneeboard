@@ -117,11 +117,15 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
   const auto renderParams
-    = this->GetRenderParameters(config, this->GetHMDPose(predictedTime));
+    = this->GetRenderParameters(snapshot, this->GetHMDPose(predictedTime));
 
-  if (!mRenderer->Render(session, mSwapChain, snapshot, renderParams))
-    [[unlikely]] {
-    return passthrough();
+  static uint64_t sRenderKey = ~(0ui64);
+  if (sRenderKey != renderParams.mCacheKey) {
+    if (!mRenderer->Render(session, mSwapChain, snapshot, renderParams))
+      [[unlikely]] {
+      return passthrough();
+    }
+    sRenderKey = renderParams.mCacheKey;
   }
 
   ovrLayerQuad kneeboardLayer {

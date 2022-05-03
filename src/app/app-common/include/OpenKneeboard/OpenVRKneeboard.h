@@ -59,7 +59,8 @@ class OpenVRKneeboard final : private VRKneeboard {
   SHM::Reader mSHM;
 
   winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
-  uint64_t mSequenceNumber = ~(0ui64);
+  winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
+  uint64_t mCacheKey = ~(0ui64);
 };
 
 }// namespace OpenKneeboard

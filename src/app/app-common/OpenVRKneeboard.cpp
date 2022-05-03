@@ -18,6 +18,7 @@
  * USA.
  */
 #include <DirectXTK/SimpleMath.h>
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/SHM.h>
@@ -73,6 +74,13 @@ OpenVRKneeboard::OpenVRKneeboard() {
   };
   winrt::check_hresult(
     device->CreateTexture2D(&desc, nullptr, mOpenVRTexture.put()));
+  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
+  winrt::check_hresult(device->CreateRenderTargetView(
+    mOpenVRTexture.get(), &rtvd, mRenderTargetView.put()));
 }
 
 OpenVRKneeboard::~OpenVRKneeboard() {
@@ -187,9 +195,13 @@ void OpenVRKneeboard::Tick() {
   const auto config = snapshot.GetConfig();
   const auto displayTime = this->GetDisplayTime();
   const auto renderParams
-    = this->GetRenderParameters(config, this->GetHMDPose(displayTime));
+    = this->GetRenderParameters(snapshot, this->GetHMDPose(displayTime));
 
   CHECK(SetOverlayWidthInMeters, mOverlay, renderParams.mKneeboardSize.x);
+
+  if (renderParams.mCacheKey == mCacheKey) {
+    return;
+  }
 
   // Transpose to fit OpenVR's in-memory layout
   // clang-format off
@@ -209,17 +221,18 @@ void OpenVRKneeboard::Tick() {
   // (e.g. DirectX12) we use SHARED_NTHANDLE, but SteamVR doesn't
   // support that - so we need to use a second texture with different
   // sharing parameters.
+  //
+  // Also lets us apply opacity here, rather than needing another
+  // OpenVR call
 
-  auto openKneeboardTexture = snapshot.GetSharedTexture(mD3D.get());
-  if (!openKneeboardTexture) {
-    return;
+  {
+    auto openKneeboardTexture = snapshot.GetSharedTexture(mD3D.get());
+    D3D11::CopyTextureWithOpacity(
+      mD3D.get(),
+      openKneeboardTexture.GetShaderResourceView(),
+      mRenderTargetView.get(),
+      renderParams.mKneeboardOpacity);
   }
-  winrt::com_ptr<ID3D11DeviceContext> context;
-
-  mD3D->GetImmediateContext(context.put());
-  context->CopyResource(
-    mOpenVRTexture.get(), openKneeboardTexture.GetTexture());
-  context->Flush();
 
   vr::VRTextureBounds_t textureBounds {
     0.0f,
@@ -229,7 +242,7 @@ void OpenVRKneeboard::Tick() {
   };
 
   CHECK(SetOverlayTextureBounds, mOverlay, &textureBounds);
-  mSequenceNumber = snapshot.GetSequenceNumber();
+  mCacheKey = renderParams.mCacheKey;
 
 #undef CHECK
 }

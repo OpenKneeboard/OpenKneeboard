@@ -289,7 +289,7 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
 
   const auto displayTime = frameEndInfo->displayTime;
   const auto renderParams
-    = this->GetRenderParameters(config, this->GetHMDPose(displayTime));
+    = this->GetRenderParameters(snapshot, this->GetHMDPose(displayTime));
   this->Render(snapshot, renderParams);
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
@@ -336,11 +336,8 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
 void OpenXRD3D11Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   const VRKneeboard::RenderParameters& params) {
-  static uint64_t sSequenceNumber = ~(0ui64);
-  static float sOpacity = 1.0f;
-  if (
-    snapshot.GetSequenceNumber() == sSequenceNumber
-    && params.mKneeboardOpacity == sOpacity) {
+  static uint64_t sCacheKey = ~(0ui64);
+  if (params.mCacheKey == sCacheKey) {
     return;
   }
 
@@ -383,7 +380,7 @@ void OpenXRD3D11Kneeboard::Render(
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to release swapchain: {}", nextResult);
   }
-  sSequenceNumber = snapshot.GetSequenceNumber();
+  sCacheKey = params.mCacheKey;
 }
 
 // Don't use a unique_ptr as on process exit, windows doesn't clean these up
