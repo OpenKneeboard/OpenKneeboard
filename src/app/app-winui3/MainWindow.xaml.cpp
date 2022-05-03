@@ -102,14 +102,16 @@ MainWindow::MainWindow() {
   auto settings = gKneeboard->GetAppSettings();
   if (settings.mWindowRect) {
     auto rect = *settings.mWindowRect;
-    SetWindowPos(
-      mHwnd,
-      NULL,
-      rect.left,
-      rect.top,
-      rect.right - rect.left,
-      rect.bottom - rect.top,
-      0);
+    if (rect.top != -32000 && rect.left != -32000) {
+      SetWindowPos(
+        mHwnd,
+        NULL,
+        rect.left,
+        rect.top,
+        rect.right - rect.left,
+        rect.bottom - rect.top,
+        0);
+    }
   }
 
   this->Closed({this, &MainWindow::OnClosed});
@@ -141,7 +143,9 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) {
   RECT windowRect {};
-  if (GetWindowRect(mHwnd, &windowRect)) {
+  if (
+    GetWindowRect(mHwnd, &windowRect) && windowRect.left != -32000
+    && windowRect.top != -32000) {
     auto settings = gKneeboard->GetAppSettings();
     settings.mWindowRect = windowRect;
     gKneeboard->SetAppSettings(settings);
