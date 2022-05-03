@@ -60,8 +60,8 @@ struct VRRenderConfig {
     static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
     | static_cast<uint32_t>(Flags::GAZE_ZOOM));
 
-  float mNormalOpacity = 0.1f;
-  float mGazeOpacity = 0.5f;
+  float mNormalOpacity = 1.0f;
+  float mGazeOpacity = 1.0f;
 };
 #pragma pack(pop)
 
