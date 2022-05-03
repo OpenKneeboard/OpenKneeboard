@@ -103,6 +103,8 @@ MainWindow::MainWindow() {
   if (settings.mWindowRect) {
     auto rect = *settings.mWindowRect;
     if (rect.top != -32000 && rect.left != -32000) {
+      // GetWindowRect() returns (-32000, -32000) for some corner cases, at
+      // least when minimized
       SetWindowPos(
         mHwnd,
         NULL,
@@ -143,9 +145,12 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) {
   RECT windowRect {};
+  const bool isMinimized = IsIconic(mHwnd);
   if (
-    GetWindowRect(mHwnd, &windowRect) && windowRect.left != -32000
-    && windowRect.top != -32000) {
+    (!isMinimized) && GetWindowRect(mHwnd, &windowRect)
+    && windowRect.left != -32000 && windowRect.top != -32000) {
+    // (-32000, -32000) is a magic 'invalid value'; it's at least used for
+    // minimized, but let's check it too in case there's other causes
     auto settings = gKneeboard->GetAppSettings();
     settings.mWindowRect = windowRect;
     gKneeboard->SetAppSettings(settings);
