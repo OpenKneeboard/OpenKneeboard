@@ -31,6 +31,7 @@ void CopyTextureWithTint(
   DirectX::FXMVECTOR tint) {
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
+  ctx->ClearRenderTargetView(dest, DirectX::Colors::Transparent);
   D3D11_VIEWPORT viewport {
     0.0f,
     0.0f,
