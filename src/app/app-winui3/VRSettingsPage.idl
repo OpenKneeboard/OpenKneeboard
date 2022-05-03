@@ -24,5 +24,8 @@ namespace OpenKneeboardApp
         Boolean DiscardOculusDepthInformation;
 
         UInt8 OpenXRMode;
+
+        UInt8 NormalOpacity;
+        UInt8 GazeOpacity;
     }
 }

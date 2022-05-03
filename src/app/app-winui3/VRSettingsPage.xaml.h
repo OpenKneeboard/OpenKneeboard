@@ -67,6 +67,11 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   bool DiscardOculusDepthInformation();
   void DiscardOculusDepthInformation(bool value);
 
+  uint8_t NormalOpacity();
+  void NormalOpacity(uint8_t);
+  uint8_t GazeOpacity();
+  void GazeOpacity(uint8_t);
+
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
       handler);

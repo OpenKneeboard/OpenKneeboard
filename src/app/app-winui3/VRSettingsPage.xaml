@@ -11,6 +11,7 @@
     <local:MetersNumberFormatter x:Key="MetersFormatter" />
     <local:DegreesValueConverter x:Key="DegreesConverter" />
     <local:MultiplierValueConverter x:Key="MultiplierConverter" />
+    <local:PercentValueConverter x:Key="PercentConverter" />
   </Page.Resources>
   <ScrollViewer>
     <StackPanel Margin="16" Spacing="8" x:DefaultBindMode="TwoWay">
@@ -36,18 +37,18 @@
         BorderThickness="1"
         Padding="8">
         <StackPanel Spacing="12">
-					<ToggleSwitch
-						Header="Gaze-based zoom"
-						OnContent="On"
-						OffContent="Off"
-						IsOn="{x:Bind GazeZoomEnabled}"
-					/>
-					<ToggleSwitch
-						Header="Discard Oculus SDK depth information - required for DCS World"
-						OnContent="On"
-						OffContent="Off"
-						IsOn="{x:Bind DiscardOculusDepthInformation}"
-					/>
+          <ToggleSwitch
+            Header="Gaze-based zoom"
+            OnContent="On"
+            OffContent="Off"
+            IsOn="{x:Bind GazeZoomEnabled}"
+          />
+          <ToggleSwitch
+            Header="Discard Oculus SDK depth information - required for DCS World"
+            OnContent="On"
+            OffContent="Off"
+            IsOn="{x:Bind DiscardOculusDepthInformation}"
+          />
           <ToggleSwitch
             Header="SteamVR support"
             OnContent="Enabled"
@@ -224,6 +225,33 @@
               ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
             />
           </Grid>
+        </StackPanel>
+      </Grid>
+      <Grid
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <StackPanel Spacing="12">
+          <Slider
+            Header="Opacity when not looking at the kneeboard"
+            Value="{x:Bind NormalOpacity}"
+            Minimum="0"
+            Maximum="100"
+            TickFrequency="10"
+            TickPlacement="Outside"
+            ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+          />
+          <Slider
+            Header="Opacity when looking at the kneeboard"
+            Value="{x:Bind GazeOpacity}"
+            Minimum="0"
+            Maximum="100"
+            TickFrequency="10"
+            TickPlacement="Outside"
+            ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+          />
         </StackPanel>
       </Grid>
     </StackPanel>

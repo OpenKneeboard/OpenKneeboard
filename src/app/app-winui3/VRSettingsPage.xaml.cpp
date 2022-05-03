@@ -81,6 +81,8 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
          L"SteamVREnabled",
          L"GazeZoomEnabled",
          L"DiscardOculusDepthInformation",
+         L"NormalOpacity",
+         L"GazeOpacity",
        }) {
     mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
   }
@@ -270,6 +272,26 @@ void VRSettingsPage::DiscardOculusDepthInformation(bool discard) {
   } else {
     config.mFlags &= ~VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
   }
+  gKneeboard->SetVRConfig(config);
+}
+
+uint8_t VRSettingsPage::NormalOpacity() {
+  return std::lround(gKneeboard->GetVRConfig().mNormalOpacity * 100);
+}
+
+void VRSettingsPage::NormalOpacity(uint8_t value) {
+  auto config = gKneeboard->GetVRConfig();
+  config.mNormalOpacity = value / 100.0f;
+  gKneeboard->SetVRConfig(config);
+}
+
+uint8_t VRSettingsPage::GazeOpacity() {
+  return std::lround(gKneeboard->GetVRConfig().mGazeOpacity * 100);
+}
+
+void VRSettingsPage::GazeOpacity(uint8_t value) {
+  auto config = gKneeboard->GetVRConfig();
+  config.mGazeOpacity = value / 100.0f;
   gKneeboard->SetVRConfig(config);
 }
 
