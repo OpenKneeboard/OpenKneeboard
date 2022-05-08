@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/shm.h>
 #include <Windows.h>
 #include <d3d11_2.h>
@@ -193,8 +194,15 @@ SharedTexture::SharedTexture(
   r->Populate(d3d, header.sequenceNumber);
   auto key = GetTextureKeyFromSequenceNumber(header.sequenceNumber);
   if (r->mMutex->AcquireSync(key, 10) != S_OK) {
-    mResources = nullptr;
-    return;
+    dprintf("Failed to get mutex with key {}, attempting repopulating", key);
+    // try repopulating (e.g. if Openkneeboard process has been restarted):
+    r->mTexture = nullptr;
+    r->Populate(d3d, header.sequenceNumber);
+    if (r->mMutex->AcquireSync(key, 10) != S_OK) {
+      dprintf("Failed to get mutex with key {}, after repopulating", key);
+      mResources = nullptr;
+      return;
+    }
   }
   mKey = key;
 }

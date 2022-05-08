@@ -368,6 +368,10 @@ void OpenXRD3D11Kneeboard::Render(
     auto sharedTexture = snapshot.GetSharedTexture(mDevice);
     if (!sharedTexture) {
       dprint("Failed to get shared texture");
+      nextResult = gNext.xrReleaseSwapchainImage(mSwapchain, nullptr);
+      if (nextResult != XR_SUCCESS) {
+        dprintf("Failed to release swapchain image: {}", nextResult);
+      }
       return;
     }
     D3D11::CopyTextureWithOpacity(
