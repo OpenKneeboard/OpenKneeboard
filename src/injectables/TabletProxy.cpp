@@ -162,6 +162,7 @@ namespace {
 std::unique_ptr<TabletProxy> gInstance;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
+  dprint("Creating TabletProxy instance");
   gInstance = std::make_unique<TabletProxy>();
   dprint("Installed Tablet Proxy");
   return S_OK;
