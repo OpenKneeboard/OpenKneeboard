@@ -149,16 +149,18 @@ bool InjectDll(HANDLE process, const std::filesystem::path& _dll) {
 
   if (!thread) {
     dprint("Failed to create remote thread");
+    return false;
   }
 
   WaitForSingleObject(thread.get(), INFINITE);
   DWORD loadLibraryReturn;
   GetExitCodeThread(thread.get(), &loadLibraryReturn);
   if (loadLibraryReturn == 0) {
-    dprintf("Injecting {} failed :'(", dll.string());
-  } else {
-    dprintf("Injected {}", dll.string());
+    dprintf("Injecting {} failed :'( - {:#x}", dll.string(), loadLibraryReturn);
+    return false;
   }
+
+  dprintf("Injected {}", dll.string());
   return true;
 }
 
