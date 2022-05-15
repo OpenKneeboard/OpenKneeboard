@@ -48,10 +48,10 @@ enum class HeaderFlags : ULONG {
 struct Header final {
   static constexpr uint16_t VERSION = 2;
 
-  uint32_t sequenceNumber = 0;
-  uint64_t sessionID = CreateSessionID();
-  HeaderFlags flags;
-  Config config;
+  uint32_t mSequenceNumber = 0;
+  uint64_t mSessionID = CreateSessionID();
+  HeaderFlags mFlags;
+  Config mConfig;
 };
 #pragma pack(pop)
 
@@ -83,7 +83,7 @@ class Spinlock final {
 
     for (int count = 1; count <= 1000; ++count) {
       auto alreadyLocked
-        = _interlockedbittestandset(std::bit_cast<LONG*>(&header->flags), bit);
+        = _interlockedbittestandset(std::bit_cast<LONG*>(&header->mFlags), bit);
       if (!alreadyLocked) {
         return;
       }
@@ -116,7 +116,7 @@ class Spinlock final {
       return;
     }
 
-    mHeader->flags &= ~HeaderFlags::LOCKED;
+    mHeader->mFlags &= ~HeaderFlags::LOCKED;
   }
 };
 
@@ -206,8 +206,8 @@ SharedTexture::SharedTexture(
   ID3D11Device* d3d,
   TextureReadResources* r)
   : mResources(r) {
-  r->Populate(d3d, header.sessionID, header.sequenceNumber);
-  auto key = GetTextureKeyFromSequenceNumber(header.sequenceNumber);
+  r->Populate(d3d, header.mSessionID, header.mSequenceNumber);
+  auto key = GetTextureKeyFromSequenceNumber(header.mSequenceNumber);
   if (r->mMutex->AcquireSync(key, 10) != S_OK) {
     mResources = nullptr;
     return;
@@ -253,7 +253,7 @@ Snapshot::~Snapshot() {
 }
 
 uint32_t Snapshot::GetSequenceNumber() const {
-  return mHeader->sequenceNumber;
+  return mHeader->mSequenceNumber;
 }
 
 SharedTexture Snapshot::GetSharedTexture(ID3D11Device* d3d) const {
@@ -267,12 +267,12 @@ Config Snapshot::GetConfig() const {
   if (!*this) {
     return {};
   }
-  return mHeader->config;
+  return mHeader->mConfig;
 }
 
 Snapshot::operator bool() const {
-  return mHeader && (mHeader->flags & HeaderFlags::FEEDER_ATTACHED)
-    && mHeader->config.mImageWidth > 0 && mHeader->config.mImageHeight > 0;
+  return mHeader && (mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED)
+    && mHeader->mConfig.mImageWidth > 0 && mHeader->mConfig.mImageHeight > 0;
 }
 
 class Impl {
@@ -293,7 +293,7 @@ class Writer::Impl : public SHM::Impl {
   bool mHaveFed = false;
 
   ~Impl() {
-    mHeader->flags &= ~HeaderFlags::FEEDER_ATTACHED;
+    mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
     FlushViewOfFile(mMapping, NULL);
   }
 };
@@ -325,23 +325,23 @@ Writer::~Writer() {
 }
 
 UINT Writer::GetPreviousTextureKey() const {
-  return GetTextureKeyFromSequenceNumber(p->mHeader->sequenceNumber);
+  return GetTextureKeyFromSequenceNumber(p->mHeader->mSequenceNumber);
 }
 
 UINT Writer::GetNextTextureKey() const {
-  return GetTextureKeyFromSequenceNumber(p->mHeader->sequenceNumber + 1);
+  return GetTextureKeyFromSequenceNumber(p->mHeader->mSequenceNumber + 1);
 }
 
 UINT Writer::GetNextTextureIndex() const {
-  return (p->mHeader->sequenceNumber + 1) % TextureCount;
+  return (p->mHeader->mSequenceNumber + 1) % TextureCount;
 }
 
 uint64_t Writer::GetSessionID() const {
-  return p->mHeader->sessionID;
+  return p->mHeader->mSessionID;
 }
 
 uint32_t Writer::GetNextSequenceNumber() const {
-  return p->mHeader->sequenceNumber + 1;
+  return p->mHeader->mSequenceNumber + 1;
 }
 
 class Reader::Impl : public SHM::Impl {
@@ -375,7 +375,7 @@ Reader::~Reader() {
 }
 
 Reader::operator bool() const {
-  return p && (p->mHeader->flags & HeaderFlags::FEEDER_ATTACHED);
+  return p && (p->mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED);
 }
 
 Writer::operator bool() const {
@@ -386,7 +386,7 @@ uint32_t Reader::GetSequenceNumber() const {
   if (!(p && p->mHeader)) {
     return 0;
   }
-  return p->mHeader->sequenceNumber;
+  return p->mHeader->mSequenceNumber;
 }
 
 Snapshot Reader::MaybeGet() const {
@@ -396,7 +396,7 @@ Snapshot Reader::MaybeGet() const {
   }
 
   return Snapshot(
-    *p->mHeader, &p->mResources.at(p->mHeader->sequenceNumber % TextureCount));
+    *p->mHeader, &p->mResources.at(p->mHeader->mSequenceNumber % TextureCount));
 }
 
 void Writer::Update(const Config& config) {
@@ -409,9 +409,9 @@ void Writer::Update(const Config& config) {
   }
 
   Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_FORCE_UNLOCK);
-  p->mHeader->config = config;
-  p->mHeader->sequenceNumber++;
-  p->mHeader->flags |= HeaderFlags::FEEDER_ATTACHED;
+  p->mHeader->mConfig = config;
+  p->mHeader->mSequenceNumber++;
+  p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
 }
 
 }// namespace OpenKneeboard::SHM
