@@ -128,7 +128,7 @@ MainWindow::MainWindow() {
     sizeof(HWND),
     hwndMappingName.c_str()));
   if (!mHwndFile) {
-    dprint("Failed to open hwnd file");
+    dprintf("Failed to open hwnd file: {:#x}", GetLastError());
     return;
   }
   void* mapping
