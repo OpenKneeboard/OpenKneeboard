@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/shm.h>
 #include <Windows.h>
 #include <d3d11_2.h>
@@ -158,7 +159,11 @@ void TextureReadResources::Populate(
   uint64_t sessionID,
   uint32_t sequenceNumber) {
   if (sessionID != mSessionID) {
-    *this = {};
+    dprintf(
+      "Replacing OpenKneeboard TextureReadResources: {:0x}/{}",
+      sessionID,
+      sequenceNumber % TextureCount);
+    *this = {.mSessionID = sessionID};
   }
 
   if (mTexture) {
