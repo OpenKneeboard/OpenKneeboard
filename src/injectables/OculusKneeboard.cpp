@@ -136,7 +136,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     .ColorTexture = mSwapChain,
     .Viewport = {
       .Pos = {0, 0},
-      .Size = { config.imageWidth, config.imageHeight },
+      .Size = { config.mImageWidth, config.mImageHeight },
     },
     .QuadPoseCenter = GetOvrPosef(renderParams.mKneeboardPose),
     .QuadSize = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y }
@@ -163,7 +163,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   }
 
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.vr.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
+  if ((config.mVR.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
     for (auto i = 0; i < newLayers.size(); ++i) {
       auto layer = newLayers.at(i);
       if (layer->Type != ovrLayerType_EyeFovDepth) {

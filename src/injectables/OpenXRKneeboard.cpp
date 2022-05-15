@@ -313,7 +313,7 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
       .swapchain = mSwapchain,
       .imageRect = {
         {0, 0},
-        {static_cast<int32_t>(config.imageWidth), static_cast<int32_t>(config.imageHeight)},
+        {static_cast<int32_t>(config.mImageWidth), static_cast<int32_t>(config.mImageHeight)},
       },
       .imageArrayIndex = 0,
     },

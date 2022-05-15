@@ -256,7 +256,7 @@ Config Snapshot::GetConfig() const {
 
 Snapshot::operator bool() const {
   return mHeader && (mHeader->flags & HeaderFlags::FEEDER_ATTACHED)
-    && mHeader->config.imageWidth > 0 && mHeader->config.imageHeight > 0;
+    && mHeader->config.mImageWidth > 0 && mHeader->config.mImageHeight > 0;
 }
 
 class Impl {
@@ -383,7 +383,7 @@ void Writer::Update(const Config& config) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
 
-  if (config.imageWidth == 0 || config.imageHeight == 0) {
+  if (config.mImageWidth == 0 || config.mImageHeight == 0) {
     throw std::logic_error("Not feeding a 0-size image");
   }
 

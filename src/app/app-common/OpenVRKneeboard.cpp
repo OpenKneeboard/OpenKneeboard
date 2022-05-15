@@ -237,8 +237,8 @@ void OpenVRKneeboard::Tick() {
   vr::VRTextureBounds_t textureBounds {
     0.0f,
     0.0f,
-    static_cast<float>(config.imageWidth) / TextureWidth,
-    static_cast<float>(config.imageHeight) / TextureHeight,
+    static_cast<float>(config.mImageWidth) / TextureWidth,
+    static_cast<float>(config.mImageHeight) / TextureHeight,
   };
 
   CHECK(SetOverlayTextureBounds, mOverlay, &textureBounds);

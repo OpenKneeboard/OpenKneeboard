@@ -316,7 +316,7 @@ class TestViewerWindow final {
 
     const auto config = snapshot.GetConfig();
 
-    if (config.imageWidth == 0 || config.imageHeight == 0) {
+    if (config.mImageWidth == 0 || config.mImageHeight == 0) {
       mErrorRenderer->Render(
         ctx,
         "No Image",
@@ -334,11 +334,12 @@ class TestViewerWindow final {
     ctx->Clear(
       mStreamerMode ? mStreamerModeWindowFrameColor : mWindowFrameColor);
 
-    const auto scalex = float(clientSize.width) / config.imageWidth;
-    const auto scaley = float(clientSize.height) / config.imageHeight;
+    const auto scalex = float(clientSize.width) / config.mImageWidth;
+    const auto scaley = float(clientSize.height) / config.mImageHeight;
     const auto scale = std::min(scalex, scaley);
-    const auto renderWidth = static_cast<uint32_t>(config.imageWidth * scale);
-    const auto renderHeight = static_cast<uint32_t>(config.imageHeight * scale);
+    const auto renderWidth = static_cast<uint32_t>(config.mImageWidth * scale);
+    const auto renderHeight
+      = static_cast<uint32_t>(config.mImageHeight * scale);
 
     const auto renderLeft = (clientSize.width - renderWidth) / 2;
     const auto renderTop = (clientSize.height - renderHeight) / 2;
@@ -351,8 +352,8 @@ class TestViewerWindow final {
     D2D1_RECT_F sourceRect {
       0,
       0,
-      static_cast<FLOAT>(config.imageWidth),
-      static_cast<FLOAT>(config.imageHeight)};
+      static_cast<FLOAT>(config.mImageWidth),
+      static_cast<FLOAT>(config.mImageHeight)};
     winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
     static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
     D2D1_BITMAP_PROPERTIES bitmapProperties {

@@ -49,10 +49,10 @@ std::wstring SharedTextureName(uint32_t sequenceNumber);
 struct Config final {
   static constexpr uint16_t VERSION = 1;
 
-  HWND feederWindow {0};
-  uint16_t imageWidth, imageHeight;// Pixels
-  VRRenderConfig vr;
-  FlatConfig flat;
+  HWND mFeederWindow {0};
+  uint16_t mImageWidth, mImageHeight;// Pixels
+  VRRenderConfig mVR;
+  FlatConfig mFlat;
 };
 #pragma pack(pop)
 

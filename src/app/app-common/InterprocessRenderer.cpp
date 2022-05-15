@@ -133,11 +133,11 @@ void InterprocessRenderer::Impl::CopyPixelsToSHM() {
   auto usedSize = mKneeboard->GetCanvasSize();
 
   SHM::Config config {
-    .feederWindow = mFeederWindow,
-    .imageWidth = static_cast<uint16_t>(usedSize.width),
-    .imageHeight = static_cast<uint16_t>(usedSize.height),
-    .vr = mKneeboard->GetVRConfig(),
-    .flat = mKneeboard->GetFlatConfig(),
+    .mFeederWindow = mFeederWindow,
+    .mImageWidth = static_cast<uint16_t>(usedSize.width),
+    .mImageHeight = static_cast<uint16_t>(usedSize.height),
+    .mVR = mKneeboard->GetVRConfig(),
+    .mFlat = mKneeboard->GetFlatConfig(),
   };
   mSHM.Update(config);
 }

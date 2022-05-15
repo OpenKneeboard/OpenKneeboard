@@ -73,18 +73,18 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
 
-  const auto aspectRatio = float(config.imageWidth) / config.imageHeight;
+  const auto aspectRatio = float(config.mImageWidth) / config.mImageHeight;
   const LONG canvasWidth = scDesc.BufferDesc.Width;
   const LONG canvasHeight = scDesc.BufferDesc.Height;
 
   const LONG renderHeight
-    = (static_cast<long>(canvasHeight) * config.flat.heightPercent) / 100;
+    = (static_cast<long>(canvasHeight) * config.mFlat.heightPercent) / 100;
   const LONG renderWidth = std::lround(renderHeight * aspectRatio);
 
-  const auto padding = config.flat.paddingPixels;
+  const auto padding = config.mFlat.paddingPixels;
 
   LONG left = padding;
-  switch (config.flat.horizontalAlignment) {
+  switch (config.mFlat.horizontalAlignment) {
     case FlatConfig::HALIGN_LEFT:
       break;
     case FlatConfig::HALIGN_CENTER:
@@ -96,7 +96,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   LONG top = padding;
-  switch (config.flat.verticalAlignment) {
+  switch (config.mFlat.verticalAlignment) {
     case FlatConfig::VALIGN_TOP:
       break;
     case FlatConfig::VALIGN_MIDDLE:
@@ -112,8 +112,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   RECT sourceRect {
     0,
     0,
-    config.imageWidth,
-    config.imageHeight,
+    config.mImageWidth,
+    config.mImageHeight,
   };
 
   auto sharedTexture = snapshot.GetSharedTexture(mDevice);
@@ -129,7 +129,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     resourceView.get(),
     destRect,
     &sourceRect,
-    DirectX::Colors::White * config.flat.opacity);
+    DirectX::Colors::White * config.mFlat.opacity);
   sprites.End();
   mDeviceResources.mContext->Flush();
 

@@ -143,9 +143,9 @@ LRESULT TabletProxy::HookedWindowProc(
   LPARAM lParam) {
   if (hwnd == mTargetWindow && mTablet->CanProcessMessage(uMsg)) {
     auto snapshot = mSHM.MaybeGet();
-    if (snapshot && snapshot.GetConfig().feederWindow) {
+    if (snapshot && snapshot.GetConfig().mFeederWindow) {
       SendNotifyMessage(
-        snapshot.GetConfig().feederWindow, uMsg, wParam, lParam);
+        snapshot.GetConfig().mFeederWindow, uMsg, wParam, lParam);
     }
     return S_OK;
   }

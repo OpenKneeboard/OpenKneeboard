@@ -163,8 +163,8 @@ bool OculusD3D12Kneeboard::Render(
     .left = 0,
     .top = 0,
     .front = 0,
-    .right = config.imageWidth,
-    .bottom = config.imageHeight,
+    .right = config.mImageWidth,
+    .bottom = config.mImageHeight,
     .back = 1,
   };
 
