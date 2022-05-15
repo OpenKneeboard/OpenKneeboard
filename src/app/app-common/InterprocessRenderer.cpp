@@ -176,11 +176,12 @@ InterprocessRenderer::InterprocessRenderer(
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
+  const auto sessionID = p->mSHM.GetSessionID();
   for (auto i = 0; i < TextureCount; ++i) {
     auto& it = p->mResources.at(i);
 
     dxr.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
-    auto textureName = SHM::SharedTextureName(i);
+    auto textureName = SHM::SharedTextureName(sessionID, i);
     it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
       nullptr,
       DXGI_SHARED_RESOURCE_READ,

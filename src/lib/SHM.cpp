@@ -28,8 +28,16 @@
 #include <fmt/xchar.h>
 
 #include <bit>
+#include <random>
 
 namespace OpenKneeboard::SHM {
+
+static uint64_t CreateSessionID() {
+  std::random_device randDevice;
+  std::uniform_int_distribution<uint32_t> randDist;
+  return (static_cast<uint64_t>(GetCurrentProcessId()) << 32)
+    | randDist(randDevice);
+}
 
 enum class HeaderFlags : ULONG {
   LOCKED = 1 << 0,
@@ -38,9 +46,10 @@ enum class HeaderFlags : ULONG {
 
 #pragma pack(push)
 struct Header final {
-  static constexpr uint16_t VERSION = 1;
+  static constexpr uint16_t VERSION = 2;
 
   uint32_t sequenceNumber = 0;
+  uint64_t sessionID = CreateSessionID();
   HeaderFlags flags;
   Config config;
 };
@@ -139,18 +148,24 @@ struct TextureReadResources {
   winrt::com_ptr<IDXGISurface> mSurface;
   winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   winrt::com_ptr<IDXGIKeyedMutex> mMutex;
+  uint64_t mSessionID = 0;
 
-  void Populate(ID3D11Device* d3d, uint32_t sequenceNumber);
+  void Populate(ID3D11Device* d3d, uint64_t sessionID, uint32_t sequenceNumber);
 };
 
 void TextureReadResources::Populate(
   ID3D11Device* d3d,
+  uint64_t sessionID,
   uint32_t sequenceNumber) {
+  if (sessionID != mSessionID) {
+    *this = {};
+  }
+
   if (mTexture) {
     return;
   }
 
-  auto textureName = SHM::SharedTextureName(sequenceNumber);
+  auto textureName = SHM::SharedTextureName(sessionID, sequenceNumber);
 
   ID3D11Device1* d1 = nullptr;
   d3d->QueryInterface(&d1);
@@ -173,12 +188,13 @@ void TextureReadResources::Populate(
     mTexture.get(), nullptr, mShaderResourceView.put());
 }
 
-std::wstring SharedTextureName(uint32_t sequenceNumber) {
+std::wstring SharedTextureName(uint64_t sessionID, uint32_t sequenceNumber) {
   return fmt::format(
-    L"Local\\{}-texture-h{}-c{}-{}",
+    L"Local\\{}-texture-h{}-c{}-{:x}-{}",
     ProjectNameW,
     Header::VERSION,
     Config::VERSION,
+    sessionID,
     sequenceNumber % TextureCount);
 }
 
@@ -190,7 +206,7 @@ SharedTexture::SharedTexture(
   ID3D11Device* d3d,
   TextureReadResources* r)
   : mResources(r) {
-  r->Populate(d3d, header.sequenceNumber);
+  r->Populate(d3d, header.sessionID, header.sequenceNumber);
   auto key = GetTextureKeyFromSequenceNumber(header.sequenceNumber);
   if (r->mMutex->AcquireSync(key, 10) != S_OK) {
     mResources = nullptr;
@@ -302,6 +318,7 @@ Writer::Writer() {
   p->mHandle = handle;
   p->mMapping = mapping;
   p->mHeader = reinterpret_cast<Header*>(mapping);
+  *p->mHeader = {};
 }
 
 Writer::~Writer() {
@@ -317,6 +334,10 @@ UINT Writer::GetNextTextureKey() const {
 
 UINT Writer::GetNextTextureIndex() const {
   return (p->mHeader->sequenceNumber + 1) % TextureCount;
+}
+
+uint64_t Writer::GetSessionID() const {
+  return p->mHeader->sessionID;
 }
 
 uint32_t Writer::GetNextSequenceNumber() const {

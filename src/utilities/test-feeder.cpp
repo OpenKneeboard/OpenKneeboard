@@ -150,7 +150,7 @@ int main() {
       it.mTexture.get(), nullptr, it.mTextureRTV.put());
 
     HANDLE sharedHandle = INVALID_HANDLE_VALUE;
-    auto textureName = SHM::SharedTextureName(i);
+    auto textureName = SHM::SharedTextureName(shm.GetSessionID(), i);
     it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
       nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
 

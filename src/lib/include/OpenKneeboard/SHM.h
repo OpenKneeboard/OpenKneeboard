@@ -43,7 +43,7 @@ static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
-std::wstring SharedTextureName(uint32_t sequenceNumber);
+std::wstring SharedTextureName(uint64_t sessionID, uint32_t sequenceNumber);
 
 #pragma pack(push)
 struct Config final {
@@ -70,6 +70,7 @@ class Writer final {
   UINT GetNextTextureKey() const;
   UINT GetNextTextureIndex() const;
 
+  uint64_t GetSessionID() const;
   uint32_t GetNextSequenceNumber() const;
 
  private:
