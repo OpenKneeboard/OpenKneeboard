@@ -210,7 +210,8 @@ void PDFTab::Reload() {
       p->mBookmarks = GetNavigationEntries(pageData, outlines);
       if (p->mBookmarks.size() < 2) {
         p->mBookmarks.clear();
-        const auto pageCount = p->mPDFDocument.PageCount();
+        const auto pageCount
+          = QPDFPageDocumentHelper(qpdf).getAllPages().size();
         for (uint16_t i = 0; i < pageCount; ++i) {
           p->mBookmarks.push_back(
             {fmt::format(fmt::runtime(_("Page {}")), i + 1), i});
