@@ -235,6 +235,11 @@ void GameInjector::CheckProcess(
     if (!processHandle) {
       processHandle.attach(OpenProcess(PROCESS_ALL_ACCESS, false, processID));
       if (!processHandle) {
+        dprintf(
+          L"Failed to OpenProcess() for PID {} ({}): {:#x}",
+          processID,
+          exeBaseName,
+          GetLastError());
         return;
       }
 
