@@ -21,28 +21,10 @@
 
 #include <filesystem>
 
-namespace OpenKneeboard::RuntimeFiles {
+namespace OpenKneeboard {
 
-#define OPENKNEEBOARD_RUNTIME_FILES \
-  IT(DCSWORLD_HOOK_DLL) \
-  IT(DCSWORLD_HOOK_LUA) \
-  IT(AUTOINJECT_MARKER_DLL) \
-  IT(INJECTION_BOOTSTRAPPER_DLL) \
-  IT(TABLET_PROXY_DLL) \
-  IT(NON_VR_D3D11_DLL) \
-  IT(OCULUS_D3D11_DLL) \
-  IT(OCULUS_D3D12_DLL) \
-  IT(OPENXR_DLL) \
-  IT(OPENXR_JSON) \
-  IT(OPENXR_REGISTER_LAYER_HELPER)
+bool FilesDiffer(
+  const std::filesystem::path& a,
+  const std::filesystem::path& b);
 
-#define IT(x) extern const std::filesystem::path x;
-OPENKNEEBOARD_RUNTIME_FILES
-#undef IT
-
-/** Installs to `GetDirectory()`, or throws */
-void Install();
-
-std::filesystem::path GetDirectory();
-
-}// namespace OpenKneeboard::RuntimeFiles
+}

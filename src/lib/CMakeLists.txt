@@ -19,6 +19,12 @@ target_link_libraries(
   PUBLIC
   _libheaders)
 
+add_library(OpenKneeboard-FilesDiffer STATIC FilesDiffer.cpp)
+target_link_libraries(
+  OpenKneeboard-FilesDiffer
+  PUBLIC
+  _libheaders)
+
 add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
 target_link_libraries(
   OpenKneeboard-UTF8
@@ -49,7 +55,13 @@ target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
 
 set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
 file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
-add_library(OpenKneeboard-RuntimeFiles STATIC "${RUNTIME_FILES_CPP}" RuntimeFilesGetDirectory.cpp)
+add_library(
+  OpenKneeboard-RuntimeFiles
+  STATIC
+  "${RUNTIME_FILES_CPP}"
+  RuntimeFilesGetDirectory.cpp
+  RuntimeFilesInstall.cpp
+)
 target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
 target_link_libraries(OpenKneeboard-RuntimeFiles PRIVATE OpenKneeboard-dprint)
 

@@ -24,6 +24,7 @@
 // clang-format on
 
 #include <OpenKneeboard/DCSWorldInstance.h>
+#include <OpenKneeboard/FilesDiffer.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
@@ -34,8 +35,6 @@
 #include <winrt/microsoft.ui.xaml.controls.h>
 #include <winrt/windows.storage.pickers.h>
 
-#include <algorithm>
-#include <filesystem>
 #include <set>
 
 #include "Globals.h"
@@ -45,49 +44,6 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt;
 
 namespace OpenKneeboard {
-
-static bool FilesDiffer(
-  const std::filesystem::path& a,
-  const std::filesystem::path& b) {
-  const auto size = std::filesystem::file_size(a);
-  if (std::filesystem::file_size(b) != size) {
-    return true;
-  }
-
-  winrt::handle ah {CreateFile(
-    a.c_str(),
-    GENERIC_READ,
-    FILE_SHARE_READ | FILE_SHARE_WRITE,
-    nullptr,
-    OPEN_EXISTING,
-    FILE_ATTRIBUTE_NORMAL,
-    NULL)};
-  winrt::handle bh {CreateFile(
-    b.c_str(),
-    GENERIC_READ,
-    FILE_SHARE_READ | FILE_SHARE_WRITE,
-    nullptr,
-    OPEN_EXISTING,
-    FILE_ATTRIBUTE_NORMAL,
-    NULL)};
-
-  winrt::file_handle afm {
-    CreateFileMappingW(ah.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
-  winrt::file_handle bfm {
-    CreateFileMappingW(bh.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
-
-  auto av = reinterpret_cast<std::byte*>(
-    MapViewOfFile(afm.get(), FILE_MAP_READ, 0, 0, 0));
-  auto bv = reinterpret_cast<std::byte*>(
-    MapViewOfFile(bfm.get(), FILE_MAP_READ, 0, 0, 0));
-
-  const auto equal = std::equal(av, av + size, bv, bv + size);
-
-  UnmapViewOfFile(av);
-  UnmapViewOfFile(bv);
-
-  return !equal;
-}
 
 enum DCSHookInstallState { UP_TO_DATE, OUT_OF_DATE, NOT_INSTALLED };
 

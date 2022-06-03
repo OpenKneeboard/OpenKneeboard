@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CheckDCSHooks.h" />
+    <ClInclude Include="CheckRuntimeFiles.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="App.xaml.h">
@@ -169,6 +170,7 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="CheckDCSHooks.cpp" />
+    <ClCompile Include="CheckRuntimeFiles.cpp" />
     <ClCompile Include="Events-winrt.cpp" />
     <ClCompile Include="ExecutableIconFactory.cpp" />
     <ClCompile Include="Globals.cpp" />

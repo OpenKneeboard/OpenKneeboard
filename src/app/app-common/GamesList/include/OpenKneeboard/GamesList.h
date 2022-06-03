@@ -44,6 +44,8 @@ class GamesList final : private EventReceiver {
   virtual ~GamesList();
   virtual nlohmann::json GetSettings() const;
 
+  void StartInjector();
+
   std::vector<std::shared_ptr<Game>> GetGames() const;
   std::vector<std::shared_ptr<GameInstance>> GetGameInstances() const;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);

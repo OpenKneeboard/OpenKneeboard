@@ -23,6 +23,8 @@
 // clang-format on
 
 #include <Dbghelp.h>
+#include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
@@ -40,6 +42,7 @@
 #include <set>
 
 #include "CheckDCSHooks.h"
+#include "CheckRuntimeFiles.h"
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
@@ -147,7 +150,12 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
 
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
     [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
-      co_await CheckAllDCSHooks(window.Content().XamlRoot());
+      auto xamlRoot = window.Content().XamlRoot();
+      co_await CheckRuntimeFiles(xamlRoot);
+      if (gKneeboard) {
+        gKneeboard->GetGamesList()->StartInjector();
+      }
+      co_await CheckAllDCSHooks(xamlRoot);
     });
   window.Activate();
 }

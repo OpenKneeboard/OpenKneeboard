@@ -32,6 +32,12 @@ GamesList::GamesList(const nlohmann::json& config) {
   } else {
     LoadSettings(config);
   }
+}
+
+void GamesList::StartInjector() {
+  if (mInjector) {
+    return;
+  }
 
   mInjector = std::make_unique<GameInjector>();
   mInjector->SetGameInstances(mInstances);
@@ -88,7 +94,9 @@ std::vector<std::shared_ptr<GameInstance>> GamesList::GetGameInstances() const {
 void GamesList::SetGameInstances(
   const std::vector<std::shared_ptr<GameInstance>>& instances) {
   mInstances = instances;
-  mInjector->SetGameInstances(mInstances);
+  if (mInjector) {
+    mInjector->SetGameInstances(mInstances);
+  }
   this->evSettingsChangedEvent.Emit();
 }
 

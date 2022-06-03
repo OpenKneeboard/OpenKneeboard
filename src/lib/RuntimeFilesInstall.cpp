@@ -17,40 +17,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/FilesDiffer.h>
 #include <OpenKneeboard/RuntimeFiles.h>
-
-// clang-format off
-#include <Windows.h>
-#include <ShlObj.h>
-#include <Psapi.h>
-#include <appmodel.h>
-// clang-format on
-
 #include <OpenKneeboard/dprint.h>
 #include <shims/winrt.h>
 
+#include <filesystem>
+
 namespace OpenKneeboard::RuntimeFiles {
 
-std::filesystem::path GetDirectory() {
-  static std::filesystem::path sPath;
-  if (!sPath.empty()) {
-    return sPath;
-  }
-
+void Install() {
   wchar_t buf[MAX_PATH];
   GetModuleFileNameW(NULL, buf, MAX_PATH);
-  const auto executablePath
+  const auto source
     = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
 
-  // App bin directory is not readable by other apps if using msix installer,
-  // so if we pass a DLL in the app directory to `LoadLibraryW` in another
-  // process, it will fail. Copy them out to a readable directory.
-  wchar_t* ref = nullptr;
-  winrt::check_hresult(
-    SHGetKnownFolderPath(FOLDERID_ProgramData, NULL, NULL, &ref));
-  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard";
+  const auto destination = RuntimeFiles::GetDirectory();
+  std::filesystem::create_directories(destination);
 
-  return sPath;
+#define IT(file) \
+  if (FilesDiffer(source / file, destination / file)) { \
+    std::filesystem::copy( \
+      source / file, \
+      destination / file, \
+      std::filesystem::copy_options::overwrite_existing); \
+  }
+
+  OPENKNEEBOARD_RUNTIME_FILES
+#undef IT
 }
 
 }// namespace OpenKneeboard::RuntimeFiles

@@ -25,6 +25,7 @@ set(
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-OpenXRMode
   OpenKneeboard-VRKneeboard
+  OpenKneeboard-FilesDiffer
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-SHM
   OpenKneeboard-UTF8

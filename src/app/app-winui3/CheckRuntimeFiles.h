@@ -19,30 +19,17 @@
  */
 #pragma once
 
-#include <filesystem>
+// clang-format off
+#include "pch.h"
+// clang-format on
 
-namespace OpenKneeboard::RuntimeFiles {
+#include <shims/winrt.h>
+#include <winrt/microsoft.ui.xaml.h>
+#include <winrt/windows.foundation.h>
 
-#define OPENKNEEBOARD_RUNTIME_FILES \
-  IT(DCSWORLD_HOOK_DLL) \
-  IT(DCSWORLD_HOOK_LUA) \
-  IT(AUTOINJECT_MARKER_DLL) \
-  IT(INJECTION_BOOTSTRAPPER_DLL) \
-  IT(TABLET_PROXY_DLL) \
-  IT(NON_VR_D3D11_DLL) \
-  IT(OCULUS_D3D11_DLL) \
-  IT(OCULUS_D3D12_DLL) \
-  IT(OPENXR_DLL) \
-  IT(OPENXR_JSON) \
-  IT(OPENXR_REGISTER_LAYER_HELPER)
+namespace OpenKneeboard {
 
-#define IT(x) extern const std::filesystem::path x;
-OPENKNEEBOARD_RUNTIME_FILES
-#undef IT
+winrt::Windows::Foundation::IAsyncAction CheckRuntimeFiles(
+  const winrt::Microsoft::UI::Xaml::XamlRoot& root);
 
-/** Installs to `GetDirectory()`, or throws */
-void Install();
-
-std::filesystem::path GetDirectory();
-
-}// namespace OpenKneeboard::RuntimeFiles
+}// namespace OpenKneeboard
