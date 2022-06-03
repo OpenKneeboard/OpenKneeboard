@@ -40,7 +40,14 @@ BOOL InjectedDLLMain(
 
   if (dwReason == DLL_PROCESS_ATTACH) {
     DPrintSettings::Set({.prefix = logPrefix});
-    dprintf("Attached to process.");
+    std::wstring fullDllPath;
+    fullDllPath.resize(MAX_PATH);
+    {
+      auto len
+        = GetModuleFileNameW(hinst, fullDllPath.data(), fullDllPath.size());
+      fullDllPath.resize(len);
+    }
+    dprintf(L"Attached to process: {}", fullDllPath);
 
     DetourRestoreAfterWith();
     DisableThreadLibraryCalls(hinst);
