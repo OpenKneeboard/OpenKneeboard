@@ -85,8 +85,6 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     this->StartOpenVRThread();
   }
 
-  SetOpenXRModeWithHelperProcess(mVRConfig.mOpenXRMode);
-
   UpdateLayout();
 }
 

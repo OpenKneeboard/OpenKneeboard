@@ -25,6 +25,7 @@
 #include <Dbghelp.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
@@ -154,6 +155,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
       co_await CheckRuntimeFiles(xamlRoot);
       if (gKneeboard) {
         gKneeboard->GetGamesList()->StartInjector();
+        SetOpenXRModeWithHelperProcess(gKneeboard->GetVRConfig().mOpenXRMode);
       }
       co_await CheckAllDCSHooks(xamlRoot);
     });
