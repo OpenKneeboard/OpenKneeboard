@@ -23,7 +23,6 @@
 #include <Windows.h>
 #include <ShlObj.h>
 #include <Psapi.h>
-#include <appmodel.h>
 // clang-format on
 
 #include <OpenKneeboard/dprint.h>
