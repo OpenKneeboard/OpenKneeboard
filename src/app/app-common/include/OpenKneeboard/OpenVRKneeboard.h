@@ -58,6 +58,9 @@ class OpenVRKneeboard final : private VRKneeboard {
   bool mVisible = true;
   SHM::Reader mSHM;
 
+  // Paint to buffer texture with variable opacity,
+  // then atomically copy to OpenVR texture
+  winrt::com_ptr<ID3D11Texture2D> mBufferTexture;
   winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
   uint64_t mCacheKey = ~(0ui64);

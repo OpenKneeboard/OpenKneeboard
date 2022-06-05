@@ -68,19 +68,24 @@ OpenVRKneeboard::OpenVRKneeboard() {
     .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
     .SampleDesc = {1, 0},
     .Usage = D3D11_USAGE_DEFAULT,
-    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
     .CPUAccessFlags = {},
     .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
   };
   winrt::check_hresult(
     device->CreateTexture2D(&desc, nullptr, mOpenVRTexture.put()));
+  desc.MiscFlags = {};
+  desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+  winrt::check_hresult(
+    device->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
+
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };
   winrt::check_hresult(device->CreateRenderTargetView(
-    mOpenVRTexture.get(), &rtvd, mRenderTargetView.put()));
+    mBufferTexture.get(), &rtvd, mRenderTargetView.put()));
 }
 
 OpenVRKneeboard::~OpenVRKneeboard() {
@@ -227,11 +232,18 @@ void OpenVRKneeboard::Tick() {
 
   {
     auto openKneeboardTexture = snapshot.GetSharedTexture(mD3D.get());
+
+    // non-atomic paint to buffer...
     D3D11::CopyTextureWithOpacity(
       mD3D.get(),
       openKneeboardTexture.GetShaderResourceView(),
       mRenderTargetView.get(),
       renderParams.mKneeboardOpacity);
+
+    // ... then atomic copy to OpenVR texture
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    mD3D->GetImmediateContext(ctx.put());
+    ctx->CopyResource(mOpenVRTexture.get(), mBufferTexture.get());
   }
 
   vr::VRTextureBounds_t textureBounds {
