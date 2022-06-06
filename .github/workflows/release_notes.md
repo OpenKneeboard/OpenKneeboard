@@ -2,6 +2,8 @@
 
 # You probably want `OpenKneeboard-@TAG@.msix`
 
+**Important**: Tablet, non-VR, and Oculus support will not work if you run the game or launchers (e.g. Skatezilla) elevated/as administrator.
+
 Please start with [the README](https://github.com/fredemmott/OpenKneeboard/blob/@TAG@/README.md); there is also extra documentation for:
 
 - [Huion tablet users](https://github.com/fredemmott/OpenKneeboard/blob/@TAG@/docs/huion.md)
