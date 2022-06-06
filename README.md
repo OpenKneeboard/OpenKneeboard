@@ -4,10 +4,6 @@ OpenKneeboard is an open source Kneeboard application, primarily aimed at virtua
 
 ![Screenshot of the main app](docs/screenshots/config-app.png)
 
-## Current Status
-
-OpenKneeboard is relatively new, and not yet widely tested; consider it 'early access' :p
-
 ## WARNING: Anti-Cheat
 
 While OpenKneeboard is not a cheat, it does hook into the games rendering and input pipelines, which over-eager anti-cheat systems may consider ban-worthy. While this is similar to how other overlays work (e.g. Steam and Discord), it is possible that using OpenKneeboard may lead to an anti-cheat ban.
