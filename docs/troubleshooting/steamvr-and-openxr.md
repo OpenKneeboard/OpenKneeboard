@@ -8,9 +8,10 @@ If this does not solve the problem, try unplugging any graphics tablets (e.g. Wa
 
 ## Kneeboard Is Not Visible
 
-- Reset OpenKneeboard's VR settings to defaults
-- Try binding a button to 'Recenter' in OpenKneeboard's Input settings; it usually works best to to use the same keys/buttons as you use for in-game VR recenter
-- If the game is running as administrator, you must run OpenKneeboard as administrator.
+- Reset OpenKneeboard's VR settings to defaults.
+- Try binding a button to 'Recenter' in OpenKneeboard's Input settings; it usually works best to to use the same keys/buttons as you use for in-game VR recenter.
+- Do not run the game elevated/as administrator.
+- Follow the [additional steps](wmr-kneeboard-position.md) for WMR if you are using a WMR headset (e.g. HP Reverb G2).
 
 ## Kneeboard Is Visible In SteamVR, But Not OpenXR
 
