@@ -2,8 +2,8 @@ include(ExternalProject)
 
 ExternalProject_Add(
   CppWinRTNuget
-  URL "https://github.com/microsoft/cppwinrt/releases/download/2.0.220131.2/Microsoft.Windows.CppWinRT.2.0.220131.2.nupkg"
-  URL_HASH "SHA256=899c1c676c72404aea4c07ebd7e3314c245867f95918c79fc122642df85e168c"
+  URL "https://github.com/microsoft/cppwinrt/releases/download/2.0.220418.1/Microsoft.Windows.CppWinRT.2.0.220418.1.nupkg"
+  URL_HASH "SHA256=2b80864729ac995915a391cda1e827e03990a511f5217863da3626a558934e89"
 
   CONFIGURE_COMMAND ""
   BUILD_COMMAND "<SOURCE_DIR>/bin/cppwinrt.exe" -in local -output "<BINARY_DIR>/include"

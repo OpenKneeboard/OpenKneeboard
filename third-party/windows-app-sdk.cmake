@@ -2,11 +2,13 @@ include(ExternalProject)
 
 ExternalProject_Add(
   WindowsAppSDKNuget
-  URL "https://www.nuget.org/api/v2/package/Microsoft.WindowsAppSDK/1.0.0"
-  URL_HASH "SHA256=b5319bc52f99cf2f9bb75ae1a77dce08ec2e57738b9d5a3c3849335bcd11c8ee"
+  URL "https://www.nuget.org/api/v2/package/Microsoft.WindowsAppSDK/1.1.0"
+  URL_HASH "SHA256=03ea666f350eb97841bebe2a137cba915928079832662dc0b5d821e8953ed046"
 
   DEPENDS NuGet::CppWinRT::Exe
 
+  PATCH_COMMAND
+    cd <SOURCE_DIR>/
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""

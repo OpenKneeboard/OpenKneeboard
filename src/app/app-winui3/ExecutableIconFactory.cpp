@@ -23,6 +23,8 @@
 #include "ExecutableIconFactory.h"
 // clang-format on
 
+#pragma comment(lib, "Shell32.lib")
+
 #include <wincodec.h>
 
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;

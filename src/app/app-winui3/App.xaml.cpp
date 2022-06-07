@@ -193,40 +193,10 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     return 0;
   }
 
-  UINT32 packageNameLen {0};
-  const bool isPackaged = GetCurrentPackageFullName(&packageNameLen, nullptr)
-    == ERROR_INSUFFICIENT_BUFFER;
-  if (!isPackaged) {
-    PACKAGE_VERSION minimumVersion {WINDOWSAPPSDK_RUNTIME_VERSION_UINT64};
-    winrt::check_hresult(MddBootstrapInitialize(
-      WINDOWSAPPSDK_RELEASE_MAJORMINOR,
-      WINDOWSAPPSDK_RELEASE_VERSION_TAG_W,
-      minimumVersion));
-  }
-
-  {
-    void(WINAPI * pfnXamlCheckProcessRequirements)();
-    auto module = ::LoadLibrary(L"Microsoft.ui.xaml.dll");
-    if (module) {
-      pfnXamlCheckProcessRequirements
-        = reinterpret_cast<decltype(pfnXamlCheckProcessRequirements)>(
-          GetProcAddress(module, "XamlCheckProcessRequirements"));
-      if (pfnXamlCheckProcessRequirements) {
-        (*pfnXamlCheckProcessRequirements)();
-      }
-
-      ::FreeLibrary(module);
-    }
-  }
-
   winrt::init_apartment(winrt::apartment_type::single_threaded);
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
-
-  if (!isPackaged) {
-    MddBootstrapShutdown();
-  }
 
   return 0;
 }

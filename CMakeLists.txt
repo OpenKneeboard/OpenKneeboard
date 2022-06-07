@@ -4,7 +4,7 @@ cmake_policy(SET CMP0079 NEW)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
-project(com.fredemmott.openkneeboard VERSION 1.0.0 LANGUAGES CXX C)
+project(com.fredemmott.openkneeboard VERSION 1.1.0 LANGUAGES CXX C)
 
 add_subdirectory("third-party")
 add_subdirectory("src")
