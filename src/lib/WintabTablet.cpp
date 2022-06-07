@@ -45,7 +45,7 @@ class LibWintab {
 #undef IT
 
   LibWintab() {
-    mWintab = LoadLibraryW("WINTAB32.dll");
+    mWintab = LoadLibraryW(L"WINTAB32.dll");
     if (!mWintab) {
       return;
     }
