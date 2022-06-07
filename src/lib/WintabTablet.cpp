@@ -45,10 +45,26 @@ class LibWintab {
 #undef IT
 
   LibWintab() {
-    mWintab = LoadLibraryA("Wintab32.dll");
+    mWintab = LoadLibraryW("WINTAB32.dll");
     if (!mWintab) {
       return;
     }
+
+    wchar_t path[MAX_PATH];
+    const auto pathLen = GetModuleFileNameW(mWintab, path, sizeof(path));
+
+    const auto fileName
+      = std::filesystem::path(std::wstring_view(path, pathLen)).filename();
+
+    // - Wacom provide Wintab32.dll
+    // - Huion provide wintab32.dll
+    // - XPPen provide WinTab32.dll, which leads to a crash on startup
+    if (fileName == "WinTab32.dll") {
+      FreeLibrary(mWintab);
+      mWintab = NULL;
+      return;
+    }
+
 #define IT(x) \
   this->x = reinterpret_cast<decltype(&::x)>(GetProcAddress(mWintab, #x));
     WINTAB_FUNCTIONS
