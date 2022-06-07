@@ -59,7 +59,7 @@ class LibWintab {
     // - Wacom provide Wintab32.dll
     // - Huion provide wintab32.dll
     // - XPPen provide WinTab32.dll, which leads to a crash on startup
-    if (fileName == "WinTab32.dll") {
+    if (fileName == L"WinTab32.dll") {
       FreeLibrary(mWintab);
       mWintab = NULL;
       return;

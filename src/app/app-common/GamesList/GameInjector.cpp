@@ -181,7 +181,7 @@ bool HaveWintab() {
   // - Wacom provide Wintab32.dll
   // - Huion provide wintab32.dll
   // - XPPen provide WinTab32.dll, which leads to a crash on startup
-  return (bool)wintab && fileName != "WinTab32.dll";
+  return (bool)wintab && fileName != L"WinTab32.dll";
 }
 
 }// namespace
