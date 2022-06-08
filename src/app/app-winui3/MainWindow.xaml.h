@@ -29,6 +29,7 @@
 using namespace winrt::Microsoft::UI::Dispatching;
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Microsoft::UI::Xaml::Navigation;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
@@ -38,9 +39,18 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   void OnNavigationItemInvoked(
     const IInspectable& sender,
     const NavigationViewItemInvokedEventArgs& args) noexcept;
-  void OnBackClick(
+
+  void OnNavigated(
     const IInspectable& sender,
-    const RoutedEventArgs& args) noexcept;
+    const NavigationEventArgs& args) noexcept;
+
+  void OnBackRequested(
+    const IInspectable& sender,
+    const NavigationViewBackRequestedEventArgs&) noexcept;
+
+  void UpdateTitleBarMargins(
+    const IInspectable& sender,
+    const IInspectable& args) noexcept;
 
  private:
   HWND mHwnd;
@@ -57,7 +67,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
 
   winrt::Windows::Foundation::IAsyncAction OnClosed(
     const IInspectable&,
-    const WindowEventArgs&);
+    const WindowEventArgs&) noexcept;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 

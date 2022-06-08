@@ -7,58 +7,50 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   >
-  <!--
-    So, this is not the 'right' way to do a modern title bar with a navigation view,
-    however the 'right' way doesn't appear to be possible at the moment:
-
-    What I'm doing:
-    * Define a title bar control with text, and margin for the controls
-    * Set it as the title bar
-    * Define a two-row layout
-
-    What I should be doing:
-    * Set the pane title on the navigation view
-    * Use the pane title area as the title bar
-
-    However, this currently makes min/max/close unclickable:
-
-    https://github.com/microsoft/microsoft-ui-xaml/issues/6519
-  -->
-  <Grid RowDefinitions="Auto,*">
+  <Grid
+    ColumnDefinitions="*"
+    Background="{ThemeResource SystemChromeMediumColor}">
+    <Grid.Resources>
+      <Thickness x:Key="NavigationViewContentMargin">0,48,0,0</Thickness>
+    </Grid.Resources>
     <Grid
-      Margin="0,0,0,0"
-      Height="36"
-      Grid.Row="0"
-      ColumnDefinitions="Auto,*"
-      Background="{ThemeResource SystemChromeMediumColor}">
-      <Button
-        Grid.Column="0"
-        Click="OnBackClick"
-        Style="{StaticResource NavigationBackButtonNormalStyle}"
-        IsEnabled="{x:Bind Frame.CanGoBack, Mode=OneWay}"
+      x:Name="AppTitleBar"
+      Grid.Column="0"
+      Height="{Binding ElementName=Navigation, Path=CompactPaneLength}"
+      VerticalAlignment="Top"
+      IsHitTestVisible="1"
+      Canvas.ZIndex="1">
+      <TextBlock
+        x:Name="AppTitle"
+        Text="OpenKneeboard"
+        TextWrapping="NoWrap"
+        Style="{StaticResource CaptionTextBlockStyle}" 
+        VerticalAlignment="Center"
       />
-      <Grid x:Name="AppTitleBar" Grid.Column="1">
-        <TextBlock
-          Text="OpenKneeboard"
-          TextWrapping="NoWrap"
-          Margin="8,0,0,0"
-          Style="{StaticResource CaptionTextBlockStyle}" 
-          VerticalAlignment="Center"
-        />
-      </Grid>
     </Grid>
     <NavigationView
-      Grid.Row="1"
-      IsBackButtonVisible="Collapsed"
+      Grid.Column="0"
+      Canvas.ZIndex="0"
       IsSettingsVisible="True"
-      IsTitleBarAutoPaddingEnabled="False"
+      IsTabStop="False"
       ItemInvoked="OnNavigationItemInvoked"
-      Background="{ThemeResource SystemChromeMediumColor}"
-      x:Name="Navigation">
+      IsTitleBarAutoPaddingEnabled="False"
+      x:Name="Navigation"
+      DisplayModeChanged="UpdateTitleBarMargins"
+      PaneOpening="UpdateTitleBarMargins"
+      PaneClosing="UpdateTitleBarMargins"
+      BackRequested="OnBackRequested">
       <NavigationView.FooterMenuItems>
-        <NavigationViewItem Content="About" Icon="Help" x:Name="AboutNavItem" />
+        <NavigationViewItem
+          x:Name="AboutNavItem"
+          Content="About"
+          Icon="Help"
+        />
       </NavigationView.FooterMenuItems>
-      <Frame x:Name="Frame" Background="{ThemeResource SystemChromeLowColor}" />
+      <Frame
+        x:Name="Frame"
+        Navigated="OnNavigated"
+      />
     </NavigationView>
   </Grid>
 </Window>

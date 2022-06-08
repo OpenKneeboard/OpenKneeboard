@@ -31,7 +31,9 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
-#include <winrt/windows.ui.xaml.interop.h>
+#include <winrt/Microsoft.UI.Interop.h>
+#include <winrt/Microsoft.UI.Windowing.h>
+#include <winrt/Windows.UI.Xaml.Interop.h>
 
 #include <nlohmann/json.hpp>
 
@@ -46,20 +48,23 @@ namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 namespace winrt::OpenKneeboardApp::implementation {
 MainWindow::MainWindow() {
   InitializeComponent();
-  Title(L"OpenKneeboard");
-  // See:
-  // * https://docs.microsoft.com/en-us/windows/winui/api/microsoft.ui.xaml.window.settitlebar
-  // * https://docs.microsoft.com/en-us/windows/apps/develop/title-bar?tabs=wasdk
-  //
-  // Broken by Windows App Runtime 1.0.1 update:
-  // https://github.com/microsoft/microsoft-ui-xaml/issues/6859
-  // ExtendsContentIntoTitleBar(true);
-  // SetTitleBar(AppTitleBar());
 
   {
     auto ref = get_strong();
     winrt::check_hresult(ref.as<IWindowNative>()->get_WindowHandle(&mHwnd));
     gMainWindow = mHwnd;
+  }
+
+  Title(L"OpenKneeboard");
+  ExtendsContentIntoTitleBar(true);
+  SetTitleBar(AppTitleBar());
+
+  const auto windowId = Microsoft::UI::GetWindowIdFromWindow(mHwnd);
+  const auto appWindow
+    = Microsoft::UI::Windowing::AppWindow::GetFromWindowId(windowId);
+  if (appWindow.TitleBar().IsCustomizationSupported()) {
+    appWindow.TitleBar().PreferredHeightOption(
+      Microsoft::UI::Windowing::TitleBarHeightOption::Tall);
   }
 
   auto bigIcon = LoadImageW(
@@ -135,15 +140,41 @@ MainWindow::MainWindow() {
     = MapViewOfFile(mHwndFile.get(), FILE_MAP_WRITE, 0, 0, sizeof(HWND));
   *reinterpret_cast<HWND*>(mapping) = mHwnd;
   UnmapViewOfFile(mapping);
+
+  UpdateTitleBarMargins(nullptr, nullptr);
 }
 
 MainWindow::~MainWindow() {
   gMainWindow = {};
 }
 
+void MainWindow::UpdateTitleBarMargins(
+  const IInspectable&,
+  const IInspectable&) noexcept {
+  auto titleBarMargin = AppTitleBar().Margin();
+  auto titleMargin = AppTitle().Margin();
+
+  const auto displayMode = Navigation().DisplayMode();
+  const auto buttonWidth = Navigation().CompactPaneLength();
+
+  titleBarMargin.Left = buttonWidth;
+  titleMargin.Left = 4;
+
+  if (displayMode == NavigationViewDisplayMode::Minimal) {
+    titleBarMargin.Left = buttonWidth * 2;
+  } else if (
+    displayMode == NavigationViewDisplayMode::Expanded
+    && !Navigation().IsPaneOpen()) {
+    titleMargin.Left = 24;
+  }
+
+  AppTitleBar().Margin(titleBarMargin);
+  AppTitle().Margin(titleMargin);
+}
+
 winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
-  const WindowEventArgs&) {
+  const WindowEventArgs&) noexcept {
   RECT windowRect {};
   const bool isMinimized = IsIconic(mHwnd);
   if (
@@ -233,10 +264,15 @@ void MainWindow::OnNavigationItemInvoked(
   gKneeboard->SetTabID(tabID);
 }
 
-void MainWindow::OnBackClick(
+void MainWindow::OnNavigated(
   const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  Frame().GoBack();
+  const NavigationEventArgs&) noexcept {
+  Navigation().IsBackEnabled(Frame().CanGoBack());
 }
 
+void MainWindow::OnBackRequested(
+  const IInspectable&,
+  const NavigationViewBackRequestedEventArgs&) noexcept {
+  Frame().GoBack();
+}
 }// namespace winrt::OpenKneeboardApp::implementation
