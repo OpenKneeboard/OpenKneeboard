@@ -169,19 +169,9 @@ bool HaveWintab() {
   // wintab drivers installed
 
   auto wintab = LoadLibraryW(L"WINTAB32.dll");
-
-  wchar_t path[MAX_PATH];
-  const auto pathLen = GetModuleFileNameW(wintab, path, sizeof(path));
-
-  const auto fileName
-    = std::filesystem::path(std::wstring_view(path, pathLen)).filename();
-
   FreeLibrary(wintab);
 
-  // - Wacom provide Wintab32.dll
-  // - Huion provide wintab32.dll
-  // - XPPen provide WinTab32.dll, which leads to a crash on startup
-  return (bool)wintab && fileName != L"WinTab32.dll";
+  return (bool)wintab;
 }
 
 }// namespace
