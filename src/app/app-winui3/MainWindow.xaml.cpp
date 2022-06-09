@@ -172,20 +172,34 @@ void MainWindow::UpdateTitleBarMargins(
   AppTitle().Margin(titleMargin);
 }
 
+void MainWindow::SaveWindowPosition() {
+  const bool isMinimized = IsIconic(mHwnd);
+  if (isMinimized) {
+    return;
+  }
+
+  WINDOWPLACEMENT placement {.length = sizeof(WINDOWPLACEMENT)};
+  GetWindowPlacement(mHwnd, &placement);
+  if (placement.showCmd == SW_SHOWMAXIMIZED) {
+    return;
+  }
+
+  // Don't use rect from `placement` as that's workspace coords,
+  // but we want screen coords
+  RECT windowRect {};
+  if (!GetWindowRect(mHwnd, &windowRect)) {
+    return;
+  }
+
+  auto settings = gKneeboard->GetAppSettings();
+  settings.mWindowRect = windowRect;
+  gKneeboard->SetAppSettings(settings);
+}
+
 winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) noexcept {
-  RECT windowRect {};
-  const bool isMinimized = IsIconic(mHwnd);
-  if (
-    (!isMinimized) && GetWindowRect(mHwnd, &windowRect)
-    && windowRect.left != -32000 && windowRect.top != -32000) {
-    // (-32000, -32000) is a magic 'invalid value'; it's at least used for
-    // minimized, but let's check it too in case there's other causes
-    auto settings = gKneeboard->GetAppSettings();
-    settings.mWindowRect = windowRect;
-    gKneeboard->SetAppSettings(settings);
-  }
+  this->SaveWindowPosition();
 
   dprint("Stopping frame timer...");
   mFrameTimer.Stop();

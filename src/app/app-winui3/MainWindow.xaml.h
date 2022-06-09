@@ -65,6 +65,8 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   void OnTabChanged();
   void OnTabsChanged();
 
+  void SaveWindowPosition();
+
   winrt::Windows::Foundation::IAsyncAction OnClosed(
     const IInspectable&,
     const WindowEventArgs&) noexcept;
