@@ -207,7 +207,7 @@ void PDFTab::Reload() {
       // Page outlines/TOC
       std::map<QPDFObjGen, uint16_t> pageIndices;
       {
-        uint16t_t nextIndex = 0;
+        uint16_t nextIndex = 0;
         for (const auto& page: QPDFPageDocumentHelper(qpdf).getAllPages()) {
           pageIndices[page.getObjectHandle().getObjGen()] = nextIndex++;
         }
