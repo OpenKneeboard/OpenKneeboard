@@ -3,6 +3,7 @@ ExternalProject_Add(
   URL "https://github.com/nih-at/libzip/releases/download/v1.8.0/libzip-1.8.0.tar.gz"
   URL_HASH "SHA256=30ee55868c0a698d3c600492f2bea4eb62c53849bcf696d21af5eb65f3f3839e"
   CMAKE_ARGS
+    "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DBUILD_SHARED_LIBS=OFF"
     "-DBUILD_TOOLS=OFF"
     "-DBUILD_REGRESS=OFF"

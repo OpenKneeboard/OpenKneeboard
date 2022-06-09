@@ -3,6 +3,7 @@ ExternalProject_Add(
   URL "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.2.zip"
   URL_HASH "SHA256=46c70b1f098ec794f8a0ed8545d6e82ddb5eea7ca6bdb80476e7039ee2e99637"
   CMAKE_ARGS
+    "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     -DENABLE_SHARED=off
     -DWITH_TURBOJPEG=OFF
   INSTALL_COMMAND

@@ -1,0 +1,18 @@
+set(CMAKE_C_COMPILER "@CMAKE_C_COMPILER@")
+set(CMAKE_CXX_COMPILER "@CMAKE_CXX_COMPILER@")
+
+# Copy through the Hybrid CRT settings
+set(
+  CMAKE_MSVC_RUNTIME_LIBRARY
+  "@CMAKE_MSVC_RUNTIME_LIBRARY@"
+)
+# If CMP0091 is not set, CMAKE_MSVC_RUNTIME_LIBRARY is
+# ignored
+cmake_policy(GET CMP0091 CMP0091)
+if(NOT "${CMP0091}" STREQUAL "NEW")
+  add_compile_options(
+    "@MSVC_RUNTIME_LIBRARY_COMPILE_OPTION@"
+  )
+endif()
+
+add_link_options("@COMMON_LINK_OPTIONS@")

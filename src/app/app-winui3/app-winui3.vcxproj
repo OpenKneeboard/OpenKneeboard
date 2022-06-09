@@ -3,6 +3,7 @@
   <Import Project="$(NUGET_WINDOWS_APP_SDK_PATH)\build\native\Microsoft.WindowsAppSDK.props" />
   <Import Project="$(NUGET_WINDOWS_SDK_BUILD_TOOLS_PATH)\build\Microsoft.Windows.SDK.BuildTools.props" />
   <Import Project="$(NUGET_CPPWINRT_PATH)\build\native\Microsoft.Windows.CppWinRT.props" />
+  <Import Project="$(MSBuildThisFileDirectory)HybridCRT.props" />
   <PropertyGroup Label="Globals">
     <CppWinRTOptimized>true</CppWinRTOptimized>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>

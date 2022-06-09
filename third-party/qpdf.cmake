@@ -3,6 +3,7 @@ ExternalProject_Add(
   URL "https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.6.3.0cmake1/qpdf-10.6.3.0cmake1.tar.gz"
   URL_HASH "SHA256=6a431eb49ed013de9e373e92bd6f90bcb75c31a7929633b113b223d7e081c857"
   CMAKE_ARGS
+    "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DREQUIRE_CRYPTO_NATIVE=ON"
     "-DUSE_IMPLICIT_CRYPTO=OFF"
     "-DBUILD_SHARED_LIBS=OFF"
