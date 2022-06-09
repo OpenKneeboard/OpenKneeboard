@@ -128,11 +128,11 @@ foreach(XAML_FILE ${XAML_FILES})
 endforeach()
 
 install(
-  FILES
-  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.exe"
-  "${MSBUILD_OUTPUT_PATH}/Microsoft.WindowsAppRuntime.Bootstrap.dll"
-  ${XBF_FILES}
+  DIRECTORY
+  "${MSBUILD_OUTPUT_PATH}"
   TYPE BIN
+  PATTERN "*.pdb" EXCLUDE
+  PATTERN "*.winmd" EXCLUDE
 )
 install(
   FILES

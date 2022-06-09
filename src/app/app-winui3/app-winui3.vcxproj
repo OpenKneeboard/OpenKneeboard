@@ -10,6 +10,7 @@
     <WindowsAppSDKBootstrapAutoInitializeOptions_OnError_DebugBreak_IfDebuggerAttached>true</WindowsAppSDKBootstrapAutoInitializeOptions_OnError_DebugBreak_IfDebuggerAttached>
     <WindowsAppSDKBootstrapAutoInitializeOptions_OnNoMatch_ShowUI>true</WindowsAppSDKBootstrapAutoInitializeOptions_OnNoMatch_ShowUI>
     <WindowsAppSDKBootstrapAutoInitializeOptions_OnPackageIdentity_NoOp>true</WindowsAppSDKBootstrapAutoInitializeOptions_OnPackageIdentity_NoOp>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
 
     <MinimalCoreWin>true</MinimalCoreWin>
     <ProjectGuid>{04bc6019-1a8c-486a-b2e9-6599ba0e7592}</ProjectGuid>
@@ -306,4 +307,10 @@
     <Import Project="$(NUGET_WINDOWS_APP_SDK_PATH)\build\native\Microsoft.WindowsAppSDK.targets" />
     <Import Project="$(NUGET_WINDOWS_IMPLEMENTATION_LIBRARY_PATH)\build\native\Microsoft.Windows.ImplementationLibrary.targets" />
   </ImportGroup>
+  <!-- Per Windows App SDK 1.1 release notes, this is a workaround that shouldn't be needed for 1.2 -->
+  <Target Name="_RemoveFrameworkReferences" BeforeTargets="_ConvertItems;_CalculateInputsForGenerateCurrentProjectAppxManifest">
+    <ItemGroup>
+      <FrameworkSdkReference Remove="@(FrameworkSdkReference)" Condition="$([System.String]::Copy('%(FrameworkSdkReference.SDKName)').StartsWith('Microsoft.WindowsAppRuntime.'))" />
+    </ItemGroup>
+  </Target>
 </Project>
