@@ -21,7 +21,10 @@ jobs:
             "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}/MyCert.pfx" `
       - name: Compile
         working-directory: build
-        run: cmake --build . --config ${{matrix.config}} --parallel
+        run: |
+          cmake --build . `
+            --config ${{matrix.config}} `
+            --parallel
       - name: Install Default Components
         working-directory: build
         shell: pwsh
@@ -42,9 +45,9 @@ jobs:
         working-directory: build-helpers
         run: |
           cmake --build . `
-          --config ${{matrix.config}} `
-          --target OpenKneeboard-OpenXR-Helper
-          --parallel
+            --config ${{matrix.config}} `
+            --target OpenKneeboard-OpenXR-Helper `
+            --parallel
       - name: Install Helpers Components
         working-directory: build-helpers
         shell: pwsh
