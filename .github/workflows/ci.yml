@@ -57,6 +57,7 @@ jobs:
             --component Helpers `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
       - name: Upload Executable Zips
+        if: '${{matrix.config}}' != 'Debug'
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}
@@ -96,6 +97,7 @@ jobs:
             /f "${{runner.temp}}/MyCert.pfx" `
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
       - name: Upload MSIX
+        if: '${{matrix.config}}' != 'Debug'
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}.msix
@@ -110,6 +112,7 @@ jobs:
             --component RemoteControl `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-RemoteControl
       - name: Upload remote control zip
+        if: '${{matrix.config}}' != 'Debug'
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}-RemoteControl
@@ -132,6 +135,7 @@ jobs:
             --component Helpers-DebugSymbols `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
       - name: Upload Symbol Zips
+        if: '${{matrix.config}}' != 'Debug'
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-${{matrix.config}}-Symbols
