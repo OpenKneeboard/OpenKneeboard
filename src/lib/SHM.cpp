@@ -212,6 +212,11 @@ SharedTexture::SharedTexture(
   TextureReadResources* r)
   : mResources(r) {
   r->Populate(d3d, header.mSessionID, header.mSequenceNumber);
+  if (!r->mMutex) {
+    mResources = nullptr;
+    return;
+  }
+
   auto key = GetTextureKeyFromSequenceNumber(header.mSequenceNumber);
   if (r->mMutex->AcquireSync(key, 10) != S_OK) {
     mResources = nullptr;
