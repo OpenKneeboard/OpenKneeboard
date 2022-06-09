@@ -3,8 +3,7 @@ ExternalProject_Add(
   URL "https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.6.3.0cmake1/qpdf-10.6.3.0cmake1.tar.gz"
   URL_HASH "SHA256=6a431eb49ed013de9e373e92bd6f90bcb75c31a7929633b113b223d7e081c857"
   CMAKE_ARGS
-    "-DREQUIRE_CRYPTO_NATIVE=ON"
-    "-DDEFAULT_CRYPTO=native"
+    "-DUSE_IMPLICIT_CRYPTO=OFF"
     "-DBUILD_SHARED_LIBS=OFF"
     "-DLIBJPEG_H_PATH=$<TARGET_PROPERTY:ThirdParty::LibJpeg,INTERFACE_INCLUDE_DIRECTORIES>"
     "-DLIBJPEG_LIB_PATH=$<TARGET_PROPERTY:ThirdParty::LibJpeg,INTERFACE_LINK_LIBRARIES>"
