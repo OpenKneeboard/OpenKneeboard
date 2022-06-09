@@ -122,7 +122,7 @@ utf8_string PDFTab::GetTitle() const {
 
 namespace {
 
-std::map<QPDFObjGen, PageData> WalkPages(QPDF& pdf) {
+std::map<QPDFObjGen, PageData> FindAllHyperlinks(QPDF& pdf) {
   std::map<QPDFObjGen, PageData> pageMap;
   QPDFPageDocumentHelper pdh(pdf);
 
@@ -156,23 +156,23 @@ std::map<QPDFObjGen, PageData> WalkPages(QPDF& pdf) {
 }
 
 std::vector<NavigationTab::Entry> GetNavigationEntries(
-  const std::map<QPDFObjGen, PageData>& pageData,
+  const std::map<QPDFObjGen, uint16_t>& pageIndices,
   std::vector<QPDFOutlineObjectHelper>& outlines) {
   std::vector<NavigationTab::Entry> entries;
 
   for (auto& outline: outlines) {
     auto page = outline.getDestPage();
     auto key = page.getObjGen();
-    if (!pageData.contains(key)) {
+    if (!pageIndices.contains(key)) {
       continue;
     }
     entries.push_back(NavigationTab::Entry {
       .mName = outline.getTitle(),
-      .mPageIndex = pageData.at(key).mPageIndex,
+      .mPageIndex = pageIndices.at(key),
     });
 
     auto kids = outline.getKids();
-    auto kidEntries = GetNavigationEntries(pageData, kids);
+    auto kidEntries = GetNavigationEntries(pageIndices, kids);
     if (kidEntries.empty()) {
       continue;
     }
@@ -203,11 +203,19 @@ void PDFTab::Reload() {
       const auto pathStr = to_utf8(p->mPath);
       QPDF qpdf;
       qpdf.processFile(pathStr.c_str());
-      QPDFOutlineDocumentHelper odh(qpdf);
 
-      auto pageData = WalkPages(qpdf);
+      // Page outlines/TOC
+      std::map<QPDFObjGen, uint16_t> pageIndices;
+      {
+        uint16t_t nextIndex = 0;
+        for (const auto& page: QPDFPageDocumentHelper(qpdf).getAllPages()) {
+          pageIndices[page.getObjectHandle().getObjGen()] = nextIndex++;
+        }
+      }
+
+      QPDFOutlineDocumentHelper odh(qpdf);
       auto outlines = odh.getTopLevelOutlines();
-      p->mBookmarks = GetNavigationEntries(pageData, outlines);
+      p->mBookmarks = GetNavigationEntries(pageIndices, outlines);
       if (p->mBookmarks.size() < 2) {
         p->mBookmarks.clear();
         const auto pageCount
@@ -218,7 +226,8 @@ void PDFTab::Reload() {
         }
       }
 
-      for (const auto& [_handle, page]: pageData) {
+      auto pageHyperlinkData = FindAllHyperlinks(qpdf);
+      for (const auto& [_handle, page]: pageHyperlinkData) {
         if (page.mInternalLinks.empty()) {
           continue;
         }
@@ -230,12 +239,12 @@ void PDFTab::Reload() {
 
         std::vector<NormalizedLink> links;
         for (const auto& pdfLink: page.mInternalLinks) {
-          if (!pageData.contains(pdfLink.mDestinationPage)) {
+          if (!pageHyperlinkData.contains(pdfLink.mDestinationPage)) {
             continue;
           }
           // Convert coordinates here :)
           links.push_back(
-            {pageData.at(pdfLink.mDestinationPage).mPageIndex,
+            {pageHyperlinkData.at(pdfLink.mDestinationPage).mPageIndex,
              D2D1_RECT_F {
                .left = static_cast<float>(pdfLink.mRect.llx - page.mRect.llx)
                  / pageWidth,
