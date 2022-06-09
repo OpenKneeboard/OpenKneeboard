@@ -69,3 +69,13 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-dprint
 )
+# Static linking to make this work 'out the box' with only
+# the desktop bridge/msix VCLibs package installed, rather
+# than the full VC redist
+set_property(
+  TARGET
+  OpenKneeboard-OpenXR-Helper
+  PROPERTY
+  MSVC_RUNTIME_LIBRARY
+  "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+)
