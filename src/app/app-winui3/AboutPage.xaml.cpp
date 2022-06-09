@@ -48,7 +48,7 @@ AboutPage::AboutPage() {
     Version::Build,
     commitID.substr(commitID.length() - 6),
     Version::HaveModifiedFiles ? "-dirty" : "",
-    Version::IsGithubActionsBuild ? "" : "-notCI",
+    Version::IsGithubActionsBuild ? "-gha" : "-local",
 #ifdef DEBUG
     "-debug"
 #else
@@ -101,7 +101,9 @@ AboutPage::AboutPage() {
   mData = "OpenKneeboard\n" + details;
 }
 
-void AboutPage::OnCopyClick(const IInspectable&, const RoutedEventArgs&) noexcept {
+void AboutPage::OnCopyClick(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
   Windows::ApplicationModel::DataTransfer::DataPackage package;
   package.SetText(winrt::to_hstring(mData));
   Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
