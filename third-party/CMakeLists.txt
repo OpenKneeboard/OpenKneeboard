@@ -1,3 +1,5 @@
+set(BUILD_SHARED_LIBS OFF)
+
 include(detours.cmake)
 include(cppwinrt.cmake)
 include(directxtk.cmake)

@@ -34,7 +34,6 @@ set(
   OpenKneeboard-scope_guard
   OpenKneeboard-tablets
   ThirdParty::fmt
-  ThirdParty::QPDF
 )
 
 set(IMPORTED_IMPLIB_LIBRARIES ThirdParty::OpenVR)
@@ -44,6 +43,7 @@ set(
   ThirdParty::DirectXTK
   ThirdParty::LibJpeg
   ThirdParty::LibZip
+  ThirdParty::QPDF
   ThirdParty::ZLib
 )
 
