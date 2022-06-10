@@ -69,10 +69,3 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-dprint
 )
-install(TARGETS OpenKneeboard-OpenXR-Helper COMPONENT Helpers)
-install(
-  FILES
-  "$<TARGET_PDB_FILE:OpenKneeboard-OpenXR-Helper>"
-  TYPE BIN
-  COMPONENT Helpers-DebugSymbols
-)

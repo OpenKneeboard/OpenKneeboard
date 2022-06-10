@@ -33,29 +33,6 @@ jobs:
             --config ${{matrix.config}} `
             --component Unspecified `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
-      - name: Make Helpers Build Directory
-        run: cmake -E make_directory build-helpers
-      - name: Configure Helpers
-        working-directory: build-helpers
-        run: |
-          cmake ${{github.workspace}}/source `
-            "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}/MyCert.pfx" `
-            "-DUSE_STATIC_CPP_RUNTIME=ON"
-      - name: Compile Helpers
-        working-directory: build-helpers
-        run: |
-          cmake --build . `
-            --config ${{matrix.config}} `
-            --target OpenKneeboard-OpenXR-Helper `
-            --parallel
-      - name: Install Helpers Components
-        working-directory: build-helpers
-        shell: pwsh
-        run:
-          cmake --install . `
-            --config ${{matrix.config}} `
-            --component Helpers `
-            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
       - name: Upload Executable Zips
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v2
@@ -125,14 +102,6 @@ jobs:
           cmake --install . `
             --config ${{matrix.config}} `
             --component DebugSymbols `
-            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
-      - name: Install Helpers Debug Symbols
-        working-directory: build-helpers
-        shell: pwsh
-        run:
-          cmake --install . `
-            --config ${{matrix.config}} `
-            --component Helpers-DebugSymbols `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
       - name: Upload Symbol Zips
         if: ${{matrix.config != 'Debug' }}
