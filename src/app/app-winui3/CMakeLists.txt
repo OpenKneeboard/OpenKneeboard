@@ -117,6 +117,10 @@ add_custom_target(
   ${VERSION_RC_FILE}
   ${LIBRARY_DEPENDENCIES}
 )
+sign_target_file(
+  OpenKneeboard-App-WinUI3
+  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.exe"
+)
 
 set(OPENKNEEBOARD_WINUI3_APP_BUILD_DIR "${MSBUILD_OUTPUT_PATH}" PARENT_SCOPE)
 
