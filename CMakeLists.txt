@@ -28,6 +28,8 @@ add_link_options("${COMMON_LINK_OPTIONS}")
 
 project(com.fredemmott.openkneeboard VERSION 1.1.0 LANGUAGES CXX C)
 
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
+
 add_subdirectory("third-party")
 add_subdirectory("src")
 add_subdirectory("assets")

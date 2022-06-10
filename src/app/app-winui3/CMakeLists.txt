@@ -136,8 +136,26 @@ install(
   DIRECTORY
   "${MSBUILD_OUTPUT_PATH}"
   TYPE BIN
+  PATTERN "OpenKneeboardApp.exe" EXCLUDE
   PATTERN "*.pdb" EXCLUDE
   PATTERN "*.winmd" EXCLUDE
+)
+install(
+  FILES
+  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.exe"
+  TYPE BIN
+)
+set_property(
+  INSTALL
+  "bin/OpenKneeboardApp.exe"
+  PROPERTY
+  CPACK_START_MENU_SHORTCUTS "OpenKneeboard"
+)
+set_property(
+  INSTALL
+  "bin/OpenKneeboardApp.exe"
+  PROPERTY
+  CPACK_DESKTOP_SHORTCUTS "OpenKneeboard"
 )
 install(
   FILES

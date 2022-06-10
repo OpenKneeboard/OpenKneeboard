@@ -1,4 +1,12 @@
-function(add_released_utility TARGET)
+function(add_helper_executable TARGET)
+  add_executable(${TARGET} ${ARGN})
+  add_version_rc(${TARGET} ${TARGET}.exe)
+  sign_target(${TARGET})
+  install(TARGETS "${TARGET}")
+  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
+endfunction()
+
+function(add_remote_control_executable TARGET)
   add_executable(${TARGET} ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.exe)
   sign_target(${TARGET})
@@ -25,7 +33,7 @@ target_link_libraries(
   ThirdParty::DirectXTK
 )
 
-add_released_utility(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
+add_remote_control_executable(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
 target_link_libraries(
   OpenKneeboard-Viewer
   OpenKneeboard-D2DErrorRenderer
@@ -39,7 +47,7 @@ target_link_libraries(
 add_executable(fake-dcs fake-dcs.cpp)
 target_link_libraries(fake-dcs fmt OpenKneeboard-games OpenKneeboard-GameEvent)
 
-add_released_utility(OpenKneeboard-Launch-WindowsApp WIN32 launch-msix.cpp icon.rc)
+add_remote_control_executable(OpenKneeboard-Launch-WindowsApp WIN32 launch-msix.cpp icon.rc)
 
 # Mostly to workaround Huion driver limitations, but maybe also useful for
 # StreamDeck
@@ -53,7 +61,7 @@ set(
 )
 foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
-  add_released_utility("${TARGET}" WIN32 simple-remote.cpp)
+  add_remote_control_executable("${TARGET}" WIN32 simple-remote.cpp)
   target_compile_definitions(
     "${TARGET}"
     PUBLIC
@@ -62,7 +70,11 @@ foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   target_link_libraries("${TARGET}" OpenKneeboard-GameEvent)
 endforeach()
 
-add_released_utility(OpenKneeboard-OpenXR-Helper WIN32 openxr-helper.cpp)
+add_helper_executable(
+  OpenKneeboard-OpenXR-Helper
+  WIN32
+  openxr-helper.cpp
+)
 target_link_libraries(
   OpenKneeboard-OpenXR-Helper 
   PRIVATE

@@ -3,14 +3,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(sign_target.cmake)
-configure_file("${CMAKE_SOURCE_DIR}/LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/license.wix.txt" COPYONLY)
-
-set(CPACK_GENERATOR "WIX")
-set(CPACK_PACKAGE_NAME "OpenKneeboard")
-set(CPACK_PACKAGE_VENDOR "Fred Emmott")
-set(CPACK_WIX_UPGRADE_GUID "843c9331-0610-4ab1-9cf9-5305c896fb5b")
-set(CPACK_WIX_LICENSE_RTF "${CMAKE_CURRENT_BINARY_DIR}/license.wix.txt")
-include(CPack)
 
 if (MSVC)
   add_compile_options(
@@ -36,16 +28,16 @@ add_compile_definitions(
 link_libraries(NuGet::CppWinRT::Base)
 
 function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC_FILE)
-	add_custom_target(
-		"${RC_TARGET}"
-		COMMAND
+  add_custom_target(
+    "${RC_TARGET}"
+    COMMAND
     ${CMAKE_COMMAND}
-		-DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
-		-DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
-		-DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+    -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
+    -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
+    -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
     "-DACTIVE_BUILD_MODE=$<CONFIG>"
-		"-DINPUT_RC_FILE=${CMAKE_SOURCE_DIR}/src/version.rc.in"
-		"-DOUTPUT_RC_FILE=${OUTPUT_RC_FILE}"
+    "-DINPUT_RC_FILE=${CMAKE_SOURCE_DIR}/src/version.rc.in"
+    "-DOUTPUT_RC_FILE=${OUTPUT_RC_FILE}"
     "-DFILE_DESCRIPTION=${ORIGINAL_TARGET}"
     "-DORIGINAL_FILENAME=${ORIGINAL_FILENAME}"
     "-P${CMAKE_SOURCE_DIR}/src/version.cmake"
@@ -66,9 +58,9 @@ function(add_version_rc TARGET ORIGINAL_FILENAME)
 endfunction()
 
 function(add_module_library TARGET)
-	add_library(${TARGET} MODULE ${ARGN})
-	add_version_rc(${TARGET} ${TARGET}.dll)
-	sign_target(${TARGET})
+  add_library(${TARGET} MODULE ${ARGN})
+  add_version_rc(${TARGET} ${TARGET}.dll)
+  sign_target(${TARGET})
 endfunction()
 
 add_subdirectory(lib)
@@ -79,3 +71,31 @@ add_subdirectory(games)
 
 add_subdirectory(utilities)
 add_subdirectory(app)
+
+##### CPack (MSI) Config #####
+
+configure_file("${CMAKE_SOURCE_DIR}/LICENSE" "${CMAKE_CURRENT_BINARY_DIR}/license.wix.txt" COPYONLY)
+
+set(CPACK_GENERATOR "WIX")
+set(CPACK_PACKAGE_NAME "OpenKneeboard")
+set(CPACK_PACKAGE_VENDOR "Fred Emmott")
+set(CPACK_WIX_UPGRADE_GUID "843c9331-0610-4ab1-9cf9-5305c896fb5b")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_BINARY_DIR}/license.wix.txt")
+set(CPACK_WIX_PRODUCT_ICON "${CMAKE_SOURCE_DIR}/assets/icon.ico")
+set(CPACK_WIX_COMPONENT_INSTALL ON)
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
+
+get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
+list(REMOVE_ITEM CPACK_COMPONENTS_ALL DebugSymbols)
+
+include(CPack)
+cpack_add_component(
+  Default
+  HIDDEN
+)
+cpack_add_component(
+  RemoteControl
+  DISPLAY_NAME "Remote controls"
+  DESCRIPTION "Utilities to control OpenKneeboard (e.g. change tab) from other scripts or programs."
+  DISABLED
+)
