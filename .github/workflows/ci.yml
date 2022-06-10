@@ -31,7 +31,7 @@ jobs:
         run:
           cmake --install . `
             --config ${{matrix.config}} `
-            --component Unspecified `
+            --component Default `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
       - name: Upload Executable Zips
         if: ${{matrix.config != 'Debug' }}
