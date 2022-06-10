@@ -4,6 +4,7 @@
 
 1. Do not run the game or any launchers (e.g. SkateZilla) as administrator/elevated.
 2. Make sure that the game is in OpenKneeboard's games list, and the path is correct.
+3. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
 ## Game Crashes
 

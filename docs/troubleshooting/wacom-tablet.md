@@ -15,6 +15,7 @@
 2. Make sure the game is listed in OpenKneeboard's settings and the path is correct
 3. Either make sure both the pen and button settings are set for 'all applications', or set them both for OpenKneeboard and the game
 4. Reinstall the latest drivers from Wacom
+5. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
 ### Root cause
 

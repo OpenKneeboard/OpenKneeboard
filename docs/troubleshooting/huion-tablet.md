@@ -15,6 +15,7 @@
 3. Either make sure both the pen and button settings are set for 'all applications', or set them both for OpenKneeboard and the game
 4. Uninstall **all** drivers from Huion or others, e.g. VRKneeboard's driver, OpenTabletDriver, or the various specialized drivers for the game 'osu!'
 5. Install the latest Huion drivers
+6. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
 ### Root cause
 
