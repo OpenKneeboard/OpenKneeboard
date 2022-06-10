@@ -92,7 +92,7 @@ AboutPage::AboutPage() {
 #endif
     commitTime,
     Version::CommitID);
-  if constexpr (Version::HaveModifiedFiles) {
+  if (Version::HaveModifiedFiles) {
     std::string files = Version::ModifiedFiles;
     details += "\nModified files:\n" + files;
   }

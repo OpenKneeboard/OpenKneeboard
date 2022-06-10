@@ -46,10 +46,10 @@ else()
   set(VERSION_BUILD_STR "${VERSION_BUILD}-local")
 endif()
 
-if(INPUT_HEADER_FILE)
+if(INPUT_CPP_FILE)
   configure_file(
-    ${INPUT_HEADER_FILE}
-    ${OUTPUT_HEADER_FILE}
+    ${INPUT_CPP_FILE}
+    ${OUTPUT_CPP_FILE}
     @ONLY
   )
 endif ()

@@ -23,17 +23,17 @@
 
 namespace OpenKneeboard::Version {
 
-constexpr unsigned int Major = @VERSION_MAJOR@;
-constexpr unsigned int Minor = @VERSION_MINOR@;
-constexpr unsigned int Patch = @VERSION_PATCH@;
-constexpr unsigned int Build = @VERSION_BUILD@;
+extern const unsigned int Major;
+extern const unsigned int Minor;
+extern const unsigned int Patch;
+extern const unsigned int Build;
 
-constexpr const char* CommitID = "@COMMIT_ID@";
+extern const char* CommitID;
 // Didn't see a clean way to get this formatted by CMake as UTC :(
-constexpr const std::time_t CommitUnixTimestamp = @COMMIT_UNIX_TIMESTAMP@;
-constexpr const char* ModifiedFiles = "@MODIFIED_FILES@";
-constexpr bool HaveModifiedFiles = @DIRTY@;
-constexpr const char* BuildTimestamp = "@BUILD_TIMESTAMP@";
-constexpr bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
+extern const std::time_t CommitUnixTimestamp;
+extern const char* ModifiedFiles;
+extern const bool HaveModifiedFiles;
+extern const char* BuildTimestamp;
+extern const bool IsGithubActionsBuild;
 
-}
+}// namespace OpenKneeboard::Version

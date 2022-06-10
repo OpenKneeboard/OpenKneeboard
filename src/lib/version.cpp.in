@@ -1,0 +1,38 @@
+/*
+ * OpenKneeboard
+ *
+ * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; version 2.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ */
+#pragma once
+
+#include <OpenKneeboard/version.h>
+
+namespace OpenKneeboard::Version {
+
+extern const unsigned int Major = @VERSION_MAJOR@;
+extern const unsigned int Minor = @VERSION_MINOR@;
+extern const unsigned int Patch = @VERSION_PATCH@;
+extern const unsigned int Build = @VERSION_BUILD@;
+
+extern const char* CommitID = "@COMMIT_ID@";
+extern const std::time_t CommitUnixTimestamp = @COMMIT_UNIX_TIMESTAMP@;
+extern const char* ModifiedFiles = "@MODIFIED_FILES@";
+extern const bool HaveModifiedFiles = @DIRTY@;
+extern const char* BuildTimestamp = "@BUILD_TIMESTAMP@";
+extern const bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
+
+}// namespace OpenKneeboard::Version

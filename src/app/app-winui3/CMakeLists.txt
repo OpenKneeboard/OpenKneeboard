@@ -33,6 +33,7 @@ set(
   OpenKneeboard-games
   OpenKneeboard-scope_guard
   OpenKneeboard-tablets
+  OpenKneeboard-version
   ThirdParty::fmt
 )
 
