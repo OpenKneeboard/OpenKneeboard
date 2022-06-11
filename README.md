@@ -47,6 +47,18 @@ You might also be interested in the documentation for:
 * [StreamDeck users](docs/streamdeck.md)
 * [Wacom tablet users](docs/wacom.md)
 
+### Adding Pages and Tabs To The Kneeboard
+
+#### DCS Aircraft Tab
+
+The aircraft tab reads from DCS's usual location: inside your DCS saved games folder (usually `Saved Games\DCS.openbeta` or `Saved Games\DCS`), add a `KNEEBOARD` folder. Within that, create another folder with the same name as the aircraft module folder from `Mods\aircraft` within your DCS installation folder. OpenKneeboard will load any image files - but not PDF or Lua files - in that folder. For example, I put my A-10C 2 images in `Saved Games\DCS.openbeta\KNEEBOARD\A-10C_2`.
+
+Most kneeboard builders and 'how-to' guides/videos for DCS's built-in Kneeboard will work with OpenKneeboard.
+
+### Other Tabs or Files
+
+Additional tabs can be added via Settings -> Tabs -> Add Tab. PDFs must [currently](https://github.com/fredemmott/OpenKneeboard/issues/83) be added as separate tabs; the 'Folder' tab only supports normal image files.
+
 ## Features
 
 ### Graphics Tablet Support
