@@ -92,6 +92,7 @@ function callbacks.onSimulationStart()
 
   local selfData = Export.LoGetSelfData()
   if not selfData then
+    OpenKneeboard.send("SimulationStart", "");
     return
   end
   state.aircraft = selfData.Name
