@@ -83,6 +83,7 @@ struct PDFTab::Impl final {
 
   CursorLinkState mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
   NormalizedLink mActiveLink;
+  bool mNavigationLoaded = false;
 };
 
 PDFTab::PDFTab(
@@ -188,6 +189,8 @@ std::vector<NavigationTab::Entry> GetNavigationEntries(
 
 void PDFTab::Reload() {
   p->mBookmarks.clear();
+  p->mNavigationLoaded = false;
+
   if (!std::filesystem::is_regular_file(p->mPath)) {
     return;
   }
@@ -225,6 +228,7 @@ void PDFTab::Reload() {
             {fmt::format(fmt::runtime(_("Page {}")), i + 1), i});
         }
       }
+      p->mNavigationLoaded = true;
 
       auto pageHyperlinkData = FindAllHyperlinks(qpdf);
       for (const auto& [_handle, page]: pageHyperlinkData) {
@@ -422,7 +426,7 @@ void PDFTab::SetPath(const std::filesystem::path& path) {
 }
 
 bool PDFTab::IsNavigationAvailable() const {
-  return p->mBookmarks.size() > 1 || this->GetPageCount() > 2;
+  return p->mNavigationLoaded && this->GetPageCount() > 2;
 }
 
 std::shared_ptr<Tab> PDFTab::CreateNavigationTab(uint16_t pageIndex) {
