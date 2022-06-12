@@ -28,11 +28,11 @@ TabAction::TabAction(utf8_string glyph, utf8_string label)
 TabAction::~TabAction() {
 }
 
-utf8_string_view TabAction::GetGlyph() {
+utf8_string_view TabAction::GetGlyph() const {
   return mGlyph;
 }
 
-utf8_string_view TabAction::GetLabel() {
+utf8_string_view TabAction::GetLabel() const {
   return mLabel;
 }
 

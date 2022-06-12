@@ -141,6 +141,10 @@ InterprocessRenderer::InterprocessRenderer(
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mCursorBrush.put()));
   ctx->CreateSolidColorBrush(
+    {0.4f, 0.4f, 0.4f, 0.5f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(mDisabledButtonBrush.put()));
+  ctx->CreateSolidColorBrush(
     {0.4f, 0.4f, 0.4f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mButtonBrush.put()));
@@ -347,13 +351,13 @@ void InterprocessRenderer::RenderToolbar() {
     DWRITE_FONT_WEIGHT_EXTRA_BOLD,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    (buttonHeight * 96) * 0.66 / dpiy,
+    (buttonHeight * 96) * 0.66f / dpiy,
     L"en-us",
     glyphFormat.put()));
   glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  for (auto action: mToolbar) {
+  for (auto action: mActions) {
     D2D1_RECT_F button {
       .left = left,
       .top = margin,
@@ -364,8 +368,10 @@ void InterprocessRenderer::RenderToolbar() {
     mButtons.push_back({button, action});
 
     ID2D1Brush* brush = mButtonBrush.get();
-    if (IsPointInRect(cursor, button)) {
-      brush = mActiveButtonBrush.get();
+    if (!action->IsEnabled()) {
+      brush = mDisabledButtonBrush.get();
+    } else if (IsPointInRect(cursor, button)) {
+      brush = mHoverButtonBrush.get();
     } else {
       auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
       if (toggle && toggle->IsActive()) {
@@ -386,9 +392,6 @@ void InterprocessRenderer::RenderToolbar() {
 void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   mNeedsRepaint = true;
   const auto tab = mKneeboard->GetCurrentTab();
-  if (!tab->SupportsTabMode(TabMode::NAVIGATION)) {
-    return;
-  }
   if (mCursorTouching && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
     return;
   }
@@ -401,28 +404,32 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   // touch state change
   mCursorTouching = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
 
-  const auto point = mKneeboard->GetCursorCanvasPoint({ev.mX, ev.mY});
-  const auto pointInNavButton = point.x >= mNavButton.left
-    && point.x <= mNavButton.right && point.y >= mNavButton.left
-    && point.y <= mNavButton.right;
+  const auto cursor = mKneeboard->GetCursorCanvasPoint({ev.mX, ev.mY});
 
   if (mCursorTouching) {
     // Touch start
-    mCursorTouchOnNavButton = pointInNavButton;
+    for (const auto& [rect, action]: mButtons) {
+      if (IsPointInRect(cursor, rect)) {
+        mActiveButton = {{rect, action}};
+        break;
+      }
+    }
     return;
   }
 
   // Touch end
-  if (!mCursorTouchOnNavButton) {
+  const auto button = mActiveButton;
+  if (!button) {
     return;
   }
-  if (pointInNavButton) {
-    if (tab->GetTabMode() == TabMode::NAVIGATION) {
-      tab->SetTabMode(TabMode::NORMAL);
-    } else {
-      tab->SetTabMode(TabMode::NAVIGATION);
-    }
+
+  const auto [rect, action] = *button;
+  mActiveButton = {};
+  if (!IsPointInRect(cursor, rect)) {
+    return;
   }
+
+  action->Execute();
 }
 
 void InterprocessRenderer::OnTabChanged() {
@@ -431,10 +438,11 @@ void InterprocessRenderer::OnTabChanged() {
     return;
   }
 
-  mToolbar = CreateTabActions(tab.get());
+  mActions = CreateTabActions(tab.get());
   mButtons.clear();
+  mActiveButton = {};
 
-  for (auto action: mToolbar) {
+  for (auto action: mActions) {
     AddEventListener(
       action->evStateChangedEvent, [this]() { mNeedsRepaint = true; });
   }

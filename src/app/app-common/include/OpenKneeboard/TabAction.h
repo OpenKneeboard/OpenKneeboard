@@ -27,8 +27,8 @@ namespace OpenKneeboard {
 class TabAction {
  public:
   virtual ~TabAction();
-  utf8_string_view GetGlyph();
-  utf8_string_view GetLabel();
+  utf8_string_view GetGlyph() const;
+  utf8_string_view GetLabel() const;
 
   virtual bool IsEnabled() = 0;
   virtual void Execute() = 0;
@@ -39,6 +39,7 @@ class TabAction {
   TabAction() = delete;
   TabAction(utf8_string glyph, utf8_string label);
 
+ private:
   utf8_string mGlyph;
   utf8_string mLabel;
 };

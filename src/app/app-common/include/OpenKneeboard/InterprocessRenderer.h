@@ -30,6 +30,7 @@
 #include <shims/winrt.h>
 
 #include <memory>
+#include <optional>
 
 namespace OpenKneeboard {
 struct DXResources;
@@ -70,6 +71,7 @@ class InterprocessRenderer final : private EventReceiver {
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
   winrt::com_ptr<ID2D1Brush> mButtonBrush;
+  winrt::com_ptr<ID2D1Brush> mDisabledButtonBrush;
   winrt::com_ptr<ID2D1Brush> mHoverButtonBrush;
   winrt::com_ptr<ID2D1Brush> mActiveButtonBrush;
   winrt::com_ptr<ID2D1Brush> mCursorBrush;
@@ -77,10 +79,11 @@ class InterprocessRenderer final : private EventReceiver {
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
 
   bool mCursorTouching = false;
-  bool mCursorTouchOnNavButton;
-  D2D1_RECT_F mNavButton;
-  std::vector<std::shared_ptr<TabAction>> mToolbar;
-  std::vector<std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>> mButtons;
+
+  std::vector<std::shared_ptr<TabAction>> mActions;
+  using Button = std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>;
+  std::vector<Button> mButtons;
+  std::optional<Button> mActiveButton;
 
   void RenderNow();
   void Render(const std::shared_ptr<Tab>& tab, uint16_t pageIndex);
