@@ -1,9 +1,13 @@
 ﻿#pragma once
+
 #define NOMINMAX 1
+
+// clang-format off
+#include <shims/winrt.h>
 #include <hstring.h>
 #include <restrictederrorinfo.h>
-#include <unknwn.h>
 #include <windows.h>
+// clang-format on
 
 // Undefine GetCurrentTime macro to prevent
 // conflict with Storyboard::GetCurrentTime
