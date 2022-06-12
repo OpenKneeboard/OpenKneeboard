@@ -18,94 +18,31 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
-#include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabState.h>
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <d2d1.h>
-#include <d2d1_1.h>
-#include <d3d11.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
-#include <shims/winrt.h>
 #include <wincodec.h>
 
 using namespace OpenKneeboard;
 
-namespace {
-
-struct SharedTextureResources {
-  winrt::com_ptr<ID3D11Texture2D> mTexture;
-  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
-  winrt::handle mHandle;
-  UINT mMutexKey = 0;
-};
-
-}// namespace
-
 namespace OpenKneeboard {
 
-class InterprocessRenderer::Impl {
- public:
-  HWND mFeederWindow;
-  OpenKneeboard::SHM::Writer mSHM;
-  DXResources mDXR;
-
-  KneeboardState* mKneeboard = nullptr;
-
-  bool mNeedsRepaint = true;
-
-  // TODO: move to DXResources
-  winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
-  winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
-  winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
-
-  std::array<SharedTextureResources, TextureCount> mResources;
-
-  winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
-  winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
-  winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
-  winrt::com_ptr<ID2D1Brush> mButtonBrush;
-  winrt::com_ptr<ID2D1Brush> mHoverButtonBrush;
-  winrt::com_ptr<ID2D1Brush> mActiveButtonBrush;
-  winrt::com_ptr<ID2D1Brush> mCursorBrush;
-
-  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
-
-  bool mCursorTouching = false;
-  bool mCursorTouchOnNavButton;
-  D2D1_RECT_F mNavButton;
-
-  void RenderError(utf8_string_view tabTitle, utf8_string_view message);
-  void CopyPixelsToSHM();
-  void RenderWithChrome(
-    const std::string_view tabTitle,
-    const D2D1_SIZE_U& preferredContentSize,
-    const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
-
-  void OnCursorEvent(const CursorEvent&);
-
- private:
-  void RenderErrorImpl(utf8_string_view message, const D2D1_RECT_F&);
-};
-
-void InterprocessRenderer::Impl::RenderError(
+void InterprocessRenderer::RenderError(
   utf8_string_view tabTitle,
   utf8_string_view message) {
   this->RenderWithChrome(
     tabTitle,
     {768, 1024},
-    std::bind_front(&Impl::RenderErrorImpl, this, message));
+    std::bind_front(&InterprocessRenderer::RenderErrorImpl, this, message));
 }
 
-void InterprocessRenderer::Impl::RenderErrorImpl(
+void InterprocessRenderer::RenderErrorImpl(
   utf8_string_view message,
   const D2D1_RECT_F& rect) {
   auto ctx = mDXR.mD2DDeviceContext.get();
@@ -115,7 +52,7 @@ void InterprocessRenderer::Impl::RenderErrorImpl(
   mErrorRenderer->Render(ctx, message, rect);
 }
 
-void InterprocessRenderer::Impl::CopyPixelsToSHM() {
+void InterprocessRenderer::CopyPixelsToSHM() {
   if (!mSHM) {
     return;
   }
@@ -145,15 +82,14 @@ void InterprocessRenderer::Impl::CopyPixelsToSHM() {
 InterprocessRenderer::InterprocessRenderer(
   HWND feederWindow,
   const DXResources& dxr,
-  KneeboardState* kneeboard)
-  : p(std::make_unique<Impl>()) {
-  p->mFeederWindow = feederWindow;
-  p->mDXR = dxr;
-  p->mKneeboard = kneeboard;
-  p->mErrorRenderer
+  KneeboardState* kneeboard) {
+  mFeederWindow = feederWindow;
+  mDXR = dxr;
+  mKneeboard = kneeboard;
+  mErrorRenderer
     = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
 
-  dxr.mD3DDevice->GetImmediateContext(p->mD3DContext.put());
+  dxr.mD3DDevice->GetImmediateContext(mD3DContext.put());
 
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = TextureWidth,
@@ -166,19 +102,17 @@ InterprocessRenderer::InterprocessRenderer(
     .MiscFlags = 0,
   };
   winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
-    &textureDesc, nullptr, p->mCanvasTexture.put()));
+    &textureDesc, nullptr, mCanvasTexture.put()));
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-    p->mCanvasTexture.as<IDXGISurface>().get(),
-    nullptr,
-    p->mCanvasBitmap.put()));
+    mCanvasTexture.as<IDXGISurface>().get(), nullptr, mCanvasBitmap.put()));
 
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
-  const auto sessionID = p->mSHM.GetSessionID();
+  const auto sessionID = mSHM.GetSessionID();
   for (auto i = 0; i < TextureCount; ++i) {
-    auto& it = p->mResources.at(i);
+    auto& it = mResources.at(i);
 
     dxr.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
     auto textureName = SHM::SharedTextureName(sessionID, i);
@@ -195,50 +129,47 @@ InterprocessRenderer::InterprocessRenderer(
   ctx->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.5f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->mHeaderBGBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderBGBrush.put()));
   ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->mHeaderTextBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderTextBrush.put()));
   ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 0.8f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->mCursorBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(mCursorBrush.put()));
   ctx->CreateSolidColorBrush(
     {0.4f, 0.4f, 0.4f, 1.0f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->mButtonBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(mButtonBrush.put()));
   ctx->CreateSolidColorBrush(
     {0.0f, 0.8f, 1.0f, 1.0f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->mHoverButtonBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(mHoverButtonBrush.put()));
   ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->mActiveButtonBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(mActiveButtonBrush.put()));
 
   ctx->CreateSolidColorBrush(
     GetSystemColor(COLOR_WINDOW),
-    reinterpret_cast<ID2D1SolidColorBrush**>(p->mErrorBGBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(mErrorBGBrush.put()));
 
-  AddEventListener(kneeboard->evCursorEvent, &Impl::OnCursorEvent, p.get());
   AddEventListener(
-    kneeboard->evNeedsRepaintEvent, [this]() { p->mNeedsRepaint = true; });
+    kneeboard->evCursorEvent, &InterprocessRenderer::OnCursorEvent, this);
+  AddEventListener(
+    kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
   this->RenderNow();
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
-    if (p && p->mNeedsRepaint) {
+    if (mNeedsRepaint) {
       RenderNow();
     }
   });
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
-  if (!p) {
-    return;
-  }
-  auto ctx = p->mD3DContext;
-  p = {};
+  auto ctx = mD3DContext;
   ctx->Flush();
 }
 
@@ -247,36 +178,36 @@ void InterprocessRenderer::Render(
   uint16_t pageIndex) {
   if (!tab) {
     auto msg = _("No Tab");
-    p->RenderError(msg, msg);
+    this->RenderError(msg, msg);
     return;
   }
 
   const auto title = tab->GetTitle();
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
-    p->RenderError(title, _("No Pages"));
+    this->RenderError(title, _("No Pages"));
     return;
   }
 
   if (pageIndex >= pageCount) {
-    p->RenderError(title, _("Invalid Page Number"));
+    this->RenderError(title, _("Invalid Page Number"));
     return;
   }
 
   const auto pageSize = tab->GetNativeContentSize(pageIndex);
   if (pageSize.width == 0 || pageSize.height == 0) {
-    p->RenderError(title, _("Invalid Page Size"));
+    this->RenderError(title, _("Invalid Page Size"));
     return;
   }
 
-  p->RenderWithChrome(
+  this->RenderWithChrome(
     title,
     pageSize,
     std::bind_front(
-      &Tab::RenderPage, tab, p->mDXR.mD2DDeviceContext.get(), pageIndex));
+      &Tab::RenderPage, tab, mDXR.mD2DDeviceContext.get(), pageIndex));
 }
 
-void InterprocessRenderer::Impl::RenderWithChrome(
+void InterprocessRenderer::RenderWithChrome(
   std::string_view tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
@@ -426,7 +357,7 @@ void InterprocessRenderer::Impl::RenderWithChrome(
     cursorStroke);
 }
 
-void InterprocessRenderer::Impl::OnCursorEvent(const CursorEvent& ev) {
+void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   mNeedsRepaint = true;
   const auto tab = mKneeboard->GetCurrentTab();
   if (!tab->SupportsTabMode(TabMode::NAVIGATION)) {
@@ -469,12 +400,12 @@ void InterprocessRenderer::Impl::OnCursorEvent(const CursorEvent& ev) {
 }
 
 void InterprocessRenderer::RenderNow() {
-  auto tabState = this->p->mKneeboard->GetCurrentTab();
+  auto tabState = this->mKneeboard->GetCurrentTab();
   if (!tabState) {
     return;
   }
   this->Render(tabState->GetTab(), tabState->GetPageIndex());
-  p->mNeedsRepaint = false;
+  mNeedsRepaint = false;
 }
 
 }// namespace OpenKneeboard
