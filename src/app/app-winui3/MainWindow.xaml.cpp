@@ -278,12 +278,6 @@ void MainWindow::OnNavigationItemInvoked(
   gKneeboard->SetTabID(tabID);
 }
 
-void MainWindow::OnNavigated(
-  const IInspectable&,
-  const NavigationEventArgs&) noexcept {
-  Navigation().IsBackEnabled(Frame().CanGoBack());
-}
-
 void MainWindow::OnBackRequested(
   const IInspectable&,
   const NavigationViewBackRequestedEventArgs&) noexcept {
