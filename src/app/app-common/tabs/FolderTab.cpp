@@ -26,20 +26,6 @@
 #include <nlohmann/json.hpp>
 
 namespace OpenKneeboard {
-class FolderTab::Impl final {
- public:
-  struct Page {
-    std::filesystem::path mPath;
-    winrt::com_ptr<ID2D1Bitmap> mBitmap;
-  };
-
-  DXResources mDXR;
-  winrt::com_ptr<IWICImagingFactory> mWIC;
-  std::filesystem::path mPath;
-  std::vector<Page> mPages = {};
-
-  winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(uint16_t index);
-};
 
 FolderTab::FolderTab(
   const DXResources& dxr,
@@ -47,12 +33,10 @@ FolderTab::FolderTab(
   utf8_string_view /* title */,
   const std::filesystem::path& path)
   : TabWithDoodles(dxr, kbs),
-    p(new Impl {
-      .mDXR = dxr,
-      .mWIC
-      = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory),
-      .mPath = path}) {
-  Reload();
+    mDXR {dxr},
+    mWIC {winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory)},
+    mPath {path} {
+  this->Reload();
 }
 
 FolderTab::FolderTab(
@@ -75,7 +59,7 @@ nlohmann::json FolderTab::GetSettings() const {
 }
 
 utf8_string FolderTab::GetTitle() const {
-  return p->mPath.filename();
+  return mPath.filename();
 }
 
 bool FolderTab::CanOpenFile(const std::filesystem::path& path) const {
@@ -84,7 +68,7 @@ bool FolderTab::CanOpenFile(const std::filesystem::path& path) const {
   }
   auto wsPath = path.wstring();
   winrt::com_ptr<IWICBitmapDecoder> decoder;
-  p->mWIC->CreateDecoderFromFilename(
+  mWIC->CreateDecoderFromFilename(
     wsPath.c_str(),
     nullptr,
     GENERIC_READ,
@@ -94,25 +78,25 @@ bool FolderTab::CanOpenFile(const std::filesystem::path& path) const {
 }
 
 void FolderTab::Reload() {
-  if (p->mPath.empty() || !std::filesystem::is_directory(p->mPath)) {
-    p->mPages.clear();
+  if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
+    mPages.clear();
     evFullyReplacedEvent.Emit();
     return;
   }
 
-  std::vector<Impl::Page> pages;
-  for (auto& entry: std::filesystem::recursive_directory_iterator(p->mPath)) {
+  std::vector<Page> pages;
+  for (auto& entry: std::filesystem::recursive_directory_iterator(mPath)) {
     if (!this->CanOpenFile(entry.path())) {
       continue;
     }
     pages.push_back({.mPath = entry.path()});
   }
-  p->mPages = pages;
+  mPages = pages;
   evFullyReplacedEvent.Emit();
 }
 
 uint16_t FolderTab::GetPageCount() const {
-  return static_cast<uint16_t>(p->mPages.size());
+  return static_cast<uint16_t>(mPages.size());
 }
 
 static bool IsValidPageIndex(uint16_t index, uint16_t count) {
@@ -132,7 +116,7 @@ D2D1_SIZE_U FolderTab::GetNativeContentSize(uint16_t index) {
     return {};
   }
 
-  auto bitmap = p->GetPageBitmap(index);
+  auto bitmap = GetPageBitmap(index);
   if (!bitmap) {
     return {};
   }
@@ -148,7 +132,7 @@ void FolderTab::RenderPageContent(
     return;
   }
 
-  auto bitmap = p->GetPageBitmap(index);
+  auto bitmap = GetPageBitmap(index);
   if (!bitmap) {
     return;
   }
@@ -173,7 +157,7 @@ void FolderTab::RenderPageContent(
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
-winrt::com_ptr<ID2D1Bitmap> FolderTab::Impl::GetPageBitmap(uint16_t index) {
+winrt::com_ptr<ID2D1Bitmap> FolderTab::GetPageBitmap(uint16_t index) {
   if (index >= mPages.size()) {
     return {};
   }
@@ -259,30 +243,30 @@ winrt::com_ptr<ID2D1Bitmap> FolderTab::Impl::GetPageBitmap(uint16_t index) {
 }
 
 std::filesystem::path FolderTab::GetPath() const {
-  return p->mPath;
+  return mPath;
 }
 
 void FolderTab::SetPath(const std::filesystem::path& path) {
-  if (path == p->mPath) {
+  if (path == mPath) {
     return;
   }
-  p->mPath = path;
-  Reload();
+  mPath = path;
+  this->Reload();
 }
 
 bool FolderTab::IsNavigationAvailable() const {
-  return p->mPages.size();
+  return mPages.size();
 }
 
 std::shared_ptr<Tab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
   std::vector<NavigationTab::Entry> entries;
 
-  for (uint16_t i = 0; i < p->mPages.size(); ++i) {
-    entries.push_back({p->mPages.at(i).mPath.stem(), i});
+  for (uint16_t i = 0; i < mPages.size(); ++i) {
+    entries.push_back({mPages.at(i).mPath.stem(), i});
   }
 
   return std::make_shared<NavigationTab>(
-    p->mDXR, this, entries, this->GetNativeContentSize(currentPage));
+    mDXR, this, entries, this->GetNativeContentSize(currentPage));
 }
 
 }// namespace OpenKneeboard

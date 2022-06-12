@@ -66,8 +66,18 @@ class FolderTab final : public TabWithDoodles,
     const D2D1_RECT_F& rect) final override;
 
  private:
-  class Impl;
-  std::unique_ptr<Impl> p;
+  struct Page {
+    std::filesystem::path mPath;
+    winrt::com_ptr<ID2D1Bitmap> mBitmap;
+  };
+
+  DXResources mDXR;
+  winrt::com_ptr<IWICImagingFactory> mWIC;
+  std::filesystem::path mPath;
+
+  std::vector<Page> mPages = {};
+
+  winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(uint16_t index);
 };
 
 }// namespace OpenKneeboard
