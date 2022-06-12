@@ -224,8 +224,6 @@ void TabPage::PaintNow() {
   if (!mSwapChain) {
     return;
   }
-  auto metrics = GetPageMetrics();
-
   auto ctx = gDXResources.mD2DDeviceContext.get();
 
   std::scoped_lock lock(mSwapChainMutex);
@@ -243,6 +241,23 @@ void TabPage::PaintNow() {
     mNeedsFrame = false;
   });
   ctx->Clear(mBackgroundColor);
+
+  if (!mState) {
+    DXGI_SURFACE_DESC desc;
+    surface->GetDesc(&desc);
+    mErrorRenderer->Render(
+      ctx,
+      _("Missing or Deleted Tab"),
+      {
+        0,
+        0,
+        static_cast<FLOAT>(desc.Width),
+        static_cast<FLOAT>(desc.Height),
+      });
+    return;
+  }
+
+  auto metrics = GetPageMetrics();
   auto tab = mState->GetTab();
   if (tab->GetPageCount()) {
     tab->RenderPage(ctx, mState->GetPageIndex(), metrics.mRenderRect);
@@ -269,6 +284,9 @@ void TabPage::PaintNow() {
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
+  if (!mState) {
+    throw std::logic_error("Attempt to fetch Page Metrics without a tab");
+  }
   const auto contentNativeSize = mState->GetPageCount() == 0 ?
     D2D1_SIZE_U {
       static_cast<UINT>(mCanvasSize.width),
@@ -308,6 +326,9 @@ void TabPage::OnPointerEvent(
 void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   auto kneeboard = gKneeboard;// increment ref count
   if (!kneeboard) {
+    return;
+  }
+  if (!mState) {
     return;
   }
   const auto metrics = GetPageMetrics();
