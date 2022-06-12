@@ -32,7 +32,7 @@ class TabFirstPageAction final : public TabAction, private EventReceiver {
   TabFirstPageAction(TabState* state);
 
   virtual bool IsEnabled() override;
-  virtual void Activate() override;
+  virtual void Execute() override;
 
  private:
   TabState* mState = nullptr;

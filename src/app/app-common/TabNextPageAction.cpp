@@ -31,7 +31,7 @@ bool TabNextPageAction::IsEnabled() {
   return mState->GetPageIndex() + 1 < mState->GetPageCount();
 }
 
-void TabNextPageAction::Activate() {
+void TabNextPageAction::Execute() {
   mState->SetPageIndex(mState->GetPageIndex() + 1);
 }
 

@@ -31,7 +31,7 @@ bool TabFirstPageAction::IsEnabled() {
   return mState->GetPageCount() > 1 && mState->GetPageIndex() > 0;
 }
 
-void TabFirstPageAction::Activate() {
+void TabFirstPageAction::Execute() {
   mState->SetPageIndex(0);
 }
 

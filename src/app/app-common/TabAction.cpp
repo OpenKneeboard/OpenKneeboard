@@ -36,4 +36,12 @@ utf8_string_view TabAction::GetLabel() {
   return mLabel;
 }
 
+void TabToggleAction::Execute() {
+  if (this->IsActive()) {
+    this->Deactivate();
+    return;
+  }
+  this->Activate();
+}
+
 }// namespace OpenKneeboard

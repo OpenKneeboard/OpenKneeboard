@@ -34,7 +34,9 @@ class TabNavigationAction final : public TabToggleAction,
 
   virtual bool IsActive() override;
   virtual bool IsEnabled() override;
+
   virtual void Activate() override;
+  virtual void Deactivate() override;
 
  private:
   TabState* mState = nullptr;

@@ -132,8 +132,8 @@ void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
       button.IsEnabled(action->IsEnabled());
 
       button.IsChecked(toggle->IsActive());
-      button.Checked([action](auto, auto) { action->Activate(); });
-      button.Unchecked([action](auto, auto) { action->Activate(); });
+      button.Checked([toggle](auto, auto) { toggle->Activate(); });
+      button.Unchecked([toggle](auto, auto) { toggle->Deactivate(); });
 
       AddEventListener(
         toggle->evStateChangedEvent,
@@ -152,7 +152,7 @@ void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
     button.Icon(icon);
     button.IsEnabled(action->IsEnabled());
 
-    button.Click([action](auto, auto) { action->Activate(); });
+    button.Click([action](auto, auto) { action->Execute(); });
 
     AddEventListener(
       action->evStateChangedEvent,

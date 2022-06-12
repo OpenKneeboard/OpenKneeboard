@@ -38,7 +38,11 @@ bool TabNavigationAction::IsActive() {
 }
 
 void TabNavigationAction::Activate() {
-  mState->SetTabMode(IsActive() ? TabMode::NORMAL : TabMode::NAVIGATION);
+  mState->SetTabMode(TabMode::NAVIGATION);
+}
+
+void TabNavigationAction::Deactivate() {
+  mState->SetTabMode(TabMode::NORMAL);
 }
 
 }// namespace OpenKneeboard

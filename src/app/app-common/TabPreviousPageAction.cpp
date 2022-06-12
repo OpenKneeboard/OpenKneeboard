@@ -31,7 +31,7 @@ bool TabPreviousPageAction::IsEnabled() {
   return mState->GetPageIndex() > 0;
 }
 
-void TabPreviousPageAction::Activate() {
+void TabPreviousPageAction::Execute() {
   mState->SetPageIndex(mState->GetPageIndex() - 1);
 }
 

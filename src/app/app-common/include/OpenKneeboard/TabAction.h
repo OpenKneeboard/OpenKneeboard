@@ -31,7 +31,7 @@ class TabAction {
   utf8_string_view GetLabel();
 
   virtual bool IsEnabled() = 0;
-  virtual void Activate() = 0;
+  virtual void Execute() = 0;
 
   Event<> evStateChangedEvent;
 
@@ -45,7 +45,11 @@ class TabAction {
 
 class TabToggleAction : public TabAction {
  public:
+  virtual void Execute() override final;
+
   virtual bool IsActive() = 0;
+  virtual void Activate() = 0;
+  virtual void Deactivate() = 0;
 
  protected:
   using TabAction::TabAction;

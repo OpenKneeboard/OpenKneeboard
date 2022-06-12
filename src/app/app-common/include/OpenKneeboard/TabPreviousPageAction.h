@@ -32,7 +32,7 @@ class TabPreviousPageAction final : public TabAction, private EventReceiver {
   TabPreviousPageAction(TabState* state);
 
   virtual bool IsEnabled() override;
-  virtual void Activate() override;
+  virtual void Execute() override;
 
  private:
   TabState* mState = nullptr;
