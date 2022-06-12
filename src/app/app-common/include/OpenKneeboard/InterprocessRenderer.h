@@ -30,6 +30,7 @@
 #include <shims/winrt.h>
 
 #include <memory>
+#include <mutex>
 #include <optional>
 
 namespace OpenKneeboard {
@@ -52,6 +53,7 @@ class InterprocessRenderer final : private EventReceiver {
     UINT mMutexKey = 0;
   };
 
+  winrt::apartment_context mUIThread;
   HWND mFeederWindow;
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
@@ -84,6 +86,7 @@ class InterprocessRenderer final : private EventReceiver {
   using Button = std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>;
   std::vector<Button> mButtons;
   std::optional<Button> mActiveButton;
+  std::mutex mToolbarMutex;
 
   void RenderNow();
   void Render(const std::shared_ptr<Tab>& tab, uint16_t pageIndex);

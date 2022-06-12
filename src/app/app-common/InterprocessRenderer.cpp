@@ -337,6 +337,8 @@ void InterprocessRenderer::RenderToolbar() {
 
   auto left = 2 * margin;
 
+  std::scoped_lock lock(mToolbarMutex);
+
   mButtons.clear();
 
   const auto cursor = mKneeboard->GetCursorCanvasPoint();
@@ -408,6 +410,7 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
 
   if (mCursorTouching) {
     // Touch start
+    std::scoped_lock lock(mToolbarMutex);
     for (const auto& [rect, action]: mButtons) {
       if (IsPointInRect(cursor, rect)) {
         mActiveButton = {{rect, action}};
@@ -418,6 +421,7 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   }
 
   // Touch end
+  std::scoped_lock lock(mToolbarMutex);
   const auto button = mActiveButton;
   if (!button) {
     return;
@@ -438,7 +442,8 @@ void InterprocessRenderer::OnTabChanged() {
     return;
   }
 
-  mActions = CreateTabActions(tab.get());
+  std::scoped_lock lock(mToolbarMutex);
+  mActions = CreateTabActions(tab);
   mButtons.clear();
   mActiveButton = {};
 
