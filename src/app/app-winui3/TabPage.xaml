@@ -9,28 +9,10 @@
   Background="{ThemeResource SystemChromeMediumLowColor}"
   Foreground="{ThemeResource TextFillColorPrimary}">
   <Grid RowDefinitions="Auto,*">
-    <CommandBar Grid.Row="0">
-      <AppBarToggleButton Icon="List" Label="Contents" x:Name="ContentsButton" Checked="EnableNavigationMode" Unchecked="DisableNavigationMode" />
-      <AppBarButton Icon="Previous" Label="First Page" x:Name="FirstPageButton" Click="OnFirstPageButtonClicked" />
-      <AppBarButton
-        Label="Previous Page"
-        x:Name="PreviousPageButton"
-        Click="OnPreviousPageButtonClicked">
-        <AppBarButton.Icon>
-          <!-- PageLeft -->
-          <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE760;"/>
-        </AppBarButton.Icon>
-      </AppBarButton>
-      <AppBarButton
-        Label="Next Page"
-        x:Name="NextPageButton"
-        Click="OnNextPageButtonClicked">
-        <AppBarButton.Icon>
-          <!-- PageRight -->
-          <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE761;"/>
-        </AppBarButton.Icon>
-      </AppBarButton>
-    </CommandBar>
+    <CommandBar
+      x:Name="CommandBar"
+      Grid.Row="0"
+    />
 
     <SwapChainPanel
       x:Name="Canvas"

@@ -23,19 +23,24 @@
 #include "TabPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabAction.h>
 #include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <microsoft.ui.xaml.media.dxinterop.h>
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/Windows.Foundation.Collections.h>
 
 #include "Globals.h"
 
 using namespace ::OpenKneeboard;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
@@ -111,20 +116,47 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
 void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
   mState = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
-  AddEventListener(state->evPageChangedEvent, &TabPage::UpdateButtons, this);
-  AddEventListener(
-    state->evAvailableFeaturesChangedEvent, &TabPage::UpdateButtons, this);
-  this->UpdateButtons();
-}
 
-void TabPage::UpdateButtons() {
-  ContentsButton().IsEnabled(mState->SupportsTabMode(TabMode::NAVIGATION));
-  ContentsButton().IsChecked(mState->GetTabMode() == TabMode::NAVIGATION);
+  auto actions = CreateTabActions(state.get());
 
-  const auto index = mState->GetPageIndex();
-  FirstPageButton().IsEnabled(index > 0);
-  PreviousPageButton().IsEnabled(index > 0);
-  NextPageButton().IsEnabled(index + 1 < mState->GetPageCount());
+  auto commands = CommandBar().PrimaryCommands();
+  for (const auto& action: actions) {
+    auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
+    FontIcon icon;
+    icon.Glyph(winrt::to_hstring(action->GetGlyph()));
+
+    if (toggle) {
+      AppBarToggleButton button;
+      button.Label(winrt::to_hstring(action->GetLabel()));
+      button.Icon(icon);
+      button.IsEnabled(action->IsEnabled());
+
+      button.IsChecked(toggle->IsActive());
+      button.Checked([action](auto, auto) { action->Activate(); });
+      button.Unchecked([action](auto, auto) { action->Activate(); });
+
+      AddEventListener(toggle->evStateChangedEvent, [toggle, button]() {
+        button.IsChecked(toggle->IsActive());
+        button.IsEnabled(toggle->IsEnabled());
+      });
+
+      commands.Append(button);
+      continue;
+    }
+
+    AppBarButton button;
+    button.Label(winrt::to_hstring(action->GetLabel()));
+    button.Icon(icon);
+    button.IsEnabled(action->IsEnabled());
+
+    button.Click([action](auto, auto) { action->Activate(); });
+
+    AddEventListener(action->evStateChangedEvent, [action, button]() {
+      button.IsEnabled(action->IsEnabled());
+    });
+
+    commands.Append(button);
+  }
 }
 
 void TabPage::OnCanvasSizeChanged(
@@ -303,42 +335,6 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     .mPressure = rightClick ? 0.8f : 0.0f,
     .mButtons = rightClick ? (1ui32 << 1) : 1ui32,
   });
-}
-
-void TabPage::EnableNavigationMode(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  mState->SetTabMode(TabMode::NAVIGATION);
-}
-
-void TabPage::DisableNavigationMode(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  // If navigation is disabled via some other method such as selecting a page
-  // to navigate to, the toolbar button for navigation mode will be
-  // programatically unchecked, which triggers the event handler, which means
-  // that it will be called even when navigation mode has already been disabled.
-  if (mState->GetTabMode() == TabMode::NAVIGATION) {
-    mState->SetTabMode(TabMode::NORMAL);
-  }
-}
-
-void TabPage::OnFirstPageButtonClicked(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  mState->SetPageIndex(0);
-}
-
-void TabPage::OnPreviousPageButtonClicked(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  mState->PreviousPage();
-}
-
-void TabPage::OnNextPageButtonClicked(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  mState->NextPage();
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

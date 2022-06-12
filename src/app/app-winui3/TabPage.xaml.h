@@ -51,22 +51,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     const IInspectable&,
     const SizeChangedEventArgs&) noexcept;
   void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
-  void OnFirstPageButtonClicked(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-  void OnPreviousPageButtonClicked(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-  void OnNextPageButtonClicked(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-
-  void EnableNavigationMode(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-  void DisableNavigationMode(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
 
  private:
   std::shared_ptr<TabState> mState;
@@ -75,8 +59,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
   winrt::com_ptr<ID2D1SolidColorBrush> mForegroundBrush;
-
-  void UpdateButtons();
 
   DispatcherQueueController mDQC {nullptr};
   InputPointerSource mInputPointerSource {nullptr};

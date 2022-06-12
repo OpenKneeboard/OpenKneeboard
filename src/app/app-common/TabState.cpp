@@ -181,6 +181,7 @@ bool TabState::SetTabMode(TabMode mode) {
 
   evPageChangedEvent.EmitFromMainThread();
   evNeedsRepaintEvent.EmitFromMainThread();
+  evTabModeChangedEvent.EmitFromMainThread();
 
   return true;
 }
