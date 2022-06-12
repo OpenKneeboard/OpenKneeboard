@@ -17,11 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabAction.h>
 #include <OpenKneeboard/TabState.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -159,13 +161,19 @@ InterprocessRenderer::InterprocessRenderer(
     kneeboard->evCursorEvent, &InterprocessRenderer::OnCursorEvent, this);
   AddEventListener(
     kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
-  this->RenderNow();
+  AddEventListener(
+    kneeboard->evCurrentTabChangedEvent,
+    &InterprocessRenderer::OnTabChanged,
+    this);
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
     if (mNeedsRepaint) {
       RenderNow();
     }
   });
+
+  this->OnTabChanged();
+  this->RenderNow();
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
@@ -291,53 +299,7 @@ void InterprocessRenderer::RenderWithChrome(
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   auto cursorPoint = mKneeboard->GetCursorCanvasPoint();
 
-  const auto tab = mKneeboard->GetCurrentTab();
-  if (tab->SupportsTabMode(TabMode::NAVIGATION)) {
-    const auto buttonHeight = headerSize.height * 0.75f;
-    const auto margin = (headerSize.height - buttonHeight) / 2.0f;
-
-    mNavButton = {
-      2 * margin,
-      margin,
-      buttonHeight + (2 * margin),
-      buttonHeight + margin,
-    };
-
-    ID2D1Brush* brush = mButtonBrush.get();
-    if (
-      cursorPoint.x >= mNavButton.left && cursorPoint.x <= mNavButton.right
-      && cursorPoint.y >= mNavButton.top
-      && cursorPoint.y <= mNavButton.bottom) {
-      brush = mHoverButtonBrush.get();
-    } else if (tab->GetTabMode() == TabMode::NAVIGATION) {
-      brush = mActiveButtonBrush.get();
-    }
-
-    const auto strokeWidth = buttonHeight / 15;
-
-    ctx->DrawRoundedRectangle(
-      D2D1::RoundedRect(mNavButton, buttonHeight / 4, buttonHeight / 4),
-      brush,
-      strokeWidth);
-
-    // Half a stroke width on top and bottom
-    const auto innerHeight = buttonHeight - strokeWidth;
-    const auto step = innerHeight / 4;
-    const auto padding = (strokeWidth / 2) + step;
-    D2D1_POINT_2F left {
-      mNavButton.left + padding,
-      mNavButton.top + padding,
-    };
-    D2D1_POINT_2F right {
-      mNavButton.right - padding,
-      mNavButton.top + padding,
-    };
-    for (auto i = 0; i <= 2; ++i) {
-      ctx->DrawLine(left, right, brush, step / 2);
-      left.y += step;
-      right.y += step;
-    }
-  }
+  this->RenderToolbar();
 
   if (!mKneeboard->HaveCursor()) {
     return;
@@ -355,6 +317,70 @@ void InterprocessRenderer::RenderWithChrome(
     D2D1::Ellipse(cursorPoint, cursorRadius, cursorRadius),
     mCursorBrush.get(),
     cursorStroke);
+}
+
+static bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {
+  return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
+}
+
+void InterprocessRenderer::RenderToolbar() {
+  auto header = mKneeboard->GetHeaderRenderRect();
+  const auto headerHeight = (header.bottom - header.top);
+  const auto buttonHeight = headerHeight * 0.75f;
+  const auto margin = (headerHeight - buttonHeight) / 2.0f;
+
+  const auto strokeWidth = buttonHeight / 15;
+
+  auto left = 2 * margin;
+
+  mButtons.clear();
+
+  const auto cursor = mKneeboard->GetCursorCanvasPoint();
+  const auto ctx = mDXR.mD2DDeviceContext;
+
+  FLOAT dpix, dpiy;
+  ctx->GetDpi(&dpix, &dpiy);
+  winrt::com_ptr<IDWriteTextFormat> glyphFormat;
+  winrt::check_hresult(mDXR.mDWriteFactory->CreateTextFormat(
+    L"Segoe MDL2 Assets",
+    nullptr,
+    DWRITE_FONT_WEIGHT_EXTRA_BOLD,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    (buttonHeight * 96) * 0.66 / dpiy,
+    L"en-us",
+    glyphFormat.put()));
+  glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+  glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+
+  for (auto action: mToolbar) {
+    D2D1_RECT_F button {
+      .left = left,
+      .top = margin,
+      .right = left + buttonHeight,
+      .bottom = margin + buttonHeight,
+    };
+    left = button.right + margin;
+    mButtons.push_back({button, action});
+
+    ID2D1Brush* brush = mButtonBrush.get();
+    if (IsPointInRect(cursor, button)) {
+      brush = mActiveButtonBrush.get();
+    } else {
+      auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
+      if (toggle && toggle->IsActive()) {
+        brush = mActiveButtonBrush.get();
+      }
+    }
+
+    ctx->DrawRoundedRectangle(
+      D2D1::RoundedRect(button, buttonHeight / 4, buttonHeight / 4),
+      brush,
+      strokeWidth);
+    auto glyph = winrt::to_hstring(action->GetGlyph());
+    ctx->DrawTextW(
+      glyph.c_str(), glyph.size(), glyphFormat.get(), button, brush);
+  }
 }
 
 void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
@@ -396,6 +422,21 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
     } else {
       tab->SetTabMode(TabMode::NAVIGATION);
     }
+  }
+}
+
+void InterprocessRenderer::OnTabChanged() {
+  auto tab = mKneeboard->GetCurrentTab();
+  if (!tab) {
+    return;
+  }
+
+  mToolbar = CreateTabActions(tab.get());
+  mButtons.clear();
+
+  for (auto action: mToolbar) {
+    AddEventListener(
+      action->evStateChangedEvent, [this]() { mNeedsRepaint = true; });
   }
 }
 

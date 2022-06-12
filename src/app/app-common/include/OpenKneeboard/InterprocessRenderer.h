@@ -35,6 +35,7 @@ namespace OpenKneeboard {
 struct DXResources;
 class KneeboardState;
 class Tab;
+class TabAction;
 
 class InterprocessRenderer final : private EventReceiver {
  public:
@@ -78,8 +79,8 @@ class InterprocessRenderer final : private EventReceiver {
   bool mCursorTouching = false;
   bool mCursorTouchOnNavButton;
   D2D1_RECT_F mNavButton;
-
-  void OnCursorEvent(const CursorEvent&);
+  std::vector<std::shared_ptr<TabAction>> mToolbar;
+  std::vector<std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>> mButtons;
 
   void RenderNow();
   void Render(const std::shared_ptr<Tab>& tab, uint16_t pageIndex);
@@ -89,8 +90,12 @@ class InterprocessRenderer final : private EventReceiver {
     const std::string_view tabTitle,
     const D2D1_SIZE_U& preferredContentSize,
     const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
+  void RenderToolbar();
 
   void CopyPixelsToSHM();
+
+  void OnCursorEvent(const CursorEvent&);
+  void OnTabChanged();
 };
 
 }// namespace OpenKneeboard
