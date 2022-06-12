@@ -17,18 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/CreateTabActions.h>
+#pragma once
+
 #include <OpenKneeboard/TabAction.h>
-#include <OpenKneeboard/TabFirstPageAction.h>
-#include <OpenKneeboard/TabNavigationAction.h>
 
 namespace OpenKneeboard {
 
-std::vector<std::shared_ptr<TabAction>> CreateTabActions(TabState* tab) {
-  return {
-    std::make_shared<TabNavigationAction>(tab),
-    std::make_shared<TabFirstPageAction>(tab),
-  };
-}
+class TabState;
+
+class TabFirstPageAction final : public TabAction, private EventReceiver {
+ public:
+  TabFirstPageAction() = delete;
+
+  TabFirstPageAction(TabState* state);
+
+  virtual bool IsEnabled() override;
+  virtual void Activate() override;
+
+ private:
+  TabState* mState = nullptr;
+};
 
 }// namespace OpenKneeboard

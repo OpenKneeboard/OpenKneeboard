@@ -135,10 +135,13 @@ void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
       button.Checked([action](auto, auto) { action->Activate(); });
       button.Unchecked([action](auto, auto) { action->Activate(); });
 
-      AddEventListener(toggle->evStateChangedEvent, [toggle, button]() {
-        button.IsChecked(toggle->IsActive());
-        button.IsEnabled(toggle->IsEnabled());
-      });
+      AddEventListener(
+        toggle->evStateChangedEvent,
+        [this, toggle, button]() noexcept -> winrt::fire_and_forget {
+          co_await mUIThread;
+          button.IsChecked(toggle->IsActive());
+          button.IsEnabled(toggle->IsEnabled());
+        });
 
       commands.Append(button);
       continue;
@@ -151,9 +154,12 @@ void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
 
     button.Click([action](auto, auto) { action->Activate(); });
 
-    AddEventListener(action->evStateChangedEvent, [action, button]() {
-      button.IsEnabled(action->IsEnabled());
-    });
+    AddEventListener(
+      action->evStateChangedEvent,
+      [this, action, button]() noexcept -> winrt::fire_and_forget {
+        co_await mUIThread;
+        button.IsEnabled(action->IsEnabled());
+      });
 
     commands.Append(button);
   }

@@ -53,6 +53,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
 
  private:
+  winrt::apartment_context mUIThread;
   std::shared_ptr<TabState> mState;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
