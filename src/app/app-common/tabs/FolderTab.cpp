@@ -22,8 +22,14 @@
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
+#include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Storage.h>
 
 #include <nlohmann/json.hpp>
+
+using namespace winrt::Windows::Storage;
+using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
@@ -78,19 +84,40 @@ bool FolderTab::CanOpenFile(const std::filesystem::path& path) const {
 }
 
 void FolderTab::Reload() {
+  this->ReloadImpl();
+}
+
+winrt::fire_and_forget FolderTab::ReloadImpl() noexcept {
+  co_await mUIThread;
+
   if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
     mPages.clear();
-    evFullyReplacedEvent.Emit();
-    return;
+    evFullyReplacedEvent.EmitFromMainThread();
+    co_return;
   }
+  if ((!mQueryResult) || mPath != mQueryResult.Folder().Path()) {
+    mQueryResult = nullptr;
+    auto folder
+      = co_await StorageFolder::GetFolderFromPathAsync(mPath.wstring());
+    mQueryResult = folder.CreateFileQuery(CommonFileQuery::OrderByName);
+    mQueryResult.ContentsChanged(
+      [this](const auto&, const auto&) { this->ReloadImpl(); });
+  }
+  auto files = co_await mQueryResult.GetFilesAsync();
+
+  co_await winrt::resume_background();
 
   std::vector<Page> pages;
-  for (auto& entry: std::filesystem::recursive_directory_iterator(mPath)) {
-    if (!this->CanOpenFile(entry.path())) {
+  for (const auto& file: files) {
+    std::filesystem::path path(std::wstring_view {file.Path()});
+    if (!this->CanOpenFile(path)) {
       continue;
     }
-    pages.push_back({.mPath = entry.path()});
+    pages.push_back({.mPath = path});
   }
+
+  co_await mUIThread;
+
   mPages = pages;
   evFullyReplacedEvent.Emit();
 }
@@ -251,6 +278,7 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
     return;
   }
   mPath = path;
+  mQueryResult = nullptr;
   this->Reload();
 }
 

@@ -19,6 +19,9 @@
  */
 #pragma once
 
+#include <shims/winrt.h>
+#include <winrt/Windows.Storage.Search.h>
+
 #include <filesystem>
 
 #include "Tab.h"
@@ -71,13 +74,18 @@ class FolderTab final : public TabWithDoodles,
     winrt::com_ptr<ID2D1Bitmap> mBitmap;
   };
 
+  winrt::apartment_context mUIThread;
+
   DXResources mDXR;
   winrt::com_ptr<IWICImagingFactory> mWIC;
   std::filesystem::path mPath;
 
   std::vector<Page> mPages = {};
+  winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
+    nullptr};
 
   winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(uint16_t index);
+  winrt::fire_and_forget ReloadImpl() noexcept;
 };
 
 }// namespace OpenKneeboard
