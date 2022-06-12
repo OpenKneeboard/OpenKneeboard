@@ -29,13 +29,13 @@ class TabFirstPageAction final : public TabAction, private EventReceiver {
  public:
   TabFirstPageAction() = delete;
 
-  TabFirstPageAction(TabState* state);
+  TabFirstPageAction(std::shared_ptr<TabState> state);
 
   virtual bool IsEnabled() override;
   virtual void Execute() override;
 
  private:
-  TabState* mState = nullptr;
+  std::shared_ptr<TabState> mState = nullptr;
 };
 
 }// namespace OpenKneeboard

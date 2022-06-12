@@ -22,7 +22,7 @@
 
 namespace OpenKneeboard {
 
-TabPreviousPageAction::TabPreviousPageAction(TabState* state)
+TabPreviousPageAction::TabPreviousPageAction(std::shared_ptr<TabState> state)
   : TabAction("\uE760", _("Previous Page")), mState(state) {
   AddEventListener(state->evNeedsRepaintEvent, this->evStateChangedEvent);
 }

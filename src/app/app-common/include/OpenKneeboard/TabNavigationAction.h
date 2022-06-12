@@ -30,7 +30,7 @@ class TabNavigationAction final : public TabToggleAction,
  public:
   TabNavigationAction() = delete;
 
-  TabNavigationAction(TabState* state);
+  TabNavigationAction(std::shared_ptr<TabState> state);
 
   virtual bool IsActive() override;
   virtual bool IsEnabled() override;
@@ -39,7 +39,7 @@ class TabNavigationAction final : public TabToggleAction,
   virtual void Deactivate() override;
 
  private:
-  TabState* mState = nullptr;
+  std::shared_ptr<TabState> mState = nullptr;
 };
 
 }// namespace OpenKneeboard

@@ -117,7 +117,7 @@ void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
   mState = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 
-  auto actions = CreateTabActions(state.get());
+  auto actions = CreateTabActions(state);
 
   auto commands = CommandBar().PrimaryCommands();
   for (const auto& action: actions) {
