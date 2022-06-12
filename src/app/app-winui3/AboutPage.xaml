@@ -9,8 +9,8 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <ScrollViewer>
     <StackPanel Orientation="Vertical" Margin="12">
-      <TextBlock Style="{ThemeResource TitleTextBlockStyle}">OpenKneeboard</TextBlock>
-      <TextBlock Style="{ThemeResource BodyTextBlockStyle}" x:Name="DetailsText" />
+      <TextBlock Style="{ThemeResource TitleTextBlockStyle}" IsTextSelectionEnabled="true">OpenKneeboard</TextBlock>
+      <TextBlock Style="{ThemeResource BodyTextBlockStyle}" x:Name="DetailsText" IsTextSelectionEnabled="true" />
       <Button Content="Copy" Click="OnCopyClick" Margin="0,12,0,0" />
     </StackPanel>
   </ScrollViewer>
