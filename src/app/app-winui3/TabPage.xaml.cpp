@@ -243,7 +243,7 @@ void TabPage::PaintNow() {
     mNeedsFrame = false;
   });
   ctx->Clear(mBackgroundColor);
-  auto tab = mState->GetTab().get();
+  auto tab = mState->GetTab();
   if (tab->GetPageCount()) {
     tab->RenderPage(ctx, mState->GetPageIndex(), metrics.mRenderRect);
   } else {
