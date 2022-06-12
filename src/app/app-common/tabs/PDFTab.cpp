@@ -194,82 +194,76 @@ void PDFTab::Reload() {
   if (!std::filesystem::is_regular_file(p->mPath)) {
     return;
   }
-  std::thread([this] {
-    SetThreadDescription(GetCurrentThread(), L"PDFTab Master Loader Thread");
-    std::jthread loadRenderer {[this] {
-      SetThreadDescription(GetCurrentThread(), L"PDFTab PdfDocument Thread");
-      auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
-      p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
-    }};
-    std::jthread loadBookmarks {[this] {
-      SetThreadDescription(GetCurrentThread(), L"PDFTab QPDF Thread");
-      const auto pathStr = to_utf8(p->mPath);
-      QPDF qpdf;
-      qpdf.processFile(pathStr.c_str());
+  std::thread {[this] {
+    SetThreadDescription(GetCurrentThread(), L"PDFTab PdfDocument Thread");
+    auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
+    p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
+    this->evFullyReplacedEvent.EmitFromMainThread();
+  }}.detach();
+  std::thread {[this] {
+    SetThreadDescription(GetCurrentThread(), L"PDFTab QPDF Thread");
+    const auto pathStr = to_utf8(p->mPath);
+    QPDF qpdf;
+    qpdf.processFile(pathStr.c_str());
 
-      // Page outlines/TOC
-      std::map<QPDFObjGen, uint16_t> pageIndices;
-      {
-        uint16_t nextIndex = 0;
-        for (const auto& page: QPDFPageDocumentHelper(qpdf).getAllPages()) {
-          pageIndices[page.getObjectHandle().getObjGen()] = nextIndex++;
-        }
+    // Page outlines/TOC
+    std::map<QPDFObjGen, uint16_t> pageIndices;
+    {
+      uint16_t nextIndex = 0;
+      for (const auto& page: QPDFPageDocumentHelper(qpdf).getAllPages()) {
+        pageIndices[page.getObjectHandle().getObjGen()] = nextIndex++;
       }
+    }
 
-      QPDFOutlineDocumentHelper odh(qpdf);
-      auto outlines = odh.getTopLevelOutlines();
-      p->mBookmarks = GetNavigationEntries(pageIndices, outlines);
-      if (p->mBookmarks.size() < 2) {
-        p->mBookmarks.clear();
-        const auto pageCount
-          = QPDFPageDocumentHelper(qpdf).getAllPages().size();
-        for (uint16_t i = 0; i < pageCount; ++i) {
-          p->mBookmarks.push_back(
-            {fmt::format(fmt::runtime(_("Page {}")), i + 1), i});
-        }
+    QPDFOutlineDocumentHelper odh(qpdf);
+    auto outlines = odh.getTopLevelOutlines();
+    p->mBookmarks = GetNavigationEntries(pageIndices, outlines);
+    if (p->mBookmarks.empty()) {
+      p->mBookmarks.clear();
+      const auto pageCount = QPDFPageDocumentHelper(qpdf).getAllPages().size();
+      for (uint16_t i = 0; i < pageCount; ++i) {
+        p->mBookmarks.push_back(
+          {fmt::format(fmt::runtime(_("Page {}")), i + 1), i});
       }
-      p->mNavigationLoaded = true;
+    }
+    p->mNavigationLoaded = true;
+    this->evAvailableFeaturesChangedEvent.EmitFromMainThread();
 
-      auto pageHyperlinkData = FindAllHyperlinks(qpdf);
-      for (const auto& [_handle, page]: pageHyperlinkData) {
-        if (page.mInternalLinks.empty()) {
+    auto pageHyperlinkData = FindAllHyperlinks(qpdf);
+    for (const auto& [_handle, page]: pageHyperlinkData) {
+      if (page.mInternalLinks.empty()) {
+        continue;
+      }
+      // PDF origin is bottom left, DirectX is top left
+      const auto pageWidth
+        = static_cast<float>(page.mRect.urx - page.mRect.llx);
+      const auto pageHeight
+        = static_cast<float>(page.mRect.ury - page.mRect.lly);
+
+      std::vector<NormalizedLink> links;
+      for (const auto& pdfLink: page.mInternalLinks) {
+        if (!pageHyperlinkData.contains(pdfLink.mDestinationPage)) {
           continue;
         }
-        // PDF origin is bottom left, DirectX is top left
-        const auto pageWidth
-          = static_cast<float>(page.mRect.urx - page.mRect.llx);
-        const auto pageHeight
-          = static_cast<float>(page.mRect.ury - page.mRect.lly);
-
-        std::vector<NormalizedLink> links;
-        for (const auto& pdfLink: page.mInternalLinks) {
-          if (!pageHyperlinkData.contains(pdfLink.mDestinationPage)) {
-            continue;
-          }
-          // Convert coordinates here :)
-          links.push_back(
-            {pageHyperlinkData.at(pdfLink.mDestinationPage).mPageIndex,
-             D2D1_RECT_F {
-               .left = static_cast<float>(pdfLink.mRect.llx - page.mRect.llx)
-                 / pageWidth,
-               .top = 1.0f
-                 - (static_cast<float>(pdfLink.mRect.ury - page.mRect.lly)
-                    / pageHeight),
-               .right
-               = static_cast<float>(pdfLink.mRect.urx - pdfLink.mRect.llx)
-                 / pageWidth,
-               .bottom = 1.0f
-                 - (static_cast<float>(pdfLink.mRect.lly - page.mRect.lly)
-                    / pageHeight),
-             }});
-        }
-        p->mLinks.emplace(page.mPageIndex, links);
+        // Convert coordinates here :)
+        links.push_back(
+          {pageHyperlinkData.at(pdfLink.mDestinationPage).mPageIndex,
+           D2D1_RECT_F {
+             .left = static_cast<float>(pdfLink.mRect.llx - page.mRect.llx)
+               / pageWidth,
+             .top = 1.0f
+               - (static_cast<float>(pdfLink.mRect.ury - page.mRect.lly)
+                  / pageHeight),
+             .right = static_cast<float>(pdfLink.mRect.urx - pdfLink.mRect.llx)
+               / pageWidth,
+             .bottom = 1.0f
+               - (static_cast<float>(pdfLink.mRect.lly - page.mRect.lly)
+                  / pageHeight),
+           }});
       }
-    }};
-    loadRenderer.join();
-    loadBookmarks.join();
-    this->evFullyReplacedEvent.EmitFromMainThread();
-  }).detach();
+      p->mLinks.emplace(page.mPageIndex, links);
+    }
+  }}.detach();
 }
 
 uint16_t PDFTab::GetPageCount() const {

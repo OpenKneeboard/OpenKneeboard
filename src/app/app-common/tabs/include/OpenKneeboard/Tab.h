@@ -40,6 +40,7 @@ class Tab {
 
   Event<> evNeedsRepaintEvent;
   Event<> evFullyReplacedEvent;
+  Event<> evAvailableFeaturesChangedEvent;
   Event<> evPageAppendedEvent;
   Event<uint16_t> evPageChangeRequestedEvent;
 };

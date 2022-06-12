@@ -111,6 +111,11 @@ void KneeboardState::SetTabs(
         this->evNeedsRepaintEvent.Emit();
       }
     });
+    AddEventListener(tab->evAvailableFeaturesChangedEvent, [=]() {
+      if (tab == this->GetCurrentTab()) {
+        this->evNeedsRepaintEvent.Emit();
+      }
+    });
     AddEventListener(
       tab->evPageChangedEvent, &KneeboardState::UpdateLayout, this);
   }

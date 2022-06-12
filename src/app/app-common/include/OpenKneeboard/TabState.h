@@ -69,6 +69,7 @@ class TabState final : private EventReceiver {
   Event<> evNeedsRepaintEvent;
   Event<> evPageChangedEvent;
   Event<uint16_t> evPageChangeRequestedEvent;
+  Event<> evAvailableFeaturesChangedEvent;
 
   TabMode GetTabMode() const;
   bool SupportsTabMode(TabMode) const;

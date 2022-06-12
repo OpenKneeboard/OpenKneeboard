@@ -112,6 +112,8 @@ void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
   mState = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
   AddEventListener(state->evPageChangedEvent, &TabPage::UpdateButtons, this);
+  AddEventListener(
+    state->evAvailableFeaturesChangedEvent, &TabPage::UpdateButtons, this);
   this->UpdateButtons();
 }
 

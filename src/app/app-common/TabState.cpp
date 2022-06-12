@@ -38,6 +38,9 @@ TabState::TabState(const std::shared_ptr<Tab>& tab)
     tab->evPageAppendedEvent, &TabState::OnTabPageAppended, this);
   AddEventListener(
     tab->evPageChangeRequestedEvent, &TabState::SetPageIndex, this);
+  AddEventListener(
+    tab->evAvailableFeaturesChangedEvent,
+    this->evAvailableFeaturesChangedEvent);
 }
 
 TabState::~TabState() {
