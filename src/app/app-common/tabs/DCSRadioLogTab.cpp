@@ -32,6 +32,10 @@ DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
 DCSRadioLogTab::~DCSRadioLogTab() {
 }
 
+utf8_string DCSRadioLogTab::GetGlyph() const {
+  return "\uF12E";
+}
+
 utf8_string DCSRadioLogTab::GetTitle() const {
   return _("Radio Log");
 }

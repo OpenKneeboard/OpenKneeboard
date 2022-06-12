@@ -138,6 +138,10 @@ utf8_string NavigationTab::GetTitle() const {
   return mRootTab->GetTitle();
 }
 
+utf8_string NavigationTab::GetGlyph() const {
+  return mRootTab->GetGlyph();
+}
+
 uint16_t NavigationTab::GetPageCount() const {
   return static_cast<uint16_t>(mEntries.size());
 }

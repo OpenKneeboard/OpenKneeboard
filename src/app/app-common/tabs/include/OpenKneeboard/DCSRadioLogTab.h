@@ -33,6 +33,7 @@ class DCSRadioLogTab final : public DCSTab,
  public:
   DCSRadioLogTab(const DXResources&, KneeboardState*);
   virtual ~DCSRadioLogTab();
+  virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
   virtual uint16_t GetPageCount() const override;
   virtual void Reload() override;

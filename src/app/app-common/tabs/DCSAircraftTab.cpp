@@ -34,6 +34,10 @@ DCSAircraftTab::DCSAircraftTab(const DXResources& dxr, KneeboardState* kbs)
     std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
 }
 
+utf8_string DCSAircraftTab::GetGlyph() const {
+  return "\uE709";
+}
+
 utf8_string DCSAircraftTab::GetTitle() const {
   return _("Aircraft");
 }

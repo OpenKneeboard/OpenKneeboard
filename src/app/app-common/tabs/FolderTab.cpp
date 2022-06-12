@@ -64,6 +64,10 @@ nlohmann::json FolderTab::GetSettings() const {
   return {{"Path", GetPath()}};
 }
 
+utf8_string FolderTab::GetGlyph() const {
+  return "\uE838";
+}
+
 utf8_string FolderTab::GetTitle() const {
   return mPath.filename();
 }

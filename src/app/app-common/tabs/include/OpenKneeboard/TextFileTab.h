@@ -44,6 +44,7 @@ class TextFileTab final : public TabWithDoodles,
     const nlohmann::json&);
   virtual ~TextFileTab();
 
+  virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
   virtual void Reload() override;
 

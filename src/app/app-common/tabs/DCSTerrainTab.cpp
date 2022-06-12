@@ -34,6 +34,10 @@ DCSTerrainTab::DCSTerrainTab(const DXResources& dxr, KneeboardState* kbs)
     std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
 }
 
+utf8_string DCSTerrainTab::GetGlyph() const {
+  return "\uE909";
+}
+
 utf8_string DCSTerrainTab::GetTitle() const {
   return _("Theater");
 }

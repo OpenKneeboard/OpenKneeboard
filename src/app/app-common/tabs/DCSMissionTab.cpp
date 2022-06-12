@@ -134,6 +134,10 @@ DCSMissionTab::~DCSMissionTab() {
   GetDelegate()->SetPath({});
 }
 
+utf8_string DCSMissionTab::GetGlyph() const {
+  return "\uF0E3";
+}
+
 utf8_string DCSMissionTab::GetTitle() const {
   return _("Mission");
 }

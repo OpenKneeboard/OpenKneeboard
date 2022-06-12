@@ -43,6 +43,7 @@ class NavigationTab final : public TabWithCursorEvents {
     const D2D1_SIZE_U& preferredSize);
   ~NavigationTab();
 
+  virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
   virtual void Reload() override;
 

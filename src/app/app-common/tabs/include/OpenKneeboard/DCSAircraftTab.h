@@ -30,6 +30,7 @@ class FolderTab;
 class DCSAircraftTab final : public DCSTab, public TabWithDelegate<FolderTab> {
  public:
   DCSAircraftTab(const DXResources&, KneeboardState*);
+  virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
 
  protected:

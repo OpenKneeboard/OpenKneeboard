@@ -117,6 +117,10 @@ nlohmann::json PDFTab::GetSettings() const {
   return {{"Path", GetPath()}};
 }
 
+utf8_string PDFTab::GetGlyph() const {
+  return "\uEA90";
+}
+
 utf8_string PDFTab::GetTitle() const {
   return p->mPath.stem();
 }

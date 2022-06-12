@@ -241,6 +241,14 @@ void MainWindow::OnTabsChanged() {
     item.Content(
       winrt::box_value(winrt::to_hstring(tab->GetTab()->GetTitle())));
     item.Tag(winrt::box_value(tab->GetInstanceID()));
+
+    auto glyph = tab->GetRootTab()->GetGlyph();
+    if (!glyph.empty()) {
+      muxc::FontIcon icon;
+      icon.Glyph(winrt::to_hstring(glyph));
+      item.Icon(icon);
+    }
+
     navItems.Append(item);
   }
 }

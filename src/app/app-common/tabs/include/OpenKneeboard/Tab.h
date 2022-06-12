@@ -29,6 +29,7 @@ namespace OpenKneeboard {
 
 class Tab {
  public:
+  virtual utf8_string GetGlyph() const = 0;
   virtual utf8_string GetTitle() const = 0;
   virtual void Reload() = 0;
 

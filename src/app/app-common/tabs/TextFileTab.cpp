@@ -54,6 +54,10 @@ nlohmann::json TextFileTab::GetSettings() const {
   return {{"Path", GetPath()}};
 }
 
+utf8_string TextFileTab::GetGlyph() const {
+  return "\uE8A5";
+}
+
 utf8_string TextFileTab::GetTitle() const {
   return mPath.stem();
 }

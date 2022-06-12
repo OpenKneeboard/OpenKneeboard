@@ -29,6 +29,7 @@ class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
  public:
   DCSMissionTab(const DXResources&, KneeboardState*);
   virtual ~DCSMissionTab();
+  virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
 
   virtual void Reload() override;

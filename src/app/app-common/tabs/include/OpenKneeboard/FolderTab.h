@@ -46,6 +46,7 @@ class FolderTab final : public TabWithDoodles,
     utf8_string_view title,
     const nlohmann::json&);
   virtual ~FolderTab();
+  virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
 
   virtual nlohmann::json GetSettings() const final override;
