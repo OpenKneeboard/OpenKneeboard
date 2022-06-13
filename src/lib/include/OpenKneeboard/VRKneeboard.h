@@ -82,7 +82,6 @@ class VRKneeboard {
     const Pose& hmdPose,
     const Pose& kneeboardPose);
 
-  bool IsGazeEnabled(const VRRenderConfig& vr);
   Sizes GetSizes(const VRRenderConfig&, const SHM::LayerConfig&) const;
 
   void Recenter(const VRRenderConfig& vr, const Pose& hmdPose);

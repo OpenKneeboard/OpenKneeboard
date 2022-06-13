@@ -50,32 +50,15 @@ Vector2 VRKneeboard::GetKneeboardSize(
   const SHM::Config& config,
   const SHM::LayerConfig& layer,
   bool isLookingAtKneeboard) {
+  const auto flags = config.mVR.mFlags;
+  using Flags = VRConfig::Flags;
+
   const auto sizes = this->GetSizes(config.mVR, layer);
-  if (!this->IsGazeEnabled(config.mVR)) {
-    return sizes.mNormalSize;
-  }
-  return isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
-}
 
-bool VRKneeboard::IsGazeEnabled(const VRRenderConfig& vr) {
-  if (std::abs(vr.mGazeOpacity - vr.mNormalOpacity) >= 0.01f) {
-    return true;
-  }
-
-  if (vr.mFlags & VRRenderConfig::Flags::FORCE_ZOOM) {
-    return false;
-  }
-  if (!(vr.mFlags & VRRenderConfig::Flags::GAZE_ZOOM)) {
-    return false;
-  }
-
-  if (
-    vr.mZoomScale < 1.1 || vr.mGazeTargetHorizontalScale < 0.1
-    || vr.mGazeTargetVerticalScale < 0.1) {
-    return false;
-  }
-
-  return true;
+  return (flags & Flags::FORCE_ZOOM)
+      || (isLookingAtKneeboard && (flags & Flags::GAZE_ZOOM))
+    ? sizes.mZoomedSize
+    : sizes.mNormalSize;
 }
 
 VRKneeboard::Sizes VRKneeboard::GetSizes(
@@ -140,9 +123,6 @@ bool VRKneeboard::IsLookingAtKneeboard(
   const Pose& hmdPose,
   const Pose& kneeboardPose) {
   static bool sIsLookingAtKneeboard = false;
-  if (!this->IsGazeEnabled(config.mVR)) {
-    return false;
-  }
 
   const auto sizes = this->GetSizes(config.mVR, layer);
   const auto currentSize
