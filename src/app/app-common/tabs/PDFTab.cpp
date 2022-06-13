@@ -153,10 +153,6 @@ std::map<QPDFObjGen, PageData> FindAllHyperlinks(QPDF& pdf) {
         continue;
       }
 
-      if (pageNumber < 2) {// FIXME
-        continue;
-      }
-
       if (aoh.hasKey("/A")) {// action
         auto action = aoh.getKey("/A");
         if (!action.hasKey("/S")) {
