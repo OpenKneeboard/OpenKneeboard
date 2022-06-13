@@ -30,6 +30,11 @@
           Click="RestoreDefaults"
         />
       </Grid>
+      <TextBlock
+        Text="Options"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,0,0,16"
+      />
       <Grid
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -38,7 +43,7 @@
         Padding="8">
         <StackPanel Spacing="12">
           <ToggleSwitch
-            Header="Gaze-based zoom"
+            Header="Zoom when looking at kneeboard"
             OnContent="On"
             OffContent="Off"
             IsOn="{x:Bind GazeZoomEnabled}"
@@ -64,6 +69,11 @@
           </ComboBox>
         </StackPanel>
       </Grid>
+      <TextBlock
+        Text="Size"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"
+      />
       <Grid
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -91,8 +101,22 @@
             Minimum="1.0"
             ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
           />
+        </StackPanel>
+      </Grid>
+      <TextBlock
+        Text="Gaze sensitivity"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"
+      />
+      <Grid
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <StackPanel Spacing="12">
           <Slider
-            Header="Horizontal size of zoom gaze target"
+            Header="Horizontal sensitivity"
             Value="{x:Bind KneeboardGazeTargetHorizontalScale}"
             TickPlacement="Outside"
             TickFrequency="0.5"
@@ -102,7 +126,7 @@
             ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
           />
           <Slider
-            Header="Vertical size of zoom gaze target"
+            Header="Vertical sensitivity"
             Value="{x:Bind KneeboardGazeTargetVerticalScale}"
             TickPlacement="Outside"
             TickFrequency="0.5"
@@ -113,6 +137,11 @@
           />
         </StackPanel>
       </Grid>
+      <TextBlock
+        Text="Position"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"
+      />
       <StackPanel
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -152,81 +181,77 @@
           eye level, but newer 'roomscale' games tend to use the floor level
           instead.
         </TextBlock>
+        <Grid ColumnDefinitions="Auto,*">
+          <NumberBox
+            Header="Left-to-right position, in meters"
+            Value="{x:Bind KneeboardX}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*">
+          <NumberBox
+            Header="Forward position, in meters"
+            Value="{x:Bind KneeboardZ}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
+          />
+        </Grid>
+        <Grid
+          ColumnDefinitions="Auto,*"
+          RowDefinitions="Auto,Auto">
+          <Slider
+            Grid.Column="0"
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            Header="Pitch in degrees"
+            Value="{x:Bind KneeboardRX}"
+            Orientation="Vertical"
+            TickPlacement="Outside"
+            TickFrequency="45"
+            StepFrequency="1"
+            IsDirectionReversed="True"
+            Minimum="-180"
+            Maximum="180"
+            Height="200"
+            Margin="0,0,20,0"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          />
+          <Slider
+            Grid.Column="1"
+            Grid.Row="0"
+            Header="Roll in degrees"
+            Value="{x:Bind KneeboardRZ}"
+            TickPlacement="Outside"
+            TickFrequency="45"
+            StepFrequency="1"
+            Minimum="-180"
+            Maximum="180"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          />
+          <Slider
+            Grid.Column="1"
+            Grid.Row="1"
+            Header="Yaw in degrees"
+            Value="{x:Bind KneeboardRY}"
+            TickPlacement="Outside"
+            TickFrequency="45"
+            StepFrequency="1"
+            Minimum="-180"
+            Maximum="180"
+            ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          />
+        </Grid>
       </StackPanel>
-      <Grid
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8">
-        <StackPanel Spacing="12">
-          <Grid ColumnDefinitions="Auto,*">
-            <NumberBox
-              Header="Left-to-right position, in meters"
-              Value="{x:Bind KneeboardX}"
-              SmallChange="0.01"
-              LargeChange="0.05"
-              SpinButtonPlacementMode="Inline"
-              NumberFormatter="{StaticResource MetersFormatter}"
-            />
-          </Grid>
-          <Grid ColumnDefinitions="Auto,*">
-            <NumberBox
-              Header="Forward position, in meters"
-              Value="{x:Bind KneeboardZ}"
-              SmallChange="0.01"
-              LargeChange="0.05"
-              SpinButtonPlacementMode="Inline"
-              NumberFormatter="{StaticResource MetersFormatter}"
-            />
-          </Grid>
-          <Grid
-            ColumnDefinitions="Auto,*"
-            RowDefinitions="Auto,Auto">
-            <Slider
-              Grid.Column="0"
-              Grid.Row="0"
-              Grid.RowSpan="2"
-              Header="Pitch in degrees"
-              Value="{x:Bind KneeboardRX}"
-              Orientation="Vertical"
-              TickPlacement="Outside"
-              TickFrequency="45"
-              StepFrequency="1"
-              IsDirectionReversed="True"
-              Minimum="-180"
-              Maximum="180"
-              Height="200"
-              Margin="0,0,20,0"
-              ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
-            />
-            <Slider
-              Grid.Column="1"
-              Grid.Row="0"
-              Header="Roll in degrees"
-              Value="{x:Bind KneeboardRZ}"
-              TickPlacement="Outside"
-              TickFrequency="45"
-              StepFrequency="1"
-              Minimum="-180"
-              Maximum="180"
-              ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
-            />
-            <Slider
-              Grid.Column="1"
-              Grid.Row="1"
-              Header="Yaw in degrees"
-              Value="{x:Bind KneeboardRY}"
-              TickPlacement="Outside"
-              TickFrequency="45"
-              StepFrequency="1"
-              Minimum="-180"
-              Maximum="180"
-              ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
-            />
-          </Grid>
-        </StackPanel>
-      </Grid>
+      <TextBlock
+        Text="Opacity"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"
+      />
       <Grid
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
