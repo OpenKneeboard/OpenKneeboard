@@ -102,39 +102,6 @@
         />
       </StackPanel>
       <TextBlock
-        Text="Gaze sensitivity"
-        Style="{StaticResource SubtitleTextBlockStyle}"
-        Margin="0,16,0,16"
-      />
-      <StackPanel
-        Spacing="12"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8">
-        <Slider
-          Header="Horizontal sensitivity"
-          Value="{x:Bind KneeboardGazeTargetHorizontalScale}"
-          TickPlacement="Outside"
-          TickFrequency="0.5"
-          StepFrequency="0.25"
-          Maximum="4"
-          Minimum="0"
-          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
-        />
-        <Slider
-          Header="Vertical sensitivity"
-          Value="{x:Bind KneeboardGazeTargetVerticalScale}"
-          TickPlacement="Outside"
-          TickFrequency="0.5"
-          StepFrequency="0.25"
-          Maximum="4"
-          Minimum="0"
-          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
-        />
-      </StackPanel>
-      <TextBlock
         Text="Position"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
@@ -245,6 +212,39 @@
         </Grid>
       </StackPanel>
       <TextBlock
+        Text="Gaze sensitivity"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"
+      />
+      <StackPanel
+        Spacing="12"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <Slider
+          Header="Horizontal sensitivity"
+          Value="{x:Bind KneeboardGazeTargetHorizontalScale}"
+          TickPlacement="Outside"
+          TickFrequency="0.5"
+          StepFrequency="0.25"
+          Maximum="4"
+          Minimum="0"
+          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+        />
+        <Slider
+          Header="Vertical sensitivity"
+          Value="{x:Bind KneeboardGazeTargetVerticalScale}"
+          TickPlacement="Outside"
+          TickFrequency="0.5"
+          StepFrequency="0.25"
+          Maximum="4"
+          Minimum="0"
+          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+        />
+      </StackPanel>
+      <TextBlock
         Text="Opacity"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
@@ -257,16 +257,7 @@
         BorderThickness="1"
         Padding="8">
         <Slider
-          Header="Opacity when not looking at the kneeboard"
-          Value="{x:Bind NormalOpacity}"
-          Minimum="0"
-          Maximum="100"
-          TickFrequency="10"
-          TickPlacement="Outside"
-          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
-        />
-        <Slider
-          Header="Opacity when looking at the kneeboard"
+          Header="When looking at the kneeboard"
           Value="{x:Bind GazeOpacity}"
           Minimum="0"
           Maximum="100"
@@ -274,6 +265,16 @@
           TickPlacement="Outside"
           ThumbToolTipValueConverter="{StaticResource PercentConverter}"
         />
+				<Slider
+					Header="When not looking at the kneeboard"
+					Value="{x:Bind NormalOpacity}"
+					Minimum="0"
+					Maximum="100"
+					TickFrequency="10"
+					TickPlacement="Outside"
+					ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+				/>
+
       </StackPanel>
     </StackPanel>
   </ScrollViewer>
