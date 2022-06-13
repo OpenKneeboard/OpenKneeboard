@@ -54,10 +54,17 @@ int main() {
   };
 
   SHM::Config config;
+
+  const uint8_t layerCount = 2;
+  static_assert(layerCount <= MaxLayers);
   SHM::LayerConfig layer {
     .mImageWidth = TextureWidth,
     .mImageHeight = TextureHeight,
   };
+  SHM::LayerConfig secondLayer(layer);
+  secondLayer.mVR.mX = -secondLayer.mVR.mX;
+  secondLayer.mVR.mRY = -secondLayer.mVR.mRY;
+
   uint64_t frames = -1;
   printf("Feeding OpenKneeboard - hit Ctrl-C to exit.\n");
   SHM::Writer shm;
@@ -106,7 +113,7 @@ int main() {
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
 
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
-  std::array<std::array<SharedTextureResources, TextureCount>, MaxLayers>
+  std::array<std::array<SharedTextureResources, TextureCount>, layerCount>
     resources;
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = layer.mImageWidth,
@@ -202,7 +209,7 @@ int main() {
       it.mMutex->ReleaseSync(it.mMutexKey);
     }
 
-    shm.Update(config, {MaxLayers, layer});
+    shm.Update(config, {layer, secondLayer});
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");
   return 0;
