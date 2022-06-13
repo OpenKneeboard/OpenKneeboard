@@ -28,6 +28,9 @@
 
 namespace OpenKneeboard {
 
+using EventContext = uint64_t;
+EventContext CreateEventContext();
+
 template <class... Args>
 using EventHandler = std::function<void(Args...)>;
 

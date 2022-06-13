@@ -21,6 +21,12 @@
 
 namespace OpenKneeboard {
 
+static EventContext sNextEventContext = 1 << 16;
+
+EventContext CreateEventContext() {
+  return sNextEventContext++;
+}
+
 void EventBase::Add(EventReceiver* receiver, uint64_t token) {
   receiver->mSenders.push_back({this, token});
 }

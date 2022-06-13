@@ -43,6 +43,6 @@ class Tab {
   Event<> evFullyReplacedEvent;
   Event<> evAvailableFeaturesChangedEvent;
   Event<> evPageAppendedEvent;
-  Event<uint16_t> evPageChangeRequestedEvent;
+  Event<EventContext, uint16_t> evPageChangeRequestedEvent;
 };
 }// namespace OpenKneeboard

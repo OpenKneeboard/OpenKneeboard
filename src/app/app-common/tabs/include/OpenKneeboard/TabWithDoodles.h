@@ -43,7 +43,10 @@ class TabWithDoodles : public virtual TabWithCursorEvents,
     ID2D1DeviceContext*,
     uint16_t pageIndex,
     const D2D1_RECT_F& rect) override final;
-  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
+  virtual void PostCursorEvent(
+    EventContext,
+    const CursorEvent&,
+    uint16_t pageIndex) override;
 
  protected:
   virtual void

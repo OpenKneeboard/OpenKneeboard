@@ -54,7 +54,10 @@ class NavigationTab final : public TabWithCursorEvents {
     uint16_t pageIndex,
     const D2D1_RECT_F& rect) override;
 
-  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
+  virtual void PostCursorEvent(
+    EventContext,
+    const CursorEvent&,
+    uint16_t pageIndex) override;
 
  private:
   DXResources mDXR;

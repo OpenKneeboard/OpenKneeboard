@@ -321,10 +321,13 @@ void PDFTab::RenderPageContent(
   winrt::check_hresult(ctx->Flush());
 }
 
-void PDFTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
+void PDFTab::PostCursorEvent(
+  EventContext ctx,
+  const CursorEvent& ev,
+  uint16_t pageIndex) {
   if (!p->mLinks.contains(pageIndex)) {
     p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
-    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
     return;
   }
   const auto contentRect = this->GetNativeContentSize(pageIndex);
@@ -350,7 +353,7 @@ void PDFTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
       && x >= p->mActiveLink.mRect.left && x <= p->mActiveLink.mRect.right
       && y >= p->mActiveLink.mRect.top && y <= p->mActiveLink.mRect.bottom) {
       this->evPageChangeRequestedEvent.Emit(
-        p->mActiveLink.mDestinationPageIndex);
+        ctx, p->mActiveLink.mDestinationPageIndex);
     }
 
     if (haveHoverLink) {
@@ -359,7 +362,7 @@ void PDFTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
     } else {
       p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
     }
-    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
     evNeedsRepaintEvent.Emit();
     return;
   }
@@ -371,7 +374,7 @@ void PDFTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   }
 
   if (p->mLinkState == CursorLinkState::PRESSED_OUTSIDE_HYPERLINK) {
-    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
     return;
   }
 
@@ -381,7 +384,7 @@ void PDFTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
     evNeedsRepaintEvent.Emit();
   } else {
     p->mLinkState = CursorLinkState::PRESSED_OUTSIDE_HYPERLINK;
-    TabWithDoodles::PostCursorEvent(ev, pageIndex);
+    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
   }
 }
 

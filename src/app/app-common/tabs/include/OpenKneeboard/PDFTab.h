@@ -59,7 +59,10 @@ class PDFTab final : public TabWithDoodles,
   virtual bool IsNavigationAvailable() const override;
   virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t pageIndex) override;
 
-  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) override;
+  virtual void PostCursorEvent(
+    EventContext ctx,
+    const CursorEvent&,
+    uint16_t pageIndex) override;
 
  protected:
   virtual void RenderPageContent(

@@ -150,7 +150,10 @@ D2D1_SIZE_U NavigationTab::GetNativeContentSize(uint16_t) {
   return mPreferredSize;
 }
 
-void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
+void NavigationTab::PostCursorEvent(
+  EventContext ctx,
+  const CursorEvent& ev,
+  uint16_t pageIndex) {
   evNeedsRepaintEvent.Emit();
   mCursorPoint = {ev.mX, ev.mY};
 
@@ -213,7 +216,7 @@ void NavigationTab::PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex) {
   }
 
   // touch release, on the same button
-  evPageChangeRequestedEvent.Emit(matchedPage);
+  evPageChangeRequestedEvent.Emit(ctx, matchedPage);
 }
 
 void NavigationTab::RenderPage(

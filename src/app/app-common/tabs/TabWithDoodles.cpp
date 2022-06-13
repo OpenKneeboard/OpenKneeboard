@@ -57,6 +57,7 @@ void TabWithDoodles::ClearDoodles() {
 }
 
 void TabWithDoodles::PostCursorEvent(
+  EventContext,
   const CursorEvent& event,
   uint16_t pageIndex) {
   std::scoped_lock lock(mBufferedEventsMutex);

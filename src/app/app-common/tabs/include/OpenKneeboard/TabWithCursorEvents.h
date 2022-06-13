@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
+
 #include "Tab.h"
 
 namespace OpenKneeboard {
@@ -27,7 +29,9 @@ struct CursorEvent;
 
 class TabWithCursorEvents : public virtual Tab {
  public:
-  virtual void PostCursorEvent(const CursorEvent&, uint16_t pageIndex) = 0;
+  virtual void
+  PostCursorEvent(EventContext, const CursorEvent&, uint16_t pageIndex)
+    = 0;
 };
 
 }// namespace OpenKneeboard

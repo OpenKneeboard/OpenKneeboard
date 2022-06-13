@@ -64,9 +64,11 @@ template <class T>
 class TabWithCursorEventsDelegate : public virtual TabWithCursorEvents,
                                     public virtual TabWithDelegateBase<T> {
  public:
-  virtual void PostCursorEvent(const CursorEvent& ev, uint16_t pageIndex)
-    override {
-    this->GetDelegate()->PostCursorEvent(ev, pageIndex);
+  virtual void PostCursorEvent(
+    EventContext ctx,
+    const CursorEvent& ev,
+    uint16_t pageIndex) override {
+    this->GetDelegate()->PostCursorEvent(ctx, ev, pageIndex);
   }
 };
 

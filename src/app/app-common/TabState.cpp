@@ -27,17 +27,20 @@
 
 namespace OpenKneeboard {
 
-uint64_t TabState::sNextID = 1;
-
 TabState::TabState(const std::shared_ptr<Tab>& tab)
-  : mInstanceID(++sNextID), mRootTab(tab), mRootTabPage(0) {
+  : mInstanceID(CreateEventContext()), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     tab->evFullyReplacedEvent, &TabState::OnTabFullyReplaced, this);
   AddEventListener(
     tab->evPageAppendedEvent, &TabState::OnTabPageAppended, this);
   AddEventListener(
-    tab->evPageChangeRequestedEvent, &TabState::SetPageIndex, this);
+    tab->evPageChangeRequestedEvent, [this](EventContext ctx, uint16_t index) {
+      if (ctx != this->GetInstanceID()) {
+        return;
+      }
+      this->SetPageIndex(index);
+    });
   AddEventListener(
     tab->evAvailableFeaturesChangedEvent,
     this->evAvailableFeaturesChangedEvent);
@@ -66,7 +69,7 @@ void TabState::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
     = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
   if (receiver) {
-    receiver->PostCursorEvent(ev, this->GetPageIndex());
+    receiver->PostCursorEvent(this->GetInstanceID(), ev, this->GetPageIndex());
   }
 }
 
@@ -151,7 +154,7 @@ bool TabState::SetTabMode(TabMode mode) {
   auto receiver
     = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
   if (receiver) {
-    receiver->PostCursorEvent({}, this->GetPageIndex());
+    receiver->PostCursorEvent(this->GetInstanceID(), {}, this->GetPageIndex());
   }
 
   mTabMode = mode;
@@ -165,7 +168,11 @@ bool TabState::SetTabMode(TabMode mode) {
       mActiveSubTab = std::dynamic_pointer_cast<TabWithNavigation>(mRootTab)
                         ->CreateNavigationTab(mRootTabPage);
       AddEventListener(
-        mActiveSubTab->evPageChangeRequestedEvent, [this](uint16_t newPage) {
+        mActiveSubTab->evPageChangeRequestedEvent,
+        [this](EventContext ctx, uint16_t newPage) {
+          if (ctx != this->GetInstanceID()) {
+            return;
+          }
           mRootTabPage = newPage;
           SetTabMode(TabMode::NORMAL);
         });
