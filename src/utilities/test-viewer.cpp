@@ -216,6 +216,7 @@ class TestViewerWindow final {
 
     if (vkk >= '1' && vkk <= '9') {
       mLayerIndex = static_cast<uint8_t>(vkk - '1');
+      this->PaintNow();
       return;
     }
   }
