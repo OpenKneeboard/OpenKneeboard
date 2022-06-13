@@ -136,6 +136,7 @@ int main() {
   textureDesc.Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT;
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+  const uint8_t layerIndex = 0;
   for (auto i = 0; i < TextureCount; ++i) {
     auto& it = resources.at(i);
     device->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
@@ -143,7 +144,8 @@ int main() {
       it.mTexture.get(), nullptr, it.mTextureRTV.put());
 
     HANDLE sharedHandle = INVALID_HANDLE_VALUE;
-    auto textureName = SHM::SharedTextureName(shm.GetSessionID(), i);
+    auto textureName
+      = SHM::SharedTextureName(shm.GetSessionID(), layerIndex, i);
     it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
       nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
 

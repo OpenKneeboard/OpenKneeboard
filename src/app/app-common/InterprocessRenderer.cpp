@@ -61,7 +61,9 @@ void InterprocessRenderer::CopyPixelsToSHM() {
 
   mD3DContext->Flush();
 
-  auto& it = mResources.at(mSHM.GetNextTextureIndex());
+  const uint8_t layerIndex = 0;
+
+  auto& it = mResources.at(layerIndex).at(mSHM.GetNextTextureIndex());
 
   it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
   mD3DContext->CopyResource(it.mTexture.get(), mCanvasTexture.get());
@@ -120,17 +122,22 @@ InterprocessRenderer::InterprocessRenderer(
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
   const auto sessionID = mSHM.GetSessionID();
-  for (auto i = 0; i < TextureCount; ++i) {
-    auto& it = mResources.at(i);
+  for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
+    auto& layerIt = mResources.at(layerIndex);
 
-    dxr.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
-    auto textureName = SHM::SharedTextureName(sessionID, i);
-    it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
-      nullptr,
-      DXGI_SHARED_RESOURCE_READ,
-      textureName.c_str(),
-      it.mHandle.put());
-    it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
+    for (uint8_t bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
+      auto& bufferIt = layerIt.at(bufferIndex);
+      dxr.mD3DDevice->CreateTexture2D(
+        &textureDesc, nullptr, bufferIt.mTexture.put());
+      auto textureName
+        = SHM::SharedTextureName(sessionID, layerIndex, bufferIndex);
+      bufferIt.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+        nullptr,
+        DXGI_SHARED_RESOURCE_READ,
+        textureName.c_str(),
+        bufferIt.mHandle.put());
+      bufferIt.mMutex = bufferIt.mTexture.as<IDXGIKeyedMutex>();
+    }
   }
 
   auto ctx = dxr.mD2DDeviceContext;

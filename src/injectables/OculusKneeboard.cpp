@@ -100,7 +100,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return passthrough();
   }
   const auto config = snapshot.GetConfig();
-  const auto& layer = snapshot.GetLayers()[0];
+  const uint8_t layerIndex = 0;
+  const auto& layer = *snapshot.GetLayerConfig(0);
 
   if (!mSwapChain) [[unlikely]] {
     if (!mRenderer) [[unlikely]] {
@@ -122,7 +123,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
   static uint64_t sRenderKey = ~(0ui64);
   if (sRenderKey != renderParams.mCacheKey) {
-    if (!mRenderer->Render(session, mSwapChain, snapshot, renderParams))
+    if (!mRenderer->Render(
+          session, mSwapChain, snapshot, layerIndex, renderParams))
       [[unlikely]] {
       return passthrough();
     }

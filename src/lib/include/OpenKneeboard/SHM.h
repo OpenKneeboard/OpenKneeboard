@@ -43,7 +43,10 @@ static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
-std::wstring SharedTextureName(uint64_t sessionID, uint32_t sequenceNumber);
+std::wstring SharedTextureName(
+  uint64_t sessionID,
+  uint8_t layerIndex,
+  uint32_t sequenceNumber);
 
 #pragma pack(push)
 struct Config final {
@@ -85,27 +88,30 @@ class Writer final {
 };
 
 struct TextureReadResources;
+struct LayerTextureReadResources;
 
 class SharedTexture final {
  public:
   SharedTexture();
+  SharedTexture(SharedTexture&&);
   SharedTexture(
     const Header& header,
     ID3D11Device* d3d,
+    uint8_t layerIndex,
     TextureReadResources* r);
   ~SharedTexture();
 
-  operator bool() const;
+  bool IsValid() const;
+
   ID3D11Texture2D* GetTexture() const;
   IDXGISurface* GetSurface() const;
   ID3D11ShaderResourceView* GetShaderResourceView() const;
 
   SharedTexture(const SharedTexture&) = delete;
-  SharedTexture(SharedTexture&&) = delete;
 
  private:
   UINT mKey = 0;
-  TextureReadResources* mResources = nullptr;
+  LayerTextureReadResources* mResources = nullptr;
 };
 
 class Snapshot final {
@@ -119,10 +125,10 @@ class Snapshot final {
   ~Snapshot();
 
   uint32_t GetSequenceNumber() const;
-  SharedTexture GetSharedTexture(ID3D11Device*) const;
   Config GetConfig() const;
   uint8_t GetLayerCount() const;
-  LayerConfig* GetLayers() const;
+  const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
+  SharedTexture GetLayerTexture(ID3D11Device*, uint8_t layerIndex) const;
 
   bool IsValid() const;
 };

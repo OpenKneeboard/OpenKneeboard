@@ -198,7 +198,8 @@ void OpenVRKneeboard::Tick() {
   }
 
   const auto config = snapshot.GetConfig();
-  const auto& layer = snapshot.GetLayers()[0];
+  const uint8_t layerIndex = 0;
+  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
   const auto displayTime = this->GetDisplayTime();
   const auto renderParams
     = this->GetRenderParameters(snapshot, layer, this->GetHMDPose(displayTime));
@@ -232,7 +233,8 @@ void OpenVRKneeboard::Tick() {
   // OpenVR call
 
   {
-    auto openKneeboardTexture = snapshot.GetSharedTexture(mD3D.get());
+    auto openKneeboardTexture
+      = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
 
     // non-atomic paint to buffer...
     D3D11::CopyTextureWithOpacity(

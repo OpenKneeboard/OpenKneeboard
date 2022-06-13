@@ -24,7 +24,7 @@ namespace OpenKneeboard {
 constexpr unsigned int TextureCount = 2;
 constexpr unsigned int TextureWidth = 2048;
 constexpr unsigned int TextureHeight = 2048;
-constexpr unsigned char MaxLayers = 2;
+constexpr unsigned char MaxLayers = 1;
 
 constexpr float CursorRadiusDivisor = 400.0f;
 constexpr float CursorStrokeDivisor = CursorRadiusDivisor * 3;

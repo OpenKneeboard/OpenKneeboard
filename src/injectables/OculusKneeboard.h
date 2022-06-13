@@ -64,6 +64,7 @@ class OculusKneeboard::Renderer {
     ovrSession session,
     ovrTextureSwapChain swapChain,
     const SHM::Snapshot& snapshot,
+    uint8_t layerIndex,
     const VRKneeboard::RenderParameters&)
     = 0;
 };

@@ -43,6 +43,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     ovrSession session,
     ovrTextureSwapChain swapChain,
     const SHM::Snapshot& snapshot,
+    uint8_t layerIndex,
     const VRKneeboard::RenderParameters&) override final;
 
  private:

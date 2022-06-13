@@ -69,7 +69,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   const auto config = snapshot.GetConfig();
-  const auto& layer = snapshot.GetLayers()[0];
+  const uint8_t layerIndex = 0;
+  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
 
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
@@ -117,8 +118,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     layer.mImageHeight,
   };
 
-  auto sharedTexture = snapshot.GetSharedTexture(mDevice);
-  if (!sharedTexture) {
+  auto sharedTexture = snapshot.GetLayerTexture(mDevice, layerIndex);
+  if (!sharedTexture.IsValid()) {
     return passthrough();
   }
   winrt::com_ptr<ID3D11ShaderResourceView> resourceView;

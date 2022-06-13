@@ -286,7 +286,8 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
   }
 
   auto config = snapshot.GetConfig();
-  const auto& layer = snapshot.GetLayers()[0];
+  const uint8_t layerIndex = 0;
+  const auto& layer = *snapshot.GetLayerConfig(0);
 
   const auto displayTime = frameEndInfo->displayTime;
   const auto renderParams
@@ -367,8 +368,8 @@ void OpenXRD3D11Kneeboard::Render(
   }
 
   {
-    auto sharedTexture = snapshot.GetSharedTexture(mDevice);
-    if (!sharedTexture) {
+    auto sharedTexture = snapshot.GetLayerTexture(mDevice, textureIndex);
+    if (!sharedTexture.IsValid()) {
       dprint("Failed to get shared texture");
       return;
     }

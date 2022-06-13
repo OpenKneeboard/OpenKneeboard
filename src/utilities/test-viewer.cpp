@@ -315,7 +315,8 @@ class TestViewerWindow final {
     mFirstDetached = true;
 
     const auto config = snapshot.GetConfig();
-    const auto& layer = snapshot.GetLayers()[0];
+    const uint8_t layerIndex = 0;
+    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
 
     if (!layer.IsValid()) {
       mErrorRenderer->Render(
@@ -326,8 +327,9 @@ class TestViewerWindow final {
       return;
     }
 
-    auto sharedTexture = snapshot.GetSharedTexture(mDXR.mD3DDevice.get());
-    if (!sharedTexture) {
+    auto sharedTexture
+      = snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), layerIndex);
+    if (!sharedTexture.IsValid()) {
       return;
     }
     auto sharedSurface = sharedTexture.GetSurface();

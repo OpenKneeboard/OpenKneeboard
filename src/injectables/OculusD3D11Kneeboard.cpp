@@ -102,6 +102,7 @@ bool OculusD3D11Kneeboard::Render(
   ovrSession session,
   ovrTextureSwapChain swapChain,
   const SHM::Snapshot& snapshot,
+  uint8_t layerIndex,
   const VRKneeboard::RenderParameters& params) {
   if (!swapChain) {
     return false;
@@ -115,8 +116,8 @@ bool OculusD3D11Kneeboard::Render(
   auto ovr = OVRProxy::Get();
   const auto config = snapshot.GetConfig();
 
-  auto sharedTexture = snapshot.GetSharedTexture(mD3D.get());
-  if (!sharedTexture) {
+  auto sharedTexture = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
+  if (!sharedTexture.IsValid()) {
     return false;
   }
 

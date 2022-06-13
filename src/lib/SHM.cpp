@@ -149,12 +149,23 @@ UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
 
 }// namespace
 
-struct TextureReadResources {
+struct LayerTextureReadResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<IDXGISurface> mSurface;
   winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   winrt::com_ptr<IDXGIKeyedMutex> mMutex;
+
+  void Populate(
+    ID3D11Device* d3d,
+    uint64_t sessionID,
+    uint8_t layerIndex,
+    uint32_t sequenceNumber);
+};
+
+struct TextureReadResources {
   uint64_t mSessionID = 0;
+
+  LayerTextureReadResources mLayers[MaxLayers];
 
   void Populate(ID3D11Device* d3d, uint64_t sessionID, uint32_t sequenceNumber);
 };
@@ -171,11 +182,22 @@ void TextureReadResources::Populate(
     *this = {.mSessionID = sessionID};
   }
 
+  for (uint8_t i = 0; i < MaxLayers; ++i) {
+    mLayers[i].Populate(d3d, sessionID, i, sequenceNumber);
+  }
+}
+
+void LayerTextureReadResources::Populate(
+  ID3D11Device* d3d,
+  uint64_t sessionID,
+  uint8_t layerIndex,
+  uint32_t sequenceNumber) {
   if (mTexture) {
     return;
   }
 
-  auto textureName = SHM::SharedTextureName(sessionID, sequenceNumber);
+  auto textureName
+    = SHM::SharedTextureName(sessionID, layerIndex, sequenceNumber);
 
   ID3D11Device1* d1 = nullptr;
   d3d->QueryInterface(&d1);
@@ -198,35 +220,45 @@ void TextureReadResources::Populate(
     mTexture.get(), nullptr, mShaderResourceView.put());
 }
 
-std::wstring SharedTextureName(uint64_t sessionID, uint32_t sequenceNumber) {
+std::wstring SharedTextureName(
+  uint64_t sessionID,
+  uint8_t layerIndex,
+  uint32_t sequenceNumber) {
   return fmt::format(
-    L"Local\\{}-texture-h{}-c{}-{:x}-{}",
+    L"Local\\{}-texture-h{}-c{}-{:x}-{}-{}",
     ProjectNameW,
     Header::VERSION,
     Config::VERSION,
     sessionID,
+    layerIndex,
     sequenceNumber % TextureCount);
 }
 
 SharedTexture::SharedTexture() {
 }
 
+SharedTexture::SharedTexture(SharedTexture&& other)
+  : mKey(other.mKey), mResources(other.mResources) {
+  other.mKey = 0;
+  other.mResources = nullptr;
+}
+
 SharedTexture::SharedTexture(
   const Header& header,
   ID3D11Device* d3d,
-  TextureReadResources* r)
-  : mResources(r) {
+  uint8_t layerIndex,
+  TextureReadResources* r) {
   r->Populate(d3d, header.mSessionID, header.mSequenceNumber);
-  if (!r->mMutex) {
-    mResources = nullptr;
+  auto l = &r->mLayers[layerIndex];
+  if (!l->mMutex) {
     return;
   }
 
   auto key = GetTextureKeyFromSequenceNumber(header.mSequenceNumber);
-  if (r->mMutex->AcquireSync(key, 10) != S_OK) {
-    mResources = nullptr;
+  if (l->mMutex->AcquireSync(key, 10) != S_OK) {
     return;
   }
+  mResources = l;
   mKey = key;
 }
 
@@ -240,7 +272,7 @@ SharedTexture::~SharedTexture() {
   mResources->mMutex->ReleaseSync(mKey);
 }
 
-SharedTexture::operator bool() const {
+bool SharedTexture::IsValid() const {
   return mResources && mKey != 0;
 }
 
@@ -271,15 +303,8 @@ uint32_t Snapshot::GetSequenceNumber() const {
   return mHeader->mSequenceNumber;
 }
 
-SharedTexture Snapshot::GetSharedTexture(ID3D11Device* d3d) const {
-  if (mHeader) {
-    return SharedTexture(*mHeader, d3d, mResources);
-  }
-  return {};
-}
-
 bool LayerConfig::IsValid() const {
-  return mImageWidth > 0 && mImageHeight > 0;
+  return this && mImageWidth > 0 && mImageHeight > 0;
 }
 
 Config Snapshot::GetConfig() const {
@@ -295,11 +320,45 @@ uint8_t Snapshot::GetLayerCount() const {
   }
 }
 
-LayerConfig* Snapshot::GetLayers() const {
-  if (!this->IsValid()) {
-    return nullptr;
+const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
+  if (layerIndex >= this->GetLayerCount()) {
+    dprintf(
+      "Asked for layer {}, but there are {} layers",
+      layerIndex,
+      this->GetLayerCount());
+    OPENKNEEBOARD_BREAK;
+    return {};
   }
-  return mHeader->mLayers;
+
+  auto config = &mHeader->mLayers[layerIndex];
+  if (!config->IsValid()) {
+    dprintf("Invalid config for layer {}", layerIndex);
+    OPENKNEEBOARD_BREAK;
+    return {};
+  }
+
+  return config;
+}
+
+SharedTexture Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
+  const {
+  if (layerIndex >= this->GetLayerCount()) {
+    dprintf(
+      "Asked for layer {}, but there are {} layers",
+      layerIndex,
+      this->GetLayerCount());
+    OPENKNEEBOARD_BREAK;
+    return {};
+  }
+
+  SharedTexture texture(*mHeader, d3d, layerIndex, mResources);
+  if (!texture.IsValid()) {
+    dprintf("Invalid texture for layer {}", layerIndex);
+    OPENKNEEBOARD_BREAK;
+    return {};
+  }
+
+  return std::move(texture);
 }
 
 bool Snapshot::IsValid() const {

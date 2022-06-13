@@ -124,10 +124,14 @@ bool OculusD3D12Kneeboard::Render(
   ovrSession session,
   ovrTextureSwapChain swapChain,
   const SHM::Snapshot& snapshot,
+  uint8_t layerIndex,
   const VRKneeboard::RenderParameters&) {
+  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+  if (!layer.IsValid()) {
+    return false;
+  }
+
   auto ovr = OVRProxy::Get();
-  const auto config = snapshot.GetConfig();
-  const auto& layer = snapshot.GetLayers()[0];
 
   int index = -1;
   ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
@@ -145,8 +149,8 @@ bool OculusD3D12Kneeboard::Render(
     return false;
   }
 
-  auto sharedTexture = snapshot.GetSharedTexture(m11on12.get());
-  if (!sharedTexture) {
+  auto sharedTexture = snapshot.GetLayerTexture(m11on12.get(), layerIndex);
+  if (!sharedTexture.IsValid()) {
     return false;
   }
   auto sharedTexture11 = sharedTexture.GetTexture();
