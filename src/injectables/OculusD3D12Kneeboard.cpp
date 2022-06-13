@@ -47,7 +47,9 @@ void OculusD3D12Kneeboard::UninstallHook() {
   mOculusKneeboard.UninstallHook();
 }
 
-ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(ovrSession session) {
+ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
+  ovrSession session,
+  uint8_t layerIndex) {
   if (!(mCommandQueue && mDevice)) {
     OPENKNEEBOARD_BREAK;
     return nullptr;
@@ -82,39 +84,6 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(ovrSession session) {
   if (length == -1) {
     OPENKNEEBOARD_BREAK;
     return nullptr;
-  }
-
-  mDescriptorHeap = nullptr;
-  D3D12_DESCRIPTOR_HEAP_DESC dhDesc {
-    .Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
-    .NumDescriptors = static_cast<UINT>(length),
-    .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-    .NodeMask = 0,
-  };
-  mDevice->CreateDescriptorHeap(&dhDesc, IID_PPV_ARGS(mDescriptorHeap.put()));
-  if (!mDescriptorHeap) {
-    dprintf("Failed to get descriptor heap: {:#x}", GetLastError());
-    OPENKNEEBOARD_BREAK;
-    return nullptr;
-  }
-
-  auto heap = mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-  auto increment = mDevice->GetDescriptorHandleIncrementSize(dhDesc.Type);
-
-  for (auto i = 0; i < length; ++i) {
-    winrt::com_ptr<ID3D12Resource> texture;
-    ovr->ovr_GetTextureSwapChainBufferDX(
-      session, swapChain, i, IID_PPV_ARGS(texture.put()));
-
-    D3D12_RENDER_TARGET_VIEW_DESC rtvDesc {
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-      .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
-      .Texture2D = {},
-    };
-
-    auto dest = heap;
-    dest.ptr += (i * increment);
-    mDevice->CreateRenderTargetView(texture.get(), &rtvDesc, dest);
   }
 
   return swapChain;
@@ -209,9 +178,6 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
       default:
         throw std::logic_error("Unsupported command queue type");
     }
-
-    mDevice->CreateCommandAllocator(
-      cqDesc.Type, IID_PPV_ARGS(mCommandAllocator.put()));
 
     // We need this as D3D12 does not appear to directly support IDXGIKeyedMutex
     UINT flags = 0;

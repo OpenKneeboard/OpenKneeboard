@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
 #include <d3d11.h>
 #include <d3d11on12.h>
 #include <shims/winrt.h>
@@ -37,7 +38,9 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
 
   void UninstallHook();
 
-  virtual ovrTextureSwapChain CreateSwapChain(ovrSession session) override;
+  virtual ovrTextureSwapChain CreateSwapChain(
+    ovrSession session,
+    uint8_t layerIndex) override;
 
   virtual bool Render(
     ovrSession session,
@@ -54,8 +57,6 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   winrt::com_ptr<ID3D11Device> m11on12;
   winrt::com_ptr<ID3D11DeviceContext> m11on12Context;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
-  winrt::com_ptr<ID3D12DescriptorHeap> mDescriptorHeap;
-  winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,
