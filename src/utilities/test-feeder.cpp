@@ -148,8 +148,13 @@ int main() {
       HANDLE sharedHandle = INVALID_HANDLE_VALUE;
       auto textureName
         = SHM::SharedTextureName(shm.GetSessionID(), layerIndex, bufferIndex);
-      bufferIt.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
-        nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
+      dprintf(L"Creating shared handle {}", textureName);
+      winrt::check_hresult(
+        bufferIt.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+          nullptr,
+          DXGI_SHARED_RESOURCE_READ,
+          textureName.c_str(),
+          &sharedHandle));
 
       bufferIt.mMutex = bufferIt.mTexture.as<IDXGIKeyedMutex>();
     }

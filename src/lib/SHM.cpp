@@ -205,13 +205,15 @@ void LayerTextureReadResources::Populate(
     return;
   }
 
-  d1->OpenSharedResourceByName(
+  auto result = d1->OpenSharedResourceByName(
     textureName.c_str(),
     DXGI_SHARED_RESOURCE_READ,
     IID_PPV_ARGS(mTexture.put()));
   if (!mTexture) {
+    dprintf(L"Failed to open shared texture {}: {:x}", textureName, result);
     return;
   }
+  dprintf(L"Opened shared texture {}", textureName);
 
   mSurface = mTexture.as<IDXGISurface>();
   mMutex = mTexture.as<IDXGIKeyedMutex>();
@@ -318,6 +320,7 @@ uint8_t Snapshot::GetLayerCount() const {
   if (!this->IsValid()) {
     return 0;
   }
+  return mHeader->mLayerCount;
 }
 
 const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
@@ -353,8 +356,6 @@ SharedTexture Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
 
   SharedTexture texture(*mHeader, d3d, layerIndex, mResources);
   if (!texture.IsValid()) {
-    dprintf("Invalid texture for layer {}", layerIndex);
-    OPENKNEEBOARD_BREAK;
     return {};
   }
 

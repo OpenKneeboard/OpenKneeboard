@@ -36,6 +36,8 @@ target_link_libraries(
 add_remote_control_executable(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
 target_link_libraries(
   OpenKneeboard-Viewer
+  PRIVATE
+  OpenKneeboard-config
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-DXResources
   OpenKneeboard-GetSystemColor

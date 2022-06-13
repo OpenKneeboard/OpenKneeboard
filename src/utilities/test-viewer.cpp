@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
@@ -51,6 +52,7 @@ class TestViewerWindow final {
   bool mShowPerformanceInformation = false;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
+  uint8_t mLayerIndex = 0;
   uint64_t mLastSequenceNumber = 0;
 
   D2D1_COLOR_F mWindowColor;
@@ -211,6 +213,11 @@ class TestViewerWindow final {
         this->PaintNow();
         return;
     }
+
+    if (vkk >= '1' && vkk <= '9') {
+      mLayerIndex = static_cast<uint8_t>(vkk - '1');
+      return;
+    }
   }
 
   void PaintNow() {
@@ -315,7 +322,8 @@ class TestViewerWindow final {
     mFirstDetached = true;
 
     const auto config = snapshot.GetConfig();
-    const uint8_t layerIndex = 0;
+    const auto layerIndex
+      = std::min<uint8_t>(mLayerIndex, snapshot.GetLayerCount() - 1);
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
 
     if (!layer.IsValid()) {
