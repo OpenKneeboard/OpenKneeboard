@@ -130,26 +130,61 @@ namespace {
 std::map<QPDFObjGen, PageData> FindAllHyperlinks(QPDF& pdf) {
   std::map<QPDFObjGen, PageData> pageMap;
   QPDFPageDocumentHelper pdh(pdf);
+  QPDFOutlineDocumentHelper odh(pdf);
 
   uint16_t pageNumber = 0;
   for (auto& page: pdh.getAllPages()) {
     // Useful references:
-    // - ij7-rups
+    // - i7j-rups
     // -
     // https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
     std::vector<InternalLink> links;
     for (auto& annotation: page.getAnnotations("/Link")) {
       auto aoh = annotation.getObjectHandle();
-      if (!aoh.hasKey("/Dest")) {
+
+      if (aoh.hasKey("/Dest")) {
+        auto dest = aoh.getKey("/Dest");
+        auto destPage = dest.getArrayItem(0).getObjGen();
+        auto linkRect = annotation.getRect();
+        links.push_back({
+          annotation.getRect(),
+          destPage,
+        });
         continue;
       }
-      auto dest = aoh.getKey("/Dest");
-      auto destPage = dest.getArrayItem(0).getObjGen();
-      auto linkRect = annotation.getRect();
-      links.push_back({
-        annotation.getRect(),
-        destPage,
-      });
+
+      if (pageNumber < 2) {// FIXME
+        continue;
+      }
+
+      if (aoh.hasKey("/A")) {// action
+        auto action = aoh.getKey("/A");
+        if (!action.hasKey("/S")) {
+          continue;
+        }
+        auto type = action.getKey("/S").getName();
+        if (type != "/GoTo") {
+          continue;
+        }
+        if (!action.hasKey("/D")) {
+          continue;
+        }
+        auto dest = action.getKey("/D");
+        if (!(dest.isName() || dest.isString())) {
+          continue;
+        }
+        dest = odh.resolveNamedDest(dest);
+        if (!dest.isArray()) {
+          continue;
+        }
+        auto destPage = dest.getArrayItem(0).getObjGen();
+        auto linkRect = annotation.getRect();
+        links.push_back({
+          annotation.getRect(),
+          destPage,
+        });
+        continue;
+      }
     }
 
     pageMap.emplace(
