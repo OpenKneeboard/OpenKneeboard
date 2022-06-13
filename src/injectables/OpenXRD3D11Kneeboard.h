@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
+
 #include "OpenXRKneeboard.h"
 
 namespace OpenKneeboard {
@@ -35,14 +37,24 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     XrSession session,
     const XrFrameEndInfo* frameEndInfo) override;
 
+ protected:
+  virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) override;
+  virtual bool Render(
+    XrSwapchain swapchain,
+    const SHM::Snapshot& snapshot,
+    uint8_t layerIndex,
+    const VRKneeboard::RenderParameters&) override;
+
  private:
   void Render(const SHM::Snapshot&, const VRKneeboard::RenderParameters&);
 
   SHM::Reader mSHM;
   ID3D11Device* mDevice = nullptr;
+
   XrSwapchain mSwapchain = nullptr;
 
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargetViews;
+  std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
+    mRenderTargetViews;
 };
 
 }// namespace OpenKneeboard

@@ -40,13 +40,20 @@ class OpenXRKneeboard : public VRKneeboard {
 
  protected:
   std::shared_ptr<OpenXRNext> mOpenXR;
+  XrSpace mLocalSpace = nullptr;
+  XrSpace mViewSpace = nullptr;
 
   Pose GetHMDPose(XrTime displayTime);
   YOrigin GetYOrigin() override;
   static XrPosef GetXrPosef(const Pose& pose);
 
-  XrSpace mLocalSpace = nullptr;
-  XrSpace mViewSpace = nullptr;
+  virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) = 0;
+  virtual bool Render(
+    XrSwapchain swapchain,
+    const SHM::Snapshot& snapshot,
+    uint8_t layerIndex,
+    const VRKneeboard::RenderParameters&)
+    = 0;
 };
 
 }// namespace OpenKneeboard
