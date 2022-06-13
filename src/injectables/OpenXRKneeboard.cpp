@@ -17,8 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+
+#include "OpenXRKneeboard.h"
+
 #include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/VRKneeboard.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <d3d11.h>
@@ -30,6 +32,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "OpenXRD3D11Kneeboard.h"
 
 #define XR_USE_GRAPHICS_API_D3D11
 #include <openxr/openxr_platform.h>
@@ -66,44 +70,6 @@ static struct {
   NEEDED_OPENXR_FUNCS
 #undef IT
 } gNext;
-
-class OpenXRKneeboard : public VRKneeboard {
- public:
-  OpenXRKneeboard() = delete;
-  OpenXRKneeboard(XrSession);
-  virtual ~OpenXRKneeboard();
-  virtual XrResult xrEndFrame(
-    XrSession session,
-    const XrFrameEndInfo* frameEndInfo)
-    = 0;
-
- protected:
-  Pose GetHMDPose(XrTime displayTime);
-  YOrigin GetYOrigin() override;
-  static XrPosef GetXrPosef(const Pose& pose);
-
-  XrSpace mLocalSpace = nullptr;
-  XrSpace mViewSpace = nullptr;
-};
-
-class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
- public:
-  OpenXRD3D11Kneeboard(XrSession, ID3D11Device*);
-  ~OpenXRD3D11Kneeboard();
-
-  virtual XrResult xrEndFrame(
-    XrSession session,
-    const XrFrameEndInfo* frameEndInfo) override;
-
- private:
-  void Render(const SHM::Snapshot&, const VRKneeboard::RenderParameters&);
-
-  SHM::Reader mSHM;
-  ID3D11Device* mDevice = nullptr;
-  XrSwapchain mSwapchain = nullptr;
-
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargetViews;
-};
 
 OpenXRKneeboard::OpenXRKneeboard(XrSession session) {
   dprintf("{}", __FUNCTION__);
