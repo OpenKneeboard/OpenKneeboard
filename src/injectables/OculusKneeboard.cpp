@@ -33,6 +33,8 @@ using namespace DirectX::SimpleMath;
 namespace OpenKneeboard {
 
 OculusKneeboard::OculusKneeboard() {
+  mSwapChains.fill(nullptr);
+  mRenderCacheKeys.fill(~(0ui64));
 }
 
 void OculusKneeboard::InstallHook(Renderer* renderer) {
@@ -100,87 +102,86 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return passthrough();
   }
   const auto config = snapshot.GetConfig();
-  const uint8_t layerIndex = 0;
-  const auto& layer = *snapshot.GetLayerConfig(0);
 
-  if (!mSwapChain) [[unlikely]] {
-    if (!mRenderer) [[unlikely]] {
-      OPENKNEEBOARD_BREAK;
-      return passthrough();
-    }
-    mSwapChain = mRenderer->CreateSwapChain(session);
+  // Copy existing layers to a mutable struct
+  //
+  // - drop empty layers so we have more space
+  // - discard depth information if desired
+  std::vector<const ovrLayerHeader*> newLayers;
+  newLayers.reserve(layerCount + snapshot.GetLayerCount());
+  std::vector<ovrLayerEyeFov> withoutDepthInformation;
+  const bool discardDepthInformation
+    = config.mVR.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
 
-    if (!mSwapChain) {
-      return passthrough();
+  for (unsigned int i = 0; i < layerCount; ++i) {
+    const auto layer = layerPtrList[i];
+
+    if (!layer) {
+      continue;
     }
+
+    if (discardDepthInformation && layer->Type == ovrLayerType_EyeFovDepth) {
+      withoutDepthInformation.push_back({});
+      auto& newLayer = withoutDepthInformation.back();
+      memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
+      newLayer.Header.Type = ovrLayerType_EyeFov;
+      newLayers.push_back(&newLayer.Header);
+      continue;
+    }
+
+    newLayers.push_back(layer);
   }
 
   auto ovr = OVRProxy::Get();
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
-  const auto renderParams = this->GetRenderParameters(
-    snapshot, layer, this->GetHMDPose(predictedTime));
 
-  static uint64_t sRenderKey = ~(0ui64);
-  if (sRenderKey != renderParams.mCacheKey) {
-    if (!mRenderer->Render(
-          session, mSwapChain, snapshot, layerIndex, renderParams))
-      [[unlikely]] {
-      return passthrough();
-    }
-    sRenderKey = renderParams.mCacheKey;
-  }
+  const auto kneeboardLayerCount = snapshot.GetLayerCount();
+  std::vector<ovrLayerQuad> kneeboardLayers;
+  kneeboardLayers.reserve(kneeboardLayerCount);
+  for (uint8_t layerIndex = 0; layerIndex < kneeboardLayerCount; ++layerIndex) {
+    auto& swapChain = mSwapChains.at(layerIndex);
+    if (!swapChain) [[unlikely]] {
+      if (!mRenderer) [[unlikely]] {
+        OPENKNEEBOARD_BREAK;
+        return passthrough();
+      }
+      swapChain = mRenderer->CreateSwapChain(session, layerIndex);
 
-  ovrLayerQuad kneeboardLayer {
-    .Header = { 
-      .Type = ovrLayerType_Quad,
-      .Flags = {ovrLayerFlag_HighQuality},
-    },
-    .ColorTexture = mSwapChain,
-    .Viewport = {
-      .Pos = {0, 0},
-      .Size = { layer.mImageWidth, layer.mImageHeight },
-    },
-    .QuadPoseCenter = GetOvrPosef(renderParams.mKneeboardPose),
-    .QuadSize = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y }
-  };
-
-  std::vector<const ovrLayerHeader*> newLayers;
-  if (layerCount == 0) {
-    newLayers.push_back(&kneeboardLayer.Header);
-  } else if (layerCount < ovrMaxLayerCount) {
-    newLayers = {&layerPtrList[0], &layerPtrList[layerCount]};
-    newLayers.push_back(&kneeboardLayer.Header);
-  } else {
-    for (unsigned int i = 0; i < layerCount; ++i) {
-      if (layerPtrList[i]) {
-        newLayers.push_back(layerPtrList[i]);
+      if (!swapChain) [[unlikely]] {
+        return passthrough();
       }
     }
 
-    if (newLayers.size() < ovrMaxLayerCount) {
-      newLayers.push_back(&kneeboardLayer.Header);
-    } else {
-      dprintf("Already at ovrMaxLayerCount without adding our layer");
-    }
-  }
+    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
 
-  std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  if ((config.mVR.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)) {
-    for (auto i = 0; i < newLayers.size(); ++i) {
-      auto layer = newLayers.at(i);
-      if (layer->Type != ovrLayerType_EyeFovDepth) {
-        continue;
+    const auto renderParams = this->GetRenderParameters(
+      snapshot, layer, this->GetHMDPose(predictedTime));
+
+    auto& cacheKey = mRenderCacheKeys.at(layerIndex);
+    if (cacheKey != renderParams.mCacheKey) {
+      if (!mRenderer->Render(
+            session, swapChain, snapshot, layerIndex, renderParams))
+        [[unlikely]] {
+        return passthrough();
       }
-
-      withoutDepthInformation.push_back({});
-      auto& newLayer
-        = withoutDepthInformation[withoutDepthInformation.size() - 1];
-      memcpy(&newLayer, layer, sizeof(ovrLayerEyeFov));
-      newLayer.Header.Type = ovrLayerType_EyeFov;
-
-      newLayers[i] = &newLayer.Header;
+      cacheKey = renderParams.mCacheKey;
     }
+
+    kneeboardLayers.push_back({
+      .Header = { 
+        .Type = ovrLayerType_Quad,
+        .Flags = {ovrLayerFlag_HighQuality},
+      },
+      .ColorTexture = swapChain,
+      .Viewport = {
+        .Pos = {0, 0},
+        .Size = {layer.mImageWidth, layer.mImageHeight},
+      },
+      .QuadPoseCenter = GetOvrPosef(renderParams.mKneeboardPose),
+      .QuadSize = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
+    });
+    newLayers.push_back(&kneeboardLayers.back().Header);
   }
 
   return next(

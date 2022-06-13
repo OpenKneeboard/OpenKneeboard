@@ -39,14 +39,16 @@ add_library(
 target_link_libraries(
   oculus-hooks
   PUBLIC
-  detours-ext
-  oculus-sdk-headers
   OpenKneeboard-DllLoadWatcher
-  OpenKneeboard-dprint
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
   OpenKneeboard-VRKneeboard
-  directxtk)
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+  detours-ext
+  directxtk
+  oculus-sdk-headers
+)
 
 add_library(openvr-hooks STATIC IVRCompositorWaitGetPosesHook.cpp)
 target_link_libraries(

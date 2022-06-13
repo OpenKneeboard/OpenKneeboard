@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRKneeboard.h>
+#include <OpenKneeboard/config.h>
 
 #include "OculusEndFrameHook.h"
 
@@ -40,7 +41,8 @@ class OculusKneeboard final : private VRKneeboard {
   YOrigin GetYOrigin() override;
 
  private:
-  ovrTextureSwapChain mSwapChain = nullptr;
+  std::array<ovrTextureSwapChain, MaxLayers> mSwapChains;
+  std::array<uint64_t, MaxLayers> mRenderCacheKeys;
   ovrSession mSession = nullptr;
   Renderer* mRenderer = nullptr;
   SHM::Reader mSHM;
@@ -59,7 +61,10 @@ class OculusKneeboard final : private VRKneeboard {
 
 class OculusKneeboard::Renderer {
  public:
-  virtual ovrTextureSwapChain CreateSwapChain(ovrSession session) = 0;
+  virtual ovrTextureSwapChain CreateSwapChain(
+    ovrSession session,
+    uint8_t layerIndex)
+    = 0;
   virtual bool Render(
     ovrSession session,
     ovrTextureSwapChain swapChain,

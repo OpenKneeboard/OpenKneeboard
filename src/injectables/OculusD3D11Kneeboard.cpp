@@ -48,7 +48,13 @@ void OculusD3D11Kneeboard::UninstallHook() {
   mDXGIHook.UninstallHook();
 }
 
-ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(ovrSession session) {
+ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
+  ovrSession session,
+  uint8_t layerIndex) {
+  if (!mD3D) {
+    return nullptr;
+  }
+
   auto ovr = OVRProxy::Get();
   ovrTextureSwapChain swapChain = nullptr;
 
@@ -69,14 +75,17 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(ovrSession session) {
   ovr->ovr_CreateTextureSwapChainDX(
     session, mD3D.get(), &kneeboardSCD, &swapChain);
   if (!swapChain) {
+    dprint("ovr_CreateTextureSwapChainDX failed");
+    OPENKNEEBOARD_BREAK;
     return nullptr;
   }
 
   int length = -1;
   ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
 
-  mRenderTargets.clear();
-  mRenderTargets.resize(length);
+  auto& layerRenderTargets = mRenderTargets.at(layerIndex);
+  layerRenderTargets.clear();
+  layerRenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D11Texture2D> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
@@ -88,9 +97,10 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(ovrSession session) {
       .Texture2D = {.MipSlice = 0}};
 
     auto hr = mD3D->CreateRenderTargetView(
-      texture.get(), &rtvd, mRenderTargets.at(i).put());
+      texture.get(), &rtvd, layerRenderTargets.at(i).put());
     if (FAILED(hr)) {
       dprintf(" - failed to create render target view");
+      OPENKNEEBOARD_BREAK;
       return nullptr;
     }
   }
@@ -105,6 +115,7 @@ bool OculusD3D11Kneeboard::Render(
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& params) {
   if (!swapChain) {
+    dprint("asked to render without swapchain");
     return false;
   }
 
@@ -118,6 +129,7 @@ bool OculusD3D11Kneeboard::Render(
 
   auto sharedTexture = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
   if (!sharedTexture.IsValid()) {
+    dprint(" - invalid shared texture");
     return false;
   }
 
@@ -131,7 +143,7 @@ bool OculusD3D11Kneeboard::Render(
   D3D11::CopyTextureWithOpacity(
     mD3D.get(),
     sharedTexture.GetShaderResourceView(),
-    mRenderTargets.at(index).get(),
+    mRenderTargets.at(layerIndex).at(index).get(),
     params.mKneeboardOpacity);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);

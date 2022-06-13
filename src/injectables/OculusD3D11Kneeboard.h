@@ -19,9 +19,12 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <shims/winrt.h>
+
+#include <array>
 
 #include "IDXGISwapChainPresentHook.h"
 #include "OculusKneeboard.h"
@@ -37,7 +40,8 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
  protected:
   virtual ovrTextureSwapChain CreateSwapChain(
-    ovrSession session) override final;
+    ovrSession session,
+    uint8_t layerIndex) override final;
 
   virtual bool Render(
     ovrSession session,
@@ -47,7 +51,8 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     const VRKneeboard::RenderParameters&) override final;
 
  private:
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargets;
+  std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
+    mRenderTargets;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
   winrt::com_ptr<ID3D11Device1> mD3D1 = nullptr;
 
