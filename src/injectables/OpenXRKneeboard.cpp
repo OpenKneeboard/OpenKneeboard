@@ -51,6 +51,7 @@ OpenXRKneeboard::OpenXRKneeboard(
   : mOpenXR(next) {
   dprintf("{}", __FUNCTION__);
   mSwapchains.fill(nullptr);
+  mRenderCacheKeys.fill(~(0ui64));
 
   XrReferenceSpaceCreateInfo referenceSpace {
     .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
@@ -110,57 +111,71 @@ XrResult OpenXRKneeboard::xrEndFrame(
   }
 
   auto config = snapshot.GetConfig();
-  const uint8_t layerIndex = 0;
-  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
-  if (!layer.IsValid()) {
-    return mOpenXR->xrEndFrame(session, frameEndInfo);
-  }
-
-  auto& swapchain = mSwapchains.at(layerIndex);
-  if (!swapchain) {
-    swapchain = this->CreateSwapChain(session, layerIndex);
-    if (!swapchain) {
-      dprint("Failed to create swapchain");
-      OPENKNEEBOARD_BREAK;
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
-    }
-  }
-
-  const auto displayTime = frameEndInfo->displayTime;
-  const auto renderParams
-    = this->GetRenderParameters(snapshot, layer, this->GetHMDPose(displayTime));
-  this->Render(swapchain, snapshot, layerIndex, renderParams);
+  const auto layerCount = snapshot.GetLayerCount();
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
+  nextLayers.reserve(frameEndInfo->layerCount + layerCount);
   std::copy(
     frameEndInfo->layers,
     &frameEndInfo->layers[frameEndInfo->layerCount],
     std::back_inserter(nextLayers));
 
-  static_assert(
-    SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
-    "Use premultiplied alpha in shared texture, or pass "
-    "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
-  XrCompositionLayerQuad xrLayer {
-		.type = XR_TYPE_COMPOSITION_LAYER_QUAD,
-		.next = nullptr,
-		.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
-			| XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT,
-		.space = mLocalSpace,
-		.eyeVisibility = XR_EYE_VISIBILITY_BOTH,
-		.subImage = {
-			.swapchain = swapchain,
-			.imageRect = {
-				{0, 0},
-				{static_cast<int32_t>(layer.mImageWidth), static_cast<int32_t>(layer.mImageHeight)},
-			},
-			.imageArrayIndex = 0,
-		},
-		.pose = this->GetXrPosef(renderParams.mKneeboardPose),
-		.size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
-	};
-  nextLayers.push_back(
-    reinterpret_cast<XrCompositionLayerBaseHeader*>(&xrLayer));
+  auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
+
+  std::vector<XrCompositionLayerQuad> kneeboardLayers;
+  kneeboardLayers.reserve(layerCount);
+  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+    if (!layer.IsValid()) {
+      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
+
+    auto& swapchain = mSwapchains.at(layerIndex);
+    if (!swapchain) {
+      swapchain = this->CreateSwapChain(session, layerIndex);
+      if (!swapchain) {
+        dprint("Failed to create swapchain");
+        OPENKNEEBOARD_BREAK;
+        return mOpenXR->xrEndFrame(session, frameEndInfo);
+      }
+    }
+
+    const auto renderParams
+      = this->GetRenderParameters(snapshot, layer, hmdPose);
+    if (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey) {
+      if (!this->Render(swapchain, snapshot, layerIndex, renderParams)) {
+        dprint("Render failed.");
+        OPENKNEEBOARD_BREAK;
+        return mOpenXR->xrEndFrame(session, frameEndInfo);
+      }
+      mRenderCacheKeys.at(layerIndex) = renderParams.mCacheKey;
+    }
+
+    static_assert(
+      SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
+      "Use premultiplied alpha in shared texture, or pass "
+      "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
+    kneeboardLayers.push_back({
+      .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
+      .next = nullptr,
+      .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
+        | XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT,
+      .space = mLocalSpace,
+      .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
+      .subImage = {
+        .swapchain = swapchain,
+        .imageRect = {
+          {0, 0},
+          {static_cast<int32_t>(layer.mImageWidth), static_cast<int32_t>(layer.mImageHeight)},
+        },
+        .imageArrayIndex = 0,
+      },
+      .pose = this->GetXrPosef(renderParams.mKneeboardPose),
+      .size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
+    });
+    nextLayers.push_back(
+      reinterpret_cast<XrCompositionLayerBaseHeader*>(&kneeboardLayers.back()));
+  }
 
   XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
   nextFrameEndInfo.layers = nextLayers.data();
