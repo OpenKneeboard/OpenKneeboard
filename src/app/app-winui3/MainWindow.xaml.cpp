@@ -59,14 +59,6 @@ MainWindow::MainWindow() {
   ExtendsContentIntoTitleBar(true);
   SetTitleBar(AppTitleBar());
 
-  const auto windowId = Microsoft::UI::GetWindowIdFromWindow(mHwnd);
-  const auto appWindow
-    = Microsoft::UI::Windowing::AppWindow::GetFromWindowId(windowId);
-  if (appWindow.TitleBar().IsCustomizationSupported()) {
-    appWindow.TitleBar().PreferredHeightOption(
-      Microsoft::UI::Windowing::TitleBarHeightOption::Tall);
-  }
-
   auto bigIcon = LoadImageW(
     GetModuleHandleW(nullptr),
     L"appIcon",
