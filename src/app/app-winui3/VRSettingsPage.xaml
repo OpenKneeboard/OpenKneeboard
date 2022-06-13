@@ -35,108 +35,105 @@
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,0,0,16"
       />
-      <Grid
+      <StackPanel
+        Spacing="12"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="4"
         BorderThickness="1"
         Padding="8">
-        <StackPanel Spacing="12">
-          <ToggleSwitch
-            Header="Zoom when looking at kneeboard"
-            OnContent="On"
-            OffContent="Off"
-            IsOn="{x:Bind GazeZoomEnabled}"
-          />
-          <ToggleSwitch
-            Header="Discard Oculus SDK depth information - required for DCS World"
-            OnContent="On"
-            OffContent="Off"
-            IsOn="{x:Bind DiscardOculusDepthInformation}"
-          />
-          <ToggleSwitch
-            Header="SteamVR support"
-            OnContent="Enabled"
-            OffContent="Disabled"
-            IsOn="{x:Bind SteamVREnabled}"
-          />
-          <ComboBox
-            Header="OpenXR support"
-            SelectedIndex="{x:Bind OpenXRMode}">
-            <x:String>Disabled</x:String>
-            <x:String>Enabled for the current user</x:String>
-            <x:String>Enabled for all users</x:String>
-          </ComboBox>
-        </StackPanel>
-      </Grid>
+        <ToggleSwitch
+          Header="Zoom when looking at kneeboard"
+          OnContent="On"
+          OffContent="Off"
+          IsOn="{x:Bind GazeZoomEnabled}"
+        />
+        <ToggleSwitch
+          Header="Discard Oculus SDK depth information - required for DCS World"
+          OnContent="On"
+          OffContent="Off"
+          IsOn="{x:Bind DiscardOculusDepthInformation}"
+        />
+        <ToggleSwitch
+          Header="SteamVR support"
+          OnContent="Enabled"
+          OffContent="Disabled"
+          IsOn="{x:Bind SteamVREnabled}"
+        />
+        <ComboBox
+          Header="OpenXR support"
+          SelectedIndex="{x:Bind OpenXRMode}">
+          <x:String>Disabled</x:String>
+          <x:String>Enabled for the current user</x:String>
+          <x:String>Enabled for all users</x:String>
+        </ComboBox>
+      </StackPanel>
       <TextBlock
         Text="Size"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
       />
-      <Grid
+      <StackPanel
+        Spacing="12"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="4"
         BorderThickness="1"
         Padding="8">
-        <StackPanel Spacing="12">
-          <Grid ColumnDefinitions="Auto,*">
-            <NumberBox
-              Header="Kneeboard size, in meters"
-              Value="{x:Bind KneeboardHeight}"
-              SmallChange="0.01"
-              LargeChange="0.05"
-              SpinButtonPlacementMode="Inline"
-              NumberFormatter="{StaticResource MetersFormatter}"
-            />
-          </Grid>
-          <Slider
-            Header="Zoom level when looking at kneeboard"
-            Value="{x:Bind KneeboardZoomScale}"
-            TickPlacement="Outside"
-            TickFrequency="0.5"
-            StepFrequency="0.25"
-            Maximum="4"
-            Minimum="1.0"
-            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+        <Grid ColumnDefinitions="Auto,*">
+          <NumberBox
+            Header="Kneeboard size, in meters"
+            Value="{x:Bind KneeboardHeight}"
+            SmallChange="0.01"
+            LargeChange="0.05"
+            SpinButtonPlacementMode="Inline"
+            NumberFormatter="{StaticResource MetersFormatter}"
           />
-        </StackPanel>
-      </Grid>
+        </Grid>
+        <Slider
+          Header="Zoom level when looking at kneeboard"
+          Value="{x:Bind KneeboardZoomScale}"
+          TickPlacement="Outside"
+          TickFrequency="0.5"
+          StepFrequency="0.25"
+          Maximum="4"
+          Minimum="1.0"
+          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+        />
+      </StackPanel>
       <TextBlock
         Text="Gaze sensitivity"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
       />
-      <Grid
+      <StackPanel
+        Spacing="12"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="4"
         BorderThickness="1"
         Padding="8">
-        <StackPanel Spacing="12">
-          <Slider
-            Header="Horizontal sensitivity"
-            Value="{x:Bind KneeboardGazeTargetHorizontalScale}"
-            TickPlacement="Outside"
-            TickFrequency="0.5"
-            StepFrequency="0.25"
-            Maximum="4"
-            Minimum="0"
-            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
-          />
-          <Slider
-            Header="Vertical sensitivity"
-            Value="{x:Bind KneeboardGazeTargetVerticalScale}"
-            TickPlacement="Outside"
-            TickFrequency="0.5"
-            StepFrequency="0.25"
-            Maximum="4"
-            Minimum="0"
-            ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
-          />
-        </StackPanel>
-      </Grid>
+        <Slider
+          Header="Horizontal sensitivity"
+          Value="{x:Bind KneeboardGazeTargetHorizontalScale}"
+          TickPlacement="Outside"
+          TickFrequency="0.5"
+          StepFrequency="0.25"
+          Maximum="4"
+          Minimum="0"
+          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+        />
+        <Slider
+          Header="Vertical sensitivity"
+          Value="{x:Bind KneeboardGazeTargetVerticalScale}"
+          TickPlacement="Outside"
+          TickFrequency="0.5"
+          StepFrequency="0.25"
+          Maximum="4"
+          Minimum="0"
+          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+        />
+      </StackPanel>
       <TextBlock
         Text="Position"
         Style="{StaticResource SubtitleTextBlockStyle}"
@@ -252,33 +249,32 @@
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
       />
-      <Grid
+      <StackPanel
+        Spacing="12"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="4"
         BorderThickness="1"
         Padding="8">
-        <StackPanel Spacing="12">
-          <Slider
-            Header="Opacity when not looking at the kneeboard"
-            Value="{x:Bind NormalOpacity}"
-            Minimum="0"
-            Maximum="100"
-            TickFrequency="10"
-            TickPlacement="Outside"
-            ThumbToolTipValueConverter="{StaticResource PercentConverter}"
-          />
-          <Slider
-            Header="Opacity when looking at the kneeboard"
-            Value="{x:Bind GazeOpacity}"
-            Minimum="0"
-            Maximum="100"
-            TickFrequency="10"
-            TickPlacement="Outside"
-            ThumbToolTipValueConverter="{StaticResource PercentConverter}"
-          />
-        </StackPanel>
-      </Grid>
+        <Slider
+          Header="Opacity when not looking at the kneeboard"
+          Value="{x:Bind NormalOpacity}"
+          Minimum="0"
+          Maximum="100"
+          TickFrequency="10"
+          TickPlacement="Outside"
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+        />
+        <Slider
+          Header="Opacity when looking at the kneeboard"
+          Value="{x:Bind GazeOpacity}"
+          Minimum="0"
+          Maximum="100"
+          TickFrequency="10"
+          TickPlacement="Outside"
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+        />
+      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 </Page>
