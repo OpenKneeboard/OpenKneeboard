@@ -25,17 +25,22 @@
 
 namespace OpenKneeboard {
 
+class OpenXRNext;
+
 class OpenXRKneeboard : public VRKneeboard {
  public:
   OpenXRKneeboard() = delete;
-  OpenXRKneeboard(XrSession);
+  OpenXRKneeboard(XrSession, const std::shared_ptr<OpenXRNext>&);
   virtual ~OpenXRKneeboard();
+
   virtual XrResult xrEndFrame(
     XrSession session,
     const XrFrameEndInfo* frameEndInfo)
     = 0;
 
  protected:
+  std::shared_ptr<OpenXRNext> mOpenXR;
+
   Pose GetHMDPose(XrTime displayTime);
   YOrigin GetYOrigin() override;
   static XrPosef GetXrPosef(const Pose& pose);

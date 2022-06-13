@@ -101,6 +101,7 @@ target_link_libraries(
 add_module_library(
   OpenKneeboard-OpenXR
   OpenXRKneeboard.cpp
+  OpenXRNext.cpp
 )
 target_link_libraries(
   OpenKneeboard-OpenXR

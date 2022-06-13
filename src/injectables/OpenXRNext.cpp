@@ -19,30 +19,18 @@
  */
 #pragma once
 
-#include "OpenXRKneeboard.h"
+#include "OpenXRNext.h"
 
 namespace OpenKneeboard {
 
-class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
- public:
-  OpenXRD3D11Kneeboard(
-    XrSession,
-    const std::shared_ptr<OpenXRNext>&,
-    ID3D11Device*);
-  ~OpenXRD3D11Kneeboard();
+OpenXRNext::OpenXRNext(XrInstance instance, PFN_xrGetInstanceProcAddr getNext) {
+  this->m_xrGetInstanceProcAddr = getNext;
 
-  virtual XrResult xrEndFrame(
-    XrSession session,
-    const XrFrameEndInfo* frameEndInfo) override;
-
- private:
-  void Render(const SHM::Snapshot&, const VRKneeboard::RenderParameters&);
-
-  SHM::Reader mSHM;
-  ID3D11Device* mDevice = nullptr;
-  XrSwapchain mSwapchain = nullptr;
-
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mRenderTargetViews;
-};
+#define IT(func) \
+  getNext( \
+    instance, #func, reinterpret_cast<PFN_xrVoidFunction*>(&this->m_##func));
+  OPENKNEEBOARD_NEXT_OPENXR_FUNCS
+#undef IT
+}
 
 }// namespace OpenKneeboard
