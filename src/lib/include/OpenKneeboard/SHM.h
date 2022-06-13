@@ -47,12 +47,18 @@ std::wstring SharedTextureName(uint64_t sessionID, uint32_t sequenceNumber);
 
 #pragma pack(push)
 struct Config final {
-  static constexpr uint16_t VERSION = 1;
+  static constexpr uint16_t VERSION = 2;
 
   HWND mFeederWindow {0};
-  uint16_t mImageWidth, mImageHeight;// Pixels
   VRRenderConfig mVR;
   FlatConfig mFlat;
+};
+struct LayerConfig final {
+  static constexpr uint16_t VERSION = 1;
+  uint16_t mImageWidth, mImageHeight;// Pixels
+  VRLayerConfig mVR;
+
+  bool IsValid() const;
 };
 #pragma pack(pop)
 
@@ -64,7 +70,7 @@ class Writer final {
   ~Writer();
 
   operator bool() const;
-  void Update(const Config& config);
+  void Update(const Config& config, const std::vector<LayerConfig>& layers);
 
   UINT GetPreviousTextureKey() const;
   UINT GetNextTextureKey() const;
@@ -115,8 +121,10 @@ class Snapshot final {
   uint32_t GetSequenceNumber() const;
   SharedTexture GetSharedTexture(ID3D11Device*) const;
   Config GetConfig() const;
+  uint8_t GetLayerCount() const;
+  LayerConfig* GetLayers() const;
 
-  operator bool() const;
+  bool IsValid() const;
 };
 
 class Reader final {

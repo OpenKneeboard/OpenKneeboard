@@ -99,7 +99,7 @@ void VRSettingsPage::PropertyChanged(winrt::event_token const& token) noexcept {
 }
 
 float VRSettingsPage::KneeboardX() {
-  return gKneeboard->GetVRConfig().mX;
+  return gKneeboard->GetVRConfig().mPrimaryLayer.mX;
 }
 
 void VRSettingsPage::KneeboardX(float value) {
@@ -107,12 +107,12 @@ void VRSettingsPage::KneeboardX(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mX = value;
+  config.mPrimaryLayer.mX = value;
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardEyeY() {
-  return -gKneeboard->GetVRConfig().mEyeY;
+  return -gKneeboard->GetVRConfig().mPrimaryLayer.mEyeY;
 }
 
 void VRSettingsPage::KneeboardEyeY(float value) {
@@ -120,12 +120,12 @@ void VRSettingsPage::KneeboardEyeY(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mEyeY = -value;
+  config.mPrimaryLayer.mEyeY = -value;
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardFloorY() {
-  return gKneeboard->GetVRConfig().mFloorY;
+  return gKneeboard->GetVRConfig().mPrimaryLayer.mFloorY;
 }
 
 void VRSettingsPage::KneeboardFloorY(float value) {
@@ -133,14 +133,14 @@ void VRSettingsPage::KneeboardFloorY(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mFloorY = value;
+  config.mPrimaryLayer.mFloorY = value;
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardZ() {
   // 3D standard right-hand-coordinate system is that -z is forwards;
   // most users expect the opposite.
-  return -gKneeboard->GetVRConfig().mZ;
+  return -gKneeboard->GetVRConfig().mPrimaryLayer.mZ;
 }
 
 void VRSettingsPage::KneeboardZ(float value) {
@@ -148,7 +148,7 @@ void VRSettingsPage::KneeboardZ(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mZ = -value;
+  config.mPrimaryLayer.mZ = -value;
   gKneeboard->SetVRConfig(config);
 }
 
@@ -161,7 +161,7 @@ static inline float DegreesToRadians(float degrees) {
 }
 
 float VRSettingsPage::KneeboardRX() {
-  auto raw = RadiansToDegrees(gKneeboard->GetVRConfig().mRX) + 90;
+  auto raw = RadiansToDegrees(gKneeboard->GetVRConfig().mPrimaryLayer.mRX) + 90;
   if (raw < 0) {
     raw += 360.0f;
   }
@@ -177,12 +177,13 @@ void VRSettingsPage::KneeboardRX(float degrees) {
     degrees += 360;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mRX = DegreesToRadians(degrees <= 180 ? degrees : -(360 - degrees));
+  config.mPrimaryLayer.mRX
+    = DegreesToRadians(degrees <= 180 ? degrees : -(360 - degrees));
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardRY() {
-  return -RadiansToDegrees(gKneeboard->GetVRConfig().mRY);
+  return -RadiansToDegrees(gKneeboard->GetVRConfig().mPrimaryLayer.mRY);
 }
 
 void VRSettingsPage::KneeboardRY(float value) {
@@ -190,12 +191,12 @@ void VRSettingsPage::KneeboardRY(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mRY = -DegreesToRadians(value);
+  config.mPrimaryLayer.mRY = -DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardRZ() {
-  return -RadiansToDegrees(gKneeboard->GetVRConfig().mRZ);
+  return -RadiansToDegrees(gKneeboard->GetVRConfig().mPrimaryLayer.mRZ);
 }
 
 void VRSettingsPage::KneeboardRZ(float value) {
@@ -203,12 +204,12 @@ void VRSettingsPage::KneeboardRZ(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mRZ = -DegreesToRadians(value);
+  config.mPrimaryLayer.mRZ = -DegreesToRadians(value);
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardHeight() {
-  return gKneeboard->GetVRConfig().mHeight;
+  return gKneeboard->GetVRConfig().mPrimaryLayer.mHeight;
 }
 
 void VRSettingsPage::KneeboardHeight(float value) {
@@ -216,7 +217,7 @@ void VRSettingsPage::KneeboardHeight(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mHeight = value;
+  config.mPrimaryLayer.mHeight = value;
   gKneeboard->SetVRConfig(config);
 }
 

@@ -54,6 +54,7 @@ class VRKneeboard {
 
   RenderParameters GetRenderParameters(
     const SHM::Snapshot&,
+    const SHM::LayerConfig&,
     const Pose& hmdPose);
 
  private:
@@ -65,19 +66,24 @@ class VRKneeboard {
   uint64_t mRecenterCount = 0;
   Matrix mRecenter = Matrix::Identity;
 
-  Pose GetKneeboardPose(const VRRenderConfig& vr, const Pose& hmdPose);
+  Pose GetKneeboardPose(
+    const VRRenderConfig& vr,
+    const SHM::LayerConfig&,
+    const Pose& hmdPose);
 
   Vector2 GetKneeboardSize(
     const SHM::Config& config,
+    const SHM::LayerConfig&,
     bool isLookingAtKneeboard);
 
   bool IsLookingAtKneeboard(
-    const SHM::Config& config,
+    const SHM::Config&,
+    const SHM::LayerConfig&,
     const Pose& hmdPose,
     const Pose& kneeboardPose);
 
   bool IsGazeEnabled(const VRRenderConfig& vr);
-  Sizes GetSizes(const SHM::Config& config) const;
+  Sizes GetSizes(const VRRenderConfig&, const SHM::LayerConfig&) const;
 
   void Recenter(const VRRenderConfig& vr, const Pose& hmdPose);
 };

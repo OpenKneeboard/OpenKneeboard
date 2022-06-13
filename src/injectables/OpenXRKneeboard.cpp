@@ -280,16 +280,17 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     throw std::logic_error("Missing swapchain");
     return gNext.xrEndFrame(session, frameEndInfo);
   }
-  if (!snapshot) {
+  if (!snapshot.IsValid()) {
     // Don't spam: expected, if OpenKneeboard isn't running
     return gNext.xrEndFrame(session, frameEndInfo);
   }
 
   auto config = snapshot.GetConfig();
+  const auto& layer = snapshot.GetLayers()[0];
 
   const auto displayTime = frameEndInfo->displayTime;
   const auto renderParams
-    = this->GetRenderParameters(snapshot, this->GetHMDPose(displayTime));
+    = this->GetRenderParameters(snapshot, layer, this->GetHMDPose(displayTime));
   this->Render(snapshot, renderParams);
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
@@ -302,7 +303,7 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
     SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
     "Use premultiplied alpha in shared texture, or pass "
     "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
-  XrCompositionLayerQuad layer {
+  XrCompositionLayerQuad xrLayer {
     .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
     .next = nullptr,
     .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
@@ -313,14 +314,15 @@ XrResult OpenXRD3D11Kneeboard::xrEndFrame(
       .swapchain = mSwapchain,
       .imageRect = {
         {0, 0},
-        {static_cast<int32_t>(config.mImageWidth), static_cast<int32_t>(config.mImageHeight)},
+        {static_cast<int32_t>(layer.mImageWidth), static_cast<int32_t>(layer.mImageHeight)},
       },
       .imageArrayIndex = 0,
     },
     .pose = this->GetXrPosef(renderParams.mKneeboardPose),
     .size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
   };
-  nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
+  nextLayers.push_back(
+    reinterpret_cast<XrCompositionLayerBaseHeader*>(&xrLayer));
 
   XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
   nextFrameEndInfo.layers = nextLayers.data();

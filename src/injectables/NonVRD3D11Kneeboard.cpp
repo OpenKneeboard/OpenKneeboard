@@ -64,16 +64,17 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   auto snapshot = mSHM.MaybeGet();
-  if (!snapshot) {
+  if (!snapshot.IsValid()) {
     return passthrough();
   }
 
   const auto config = snapshot.GetConfig();
+  const auto& layer = snapshot.GetLayers()[0];
 
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
 
-  const auto aspectRatio = float(config.mImageWidth) / config.mImageHeight;
+  const auto aspectRatio = float(layer.mImageWidth) / layer.mImageHeight;
   const LONG canvasWidth = scDesc.BufferDesc.Width;
   const LONG canvasHeight = scDesc.BufferDesc.Height;
 
@@ -112,8 +113,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   RECT sourceRect {
     0,
     0,
-    config.mImageWidth,
-    config.mImageHeight,
+    layer.mImageWidth,
+    layer.mImageHeight,
   };
 
   auto sharedTexture = snapshot.GetSharedTexture(mDevice);

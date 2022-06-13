@@ -184,7 +184,7 @@ void OpenVRKneeboard::Tick() {
   mFrameCounter++;
 
   auto snapshot = mSHM.MaybeGet();
-  if (!snapshot) {
+  if (!snapshot.IsValid()) {
     if (mVisible) {
       mIVROverlay->HideOverlay(mOverlay);
       mVisible = false;
@@ -198,9 +198,10 @@ void OpenVRKneeboard::Tick() {
   }
 
   const auto config = snapshot.GetConfig();
+  const auto& layer = snapshot.GetLayers()[0];
   const auto displayTime = this->GetDisplayTime();
   const auto renderParams
-    = this->GetRenderParameters(snapshot, this->GetHMDPose(displayTime));
+    = this->GetRenderParameters(snapshot, layer, this->GetHMDPose(displayTime));
 
   CHECK(SetOverlayWidthInMeters, mOverlay, renderParams.mKneeboardSize.x);
 
@@ -249,8 +250,8 @@ void OpenVRKneeboard::Tick() {
   vr::VRTextureBounds_t textureBounds {
     0.0f,
     0.0f,
-    static_cast<float>(config.mImageWidth) / TextureWidth,
-    static_cast<float>(config.mImageHeight) / TextureHeight,
+    static_cast<float>(layer.mImageWidth) / TextureWidth,
+    static_cast<float>(layer.mImageHeight) / TextureHeight,
   };
 
   CHECK(SetOverlayTextureBounds, mOverlay, &textureBounds);

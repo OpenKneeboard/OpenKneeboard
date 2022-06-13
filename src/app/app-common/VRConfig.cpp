@@ -23,14 +23,15 @@
 
 namespace OpenKneeboard {
 void from_json(const nlohmann::json& j, VRConfig& vrc) {
-  vrc.mX = j.at("x");
-  vrc.mEyeY = j.at("eyeY");
-  vrc.mFloorY = j.at("floorY");
-  vrc.mZ = j.at("z");
-  vrc.mRX = j.at("rx");
-  vrc.mRY = j.at("ry");
-  vrc.mRZ = j.at("rz");
-  vrc.mHeight = j.at("height");
+  auto& l = vrc.mPrimaryLayer;
+  l.mX = j.at("x");
+  l.mEyeY = j.at("eyeY");
+  l.mFloorY = j.at("floorY");
+  l.mZ = j.at("z");
+  l.mRX = j.at("rx");
+  l.mRY = j.at("ry");
+  l.mRZ = j.at("rz");
+  l.mHeight = j.at("height");
   vrc.mZoomScale = j.at("zoomScale");
 
   if (j.contains("gazeTargetScale")) {
@@ -71,15 +72,16 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
 }
 
 void to_json(nlohmann::json& j, const VRConfig& vrc) {
+  const auto& l = vrc.mPrimaryLayer;
   j = {
-    {"x", vrc.mX},
-    {"eyeY", vrc.mEyeY},
-    {"floorY", vrc.mFloorY},
-    {"z", vrc.mZ},
-    {"rx", vrc.mRX},
-    {"ry", vrc.mRY},
-    {"rz", vrc.mRZ},
-    {"height", vrc.mHeight},
+    {"x", l.mX},
+    {"eyeY", l.mEyeY},
+    {"floorY", l.mFloorY},
+    {"z", l.mZ},
+    {"rx", l.mRX},
+    {"ry", l.mRY},
+    {"rz", l.mRZ},
+    {"height", l.mHeight},
     {"zoomScale", vrc.mZoomScale},
     {"discardOculusDepthInformation",
      static_cast<bool>(

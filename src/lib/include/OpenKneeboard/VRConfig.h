@@ -32,8 +32,17 @@
 namespace OpenKneeboard {
 
 #pragma pack(push)
+struct VRLayerConfig {
+  static constexpr uint16_t VERSION = 1;
+  // Distances in meters, rotations in radians
+  float mX = 0.15f, mFloorY = 0.6f, mEyeY = -0.7f, mZ = -0.4f;
+  float mRX = -2 * std::numbers::pi_v<float> / 5,
+        mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
+  float mHeight = 0.25f;
+};
+
 struct VRRenderConfig {
-  static constexpr uint16_t VERSION = 4;
+  static constexpr uint16_t VERSION = 5;
 
   enum class Flags : uint32_t {
     // HEADLOCKED = 1 << 0,
@@ -43,11 +52,6 @@ struct VRRenderConfig {
     FORCE_ZOOM = 1 << 4,
   };
 
-  // Distances in meters, rotations in radians
-  float mX = 0.15f, mFloorY = 0.6f, mEyeY = -0.7f, mZ = -0.4f;
-  float mRX = -2 * std::numbers::pi_v<float> / 5,
-        mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
-  float mHeight = 0.25f;
   float mZoomScale = 2.0f;
 
   // Increment every time binding is pressed
@@ -68,6 +72,7 @@ struct VRRenderConfig {
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
   OpenXRMode mOpenXRMode = OpenXRMode::CurrentUser;
+  VRLayerConfig mPrimaryLayer;
 };
 
 template <>

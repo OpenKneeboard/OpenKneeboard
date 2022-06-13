@@ -53,6 +53,9 @@ struct Header final {
   uint64_t mSessionID = CreateSessionID();
   HeaderFlags mFlags;
   Config mConfig;
+
+  uint8_t mLayerCount = 0;
+  LayerConfig mLayers[MaxLayers];
 };
 #pragma pack(pop)
 
@@ -128,11 +131,13 @@ constexpr auto SHMPath() {
   char buf[255];
   auto end = fmt::format_to(
     buf,
-    FMT_COMPILE("{}/h{}-c{}-vrc{}-fc{}-s{:x}"),
+    FMT_COMPILE("{}/h{}-c{}-lc{}-vrc{}-vrlc{}-fc{}-s{:x}"),
     ProjectNameA,
     Header::VERSION,
     Config::VERSION,
+    LayerConfig::VERSION,
     VRRenderConfig::VERSION,
+    VRLayerConfig::VERSION,
     FlatConfig::VERSION,
     SHM_SIZE);
   return std::string(buf, end);
@@ -273,16 +278,33 @@ SharedTexture Snapshot::GetSharedTexture(ID3D11Device* d3d) const {
   return {};
 }
 
+bool LayerConfig::IsValid() const {
+  return mImageWidth > 0 && mImageHeight > 0;
+}
+
 Config Snapshot::GetConfig() const {
-  if (!*this) {
+  if (!this->IsValid()) {
     return {};
   }
   return mHeader->mConfig;
 }
 
-Snapshot::operator bool() const {
+uint8_t Snapshot::GetLayerCount() const {
+  if (!this->IsValid()) {
+    return 0;
+  }
+}
+
+LayerConfig* Snapshot::GetLayers() const {
+  if (!this->IsValid()) {
+    return nullptr;
+  }
+  return mHeader->mLayers;
+}
+
+bool Snapshot::IsValid() const {
   return mHeader && (mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED)
-    && mHeader->mConfig.mImageWidth > 0 && mHeader->mConfig.mImageHeight > 0;
+    && mHeader->mLayerCount > 0;
 }
 
 class Impl {
@@ -409,19 +431,31 @@ Snapshot Reader::MaybeGet() const {
     *p->mHeader, &p->mResources.at(p->mHeader->mSequenceNumber % TextureCount));
 }
 
-void Writer::Update(const Config& config) {
+void Writer::Update(
+  const Config& config,
+  const std::vector<LayerConfig>& layers) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
 
-  if (config.mImageWidth == 0 || config.mImageHeight == 0) {
-    throw std::logic_error("Not feeding a 0-size image");
+  if (layers.size() > MaxLayers) {
+    throw std::logic_error(fmt::format(
+      "Asked to publish {} layers, but max is {}", layers.size(), MaxLayers));
+  }
+
+  for (auto layer: layers) {
+    if (layer.mImageWidth == 0 || layer.mImageHeight == 0) {
+      throw std::logic_error("Not feeding a 0-size image");
+    }
   }
 
   Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_FORCE_UNLOCK);
   p->mHeader->mConfig = config;
   p->mHeader->mSequenceNumber++;
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
+  p->mHeader->mLayerCount = static_cast<uint8_t>(layers.size());
+  memcpy(
+    p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
 }
 
 }// namespace OpenKneeboard::SHM

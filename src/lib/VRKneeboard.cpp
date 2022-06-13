@@ -26,16 +26,18 @@ namespace OpenKneeboard {
 
 VRKneeboard::Pose VRKneeboard::GetKneeboardPose(
   const VRRenderConfig& vr,
+  const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
+  const auto& vrl = layer.mVR;
   this->Recenter(vr, hmdPose);
   // clang-format off
     auto matrix =
-      Matrix::CreateRotationX(vr.mRX)
-      * Matrix::CreateRotationY(vr.mRY)
-      * Matrix::CreateRotationZ(vr.mRZ)
+      Matrix::CreateRotationX(vrl.mRX)
+      * Matrix::CreateRotationY(vrl.mRY)
+      * Matrix::CreateRotationZ(vrl.mRZ)
       * Matrix::CreateTranslation({
-        vr.mX,
-        this->GetYOrigin() == YOrigin::EYE_LEVEL ? vr.mEyeY : vr.mFloorY, vr.mZ})
+        vrl.mX,
+        this->GetYOrigin() == YOrigin::EYE_LEVEL ? vrl.mEyeY : vrl.mFloorY, vrl.mZ})
       * mRecenter;
   // clang-format on
   return {
@@ -46,8 +48,9 @@ VRKneeboard::Pose VRKneeboard::GetKneeboardPose(
 
 Vector2 VRKneeboard::GetKneeboardSize(
   const SHM::Config& config,
+  const SHM::LayerConfig& layer,
   bool isLookingAtKneeboard) {
-  const auto sizes = this->GetSizes(config);
+  const auto sizes = this->GetSizes(config.mVR, layer);
   if (!this->IsGazeEnabled(config.mVR)) {
     return sizes.mNormalSize;
   }
@@ -75,16 +78,18 @@ bool VRKneeboard::IsGazeEnabled(const VRRenderConfig& vr) {
   return true;
 }
 
-VRKneeboard::Sizes VRKneeboard::GetSizes(const SHM::Config& config) const {
-  const auto& vr = config.mVR;
-  const auto aspectRatio = float(config.mImageWidth) / config.mImageHeight;
+VRKneeboard::Sizes VRKneeboard::GetSizes(
+  const VRRenderConfig& vrc,
+  const SHM::LayerConfig& layer) const {
+  const auto& vr = layer.mVR;
+  const auto aspectRatio = float(layer.mImageWidth) / layer.mImageHeight;
   const auto virtualHeight = vr.mHeight;
   const auto virtualWidth = aspectRatio * vr.mHeight;
 
   return {
     .mNormalSize = {virtualWidth, virtualHeight},
     .mZoomedSize
-    = {virtualWidth * vr.mZoomScale, virtualHeight * vr.mZoomScale},
+    = {virtualWidth * vrc.mZoomScale, virtualHeight * vrc.mZoomScale},
   };
 }
 
@@ -112,14 +117,16 @@ void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
 
 VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
   const SHM::Snapshot& snapshot,
+  const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
   auto config = snapshot.GetConfig();
-  const auto kneeboardPose = this->GetKneeboardPose(config.mVR, hmdPose);
+  const auto kneeboardPose = this->GetKneeboardPose(config.mVR, layer, hmdPose);
   const auto isLookingAtKneeboard
-    = this->IsLookingAtKneeboard(config, hmdPose, kneeboardPose);
+    = this->IsLookingAtKneeboard(config, layer, hmdPose, kneeboardPose);
   return {
     .mKneeboardPose = kneeboardPose,
-    .mKneeboardSize = this->GetKneeboardSize(config, isLookingAtKneeboard),
+    .mKneeboardSize
+    = this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
     .mKneeboardOpacity = isLookingAtKneeboard ? config.mVR.mGazeOpacity
                                               : config.mVR.mNormalOpacity,
     .mCacheKey = snapshot.GetSequenceNumber()
@@ -129,6 +136,7 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
 
 bool VRKneeboard::IsLookingAtKneeboard(
   const SHM::Config& config,
+  const SHM::LayerConfig& layer,
   const Pose& hmdPose,
   const Pose& kneeboardPose) {
   static bool sIsLookingAtKneeboard = false;
@@ -136,7 +144,7 @@ bool VRKneeboard::IsLookingAtKneeboard(
     return false;
   }
 
-  const auto sizes = this->GetSizes(config);
+  const auto sizes = this->GetSizes(config.mVR, layer);
   const auto currentSize
     = sIsLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
 

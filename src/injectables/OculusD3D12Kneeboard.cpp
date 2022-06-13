@@ -127,6 +127,7 @@ bool OculusD3D12Kneeboard::Render(
   const VRKneeboard::RenderParameters&) {
   auto ovr = OVRProxy::Get();
   const auto config = snapshot.GetConfig();
+  const auto& layer = snapshot.GetLayers()[0];
 
   int index = -1;
   ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
@@ -163,8 +164,8 @@ bool OculusD3D12Kneeboard::Render(
     .left = 0,
     .top = 0,
     .front = 0,
-    .right = config.mImageWidth,
-    .bottom = config.mImageHeight,
+    .right = layer.mImageWidth,
+    .bottom = layer.mImageHeight,
     .back = 1,
   };
 

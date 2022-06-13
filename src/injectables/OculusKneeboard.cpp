@@ -96,10 +96,11 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return passthrough();
   }
   auto snapshot = mSHM.MaybeGet();
-  if (!snapshot) {
+  if (!snapshot.IsValid()) {
     return passthrough();
   }
   const auto config = snapshot.GetConfig();
+  const auto& layer = snapshot.GetLayers()[0];
 
   if (!mSwapChain) [[unlikely]] {
     if (!mRenderer) [[unlikely]] {
@@ -116,8 +117,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   auto ovr = OVRProxy::Get();
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
-  const auto renderParams
-    = this->GetRenderParameters(snapshot, this->GetHMDPose(predictedTime));
+  const auto renderParams = this->GetRenderParameters(
+    snapshot, layer, this->GetHMDPose(predictedTime));
 
   static uint64_t sRenderKey = ~(0ui64);
   if (sRenderKey != renderParams.mCacheKey) {
@@ -136,7 +137,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     .ColorTexture = mSwapChain,
     .Viewport = {
       .Pos = {0, 0},
-      .Size = { config.mImageWidth, config.mImageHeight },
+      .Size = { layer.mImageWidth, layer.mImageHeight },
     },
     .QuadPoseCenter = GetOvrPosef(renderParams.mKneeboardPose),
     .QuadSize = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y }

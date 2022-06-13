@@ -73,12 +73,19 @@ void InterprocessRenderer::CopyPixelsToSHM() {
 
   SHM::Config config {
     .mFeederWindow = mFeederWindow,
-    .mImageWidth = static_cast<uint16_t>(usedSize.width),
-    .mImageHeight = static_cast<uint16_t>(usedSize.height),
     .mVR = mKneeboard->GetVRConfig(),
     .mFlat = mKneeboard->GetFlatConfig(),
   };
-  mSHM.Update(config);
+
+  mSHM.Update(
+    config,
+    {
+      SHM::LayerConfig {
+        .mImageWidth = static_cast<uint16_t>(usedSize.width),
+        .mImageHeight = static_cast<uint16_t>(usedSize.height),
+        .mVR = mKneeboard->GetVRConfig().mPrimaryLayer,
+      },
+    });
 }
 
 InterprocessRenderer::InterprocessRenderer(

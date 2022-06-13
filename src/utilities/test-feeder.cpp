@@ -53,15 +53,8 @@ int main() {
     {1.0f, 0.0f, 1.0f, 0.5f},// translucent magenta
   };
 
-  SHM::Config config {
-    /* Headlocked
-    .Flags = OpenKneeboard::Flags::HEADLOCKED |
-    OpenKneeboard::Flags::DISCARD_DEPTH_INFORMATION, .y = -0.15, .z = -0.5f,
-    .VirtualHeight = 0.25f,
-    .mImageWidth = 400,
-    .mImageHeight = 1200,
-    */
-    /* On knee */
+  SHM::Config config;
+  SHM::LayerConfig layer {
     .mImageWidth = TextureWidth,
     .mImageHeight = TextureHeight,
   };
@@ -115,8 +108,8 @@ int main() {
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
   std::array<SharedTextureResources, TextureCount> resources;
   D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = config.mImageWidth,
-    .Height = config.mImageHeight,
+    .Width = layer.mImageWidth,
+    .Height = layer.mImageHeight,
     .MipLevels = 1,
     .ArraySize = 1,
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,// needed for Direct2D
@@ -157,7 +150,7 @@ int main() {
     it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
   }
 
-  D3D11_VIEWPORT viewport {0, 0, config.mImageWidth, config.mImageHeight, 0, 1};
+  D3D11_VIEWPORT viewport {0, 0, layer.mImageWidth, layer.mImageHeight, 0, 1};
   ctx->RSSetViewports(1, &viewport);
   ID3D11ShaderResourceView* nullSRV = nullptr;
   ctx->PSSetShaderResources(0, 1, &nullSRV);
@@ -173,8 +166,8 @@ int main() {
       D2D1_RECT_F {
         0.0f,
         0.0f,
-        static_cast<float>(config.mImageWidth),
-        static_cast<float>(config.mImageHeight)},
+        static_cast<float>(layer.mImageWidth),
+        static_cast<float>(layer.mImageHeight)},
       textBrush.get());
     winrt::check_hresult(renderTarget->EndDraw());
     renderTarget->Flush();
@@ -197,7 +190,7 @@ int main() {
 
     auto idx = shm.GetNextTextureIndex();
     auto key = it.mMutexKey;
-    shm.Update(config);
+    shm.Update(config, {layer});
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");
   return 0;
