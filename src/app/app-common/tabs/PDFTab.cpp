@@ -23,7 +23,9 @@
 #include <OpenKneeboard/PDFTab.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
+#include <fmt/chrono.h>
 #include <inttypes.h>
 #include <shims/winrt.h>
 #include <windows.data.pdf.interop.h>
@@ -31,6 +33,7 @@
 #include <winrt/windows.foundation.h>
 #include <winrt/windows.storage.h>
 
+#include <chrono>
 #include <nlohmann/json.hpp>
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFOutlineDocumentHelper.hh>
@@ -237,9 +240,47 @@ void PDFTab::Reload() {
   }}.detach();
   std::thread {[this] {
     SetThreadDescription(GetCurrentThread(), L"PDFTab QPDF Thread");
-    const auto pathStr = to_utf8(p->mPath);
+    const auto startTime = std::chrono::steady_clock::now();
+    scope_guard timer([startTime]() {
+      const auto endTime = std::chrono::steady_clock::now();
+      dprintf(
+        "QPDF processing time: {}ms",
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+          endTime - startTime));
+    });
+
+    const auto fileSize = std::filesystem::file_size(p->mPath);
+    const auto wpath = p->mPath.wstring();
+    winrt::handle file {CreateFileW(
+      wpath.c_str(),
+      GENERIC_READ,
+      FILE_SHARE_READ,
+      nullptr,
+      OPEN_EXISTING,
+      FILE_ATTRIBUTE_NORMAL,
+      NULL)};
+    if (!file) {
+      dprint("Failed to open PDF with CreateFileW");
+      return;
+    }
+    winrt::handle mapping {CreateFileMappingW(
+      file.get(),
+      nullptr,
+      PAGE_READONLY,
+      fileSize >> 32,
+      static_cast<DWORD>(fileSize),
+      nullptr)};
+    if (!mapping) {
+      dprint("Failed to create file mapping of PDF");
+      return;
+    }
+    auto fileView = MapViewOfFile(mapping.get(), FILE_MAP_READ, 0, 0, fileSize);
+    scope_guard fileViewGuard([fileView]() { UnmapViewOfFile(fileView); });
+
     QPDF qpdf;
-    qpdf.processFile(pathStr.c_str());
+    auto path = to_utf8(wpath);
+    qpdf.processMemoryFile(
+      path.c_str(), reinterpret_cast<const char*>(fileView), fileSize);
 
     // Page outlines/TOC
     std::map<QPDFObjGen, uint16_t> pageIndices;
@@ -262,6 +303,12 @@ void PDFTab::Reload() {
       }
     }
     p->mNavigationLoaded = true;
+
+    const auto outlineTime
+      = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - startTime);
+    dprintf("QPDF outline time: {}ms", outlineTime);
+
     this->evAvailableFeaturesChangedEvent.EmitFromMainThread();
 
     auto pageHyperlinkData = FindAllHyperlinks(qpdf);
