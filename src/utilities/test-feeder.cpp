@@ -176,7 +176,7 @@ int main() {
     const auto bufferIndex = shm.GetNextTextureIndex();
     for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
       renderTarget->BeginDraw();
-      renderTarget->Clear(colors[frames % 4]);
+      renderTarget->Clear(colors[(frames + layerIndex) % 4]);
       auto message = fmt::format(
         L"This Way Up\nLayer {} of {}", layerIndex + 1, MaxLayers);
       renderTarget->DrawTextW(
@@ -196,7 +196,6 @@ int main() {
       device->CreateShaderResourceView(canvas.get(), nullptr, srv.put());
       copier.SetSourceTexture(srv.get());
 
-      frames++;
       auto& it = resources.at(layerIndex).at(bufferIndex);
       winrt::check_hresult(it.mMutex->AcquireSync(it.mMutexKey, INFINITE));
 
@@ -208,6 +207,7 @@ int main() {
       it.mMutexKey = shm.GetNextTextureKey();
       it.mMutex->ReleaseSync(it.mMutexKey);
     }
+    frames++;
 
     shm.Update(config, {layer, secondLayer});
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
