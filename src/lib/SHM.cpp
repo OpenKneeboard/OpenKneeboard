@@ -227,7 +227,7 @@ std::wstring SharedTextureName(
   uint8_t layerIndex,
   uint32_t sequenceNumber) {
   return fmt::format(
-    L"Local\\{}-texture-h{}-c{}-{:x}-{}-{}",
+    L"Local\\{}-texture-h{}-c{}-s{:x}-l{}-b{}",
     ProjectNameW,
     Header::VERSION,
     Config::VERSION,
