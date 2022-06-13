@@ -33,10 +33,6 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     ID3D11Device*);
   ~OpenXRD3D11Kneeboard();
 
-  virtual XrResult xrEndFrame(
-    XrSession session,
-    const XrFrameEndInfo* frameEndInfo) override;
-
  protected:
   virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) override;
   virtual bool Render(
@@ -46,12 +42,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const VRKneeboard::RenderParameters&) override;
 
  private:
-  void Render(const SHM::Snapshot&, const VRKneeboard::RenderParameters&);
-
-  SHM::Reader mSHM;
   ID3D11Device* mDevice = nullptr;
-
-  XrSwapchain mSwapchain = nullptr;
 
   std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
     mRenderTargetViews;

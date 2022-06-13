@@ -50,6 +50,8 @@ OpenXRKneeboard::OpenXRKneeboard(
   const std::shared_ptr<OpenXRNext>& next)
   : mOpenXR(next) {
   dprintf("{}", __FUNCTION__);
+  mSwapchains.fill(nullptr);
+
   XrReferenceSpaceCreateInfo referenceSpace {
     .type = XR_TYPE_REFERENCE_SPACE_CREATE_INFO,
     .next = nullptr,
@@ -82,6 +84,93 @@ OpenXRKneeboard::~OpenXRKneeboard() {
   if (mViewSpace) {
     mOpenXR->xrDestroySpace(mViewSpace);
   }
+
+  for (auto swapchain: mSwapchains) {
+    if (swapchain) {
+      mOpenXR->xrDestroySwapchain(swapchain);
+    }
+  }
+}
+
+OpenXRNext* OpenXRKneeboard::GetOpenXR() {
+  return mOpenXR.get();
+}
+
+XrResult OpenXRKneeboard::xrEndFrame(
+  XrSession session,
+  const XrFrameEndInfo* frameEndInfo) {
+  if (frameEndInfo->layerCount == 0) {
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+
+  auto snapshot = mSHM.MaybeGet();
+  if (!snapshot.IsValid()) {
+    // Don't spam: expected, if OpenKneeboard isn't running
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+
+  auto config = snapshot.GetConfig();
+  const uint8_t layerIndex = 0;
+  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+  if (!layer.IsValid()) {
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+
+  auto& swapchain = mSwapchains.at(layerIndex);
+  if (!swapchain) {
+    swapchain = this->CreateSwapChain(session, layerIndex);
+    if (!swapchain) {
+      dprint("Failed to create swapchain");
+      OPENKNEEBOARD_BREAK;
+      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
+  }
+
+  const auto displayTime = frameEndInfo->displayTime;
+  const auto renderParams
+    = this->GetRenderParameters(snapshot, layer, this->GetHMDPose(displayTime));
+  this->Render(swapchain, snapshot, layerIndex, renderParams);
+
+  std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
+  std::copy(
+    frameEndInfo->layers,
+    &frameEndInfo->layers[frameEndInfo->layerCount],
+    std::back_inserter(nextLayers));
+
+  static_assert(
+    SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
+    "Use premultiplied alpha in shared texture, or pass "
+    "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
+  XrCompositionLayerQuad xrLayer {
+		.type = XR_TYPE_COMPOSITION_LAYER_QUAD,
+		.next = nullptr,
+		.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
+			| XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT,
+		.space = mLocalSpace,
+		.eyeVisibility = XR_EYE_VISIBILITY_BOTH,
+		.subImage = {
+			.swapchain = swapchain,
+			.imageRect = {
+				{0, 0},
+				{static_cast<int32_t>(layer.mImageWidth), static_cast<int32_t>(layer.mImageHeight)},
+			},
+			.imageArrayIndex = 0,
+		},
+		.pose = this->GetXrPosef(renderParams.mKneeboardPose),
+		.size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
+	};
+  nextLayers.push_back(
+    reinterpret_cast<XrCompositionLayerBaseHeader*>(&xrLayer));
+
+  XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
+  nextFrameEndInfo.layers = nextLayers.data();
+  nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
+
+  auto nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
+  if (nextResult != XR_SUCCESS) {
+    OPENKNEEBOARD_BREAK;
+  }
+  return nextResult;
 }
 
 OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {

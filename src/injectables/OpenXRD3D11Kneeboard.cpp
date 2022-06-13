@@ -42,13 +42,9 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   : OpenXRKneeboard(session, next), mDevice(device) {
   dprintf("{}", __FUNCTION__);
   const uint8_t layerIndex = 0;
-  mSwapchain = this->CreateSwapChain(session, layerIndex);
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
-  if (mSwapchain) {
-    mOpenXR->xrDestroySwapchain(mSwapchain);
-  }
 }
 
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
@@ -68,7 +64,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     .mipCount = 1,
   };
 
-  auto oxr = mOpenXR.get();
+  auto oxr = this->GetOpenXR();
 
   XrSwapchain swapchain {nullptr};
 
@@ -138,7 +134,7 @@ bool OpenXRD3D11Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  auto oxr = mOpenXR.get();
+  auto oxr = this->GetOpenXR();
 
   auto config = snapshot.GetConfig();
   uint32_t textureIndex;
@@ -180,81 +176,6 @@ bool OpenXRD3D11Kneeboard::Render(
     dprintf("Failed to release swapchain: {}", nextResult);
   }
   return true;
-}
-
-XrResult OpenXRD3D11Kneeboard::xrEndFrame(
-  XrSession session,
-  const XrFrameEndInfo* frameEndInfo) {
-  if (frameEndInfo->layerCount == 0) {
-    return mOpenXR->xrEndFrame(session, frameEndInfo);
-  }
-
-  auto snapshot = mSHM.MaybeGet();
-  if (!mSwapchain) {
-    throw std::logic_error("Missing swapchain");
-    return mOpenXR->xrEndFrame(session, frameEndInfo);
-  }
-  if (!snapshot.IsValid()) {
-    // Don't spam: expected, if OpenKneeboard isn't running
-    return mOpenXR->xrEndFrame(session, frameEndInfo);
-  }
-
-  auto config = snapshot.GetConfig();
-  const uint8_t layerIndex = 0;
-  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
-
-  const auto displayTime = frameEndInfo->displayTime;
-  const auto renderParams
-    = this->GetRenderParameters(snapshot, layer, this->GetHMDPose(displayTime));
-  this->Render(snapshot, renderParams);
-
-  std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
-  std::copy(
-    frameEndInfo->layers,
-    &frameEndInfo->layers[frameEndInfo->layerCount],
-    std::back_inserter(nextLayers));
-
-  static_assert(
-    SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
-    "Use premultiplied alpha in shared texture, or pass "
-    "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
-  XrCompositionLayerQuad xrLayer {
-    .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
-    .next = nullptr,
-    .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
-      | XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT,
-    .space = mLocalSpace,
-    .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
-    .subImage = {
-      .swapchain = mSwapchain,
-      .imageRect = {
-        {0, 0},
-        {static_cast<int32_t>(layer.mImageWidth), static_cast<int32_t>(layer.mImageHeight)},
-      },
-      .imageArrayIndex = 0,
-    },
-    .pose = this->GetXrPosef(renderParams.mKneeboardPose),
-    .size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
-  };
-  nextLayers.push_back(
-    reinterpret_cast<XrCompositionLayerBaseHeader*>(&xrLayer));
-
-  XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
-  nextFrameEndInfo.layers = nextLayers.data();
-  nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
-
-  auto nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
-  if (nextResult != XR_SUCCESS) {
-    OPENKNEEBOARD_BREAK;
-  }
-  return nextResult;
-}
-
-void OpenXRD3D11Kneeboard::Render(
-  const SHM::Snapshot& snapshot,
-  const VRKneeboard::RenderParameters& params) {
-  const uint8_t layerIndex = 0;
-  this->Render(mSwapchain, snapshot, layerIndex, params);
 }
 
 }// namespace OpenKneeboard

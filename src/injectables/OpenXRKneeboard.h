@@ -21,6 +21,7 @@
 #pragma once
 
 #include <OpenKneeboard/VRKneeboard.h>
+#include <OpenKneeboard/config.h>
 #include <openxr/openxr.h>
 
 namespace OpenKneeboard {
@@ -33,20 +34,9 @@ class OpenXRKneeboard : public VRKneeboard {
   OpenXRKneeboard(XrSession, const std::shared_ptr<OpenXRNext>&);
   virtual ~OpenXRKneeboard();
 
-  virtual XrResult xrEndFrame(
-    XrSession session,
-    const XrFrameEndInfo* frameEndInfo)
-    = 0;
+  XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo);
 
  protected:
-  std::shared_ptr<OpenXRNext> mOpenXR;
-  XrSpace mLocalSpace = nullptr;
-  XrSpace mViewSpace = nullptr;
-
-  Pose GetHMDPose(XrTime displayTime);
-  YOrigin GetYOrigin() override;
-  static XrPosef GetXrPosef(const Pose& pose);
-
   virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) = 0;
   virtual bool Render(
     XrSwapchain swapchain,
@@ -54,6 +44,21 @@ class OpenXRKneeboard : public VRKneeboard {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&)
     = 0;
+
+  OpenXRNext* GetOpenXR();
+
+ private:
+  std::shared_ptr<OpenXRNext> mOpenXR;
+
+  std::array<XrSwapchain, MaxLayers> mSwapchains;
+  SHM::Reader mSHM;
+
+  XrSpace mLocalSpace = nullptr;
+  XrSpace mViewSpace = nullptr;
+
+  Pose GetHMDPose(XrTime displayTime);
+  YOrigin GetYOrigin() override;
+  static XrPosef GetXrPosef(const Pose& pose);
 };
 
 }// namespace OpenKneeboard
