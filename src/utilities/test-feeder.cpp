@@ -22,6 +22,7 @@
 #include <D3d11.h>
 #include <DirectXTK/PostProcess.h>
 #include <OpenKneeboard/ConsoleLoopCondition.h>
+#include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -31,6 +32,7 @@
 #include <shims/winrt.h>
 
 #include <cmath>
+#include <thread>
 
 #pragma comment(lib, "D3d11.lib")
 #pragma comment(lib, "D2d1.lib")
@@ -46,6 +48,11 @@ struct SharedTextureResources {
 };
 
 int main() {
+  std::jthread OpenVRThread {[](std::stop_token stopToken) {
+    SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
+    OpenVRKneeboard().Run(stopToken);
+  }};
+
   D2D1_COLOR_F colors[] = {
     {1.0f, 0.0f, 0.0f, 1.0f},// red
     {0.0f, 1.0f, 0.0f, 1.0f},// green

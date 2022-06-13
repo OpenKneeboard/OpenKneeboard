@@ -16,24 +16,25 @@ string(
 
 set(
   TARGET_FILE_LIBRARIES
-  OpenKneeboard::App::Common
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-D3D11
   OpenKneeboard-DXResources
+  OpenKneeboard-FilesDiffer
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
-  OpenKneeboard-RayIntersectsRect
+  OpenKneeboard-OpenVRKneeboard
   OpenKneeboard-OpenXRMode
-  OpenKneeboard-VRKneeboard
-  OpenKneeboard-FilesDiffer
+  OpenKneeboard-RayIntersectsRect
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-SHM
   OpenKneeboard-UTF8
+  OpenKneeboard-VRKneeboard
   OpenKneeboard-dprint
   OpenKneeboard-games
   OpenKneeboard-scope_guard
   OpenKneeboard-tablets
   OpenKneeboard-version
+  OpenKneeboard::App::Common
   ThirdParty::fmt
 )
 

@@ -16,6 +16,7 @@ target_link_libraries(
 	OpenKneeboard-GetSystemColor
 	OpenKneeboard-RayIntersectsRect
 	OpenKneeboard-RuntimeFiles
+	OpenKneeboard-OpenVRKneeboard
 	OpenKneeboard-scope_guard
 	OpenKneeboard-SHM
 	OpenKneeboard-OpenXRMode

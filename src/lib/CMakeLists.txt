@@ -169,3 +169,20 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   ThirdParty::fmt
 )
+
+add_library(OpenKneeboard-OpenVRKneeboard STATIC OpenVRKneeboard.cpp)
+target_link_libraries(
+  OpenKneeboard-OpenVRKneeboard
+  PUBLIC
+  OpenKneeboard-VRKneeboard
+  OpenKneeboard-config
+  ThirdParty::DirectXTK
+  ThirdParty::OpenVR
+  _libheaders
+)
+target_link_libraries(
+  OpenKneeboard-OpenVRKneeboard
+  PRIVATE
+  OpenKneeboard-D3D11
+  OpenKneeboard-dprint
+)

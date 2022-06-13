@@ -29,8 +29,18 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-consolelib
   OpenKneeboard-dprint
+  OpenKneeboard-OpenVRKneeboard
   OpenKneeboard-SHM
   ThirdParty::DirectXTK
+)
+
+add_custom_command(
+  TARGET test-feeder
+  POST_BUILD
+  COMMAND
+  "${CMAKE_COMMAND}" -E copy_if_different
+  "$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>"
+  "$<TARGET_FILE_DIR:test-feeder>/openvr_api.dll"
 )
 
 add_remote_control_executable(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
