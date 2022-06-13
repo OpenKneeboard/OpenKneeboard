@@ -72,8 +72,12 @@ OpenVRKneeboard::OpenVRKneeboard() {
     .CPUAccessFlags = {},
     .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
   };
-  winrt::check_hresult(
-    device->CreateTexture2D(&desc, nullptr, mOpenVRTexture.put()));
+
+  for (uint8_t i = 0; i < MaxLayers; ++i) {
+    winrt::check_hresult(device->CreateTexture2D(
+      &desc, nullptr, mLayers.at(i).mOpenVRTexture.put()));
+  }
+
   desc.MiscFlags = {};
   desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
   winrt::check_hresult(
@@ -100,7 +104,7 @@ void OpenVRKneeboard::Reset() {
   vr::VR_Shutdown();
   mIVRSystem = {};
   mIVROverlay = {};
-  mOverlay = {};
+  mLayers = {};
 }
 
 static bool overlay_check(vr::EVROverlayError err, const char* method) {
@@ -124,6 +128,7 @@ bool OpenVRKneeboard::InitializeOpenVR() {
     this->Reset(); \
     return false; \
   }
+
   vr::EVRInitError err;
   mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
   if (!mIVRSystem) {
@@ -137,26 +142,31 @@ bool OpenVRKneeboard::InitializeOpenVR() {
   }
   dprint("Initialized OpenVR overlay system");
 
-  CHECK(CreateOverlay, ProjectNameA, "OpenKneeboard", &mOverlay);
+  for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
+    auto& layerData = mLayers.at(layerIndex);
+    auto key = fmt::format("{}.{}", ProjectNameA, layerIndex);
+    auto name = fmt::format("OpenKneeboard {}", layerIndex + 1);
 
-  dprintf("Created OpenVR overlay");
+    CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerData.mOverlay);
 
-  HANDLE handle = INVALID_HANDLE_VALUE;
-  winrt::check_hresult(
-    mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(&handle));
-  vr::Texture_t vrt {
-    .handle = handle,
-    .eType = vr::TextureType_DXGISharedHandle,
-    .eColorSpace = vr::ColorSpace_Auto,
-  };
+    dprintf("Created OpenVR overlay {}", layerIndex);
 
-  CHECK(SetOverlayTexture, mOverlay, &vrt);
-  CHECK(
-    SetOverlayFlag,
-    mOverlay,
-    vr::VROverlayFlags_IsPremultiplied,
-    SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
-  CHECK(ShowOverlay, mOverlay);
+    HANDLE handle = INVALID_HANDLE_VALUE;
+    winrt::check_hresult(
+      layerData.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(&handle));
+    vr::Texture_t vrt {
+      .handle = handle,
+      .eType = vr::TextureType_DXGISharedHandle,
+      .eColorSpace = vr::ColorSpace_Auto,
+    };
+
+    CHECK(SetOverlayTexture, layerData.mOverlay, &vrt);
+    CHECK(
+      SetOverlayFlag,
+      layerData.mOverlay,
+      vr::VROverlayFlags_IsPremultiplied,
+      SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
+  }
 #undef CHECK
   return true;
 }
@@ -173,11 +183,14 @@ void OpenVRKneeboard::Tick() {
   }
 
   vr::VREvent_t event;
-  while (mIVROverlay->PollNextOverlayEvent(mOverlay, &event, sizeof(event))) {
-    if (event.eventType == vr::VREvent_Quit) {
-      dprint("OpenVR shutting down, detaching");
-      this->Reset();
-      return;
+  for (const auto& layer: mLayers) {
+    while (mIVROverlay->PollNextOverlayEvent(
+      layer.mOverlay, &event, sizeof(event))) {
+      if (event.eventType == vr::VREvent_Quit) {
+        dprint("OpenVR shutting down, detaching");
+        this->Reset();
+        return;
+      }
     }
   }
 
@@ -185,79 +198,98 @@ void OpenVRKneeboard::Tick() {
 
   auto snapshot = mSHM.MaybeGet();
   if (!snapshot.IsValid()) {
-    if (mVisible) {
-      mIVROverlay->HideOverlay(mOverlay);
-      mVisible = false;
-    }
     return;
   }
 
-  if (!mVisible) {
-    mVisible = true;
-    mIVROverlay->ShowOverlay(mOverlay);
-  }
+  const auto displayTime = this->GetDisplayTime();
+  const auto hmdPose = this->GetHMDPose(displayTime);
 
   const auto config = snapshot.GetConfig();
-  const uint8_t layerIndex = 0;
-  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
-  const auto displayTime = this->GetDisplayTime();
-  const auto renderParams
-    = this->GetRenderParameters(snapshot, layer, this->GetHMDPose(displayTime));
 
-  CHECK(SetOverlayWidthInMeters, mOverlay, renderParams.mKneeboardSize.x);
+  for (uint8_t layerIndex = 0; layerIndex < snapshot.GetLayerCount();
+       ++layerIndex) {
+    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+    auto& layerData = mLayers.at(layerIndex);
+    if (!layer.IsValid()) {
+      if (layerData.mVisible) {
+        CHECK(HideOverlay, layerData.mOverlay);
+        layerData.mVisible = false;
+      }
+      continue;
+    }
 
-  if (renderParams.mCacheKey == mCacheKey) {
-    return;
+    const auto renderParams
+      = this->GetRenderParameters(snapshot, layer, hmdPose);
+
+    if (renderParams.mCacheKey == layerData.mCacheKey) {
+      continue;
+    }
+    CHECK(
+      SetOverlayWidthInMeters,
+      layerData.mOverlay,
+      renderParams.mKneeboardSize.x);
+
+    // Transpose to fit OpenVR's in-memory layout
+    // clang-format off
+    const auto transform = (
+      Matrix::CreateFromQuaternion(renderParams.mKneeboardPose.mOrientation)
+      * Matrix::CreateTranslation(renderParams.mKneeboardPose.mPosition)
+    ).Transpose();
+    // clang-format on
+
+    CHECK(
+      SetOverlayTransformAbsolute,
+      layerData.mOverlay,
+      vr::TrackingUniverseStanding,
+      reinterpret_cast<const vr::HmdMatrix34_t*>(&transform));
+
+    // Copy the texture as for interoperability with other systems
+    // (e.g. DirectX12) we use SHARED_NTHANDLE, but SteamVR doesn't
+    // support that - so we need to use a second texture with different
+    // sharing parameters.
+    //
+    // Also lets us apply opacity here, rather than needing another
+    // OpenVR call
+
+    {
+      auto openKneeboardTexture
+        = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
+
+      // non-atomic paint to buffer...
+      D3D11::CopyTextureWithOpacity(
+        mD3D.get(),
+        openKneeboardTexture.GetShaderResourceView(),
+        mRenderTargetView.get(),
+        renderParams.mKneeboardOpacity);
+
+      // ... then atomic copy to OpenVR texture
+      winrt::com_ptr<ID3D11DeviceContext> ctx;
+      mD3D->GetImmediateContext(ctx.put());
+      ctx->CopyResource(layerData.mOpenVRTexture.get(), mBufferTexture.get());
+    }
+
+    vr::VRTextureBounds_t textureBounds {
+      0.0f,
+      0.0f,
+      static_cast<float>(layer.mImageWidth) / TextureWidth,
+      static_cast<float>(layer.mImageHeight) / TextureHeight,
+    };
+
+    CHECK(SetOverlayTextureBounds, layerData.mOverlay, &textureBounds);
+
+    if (!layerData.mVisible) {
+      CHECK(ShowOverlay, layerData.mOverlay);
+      layerData.mVisible = true;
+    }
+
+    layerData.mCacheKey = renderParams.mCacheKey;
   }
-
-  // Transpose to fit OpenVR's in-memory layout
-  // clang-format off
-  const auto transform = (
-    Matrix::CreateFromQuaternion(renderParams.mKneeboardPose.mOrientation)
-    * Matrix::CreateTranslation(renderParams.mKneeboardPose.mPosition)
-  ).Transpose();
-  // clang-format on
-
-  CHECK(
-    SetOverlayTransformAbsolute,
-    mOverlay,
-    vr::TrackingUniverseStanding,
-    reinterpret_cast<const vr::HmdMatrix34_t*>(&transform));
-
-  // Copy the texture as for interoperability with other systems
-  // (e.g. DirectX12) we use SHARED_NTHANDLE, but SteamVR doesn't
-  // support that - so we need to use a second texture with different
-  // sharing parameters.
-  //
-  // Also lets us apply opacity here, rather than needing another
-  // OpenVR call
-
-  {
-    auto openKneeboardTexture
-      = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
-
-    // non-atomic paint to buffer...
-    D3D11::CopyTextureWithOpacity(
-      mD3D.get(),
-      openKneeboardTexture.GetShaderResourceView(),
-      mRenderTargetView.get(),
-      renderParams.mKneeboardOpacity);
-
-    // ... then atomic copy to OpenVR texture
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    mD3D->GetImmediateContext(ctx.put());
-    ctx->CopyResource(mOpenVRTexture.get(), mBufferTexture.get());
+  for (uint8_t i = snapshot.GetLayerCount(); i < MaxLayers; ++i) {
+    if (mLayers.at(i).mVisible) {
+      CHECK(HideOverlay, mLayers.at(i).mOverlay);
+      mLayers.at(i).mVisible = false;
+    }
   }
-
-  vr::VRTextureBounds_t textureBounds {
-    0.0f,
-    0.0f,
-    static_cast<float>(layer.mImageWidth) / TextureWidth,
-    static_cast<float>(layer.mImageHeight) / TextureHeight,
-  };
-
-  CHECK(SetOverlayTextureBounds, mOverlay, &textureBounds);
-  mCacheKey = renderParams.mCacheKey;
 
 #undef CHECK
 }

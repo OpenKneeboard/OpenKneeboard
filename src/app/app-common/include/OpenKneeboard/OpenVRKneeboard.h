@@ -22,6 +22,7 @@
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRKneeboard.h>
+#include <OpenKneeboard/config.h>
 #include <d3d11_1.h>
 #include <openvr.h>
 #include <shims/winrt.h>
@@ -54,16 +55,20 @@ class OpenVRKneeboard final : private VRKneeboard {
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
-  vr::VROverlayHandle_t mOverlay {};
-  bool mVisible = true;
   SHM::Reader mSHM;
 
   // Paint to buffer texture with variable opacity,
   // then atomically copy to OpenVR texture
   winrt::com_ptr<ID3D11Texture2D> mBufferTexture;
-  winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
-  uint64_t mCacheKey = ~(0ui64);
+
+  struct LayerData {
+    bool mVisible = false;
+    winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
+    vr::VROverlayHandle_t mOverlay {};
+    uint64_t mCacheKey = ~(0ui64);
+  };
+  std::array<LayerData, MaxLayers> mLayers;
 };
 
 }// namespace OpenKneeboard
