@@ -106,7 +106,8 @@ int main() {
   winrt::com_ptr<ID2D1SolidColorBrush> textBrush;
 
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
-  std::array<SharedTextureResources, TextureCount> resources;
+  std::array<std::array<SharedTextureResources, TextureCount>, MaxLayers>
+    resources;
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = layer.mImageWidth,
     .Height = layer.mImageHeight,
@@ -136,20 +137,22 @@ int main() {
   textureDesc.Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT;
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
-  const uint8_t layerIndex = 0;
-  for (auto i = 0; i < TextureCount; ++i) {
-    auto& it = resources.at(i);
-    device->CreateTexture2D(&textureDesc, nullptr, it.mTexture.put());
-    device->CreateRenderTargetView(
-      it.mTexture.get(), nullptr, it.mTextureRTV.put());
+  for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
+    auto& layerIt = resources.at(layerIndex);
+    for (auto bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
+      auto& bufferIt = layerIt.at(bufferIndex);
+      device->CreateTexture2D(&textureDesc, nullptr, bufferIt.mTexture.put());
+      device->CreateRenderTargetView(
+        bufferIt.mTexture.get(), nullptr, bufferIt.mTextureRTV.put());
 
-    HANDLE sharedHandle = INVALID_HANDLE_VALUE;
-    auto textureName
-      = SHM::SharedTextureName(shm.GetSessionID(), layerIndex, i);
-    it.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
-      nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
+      HANDLE sharedHandle = INVALID_HANDLE_VALUE;
+      auto textureName
+        = SHM::SharedTextureName(shm.GetSessionID(), layerIndex, bufferIndex);
+      bufferIt.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+        nullptr, DXGI_SHARED_RESOURCE_READ, textureName.c_str(), &sharedHandle);
 
-    it.mMutex = it.mTexture.as<IDXGIKeyedMutex>();
+      bufferIt.mMutex = bufferIt.mTexture.as<IDXGIKeyedMutex>();
+    }
   }
 
   D3D11_VIEWPORT viewport {0, 0, layer.mImageWidth, layer.mImageHeight, 0, 1};
@@ -158,41 +161,43 @@ int main() {
   ctx->PSSetShaderResources(0, 1, &nullSRV);
 
   do {
-    renderTarget->BeginDraw();
-    renderTarget->Clear(colors[frames % 4]);
-    std::wstring message(L"This Way Up");
-    renderTarget->DrawTextW(
-      message.data(),
-      static_cast<UINT32>(message.length()),
-      textFormat.get(),
-      D2D1_RECT_F {
-        0.0f,
-        0.0f,
-        static_cast<float>(layer.mImageWidth),
-        static_cast<float>(layer.mImageHeight)},
-      textBrush.get());
-    winrt::check_hresult(renderTarget->EndDraw());
-    renderTarget->Flush();
+    const auto bufferIndex = shm.GetNextTextureIndex();
+    for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
+      renderTarget->BeginDraw();
+      renderTarget->Clear(colors[frames % 4]);
+      auto message = fmt::format(
+        L"This Way Up\nLayer {} of {}", layerIndex + 1, MaxLayers);
+      renderTarget->DrawTextW(
+        message.data(),
+        static_cast<UINT32>(message.length()),
+        textFormat.get(),
+        D2D1_RECT_F {
+          0.0f,
+          0.0f,
+          static_cast<float>(layer.mImageWidth),
+          static_cast<float>(layer.mImageHeight)},
+        textBrush.get());
+      winrt::check_hresult(renderTarget->EndDraw());
+      renderTarget->Flush();
 
-    winrt::com_ptr<ID3D11ShaderResourceView> srv;
-    device->CreateShaderResourceView(canvas.get(), nullptr, srv.put());
-    copier.SetSourceTexture(srv.get());
+      winrt::com_ptr<ID3D11ShaderResourceView> srv;
+      device->CreateShaderResourceView(canvas.get(), nullptr, srv.put());
+      copier.SetSourceTexture(srv.get());
 
-    frames++;
-    auto& it = resources.at(shm.GetNextTextureIndex());
-    winrt::check_hresult(it.mMutex->AcquireSync(it.mMutexKey, INFINITE));
+      frames++;
+      auto& it = resources.at(layerIndex).at(bufferIndex);
+      winrt::check_hresult(it.mMutex->AcquireSync(it.mMutexKey, INFINITE));
 
-    auto rtv = it.mTextureRTV.get();
-    ctx->OMSetRenderTargets(1, &rtv, nullptr);
-    copier.Process(ctx.get());
-    ctx->Flush();
+      auto rtv = it.mTextureRTV.get();
+      ctx->OMSetRenderTargets(1, &rtv, nullptr);
+      copier.Process(ctx.get());
+      ctx->Flush();
 
-    it.mMutexKey = shm.GetNextTextureKey();
-    it.mMutex->ReleaseSync(it.mMutexKey);
+      it.mMutexKey = shm.GetNextTextureKey();
+      it.mMutex->ReleaseSync(it.mMutexKey);
+    }
 
-    auto idx = shm.GetNextTextureIndex();
-    auto key = it.mMutexKey;
-    shm.Update(config, {layer});
+    shm.Update(config, {MaxLayers, layer});
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");
   return 0;
