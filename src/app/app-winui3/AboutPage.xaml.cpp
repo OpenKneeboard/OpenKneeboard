@@ -187,8 +187,16 @@ winrt::fire_and_forget AboutPage::OnExportClick(
   }
 
   auto sep = "\n\n--------------------------------\n\n";
+
+  auto now = std::chrono::time_point_cast<std::chrono::seconds>(
+    std::chrono::system_clock::now());
   std::ofstream(std::filesystem::path {std::wstring_view {path}})
-    << mVersionClipboardData << sep << mGameEventsClipboardData << sep
+    << std::format(
+         "Local time: {0:%F} {0:%T%z}\n"
+         "UTC time:   {1:%F} {1:%T}",
+         std::chrono::zoned_time(std::chrono::current_zone(), now),
+         std::chrono::zoned_time("UTC", now))
+    << sep << mVersionClipboardData << sep << mGameEventsClipboardData << sep
     << winrt::to_string(mDPrintClipboardData) << std::endl;
 }
 
