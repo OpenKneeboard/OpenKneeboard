@@ -23,6 +23,8 @@
 #include "pch.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
+
 #include <string>
 
 #include "AboutPage.g.h"
@@ -30,12 +32,22 @@
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct AboutPage : AboutPageT<AboutPage> {
+struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
   AboutPage();
-  void OnCopyClick(const IInspectable&, const RoutedEventArgs&) noexcept;
+
+  void OnCopyVersionDataClick(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+  void OnCopyGameEventsClick(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
 
  private:
-  std::string mData;
+  std::string mVersionClipboardData;
+  std::string mGameEventsClipboardData;
+
+  void PopulateVersion();
+  void PopulateEvents();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
