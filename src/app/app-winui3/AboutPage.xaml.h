@@ -45,6 +45,10 @@ struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
 
   void OnDPrintLayoutChanged(const IInspectable&, const IInspectable&) noexcept;
 
+  winrt::fire_and_forget OnExportClick(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;

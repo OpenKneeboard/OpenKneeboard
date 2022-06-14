@@ -29,9 +29,13 @@
 #include <appmodel.h>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
+#include <microsoft.ui.xaml.window.h>
+#include <shobjidl.h>
 #include <time.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
+#include <winrt/windows.storage.pickers.h>
 
+#include <fstream>
 #include <string>
 
 using namespace OpenKneeboard;
@@ -151,6 +155,43 @@ void AboutPage::OnCopyGameEventsClick(
   SetClipboardText(mGameEventsClipboardData);
 }
 
+winrt::fire_and_forget AboutPage::OnExportClick(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
+  Windows::Storage::Pickers::FileSavePicker picker;
+
+  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
+  picker.SettingsIdentifier(L"openkneeboard/exportDebugInfo");
+  picker.SuggestedStartLocation(
+    Windows::Storage::Pickers::PickerLocationId::Desktop);
+
+  auto plainTextExtensions {winrt::single_threaded_vector<winrt::hstring>()};
+  plainTextExtensions.Append(L".txt");
+
+  picker.FileTypeChoices().Insert(L"Plain Text", plainTextExtensions);
+  picker.SuggestedFileName(fmt::format(
+    L"OpenKneeboard-{}.{}.{}.{}.txt",
+    Version::Major,
+    Version::Minor,
+    Version::Patch,
+    Version::Build));
+
+  auto file = co_await picker.PickSaveFileAsync();
+  if (!file) {
+    return;
+  }
+
+  auto path = file.Path();
+  if (path.empty()) {
+    return;
+  }
+
+  auto sep = "\n\n--------------------------------\n\n";
+  std::ofstream(std::filesystem::path {std::wstring_view {path}})
+    << mVersionClipboardData << sep << mGameEventsClipboardData << sep
+    << winrt::to_string(mDPrintClipboardData) << std::endl;
+}
+
 void AboutPage::OnCopyDPrintClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
@@ -160,10 +201,11 @@ void AboutPage::OnCopyDPrintClick(
 void AboutPage::PopulateEvents() {
   auto events = TroubleshootingStore::Get()->GetGameEvents();
 
-  auto message = fmt::format("Updated at {}", std::chrono::system_clock::now());
+  std::string message;
 
   if (events.empty()) {
-    message += "\n\nNo events.";
+    message
+      = fmt::format("No events as of {}", std::chrono::system_clock::now());
   }
 
   for (const auto& event: events) {

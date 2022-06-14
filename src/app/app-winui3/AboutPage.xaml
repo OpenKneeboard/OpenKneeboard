@@ -9,7 +9,16 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <ScrollViewer>
     <StackPanel Orientation="Vertical" Margin="12" Spacing="12">
-      <TextBlock Style="{ThemeResource TitleTextBlockStyle}">About OpenKneeboard</TextBlock>
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock
+          Grid.Column="0"
+          Style="{ThemeResource TitleTextBlockStyle}">
+          About OpenKneeboard
+        </TextBlock>
+        <HyperlinkButton Grid.Column="1" Click="OnExportClick">
+          Save As...
+        </HyperlinkButton>
+      </Grid>
       <Expander
         IsExpanded="True"
         HorizontalAlignment="Stretch"
