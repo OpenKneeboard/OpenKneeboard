@@ -52,7 +52,6 @@ std::wstring SharedTextureName(
 struct Config final {
   static constexpr uint16_t VERSION = 2;
 
-  HWND mFeederWindow {0};
   VRRenderConfig mVR;
   FlatConfig mFlat;
 };

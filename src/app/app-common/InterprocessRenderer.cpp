@@ -74,7 +74,6 @@ void InterprocessRenderer::CopyPixelsToSHM() {
   auto usedSize = mKneeboard->GetCanvasSize();
 
   SHM::Config config {
-    .mFeederWindow = mFeederWindow,
     .mVR = mKneeboard->GetVRConfig(),
     .mFlat = mKneeboard->GetFlatConfig(),
   };
@@ -91,10 +90,8 @@ void InterprocessRenderer::CopyPixelsToSHM() {
 }
 
 InterprocessRenderer::InterprocessRenderer(
-  HWND feederWindow,
   const DXResources& dxr,
   KneeboardState* kneeboard) {
-  mFeederWindow = feederWindow;
   mDXR = dxr;
   mKneeboard = kneeboard;
   mErrorRenderer

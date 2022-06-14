@@ -139,5 +139,6 @@ target_link_libraries(
   detours-ext
   OpenKneeboard-dprint
   OpenKneeboard-FindMainWindow
-  OpenKneeboard-SHM
-  OpenKneeboard-tablets)
+  OpenKneeboard-GetMainHWND
+  OpenKneeboard-tablets
+)

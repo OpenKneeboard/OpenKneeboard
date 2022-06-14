@@ -42,7 +42,7 @@ class TabAction;
 class InterprocessRenderer final : private EventReceiver {
  public:
   InterprocessRenderer() = delete;
-  InterprocessRenderer(HWND feederWindow, const DXResources&, KneeboardState*);
+  InterprocessRenderer(const DXResources&, KneeboardState*);
   ~InterprocessRenderer();
 
  private:
@@ -54,7 +54,6 @@ class InterprocessRenderer final : private EventReceiver {
   };
 
   winrt::apartment_context mUIThread;
-  HWND mFeederWindow;
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
 
@@ -67,9 +66,8 @@ class InterprocessRenderer final : private EventReceiver {
   winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
   winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
 
-  std::array<
-    std::array<SharedTextureResources, TextureCount>,
-    MaxLayers> mResources;
+  std::array<std::array<SharedTextureResources, TextureCount>, MaxLayers>
+    mResources;
 
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;

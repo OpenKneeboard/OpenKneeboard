@@ -21,6 +21,7 @@ set(
   OpenKneeboard-DXResources
   OpenKneeboard-FilesDiffer
   OpenKneeboard-GameEvent
+  OpenKneeboard-GetMainHWND
   OpenKneeboard-GetSystemColor
   OpenKneeboard-OpenVRKneeboard
   OpenKneeboard-OpenXRMode

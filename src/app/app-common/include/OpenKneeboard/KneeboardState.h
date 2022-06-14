@@ -100,7 +100,6 @@ class KneeboardState final : private EventReceiver {
   void SaveSettings();
 
  private:
-  HWND mMainWindow;
   DXResources mDXResources;
   Settings mSettings {Settings::Load()};
 

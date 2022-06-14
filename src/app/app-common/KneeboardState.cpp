@@ -37,7 +37,7 @@
 namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
-  : mMainWindow(hwnd), mDXResources(dxr) {
+  : mDXResources(dxr) {
   AddEventListener(evCursorEvent, &KneeboardState::OnCursorEvent, this);
 
   if (!mSettings.NonVR.is_null()) {
@@ -58,7 +58,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
   mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.Tabs);
   mInterprocessRenderer
-    = std::make_unique<InterprocessRenderer>(hwnd, mDXResources, this);
+    = std::make_unique<InterprocessRenderer>(mDXResources, this);
 
   mTabletInput
     = std::make_unique<TabletInputAdapter>(hwnd, this, mSettings.TabletInput);
@@ -301,8 +301,8 @@ void KneeboardState::OnUserAction(UserAction action) {
       if (mInterprocessRenderer) {
         mInterprocessRenderer.reset();
       } else {
-        mInterprocessRenderer = std::make_unique<InterprocessRenderer>(
-          mMainWindow, mDXResources, this);
+        mInterprocessRenderer
+          = std::make_unique<InterprocessRenderer>(mDXResources, this);
       }
       return;
     case UserAction::PREVIOUS_TAB:

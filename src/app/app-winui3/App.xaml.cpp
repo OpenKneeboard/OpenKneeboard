@@ -24,6 +24,7 @@
 
 #include <Dbghelp.h>
 #include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
@@ -179,17 +180,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   winrt::handle mutex {
     CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
-    auto name = fmt::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectNameW);
-    winrt::handle hwndFile {
-      OpenFileMapping(PAGE_READWRITE, FALSE, name.c_str())};
-    if (!hwndFile) {
-      return 1;
-    }
-    void* mapping
-      = MapViewOfFile(hwndFile.get(), FILE_MAP_READ, 0, 0, sizeof(HWND));
-    auto hwnd = *reinterpret_cast<HWND*>(mapping);
-    UnmapViewOfFile(mapping);
-    ShowWindow(hwnd, SW_SHOWNORMAL) && SetForegroundWindow(hwnd);
+    const auto hwnd = GetMainHWND();
+    ShowWindow(*hwnd, SW_SHOWNORMAL) && SetForegroundWindow(*hwnd);
     return 0;
   }
 

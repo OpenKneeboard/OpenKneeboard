@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
@@ -54,14 +54,12 @@ class TabletProxy final {
 
   static WNDPROC mWindowProc;
   static HWND mTargetWindow;
-  static SHM::Reader mSHM;
   static std::unique_ptr<WintabTablet> mTablet;
 
   static LRESULT CALLBACK
   HookedWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
 
-SHM::Reader TabletProxy::mSHM;
 WNDPROC TabletProxy::mWindowProc;
 HWND TabletProxy::mTargetWindow;
 std::unique_ptr<WintabTablet> TabletProxy::mTablet;
@@ -142,10 +140,9 @@ LRESULT TabletProxy::HookedWindowProc(
   WPARAM wParam,
   LPARAM lParam) {
   if (hwnd == mTargetWindow && mTablet->CanProcessMessage(uMsg)) {
-    auto snapshot = mSHM.MaybeGet();
-    if (snapshot.IsValid() && snapshot.GetConfig().mFeederWindow) {
-      SendNotifyMessage(
-        snapshot.GetConfig().mFeederWindow, uMsg, wParam, lParam);
+    auto openKneeboard = OpenKneeboard::GetMainHWND();
+    if (openKneeboard) {
+      SendNotifyMessage(*openKneeboard, uMsg, wParam, lParam);
     }
     return S_OK;
   }
