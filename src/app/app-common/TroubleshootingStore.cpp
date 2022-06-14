@@ -19,10 +19,46 @@
  */
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
+#include <OpenKneeboard/dprint.h>
 
 namespace OpenKneeboard {
 
+static std::weak_ptr<TroubleshootingStore> gStore;
+
+std::shared_ptr<TroubleshootingStore> TroubleshootingStore::Get() {
+  auto shared = gStore.lock();
+  if (!shared) {
+    shared.reset(new TroubleshootingStore());
+    gStore = shared;
+  }
+  return shared;
+}
+
+class TroubleshootingStore::DPrintReceiver final
+  : public OpenKneeboard::DPrintReceiver {
+ public:
+  ~DPrintReceiver();
+
+  std::vector<DPrintEntry> GetMessages() const;
+
+  Event<DPrintEntry> evMessageReceived;
+
+ protected:
+  virtual void OnMessage(const DPrintMessage& message) override;
+
+ private:
+  std::vector<DPrintEntry> mMessages;
+};
+
 TroubleshootingStore::TroubleshootingStore() {
+  mDPrint = std::make_unique<DPrintReceiver>();
+  mDPrintThread = {[this](std::stop_token stopToken) {
+    SetThreadDescription(
+      GetCurrentThread(), L"TroubleshootingStore DPrintReceiver");
+    mDPrint->Run(stopToken);
+  }};
+
+  AddEventListener(mDPrint->evMessageReceived, this->evDPrintMessageReceived);
 }
 
 TroubleshootingStore::~TroubleshootingStore() {
@@ -44,7 +80,7 @@ void TroubleshootingStore::OnGameEvent(const GameEvent& ev) {
     entry.mValue = ev.value;
   }
 
-  evGameEventUpdated.Emit(entry);
+  evGameEventReceived.Emit(entry);
 }
 
 std::vector<TroubleshootingStore::GameEventEntry>
@@ -55,6 +91,25 @@ TroubleshootingStore::GetGameEvents() const {
     events.push_back(event);
   }
   return events;
+}
+
+TroubleshootingStore::DPrintReceiver::~DPrintReceiver() {
+}
+
+std::vector<TroubleshootingStore::DPrintEntry>
+TroubleshootingStore::DPrintReceiver::GetMessages() const {
+  return mMessages;
+}
+
+std::vector<TroubleshootingStore::DPrintEntry>
+TroubleshootingStore::GetDPrintMessages() const {
+  return mDPrint->GetMessages();
+}
+
+void TroubleshootingStore::DPrintReceiver::OnMessage(
+  const DPrintMessage& message) {
+  mMessages.push_back({std::chrono::system_clock::now(), message});
+  evMessageReceived.Emit(mMessages.back());
 }
 
 }// namespace OpenKneeboard

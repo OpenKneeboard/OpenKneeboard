@@ -41,13 +41,17 @@ struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
   void OnCopyGameEventsClick(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
+  void OnCopyDPrintClick(const IInspectable&, const RoutedEventArgs&) noexcept;
 
  private:
+  winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
   std::string mGameEventsClipboardData;
+  std::wstring mDPrintClipboardData;
 
   void PopulateVersion();
   void PopulateEvents();
+  void PopulateDPrint();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

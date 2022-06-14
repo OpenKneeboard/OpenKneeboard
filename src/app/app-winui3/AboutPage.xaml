@@ -72,6 +72,44 @@
           FontFamily="Consolas"
         />
       </Expander>
+      <Expander
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Stretch">
+        <Expander.Header>
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <FontIcon
+              Grid.Column="0"
+              Glyph="&#xE81C;"
+              FontFamily="{StaticResource SymbolThemeFontFamily}"
+              Margin="0,0,12,0"
+              VerticalAlignment="Center"
+            />
+            <TextBlock
+              Grid.Column="1"
+              Text="Debug Messages"
+              Style="{StaticResource SubtitleTextBlockStyle}"
+              VerticalAlignment="Center"
+            />
+            <Button
+              Grid.Column="3"
+              Content="Copy"
+              Click="OnCopyDPrintClick"
+              VerticalAlignment="Center"
+            />
+          </Grid>
+        </Expander.Header>
+        <ScrollViewer
+          x:Name="DPrintScroll"
+          HorizontalScrollBarVisibility="Auto">
+          <TextBlock
+            x:Name="DPrintText"
+            Style="{ThemeResource BodyTextBlockStyle}" 
+            IsTextSelectionEnabled="True"
+            FontFamily="Consolas"
+            TextWrapping="NoWrap"
+          />
+        </ScrollViewer>
+      </Expander>
     </StackPanel>
   </ScrollViewer>
 </Page>

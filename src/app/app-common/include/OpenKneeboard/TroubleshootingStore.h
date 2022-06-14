@@ -20,18 +20,20 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/dprint.h>
 
 #include <chrono>
 #include <string>
+#include <thread>
 #include <vector>
 
 namespace OpenKneeboard {
 
 struct GameEvent;
 
-class TroubleshootingStore final {
+class TroubleshootingStore final : private EventReceiver {
  public:
-  TroubleshootingStore();
+  static std::shared_ptr<TroubleshootingStore> Get();
   ~TroubleshootingStore();
 
   struct GameEventEntry {
@@ -45,14 +47,26 @@ class TroubleshootingStore final {
     std::string mValue;
   };
 
+  struct DPrintEntry {
+    std::chrono::system_clock::time_point mWhen;
+    DPrintMessage mMessage;
+  };
+
   void OnGameEvent(const GameEvent&);
 
   std::vector<GameEventEntry> GetGameEvents() const;
+  std::vector<DPrintEntry> GetDPrintMessages() const;
 
-  Event<GameEventEntry> evGameEventUpdated;
+  Event<GameEventEntry> evGameEventReceived;
+  Event<DPrintEntry> evDPrintMessageReceived;
 
  private:
+  class DPrintReceiver;
+  std::unique_ptr<DPrintReceiver> mDPrint;
+  std::jthread mDPrintThread;
   std::map<std::string, GameEventEntry> mGameEvents;
+
+  TroubleshootingStore();
 };
 
 }// namespace OpenKneeboard

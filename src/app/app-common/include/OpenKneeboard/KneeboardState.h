@@ -43,7 +43,6 @@ class InterprocessRenderer;
 class TabState;
 class TabletInputAdapter;
 class TabsList;
-class TroubleshootingStore;
 class UserInputDevice;
 
 class KneeboardState final : private EventReceiver {
@@ -100,8 +99,6 @@ class KneeboardState final : private EventReceiver {
 
   void SaveSettings();
 
-  std::shared_ptr<TroubleshootingStore> GetTroubleshootingStore() const;
-
  private:
   DXResources mDXResources;
   Settings mSettings {Settings::Load()};
@@ -122,8 +119,6 @@ class KneeboardState final : private EventReceiver {
   std::unique_ptr<InterprocessRenderer> mInterprocessRenderer;
   std::unique_ptr<DirectInputAdapter> mDirectInput;
   std::unique_ptr<TabletInputAdapter> mTabletInput;
-
-  std::shared_ptr<TroubleshootingStore> mTroubleshootingStore;
 
   std::jthread mGameEventThread;
   std::jthread mOpenVRThread;

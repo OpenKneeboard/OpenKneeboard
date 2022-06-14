@@ -85,8 +85,12 @@ target_link_libraries(OpenKneeboard-SHM PRIVATE fmt OpenKneeboard-config OpenKne
 target_link_libraries(OpenKneeboard-SHM PUBLIC _libheaders)
 
 add_library(OpenKneeboard-dprint STATIC dprint.cpp)
-target_link_libraries(OpenKneeboard-dprint PUBLIC fmt)
-target_link_libraries(OpenKneeboard-dprint PUBLIC _libheaders)
+target_link_libraries(OpenKneeboard-dprint PUBLIC fmt _libheaders)
+target_link_libraries(OpenKneeboard-dprint
+  PRIVATE
+  OpenKneeboard-config
+  OpenKneeboard-scope_guard
+)
 
 add_library(OpenKneeboard-consolelib STATIC ConsoleLoopCondition.cpp)
 target_link_libraries(OpenKneeboard-consolelib PUBLIC _libheaders)

@@ -29,6 +29,7 @@
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/version.h>
@@ -164,6 +165,8 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
 }
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
+  auto troubleshootingStore = TroubleshootingStore::Get();
+
   wchar_t* savedGamesBuffer = nullptr;
   winrt::check_hresult(
     SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &savedGamesBuffer));

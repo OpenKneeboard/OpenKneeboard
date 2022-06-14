@@ -19,8 +19,11 @@
  */
 #pragma once
 
+#include <fmt/format.h>
 #include <fmt/xchar.h>
+#include <shims/winrt.h>
 
+#include <stop_token>
 #include <string>
 
 namespace OpenKneeboard {
@@ -48,6 +51,46 @@ struct DPrintSettings {
   ConsoleOutputMode consoleOutput = ConsoleOutputMode::DEBUG_ONLY;
 
   static void Set(const DPrintSettings&);
+};
+
+#pragma pack(push)
+struct DPrintMessageHeader {
+  DWORD mProcessID = 0;
+  wchar_t mExecutable[MAX_PATH];
+  wchar_t mPrefix[MAX_PATH];
+};
+static_assert(sizeof(DPrintMessageHeader) % sizeof(wchar_t) == 0);
+
+struct DPrintMessage : public DPrintMessageHeader {
+ private:
+  static constexpr auto HeaderSize = sizeof(DPrintMessageHeader);
+  static constexpr auto MaxMessageSize = 4096 - HeaderSize;
+
+ public:
+  static constexpr auto MaxMessageLength = MaxMessageSize / sizeof(wchar_t);
+  wchar_t mMessage[MaxMessageLength];
+};
+#pragma pack(pop)
+
+class DPrintReceiver {
+ public:
+  DPrintReceiver();
+  ~DPrintReceiver();
+
+  bool IsUsable() const;
+  void Run(std::stop_token);
+
+ protected:
+  virtual void OnMessage(const DPrintMessage&) = 0;
+
+ private:
+  winrt::handle mMutex;
+  winrt::handle mMapping;
+  winrt::handle mBufferReadyEvent;
+  winrt::handle mDataReadyEvent;
+  DPrintMessage* mSHM = nullptr;
+
+  bool mUsable = false;
 };
 
 }// namespace OpenKneeboard

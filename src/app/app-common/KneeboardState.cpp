@@ -39,8 +39,6 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
-  mTroubleshootingStore = std::make_shared<TroubleshootingStore>();
-
   AddEventListener(evCursorEvent, &KneeboardState::OnCursorEvent, this);
 
   if (!mSettings.NonVR.is_null()) {
@@ -340,7 +338,7 @@ void KneeboardState::OnUserAction(UserAction action) {
 }
 
 void KneeboardState::OnGameEvent(const GameEvent& ev) {
-  mTroubleshootingStore->OnGameEvent(ev);
+  TroubleshootingStore::Get()->OnGameEvent(ev);
 
   if (ev.name == GameEvent::EVT_REMOTE_USER_ACTION) {
 #define IT(ACTION) \
@@ -468,11 +466,6 @@ void KneeboardState::SaveSettings() {
   mSettings.Doodle = mDoodleSettings;
 
   mSettings.Save();
-}
-
-std::shared_ptr<TroubleshootingStore> KneeboardState::GetTroubleshootingStore()
-  const {
-  return mTroubleshootingStore;
 }
 
 DoodleSettings KneeboardState::GetDoodleSettings() {

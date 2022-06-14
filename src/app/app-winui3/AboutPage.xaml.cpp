@@ -23,7 +23,6 @@
 #include "AboutPage.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
@@ -35,21 +34,33 @@
 
 #include <string>
 
-#include "Globals.h"
-
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
 AboutPage::AboutPage() {
   InitializeComponent();
+
+  // The one true terminal size is 80x24, fight me.
+  DPrintScroll().MaxHeight(DPrintText().FontSize() * 24);
+
   this->PopulateVersion();
   this->PopulateEvents();
+  this->PopulateDPrint();
 
   AddEventListener(
-    gKneeboard->GetTroubleshootingStore()->evGameEventUpdated,
+    TroubleshootingStore::Get()->evGameEventReceived,
     &AboutPage::PopulateEvents,
     this);
+
+  AddEventListener(
+    TroubleshootingStore::Get()->evDPrintMessageReceived, [this]() {
+      [this]() noexcept -> winrt::fire_and_forget {
+        co_await winrt::resume_background();
+        co_await mUIThread;
+        this->PopulateDPrint();
+      }();
+    });
 }
 
 void AboutPage::PopulateVersion() {
@@ -116,9 +127,15 @@ void AboutPage::PopulateVersion() {
   mVersionClipboardData = details;
 }
 
-static void SetClipboardText(const std::string& text) {
+static inline void SetClipboardText(std::string_view text) {
   Windows::ApplicationModel::DataTransfer::DataPackage package;
   package.SetText(winrt::to_hstring(text));
+  Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
+}
+
+static inline void SetClipboardText(std::wstring_view text) {
+  Windows::ApplicationModel::DataTransfer::DataPackage package;
+  package.SetText(text);
   Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
 }
 
@@ -134,8 +151,14 @@ void AboutPage::OnCopyGameEventsClick(
   SetClipboardText(mGameEventsClipboardData);
 }
 
+void AboutPage::OnCopyDPrintClick(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
+  SetClipboardText(mDPrintClipboardData);
+}
+
 void AboutPage::PopulateEvents() {
-  auto events = gKneeboard->GetTroubleshootingStore()->GetGameEvents();
+  auto events = TroubleshootingStore::Get()->GetGameEvents();
 
   auto message = fmt::format("Updated at {}", std::chrono::system_clock::now());
 
@@ -173,6 +196,45 @@ void AboutPage::PopulateEvents() {
   mGameEventsClipboardData = message;
 
   EventsText().Text(winrt::to_hstring(message));
+}
+
+void AboutPage::PopulateDPrint() {
+  auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
+
+  std::wstring text;
+  if (messages.empty()) {
+    text = L"No log messages (?!)";
+  }
+
+  bool first = true;
+  for (const auto& entry: messages) {
+    if (first) [[unlikely]] {
+      first = false;
+    } else {
+      text += L'\n';
+    }
+
+    auto exe = std::wstring_view(entry.mMessage.mExecutable);
+    {
+      auto dirSep = exe.find_last_of(L'\\');
+      if (dirSep != exe.npos && dirSep + 1 < exe.size()) {
+        exe.remove_prefix(dirSep + 1);
+      }
+    }
+
+    text += fmt::format(
+      L"[{} {} ({})] {}: {}",
+      entry.mWhen,
+      exe,
+      entry.mMessage.mProcessID,
+      entry.mMessage.mPrefix,
+      entry.mMessage.mMessage);
+  }
+
+  mDPrintClipboardData = text;
+  DPrintText().Text(text);
+  DPrintScroll().UpdateLayout();
+  DPrintScroll().ChangeView({}, {DPrintScroll().ScrollableHeight()}, {});
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
