@@ -39,19 +39,13 @@ void dprintf(fmt::wformat_string<T...> fmt, T&&... args) {
 }
 
 struct DPrintSettings {
-  enum class Target {
-    // Traditional console window, created if necessary
-    CONSOLE,
-    // Use debugger or `dbgview` etc to view this
-    DEBUG_STREAM,
-    CONSOLE_AND_DEBUG_STREAM,
-    // DEBUG_STREAM if release build, CONSOLE_AND_DEBUG_STREAM otherwise
-    DEFAULT
+  enum class ConsoleOutputMode {
+    DEBUG_ONLY,
+    ALWAYS,
   };
 
   std::string prefix = "OpenKneeboard";
-  Target target = Target::DEFAULT;
-  Target prefixTarget = Target::DEFAULT;
+  ConsoleOutputMode consoleOutput = ConsoleOutputMode::DEBUG_ONLY;
 
   static void Set(const DPrintSettings&);
 };

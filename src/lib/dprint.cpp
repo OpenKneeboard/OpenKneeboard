@@ -21,10 +21,52 @@
 #include <Windows.h>
 #include <shims/winrt.h>
 
+#include <filesystem>
+#include <optional>
+
 namespace OpenKneeboard {
 
 static DPrintSettings gSettings;
 static std::wstring gPrefixW;
+
+static bool IsDebugStreamEnabledInRegistry() {
+  static std::optional<bool> sCache;
+  if (sCache) {
+    return *sCache;
+  }
+  DWORD value = 0;
+  for (auto hkey: {HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE}) {
+    DWORD size = sizeof(value);
+    if (
+      RegGetValueW(
+        hkey,
+        L"SOFTWARE\\Fred Emmott\\OpenKneeboard",
+        L"AlwaysWriteToDebugStream",
+        RRF_RT_REG_DWORD,
+        nullptr,
+        &value,
+        &size)
+      == ERROR_SUCCESS) {
+      break;
+    }
+  }
+  *sCache = (value != 0);
+  return *sCache;
+}
+
+static inline bool IsDebugStreamEnabled() {
+#ifdef DEBUG
+  return true;
+#endif
+  return IsDebugStreamEnabledInRegistry() || IsDebuggerPresent();
+}
+
+static inline bool IsConsoleOutputEnabled() {
+#ifdef DEBUG
+  return true;
+#endif
+  return gSettings.consoleOutput == DPrintSettings::ConsoleOutputMode::ALWAYS;
+}
 
 void dprint(std::string_view message) {
   auto w = winrt::to_hstring(message);
@@ -32,35 +74,12 @@ void dprint(std::string_view message) {
 }
 
 void dprint(std::wstring_view message) {
-  auto target = gSettings.target;
-
-  if (target == DPrintSettings::Target::DEFAULT) {
-#ifdef NDEBUG
-    target = DPrintSettings::Target::DEBUG_STREAM;
-#else
-    target = DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM;
-#endif;
-  }
-
-  if (
-    target == DPrintSettings::Target::DEBUG_STREAM
-    || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
+  if (IsDebugStreamEnabled()) {
     auto output = fmt::format(L"[{}] {}\n", gPrefixW, message);
     OutputDebugStringW(output.c_str());
   }
 
-  if (
-    target == DPrintSettings::Target::CONSOLE
-    || target == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
-    std::wstring output;
-    if (
-      gSettings.prefixTarget
-      == DPrintSettings::Target::CONSOLE_AND_DEBUG_STREAM) {
-      output = fmt::format(L"[{}] {}\n", gPrefixW, message);
-    } else {
-      output = fmt::format(L"{}\n", message);
-    }
-
+  if (IsConsoleOutputEnabled()) {
     if (AllocConsole()) {
       // Gets detour trace working too :)
       freopen("CONIN$", "r", stdin);
@@ -73,8 +92,8 @@ void dprint(std::wstring_view message) {
     }
     WriteConsoleW(
       handle,
-      output.c_str(),
-      static_cast<DWORD>(output.size()),
+      message.data(),
+      static_cast<DWORD>(message.size()),
       nullptr,
       nullptr);
   }
