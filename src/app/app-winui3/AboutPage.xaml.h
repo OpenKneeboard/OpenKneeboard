@@ -43,6 +43,8 @@ struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
     const RoutedEventArgs&) noexcept;
   void OnCopyDPrintClick(const IInspectable&, const RoutedEventArgs&) noexcept;
 
+  void OnDPrintLayoutChanged(const IInspectable&, const IInspectable&) noexcept;
+
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
@@ -52,6 +54,8 @@ struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
   void PopulateVersion();
   void PopulateEvents();
   void PopulateDPrint();
+
+  void ScrollDPrintToEnd();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

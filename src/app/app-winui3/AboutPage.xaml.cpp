@@ -233,6 +233,16 @@ void AboutPage::PopulateDPrint() {
 
   mDPrintClipboardData = text;
   DPrintText().Text(text);
+  this->ScrollDPrintToEnd();
+}
+
+void AboutPage::OnDPrintLayoutChanged(
+  const IInspectable&,
+  const IInspectable&) noexcept {
+  this->ScrollDPrintToEnd();
+}
+
+void AboutPage::ScrollDPrintToEnd() {
   DPrintScroll().UpdateLayout();
   DPrintScroll().ChangeView({}, {DPrintScroll().ScrollableHeight()}, {});
 }

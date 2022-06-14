@@ -1,4 +1,4 @@
-<Page
+﻿<Page
   x:Class="OpenKneeboardApp.AboutPage"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -74,7 +74,8 @@
       </Expander>
       <Expander
         HorizontalAlignment="Stretch"
-        HorizontalContentAlignment="Stretch">
+        HorizontalContentAlignment="Stretch"
+        LayoutUpdated="OnDPrintLayoutChanged">
         <Expander.Header>
           <Grid ColumnDefinitions="Auto,*,Auto,Auto">
             <FontIcon
@@ -86,7 +87,7 @@
             />
             <TextBlock
               Grid.Column="1"
-              Text="Debug Messages"
+              Text="Debug Log"
               Style="{StaticResource SubtitleTextBlockStyle}"
               VerticalAlignment="Center"
             />
