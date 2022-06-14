@@ -48,6 +48,10 @@ struct SharedTextureResources {
 };
 
 int main() {
+  DPrintSettings::Set({
+    .prefix = "test-feeder",
+    .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,
+  });
   std::jthread OpenVRThread {[](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
     OpenVRKneeboard().Run(stopToken);
