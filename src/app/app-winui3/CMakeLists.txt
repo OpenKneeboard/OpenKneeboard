@@ -111,6 +111,8 @@ add_custom_target(
   "-p:OutDir=$<SHELL_PATH:${MSBUILD_OUTPUT_PATH}>"
   "-p:IntDir=$<SHELL_PATH:${MSBUILD_INTERMEDIATE_PATH}>"
   "-p:GeneratedFilesDir=$<SHELL_PATH:${MSBUILD_GENERATED_FILES_PATH}>"
+  -fl "-flp:logfile=buildlog.txt;verbosity=diagnostic"
+  -bl:buildlog.binlog
   DEPENDS
   OpenKneeboard-App-Common
   CppWinRTNuget
