@@ -289,9 +289,13 @@ void AboutPage::PopulateDPrint() {
 void AboutPage::OnDPrintLayoutChanged(
   const IInspectable&,
   const IInspectable&) noexcept {
-  if (DPrintExpander().IsExpanded() && !mWasDPrintExpanded) {
-    this->ScrollDPrintToEnd();
+  if (DPrintExpander().IsExpanded()) {
+    if (!mWasDPrintExpanded) {
+      this->ScrollDPrintToEnd();
+    }
     mWasDPrintExpanded = true;
+  } else {
+    mWasDPrintExpanded = false;
   }
 }
 
