@@ -54,6 +54,7 @@ struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
   std::string mVersionClipboardData;
   std::string mGameEventsClipboardData;
   std::wstring mDPrintClipboardData;
+  bool mWasDPrintExpanded = false;
 
   void PopulateVersion();
   void PopulateEvents();

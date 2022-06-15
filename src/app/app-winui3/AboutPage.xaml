@@ -82,6 +82,7 @@
         />
       </Expander>
       <Expander
+        x:Name="DPrintExpander"
         HorizontalAlignment="Stretch"
         HorizontalContentAlignment="Stretch"
         LayoutUpdated="OnDPrintLayoutChanged">

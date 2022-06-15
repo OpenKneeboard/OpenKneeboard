@@ -289,7 +289,10 @@ void AboutPage::PopulateDPrint() {
 void AboutPage::OnDPrintLayoutChanged(
   const IInspectable&,
   const IInspectable&) noexcept {
-  this->ScrollDPrintToEnd();
+  if (DPrintExpander().IsExpanded() && !mWasDPrintExpanded) {
+    this->ScrollDPrintToEnd();
+    mWasDPrintExpanded = true;
+  }
 }
 
 void AboutPage::ScrollDPrintToEnd() {
