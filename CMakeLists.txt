@@ -21,8 +21,8 @@ set(
 )
 set(
   COMMON_LINK_OPTIONS
-  "/DEFAULTLIB:ucrt$<$<CONFIG:Debug>:d>.lib" # include the static CRT
-  "/NODEFAULTLIB:libucrt$<$<CONFIG:Debug>:d>.lib" # ignore conflicts with dynamic CRT
+  "/DEFAULTLIB:ucrt$<$<CONFIG:Debug>:d>.lib" # include the dynamic UCRT
+  "/NODEFAULTLIB:libucrt$<$<CONFIG:Debug>:d>.lib" # remove the static UCRT
 )
 add_link_options("${COMMON_LINK_OPTIONS}")
 
