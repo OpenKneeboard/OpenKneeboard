@@ -10,8 +10,7 @@ create_version_rc(
 add_executable(
   OpenKneeboard-App-WinUI3
   WIN32
-  app.manifest
-  ${VERSION_RC_FILE}
+  Resource.rc ${VERSION_RC_FILE} app.manifest
   AboutPage.idl AboutPage.xaml AboutPage.xaml.cpp AboutPage.xaml.h
   App.idl App.xaml App.xaml.cpp App.xaml.h
   CheckDCSHooks.cpp CheckDCSHooks.h

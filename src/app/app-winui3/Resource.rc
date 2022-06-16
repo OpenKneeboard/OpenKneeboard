@@ -1,2 +1,1 @@
 appIcon ICON "..\\..\\..\\assets\\icon.ico"
-#include "version.rc"
