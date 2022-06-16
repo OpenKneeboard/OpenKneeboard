@@ -40,10 +40,17 @@ jobs:
           name: OpenKneeboard-${{matrix.config}}
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
+      - name: Fetch MSIX build tools
+        shell:pwsh
+        run: |
+          Invoke-WebRequest `
+            -Uri "https://www.nuget.org/api/v2/package/Microsoft.Windows.SDK.BuildTools/10.0.22621.1" `
+            -OutFile sdk-build-tools.zip
+          Extract-Archive sdk-build-tools.zip
       - name: Create MSIX
         shell: pwsh
         run: |
-          $kitsRoot = "build\third-party\WindowsSDKBuildToolsNuget-prefix\src\WindowsSDKBuildToolsNuget"
+          $kitsRoot = "sdk-build-tools"
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
 
