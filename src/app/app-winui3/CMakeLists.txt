@@ -70,6 +70,11 @@ target_compile_definitions(
   DISABLE_XAML_GENERATED_MAIN=1
 )
 
+set_property(
+  TARGET OpenKneeboard-App-WinUI3
+  PROPERTY OUTPUT_NAME OpenKneeboardApp # .exe
+)
+
 install(
   DIRECTORY
   # Trailing / copies the contents instead of the directory itself,
