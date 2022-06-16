@@ -34,10 +34,6 @@
 #include <cmath>
 #include <thread>
 
-#pragma comment(lib, "D3d11.lib")
-#pragma comment(lib, "D2d1.lib")
-#pragma comment(lib, "DWrite.lib")
-
 using namespace OpenKneeboard;
 
 struct SharedTextureResources {

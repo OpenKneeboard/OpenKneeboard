@@ -9,6 +9,11 @@ target_compile_definitions(
 target_link_libraries(
 	OpenKneeboard-App-Common
 	PUBLIC
+	ThirdParty::JSON
+)
+target_link_libraries(
+	OpenKneeboard-App-Common
+	PRIVATE
 	OpenKneeboard-D2DErrorRenderer
 	OpenKneeboard-DXResources
 	OpenKneeboard-GameEvent
@@ -25,8 +30,10 @@ target_link_libraries(
 	OpenKneeboard-games
 	OpenKneeboard-tablets
 	System::D2d1
+	System::Dinput8
+	System::Dxguid
+	System::Rpcrt4
 	ThirdParty::DirectXTK
-	ThirdParty::JSON
 	ThirdParty::OpenVR
 	ThirdParty::QPDF
 	ThirdParty::LibZip

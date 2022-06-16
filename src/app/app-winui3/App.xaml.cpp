@@ -61,8 +61,6 @@ using namespace OpenKneeboard;
 #include <WindowsAppSDK-VersionInfo.h>
 #include <mddbootstrap.h>
 
-#pragma comment(lib, "Dbghelp.lib")
-
 static std::filesystem::path gDumpDirectory;
 static bool gDumped = false;
 

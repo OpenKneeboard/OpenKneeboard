@@ -32,6 +32,9 @@ target_link_libraries(
   OpenKneeboard-OpenVRKneeboard
   OpenKneeboard-SHM
   ThirdParty::DirectXTK
+  System::D2d1
+  System::D3d11
+  System::Dwrite
 )
 
 add_custom_command(
@@ -53,6 +56,9 @@ target_link_libraries(
   OpenKneeboard-GetSystemColor
   OpenKneeboard-SHM
   OpenKneeboard-scope_guard
+  System::D2d1
+  System::D3d11
+  System::Dxgi
   ThirdParty::fmt
 )
 

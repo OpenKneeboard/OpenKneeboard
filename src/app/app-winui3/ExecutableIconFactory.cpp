@@ -23,8 +23,6 @@
 #include "ExecutableIconFactory.h"
 // clang-format on
 
-#pragma comment(lib, "Shell32.lib")
-
 #include <shellapi.h>
 #include <wincodec.h>
 

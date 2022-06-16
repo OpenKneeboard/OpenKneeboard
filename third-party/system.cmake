@@ -1,8 +1,21 @@
-add_library(System::D2d1 INTERFACE IMPORTED GLOBAL)
-set_property(TARGET System::D2d1 PROPERTY IMPORTED_LIBNAME "D2d1")
-
-add_library(System::Dwrite INTERFACE IMPORTED GLOBAL)
-set_property(TARGET System::Dwrite PROPERTY IMPORTED_LIBNAME "Dwrite")
-
-add_library(System::WindowsApp INTERFACE IMPORTED GLOBAL)
-set_property(TARGET System::WindowsApp PROPERTY IMPORTED_LIBNAME "WindowsApp")
+set(
+  SYSTEM_LIBRARIES
+  D2d1
+  D3d11
+  D3d12
+  Dbghelp
+  Dinput8
+  Dwrite
+  Dxgi
+  Dxguid
+  Rpcrt4
+  Shell32
+  WindowsApp
+)
+foreach(LIBRARY ${SYSTEM_LIBRARIES})
+  add_library("System::${LIBRARY}" INTERFACE IMPORTED GLOBAL)
+  set_property(
+    TARGET "System::${LIBRARY}"
+    PROPERTY IMPORTED_LIBNAME "${LIBRARY}"
+  )
+endforeach()

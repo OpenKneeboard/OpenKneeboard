@@ -18,7 +18,9 @@
  * USA.
  */
 #include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/Game.h>
 #include <OpenKneeboard/GameInjector.h>
+#include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GenericGame.h>
 #include <windows.h>

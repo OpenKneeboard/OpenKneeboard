@@ -25,8 +25,6 @@
 #include "d3d12-offsets.h"
 #include "detours-ext.h"
 
-#pragma comment(lib, "D3D12.lib")
-
 namespace OpenKneeboard {
 
 namespace {

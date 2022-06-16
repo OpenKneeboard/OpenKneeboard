@@ -26,7 +26,7 @@ target_link_libraries(
   OpenKneeboard-FindMainWindow)
 
 add_library(d3d12-hooks STATIC d3d12-offsets.c ID3D12CommandQueueExecuteCommandListsHook.cpp)
-target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint)
+target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint System::D3d12)
 
 add_library(OpenKneeboard-ScopedRWX STATIC ScopedRWX.cpp)
 

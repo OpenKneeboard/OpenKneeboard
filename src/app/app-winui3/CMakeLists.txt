@@ -50,19 +50,24 @@ set_property(
 )
 
 target_link_libraries(
-	OpenKneeboard-App-WinUI3
-	PRIVATE
-	OpenKneeboard-App-Common
-	OpenKneeboard-FilesDiffer
-	OpenKneeboard-GetMainHWND
-	OpenKneeboard-RuntimeFiles
+  OpenKneeboard-App-WinUI3
+  PRIVATE
+  OpenKneeboard-App-Common
+  OpenKneeboard-FilesDiffer
+  OpenKneeboard-GetMainHWND
+  OpenKneeboard-RuntimeFiles
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+  OpenKneeboard-games
   OpenKneeboard-version
+  System::Dbghelp
+  System::Shell32
 )
 
 target_include_directories(
-	OpenKneeboard-App-WinUI3
-	PRIVATE
-	"${CMAKE_CURRENT_SOURCE_DIR}"
+  OpenKneeboard-App-WinUI3
+  PRIVATE
+  "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
 target_compile_definitions(

@@ -20,12 +20,13 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/Game.h>
-#include <OpenKneeboard/GameInstance.h>
 
+#include <nlohmann/json_fwd.hpp>
 #include <thread>
 
 namespace OpenKneeboard {
+class Game;
+struct GameInstance;
 class GameInjector;
 
 class GamesList final : private EventReceiver {

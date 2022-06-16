@@ -34,10 +34,6 @@
 #include <memory>
 #include <type_traits>
 
-#pragma comment(lib, "D2d1.lib")
-#pragma comment(lib, "DXGI.lib")
-#pragma comment(lib, "D3D11.lib")
-
 using namespace OpenKneeboard;
 
 #pragma pack(push)

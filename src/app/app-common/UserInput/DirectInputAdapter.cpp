@@ -31,10 +31,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#pragma comment(lib, "dinput8.lib")
-#pragma comment(lib, "dxguid.lib")
-#pragma comment(lib, "Rpcrt4.lib")
-
 using namespace OpenKneeboard;
 
 namespace {

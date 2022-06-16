@@ -34,8 +34,6 @@
 #include <filesystem>
 #include <thread>
 
-#pragma comment(lib, "D3D11.lib")
-
 using namespace DirectX::SimpleMath;
 
 namespace OpenKneeboard {
