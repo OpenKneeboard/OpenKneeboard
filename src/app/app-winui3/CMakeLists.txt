@@ -70,3 +70,32 @@ target_compile_definitions(
   PRIVATE
   DISABLE_XAML_GENERATED_MAIN=1
 )
+
+install(
+  DIRECTORY
+  # Trailing / copies the contents instead of the directory itself,
+  # i.e. avoids installing `bin/Debug/`
+  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/"
+  TYPE BIN
+  PATTERN "*.pdb" EXCLUDE
+  PATTERN "*.lib" EXCLUDE
+)
+install(
+  FILES
+  "$<TARGET_PDB_FILE:OpenKneeboard-App-WinUI3>"
+  TYPE BIN
+  COMPONENT DebugSymbols
+)
+
+set_property(
+  INSTALL
+  "bin/OpenKneeboardApp.exe"
+  PROPERTY
+  CPACK_START_MENU_SHORTCUTS "OpenKneeboard"
+)
+set_property(
+  INSTALL
+  "bin/OpenKneeboardApp.exe"
+  PROPERTY
+  CPACK_DESKTOP_SHORTCUTS "OpenKneeboard"
+)
