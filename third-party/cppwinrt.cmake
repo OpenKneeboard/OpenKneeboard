@@ -18,11 +18,10 @@ ExternalProject_Add(
 ExternalProject_Get_property(CppWinRTNuget SOURCE_DIR)
 ExternalProject_Get_property(CppWinRTNuget BINARY_DIR)
 
-add_library(cppwinrt-base INTERFACE)
-add_dependencies(cppwinrt-base CppWinRTNuget)
-target_link_libraries(cppwinrt-base INTERFACE WindowsApp.lib)
-target_include_directories(cppwinrt-base INTERFACE "${BINARY_DIR}/include")
-add_library(ThirdParty::CppWinRT ALIAS cppwinrt-base)
+add_library(ThirdParty::CppWinRT INTERFACE IMPORTED GLOBAL)
+add_dependencies(ThirdParty::CppWinRT CppWinRTNuget)
+target_link_libraries(ThirdParty::CppWinRT INTERFACE System::WindowsApp)
+target_include_directories(ThirdParty::CppWinRT INTERFACE "${BINARY_DIR}/include")
 
 install(
   FILES

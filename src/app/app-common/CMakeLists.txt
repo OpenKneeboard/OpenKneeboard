@@ -9,7 +9,6 @@ target_compile_definitions(
 target_link_libraries(
 	OpenKneeboard-App-Common
 	PUBLIC
-	D2d1
 	OpenKneeboard-D2DErrorRenderer
 	OpenKneeboard-DXResources
 	OpenKneeboard-GameEvent
@@ -25,7 +24,7 @@ target_link_libraries(
 	OpenKneeboard-dprint
 	OpenKneeboard-games
 	OpenKneeboard-tablets
-	OpenKneeboard-version
+	System::D2d1
 	ThirdParty::DirectXTK
 	ThirdParty::JSON
 	ThirdParty::OpenVR

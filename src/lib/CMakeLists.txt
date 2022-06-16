@@ -102,9 +102,9 @@ add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
 target_link_libraries(
   OpenKneeboard-D2DErrorRenderer
   PUBLIC
-  D2d1
   OpenKneeboard-UTF8
-  Dwrite
+  System::D2d1
+  System::Dwrite
   _libheaders)
 
 add_library(OpenKneeboard-RayIntersectsRect STATIC RayIntersectsRect.cpp)

@@ -30,7 +30,6 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <OpenKneeboard/version.h>
 #include <shims/winrt.h>
 
 #include <chrono>

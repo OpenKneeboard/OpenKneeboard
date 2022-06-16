@@ -53,9 +53,10 @@ target_link_libraries(
 	OpenKneeboard-App-WinUI3
 	PRIVATE
 	OpenKneeboard-App-Common
-	OpenKneeboard-GetMainHWND
 	OpenKneeboard-FilesDiffer
+	OpenKneeboard-GetMainHWND
 	OpenKneeboard-RuntimeFiles
+  OpenKneeboard-version
 )
 
 target_include_directories(
