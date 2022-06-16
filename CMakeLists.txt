@@ -45,27 +45,3 @@ install(
   LICENSE
   gpl-2.0.txt
   TYPE DOC)
-
-# VS_PACKAGE_REFERENCES is not inherited, so we can't create a handy cmake target
-# referencing the cppwinrt package - but we need to be certain that every target
-# that does `#include <winrt/foo.h>` uses the same version of C++/WinRT, instead
-# of some other version, e.g. installed via vcpkg or from the windows SDK
-
-macro(get_all_targets TARGETS DIR)
-  get_property(DIR_TARGETS DIRECTORY ${DIR} PROPERTY BUILDSYSTEM_TARGETS)
-  list(APPEND "${TARGETS}" ${DIR_TARGETS})
-
-  get_property(SUBDIRS DIRECTORY ${DIR} PROPERTY SUBDIRECTORIES)
-  foreach(SUBDIR ${SUBDIRS})
-    get_all_targets(${TARGETS} ${SUBDIR})
-  endforeach()
-endmacro()
-
-set(ALL_TARGETS)
-get_all_targets(ALL_TARGETS "${CMAKE_CURRENT_SOURCE_DIR}")
-
-foreach(TARGET ${ALL_TARGETS})
-  get_property(NUGET_PACKAGES TARGET "${TARGET}" PROPERTY VS_PACKAGE_REFERENCES)
-  list(APPEND NUGET_PACKAGES "Microsoft.Windows.CppWinRT_2.0.220608.4")
-  set_property(TARGET "${TARGET}" PROPERTY VS_PACKAGE_REFERENCES ${NUGET_PACKAGES})
-endforeach()
