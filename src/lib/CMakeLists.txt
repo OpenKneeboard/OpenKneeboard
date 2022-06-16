@@ -24,7 +24,6 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-config
   OpenKneeboard-shims
-  NuGet::CppWinRT::Base
   ThirdParty::fmt
 )
 

@@ -117,7 +117,6 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-scope_guard
   OpenKneeboard-shims
-  NuGet::CppWinRT::Base
 )
 
 install(FILES OpenKneeboard-OpenXR.json TYPE BIN)

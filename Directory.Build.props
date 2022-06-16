@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+     <RuntimeIdentifiers>win-x64;win10-x64</RuntimeIdentifiers>
+     <NuGetTargetMoniker>native,Version=v0.0</NuGetTargetMoniker>
+  </PropertyGroup>
+</Project>

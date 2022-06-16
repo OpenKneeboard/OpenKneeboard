@@ -1,3 +1,6 @@
+add_library(qpdfDeps INTERFACE)
+target_link_libraries(qpdfDeps INTERFACE ThirdParty::LibJpeg ThirdParty::ZLib)
+
 ExternalProject_Add(
   qpdfBuild
   URL "https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.6.3.0cmake1/qpdf-10.6.3.0cmake1.tar.gz"
@@ -23,13 +26,8 @@ ExternalProject_Add(
     --prefix "<INSTALL_DIR>/$<CONFIG>"
     --config "$<CONFIG>"
     --component "dev"
+  DEPENDS qpdfDeps
   EXCLUDE_FROM_ALL
-)
-
-add_dependencies(
-  qpdfBuild
-  ThirdParty::LibJpeg
-  ThirdParty::ZLib
 )
 
 ExternalProject_Get_property(qpdfBuild SOURCE_DIR)
@@ -41,6 +39,7 @@ target_link_libraries(
   libqpdf
   INTERFACE
   "${INSTALL_DIR}/$<CONFIG>/lib/qpdf.lib"
+  qpdfDeps
 )
 target_include_directories(
   libqpdf

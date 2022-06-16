@@ -27,7 +27,7 @@ add_compile_definitions(
 )
 
 # Always link this so we never accidentally use the SDK version
-link_libraries(NuGet::CppWinRT::Base)
+link_libraries(ThirdParty::CppWinRT)
 
 function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC_FILE)
   add_custom_target(

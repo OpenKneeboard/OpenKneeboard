@@ -25,6 +25,7 @@
 
 #pragma comment(lib, "Shell32.lib")
 
+#include <shellapi.h>
 #include <wincodec.h>
 
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
@@ -42,7 +43,7 @@ ExecutableIconFactory::~ExecutableIconFactory() {
 winrt::com_ptr<IWICBitmap> ExecutableIconFactory::CreateWICBitmap(
   const std::filesystem::path& executable) {
   auto wpath = executable.wstring();
-  HICON handle = ExtractIcon(GetModuleHandle(NULL), wpath.c_str(), 0);
+  HICON handle = ExtractIconW(GetModuleHandle(NULL), wpath.c_str(), 0);
   if (!handle) {
     handle = LoadIconW(NULL, IDI_APPLICATION);
   }

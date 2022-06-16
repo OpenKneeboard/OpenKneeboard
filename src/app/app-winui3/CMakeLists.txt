@@ -1,82 +1,3 @@
-# So, WinUI3 looks good and has powerful layouts. Sadly:
-# - While controls can be created through code, XAML is required
-#   for things like Frame::Navigate
-# - The XAML compiler is only available as an msbuild DLL
-#
-# ... so, for now, we need to use msbuild for this. Hopefully it
-# changes in the future.
-set(MSBUILD_GENERATED_FILES_PATH "${CMAKE_CURRENT_BINARY_DIR}/msbuild-generated-files/")
-set(MSBUILD_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/msbuild-out-$<CONFIG>/")
-set(MSBUILD_INTERMEDIATE_PATH "${CMAKE_CURRENT_BINARY_DIR}/msbuild-intermediate-$<CONFIG>/")
-
-string(
-  JOIN ";" INCLUDE_DIRS
-  "$<TARGET_PROPERTY:OpenKneeboard-App-Common,INCLUDE_DIRECTORIES>"
-)
-
-set(
-  TARGET_FILE_LIBRARIES
-  OpenKneeboard-D2DErrorRenderer
-  OpenKneeboard-D3D11
-  OpenKneeboard-DXResources
-  OpenKneeboard-FilesDiffer
-  OpenKneeboard-GameEvent
-  OpenKneeboard-GetMainHWND
-  OpenKneeboard-GetSystemColor
-  OpenKneeboard-OpenVRKneeboard
-  OpenKneeboard-OpenXRMode
-  OpenKneeboard-RayIntersectsRect
-  OpenKneeboard-RuntimeFiles
-  OpenKneeboard-SHM
-  OpenKneeboard-UTF8
-  OpenKneeboard-VRKneeboard
-  OpenKneeboard-dprint
-  OpenKneeboard-games
-  OpenKneeboard-scope_guard
-  OpenKneeboard-tablets
-  OpenKneeboard-version
-  OpenKneeboard::App::Common
-  ThirdParty::fmt
-)
-
-set(IMPORTED_IMPLIB_LIBRARIES ThirdParty::OpenVR)
-
-set(
-  INTERFACE_LIBRARIES
-  ThirdParty::DirectXTK
-  ThirdParty::LibJpeg
-  ThirdParty::LibZip
-  ThirdParty::QPDF
-  ThirdParty::ZLib
-)
-
-set(LIBRARY_DEPENDENCIES)
-set(LIBRARY_PATHS)
-
-foreach(TARGET ${TARGET_FILE_LIBRARIES})
-  list(APPEND LIBRARY_DEPENDENCIES "${TARGET}")
-  list(APPEND LIBRARY_PATHS "$<TARGET_FILE:${TARGET}>")
-endforeach()
-
-foreach(TARGET ${IMPORTED_IMPLIB_LIBRARIES})
-  list(APPEND LIBRARY_DEPENDENCIES "${TARGET}")
-  list(
-    APPEND
-    LIBRARY_PATHS
-    "$<GENEX_EVAL:$<TARGET_PROPERTY:${TARGET},IMPORTED_IMPLIB>>"
-  )
-endforeach()
-
-foreach(TARGET ${INTERFACE_LIBRARIES})
-  list(APPEND LIBRARY_DEPENDENCIES "${TARGET}")
-  list(
-    APPEND
-    LIBRARY_PATHS
-    "$<GENEX_EVAL:$<TARGET_PROPERTY:${TARGET},INTERFACE_LINK_LIBRARIES>>"
-  )
-endforeach()
-
-string(JOIN ";" LIBRARY_PATHS ${LIBRARY_PATHS})
 
 set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
 create_version_rc(
@@ -85,85 +6,67 @@ create_version_rc(
   OpenKneeboardApp.exe
   ${VERSION_RC_FILE}
 )
-get_filename_component(VERSION_RC_DIRECTORY "${VERSION_RC_FILE}" DIRECTORY)
 
-add_custom_target(
+add_executable(
   OpenKneeboard-App-WinUI3
-  ALL
-  COMMAND
-  "${CMAKE_VS_MSBUILD_COMMAND}"
-  "${CMAKE_CURRENT_SOURCE_DIR}\\app-winui3.vcxproj"
-  "-p:Configuration=$<IF:$<CONFIG:Debug>,Debug,Release>"
-  "-p:Platform=x64"
-
-  "-p:CMakeIncludeDirs=\"$<SHELL_PATH:${INCLUDE_DIRS}>\""
-  "-p:CMakeLinkLibs=\"$<SHELL_PATH:${LIBRARY_PATHS}>\""
-  "-p:VERSION_RC_DIRECTORY=\"$<SHELL_PATH:${VERSION_RC_DIRECTORY}>\""
-
-  "-p:NUGET_CPPWINRT_PATH=${NUGET_CPPWINRT_PATH}" 
-  "-p:NUGET_WINDOWS_APP_SDK_PATH=${NUGET_WINDOWS_APP_SDK_PATH}" 
-  "-p:NUGET_WINDOWS_SDK_BUILD_TOOLS_PATH=${NUGET_WINDOWS_SDK_BUILD_TOOLS_PATH}" 
-  "-p:NUGET_WINDOWS_IMPLEMENTATION_LIBRARY_PATH=${NUGET_WINDOWS_IMPLEMENTATION_LIBRARY_PATH}" 
-
-  "-p:BaseOutputPath=$<SHELL_PATH:${MSBUILD_OUTPUT_PATH}>"
-  "-p:OutputPath=$<SHELL_PATH:${MSBUILD_OUTPUT_PATH}>"
-  "-p:OutputDir=$<SHELL_PATH:${MSBUILD_OUTPUT_PATH}>"
-  "-p:OutDir=$<SHELL_PATH:${MSBUILD_OUTPUT_PATH}>"
-  "-p:IntDir=$<SHELL_PATH:${MSBUILD_INTERMEDIATE_PATH}>"
-  "-p:GeneratedFilesDir=$<SHELL_PATH:${MSBUILD_GENERATED_FILES_PATH}>"
-  -fl "-flp:logfile=buildlog.txt;verbosity=diagnostic"
-  -bl:buildlog.binlog
-  DEPENDS
-  OpenKneeboard-App-Common
-  CppWinRTNuget
-  WindowsImplementationLibraryNuget
-  WindowsAppSDKNuget
-  WindowsSDKBuildToolsNuget
+  WIN32
+  app.manifest
   ${VERSION_RC_FILE}
-  ${LIBRARY_DEPENDENCIES}
+  AboutPage.idl AboutPage.xaml AboutPage.xaml.cpp AboutPage.xaml.h
+  App.idl App.xaml App.xaml.cpp App.xaml.h
+  CheckDCSHooks.cpp CheckDCSHooks.h
+  CheckRuntimeFiles.cpp CheckRuntimeFiles.h
+  DegreesValueConverter.cpp DegreesValueConverter.h DegreesValueConverter.idl
+  Events-winrt.cpp
+  ExecutableIconFactory.cpp ExecutableIconFactory.h
+  GameSettingsPage.idl GameSettingsPage.xaml GameSettingsPage.xaml.cpp GameSettingsPage.xaml.h
+  Globals.cpp Globals.h
+  InputBindingsControl.idl InputBindingsControl.xaml InputBindingsControl.xaml.cpp InputBindingsControl.xaml.h
+  InputDeviceUIData.cpp InputDeviceUIData.h
+  InputSettingsPage.idl InputSettingsPage.xaml InputSettingsPage.xaml.cpp InputSettingsPage.xaml.h
+  MainWindow.idl MainWindow.xaml MainWindow.xaml.cpp MainWindow.xaml.h
+  MetersNumberFormatter.cpp MetersNumberFormatter.h MetersNumberFormatter.idl
+  MultiplierValueConverter.cpp MultiplierValueConverter.h MultiplierValueConverter.idl
+  NonVRSettingsPage.idl NonVRSettingsPage.xaml NonVRSettingsPage.xaml.cpp NonVRSettingsPage.xaml.h
+  PercentValueConverter.cpp PercentValueConverter.h PercentValueConverter.idl
+  ProcessListPage.idl ProcessListPage.xaml ProcessListPage.xaml.cpp ProcessListPage.xaml.h
+  SettingsPage.idl SettingsPage.xaml SettingsPage.xaml.cpp SettingsPage.xaml.h
+  TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
+  TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
+  VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
 )
-sign_target_file(
+
+include(winui3-boilerplate.cmake)
+
+set_property(
+  SOURCE App.xaml
+  PROPERTY VS_XAML_TYPE
+  "ApplicationDefinition"
+)
+
+set_property(
+  SOURCE InputDeviceUIData.h InputDeviceUIData.cpp
+  PROPERTY VS_SETTINGS
+  "DependentUpon=InputDeviceSettingsPage.idl"
+)
+
+target_link_libraries(
+	OpenKneeboard-App-WinUI3
+	PRIVATE
+	OpenKneeboard-App-Common
+	OpenKneeboard-GetMainHWND
+	OpenKneeboard-FilesDiffer
+	OpenKneeboard-RuntimeFiles
+)
+
+target_include_directories(
+	OpenKneeboard-App-WinUI3
+	PRIVATE
+	"${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
+target_compile_definitions(
   OpenKneeboard-App-WinUI3
-  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.exe"
-)
-
-set(OPENKNEEBOARD_WINUI3_APP_BUILD_DIR "${MSBUILD_OUTPUT_PATH}" PARENT_SCOPE)
-
-file(GLOB XAML_FILES CONFIGURE_DEPENDS "*.xaml")
-set(XBF_FILES)
-foreach(XAML_FILE ${XAML_FILES})
-  get_filename_component(BASENAME "${XAML_FILE}" NAME_WLE)
-  list(APPEND XBF_FILES "${MSBUILD_OUTPUT_PATH}/${BASENAME}.xbf")
-endforeach()
-
-install(
-  DIRECTORY
-  "${MSBUILD_OUTPUT_PATH}"
-  TYPE BIN
-  PATTERN "OpenKneeboardApp.exe" EXCLUDE
-  PATTERN "*.pdb" EXCLUDE
-  PATTERN "*.winmd" EXCLUDE
-)
-install(
-  FILES
-  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.exe"
-  TYPE BIN
-)
-set_property(
-  INSTALL
-  "bin/OpenKneeboardApp.exe"
-  PROPERTY
-  CPACK_START_MENU_SHORTCUTS "OpenKneeboard"
-)
-set_property(
-  INSTALL
-  "bin/OpenKneeboardApp.exe"
-  PROPERTY
-  CPACK_DESKTOP_SHORTCUTS "OpenKneeboard"
-)
-install(
-  FILES
-  "${MSBUILD_OUTPUT_PATH}/OpenKneeboardApp.pdb"
-  TYPE BIN
-  COMPONENT DebugSymbols
+  PRIVATE
+  DISABLE_XAML_GENERATED_MAIN=1
 )

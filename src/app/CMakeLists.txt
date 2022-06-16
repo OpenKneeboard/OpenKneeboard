@@ -33,15 +33,14 @@ add_custom_target(
 	ALL
 	COMMAND
 	"${CMAKE_COMMAND}" -E make_directory
-	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
+	"$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
 	&&
 	${CMAKE_COMMAND} -E copy_if_different
 	"${RUNTIME_FILES}"
-	"${OPENKNEEBOARD_WINUI3_APP_BUILD_DIR}"
+	"$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
 	COMMAND_EXPAND_LISTS
 )
 add_dependencies(CopyRuntimeFiles ThirdParty::OpenVR)
-add_dependencies(OpenKneeboard-App-WinUI3 CopyRuntimeFiles)
 
 
 set(GENERATED_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/appxmanifest.xml")
