@@ -20,6 +20,10 @@ ExternalProject_Add(
     --config "$<CONFIG>"
     --target "libqpdf"
     --parallel
+    --
+    /p:CL_MPCount=
+    /p:UseMultiToolTask=true
+    /p:EnforceProcessCountAcrossBuilds=true
   INSTALL_COMMAND
     "${CMAKE_COMMAND}"
     --install .

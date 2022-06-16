@@ -24,7 +24,9 @@ jobs:
         run: |
           cmake --build . `
             --config ${{matrix.config}} `
-            --parallel
+            --parallel `
+            -- `
+            /p:CL_MPCount=
       - name: Install Default Components
         working-directory: build
         shell: pwsh

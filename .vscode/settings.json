@@ -102,5 +102,8 @@
   },
   "[cpp]": {
     "editor.formatOnSave": true
-  }
+  },
+  "cmake.buildToolArgs": [
+    "/p:CL_MPCount="
+  ]
 }
