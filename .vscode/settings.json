@@ -104,5 +104,9 @@
   },
   "cmake.buildToolArgs": [
     "/p:CL_MPCount="
+  ],
+  "C_Cpp.default.compilerArgs": [
+    "/DNOMINMAX=1",
+    "/DOPENKNEEBOARD_BREAK"
   ]
 }
