@@ -21,6 +21,7 @@
 
 #include <concepts>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <type_traits>
 
@@ -37,7 +38,10 @@ namespace OpenKneeboard {
 #ifdef _
 #undef _
 #endif
-#define _(x) (x)
+template <class T>
+constexpr auto _(T&& x) {
+  return std::forward<T>(x);
+}
 
 class utf8_string_view;
 class utf8_string;
