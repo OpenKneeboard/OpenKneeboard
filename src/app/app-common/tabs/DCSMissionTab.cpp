@@ -156,7 +156,7 @@ void DCSMissionTab::Reload() {
       root / "KNEEBOARD" / mAircraft / "IMAGES"};
     dprintf("Checking {}", aircraftPath);
     if (std::filesystem::exists(aircraftPath)) {
-      dprintf("Using aircraft-specific path");
+      dprint("Using aircraft-specific path");
       GetDelegate()->SetPath(aircraftPath);
       return;
     }
