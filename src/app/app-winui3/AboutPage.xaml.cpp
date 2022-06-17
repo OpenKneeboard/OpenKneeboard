@@ -205,7 +205,7 @@ void AboutPage::OnCopyDPrintClick(
   SetClipboardText(mDPrintClipboardData);
 }
 
-template <class T, class T>
+template <class C, class T>
 auto ReadableTime(const std::chrono::time_point<C, T>& time) {
   return std::chrono::zoned_time(
     std::chrono::current_zone(),
