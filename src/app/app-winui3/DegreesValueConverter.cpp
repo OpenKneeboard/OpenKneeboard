@@ -23,7 +23,7 @@
 #include "DegreesValueConverter.g.cpp"
 // clang-format on
 
-#include <fmt/format.h>
+#include <format>
 
 namespace winrt::OpenKneeboardApp::implementation {
 winrt::Windows::Foundation::IInspectable DegreesValueConverter::Convert(
@@ -32,7 +32,7 @@ winrt::Windows::Foundation::IInspectable DegreesValueConverter::Convert(
   winrt::Windows::Foundation::IInspectable const& parameter,
   hstring const& language) {
   return box_value(
-    to_hstring(fmt::format("{}°", std::lround(unbox_value<double>(value)))));
+    to_hstring(std::format("{}°", std::lround(unbox_value<double>(value)))));
 }
 
 winrt::Windows::Foundation::IInspectable DegreesValueConverter::ConvertBack(

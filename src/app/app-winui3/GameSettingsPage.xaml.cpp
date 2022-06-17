@@ -32,12 +32,12 @@
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/utf8.h>
-#include <fmt/format.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/windows.storage.pickers.h>
 
 #include <algorithm>
+#include <format>
 
 #include "CheckDCSHooks.h"
 #include "ExecutableIconFactory.h"
@@ -194,10 +194,10 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
 
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
-  dialog.Title(box_value(
-    to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), instance->mName))));
-  dialog.Content(box_value(to_hstring(fmt::format(
-    fmt::runtime(_("Do you want OpenKneeboard to stop integrating with {}?")),
+  dialog.Title(
+    box_value(to_hstring(std::format(_("Remove {}?"), instance->mName))));
+  dialog.Content(box_value(to_hstring(std::format(
+    _("Do you want OpenKneeboard to stop integrating with {}?"),
     instance->mName))));
 
   dialog.PrimaryButtonText(to_hstring(_("Yes")));

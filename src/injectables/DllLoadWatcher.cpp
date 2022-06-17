@@ -114,7 +114,7 @@ void DllLoadWatcher::InstallHook(const Callbacks& callbacks) {
   auto f = reinterpret_cast<decltype(&LdrRegisterDllNotification)>(
     DetourFindFunction("Ntdll.dll", "LdrRegisterDllNotification"));
   if (!f) {
-    dprintf("Failed to find LdrRegisterDllNotification");
+    dprint("Failed to find LdrRegisterDllNotification");
     return;
   }
   auto status = f(
@@ -142,7 +142,7 @@ void DllLoadWatcher::UninstallHook() {
   auto f = reinterpret_cast<decltype(&LdrUnregisterDllNotification)>(
     DetourFindFunction("Ntdll.dll", "LdrUnregisterDllNotification"));
   if (!f) {
-    dprintf("Failed to find LdrUnregisterDllNotification");
+    dprint("Failed to find LdrUnregisterDllNotification");
     return;
   }
   auto status = f(p->mCookie);

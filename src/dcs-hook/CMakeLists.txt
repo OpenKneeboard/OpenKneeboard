@@ -1,6 +1,6 @@
 add_module_library(OpenKneeboard-dcs-ext-dll OpenKneeboardDCSExt.cpp)
 target_link_libraries(OpenKneeboard-dcs-ext-dll PUBLIC lualib)
-target_link_libraries(OpenKneeboard-dcs-ext-dll PRIVATE lualib fmt OpenKneeboard-dprint OpenKneeboard-GameEvent)
+target_link_libraries(OpenKneeboard-dcs-ext-dll PRIVATE lualib OpenKneeboard-dprint OpenKneeboard-GameEvent)
 set_target_properties(
   OpenKneeboard-dcs-ext-dll
   PROPERTIES

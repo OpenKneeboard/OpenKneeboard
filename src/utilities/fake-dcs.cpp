@@ -21,7 +21,8 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/utf8.h>
 #include <Windows.h>
-#include <fmt/format.h>
+
+#include <format>
 
 using DCS = OpenKneeboard::DCSWorld;
 using namespace OpenKneeboard;

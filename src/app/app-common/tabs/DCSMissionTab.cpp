@@ -54,7 +54,7 @@ class DCSMissionTab::ExtractedMission final {
     auto tempDirLen = GetTempPathW(MAX_PATH, tempDir);
 
     mTempDir = std::filesystem::path(std::wstring_view(tempDir, tempDirLen))
-      / fmt::format(
+      / std::format(
                  "OpenKneeboard-{}-{:016x}-{}",
                  static_cast<uint32_t>(GetCurrentProcessId()),
                  randDist(randDevice),

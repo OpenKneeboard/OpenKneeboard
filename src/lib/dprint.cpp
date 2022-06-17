@@ -31,7 +31,7 @@ namespace OpenKneeboard {
 static std::wstring GetDPrintResourceName(
   std::wstring_view prefix,
   std::wstring_view key) {
-  return fmt::format(
+  return std::format(
     L"{}{}.dprint.v1.{}", prefix, OpenKneeboard::ProjectNameW, key);
 }
 
@@ -161,7 +161,7 @@ void dprint(std::string_view message) {
 
 void dprint(std::wstring_view message) {
   if (IsDebugStreamEnabled()) {
-    auto output = fmt::format(L"[{}] {}\n", gPrefixW, message);
+    auto output = std::format(L"[{}] {}\n", gPrefixW, message);
     OutputDebugStringW(output.c_str());
   }
 

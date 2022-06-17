@@ -61,7 +61,7 @@ void* Find_SteamOverlay_IDXGISwapChain_Present() {
   auto func = FindFunctionPatternInModule(
     "GameOverlayRenderer64", {pattern, sizeof(pattern)}, &foundMultiple);
   if (foundMultiple) {
-    dprintf("Found multiple potential Steam overlay functions :'(");
+    dprint("Found multiple potential Steam overlay functions :'(");
     return nullptr;
   }
   return func;
@@ -183,8 +183,8 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   decltype(&D3D11CreateDeviceAndSwapChain) factory = nullptr;
   factory = reinterpret_cast<decltype(factory)>(
     DetourFindFunction("d3d11.dll", "D3D11CreateDeviceAndSwapChain"));
-  dprintf("Creating temporary device and swap chain");
-  auto createDeviceAndSwapChainResult = factory(
+  dprint("Creating temporary device and swap chain");
+  auto error = factory(
     nullptr,
     D3D_DRIVER_TYPE_HARDWARE,
     nullptr,
@@ -198,11 +198,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
     nullptr,
     nullptr);
   if (!(device && swapchain)) {
-    auto error = winrt::hresult_error(createDeviceAndSwapChainResult);
-    dprintf(
-      " - failed to get D3D11 device and swapchain: {} - {}\n",
-      error.code(),
-      winrt::to_string(error.message()));
+    dprintf(" - failed to get D3D11 device and swapchain: {}", error);
     OPENKNEEBOARD_BREAK;
     return;
   }
@@ -216,7 +212,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   auto err = DetourSingleAttach(
     fpp, std::bit_cast<void*>(&Impl::Hooked_IDXGISwapChain_Present));
   if (err == 0) {
-    dprintf(" - hooked IDXGISwapChain::Present().");
+    dprint(" - hooked IDXGISwapChain::Present().");
   } else {
     dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
   }

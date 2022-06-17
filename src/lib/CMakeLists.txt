@@ -24,7 +24,6 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-config
   OpenKneeboard-shims
-  ThirdParty::fmt
 )
 
 add_library(OpenKneeboard-GetSystemColor STATIC GetSystemColor.cpp)
@@ -81,11 +80,11 @@ target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
 target_link_libraries(OpenKneeboard-RuntimeFiles PRIVATE OpenKneeboard-dprint)
 
 add_library(OpenKneeboard-SHM STATIC SHM.cpp)
-target_link_libraries(OpenKneeboard-SHM PRIVATE fmt OpenKneeboard-config OpenKneeboard-dprint)
+target_link_libraries(OpenKneeboard-SHM PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
 target_link_libraries(OpenKneeboard-SHM PUBLIC _libheaders)
 
 add_library(OpenKneeboard-dprint STATIC dprint.cpp)
-target_link_libraries(OpenKneeboard-dprint PUBLIC fmt _libheaders)
+target_link_libraries(OpenKneeboard-dprint PUBLIC _libheaders)
 target_link_libraries(OpenKneeboard-dprint
   PRIVATE
   OpenKneeboard-config
@@ -96,7 +95,7 @@ add_library(OpenKneeboard-consolelib STATIC ConsoleLoopCondition.cpp)
 target_link_libraries(OpenKneeboard-consolelib PUBLIC _libheaders)
 
 add_library(OpenKneeboard-GameEvent STATIC GameEvent.cpp)
-target_link_libraries(OpenKneeboard-GameEvent PRIVATE fmt OpenKneeboard-config OpenKneeboard-dprint)
+target_link_libraries(OpenKneeboard-GameEvent PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
 target_link_libraries(OpenKneeboard-GameEvent PUBLIC _libheaders OpenKneeboard-UTF8)
 
 add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
@@ -186,7 +185,6 @@ target_link_libraries(
   OpenKneeboard-OpenXRMode
   PRIVATE
   OpenKneeboard-RuntimeFiles
-  ThirdParty::fmt
 )
 
 add_library(OpenKneeboard-OpenVRKneeboard STATIC OpenVRKneeboard.cpp)

@@ -22,8 +22,9 @@
 #include <OpenKneeboard/DirectInputDevice.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
 #include <OpenKneeboard/utf8.h>
-#include <fmt/format.h>
 #include <shims/winrt.h>
+
+#include <format>
 
 namespace OpenKneeboard {
 
@@ -41,7 +42,7 @@ std::string DirectInputDevice::GetID() const {
 
 std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
   if ((mDevice.dwDevType & 0xff) != DI8DEVTYPE_KEYBOARD) {
-    return fmt::to_string(button + 1);
+    return std::to_string(button + 1);
   }
   switch (button) {
     case DIK_ESCAPE:
@@ -270,7 +271,7 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
     case 0x76:
       return "F24";
     default:
-      return fmt::format("{:#x}", button);
+      return std::format("{:#x}", button);
   }
 }
 
@@ -280,10 +281,10 @@ std::string DirectInputDevice::GetButtonComboDescription(
     return _("None");
   }
   if (ids.size() == 1) {
-    auto label = (mDevice.dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD
-      ? "{}"
-      : _("Button {}");
-    return fmt::format(fmt::runtime(label), GetButtonLabel(*ids.begin()));
+    auto label = (mDevice.dwDevType & 0xff);
+    return (label == DI8DEVTYPE_KEYBOARD)
+      ? ""
+      : std::format(_("Button {}"), GetButtonLabel(*ids.begin()));
   }
   std::string out;
   for (auto id: ids) {

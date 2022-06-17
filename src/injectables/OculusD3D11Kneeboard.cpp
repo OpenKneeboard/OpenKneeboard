@@ -99,7 +99,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
     auto hr = mD3D->CreateRenderTargetView(
       texture.get(), &rtvd, layerRenderTargets.at(i).put());
     if (FAILED(hr)) {
-      dprintf(" - failed to create render target view");
+      dprint(" - failed to create render target view");
       OPENKNEEBOARD_BREAK;
       return nullptr;
     }
@@ -162,7 +162,7 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
   if (!mD3D) {
     swapChain->GetDevice(IID_PPV_ARGS(mD3D.put()));
     if (!mD3D) {
-      dprintf("Got a swapchain without a D3D11 device");
+      dprint("Got a swapchain without a D3D11 device");
     }
   }
   mD3D1 = mD3D.as<ID3D11Device1>();

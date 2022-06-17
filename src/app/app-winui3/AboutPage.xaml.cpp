@@ -27,14 +27,13 @@
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
 #include <appmodel.h>
-#include <fmt/chrono.h>
-#include <fmt/format.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <time.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include <winrt/windows.storage.pickers.h>
 
+#include <format>
 #include <fstream>
 #include <string>
 
@@ -70,7 +69,7 @@ AboutPage::AboutPage() {
 void AboutPage::PopulateVersion() {
   std::string_view commitID(Version::CommitID);
 
-  const auto version = fmt::format(
+  const auto version = std::format(
     "{}.{}.{}.{}-{}{}{}{}",
     Version::Major,
     Version::Minor,
@@ -86,8 +85,8 @@ void AboutPage::PopulateVersion() {
 #endif
   );
 
-  tm commitTime;
-  gmtime_s(&commitTime, &Version::CommitUnixTimestamp);
+  auto commitTime
+    = std::chrono::system_clock::from_time_t(Version::CommitUnixTimestamp);
 
   UINT32 packageNameLen = MAX_PATH;
   wchar_t packageName[MAX_PATH];
@@ -98,7 +97,7 @@ void AboutPage::PopulateVersion() {
     packageNameLen = 0;
   }
 
-  auto details = fmt::format(
+  auto details = std::format(
     "OpenKneeboard v{}\n\n"
     "Copyright © 2021-2022 Frederick Emmott.\n\n"
     "With thanks to Paul 'Goldwolf' Whittingham for the logo and banner "
@@ -169,7 +168,7 @@ winrt::fire_and_forget AboutPage::OnExportClick(
   plainTextExtensions.Append(L".txt");
 
   picker.FileTypeChoices().Insert(L"Plain Text", plainTextExtensions);
-  picker.SuggestedFileName(fmt::format(
+  picker.SuggestedFileName(std::format(
     L"OpenKneeboard-{}.{}.{}.{}.txt",
     Version::Major,
     Version::Minor,
@@ -213,7 +212,7 @@ void AboutPage::PopulateEvents() {
 
   if (events.empty()) {
     message
-      = fmt::format("No events as of {}", std::chrono::system_clock::now());
+      = std::format("No events as of {}", std::chrono::system_clock::now());
   }
 
   for (const auto& event: events) {
@@ -228,7 +227,7 @@ void AboutPage::PopulateEvents() {
       name.remove_prefix('.');
     }
 
-    message += fmt::format(
+    message += std::format(
       "{}:\n"
       "  Latest value:  '{}'\n"
       "  First seen:    {}\n"
@@ -272,7 +271,7 @@ void AboutPage::PopulateDPrint() {
       }
     }
 
-    text += fmt::format(
+    text += std::format(
       L"[{} {} ({})] {}: {}",
       entry.mWhen,
       exe,

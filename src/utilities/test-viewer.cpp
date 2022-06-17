@@ -27,10 +27,9 @@
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 #include <shims/winrt.h>
 
+#include <format>
 #include <memory>
 #include <type_traits>
 
@@ -244,7 +243,7 @@ class TestViewerWindow final {
 
   void PaintPerformanceInformation(ID2D1DeviceContext* ctx) {
     const auto clientSize = GetClientSize();
-    const auto text = fmt::format(L"Frame #{}", mSHM.GetSequenceNumber());
+    const auto text = std::format(L"Frame #{}", mSHM.GetSequenceNumber());
     winrt::com_ptr<IDWriteTextLayout> layout;
     mDXR.mDWriteFactory->CreateTextLayout(
       text.data(),

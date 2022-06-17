@@ -80,10 +80,10 @@ fire_and_forget TabSettingsPage::RemoveTab(
 
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
-  dialog.Title(box_value(
-    to_hstring(fmt::format(fmt::runtime(_("Remove {}?")), tab->GetTitle()))));
-  dialog.Content(box_value(to_hstring(fmt::format(
-    fmt::runtime(_("Do you want to remove the '{}' tab?")), tab->GetTitle()))));
+  dialog.Title(
+    box_value(to_hstring(std::format(_("Remove {}?"), tab->GetTitle()))));
+  dialog.Content(box_value(to_hstring(
+    std::format(_("Do you want to remove the '{}' tab?"), tab->GetTitle()))));
 
   dialog.PrimaryButtonText(to_hstring(_("Yes")));
   dialog.CloseButtonText(to_hstring(_("No")));
@@ -128,13 +128,13 @@ void TabSettingsPage::CreateTab(
       return; \
     } else { \
       throw std::logic_error( \
-        fmt::format("Don't know how to construct {}Tab", #type)); \
+        std::format("Don't know how to construct {}Tab", #type)); \
     } \
   }
   OPENKNEEBOARD_TAB_TYPES
 #undef IT
   throw std::logic_error(
-    fmt::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
+    std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
 }
 
 template <class T>

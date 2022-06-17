@@ -34,7 +34,7 @@
  * - new/delete/malloc/free
  * - on-stack objects with heap-allocated content (e.g. `std::vector`) going
  *   out of scope
- * - `printf`, `fmt::format`, `dprint` etc
+ * - `printf`, `std::format`, `dprint` etc
  */
 class DetourTransaction final {
  private:

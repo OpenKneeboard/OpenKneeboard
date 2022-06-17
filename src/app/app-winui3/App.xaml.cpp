@@ -36,7 +36,6 @@
 #include <Psapi.h>
 #include <ShlObj.h>
 #include <appmodel.h>
-#include <fmt/chrono.h>
 #include <signal.h>
 
 #include <chrono>
@@ -76,7 +75,7 @@ static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
 #endif
   const auto processId = GetCurrentProcessId();
 
-  auto fileName = fmt::format(
+  auto fileName = std::format(
     L"OpenKneeboard-{:%Y%m%dT%H%M%S}-{}.{}.{}.{}-{}.dmp",
     std::chrono::system_clock::now(),
     Version::Major,

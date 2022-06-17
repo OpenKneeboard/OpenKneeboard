@@ -19,10 +19,9 @@
  */
 #pragma once
 
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 #include <shims/winrt.h>
 
+#include <format>
 #include <stop_token>
 #include <string>
 
@@ -31,14 +30,16 @@ namespace OpenKneeboard {
 void dprint(std::string_view s);
 void dprint(std::wstring_view s);
 
-template <typename... T>
-void dprintf(fmt::format_string<T...> fmt, T&&... args) {
-  dprint(fmt::format(fmt, std::forward<T>(args)...));
+template <typename... Args>
+void dprintf(std::_Fmt_string<Args...> fmt, Args&&... args) {
+  static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
+  dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
-template <typename... T>
-void dprintf(fmt::wformat_string<T...> fmt, T&&... args) {
-  dprint(fmt::vformat(fmt::wstring_view(fmt), fmt::make_wformat_args(args...)));
+template <typename... Args>
+void dprintf(std::_Fmt_wstring<Args...> fmt, Args&&... args) {
+  static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
+  dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
 struct DPrintSettings {

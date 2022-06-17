@@ -22,7 +22,8 @@
 #include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
 #include <OpenKneeboard/utf8.h>
-#include <fmt/format.h>
+
+#include <format>
 
 namespace OpenKneeboard {
 
@@ -50,14 +51,14 @@ std::string TabletInputDevice::GetButtonComboDescription(
     return _("None");
   }
   if (ids.size() == 1) {
-    return fmt::format(fmt::runtime(_("Key {}")), *ids.begin() + 1);
+    return std::format(_("Key {}"), *ids.begin() + 1);
   }
   std::string out;
   for (auto id: ids) {
     if (!out.empty()) {
       out += " + ";
     }
-    out += fmt::to_string(id + 1);
+    out += std::to_string(id + 1);
   }
   return out;
 }

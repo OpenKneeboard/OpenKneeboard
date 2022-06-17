@@ -142,8 +142,8 @@ bool OpenVRKneeboard::InitializeOpenVR() {
 
   for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
     auto& layerData = mLayers.at(layerIndex);
-    auto key = fmt::format("{}.{}", ProjectNameA, layerIndex);
-    auto name = fmt::format("OpenKneeboard {}", layerIndex + 1);
+    auto key = std::format("{}.{}", ProjectNameA, layerIndex);
+    auto name = std::format("OpenKneeboard {}", layerIndex + 1);
 
     CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerData.mOverlay);
 

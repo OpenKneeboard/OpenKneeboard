@@ -24,6 +24,11 @@
 #include <OpenKneeboard/config.h>
 #include <openxr/openxr.h>
 
+#include <format>
+
+template <class CharT>
+struct std::formatter<XrResult, CharT> : std::formatter<int, CharT> {};
+
 namespace OpenKneeboard {
 
 class OpenXRNext;

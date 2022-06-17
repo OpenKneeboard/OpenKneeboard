@@ -20,9 +20,9 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
-#include <fmt/format.h>
 #include <shims/winrt.h>
 
+#include <format>
 #include <string>
 
 extern "C" {
@@ -52,7 +52,7 @@ static int SendToOpenKneeboard(lua_State* state) {
   }
 
   auto ge = OpenKneeboard::GameEvent {
-    fmt::format(
+    std::format(
       "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1)),
     lua_tostring(state, 2)};
   ge.Send();

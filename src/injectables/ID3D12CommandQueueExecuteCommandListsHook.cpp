@@ -98,7 +98,7 @@ void ID3D12CommandQueueExecuteCommandListsHook::Impl::InstallHook(
   auto err = DetourSingleAttach(
     fpp, std::bit_cast<void*>(&Impl::Hooked_ExecuteCommandLists));
   if (err == 0) {
-    dprintf(" - hooked ID3D12CommandQueue::ExecuteCommandLists().");
+    dprint(" - hooked ID3D12CommandQueue::ExecuteCommandLists().");
   } else {
     dprintf(
       " - failed to hook ID3D12CommandQueue::ExecuteCommandLists(): {}", err);

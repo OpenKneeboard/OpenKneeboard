@@ -20,7 +20,6 @@ target_link_libraries(
   OpenKneeboard-GameEvent
   OpenKneeboard-consolelib
   OpenKneeboard-games
-  fmt
 )
 
 add_executable(test-feeder test-feeder.cpp)
@@ -59,11 +58,10 @@ target_link_libraries(
   System::D2d1
   System::D3d11
   System::Dxgi
-  ThirdParty::fmt
 )
 
 add_executable(fake-dcs fake-dcs.cpp)
-target_link_libraries(fake-dcs fmt OpenKneeboard-games OpenKneeboard-GameEvent)
+target_link_libraries(fake-dcs OpenKneeboard-games OpenKneeboard-GameEvent)
 
 add_remote_control_executable(OpenKneeboard-Launch-WindowsApp WIN32 launch-msix.cpp icon.rc)
 

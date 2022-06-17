@@ -21,10 +21,9 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <Windows.h>
-#include <fmt/chrono.h>
-#include <fmt/format.h>
 
 #include <chrono>
+#include <format>
 
 using namespace OpenKneeboard;
 using DCS = OpenKneeboard::DCSWorld;
@@ -45,7 +44,7 @@ int main() {
       .Send();
     (GameEvent {
        .name = DCS::EVT_RADIO_MESSAGE,
-       .value = fmt::format(
+       .value = std::format(
          "{}: Test message from PID {}",
          std::chrono::system_clock::now(),
          GetCurrentProcessId()),

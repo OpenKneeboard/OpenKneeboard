@@ -240,7 +240,7 @@ static void CleanupHookInstance() {
 DWORD InjectionBootstrapper::UnloadWithoutNextThreadImpl(void* unused) {
   CleanupHookInstance();
 
-  dprintf("----- Freeing bootstrapper DLL ----");
+  dprint("----- Freeing bootstrapper DLL ----");
   FreeLibraryAndExitThread(gModule, S_OK);
 
   return S_OK;

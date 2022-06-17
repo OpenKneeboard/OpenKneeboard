@@ -87,7 +87,7 @@ GameEvent GameEvent::Unserialize(const std::vector<std::byte>& buffer) {
 }
 
 std::vector<std::byte> GameEvent::Serialize() const {
-  const auto str = fmt::format(
+  const auto str = std::format(
     "{:08x}!{}!{:08x}!{}!", name.size(), name, value.size(), value);
   const auto first = reinterpret_cast<const std::byte*>(str.data());
   return {first, first + str.size()};
@@ -124,7 +124,7 @@ void GameEvent::Send() const {
 const char* GameEvent::GetMailslotPath() {
   static std::string sPath;
   if (sPath.empty()) {
-    sPath = fmt::format(
+    sPath = std::format(
       "\\\\.\\mailslot\\{}.events.v1", OpenKneeboard::ProjectNameA);
   }
   return sPath.c_str();

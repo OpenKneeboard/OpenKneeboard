@@ -13,7 +13,6 @@ configure_file(
 include(detours.cmake)
 include(cppwinrt.cmake)
 include(directxtk.cmake)
-include(fmt.cmake)
 include(json.cmake)
 include(libjpeg-turbo.cmake)
 include(libzip.cmake)

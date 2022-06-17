@@ -25,12 +25,12 @@
 
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/utf8.h>
-#include <fmt/format.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/microsoft.ui.xaml.controls.h>
 
 #include <filesystem>
+#include <format>
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -46,11 +46,11 @@ winrt::Windows::Foundation::IAsyncAction CheckRuntimeFiles(
       RuntimeFiles::Install();
       co_return;
     } catch (const std::filesystem::filesystem_error& error) {
-      message = fmt::format(
-        fmt::runtime(_("OpenKneeboard couldn't update the helper files, so "
-                       "might not work correctly; close any games that "
-                       "you use with OpenKneeboard, and try "
-                       "again.\n\nError {:#x}: {}\n{}")),
+      message = std::format(
+        _("OpenKneeboard couldn't update the helper files, so "
+          "might not work correctly; close any games that "
+          "you use with OpenKneeboard, and try "
+          "again.\n\nError {:#x}: {}\n{}"),
         error.code().value(),
         error.code().message(),
         error.what());

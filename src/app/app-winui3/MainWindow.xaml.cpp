@@ -115,7 +115,7 @@ MainWindow::MainWindow() {
 
   this->Closed({this, &MainWindow::OnClosed});
 
-  auto hwndMappingName = fmt::format(L"Local\\{}.hwnd", ProjectNameW);
+  auto hwndMappingName = std::format(L"Local\\{}.hwnd", ProjectNameW);
   // Initially leak for the duration of the app
   mHwndFile.attach(CreateFileMappingW(
     INVALID_HANDLE_VALUE,

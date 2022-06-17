@@ -212,9 +212,9 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
     = reinterpret_cast<decltype(&vr::VR_GetGenericInterface)>(
       DetourFindFunction(MODULE_NAME, "VR_GetGenericInterface"));
   if (Real_VR_GetGenericInterface) {
-    dprintf("Found OpenVR API");
+    dprint("Found OpenVR API");
   } else {
-    dprintf("Did not find OpenVR API");
+    dprint("Did not find OpenVR API");
     return;
   }
 

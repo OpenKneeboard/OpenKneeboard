@@ -29,12 +29,12 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/utf8.h>
-#include <fmt/format.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/microsoft.ui.xaml.controls.h>
 #include <winrt/windows.storage.pickers.h>
 
+#include <format>
 #include <set>
 
 #include "Globals.h"
@@ -107,8 +107,8 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
     std::error_code ec;
     if (!(std::filesystem::is_directory(hooksDir)
           || std::filesystem::create_directories(hooksDir, ec))) {
-      dialog.Content(winrt::box_value(winrt::to_hstring(fmt::format(
-        fmt::runtime(_("Failed to create {}: {} ({:#x}})")),
+      dialog.Content(winrt::box_value(winrt::to_hstring(std::format(
+        _("Failed to create {}: {} ({:#x})"),
         to_utf8(hooksDir),
         ec.message(),
         ec.value()))));
@@ -120,9 +120,9 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
           luaDest,
           std::filesystem::copy_options::overwrite_existing,
           ec)) {
-      dialog.Content(winrt::box_value(winrt::to_hstring(fmt::format(
-        fmt::runtime(_("Failed to write to {}: {} ({:#x}) - if DCS is running, "
-                       "close DCS, and try again.")),
+      dialog.Content(winrt::box_value(winrt::to_hstring(std::format(
+        _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
+          "close DCS, and try again."),
         to_utf8(luaDest),
         ec.message(),
         ec.value()))));
@@ -134,9 +134,9 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
           dllDest,
           std::filesystem::copy_options::overwrite_existing,
           ec)) {
-      dialog.Content(winrt::box_value(winrt::to_hstring(fmt::format(
-        fmt::runtime(_("Failed to write to {}: {} ({:#x}) - if DCS is running, "
-                       "close DCS, and try again.")),
+      dialog.Content(winrt::box_value(winrt::to_hstring(std::format(
+        _("Failed to write to {}: {} ({:#x}) - if DCS is running, "
+          "close DCS, and try again."),
         to_utf8(luaDest),
         ec.message(),
         ec.value()))));

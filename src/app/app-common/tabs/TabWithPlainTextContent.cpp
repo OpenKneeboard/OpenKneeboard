@@ -22,10 +22,9 @@
 #include <OpenKneeboard/dprint.h>
 #include <Unknwn.h>
 #include <dwrite.h>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 
 #include <algorithm>
+#include <format>
 
 namespace OpenKneeboard {
 
@@ -143,8 +142,8 @@ void TabWithPlainTextContent::RenderPlainTextContent(
   }
 
   {
-    auto text = winrt::to_hstring(fmt::format(
-      fmt::runtime(_("Page {} of {}")),
+    auto text = winrt::to_hstring(std::format(
+      _("Page {} of {}"),
       pageIndex + 1,
       std::max<uint16_t>(pageIndex + 1, GetPageCount())));
 

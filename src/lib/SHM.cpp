@@ -24,11 +24,9 @@
 #include <Windows.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
-#include <fmt/compile.h>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 
 #include <bit>
+#include <format>
 #include <random>
 
 namespace OpenKneeboard::SHM {
@@ -127,12 +125,14 @@ class Spinlock final {
 constexpr DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
 constexpr DWORD SHM_SIZE = sizeof(Header);
 
-constexpr auto SHMPath() {
-  char buf[255];
-  auto end = fmt::format_to(
-    buf,
-    FMT_COMPILE("{}/h{}-c{}-lc{}-vrc{}-vrlc{}-fc{}-s{:x}"),
-    ProjectNameA,
+auto SHMPath() {
+  static std::wstring sCache;
+  if (!sCache.empty()) {
+    return sCache;
+  }
+  sCache = std::format(
+    L"{}/h{}-c{}-lc{}-vrc{}-vrlc{}-fc{}-s{:x}",
+    ProjectNameW,
     Header::VERSION,
     Config::VERSION,
     LayerConfig::VERSION,
@@ -140,7 +140,7 @@ constexpr auto SHMPath() {
     VRLayerConfig::VERSION,
     FlatConfig::VERSION,
     SHM_SIZE);
-  return std::string(buf, end);
+  return sCache;
 }
 
 UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
@@ -226,7 +226,7 @@ std::wstring SharedTextureName(
   uint64_t sessionID,
   uint8_t layerIndex,
   uint32_t sequenceNumber) {
-  return fmt::format(
+  return std::format(
     L"Local\\{}-texture-hv{}-cv{}-lv{}-s{:x}-l{}-b{}",
     ProjectNameW,
     Header::VERSION,
@@ -395,7 +395,7 @@ Writer::Writer() {
   const auto path = SHMPath();
 
   HANDLE handle;
-  handle = CreateFileMappingA(
+  handle = CreateFileMappingW(
     INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
   if (!handle) {
     return;
@@ -445,7 +445,7 @@ class Reader::Impl : public SHM::Impl {
 Reader::Reader() {
   const auto path = SHMPath();
   HANDLE handle;
-  handle = CreateFileMappingA(
+  handle = CreateFileMappingW(
     INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
   if (!handle) {
     return;
@@ -500,7 +500,7 @@ void Writer::Update(
   }
 
   if (layers.size() > MaxLayers) {
-    throw std::logic_error(fmt::format(
+    throw std::logic_error(std::format(
       "Asked to publish {} layers, but max is {}", layers.size(), MaxLayers));
   }
 

@@ -184,7 +184,7 @@ int main() {
     for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
       renderTarget->BeginDraw();
       renderTarget->Clear(colors[(frames + layerIndex) % 4]);
-      auto message = fmt::format(
+      auto message = std::format(
         L"This Way Up\nLayer {} of {}", layerIndex + 1, MaxLayers);
       renderTarget->DrawTextW(
         message.data(),

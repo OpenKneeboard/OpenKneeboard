@@ -20,9 +20,9 @@
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 #include <shims/winrt.h>
+
+#include <format>
 
 // clang-format off
 #include <Windows.h>
@@ -46,7 +46,7 @@ void LaunchAndWaitForOpenXRHelperSubprocess(
                   / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER)
                    .wstring();
 
-  auto commandLine = fmt::format(L"{} \"{}\"", command, layerPath);
+  auto commandLine = std::format(L"{} \"{}\"", command, layerPath);
 
   SHELLEXECUTEINFOW shellExecuteInfo {
     .cbSize = sizeof(SHELLEXECUTEINFOW),

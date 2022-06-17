@@ -21,14 +21,14 @@
 
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/config.h>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
 #include <shims/winrt.h>
+
+#include <format>
 
 namespace OpenKneeboard {
 
 std::optional<HWND> GetMainHWND() {
-  auto name = fmt::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectNameW);
+  auto name = std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectNameW);
   winrt::handle hwndFile {OpenFileMapping(PAGE_READWRITE, FALSE, name.c_str())};
   if (!hwndFile) {
     return {};

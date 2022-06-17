@@ -23,20 +23,19 @@
 #include "MetersNumberFormatter.g.cpp"
 // clang-format on
 
-#include <fmt/format.h>
-
+#include <format>
 #include <regex>
 #include <string>
 
 namespace winrt::OpenKneeboardApp::implementation {
 hstring MetersNumberFormatter::FormatInt(int64_t value) {
-  return to_hstring(fmt::format("{}m", value));
+  return to_hstring(std::format("{}m", value));
 }
 hstring MetersNumberFormatter::FormatUInt(uint64_t value) {
-  return to_hstring(fmt::format("{}m", value));
+  return to_hstring(std::format("{}m", value));
 }
 hstring MetersNumberFormatter::FormatDouble(double value) {
-  return to_hstring(fmt::format("{:0.2f}m", value));
+  return to_hstring(std::format("{:0.2f}m", value));
 }
 
 winrt::Windows::Foundation::IReference<int64_t> MetersNumberFormatter::ParseInt(

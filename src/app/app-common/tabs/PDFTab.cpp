@@ -25,7 +25,6 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
-#include <fmt/chrono.h>
 #include <inttypes.h>
 #include <shims/winrt.h>
 #include <windows.data.pdf.interop.h>
@@ -298,8 +297,7 @@ void PDFTab::Reload() {
       p->mBookmarks.clear();
       const auto pageCount = QPDFPageDocumentHelper(qpdf).getAllPages().size();
       for (uint16_t i = 0; i < pageCount; ++i) {
-        p->mBookmarks.push_back(
-          {fmt::format(fmt::runtime(_("Page {}")), i + 1), i});
+        p->mBookmarks.push_back({std::format(_("Page {}"), i + 1), i});
       }
     }
     p->mNavigationLoaded = true;

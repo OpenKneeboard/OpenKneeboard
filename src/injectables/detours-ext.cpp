@@ -38,7 +38,7 @@ std::vector<HANDLE> GetAllThreads() {
   auto myProc = GetCurrentProcessId();
   auto myThread = GetCurrentThreadId();
   if (!Thread32First(snapshot, &thread)) {
-    dprintf("Failed to find first thread");
+    dprint("Failed to find first thread");
     return {};
   }
 

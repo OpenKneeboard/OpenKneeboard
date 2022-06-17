@@ -23,13 +23,14 @@
 #include <OpenKneeboard/utf8.h>
 #include <ShlObj.h>
 #include <Windows.h>
-#include <fmt/format.h>
 #include <shims/winrt.h>
+
+#include <format>
 
 namespace OpenKneeboard {
 
 static std::filesystem::path GetDCSPath(const char* lastSubKey) {
-  const auto subkey = fmt::format("SOFTWARE\\Eagle Dynamics\\{}", lastSubKey);
+  const auto subkey = std::format("SOFTWARE\\Eagle Dynamics\\{}", lastSubKey);
   const auto wSubKey = winrt::to_hstring(subkey);
 
   wchar_t buffer[MAX_PATH];

@@ -306,8 +306,8 @@ void NavigationTab::RenderPage(
       D2D1_DRAW_TEXT_OPTIONS_NO_SNAP | D2D1_DRAW_TEXT_OPTIONS_CLIP);
   }
 
-  auto message = winrt::to_hstring(fmt::format(
-    fmt::runtime(_("Page {} of {}")), pageIndex + 1, mEntries.size()));
+  auto message = winrt::to_hstring(
+    std::format(_("Page {} of {}"), pageIndex + 1, mEntries.size()));
   ctx->DrawTextW(
     message.data(),
     static_cast<UINT32>(message.size()),

@@ -287,7 +287,7 @@ void InterprocessRenderer::RenderWithChrome(
   ctx->DrawTextLayout({0.0f, 0.0f}, headerLayout.get(), mHeaderTextBrush.get());
 
 #ifdef DEBUG
-  auto frameText = fmt::format(L"Frame {}", mSHM.GetNextSequenceNumber());
+  auto frameText = std::format(L"Frame {}", mSHM.GetNextSequenceNumber());
   headerFormat = nullptr;
   dwf->CreateTextFormat(
     L"Consolas",
