@@ -28,8 +28,14 @@ set(
 )
 add_link_options("${COMMON_LINK_OPTIONS}")
 
-# Synchronous writes to PDB files in case building with parallel CL.exe
-add_compile_options("/FS")
+set(
+  COMMON_COMPILE_OPTIONS
+  # Synchronous writes to PDB files in case building with parallel CL.exe
+  "/FS"
+  # Include content and marker in error messages
+  "/diagnostics:caret"
+)
+add_compile_options(${COMMON_COMPILE_OPTIONS})
 
 project(com.fredemmott.openkneeboard VERSION 1.1.0 LANGUAGES CXX C)
 
