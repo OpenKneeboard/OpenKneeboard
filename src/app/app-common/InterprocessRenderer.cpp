@@ -24,7 +24,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
-#include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/TabViewState.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <dwrite.h>
@@ -465,11 +465,11 @@ void InterprocessRenderer::OnTabChanged() {
 }
 
 void InterprocessRenderer::RenderNow() {
-  auto tabState = this->mKneeboard->GetCurrentTab();
-  if (!tabState) {
+  auto TabViewState = this->mKneeboard->GetCurrentTab();
+  if (!TabViewState) {
     return;
   }
-  this->Render(tabState->GetTab(), tabState->GetPageIndex());
+  this->Render(TabViewState->GetTab(), TabViewState->GetPageIndex());
   mNeedsRepaint = false;
 }
 

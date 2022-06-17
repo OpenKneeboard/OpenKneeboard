@@ -29,7 +29,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
-#include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/TabViewState.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -113,7 +113,7 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   }
 }
 
-void TabPage::SetTab(const std::shared_ptr<TabState>& state) {
+void TabPage::SetTab(const std::shared_ptr<TabViewState>& state) {
   mState = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 

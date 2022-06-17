@@ -26,7 +26,7 @@
 #include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/Tab.h>
-#include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/TabViewState.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabsList.h>
@@ -92,12 +92,12 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 KneeboardState::~KneeboardState() {
 }
 
-std::vector<std::shared_ptr<TabState>> KneeboardState::GetTabs() const {
+std::vector<std::shared_ptr<TabViewState>> KneeboardState::GetTabs() const {
   return mTabs;
 }
 
 void KneeboardState::SetTabs(
-  const std::vector<std::shared_ptr<TabState>>& tabs) {
+  const std::vector<std::shared_ptr<TabViewState>>& tabs) {
   if (std::ranges::equal(tabs, mTabs)) {
     return;
   }
@@ -134,13 +134,13 @@ void KneeboardState::SetTabs(
 
 void KneeboardState::InsertTab(
   uint8_t index,
-  const std::shared_ptr<TabState>& tab) {
+  const std::shared_ptr<TabViewState>& tab) {
   auto tabs = mTabs;
   tabs.insert(tabs.begin() + index, tab);
   SetTabs(tabs);
 }
 
-void KneeboardState::AppendTab(const std::shared_ptr<TabState>& tab) {
+void KneeboardState::AppendTab(const std::shared_ptr<TabViewState>& tab) {
   auto tabs = mTabs;
   tabs.push_back(tab);
   SetTabs(tabs);
@@ -206,7 +206,7 @@ void KneeboardState::NextTab() {
   }
 }
 
-std::shared_ptr<TabState> KneeboardState::GetCurrentTab() const {
+std::shared_ptr<TabViewState> KneeboardState::GetCurrentTab() const {
   return mCurrentTab;
 }
 

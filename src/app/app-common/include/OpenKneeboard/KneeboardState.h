@@ -40,7 +40,7 @@ struct GameEvent;
 class DirectInputAdapter;
 class GamesList;
 class InterprocessRenderer;
-class TabState;
+class TabViewState;
 class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
@@ -51,13 +51,13 @@ class KneeboardState final : private EventReceiver {
   KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
-  std::vector<std::shared_ptr<TabState>> GetTabs() const;
-  void SetTabs(const std::vector<std::shared_ptr<TabState>>& tabs);
-  void InsertTab(uint8_t index, const std::shared_ptr<TabState>& tab);
-  void AppendTab(const std::shared_ptr<TabState>& tab);
+  std::vector<std::shared_ptr<TabViewState>> GetTabs() const;
+  void SetTabs(const std::vector<std::shared_ptr<TabViewState>>& tabs);
+  void InsertTab(uint8_t index, const std::shared_ptr<TabViewState>& tab);
+  void AppendTab(const std::shared_ptr<TabViewState>& tab);
   void RemoveTab(uint8_t index);
 
-  std::shared_ptr<TabState> GetCurrentTab() const;
+  std::shared_ptr<TabViewState> GetCurrentTab() const;
   uint8_t GetTabIndex() const;
   void SetTabIndex(uint8_t);
   void SetTabID(uint64_t);
@@ -103,8 +103,8 @@ class KneeboardState final : private EventReceiver {
   DXResources mDXResources;
   Settings mSettings {Settings::Load()};
 
-  std::vector<std::shared_ptr<TabState>> mTabs;
-  std::shared_ptr<TabState> mCurrentTab;
+  std::vector<std::shared_ptr<TabViewState>> mTabs;
+  std::shared_ptr<TabViewState> mCurrentTab;
 
   D2D1_SIZE_U mCanvasSize;
   D2D1_SIZE_U mContentNativeSize;

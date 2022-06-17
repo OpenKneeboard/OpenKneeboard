@@ -19,7 +19,7 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Tab.h>
-#include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/TabViewState.h>
 #include <OpenKneeboard/TabWithCursorEvents.h>
 #include <OpenKneeboard/TabWithNavigation.h>
 #include <OpenKneeboard/config.h>
@@ -27,13 +27,13 @@
 
 namespace OpenKneeboard {
 
-TabState::TabState(const std::shared_ptr<Tab>& tab)
+TabViewState::TabViewState(const std::shared_ptr<Tab>& tab)
   : mInstanceID(CreateEventContext()), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
-    tab->evFullyReplacedEvent, &TabState::OnTabFullyReplaced, this);
+    tab->evFullyReplacedEvent, &TabViewState::OnTabFullyReplaced, this);
   AddEventListener(
-    tab->evPageAppendedEvent, &TabState::OnTabPageAppended, this);
+    tab->evPageAppendedEvent, &TabViewState::OnTabPageAppended, this);
   AddEventListener(
     tab->evPageChangeRequestedEvent, [this](EventContext ctx, uint16_t index) {
       if (ctx != this->GetInstanceID()) {
@@ -46,26 +46,26 @@ TabState::TabState(const std::shared_ptr<Tab>& tab)
     this->evAvailableFeaturesChangedEvent);
 }
 
-TabState::~TabState() {
+TabViewState::~TabViewState() {
 }
 
-uint64_t TabState::GetInstanceID() const {
+uint64_t TabViewState::GetInstanceID() const {
   return mInstanceID;
 }
 
-std::shared_ptr<Tab> TabState::GetRootTab() const {
+std::shared_ptr<Tab> TabViewState::GetRootTab() const {
   return mRootTab;
 }
 
-std::shared_ptr<Tab> TabState::GetTab() const {
+std::shared_ptr<Tab> TabViewState::GetTab() const {
   return mActiveSubTab ? mActiveSubTab : mRootTab;
 }
 
-uint16_t TabState::GetPageIndex() const {
+uint16_t TabViewState::GetPageIndex() const {
   return mActiveSubTab ? mActiveSubTabPage : mRootTabPage;
 }
 
-void TabState::PostCursorEvent(const CursorEvent& ev) {
+void TabViewState::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
     = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
   if (receiver) {
@@ -73,11 +73,11 @@ void TabState::PostCursorEvent(const CursorEvent& ev) {
   }
 }
 
-uint16_t TabState::GetPageCount() const {
+uint16_t TabViewState::GetPageCount() const {
   return this->GetTab()->GetPageCount();
 }
 
-void TabState::SetPageIndex(uint16_t page) {
+void TabViewState::SetPageIndex(uint16_t page) {
   if (page >= this->GetPageCount()) {
     return;
   }
@@ -94,18 +94,18 @@ void TabState::SetPageIndex(uint16_t page) {
   evPageChangedEvent.Emit();
 }
 
-void TabState::NextPage() {
+void TabViewState::NextPage() {
   SetPageIndex(GetPageIndex() + 1);
 }
 
-void TabState::PreviousPage() {
+void TabViewState::PreviousPage() {
   const auto page = GetPageIndex();
   if (page > 0) {
     SetPageIndex(page - 1);
   }
 }
 
-void TabState::OnTabFullyReplaced() {
+void TabViewState::OnTabFullyReplaced() {
   mRootTabPage = 0;
   if (!mActiveSubTab) {
     evNeedsRepaintEvent.Emit();
@@ -113,7 +113,7 @@ void TabState::OnTabFullyReplaced() {
   evPageChangedEvent.Emit();
 }
 
-void TabState::OnTabPageAppended() {
+void TabViewState::OnTabPageAppended() {
   const auto count = mRootTab->GetPageCount();
   if (mRootTabPage == count - 2) {
     if (mActiveSubTab) {
@@ -124,15 +124,15 @@ void TabState::OnTabPageAppended() {
   }
 }
 
-D2D1_SIZE_U TabState::GetNativeContentSize() const {
+D2D1_SIZE_U TabViewState::GetNativeContentSize() const {
   return GetTab()->GetNativeContentSize(GetPageIndex());
 }
 
-TabMode TabState::GetTabMode() const {
+TabMode TabViewState::GetTabMode() const {
   return mTabMode;
 }
 
-bool TabState::SupportsTabMode(TabMode mode) const {
+bool TabViewState::SupportsTabMode(TabMode mode) const {
   switch (mode) {
     case TabMode::NORMAL:
       return true;
@@ -146,7 +146,7 @@ bool TabState::SupportsTabMode(TabMode mode) const {
   return false;
 }
 
-bool TabState::SetTabMode(TabMode mode) {
+bool TabViewState::SetTabMode(TabMode mode) {
   if (mTabMode == mode || !SupportsTabMode(mode)) {
     return false;
   }

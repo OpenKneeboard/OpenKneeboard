@@ -27,7 +27,7 @@
 namespace OpenKneeboard {
 
 std::vector<std::shared_ptr<TabAction>> CreateTabActions(
-  std::shared_ptr<TabState> tab) {
+  std::shared_ptr<TabViewState> tab) {
   return {
     std::make_shared<TabNavigationAction>(tab),
     std::make_shared<TabFirstPageAction>(tab),

@@ -18,11 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/TabFirstPageAction.h>
-#include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/TabViewState.h>
 
 namespace OpenKneeboard {
 
-TabFirstPageAction::TabFirstPageAction(std::shared_ptr<TabState> state)
+TabFirstPageAction::TabFirstPageAction(std::shared_ptr<TabViewState> state)
   : TabAction("\uE892", _("First Page")), mState(state) {
   AddEventListener(state->evNeedsRepaintEvent, this->evStateChangedEvent);
 }

@@ -27,7 +27,7 @@
 
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
-#include <OpenKneeboard/TabState.h>
+#include <OpenKneeboard/TabViewState.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
