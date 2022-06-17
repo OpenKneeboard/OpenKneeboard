@@ -85,8 +85,8 @@ void AboutPage::PopulateVersion() {
 #endif
   );
 
-  auto commitTime
-    = std::chrono::system_clock::from_time_t(Version::CommitUnixTimestamp);
+  auto commitTime = std::chrono::time_point_cast<std::chrono::seconds>(
+    std::chrono::system_clock::from_time_t(Version::CommitUnixTimestamp));
 
   UINT32 packageNameLen = MAX_PATH;
   wchar_t packageName[MAX_PATH];
@@ -191,8 +191,8 @@ winrt::fire_and_forget AboutPage::OnExportClick(
     std::chrono::system_clock::now());
   std::ofstream(std::filesystem::path {std::wstring_view {path}})
     << std::format(
-         "Local time: {0:%F} {0:%T%z}\n"
-         "UTC time:   {1:%F} {1:%T}",
+         "Local time: {:%F %T%z}\n"
+         "UTC time:   {:%F %T}",
          std::chrono::zoned_time(std::chrono::current_zone(), now),
          std::chrono::zoned_time("UTC", now))
     << sep << mVersionClipboardData << sep << mGameEventsClipboardData << sep
@@ -205,14 +205,21 @@ void AboutPage::OnCopyDPrintClick(
   SetClipboardText(mDPrintClipboardData);
 }
 
+template <class T, class T>
+auto ReadableTime(const std::chrono::time_point<C, T>& time) {
+  return std::chrono::zoned_time(
+    std::chrono::current_zone(),
+    std::chrono::time_point_cast<std::chrono::seconds>(time));
+}
+
 void AboutPage::PopulateEvents() {
   auto events = TroubleshootingStore::Get()->GetGameEvents();
 
   std::string message;
 
   if (events.empty()) {
-    message
-      = std::format("No events as of {}", std::chrono::system_clock::now());
+    message = std::format(
+      "No events as of {}", ReadableTime(std::chrono::system_clock::now()));
   }
 
   for (const auto& event: events) {
@@ -236,8 +243,8 @@ void AboutPage::PopulateEvents() {
       "  Change count:  {}",
       name,
       event.mValue,
-      event.mFirstSeen,
-      event.mLastSeen,
+      ReadableTime(event.mFirstSeen),
+      ReadableTime(event.mLastSeen),
       event.mReceiveCount,
       event.mUpdateCount);
   }
@@ -272,8 +279,8 @@ void AboutPage::PopulateDPrint() {
     }
 
     text += std::format(
-      L"[{} {} ({})] {}: {}",
-      entry.mWhen,
+      L"[{:%F %T} {} ({})] {}: {}",
+      ReadableTime(entry.mWhen),
       exe,
       entry.mMessage.mProcessID,
       entry.mMessage.mPrefix,
