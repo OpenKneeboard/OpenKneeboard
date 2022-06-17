@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <filesystem>
+#include <shims/filesystem>
 
 namespace OpenKneeboard::RuntimeFiles {
 

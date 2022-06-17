@@ -22,7 +22,7 @@
 #include <shims/winrt.h>
 #include <winrt/Windows.Storage.Search.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 
 #include "Tab.h"
 #include "TabWithDoodles.h"

@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/Game.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 #include <string>
 
 namespace OpenKneeboard {

@@ -21,7 +21,7 @@
 #include <shims/winrt.h>
 
 #include <algorithm>
-#include <filesystem>
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 

@@ -29,8 +29,8 @@
 #include <shobjidl.h>
 #include <winrt/microsoft.ui.xaml.controls.h>
 
-#include <filesystem>
 #include <format>
+#include <shims/filesystem>
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;

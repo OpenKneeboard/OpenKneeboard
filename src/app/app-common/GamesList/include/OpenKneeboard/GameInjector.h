@@ -22,9 +22,9 @@
 #include <OpenKneeboard/Events.h>
 #include <Windows.h>
 
-#include <filesystem>
 #include <memory>
 #include <mutex>
+#include <shims/filesystem>
 #include <stop_token>
 #include <string>
 #include <vector>

@@ -20,8 +20,8 @@
 #include <OpenKneeboard/Settings.h>
 #include <ShlObj.h>
 
-#include <filesystem>
 #include <fstream>
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 

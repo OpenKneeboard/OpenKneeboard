@@ -28,7 +28,7 @@
 #include <winrt/microsoft.ui.xaml.h>
 #include <winrt/windows.foundation.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 

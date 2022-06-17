@@ -146,14 +146,27 @@ void DCSMissionTab::Reload() {
   if ((!mExtracted) || mExtracted->GetZipPath() != mMission) {
     mExtracted = std::make_unique<ExtractedMission>(mMission);
   }
-  auto root = mExtracted->GetExtractedPath();
-  if (
-    (!mAircraft.empty())
-    && std::filesystem::exists(root / "KNEEBOARD" / mAircraft / "IMAGES")) {
-    GetDelegate()->SetPath(root / "KNEEBOARD" / mAircraft / "IMAGES");
+
+  dprintf("Mission tab: loading {}", mMission);
+
+  const auto root = mExtracted->GetExtractedPath();
+
+  if (!mAircraft.empty()) {
+    const std::filesystem::path aircraftPath {
+      root / "KNEEBOARD" / mAircraft / "IMAGES"};
+    dprintf("Checking {}", aircraftPath);
+    if (std::filesystem::exists(aircraftPath)) {
+      dprintf("Using aircraft-specific path");
+      GetDelegate()->SetPath(aircraftPath);
+      return;
+    }
   } else {
-    GetDelegate()->SetPath(root / "KNEEBOARD" / "IMAGES");
+    dprint("Aircraft not detected.");
   }
+
+  const std::filesystem::path genericPath {root / "KNEEBOARD" / "IMAGES"};
+  dprintf("Using {}", genericPath);
+  GetDelegate()->SetPath(genericPath);
 }
 
 void DCSMissionTab::OnGameEvent(

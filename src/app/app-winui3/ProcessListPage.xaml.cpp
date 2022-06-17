@@ -26,8 +26,8 @@
 #include <TlHelp32.h>
 
 #include <algorithm>
-#include <filesystem>
 #include <set>
+#include <shims/filesystem>
 
 #include "ExecutableIconFactory.h"
 

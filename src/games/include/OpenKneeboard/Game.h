@@ -19,9 +19,9 @@
  */
 #pragma once
 
-#include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
+#include <shims/filesystem>
 #include <vector>
 
 namespace OpenKneeboard {

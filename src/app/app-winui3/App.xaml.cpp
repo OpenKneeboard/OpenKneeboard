@@ -40,8 +40,8 @@
 
 #include <chrono>
 #include <exception>
-#include <filesystem>
 #include <set>
+#include <shims/filesystem>
 
 #include "CheckDCSHooks.h"
 #include "CheckRuntimeFiles.h"

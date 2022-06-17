@@ -31,7 +31,7 @@
 #include <openvr.h>
 #include <shims/winrt.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 #include <thread>
 
 using namespace DirectX::SimpleMath;

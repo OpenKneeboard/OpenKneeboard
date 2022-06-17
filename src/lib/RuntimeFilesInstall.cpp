@@ -22,7 +22,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <shims/winrt.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 
 namespace OpenKneeboard::RuntimeFiles {
 

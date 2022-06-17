@@ -23,7 +23,7 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 
 using DCS = OpenKneeboard::DCSWorld;
 
@@ -50,7 +50,8 @@ void DCSAircraftTab::OnGameEvent(
     return;
   }
 
-  auto path = savedGamesPath / "KNEEBOARD" / event.value;
+  const auto path = savedGamesPath / "KNEEBOARD" / event.value;
+  dprintf("Aircraft tab: looking for {}", path);
   this->GetDelegate()->SetPath(path);
 }
 

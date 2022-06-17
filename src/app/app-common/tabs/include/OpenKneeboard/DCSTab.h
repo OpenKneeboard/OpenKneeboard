@@ -22,7 +22,7 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 

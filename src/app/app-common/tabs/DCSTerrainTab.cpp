@@ -23,7 +23,7 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 
 using DCS = OpenKneeboard::DCSWorld;
 
@@ -50,7 +50,9 @@ void DCSTerrainTab::OnGameEvent(
     return;
   }
 
-  auto path = installPath / "Mods" / "terrains" / event.value / "Kneeboard";
+  const auto path
+    = installPath / "Mods" / "terrains" / event.value / "Kneeboard";
+  dprintf("Terrain tab: loading {}", path);
   this->GetDelegate()->SetPath(path);
 }
 

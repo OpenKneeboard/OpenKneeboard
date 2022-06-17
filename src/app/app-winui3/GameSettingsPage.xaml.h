@@ -28,7 +28,7 @@
 
 #include <OpenKneeboard/GameInstance.h>
 
-#include <filesystem>
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 class ExecutableIconFactory;

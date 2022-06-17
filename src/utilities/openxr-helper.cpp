@@ -30,8 +30,8 @@
 #include <Windows.h>
 #include <shellapi.h>
 
-#include <filesystem>
 #include <functional>
+#include <shims/filesystem>
 #include <string>
 
 using namespace OpenKneeboard;

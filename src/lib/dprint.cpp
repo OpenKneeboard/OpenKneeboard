@@ -23,8 +23,8 @@
 #include <Windows.h>
 #include <shims/winrt.h>
 
-#include <filesystem>
 #include <optional>
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
