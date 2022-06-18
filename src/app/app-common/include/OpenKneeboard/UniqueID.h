@@ -21,6 +21,7 @@
 
 #include <concepts>
 #include <cstdint>
+#include <functional>
 #include <type_traits>
 
 namespace OpenKneeboard {
@@ -73,3 +74,11 @@ class UniqueID final : public UniqueIDBase<UniqueID> {};
 static_assert(std::equality_comparable<UniqueID>);
 
 };// namespace OpenKneeboard
+
+template <class T>
+  requires std::derived_from<T, OpenKneeboard::UniqueIDBase<T>>
+struct std::hash<T> {
+  constexpr std::size_t operator()(const T& id) const noexcept {
+    return static_cast<std::size_t>(id.GetTemporaryValue());
+  }
+};

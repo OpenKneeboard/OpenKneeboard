@@ -27,8 +27,10 @@ uint64_t _UniqueIDImpl::GetAndIncrementNextValue() {
   return sNextUniqueID++;
 }
 
-void EventBase::Add(EventReceiver* receiver, uint64_t token) {
+EventHandlerToken EventBase::AddHandler(EventReceiver* receiver) {
+  const EventHandlerToken token;
   receiver->mSenders.push_back({this, token});
+  return token;
 }
 
 EventReceiver::EventReceiver() {
@@ -40,6 +42,16 @@ EventReceiver::~EventReceiver() {
     mSenders.pop_back();
     sender.mEvent->RemoveHandler(sender.mToken);
   }
+}
+
+void EventReceiver::RemoveEventListener(EventHandlerToken token) {
+  auto it = std::ranges::find(
+    mSenders, token, [](const SenderInfo& sender) { return sender.mToken; });
+  if (it == mSenders.end()) {
+    return;
+  }
+  it->mEvent->RemoveHandler(token);
+  mSenders.erase(it);
 }
 
 }// namespace OpenKneeboard

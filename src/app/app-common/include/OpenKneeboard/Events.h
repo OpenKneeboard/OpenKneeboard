@@ -31,7 +31,7 @@
 namespace OpenKneeboard {
 
 class EventContext final : public UniqueIDBase<EventContext> {};
-static_assert(std::equality_comparable<EventContext>);
+class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
 
 template <class... Args>
 using EventHandler = std::function<void(Args...)>;
@@ -52,8 +52,8 @@ class EventBase {
 
  protected:
   static void EnqueueForMainThread(std::function<void()>);
-  void Add(EventReceiver*, uint64_t);
-  virtual void RemoveHandler(uint64_t token) = 0;
+  EventHandlerToken AddHandler(EventReceiver*);
+  virtual void RemoveHandler(EventHandlerToken) = 0;
 };
 
 /** a 1:n event. */
@@ -76,16 +76,15 @@ class Event final : public EventBase {
   void PopHook();
 
  protected:
-  void AddHandler(EventReceiver*, const EventHandler<Args...>&);
-  virtual void RemoveHandler(uint64_t token) override;
+  EventHandlerToken AddHandler(EventReceiver*, const EventHandler<Args...>&);
+  virtual void RemoveHandler(EventHandlerToken token) override;
 
  private:
   struct ReceiverInfo {
     EventReceiver* mReceiver;
     EventHandler<Args...> mFunc;
   };
-  uint64_t mNextToken = 0;
-  std::unordered_map<uint64_t, ReceiverInfo> mReceivers;
+  std::unordered_map<EventHandlerToken, ReceiverInfo> mReceivers;
   std::list<Hook> mHooks;
 };
 
@@ -104,49 +103,51 @@ class EventReceiver {
  protected:
   struct SenderInfo {
     EventBase* mEvent;
-    uint64_t mToken;
+    EventHandlerToken mToken;
   };
   std::vector<SenderInfo> mSenders;
 
   // `std::type_identity_t` makes the compiler infer `Args` from the event, then
   // match the handler, instead of attempting to infer `Args from both.
   template <class... Args>
-  void AddEventListener(
+  EventHandlerToken AddEventListener(
     Event<Args...>& event,
     const std::type_identity_t<EventHandler<Args...>>& handler);
   template <class... Args>
-  void AddEventListener(
+  EventHandlerToken AddEventListener(
     Event<Args...>& event,
     std::type_identity_t<Event<Args...>>& forwardAs);
   template <class... Args>
-  void AddEventListener(
+  EventHandlerToken AddEventListener(
     Event<Args...>& event,
     const std::function<void()>& handler);
 
   template <class... EventArgs, class Func, class First, class... Rest>
-  void AddEventListener(
+  EventHandlerToken AddEventListener(
     Event<EventArgs...>& event,
     Func f,
     First&& first,
     Rest&&... rest) {
-    AddEventListener(
+    return AddEventListener(
       event,
       std::bind_front(
         f, std::forward<First>(first), std::forward<Rest>(rest)...));
   }
+
+  void RemoveEventListener(EventHandlerToken);
 };
 
 template <class... Args>
-void Event<Args...>::AddHandler(
+EventHandlerToken Event<Args...>::AddHandler(
   EventReceiver* receiver,
   const EventHandler<Args...>& handler) {
-  const auto token = mNextToken++;
+  const auto token = EventBase::AddHandler(receiver);
   mReceivers.emplace(token, ReceiverInfo {receiver, handler});
-  this->Add(receiver, token);
+  return token;
 }
 
 template <class... Args>
-void Event<Args...>::RemoveHandler(uint64_t token) {
+void Event<Args...>::RemoveHandler(EventHandlerToken token) {
   mReceivers.erase(token);
 }
 
@@ -195,24 +196,24 @@ void Event<Args...>::PopHook() {
 }
 
 template <class... Args>
-void EventReceiver::AddEventListener(
+EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
   const std::type_identity_t<EventHandler<Args...>>& handler) {
-  event.AddHandler(this, handler);
+  return event.AddHandler(this, handler);
 }
 
 template <class... Args>
-void EventReceiver::AddEventListener(
+EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
   const std::function<void()>& handler) {
-  event.AddHandler(this, [handler](Args...) { handler(); });
+  return event.AddHandler(this, [handler](Args...) { handler(); });
 }
 
 template <class... Args>
-void EventReceiver::AddEventListener(
+EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
   std::type_identity_t<Event<Args...>>& forwardTo) {
-  event.AddHandler(this, [&](Args... args) { forwardTo.Emit(args...); });
+  return event.AddHandler(this, [&](Args... args) { forwardTo.Emit(args...); });
 }
 
 }// namespace OpenKneeboard

@@ -76,6 +76,14 @@ target_compile_definitions(
   DISABLE_XAML_GENERATED_MAIN=1
 )
 
+target_compile_options(
+  OpenKneeboard-App-WinUI3
+  PRIVATE
+  # We intentionally throw from noexcept functions to get more useful
+  # backtraces/crash dumps from winrt event handlers
+  "/wd4297"
+)
+
 set_property(
   TARGET OpenKneeboard-App-WinUI3
   PROPERTY OUTPUT_NAME OpenKneeboardApp # .exe
