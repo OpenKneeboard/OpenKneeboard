@@ -29,8 +29,11 @@ namespace OpenKneeboard {
 
 class Tab {
  public:
+  class RuntimeID final : public UniqueIDBase<RuntimeID> {};
+
   virtual utf8_string GetGlyph() const = 0;
   virtual utf8_string GetTitle() const = 0;
+  virtual RuntimeID GetRuntimeID() const = 0;
   virtual void Reload() = 0;
 
   virtual uint16_t GetPageCount() const = 0;
@@ -45,4 +48,5 @@ class Tab {
   Event<> evPageAppendedEvent;
   Event<EventContext, uint16_t> evPageChangeRequestedEvent;
 };
+
 }// namespace OpenKneeboard

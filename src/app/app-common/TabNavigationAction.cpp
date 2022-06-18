@@ -18,11 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/TabNavigationAction.h>
-#include <OpenKneeboard/TabViewState.h>
+#include <OpenKneeboard/TabView.h>
 
 namespace OpenKneeboard {
 
-TabNavigationAction::TabNavigationAction(std::shared_ptr<TabViewState> state)
+TabNavigationAction::TabNavigationAction(std::shared_ptr<TabView> state)
   : TabToggleAction("\uE700", _("Contents")), mState(state) {
   AddEventListener(
     state->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);

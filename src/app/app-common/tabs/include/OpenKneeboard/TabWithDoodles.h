@@ -22,7 +22,6 @@
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/KneeboardState.h>
 #include <d2d1.h>
 #include <shims/winrt.h>
 
@@ -32,6 +31,8 @@
 #include "TabWithCursorEvents.h"
 
 namespace OpenKneeboard {
+
+class KneeboardState;
 
 class TabWithDoodles : public virtual TabWithCursorEvents,
                        private EventReceiver {

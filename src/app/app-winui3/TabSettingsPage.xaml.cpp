@@ -27,11 +27,13 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabTypes.h>
-#include <OpenKneeboard/TabViewState.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/windows.storage.pickers.h>
+
+#include <ranges>
 
 #include "Globals.h"
 
@@ -44,10 +46,10 @@ TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
 
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
-  for (const auto& TabViewState: gKneeboard->GetTabs()) {
+  for (const auto& tab: gKneeboard->GetTabs()) {
     auto winrtTab = winrt::make<TabUIData>();
-    winrtTab.Title(to_hstring(TabViewState->GetRootTab()->GetTitle()));
-    winrtTab.InstanceID(TabViewState->GetInstanceID());
+    winrtTab.Title(to_hstring(tab->GetTitle()));
+    winrtTab.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
     tabs.Append(winrtTab);
   }
   List().ItemsSource(tabs);
@@ -67,16 +69,14 @@ TabSettingsPage::TabSettingsPage() {
 fire_and_forget TabSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
-  auto instanceID = unbox_value<uint64_t>(sender.as<Button>().Tag());
-  auto tabs = gKneeboard->GetTabs();
-  auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& TabViewState) {
-    return TabViewState->GetInstanceID() == instanceID;
-  });
+  const auto tabID = Tab::RuntimeID::FromTemporaryValue(
+    unbox_value<uint64_t>(sender.as<Button>().Tag()));
+  const auto tabs = gKneeboard->GetTabs();
+  auto it = std::ranges::find(tabs, tabID, &Tab::GetRuntimeID);
   if (it == tabs.end()) {
     co_return;
   }
-  auto& TabViewState = *it;
-  auto tab = TabViewState->GetRootTab();
+  const auto& tab = *it;
 
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
@@ -193,12 +193,11 @@ void TabSettingsPage::AddTab(const std::shared_ptr<Tab>& tab) {
   if (idx == -1) {
     idx = 0;
   }
-  auto TabViewState = std::make_shared<TabViewState>(tab);
-  gKneeboard->InsertTab(static_cast<uint8_t>(idx), TabViewState);
+  gKneeboard->InsertTab(static_cast<uint8_t>(idx), tab);
 
   auto winrtTab = winrt::make<TabUIData>();
   winrtTab.Title(to_hstring(tab->GetTitle()));
-  winrtTab.InstanceID(TabViewState->GetInstanceID());
+  winrtTab.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
   List()
     .ItemsSource()
     .as<Windows::Foundation::Collections::IVector<IInspectable>>()
@@ -222,12 +221,11 @@ void TabSettingsPage::OnTabsChanged(
   }
   // ... but act on the insert :)
 
-  std::vector<std::shared_ptr<TabViewState>> reorderedTabs;
+  std::vector<std::shared_ptr<Tab>> reorderedTabs;
   for (auto item: items) {
-    auto id = item.as<TabUIData>()->InstanceID();
-    auto it = std::find_if(tabs.begin(), tabs.end(), [&](auto& it) {
-      return it->GetInstanceID() == id;
-    });
+    auto id
+      = Tab::RuntimeID::FromTemporaryValue(item.as<TabUIData>()->InstanceID());
+    auto it = std::ranges::find(tabs, id, &Tab::GetRuntimeID);
     if (it == tabs.end()) {
       continue;
     }

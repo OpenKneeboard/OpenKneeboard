@@ -1,4 +1,4 @@
-file(GLOB_RECURSE APP_COMMON_SOURCES CONFIGURE_DEPENDS "*.cpp")
+file(GLOB_RECURSE APP_COMMON_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
 add_library(OpenKneeboard-App-Common STATIC ${APP_COMMON_SOURCES})
 target_compile_definitions(
 	OpenKneeboard-App-Common

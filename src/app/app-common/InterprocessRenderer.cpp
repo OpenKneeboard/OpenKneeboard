@@ -22,9 +22,10 @@
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
-#include <OpenKneeboard/TabViewState.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <dwrite.h>
@@ -54,7 +55,7 @@ void InterprocessRenderer::RenderErrorImpl(
   mErrorRenderer->Render(ctx, message, rect);
 }
 
-void InterprocessRenderer::CopyPixelsToSHM() {
+void InterprocessRenderer::Commit(const SHM::LayerConfig& layerConfig) {
   if (!mSHM) {
     return;
   }
@@ -71,22 +72,12 @@ void InterprocessRenderer::CopyPixelsToSHM() {
   it.mMutexKey = mSHM.GetNextTextureKey();
   it.mMutex->ReleaseSync(it.mMutexKey);
 
-  auto usedSize = mKneeboard->GetCanvasSize();
-
   SHM::Config config {
     .mVR = mKneeboard->GetVRConfig(),
     .mFlat = mKneeboard->GetFlatConfig(),
   };
 
-  mSHM.Update(
-    config,
-    {
-      SHM::LayerConfig {
-        .mImageWidth = static_cast<uint16_t>(usedSize.width),
-        .mImageHeight = static_cast<uint16_t>(usedSize.height),
-        .mVR = mKneeboard->GetVRConfig().mPrimaryLayer,
-      },
-    });
+  mSHM.Update(config, {layerConfig});
 }
 
 InterprocessRenderer::InterprocessRenderer(
@@ -172,14 +163,15 @@ InterprocessRenderer::InterprocessRenderer(
     GetSystemColor(COLOR_WINDOW),
     reinterpret_cast<ID2D1SolidColorBrush**>(mErrorBGBrush.put()));
 
+  auto view = kneeboard->GetActiveView();
   AddEventListener(
-    kneeboard->evCursorEvent, &InterprocessRenderer::OnCursorEvent, this);
+    view->evCursorEvent, &InterprocessRenderer::OnCursorEvent, this);
+  AddEventListener(
+    view->evCurrentTabChangedEvent, &InterprocessRenderer::OnTabChanged, this);
+  AddEventListener(
+    view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
   AddEventListener(
     kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
-  AddEventListener(
-    kneeboard->evCurrentTabChangedEvent,
-    &InterprocessRenderer::OnTabChanged,
-    this);
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
     if (mNeedsRepaint) {
@@ -234,20 +226,30 @@ void InterprocessRenderer::RenderWithChrome(
   std::string_view tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
+  // TODO: support multiple views
+  const auto view = mKneeboard->GetActiveView();
+
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTarget(mCanvasBitmap.get());
 
   ctx->BeginDraw();
-  const auto cleanup = scope_guard([&ctx, this]() {
+  const auto cleanup = scope_guard([&, this]() {
     winrt::check_hresult(ctx->EndDraw());
-    this->CopyPixelsToSHM();
+    const auto usedSize = view->GetCanvasSize();
+    this->Commit({
+      .mImageWidth = static_cast<uint16_t>(usedSize.width),
+      .mImageHeight = static_cast<uint16_t>(usedSize.height),
+      .mVR = mKneeboard->GetVRConfig().mPrimaryLayer,
+    });
   });
   ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  renderContent(mKneeboard->GetContentRenderRect());
 
-  const auto headerRect = mKneeboard->GetHeaderRenderRect();
+  const auto contentRect = view->GetContentRenderRect();
+  renderContent(contentRect);
+
+  const auto headerRect = view->GetHeaderRenderRect();
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->FillRectangle(headerRect, mHeaderBGBrush.get());
@@ -312,15 +314,14 @@ void InterprocessRenderer::RenderWithChrome(
 #endif
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  auto cursorPoint = mKneeboard->GetCursorCanvasPoint();
+  auto cursorPoint = view->GetCursorCanvasPoint();
 
-  this->RenderToolbar();
+  this->RenderToolbar(view);
 
-  if (!mKneeboard->HaveCursor()) {
+  if (!view->HaveCursor()) {
     return;
   }
 
-  const auto contentRect = mKneeboard->GetContentRenderRect();
   const D2D1_SIZE_F contentSize = {
     contentRect.right - contentRect.left,
     contentRect.bottom - contentRect.top,
@@ -338,8 +339,9 @@ static bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {
   return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
 }
 
-void InterprocessRenderer::RenderToolbar() {
-  auto header = mKneeboard->GetHeaderRenderRect();
+void InterprocessRenderer::RenderToolbar(
+  const std::shared_ptr<KneeboardView>& view) {
+  auto header = view->GetHeaderRenderRect();
   const auto headerHeight = (header.bottom - header.top);
   const auto buttonHeight = headerHeight * 0.75f;
   const auto margin = (headerHeight - buttonHeight) / 2.0f;
@@ -352,7 +354,7 @@ void InterprocessRenderer::RenderToolbar() {
 
   mButtons.clear();
 
-  const auto cursor = mKneeboard->GetCursorCanvasPoint();
+  const auto cursor = view->GetCursorCanvasPoint();
   const auto ctx = mDXR.mD2DDeviceContext;
 
   FLOAT dpix, dpiy;
@@ -404,7 +406,8 @@ void InterprocessRenderer::RenderToolbar() {
 
 void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   mNeedsRepaint = true;
-  const auto tab = mKneeboard->GetCurrentTab();
+  auto view = mKneeboard->GetActiveView();
+  const auto tab = view->GetCurrentTab();
   if (mCursorTouching && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
     return;
   }
@@ -417,7 +420,7 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   // touch state change
   mCursorTouching = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
 
-  const auto cursor = mKneeboard->GetCursorCanvasPoint({ev.mX, ev.mY});
+  const auto cursor = view->GetCursorCanvasPoint({ev.mX, ev.mY});
 
   if (mCursorTouching) {
     // Touch start
@@ -448,7 +451,7 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
 }
 
 void InterprocessRenderer::OnTabChanged() {
-  auto tab = mKneeboard->GetCurrentTab();
+  auto tab = mKneeboard->GetActiveView()->GetCurrentTab();
   if (!tab) {
     return;
   }
@@ -465,11 +468,11 @@ void InterprocessRenderer::OnTabChanged() {
 }
 
 void InterprocessRenderer::RenderNow() {
-  auto TabViewState = this->mKneeboard->GetCurrentTab();
-  if (!TabViewState) {
+  auto tabView = mKneeboard->GetActiveView()->GetCurrentTab();
+  if (!tabView) {
     return;
   }
-  this->Render(TabViewState->GetTab(), TabViewState->GetPageIndex());
+  this->Render(tabView->GetTab(), tabView->GetPageIndex());
   mNeedsRepaint = false;
 }
 

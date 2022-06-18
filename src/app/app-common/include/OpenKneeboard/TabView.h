@@ -36,20 +36,10 @@ enum class TabMode {
   NAVIGATION,
 };
 
-class TabViewState final : private EventReceiver {
+class TabView final : private EventReceiver {
  public:
-  TabViewState(const std::shared_ptr<Tab>&);
-  ~TabViewState();
-  uint64_t GetInstanceID() const;
-
-  template <std::derived_from<Tab> T, class... Args>
-  static std::shared_ptr<TabViewState> make_shared(Args... args) {
-    auto tab = std::make_shared<T>(args...);
-    if (!tab) {
-      return {};
-    }
-    return std::make_shared<TabViewState>(tab);
-  }
+  TabView(const std::shared_ptr<Tab>&);
+  ~TabView();
 
   std::shared_ptr<Tab> GetRootTab() const;
 
@@ -77,8 +67,8 @@ class TabViewState final : private EventReceiver {
   bool SetTabMode(TabMode);
 
  private:
-  static uint64_t sNextID;
-  uint64_t mInstanceID;
+  const EventContext mEventContext;
+
   std::shared_ptr<Tab> mRootTab;
   uint16_t mRootTabPage;
 

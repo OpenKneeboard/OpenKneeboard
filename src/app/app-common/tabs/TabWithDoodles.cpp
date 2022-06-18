@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabWithDoodles.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>

@@ -26,7 +26,6 @@
 #include <OpenKneeboard/FlatConfig.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
-#include <d2d1.h>
 
 #include <memory>
 #include <thread>
@@ -35,15 +34,16 @@
 namespace OpenKneeboard {
 
 enum class UserAction;
-struct CursorEvent;
-struct GameEvent;
 class DirectInputAdapter;
 class GamesList;
 class InterprocessRenderer;
-class TabViewState;
+class KneeboardView;
+class Tab;
+class TabView;
 class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
+struct GameEvent;
 
 class KneeboardState final : private EventReceiver {
  public:
@@ -51,38 +51,19 @@ class KneeboardState final : private EventReceiver {
   KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
-  std::vector<std::shared_ptr<TabViewState>> GetTabs() const;
-  void SetTabs(const std::vector<std::shared_ptr<TabViewState>>& tabs);
-  void InsertTab(uint8_t index, const std::shared_ptr<TabViewState>& tab);
-  void AppendTab(const std::shared_ptr<TabViewState>& tab);
+  uint8_t GetViewCount() const;
+  std::shared_ptr<KneeboardView> GetView(uint8_t index) const;
+  std::shared_ptr<KneeboardView> GetActiveView() const;
+
+  std::vector<std::shared_ptr<Tab>> GetTabs() const;
+  void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);
+  void InsertTab(uint8_t index, const std::shared_ptr<Tab>& tab);
+  void AppendTab(const std::shared_ptr<Tab>& tab);
   void RemoveTab(uint8_t index);
 
-  std::shared_ptr<TabViewState> GetCurrentTab() const;
-  uint8_t GetTabIndex() const;
-  void SetTabIndex(uint8_t);
-  void SetTabID(uint64_t);
-  void PreviousTab();
-  void NextTab();
-
-  void NextPage();
-  void PreviousPage();
-
-  const D2D1_SIZE_U& GetCanvasSize() const;
-  const D2D1_RECT_F& GetHeaderRenderRect() const;
-  const D2D1_RECT_F& GetContentRenderRect() const;
-  /// ContentRenderRect may be scaled; this is the 'real' size.
-  const D2D1_SIZE_U& GetContentNativeSize() const;
-
-  bool HaveCursor() const;
-  D2D1_POINT_2F GetCursorPoint() const;
-  D2D1_POINT_2F GetCursorCanvasPoint() const;
-  D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F&) const;
-
-  Event<uint8_t> evCurrentTabChangedEvent;
-  Event<> evNeedsRepaintEvent;
-  Event<const CursorEvent&> evCursorEvent;
   Event<> evFrameTimerEvent;
   Event<> evTabsChangedEvent;
+  Event<> evNeedsRepaintEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 
@@ -103,16 +84,8 @@ class KneeboardState final : private EventReceiver {
   DXResources mDXResources;
   Settings mSettings {Settings::Load()};
 
-  std::vector<std::shared_ptr<TabViewState>> mTabs;
-  std::shared_ptr<TabViewState> mCurrentTab;
-
-  D2D1_SIZE_U mCanvasSize;
-  D2D1_SIZE_U mContentNativeSize;
-  D2D1_RECT_F mHeaderRenderRect;
-  D2D1_RECT_F mContentRenderRect;
-
-  bool mHaveCursor = false;
-  D2D1_POINT_2F mCursorPoint;
+  std::vector<std::shared_ptr<Tab>> mTabs;
+  std::vector<std::shared_ptr<KneeboardView>> mViews;
 
   std::unique_ptr<GamesList> mGamesList;
   std::unique_ptr<TabsList> mTabsList;
@@ -128,11 +101,8 @@ class KneeboardState final : private EventReceiver {
   AppSettings mAppSettings;
   DoodleSettings mDoodleSettings;
 
-  void UpdateLayout();
-
-  void OnCursorEvent(const CursorEvent& ev);
+  void OnGameEvent(const GameEvent& ev);
   void OnUserAction(UserAction);
-  void OnGameEvent(const GameEvent&);
 
   void StartOpenVRThread();
 };

@@ -26,8 +26,9 @@
 // clang-format on
 
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/Tab.h>
-#include <OpenKneeboard/TabViewState.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
@@ -84,8 +85,9 @@ MainWindow::MainWindow() {
   OnTabsChanged();
   OnTabChanged();
 
+  auto view = gKneeboard->GetActiveView();
   AddEventListener(
-    gKneeboard->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+    view->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
   AddEventListener(
     gKneeboard->evTabsChangedEvent, &MainWindow::OnTabsChanged, this);
 
@@ -206,7 +208,8 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
 }
 
 void MainWindow::OnTabChanged() {
-  const auto id = gKneeboard->GetCurrentTab()->GetInstanceID();
+  const auto id
+    = gKneeboard->GetActiveView()->GetCurrentTab()->GetTab()->GetRuntimeID();
 
   for (auto it: this->Navigation().MenuItems()) {
     auto item = it.try_as<Control>();
@@ -222,7 +225,8 @@ void MainWindow::OnTabChanged() {
       break;
     }
   }
-  this->Frame().Navigate(xaml_typename<TabPage>(), winrt::box_value(id));
+  this->Frame().Navigate(
+    xaml_typename<TabPage>(), winrt::box_value(id.GetTemporaryValue()));
 }
 
 void MainWindow::OnTabsChanged() {
@@ -230,11 +234,10 @@ void MainWindow::OnTabsChanged() {
   navItems.Clear();
   for (auto tab: gKneeboard->GetTabs()) {
     muxc::NavigationViewItem item;
-    item.Content(
-      winrt::box_value(winrt::to_hstring(tab->GetTab()->GetTitle())));
-    item.Tag(winrt::box_value(tab->GetInstanceID()));
+    item.Content(winrt::box_value(winrt::to_hstring(tab->GetTitle())));
+    item.Tag(winrt::box_value(tab->GetRuntimeID().GetTemporaryValue()));
 
-    auto glyph = tab->GetRootTab()->GetGlyph();
+    auto glyph = tab->GetGlyph();
     if (!glyph.empty()) {
       muxc::FontIcon icon;
       icon.Glyph(winrt::to_hstring(glyph));
@@ -270,12 +273,15 @@ void MainWindow::OnNavigationItemInvoked(
 
   const auto tabID = winrt::unbox_value<uint64_t>(tag);
 
-  if (tabID == gKneeboard->GetCurrentTab()->GetInstanceID()) {
+  if (
+    tabID
+    == gKneeboard->GetActiveView()->GetCurrentTab()->GetTab()->GetRuntimeID()) {
     Frame().Navigate(xaml_typename<TabPage>(), tag);
     return;
   }
 
-  gKneeboard->SetTabID(tabID);
+  gKneeboard->GetActiveView()->SetTabByID(
+    Tab::RuntimeID::FromTemporaryValue(tabID));
 }
 
 void MainWindow::OnBackRequested(

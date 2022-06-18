@@ -17,16 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/Tab.h>
-#include <OpenKneeboard/TabViewState.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabWithGameEvents.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabsList.h>
@@ -39,8 +39,6 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
-  AddEventListener(evCursorEvent, &KneeboardState::OnCursorEvent, this);
-
   if (!mSettings.NonVR.is_null()) {
     mFlatConfig = mSettings.NonVR;
   }
@@ -52,6 +50,11 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   }
   if (!mSettings.Doodle.is_null()) {
     mDoodleSettings = mSettings.Doodle;
+  }
+
+  mViews = {std::make_shared<KneeboardView>()};
+  for (const auto& viewState: mViews) {
+    AddEventListener(viewState->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
@@ -85,62 +88,53 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   if (mVRConfig.mEnableSteamVR) {
     this->StartOpenVRThread();
   }
-
-  UpdateLayout();
 }
 
 KneeboardState::~KneeboardState() {
 }
 
-std::vector<std::shared_ptr<TabViewState>> KneeboardState::GetTabs() const {
+uint8_t KneeboardState::GetViewCount() const {
+  return mViews.size();
+}
+
+std::shared_ptr<KneeboardView> KneeboardState::GetView(uint8_t index) const {
+  if (index >= this->GetViewCount()) {
+    throw std::logic_error("Only a single view is currently supported");
+  }
+  return mViews.at(index);
+}
+
+std::shared_ptr<KneeboardView> KneeboardState::GetActiveView() const {
+  // TODO: support multiple kneeboards
+  return mViews.at(0);
+}
+
+std::vector<std::shared_ptr<Tab>> KneeboardState::GetTabs() const {
   return mTabs;
 }
 
-void KneeboardState::SetTabs(
-  const std::vector<std::shared_ptr<TabViewState>>& tabs) {
+void KneeboardState::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
   if (std::ranges::equal(tabs, mTabs)) {
     return;
-  }
-  auto oldTab = mCurrentTab;
-
-  for (const auto& tab: tabs) {
-    if (std::find(mTabs.begin(), mTabs.end(), tab) != mTabs.end()) {
-      continue;
-    }
-    AddEventListener(tab->evNeedsRepaintEvent, [=]() {
-      if (tab == this->GetCurrentTab()) {
-        this->evNeedsRepaintEvent.Emit();
-      }
-    });
-    AddEventListener(tab->evAvailableFeaturesChangedEvent, [=]() {
-      if (tab == this->GetCurrentTab()) {
-        this->evNeedsRepaintEvent.Emit();
-      }
-    });
-    AddEventListener(
-      tab->evPageChangedEvent, &KneeboardState::UpdateLayout, this);
   }
 
   mTabs = tabs;
   SaveSettings();
 
-  auto it = std::find(tabs.begin(), tabs.end(), mCurrentTab);
-  if (it == tabs.end()) {
-    mCurrentTab = tabs.empty() ? nullptr : tabs.front();
+  for (const auto& view: mViews) {
+    view->SetTabs(tabs);
   }
-  UpdateLayout();
+
   evTabsChangedEvent.Emit();
 }
 
-void KneeboardState::InsertTab(
-  uint8_t index,
-  const std::shared_ptr<TabViewState>& tab) {
+void KneeboardState::InsertTab(uint8_t index, const std::shared_ptr<Tab>& tab) {
   auto tabs = mTabs;
   tabs.insert(tabs.begin() + index, tab);
   SetTabs(tabs);
 }
 
-void KneeboardState::AppendTab(const std::shared_ptr<TabViewState>& tab) {
+void KneeboardState::AppendTab(const std::shared_ptr<Tab>& tab) {
   auto tabs = mTabs;
   tabs.push_back(tab);
   SetTabs(tabs);
@@ -156,146 +150,6 @@ void KneeboardState::RemoveTab(uint8_t index) {
   SetTabs(tabs);
 }
 
-uint8_t KneeboardState::GetTabIndex() const {
-  auto it = std::find(mTabs.begin(), mTabs.end(), mCurrentTab);
-  if (it == mTabs.end()) {
-    return 0;
-  }
-  return static_cast<uint8_t>(it - mTabs.begin());
-}
-
-void KneeboardState::SetTabIndex(uint8_t index) {
-  if (index >= mTabs.size()) {
-    return;
-  }
-  if (mCurrentTab == mTabs.at(index)) {
-    return;
-  }
-  if (mCurrentTab) {
-    mCurrentTab->PostCursorEvent({});
-  }
-  mCurrentTab = mTabs.at(index);
-  UpdateLayout();
-  evCurrentTabChangedEvent.Emit(index);
-}
-
-void KneeboardState::SetTabID(uint64_t id) {
-  if (mCurrentTab && mCurrentTab->GetInstanceID() == id) {
-    return;
-  }
-  for (uint8_t i = 0; i < mTabs.size(); ++i) {
-    if (mTabs.at(i)->GetInstanceID() == id) {
-      SetTabIndex(i);
-      return;
-    }
-  }
-}
-
-void KneeboardState::PreviousTab() {
-  const auto current = GetTabIndex();
-  if (current > 0) {
-    SetTabIndex(current - 1);
-  }
-}
-
-void KneeboardState::NextTab() {
-  const auto current = GetTabIndex();
-  const auto count = GetTabs().size();
-  if (current + 1 < count) {
-    SetTabIndex(current + 1);
-  }
-}
-
-std::shared_ptr<TabViewState> KneeboardState::GetCurrentTab() const {
-  return mCurrentTab;
-}
-
-void KneeboardState::NextPage() {
-  if (mCurrentTab) {
-    mCurrentTab->NextPage();
-    UpdateLayout();
-  }
-}
-
-void KneeboardState::PreviousPage() {
-  if (mCurrentTab) {
-    mCurrentTab->PreviousPage();
-    UpdateLayout();
-  }
-}
-
-void KneeboardState::UpdateLayout() {
-  const auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
-
-  mContentNativeSize = {768, 1024};
-  auto tab = GetCurrentTab();
-  if (tab && tab->GetPageCount() > 0) {
-    mContentNativeSize = tab->GetNativeContentSize();
-  }
-
-  if (mContentNativeSize.width == 0 || mContentNativeSize.height == 0) {
-    mContentNativeSize = {768, 1024};
-  }
-
-  const auto scaleX
-    = static_cast<float>(TextureWidth) / mContentNativeSize.width;
-  const auto scaleY = static_cast<float>(TextureHeight)
-    / (totalHeightRatio * mContentNativeSize.height);
-  const auto scale = std::min(scaleX, scaleY);
-  const D2D1_SIZE_F contentRenderSize {
-    mContentNativeSize.width * scale,
-    mContentNativeSize.height * scale,
-  };
-  const D2D1_SIZE_F headerRenderSize {
-    static_cast<FLOAT>(contentRenderSize.width),
-    contentRenderSize.height * (HeaderPercent / 100.0f),
-  };
-
-  mCanvasSize = {
-    static_cast<UINT>(contentRenderSize.width),
-    static_cast<UINT>(contentRenderSize.height + headerRenderSize.height),
-  };
-  mHeaderRenderRect = {
-    .left = 0,
-    .top = 0,
-    .right = headerRenderSize.width,
-    .bottom = headerRenderSize.height,
-  };
-  mContentRenderRect = {
-    .left = 0,
-    .top = mHeaderRenderRect.bottom,
-    .right = contentRenderSize.width,
-    .bottom = mHeaderRenderRect.bottom + contentRenderSize.height,
-  };
-
-  evNeedsRepaintEvent.Emit();
-}
-
-const D2D1_SIZE_U& KneeboardState::GetCanvasSize() const {
-  return mCanvasSize;
-}
-
-const D2D1_SIZE_U& KneeboardState::GetContentNativeSize() const {
-  return mContentNativeSize;
-}
-
-const D2D1_RECT_F& KneeboardState::GetHeaderRenderRect() const {
-  return mHeaderRenderRect;
-}
-
-const D2D1_RECT_F& KneeboardState::GetContentRenderRect() const {
-  return mContentRenderRect;
-}
-
-void KneeboardState::OnCursorEvent(const CursorEvent& ev) {
-  mCursorPoint = {ev.mX, ev.mY};
-  mHaveCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
-
-  if (mCurrentTab) {
-    mCurrentTab->PostCursorEvent(ev);
-  }
-}
-
 void KneeboardState::OnUserAction(UserAction action) {
   switch (action) {
     case UserAction::TOGGLE_VISIBILITY:
@@ -305,18 +159,6 @@ void KneeboardState::OnUserAction(UserAction action) {
         mInterprocessRenderer
           = std::make_unique<InterprocessRenderer>(mDXResources, this);
       }
-      return;
-    case UserAction::PREVIOUS_TAB:
-      this->PreviousTab();
-      return;
-    case UserAction::NEXT_TAB:
-      this->NextTab();
-      return;
-    case UserAction::PREVIOUS_PAGE:
-      this->PreviousPage();
-      return;
-    case UserAction::NEXT_PAGE:
-      this->NextPage();
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
       auto& flags = this->mVRConfig.mFlags;
@@ -332,6 +174,12 @@ void KneeboardState::OnUserAction(UserAction action) {
     case UserAction::RECENTER_VR:
       this->mVRConfig.mRecenterCount++;
       this->evNeedsRepaintEvent.Emit();
+      return;
+    case UserAction::PREVIOUS_TAB:
+    case UserAction::NEXT_TAB:
+    case UserAction::PREVIOUS_PAGE:
+    case UserAction::NEXT_PAGE:
+      this->GetActiveView()->PostUserAction(action);
       return;
   }
   OPENKNEEBOARD_BREAK;
@@ -350,42 +198,11 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
 #undef IT
   }
   for (auto tab: mTabs) {
-    auto receiver
-      = std::dynamic_pointer_cast<TabWithGameEvents>(tab->GetRootTab());
+    auto receiver = std::dynamic_pointer_cast<TabWithGameEvents>(tab);
     if (receiver) {
       receiver->PostGameEvent(ev);
     }
   }
-}
-
-bool KneeboardState::HaveCursor() const {
-  return mHaveCursor;
-}
-
-D2D1_POINT_2F KneeboardState::GetCursorPoint() const {
-  return mCursorPoint;
-}
-
-D2D1_POINT_2F KneeboardState::GetCursorCanvasPoint() const {
-  return this->GetCursorCanvasPoint(this->GetCursorPoint());
-}
-
-D2D1_POINT_2F KneeboardState::GetCursorCanvasPoint(
-  const D2D1_POINT_2F& contentPoint) const {
-  const auto contentRect = this->GetContentRenderRect();
-  const D2D1_SIZE_F contentSize = {
-    contentRect.right - contentRect.left,
-    contentRect.bottom - contentRect.top,
-  };
-  const auto contentNativeSize = this->GetContentNativeSize();
-  const auto scale = contentSize.height / contentNativeSize.height;
-
-  auto cursorPoint = contentPoint;
-  cursorPoint.x *= scale;
-  cursorPoint.y *= scale;
-  cursorPoint.x += contentRect.left;
-  cursorPoint.y += contentRect.top;
-  return cursorPoint;
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()

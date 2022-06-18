@@ -21,13 +21,16 @@
 
 #include "DCSTab.h"
 #include "FolderTab.h"
+#include "TabBase.h"
 #include "TabWithDelegate.h"
 
 namespace OpenKneeboard {
 
 class FolderTab;
 
-class DCSAircraftTab final : public DCSTab, public TabWithDelegate<FolderTab> {
+class DCSAircraftTab final : public TabBase,
+                             public DCSTab,
+                             public TabWithDelegate<FolderTab> {
  public:
   DCSAircraftTab(const DXResources&, KneeboardState*);
   virtual utf8_string GetGlyph() const override;

@@ -27,9 +27,10 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
-#include <OpenKneeboard/TabViewState.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -37,10 +38,13 @@
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Foundation.Collections.h>
 
+#include <ranges>
+
 #include "Globals.h"
 
 using namespace ::OpenKneeboard;
-using namespace winrt::Microsoft::UI::Xaml::Controls;
+
+namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
@@ -77,14 +81,15 @@ TabPage::TabPage() {
       PaintNow();
     }
   });
-  AddEventListener(gKneeboard->evCursorEvent, [this](const auto& ev) {
-    if (ev.mSource == CursorSource::WINDOW_POINTER) {
-      mDrawCursor = false;
-    } else {
-      mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
-      PaintLater();
-    }
-  });
+  AddEventListener(
+    gKneeboard->GetActiveView()->evCursorEvent, [this](const auto& ev) {
+      if (ev.mSource == CursorSource::WINDOW_POINTER) {
+        mDrawCursor = false;
+      } else {
+        mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
+        PaintLater();
+      }
+    });
 }
 
 TabPage::~TabPage() {
@@ -103,17 +108,13 @@ void TabPage::InitializePointerSource() {
 }
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
-  const auto id = winrt::unbox_value<uint64_t>(args.Parameter());
-  for (auto tab: gKneeboard->GetTabs()) {
-    if (tab->GetInstanceID() != id) {
-      continue;
-    }
-    SetTab(tab);
-    break;
-  }
+  const auto id = Tab::RuntimeID::FromTemporaryValue(
+    winrt::unbox_value<uint64_t>(args.Parameter()));
+  auto view = gKneeboard->GetActiveView()->GetTabViewByID(id);
+  this->SetTab(view);
 }
 
-void TabPage::SetTab(const std::shared_ptr<TabViewState>& state) {
+void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
   mState = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 
@@ -122,11 +123,11 @@ void TabPage::SetTab(const std::shared_ptr<TabViewState>& state) {
   auto commands = CommandBar().PrimaryCommands();
   for (const auto& action: actions) {
     auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
-    FontIcon icon;
+    muxc::FontIcon icon;
     icon.Glyph(winrt::to_hstring(action->GetGlyph()));
 
     if (toggle) {
-      AppBarToggleButton button;
+      muxc::AppBarToggleButton button;
       button.Label(winrt::to_hstring(action->GetLabel()));
       button.Icon(icon);
       button.IsEnabled(action->IsEnabled());
@@ -147,7 +148,7 @@ void TabPage::SetTab(const std::shared_ptr<TabViewState>& state) {
       continue;
     }
 
-    AppBarButton button;
+    muxc::AppBarButton button;
     button.Label(winrt::to_hstring(action->GetLabel()));
     button.Icon(icon);
     button.IsEnabled(action->IsEnabled());
@@ -272,7 +273,7 @@ void TabPage::PaintNow() {
   const auto cursorRadius = metrics.mRenderSize.height / CursorRadiusDivisor;
   const auto cursorStroke = metrics.mRenderSize.height / CursorStrokeDivisor;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  auto point = gKneeboard->GetCursorPoint();
+  auto point = gKneeboard->GetActiveView()->GetCursorPoint();
   point.x *= metrics.mScale;
   point.y *= metrics.mScale;
   point.x += metrics.mRenderRect.left;
@@ -351,7 +352,7 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   const bool leftClick = ppp.IsLeftButtonPressed();
   const bool rightClick = ppp.IsRightButtonPressed();
 
-  gKneeboard->evCursorEvent.Emit({
+  gKneeboard->GetActiveView()->PostCursorEvent({
     .mSource = CursorSource::WINDOW_POINTER,
     .mPositionState = positionState,
     .mTouchState = (leftClick || rightClick)

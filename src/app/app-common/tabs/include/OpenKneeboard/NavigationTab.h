@@ -25,11 +25,12 @@
 
 #include <limits>
 
+#include "TabBase.h"
 #include "TabWithCursorEvents.h"
 
 namespace OpenKneeboard {
 
-class NavigationTab final : public TabWithCursorEvents {
+class NavigationTab final : public TabBase, public TabWithCursorEvents {
  public:
   struct Entry {
     utf8_string mName;

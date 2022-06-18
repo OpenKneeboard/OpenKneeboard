@@ -19,7 +19,7 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Tab.h>
-#include <OpenKneeboard/TabViewState.h>
+#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabWithCursorEvents.h>
 #include <OpenKneeboard/TabWithNavigation.h>
 #include <OpenKneeboard/config.h>
@@ -27,16 +27,15 @@
 
 namespace OpenKneeboard {
 
-TabViewState::TabViewState(const std::shared_ptr<Tab>& tab)
-  : mInstanceID(CreateEventContext()), mRootTab(tab), mRootTabPage(0) {
+TabView::TabView(const std::shared_ptr<Tab>& tab)
+  : mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
-    tab->evFullyReplacedEvent, &TabViewState::OnTabFullyReplaced, this);
-  AddEventListener(
-    tab->evPageAppendedEvent, &TabViewState::OnTabPageAppended, this);
+    tab->evFullyReplacedEvent, &TabView::OnTabFullyReplaced, this);
+  AddEventListener(tab->evPageAppendedEvent, &TabView::OnTabPageAppended, this);
   AddEventListener(
     tab->evPageChangeRequestedEvent, [this](EventContext ctx, uint16_t index) {
-      if (ctx != this->GetInstanceID()) {
+      if (ctx != mEventContext) {
         return;
       }
       this->SetPageIndex(index);
@@ -46,38 +45,34 @@ TabViewState::TabViewState(const std::shared_ptr<Tab>& tab)
     this->evAvailableFeaturesChangedEvent);
 }
 
-TabViewState::~TabViewState() {
+TabView::~TabView() {
 }
 
-uint64_t TabViewState::GetInstanceID() const {
-  return mInstanceID;
-}
-
-std::shared_ptr<Tab> TabViewState::GetRootTab() const {
+std::shared_ptr<Tab> TabView::GetRootTab() const {
   return mRootTab;
 }
 
-std::shared_ptr<Tab> TabViewState::GetTab() const {
+std::shared_ptr<Tab> TabView::GetTab() const {
   return mActiveSubTab ? mActiveSubTab : mRootTab;
 }
 
-uint16_t TabViewState::GetPageIndex() const {
+uint16_t TabView::GetPageIndex() const {
   return mActiveSubTab ? mActiveSubTabPage : mRootTabPage;
 }
 
-void TabViewState::PostCursorEvent(const CursorEvent& ev) {
+void TabView::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
     = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
   if (receiver) {
-    receiver->PostCursorEvent(this->GetInstanceID(), ev, this->GetPageIndex());
+    receiver->PostCursorEvent(mEventContext, ev, this->GetPageIndex());
   }
 }
 
-uint16_t TabViewState::GetPageCount() const {
+uint16_t TabView::GetPageCount() const {
   return this->GetTab()->GetPageCount();
 }
 
-void TabViewState::SetPageIndex(uint16_t page) {
+void TabView::SetPageIndex(uint16_t page) {
   if (page >= this->GetPageCount()) {
     return;
   }
@@ -94,18 +89,18 @@ void TabViewState::SetPageIndex(uint16_t page) {
   evPageChangedEvent.Emit();
 }
 
-void TabViewState::NextPage() {
+void TabView::NextPage() {
   SetPageIndex(GetPageIndex() + 1);
 }
 
-void TabViewState::PreviousPage() {
+void TabView::PreviousPage() {
   const auto page = GetPageIndex();
   if (page > 0) {
     SetPageIndex(page - 1);
   }
 }
 
-void TabViewState::OnTabFullyReplaced() {
+void TabView::OnTabFullyReplaced() {
   mRootTabPage = 0;
   if (!mActiveSubTab) {
     evNeedsRepaintEvent.Emit();
@@ -113,7 +108,7 @@ void TabViewState::OnTabFullyReplaced() {
   evPageChangedEvent.Emit();
 }
 
-void TabViewState::OnTabPageAppended() {
+void TabView::OnTabPageAppended() {
   const auto count = mRootTab->GetPageCount();
   if (mRootTabPage == count - 2) {
     if (mActiveSubTab) {
@@ -124,15 +119,15 @@ void TabViewState::OnTabPageAppended() {
   }
 }
 
-D2D1_SIZE_U TabViewState::GetNativeContentSize() const {
+D2D1_SIZE_U TabView::GetNativeContentSize() const {
   return GetTab()->GetNativeContentSize(GetPageIndex());
 }
 
-TabMode TabViewState::GetTabMode() const {
+TabMode TabView::GetTabMode() const {
   return mTabMode;
 }
 
-bool TabViewState::SupportsTabMode(TabMode mode) const {
+bool TabView::SupportsTabMode(TabMode mode) const {
   switch (mode) {
     case TabMode::NORMAL:
       return true;
@@ -146,7 +141,7 @@ bool TabViewState::SupportsTabMode(TabMode mode) const {
   return false;
 }
 
-bool TabViewState::SetTabMode(TabMode mode) {
+bool TabView::SetTabMode(TabMode mode) {
   if (mTabMode == mode || !SupportsTabMode(mode)) {
     return false;
   }
@@ -154,7 +149,7 @@ bool TabViewState::SetTabMode(TabMode mode) {
   auto receiver
     = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
   if (receiver) {
-    receiver->PostCursorEvent(this->GetInstanceID(), {}, this->GetPageIndex());
+    receiver->PostCursorEvent(mEventContext, {}, this->GetPageIndex());
   }
 
   mTabMode = mode;
@@ -170,7 +165,7 @@ bool TabViewState::SetTabMode(TabMode mode) {
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
         [this](EventContext ctx, uint16_t newPage) {
-          if (ctx != this->GetInstanceID()) {
+          if (ctx != mEventContext) {
             return;
           }
           mRootTabPage = newPage;

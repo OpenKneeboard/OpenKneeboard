@@ -20,6 +20,7 @@
 
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserAction.h>
@@ -186,6 +187,8 @@ void TabletInputAdapter::ProcessTabletMessage(
     return;
   }
 
+  const auto view = mKneeboard->GetActiveView();
+
   if (state.active) {
     auto tabletLimits = mTablet->GetLimits();
 
@@ -215,7 +218,7 @@ void TabletInputAdapter::ProcessTabletMessage(
     // the origin, we need a few transformations:
 
     // 1. scale to canvas size
-    auto canvasSize = mKneeboard->GetCanvasSize();
+    auto canvasSize = view->GetCanvasSize();
 
     const auto scaleX = static_cast<float>(canvasSize.width) / tabletLimits.x;
     const auto scaleY = static_cast<float>(canvasSize.height) / tabletLimits.y;
@@ -229,12 +232,12 @@ void TabletInputAdapter::ProcessTabletMessage(
 
     // 2. translate to content origgin
 
-    const auto contentRenderRect = mKneeboard->GetContentRenderRect();
+    const auto contentRenderRect = view->GetContentRenderRect();
     x -= contentRenderRect.left;
     y -= contentRenderRect.top;
 
     // 3. scale to content size;
-    const auto contentNativeSize = mKneeboard->GetContentNativeSize();
+    const auto contentNativeSize = view->GetContentNativeSize();
     const auto contentScale = contentNativeSize.width
       / (contentRenderRect.right - contentRenderRect.left);
     x *= contentScale;
@@ -257,9 +260,9 @@ void TabletInputAdapter::ProcessTabletMessage(
       event.mPositionState = CursorPositionState::NOT_IN_CONTENT_RECT;
     }
 
-    mKneeboard->evCursorEvent.Emit(event);
+    view->PostCursorEvent(event);
   } else {
-    mKneeboard->evCursorEvent.Emit({});
+    view->PostCursorEvent({});
   }
 }
 

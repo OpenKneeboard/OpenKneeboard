@@ -20,6 +20,7 @@
 #pragma once
 
 #include "DCSTab.h"
+#include "TabBase.h"
 #include "TabWithDoodles.h"
 #include "TabWithPlainTextContent.h"
 
@@ -27,7 +28,8 @@ namespace OpenKneeboard {
 
 class FolderTab;
 
-class DCSRadioLogTab final : public DCSTab,
+class DCSRadioLogTab final : public TabBase,
+                             public DCSTab,
                              public TabWithDoodles,
                              public TabWithPlainTextContent {
  public:

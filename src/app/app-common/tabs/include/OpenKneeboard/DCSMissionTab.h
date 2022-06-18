@@ -21,11 +21,14 @@
 
 #include "DCSTab.h"
 #include "FolderTab.h"
+#include "TabBase.h"
 #include "TabWithDelegate.h"
 
 namespace OpenKneeboard {
 
-class DCSMissionTab final : public DCSTab, public TabWithDelegate<FolderTab> {
+class DCSMissionTab final : public TabBase,
+                            public DCSTab,
+                            public TabWithDelegate<FolderTab> {
  public:
   DCSMissionTab(const DXResources&, KneeboardState*);
   virtual ~DCSMissionTab();

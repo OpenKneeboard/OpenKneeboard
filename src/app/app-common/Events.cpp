@@ -21,10 +21,10 @@
 
 namespace OpenKneeboard {
 
-static EventContext sNextEventContext = 1 << 16;
+static uint64_t sNextUniqueID = 0x1234abcdui64 << 32;
 
-EventContext CreateEventContext() {
-  return sNextEventContext++;
+uint64_t _UniqueIDImpl::GetAndIncrementNextValue() {
+  return sNextUniqueID++;
 }
 
 void EventBase::Add(EventReceiver* receiver, uint64_t token) {

@@ -31,7 +31,7 @@
 
 namespace OpenKneeboard {
 class D2DErrorRenderer;
-class TabViewState;
+class TabView;
 }// namespace OpenKneeboard
 
 using namespace winrt::Microsoft::UI::Dispatching;
@@ -43,6 +43,8 @@ using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct TabPage : TabPageT<TabPage>, EventReceiver {
+  using TabView = OpenKneeboard::TabView;
+
   TabPage();
   ~TabPage();
 
@@ -54,7 +56,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
  private:
   winrt::apartment_context mUIThread;
-  std::shared_ptr<TabViewState> mState;
+  std::shared_ptr<TabView> mState;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
@@ -68,7 +70,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void InitializePointerSource();
   void QueuePointerPoint(const PointerPoint&);
 
-  void SetTab(const std::shared_ptr<TabViewState>&);
+  void SetTab(const std::shared_ptr<TabView>&);
   void InitializeSwapChain();
   void ResizeSwapChain();
 

@@ -17,22 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/TabPreviousPageAction.h>
-#include <OpenKneeboard/TabView.h>
+#pragma once
+
+#include "Tab.h"
 
 namespace OpenKneeboard {
 
-TabPreviousPageAction::TabPreviousPageAction(std::shared_ptr<TabView> state)
-  : TabAction("\uE760", _("Previous Page")), mState(state) {
-  AddEventListener(state->evNeedsRepaintEvent, this->evStateChangedEvent);
-}
+class TabBase : public virtual Tab {
+ public:
+  virtual RuntimeID GetRuntimeID() const override;
 
-bool TabPreviousPageAction::IsEnabled() {
-  return mState->GetPageIndex() > 0;
-}
-
-void TabPreviousPageAction::Execute() {
-  mState->SetPageIndex(mState->GetPageIndex() - 1);
-}
+ private:
+  const RuntimeID mRuntimeID;
+};
 
 }// namespace OpenKneeboard

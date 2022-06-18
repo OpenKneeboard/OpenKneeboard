@@ -25,13 +25,15 @@
 #include <shims/filesystem>
 
 #include "Tab.h"
+#include "TabBase.h"
 #include "TabWithDoodles.h"
 #include "TabWithNavigation.h"
 #include "TabWithSettings.h"
 
 namespace OpenKneeboard {
 
-class FolderTab final : public TabWithDoodles,
+class FolderTab final : public TabBase,
+                        public TabWithDoodles,
                         public TabWithNavigation,
                         public TabWithSettings {
  public:

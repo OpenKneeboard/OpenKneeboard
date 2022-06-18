@@ -26,10 +26,12 @@
 #include <type_traits>
 #include <vector>
 
+#include "UniqueID.h"
+
 namespace OpenKneeboard {
 
-using EventContext = uint64_t;
-EventContext CreateEventContext();
+class EventContext final : public UniqueIDBase<EventContext> {};
+static_assert(std::equality_comparable<EventContext>);
 
 template <class... Args>
 using EventHandler = std::function<void(Args...)>;

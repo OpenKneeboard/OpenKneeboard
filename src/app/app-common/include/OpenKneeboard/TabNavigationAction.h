@@ -23,14 +23,14 @@
 
 namespace OpenKneeboard {
 
-class TabViewState;
+class TabView;
 
 class TabNavigationAction final : public TabToggleAction,
                                   private EventReceiver {
  public:
   TabNavigationAction() = delete;
 
-  TabNavigationAction(std::shared_ptr<TabViewState> state);
+  TabNavigationAction(std::shared_ptr<TabView> state);
 
   virtual bool IsActive() override;
   virtual bool IsEnabled() override;
@@ -39,7 +39,7 @@ class TabNavigationAction final : public TabToggleAction,
   virtual void Deactivate() override;
 
  private:
-  std::shared_ptr<TabViewState> mState = nullptr;
+  std::shared_ptr<TabView> mState = nullptr;
 };
 
 }// namespace OpenKneeboard
