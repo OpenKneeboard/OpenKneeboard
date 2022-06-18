@@ -174,15 +174,19 @@ InterprocessRenderer::InterprocessRenderer(
     GetSystemColor(COLOR_WINDOW),
     reinterpret_cast<ID2D1SolidColorBrush**>(mErrorBGBrush.put()));
 
-  auto view = kneeboard->GetActiveView();
-  AddEventListener(
-    view->evCursorEvent, &InterprocessRenderer::OnCursorEvent, this);
-  AddEventListener(
-    view->evCurrentTabChangedEvent, &InterprocessRenderer::OnTabChanged, this);
-  AddEventListener(
-    view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
   AddEventListener(
     kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
+  for (uint8_t i = 0; i < kneeboard->GetMaxSupportedViews(); ++i) {
+    auto view = kneeboard->GetView(i);
+    AddEventListener(
+      view->evCursorEvent, &InterprocessRenderer::OnCursorEvent, this);
+    AddEventListener(
+      view->evCurrentTabChangedEvent,
+      &InterprocessRenderer::OnTabChanged,
+      this);
+    AddEventListener(
+      view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
+  }
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
     if (mNeedsRepaint) {
@@ -476,7 +480,7 @@ void InterprocessRenderer::OnTabChanged() {
 }
 
 void InterprocessRenderer::RenderNow() {
-  const auto layerCount = mKneeboard->GetViewCount();
+  const auto layerCount = mKneeboard->GetMaxSupportedViews();
   for (uint8_t i = 0; i < layerCount; ++i) {
     auto& layer = mLayers.at(i);
     layer.mKneeboardView = mKneeboard->GetView(i);

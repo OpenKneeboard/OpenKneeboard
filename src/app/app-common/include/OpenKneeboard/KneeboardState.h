@@ -53,7 +53,7 @@ class KneeboardState final : private EventReceiver {
   KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
-  uint8_t GetViewCount() const;
+  uint8_t GetMaxSupportedViews() const;
   std::shared_ptr<IKneeboardView> GetView(uint8_t index) const;
   std::shared_ptr<IKneeboardView> GetActiveView() const;
 

@@ -99,12 +99,12 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 KneeboardState::~KneeboardState() {
 }
 
-uint8_t KneeboardState::GetViewCount() const {
+uint8_t KneeboardState::GetMaxSupportedViews() const {
   return mViews.size();
 }
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetView(uint8_t index) const {
-  if (index >= this->GetViewCount()) {
+  if (index >= this->GetMaxSupportedViews()) {
     throw std::logic_error("Only a single view is currently supported");
   }
   return mViews.at(index);
