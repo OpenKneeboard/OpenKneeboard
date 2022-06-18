@@ -184,8 +184,7 @@ void KneeboardState::OnUserAction(UserAction action) {
     case UserAction::NEXT_TAB:
     case UserAction::PREVIOUS_PAGE:
     case UserAction::NEXT_PAGE:
-      std::dynamic_pointer_cast<KneeboardView>(this->GetActiveView())
-        ->PostUserAction(action);
+      mViews.at(mActiveViewIndex)->PostUserAction(action);
       return;
   }
   OPENKNEEBOARD_BREAK;

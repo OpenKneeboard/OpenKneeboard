@@ -31,7 +31,7 @@ KneeboardViewProxy::~KneeboardViewProxy() {
 
 void KneeboardViewProxy::SetBackingView(
   const std::shared_ptr<IKneeboardView>& view) {
-  const auto oldTab = this->GetTabIndex();
+  const auto oldTab = mView ? this->GetTabIndex() : 0xff;
 
   for (const auto event: mEventHandlers) {
     RemoveEventListener(event);

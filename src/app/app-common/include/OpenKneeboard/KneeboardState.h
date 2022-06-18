@@ -88,6 +88,7 @@ class KneeboardState final : private EventReceiver {
 
   std::vector<std::shared_ptr<Tab>> mTabs;
 
+  uint8_t mActiveViewIndex = 0;
   std::array<std::shared_ptr<KneeboardView>, 2> mViews;
   std::shared_ptr<KneeboardViewProxy> mViewProxy;
 
