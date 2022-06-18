@@ -85,6 +85,7 @@ struct PDFTab::Impl final {
 
   CursorLinkState mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
   NormalizedLink mActiveLink;
+  uint16_t mActivePage;
   bool mNavigationLoaded = false;
 };
 
@@ -226,6 +227,9 @@ std::vector<NavigationTab::Entry> GetNavigationEntries(
 
 void PDFTab::Reload() {
   p->mBookmarks.clear();
+  p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
+  p->mActiveLink = {};
+  p->mActivePage = ~(0ui16);
   p->mNavigationLoaded = false;
 
   if (!std::filesystem::is_regular_file(p->mPath)) {
@@ -401,6 +405,11 @@ void PDFTab::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
   uint16_t pageIndex) {
+  if (pageIndex != p->mActivePage) {
+    p->mActiveLink = {};
+    p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
+    p->mActivePage = pageIndex;
+  }
   if (!p->mLinks.contains(pageIndex)) {
     p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
     TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
@@ -468,6 +477,9 @@ void PDFTab::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& contentRect) {
+  if (pageIndex != p->mActivePage) {
+    return;
+  }
   if (
     p->mLinkState == CursorLinkState::OUTSIDE_HYPERLINK
     || p->mLinkState == CursorLinkState::PRESSED_OUTSIDE_HYPERLINK) {
