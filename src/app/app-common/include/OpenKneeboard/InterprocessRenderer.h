@@ -48,13 +48,6 @@ class InterprocessRenderer final : private EventReceiver {
   ~InterprocessRenderer();
 
  private:
-  struct SharedTextureResources {
-    winrt::com_ptr<ID3D11Texture2D> mTexture;
-    winrt::com_ptr<IDXGIKeyedMutex> mMutex;
-    winrt::handle mHandle;
-    UINT mMutexKey = 0;
-  };
-
   winrt::apartment_context mUIThread;
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
@@ -65,11 +58,24 @@ class InterprocessRenderer final : private EventReceiver {
 
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
-  winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
-  winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
 
-  std::array<std::array<SharedTextureResources, TextureCount>, MaxLayers>
-    mResources;
+  struct SharedTextureResources {
+    winrt::com_ptr<ID3D11Texture2D> mTexture;
+    winrt::com_ptr<IDXGIKeyedMutex> mMutex;
+    winrt::handle mHandle;
+    UINT mMutexKey = 0;
+  };
+
+  struct Layer {
+    SHM::LayerConfig mConfig;
+    std::shared_ptr<IKneeboardView> mKneeboardView;
+
+    winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
+    winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
+
+    std::array<SharedTextureResources, TextureCount> mSharedResources;
+  };
+  std::array<Layer, MaxLayers> mLayers;
 
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
@@ -91,16 +97,20 @@ class InterprocessRenderer final : private EventReceiver {
   std::mutex mToolbarMutex;
 
   void RenderNow();
-  void Render(const std::shared_ptr<Tab>& tab, uint16_t pageIndex);
-  void RenderError(utf8_string_view tabTitle, utf8_string_view message);
+  void Render(Layer&);
+  void RenderError(
+    const std::shared_ptr<IKneeboardView>&,
+    utf8_string_view tabTitle,
+    utf8_string_view message);
   void RenderErrorImpl(utf8_string_view message, const D2D1_RECT_F&);
   void RenderWithChrome(
+    const std::shared_ptr<IKneeboardView>&,
     const std::string_view tabTitle,
     const D2D1_SIZE_U& preferredContentSize,
     const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
   void RenderToolbar(const std::shared_ptr<IKneeboardView>&);
 
-  void Commit(const SHM::LayerConfig&);
+  void Commit(uint8_t layerCount);
 
   void OnCursorEvent(const CursorEvent&);
   void OnTabChanged();

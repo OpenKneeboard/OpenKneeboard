@@ -37,9 +37,11 @@ using namespace OpenKneeboard;
 namespace OpenKneeboard {
 
 void InterprocessRenderer::RenderError(
+  const std::shared_ptr<IKneeboardView>& view,
   utf8_string_view tabTitle,
   utf8_string_view message) {
   this->RenderWithChrome(
+    view,
     tabTitle,
     {768, 1024},
     std::bind_front(&InterprocessRenderer::RenderErrorImpl, this, message));
@@ -55,29 +57,34 @@ void InterprocessRenderer::RenderErrorImpl(
   mErrorRenderer->Render(ctx, message, rect);
 }
 
-void InterprocessRenderer::Commit(const SHM::LayerConfig& layerConfig) {
+void InterprocessRenderer::Commit(uint8_t layerCount) {
   if (!mSHM) {
     return;
   }
 
   mD3DContext->Flush();
 
-  const uint8_t layerIndex = 0;
+  std::vector<SHM::LayerConfig> shmLayers;
 
-  auto& it = mResources.at(layerIndex).at(mSHM.GetNextTextureIndex());
+  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+    auto& layer = mLayers.at(layerIndex);
+    auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
 
-  it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
-  mD3DContext->CopyResource(it.mTexture.get(), mCanvasTexture.get());
-  mD3DContext->Flush();
-  it.mMutexKey = mSHM.GetNextTextureKey();
-  it.mMutex->ReleaseSync(it.mMutexKey);
+    it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
+    mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
+    mD3DContext->Flush();
+    it.mMutexKey = mSHM.GetNextTextureKey();
+    it.mMutex->ReleaseSync(it.mMutexKey);
+
+    shmLayers.push_back(layer.mConfig);
+  }
 
   SHM::Config config {
     .mVR = mKneeboard->GetVRConfig(),
     .mFlat = mKneeboard->GetFlatConfig(),
   };
 
-  mSHM.Update(config, {layerConfig});
+  mSHM.Update(config, shmLayers);
 }
 
 InterprocessRenderer::InterprocessRenderer(
@@ -100,31 +107,35 @@ InterprocessRenderer::InterprocessRenderer(
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
     .MiscFlags = 0,
   };
-  winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
-    &textureDesc, nullptr, mCanvasTexture.put()));
 
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-    mCanvasTexture.as<IDXGISurface>().get(), nullptr, mCanvasBitmap.put()));
+  for (auto& layer: mLayers) {
+    winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
+      &textureDesc, nullptr, layer.mCanvasTexture.put()));
+
+    winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+      layer.mCanvasTexture.as<IDXGISurface>().get(),
+      nullptr,
+      layer.mCanvasBitmap.put()));
+  }
 
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
   const auto sessionID = mSHM.GetSessionID();
   for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
-    auto& layerIt = mResources.at(layerIndex);
-
+    auto& layer = mLayers.at(layerIndex);
     for (uint8_t bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
-      auto& bufferIt = layerIt.at(bufferIndex);
+      auto& resources = layer.mSharedResources.at(bufferIndex);
       dxr.mD3DDevice->CreateTexture2D(
-        &textureDesc, nullptr, bufferIt.mTexture.put());
+        &textureDesc, nullptr, resources.mTexture.put());
       auto textureName
         = SHM::SharedTextureName(sessionID, layerIndex, bufferIndex);
-      bufferIt.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+      resources.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
         nullptr,
         DXGI_SHARED_RESOURCE_READ,
         textureName.c_str(),
-        bufferIt.mHandle.put());
-      bufferIt.mMutex = bufferIt.mTexture.as<IDXGIKeyedMutex>();
+        resources.mHandle.put());
+      resources.mMutex = resources.mTexture.as<IDXGIKeyedMutex>();
     }
   }
 
@@ -188,34 +199,50 @@ InterprocessRenderer::~InterprocessRenderer() {
   ctx->Flush();
 }
 
-void InterprocessRenderer::Render(
-  const std::shared_ptr<Tab>& tab,
-  uint16_t pageIndex) {
+void InterprocessRenderer::Render(Layer& layer) {
+  const auto view = layer.mKneeboardView;
+  const auto tabView = view->GetCurrentTabView();
+  const auto tab = tabView->GetTab();
+  const auto pageIndex = tabView->GetPageIndex();
+
+  const auto usedSize = view->GetCanvasSize();
+  layer.mConfig.mImageWidth = usedSize.width;
+  layer.mConfig.mImageHeight = usedSize.height;
+
+  auto ctx = mDXR.mD2DDeviceContext;
+  ctx->SetTarget(layer.mCanvasBitmap.get());
+  ctx->BeginDraw();
+  const scope_guard endDraw {
+    [&, this]() { winrt::check_hresult(ctx->EndDraw()); }};
+  ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+
   if (!tab) {
     auto msg = _("No Tab");
-    this->RenderError(msg, msg);
+    this->RenderError(view, msg, msg);
     return;
   }
 
   const auto title = tab->GetTitle();
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
-    this->RenderError(title, _("No Pages"));
+    this->RenderError(view, title, _("No Pages"));
     return;
   }
 
   if (pageIndex >= pageCount) {
-    this->RenderError(title, _("Invalid Page Number"));
+    this->RenderError(view, title, _("Invalid Page Number"));
     return;
   }
 
   const auto pageSize = tab->GetNativeContentSize(pageIndex);
   if (pageSize.width == 0 || pageSize.height == 0) {
-    this->RenderError(title, _("Invalid Page Size"));
+    this->RenderError(view, title, _("Invalid Page Size"));
     return;
   }
 
   this->RenderWithChrome(
+    view,
     title,
     pageSize,
     std::bind_front(
@@ -223,35 +250,16 @@ void InterprocessRenderer::Render(
 }
 
 void InterprocessRenderer::RenderWithChrome(
+  const std::shared_ptr<IKneeboardView>& view,
   std::string_view tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
-  // TODO: support multiple views
-  const auto view = mKneeboard->GetActiveView();
-
-  auto ctx = mDXR.mD2DDeviceContext;
-  ctx->SetTarget(mCanvasBitmap.get());
-
-  ctx->BeginDraw();
-  const auto cleanup = scope_guard([&, this]() {
-    winrt::check_hresult(ctx->EndDraw());
-    const auto usedSize = view->GetCanvasSize();
-    this->Commit({
-      .mImageWidth = static_cast<uint16_t>(usedSize.width),
-      .mImageHeight = static_cast<uint16_t>(usedSize.height),
-      .mVR = mKneeboard->GetVRConfig().mPrimaryLayer,
-    });
-  });
-  ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
-
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-
   const auto contentRect = view->GetContentRenderRect();
   renderContent(contentRect);
 
   const auto headerRect = view->GetHeaderRenderRect();
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  auto ctx = mDXR.mD2DDeviceContext;
   ctx->FillRectangle(headerRect, mHeaderBGBrush.get());
 
   const D2D1_SIZE_F headerSize {
@@ -468,11 +476,15 @@ void InterprocessRenderer::OnTabChanged() {
 }
 
 void InterprocessRenderer::RenderNow() {
-  auto tabView = mKneeboard->GetActiveView()->GetCurrentTabView();
-  if (!tabView) {
-    return;
+  const auto layerCount = mKneeboard->GetViewCount();
+  for (uint8_t i = 0; i < layerCount; ++i) {
+    auto& layer = mLayers.at(i);
+    layer.mKneeboardView = mKneeboard->GetView(i);
+    // FIXME: layer VR Config
+    this->Render(layer);
   }
-  this->Render(tabView->GetTab(), tabView->GetPageIndex());
+
+  this->Commit(layerCount);
   mNeedsRepaint = false;
 }
 
