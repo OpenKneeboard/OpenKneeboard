@@ -37,12 +37,13 @@ class KneeboardView final : private EventReceiver {
   KneeboardView();
   ~KneeboardView();
 
-  // TODO: rename to GetCurrentTabView, then re-add GetCurrentTab
-  std::shared_ptr<TabView> GetCurrentTab() const;
+  std::shared_ptr<TabView> GetCurrentTabView() const;
+  std::shared_ptr<Tab> GetCurrentTab() const;
   uint8_t GetTabIndex() const;
   std::shared_ptr<TabView> GetTabViewByID(Tab::RuntimeID) const;
-  void SetTabByIndex(uint8_t);
-  void SetTabByID(Tab::RuntimeID);
+  void SetCurrentTabByIndex(uint8_t);
+  void SetCurrentTabByID(Tab::RuntimeID);
+
   void PreviousTab();
   void NextTab();
 
@@ -71,7 +72,7 @@ class KneeboardView final : private EventReceiver {
 
  private:
   std::vector<std::shared_ptr<TabView>> mTabs;
-  std::shared_ptr<TabView> mCurrentTab;
+  std::shared_ptr<TabView> mCurrentTabView;
 
   D2D1_SIZE_U mCanvasSize;
   D2D1_SIZE_U mContentNativeSize;

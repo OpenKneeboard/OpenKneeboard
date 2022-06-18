@@ -208,8 +208,7 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
 }
 
 void MainWindow::OnTabChanged() {
-  const auto id
-    = gKneeboard->GetActiveView()->GetCurrentTab()->GetTab()->GetRuntimeID();
+  const auto id = gKneeboard->GetActiveView()->GetCurrentTab()->GetRuntimeID();
 
   for (auto it: this->Navigation().MenuItems()) {
     auto item = it.try_as<Control>();
@@ -275,12 +274,14 @@ void MainWindow::OnNavigationItemInvoked(
 
   if (
     tabID
-    == gKneeboard->GetActiveView()->GetCurrentTab()->GetTab()->GetRuntimeID()) {
+    == gKneeboard->GetActiveView()
+         ->GetCurrentTab()
+         ->GetRuntimeID()) {
     Frame().Navigate(xaml_typename<TabPage>(), tag);
     return;
   }
 
-  gKneeboard->GetActiveView()->SetTabByID(
+  gKneeboard->GetActiveView()->SetCurrentTabByID(
     Tab::RuntimeID::FromTemporaryValue(tabID));
 }
 

@@ -407,7 +407,7 @@ void InterprocessRenderer::RenderToolbar(
 void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   mNeedsRepaint = true;
   auto view = mKneeboard->GetActiveView();
-  const auto tab = view->GetCurrentTab();
+  const auto tab = view->GetCurrentTabView();
   if (mCursorTouching && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
     return;
   }
@@ -451,7 +451,7 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
 }
 
 void InterprocessRenderer::OnTabChanged() {
-  auto tab = mKneeboard->GetActiveView()->GetCurrentTab();
+  auto tab = mKneeboard->GetActiveView()->GetCurrentTabView();
   if (!tab) {
     return;
   }
@@ -468,7 +468,7 @@ void InterprocessRenderer::OnTabChanged() {
 }
 
 void InterprocessRenderer::RenderNow() {
-  auto tabView = mKneeboard->GetActiveView()->GetCurrentTab();
+  auto tabView = mKneeboard->GetActiveView()->GetCurrentTabView();
   if (!tabView) {
     return;
   }

@@ -53,12 +53,12 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
     viewStates.push_back(viewState);
 
     AddEventListener(viewState->evNeedsRepaintEvent, [=]() {
-      if (viewState == this->GetCurrentTab()) {
+      if (viewState == this->GetCurrentTabView()) {
         this->evNeedsRepaintEvent.Emit();
       }
     });
     AddEventListener(tab->evAvailableFeaturesChangedEvent, [=]() {
-      if (viewState == this->GetCurrentTab()) {
+      if (viewState == this->GetCurrentTabView()) {
         this->evNeedsRepaintEvent.Emit();
       }
     });
@@ -67,38 +67,38 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
   }
 
   mTabs = viewStates;
-  auto it = std::ranges::find(viewStates, mCurrentTab);
+  auto it = std::ranges::find(viewStates, mCurrentTabView);
   if (it == viewStates.end()) {
-    mCurrentTab = tabs.empty() ? nullptr : viewStates.front();
+    mCurrentTabView = tabs.empty() ? nullptr : viewStates.front();
   }
 
   UpdateLayout();
 }
 
 uint8_t KneeboardView::GetTabIndex() const {
-  auto it = std::ranges::find(mTabs, mCurrentTab);
+  auto it = std::ranges::find(mTabs, mCurrentTabView);
   if (it == mTabs.end()) {
     return 0;
   }
   return static_cast<uint8_t>(it - mTabs.begin());
 }
 
-void KneeboardView::SetTabByIndex(uint8_t index) {
+void KneeboardView::SetCurrentTabByIndex(uint8_t index) {
   if (index >= mTabs.size()) {
     return;
   }
-  if (mCurrentTab == mTabs.at(index)) {
+  if (mCurrentTabView == mTabs.at(index)) {
     return;
   }
-  if (mCurrentTab) {
-    mCurrentTab->PostCursorEvent({});
+  if (mCurrentTabView) {
+    mCurrentTabView->PostCursorEvent({});
   }
-  mCurrentTab = mTabs.at(index);
+  mCurrentTabView = mTabs.at(index);
   UpdateLayout();
   evCurrentTabChangedEvent.Emit(index);
 }
 
-void KneeboardView::SetTabByID(Tab::RuntimeID id) {
+void KneeboardView::SetCurrentTabByID(Tab::RuntimeID id) {
   const auto it = std::ranges::find(mTabs, id, [](const auto& view) {
     return view->GetRootTab()->GetRuntimeID();
   });
@@ -106,17 +106,17 @@ void KneeboardView::SetTabByID(Tab::RuntimeID id) {
   if (it == mTabs.end()) {
     return;
   }
-  if (*it == mCurrentTab) {
+  if (*it == mCurrentTabView) {
     return;
   }
 
-  SetTabByIndex(it - mTabs.begin());
+  SetCurrentTabByIndex(it - mTabs.begin());
 }
 
 void KneeboardView::PreviousTab() {
   const auto current = GetTabIndex();
   if (current > 0) {
-    SetTabByIndex(current - 1);
+    SetCurrentTabByIndex(current - 1);
   }
 }
 
@@ -124,7 +124,7 @@ void KneeboardView::NextTab() {
   const auto current = GetTabIndex();
   const auto count = mTabs.size();
   if (current + 1 < count) {
-    SetTabByIndex(current + 1);
+    SetCurrentTabByIndex(current + 1);
   }
 }
 
@@ -138,20 +138,24 @@ std::shared_ptr<TabView> KneeboardView::GetTabViewByID(
   return *it;
 }
 
-std::shared_ptr<TabView> KneeboardView::GetCurrentTab() const {
-  return mCurrentTab;
+std::shared_ptr<Tab> KneeboardView::GetCurrentTab() const {
+  return mCurrentTabView->GetTab();
+}
+
+std::shared_ptr<TabView> KneeboardView::GetCurrentTabView() const {
+  return mCurrentTabView;
 }
 
 void KneeboardView::NextPage() {
-  if (mCurrentTab) {
-    mCurrentTab->NextPage();
+  if (mCurrentTabView) {
+    mCurrentTabView->NextPage();
     UpdateLayout();
   }
 }
 
 void KneeboardView::PreviousPage() {
-  if (mCurrentTab) {
-    mCurrentTab->PreviousPage();
+  if (mCurrentTabView) {
+    mCurrentTabView->PreviousPage();
     UpdateLayout();
   }
 }
@@ -160,7 +164,7 @@ void KneeboardView::UpdateLayout() {
   const auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
 
   mContentNativeSize = {768, 1024};
-  auto tab = GetCurrentTab();
+  auto tab = GetCurrentTabView();
   if (tab && tab->GetPageCount() > 0) {
     mContentNativeSize = tab->GetNativeContentSize();
   }
@@ -223,8 +227,8 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
   mCursorPoint = {ev.mX, ev.mY};
   mHaveCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
 
-  if (mCurrentTab) {
-    mCurrentTab->PostCursorEvent(ev);
+  if (mCurrentTabView) {
+    mCurrentTabView->PostCursorEvent(ev);
   }
 }
 
