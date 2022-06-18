@@ -23,6 +23,7 @@
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/KneeboardViewProxy.h>
 #include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/Tab.h>
@@ -39,6 +40,12 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
+  mViews = {
+    std::make_shared<KneeboardView>(),
+    std::make_shared<KneeboardView>(),
+  };
+  mViewProxy = std::make_shared<KneeboardViewProxy>(mViews.front());
+
   if (!mSettings.NonVR.is_null()) {
     mFlatConfig = mSettings.NonVR;
   }
@@ -52,7 +59,6 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mDoodleSettings = mSettings.Doodle;
   }
 
-  mViews = {std::make_shared<KneeboardView>()};
   for (const auto& viewState: mViews) {
     AddEventListener(viewState->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
@@ -105,8 +111,7 @@ std::shared_ptr<IKneeboardView> KneeboardState::GetView(uint8_t index) const {
 }
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveView() const {
-  // TODO: support multiple kneeboards
-  return mViews.at(0);
+  return mViewProxy;
 }
 
 std::vector<std::shared_ptr<Tab>> KneeboardState::GetTabs() const {

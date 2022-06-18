@@ -39,6 +39,7 @@ class GamesList;
 class InterprocessRenderer;
 class IKneeboardView;
 class KneeboardView;
+class KneeboardViewProxy;
 class Tab;
 class TabView;
 class TabletInputAdapter;
@@ -86,7 +87,9 @@ class KneeboardState final : private EventReceiver {
   Settings mSettings {Settings::Load()};
 
   std::vector<std::shared_ptr<Tab>> mTabs;
-  std::vector<std::shared_ptr<KneeboardView>> mViews;
+
+  std::array<std::shared_ptr<KneeboardView>, 2> mViews;
+  std::shared_ptr<KneeboardViewProxy> mViewProxy;
 
   std::unique_ptr<GamesList> mGamesList;
   std::unique_ptr<TabsList> mTabsList;
