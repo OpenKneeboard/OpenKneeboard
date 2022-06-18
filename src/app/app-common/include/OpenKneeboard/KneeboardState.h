@@ -37,6 +37,7 @@ enum class UserAction;
 class DirectInputAdapter;
 class GamesList;
 class InterprocessRenderer;
+class IKneeboardView;
 class KneeboardView;
 class Tab;
 class TabView;
@@ -52,8 +53,8 @@ class KneeboardState final : private EventReceiver {
   ~KneeboardState();
 
   uint8_t GetViewCount() const;
-  std::shared_ptr<KneeboardView> GetView(uint8_t index) const;
-  std::shared_ptr<KneeboardView> GetActiveView() const;
+  std::shared_ptr<IKneeboardView> GetView(uint8_t index) const;
+  std::shared_ptr<IKneeboardView> GetActiveView() const;
 
   std::vector<std::shared_ptr<Tab>> GetTabs() const;
   void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);

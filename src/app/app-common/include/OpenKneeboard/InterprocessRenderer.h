@@ -37,7 +37,7 @@ namespace OpenKneeboard {
 struct DXResources;
 class CursorEvent;
 class KneeboardState;
-class KneeboardView;
+class IKneeboardView;
 class Tab;
 class TabAction;
 
@@ -98,7 +98,7 @@ class InterprocessRenderer final : private EventReceiver {
     const std::string_view tabTitle,
     const D2D1_SIZE_U& preferredContentSize,
     const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
-  void RenderToolbar(const std::shared_ptr<KneeboardView>&);
+  void RenderToolbar(const std::shared_ptr<IKneeboardView>&);
 
   void Commit(const SHM::LayerConfig&);
 

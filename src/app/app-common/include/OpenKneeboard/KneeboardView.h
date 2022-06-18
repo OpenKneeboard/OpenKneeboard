@@ -19,11 +19,8 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/Tab.h>
-#include <d2d1.h>
+#include <OpenKneeboard/IKneeboardView.h>
 
-#include <memory>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -32,43 +29,41 @@ enum class UserAction;
 class TabView;
 struct CursorEvent;
 
-class KneeboardView final : private EventReceiver {
+class KneeboardView final : public IKneeboardView, private EventReceiver {
  public:
   KneeboardView();
   ~KneeboardView();
 
-  std::shared_ptr<TabView> GetCurrentTabView() const;
-  std::shared_ptr<Tab> GetCurrentTab() const;
-  uint8_t GetTabIndex() const;
-  std::shared_ptr<TabView> GetTabViewByID(Tab::RuntimeID) const;
-  void SetCurrentTabByIndex(uint8_t);
-  void SetCurrentTabByID(Tab::RuntimeID);
-
-  void PreviousTab();
-  void NextTab();
-
-  void NextPage();
-  void PreviousPage();
-
-  const D2D1_SIZE_U& GetCanvasSize() const;
-  const D2D1_RECT_F& GetHeaderRenderRect() const;
-  const D2D1_RECT_F& GetContentRenderRect() const;
-  /// ContentRenderRect may be scaled; this is the 'real' size.
-  const D2D1_SIZE_U& GetContentNativeSize() const;
-
-  Event<uint8_t> evCurrentTabChangedEvent;
-  Event<> evNeedsRepaintEvent;
-
-  Event<const CursorEvent&> evCursorEvent;
-  bool HaveCursor() const;
-  D2D1_POINT_2F GetCursorPoint() const;
-  D2D1_POINT_2F GetCursorCanvasPoint() const;
-  D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F&) const;
-
   void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);
-
-  void PostCursorEvent(const CursorEvent& ev);
   void PostUserAction(UserAction);
+
+  virtual std::shared_ptr<TabView> GetCurrentTabView() const override;
+  virtual std::shared_ptr<Tab> GetCurrentTab() const override;
+  virtual uint8_t GetTabIndex() const override;
+  virtual std::shared_ptr<TabView> GetTabViewByID(
+    Tab::RuntimeID) const override;
+  virtual void SetCurrentTabByIndex(uint8_t) override;
+  virtual void SetCurrentTabByID(Tab::RuntimeID) override;
+
+  virtual void PreviousTab() override;
+  virtual void NextTab() override;
+
+  virtual void NextPage() override;
+  virtual void PreviousPage() override;
+
+  virtual const D2D1_SIZE_U& GetCanvasSize() const override;
+  virtual const D2D1_RECT_F& GetHeaderRenderRect() const override;
+  virtual const D2D1_RECT_F& GetContentRenderRect() const override;
+  /// ContentRenderRect may be scaled; this is the 'real' size.
+  virtual const D2D1_SIZE_U& GetContentNativeSize() const override;
+
+  virtual bool HaveCursor() const override;
+  virtual D2D1_POINT_2F GetCursorPoint() const override;
+  virtual D2D1_POINT_2F GetCursorCanvasPoint() const override;
+  virtual D2D1_POINT_2F GetCursorCanvasPoint(
+    const D2D1_POINT_2F&) const override;
+
+  virtual void PostCursorEvent(const CursorEvent& ev) override;
 
  private:
   std::vector<std::shared_ptr<TabView>> mTabs;

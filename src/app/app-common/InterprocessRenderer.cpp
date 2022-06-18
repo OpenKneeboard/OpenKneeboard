@@ -340,7 +340,7 @@ static bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {
 }
 
 void InterprocessRenderer::RenderToolbar(
-  const std::shared_ptr<KneeboardView>& view) {
+  const std::shared_ptr<IKneeboardView>& view) {
   auto header = view->GetHeaderRenderRect();
   const auto headerHeight = (header.bottom - header.top);
   const auto buttonHeight = headerHeight * 0.75f;

@@ -97,14 +97,14 @@ uint8_t KneeboardState::GetViewCount() const {
   return mViews.size();
 }
 
-std::shared_ptr<KneeboardView> KneeboardState::GetView(uint8_t index) const {
+std::shared_ptr<IKneeboardView> KneeboardState::GetView(uint8_t index) const {
   if (index >= this->GetViewCount()) {
     throw std::logic_error("Only a single view is currently supported");
   }
   return mViews.at(index);
 }
 
-std::shared_ptr<KneeboardView> KneeboardState::GetActiveView() const {
+std::shared_ptr<IKneeboardView> KneeboardState::GetActiveView() const {
   // TODO: support multiple kneeboards
   return mViews.at(0);
 }
@@ -179,7 +179,8 @@ void KneeboardState::OnUserAction(UserAction action) {
     case UserAction::NEXT_TAB:
     case UserAction::PREVIOUS_PAGE:
     case UserAction::NEXT_PAGE:
-      this->GetActiveView()->PostUserAction(action);
+      std::dynamic_pointer_cast<KneeboardView>(this->GetActiveView())
+        ->PostUserAction(action);
       return;
   }
   OPENKNEEBOARD_BREAK;
