@@ -36,47 +36,62 @@
 #include "Globals.h"
 
 namespace winrt::OpenKneeboardApp::implementation {
-InputBindingsControl::InputBindingsControl() {
+InputBindingsControl::InputBindingsControl() noexcept {
   this->InitializeComponent();
+  this->PopulateUI();
+}
 
-  ///// bind buttons /////
+void InputBindingsControl::PopulateUI() {
+  AppendUIRow(UserAction::TOGGLE_VISIBILITY, _(L"Show/hide"));
+  AppendUIRow(UserAction::TOGGLE_FORCE_ZOOM, _(L"Toggle forced VR zoom"));
+  AppendUIRow(UserAction::RECENTER_VR, _(L"Recenter kneeboard"));
 
-  ToggleVisibilityBindButton().Click([this](auto&, auto&) {
-    this->PromptForBinding(UserAction::TOGGLE_VISIBILITY);
-  });
-  ToggleForceZoomBindButton().Click([this](auto&, auto&) {
-    this->PromptForBinding(UserAction::TOGGLE_FORCE_ZOOM);
-  });
-  RecenterVRBindButton().Click(
-    [this](auto&, auto&) { this->PromptForBinding(UserAction::RECENTER_VR); });
-  PreviousPageBindButton().Click([this](auto&, auto&) {
-    this->PromptForBinding(UserAction::PREVIOUS_PAGE);
-  });
-  NextPageBindButton().Click(
-    [this](auto&, auto&) { this->PromptForBinding(UserAction::NEXT_PAGE); });
-  PreviousTabBindButton().Click(
-    [this](auto&, auto&) { this->PromptForBinding(UserAction::PREVIOUS_TAB); });
-  NextTabBindButton().Click(
-    [this](auto&, auto&) { this->PromptForBinding(UserAction::NEXT_TAB); });
+  AppendUIRow(UserAction::PREVIOUS_TAB, _(L"Previous tab"));
+  AppendUIRow(UserAction::NEXT_TAB, _(L"Next tab"));
 
-  ///// clear buttons /////
+  AppendUIRow(UserAction::PREVIOUS_PAGE, _(L"Previous page"));
+  AppendUIRow(UserAction::NEXT_PAGE, _(L"Next page"));
+}
 
-  ToggleVisibilityClearButton().Click([this](auto&, auto&) {
-    this->ClearBinding(UserAction::TOGGLE_VISIBILITY);
-  });
-  ToggleForceZoomClearButton().Click([this](auto&, auto&) {
-    this->ClearBinding(UserAction::TOGGLE_FORCE_ZOOM);
-  });
-  RecenterVRClearButton().Click(
-    [this](auto&, auto&) { this->ClearBinding(UserAction::RECENTER_VR); });
-  PreviousPageClearButton().Click(
-    [this](auto&, auto&) { this->ClearBinding(UserAction::PREVIOUS_PAGE); });
-  NextPageClearButton().Click(
-    [this](auto&, auto&) { this->ClearBinding(UserAction::NEXT_PAGE); });
-  PreviousTabClearButton().Click(
-    [this](auto&, auto&) { this->ClearBinding(UserAction::PREVIOUS_TAB); });
-  NextTabClearButton().Click(
-    [this](auto&, auto&) { this->ClearBinding(UserAction::NEXT_TAB); });
+void InputBindingsControl::AppendUIRow(
+  UserAction action,
+  winrt::hstring label) {
+  auto grid = ContentGrid();
+  const auto row = static_cast<int32_t>(mRows.size());
+  auto AddToGrid
+    = [&](Microsoft::UI::Xaml::FrameworkElement element, int32_t column) {
+        grid.Children().Append(element);
+        Grid::SetColumn(element, column);
+        Grid::SetRow(element, row);
+      };
+
+  TextBlock labelText;
+  labelText.Style(this->Resources()
+                    .Lookup(box_value(L"BodyTextBlockStyle"))
+                    .as<Microsoft::UI::Xaml::Style>());
+  labelText.Text(label);
+  AddToGrid(labelText, 0);
+
+  TextBlock bindingText;
+  bindingText.HorizontalTextAlignment(
+    Microsoft::UI::Xaml::TextAlignment::Center);
+  bindingText.Foreground(this->Resources()
+                           .Lookup(box_value(L"TextFillColorSecondary"))
+                           .as<Microsoft::UI::Xaml::Media::Brush>());
+  AddToGrid(bindingText, 1);
+
+  Button bindButton;
+  bindButton.Content(box_value(_(L"Bind")));
+  AddToGrid(bindButton, 2);
+
+  Button clearButton;
+  clearButton.Content(box_value(_(L"Clear Binding")));
+  AddToGrid(clearButton, 3);
+
+  bindButton.Click([=](auto&, auto&) { this->PromptForBinding(action); });
+  clearButton.Click([=](auto&, auto&) { this->ClearBinding(action); });
+
+  mRows.emplace(action, Row {bindingText, bindButton, clearButton});
 }
 
 InputBindingsControl::~InputBindingsControl() {
@@ -168,60 +183,27 @@ void InputBindingsControl::ClearBinding(UserAction action) {
 }
 
 void InputBindingsControl::UpdateUI() {
-  UpdateUI(
-    UserAction::TOGGLE_VISIBILITY,
-    ToggleVisibilityLabel(),
-    ToggleVisibilityBindButton(),
-    ToggleVisibilityClearButton());
-  UpdateUI(
-    UserAction::TOGGLE_FORCE_ZOOM,
-    ToggleForceZoomLabel(),
-    ToggleForceZoomBindButton(),
-    ToggleForceZoomClearButton());
-  UpdateUI(
-    UserAction::RECENTER_VR,
-    RecenterVRLabel(),
-    RecenterVRBindButton(),
-    RecenterVRClearButton());
-  UpdateUI(
-    UserAction::PREVIOUS_PAGE,
-    PreviousPageLabel(),
-    PreviousPageBindButton(),
-    PreviousPageClearButton());
-  UpdateUI(
-    UserAction::NEXT_PAGE,
-    NextPageLabel(),
-    NextPageBindButton(),
-    NextPageClearButton());
-  UpdateUI(
-    UserAction::PREVIOUS_TAB,
-    PreviousTabLabel(),
-    PreviousTabBindButton(),
-    PreviousTabClearButton());
-  UpdateUI(
-    UserAction::NEXT_TAB,
-    NextTabLabel(),
-    NextTabBindButton(),
-    NextTabClearButton());
+  for (const auto& [action, row]: mRows) {
+    UpdateUI(action);
+  }
 }
 
-void InputBindingsControl::UpdateUI(
-  UserAction action,
-  TextBlock label,
-  Button bindButton,
-  Button clearButton) {
+void InputBindingsControl::UpdateUI(UserAction action) {
+  auto& row = mRows.at(action);
+
   auto bindings = mDevice->GetButtonBindings();
   auto it = std::ranges::find_if(
     bindings, [=](auto& it) { return it.GetAction() == action; });
+
   if (it == bindings.end()) {
-    label.Text(to_hstring(_("not bound")));
-    clearButton.IsEnabled(false);
+    row.mCurrentBinding.Text(to_hstring(_("not bound")));
+    row.mClearButton.IsEnabled(false);
     return;
   }
 
-  clearButton.IsEnabled(true);
+  row.mClearButton.IsEnabled(true);
   const auto& binding = *it;
-  label.Text(
+  row.mCurrentBinding.Text(
     to_hstring(mDevice->GetButtonComboDescription(binding.GetButtonIDs())));
 }
 

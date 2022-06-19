@@ -24,6 +24,8 @@
 #include "InputBindingsControl.g.h"
 // clang-format on
 
+#include <unordered_map>
+
 namespace OpenKneeboard {
 class UserInputDevice;
 enum class UserAction;
@@ -34,7 +36,7 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
-  InputBindingsControl();
+  InputBindingsControl() noexcept;
   ~InputBindingsControl();
 
   hstring DeviceID();
@@ -44,12 +46,20 @@ struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
   fire_and_forget PromptForBinding(UserAction);
   void ClearBinding(UserAction);
 
+  void PopulateUI();
+  void AppendUIRow(UserAction, winrt::hstring label);
   void UpdateUI();
-  void
-  UpdateUI(UserAction, TextBlock label, Button bindButton, Button ClearButton);
 
   hstring mDeviceID;
   std::shared_ptr<UserInputDevice> mDevice;
+
+  struct Row {
+    TextBlock mCurrentBinding;
+    Button mBindButton;
+    Button mClearButton;
+  };
+  std::unordered_map<UserAction, Row> mRows;
+  void UpdateUI(UserAction);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
