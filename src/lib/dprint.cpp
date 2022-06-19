@@ -177,7 +177,7 @@ void dprint(std::wstring_view message) {
       return;
     }
 
-    const auto withNewline = std::format("{}\n", message);
+    const auto withNewline = std::format(L"{}\n", message);
     WriteConsoleW(
       handle,
       withNewline.data(),
