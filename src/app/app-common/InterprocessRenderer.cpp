@@ -37,11 +37,11 @@ using namespace OpenKneeboard;
 namespace OpenKneeboard {
 
 void InterprocessRenderer::RenderError(
-  const std::shared_ptr<IKneeboardView>& view,
+  Layer& layer,
   utf8_string_view tabTitle,
   utf8_string_view message) {
   this->RenderWithChrome(
-    view,
+    layer,
     tabTitle,
     {768, 1024},
     std::bind_front(&InterprocessRenderer::RenderErrorImpl, this, message));
@@ -177,15 +177,17 @@ InterprocessRenderer::InterprocessRenderer(
   AddEventListener(
     kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
   for (uint8_t i = 0; i < kneeboard->GetMaxSupportedViews(); ++i) {
-    auto view = kneeboard->GetView(i);
-    AddEventListener(
-      view->evCursorEvent, &InterprocessRenderer::OnCursorEvent, this);
-    AddEventListener(
-      view->evCurrentTabChangedEvent,
-      &InterprocessRenderer::OnTabChanged,
-      this);
+    const auto view = kneeboard->GetView(i);
+    mLayers.at(i).mKneeboardView = view;
+    const std::weak_ptr<IKneeboardView> weakView(view);
+    AddEventListener(view->evCursorEvent, [=](const CursorEvent& ev) {
+      this->OnCursorEvent(weakView, ev);
+    });
+    this->AddEventListener(
+      view->evCurrentTabChangedEvent, [=]() { this->OnTabChanged(weakView); });
     AddEventListener(
       view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
+    this->OnTabChanged(weakView);
   }
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
@@ -194,7 +196,6 @@ InterprocessRenderer::InterprocessRenderer(
     }
   });
 
-  this->OnTabChanged();
   this->RenderNow();
 }
 
@@ -223,30 +224,30 @@ void InterprocessRenderer::Render(Layer& layer) {
 
   if (!tab) {
     auto msg = _("No Tab");
-    this->RenderError(view, msg, msg);
+    this->RenderError(layer, msg, msg);
     return;
   }
 
   const auto title = tab->GetTitle();
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
-    this->RenderError(view, title, _("No Pages"));
+    this->RenderError(layer, title, _("No Pages"));
     return;
   }
 
   if (pageIndex >= pageCount) {
-    this->RenderError(view, title, _("Invalid Page Number"));
+    this->RenderError(layer, title, _("Invalid Page Number"));
     return;
   }
 
   const auto pageSize = tab->GetNativeContentSize(pageIndex);
   if (pageSize.width == 0 || pageSize.height == 0) {
-    this->RenderError(view, title, _("Invalid Page Size"));
+    this->RenderError(layer, title, _("Invalid Page Size"));
     return;
   }
 
   this->RenderWithChrome(
-    view,
+    layer,
     title,
     pageSize,
     std::bind_front(
@@ -254,10 +255,11 @@ void InterprocessRenderer::Render(Layer& layer) {
 }
 
 void InterprocessRenderer::RenderWithChrome(
-  const std::shared_ptr<IKneeboardView>& view,
+  Layer& layer,
   std::string_view tabTitle,
   const D2D1_SIZE_U& preferredContentSize,
   const std::function<void(const D2D1_RECT_F&)>& renderContent) {
+  const auto view = layer.mKneeboardView;
   const auto contentRect = view->GetContentRenderRect();
   renderContent(contentRect);
 
@@ -328,7 +330,7 @@ void InterprocessRenderer::RenderWithChrome(
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   auto cursorPoint = view->GetCursorCanvasPoint();
 
-  this->RenderToolbar(view);
+  this->RenderToolbar(layer);
 
   if (!view->HaveCursor()) {
     return;
@@ -351,9 +353,9 @@ static bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {
   return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
 }
 
-void InterprocessRenderer::RenderToolbar(
-  const std::shared_ptr<IKneeboardView>& view) {
-  auto header = view->GetHeaderRenderRect();
+void InterprocessRenderer::RenderToolbar(Layer& layer) {
+  const auto view = layer.mKneeboardView;
+  const auto header = view->GetHeaderRenderRect();
   const auto headerHeight = (header.bottom - header.top);
   const auto buttonHeight = headerHeight * 0.75f;
   const auto margin = (headerHeight - buttonHeight) / 2.0f;
@@ -362,9 +364,9 @@ void InterprocessRenderer::RenderToolbar(
 
   auto left = 2 * margin;
 
-  std::scoped_lock lock(mToolbarMutex);
+  std::scoped_lock lock(layer.mToolbarMutex);
 
-  mButtons.clear();
+  layer.mButtons.clear();
 
   const auto cursor = view->GetCursorCanvasPoint();
   const auto ctx = mDXR.mD2DDeviceContext;
@@ -384,7 +386,7 @@ void InterprocessRenderer::RenderToolbar(
   glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  for (auto action: mActions) {
+  for (auto action: layer.mActions) {
     D2D1_RECT_F button {
       .left = left,
       .top = margin,
@@ -392,7 +394,7 @@ void InterprocessRenderer::RenderToolbar(
       .bottom = margin + buttonHeight,
     };
     left = button.right + margin;
-    mButtons.push_back({button, action});
+    layer.mButtons.push_back({button, action});
 
     ID2D1Brush* brush = mButtonBrush.get();
     if (!action->IsEnabled()) {
@@ -416,30 +418,49 @@ void InterprocessRenderer::RenderToolbar(
   }
 }
 
-void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
+void InterprocessRenderer::OnCursorEvent(
+  const std::weak_ptr<IKneeboardView>& weakView,
+  const CursorEvent& ev) {
+  const auto view = weakView.lock();
+  if (!view) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  auto it = std::ranges::find(
+    mLayers, view, [](const Layer& l) { return l.mKneeboardView; });
+  if (it == mLayers.end()) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  auto& layer = *it;
+
   mNeedsRepaint = true;
-  auto view = mKneeboard->GetActiveView();
   const auto tab = view->GetCurrentTabView();
-  if (mCursorTouching && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
+  if (
+    layer.mCursorTouching
+    && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
     return;
   }
   if (
-    (!mCursorTouching)
+    (!layer.mCursorTouching)
     && ev.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
     return;
   }
 
   // touch state change
-  mCursorTouching = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
+  layer.mCursorTouching
+    = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
 
   const auto cursor = view->GetCursorCanvasPoint({ev.mX, ev.mY});
 
-  if (mCursorTouching) {
+  std::scoped_lock lock(layer.mToolbarMutex);
+
+  if (layer.mCursorTouching) {
     // Touch start
-    std::scoped_lock lock(mToolbarMutex);
-    for (const auto& [rect, action]: mButtons) {
+    for (const auto& [rect, action]: layer.mButtons) {
       if (IsPointInRect(cursor, rect)) {
-        mActiveButton = {{rect, action}};
+        layer.mActiveButton = {{rect, action}};
         break;
       }
     }
@@ -447,14 +468,13 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   }
 
   // Touch end
-  std::scoped_lock lock(mToolbarMutex);
-  const auto button = mActiveButton;
+  const auto button = layer.mActiveButton;
   if (!button) {
     return;
   }
 
   const auto [rect, action] = *button;
-  mActiveButton = {};
+  layer.mActiveButton = {};
   if (!IsPointInRect(cursor, rect)) {
     return;
   }
@@ -462,18 +482,34 @@ void InterprocessRenderer::OnCursorEvent(const CursorEvent& ev) {
   action->Execute();
 }
 
-void InterprocessRenderer::OnTabChanged() {
-  auto tab = mKneeboard->GetActiveView()->GetCurrentTabView();
-  if (!tab) {
+void InterprocessRenderer::OnTabChanged(
+  const std::weak_ptr<IKneeboardView>& weakView) {
+  const auto view = weakView.lock();
+  if (!view) {
+    OPENKNEEBOARD_BREAK;
     return;
   }
 
-  std::scoped_lock lock(mToolbarMutex);
-  mActions = CreateTabActions(tab);
-  mButtons.clear();
-  mActiveButton = {};
+  auto it = std::ranges::find(
+    mLayers, view, [](const Layer& l) { return l.mKneeboardView; });
+  if (it == mLayers.end()) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  auto& layer = *it;
 
-  for (auto action: mActions) {
+  auto tab = view->GetCurrentTabView();
+  if (!tab) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  std::scoped_lock lock(layer.mToolbarMutex);
+  layer.mActions = CreateTabActions(tab);
+  layer.mButtons.clear();
+  layer.mActiveButton = {};
+
+  for (auto action: layer.mActions) {
     AddEventListener(
       action->evStateChangedEvent, [this]() { mNeedsRepaint = true; });
   }

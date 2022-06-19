@@ -230,6 +230,8 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
   if (mCurrentTabView) {
     mCurrentTabView->PostCursorEvent(ev);
   }
+
+  evCursorEvent.Emit(ev);
 }
 
 void KneeboardView::PostUserAction(UserAction action) {

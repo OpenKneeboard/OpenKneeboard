@@ -74,6 +74,14 @@ class InterprocessRenderer final : private EventReceiver {
     winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
 
     std::array<SharedTextureResources, TextureCount> mSharedResources;
+
+    bool mCursorTouching = false;
+
+    std::vector<std::shared_ptr<TabAction>> mActions;
+    using Button = std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>;
+    std::vector<Button> mButtons;
+    std::optional<Button> mActiveButton;
+    std::mutex mToolbarMutex;
   };
   std::array<Layer, MaxLayers> mLayers;
 
@@ -88,32 +96,21 @@ class InterprocessRenderer final : private EventReceiver {
 
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
 
-  bool mCursorTouching = false;
-
-  std::vector<std::shared_ptr<TabAction>> mActions;
-  using Button = std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>;
-  std::vector<Button> mButtons;
-  std::optional<Button> mActiveButton;
-  std::mutex mToolbarMutex;
-
   void RenderNow();
   void Render(Layer&);
-  void RenderError(
-    const std::shared_ptr<IKneeboardView>&,
-    utf8_string_view tabTitle,
-    utf8_string_view message);
+  void RenderError(Layer&, utf8_string_view tabTitle, utf8_string_view message);
   void RenderErrorImpl(utf8_string_view message, const D2D1_RECT_F&);
   void RenderWithChrome(
-    const std::shared_ptr<IKneeboardView>&,
+    Layer&,
     const std::string_view tabTitle,
     const D2D1_SIZE_U& preferredContentSize,
     const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
-  void RenderToolbar(const std::shared_ptr<IKneeboardView>&);
+  void RenderToolbar(Layer&);
 
   void Commit(uint8_t layerCount);
 
-  void OnCursorEvent(const CursorEvent&);
-  void OnTabChanged();
+  void OnCursorEvent(const std::weak_ptr<IKneeboardView>&, const CursorEvent&);
+  void OnTabChanged(const std::weak_ptr<IKneeboardView>&);
 };
 
 }// namespace OpenKneeboard
