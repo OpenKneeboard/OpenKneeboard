@@ -176,10 +176,12 @@ void dprint(std::wstring_view message) {
     if (handle == INVALID_HANDLE_VALUE) {
       return;
     }
+
+    const auto withNewline = std::format("{}\n", message);
     WriteConsoleW(
       handle,
-      message.data(),
-      static_cast<DWORD>(message.size()),
+      withNewline.data(),
+      static_cast<DWORD>(withNewline.size()),
       nullptr,
       nullptr);
   }
