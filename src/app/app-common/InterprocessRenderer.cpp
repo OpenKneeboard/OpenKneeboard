@@ -176,9 +176,12 @@ InterprocessRenderer::InterprocessRenderer(
 
   AddEventListener(
     kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
-  for (uint8_t i = 0; i < kneeboard->GetMaxSupportedViews(); ++i) {
-    const auto view = kneeboard->GetView(i);
+
+  const auto views = kneeboard->GetAllViewsInFixedOrder();
+  for (int i = 0; i < views.size(); ++i) {
+    auto view = views.at(i);
     mLayers.at(i).mKneeboardView = view;
+
     const std::weak_ptr<IKneeboardView> weakView(view);
     AddEventListener(view->evCursorEvent, [=](const CursorEvent& ev) {
       this->OnCursorEvent(weakView, ev);
@@ -516,15 +519,17 @@ void InterprocessRenderer::OnTabChanged(
 }
 
 void InterprocessRenderer::RenderNow() {
-  const auto layerCount = mKneeboard->GetMaxSupportedViews();
-  for (uint8_t i = 0; i < layerCount; ++i) {
+  const auto renderInfos = mKneeboard->GetViewRenderInfo();
+
+  for (uint8_t i = 0; i < renderInfos.size(); ++i) {
     auto& layer = mLayers.at(i);
-    layer.mKneeboardView = mKneeboard->GetView(i);
-    // FIXME: layer VR Config
+    const auto& info = renderInfos.at(i);
+    layer.mKneeboardView = info.mView;
+    layer.mConfig.mVR = info.mVR;
     this->Render(layer);
   }
 
-  this->Commit(layerCount);
+  this->Commit(renderInfos.size());
   mNeedsRepaint = false;
 }
 

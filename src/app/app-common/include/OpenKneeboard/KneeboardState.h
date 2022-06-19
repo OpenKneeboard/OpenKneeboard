@@ -47,15 +47,20 @@ class TabsList;
 class UserInputDevice;
 struct GameEvent;
 
+struct ViewRenderInfo {
+  std::shared_ptr<IKneeboardView> mView;
+  VRLayerConfig mVR;
+};
+
 class KneeboardState final : private EventReceiver {
  public:
   KneeboardState() = delete;
   KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
-  uint8_t GetMaxSupportedViews() const;
-  std::shared_ptr<IKneeboardView> GetView(uint8_t index) const;
   std::shared_ptr<IKneeboardView> GetActiveView() const;
+  std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
+  std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 
   std::vector<std::shared_ptr<Tab>> GetTabs() const;
   void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);

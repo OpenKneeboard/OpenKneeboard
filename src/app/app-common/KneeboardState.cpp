@@ -99,15 +99,28 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 KneeboardState::~KneeboardState() {
 }
 
-uint8_t KneeboardState::GetMaxSupportedViews() const {
-  return mViews.size();
+std::vector<std::shared_ptr<IKneeboardView>>
+KneeboardState::GetAllViewsInFixedOrder() const {
+  return {mViews.begin(), mViews.end()};
 }
 
-std::shared_ptr<IKneeboardView> KneeboardState::GetView(uint8_t index) const {
-  if (index >= this->GetMaxSupportedViews()) {
-    throw std::logic_error("Only a single view is currently supported");
-  }
-  return mViews.at(index);
+std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
+  // TODO: make second kneeboard optional
+  const auto primaryVR = mVRConfig.mPrimaryLayer;
+  auto secondaryVR = primaryVR;
+  secondaryVR.mX = -primaryVR.mX;
+  secondaryVR.mRY = -primaryVR.mRY;
+
+  return {
+    {
+      .mView = mViews.at(mActiveViewIndex),
+      .mVR = primaryVR,
+    },
+    {
+      .mView = mViews.at(1 - mActiveViewIndex),
+      .mVR = secondaryVR,
+    },
+  };
 }
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveView() const {
