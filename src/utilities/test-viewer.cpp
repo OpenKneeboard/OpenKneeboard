@@ -244,7 +244,7 @@ class TestViewerWindow final {
   void PaintOverlay(ID2D1DeviceContext* ctx) {
     const auto clientSize = GetClientSize();
     const auto text = std::format(
-      L"Frame #{}, Layer {}", mSHM.GetSequenceNumber(), mLayerIndex);
+      L"Frame #{}, View {}", mSHM.GetSequenceNumber(), mLayerIndex);
     winrt::com_ptr<IDWriteTextLayout> layout;
     mDXR.mDWriteFactory->CreateTextLayout(
       text.data(),
