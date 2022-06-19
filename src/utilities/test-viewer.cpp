@@ -44,7 +44,7 @@ struct Pixel {
 class TestViewerWindow final {
  private:
   bool mStreamerMode = false;
-  bool mShowPerformanceInformation = false;
+  bool mShowOverlay = false;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
   uint8_t mLayerIndex = 0;
@@ -203,8 +203,8 @@ class TestViewerWindow final {
         mStreamerMode = !mStreamerMode;
         this->PaintNow();
         return;
-      case 'P':
-        mShowPerformanceInformation = !mShowPerformanceInformation;
+      case 'O':
+        mShowOverlay = !mShowOverlay;
         this->PaintNow();
         return;
     }
@@ -236,14 +236,15 @@ class TestViewerWindow final {
 
     this->PaintContent(ctx);
 
-    if (mShowPerformanceInformation) {
-      this->PaintPerformanceInformation(ctx);
+    if (mShowOverlay) {
+      this->PaintOverlay(ctx);
     }
   }
 
-  void PaintPerformanceInformation(ID2D1DeviceContext* ctx) {
+  void PaintOverlay(ID2D1DeviceContext* ctx) {
     const auto clientSize = GetClientSize();
-    const auto text = std::format(L"Frame #{}", mSHM.GetSequenceNumber());
+    const auto text = std::format(
+      L"Frame #{}, Layer {}", mSHM.GetSequenceNumber(), mLayerIndex);
     winrt::com_ptr<IDWriteTextLayout> layout;
     mDXR.mDWriteFactory->CreateTextLayout(
       text.data(),
