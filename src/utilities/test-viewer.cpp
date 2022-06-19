@@ -44,7 +44,7 @@ struct Pixel {
 class TestViewerWindow final {
  private:
   bool mStreamerMode = false;
-  bool mShowOverlay = false;
+  bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
   uint8_t mLayerIndex = 0;
@@ -203,8 +203,8 @@ class TestViewerWindow final {
         mStreamerMode = !mStreamerMode;
         this->PaintNow();
         return;
-      case 'O':
-        mShowOverlay = !mShowOverlay;
+      case 'I':
+        mShowInformationOverlay = !mShowInformationOverlay;
         this->PaintNow();
         return;
     }
@@ -236,12 +236,12 @@ class TestViewerWindow final {
 
     this->PaintContent(ctx);
 
-    if (mShowOverlay) {
-      this->PaintOverlay(ctx);
+    if (mShowInformationOverlay) {
+      this->PaintInformationOverlay(ctx);
     }
   }
 
-  void PaintOverlay(ID2D1DeviceContext* ctx) {
+  void PaintInformationOverlay(ID2D1DeviceContext* ctx) {
     const auto clientSize = GetClientSize();
     const auto text = std::format(
       L"Frame #{}, View {}", mSHM.GetSequenceNumber(), mLayerIndex);
