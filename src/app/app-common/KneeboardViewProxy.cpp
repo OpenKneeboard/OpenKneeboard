@@ -48,6 +48,14 @@ void KneeboardViewProxy::SetBackingView(
     AddEventListener(view->evCursorEvent, this->evCursorEvent),
   };
 
+  for (auto& [id, weakTabView]: mTabViews) {
+    auto tabView = weakTabView.lock();
+    if (!tabView) {
+      continue;
+    }
+    tabView->SetBackingView(view->GetTabViewByID(id));
+  }
+
   const auto newTab = this->GetTabIndex();
   if (oldTab != newTab) {
     this->evCurrentTabChangedEvent.Emit(newTab);
@@ -77,7 +85,8 @@ void KneeboardViewProxy::NextTab() {
 
 std::shared_ptr<ITabView> KneeboardViewProxy::GetTabViewByID(
   Tab::RuntimeID id) const {
-  return const_cast<KneeboardViewProxy*>(this)->mView->GetTabViewByID(id);
+  return const_cast<KneeboardViewProxy*>(this)->GetProxyTabView(
+    mView->GetTabViewByID(id));
 }
 
 std::shared_ptr<Tab> KneeboardViewProxy::GetCurrentTab() const {

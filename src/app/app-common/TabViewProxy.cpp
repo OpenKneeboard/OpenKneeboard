@@ -46,6 +46,11 @@ void TabViewProxy::SetBackingView(const std::shared_ptr<ITabView>& view) {
       this->evAvailableFeaturesChangedEvent),
     AddEventListener(view->evTabModeChangedEvent, this->evTabModeChangedEvent),
   };
+
+  if (oldPage != view->GetPageIndex()) {
+    this->evPageChangedEvent.Emit();
+    this->evNeedsRepaintEvent.Emit();
+  }
 }
 
 std::shared_ptr<Tab> TabViewProxy::GetRootTab() const {
