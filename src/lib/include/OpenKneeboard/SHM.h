@@ -123,7 +123,8 @@ class Snapshot final {
   Snapshot(const Header& header, TextureReadResources*);
   ~Snapshot();
 
-  uint32_t GetSequenceNumber() const;
+  /// Changes even if the feeder restarts with frame ID 0
+  size_t GetRenderCacheKey() const;
   Config GetConfig() const;
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
@@ -139,7 +140,10 @@ class Reader final {
 
   operator bool() const;
   Snapshot MaybeGet() const;
-  uint32_t GetSequenceNumber() const;
+  /// Changes even if the feeder restarts with frame ID 0
+  size_t GetRenderCacheKey() const;
+  /// Do not use for caching - use GetRenderCacheKey instead
+  uint32_t GetFrameCountForMetricsOnly() const;
 
  private:
   class Impl;

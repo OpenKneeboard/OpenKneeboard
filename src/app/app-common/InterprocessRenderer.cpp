@@ -126,15 +126,16 @@ InterprocessRenderer::InterprocessRenderer(
     auto& layer = mLayers.at(layerIndex);
     for (uint8_t bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
       auto& resources = layer.mSharedResources.at(bufferIndex);
-      dxr.mD3DDevice->CreateTexture2D(
-        &textureDesc, nullptr, resources.mTexture.put());
+      winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
+        &textureDesc, nullptr, resources.mTexture.put()));
       auto textureName
         = SHM::SharedTextureName(sessionID, layerIndex, bufferIndex);
-      resources.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
-        nullptr,
-        DXGI_SHARED_RESOURCE_READ,
-        textureName.c_str(),
-        resources.mHandle.put());
+      winrt::check_hresult(
+        resources.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+          nullptr,
+          DXGI_SHARED_RESOURCE_READ,
+          textureName.c_str(),
+          resources.mHandle.put()));
       resources.mMutex = resources.mTexture.as<IDXGIKeyedMutex>();
     }
   }

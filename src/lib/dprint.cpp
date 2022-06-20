@@ -80,7 +80,6 @@ static void WriteIPCMessage(std::wstring_view message) {
   }
 
   if (WaitForSingleObject(bufferReadyEvent.get(), 100) == WAIT_TIMEOUT) {
-    OPENKNEEBOARD_BREAK;
     return;
   }
 

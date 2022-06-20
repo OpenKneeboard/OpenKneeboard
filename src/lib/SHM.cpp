@@ -54,6 +54,8 @@ struct Header final {
 
   uint8_t mLayerCount = 0;
   LayerConfig mLayers[MaxLayers];
+
+  size_t GetRenderCacheKey() const;
 };
 #pragma pack(pop)
 
@@ -302,8 +304,13 @@ Snapshot::Snapshot(const Header& header, TextureReadResources* r)
 Snapshot::~Snapshot() {
 }
 
-uint32_t Snapshot::GetSequenceNumber() const {
-  return mHeader->mSequenceNumber;
+size_t Snapshot::GetRenderCacheKey() const {
+  // This is lazy, and only works because:
+  // - session ID already contains random data
+  // - we're only combining *one* other value which isn't
+  // If adding more data, it either needs to be random,
+  // or need something like boost::hash_combine()
+  return mHeader->GetRenderCacheKey();
 }
 
 bool LayerConfig::IsValid() const {
@@ -475,13 +482,6 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-uint32_t Reader::GetSequenceNumber() const {
-  if (!(p && p->mHeader)) {
-    return 0;
-  }
-  return p->mHeader->mSequenceNumber;
-}
-
 Snapshot Reader::MaybeGet() const {
   Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_CREATE_FALSEY);
   if (!lock) {
@@ -490,6 +490,13 @@ Snapshot Reader::MaybeGet() const {
 
   return Snapshot(
     *p->mHeader, &p->mResources.at(p->mHeader->mSequenceNumber % TextureCount));
+}
+
+size_t Reader::GetRenderCacheKey() const {
+  if (!(p && p->mHeader)) {
+    return {};
+  }
+  return p->mHeader->GetRenderCacheKey();
 }
 
 void Writer::Update(
@@ -517,6 +524,23 @@ void Writer::Update(
   p->mHeader->mLayerCount = static_cast<uint8_t>(layers.size());
   memcpy(
     p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
+}
+
+size_t Header::GetRenderCacheKey() const {
+  // This is lazy, and only works because:
+  // - session ID already contains random data
+  // - we're only combining *one* other value which isn't
+  // If adding more data, it either needs to be random,
+  // or need something like boost::hash_combine()
+  std::hash<uint64_t> HashUI64;
+  return HashUI64(mSessionID) ^ HashUI64(mSequenceNumber);
+}
+
+uint32_t Reader::GetFrameCountForMetricsOnly() const {
+  if (!(p && p->mHeader)) {
+    return {};
+  }
+  return p->mHeader->mSequenceNumber;
 }
 
 }// namespace OpenKneeboard::SHM

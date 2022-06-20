@@ -43,8 +43,6 @@ class NonVRD3D11Kneeboard final {
   struct {
     winrt::com_ptr<ID3D11DeviceContext> mContext;
     std::unique_ptr<DirectX::SpriteBatch> mSpriteBatch;
-
-    uint64_t mLastSequenceNumber;
   } mDeviceResources;
 
   HRESULT OnIDXGISwapChain_Present(

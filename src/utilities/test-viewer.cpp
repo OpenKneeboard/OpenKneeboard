@@ -48,7 +48,7 @@ class TestViewerWindow final {
   bool mFirstDetached = false;
   SHM::Reader mSHM;
   uint8_t mLayerIndex = 0;
-  uint64_t mLastSequenceNumber = 0;
+  size_t mRenderCacheKey = 0;
 
   D2D1_COLOR_F mWindowColor;
   D2D1_COLOR_F mStreamerModeWindowColor;
@@ -133,7 +133,7 @@ class TestViewerWindow final {
       return;
     }
 
-    if (mSHM.GetSequenceNumber() != mLastSequenceNumber) {
+    if (mSHM.GetRenderCacheKey() != mRenderCacheKey) {
       PaintNow();
     }
   }
@@ -244,7 +244,9 @@ class TestViewerWindow final {
   void PaintInformationOverlay(ID2D1DeviceContext* ctx) {
     const auto clientSize = GetClientSize();
     const auto text = std::format(
-      L"Frame #{}, View {}", mSHM.GetSequenceNumber(), mLayerIndex + 1);
+      L"Frame #{}, View {}",
+      mSHM.GetFrameCountForMetricsOnly(),
+      mLayerIndex + 1);
     winrt::com_ptr<IDWriteTextLayout> layout;
     mDXR.mDWriteFactory->CreateTextLayout(
       text.data(),
@@ -389,7 +391,7 @@ class TestViewerWindow final {
       &sourceRect);
     ctx->Flush();
 
-    mLastSequenceNumber = snapshot.GetSequenceNumber();
+    mRenderCacheKey = snapshot.GetRenderCacheKey();
   }
 };
 

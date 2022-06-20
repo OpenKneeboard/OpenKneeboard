@@ -41,7 +41,7 @@ class VRKneeboard {
     Pose mKneeboardPose;
     Vector2 mKneeboardSize;
     float mKneeboardOpacity;
-    uint64_t mCacheKey;
+    size_t mCacheKey;
   };
 
  protected:

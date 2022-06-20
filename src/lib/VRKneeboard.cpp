@@ -106,14 +106,21 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
   const auto kneeboardPose = this->GetKneeboardPose(config.mVR, layer, hmdPose);
   const auto isLookingAtKneeboard
     = this->IsLookingAtKneeboard(config, layer, hmdPose, kneeboardPose);
+
+  auto cacheKey = snapshot.GetRenderCacheKey();
+  if (isLookingAtKneeboard) {
+    cacheKey |= 1;
+  } else {
+    cacheKey &= ~static_cast<size_t>(1);
+  }
+
   return {
     .mKneeboardPose = kneeboardPose,
     .mKneeboardSize
     = this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
     .mKneeboardOpacity = isLookingAtKneeboard ? config.mVR.mGazeOpacity
                                               : config.mVR.mNormalOpacity,
-    .mCacheKey = snapshot.GetSequenceNumber()
-      ^ ((isLookingAtKneeboard ? 1ui64 : 0ui64) << 63),
+    .mCacheKey = cacheKey,
   };
 }
 
