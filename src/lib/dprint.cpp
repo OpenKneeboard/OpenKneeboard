@@ -28,26 +28,23 @@
 
 namespace OpenKneeboard {
 
-static std::wstring GetDPrintResourceName(
-  std::wstring_view prefix,
-  std::wstring_view key) {
-  return std::format(
-    L"{}{}.dprint.v1.{}", prefix, OpenKneeboard::ProjectNameW, key);
+static std::wstring GetDPrintResourceName(std::wstring_view key) {
+  return std::format(L"{}.dprint.v1.{}", OpenKneeboard::ProjectNameW, key);
 }
 
-#define IPC_RESOURCE_NAME_FUNC(resource, prefix) \
+#define IPC_RESOURCE_NAME_FUNC(resource) \
   static std::wstring_view GetDPrint##resource##Name() { \
     static std::wstring sCache; \
     if (!sCache.empty()) { \
       return sCache; \
     } \
-    sCache = GetDPrintResourceName(prefix, L#resource); \
+    sCache = GetDPrintResourceName(L#resource); \
     return sCache; \
   }
-IPC_RESOURCE_NAME_FUNC(BufferReadyEvent, L"Local\\")
-IPC_RESOURCE_NAME_FUNC(DataReadyEvent, L"Local\\")
-IPC_RESOURCE_NAME_FUNC(Mapping, L"Local\\")
-IPC_RESOURCE_NAME_FUNC(Mutex, L"\\\\.\\")
+IPC_RESOURCE_NAME_FUNC(BufferReadyEvent)
+IPC_RESOURCE_NAME_FUNC(DataReadyEvent)
+IPC_RESOURCE_NAME_FUNC(Mapping)
+IPC_RESOURCE_NAME_FUNC(Mutex)
 #undef IPC_RESOURCE_NAME_FUNC
 
 static DPrintSettings gSettings;
@@ -59,7 +56,7 @@ static void WriteIPCMessage(std::wstring_view message) {
   {
     winrt::handle mutex {
       OpenMutexW(SYNCHRONIZE, false, GetDPrintMutexName().data())};
-    if (mutex) {
+    if (!mutex) {
       return;
     }
     if (GetLastError() == ERROR_FILE_NOT_FOUND) {
@@ -218,6 +215,10 @@ DPrintReceiver::DPrintReceiver() {
 
   mMutex = {CreateMutexW(nullptr, true, GetDPrintMutexName().data())};
   if (mMutex && GetLastError() == ERROR_ALREADY_EXISTS) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  if (!mMutex) {
     OPENKNEEBOARD_BREAK;
     return;
   }
