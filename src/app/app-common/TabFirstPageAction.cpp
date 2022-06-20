@@ -22,7 +22,7 @@
 
 namespace OpenKneeboard {
 
-TabFirstPageAction::TabFirstPageAction(std::shared_ptr<TabView> state)
+TabFirstPageAction::TabFirstPageAction(const std::shared_ptr<ITabView>& state)
   : TabAction("\uE892", _("First Page")), mState(state) {
   AddEventListener(state->evNeedsRepaintEvent, this->evStateChangedEvent);
 }

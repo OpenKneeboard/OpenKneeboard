@@ -26,7 +26,7 @@
 namespace OpenKneeboard {
 
 enum class UserAction;
-class TabView;
+class ITabView;
 struct CursorEvent;
 
 class KneeboardView final : public IKneeboardView, private EventReceiver {
@@ -37,10 +37,10 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
   void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);
   void PostUserAction(UserAction);
 
-  virtual std::shared_ptr<TabView> GetCurrentTabView() const override;
+  virtual std::shared_ptr<ITabView> GetCurrentTabView() const override;
   virtual std::shared_ptr<Tab> GetCurrentTab() const override;
   virtual uint8_t GetTabIndex() const override;
-  virtual std::shared_ptr<TabView> GetTabViewByID(
+  virtual std::shared_ptr<ITabView> GetTabViewByID(
     Tab::RuntimeID) const override;
   virtual void SetCurrentTabByIndex(uint8_t) override;
   virtual void SetCurrentTabByID(Tab::RuntimeID) override;
@@ -66,8 +66,8 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
   virtual void PostCursorEvent(const CursorEvent& ev) override;
 
  private:
-  std::vector<std::shared_ptr<TabView>> mTabs;
-  std::shared_ptr<TabView> mCurrentTabView;
+  std::vector<std::shared_ptr<ITabView>> mTabs;
+  std::shared_ptr<ITabView> mCurrentTabView;
 
   D2D1_SIZE_U mCanvasSize;
   D2D1_SIZE_U mContentNativeSize;

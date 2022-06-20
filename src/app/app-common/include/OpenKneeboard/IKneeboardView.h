@@ -28,7 +28,7 @@
 namespace OpenKneeboard {
 
 enum class UserAction;
-class TabView;
+class ITabView;
 struct CursorEvent;
 
 class IKneeboardView {
@@ -36,10 +36,10 @@ class IKneeboardView {
   IKneeboardView();
   virtual ~IKneeboardView();
 
-  virtual std::shared_ptr<TabView> GetCurrentTabView() const = 0;
+  virtual std::shared_ptr<ITabView> GetCurrentTabView() const = 0;
   virtual std::shared_ptr<Tab> GetCurrentTab() const = 0;
   virtual uint8_t GetTabIndex() const = 0;
-  virtual std::shared_ptr<TabView> GetTabViewByID(Tab::RuntimeID) const = 0;
+  virtual std::shared_ptr<ITabView> GetTabViewByID(Tab::RuntimeID) const = 0;
   virtual void SetCurrentTabByIndex(uint8_t) = 0;
   virtual void SetCurrentTabByID(Tab::RuntimeID) = 0;
 

@@ -17,7 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardViewProxy.h>
+#include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/TabViewProxy.h>
 
 namespace OpenKneeboard {
 
@@ -36,14 +39,14 @@ void KneeboardViewProxy::SetBackingView(
   for (const auto event: mEventHandlers) {
     RemoveEventListener(event);
   }
-  mEventHandlers.clear();
-
   mView = view;
 
-  AddEventListener(
-    view->evCurrentTabChangedEvent, this->evCurrentTabChangedEvent);
-  AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
-  AddEventListener(view->evCursorEvent, this->evCursorEvent);
+  mEventHandlers = {
+    AddEventListener(
+      view->evCurrentTabChangedEvent, this->evCurrentTabChangedEvent),
+    AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent),
+    AddEventListener(view->evCursorEvent, this->evCursorEvent),
+  };
 
   const auto newTab = this->GetTabIndex();
   if (oldTab != newTab) {
@@ -72,17 +75,18 @@ void KneeboardViewProxy::NextTab() {
   mView->NextTab();
 }
 
-std::shared_ptr<TabView> KneeboardViewProxy::GetTabViewByID(
+std::shared_ptr<ITabView> KneeboardViewProxy::GetTabViewByID(
   Tab::RuntimeID id) const {
-  return mView->GetTabViewByID(id);
+  return const_cast<KneeboardViewProxy*>(this)->mView->GetTabViewByID(id);
 }
 
 std::shared_ptr<Tab> KneeboardViewProxy::GetCurrentTab() const {
   return mView->GetCurrentTab();
 }
 
-std::shared_ptr<TabView> KneeboardViewProxy::GetCurrentTabView() const {
-  return mView->GetCurrentTabView();
+std::shared_ptr<ITabView> KneeboardViewProxy::GetCurrentTabView() const {
+  return const_cast<KneeboardViewProxy*>(this)->GetProxyTabView(
+    mView->GetCurrentTabView());
 }
 
 void KneeboardViewProxy::NextPage() {
@@ -128,6 +132,26 @@ D2D1_POINT_2F KneeboardViewProxy::GetCursorCanvasPoint() const {
 D2D1_POINT_2F KneeboardViewProxy::GetCursorCanvasPoint(
   const D2D1_POINT_2F& contentPoint) const {
   return mView->GetCursorCanvasPoint(contentPoint);
+}
+
+std::shared_ptr<ITabView> KneeboardViewProxy::GetProxyTabView(
+  const std::shared_ptr<ITabView>& original) {
+  const auto tabID = original->GetTab()->GetRuntimeID();
+  auto& weakProxy = mTabViews[tabID];
+  auto proxy = weakProxy.lock();
+  if (proxy) {
+    return std::static_pointer_cast<ITabView>(proxy);
+  }
+
+  proxy = std::shared_ptr<TabViewProxy> {
+    new TabViewProxy(original),
+    [this, tabID](TabViewProxy* instance) {
+      mTabViews.erase(tabID);
+      delete instance;
+    },
+  };
+  weakProxy = proxy;
+  return std::static_pointer_cast<ITabView>(proxy);
 }
 
 }// namespace OpenKneeboard

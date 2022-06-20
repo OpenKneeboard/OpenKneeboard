@@ -21,9 +21,13 @@
 
 #include <OpenKneeboard/IKneeboardView.h>
 
+#include <unordered_map>
 #include <vector>
 
 namespace OpenKneeboard {
+
+class ITabView;
+class TabViewProxy;
 
 class KneeboardViewProxy final : public IKneeboardView, private EventReceiver {
  public:
@@ -33,10 +37,10 @@ class KneeboardViewProxy final : public IKneeboardView, private EventReceiver {
 
   void SetBackingView(const std::shared_ptr<IKneeboardView>&);
 
-  virtual std::shared_ptr<TabView> GetCurrentTabView() const override;
+  virtual std::shared_ptr<ITabView> GetCurrentTabView() const override;
   virtual std::shared_ptr<Tab> GetCurrentTab() const override;
   virtual uint8_t GetTabIndex() const override;
-  virtual std::shared_ptr<TabView> GetTabViewByID(
+  virtual std::shared_ptr<ITabView> GetTabViewByID(
     Tab::RuntimeID) const override;
   virtual void SetCurrentTabByIndex(uint8_t) override;
   virtual void SetCurrentTabByID(Tab::RuntimeID) override;
@@ -63,7 +67,10 @@ class KneeboardViewProxy final : public IKneeboardView, private EventReceiver {
 
  private:
   std::shared_ptr<IKneeboardView> mView;
+  std::unordered_map<Tab::RuntimeID, std::weak_ptr<TabViewProxy>> mTabViews;
   std::vector<EventHandlerToken> mEventHandlers;
+
+  std::shared_ptr<ITabView> GetProxyTabView(const std::shared_ptr<ITabView>&);
 };
 
 }// namespace OpenKneeboard

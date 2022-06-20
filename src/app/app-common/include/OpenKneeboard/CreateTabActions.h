@@ -25,9 +25,9 @@
 namespace OpenKneeboard {
 
 class TabAction;
-class TabView;
+class ITabView;
 
 std::vector<std::shared_ptr<TabAction>> CreateTabActions(
-  std::shared_ptr<TabView> tab);
+  const std::shared_ptr<ITabView>& tab);
 
 }// namespace OpenKneeboard

@@ -25,10 +25,13 @@
 
 namespace OpenKneeboard {
 
-class TabView final : public ITabView, private EventReceiver {
+class TabViewProxy final : public ITabView, private EventReceiver {
  public:
-  TabView(const std::shared_ptr<Tab>&);
-  ~TabView();
+  TabViewProxy() = delete;
+  TabViewProxy(const std::shared_ptr<ITabView>&);
+  ~TabViewProxy();
+
+  void SetBackingView(const std::shared_ptr<ITabView>&);
 
   virtual std::shared_ptr<Tab> GetRootTab() const override;
 
@@ -49,19 +52,8 @@ class TabView final : public ITabView, private EventReceiver {
   virtual bool SetTabMode(TabMode) override;
 
  private:
-  const EventContext mEventContext;
-
-  std::shared_ptr<Tab> mRootTab;
-  uint16_t mRootTabPage;
-
-  // For now, just navigation views, maybe more later
-  std::shared_ptr<Tab> mActiveSubTab;
-  uint16_t mActiveSubTabPage;
-
-  TabMode mTabMode = TabMode::NORMAL;
-
-  void OnTabFullyReplaced();
-  void OnTabPageAppended();
+  std::shared_ptr<ITabView> mView;
+  std::vector<EventHandlerToken> mEventHandlers;
 };
 
 }// namespace OpenKneeboard

@@ -114,7 +114,7 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   this->SetTab(view);
 }
 
-void TabPage::SetTab(const std::shared_ptr<TabView>& state) {
+void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mState = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 

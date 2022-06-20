@@ -36,8 +36,9 @@ namespace OpenKneeboard {
 enum class UserAction;
 class DirectInputAdapter;
 class GamesList;
-class InterprocessRenderer;
 class IKneeboardView;
+class ITabView;
+class InterprocessRenderer;
 class KneeboardView;
 class KneeboardViewProxy;
 class Tab;

@@ -17,25 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ITabView.h>
 
 namespace OpenKneeboard {
 
-class ITabView;
+ITabView::ITabView() = default;
 
-class TabNextPageAction final : public TabAction, private EventReceiver {
- public:
-  TabNextPageAction() = delete;
+ITabView::~ITabView() = default;
 
-  TabNextPageAction(const std::shared_ptr<ITabView>& state);
-
-  virtual bool IsEnabled() override;
-  virtual void Execute() override;
-
- private:
-  std::shared_ptr<ITabView> mState = nullptr;
-};
-
-}// namespace OpenKneeboard
+}

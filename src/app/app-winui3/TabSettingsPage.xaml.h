@@ -29,7 +29,7 @@
 
 namespace OpenKneeboard {
 class Tab;
-class TabView;
+class ITabView;
 enum class TabType;
 }// namespace OpenKneeboard
 
