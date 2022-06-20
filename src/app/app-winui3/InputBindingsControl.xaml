@@ -12,7 +12,6 @@
   <Grid
     x:Name="ContentGrid"
     ColumnDefinitions="auto,*,auto,auto"
-    RowDefinitions="auto,auto,auto,auto,auto,auto,auto"
     ColumnSpacing="4"
     RowSpacing="8"
   />

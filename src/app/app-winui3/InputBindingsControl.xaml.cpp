@@ -53,12 +53,15 @@ void InputBindingsControl::PopulateUI() {
 
   AppendUIRow(UserAction::PREVIOUS_PAGE, _(L"Previous page"));
   AppendUIRow(UserAction::NEXT_PAGE, _(L"Next page"));
+
+  ContentGrid().UpdateLayout();
 }
 
 void InputBindingsControl::AppendUIRow(
   UserAction action,
   winrt::hstring label) {
   auto grid = ContentGrid();
+  grid.RowDefinitions().Append({});
   const auto row = static_cast<int32_t>(mRows.size());
   auto AddToGrid
     = [&](Microsoft::UI::Xaml::FrameworkElement element, int32_t column) {
