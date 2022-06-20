@@ -198,8 +198,6 @@ InterprocessRenderer::InterprocessRenderer(
       RenderNow();
     }
   });
-
-  this->RenderNow();
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
