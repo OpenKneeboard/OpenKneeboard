@@ -143,7 +143,7 @@ InterprocessRenderer::InterprocessRenderer(
   auto ctx = dxr.mD2DDeviceContext;
 
   ctx->CreateSolidColorBrush(
-    {0.7f, 0.7f, 0.7f, 0.5f},
+    {0.7f, 0.7f, 0.7f, 0.8f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderBGBrush.put()));
   ctx->CreateSolidColorBrush(
@@ -159,7 +159,7 @@ InterprocessRenderer::InterprocessRenderer(
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mDisabledButtonBrush.put()));
   ctx->CreateSolidColorBrush(
-    {0.4f, 0.4f, 0.4f, 1.0f},
+    {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mButtonBrush.put()));
   ctx->CreateSolidColorBrush(
