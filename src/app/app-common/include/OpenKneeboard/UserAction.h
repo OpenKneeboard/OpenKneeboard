@@ -30,7 +30,7 @@ namespace OpenKneeboard {
   IT(NEXT_PAGE) \
   IT(TOGGLE_VISIBILITY) \
   IT(TOGGLE_FORCE_ZOOM) \
-  IT(SWITCH_ACTIVE_KNEEBOARD) \
+  IT(SWITCH_KNEEBOARDS) \
   IT(RECENTER_VR)
 
 enum class UserAction {

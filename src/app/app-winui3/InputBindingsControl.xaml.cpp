@@ -45,8 +45,7 @@ void InputBindingsControl::PopulateUI() {
   AppendUIRow(UserAction::TOGGLE_VISIBILITY, _(L"Show/hide"));
   AppendUIRow(UserAction::TOGGLE_FORCE_ZOOM, _(L"Toggle forced VR zoom"));
   AppendUIRow(UserAction::RECENTER_VR, _(L"Recenter kneeboard"));
-  AppendUIRow(
-    UserAction::SWITCH_ACTIVE_KNEEBOARD, _(L"Switch active kneeboard"));
+  AppendUIRow(UserAction::SWITCH_KNEEBOARDS, _(L"Switch kneeboards"));
 
   AppendUIRow(UserAction::PREVIOUS_TAB, _(L"Previous tab"));
   AppendUIRow(UserAction::NEXT_TAB, _(L"Next tab"));
