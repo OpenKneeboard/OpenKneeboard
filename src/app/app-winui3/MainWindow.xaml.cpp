@@ -85,7 +85,7 @@ MainWindow::MainWindow() {
   OnTabsChanged();
   OnTabChanged();
 
-  auto view = gKneeboard->GetActiveView();
+  auto view = gKneeboard->GetPrimaryViewForDisplay();
   AddEventListener(
     view->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
   AddEventListener(
@@ -208,7 +208,8 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
 }
 
 void MainWindow::OnTabChanged() {
-  const auto id = gKneeboard->GetActiveView()->GetCurrentTab()->GetRuntimeID();
+  const auto id
+    = gKneeboard->GetPrimaryViewForDisplay()->GetCurrentTab()->GetRuntimeID();
 
   for (auto it: this->Navigation().MenuItems()) {
     auto item = it.try_as<Control>();
@@ -272,16 +273,12 @@ void MainWindow::OnNavigationItemInvoked(
 
   const auto tabID = winrt::unbox_value<uint64_t>(tag);
 
-  if (
-    tabID
-    == gKneeboard->GetActiveView()
-         ->GetCurrentTab()
-         ->GetRuntimeID()) {
+  if (tabID == gKneeboard->GetPrimaryViewForDisplay()->GetCurrentTab()->GetRuntimeID()) {
     Frame().Navigate(xaml_typename<TabPage>(), tag);
     return;
   }
 
-  gKneeboard->GetActiveView()->SetCurrentTabByID(
+  gKneeboard->GetPrimaryViewForDisplay()->SetCurrentTabByID(
     Tab::RuntimeID::FromTemporaryValue(tabID));
 }
 

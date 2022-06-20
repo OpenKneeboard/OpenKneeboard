@@ -76,6 +76,7 @@ class InterprocessRenderer final : private EventReceiver {
     std::array<SharedTextureResources, TextureCount> mSharedResources;
 
     bool mCursorTouching = false;
+    bool mIsActiveForInput = false;
 
     std::vector<std::shared_ptr<TabAction>> mActions;
     using Button = std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>;

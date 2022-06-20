@@ -26,11 +26,11 @@
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
-#include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -82,7 +82,8 @@ TabPage::TabPage() {
     }
   });
   AddEventListener(
-    gKneeboard->GetActiveView()->evCursorEvent, [this](const auto& ev) {
+    gKneeboard->GetPrimaryViewForDisplay()->evCursorEvent,
+    [this](const auto& ev) {
       if (ev.mSource == CursorSource::WINDOW_POINTER) {
         mDrawCursor = false;
       } else {
@@ -110,12 +111,12 @@ void TabPage::InitializePointerSource() {
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   const auto id = Tab::RuntimeID::FromTemporaryValue(
     winrt::unbox_value<uint64_t>(args.Parameter()));
-  auto view = gKneeboard->GetActiveView()->GetTabViewByID(id);
-  this->SetTab(view);
+  mKneeboardView = gKneeboard->GetPrimaryViewForDisplay();
+  this->SetTab(mKneeboardView->GetTabViewByID(id));
 }
 
 void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
-  mState = state;
+  mTabView = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 
   auto actions = CreateTabActions(state);
@@ -243,7 +244,7 @@ void TabPage::PaintNow() {
   });
   ctx->Clear(mBackgroundColor);
 
-  if (!mState) {
+  if (!mTabView) {
     DXGI_SURFACE_DESC desc;
     surface->GetDesc(&desc);
     mErrorRenderer->Render(
@@ -259,9 +260,9 @@ void TabPage::PaintNow() {
   }
 
   auto metrics = GetPageMetrics();
-  auto tab = mState->GetTab();
+  auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
-    tab->RenderPage(ctx, mState->GetPageIndex(), metrics.mRenderRect);
+    tab->RenderPage(ctx, mTabView->GetPageIndex(), metrics.mRenderRect);
   } else {
     mErrorRenderer->Render(
       ctx, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
@@ -273,7 +274,7 @@ void TabPage::PaintNow() {
   const auto cursorRadius = metrics.mRenderSize.height / CursorRadiusDivisor;
   const auto cursorStroke = metrics.mRenderSize.height / CursorStrokeDivisor;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  auto point = gKneeboard->GetActiveView()->GetCursorPoint();
+  auto point = mKneeboardView->GetCursorPoint();
   point.x *= metrics.mScale;
   point.y *= metrics.mScale;
   point.x += metrics.mRenderRect.left;
@@ -285,15 +286,15 @@ void TabPage::PaintNow() {
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {
-  if (!mState) {
+  if (!mTabView) {
     throw std::logic_error("Attempt to fetch Page Metrics without a tab");
   }
-  const auto contentNativeSize = mState->GetPageCount() == 0 ?
+  const auto contentNativeSize = mTabView->GetPageCount() == 0 ?
     D2D1_SIZE_U {
       static_cast<UINT>(mCanvasSize.width),
       static_cast<UINT>(mCanvasSize.height),
     }
-  : mState->GetNativeContentSize();
+  : mTabView->GetNativeContentSize();
 
   const auto scaleX = mCanvasSize.width / contentNativeSize.width;
   const auto scaleY = mCanvasSize.height / contentNativeSize.height;
@@ -325,11 +326,10 @@ void TabPage::OnPointerEvent(
 }
 
 void TabPage::QueuePointerPoint(const PointerPoint& pp) {
-  auto kneeboard = gKneeboard;// increment ref count
-  if (!kneeboard) {
+  if (!mKneeboardView) {
     return;
   }
-  if (!mState) {
+  if (!mTabView) {
     return;
   }
   const auto metrics = GetPageMetrics();
@@ -352,7 +352,7 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   const bool leftClick = ppp.IsLeftButtonPressed();
   const bool rightClick = ppp.IsRightButtonPressed();
 
-  gKneeboard->GetActiveView()->PostCursorEvent({
+  mKneeboardView->PostCursorEvent({
     .mSource = CursorSource::WINDOW_POINTER,
     .mPositionState = positionState,
     .mTouchState = (leftClick || rightClick)

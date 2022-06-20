@@ -51,6 +51,7 @@ struct GameEvent;
 struct ViewRenderInfo {
   std::shared_ptr<IKneeboardView> mView;
   VRLayerConfig mVR;
+  bool mIsActiveForInput = false;
 };
 
 class KneeboardState final : private EventReceiver {
@@ -59,7 +60,11 @@ class KneeboardState final : private EventReceiver {
   KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
-  std::shared_ptr<IKneeboardView> GetActiveView() const;
+  // A view that always shows the 'primary' view; this is the view
+  // shown in the main window, and the view shown on the right
+  // knee by default in VR
+  std::shared_ptr<IKneeboardView> GetPrimaryViewForDisplay() const;
+  std::shared_ptr<IKneeboardView> GetActiveViewForGlobalInput() const;
   std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 

@@ -115,15 +115,23 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     {
       .mView = mViews.at(mActiveViewIndex),
       .mVR = primaryVR,
+      .mIsActiveForInput = true,
     },
     {
       .mView = mViews.at(1 - mActiveViewIndex),
       .mVR = secondaryVR,
+      .mIsActiveForInput = false,
     },
   };
 }
 
-std::shared_ptr<IKneeboardView> KneeboardState::GetActiveView() const {
+std::shared_ptr<IKneeboardView> KneeboardState::GetPrimaryViewForDisplay()
+  const {
+  return mViewProxy;
+}
+
+std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
+  const {
   return mViewProxy;
 }
 

@@ -357,6 +357,10 @@ static bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {
 }
 
 void InterprocessRenderer::RenderToolbar(Layer& layer) {
+  if (!layer.mIsActiveForInput) {
+    return;
+  }
+
   const auto view = layer.mKneeboardView;
   const auto header = view->GetHeaderRenderRect();
   const auto headerHeight = (header.bottom - header.top);
@@ -526,6 +530,7 @@ void InterprocessRenderer::RenderNow() {
     const auto& info = renderInfos.at(i);
     layer.mKneeboardView = info.mView;
     layer.mConfig.mVR = info.mVR;
+    layer.mIsActiveForInput = info.mIsActiveForInput;
     this->Render(layer);
   }
 

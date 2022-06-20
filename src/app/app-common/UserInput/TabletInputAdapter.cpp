@@ -187,7 +187,7 @@ void TabletInputAdapter::ProcessTabletMessage(
     return;
   }
 
-  const auto view = mKneeboard->GetActiveView();
+  const auto view = mKneeboard->GetActiveViewForGlobalInput();
 
   if (state.active) {
     auto tabletLimits = mTablet->GetLimits();
