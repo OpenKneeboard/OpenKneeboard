@@ -20,6 +20,8 @@
 #include <OpenKneeboard/Settings.h>
 #include <ShlObj.h>
 
+#include <chrono>
+#include <format>
 #include <fstream>
 #include <shims/filesystem>
 
@@ -60,6 +62,13 @@ Settings Settings::Load() {
     // TODO: check version
     return json;
   } catch (nlohmann::json::exception&) {
+    std::filesystem::copy_file(
+      path,
+      GetSettingsDirectoryPath()
+        / std::format(
+          "Settings-backup-{:%F-%T}.json",
+          std::chrono::zoned_time(
+            std::chrono::current_zone(), std::chrono::system_clock::now())));
     return {};
   }
 }
