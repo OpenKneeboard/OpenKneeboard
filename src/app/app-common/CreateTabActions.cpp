@@ -18,6 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/CreateTabActions.h>
+#include <OpenKneeboard/NextTabAction.h>
+#include <OpenKneeboard/PreviousTabAction.h>
 #include <OpenKneeboard/TabAction.h>
 #include <OpenKneeboard/TabFirstPageAction.h>
 #include <OpenKneeboard/TabNavigationAction.h>
@@ -27,13 +29,16 @@
 namespace OpenKneeboard {
 
 std::vector<std::shared_ptr<TabAction>> CreateTabActions(
-  KneeboardState* kneeboard,
-  const std::shared_ptr<ITabView>& tab) {
+  KneeboardState* kneeboardState,
+  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<ITabView>& tabView) {
   return {
-    std::make_shared<TabNavigationAction>(tab),
-    std::make_shared<TabFirstPageAction>(tab),
-    std::make_shared<TabPreviousPageAction>(kneeboard, tab),
-    std::make_shared<TabNextPageAction>(kneeboard, tab),
+    std::make_shared<TabNavigationAction>(tabView),
+    std::make_shared<TabFirstPageAction>(tabView),
+    std::make_shared<TabPreviousPageAction>(kneeboardState, tabView),
+    std::make_shared<TabNextPageAction>(kneeboardState, tabView),
+    std::make_shared<PreviousTabAction>(kneeboardState, kneeboardView),
+    std::make_shared<NextTabAction>(kneeboardState, kneeboardView),
   };
 }
 

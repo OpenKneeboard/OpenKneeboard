@@ -119,10 +119,19 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mTabView = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 
-  auto actions = CreateTabActions(gKneeboard.get(), state);
+  auto actions = CreateTabActions(gKneeboard.get(), mKneeboardView, state);
 
-  auto commands = CommandBar().PrimaryCommands();
+  auto primary = CommandBar().PrimaryCommands();
+  auto secondary = CommandBar().SecondaryCommands();
   for (const auto& action: actions) {
+    const auto visibility
+      = action->GetVisibility(TabAction::Context::WindowToolbar);
+    if (visibility == TabAction::Visibility::None) {
+      continue;
+    }
+
+    auto& commands
+      = (visibility == TabAction::Visibility::Primary) ? primary : secondary;
     auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
     muxc::FontIcon icon;
     icon.Glyph(winrt::to_hstring(action->GetGlyph()));

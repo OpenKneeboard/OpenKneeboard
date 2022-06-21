@@ -114,9 +114,12 @@ class EventReceiver {
     Event<Args...>& event,
     const std::type_identity_t<EventHandler<Args...>>& handler);
   template <class... Args>
+    requires(sizeof...(Args) > 0)
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
     std::type_identity_t<Event<Args...>>& forwardAs);
+  template <class... Args>
+  EventHandlerToken AddEventListener(Event<Args...>& event, Event<>& forwardAs);
   template <class... Args>
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
@@ -210,10 +213,18 @@ EventHandlerToken EventReceiver::AddEventListener(
 }
 
 template <class... Args>
+  requires(sizeof...(Args) > 0)
 EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
   std::type_identity_t<Event<Args...>>& forwardTo) {
   return event.AddHandler(this, [&](Args... args) { forwardTo.Emit(args...); });
+}
+
+template <class... Args>
+EventHandlerToken EventReceiver::AddEventListener(
+  Event<Args...>& event,
+  Event<>& forwardTo) {
+  return event.AddHandler(this, [&](Args...) { forwardTo.Emit(); });
 }
 
 }// namespace OpenKneeboard

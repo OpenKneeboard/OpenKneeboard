@@ -17,35 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#pragma once
+
 #include <OpenKneeboard/TabAction.h>
 
 namespace OpenKneeboard {
 
-TabAction::TabAction(utf8_string glyph, utf8_string label)
-  : mGlyph(glyph), mLabel(label) {
-}
+class KneeboardState;
+class IKneeboardView;
+class IKneeboardView;
 
-TabAction::~TabAction() {
-}
+class PreviousTabAction final : public TabAction, private EventReceiver {
+ public:
+  PreviousTabAction() = delete;
 
-utf8_string_view TabAction::GetGlyph() const {
-  return mGlyph;
-}
+  PreviousTabAction(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
+  ~PreviousTabAction();
 
-utf8_string_view TabAction::GetLabel() const {
-  return mLabel;
-}
+  virtual Visibility GetVisibility(Context) const override;
 
-TabAction::Visibility TabAction::GetVisibility(Context) const {
-  return Visibility::Primary;
-}
+  virtual bool IsEnabled() override;
+  virtual void Execute() override;
 
-void TabToggleAction::Execute() {
-  if (this->IsActive()) {
-    this->Deactivate();
-    return;
-  }
-  this->Activate();
-}
+ private:
+  KneeboardState* mKneeboardState;
+  std::shared_ptr<IKneeboardView> mKneeboardView;
+};
 
 }// namespace OpenKneeboard

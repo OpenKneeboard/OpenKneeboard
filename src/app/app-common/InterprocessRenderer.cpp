@@ -32,6 +32,8 @@
 #include <dxgi1_2.h>
 #include <wincodec.h>
 
+#include <ranges>
+
 using namespace OpenKneeboard;
 
 namespace OpenKneeboard {
@@ -368,7 +370,8 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
 
   const auto strokeWidth = buttonHeight / 15;
 
-  auto left = 2 * margin;
+  auto primaryLeft = 2 * margin;
+  auto secondaryRight = header.right - primaryLeft;
 
   std::scoped_lock lock(layer.mToolbarMutex);
 
@@ -392,14 +395,40 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
   glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  for (auto action: layer.mActions) {
+  decltype(layer.mActions) actions;
+  std::ranges::copy_if(
+    layer.mActions, std::back_inserter(actions), [](const auto& action) {
+      return action->GetVisibility(TabAction::Context::InGameToolbar)
+        == TabAction::Visibility::Primary;
+    });
+  std::ranges::copy_if(
+    layer.mActions | std::ranges::views::reverse,
+    std::back_inserter(actions),
+    [](const auto& action) {
+      return action->GetVisibility(TabAction::Context::InGameToolbar)
+        == TabAction::Visibility::Secondary;
+    });
+
+  for (auto action: actions) {
+    const auto visibility
+      = action->GetVisibility(TabAction::Context::InGameToolbar);
+    if (visibility == TabAction::Visibility::None) [[unlikely]] {
+      throw std::logic_error("Should not have been copied to actions local");
+    }
+
     D2D1_RECT_F button {
-      .left = left,
       .top = margin,
-      .right = left + buttonHeight,
       .bottom = margin + buttonHeight,
     };
-    left = button.right + margin;
+    if (visibility == TabAction::Visibility::Primary) {
+      button.left = primaryLeft;
+      button.right = primaryLeft + buttonHeight,
+      primaryLeft = button.right + margin;
+    } else {
+      button.right = secondaryRight;
+      button.left = secondaryRight - buttonHeight;
+      secondaryRight = button.left - margin;
+    }
     layer.mButtons.push_back({button, action});
 
     ID2D1Brush* brush = mButtonBrush.get();
@@ -460,7 +489,7 @@ void InterprocessRenderer::OnCursorEvent(
 
   const auto cursor = view->GetCursorCanvasPoint({ev.mX, ev.mY});
 
-  std::scoped_lock lock(layer.mToolbarMutex);
+  std::unique_lock lock(layer.mToolbarMutex);
 
   if (layer.mCursorTouching) {
     // Touch start
@@ -485,6 +514,9 @@ void InterprocessRenderer::OnCursorEvent(
     return;
   }
 
+  // Action might mutate the toolbar (e.g. for a tab change), so release
+  // the mutex before we trigger it
+  lock.unlock();
   action->Execute();
 }
 
@@ -511,7 +543,7 @@ void InterprocessRenderer::OnTabChanged(
   }
 
   std::scoped_lock lock(layer.mToolbarMutex);
-  layer.mActions = CreateTabActions(mKneeboard, tab);
+  layer.mActions = CreateTabActions(mKneeboard, view, tab);
   layer.mButtons.clear();
   layer.mActiveButton = {};
 
