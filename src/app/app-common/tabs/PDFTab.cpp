@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFTab.h>
 #include <OpenKneeboard/config.h>
@@ -31,7 +32,6 @@
 #include <winrt/Windows.Data.Pdf.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
-#include <winrt/Windows.System.h>
 
 #include <chrono>
 #include <nlohmann/json.hpp>
@@ -453,19 +453,7 @@ void PDFTab::PostCursorEvent(
           this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
           break;
         case LinkDestination::Type::URI: {
-          winrt::Windows::Foundation::Uri uri(winrt::to_hstring(dest.mURI));
-          if (uri.SchemeName() != L"openkneeboard") {
-            [uri]() -> winrt::fire_and_forget {
-              co_await winrt::Windows::System::Launcher::LaunchUriAsync(uri);
-            }();
-            break;
-          }
-          std::wstring_view path = uri.Path();
-          if (path.starts_with(L'/')) {
-            path.remove_prefix(1);
-          }
-          // FIXME
-          OPENKNEEBOARD_BREAK;
+          LaunchURI(dest.mURI);
           break;
         }
       }

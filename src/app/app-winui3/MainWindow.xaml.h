@@ -49,6 +49,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
     const IInspectable& args) noexcept;
 
  private:
+  winrt::apartment_context mUIThread;
   HWND mHwnd;
   winrt::handle mHwndFile;
   NavigationViewItem mTabSettingsItem;
@@ -58,6 +59,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   DispatcherQueueController mDQC {nullptr};
   DispatcherQueueTimer mFrameTimer {nullptr};
 
+  winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   void OnTabChanged();
   void OnTabsChanged();
 

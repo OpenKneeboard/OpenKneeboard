@@ -43,7 +43,6 @@ add_custom_target(
 )
 add_dependencies(CopyRuntimeFiles ThirdParty::OpenVR)
 
-
 set(GENERATED_MANIFEST "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/appxmanifest.xml")
 add_custom_target(
   AppxManifest

@@ -27,6 +27,7 @@
 
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/config.h>
@@ -34,6 +35,7 @@
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
+#include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
 
 #include <nlohmann/json.hpp>
@@ -136,6 +138,9 @@ MainWindow::MainWindow() {
   UnmapViewOfFile(mapping);
 
   UpdateTitleBarMargins(nullptr, nullptr);
+
+  RegisterURIHandler(
+    "openkneeboard", [this](auto uri) { this->LaunchOpenKneeboardURI(uri); });
 }
 
 MainWindow::~MainWindow() {
@@ -273,7 +278,11 @@ void MainWindow::OnNavigationItemInvoked(
 
   const auto tabID = winrt::unbox_value<uint64_t>(tag);
 
-  if (tabID == gKneeboard->GetPrimaryViewForDisplay()->GetCurrentTab()->GetRuntimeID()) {
+  if (
+    tabID
+    == gKneeboard->GetPrimaryViewForDisplay()
+         ->GetCurrentTab()
+         ->GetRuntimeID()) {
     Frame().Navigate(xaml_typename<TabPage>(), tag);
     return;
   }
@@ -287,4 +296,30 @@ void MainWindow::OnBackRequested(
   const NavigationViewBackRequestedEventArgs&) noexcept {
   Frame().GoBack();
 }
+
+winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
+  std::string_view uriStr) {
+  auto uri = winrt::Windows::Foundation::Uri(winrt::to_hstring(uriStr));
+  std::wstring_view path(uri.Path());
+
+  if (path.starts_with(L'/')) {
+    path.remove_prefix(1);
+  }
+
+  co_await mUIThread;
+
+  if (path == L"Settings/Games") {
+    Frame().Navigate(xaml_typename<GameSettingsPage>());
+    return;
+  }
+  if (path == L"Settings/Input") {
+    Frame().Navigate(xaml_typename<InputSettingsPage>());
+    return;
+  }
+  if (path == L"Settings/Tabs") {
+    Frame().Navigate(xaml_typename<TabSettingsPage>());
+    return;
+  }
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation
