@@ -30,6 +30,7 @@ struct AppSettings final {
   std::optional<RECT> mWindowRect;
   bool mLoopPages = false;
   bool mLoopTabs = false;
+  bool mDualKneeboards = false;
 };
 
 void from_json(const nlohmann::json&, AppSettings&);

@@ -120,6 +120,8 @@ class KneeboardState final : private EventReceiver {
   void OnUserAction(UserAction);
 
   void StartOpenVRThread();
+
+  void SetActiveViewIndex(uint8_t index);
 };
 
 }// namespace OpenKneeboard

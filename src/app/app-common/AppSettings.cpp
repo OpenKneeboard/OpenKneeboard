@@ -24,10 +24,15 @@ namespace OpenKneeboard {
 static constexpr auto WindowPositionKey {"WindowPositionV2"};
 static constexpr auto LoopPagesKey {"LoopPages"};
 static constexpr auto LoopTabsKey {"LoopTabs"};
+static constexpr auto DualKneeboardsKey {"DualKneeboards"};
 
 void from_json(const nlohmann::json& j, AppSettings& as) {
   if (j.is_null()) {
     return;
+  }
+
+  if (j.contains(LoopTabsKey)) {
+    as.mLoopTabs = j.at(LoopTabsKey);
   }
 
   if (j.contains(LoopPagesKey)) {
@@ -35,6 +40,9 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
   }
   if (j.contains(LoopTabsKey)) {
     as.mLoopTabs = j.at(LoopTabsKey);
+  }
+  if (j.contains(DualKneeboardsKey)) {
+    as.mDualKneeboards = j.at(DualKneeboardsKey).at("Enabled");
   }
 
   if (!j.contains(WindowPositionKey)) {
@@ -51,16 +59,24 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
 }
 
 void to_json(nlohmann::json& j, const AppSettings& as) {
-  j[LoopPagesKey] = as.mLoopPages;
-  j[LoopTabsKey] = as.mLoopTabs;
+  j = {
+    {LoopPagesKey, as.mLoopPages},
+    {LoopTabsKey, as.mLoopTabs},
+    {
+      DualKneeboardsKey,
+      {
+        {"Enabled", as.mDualKneeboards},
+      },
+    },
+  };
 
   if (as.mWindowRect) {
-    nlohmann::json rect;
-    rect["Left"] = as.mWindowRect->left;
-    rect["Top"] = as.mWindowRect->top;
-    rect["Right"] = as.mWindowRect->right;
-    rect["Bottom"] = as.mWindowRect->bottom;
-    j[WindowPositionKey] = rect;
+    j[WindowPositionKey] = {
+      {"Left", as.mWindowRect->left},
+      {"Top", as.mWindowRect->top},
+      {"Right", as.mWindowRect->right},
+      {"Bottom", as.mWindowRect->bottom},
+    };
   }
 }
 

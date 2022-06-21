@@ -47,6 +47,16 @@ void AdvancedSettingsPage::PropertyChanged(
   mPropertyChangedEvent.remove(token);
 }
 
+bool AdvancedSettingsPage::DualKneeboards() const noexcept {
+  return gKneeboard->GetAppSettings().mDualKneeboards;
+}
+
+void AdvancedSettingsPage::DualKneeboards(bool value) noexcept {
+  auto s = gKneeboard->GetAppSettings();
+  s.mDualKneeboards = value;
+  gKneeboard->SetAppSettings(s);
+}
+
 bool AdvancedSettingsPage::LoopPages() const noexcept {
   return gKneeboard->GetAppSettings().mLoopPages;
 }

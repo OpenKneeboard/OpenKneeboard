@@ -5,7 +5,9 @@ namespace OpenKneeboardApp
                                        Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         AdvancedSettingsPage();
-        
+
+        Boolean DualKneeboards;
+
         Boolean LoopPages;
         Boolean LoopTabs;
 

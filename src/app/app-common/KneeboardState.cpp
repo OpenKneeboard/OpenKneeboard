@@ -105,8 +105,17 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 }
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
-  // TODO: make second kneeboard optional
   const auto primaryVR = mVRConfig.mPrimaryLayer;
+  if (!mAppSettings.mDualKneeboards) {
+    return {
+      {
+        .mView = mViews.at(mActiveViewIndex),
+        .mVR = primaryVR,
+        .mIsActiveForInput = true,
+      },
+    };
+  }
+
   auto secondaryVR = primaryVR;
   secondaryVR.mX = -primaryVR.mX;
   secondaryVR.mRY = -primaryVR.mRY;
@@ -202,10 +211,7 @@ void KneeboardState::OnUserAction(UserAction action) {
       this->evNeedsRepaintEvent.Emit();
       return;
     case UserAction::SWITCH_KNEEBOARDS:
-      // TODO: make it possible to disable the second kneeboard
-      this->mActiveViewIndex = 1 - this->mActiveViewIndex;
-      this->mViewProxy->SetBackingView(mViews.at(this->mActiveViewIndex));
-      this->evNeedsRepaintEvent.Emit();
+      this->SetActiveViewIndex(1 - this->mActiveViewIndex);
       return;
     case UserAction::PREVIOUS_TAB:
     case UserAction::NEXT_TAB:
@@ -215,6 +221,11 @@ void KneeboardState::OnUserAction(UserAction action) {
       return;
   }
   OPENKNEEBOARD_BREAK;
+}
+void KneeboardState::SetActiveViewIndex(uint8_t index) {
+  this->mActiveViewIndex = 1 - this->mActiveViewIndex;
+  this->mViewProxy->SetBackingView(mViews.at(this->mActiveViewIndex));
+  this->evNeedsRepaintEvent.Emit();
 }
 
 void KneeboardState::OnGameEvent(const GameEvent& ev) {
@@ -289,6 +300,9 @@ AppSettings KneeboardState::GetAppSettings() const {
 void KneeboardState::SetAppSettings(const AppSettings& value) {
   mAppSettings = value;
   this->SaveSettings();
+  if (!value.mDualKneeboards) {
+    this->SetActiveViewIndex(0);
+  }
 }
 
 GamesList* KneeboardState::GetGamesList() const {

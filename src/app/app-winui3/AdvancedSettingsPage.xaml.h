@@ -31,6 +31,9 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   AdvancedSettingsPage();
 
+  bool DualKneeboards() const noexcept;
+  void DualKneeboards(bool value) noexcept;
+
   bool LoopPages() const noexcept;
   void LoopPages(bool) noexcept;
 

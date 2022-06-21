@@ -13,6 +13,31 @@
       Spacing="16"
       x:DefaultBindMode="TwoWay">
       <TextBlock
+        Text="Dual kneeboard"
+        Style="{ThemeResource SubtitleTextBlockStyle}"
+      />
+      <StackPanel Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <ToggleSwitch
+          OffContent="Disabled"
+          OnContent="Enabled"
+          IsOn="{x:Bind DualKneeboards}"
+        />
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          Both kneeboards use the same set of tab, but track the active tab
+          and pages separately. Buttons and pen strokes always go to the
+          primary kneeboard - bind a button to switch kneeboards to control
+          the second kneeboard.
+        </TextBlock>
+      </StackPanel>
+      <TextBlock
         Text="Looping"
         Style="{ThemeResource SubtitleTextBlockStyle}"
       />
