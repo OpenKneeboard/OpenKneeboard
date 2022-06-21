@@ -321,22 +321,30 @@ class TestViewerWindow final {
     mFirstDetached = true;
 
     const auto config = snapshot.GetConfig();
-    const auto layerIndex
-      = std::min<uint8_t>(mLayerIndex, snapshot.GetLayerCount() - 1);
-    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+    if (mLayerIndex >= snapshot.GetLayerCount()) {
+      mErrorRenderer->Render(
+        ctx,
+        std::format("No Layer {}", mLayerIndex + 1),
+        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
+      return;
+    }
+    const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
 
     if (!layer.IsValid()) {
       mErrorRenderer->Render(
         ctx,
-        "No Image",
+        std::format("No Config For Layer {}", mLayerIndex + 1),
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
-      mFirstDetached = false;
       return;
     }
 
     auto sharedTexture
-      = snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), layerIndex);
+      = snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex);
     if (!sharedTexture.IsValid()) {
+      mErrorRenderer->Render(
+        ctx,
+        std::format("No Texture For Layer {}", mLayerIndex + 1),
+        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       return;
     }
     auto sharedSurface = sharedTexture.GetSurface();
