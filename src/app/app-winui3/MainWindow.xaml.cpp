@@ -32,11 +32,14 @@
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/version.h>
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
+#include <winrt/Windows.Web.Http.Headers.h>
+#include <winrt/Windows.Web.Http.h>
 
 #include <nlohmann/json.hpp>
 
@@ -141,6 +144,7 @@ MainWindow::MainWindow() {
 
   RegisterURIHandler(
     "openkneeboard", [this](auto uri) { this->LaunchOpenKneeboardURI(uri); });
+  this->CheckForUpdates();
 }
 
 MainWindow::~MainWindow() {
@@ -320,6 +324,85 @@ winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
     Frame().Navigate(xaml_typename<TabSettingsPage>());
     return;
   }
+}
+
+winrt::fire_and_forget MainWindow::CheckForUpdates() {
+  Windows::Web::Http::HttpClient http;
+  auto headers = http.DefaultRequestHeaders();
+  headers.UserAgent().Append(
+    {ProjectNameW,
+     std::format(
+       L"{}.{}.{}.{}-{}",
+       Version::Major,
+       Version::Minor,
+       Version::Patch,
+       Version::Build,
+       std::wstring_view {to_hstring(Version::CommitID)})});
+  headers.Accept().Clear();
+  headers.Accept().Append(
+    Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
+      hstring {L"application/vnd.github.v3+json"}));
+
+  // FIXME: catch and ignore network errors
+  dprint("Starting update check");
+
+  auto json = co_await http.GetBufferAsync(Windows::Foundation::Uri(hstring {
+    L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
+  auto releases = nlohmann::json::parse(json.data());
+  if (releases.empty()) {
+    dprint("Didn't get any releases from github API :/");
+    return;
+  }
+
+  bool isPreRelease = false;
+  bool foundThisRelease = false;
+  nlohmann::json latestRelease;
+  nlohmann::json latestStableRelease;
+
+  for (auto release: releases) {
+    if (latestRelease.is_null()) {
+      latestRelease = release;
+      dprintf(
+        "Latest release is {}", release.at("tag_name").get<std::string_view>());
+    }
+    if (
+      latestStableRelease.is_null() && !release.at("prerelease").get<bool>()) {
+      latestStableRelease = release;
+      dprintf(
+        "Latest stable release is {}",
+        release.at("tag_name").get<std::string_view>());
+    }
+
+    if (
+      Version::CommitID
+      == release.at("target_commitish").get<std::string_view>()) {
+      foundThisRelease = true;
+      isPreRelease = release.at("prerelease").get<bool>();
+      dprintf(
+        "Found this version as {} ({})",
+        release.at("tag_name").get<std::string_view>(),
+        isPreRelease ? "prerelease" : "stable");
+      break;
+    }
+  }
+
+  auto release = isPreRelease ? latestRelease : latestStableRelease;
+  if (release.is_null()) {
+    dprint("Didn't find a valid release.");
+    return;
+  }
+
+  auto newCommit = release.at("target_commitish").get<std::string_view>();
+
+  if (newCommit == Version::CommitID) {
+    dprintf("Up to date on commit ID {}", Version::CommitID);
+    return;
+  }
+
+  const auto oldName = Version::ReleaseName;
+  const auto newName = release.at("tag_name").get<std::string_view>();
+
+  dprintf("Want to upgrade from {} to {}", oldName, newName);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

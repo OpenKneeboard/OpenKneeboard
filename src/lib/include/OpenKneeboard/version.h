@@ -20,6 +20,7 @@
 #pragma once
 
 #include <ctime>
+#include <string_view>
 
 namespace OpenKneeboard::Version {
 
@@ -29,6 +30,7 @@ extern const unsigned int Patch;
 extern const unsigned int Build;
 
 extern const char* CommitID;
+extern const std::string_view ReleaseName;
 // Didn't see a clean way to get this formatted by CMake as UTC :(
 extern const std::time_t CommitUnixTimestamp;
 extern const char* ModifiedFiles;

@@ -19,6 +19,8 @@ jobs:
         run: |
           cmake ${{github.workspace}}/source `
             "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}/MyCert.pfx" `
+            "-DGITHUB_REF_TYPE=${{github.ref_type}}" `
+            "-DGITHUB_REF_NAME=${{github.ref_name}}"
       - name: Compile
         working-directory: build
         run: |

@@ -29,6 +29,7 @@ extern const unsigned int Patch = @VERSION_PATCH@;
 extern const unsigned int Build = @VERSION_BUILD@;
 
 extern const char* CommitID = "@COMMIT_ID@";
+extern const std::string_view ReleaseName { "@RELEASE_NAME@" };
 extern const std::time_t CommitUnixTimestamp = @COMMIT_UNIX_TIMESTAMP@;
 extern const char* ModifiedFiles = "@MODIFIED_FILES@";
 extern const bool HaveModifiedFiles = @DIRTY@;

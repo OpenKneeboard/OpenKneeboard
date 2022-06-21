@@ -46,6 +46,10 @@ else()
   set(VERSION_BUILD_STR "${VERSION_BUILD}-local")
 endif()
 
+if("${RELEASE_NAME}" STREQUAL "")
+  set(RELEASE_NAME "v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.${VERSION_BUILD_STR}")
+endif()
+
 if(INPUT_CPP_FILE)
   configure_file(
     ${INPUT_CPP_FILE}

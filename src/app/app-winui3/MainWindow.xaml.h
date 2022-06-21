@@ -59,6 +59,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   DispatcherQueueController mDQC {nullptr};
   DispatcherQueueTimer mFrameTimer {nullptr};
 
+  winrt::fire_and_forget CheckForUpdates();
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   void OnTabChanged();
   void OnTabsChanged();
