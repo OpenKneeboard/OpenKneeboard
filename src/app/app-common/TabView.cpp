@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabWithCursorEvents.h>
@@ -27,8 +28,8 @@
 
 namespace OpenKneeboard {
 
-TabView::TabView(const std::shared_ptr<Tab>& tab)
-  : mRootTab(tab), mRootTabPage(0) {
+TabView::TabView(KneeboardState* kneeboard, const std::shared_ptr<Tab>& tab)
+  : mKneeboard(kneeboard), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     tab->evFullyReplacedEvent, &TabView::OnTabFullyReplaced, this);
@@ -45,8 +46,7 @@ TabView::TabView(const std::shared_ptr<Tab>& tab)
     this->evAvailableFeaturesChangedEvent);
 }
 
-TabView::~TabView() {
-}
+TabView::~TabView() = default;
 
 std::shared_ptr<Tab> TabView::GetRootTab() const {
   return mRootTab;
@@ -90,13 +90,36 @@ void TabView::SetPageIndex(uint16_t page) {
 }
 
 void TabView::NextPage() {
-  SetPageIndex(GetPageIndex() + 1);
+  const auto count = this->GetPageCount();
+  if (count < 2) {
+    return;
+  }
+
+  const auto current = this->GetPageIndex();
+  if (current + 1 < count) {
+    this->SetPageIndex(current + 1);
+    return;
+  }
+
+  if (mKneeboard->GetAppSettings().mLoopPages) {
+    this->SetPageIndex(0);
+  }
 }
 
 void TabView::PreviousPage() {
   const auto page = GetPageIndex();
   if (page > 0) {
-    SetPageIndex(page - 1);
+    this->SetPageIndex(page - 1);
+    return;
+  }
+
+  if (!mKneeboard->GetAppSettings().mLoopPages) {
+    return;
+  }
+
+  const auto count = this->GetPageCount();
+  if (count > 2) {
+    this->SetPageIndex(count - 1);
   }
 }
 
@@ -184,6 +207,7 @@ bool TabView::SetTabMode(TabMode mode) {
   evPageChangedEvent.EmitFromMainThread();
   evNeedsRepaintEvent.EmitFromMainThread();
   evTabModeChangedEvent.EmitFromMainThread();
+  evAvailableFeaturesChangedEvent.EmitFromMainThread();
 
   return true;
 }

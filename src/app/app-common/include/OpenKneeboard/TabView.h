@@ -25,9 +25,11 @@
 
 namespace OpenKneeboard {
 
+class KneeboardState;
+
 class TabView final : public ITabView, private EventReceiver {
  public:
-  TabView(const std::shared_ptr<Tab>&);
+  TabView(KneeboardState*, const std::shared_ptr<Tab>&);
   ~TabView();
 
   virtual std::shared_ptr<Tab> GetRootTab() const override;
@@ -51,6 +53,7 @@ class TabView final : public ITabView, private EventReceiver {
  private:
   const EventContext mEventContext;
 
+  KneeboardState* mKneeboard;
   std::shared_ptr<Tab> mRootTab;
   uint16_t mRootTabPage;
 

@@ -28,10 +28,11 @@ namespace OpenKneeboard {
 enum class UserAction;
 class ITabView;
 struct CursorEvent;
+class KneeboardState;
 
 class KneeboardView final : public IKneeboardView, private EventReceiver {
  public:
-  KneeboardView();
+  KneeboardView(KneeboardState*);
   ~KneeboardView();
 
   void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);
@@ -66,6 +67,7 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
   virtual void PostCursorEvent(const CursorEvent& ev) override;
 
  private:
+  KneeboardState* mKneeboard;
   std::vector<std::shared_ptr<ITabView>> mTabs;
   std::shared_ptr<ITabView> mCurrentTabView;
 

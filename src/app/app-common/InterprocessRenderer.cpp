@@ -511,7 +511,7 @@ void InterprocessRenderer::OnTabChanged(
   }
 
   std::scoped_lock lock(layer.mToolbarMutex);
-  layer.mActions = CreateTabActions(tab);
+  layer.mActions = CreateTabActions(mKneeboard, tab);
   layer.mButtons.clear();
   layer.mActiveButton = {};
 

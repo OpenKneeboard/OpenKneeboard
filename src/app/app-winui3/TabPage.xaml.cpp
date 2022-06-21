@@ -119,7 +119,7 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mTabView = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 
-  auto actions = CreateTabActions(state);
+  auto actions = CreateTabActions(gKneeboard.get(), state);
 
   auto commands = CommandBar().PrimaryCommands();
   for (const auto& action: actions) {

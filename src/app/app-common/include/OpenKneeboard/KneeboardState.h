@@ -75,6 +75,7 @@ class KneeboardState final : private EventReceiver {
   Event<> evFrameTimerEvent;
   Event<> evTabsChangedEvent;
   Event<> evNeedsRepaintEvent;
+  Event<> evSettingsChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 

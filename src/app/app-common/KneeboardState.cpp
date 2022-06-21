@@ -41,8 +41,8 @@ namespace OpenKneeboard {
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
   mViews = {
-    std::make_shared<KneeboardView>(),
-    std::make_shared<KneeboardView>(),
+    std::make_shared<KneeboardView>(this),
+    std::make_shared<KneeboardView>(this),
   };
   mViewProxy = std::make_shared<KneeboardViewProxy>(mViews.front());
 
@@ -315,6 +315,7 @@ void KneeboardState::SaveSettings() {
   mSettings.Doodle = mDoodleSettings;
 
   mSettings.Save();
+  evSettingsChangedEvent.Emit();
 }
 
 DoodleSettings KneeboardState::GetDoodleSettings() {

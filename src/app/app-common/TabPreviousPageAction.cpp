@@ -17,23 +17,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/AppSettings.h>
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabPreviousPageAction.h>
 #include <OpenKneeboard/TabView.h>
 
 namespace OpenKneeboard {
 
 TabPreviousPageAction::TabPreviousPageAction(
-  const std::shared_ptr<ITabView>& state)
-  : TabAction("\uE760", _("Previous Page")), mState(state) {
-  AddEventListener(state->evNeedsRepaintEvent, this->evStateChangedEvent);
+  KneeboardState* kneeboard,
+  const std::shared_ptr<ITabView>& tabView)
+  : TabAction("\uE760", _("Previous Page")),
+    mKneeboard(kneeboard),
+    mTabView(tabView) {
+  AddEventListener(tabView->evPageChangedEvent, this->evStateChangedEvent);
+  AddEventListener(
+    tabView->GetTab()->evPageAppendedEvent, this->evStateChangedEvent);
+  AddEventListener(
+    kneeboard->evSettingsChangedEvent, this->evStateChangedEvent);
 }
 
+TabPreviousPageAction::~TabPreviousPageAction() = default;
+
 bool TabPreviousPageAction::IsEnabled() {
-  return mState->GetPageIndex() > 0;
+  if (mKneeboard->GetAppSettings().mLoopPages) {
+    return mTabView->GetPageCount() > 1;
+  }
+
+  return mTabView->GetPageIndex() > 0;
 }
 
 void TabPreviousPageAction::Execute() {
-  mState->SetPageIndex(mState->GetPageIndex() - 1);
+  mTabView->PreviousPage();
 }
 
 }// namespace OpenKneeboard

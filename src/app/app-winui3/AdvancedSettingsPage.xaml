@@ -1,0 +1,48 @@
+﻿<Page
+  x:Class="OpenKneeboardApp.AdvancedSettingsPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:OpenKneeboardApp"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d"
+  Background="{ThemeResource SystemChromeMediumLowColor}">
+  <ScrollViewer VerticalScrollMode="Auto" Padding="24">
+    <StackPanel Orientation="Vertical" x:DefaultBindMode="TwoWay">
+      <TextBlock
+        Text="Looping"
+        Style="{ThemeResource SubtitleTextBlockStyle}"
+        Margin="0,0,0,16"
+      />
+      <StackPanel Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <ToggleSwitch
+          Header="Pages"
+          OffContent="Pages do not loop"
+          OnContent="First and last pages loop"
+          IsOn="{x:Bind LoopPages}"
+        />
+        <ToggleSwitch
+          Header="Tabs"
+          OffContent="Tabs do not loop"
+          OnContent="First and last tabs loop"
+          IsOn="{x:Bind LoopTabs}"
+        />
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+					By default, 'Previous Page' is disabled on the first page, and
+					'Next Page' is disabled on the last page. Alternatively, pages can
+					loop so that if you're on the first page, 'Previous Page' will take
+					you to the last page, and if you're on the last page, 'Next Page'
+					will take you to the first page. Looping is similarly supported for tabs.
+				</TextBlock>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</Page>

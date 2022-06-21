@@ -12,6 +12,7 @@ namespace OpenKneeboardApp
         Input,
         VRConfig,
         NonVRConfig,
+        Advanced,
     };
 
     [default_interface]

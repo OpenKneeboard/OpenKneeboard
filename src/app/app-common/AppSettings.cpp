@@ -22,10 +22,19 @@
 namespace OpenKneeboard {
 
 static constexpr auto WindowPositionKey {"WindowPositionV2"};
+static constexpr auto LoopPagesKey {"LoopPages"};
+static constexpr auto LoopTabsKey {"LoopTabs"};
 
 void from_json(const nlohmann::json& j, AppSettings& as) {
   if (j.is_null()) {
     return;
+  }
+
+  if (j.contains(LoopPagesKey)) {
+    as.mLoopPages = j.at(LoopPagesKey);
+  }
+  if (j.contains(LoopTabsKey)) {
+    as.mLoopTabs = j.at(LoopTabsKey);
   }
 
   if (!j.contains(WindowPositionKey)) {
@@ -42,6 +51,9 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
 }
 
 void to_json(nlohmann::json& j, const AppSettings& as) {
+  j[LoopPagesKey] = as.mLoopPages;
+  j[LoopTabsKey] = as.mLoopTabs;
+
   if (as.mWindowRect) {
     nlohmann::json rect;
     rect["Left"] = as.mWindowRect->left;

@@ -82,6 +82,10 @@
         <local:SettingsSubpageData ID="Input" Glyph="&#xE961;" Title="Input">
           Control your kneeboard with your keyboard, joystick, or graphics tablet buttons.
         </local:SettingsSubpageData>
+        <!-- E9E9 Equalizer-->
+        <local:SettingsSubpageData ID="Advanced" Glyph="&#xE9E9;" Title="Advanced">
+          Advanced features and behavior tweaks.
+        </local:SettingsSubpageData>
       </GridView.Items>
     </GridView>
   </Grid>

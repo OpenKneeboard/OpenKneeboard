@@ -54,6 +54,9 @@ void SettingsPage::OnItemClick(
     case SettingsSubpageID::VRConfig:
       Frame().Navigate(xaml_typename<VRSettingsPage>());
       return;
+    case SettingsSubpageID::Advanced:
+      Frame().Navigate(xaml_typename<AdvancedSettingsPage>());
+      return;
   }
 }
 

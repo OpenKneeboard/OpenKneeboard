@@ -12,6 +12,7 @@ add_executable(
   WIN32
   Resource.rc ${VERSION_RC_FILE} app.manifest
   AboutPage.idl AboutPage.xaml AboutPage.xaml.cpp AboutPage.xaml.h
+  AdvancedSettingsPage.idl AdvancedSettingsPage.xaml AdvancedSettingsPage.xaml.cpp AdvancedSettingsPage.xaml.h
   App.idl App.xaml App.xaml.cpp App.xaml.h
   CheckDCSHooks.cpp CheckDCSHooks.h
   CheckRuntimeFiles.cpp CheckRuntimeFiles.h

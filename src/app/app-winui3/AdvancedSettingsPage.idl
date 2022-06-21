@@ -1,0 +1,12 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass AdvancedSettingsPage: Microsoft.UI.Xaml.Controls.Page,
+                                       Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        AdvancedSettingsPage();
+        Boolean LoopPages;
+        Boolean LoopTabs;
+    }
+
+}

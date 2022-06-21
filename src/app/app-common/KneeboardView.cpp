@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabView.h>
@@ -28,7 +29,8 @@
 
 namespace OpenKneeboard {
 
-KneeboardView::KneeboardView() {
+KneeboardView::KneeboardView(KneeboardState* kneeboard)
+  : mKneeboard(kneeboard) {
   UpdateLayout();
 }
 
@@ -49,7 +51,7 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
       continue;
     }
 
-    auto viewState = std::make_shared<TabView>(tab);
+    auto viewState = std::make_shared<TabView>(mKneeboard, tab);
     viewStates.push_back(viewState);
 
     AddEventListener(viewState->evNeedsRepaintEvent, [=]() {
@@ -114,17 +116,37 @@ void KneeboardView::SetCurrentTabByID(Tab::RuntimeID id) {
 }
 
 void KneeboardView::PreviousTab() {
+  const auto count = mTabs.size();
+  if (count < 2) {
+    return;
+  }
+
   const auto current = GetTabIndex();
   if (current > 0) {
     SetCurrentTabByIndex(current - 1);
+    return;
+  }
+
+  if (mKneeboard->GetAppSettings().mLoopTabs) {
+    SetCurrentTabByIndex(count - 1);
   }
 }
 
 void KneeboardView::NextTab() {
-  const auto current = GetTabIndex();
   const auto count = mTabs.size();
+  if (count < 2) {
+    return;
+  }
+
+  const auto current = GetTabIndex();
   if (current + 1 < count) {
     SetCurrentTabByIndex(current + 1);
+    return;
+  }
+
+  if (mKneeboard->GetAppSettings().mLoopTabs) {
+    SetCurrentTabByIndex(0);
+    return;
   }
 }
 
