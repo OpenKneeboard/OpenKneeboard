@@ -67,4 +67,59 @@ void AdvancedSettingsPage::LoopTabs(bool value) noexcept {
   gKneeboard->SetAppSettings(s);
 }
 
+uint32_t AdvancedSettingsPage::MinimumPenRadius() {
+  return gKneeboard->GetDoodleSettings().minimumPenRadius;
+}
+
+void AdvancedSettingsPage::MinimumPenRadius(uint32_t value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.minimumPenRadius = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+
+uint32_t AdvancedSettingsPage::PenSensitivity() {
+  return gKneeboard->GetDoodleSettings().penSensitivity;
+}
+
+void AdvancedSettingsPage::PenSensitivity(uint32_t value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.penSensitivity = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+
+uint32_t AdvancedSettingsPage::MinimumEraseRadius() {
+  return gKneeboard->GetDoodleSettings().minimumEraseRadius;
+}
+
+void AdvancedSettingsPage::MinimumEraseRadius(uint32_t value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.minimumEraseRadius = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+
+uint32_t AdvancedSettingsPage::EraseSensitivity() {
+  return gKneeboard->GetDoodleSettings().eraseSensitivity;
+}
+
+void AdvancedSettingsPage::EraseSensitivity(uint32_t value) {
+  auto ds = gKneeboard->GetDoodleSettings();
+  ds.eraseSensitivity = value;
+  gKneeboard->SetDoodleSettings(ds);
+}
+
+void AdvancedSettingsPage::RestoreDoodleDefaults(
+  const IInspectable&,
+  const IInspectable&) noexcept {
+  gKneeboard->SetDoodleSettings({});
+
+  for (auto prop: {
+         L"MinimumPenRadius",
+         L"PenSensitivity",
+         L"MinimumEraseRadius",
+         L"EraseSensitivity",
+       }) {
+    mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
+  }
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation

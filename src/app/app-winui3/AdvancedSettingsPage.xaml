@@ -8,11 +8,13 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
-    <StackPanel Orientation="Vertical" x:DefaultBindMode="TwoWay">
+    <StackPanel
+      Orientation="Vertical"
+      Spacing="16"
+      x:DefaultBindMode="TwoWay">
       <TextBlock
         Text="Looping"
         Style="{ThemeResource SubtitleTextBlockStyle}"
-        Margin="0,0,0,16"
       />
       <StackPanel Orientation="Vertical"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -43,6 +45,62 @@
 					will take you to the first page. Looping is similarly supported for tabs.
 				</TextBlock>
       </StackPanel>
+			<Grid ColumnDefinitions="*, Auto">
+				<TextBlock 
+					Grid.Column="0"
+					Text="Drawing" 
+					Style="{StaticResource SubtitleTextBlockStyle}" 
+				/>
+				<Button
+					Grid.Column="1"
+					Content="Restore defaults"
+					Click="RestoreDoodleDefaults"
+				/>
+			</Grid>
+			<StackPanel 
+				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
+				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
+				CornerRadius="4"
+				BorderThickness="1"
+				Padding="8"
+        Spacing="12">
+				<Slider 
+					Header="Minimum pen stroke size" 
+					Value="{x:Bind MinimumPenRadius}"
+					TickPlacement="Outside" 
+					TickFrequency="5" 
+					StepFrequency="1" 
+					Maximum="50" 
+					Minimum="0"
+				/>
+				<Slider 
+					Header="Pen sensitivity"
+					Value="{x:Bind PenSensitivity}"
+					TickPlacement="Outside" 
+					TickFrequency="5" 
+					StepFrequency="1" 
+					Maximum="50" 
+					Minimum="0"
+				/>
+				<Slider 
+					Header="Minimum eraser size"
+					Value="{x:Bind MinimumEraseRadius}"
+					TickPlacement="Outside" 
+					TickFrequency="50" 
+					StepFrequency="1" 
+					Maximum="300" 
+					Minimum="0.0"
+				/>
+				<Slider 
+					Header="Eraser sensitivity"
+					Value="{x:Bind EraseSensitivity}"
+					TickPlacement="Outside" 
+					TickFrequency="100" 
+					StepFrequency="1" 
+					Maximum="500" 
+					Minimum="1.0"
+				/>
+			</StackPanel>
     </StackPanel>
   </ScrollViewer>
 </Page>

@@ -33,22 +33,11 @@ using namespace winrt::Windows::Foundation::Collections;
 namespace winrt::OpenKneeboardApp::implementation {
 struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
   InputSettingsPage();
+
   IVector<IInspectable> Devices() noexcept;
   void OnOrientationChanged(
     const IInspectable&,
     const SelectionChangedEventArgs&);
-
-  uint32_t MinimumPenRadius();
-  void MinimumPenRadius(uint32_t value);
-  uint32_t PenSensitivity();
-  void PenSensitivity(uint32_t value);
-
-  uint32_t MinimumEraseRadius();
-  void MinimumEraseRadius(uint32_t value);
-  uint32_t EraseSensitivity();
-  void EraseSensitivity(uint32_t value);
-
-  void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
 
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&

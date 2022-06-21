@@ -37,7 +37,20 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   bool LoopTabs() const noexcept;
   void LoopTabs(bool) noexcept;
 
+  void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
+
+  uint32_t MinimumPenRadius();
+  void MinimumPenRadius(uint32_t value);
+  uint32_t PenSensitivity();
+  void PenSensitivity(uint32_t value);
+
+  uint32_t MinimumEraseRadius();
+  void MinimumEraseRadius(uint32_t value);
+  uint32_t EraseSensitivity();
+  void EraseSensitivity(uint32_t value);
+
   winrt::event_token PropertyChanged(
+
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
       handler);
   void PropertyChanged(winrt::event_token const& token) noexcept;

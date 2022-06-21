@@ -5,8 +5,15 @@ namespace OpenKneeboardApp
                                        Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         AdvancedSettingsPage();
+        
         Boolean LoopPages;
         Boolean LoopTabs;
+
+		UInt32 MinimumPenRadius;
+		UInt32 MinimumEraseRadius;
+		UInt32 PenSensitivity;
+		UInt32 EraseSensitivity;
+
     }
 
 }
