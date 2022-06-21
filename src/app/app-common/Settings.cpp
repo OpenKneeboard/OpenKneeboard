@@ -66,9 +66,11 @@ Settings Settings::Load() {
       path,
       GetSettingsDirectoryPath()
         / std::format(
-          "Settings-backup-{:%F-%T}.json",
+          "Settings-backup-{:%F-%H%M%S}.json",
           std::chrono::zoned_time(
-            std::chrono::current_zone(), std::chrono::system_clock::now())));
+            std::chrono::current_zone(),
+            std::chrono::time_point_cast<std::chrono::seconds>(
+              std::chrono::system_clock::now()))));
     return {};
   }
 }

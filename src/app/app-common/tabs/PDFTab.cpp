@@ -28,9 +28,10 @@
 #include <inttypes.h>
 #include <shims/winrt.h>
 #include <windows.data.pdf.interop.h>
-#include <winrt/windows.data.pdf.h>
-#include <winrt/windows.foundation.h>
-#include <winrt/windows.storage.h>
+#include <winrt/Windows.Data.Pdf.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.System.h>
 
 #include <chrono>
 #include <nlohmann/json.hpp>
@@ -45,20 +46,19 @@ using namespace winrt::Windows::Storage;
 
 namespace {
 
-struct InternalLink {
-  QPDFObjectHandle::Rectangle mRect;
-  QPDFObjGen mDestinationPage;
-};
-
-struct PageData {
+struct LinkDestination {
+  enum class Type {
+    Page,
+    URI,
+  };
+  Type mType;
   uint16_t mPageIndex;
-  QPDFObjectHandle::Rectangle mRect;
-  std::vector<InternalLink> mInternalLinks;
+  std::string mURI;
 };
 
 struct NormalizedLink {
-  uint16_t mDestinationPageIndex;
   D2D1_RECT_F mRect;
+  LinkDestination mDestination;
 };
 
 enum class CursorLinkState {
@@ -81,7 +81,7 @@ struct PDFTab::Impl final {
   winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
 
   std::vector<NavigationTab::Entry> mBookmarks;
-  std::unordered_map<uint16_t, std::vector<NormalizedLink>> mLinks;
+  std::vector<std::vector<NormalizedLink>> mLinks;
 
   CursorLinkState mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
   NormalizedLink mActiveLink;
@@ -130,28 +130,50 @@ utf8_string PDFTab::GetTitle() const {
 
 namespace {
 
-std::map<QPDFObjGen, PageData> FindAllHyperlinks(QPDF& pdf) {
-  std::map<QPDFObjGen, PageData> pageMap;
+std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(QPDF& pdf) {
   QPDFPageDocumentHelper pdh(pdf);
+  auto pages = pdh.getAllPages();
+
+  std::map<QPDFObjGen, uint16_t> pageNumbers;
+  uint16_t pageIndex = 0;
+  for (auto& page: pages) {
+    pageNumbers.emplace(page.getObjectHandle().getObjGen(), pageIndex++);
+  }
+
   QPDFOutlineDocumentHelper odh(pdf);
 
-  uint16_t pageNumber = 0;
-  for (auto& page: pdh.getAllPages()) {
+  std::vector<std::vector<NormalizedLink>> ret;
+  for (auto& page: pages) {
     // Useful references:
     // - i7j-rups
     // -
     // https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
-    std::vector<InternalLink> links;
+    std::vector<NormalizedLink> links;
+    auto pageRect = page.getCropBox().getArrayAsRectangle();
+    const auto pageWidth = static_cast<float>(pageRect.urx - pageRect.llx);
+    const auto pageHeight = static_cast<float>(pageRect.ury - pageRect.lly);
     for (auto& annotation: page.getAnnotations("/Link")) {
       auto aoh = annotation.getObjectHandle();
 
+      // Convert bottom-left origin (PDF) to top-left origin (everything else,
+      // including D2D)
+      const auto pdfRect = annotation.getRect();
+      const D2D1_RECT_F rect {
+        .left = static_cast<float>(pdfRect.llx - pageRect.llx) / pageWidth,
+        .top
+        = 1.0f - (static_cast<float>(pdfRect.ury - pageRect.lly) / pageHeight),
+        .right = static_cast<float>(pdfRect.urx - pageRect.llx) / pageWidth,
+        .bottom
+        = 1.0f - (static_cast<float>(pdfRect.lly - pageRect.lly) / pageHeight),
+      };
+
       if (aoh.hasKey("/Dest")) {
         auto dest = aoh.getKey("/Dest");
-        auto destPage = dest.getArrayItem(0).getObjGen();
+        auto destPage = pageNumbers.at(dest.getArrayItem(0).getObjGen());
         auto linkRect = annotation.getRect();
         links.push_back({
-          annotation.getRect(),
-          destPage,
+          rect,
+          {.mType = LinkDestination::Type::Page, .mPageIndex = destPage},
         });
         continue;
       }
@@ -162,6 +184,25 @@ std::map<QPDFObjGen, PageData> FindAllHyperlinks(QPDF& pdf) {
           continue;
         }
         auto type = action.getKey("/S").getName();
+
+        if (type == "/URI") {
+          if (!action.hasKey("/URI")) {
+            continue;
+          }
+          auto uri = action.getKey("/URI").getStringValue();
+          if (uri.starts_with("openkneeboard://")) {
+            dprintf("Found magic URI in PDF: {}", uri);
+          }
+          links.push_back({
+            rect,
+            {
+              .mType = LinkDestination::Type::URI,
+              .mURI = uri,
+            },
+          });
+          continue;
+        }
+
         if (type != "/GoTo") {
           continue;
         }
@@ -176,22 +217,23 @@ std::map<QPDFObjGen, PageData> FindAllHyperlinks(QPDF& pdf) {
         if (!dest.isArray()) {
           continue;
         }
-        auto destPage = dest.getArrayItem(0).getObjGen();
+        auto destPage = pageNumbers.at(dest.getArrayItem(0).getObjGen());
         auto linkRect = annotation.getRect();
         links.push_back({
-          annotation.getRect(),
-          destPage,
+          rect,
+          {
+            .mType = LinkDestination::Type::Page,
+            .mPageIndex = destPage,
+          },
         });
         continue;
       }
     }
 
-    pageMap.emplace(
-      page.getObjectHandle().getObjGen(),
-      PageData {pageNumber++, page.getTrimBox().getArrayAsRectangle(), links});
+    ret.push_back(links);
   }
 
-  return pageMap;
+  return ret;
 }
 
 std::vector<NavigationTab::Entry> GetNavigationEntries(
@@ -313,40 +355,7 @@ void PDFTab::Reload() {
 
     this->evAvailableFeaturesChangedEvent.EmitFromMainThread();
 
-    auto pageHyperlinkData = FindAllHyperlinks(qpdf);
-    for (const auto& [_handle, page]: pageHyperlinkData) {
-      if (page.mInternalLinks.empty()) {
-        continue;
-      }
-      // PDF origin is bottom left, DirectX is top left
-      const auto pageWidth
-        = static_cast<float>(page.mRect.urx - page.mRect.llx);
-      const auto pageHeight
-        = static_cast<float>(page.mRect.ury - page.mRect.lly);
-
-      std::vector<NormalizedLink> links;
-      for (const auto& pdfLink: page.mInternalLinks) {
-        if (!pageHyperlinkData.contains(pdfLink.mDestinationPage)) {
-          continue;
-        }
-        // Convert coordinates here :)
-        links.push_back(
-          {pageHyperlinkData.at(pdfLink.mDestinationPage).mPageIndex,
-           D2D1_RECT_F {
-             .left = static_cast<float>(pdfLink.mRect.llx - page.mRect.llx)
-               / pageWidth,
-             .top = 1.0f
-               - (static_cast<float>(pdfLink.mRect.ury - page.mRect.lly)
-                  / pageHeight),
-             .right = static_cast<float>(pdfLink.mRect.urx - pdfLink.mRect.llx)
-               / pageWidth,
-             .bottom = 1.0f
-               - (static_cast<float>(pdfLink.mRect.lly - page.mRect.lly)
-                  / pageHeight),
-           }});
-      }
-      p->mLinks.emplace(page.mPageIndex, links);
-    }
+    p->mLinks = FindAllHyperlinks(qpdf);
   }}.detach();
 }
 
@@ -410,11 +419,12 @@ void PDFTab::PostCursorEvent(
     p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
     p->mActivePage = pageIndex;
   }
-  if (!p->mLinks.contains(pageIndex)) {
+  if (pageIndex >= p->mLinks.size()) {
     p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
     TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
     return;
   }
+
   const auto contentRect = this->GetNativeContentSize(pageIndex);
   const auto x = ev.mX / contentRect.width;
   const auto y = ev.mY / contentRect.height;
@@ -437,8 +447,28 @@ void PDFTab::PostCursorEvent(
       p->mLinkState == CursorLinkState::PRESSED_IN_HYPERLINK
       && x >= p->mActiveLink.mRect.left && x <= p->mActiveLink.mRect.right
       && y >= p->mActiveLink.mRect.top && y <= p->mActiveLink.mRect.bottom) {
-      this->evPageChangeRequestedEvent.Emit(
-        ctx, p->mActiveLink.mDestinationPageIndex);
+      const auto& dest = p->mActiveLink.mDestination;
+      switch (dest.mType) {
+        case LinkDestination::Type::Page:
+          this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
+          break;
+        case LinkDestination::Type::URI: {
+          winrt::Windows::Foundation::Uri uri(winrt::to_hstring(dest.mURI));
+          if (uri.SchemeName() != L"openkneeboard") {
+            [uri]() -> winrt::fire_and_forget {
+              co_await winrt::Windows::System::Launcher::LaunchUriAsync(uri);
+            }();
+            break;
+          }
+          std::wstring_view path = uri.Path();
+          if (path.starts_with(L'/')) {
+            path.remove_prefix(1);
+          }
+          // FIXME
+          OPENKNEEBOARD_BREAK;
+          break;
+        }
+      }
     }
 
     if (haveHoverLink) {

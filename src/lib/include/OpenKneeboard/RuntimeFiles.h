@@ -34,7 +34,8 @@ namespace OpenKneeboard::RuntimeFiles {
   IT(OCULUS_D3D12_DLL) \
   IT(OPENXR_DLL) \
   IT(OPENXR_JSON) \
-  IT(OPENXR_REGISTER_LAYER_HELPER)
+  IT(OPENXR_REGISTER_LAYER_HELPER) \
+  IT(QUICK_START_PDF)
 
 #define IT(x) extern const std::filesystem::path x;
 OPENKNEEBOARD_RUNTIME_FILES
