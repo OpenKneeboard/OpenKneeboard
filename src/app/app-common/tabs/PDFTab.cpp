@@ -281,7 +281,7 @@ void PDFTab::Reload() {
     SetThreadDescription(GetCurrentThread(), L"PDFTab PdfDocument Thread");
     auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
     p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
-    this->evFullyReplacedEvent.EmitFromMainThread();
+    this->evFullyReplacedEvent.Emit();
   }}.detach();
   std::thread {[this] {
     SetThreadDescription(GetCurrentThread(), L"PDFTab QPDF Thread");
@@ -353,7 +353,7 @@ void PDFTab::Reload() {
         std::chrono::steady_clock::now() - startTime);
     dprintf("QPDF outline time: {}ms", outlineTime);
 
-    this->evAvailableFeaturesChangedEvent.EmitFromMainThread();
+    this->evAvailableFeaturesChangedEvent.Emit();
 
     p->mLinks = FindAllHyperlinks(qpdf);
   }}.detach();

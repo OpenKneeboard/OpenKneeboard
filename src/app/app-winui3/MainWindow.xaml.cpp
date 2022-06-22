@@ -153,8 +153,9 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::OnPrimaryViewChanged() {
+  RemoveEventListener(mTabChangedEvent);
   auto view = gKneeboard->GetPrimaryViewForDisplay();
-  AddEventListener(
+  mTabChangedEvent = AddEventListener(
     view->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
   this->OnTabChanged();
 }
@@ -224,7 +225,8 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   gDXResources = {};
 }
 
-void MainWindow::OnTabChanged() {
+winrt::fire_and_forget MainWindow::OnTabChanged() {
+  co_await mUIThread;
   const auto id
     = gKneeboard->GetPrimaryViewForDisplay()->GetCurrentTab()->GetRuntimeID();
 

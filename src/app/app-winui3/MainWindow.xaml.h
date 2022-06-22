@@ -56,13 +56,14 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   NavigationViewItem mGameSettingsItem;
   NavigationViewItem mBindingSettingsItem;
 
+  OpenKneeboard::EventHandlerToken mTabChangedEvent;
   DispatcherQueueController mDQC {nullptr};
   DispatcherQueueTimer mFrameTimer {nullptr};
 
   winrt::fire_and_forget CheckForUpdates();
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   void OnPrimaryViewChanged();
-  void OnTabChanged();
+  winrt::fire_and_forget OnTabChanged();
   void OnTabsChanged();
 
   void SaveWindowPosition();

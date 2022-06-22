@@ -204,10 +204,10 @@ bool TabView::SetTabMode(TabMode mode) {
     OPENKNEEBOARD_BREAK;
   }
 
-  evPageChangedEvent.EmitFromMainThread();
-  evNeedsRepaintEvent.EmitFromMainThread();
-  evTabModeChangedEvent.EmitFromMainThread();
-  evAvailableFeaturesChangedEvent.EmitFromMainThread();
+  evPageChangedEvent.Emit();
+  evNeedsRepaintEvent.Emit();
+  evTabModeChangedEvent.Emit();
+  evAvailableFeaturesChangedEvent.Emit();
 
   return true;
 }

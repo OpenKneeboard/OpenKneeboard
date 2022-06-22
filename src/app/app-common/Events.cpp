@@ -27,7 +27,10 @@ uint64_t _UniqueIDImpl::GetAndIncrementNextValue() {
   return sNextUniqueID++;
 }
 
+std::recursive_mutex EventBase::sMutex;
+
 EventHandlerToken EventBase::AddHandler(EventReceiver* receiver) {
+  std::unique_lock lock(sMutex);
   const EventHandlerToken token;
   receiver->mSenders.push_back({this, token});
   return token;
@@ -37,6 +40,11 @@ EventReceiver::EventReceiver() {
 }
 
 EventReceiver::~EventReceiver() {
+  this->RemoveAllEventListeners();
+}
+
+void EventReceiver::RemoveAllEventListeners() {
+  std::unique_lock lock(EventBase::sMutex);
   while (!mSenders.empty()) {
     auto sender = mSenders.back();
     mSenders.pop_back();
@@ -45,6 +53,7 @@ EventReceiver::~EventReceiver() {
 }
 
 void EventReceiver::RemoveEventListener(EventHandlerToken token) {
+  std::unique_lock lock(EventBase::sMutex);
   auto it = std::ranges::find(
     mSenders, token, [](const SenderInfo& sender) { return sender.mToken; });
   if (it == mSenders.end()) {

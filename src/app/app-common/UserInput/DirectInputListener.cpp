@@ -122,7 +122,7 @@ void DirectInputListener::Run(std::stop_token stopToken) {
 
     for (uint64_t i = 0; i < newState.size(); ++i) {
       if (oldState[i] != newState[i]) {
-        device.mDevice->evButtonEvent.EmitFromMainThread({
+        device.mDevice->evButtonEvent.Emit({
           device.mDevice,
           i,
           static_cast<bool>(newState[i] & (1 << 7)),

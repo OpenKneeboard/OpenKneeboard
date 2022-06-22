@@ -49,6 +49,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   TabPage();
   ~TabPage();
 
+  static winrt::fire_and_forget final_release(std::unique_ptr<TabPage>);
+
   void OnNavigatedTo(const NavigationEventArgs&) noexcept;
   void OnCanvasSizeChanged(
     const IInspectable&,
@@ -78,7 +80,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   bool mNeedsFrame = true;
   void PaintLater();
-  void PaintNow();
+  void PaintNow() noexcept;
 
   D2D1_SIZE_F mCanvasSize;
 

@@ -23,6 +23,7 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <mutex>
 #include <type_traits>
 #include <vector>
 
@@ -51,6 +52,7 @@ class EventBase {
   };
 
  protected:
+  static std::recursive_mutex sMutex;
   static void EnqueueForMainThread(std::function<void()>);
   EventHandlerToken AddHandler(EventReceiver*);
   virtual void RemoveHandler(EventHandlerToken) = 0;
@@ -138,12 +140,14 @@ class EventReceiver {
   }
 
   void RemoveEventListener(EventHandlerToken);
+  void RemoveAllEventListeners();
 };
 
 template <class... Args>
 EventHandlerToken Event<Args...>::AddHandler(
   EventReceiver* receiver,
   const EventHandler<Args...>& handler) {
+  std::unique_lock lock(sMutex);
   const auto token = EventBase::AddHandler(receiver);
   mReceivers.emplace(token, ReceiverInfo {receiver, handler});
   return token;
@@ -151,13 +155,19 @@ EventHandlerToken Event<Args...>::AddHandler(
 
 template <class... Args>
 void Event<Args...>::RemoveHandler(EventHandlerToken token) {
+  std::unique_lock lock(sMutex);
   mReceivers.erase(token);
 }
 
 template <class... Args>
 void Event<Args...>::Emit(Args... args) {
-  // Copy in case one is erased while we're running
-  auto hooks = mHooks;
+  //  Copy in case one is erased while we're running
+  decltype(mHooks) hooks;
+  {
+    std::unique_lock lock(sMutex);
+    hooks = mHooks;
+  }
+
   for (const auto& hook: hooks) {
     if (hook(args...) == HookResult::STOP_PROPAGATION) {
       return;
@@ -175,8 +185,9 @@ void Event<Args...>::EmitFromMainThread(Args... args) {
 
 template <class... Args>
 Event<Args...>::~Event() {
-  for (const auto& receiverIt: mReceivers) {
-    auto info = receiverIt.second;
+  std::unique_lock lock(sMutex);
+  auto receivers = mReceivers;
+  for (const auto& [token, info]: receivers) {
     auto& receiverHandlers = info.mReceiver->mSenders;
     for (auto it = receiverHandlers.begin(); it != receiverHandlers.end();) {
       if (it->mEvent == this) {

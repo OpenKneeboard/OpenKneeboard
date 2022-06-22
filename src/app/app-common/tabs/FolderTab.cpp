@@ -96,7 +96,7 @@ winrt::fire_and_forget FolderTab::ReloadImpl() noexcept {
 
   if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
     mPages.clear();
-    evFullyReplacedEvent.EmitFromMainThread();
+    evFullyReplacedEvent.Emit();
     co_return;
   }
   if ((!mQueryResult) || mPath != mQueryResult.Folder().Path()) {

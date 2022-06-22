@@ -63,7 +63,7 @@ bool GameEventServer::Run(std::stop_token stopToken) {
       continue;
     }
 
-    evGameEvent.EmitFromMainThread(GameEvent::Unserialize(buffer));
+    evGameEvent.Emit(GameEvent::Unserialize(buffer));
   }
 
   return true;

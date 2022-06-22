@@ -32,7 +32,6 @@
 #include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
 #include <OpenKneeboard/config.h>
-#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <microsoft.ui.xaml.media.dxinterop.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
@@ -93,7 +92,11 @@ TabPage::TabPage() {
     });
 }
 
-TabPage::~TabPage() {
+TabPage::~TabPage() = default;
+
+winrt::fire_and_forget TabPage::final_release(std::unique_ptr<TabPage> _this) {
+  co_await _this->mDQC.ShutdownQueueAsync();
+  _this->RemoveAllEventListeners();
 }
 
 void TabPage::InitializePointerSource() {
@@ -231,7 +234,7 @@ void TabPage::PaintLater() {
   mNeedsFrame = true;
 }
 
-void TabPage::PaintNow() {
+void TabPage::PaintNow() noexcept {
   if (!mSwapChain) {
     return;
   }
