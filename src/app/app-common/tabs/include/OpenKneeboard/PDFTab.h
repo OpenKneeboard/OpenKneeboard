@@ -77,6 +77,7 @@ class PDFTab final : public TabBase,
     const D2D1_RECT_F&) override;
 
  private:
+  winrt::apartment_context mUIThread;
   struct Impl;
   std::shared_ptr<Impl> p;
 };

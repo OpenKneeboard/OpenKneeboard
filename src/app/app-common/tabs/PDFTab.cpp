@@ -277,12 +277,18 @@ void PDFTab::Reload() {
   if (!std::filesystem::is_regular_file(p->mPath)) {
     return;
   }
-  std::thread {[this] {
-    SetThreadDescription(GetCurrentThread(), L"PDFTab PdfDocument Thread");
-    auto file = StorageFile::GetFileFromPathAsync(p->mPath.wstring()).get();
-    p->mPDFDocument = PdfDocument::LoadFromFileAsync(file).get();
-    this->evFullyReplacedEvent.Emit();
-  }}.detach();
+
+  [this]() -> winrt::fire_and_forget {
+    // Captures become invalid after the function returns, which is the first
+    // co_await
+    auto _this = this;
+    co_await winrt::resume_background();
+    auto file
+      = co_await StorageFile::GetFileFromPathAsync(_this->p->mPath.wstring());
+    _this->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
+    _this->evFullyReplacedEvent.Emit();
+  }();
+
   std::thread {[this] {
     SetThreadDescription(GetCurrentThread(), L"PDFTab QPDF Thread");
     const auto startTime = std::chrono::steady_clock::now();
@@ -534,5 +540,4 @@ std::shared_ptr<Tab> PDFTab::CreateNavigationTab(uint16_t pageIndex) {
   return std::make_shared<NavigationTab>(
     p->mDXR, this, p->mBookmarks, this->GetNativeContentSize(pageIndex));
 }
-
 }// namespace OpenKneeboard

@@ -59,9 +59,10 @@ AboutPage::AboutPage() {
   AddEventListener(
     TroubleshootingStore::Get()->evDPrintMessageReceived, [this]() {
       [this]() noexcept -> winrt::fire_and_forget {
+        auto _this = this;
         co_await winrt::resume_background();
         co_await mUIThread;
-        this->PopulateDPrint();
+        _this->PopulateDPrint();
       }();
     });
 }
@@ -177,12 +178,12 @@ winrt::fire_and_forget AboutPage::OnExportClick(
 
   auto file = co_await picker.PickSaveFileAsync();
   if (!file) {
-    return;
+    co_return;
   }
 
   auto path = file.Path();
   if (path.empty()) {
-    return;
+    co_return;
   }
 
   auto sep = "\n\n--------------------------------\n\n";

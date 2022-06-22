@@ -56,13 +56,13 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   dialog.DefaultButton(ContentDialogButton::Close);
 
   if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
-    return;
+    co_return;
   }
 
   gKneeboard->SetVRConfig({});
 
   if (!mPropertyChangedEvent) {
-    return;
+    co_return;
   }
 
   // Tell the XAML UI elements to update to the new values

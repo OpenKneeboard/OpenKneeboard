@@ -116,12 +116,12 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
 
   auto result = co_await dialog.ShowAsync();
   if (result != ContentDialogResult::Primary) {
-    return;
+    co_return;
   }
 
   auto path = processList.SelectedPath();
   if (path.empty()) {
-    return;
+    co_return;
   }
 
   this->AddPath(std::wstring_view {path});
@@ -138,11 +138,11 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
   picker.FileTypeFilter().Append(L".exe");
   auto file = co_await picker.PickSingleFileAsync();
   if (!file) {
-    return;
+    co_return;
   }
   auto path = file.Path();
   if (path.empty()) {
-    return;
+    co_return;
   }
 
   AddPath(std::wstring_view {path});
@@ -206,7 +206,7 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
 
   auto result = co_await dialog.ShowAsync();
   if (result != ContentDialogResult::Primary) {
-    return;
+    co_return;
   }
 
   auto gamesList = gKneeboard->GetGamesList();

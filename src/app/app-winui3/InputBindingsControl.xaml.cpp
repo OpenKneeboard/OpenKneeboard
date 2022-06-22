@@ -143,7 +143,7 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
     co_await dialog.ShowAsync();
   }
   if (cancelled) {
-    return;
+    co_return;
   }
 
   auto bindings = mDevice->GetButtonBindings();

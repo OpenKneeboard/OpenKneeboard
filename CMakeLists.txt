@@ -30,6 +30,7 @@ add_link_options("${COMMON_LINK_OPTIONS}")
 
 set(
   COMMON_COMPILE_OPTIONS
+  "/await:strict"
   # Synchronous writes to PDB files in case building with parallel CL.exe
   "/FS"
   # Include content and marker in error messages

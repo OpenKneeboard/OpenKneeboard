@@ -148,11 +148,11 @@ fire_and_forget TabSettingsPage::CreateFileBasedTab(hstring fileExtension) {
 
   auto file = co_await picker.PickSingleFileAsync();
   if (!file) {
-    return;
+    co_return;
   }
   auto stringPath = file.Path();
   if (stringPath.empty()) {
-    return;
+    co_return;
   }
 
   const auto path = std::filesystem::canonical(std::wstring_view {stringPath});

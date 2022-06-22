@@ -52,13 +52,13 @@ fire_and_forget NonVRSettingsPage::RestoreDefaults(
   dialog.DefaultButton(ContentDialogButton::Close);
 
   if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
-    return;
+    co_return;
   }
 
   gKneeboard->SetFlatConfig({});
 
   if (!mPropertyChangedEvent) {
-    return;
+    co_return;
   }
 
   mPropertyChangedEvent(

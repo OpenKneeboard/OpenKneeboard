@@ -318,15 +318,15 @@ winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
 
   if (path == L"Settings/Games") {
     Frame().Navigate(xaml_typename<GameSettingsPage>());
-    return;
+    co_return;
   }
   if (path == L"Settings/Input") {
     Frame().Navigate(xaml_typename<InputSettingsPage>());
-    return;
+    co_return;
   }
   if (path == L"Settings/Tabs") {
     Frame().Navigate(xaml_typename<TabSettingsPage>());
-    return;
+    co_return;
   }
 }
 
@@ -355,7 +355,7 @@ winrt::fire_and_forget MainWindow::CheckForUpdates() {
   auto releases = nlohmann::json::parse(json.data());
   if (releases.empty()) {
     dprint("Didn't get any releases from github API :/");
-    return;
+    co_return;
   }
 
   bool isPreRelease = false;
@@ -393,14 +393,14 @@ winrt::fire_and_forget MainWindow::CheckForUpdates() {
   auto release = isPreRelease ? latestRelease : latestStableRelease;
   if (release.is_null()) {
     dprint("Didn't find a valid release.");
-    return;
+    co_return;
   }
 
   auto newCommit = release.at("target_commitish").get<std::string_view>();
 
   if (newCommit == Version::CommitID) {
     dprintf("Up to date on commit ID {}", Version::CommitID);
-    return;
+    co_return;
   }
 
   const auto oldName = Version::ReleaseName;

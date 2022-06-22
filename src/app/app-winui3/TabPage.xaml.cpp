@@ -151,6 +151,7 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
       AddEventListener(
         toggle->evStateChangedEvent,
         [this, toggle, button]() noexcept -> winrt::fire_and_forget {
+          auto [toggle, button] = std::make_tuple(toggle, button);
           co_await mUIThread;
           button.IsChecked(toggle->IsActive());
           button.IsEnabled(toggle->IsEnabled());
@@ -170,6 +171,7 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
     AddEventListener(
       action->evStateChangedEvent,
       [this, action, button]() noexcept -> winrt::fire_and_forget {
+        auto [action, button] = std::make_tuple(action, button);
         co_await mUIThread;
         button.IsEnabled(action->IsEnabled());
       });
