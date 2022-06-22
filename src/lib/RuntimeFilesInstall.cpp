@@ -27,7 +27,24 @@
 namespace OpenKneeboard::RuntimeFiles {
 
 void Install() {
-  return;
+  wchar_t buf[MAX_PATH];
+  GetModuleFileNameW(NULL, buf, MAX_PATH);
+  const auto source
+    = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
+
+  const auto destination = RuntimeFiles::GetDirectory();
+  std::filesystem::create_directories(destination);
+
+#define IT(file) \
+  if (FilesDiffer(source / file, destination / file)) { \
+    std::filesystem::copy( \
+      source / file, \
+      destination / file, \
+      std::filesystem::copy_options::overwrite_existing); \
+  }
+
+  OPENKNEEBOARD_RUNTIME_FILES
+#undef IT
 }
 
 }// namespace OpenKneeboard::RuntimeFiles

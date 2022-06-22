@@ -161,16 +161,9 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window.Activate();
 }
 
-static void StartApp() {
+int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   auto troubleshootingStore = TroubleshootingStore::Get();
 
-  winrt::init_apartment(winrt::apartment_type::single_threaded);
-  ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
-    ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
-  });
-}
-
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   wchar_t* savedGamesBuffer = nullptr;
   winrt::check_hresult(
     SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &savedGamesBuffer));
@@ -180,6 +173,10 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   SetUnhandledExceptionFilter(&OnUnhandledException);
   set_terminate(&OnTerminate);
 
+  DPrintSettings::Set({
+    .prefix = "OpenKneeboard-WinUI3",
+  });
+
   winrt::handle mutex {
     CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
@@ -188,37 +185,10 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
     return 0;
   }
 
-  DPrintSettings::Set({
-    .prefix = "OpenKneeboard-WinUI3",
+  winrt::init_apartment(winrt::apartment_type::single_threaded);
+  ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
+    ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
-
-  const bool isPackaged
-    = ::GetCurrentPackageFullName(nullptr, 0) == ERROR_INSUFFICIENT_BUFFER;
-  if (!isPackaged) {
-    StartApp();
-    return 0;
-  }
-
-  wchar_t thisExe[MAX_PATH];
-  GetModuleFileNameW(0, thisExe, MAX_PATH);
-
-  STARTUPINFOW startupInfo;
-  startupInfo.cb = sizeof(startupInfo);
-  GetStartupInfoW(&startupInfo);
-
-  PROCESS_INFORMATION processInfo;
-  CreateProcessW(
-    thisExe,
-    commandLine,
-    nullptr,
-    nullptr,
-    false,
-    0,
-    nullptr,
-    nullptr,
-    &startupInfo,
-    &processInfo);
-  CloseHandle(processInfo.hProcess);
 
   return 0;
 }

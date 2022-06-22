@@ -38,7 +38,17 @@ std::filesystem::path GetDirectory() {
 
   wchar_t buf[MAX_PATH];
   GetModuleFileNameW(NULL, buf, MAX_PATH);
-  sPath = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
+  const auto executablePath
+    = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
+
+  // App bin directory is not readable by other apps if using msix installer,
+  // so if we pass a DLL in the app directory to `LoadLibraryW` in another
+  // process, it will fail. Copy them out to a readable directory.
+  wchar_t* ref = nullptr;
+  winrt::check_hresult(
+    SHGetKnownFolderPath(FOLDERID_ProgramData, NULL, NULL, &ref));
+  sPath = std::filesystem::path(std::wstring_view(ref)) / "OpenKneeboard";
+
   return sPath;
 }
 
