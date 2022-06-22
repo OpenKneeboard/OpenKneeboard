@@ -80,16 +80,6 @@ TabPage::TabPage() {
       PaintNow();
     }
   });
-  AddEventListener(
-    gKneeboard->GetPrimaryViewForDisplay()->evCursorEvent,
-    [this](const auto& ev) {
-      if (ev.mSource == CursorSource::WINDOW_POINTER) {
-        mDrawCursor = false;
-      } else {
-        mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
-        PaintLater();
-      }
-    });
 }
 
 TabPage::~TabPage() = default;
@@ -114,7 +104,16 @@ void TabPage::InitializePointerSource() {
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   const auto id = Tab::RuntimeID::FromTemporaryValue(
     winrt::unbox_value<uint64_t>(args.Parameter()));
-  mKneeboardView = gKneeboard->GetPrimaryViewForDisplay();
+  mKneeboardView = gKneeboard->GetViewRenderInfo().front().mView;
+  AddEventListener(mKneeboardView->evCursorEvent, [this](const auto& ev) {
+    if (ev.mSource == CursorSource::WINDOW_POINTER) {
+      mDrawCursor = false;
+    } else {
+      mDrawCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
+      PaintLater();
+    }
+  });
+
   this->SetTab(mKneeboardView->GetTabViewByID(id));
 }
 

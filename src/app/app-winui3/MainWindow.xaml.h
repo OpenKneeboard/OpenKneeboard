@@ -20,19 +20,20 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/IKneeboardView.h>
 
 #include <memory>
 #include <thread>
 
 #include "MainWindow.g.h"
-
 using namespace winrt::Microsoft::UI::Dispatching;
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Microsoft::UI::Xaml::Navigation;
+using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
+struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
   MainWindow();
   ~MainWindow();
 
@@ -52,17 +53,18 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
   winrt::apartment_context mUIThread;
   HWND mHwnd;
   winrt::handle mHwndFile;
+  std::shared_ptr<IKneeboardView> mKneeboardView;
   NavigationViewItem mTabSettingsItem;
   NavigationViewItem mGameSettingsItem;
   NavigationViewItem mBindingSettingsItem;
 
-  OpenKneeboard::EventHandlerToken mTabChangedEvent;
+  EventHandlerToken mTabChangedEvent;
   DispatcherQueueController mDQC {nullptr};
   DispatcherQueueTimer mFrameTimer {nullptr};
 
   winrt::fire_and_forget CheckForUpdates();
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
-  void OnPrimaryViewChanged();
+  void OnViewOrderChanged();
   winrt::fire_and_forget OnTabChanged();
   void OnTabsChanged();
 

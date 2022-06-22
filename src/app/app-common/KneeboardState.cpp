@@ -135,11 +135,6 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   };
 }
 
-std::shared_ptr<IKneeboardView> KneeboardState::GetPrimaryViewForDisplay()
-  const {
-  return mViews.at(mActiveViewIndex);
-}
-
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
   return mViews.at(mActiveViewIndex);
@@ -226,7 +221,7 @@ void KneeboardState::OnUserAction(UserAction action) {
 void KneeboardState::SetActiveViewIndex(uint8_t index) {
   this->mActiveViewIndex = 1 - this->mActiveViewIndex;
   this->evNeedsRepaintEvent.Emit();
-  this->evPrimaryViewForDisplayChangedEvent.Emit();
+  this->evViewOrderChangedEvent.Emit();
 }
 
 void KneeboardState::OnGameEvent(const GameEvent& ev) {

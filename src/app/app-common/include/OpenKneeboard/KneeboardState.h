@@ -57,7 +57,6 @@ class KneeboardState final : private EventReceiver {
   KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
-  std::shared_ptr<IKneeboardView> GetPrimaryViewForDisplay() const;
   std::shared_ptr<IKneeboardView> GetActiveViewForGlobalInput() const;
   std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
@@ -72,7 +71,7 @@ class KneeboardState final : private EventReceiver {
   Event<> evTabsChangedEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evSettingsChangedEvent;
-  Event<> evPrimaryViewForDisplayChangedEvent;
+  Event<> evViewOrderChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 

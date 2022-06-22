@@ -88,11 +88,10 @@ MainWindow::MainWindow() {
   gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);
 
   OnTabsChanged();
-  OnPrimaryViewChanged();
+  OnViewOrderChanged();
+
   AddEventListener(
-    gKneeboard->evPrimaryViewForDisplayChangedEvent,
-    &MainWindow::OnPrimaryViewChanged,
-    this);
+    gKneeboard->evViewOrderChangedEvent, &MainWindow::OnViewOrderChanged, this);
 
   AddEventListener(
     gKneeboard->evTabsChangedEvent, &MainWindow::OnTabsChanged, this);
@@ -152,11 +151,12 @@ MainWindow::~MainWindow() {
   gMainWindow = {};
 }
 
-void MainWindow::OnPrimaryViewChanged() {
+void MainWindow::OnViewOrderChanged() {
   RemoveEventListener(mTabChangedEvent);
-  auto view = gKneeboard->GetPrimaryViewForDisplay();
+  mKneeboardView = gKneeboard->GetViewRenderInfo().front().mView;
+
   mTabChangedEvent = AddEventListener(
-    view->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+    mKneeboardView->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
   this->OnTabChanged();
 }
 
@@ -227,8 +227,7 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
 
 winrt::fire_and_forget MainWindow::OnTabChanged() {
   co_await mUIThread;
-  const auto id
-    = gKneeboard->GetPrimaryViewForDisplay()->GetCurrentTab()->GetRuntimeID();
+  const auto id = mKneeboardView->GetCurrentTab()->GetRuntimeID();
 
   for (auto it: this->Navigation().MenuItems()) {
     auto item = it.try_as<Control>();
@@ -292,17 +291,12 @@ void MainWindow::OnNavigationItemInvoked(
 
   const auto tabID = winrt::unbox_value<uint64_t>(tag);
 
-  if (
-    tabID
-    == gKneeboard->GetPrimaryViewForDisplay()
-         ->GetCurrentTab()
-         ->GetRuntimeID()) {
+  if (tabID == mKneeboardView->GetCurrentTab()->GetRuntimeID()) {
     Frame().Navigate(xaml_typename<TabPage>(), tag);
     return;
   }
 
-  gKneeboard->GetPrimaryViewForDisplay()->SetCurrentTabByID(
-    Tab::RuntimeID::FromTemporaryValue(tabID));
+  mKneeboardView->SetCurrentTabByID(Tab::RuntimeID::FromTemporaryValue(tabID));
 }
 
 void MainWindow::OnBackRequested(
