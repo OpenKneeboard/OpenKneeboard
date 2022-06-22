@@ -371,12 +371,6 @@ D2D1_SIZE_U PDFTab::GetNativeContentSize(uint16_t index) {
     return {};
   }
   auto size = p->mPDFDocument.GetPage(index).Size();
-  // scale to fit to get higher quality text rendering
-  const auto scaleX = TextureWidth / size.Width;
-  const auto scaleY = TextureHeight / size.Height;
-  const auto scale = std::min(scaleX, scaleY);
-  size.Width *= scale;
-  size.Height *= scale;
 
   return {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)};
 }
