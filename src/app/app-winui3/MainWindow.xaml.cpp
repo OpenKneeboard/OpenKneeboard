@@ -88,11 +88,12 @@ MainWindow::MainWindow() {
   gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);
 
   OnTabsChanged();
-  OnTabChanged();
-
-  auto view = gKneeboard->GetPrimaryViewForDisplay();
+  OnPrimaryViewChanged();
   AddEventListener(
-    view->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+    gKneeboard->evPrimaryViewForDisplayChangedEvent,
+    &MainWindow::OnPrimaryViewChanged,
+    this);
+
   AddEventListener(
     gKneeboard->evTabsChangedEvent, &MainWindow::OnTabsChanged, this);
 
@@ -149,6 +150,13 @@ MainWindow::MainWindow() {
 
 MainWindow::~MainWindow() {
   gMainWindow = {};
+}
+
+void MainWindow::OnPrimaryViewChanged() {
+  auto view = gKneeboard->GetPrimaryViewForDisplay();
+  AddEventListener(
+    view->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+  this->OnTabChanged();
 }
 
 void MainWindow::UpdateTitleBarMargins(

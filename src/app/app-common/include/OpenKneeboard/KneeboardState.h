@@ -39,7 +39,6 @@ class GamesList;
 class IKneeboardView;
 class InterprocessRenderer;
 class KneeboardView;
-class KneeboardViewProxy;
 class Tab;
 class TabletInputAdapter;
 class TabsList;
@@ -58,9 +57,6 @@ class KneeboardState final : private EventReceiver {
   KneeboardState(HWND mainWindow, const DXResources&);
   ~KneeboardState();
 
-  // A view that always shows the 'primary' view; this is the view
-  // shown in the main window, and the view shown on the right
-  // knee by default in VR
   std::shared_ptr<IKneeboardView> GetPrimaryViewForDisplay() const;
   std::shared_ptr<IKneeboardView> GetActiveViewForGlobalInput() const;
   std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
@@ -76,6 +72,7 @@ class KneeboardState final : private EventReceiver {
   Event<> evTabsChangedEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evSettingsChangedEvent;
+  Event<> evPrimaryViewForDisplayChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 
@@ -100,7 +97,6 @@ class KneeboardState final : private EventReceiver {
 
   uint8_t mActiveViewIndex = 0;
   std::array<std::shared_ptr<KneeboardView>, 2> mViews;
-  std::shared_ptr<KneeboardViewProxy> mViewProxy;
 
   std::unique_ptr<GamesList> mGamesList;
   std::unique_ptr<TabsList> mTabsList;

@@ -61,6 +61,7 @@ struct MainWindow : MainWindowT<MainWindow>, OpenKneeboard::EventReceiver {
 
   winrt::fire_and_forget CheckForUpdates();
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
+  void OnPrimaryViewChanged();
   void OnTabChanged();
   void OnTabsChanged();
 

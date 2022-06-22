@@ -23,7 +23,6 @@
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/KneeboardViewProxy.h>
 #include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/Tab.h>
@@ -44,7 +43,6 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     std::make_shared<KneeboardView>(this),
     std::make_shared<KneeboardView>(this),
   };
-  mViewProxy = std::make_shared<KneeboardViewProxy>(mViews.front());
 
   if (!mSettings.NonVR.is_null()) {
     mFlatConfig = mSettings.NonVR;
@@ -136,12 +134,12 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetPrimaryViewForDisplay()
   const {
-  return mViewProxy;
+  return mViews.at(mActiveViewIndex);
 }
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
-  return mViewProxy;
+  return mViews.at(mActiveViewIndex);
 }
 
 std::vector<std::shared_ptr<Tab>> KneeboardState::GetTabs() const {
@@ -224,8 +222,8 @@ void KneeboardState::OnUserAction(UserAction action) {
 }
 void KneeboardState::SetActiveViewIndex(uint8_t index) {
   this->mActiveViewIndex = 1 - this->mActiveViewIndex;
-  this->mViewProxy->SetBackingView(mViews.at(this->mActiveViewIndex));
   this->evNeedsRepaintEvent.Emit();
+  this->evPrimaryViewForDisplayChangedEvent.Emit();
 }
 
 void KneeboardState::OnGameEvent(const GameEvent& ev) {
