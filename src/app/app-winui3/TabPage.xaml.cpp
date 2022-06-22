@@ -104,7 +104,7 @@ void TabPage::InitializePointerSource() {
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   const auto id = Tab::RuntimeID::FromTemporaryValue(
     winrt::unbox_value<uint64_t>(args.Parameter()));
-  mKneeboardView = gKneeboard->GetViewRenderInfo().front().mView;
+  mKneeboardView = gKneeboard->GetActiveViewForGlobalInput();
   AddEventListener(mKneeboardView->evCursorEvent, [this](const auto& ev) {
     if (ev.mSource == CursorSource::WINDOW_POINTER) {
       mDrawCursor = false;

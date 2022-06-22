@@ -153,7 +153,7 @@ MainWindow::~MainWindow() {
 
 void MainWindow::OnViewOrderChanged() {
   RemoveEventListener(mTabChangedEvent);
-  mKneeboardView = gKneeboard->GetViewRenderInfo().front().mView;
+  mKneeboardView = gKneeboard->GetActiveViewForGlobalInput();
 
   mTabChangedEvent = AddEventListener(
     mKneeboardView->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
