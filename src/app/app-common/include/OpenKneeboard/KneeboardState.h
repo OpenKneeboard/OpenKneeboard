@@ -94,7 +94,7 @@ class KneeboardState final : private EventReceiver {
 
   std::vector<std::shared_ptr<Tab>> mTabs;
 
-  uint8_t mActiveViewIndex = 0;
+  uint8_t mFirstViewIndex = 0;
   std::array<std::shared_ptr<KneeboardView>, 2> mViews;
 
   std::unique_ptr<GamesList> mGamesList;

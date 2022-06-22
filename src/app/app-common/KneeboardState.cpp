@@ -107,7 +107,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   if (!mAppSettings.mDualKneeboards) {
     return {
       {
-        .mView = mViews.at(mActiveViewIndex),
+        .mView = mViews.at(mFirstViewIndex),
         .mVR = primaryVR,
         .mIsActiveForInput = true,
       },
@@ -123,12 +123,12 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
   return {
     {
-      .mView = mViews.at(mActiveViewIndex),
+      .mView = mViews.at(mFirstViewIndex),
       .mVR = primaryVR,
       .mIsActiveForInput = true,
     },
     {
-      .mView = mViews.at(1 - mActiveViewIndex),
+      .mView = mViews.at((mFirstViewIndex + 1) % 2),
       .mVR = secondaryVR,
       .mIsActiveForInput = false,
     },
@@ -137,7 +137,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
-  return mViews.at(mActiveViewIndex);
+  return mViews.at(mFirstViewIndex);
 }
 
 std::vector<std::shared_ptr<Tab>> KneeboardState::GetTabs() const {
@@ -207,19 +207,20 @@ void KneeboardState::OnUserAction(UserAction action) {
       this->evNeedsRepaintEvent.Emit();
       return;
     case UserAction::SWITCH_KNEEBOARDS:
-      this->SetActiveViewIndex(1 - this->mActiveViewIndex);
+      this->SetActiveViewIndex((this->mFirstViewIndex + 1) % 2);
       return;
     case UserAction::PREVIOUS_TAB:
     case UserAction::NEXT_TAB:
     case UserAction::PREVIOUS_PAGE:
     case UserAction::NEXT_PAGE:
-      mViews.at(mActiveViewIndex)->PostUserAction(action);
+      mViews.at(mFirstViewIndex)->PostUserAction(action);
       return;
   }
   OPENKNEEBOARD_BREAK;
 }
 void KneeboardState::SetActiveViewIndex(uint8_t index) {
-  this->mActiveViewIndex = 1 - this->mActiveViewIndex;
+  this->mFirstViewIndex
+    = std::min<uint8_t>(index, mAppSettings.mDualKneeboards ? 1 : 0);
   this->evNeedsRepaintEvent.Emit();
   this->evViewOrderChangedEvent.Emit();
 }
