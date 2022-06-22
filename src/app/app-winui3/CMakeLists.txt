@@ -17,7 +17,6 @@ add_executable(
   CheckDCSHooks.cpp CheckDCSHooks.h
   CheckRuntimeFiles.cpp CheckRuntimeFiles.h
   DegreesValueConverter.cpp DegreesValueConverter.h DegreesValueConverter.idl
-  Events-winrt.cpp
   ExecutableIconFactory.cpp ExecutableIconFactory.h
   GameSettingsPage.idl GameSettingsPage.xaml GameSettingsPage.xaml.cpp GameSettingsPage.xaml.h
   Globals.cpp Globals.h

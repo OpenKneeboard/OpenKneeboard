@@ -53,7 +53,6 @@ class EventBase {
 
  protected:
   static std::recursive_mutex sMutex;
-  static void EnqueueForMainThread(std::function<void()>);
   EventHandlerToken AddHandler(EventReceiver*);
   virtual void RemoveHandler(EventHandlerToken) = 0;
 };
@@ -72,7 +71,6 @@ class Event final : public EventBase {
   ~Event();
 
   void Emit(Args... args);
-  void EmitFromMainThread(Args... args);
 
   void PushHook(Hook);
   void PopHook();
@@ -176,11 +174,6 @@ void Event<Args...>::Emit(Args... args) {
   for (const auto& [token, info]: mReceivers) {
     info.mFunc(args...);
   }
-}
-
-template <class... Args>
-void Event<Args...>::EmitFromMainThread(Args... args) {
-  EventBase::EnqueueForMainThread([=]() { this->Emit(args...); });
 }
 
 template <class... Args>
