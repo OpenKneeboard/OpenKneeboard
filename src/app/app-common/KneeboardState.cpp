@@ -116,7 +116,10 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 
   auto secondaryVR = primaryVR;
   secondaryVR.mX = -primaryVR.mX;
+  // Yaw
   secondaryVR.mRY = -primaryVR.mRY;
+  // Roll
+  secondaryVR.mRZ = -primaryVR.mRZ;
 
   return {
     {
