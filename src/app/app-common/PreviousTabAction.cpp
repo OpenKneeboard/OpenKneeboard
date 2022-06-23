@@ -40,10 +40,10 @@ PreviousTabAction::~PreviousTabAction() = default;
 
 TabAction::Visibility PreviousTabAction::GetVisibility(Context ctx) const {
   switch (ctx) {
-    case Context::WindowToolbar:
-      return Visibility::None;
     case Context::InGameToolbar:
       return Visibility::Secondary;
+    default:
+      return Visibility::None;
   }
 }
 

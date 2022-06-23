@@ -174,7 +174,13 @@ int main() {
     }
   }
 
-  D3D11_VIEWPORT viewport {0, 0, layer.mImageWidth, layer.mImageHeight, 0, 1};
+  D3D11_VIEWPORT viewport {
+    0,
+    0,
+    static_cast<FLOAT>(layer.mImageWidth),
+    static_cast<FLOAT>(layer.mImageHeight),
+    0,
+    1};
   ctx->RSSetViewports(1, &viewport);
   ID3D11ShaderResourceView* nullSRV = nullptr;
   ctx->PSSetShaderResources(0, 1, &nullSRV);

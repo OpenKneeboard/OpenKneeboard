@@ -1,21 +1,16 @@
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(sign_target.cmake)
 
-if (MSVC)
-  add_compile_options(
-    "/Zc:__cplusplus"
-    "/utf-8"
-    # Lots of legacy C functions are unsafe, and raise warnings in third-party code
-    "/wd4996"
-    # Basically expected when you do diamond inheritance that isn't entirely pure virtuals
-    "/wd4250"
-    # Standard C++ exception behavior
-    "/EHsc"
-  )
-endif()
+add_compile_options(
+  "/Zc:__cplusplus"
+  "/utf-8"
+  # All warnings as errors
+  "/WX"
+  # Lots of legacy C functions are unsafe, and raise warnings in third-party code
+  "/wd4996"
+  # Informational 'warning' describing how diamond inheritance works
+  "/wd4250"
+)
 
 add_compile_definitions(
   "UNICODE=1"

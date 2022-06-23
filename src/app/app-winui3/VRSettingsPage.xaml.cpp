@@ -277,7 +277,8 @@ void VRSettingsPage::DiscardOculusDepthInformation(bool discard) {
 }
 
 uint8_t VRSettingsPage::NormalOpacity() {
-  return std::lround(gKneeboard->GetVRConfig().mNormalOpacity * 100);
+  return static_cast<uint8_t>(
+    std::lround(gKneeboard->GetVRConfig().mNormalOpacity * 100));
 }
 
 void VRSettingsPage::NormalOpacity(uint8_t value) {
@@ -287,7 +288,7 @@ void VRSettingsPage::NormalOpacity(uint8_t value) {
 }
 
 uint8_t VRSettingsPage::GazeOpacity() {
-  return std::lround(gKneeboard->GetVRConfig().mGazeOpacity * 100);
+  return static_cast<uint8_t>(std::lround(gKneeboard->GetVRConfig().mGazeOpacity * 100));
 }
 
 void VRSettingsPage::GazeOpacity(uint8_t value) {
