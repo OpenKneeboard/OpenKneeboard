@@ -1,4 +1,4 @@
-﻿/*
+/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -347,12 +347,24 @@ winrt::fire_and_forget MainWindow::CheckForUpdates() {
     Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
       hstring {L"application/vnd.github.v3+json"}));
 
-  // FIXME: catch and ignore network errors
   dprint("Starting update check");
 
-  auto json = co_await http.GetBufferAsync(Windows::Foundation::Uri(hstring {
-    L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
-  auto releases = nlohmann::json::parse(json.data());
+  nlohmann::json releases;
+  try {
+    auto json = co_await http.GetBufferAsync(Windows::Foundation::Uri(hstring {
+      L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
+    releases = nlohmann::json::parse(json.data());
+  } catch (const nlohmann::json::parse_error&) {
+    dprint("Buffering error, or invalid JSON from GitHub API");
+    co_return;
+  } catch (const winrt::hresult_error& hr) {
+    dprintf(
+      L"Error fetching releases from GitHub API: {} ({:#08x}) - {}",
+      hr.code().value,
+      std::bit_cast<uint32_t>(hr.code().value),
+      hr.message());
+    co_return;
+  }
   if (releases.empty()) {
     dprint("Didn't get any releases from github API :/");
     co_return;
