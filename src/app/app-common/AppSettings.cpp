@@ -25,6 +25,7 @@ static constexpr auto WindowPositionKey {"WindowPositionV2"};
 static constexpr auto LoopPagesKey {"LoopPages"};
 static constexpr auto LoopTabsKey {"LoopTabs"};
 static constexpr auto DualKneeboardsKey {"DualKneeboards"};
+static constexpr auto AutoUpdateKey {"AutoUpdate"};
 
 void from_json(const nlohmann::json& j, AppSettings& as) {
   if (j.is_null()) {
@@ -49,6 +50,15 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
     return;
   }
 
+  if (j.contains(AutoUpdateKey)) {
+    auto au = j.at(AutoUpdateKey);
+    as.mAutoUpdate.mDisabledUntil = au.at("DisabledUntil");
+    as.mAutoUpdate.mSkipVersion = au.at("SkipVersion");
+    if (au.contains("ForceUpgradeTo")) {
+      as.mAutoUpdate.mForceUpgradeTo = au.at("ForceUpgradeTo");
+    }
+  }
+
   auto jrect = j.at(WindowPositionKey);
   RECT rect;
   rect.left = jrect.at("Left");
@@ -66,6 +76,13 @@ void to_json(nlohmann::json& j, const AppSettings& as) {
       DualKneeboardsKey,
       {
         {"Enabled", as.mDualKneeboards},
+      },
+    },
+    {
+      AutoUpdateKey,
+      {
+        {"DisabledUntil", as.mAutoUpdate.mDisabledUntil},
+        {"SkipVersion", as.mAutoUpdate.mSkipVersion},
       },
     },
   };
