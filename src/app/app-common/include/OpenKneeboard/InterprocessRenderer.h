@@ -34,12 +34,13 @@
 #include <optional>
 
 namespace OpenKneeboard {
-struct DXResources;
 class CursorEvent;
-class KneeboardState;
+class CursorRenderer;
 class IKneeboardView;
+class KneeboardState;
 class Tab;
 class TabAction;
+struct DXResources;
 
 class InterprocessRenderer final : private EventReceiver {
  public:
@@ -93,9 +94,9 @@ class InterprocessRenderer final : private EventReceiver {
   winrt::com_ptr<ID2D1Brush> mDisabledButtonBrush;
   winrt::com_ptr<ID2D1Brush> mHoverButtonBrush;
   winrt::com_ptr<ID2D1Brush> mActiveButtonBrush;
-  winrt::com_ptr<ID2D1Brush> mCursorBrush;
 
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+  std::unique_ptr<CursorRenderer> mCursorRenderer;
 
   void RenderNow();
   void Render(Layer&);

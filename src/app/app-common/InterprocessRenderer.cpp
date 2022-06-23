@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -33,8 +34,6 @@
 #include <wincodec.h>
 
 #include <ranges>
-
-using namespace OpenKneeboard;
 
 namespace OpenKneeboard {
 
@@ -96,6 +95,7 @@ InterprocessRenderer::InterprocessRenderer(
   mKneeboard = kneeboard;
   mErrorRenderer
     = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
+  mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
 
   dxr.mD3DDevice->GetImmediateContext(mD3DContext.put());
 
@@ -152,10 +152,6 @@ InterprocessRenderer::InterprocessRenderer(
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderTextBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 0.8f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mCursorBrush.put()));
   ctx->CreateSolidColorBrush(
     {0.4f, 0.4f, 0.4f, 0.5f},
     D2D1::BrushProperties(),
@@ -345,12 +341,7 @@ void InterprocessRenderer::RenderWithChrome(
     contentRect.bottom - contentRect.top,
   };
 
-  const auto cursorRadius = contentSize.height / CursorRadiusDivisor;
-  const auto cursorStroke = contentSize.height / CursorStrokeDivisor;
-  ctx->DrawEllipse(
-    D2D1::Ellipse(cursorPoint, cursorRadius, cursorRadius),
-    mCursorBrush.get(),
-    cursorStroke);
+  mCursorRenderer->Render(ctx.get(), cursorPoint, contentSize);
 }
 
 static bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {

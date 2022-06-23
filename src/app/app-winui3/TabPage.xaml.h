@@ -30,6 +30,7 @@
 #include "TabPage.g.h"
 
 namespace OpenKneeboard {
+class CursorRenderer;
 class D2DErrorRenderer;
 class ITabView;
 class IKneeboardView;
@@ -61,8 +62,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   winrt::apartment_context mUIThread;
   std::shared_ptr<IKneeboardView> mKneeboardView;
   std::shared_ptr<ITabView> mTabView;
+  std::unique_ptr<CursorRenderer> mCursorRenderer;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
-  winrt::com_ptr<ID2D1SolidColorBrush> mCursorBrush;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   D2D1_COLOR_F mBackgroundColor;
   winrt::com_ptr<ID2D1SolidColorBrush> mForegroundBrush;

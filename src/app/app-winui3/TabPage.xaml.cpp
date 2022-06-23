@@ -25,6 +25,7 @@
 
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITabView.h>
@@ -69,8 +70,7 @@ TabPage::TabPage() {
       color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f),
     mForegroundBrush.put()));
 
-  winrt::check_hresult(gDXResources.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mCursorBrush.put()));
+  mCursorRenderer = std::make_unique<CursorRenderer>(gDXResources);
   mErrorRenderer
     = std::make_unique<D2DErrorRenderer>(gDXResources.mD2DDeviceContext.get());
 
@@ -284,18 +284,14 @@ void TabPage::PaintNow() noexcept {
   if (!mDrawCursor) {
     return;
   }
-  const auto cursorRadius = metrics.mRenderSize.height / CursorRadiusDivisor;
-  const auto cursorStroke = metrics.mRenderSize.height / CursorStrokeDivisor;
+
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   auto point = mKneeboardView->GetCursorPoint();
   point.x *= metrics.mScale;
   point.y *= metrics.mScale;
   point.x += metrics.mRenderRect.left;
   point.y += metrics.mRenderRect.top;
-  ctx->DrawEllipse(
-    D2D1::Ellipse(point, cursorRadius, cursorRadius),
-    mCursorBrush.get(),
-    cursorStroke);
+  mCursorRenderer->Render(ctx, point, metrics.mRenderSize);
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {

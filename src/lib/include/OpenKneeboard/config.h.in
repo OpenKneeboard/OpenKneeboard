@@ -27,7 +27,7 @@ constexpr unsigned int TextureHeight = 2048;
 constexpr unsigned char MaxLayers = 2;
 
 constexpr float CursorRadiusDivisor = 400.0f;
-constexpr float CursorStrokeDivisor = CursorRadiusDivisor * 3;
+constexpr float CursorStrokeDivisor = CursorRadiusDivisor;
 
 const unsigned int HeaderPercent = 5;
 

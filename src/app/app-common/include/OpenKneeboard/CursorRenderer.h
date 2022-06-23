@@ -19,18 +19,27 @@
  */
 #pragma once
 
-#include <nlohmann/json_fwd.hpp>
+#include <d2d1.h>
+#include <shims/winrt.h>
 
 namespace OpenKneeboard {
-struct DoodleSettings final {
-  uint32_t minimumPenRadius = 1;
-  uint32_t minimumEraseRadius = 10;
-  uint32_t penSensitivity = 15;
-  uint32_t eraseSensitivity = 150;
-  // TODO: stroke color?
-};
 
-void from_json(const nlohmann::json&, DoodleSettings&);
-void to_json(nlohmann::json&, const DoodleSettings&);
+struct DXResources;
+
+class CursorRenderer final {
+ public:
+  CursorRenderer() = delete;
+  CursorRenderer(const DXResources&);
+  ~CursorRenderer();
+
+  void Render(
+    ID2D1RenderTarget* ctx,
+    const D2D1_POINT_2F& point,
+    const D2D1_SIZE_F& scaleTo);
+
+ private:
+  winrt::com_ptr<ID2D1SolidColorBrush> mInnerBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mOuterBrush;
+};
 
 }// namespace OpenKneeboard
