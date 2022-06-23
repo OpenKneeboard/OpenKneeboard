@@ -281,12 +281,12 @@ void PDFTab::Reload() {
   [this]() -> winrt::fire_and_forget {
     // Captures become invalid after the function returns, which is the first
     // co_await
-    // auto _this = this;
+    auto _this = this;
     co_await winrt::resume_background();
-    auto file = co_await StorageFile::GetFileFromPathAsync(p->mPath.wstring());
-    // FIXME ERROR HERE AABCD
-    this->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
-    this->evFullyReplacedEvent.Emit();
+    auto file
+      = co_await StorageFile::GetFileFromPathAsync(_this->p->mPath.wstring());
+    _this->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
+    _this->evFullyReplacedEvent.Emit();
   }();
 
   std::thread {[this] {
