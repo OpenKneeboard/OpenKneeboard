@@ -173,15 +173,6 @@ jobs:
           asset_path: ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo.msix/OpenKneeboard-RelWithDebInfo.msix
           asset_name: OpenKneeboard-${{github.ref_name}}.msix
           asset_content_type: application/msix
-      - name: Attach -RelWithDebInfo.zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo.zip
-          asset_name: OpenKneeboard-${{github.ref_name}}.zip
-          asset_content_type: application/zip
       - name: Attach -RelWithDebInfo-RemoteControl.zip
         uses: actions/upload-release-asset@v1
         env:
