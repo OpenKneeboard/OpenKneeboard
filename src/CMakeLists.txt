@@ -12,6 +12,8 @@ if (MSVC)
     "/wd4996"
     # Basically expected when you do diamond inheritance that isn't entirely pure virtuals
     "/wd4250"
+    # Standard C++ exception behavior
+    "/EHsc"
   )
 endif()
 
