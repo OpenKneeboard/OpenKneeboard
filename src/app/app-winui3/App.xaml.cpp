@@ -189,7 +189,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
       return 0;
     }
     ShowWindow(*hwnd, SW_SHOWNORMAL);
-    if (SetForegroundWindow(*hwnd)) {
+    if (!SetForegroundWindow(*hwnd)) {
       // error codes are not set, so no details :(
       MessageBoxW(
         NULL,
