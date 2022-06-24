@@ -69,11 +69,14 @@ add_remote_control_executable(OpenKneeboard-Launch-WindowsApp WIN32 launch-msix.
 # StreamDeck
 set(
   SIMPLE_REMOTE_ACTIONS
-  TOGGLE_VISIBILITY
   PREVIOUS_TAB
   NEXT_TAB
   PREVIOUS_PAGE
   NEXT_PAGE
+  TOGGLE_VISIBILITY
+  TOGGLE_FORCE_ZOOM
+  SWITCH_KNEEBOARDS
+  RECENTER_VR
 )
 foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
