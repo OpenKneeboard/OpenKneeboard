@@ -64,7 +64,7 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
 
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   void OnViewOrderChanged();
-  winrt::fire_and_forget OnTabChanged();
+  winrt::fire_and_forget OnTabChanged() noexcept;
   void OnTabsChanged();
 
   void SaveWindowPosition();

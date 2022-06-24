@@ -222,8 +222,22 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   gDXResources = {};
 }
 
-winrt::fire_and_forget MainWindow::OnTabChanged() {
+winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   co_await mUIThread;
+
+  // Don't automatically move away from "About" or "Settings"
+  auto currentItem = Navigation().SelectedItem();
+  if (currentItem) {
+    if (currentItem == Navigation().SettingsItem()) {
+      co_return;
+    }
+    for (const auto& item: Navigation().FooterMenuItems()) {
+      if (currentItem == item) {
+        co_return;
+      }
+    }
+  }
+
   const auto id = mKneeboardView->GetCurrentTab()->GetRuntimeID();
 
   for (auto it: this->Navigation().MenuItems()) {
