@@ -295,15 +295,11 @@ void DPrintReceiver::Run(std::stop_token stopToken) {
       sizeof(handles) / sizeof(handles[0]),
       handles,
       /* all = */ false,
-      /* ms = */ 100);
+      /* ms = */ INFINITE);
 
     if (stopToken.stop_requested()) {
       ResetEvent(mBufferReadyEvent.get());
       return;
-    }
-
-    if (result == WAIT_TIMEOUT) {
-      continue;
     }
 
     this->OnMessage(*mSHM);
