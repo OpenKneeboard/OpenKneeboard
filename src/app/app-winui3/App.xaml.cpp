@@ -1,4 +1,4 @@
-﻿/*
+/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -164,8 +164,6 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
 }
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
-  auto troubleshootingStore = TroubleshootingStore::Get();
-
   wchar_t* savedGamesBuffer = nullptr;
   winrt::check_hresult(
     SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &savedGamesBuffer));
@@ -175,10 +173,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   SetUnhandledExceptionFilter(&OnUnhandledException);
   set_terminate(&OnTerminate);
 
-  DPrintSettings::Set({
-    .prefix = "OpenKneeboard-WinUI3",
-  });
-
   winrt::handle mutex {
     CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
@@ -186,6 +180,12 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     ShowWindow(*hwnd, SW_SHOWNORMAL) && SetForegroundWindow(*hwnd);
     return 0;
   }
+
+  auto troubleshootingStore = TroubleshootingStore::Get();
+
+  DPrintSettings::Set({
+    .prefix = "OpenKneeboard-WinUI3",
+  });
 
   winrt::init_apartment(winrt::apartment_type::single_threaded);
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
