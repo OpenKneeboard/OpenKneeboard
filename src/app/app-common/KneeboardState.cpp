@@ -219,7 +219,7 @@ void KneeboardState::OnUserAction(UserAction action) {
     case UserAction::NEXT_TAB:
     case UserAction::PREVIOUS_PAGE:
     case UserAction::NEXT_PAGE:
-      mViews.at(mFirstViewIndex)->PostUserAction(action);
+      mViews.at(mInputViewIndex)->PostUserAction(action);
       return;
   }
   OPENKNEEBOARD_BREAK;
