@@ -44,6 +44,7 @@
 #include <shims/filesystem>
 
 #include "CheckDCSHooks.h"
+#include "CheckForUpdates.h"
 #include "CheckRuntimeFiles.h"
 #include "Globals.h"
 #include "MainWindow.xaml.h"
@@ -151,6 +152,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
     [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
       auto xamlRoot = window.Content().XamlRoot();
+      co_await CheckForUpdates(xamlRoot);
       co_await CheckRuntimeFiles(xamlRoot);
       if (gKneeboard) {
         gKneeboard->GetGamesList()->StartInjector();

@@ -15,6 +15,7 @@ add_executable(
   AdvancedSettingsPage.idl AdvancedSettingsPage.xaml AdvancedSettingsPage.xaml.cpp AdvancedSettingsPage.xaml.h
   App.idl App.xaml App.xaml.cpp App.xaml.h
   CheckDCSHooks.cpp CheckDCSHooks.h
+  CheckForUpdates.cpp CheckForUpdates.h
   CheckRuntimeFiles.cpp CheckRuntimeFiles.h
   DegreesValueConverter.cpp DegreesValueConverter.h DegreesValueConverter.idl
   ExecutableIconFactory.cpp ExecutableIconFactory.h
