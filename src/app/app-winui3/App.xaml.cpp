@@ -1,4 +1,4 @@
-/*
+﻿/*
  * OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
@@ -177,7 +177,29 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
     const auto hwnd = GetMainHWND();
-    ShowWindow(*hwnd, SW_SHOWNORMAL) && SetForegroundWindow(*hwnd);
+    if (!hwnd) {
+      MessageBoxW(
+        NULL,
+        _(L"OpenKneeboard is already running, but can't find the existing "
+          L"window to switch to it.\n\n"
+          L"Switch to it with Alt-Tab or the Windows "
+          L"task bar, or kill it with Task Manager, then try again."),
+        _(L"OpenKneeboard"),
+        MB_OK | MB_ICONERROR);
+      return 0;
+    }
+    ShowWindow(*hwnd, SW_SHOWNORMAL);
+    if (SetForegroundWindow(*hwnd)) {
+      // error codes are not set, so no details :(
+      MessageBoxW(
+        NULL,
+        _(L"OpenKneeboard is already running, but unable to switch to the "
+          L"existing window .\n\n"
+          L"Switch to it with Alt-Tab or the Windows "
+          L"task bar, or kill it with Task Manager, then try again."),
+        _(L"OpenKneeboard"),
+        MB_OK | MB_ICONERROR);
+    }
     return 0;
   }
 
