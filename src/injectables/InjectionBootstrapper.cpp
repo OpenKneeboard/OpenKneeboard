@@ -130,6 +130,7 @@ class InjectionBootstrapper final {
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next) {
     if (mFrames == 0) {
+      dprint("Got first DXGI frame");
       SetD3DFlags(swapChain);
     }
     mFrames++;
@@ -163,6 +164,7 @@ class InjectionBootstrapper final {
 
  private:
   void Next() {
+    dprint("Going Next()");
     UninstallHook();
 
     // Whatever APIs are in use, if SteamVR is one of them, the main app will

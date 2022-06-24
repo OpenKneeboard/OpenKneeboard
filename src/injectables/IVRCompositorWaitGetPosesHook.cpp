@@ -131,6 +131,8 @@ IVRCompositorWaitGetPosesHook::Impl::Hooked_VR_GetGenericInterface(
     return ret;
   }
 
+  dprintf("Requested OpenVR interface: {}", pchInterfaceVersion);
+
   if (std::string_view(pchInterfaceVersion).starts_with("IVRCompositor_")) {
     auto p = gInstance;
     p->UninstallHook();
@@ -150,6 +152,8 @@ void IVRCompositorWaitGetPosesHook::Impl::UninstallHook() {
   if (gInstance != this) {
     return;
   }
+
+  dprint("Uninstalling OpenVR hooks");
 
   mLibOpenVR.UninstallHook();
 
@@ -234,6 +238,7 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
   if (mCallbacks.onHookInstalled) {
     mCallbacks.onHookInstalled();
   }
+  N
 }
 
 }// namespace OpenKneeboard
