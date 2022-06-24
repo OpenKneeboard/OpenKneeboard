@@ -57,6 +57,9 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
     if (au.contains("ForceUpgradeTo")) {
       as.mAutoUpdate.mForceUpgradeTo = au.at("ForceUpgradeTo");
     }
+    if (au.contains("HaveUsedPrereleases")) {
+      as.mAutoUpdate.mHaveUsedPrereleases = au.at("HaveUsedPrereleases");
+    }
   }
 
   auto jrect = j.at(WindowPositionKey);
@@ -83,6 +86,7 @@ void to_json(nlohmann::json& j, const AppSettings& as) {
       {
         {"DisabledUntil", as.mAutoUpdate.mDisabledUntil},
         {"SkipVersion", as.mAutoUpdate.mSkipVersion},
+        {"HaveUsedPrereleases", as.mAutoUpdate.mHaveUsedPrereleases},
       },
     },
   };

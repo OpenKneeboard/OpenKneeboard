@@ -134,7 +134,10 @@ winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
     }
   }
 
-  auto release = isPreRelease ? latestRelease : latestStableRelease;
+  settings.mHaveUsedPrereleases = settings.mHaveUsedPrereleases || isPreRelease;
+
+  auto release
+    = settings.mHaveUsedPrereleases ? latestRelease : latestStableRelease;
   if (!settings.mForceUpgradeTo.empty()) {
     release = forcedRelease;
   }

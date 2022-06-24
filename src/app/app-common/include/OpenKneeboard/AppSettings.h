@@ -36,6 +36,7 @@ struct AppSettings final {
     uint64_t mDisabledUntil = 0;
     std::string mSkipVersion;
     std::string mForceUpgradeTo;// for testing
+    bool mHaveUsedPrereleases = false;
   } mAutoUpdate;
 };
 
