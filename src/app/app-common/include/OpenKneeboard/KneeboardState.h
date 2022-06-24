@@ -95,6 +95,7 @@ class KneeboardState final : private EventReceiver {
   std::vector<std::shared_ptr<Tab>> mTabs;
 
   uint8_t mFirstViewIndex = 0;
+  uint8_t mInputViewIndex = 0;
   std::array<std::shared_ptr<KneeboardView>, 2> mViews;
 
   std::unique_ptr<GamesList> mGamesList;
@@ -116,7 +117,7 @@ class KneeboardState final : private EventReceiver {
 
   void StartOpenVRThread();
 
-  void SetActiveViewIndex(uint8_t index);
+  void SetFirstViewIndex(uint8_t index);
 };
 
 }// namespace OpenKneeboard

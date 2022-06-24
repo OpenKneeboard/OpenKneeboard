@@ -35,6 +35,8 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <string>
+
 namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
@@ -129,19 +131,19 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     {
       .mView = mViews.at(mFirstViewIndex),
       .mVR = primaryVR,
-      .mIsActiveForInput = true,
+      .mIsActiveForInput = mFirstViewIndex == mInputViewIndex,
     },
     {
       .mView = mViews.at((mFirstViewIndex + 1) % 2),
       .mVR = secondaryVR,
-      .mIsActiveForInput = false,
+      .mIsActiveForInput = mFirstViewIndex != mInputViewIndex,
     },
   };
 }
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
-  return mViews.at(mFirstViewIndex);
+  return mViews.at(mInputViewIndex);
 }
 
 std::vector<std::shared_ptr<Tab>> KneeboardState::GetTabs() const {
@@ -211,7 +213,7 @@ void KneeboardState::OnUserAction(UserAction action) {
       this->evNeedsRepaintEvent.Emit();
       return;
     case UserAction::SWITCH_KNEEBOARDS:
-      this->SetActiveViewIndex((this->mFirstViewIndex + 1) % 2);
+      this->SetFirstViewIndex((this->mFirstViewIndex + 1) % 2);
       return;
     case UserAction::PREVIOUS_TAB:
     case UserAction::NEXT_TAB:
@@ -222,15 +224,43 @@ void KneeboardState::OnUserAction(UserAction action) {
   }
   OPENKNEEBOARD_BREAK;
 }
-void KneeboardState::SetActiveViewIndex(uint8_t index) {
+void KneeboardState::SetFirstViewIndex(uint8_t index) {
+  const auto inputIsFirst = this->mFirstViewIndex == this->mInputViewIndex;
   this->mFirstViewIndex
     = std::min<uint8_t>(index, mAppSettings.mDualKneeboards ? 1 : 0);
+  if (inputIsFirst) {
+    this->mInputViewIndex = this->mFirstViewIndex;
+  } else {
+    this->mInputViewIndex
+      = std::min<uint8_t>(index, mAppSettings.mDualKneeboards ? 1 : 0);
+  }
   this->evNeedsRepaintEvent.Emit();
   this->evViewOrderChangedEvent.Emit();
 }
 
 void KneeboardState::OnGameEvent(const GameEvent& ev) {
   TroubleshootingStore::Get()->OnGameEvent(ev);
+
+  if (ev.name == GameEvent::EVT_SET_INPUT_FOCUS) {
+    const auto viewID = std::stoull(ev.value);
+    for (int i = 0; i < mViews.size(); ++i) {
+      if (mViews.at(i)->GetRuntimeID() != viewID) {
+        continue;
+      }
+      if (mInputViewIndex == i) {
+        return;
+      }
+      dprintf("Giving input focus to view {:#016x} at index {}", viewID, i);
+      mInputViewIndex = i;
+      evNeedsRepaintEvent.Emit();
+      evViewOrderChangedEvent.Emit();
+      return;
+    }
+    dprintf(
+      "Asked to give input focus to view {:#016x}, but couldn't find it",
+      viewID);
+    return;
+  }
 
   if (ev.name == GameEvent::EVT_REMOTE_USER_ACTION) {
 #define IT(ACTION) \
@@ -241,6 +271,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
     OPENKNEEBOARD_USER_ACTIONS
 #undef IT
   }
+
   for (auto tab: mTabs) {
     auto receiver = std::dynamic_pointer_cast<TabWithGameEvents>(tab);
     if (receiver) {
@@ -302,7 +333,7 @@ void KneeboardState::SetAppSettings(const AppSettings& value) {
   mAppSettings = value;
   this->SaveSettings();
   if (!value.mDualKneeboards) {
-    this->SetActiveViewIndex(0);
+    this->SetFirstViewIndex(0);
   }
 }
 

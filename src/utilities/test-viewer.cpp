@@ -20,6 +20,7 @@
 #include <D2d1.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
@@ -48,6 +49,7 @@ class TestViewerWindow final {
   bool mFirstDetached = false;
   SHM::Reader mSHM;
   uint8_t mLayerIndex = 0;
+  uint64_t mLayerID = 0;
   size_t mRenderCacheKey = 0;
 
   D2D1_COLOR_F mWindowColor;
@@ -184,6 +186,17 @@ class TestViewerWindow final {
       nullptr,
       nullptr,
       mSwapChain.put());
+  }
+
+  void OnFocus() {
+    if (!mLayerID) {
+      return;
+    }
+    GameEvent {
+      GameEvent::EVT_SET_INPUT_FOCUS,
+      std::to_string(mLayerID),
+    }
+      .Send();
   }
 
   void OnPaint() {
@@ -329,7 +342,6 @@ class TestViewerWindow final {
       return;
     }
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
-
     if (!layer.IsValid()) {
       mErrorRenderer->Render(
         ctx,
@@ -337,6 +349,7 @@ class TestViewerWindow final {
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       return;
     }
+    mLayerID = layer.mLayerID;
 
     auto sharedTexture
       = snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex);
@@ -411,6 +424,9 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
   WPARAM wParam,
   LPARAM lParam) {
   switch (uMsg) {
+    case WM_SETFOCUS:
+      gInstance->OnFocus();
+      return 0;
     case WM_PAINT:
       gInstance->OnPaint();
       return 0;

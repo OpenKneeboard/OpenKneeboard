@@ -81,9 +81,9 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
   }
 
   SHM::Config config {
-    .mLayerIDForGlobalInput = mKneeboard->GetActiveViewForGlobalInput()
-                                ->GetRuntimeID()
-                                .GetTemporaryValue(),
+    .mGlobalInputLayerID = mKneeboard->GetActiveViewForGlobalInput()
+                             ->GetRuntimeID()
+                             .GetTemporaryValue(),
     .mVR = mKneeboard->GetVRConfig(),
     .mFlat = mKneeboard->GetFlatConfig(),
   };

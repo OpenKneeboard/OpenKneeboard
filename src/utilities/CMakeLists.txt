@@ -52,6 +52,7 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-DXResources
+  OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
   OpenKneeboard-SHM
   OpenKneeboard-scope_guard

@@ -50,6 +50,7 @@ struct VRRenderConfig {
     // PREFER_ROOMSCALE_POSITION = 1 << 2,
     GAZE_ZOOM = 1 << 3,
     FORCE_ZOOM = 1 << 4,
+    GAZE_INPUT_FOCUS = 1 << 5,
   };
 
   float mZoomScale = 2.0f;

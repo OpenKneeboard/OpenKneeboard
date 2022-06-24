@@ -40,5 +40,8 @@ struct GameEvent final {
 
   static constexpr char EVT_REMOTE_USER_ACTION[]
     = "com.fredemmott.openkneeboard/RemoteUserAction";
+
+  static constexpr char EVT_SET_INPUT_FOCUS[]
+    = "com.fredemmott.openkneeboard/SetInputFocus";
 };
 }// namespace OpenKneeboard

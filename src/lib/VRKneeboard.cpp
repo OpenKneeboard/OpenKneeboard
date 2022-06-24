@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/VRKneeboard.h>
 
@@ -141,6 +142,14 @@ bool VRKneeboard::IsLookingAtKneeboard(
     kneeboardPose.mPosition,
     kneeboardPose.mOrientation,
     currentSize);
+
+  if (sIsLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID) {
+    GameEvent {
+      GameEvent::EVT_SET_INPUT_FOCUS,
+      std::to_string(layer.mLayerID),
+    }
+      .Send();
+  }
 
   return sIsLookingAtKneeboard;
 }
