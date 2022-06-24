@@ -50,13 +50,14 @@ std::wstring SharedTextureName(
 
 #pragma pack(push)
 struct Config final {
-  static constexpr uint16_t VERSION = 2;
-
+  static constexpr uint16_t VERSION = 3;
+  uint64_t mLayerIDForGlobalInput;
   VRRenderConfig mVR;
   FlatConfig mFlat;
 };
 struct LayerConfig final {
-  static constexpr uint16_t VERSION = 1;
+  static constexpr uint16_t VERSION = 2;
+  uint64_t mLayerID;
   uint16_t mImageWidth, mImageHeight;// Pixels
   VRLayerConfig mVR;
 

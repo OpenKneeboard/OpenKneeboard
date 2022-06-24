@@ -31,10 +31,14 @@ enum class UserAction;
 class ITabView;
 struct CursorEvent;
 
+struct KneeboardViewID final : public UniqueIDBase<KneeboardViewID> {};
+
 class IKneeboardView {
  public:
   IKneeboardView();
   virtual ~IKneeboardView();
+
+  virtual KneeboardViewID GetRuntimeID() const = 0;
 
   virtual std::shared_ptr<ITabView> GetCurrentTabView() const = 0;
   virtual std::shared_ptr<Tab> GetCurrentTab() const = 0;

@@ -81,6 +81,9 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
   }
 
   SHM::Config config {
+    .mLayerIDForGlobalInput = mKneeboard->GetActiveViewForGlobalInput()
+                                ->GetRuntimeID()
+                                .GetTemporaryValue(),
     .mVR = mKneeboard->GetVRConfig(),
     .mFlat = mKneeboard->GetFlatConfig(),
   };
@@ -211,6 +214,7 @@ void InterprocessRenderer::Render(Layer& layer) {
   const auto pageIndex = tabView->GetPageIndex();
 
   const auto usedSize = view->GetCanvasSize();
+  layer.mConfig.mLayerID = view->GetRuntimeID().GetTemporaryValue();
   layer.mConfig.mImageWidth = usedSize.width;
   layer.mConfig.mImageHeight = usedSize.height;
 

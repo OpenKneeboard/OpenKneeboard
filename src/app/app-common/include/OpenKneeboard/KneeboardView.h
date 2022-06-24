@@ -35,6 +35,8 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
   KneeboardView(KneeboardState*);
   ~KneeboardView();
 
+  virtual KneeboardViewID GetRuntimeID() const override;
+
   void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);
   void PostUserAction(UserAction);
 
@@ -67,6 +69,7 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
   virtual void PostCursorEvent(const CursorEvent& ev) override;
 
  private:
+  KneeboardViewID mID;
   KneeboardState* mKneeboard;
   std::vector<std::shared_ptr<ITabView>> mTabs;
   std::shared_ptr<ITabView> mCurrentTabView;
