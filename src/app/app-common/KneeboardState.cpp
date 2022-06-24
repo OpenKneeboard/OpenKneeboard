@@ -95,6 +95,10 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 }
 
 KneeboardState::~KneeboardState() {
+  mGameEventThread.request_stop();
+  mOpenVRThread.request_stop();
+  mGameEventThread.join();
+  mOpenVRThread.join();
 }
 
 std::vector<std::shared_ptr<IKneeboardView>>
