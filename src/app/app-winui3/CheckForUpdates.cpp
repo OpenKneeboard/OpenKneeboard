@@ -224,6 +224,10 @@ winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
       of.close();
       std::filesystem::rename(tmpFile, destination);
     }
+    settings.mForceUpgradeTo = {};
+    auto app = gKneeboard->GetAppSettings();
+    app.mAutoUpdate = settings;
+    gKneeboard->SetAppSettings(app);
     OpenKneeboard::LaunchURI(to_utf8(destination));
     co_return;
   }

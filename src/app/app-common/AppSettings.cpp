@@ -86,6 +86,7 @@ void to_json(nlohmann::json& j, const AppSettings& as) {
       {
         {"DisabledUntil", as.mAutoUpdate.mDisabledUntil},
         {"SkipVersion", as.mAutoUpdate.mSkipVersion},
+        {"ForceUpgradeTo", as.mAutoUpdate.mForceUpgradeTo},
         {"HaveUsedPrereleases", as.mAutoUpdate.mHaveUsedPrereleases},
       },
     },
