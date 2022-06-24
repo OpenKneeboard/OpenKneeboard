@@ -50,6 +50,7 @@ class TestViewerWindow final {
   SHM::Reader mSHM;
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
+  bool mSetInputFocus = false;
   size_t mRenderCacheKey = 0;
 
   D2D1_COLOR_F mWindowColor;
@@ -189,7 +190,7 @@ class TestViewerWindow final {
   }
 
   void OnFocus() {
-    if (!mLayerID) {
+    if (!(mSetInputFocus && mLayerID)) {
       return;
     }
     GameEvent {
@@ -334,6 +335,8 @@ class TestViewerWindow final {
     mFirstDetached = true;
 
     const auto config = snapshot.GetConfig();
+    mSetInputFocus = config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS;
+
     if (mLayerIndex >= snapshot.GetLayerCount()) {
       mErrorRenderer->Render(
         ctx,

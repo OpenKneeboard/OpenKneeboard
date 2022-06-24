@@ -320,6 +320,13 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
     SetOpenXRModeWithHelperProcess(value.mOpenXRMode, {mVRConfig.mOpenXRMode});
   }
 
+  if (
+    (value.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)
+    != (mVRConfig.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)) {
+    mInputViewIndex = mFirstViewIndex;
+    this->evViewOrderChangedEvent.Emit();
+  }
+
   mVRConfig = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();

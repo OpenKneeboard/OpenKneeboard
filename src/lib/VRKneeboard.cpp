@@ -143,7 +143,9 @@ bool VRKneeboard::IsLookingAtKneeboard(
     kneeboardPose.mOrientation,
     currentSize);
 
-  if (sIsLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID) {
+  if (
+    sIsLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID
+    && (config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)) {
     GameEvent {
       GameEvent::EVT_SET_INPUT_FOCUS,
       std::to_string(layer.mLayerID),

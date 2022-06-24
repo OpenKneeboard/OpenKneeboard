@@ -34,6 +34,9 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   bool DualKneeboards() const noexcept;
   void DualKneeboards(bool value) noexcept;
 
+  bool GazeInputFocus() const noexcept;
+  void GazeInputFocus(bool value) noexcept;
+
   bool LoopPages() const noexcept;
   void LoopPages(bool) noexcept;
 

@@ -69,6 +69,15 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
     vrc.mNormalOpacity = opacity.at("normal");
     vrc.mGazeOpacity = opacity.at("gaze");
   }
+
+  if (j.contains("dualKneeboards")) {
+    auto dualKneeboards = j.at("dualKneeboards");
+    if (dualKneeboards.at("enableGazeInputFocus").get<bool>()) {
+      vrc.mFlags |= VRConfig::Flags::GAZE_INPUT_FOCUS;
+    } else {
+      vrc.mFlags &= ~VRConfig::Flags::GAZE_INPUT_FOCUS;
+    }
+  }
 }
 
 void to_json(nlohmann::json& j, const VRConfig& vrc) {
@@ -102,6 +111,15 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
       {
         {"normal", vrc.mNormalOpacity},
         {"gaze", vrc.mGazeOpacity},
+      },
+    },
+    {
+      "dualKneeboards",
+      {
+        {
+          "enableGazeInputFocus",
+          static_cast<bool>(vrc.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS),
+        },
       },
     },
   };

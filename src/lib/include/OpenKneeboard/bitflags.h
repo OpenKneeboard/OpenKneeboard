@@ -50,6 +50,10 @@ class CoerceableBitflags final {
   constexpr operator bool() const {
     return static_cast<bool>(value);
   }
+
+  constexpr bool operator==(CoerceableBitflags<T> other) const {
+    return value == other.value;
+  }
 };
 
 template <bitflags T>
@@ -65,10 +69,7 @@ constexpr CoerceableBitflags<T> operator&(T a, T b) {
 }
 
 template <bitflags T>
-constexpr T operator^(T a, T b) {
-  using UT = std::underlying_type_t<T>;
-  return static_cast<T>(static_cast<UT>(a) ^ static_cast<UT>(b));
-}
+constexpr T operator^(T a, T b) = delete;
 
 template <bitflags T>
 constexpr T operator~(T a) {

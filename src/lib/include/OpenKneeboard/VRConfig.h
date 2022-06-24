@@ -63,7 +63,8 @@ struct VRRenderConfig {
 
   Flags mFlags = static_cast<Flags>(
     static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
-    | static_cast<uint32_t>(Flags::GAZE_ZOOM));
+    | static_cast<uint32_t>(Flags::GAZE_ZOOM)
+    | static_cast<uint32_t>(Flags::GAZE_INPUT_FOCUS));
 
   float mNormalOpacity = 1.0f;
   float mGazeOpacity = 1.0f;

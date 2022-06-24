@@ -25,6 +25,7 @@
 
 #include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/VRConfig.h>
 
 #include "Globals.h"
 
@@ -55,6 +56,20 @@ void AdvancedSettingsPage::DualKneeboards(bool value) noexcept {
   auto s = gKneeboard->GetAppSettings();
   s.mDualKneeboards = value;
   gKneeboard->SetAppSettings(s);
+}
+
+bool AdvancedSettingsPage::GazeInputFocus() const noexcept {
+  return gKneeboard->GetVRConfig().mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS;
+}
+
+void AdvancedSettingsPage::GazeInputFocus(bool enabled) noexcept {
+  auto vr = gKneeboard->GetVRConfig();
+  if (enabled) {
+    vr.mFlags |= VRConfig::Flags::GAZE_INPUT_FOCUS;
+  } else {
+    vr.mFlags &= ~VRConfig::Flags::GAZE_INPUT_FOCUS;
+  }
+  gKneeboard->SetVRConfig(vr);
 }
 
 bool AdvancedSettingsPage::LoopPages() const noexcept {
