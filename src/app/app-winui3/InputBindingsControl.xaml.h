@@ -43,6 +43,7 @@ struct InputBindingsControl : InputBindingsControlT<InputBindingsControl> {
   void DeviceID(const hstring&);
 
  private:
+  winrt::apartment_context mUIThread;
   fire_and_forget PromptForBinding(UserAction);
   void ClearBinding(UserAction);
 

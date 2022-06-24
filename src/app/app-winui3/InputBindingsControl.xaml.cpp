@@ -42,12 +42,11 @@ InputBindingsControl::InputBindingsControl() noexcept {
 }
 
 void InputBindingsControl::PopulateUI() {
+  AppendUIRow(UserAction::PREVIOUS_TAB, _(L"Previous tab"));
+  AppendUIRow(UserAction::NEXT_TAB, _(L"Next tab"));
 
-	AppendUIRow(UserAction::PREVIOUS_TAB, _(L"Previous tab"));
-	AppendUIRow(UserAction::NEXT_TAB, _(L"Next tab"));
-
-	AppendUIRow(UserAction::PREVIOUS_PAGE, _(L"Previous page"));
-	AppendUIRow(UserAction::NEXT_PAGE, _(L"Next page"));
+  AppendUIRow(UserAction::PREVIOUS_PAGE, _(L"Previous page"));
+  AppendUIRow(UserAction::NEXT_PAGE, _(L"Next page"));
 
   AppendUIRow(UserAction::RECENTER_VR, _(L"Recenter kneeboard"));
   AppendUIRow(UserAction::SWITCH_KNEEBOARDS, _(L"Switch kneeboards"));
@@ -134,10 +133,13 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
   mDevice->evButtonEvent.PushHook([&](const UserInputButtonEvent& ev) {
     if (ev.IsPressed()) {
       pressedButtons.insert(ev.GetButtonID());
-      return EventBase::HookResult::STOP_PROPAGATION;
+      EventBase::HookResult::STOP_PROPAGATION;
     }
     cancelled = false;
-    dialog.Hide();
+    [](auto uiThread, auto dialog) noexcept -> winrt::fire_and_forget {
+      co_await uiThread;
+      dialog.Hide();
+    }(mUIThread, dialog);
     return EventBase::HookResult::STOP_PROPAGATION;
   });
   {
