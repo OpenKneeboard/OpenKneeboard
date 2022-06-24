@@ -60,8 +60,8 @@ AboutPage::AboutPage() {
     TroubleshootingStore::Get()->evDPrintMessageReceived, [this]() {
       [this]() noexcept -> winrt::fire_and_forget {
         auto _this = this;
+        // always force a reschedule
         co_await winrt::resume_background();
-        co_await mUIThread;
         _this->PopulateDPrint();
       }();
     });
@@ -213,7 +213,7 @@ auto ReadableTime(const std::chrono::time_point<C, T>& time) {
     std::chrono::time_point_cast<std::chrono::seconds>(time));
 }
 
-void AboutPage::PopulateEvents() {
+winrt::fire_and_forget AboutPage::PopulateEvents() noexcept {
   auto events = TroubleshootingStore::Get()->GetGameEvents();
 
   std::string message;
@@ -252,10 +252,11 @@ void AboutPage::PopulateEvents() {
 
   mGameEventsClipboardData = message;
 
+  co_await mUIThread;
   EventsText().Text(winrt::to_hstring(message));
 }
 
-void AboutPage::PopulateDPrint() {
+winrt::fire_and_forget AboutPage::PopulateDPrint() noexcept {
   auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
 
   std::wstring text;
@@ -289,6 +290,7 @@ void AboutPage::PopulateDPrint() {
   }
 
   mDPrintClipboardData = text;
+  co_await mUIThread;
   DPrintText().Text(text);
   this->ScrollDPrintToEnd();
 }

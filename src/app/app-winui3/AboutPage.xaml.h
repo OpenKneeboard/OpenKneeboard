@@ -57,8 +57,8 @@ struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
   bool mWasDPrintExpanded = false;
 
   void PopulateVersion();
-  void PopulateEvents();
-  void PopulateDPrint();
+  winrt::fire_and_forget PopulateEvents() noexcept;
+  winrt::fire_and_forget PopulateDPrint() noexcept;
 
   void ScrollDPrintToEnd();
 };
