@@ -238,7 +238,6 @@ void IVRCompositorWaitGetPosesHook::Impl::InstallHook() {
   if (mCallbacks.onHookInstalled) {
     mCallbacks.onHookInstalled();
   }
-  N
 }
 
 }// namespace OpenKneeboard
