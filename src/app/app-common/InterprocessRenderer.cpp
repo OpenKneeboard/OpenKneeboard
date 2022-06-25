@@ -358,6 +358,8 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
   }
 
   const auto view = layer.mKneeboardView;
+  auto& toolbar = mToolbars[view->GetRuntimeID()];
+
   const auto header = view->GetHeaderRenderRect();
   const auto headerHeight = (header.bottom - header.top);
   const auto buttonHeight = headerHeight * 0.75f;
@@ -368,9 +370,9 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
   auto primaryLeft = 2 * margin;
   auto secondaryRight = header.right - primaryLeft;
 
-  std::scoped_lock lock(layer.mToolbarMutex);
+  std::scoped_lock lock(toolbar.mMutex);
 
-  layer.mButtons.clear();
+  toolbar.mButtons = {};
 
   const auto cursor = view->GetCursorCanvasPoint();
   const auto ctx = mDXR.mD2DDeviceContext;
@@ -390,14 +392,14 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
   glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  decltype(layer.mActions) actions;
+  decltype(toolbar.mActions) actions;
   std::ranges::copy_if(
-    layer.mActions, std::back_inserter(actions), [](const auto& action) {
+    toolbar.mActions, std::back_inserter(actions), [](const auto& action) {
       return action->GetVisibility(TabAction::Context::InGameToolbar)
         == TabAction::Visibility::Primary;
     });
   std::ranges::copy_if(
-    layer.mActions | std::ranges::views::reverse,
+    toolbar.mActions | std::ranges::views::reverse,
     std::back_inserter(actions),
     [](const auto& action) {
       return action->GetVisibility(TabAction::Context::InGameToolbar)
@@ -424,7 +426,7 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
       button.left = secondaryRight - buttonHeight;
       secondaryRight = button.left - margin;
     }
-    layer.mButtons.push_back({button, action});
+    toolbar.mButtons.push_back({button, action});
 
     ID2D1Brush* brush = mButtonBrush.get();
     if (!action->IsEnabled()) {
@@ -457,40 +459,33 @@ void InterprocessRenderer::OnCursorEvent(
     return;
   }
 
-  auto it = std::ranges::find(
-    mLayers, view, [](const Layer& l) { return l.mKneeboardView; });
-  if (it == mLayers.end()) {
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-  auto& layer = *it;
+  auto& toolbar = mToolbars[view->GetRuntimeID()];
+  scope_guard repaintOnExit([this]() { mNeedsRepaint = true; });
 
-  mNeedsRepaint = true;
-  const auto tab = view->GetCurrentTabView();
   if (
-    layer.mCursorTouching
+    toolbar.mCursorTouching
     && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
     return;
   }
   if (
-    (!layer.mCursorTouching)
+    (!toolbar.mCursorTouching)
     && ev.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
     return;
   }
 
   // touch state change
-  layer.mCursorTouching
+  toolbar.mCursorTouching
     = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
 
   const auto cursor = view->GetCursorCanvasPoint({ev.mX, ev.mY});
 
-  std::unique_lock lock(layer.mToolbarMutex);
+  std::unique_lock lock(toolbar.mMutex);
 
-  if (layer.mCursorTouching) {
+  if (toolbar.mCursorTouching) {
     // Touch start
-    for (const auto& [rect, action]: layer.mButtons) {
+    for (const auto& [rect, action]: toolbar.mButtons) {
       if (IsPointInRect(cursor, rect)) {
-        layer.mActiveButton = {{rect, action}};
+        toolbar.mActiveButton = {{rect, action}};
         break;
       }
     }
@@ -498,13 +493,13 @@ void InterprocessRenderer::OnCursorEvent(
   }
 
   // Touch end
-  const auto button = layer.mActiveButton;
+  const auto button = toolbar.mActiveButton;
   if (!button) {
     return;
   }
 
   const auto [rect, action] = *button;
-  layer.mActiveButton = {};
+  toolbar.mActiveButton = {};
   if (!IsPointInRect(cursor, rect)) {
     return;
   }
@@ -523,26 +518,19 @@ void InterprocessRenderer::OnTabChanged(
     return;
   }
 
-  auto it = std::ranges::find(
-    mLayers, view, [](const Layer& l) { return l.mKneeboardView; });
-  if (it == mLayers.end()) {
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-  auto& layer = *it;
-
   auto tab = view->GetCurrentTabView();
   if (!tab) {
     OPENKNEEBOARD_BREAK;
     return;
   }
 
-  std::scoped_lock lock(layer.mToolbarMutex);
-  layer.mActions = CreateTabActions(mKneeboard, view, tab);
-  layer.mButtons.clear();
-  layer.mActiveButton = {};
+  auto& toolbar = mToolbars[view->GetRuntimeID()];
 
-  for (auto action: layer.mActions) {
+  std::scoped_lock lock(toolbar.mMutex);
+  toolbar.mButtons = {};
+  toolbar.mActions = CreateTabActions(mKneeboard, view, tab);
+
+  for (auto action: toolbar.mActions) {
     AddEventListener(
       action->evStateChangedEvent, [this]() { mNeedsRepaint = true; });
   }

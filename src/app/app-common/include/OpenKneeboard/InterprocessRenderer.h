@@ -22,6 +22,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <d2d1.h>
@@ -36,7 +37,6 @@
 namespace OpenKneeboard {
 class CursorEvent;
 class CursorRenderer;
-class IKneeboardView;
 class KneeboardState;
 class Tab;
 class TabAction;
@@ -76,16 +76,20 @@ class InterprocessRenderer final : private EventReceiver {
 
     std::array<SharedTextureResources, TextureCount> mSharedResources;
 
-    bool mCursorTouching = false;
     bool mIsActiveForInput = false;
+  };
+  std::array<Layer, MaxLayers> mLayers;
+
+  struct Toolbar {
+    bool mCursorTouching = false;
 
     std::vector<std::shared_ptr<TabAction>> mActions;
     using Button = std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>;
     std::vector<Button> mButtons;
     std::optional<Button> mActiveButton;
-    std::mutex mToolbarMutex;
+    std::mutex mMutex;
   };
-  std::array<Layer, MaxLayers> mLayers;
+  std::unordered_map<KneeboardViewID, Toolbar> mToolbars;
 
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
