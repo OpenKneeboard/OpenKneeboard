@@ -27,6 +27,10 @@ TabFirstPageAction::TabFirstPageAction(const std::shared_ptr<ITabView>& state)
   AddEventListener(state->evNeedsRepaintEvent, this->evStateChangedEvent);
 }
 
+TabFirstPageAction::~TabFirstPageAction() {
+  this->RemoveAllEventListeners();
+}
+
 bool TabFirstPageAction::IsEnabled() {
   return mState->GetPageCount() > 1 && mState->GetPageIndex() > 0;
 }

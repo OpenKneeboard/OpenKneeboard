@@ -37,7 +37,9 @@ TabNextPageAction::TabNextPageAction(
     kneeboard->evSettingsChangedEvent, this->evStateChangedEvent);
 }
 
-TabNextPageAction::~TabNextPageAction() = default;
+TabNextPageAction::~TabNextPageAction() {
+  this->RemoveAllEventListeners();
+}
 
 bool TabNextPageAction::IsEnabled() {
   const auto count = mTabView->GetPageCount();

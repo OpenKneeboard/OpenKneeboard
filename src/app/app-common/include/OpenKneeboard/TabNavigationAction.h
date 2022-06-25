@@ -29,8 +29,8 @@ class TabNavigationAction final : public TabToggleAction,
                                   private EventReceiver {
  public:
   TabNavigationAction() = delete;
-
   TabNavigationAction(const std::shared_ptr<ITabView>& state);
+  ~TabNavigationAction();
 
   virtual bool IsActive() override;
   virtual bool IsEnabled() override;

@@ -47,6 +47,7 @@ TabWithDoodles::TabWithDoodles(const DXResources& dxr, KneeboardState* kbs)
 }
 
 TabWithDoodles::~TabWithDoodles() {
+  this->RemoveAllEventListeners();
 }
 
 void TabWithDoodles::ClearContentCache() {
@@ -61,11 +62,13 @@ void TabWithDoodles::PostCursorEvent(
   EventContext,
   const CursorEvent& event,
   uint16_t pageIndex) {
-  std::scoped_lock lock(mBufferedEventsMutex);
-  if (pageIndex >= mDrawings.size()) {
-    mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
+  {
+    std::scoped_lock lock(mBufferedEventsMutex);
+    if (pageIndex >= mDrawings.size()) {
+      mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
+    }
+    mDrawings.at(pageIndex).mBufferedEvents.push_back(event);
   }
-  mDrawings.at(pageIndex).mBufferedEvents.push_back(event);
   if (event.mButtons) {
     this->evNeedsRepaintEvent.Emit();
   }

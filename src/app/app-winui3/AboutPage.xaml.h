@@ -34,6 +34,7 @@ using namespace winrt::Microsoft::UI::Xaml;
 namespace winrt::OpenKneeboardApp::implementation {
 struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
   AboutPage();
+  ~AboutPage();
 
   void OnCopyVersionDataClick(
     const IInspectable&,

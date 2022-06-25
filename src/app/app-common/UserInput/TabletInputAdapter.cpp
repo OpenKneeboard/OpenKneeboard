@@ -136,6 +136,7 @@ TabletInputAdapter::TabletInputAdapter(
 }
 
 TabletInputAdapter::~TabletInputAdapter() {
+  this->RemoveAllEventListeners();
   if (mPreviousWndProc) {
     SetWindowLongPtrW(
       mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWndProc));

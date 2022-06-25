@@ -108,6 +108,10 @@ class TabWithDelegate : public virtual TabWithDelegateBase<T>,
       delegate->evPageChangeRequestedEvent, this->evPageChangeRequestedEvent);
   }
 
+  virtual ~TabWithDelegate() {
+    this->RemoveAllEventListeners();
+  }
+
  protected:
   virtual T* GetDelegate() const final override {
     return mDelegate.get();

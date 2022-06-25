@@ -35,6 +35,7 @@ KneeboardView::KneeboardView(KneeboardState* kneeboard)
 }
 
 KneeboardView::~KneeboardView() {
+  this->RemoveAllEventListeners();
 }
 
 KneeboardViewID KneeboardView::GetRuntimeID() const {

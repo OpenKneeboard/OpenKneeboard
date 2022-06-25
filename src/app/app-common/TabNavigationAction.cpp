@@ -29,6 +29,10 @@ TabNavigationAction::TabNavigationAction(const std::shared_ptr<ITabView>& state)
   AddEventListener(state->evTabModeChangedEvent, this->evStateChangedEvent);
 }
 
+TabNavigationAction::~TabNavigationAction() {
+  this->RemoveAllEventListeners();
+}
+
 bool TabNavigationAction::IsEnabled() {
   return mState->SupportsTabMode(TabMode::NAVIGATION);
 }

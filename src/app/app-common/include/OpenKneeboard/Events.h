@@ -41,8 +41,12 @@ class EventReceiver;
 
 template <class... Args>
 class Event;
+class EventConnectionBase;
+template <class... Args>
+class EventConnection;
 
 class EventBase {
+  friend class EventConnectionBase;
   friend class EventReceiver;
 
  public:
@@ -52,9 +56,43 @@ class EventBase {
   };
 
  protected:
-  static std::recursive_mutex sMutex;
-  EventHandlerToken AddHandler(EventReceiver*);
   virtual void RemoveHandler(EventHandlerToken) = 0;
+  std::recursive_mutex mMutex;
+};
+
+class EventConnectionBase {
+ public:
+  EventHandlerToken mToken;
+  EventBase* mSender;
+  void Invalidate();
+
+ protected:
+  virtual void InvalidateImpl() = 0;
+  std::recursive_mutex mMutex;
+};
+
+template <class... Args>
+class EventConnection : public EventConnectionBase {
+ public:
+  EventConnection(EventBase* sender, EventHandler<Args...> handler)
+    : mHandler(handler) {
+    mSender = sender;
+  }
+
+  void Call(Args... args) {
+    std::unique_lock lock(mMutex);
+    if (mHandler) {
+      mHandler(args...);
+    }
+  }
+
+ protected:
+  virtual void InvalidateImpl() override {
+    mHandler = {};
+  }
+
+ private:
+  EventHandler<Args...> mHandler;
 };
 
 /** a 1:n event. */
@@ -76,15 +114,13 @@ class Event final : public EventBase {
   void PopHook();
 
  protected:
-  EventHandlerToken AddHandler(EventReceiver*, const EventHandler<Args...>&);
+  std::shared_ptr<EventConnectionBase> AddHandler(const EventHandler<Args...>&);
   virtual void RemoveHandler(EventHandlerToken token) override;
 
  private:
-  struct ReceiverInfo {
-    EventReceiver* mReceiver;
-    EventHandler<Args...> mFunc;
-  };
-  std::unordered_map<EventHandlerToken, ReceiverInfo> mReceivers;
+  std::
+    unordered_map<EventHandlerToken, std::shared_ptr<EventConnection<Args...>>>
+      mReceivers;
   std::list<Hook> mHooks;
 };
 
@@ -95,17 +131,18 @@ class EventReceiver {
 
  public:
   EventReceiver();
+  /* You **MUST** call RemoveAllEventListeners() in your
+   * subclass destructor - otherwise other threads may
+   * invoke an event handler while your object is partially
+   * destructed */
   virtual ~EventReceiver();
 
   EventReceiver(const EventReceiver&) = delete;
   EventReceiver& operator=(const EventReceiver&) = delete;
 
  protected:
-  struct SenderInfo {
-    EventBase* mEvent;
-    EventHandlerToken mToken;
-  };
-  std::vector<SenderInfo> mSenders;
+  bool mCleared = false;
+  std::vector<std::shared_ptr<EventConnectionBase>> mSenders;
 
   // `std::type_identity_t` makes the compiler infer `Args` from the event, then
   // match the handler, instead of attempting to infer `Args from both.
@@ -113,14 +150,18 @@ class EventReceiver {
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
     const std::type_identity_t<EventHandler<Args...>>& handler);
+
   template <class... Args>
-    requires(sizeof...(Args) > 0)
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
     std::type_identity_t<Event<Args...>>& forwardAs);
+
   template <class... Args>
+    requires(sizeof...(Args) > 0)
   EventHandlerToken AddEventListener(Event<Args...>& event, Event<>& forwardAs);
+
   template <class... Args>
+    requires(sizeof...(Args) > 0)
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
     const std::function<void()>& handler);
@@ -139,31 +180,44 @@ class EventReceiver {
 
   void RemoveEventListener(EventHandlerToken);
   void RemoveAllEventListeners();
+
+ private:
+  std::recursive_mutex mMutex;
 };
 
 template <class... Args>
-EventHandlerToken Event<Args...>::AddHandler(
-  EventReceiver* receiver,
+std::shared_ptr<EventConnectionBase> Event<Args...>::AddHandler(
   const EventHandler<Args...>& handler) {
-  std::unique_lock lock(sMutex);
-  const auto token = EventBase::AddHandler(receiver);
-  mReceivers.emplace(token, ReceiverInfo {receiver, handler});
-  return token;
+  std::unique_lock lock(mMutex);
+  auto connection = std::make_shared<EventConnection<Args...>>(this, handler);
+  auto token = connection->mToken;
+  mReceivers.emplace(token, connection);
+  return std::move(connection);
 }
 
 template <class... Args>
 void Event<Args...>::RemoveHandler(EventHandlerToken token) {
-  std::unique_lock lock(sMutex);
-  mReceivers.erase(token);
+  std::shared_ptr<EventConnectionBase> receiver;
+  {
+    std::unique_lock lock(mMutex);
+    if (!mReceivers.contains(token)) {
+      return;
+    }
+    receiver = mReceivers.at(token);
+    mReceivers.erase(token);
+  }
+  receiver->Invalidate();
 }
 
 template <class... Args>
 void Event<Args...>::Emit(Args... args) {
   //  Copy in case one is erased while we're running
   decltype(mHooks) hooks;
+  decltype(mReceivers) receivers;
   {
-    std::unique_lock lock(sMutex);
+    std::unique_lock lock(mMutex);
     hooks = mHooks;
+    receivers = mReceivers;
   }
 
   for (const auto& hook: hooks) {
@@ -171,24 +225,20 @@ void Event<Args...>::Emit(Args... args) {
       return;
     }
   }
-  for (const auto& [token, info]: mReceivers) {
-    info.mFunc(args...);
+  for (const auto& [token, receiver]: receivers) {
+    receiver->Call(args...);
   }
 }
 
 template <class... Args>
 Event<Args...>::~Event() {
-  std::unique_lock lock(sMutex);
-  auto receivers = mReceivers;
-  for (const auto& [token, info]: receivers) {
-    auto& receiverHandlers = info.mReceiver->mSenders;
-    for (auto it = receiverHandlers.begin(); it != receiverHandlers.end();) {
-      if (it->mEvent == this) {
-        it = receiverHandlers.erase(it);
-      } else {
-        ++it;
-      }
-    }
+  decltype(mReceivers) receivers;
+  {
+    std::unique_lock lock(mMutex);
+    auto receivers = mReceivers;
+  }
+  for (const auto& [token, receiver]: receivers) {
+    receiver->Invalidate();
   }
 }
 
@@ -206,29 +256,34 @@ template <class... Args>
 EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
   const std::type_identity_t<EventHandler<Args...>>& handler) {
-  return event.AddHandler(this, handler);
-}
-
-template <class... Args>
-EventHandlerToken EventReceiver::AddEventListener(
-  Event<Args...>& event,
-  const std::function<void()>& handler) {
-  return event.AddHandler(this, [handler](Args...) { handler(); });
+  std::unique_lock lock(mMutex);
+  mCleared = false;
+  mSenders.push_back(event.AddHandler(handler));
+  return mSenders.back()->mToken;
 }
 
 template <class... Args>
   requires(sizeof...(Args) > 0)
 EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
-  std::type_identity_t<Event<Args...>>& forwardTo) {
-  return event.AddHandler(this, [&](Args... args) { forwardTo.Emit(args...); });
+  const std::function<void()>& handler) {
+  return AddEventListener(event, [handler](Args...) { handler(); });
 }
 
 template <class... Args>
 EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
+  std::type_identity_t<Event<Args...>>& forwardTo) {
+  return AddEventListener(
+    event, [&forwardTo](Args... args) { forwardTo.Emit(args...); });
+}
+
+template <class... Args>
+  requires(sizeof...(Args) > 0)
+EventHandlerToken EventReceiver::AddEventListener(
+  Event<Args...>& event,
   Event<>& forwardTo) {
-  return event.AddHandler(this, [&](Args...) { forwardTo.Emit(); });
+  return AddEventListener(event, [&forwardTo](Args...) { forwardTo.Emit(); });
 }
 
 }// namespace OpenKneeboard

@@ -59,6 +59,7 @@ void GamesList::LoadDefaultSettings() {
 }
 
 GamesList::~GamesList() {
+  this->RemoveAllEventListeners();
 }
 
 nlohmann::json GamesList::GetSettings() const {

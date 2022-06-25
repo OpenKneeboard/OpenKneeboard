@@ -28,6 +28,7 @@ UserInputDevice::UserInputDevice() {
 }
 
 UserInputDevice::~UserInputDevice() {
+  this->RemoveAllEventListeners();
 }
 
 void UserInputDevice::OnButtonEvent(UserInputButtonEvent ev) {

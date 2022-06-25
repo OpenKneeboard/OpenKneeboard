@@ -98,6 +98,7 @@ DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
 }
 
 DirectInputAdapter::~DirectInputAdapter() {
+  this->RemoveAllEventListeners();
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()

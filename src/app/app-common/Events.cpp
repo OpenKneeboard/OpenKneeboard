@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/dprint.h>
 
 namespace OpenKneeboard {
 
@@ -27,40 +28,67 @@ uint64_t _UniqueIDImpl::GetAndIncrementNextValue() {
   return sNextUniqueID++;
 }
 
-std::recursive_mutex EventBase::sMutex;
-
-EventHandlerToken EventBase::AddHandler(EventReceiver* receiver) {
-  std::unique_lock lock(sMutex);
-  const EventHandlerToken token;
-  receiver->mSenders.push_back({this, token});
-  return token;
-}
-
 EventReceiver::EventReceiver() {
 }
 
 EventReceiver::~EventReceiver() {
+  if (!mCleared) {
+    dprint(
+      "I'm in danger! ~EventReceiver() called without "
+      "RemoveAllEventListeners()");
+    OPENKNEEBOARD_BREAK;
+  } else if (!mSenders.empty()) {
+    dprint(
+      "I'm in danger! ~EventReceiver() has senders "
+      "despite clearing");
+    OPENKNEEBOARD_BREAK;
+  }
   this->RemoveAllEventListeners();
 }
 
 void EventReceiver::RemoveAllEventListeners() {
-  std::unique_lock lock(EventBase::sMutex);
-  while (!mSenders.empty()) {
-    auto sender = mSenders.back();
-    mSenders.pop_back();
-    sender.mEvent->RemoveHandler(sender.mToken);
+  decltype(mSenders) senders;
+  {
+    std::unique_lock lock(mMutex);
+    senders = mSenders;
+    mSenders.clear();
+    mCleared = true;
+  }
+
+  for (auto& sender: senders) {
+    sender->Invalidate();
   }
 }
 
 void EventReceiver::RemoveEventListener(EventHandlerToken token) {
-  std::unique_lock lock(EventBase::sMutex);
-  auto it = std::ranges::find(
-    mSenders, token, [](const SenderInfo& sender) { return sender.mToken; });
-  if (it == mSenders.end()) {
-    return;
+  std::shared_ptr<EventConnectionBase> toInvalidate;
+  {
+    std::unique_lock lock(mMutex);
+    for (auto it = mSenders.begin(); it != mSenders.end(); ++it) {
+      auto& sender = *it;
+      if (sender->mToken != token) {
+        continue;
+      }
+      toInvalidate = sender;
+      mSenders.erase(it);
+      break;
+    }
   }
-  it->mEvent->RemoveHandler(token);
-  mSenders.erase(it);
+  if (toInvalidate) {
+    toInvalidate->Invalidate();
+  }
+}
+
+void EventConnectionBase::Invalidate() {
+  std::unique_lock lock(mMutex);
+  auto sender = mSender;
+  mSender = nullptr;
+
+  if (sender) {
+    sender->RemoveHandler(mToken);
+  }
+
+  this->InvalidateImpl();
 }
 
 }// namespace OpenKneeboard

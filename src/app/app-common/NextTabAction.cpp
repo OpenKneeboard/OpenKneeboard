@@ -36,7 +36,9 @@ NextTabAction::NextTabAction(
     kneeboardState->evSettingsChangedEvent, this->evStateChangedEvent);
 }
 
-NextTabAction::~NextTabAction() = default;
+NextTabAction::~NextTabAction() {
+  this->RemoveAllEventListeners();
+}
 
 TabAction::Visibility NextTabAction::GetVisibility(Context ctx) const {
   switch (ctx) {

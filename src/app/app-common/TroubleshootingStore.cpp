@@ -62,6 +62,7 @@ TroubleshootingStore::TroubleshootingStore() {
 }
 
 TroubleshootingStore::~TroubleshootingStore() {
+  this->RemoveAllEventListeners();
 }
 
 void TroubleshootingStore::OnGameEvent(const GameEvent& ev) {

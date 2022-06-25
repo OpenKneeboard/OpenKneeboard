@@ -67,6 +67,10 @@ AboutPage::AboutPage() {
     });
 }
 
+AboutPage::~AboutPage() {
+  this->RemoveAllEventListeners();
+}
+
 void AboutPage::PopulateVersion() {
   std::string_view commitID(Version::CommitID);
 

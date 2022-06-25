@@ -28,8 +28,8 @@ class ITabView;
 class TabFirstPageAction final : public TabAction, private EventReceiver {
  public:
   TabFirstPageAction() = delete;
-
   TabFirstPageAction(const std::shared_ptr<ITabView>& state);
+  ~TabFirstPageAction();
 
   virtual bool IsEnabled() override;
   virtual void Execute() override;

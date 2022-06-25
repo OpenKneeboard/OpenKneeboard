@@ -97,6 +97,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 }
 
 KneeboardState::~KneeboardState() {
+  this->RemoveAllEventListeners();
   mGameEventThread.request_stop();
   mOpenVRThread.request_stop();
   mGameEventThread.join();

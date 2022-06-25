@@ -46,7 +46,9 @@ TabView::TabView(KneeboardState* kneeboard, const std::shared_ptr<Tab>& tab)
     this->evAvailableFeaturesChangedEvent);
 }
 
-TabView::~TabView() = default;
+TabView::~TabView() {
+  this->RemoveAllEventListeners();
+}
 
 std::shared_ptr<Tab> TabView::GetRootTab() const {
   return mRootTab;

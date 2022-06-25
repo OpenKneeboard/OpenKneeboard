@@ -36,7 +36,9 @@ PreviousTabAction::PreviousTabAction(
     kneeboardState->evSettingsChangedEvent, this->evStateChangedEvent);
 }
 
-PreviousTabAction::~PreviousTabAction() = default;
+PreviousTabAction::~PreviousTabAction() {
+  this->RemoveAllEventListeners();
+}
 
 TabAction::Visibility PreviousTabAction::GetVisibility(Context ctx) const {
   switch (ctx) {

@@ -89,10 +89,14 @@
     "valarray": "cpp",
     "mutex": "cpp",
     "numbers": "cpp",
-    // removed as inconsistent formatting.
-    // "*.idl": "cpp",
     "condition_variable": "cpp",
-    "future": "cpp"
+    "future": "cpp",
+    "codecvt": "cpp",
+    "cwctype": "cpp",
+    "resumable": "cpp",
+    "ranges": "cpp",
+    "shared_mutex": "cpp",
+    "span": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",

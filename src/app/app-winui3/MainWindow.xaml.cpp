@@ -145,6 +145,7 @@ MainWindow::MainWindow() {
 }
 
 MainWindow::~MainWindow() {
+  this->RemoveAllEventListeners();
   gMainWindow = {};
 }
 

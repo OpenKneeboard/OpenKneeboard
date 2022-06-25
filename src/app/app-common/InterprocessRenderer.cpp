@@ -203,6 +203,7 @@ InterprocessRenderer::InterprocessRenderer(
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
+  this->RemoveAllEventListeners();
   auto ctx = mD3DContext;
   ctx->Flush();
 }

@@ -38,7 +38,9 @@ TabPreviousPageAction::TabPreviousPageAction(
     kneeboard->evSettingsChangedEvent, this->evStateChangedEvent);
 }
 
-TabPreviousPageAction::~TabPreviousPageAction() = default;
+TabPreviousPageAction::~TabPreviousPageAction() {
+  this->RemoveAllEventListeners();
+}
 
 bool TabPreviousPageAction::IsEnabled() {
   if (mKneeboard->GetAppSettings().mLoopPages) {
