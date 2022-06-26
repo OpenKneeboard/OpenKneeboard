@@ -43,12 +43,15 @@
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Windows::Web::Http;
+using namespace winrt::Windows::Foundation;
 using namespace winrt;
 
 namespace OpenKneeboard {
 
-winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
-  const XamlRoot& xamlRoot) {
+IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
+  winrt::apartment_context uiThread;
+
   const auto now = std::chrono::duration_cast<std::chrono::seconds>(
                      std::chrono::system_clock::now().time_since_epoch())
                      .count();
@@ -58,7 +61,7 @@ winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
     co_return;
   }
 
-  Windows::Web::Http::HttpClient http;
+  HttpClient http;
   auto headers = http.DefaultRequestHeaders();
   headers.UserAgent().Append(
     {ProjectNameW,
@@ -79,9 +82,8 @@ winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
   nlohmann::json releases;
   try {
     // GetStringAsync is UTF-16, GetBufferAsync is often truncated
-    auto stream
-      = co_await http.GetInputStreamAsync(Windows::Foundation::Uri(hstring {
-        L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
+    auto stream = co_await http.GetInputStreamAsync(Uri(hstring {
+      L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
     std::string json;
     Windows::Storage::Streams::Buffer buffer(4096);
     Windows::Storage::Streams::IBuffer readBuffer;
@@ -191,22 +193,57 @@ winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
   {
     ContentDialog dialog;
     dialog.XamlRoot(xamlRoot);
-    dialog.Title(box_value(to_hstring(_("Update OpenKneeboard")))),
-      dialog.Content(box_value(to_hstring(std::format(
-        _("A new version of OpenKneeboard is available; would you like to "
-          "upgrade from {} to {}?"),
-        oldName,
-        newName))));
-    dialog.PrimaryButtonText(to_hstring(_("Update Now")));
-    dialog.SecondaryButtonText(to_hstring(_("Skip This Version")));
-    dialog.CloseButtonText(to_hstring(_("Not Now")));
+    dialog.Title(box_value(to_hstring(_(L"Update OpenKneeboard"))));
+    dialog.Content(box_value(to_hstring(std::format(
+      _("A new version of OpenKneeboard is available; would you like to "
+        "upgrade from {} to {}?"),
+      oldName,
+      newName))));
+    dialog.PrimaryButtonText(_(L"Update Now"));
+    dialog.SecondaryButtonText(_(L"Skip This Version"));
+    dialog.CloseButtonText(_(L"Not Now"));
     dialog.DefaultButton(ContentDialogButton::Primary);
 
     result = co_await dialog.ShowAsync();
   }
 
   if (result == ContentDialogResult::Primary) {
-    co_await resume_background();
+    co_await uiThread;
+    ProgressRing progressRing;
+    TextBlock progressText;
+    progressText.Text(_(L"Starting download..."));
+
+    StackPanel layout;
+    layout.Margin({12, 12, 12, 12});
+    layout.Spacing(8);
+    layout.Orientation(Orientation::Horizontal);
+    layout.Children().Append(progressRing);
+    layout.Children().Append(progressText);
+
+    ContentDialog dialog;
+    dialog.XamlRoot(xamlRoot);
+    dialog.Title(box_value(to_hstring(_(L"Downloading Update"))));
+    dialog.Content(layout);
+    dialog.CloseButtonText(_(L"Cancel"));
+    bool cancelled = false;
+    auto dialogResultAsync = [](bool& cancelled, ContentDialog& dialog)
+      -> decltype(dialog.ShowAsync()) {
+      const auto result = co_await dialog.ShowAsync();
+      if (result == ContentDialogResult::None) {
+        cancelled = true;
+      }
+      co_return result;
+    }(cancelled, dialog);
+
+    // ProgressRing is buggy inside a ContentDialog, and only works properly
+    // after it has been set multiple times with a time delay
+    progressRing.IsIndeterminate(false);
+    progressRing.IsActive(true);
+    progressRing.Value(0);
+    co_await winrt::resume_after(std::chrono::milliseconds(100));
+    co_await uiThread;
+    progressRing.Value(100);
+    progressRing.IsIndeterminate(true);
 
     wchar_t tempPath[MAX_PATH];
     auto tempPathLen = GetTempPathW(MAX_PATH, tempPath);
@@ -221,27 +258,71 @@ winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
         std::filesystem::remove(tmpFile);
       }
       std::ofstream of(tmpFile, std::ios::binary | std::ios::out);
-      auto stream = co_await http.GetInputStreamAsync(
-        Windows::Foundation::Uri {to_hstring(msixURL)});
+      uint64_t totalBytes = 0;
+      auto op = http.GetInputStreamAsync(Uri {to_hstring(msixURL)});
+      op.Progress([&](auto&, const HttpProgress& hp) {
+        if (hp.TotalBytesToReceive) {
+          totalBytes = hp.TotalBytesToReceive.Value();
+        }
+      });
+      auto stream = co_await op;
       Windows::Storage::Streams::Buffer buffer(4096);
       Windows::Storage::Streams::IBuffer readBuffer;
+      uint64_t bytesRead = 0;
       do {
         readBuffer = co_await stream.ReadAsync(
           buffer,
           buffer.Capacity(),
           Windows::Storage::Streams::InputStreamOptions::Partial);
+
         of << std::string_view {
           reinterpret_cast<const char*>(readBuffer.data()),
           readBuffer.Length()};
-      } while (readBuffer.Length() > 0);
+
+        bytesRead += readBuffer.Length();
+        co_await uiThread;
+        progressRing.IsIndeterminate(false);
+        progressRing.Value((100.0 * bytesRead) / totalBytes);
+        progressText.Text(std::format(
+          _(L"{:0.2f}MiB of {:0.2f}MiB"),
+          bytesRead / (1024.0 * 1024),
+          totalBytes / (1024.0 * 1024)));
+
+      } while (readBuffer.Length() > 0 && !cancelled);
       of.close();
+      if (cancelled) {
+        if (std::filesystem::exists(tmpFile)) {
+          std::filesystem::remove(tmpFile);
+        }
+        co_return;
+      }
       std::filesystem::rename(tmpFile, destination);
+    }
+
+    co_await uiThread;
+    dialog.Title(box_value(to_hstring(_(L"Installing Update"))));
+    progressRing.IsIndeterminate(true);
+    progressRing.IsActive(true);
+
+    progressText.Text(_(L"Launching installer..."));
+
+    co_await winrt::when_any(
+      [](decltype(dialogResultAsync)& dialogResultAsync) -> IAsyncAction {
+        co_await dialogResultAsync;
+      }(dialogResultAsync),
+      []() -> IAsyncAction {
+        co_await resume_after(std::chrono::seconds(2));
+      }());
+    if (cancelled) {
+      co_return;
     }
     settings.mForceUpgradeTo = {};
     auto app = gKneeboard->GetAppSettings();
     app.mAutoUpdate = settings;
     gKneeboard->SetAppSettings(app);
     OpenKneeboard::LaunchURI(to_utf8(destination));
+    co_await uiThread;
+    Application::Current().Exit();
     co_return;
   }
 
