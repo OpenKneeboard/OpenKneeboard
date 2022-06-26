@@ -103,15 +103,17 @@ void AboutPage::PopulateVersion() {
   }
 
   auto details = std::format(
-    "OpenKneeboard v{}\n\n"
+    "OpenKneeboard {}\n\n"
     "Copyright © 2021-2022 Frederick Emmott.\n\n"
     "With thanks to Paul 'Goldwolf' Whittingham for the logo and banner "
     "artwork.\n\n"
+    "v{}\n"
     "Package: {}\n"
     "Built at: {}\n"
     "Build type: {}-{}\n"
     "Commited at: {:%Y-%m-%dT%H:%M:%SZ}\n"
     "Commit ID: {}\n",
+    Version::ReleaseName,
     version,
     packageNameLen ? to_utf8(std::wstring_view(packageName, packageNameLen))
                    : "Unpackaged",
