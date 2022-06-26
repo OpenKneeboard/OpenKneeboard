@@ -145,7 +145,6 @@ MainWindow::MainWindow() {
 }
 
 MainWindow::~MainWindow() {
-  this->RemoveAllEventListeners();
   gMainWindow = {};
 }
 
@@ -209,6 +208,8 @@ void MainWindow::SaveWindowPosition() {
 winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) noexcept {
+  this->RemoveAllEventListeners();
+
   this->SaveWindowPosition();
 
   dprint("Stopping frame timer...");
