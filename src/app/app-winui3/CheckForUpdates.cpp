@@ -78,8 +78,21 @@ winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
 
   nlohmann::json releases;
   try {
-    auto json = co_await http.GetBufferAsync(Windows::Foundation::Uri(hstring {
-      L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
+    // GetStringAsync is UTF-16, GetBufferAsync is often truncated
+    auto stream
+      = co_await http.GetInputStreamAsync(Windows::Foundation::Uri(hstring {
+        L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
+    std::string json;
+    Windows::Storage::Streams::Buffer buffer(4096);
+    Windows::Storage::Streams::IBuffer readBuffer;
+    do {
+      readBuffer = co_await stream.ReadAsync(
+        buffer,
+        buffer.Capacity(),
+        Windows::Storage::Streams::InputStreamOptions::Partial);
+      json += std::string_view {
+        reinterpret_cast<const char*>(readBuffer.data()), readBuffer.Length()};
+    } while (readBuffer.Length() > 0);
     releases = nlohmann::json::parse(json.data());
   } catch (const nlohmann::json::parse_error&) {
     dprint("Buffering error, or invalid JSON from GitHub API");
