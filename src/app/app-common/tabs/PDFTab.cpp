@@ -87,6 +87,7 @@ struct PDFTab::Impl final {
   NormalizedLink mActiveLink;
   uint16_t mActivePage;
   bool mNavigationLoaded = false;
+  std::jthread mQPDFThread;
 };
 
 PDFTab::PDFTab(
@@ -114,6 +115,10 @@ PDFTab::PDFTab(
 }
 
 PDFTab::~PDFTab() {
+  if (p) {
+    p->mQPDFThread.request_stop();
+    p->mQPDFThread.join();
+  }
 }
 
 nlohmann::json PDFTab::GetSettings() const {
@@ -130,7 +135,9 @@ utf8_string PDFTab::GetTitle() const {
 
 namespace {
 
-std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(QPDF& pdf) {
+std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(
+  QPDF& pdf,
+  std::stop_token stopToken) {
   QPDFPageDocumentHelper pdh(pdf);
   auto pages = pdh.getAllPages();
 
@@ -144,6 +151,9 @@ std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(QPDF& pdf) {
 
   std::vector<std::vector<NormalizedLink>> ret;
   for (auto& page: pages) {
+    if (stopToken.stop_requested()) {
+      return {};
+    }
     // Useful references:
     // - i7j-rups
     // -
@@ -289,7 +299,7 @@ void PDFTab::Reload() {
     _this->evFullyReplacedEvent.Emit();
   }();
 
-  std::thread {[this] {
+  p->mQPDFThread = {[this](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"PDFTab QPDF Thread");
     const auto startTime = std::chrono::steady_clock::now();
     scope_guard timer([startTime]() {
@@ -338,6 +348,9 @@ void PDFTab::Reload() {
     {
       uint16_t nextIndex = 0;
       for (const auto& page: QPDFPageDocumentHelper(qpdf).getAllPages()) {
+        if (stopToken.stop_requested()) {
+          return;
+        }
         pageIndices[page.getObjectHandle().getObjGen()] = nextIndex++;
       }
     }
@@ -347,8 +360,7 @@ void PDFTab::Reload() {
     p->mBookmarks = GetNavigationEntries(pageIndices, outlines);
     if (p->mBookmarks.empty()) {
       p->mBookmarks.clear();
-      const auto pageCount = QPDFPageDocumentHelper(qpdf).getAllPages().size();
-      for (uint16_t i = 0; i < pageCount; ++i) {
+      for (uint16_t i = 0; i < pageIndices.size(); ++i) {
         p->mBookmarks.push_back({std::format(_("Page {}"), i + 1), i});
       }
     }
@@ -359,10 +371,13 @@ void PDFTab::Reload() {
         std::chrono::steady_clock::now() - startTime);
     dprintf("QPDF outline time: {}ms", outlineTime);
 
+    if (stopToken.stop_requested()) {
+      return;
+    }
     this->evAvailableFeaturesChangedEvent.Emit();
 
-    p->mLinks = FindAllHyperlinks(qpdf);
-  }}.detach();
+    p->mLinks = FindAllHyperlinks(qpdf, stopToken);
+  }};
 }
 
 uint16_t PDFTab::GetPageCount() const {
