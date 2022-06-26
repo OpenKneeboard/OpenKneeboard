@@ -311,7 +311,7 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
         co_await dialogResultAsync;
       }(dialogResultAsync),
       []() -> IAsyncAction {
-        co_await resume_after(std::chrono::seconds(2));
+        co_await resume_after(std::chrono::seconds(1));
       }());
     if (cancelled) {
       co_return;
