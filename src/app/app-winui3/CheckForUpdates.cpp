@@ -174,20 +174,28 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
 
   dprintf("Found upgrade {} to {}", oldName, newName);
   if (newName == settings.mSkipVersion) {
-    dprint("Skipping update at user request.");
+    dprintf("Skipping {} at user request.", newName);
     co_return;
   }
   const auto assets = release.at("assets");
-  const auto msixAsset = std::ranges::find_if(assets, [=](const auto& asset) {
+  auto updateAsset = std::ranges::find_if(assets, [=](const auto& asset) {
     auto name = asset.at("name").get<std::string_view>();
     return name.ends_with(".msix") && (name.find("Debug") == name.npos);
   });
-  if (msixAsset == assets.end()) {
+  if (updateAsset == assets.end()) {
     dprint("Didn't find any MSIX");
-    co_return;
+    updateAsset = std::ranges::find_if(assets, [=](const auto& asset) {
+      auto name = asset.at("name").get<std::string_view>();
+      return name.ends_with(".msi") && (name.find("Debug") == name.npos);
+    });
+    if (updateAsset == assets.end()) {
+      dprint("Didn't find any MSI");
+      co_return;
+    }
   }
-  auto msixURL = msixAsset->at("browser_download_url").get<std::string_view>();
-  dprintf("MSIX found at {}", msixURL);
+  const auto updateURL
+    = updateAsset->at("browser_download_url").get<std::string_view>();
+  dprintf("Update installer found at {}", updateURL);
 
   ContentDialogResult result;
   {
@@ -264,7 +272,7 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
 
     const auto destination
       = std::filesystem::path(std::wstring_view {tempPath, tempPathLen})
-      / msixAsset->at("name").get<std::string_view>();
+      / updateAsset->at("name").get<std::string_view>();
     if (!std::filesystem::exists(destination)) {
       auto tmpFile = destination;
       tmpFile += ".download";
@@ -273,7 +281,7 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
       }
       std::ofstream of(tmpFile, std::ios::binary | std::ios::out);
       uint64_t totalBytes = 0;
-      auto op = http.GetInputStreamAsync(Uri {to_hstring(msixURL)});
+      auto op = http.GetInputStreamAsync(Uri {to_hstring(updateURL)});
       op.Progress([&](auto&, const HttpProgress& hp) {
         if (hp.TotalBytesToReceive) {
           totalBytes = hp.TotalBytesToReceive.Value();
