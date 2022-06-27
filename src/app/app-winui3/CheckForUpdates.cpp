@@ -159,6 +159,10 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
 
   if (release.is_null()) {
     dprint("Didn't find a valid release.");
+    settings.mDisabledUntil = now + (60 * 60 * 24);
+    auto app = gKneeboard->GetAppSettings();
+    app.mAutoUpdate = settings;
+    gKneeboard->SetAppSettings(app);
     co_return;
   }
 
