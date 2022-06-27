@@ -271,6 +271,7 @@ void InterprocessRenderer::RenderWithChrome(
   const auto headerRect = view->GetHeaderRenderRect();
 
   auto ctx = mDXR.mD2DDeviceContext;
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->FillRectangle(headerRect, mHeaderBGBrush.get());
 
   const D2D1_SIZE_F headerSize {
@@ -332,7 +333,6 @@ void InterprocessRenderer::RenderWithChrome(
   ctx->DrawTextLayout({0.0f, 0.0f}, headerLayout.get(), mHeaderTextBrush.get());
 #endif
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   auto cursorPoint = view->GetCursorCanvasPoint();
 
   this->RenderToolbar(layer);
