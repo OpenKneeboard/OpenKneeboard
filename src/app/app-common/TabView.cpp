@@ -130,6 +130,7 @@ void TabView::OnTabFullyReplaced() {
   if (!mActiveSubTab) {
     evNeedsRepaintEvent.Emit();
   }
+  evAvailableFeaturesChangedEvent.Emit();
   evPageChangedEvent.Emit();
 }
 
