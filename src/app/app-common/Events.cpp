@@ -79,16 +79,4 @@ void EventReceiver::RemoveEventListener(EventHandlerToken token) {
   }
 }
 
-void EventConnectionBase::Invalidate() {
-  std::unique_lock lock(mMutex);
-  auto sender = mSender;
-  mSender = nullptr;
-
-  if (sender) {
-    sender->RemoveHandler(mToken);
-  }
-
-  this->InvalidateImpl();
-}
-
 }// namespace OpenKneeboard

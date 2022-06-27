@@ -63,20 +63,19 @@ class EventBase {
 class EventConnectionBase {
  public:
   EventHandlerToken mToken;
-  EventBase* mSender;
-  void Invalidate();
-
- protected:
-  virtual void InvalidateImpl() = 0;
-  std::recursive_mutex mMutex;
+  virtual void Invalidate() = 0;
 };
 
 template <class... Args>
 class EventConnection : public EventConnectionBase {
  public:
-  EventConnection(EventBase* sender, EventHandler<Args...> handler)
-    : mHandler(handler) {
-    mSender = sender;
+  EventConnection(EventHandler<Args...> handler) : mHandler(handler) {
+  }
+
+  constexpr operator bool() const noexcept {
+    // not bothering with the lock, as it's checked with lock in Call() and
+    // Invalidate() anyway
+    return static_cast<bool>(mHandler);
   }
 
   void Call(Args... args) {
@@ -86,13 +85,14 @@ class EventConnection : public EventConnectionBase {
     }
   }
 
- protected:
-  virtual void InvalidateImpl() override {
+  virtual void Invalidate() override {
+    std::unique_lock lock(mMutex);
     mHandler = {};
   }
 
  private:
   EventHandler<Args...> mHandler;
+  std::recursive_mutex mMutex;
 };
 
 /** a 1:n event. */
@@ -189,7 +189,7 @@ template <class... Args>
 std::shared_ptr<EventConnectionBase> Event<Args...>::AddHandler(
   const EventHandler<Args...>& handler) {
   std::unique_lock lock(mMutex);
-  auto connection = std::make_shared<EventConnection<Args...>>(this, handler);
+  auto connection = std::make_shared<EventConnection<Args...>>(handler);
   auto token = connection->mToken;
   mReceivers.emplace(token, connection);
   return std::move(connection);
@@ -213,11 +213,18 @@ template <class... Args>
 void Event<Args...>::Emit(Args... args) {
   //  Copy in case one is erased while we're running
   decltype(mHooks) hooks;
-  decltype(mReceivers) receivers;
+  std::vector<std::shared_ptr<EventConnection<Args...>>> receivers;
   {
     std::unique_lock lock(mMutex);
     hooks = mHooks;
-    receivers = mReceivers;
+    for (auto it = mReceivers.begin(); it != mReceivers.end(); ++it) {
+      auto receiver = it->second;
+      if (!receiver) {
+        mReceivers.erase(it);
+        continue;
+      }
+      receivers.push_back(receiver);
+    }
   }
 
   for (const auto& hook: hooks) {
@@ -225,7 +232,7 @@ void Event<Args...>::Emit(Args... args) {
       return;
     }
   }
-  for (const auto& [token, receiver]: receivers) {
+  for (const auto& receiver: receivers) {
     receiver->Call(args...);
   }
 }
