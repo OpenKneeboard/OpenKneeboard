@@ -1,10 +1,15 @@
-
 set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
 create_version_rc(
   OpenKneeboard-App-WinUI3_version-rc
   OpenKneeboard-App-WinUI3
   OpenKneeboardApp.exe
   ${VERSION_RC_FILE}
+)
+
+set(
+  CMAKE_CXX_STANDARD_LIBRARIES
+  # Keep stuff that NuGet package references added
+  "%(AdditionalDependencies)"
 )
 
 add_executable(
@@ -63,6 +68,7 @@ target_link_libraries(
   OpenKneeboard-version
   System::Dbghelp
   System::Shell32
+  System::User32
 )
 
 target_include_directories(

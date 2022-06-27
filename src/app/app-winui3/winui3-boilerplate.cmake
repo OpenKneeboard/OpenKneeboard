@@ -25,6 +25,9 @@ set_target_properties(
   VS_GLOBAL_CppWinRTRootNamespaceAutoMerge true
   VS_GLOBAL_UseWinUI true
   VS_GLOBAL_ApplicationType "Windows Store"
+  VS_GLOBAL_ApplicationTypeRevision 10.0
+  VS_GLOBAL_WindowsTargetPlatformVersion 10.0
+  VS_GLOBAL_WindowsTargetPlatformMinVersion 10.0.17763.0
   VS_GLOBAL_WindowsPackageType None
   VS_GLOBAL_EnablePreviewMsixTooling true
   VS_GLOBAL_WindowsAppSDKSelfContained true

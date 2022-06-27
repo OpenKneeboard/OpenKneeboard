@@ -10,6 +10,7 @@ set(
   Dxguid
   Rpcrt4
   Shell32
+  User32
   WindowsApp
 )
 foreach(LIBRARY ${SYSTEM_LIBRARIES})
