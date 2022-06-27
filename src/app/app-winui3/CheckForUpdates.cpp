@@ -191,14 +191,28 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
 
   ContentDialogResult result;
   {
+    HyperlinkButton releaseNotesLink;
+    releaseNotesLink.Content(box_value(
+      to_hstring(std::format(_("OpenKneeboard {} is available!"), newName))));
+    releaseNotesLink.NavigateUri(
+      Uri {to_hstring(release.at("html_url").get<std::string_view>())});
+    releaseNotesLink.HorizontalAlignment(HorizontalAlignment::Center);
+    TextBlock promptText;
+    promptText.Text(to_hstring(
+      std::format(_("Would you like to upgrade from {}?"), oldName)));
+    promptText.TextWrapping(TextWrapping::WrapWholeWords);
+
+    StackPanel layout;
+    layout.Margin({8, 8, 8, 8});
+    layout.Spacing(4);
+    layout.Orientation(Orientation::Vertical);
+    layout.Children().Append(releaseNotesLink);
+    layout.Children().Append(promptText);
+
     ContentDialog dialog;
     dialog.XamlRoot(xamlRoot);
     dialog.Title(box_value(to_hstring(_(L"Update OpenKneeboard"))));
-    dialog.Content(box_value(to_hstring(std::format(
-      _("A new version of OpenKneeboard is available; would you like to "
-        "upgrade from {} to {}?"),
-      oldName,
-      newName))));
+    dialog.Content(layout);
     dialog.PrimaryButtonText(_(L"Update Now"));
     dialog.SecondaryButtonText(_(L"Skip This Version"));
     dialog.CloseButtonText(_(L"Not Now"));
