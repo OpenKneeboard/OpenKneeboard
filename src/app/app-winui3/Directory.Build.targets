@@ -5,4 +5,10 @@
   <ItemDefinitionGroup>
     <Midl><OutputDirectory /></Midl>
   </ItemDefinitionGroup>
+  <!-- Per Windows App SDK 1.1 release notes, this is a workaround that shouldn't be needed for 1.2 -->
+  <Target Name="_RemoveFrameworkReferences" BeforeTargets="_ConvertItems;_CalculateInputsForGenerateCurrentProjectAppxManifest">
+    <ItemGroup>
+      <FrameworkSdkReference Remove="@(FrameworkSdkReference)" Condition="$([System.String]::Copy('%(FrameworkSdkReference.SDKName)').StartsWith('Microsoft.WindowsAppRuntime.'))" />
+    </ItemGroup>
+  </Target>
 </Project>

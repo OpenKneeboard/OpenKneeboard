@@ -4,6 +4,15 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(
+  CMAKE_VS_GLOBALS
+  "AppxPackage=false"
+  "RuntimeIdentifier=win10-x64"
+  "RuntimeIdentifiers=win10-x64"
+  "BaseNuGetRuntimeIdentifier=win10"
+  "AssetTargetFallback=$(AssetTargetFallback);native"
+)
+
 add_compile_options(
   # Standard C++ exception behavior
   "/EHsc"
