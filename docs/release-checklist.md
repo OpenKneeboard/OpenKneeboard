@@ -7,8 +7,9 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 * SteamVR
   * Gaze zoom before and after recentering
 * Oculus: DX11 and DX12
-* OpenXR: DX11
+* OpenXR: DX11 and DX12
 * Non-VR: DX11
+* Gaze detection, zoomed and unzoomed (`hello_xr` is useful for testing)
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys
 * Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
 * Variable aspect ratios
@@ -17,6 +18,7 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 * Physical joystick/throttle
 * VJoy controller
 * adding, removing, reordering tabs, including DCS tabs
+* expected default tabs with quick start guide on fresh install
 * adding, removing games
 * finding DCS from empty games list
 * DCS integration test utilities: `fake-dcs.exe` and `test-gameevent-feeder.exe`
