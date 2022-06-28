@@ -30,7 +30,7 @@ set_target_properties(
   VS_GLOBAL_WindowsTargetPlatformMinVersion 10.0.17763.0
   VS_GLOBAL_WindowsPackageType None
   VS_GLOBAL_EnablePreviewMsixTooling true
-  VS_GLOBAL_WindowsAppSDKSelfContained true
+  VS_GLOBAL_WindowsAppSDKSelfContained false
 )
 
 # Set source file dependencies properly for Xaml and non-Xaml IDL
