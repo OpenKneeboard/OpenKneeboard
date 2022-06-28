@@ -65,6 +65,7 @@ class VRKneeboard {
 
   uint64_t mRecenterCount = 0;
   Matrix mRecenter = Matrix::Identity;
+  std::unordered_map<uint64_t, bool> mIsLookingAtKneeboard;
 
   Pose GetKneeboardPose(
     const VRRenderConfig& vr,

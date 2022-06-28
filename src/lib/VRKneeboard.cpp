@@ -130,13 +130,13 @@ bool VRKneeboard::IsLookingAtKneeboard(
   const SHM::LayerConfig& layer,
   const Pose& hmdPose,
   const Pose& kneeboardPose) {
-  static bool sIsLookingAtKneeboard = false;
+  auto& isLookingAtKneeboard = mIsLookingAtKneeboard[layer.mLayerID];
 
   const auto sizes = this->GetSizes(config.mVR, layer);
   const auto currentSize
-    = sIsLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
+    = isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
 
-  sIsLookingAtKneeboard = RayIntersectsRect(
+  isLookingAtKneeboard = RayIntersectsRect(
     hmdPose.mPosition,
     hmdPose.mOrientation,
     kneeboardPose.mPosition,
@@ -144,7 +144,7 @@ bool VRKneeboard::IsLookingAtKneeboard(
     currentSize);
 
   if (
-    sIsLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID
+    isLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID
     && (config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)) {
     GameEvent {
       GameEvent::EVT_SET_INPUT_FOCUS,
@@ -153,7 +153,7 @@ bool VRKneeboard::IsLookingAtKneeboard(
       .Send();
   }
 
-  return sIsLookingAtKneeboard;
+  return isLookingAtKneeboard;
 }
 
 }// namespace OpenKneeboard
