@@ -35,6 +35,15 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const XrGraphicsBindingD3D11KHR&);
   ~OpenXRD3D11Kneeboard();
 
+  static bool Render(
+    OpenXRNext*,
+    ID3D11Device*,
+    const std::vector<winrt::com_ptr<ID3D11RenderTargetView>>&,
+    XrSwapchain,
+    const SHM::Snapshot&,
+    uint8_t layerIndex,
+    const VRKneeboard::RenderParameters&);
+
  protected:
   virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) override;
   virtual bool Render(

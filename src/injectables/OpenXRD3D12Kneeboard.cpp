@@ -28,6 +28,7 @@
 #include <d3d12.h>
 #include <shims/winrt.h>
 
+#include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRNext.h"
 
 #define XR_USE_GRAPHICS_API_D3D12
@@ -168,49 +169,14 @@ bool OpenXRD3D12Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  auto oxr = this->GetOpenXR();
-
-  auto config = snapshot.GetConfig();
-  uint32_t textureIndex;
-  auto nextResult
-    = oxr->xrAcquireSwapchainImage(swapchain, nullptr, &textureIndex);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to acquire swapchain image: {}", nextResult);
-    return false;
-  }
-
-  XrSwapchainImageWaitInfo waitInfo {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = XR_INFINITE_DURATION,
-  };
-  nextResult = oxr->xrWaitSwapchainImage(swapchain, &waitInfo);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to wait for swapchain image: {}", nextResult);
-    nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
-    if (nextResult != XR_SUCCESS) {
-      dprintf("Failed to release swapchain image: {}", nextResult);
-    }
-    return false;
-  }
-
-  {
-    auto device = m11on12.get();
-    auto sharedTexture = snapshot.GetLayerTexture(device, layerIndex);
-    if (!sharedTexture.IsValid()) {
-      dprint("Failed to get shared texture");
-      return false;
-    }
-    D3D11::CopyTextureWithOpacity(
-      device,
-      sharedTexture.GetShaderResourceView(),
-      mRenderTargetViews.at(layerIndex).at(textureIndex).get(),
-      renderParameters.mKneeboardOpacity);
-  }
-  nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to release swapchain: {}", nextResult);
-  }
-  return true;
+  return OpenXRD3D11Kneeboard::Render(
+    this->GetOpenXR(),
+    m11on12.get(),
+    mRenderTargetViews.at(layerIndex),
+    swapchain,
+    snapshot,
+    layerIndex,
+    renderParameters);
 }
 
 }// namespace OpenKneeboard
