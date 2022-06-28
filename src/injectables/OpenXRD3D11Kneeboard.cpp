@@ -108,21 +108,15 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   }
 
   mRenderTargetViews.at(layerIndex).resize(imageCount);
-  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {.MipSlice = 0},
-  };
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
     if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
       OPENKNEEBOARD_BREAK;
     }
 #endif
-    winrt::check_hresult(mDevice->CreateRenderTargetView(
-      images.at(i).texture,
-      &rtvd,
-      mRenderTargetViews.at(layerIndex).at(i).put()));
+    mRenderTargetViews.at(layerIndex).at(i)
+      = std::make_shared<D3D11::D3D11RenderTargetViewFactory>(
+        mDevice, images.at(i).texture);
   }
 
   return swapchain;
@@ -146,7 +140,8 @@ bool OpenXRD3D11Kneeboard::Render(
 bool OpenXRD3D11Kneeboard::Render(
   OpenXRNext* oxr,
   ID3D11Device* device,
-  const std::vector<winrt::com_ptr<ID3D11RenderTargetView>>& renderTargetViews,
+  const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&
+    renderTargetViews,
   XrSwapchain swapchain,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
@@ -180,10 +175,11 @@ bool OpenXRD3D11Kneeboard::Render(
       dprint("Failed to get shared texture");
       return false;
     }
+    auto rtv = renderTargetViews.at(textureIndex)->Get();
     D3D11::CopyTextureWithOpacity(
       device,
       sharedTexture.GetShaderResourceView(),
-      renderTargetViews.at(textureIndex).get(),
+      rtv->Get(),
       renderParameters.mKneeboardOpacity);
   }
   nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);

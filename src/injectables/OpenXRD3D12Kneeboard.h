@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <d3d12.h>
 
@@ -50,7 +51,7 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   winrt::com_ptr<ID3D11Device> m11on12;
   winrt::com_ptr<ID3D11DeviceContext> m11on12Context;
 
-  std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
+  std::array<std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>, MaxLayers>
     mRenderTargetViews;
 };
 

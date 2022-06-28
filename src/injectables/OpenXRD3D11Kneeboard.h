@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 
 #include "OpenXRKneeboard.h"
@@ -38,7 +39,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   static bool Render(
     OpenXRNext*,
     ID3D11Device*,
-    const std::vector<winrt::com_ptr<ID3D11RenderTargetView>>&,
+    const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&,
     XrSwapchain,
     const SHM::Snapshot&,
     uint8_t layerIndex,
@@ -46,6 +47,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
 
  protected:
   virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) override;
+
   virtual bool Render(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
@@ -55,7 +57,9 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
  private:
   ID3D11Device* mDevice = nullptr;
 
-  std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
+  std::array<
+    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    MaxLayers>
     mRenderTargetViews;
 };
 

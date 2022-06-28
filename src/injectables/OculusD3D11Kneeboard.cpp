@@ -90,18 +90,9 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
 
-    D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-      .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-      .Texture2D = {.MipSlice = 0}};
-
-    auto hr = mD3D->CreateRenderTargetView(
-      texture.get(), &rtvd, layerRenderTargets.at(i).put());
-    if (FAILED(hr)) {
-      dprint(" - failed to create render target view");
-      OPENKNEEBOARD_BREAK;
-      return nullptr;
-    }
+    layerRenderTargets.at(i)
+      = std::make_shared<D3D11::D3D11RenderTargetViewFactory>(
+        mD3D.get(), texture.get());
   }
 
   return swapChain;

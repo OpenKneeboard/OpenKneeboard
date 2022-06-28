@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <d3d11.h>
 #include <d3d11on12.h>
@@ -52,12 +53,15 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
  private:
   ID3D12CommandQueueExecuteCommandListsHook mExecuteCommandListsHook;
   OculusKneeboard mOculusKneeboard;
-  std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
+  std::array<
+    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    MaxLayers>
     mRenderTargetViews;
 
   winrt::com_ptr<ID3D12Device> mDevice;
-  winrt::com_ptr<ID3D11Device> m11on12;
-  winrt::com_ptr<ID3D11DeviceContext> m11on12Context;
+  winrt::com_ptr<ID3D11Device> mD3D11;
+  winrt::com_ptr<ID3D11On12Device> mD3D11On12;
+  winrt::com_ptr<ID3D11DeviceContext> mD3D11On12Context;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(

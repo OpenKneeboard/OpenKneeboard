@@ -57,4 +57,84 @@ void CopyTextureWithOpacity(
   CopyTextureWithTint(device, source, dest, DirectX::Colors::White * opacity);
 }
 
+RenderTargetView::RenderTargetView() = default;
+
+RenderTargetView::~RenderTargetView() = default;
+
+RenderTargetViewFactory::~RenderTargetViewFactory() = default;
+
+D3D11RenderTargetView::D3D11RenderTargetView(
+  const winrt::com_ptr<ID3D11RenderTargetView>& impl)
+  : mImpl(impl) {
+}
+
+D3D11RenderTargetView::~D3D11RenderTargetView() = default;
+
+ID3D11RenderTargetView* D3D11RenderTargetView::Get() const {
+  return mImpl.get();
+}
+
+D3D11RenderTargetViewFactory::D3D11RenderTargetViewFactory(
+  ID3D11Device* device,
+  ID3D11Texture2D* texture) {
+  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
+
+  winrt::check_hresult(
+    device->CreateRenderTargetView(texture, &rtvd, mImpl.put()));
+}
+
+D3D11RenderTargetViewFactory::~D3D11RenderTargetViewFactory() = default;
+
+std::unique_ptr<RenderTargetView> D3D11RenderTargetViewFactory::Get() const {
+  return std::make_unique<D3D11RenderTargetView>(mImpl);
+}
+
+D3D11On12RenderTargetView::D3D11On12RenderTargetView(
+  ID3D11Device* d3d11,
+  ID3D11On12Device* d3d11On12,
+  ID3D12Resource* texture12) {
+  D3D11_RESOURCE_FLAGS resourceFlags11 {D3D11_BIND_RENDER_TARGET};
+  winrt::com_ptr<ID3D11Texture2D> texture11;
+  winrt::check_hresult(d3d11On12->CreateWrappedResource(
+    texture12,
+    &resourceFlags11,
+    D3D12_RESOURCE_STATE_COMMON,
+    D3D12_RESOURCE_STATE_COMMON,
+    IID_PPV_ARGS(texture11.put())));
+
+  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
+  winrt::check_hresult(d3d11->CreateRenderTargetView(
+    texture11.get(), &rtvd, mRenderTargetView.put()));
+}
+
+D3D11On12RenderTargetView::~D3D11On12RenderTargetView() = default;
+
+ID3D11RenderTargetView* D3D11On12RenderTargetView::Get() const {
+  return mRenderTargetView.get();
+}
+
+D3D11On12RenderTargetViewFactory::D3D11On12RenderTargetViewFactory(
+  const winrt::com_ptr<ID3D11Device>& d3d11,
+  const winrt::com_ptr<ID3D11On12Device>& d3d11On12,
+  const winrt::com_ptr<ID3D12Resource>& texture12)
+  : mD3D11(d3d11), mD3D11On12(d3d11On12), mTexture12(texture12) {
+}
+
+D3D11On12RenderTargetViewFactory::~D3D11On12RenderTargetViewFactory() {
+}
+
+std::unique_ptr<RenderTargetView> D3D11On12RenderTargetViewFactory::Get()
+  const {
+  return std::make_unique<D3D11On12RenderTargetView>(
+    mD3D11.get(), mD3D11On12.get(), mTexture12.get());
+}
+
 }// namespace OpenKneeboard::D3D11

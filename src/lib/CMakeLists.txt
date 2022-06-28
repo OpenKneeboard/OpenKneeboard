@@ -55,6 +55,8 @@ target_link_libraries(
   OpenKneeboard-D3D11
   PUBLIC
   System::D3d11
+  OpenKneeboard-shims
+  ThirdParty::CppWinRT
   _libheaders
 )
 target_link_libraries(

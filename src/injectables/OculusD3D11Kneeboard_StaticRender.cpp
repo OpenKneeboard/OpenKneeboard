@@ -27,7 +27,8 @@
 namespace OpenKneeboard {
 bool OculusD3D11Kneeboard::Render(
   ID3D11Device* device,
-  const std::vector<winrt::com_ptr<ID3D11RenderTargetView>>& renderTargetViews,
+  const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&
+    renderTargetViews,
   ovrSession session,
   ovrTextureSwapChain swapChain,
   const SHM::Snapshot& snapshot,
@@ -59,10 +60,11 @@ bool OculusD3D11Kneeboard::Render(
     return false;
   }
 
+  auto rtv = renderTargetViews.at(index)->Get();
   D3D11::CopyTextureWithOpacity(
     device,
     sharedTexture.GetShaderResourceView(),
-    renderTargetViews.at(index).get(),
+    rtv->Get(),
     params.mKneeboardOpacity);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);

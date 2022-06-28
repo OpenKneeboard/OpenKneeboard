@@ -134,11 +134,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   }
 
   mRenderTargetViews.at(layerIndex).resize(imageCount);
-  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {.MipSlice = 0},
-  };
+  auto d3d11On12 = m11on12.as<ID3D11On12Device>();
 
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
@@ -146,17 +142,11 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
       OPENKNEEBOARD_BREAK;
     }
 #endif
-    D3D11_RESOURCE_FLAGS resourceFlags11 {D3D11_BIND_RENDER_TARGET};
-    winrt::com_ptr<ID3D11Texture2D> texture11;
-    winrt::check_hresult(m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
-      images.at(i).texture,
-      &resourceFlags11,
-      D3D12_RESOURCE_STATE_COMMON,
-      D3D12_RESOURCE_STATE_COMMON,
-      IID_PPV_ARGS(texture11.put())));
-
-    winrt::check_hresult(m11on12->CreateRenderTargetView(
-      texture11.get(), &rtvd, mRenderTargetViews.at(layerIndex).at(i).put()));
+    winrt::com_ptr<ID3D12Resource> texture12;
+    texture12.copy_from(images.at(i).texture);
+    mRenderTargetViews.at(layerIndex).at(i)
+      = std::make_shared<D3D11::D3D11On12RenderTargetViewFactory>(
+        m11on12, d3d11On12, texture12);
   }
   dprintf(
     "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);
@@ -169,14 +159,18 @@ bool OpenXRD3D12Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  return OpenXRD3D11Kneeboard::Render(
-    this->GetOpenXR(),
-    m11on12.get(),
-    mRenderTargetViews.at(layerIndex),
-    swapchain,
-    snapshot,
-    layerIndex,
-    renderParameters);
+  if (!OpenXRD3D11Kneeboard::Render(
+        this->GetOpenXR(),
+        m11on12.get(),
+        mRenderTargetViews.at(layerIndex),
+        swapchain,
+        snapshot,
+        layerIndex,
+        renderParameters)) {
+    return false;
+  }
+  m11on12Context->Flush();
+  return true;
 }
 
 }// namespace OpenKneeboard

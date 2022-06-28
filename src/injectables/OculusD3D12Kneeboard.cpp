@@ -89,28 +89,15 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   auto& layerRenderTargets = mRenderTargetViews.at(layerIndex);
   layerRenderTargets.clear();
   layerRenderTargets.resize(length);
-  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {.MipSlice = 0},
-  };
 
   for (int i = 0; i < length; ++i) {
-    winrt::com_ptr<ID3D12Resource> texture;
+    winrt::com_ptr<ID3D12Resource> texture12;
     ovr->ovr_GetTextureSwapChainBufferDX(
-      session, swapChain, i, IID_PPV_ARGS(texture.put()));
+      session, swapChain, i, IID_PPV_ARGS(texture12.put()));
 
-    D3D11_RESOURCE_FLAGS resourceFlags11 {D3D11_BIND_RENDER_TARGET};
-    winrt::com_ptr<ID3D11Texture2D> texture11;
-    winrt::check_hresult(m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
-      texture.get(),
-      &resourceFlags11,
-      D3D12_RESOURCE_STATE_COMMON,
-      D3D12_RESOURCE_STATE_COMMON,
-      IID_PPV_ARGS(texture11.put())));
-
-    winrt::check_hresult(m11on12->CreateRenderTargetView(
-      texture11.get(), &rtvd, layerRenderTargets.at(i).put()));
+    layerRenderTargets.at(i)
+      = std::make_shared<D3D11::D3D11On12RenderTargetViewFactory>(
+        mD3D11, mD3D11On12, texture12);
   }
 
   return swapChain;
@@ -122,14 +109,18 @@ bool OculusD3D12Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  return OculusD3D11Kneeboard::Render(
-    m11on12.get(),
-    mRenderTargetViews.at(layerIndex),
-    session,
-    swapChain,
-    snapshot,
-    layerIndex,
-    renderParameters);
+  if (!OculusD3D11Kneeboard::Render(
+        mD3D11.get(),
+        mRenderTargetViews.at(layerIndex),
+        session,
+        swapChain,
+        snapshot,
+        layerIndex,
+        renderParameters)) {
+    return false;
+  }
+  mD3D11On12Context->Flush();
+  return true;
 }
 
 void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
@@ -165,7 +156,7 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
 #ifdef DEBUG
     flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
-    D3D11On12CreateDevice(
+    winrt::check_hresult(D3D11On12CreateDevice(
       mDevice.get(),
       flags,
       nullptr,
@@ -173,9 +164,10 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
       nullptr,
       0,
       1,
-      m11on12.put(),
-      m11on12Context.put(),
-      nullptr);
+      mD3D11.put(),
+      mD3D11On12Context.put(),
+      nullptr));
+    mD3D11On12 = mD3D11.as<ID3D11On12Device>();
   }
 
   mExecuteCommandListsHook.UninstallHook();

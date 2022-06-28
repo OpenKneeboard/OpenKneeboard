@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
@@ -40,7 +41,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
   static bool Render(
     ID3D11Device*,
-    const std::vector<winrt::com_ptr<ID3D11RenderTargetView>>&,
+    const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&,
     ovrSession,
     ovrTextureSwapChain,
     const SHM::Snapshot&,
@@ -60,7 +61,9 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     const VRKneeboard::RenderParameters&) override final;
 
  private:
-  std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
+  std::array<
+    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    MaxLayers>
     mRenderTargetViews;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
 
