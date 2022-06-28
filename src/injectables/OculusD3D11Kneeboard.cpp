@@ -24,7 +24,6 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
-#include "InjectedDLLMain.h"
 #include "OVRProxy.h"
 
 namespace OpenKneeboard {
@@ -83,13 +82,13 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   int length = -1;
   ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
 
-  auto& layerRenderTargets = mRenderTargets.at(layerIndex);
+  auto& layerRenderTargets = mRenderTargetViews.at(layerIndex);
   layerRenderTargets.clear();
   layerRenderTargets.resize(length);
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D11Texture2D> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
-      session, swapChain, i, IID_PPV_ARGS(&texture));
+      session, swapChain, i, IID_PPV_ARGS(texture.put()));
 
     D3D11_RENDER_TARGET_VIEW_DESC rtvd = {
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -114,44 +113,14 @@ bool OculusD3D11Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& params) {
-  if (!swapChain) {
-    dprint("asked to render without swapchain");
-    return false;
-  }
-
-  if (!mD3D) {
-    dprintf(" - no D3D - {}", __FUNCTION__);
-    return false;
-  }
-
-  auto ovr = OVRProxy::Get();
-  const auto config = snapshot.GetConfig();
-
-  auto sharedTexture = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
-  if (!sharedTexture.IsValid()) {
-    dprint(" - invalid shared texture");
-    return false;
-  }
-
-  int index = -1;
-  ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
-  if (index < 0) {
-    dprintf(" - invalid swap chain index ({})", index);
-    return false;
-  }
-
-  D3D11::CopyTextureWithOpacity(
+  return OculusD3D11Kneeboard::Render(
     mD3D.get(),
-    sharedTexture.GetShaderResourceView(),
-    mRenderTargets.at(layerIndex).at(index).get(),
-    params.mKneeboardOpacity);
-
-  auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
-  if (error) {
-    dprintf("Commit failed with {}", error);
-  }
-
-  return true;
+    mRenderTargetViews.at(layerIndex),
+    session,
+    swapChain,
+    snapshot,
+    layerIndex,
+    params);
 }
 
 HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
@@ -165,35 +134,9 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
       dprint("Got a swapchain without a D3D11 device");
     }
   }
-  mD3D1 = mD3D.as<ID3D11Device1>();
 
   mDXGIHook.UninstallHook();
   return std::invoke(next, swapChain, syncInterval, flags);
 }
 
 }// namespace OpenKneeboard
-
-using namespace OpenKneeboard;
-
-namespace {
-std::unique_ptr<OculusD3D11Kneeboard> gInstance;
-
-DWORD WINAPI ThreadEntry(LPVOID ignored) {
-  gInstance = std::make_unique<OculusD3D11Kneeboard>();
-  dprintf(
-    "----- OculusD3D11Kneeboard active at {:#018x} -----",
-    (intptr_t)gInstance.get());
-  return S_OK;
-}
-
-}// namespace
-
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-  return InjectedDLLMain(
-    "OpenKneeboard-Oculus-D3D11",
-    gInstance,
-    &ThreadEntry,
-    hinst,
-    dwReason,
-    reserved);
-}

@@ -25,8 +25,8 @@
 #include <dxgi.h>
 #include <shims/winrt.h>
 
-#include "InjectedDLLMain.h"
 #include "OVRProxy.h"
+#include "OculusD3D11Kneeboard.h"
 
 namespace OpenKneeboard {
 
@@ -86,6 +86,33 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
     return nullptr;
   }
 
+  auto& layerRenderTargets = mRenderTargetViews.at(layerIndex);
+  layerRenderTargets.clear();
+  layerRenderTargets.resize(length);
+  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
+
+  for (int i = 0; i < length; ++i) {
+    winrt::com_ptr<ID3D12Resource> texture;
+    ovr->ovr_GetTextureSwapChainBufferDX(
+      session, swapChain, i, IID_PPV_ARGS(texture.put()));
+
+    D3D11_RESOURCE_FLAGS resourceFlags11 {D3D11_BIND_RENDER_TARGET};
+    winrt::com_ptr<ID3D11Texture2D> texture11;
+    winrt::check_hresult(m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
+      texture.get(),
+      &resourceFlags11,
+      D3D12_RESOURCE_STATE_COMMON,
+      D3D12_RESOURCE_STATE_COMMON,
+      IID_PPV_ARGS(texture11.put())));
+
+    winrt::check_hresult(m11on12->CreateRenderTargetView(
+      texture11.get(), &rtvd, layerRenderTargets.at(i).put()));
+  }
+
   return swapChain;
 }
 
@@ -94,61 +121,15 @@ bool OculusD3D12Kneeboard::Render(
   ovrTextureSwapChain swapChain,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
-  const VRKneeboard::RenderParameters&) {
-  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
-  if (!layer.IsValid()) {
-    return false;
-  }
-
-  auto ovr = OVRProxy::Get();
-
-  int index = -1;
-  ovr->ovr_GetTextureSwapChainCurrentIndex(session, swapChain, &index);
-  if (index < 0) {
-    dprintf(" - invalid swap chain index ({})", index);
-    OPENKNEEBOARD_BREAK;
-    return false;
-  }
-
-  winrt::com_ptr<ID3D12Resource> layerTexture12;
-  ovr->ovr_GetTextureSwapChainBufferDX(
-    session, swapChain, index, IID_PPV_ARGS(layerTexture12.put()));
-  if (!layerTexture12) {
-    OPENKNEEBOARD_BREAK;
-    return false;
-  }
-
-  auto sharedTexture = snapshot.GetLayerTexture(m11on12.get(), layerIndex);
-  if (!sharedTexture.IsValid()) {
-    return false;
-  }
-  auto sharedTexture11 = sharedTexture.GetTexture();
-
-  winrt::com_ptr<ID3D11Texture2D> layerTexture11;
-  D3D11_RESOURCE_FLAGS resourceFlags11 {};
-  winrt::check_hresult(m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
-    layerTexture12.get(),
-    &resourceFlags11,
-    D3D12_RESOURCE_STATE_COMMON,
-    D3D12_RESOURCE_STATE_COMMON,
-    IID_PPV_ARGS(layerTexture11.put())));
-
-  D3D11_BOX sourceBox {
-    .left = 0,
-    .top = 0,
-    .front = 0,
-    .right = layer.mImageWidth,
-    .bottom = layer.mImageHeight,
-    .back = 1,
-  };
-
-  m11on12Context->CopySubresourceRegion(
-    layerTexture11.get(), 0, 0, 0, 0, sharedTexture11, 0, &sourceBox);
-  m11on12Context->Flush();
-
-  ovr->ovr_CommitTextureSwapChain(session, swapChain);
-
-  return true;
+  const VRKneeboard::RenderParameters& renderParameters) {
+  return OculusD3D11Kneeboard::Render(
+    m11on12.get(),
+    mRenderTargetViews.at(layerIndex),
+    session,
+    swapChain,
+    snapshot,
+    layerIndex,
+    renderParameters);
 }
 
 void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
@@ -202,28 +183,3 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
 }
 
 }// namespace OpenKneeboard
-
-using namespace OpenKneeboard;
-
-namespace {
-std::unique_ptr<OculusD3D12Kneeboard> gInstance;
-
-DWORD WINAPI ThreadEntry(LPVOID ignored) {
-  gInstance = std::make_unique<OculusD3D12Kneeboard>();
-  dprintf(
-    "----- OculusD3D12Kneeboard active at {:#018x} -----",
-    (intptr_t)gInstance.get());
-  return S_OK;
-}
-
-}// namespace
-
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-  return InjectedDLLMain(
-    "OpenKneeboard-Oculus-D3D12",
-    gInstance,
-    &ThreadEntry,
-    hinst,
-    dwReason,
-    reserved);
-}

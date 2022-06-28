@@ -74,7 +74,12 @@ target_link_libraries(
   OpenKneeboard-SHM
   OpenKneeboard-DllLoadWatcher)
 
-add_module_library(OpenKneeboard-oculus-d3d11 OculusD3D11Kneeboard.cpp)
+add_module_library(
+  OpenKneeboard-oculus-d3d11
+  OculusD3D11Kneeboard.cpp
+  OculusD3D11Kneeboard_DllMain.cpp
+  OculusD3D11Kneeboard_StaticRender.cpp
+)
 target_link_libraries(
   OpenKneeboard-oculus-d3d11
   PRIVATE
@@ -86,7 +91,12 @@ target_link_libraries(
   oculus-hooks
   oculus-sdk-headers)
 
-add_module_library(OpenKneeboard-oculus-d3d12 OculusD3D12Kneeboard.cpp)
+add_module_library(
+  OpenKneeboard-oculus-d3d12
+  OculusD3D11Kneeboard_StaticRender.cpp
+  OculusD3D12Kneeboard.cpp
+  OculusD3D12Kneeboard_DllMain.cpp
+)
 target_link_libraries(
   OpenKneeboard-oculus-d3d12
   PRIVATE
@@ -94,6 +104,7 @@ target_link_libraries(
   detours-ext
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-D3D11
   OpenKneeboard-ScopedRWX
   oculus-hooks
   oculus-sdk-headers)

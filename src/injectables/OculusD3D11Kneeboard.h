@@ -38,6 +38,15 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
   void UninstallHook();
 
+  static bool Render(
+    ID3D11Device*,
+    const std::vector<winrt::com_ptr<ID3D11RenderTargetView>>&,
+    ovrSession,
+    ovrTextureSwapChain,
+    const SHM::Snapshot&,
+    uint8_t layerIndex,
+    const VRKneeboard::RenderParameters&);
+
  protected:
   virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
@@ -52,9 +61,8 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
  private:
   std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
-    mRenderTargets;
+    mRenderTargetViews;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
-  winrt::com_ptr<ID3D11Device1> mD3D1 = nullptr;
 
   OculusKneeboard mOculusKneeboard;
   IDXGISwapChainPresentHook mDXGIHook;
