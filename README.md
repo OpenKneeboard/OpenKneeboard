@@ -150,7 +150,7 @@ You can also add any other folder of images as another tab; this works great in 
 - Non-VR: DirectX 11
 - OpenVR: any
 - Oculus: DirectX 11, DirectX 12.
-- OpenXR: DirectX 11
+- OpenXR: DirectX 11, DirectX 12.
 
 OpenKneeboard has been primarily tested with DCS: World Open Beta via the Oculus SDK, using DirectX 11.
 

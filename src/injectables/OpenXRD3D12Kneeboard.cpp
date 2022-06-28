@@ -18,35 +18,59 @@
  * USA.
  */
 
-#include "OpenXRD3D11Kneeboard.h"
+#include "OpenXRD3D12Kneeboard.h"
 
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <d3d11.h>
+#include <d3d11on12.h>
+#include <d3d12.h>
 #include <shims/winrt.h>
 
 #include "OpenXRNext.h"
 
-#define XR_USE_GRAPHICS_API_D3D11
+#define XR_USE_GRAPHICS_API_D3D12
 #include <openxr/openxr_platform.h>
-
-using namespace DirectX::SimpleMath;
 
 namespace OpenKneeboard {
 
-OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
+OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   XrSession session,
   const std::shared_ptr<OpenXRNext>& next,
-  const XrGraphicsBindingD3D11KHR& binding)
+  const XrGraphicsBindingD3D12KHR& binding)
   : OpenXRKneeboard(session, next), mDevice(binding.device) {
   dprintf("{}", __FUNCTION__);
+
+#ifdef DEBUG
+  winrt::com_ptr<ID3D12Debug> debug;
+  D3D12GetDebugInterface(IID_PPV_ARGS(debug.put()));
+  if (debug) {
+    dprint("Enabling D3D12 debug layer");
+    debug->EnableDebugLayer();
+  }
+#endif
+
+  UINT flags = 0;
+#ifdef DEBUG
+  flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+  D3D11On12CreateDevice(
+    mDevice,
+    flags,
+    nullptr,
+    0,
+    nullptr,
+    0,
+    1,
+    m11on12.put(),
+    m11on12Context.put(),
+    nullptr);
 }
 
-OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
-}
+OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() = default;
 
-XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
+XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   XrSession session,
   uint8_t layerIndex) {
   dprintf("{}", __FUNCTION__);
@@ -83,12 +107,13 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
 
   dprintf("{} images in swapchain", imageCount);
 
-  std::vector<XrSwapchainImageD3D11KHR> images;
+  std::vector<XrSwapchainImageD3D12KHR> images;
   images.resize(
     imageCount,
-    XrSwapchainImageD3D11KHR {
-      .type = XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR,
+    XrSwapchainImageD3D12KHR {
+      .type = XR_TYPE_SWAPCHAIN_IMAGE_D3D12_KHR,
     });
+
   nextResult = oxr->xrEnumerateSwapchainImages(
     swapchain,
     imageCount,
@@ -100,8 +125,8 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     return nullptr;
   }
 
-  if (images.at(0).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
-    dprint("Swap chain is not a D3D11 swapchain");
+  if (images.at(0).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D12_KHR) {
+    dprint("Swap chain is not a D3D12 swapchain");
     OPENKNEEBOARD_BREAK;
     oxr->xrDestroySwapchain(swapchain);
     return nullptr;
@@ -113,26 +138,37 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };
+
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
-    if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
+    if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D12_KHR) {
       OPENKNEEBOARD_BREAK;
     }
 #endif
-    winrt::check_hresult(mDevice->CreateRenderTargetView(
+    D3D11_RESOURCE_FLAGS resourceFlags11 {D3D11_BIND_RENDER_TARGET};
+    winrt::com_ptr<ID3D11Texture2D> texture11;
+    winrt::check_hresult(m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
       images.at(i).texture,
-      &rtvd,
-      mRenderTargetViews.at(layerIndex).at(i).put()));
+      &resourceFlags11,
+      D3D12_RESOURCE_STATE_COMMON,
+      D3D12_RESOURCE_STATE_COMMON,
+      IID_PPV_ARGS(texture11.put())));
+
+    winrt::check_hresult(m11on12->CreateRenderTargetView(
+      texture11.get(), &rtvd, mRenderTargetViews.at(layerIndex).at(i).put()));
   }
+  dprintf(
+    "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);
 
   return swapchain;
 }
 
-bool OpenXRD3D11Kneeboard::Render(
+bool OpenXRD3D12Kneeboard::Render(
   XrSwapchain swapchain,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
+  dprint(__FUNCTION__);
   auto oxr = this->GetOpenXR();
 
   auto config = snapshot.GetConfig();
@@ -159,13 +195,14 @@ bool OpenXRD3D11Kneeboard::Render(
   }
 
   {
-    auto sharedTexture = snapshot.GetLayerTexture(mDevice, layerIndex);
+    auto device = m11on12.get();
+    auto sharedTexture = snapshot.GetLayerTexture(device, layerIndex);
     if (!sharedTexture.IsValid()) {
       dprint("Failed to get shared texture");
       return false;
     }
     D3D11::CopyTextureWithOpacity(
-      mDevice,
+      device,
       sharedTexture.GetShaderResourceView(),
       mRenderTargetViews.at(layerIndex).at(textureIndex).get(),
       renderParameters.mKneeboardOpacity);

@@ -126,12 +126,12 @@ bool OculusD3D12Kneeboard::Render(
 
   winrt::com_ptr<ID3D11Texture2D> layerTexture11;
   D3D11_RESOURCE_FLAGS resourceFlags11 {};
-  m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
+  winrt::check_hresult(m11on12.as<ID3D11On12Device2>()->CreateWrappedResource(
     layerTexture12.get(),
     &resourceFlags11,
     D3D12_RESOURCE_STATE_COMMON,
     D3D12_RESOURCE_STATE_COMMON,
-    IID_PPV_ARGS(layerTexture11.put()));
+    IID_PPV_ARGS(layerTexture11.put())));
 
   D3D11_BOX sourceBox {
     .left = 0,

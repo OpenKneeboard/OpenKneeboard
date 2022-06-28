@@ -29,9 +29,11 @@
 #include <string>
 
 #include "OpenXRD3D11Kneeboard.h"
+#include "OpenXRD3D12Kneeboard.h"
 #include "OpenXRNext.h"
 
 #define XR_USE_GRAPHICS_API_D3D11
+#define XR_USE_GRAPHICS_API_D3D12
 #include <openxr/openxr_platform.h>
 
 namespace OpenKneeboard {
@@ -268,7 +270,13 @@ XrResult xrCreateSession(
   auto d3d11 = findInXrNextChain<XrGraphicsBindingD3D11KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
-    gKneeboard = new OpenXRD3D11Kneeboard(*session, gNext, d3d11->device);
+    gKneeboard = new OpenXRD3D11Kneeboard(*session, gNext, *d3d11);
+    return XR_SUCCESS;
+  }
+  auto d3d12 = findInXrNextChain<XrGraphicsBindingD3D12KHR>(
+    XR_TYPE_GRAPHICS_BINDING_D3D12_KHR, createInfo->next);
+  if (d3d12 && d3d12->device) {
+    gKneeboard = new OpenXRD3D12Kneeboard(*session, gNext, *d3d12);
     return XR_SUCCESS;
   }
 

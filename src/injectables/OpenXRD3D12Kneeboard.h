@@ -20,20 +20,22 @@
 #pragma once
 
 #include <OpenKneeboard/config.h>
+#include <d3d12.h>
 
 #include "OpenXRKneeboard.h"
 
-struct XrGraphicsBindingD3D11KHR;
+struct XrGraphicsBindingD3D12KHR;
 
 namespace OpenKneeboard {
 
-class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
+class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
  public:
-  OpenXRD3D11Kneeboard(
+  OpenXRD3D12Kneeboard() = delete;
+  OpenXRD3D12Kneeboard(
     XrSession,
     const std::shared_ptr<OpenXRNext>&,
-    const XrGraphicsBindingD3D11KHR&);
-  ~OpenXRD3D11Kneeboard();
+    const XrGraphicsBindingD3D12KHR&);
+  ~OpenXRD3D12Kneeboard();
 
  protected:
   virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) override;
@@ -44,7 +46,9 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const VRKneeboard::RenderParameters&) override;
 
  private:
-  ID3D11Device* mDevice = nullptr;
+  ID3D12Device* mDevice = nullptr;
+  winrt::com_ptr<ID3D11Device> m11on12;
+  winrt::com_ptr<ID3D11DeviceContext> m11on12Context;
 
   std::array<std::vector<winrt::com_ptr<ID3D11RenderTargetView>>, MaxLayers>
     mRenderTargetViews;
