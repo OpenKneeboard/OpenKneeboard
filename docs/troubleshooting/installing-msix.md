@@ -8,7 +8,19 @@ Install [App Installer from the Microsoft Store](https://www.microsoft.com/en-us
 
 These may just be slow, depending on the speed of your internet connection; you can check for progress in the Windows notification area from the 'message' icon next to the Windows clock.
 
-If it seems to be making no progress, you can also download these direct from Microsoft:
+If it seems to be making no progress, you can:
+
+1. Cancel the installation
+2. From powershell: `get-appxpackage -name '*AppRuntime*' | remove-appxpackage`
+3. If you get errors saying that a package can't be removed because another package depends on it, uninstall the other package, then repeat the powershell command
+4. Install the frameworks below
+5. Install OpenKneeboard
+
+### Frameworks for OpenKneeboard v1.0 and below
 
 * [`Microsoft.VCLibs.x64.14.00.Desktop.appx`](https://docs.microsoft.com/en-us/troubleshoot/developer/visualstudio/cpp/libraries/c-runtime-packages-desktop-bridge)
-* [Windows App SDK](https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/downloads) - scroll down to 'Releases' and download "Installer (x64)" from the release marked '(Latest)' - ignore any preview releases.
+* [Windows App Runtime v1.0](https://aka.ms/windowsappsdk/1.0/1.0.4/windowsappruntimeinstall-1.0.4-x64.exe)
+
+### Frameworks for OpenKneeboard v1.1 and above
+
+* [Windows App Runtime v1.1](https://aka.ms/windowsappsdk/1.1/1.1.1/windowsappruntimeinstall-1.1.1-x64.exe)
