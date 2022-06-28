@@ -94,28 +94,20 @@ std::unique_ptr<RenderTargetView> D3D11RenderTargetViewFactory::Get() const {
 }
 
 D3D11On12RenderTargetView::D3D11On12RenderTargetView(
-  ID3D11Device* d3d11,
-  ID3D11On12Device* d3d11On12,
-  ID3D12Resource* texture12) {
-  D3D11_RESOURCE_FLAGS resourceFlags11 {D3D11_BIND_RENDER_TARGET};
-  winrt::com_ptr<ID3D11Texture2D> texture11;
-  winrt::check_hresult(d3d11On12->CreateWrappedResource(
-    texture12,
-    &resourceFlags11,
-    D3D12_RESOURCE_STATE_COMMON,
-    D3D12_RESOURCE_STATE_COMMON,
-    IID_PPV_ARGS(texture11.put())));
-
-  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {.MipSlice = 0},
-  };
-  winrt::check_hresult(d3d11->CreateRenderTargetView(
-    texture11.get(), &rtvd, mRenderTargetView.put()));
+  const winrt::com_ptr<ID3D11On12Device>& d3d11On12,
+  const winrt::com_ptr<ID3D11Texture2D>& texture11,
+  const winrt::com_ptr<ID3D11RenderTargetView>& renderTargetView)
+  : mD3D11On12(d3d11On12),
+    mTexture11(texture11),
+    mRenderTargetView(renderTargetView) {
+  ID3D11Resource* ptr = mTexture11.get();
+  mD3D11On12->AcquireWrappedResources(&ptr, 1);
 }
 
-D3D11On12RenderTargetView::~D3D11On12RenderTargetView() = default;
+D3D11On12RenderTargetView::~D3D11On12RenderTargetView() {
+  ID3D11Resource* ptr = mTexture11.get();
+  mD3D11On12->ReleaseWrappedResources(&ptr, 1);
+}
 
 ID3D11RenderTargetView* D3D11On12RenderTargetView::Get() const {
   return mRenderTargetView.get();
@@ -125,16 +117,30 @@ D3D11On12RenderTargetViewFactory::D3D11On12RenderTargetViewFactory(
   const winrt::com_ptr<ID3D11Device>& d3d11,
   const winrt::com_ptr<ID3D11On12Device>& d3d11On12,
   const winrt::com_ptr<ID3D12Resource>& texture12)
-  : mD3D11(d3d11), mD3D11On12(d3d11On12), mTexture12(texture12) {
+  : mD3D11On12(d3d11On12) {
+  D3D11_RESOURCE_FLAGS resourceFlags11 {D3D11_BIND_RENDER_TARGET};
+  winrt::check_hresult(d3d11On12->CreateWrappedResource(
+    texture12.get(),
+    &resourceFlags11,
+    D3D12_RESOURCE_STATE_COMMON,
+    D3D12_RESOURCE_STATE_COMMON,
+    IID_PPV_ARGS(mTexture11.put())));
+
+  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
+  winrt::check_hresult(d3d11->CreateRenderTargetView(
+    mTexture11.get(), &rtvd, mRenderTargetView.put()));
 }
 
-D3D11On12RenderTargetViewFactory::~D3D11On12RenderTargetViewFactory() {
-}
+D3D11On12RenderTargetViewFactory::~D3D11On12RenderTargetViewFactory() = default;
 
 std::unique_ptr<RenderTargetView> D3D11On12RenderTargetViewFactory::Get()
   const {
   return std::make_unique<D3D11On12RenderTargetView>(
-    mD3D11.get(), mD3D11On12.get(), mTexture12.get());
+    mD3D11On12, mTexture11, mRenderTargetView);
 }
 
 }// namespace OpenKneeboard::D3D11

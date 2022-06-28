@@ -84,12 +84,17 @@ class D3D11RenderTargetViewFactory final : public RenderTargetViewFactory {
 class D3D11On12RenderTargetView final : public RenderTargetView {
  public:
   D3D11On12RenderTargetView() = delete;
-  D3D11On12RenderTargetView(ID3D11Device*, ID3D11On12Device*, ID3D12Resource*);
+  D3D11On12RenderTargetView(
+    const winrt::com_ptr<ID3D11On12Device>&,
+    const winrt::com_ptr<ID3D11Texture2D>&,
+    const winrt::com_ptr<ID3D11RenderTargetView>&);
   ~D3D11On12RenderTargetView();
 
   virtual ID3D11RenderTargetView* Get() const override;
 
  private:
+  winrt::com_ptr<ID3D11On12Device> mD3D11On12;
+  winrt::com_ptr<ID3D11Texture2D> mTexture11;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
 };
 
@@ -104,9 +109,9 @@ class D3D11On12RenderTargetViewFactory final : public RenderTargetViewFactory {
   virtual std::unique_ptr<RenderTargetView> Get() const override;
 
  private:
-  winrt::com_ptr<ID3D11Device> mD3D11;
   winrt::com_ptr<ID3D11On12Device> mD3D11On12;
-  winrt::com_ptr<ID3D12Resource> mTexture12;
+  winrt::com_ptr<ID3D11Texture2D> mTexture11;
+  winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
 };
 
 }// namespace OpenKneeboard::D3D11
