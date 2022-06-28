@@ -31,6 +31,8 @@ set_target_properties(
   VS_GLOBAL_WindowsPackageType None
   VS_GLOBAL_EnablePreviewMsixTooling true
   VS_GLOBAL_WindowsAppSDKSelfContained false
+  VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnNoMatch_ShowUI true
+  VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnPackageIdentity_NoOp true
 )
 
 # Set source file dependencies properly for Xaml and non-Xaml IDL
