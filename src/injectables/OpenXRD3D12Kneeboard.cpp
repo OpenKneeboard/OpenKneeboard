@@ -168,7 +168,6 @@ bool OpenXRD3D12Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  dprint(__FUNCTION__);
   auto oxr = this->GetOpenXR();
 
   auto config = snapshot.GetConfig();
