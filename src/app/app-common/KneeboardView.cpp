@@ -24,6 +24,7 @@
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 
 #include <ranges>
 
@@ -43,15 +44,15 @@ KneeboardViewID KneeboardView::GetRuntimeID() const {
 }
 
 void KneeboardView::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
-  if (std::ranges::equal(tabs, mTabs, {}, {}, &ITabView::GetTab)) {
+  if (std::ranges::equal(tabs, mTabViews, {}, {}, &ITabView::GetTab)) {
     return;
   }
 
-  decltype(mTabs) viewStates;
+  decltype(mTabViews) viewStates;
 
   for (const auto& tab: tabs) {
-    auto it = std::ranges::find(mTabs, tab, &ITabView::GetTab);
-    if (it != mTabs.end()) {
+    auto it = std::ranges::find(mTabViews, tab, &ITabView::GetTab);
+    if (it != mTabViews.end()) {
       viewStates.push_back(*it);
       continue;
     }
@@ -73,7 +74,7 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
       viewState->evPageChangedEvent, &KneeboardView::UpdateLayout, this);
   }
 
-  mTabs = viewStates;
+  mTabViews = viewStates;
   auto it = std::ranges::find(viewStates, mCurrentTabView);
   if (it == viewStates.end()) {
     mCurrentTabView = tabs.empty() ? nullptr : viewStates.front();
@@ -83,45 +84,45 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
 }
 
 uint8_t KneeboardView::GetTabIndex() const {
-  auto it = std::ranges::find(mTabs, mCurrentTabView);
-  if (it == mTabs.end()) {
+  auto it = std::ranges::find(mTabViews, mCurrentTabView);
+  if (it == mTabViews.end()) {
     return 0;
   }
-  return static_cast<uint8_t>(it - mTabs.begin());
+  return static_cast<uint8_t>(it - mTabViews.begin());
 }
 
 void KneeboardView::SetCurrentTabByIndex(uint8_t index) {
-  if (index >= mTabs.size()) {
+  if (index >= mTabViews.size()) {
     return;
   }
-  if (mCurrentTabView == mTabs.at(index)) {
+  if (mCurrentTabView == mTabViews.at(index)) {
     return;
   }
   if (mCurrentTabView) {
     mCurrentTabView->PostCursorEvent({});
   }
-  mCurrentTabView = mTabs.at(index);
+  mCurrentTabView = mTabViews.at(index);
   UpdateLayout();
   evCurrentTabChangedEvent.Emit(index);
 }
 
 void KneeboardView::SetCurrentTabByID(Tab::RuntimeID id) {
-  const auto it = std::ranges::find(mTabs, id, [](const auto& view) {
+  const auto it = std::ranges::find(mTabViews, id, [](const auto& view) {
     return view->GetRootTab()->GetRuntimeID();
   });
 
-  if (it == mTabs.end()) {
+  if (it == mTabViews.end()) {
     return;
   }
   if (*it == mCurrentTabView) {
     return;
   }
 
-  SetCurrentTabByIndex(it - mTabs.begin());
+  SetCurrentTabByIndex(it - mTabViews.begin());
 }
 
 void KneeboardView::PreviousTab() {
-  const auto count = mTabs.size();
+  const auto count = mTabViews.size();
   if (count < 2) {
     return;
   }
@@ -138,7 +139,7 @@ void KneeboardView::PreviousTab() {
 }
 
 void KneeboardView::NextTab() {
-  const auto count = mTabs.size();
+  const auto count = mTabViews.size();
   if (count < 2) {
     return;
   }
@@ -157,12 +158,17 @@ void KneeboardView::NextTab() {
 
 std::shared_ptr<ITabView> KneeboardView::GetTabViewByID(
   Tab::RuntimeID id) const {
-  auto it = std::ranges::find(
-    mTabs, id, [](auto& view) { return view->GetRootTab()->GetRuntimeID(); });
-  if (it == mTabs.end()) {
-    return {};
+  for (const auto& tabView: mTabViews) {
+    if (tabView->GetTab()->GetRuntimeID() == id) {
+      return tabView;
+    }
+    if (tabView->GetRootTab()->GetRuntimeID() == id) {
+      return tabView;
+    }
   }
-  return *it;
+  dprint("Failed to find tab by ID");
+  OPENKNEEBOARD_BREAK;
+  return {};
 }
 
 std::shared_ptr<Tab> KneeboardView::GetCurrentTab() const {

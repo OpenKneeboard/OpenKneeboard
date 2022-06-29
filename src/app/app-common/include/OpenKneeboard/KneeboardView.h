@@ -71,7 +71,7 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
  private:
   KneeboardViewID mID;
   KneeboardState* mKneeboard;
-  std::vector<std::shared_ptr<ITabView>> mTabs;
+  std::vector<std::shared_ptr<ITabView>> mTabViews;
   std::shared_ptr<ITabView> mCurrentTabView;
 
   D2D1_SIZE_U mCanvasSize;
