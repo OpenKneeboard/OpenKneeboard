@@ -36,11 +36,7 @@ void CachedLayer::Render(
   ID2D1DeviceContext* ctx,
   std::function<void(ID2D1DeviceContext*, const D2D1_SIZE_U&)> impl) {
   std::scoped_lock lock(mCacheMutex);
-
-  if (mKey == cacheKey) {
-    ctx->DrawBitmap(mCache.get(), where);
-    return;
-  }
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
   if (mCacheSize != nativeSize || !mCache) {
     mCache = nullptr;
@@ -52,6 +48,11 @@ void CachedLayer::Render(
     };
     winrt::check_hresult(
       ctx->CreateBitmap(nativeSize, nullptr, 0, &props, mCache.put()));
+  }
+
+  if (mKey == cacheKey) {
+    ctx->DrawBitmap(mCache.get(), where);
+    return;
   }
 
   winrt::com_ptr<ID2D1Device> device;

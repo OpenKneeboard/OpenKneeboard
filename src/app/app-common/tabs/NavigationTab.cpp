@@ -230,9 +230,9 @@ void NavigationTab::RenderPage(
   ctx->FillRectangle(canvasRect, mBackgroundBrush.get());
 
   const D2D1_POINT_2F origin {canvasRect.left, canvasRect.top};
-  ctx->SetTransform(
-    D2D1::Matrix3x2F::Translation(origin.x, origin.y)
-    * D2D1::Matrix3x2F::Scale({scale, scale}, origin));
+  const auto pageTransform = D2D1::Matrix3x2F::Translation(origin.x, origin.y)
+    * D2D1::Matrix3x2F::Scale({scale, scale}, origin);
+  ctx->SetTransform(pageTransform);
 
   const auto& pageEntries = mEntries.at(pageIndex);
 
@@ -266,16 +266,20 @@ void NavigationTab::RenderPage(
     }
   }
 
+  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   mPreviewLayer.Render(
-    {0.0f,
-     0.0f,
-     static_cast<float>(mPreferredSize.width),
-     static_cast<float>(mPreferredSize.height)},
+    {
+      origin.x,
+      origin.y,
+      origin.x + (scale * mPreferredSize.width),
+      origin.y + (scale * mPreferredSize.height),
+    },
     mPreferredSize,
     pageIndex,
     ctx,
     std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageIndex));
 
+  ctx->SetTransform(pageTransform);
   std::vector<float> columnPreviewRightEdge(mRenderColumns);
   for (auto i = 0; i < pageEntries.size(); ++i) {
     const auto& entry = pageEntries.at(i);
