@@ -45,7 +45,6 @@ class CachedLayer final {
  private:
   uint16_t mKey = ~0ui16;
 
-  winrt::com_ptr<ID2D1DeviceContext> mCacheContext;
   D2D1_SIZE_U mCacheSize;
   winrt::com_ptr<ID2D1Bitmap1> mCache;
   std::mutex mCacheMutex;

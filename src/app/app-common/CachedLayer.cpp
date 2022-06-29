@@ -19,12 +19,11 @@
  */
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/scope_guard.h>
 
 namespace OpenKneeboard {
 
 CachedLayer::CachedLayer(const DXResources& dxr) {
-  winrt::check_hresult(dxr.mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mCacheContext.put()));
 }
 
 CachedLayer::~CachedLayer() {
@@ -55,17 +54,23 @@ void CachedLayer::Render(
       ctx->CreateBitmap(nativeSize, nullptr, 0, &props, mCache.put()));
   }
 
-  mCacheContext->SetTarget(mCache.get());
-  mCacheContext->BeginDraw();
-  mCacheContext->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
-  try {
-    impl(mCacheContext.get(), nativeSize);
-  } catch (...) {
-    winrt::check_hresult(mCacheContext->EndDraw());
-    throw;
-  }
-  winrt::check_hresult(mCacheContext->EndDraw());
+  winrt::com_ptr<ID2D1Device> device;
+  ctx->GetDevice(device.put());
+  winrt::check_pointer(device.get());
 
+  winrt::com_ptr<ID2D1DeviceContext> cacheContext;
+  winrt::check_hresult(device->CreateDeviceContext(
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, cacheContext.put()));
+
+  cacheContext->SetTarget(mCache.get());
+  {
+    cacheContext->BeginDraw();
+    scope_guard endDraw([cacheContext]() noexcept {
+      winrt::check_hresult(cacheContext->EndDraw());
+    });
+    cacheContext->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
+    impl(cacheContext.get(), nativeSize);
+  }
   ctx->DrawBitmap(mCache.get(), where);
   mKey = cacheKey;
 }
