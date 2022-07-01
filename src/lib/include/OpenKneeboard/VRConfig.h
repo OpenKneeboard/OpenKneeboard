@@ -51,6 +51,7 @@ struct VRRenderConfig {
     GAZE_ZOOM = 1 << 3,
     FORCE_ZOOM = 1 << 4,
     GAZE_INPUT_FOCUS = 1 << 5,
+    INVERT_OPENXR_Y_POSITION = 1 << 6,
   };
 
   float mZoomScale = 2.0f;
