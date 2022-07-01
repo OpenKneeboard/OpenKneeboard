@@ -39,7 +39,7 @@ class TroubleshootingStore::DPrintReceiver final
  public:
   ~DPrintReceiver();
 
-  std::vector<DPrintEntry> GetMessages() const;
+  std::vector<DPrintEntry> GetMessages();
 
   Event<DPrintEntry> evMessageReceived;
 
@@ -48,6 +48,7 @@ class TroubleshootingStore::DPrintReceiver final
 
  private:
   std::vector<DPrintEntry> mMessages;
+  std::recursive_mutex mMutex;
 };
 
 TroubleshootingStore::TroubleshootingStore() {
@@ -98,7 +99,8 @@ TroubleshootingStore::DPrintReceiver::~DPrintReceiver() {
 }
 
 std::vector<TroubleshootingStore::DPrintEntry>
-TroubleshootingStore::DPrintReceiver::GetMessages() const {
+TroubleshootingStore::DPrintReceiver::GetMessages() {
+  std::unique_lock lock(mMutex);
   return mMessages;
 }
 
@@ -109,8 +111,12 @@ TroubleshootingStore::GetDPrintMessages() const {
 
 void TroubleshootingStore::DPrintReceiver::OnMessage(
   const DPrintMessage& message) {
-  mMessages.push_back({std::chrono::system_clock::now(), message});
-  evMessageReceived.Emit(mMessages.back());
+  DPrintEntry entry {std::chrono::system_clock::now(), message};
+  {
+    std::unique_lock lock(mMutex);
+    mMessages.push_back(entry);
+  }
+  evMessageReceived.Emit(entry);
 }
 
 }// namespace OpenKneeboard
