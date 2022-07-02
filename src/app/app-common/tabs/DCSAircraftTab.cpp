@@ -51,8 +51,10 @@ void DCSAircraftTab::OnGameEvent(
   }
 
   const auto path = savedGamesPath / "KNEEBOARD" / event.value;
-  dprintf("Aircraft tab: looking for {}", path);
-  this->GetDelegate()->SetPath(path);
+  if (this->GetDelegate()->GetPath() != path) {
+    dprintf("Aircraft tab: looking for {}", path);
+    this->GetDelegate()->SetPath(path);
+  }
 }
 
 }// namespace OpenKneeboard
