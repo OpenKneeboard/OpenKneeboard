@@ -19,15 +19,18 @@
  */
 // clang-format off
 #include "pch.h"
-#include "AboutPage.xaml.h"
-#include "AboutPage.g.cpp"
+#include "HelpPage.xaml.h"
+#include "HelpPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/LaunchURI.h>
+#include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
 #include <appmodel.h>
 #include <microsoft.ui.xaml.window.h>
+#include <shims/winrt.h>
 #include <shobjidl.h>
 #include <time.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
@@ -35,13 +38,14 @@
 
 #include <format>
 #include <fstream>
+#include <shims/filesystem>
 #include <string>
 
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
-AboutPage::AboutPage() {
+HelpPage::HelpPage() {
   InitializeComponent();
 
   // The one true terminal size is 80x24, fight me.
@@ -53,7 +57,7 @@ AboutPage::AboutPage() {
 
   AddEventListener(
     TroubleshootingStore::Get()->evGameEventReceived,
-    &AboutPage::PopulateEvents,
+    &HelpPage::PopulateEvents,
     this);
 
   AddEventListener(
@@ -65,13 +69,20 @@ AboutPage::AboutPage() {
         _this->PopulateDPrint();
       }();
     });
+
+  QuickStartLink().Click([](auto&, auto&) {
+    const auto quickStartPath
+      = RuntimeFiles::GetDirectory() / RuntimeFiles::QUICK_START_PDF;
+
+    LaunchURI(to_utf8(quickStartPath));
+  });
 }
 
-AboutPage::~AboutPage() {
+HelpPage::~HelpPage() {
   this->RemoveAllEventListeners();
 }
 
-void AboutPage::PopulateVersion() {
+void HelpPage::PopulateVersion() {
   std::string_view commitID(Version::CommitID);
 
   const auto version = std::format(
@@ -149,19 +160,19 @@ static inline void SetClipboardText(std::wstring_view text) {
   Windows::ApplicationModel::DataTransfer::Clipboard::SetContent(package);
 }
 
-void AboutPage::OnCopyVersionDataClick(
+void HelpPage::OnCopyVersionDataClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   SetClipboardText(mVersionClipboardData);
 }
 
-void AboutPage::OnCopyGameEventsClick(
+void HelpPage::OnCopyGameEventsClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   SetClipboardText(mGameEventsClipboardData);
 }
 
-winrt::fire_and_forget AboutPage::OnExportClick(
+winrt::fire_and_forget HelpPage::OnExportClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   Windows::Storage::Pickers::FileSavePicker picker;
@@ -206,7 +217,7 @@ winrt::fire_and_forget AboutPage::OnExportClick(
     << winrt::to_string(mDPrintClipboardData) << std::endl;
 }
 
-void AboutPage::OnCopyDPrintClick(
+void HelpPage::OnCopyDPrintClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   SetClipboardText(mDPrintClipboardData);
@@ -219,7 +230,7 @@ auto ReadableTime(const std::chrono::time_point<C, T>& time) {
     std::chrono::time_point_cast<std::chrono::seconds>(time));
 }
 
-winrt::fire_and_forget AboutPage::PopulateEvents() noexcept {
+winrt::fire_and_forget HelpPage::PopulateEvents() noexcept {
   auto events = TroubleshootingStore::Get()->GetGameEvents();
 
   std::string message;
@@ -262,7 +273,7 @@ winrt::fire_and_forget AboutPage::PopulateEvents() noexcept {
   EventsText().Text(winrt::to_hstring(message));
 }
 
-winrt::fire_and_forget AboutPage::PopulateDPrint() noexcept {
+winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
   auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
 
   std::wstring text;
@@ -301,7 +312,7 @@ winrt::fire_and_forget AboutPage::PopulateDPrint() noexcept {
   this->ScrollDPrintToEnd();
 }
 
-void AboutPage::OnDPrintLayoutChanged(
+void HelpPage::OnDPrintLayoutChanged(
   const IInspectable&,
   const IInspectable&) noexcept {
   if (DPrintExpander().IsExpanded()) {
@@ -314,7 +325,7 @@ void AboutPage::OnDPrintLayoutChanged(
   }
 }
 
-void AboutPage::ScrollDPrintToEnd() {
+void HelpPage::ScrollDPrintToEnd() {
   DPrintScroll().UpdateLayout();
   DPrintScroll().ChangeView({}, {DPrintScroll().ScrollableHeight()}, {});
 }

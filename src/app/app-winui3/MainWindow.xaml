@@ -43,8 +43,8 @@
       BackRequested="OnBackRequested">
       <NavigationView.FooterMenuItems>
         <NavigationViewItem
-          x:Name="AboutNavItem"
-          Content="About"
+          x:Name="HelpNavItem"
+          Content="Help"
           Icon="Help"
         />
       </NavigationView.FooterMenuItems>

@@ -292,8 +292,8 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
-  if (item == AboutNavItem()) {
-    Frame().Navigate(xaml_typename<AboutPage>());
+  if (item == HelpNavItem()) {
+    Frame().Navigate(xaml_typename<HelpPage>());
     return;
   }
 

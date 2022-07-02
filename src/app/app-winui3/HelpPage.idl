@@ -1,0 +1,8 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass HelpPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        HelpPage();
+    }
+}

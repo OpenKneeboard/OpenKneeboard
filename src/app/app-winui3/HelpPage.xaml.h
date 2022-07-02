@@ -27,14 +27,14 @@
 
 #include <string>
 
-#include "AboutPage.g.h"
+#include "HelpPage.g.h"
 
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
-  AboutPage();
-  ~AboutPage();
+struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
+  HelpPage();
+  ~HelpPage();
 
   void OnCopyVersionDataClick(
     const IInspectable&,
@@ -65,5 +65,5 @@ struct AboutPage : AboutPageT<AboutPage>, private OpenKneeboard::EventReceiver {
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
-struct AboutPage : AboutPageT<AboutPage, implementation::AboutPage> {};
+struct HelpPage : HelpPageT<HelpPage, implementation::HelpPage> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation
