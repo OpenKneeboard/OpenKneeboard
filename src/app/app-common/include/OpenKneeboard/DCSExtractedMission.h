@@ -17,38 +17,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
 
-#include "DCSTab.h"
-#include "FolderTab.h"
-#include "TabBase.h"
-#include "TabWithDelegate.h"
+#include <memory>
+#include <mutex>
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
-class DCSExtractedMission;
-
-class DCSMissionTab final : public TabBase,
-                            public DCSTab,
-                            public TabWithDelegate<FolderTab> {
+class DCSExtractedMission final {
  public:
-  DCSMissionTab(const DXResources&, KneeboardState*);
-  virtual ~DCSMissionTab();
-  virtual utf8_string GetGlyph() const override;
-  virtual utf8_string GetTitle() const override;
+  DCSExtractedMission(const DCSExtractedMission&) = delete;
+  DCSExtractedMission& operator=(const DCSExtractedMission&) = delete;
 
-  virtual void Reload() override;
+  DCSExtractedMission();
+  ~DCSExtractedMission();
+
+  static std::shared_ptr<DCSExtractedMission> Get(
+    const std::filesystem::path& zipPath);
+
+  std::filesystem::path GetZipPath() const;
+  std::filesystem::path GetExtractedPath() const;
 
  protected:
-  virtual void OnGameEvent(
-    const GameEvent&,
-    const std::filesystem::path&,
-    const std::filesystem::path&) override;
+  DCSExtractedMission(const std::filesystem::path& zipPath);
 
  private:
-  std::filesystem::path mMission;
-  std::string mAircraft;
-  std::shared_ptr<DCSExtractedMission> mExtracted;
+  std::filesystem::path mZipPath;
+  std::filesystem::path mTempDir;
+
+  static std::mutex sCacheMutex;
+  static std::shared_ptr<DCSExtractedMission> sCache;
 };
 
 }// namespace OpenKneeboard
