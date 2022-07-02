@@ -101,10 +101,17 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   dialog.Title(winrt::box_value(winrt::to_hstring(_("DCS Hooks"))));
   dialog.DefaultButton(ContentDialogButton::Primary);
   dialog.PrimaryButtonText(winrt::to_hstring(_("Retry")));
-  dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
+  dialog.CloseButtonText(winrt::to_hstring(_("Ignore")));
 
+  std::error_code ec;
   do {
-    std::error_code ec;
+    if (ec) {
+      auto result = co_await dialog.ShowAsync();
+      if (result != ContentDialogResult::Primary) {
+        break;
+      }
+    }
+
     if (!(std::filesystem::is_directory(hooksDir)
           || std::filesystem::create_directories(hooksDir, ec))) {
       dialog.Content(winrt::box_value(winrt::to_hstring(std::format(
