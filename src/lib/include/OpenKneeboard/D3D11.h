@@ -40,6 +40,22 @@ void CopyTextureWithOpacity(
   ID3D11RenderTargetView* dest,
   float opacity);
 
+void DrawTextureWithTint(
+  ID3D11Device* device,
+  ID3D11ShaderResourceView* source,
+  ID3D11RenderTargetView* dest,
+  const RECT& sourceRect,
+  const RECT& destRect,
+  DirectX::FXMVECTOR tint);
+
+void DrawTextureWithOpacity(
+  ID3D11Device* device,
+  ID3D11ShaderResourceView* source,
+  ID3D11RenderTargetView* dest,
+  const RECT& sourceRect,
+  const RECT& destRect,
+  float opacity);
+
 class RenderTargetView {
  public:
   RenderTargetView();

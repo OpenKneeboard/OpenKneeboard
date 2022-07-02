@@ -67,10 +67,10 @@ add_module_library(OpenKneeboard-nonvr-d3d11 NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
   PRIVATE
-  directxtk
   dxgi-hooks
   detours-ext
   OpenKneeboard-dprint
+  OpenKneeboard-D3D11
   OpenKneeboard-SHM
   OpenKneeboard-DllLoadWatcher)
 

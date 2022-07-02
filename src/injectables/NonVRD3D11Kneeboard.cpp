@@ -19,7 +19,7 @@
  */
 #include "NonVRD3D11Kneeboard.h"
 
-#include <DirectXTK/SpriteBatch.h>
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/dprint.h>
 #include <dxgi.h>
 #include <shims/winrt.h>
@@ -55,13 +55,6 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
 
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
-  if (device.get() != mDevice) {
-    mDevice = device.get();
-    mDeviceResources = {};
-    device->GetImmediateContext(mDeviceResources.mContext.put());
-    mDeviceResources.mSpriteBatch
-      = std::make_unique<DirectX::SpriteBatch>(mDeviceResources.mContext.get());
-  }
 
   auto snapshot = mSHM.MaybeGet();
   if (!snapshot.IsValid()) {
@@ -109,7 +102,6 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       break;
   }
 
-  auto& sprites = *mDeviceResources.mSpriteBatch;
   RECT destRect {left, top, left + renderWidth, top + renderHeight};
   RECT sourceRect {
     0,
@@ -118,22 +110,34 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     layer.mImageHeight,
   };
 
-  auto sharedTexture = snapshot.GetLayerTexture(mDevice, layerIndex);
-  if (!sharedTexture.IsValid()) {
-    return passthrough();
-  }
-  winrt::com_ptr<ID3D11ShaderResourceView> resourceView;
-  mDevice->CreateShaderResourceView(
-    sharedTexture.GetTexture(), nullptr, resourceView.put());
+  {
+    winrt::com_ptr<ID3D11Texture2D> destinationTexture;
+    swapChain->GetBuffer(0, IID_PPV_ARGS(destinationTexture.put()));
+    if (!destinationTexture) {
+      OPENKNEEBOARD_BREAK;
+      return passthrough();
+    }
+    winrt::com_ptr<ID3D11RenderTargetView> rtv;
+    device->CreateRenderTargetView(
+      destinationTexture.get(), nullptr, rtv.put());
+    if (!rtv) {
+      OPENKNEEBOARD_BREAK;
+      return passthrough();
+    }
 
-  sprites.Begin();
-  sprites.Draw(
-    resourceView.get(),
-    destRect,
-    &sourceRect,
-    DirectX::Colors::White * config.mFlat.opacity);
-  sprites.End();
-  mDeviceResources.mContext->Flush();
+    auto sharedTexture = snapshot.GetLayerTexture(device.get(), layerIndex);
+    if (!sharedTexture.IsValid()) {
+      return passthrough();
+    }
+
+    D3D11::DrawTextureWithOpacity(
+      device.get(),
+      sharedTexture.GetShaderResourceView(),
+      rtv.get(),
+      sourceRect,
+      destRect,
+      config.mFlat.opacity);
+  }
 
   return passthrough();
 }

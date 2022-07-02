@@ -19,7 +19,6 @@
  */
 #pragma once
 
-#include <DirectXTK/SpriteBatch.h>
 #include <OpenKneeboard/SHM.h>
 #include <shims/winrt.h>
 
@@ -39,11 +38,6 @@ class NonVRD3D11Kneeboard final {
  private:
   SHM::Reader mSHM;
   IDXGISwapChainPresentHook mDXGIHook;
-  ID3D11Device* mDevice = nullptr;
-  struct {
-    winrt::com_ptr<ID3D11DeviceContext> mContext;
-    std::unique_ptr<DirectX::SpriteBatch> mSpriteBatch;
-  } mDeviceResources;
 
   HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,

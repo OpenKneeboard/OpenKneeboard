@@ -49,12 +49,54 @@ void CopyTextureWithTint(
   sprites.End();
 }
 
+void DrawTextureWithTint(
+  ID3D11Device* device,
+  ID3D11ShaderResourceView* source,
+  ID3D11RenderTargetView* dest,
+  const RECT& sourceRect,
+  const RECT& destRect,
+  DirectX::FXMVECTOR tint) {
+  winrt::com_ptr<ID3D11DeviceContext> ctx;
+  device->GetImmediateContext(ctx.put());
+  D3D11_VIEWPORT viewport {
+    0.0f,
+    0.0f,
+    static_cast<FLOAT>(destRect.right),
+    static_cast<FLOAT>(destRect.bottom),
+    0.0f,
+    1.0f,
+  };
+  ctx->RSSetViewports(1, &viewport);
+  ctx->OMSetRenderTargets(1, &dest, nullptr);
+
+  DirectX::SpriteBatch sprites(ctx.get());
+  sprites.Begin();
+  sprites.Draw(source, destRect, &sourceRect, tint);
+  sprites.End();
+}
+
 void CopyTextureWithOpacity(
   ID3D11Device* device,
   ID3D11ShaderResourceView* source,
   ID3D11RenderTargetView* dest,
   float opacity) {
   CopyTextureWithTint(device, source, dest, DirectX::Colors::White * opacity);
+}
+
+void DrawTextureWithOpacity(
+  ID3D11Device* device,
+  ID3D11ShaderResourceView* source,
+  ID3D11RenderTargetView* dest,
+  const RECT& sourceRect,
+  const RECT& destRect,
+  float opacity) {
+  DrawTextureWithTint(
+    device,
+    source,
+    dest,
+    sourceRect,
+    destRect,
+    DirectX::Colors::White * opacity);
 }
 
 RenderTargetView::RenderTargetView() = default;
