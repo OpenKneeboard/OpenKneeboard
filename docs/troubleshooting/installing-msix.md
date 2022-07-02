@@ -16,14 +16,14 @@ If it seems to be making no progress, you can:
 4. Install the frameworks below
 5. Install OpenKneeboard
 
+### Frameworks for OpenKneeboard v1.1 and above
+
+* [Windows App Runtime v1.1](https://aka.ms/windowsappsdk/1.1/1.1.1/windowsappruntimeinstall-1.1.1-x64.exe) - [alternative (see below)](https://aka.ms/windowsappsdk/1.1/1.1.1/windowsappruntimeredist-1.1.1.zip)
+
 ### Frameworks for OpenKneeboard v1.0 and below
 
 * [`Microsoft.VCLibs.x64.14.00.Desktop.appx`](https://docs.microsoft.com/en-us/troubleshoot/developer/visualstudio/cpp/libraries/c-runtime-packages-desktop-bridge)
-* [Windows App Runtime v1.0](https://aka.ms/windowsappsdk/1.0/1.0.4/windowsappruntimeinstall-1.0.4-x64.exe) - [alternative](https://aka.ms/windowsappsdk/1.0/1.0.4/windowsappruntimeredist-1.0.4.zip)
-
-### Frameworks for OpenKneeboard v1.1 and above
-
-* [Windows App Runtime v1.1](https://aka.ms/windowsappsdk/1.1/1.1.1/windowsappruntimeinstall-1.1.1-x64.exe) - [alternative](https://aka.ms/windowsappsdk/1.1/1.1.1/windowsappruntimeredist-1.1.1.zip)
+* [Windows App Runtime v1.0](https://aka.ms/windowsappsdk/1.0/1.0.4/windowsappruntimeinstall-1.0.4-x64.exe) - [alternative (see below)](https://aka.ms/windowsappsdk/1.0/1.0.4/windowsappruntimeredist-1.0.4.zip)
 
 ### Alternative installation of Windows App Runtime
 
