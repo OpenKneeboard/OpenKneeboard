@@ -52,8 +52,10 @@ void DCSTerrainTab::OnGameEvent(
 
   const auto path
     = installPath / "Mods" / "terrains" / event.value / "Kneeboard";
-  dprintf("Terrain tab: loading {}", path);
-  this->GetDelegate()->SetPath(path);
+  if (path != this->GetDelegate()->GetPath()) {
+    dprintf("Terrain tab: loading {}", path);
+    this->GetDelegate()->SetPath(path);
+  }
 }
 
 }// namespace OpenKneeboard
