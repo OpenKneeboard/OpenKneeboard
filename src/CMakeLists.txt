@@ -1,6 +1,4 @@
 
-include(sign_target.cmake)
-
 add_compile_options(
   "/Zc:__cplusplus"
   "/utf-8"

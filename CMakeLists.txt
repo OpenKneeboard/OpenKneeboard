@@ -60,6 +60,9 @@ project(com.fredemmott.openkneeboard VERSION 1.1.1 LANGUAGES CXX C)
 
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
 
+include(sign_target.cmake)
+
+
 configure_file(
 	"${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props"
 	"${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props"
