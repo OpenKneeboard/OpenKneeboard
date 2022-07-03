@@ -90,10 +90,6 @@ std::shared_ptr<T> load_tab(
                   nlohmann::json>) {
     return std::make_shared<T>(dxr, kbs, title, config);
   }
-
-  if constexpr (std::is_same_v<T, TextFileTab>) {
-    return std::make_shared<TextFileTab>(dxr, kbs, title, config);
-  }
 }
 
 }// namespace OpenKneeboard
