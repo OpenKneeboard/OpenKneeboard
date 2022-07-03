@@ -39,6 +39,7 @@ state = {
   mission = nil,
   aircraft = nil,
   terrain = nil,
+  selfData = nil,
 }
 
 function sendState()
@@ -52,6 +53,9 @@ function sendState()
   end
   if state.terrain then
     OpenKneeboard.send("Terrain", state.terrain)
+  end
+  if (state.selfData) then
+    OpenKneeboard.send("SelfData", net.lua2json(state.selfData))
   end
 end
 
@@ -84,6 +88,7 @@ function callbacks.onMissionLoadBegin()
     state.terrain = mission.mission.theatre
     l("Terrain: "..state.terrain)
   end
+  state.selfData = Export.LoGetSelfData()
   sendState()
 end
 
@@ -96,6 +101,7 @@ function callbacks.onSimulationStart()
     return
   end
   state.aircraft = selfData.Name
+  state.selfData = selfData
   l("Aircraft: "..state.aircraft)
   sendState()
   OpenKneeboard.send("SimulationStart", "");
@@ -105,8 +111,8 @@ function callbacks.onPlayerChangeSlot(id)
   if id == net.get_my_player_id() then
     local slotid = net.get_player_info(id, 'slot')
     state.aircraft = DCS.getUnitProperty(slotid, DCS.UNIT_TYPE)
-    l("Aircraft (onPlayerChangeSlot): " .. state.aircraft)
-    OpenKneeboard.send("Aircraft", state.aircraft);
+    state.selfData = Export.LoGetSelfData()
+    sendState()
   end
 end
 
