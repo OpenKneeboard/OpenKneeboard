@@ -99,6 +99,9 @@ void DCSBriefingTab::Reload() noexcept {
   const auto mission = luabridge::getGlobal(lua, "mission");
   const auto dictionary = luabridge::getGlobal(lua, "dictionary");
 
+  // WIP FIXME
+  constexpr bool isRedFor = true;
+
   if (std::filesystem::exists(localized / "mapResource")) {
     error = luaL_dofile(lua, to_utf8(localized / "MapResource").c_str());
     if (error) {
@@ -109,16 +112,14 @@ void DCSBriefingTab::Reload() noexcept {
     const auto mapResource = luabridge::getGlobal(lua, "mapResource");
 
     std::vector<std::filesystem::path> images;
-    // FIXME: Only show Bluefor **OR** Redfor
-    luabridge::LuaRef bluefor = mission["pictureFileNameB"];
-    luabridge::LuaRef redfor = mission["pictureFileNameR"];
-    for (const luabridge::LuaRef& force: {bluefor, redfor}) {
-      for (auto&& [i, resourceName]: luabridge::pairs(force)) {
-        const auto fileName = mapResource[resourceName].cast<std::string>();
-        const auto path = localized / fileName;
-        if (std::filesystem::is_regular_file(path)) {
-          images.push_back(path);
-        }
+
+    luabridge::LuaRef force
+      = mission[isRedFor ? "pictureFileNameR" : "pictureFileNameB"];
+    for (auto&& [i, resourceName]: luabridge::pairs(force)) {
+      const auto fileName = mapResource[resourceName].cast<std::string>();
+      const auto path = localized / fileName;
+      if (std::filesystem::is_regular_file(path)) {
+        images.push_back(path);
       }
     }
     mImagePages->SetPaths(images);
