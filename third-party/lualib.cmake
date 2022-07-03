@@ -30,6 +30,7 @@ if(NOT lua_POPULATED)
 		OUTPUT_NAME lua
 		OUTPUT_NAME_Debug luad
 	)
+	sign_target(lualib)
 endif()
 
 install(
