@@ -71,8 +71,25 @@ D2D1_SIZE_U DCSBriefingTab::GetNativeContentSize(uint16_t pageIndex) {
   return mTextPages->GetNativeContentSize(pageIndex - imageCount);
 }
 
+static std::string GetCountries(const luabridge::LuaRef& countries) {
+  std::string ret;
+  for (auto&& [i, country]: luabridge::pairs(countries)) {
+    if (
+      country["static"].isNil() || country["helicopter"].isNil()
+      || country["vehicle"].isNil() || country["plane"].isNil()) {
+      continue;
+    }
+    if (!ret.empty()) {
+      ret += ", ";
+    }
+    ret += country["name"].cast<std::string>();
+  }
+  return ret;
+}
+
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
+    this->ClearContentCache();
     this->evFullyReplacedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
   });
@@ -141,6 +158,23 @@ void DCSBriefingTab::Reload() noexcept {
     std::chrono::seconds {
       startSecondsSinceMidnight.cast<unsigned int>(),
     });
+  const std::string redCountries
+    = GetCountries(mission["coalition"]["red"]["country"]);
+  const std::string blueCountries
+    = GetCountries(mission["coalition"]["blue"]["country"]);
+  std::string_view alliedCountries;
+  std::string_view enemyCountries;
+  switch (mSelfData.mCoalition) {
+    case DCSWorld::Coalition::Neutral:
+      break;
+    case DCSWorld::Coalition::Blue:
+      alliedCountries = blueCountries;
+      enemyCountries = redCountries;
+      break;
+    case DCSWorld::Coalition::Red:
+      alliedCountries = redCountries;
+      enemyCountries = blueCountries;
+  }
 
   const auto situation
     = dictionary[mission["descriptionText"]].cast<std::string>();
@@ -163,8 +197,8 @@ void DCSBriefingTab::Reload() noexcept {
       "\n"
       "Title:    {}\n"
       "Start at: {}\n"
-      "My side:  NOT IMPLEMENTED\n"
-      "Enemies:  NOT IMPLEMENTED\n"
+      "My side:  {}\n"
+      "Enemies:  {}\n"
       "\n"
       "SITUATION\n"
       "\n"
@@ -184,6 +218,8 @@ void DCSBriefingTab::Reload() noexcept {
       "             At 8000m {} m/s, {}° Meteo {}°"),
     title,
     startDateTime,
+    alliedCountries,
+    enemyCountries,
     situation,
     objective,
     temperature,
