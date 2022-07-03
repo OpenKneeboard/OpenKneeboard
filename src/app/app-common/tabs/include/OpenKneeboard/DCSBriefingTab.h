@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DCSWorld.h>
 
 #include "DCSTab.h"
+#include "ITabWithNavigation.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
 
@@ -33,6 +34,7 @@ class PlainTextPageSource;
 
 class DCSBriefingTab final : public TabBase,
                              public DCSTab,
+                             public ITabWithNavigation,
                              public TabWithDoodles {
  public:
   DCSBriefingTab(const DXResources&, KneeboardState*);
@@ -44,6 +46,10 @@ class DCSBriefingTab final : public TabBase,
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
 
   virtual void Reload() noexcept override;
+
+  bool IsNavigationAvailable() const override;
+
+  std::shared_ptr<ITab> CreateNavigationTab(uint16_t currentPage) override;
 
  protected:
   virtual void OnGameEvent(
@@ -57,6 +63,7 @@ class DCSBriefingTab final : public TabBase,
     const D2D1_RECT_F&) override;
 
  private:
+  DXResources mDXR;
   std::shared_ptr<DCSExtractedMission> mMission;
   std::unique_ptr<ImagePageSource> mImagePages;
   std::unique_ptr<PlainTextPageSource> mTextPages;

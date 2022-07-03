@@ -23,6 +23,7 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/ImagePageSource.h>
+#include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -43,6 +44,7 @@ namespace OpenKneeboard {
 
 DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
   : TabWithDoodles(dxr, kbs),
+    mDXR(dxr),
     mImagePages(std::make_unique<ImagePageSource>(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
 }
@@ -52,7 +54,7 @@ DCSBriefingTab::~DCSBriefingTab() {
 }
 
 utf8_string DCSBriefingTab::GetGlyph() const {
-  return {};// FIXME
+  return "\uE95D";
 }
 
 utf8_string DCSBriefingTab::GetTitle() const {
@@ -91,6 +93,7 @@ void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
     this->ClearContentCache();
     this->evFullyReplacedEvent.Emit();
+    this->evAvailableFeaturesChangedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
   });
   mImagePages->SetPaths({});
@@ -278,6 +281,32 @@ void DCSBriefingTab::RenderPageContent(
     return;
   }
   return mTextPages->RenderPage(ctx, pageIndex - imageCount, rect);
+}
+
+bool DCSBriefingTab::IsNavigationAvailable() const {
+  return this->GetPageCount() > 2;
+}
+
+std::shared_ptr<ITab> DCSBriefingTab::CreateNavigationTab(
+  uint16_t currentPage) {
+  std::vector<NavigationTab::Entry> entries;
+
+  const auto paths = mImagePages->GetPaths();
+
+  for (uint16_t i = 0; i < paths.size(); ++i) {
+    entries.push_back({paths.at(i).stem(), i});
+  }
+
+  const auto textCount = mTextPages->GetPageCount();
+  for (uint16_t i = 0; i < textCount; ++i) {
+    entries.push_back({
+      std::format(_("Transcription {}/{}"), i + 1, textCount),
+      static_cast<uint16_t>(i + paths.size()),
+    });
+  }
+
+  return std::make_shared<NavigationTab>(
+    mDXR, this, entries, this->GetNativeContentSize(currentPage));
 }
 
 }// namespace OpenKneeboard
