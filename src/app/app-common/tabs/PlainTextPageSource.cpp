@@ -173,12 +173,12 @@ void PlainTextPageSource::RenderPage(
 
 void PlainTextPageSource::ClearText() {
   mMessages.clear();
+  mCurrentPageLines.clear();
   mCompletePages.clear();
 }
 
 void PlainTextPageSource::SetText(utf8_string_view text) {
-  mMessages.clear();
-  mCompletePages.clear();
+  this->ClearText();
   this->PushMessage(text);
 }
 
