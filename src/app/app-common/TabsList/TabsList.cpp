@@ -92,6 +92,7 @@ void TabsList::LoadDefaultConfig() {
       _("Quick Start"),
       exeDir / RuntimeFiles::QUICK_START_PDF),
     std::make_shared<DCSRadioLogTab>(mDXR, mKneeboard),
+    std::make_shared<DCSBriefingTab>(mDXR, mKneeboard),
     std::make_shared<DCSMissionTab>(mDXR, mKneeboard),
     std::make_shared<DCSAircraftTab>(mDXR, mKneeboard),
     std::make_shared<DCSTerrainTab>(mDXR, mKneeboard),

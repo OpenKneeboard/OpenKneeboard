@@ -34,9 +34,10 @@ target_link_libraries(
 	System::Dxguid
 	System::Rpcrt4
 	ThirdParty::DirectXTK
+	ThirdParty::LibZip
+	ThirdParty::LuaBridge
 	ThirdParty::OpenVR
 	ThirdParty::QPDF
-	ThirdParty::LibZip
 )
 target_include_directories(
 	OpenKneeboard-App-Common

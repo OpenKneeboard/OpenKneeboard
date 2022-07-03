@@ -38,6 +38,12 @@ int main() {
   (GameEvent {DCS::EVT_SAVED_GAMES_PATH, to_utf8(savedGamePath)}).Send();
   (GameEvent {DCS::EVT_AIRCRAFT, "A-10C_2"}).Send();
   (GameEvent {DCS::EVT_TERRAIN, "Caucasus"}).Send();
+  (GameEvent {
+     DCS::EVT_MISSION,
+     "C:\\Program Files\\Eagle Dynamics\\DCS World "
+     "OpenBeta\\Mods\\aircraft\\Ka-50\\Missions\\Campaigns\\ATO-A-P2.2.miz",
+   })
+    .Send();
 
   const std::vector<const char*> messages = {
     "Simple single line",

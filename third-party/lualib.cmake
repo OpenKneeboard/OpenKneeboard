@@ -38,3 +38,5 @@ install(
   TYPE DOC
   RENAME "LICENSE-ThirdParty-lua"
 )
+
+add_library(ThirdParty::Lua ALIAS lualib)

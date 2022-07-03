@@ -56,9 +56,6 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   }
   auto closeZip = scope_guard([=] { zip_close(zip); });
 
-  // Zip file format specifies `/` as a directory separator, not backslash,
-  // and libzip respects this, even on windows.
-  const std::string_view prefix {"KNEEBOARD/"};
   // 4k limit for all stack variables
   auto fileBuffer = std::make_unique<std::array<char, 1024 * 1024>>();
   for (auto i = 0; i < zip_get_num_entries(zip, 0); i++) {
@@ -68,9 +65,6 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
     }
     std::string_view name(zstat.name);
     if (name.ends_with('/')) {
-      continue;
-    }
-    if (!name.starts_with(prefix)) {
       continue;
     }
 

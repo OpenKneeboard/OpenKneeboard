@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/DCSAircraftTab.h>
+#include <OpenKneeboard/DCSBriefingTab.h>
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
@@ -35,6 +36,7 @@
   IT(_("PDF"), PDF) \
   IT(_("Text File"), TextFile) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
+  IT(_("DCS Mission Briefing"), DCSBriefing) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \
   IT(_("DCS Radio Log"), DCSRadioLog) \
   IT(_("DCS Terrain Kneeboard"), DCSTerrain)
@@ -43,7 +45,6 @@
 #define IT(_, type) \
   static_assert( \
     std::derived_from<OpenKneeboard::type##Tab, OpenKneeboard::ITab>);
-OPENKNEEBOARD_TAB_TYPES
 #undef IT
 
 namespace OpenKneeboard {
@@ -90,6 +91,8 @@ std::shared_ptr<T> load_tab(
                   nlohmann::json>) {
     return std::make_shared<T>(dxr, kbs, title, config);
   }
+
+  static_assert(!std::is_abstract_v<T>);
 }
 
 }// namespace OpenKneeboard

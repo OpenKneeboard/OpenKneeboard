@@ -20,8 +20,21 @@
 
 #include <OpenKneeboard/DCSBriefingTab.h>
 #include <OpenKneeboard/DCSExtractedMission.h>
+#include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/ImagePageSource.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+
+extern "C" {
+#include <lauxlib.h>
+#include <lualib.h>
+}
+
+#include <LuaBridge/LuaBridge.h>
+
+using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
@@ -56,12 +69,55 @@ D2D1_SIZE_U DCSBriefingTab::GetNativeContentSize(uint16_t pageIndex) {
 }
 
 void DCSBriefingTab::Reload() {
+  const scope_guard emitEvents([this]() {
+    this->evFullyReplacedEvent.Emit();
+    this->evNeedsRepaintEvent.Emit();
+  });
+
+  lua_State* lua = lua_open();
+  scope_guard closeLua([&lua]() { lua_close(lua); });
+
+  luaL_openlibs(lua);
+
+  const auto root = mMission->GetExtractedPath();
+
+  int error = luaL_dofile(lua, to_utf8(root / "mission").c_str());
+  if (error) {
+    dprintf("Failed to load lua mission table: {}", lua_tostring(lua, -1));
+    return;
+  }
+  error = luaL_dofile(
+    lua, to_utf8(root / "l10n" / "DEFAULT" / "dictionary").c_str());
+  if (error) {
+    dprintf("Failed to load lua dictionary table: {}", lua_tostring(lua, -1));
+    return;
+  }
+
+  const auto mission = luabridge::getGlobal(lua, "mission");
+  const auto dictionary = luabridge::getGlobal(lua, "dictionary");
+
+  const std::string title = dictionary[mission["sortie"]];
+
+  mTextPages->SetText(title);
 }
 
 void DCSBriefingTab::OnGameEvent(
-  const GameEvent&,
+  const GameEvent& event,
   const std::filesystem::path&,
   const std::filesystem::path&) {
+  if (event.name != DCS::EVT_MISSION) {
+    return;
+  }
+
+  const auto missionZip = std::filesystem::canonical(event.value);
+
+  if (mMission && mMission->GetZipPath() == missionZip) {
+    return;
+  }
+
+  mMission = DCSExtractedMission::Get(missionZip);
+  dprintf("Briefing tab: loading {}", missionZip);
+  this->Reload();
 }
 
 void DCSBriefingTab::RenderPageContent(

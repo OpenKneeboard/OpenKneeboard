@@ -38,8 +38,8 @@ class DCSBriefingTab final : public TabBase,
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
 
-  virtual uint16_t GetPageCount() const = 0;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) = 0;
+  virtual uint16_t GetPageCount() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
 
   virtual void Reload() override;
 
@@ -55,8 +55,7 @@ class DCSBriefingTab final : public TabBase,
     const D2D1_RECT_F&) override;
 
  private:
-  std::filesystem::path mMission;
-  std::shared_ptr<DCSExtractedMission> mExtracted;
+  std::shared_ptr<DCSExtractedMission> mMission;
   std::unique_ptr<ImagePageSource> mImagePages;
   std::unique_ptr<PlainTextPageSource> mTextPages;
 };
