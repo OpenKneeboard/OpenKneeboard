@@ -21,29 +21,30 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
-#include <shims/winrt.h>
 
 #include <thread>
 
 namespace OpenKneeboard {
 
-bool GameEventServer::Run(std::stop_token stopToken) {
+winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
   winrt::file_handle handle {CreateMailslotA(
     GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr)};
   if (!handle) {
     dprint("Failed to create GameEvent mailslot");
-    return false;
+    co_return;
   }
 
   dprint("Started listening for game events");
 
-  while (!stopToken.stop_requested()) {
+  auto cancelled = co_await winrt::get_cancellation_token();
+
+  while (!cancelled()) {
     DWORD unreadMessageCount = 0;
     DWORD nextMessageSize = 0;
     GetMailslotInfo(
       handle.get(), nullptr, &nextMessageSize, &unreadMessageCount, nullptr);
     if (unreadMessageCount == 0) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      co_await winrt::resume_after(std::chrono::milliseconds(100));
       continue;
     }
 
@@ -66,7 +67,7 @@ bool GameEventServer::Run(std::stop_token stopToken) {
     evGameEvent.Emit(GameEvent::Unserialize(buffer));
   }
 
-  return true;
+  co_return;
 }
 
 }// namespace OpenKneeboard

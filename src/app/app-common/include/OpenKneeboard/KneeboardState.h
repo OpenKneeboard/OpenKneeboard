@@ -26,6 +26,8 @@
 #include <OpenKneeboard/FlatConfig.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
+#include <shims/winrt.h>
+#include <winrt/Windows.Foundation.h>
 
 #include <memory>
 #include <thread>
@@ -44,6 +46,7 @@ class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
 struct GameEvent;
+class GameEventServer;
 
 struct ViewRenderInfo {
   std::shared_ptr<IKneeboardView> mView;
@@ -104,7 +107,8 @@ class KneeboardState final : private EventReceiver {
   std::unique_ptr<DirectInputAdapter> mDirectInput;
   std::unique_ptr<TabletInputAdapter> mTabletInput;
 
-  std::jthread mGameEventThread;
+  std::unique_ptr<GameEventServer> mGameEventServer;
+  winrt::Windows::Foundation::IAsyncAction mGameEventWorker;
   std::jthread mOpenVRThread;
 
   VRConfig mVRConfig;

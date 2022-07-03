@@ -21,8 +21,8 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/GameEvent.h>
-
-#include <stop_token>
+#include <shims/winrt.h>
+#include <winrt/Windows.Foundation.h>
 
 namespace OpenKneeboard {
 
@@ -30,7 +30,7 @@ class GameEventServer final {
  public:
   Event<GameEvent> evGameEvent;
 
-  bool Run(std::stop_token);
+  winrt::Windows::Foundation::IAsyncAction Run();
 };
 
 }// namespace OpenKneeboard

@@ -83,13 +83,10 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   AddEventListener(
     mDirectInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
 
-  mGameEventThread = std::jthread([this](std::stop_token stopToken) {
-    SetThreadDescription(GetCurrentThread(), L"GameEvent Thread");
-    GameEventServer server;
-    this->AddEventListener(
-      server.evGameEvent, &KneeboardState::OnGameEvent, this);
-    server.Run(stopToken);
-  });
+  mGameEventServer = std::make_unique<GameEventServer>();
+  AddEventListener(
+    mGameEventServer->evGameEvent, &KneeboardState::OnGameEvent, this);
+  mGameEventWorker = mGameEventServer->Run();
 
   if (mVRConfig.mEnableSteamVR) {
     this->StartOpenVRThread();
@@ -98,12 +95,9 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 
 KneeboardState::~KneeboardState() {
   this->RemoveAllEventListeners();
-  mGameEventThread.request_stop();
+  mGameEventWorker.Cancel();
   if (mOpenVRThread.joinable()) {
     mOpenVRThread.request_stop();
-  }
-  mGameEventThread.join();
-  if (mOpenVRThread.joinable()) {
     mOpenVRThread.join();
   }
 }
