@@ -68,11 +68,13 @@ D2D1_SIZE_U DCSBriefingTab::GetNativeContentSize(uint16_t pageIndex) {
   return mTextPages->GetNativeContentSize(pageIndex - imageCount);
 }
 
-void DCSBriefingTab::Reload() {
+void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
     this->evFullyReplacedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
   });
+  mImagePages->SetPaths({});
+  mTextPages->ClearText();
 
   lua_State* lua = lua_open();
   scope_guard closeLua([&lua]() { lua_close(lua); });
@@ -86,8 +88,9 @@ void DCSBriefingTab::Reload() {
     dprintf("Failed to load lua mission table: {}", lua_tostring(lua, -1));
     return;
   }
-  error = luaL_dofile(
-    lua, to_utf8(root / "l10n" / "DEFAULT" / "dictionary").c_str());
+
+  const auto localized = root / "l10n" / "DEFAULT";
+  error = luaL_dofile(lua, to_utf8(localized / "dictionary").c_str());
   if (error) {
     dprintf("Failed to load lua dictionary table: {}", lua_tostring(lua, -1));
     return;
@@ -95,6 +98,31 @@ void DCSBriefingTab::Reload() {
 
   const auto mission = luabridge::getGlobal(lua, "mission");
   const auto dictionary = luabridge::getGlobal(lua, "dictionary");
+
+  if (std::filesystem::exists(localized / "mapResource")) {
+    error = luaL_dofile(lua, to_utf8(localized / "MapResource").c_str());
+    if (error) {
+      dprintf("Failed to load lua mapResource: {}", lua_tostring(lua, -1));
+      return;
+    }
+
+    const auto mapResource = luabridge::getGlobal(lua, "mapResource");
+
+    std::vector<std::filesystem::path> images;
+    // FIXME: Only show Bluefor **OR** Redfor
+    luabridge::LuaRef bluefor = mission["pictureFileNameB"];
+    luabridge::LuaRef redfor = mission["pictureFileNameR"];
+    for (const luabridge::LuaRef& force: {bluefor, redfor}) {
+      for (auto&& [i, resourceName]: luabridge::pairs(force)) {
+        const auto fileName = mapResource[resourceName].cast<std::string>();
+        const auto path = localized / fileName;
+        if (std::filesystem::is_regular_file(path)) {
+          images.push_back(path);
+        }
+      }
+    }
+    mImagePages->SetPaths(images);
+  }
 
   const std::string title = dictionary[mission["sortie"]];
 

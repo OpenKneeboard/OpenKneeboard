@@ -57,6 +57,7 @@ class ImagePageSource final : public IPageSource {
   DXResources mDXR;
   winrt::com_ptr<IWICImagingFactory> mWIC;
 
+  std::mutex mMutex;
   std::vector<Page> mPages = {};
 
   winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(uint16_t index);

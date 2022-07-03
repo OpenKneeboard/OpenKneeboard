@@ -134,6 +134,7 @@ void ImagePageSource::RenderPage(
 }
 
 winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
+  std::unique_lock lock(mMutex);
   if (index >= mPages.size()) {
     return {};
   }
