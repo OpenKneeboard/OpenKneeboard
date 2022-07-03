@@ -30,6 +30,7 @@ namespace OpenKneeboard {
 class ITab {
  public:
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
+  virtual ~ITab();
 
   virtual utf8_string GetGlyph() const = 0;
   virtual utf8_string GetTitle() const = 0;
