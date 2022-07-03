@@ -40,10 +40,14 @@ namespace OpenKneeboard {
 
 winrt::Windows::Foundation::IAsyncAction CheckRuntimeFiles(
   const XamlRoot& root) {
+  winrt::apartment_context uiThread;
+
   do {
     std::string message;
     try {
+      co_await winrt::resume_background();
       RuntimeFiles::Install();
+      co_await uiThread;
       co_return;
     } catch (const std::filesystem::filesystem_error& error) {
       message = std::format(
@@ -55,6 +59,8 @@ winrt::Windows::Foundation::IAsyncAction CheckRuntimeFiles(
         error.code().message(),
         error.what());
     }
+
+    co_await uiThread;
 
     ContentDialog dialog;
     dialog.XamlRoot(root);
