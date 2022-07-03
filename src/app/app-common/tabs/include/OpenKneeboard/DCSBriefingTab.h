@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DCSWorld.h>
+
 #include "DCSTab.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
@@ -58,6 +60,30 @@ class DCSBriefingTab final : public TabBase,
   std::shared_ptr<DCSExtractedMission> mMission;
   std::unique_ptr<ImagePageSource> mImagePages;
   std::unique_ptr<PlainTextPageSource> mTextPages;
+
+  struct SelfData {
+    DCSWorld::Coalition mCoalition {DCSWorld::Coalition::Neutral};
+    int mCountry = -1;
+    std::string mAircraft;
+
+    auto operator<=>(const SelfData&) const = default;
+  };
+  SelfData mSelfData;
+
+  constexpr const char* CoalitionKey(
+    const char* neutralKey,
+    const char* redforKey,
+    const char* blueforKey) {
+    switch (mSelfData.mCoalition) {
+      case DCSWorld::Coalition::Neutral:
+        return neutralKey;
+      case DCSWorld::Coalition::Red:
+        return redforKey;
+      case DCSWorld::Coalition::Blue:
+        return blueforKey;
+    }
+    throw std::logic_error("Invalid coalition");
+  }
 };
 
 }// namespace OpenKneeboard

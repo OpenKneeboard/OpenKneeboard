@@ -62,6 +62,12 @@ class DCSWorld final : public OpenKneeboard::Game {
     = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
   static constexpr char EVT_TERRAIN[]
     = "com.fredemmott.openkneeboard.dcsext/Terrain";
+
+  enum class Coalition {
+    Neutral = 0,
+    Red = 1,
+    Blue = 2,
+  };
 };
 
 }// namespace OpenKneeboard

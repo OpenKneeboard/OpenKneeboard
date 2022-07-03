@@ -106,9 +106,6 @@ void DCSBriefingTab::Reload() noexcept {
   const auto mission = luabridge::getGlobal(lua, "mission");
   const auto dictionary = luabridge::getGlobal(lua, "dictionary");
 
-  // WIP FIXME
-  constexpr bool isRedFor = true;
-
   if (std::filesystem::exists(localized / "mapResource")) {
     error = luaL_dofile(lua, to_utf8(localized / "MapResource").c_str());
     if (error) {
@@ -120,8 +117,8 @@ void DCSBriefingTab::Reload() noexcept {
 
     std::vector<std::filesystem::path> images;
 
-    luabridge::LuaRef force
-      = mission[isRedFor ? "pictureFileNameR" : "pictureFileNameB"];
+    luabridge::LuaRef force = mission[CoalitionKey(
+      "pictureFileNameN", "pictureFileNameR", "pictureFileNameB")];
     for (auto&& [i, resourceName]: luabridge::pairs(force)) {
       const auto fileName = mapResource[resourceName].cast<std::string>();
       const auto path = localized / fileName;
@@ -148,10 +145,11 @@ void DCSBriefingTab::Reload() noexcept {
   const auto situation
     = dictionary[mission["descriptionText"]].cast<std::string>();
 
-  const auto objective
-    = dictionary
-        [mission[isRedFor ? "descriptionRedTask" : "descriptionBlueTask"]]
-          .cast<std::string>();
+  const auto objective = dictionary[mission[CoalitionKey(
+                                      "descriptionNeutralTask",
+                                      "descriptionRedTask",
+                                      "descriptionBlueTask")]]
+                           .cast<std::string>();
 
   const auto weather = mission["weather"];
   const auto temperature = weather["season"]["temperature"].cast<int>();
@@ -207,19 +205,31 @@ void DCSBriefingTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path&,
   const std::filesystem::path&) {
-  if (event.name != DCS::EVT_MISSION) {
+  if (event.name == DCS::EVT_MISSION) {
+    const auto missionZip = std::filesystem::canonical(event.value);
+
+    if (mMission && mMission->GetZipPath() == missionZip) {
+      return;
+    }
+
+    mMission = DCSExtractedMission::Get(missionZip);
+    dprintf("Briefing tab: loading {}", missionZip);
+    this->Reload();
     return;
   }
 
-  const auto missionZip = std::filesystem::canonical(event.value);
-
-  if (mMission && mMission->GetZipPath() == missionZip) {
-    return;
+  if (event.name == DCS::EVT_SELF_DATA) {
+    auto raw = nlohmann::json::parse(event.value);
+    const SelfData self {
+      .mCoalition = raw.at("CoalitionID"),
+      .mCountry = raw.at("Country"),
+      .mAircraft = raw.at("Name"),
+    };
+    if (self != mSelfData) {
+      mSelfData = self;
+      this->Reload();
+    }
   }
-
-  mMission = DCSExtractedMission::Get(missionZip);
-  dprintf("Briefing tab: loading {}", missionZip);
-  this->Reload();
 }
 
 void DCSBriefingTab::RenderPageContent(
