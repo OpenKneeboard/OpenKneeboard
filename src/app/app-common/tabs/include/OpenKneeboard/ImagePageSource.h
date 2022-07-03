@@ -27,13 +27,13 @@
 
 namespace OpenKneeboard {
 
-class ImagePagesSource final : public IPageSource {
+class ImagePageSource final : public IPageSource {
  public:
-  ImagePagesSource() = delete;
-  ImagePagesSource(
+  ImagePageSource() = delete;
+  ImagePageSource(
     const DXResources&,
     const std::vector<std::filesystem::path>& paths = {});
-  virtual ~ImagePagesSource();
+  virtual ~ImagePageSource();
 
   void SetPaths(const std::vector<std::filesystem::path>&);
   std::vector<std::filesystem::path> GetPaths() const;

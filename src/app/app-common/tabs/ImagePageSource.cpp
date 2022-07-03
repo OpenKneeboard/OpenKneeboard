@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/ImagePagesSource.h>
+#include <OpenKneeboard/ImagePageSource.h>
 #include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -31,7 +31,7 @@ using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
-ImagePagesSource::ImagePagesSource(
+ImagePageSource::ImagePageSource(
   const DXResources& dxr,
   const std::vector<std::filesystem::path>& paths)
   : mDXR(dxr),
@@ -39,7 +39,7 @@ ImagePagesSource::ImagePagesSource(
   this->SetPaths(paths);
 }
 
-void ImagePagesSource::SetPaths(
+void ImagePageSource::SetPaths(
   const std::vector<std::filesystem::path>& paths) {
   mPages.clear();
   mPages.reserve(paths.size());
@@ -48,15 +48,15 @@ void ImagePagesSource::SetPaths(
   }
 }
 
-std::vector<std::filesystem::path> ImagePagesSource::GetPaths() const {
+std::vector<std::filesystem::path> ImagePageSource::GetPaths() const {
   auto view = std::ranges::views::transform(
     mPages, [](const auto& page) { return page.mPath; });
   return {view.begin(), view.end()};
 }
 
-ImagePagesSource::~ImagePagesSource() = default;
+ImagePageSource::~ImagePageSource() = default;
 
-bool ImagePagesSource::CanOpenFile(const std::filesystem::path& path) const {
+bool ImagePageSource::CanOpenFile(const std::filesystem::path& path) const {
   if (!std::filesystem::is_regular_file(path)) {
     return false;
   }
@@ -71,7 +71,7 @@ bool ImagePagesSource::CanOpenFile(const std::filesystem::path& path) const {
   return static_cast<bool>(decoder);
 }
 
-uint16_t ImagePagesSource::GetPageCount() const {
+uint16_t ImagePageSource::GetPageCount() const {
   return static_cast<uint16_t>(mPages.size());
 }
 
@@ -87,7 +87,7 @@ static bool IsValidPageIndex(uint16_t index, uint16_t count) {
   return false;
 }
 
-D2D1_SIZE_U ImagePagesSource::GetNativeContentSize(uint16_t index) {
+D2D1_SIZE_U ImagePageSource::GetNativeContentSize(uint16_t index) {
   if (!IsValidPageIndex(index, GetPageCount())) {
     return {};
   }
@@ -100,7 +100,7 @@ D2D1_SIZE_U ImagePagesSource::GetNativeContentSize(uint16_t index) {
   return bitmap->GetPixelSize();
 }
 
-void ImagePagesSource::RenderPage(
+void ImagePageSource::RenderPage(
   ID2D1DeviceContext* ctx,
   uint16_t index,
   const D2D1_RECT_F& rect) {
@@ -133,7 +133,7 @@ void ImagePagesSource::RenderPage(
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
-winrt::com_ptr<ID2D1Bitmap> ImagePagesSource::GetPageBitmap(uint16_t index) {
+winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
   if (index >= mPages.size()) {
     return {};
   }

@@ -32,7 +32,7 @@
 
 namespace OpenKneeboard {
 
-class ImagePagesSource;
+class ImagePageSource;
 
 class FolderTab final : public TabBase,
                         public TabWithDoodles,
@@ -76,7 +76,7 @@ class FolderTab final : public TabBase,
 
   DXResources mDXR;
 
-  std::unique_ptr<ImagePagesSource> mPageSource;
+  std::unique_ptr<ImagePageSource> mPageSource;
   std::filesystem::path mPath;
 
   winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {

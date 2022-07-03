@@ -26,8 +26,9 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSTab::DCSTab() {
-}
+DCSTab::DCSTab() = default;
+
+DCSTab::~DCSTab() = default;
 
 void DCSTab::PostGameEvent(const GameEvent& event) {
   if (event.name == DCS::EVT_INSTALL_PATH) {

@@ -19,7 +19,7 @@
  */
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/FolderTab.h>
-#include <OpenKneeboard/ImagePagesSource.h>
+#include <OpenKneeboard/ImagePageSource.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/dprint.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -40,7 +40,7 @@ FolderTab::FolderTab(
   const std::filesystem::path& path)
   : TabWithDoodles(dxr, kbs),
     mDXR(dxr),
-    mPageSource(std::make_unique<ImagePagesSource>(dxr)),
+    mPageSource(std::make_unique<ImagePageSource>(dxr)),
     mPath {path} {
   this->Reload();
 }

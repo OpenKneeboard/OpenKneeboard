@@ -29,6 +29,7 @@ namespace OpenKneeboard {
 class DCSTab : public virtual ITabWithGameEvents {
  public:
   DCSTab();
+  virtual ~DCSTab();
   virtual void PostGameEvent(const GameEvent&) override final;
 
  protected:
