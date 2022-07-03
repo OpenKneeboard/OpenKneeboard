@@ -19,30 +19,21 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/IPageSource.h>
-#include <OpenKneeboard/utf8.h>
 #include <d2d1_1.h>
 
-#include <string>
+#include <cstdint>
 
 namespace OpenKneeboard {
 
-class ITab : public IPageSource {
+class IPageSource {
  public:
-  class RuntimeID final : public UniqueIDBase<RuntimeID> {};
-  virtual ~ITab();
+  virtual ~IPageSource();
 
-  virtual utf8_string GetGlyph() const = 0;
-  virtual utf8_string GetTitle() const = 0;
-  virtual RuntimeID GetRuntimeID() const = 0;
-  virtual void Reload() = 0;
-
-  Event<> evNeedsRepaintEvent;
-  Event<> evFullyReplacedEvent;
-  Event<> evAvailableFeaturesChangedEvent;
-  Event<> evPageAppendedEvent;
-  Event<EventContext, uint16_t> evPageChangeRequestedEvent;
+  virtual uint16_t GetPageCount() const = 0;
+  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) = 0;
+  virtual void
+  RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
+    = 0;
 };
 
 }// namespace OpenKneeboard
