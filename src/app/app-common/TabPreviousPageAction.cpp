@@ -18,8 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/AppSettings.h>
+#include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabPreviousPageAction.h>
 #include <OpenKneeboard/TabView.h>
 

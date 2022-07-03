@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/ITab.h>
 
 #include <nlohmann/json_fwd.hpp>
 

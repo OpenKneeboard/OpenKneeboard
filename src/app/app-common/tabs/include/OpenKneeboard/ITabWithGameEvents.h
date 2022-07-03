@@ -19,14 +19,15 @@
  */
 #pragma once
 
-#include "Tab.h"
+#include "ITab.h"
 
 namespace OpenKneeboard {
 
-class TabWithNavigation : public virtual Tab {
+struct GameEvent;
+
+class ITabWithGameEvents : public virtual ITab {
  public:
-  virtual bool IsNavigationAvailable() const = 0;
-  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t pageIndex) = 0;
+  virtual void PostGameEvent(const GameEvent&) = 0;
 };
 
 }// namespace OpenKneeboard

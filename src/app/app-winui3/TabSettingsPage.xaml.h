@@ -28,7 +28,7 @@
 #include <string>
 
 namespace OpenKneeboard {
-class Tab;
+class ITab;
 class ITabView;
 enum class TabType;
 }// namespace OpenKneeboard
@@ -51,7 +51,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   template <class T>
   fire_and_forget CreateFolderBasedTab();
 
-  void AddTab(const std::shared_ptr<OpenKneeboard::Tab>&);
+  void AddTab(const std::shared_ptr<OpenKneeboard::ITab>&);
   std::string mData;
 };
 

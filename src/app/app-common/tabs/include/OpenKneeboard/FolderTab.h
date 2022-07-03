@@ -24,18 +24,18 @@
 
 #include <shims/filesystem>
 
-#include "Tab.h"
+#include "ITab.h"
+#include "ITabWithNavigation.h"
+#include "ITabWithSettings.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
-#include "TabWithNavigation.h"
-#include "TabWithSettings.h"
 
 namespace OpenKneeboard {
 
 class FolderTab final : public TabBase,
                         public TabWithDoodles,
-                        public TabWithNavigation,
-                        public TabWithSettings {
+                        public ITabWithNavigation,
+                        public ITabWithSettings {
  public:
   FolderTab(
     const DXResources&,
@@ -61,7 +61,7 @@ class FolderTab final : public TabBase,
   virtual void SetPath(const std::filesystem::path& path);
 
   virtual bool IsNavigationAvailable() const override;
-  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t) override;
+  virtual std::shared_ptr<ITab> CreateNavigationTab(uint16_t) override;
 
   bool CanOpenFile(const std::filesystem::path&) const;
 

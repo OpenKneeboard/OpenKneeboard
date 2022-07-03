@@ -19,15 +19,15 @@
  */
 #pragma once
 
-#include "Tab.h"
+#include <nlohmann/json_fwd.hpp>
+
+#include "ITab.h"
 
 namespace OpenKneeboard {
 
-struct GameEvent;
-
-class TabWithGameEvents : public virtual Tab {
+class ITabWithSettings : public virtual ITab {
  public:
-  virtual void PostGameEvent(const GameEvent&) = 0;
+  virtual nlohmann::json GetSettings() const = 0;
 };
 
 }// namespace OpenKneeboard

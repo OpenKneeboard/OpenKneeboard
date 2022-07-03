@@ -39,7 +39,7 @@ class GamesList;
 class IKneeboardView;
 class InterprocessRenderer;
 class KneeboardView;
-class Tab;
+class ITab;
 class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
@@ -61,10 +61,10 @@ class KneeboardState final : private EventReceiver {
   std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 
-  std::vector<std::shared_ptr<Tab>> GetTabs() const;
-  void SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs);
-  void InsertTab(uint8_t index, const std::shared_ptr<Tab>& tab);
-  void AppendTab(const std::shared_ptr<Tab>& tab);
+  std::vector<std::shared_ptr<ITab>> GetTabs() const;
+  void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
+  void InsertTab(uint8_t index, const std::shared_ptr<ITab>& tab);
+  void AppendTab(const std::shared_ptr<ITab>& tab);
   void RemoveTab(uint8_t index);
 
   Event<> evFrameTimerEvent;
@@ -92,7 +92,7 @@ class KneeboardState final : private EventReceiver {
   DXResources mDXResources;
   Settings mSettings {Settings::Load()};
 
-  std::vector<std::shared_ptr<Tab>> mTabs;
+  std::vector<std::shared_ptr<ITab>> mTabs;
 
   uint8_t mFirstViewIndex = 0;
   uint8_t mInputViewIndex = 0;

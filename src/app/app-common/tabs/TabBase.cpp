@@ -22,7 +22,7 @@
 
 namespace OpenKneeboard {
 
-Tab::RuntimeID TabBase::GetRuntimeID() const {
+ITab::RuntimeID TabBase::GetRuntimeID() const {
   return mRuntimeID;
 }
 

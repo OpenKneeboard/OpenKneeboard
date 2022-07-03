@@ -42,7 +42,7 @@
 // If this fails, check that you included the header :)
 #define IT(_, type) \
   static_assert( \
-    std::derived_from<OpenKneeboard::type##Tab, OpenKneeboard::Tab>);
+    std::derived_from<OpenKneeboard::type##Tab, OpenKneeboard::ITab>);
 OPENKNEEBOARD_TAB_TYPES
 #undef IT
 
@@ -62,8 +62,8 @@ enum class TabType {
 
 struct DXResources;
 
-/** Create a `shared_ptr<Tab>` with existing config */
-template <std::derived_from<Tab> T>
+/** Create a `shared_ptr<ITab>` with existing config */
+template <std::derived_from<ITab> T>
 std::shared_ptr<T> load_tab(
   const DXResources& dxr,
   KneeboardState* kbs,

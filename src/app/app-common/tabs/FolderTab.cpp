@@ -290,7 +290,7 @@ bool FolderTab::IsNavigationAvailable() const {
   return mPages.size();
 }
 
-std::shared_ptr<Tab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
+std::shared_ptr<ITab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
   std::vector<NavigationTab::Entry> entries;
 
   for (uint16_t i = 0; i < mPages.size(); ++i) {

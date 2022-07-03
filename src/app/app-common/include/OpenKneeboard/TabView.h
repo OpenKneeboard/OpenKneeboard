@@ -29,16 +29,16 @@ class KneeboardState;
 
 class TabView final : public ITabView, private EventReceiver {
  public:
-  TabView(KneeboardState*, const std::shared_ptr<Tab>&);
+  TabView(KneeboardState*, const std::shared_ptr<ITab>&);
   ~TabView();
 
-  virtual std::shared_ptr<Tab> GetRootTab() const override;
+  virtual std::shared_ptr<ITab> GetRootTab() const override;
 
   virtual void SetPageIndex(uint16_t) override;
   virtual void NextPage() override;
   virtual void PreviousPage() override;
 
-  virtual std::shared_ptr<Tab> GetTab() const override;
+  virtual std::shared_ptr<ITab> GetTab() const override;
   virtual uint16_t GetPageCount() const override;
   virtual uint16_t GetPageIndex() const override;
 
@@ -54,11 +54,11 @@ class TabView final : public ITabView, private EventReceiver {
   const EventContext mEventContext;
 
   KneeboardState* mKneeboard;
-  std::shared_ptr<Tab> mRootTab;
+  std::shared_ptr<ITab> mRootTab;
   uint16_t mRootTabPage;
 
   // For now, just navigation views, maybe more later
-  std::shared_ptr<Tab> mActiveSubTab;
+  std::shared_ptr<ITab> mActiveSubTab;
   uint16_t mActiveSubTabPage;
 
   TabMode mTabMode = TabMode::NORMAL;

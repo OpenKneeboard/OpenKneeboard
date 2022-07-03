@@ -21,18 +21,18 @@
 
 #include <shims/filesystem>
 
-#include "Tab.h"
+#include "ITab.h"
+#include "ITabWithSettings.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
 #include "TabWithPlainTextContent.h"
-#include "TabWithSettings.h"
 
 namespace OpenKneeboard {
 
 class TextFileTab final : public TabBase,
                           public TabWithDoodles,
                           public TabWithPlainTextContent,
-                          public TabWithSettings {
+                          public ITabWithSettings {
  public:
   explicit TextFileTab(
     const DXResources&,

@@ -28,9 +28,9 @@
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -104,7 +104,7 @@ void TabPage::InitializePointerSource() {
 }
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
-  const auto id = Tab::RuntimeID::FromTemporaryValue(
+  const auto id = ITab::RuntimeID::FromTemporaryValue(
     winrt::unbox_value<uint64_t>(args.Parameter()));
   mKneeboardView = gKneeboard->GetActiveViewForGlobalInput();
   AddEventListener(mKneeboardView->evCursorEvent, [this](const auto& ev) {

@@ -551,7 +551,7 @@ bool PDFTab::IsNavigationAvailable() const {
   return p->mNavigationLoaded && this->GetPageCount() > 2;
 }
 
-std::shared_ptr<Tab> PDFTab::CreateNavigationTab(uint16_t pageIndex) {
+std::shared_ptr<ITab> PDFTab::CreateNavigationTab(uint16_t pageIndex) {
   return std::make_shared<NavigationTab>(
     p->mDXR, this, p->mBookmarks, this->GetNativeContentSize(pageIndex));
 }

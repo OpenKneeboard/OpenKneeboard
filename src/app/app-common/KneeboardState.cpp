@@ -20,14 +20,14 @@
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/ITabWithGameEvents.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/OpenXRMode.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabWithGameEvents.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
@@ -151,11 +151,11 @@ std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   return mViews.at(mInputViewIndex);
 }
 
-std::vector<std::shared_ptr<Tab>> KneeboardState::GetTabs() const {
+std::vector<std::shared_ptr<ITab>> KneeboardState::GetTabs() const {
   return mTabs;
 }
 
-void KneeboardState::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
+void KneeboardState::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   if (std::ranges::equal(tabs, mTabs)) {
     return;
   }
@@ -170,13 +170,15 @@ void KneeboardState::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
   evTabsChangedEvent.Emit();
 }
 
-void KneeboardState::InsertTab(uint8_t index, const std::shared_ptr<Tab>& tab) {
+void KneeboardState::InsertTab(
+  uint8_t index,
+  const std::shared_ptr<ITab>& tab) {
   auto tabs = mTabs;
   tabs.insert(tabs.begin() + index, tab);
   SetTabs(tabs);
 }
 
-void KneeboardState::AppendTab(const std::shared_ptr<Tab>& tab) {
+void KneeboardState::AppendTab(const std::shared_ptr<ITab>& tab) {
   auto tabs = mTabs;
   tabs.push_back(tab);
   SetTabs(tabs);
@@ -278,7 +280,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
   }
 
   for (auto tab: mTabs) {
-    auto receiver = std::dynamic_pointer_cast<TabWithGameEvents>(tab);
+    auto receiver = std::dynamic_pointer_cast<ITabWithGameEvents>(tab);
     if (receiver) {
       receiver->PostGameEvent(ev);
     }

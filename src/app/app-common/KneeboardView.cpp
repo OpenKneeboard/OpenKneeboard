@@ -18,9 +18,9 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
@@ -43,7 +43,7 @@ KneeboardViewID KneeboardView::GetRuntimeID() const {
   return mID;
 }
 
-void KneeboardView::SetTabs(const std::vector<std::shared_ptr<Tab>>& tabs) {
+void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   if (std::ranges::equal(tabs, mTabViews, {}, {}, &ITabView::GetTab)) {
     return;
   }
@@ -106,7 +106,7 @@ void KneeboardView::SetCurrentTabByIndex(uint8_t index) {
   evCurrentTabChangedEvent.Emit(index);
 }
 
-void KneeboardView::SetCurrentTabByID(Tab::RuntimeID id) {
+void KneeboardView::SetCurrentTabByID(ITab::RuntimeID id) {
   const auto it = std::ranges::find(mTabViews, id, [](const auto& view) {
     return view->GetRootTab()->GetRuntimeID();
   });
@@ -157,7 +157,7 @@ void KneeboardView::NextTab() {
 }
 
 std::shared_ptr<ITabView> KneeboardView::GetTabViewByID(
-  Tab::RuntimeID id) const {
+  ITab::RuntimeID id) const {
   for (const auto& tabView: mTabViews) {
     if (tabView->GetTab()->GetRuntimeID() == id) {
       return tabView;
@@ -171,7 +171,7 @@ std::shared_ptr<ITabView> KneeboardView::GetTabViewByID(
   return {};
 }
 
-std::shared_ptr<Tab> KneeboardView::GetCurrentTab() const {
+std::shared_ptr<ITab> KneeboardView::GetCurrentTab() const {
   return mCurrentTabView->GetTab();
 }
 

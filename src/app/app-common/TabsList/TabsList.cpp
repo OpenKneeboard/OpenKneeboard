@@ -119,7 +119,7 @@ nlohmann::json TabsList::GetSettings() const {
       {"Title", tab->GetTitle()},
     };
 
-    auto withSettings = std::dynamic_pointer_cast<TabWithSettings>(tab);
+    auto withSettings = std::dynamic_pointer_cast<ITabWithSettings>(tab);
     if (withSettings) {
       auto settings = withSettings->GetSettings();
       if (!settings.is_null()) {

@@ -21,10 +21,10 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/GetSystemColor.h>
+#include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabAction.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/dprint.h>
@@ -256,7 +256,7 @@ void InterprocessRenderer::Render(Layer& layer) {
     title,
     pageSize,
     std::bind_front(
-      &Tab::RenderPage, tab, mDXR.mD2DDeviceContext.get(), pageIndex));
+      &ITab::RenderPage, tab, mDXR.mD2DDeviceContext.get(), pageIndex));
 }
 
 void InterprocessRenderer::RenderWithChrome(

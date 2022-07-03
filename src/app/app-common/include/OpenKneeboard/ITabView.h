@@ -27,7 +27,7 @@
 namespace OpenKneeboard {
 
 struct CursorEvent;
-class Tab;
+class ITab;
 
 enum class TabMode {
   NORMAL,
@@ -39,13 +39,13 @@ class ITabView {
   ITabView();
   virtual ~ITabView();
 
-  virtual std::shared_ptr<Tab> GetRootTab() const = 0;
+  virtual std::shared_ptr<ITab> GetRootTab() const = 0;
 
   virtual void SetPageIndex(uint16_t) = 0;
   virtual void NextPage() = 0;
   virtual void PreviousPage() = 0;
 
-  virtual std::shared_ptr<Tab> GetTab() const = 0;
+  virtual std::shared_ptr<ITab> GetTab() const = 0;
   virtual uint16_t GetPageCount() const = 0;
   virtual uint16_t GetPageIndex() const = 0;
 

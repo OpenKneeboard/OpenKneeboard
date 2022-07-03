@@ -25,7 +25,7 @@ namespace OpenKneeboard {
 
 NavigationTab::NavigationTab(
   const DXResources& dxr,
-  Tab* rootTab,
+  ITab* rootTab,
   const std::vector<Entry>& entries,
   const D2D1_SIZE_U& _ignoredPreferredSize)
   : mDXR(dxr),

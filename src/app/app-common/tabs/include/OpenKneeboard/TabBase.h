@@ -19,11 +19,11 @@
  */
 #pragma once
 
-#include "Tab.h"
+#include "ITab.h"
 
 namespace OpenKneeboard {
 
-class TabBase : public virtual Tab {
+class TabBase : public virtual ITab {
  public:
   virtual RuntimeID GetRuntimeID() const override;
 

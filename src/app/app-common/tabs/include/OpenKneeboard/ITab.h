@@ -27,7 +27,7 @@
 
 namespace OpenKneeboard {
 
-class Tab {
+class ITab {
  public:
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
 

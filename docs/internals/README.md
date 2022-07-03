@@ -66,7 +66,7 @@ A tab is responsible for loading and drawing its' content (including graphics
 tablet drawings), serializing its' settings as JSON, restoring settings
 from JSON, and producing a settings UI.
 
-By default, any pen input to an `OpenKneeboard::Tab` will be treated as a
+By default, any pen input to an `OpenKneeboard::ITab` will be treated as a
 drawing/annotation; you can replace or extend this behavior by overriding
 the `OnCursorEvent` method.
 

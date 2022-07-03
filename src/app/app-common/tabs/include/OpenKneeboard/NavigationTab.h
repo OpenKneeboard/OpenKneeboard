@@ -25,12 +25,12 @@
 
 #include <limits>
 
+#include "ITabWithCursorEvents.h"
 #include "TabBase.h"
-#include "TabWithCursorEvents.h"
 
 namespace OpenKneeboard {
 
-class NavigationTab final : public TabBase, public TabWithCursorEvents {
+class NavigationTab final : public TabBase, public ITabWithCursorEvents {
  public:
   struct Entry {
     utf8_string mName;
@@ -39,7 +39,7 @@ class NavigationTab final : public TabBase, public TabWithCursorEvents {
 
   NavigationTab(
     const DXResources&,
-    Tab* rootTab,
+    ITab* rootTab,
     const std::vector<Entry>& entries,
     const D2D1_SIZE_U& preferredSize);
   ~NavigationTab();
@@ -62,7 +62,7 @@ class NavigationTab final : public TabBase, public TabWithCursorEvents {
 
  private:
   DXResources mDXR;
-  Tab* mRootTab;
+  ITab* mRootTab;
   D2D1_SIZE_U mPreferredSize;
   CachedLayer mPreviewLayer;
 

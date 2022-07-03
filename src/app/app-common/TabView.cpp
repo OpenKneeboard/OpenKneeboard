@@ -18,17 +18,17 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/ITabWithCursorEvents.h>
+#include <OpenKneeboard/ITabWithNavigation.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabView.h>
-#include <OpenKneeboard/TabWithCursorEvents.h>
-#include <OpenKneeboard/TabWithNavigation.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 namespace OpenKneeboard {
 
-TabView::TabView(KneeboardState* kneeboard, const std::shared_ptr<Tab>& tab)
+TabView::TabView(KneeboardState* kneeboard, const std::shared_ptr<ITab>& tab)
   : mKneeboard(kneeboard), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
@@ -50,11 +50,11 @@ TabView::~TabView() {
   this->RemoveAllEventListeners();
 }
 
-std::shared_ptr<Tab> TabView::GetRootTab() const {
+std::shared_ptr<ITab> TabView::GetRootTab() const {
   return mRootTab;
 }
 
-std::shared_ptr<Tab> TabView::GetTab() const {
+std::shared_ptr<ITab> TabView::GetTab() const {
   return mActiveSubTab ? mActiveSubTab : mRootTab;
 }
 
@@ -64,7 +64,7 @@ uint16_t TabView::GetPageIndex() const {
 
 void TabView::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
-    = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
+    = std::dynamic_pointer_cast<ITabWithCursorEvents>(this->GetTab());
   if (receiver) {
     receiver->PostCursorEvent(mEventContext, ev, this->GetPageIndex());
   }
@@ -158,7 +158,7 @@ bool TabView::SupportsTabMode(TabMode mode) const {
     case TabMode::NORMAL:
       return true;
     case TabMode::NAVIGATION: {
-      auto nav = std::dynamic_pointer_cast<TabWithNavigation>(mRootTab);
+      auto nav = std::dynamic_pointer_cast<ITabWithNavigation>(mRootTab);
       return nav && nav->IsNavigationAvailable();
     }
   }
@@ -173,7 +173,7 @@ bool TabView::SetTabMode(TabMode mode) {
   }
 
   auto receiver
-    = std::dynamic_pointer_cast<TabWithCursorEvents>(this->GetTab());
+    = std::dynamic_pointer_cast<ITabWithCursorEvents>(this->GetTab());
   if (receiver) {
     receiver->PostCursorEvent(mEventContext, {}, this->GetPageIndex());
   }
@@ -186,7 +186,7 @@ bool TabView::SetTabMode(TabMode mode) {
     case TabMode::NORMAL:
       break;
     case TabMode::NAVIGATION:
-      mActiveSubTab = std::dynamic_pointer_cast<TabWithNavigation>(mRootTab)
+      mActiveSubTab = std::dynamic_pointer_cast<ITabWithNavigation>(mRootTab)
                         ->CreateNavigationTab(mRootTabPage);
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,

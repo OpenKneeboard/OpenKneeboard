@@ -28,13 +28,13 @@
 #include <memory>
 #include <mutex>
 
-#include "TabWithCursorEvents.h"
+#include "ITabWithCursorEvents.h"
 
 namespace OpenKneeboard {
 
 class KneeboardState;
 
-class TabWithDoodles : public virtual TabWithCursorEvents,
+class TabWithDoodles : public virtual ITabWithCursorEvents,
                        private EventReceiver {
  public:
   TabWithDoodles(const DXResources&, KneeboardState*);

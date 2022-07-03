@@ -38,7 +38,7 @@ namespace OpenKneeboard {
 class CursorEvent;
 class CursorRenderer;
 class KneeboardState;
-class Tab;
+class ITab;
 class TabAction;
 struct DXResources;
 

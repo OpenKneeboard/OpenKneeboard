@@ -19,15 +19,19 @@
  */
 #pragma once
 
-#include <nlohmann/json_fwd.hpp>
+#include <OpenKneeboard/Events.h>
 
-#include "Tab.h"
+#include "ITab.h"
 
 namespace OpenKneeboard {
 
-class TabWithSettings : public virtual Tab {
+struct CursorEvent;
+
+class ITabWithCursorEvents : public virtual ITab {
  public:
-  virtual nlohmann::json GetSettings() const = 0;
+  virtual void
+  PostCursorEvent(EventContext, const CursorEvent&, uint16_t pageIndex)
+    = 0;
 };
 
 }// namespace OpenKneeboard

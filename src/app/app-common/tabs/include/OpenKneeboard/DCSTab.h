@@ -20,13 +20,13 @@
 #pragma once
 
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/TabWithGameEvents.h>
+#include <OpenKneeboard/ITabWithGameEvents.h>
 
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
 
-class DCSTab : public virtual TabWithGameEvents {
+class DCSTab : public virtual ITabWithGameEvents {
  public:
   DCSTab();
   virtual void PostGameEvent(const GameEvent&) override final;

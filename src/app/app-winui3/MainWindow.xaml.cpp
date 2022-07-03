@@ -25,10 +25,10 @@
 #endif
 // clang-format on
 
+#include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/LaunchURI.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -309,7 +309,7 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
-  mKneeboardView->SetCurrentTabByID(Tab::RuntimeID::FromTemporaryValue(tabID));
+  mKneeboardView->SetCurrentTabByID(ITab::RuntimeID::FromTemporaryValue(tabID));
 }
 
 void MainWindow::OnBackRequested(

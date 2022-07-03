@@ -19,11 +19,11 @@
  */
 #pragma once
 
-#include "Tab.h"
+#include "ITab.h"
 
 namespace OpenKneeboard {
 
-class TabWithPlainTextContent : virtual public Tab {
+class TabWithPlainTextContent : virtual public ITab {
  public:
   TabWithPlainTextContent(const DXResources&);
   virtual ~TabWithPlainTextContent();

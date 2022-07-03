@@ -21,18 +21,18 @@
 
 #include <shims/filesystem>
 
-#include "Tab.h"
+#include "ITab.h"
+#include "ITabWithNavigation.h"
+#include "ITabWithSettings.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
-#include "TabWithNavigation.h"
-#include "TabWithSettings.h"
 
 namespace OpenKneeboard {
 
 class PDFTab final : public TabBase,
                      public TabWithDoodles,
-                     public TabWithNavigation,
-                     public TabWithSettings {
+                     public ITabWithNavigation,
+                     public ITabWithSettings {
  public:
   explicit PDFTab(
     const DXResources&,
@@ -59,7 +59,8 @@ class PDFTab final : public TabBase,
   virtual void SetPath(const std::filesystem::path& path);
 
   virtual bool IsNavigationAvailable() const override;
-  virtual std::shared_ptr<Tab> CreateNavigationTab(uint16_t pageIndex) override;
+  virtual std::shared_ptr<ITab> CreateNavigationTab(
+    uint16_t pageIndex) override;
 
   virtual void PostCursorEvent(
     EventContext ctx,

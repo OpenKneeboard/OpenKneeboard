@@ -24,8 +24,8 @@
 #include "TabSettingsPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/Tab.h>
 #include <OpenKneeboard/TabTypes.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/dprint.h>
@@ -69,10 +69,10 @@ TabSettingsPage::TabSettingsPage() {
 fire_and_forget TabSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
-  const auto tabID = Tab::RuntimeID::FromTemporaryValue(
+  const auto tabID = ITab::RuntimeID::FromTemporaryValue(
     unbox_value<uint64_t>(sender.as<Button>().Tag()));
   const auto tabs = gKneeboard->GetTabs();
-  auto it = std::ranges::find(tabs, tabID, &Tab::GetRuntimeID);
+  auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
   if (it == tabs.end()) {
     co_return;
   }
@@ -188,7 +188,7 @@ fire_and_forget TabSettingsPage::CreateFolderBasedTab() {
   co_return;
 }
 
-void TabSettingsPage::AddTab(const std::shared_ptr<Tab>& tab) {
+void TabSettingsPage::AddTab(const std::shared_ptr<ITab>& tab) {
   auto idx = List().SelectedIndex();
   if (idx == -1) {
     idx = 0;
@@ -221,11 +221,11 @@ void TabSettingsPage::OnTabsChanged(
   }
   // ... but act on the insert :)
 
-  std::vector<std::shared_ptr<Tab>> reorderedTabs;
+  std::vector<std::shared_ptr<ITab>> reorderedTabs;
   for (auto item: items) {
     auto id
-      = Tab::RuntimeID::FromTemporaryValue(item.as<TabUIData>()->InstanceID());
-    auto it = std::ranges::find(tabs, id, &Tab::GetRuntimeID);
+      = ITab::RuntimeID::FromTemporaryValue(item.as<TabUIData>()->InstanceID());
+    auto it = std::ranges::find(tabs, id, &ITab::GetRuntimeID);
     if (it == tabs.end()) {
       continue;
     }

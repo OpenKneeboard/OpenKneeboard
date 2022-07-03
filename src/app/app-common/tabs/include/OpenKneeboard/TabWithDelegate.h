@@ -24,14 +24,14 @@
 #include <concepts>
 #include <type_traits>
 
-#include "Tab.h"
+#include "ITab.h"
+#include "ITabWithNavigation.h"
 #include "TabWithDoodles.h"
-#include "TabWithNavigation.h"
 
 namespace OpenKneeboard {
 
-template <std::derived_from<Tab> T>
-class TabWithDelegateBase : public virtual Tab {
+template <std::derived_from<ITab> T>
+class TabWithDelegateBase : public virtual ITab {
  public:
   virtual utf8_string GetTitle() const override {
     return this->GetDelegate()->GetTitle();
@@ -61,7 +61,7 @@ class TabWithDelegateBase : public virtual Tab {
 };
 
 template <class T>
-class TabWithCursorEventsDelegate : public virtual TabWithCursorEvents,
+class TabWithCursorEventsDelegate : public virtual ITabWithCursorEvents,
                                     public virtual TabWithDelegateBase<T> {
  public:
   virtual void PostCursorEvent(
@@ -73,27 +73,27 @@ class TabWithCursorEventsDelegate : public virtual TabWithCursorEvents,
 };
 
 template <class T>
-class TabWithNavigationDelegate : public virtual TabWithNavigation,
+class TabWithNavigationDelegate : public virtual ITabWithNavigation,
                                   public virtual TabWithDelegateBase<T> {
  public:
   virtual bool IsNavigationAvailable() const {
     return this->GetDelegate()->IsNavigationAvailable();
   }
 
-  virtual std::shared_ptr<Tab> CreateNavigationTab(
+  virtual std::shared_ptr<ITab> CreateNavigationTab(
     uint16_t pageIndex) override {
     return this->GetDelegate()->CreateNavigationTab(pageIndex);
   }
 };
 
-template <std::derived_from<Tab> T>
+template <std::derived_from<ITab> T>
 class TabWithDelegate : public virtual TabWithDelegateBase<T>,
                         public virtual std::conditional_t<
-                          std::derived_from<T, TabWithCursorEvents>,
+                          std::derived_from<T, ITabWithCursorEvents>,
                           TabWithCursorEventsDelegate<T>,
                           void>,
                         public virtual std::conditional_t<
-                          std::derived_from<T, TabWithNavigation>,
+                          std::derived_from<T, ITabWithNavigation>,
                           TabWithNavigationDelegate<T>,
                           void>,
                         private EventReceiver {

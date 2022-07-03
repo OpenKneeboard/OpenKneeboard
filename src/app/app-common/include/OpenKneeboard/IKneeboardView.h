@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/Tab.h>
+#include <OpenKneeboard/ITab.h>
 #include <d2d1.h>
 
 #include <memory>
@@ -41,11 +41,11 @@ class IKneeboardView {
   virtual KneeboardViewID GetRuntimeID() const = 0;
 
   virtual std::shared_ptr<ITabView> GetCurrentTabView() const = 0;
-  virtual std::shared_ptr<Tab> GetCurrentTab() const = 0;
+  virtual std::shared_ptr<ITab> GetCurrentTab() const = 0;
   virtual uint8_t GetTabIndex() const = 0;
-  virtual std::shared_ptr<ITabView> GetTabViewByID(Tab::RuntimeID) const = 0;
+  virtual std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const = 0;
   virtual void SetCurrentTabByIndex(uint8_t) = 0;
-  virtual void SetCurrentTabByID(Tab::RuntimeID) = 0;
+  virtual void SetCurrentTabByID(ITab::RuntimeID) = 0;
 
   virtual void PreviousTab() = 0;
   virtual void NextTab() = 0;
