@@ -35,7 +35,7 @@ namespace OpenKneeboard {
 class KneeboardState;
 
 class TabWithDoodles : public virtual ITabWithCursorEvents,
-                       private EventReceiver {
+                       protected EventReceiver {
  public:
   TabWithDoodles(const DXResources&, KneeboardState*);
   virtual ~TabWithDoodles();

@@ -19,29 +19,35 @@
  */
 #pragma once
 
-#include "ITab.h"
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/utf8.h>
+#include <shims/winrt.h>
+
+#include <memory>
+
+#include "IPageSource.h"
 
 namespace OpenKneeboard {
 
-class TabWithPlainTextContent : virtual public ITab {
+struct DXResources;
+
+class PlainTextPageSource final : public IPageSource {
  public:
-  TabWithPlainTextContent(const DXResources&);
-  virtual ~TabWithPlainTextContent();
+  PlainTextPageSource() = delete;
+  PlainTextPageSource(const DXResources&, utf8_string_view placeholderText);
+  virtual ~PlainTextPageSource();
 
-  virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
-
- protected:
-  virtual utf8_string GetPlaceholderText() const = 0;
-
-  void RenderPlainTextContent(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F& rect);
   void ClearText();
   void SetText(utf8_string_view text);
   void PushMessage(utf8_string_view message);
   void PushFullWidthSeparator();
+
+  virtual uint16_t GetPageCount() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
+  virtual void RenderPage(
+    ID2D1DeviceContext*,
+    uint16_t pageIndex,
+    const D2D1_RECT_F& rect) override;
 
  private:
   static constexpr int RENDER_SCALE = 1;
@@ -57,6 +63,7 @@ class TabWithPlainTextContent : virtual public ITab {
 
   DXResources mDXR;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+  utf8_string mPlaceholderText;
 
   void LayoutMessages();
   void PushPage();

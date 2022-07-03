@@ -41,7 +41,6 @@ class ITab : public IPageSource {
   Event<> evNeedsRepaintEvent;
   Event<> evFullyReplacedEvent;
   Event<> evAvailableFeaturesChangedEvent;
-  Event<> evPageAppendedEvent;
   Event<EventContext, uint16_t> evPageChangeRequestedEvent;
 };
 

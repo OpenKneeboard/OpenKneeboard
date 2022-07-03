@@ -25,13 +25,13 @@
 #include "ITabWithSettings.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
-#include "TabWithPlainTextContent.h"
 
 namespace OpenKneeboard {
 
+class PlainTextPageSource;
+
 class TextFileTab final : public TabBase,
                           public TabWithDoodles,
-                          public TabWithPlainTextContent,
                           public ITabWithSettings {
  public:
   explicit TextFileTab(
@@ -45,6 +45,9 @@ class TextFileTab final : public TabBase,
     utf8_string_view title,
     const nlohmann::json&);
   virtual ~TextFileTab();
+
+  virtual uint16_t GetPageCount() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
 
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
@@ -61,10 +64,9 @@ class TextFileTab final : public TabBase,
     uint16_t pageIndex,
     const D2D1_RECT_F& rect) final override;
 
-  virtual utf8_string GetPlaceholderText() const override;
-
  private:
   std::filesystem::path mPath;
+  std::unique_ptr<PlainTextPageSource> mPageSource;
 };
 
 }// namespace OpenKneeboard

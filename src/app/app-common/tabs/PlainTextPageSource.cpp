@@ -18,7 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/TabWithPlainTextContent.h>
+#include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/dprint.h>
 #include <Unknwn.h>
 #include <dwrite.h>
@@ -28,8 +28,10 @@
 
 namespace OpenKneeboard {
 
-TabWithPlainTextContent::TabWithPlainTextContent(const DXResources& dxr)
-  : mDXR(dxr) {
+PlainTextPageSource::PlainTextPageSource(
+  const DXResources& dxr,
+  utf8_string_view placeholderText)
+  : mDXR(dxr), mPlaceholderText(placeholderText) {
   auto dwf = mDXR.mDWriteFactory;
   dwf->CreateTextFormat(
     L"Consolas",
@@ -53,10 +55,10 @@ TabWithPlainTextContent::TabWithPlainTextContent(const DXResources& dxr)
   mColumns = static_cast<int>((size.width - (2 * mPadding)) / metrics.width);
 }
 
-TabWithPlainTextContent::~TabWithPlainTextContent() {
+PlainTextPageSource::~PlainTextPageSource() {
 }
 
-uint16_t TabWithPlainTextContent::GetPageCount() const {
+uint16_t PlainTextPageSource::GetPageCount() const {
   if (mCompletePages.empty() && mCurrentPageLines.empty()) {
     return 0;
   }
@@ -65,15 +67,15 @@ uint16_t TabWithPlainTextContent::GetPageCount() const {
   return mCompletePages.size() + 1;
 }
 
-D2D1_SIZE_U TabWithPlainTextContent::GetNativeContentSize(uint16_t pageIndex) {
+D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(uint16_t pageIndex) {
   return {768 * RENDER_SCALE, 1024 * RENDER_SCALE};
 }
 
-void TabWithPlainTextContent::RenderPlainTextContent(
+void PlainTextPageSource::RenderPage(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  const auto virtualSize = GetNativeContentSize(0);
+  const auto virtualSize = this->GetNativeContentSize(0);
   const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
 
   const auto scaleX = canvasSize.width / virtualSize.width;
@@ -105,7 +107,7 @@ void TabWithPlainTextContent::RenderPlainTextContent(
   auto textFormat = mTextFormat.get();
   textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
   if (mCurrentPageLines.empty()) {
-    auto message = winrt::to_hstring(this->GetPlaceholderText());
+    auto message = winrt::to_hstring(mPlaceholderText);
     ctx->DrawTextW(
       message.data(),
       static_cast<UINT32>(message.size()),
@@ -169,32 +171,29 @@ void TabWithPlainTextContent::RenderPlainTextContent(
   }
 }
 
-void TabWithPlainTextContent::ClearText() {
+void PlainTextPageSource::ClearText() {
   mMessages.clear();
   mCompletePages.clear();
-  this->evFullyReplacedEvent.Emit();
 }
 
-void TabWithPlainTextContent::SetText(utf8_string_view text) {
+void PlainTextPageSource::SetText(utf8_string_view text) {
   mMessages.clear();
   mCompletePages.clear();
   this->PushMessage(text);
-  this->evFullyReplacedEvent.Emit();
 }
 
-void TabWithPlainTextContent::PushMessage(utf8_string_view message) {
+void PlainTextPageSource::PushMessage(utf8_string_view message) {
   mMessages.push_back(utf8_string(message));
   LayoutMessages();
-  this->evNeedsRepaintEvent.Emit();
 }
 
-void TabWithPlainTextContent::PushPage() {
+void PlainTextPageSource::PushPage() {
   mCompletePages.push_back(mCurrentPageLines);
   mCurrentPageLines.clear();
   this->evPageAppendedEvent.Emit();
 }
 
-void TabWithPlainTextContent::LayoutMessages() {
+void PlainTextPageSource::LayoutMessages() {
   if (mRows <= 1 || mColumns <= 1) {
     return;
   }
@@ -287,7 +286,7 @@ void TabWithPlainTextContent::LayoutMessages() {
   mMessages.clear();
 }
 
-void TabWithPlainTextContent::PushFullWidthSeparator() {
+void PlainTextPageSource::PushFullWidthSeparator() {
   if (mColumns <= 0 || mMessages.empty()) {
     return;
   }

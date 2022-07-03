@@ -17,7 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/TextFileTab.h>
+#include <OpenKneeboard/scope_guard.h>
 
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -29,9 +31,9 @@ TextFileTab::TextFileTab(
   KneeboardState* kbs,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : mPath(path), TabWithDoodles(dxr, kbs), TabWithPlainTextContent(dxr) {
-  this->evPageAppendedEvent.PushHook(
-    [] { return EventBase::HookResult::STOP_PROPAGATION; });
+  : TabWithDoodles(dxr, kbs),
+    mPath(path),
+    mPageSource(std::make_unique<PlainTextPageSource>(dxr, _("[empty file]"))) {
   Reload();
 }
 
@@ -66,11 +68,7 @@ void TextFileTab::RenderPageContent(
   ID2D1DeviceContext* ctx,
   uint16_t index,
   const D2D1_RECT_F& rect) {
-  return this->RenderPlainTextContent(ctx, index, rect);
-}
-
-utf8_string TextFileTab::GetPlaceholderText() const {
-  return _("[empty file]");
+  mPageSource->RenderPage(ctx, index, rect);
 }
 
 std::filesystem::path TextFileTab::GetPath() const {
@@ -87,8 +85,13 @@ void TextFileTab::SetPath(const std::filesystem::path& path) {
 
 void TextFileTab::Reload() {
   this->ClearContentCache();
+  scope_guard emitEvents([this]() {
+    this->evFullyReplacedEvent.Emit();
+    this->evNeedsRepaintEvent.Emit();
+  });
+
   if (!std::filesystem::is_regular_file(mPath)) {
-    this->ClearText();
+    mPageSource->ClearText();
     return;
   }
 
@@ -99,7 +102,7 @@ void TextFileTab::Reload() {
 
   std::ifstream f(mPath, std::ios::in | std::ios::binary);
   if (!f.is_open()) {
-    this->ClearText();
+    mPageSource->ClearText();
     return;
   }
   while (bytes > 0) {
@@ -114,7 +117,15 @@ void TextFileTab::Reload() {
     pos++;
   }
 
-  this->SetText(buffer);
+  mPageSource->SetText(buffer);
+}
+
+uint16_t TextFileTab::GetPageCount() const {
+  return mPageSource->GetPageCount();
+}
+
+D2D1_SIZE_U TextFileTab::GetNativeContentSize(uint16_t pageIndex) {
+  return mPageSource->GetNativeContentSize(pageIndex);
 }
 
 }// namespace OpenKneeboard

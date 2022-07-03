@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <d2d1_1.h>
 
 #include <cstdint>
@@ -34,6 +35,8 @@ class IPageSource {
   virtual void
   RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
     = 0;
+
+  Event<> evPageAppendedEvent;
 };
 
 }// namespace OpenKneeboard

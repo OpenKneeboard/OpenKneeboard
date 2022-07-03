@@ -20,16 +20,22 @@
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/PlainTextPageSource.h>
 
 using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
-  : TabWithDoodles(dxr, kbs), TabWithPlainTextContent(dxr) {
+  : TabWithDoodles(dxr, kbs),
+    mPageSource(std::make_unique<PlainTextPageSource>(
+      dxr,
+      _("[waiting for radio messages]"))) {
+  AddEventListener(mPageSource->evPageAppendedEvent, this->evPageAppendedEvent);
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
+  this->RemoveAllEventListeners();
 }
 
 utf8_string DCSRadioLogTab::GetGlyph() const {
@@ -41,16 +47,20 @@ utf8_string DCSRadioLogTab::GetTitle() const {
 }
 
 uint16_t DCSRadioLogTab::GetPageCount() const {
-  const auto count = TabWithPlainTextContent::GetPageCount();
+  const auto count = mPageSource->GetPageCount();
   // We display a placeholder message
   return count == 0 ? 1 : count;
+}
+
+D2D1_SIZE_U DCSRadioLogTab::GetNativeContentSize(uint16_t pageIndex) {
+  return mPageSource->GetNativeContentSize(pageIndex);
 }
 
 void DCSRadioLogTab::RenderPageContent(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  TabWithPlainTextContent::RenderPlainTextContent(ctx, pageIndex, rect);
+  mPageSource->RenderPage(ctx, pageIndex, rect);
 }
 
 void DCSRadioLogTab::OnGameEvent(
@@ -58,7 +68,8 @@ void DCSRadioLogTab::OnGameEvent(
   const std::filesystem::path& installPath,
   const std::filesystem::path& savedGamesPath) {
   if (event.name == DCS::EVT_SIMULATION_START) {
-    this->PushFullWidthSeparator();
+    mPageSource->PushFullWidthSeparator();
+    this->evNeedsRepaintEvent.Emit();
     return;
   }
 
@@ -67,15 +78,13 @@ void DCSRadioLogTab::OnGameEvent(
   }
 
   this->ClearContentCache();
-  this->PushMessage(event.value);
-}
-
-utf8_string DCSRadioLogTab::GetPlaceholderText() const {
-  return _("[waiting for radio messages]");
+  mPageSource->PushMessage(event.value);
+  this->evNeedsRepaintEvent.Emit();
 }
 
 void DCSRadioLogTab::Reload() {
-  this->ClearText();
+  mPageSource->ClearText();
+  this->evFullyReplacedEvent.Emit();
 }
 
 }// namespace OpenKneeboard
