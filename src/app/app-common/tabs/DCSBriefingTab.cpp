@@ -27,6 +27,9 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
+#include <chrono>
+#include <format>
+
 extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
@@ -127,7 +130,19 @@ void DCSBriefingTab::Reload() noexcept {
 
   const std::string title = dictionary[mission["sortie"]];
 
-  mTextPages->SetText(title);
+  const auto startDate = mission["date"];
+  const auto startSecondsSinceMidnight = mission["start_time"];
+
+  const auto startDateTime = std::format(
+    "{:04d}-{:02d}-{:02d} {:%T}",
+    startDate["Year"].cast<unsigned int>(),
+    startDate["Month"].cast<unsigned int>(),
+    startDate["Day"].cast<unsigned int>(),
+    std::chrono::seconds {
+      startSecondsSinceMidnight.cast<unsigned int>(),
+    });
+
+  mTextPages->SetText(startDateTime);
 }
 
 void DCSBriefingTab::OnGameEvent(
