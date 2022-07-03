@@ -132,7 +132,6 @@ void DCSBriefingTab::Reload() noexcept {
 
   const auto startDate = mission["date"];
   const auto startSecondsSinceMidnight = mission["start_time"];
-
   const auto startDateTime = std::format(
     "{:04d}-{:02d}-{:02d} {:%T}",
     startDate["Year"].cast<unsigned int>(),
@@ -142,7 +141,32 @@ void DCSBriefingTab::Reload() noexcept {
       startSecondsSinceMidnight.cast<unsigned int>(),
     });
 
-  mTextPages->SetText(startDateTime);
+  const auto situation
+    = dictionary[mission["descriptionText"]].cast<std::string>();
+
+  const auto objective
+    = dictionary
+        [mission[isRedFor ? "descriptionRedTask" : "descriptionBlueTask"]]
+          .cast<std::string>();
+
+  mTextPages->SetText(std::format(
+    _("MISSION OVERVIEW\n"
+      "\n"
+      "Title:    {}\n"
+      "Start at: {}\n"
+      "My side:  NOT IMPLEMENTED\n"
+      "Enemies:  NOT IMPLEMENTED\n"
+      "\n"
+      "SITUATION\n"
+      "\n"
+      "{}\n"
+      "OBJECTIVE\n"
+      "\n"
+      "{}"),
+    title,
+    startDateTime,
+    situation,
+    objective));
 }
 
 void DCSBriefingTab::OnGameEvent(
