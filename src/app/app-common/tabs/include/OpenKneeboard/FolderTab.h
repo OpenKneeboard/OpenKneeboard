@@ -32,6 +32,8 @@
 
 namespace OpenKneeboard {
 
+class ImagePagesSource;
+
 class FolderTab final : public TabBase,
                         public TabWithDoodles,
                         public ITabWithNavigation,
@@ -63,8 +65,6 @@ class FolderTab final : public TabBase,
   virtual bool IsNavigationAvailable() const override;
   virtual std::shared_ptr<ITab> CreateNavigationTab(uint16_t) override;
 
-  bool CanOpenFile(const std::filesystem::path&) const;
-
  protected:
   virtual void RenderPageContent(
     ID2D1DeviceContext*,
@@ -72,22 +72,16 @@ class FolderTab final : public TabBase,
     const D2D1_RECT_F& rect) final override;
 
  private:
-  struct Page {
-    std::filesystem::path mPath;
-    winrt::com_ptr<ID2D1Bitmap> mBitmap;
-  };
-
   winrt::apartment_context mUIThread;
 
   DXResources mDXR;
-  winrt::com_ptr<IWICImagingFactory> mWIC;
+
+  std::unique_ptr<ImagePagesSource> mPageSource;
   std::filesystem::path mPath;
 
-  std::vector<Page> mPages = {};
   winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
     nullptr};
 
-  winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(uint16_t index);
   winrt::fire_and_forget ReloadImpl() noexcept;
 };
 
