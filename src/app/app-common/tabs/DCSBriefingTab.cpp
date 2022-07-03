@@ -79,6 +79,10 @@ void DCSBriefingTab::Reload() noexcept {
   mImagePages->SetPaths({});
   mTextPages->ClearText();
 
+  if (!mMission) {
+    return;
+  }
+
   lua_State* lua = lua_open();
   scope_guard closeLua([&lua]() { lua_close(lua); });
 
@@ -149,6 +153,13 @@ void DCSBriefingTab::Reload() noexcept {
         [mission[isRedFor ? "descriptionRedTask" : "descriptionBlueTask"]]
           .cast<std::string>();
 
+  const auto weather = mission["weather"];
+  const auto temperature = weather["season"]["temperature"].cast<int>();
+  const auto qnhMmHg = weather["qnh"].cast<int>();
+  const auto qnhInHg = qnhMmHg / 25.4;
+  const auto cloudBase = weather["clouds"]["base"].cast<int>();
+  const auto wind = weather["wind"];
+
   mTextPages->SetText(std::format(
     _("MISSION OVERVIEW\n"
       "\n"
@@ -160,13 +171,36 @@ void DCSBriefingTab::Reload() noexcept {
       "SITUATION\n"
       "\n"
       "{}\n"
+      "\n"
       "OBJECTIVE\n"
       "\n"
-      "{}"),
+      "{}\n"
+      "\n"
+      "WEATHER\n"
+      "\n"
+      "Temperature: {:+d}°\n"
+      "QNH:         {} / {:.02f}\n"
+      "Cloud cover: Base {}\n"
+      "Nav wind:    At GRND {} m/s, {}° Meteo {}°\n"
+      "             At 2000m {} m/s, {}° Meteo {}°\n"
+      "             At 8000m {} m/s, {}° Meteo {}°"),
     title,
     startDateTime,
     situation,
-    objective));
+    objective,
+    temperature,
+    qnhMmHg,
+    qnhInHg,
+    cloudBase,
+    wind["atGround"]["speed"].cast<int>(),
+    wind["atGround"]["dir"].cast<int>(),
+    (180 + wind["atGround"]["dir"].cast<int>()) % 360,
+    wind["at2000"]["speed"].cast<int>(),
+    wind["at2000"]["dir"].cast<int>(),
+    (180 + wind["at2000"]["dir"].cast<int>()) % 360,
+    wind["at8000"]["speed"].cast<int>(),
+    wind["at8000"]["dir"].cast<int>(),
+    (180 + wind["at8000"]["dir"].cast<int>()) % 360));
 }
 
 void DCSBriefingTab::OnGameEvent(
