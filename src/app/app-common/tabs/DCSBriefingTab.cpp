@@ -66,11 +66,11 @@ uint16_t DCSBriefingTab::GetPageCount() const {
 }
 
 D2D1_SIZE_U DCSBriefingTab::GetNativeContentSize(uint16_t pageIndex) {
-  const auto imageCount = mImagePages->GetPageCount();
-  if (pageIndex < imageCount) {
-    return mImagePages->GetNativeContentSize(pageIndex);
+  const auto textPageCount = mTextPages->GetPageCount();
+  if (pageIndex < textPageCount) {
+    return mTextPages->GetNativeContentSize(pageIndex);
   }
-  return mTextPages->GetNativeContentSize(pageIndex - imageCount);
+  return mImagePages->GetNativeContentSize(pageIndex - textPageCount);
 }
 
 static std::string GetCountries(const luabridge::LuaRef& countries) {
@@ -275,12 +275,12 @@ void DCSBriefingTab::RenderPageContent(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  const auto imageCount = mImagePages->GetPageCount();
-  if (pageIndex < imageCount) {
-    mImagePages->RenderPage(ctx, pageIndex, rect);
+  const auto textPageCount = mTextPages->GetPageCount();
+  if (pageIndex < textPageCount) {
+    mTextPages->RenderPage(ctx, pageIndex, rect);
     return;
   }
-  return mTextPages->RenderPage(ctx, pageIndex - imageCount, rect);
+  mImagePages->RenderPage(ctx, pageIndex - textPageCount, rect);
 }
 
 bool DCSBriefingTab::IsNavigationAvailable() const {
@@ -291,18 +291,19 @@ std::shared_ptr<ITab> DCSBriefingTab::CreateNavigationTab(
   uint16_t currentPage) {
   std::vector<NavigationTab::Entry> entries;
 
-  const auto paths = mImagePages->GetPaths();
-
-  for (uint16_t i = 0; i < paths.size(); ++i) {
-    entries.push_back({paths.at(i).stem(), i});
-  }
-
   const auto textCount = mTextPages->GetPageCount();
   for (uint16_t i = 0; i < textCount; ++i) {
     entries.push_back({
       std::format(_("Transcription {}/{}"), i + 1, textCount),
-      static_cast<uint16_t>(i + paths.size()),
+      i,
     });
+  }
+
+  const auto paths = mImagePages->GetPaths();
+
+  for (uint16_t i = 0; i < paths.size(); ++i) {
+    entries.push_back(
+      {paths.at(i).stem(), static_cast<uint16_t>(i + textCount)});
   }
 
   return std::make_shared<NavigationTab>(
