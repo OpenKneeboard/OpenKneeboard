@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/LaunchURI.h>
@@ -34,6 +35,7 @@
 #include <winrt/Windows.Storage.h>
 
 #include <chrono>
+#include <cstring>
 #include <nlohmann/json.hpp>
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFOutlineDocumentHelper.hh>
@@ -56,9 +58,17 @@ struct LinkDestination {
   std::string mURI;
 };
 
+static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
+  return std::memcmp(&a, &b, sizeof(a)) == 0;
+}
+
 struct NormalizedLink {
   D2D1_RECT_F mRect;
   LinkDestination mDestination;
+
+  bool operator==(const NormalizedLink& other) const noexcept {
+    return mRect == other.mRect;
+  }
 };
 
 enum class CursorLinkState {
@@ -72,6 +82,7 @@ enum class CursorLinkState {
 
 namespace OpenKneeboard {
 struct PDFTab::Impl final {
+  struct LinkHandler;
   DXResources mDXR;
   std::filesystem::path mPath;
 
@@ -81,13 +92,21 @@ struct PDFTab::Impl final {
   winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
 
   std::vector<NavigationTab::Entry> mBookmarks;
-  std::vector<std::vector<NormalizedLink>> mLinks;
+  std::vector<std::shared_ptr<LinkHandler>> mLinks;
 
-  CursorLinkState mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
-  NormalizedLink mActiveLink;
-  uint16_t mActivePage;
   bool mNavigationLoaded = false;
   std::jthread mQPDFThread;
+};
+
+class PDFTab::Impl::LinkHandler final
+  : public CursorClickableRegions<NormalizedLink> {
+ public:
+  using CursorClickableRegions::CursorClickableRegions;
+
+ protected:
+  virtual D2D1_RECT_F GetButtonRect(const NormalizedLink& link) const override {
+    return link.mRect;
+  }
 };
 
 PDFTab::PDFTab(
@@ -279,9 +298,7 @@ std::vector<NavigationTab::Entry> GetNavigationEntries(
 
 void PDFTab::Reload() {
   p->mBookmarks.clear();
-  p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
-  p->mActiveLink = {};
-  p->mActivePage = ~(0ui16);
+  p->mLinks.clear();
   p->mNavigationLoaded = false;
 
   if (!std::filesystem::is_regular_file(p->mPath)) {
@@ -376,7 +393,24 @@ void PDFTab::Reload() {
     }
     this->evAvailableFeaturesChangedEvent.Emit();
 
-    p->mLinks = FindAllHyperlinks(qpdf, stopToken);
+    const auto links = FindAllHyperlinks(qpdf, stopToken);
+    for (const auto& pageLinks: links) {
+      auto handler = std::make_shared<Impl::LinkHandler>(pageLinks);
+      AddEventListener(
+        handler->evClicked, [this](auto ctx, const NormalizedLink& link) {
+          const auto& dest = link.mDestination;
+          switch (dest.mType) {
+            case LinkDestination::Type::Page:
+              this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
+              break;
+            case LinkDestination::Type::URI: {
+              LaunchURI(dest.mURI);
+              break;
+            }
+          }
+        });
+      p->mLinks.push_back(handler);
+    }
   }};
 }
 
@@ -429,93 +463,41 @@ void PDFTab::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
   uint16_t pageIndex) {
-  if (pageIndex != p->mActivePage) {
-    p->mActiveLink = {};
-    p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
-    p->mActivePage = pageIndex;
-  }
   if (pageIndex >= p->mLinks.size()) {
-    p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
     TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
     return;
   }
+
+  auto links = p->mLinks.at(pageIndex);
+  if (!links) {
+    return;
+  }
+
+  scope_guard repaint([&]() { evNeedsRepaintEvent.Emit(); });
 
   const auto contentRect = this->GetNativeContentSize(pageIndex);
-  const auto x = ev.mX / contentRect.width;
-  const auto y = ev.mY / contentRect.height;
+  CursorEvent pageEvent {ev};
+  pageEvent.mX /= contentRect.width;
+  pageEvent.mY /= contentRect.height;
 
-  bool haveHoverLink = false;
-  NormalizedLink hoverLink;
-  for (const auto& link: p->mLinks.at(pageIndex)) {
-    const auto& linkRect = link.mRect;
-    if (
-      x >= linkRect.left && x <= linkRect.right && y >= linkRect.top
-      && y <= linkRect.bottom) {
-      haveHoverLink = true;
-      hoverLink = link;
-      break;
-    }
-  }
+  links->PostCursorEvent(ctx, pageEvent);
 
-  if (ev.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
-    if (
-      p->mLinkState == CursorLinkState::PRESSED_IN_HYPERLINK
-      && x >= p->mActiveLink.mRect.left && x <= p->mActiveLink.mRect.right
-      && y >= p->mActiveLink.mRect.top && y <= p->mActiveLink.mRect.bottom) {
-      const auto& dest = p->mActiveLink.mDestination;
-      switch (dest.mType) {
-        case LinkDestination::Type::Page:
-          this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
-          break;
-        case LinkDestination::Type::URI: {
-          LaunchURI(dest.mURI);
-          break;
-        }
-      }
-    }
-
-    if (haveHoverLink) {
-      p->mActiveLink = hoverLink;
-      p->mLinkState = CursorLinkState::IN_HYPERLINK;
-    } else {
-      p->mLinkState = CursorLinkState::OUTSIDE_HYPERLINK;
-    }
-    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
-    evNeedsRepaintEvent.Emit();
+  if (links->HaveHoverOrPendingClick()) {
     return;
   }
 
-  // Touching surface
-
-  if (p->mLinkState == CursorLinkState::PRESSED_IN_HYPERLINK) {
-    return;
-  }
-
-  if (p->mLinkState == CursorLinkState::PRESSED_OUTSIDE_HYPERLINK) {
-    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
-    return;
-  }
-
-  if (haveHoverLink) {
-    p->mActiveLink = hoverLink;
-    p->mLinkState = CursorLinkState::PRESSED_IN_HYPERLINK;
-    evNeedsRepaintEvent.Emit();
-  } else {
-    p->mLinkState = CursorLinkState::PRESSED_OUTSIDE_HYPERLINK;
-    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
-  }
+  TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
 }
 
 void PDFTab::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& contentRect) {
-  if (pageIndex != p->mActivePage) {
+  if (pageIndex >= p->mLinks.size()) {
     return;
   }
-  if (
-    p->mLinkState == CursorLinkState::OUTSIDE_HYPERLINK
-    || p->mLinkState == CursorLinkState::PRESSED_OUTSIDE_HYPERLINK) {
+  const auto hoverButton = p->mLinks.at(pageIndex)->GetHoverButton();
+  if (!hoverButton) {
     return;
   }
 
@@ -523,10 +505,10 @@ void PDFTab::RenderOverDoodles(
   const auto contentHeight = contentRect.bottom - contentRect.top;
 
   const D2D1_RECT_F rect {
-    (p->mActiveLink.mRect.left * contentWidth) + contentRect.left,
-    (p->mActiveLink.mRect.top * contentHeight) + contentRect.top,
-    (p->mActiveLink.mRect.right * contentWidth) + contentRect.left,
-    (p->mActiveLink.mRect.bottom * contentHeight) + contentRect.top,
+    (hoverButton->mRect.left * contentWidth) + contentRect.left,
+    (hoverButton->mRect.top * contentHeight) + contentRect.top,
+    (hoverButton->mRect.right * contentWidth) + contentRect.left,
+    (hoverButton->mRect.bottom * contentHeight) + contentRect.top,
   };
   const auto radius = contentHeight * 0.006f;
   ctx->DrawRoundedRectangle(

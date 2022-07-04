@@ -40,6 +40,11 @@ class CursorClickableRegions {
     return mHoverButton;
   }
 
+  bool HaveHoverOrPendingClick() const {
+    std::unique_lock lock(mMutex);
+    return static_cast<bool>(mHoverButton) || static_cast<bool>(mPressedButton);
+  }
+
   std::vector<Button> GetButtons() const {
     std::unique_lock lock(mMutex);
     return mButtons;
