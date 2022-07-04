@@ -22,6 +22,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/UserAction.h>
 #include <shims/winrt.h>
+#include <winrt/Windows.Foundation.h>
 
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -31,6 +32,7 @@ struct IDirectInput8W;
 namespace OpenKneeboard {
 
 class DirectInputDevice;
+class DirectInputListener;
 class UserInputButtonBinding;
 class UserInputDevice;
 
@@ -49,7 +51,9 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
  private:
   winrt::com_ptr<IDirectInput8W> mDI8;
   std::vector<std::shared_ptr<DirectInputDevice>> mDevices;
-  std::jthread mDIThread;
+
+  std::unique_ptr<DirectInputListener> mListener;
+  winrt::Windows::Foundation::IAsyncAction mWorker;
 
   const nlohmann::json mInitialSettings;
 };
