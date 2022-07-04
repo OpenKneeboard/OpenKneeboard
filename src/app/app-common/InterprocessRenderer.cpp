@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/CreateTabActions.h>
+#include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/GetSystemColor.h>
@@ -36,6 +37,26 @@
 #include <ranges>
 
 namespace OpenKneeboard {
+
+struct InterprocessRenderer::Button {
+  D2D1_RECT_F mRect;
+  std::shared_ptr<TabAction> mAction;
+
+  bool operator==(const Button& other) const noexcept {
+    return mAction == other.mAction;
+  }
+};
+
+class InterprocessRenderer::Toolbar final
+  : public CursorClickableRegions<Button> {
+ public:
+  using CursorClickableRegions::CursorClickableRegions;
+
+ protected:
+  virtual D2D1_RECT_F GetButtonRect(const Button& button) const override {
+    return button.mRect;
+  }
+};
 
 void InterprocessRenderer::RenderError(
   Layer& layer,
@@ -188,11 +209,11 @@ InterprocessRenderer::InterprocessRenderer(
     AddEventListener(view->evCursorEvent, [=](const CursorEvent& ev) {
       this->OnCursorEvent(weakView, ev);
     });
-    this->AddEventListener(
-      view->evCurrentTabChangedEvent, [=]() { this->OnTabChanged(weakView); });
+    AddEventListener(
+      view->evLayoutChangedEvent, [=]() { this->OnLayoutChanged(weakView); });
     AddEventListener(
       view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
-    this->OnTabChanged(weakView);
+    this->OnLayoutChanged(weakView);
   }
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
@@ -349,34 +370,28 @@ void InterprocessRenderer::RenderWithChrome(
   mCursorRenderer->Render(ctx.get(), cursorPoint, contentSize);
 }
 
-static bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {
-  return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
-}
-
 void InterprocessRenderer::RenderToolbar(Layer& layer) {
   if (!layer.mIsActiveForInput) {
     return;
   }
 
   const auto view = layer.mKneeboardView;
-  auto& toolbar = mToolbars[view->GetRuntimeID()];
+  const auto toolbar = mToolbars[view->GetRuntimeID()];
+  if (!toolbar) {
+    return;
+  }
 
-  const auto header = view->GetHeaderRenderRect();
-  const auto headerHeight = (header.bottom - header.top);
-  const auto buttonHeight = headerHeight * 0.75f;
-  const auto margin = (headerHeight - buttonHeight) / 2.0f;
-
-  const auto strokeWidth = buttonHeight / 15;
-
-  auto primaryLeft = 2 * margin;
-  auto secondaryRight = header.right - primaryLeft;
-
-  std::scoped_lock lock(toolbar.mMutex);
-
-  toolbar.mButtons = {};
+  const auto [hoverButton, buttons] = toolbar->GetState();
+  if (buttons.empty()) {
+    return;
+  }
 
   const auto cursor = view->GetCursorCanvasPoint();
   const auto ctx = mDXR.mD2DDeviceContext;
+
+  const auto buttonHeight
+    = buttons.front().mRect.bottom - buttons.front().mRect.top;
+  const auto strokeWidth = buttonHeight / 15;
 
   FLOAT dpix, dpiy;
   ctx->GetDpi(&dpix, &dpiy);
@@ -393,26 +408,102 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
   glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  decltype(toolbar.mActions) actions;
+  for (auto button: buttons) {
+    auto& action = button.mAction;
+    ID2D1Brush* brush = mButtonBrush.get();
+    if (!action->IsEnabled()) {
+      brush = mDisabledButtonBrush.get();
+    } else if (hoverButton == button) {
+      brush = mHoverButtonBrush.get();
+    } else {
+      auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
+      if (toggle && toggle->IsActive()) {
+        brush = mActiveButtonBrush.get();
+      }
+    }
+
+    ctx->DrawRoundedRectangle(
+      D2D1::RoundedRect(button.mRect, buttonHeight / 4, buttonHeight / 4),
+      brush,
+      strokeWidth);
+    auto glyph = winrt::to_hstring(action->GetGlyph());
+    ctx->DrawTextW(
+      glyph.c_str(), glyph.size(), glyphFormat.get(), button.mRect, brush);
+  }
+}
+
+void InterprocessRenderer::OnCursorEvent(
+  const std::weak_ptr<IKneeboardView>& weakView,
+  const CursorEvent& ev) {
+  const auto view = weakView.lock();
+  if (!view) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  auto toolbar = mToolbars[view->GetRuntimeID()];
+  if (!toolbar) {
+    return;
+  }
+  scope_guard repaintOnExit([this]() { mNeedsRepaint = true; });
+
+  const auto cursor = view->GetCursorCanvasPoint({ev.mX, ev.mY});
+  CursorEvent canvasEvent {ev};
+  canvasEvent.mX = cursor.x;
+  canvasEvent.mY = cursor.y;
+  toolbar->PostCursorEvent(canvasEvent);
+}
+
+void InterprocessRenderer::OnLayoutChanged(
+  const std::weak_ptr<IKneeboardView>& weakView) {
+  const auto view = weakView.lock();
+  if (!view) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  auto tab = view->GetCurrentTabView();
+  if (!tab) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  auto allActions = CreateTabActions(mKneeboard, view, tab);
+  std::vector<std::shared_ptr<TabAction>> actions;
+
   std::ranges::copy_if(
-    toolbar.mActions, std::back_inserter(actions), [](const auto& action) {
+    allActions, std::back_inserter(actions), [](const auto& action) {
       return action->GetVisibility(TabAction::Context::InGameToolbar)
         == TabAction::Visibility::Primary;
     });
   std::ranges::copy_if(
-    toolbar.mActions | std::ranges::views::reverse,
+    allActions | std::ranges::views::reverse,
     std::back_inserter(actions),
     [](const auto& action) {
       return action->GetVisibility(TabAction::Context::InGameToolbar)
         == TabAction::Visibility::Secondary;
     });
+  allActions.clear();
 
-  for (auto action: actions) {
+  std::vector<Button> buttons;
+
+  const auto header = view->GetHeaderRenderRect();
+  const auto headerHeight = (header.bottom - header.top);
+  const auto buttonHeight = headerHeight * 0.75f;
+  const auto margin = (headerHeight - buttonHeight) / 2.0f;
+
+  auto primaryLeft = 2 * margin;
+  auto secondaryRight = header.right - primaryLeft;
+
+  for (const auto& action: actions) {
     const auto visibility
       = action->GetVisibility(TabAction::Context::InGameToolbar);
     if (visibility == TabAction::Visibility::None) [[unlikely]] {
       throw std::logic_error("Should not have been copied to actions local");
     }
+
+    AddEventListener(
+      action->evStateChangedEvent, [this]() { mNeedsRepaint = true; });
 
     D2D1_RECT_F button {
       .top = margin,
@@ -427,114 +518,14 @@ void InterprocessRenderer::RenderToolbar(Layer& layer) {
       button.left = secondaryRight - buttonHeight;
       secondaryRight = button.left - margin;
     }
-    toolbar.mButtons.push_back({button, action});
-
-    ID2D1Brush* brush = mButtonBrush.get();
-    if (!action->IsEnabled()) {
-      brush = mDisabledButtonBrush.get();
-    } else if (IsPointInRect(cursor, button)) {
-      brush = mHoverButtonBrush.get();
-    } else {
-      auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
-      if (toggle && toggle->IsActive()) {
-        brush = mActiveButtonBrush.get();
-      }
-    }
-
-    ctx->DrawRoundedRectangle(
-      D2D1::RoundedRect(button, buttonHeight / 4, buttonHeight / 4),
-      brush,
-      strokeWidth);
-    auto glyph = winrt::to_hstring(action->GetGlyph());
-    ctx->DrawTextW(
-      glyph.c_str(), glyph.size(), glyphFormat.get(), button, brush);
-  }
-}
-
-void InterprocessRenderer::OnCursorEvent(
-  const std::weak_ptr<IKneeboardView>& weakView,
-  const CursorEvent& ev) {
-  const auto view = weakView.lock();
-  if (!view) {
-    OPENKNEEBOARD_BREAK;
-    return;
+    buttons.push_back({button, action});
   }
 
-  auto& toolbar = mToolbars[view->GetRuntimeID()];
-  scope_guard repaintOnExit([this]() { mNeedsRepaint = true; });
-
-  if (
-    toolbar.mCursorTouching
-    && ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
-    return;
-  }
-  if (
-    (!toolbar.mCursorTouching)
-    && ev.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
-    return;
-  }
-
-  // touch state change
-  toolbar.mCursorTouching
-    = (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE);
-
-  const auto cursor = view->GetCursorCanvasPoint({ev.mX, ev.mY});
-
-  std::unique_lock lock(toolbar.mMutex);
-
-  if (toolbar.mCursorTouching) {
-    // Touch start
-    for (const auto& [rect, action]: toolbar.mButtons) {
-      if (IsPointInRect(cursor, rect)) {
-        toolbar.mActiveButton = {{rect, action}};
-        break;
-      }
-    }
-    return;
-  }
-
-  // Touch end
-  const auto button = toolbar.mActiveButton;
-  if (!button) {
-    return;
-  }
-
-  const auto [rect, action] = *button;
-  toolbar.mActiveButton = {};
-  if (!IsPointInRect(cursor, rect)) {
-    return;
-  }
-
-  // Action might mutate the toolbar (e.g. for a tab change), so release
-  // the mutex before we trigger it
-  lock.unlock();
-  action->Execute();
-}
-
-void InterprocessRenderer::OnTabChanged(
-  const std::weak_ptr<IKneeboardView>& weakView) {
-  const auto view = weakView.lock();
-  if (!view) {
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-
-  auto tab = view->GetCurrentTabView();
-  if (!tab) {
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-
-  auto& toolbar = mToolbars[view->GetRuntimeID()];
-
-  std::scoped_lock lock(toolbar.mMutex);
-  toolbar.mButtons = {};
-  toolbar.mActions = CreateTabActions(mKneeboard, view, tab);
-
-  for (auto action: toolbar.mActions) {
-    AddEventListener(
-      action->evStateChangedEvent, [this]() { mNeedsRepaint = true; });
-  }
+  auto toolbar = std::make_shared<Toolbar>(buttons);
+  AddEventListener(toolbar->evClicked, [](const Button& button) {
+    button.mAction->Execute();
+  });
+  mToolbars[view->GetRuntimeID()] = toolbar;
 }
 
 void InterprocessRenderer::RenderNow() {

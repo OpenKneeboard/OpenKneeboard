@@ -237,6 +237,7 @@ void KneeboardView::UpdateLayout() {
     .bottom = mHeaderRenderRect.bottom + contentRenderSize.height,
   };
 
+  evLayoutChangedEvent.Emit();
   evNeedsRepaintEvent.Emit();
 }
 

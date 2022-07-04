@@ -80,16 +80,9 @@ class InterprocessRenderer final : private EventReceiver {
   };
   std::array<Layer, MaxLayers> mLayers;
 
-  struct Toolbar {
-    bool mCursorTouching = false;
-
-    std::vector<std::shared_ptr<TabAction>> mActions;
-    using Button = std::pair<D2D1_RECT_F, std::shared_ptr<TabAction>>;
-    std::vector<Button> mButtons;
-    std::optional<Button> mActiveButton;
-    std::mutex mMutex;
-  };
-  std::unordered_map<KneeboardViewID, Toolbar> mToolbars;
+  struct Button;
+  class Toolbar;
+  std::unordered_map<KneeboardViewID, std::shared_ptr<Toolbar>> mToolbars;
 
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
@@ -115,8 +108,8 @@ class InterprocessRenderer final : private EventReceiver {
 
   void Commit(uint8_t layerCount);
 
+  void OnLayoutChanged(const std::weak_ptr<IKneeboardView>&);
   void OnCursorEvent(const std::weak_ptr<IKneeboardView>&, const CursorEvent&);
-  void OnTabChanged(const std::weak_ptr<IKneeboardView>&);
 };
 
 }// namespace OpenKneeboard

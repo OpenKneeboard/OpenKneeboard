@@ -62,6 +62,7 @@ class IKneeboardView {
   Event<uint8_t> evCurrentTabChangedEvent;
   Event<> evNeedsRepaintEvent;
   Event<const CursorEvent&> evCursorEvent;
+  Event<> evLayoutChangedEvent;
 
   virtual bool HaveCursor() const = 0;
   virtual D2D1_POINT_2F GetCursorPoint() const = 0;
