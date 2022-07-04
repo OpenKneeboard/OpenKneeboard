@@ -115,7 +115,7 @@ PDFTab::PDFTab(
 }
 
 PDFTab::~PDFTab() {
-  if (p) {
+  if (p && p->mQPDFThread.joinable()) {
     p->mQPDFThread.request_stop();
     p->mQPDFThread.join();
   }
