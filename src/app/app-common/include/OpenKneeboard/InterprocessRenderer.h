@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
@@ -80,8 +81,13 @@ class InterprocessRenderer final : private EventReceiver {
   };
   std::array<Layer, MaxLayers> mLayers;
 
-  struct Button;
-  class Toolbar;
+  struct Button {
+    D2D1_RECT_F mRect;
+    std::shared_ptr<TabAction> mAction;
+
+    bool operator==(const Button&) const noexcept;
+  };
+  using Toolbar = CursorClickableRegions<Button>;
   std::unordered_map<KneeboardViewID, std::shared_ptr<Toolbar>> mToolbars;
 
   winrt::com_ptr<ID2D1Brush> mErrorBGBrush;

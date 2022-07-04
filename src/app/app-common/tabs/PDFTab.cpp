@@ -71,18 +71,13 @@ struct NormalizedLink {
   }
 };
 
-enum class CursorLinkState {
-  OUTSIDE_HYPERLINK,
-  IN_HYPERLINK,
-  PRESSED_IN_HYPERLINK,
-  PRESSED_OUTSIDE_HYPERLINK,
-};
-
 }// namespace
 
 namespace OpenKneeboard {
+
 struct PDFTab::Impl final {
-  struct LinkHandler;
+  using LinkHandler = CursorClickableRegions<NormalizedLink>;
+
   DXResources mDXR;
   std::filesystem::path mPath;
 
@@ -96,17 +91,6 @@ struct PDFTab::Impl final {
 
   bool mNavigationLoaded = false;
   std::jthread mQPDFThread;
-};
-
-class PDFTab::Impl::LinkHandler final
-  : public CursorClickableRegions<NormalizedLink> {
- public:
-  using CursorClickableRegions::CursorClickableRegions;
-
- protected:
-  virtual D2D1_RECT_F GetButtonRect(const NormalizedLink& link) const override {
-    return link.mRect;
-  }
 };
 
 PDFTab::PDFTab(

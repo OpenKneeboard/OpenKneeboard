@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/CachedLayer.h>
+#include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
@@ -70,8 +71,16 @@ class NavigationTab final : public TabBase,
   CachedLayer mPreviewLayer;
 
   uint16_t mRenderColumns;
-  struct Button;
-  class ButtonTracker;
+
+  struct Button final {
+    winrt::hstring mName;
+    uint16_t mPageIndex;
+    D2D1_RECT_F mRect;
+    uint16_t mRenderColumn;
+
+    bool operator==(const Button&) const noexcept;
+  };
+  using ButtonTracker = CursorClickableRegions<Button>;
   std::vector<std::shared_ptr<ButtonTracker>> mButtonTrackers;
 
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;

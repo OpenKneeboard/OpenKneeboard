@@ -28,8 +28,13 @@
 
 namespace OpenKneeboard {
 
-template <class Button>
-class CursorClickableRegions {
+template <class T>
+concept ClickableRegion = requires(T a) {
+  { a.mRect } -> std::convertible_to<D2D1_RECT_F>;
+};
+
+template <ClickableRegion Button>
+class CursorClickableRegions final {
  public:
   CursorClickableRegions(const std::vector<Button>& buttons)
     : mButtons(buttons) {
@@ -63,7 +68,7 @@ class CursorClickableRegions {
     std::optional<Button> buttonUnderCursor;
 
     for (const auto& button: mButtons) {
-      if (IsPointInRect(cursor, this->GetButtonRect(button))) {
+      if (IsPointInRect(cursor, button.mRect)) {
         buttonUnderCursor = button;
         break;
       }
@@ -108,9 +113,6 @@ class CursorClickableRegions {
     lock.unlock();
     evClicked.Emit(ec, pressedButton);
   }
-
- protected:
-  virtual D2D1_RECT_F GetButtonRect(const Button&) const = 0;
 
  private:
   bool mCursorTouching = false;

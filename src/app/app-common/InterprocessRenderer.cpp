@@ -38,25 +38,10 @@
 
 namespace OpenKneeboard {
 
-struct InterprocessRenderer::Button {
-  D2D1_RECT_F mRect;
-  std::shared_ptr<TabAction> mAction;
-
-  bool operator==(const Button& other) const noexcept {
-    return mAction == other.mAction;
-  }
-};
-
-class InterprocessRenderer::Toolbar final
-  : public CursorClickableRegions<Button> {
- public:
-  using CursorClickableRegions::CursorClickableRegions;
-
- protected:
-  virtual D2D1_RECT_F GetButtonRect(const Button& button) const override {
-    return button.mRect;
-  }
-};
+bool InterprocessRenderer::Button::operator==(
+  const Button& other) const noexcept {
+  return mAction == other.mAction;
+}
 
 void InterprocessRenderer::RenderError(
   Layer& layer,

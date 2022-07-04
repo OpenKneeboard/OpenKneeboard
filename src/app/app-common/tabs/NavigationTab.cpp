@@ -18,7 +18,6 @@
  * USA.
  */
 
-#include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -27,30 +26,10 @@
 
 namespace OpenKneeboard {
 
-static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
-  return std::memcmp(&a, &b, sizeof(a)) == 0;
+bool NavigationTab::Button::operator==(
+  const NavigationTab::Button& other) const noexcept {
+  return std::memcmp(&mRect, &other.mRect, sizeof(mRect)) == 0;
 }
-
-struct NavigationTab::Button final {
-  winrt::hstring mName;
-  uint16_t mPageIndex;
-  D2D1_RECT_F mRect;
-  uint16_t mRenderColumn;
-
-  bool operator==(const Button& other) const noexcept {
-    return mRect == other.mRect;
-  }
-};
-
-class NavigationTab::ButtonTracker final
-  : public CursorClickableRegions<Button> {
-  using CursorClickableRegions::CursorClickableRegions;
-
- protected:
-  virtual D2D1_RECT_F GetButtonRect(const Button& button) const override {
-    return button.mRect;
-  }
-};
 
 NavigationTab::NavigationTab(
   const DXResources& dxr,
