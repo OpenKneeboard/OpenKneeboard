@@ -48,6 +48,8 @@ class DCSWorld final : public OpenKneeboard::Game {
 
   static constexpr char EVT_AIRCRAFT[]
     = "com.fredemmott.openkneeboard.dcsext/Aircraft";
+  static constexpr char EVT_BULLSEYE[]
+    = "com.fredemmott.openkneeboard.dcsext/Bullseye";
   static constexpr char EVT_INSTALL_PATH[]
     = "com.fredemmott.openkneeboard.dcsext/InstallPath";
   static constexpr char EVT_MISSION[]

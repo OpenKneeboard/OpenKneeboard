@@ -38,6 +38,7 @@ target_link_libraries(
 	ThirdParty::LuaBridge
 	ThirdParty::OpenVR
 	ThirdParty::QPDF
+	ThirdParty::WMM
 )
 target_include_directories(
 	OpenKneeboard-App-Common

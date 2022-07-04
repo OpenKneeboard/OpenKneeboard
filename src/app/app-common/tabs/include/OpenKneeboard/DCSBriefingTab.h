@@ -67,11 +67,20 @@ class DCSBriefingTab final : public TabBase,
   std::shared_ptr<DCSExtractedMission> mMission;
   std::unique_ptr<ImagePageSource> mImagePages;
   std::unique_ptr<PlainTextPageSource> mTextPages;
+  std::filesystem::path mInstallationPath;
+
+  struct LatLong {
+    float mLat;
+    float mLong;
+
+    auto operator<=>(const LatLong&) const noexcept = default;
+  };
 
   struct SelfData {
     DCSWorld::Coalition mCoalition {DCSWorld::Coalition::Neutral};
     int mCountry = -1;
     std::string mAircraft;
+    std::optional<LatLong> mBullseye;
 
     auto operator<=>(const SelfData&) const = default;
   };

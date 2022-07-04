@@ -32,6 +32,7 @@
 #include <format>
 
 extern "C" {
+#include <GeomagnetismHeader.h>
 #include <lauxlib.h>
 #include <lualib.h>
 }
@@ -41,6 +42,116 @@ extern "C" {
 using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
+
+class DCSMagneticModel {
+ public:
+  DCSMagneticModel(const std::filesystem::path& dcsInstallation);
+  ~DCSMagneticModel();
+
+  float GetMagneticVariation(
+    const std::chrono::year_month_day& date,
+    float latitude,
+    float longitude) const;
+
+ private:
+  MAGtype_MagneticModel* GetModel(
+    const std::chrono::year_month_day& date) const;
+  std::vector<MAGtype_MagneticModel*> mModels;
+};
+
+DCSMagneticModel::DCSMagneticModel(
+  const std::filesystem::path& dcsInstallation) {
+  const auto cofDir = dcsInstallation / "Data" / "MagVar" / "COF";
+
+  for (const auto& file: std::filesystem::directory_iterator(cofDir)) {
+    if (!std::filesystem::is_regular_file(file)) {
+      continue;
+    }
+    MAGtype_MagneticModel* model = nullptr;
+    MAG_robustReadMagModels(
+      const_cast<char*>(file.path().string().c_str()),
+      reinterpret_cast<MAGtype_MagneticModel*(*)[]>(&model),
+      1);
+    mModels.push_back(model);
+  }
+}
+
+MAGtype_MagneticModel* DCSMagneticModel::GetModel(
+  const std::chrono::year_month_day& date) const {
+  MAGtype_Date magDate {
+    static_cast<int>(date.year()),
+    static_cast<int>(static_cast<unsigned>(date.month())),
+    static_cast<int>(static_cast<unsigned>(date.day())),
+  };
+  char error[512];
+  MAG_DateToYear(&magDate, error);
+  const auto year = magDate.DecimalYear;
+
+  MAGtype_MagneticModel* prev = nullptr;
+  for (auto model: mModels) {
+    if (model->epoch <= year) {
+      prev = model;
+      continue;
+    }
+
+    if (!prev) {
+      return model;
+    }
+
+    if ((model->epoch - year) > (year - model->epoch)) {
+      return model;
+    }
+
+    return prev;
+  }
+
+  // in the future!
+  return mModels.back();
+}
+
+DCSMagneticModel::~DCSMagneticModel() {
+  for (auto model: mModels) {
+    MAG_FreeMagneticModelMemory(model);
+  }
+}
+
+float DCSMagneticModel::GetMagneticVariation(
+  const std::chrono::year_month_day& date,
+  float latitude,
+  float longitude) const {
+  const MAGtype_CoordGeodetic geoCoord {
+    .lambda = longitude,
+    .phi = latitude,
+  };
+
+  MAGtype_Ellipsoid ellipsoid;
+  MAGtype_Geoid geoid;
+  MAG_SetDefaults(&ellipsoid, &geoid);
+  MAGtype_CoordSpherical sphereCoord {};
+  MAG_GeodeticToSpherical(ellipsoid, geoCoord, &sphereCoord);
+
+  MAGtype_MagneticModel* model = this->GetModel(date);
+  MAGtype_MagneticModel* timedModel;
+  const auto nMax = model->nMax;
+  // Taken from wmm_point.c sample
+  timedModel = MAG_AllocateModelMemory((nMax + 1) * (nMax + 2) / 2);
+  scope_guard freeTimedModel(
+    [=]() { MAG_FreeMagneticModelMemory(timedModel); });
+
+  MAGtype_Date magDate {
+    static_cast<int>(date.year()),
+    static_cast<int>(static_cast<unsigned>(date.month())),
+    static_cast<int>(static_cast<unsigned>(date.day())),
+  };
+  char error[512];
+  MAG_DateToYear(&magDate, error);
+  MAG_TimelyModifyMagneticModel(magDate, model, timedModel);
+
+  MAGtype_GeoMagneticElements geoElements {};
+  MAG_Geomag(ellipsoid, sphereCoord, geoCoord, timedModel, &geoElements);
+
+  return geoElements.Decl;
+}
 
 DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
   : TabWithDoodles(dxr, kbs),
@@ -195,6 +306,17 @@ void DCSBriefingTab::Reload() noexcept {
   const auto cloudBase = weather["clouds"]["base"].cast<int>();
   const auto wind = weather["wind"];
 
+  DCSMagneticModel magModel(mInstallationPath);
+  double magVar = mSelfData.mBullseye ? magModel.GetMagneticVariation(
+                    std::chrono::year_month_day {
+                      std::chrono::year {startDate["Year"].cast<int>()},
+                      std::chrono::month {startDate["Month"].cast<unsigned>()},
+                      std::chrono::day {startDate["Day"].cast<unsigned>()},
+                    },
+                    mSelfData.mBullseye->mLat,
+                    mSelfData.mBullseye->mLong)
+                                      : 999.999;
+
   mTextPages->SetText(std::format(
     _("MISSION OVERVIEW\n"
       "\n"
@@ -202,6 +324,7 @@ void DCSBriefingTab::Reload() noexcept {
       "Start at: {}\n"
       "My side:  {}\n"
       "Enemies:  {}\n"
+      "MagVar:   {:.1f}° at bullseye\n"
       "\n"
       "SITUATION\n"
       "\n"
@@ -223,6 +346,7 @@ void DCSBriefingTab::Reload() noexcept {
     startDateTime,
     alliedCountries,
     enemyCountries,
+    magVar,
     situation,
     objective,
     temperature,
@@ -238,12 +362,15 @@ void DCSBriefingTab::Reload() noexcept {
     wind["at8000"]["speed"].cast<int>(),
     wind["at8000"]["dir"].cast<int>(),
     (180 + wind["at8000"]["dir"].cast<int>()) % 360));
+  this->ClearContentCache();
+  this->evFullyReplacedEvent.Emit();
 }
 
 void DCSBriefingTab::OnGameEvent(
   const GameEvent& event,
-  const std::filesystem::path&,
+  const std::filesystem::path& installPath,
   const std::filesystem::path&) {
+  mInstallationPath = installPath;
   if (event.name == DCS::EVT_MISSION) {
     const auto missionZip = std::filesystem::canonical(event.value);
 
@@ -257,17 +384,23 @@ void DCSBriefingTab::OnGameEvent(
     return;
   }
 
+  auto self = mSelfData;
   if (event.name == DCS::EVT_SELF_DATA) {
     auto raw = nlohmann::json::parse(event.value);
-    const SelfData self {
-      .mCoalition = raw.at("CoalitionID"),
-      .mCountry = raw.at("Country"),
-      .mAircraft = raw.at("Name"),
+    self.mCoalition = raw.at("CoalitionID"), self.mCountry = raw.at("Country"),
+    self.mAircraft = raw.at("Name");
+  } else if (event.name == DCS::EVT_BULLSEYE) {
+    auto raw = nlohmann::json::parse(event.value);
+    self.mBullseye = LatLong {
+      .mLat = raw["latitude"],
+      .mLong = raw["longitude"],
     };
-    if (self != mSelfData) {
-      mSelfData = self;
-      this->Reload();
-    }
+  } else {
+    return;
+  }
+  if (self != mSelfData) {
+    mSelfData = self;
+    this->Reload();
   }
 }
 
