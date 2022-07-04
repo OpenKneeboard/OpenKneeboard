@@ -18,10 +18,39 @@
  * USA.
  */
 
+#include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+
+#include <cstring>
 
 namespace OpenKneeboard {
+
+static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
+  return std::memcmp(&a, &b, sizeof(a)) == 0;
+}
+
+struct NavigationTab::Button final {
+  winrt::hstring mName;
+  uint16_t mPageIndex;
+  D2D1_RECT_F mRect;
+  uint16_t mRenderColumn;
+
+  bool operator==(const Button& other) const noexcept {
+    return mRect == other.mRect;
+  }
+};
+
+class NavigationTab::ButtonTracker final
+  : public CursorClickableRegions<Button> {
+  using CursorClickableRegions::CursorClickableRegions;
+
+ protected:
+  virtual D2D1_RECT_F GetButtonRect(const Button& button) const override {
+    return button.mRect;
+  }
+};
 
 NavigationTab::NavigationTab(
   const DXResources& dxr,
@@ -101,13 +130,12 @@ NavigationTab::NavigationTab(
     .bottom = (2 * padding) + rowHeight,
   };
   auto rect = topRect;
-  mEntries.push_back({});
 
-  auto pageEntries = &mEntries.at(0);
+  std::vector<Button> buttons;
   uint16_t column = 0;
 
   for (const auto& entry: entries) {
-    pageEntries->push_back(
+    buttons.push_back(
       {winrt::to_hstring(entry.mName), entry.mPageIndex, rect, column});
 
     rect.top = rect.bottom + padding;
@@ -117,8 +145,8 @@ NavigationTab::NavigationTab(
       column = (column + 1) % columns;
       rect = topRect;
       if (column == 0) {
-        mEntries.push_back({});
-        pageEntries = &mEntries.back();
+        mButtonTrackers.push_back(std::make_shared<ButtonTracker>(buttons));
+        buttons.clear();
       } else {
         const auto translateX = column * (mPreferredSize.width / columns);
         rect.left += translateX;
@@ -126,12 +154,21 @@ NavigationTab::NavigationTab(
       }
     }
   }
-  if (mEntries.back().empty()) {
-    mEntries.pop_back();
+
+  if (!buttons.empty()) {
+    mButtonTrackers.push_back(std::make_shared<ButtonTracker>(buttons));
+  }
+
+  for (const auto& buttonTracker: mButtonTrackers) {
+    AddEventListener(
+      buttonTracker->evClicked, [this](auto ctx, const Button& button) {
+        this->evPageChangeRequestedEvent.Emit(ctx, button.mPageIndex);
+      });
   }
 }
 
 NavigationTab::~NavigationTab() {
+  this->RemoveAllEventListeners();
 }
 
 utf8_string NavigationTab::GetTitle() const {
@@ -143,7 +180,7 @@ utf8_string NavigationTab::GetGlyph() const {
 }
 
 uint16_t NavigationTab::GetPageCount() const {
-  return static_cast<uint16_t>(mEntries.size());
+  return static_cast<uint16_t>(mButtonTrackers.size());
 }
 
 D2D1_SIZE_U NavigationTab::GetNativeContentSize(uint16_t) {
@@ -154,69 +191,8 @@ void NavigationTab::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
   uint16_t pageIndex) {
-  evNeedsRepaintEvent.Emit();
-  mCursorPoint = {ev.mX, ev.mY};
-
-  // We only care about touch start and end
-
-  // moving with button pressed: no state change
-  if (
-    ev.mTouchState == CursorTouchState::TOUCHING_SURFACE
-    && mButtonState != ButtonState::NOT_PRESSED) {
-    return;
-  }
-
-  // moving without button pressed, no state change
-  if (
-    ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
-    && mButtonState == ButtonState::NOT_PRESSED) {
-    return;
-  }
-
-  // touch end, but touch start wasn't on a button
-  if (
-    ev.mTouchState != CursorTouchState::TOUCHING_SURFACE
-    && mButtonState == ButtonState::PRESSING_INACTIVE_AREA) {
-    mButtonState = ButtonState::NOT_PRESSED;
-    return;
-  }
-
-  bool matched = false;
-  uint16_t matchedIndex;
-  uint16_t matchedPage;
-  const auto& entries = mEntries.at(pageIndex);
-  for (uint16_t i = 0; i < entries.size(); ++i) {
-    const auto& r = entries.at(i).mRect;
-    if (
-      ev.mX >= r.left && ev.mX <= r.right && ev.mY >= r.top
-      && ev.mY <= r.bottom) {
-      matched = true;
-      matchedIndex = i;
-      matchedPage = entries.at(i).mPageIndex;
-      break;
-    }
-  }
-
-  // touch start
-  if (ev.mTouchState == CursorTouchState::TOUCHING_SURFACE) {
-    if (matched) {
-      mActiveButton = matchedIndex;
-      mButtonState = ButtonState::PRESSING_BUTTON;
-    } else {
-      mButtonState = ButtonState::PRESSING_INACTIVE_AREA;
-    }
-    return;
-  }
-
-  mButtonState = ButtonState::NOT_PRESSED;
-
-  // touch release, but not on the same button
-  if ((!matched) || matchedIndex != mActiveButton) {
-    return;
-  }
-
-  // touch release, on the same button
-  evPageChangeRequestedEvent.Emit(ctx, matchedPage);
+  scope_guard repaintOnExit([&]() { evNeedsRepaintEvent.Emit(); });
+  mButtonTrackers.at(pageIndex)->PostCursorEvent(ctx, ev);
 }
 
 void NavigationTab::RenderPage(
@@ -234,31 +210,13 @@ void NavigationTab::RenderPage(
     * D2D1::Matrix3x2F::Scale({scale, scale}, origin);
   ctx->SetTransform(pageTransform);
 
-  const auto& pageEntries = mEntries.at(pageIndex);
+  const auto [hoverButton, buttons] = mButtonTrackers.at(pageIndex)->GetState();
 
-  uint16_t hoverPage = ~0ui16;
-  const auto x = mCursorPoint.x;
-  const auto y = mCursorPoint.y;
+  for (int i = 0; i < buttons.size(); ++i) {
+    const auto& button = buttons.at(i);
+    const auto& rect = button.mRect;
 
-  for (int i = 0; i < pageEntries.size(); ++i) {
-    const auto& entry = pageEntries.at(i);
-    const auto& rect = entry.mRect;
-    bool hover = false;
-
-    switch (mButtonState) {
-      case ButtonState::NOT_PRESSED:
-        hover = x >= rect.left && x <= rect.right && y >= rect.top
-          && y <= rect.bottom;
-        break;
-      case ButtonState::PRESSING_BUTTON:
-        hover = (i == mActiveButton);
-        break;
-      case ButtonState::PRESSING_INACTIVE_AREA:
-        break;
-    }
-
-    if (hover) {
-      hoverPage = i;
+    if (button == hoverButton) {
       ctx->FillRectangle(rect, mHighlightBrush.get());
       ctx->FillRectangle(mPreviewMetrics.mRects.at(i), mBackgroundBrush.get());
     } else {
@@ -281,14 +239,14 @@ void NavigationTab::RenderPage(
 
   ctx->SetTransform(pageTransform);
   std::vector<float> columnPreviewRightEdge(mRenderColumns);
-  for (auto i = 0; i < pageEntries.size(); ++i) {
-    const auto& entry = pageEntries.at(i);
+  for (auto i = 0; i < buttons.size(); ++i) {
+    const auto& button = buttons.at(i);
     const auto& previewRect = mPreviewMetrics.mRects.at(i);
-    auto& rightEdge = columnPreviewRightEdge.at(entry.mRenderColumn);
+    auto& rightEdge = columnPreviewRightEdge.at(button.mRenderColumn);
     if (previewRect.right > rightEdge) {
       rightEdge = previewRect.right;
     }
-    if (hoverPage == i) {
+    if (button == hoverButton) {
       ctx->DrawRectangle(
         previewRect, mHighlightBrush.get(), mPreviewMetrics.mStroke);
     } else {
@@ -297,13 +255,13 @@ void NavigationTab::RenderPage(
     }
   }
 
-  for (const auto& entry: pageEntries) {
-    auto rect = entry.mRect;
-    rect.left
-      = columnPreviewRightEdge.at(entry.mRenderColumn) + mPreviewMetrics.mBleed;
+  for (const auto& button: buttons) {
+    auto rect = button.mRect;
+    rect.left = columnPreviewRightEdge.at(button.mRenderColumn)
+      + mPreviewMetrics.mBleed;
     ctx->DrawTextW(
-      entry.mName.data(),
-      static_cast<UINT32>(entry.mName.size()),
+      button.mName.data(),
+      static_cast<UINT32>(button.mName.size()),
       mTextFormat.get(),
       rect,
       mTextBrush.get(),
@@ -311,7 +269,7 @@ void NavigationTab::RenderPage(
   }
 
   auto message = winrt::to_hstring(
-    std::format(_("Page {} of {}"), pageIndex + 1, mEntries.size()));
+    std::format(_("Page {} of {}"), pageIndex + 1, this->GetPageCount()));
   ctx->DrawTextW(
     message.data(),
     static_cast<UINT32>(message.size()),
@@ -332,11 +290,11 @@ void NavigationTab::RenderPreviewLayer(
   auto& m = mPreviewMetrics;
   m = {};
 
-  const auto& pageEntries = mEntries.at(pageIndex);
+  const auto& buttons = mButtonTrackers.at(pageIndex)->GetButtons();
   m.mRects.clear();
-  m.mRects.resize(pageEntries.size());
+  m.mRects.resize(buttons.size());
 
-  const auto& first = pageEntries.front();
+  const auto& first = buttons.front();
 
   // just a little less than the padding
   m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.1f;
@@ -344,20 +302,20 @@ void NavigationTab::RenderPreviewLayer(
   m.mStroke = m.mBleed * 0.3f;
   m.mHeight = (first.mRect.bottom - first.mRect.top) + (m.mBleed * 2);
 
-  for (auto i = 0; i < pageEntries.size(); ++i) {
-    const auto& entry = pageEntries.at(i);
+  for (auto i = 0; i < buttons.size(); ++i) {
+    const auto& button = buttons.at(i);
 
-    const auto nativeSize = mRootTab->GetNativeContentSize(entry.mPageIndex);
+    const auto nativeSize = mRootTab->GetNativeContentSize(button.mPageIndex);
     const auto scale = m.mHeight / nativeSize.height;
     const auto width = nativeSize.width * scale;
 
     auto& rect = m.mRects.at(i);
-    rect.left = entry.mRect.left + m.mBleed;
-    rect.top = entry.mRect.top - m.mBleed;
+    rect.left = button.mRect.left + m.mBleed;
+    rect.top = button.mRect.top - m.mBleed;
     rect.right = rect.left + width;
-    rect.bottom = entry.mRect.bottom + m.mBleed;
+    rect.bottom = button.mRect.bottom + m.mBleed;
 
-    mRootTab->RenderPage(ctx, entry.mPageIndex, rect);
+    mRootTab->RenderPage(ctx, button.mPageIndex, rect);
   }
 }
 

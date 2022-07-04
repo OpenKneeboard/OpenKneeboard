@@ -49,7 +49,7 @@ class InterprocessRenderer final : private EventReceiver {
   ~InterprocessRenderer();
 
  private:
-  winrt::apartment_context mUIThread;
+  EventContext mEventContext;
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
 

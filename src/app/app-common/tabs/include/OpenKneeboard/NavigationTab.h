@@ -22,6 +22,7 @@
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Events.h>
 
 #include <limits>
 
@@ -30,7 +31,9 @@
 
 namespace OpenKneeboard {
 
-class NavigationTab final : public TabBase, public ITabWithCursorEvents {
+class NavigationTab final : public TabBase,
+                            public ITabWithCursorEvents,
+                            private EventReceiver {
  public:
   struct Entry {
     utf8_string mName;
@@ -67,23 +70,9 @@ class NavigationTab final : public TabBase, public ITabWithCursorEvents {
   CachedLayer mPreviewLayer;
 
   uint16_t mRenderColumns;
-  struct EntryImpl {
-    winrt::hstring mName;
-    uint16_t mPageIndex;
-    D2D1_RECT_F mRect;
-    uint16_t mRenderColumn;
-  };
-  std::vector<std::vector<EntryImpl>> mEntries;
-
-  enum class ButtonState {
-    NOT_PRESSED,
-    PRESSING_BUTTON,
-    PRESSING_INACTIVE_AREA,
-  };
-  ButtonState mButtonState = ButtonState::NOT_PRESSED;
-  uint16_t mActiveButton;
-
-  D2D1_POINT_2F mCursorPoint;
+  struct Button;
+  class ButtonTracker;
+  std::vector<std::shared_ptr<ButtonTracker>> mButtonTrackers;
 
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   winrt::com_ptr<IDWriteTextFormat> mPageNumberTextFormat;

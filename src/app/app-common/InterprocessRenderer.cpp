@@ -451,7 +451,7 @@ void InterprocessRenderer::OnCursorEvent(
   CursorEvent canvasEvent {ev};
   canvasEvent.mX = cursor.x;
   canvasEvent.mY = cursor.y;
-  toolbar->PostCursorEvent(canvasEvent);
+  toolbar->PostCursorEvent(mEventContext, canvasEvent);
 }
 
 void InterprocessRenderer::OnLayoutChanged(
@@ -522,7 +522,7 @@ void InterprocessRenderer::OnLayoutChanged(
   }
 
   auto toolbar = std::make_shared<Toolbar>(buttons);
-  AddEventListener(toolbar->evClicked, [](const Button& button) {
+  AddEventListener(toolbar->evClicked, [](auto, const Button& button) {
     button.mAction->Execute();
   });
   mToolbars[view->GetRuntimeID()] = toolbar;
