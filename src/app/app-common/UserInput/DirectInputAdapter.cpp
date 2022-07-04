@@ -93,12 +93,22 @@ DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
   mDIThread = std::jthread([=](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"DirectInput Thread");
     DirectInputListener listener(mDI8, mDevices);
-    listener.Run(stopToken);
+    auto promise = listener.Run();
+    std::stop_callback stopper(stopToken, [&promise]() {
+      /** SPAMMMMMMMMMMMMMMM
+       * MMMM */
+      promise.Cancel();
+    });
+    try {
+      promise.get();
+    } catch (winrt::hresult_canceled) {
+    }
   });
 }
 
 DirectInputAdapter::~DirectInputAdapter() {
   this->RemoveAllEventListeners();
+  mDIThread.request_stop();
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()

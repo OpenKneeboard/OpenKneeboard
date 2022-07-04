@@ -22,8 +22,7 @@
 #include <OpenKneeboard/Events.h>
 #include <dinput.h>
 #include <shims/winrt.h>
-
-#include <stop_token>
+#include <winrt/Windows.Foundation.h>
 
 namespace OpenKneeboard {
 
@@ -36,11 +35,13 @@ class DirectInputListener final {
     const std::vector<std::shared_ptr<DirectInputDevice>>& devices);
   ~DirectInputListener();
 
-  void Run(std::stop_token);
+  winrt::Windows::Foundation::IAsyncAction Run();
 
  private:
   struct DeviceInfo;
   std::vector<DeviceInfo> mDevices;
+
+  winrt::Windows::Foundation::IAsyncAction Run(DeviceInfo&);
 };
 
 }// namespace OpenKneeboard

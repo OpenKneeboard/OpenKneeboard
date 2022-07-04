@@ -81,27 +81,35 @@ DirectInputListener::DirectInputListener(
 DirectInputListener::~DirectInputListener() {
 }
 
-void DirectInputListener::Run(std::stop_token stopToken) {
-  winrt::handle cancelHandle {CreateEvent(nullptr, false, false, nullptr)};
-
-  std::stop_callback stopEvent(
-    stopToken, [&]() { SetEvent(cancelHandle.get()); });
-
-  std::vector<HANDLE> handles;
-  for (const auto& it: mDevices) {
-    handles.push_back(it.mEventHandle);
+winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() {
+  std::vector<winrt::Windows::Foundation::IAsyncAction> subs;
+  for (auto& device: mDevices) {
+    subs.push_back(Run(device));
   }
-  handles.push_back(cancelHandle.get());
+  auto cancelled = co_await winrt::get_cancellation_token();
+  cancelled.callback([&]() {
+    for (auto& sub: subs) {
+      sub.Cancel();
+    }
+  });
+  for (auto& sub: subs) {
+    co_await sub;
+  }
+}
 
-  while (!stopToken.stop_requested()) {
-    auto result
-      = WaitForMultipleObjects(handles.size(), handles.data(), false, INFINITE);
-    auto idx = result - WAIT_OBJECT_0;
-    if (idx < 0 || idx >= (handles.size() - 1)) {
-      continue;
+winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
+  DeviceInfo& device) {
+  auto cancelled = co_await winrt::get_cancellation_token();
+  cancelled.callback([&device]() {
+    /** SPAMMM */
+    SetEvent(device.mEventHandle);
+  });
+  while (!cancelled()) {
+    co_await winrt::resume_on_signal(device.mEventHandle);
+    if (cancelled()) {
+      co_return;
     }
 
-    auto& device = mDevices.at(idx);
     auto oldState = device.mState;
     decltype(oldState) newState {};
     device.mDIDevice->Poll();
