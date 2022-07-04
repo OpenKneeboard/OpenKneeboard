@@ -112,7 +112,15 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
 
     auto oldState = device.mState;
     decltype(oldState) newState {};
-    device.mDIDevice->Poll();
+    const auto pollResult = device.mDIDevice->Poll();
+    if (pollResult != DI_OK && pollResult != DI_NOEFFECT) {
+      dprintf(
+        "Abandoning DI device '{}' due to error {} ({:#08x})",
+        device.mDevice->GetName(),
+        pollResult,
+        std::bit_cast<uint32_t>(pollResult));
+      co_return;
+    }
     if (
       (device.mDevice->GetDIDeviceInstance().dwDevType & 0xff)
       == DI8DEVTYPE_KEYBOARD) {
