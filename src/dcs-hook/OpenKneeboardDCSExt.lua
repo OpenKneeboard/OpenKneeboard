@@ -40,7 +40,37 @@ state = {
   aircraft = nil,
   terrain = nil,
   selfData = nil,
+  bullseye = nil,
 }
+
+function updateGeo()
+  local playerID = net.get_my_player_id()
+  local coalition = net.get_player_info(playerID, 'side')
+  local mission = DCS.getCurrentMission().mission
+
+  state.bullseye = nil
+
+  if not coalition then
+    return
+  end
+
+  if coalition == 1 then
+    coalition = mission.coalition.red
+  else
+    coalition = mission.coalition.blue
+  end
+  
+  if not coalition then
+    return
+  end
+
+  local bullseye = coalition.bullseye
+  if not bullseye then
+    return
+  end
+
+  state.bullseye = Export.LoLoCoordinatesToGeoCoordinates(bullseye)
+end
 
 function sendState()
   OpenKneeboard.send("InstallPath", lfs.currentdir());
@@ -56,6 +86,9 @@ function sendState()
   end
   if (state.selfData) then
     OpenKneeboard.send("SelfData", net.lua2json(state.selfData))
+  end
+  if state.bullseye then
+    OpenKneeboard.send("Bullseye", net.lua2json(state.bullseye))
   end
 end
 
@@ -102,6 +135,7 @@ function callbacks.onSimulationStart()
   end
   state.aircraft = selfData.Name
   state.selfData = selfData
+  updateGeo()
   l("Aircraft: "..state.aircraft)
   sendState()
   OpenKneeboard.send("SimulationStart", "");
@@ -112,6 +146,7 @@ function callbacks.onPlayerChangeSlot(id)
     local slotid = net.get_player_info(id, 'slot')
     state.aircraft = DCS.getUnitProperty(slotid, DCS.UNIT_TYPE)
     state.selfData = Export.LoGetSelfData()
+    updateGeo()
     sendState()
   end
 end
