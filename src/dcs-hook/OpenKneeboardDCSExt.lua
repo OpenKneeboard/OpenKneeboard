@@ -57,6 +57,7 @@ function updateGeo()
     return
   end
 
+  -- FIXME: coalition is 0 when this code is currently evaluated
   if coalition == 1 then
     coalition = mission.coalition.red
   else
@@ -72,7 +73,7 @@ function updateGeo()
     return
   end
 
-  state.bullseye = Export.LoLoCoordinatesToGeoCoordinates(bullseye.x, bullseye.z)
+  state.bullseye = Export.LoLoCoordinatesToGeoCoordinates(bullseye.x, bullseye.y)
 end
 
 function sendState()
