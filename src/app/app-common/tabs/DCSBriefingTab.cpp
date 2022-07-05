@@ -388,7 +388,7 @@ void DCSBriefingTab::Reload() noexcept {
 
   if (mSelfData.mAircraft.starts_with("A-10C")) {
     mTextPages->PushMessage(std::format(
-      _("A10-C LASTE WIND\n"
+      _("A-10C LASTE WIND\n"
         "\n"
         "Using bullseye magvar: {:.1f}°\n"
         "\n"
