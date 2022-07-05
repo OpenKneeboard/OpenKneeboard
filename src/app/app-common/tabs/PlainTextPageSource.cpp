@@ -116,6 +116,9 @@ void PlainTextPageSource::RenderPage(
       footerBrush.get());
     return;
   }
+
+  std::unique_lock lock(mMutex);
+
   const auto& lines = (pageIndex == mCompletePages.size())
     ? mCurrentPageLines
     : mCompletePages.at(pageIndex);
@@ -172,19 +175,28 @@ void PlainTextPageSource::RenderPage(
 }
 
 void PlainTextPageSource::ClearText() {
+  std::unique_lock lock(mMutex);
   mMessages.clear();
   mCurrentPageLines.clear();
   mCompletePages.clear();
 }
 
 void PlainTextPageSource::SetText(utf8_string_view text) {
+  std::unique_lock lock(mMutex);
   this->ClearText();
   this->PushMessage(text);
 }
 
 void PlainTextPageSource::PushMessage(utf8_string_view message) {
+  std::unique_lock lock(mMutex);
   mMessages.push_back(utf8_string(message));
   LayoutMessages();
+}
+
+void PlainTextPageSource::EnsureNewPage() {
+  if (!mCurrentPageLines.empty()) {
+    this->PushPage();
+  }
 }
 
 void PlainTextPageSource::PushPage() {

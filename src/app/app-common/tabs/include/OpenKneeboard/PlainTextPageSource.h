@@ -24,6 +24,7 @@
 #include <shims/winrt.h>
 
 #include <memory>
+#include <mutex>
 
 #include "IPageSource.h"
 
@@ -41,6 +42,7 @@ class PlainTextPageSource final : public IPageSource {
   void SetText(utf8_string_view text);
   void PushMessage(utf8_string_view message);
   void PushFullWidthSeparator();
+  void EnsureNewPage();
 
   virtual uint16_t GetPageCount() const override;
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
@@ -52,6 +54,7 @@ class PlainTextPageSource final : public IPageSource {
  private:
   static constexpr int RENDER_SCALE = 1;
 
+  mutable std::recursive_mutex mMutex;
   std::vector<std::vector<winrt::hstring>> mCompletePages;
   std::vector<winrt::hstring> mCurrentPageLines;
   std::vector<utf8_string> mMessages;
