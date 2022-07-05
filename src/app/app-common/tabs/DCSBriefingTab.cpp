@@ -200,6 +200,26 @@ static std::string GetCountries(const luabridge::LuaRef& countries) {
   return ret;
 }
 
+struct DCSBriefingWind {
+  DCSBriefingWind(const luabridge::LuaRef& data) {
+    mSpeed = data["speed"].cast<float>();
+    mDirection = data["dir"].cast<int>();
+    mStandardDirection = (180 + mDirection) % 360;
+    if (mDirection == 0) {
+      mDirection = 360;
+    }
+    if (mStandardDirection == 0) {
+      mStandardDirection = 360;
+    }
+    mSpeedInKnots = mSpeed * 1.94384f;
+  }
+
+  float mSpeed;
+  float mSpeedInKnots;
+  int mDirection;
+  int mStandardDirection;
+};
+
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
     this->ClearContentCache();
@@ -305,6 +325,9 @@ void DCSBriefingTab::Reload() noexcept {
   const auto qnhInHg = qnhMmHg / 25.4;
   const auto cloudBase = weather["clouds"]["base"].cast<int>();
   const auto wind = weather["wind"];
+  DCSBriefingWind windAtGround {luabridge::LuaRef {wind["atGround"]}};
+  DCSBriefingWind windAt2000 {luabridge::LuaRef {wind["at2000"]}};
+  DCSBriefingWind windAt8000 {luabridge::LuaRef {wind["at8000"]}};
 
   DCSMagneticModel magModel(mInstallationPath);
   double magVar = mSelfData.mBullseye ? magModel.GetMagneticVariation(
@@ -339,9 +362,9 @@ void DCSBriefingTab::Reload() noexcept {
       "Temperature: {:+d}°\n"
       "QNH:         {} / {:.02f}\n"
       "Cloud cover: Base {}\n"
-      "Nav wind:    At GRND {} m/s, {}° Meteo {}°\n"
-      "             At 2000m {} m/s, {}° Meteo {}°\n"
-      "             At 8000m {} m/s, {}° Meteo {}°"),
+      "Nav wind:    At GRND {:.0f} m/s, {}° Meteo {}°\n"
+      "             At 2000m {:.0f} m/s, {}° Meteo {}°\n"
+      "             At 8000m {:.0f} m/s, {}° Meteo {}°"),
     title,
     startDateTime,
     alliedCountries,
@@ -353,15 +376,51 @@ void DCSBriefingTab::Reload() noexcept {
     qnhMmHg,
     qnhInHg,
     cloudBase,
-    wind["atGround"]["speed"].cast<int>(),
-    wind["atGround"]["dir"].cast<int>(),
-    (180 + wind["atGround"]["dir"].cast<int>()) % 360,
-    wind["at2000"]["speed"].cast<int>(),
-    wind["at2000"]["dir"].cast<int>(),
-    (180 + wind["at2000"]["dir"].cast<int>()) % 360,
-    wind["at8000"]["speed"].cast<int>(),
-    wind["at8000"]["dir"].cast<int>(),
-    (180 + wind["at8000"]["dir"].cast<int>()) % 360));
+    windAtGround.mSpeed,
+    windAtGround.mDirection,
+    windAtGround.mStandardDirection,
+    windAt2000.mSpeed,
+    windAt2000.mDirection,
+    windAt2000.mStandardDirection,
+    windAt8000.mSpeed,
+    windAt8000.mDirection,
+    windAt8000.mStandardDirection));
+
+  if (mSelfData.mAircraft.starts_with("A-10C")) {
+    mTextPages->PushMessage(std::format(
+      _("A10-C LASTE WIND\n"
+        "\n"
+        "Using bullseye magvar: {:.1f}°\n"
+        "\n"
+        "ALT WIND   TEMPERATURE\n"
+        "00  {:03.0f}/{:02.0f} {}\n"
+        "01  {:03.0f}/{:02.0f} {}\n"
+        "02  {:03.0f}/{:02.0f} {}\n"
+        "07  {:03.0f}/{:02.0f} {}\n"
+        "26  {:03.0f}/{:02.0f} {}"),
+      magVar,
+      // 0ft/ground
+      windAtGround.mStandardDirection - magVar,
+      windAtGround.mSpeedInKnots,
+      temperature,
+      // 1000ft
+      windAtGround.mStandardDirection - magVar,
+      windAtGround.mSpeedInKnots * 2,
+      temperature - 2,
+      // 2000ft
+      windAtGround.mStandardDirection - magVar,
+      windAtGround.mSpeedInKnots * 2,
+      temperature - (2 * 2),
+      // 7000ft/2000m
+      windAt2000.mStandardDirection - magVar,
+      windAt2000.mSpeedInKnots,
+      temperature - (2 * 7),
+      // 26000ft/8000m
+      windAt8000.mStandardDirection - magVar,
+      windAt8000.mSpeedInKnots,
+      temperature - (2 * 26)));
+  }
+
   this->ClearContentCache();
   this->evFullyReplacedEvent.Emit();
 }
