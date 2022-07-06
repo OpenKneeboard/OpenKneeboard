@@ -188,7 +188,7 @@ DCSGrid::DCSGrid(double originLat, double originLong) {
 
 std::tuple<double, double> DCSGrid::LatLongFromXY(double dcsX, double dcsY)
   const {
-  // UTM (x, y) are (easting, northing), but UTM (x, y) are (northing, easting)
+  // UTM (x, y) are (easting, northing), but DCS (x, y) are (northing, easting)
   const auto x = mOffsetX + dcsY;
   const auto y = mOffsetY + dcsX;
   double retLat, retLong;
