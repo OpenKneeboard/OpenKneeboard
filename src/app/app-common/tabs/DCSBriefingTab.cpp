@@ -29,6 +29,7 @@
 #include <OpenKneeboard/scope_guard.h>
 
 #include <GeographicLib/GeoCoords.hpp>
+#include <GeographicLib/TransverseMercator.hpp>
 #include <GeographicLib/TransverseMercatorExact.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 #include <chrono>
@@ -81,6 +82,12 @@ DCSMagneticModel::DCSMagneticModel(
   }
 }
 
+DCSMagneticModel::~DCSMagneticModel() {
+  for (auto model: mModels) {
+    MAG_FreeMagneticModelMemory(model);
+  }
+}
+
 MAGtype_MagneticModel* DCSMagneticModel::GetModel(
   const std::chrono::year_month_day& date) const {
   MAGtype_Date magDate {
@@ -112,12 +119,6 @@ MAGtype_MagneticModel* DCSMagneticModel::GetModel(
 
   // in the future!
   return mModels.back();
-}
-
-DCSMagneticModel::~DCSMagneticModel() {
-  for (auto model: mModels) {
-    MAG_FreeMagneticModelMemory(model);
-  }
 }
 
 float DCSMagneticModel::GetMagneticVariation(
@@ -156,6 +157,45 @@ float DCSMagneticModel::GetMagneticVariation(
   MAG_Geomag(ellipsoid, sphereCoord, geoCoord, timedModel, &geoElements);
 
   return geoElements.Decl;
+}
+
+class DCSGrid final {
+ public:
+  DCSGrid(double originLat, double originLong);
+  std::tuple<double, double> LatLongFromXY(double x, double y) const;
+
+ private:
+  double mOffsetX;
+  double mOffsetY;
+  double mZoneMeridian;
+};
+
+DCSGrid::DCSGrid(double originLat, double originLong) {
+  const int zone = GeographicLib::UTMUPS::StandardZone(originLat, originLong);
+  mZoneMeridian = (6.0 * zone - 183);
+
+  GeographicLib::TransverseMercator::UTM().Forward(
+    mZoneMeridian, originLat, originLong, mOffsetX, mOffsetY);
+
+  dprintf(
+    "DCS (0, 0) is in UTM zone {}, with meridian at {} and a UTM offset of "
+    "({}, {})",
+    zone,
+    mZoneMeridian,
+    mOffsetX,
+    mOffsetY);
+}
+
+std::tuple<double, double> DCSGrid::LatLongFromXY(double dcsX, double dcsY)
+  const {
+  // UTM (x, y) are (easting, northing), but UTM (x, y) are (northing, easting)
+  const auto x = mOffsetX + dcsY;
+  const auto y = mOffsetY + dcsX;
+  double retLat, retLong;
+
+  GeographicLib::TransverseMercator::UTM().Reverse(
+    mZoneMeridian, x, y, retLat, retLong);
+  return {retLat, retLong};
 }
 
 DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
@@ -347,23 +387,12 @@ void DCSBriefingTab::Reload() noexcept {
 
   if (mDCSState.mOrigin && mDCSState.mCoalition != DCS::Coalition::Neutral) {
     const auto& origin = mDCSState.mOrigin;
-    const int zone
-      = GeographicLib::UTMUPS::StandardZone(origin->mLat, origin->mLong);
-    const double zoneMeridian = (6.0 * zone - 183);
-
-    const auto utm = GeographicLib::TransverseMercatorExact::UTM();
-    double originX, originY;
-    utm.Forward(zoneMeridian, origin->mLat, origin->mLong, originX, originY);
+    DCSGrid grid(origin->mLat, origin->mLong);
 
     const auto key = CoalitionKey("neutral", "red", "blue");
     const auto xyBulls = mission["coalition"][key]["bullseye"];
-    const auto bullsNorthing = xyBulls["x"].cast<double>();
-    const auto bullsEasting = xyBulls["y"].cast<double>();
-    double bullsLat;
-    double bullsLong;
-    const double bullsX = originX + bullsEasting;
-    const double bullsY = originY + bullsNorthing;
-    utm.Reverse(zoneMeridian, bullsX, bullsY, bullsLat, bullsLong);
+    const auto [bullsLat, bullsLong] = grid.LatLongFromXY(
+      xyBulls["x"].cast<double>(), xyBulls["y"].cast<double>());
 
     GeographicLib::GeoCoords bulls(bullsLat, bullsLong);
 
