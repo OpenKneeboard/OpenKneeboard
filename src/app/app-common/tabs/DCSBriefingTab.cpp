@@ -28,9 +28,9 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
+#include <GeographicLib/DMS.hpp>
 #include <GeographicLib/GeoCoords.hpp>
 #include <GeographicLib/TransverseMercator.hpp>
-#include <GeographicLib/TransverseMercatorExact.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 #include <chrono>
 #include <cmath>
@@ -270,6 +270,27 @@ struct DCSBriefingWind {
   int mStandardDirection;
 };
 
+static std::string DMSFormat(double angle, char pos, char neg) {
+  double degrees, minutes, seconds;
+  GeographicLib::DMS::Encode(angle, degrees, minutes, seconds);
+  return std::format(
+    "{} {:03.0f}°{:02.0f}'{:05.2f}\"",
+    degrees >= 0 ? pos : neg,
+    std::abs(degrees),
+    minutes,
+    seconds);
+};
+
+static std::string DMFormat(double angle, char pos, char neg) {
+  double degrees, minutes;
+  GeographicLib::DMS::Encode(angle, degrees, minutes);
+  return std::format(
+    "{} {:03.0f}°{:05.3f}'",
+    degrees >= 0 ? pos : neg,
+    std::abs(degrees),
+    minutes);
+}
+
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
     this->ClearContentCache();
@@ -414,12 +435,14 @@ void DCSBriefingTab::Reload() noexcept {
     mTextPages->PushMessage(std::format(
       _("BULLSEYE\n"
         "\n"
-        "Position: {}\n"
-        "          {}\n"
+        "Position: {} {}\n"
+        "          {}   {}\n"
         "          {}\n"
         "MagVar:   {:.01f}°"),
-      bulls.DMSRepresentation(1),
-      bulls.UTMUPSRepresentation(1),
+      DMSFormat(bullsLat, 'N', 'S'),
+      DMSFormat(bullsLong, 'E', 'W'),
+      DMFormat(bullsLat, 'N', 'S'),
+      DMFormat(bullsLong, 'E', 'W'),
       bulls.MGRSRepresentation(1),
       magVar));
   }
