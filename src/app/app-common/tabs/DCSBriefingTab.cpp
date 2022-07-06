@@ -351,16 +351,14 @@ void DCSBriefingTab::Reload() noexcept {
       = GeographicLib::UTMUPS::StandardZone(origin->mLat, origin->mLong);
     const double zoneMeridian = (6.0 * zone - 183);
 
-    const auto key = CoalitionKey("neutral", "red", "blue");
-    const auto xyBulls = mission["coalition"][key]["bullseye"];
-
-    const auto bullsNorthing = xyBulls["x"].cast<double>();
-    const auto bullsEasting = xyBulls["y"].cast<double>();
-
     const auto utm = GeographicLib::TransverseMercatorExact::UTM();
     double originX, originY;
     utm.Forward(zoneMeridian, origin->mLat, origin->mLong, originX, originY);
 
+    const auto key = CoalitionKey("neutral", "red", "blue");
+    const auto xyBulls = mission["coalition"][key]["bullseye"];
+    const auto bullsNorthing = xyBulls["x"].cast<double>();
+    const auto bullsEasting = xyBulls["y"].cast<double>();
     double bullsLat;
     double bullsLong;
     const double bullsX = originX + bullsEasting;
