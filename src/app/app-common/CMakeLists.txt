@@ -34,6 +34,7 @@ target_link_libraries(
 	System::Dxguid
 	System::Rpcrt4
 	ThirdParty::DirectXTK
+	ThirdParty::GeographicLib
 	ThirdParty::LibZip
 	ThirdParty::LuaBridge
 	ThirdParty::OpenVR

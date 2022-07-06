@@ -76,21 +76,21 @@ class DCSBriefingTab final : public TabBase,
     auto operator<=>(const LatLong&) const noexcept = default;
   };
 
-  struct SelfData {
+  struct DCSState {
     DCSWorld::Coalition mCoalition {DCSWorld::Coalition::Neutral};
     int mCountry = -1;
     std::string mAircraft;
-    std::optional<LatLong> mBullseye;
+    std::optional<LatLong> mOrigin;
 
-    auto operator<=>(const SelfData&) const = default;
+    auto operator<=>(const DCSState&) const = default;
   };
-  SelfData mSelfData;
+  DCSState mDCSState;
 
   constexpr const char* CoalitionKey(
     const char* neutralKey,
     const char* redforKey,
     const char* blueforKey) {
-    switch (mSelfData.mCoalition) {
+    switch (mDCSState.mCoalition) {
       case DCSWorld::Coalition::Neutral:
         return neutralKey;
       case DCSWorld::Coalition::Red:

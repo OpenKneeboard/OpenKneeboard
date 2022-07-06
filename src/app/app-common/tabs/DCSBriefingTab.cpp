@@ -28,8 +28,13 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
+#include <GeographicLib/GeoCoords.hpp>
+#include <GeographicLib/TransverseMercatorExact.hpp>
+#include <GeographicLib/UTMUPS.hpp>
 #include <chrono>
+#include <cmath>
 #include <format>
+#include <limits>
 
 extern "C" {
 #include <GeomagnetismHeader.h>
@@ -298,7 +303,7 @@ void DCSBriefingTab::Reload() noexcept {
     = GetCountries(mission["coalition"]["blue"]["country"]);
   std::string_view alliedCountries;
   std::string_view enemyCountries;
-  switch (mSelfData.mCoalition) {
+  switch (mDCSState.mCoalition) {
     case DCSWorld::Coalition::Neutral:
       break;
     case DCSWorld::Coalition::Blue:
@@ -310,14 +315,82 @@ void DCSBriefingTab::Reload() noexcept {
       enemyCountries = blueCountries;
   }
 
-  const auto situation
-    = dictionary[mission["descriptionText"]].cast<std::string>();
+  mTextPages->PushMessage(std::format(
+    _("MISSION OVERVIEW\n"
+      "\n"
+      "Title:    {}\n"
+      "Start at: {}\n"
+      "My side:  {}\n"
+      "Enemies:  {}"),
+    title,
+    startDateTime,
+    alliedCountries,
+    enemyCountries));
 
-  const auto objective = dictionary[mission[CoalitionKey(
-                                      "descriptionNeutralTask",
-                                      "descriptionRedTask",
-                                      "descriptionBlueTask")]]
-                           .cast<std::string>();
+  mTextPages->PushMessage(std::format(
+    _("SITUATION\n"
+      "\n"
+      "{}"),
+    dictionary[mission["descriptionText"]].cast<std::string>()));
+
+  mTextPages->PushMessage(std::format(
+    _("OBJECTIVE\n"
+      "\n"
+      "{}"),
+    dictionary[mission[CoalitionKey(
+                 "descriptionNeutralTask",
+                 "descriptionRedTask",
+                 "descriptionBlueTask")]]
+      .cast<std::string>()));
+
+  double magVar = 0.0f;
+
+  if (mDCSState.mOrigin && mDCSState.mCoalition != DCS::Coalition::Neutral) {
+    const auto& origin = mDCSState.mOrigin;
+    const int zone
+      = GeographicLib::UTMUPS::StandardZone(origin->mLat, origin->mLong);
+    const double zoneMeridian = (6.0 * zone - 183);
+
+    const auto key = CoalitionKey("neutral", "red", "blue");
+    const auto xyBulls = mission["coalition"][key]["bullseye"];
+
+    const auto bullsNorthing = xyBulls["x"].cast<double>();
+    const auto bullsEasting = xyBulls["y"].cast<double>();
+
+    const auto utm = GeographicLib::TransverseMercatorExact::UTM();
+    double originX, originY;
+    utm.Forward(zoneMeridian, origin->mLat, origin->mLong, originX, originY);
+
+    double bullsLat;
+    double bullsLong;
+    const double bullsX = originX + bullsEasting;
+    const double bullsY = originY + bullsNorthing;
+    utm.Reverse(zoneMeridian, bullsX, bullsY, bullsLat, bullsLong);
+
+    GeographicLib::GeoCoords bulls(bullsLat, bullsLong);
+
+    DCSMagneticModel magModel(mInstallationPath);
+    magVar = magModel.GetMagneticVariation(
+      std::chrono::year_month_day {
+        std::chrono::year {startDate["Year"].cast<int>()},
+        std::chrono::month {startDate["Month"].cast<unsigned>()},
+        std::chrono::day {startDate["Day"].cast<unsigned>()},
+      },
+      static_cast<float>(bullsLat),
+      static_cast<float>(bullsLong));
+
+    mTextPages->PushMessage(std::format(
+      _("BULLSEYE\n"
+        "\n"
+        "Position: {}\n"
+        "          {}\n"
+        "          {}\n"
+        "MagVar:   {:.01f}°"),
+      bulls.DMSRepresentation(1),
+      bulls.UTMUPSRepresentation(1),
+      bulls.MGRSRepresentation(1),
+      magVar));
+  }
 
   const auto weather = mission["weather"];
   const auto temperature = weather["season"]["temperature"].cast<int>();
@@ -329,35 +402,8 @@ void DCSBriefingTab::Reload() noexcept {
   DCSBriefingWind windAt2000 {luabridge::LuaRef {wind["at2000"]}};
   DCSBriefingWind windAt8000 {luabridge::LuaRef {wind["at8000"]}};
 
-  DCSMagneticModel magModel(mInstallationPath);
-  double magVar = mSelfData.mBullseye ? magModel.GetMagneticVariation(
-                    std::chrono::year_month_day {
-                      std::chrono::year {startDate["Year"].cast<int>()},
-                      std::chrono::month {startDate["Month"].cast<unsigned>()},
-                      std::chrono::day {startDate["Day"].cast<unsigned>()},
-                    },
-                    mSelfData.mBullseye->mLat,
-                    mSelfData.mBullseye->mLong)
-                                      : 999.999;
-
-  mTextPages->SetText(std::format(
-    _("MISSION OVERVIEW\n"
-      "\n"
-      "Title:    {}\n"
-      "Start at: {}\n"
-      "My side:  {}\n"
-      "Enemies:  {}\n"
-      "MagVar:   {:.1f}° at bullseye\n"
-      "\n"
-      "SITUATION\n"
-      "\n"
-      "{}\n"
-      "\n"
-      "OBJECTIVE\n"
-      "\n"
-      "{}\n"
-      "\n"
-      "WEATHER\n"
+  mTextPages->PushMessage(std::format(
+    _("WEATHER\n"
       "\n"
       "Temperature: {:+d}°\n"
       "QNH:         {} / {:.02f}\n"
@@ -365,13 +411,6 @@ void DCSBriefingTab::Reload() noexcept {
       "Nav wind:    At GRND {:.0f} m/s, {}° Meteo {}°\n"
       "             At 2000m {:.0f} m/s, {}° Meteo {}°\n"
       "             At 8000m {:.0f} m/s, {}° Meteo {}°"),
-    title,
-    startDateTime,
-    alliedCountries,
-    enemyCountries,
-    magVar,
-    situation,
-    objective,
     temperature,
     qnhMmHg,
     qnhInHg,
@@ -386,13 +425,13 @@ void DCSBriefingTab::Reload() noexcept {
     windAt8000.mDirection,
     windAt8000.mStandardDirection));
 
-  if (mSelfData.mAircraft.starts_with("A-10C")) {
+  if (mDCSState.mAircraft.starts_with("A-10C")) {
     mTextPages->PushMessage(std::format(
       _("A-10C LASTE WIND\n"
         "\n"
         "Using bullseye magvar: {:.1f}°\n"
         "\n"
-        "ALT WIND   TEMPERATURE\n"
+        "ALT WIND   TEMP\n"
         "00  {:03.0f}/{:02.0f} {}\n"
         "01  {:03.0f}/{:02.0f} {}\n"
         "02  {:03.0f}/{:02.0f} {}\n"
@@ -443,22 +482,24 @@ void DCSBriefingTab::OnGameEvent(
     return;
   }
 
-  auto self = mSelfData;
+  auto state = mDCSState;
   if (event.name == DCS::EVT_SELF_DATA) {
     auto raw = nlohmann::json::parse(event.value);
-    self.mCoalition = raw.at("CoalitionID"), self.mCountry = raw.at("Country"),
-    self.mAircraft = raw.at("Name");
-  } else if (event.name == DCS::EVT_BULLSEYE) {
+    state.mCoalition = raw.at("CoalitionID"),
+    state.mCountry = raw.at("Country");
+    state.mAircraft = raw.at("Name");
+  } else if (event.name == DCS::EVT_ORIGIN) {
     auto raw = nlohmann::json::parse(event.value);
-    self.mBullseye = LatLong {
+    state.mOrigin = LatLong {
       .mLat = raw["latitude"],
       .mLong = raw["longitude"],
     };
   } else {
     return;
   }
-  if (self != mSelfData) {
-    mSelfData = self;
+
+  if (state != mDCSState) {
+    mDCSState = state;
     this->Reload();
   }
 }

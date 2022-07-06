@@ -48,12 +48,12 @@ class DCSWorld final : public OpenKneeboard::Game {
 
   static constexpr char EVT_AIRCRAFT[]
     = "com.fredemmott.openkneeboard.dcsext/Aircraft";
-  static constexpr char EVT_BULLSEYE[]
-    = "com.fredemmott.openkneeboard.dcsext/Bullseye";
   static constexpr char EVT_INSTALL_PATH[]
     = "com.fredemmott.openkneeboard.dcsext/InstallPath";
   static constexpr char EVT_MISSION[]
     = "com.fredemmott.openkneeboard.dcsext/Mission";
+  static constexpr char EVT_ORIGIN[]
+    = "com.fredemmott.openkneeboard.dcsext/Origin";
   static constexpr char EVT_SELF_DATA[]
     = "com.fredemmott.openkneeboard.dcsext/SelfData";
   static constexpr char EVT_RADIO_MESSAGE[]
