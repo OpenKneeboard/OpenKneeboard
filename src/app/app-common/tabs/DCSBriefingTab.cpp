@@ -99,26 +99,31 @@ MAGtype_MagneticModel* DCSMagneticModel::GetModel(
   MAG_DateToYear(&magDate, error);
   const auto year = magDate.DecimalYear;
 
-  MAGtype_MagneticModel* prev = nullptr;
   for (auto model: mModels) {
-    if (model->epoch <= year) {
-      prev = model;
-      continue;
-    }
-
-    if (!prev) {
+    if (year < model->epoch) {
+      dprintf(
+        "No WMM model for historical year {}, using incorrect {:.0f} model",
+        date.year(),
+        model->epoch);
       return model;
     }
 
-    if ((model->epoch - year) > (year - model->epoch)) {
+    if (year - model->epoch <= 5) {
+      dprintf(
+        "Using correct WMM {:0.0f} model for year {}",
+        model->epoch,
+        date.year());
       return model;
     }
-
-    return prev;
   }
 
-  // in the future!
-  return mModels.back();
+  auto model = mModels.back();
+
+  dprintf(
+    "No WMM model found for future year {}, using incorrect {:.0f} model",
+    date.year(),
+    model->epoch);
+  return model;
 }
 
 float DCSMagneticModel::GetMagneticVariation(
