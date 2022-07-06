@@ -195,13 +195,16 @@ winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
    * referenced (or kept alive) by the D3D11 render pipeline.
    */
   winrt::com_ptr<ID2D1Bitmap> sharedBitmap;
-  mDXR.mD2DDeviceContext->CreateBitmapFromWicBitmap(
-    converter.get(), sharedBitmap.put());
+  winrt::com_ptr<ID2D1DeviceContext> ctx;
+  winrt::check_hresult(mDXR.mD2DDevice->CreateDeviceContext(
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ctx.put()));
+
+  ctx->CreateBitmapFromWicBitmap(converter.get(), sharedBitmap.put());
   if (!sharedBitmap) {
     return {};
   }
 
-  winrt::check_hresult(mDXR.mD2DDeviceContext->CreateBitmap(
+  winrt::check_hresult(ctx->CreateBitmap(
     sharedBitmap->GetPixelSize(),
     D2D1_BITMAP_PROPERTIES {
       .pixelFormat = {
