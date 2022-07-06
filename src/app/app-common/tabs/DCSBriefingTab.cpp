@@ -291,6 +291,22 @@ static std::string DMFormat(double angle, char pos, char neg) {
     minutes);
 }
 
+static std::string MGRSFormat(double latitude, double longitude) {
+  const auto raw
+    = GeographicLib::GeoCoords(latitude, longitude).MGRSRepresentation(0);
+  // e.g. 37TEHnnnnneeeee
+  //                ^ -5
+  //           ^ -10
+  //         ^-12
+  const std::string_view view(raw);
+  return std::format(
+    "{} {} {} {}",
+    view.substr(0, view.size() - 12),
+    view.substr(view.size() - 12, 2),
+    view.substr(view.size() - 10, 5),
+    view.substr(view.size() - 5, 5));
+}
+
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
     this->ClearContentCache();
@@ -420,8 +436,6 @@ void DCSBriefingTab::Reload() noexcept {
     const auto [bullsLat, bullsLong] = grid.LatLongFromXY(
       xyBulls["x"].cast<double>(), xyBulls["y"].cast<double>());
 
-    GeographicLib::GeoCoords bulls(bullsLat, bullsLong);
-
     DCSMagneticModel magModel(mInstallationPath);
     magVar = magModel.GetMagneticVariation(
       std::chrono::year_month_day {
@@ -443,7 +457,7 @@ void DCSBriefingTab::Reload() noexcept {
       DMSFormat(bullsLong, 'E', 'W'),
       DMFormat(bullsLat, 'N', 'S'),
       DMFormat(bullsLong, 'E', 'W'),
-      bulls.MGRSRepresentation(1),
+      MGRSFormat(bullsLat, bullsLong),
       magVar));
   }
 
