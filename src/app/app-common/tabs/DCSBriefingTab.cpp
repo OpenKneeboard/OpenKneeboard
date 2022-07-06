@@ -454,12 +454,15 @@ void DCSBriefingTab::Reload() noexcept {
         "\n"
         "Position: {} {}\n"
         "          {}   {}\n"
+        "          {:08.4f}, {:08.4f}\n"
         "          {}\n"
         "MagVar:   {:.01f}°"),
       DMSFormat(bullsLat, 'N', 'S'),
       DMSFormat(bullsLong, 'E', 'W'),
       DMFormat(bullsLat, 'N', 'S'),
       DMFormat(bullsLong, 'E', 'W'),
+      bullsLat,
+      bullsLong,
       MGRSFormat(bullsLat, bullsLong),
       magVar));
   }
