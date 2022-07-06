@@ -173,14 +173,18 @@ class DCSGrid final {
   double mOffsetX;
   double mOffsetY;
   double mZoneMeridian;
+
+  static GeographicLib::TransverseMercator sModel;
 };
+
+GeographicLib::TransverseMercator DCSGrid::sModel
+  = GeographicLib::TransverseMercator::UTM();
 
 DCSGrid::DCSGrid(double originLat, double originLong) {
   const int zone = GeographicLib::UTMUPS::StandardZone(originLat, originLong);
   mZoneMeridian = (6.0 * zone - 183);
 
-  GeographicLib::TransverseMercator::UTM().Forward(
-    mZoneMeridian, originLat, originLong, mOffsetX, mOffsetY);
+  sModel.Forward(mZoneMeridian, originLat, originLong, mOffsetX, mOffsetY);
 
   dprintf(
     "DCS (0, 0) is in UTM zone {}, with meridian at {} and a UTM offset of "
@@ -198,8 +202,7 @@ std::tuple<double, double> DCSGrid::LatLongFromXY(double dcsX, double dcsY)
   const auto y = mOffsetY + dcsX;
   double retLat, retLong;
 
-  GeographicLib::TransverseMercator::UTM().Reverse(
-    mZoneMeridian, x, y, retLat, retLong);
+  sModel.Reverse(mZoneMeridian, x, y, retLat, retLong);
   return {retLat, retLong};
 }
 
