@@ -40,40 +40,11 @@ state = {
   aircraft = nil,
   terrain = nil,
   selfData = nil,
-  bullseye = nil,
   origin = nil,
 }
 
 function updateGeo()
   state.origin = Export.LoLoCoordinatesToGeoCoordinates(0, 0);
-
-  local playerID = net.get_my_player_id()
-  local coalition = net.get_player_info(playerID, 'side')
-  local mission = DCS.getCurrentMission().mission
-
-  state.bullseye = nil
-
-  if not coalition then
-    return
-  end
-
-  -- FIXME: coalition is 0 when this code is currently evaluated
-  if coalition == 1 then
-    coalition = mission.coalition.red
-  else
-    coalition = mission.coalition.blue
-  end
-  
-  if not coalition then
-    return
-  end
-
-  local bullseye = coalition.bullseye
-  if not bullseye then
-    return
-  end
-
-  state.bullseye = Export.LoLoCoordinatesToGeoCoordinates(bullseye.x, bullseye.y)
 end
 
 function sendState()
@@ -90,9 +61,6 @@ function sendState()
   end
   if (state.selfData) then
     OpenKneeboard.send("SelfData", net.lua2json(state.selfData))
-  end
-  if state.bullseye then
-    OpenKneeboard.send("Bullseye", net.lua2json(state.bullseye))
   end
   if state.origin then
     OpenKneeboard.send("Origin", net.lua2json(state.origin))
