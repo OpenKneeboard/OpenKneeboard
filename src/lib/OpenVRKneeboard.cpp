@@ -196,6 +196,12 @@ void OpenVRKneeboard::Tick() {
 
   auto snapshot = mSHM.MaybeGet();
   if (!snapshot.IsValid()) {
+    for (auto& layer: mLayers) {
+      if (layer.mVisible) {
+        layer.mVisible = false;
+        CHECK(HideOverlay, layer.mOverlay);
+      }
+    }
     return;
   }
 
