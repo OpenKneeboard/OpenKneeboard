@@ -47,6 +47,9 @@ extern "C" {
 
 using DCS = OpenKneeboard::DCSWorld;
 
+static_assert(
+  std::is_same_v<GeographicLib::Math::real, OpenKneeboard::DCSGeoReal>);
+
 namespace OpenKneeboard {
 
 class DCSMagneticModel {
@@ -166,13 +169,14 @@ float DCSMagneticModel::GetMagneticVariation(
 
 class DCSGrid final {
  public:
-  DCSGrid(double originLat, double originLong);
-  std::tuple<double, double> LatLongFromXY(double x, double y) const;
+  DCSGrid(DCSGeoReal originLat, DCSGeoReal originLong);
+  std::tuple<DCSGeoReal, DCSGeoReal> LatLongFromXY(DCSGeoReal x, DCSGeoReal y)
+    const;
 
  private:
-  double mOffsetX;
-  double mOffsetY;
-  double mZoneMeridian;
+  DCSGeoReal mOffsetX;
+  DCSGeoReal mOffsetY;
+  DCSGeoReal mZoneMeridian;
 
   static GeographicLib::TransverseMercator sModel;
 };
@@ -180,7 +184,7 @@ class DCSGrid final {
 GeographicLib::TransverseMercator DCSGrid::sModel
   = GeographicLib::TransverseMercator::UTM();
 
-DCSGrid::DCSGrid(double originLat, double originLong) {
+DCSGrid::DCSGrid(DCSGeoReal originLat, DCSGeoReal originLong) {
   const int zone = GeographicLib::UTMUPS::StandardZone(originLat, originLong);
   mZoneMeridian = (6.0 * zone - 183);
 
@@ -195,12 +199,13 @@ DCSGrid::DCSGrid(double originLat, double originLong) {
     mOffsetY);
 }
 
-std::tuple<double, double> DCSGrid::LatLongFromXY(double dcsX, double dcsY)
-  const {
+std::tuple<DCSGeoReal, DCSGeoReal> DCSGrid::LatLongFromXY(
+  DCSGeoReal dcsX,
+  DCSGeoReal dcsY) const {
   // UTM (x, y) are (easting, northing), but DCS (x, y) are (northing, easting)
   const auto x = mOffsetX + dcsY;
   const auto y = mOffsetY + dcsX;
-  double retLat, retLong;
+  DCSGeoReal retLat, retLong;
 
   sModel.Reverse(mZoneMeridian, x, y, retLat, retLong);
   return {retLat, retLong};
@@ -273,8 +278,8 @@ struct DCSBriefingWind {
   int mStandardDirection;
 };
 
-static std::string DMSFormat(double angle, char pos, char neg) {
-  double degrees, minutes, seconds;
+static std::string DMSFormat(DCSGeoReal angle, char pos, char neg) {
+  DCSGeoReal degrees, minutes, seconds;
   GeographicLib::DMS::Encode(angle, degrees, minutes, seconds);
   return std::format(
     "{} {:03.0f}°{:02.0f}'{:05.2f}\"",
@@ -284,8 +289,8 @@ static std::string DMSFormat(double angle, char pos, char neg) {
     seconds);
 };
 
-static std::string DMFormat(double angle, char pos, char neg) {
-  double degrees, minutes;
+static std::string DMFormat(DCSGeoReal angle, char pos, char neg) {
+  DCSGeoReal degrees, minutes;
   GeographicLib::DMS::Encode(angle, degrees, minutes);
   return std::format(
     "{} {:03.0f}°{:05.3f}'",
@@ -437,7 +442,7 @@ void DCSBriefingTab::Reload() noexcept {
     const auto key = CoalitionKey("neutral", "red", "blue");
     const auto xyBulls = mission["coalition"][key]["bullseye"];
     const auto [bullsLat, bullsLong] = grid.LatLongFromXY(
-      xyBulls["x"].cast<double>(), xyBulls["y"].cast<double>());
+      xyBulls["x"].cast<DCSGeoReal>(), xyBulls["y"].cast<DCSGeoReal>());
 
     DCSMagneticModel magModel(mInstallationPath);
     magVar = magModel.GetMagneticVariation(
