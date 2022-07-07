@@ -117,10 +117,15 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       OPENKNEEBOARD_BREAK;
       return passthrough();
     }
+
     winrt::com_ptr<ID3D11RenderTargetView> rtv;
-    device->CreateRenderTargetView(
+    auto result = device->CreateRenderTargetView(
       destinationTexture.get(), nullptr, rtv.put());
     if (!rtv) {
+      dprintf(
+        "Failed to create RenderTargetView: {} ({:#08x})",
+        result,
+        std::bit_cast<uint32_t>(result));
       OPENKNEEBOARD_BREAK;
       return passthrough();
     }
