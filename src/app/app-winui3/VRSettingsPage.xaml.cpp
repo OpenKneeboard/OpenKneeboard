@@ -276,6 +276,22 @@ void VRSettingsPage::DiscardOculusDepthInformation(bool discard) {
   gKneeboard->SetVRConfig(config);
 }
 
+bool VRSettingsPage::InvertOpenXRYAxis() const {
+  return (
+    gKneeboard->GetVRConfig().mFlags
+    & VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION);
+}
+
+void VRSettingsPage::InvertOpenXRYAxis(bool invert) {
+  auto config = gKneeboard->GetVRConfig();
+  if (invert) {
+    config.mFlags |= VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION;
+  } else {
+    config.mFlags &= ~VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION;
+  }
+  gKneeboard->SetVRConfig(config);
+}
+
 uint8_t VRSettingsPage::NormalOpacity() {
   return static_cast<uint8_t>(
     std::lround(gKneeboard->GetVRConfig().mNormalOpacity * 100));
@@ -288,7 +304,8 @@ void VRSettingsPage::NormalOpacity(uint8_t value) {
 }
 
 uint8_t VRSettingsPage::GazeOpacity() {
-  return static_cast<uint8_t>(std::lround(gKneeboard->GetVRConfig().mGazeOpacity * 100));
+  return static_cast<uint8_t>(
+    std::lround(gKneeboard->GetVRConfig().mGazeOpacity * 100));
 }
 
 void VRSettingsPage::GazeOpacity(uint8_t value) {
