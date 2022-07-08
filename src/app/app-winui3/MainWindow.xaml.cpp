@@ -126,11 +126,15 @@ MainWindow::MainWindow() {
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
-    sizeof(HWND),
+    /* high bits of size = */ 0,
     sizeof(HWND),
     hwndMappingName.c_str()));
   if (!mHwndFile) {
-    dprintf("Failed to open hwnd file: {:#x}", GetLastError());
+    const auto err = GetLastError();
+    dprintf(
+      "Failed to open hwnd file: {} {:#08x}",
+      err,
+      std::bit_cast<uint32_t>(err));
     return;
   }
   void* mapping
@@ -309,7 +313,7 @@ void MainWindow::OnNavigationItemInvoked(
 
   const auto tabID = winrt::unbox_value<uint64_t>(tag);
 
-    if (tabID == mKneeboardView->GetCurrentTab()->GetRuntimeID()) {
+  if (tabID == mKneeboardView->GetCurrentTab()->GetRuntimeID()) {
     Frame().Navigate(xaml_typename<TabPage>(), tag);
     return;
   }
