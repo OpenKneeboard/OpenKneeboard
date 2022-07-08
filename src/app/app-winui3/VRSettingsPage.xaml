@@ -67,6 +67,12 @@
           <x:String>Enabled for the current user</x:String>
           <x:String>Enabled for all users</x:String>
         </ComboBox>
+        <ToggleSwitch
+          Header="Invert OpenXR Y axis - may be required for Varjo headsets"
+          OnContent="Inverted Y axis"
+          OffContent="Normal Y axis"
+          IsOn="{x:Bind InvertOpenXRYAxis}"
+        />
       </StackPanel>
       <TextBlock
         Text="Size"

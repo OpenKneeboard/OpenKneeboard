@@ -127,9 +127,14 @@ XrResult OpenXRKneeboard::xrEndFrame(
   std::vector<XrCompositionLayerQuad> kneeboardLayers;
   kneeboardLayers.reserve(layerCount);
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+    auto layer = *snapshot.GetLayerConfig(layerIndex);
     if (!layer.IsValid()) {
       return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
+
+    if (config.mVR.mFlags & VRConfig::Flags::INVERT_OPENXR_Y_POSITION) {
+      layer.mVR.mEyeY = -layer.mVR.mEyeY;
+      layer.mVR.mFloorY = -layer.mVR.mFloorY;
     }
 
     auto& swapchain = mSwapchains.at(layerIndex);

@@ -64,6 +64,14 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
     vrc.mOpenXRMode = j.at("openXRMode").get<OpenXRMode>();
   }
 
+  if (j.contains("invertOpenXRYPosition")) {
+    if (j.at("invertOpenXRYPosition").get<bool>()) {
+      vrc.mFlags |= VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION;
+    } else {
+      vrc.mFlags &= ~VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION;
+    }
+  }
+
   if (j.contains("opacity")) {
     auto opacity = j.at("opacity");
     vrc.mNormalOpacity = opacity.at("normal");
@@ -92,6 +100,9 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"rz", l.mRZ},
     {"height", l.mHeight},
     {"zoomScale", vrc.mZoomScale},
+    {"invertOpenXRYPosition",
+     static_cast<bool>(
+       vrc.mFlags & VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION)},
     {"discardOculusDepthInformation",
      static_cast<bool>(
        vrc.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION)},
