@@ -141,27 +141,27 @@ bool OpenVRKneeboard::InitializeOpenVR() {
   dprint("Initialized OpenVR overlay system");
 
   for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
-    auto& layerData = mLayers.at(layerIndex);
+    auto& layerState = mLayers.at(layerIndex);
     auto key = std::format("{}.{}", ProjectNameA, layerIndex);
     auto name = std::format("OpenKneeboard {}", layerIndex + 1);
 
-    CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerData.mOverlay);
+    CHECK(CreateOverlay, key.c_str(), name.c_str(), &layerState.mOverlay);
 
     dprintf("Created OpenVR overlay {}", layerIndex);
 
     HANDLE handle = INVALID_HANDLE_VALUE;
     winrt::check_hresult(
-      layerData.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(&handle));
+      layerState.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(&handle));
     vr::Texture_t vrt {
       .handle = handle,
       .eType = vr::TextureType_DXGISharedHandle,
       .eColorSpace = vr::ColorSpace_Auto,
     };
 
-    CHECK(SetOverlayTexture, layerData.mOverlay, &vrt);
+    CHECK(SetOverlayTexture, layerState.mOverlay, &vrt);
     CHECK(
       SetOverlayFlag,
-      layerData.mOverlay,
+      layerState.mOverlay,
       vr::VROverlayFlags_IsPremultiplied,
       SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
   }
@@ -181,9 +181,9 @@ void OpenVRKneeboard::Tick() {
   }
 
   vr::VREvent_t event;
-  for (const auto& layer: mLayers) {
+  for (const auto& layerState: mLayers) {
     while (mIVROverlay->PollNextOverlayEvent(
-      layer.mOverlay, &event, sizeof(event))) {
+      layerState.mOverlay, &event, sizeof(event))) {
       if (event.eventType == vr::VREvent_Quit) {
         dprint("OpenVR shutting down, detaching");
         this->Reset();
@@ -196,10 +196,10 @@ void OpenVRKneeboard::Tick() {
 
   auto snapshot = mSHM.MaybeGet();
   if (!snapshot.IsValid()) {
-    for (auto& layer: mLayers) {
-      if (layer.mVisible) {
-        layer.mVisible = false;
-        CHECK(HideOverlay, layer.mOverlay);
+    for (auto& layerState: mLayers) {
+      if (layerState.mVisible) {
+        layerState.mVisible = false;
+        CHECK(HideOverlay, layerState.mOverlay);
       }
     }
     return;
@@ -213,11 +213,11 @@ void OpenVRKneeboard::Tick() {
   for (uint8_t layerIndex = 0; layerIndex < snapshot.GetLayerCount();
        ++layerIndex) {
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
-    auto& layerData = mLayers.at(layerIndex);
+    auto& layerState = mLayers.at(layerIndex);
     if (!layer.IsValid()) {
-      if (layerData.mVisible) {
-        CHECK(HideOverlay, layerData.mOverlay);
-        layerData.mVisible = false;
+      if (layerState.mVisible) {
+        CHECK(HideOverlay, layerState.mOverlay);
+        layerState.mVisible = false;
       }
       continue;
     }
@@ -225,12 +225,12 @@ void OpenVRKneeboard::Tick() {
     const auto renderParams
       = this->GetRenderParameters(snapshot, layer, hmdPose);
 
-    if (renderParams.mCacheKey == layerData.mCacheKey) {
+    if (renderParams.mCacheKey == layerState.mCacheKey) {
       continue;
     }
     CHECK(
       SetOverlayWidthInMeters,
-      layerData.mOverlay,
+      layerState.mOverlay,
       renderParams.mKneeboardSize.x);
 
     // Transpose to fit OpenVR's in-memory layout
@@ -243,7 +243,7 @@ void OpenVRKneeboard::Tick() {
 
     CHECK(
       SetOverlayTransformAbsolute,
-      layerData.mOverlay,
+      layerState.mOverlay,
       vr::TrackingUniverseStanding,
       reinterpret_cast<const vr::HmdMatrix34_t*>(&transform));
 
@@ -269,7 +269,7 @@ void OpenVRKneeboard::Tick() {
       // ... then atomic copy to OpenVR texture
       winrt::com_ptr<ID3D11DeviceContext> ctx;
       mD3D->GetImmediateContext(ctx.put());
-      ctx->CopyResource(layerData.mOpenVRTexture.get(), mBufferTexture.get());
+      ctx->CopyResource(layerState.mOpenVRTexture.get(), mBufferTexture.get());
     }
 
     vr::VRTextureBounds_t textureBounds {
@@ -279,14 +279,14 @@ void OpenVRKneeboard::Tick() {
       static_cast<float>(layer.mImageHeight) / TextureHeight,
     };
 
-    CHECK(SetOverlayTextureBounds, layerData.mOverlay, &textureBounds);
+    CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);
 
-    if (!layerData.mVisible) {
-      CHECK(ShowOverlay, layerData.mOverlay);
-      layerData.mVisible = true;
+    if (!layerState.mVisible) {
+      CHECK(ShowOverlay, layerState.mOverlay);
+      layerState.mVisible = true;
     }
 
-    layerData.mCacheKey = renderParams.mCacheKey;
+    layerState.mCacheKey = renderParams.mCacheKey;
   }
   for (uint8_t i = snapshot.GetLayerCount(); i < MaxLayers; ++i) {
     if (mLayers.at(i).mVisible) {

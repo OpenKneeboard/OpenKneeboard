@@ -62,13 +62,13 @@ class OpenVRKneeboard final : private VRKneeboard {
   winrt::com_ptr<ID3D11Texture2D> mBufferTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
 
-  struct LayerData {
+  struct LayerState {
     bool mVisible = false;
     winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
     vr::VROverlayHandle_t mOverlay {};
     uint64_t mCacheKey = ~(0ui64);
   };
-  std::array<LayerData, MaxLayers> mLayers;
+  std::array<LayerState, MaxLayers> mLayers;
 };
 
 }// namespace OpenKneeboard
