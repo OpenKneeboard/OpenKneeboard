@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/version.h>
 #include <Windows.h>
 
 #include "detours-ext.h"
@@ -47,7 +48,10 @@ BOOL InjectedDLLMain(
         = GetModuleFileNameW(hinst, fullDllPath.data(), fullDllPath.size());
       fullDllPath.resize(len);
     }
-    dprintf(L"Attached to process: {}", fullDllPath);
+    dprintf(
+      "Attached {} to process: {}",
+      Version::ReleaseName,
+      winrt::to_string(fullDllPath));
 
     DetourRestoreAfterWith();
     DisableThreadLibraryCalls(hinst);

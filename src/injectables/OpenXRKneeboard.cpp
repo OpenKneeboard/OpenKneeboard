@@ -22,6 +22,7 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/version.h>
 #include <loader_interfaces.h>
 #include <openxr/openxr.h>
 
@@ -366,7 +367,7 @@ XrResult __declspec(dllexport) XRAPI_CALL
   DPrintSettings::Set({
     .prefix = "OpenKneeboard-OpenXR",
   });
-  dprintf("{}", __FUNCTION__);
+  dprintf("{} {}", __FUNCTION__, Version::ReleaseName);
 
   if (layerName != OpenKneeboard::OpenXRLayerName) {
     dprintf("Layer name mismatch:\n -{}\n +{}", OpenXRLayerName, layerName);

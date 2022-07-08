@@ -70,6 +70,7 @@ target_link_libraries(
   dxgi-hooks
   detours-ext
   OpenKneeboard-dprint
+  OpenKneeboard-version
   OpenKneeboard-D3D11
   OpenKneeboard-SHM
   OpenKneeboard-DllLoadWatcher)
@@ -87,6 +88,7 @@ target_link_libraries(
   detours-ext
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-version
   OpenKneeboard-D3D11
   oculus-hooks
   oculus-sdk-headers)
@@ -104,6 +106,7 @@ target_link_libraries(
   detours-ext
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-version
   OpenKneeboard-D3D11
   OpenKneeboard-ScopedRWX
   oculus-hooks
@@ -129,6 +132,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-scope_guard
   OpenKneeboard-shims
+  OpenKneeboard-version
 )
 
 install(FILES OpenKneeboard-OpenXR.json TYPE BIN)
@@ -138,6 +142,7 @@ target_link_libraries(
   OpenKneeboard-Injection-Bootstrapper
   PRIVATE
   OpenKneeboard-RuntimeFiles
+  OpenKneeboard-version
   detours-ext
   dxgi-hooks
   oculus-hooks
@@ -152,4 +157,5 @@ target_link_libraries(
   OpenKneeboard-FindMainWindow
   OpenKneeboard-GetMainHWND
   OpenKneeboard-tablets
+  OpenKneeboard-version
 )
