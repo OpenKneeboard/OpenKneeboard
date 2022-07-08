@@ -172,6 +172,9 @@ std::shared_ptr<ITabView> KneeboardView::GetTabViewByID(
 }
 
 std::shared_ptr<ITab> KneeboardView::GetCurrentTab() const {
+  if (!mCurrentTabView) [[unlikely]] {
+    return {};
+  }
   return mCurrentTabView->GetTab();
 }
 

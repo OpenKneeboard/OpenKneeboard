@@ -215,16 +215,6 @@ InterprocessRenderer::~InterprocessRenderer() {
 }
 
 void InterprocessRenderer::Render(Layer& layer) {
-  const auto view = layer.mKneeboardView;
-  const auto tabView = view->GetCurrentTabView();
-  const auto tab = tabView->GetTab();
-  const auto pageIndex = tabView->GetPageIndex();
-
-  const auto usedSize = view->GetCanvasSize();
-  layer.mConfig.mLayerID = view->GetRuntimeID().GetTemporaryValue();
-  layer.mConfig.mImageWidth = usedSize.width;
-  layer.mConfig.mImageHeight = usedSize.height;
-
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTarget(layer.mCanvasBitmap.get());
   ctx->BeginDraw();
@@ -233,11 +223,28 @@ void InterprocessRenderer::Render(Layer& layer) {
   ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
+  const auto view = layer.mKneeboardView;
+  layer.mConfig.mLayerID = view->GetRuntimeID().GetTemporaryValue();
+  const auto usedSize = view->GetCanvasSize();
+  layer.mConfig.mImageWidth = usedSize.width;
+  layer.mConfig.mImageHeight = usedSize.height;
+
+  const auto tabView = view->GetCurrentTabView();
+  if (!tabView) {
+    auto msg = _("No Tab");
+    this->RenderError(layer, msg, msg);
+    return;
+  }
+
+  const auto tab = tabView->GetTab();
+
   if (!tab) {
     auto msg = _("No Tab");
     this->RenderError(layer, msg, msg);
     return;
   }
+
+  const auto pageIndex = tabView->GetPageIndex();
 
   const auto title = tab->GetTitle();
   const auto pageCount = tab->GetPageCount();
@@ -449,7 +456,6 @@ void InterprocessRenderer::OnLayoutChanged(
 
   auto tab = view->GetCurrentTabView();
   if (!tab) {
-    OPENKNEEBOARD_BREAK;
     return;
   }
 

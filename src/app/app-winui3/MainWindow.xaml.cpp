@@ -240,7 +240,12 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
     }
   }
 
-  const auto id = mKneeboardView->GetCurrentTab()->GetRuntimeID();
+  const auto tab = mKneeboardView->GetCurrentTab();
+  if (!tab) {
+    co_return;
+  }
+
+  const auto id = tab->GetRuntimeID();
 
   for (auto it: this->Navigation().MenuItems()) {
     auto item = it.try_as<Control>();
@@ -304,7 +309,7 @@ void MainWindow::OnNavigationItemInvoked(
 
   const auto tabID = winrt::unbox_value<uint64_t>(tag);
 
-  if (tabID == mKneeboardView->GetCurrentTab()->GetRuntimeID()) {
+    if (tabID == mKneeboardView->GetCurrentTab()->GetRuntimeID()) {
     Frame().Navigate(xaml_typename<TabPage>(), tag);
     return;
   }
