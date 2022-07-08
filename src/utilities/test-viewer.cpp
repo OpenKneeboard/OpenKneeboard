@@ -226,6 +226,13 @@ class TestViewerWindow final {
     if (vkk >= '1' && vkk <= '9') {
       mLayerIndex = static_cast<uint8_t>(vkk - '1');
       this->PaintNow();
+      if (mSetInputFocus) {
+        GameEvent {
+          GameEvent::EVT_SET_INPUT_FOCUS,
+          std::to_string(mLayerID),
+        }
+          .Send();
+      }
       return;
     }
   }
