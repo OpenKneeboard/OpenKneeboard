@@ -127,6 +127,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   std::vector<XrCompositionLayerQuad> kneeboardLayers;
   kneeboardLayers.reserve(layerCount);
+
+  uint8_t topMost = layerCount - 1;
+
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
     if (!layer.IsValid()) {
@@ -145,6 +148,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
     const auto renderParams
       = this->GetRenderParameters(snapshot, layer, hmdPose);
+    if (renderParams.mIsLookingAtKneeboard) {
+      topMost = layerIndex;
+    }
     if (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey) {
       if (!this->Render(swapchain, snapshot, layerIndex, renderParams)) {
         dprint("Render failed.");
@@ -178,6 +184,10 @@ XrResult OpenXRKneeboard::xrEndFrame(
     });
     nextLayers.push_back(
       reinterpret_cast<XrCompositionLayerBaseHeader*>(&kneeboardLayers.back()));
+  }
+
+  if (topMost != layerCount - 1) {
+    std::swap(kneeboardLayers.back(), kneeboardLayers.at(topMost));
   }
 
   XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
