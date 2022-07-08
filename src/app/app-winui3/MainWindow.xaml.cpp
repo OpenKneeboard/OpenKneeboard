@@ -126,11 +126,15 @@ MainWindow::MainWindow() {
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
-    sizeof(HWND),
+    /* high bits of size = */ 0,
     sizeof(HWND),
     hwndMappingName.c_str()));
   if (!mHwndFile) {
-    dprintf("Failed to open hwnd file: {:#x}", GetLastError());
+    const auto err = GetLastError();
+    dprintf(
+      "Failed to open hwnd file: {} {:#08x}",
+      err,
+      std::bit_cast<uint32_t>(err));
     return;
   }
   void* mapping
