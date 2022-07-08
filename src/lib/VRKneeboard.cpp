@@ -122,6 +122,7 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
     .mKneeboardOpacity = isLookingAtKneeboard ? config.mVR.mGazeOpacity
                                               : config.mVR.mNormalOpacity,
     .mCacheKey = cacheKey,
+    .mIsLookingAtKneeboard = isLookingAtKneeboard,
   };
 }
 

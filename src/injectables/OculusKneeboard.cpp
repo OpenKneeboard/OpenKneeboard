@@ -139,6 +139,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const auto kneeboardLayerCount = snapshot.GetLayerCount();
   std::vector<ovrLayerQuad> kneeboardLayers;
   kneeboardLayers.reserve(kneeboardLayerCount);
+  uint16_t topMost = kneeboardLayerCount - 1;
   for (uint8_t layerIndex = 0; layerIndex < kneeboardLayerCount; ++layerIndex) {
     auto& swapChain = mSwapChains.at(layerIndex);
     if (!swapChain) [[unlikely]] {
@@ -157,6 +158,9 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
     const auto renderParams = this->GetRenderParameters(
       snapshot, layer, this->GetHMDPose(predictedTime));
+    if (renderParams.mIsLookingAtKneeboard) {
+      topMost = layerIndex;
+    }
 
     auto& cacheKey = mRenderCacheKeys.at(layerIndex);
     if (cacheKey != renderParams.mCacheKey) {
@@ -182,6 +186,10 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       .QuadSize = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
     });
     newLayers.push_back(&kneeboardLayers.back().Header);
+  }
+
+  if (topMost != kneeboardLayerCount - 1) {
+    std::swap(kneeboardLayers.back(), kneeboardLayers.at(topMost));
   }
 
   return next(

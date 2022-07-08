@@ -42,6 +42,7 @@ class VRKneeboard {
     Vector2 mKneeboardSize;
     float mKneeboardOpacity;
     size_t mCacheKey;
+    bool mIsLookingAtKneeboard;
   };
 
  protected:
