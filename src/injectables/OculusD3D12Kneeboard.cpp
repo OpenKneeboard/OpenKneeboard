@@ -23,7 +23,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <d3d11_1.h>
 #include <dxgi.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include "OVRProxy.h"
 #include "OculusD3D11Kneeboard.h"

@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/config.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <format>
 

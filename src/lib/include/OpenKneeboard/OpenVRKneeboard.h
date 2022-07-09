@@ -25,7 +25,7 @@
 #include <OpenKneeboard/config.h>
 #include <d3d11_1.h>
 #include <openvr.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <memory>
 #include <stop_token>

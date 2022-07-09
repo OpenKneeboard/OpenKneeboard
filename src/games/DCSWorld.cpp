@@ -23,7 +23,7 @@
 #include <OpenKneeboard/utf8.h>
 #include <ShlObj.h>
 #include <Windows.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <format>
 

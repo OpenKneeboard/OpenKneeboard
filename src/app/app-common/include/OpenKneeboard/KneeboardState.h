@@ -26,7 +26,7 @@
 #include <OpenKneeboard/FlatConfig.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
 
 #include <memory>

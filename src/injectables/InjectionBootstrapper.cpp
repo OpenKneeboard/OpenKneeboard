@@ -22,7 +22,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <d3d11.h>
 #include <d3d12.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <windows.h>
 
 #include <thread>

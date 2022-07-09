@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/SHM.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <memory>
 

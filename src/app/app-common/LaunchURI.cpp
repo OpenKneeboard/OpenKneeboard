@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/LaunchURI.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.System.h>
 

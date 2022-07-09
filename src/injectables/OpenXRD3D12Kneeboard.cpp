@@ -26,7 +26,7 @@
 #include <d3d11.h>
 #include <d3d11on12.h>
 #include <d3d12.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRNext.h"

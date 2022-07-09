@@ -21,7 +21,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <optional>
 #include <shims/filesystem>

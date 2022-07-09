@@ -26,7 +26,7 @@
 // clang-format on
 
 #include <OpenKneeboard/dprint.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard::RuntimeFiles {
 

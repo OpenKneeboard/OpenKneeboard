@@ -28,7 +28,7 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <inttypes.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <windows.data.pdf.interop.h>
 #include <winrt/Windows.Data.Pdf.h>
 #include <winrt/Windows.Foundation.h>

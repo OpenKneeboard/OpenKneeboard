@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/Events.h>
 #include <dinput.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
 
 namespace OpenKneeboard {

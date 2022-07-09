@@ -29,7 +29,7 @@
 #include <d3d11_1.h>
 #include <dxgi1_2.h>
 #include <openvr.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <shims/filesystem>
 #include <thread>

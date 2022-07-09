@@ -29,7 +29,7 @@
 #include <Windows.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <cmath>
 #include <thread>

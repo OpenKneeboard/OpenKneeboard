@@ -18,7 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/FilesDiffer.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <algorithm>
 #include <shims/filesystem>

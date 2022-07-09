@@ -29,7 +29,7 @@
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <d3d11.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <memory>
 #include <mutex>

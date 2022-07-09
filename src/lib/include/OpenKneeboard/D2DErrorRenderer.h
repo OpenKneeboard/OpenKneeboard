@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/utf8.h>
 #include <d2d1_1.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <memory>
 

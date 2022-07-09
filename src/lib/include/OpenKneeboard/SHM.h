@@ -21,7 +21,7 @@
 
 #include <Windows.h>
 #include <d3d11.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <cstddef>
 #include <cstdint>

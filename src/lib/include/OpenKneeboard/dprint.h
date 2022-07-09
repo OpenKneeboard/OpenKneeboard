@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <format>
 #include <stop_token>

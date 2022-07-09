@@ -30,7 +30,7 @@
 #include <OpenKneeboard/version.h>
 #include <appmodel.h>
 #include <microsoft.ui.xaml.window.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <shobjidl.h>
 #include <time.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>

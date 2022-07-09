@@ -24,7 +24,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <d3d11.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include "OpenXRNext.h"
 

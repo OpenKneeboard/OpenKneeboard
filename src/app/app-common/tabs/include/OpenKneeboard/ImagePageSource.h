@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/IPageSource.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <shims/filesystem>
 

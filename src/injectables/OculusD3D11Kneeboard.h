@@ -23,7 +23,7 @@
 #include <OpenKneeboard/config.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <array>
 

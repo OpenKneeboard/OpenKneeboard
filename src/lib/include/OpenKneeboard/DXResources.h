@@ -23,7 +23,7 @@
 #include <d3d11_2.h>
 #include <dwrite.h>
 #include <dxgi1_3.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
 

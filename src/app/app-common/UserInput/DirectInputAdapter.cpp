@@ -24,7 +24,7 @@
 #include <OpenKneeboard/UserInputButtonBinding.h>
 #include <Rpc.h>
 #include <dinput.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <nlohmann/json.hpp>
 #include <thread>

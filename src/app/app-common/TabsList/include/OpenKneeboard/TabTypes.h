@@ -27,7 +27,7 @@
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/PDFTab.h>
 #include <OpenKneeboard/TextFileTab.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <concepts>
 

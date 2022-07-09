@@ -20,7 +20,7 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <format>
 #include <string>

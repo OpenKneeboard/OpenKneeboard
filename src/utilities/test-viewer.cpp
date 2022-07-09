@@ -28,7 +28,7 @@
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <format>
 #include <memory>

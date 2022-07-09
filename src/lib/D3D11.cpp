@@ -20,7 +20,7 @@
 #include <DirectXTK/SpriteBatch.h>
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard::D3D11 {
 

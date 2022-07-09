@@ -20,7 +20,7 @@
 #pragma once
 
 #include <d2d1_2.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include <functional>
 #include <mutex>

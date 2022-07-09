@@ -3,7 +3,7 @@
 #define NOMINMAX 1
 
 // clang-format off
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <hstring.h>
 #include <restrictederrorinfo.h>
 #include <windows.h>

@@ -23,7 +23,7 @@
 #include "pch.h"
 // clang-format on
 
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 #include <winrt/microsoft.ui.xaml.h>
 #include <winrt/windows.foundation.h>
 

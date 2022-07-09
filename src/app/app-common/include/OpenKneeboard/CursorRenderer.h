@@ -20,7 +20,7 @@
 #pragma once
 
 #include <d2d1.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
 

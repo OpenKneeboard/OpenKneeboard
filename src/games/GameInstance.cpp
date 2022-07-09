@@ -20,7 +20,7 @@
 #include <OpenKneeboard/Game.h>
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/utf8.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
 

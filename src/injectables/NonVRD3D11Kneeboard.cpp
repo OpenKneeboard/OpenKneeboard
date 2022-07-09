@@ -22,7 +22,7 @@
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/dprint.h>
 #include <dxgi.h>
-#include <shims/winrt.h>
+#include <shims/winrt/base.h>
 
 #include "InjectedDLLMain.h"
 
