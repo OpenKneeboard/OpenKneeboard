@@ -27,6 +27,7 @@
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
 #include <shobjidl.h>
@@ -185,16 +186,19 @@ IAsyncAction CheckForUpdates(
 
   if (release.is_null()) {
     dprint("Didn't find a valid release.");
-    settings.mDisabledUntil = now + (60 * 60 * 24);
-    auto app = gKneeboard->GetAppSettings();
-    app.mAutoUpdate = settings;
-    gKneeboard->SetAppSettings(app);
     if (checkType == UpdateCheckType::Manual) {
       ShowResultDialog(
         _("Error: GitHub release information was invalid"), uiThread, xamlRoot);
     }
     co_return;
   }
+
+  scope_guard oncePerDay([&]() {
+    settings.mDisabledUntil = now + (60 * 60 * 24);
+    auto app = gKneeboard->GetAppSettings();
+    app.mAutoUpdate = settings;
+    gKneeboard->SetAppSettings(app);
+  });
 
   auto newCommit = release.at("target_commitish").get<std::string_view>();
 
@@ -386,9 +390,7 @@ IAsyncAction CheckForUpdates(
       co_return;
     }
     settings.mForceUpgradeTo = {};
-    auto app = gKneeboard->GetAppSettings();
-    app.mAutoUpdate = settings;
-    gKneeboard->SetAppSettings(app);
+    // Settings saved by scope guard
     co_await uiThread;
     OpenKneeboard::LaunchURI(to_utf8(destination));
     Application::Current().Exit();
@@ -398,13 +400,8 @@ IAsyncAction CheckForUpdates(
   if (result == ContentDialogResult::Secondary) {
     // "Skip This Version"
     settings.mSkipVersion = newName;
-  } else if (result == ContentDialogResult::None) {
-    settings.mDisabledUntil = now + (60 * 60 * 48);
   }
-
-  auto app = gKneeboard->GetAppSettings();
-  app.mAutoUpdate = settings;
-  gKneeboard->SetAppSettings(app);
+  // Settings saved by scope guard
 }
 
 static fire_and_forget ShowResultDialog(
