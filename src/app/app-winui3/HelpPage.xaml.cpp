@@ -41,6 +41,8 @@
 #include <shims/filesystem>
 #include <string>
 
+#include "CheckForUpdates.h"
+
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -328,6 +330,12 @@ void HelpPage::OnDPrintLayoutChanged(
 void HelpPage::ScrollDPrintToEnd() {
   DPrintScroll().UpdateLayout();
   DPrintScroll().ChangeView({}, {DPrintScroll().ScrollableHeight()}, {});
+}
+
+winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
+  co_await CheckForUpdates(UpdateCheckType::Manual, this->XamlRoot());
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

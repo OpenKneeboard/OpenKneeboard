@@ -49,13 +49,25 @@ using namespace winrt;
 
 namespace OpenKneeboard {
 
-IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
+static fire_and_forget ShowResultDialog(
+  std::string_view message,
+  winrt::apartment_context& uiThread,
+  const XamlRoot& xamlRoot);
+
+IAsyncAction CheckForUpdates(
+  UpdateCheckType checkType,
+  const XamlRoot& xamlRoot) {
   winrt::apartment_context uiThread;
 
   const auto now = std::chrono::duration_cast<std::chrono::seconds>(
                      std::chrono::system_clock::now().time_since_epoch())
                      .count();
-  auto settings = gKneeboard->GetAppSettings().mAutoUpdate;
+  AutoUpdateSettings settings = gKneeboard->GetAppSettings().mAutoUpdate;
+  if (checkType == UpdateCheckType::Manual) {
+    settings.mDisabledUntil = 0;
+    settings.mSkipVersion = {};
+  }
+
   if (settings.mDisabledUntil > static_cast<uint64_t>(now)) {
     dprint("Not checking for update, too soon");
     co_return;
@@ -97,18 +109,32 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
     } while (readBuffer.Length() > 0);
     releases = nlohmann::json::parse(json.data());
   } catch (const nlohmann::json::parse_error&) {
-    dprint("Buffering error, or invalid JSON from GitHub API");
+    const auto message = "Buffering error, or invalid JSON from GitHub API";
+    dprint(message);
+    if (checkType == UpdateCheckType::Manual) {
+      ShowResultDialog(message, uiThread, xamlRoot);
+    }
     co_return;
   } catch (const winrt::hresult_error& hr) {
-    dprintf(
-      L"Error fetching releases from GitHub API: {} ({:#08x}) - {}",
+    const auto message = std::format(
+      "Error fetching releases from GitHub API: {} ({:#08x}) - {}",
       hr.code().value,
       std::bit_cast<uint32_t>(hr.code().value),
-      hr.message());
+      to_string(hr.message()));
+    dprint(message);
+    if (checkType == UpdateCheckType::Manual) {
+      ShowResultDialog(message, uiThread, xamlRoot);
+    }
     co_return;
   }
   if (releases.empty()) {
     dprint("Didn't get any releases from github API :/");
+    if (checkType == UpdateCheckType::Manual) {
+      ShowResultDialog(
+        _("Error: GitHub API did not return any releases."),
+        uiThread,
+        xamlRoot);
+    }
     co_return;
   }
 
@@ -163,6 +189,10 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
     auto app = gKneeboard->GetAppSettings();
     app.mAutoUpdate = settings;
     gKneeboard->SetAppSettings(app);
+    if (checkType == UpdateCheckType::Manual) {
+      ShowResultDialog(
+        _("Error: GitHub release information was invalid"), uiThread, xamlRoot);
+    }
     co_return;
   }
 
@@ -170,6 +200,10 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
 
   if (newCommit == Version::CommitID) {
     dprintf("Up to date on commit ID {}", Version::CommitID);
+    if (checkType == UpdateCheckType::Manual) {
+      ShowResultDialog(
+        _("You're running the latest version!"), uiThread, xamlRoot);
+    }
     co_return;
   }
 
@@ -194,6 +228,15 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
     });
     if (updateAsset == assets.end()) {
       dprint("Didn't find any MSI");
+      if (checkType == UpdateCheckType::Manual) {
+        ShowResultDialog(
+          std::format(
+            _("Error: found a new version ({}), but couldn't find an "
+              "installer"),
+            newName),
+          uiThread,
+          xamlRoot);
+      }
       co_return;
     }
   }
@@ -346,8 +389,8 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
     auto app = gKneeboard->GetAppSettings();
     app.mAutoUpdate = settings;
     gKneeboard->SetAppSettings(app);
-    OpenKneeboard::LaunchURI(to_utf8(destination));
     co_await uiThread;
+    OpenKneeboard::LaunchURI(to_utf8(destination));
     Application::Current().Exit();
     co_return;
   }
@@ -362,6 +405,21 @@ IAsyncAction CheckForUpdates(const XamlRoot& xamlRoot) {
   auto app = gKneeboard->GetAppSettings();
   app.mAutoUpdate = settings;
   gKneeboard->SetAppSettings(app);
+}
+
+static fire_and_forget ShowResultDialog(
+  std::string_view message,
+  winrt::apartment_context& uiThread,
+  const XamlRoot& xamlRoot) {
+  co_await uiThread;
+
+  ContentDialog dialog;
+  dialog.XamlRoot(xamlRoot);
+  dialog.Title(box_value(to_hstring(_(L"Update OpenKneeboard"))));
+  dialog.Content(box_value(to_hstring(message)));
+  dialog.CloseButtonText(_(L"OK"));
+  dialog.DefaultButton(ContentDialogButton::Close);
+  co_await dialog.ShowAsync();
 }
 
 }// namespace OpenKneeboard

@@ -30,7 +30,13 @@
 
 namespace OpenKneeboard {
 
+enum class UpdateCheckType {
+  Automatic,
+  Manual,
+};
+
 winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
+  UpdateCheckType,
   const winrt::Microsoft::UI::Xaml::XamlRoot&);
 
 }// namespace OpenKneeboard

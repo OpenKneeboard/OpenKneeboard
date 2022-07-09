@@ -50,6 +50,10 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
+  winrt::fire_and_forget OnCheckForUpdatesClick(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
