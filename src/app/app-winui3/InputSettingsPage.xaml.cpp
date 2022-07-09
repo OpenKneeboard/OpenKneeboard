@@ -35,6 +35,14 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
+  auto weakThis = get_weak();
+  AddEventListener(gKneeboard->evInputDevicesChangedEvent, [weakThis]() {
+    auto _this = weakThis.get();
+    if (!_this) {
+      return;
+    }
+    _this->mPropertyChangedEvent(*_this, PropertyChangedEventArgs(L"Devices"));
+  });
 }
 
 winrt::event_token InputSettingsPage::PropertyChanged(

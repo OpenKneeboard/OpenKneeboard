@@ -22,14 +22,20 @@
 #include <OpenKneeboard/DirectInputListener.h>
 #include <OpenKneeboard/GetDirectInputDevices.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
-#include <Rpc.h>
-#include <dinput.h>
+#include <OpenKneeboard/dprint.h>
 #include <shims/winrt/base.h>
 
 #include <nlohmann/json.hpp>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+
+// clang-format off
+#include <Windows.h>
+#include <Dbt.h>
+#include <Rpc.h>
+#include <dinput.h>
+// clang-format on
 
 using namespace OpenKneeboard;
 
@@ -56,8 +62,22 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices);
 
 namespace OpenKneeboard {
 
-DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
-  : mInitialSettings(jsonSettings) {
+DirectInputAdapter* DirectInputAdapter::gInstance = nullptr;
+
+DirectInputAdapter::DirectInputAdapter(
+  HWND hwnd,
+  const nlohmann::json& jsonSettings)
+  : mWindow(hwnd), mSettings(jsonSettings) {
+  if (gInstance) {
+    throw std::logic_error("Only one DirectInputAdapter at a time");
+  }
+  gInstance = this;
+
+  mPreviousWindowProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
+    hwnd,
+    GWLP_WNDPROC,
+    reinterpret_cast<LONG_PTR>(&DirectInputAdapter::WindowProc)));
+  winrt::check_pointer(mPreviousWindowProc);
   winrt::check_hresult(DirectInput8Create(
     GetModuleHandle(nullptr),
     DIRECTINPUT_VERSION,
@@ -65,9 +85,21 @@ DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
     mDI8.put_void(),
     NULL));
 
+  this->Reload();
+}
+
+void DirectInputAdapter::Reload() {
+  this->RemoveAllEventListeners();
+
   JSONSettings settings;
-  if (!jsonSettings.is_null()) {
-    jsonSettings.get_to(settings);
+  if (!mSettings.is_null()) {
+    mSettings.get_to(settings);
+  }
+
+  if (mWorker) {
+    mWorker.Cancel();
+    mWorker = {};
+    mDevices.clear();
   }
 
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
@@ -92,11 +124,17 @@ DirectInputAdapter::DirectInputAdapter(const nlohmann::json& jsonSettings)
 
   mListener = std::make_unique<DirectInputListener>(mDI8, mDevices);
   mWorker = mListener->Run();
+  this->evAttachedControllersChangedEvent.Emit();
 }
 
 DirectInputAdapter::~DirectInputAdapter() {
   this->RemoveAllEventListeners();
+  if (mPreviousWindowProc) {
+    SetWindowLongPtrW(
+      mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWindowProc));
+  }
   mWorker.Cancel();
+  gInstance = nullptr;
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
@@ -110,8 +148,8 @@ std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
 
 nlohmann::json DirectInputAdapter::GetSettings() const {
   JSONSettings settings;
-  if (!mInitialSettings.is_null()) {
-    mInitialSettings.get_to(settings);
+  if (!mSettings.is_null()) {
+    mSettings.get_to(settings);
   }
 
   for (const auto& device: mDevices) {
@@ -144,7 +182,23 @@ nlohmann::json DirectInputAdapter::GetSettings() const {
       .ButtonBindings = buttonBindings,
     };
   }
+
+  mSettings = settings;
   return settings;
+}
+
+LRESULT CALLBACK DirectInputAdapter::WindowProc(
+  _In_ HWND hwnd,
+  _In_ UINT uMsg,
+  _In_ WPARAM wParam,
+  _In_ LPARAM lParam) {
+  if (uMsg == WM_DEVICECHANGE && wParam == DBT_DEVNODES_CHANGED) {
+    dprint("Devices changed, reloading DirectInput device list");
+    gInstance->Reload();
+  }
+
+  return CallWindowProc(
+    gInstance->mPreviousWindowProc, hwnd, uMsg, wParam, lParam);
 }
 
 }// namespace OpenKneeboard

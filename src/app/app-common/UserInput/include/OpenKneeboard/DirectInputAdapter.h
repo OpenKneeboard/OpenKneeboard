@@ -39,7 +39,7 @@ class UserInputDevice;
 class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
  public:
   DirectInputAdapter() = delete;
-  DirectInputAdapter(const nlohmann::json& settings);
+  DirectInputAdapter(HWND mainWindow, const nlohmann::json& settings);
   ~DirectInputAdapter();
 
   nlohmann::json GetSettings() const;
@@ -47,15 +47,29 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
 
   Event<UserAction> evUserActionEvent;
   Event<> evSettingsChangedEvent;
+  Event<> evAttachedControllersChangedEvent;
 
  private:
+  void Reload();
+
+  HWND mWindow;
+  WNDPROC mPreviousWindowProc;
+
   winrt::com_ptr<IDirectInput8W> mDI8;
   std::vector<std::shared_ptr<DirectInputDevice>> mDevices;
 
   std::unique_ptr<DirectInputListener> mListener;
   winrt::Windows::Foundation::IAsyncAction mWorker;
 
-  const nlohmann::json mInitialSettings;
+  mutable nlohmann::json mSettings;
+
+  static LRESULT CALLBACK WindowProc(
+    _In_ HWND hwnd,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam);
+
+  static DirectInputAdapter* gInstance;
 };
 
 }// namespace OpenKneeboard

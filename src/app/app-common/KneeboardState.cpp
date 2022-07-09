@@ -77,11 +77,15 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   AddEventListener(
     mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
 
-  mDirectInput = std::make_unique<DirectInputAdapter>(mSettings.DirectInputV2);
+  mDirectInput
+    = std::make_unique<DirectInputAdapter>(hwnd, mSettings.DirectInputV2);
   AddEventListener(
     mDirectInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
   AddEventListener(
     mDirectInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+  AddEventListener(
+    mDirectInput->evAttachedControllersChangedEvent,
+    this->evInputDevicesChangedEvent);
 
   mGameEventServer = std::make_unique<GameEventServer>();
   AddEventListener(

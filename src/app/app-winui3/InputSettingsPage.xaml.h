@@ -24,6 +24,8 @@
 #include "InputSettingsPage.g.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
+
 #include <string>
 
 using namespace winrt::Microsoft::UI::Xaml;
@@ -31,7 +33,8 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct InputSettingsPage : InputSettingsPageT<InputSettingsPage> {
+struct InputSettingsPage : InputSettingsPageT<InputSettingsPage>,
+                           private OpenKneeboard::EventReceiver {
   InputSettingsPage();
 
   IVector<IInspectable> Devices() noexcept;

@@ -71,7 +71,7 @@
         Text="Input Settings"
         Margin="0,0,0,8"
       />
-      <ItemsRepeater ItemsSource="{x:Bind Devices}">
+      <ItemsRepeater ItemsSource="{x:Bind Devices, Mode=OneWay}">
         <ItemsRepeater.Layout>
           <StackLayout Orientation="Vertical" Spacing="24" />
         </ItemsRepeater.Layout>
