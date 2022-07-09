@@ -26,7 +26,7 @@ TabNavigationAction::TabNavigationAction(const std::shared_ptr<ITabView>& state)
   : TabToggleAction("\uE700", _("Contents")), mState(state) {
   AddEventListener(
     state->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);
-  AddEventListener(state->evTabModeChangedEvent, this->evStateChangedEvent);
+  AddEventListener(state->evContentChangedEvent, this->evStateChangedEvent);
 }
 
 TabNavigationAction::~TabNavigationAction() {

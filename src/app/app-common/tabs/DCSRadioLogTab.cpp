@@ -84,7 +84,7 @@ void DCSRadioLogTab::OnGameEvent(
 
 void DCSRadioLogTab::Reload() {
   mPageSource->ClearText();
-  this->evFullyReplacedEvent.Emit();
+  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
 }// namespace OpenKneeboard

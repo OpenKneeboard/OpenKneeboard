@@ -20,9 +20,14 @@
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/TextFileTab.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Storage.h>
 
 #include <fstream>
 #include <nlohmann/json.hpp>
+
+using namespace winrt::Windows::Storage;
+using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
@@ -79,22 +84,51 @@ void TextFileTab::SetPath(const std::filesystem::path& path) {
   if (path == mPath) {
     return;
   }
-  mPath = path;
+  mPath = std::filesystem::canonical(path);
   Reload();
 }
 
 void TextFileTab::Reload() {
   this->ClearContentCache();
   scope_guard emitEvents([this]() {
-    this->evFullyReplacedEvent.Emit();
+    this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     this->evNeedsRepaintEvent.Emit();
   });
+
+  this->mQueryResult = {nullptr};
 
   if (!std::filesystem::is_regular_file(mPath)) {
     mPageSource->ClearText();
     return;
   }
 
+  mPageSource->SetText(this->GetFileContent());
+  mLastWriteTime = std::filesystem::last_write_time(mPath);
+  this->SubscribeToChanges();
+}
+
+winrt::fire_and_forget TextFileTab::SubscribeToChanges() noexcept {
+  auto folder = co_await StorageFolder::GetFolderFromPathAsync(
+    mPath.parent_path().wstring());
+  mQueryResult = folder.CreateFileQuery();
+  mQueryResult.ContentsChanged(
+    [this](const auto&, const auto&) { this->OnFileModified(); });
+  // Must fetch results once to make the query active
+  co_await mQueryResult.GetFilesAsync();
+}
+
+void TextFileTab::OnFileModified() noexcept {
+  const auto newWriteTime = std::filesystem::last_write_time(mPath);
+  if (newWriteTime == mLastWriteTime) {
+    return;
+  }
+
+  mLastWriteTime = newWriteTime;
+  mPageSource->SetText(this->GetFileContent());
+  this->evContentChangedEvent.Emit(ContentChangeType::Modified);
+}
+
+std::string TextFileTab::GetFileContent() const {
   auto bytes = std::filesystem::file_size(mPath);
   std::string buffer;
   buffer.resize(bytes);
@@ -103,7 +137,7 @@ void TextFileTab::Reload() {
   std::ifstream f(mPath, std::ios::in | std::ios::binary);
   if (!f.is_open()) {
     mPageSource->ClearText();
-    return;
+    return {};
   }
   while (bytes > 0) {
     f.read(&buffer.data()[offset], bytes);
@@ -117,11 +151,12 @@ void TextFileTab::Reload() {
     pos++;
   }
 
-  mPageSource->SetText(buffer);
+  return buffer;
 }
 
 uint16_t TextFileTab::GetPageCount() const {
-  return mPageSource->GetPageCount();
+  // Show placeholder "[empty file]" instead of 'no pages' error
+  return std::max<uint16_t>(1, mPageSource->GetPageCount());
 }
 
 D2D1_SIZE_U TextFileTab::GetNativeContentSize(uint16_t pageIndex) {

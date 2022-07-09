@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/dprint.h>
@@ -75,6 +76,8 @@ void PlainTextPageSource::RenderPage(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
+  std::unique_lock lock(mMutex);
+
   const auto virtualSize = this->GetNativeContentSize(0);
   const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
 
@@ -117,7 +120,16 @@ void PlainTextPageSource::RenderPage(
     return;
   }
 
-  std::unique_lock lock(mMutex);
+  if (pageIndex > mCompletePages.size()) [[unlikely]] {
+    D2DErrorRenderer(ctx).Render(
+      ctx,
+      std::format(
+        _("Invalid Page Number: {} of {}"),
+        pageIndex + 1,
+        mCompletePages.size() + 1),
+      rect);
+    return;
+  }
 
   const auto& lines = (pageIndex == mCompletePages.size())
     ? mCurrentPageLines
@@ -194,6 +206,7 @@ void PlainTextPageSource::PushMessage(utf8_string_view message) {
 }
 
 void PlainTextPageSource::EnsureNewPage() {
+  std::unique_lock lock(mMutex);
   if (!mCurrentPageLines.empty()) {
     this->PushPage();
   }
@@ -299,6 +312,7 @@ void PlainTextPageSource::LayoutMessages() {
 }
 
 void PlainTextPageSource::PushFullWidthSeparator() {
+  std::unique_lock lock(mMutex);
   if (mColumns <= 0 || mMessages.empty()) {
     return;
   }

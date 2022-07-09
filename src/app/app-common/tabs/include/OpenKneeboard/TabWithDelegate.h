@@ -102,7 +102,7 @@ class TabWithDelegate : public virtual TabWithDelegateBase<T>,
   TabWithDelegate(const std::shared_ptr<T>& delegate) : mDelegate(delegate) {
     AddEventListener(delegate->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
     AddEventListener(
-      delegate->evFullyReplacedEvent, this->evFullyReplacedEvent);
+      delegate->evContentChangedEvent, this->evContentChangedEvent);
     AddEventListener(delegate->evPageAppendedEvent, this->evPageAppendedEvent);
     AddEventListener(
       delegate->evPageChangeRequestedEvent, this->evPageChangeRequestedEvent);

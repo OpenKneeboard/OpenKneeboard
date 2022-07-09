@@ -81,7 +81,7 @@ winrt::fire_and_forget FolderTab::ReloadImpl() noexcept {
 
   if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
     mPageSource->SetPaths({});
-    evFullyReplacedEvent.Emit();
+    evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     co_return;
   }
   if ((!mQueryResult) || mPath != mQueryResult.Folder().Path()) {
@@ -108,7 +108,7 @@ winrt::fire_and_forget FolderTab::ReloadImpl() noexcept {
   co_await mUIThread;
 
   mPageSource->SetPaths(paths);
-  evFullyReplacedEvent.Emit();
+  evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
 uint16_t FolderTab::GetPageCount() const {

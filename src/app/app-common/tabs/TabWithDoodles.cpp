@@ -40,7 +40,7 @@ TabWithDoodles::TabWithDoodles(const DXResources& dxr, KneeboardState* kbs)
   mDXR.mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
 
-  AddEventListener(this->evFullyReplacedEvent, [this]() {
+  AddEventListener(this->evContentChangedEvent, [this]() {
     this->ClearContentCache();
     this->ClearDoodles();
   });

@@ -318,7 +318,7 @@ static std::string MGRSFormat(double latitude, double longitude) {
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
     this->ClearContentCache();
-    this->evFullyReplacedEvent.Emit();
+    this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     this->evAvailableFeaturesChangedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
   });
@@ -541,7 +541,7 @@ void DCSBriefingTab::Reload() noexcept {
   }
 
   this->ClearContentCache();
-  this->evFullyReplacedEvent.Emit();
+  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
 void DCSBriefingTab::OnGameEvent(

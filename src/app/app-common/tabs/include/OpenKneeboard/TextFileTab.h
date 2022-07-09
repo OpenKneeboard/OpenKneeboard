@@ -19,6 +19,9 @@
  */
 #pragma once
 
+#include <shims/winrt/base.h>
+#include <winrt/Windows.Storage.Search.h>
+
 #include <shims/filesystem>
 
 #include "ITab.h"
@@ -66,7 +69,15 @@ class TextFileTab final : public TabBase,
 
  private:
   std::filesystem::path mPath;
+  std::filesystem::file_time_type mLastWriteTime;
   std::unique_ptr<PlainTextPageSource> mPageSource;
+  winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
+    nullptr};
+
+  std::string GetFileContent() const;
+
+  winrt::fire_and_forget SubscribeToChanges() noexcept;
+  void OnFileModified() noexcept;
 };
 
 }// namespace OpenKneeboard

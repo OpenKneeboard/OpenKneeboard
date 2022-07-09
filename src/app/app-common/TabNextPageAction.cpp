@@ -31,6 +31,7 @@ TabNextPageAction::TabNextPageAction(
     mKneeboard(kneeboard),
     mTabView(tabView) {
   AddEventListener(tabView->evPageChangedEvent, this->evStateChangedEvent);
+  AddEventListener(tabView->evContentChangedEvent, this->evStateChangedEvent);
   AddEventListener(
     tabView->GetTab()->evPageAppendedEvent, this->evStateChangedEvent);
   AddEventListener(

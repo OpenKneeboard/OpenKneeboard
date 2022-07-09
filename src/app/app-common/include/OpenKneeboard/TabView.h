@@ -25,6 +25,7 @@
 
 namespace OpenKneeboard {
 
+enum class ContentChangeType;
 class KneeboardState;
 
 class TabView final : public ITabView, private EventReceiver {
@@ -63,7 +64,7 @@ class TabView final : public ITabView, private EventReceiver {
 
   TabMode mTabMode = TabMode::NORMAL;
 
-  void OnTabFullyReplaced();
+  void OnTabContentChanged(ContentChangeType);
   void OnTabPageAppended();
 };
 

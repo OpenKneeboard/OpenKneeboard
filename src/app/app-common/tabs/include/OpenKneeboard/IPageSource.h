@@ -26,6 +26,14 @@
 
 namespace OpenKneeboard {
 
+enum class ContentChangeType {
+  /// Treat like a new tab
+  FullyReplaced,
+  /// Content changed, but likely similar; preserve view state like
+  /// 'current page' if possible.
+  Modified,
+};
+
 class IPageSource {
  public:
   virtual ~IPageSource();
@@ -37,6 +45,7 @@ class IPageSource {
     = 0;
 
   Event<> evPageAppendedEvent;
+  Event<ContentChangeType> evContentChangedEvent;
 };
 
 }// namespace OpenKneeboard

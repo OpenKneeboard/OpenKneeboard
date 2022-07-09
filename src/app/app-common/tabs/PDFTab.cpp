@@ -297,7 +297,7 @@ void PDFTab::Reload() {
     auto file
       = co_await StorageFile::GetFileFromPathAsync(_this->p->mPath.wstring());
     _this->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
-    _this->evFullyReplacedEvent.Emit();
+    _this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
   }();
 
   p->mQPDFThread = {[this](std::stop_token stopToken) {

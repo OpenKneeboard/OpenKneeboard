@@ -32,7 +32,7 @@ TabView::TabView(KneeboardState* kneeboard, const std::shared_ptr<ITab>& tab)
   : mKneeboard(kneeboard), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
-    tab->evFullyReplacedEvent, &TabView::OnTabFullyReplaced, this);
+    tab->evContentChangedEvent, &TabView::OnTabContentChanged, this);
   AddEventListener(tab->evPageAppendedEvent, &TabView::OnTabPageAppended, this);
   AddEventListener(
     tab->evPageChangeRequestedEvent, [this](EventContext ctx, uint16_t index) {
@@ -125,13 +125,22 @@ void TabView::PreviousPage() {
   }
 }
 
-void TabView::OnTabFullyReplaced() {
-  mRootTabPage = 0;
+void TabView::OnTabContentChanged(ContentChangeType changeType) {
+  this->evContentChangedEvent.Emit(changeType);
+  if (changeType == ContentChangeType::FullyReplaced) {
+    mRootTabPage = 0;
+    evPageChangedEvent.Emit();
+  } else {
+    const auto pageCount = mRootTab->GetPageCount();
+    if (mRootTabPage >= pageCount) {
+      mRootTabPage = std::max<uint16_t>(pageCount - 1, 0);
+      evPageChangedEvent.Emit();
+    }
+  }
+  evAvailableFeaturesChangedEvent.Emit();
   if (!mActiveSubTab) {
     evNeedsRepaintEvent.Emit();
   }
-  evAvailableFeaturesChangedEvent.Emit();
-  evPageChangedEvent.Emit();
 }
 
 void TabView::OnTabPageAppended() {
@@ -210,6 +219,7 @@ bool TabView::SetTabMode(TabMode mode) {
   evPageChangedEvent.Emit();
   evNeedsRepaintEvent.Emit();
   evTabModeChangedEvent.Emit();
+  evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
   evAvailableFeaturesChangedEvent.Emit();
 
   return true;

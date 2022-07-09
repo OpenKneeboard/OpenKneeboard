@@ -39,7 +39,6 @@ class ITab : public IPageSource {
   virtual void Reload() = 0;
 
   Event<> evNeedsRepaintEvent;
-  Event<> evFullyReplacedEvent;
   Event<> evAvailableFeaturesChangedEvent;
   Event<EventContext, uint16_t> evPageChangeRequestedEvent;
 };
