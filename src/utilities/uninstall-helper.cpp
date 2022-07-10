@@ -35,8 +35,14 @@
 #include <string>
 
 using namespace OpenKneeboard;
+namespace {
 
-static HKEY OpenImplicitLayerRegistryKey(HKEY root) {
+enum class Mode {
+  Uninstall,
+  Repair,
+};
+
+HKEY OpenImplicitLayerRegistryKey(HKEY root) {
   HKEY openXRKey {0};
   RegOpenKeyExW(
     root,
@@ -47,7 +53,7 @@ static HKEY OpenImplicitLayerRegistryKey(HKEY root) {
   return openXRKey;
 }
 
-static void DisableOpenKneeboardOpenXRLayers(HKEY root) {
+void DisableOpenKneeboardOpenXRLayers(HKEY root) {
   auto openXRKey = OpenImplicitLayerRegistryKey(root);
   if (!openXRKey) {
     return;
@@ -85,7 +91,17 @@ static void DisableOpenKneeboardOpenXRLayers(HKEY root) {
   RegCloseKey(openXRKey);
 }
 
-void RemoveRuntimeFiles() {
+void dprint(std::wstring_view message) {
+  static std::wstring sExe;
+  if (sExe.empty()) {
+    wchar_t buffer[MAX_PATH];
+    auto size = GetModuleFileNameW(NULL, buffer, MAX_PATH);
+    sExe = std::filesystem::path(std::wstring_view {buffer, size}).stem();
+  }
+  OutputDebugStringW(std::format(L"{}: {}", sExe, message).c_str());
+}
+
+void RemoveRuntimeFiles(Mode) {
   auto dir = RuntimeFiles::GetDirectory();
   if (!std::filesystem::exists(dir)) {
     return;
@@ -112,30 +128,47 @@ void RemoveRuntimeFiles() {
         L"Uninstall OpenKneeboard",
         MB_ICONWARNING | MB_RETRYCANCEL | MB_SYSTEMMODAL);
       if (result == IDCANCEL) {
+        dprint(_(L"Removal of runtime files cancelled."));
         return;
       }
     }
   }
 }
 
-static void dprint(std::wstring_view message) {
-  static std::wstring sExe;
-  if (sExe.empty()) {
-    wchar_t buffer[MAX_PATH];
-    auto size = GetModuleFileNameW(NULL, buffer, MAX_PATH);
-    sExe = std::filesystem::path(std::wstring_view {buffer, size}).stem();
-  }
-  OutputDebugStringW(std::format(L"{}: {}", sExe, message).c_str());
-}
+}// namespace
 
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
-  dprint(L"Starting up...");
+int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLineRaw, int) {
+  const std::wstring_view modeStr(commandLineRaw);
+  Mode mode;
+  if (modeStr.empty() || modeStr == L"/uninstall") {
+    dprint(L"Starting up - uninstall mode");
+    mode = Mode::Uninstall;
+  } else if (modeStr == L"/repair") {
+    dprint(L"Starting up - repair mode");
+    mode = Mode::Repair;
+  } else if (modeStr == L"/install") {
+    dprint(L"/install specified, nothing to do.");
+    return 0;
+  } else {
+    MessageBoxW(
+      0,
+      std::format(_(L"Unsupported mode: '{}'"), modeStr).c_str(),
+      L"OpenKneeboard",
+      MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
+    return 1;
+  }
+
   DisableOpenKneeboardOpenXRLayers(HKEY_LOCAL_MACHINE);
   dprint(L"Disabled HKLM OpenXR layers.");
   DisableOpenKneeboardOpenXRLayers(HKEY_CURRENT_USER);
   dprint(L"Disabled HKCU OpenXR layers.");
-  RemoveRuntimeFiles();
-  dprint(L"Removed runtime files.");
+
+  // Not needed for repair mode: OpenKneeboard does this on startup
+  if (mode == Mode::Uninstall) {
+    dprint(L"Removing runtime files...");
+    RemoveRuntimeFiles(mode);
+    dprint(L"Removed runtime files.");
+  }
 
   return 0;
 }

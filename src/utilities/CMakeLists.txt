@@ -105,7 +105,7 @@ target_link_libraries(
   OpenKneeboard-dprint
 )
 
-add_executable(OpenKneeboard-Uninstall-Helper WIN32 uninstall-cleanup.cpp icon.rc)
+add_executable(OpenKneeboard-Uninstall-Helper WIN32 uninstall-helper.cpp icon.rc)
 add_version_rc(OpenKneeboard-Uninstall-Helper OpenKneeboard-Uninstall-Helper.exe)
 sign_target(OpenKneeboard-Uninstall-Helper)
 target_link_libraries(
