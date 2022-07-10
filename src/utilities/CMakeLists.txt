@@ -1,3 +1,5 @@
+include(GNUInstallDirs)
+
 function(add_helper_executable TARGET)
   add_executable(${TARGET} ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.exe)
@@ -94,6 +96,7 @@ add_helper_executable(
   OpenKneeboard-OpenXR-Helper
   WIN32
   openxr-helper.cpp
+  icon.rc
 )
 target_link_libraries(
   OpenKneeboard-OpenXR-Helper 
@@ -101,3 +104,26 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-dprint
 )
+
+add_executable(OpenKneeboard-Uninstall-Helper WIN32 uninstall-cleanup.cpp icon.rc)
+add_version_rc(OpenKneeboard-Uninstall-Helper OpenKneeboard-Uninstall-Helper.exe)
+sign_target(OpenKneeboard-Uninstall-Helper)
+target_link_libraries(
+  OpenKneeboard-Uninstall-Helper
+  PRIVATE
+  OpenKneeboard-RuntimeFiles
+  OpenKneeboard-UTF8
+  ThirdParty::CppWinRT)
+target_link_options(OpenKneeboard-Uninstall-Helper PRIVATE "/MANIFESTUAC:level='requireAdministrator'")
+install(
+  TARGETS
+  OpenKneeboard-Uninstall-Helper
+  DESTINATION
+  "${CMAKE_INSTALL_BINDIR}/installation")
+install(
+  TARGETS
+  OpenKneeboard-Uninstall-Helper
+  COMPONENT
+  RemoteControl
+  EXCLUDE_FROM_ALL)
+install(FILES "$<TARGET_PDB_FILE:OpenKneeboard-Uninstall-Helper>" TYPE BIN COMPONENT DebugSymbols)
