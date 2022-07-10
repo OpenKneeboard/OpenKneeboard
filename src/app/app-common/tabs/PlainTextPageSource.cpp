@@ -313,7 +313,7 @@ void PlainTextPageSource::LayoutMessages() {
 
 void PlainTextPageSource::PushFullWidthSeparator() {
   std::unique_lock lock(mMutex);
-  if (mColumns <= 0 || mMessages.empty()) {
+  if (mColumns <= 0 || (mMessages.empty() && mCurrentPageLines.empty())) {
     return;
   }
   this->PushMessage(std::string(mColumns, '-'));
