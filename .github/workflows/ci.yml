@@ -11,7 +11,7 @@ jobs:
       - name: Fetch code-signing key
         env:
           CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
-        if: ${{ (matrix.config != 'Debug') && (github.repository == 'OpenKneeboard/OpenKneeboard') }}
+        if: ${{ (matrix.config != 'Debug') && (secrets.CODE_SIGNING_KEY != null) }}
         run:
           '[System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content ${{runner.temp}}/MyCert.pfx -AsByteStream'
       - name: Make build directory
