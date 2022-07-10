@@ -45,6 +45,10 @@ InputSettingsPage::InputSettingsPage() {
   });
 }
 
+InputSettingsPage::~InputSettingsPage() {
+  this->RemoveAllEventListeners();
+}
+
 winrt::event_token InputSettingsPage::PropertyChanged(
   winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
     handler) {

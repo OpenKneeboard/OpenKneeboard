@@ -36,6 +36,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct InputSettingsPage : InputSettingsPageT<InputSettingsPage>,
                            private OpenKneeboard::EventReceiver {
   InputSettingsPage();
+  ~InputSettingsPage();
 
   IVector<IInspectable> Devices() noexcept;
   void OnOrientationChanged(
