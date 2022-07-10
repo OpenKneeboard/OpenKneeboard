@@ -134,15 +134,16 @@ end
 
 function callbacks.onSimulationStart()
   l("onSimulationStart")
+  updateGeo()
 
   local selfData = Export.LoGetSelfData()
   if not selfData then
     OpenKneeboard.send("SimulationStart", "");
+    sendState()
     return
   end
   state.aircraft = selfData.Name
   state.selfData = selfData
-  updateGeo()
   l("Aircraft: "..state.aircraft)
   sendState()
   OpenKneeboard.send("SimulationStart", "");
