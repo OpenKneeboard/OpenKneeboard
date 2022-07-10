@@ -11,16 +11,23 @@ jobs:
       - name: Fetch code-signing key
         env:
           CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
-        run: '[System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content ${{runner.temp}}/MyCert.pfx -AsByteStream'
+        if: ${{matrix.config != 'Debug' && secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
+        run:
+          '[System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content ${{runner.temp}}/MyCert.pfx -AsByteStream'
       - name: Make build directory
         run: cmake -E make_directory build
       - name: Configure
         working-directory: build
+        shell: pwsh
         run: |
-          cmake ${{github.workspace}}/source `
-            "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}/MyCert.pfx" `
-            "-DGITHUB_REF_TYPE=${{github.ref_type}}" `
+          $args = @(
+            "-DGITHUB_REF_TYPE=${{github.ref_type}}",
             "-DGITHUB_REF_NAME=${{github.ref_name}}"
+          )
+          if (Test-Path -Path "${{runner.temp}}/MyCert.pfx") {
+            $args += "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}/MyCert.pfx" `
+          }
+          cmake ${{github.workspace}}/source @args
       - name: Compile
         working-directory: build
         run: |
@@ -45,18 +52,22 @@ jobs:
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
       - name: Fetch MSIX build tools
+        id: windowsSdkBuildTools
         shell: pwsh
         run: |
           Invoke-WebRequest `
             -Uri "https://www.nuget.org/api/v2/package/Microsoft.Windows.SDK.BuildTools/10.0.22621.1" `
             -OutFile sdk-build-tools.zip
           Expand-Archive sdk-build-tools.zip
-      - name: Create MSIX
-        shell: pwsh
-        run: |
           $kitsRoot = "sdk-build-tools"
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
+
+          echo "::set-output name=KIT_BIN::$kitDir"
+      - name: Create MSIX
+        shell: pwsh
+        run: |
+          $kitBin = "${{steps.windowsSdkBuildTools.outputs.KIT_BIN}}"
 
           Copy-Item -Path ${{github.workspace}}\source\src\app\artifacts\* -Destination $(Get-Location)
 
@@ -77,6 +88,11 @@ jobs:
             pack `
             /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
             /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
+      - name: Sign MSIX
+        shell: pwsh
+        if: ${{matrix.config != 'Debug' && secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
+        run: |
+          $kitBin = "${{steps.windowsSdkBuildTools.outputs.KIT_BIN}}"
 
           & "$kitBin\signtool.exe" `
             sign `
