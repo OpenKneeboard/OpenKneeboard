@@ -11,7 +11,7 @@ jobs:
       - name: Fetch code-signing key
         env:
           CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
-        if: ${{ (matrix.config != 'Debug') && (github.repository == "OpenKneeboard/OpenKneeboard") }}
+        if: ${{ (matrix.config != 'Debug') && (github.repository == 'OpenKneeboard/OpenKneeboard') }}
         run:
           '[System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content ${{runner.temp}}/MyCert.pfx -AsByteStream'
       - name: Make build directory
@@ -90,7 +90,7 @@ jobs:
             /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
       - name: Sign MSIX
         shell: pwsh
-        if: ${{ (matrix.config != 'Debug') && (github.repository == "OpenKneeboard/OpenKneeboard") }}
+        if: ${{ (matrix.config != 'Debug') && (github.repository == 'OpenKneeboard/OpenKneeboard') }}
         run: |
           $kitBin = "${{steps.windowsSdkBuildTools.outputs.KIT_BIN}}"
 
