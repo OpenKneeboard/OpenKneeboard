@@ -32,7 +32,6 @@
   </Dependencies>
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
-    <rescap:Capability Name="customInstallActions" />
   </Capabilities>
   <Applications>
     <Application Id="OpenKneeboard" Executable="bin\OpenKneeboardApp.exe" EntryPoint="Windows.FullTrustApplication">
