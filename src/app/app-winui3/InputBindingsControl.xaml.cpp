@@ -133,10 +133,18 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
   mDevice->evButtonEvent.PushHook([&](const UserInputButtonEvent& ev) {
     if (ev.IsPressed()) {
       pressedButtons.insert(ev.GetButtonID());
+      [](auto self, auto dialog, const auto buttons) -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        dialog.Content(box_value(to_hstring(std::format(
+          _("Press then release buttons to bind input.\n\n{}"),
+          self->mDevice->GetButtonComboDescription(buttons)))));
+      }(this, dialog, pressedButtons);
       return EventBase::HookResult::STOP_PROPAGATION;
     }
     cancelled = false;
     [](auto uiThread, auto dialog) noexcept -> winrt::fire_and_forget {
+      // Show the complete combo for a moment
+      co_await winrt::resume_after(std::chrono::milliseconds(250));
       co_await uiThread;
       dialog.Hide();
     }(mUIThread, dialog);
