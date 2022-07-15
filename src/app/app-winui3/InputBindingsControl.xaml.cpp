@@ -133,7 +133,7 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
   mDevice->evButtonEvent.PushHook([&](const UserInputButtonEvent& ev) {
     if (ev.IsPressed()) {
       pressedButtons.insert(ev.GetButtonID());
-      EventBase::HookResult::STOP_PROPAGATION;
+      return EventBase::HookResult::STOP_PROPAGATION;
     }
     cancelled = false;
     [](auto uiThread, auto dialog) noexcept -> winrt::fire_and_forget {
