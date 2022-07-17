@@ -20,6 +20,7 @@
 
 #include <OpenKneeboard/DCSBriefingTab.h>
 #include <OpenKneeboard/DCSExtractedMission.h>
+#include <OpenKneeboard/DCSMagneticModel.h>
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/ImagePageSource.h>
@@ -38,144 +39,23 @@
 #include <format>
 #include <limits>
 
-extern "C" {
-#include <GeomagnetismHeader.h>
-#include <lauxlib.h>
-#include <lualib.h>
-}
-
 using DCS = OpenKneeboard::DCSWorld;
 
-static_assert(
-  std::is_same_v<GeographicLib::Math::real, OpenKneeboard::DCSGeoReal>);
+static_assert(std::is_same_v<GeographicLib::Math::real, DCS::GeoReal>);
 
 namespace OpenKneeboard {
 
-class DCSMagneticModel {
- public:
-  DCSMagneticModel(const std::filesystem::path& dcsInstallation);
-  ~DCSMagneticModel();
-
-  float GetMagneticVariation(
-    const std::chrono::year_month_day& date,
-    float latitude,
-    float longitude) const;
-
- private:
-  MAGtype_MagneticModel* GetModel(
-    const std::chrono::year_month_day& date) const;
-  std::vector<MAGtype_MagneticModel*> mModels;
-};
-
-DCSMagneticModel::DCSMagneticModel(
-  const std::filesystem::path& dcsInstallation) {
-  const auto cofDir = dcsInstallation / "Data" / "MagVar" / "COF";
-
-  for (const auto& file: std::filesystem::directory_iterator(cofDir)) {
-    if (!std::filesystem::is_regular_file(file)) {
-      continue;
-    }
-    MAGtype_MagneticModel* model = nullptr;
-    MAG_robustReadMagModels(
-      const_cast<char*>(file.path().string().c_str()),
-      reinterpret_cast<MAGtype_MagneticModel*(*)[]>(&model),
-      1);
-    mModels.push_back(model);
-  }
-}
-
-DCSMagneticModel::~DCSMagneticModel() {
-  for (auto model: mModels) {
-    MAG_FreeMagneticModelMemory(model);
-  }
-}
-
-MAGtype_MagneticModel* DCSMagneticModel::GetModel(
-  const std::chrono::year_month_day& date) const {
-  MAGtype_Date magDate {
-    static_cast<int>(date.year()),
-    static_cast<int>(static_cast<unsigned>(date.month())),
-    static_cast<int>(static_cast<unsigned>(date.day())),
-  };
-  char error[512];
-  MAG_DateToYear(&magDate, error);
-  const auto year = magDate.DecimalYear;
-
-  for (auto model: mModels) {
-    if (year < model->epoch) {
-      dprintf(
-        "No WMM model for historical year {}, using incorrect {:.0f} model",
-        date.year(),
-        model->epoch);
-      return model;
-    }
-
-    if (year - model->epoch <= 5) {
-      dprintf(
-        "Using correct WMM {:0.0f} model for year {}",
-        model->epoch,
-        date.year());
-      return model;
-    }
-  }
-
-  auto model = mModels.back();
-
-  dprintf(
-    "No WMM model found for future year {}, using incorrect {:.0f} model",
-    date.year(),
-    model->epoch);
-  return model;
-}
-
-float DCSMagneticModel::GetMagneticVariation(
-  const std::chrono::year_month_day& date,
-  float latitude,
-  float longitude) const {
-  const MAGtype_CoordGeodetic geoCoord {
-    .lambda = longitude,
-    .phi = latitude,
-  };
-
-  MAGtype_Ellipsoid ellipsoid;
-  MAGtype_Geoid geoid;
-  MAG_SetDefaults(&ellipsoid, &geoid);
-  MAGtype_CoordSpherical sphereCoord {};
-  MAG_GeodeticToSpherical(ellipsoid, geoCoord, &sphereCoord);
-
-  MAGtype_MagneticModel* model = this->GetModel(date);
-  MAGtype_MagneticModel* timedModel;
-  const auto nMax = model->nMax;
-  // Taken from wmm_point.c sample
-  timedModel = MAG_AllocateModelMemory((nMax + 1) * (nMax + 2) / 2);
-  scope_guard freeTimedModel(
-    [=]() { MAG_FreeMagneticModelMemory(timedModel); });
-
-  MAGtype_Date magDate {
-    static_cast<int>(date.year()),
-    static_cast<int>(static_cast<unsigned>(date.month())),
-    static_cast<int>(static_cast<unsigned>(date.day())),
-  };
-  char error[512];
-  MAG_DateToYear(&magDate, error);
-  MAG_TimelyModifyMagneticModel(magDate, model, timedModel);
-
-  MAGtype_GeoMagneticElements geoElements {};
-  MAG_Geomag(ellipsoid, sphereCoord, geoCoord, timedModel, &geoElements);
-
-  return geoElements.Decl;
-}
-
 class DCSGrid final {
  public:
-  DCSGrid(DCSGeoReal originLat, DCSGeoReal originLong);
-  std::tuple<DCSGeoReal, DCSGeoReal> LatLongFromXY(DCSGeoReal x, DCSGeoReal y)
-    const;
+  DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong);
+  std::tuple<DCSWorld::GeoReal, DCSWorld::GeoReal> LatLongFromXY(
+    DCSWorld::GeoReal x,
+    DCSWorld::GeoReal y) const;
 
  private:
-  DCSGeoReal mOffsetX;
-  DCSGeoReal mOffsetY;
-  DCSGeoReal mZoneMeridian;
+  DCSWorld::GeoReal mOffsetX;
+  DCSWorld::GeoReal mOffsetY;
+  DCSWorld::GeoReal mZoneMeridian;
 
   static GeographicLib::TransverseMercator sModel;
 };
@@ -183,7 +63,7 @@ class DCSGrid final {
 GeographicLib::TransverseMercator DCSGrid::sModel
   = GeographicLib::TransverseMercator::UTM();
 
-DCSGrid::DCSGrid(DCSGeoReal originLat, DCSGeoReal originLong) {
+DCSGrid::DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong) {
   const int zone = GeographicLib::UTMUPS::StandardZone(originLat, originLong);
   mZoneMeridian = (6.0 * zone - 183);
 
@@ -198,13 +78,13 @@ DCSGrid::DCSGrid(DCSGeoReal originLat, DCSGeoReal originLong) {
     mOffsetY);
 }
 
-std::tuple<DCSGeoReal, DCSGeoReal> DCSGrid::LatLongFromXY(
-  DCSGeoReal dcsX,
-  DCSGeoReal dcsY) const {
+std::tuple<DCSWorld::GeoReal, DCSWorld::GeoReal> DCSGrid::LatLongFromXY(
+  DCSWorld::GeoReal dcsX,
+  DCSWorld::GeoReal dcsY) const {
   // UTM (x, y) are (easting, northing), but DCS (x, y) are (northing, easting)
   const auto x = mOffsetX + dcsY;
   const auto y = mOffsetY + dcsX;
-  DCSGeoReal retLat, retLong;
+  DCSWorld::GeoReal retLat, retLong;
 
   sModel.Reverse(mZoneMeridian, x, y, retLat, retLong);
   return {retLat, retLong};
@@ -276,8 +156,8 @@ struct DCSBriefingWind {
   int mStandardDirection;
 };
 
-static std::string DMSFormat(DCSGeoReal angle, char pos, char neg) {
-  DCSGeoReal degrees, minutes, seconds;
+static std::string DMSFormat(DCSWorld::GeoReal angle, char pos, char neg) {
+  DCSWorld::GeoReal degrees, minutes, seconds;
   GeographicLib::DMS::Encode(angle, degrees, minutes, seconds);
   return std::format(
     "{} {:03.0f}°{:02.0f}'{:05.2f}\"",
@@ -287,8 +167,8 @@ static std::string DMSFormat(DCSGeoReal angle, char pos, char neg) {
     seconds);
 };
 
-static std::string DMFormat(DCSGeoReal angle, char pos, char neg) {
-  DCSGeoReal degrees, minutes;
+static std::string DMFormat(DCSWorld::GeoReal angle, char pos, char neg) {
+  DCSWorld::GeoReal degrees, minutes;
   GeographicLib::DMS::Encode(angle, degrees, minutes);
   return std::format(
     "{} {:03.0f}°{:05.3f}'",
@@ -569,7 +449,8 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
   const auto startDate = mission.at("date");
   const auto xyBulls = mission["coalition"][key]["bullseye"];
   const auto [bullsLat, bullsLong] = grid.LatLongFromXY(
-    xyBulls["x"].Cast<DCSGeoReal>(), xyBulls["y"].Cast<DCSGeoReal>());
+    xyBulls["x"].Cast<DCSWorld::GeoReal>(),
+    xyBulls["y"].Cast<DCSWorld::GeoReal>());
 
   DCSMagneticModel magModel(mInstallationPath);
   magVar = magModel.GetMagneticVariation(

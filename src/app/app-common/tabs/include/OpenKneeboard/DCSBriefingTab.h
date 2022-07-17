@@ -28,8 +28,6 @@
 
 namespace OpenKneeboard {
 
-using DCSGeoReal = double;
-
 class LuaRef;
 class DCSExtractedMission;
 class ImagePageSource;
@@ -73,8 +71,8 @@ class DCSBriefingTab final : public TabBase,
   std::filesystem::path mInstallationPath;
 
   struct LatLong {
-    DCSGeoReal mLat;
-    DCSGeoReal mLong;
+    DCSWorld::GeoReal mLat;
+    DCSWorld::GeoReal mLong;
 
     auto operator<=>(const LatLong&) const noexcept = default;
   };

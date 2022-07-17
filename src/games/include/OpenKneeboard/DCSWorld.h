@@ -28,6 +28,8 @@ namespace OpenKneeboard {
 
 class DCSWorld final : public OpenKneeboard::Game {
  public:
+  using GeoReal = double;
+
   const char* GetNameForConfigFile() const override;
   std::string GetUserFriendlyName(
     const std::filesystem::path&) const override final;
