@@ -56,6 +56,8 @@ extern "C" {
  *   of returning a null object
  * - allow implicit casting, but only to limited types
  * - throw if a `static_cast<>` would not be sufficient
+ * - support `const`
+ * - generally feel more 'C++-like' than 'lua-like'
  */
 
 namespace OpenKneeboard {
