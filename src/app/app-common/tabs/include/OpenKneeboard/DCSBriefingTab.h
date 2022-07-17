@@ -30,6 +30,7 @@ namespace OpenKneeboard {
 
 using DCSGeoReal = double;
 
+class LuaRef;
 class DCSExtractedMission;
 class ImagePageSource;
 class PlainTextPageSource;
@@ -102,6 +103,17 @@ class DCSBriefingTab final : public TabBase,
     }
     throw std::logic_error("Invalid coalition");
   }
+
+  void SetMissionImages(
+    const LuaRef& mission,
+    const LuaRef& mapResource,
+    const std::filesystem::path& localizedResourcePath);
+
+  void PushMissionOverview(const LuaRef& mission, const LuaRef& dictionary);
+  void PushMissionSituation(const LuaRef& mission, const LuaRef& dictionary);
+  void PushMissionObjective(const LuaRef& mission, const LuaRef& dictionary);
+  void PushMissionWeather(const LuaRef& mission);
+  void PushBullseyeData(const LuaRef& mission);
 };
 
 }// namespace OpenKneeboard
