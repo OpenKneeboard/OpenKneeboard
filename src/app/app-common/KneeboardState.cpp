@@ -100,7 +100,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 KneeboardState::~KneeboardState() {
   this->RemoveAllEventListeners();
   mGameEventWorker.Cancel();
-  if (mOpenVRThread.joinable()) {
+  if (mOpenVRThread.get_id() != std::thread::id {}) {
     mOpenVRThread.request_stop();
     mOpenVRThread.join();
   }

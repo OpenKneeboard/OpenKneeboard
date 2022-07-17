@@ -118,7 +118,7 @@ PDFTab::PDFTab(
 }
 
 PDFTab::~PDFTab() {
-  if (p && p->mQPDFThread.joinable()) {
+  if (p && p->mQPDFThread.get_id() != std::thread::id {}) {
     p->mQPDFThread.request_stop();
     p->mQPDFThread.join();
   }
