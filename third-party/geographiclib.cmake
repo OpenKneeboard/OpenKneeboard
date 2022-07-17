@@ -1,7 +1,7 @@
 ExternalProject_Add(
   geographiclibBuild
-  URL "https://sourceforge.net/projects/geographiclib/files/distrib-C%2B%2B/GeographicLib-2.1.zip/download"
-  URL_HASH "SHA256=519e88e0c07a2067a633870e973af90100f9fbde1429ae6738a3805d06ce55b1"
+  URL "https://github.com/geographiclib/geographiclib/archive/refs/tags/v2.1.zip"
+  URL_HASH "SHA256=a03fbd13434622a32de90098fa8781857639ea0f7e4aaa6905304e4083c6e512"
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     -DBUILD_SHARED_LIBS=OFF
