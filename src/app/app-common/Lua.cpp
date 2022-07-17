@@ -144,6 +144,8 @@ void LuaState::DoFile(const std::filesystem::path& path) {
 }
 
 LuaRef LuaState::GetGlobal(const char* name) const {
+  const LuaStackCheck stackCheck(mLua);
+
   lua_getglobal(*mLua, name);
   return {mLua};
 }
