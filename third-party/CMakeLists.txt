@@ -18,7 +18,6 @@ include(json.cmake)
 include(libjpeg-turbo.cmake)
 include(libzip.cmake)
 include(lualib.cmake)
-include(LuaBridge.cmake) # must be after lualib
 include(oculus-sdk.cmake)
 include(openvr.cmake)
 include(openxr.cmake)

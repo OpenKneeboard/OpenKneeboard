@@ -36,7 +36,7 @@ target_link_libraries(
 	ThirdParty::DirectXTK
 	ThirdParty::GeographicLib
 	ThirdParty::LibZip
-	ThirdParty::LuaBridge
+	ThirdParty::Lua
 	ThirdParty::OpenVR
 	ThirdParty::QPDF
 	ThirdParty::WMM

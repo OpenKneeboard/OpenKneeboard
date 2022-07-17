@@ -23,6 +23,7 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/ImagePageSource.h>
+#include <OpenKneeboard/Lua.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/dprint.h>
@@ -42,8 +43,6 @@ extern "C" {
 #include <lauxlib.h>
 #include <lualib.h>
 }
-
-#include <LuaBridge/LuaBridge.h>
 
 using DCS = OpenKneeboard::DCSWorld;
 
@@ -242,26 +241,25 @@ D2D1_SIZE_U DCSBriefingTab::GetNativeContentSize(uint16_t pageIndex) {
   return mImagePages->GetNativeContentSize(pageIndex - textPageCount);
 }
 
-static std::string GetCountries(const luabridge::LuaRef& countries) {
+static std::string GetCountries(const LuaRef& countries) {
   std::string ret;
-  for (auto&& [i, country]: luabridge::pairs(countries)) {
-    if (
-      country["static"].isNil() || country["helicopter"].isNil()
-      || country["vehicle"].isNil() || country["plane"].isNil()) {
+  for (auto&& [i, country]: countries) {
+    if (!(country.contains("static") && country.contains("helicopter")
+          && country.contains("vehicle") && country.contains("plane"))) {
       continue;
     }
     if (!ret.empty()) {
       ret += ", ";
     }
-    ret += country["name"].cast<std::string>();
+    ret += country["name"].Get<std::string>();
   }
   return ret;
 }
 
 struct DCSBriefingWind {
-  DCSBriefingWind(const luabridge::LuaRef& data) {
-    mSpeed = data["speed"].cast<float>();
-    mDirection = data["dir"].cast<int>();
+  DCSBriefingWind(const LuaRef& data) {
+    mSpeed = data["speed"].Cast<float>();
+    mDirection = data["dir"].Cast<int>();
     mStandardDirection = (180 + mDirection) % 360;
     if (mDirection == 0) {
       mDirection = 360;
@@ -329,47 +327,34 @@ void DCSBriefingTab::Reload() noexcept {
     return;
   }
 
-  lua_State* lua = lua_open();
-  scope_guard closeLua([&lua]() { lua_close(lua); });
-
-  luaL_openlibs(lua);
+  LuaState lua;
 
   const auto root = mMission->GetExtractedPath();
 
-  int error = luaL_dofile(lua, to_utf8(root / "mission").c_str());
-  if (error) {
-    dprintf("Failed to load lua mission table: {}", lua_tostring(lua, -1));
-    return;
-  }
-
+  lua.DoFile(root / "mission");
   const auto localized = root / "l10n" / "DEFAULT";
-  error = luaL_dofile(lua, to_utf8(localized / "dictionary").c_str());
-  if (error) {
-    dprintf("Failed to load lua dictionary table: {}", lua_tostring(lua, -1));
-    return;
-  }
+  lua.DoFile(localized / "dictionary");
 
-  const auto mission = luabridge::getGlobal(lua, "mission");
-  const auto dictionary = luabridge::getGlobal(lua, "dictionary");
+  const auto mission = lua.GetGlobal("mission");
+  const auto dictionary = lua.GetGlobal("dictionary");
 
   if (std::filesystem::exists(localized / "mapResource")) {
-    error = luaL_dofile(lua, to_utf8(localized / "MapResource").c_str());
-    if (error) {
-      dprintf("Failed to load lua mapResource: {}", lua_tostring(lua, -1));
-      return;
-    }
+    lua.DoFile(localized / "MapResource");
 
-    const auto mapResource = luabridge::getGlobal(lua, "mapResource");
+    const auto mapResource = lua.GetGlobal("mapResource");
 
     std::vector<std::filesystem::path> images;
 
-    luabridge::LuaRef force = mission[CoalitionKey(
-      "pictureFileNameN", "pictureFileNameR", "pictureFileNameB")];
-    for (auto&& [i, resourceName]: luabridge::pairs(force)) {
-      const auto fileName = mapResource[resourceName].cast<std::string>();
-      const auto path = localized / fileName;
-      if (std::filesystem::is_regular_file(path)) {
-        images.push_back(path);
+    const auto forceKey = CoalitionKey(
+      "pictureFileNameN", "pictureFileNameR", "pictureFileNameB");
+    if (mission.contains(forceKey)) {
+      const auto force = mission.at(forceKey);
+      for (auto&& [i, resourceName]: force) {
+        const auto fileName = mapResource[resourceName].Cast<std::string>();
+        const auto path = localized / fileName;
+        if (std::filesystem::is_regular_file(path)) {
+          images.push_back(path);
+        }
       }
     }
     mImagePages->SetPaths(images);
@@ -381,13 +366,13 @@ void DCSBriefingTab::Reload() noexcept {
   const auto startSecondsSinceMidnight = mission["start_time"];
   const auto startDateTime = std::format(
     "{:04d}-{:02d}-{:02d} {:%T}",
-    startDate["Year"].cast<unsigned int>(),
-    startDate["Month"].cast<unsigned int>(),
-    startDate["Day"].cast<unsigned int>(),
+    startDate["Year"].Cast<unsigned int>(),
+    startDate["Month"].Cast<unsigned int>(),
+    startDate["Day"].Cast<unsigned int>(),
     std::chrono::seconds {
-      startSecondsSinceMidnight.cast<unsigned int>(),
+      startSecondsSinceMidnight.Cast<unsigned int>(),
     });
-  const std::string redCountries
+  std::string redCountries
     = GetCountries(mission["coalition"]["red"]["country"]);
   const std::string blueCountries
     = GetCountries(mission["coalition"]["blue"]["country"]);
@@ -421,17 +406,21 @@ void DCSBriefingTab::Reload() noexcept {
     _("SITUATION\n"
       "\n"
       "{}"),
-    dictionary[mission["descriptionText"]].cast<std::string>()));
+    dictionary[mission["descriptionText"]].Cast<std::string>()));
 
-  mTextPages->PushMessage(std::format(
-    _("OBJECTIVE\n"
-      "\n"
-      "{}"),
-    dictionary[mission[CoalitionKey(
-                 "descriptionNeutralTask",
-                 "descriptionRedTask",
-                 "descriptionBlueTask")]]
-      .cast<std::string>()));
+  try {
+    mTextPages->PushMessage(std::format(
+      _("OBJECTIVE\n"
+        "\n"
+        "{}"),
+      dictionary[mission[CoalitionKey(
+                   "descriptionNeutralTask",
+                   "descriptionRedTask",
+                   "descriptionBlueTask")]]
+        .Cast<std::string>()));
+  } catch (const LuaIndexError&) {
+    // just skip the section
+  }
 
   double magVar = 0.0f;
 
@@ -442,14 +431,14 @@ void DCSBriefingTab::Reload() noexcept {
     const auto key = CoalitionKey("neutral", "red", "blue");
     const auto xyBulls = mission["coalition"][key]["bullseye"];
     const auto [bullsLat, bullsLong] = grid.LatLongFromXY(
-      xyBulls["x"].cast<DCSGeoReal>(), xyBulls["y"].cast<DCSGeoReal>());
+      xyBulls["x"].Cast<DCSGeoReal>(), xyBulls["y"].Cast<DCSGeoReal>());
 
     DCSMagneticModel magModel(mInstallationPath);
     magVar = magModel.GetMagneticVariation(
       std::chrono::year_month_day {
-        std::chrono::year {startDate["Year"].cast<int>()},
-        std::chrono::month {startDate["Month"].cast<unsigned>()},
-        std::chrono::day {startDate["Day"].cast<unsigned>()},
+        std::chrono::year {startDate["Year"].Cast<int>()},
+        std::chrono::month {startDate["Month"].Cast<unsigned>()},
+        std::chrono::day {startDate["Day"].Cast<unsigned>()},
       },
       static_cast<float>(bullsLat),
       static_cast<float>(bullsLong));
@@ -473,14 +462,14 @@ void DCSBriefingTab::Reload() noexcept {
   }
 
   const auto weather = mission["weather"];
-  const auto temperature = weather["season"]["temperature"].cast<int>();
-  const auto qnhMmHg = weather["qnh"].cast<int>();
+  const auto temperature = weather["season"]["temperature"].Cast<int>();
+  const auto qnhMmHg = weather["qnh"].Cast<int>();
   const auto qnhInHg = qnhMmHg / 25.4;
-  const auto cloudBase = weather["clouds"]["base"].cast<int>();
+  const auto cloudBase = weather["clouds"]["base"].Cast<int>();
   const auto wind = weather["wind"];
-  DCSBriefingWind windAtGround {luabridge::LuaRef {wind["atGround"]}};
-  DCSBriefingWind windAt2000 {luabridge::LuaRef {wind["at2000"]}};
-  DCSBriefingWind windAt8000 {luabridge::LuaRef {wind["at8000"]}};
+  DCSBriefingWind windAtGround {wind["atGround"]};
+  DCSBriefingWind windAt2000 {wind["at2000"]};
+  DCSBriefingWind windAt8000 {wind["at8000"]};
 
   mTextPages->PushMessage(std::format(
     _("WEATHER\n"
