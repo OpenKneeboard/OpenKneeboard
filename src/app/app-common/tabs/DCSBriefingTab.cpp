@@ -20,6 +20,7 @@
 
 #include <OpenKneeboard/DCSBriefingTab.h>
 #include <OpenKneeboard/DCSExtractedMission.h>
+#include <OpenKneeboard/DCSGrid.h>
 #include <OpenKneeboard/DCSMagneticModel.h>
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
@@ -33,7 +34,6 @@
 #include <GeographicLib/DMS.hpp>
 #include <GeographicLib/GeoCoords.hpp>
 #include <GeographicLib/TransverseMercator.hpp>
-#include <GeographicLib/UTMUPS.hpp>
 #include <chrono>
 #include <cmath>
 #include <format>
@@ -44,51 +44,6 @@ using DCS = OpenKneeboard::DCSWorld;
 static_assert(std::is_same_v<GeographicLib::Math::real, DCS::GeoReal>);
 
 namespace OpenKneeboard {
-
-class DCSGrid final {
- public:
-  DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong);
-  std::tuple<DCSWorld::GeoReal, DCSWorld::GeoReal> LatLongFromXY(
-    DCSWorld::GeoReal x,
-    DCSWorld::GeoReal y) const;
-
- private:
-  DCSWorld::GeoReal mOffsetX;
-  DCSWorld::GeoReal mOffsetY;
-  DCSWorld::GeoReal mZoneMeridian;
-
-  static GeographicLib::TransverseMercator sModel;
-};
-
-GeographicLib::TransverseMercator DCSGrid::sModel
-  = GeographicLib::TransverseMercator::UTM();
-
-DCSGrid::DCSGrid(DCSWorld::GeoReal originLat, DCSWorld::GeoReal originLong) {
-  const int zone = GeographicLib::UTMUPS::StandardZone(originLat, originLong);
-  mZoneMeridian = (6.0 * zone - 183);
-
-  sModel.Forward(mZoneMeridian, originLat, originLong, mOffsetX, mOffsetY);
-
-  dprintf(
-    "DCS (0, 0) is in UTM zone {}, with meridian at {} and a UTM offset of "
-    "({}, {})",
-    zone,
-    mZoneMeridian,
-    mOffsetX,
-    mOffsetY);
-}
-
-std::tuple<DCSWorld::GeoReal, DCSWorld::GeoReal> DCSGrid::LatLongFromXY(
-  DCSWorld::GeoReal dcsX,
-  DCSWorld::GeoReal dcsY) const {
-  // UTM (x, y) are (easting, northing), but DCS (x, y) are (northing, easting)
-  const auto x = mOffsetX + dcsY;
-  const auto y = mOffsetY + dcsX;
-  DCSWorld::GeoReal retLat, retLong;
-
-  sModel.Reverse(mZoneMeridian, x, y, retLat, retLong);
-  return {retLat, retLong};
-}
 
 DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
   : TabWithDoodles(dxr, kbs),
