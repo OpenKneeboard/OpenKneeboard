@@ -18,6 +18,7 @@
  * USA.
  */
 
+#include <OpenKneeboard/Coordinates.h>
 #include <OpenKneeboard/DCSBriefingTab.h>
 #include <OpenKneeboard/DCSExtractedMission.h>
 #include <OpenKneeboard/DCSGrid.h>
@@ -31,17 +32,15 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
-#include <GeographicLib/DMS.hpp>
-#include <GeographicLib/GeoCoords.hpp>
-#include <GeographicLib/TransverseMercator.hpp>
 #include <chrono>
 #include <cmath>
 #include <format>
-#include <limits>
 
+static_assert(
+  std::is_same_v<OpenKneeboard::DCSWorld::GeoReal, OpenKneeboard::GeoReal>);
 using DCS = OpenKneeboard::DCSWorld;
 
-static_assert(std::is_same_v<GeographicLib::Math::real, DCS::GeoReal>);
+using namespace OpenKneeboard::Coordinates;
 
 namespace OpenKneeboard {
 
@@ -110,43 +109,6 @@ struct DCSBriefingWind {
   int mDirection;
   int mStandardDirection;
 };
-
-static std::string DMSFormat(DCSWorld::GeoReal angle, char pos, char neg) {
-  DCSWorld::GeoReal degrees, minutes, seconds;
-  GeographicLib::DMS::Encode(angle, degrees, minutes, seconds);
-  return std::format(
-    "{} {:03.0f}°{:02.0f}'{:05.2f}\"",
-    degrees >= 0 ? pos : neg,
-    std::abs(degrees),
-    minutes,
-    seconds);
-};
-
-static std::string DMFormat(DCSWorld::GeoReal angle, char pos, char neg) {
-  DCSWorld::GeoReal degrees, minutes;
-  GeographicLib::DMS::Encode(angle, degrees, minutes);
-  return std::format(
-    "{} {:03.0f}°{:05.3f}'",
-    degrees >= 0 ? pos : neg,
-    std::abs(degrees),
-    minutes);
-}
-
-static std::string MGRSFormat(double latitude, double longitude) {
-  const auto raw
-    = GeographicLib::GeoCoords(latitude, longitude).MGRSRepresentation(0);
-  // e.g. 37TEHnnnnneeeee
-  //                ^ -5
-  //           ^ -10
-  //         ^-12
-  const std::string_view view(raw);
-  return std::format(
-    "{} {} {} {}",
-    view.substr(0, view.size() - 12),
-    view.substr(view.size() - 12, 2),
-    view.substr(view.size() - 10, 5),
-    view.substr(view.size() - 5, 5));
-}
 
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
