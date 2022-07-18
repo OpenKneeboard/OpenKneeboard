@@ -353,10 +353,22 @@ void HelpPage::PopulateLicenses() noexcept {
   auto children = Licenses().Children();
   children.Clear();
 
-  std::vector<std::pair<std::string, std::filesystem::path>> licenseFiles {
-    {"OpenKneeboard", docDir / "LICENSE.txt"},
-    {"GNU General Public License, Version 2", docDir / "gpl-2.0.txt"},
-  };
+  auto addEntry
+    = [&](const std::string& label, const std::filesystem::path& path) {
+        Controls::HyperlinkButton link;
+        link.Content(box_value(to_hstring(label)));
+        link.Click(
+          [=](const auto&, const auto&) { this->DisplayLicense(label, path); });
+        children.Append(link);
+      };
+
+  addEntry("OpenKneeboard", docDir / "LICENSE.txt");
+  addEntry("GNU General Public License, Version 2", docDir / "gpl-2.0.txt");
+
+  Controls::TextBlock ackBlock;
+  ackBlock.TextWrapping(TextWrapping::WrapWholeWords);
+  ackBlock.Text(_(L"OpenKneeboard uses the following projects:"));
+  children.Append(ackBlock);
 
   for (const auto& entry: std::filesystem::directory_iterator(docDir)) {
     if (!entry.is_regular_file()) {
@@ -368,20 +380,7 @@ void HelpPage::PopulateLicenses() noexcept {
     }
     label.erase(0, sizeof("LICENSE-ThirdParty-") - 1 /* trailing null */);
 
-    licenseFiles.push_back({label, entry.path()});
-  }
-
-  for (const auto& [label, path]: licenseFiles) {
-    if (!std::filesystem::exists(path)) {
-      dprintf("Expected license file {}, but couldn't find it", path);
-      continue;
-    }
-
-    Controls::HyperlinkButton link;
-    link.Content(box_value(to_hstring(label)));
-    link.Click(
-      [=](const auto&, const auto&) { this->DisplayLicense(label, path); });
-    children.Append(link);
+    addEntry(label, entry.path());
   }
 }
 
