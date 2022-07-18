@@ -31,5 +31,5 @@ install(
   FILES
   "${SOURCE_DIR}/LICENSE.md"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-Detours.md"
+  RENAME "LICENSE-ThirdParty-Detours.txt"
 )

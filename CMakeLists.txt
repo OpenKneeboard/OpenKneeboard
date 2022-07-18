@@ -74,7 +74,11 @@ add_subdirectory("src")
 add_subdirectory("assets")
 
 install(
-  FILES
-  LICENSE
-  gpl-2.0.txt
-  TYPE DOC)
+  FILES LICENSE
+  TYPE DOC
+  RENAME "LICENSE.txt"
+)
+install(
+  FILES gpl-2.0.txt
+  TYPE DOC
+)

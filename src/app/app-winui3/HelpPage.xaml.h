@@ -68,9 +68,7 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   void PopulateLicenses() noexcept;
 
   void ScrollDPrintToEnd();
-  winrt::fire_and_forget DisplayLicense(
-    const std::string& header,
-    const std::filesystem::path&);
+  void DisplayLicense(const std::string& header, const std::filesystem::path&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

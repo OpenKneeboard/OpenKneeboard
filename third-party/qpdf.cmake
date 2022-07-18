@@ -55,5 +55,5 @@ add_library(ThirdParty::QPDF ALIAS libqpdf)
 install(
 	FILES "${SOURCE_DIR}/NOTICE.md"
 	TYPE DOC
-	RENAME "LICENSE-ThirdParty-QPDF.md"
+	RENAME "LICENSE-ThirdParty-QPDF.txt"
 )

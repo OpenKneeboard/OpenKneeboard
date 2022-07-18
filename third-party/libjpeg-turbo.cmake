@@ -24,5 +24,5 @@ add_library(ThirdParty::LibJpeg ALIAS libjpegTurbo)
 install(
 	FILES "${SOURCE_DIR}/LICENSE.md"
 	TYPE DOC
-	RENAME "LICENSE-ThirdParty-libjpeg-turbo.md"
+	RENAME "LICENSE-ThirdParty-libjpeg-turbo.txt"
 )

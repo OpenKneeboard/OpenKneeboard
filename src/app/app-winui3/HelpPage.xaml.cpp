@@ -30,6 +30,7 @@
 #include <OpenKneeboard/version.h>
 #include <appmodel.h>
 #include <microsoft.ui.xaml.window.h>
+#include <shellapi.h>
 #include <shims/winrt/base.h>
 #include <shobjidl.h>
 #include <time.h>
@@ -384,34 +385,14 @@ void HelpPage::PopulateLicenses() noexcept {
   }
 }
 
-winrt::fire_and_forget HelpPage::DisplayLicense(
-  const std::string& header,
+void HelpPage::DisplayLicense(
+  const std::string& /* title */,
   const std::filesystem::path& path) {
   if (!std::filesystem::is_regular_file(path)) {
-    co_return;
+    return;
   }
 
-  std::ifstream f(path, std::ios::binary);
-  std::stringstream buffer;
-  buffer << f.rdbuf();
-
-  Controls::TextBlock textBlock;
-  textBlock.Text(to_hstring(buffer.str()));
-  textBlock.FontFamily(Media::FontFamily(L"Consolas"));
-  textBlock.IsTextSelectionEnabled(true);
-
-  Controls::ScrollViewer scrollViewer;
-  scrollViewer.HorizontalScrollBarVisibility(
-    Controls::ScrollBarVisibility::Auto);
-  scrollViewer.Content(textBlock);
-
-  Controls::ContentDialog dialog;
-  dialog.XamlRoot(this->XamlRoot());
-  dialog.Title(box_value(to_hstring(header)));
-  dialog.Content(scrollViewer);
-  dialog.CloseButtonText(_(L"Close"));
-  dialog.DefaultButton(Controls::ContentDialogButton::Close);
-  co_await dialog.ShowAsync();
+  ShellExecuteW(NULL, L"open", path.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
