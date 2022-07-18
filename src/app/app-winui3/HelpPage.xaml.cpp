@@ -354,7 +354,7 @@ void HelpPage::PopulateLicenses() noexcept {
   children.Clear();
 
   std::vector<std::pair<std::string, std::filesystem::path>> licenseFiles {
-    {"OpenKneeboard", docDir / "LICENSE"},
+    {"OpenKneeboard", docDir / "LICENSE.txt"},
     {"GNU General Public License, Version 2", docDir / "gpl-2.0.txt"},
   };
 
