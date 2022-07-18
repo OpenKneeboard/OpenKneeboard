@@ -56,6 +56,7 @@ HelpPage::HelpPage() {
   this->PopulateVersion();
   this->PopulateEvents();
   this->PopulateDPrint();
+  this->PopulateLicenses();
 
   AddEventListener(
     TroubleshootingStore::Get()->evGameEventReceived,
@@ -336,6 +337,84 @@ winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   co_await CheckForUpdates(UpdateCheckType::Manual, this->XamlRoot());
+}
+
+void HelpPage::PopulateLicenses() noexcept {
+  wchar_t buffer[MAX_PATH];
+  const auto pathLen = GetModuleFileNameW(NULL, buffer, MAX_PATH);
+  const std::filesystem::path exePath {std::wstring_view {buffer, pathLen}};
+
+  const auto docDir = exePath.parent_path().parent_path() / "share" / "doc";
+
+  auto items = LicenseSource().Items();
+  if (!std::filesystem::exists(docDir)) {
+    dprintf("Expected license/docs dir doesn't exist: {}", docDir);
+    LicenseSource().IsEnabled(false);
+    Controls::ComboBoxItem item;
+    item.Content(box_value(L"OpenKneeboard"));
+    items.Append(item);
+    LicenseText().Text(
+      _(L"No license information found, please report a bug if this "
+        L"is an installed version."));
+    LicenseSource().SelectedIndex(0);
+    return;
+  }
+
+  std::vector<std::pair<std::string, std::filesystem::path>> licenseFiles {
+    {"OpenKneeboard", docDir / "LICENSE"},
+    {"GNU General Public License, Version 2", docDir / "gpl-2.0.txt"},
+  };
+
+  for (const auto& entry: std::filesystem::directory_iterator(docDir)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    auto label = to_utf8(entry.path().stem());
+    if (!label.starts_with("LICENSE-ThirdParty-")) {
+      continue;
+    }
+    label.erase(0, sizeof("LICENSE-ThirdParty-") - 1 /* trailing null */);
+
+    licenseFiles.push_back({label, entry.path()});
+  }
+
+  for (const auto& [label, path]: licenseFiles) {
+    if (!std::filesystem::exists(path)) {
+      dprintf("Expected license file {}, but couldn't find it", path);
+      continue;
+    }
+    Controls::ComboBoxItem item;
+    item.Content(box_value(to_hstring(label)));
+    item.Tag(box_value(path.wstring()));
+    items.Append(item);
+  }
+
+  if (items.Size() > 0) {
+    LicenseSource().SelectedIndex(0);
+  }
+}
+
+void HelpPage::OnSelectedLicenseChanged(
+  const IInspectable&,
+  const Controls::SelectionChangedEventArgs&) noexcept {
+  const auto& item = LicenseSource().SelectedItem();
+
+  const auto tag = item.as<Controls::ComboBoxItem>().Tag();
+  if (!tag) {
+    return;
+  }
+
+  const std::wstring path {unbox_value<winrt::hstring>(tag)};
+  if (!std::filesystem::is_regular_file(path)) {
+    return;
+  }
+
+  std::ifstream f(path, std::ios::binary);
+  std::stringstream buffer;
+  buffer << f.rdbuf();
+
+  LicenseText().Text(to_hstring(buffer.str()));
+  LicenseScrollViewer().ChangeView({}, {}, {});
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

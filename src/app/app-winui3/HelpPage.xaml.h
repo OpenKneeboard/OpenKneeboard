@@ -54,6 +54,10 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
+  void OnSelectedLicenseChanged(
+    const IInspectable&,
+    const Controls::SelectionChangedEventArgs&) noexcept;
+
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
@@ -64,6 +68,7 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   void PopulateVersion();
   winrt::fire_and_forget PopulateEvents() noexcept;
   winrt::fire_and_forget PopulateDPrint() noexcept;
+  void PopulateLicenses() noexcept;
 
   void ScrollDPrintToEnd();
 };
