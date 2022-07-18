@@ -367,7 +367,8 @@ void HelpPage::PopulateLicenses() noexcept {
 
   Controls::TextBlock ackBlock;
   ackBlock.TextWrapping(TextWrapping::WrapWholeWords);
-  ackBlock.Text(_(L"OpenKneeboard uses the following projects:"));
+  ackBlock.Text(_(
+    L"OpenKneeboard uses and includes software from the following projects:"));
   children.Append(ackBlock);
 
   for (const auto& entry: std::filesystem::directory_iterator(docDir)) {
