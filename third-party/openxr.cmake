@@ -20,3 +20,9 @@ target_include_directories(
 )
 
 add_library(ThirdParty::OpenXR ALIAS OpenXRSDK)
+
+install(
+	FILES "${SOURCE_DIR}/LICENSE"
+	TYPE DOC
+	RENAME "LICENSE-ThirdParty-OpenXR SDK.txt"
+)

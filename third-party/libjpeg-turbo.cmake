@@ -11,6 +11,7 @@ ExternalProject_Add(
   EXCLUDE_FROM_ALL
 )
 
+ExternalProject_Get_property(libjpegTurboBuild SOURCE_DIR)
 ExternalProject_Get_property(libjpegTurboBuild INSTALL_DIR)
 
 add_library(libjpegTurbo INTERFACE)
@@ -19,3 +20,9 @@ target_link_libraries(libjpegTurbo INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/jpeg-
 target_include_directories(libjpegTurbo INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
 
 add_library(ThirdParty::LibJpeg ALIAS libjpegTurbo)
+
+install(
+	FILES "${SOURCE_DIR}/LICENSE.md"
+	TYPE DOC
+	RENAME "LICENSE-ThirdParty-libjpeg-turbo.md"
+)

@@ -20,6 +20,7 @@ ExternalProject_Add(
 )
 add_dependencies(libzipBuild zlibBuild)
 
+ExternalProject_Get_property(libzipBuild SOURCE_DIR)
 ExternalProject_Get_property(libzipBuild INSTALL_DIR)
 
 add_library(libzip INTERFACE)
@@ -28,3 +29,9 @@ target_link_libraries(libzip INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/zip.lib")
 target_include_directories(libzip INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
 
 add_library(ThirdParty::LibZip ALIAS libzip)
+
+install(
+	FILES "${SOURCE_DIR}/LICENSE"
+	TYPE DOC
+	RENAME "LICENSE-ThirdParty-libzip.txt"
+)

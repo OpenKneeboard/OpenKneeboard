@@ -10,3 +10,5 @@ add_library(
 target_include_directories(wmm PUBLIC "${WMM_ROOT}")
 
 add_library(ThirdParty::WMM ALIAS wmm)
+
+# No copyright notice: public domain work of the US Government

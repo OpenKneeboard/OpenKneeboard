@@ -16,3 +16,9 @@ target_link_libraries(zlib INTERFACE "${INSTALL_DIR}/lib/zlibstatic$<$<CONFIG:De
 target_include_directories(zlib INTERFACE "${INSTALL_DIR}/include")
 
 add_library(ThirdParty::ZLib ALIAS zlib)
+
+install(
+	FILES "${CMAKE_CURRENT_LIST_DIR}/zlib.COPYING.txt"
+	TYPE DOC
+	RENAME "LICENSE-ThirdParty-zlib.txt"
+)

@@ -29,7 +29,7 @@ install(
   FILES
   "${SOURCE_DIR}/LICENSE"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-DirectXTK"
+  RENAME "LICENSE-ThirdParty-DirectXTK.txt"
 )
 
 add_library(ThirdParty::DirectXTK ALIAS directxtk)

@@ -24,7 +24,7 @@ install(
   FILES
   "${SOURCE_DIR}/LICENSE.MIT"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-JSON_for_Modern_CPP"
+  RENAME "LICENSE-ThirdParty-JSON for Modern CPP.txt"
 )
 
 add_library(ThirdParty::JSON ALIAS json)

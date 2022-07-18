@@ -22,6 +22,7 @@ ExternalProject_Add(
   EXCLUDE_FROM_ALL
 )
 
+ExternalProject_Get_property(geographiclibBuild SOURCE_DIR)
 ExternalProject_Get_property(geographiclibBuild INSTALL_DIR)
 add_library(geographiclib INTERFACE)
 add_dependencies(geographiclib INTERFACE geographiclibBuild)
@@ -38,3 +39,9 @@ target_include_directories(
 )
 add_library(ThirdParty::GeographicLib ALIAS geographiclib)
 
+
+install(
+	FILES "${SOURCE_DIR}/LICENSE.txt"
+	TYPE DOC
+	RENAME "LICENSE-ThirdParty-geographiclib.txt"
+)

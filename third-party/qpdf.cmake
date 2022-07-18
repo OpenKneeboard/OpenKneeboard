@@ -51,3 +51,9 @@ target_include_directories(
   "${INSTALL_DIR}/$<CONFIG>/include"
 )
 add_library(ThirdParty::QPDF ALIAS libqpdf)
+
+install(
+	FILES "${SOURCE_DIR}/NOTICE.md"
+	TYPE DOC
+	RENAME "LICENSE-ThirdParty-QPDF.md"
+)

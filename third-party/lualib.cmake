@@ -37,7 +37,7 @@ install(
   FILES
   "${lua_SOURCE_DIR}/COPYRIGHT"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-lua"
+  RENAME "LICENSE-ThirdParty-Lua.txt"
 )
 
 add_library(ThirdParty::Lua ALIAS lualib)

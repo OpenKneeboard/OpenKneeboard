@@ -28,5 +28,5 @@ install(
   FILES
   "${SOURCE_DIR}/LICENSE"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-cppwinrt.txt"
+  RENAME "LICENSE-ThirdParty-CppWinRT.txt"
 )
