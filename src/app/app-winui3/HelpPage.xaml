@@ -187,29 +187,20 @@
             />
             <TextBlock
               Grid.Column="1"
-              Text="Licenses and Acknowledgements"
+              Text="Acknowledgements and Copyright"
               Style="{StaticResource SubtitleTextBlockStyle}"
               VerticalAlignment="Center"
             />
           </Grid>
         </Expander.Header>
-        <StackPanel Orientation="Vertical" Spacing="12">
-          <ComboBox
-            x:Name="LicenseSource" 
-            SelectionChanged="OnSelectedLicenseChanged"
-          />
-          <ScrollViewer
-            HorizontalScrollBarVisibility="Auto"
-            MaxHeight="120"
-            x:Name="LicenseScrollViewer">
-            <TextBlock
-              x:Name="LicenseText"
-              Style="{ThemeResource BodyTextBlockStyle}" 
-              IsTextSelectionEnabled="True"
-              FontFamily="Consolas"
-              TextWrapping="NoWrap"
-            />
-          </ScrollViewer>
+        <StackPanel
+          Orientation="Vertical"
+          Spacing="12"
+          x:Name="Licenses">
+          <TextBlock>
+            No copyright files found; please file a bug if this is a
+            released verison.
+          </TextBlock>
         </StackPanel>
       </Expander>
     </StackPanel>

@@ -25,6 +25,7 @@
 
 #include <OpenKneeboard/Events.h>
 
+#include <shims/filesystem>
 #include <string>
 
 #include "HelpPage.g.h"
@@ -54,10 +55,6 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
-  void OnSelectedLicenseChanged(
-    const IInspectable&,
-    const Controls::SelectionChangedEventArgs&) noexcept;
-
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
@@ -71,6 +68,9 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   void PopulateLicenses() noexcept;
 
   void ScrollDPrintToEnd();
+  winrt::fire_and_forget DisplayLicense(
+    const std::string& header,
+    const std::filesystem::path&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

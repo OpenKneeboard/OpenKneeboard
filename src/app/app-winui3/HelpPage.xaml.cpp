@@ -38,7 +38,6 @@
 
 #include <format>
 #include <fstream>
-#include <shims/filesystem>
 #include <string>
 
 #include "CheckForUpdates.h"
@@ -346,19 +345,12 @@ void HelpPage::PopulateLicenses() noexcept {
 
   const auto docDir = exePath.parent_path().parent_path() / "share" / "doc";
 
-  auto items = LicenseSource().Items();
   if (!std::filesystem::exists(docDir)) {
-    dprintf("Expected license/docs dir doesn't exist: {}", docDir);
-    LicenseSource().IsEnabled(false);
-    Controls::ComboBoxItem item;
-    item.Content(box_value(L"OpenKneeboard"));
-    items.Append(item);
-    LicenseText().Text(
-      _(L"No license information found, please report a bug if this "
-        L"is an installed version."));
-    LicenseSource().SelectedIndex(0);
     return;
   }
+
+  auto children = Licenses().Children();
+  children.Clear();
 
   std::vector<std::pair<std::string, std::filesystem::path>> licenseFiles {
     {"OpenKneeboard", docDir / "LICENSE"},
@@ -383,38 +375,43 @@ void HelpPage::PopulateLicenses() noexcept {
       dprintf("Expected license file {}, but couldn't find it", path);
       continue;
     }
-    Controls::ComboBoxItem item;
-    item.Content(box_value(to_hstring(label)));
-    item.Tag(box_value(path.wstring()));
-    items.Append(item);
-  }
 
-  if (items.Size() > 0) {
-    LicenseSource().SelectedIndex(0);
+    Controls::HyperlinkButton link;
+    link.Content(box_value(to_hstring(label)));
+    link.Click(
+      [=](const auto&, const auto&) { this->DisplayLicense(label, path); });
+    children.Append(link);
   }
 }
 
-void HelpPage::OnSelectedLicenseChanged(
-  const IInspectable&,
-  const Controls::SelectionChangedEventArgs&) noexcept {
-  const auto& item = LicenseSource().SelectedItem();
-
-  const auto tag = item.as<Controls::ComboBoxItem>().Tag();
-  if (!tag) {
-    return;
-  }
-
-  const std::wstring path {unbox_value<winrt::hstring>(tag)};
+winrt::fire_and_forget HelpPage::DisplayLicense(
+  const std::string& header,
+  const std::filesystem::path& path) {
   if (!std::filesystem::is_regular_file(path)) {
-    return;
+    co_return;
   }
 
   std::ifstream f(path, std::ios::binary);
   std::stringstream buffer;
   buffer << f.rdbuf();
 
-  LicenseText().Text(to_hstring(buffer.str()));
-  LicenseScrollViewer().ChangeView({}, {}, {});
+  Controls::TextBlock textBlock;
+  textBlock.Text(to_hstring(buffer.str()));
+  textBlock.FontFamily(Media::FontFamily(L"Consolas"));
+  textBlock.IsTextSelectionEnabled(true);
+
+  Controls::ScrollViewer scrollViewer;
+  scrollViewer.HorizontalScrollBarVisibility(
+    Controls::ScrollBarVisibility::Auto);
+  scrollViewer.Content(textBlock);
+
+  Controls::ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(to_hstring(header)));
+  dialog.Content(scrollViewer);
+  dialog.CloseButtonText(_(L"Close"));
+  dialog.DefaultButton(Controls::ContentDialogButton::Close);
+  co_await dialog.ShowAsync();
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
