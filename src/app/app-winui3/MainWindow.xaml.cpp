@@ -81,7 +81,6 @@ MainWindow::MainWindow() {
   SendMessage(
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
 
-  gUIThreadDispatcherQueue = DispatcherQueue();
   gDXResources = DXResources::Create();
   gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);
 
