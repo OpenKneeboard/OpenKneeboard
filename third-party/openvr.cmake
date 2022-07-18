@@ -33,7 +33,7 @@ install(
   FILES
   "${SOURCE_DIR}/LICENSE"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-OpenVR.txt"
+  RENAME "LICENSE-ThirdParty-OpenVR SDK.txt"
 )
 
 add_library(ThirdParty::OpenVR ALIAS openvr)
