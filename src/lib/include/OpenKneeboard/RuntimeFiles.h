@@ -35,7 +35,8 @@ namespace OpenKneeboard::RuntimeFiles {
   IT(OPENXR_DLL) \
   IT(OPENXR_JSON) \
   IT(OPENXR_REGISTER_LAYER_HELPER) \
-  IT(QUICK_START_PDF)
+  IT(QUICK_START_PDF) \
+  IT(WINDOWSAPP_LAUNCHER)
 
 #define IT(x) extern const std::filesystem::path x;
 OPENKNEEBOARD_RUNTIME_FILES
