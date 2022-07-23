@@ -113,7 +113,7 @@ jobs:
         run:
           cmake --install . `
             --config ${{matrix.config}} `
-            --component Utilities`
+            --component Utilities `
             --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Utilities
       - name: Upload utilities zip
         if: ${{matrix.config != 'Debug' }}
