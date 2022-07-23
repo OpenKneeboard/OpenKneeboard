@@ -17,7 +17,7 @@ I make this for my own use, and I share this in the hope others find it useful; 
 Support may be available from the community via:
 
 - [GitHub Discussions](https://github.com/fredemmott/OpenKneeboard/discussions)
-- [Discord](https://discord.gg/CWrvKfuff3)
+- [Discord](https://go.openkneeboard.com/discord)
 
 I am not able to respond to 1:1 requests for help via any means, including GitHub, Discord, Twitter, Reddit, or email.
 
