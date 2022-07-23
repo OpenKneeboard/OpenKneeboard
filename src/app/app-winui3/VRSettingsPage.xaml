@@ -86,16 +86,23 @@
         CornerRadius="4"
         BorderThickness="1"
         Padding="8">
-        <Grid ColumnDefinitions="Auto,*">
-          <NumberBox
-            Header="Kneeboard size, in meters"
-            Value="{x:Bind KneeboardHeight}"
-            SmallChange="0.01"
-            LargeChange="0.05"
-            SpinButtonPlacementMode="Inline"
-            NumberFormatter="{StaticResource MetersFormatter}"
-          />
-        </Grid>
+        <NumberBox
+          Header="Kneeboard width limit, in meters"
+          Value="{x:Bind KneeboardMaxWidth}"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+        />
+				<NumberBox
+					Header="Kneeboard height limit, in meters"
+					Value="{x:Bind KneeboardMaxHeight}"
+					SmallChange="0.01"
+					LargeChange="0.05"
+					SpinButtonPlacementMode="Inline"
+					NumberFormatter="{StaticResource MetersFormatter}"
+				/>
+
         <Slider
           Header="Zoom level when looking at kneeboard"
           Value="{x:Bind KneeboardZoomScale}"
@@ -271,15 +278,15 @@
           TickPlacement="Outside"
           ThumbToolTipValueConverter="{StaticResource PercentConverter}"
         />
-				<Slider
-					Header="When not looking at the kneeboard"
-					Value="{x:Bind NormalOpacity}"
-					Minimum="0"
-					Maximum="100"
-					TickFrequency="10"
-					TickPlacement="Outside"
-					ThumbToolTipValueConverter="{StaticResource PercentConverter}"
-				/>
+        <Slider
+          Header="When not looking at the kneeboard"
+          Value="{x:Bind NormalOpacity}"
+          Minimum="0"
+          Maximum="100"
+          TickFrequency="10"
+          TickPlacement="Outside"
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+        />
 
       </StackPanel>
     </StackPanel>

@@ -33,11 +33,12 @@ namespace OpenKneeboard {
 
 #pragma pack(push)
 struct VRLayerConfig {
-  static constexpr uint16_t VERSION = 1;
+  static constexpr uint16_t VERSION = 2;
   // Distances in meters, rotations in radians
   float mX = 0.15f, mFloorY = 0.6f, mEyeY = -0.7f, mZ = -0.4f;
   float mRX = -2 * std::numbers::pi_v<float> / 5,
         mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
+  float mWidth = 0.25f;
   float mHeight = 0.25f;
 };
 
@@ -76,6 +77,8 @@ struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
   OpenXRMode mOpenXRMode = OpenXRMode::CurrentUser;
   VRLayerConfig mPrimaryLayer;
+  float mMaxWidth = 0.15f;
+  float mMaxHeight = 0.25f;
 };
 
 template <>

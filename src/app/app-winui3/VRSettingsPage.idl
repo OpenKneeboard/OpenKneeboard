@@ -6,7 +6,8 @@ namespace OpenKneeboardApp
         VRSettingsPage();
 
         Single KneeboardZoomScale;
-        Single KneeboardHeight;
+        Single KneeboardMaxHeight;
+        Single KneeboardMaxWidth;
 
         Single KneeboardX;
         Single KneeboardEyeY;

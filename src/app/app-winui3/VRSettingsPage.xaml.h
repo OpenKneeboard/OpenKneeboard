@@ -47,8 +47,10 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   void KneeboardRY(float value);
   float KneeboardRZ();
   void KneeboardRZ(float value);
-  float KneeboardHeight();
-  void KneeboardHeight(float value);
+  float KneeboardMaxWidth();
+  void KneeboardMaxWidth(float value);
+  float KneeboardMaxHeight();
+  void KneeboardMaxHeight(float value);
   float KneeboardZoomScale();
   void KneeboardZoomScale(float value);
   float KneeboardGazeTargetHorizontalScale();

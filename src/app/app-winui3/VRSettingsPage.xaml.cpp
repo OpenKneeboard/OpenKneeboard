@@ -74,7 +74,8 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
          L"KneeboardRX",
          L"KneeboardRY",
          L"KneeboardRZ",
-         L"KneeboardHeight",
+         L"KneeboardMaxWidth",
+         L"KneeboardMaxHeight",
          L"KneeboardZoomScale",
          L"KneeboardGazeTargetHorizontalScale",
          L"KneeboardGazeTargetVerticalScale",
@@ -208,16 +209,29 @@ void VRSettingsPage::KneeboardRZ(float value) {
   gKneeboard->SetVRConfig(config);
 }
 
-float VRSettingsPage::KneeboardHeight() {
-  return gKneeboard->GetVRConfig().mPrimaryLayer.mHeight;
+float VRSettingsPage::KneeboardMaxHeight() {
+  return gKneeboard->GetVRConfig().mMaxHeight;
 }
 
-void VRSettingsPage::KneeboardHeight(float value) {
+void VRSettingsPage::KneeboardMaxHeight(float value) {
   if (std::isnan(value)) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mPrimaryLayer.mHeight = value;
+  config.mMaxHeight = value;
+  gKneeboard->SetVRConfig(config);
+}
+
+float VRSettingsPage::KneeboardMaxWidth() {
+  return gKneeboard->GetVRConfig().mMaxWidth;
+}
+
+void VRSettingsPage::KneeboardMaxWidth(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto config = gKneeboard->GetVRConfig();
+  config.mMaxWidth = value;
   gKneeboard->SetVRConfig(config);
 }
 

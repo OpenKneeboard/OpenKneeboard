@@ -31,8 +31,11 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
   l.mRX = j.at("rx");
   l.mRY = j.at("ry");
   l.mRZ = j.at("rz");
-  l.mHeight = j.at("height");
+  vrc.mMaxHeight = j.at("height");
   vrc.mZoomScale = j.at("zoomScale");
+  if (j.contains("width")) {
+    vrc.mMaxWidth = j.at("width");
+  }
 
   if (j.contains("gazeTargetScale")) {
     auto scale = j.at("gazeTargetScale");
@@ -98,7 +101,8 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"rx", l.mRX},
     {"ry", l.mRY},
     {"rz", l.mRZ},
-    {"height", l.mHeight},
+    {"width", vrc.mMaxWidth},
+    {"height", vrc.mMaxHeight},
     {"zoomScale", vrc.mZoomScale},
     {"invertOpenXRYPosition",
      static_cast<bool>(

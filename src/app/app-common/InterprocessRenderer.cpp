@@ -229,6 +229,13 @@ void InterprocessRenderer::Render(Layer& layer) {
   layer.mConfig.mImageWidth = usedSize.width;
   layer.mConfig.mImageHeight = usedSize.height;
 
+  const auto vrc = mKneeboard->GetVRConfig();
+  const auto xFitScale = vrc.mMaxWidth / usedSize.width;
+  const auto yFitScale = vrc.mMaxHeight / usedSize.height;
+  const auto scale = std::min<float>(xFitScale, yFitScale);
+  layer.mConfig.mVR.mWidth = usedSize.width * scale;
+  layer.mConfig.mVR.mHeight = usedSize.height * scale;
+
   const auto tabView = view->GetCurrentTabView();
   if (!tabView) {
     auto msg = _("No Tab");
