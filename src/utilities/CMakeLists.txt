@@ -12,7 +12,7 @@ function(add_remote_control_executable TARGET)
   add_executable(${TARGET} ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.exe)
   sign_target(${TARGET})
-  install(TARGETS "${TARGET}" COMPONENT RemoteControl)
+  install(TARGETS "${TARGET}" COMPONENT Utilities)
   install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
 endfunction()
 
@@ -124,6 +124,6 @@ install(
   TARGETS
   OpenKneeboard-Uninstall-Helper
   COMPONENT
-  RemoteControl
+  Utilities 
   EXCLUDE_FROM_ALL)
 install(FILES "$<TARGET_PDB_FILE:OpenKneeboard-Uninstall-Helper>" TYPE BIN COMPONENT DebugSymbols)

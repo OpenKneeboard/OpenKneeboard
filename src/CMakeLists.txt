@@ -101,8 +101,8 @@ cpack_add_component(
   HIDDEN
 )
 cpack_add_component(
-  RemoteControl
-  DISPLAY_NAME "Remote controls"
+  Utilities
+  DISPLAY_NAME "Utilities"
   DESCRIPTION "Utilities to control OpenKneeboard (e.g. change tab) from other scripts or programs."
   DISABLED
 )

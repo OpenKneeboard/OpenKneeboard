@@ -107,21 +107,21 @@ jobs:
           name: OpenKneeboard-${{matrix.config}}.msix
           path:
             ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
-      - name: Install remote control apps
+      - name: Install utility apps
         working-directory: build
         shell: pwsh
         run:
           cmake --install . `
             --config ${{matrix.config}} `
-            --component RemoteControl `
-            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-RemoteControl
-      - name: Upload remote control zip
+            --component Utilities`
+            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Utilities
+      - name: Upload utilities zip
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}-RemoteControl
+          name: OpenKneeboard-${{matrix.config}}-Utilities
           path:
-            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-RemoteControl/bin
+            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Utilities/bin
       - name: Install Debug Symbols
         working-directory: build
         shell: pwsh
@@ -161,7 +161,7 @@ jobs:
       - name: Create zip files
         run: |
           for CONFIG in RelWithDebInfo; do
-            for ZIP_ARTIFACT in "" "-RemoteControl" "-Symbols"; do
+            for ZIP_ARTIFACT in "" "-Utilities" "-Symbols"; do
               (
                 cd ${{runner.temp}}/artifacts/OpenKneeboard-${CONFIG}${ZIP_ARTIFACT}
                 zip -r \
@@ -189,14 +189,14 @@ jobs:
           asset_path: ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo.msix/OpenKneeboard-RelWithDebInfo.msix
           asset_name: OpenKneeboard-${{github.ref_name}}.msix
           asset_content_type: application/msix
-      - name: Attach -RelWithDebInfo-RemoteControl.zip
+      - name: Attach -RelWithDebInfo-Utilities.zip
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-RemoteControl.zip
-          asset_name: OpenKneeboard-${{github.ref_name}}-RemoteControl.zip
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-Utilities.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}-Utilities.zip
           asset_content_type: application/zip
       - name: Attach -RelWithDebInfo-Symbols.zip
         uses: actions/upload-release-asset@v1
