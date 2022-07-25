@@ -50,7 +50,10 @@ void DCSAircraftTab::OnGameEvent(
     return;
   }
 
-  const auto path = savedGamesPath / "KNEEBOARD" / event.value;
+  auto path = savedGamesPath / "KNEEBOARD" / event.value;
+  if (std::filesystem::exists(path)) {
+    path = std::filesystem::canonical(path);
+  }
   if (this->GetDelegate()->GetPath() != path) {
     dprintf("Aircraft tab: looking for {}", path);
     this->GetDelegate()->SetPath(path);
