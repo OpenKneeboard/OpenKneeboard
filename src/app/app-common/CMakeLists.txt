@@ -48,7 +48,8 @@ target_include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/UserInput/include
 	${CMAKE_CURRENT_SOURCE_DIR}/GamesList/include
 	${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include
-	${CMAKE_CURRENT_SOURCE_DIR}/tabs/include
+	${CMAKE_CURRENT_SOURCE_DIR}/Tab/include
+	${CMAKE_CURRENT_SOURCE_DIR}/PageSource/include
 )
 
 add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)
