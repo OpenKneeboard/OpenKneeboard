@@ -118,13 +118,10 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() {
 
     mState = newState;
 
-    for (uint64_t i = 0; i < newState.size(); ++i) {
+    for (uint8_t i = 0; i < newState.size(); ++i) {
       if (oldState[i] != newState[i]) {
-        mDevice->evButtonEvent.Emit({
-          mDevice,
-          i,
-          static_cast<bool>(newState[i] & (1 << 7)),
-        });
+        mDevice->PostButtonStateChange(
+          i, static_cast<bool>(newState[i] & (1 << 7)));
       }
     }
   }

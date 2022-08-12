@@ -21,11 +21,14 @@
 
 #include <dinput.h>
 
+#include <memory>
+
 #include "UserInputDevice.h"
 
 namespace OpenKneeboard {
 
-class DirectInputDevice final : public UserInputDevice {
+class DirectInputDevice final : public UserInputDevice,
+                                public std::enable_shared_from_this<DirectInputDevice> {
  public:
   DirectInputDevice(const DIDEVICEINSTANCEW&);
 
@@ -42,6 +45,8 @@ class DirectInputDevice final : public UserInputDevice {
   Event<> evBindingsChangedEvent;
 
   DIDEVICEINSTANCEW GetDIDeviceInstance() const;
+
+  void PostButtonStateChange(uint8_t index, bool pressed);
 
  private:
   DIDEVICEINSTANCEW mDevice;

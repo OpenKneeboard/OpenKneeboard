@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DirectInputDevice.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/utf8.h>
 #include <shims/winrt/base.h>
 
@@ -305,6 +306,14 @@ void DirectInputDevice::SetButtonBindings(
   const std::vector<UserInputButtonBinding>& bindings) {
   mButtonBindings = bindings;
   evBindingsChangedEvent.Emit();
+}
+
+void DirectInputDevice::PostButtonStateChange(uint8_t id, bool pressed) {
+  evButtonEvent.Emit(UserInputButtonEvent {
+    this->shared_from_this(),
+    id,
+    pressed,
+  });
 }
 
 DIDEVICEINSTANCEW DirectInputDevice::GetDIDeviceInstance() const {
