@@ -18,6 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/DirectInputDevice.h>
+#include <OpenKneeboard/DirectInputJoystickListener.h>
+#include <OpenKneeboard/DirectInputKeyboardListener.h>
 #include <OpenKneeboard/DirectInputListener.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/dprint.h>
@@ -51,16 +53,6 @@ DirectInputListener::DirectInputListener(
   winrt::check_hresult(mDIDevice->SetCooperativeLevel(
     NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE));
   winrt::check_hresult(mDIDevice->Acquire());
-
-  if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
-    winrt::check_hresult(
-      mDIDevice->GetDeviceState(mState.size(), mState.data()));
-  } else {
-    DIJOYSTATE2 joyState;
-    winrt::check_hresult(
-      mDIDevice->GetDeviceState(sizeof(joyState), &joyState));
-    ::memcpy(mState.data(), joyState.rgbButtons, 128);
-  }
 }
 
 DirectInputListener::~DirectInputListener() {
@@ -73,7 +65,13 @@ DirectInputListener::~DirectInputListener() {
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
   const winrt::com_ptr<IDirectInput8>& di,
   const std::shared_ptr<DirectInputDevice>& device) {
-  DirectInputListener listener {di, device};
+  if (device->GetDIDeviceInstance().dwDevType & 0xff == DI8DEVTYPE_KEYBOARD) {
+    DirectInputKeyboardListener listener {di, device};
+    co_await listener.Run();
+    co_return;
+  }
+
+  DirectInputJoystickListener listener {di, device};
   co_await listener.Run();
 }
 
@@ -92,8 +90,6 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() {
       co_return;
     }
 
-    auto oldState = mState;
-    decltype(oldState) newState {};
     const auto pollResult = mDIDevice->Poll();
     if (pollResult != DI_OK && pollResult != DI_NOEFFECT) {
       dprintf(
@@ -103,28 +99,12 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() {
         std::bit_cast<uint32_t>(pollResult));
       co_return;
     }
-    if (
-      (mDevice->GetDIDeviceInstance().dwDevType & 0xff)
-      == DI8DEVTYPE_KEYBOARD) {
-      mDIDevice->GetDeviceState(sizeof(newState), &newState);
-    } else {
-      DIJOYSTATE2 joyState;
-      mDIDevice->GetDeviceState(sizeof(joyState), &joyState);
-      ::memcpy(newState.data(), joyState.rgbButtons, 128);
-    }
-    if (::memcmp(oldState.data(), newState.data(), sizeof(newState)) == 0) {
-      continue;
-    }
-
-    mState = newState;
-
-    for (uint8_t i = 0; i < newState.size(); ++i) {
-      if (oldState[i] != newState[i]) {
-        mDevice->PostButtonStateChange(
-          i, static_cast<bool>(newState[i] & (1 << 7)));
-      }
-    }
+    this->Poll();
   }
+}
+
+std::shared_ptr<DirectInputDevice> DirectInputListener::GetDevice() const {
+  return mDevice;
 }
 
 }// namespace OpenKneeboard

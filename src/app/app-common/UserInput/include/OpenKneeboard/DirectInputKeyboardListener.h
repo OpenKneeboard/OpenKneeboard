@@ -19,45 +19,24 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
-#include <dinput.h>
-#include <shims/winrt/base.h>
-#include <winrt/Windows.Foundation.h>
+#include <OpenKneeboard/DirectInputListener.h>
 
 #include <array>
 
 namespace OpenKneeboard {
 
-class DirectInputDevice;
-
-class DirectInputListener {
+class DirectInputKeyboardListener final : public DirectInputListener {
  public:
-  virtual ~DirectInputListener();
-
-  static winrt::Windows::Foundation::IAsyncAction Run(
+  DirectInputKeyboardListener(
     const winrt::com_ptr<IDirectInput8>& di,
     const std::shared_ptr<DirectInputDevice>& device);
+  ~DirectInputKeyboardListener();
 
  protected:
-  DirectInputListener(
-    const winrt::com_ptr<IDirectInput8>& di,
-    const std::shared_ptr<DirectInputDevice>& device);
-
-  virtual void Poll() = 0;
-
-  template <class T>
-  void GetState(DWORD size, T* state) {
-    winrt::check_hresult(mDIDevice->GetDeviceState(size, state));
-  }
-
-  std::shared_ptr<DirectInputDevice> GetDevice() const;
+  virtual void Poll() override;
 
  private:
-  winrt::Windows::Foundation::IAsyncAction Run();
-
-  std::shared_ptr<DirectInputDevice> mDevice;
-  winrt::com_ptr<IDirectInputDevice8> mDIDevice;
-  winrt::handle mEventHandle;
+  std::array<unsigned char, 256> mState;
 };
 
 }// namespace OpenKneeboard
