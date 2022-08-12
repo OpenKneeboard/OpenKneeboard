@@ -33,7 +33,6 @@ struct IDirectInput8W;
 namespace OpenKneeboard {
 
 class DirectInputDevice;
-class DirectInputListener;
 class UserInputButtonBinding;
 class UserInputDevice;
 
@@ -60,8 +59,7 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
 
   struct DeviceState {
     std::shared_ptr<DirectInputDevice> mDevice;
-    std::unique_ptr<DirectInputListener> mListener;
-    winrt::Windows::Foundation::IAsyncAction mWorker;
+    winrt::Windows::Foundation::IAsyncAction mListener;
   };
   std::unordered_map<std::string, DeviceState> mDevices;
 

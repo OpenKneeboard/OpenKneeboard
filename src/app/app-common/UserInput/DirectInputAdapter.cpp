@@ -97,7 +97,7 @@ void DirectInputAdapter::Reload() {
   }
 
   for (auto& [id, device]: mDevices) {
-    device.mWorker.Cancel();
+    device.mListener.Cancel();
   }
   mDevices.clear();
 
@@ -118,14 +118,12 @@ void DirectInputAdapter::Reload() {
       }
       device->SetButtonBindings(bindings);
     }
-    auto listener = std::make_unique<DirectInputListener>(mDI8, device);
-    auto worker = listener->Run();
+
     mDevices.insert_or_assign(
       device->GetID(),
       DeviceState {
         .mDevice = device,
-        .mListener = std::move(listener),
-        .mWorker = std::move(worker),
+        .mListener = DirectInputListener::Run(mDI8, device),
       });
   }
 
@@ -139,7 +137,7 @@ DirectInputAdapter::~DirectInputAdapter() {
       mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWindowProc));
   }
   for (auto& [id, device]: mDevices) {
-    device.mWorker.Cancel();
+    device.mListener.Cancel();
   }
   gInstance = nullptr;
 }

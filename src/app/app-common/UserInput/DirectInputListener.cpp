@@ -70,6 +70,13 @@ DirectInputListener::~DirectInputListener() {
   }
 }
 
+winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
+  const winrt::com_ptr<IDirectInput8>& di,
+  const std::shared_ptr<DirectInputDevice>& device) {
+  DirectInputListener listener {di, device};
+  co_await listener.Run();
+}
+
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() {
   if (!(mDIDevice && mEventHandle)) {
     co_return;

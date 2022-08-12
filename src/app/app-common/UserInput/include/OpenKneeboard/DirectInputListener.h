@@ -32,14 +32,19 @@ class DirectInputDevice;
 
 class DirectInputListener final {
  public:
+  ~DirectInputListener();
+
+  static winrt::Windows::Foundation::IAsyncAction Run(
+    const winrt::com_ptr<IDirectInput8>& di,
+    const std::shared_ptr<DirectInputDevice>& device);
+
+ private:
   DirectInputListener(
     const winrt::com_ptr<IDirectInput8>& di,
-    const std::shared_ptr<DirectInputDevice>& devices);
-  ~DirectInputListener();
+    const std::shared_ptr<DirectInputDevice>& device);
 
   winrt::Windows::Foundation::IAsyncAction Run();
 
- private:
   std::shared_ptr<DirectInputDevice> mDevice;
   winrt::com_ptr<IDirectInputDevice8> mDIDevice;
   winrt::handle mEventHandle;
