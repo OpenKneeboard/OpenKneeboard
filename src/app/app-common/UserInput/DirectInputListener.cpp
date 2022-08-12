@@ -26,120 +26,95 @@
 
 namespace OpenKneeboard {
 
-struct DirectInputListener::DeviceInfo {
-  std::shared_ptr<DirectInputDevice> mDevice;
-  winrt::com_ptr<IDirectInputDevice8> mDIDevice;
-  HANDLE mEventHandle = INVALID_HANDLE_VALUE;
-  std::array<unsigned char, 256> mState;
-};
-
 DirectInputListener::DirectInputListener(
   const winrt::com_ptr<IDirectInput8>& di,
-  const std::vector<std::shared_ptr<DirectInputDevice>>& devices) {
-  for (const auto& it: devices) {
-    winrt::com_ptr<IDirectInputDevice8> device;
-    di->CreateDevice(
-      it->GetDIDeviceInstance().guidInstance, device.put(), NULL);
-    if (!device) {
-      continue;
-    }
+  const std::shared_ptr<DirectInputDevice>& device)
+  : mDevice(device) {
+  di->CreateDevice(
+    device->GetDIDeviceInstance().guidInstance, mDIDevice.put(), NULL);
+  if (!mDIDevice) {
+    return;
+  }
 
-    HANDLE event {CreateEvent(nullptr, false, false, nullptr)};
-    if (!event) {
-      continue;
-    }
+  mEventHandle.attach(CreateEvent(nullptr, false, false, nullptr));
+  if (!mEventHandle) {
+    return;
+  }
 
-    std::array<unsigned char, 256> state {};
+  if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
+    winrt::check_hresult(mDIDevice->SetDataFormat(&c_dfDIKeyboard));
+  } else {
+    winrt::check_hresult(mDIDevice->SetDataFormat(&c_dfDIJoystick2));
+  }
 
-    if ((it->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
-      winrt::check_hresult(device->SetDataFormat(&c_dfDIKeyboard));
-    } else {
-      winrt::check_hresult(device->SetDataFormat(&c_dfDIJoystick2));
-    }
+  winrt::check_hresult(mDIDevice->SetEventNotification(mEventHandle.get()));
+  winrt::check_hresult(mDIDevice->SetCooperativeLevel(
+    NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE));
+  winrt::check_hresult(mDIDevice->Acquire());
 
-    winrt::check_hresult(device->SetEventNotification(event));
+  if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
     winrt::check_hresult(
-      device->SetCooperativeLevel(NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE));
-    winrt::check_hresult(device->Acquire());
-
-    if ((it->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
-      winrt::check_hresult(device->GetDeviceState(state.size(), state.data()));
-    } else {
-      DIJOYSTATE2 joyState;
-      winrt::check_hresult(device->GetDeviceState(sizeof(joyState), &joyState));
-      ::memcpy(state.data(), joyState.rgbButtons, 128);
-    }
-    mDevices.push_back({
-      .mDevice = it,
-      .mDIDevice = device,
-      .mEventHandle = event,
-      .mState = state,
-    });
+      mDIDevice->GetDeviceState(mState.size(), mState.data()));
+  } else {
+    DIJOYSTATE2 joyState;
+    winrt::check_hresult(
+      mDIDevice->GetDeviceState(sizeof(joyState), &joyState));
+    ::memcpy(mState.data(), joyState.rgbButtons, 128);
   }
 }
 
 DirectInputListener::~DirectInputListener() {
+  if (mDIDevice) {
+    // Must detach the event handle before winrt::handle destroys it
+    mDIDevice->SetEventNotification(NULL);
+  }
 }
 
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() {
-  std::vector<winrt::Windows::Foundation::IAsyncAction> subs;
-  for (auto& device: mDevices) {
-    subs.push_back(Run(device));
+  if (!(mDIDevice && mEventHandle)) {
+    co_return;
   }
   auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.callback([&]() {
-    for (auto& sub: subs) {
-      sub.Cancel();
-    }
-  });
-  for (auto& sub: subs) {
-    co_await sub;
-  }
-}
-
-winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
-  DeviceInfo& device) {
-  auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.callback([&device]() {
+  cancelled.callback([this]() {
     /** SPAMMM */
-    SetEvent(device.mEventHandle);
+    SetEvent(mEventHandle.get());
   });
   while (!cancelled()) {
-    co_await winrt::resume_on_signal(device.mEventHandle);
+    co_await winrt::resume_on_signal(mEventHandle.get());
     if (cancelled()) {
       co_return;
     }
 
-    auto oldState = device.mState;
+    auto oldState = mState;
     decltype(oldState) newState {};
-    const auto pollResult = device.mDIDevice->Poll();
+    const auto pollResult = mDIDevice->Poll();
     if (pollResult != DI_OK && pollResult != DI_NOEFFECT) {
       dprintf(
         "Abandoning DI device '{}' due to error {} ({:#08x})",
-        device.mDevice->GetName(),
+        mDevice->GetName(),
         pollResult,
         std::bit_cast<uint32_t>(pollResult));
       co_return;
     }
     if (
-      (device.mDevice->GetDIDeviceInstance().dwDevType & 0xff)
+      (mDevice->GetDIDeviceInstance().dwDevType & 0xff)
       == DI8DEVTYPE_KEYBOARD) {
-      device.mDIDevice->GetDeviceState(sizeof(newState), &newState);
+      mDIDevice->GetDeviceState(sizeof(newState), &newState);
     } else {
       DIJOYSTATE2 joyState;
-      device.mDIDevice->GetDeviceState(sizeof(joyState), &joyState);
+      mDIDevice->GetDeviceState(sizeof(joyState), &joyState);
       ::memcpy(newState.data(), joyState.rgbButtons, 128);
     }
     if (::memcmp(oldState.data(), newState.data(), sizeof(newState)) == 0) {
       continue;
     }
 
-    device.mState = newState;
+    mState = newState;
 
     for (uint64_t i = 0; i < newState.size(); ++i) {
       if (oldState[i] != newState[i]) {
-        device.mDevice->evButtonEvent.Emit({
-          device.mDevice,
+        mDevice->evButtonEvent.Emit({
+          mDevice,
           i,
           static_cast<bool>(newState[i] & (1 << 7)),
         });

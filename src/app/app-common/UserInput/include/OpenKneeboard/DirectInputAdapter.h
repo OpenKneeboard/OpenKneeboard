@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <unordered_map>
 
 struct IDirectInput8W;
 
@@ -56,10 +57,13 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
   WNDPROC mPreviousWindowProc;
 
   winrt::com_ptr<IDirectInput8W> mDI8;
-  std::vector<std::shared_ptr<DirectInputDevice>> mDevices;
 
-  std::unique_ptr<DirectInputListener> mListener;
-  winrt::Windows::Foundation::IAsyncAction mWorker;
+  struct DeviceState {
+    std::shared_ptr<DirectInputDevice> mDevice;
+    std::unique_ptr<DirectInputListener> mListener;
+    winrt::Windows::Foundation::IAsyncAction mWorker;
+  };
+  std::unordered_map<std::string, DeviceState> mDevices;
 
   mutable nlohmann::json mSettings;
 

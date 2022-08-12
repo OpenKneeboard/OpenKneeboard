@@ -96,11 +96,10 @@ void DirectInputAdapter::Reload() {
     mSettings.get_to(settings);
   }
 
-  if (mWorker) {
-    mWorker.Cancel();
-    mWorker = {};
-    mDevices.clear();
+  for (auto& [id, device]: mDevices) {
+    device.mWorker.Cancel();
   }
+  mDevices.clear();
 
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
     auto device = std::make_shared<DirectInputDevice>(diDeviceInstance);
@@ -119,11 +118,17 @@ void DirectInputAdapter::Reload() {
       }
       device->SetButtonBindings(bindings);
     }
-    mDevices.push_back(device);
+    auto listener = std::make_unique<DirectInputListener>(mDI8, device);
+    auto worker = listener->Run();
+    mDevices.insert_or_assign(
+      device->GetID(),
+      DeviceState {
+        .mDevice = device,
+        .mListener = std::move(listener),
+        .mWorker = std::move(worker),
+      });
   }
 
-  mListener = std::make_unique<DirectInputListener>(mDI8, mDevices);
-  mWorker = mListener->Run();
   this->evAttachedControllersChangedEvent.Emit();
 }
 
@@ -133,15 +138,18 @@ DirectInputAdapter::~DirectInputAdapter() {
     SetWindowLongPtrW(
       mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWindowProc));
   }
-  mWorker.Cancel();
+  for (auto& [id, device]: mDevices) {
+    device.mWorker.Cancel();
+  }
   gInstance = nullptr;
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
   const {
   std::vector<std::shared_ptr<UserInputDevice>> devices;
-  for (const auto& device: mDevices) {
-    devices.push_back(std::static_pointer_cast<UserInputDevice>(device));
+  for (const auto& [id, device]: mDevices) {
+    devices.push_back(
+      std::static_pointer_cast<UserInputDevice>(device.mDevice));
   }
   return devices;
 }
@@ -152,11 +160,12 @@ nlohmann::json DirectInputAdapter::GetSettings() const {
     mSettings.get_to(settings);
   }
 
-  for (const auto& device: mDevices) {
-    const auto deviceID = device->GetID();
+  for (const auto& [deviceID, state]: mDevices) {
     if (settings.Devices.contains(deviceID)) {
       settings.Devices.erase(deviceID);
     }
+
+    const auto& device = state.mDevice;
 
     if (device->GetButtonBindings().empty()) {
       continue;

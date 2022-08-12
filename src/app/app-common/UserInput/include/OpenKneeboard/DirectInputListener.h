@@ -24,6 +24,8 @@
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
 
+#include <array>
+
 namespace OpenKneeboard {
 
 class DirectInputDevice;
@@ -32,16 +34,16 @@ class DirectInputListener final {
  public:
   DirectInputListener(
     const winrt::com_ptr<IDirectInput8>& di,
-    const std::vector<std::shared_ptr<DirectInputDevice>>& devices);
+    const std::shared_ptr<DirectInputDevice>& devices);
   ~DirectInputListener();
 
   winrt::Windows::Foundation::IAsyncAction Run();
 
  private:
-  struct DeviceInfo;
-  std::vector<DeviceInfo> mDevices;
-
-  winrt::Windows::Foundation::IAsyncAction Run(DeviceInfo&);
+  std::shared_ptr<DirectInputDevice> mDevice;
+  winrt::com_ptr<IDirectInputDevice8> mDIDevice;
+  winrt::handle mEventHandle;
+  std::array<unsigned char, 256> mState;
 };
 
 }// namespace OpenKneeboard
