@@ -29,6 +29,38 @@
 
 namespace OpenKneeboard {
 
+namespace {
+enum class DirectInputButtonType : uint64_t {
+  Button = 0,
+  Key = 0,
+  HatDirection = 1,
+};
+
+DirectInputButtonType GetButtonType(uint64_t button) {
+  return static_cast<DirectInputButtonType>(button >> 48);
+}
+
+struct DirectInputHat {
+  uint8_t mHat;
+  uint16_t mValue;
+};
+
+DirectInputHat DecodeHat(uint64_t button) {
+  winrt::check_bool(
+    GetButtonType(button) == DirectInputButtonType::HatDirection);
+  return {
+    .mHat = static_cast<uint8_t>((button >> 32) & 0xff),
+    .mValue = static_cast<uint16_t>(button & 0xffff),
+  };
+}
+
+uint64_t EncodeHat(uint8_t hat, uint16_t value) {
+  return (static_cast<uint64_t>(DirectInputButtonType::HatDirection) << 48)
+    | (static_cast<uint64_t>(hat) << 32) | value;
+}
+
+};// namespace
+
 std::shared_ptr<DirectInputDevice> DirectInputDevice::Create(
   const DIDEVICEINSTANCEW& instance) {
   // Can't use make_shared because ctor is private
@@ -48,10 +80,55 @@ std::string DirectInputDevice::GetID() const {
 }
 
 std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
-  if ((mDevice.dwDevType & 0xff) != DI8DEVTYPE_KEYBOARD) {
-    return std::to_string(button + 1);
+  if ((mDevice.dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
+    return this->GetKeyLabel(button);
   }
-  switch (button) {
+
+  const auto buttonType = GetButtonType(button);
+  switch (buttonType) {
+    case DirectInputButtonType::Button:
+      return std::format("Button {}", button + 1);
+    case DirectInputButtonType::HatDirection: {
+      const auto hat = DecodeHat(button);
+      std::string value;
+      switch (hat.mValue) {
+        case 0:
+          value = "N";
+          break;
+        case 4500:
+          value = "NE";
+          break;
+        case 9000:
+          value = "E";
+          break;
+        case 13500:
+          value = "SE";
+          break;
+        case 18000:
+          value = "S";
+          break;
+        case 22500:
+          value = "SW";
+          break;
+        case 27000:
+          value = "W";
+          break;
+        case 31500:
+          value = "NW";
+          break;
+        default:
+          value = std::format("{}°", hat.mValue / 100);
+          break;
+      }
+      return std::format(_("Hat {} {}"), hat.mHat + 1, value);
+    };
+  }
+
+  throw std::logic_error("Should be unreachable");
+}
+
+std::string DirectInputDevice::GetKeyLabel(uint64_t key) const {
+  switch (key) {
     case DIK_ESCAPE:
       return "Esc";
     case DIK_1:
@@ -278,7 +355,7 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
     case 0x76:
       return "F24";
     default:
-      return std::format("{:#x}", button);
+      return std::format("{:#x}", key);
   }
 }
 
@@ -286,12 +363,6 @@ std::string DirectInputDevice::GetButtonComboDescription(
   const std::unordered_set<uint64_t>& ids) const {
   if (ids.empty()) {
     return _("None");
-  }
-  if (ids.size() == 1) {
-    auto label = (mDevice.dwDevType & 0xff);
-    return (label == DI8DEVTYPE_KEYBOARD)
-      ? ""
-      : std::format(_("Button {}"), GetButtonLabel(*ids.begin()));
   }
   std::string out;
   for (auto id: ids) {
@@ -320,6 +391,37 @@ void DirectInputDevice::PostButtonStateChange(uint8_t id, bool pressed) {
     id,
     pressed,
   });
+}
+
+void DirectInputDevice::PostHatStateChange(
+  uint8_t hat,
+  DWORD oldValue,
+  DWORD newValue) {
+  // Center is documented as '-1', but DWORD is an unsigned type.
+  // This is interpreted differently by different devices/drivers/...
+  // so normalize.
+  //
+  // Non-center values are centidegrees, so max out at 35999, which is < 0xffff,
+  // so we can losslesly normalize by truncating to 16 bits.
+  constexpr uint32_t center = 0xffff;
+  oldValue &= 0xffff;
+  newValue &= 0xffff;
+
+  if (oldValue != center) {
+    evButtonEvent.Emit(UserInputButtonEvent {
+      this->shared_from_this(),
+      EncodeHat(hat, static_cast<uint32_t>(oldValue)),
+      false,
+    });
+  }
+
+  if (newValue != center) {
+    evButtonEvent.Emit(UserInputButtonEvent {
+      this->shared_from_this(),
+      EncodeHat(hat, static_cast<uint32_t>(newValue)),
+      true,
+    });
+  }
 }
 
 DIDEVICEINSTANCEW DirectInputDevice::GetDIDeviceInstance() const {

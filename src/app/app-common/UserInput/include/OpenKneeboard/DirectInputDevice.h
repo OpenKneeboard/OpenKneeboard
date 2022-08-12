@@ -50,6 +50,7 @@ class DirectInputDevice final
   DIDEVICEINSTANCEW GetDIDeviceInstance() const;
 
   void PostButtonStateChange(uint8_t index, bool pressed);
+  void PostHatStateChange(uint8_t hatIndex, DWORD oldValue, DWORD newValue);
 
  private:
   DirectInputDevice(const DIDEVICEINSTANCEW&);
@@ -58,6 +59,8 @@ class DirectInputDevice final
   std::vector<UserInputButtonBinding> mButtonBindings;
 
   std::string GetButtonLabel(uint64_t button) const;
+
+  std::string GetKeyLabel(uint64_t key) const;
 };
 
 }// namespace OpenKneeboard

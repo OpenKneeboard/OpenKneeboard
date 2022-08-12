@@ -45,6 +45,13 @@ void DirectInputJoystickListener::Poll() {
         i, static_cast<bool>(newState.rgbButtons[i] & (1 << 7)));
     }
   }
+
+  constexpr auto maxHats = sizeof(mState.rgdwPOV) / sizeof(mState.rgdwPOV[0]);
+  for (uint8_t i = 0; i < maxHats; ++i) {
+    if (mState.rgdwPOV[i] != newState.rgdwPOV[i]) {
+      device->PostHatStateChange(i, mState.rgdwPOV[i], newState.rgdwPOV[i]);
+    }
+  }
 }
 
 }// namespace OpenKneeboard
