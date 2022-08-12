@@ -29,6 +29,12 @@
 
 namespace OpenKneeboard {
 
+std::shared_ptr<DirectInputDevice> DirectInputDevice::Create(
+  const DIDEVICEINSTANCEW& instance) {
+  // Can't use make_shared because ctor is private
+  return std::shared_ptr<DirectInputDevice>(new DirectInputDevice(instance));
+}
+
 DirectInputDevice::DirectInputDevice(const DIDEVICEINSTANCEW& device)
   : mDevice(device) {
 }

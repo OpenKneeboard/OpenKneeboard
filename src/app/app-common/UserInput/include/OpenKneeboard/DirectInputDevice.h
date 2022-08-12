@@ -27,10 +27,13 @@
 
 namespace OpenKneeboard {
 
-class DirectInputDevice final : public UserInputDevice,
-                                public std::enable_shared_from_this<DirectInputDevice> {
+class DirectInputDevice final
+  : public UserInputDevice,
+    public std::enable_shared_from_this<DirectInputDevice> {
  public:
-  DirectInputDevice(const DIDEVICEINSTANCEW&);
+  DirectInputDevice() = delete;
+  static std::shared_ptr<DirectInputDevice> Create(
+    const DIDEVICEINSTANCEW& instance);
 
   virtual std::string GetName() const override;
   virtual std::string GetID() const override;
@@ -49,6 +52,8 @@ class DirectInputDevice final : public UserInputDevice,
   void PostButtonStateChange(uint8_t index, bool pressed);
 
  private:
+  DirectInputDevice(const DIDEVICEINSTANCEW&);
+
   DIDEVICEINSTANCEW mDevice;
   std::vector<UserInputButtonBinding> mButtonBindings;
 

@@ -102,7 +102,7 @@ void DirectInputAdapter::Reload() {
   mDevices.clear();
 
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
-    auto device = std::make_shared<DirectInputDevice>(diDeviceInstance);
+    auto device = DirectInputDevice::Create(diDeviceInstance);
     AddEventListener(device->evUserActionEvent, this->evUserActionEvent);
     AddEventListener(
       device->evBindingsChangedEvent, this->evSettingsChangedEvent);
