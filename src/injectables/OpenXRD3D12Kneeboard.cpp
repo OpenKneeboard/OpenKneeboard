@@ -40,7 +40,7 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   XrSession session,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
-  : OpenXRKneeboard(session, next), mDevice(binding.device) {
+  : OpenXRKneeboard(session, next), mDevice12(binding.device) {
   dprintf("{}", __FUNCTION__);
 
 #ifdef DEBUG
@@ -57,15 +57,15 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
   D3D11On12CreateDevice(
-    mDevice,
+    mDevice12,
     flags,
     nullptr,
     0,
     nullptr,
     0,
     1,
-    m11on12.put(),
-    m11on12Context.put(),
+    mDevice11.put(),
+    mContext11.put(),
     nullptr);
 }
 
@@ -134,7 +134,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   }
 
   mRenderTargetViews.at(layerIndex).resize(imageCount);
-  auto d3d11On12 = m11on12.as<ID3D11On12Device>();
+  auto d3d11On12 = mDevice11.as<ID3D11On12Device>();
 
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
@@ -146,7 +146,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
     texture12.copy_from(images.at(i).texture);
     mRenderTargetViews.at(layerIndex).at(i)
       = std::make_shared<D3D11::D3D11On12RenderTargetViewFactory>(
-        m11on12, d3d11On12, texture12);
+        mDevice11, d3d11On12, texture12);
   }
   dprintf(
     "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);
@@ -161,7 +161,7 @@ bool OpenXRD3D12Kneeboard::Render(
   const VRKneeboard::RenderParameters& renderParameters) {
   if (!OpenXRD3D11Kneeboard::Render(
         this->GetOpenXR(),
-        m11on12.get(),
+        mDevice11.get(),
         mRenderTargetViews.at(layerIndex),
         swapchain,
         snapshot,
@@ -169,7 +169,7 @@ bool OpenXRD3D12Kneeboard::Render(
         renderParameters)) {
     return false;
   }
-  m11on12Context->Flush();
+  mContext11->Flush();
   return true;
 }
 

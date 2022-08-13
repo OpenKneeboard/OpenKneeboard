@@ -47,11 +47,13 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
     const VRKneeboard::RenderParameters&) override;
 
  private:
-  ID3D12Device* mDevice = nullptr;
-  winrt::com_ptr<ID3D11Device> m11on12;
-  winrt::com_ptr<ID3D11DeviceContext> m11on12Context;
+  ID3D12Device* mDevice12 = nullptr;
+  winrt::com_ptr<ID3D11Device> mDevice11;
+  winrt::com_ptr<ID3D11DeviceContext> mContext11;
 
-  std::array<std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>, MaxLayers>
+  std::array<
+    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    MaxLayers>
     mRenderTargetViews;
 };
 
