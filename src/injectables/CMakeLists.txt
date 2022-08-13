@@ -102,13 +102,14 @@ add_module_library(
 target_link_libraries(
   OpenKneeboard-oculus-d3d12
   PRIVATE
-  d3d12-hooks
-  detours-ext
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-version
   OpenKneeboard-D3D11
   OpenKneeboard-ScopedRWX
+  d3d12-hooks
+  detours-ext
+  directxtk12
   oculus-hooks
   oculus-sdk-headers)
 
