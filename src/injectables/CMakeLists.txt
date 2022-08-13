@@ -45,8 +45,8 @@ target_link_libraries(
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
   OpenKneeboard-dprint
+  ThirdParty::DirectXTK
   detours-ext
-  directxtk
   oculus-sdk-headers
 )
 
@@ -109,7 +109,6 @@ target_link_libraries(
   OpenKneeboard-ScopedRWX
   d3d12-hooks
   detours-ext
-  directxtk12
   oculus-hooks
   oculus-sdk-headers)
 

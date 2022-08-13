@@ -28,5 +28,7 @@ install(
   FILES
   "${SOURCE_DIR}/LICENSE"
   TYPE DOC
-  RENAME "LICENSE-ThirdParty-DirectXTK12"
+  RENAME "LICENSE-ThirdParty-DirectXTK12.txt"
 )
+
+add_library(ThirdParty::DirectXTK12 ALIAS directxtk12)
