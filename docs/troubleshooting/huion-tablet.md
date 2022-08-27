@@ -13,9 +13,11 @@
 1. Make the sure the game (and any launchers, e.g. Skatezilla) are not running elevated/as administrator
 2. Make sure the game is listed in OpenKneeboard's settings and the path is correct
 3. Either make sure both the pen and button settings are set for 'all applications', or set them both for OpenKneeboard and the game
-4. Uninstall **all** drivers from Huion or others, e.g. VRKneeboard's driver, OpenTabletDriver, or the various specialized drivers for the game 'osu!'
+4. Uninstall **all** drivers from Huion and others, e.g. VRKneeboard's driver, OpenTabletDriver, or the various specialized drivers for the game 'osu!'; this includes the drivers you're currently using
 5. Install the latest Huion drivers
 6. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+
+It is very important that you uninstall then reinstall the drivers; reinstalling/updating/repairing is not enough.
 
 ### Root cause
 
