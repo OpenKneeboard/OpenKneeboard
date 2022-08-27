@@ -239,16 +239,16 @@ std::wstring SharedTextureName(
     sequenceNumber % TextureCount);
 }
 
-SharedTexture::SharedTexture() {
+SharedTexture11::SharedTexture11() {
 }
 
-SharedTexture::SharedTexture(SharedTexture&& other)
+SharedTexture11::SharedTexture11(SharedTexture11&& other)
   : mKey(other.mKey), mResources(other.mResources) {
   other.mKey = 0;
   other.mResources = nullptr;
 }
 
-SharedTexture::SharedTexture(
+SharedTexture11::SharedTexture11(
   const Header& header,
   ID3D11Device* d3d,
   uint8_t layerIndex,
@@ -267,7 +267,7 @@ SharedTexture::SharedTexture(
   mKey = key;
 }
 
-SharedTexture::~SharedTexture() {
+SharedTexture11::~SharedTexture11() {
   if (mKey == 0) {
     return;
   }
@@ -277,19 +277,19 @@ SharedTexture::~SharedTexture() {
   mResources->mMutex->ReleaseSync(mKey);
 }
 
-bool SharedTexture::IsValid() const {
+bool SharedTexture11::IsValid() const {
   return mResources && mKey != 0;
 }
 
-ID3D11Texture2D* SharedTexture::GetTexture() const {
+ID3D11Texture2D* SharedTexture11::GetTexture() const {
   return mResources->mTexture.get();
 }
 
-IDXGISurface* SharedTexture::GetSurface() const {
+IDXGISurface* SharedTexture11::GetSurface() const {
   return mResources->mSurface.get();
 }
 
-ID3D11ShaderResourceView* SharedTexture::GetShaderResourceView() const {
+ID3D11ShaderResourceView* SharedTexture11::GetShaderResourceView() const {
   return mResources->mShaderResourceView.get();
 }
 
@@ -351,7 +351,7 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   return config;
 }
 
-SharedTexture Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
+SharedTexture11 Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
   const {
   if (layerIndex >= this->GetLayerCount()) {
     dprintf(
@@ -362,7 +362,7 @@ SharedTexture Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
     return {};
   }
 
-  SharedTexture texture(*mHeader, d3d, layerIndex, mResources);
+  SharedTexture11 texture(*mHeader, d3d, layerIndex, mResources);
   if (!texture.IsValid()) {
     return {};
   }

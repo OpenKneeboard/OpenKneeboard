@@ -90,16 +90,16 @@ class Writer final {
 struct TextureReadResources;
 struct LayerTextureReadResources;
 
-class SharedTexture final {
+class SharedTexture11 final {
  public:
-  SharedTexture();
-  SharedTexture(SharedTexture&&);
-  SharedTexture(
+  SharedTexture11();
+  SharedTexture11(SharedTexture11&&);
+  SharedTexture11(
     const Header& header,
     ID3D11Device* d3d,
     uint8_t layerIndex,
     TextureReadResources* r);
-  ~SharedTexture();
+  ~SharedTexture11();
 
   bool IsValid() const;
 
@@ -107,7 +107,7 @@ class SharedTexture final {
   IDXGISurface* GetSurface() const;
   ID3D11ShaderResourceView* GetShaderResourceView() const;
 
-  SharedTexture(const SharedTexture&) = delete;
+  SharedTexture11(const SharedTexture11&) = delete;
 
  private:
   UINT mKey = 0;
@@ -129,7 +129,7 @@ class Snapshot final {
   Config GetConfig() const;
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
-  SharedTexture GetLayerTexture(ID3D11Device*, uint8_t layerIndex) const;
+  SharedTexture11 GetLayerTexture(ID3D11Device*, uint8_t layerIndex) const;
 
   bool IsValid() const;
 };
