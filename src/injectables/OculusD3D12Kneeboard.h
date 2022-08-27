@@ -58,11 +58,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     MaxLayers>
     mRenderTargetViews;
 
-  winrt::com_ptr<ID3D12Device> mDevice;
-  winrt::com_ptr<ID3D11Device> mD3D11;
-  winrt::com_ptr<ID3D11On12Device> mD3D11On12;
-  winrt::com_ptr<ID3D11DeviceContext> mD3D11On12Context;
-  winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
+  D3D11::D3D11On12DeviceResources mDeviceResources;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,

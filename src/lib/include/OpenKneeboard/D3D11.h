@@ -97,36 +97,51 @@ class D3D11RenderTargetViewFactory final : public RenderTargetViewFactory {
   winrt::com_ptr<ID3D11RenderTargetView> mImpl;
 };
 
+struct D3D11On12DeviceResources {
+  winrt::com_ptr<ID3D11Device> mDevice11;
+  winrt::com_ptr<ID3D11DeviceContext> mContext11;
+
+  winrt::com_ptr<ID3D11On12Device> m11on12;
+
+  winrt::com_ptr<ID3D12Device> mDevice12;
+  winrt::com_ptr<ID3D12CommandQueue> mCommandQueue12;
+};
+
 class D3D11On12RenderTargetView final : public RenderTargetView {
  public:
   D3D11On12RenderTargetView() = delete;
   D3D11On12RenderTargetView(
-    const winrt::com_ptr<ID3D11On12Device>&,
-    const winrt::com_ptr<ID3D11Texture2D>&,
+    const D3D11On12DeviceResources&,
+    const winrt::com_ptr<ID3D12Resource>& texture12,
+    const winrt::com_ptr<ID3D11Texture2D>& texture11,
+    const winrt::com_ptr<ID3D11Texture2D>& bufferTexture11,
     const winrt::com_ptr<ID3D11RenderTargetView>&);
   ~D3D11On12RenderTargetView();
 
   virtual ID3D11RenderTargetView* Get() const override;
 
  private:
-  winrt::com_ptr<ID3D11On12Device> mD3D11On12;
+  D3D11On12DeviceResources mDeviceResources;
+  winrt::com_ptr<ID3D12Resource> mTexture12;
   winrt::com_ptr<ID3D11Texture2D> mTexture11;
+  winrt::com_ptr<ID3D11Texture2D> mBufferTexture11;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
 };
 
 class D3D11On12RenderTargetViewFactory final : public RenderTargetViewFactory {
  public:
   D3D11On12RenderTargetViewFactory(
-    const winrt::com_ptr<ID3D11Device>&,
-    const winrt::com_ptr<ID3D11On12Device>&,
+    const D3D11On12DeviceResources&,
     const winrt::com_ptr<ID3D12Resource>& texture12);
   virtual ~D3D11On12RenderTargetViewFactory();
 
   virtual std::unique_ptr<RenderTargetView> Get() const override;
 
  private:
-  winrt::com_ptr<ID3D11On12Device> mD3D11On12;
+  D3D11On12DeviceResources mDeviceResources;
+  winrt::com_ptr<ID3D12Resource> mTexture12;
   winrt::com_ptr<ID3D11Texture2D> mTexture11;
+  winrt::com_ptr<ID3D11Texture2D> mBufferTexture11;
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
 };
 

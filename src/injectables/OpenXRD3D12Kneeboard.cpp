@@ -40,33 +40,28 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   XrSession session,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
-  : OpenXRKneeboard(session, next), mDevice12(binding.device) {
-  dprintf("{}", __FUNCTION__);
+  : OpenXRKneeboard(session, next) {
+  mDeviceResources.mDevice12.copy_from(binding.device);
+  mDeviceResources.mCommandQueue12.copy_from(binding.queue);
 
-#ifdef DEBUG
-  winrt::com_ptr<ID3D12Debug> debug;
-  D3D12GetDebugInterface(IID_PPV_ARGS(debug.put()));
-  if (debug) {
-    dprint("Enabling D3D12 debug layer");
-    debug->EnableDebugLayer();
-  }
-#endif
+  dprintf("{}", __FUNCTION__);
 
   UINT flags = 0;
 #ifdef DEBUG
   flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
   D3D11On12CreateDevice(
-    mDevice12,
+    mDeviceResources.mDevice12.get(),
     flags,
     nullptr,
     0,
     nullptr,
     0,
     1,
-    mDevice11.put(),
-    mContext11.put(),
+    mDeviceResources.mDevice11.put(),
+    mDeviceResources.mContext11.put(),
     nullptr);
+  mDeviceResources.m11on12 = mDeviceResources.mDevice11.as<ID3D11On12Device>();
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() = default;
@@ -134,7 +129,6 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   }
 
   mRenderTargetViews.at(layerIndex).resize(imageCount);
-  auto d3d11On12 = mDevice11.as<ID3D11On12Device>();
 
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
@@ -146,7 +140,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
     texture12.copy_from(images.at(i).texture);
     mRenderTargetViews.at(layerIndex).at(i)
       = std::make_shared<D3D11::D3D11On12RenderTargetViewFactory>(
-        mDevice11, d3d11On12, texture12);
+        mDeviceResources, texture12);
   }
   dprintf(
     "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);
@@ -161,7 +155,7 @@ bool OpenXRD3D12Kneeboard::Render(
   const VRKneeboard::RenderParameters& renderParameters) {
   if (!OpenXRD3D11Kneeboard::Render(
         this->GetOpenXR(),
-        mDevice11.get(),
+        mDeviceResources.mDevice11.get(),
         mRenderTargetViews.at(layerIndex),
         swapchain,
         snapshot,
@@ -169,7 +163,7 @@ bool OpenXRD3D12Kneeboard::Render(
         renderParameters)) {
     return false;
   }
-  mContext11->Flush();
+  mDeviceResources.mContext11->Flush();
   return true;
 }
 
