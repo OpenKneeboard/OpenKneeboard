@@ -69,7 +69,7 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
     mDeviceResources.mDevice11.put(),
     mDeviceResources.mContext11.put(),
     nullptr);
-  mDeviceResources.m11on12 = mDeviceResources.mDevice11.as<ID3D11On12Device>();
+  mDeviceResources.m11on12 = mDeviceResources.mDevice11.as<ID3D11On12Device2>();
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() = default;

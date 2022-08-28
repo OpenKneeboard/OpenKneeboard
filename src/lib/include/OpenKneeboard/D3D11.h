@@ -102,7 +102,7 @@ struct D3D11On12DeviceResources {
   winrt::com_ptr<ID3D11Device> mDevice11;
   winrt::com_ptr<ID3D11DeviceContext> mContext11;
 
-  winrt::com_ptr<ID3D11On12Device> m11on12;
+  winrt::com_ptr<ID3D11On12Device2> m11on12;
 
   winrt::com_ptr<ID3D12Device> mDevice12;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue12;

@@ -168,7 +168,7 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
       mDeviceResources.mContext11.put(),
       nullptr));
     mDeviceResources.m11on12
-      = mDeviceResources.mDevice11.as<ID3D11On12Device>();
+      = mDeviceResources.mDevice11.as<ID3D11On12Device2>();
   }
 
   mExecuteCommandListsHook.UninstallHook();

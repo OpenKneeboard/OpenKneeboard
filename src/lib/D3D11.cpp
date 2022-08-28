@@ -21,6 +21,7 @@
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <shims/winrt/base.h>
 
 namespace OpenKneeboard::D3D11 {
@@ -171,11 +172,14 @@ D3D11On12RenderTargetView::~D3D11On12RenderTargetView() {
     nullptr,
     IID_PPV_ARGS(commandList.put())));
   winrt::com_ptr<ID3D12Resource> bufferTexture12;
-  winrt::check_hresult(
-    mDeviceResources.m11on12.as<ID3D11On12Device2>()->UnwrapUnderlyingResource(
-      mBufferTexture11.get(),
-      mDeviceResources.mCommandQueue12.get(),
-      IID_PPV_ARGS(bufferTexture12.put())));
+  winrt::check_hresult(mDeviceResources.m11on12->UnwrapUnderlyingResource(
+    mBufferTexture11.get(),
+    mDeviceResources.mCommandQueue12.get(),
+    IID_PPV_ARGS(bufferTexture12.put())));
+  const scope_guard returnResource([&]() noexcept {
+    winrt::check_hresult(mDeviceResources.m11on12->ReturnUnderlyingResource(
+      mBufferTexture11.get(), 0, nullptr, nullptr));
+  });
 
   D3D12_RESOURCE_BARRIER inBarrier {
       .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
@@ -204,10 +208,6 @@ D3D11On12RenderTargetView::~D3D11On12RenderTargetView() {
 
   const auto commandLists = static_cast<ID3D12CommandList*>(commandList.get());
   mDeviceResources.mCommandQueue12->ExecuteCommandLists(1, &commandLists);
-
-  winrt::check_hresult(
-    mDeviceResources.m11on12.as<ID3D11On12Device2>()->ReturnUnderlyingResource(
-      mBufferTexture11.get(), 0, nullptr, nullptr));
 }
 
 ID3D11RenderTargetView* D3D11On12RenderTargetView::Get() const {
