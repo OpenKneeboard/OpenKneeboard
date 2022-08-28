@@ -39,16 +39,16 @@ enum class Flags : uint16_t {
   DoubleBuffer = 1,// For Varjo
 };
 
-class D3D11On12RenderTargetView final : public D3D11::IRenderTargetView {
+class RenderTargetView final : public D3D11::IRenderTargetView {
  public:
-  D3D11On12RenderTargetView() = delete;
-  D3D11On12RenderTargetView(
+  RenderTargetView() = delete;
+  RenderTargetView(
     const DeviceResources&,
     const winrt::com_ptr<ID3D12Resource>& texture12,
     const winrt::com_ptr<ID3D11Texture2D>& texture11,
     const winrt::com_ptr<ID3D11Texture2D>& bufferTexture11,
     const winrt::com_ptr<ID3D11RenderTargetView>&);
-  ~D3D11On12RenderTargetView();
+  ~RenderTargetView();
 
   virtual ID3D11RenderTargetView* Get() const override;
 
@@ -60,14 +60,13 @@ class D3D11On12RenderTargetView final : public D3D11::IRenderTargetView {
   winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
 };
 
-class D3D11On12RenderTargetViewFactory final
-  : public D3D11::IRenderTargetViewFactory {
+class RenderTargetViewFactory final : public D3D11::IRenderTargetViewFactory {
  public:
-  D3D11On12RenderTargetViewFactory(
+  RenderTargetViewFactory(
     const DeviceResources&,
     const winrt::com_ptr<ID3D12Resource>& texture12,
     Flags flags = Flags::None);
-  virtual ~D3D11On12RenderTargetViewFactory();
+  virtual ~RenderTargetViewFactory();
 
   virtual std::unique_ptr<D3D11::IRenderTargetView> Get() const override;
 

@@ -25,7 +25,7 @@
 
 namespace OpenKneeboard::D3D11On12 {
 
-D3D11On12RenderTargetView::D3D11On12RenderTargetView(
+RenderTargetView::RenderTargetView(
   const DeviceResources& deviceResources,
   const winrt::com_ptr<ID3D12Resource>& texture12,
   const winrt::com_ptr<ID3D11Texture2D>& texture11,
@@ -42,7 +42,7 @@ D3D11On12RenderTargetView::D3D11On12RenderTargetView(
   }
 }
 
-D3D11On12RenderTargetView::~D3D11On12RenderTargetView() {
+RenderTargetView::~RenderTargetView() {
   if (!mBufferTexture11) {
     auto resources = static_cast<ID3D11Resource*>(mTexture11.get());
     mDeviceResources.m11on12->ReleaseWrappedResources(&resources, 1);
@@ -98,11 +98,11 @@ D3D11On12RenderTargetView::~D3D11On12RenderTargetView() {
   mDeviceResources.mCommandQueue12->ExecuteCommandLists(1, &commandLists);
 }
 
-ID3D11RenderTargetView* D3D11On12RenderTargetView::Get() const {
+ID3D11RenderTargetView* RenderTargetView::Get() const {
   return mRenderTargetView.get();
 }
 
-D3D11On12RenderTargetViewFactory::D3D11On12RenderTargetViewFactory(
+RenderTargetViewFactory::RenderTargetViewFactory(
   const DeviceResources& deviceResources,
   const winrt::com_ptr<ID3D12Resource>& texture12,
   Flags flags)
@@ -144,11 +144,10 @@ D3D11On12RenderTargetViewFactory::D3D11On12RenderTargetViewFactory(
     mRenderTargetView.put()));
 }
 
-D3D11On12RenderTargetViewFactory::~D3D11On12RenderTargetViewFactory() = default;
+RenderTargetViewFactory::~RenderTargetViewFactory() = default;
 
-std::unique_ptr<D3D11::IRenderTargetView>
-D3D11On12RenderTargetViewFactory::Get() const {
-  return std::make_unique<D3D11On12RenderTargetView>(
+std::unique_ptr<D3D11::IRenderTargetView> RenderTargetViewFactory::Get() const {
+  return std::make_unique<RenderTargetView>(
     mDeviceResources,
     mTexture12,
     mTexture11,

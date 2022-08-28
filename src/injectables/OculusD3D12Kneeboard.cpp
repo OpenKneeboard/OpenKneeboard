@@ -97,7 +97,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
 
     layerRenderTargets.at(i)
       = std::static_pointer_cast<D3D11::IRenderTargetViewFactory>(
-        std::make_shared<D3D11On12::D3D11On12RenderTargetViewFactory>(
+        std::make_shared<D3D11On12::RenderTargetViewFactory>(
           mDeviceResources, texture12));
   }
 
