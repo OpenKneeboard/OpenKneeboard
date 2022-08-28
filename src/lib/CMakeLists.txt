@@ -65,6 +65,18 @@ target_link_libraries(
   ThirdParty::DirectXTK
   OpenKneeboard-config
 )
+add_library(OpenKneeboard-D3D11On12 STATIC D3D11On12.cpp)
+target_link_libraries(
+  OpenKneeboard-D3D11On12
+  PUBLIC
+  OpenKneeboard-D3D11
+  _libheaders
+)
+target_link_libraries(
+  OpenKneeboard-D3D11On12
+  PRIVATE
+  OpenKneeboard-config
+)
 
 add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
 target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)

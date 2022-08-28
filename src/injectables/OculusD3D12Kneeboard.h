@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/D3D11On12.h>
 #include <OpenKneeboard/config.h>
 #include <d3d11.h>
 #include <d3d11on12.h>
@@ -58,7 +58,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     MaxLayers>
     mRenderTargetViews;
 
-  D3D11::D3D11On12DeviceResources mDeviceResources;
+  D3D11On12::DeviceResources mDeviceResources;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,

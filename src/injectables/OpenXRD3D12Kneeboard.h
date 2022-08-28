@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/D3D11On12.h>
 #include <OpenKneeboard/config.h>
 #include <d3d12.h>
 
@@ -50,7 +50,7 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
  private:
   bool mDoubleBufferForVarjoQuirk = false;
 
-  D3D11::D3D11On12DeviceResources mDeviceResources;
+  D3D11On12::DeviceResources mDeviceResources;
 
   std::array<
     std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,

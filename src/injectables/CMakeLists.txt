@@ -105,7 +105,7 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-version
-  OpenKneeboard-D3D11
+  OpenKneeboard-D3D11On12
   OpenKneeboard-ScopedRWX
   d3d12-hooks
   detours-ext
@@ -125,6 +125,7 @@ target_link_libraries(
   ThirdParty::OpenXR
   ThirdParty::DirectXTK
   OpenKneeboard-D3D11
+  OpenKneeboard-D3D11On12
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
   OpenKneeboard-VRKneeboard
