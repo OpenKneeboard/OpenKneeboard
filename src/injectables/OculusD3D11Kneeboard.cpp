@@ -90,9 +90,8 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
 
-    layerRenderTargets.at(i)
-      = std::make_shared<D3D11::D3D11RenderTargetViewFactory>(
-        mD3D.get(), texture.get());
+    layerRenderTargets.at(i) = std::make_shared<D3D11::RenderTargetViewFactory>(
+      mD3D.get(), texture.get());
   }
 
   return swapChain;

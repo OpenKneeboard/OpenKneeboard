@@ -74,11 +74,11 @@ class IRenderTargetViewFactory {
   virtual std::unique_ptr<IRenderTargetView> Get() const = 0;
 };
 
-class D3D11RenderTargetView final : public IRenderTargetView {
+class RenderTargetView final : public IRenderTargetView {
  public:
-  D3D11RenderTargetView() = delete;
-  D3D11RenderTargetView(const winrt::com_ptr<ID3D11RenderTargetView>&);
-  ~D3D11RenderTargetView();
+  RenderTargetView() = delete;
+  RenderTargetView(const winrt::com_ptr<ID3D11RenderTargetView>&);
+  ~RenderTargetView();
 
   virtual ID3D11RenderTargetView* Get() const override;
 
@@ -86,10 +86,10 @@ class D3D11RenderTargetView final : public IRenderTargetView {
   winrt::com_ptr<ID3D11RenderTargetView> mImpl;
 };
 
-class D3D11RenderTargetViewFactory final : public IRenderTargetViewFactory {
+class RenderTargetViewFactory final : public IRenderTargetViewFactory {
  public:
-  D3D11RenderTargetViewFactory(ID3D11Device*, ID3D11Texture2D*);
-  virtual ~D3D11RenderTargetViewFactory();
+  RenderTargetViewFactory(ID3D11Device*, ID3D11Texture2D*);
+  virtual ~RenderTargetViewFactory();
 
   virtual std::unique_ptr<IRenderTargetView> Get() const override;
 

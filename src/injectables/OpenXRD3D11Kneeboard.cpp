@@ -115,7 +115,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     }
 #endif
     mRenderTargetViews.at(layerIndex).at(i)
-      = std::make_shared<D3D11::D3D11RenderTargetViewFactory>(
+      = std::make_shared<D3D11::RenderTargetViewFactory>(
         mDevice, images.at(i).texture);
   }
 

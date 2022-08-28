@@ -105,18 +105,18 @@ IRenderTargetView::IRenderTargetView() = default;
 IRenderTargetView::~IRenderTargetView() = default;
 IRenderTargetViewFactory::~IRenderTargetViewFactory() = default;
 
-D3D11RenderTargetView::D3D11RenderTargetView(
+RenderTargetView::RenderTargetView(
   const winrt::com_ptr<ID3D11RenderTargetView>& impl)
   : mImpl(impl) {
 }
 
-D3D11RenderTargetView::~D3D11RenderTargetView() = default;
+RenderTargetView::~RenderTargetView() = default;
 
-ID3D11RenderTargetView* D3D11RenderTargetView::Get() const {
+ID3D11RenderTargetView* RenderTargetView::Get() const {
   return mImpl.get();
 }
 
-D3D11RenderTargetViewFactory::D3D11RenderTargetViewFactory(
+RenderTargetViewFactory::RenderTargetViewFactory(
   ID3D11Device* device,
   ID3D11Texture2D* texture) {
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
@@ -129,10 +129,10 @@ D3D11RenderTargetViewFactory::D3D11RenderTargetViewFactory(
     device->CreateRenderTargetView(texture, &rtvd, mImpl.put()));
 }
 
-D3D11RenderTargetViewFactory::~D3D11RenderTargetViewFactory() = default;
+RenderTargetViewFactory::~RenderTargetViewFactory() = default;
 
-std::unique_ptr<IRenderTargetView> D3D11RenderTargetViewFactory::Get() const {
-  return std::make_unique<D3D11RenderTargetView>(mImpl);
+std::unique_ptr<IRenderTargetView> RenderTargetViewFactory::Get() const {
+  return std::make_unique<RenderTargetView>(mImpl);
 }
 
 }// namespace OpenKneeboard::D3D11
