@@ -72,6 +72,8 @@ Write down 9-lines, do quick sketches, and use PDF bookmarks/tables of contents.
 
 XP-Pen and Gaomon tablets are not currently compatible with OpenKneeboard.
 
+Tablet computers (e.g. iPads) are not supported.
+
 ### DirectInput Joystick and Keyboard Support
 
 Bind any of your device buttons (even if you have 128) to show/hide the kneeboard, previous tab, next tab, previous page, or next page.
