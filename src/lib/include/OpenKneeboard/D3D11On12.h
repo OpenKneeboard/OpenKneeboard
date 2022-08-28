@@ -39,7 +39,7 @@ enum class Flags : uint16_t {
   DoubleBuffer = 1,// For Varjo
 };
 
-class D3D11On12RenderTargetView final : public D3D11::RenderTargetView {
+class D3D11On12RenderTargetView final : public D3D11::IRenderTargetView {
  public:
   D3D11On12RenderTargetView() = delete;
   D3D11On12RenderTargetView(
@@ -61,7 +61,7 @@ class D3D11On12RenderTargetView final : public D3D11::RenderTargetView {
 };
 
 class D3D11On12RenderTargetViewFactory final
-  : public D3D11::RenderTargetViewFactory {
+  : public D3D11::IRenderTargetViewFactory {
  public:
   D3D11On12RenderTargetViewFactory(
     const DeviceResources&,
@@ -69,7 +69,7 @@ class D3D11On12RenderTargetViewFactory final
     Flags flags = Flags::None);
   virtual ~D3D11On12RenderTargetViewFactory();
 
-  virtual std::unique_ptr<D3D11::RenderTargetView> Get() const override;
+  virtual std::unique_ptr<D3D11::IRenderTargetView> Get() const override;
 
  private:
   DeviceResources mDeviceResources;

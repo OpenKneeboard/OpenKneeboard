@@ -27,7 +27,7 @@
 namespace OpenKneeboard {
 bool OculusD3D11Kneeboard::Render(
   ID3D11Device* device,
-  const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&
+  const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&
     renderTargetViews,
   ovrSession session,
   ovrTextureSwapChain swapChain,

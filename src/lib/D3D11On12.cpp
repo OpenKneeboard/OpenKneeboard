@@ -146,8 +146,8 @@ D3D11On12RenderTargetViewFactory::D3D11On12RenderTargetViewFactory(
 
 D3D11On12RenderTargetViewFactory::~D3D11On12RenderTargetViewFactory() = default;
 
-std::unique_ptr<D3D11::RenderTargetView> D3D11On12RenderTargetViewFactory::Get()
-  const {
+std::unique_ptr<D3D11::IRenderTargetView>
+D3D11On12RenderTargetViewFactory::Get() const {
   return std::make_unique<D3D11On12RenderTargetView>(
     mDeviceResources,
     mTexture12,

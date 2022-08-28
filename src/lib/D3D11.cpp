@@ -101,11 +101,9 @@ void DrawTextureWithOpacity(
     DirectX::Colors::White * opacity);
 }
 
-RenderTargetView::RenderTargetView() = default;
-
-RenderTargetView::~RenderTargetView() = default;
-
-RenderTargetViewFactory::~RenderTargetViewFactory() = default;
+IRenderTargetView::IRenderTargetView() = default;
+IRenderTargetView::~IRenderTargetView() = default;
+IRenderTargetViewFactory::~IRenderTargetViewFactory() = default;
 
 D3D11RenderTargetView::D3D11RenderTargetView(
   const winrt::com_ptr<ID3D11RenderTargetView>& impl)
@@ -133,7 +131,7 @@ D3D11RenderTargetViewFactory::D3D11RenderTargetViewFactory(
 
 D3D11RenderTargetViewFactory::~D3D11RenderTargetViewFactory() = default;
 
-std::unique_ptr<RenderTargetView> D3D11RenderTargetViewFactory::Get() const {
+std::unique_ptr<IRenderTargetView> D3D11RenderTargetViewFactory::Get() const {
   return std::make_unique<D3D11RenderTargetView>(mImpl);
 }
 

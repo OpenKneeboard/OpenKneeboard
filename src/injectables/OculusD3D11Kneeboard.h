@@ -41,7 +41,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
   static bool Render(
     ID3D11Device*,
-    const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&,
+    const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,
     ovrSession,
     ovrTextureSwapChain,
     const SHM::Snapshot&,
@@ -62,7 +62,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
  private:
   std::array<
-    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
     MaxLayers>
     mRenderTargetViews;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;

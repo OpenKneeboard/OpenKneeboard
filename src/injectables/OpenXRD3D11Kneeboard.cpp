@@ -140,7 +140,7 @@ bool OpenXRD3D11Kneeboard::Render(
 bool OpenXRD3D11Kneeboard::Render(
   OpenXRNext* oxr,
   ID3D11Device* device,
-  const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&
+  const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&
     renderTargetViews,
   XrSwapchain swapchain,
   const SHM::Snapshot& snapshot,

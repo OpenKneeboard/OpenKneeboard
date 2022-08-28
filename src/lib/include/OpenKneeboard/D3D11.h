@@ -56,25 +56,25 @@ void DrawTextureWithOpacity(
   const RECT& destRect,
   float opacity);
 
-class RenderTargetView {
+class IRenderTargetView {
  public:
-  RenderTargetView();
-  virtual ~RenderTargetView();
+  IRenderTargetView();
+  virtual ~IRenderTargetView();
   virtual ID3D11RenderTargetView* Get() const = 0;
 
-  RenderTargetView(const RenderTargetView&) = delete;
-  RenderTargetView(const RenderTargetView&&) = delete;
-  RenderTargetView& operator=(const RenderTargetView&) = delete;
-  RenderTargetView& operator=(RenderTargetView&&) = delete;
+  IRenderTargetView(const IRenderTargetView&) = delete;
+  IRenderTargetView(const IRenderTargetView&&) = delete;
+  IRenderTargetView& operator=(const IRenderTargetView&) = delete;
+  IRenderTargetView& operator=(IRenderTargetView&&) = delete;
 };
 
-class RenderTargetViewFactory {
+class IRenderTargetViewFactory {
  public:
-  virtual ~RenderTargetViewFactory();
-  virtual std::unique_ptr<RenderTargetView> Get() const = 0;
+  virtual ~IRenderTargetViewFactory();
+  virtual std::unique_ptr<IRenderTargetView> Get() const = 0;
 };
 
-class D3D11RenderTargetView final : public RenderTargetView {
+class D3D11RenderTargetView final : public IRenderTargetView {
  public:
   D3D11RenderTargetView() = delete;
   D3D11RenderTargetView(const winrt::com_ptr<ID3D11RenderTargetView>&);
@@ -86,12 +86,12 @@ class D3D11RenderTargetView final : public RenderTargetView {
   winrt::com_ptr<ID3D11RenderTargetView> mImpl;
 };
 
-class D3D11RenderTargetViewFactory final : public RenderTargetViewFactory {
+class D3D11RenderTargetViewFactory final : public IRenderTargetViewFactory {
  public:
   D3D11RenderTargetViewFactory(ID3D11Device*, ID3D11Texture2D*);
   virtual ~D3D11RenderTargetViewFactory();
 
-  virtual std::unique_ptr<RenderTargetView> Get() const override;
+  virtual std::unique_ptr<IRenderTargetView> Get() const override;
 
  private:
   winrt::com_ptr<ID3D11RenderTargetView> mImpl;

@@ -53,7 +53,7 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   D3D11On12::DeviceResources mDeviceResources;
 
   std::array<
-    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
     MaxLayers>
     mRenderTargetViews;
 };

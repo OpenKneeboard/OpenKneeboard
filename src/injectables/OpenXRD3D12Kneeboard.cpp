@@ -147,11 +147,12 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
     winrt::com_ptr<ID3D12Resource> texture12;
     texture12.copy_from(images.at(i).texture);
     mRenderTargetViews.at(layerIndex).at(i)
-      = std::make_shared<D3D11On12::D3D11On12RenderTargetViewFactory>(
-        mDeviceResources,
-        texture12,
-        mDoubleBufferForVarjoQuirk ? D3D11On12::Flags::DoubleBuffer
-                                   : D3D11On12::Flags::None);
+      = std::static_pointer_cast<D3D11::IRenderTargetViewFactory>(
+        std::make_shared<D3D11On12::D3D11On12RenderTargetViewFactory>(
+          mDeviceResources,
+          texture12,
+          mDoubleBufferForVarjoQuirk ? D3D11On12::Flags::DoubleBuffer
+                                     : D3D11On12::Flags::None));
   }
   dprintf(
     "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);

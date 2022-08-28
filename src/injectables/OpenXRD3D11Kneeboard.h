@@ -39,7 +39,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   static bool Render(
     OpenXRNext*,
     ID3D11Device*,
-    const std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>&,
+    const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,
     XrSwapchain,
     const SHM::Snapshot&,
     uint8_t layerIndex,
@@ -58,7 +58,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   ID3D11Device* mDevice = nullptr;
 
   std::array<
-    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
     MaxLayers>
     mRenderTargetViews;
 };

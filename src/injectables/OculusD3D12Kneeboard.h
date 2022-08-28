@@ -54,7 +54,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   ID3D12CommandQueueExecuteCommandListsHook mExecuteCommandListsHook;
   OculusKneeboard mOculusKneeboard;
   std::array<
-    std::vector<std::shared_ptr<D3D11::RenderTargetViewFactory>>,
+    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
     MaxLayers>
     mRenderTargetViews;
 
