@@ -31,6 +31,11 @@ struct std::formatter<XrResult, CharT> : std::formatter<int, CharT> {};
 
 namespace OpenKneeboard {
 
+struct OpenXRRuntimeID {
+  XrVersion mVersion;
+  char mName[XR_MAX_RUNTIME_NAME_SIZE];
+};
+
 class OpenXRNext;
 
 class OpenXRKneeboard : public VRKneeboard {

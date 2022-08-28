@@ -34,6 +34,7 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   OpenXRD3D12Kneeboard() = delete;
   OpenXRD3D12Kneeboard(
     XrSession,
+    OpenXRRuntimeID,
     const std::shared_ptr<OpenXRNext>&,
     const XrGraphicsBindingD3D12KHR&);
   ~OpenXRD3D12Kneeboard();
@@ -47,6 +48,8 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
     const VRKneeboard::RenderParameters&) override;
 
  private:
+  bool mDoubleBufferForVarjoQuirk = false;
+
   D3D11::D3D11On12DeviceResources mDeviceResources;
 
   std::array<

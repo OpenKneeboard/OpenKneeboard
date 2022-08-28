@@ -28,6 +28,7 @@
   IT(xrCreateSession) \
   IT(xrDestroySession) \
   IT(xrEndFrame) \
+  IT(xrGetInstanceProperties) \
   IT(xrCreateSwapchain) \
   IT(xrEnumerateSwapchainImages) \
   IT(xrAcquireSwapchainImage) \

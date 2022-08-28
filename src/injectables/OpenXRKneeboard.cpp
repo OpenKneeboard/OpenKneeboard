@@ -48,6 +48,8 @@ const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
 
 static std::shared_ptr<OpenXRNext> gNext;
 
+static OpenXRRuntimeID gRuntime;
+
 OpenXRKneeboard::OpenXRKneeboard(
   XrSession session,
   const std::shared_ptr<OpenXRNext>& next)
@@ -272,6 +274,12 @@ XrResult xrCreateSession(
   XrInstance instance,
   const XrSessionCreateInfo* createInfo,
   XrSession* session) {
+  XrInstanceProperties instanceProps {XR_TYPE_INSTANCE_PROPERTIES};
+  gNext->xrGetInstanceProperties(instance, &instanceProps);
+  gRuntime.mVersion = instanceProps.runtimeVersion;
+  strncpy(gRuntime.mName, instanceProps.runtimeName, XR_MAX_RUNTIME_NAME_SIZE);
+  dprintf("OpenXR runtime: '{}' v{:#x}", gRuntime.mName, gRuntime.mVersion);
+
   auto nextResult = gNext->xrCreateSession(instance, createInfo, session);
   if (nextResult != XR_SUCCESS) {
     dprint("next xrCreateSession failed");
@@ -292,7 +300,7 @@ XrResult xrCreateSession(
   auto d3d12 = findInXrNextChain<XrGraphicsBindingD3D12KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D12_KHR, createInfo->next);
   if (d3d12 && d3d12->device) {
-    gKneeboard = new OpenXRD3D12Kneeboard(*session, gNext, *d3d12);
+    gKneeboard = new OpenXRD3D12Kneeboard(*session, gRuntime, gNext, *d3d12);
     return XR_SUCCESS;
   }
 

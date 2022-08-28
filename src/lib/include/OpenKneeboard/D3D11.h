@@ -20,6 +20,7 @@
 #pragma once
 
 #include <DirectXMath.h>
+#include <OpenKneeboard/bitflags.h>
 #include <d3d11.h>
 #include <d3d11on12.h>
 #include <shims/winrt/base.h>
@@ -107,6 +108,11 @@ struct D3D11On12DeviceResources {
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue12;
 };
 
+enum class D3D11On12Flags : uint16_t {
+  None = 0,
+  DoubleBuffer = 1,// For Varjo
+};
+
 class D3D11On12RenderTargetView final : public RenderTargetView {
  public:
   D3D11On12RenderTargetView() = delete;
@@ -132,7 +138,8 @@ class D3D11On12RenderTargetViewFactory final : public RenderTargetViewFactory {
  public:
   D3D11On12RenderTargetViewFactory(
     const D3D11On12DeviceResources&,
-    const winrt::com_ptr<ID3D12Resource>& texture12);
+    const winrt::com_ptr<ID3D12Resource>& texture12,
+    D3D11On12Flags flags = D3D11On12Flags::None);
   virtual ~D3D11On12RenderTargetViewFactory();
 
   virtual std::unique_ptr<RenderTargetView> Get() const override;
@@ -146,3 +153,8 @@ class D3D11On12RenderTargetViewFactory final : public RenderTargetViewFactory {
 };
 
 }// namespace OpenKneeboard::D3D11
+
+namespace OpenKneeboard {
+template <>
+constexpr bool is_bitflags_v<D3D11::D3D11On12Flags> = true;
+}

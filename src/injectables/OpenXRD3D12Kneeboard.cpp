@@ -28,6 +28,8 @@
 #include <d3d12.h>
 #include <shims/winrt/base.h>
 
+#include <string>
+
 #include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRNext.h"
 
@@ -38,6 +40,7 @@ namespace OpenKneeboard {
 
 OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   XrSession session,
+  OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
   : OpenXRKneeboard(session, next) {
@@ -45,6 +48,11 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   mDeviceResources.mCommandQueue12.copy_from(binding.queue);
 
   dprintf("{}", __FUNCTION__);
+
+  if (std::string_view(runtimeID.mName).starts_with("Varjo")) {
+    dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
+    mDoubleBufferForVarjoQuirk = true;
+  }
 
   UINT flags = 0;
 #ifdef DEBUG
@@ -140,7 +148,10 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
     texture12.copy_from(images.at(i).texture);
     mRenderTargetViews.at(layerIndex).at(i)
       = std::make_shared<D3D11::D3D11On12RenderTargetViewFactory>(
-        mDeviceResources, texture12);
+        mDeviceResources,
+        texture12,
+        mDoubleBufferForVarjoQuirk ? D3D11::D3D11On12Flags::DoubleBuffer
+                                   : D3D11::D3D11On12Flags::None);
   }
   dprintf(
     "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);
