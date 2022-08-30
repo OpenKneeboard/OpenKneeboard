@@ -33,13 +33,13 @@ DirectInputKeyboardListener::DirectInputKeyboardListener(
 
 DirectInputKeyboardListener::~DirectInputKeyboardListener() = default;
 
-void DirectInputKeyboardListener::Poll() {
+void DirectInputKeyboardListener::Poll() noexcept {
   decltype(mState) newState {};
   this->GetState(newState.size(), &newState);
   scope_guard updateState([&]() { mState = newState; });
 
   auto device = this->GetDevice();
-  for (uint8_t i = 0; i < newState.size(); ++i) {
+  for (size_t i = 0; i < newState.size(); ++i) {
     if (mState[i] != newState[i]) {
       device->PostButtonStateChange(
         i, static_cast<bool>(newState[i] & (1 << 7)));

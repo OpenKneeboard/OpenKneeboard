@@ -33,7 +33,7 @@ class DirectInputKeyboardListener final : public DirectInputListener {
   ~DirectInputKeyboardListener();
 
  protected:
-  virtual void Poll() override;
+  virtual void Poll() noexcept override;
 
  private:
   std::array<unsigned char, 256> mState;

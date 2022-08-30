@@ -36,24 +36,24 @@ class DirectInputListener {
 
   static winrt::Windows::Foundation::IAsyncAction Run(
     const winrt::com_ptr<IDirectInput8>& di,
-    const std::shared_ptr<DirectInputDevice>& device);
+    const std::shared_ptr<DirectInputDevice>& device) noexcept;
 
  protected:
   DirectInputListener(
     const winrt::com_ptr<IDirectInput8>& di,
     const std::shared_ptr<DirectInputDevice>& device);
 
-  virtual void Poll() = 0;
+  virtual void Poll() noexcept = 0;
 
   template <class T>
-  void GetState(DWORD size, T* state) {
+  void GetState(DWORD size, T* state) noexcept {
     winrt::check_hresult(mDIDevice->GetDeviceState(size, state));
   }
 
   std::shared_ptr<DirectInputDevice> GetDevice() const;
 
  private:
-  winrt::Windows::Foundation::IAsyncAction Run();
+  winrt::Windows::Foundation::IAsyncAction Run() noexcept;
 
   std::shared_ptr<DirectInputDevice> mDevice;
   winrt::com_ptr<IDirectInputDevice8> mDIDevice;

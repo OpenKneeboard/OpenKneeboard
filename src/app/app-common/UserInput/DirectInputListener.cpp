@@ -64,8 +64,8 @@ DirectInputListener::~DirectInputListener() {
 
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
   const winrt::com_ptr<IDirectInput8>& di,
-  const std::shared_ptr<DirectInputDevice>& device) {
-  if (device->GetDIDeviceInstance().dwDevType & 0xff == DI8DEVTYPE_KEYBOARD) {
+  const std::shared_ptr<DirectInputDevice>& device) noexcept {
+  if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
     DirectInputKeyboardListener listener {di, device};
     co_await listener.Run();
     co_return;
@@ -75,7 +75,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
   co_await listener.Run();
 }
 
-winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() {
+winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
   if (!(mDIDevice && mEventHandle)) {
     co_return;
   }
