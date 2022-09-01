@@ -5,18 +5,20 @@
 Test all of these with the `RelWithDebInfo` msix package, as it's the most restricted form of installation.
 
 * SteamVR
-  * Gaze zoom before and after recentering
 * Oculus: DX11 and DX12
 * OpenXR: DX11 and DX12
 * Non-VR: DX11
-* Gaze detection, zoomed and unzoomed (`hello_xr` is useful for testing)
+* Gaze detection, zoomed and unzoomed (`hello_xr` is useful for testing), before and after centering
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys
 * Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
 * Variable aspect ratios
 * Drawing perf/feel while in VR
-* XBox controller
-* Physical joystick/throttle
-* VJoy controller
+* Bindings
+  * Physical joystick/throttle
+  * XBox controller
+  * VJoy controller
+  * Mouse buttons
+  * Keyboard
 * adding, removing, reordering tabs, including DCS tabs
 * expected default tabs with quick start guide on fresh install
 * adding, removing games
@@ -31,6 +33,7 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 
 ## Releasing
 
+* Check `Quick Start.pdf` is up to date
 * Check version number in CMakeLists.txt is up to date
 * Test msix from GitHub Actions as above
 * Push tag
