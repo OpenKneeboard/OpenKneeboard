@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DirectInputJoystickListener.h>
 #include <OpenKneeboard/DirectInputKeyboardListener.h>
 #include <OpenKneeboard/DirectInputListener.h>
+#include <OpenKneeboard/DirectInputMouseListener.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -37,22 +38,27 @@ DirectInputListener::DirectInputListener(
   if (!mDIDevice) {
     return;
   }
+}
+
+void DirectInputListener::Initialize() {
+  if (mInitialized || !mDIDevice) {
+    return;
+  }
+  mInitialized = true;
 
   mEventHandle.attach(CreateEvent(nullptr, false, false, nullptr));
   if (!mEventHandle) {
     return;
   }
 
-  if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
-    winrt::check_hresult(mDIDevice->SetDataFormat(&c_dfDIKeyboard));
-  } else {
-    winrt::check_hresult(mDIDevice->SetDataFormat(&c_dfDIJoystick2));
-  }
+  this->SetDataFormat();
 
   winrt::check_hresult(mDIDevice->SetEventNotification(mEventHandle.get()));
   winrt::check_hresult(mDIDevice->SetCooperativeLevel(
     NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE));
   winrt::check_hresult(mDIDevice->Acquire());
+
+  this->OnAcquired();
 }
 
 DirectInputListener::~DirectInputListener() {
@@ -71,11 +77,19 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
     co_return;
   }
 
+  if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_MOUSE) {
+    DirectInputMouseListener listener {di, device};
+    co_await listener.Run();
+    co_return;
+  }
+
   DirectInputJoystickListener listener {di, device};
   co_await listener.Run();
 }
 
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
+  this->Initialize();
+
   if (!(mDIDevice && mEventHandle)) {
     co_return;
   }
@@ -105,6 +119,10 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
 
 std::shared_ptr<DirectInputDevice> DirectInputListener::GetDevice() const {
   return mDevice;
+}
+
+winrt::com_ptr<IDirectInputDevice8W> DirectInputListener::GetDIDevice() const {
+  return mDIDevice;
 }
 
 }// namespace OpenKneeboard

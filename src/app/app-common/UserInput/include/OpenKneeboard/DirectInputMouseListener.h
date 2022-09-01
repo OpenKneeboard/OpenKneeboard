@@ -23,12 +23,12 @@
 
 namespace OpenKneeboard {
 
-class DirectInputJoystickListener final : public DirectInputListener {
+class DirectInputMouseListener final : public DirectInputListener {
  public:
-  DirectInputJoystickListener(
+  DirectInputMouseListener(
     const winrt::com_ptr<IDirectInput8>& di,
     const std::shared_ptr<DirectInputDevice>& device);
-  ~DirectInputJoystickListener();
+  ~DirectInputMouseListener();
 
  protected:
   virtual void Poll() noexcept override;
@@ -36,7 +36,7 @@ class DirectInputJoystickListener final : public DirectInputListener {
   virtual void OnAcquired() noexcept override;
 
  private:
-  DIJOYSTATE2 mState;
+  DIMOUSESTATE2 mState;
 };
 
 }// namespace OpenKneeboard

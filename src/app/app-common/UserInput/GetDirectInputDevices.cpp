@@ -57,7 +57,9 @@ static bool IsGameController(LPCDIDEVICEINSTANCE inst) {
 static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
   auto devType = inst->dwDevType & 0xff;
   // vjoystick devices self-report as 6DOF 1st-person controllers
-  if (devType == DI8DEVTYPE_KEYBOARD || IsGameController(inst)) {
+  if (
+    devType == DI8DEVTYPE_KEYBOARD || devType == DI8DEVTYPE_MOUSE
+    || IsGameController(inst)) {
     auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
     devices.push_back(*inst);
   } else {

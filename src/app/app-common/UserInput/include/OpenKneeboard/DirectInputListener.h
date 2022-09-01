@@ -44,6 +44,8 @@ class DirectInputListener {
     const std::shared_ptr<DirectInputDevice>& device);
 
   virtual void Poll() noexcept = 0;
+  virtual void SetDataFormat() noexcept = 0;
+  virtual void OnAcquired() noexcept = 0;
 
   template <class T>
   void GetState(DWORD size, T* state) noexcept {
@@ -51,13 +53,16 @@ class DirectInputListener {
   }
 
   std::shared_ptr<DirectInputDevice> GetDevice() const;
+  winrt::com_ptr<IDirectInputDevice8W> GetDIDevice() const;
 
  private:
-  winrt::Windows::Foundation::IAsyncAction Run() noexcept;
-
   std::shared_ptr<DirectInputDevice> mDevice;
   winrt::com_ptr<IDirectInputDevice8> mDIDevice;
   winrt::handle mEventHandle;
+  bool mInitialized = false;
+
+  winrt::Windows::Foundation::IAsyncAction Run() noexcept;
+  void Initialize();
 };
 
 }// namespace OpenKneeboard

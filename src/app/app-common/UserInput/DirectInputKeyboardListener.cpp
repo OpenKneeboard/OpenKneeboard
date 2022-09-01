@@ -28,7 +28,6 @@ DirectInputKeyboardListener::DirectInputKeyboardListener(
   const winrt::com_ptr<IDirectInput8>& di,
   const std::shared_ptr<DirectInputDevice>& device)
   : DirectInputListener(di, device) {
-  this->GetState(mState.size(), mState.data());
 }
 
 DirectInputKeyboardListener::~DirectInputKeyboardListener() = default;
@@ -45,6 +44,14 @@ void DirectInputKeyboardListener::Poll() noexcept {
         i, static_cast<bool>(newState[i] & (1 << 7)));
     }
   }
+}
+
+void DirectInputKeyboardListener::SetDataFormat() noexcept {
+  this->GetDIDevice()->SetDataFormat(&c_dfDIKeyboard);
+}
+
+void DirectInputKeyboardListener::OnAcquired() noexcept {
+  this->GetState(sizeof(mState), &mState);
 }
 
 }// namespace OpenKneeboard

@@ -19,45 +19,38 @@
  */
 
 #include <OpenKneeboard/DirectInputDevice.h>
-#include <OpenKneeboard/DirectInputJoystickListener.h>
+#include <OpenKneeboard/DirectInputMouseListener.h>
 #include <OpenKneeboard/scope_guard.h>
 
 namespace OpenKneeboard {
 
-DirectInputJoystickListener::DirectInputJoystickListener(
+DirectInputMouseListener::DirectInputMouseListener(
   const winrt::com_ptr<IDirectInput8>& di,
   const std::shared_ptr<DirectInputDevice>& device)
   : DirectInputListener(di, device) {
 }
 
-DirectInputJoystickListener::~DirectInputJoystickListener() = default;
+DirectInputMouseListener::~DirectInputMouseListener() = default;
 
-void DirectInputJoystickListener::Poll() noexcept {
+void DirectInputMouseListener::Poll() noexcept {
   decltype(mState) newState {};
   this->GetState(sizeof(mState), &newState);
   scope_guard updateState([&]() { mState = newState; });
 
   auto device = this->GetDevice();
-  for (uint8_t i = 0; i < sizeof(mState.rgbButtons); ++i) {
+  for (size_t i = 0; i < sizeof(mState.rgbButtons); ++i) {
     if (mState.rgbButtons[i] != newState.rgbButtons[i]) {
       device->PostButtonStateChange(
         i, static_cast<bool>(newState.rgbButtons[i] & (1 << 7)));
     }
   }
-
-  constexpr auto maxHats = sizeof(mState.rgdwPOV) / sizeof(mState.rgdwPOV[0]);
-  for (uint8_t i = 0; i < maxHats; ++i) {
-    if (mState.rgdwPOV[i] != newState.rgdwPOV[i]) {
-      device->PostHatStateChange(i, mState.rgdwPOV[i], newState.rgdwPOV[i]);
-    }
-  }
 }
 
-void DirectInputJoystickListener::SetDataFormat() noexcept {
-  this->GetDIDevice()->SetDataFormat(&c_dfDIJoystick2);
+void DirectInputMouseListener::SetDataFormat() noexcept {
+  this->GetDIDevice()->SetDataFormat(&c_dfDIMouse2);
 }
 
-void DirectInputJoystickListener::OnAcquired() noexcept {
+void DirectInputMouseListener::OnAcquired() noexcept {
   this->GetState(sizeof(mState), &mState);
 }
 

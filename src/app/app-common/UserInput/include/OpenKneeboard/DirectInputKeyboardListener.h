@@ -34,6 +34,8 @@ class DirectInputKeyboardListener final : public DirectInputListener {
 
  protected:
   virtual void Poll() noexcept override;
+  virtual void SetDataFormat() noexcept override;
+  virtual void OnAcquired() noexcept override;
 
  private:
   std::array<unsigned char, 256> mState;
