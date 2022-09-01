@@ -366,6 +366,10 @@ XrResult xrGetInstanceProcAddr(
   }
 
   if (!gNext) {
+    dprintf(
+      "Unsupported OpenXR call '{}' with instance {:#016x} and no next",
+      name,
+      reinterpret_cast<uintptr_t>(instance));
     return XR_ERROR_FUNCTION_UNSUPPORTED;
   }
 
