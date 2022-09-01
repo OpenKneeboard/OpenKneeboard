@@ -328,11 +328,25 @@ XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) {
   return gNext->xrEndFrame(session, frameEndInfo);
 }
 
+XrResult xrEnumerateApiLayerProperties(
+  uint32_t /*propertyCapacityInput*/,
+  uint32_t* propertyCountOutput,
+  XrApiLayerProperties* /*properties*/) {
+  *propertyCountOutput = 0;
+  return XR_SUCCESS;
+}
+
 XrResult xrGetInstanceProcAddr(
   XrInstance instance,
   const char* name_cstr,
   PFN_xrVoidFunction* function) {
   std::string_view name {name_cstr};
+
+  if (name == "xrEnumerateApiLayerProperties") {
+    *function
+      = reinterpret_cast<PFN_xrVoidFunction>(&xrEnumerateApiLayerProperties);
+    return XR_SUCCESS;
+  }
 
   if (name == "xrCreateSession") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateSession);
@@ -349,6 +363,10 @@ XrResult xrGetInstanceProcAddr(
   if (name == "xrEndFrame") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
     return XR_SUCCESS;
+  }
+
+  if (!gNext) {
+    return XR_ERROR_FUNCTION_UNSUPPORTED;
   }
 
   return gNext->xrGetInstanceProcAddr(instance, name_cstr, function);
