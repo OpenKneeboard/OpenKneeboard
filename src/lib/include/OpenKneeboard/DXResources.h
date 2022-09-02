@@ -24,6 +24,7 @@
 #include <dwrite.h>
 #include <dxgi1_3.h>
 #include <shims/winrt/base.h>
+#include <wincodec.h>
 
 namespace OpenKneeboard {
 
@@ -47,6 +48,8 @@ struct DXResources {
   winrt::com_ptr<ID2D1Factory> mD2DFactory;
   winrt::com_ptr<IDXGIFactory2> mDXGIFactory;
   winrt::com_ptr<IDWriteFactory> mDWriteFactory;
+
+  winrt::com_ptr<IWICImagingFactory> mWIC;
 
   static DXResources Create();
 };

@@ -76,6 +76,9 @@ DXResources DXResources::Create() {
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(ret.mDWriteFactory.put())));
 
+  ret.mWIC
+    = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
+
   return ret;
 }
 

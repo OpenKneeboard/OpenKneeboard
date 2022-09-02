@@ -60,7 +60,6 @@ class ImagePageSource final : public virtual IPageSource,
   };
 
   DXResources mDXR;
-  winrt::com_ptr<IWICImagingFactory> mWIC;
 
   std::mutex mMutex;
   std::vector<Page> mPages = {};

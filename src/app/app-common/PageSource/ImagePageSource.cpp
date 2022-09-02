@@ -34,8 +34,7 @@ namespace OpenKneeboard {
 ImagePageSource::ImagePageSource(
   const DXResources& dxr,
   const std::vector<std::filesystem::path>& paths)
-  : mDXR(dxr),
-    mWIC {winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory)} {
+  : mDXR(dxr) {
   this->SetPaths(paths);
 }
 
@@ -62,7 +61,7 @@ bool ImagePageSource::CanOpenFile(const std::filesystem::path& path) const {
   }
   auto wsPath = path.wstring();
   winrt::com_ptr<IWICBitmapDecoder> decoder;
-  mWIC->CreateDecoderFromFilename(
+  mDXR.mWIC->CreateDecoderFromFilename(
     wsPath.c_str(),
     nullptr,
     GENERIC_READ,
@@ -146,8 +145,10 @@ winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
 
   winrt::com_ptr<IWICBitmapDecoder> decoder;
 
+  const auto wic = mDXR.mWIC.get();
+
   auto path = page.mPath.wstring();
-  mWIC->CreateDecoderFromFilename(
+  wic->CreateDecoderFromFilename(
     path.c_str(),
     nullptr,
     GENERIC_READ,
@@ -164,7 +165,7 @@ winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
   }
 
   winrt::com_ptr<IWICFormatConverter> converter;
-  mWIC->CreateFormatConverter(converter.put());
+  wic->CreateFormatConverter(converter.put());
   if (!converter) {
     return {};
   }
