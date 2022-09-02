@@ -19,8 +19,8 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
+#include <OpenKneeboard/IPageSourceWithNavigation.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/ITabWithNavigation.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/TabView.h>
@@ -171,7 +171,7 @@ bool TabView::SupportsTabMode(TabMode mode) const {
     case TabMode::NORMAL:
       return true;
     case TabMode::NAVIGATION: {
-      auto nav = std::dynamic_pointer_cast<ITabWithNavigation>(mRootTab);
+      auto nav = std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab);
       return nav && nav->IsNavigationAvailable();
     }
   }
@@ -201,7 +201,9 @@ bool TabView::SetTabMode(TabMode mode) {
     case TabMode::NAVIGATION:
       mActiveSubTab = std::make_shared<NavigationTab>(
         mDXR,
-        std::dynamic_pointer_cast<ITabWithNavigation>(mRootTab),
+        mRootTab,
+        std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab)
+          ->GetNavigationEntries(),
         mRootTab->GetNativeContentSize(mRootTabPage));
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,

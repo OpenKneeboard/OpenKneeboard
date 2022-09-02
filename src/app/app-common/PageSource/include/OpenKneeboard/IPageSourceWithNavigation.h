@@ -19,7 +19,8 @@
  */
 #pragma once
 
-#include "ITab.h"
+#include <OpenKneeboard/IPageSource.h>
+#include <OpenKneeboard/utf8.h>
 
 namespace OpenKneeboard {
 
@@ -28,7 +29,7 @@ struct NavigationEntry {
   uint16_t mPageIndex;
 };
 
-class ITabWithNavigation : public virtual ITab {
+class IPageSourceWithNavigation : public virtual IPageSource {
  public:
   virtual bool IsNavigationAvailable() const = 0;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const = 0;

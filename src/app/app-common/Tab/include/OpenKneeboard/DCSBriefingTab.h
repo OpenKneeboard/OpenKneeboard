@@ -20,9 +20,9 @@
 #pragma once
 
 #include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/IPageSourceWithNavigation.h>
 
 #include "DCSTab.h"
-#include "ITabWithNavigation.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
 
@@ -35,7 +35,7 @@ class PlainTextPageSource;
 
 class DCSBriefingTab final : public TabBase,
                              public DCSTab,
-                             public ITabWithNavigation,
+                             public IPageSourceWithNavigation,
                              public TabWithDoodles {
  public:
   DCSBriefingTab(const DXResources&, KneeboardState*);

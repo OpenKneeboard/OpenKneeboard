@@ -19,10 +19,11 @@
  */
 #pragma once
 
+#include <OpenKneeboard/IPageSourceWithNavigation.h>
+
 #include <shims/filesystem>
 
 #include "ITab.h"
-#include "ITabWithNavigation.h"
 #include "ITabWithSettings.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
@@ -31,7 +32,7 @@ namespace OpenKneeboard {
 
 class PDFTab final : public TabBase,
                      public TabWithDoodles,
-                     public ITabWithNavigation,
+                     public IPageSourceWithNavigation,
                      public ITabWithSettings {
  public:
   explicit PDFTab(

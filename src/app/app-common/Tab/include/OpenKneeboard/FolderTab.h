@@ -19,13 +19,13 @@
  */
 #pragma once
 
+#include <OpenKneeboard/IPageSourceWithNavigation.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Storage.Search.h>
 
 #include <shims/filesystem>
 
 #include "ITab.h"
-#include "ITabWithNavigation.h"
 #include "ITabWithSettings.h"
 #include "TabBase.h"
 #include "TabWithDoodles.h"
@@ -36,7 +36,7 @@ class ImagePageSource;
 
 class FolderTab final : public TabBase,
                         public TabWithDoodles,
-                        public ITabWithNavigation,
+                        public IPageSourceWithNavigation,
                         public ITabWithSettings {
  public:
   FolderTab(

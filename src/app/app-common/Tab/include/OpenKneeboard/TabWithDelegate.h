@@ -20,12 +20,12 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/IPageSourceWithNavigation.h>
 
 #include <concepts>
 #include <type_traits>
 
 #include "ITab.h"
-#include "ITabWithNavigation.h"
 #include "TabWithDoodles.h"
 
 namespace OpenKneeboard {
@@ -73,7 +73,7 @@ class TabWithCursorEventsDelegate : public virtual IPageSourceWithCursorEvents,
 };
 
 template <class T>
-class TabWithNavigationDelegate : public virtual ITabWithNavigation,
+class TabWithNavigationDelegate : public virtual IPageSourceWithNavigation,
                                   public virtual TabWithDelegateBase<T> {
  public:
   virtual bool IsNavigationAvailable() const {
@@ -92,7 +92,7 @@ class TabWithDelegate : public virtual TabWithDelegateBase<T>,
                           TabWithCursorEventsDelegate<T>,
                           void>,
                         public virtual std::conditional_t<
-                          std::derived_from<T, ITabWithNavigation>,
+                          std::derived_from<T, IPageSourceWithNavigation>,
                           TabWithNavigationDelegate<T>,
                           void>,
                         private EventReceiver {
