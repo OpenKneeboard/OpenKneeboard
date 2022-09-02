@@ -18,8 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/ITabWithCursorEvents.h>
 #include <OpenKneeboard/ITabWithNavigation.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabView.h>
@@ -64,7 +64,7 @@ uint16_t TabView::GetPageIndex() const {
 
 void TabView::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
-    = std::dynamic_pointer_cast<ITabWithCursorEvents>(this->GetTab());
+    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
   if (receiver) {
     receiver->PostCursorEvent(mEventContext, ev, this->GetPageIndex());
   }
@@ -182,7 +182,7 @@ bool TabView::SetTabMode(TabMode mode) {
   }
 
   auto receiver
-    = std::dynamic_pointer_cast<ITabWithCursorEvents>(this->GetTab());
+    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
   if (receiver) {
     receiver->PostCursorEvent(mEventContext, {}, this->GetPageIndex());
   }

@@ -61,7 +61,7 @@ class TabWithDelegateBase : public virtual ITab {
 };
 
 template <class T>
-class TabWithCursorEventsDelegate : public virtual ITabWithCursorEvents,
+class TabWithCursorEventsDelegate : public virtual IPageSourceWithCursorEvents,
                                     public virtual TabWithDelegateBase<T> {
  public:
   virtual void PostCursorEvent(
@@ -89,7 +89,7 @@ class TabWithNavigationDelegate : public virtual ITabWithNavigation,
 template <std::derived_from<ITab> T>
 class TabWithDelegate : public virtual TabWithDelegateBase<T>,
                         public virtual std::conditional_t<
-                          std::derived_from<T, ITabWithCursorEvents>,
+                          std::derived_from<T, IPageSourceWithCursorEvents>,
                           TabWithCursorEventsDelegate<T>,
                           void>,
                         public virtual std::conditional_t<

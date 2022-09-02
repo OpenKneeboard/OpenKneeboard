@@ -22,19 +22,18 @@
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <d2d1.h>
 #include <shims/winrt/base.h>
 
 #include <memory>
 #include <mutex>
 
-#include "ITabWithCursorEvents.h"
-
 namespace OpenKneeboard {
 
 class KneeboardState;
 
-class TabWithDoodles : public virtual ITabWithCursorEvents,
+class TabWithDoodles : public virtual IPageSourceWithCursorEvents,
                        protected EventReceiver {
  public:
   TabWithDoodles(const DXResources&, KneeboardState*);

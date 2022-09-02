@@ -19,13 +19,13 @@
  */
 #pragma once
 
-#include "ITab.h"
+#include "IPageSource.h"
 
 namespace OpenKneeboard {
 
 struct GameEvent;
 
-class ITabWithGameEvents : public virtual ITab {
+class IPageSourceWithGameEvents : public virtual IPageSource {
  public:
   virtual void PostGameEvent(const GameEvent&) = 0;
 };

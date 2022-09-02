@@ -21,13 +21,13 @@
 
 #include <OpenKneeboard/Events.h>
 
-#include "ITab.h"
+#include "IPageSource.h"
 
 namespace OpenKneeboard {
 
 struct CursorEvent;
 
-class ITabWithCursorEvents : public virtual ITab {
+class IPageSourceWithCursorEvents : public virtual IPageSource {
  public:
   virtual void
   PostCursorEvent(EventContext, const CursorEvent&, uint16_t pageIndex)

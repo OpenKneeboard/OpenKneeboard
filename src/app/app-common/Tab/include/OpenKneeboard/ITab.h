@@ -28,7 +28,7 @@
 
 namespace OpenKneeboard {
 
-class ITab : public IPageSource {
+class ITab : public virtual IPageSource {
  public:
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
   virtual ~ITab();
@@ -38,7 +38,6 @@ class ITab : public IPageSource {
   virtual RuntimeID GetRuntimeID() const = 0;
   virtual void Reload() = 0;
 
-  Event<> evNeedsRepaintEvent;
   Event<> evAvailableFeaturesChangedEvent;
   Event<EventContext, uint16_t> evPageChangeRequestedEvent;
 };

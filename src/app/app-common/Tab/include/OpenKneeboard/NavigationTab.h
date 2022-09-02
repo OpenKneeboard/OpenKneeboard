@@ -24,16 +24,16 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 
 #include <limits>
 
-#include "ITabWithCursorEvents.h"
 #include "TabBase.h"
 
 namespace OpenKneeboard {
 
 class NavigationTab final : public TabBase,
-                            public ITabWithCursorEvents,
+                            public IPageSourceWithCursorEvents,
                             private EventReceiver {
  public:
   struct Entry {

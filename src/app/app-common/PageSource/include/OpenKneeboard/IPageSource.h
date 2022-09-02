@@ -44,6 +44,7 @@ class IPageSource {
   RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
     = 0;
 
+  Event<> evNeedsRepaintEvent;
   Event<> evPageAppendedEvent;
   Event<ContentChangeType> evContentChangedEvent;
 };
