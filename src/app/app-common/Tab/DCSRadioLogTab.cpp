@@ -27,10 +27,11 @@ using DCS = OpenKneeboard::DCSWorld;
 namespace OpenKneeboard {
 
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
-  : TabWithDoodles(dxr, kbs),
-    mPageSource(std::make_unique<PlainTextPageSource>(
+  : PageSourceWithDelegates(dxr, kbs),
+    mPageSource(std::make_shared<PlainTextPageSource>(
       dxr,
       _("[waiting for radio messages]"))) {
+  this->SetDelegates({mPageSource});
   AddEventListener(mPageSource->evPageAppendedEvent, this->evPageAppendedEvent);
 }
 
@@ -52,17 +53,6 @@ uint16_t DCSRadioLogTab::GetPageCount() const {
   return count == 0 ? 1 : count;
 }
 
-D2D1_SIZE_U DCSRadioLogTab::GetNativeContentSize(uint16_t pageIndex) {
-  return mPageSource->GetNativeContentSize(pageIndex);
-}
-
-void DCSRadioLogTab::RenderPageContent(
-  ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
-  const D2D1_RECT_F& rect) {
-  mPageSource->RenderPage(ctx, pageIndex, rect);
-}
-
 void DCSRadioLogTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& installPath,
@@ -77,9 +67,7 @@ void DCSRadioLogTab::OnGameEvent(
     return;
   }
 
-  this->ClearContentCache();
   mPageSource->PushMessage(event.value);
-  this->evNeedsRepaintEvent.Emit();
 }
 
 void DCSRadioLogTab::Reload() {

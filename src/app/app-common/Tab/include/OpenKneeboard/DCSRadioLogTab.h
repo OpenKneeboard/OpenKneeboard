@@ -19,9 +19,10 @@
  */
 #pragma once
 
+#include <OpenKneeboard/PageSourceWithDelegates.h>
+
 #include "DCSTab.h"
 #include "TabBase.h"
-#include "TabWithDoodles.h"
 
 namespace OpenKneeboard {
 
@@ -29,29 +30,23 @@ class PlainTextPageSource;
 
 class DCSRadioLogTab final : public TabBase,
                              public DCSTab,
-                             public TabWithDoodles {
+                             public PageSourceWithDelegates {
  public:
   DCSRadioLogTab(const DXResources&, KneeboardState*);
   virtual ~DCSRadioLogTab();
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
   virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
   virtual void Reload() override;
 
  protected:
-  virtual void RenderPageContent(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F& rect) override;
-
   virtual void OnGameEvent(
     const GameEvent&,
     const std::filesystem::path& installPath,
     const std::filesystem::path& savedGamesPath) override;
 
  private:
-  std::unique_ptr<PlainTextPageSource> mPageSource;
+  std::shared_ptr<PlainTextPageSource> mPageSource;
 };
 
 }// namespace OpenKneeboard
