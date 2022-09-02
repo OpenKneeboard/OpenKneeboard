@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <Unknwn.h>
 #include <dwrite.h>
 
@@ -222,6 +223,14 @@ void PlainTextPageSource::LayoutMessages() {
   if (mRows <= 1 || mColumns <= 1) {
     return;
   }
+
+  if (mMessages.empty()) {
+    return;
+  }
+
+  const scope_guard repaintAtEnd([this]() {
+    this->evContentChangedEvent.Emit(ContentChangeType::Modified);
+  });
 
   for (auto message: mMessages) {
     // tabs are variable width, and everything else here
