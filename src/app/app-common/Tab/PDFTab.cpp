@@ -249,7 +249,7 @@ std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(
   return ret;
 }
 
-std::vector<NavigationTab::Entry> GetNavigationEntries(
+std::vector<NavigationTab::Entry> ExtractNavigationEntries(
   const std::map<QPDFObjGen, uint16_t>& pageIndices,
   std::vector<QPDFOutlineObjectHelper>& outlines) {
   std::vector<NavigationTab::Entry> entries;
@@ -266,7 +266,7 @@ std::vector<NavigationTab::Entry> GetNavigationEntries(
     });
 
     auto kids = outline.getKids();
-    auto kidEntries = GetNavigationEntries(pageIndices, kids);
+    auto kidEntries = ExtractNavigationEntries(pageIndices, kids);
     if (kidEntries.empty()) {
       continue;
     }
@@ -358,7 +358,7 @@ void PDFTab::Reload() {
 
     QPDFOutlineDocumentHelper odh(qpdf);
     auto outlines = odh.getTopLevelOutlines();
-    p->mBookmarks = GetNavigationEntries(pageIndices, outlines);
+    p->mBookmarks = ExtractNavigationEntries(pageIndices, outlines);
     if (p->mBookmarks.empty()) {
       p->mBookmarks.clear();
       for (uint16_t i = 0; i < pageIndices.size(); ++i) {
@@ -517,8 +517,7 @@ bool PDFTab::IsNavigationAvailable() const {
   return p->mNavigationLoaded && this->GetPageCount() > 2;
 }
 
-std::shared_ptr<ITab> PDFTab::CreateNavigationTab(uint16_t pageIndex) {
-  return std::make_shared<NavigationTab>(
-    p->mDXR, this, p->mBookmarks, this->GetNativeContentSize(pageIndex));
+std::vector<NavigationEntry> PDFTab::GetNavigationEntries() const {
+  return p->mBookmarks;
 }
 }// namespace OpenKneeboard

@@ -33,13 +33,13 @@ bool NavigationTab::Button::operator==(
 
 NavigationTab::NavigationTab(
   const DXResources& dxr,
-  ITab* rootTab,
-  const std::vector<Entry>& entries,
+  const std::shared_ptr<ITabWithNavigation>& rootTab,
   const D2D1_SIZE_U& _ignoredPreferredSize)
   : mDXR(dxr),
     mRootTab(rootTab),
     mPreferredSize({768, 1024}),
     mPreviewLayer(dxr) {
+  const auto entries = rootTab->GetNavigationEntries();
   const auto columns = entries.size() >= 10
     ? std::max(
       1ui32,

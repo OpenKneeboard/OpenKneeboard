@@ -22,14 +22,18 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabWithNavigation.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 namespace OpenKneeboard {
 
-TabView::TabView(KneeboardState* kneeboard, const std::shared_ptr<ITab>& tab)
-  : mKneeboard(kneeboard), mRootTab(tab), mRootTabPage(0) {
+TabView::TabView(
+  const DXResources& dxr,
+  KneeboardState* kneeboard,
+  const std::shared_ptr<ITab>& tab)
+  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     tab->evContentChangedEvent, &TabView::OnTabContentChanged, this);
@@ -195,8 +199,10 @@ bool TabView::SetTabMode(TabMode mode) {
     case TabMode::NORMAL:
       break;
     case TabMode::NAVIGATION:
-      mActiveSubTab = std::dynamic_pointer_cast<ITabWithNavigation>(mRootTab)
-                        ->CreateNavigationTab(mRootTabPage);
+      mActiveSubTab = std::make_shared<NavigationTab>(
+        mDXR,
+        std::dynamic_pointer_cast<ITabWithNavigation>(mRootTab),
+        mRootTab->GetNativeContentSize(mRootTabPage));
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
         [this](EventContext ctx, uint16_t newPage) {

@@ -165,9 +165,8 @@ bool DCSBriefingTab::IsNavigationAvailable() const {
   return this->GetPageCount() > 2;
 }
 
-std::shared_ptr<ITab> DCSBriefingTab::CreateNavigationTab(
-  uint16_t currentPage) {
-  std::vector<NavigationTab::Entry> entries;
+std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
+  std::vector<NavigationEntry> entries;
 
   const auto textCount = mTextPages->GetPageCount();
   for (uint16_t i = 0; i < textCount; ++i) {
@@ -184,8 +183,7 @@ std::shared_ptr<ITab> DCSBriefingTab::CreateNavigationTab(
       {paths.at(i).stem(), static_cast<uint16_t>(i + textCount)});
   }
 
-  return std::make_shared<NavigationTab>(
-    mDXR, this, entries, this->GetNativeContentSize(currentPage));
+  return entries;
 }
 
 }// namespace OpenKneeboard

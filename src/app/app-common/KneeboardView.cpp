@@ -30,8 +30,8 @@
 
 namespace OpenKneeboard {
 
-KneeboardView::KneeboardView(KneeboardState* kneeboard)
-  : mKneeboard(kneeboard) {
+KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
+  : mDXR(dxr), mKneeboard(kneeboard) {
   UpdateLayout();
 }
 
@@ -57,7 +57,7 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
       continue;
     }
 
-    auto viewState = std::make_shared<TabView>(mKneeboard, tab);
+    auto viewState = std::make_shared<TabView>(mDXR, mKneeboard, tab);
     viewStates.push_back(viewState);
 
     AddEventListener(viewState->evNeedsRepaintEvent, [=]() {

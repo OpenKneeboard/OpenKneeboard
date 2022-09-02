@@ -80,9 +80,8 @@ class TabWithNavigationDelegate : public virtual ITabWithNavigation,
     return this->GetDelegate()->IsNavigationAvailable();
   }
 
-  virtual std::shared_ptr<ITab> CreateNavigationTab(
-    uint16_t pageIndex) override {
-    return this->GetDelegate()->CreateNavigationTab(pageIndex);
+  virtual std::vector<NavigationEntry> GetNavigationEntries() const override {
+    return this->GetDelegate()->GetNavigationEntries();
   }
 };
 

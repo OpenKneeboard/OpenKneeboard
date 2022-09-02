@@ -59,8 +59,7 @@ class PDFTab final : public TabBase,
   virtual void SetPath(const std::filesystem::path& path);
 
   virtual bool IsNavigationAvailable() const override;
-  virtual std::shared_ptr<ITab> CreateNavigationTab(
-    uint16_t pageIndex) override;
+  virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 
   virtual void PostCursorEvent(
     EventContext ctx,

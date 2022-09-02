@@ -23,10 +23,15 @@
 
 namespace OpenKneeboard {
 
+struct NavigationEntry {
+  utf8_string mName;
+  uint16_t mPageIndex;
+};
+
 class ITabWithNavigation : public virtual ITab {
  public:
   virtual bool IsNavigationAvailable() const = 0;
-  virtual std::shared_ptr<ITab> CreateNavigationTab(uint16_t pageIndex) = 0;
+  virtual std::vector<NavigationEntry> GetNavigationEntries() const = 0;
 };
 
 }// namespace OpenKneeboard

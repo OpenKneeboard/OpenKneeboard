@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/IKneeboardView.h>
 
 #include <vector>
@@ -32,7 +33,7 @@ class KneeboardState;
 
 class KneeboardView final : public IKneeboardView, private EventReceiver {
  public:
-  KneeboardView(KneeboardState*);
+  KneeboardView(const DXResources&, KneeboardState*);
   ~KneeboardView();
 
   virtual KneeboardViewID GetRuntimeID() const override;
@@ -70,6 +71,7 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
 
  private:
   KneeboardViewID mID;
+  DXResources mDXR;
   KneeboardState* mKneeboard;
   std::vector<std::shared_ptr<ITabView>> mTabViews;
   std::shared_ptr<ITabView> mCurrentTabView;

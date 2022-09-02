@@ -42,8 +42,8 @@ namespace OpenKneeboard {
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
   mViews = {
-    std::make_shared<KneeboardView>(this),
-    std::make_shared<KneeboardView>(this),
+    std::make_shared<KneeboardView>(dxr, this),
+    std::make_shared<KneeboardView>(dxr, this),
   };
 
   if (!mSettings.NonVR.is_null()) {

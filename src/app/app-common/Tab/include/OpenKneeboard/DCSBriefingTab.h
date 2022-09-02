@@ -49,8 +49,7 @@ class DCSBriefingTab final : public TabBase,
   virtual void Reload() noexcept override;
 
   bool IsNavigationAvailable() const override;
-
-  std::shared_ptr<ITab> CreateNavigationTab(uint16_t currentPage) override;
+  std::vector<NavigationEntry> GetNavigationEntries() const override;
 
  protected:
   virtual void OnGameEvent(

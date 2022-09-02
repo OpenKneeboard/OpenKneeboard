@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/ITabView.h>
 
 #include <vector>
@@ -30,7 +31,7 @@ class KneeboardState;
 
 class TabView final : public ITabView, private EventReceiver {
  public:
-  TabView(KneeboardState*, const std::shared_ptr<ITab>&);
+  TabView(const DXResources&, KneeboardState*, const std::shared_ptr<ITab>&);
   ~TabView();
 
   virtual std::shared_ptr<ITab> GetRootTab() const override;
@@ -54,7 +55,9 @@ class TabView final : public ITabView, private EventReceiver {
  private:
   const EventContext mEventContext;
 
+  DXResources mDXR;
   KneeboardState* mKneeboard;
+
   std::shared_ptr<ITab> mRootTab;
   uint16_t mRootTabPage;
 

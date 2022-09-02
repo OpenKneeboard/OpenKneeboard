@@ -143,8 +143,8 @@ bool FolderTab::IsNavigationAvailable() const {
   return mPageSource->GetPageCount() > 2;
 }
 
-std::shared_ptr<ITab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
-  std::vector<NavigationTab::Entry> entries;
+std::vector<NavigationEntry> FolderTab::GetNavigationEntries() const {
+  std::vector<NavigationEntry> entries;
 
   const auto paths = mPageSource->GetPaths();
 
@@ -152,8 +152,7 @@ std::shared_ptr<ITab> FolderTab::CreateNavigationTab(uint16_t currentPage) {
     entries.push_back({paths.at(i).stem(), i});
   }
 
-  return std::make_shared<NavigationTab>(
-    mDXR, this, entries, this->GetNativeContentSize(currentPage));
+  return entries;
 }
 
 }// namespace OpenKneeboard

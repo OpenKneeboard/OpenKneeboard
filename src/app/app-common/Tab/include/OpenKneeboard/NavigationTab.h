@@ -25,8 +25,10 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
+#include <OpenKneeboard/ITabWithNavigation.h>
 
 #include <limits>
+#include <memory>
 
 #include "TabBase.h"
 
@@ -36,15 +38,11 @@ class NavigationTab final : public TabBase,
                             public IPageSourceWithCursorEvents,
                             private EventReceiver {
  public:
-  struct Entry {
-    utf8_string mName;
-    uint16_t mPageIndex;
-  };
+  using Entry = NavigationEntry;
 
   NavigationTab(
     const DXResources&,
-    ITab* rootTab,
-    const std::vector<Entry>& entries,
+    const std::shared_ptr<ITabWithNavigation>& rootTab,
     const D2D1_SIZE_U& preferredSize);
   ~NavigationTab();
 
@@ -66,7 +64,7 @@ class NavigationTab final : public TabBase,
 
  private:
   DXResources mDXR;
-  ITab* mRootTab;
+  std::shared_ptr<ITabWithNavigation> mRootTab;
   D2D1_SIZE_U mPreferredSize;
   CachedLayer mPreviewLayer;
 
