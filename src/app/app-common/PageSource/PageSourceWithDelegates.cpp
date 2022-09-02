@@ -20,6 +20,7 @@
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
+#include <OpenKneeboard/scope_guard.h>
 
 #include <algorithm>
 #include <numeric>
@@ -147,12 +148,20 @@ bool PageSourceWithDelegates::IsNavigationAvailable() const {
 std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
   const {
   std::vector<NavigationEntry> entries;
+  uint16_t pageOffset = 0;
   for (const auto& delegate: mDelegates) {
-    auto withNavigation
+    const scope_guard updateScopeOffset(
+      [&]() { pageOffset += delegate->GetPageCount(); });
+
+    const auto withNavigation
       = std::dynamic_pointer_cast<IPageSourceWithNavigation>(delegate);
-    if (withNavigation) {
-      std::ranges::copy(
-        withNavigation->GetNavigationEntries(), std::back_inserter(entries));
+    if (!withNavigation) {
+      continue;
+    }
+    const auto delegateEntries = withNavigation->GetNavigationEntries();
+    for (const auto& entry: delegateEntries) {
+      entries.push_back(
+        {entry.mName, static_cast<uint16_t>(entry.mPageIndex + pageOffset)});
     }
   }
   return entries;
