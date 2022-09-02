@@ -69,7 +69,7 @@ uint16_t TabView::GetPageIndex() const {
 void TabView::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
-  if (receiver) {
+  if (receiver && (this->GetPageIndex() < this->GetPageCount())) {
     receiver->PostCursorEvent(mEventContext, ev, this->GetPageIndex());
   }
 }

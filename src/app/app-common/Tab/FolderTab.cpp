@@ -17,19 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/FolderTab.h>
-#include <OpenKneeboard/ImagePageSource.h>
-#include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/dprint.h>
-#include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Storage.h>
 
 #include <nlohmann/json.hpp>
-
-using namespace winrt::Windows::Storage;
-using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
@@ -38,10 +30,10 @@ FolderTab::FolderTab(
   KneeboardState* kbs,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : TabWithDoodles(dxr, kbs),
-    mDXR(dxr),
-    mPageSource(std::make_unique<ImagePageSource>(dxr)),
+  : PageSourceWithDelegates(dxr, kbs),
+    mPageSource(std::make_shared<FolderPageSource>(dxr, kbs, path)),
     mPath {path} {
+  this->SetDelegates({mPageSource});
   this->Reload();
 }
 
@@ -73,57 +65,7 @@ utf8_string FolderTab::GetTitle() const {
 }
 
 void FolderTab::Reload() {
-  this->ReloadImpl();
-}
-
-winrt::fire_and_forget FolderTab::ReloadImpl() noexcept {
-  co_await mUIThread;
-
-  if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
-    mPageSource->SetPaths({});
-    evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
-    co_return;
-  }
-  if ((!mQueryResult) || mPath != mQueryResult.Folder().Path()) {
-    mQueryResult = nullptr;
-    auto folder
-      = co_await StorageFolder::GetFolderFromPathAsync(mPath.wstring());
-    mQueryResult = folder.CreateFileQuery(CommonFileQuery::OrderByName);
-    mQueryResult.ContentsChanged(
-      [this](const auto&, const auto&) { this->ReloadImpl(); });
-  }
-  const auto files = co_await mQueryResult.GetFilesAsync();
-
-  co_await winrt::resume_background();
-
-  std::vector<std::filesystem::path> paths;
-  for (const auto& file: files) {
-    std::filesystem::path path(std::wstring_view {file.Path()});
-    if (!mPageSource->CanOpenFile(path)) {
-      continue;
-    }
-    paths.push_back(path);
-  }
-
-  co_await mUIThread;
-
-  mPageSource->SetPaths(paths);
-  evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
-}
-
-uint16_t FolderTab::GetPageCount() const {
-  return mPageSource->GetPageCount();
-}
-
-D2D1_SIZE_U FolderTab::GetNativeContentSize(uint16_t index) {
-  return mPageSource->GetNativeContentSize(index);
-}
-
-void FolderTab::RenderPageContent(
-  ID2D1DeviceContext* ctx,
-  uint16_t index,
-  const D2D1_RECT_F& rect) {
-  mPageSource->RenderPage(ctx, index, rect);
+  mPageSource->Reload();
 }
 
 std::filesystem::path FolderTab::GetPath() const {
@@ -134,25 +76,8 @@ void FolderTab::SetPath(const std::filesystem::path& path) {
   if (path == mPath) {
     return;
   }
+  mPageSource->SetPath(path);
   mPath = path;
-  mQueryResult = nullptr;
-  this->Reload();
-}
-
-bool FolderTab::IsNavigationAvailable() const {
-  return mPageSource->GetPageCount() > 2;
-}
-
-std::vector<NavigationEntry> FolderTab::GetNavigationEntries() const {
-  std::vector<NavigationEntry> entries;
-
-  const auto paths = mPageSource->GetPaths();
-
-  for (uint16_t i = 0; i < paths.size(); ++i) {
-    entries.push_back({paths.at(i).stem(), i});
-  }
-
-  return entries;
 }
 
 }// namespace OpenKneeboard

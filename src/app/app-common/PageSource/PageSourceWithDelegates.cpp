@@ -31,10 +31,21 @@ PageSourceWithDelegates::PageSourceWithDelegates(
   KneeboardState* kbs) {
   mContentLayerCache = std::make_unique<CachedLayer>(dxr);
   mDoodleRenderer = std::make_unique<DoodleRenderer>(dxr, kbs);
+
+  mFixedEvents = {
+    AddEventListener(
+      mDoodleRenderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent),
+    AddEventListener(
+      this->evContentChangedEvent,
+      [this]() { this->mContentLayerCache->Reset(); }),
+  };
 }
 
 PageSourceWithDelegates::~PageSourceWithDelegates() {
   for (auto& event: mDelegateEvents) {
+    this->RemoveEventListener(event);
+  }
+  for (auto& event: mFixedEvents) {
     this->RemoveEventListener(event);
   }
 }

@@ -19,44 +19,40 @@
  */
 #pragma once
 
-#include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
-#include <OpenKneeboard/TabBase.h>
+#include <shims/winrt/base.h>
+#include <winrt/Windows.Storage.Search.h>
 
+#include <memory>
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
 
-class FolderPageSource;
+class ImagePageSource;
+struct DXResources;
+struct KneeboardState;
 
-class FolderTab final : public TabBase,
-                        public PageSourceWithDelegates,
-                        public ITabWithSettings {
+class FolderPageSource final : public PageSourceWithDelegates {
  public:
-  FolderTab(
+  FolderPageSource(
     const DXResources&,
     KneeboardState*,
-    utf8_string_view title,
-    const std::filesystem::path& path);
-  explicit FolderTab(
-    const DXResources&,
-    KneeboardState*,
-    utf8_string_view title,
-    const nlohmann::json&);
-  virtual ~FolderTab();
-  virtual utf8_string GetGlyph() const override;
-  virtual utf8_string GetTitle() const override;
-
-  virtual nlohmann::json GetSettings() const final override;
-
-  virtual void Reload() final override;
+    const std::filesystem::path&);
+  virtual ~FolderPageSource();
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
 
+  winrt::fire_and_forget Reload() noexcept;
+
  private:
-  std::shared_ptr<FolderPageSource> mPageSource;
+  winrt::apartment_context mUIThread;
+
+  std::shared_ptr<ImagePageSource> mPageSource;
   std::filesystem::path mPath;
+
+  winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
+    nullptr};
 };
 
 }// namespace OpenKneeboard

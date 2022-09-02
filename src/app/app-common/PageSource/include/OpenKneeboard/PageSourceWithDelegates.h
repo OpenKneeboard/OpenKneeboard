@@ -40,6 +40,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
                                 public virtual IPageSourceWithNavigation,
                                 protected EventReceiver {
  public:
+  PageSourceWithDelegates() = delete;
   PageSourceWithDelegates(const DXResources&, KneeboardState*);
   virtual ~PageSourceWithDelegates();
 
@@ -64,6 +65,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
  private:
   std::vector<std::shared_ptr<IPageSource>> mDelegates;
   std::vector<EventHandlerToken> mDelegateEvents;
+  std::vector<EventHandlerToken> mFixedEvents;
 
   std::tuple<std::shared_ptr<IPageSource>, uint16_t> DecodePageIndex(
     uint16_t) const;
