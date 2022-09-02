@@ -23,9 +23,6 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 
-#include <ranges>
-#include <shims/filesystem>
-
 using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
@@ -77,6 +74,7 @@ void DCSAircraftTab::OnGameEvent(
   if (mPaths == paths) {
     return;
   }
+  mPaths = paths;
 
   std::vector<std::shared_ptr<IPageSource>> delegates;
   for (auto& path: paths) {
@@ -84,8 +82,6 @@ void DCSAircraftTab::OnGameEvent(
       std::make_shared<FolderPageSource>(mDXR, mKneeboard, path)));
   }
   this->SetDelegates(delegates);
-
-  mPaths = paths;
 }
 
 }// namespace OpenKneeboard

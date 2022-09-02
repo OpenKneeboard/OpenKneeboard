@@ -19,19 +19,20 @@
  */
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
-
-#include <shims/filesystem>
 
 using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
 DCSTerrainTab::DCSTerrainTab(const DXResources& dxr, KneeboardState* kbs)
-  : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
+  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
+}
+
+DCSTerrainTab::~DCSTerrainTab() {
+  this->RemoveAllEventListeners();
 }
 
 utf8_string DCSTerrainTab::GetGlyph() const {
@@ -42,20 +43,48 @@ utf8_string DCSTerrainTab::GetTitle() const {
   return _("Theater");
 }
 
+void DCSTerrainTab::Reload() {
+  mPaths = {};
+  mTerrain = {};
+  this->SetDelegates({});
+}
+
 void DCSTerrainTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& installPath,
-  const std::filesystem::path& _savedGamesPath) {
+  const std::filesystem::path& savedGamesPath) {
   if (event.name != DCS::EVT_TERRAIN) {
     return;
   }
-
-  const auto path
-    = installPath / "Mods" / "terrains" / event.value / "Kneeboard";
-  if (path != this->GetDelegate()->GetPath()) {
-    dprintf("Terrain tab: loading {}", path);
-    this->GetDelegate()->SetPath(path);
+  if (event.value == mTerrain) {
+    return;
   }
+  mTerrain = event.value;
+
+  std::vector<std::filesystem::path> paths;
+
+  auto path = installPath / "Mods" / "terrains" / event.value / "Kneeboard";
+  dprintf("Terrain tab: checking {}", path);
+  if (std::filesystem::exists(path)) {
+    paths.push_back(std::filesystem::canonical(path));
+  }
+  path = savedGamesPath / "KNEEBOARD" / mTerrain;
+  dprintf("Terrain tab: checking {}", path);
+  if (std::filesystem::exists(path)) {
+    paths.push_back(std::filesystem::canonical(path));
+  }
+
+  if (paths == mPaths) {
+    return;
+  }
+  mPaths = paths;
+
+  std::vector<std::shared_ptr<IPageSource>> delegates;
+  for (auto& path: paths) {
+    delegates.push_back(std::static_pointer_cast<IPageSource>(
+      std::make_shared<FolderPageSource>(mDXR, mKneeboard, path)));
+  }
+  this->SetDelegates(delegates);
 }
 
 }// namespace OpenKneeboard

@@ -39,7 +39,7 @@ class DCSAircraftTab final : public TabBase,
   DCSAircraftTab(const DXResources&, KneeboardState*);
   ~DCSAircraftTab();
 
-  void Reload() override;
+  virtual void Reload() override;
 
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
