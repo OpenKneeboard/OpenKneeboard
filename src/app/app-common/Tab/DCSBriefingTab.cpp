@@ -22,7 +22,7 @@
 #include <OpenKneeboard/DCSExtractedMission.h>
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/ImagePageSource.h>
+#include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/Lua.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
@@ -35,7 +35,7 @@ namespace OpenKneeboard {
 
 DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs),
-    mImagePages(std::make_unique<ImagePageSource>(dxr)),
+    mImagePages(std::make_unique<ImageFilePageSource>(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
   this->SetDelegates({
     std::static_pointer_cast<IPageSource>(mTextPages),

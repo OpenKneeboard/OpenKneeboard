@@ -29,7 +29,7 @@ namespace OpenKneeboard {
 
 class LuaRef;
 class DCSExtractedMission;
-class ImagePageSource;
+class ImageFilePageSource;
 class PlainTextPageSource;
 class KneeboardState;
 struct DXResources;
@@ -56,7 +56,7 @@ class DCSBriefingTab final : public TabBase,
 
  private:
   std::shared_ptr<DCSExtractedMission> mMission;
-  std::shared_ptr<ImagePageSource> mImagePages;
+  std::shared_ptr<ImageFilePageSource> mImagePages;
   std::shared_ptr<PlainTextPageSource> mTextPages;
   std::filesystem::path mInstallationPath;
 

@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/ImagePageSource.h>
+#include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/dprint.h>
 #include <wincodec.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -31,14 +31,14 @@ using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
-ImagePageSource::ImagePageSource(
+ImageFilePageSource::ImageFilePageSource(
   const DXResources& dxr,
   const std::vector<std::filesystem::path>& paths)
   : mDXR(dxr) {
   this->SetPaths(paths);
 }
 
-void ImagePageSource::SetPaths(
+void ImageFilePageSource::SetPaths(
   const std::vector<std::filesystem::path>& paths) {
   mPages.clear();
   mPages.reserve(paths.size());
@@ -47,15 +47,15 @@ void ImagePageSource::SetPaths(
   }
 }
 
-std::vector<std::filesystem::path> ImagePageSource::GetPaths() const {
+std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {
   auto view = std::ranges::views::transform(
     mPages, [](const auto& page) { return page.mPath; });
   return {view.begin(), view.end()};
 }
 
-ImagePageSource::~ImagePageSource() = default;
+ImageFilePageSource::~ImageFilePageSource() = default;
 
-bool ImagePageSource::CanOpenFile(const std::filesystem::path& path) const {
+bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
   if (!std::filesystem::is_regular_file(path)) {
     return false;
   }
@@ -70,7 +70,7 @@ bool ImagePageSource::CanOpenFile(const std::filesystem::path& path) const {
   return static_cast<bool>(decoder);
 }
 
-uint16_t ImagePageSource::GetPageCount() const {
+uint16_t ImageFilePageSource::GetPageCount() const {
   return static_cast<uint16_t>(mPages.size());
 }
 
@@ -86,7 +86,7 @@ static bool IsValidPageIndex(uint16_t index, uint16_t count) {
   return false;
 }
 
-D2D1_SIZE_U ImagePageSource::GetNativeContentSize(uint16_t index) {
+D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(uint16_t index) {
   if (!IsValidPageIndex(index, GetPageCount())) {
     return {};
   }
@@ -99,7 +99,7 @@ D2D1_SIZE_U ImagePageSource::GetNativeContentSize(uint16_t index) {
   return bitmap->GetPixelSize();
 }
 
-void ImagePageSource::RenderPage(
+void ImageFilePageSource::RenderPage(
   ID2D1DeviceContext* ctx,
   uint16_t index,
   const D2D1_RECT_F& rect) {
@@ -132,7 +132,7 @@ void ImagePageSource::RenderPage(
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
-winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
+winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(uint16_t index) {
   std::unique_lock lock(mMutex);
   if (index >= mPages.size()) [[unlikely]] {
     return {};
@@ -223,11 +223,11 @@ winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
   return page.mBitmap;
 }
 
-bool ImagePageSource::IsNavigationAvailable() const {
+bool ImageFilePageSource::IsNavigationAvailable() const {
   return this->GetPageCount() > 2;
 }
 
-std::vector<NavigationEntry> ImagePageSource::GetNavigationEntries() const {
+std::vector<NavigationEntry> ImageFilePageSource::GetNavigationEntries() const {
   std::vector<NavigationEntry> entries;
   for (uint16_t i = 0; i < mPages.size(); ++i) {
     const auto& page = mPages.at(i);

@@ -18,7 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/FolderPageSource.h>
-#include <OpenKneeboard/ImagePageSource.h>
+#include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/dprint.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
@@ -36,7 +36,7 @@ FolderPageSource::FolderPageSource(
   KneeboardState* kbs,
   const std::filesystem::path& path)
   : PageSourceWithDelegates(dxr, kbs),
-    mPageSource(std::make_unique<ImagePageSource>(dxr)) {
+    mPageSource(std::make_unique<ImageFilePageSource>(dxr)) {
   this->SetDelegates({mPageSource});
   this->SetPath(path);
 }

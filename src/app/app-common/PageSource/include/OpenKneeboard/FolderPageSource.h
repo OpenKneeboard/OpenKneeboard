@@ -28,7 +28,7 @@
 
 namespace OpenKneeboard {
 
-class ImagePageSource;
+class ImageFilePageSource;
 struct DXResources;
 struct KneeboardState;
 
@@ -48,7 +48,7 @@ class FolderPageSource final : public PageSourceWithDelegates {
  private:
   winrt::apartment_context mUIThread;
 
-  std::shared_ptr<ImagePageSource> mPageSource;
+  std::shared_ptr<ImageFilePageSource> mPageSource;
   std::filesystem::path mPath;
 
   winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {

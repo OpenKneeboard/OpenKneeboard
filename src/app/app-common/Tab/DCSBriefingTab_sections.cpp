@@ -25,7 +25,7 @@
 #include <OpenKneeboard/DCSMagneticModel.h>
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
-#include <OpenKneeboard/ImagePageSource.h>
+#include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/Lua.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/dprint.h>
