@@ -19,24 +19,38 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/PageSourceWithDelegates.h>
+
+#include <shims/filesystem>
+#include <vector>
+
 #include "DCSTab.h"
-#include "FolderTab.h"
 #include "TabBase.h"
-#include "TabWithDelegate.h"
 
 namespace OpenKneeboard {
 
-class FolderTab;
+class KneeboardState;
 
 class DCSAircraftTab final : public TabBase,
                              public DCSTab,
-                             public TabWithDelegate<FolderTab> {
+                             public PageSourceWithDelegates {
  public:
   DCSAircraftTab(const DXResources&, KneeboardState*);
+  ~DCSAircraftTab();
+
+  void Reload() override;
+
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
 
  protected:
+  DXResources mDXR;
+  KneeboardState* mKneeboard = nullptr;
+
+  std::string mAircraft;
+  std::vector<std::filesystem::path> mPaths;
+
   virtual void OnGameEvent(
     const GameEvent&,
     const std::filesystem::path&,

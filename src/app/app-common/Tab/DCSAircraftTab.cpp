@@ -19,10 +19,11 @@
  */
 #include <OpenKneeboard/DCSAircraftTab.h>
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <ranges>
 #include <shims/filesystem>
 
 using DCS = OpenKneeboard::DCSWorld;
@@ -30,8 +31,11 @@ using DCS = OpenKneeboard::DCSWorld;
 namespace OpenKneeboard {
 
 DCSAircraftTab::DCSAircraftTab(const DXResources& dxr, KneeboardState* kbs)
-  : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
+  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
+}
+
+DCSAircraftTab::~DCSAircraftTab() {
+  this->RemoveAllEventListeners();
 }
 
 utf8_string DCSAircraftTab::GetGlyph() const {
@@ -42,6 +46,12 @@ utf8_string DCSAircraftTab::GetTitle() const {
   return _("Aircraft");
 }
 
+void DCSAircraftTab::Reload() {
+  mPaths = {};
+  mAircraft = {};
+  this->SetDelegates({});
+}
+
 void DCSAircraftTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& installPath,
@@ -49,15 +59,33 @@ void DCSAircraftTab::OnGameEvent(
   if (event.name != DCS::EVT_AIRCRAFT) {
     return;
   }
+  if (event.value == mAircraft) {
+    return;
+  }
+  mAircraft = event.value;
+
+  std::vector<std::filesystem::path> paths;
 
   auto path = savedGamesPath / "KNEEBOARD" / event.value;
+
+  dprintf("Aircraft tab: looking for {}", path);
   if (std::filesystem::exists(path)) {
-    path = std::filesystem::canonical(path);
+    paths.push_back(std::filesystem::canonical(path));
   }
-  if (this->GetDelegate()->GetPath() != path) {
-    dprintf("Aircraft tab: looking for {}", path);
-    this->GetDelegate()->SetPath(path);
+
+  // TODO: check for built-in aircraft kneeboard images
+  if (mPaths == paths) {
+    return;
   }
+
+  std::vector<std::shared_ptr<IPageSource>> delegates;
+  for (auto& path: paths) {
+    delegates.push_back(std::static_pointer_cast<IPageSource>(
+      std::make_shared<FolderPageSource>(mDXR, mKneeboard, path)));
+  }
+  this->SetDelegates(delegates);
+
+  mPaths = paths;
 }
 
 }// namespace OpenKneeboard
