@@ -63,14 +63,19 @@ void DCSAircraftTab::OnGameEvent(
 
   std::vector<std::filesystem::path> paths;
 
-  auto path = savedGamesPath / "KNEEBOARD" / event.value;
-
-  dprintf("Aircraft tab: looking for {}", path);
-  if (std::filesystem::exists(path)) {
-    paths.push_back(std::filesystem::canonical(path));
+  for (const auto& path: {
+         savedGamesPath / "KNEEBOARD" / mAircraft,
+         installPath / "Mods" / "aircraft" / mAircraft / "Cockpit" / "KNEEBOARD"
+           / "pages",
+         installPath / "Mods" / "aircraft" / mAircraft / "Cockpit" / "Scripts"
+           / "KNEEBOARD" / "pages",
+       }) {
+    dprintf("Aircraft tab: looking for {}", path);
+    if (std::filesystem::exists(path)) {
+      paths.push_back(std::filesystem::canonical(path));
+    }
   }
 
-  // TODO: check for built-in aircraft kneeboard images
   if (mPaths == paths) {
     return;
   }
