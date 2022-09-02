@@ -21,13 +21,15 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/IPageSource.h>
+#include <OpenKneeboard/IPageSourceWithNavigation.h>
 #include <shims/winrt/base.h>
 
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
 
-class ImagePageSource final : public IPageSource {
+class ImagePageSource final : public virtual IPageSource,
+                              public virtual IPageSourceWithNavigation {
  public:
   ImagePageSource() = delete;
   ImagePageSource(
@@ -47,6 +49,9 @@ class ImagePageSource final : public IPageSource {
     ID2D1DeviceContext*,
     uint16_t pageIndex,
     const D2D1_RECT_F& rect) final override;
+
+  virtual bool IsNavigationAvailable() const override;
+  virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 
  private:
   struct Page {

@@ -222,4 +222,20 @@ winrt::com_ptr<ID2D1Bitmap> ImagePageSource::GetPageBitmap(uint16_t index) {
   return page.mBitmap;
 }
 
+bool ImagePageSource::IsNavigationAvailable() const {
+  return this->GetPageCount() > 2;
+}
+
+std::vector<NavigationEntry> ImagePageSource::GetNavigationEntries() const {
+  std::vector<NavigationEntry> entries;
+  for (uint16_t i = 0; i < mPages.size(); ++i) {
+    const auto& page = mPages.at(i);
+    entries.push_back({
+      page.mPath.stem(),
+      i,
+    });
+  }
+  return entries;
+}
+
 }// namespace OpenKneeboard

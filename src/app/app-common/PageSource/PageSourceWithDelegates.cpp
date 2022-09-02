@@ -141,11 +141,7 @@ void PageSourceWithDelegates::PostCursorEvent(
 }
 
 bool PageSourceWithDelegates::IsNavigationAvailable() const {
-  return std::ranges::any_of(mDelegates, [](const auto& delegate) {
-    auto withNavigation
-      = std::dynamic_pointer_cast<IPageSourceWithNavigation>(delegate);
-    return withNavigation && withNavigation->IsNavigationAvailable();
-  });
+  return this->GetPageCount() > 2 && !this->GetNavigationEntries().empty();
 }
 
 std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
