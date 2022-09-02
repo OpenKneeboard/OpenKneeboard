@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabWithDoodles.h>
 #include <OpenKneeboard/config.h>
@@ -28,22 +29,15 @@
 namespace OpenKneeboard {
 
 TabWithDoodles::TabWithDoodles(const DXResources& dxr, KneeboardState* kbs)
-  : mContentLayer(dxr) {
-  mDXR = dxr;
-  mKneeboard = kbs;
-
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBrush.put()));
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), mEraser.put()));
-
-  mDXR.mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
+  : mContentLayer(dxr), mDXR(dxr), mKneeboard(kbs) {
+  mDoodleRenderer = std::make_unique<DoodleRenderer>(dxr, kbs);
 
   AddEventListener(this->evContentChangedEvent, [this]() {
     this->ClearContentCache();
     this->ClearDoodles();
   });
+  AddEventListener(
+    mDoodleRenderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
 }
 
 TabWithDoodles::~TabWithDoodles() {
@@ -55,134 +49,21 @@ void TabWithDoodles::ClearContentCache() {
 }
 
 void TabWithDoodles::ClearDoodles() {
-  mDrawings.clear();
+  mDoodleRenderer->Clear();
 }
 
 void TabWithDoodles::PostCursorEvent(
-  EventContext,
+  EventContext ctx,
   const CursorEvent& event,
   uint16_t pageIndex) {
-  {
-    std::scoped_lock lock(mBufferedEventsMutex);
-    if (pageIndex >= mDrawings.size()) {
-      mDrawings.resize(std::max<uint16_t>(pageIndex + 1, GetPageCount()));
-    }
-    mDrawings.at(pageIndex).mBufferedEvents.push_back(event);
-  }
-  if (event.mButtons) {
-    this->evNeedsRepaintEvent.Emit();
-  }
-}
-
-void TabWithDoodles::FlushCursorEvents() {
-  auto ctx = mDrawingContext;
-  std::scoped_lock lock(mBufferedEventsMutex);
-
-  for (auto pageIndex = 0; pageIndex < mDrawings.size(); ++pageIndex) {
-    auto& page = mDrawings.at(pageIndex);
-    if (page.mBufferedEvents.empty()) {
-      continue;
-    }
-
-    bool drawing = false;
-    for (const auto& event: page.mBufferedEvents) {
-      if (
-        event.mTouchState != CursorTouchState::TOUCHING_SURFACE
-        || event.mPositionState != CursorPositionState::IN_CONTENT_RECT) {
-        page.mHaveCursor = false;
-        continue;
-      }
-
-      if (!drawing) {
-        drawing = true;
-        ctx->BeginDraw();
-        ctx->SetTarget(
-          GetDrawingSurface(pageIndex, this->GetNativeContentSize(pageIndex)));
-      }
-
-      // ignore tip button - any other pen button == erase
-      const bool erasing = event.mButtons & ~1;
-
-      const auto scale = mDrawings.at(pageIndex).mScale;
-
-      const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
-
-      auto ds = GetKneeboardState()->GetDoodleSettings();
-      const auto minimum
-        = erasing ? ds.minimumEraseRadius : ds.minimumPenRadius;
-      const auto sensitivity
-        = erasing ? ds.eraseSensitivity : ds.penSensitivity;
-      auto radius = minimum + (sensitivity * pressure);
-
-      const auto x = event.mX * scale;
-      const auto y = event.mY * scale;
-      const auto brush = erasing ? mEraser : mBrush;
-
-      ctx->SetPrimitiveBlend(
-        erasing ? D2D1_PRIMITIVE_BLEND_COPY : D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
-
-      if (page.mHaveCursor) {
-        ctx->DrawLine(page.mCursorPoint, {x, y}, brush.get(), radius * 2);
-      }
-      ctx->FillEllipse(D2D1::Ellipse({x, y}, radius, radius), brush.get());
-      page.mHaveCursor = true;
-      page.mCursorPoint = {x, y};
-    }
-    if (drawing) {
-      winrt::check_hresult(ctx->EndDraw());
-    }
-    page.mBufferedEvents.clear();
-  }
-}
-
-ID2D1Bitmap* TabWithDoodles::GetDrawingSurface(
-  uint16_t index,
-  const D2D1_SIZE_U& contentPixels) {
-  if (index >= mDrawings.size()) {
-    mDrawings.resize(std::max<uint16_t>(index + 1, GetPageCount()));
-  }
-
-  auto& page = mDrawings.at(index);
-  if (page.mBitmap) {
-    return page.mBitmap.get();
-  }
-
-  const auto scaleX = static_cast<float>(TextureWidth) / contentPixels.width;
-  const auto scaleY = static_cast<float>(TextureHeight) / contentPixels.height;
-  page.mScale = std::min(scaleX, scaleY);
-  D2D1_SIZE_U surfaceSize {
-    static_cast<UINT32>(std::lround(contentPixels.width * page.mScale)),
-    static_cast<UINT32>(std::lround(contentPixels.height * page.mScale)),
-  };
-
-  D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = surfaceSize.width,
-    .Height = surfaceSize.height,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .SampleDesc = {1, 0},
-    .Usage = D3D11_USAGE_DEFAULT,
-    .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
-  };
-
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  winrt::check_hresult(
-    mDXR.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, texture.put()));
-  page.mSurface = texture.as<IDXGISurface>();
-
-  mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-    page.mSurface.get(), nullptr, page.mBitmap.put());
-
-  return page.mBitmap.get();
+  mDoodleRenderer->PostCursorEvent(
+    ctx, event, pageIndex, this->GetNativeContentSize(pageIndex));
 }
 
 void TabWithDoodles::RenderPage(
   ID2D1DeviceContext* ctx,
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
-  FlushCursorEvents();
-
   const auto nativeSize = this->GetNativeContentSize(pageIndex);
   mContentLayer.Render(
     rect,
@@ -199,17 +80,7 @@ void TabWithDoodles::RenderPage(
          static_cast<FLOAT>(size.height)});
     });
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-
-  if (pageIndex < mDrawings.size()) {
-    auto& page = mDrawings.at(pageIndex);
-    auto bitmap = page.mBitmap;
-
-    if (bitmap) {
-      ctx->DrawBitmap(
-        bitmap.get(), rect, 1.0f, D2D1_INTERPOLATION_MODE_HIGH_QUALITY_CUBIC);
-    }
-  }
+  mDoodleRenderer->Render(ctx, pageIndex, rect);
 
   this->RenderOverDoodles(ctx, pageIndex, rect);
 }

@@ -19,55 +19,57 @@
  */
 #pragma once
 
-#include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/IPageSourceWithCursorEvents.h>
-#include <d2d1.h>
-#include <shims/winrt/base.h>
-
-#include <memory>
-#include <mutex>
+#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 
-class DoodleRenderer;
 class KneeboardState;
 
-class TabWithDoodles : public virtual IPageSourceWithCursorEvents,
-                       protected EventReceiver {
+class DoodleRenderer final {
  public:
-  TabWithDoodles(const DXResources&, KneeboardState*);
-  virtual ~TabWithDoodles();
+  DoodleRenderer(const DXResources&, KneeboardState*);
+  ~DoodleRenderer();
 
-  virtual void RenderPage(
+  void Render(
     ID2D1DeviceContext*,
     uint16_t pageIndex,
-    const D2D1_RECT_F& rect) override final;
-  virtual void PostCursorEvent(
+    const D2D1_RECT_F& targetRect);
+  void PostCursorEvent(
     EventContext,
     const CursorEvent&,
-    uint16_t pageIndex) override;
-
- protected:
-  virtual void
-  RenderPageContent(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F&)
-    = 0;
-  virtual void RenderOverDoodles(
-    ID2D1DeviceContext*,
     uint16_t pageIndex,
-    const D2D1_RECT_F&);
+    const D2D1_SIZE_U& nativePageSize);
 
-  void ClearContentCache();
-  void ClearDoodles();
+  void Clear();
+  void ClearPage(uint16_t pageIndex);
 
-  KneeboardState* GetKneeboardState();
+  Event<> evNeedsRepaintEvent;
 
  private:
   DXResources mDXR;
   KneeboardState* mKneeboard;
-  std::unique_ptr<DoodleRenderer> mDoodleRenderer;
 
-  CachedLayer mContentLayer;
+  winrt::com_ptr<ID2D1SolidColorBrush> mBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mEraser;
+
+  struct Drawing {
+    winrt::com_ptr<IDXGISurface> mSurface;
+    winrt::com_ptr<ID2D1Bitmap1> mBitmap;
+    float mScale {-1.0f};
+    std::vector<CursorEvent> mBufferedEvents;
+    bool mHaveCursor {false};
+    D2D1_POINT_2F mCursorPoint;
+    D2D1_SIZE_U mNativeSize {0, 0};
+  };
+  winrt::com_ptr<ID2D1DeviceContext> mDrawingContext;
+  std::mutex mBufferedEventsMutex;
+  std::vector<Drawing> mDrawings;
+
+  ID2D1Bitmap* GetDrawingSurface(uint16_t index);
+
+  void FlushCursorEvents();
 };
+
 }// namespace OpenKneeboard
