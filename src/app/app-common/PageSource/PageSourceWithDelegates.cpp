@@ -176,7 +176,11 @@ PageSourceWithDelegates::DecodePageIndex(uint16_t pageIndex) const {
     }
     offset += delegate->GetPageCount();
   }
-  return {nullptr, 0};
+
+  if (!mDelegates.empty()) {
+    return {mDelegates.front(), pageIndex};
+  }
+  return {nullptr, pageIndex};
 }
 
 }// namespace OpenKneeboard
