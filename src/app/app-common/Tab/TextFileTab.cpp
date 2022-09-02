@@ -36,9 +36,10 @@ TextFileTab::TextFileTab(
   KneeboardState* kbs,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : TabWithDoodles(dxr, kbs),
+  : PageSourceWithDelegates(dxr, kbs),
     mPath(path),
-    mPageSource(std::make_unique<PlainTextPageSource>(dxr, _("[empty file]"))) {
+    mPageSource(std::make_shared<PlainTextPageSource>(dxr, _("[empty file]"))) {
+  this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
   Reload();
 }
 
@@ -69,13 +70,6 @@ utf8_string TextFileTab::GetTitle() const {
   return mPath.stem();
 }
 
-void TextFileTab::RenderPageContent(
-  ID2D1DeviceContext* ctx,
-  uint16_t index,
-  const D2D1_RECT_F& rect) {
-  mPageSource->RenderPage(ctx, index, rect);
-}
-
 std::filesystem::path TextFileTab::GetPath() const {
   return mPath;
 }
@@ -89,7 +83,6 @@ void TextFileTab::SetPath(const std::filesystem::path& path) {
 }
 
 void TextFileTab::Reload() {
-  this->ClearContentCache();
   scope_guard emitEvents([this]() {
     this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     this->evNeedsRepaintEvent.Emit();
@@ -157,10 +150,6 @@ std::string TextFileTab::GetFileContent() const {
 uint16_t TextFileTab::GetPageCount() const {
   // Show placeholder "[empty file]" instead of 'no pages' error
   return std::max<uint16_t>(1, mPageSource->GetPageCount());
-}
-
-D2D1_SIZE_U TextFileTab::GetNativeContentSize(uint16_t pageIndex) {
-  return mPageSource->GetNativeContentSize(pageIndex);
 }
 
 }// namespace OpenKneeboard
