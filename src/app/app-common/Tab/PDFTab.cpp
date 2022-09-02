@@ -17,9 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFTab.h>
@@ -91,6 +93,9 @@ struct PDFTab::Impl final {
 
   bool mNavigationLoaded = false;
   std::jthread mQPDFThread;
+
+  std::unique_ptr<CachedLayer> mContentLayer;
+  std::unique_ptr<DoodleRenderer> mDoodles;
 };
 
 PDFTab::PDFTab(
@@ -98,13 +103,16 @@ PDFTab::PDFTab(
   KneeboardState* kbs,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : TabWithDoodles(dxr, kbs), p(new Impl {.mDXR = dxr, .mPath = path}) {
+  : p(new Impl {.mDXR = dxr, .mPath = path}) {
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), p->mBackgroundBrush.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), p->mHighlightBrush.put()));
+
+  p->mContentLayer = std::make_unique<CachedLayer>(dxr);
+  p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
 
   Reload();
 }
@@ -122,6 +130,7 @@ PDFTab::~PDFTab() {
     p->mQPDFThread.request_stop();
     p->mQPDFThread.join();
   }
+  this->RemoveAllEventListeners();
 }
 
 nlohmann::json PDFTab::GetSettings() const {
@@ -447,8 +456,10 @@ void PDFTab::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
   uint16_t pageIndex) {
+  const auto contentRect = this->GetNativeContentSize(pageIndex);
+
   if (pageIndex >= p->mLinks.size()) {
-    TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
+    p->mDoodles->PostCursorEvent(ctx, ev, pageIndex, contentRect);
     return;
   }
 
@@ -459,7 +470,6 @@ void PDFTab::PostCursorEvent(
 
   scope_guard repaint([&]() { evNeedsRepaintEvent.Emit(); });
 
-  const auto contentRect = this->GetNativeContentSize(pageIndex);
   CursorEvent pageEvent {ev};
   pageEvent.mX /= contentRect.width;
   pageEvent.mY /= contentRect.height;
@@ -470,7 +480,7 @@ void PDFTab::PostCursorEvent(
     return;
   }
 
-  TabWithDoodles::PostCursorEvent(ctx, ev, pageIndex);
+  p->mDoodles->PostCursorEvent(ctx, ev, pageIndex, contentRect);
 }
 
 void PDFTab::RenderOverDoodles(
@@ -520,4 +530,26 @@ bool PDFTab::IsNavigationAvailable() const {
 std::vector<NavigationEntry> PDFTab::GetNavigationEntries() const {
   return p->mBookmarks;
 }
+
+void PDFTab::RenderPage(
+  ID2D1DeviceContext* ctx,
+  uint16_t pageIndex,
+  const D2D1_RECT_F& rect) {
+  const auto size = this->GetNativeContentSize(pageIndex);
+  p->mContentLayer->Render(
+    rect, size, pageIndex, ctx, [=](auto ctx, const auto& size) {
+      this->RenderPageContent(
+        ctx,
+        pageIndex,
+        {
+          0.0f,
+          0.0f,
+          static_cast<FLOAT>(size.width),
+          static_cast<FLOAT>(size.height),
+        });
+    });
+  p->mDoodles->Render(ctx, pageIndex, rect);
+  this->RenderOverDoodles(ctx, pageIndex, rect);
+}
+
 }// namespace OpenKneeboard

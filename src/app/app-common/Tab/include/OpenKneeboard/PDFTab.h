@@ -19,21 +19,26 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
+#include <shims/winrt/base.h>
 
 #include <shims/filesystem>
 
 #include "ITab.h"
 #include "ITabWithSettings.h"
 #include "TabBase.h"
-#include "TabWithDoodles.h"
 
 namespace OpenKneeboard {
 
+class KneeboardState;
+
 class PDFTab final : public TabBase,
-                     public TabWithDoodles,
+                     public IPageSourceWithCursorEvents,
                      public IPageSourceWithNavigation,
-                     public ITabWithSettings {
+                     public ITabWithSettings,
+                     public EventReceiver {
  public:
   explicit PDFTab(
     const DXResources&,
@@ -67,20 +72,24 @@ class PDFTab final : public TabBase,
     const CursorEvent&,
     uint16_t pageIndex) override;
 
- protected:
-  virtual void RenderPageContent(
+  virtual void RenderPage(
     ID2D1DeviceContext*,
     uint16_t pageIndex,
-    const D2D1_RECT_F& rect) final override;
-  virtual void RenderOverDoodles(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F&) override;
+    const D2D1_RECT_F& rect) override;
 
  private:
   winrt::apartment_context mUIThread;
   struct Impl;
   std::shared_ptr<Impl> p;
+
+  void RenderPageContent(
+    ID2D1DeviceContext*,
+    uint16_t pageIndex,
+    const D2D1_RECT_F& rect);
+  void RenderOverDoodles(
+    ID2D1DeviceContext*,
+    uint16_t pageIndex,
+    const D2D1_RECT_F&);
 };
 
 }// namespace OpenKneeboard
