@@ -37,7 +37,7 @@ class FolderPageSource final : public PageSourceWithDelegates {
   FolderPageSource(
     const DXResources&,
     KneeboardState*,
-    const std::filesystem::path&);
+    const std::filesystem::path& = {});
   virtual ~FolderPageSource();
 
   std::filesystem::path GetPath() const;

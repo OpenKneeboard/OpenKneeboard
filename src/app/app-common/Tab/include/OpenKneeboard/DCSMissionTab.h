@@ -19,18 +19,20 @@
  */
 #pragma once
 
+#include <OpenKneeboard/PageSourceWithDelegates.h>
+
 #include "DCSTab.h"
-#include "FolderTab.h"
 #include "TabBase.h"
-#include "TabWithDelegate.h"
 
 namespace OpenKneeboard {
 
+struct DXResources;
 class DCSExtractedMission;
+class FolderPageSource;
 
 class DCSMissionTab final : public TabBase,
                             public DCSTab,
-                            public TabWithDelegate<FolderTab> {
+                            public PageSourceWithDelegates {
  public:
   DCSMissionTab(const DXResources&, KneeboardState*);
   virtual ~DCSMissionTab();
@@ -49,6 +51,7 @@ class DCSMissionTab final : public TabBase,
   std::filesystem::path mMission;
   std::string mAircraft;
   std::shared_ptr<DCSExtractedMission> mExtracted;
+  std::shared_ptr<FolderPageSource> mPageSource;
 };
 
 }// namespace OpenKneeboard

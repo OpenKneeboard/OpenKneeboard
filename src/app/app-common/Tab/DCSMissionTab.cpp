@@ -20,7 +20,7 @@
 #include <OpenKneeboard/DCSExtractedMission.h>
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/FolderTab.h>
+#include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -29,12 +29,13 @@ using DCS = OpenKneeboard::DCSWorld;
 namespace OpenKneeboard {
 
 DCSMissionTab::DCSMissionTab(const DXResources& dxr, KneeboardState* kbs)
-  : TabWithDelegate(
-    std::make_shared<FolderTab>(dxr, kbs, "", std::filesystem::path {})) {
+  : PageSourceWithDelegates(dxr, kbs) {
+  mPageSource = std::make_shared<FolderPageSource>(dxr, kbs);
+  this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
 }
 
 DCSMissionTab::~DCSMissionTab() {
-  GetDelegate()->SetPath({});
+  this->RemoveAllEventListeners();
 }
 
 utf8_string DCSMissionTab::GetGlyph() const {
@@ -60,7 +61,7 @@ void DCSMissionTab::Reload() {
     dprintf("Checking {}", aircraftPath);
     if (std::filesystem::exists(aircraftPath)) {
       dprint("Using aircraft-specific path");
-      GetDelegate()->SetPath(aircraftPath);
+      mPageSource->SetPath(aircraftPath);
       return;
     }
   } else {
@@ -69,7 +70,7 @@ void DCSMissionTab::Reload() {
 
   const std::filesystem::path genericPath {root / "KNEEBOARD" / "IMAGES"};
   dprintf("Using {}", genericPath);
-  GetDelegate()->SetPath(genericPath);
+  mPageSource->SetPath(genericPath);
 }
 
 void DCSMissionTab::OnGameEvent(
