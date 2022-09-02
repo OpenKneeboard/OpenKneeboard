@@ -34,11 +34,13 @@ using DCS = OpenKneeboard::DCSWorld;
 namespace OpenKneeboard {
 
 DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
-  : mImagePages(std::make_unique<ImagePageSource>(dxr)),
+  : PageSourceWithDelegates(dxr, kbs),
+    mImagePages(std::make_unique<ImagePageSource>(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
   this->SetDelegates({
     std::static_pointer_cast<IPageSource>(mTextPages),
-    std::static_pointer_cast<IPageSource>(mImagePages),});
+    std::static_pointer_cast<IPageSource>(mImagePages),
+  });
 }
 
 DCSBriefingTab::~DCSBriefingTab() {

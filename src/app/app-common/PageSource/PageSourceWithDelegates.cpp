@@ -17,12 +17,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CachedLayer.h>
+#include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
 #include <algorithm>
 #include <numeric>
 
 namespace OpenKneeboard {
+
+PageSourceWithDelegates::PageSourceWithDelegates(
+  const DXResources& dxr,
+  KneeboardState* kbs) {
+  mContentLayerCache = std::make_unique<CachedLayer>(dxr);
+  mDoodleRenderer = std::make_unique<DoodleRenderer>(dxr, kbs);
+}
 
 PageSourceWithDelegates::~PageSourceWithDelegates() {
   for (auto& event: mDelegateEvents) {
@@ -75,7 +84,34 @@ void PageSourceWithDelegates::RenderPage(
   uint16_t pageIndex,
   const D2D1_RECT_F& rect) {
   auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
-  delegate->RenderPage(ctx, decodedIndex, rect);
+
+  // If it has cursor events, let it do everything itself...
+  auto withCursorEvents
+    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+  if (withCursorEvents) {
+    delegate->RenderPage(ctx, decodedIndex, rect);
+    return;
+  }
+
+  // ... otherwise, we'll assume it should be doodleable
+  const auto nativeSize = delegate->GetNativeContentSize(decodedIndex);
+  mContentLayerCache->Render(
+    rect,
+    nativeSize,
+    pageIndex,
+    ctx,
+    [&](ID2D1DeviceContext* ctx, const D2D1_SIZE_U& size) {
+      delegate->RenderPage(
+        ctx,
+        decodedIndex,
+        {
+          0.0f,
+          0.0f,
+          static_cast<FLOAT>(size.width),
+          static_cast<FLOAT>(size.height),
+        });
+    });
+  mDoodleRenderer->Render(ctx, pageIndex, rect);
 }
 
 void PageSourceWithDelegates::PostCursorEvent(
@@ -87,6 +123,9 @@ void PageSourceWithDelegates::PostCursorEvent(
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (withCursorEvents) {
     withCursorEvents->PostCursorEvent(ctx, event, decodedIndex);
+  } else {
+    mDoodleRenderer->PostCursorEvent(
+      ctx, event, pageIndex, delegate->GetNativeContentSize(decodedIndex));
   }
 }
 

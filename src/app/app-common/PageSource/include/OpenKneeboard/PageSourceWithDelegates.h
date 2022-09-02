@@ -30,11 +30,17 @@
 
 namespace OpenKneeboard {
 
+struct DXResources;
+class CachedLayer;
+class DoodleRenderer;
+class KneeboardState;
+
 class PageSourceWithDelegates : public virtual IPageSource,
                                 public virtual IPageSourceWithCursorEvents,
                                 public virtual IPageSourceWithNavigation,
                                 protected EventReceiver {
  public:
+  PageSourceWithDelegates(const DXResources&, KneeboardState*);
   virtual ~PageSourceWithDelegates();
 
   virtual uint16_t GetPageCount() const override;
@@ -61,6 +67,9 @@ class PageSourceWithDelegates : public virtual IPageSource,
 
   std::tuple<std::shared_ptr<IPageSource>, uint16_t> DecodePageIndex(
     uint16_t) const;
+
+  std::unique_ptr<CachedLayer> mContentLayerCache;
+  std::unique_ptr<DoodleRenderer> mDoodleRenderer;
 };
 
 }// namespace OpenKneeboard
