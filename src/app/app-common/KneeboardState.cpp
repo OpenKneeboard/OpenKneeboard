@@ -20,8 +20,8 @@
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/IPageSourceWithGameEvents.h>
 #include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/ITabWithGameEvents.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
@@ -278,7 +278,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
   }
 
   for (auto tab: mTabs) {
-    auto receiver = std::dynamic_pointer_cast<IPageSourceWithGameEvents>(tab);
+    auto receiver = std::dynamic_pointer_cast<ITabWithGameEvents>(tab);
     if (receiver) {
       receiver->PostGameEvent(ev);
     }

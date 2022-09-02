@@ -20,11 +20,10 @@
 #pragma once
 
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/IPageSourceWithNavigation.h>
+#include <OpenKneeboard/PageSourceWithDelegates.h>
 
 #include "DCSTab.h"
 #include "TabBase.h"
-#include "TabWithDoodles.h"
 
 namespace OpenKneeboard {
 
@@ -32,19 +31,17 @@ class LuaRef;
 class DCSExtractedMission;
 class ImagePageSource;
 class PlainTextPageSource;
+class KneeboardState;
+struct DXResources;
 
 class DCSBriefingTab final : public TabBase,
-                             public DCSTab,
-                             public IPageSourceWithNavigation,
-                             public TabWithDoodles {
+                             public virtual DCSTab,
+                             public virtual PageSourceWithDelegates {
  public:
   DCSBriefingTab(const DXResources&, KneeboardState*);
   virtual ~DCSBriefingTab();
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
-
-  virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
 
   virtual void Reload() noexcept override;
 
@@ -57,16 +54,10 @@ class DCSBriefingTab final : public TabBase,
     const std::filesystem::path&,
     const std::filesystem::path&) override;
 
-  virtual void RenderPageContent(
-    ID2D1DeviceContext*,
-    uint16_t pageIndex,
-    const D2D1_RECT_F&) override;
-
  private:
-  DXResources mDXR;
   std::shared_ptr<DCSExtractedMission> mMission;
-  std::unique_ptr<ImagePageSource> mImagePages;
-  std::unique_ptr<PlainTextPageSource> mTextPages;
+  std::shared_ptr<ImagePageSource> mImagePages;
+  std::shared_ptr<PlainTextPageSource> mTextPages;
   std::filesystem::path mInstallationPath;
 
   struct LatLong {

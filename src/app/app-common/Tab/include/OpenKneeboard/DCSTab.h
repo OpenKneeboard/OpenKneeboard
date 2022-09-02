@@ -20,13 +20,13 @@
 #pragma once
 
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/IPageSourceWithGameEvents.h>
+#include <OpenKneeboard/ITabWithGameEvents.h>
 
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
 
-class DCSTab : public virtual IPageSourceWithGameEvents {
+class DCSTab : public virtual ITabWithGameEvents {
  public:
   DCSTab();
   virtual ~DCSTab();

@@ -34,10 +34,11 @@ using DCS = OpenKneeboard::DCSWorld;
 namespace OpenKneeboard {
 
 DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
-  : TabWithDoodles(dxr, kbs),
-    mDXR(dxr),
-    mImagePages(std::make_unique<ImagePageSource>(dxr)),
+  : mImagePages(std::make_unique<ImagePageSource>(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
+  this->SetDelegates({
+    std::static_pointer_cast<IPageSource>(mTextPages),
+    std::static_pointer_cast<IPageSource>(mImagePages),});
 }
 
 DCSBriefingTab::~DCSBriefingTab() {
@@ -52,21 +53,8 @@ utf8_string DCSBriefingTab::GetTitle() const {
   return _("Briefing");
 }
 
-uint16_t DCSBriefingTab::GetPageCount() const {
-  return mImagePages->GetPageCount() + mTextPages->GetPageCount();
-}
-
-D2D1_SIZE_U DCSBriefingTab::GetNativeContentSize(uint16_t pageIndex) {
-  const auto textPageCount = mTextPages->GetPageCount();
-  if (pageIndex < textPageCount) {
-    return mTextPages->GetNativeContentSize(pageIndex);
-  }
-  return mImagePages->GetNativeContentSize(pageIndex - textPageCount);
-}
-
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
-    this->ClearContentCache();
     this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     this->evAvailableFeaturesChangedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
@@ -105,7 +93,6 @@ void DCSBriefingTab::Reload() noexcept {
   this->PushMissionWeather(mission);
   this->PushBullseyeData(mission);
 
-  this->ClearContentCache();
   this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
@@ -147,18 +134,6 @@ void DCSBriefingTab::OnGameEvent(
     mDCSState = state;
     this->Reload();
   }
-}
-
-void DCSBriefingTab::RenderPageContent(
-  ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
-  const D2D1_RECT_F& rect) {
-  const auto textPageCount = mTextPages->GetPageCount();
-  if (pageIndex < textPageCount) {
-    mTextPages->RenderPage(ctx, pageIndex, rect);
-    return;
-  }
-  mImagePages->RenderPage(ctx, pageIndex - textPageCount, rect);
 }
 
 bool DCSBriefingTab::IsNavigationAvailable() const {
