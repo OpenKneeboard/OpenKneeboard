@@ -63,15 +63,14 @@ void DCSTerrainTab::OnGameEvent(
 
   std::vector<std::filesystem::path> paths;
 
-  auto path = installPath / "Mods" / "terrains" / event.value / "Kneeboard";
-  dprintf("Terrain tab: checking {}", path);
-  if (std::filesystem::exists(path)) {
-    paths.push_back(std::filesystem::canonical(path));
-  }
-  path = savedGamesPath / "KNEEBOARD" / mTerrain;
-  dprintf("Terrain tab: checking {}", path);
-  if (std::filesystem::exists(path)) {
-    paths.push_back(std::filesystem::canonical(path));
+  for (auto path: {
+         savedGamesPath / "KNEEBOARD" / mTerrain,
+         installPath / "Mods" / "terrains" / event.value / "Kneeboard",
+       }) {
+    dprintf("Terrain tab: checking {}", path);
+    if (std::filesystem::exists(path)) {
+      paths.push_back(std::filesystem::canonical(path));
+    }
   }
 
   if (paths == mPaths) {
