@@ -117,7 +117,7 @@ static bool overlay_check(vr::EVROverlayError err, const char* method) {
 }
 
 bool OpenVRKneeboard::InitializeOpenVR() {
-  if (mIVRSystem) {
+  if (mIVRSystem && mIVROverlay) {
     return true;
   }
 
@@ -128,17 +128,23 @@ bool OpenVRKneeboard::InitializeOpenVR() {
   }
 
   vr::EVRInitError err;
-  mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
   if (!mIVRSystem) {
-    return false;
+    mIVRSystem = vr::VR_Init(&err, vr::VRApplication_Background);
+    if (!mIVRSystem) {
+      dprintf("Failed to get an OpenVR IVRSystem: {}", static_cast<int>(err));
+      return false;
+    }
+    dprint("Initialized OpenVR");
   }
-  dprint("Initialized OpenVR");
 
-  mIVROverlay = vr::VROverlay();
   if (!mIVROverlay) {
-    return false;
+    mIVROverlay = vr::VROverlay();
+    if (!mIVROverlay) {
+      dprint("Failed to get an OpenVR IVROverlay");
+      return false;
+    }
+    dprint("Initialized OpenVR overlay system");
   }
-  dprint("Initialized OpenVR overlay system");
 
   for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
     auto& layerState = mLayers.at(layerIndex);
