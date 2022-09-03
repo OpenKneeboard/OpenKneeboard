@@ -22,7 +22,6 @@
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/PDFTab.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TabTypes.h>
 #include <OpenKneeboard/TabView.h>
@@ -48,6 +47,16 @@ TabsList::TabsList(
 TabsList::~TabsList() {
 }
 
+static std::tuple<std::string, nlohmann::json> MigrateTab(
+  const std::string& type,
+  const nlohmann::json& settings) {
+  if (type == "PDF" || type == "TextFile") {
+    return {"SingleFile", settings};
+  }
+
+  return {type, settings};
+}
+
 void TabsList::LoadConfig(const nlohmann::json& config) {
   std::vector<nlohmann::json> tabs = config;
 
@@ -57,12 +66,14 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
     }
 
     const std::string title = tab.at("Title");
-    const std::string type = tab.at("Type");
+    const std::string rawType = tab.at("Type");
 
-    nlohmann::json settings;
+    nlohmann::json rawSettings;
     if (tab.contains("Settings")) {
-      settings = tab.at("Settings");
+      rawSettings = tab.at("Settings");
     }
+
+    const auto [type, settings] = MigrateTab(rawType, rawSettings);
 
 #define IT(_, it) \
   if (type == #it) { \
@@ -74,6 +85,8 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
   }
     OPENKNEEBOARD_TAB_TYPES
 #undef IT
+    dprintf("Couldn't load tab with type {}", rawType);
+    OPENKNEEBOARD_BREAK;
   }
 }
 
@@ -86,7 +99,7 @@ void TabsList::LoadDefaultConfig() {
 
   auto kbs = mKneeboard;
   mKneeboard->SetTabs({
-    std::make_shared<PDFTab>(
+    std::make_shared<SingleFileTab>(
       mDXR,
       mKneeboard,
       _("Quick Start"),

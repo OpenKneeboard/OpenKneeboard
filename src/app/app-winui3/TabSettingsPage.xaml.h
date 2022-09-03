@@ -46,12 +46,10 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
     const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
 
  private:
-  template <class T>
-  fire_and_forget CreateFileBasedTab(hstring filenameExtension);
-  template <class T>
-  fire_and_forget CreateFolderBasedTab();
+  fire_and_forget CreateFileTab();
+  fire_and_forget CreateFolderTab();
 
-  void AddTab(const std::shared_ptr<OpenKneeboard::ITab>&);
+  void AddTabs(const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
   std::string mData;
 };
 

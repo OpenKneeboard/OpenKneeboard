@@ -50,6 +50,7 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
     std::wstring buffer(neededBufferSize, 0);
     winrt::check_hresult(info->GetFileExtensions(
       neededBufferSize, buffer.data(), &neededBufferSize));
+    buffer.pop_back();// remove trailing null
 
     for (const auto& range: std::ranges::views::split(buffer, L',')) {
       extensions.push_back(

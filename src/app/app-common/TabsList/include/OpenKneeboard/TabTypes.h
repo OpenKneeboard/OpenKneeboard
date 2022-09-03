@@ -25,16 +25,14 @@
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/FolderTab.h>
-#include <OpenKneeboard/PDFTab.h>
-#include <OpenKneeboard/TextFileTab.h>
+#include <OpenKneeboard/SingleFileTab.h>
 #include <shims/winrt/base.h>
 
 #include <concepts>
 
 #define OPENKNEEBOARD_TAB_TYPES \
+  IT(_("Files (one per tab)"), SingleFile) \
   IT(_("Folder"), Folder) \
-  IT(_("PDF"), PDF) \
-  IT(_("Text File"), TextFile) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Briefing"), DCSBriefing) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \

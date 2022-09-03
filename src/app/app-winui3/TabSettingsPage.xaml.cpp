@@ -24,6 +24,7 @@
 #include "TabSettingsPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/FilePageSource.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabTypes.h>
@@ -109,13 +110,10 @@ void TabSettingsPage::CreateTab(
     unbox_value<uint64_t>(sender.as<MenuFlyoutItem>().Tag()));
   switch (tabType) {
     case TabType::Folder:
-      CreateFolderBasedTab<FolderTab>();
+      CreateFolderTab();
       return;
-    case TabType::PDF:
-      CreateFileBasedTab<PDFTab>(L".pdf");
-      return;
-    case TabType::TextFile:
-      CreateFileBasedTab<TextFileTab>(L".txt");
+    case TabType::SingleFile:
+      CreateFileTab();
       return;
   }
 #define IT(_, type) \
@@ -124,7 +122,7 @@ void TabSettingsPage::CreateTab(
                     type##Tab, \
                     DXResources, \
                     KneeboardState*>) { \
-      AddTab(std::make_shared<type##Tab>(gDXResources, gKneeboard.get())); \
+      AddTabs({std::make_shared<type##Tab>(gDXResources, gKneeboard.get())}); \
       return; \
     } else { \
       throw std::logic_error( \
@@ -137,33 +135,39 @@ void TabSettingsPage::CreateTab(
     std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
 }
 
-template <class T>
-fire_and_forget TabSettingsPage::CreateFileBasedTab(hstring fileExtension) {
+fire_and_forget TabSettingsPage::CreateFileTab() {
   auto picker = Windows::Storage::Pickers::FileOpenPicker();
   picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
   picker.SettingsIdentifier(L"chooseFileForTab");
   picker.SuggestedStartLocation(
     Windows::Storage::Pickers::PickerLocationId::DocumentsLibrary);
-  picker.FileTypeFilter().Append(fileExtension);
-
-  auto file = co_await picker.PickSingleFileAsync();
-  if (!file) {
-    co_return;
-  }
-  auto stringPath = file.Path();
-  if (stringPath.empty()) {
-    co_return;
+  auto filter = picker.FileTypeFilter();
+  for (const auto& extension:
+       FilePageSource::GetSupportedExtensions(gDXResources)) {
+    picker.FileTypeFilter().Append(winrt::to_hstring(extension));
   }
 
-  const auto path = std::filesystem::canonical(std::wstring_view {stringPath});
-  const auto title = path.stem();
+  auto files = co_await picker.PickMultipleFilesAsync();
 
-  this->AddTab(
-    std::make_shared<T>(gDXResources, gKneeboard.get(), title, path));
+  std::vector<std::shared_ptr<OpenKneeboard::ITab>> newTabs;
+  for (const auto& file: files) {
+    auto stringPath = file.Path();
+    if (stringPath.empty()) {
+      continue;
+    }
+
+    const auto path
+      = std::filesystem::canonical(std::wstring_view {stringPath});
+    const auto title = path.stem();
+
+    newTabs.push_back(std::make_shared<SingleFileTab>(
+      gDXResources, gKneeboard.get(), title, path));
+  }
+
+  this->AddTabs(newTabs);
 }
 
-template <class T>
-fire_and_forget TabSettingsPage::CreateFolderBasedTab() {
+fire_and_forget TabSettingsPage::CreateFolderTab() {
   auto picker = Windows::Storage::Pickers::FolderPicker();
   picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
   picker.SettingsIdentifier(L"chooseFileForTab");
@@ -183,25 +187,33 @@ fire_and_forget TabSettingsPage::CreateFolderBasedTab() {
   const auto path = std::filesystem::canonical(std::wstring_view {stringPath});
   const auto title = path.stem();
 
-  this->AddTab(
-    std::make_shared<T>(gDXResources, gKneeboard.get(), title, path));
-  co_return;
+  this->AddTabs(
+    {std::make_shared<FolderTab>(gDXResources, gKneeboard.get(), title, path)});
 }
 
-void TabSettingsPage::AddTab(const std::shared_ptr<ITab>& tab) {
-  auto idx = List().SelectedIndex();
-  if (idx == -1) {
-    idx = 0;
+void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+  auto initialIndex = List().SelectedIndex();
+  if (initialIndex == -1) {
+    initialIndex = 0;
   }
-  gKneeboard->InsertTab(static_cast<uint8_t>(idx), tab);
 
-  auto winrtTab = winrt::make<TabUIData>();
-  winrtTab.Title(to_hstring(tab->GetTitle()));
-  winrtTab.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
-  List()
-    .ItemsSource()
-    .as<Windows::Foundation::Collections::IVector<IInspectable>>()
-    .InsertAt(idx, winrtTab);
+  auto idx = initialIndex;
+  auto allTabs = gKneeboard->GetTabs();
+  for (const auto& tab: tabs) {
+    allTabs.insert(allTabs.begin() + idx++, tab);
+  }
+  gKneeboard->SetTabs(allTabs);
+
+  idx = initialIndex;
+  auto items = List()
+                 .ItemsSource()
+                 .as<Windows::Foundation::Collections::IVector<IInspectable>>();
+  for (const auto& tab: tabs) {
+    auto winrtTab = winrt::make<TabUIData>();
+    winrtTab.Title(to_hstring(tab->GetTitle()));
+    winrtTab.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
+    items.InsertAt(idx++, winrtTab);
+  }
 }
 
 void TabSettingsPage::OnTabsChanged(

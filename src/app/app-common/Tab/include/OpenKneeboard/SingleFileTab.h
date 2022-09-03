@@ -19,9 +19,8 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
-#include <shims/winrt/base.h>
 
 #include <shims/filesystem>
 
@@ -31,38 +30,45 @@
 
 namespace OpenKneeboard {
 
-struct DXResources;
-class KneeboardState;
-class PDFFilePageSource;
+class PlainTextFilePageSource;
 
-class PDFTab final : public TabBase,
-                     public PageSourceWithDelegates,
-                     public ITabWithSettings {
+class SingleFileTab final : public TabBase,
+                            public ITabWithSettings,
+                            public PageSourceWithDelegates {
  public:
-  explicit PDFTab(
+  enum class Kind {
+    Unknown,
+    PDFFile,
+    PlainTextFile,
+    ImageFile,
+  };
+  explicit SingleFileTab(
     const DXResources&,
     KneeboardState*,
     utf8_string_view title,
     const std::filesystem::path& path);
-  explicit PDFTab(
+  explicit SingleFileTab(
     const DXResources&,
     KneeboardState*,
     utf8_string_view title,
     const nlohmann::json&);
-  virtual ~PDFTab();
+  virtual ~SingleFileTab();
 
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
+  virtual void Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
-
-  virtual void Reload() final override;
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
 
  private:
-  std::shared_ptr<PDFFilePageSource> mPageSource;
+  DXResources mDXR;
+  KneeboardState* mKneeboard;
+
+  Kind mKind = Kind::Unknown;
+  std::filesystem::path mPath;
 };
 
 }// namespace OpenKneeboard
