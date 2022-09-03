@@ -388,15 +388,14 @@ bool OpenVRKneeboard::Run(std::stop_token stopToken) {
   dprint("Initializing OpenVR support");
 
   while (!stopToken.stop_requested()) {
-    if (!IsSteamVRRunning()) {
-      std::this_thread::sleep_for(inactiveSleep);
+    if (
+      IsSteamVRRunning() && vr::VR_IsHmdPresent() && this->InitializeOpenVR()) {
+      this->Tick();
+      std::this_thread::sleep_for(frameSleep);
       continue;
     }
 
-    if (this->InitializeOpenVR()) {
-      this->Tick();
-    }
-    std::this_thread::sleep_for(mIVRSystem ? frameSleep : inactiveSleep);
+    std::this_thread::sleep_for(inactiveSleep);
   }
   dprint("Shutting down OpenVR support - stop requested");
 
