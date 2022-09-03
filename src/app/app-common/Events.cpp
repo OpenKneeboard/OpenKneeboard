@@ -32,15 +32,10 @@ EventReceiver::EventReceiver() {
 }
 
 EventReceiver::~EventReceiver() {
-  if (!mCleared) {
+  if (!mSenders.empty()) {
     dprint(
       "I'm in danger! ~EventReceiver() called without "
       "RemoveAllEventListeners()");
-    OPENKNEEBOARD_BREAK;
-  } else if (!mSenders.empty()) {
-    dprint(
-      "I'm in danger! ~EventReceiver() has senders "
-      "despite clearing");
     OPENKNEEBOARD_BREAK;
   }
   this->RemoveAllEventListeners();
@@ -52,7 +47,6 @@ void EventReceiver::RemoveAllEventListeners() {
     std::unique_lock lock(mMutex);
     senders = mSenders;
     mSenders.clear();
-    mCleared = true;
   }
 
   for (auto& sender: senders) {

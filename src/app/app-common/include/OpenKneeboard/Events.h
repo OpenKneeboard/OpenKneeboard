@@ -141,7 +141,6 @@ class EventReceiver {
   EventReceiver& operator=(const EventReceiver&) = delete;
 
  protected:
-  bool mCleared = false;
   std::vector<std::shared_ptr<EventConnectionBase>> mSenders;
 
   // `std::type_identity_t` makes the compiler infer `Args` from the event, then
@@ -264,7 +263,6 @@ EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
   const std::type_identity_t<EventHandler<Args...>>& handler) {
   std::unique_lock lock(mMutex);
-  mCleared = false;
   mSenders.push_back(event.AddHandler(handler));
   return mSenders.back()->mToken;
 }
