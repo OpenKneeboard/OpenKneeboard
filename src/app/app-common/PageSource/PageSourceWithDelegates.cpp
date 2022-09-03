@@ -61,6 +61,7 @@ void PageSourceWithDelegates::SetDelegates(
   mDelegates = delegates;
 
   for (auto& delegate: delegates) {
+    std::weak_ptr<IPageSource> weakDelegate {delegate};
     std::ranges::copy(
       std::vector<EventHandlerToken> {
         AddEventListener(
@@ -69,6 +70,25 @@ void PageSourceWithDelegates::SetDelegates(
           delegate->evPageAppendedEvent, this->evPageAppendedEvent),
         AddEventListener(
           delegate->evContentChangedEvent, this->evContentChangedEvent),
+        AddEventListener(
+          delegate->evAvailableFeaturesChangedEvent,
+          this->evAvailableFeaturesChangedEvent),
+        AddEventListener(
+          delegate->evPageChangeRequestedEvent,
+          [=](auto ctx, uint16_t requestedPage) {
+            uint16_t offset = 0;
+            auto strongDelegate = weakDelegate.lock();
+            for (const auto& it: mDelegates) {
+              if (it != strongDelegate) {
+                offset += delegate->GetPageCount();
+                continue;
+              }
+              this->evPageChangeRequestedEvent.Emit(
+                ctx, offset + requestedPage);
+              break;
+            }
+          }),
+
       },
       std::back_inserter(mDelegateEvents));
   }

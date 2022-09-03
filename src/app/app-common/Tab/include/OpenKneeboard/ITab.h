@@ -37,9 +37,6 @@ class ITab : public virtual IPageSource {
   virtual utf8_string GetTitle() const = 0;
   virtual RuntimeID GetRuntimeID() const = 0;
   virtual void Reload() = 0;
-
-  Event<> evAvailableFeaturesChangedEvent;
-  Event<EventContext, uint16_t> evPageChangeRequestedEvent;
 };
 
 }// namespace OpenKneeboard

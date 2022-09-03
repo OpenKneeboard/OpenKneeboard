@@ -47,6 +47,8 @@ class IPageSource {
   Event<> evNeedsRepaintEvent;
   Event<> evPageAppendedEvent;
   Event<ContentChangeType> evContentChangedEvent;
+  Event<EventContext, uint16_t> evPageChangeRequestedEvent;
+  Event<> evAvailableFeaturesChangedEvent;
 };
 
 }// namespace OpenKneeboard
