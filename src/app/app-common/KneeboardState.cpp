@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/DirectInputAdapter.h>
+#include <OpenKneeboard/FilePageSource.h>
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/ITab.h>
@@ -95,9 +96,14 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   if (mVRConfig.mEnableSteamVR) {
     this->StartOpenVRThread();
   }
+
+  dprint("Supported file extensions:");
+  for (const auto& ext: FilePageSource::GetSupportedExtensions(mDXResources)) {
+    dprintf(" - {}", ext);
+  }
 }
 
-KneeboardState::~KneeboardState() {
+KneeboardState::~KneeboardState() noexcept {
   this->RemoveAllEventListeners();
   mGameEventWorker.Cancel();
   if (mOpenVRThread.get_id() != std::thread::id {}) {

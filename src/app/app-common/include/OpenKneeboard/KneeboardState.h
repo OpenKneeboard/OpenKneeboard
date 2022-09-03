@@ -58,7 +58,7 @@ class KneeboardState final : private EventReceiver {
  public:
   KneeboardState() = delete;
   KneeboardState(HWND mainWindow, const DXResources&);
-  ~KneeboardState();
+  ~KneeboardState() noexcept;
 
   std::shared_ptr<IKneeboardView> GetActiveViewForGlobalInput() const;
   std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;

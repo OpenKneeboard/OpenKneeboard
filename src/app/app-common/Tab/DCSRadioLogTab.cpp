@@ -57,15 +57,25 @@ void DCSRadioLogTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& installPath,
   const std::filesystem::path& savedGamesPath) {
+  this->OnGameEventImpl(event, installPath, savedGamesPath);
+}
+
+winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
+  const GameEvent& event,
+  const std::filesystem::path& installPath,
+  const std::filesystem::path& savedGamesPath) {
   if (event.name == DCS::EVT_SIMULATION_START) {
+    co_await mUIThread;
     mPageSource->PushFullWidthSeparator();
     this->evNeedsRepaintEvent.Emit();
-    return;
+    co_return;
   }
 
   if (event.name != DCS::EVT_RADIO_MESSAGE) {
-    return;
+    co_return;
   }
+
+  co_await mUIThread;
 
   mPageSource->PushMessage(event.value);
 }

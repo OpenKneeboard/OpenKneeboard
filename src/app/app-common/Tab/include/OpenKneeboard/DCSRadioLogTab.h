@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/PageSourceWithDelegates.h>
+#include <shims/winrt/base.h>
 
 #include "DCSTab.h"
 #include "TabBase.h"
@@ -46,7 +47,13 @@ class DCSRadioLogTab final : public TabBase,
     const std::filesystem::path& savedGamesPath) override;
 
  private:
+  winrt::apartment_context mUIThread;
   std::shared_ptr<PlainTextPageSource> mPageSource;
+
+  winrt::fire_and_forget OnGameEventImpl(
+    const GameEvent&,
+    const std::filesystem::path& installPath,
+    const std::filesystem::path& savedGamesPath);
 };
 
 }// namespace OpenKneeboard

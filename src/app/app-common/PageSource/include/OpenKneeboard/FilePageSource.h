@@ -19,41 +19,27 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/PageSourceWithDelegates.h>
-#include <shims/winrt/base.h>
-#include <winrt/Windows.Storage.Search.h>
-
 #include <memory>
 #include <shims/filesystem>
+#include <string>
+#include <vector>
 
 namespace OpenKneeboard {
 
-struct KneeboardState;
+struct DXResources;
+class KneeboardState;
+class IPageSource;
 
-class FolderPageSource final : public PageSourceWithDelegates {
+class FilePageSource final {
  public:
-  FolderPageSource(
+  FilePageSource() = delete;
+
+  static std::vector<std::string> GetSupportedExtensions(
+    const DXResources&) noexcept;
+  static std::shared_ptr<IPageSource> Get(
     const DXResources&,
     KneeboardState*,
-    const std::filesystem::path& = {});
-  virtual ~FolderPageSource();
-
-  std::filesystem::path GetPath() const;
-  virtual void SetPath(const std::filesystem::path& path);
-
-  winrt::fire_and_forget Reload() noexcept;
-
- private:
-  winrt::apartment_context mUIThread;
-
-  DXResources mDXR;
-  KneeboardState* mKneeboard = nullptr;
-
-  std::filesystem::path mPath;
-
-  winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
-    nullptr};
+    const std::filesystem::path&) noexcept;
 };
 
 }// namespace OpenKneeboard

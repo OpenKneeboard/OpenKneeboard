@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/FilePageSource.h>
 #include <OpenKneeboard/FolderPageSource.h>
-#include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/dprint.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
@@ -35,9 +35,7 @@ FolderPageSource::FolderPageSource(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path)
-  : PageSourceWithDelegates(dxr, kbs),
-    mPageSource(std::make_unique<ImageFilePageSource>(dxr)) {
-  this->SetDelegates({mPageSource});
+  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
   this->SetPath(path);
 }
 
@@ -47,7 +45,7 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
   co_await mUIThread;
 
   if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
-    mPageSource->SetPaths({});
+    this->SetDelegates({});
     evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     co_return;
   }
@@ -61,21 +59,18 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
   }
   const auto files = co_await mQueryResult.GetFilesAsync();
 
-  co_await winrt::resume_background();
-
-  std::vector<std::filesystem::path> paths;
-  for (const auto& file: files) {
-    std::filesystem::path path(std::wstring_view {file.Path()});
-    if (!mPageSource->CanOpenFile(path)) {
-      continue;
-    }
-    paths.push_back(path);
-  }
-
   co_await mUIThread;
 
-  mPageSource->SetPaths(paths);
-  evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  std::vector<std::shared_ptr<IPageSource>> delegates;
+  for (const auto& file: files) {
+    std::filesystem::path path(std::wstring_view {file.Path()});
+    auto delegate = FilePageSource::Get(mDXR, mKneeboard, path);
+    if (delegate) {
+      delegates.push_back(std::move(delegate));
+    }
+  }
+
+  this->SetDelegates(delegates);
 }
 
 std::filesystem::path FolderPageSource::GetPath() const {

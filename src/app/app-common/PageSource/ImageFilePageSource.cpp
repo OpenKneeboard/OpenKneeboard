@@ -56,12 +56,18 @@ std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {
 ImageFilePageSource::~ImageFilePageSource() = default;
 
 bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
+  return ImageFilePageSource::CanOpenFile(mDXR, path);
+}
+
+bool ImageFilePageSource::CanOpenFile(
+  const DXResources& dxr,
+  const std::filesystem::path& path) {
   if (!std::filesystem::is_regular_file(path)) {
     return false;
   }
   auto wsPath = path.wstring();
   winrt::com_ptr<IWICBitmapDecoder> decoder;
-  mDXR.mWIC->CreateDecoderFromFilename(
+  dxr.mWIC->CreateDecoderFromFilename(
     wsPath.c_str(),
     nullptr,
     GENERIC_READ,

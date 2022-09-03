@@ -44,6 +44,7 @@ class ImageFilePageSource final : public virtual IPageSource,
   virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) final override;
 
   bool CanOpenFile(const std::filesystem::path&) const;
+  static bool CanOpenFile(const DXResources& dxr, const std::filesystem::path&);
 
   virtual void RenderPage(
     ID2D1DeviceContext*,
