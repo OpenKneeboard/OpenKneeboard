@@ -20,44 +20,41 @@
 #pragma once
 
 #include <OpenKneeboard/PageSourceWithDelegates.h>
+#include <shims/winrt/base.h>
+#include <winrt/Windows.Storage.Search.h>
 
 #include <shims/filesystem>
 
-#include "ITab.h"
-#include "ITabWithSettings.h"
-#include "TabBase.h"
-
 namespace OpenKneeboard {
 
-class PlainTextFilePageSource;
+class PlainTextPageSource;
 
-class TextFileTab final : public TabBase,
-                          public ITabWithSettings,
-                          public PageSourceWithDelegates {
+class PlainTextFilePageSource final : public PageSourceWithDelegates {
  public:
-  explicit TextFileTab(
+  PlainTextFilePageSource(
     const DXResources&,
     KneeboardState*,
-    utf8_string_view title,
-    const std::filesystem::path& path);
-  explicit TextFileTab(
-    const DXResources&,
-    KneeboardState*,
-    utf8_string_view title,
-    const nlohmann::json&);
-  virtual ~TextFileTab();
-
-  virtual utf8_string GetGlyph() const override;
-  virtual utf8_string GetTitle() const override;
-  virtual void Reload() override;
-
-  virtual nlohmann::json GetSettings() const override;
+    const std::filesystem::path& path = {});
+  virtual ~PlainTextFilePageSource();
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
 
+  uint16_t GetPageCount() const override;
+
+  void Reload();
+
  private:
-  std::shared_ptr<PlainTextFilePageSource> mPageSource;
+  std::filesystem::path mPath;
+  std::filesystem::file_time_type mLastWriteTime;
+  std::shared_ptr<PlainTextPageSource> mPageSource;
+  winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
+    nullptr};
+
+  std::string GetFileContent() const;
+
+  winrt::fire_and_forget SubscribeToChanges() noexcept;
+  void OnFileModified() noexcept;
 };
 
 }// namespace OpenKneeboard

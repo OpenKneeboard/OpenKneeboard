@@ -17,17 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/PlainTextPageSource.h>
+#include <OpenKneeboard/PlainTextFilePageSource.h>
 #include <OpenKneeboard/TextFileTab.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Storage.h>
 
-#include <fstream>
 #include <nlohmann/json.hpp>
-
-using namespace winrt::Windows::Storage;
-using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
@@ -37,10 +31,8 @@ TextFileTab::TextFileTab(
   utf8_string_view /* title */,
   const std::filesystem::path& path)
   : PageSourceWithDelegates(dxr, kbs),
-    mPath(path),
-    mPageSource(std::make_shared<PlainTextPageSource>(dxr, _("[empty file]"))) {
+    mPageSource(std::make_shared<PlainTextFilePageSource>(dxr, kbs, path)) {
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
-  Reload();
 }
 
 TextFileTab::TextFileTab(
@@ -67,89 +59,28 @@ utf8_string TextFileTab::GetGlyph() const {
 }
 
 utf8_string TextFileTab::GetTitle() const {
-  return mPath.stem();
+  return mPageSource->GetPath().stem();
 }
 
 std::filesystem::path TextFileTab::GetPath() const {
-  return mPath;
+  return mPageSource->GetPath();
 }
 
-void TextFileTab::SetPath(const std::filesystem::path& path) {
-  if (path == mPath) {
+void TextFileTab::SetPath(const std::filesystem::path& rawPath) {
+  auto path = rawPath;
+  if (std::filesystem::exists(path)) {
+    path = std::filesystem::canonical(path);
+  }
+
+  if (path == this->GetPath()) {
     return;
   }
-  mPath = std::filesystem::canonical(path);
-  Reload();
+
+  mPageSource->SetPath(path);
 }
 
 void TextFileTab::Reload() {
-  scope_guard emitEvents([this]() {
-    this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
-    this->evNeedsRepaintEvent.Emit();
-  });
-
-  this->mQueryResult = {nullptr};
-
-  if (!std::filesystem::is_regular_file(mPath)) {
-    mPageSource->ClearText();
-    return;
-  }
-
-  mPageSource->SetText(this->GetFileContent());
-  mLastWriteTime = std::filesystem::last_write_time(mPath);
-  this->SubscribeToChanges();
-}
-
-winrt::fire_and_forget TextFileTab::SubscribeToChanges() noexcept {
-  auto folder = co_await StorageFolder::GetFolderFromPathAsync(
-    mPath.parent_path().wstring());
-  mQueryResult = folder.CreateFileQuery();
-  mQueryResult.ContentsChanged(
-    [this](const auto&, const auto&) { this->OnFileModified(); });
-  // Must fetch results once to make the query active
-  co_await mQueryResult.GetFilesAsync();
-}
-
-void TextFileTab::OnFileModified() noexcept {
-  const auto newWriteTime = std::filesystem::last_write_time(mPath);
-  if (newWriteTime == mLastWriteTime) {
-    return;
-  }
-
-  mLastWriteTime = newWriteTime;
-  mPageSource->SetText(this->GetFileContent());
-  this->evContentChangedEvent.Emit(ContentChangeType::Modified);
-}
-
-std::string TextFileTab::GetFileContent() const {
-  auto bytes = std::filesystem::file_size(mPath);
-  std::string buffer;
-  buffer.resize(bytes);
-  size_t offset = 0;
-
-  std::ifstream f(mPath, std::ios::in | std::ios::binary);
-  if (!f.is_open()) {
-    mPageSource->ClearText();
-    return {};
-  }
-  while (bytes > 0) {
-    f.read(&buffer.data()[offset], bytes);
-    bytes -= f.gcount();
-    offset += f.gcount();
-  }
-
-  size_t pos = 0;
-  while ((pos = buffer.find("\r\n", pos)) != std::string::npos) {
-    buffer.replace(pos, 2, "\n");
-    pos++;
-  }
-
-  return buffer;
-}
-
-uint16_t TextFileTab::GetPageCount() const {
-  // Show placeholder "[empty file]" instead of 'no pages' error
-  return std::max<uint16_t>(1, mPageSource->GetPageCount());
+  mPageSource->Reload();
 }
 
 }// namespace OpenKneeboard
