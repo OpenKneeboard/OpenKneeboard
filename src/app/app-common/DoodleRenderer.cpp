@@ -57,13 +57,19 @@ void DoodleRenderer::PostCursorEvent(
   const CursorEvent& event,
   uint16_t pageIndex,
   const D2D1_SIZE_U& nativePageSize) {
+  if (nativePageSize.width == 0 || nativePageSize.height == 0) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
   {
     std::scoped_lock lock(mBufferedEventsMutex);
     if (pageIndex >= mDrawings.size()) {
       mDrawings.resize(pageIndex + 1);
-      mDrawings.at(pageIndex).mNativeSize = nativePageSize;
     }
-    mDrawings.at(pageIndex).mBufferedEvents.push_back(event);
+    auto& drawing = mDrawings.at(pageIndex);
+    drawing.mNativeSize = nativePageSize;
+    drawing.mBufferedEvents.push_back(event);
   }
   if (event.mButtons) {
     this->evNeedsRepaintEvent.Emit();
