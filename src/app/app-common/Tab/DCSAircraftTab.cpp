@@ -60,14 +60,20 @@ void DCSAircraftTab::OnGameEvent(
     return;
   }
   mAircraft = event.value;
+  auto moduleName = mAircraft;
+  if (mAircraft == "FA-18C_hornet") {
+    moduleName = "FA-18C";
+  } else if (mAircraft == "F-16C_50") {
+    moduleName = "F-16C";
+  }
 
   std::vector<std::filesystem::path> paths;
 
   for (const auto& path: {
          savedGamesPath / "KNEEBOARD" / mAircraft,
-         installPath / "Mods" / "aircraft" / mAircraft / "Cockpit" / "KNEEBOARD"
-           / "pages",
-         installPath / "Mods" / "aircraft" / mAircraft / "Cockpit" / "Scripts"
+         installPath / "Mods" / "aircraft" / moduleName / "Cockpit"
+           / "KNEEBOARD" / "pages",
+         installPath / "Mods" / "aircraft" / moduleName / "Cockpit" / "Scripts"
            / "KNEEBOARD" / "pages",
        }) {
     dprintf("Aircraft tab: looking for {}", path);
