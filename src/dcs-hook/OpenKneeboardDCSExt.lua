@@ -169,6 +169,13 @@ function callbacks.onSimulationFrame()
     return
   end
   lastUpdate = DCS.getModelTime()
+
+  -- Workaround onPlayerChangeSlot not being called for single player
+  state.selfData = Export.LoGetSelfData()
+  if state.selfData then
+    state.aircraft = state.selfData.Name
+  end
+
   sendState()
 end
 
