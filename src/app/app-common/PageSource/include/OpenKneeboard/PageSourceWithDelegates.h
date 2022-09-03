@@ -71,7 +71,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
     uint16_t) const;
 
   std::unique_ptr<CachedLayer> mContentLayerCache;
-  std::unique_ptr<DoodleRenderer> mDoodleRenderer;
+  std::unique_ptr<DoodleRenderer> mDoodles;
 };
 
 }// namespace OpenKneeboard

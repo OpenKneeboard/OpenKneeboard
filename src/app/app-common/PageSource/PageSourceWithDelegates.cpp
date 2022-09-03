@@ -31,11 +31,10 @@ PageSourceWithDelegates::PageSourceWithDelegates(
   const DXResources& dxr,
   KneeboardState* kbs) {
   mContentLayerCache = std::make_unique<CachedLayer>(dxr);
-  mDoodleRenderer = std::make_unique<DoodleRenderer>(dxr, kbs);
+  mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
 
   mFixedEvents = {
-    AddEventListener(
-      mDoodleRenderer->evNeedsRepaintEvent, this->evNeedsRepaintEvent),
+    AddEventListener(mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent),
     AddEventListener(
       this->evContentChangedEvent,
       [this]() { this->mContentLayerCache->Reset(); }),
@@ -143,7 +142,7 @@ void PageSourceWithDelegates::RenderPage(
           static_cast<FLOAT>(size.height),
         });
     });
-  mDoodleRenderer->Render(ctx, pageIndex, rect);
+  mDoodles->Render(ctx, pageIndex, rect);
 }
 
 void PageSourceWithDelegates::PostCursorEvent(
@@ -156,7 +155,7 @@ void PageSourceWithDelegates::PostCursorEvent(
   if (withCursorEvents) {
     withCursorEvents->PostCursorEvent(ctx, event, decodedIndex);
   } else {
-    mDoodleRenderer->PostCursorEvent(
+    mDoodles->PostCursorEvent(
       ctx, event, pageIndex, delegate->GetNativeContentSize(decodedIndex));
   }
 }
