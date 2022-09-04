@@ -8,6 +8,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           path: source
+          fetch-depth: 0
       - name: Fetch code-signing key
         env:
           CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
@@ -16,9 +17,6 @@ jobs:
           '[System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content ${{runner.temp}}/MyCert.pfx -AsByteStream'
       - name: Make build directory
         run: cmake -E make_directory build
-      - name: Fetch git tags for build metadata
-        run: git fetch --tags
-        working-directory: ${{github.workspace}}/source
       - name: Configure
         working-directory: build
         shell: pwsh
