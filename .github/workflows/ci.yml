@@ -18,6 +18,7 @@ jobs:
         run: cmake -E make_directory build
       - name: Fetch git tags for build metadata
         run: git fetch --tags
+        working-directory: ${{githhub.workspace}}/source
       - name: Configure
         working-directory: build
         shell: pwsh
