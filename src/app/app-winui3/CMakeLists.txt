@@ -69,6 +69,7 @@ target_link_libraries(
   System::Dbghelp
   System::Shell32
   System::User32
+  ThirdParty::SemVer
 )
 
 target_include_directories(

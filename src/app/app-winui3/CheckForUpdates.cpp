@@ -30,6 +30,7 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
+#include <semver200.h>
 #include <shobjidl.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Storage.Streams.h>
@@ -38,6 +39,7 @@
 
 #include <format>
 #include <fstream>
+#include <regex>
 #include <shims/filesystem>
 
 #include "Globals.h"
@@ -49,6 +51,24 @@ using namespace winrt::Windows::Foundation;
 using namespace winrt;
 
 namespace OpenKneeboard {
+
+static std::string ToSemVerString(std::string_view raw) {
+  // Remove leading v
+  std::string ret {(raw.front() == 'v') ? raw.substr(1) : raw};
+  // The .z in x.y.z is mandatory
+  ret = std::regex_replace(
+    ret,
+    std::regex {"^(\\d+\\.\\d+)(-|$)"},
+    "\\1.0\\2",
+    std::regex_constants::format_sed);
+  // 'beta3' should be 'beta.3' to get numeric comparisons
+  ret = std::regex_replace(
+    ret,
+    std::regex {"-([a-z]+)(\\d+)\\b"},
+    "-\\1.\\2",
+    std::regex_constants::format_sed);
+  return ret;
+}
 
 static fire_and_forget ShowResultDialog(
   std::string_view message,
@@ -159,15 +179,28 @@ IAsyncAction CheckForUpdates(
     gKneeboard->SetAppSettings(app);
   });
 
-  auto newCommit = latestRelease.at("target_commitish").get<std::string_view>();
+  const auto currentVersionString = ToSemVerString(Version::ReleaseName);
+  const auto latestVersionString
+    = ToSemVerString(latestRelease.at("tag_name").get<std::string_view>());
 
-  if (newCommit == Version::CommitID) {
-    dprintf("Up to date on commit ID {}", Version::CommitID);
+  const version::Semver200_version currentVersion(currentVersionString);
+  const version::Semver200_version latestVersion(latestVersionString);
+
+  if (currentVersion >= latestVersion) {
+    dprintf(
+      "Current version '{}' >= latest '{}'",
+      currentVersionString,
+      latestVersionString);
     if (checkType == UpdateCheckType::Manual) {
       ShowResultDialog(
         _("You're running the latest version!"), uiThread, xamlRoot);
     }
     co_return;
+  } else {
+    dprintf(
+      "Current version '{}' < latest '{}'",
+      currentVersionString,
+      latestVersionString);
   }
 
   const auto oldName = Version::ReleaseName;

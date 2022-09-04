@@ -171,6 +171,9 @@ add_custom_target(
   "-DINPUT_CPP_FILE=${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in"
   "-DOUTPUT_CPP_FILE=${VERSION_CPP_FILE}"
   "-P${CMAKE_CURRENT_SOURCE_DIR}/../version.cmake"
+  DEPENDS
+  "${CMAKE_CURRENT_SOURCE_DIR}/../version.cmake"
+  "version.cpp.in"
   BYPRODUCTS
   "${VERSION_CPP_FILE}"
   WORKING_DIRECTORY

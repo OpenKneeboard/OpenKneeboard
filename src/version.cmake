@@ -32,22 +32,28 @@ else()
   set(DIRTY "true")
 endif()
 
+execute_process(
+	COMMAND git describe --tags --abbrev=0
+	OUTPUT_VARIABLE LATEST_GIT_TAG
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 if(DEFINED ENV{GITHUB_RUN_NUMBER})
   set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
   set(IS_GITHUB_ACTIONS_BUILD "true")
-  set(VERSION_BUILD_STR "${VERSION_BUILD}-gha")
+  set(BUILD_TYPE "gha")
 else()
   execute_process(
-    COMMAND git rev-list --count HEAD
+    COMMAND git rev-list --count "${LATEST_GIT_TAG}..HEAD"
     OUTPUT_VARIABLE VERSION_BUILD
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   set(IS_GITHUB_ACTIONS_BUILD "false")
-  set(VERSION_BUILD_STR "${VERSION_BUILD}-local")
+  set(BUILD_TYPE "local")
 endif()
 
 if("${RELEASE_NAME}" STREQUAL "")
-  set(RELEASE_NAME "v${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.${VERSION_BUILD_STR}")
+  set(RELEASE_NAME "${LATEST_GIT_TAG}+${BUILD_TYPE}.${VERSION_BUILD}")
 endif()
 
 if(INPUT_CPP_FILE)
