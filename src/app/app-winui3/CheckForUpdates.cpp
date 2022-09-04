@@ -74,6 +74,12 @@ IAsyncAction CheckForUpdates(
     co_return;
   }
 
+  const auto isPreRelease
+    = Version::ReleaseName.find('-') != Version::ReleaseName.npos;
+  if (settings.mChannel == AutoUpdateSettings::StableChannel && isPreRelease) {
+    settings.mChannel = AutoUpdateSettings::PreviewChannel;
+  }
+
   HttpClient http;
   auto headers = http.DefaultRequestHeaders();
   headers.UserAgent().Append(
@@ -90,13 +96,16 @@ IAsyncAction CheckForUpdates(
     Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
       hstring {L"application/vnd.github.v3+json"}));
 
-  dprint("Starting update check");
+  const auto uri = std::format(
+    "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/"
+    "autoupdate/{}.json",
+    settings.mChannel);
+  dprintf("Starting update check: {}", uri);
 
   nlohmann::json releases;
   try {
     // GetStringAsync is UTF-16, GetBufferAsync is often truncated
-    auto stream = co_await http.GetInputStreamAsync(Uri(hstring {
-      L"https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases"}));
+    auto stream = co_await http.GetInputStreamAsync(Uri(to_hstring(uri)));
     std::string json;
     Windows::Storage::Streams::Buffer buffer(4096);
     Windows::Storage::Streams::IBuffer readBuffer;
@@ -132,66 +141,14 @@ IAsyncAction CheckForUpdates(
     dprint("Didn't get any releases from github API :/");
     if (checkType == UpdateCheckType::Manual) {
       ShowResultDialog(
-        _("Error: GitHub API did not return any releases."),
-        uiThread,
-        xamlRoot);
+        _("Error: API did not return any releases."), uiThread, xamlRoot);
     }
     co_return;
   }
 
-  bool isPreRelease = false;
-  nlohmann::json latestRelease;
-  nlohmann::json latestStableRelease;
-  nlohmann::json forcedRelease;
-
-  for (auto release: releases) {
-    const auto name = release.at("tag_name").get<std::string_view>();
-    if (name == settings.mForceUpgradeTo) {
-      forcedRelease = release;
-      dprintf("Found forced release {}", name);
-      continue;
-    }
-
-    if (latestRelease.is_null()) {
-      latestRelease = release;
-      dprintf("Latest release is {}", name);
-    }
-    if (
-      latestStableRelease.is_null() && !release.at("prerelease").get<bool>()) {
-      latestStableRelease = release;
-      dprintf("Latest stable release is {}", name);
-    }
-
-    if (
-      Version::CommitID
-      == release.at("target_commitish").get<std::string_view>()) {
-      isPreRelease = release.at("prerelease").get<bool>();
-      dprintf(
-        "Found this version as {} ({})",
-        name,
-        isPreRelease ? "prerelease" : "stable");
-      if (settings.mForceUpgradeTo.empty()) {
-        break;
-      }
-    }
-  }
-
-  settings.mHaveUsedPrereleases = settings.mHaveUsedPrereleases || isPreRelease;
-
-  auto release
-    = settings.mHaveUsedPrereleases ? latestRelease : latestStableRelease;
-  if (!settings.mForceUpgradeTo.empty()) {
-    release = forcedRelease;
-  }
-
-  if (release.is_null()) {
-    dprint("Didn't find a valid release.");
-    if (checkType == UpdateCheckType::Manual) {
-      ShowResultDialog(
-        _("Error: GitHub release information was invalid"), uiThread, xamlRoot);
-    }
-    co_return;
-  }
+  auto latestRelease = releases.front();
+  dprintf(
+    "Latest release is {}", latestRelease.at("name").get<std::string_view>());
 
   scope_guard oncePerDay([&]() {
     settings.mDisabledUntil = now + (60 * 60 * 24);
@@ -200,7 +157,7 @@ IAsyncAction CheckForUpdates(
     gKneeboard->SetAppSettings(app);
   });
 
-  auto newCommit = release.at("target_commitish").get<std::string_view>();
+  auto newCommit = latestRelease.at("target_commitish").get<std::string_view>();
 
   if (newCommit == Version::CommitID) {
     dprintf("Up to date on commit ID {}", Version::CommitID);
@@ -212,14 +169,14 @@ IAsyncAction CheckForUpdates(
   }
 
   const auto oldName = Version::ReleaseName;
-  const auto newName = release.at("tag_name").get<std::string_view>();
+  const auto newName = latestRelease.at("tag_name").get<std::string_view>();
 
   dprintf("Found upgrade {} to {}", oldName, newName);
   if (newName == settings.mSkipVersion) {
     dprintf("Skipping {} at user request.", newName);
     co_return;
   }
-  const auto assets = release.at("assets");
+  const auto assets = latestRelease.at("assets");
   auto updateAsset = std::ranges::find_if(assets, [=](const auto& asset) {
     auto name = asset.at("name").get<std::string_view>();
     return name.ends_with(".msix") && (name.find("Debug") == name.npos);
@@ -254,7 +211,7 @@ IAsyncAction CheckForUpdates(
     releaseNotesLink.Content(box_value(
       to_hstring(std::format(_("OpenKneeboard {} is available!"), newName))));
     releaseNotesLink.NavigateUri(
-      Uri {to_hstring(release.at("html_url").get<std::string_view>())});
+      Uri {to_hstring(latestRelease.at("html_url").get<std::string_view>())});
     releaseNotesLink.HorizontalAlignment(HorizontalAlignment::Center);
     TextBlock promptText;
     promptText.Text(to_hstring(
@@ -389,7 +346,6 @@ IAsyncAction CheckForUpdates(
     if (cancelled) {
       co_return;
     }
-    settings.mForceUpgradeTo = {};
     // Settings saved by scope guard
     co_await uiThread;
     OpenKneeboard::LaunchURI(to_utf8(destination));

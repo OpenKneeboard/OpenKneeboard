@@ -54,11 +54,11 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
     auto au = j.at(AutoUpdateKey);
     as.mAutoUpdate.mDisabledUntil = au.at("DisabledUntil");
     as.mAutoUpdate.mSkipVersion = au.at("SkipVersion");
-    if (au.contains("ForceUpgradeTo")) {
-      as.mAutoUpdate.mForceUpgradeTo = au.at("ForceUpgradeTo");
-    }
-    if (au.contains("HaveUsedPrereleases")) {
-      as.mAutoUpdate.mHaveUsedPrereleases = au.at("HaveUsedPrereleases");
+
+    if (au.contains("Channel")) {
+      as.mAutoUpdate.mChannel = au.at("Channel");
+    } else if (au.value<bool>("HaveUsedPrereleases", false)) {
+      as.mAutoUpdate.mChannel = AutoUpdateSettings::PreviewChannel;
     }
   }
 
@@ -86,8 +86,7 @@ void to_json(nlohmann::json& j, const AppSettings& as) {
       {
         {"DisabledUntil", as.mAutoUpdate.mDisabledUntil},
         {"SkipVersion", as.mAutoUpdate.mSkipVersion},
-        {"ForceUpgradeTo", as.mAutoUpdate.mForceUpgradeTo},
-        {"HaveUsedPrereleases", as.mAutoUpdate.mHaveUsedPrereleases},
+        {"Channel", as.mAutoUpdate.mChannel},
       },
     },
   };

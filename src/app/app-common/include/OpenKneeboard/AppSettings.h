@@ -27,10 +27,12 @@
 namespace OpenKneeboard {
 
 struct AutoUpdateSettings {
+  static constexpr std::string_view StableChannel {"stable"};
+  static constexpr std::string_view PreviewChannel {"preview"};
+
   uint64_t mDisabledUntil = 0;
   std::string mSkipVersion;
-  std::string mForceUpgradeTo;// for testing
-  bool mHaveUsedPrereleases = false;
+  std::string mChannel {StableChannel};
 };
 
 struct AppSettings final {
