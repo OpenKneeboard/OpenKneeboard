@@ -19,6 +19,7 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
   * VJoy controller
   * Mouse buttons
   * Keyboard
+  * Multiple buttons (combos)
 * adding, removing, reordering tabs, including DCS tabs
 * expected default tabs with quick start guide on fresh install
 * adding, removing games
