@@ -9,7 +9,7 @@ $AllReleases = (Invoke-WebRequest -URI https://api.github.com/repos/OpenKneeboar
 $AllReleases
   | Select-Object -First 1
   | ConvertTo-Json -Depth 8 -AsArray
-  | Out-File -Encoding utf8NoBOM -FilePath prerelease.json
+  | Out-File -Encoding utf8NoBOM -FilePath preview.json
 
 # Latest stable release
 $AllReleases
