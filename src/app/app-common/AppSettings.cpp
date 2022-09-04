@@ -60,6 +60,9 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
     } else if (au.value<bool>("HaveUsedPrereleases", false)) {
       as.mAutoUpdate.mChannel = AutoUpdateSettings::PreviewChannel;
     }
+    if (au.contains("BaseURI")) {
+      as.mAutoUpdate.mBaseURI = au.at("BaseURI");
+    }
   }
 
   auto jrect = j.at(WindowPositionKey);
@@ -87,6 +90,7 @@ void to_json(nlohmann::json& j, const AppSettings& as) {
         {"DisabledUntil", as.mAutoUpdate.mDisabledUntil},
         {"SkipVersion", as.mAutoUpdate.mSkipVersion},
         {"Channel", as.mAutoUpdate.mChannel},
+        {"BaseURI", as.mAutoUpdate.mBaseURI},
       },
     },
   };

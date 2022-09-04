@@ -96,10 +96,12 @@ IAsyncAction CheckForUpdates(
     Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
       hstring {L"application/vnd.github.v3+json"}));
 
-  const auto uri = std::format(
-    "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/"
-    "autoupdate/{}.json",
-    settings.mChannel);
+  const auto baseUri = settings.mBaseURI.empty()
+    ? "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/"
+      "autoupdate"
+    : settings.mBaseURI;
+
+  const auto uri = std::format("{}/{}.json", baseUri, settings.mChannel);
   dprintf("Starting update check: {}", uri);
 
   nlohmann::json releases;

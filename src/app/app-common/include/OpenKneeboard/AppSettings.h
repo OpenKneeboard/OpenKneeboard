@@ -32,6 +32,7 @@ struct AutoUpdateSettings {
 
   uint64_t mDisabledUntil = 0;
   std::string mSkipVersion;
+  std::string mBaseURI;
   std::string mChannel {StableChannel};
 };
 
