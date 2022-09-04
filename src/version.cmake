@@ -33,7 +33,7 @@ else()
 endif()
 
 execute_process(
-	COMMAND git describe --tags --abbrev=0
+	COMMAND git describe --tags --abbrev=0 HEAD
 	OUTPUT_VARIABLE LATEST_GIT_TAG
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 )
