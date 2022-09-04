@@ -13,14 +13,7 @@ ExternalProject_Add(
     "-DZLIB_LIBRARY_DEBUG=$<TARGET_PROPERTY:zlib,INTERFACE_LINK_LIBRARIES_DEBUG>"
     "-DZLIB_LIBRARY_RELEASE=$<TARGET_PROPERTY:zlib,INTERFACE_LINK_LIBRARIES>"
   BUILD_COMMAND
-    ${CMAKE_COMMAND}
-    --build .
-    --config "$<CONFIG>"
-    --parallel
-    --
-    /p:CL_MPCount=
-    /p:UseMultiToolTask=true
-    /p:EnforceProcessCountAcrossBuilds=true
+    ${CMAKE_COMMAND} --build . --config "$<CONFIG>" --parallel
   INSTALL_COMMAND
     ${CMAKE_COMMAND} --install . --config "$<CONFIG>" --prefix "<INSTALL_DIR>/$<CONFIG>"
   EXCLUDE_FROM_ALL

@@ -13,7 +13,6 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
     ${CMAKE_COMMAND} -E env
-    "CL=/MP /p:CL_MPCount= /p:UseMultiToolTask=true /p:EnforceProcessCountAcrossBuilds=true"
     "DETOURS_CONFIG=${DETOURS_CONFIG}"
     nmake
   INSTALL_COMMAND ""

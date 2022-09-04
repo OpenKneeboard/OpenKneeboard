@@ -6,15 +6,6 @@ ExternalProject_Add(
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     -DENABLE_SHARED=off
     -DWITH_TURBOJPEG=OFF
-  BUILD_COMMAND
-    ${CMAKE_COMMAND}
-    --build .
-    --config "$<CONFIG>"
-    --parallel
-    --
-    /p:CL_MPCount=
-    /p:UseMultiToolTask=true
-    /p:EnforceProcessCountAcrossBuilds=true
   INSTALL_COMMAND
     "${CMAKE_COMMAND}" --install . --prefix "<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
   EXCLUDE_FROM_ALL

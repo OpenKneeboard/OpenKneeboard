@@ -5,15 +5,6 @@ ExternalProject_Add(
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
-  BUILD_COMMAND
-    ${CMAKE_COMMAND}
-    --build .
-    --config "$<CONFIG>"
-    --parallel
-    --
-    /p:CL_MPCount=
-    /p:UseMultiToolTask=true
-    /p:EnforceProcessCountAcrossBuilds=true
   EXCLUDE_FROM_ALL
 )
 

@@ -37,8 +37,6 @@ jobs:
             --parallel `
             -- `
             /p:CL_MPCount=
-            /p:UseMultiToolTask=true
-            /p:EnforceProcessCountAcrossBuilds=true
       - name: Install Default Components
         working-directory: build
         shell: pwsh
