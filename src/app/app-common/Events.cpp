@@ -19,6 +19,9 @@
  */
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+
+#include <queue>
 
 namespace OpenKneeboard {
 
@@ -71,6 +74,43 @@ void EventReceiver::RemoveEventListener(EventHandlerToken token) {
   if (toInvalidate) {
     toInvalidate->Invalidate();
   }
+}
+
+static thread_local bool gHandlerRunning = false;
+static thread_local std::queue<std::function<void()>> gEmitterQueue;
+
+static void FlushEmitterQueue() {
+  while (!gEmitterQueue.empty()) {
+    gEmitterQueue.front()();
+    gEmitterQueue.pop();
+  }
+}
+
+void EventBase::InvokeOrEnqueue(std::function<void()> func) {
+  if (gHandlerRunning) {
+    gEmitterQueue.push(func);
+    return;
+  }
+  gHandlerRunning = true;
+  scope_guard notRunning([&]() { gHandlerRunning = false; });
+  func();
+  FlushEmitterQueue();
+}
+
+EventDelay::EventDelay() {
+  if (gHandlerRunning) {
+    return;
+  }
+  gHandlerRunning = true;
+  mOwner = true;
+}
+
+EventDelay::~EventDelay() {
+  if (!mOwner) {
+    return;
+  }
+  FlushEmitterQueue();
+  gHandlerRunning = false;
 }
 
 }// namespace OpenKneeboard

@@ -66,8 +66,11 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
   const std::filesystem::path& savedGamesPath) {
   if (event.name == DCS::EVT_SIMULATION_START) {
     co_await mUIThread;
-    mPageSource->PushFullWidthSeparator();
-    this->evNeedsRepaintEvent.Emit();
+    {
+      const EventDelay eventDelay;
+      mPageSource->PushFullWidthSeparator();
+      this->evNeedsRepaintEvent.Emit();
+    }
     co_return;
   }
 
@@ -77,6 +80,7 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
 
   co_await mUIThread;
 
+  const EventDelay delay;
   mPageSource->PushMessage(event.value);
 }
 

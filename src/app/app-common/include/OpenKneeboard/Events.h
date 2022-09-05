@@ -56,8 +56,40 @@ class EventBase {
   };
 
  protected:
+  /** Event handlers are not invoked recursively to avoid deadlocks.
+   *
+   * If no calls are in progress in the current thread, this will immediately
+   * invoke the specified handler, then invoke any other handlers that were
+   * queued up while it was executing.
+   *
+   * If a call is in progress in the current thread, it will queue up the new
+   * one, and return immediately.
+   *
+   * To similarly buffer events in a non-handler context, use the `EventDelay`
+   * class.
+   */
+  static void InvokeOrEnqueue(std::function<void()>);
+
   virtual void RemoveHandler(EventHandlerToken) = 0;
   std::recursive_mutex mMutex;
+};
+
+/** Delay any event handling in the current thread for the lifetime of this
+ * class.
+ *
+ * For example, you may want to use this after */
+class EventDelay final {
+ public:
+  EventDelay();
+  ~EventDelay();
+
+  EventDelay(const EventDelay&) = delete;
+  EventDelay(EventDelay&&) = delete;
+  auto operator=(const EventDelay&) = delete;
+  auto operator=(EventDelay&&) = delete;
+
+ private:
+  bool mOwner = false;
 };
 
 class EventConnectionBase {
@@ -143,8 +175,8 @@ class EventReceiver {
  protected:
   std::vector<std::shared_ptr<EventConnectionBase>> mSenders;
 
-  // `std::type_identity_t` makes the compiler infer `Args` from the event, then
-  // match the handler, instead of attempting to infer `Args from both.
+  // `std::type_identity_t` makes the compiler infer `Args` from the event,
+  // then match the handler, instead of attempting to infer `Args from both.
   template <class... Args>
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
@@ -231,9 +263,12 @@ void Event<Args...>::Emit(Args... args) {
       return;
     }
   }
-  for (const auto& receiver: receivers) {
-    receiver->Call(args...);
-  }
+
+  InvokeOrEnqueue([=]() {
+    for (const auto& receiver: receivers) {
+      receiver->Call(args...);
+    }
+  });
 }
 
 template <class... Args>
