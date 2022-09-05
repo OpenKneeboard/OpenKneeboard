@@ -38,16 +38,14 @@ void RegisterURIHandler(
     std::wstring(winrt::to_hstring(schemeName)), handler);
 }
 
-void LaunchURI(std::string_view uriStr) {
+winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uriStr) {
   auto uri = winrt::Windows::Foundation::Uri(winrt::to_hstring(uriStr));
   const std::wstring scheme(uri.SchemeName());
   if (gHandlers.contains(scheme)) {
     gHandlers.at(scheme)(uriStr);
-    return;
+    co_return;
   }
-  [uri]() -> winrt::fire_and_forget {
-    co_await winrt::Windows::System::Launcher::LaunchUriAsync(uri);
-  }();
+  co_await winrt::Windows::System::Launcher::LaunchUriAsync(uri);
 }
 
 }// namespace OpenKneeboard

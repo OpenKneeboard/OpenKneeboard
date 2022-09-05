@@ -383,7 +383,7 @@ IAsyncAction CheckForUpdates(
     }
     // Settings saved by scope guard
     co_await uiThread;
-    OpenKneeboard::LaunchURI(to_utf8(destination));
+    co_await OpenKneeboard::LaunchURI(to_utf8(destination));
     Application::Current().Exit();
     co_return;
   }

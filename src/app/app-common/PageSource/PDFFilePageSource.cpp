@@ -376,7 +376,9 @@ void PDFFilePageSource::Reload() {
               this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
               break;
             case LinkDestination::Type::URI: {
-              LaunchURI(dest.mURI);
+              [=]() -> winrt::fire_and_forget {
+                co_await LaunchURI(dest.mURI);
+              }();
               break;
             }
           }
