@@ -60,8 +60,19 @@ void from_json(const nlohmann::json& j, AppSettings& as) {
     } else if (au.value<bool>("HaveUsedPrereleases", false)) {
       as.mAutoUpdate.mChannel = AutoUpdateSettings::PreviewChannel;
     }
-    if (au.contains("BaseURI")) {
-      as.mAutoUpdate.mBaseURI = au.at("BaseURI");
+
+    if (au.contains("Testing")) {
+      auto t = au.at("Testing");
+
+      as.mAutoUpdate.mBaseURI = t.value<std::string>("BaseURI", {});
+      as.mAutoUpdate.mFakeCurrentVersion
+        = t.value<std::string>("FakeCurrentVersion", {});
+      as.mAutoUpdate.mFakeUpdateVersion
+        = t.value<std::string>("FakeUpdateVersion", {});
+
+      if (t.contains("AlwaysCheck")) {
+        as.mAutoUpdate.mAlwaysCheck = t.at("AlwaysCheck");
+      }
     }
   }
 
@@ -90,7 +101,15 @@ void to_json(nlohmann::json& j, const AppSettings& as) {
         {"DisabledUntil", as.mAutoUpdate.mDisabledUntil},
         {"SkipVersion", as.mAutoUpdate.mSkipVersion},
         {"Channel", as.mAutoUpdate.mChannel},
-        {"BaseURI", as.mAutoUpdate.mBaseURI},
+        {
+          "Testing",
+          {
+            {"BaseURI", as.mAutoUpdate.mBaseURI},
+            {"FakeCurrentVersion", as.mAutoUpdate.mFakeCurrentVersion},
+            {"FakeUpdateVersion", as.mAutoUpdate.mFakeUpdateVersion},
+            {"AlwaysCheck", as.mAutoUpdate.mAlwaysCheck},
+          },
+        },
       },
     },
   };

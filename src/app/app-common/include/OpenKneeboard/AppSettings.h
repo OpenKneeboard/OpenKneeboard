@@ -32,8 +32,13 @@ struct AutoUpdateSettings {
 
   uint64_t mDisabledUntil = 0;
   std::string mSkipVersion;
-  std::string mBaseURI;
   std::string mChannel {StableChannel};
+
+  // For testing
+  std::string mBaseURI;
+  std::string mFakeCurrentVersion;
+  std::string mFakeUpdateVersion;
+  bool mAlwaysCheck = false;
 };
 
 struct AppSettings final {

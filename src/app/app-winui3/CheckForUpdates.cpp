@@ -88,6 +88,9 @@ IAsyncAction CheckForUpdates(
     settings.mDisabledUntil = 0;
     settings.mSkipVersion = {};
   }
+  if (settings.mAlwaysCheck) {
+    settings.mDisabledUntil = 0;
+  }
 
   if (settings.mDisabledUntil > static_cast<uint64_t>(now)) {
     dprint("Not checking for update, too soon");
@@ -179,9 +182,13 @@ IAsyncAction CheckForUpdates(
     gKneeboard->SetAppSettings(app);
   });
 
-  const auto currentVersionString = ToSemVerString(Version::ReleaseName);
-  const auto latestVersionString
-    = ToSemVerString(latestRelease.at("tag_name").get<std::string_view>());
+  const auto currentVersionString = ToSemVerString(
+    settings.mFakeCurrentVersion.empty() ? Version::ReleaseName
+                                         : settings.mFakeCurrentVersion);
+  const auto latestVersionString = ToSemVerString(
+    settings.mFakeUpdateVersion.empty()
+      ? latestRelease.at("tag_name").get<std::string_view>()
+      : settings.mFakeUpdateVersion);
 
   const version::Semver200_version currentVersion(currentVersionString);
   const version::Semver200_version latestVersion(latestVersionString);
