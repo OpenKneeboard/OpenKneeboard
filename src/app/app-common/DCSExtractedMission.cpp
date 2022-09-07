@@ -46,6 +46,8 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
                static_cast<uint32_t>(GetCurrentProcessId()),
                randDist(randDevice),
                zipPath.stem().string());
+  dprintf(
+    L"Extracting DCS mission {} to {}", zipPath.wstring(), mTempDir.wstring());
   std::filesystem::create_directories(mTempDir);
   int err = 0;
   auto zipPathString = zipPath.string();
