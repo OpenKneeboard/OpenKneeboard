@@ -55,8 +55,10 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
     auto folder
       = co_await StorageFolder::GetFolderFromPathAsync(mPath.wstring());
     mQueryResult = folder.CreateFileQuery(CommonFileQuery::OrderByName);
-    mQueryResult.ContentsChanged(
-      [this](const auto&, const auto&) { this->Reload(); });
+    mQueryResult.ContentsChanged([=](const auto&, const auto&) {
+      dprintf(L"Folder {} was modified", mPath.wstring());
+      this->Reload();
+    });
   }
   const auto files = co_await mQueryResult.GetFilesAsync();
 
