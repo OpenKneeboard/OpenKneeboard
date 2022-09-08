@@ -37,10 +37,16 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   std::random_device randDevice;
   std::uniform_int_distribution<uint64_t> randDist;
 
-  wchar_t tempDir[MAX_PATH];
-  auto tempDirLen = GetTempPathW(MAX_PATH, tempDir);
+  wchar_t tempDirBuf[MAX_PATH];
+  auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
+  auto tempDir
+    = std::filesystem::path {std::wstring_view {tempDirBuf, tempDirLen}};
+  if (!std::filesystem::exists(tempDir)) {
+    std::filesystem::create_directory(tempDir);
+  }
+  tempDir = std::filesystem::canonical(tempDir);
 
-  mTempDir = std::filesystem::path(std::wstring_view(tempDir, tempDirLen))
+  mTempDir = tempDir
     / std::format(
                "OpenKneeboard-{}-{:016x}-{}",
                static_cast<uint32_t>(GetCurrentProcessId()),
