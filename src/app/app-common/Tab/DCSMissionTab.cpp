@@ -30,7 +30,7 @@ namespace OpenKneeboard {
 
 DCSMissionTab::DCSMissionTab(const DXResources& dxr, KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs) {
-  mPageSource = std::make_shared<FolderPageSource>(dxr, kbs);
+  mPageSource = FolderPageSource::Create(dxr, kbs);
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
 }
 

@@ -31,7 +31,7 @@ FolderTab::FolderTab(
   utf8_string_view /* title */,
   const std::filesystem::path& path)
   : PageSourceWithDelegates(dxr, kbs),
-    mPageSource(std::make_shared<FolderPageSource>(dxr, kbs, path)),
+    mPageSource(FolderPageSource::Create(dxr, kbs, path)),
     mPath {path} {
   this->SetDelegates({mPageSource});
 }

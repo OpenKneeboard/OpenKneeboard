@@ -31,9 +31,15 @@ namespace OpenKneeboard {
 
 struct KneeboardState;
 
-class FolderPageSource final : public PageSourceWithDelegates {
+class FolderPageSource final
+  : public PageSourceWithDelegates,
+    public std::enable_shared_from_this<FolderPageSource> {
+ private:
+  FolderPageSource(const DXResources&, KneeboardState*);
+
  public:
-  FolderPageSource(
+  FolderPageSource() = delete;
+  static std::shared_ptr<FolderPageSource> Create(
     const DXResources&,
     KneeboardState*,
     const std::filesystem::path& = {});

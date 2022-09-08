@@ -81,7 +81,7 @@ void DCSTerrainTab::OnGameEvent(
   std::vector<std::shared_ptr<IPageSource>> delegates;
   for (auto& path: paths) {
     delegates.push_back(std::static_pointer_cast<IPageSource>(
-      std::make_shared<FolderPageSource>(mDXR, mKneeboard, path)));
+      FolderPageSource::Create(mDXR, mKneeboard, path)));
   }
   this->SetDelegates(delegates);
 }

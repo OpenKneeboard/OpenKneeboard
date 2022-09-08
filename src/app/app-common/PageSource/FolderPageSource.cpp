@@ -31,18 +31,30 @@ using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
-FolderPageSource::FolderPageSource(
+FolderPageSource::FolderPageSource(const DXResources& dxr, KneeboardState* kbs)
+  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
+}
+
+std::shared_ptr<FolderPageSource> FolderPageSource::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
-  const std::filesystem::path& path)
-  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
-  this->SetPath(path);
+  const std::filesystem::path& path) {
+  std::shared_ptr<FolderPageSource> ret {new FolderPageSource(dxr, kbs)};
+  if (!path.empty()) {
+    ret->SetPath(path);
+  }
+  return ret;
 }
 
 FolderPageSource::~FolderPageSource() = default;
 
 winrt::fire_and_forget FolderPageSource::Reload() noexcept {
+  const auto weakThis = this->weak_from_this();
   co_await mUIThread;
+  const auto strongThis = this->shared_from_this();
+  if (!strongThis) {
+    co_return;
+  }
 
   if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
     EventDelay eventDelay;
