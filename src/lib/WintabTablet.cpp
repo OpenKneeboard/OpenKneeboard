@@ -80,10 +80,10 @@ struct WintabTablet::Impl {
   Impl(HWND window);
   ~Impl();
 
-  State mState;
-  Limits mLimits;
-  LibWintab mWintab;
-  HCTX mCtx;
+  State mState {};
+  Limits mLimits {};
+  LibWintab mWintab {};
+  HCTX mCtx {nullptr};
 };
 
 WintabTablet::WintabTablet(HWND window) : p(std::make_unique<Impl>(window)) {
