@@ -111,9 +111,13 @@ class EventConnection : public EventConnectionBase {
   }
 
   void Call(Args... args) {
-    std::unique_lock lock(mMutex);
-    if (mHandler) {
-      mHandler(args...);
+    decltype(mHandler) handler;
+    {
+      std::unique_lock lock(mMutex);
+      handler = mHandler;
+    }
+    if (handler) {
+      handler(args...);
     }
   }
 
