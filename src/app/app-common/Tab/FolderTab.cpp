@@ -34,7 +34,6 @@ FolderTab::FolderTab(
     mPageSource(std::make_shared<FolderPageSource>(dxr, kbs, path)),
     mPath {path} {
   this->SetDelegates({mPageSource});
-  this->Reload();
 }
 
 FolderTab::FolderTab(
