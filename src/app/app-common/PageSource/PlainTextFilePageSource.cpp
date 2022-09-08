@@ -33,16 +33,26 @@ namespace OpenKneeboard {
 
 PlainTextFilePageSource::PlainTextFilePageSource(
   const DXResources& dxr,
-  KneeboardState* kbs,
-  const std::filesystem::path& path)
+  KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs),
     mPageSource(std::make_shared<PlainTextPageSource>(dxr, _("[empty file]"))) {
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
-  this->SetPath(path);
 }
 
 PlainTextFilePageSource::~PlainTextFilePageSource() {
   this->RemoveAllEventListeners();
+}
+
+std::shared_ptr<PlainTextFilePageSource> PlainTextFilePageSource::Create(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const std::filesystem::path& path) {
+  std::shared_ptr<PlainTextFilePageSource> ret {
+    new PlainTextFilePageSource(dxr, kbs)};
+  if (!path.empty()) {
+    ret->SetPath(path);
+  }
+  return ret;
 }
 
 std::filesystem::path PlainTextFilePageSource::GetPath() const {
@@ -76,11 +86,19 @@ void PlainTextFilePageSource::Reload() {
 }
 
 winrt::fire_and_forget PlainTextFilePageSource::SubscribeToChanges() noexcept {
+  auto weakThis = this->weak_from_this();
+  auto strongThis = this->shared_from_this();
+
   auto folder = co_await StorageFolder::GetFolderFromPathAsync(
     mPath.parent_path().wstring());
   mQueryResult = folder.CreateFileQuery();
-  mQueryResult.ContentsChanged(
-    [this](const auto&, const auto&) { this->OnFileModified(); });
+  mQueryResult.ContentsChanged([weakThis](const auto&, const auto&) {
+    auto strongThis = weakThis.lock();
+    if (!strongThis) {
+      return;
+    }
+    strongThis->OnFileModified();
+  });
   // Must fetch results once to make the query active
   co_await mQueryResult.GetFilesAsync();
 }

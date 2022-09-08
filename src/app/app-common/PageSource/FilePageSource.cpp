@@ -72,7 +72,7 @@ std::shared_ptr<IPageSource> FilePageSource::Get(
   }
 
   if (u_strcasecmp(extension.c_str(), L".txt", U_FOLD_CASE_DEFAULT) == 0) {
-    return std::make_shared<PlainTextFilePageSource>(dxr, kbs, path);
+    return PlainTextFilePageSource::Create(dxr, kbs, path);
   }
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {

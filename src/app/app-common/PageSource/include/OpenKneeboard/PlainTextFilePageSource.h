@@ -23,19 +23,26 @@
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Storage.Search.h>
 
+#include <memory>
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
 
 class PlainTextPageSource;
 
-class PlainTextFilePageSource final : public PageSourceWithDelegates {
+class PlainTextFilePageSource final
+  : public PageSourceWithDelegates,
+    std::enable_shared_from_this<PlainTextFilePageSource> {
+ private:
+  PlainTextFilePageSource(const DXResources&, KneeboardState*);
+
  public:
-  PlainTextFilePageSource(
+  PlainTextFilePageSource() = delete;
+  virtual ~PlainTextFilePageSource();
+  static std::shared_ptr<PlainTextFilePageSource> Create(
     const DXResources&,
     KneeboardState*,
     const std::filesystem::path& path = {});
-  virtual ~PlainTextFilePageSource();
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
