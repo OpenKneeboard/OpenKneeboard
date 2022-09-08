@@ -100,9 +100,8 @@ struct PDFFilePageSource::Impl final {
 
 PDFFilePageSource::PDFFilePageSource(
   const DXResources& dxr,
-  KneeboardState* kbs,
-  const std::filesystem::path& path)
-  : p(new Impl {.mDXR = dxr, .mPath = path}) {
+  KneeboardState* kbs)
+  : p(new Impl {.mDXR = dxr}) {
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
@@ -112,8 +111,6 @@ PDFFilePageSource::PDFFilePageSource(
 
   p->mContentLayer = std::make_unique<CachedLayer>(dxr);
   p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
-
-  Reload();
 }
 
 PDFFilePageSource::~PDFFilePageSource() {
@@ -122,6 +119,26 @@ PDFFilePageSource::~PDFFilePageSource() {
     p->mQPDFThread.join();
   }
   this->RemoveAllEventListeners();
+}
+
+std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const std::filesystem::path& path) {
+  auto _this
+    = std::shared_ptr<PDFFilePageSource>(new PDFFilePageSource(dxr, kbs));
+
+  // Not a constructor argument as we need:
+  // 1) async loading functions
+  // 2) a weak_ptr to pass into the async loaders to ensure this object still
+  //    exists when those finish executing
+  // 3) so, we need the shared_ptr before we call `SetPath()`...
+  // 4) so, we can't call `SetPath()` or `Reload()` from the constructor
+  if (!path.empty()) {
+    _this->SetPath(path);
+  }
+
+  return _this;
 }
 
 namespace {
@@ -277,18 +294,28 @@ void PDFFilePageSource::Reload() {
     return;
   }
 
-  [this]() -> winrt::fire_and_forget {
-    // Captures become invalid after the function returns, which is the first
-    // co_await
-    auto _this = this;
+  auto weakThis = this->weak_from_this();
+
+  // captures are undefined after the first co_await
+  [](auto weakThis) -> winrt::fire_and_forget {
     co_await winrt::resume_background();
+    auto _this = weakThis.lock();
+    if (!_this) {
+      co_return;
+    }
+
     auto file
       = co_await StorageFile::GetFileFromPathAsync(_this->p->mPath.wstring());
     _this->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
     _this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
-  }();
+  }(weakThis);
 
-  p->mQPDFThread = {[this](std::stop_token stopToken) {
+  p->mQPDFThread = {[weakThis, this](std::stop_token stopToken) {
+    auto strongThis = weakThis.lock();
+    if (!strongThis) {
+      return;
+    }
+
     SetThreadDescription(GetCurrentThread(), L"PDFFilePageSource QPDF Thread");
     const auto startTime = std::chrono::steady_clock::now();
     scope_guard timer([startTime]() {

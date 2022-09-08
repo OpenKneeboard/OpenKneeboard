@@ -24,6 +24,7 @@
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
 #include <shims/winrt/base.h>
 
+#include <memory>
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
@@ -31,15 +32,21 @@ namespace OpenKneeboard {
 class KneeboardState;
 struct DXResources;
 
-class PDFFilePageSource final : virtual public IPageSourceWithCursorEvents,
-                                virtual public IPageSourceWithNavigation,
-                                public EventReceiver {
+class PDFFilePageSource final
+  : virtual public IPageSourceWithCursorEvents,
+    virtual public IPageSourceWithNavigation,
+    public EventReceiver,
+    public std::enable_shared_from_this<PDFFilePageSource> {
+ private:
+  explicit PDFFilePageSource(const DXResources&, KneeboardState*);
+
  public:
-  explicit PDFFilePageSource(
+  PDFFilePageSource() = delete;
+  virtual ~PDFFilePageSource();
+  static std::shared_ptr<PDFFilePageSource> Create(
     const DXResources&,
     KneeboardState*,
     const std::filesystem::path& path = {});
-  virtual ~PDFFilePageSource();
 
   virtual void Reload();
 

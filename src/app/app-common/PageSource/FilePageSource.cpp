@@ -68,7 +68,7 @@ std::shared_ptr<IPageSource> FilePageSource::Get(
   const auto extension = path.extension().wstring();
 
   if (u_strcasecmp(extension.c_str(), L".pdf", U_FOLD_CASE_DEFAULT) == 0) {
-    return std::make_shared<PDFFilePageSource>(dxr, kbs, path);
+    return PDFFilePageSource::Create(dxr, kbs, path);
   }
 
   if (u_strcasecmp(extension.c_str(), L".txt", U_FOLD_CASE_DEFAULT) == 0) {
