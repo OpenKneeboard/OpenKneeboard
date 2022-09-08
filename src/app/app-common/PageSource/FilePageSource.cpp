@@ -61,7 +61,7 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
   return extensions;
 }
 
-std::shared_ptr<IPageSource> FilePageSource::Get(
+std::shared_ptr<IPageSource> FilePageSource::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) noexcept {

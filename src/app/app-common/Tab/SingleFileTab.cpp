@@ -92,7 +92,7 @@ void SingleFileTab::SetPath(const std::filesystem::path& rawPath) {
 
 void SingleFileTab::Reload() {
   mKind = Kind::Unknown;
-  auto delegate = FilePageSource::Get(mDXR, mKneeboard, mPath);
+  auto delegate = FilePageSource::Create(mDXR, mKneeboard, mPath);
   if (!delegate) {
     this->SetDelegates({});
   }

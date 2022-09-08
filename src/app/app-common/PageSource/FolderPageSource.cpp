@@ -83,7 +83,7 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
   std::vector<std::shared_ptr<IPageSource>> delegates;
   for (const auto& file: files) {
     std::filesystem::path path(std::wstring_view {file.Path()});
-    auto delegate = FilePageSource::Get(mDXR, mKneeboard, path);
+    auto delegate = FilePageSource::Create(mDXR, mKneeboard, path);
     if (delegate) {
       delegates.push_back(std::move(delegate));
     }

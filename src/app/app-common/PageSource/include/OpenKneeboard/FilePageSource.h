@@ -36,7 +36,7 @@ class FilePageSource final {
 
   static std::vector<std::string> GetSupportedExtensions(
     const DXResources&) noexcept;
-  static std::shared_ptr<IPageSource> Get(
+  static std::shared_ptr<IPageSource> Create(
     const DXResources&,
     KneeboardState*,
     const std::filesystem::path&) noexcept;
