@@ -125,7 +125,7 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
-  auto _this
+  auto ret
     = std::shared_ptr<PDFFilePageSource>(new PDFFilePageSource(dxr, kbs));
 
   // Not a constructor argument as we need:
@@ -135,10 +135,10 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
   // 3) so, we need the shared_ptr before we call `SetPath()`...
   // 4) so, we can't call `SetPath()` or `Reload()` from the constructor
   if (!path.empty()) {
-    _this->SetPath(path);
+    ret->SetPath(path);
   }
 
-  return _this;
+  return ret;
 }
 
 namespace {
@@ -299,20 +299,20 @@ void PDFFilePageSource::Reload() {
   // captures are undefined after the first co_await
   [](auto weakThis) -> winrt::fire_and_forget {
     co_await winrt::resume_background();
-    auto _this = weakThis.lock();
-    if (!_this) {
+    auto strongThis = weakThis.lock();
+    if (!strongThis) {
       co_return;
     }
 
-    auto file
-      = co_await StorageFile::GetFileFromPathAsync(_this->p->mPath.wstring());
-    _this->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
-    _this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+    auto file = co_await StorageFile::GetFileFromPathAsync(
+      strongThis->p->mPath.wstring());
+    strongThis->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
+    strongThis->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
   }(weakThis);
 
   p->mQPDFThread = {[weakThis, this](std::stop_token stopToken) {
-    auto strongThis = weakThis.lock();
-    if (!strongThis) {
+    const auto stayingAlive = weakThis.lock();
+    if (!stayingAlive) {
       return;
     }
 

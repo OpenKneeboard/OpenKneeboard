@@ -37,11 +37,11 @@ InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
   auto weakThis = get_weak();
   AddEventListener(gKneeboard->evInputDevicesChangedEvent, [weakThis]() {
-    auto _this = weakThis.get();
-    if (!_this) {
+    auto strongThis = weakThis.get();
+    if (!strongThis) {
       return;
     }
-    _this->mPropertyChangedEvent(*_this, PropertyChangedEventArgs(L"Devices"));
+    strongThis->mPropertyChangedEvent(*strongThis, PropertyChangedEventArgs(L"Devices"));
   });
 }
 

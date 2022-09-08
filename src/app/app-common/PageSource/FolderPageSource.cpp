@@ -51,8 +51,8 @@ FolderPageSource::~FolderPageSource() = default;
 winrt::fire_and_forget FolderPageSource::Reload() noexcept {
   const auto weakThis = this->weak_from_this();
   co_await mUIThread;
-  const auto strongThis = this->shared_from_this();
-  if (!strongThis) {
+  const auto stayingAlive = this->shared_from_this();
+  if (!stayingAlive) {
     co_return;
   }
 

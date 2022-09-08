@@ -63,13 +63,16 @@ HelpPage::HelpPage() {
     &HelpPage::PopulateEvents,
     this);
 
+  auto weakThis = this->get_weak();
   AddEventListener(
-    TroubleshootingStore::Get()->evDPrintMessageReceived, [this]() {
-      [this]() noexcept -> winrt::fire_and_forget {
-        auto _this = this;
+    TroubleshootingStore::Get()->evDPrintMessageReceived, [weakThis]() {
+      [weakThis]() noexcept -> winrt::fire_and_forget {
         // always force a reschedule
         co_await winrt::resume_background();
-        _this->PopulateDPrint();
+        auto strongThis = weakThis.get();
+        if (strongThis) {
+          strongThis->PopulateDPrint();
+        }
       }();
     });
 
