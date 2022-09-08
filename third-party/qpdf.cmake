@@ -1,5 +1,7 @@
-add_library(qpdfDeps INTERFACE)
-target_link_libraries(qpdfDeps INTERFACE ThirdParty::LibJpeg ThirdParty::ZLib)
+set(
+  QPDF_DEPENDENCIES
+  ThirdParty::LibJpeg ThirdParty::ZLib
+)
 
 ExternalProject_Add(
   qpdfBuild
@@ -30,7 +32,7 @@ ExternalProject_Add(
     --prefix "<INSTALL_DIR>/$<CONFIG>"
     --config "$<CONFIG>"
     --component "dev"
-  DEPENDS qpdfDeps
+  DEPENDS ${QPDF_DEPENDENCIES}
   EXCLUDE_FROM_ALL
 )
 
@@ -43,7 +45,7 @@ target_link_libraries(
   libqpdf
   INTERFACE
   "${INSTALL_DIR}/$<CONFIG>/lib/qpdf.lib"
-  qpdfDeps
+  ${QPDF_DEPENDENCIES}
 )
 target_include_directories(
   libqpdf
