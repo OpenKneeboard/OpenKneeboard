@@ -35,7 +35,7 @@ I am not able to respond to 1:1 requests for help via any means, including GitHu
 
 ## Compatibility
 
-- 64-bit Windows 10, Fall Creators Update (version 1709 or 10.0.16299) or newer
+- 64-bit Windows 10 May 2020 Update (version 2004 or 10.0.19041) or newer
 - A graphics card that supports Direct3D 11
 
 Windows 11 is untested, and I am unable to investigate any issues reported with OpenKneeboard on Windows 11.
