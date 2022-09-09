@@ -119,11 +119,6 @@ target_link_options(OpenKneeboard-Uninstall-Helper PRIVATE "/MANIFESTUAC:level='
 install(
   TARGETS
   OpenKneeboard-Uninstall-Helper
-  DESTINATION
-  "${CMAKE_INSTALL_BINDIR}/installation")
-install(
-  TARGETS
-  OpenKneeboard-Uninstall-Helper
   COMPONENT
   Utilities 
   EXCLUDE_FROM_ALL)

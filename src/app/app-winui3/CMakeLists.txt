@@ -115,13 +115,13 @@ install(
 
 set_property(
   INSTALL
-  "bin/OpenKneeboardApp.exe"
+  "OpenKneeboardApp.exe"
   PROPERTY
   CPACK_START_MENU_SHORTCUTS "OpenKneeboard"
 )
 set_property(
   INSTALL
-  "bin/OpenKneeboardApp.exe"
+  "OpenKneeboardApp.exe"
   PROPERTY
   CPACK_DESKTOP_SHORTCUTS "OpenKneeboard"
 )

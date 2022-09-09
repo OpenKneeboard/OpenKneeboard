@@ -21,7 +21,7 @@ Once OpenKneeboard is installed, it can be started:
 If you need the path of the real exe for a specialized reason, e.g. for HidHide:
 
 1. Open 'Windows PowerShell' from the Start menu
-2. Run `"$((Get-AppxPackage -name '*OpenKneeboard*').InstallLocation)\bin\OpenKneeboardApp.exe"`
+2. Run `"$((Get-AppxPackage -name '*OpenKneeboard*').InstallLocation)\OpenKneeboardApp.exe"`
 3. This will show you the full path to the exe; this path will change with every upgrade
 
 ## Uninstalling OpenKneeboard

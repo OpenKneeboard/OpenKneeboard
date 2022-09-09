@@ -347,7 +347,7 @@ void HelpPage::PopulateLicenses() noexcept {
   const auto pathLen = GetModuleFileNameW(NULL, buffer, MAX_PATH);
   const std::filesystem::path exePath {std::wstring_view {buffer, pathLen}};
 
-  const auto docDir = exePath.parent_path().parent_path() / "share" / "doc";
+  const auto docDir = exePath.parent_path() / "share" / "doc";
 
   if (!std::filesystem::exists(docDir)) {
     return;

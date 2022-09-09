@@ -24,7 +24,7 @@ set(
   OpenKneeboard-OpenXR
   OpenKneeboard-dcs-ext-dll
 )
-install(TARGETS ${DLL_TARGETS} LIBRARY DESTINATION bin)
+install(TARGETS ${DLL_TARGETS} LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
 foreach(TARGET ${DLL_TARGETS})
   list(APPEND RUNTIME_FILES "$<TARGET_FILE:${TARGET}>")
