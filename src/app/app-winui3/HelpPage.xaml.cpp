@@ -97,7 +97,7 @@ void HelpPage::PopulateVersion() {
     Version::Minor,
     Version::Patch,
     Version::Build,
-    commitID.substr(commitID.length() - 6),
+    commitID.substr(0, 7),
     Version::HaveModifiedFiles ? "-dirty" : "",
     Version::IsGithubActionsBuild ? "-gha" : "-local",
 #ifdef DEBUG
