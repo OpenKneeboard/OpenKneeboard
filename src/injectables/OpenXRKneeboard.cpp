@@ -44,7 +44,7 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
   .position = {0.0f, 0.0f, 0.0f},
 };
 
-const std::string_view OpenXRLayerName {"XR_APILAYER_NOVENDOR_OpenKneeboard"};
+const std::string_view OpenXRLayerName {"XR_APILAYER_FREDEMMOTT_OpenKneeboard"};
 
 static std::shared_ptr<OpenXRNext> gNext;
 

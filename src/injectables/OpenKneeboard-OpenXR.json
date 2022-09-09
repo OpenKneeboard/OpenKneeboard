@@ -1,7 +1,7 @@
 {
   "file_format_version": "1.0.0",
   "api_layer": {
-    "name": "XR_APILAYER_NOVENDOR_OpenKneeboard",
+    "name": "XR_APILAYER_FREDEMMOTT_OpenKneeboard",
     "library_path": ".\\OpenKneeboard-OpenXR.dll",
     "api_version": "1.0",
     "implementation_version": "1",
@@ -9,6 +9,6 @@
     "functions": {
       "xrNegotiateLoaderApiLayerInterface": "OpenKneeboard_xrNegotiateLoaderApiLayerInterface"
     },
-    "disable_environment": "DISABLE_XR_API_LAYER_NOVENDOR_OpenKneeboard"
+    "disable_environment": "DISABLE_XR_API_LAYER_FREDEMMOTT_OpenKneeboard"
   }
 }
