@@ -30,7 +30,7 @@ set_target_properties(
   VS_GLOBAL_WindowsTargetPlatformMinVersion ${MINIMUM_WINDOWS_VERSION}
   VS_GLOBAL_WindowsPackageType None
   VS_GLOBAL_EnablePreviewMsixTooling true
-  VS_GLOBAL_WindowsAppSDKSelfContained false
+  VS_GLOBAL_WindowsAppSDKSelfContained true 
   VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnNoMatch_ShowUI true
   VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnPackageIdentity_NoOp true
 )
