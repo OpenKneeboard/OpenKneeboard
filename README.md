@@ -8,7 +8,7 @@ OpenKneeboard is a way to show reference information and take notes in games - e
 
 ## Getting Started
 
-1. Download [the latest release](https://github.com/fredemmott/OpenKneeboard/releases/latest)
+1. Download [the latest release](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)
 2. Install it; the installer will offer to launch OpenKneeboard when finished.
 3. Open settings
 4. Add games to the 'Games' tab if they were not automatically added; this is needed for tablet, Oculus, and non-VR support
@@ -28,7 +28,7 @@ I make this for my own use, and I share this in the hope others find it useful; 
 
 Support may be available from the community via:
 
-- [GitHub Discussions](https://github.com/fredemmott/OpenKneeboard/discussions)
+- [GitHub Discussions](https://github.com/OpenKneeboard/OpenKneeboard/discussions)
 - [Discord](https://go.openkneeboard.com/discord)
 
 I am not able to respond to 1:1 requests for help via any means, including GitHub, Discord, Twitter, Reddit, or email.
@@ -86,7 +86,7 @@ Note that OpenKneeboard has **NO WARRANTY**; see [the LICENSE file](LICENSE) and
 
 ## Developer Information
 
-[![Continuous Integration](https://github.com/fredemmott/OpenKneeboard/actions/workflows/ci.yml/badge.svg)](https://github.com/fredemmott/OpenKneeboard/actions/workflows/ci.yml)
+[![Continuous Integration](https://github.com/OpenKneeboard/OpenKneeboard/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenKneeboard/OpenKneeboard/actions/workflows/ci.yml)
 
 - This project is written in C++20
 - It is built with CMake
