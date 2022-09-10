@@ -110,8 +110,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   std::vector<const ovrLayerHeader*> newLayers;
   newLayers.reserve(layerCount + snapshot.GetLayerCount());
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  const bool discardDepthInformation
-    = config.mVR.mFlags & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
+  const bool discardDepthInformation = config.mVR.mFlags
+    & VRRenderConfig::Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION;
 
   for (unsigned int i = 0; i < layerCount; ++i) {
     const auto layer = layerPtrList[i];

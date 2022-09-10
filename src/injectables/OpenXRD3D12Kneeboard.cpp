@@ -43,16 +43,11 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
-  : OpenXRKneeboard(session, next) {
+  : OpenXRKneeboard(session, runtimeID, next) {
   mDeviceResources.mDevice12.copy_from(binding.device);
   mDeviceResources.mCommandQueue12.copy_from(binding.queue);
 
   dprintf("{}", __FUNCTION__);
-
-  if (std::string_view(runtimeID.mName).starts_with("Varjo")) {
-    dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
-    mDoubleBufferForVarjoQuirk = true;
-  }
 
   UINT flags = 0;
 #ifdef DEBUG
@@ -74,8 +69,20 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() = default;
 
+bool OpenXRD3D12Kneeboard::FlagsAreCompatible(
+  VRRenderConfig::Flags initialFlags,
+  VRRenderConfig::Flags currentFlags) const {
+  if (!IsVarjoRuntime()) {
+    return true;
+  }
+  const auto flag
+    = VRRenderConfig::Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER;
+  return (initialFlags & flag) == (currentFlags & flag);
+}
+
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   XrSession session,
+  VRRenderConfig::Flags flags,
   uint8_t layerIndex) {
   dprintf("{}", __FUNCTION__);
 
@@ -110,6 +117,14 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   }
 
   dprintf("{} images in swapchain", imageCount);
+
+  bool doubleBuffer = false;
+  if (
+    IsVarjoRuntime()
+    && (flags & VRRenderConfig::Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER)) {
+    dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
+    doubleBuffer = true;
+  }
 
   std::vector<XrSwapchainImageD3D12KHR> images;
   images.resize(
@@ -151,8 +166,8 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
         std::make_shared<D3D11On12::RenderTargetViewFactory>(
           mDeviceResources,
           texture12,
-          mDoubleBufferForVarjoQuirk ? D3D11On12::Flags::DoubleBuffer
-                                     : D3D11On12::Flags::None));
+          doubleBuffer ? D3D11On12::Flags::DoubleBuffer
+                       : D3D11On12::Flags::None));
   }
   dprintf(
     "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);

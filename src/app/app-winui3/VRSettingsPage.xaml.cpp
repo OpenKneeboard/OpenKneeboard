@@ -81,7 +81,6 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
          L"KneeboardGazeTargetVerticalScale",
          L"SteamVREnabled",
          L"GazeZoomEnabled",
-         L"DiscardOculusDepthInformation",
          L"NormalOpacity",
          L"GazeOpacity",
        }) {
@@ -271,38 +270,6 @@ void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
   }
   auto config = gKneeboard->GetVRConfig();
   config.mGazeTargetVerticalScale = value;
-  gKneeboard->SetVRConfig(config);
-}
-
-bool VRSettingsPage::DiscardOculusDepthInformation() {
-  return (
-    gKneeboard->GetVRConfig().mFlags
-    & VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION);
-}
-
-void VRSettingsPage::DiscardOculusDepthInformation(bool discard) {
-  auto config = gKneeboard->GetVRConfig();
-  if (discard) {
-    config.mFlags |= VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
-  } else {
-    config.mFlags &= ~VRRenderConfig::Flags::DISCARD_DEPTH_INFORMATION;
-  }
-  gKneeboard->SetVRConfig(config);
-}
-
-bool VRSettingsPage::InvertOpenXRYAxis() const {
-  return (
-    gKneeboard->GetVRConfig().mFlags
-    & VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION);
-}
-
-void VRSettingsPage::InvertOpenXRYAxis(bool invert) {
-  auto config = gKneeboard->GetVRConfig();
-  if (invert) {
-    config.mFlags |= VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION;
-  } else {
-    config.mFlags &= ~VRRenderConfig::Flags::INVERT_OPENXR_Y_POSITION;
-  }
   gKneeboard->SetVRConfig(config);
 }
 

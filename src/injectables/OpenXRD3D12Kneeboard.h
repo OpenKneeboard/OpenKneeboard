@@ -40,7 +40,13 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   ~OpenXRD3D12Kneeboard();
 
  protected:
-  virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) override;
+  virtual bool FlagsAreCompatible(
+    VRRenderConfig::Flags initialFlags,
+    VRRenderConfig::Flags currentFlags) const override;
+  virtual XrSwapchain CreateSwapChain(
+    XrSession,
+    VRRenderConfig::Flags flags,
+    uint8_t layerIndex) override;
   virtual bool Render(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
@@ -48,8 +54,6 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
     const VRKneeboard::RenderParameters&) override;
 
  private:
-  bool mDoubleBufferForVarjoQuirk = false;
-
   D3D11On12::DeviceResources mDeviceResources;
 
   std::array<

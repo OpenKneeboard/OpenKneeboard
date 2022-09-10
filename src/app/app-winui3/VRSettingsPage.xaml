@@ -49,12 +49,6 @@
           IsOn="{x:Bind GazeZoomEnabled}"
         />
         <ToggleSwitch
-          Header="Discard Oculus SDK depth information - required for DCS World"
-          OnContent="On"
-          OffContent="Off"
-          IsOn="{x:Bind DiscardOculusDepthInformation}"
-        />
-        <ToggleSwitch
           Header="SteamVR support"
           OnContent="Enabled"
           OffContent="Disabled"
@@ -67,12 +61,6 @@
           <x:String>Enabled for the current user</x:String>
           <x:String>Enabled for all users</x:String>
         </ComboBox>
-        <ToggleSwitch
-          Header="Invert OpenXR Y axis - may be required for Varjo headsets"
-          OnContent="Inverted Y axis"
-          OffContent="Normal Y axis"
-          IsOn="{x:Bind InvertOpenXRYAxis}"
-        />
       </StackPanel>
       <TextBlock
         Text="Size"

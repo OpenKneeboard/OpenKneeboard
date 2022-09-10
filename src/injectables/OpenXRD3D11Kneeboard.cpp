@@ -37,17 +37,25 @@ namespace OpenKneeboard {
 
 OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   XrSession session,
+  OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D11KHR& binding)
-  : OpenXRKneeboard(session, next), mDevice(binding.device) {
+  : OpenXRKneeboard(session, runtimeID, next), mDevice(binding.device) {
   dprintf("{}", __FUNCTION__);
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
 }
 
+bool OpenXRD3D11Kneeboard::FlagsAreCompatible(
+  VRRenderConfig::Flags,
+  VRRenderConfig::Flags) const {
+  return true;
+}
+
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   XrSession session,
+  VRRenderConfig::Flags,
   uint8_t layerIndex) {
   dprintf("{}", __FUNCTION__);
 

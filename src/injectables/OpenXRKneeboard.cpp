@@ -52,9 +52,16 @@ static OpenXRRuntimeID gRuntime;
 
 OpenXRKneeboard::OpenXRKneeboard(
   XrSession session,
+  OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next)
   : mOpenXR(next) {
   dprintf("{}", __FUNCTION__);
+
+  if (std::string_view(runtimeID.mName).starts_with("Varjo")) {
+    dprint("Varjo runtime detected");
+    mIsVarjoRuntime = true;
+  }
+
   mSwapchains.fill(nullptr);
   mRenderCacheKeys.fill(~(0ui64));
 
@@ -98,6 +105,10 @@ OpenXRKneeboard::~OpenXRKneeboard() {
   }
 }
 
+bool OpenXRKneeboard::IsVarjoRuntime() const {
+  return mIsVarjoRuntime;
+}
+
 OpenXRNext* OpenXRKneeboard::GetOpenXR() {
   return mOpenXR.get();
 }
@@ -138,14 +149,25 @@ XrResult OpenXRKneeboard::xrEndFrame(
       return mOpenXR->xrEndFrame(session, frameEndInfo);
     }
 
-    if (config.mVR.mFlags & VRConfig::Flags::INVERT_OPENXR_Y_POSITION) {
+    if (
+      IsVarjoRuntime()
+      && (config.mVR.mFlags & VRConfig::Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION)) {
       layer.mVR.mEyeY = -layer.mVR.mEyeY;
       layer.mVR.mFloorY = -layer.mVR.mFloorY;
     }
 
     auto& swapchain = mSwapchains.at(layerIndex);
+    if (swapchain) {
+      if (!this->FlagsAreCompatible(mInitialFlags, config.mVR.mFlags)) {
+        dprint("Incompatible swapchain due to flags change, recreating");
+        mOpenXR->xrDestroySwapchain(swapchain);
+        swapchain = nullptr;
+      }
+    }
+
     if (!swapchain) {
-      swapchain = this->CreateSwapChain(session, layerIndex);
+      mInitialFlags = config.mVR.mFlags;
+      swapchain = this->CreateSwapChain(session, mInitialFlags, layerIndex);
       if (!swapchain) {
         dprint("Failed to create swapchain");
         OPENKNEEBOARD_BREAK;
@@ -294,7 +316,7 @@ XrResult xrCreateSession(
   auto d3d11 = findInXrNextChain<XrGraphicsBindingD3D11KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
-    gKneeboard = new OpenXRD3D11Kneeboard(*session, gNext, *d3d11);
+    gKneeboard = new OpenXRD3D11Kneeboard(*session, gRuntime, gNext, *d3d11);
     return XR_SUCCESS;
   }
   auto d3d12 = findInXrNextChain<XrGraphicsBindingD3D12KHR>(

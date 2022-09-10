@@ -45,14 +45,17 @@ struct VRLayerConfig {
 struct VRRenderConfig {
   static constexpr uint16_t VERSION = 5;
 
+  // Old flags can be removed when VERSION is changed
   enum class Flags : uint32_t {
     // HEADLOCKED = 1 << 0,
-    DISCARD_DEPTH_INFORMATION = 1 << 1,
+    QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION = 1 << 1,
     // PREFER_ROOMSCALE_POSITION = 1 << 2,
     GAZE_ZOOM = 1 << 3,
     FORCE_ZOOM = 1 << 4,
     GAZE_INPUT_FOCUS = 1 << 5,
-    INVERT_OPENXR_Y_POSITION = 1 << 6,
+    // INVERT_OPENXR_Y_POSITION = 1 << 6,
+    QUIRK_VARJO_OPENXR_INVERT_Y_POSITION = 1 << 7,
+    QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER = 1 << 8,
   };
 
   float mZoomScale = 2.0f;
@@ -64,9 +67,11 @@ struct VRRenderConfig {
   float mGazeTargetHorizontalScale = 1.0f;
 
   Flags mFlags = static_cast<Flags>(
-    static_cast<uint32_t>(Flags::DISCARD_DEPTH_INFORMATION)
+    static_cast<uint32_t>(Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION)
     | static_cast<uint32_t>(Flags::GAZE_ZOOM)
-    | static_cast<uint32_t>(Flags::GAZE_INPUT_FOCUS));
+    | static_cast<uint32_t>(Flags::GAZE_INPUT_FOCUS)
+    | static_cast<uint32_t>(Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER)
+    | static_cast<uint32_t>(Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION));
 
   float mNormalOpacity = 1.0f;
   float mGazeOpacity = 1.0f;

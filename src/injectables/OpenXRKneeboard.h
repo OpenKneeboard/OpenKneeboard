@@ -41,19 +41,30 @@ class OpenXRNext;
 class OpenXRKneeboard : public VRKneeboard {
  public:
   OpenXRKneeboard() = delete;
-  OpenXRKneeboard(XrSession, const std::shared_ptr<OpenXRNext>&);
+  OpenXRKneeboard(
+    XrSession,
+    OpenXRRuntimeID,
+    const std::shared_ptr<OpenXRNext>&);
   virtual ~OpenXRKneeboard();
 
   XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo);
 
  protected:
-  virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) = 0;
+  virtual bool FlagsAreCompatible(
+    VRRenderConfig::Flags initialFlags,
+    VRRenderConfig::Flags currentFlags) const = 0;
+  virtual XrSwapchain
+  CreateSwapChain(XrSession, VRRenderConfig::Flags flags, uint8_t layerIndex)
+    = 0;
   virtual bool Render(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&)
     = 0;
+
+  // For quirks
+  bool IsVarjoRuntime() const;
 
   OpenXRNext* GetOpenXR();
 
@@ -66,6 +77,10 @@ class OpenXRKneeboard : public VRKneeboard {
 
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;
+
+  // For quirks
+  bool mIsVarjoRuntime = false;
+  VRRenderConfig::Flags mInitialFlags;
 
   Pose GetHMDPose(XrTime displayTime);
   YOrigin GetYOrigin() override;

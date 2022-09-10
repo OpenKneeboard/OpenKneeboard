@@ -32,6 +32,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
  public:
   OpenXRD3D11Kneeboard(
     XrSession,
+    OpenXRRuntimeID,
     const std::shared_ptr<OpenXRNext>&,
     const XrGraphicsBindingD3D11KHR&);
   ~OpenXRD3D11Kneeboard();
@@ -46,7 +47,13 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const VRKneeboard::RenderParameters&);
 
  protected:
-  virtual XrSwapchain CreateSwapChain(XrSession, uint8_t layerIndex) override;
+  virtual bool FlagsAreCompatible(
+    VRRenderConfig::Flags initialFlags,
+    VRRenderConfig::Flags currentFlags) const override;
+  virtual XrSwapchain CreateSwapChain(
+    XrSession,
+    VRRenderConfig::Flags,
+    uint8_t layerIndex) override;
 
   virtual bool Render(
     XrSwapchain swapchain,

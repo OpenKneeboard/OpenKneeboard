@@ -66,12 +66,6 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   uint8_t OpenXRMode();
   void OpenXRMode(uint8_t);
 
-  bool DiscardOculusDepthInformation();
-  void DiscardOculusDepthInformation(bool value);
-
-  bool InvertOpenXRYAxis() const;
-  void InvertOpenXRYAxis(bool value);
-
   uint8_t NormalOpacity();
   void NormalOpacity(uint8_t);
   uint8_t GazeOpacity();
