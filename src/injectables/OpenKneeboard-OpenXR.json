@@ -9,6 +9,6 @@
     "functions": {
       "xrNegotiateLoaderApiLayerInterface": "OpenKneeboard_xrNegotiateLoaderApiLayerInterface"
     },
-    "disable_environment": "DISABLE_XR_API_LAYER_FREDEMMOTT_OpenKneeboard"
+    "disable_environment": "DISABLE_XR_APILAYER_FREDEMMOTT_OpenKneeboard"
   }
 }
