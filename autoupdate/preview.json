@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76319031",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76319031/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76319031/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2-beta5",
-    "id": 76319031,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76782366",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76782366/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76782366/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2-beta6",
+    "id": 76782366,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84EjIk3",
-    "tag_name": "v1.2-beta5",
-    "target_commitish": "1269c9248a960339c51d9fd4c3ca9d7ff2a77018",
-    "name": "v1.2-beta5: fix occasional freeze when changing missions or receiving radio messages",
+    "node_id": "RE_kwDOGk0DR84Ek5se",
+    "tag_name": "v1.2-beta6",
+    "target_commitish": "9179309a43ab08b808863b7ecc7eccb2ef14c9a1",
+    "name": "v1.2-beta6",
     "draft": false,
     "prerelease": true,
-    "created_at": "2022-09-05T19:30:35Z",
-    "published_at": "2022-09-05T20:49:06Z",
+    "created_at": "2022-09-10T04:33:28Z",
+    "published_at": "2022-09-10T14:14:18Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/76954005",
-        "id": 76954005,
-        "node_id": "RA_kwDOGk0DR84EljmV",
-        "name": "OpenKneeboard-v1.2-beta5-Symbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/77419954",
+        "id": 77419954,
+        "node_id": "RA_kwDOGk0DR84EnVWy",
+        "name": "OpenKneeboard-v1.2-beta6-Symbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 68439103,
+        "size": 68504196,
         "download_count": 0,
-        "created_at": "2022-09-05T20:03:41Z",
-        "updated_at": "2022-09-05T20:03:48Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta5/OpenKneeboard-v1.2-beta5-Symbols.zip"
+        "created_at": "2022-09-10T05:04:08Z",
+        "updated_at": "2022-09-10T05:04:09Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6-Symbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/76954004",
-        "id": 76954004,
-        "node_id": "RA_kwDOGk0DR84EljmU",
-        "name": "OpenKneeboard-v1.2-beta5-Utilities.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/77419951",
+        "id": 77419951,
+        "node_id": "RA_kwDOGk0DR84EnVWv",
+        "name": "OpenKneeboard-v1.2-beta6-Utilities.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,17 +96,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 3215981,
+        "size": 3216028,
         "download_count": 0,
-        "created_at": "2022-09-05T20:03:36Z",
-        "updated_at": "2022-09-05T20:03:40Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta5/OpenKneeboard-v1.2-beta5-Utilities.zip"
+        "created_at": "2022-09-10T05:04:07Z",
+        "updated_at": "2022-09-10T05:04:07Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6-Utilities.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/76954002",
-        "id": 76954002,
-        "node_id": "RA_kwDOGk0DR84EljmS",
-        "name": "OpenKneeboard-v1.2-beta5.msix",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/77419947",
+        "id": 77419947,
+        "node_id": "RA_kwDOGk0DR84EnVWr",
+        "name": "OpenKneeboard-v1.2-beta6.msix",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -130,16 +130,16 @@
         },
         "content_type": "application/msix",
         "state": "uploaded",
-        "size": 6886439,
-        "download_count": 0,
-        "created_at": "2022-09-05T20:03:34Z",
-        "updated_at": "2022-09-05T20:03:35Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta5/OpenKneeboard-v1.2-beta5.msix"
+        "size": 27289239,
+        "download_count": 1,
+        "created_at": "2022-09-10T05:04:05Z",
+        "updated_at": "2022-09-10T05:04:07Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6.msix"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2-beta5",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2-beta5",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2-beta5.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta5/OpenKneeboard-v1.2-beta5.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Changes since v1.2-beta4\r\n\r\n* Fixes an occasional crash changing mission if the 'briefing' tab is enabled\r\n* Fixes an occasional crash when receiving radio messages if the 'radio log' tab is enabled",
-    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/177"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2-beta6",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2-beta6",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2-beta6.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Changes since v1.2-beta5\r\n\r\n- Updated minimum Windows version to Windows 10 20H1 (10.0.19041, or build 18917). This was already required for full functionality.\r\n- Fixes intermittent crashes when folders containing PDFs are loaded\r\n- Fix mission tab continuously reloading if username contains more than 8 characters, leading to Windows returning a classic DOS `ABCDEF~1` path instead of the actual path of the temporary directory\r\n- Fixed auto-update sometimes closing OpenKneeboard before the installer for the new version had started\r\n- No longer requires the windows app runtime package; this should fix problems with MSIX installation, however it makes the package somewhat larger\r\n- The OpenXR API layer name is now `XR_APILAYER_FREDEMMOTT_OpenKneeboard` instead of `XR_APILAYER_NOVENDOR_OpenKneeboard` (vendor ID added in OpenXR 1.0.25)",
+    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/180"
   }
 ]
