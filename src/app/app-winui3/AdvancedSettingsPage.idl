@@ -17,6 +17,9 @@ namespace OpenKneeboardApp
 		UInt32 PenSensitivity;
 		UInt32 EraseSensitivity;
 
+        Boolean Quirk_OculusSDK_DiscardDepthInformation;
+        Boolean Quirk_Varjo_OpenXR_InvertYPosition;
+        Boolean Quirk_Varjo_OpenXR_D3D12_DoubleBuffer;
     }
 
 }

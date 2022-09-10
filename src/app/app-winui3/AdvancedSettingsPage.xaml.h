@@ -44,6 +44,7 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   void LoopTabs(bool) noexcept;
 
   void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
+  void RestoreQuirkDefaults(const IInspectable&, const IInspectable&) noexcept;
 
   uint32_t MinimumPenRadius();
   void MinimumPenRadius(uint32_t value);
@@ -54,6 +55,15 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   void MinimumEraseRadius(uint32_t value);
   uint32_t EraseSensitivity();
   void EraseSensitivity(uint32_t value);
+
+  bool Quirk_OculusSDK_DiscardDepthInformation() const noexcept;
+  void Quirk_OculusSDK_DiscardDepthInformation(bool value) noexcept;
+
+  bool Quirk_Varjo_OpenXR_InvertYPosition() const noexcept;
+  void Quirk_Varjo_OpenXR_InvertYPosition(bool value) noexcept;
+
+  bool Quirk_Varjo_OpenXR_D3D12_DoubleBuffer() const noexcept;
+  void Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(bool value) noexcept;
 
   winrt::event_token PropertyChanged(
 

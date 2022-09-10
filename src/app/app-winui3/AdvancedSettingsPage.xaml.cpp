@@ -58,18 +58,32 @@ void AdvancedSettingsPage::DualKneeboards(bool value) noexcept {
   gKneeboard->SetAppSettings(s);
 }
 
+namespace {
+
+using Flags = VRRenderConfig::Flags;
+
+bool TestFlag(Flags flag) noexcept {
+  return gKneeboard->GetVRConfig().mFlags & flag;
+}
+
+void SetFlag(Flags flag, bool value) noexcept {
+  auto vr = gKneeboard->GetVRConfig();
+  if (value) {
+    vr.mFlags |= flag;
+  } else {
+    vr.mFlags &= ~flag;
+  }
+  gKneeboard->SetVRConfig(vr);
+}
+
+}// namespace
+
 bool AdvancedSettingsPage::GazeInputFocus() const noexcept {
-  return gKneeboard->GetVRConfig().mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS;
+  return TestFlag(Flags::GAZE_INPUT_FOCUS);
 }
 
 void AdvancedSettingsPage::GazeInputFocus(bool enabled) noexcept {
-  auto vr = gKneeboard->GetVRConfig();
-  if (enabled) {
-    vr.mFlags |= VRConfig::Flags::GAZE_INPUT_FOCUS;
-  } else {
-    vr.mFlags &= ~VRConfig::Flags::GAZE_INPUT_FOCUS;
-  }
-  gKneeboard->SetVRConfig(vr);
+  SetFlag(Flags::GAZE_INPUT_FOCUS, enabled);
 }
 
 bool AdvancedSettingsPage::LoopPages() const noexcept {
@@ -145,6 +159,51 @@ void AdvancedSettingsPage::RestoreDoodleDefaults(
        }) {
     mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
   }
+}
+
+void AdvancedSettingsPage::RestoreQuirkDefaults(
+  const IInspectable&,
+  const IInspectable&) noexcept {
+  auto vr = gKneeboard->GetVRConfig();
+  vr.mFlags
+    |= (Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION | Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER | Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION);
+  gKneeboard->SetVRConfig(vr);
+  for (auto prop: {
+         L"Quirk_OculusSDK_DiscardDepthInformation",
+         L"Quirk_Varjo_OpenXR_InvertYPosition",
+         L"Quirk_Varjo_OpenXR_D3D12_DoubleBuffer",
+       }) {
+    mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
+  }
+}
+
+bool AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation()
+  const noexcept {
+  return TestFlag(Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION);
+}
+
+void AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
+  bool value) noexcept {
+  SetFlag(Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION, value);
+}
+
+bool AdvancedSettingsPage::Quirk_Varjo_OpenXR_InvertYPosition() const noexcept {
+  return TestFlag(Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION);
+}
+
+void AdvancedSettingsPage::Quirk_Varjo_OpenXR_InvertYPosition(
+  bool value) noexcept {
+  SetFlag(Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION, value);
+}
+
+bool AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer()
+  const noexcept {
+  return TestFlag(Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER);
+}
+
+void AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(
+  bool value) noexcept {
+  SetFlag(Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER, value);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
