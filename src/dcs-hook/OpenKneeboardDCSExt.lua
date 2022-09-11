@@ -99,6 +99,15 @@ function sendState()
   end
 end
 
+--[[
+  MISSION_NAME-YYYYMMDD-HHMMSS.trk
+
+  Captures:
+  1. Mission name
+  2. Full date and time
+  3. Date
+  4. Time
+--]]
 trackPattern = "^(.+)%-((%d+)%-(%d+))%.trk$"
 
 function getTrackFileDateTime(trackFile)
