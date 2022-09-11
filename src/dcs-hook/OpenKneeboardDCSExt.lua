@@ -110,8 +110,8 @@ function escapeMagicChars(pattern)
 end
 
 function setMultiplayerMissionPath()
-		l("Mission: is multiplayer: ")
-		--[[
+    l("Mission: is multiplayer: ")
+    --[[
       DCS does not make the .miz available for multiplayer, however the
       the track file contains the kneeboard images, briefing etc.
 
@@ -119,14 +119,14 @@ function setMultiplayerMissionPath()
       either when in multiplayer, but we can figure it out from the
       mission name
     --]]
-		local mpTrackPath = lfs.writedir() .. "\\Tracks\\Multiplayer";
+    local mpTrackPath = lfs.writedir() .. "\\Tracks\\Multiplayer";
 
-		local missionNamePattern = escapeMagicChars(DCS.getMissionName())
-		found = {}
-		for entry in lfs.dir(mpTrackPath) do
-			local startPos, endPos = string.find(entry, missionNamePattern)
+    local missionNamePattern = escapeMagicChars(DCS.getMissionName())
+    found = {}
+    for entry in lfs.dir(mpTrackPath) do
+      local startPos, endPos = string.find(entry, missionNamePattern)
 
-			--[[
+      --[[
         if found; check that the mission filename occurs at the start of the
         track file name, and that the remaining length is no more than the
         track file datetime suffix.
@@ -138,11 +138,11 @@ function setMultiplayerMissionPath()
         This so that if we're looking for 'foo', we don't pick up a track
         for 'foobar'
       --]]
-			if (startPos == 1) and (#entry == endPos + 20) then
-				l("Found: " .. entry)
-				table.insert(found, entry)
-			end
-		end
+      if (startPos == 1) and (#entry == endPos + 20) then
+        l("Found: " .. entry)
+        table.insert(found, entry)
+      end
+    end
 
     --[[
       If there are multiple matching track files, we want the most recent
@@ -151,15 +151,15 @@ function setMultiplayerMissionPath()
       Everything up to `YYYYMMDD-HHMMSS` is identical, so we can just
       sort them into descending order
     --]]
-		table.sort(
+    table.sort(
       found,
       function(a, b) return a > b end
     )
-		
-		if #found > 0 then
-			l("Setting Mission: " .. found[#found])
-			state.mission = mpTrackPath .. "\\" .. found[#found]
-		end
+    
+    if #found > 0 then
+      l("Setting Mission: " .. found[#found])
+      state.mission = mpTrackPath .. "\\" .. found[#found]
+    end
 end
 
 function callbacks.onMissionLoadBegin()
