@@ -149,13 +149,9 @@ function setMultiplayerMissionPath()
       one, in case the mission has been modified/updated.
 
       Everything up to `YYYYMMDD-HHMMSS` is identical, so we can just
-      sort them into descending order
+      sort them, then take the last one
     --]]
-    table.sort(
-      found,
-      function(a, b) return a > b end
-    )
-    
+    table.sort(found)
     if #found > 0 then
       l("Setting Mission: " .. found[#found])
       state.mission = mpTrackPath .. "\\" .. found[#found]
