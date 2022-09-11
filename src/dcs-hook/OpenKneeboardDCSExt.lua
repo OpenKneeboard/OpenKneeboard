@@ -99,24 +99,73 @@ function sendState()
   end
 end
 
+--[[
+Escape any non-alphanumerics in the search pattern.
+
+Lua string.find and string.gsub functions take patterns, not literal
+strings, so various special characters need to be escaped
+--]]
+function escapeMagicChars(pattern)
+    return (pattern:gsub("%W", "%%%1"))
+end
+
+function setMultiplayerMissionPath()
+		l("Mission: is multiplayer: ")
+		--[[
+      DCS does not make the .miz available for multiplayer, however the
+      the track file contains the kneeboard images, briefing etc.
+
+      DCS also doesn't make the track file path directly available
+      either when in multiplayer, but we can figure it out from the
+      mission name
+    --]]
+		local mpTrackPath = lfs.writedir() .. "\\Tracks\\Multiplayer";
+
+		local missionNamePattern = escapeMagicChars(DCS.getMissionName())
+		found = {}
+		for entry in lfs.dir(mpTrackPath) do
+			local startPos, endPos = string.find(entry, missionNamePattern)
+
+			--[[
+        if found; check that the mission filename occurs at the start of the
+        track file name, and that the remaining length is no more than the
+        track file datetime suffix.
+
+        This effectively means we're looking for:
+          MISSION_NAME-YYYYMMDD-HHMMSS.trk
+                      ^ --- 20 chars --- ^
+
+        This so that if we're looking for 'foo', we don't pick up a track
+        for 'foobar'
+      --]]
+			if (startPos == 1) and (#entry == endPos + 20) then
+				l("Found: " .. entry)
+				table.insert(found, entry)
+			end
+		end
+
+    --[[
+      If there are multiple matching track files, we want the most recent
+      one, in case the mission has been modified/updated.
+
+      Everything up to `YYYYMMDD-HHMMSS` is identical, so we can just
+      sort them into descending order
+    --]]
+		table.sort(
+      found,
+      function(a, b) return a > b end
+    )
+		
+		if #found > 0 then
+			l("Setting Mission: " .. found[#found])
+			state.mission = mpTrackPath .. "\\" .. found[#found]
+		end
+end
+
 function callbacks.onMissionLoadBegin()
   l("onMissionLoadBegin: "..DCS.getMissionName())
   if DCS.isMultiplayer() then
-    l("Mission: is multiplayer: ")
-    -- search for the right track:
-    local mpTrackPath = lfs.writedir() .. "\\Tracks\\Multiplayer";
-    found = {}
-    for entry in lfs.dir(mpTrackPath) do
-      if string.find(entry, DCS.getMissionName()) then
-        l("Found: " .. entry)
-        table.insert(found, entry)
-      end
-    end
-    table.sort(found)
-    if #found > 0 then
-      l("Setting Mission: " .. found[#found])
-      state.mission = mpTrackPath .. "\\" .. found[#found]
-    end
+    setMultiplayerMissionPath()
   else 
     local file = DCS.getMissionFilename()
     file = file:gsub("^.[/\\]+", lfs.currentdir())
