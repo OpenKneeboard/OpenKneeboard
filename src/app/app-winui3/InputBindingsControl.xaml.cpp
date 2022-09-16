@@ -130,28 +130,39 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
 
   std::unordered_set<uint64_t> pressedButtons;
   bool cancelled = true;
-  mDevice->evButtonEvent.PushHook([&](const UserInputButtonEvent& ev) {
-    if (ev.IsPressed()) {
-      pressedButtons.insert(ev.GetButtonID());
-      [](auto self, auto dialog, const auto buttons) -> winrt::fire_and_forget {
-        co_await self->mUIThread;
-        dialog.Content(box_value(to_hstring(std::format(
-          _("Press then release buttons to bind input.\n\n{}"),
-          self->mDevice->GetButtonComboDescription(buttons)))));
-      }(this, dialog, pressedButtons);
+  auto stayingAlive = this->get_strong();
+  auto weakThis = this->get_weak();
+  mDevice->evButtonEvent.PushHook(
+    [weakThis, dialog, &pressedButtons, &cancelled](
+      const UserInputButtonEvent& ev) {
+      auto strongThis = weakThis.get();
+      if (!strongThis) {
+        return EventBase::HookResult::ALLOW_PROPAGATION;
+      }
+
+      if (ev.IsPressed()) {
+        pressedButtons.insert(ev.GetButtonID());
+        [](auto strongThis, auto dialog, const auto buttons)
+          -> winrt::fire_and_forget {
+          co_await strongThis->mUIThread;
+          dialog.Content(box_value(to_hstring(std::format(
+            _("Press then release buttons to bind input.\n\n{}"),
+            strongThis->mDevice->GetButtonComboDescription(buttons)))));
+        }(strongThis, dialog, pressedButtons);
+        return EventBase::HookResult::STOP_PROPAGATION;
+      }
+      cancelled = false;
+      [](auto uiThread, auto dialog) noexcept -> winrt::fire_and_forget {
+        // Show the complete combo for a moment
+        co_await winrt::resume_after(std::chrono::milliseconds(250));
+        co_await uiThread;
+        dialog.Hide();
+      }(strongThis->mUIThread, dialog);
       return EventBase::HookResult::STOP_PROPAGATION;
-    }
-    cancelled = false;
-    [](auto uiThread, auto dialog) noexcept -> winrt::fire_and_forget {
-      // Show the complete combo for a moment
-      co_await winrt::resume_after(std::chrono::milliseconds(250));
-      co_await uiThread;
-      dialog.Hide();
-    }(mUIThread, dialog);
-    return EventBase::HookResult::STOP_PROPAGATION;
-  });
+    });
   {
-    auto unhook = scope_guard([=] { mDevice->evButtonEvent.PopHook(); });
+    auto unhook = scope_guard(
+      [mDevice = this->mDevice] { mDevice->evButtonEvent.PopHook(); });
     co_await dialog.ShowAsync();
   }
   if (cancelled) {
