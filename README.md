@@ -2,10 +2,6 @@
 
 OpenKneeboard is a way to show reference information and take notes in games - especially flight simulators - including in VR. Taking notes requires a wintab-compatible graphics tablet.
 
-![Screenshot of the main app](docs/screenshots/config-app.png)
-![Non-VR Screenshot](docs/screenshots/non-vr.png)
-![VR Screenshot](docs/screenshots/theater.png)
-
 ## Getting Started
 
 1. Download [the latest release](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)
@@ -100,3 +96,9 @@ For details on some internals, see [docs/internals/](docs/internals/).
 OpenKneeboard is licensed under the GNU General Public License, version 2.
 
 This project uses several third-party libraries, which are used and distributed under their own license terms.
+
+## Screenshots
+
+![Screenshot of the main app](docs/screenshots/config-app.png)
+![Non-VR Screenshot](docs/screenshots/non-vr.png)
+![VR Screenshot](docs/screenshots/theater.png)
