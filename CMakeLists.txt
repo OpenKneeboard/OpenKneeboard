@@ -61,7 +61,7 @@ set(
 )
 add_compile_options(${COMMON_COMPILE_OPTIONS})
 
-project(com.fredemmott.openkneeboard VERSION 1.2.0 LANGUAGES CXX C)
+project(com.fredemmott.openkneeboard VERSION 1.3.0 LANGUAGES CXX C)
 
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
 
