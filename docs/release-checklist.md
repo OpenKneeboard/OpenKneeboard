@@ -26,6 +26,10 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 * finding DCS from empty games list
 * DCS integration test utilities: `fake-dcs.exe` and `test-gameevent-feeder.exe`
 * DCS: play full single-player mission in Caucasus or NTTR
+  * Briefing tab
+    * Text
+    * Images
+    * A-10C CDU wind
   * Mission kneeboard
   * Radio log
   * Theater kneeboard (only in Caucasus and NTTR)

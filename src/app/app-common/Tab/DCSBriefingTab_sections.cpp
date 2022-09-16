@@ -245,7 +245,7 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
   }
 
   const auto weather = mission["weather"];
-  const auto wind = mission["wind"];
+  const auto wind = weather["wind"];
   const auto temperature = weather["season"]["temperature"].Cast<int>();
   DCSBriefingWind windAtGround {wind["atGround"]};
   DCSBriefingWind windAt2000 {wind["at2000"]};
