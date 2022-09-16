@@ -99,9 +99,20 @@ class EventConnectionBase {
 };
 
 template <class... Args>
-class EventConnection : public EventConnectionBase {
- public:
+class EventConnection final
+  : public EventConnectionBase,
+    public std::enable_shared_from_this<EventConnection<Args...>> {
+ private:
   EventConnection(EventHandler<Args...> handler) : mHandler(handler) {
+  }
+
+ public:
+  EventConnection() = delete;
+
+  static std::shared_ptr<EventConnection<Args...>> Create(
+    EventHandler<Args...> handler) {
+    return std::shared_ptr<EventConnection<Args...>>(
+      new EventConnection(handler));
   }
 
   constexpr operator bool() const noexcept {
@@ -111,6 +122,8 @@ class EventConnection : public EventConnectionBase {
   }
 
   void Call(Args... args) {
+    auto stayingAlive = this->shared_from_this();
+
     decltype(mHandler) handler;
     {
       std::unique_lock lock(mMutex);
@@ -122,6 +135,7 @@ class EventConnection : public EventConnectionBase {
   }
 
   virtual void Invalidate() override {
+    auto stayingAlive = this->shared_from_this();
     std::unique_lock lock(mMutex);
     mHandler = {};
   }
@@ -224,7 +238,7 @@ template <class... Args>
 std::shared_ptr<EventConnectionBase> Event<Args...>::AddHandler(
   const EventHandler<Args...>& handler) {
   std::unique_lock lock(mMutex);
-  auto connection = std::make_shared<EventConnection<Args...>>(handler);
+  auto connection = EventConnection<Args...>::Create(handler);
   auto token = connection->mToken;
   mReceivers.emplace(token, connection);
   return std::move(connection);
