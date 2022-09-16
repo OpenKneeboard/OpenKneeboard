@@ -5,8 +5,8 @@ set(
 
 ExternalProject_Add(
   qpdfBuild
-  URL "https://github.com/qpdf/qpdf/releases/download/release-qpdf-10.6.3.0cmake1/qpdf-10.6.3.0cmake1.tar.gz"
-  URL_HASH "SHA256=6a431eb49ed013de9e373e92bd6f90bcb75c31a7929633b113b223d7e081c857"
+  URL "https://github.com/qpdf/qpdf/releases/download/v11.1.0/qpdf-11.1.0.tar.gz"
+  URL_HASH "SHA256=34a7cf3ac6e239510e9a20d7cbe10a4aff0f572c20e0a9bed0badb820a69e22d"
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DREQUIRE_CRYPTO_NATIVE=ON"
@@ -51,6 +51,11 @@ target_include_directories(
   libqpdf
   INTERFACE
   "${INSTALL_DIR}/$<CONFIG>/include"
+)
+target_compile_definitions(
+  libqpdf
+  INTERFACE
+  POINTERHOLDER_TRANSITION=4
 )
 add_library(ThirdParty::QPDF ALIAS libqpdf)
 
