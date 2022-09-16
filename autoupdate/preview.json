@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76782366",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76782366/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/76782366/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2-beta6",
-    "id": 76782366,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/77349282",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/77349282/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/77349282/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.0",
+    "id": 77349282,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Ek5se",
-    "tag_name": "v1.2-beta6",
-    "target_commitish": "9179309a43ab08b808863b7ecc7eccb2ef14c9a1",
-    "name": "v1.2-beta6",
+    "node_id": "RE_kwDOGk0DR84EnEGi",
+    "tag_name": "v1.2.0",
+    "target_commitish": "874bb41e48be79190d67b7771a56b7d84883fb20",
+    "name": "v1.2.0: Briefing tab",
     "draft": false,
-    "prerelease": true,
-    "created_at": "2022-09-10T04:33:28Z",
-    "published_at": "2022-09-10T14:14:18Z",
+    "prerelease": false,
+    "created_at": "2022-09-16T00:44:05Z",
+    "published_at": "2022-09-16T01:34:23Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/77419954",
-        "id": 77419954,
-        "node_id": "RA_kwDOGk0DR84EnVWy",
-        "name": "OpenKneeboard-v1.2-beta6-Symbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78024920",
+        "id": 78024920,
+        "node_id": "RA_kwDOGk0DR84EppDY",
+        "name": "OpenKneeboard-v1.2.0-Symbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 68504196,
+        "size": 68622221,
         "download_count": 0,
-        "created_at": "2022-09-10T05:04:08Z",
-        "updated_at": "2022-09-10T05:04:09Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6-Symbols.zip"
+        "created_at": "2022-09-16T01:17:25Z",
+        "updated_at": "2022-09-16T01:17:27Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.0/OpenKneeboard-v1.2.0-Symbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/77419951",
-        "id": 77419951,
-        "node_id": "RA_kwDOGk0DR84EnVWv",
-        "name": "OpenKneeboard-v1.2-beta6-Utilities.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78024919",
+        "id": 78024919,
+        "node_id": "RA_kwDOGk0DR84EppDX",
+        "name": "OpenKneeboard-v1.2.0-Utilities.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,17 +96,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 3216028,
+        "size": 3214967,
         "download_count": 0,
-        "created_at": "2022-09-10T05:04:07Z",
-        "updated_at": "2022-09-10T05:04:07Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6-Utilities.zip"
+        "created_at": "2022-09-16T01:17:24Z",
+        "updated_at": "2022-09-16T01:17:25Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.0/OpenKneeboard-v1.2.0-Utilities.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/77419947",
-        "id": 77419947,
-        "node_id": "RA_kwDOGk0DR84EnVWr",
-        "name": "OpenKneeboard-v1.2-beta6.msix",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78024917",
+        "id": 78024917,
+        "node_id": "RA_kwDOGk0DR84EppDV",
+        "name": "OpenKneeboard-v1.2.0.msix",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -130,16 +130,16 @@
         },
         "content_type": "application/msix",
         "state": "uploaded",
-        "size": 27289239,
-        "download_count": 1,
-        "created_at": "2022-09-10T05:04:05Z",
-        "updated_at": "2022-09-10T05:04:07Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6.msix"
+        "size": 27301565,
+        "download_count": 0,
+        "created_at": "2022-09-16T01:17:23Z",
+        "updated_at": "2022-09-16T01:17:24Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.0/OpenKneeboard-v1.2.0.msix"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2-beta6",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2-beta6",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2-beta6.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2-beta6/OpenKneeboard-v1.2-beta6.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Changes since v1.2-beta5\r\n\r\n- Updated minimum Windows version to Windows 10 20H1 (10.0.19041, or build 18917). This was already required for full functionality.\r\n- Fixes intermittent crashes when folders containing PDFs are loaded\r\n- Fix mission tab continuously reloading if username contains more than 8 characters, leading to Windows returning a classic DOS `ABCDEF~1` path instead of the actual path of the temporary directory\r\n- Fixed auto-update sometimes closing OpenKneeboard before the installer for the new version had started\r\n- No longer requires the windows app runtime package; this should fix problems with MSIX installation, however it makes the package somewhat larger\r\n- The OpenXR API layer name is now `XR_APILAYER_FREDEMMOTT_OpenKneeboard` instead of `XR_APILAYER_NOVENDOR_OpenKneeboard` (vendor ID added in OpenXR 1.0.25)",
-    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/180"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2.0",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2.0",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2.0.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.0/OpenKneeboard-v1.2.0.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Highlights\r\n\r\n- Adds a 'Briefing' tab for DCS; for the A-10C, this includes CDU LASTE wind correction data. This is in addition to the 'Mission' tab, which shows any kneeboard images provided with the mission.\r\n- Improved non-VR compatibility, particularly with Falcon VMS\r\n- Improved compatibility with single player missions with multiple slots (e.g. DCS: Liberation)\r\n- Improved compatibility with Varjo headsets in games using Direct3D 12 in combination with OpenXR\r\n- Binding POV hats is now supported\r\n- Binding mouse buttons is now supported; this will not work if drivers are used to change the functionality of your mouse buttons\r\n- PDF files and text files are now supported in folder, aircraft, theater, and mission tabs\r\n- Built-in DCS aircraft images are now loaded; LUA files remain unsupported\r\n- The 'Theater' tab now also looks for images in `Saved Games\\KNEEBOARD\\Caucasus`, for example.\r\n- The installer now requires Windows 10 20H1 (10.0.19041, or build 18917). This was already required for full functionality\r\n- Headset-specific options are moved to 'Advanced settings'\r\n- Increased performance and reliability, and decreased CPU usage.\r\n\r\n# Changes since v1.2-beta6\r\n\r\n- Vendor-specific quirks are now enabled by default on headsets that need them; they can be disabled in advanced settings\r\n- Fixed crash if closing the bindings screen *extremely* quickly after setting a binding\r\n- Improved multiplayer track file detection\r\n\r\n# Other changes since v1.1\r\n\r\n- Added a max-width VR settings\r\n- Plugging and unplugging game controllers while OpenKneeboard is now fully supported\r\n- Text file tabs now automatically update when the files are modified\r\n- Aircraft kneeboard images in paths involving NTFS junction points are now supported\r\n- Fixed mission tab continuously reloading if the Windows temporary directory was reported as a DOS file name\r\n- Improved auto-updater reliability\r\n- The OpenXR API layer is now `XR_APILAYER_FREDEMMOTT_OpenKneeboard` instead of `XR_APILAYER_NOVENDOR_OpenKneeboard`; vendor ID added in OpenXR 1.0.25\r\n- After first run, `C:\\ProgramData\\OpenKneeboard\\OpenKneeboard-Launch-WindowsApp.exe` can be used to start OpenKneeboard with a shortcut or from other tools\r\n- No longer requires external frameworks; this leads to a bigger installer, but fewer problems.\r\n\r\nYou can also check out [the full list](https://github.com/OpenKneeboard/OpenKneeboard/compare/v1.1.4...v1.2.0) of 242 (!) changes 🎉",
+    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/186"
   }
 ]
