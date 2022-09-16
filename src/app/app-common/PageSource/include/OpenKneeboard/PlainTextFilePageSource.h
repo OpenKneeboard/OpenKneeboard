@@ -32,7 +32,7 @@ class PlainTextPageSource;
 
 class PlainTextFilePageSource final
   : public PageSourceWithDelegates,
-    std::enable_shared_from_this<PlainTextFilePageSource> {
+    public std::enable_shared_from_this<PlainTextFilePageSource> {
  private:
   PlainTextFilePageSource(const DXResources&, KneeboardState*);
 
