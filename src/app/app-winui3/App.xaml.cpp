@@ -36,6 +36,7 @@
 #include <Psapi.h>
 #include <ShlObj.h>
 #include <appmodel.h>
+#include <dxgi.h>
 #include <signal.h>
 
 #include <chrono>
@@ -163,6 +164,57 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window.Activate();
 }
 
+static void LogSystemInformation() {
+  dprintf("{} {}", ProjectNameA, Version::ReleaseName);
+  dprint("----------");
+
+  CPINFOEXW codePageInfo;
+  GetCPInfoExW(CP_ACP, 0, &codePageInfo);
+  dprintf(L"  Active code page: {}", codePageInfo.CodePageName);
+
+  DWORD codePage;
+  GetLocaleInfoW(
+    LOCALE_SYSTEM_DEFAULT,
+    LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
+    reinterpret_cast<LPWSTR>(&codePage),
+    sizeof(codePage));
+  GetCPInfoExW(codePage, 0, &codePageInfo);
+  dprintf(L"  System code page: {}", codePageInfo.CodePageName);
+  GetLocaleInfoW(
+    LOCALE_USER_DEFAULT,
+    LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
+    reinterpret_cast<LPWSTR>(&codePage),
+    sizeof(codePage));
+  dprintf(L"  User code page: {}", codePageInfo.CodePageName);
+  wchar_t localeName[LOCALE_NAME_MAX_LENGTH];
+  LCIDToLocaleName(LOCALE_SYSTEM_DEFAULT, localeName, sizeof(localeName), 0);
+  dprintf(L"  System locale: {}", localeName);
+  LCIDToLocaleName(LOCALE_USER_DEFAULT, localeName, sizeof(localeName), 0);
+  dprintf(L"  User locale: {}", localeName);
+  dprint("----------");
+
+  winrt::com_ptr<IDXGIFactory1> dxgi;
+  CreateDXGIFactory1(IID_PPV_ARGS(dxgi.put()));
+  winrt::com_ptr<IDXGIAdapter1> adapter;
+
+  uint64_t totalMemoryKB {0};
+  GetPhysicallyInstalledSystemMemory(&totalMemoryKB);
+  dprintf("  Total RAM: {}mb", totalMemoryKB / 1024);
+  for (unsigned int i = 0; dxgi->EnumAdapters1(i, adapter.put()) == S_OK; ++i) {
+    DXGI_ADAPTER_DESC1 desc {};
+    adapter->GetDesc1(&desc);
+    dprintf(
+      L"  GPU {}: {:04x}:{:04x}: '{}' ({}mb){}",
+      i,
+      desc.VendorId,
+      desc.DeviceId,
+      desc.Description,
+      desc.DedicatedVideoMemory / (1024 * 1024),
+      (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) ? L" (software)" : L"");
+  }
+  dprint("----------");
+}
+
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   wchar_t* savedGamesBuffer = nullptr;
   winrt::check_hresult(
@@ -203,13 +255,15 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
     return 0;
   }
 
-  auto troubleshootingStore = TroubleshootingStore::Get();
-
   DPrintSettings::Set({
     .prefix = "OpenKneeboard-WinUI3",
   });
 
   winrt::init_apartment(winrt::apartment_type::single_threaded);
+
+  auto troubleshootingStore = TroubleshootingStore::Get();
+  LogSystemInformation();
+
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
