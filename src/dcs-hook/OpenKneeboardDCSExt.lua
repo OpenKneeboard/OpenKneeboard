@@ -189,10 +189,6 @@ function callbacks.onPlayerChangeSlot(id)
   end
 end
 
-function callbacks.onGameEvent(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
-  l("Game event: "..event)
-end
-
 lastUpdate = DCS.getModelTime()
 function callbacks.onSimulationFrame()
   if DCS.getModelTime() < lastUpdate + 1 then
