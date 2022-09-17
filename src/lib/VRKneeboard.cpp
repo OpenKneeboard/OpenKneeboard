@@ -133,9 +133,18 @@ bool VRKneeboard::IsLookingAtKneeboard(
   const Pose& kneeboardPose) {
   auto& isLookingAtKneeboard = mIsLookingAtKneeboard[layer.mLayerID];
 
+  if (
+    config.mVR.mGazeTargetHorizontalScale < 0.1
+    || config.mVR.mGazeTargetVerticalScale < 0.1) {
+    return false;
+  }
+
   const auto sizes = this->GetSizes(config.mVR, layer);
-  const auto currentSize
+  auto currentSize
     = isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
+
+  currentSize.x *= config.mVR.mGazeTargetHorizontalScale;
+  currentSize.y *= config.mVR.mGazeTargetVerticalScale;
 
   isLookingAtKneeboard = RayIntersectsRect(
     hmdPose.mPosition,

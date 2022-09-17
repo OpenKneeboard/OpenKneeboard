@@ -213,7 +213,7 @@
         </Grid>
       </StackPanel>
       <TextBlock
-        Text="Gaze sensitivity"
+        Text="Gaze target size"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
       />
@@ -225,7 +225,7 @@
         BorderThickness="1"
         Padding="8">
         <Slider
-          Header="Horizontal sensitivity"
+          Header="Horizontal target size"
           Value="{x:Bind KneeboardGazeTargetHorizontalScale}"
           TickPlacement="Outside"
           TickFrequency="0.5"
@@ -235,7 +235,7 @@
           ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
         />
         <Slider
-          Header="Vertical sensitivity"
+          Header="Vertical target size"
           Value="{x:Bind KneeboardGazeTargetVerticalScale}"
           TickPlacement="Outside"
           TickFrequency="0.5"
