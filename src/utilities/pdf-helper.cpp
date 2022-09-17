@@ -36,188 +36,203 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <Windows.h>
-#include <fpdf_doc.h>
-#include <fpdf_scopers.h>
-#include <fpdfview.h>
 #include <shellapi.h>
 #include <shims/winrt/base.h>
 
 #include <fstream>
+#include <map>
+#include <qpdf/QPDF.hh>
+#include <qpdf/QPDFOutlineDocumentHelper.hh>
+#include <qpdf/QPDFPageDocumentHelper.hh>
 #include <shims/filesystem>
 
 using namespace OpenKneeboard;
 using namespace OpenKneeboard::PDFIPC;
 
+using PageIndexMap = std::map<QPDFObjGen, uint16_t>;
+
 static void ExtractBookmarks(
-  FPDF_DOCUMENT document,
-  FPDF_BOOKMARK parent,
+  std::vector<QPDFOutlineObjectHelper>& outlines,
+  const PageIndexMap& pageIndices,
   std::back_insert_iterator<std::vector<Bookmark>> inserter) {
-  for (auto it = FPDFBookmark_GetFirstChild(document, parent); it;
-       it = FPDFBookmark_GetNextSibling(document, it)) {
-    auto dest = FPDFBookmark_GetDest(document, it);
-    if (!dest) {
+  // Useful references:
+  // - i7j-rups
+  // -
+  // https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
+  for (auto& outline: outlines) {
+    auto page = outline.getDestPage();
+    auto key = page.getObjGen();
+    if (!pageIndices.contains(key)) {
       continue;
     }
-    const auto page = FPDFDest_GetDestPageIndex(document, dest);
-    if (page == -1) {
-      continue;
-    }
-
-    const auto titleBytes
-      = static_cast<size_t>(FPDFBookmark_GetTitle(it, nullptr, 0));
-    std::wstring title(titleBytes / sizeof(wchar_t), L'\0');
-    FPDFBookmark_GetTitle(it, title.data(), titleBytes);
-
-    std::wstring_view titleView {title};
-    titleView.remove_suffix(1);// trailing null
-
     inserter = {
-      to_utf8(titleView),
-      static_cast<uint16_t>(page),
+      .mName = outline.getTitle(),
+      .mPageIndex = pageIndices.at(key),
     };
 
-    ExtractBookmarks(document, it, inserter);
+    auto kids = outline.getKids();
+    ExtractBookmarks(kids, pageIndices, inserter);
   }
 }
 
-static std::vector<Bookmark> ExtractBookmarks(FPDF_DOCUMENT document) {
+static std::vector<Bookmark> ExtractBookmarks(
+  QPDFOutlineDocumentHelper& outlineHelper,
+  const PageIndexMap& pageIndices) {
   std::vector<Bookmark> bookmarks;
   DebugTimer timer("Bookmarks");
-  ExtractBookmarks(
-    document, /* parent = */ nullptr, std::back_inserter(bookmarks));
+  auto outlines = outlineHelper.getTopLevelOutlines();
+  ExtractBookmarks(outlines, pageIndices, std::back_inserter(bookmarks));
   return bookmarks;
 }
 
-static void PushDestLink(
-  FPDF_DOCUMENT document,
-  FPDF_DEST dest,
+static bool PushDestLink(
+  QPDFObjectHandle& it,
+  const PageIndexMap& pageIndices,
   const NormalizedRect& rect,
-  std::vector<Link>& container) {
-  if (!dest) {
-    return;
-  }
-  const auto destPage = FPDFDest_GetDestPageIndex(document, dest);
-  if (destPage < 0) {
-    return;
+  std::vector<Link>& links) {
+  if (!it.hasKey("/Dest")) {
+    return false;
   }
 
-  container.push_back({
+  auto dest = it.getKey("/Dest");
+  auto destPage = pageIndices.at(dest.getArrayItem(0).getObjGen());
+  links.push_back({
     rect,
     {
       .mType = DestinationType::Page,
-      .mPageIndex = static_cast<uint16_t>(destPage),
+      .mPageIndex = destPage,
     },
   });
+  return true;
 }
 
 static void PushURIActionLink(
-  FPDF_DOCUMENT document,
-  FPDF_ACTION action,
+  QPDFObjectHandle& action,
   const NormalizedRect& rect,
-  std::vector<Link>& container) {
-  const auto byteLen = FPDFAction_GetURIPath(document, action, nullptr, 0);
-  if (byteLen < 2) {
-    // at least 1 meaningful byte + trailing null
+  std::vector<Link>& links) {
+  if (!action.hasKey("/URI")) {
     return;
   }
 
-  std::string uri(byteLen, '\0');
-  FPDFAction_GetURIPath(document, action, uri.data(), byteLen);
-  uri.resize(uri.size() - 1);// remove trailing null
-
-  container.push_back({
+  auto uri = action.getKey("/URI").getStringValue();
+  links.push_back({
     rect,
     {
       .mType = DestinationType::URI,
       .mURI = uri,
     },
   });
+  return;
 }
 
-static std::vector<std::vector<Link>> ExtractLinks(FPDF_DOCUMENT document) {
-  DebugTimer timer("Links");
-  std::vector<std::vector<Link>> allLinks;
-  const auto pageCount = FPDF_GetPageCount(document);
-  allLinks.reserve(pageCount);
+static void PushGoToActionLink(
+  QPDFOutlineDocumentHelper& outlineHelper,
+  const PageIndexMap& pageIndices,
+  QPDFObjectHandle& action,
+  const NormalizedRect& rect,
+  std::vector<Link>& links) {
+  if (!action.hasKey("/D")) {
+    return;
+  }
 
-  for (int pageIndex = 0; pageIndex < pageCount; ++pageIndex) {
-    std::vector<Link> pageLinks;
-    const scope_guard pushPageLinks([&]() { allLinks.push_back(pageLinks); });
+  auto dest = action.getKey("/D");
+  if (!(dest.isName() || dest.isString())) {
+    return;
+  }
+  dest = outlineHelper.resolveNamedDest(dest);
+  if (!dest.isArray()) {
+    return;
+  }
 
-    ScopedFPDFPage page {FPDF_LoadPage(document, pageIndex)};
+  auto destPage = pageIndices.at(dest.getArrayItem(0).getObjGen());
+  links.push_back({
+    rect,
+    {
+      .mType = DestinationType::Page,
+      .mPageIndex = destPage,
+    },
+  });
+}
 
-    int startPos = 0;
-    FPDF_LINK link {nullptr};
-    FPDFLink_Enumerate(page.get(), &startPos, &link);
-    if (!link) {
-      // continue;
-    }
+static bool PushActionLink(
+  QPDFOutlineDocumentHelper& outlineHelper,
+  const PageIndexMap& pageIndices,
+  QPDFObjectHandle& it,
+  const NormalizedRect& rect,
+  std::vector<Link>& links) {
+  if (!it.hasKey("/A")) {
+    return false;
+  }
+  auto action = it.getKey("/A");
+  if (!action.hasKey("/S")) {
+    return true;
+  }
 
-    FS_RECTF pageRect;
-    if (!FPDF_GetPageBoundingBox(page.get(), &pageRect)) {
+  auto type = action.getKey("/S").getName();
+
+  if (type == "/URI") {
+    PushURIActionLink(action, rect, links);
+    return true;
+  }
+
+  if (type == "/GoTo") {
+    PushGoToActionLink(outlineHelper, pageIndices, action, rect, links);
+    return true;
+  }
+
+  return true;
+}
+
+static std::vector<Link> ExtractLinks(
+  QPDFOutlineDocumentHelper& outlineHelper,
+  QPDFPageObjectHelper& page,
+  const PageIndexMap& pageIndices) {
+  auto annotations = page.getAnnotations("/Link");
+  if (annotations.empty()) {
+    return {};
+  }
+
+  auto pageRect = page.getCropBox().getArrayAsRectangle();
+  const auto pageWidth = static_cast<float>(pageRect.urx - pageRect.llx);
+  const auto pageHeight = static_cast<float>(pageRect.ury - pageRect.lly);
+
+  std::vector<Link> links;
+  for (auto& annotation: annotations) {
+    // Convert bottom-left origin (PDF) to top-left origin (everything else,
+    // including D2D)
+    const auto pdfRect = annotation.getRect();
+    const NormalizedRect linkRect {
+      .mLeft = static_cast<float>(pdfRect.llx - pageRect.llx) / pageWidth,
+      .mTop
+      = 1.0f - (static_cast<float>(pdfRect.ury - pageRect.lly) / pageHeight),
+      .mRight = static_cast<float>(pdfRect.urx - pageRect.llx) / pageWidth,
+      .mBottom
+      = 1.0f - (static_cast<float>(pdfRect.lly - pageRect.lly) / pageHeight),
+    };
+
+    auto handle = annotation.getObjectHandle();
+    if (PushDestLink(handle, pageIndices, linkRect, links)) {
       continue;
     }
-
-    // PDF origin is bottom left, not top left
-    const auto pageWidth = pageRect.right - pageRect.left;
-    const auto pageHeight = pageRect.top - pageRect.bottom;
-
-    while (link) {
-      const scope_guard next([&]() {
-        if (!FPDFLink_Enumerate(page.get(), &startPos, &link)) {
-          link = nullptr;
-        }
-      });
-
-      FS_RECTF linkRect;
-      if (!FPDFLink_GetAnnotRect(link, &linkRect)) {
-        continue;
-      }
-
-      // Rect dicts are usually [llx, lly, urx, ury], but PDFium
-      // normalizes them so that bottom > top
-      //
-      // Get us back to the PDF coordinate system (even though it's weird),
-      // so things are consistent
-      if (linkRect.bottom > linkRect.top) {
-        std::swap(linkRect.bottom, linkRect.top);
-      }
-      if (linkRect.left > linkRect.right) {
-        std::swap(linkRect.left, linkRect.right);
-      }
-
-      const NormalizedRect normalizedLinkRect {
-        .mLeft = (linkRect.left - pageRect.left) / pageWidth,
-        .mTop = 1 - ((linkRect.top - pageRect.bottom) / pageHeight),
-        .mRight = (linkRect.right - pageRect.left) / pageWidth,
-        .mBottom = 1 - ((linkRect.bottom - pageRect.bottom) / pageHeight),
-      };
-
-      auto dest = FPDFLink_GetDest(document, link);
-      if (dest) {
-        PushDestLink(document, dest, normalizedLinkRect, pageLinks);
-        continue;
-      }
-
-      const auto action = FPDFLink_GetAction(link);
-      if (action) {
-        switch (FPDFAction_GetType(action)) {
-          case PDFACTION_GOTO:
-            PushDestLink(
-              document,
-              FPDFAction_GetDest(document, action),
-              normalizedLinkRect,
-              pageLinks);
-            continue;
-          case PDFACTION_URI:
-            PushURIActionLink(document, action, normalizedLinkRect, pageLinks);
-            continue;
-          default:
-            continue;
-        }
-      }
+    if (PushActionLink(outlineHelper, pageIndices, handle, linkRect, links)) {
+      continue;
     }
   }
+  return links;
+}
+
+static std::vector<std::vector<Link>> ExtractLinks(
+  QPDFOutlineDocumentHelper& outlineHelper,
+  std::vector<QPDFPageObjectHelper>& pages,
+  const PageIndexMap& pageIndices) {
+  DebugTimer timer("Links");
+  std::vector<std::vector<Link>> allLinks;
+  allLinks.reserve(pages.size());
+
+  for (auto& page: pages) {
+    allLinks.push_back(ExtractLinks(outlineHelper, page, pageIndices));
+  }
+
   return allLinks;
 }
 
@@ -254,20 +269,54 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
     return 3;
   }
 
-  const auto pdfFile = pdfPath.filename().string();
-  DebugTimer totalTimer(std::format("Total ({})", pdfFile));
+  DebugTimer totalTimer(std::format("Total ({})", to_utf8(pdfPath.filename())));
   DebugTimer initTimer("Init");
 
-  FPDF_InitLibrary();
+  const auto fileSize = std::filesystem::file_size(pdfPath);
+  const auto wpath = pdfPath.wstring();
+  winrt::handle file {CreateFileW(
+    wpath.c_str(),
+    GENERIC_READ,
+    FILE_SHARE_READ,
+    nullptr,
+    OPEN_EXISTING,
+    FILE_ATTRIBUTE_NORMAL,
+    NULL)};
+  if (!file) {
+    dprint("Failed to open PDF with CreateFileW");
+    return 4;
+  }
+  winrt::handle mapping {CreateFileMappingW(
+    file.get(),
+    nullptr,
+    PAGE_READONLY,
+    fileSize >> 32,
+    static_cast<DWORD>(fileSize),
+    nullptr)};
+  if (!mapping) {
+    dprint("Failed to create file mapping of PDF");
+    return 5;
+  }
+  auto fileView = MapViewOfFile(mapping.get(), FILE_MAP_READ, 0, 0, fileSize);
+  scope_guard fileViewGuard([fileView]() { UnmapViewOfFile(fileView); });
 
-  const ScopedFPDFDocument document {
-    FPDF_LoadDocument(to_utf8(pdfPath).c_str(), nullptr)};
+  QPDF qpdf;
+  const auto utf8Path = to_utf8(pdfPath);
+  qpdf.processMemoryFile(
+    utf8Path.c_str(), reinterpret_cast<const char*>(fileView), fileSize);
+  auto pages = QPDFPageDocumentHelper(qpdf).getAllPages();
+  PageIndexMap pageIndices;
+  for (const auto& page: pages) {
+    pageIndices[page.getObjectHandle().getObjGen()] = pageIndices.size();
+  }
+  QPDFOutlineDocumentHelper outlineHelper(qpdf);
+
   initTimer.End();
 
   const Response response {
     .mPDFFilePath = request.mPDFFilePath,
-    .mBookmarks = ExtractBookmarks(document.get()),
-    .mLinksByPage = ExtractLinks(document.get()),
+    .mBookmarks = ExtractBookmarks(outlineHelper, pageIndices),
+    .mLinksByPage = ExtractLinks(outlineHelper, pages, pageIndices),
   };
 
   std::ofstream output(

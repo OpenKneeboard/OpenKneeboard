@@ -118,7 +118,7 @@ target_link_libraries(
   OpenKneeboard-PDFIPC
   OpenKneeboard-UTF8
   OpenKneeboard-dprint
-  ThirdParty::PDFium
+  ThirdParty::QPDF
 )
 
 add_executable(OpenKneeboard-Uninstall-Helper WIN32 uninstall-helper.cpp icon.rc)
