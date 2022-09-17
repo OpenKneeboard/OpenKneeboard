@@ -16,6 +16,7 @@ target_link_libraries(
 	PRIVATE
 	OpenKneeboard-D2DErrorRenderer
 	OpenKneeboard-DXResources
+	OpenKneeboard-Filesystem
 	OpenKneeboard-GameEvent
 	OpenKneeboard-GetSystemColor
 	OpenKneeboard-RayIntersectsRect
@@ -38,7 +39,6 @@ target_link_libraries(
 	ThirdParty::LibZip
 	ThirdParty::Lua
 	ThirdParty::OpenVR
-	ThirdParty::QPDF
 	ThirdParty::WMM
 )
 target_include_directories(

@@ -102,7 +102,7 @@ void dprint(std::wstring_view message) {
 }
 
 void RemoveRuntimeFiles(Mode) {
-  auto dir = RuntimeFiles::GetDirectory();
+  auto dir = RuntimeFiles::GetInstallationDirectory();
   if (!std::filesystem::exists(dir)) {
     return;
   }

@@ -17,29 +17,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/FilesDiffer.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/DebugTimer.h>
 #include <OpenKneeboard/dprint.h>
-#include <shims/winrt/base.h>
 
-namespace OpenKneeboard::RuntimeFiles {
+#include <format>
 
-void Install() {
-  const auto source = Filesystem::GetRuntimeDirectory();
-  const auto destination = RuntimeFiles::GetInstallationDirectory();
-  std::filesystem::create_directories(destination);
+namespace OpenKneeboard {
 
-#define IT(file) \
-  if (FilesDiffer(source / file, destination / file)) { \
-    std::filesystem::copy( \
-      source / file, \
-      destination / file, \
-      std::filesystem::copy_options::overwrite_existing); \
-  }
-
-  OPENKNEEBOARD_PUBLIC_RUNTIME_FILES
-#undef IT
+DebugTimer::DebugTimer(std::string_view label)
+  : mLabel(label), mStart(std::chrono::steady_clock::now()) {
 }
 
-}// namespace OpenKneeboard::RuntimeFiles
+DebugTimer::~DebugTimer() {
+  this->End();
+}
+
+void DebugTimer::End() {
+  if (mFinished) {
+    return;
+  }
+
+  mFinished = true;
+  dprintf(
+    "Timer: {} = {}",
+    mLabel,
+    std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::steady_clock::now() - mStart));
+}
+
+}// namespace OpenKneeboard

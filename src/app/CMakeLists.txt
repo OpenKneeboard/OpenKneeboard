@@ -4,12 +4,14 @@ add_subdirectory(app-winui3)
 set(
   RUNTIME_FILES
   "$<TARGET_FILE:OpenKneeboard-OpenXR-Helper>"
+  "$<TARGET_FILE:OpenKneeboard-PDF-Helper>"
   "$<TARGET_FILE:OpenKneeboard-Launch-WindowsApp>"
   "$<TARGET_FILE:ThirdParty::Lua>"
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
   "${CMAKE_SOURCE_DIR}/src/injectables/OpenKneeboard-OpenXR.json"
   "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>>"
   "${CMAKE_SOURCE_DIR}/docs/Quick Start.pdf"
+  "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::PDFium,IMPORTED_LOCATION>>"
 )
 install(FILES "${RUNTIME_FILES}" TYPE BIN)
 

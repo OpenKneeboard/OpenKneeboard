@@ -67,6 +67,7 @@ target_link_libraries(
   OpenKneeboard-games
   OpenKneeboard-version
   System::Dbghelp
+  System::Dxgi
   System::Shell32
   System::User32
   ThirdParty::SemVer

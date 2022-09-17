@@ -22,9 +22,12 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/DoodleRenderer.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFFilePageSource.h>
+#include <OpenKneeboard/PDFIPC.h>
+#include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -36,49 +39,30 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
 
-#include <chrono>
 #include <cstring>
+#include <fstream>
+#include <iterator>
 #include <nlohmann/json.hpp>
-#include <qpdf/QPDF.hh>
-#include <qpdf/QPDFOutlineDocumentHelper.hh>
-#include <qpdf/QPDFPageDocumentHelper.hh>
+#include <random>
 #include <thread>
 
 using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Storage;
 
-namespace {
-
-struct LinkDestination {
-  enum class Type {
-    Page,
-    URI,
-  };
-  Type mType;
-  uint16_t mPageIndex;
-  std::string mURI;
-};
-
-static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
-  return std::memcmp(&a, &b, sizeof(a)) == 0;
-}
-
-struct NormalizedLink {
-  D2D1_RECT_F mRect;
-  LinkDestination mDestination;
-
-  bool operator==(const NormalizedLink& other) const noexcept {
-    return mRect == other.mRect;
-  }
-};
-
-}// namespace
-
 namespace OpenKneeboard {
 
 struct PDFFilePageSource::Impl final {
-  using LinkHandler = CursorClickableRegions<NormalizedLink>;
+  struct Link {
+    D2D1_RECT_F mRect;
+    PDFIPC::Destination mDestination;
+
+    constexpr bool operator==(const Link& other) const noexcept {
+      return mDestination == other.mDestination
+        && memcmp(&mRect, &other.mRect, sizeof(mRect)) == 0;
+    }
+  };
+  using LinkHandler = CursorClickableRegions<Link>;
 
   DXResources mDXR;
   std::filesystem::path mPath;
@@ -88,11 +72,10 @@ struct PDFFilePageSource::Impl final {
   winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
 
-  std::vector<NavigationTab::Entry> mBookmarks;
+  std::vector<NavigationEntry> mBookmarks;
   std::vector<std::shared_ptr<LinkHandler>> mLinks;
 
   bool mNavigationLoaded = false;
-  std::jthread mQPDFThread;
 
   std::unique_ptr<CachedLayer> mContentLayer;
   std::unique_ptr<DoodleRenderer> mDoodles;
@@ -114,10 +97,6 @@ PDFFilePageSource::PDFFilePageSource(
 }
 
 PDFFilePageSource::~PDFFilePageSource() {
-  if (p && p->mQPDFThread.get_id() != std::thread::id {}) {
-    p->mQPDFThread.request_stop();
-    p->mQPDFThread.join();
-  }
   this->RemoveAllEventListeners();
 }
 
@@ -141,149 +120,141 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
   return ret;
 }
 
-namespace {
-
-std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(
-  QPDF& pdf,
-  std::stop_token stopToken) {
-  QPDFPageDocumentHelper pdh(pdf);
-  auto pages = pdh.getAllPages();
-
-  std::map<QPDFObjGen, uint16_t> pageNumbers;
-  uint16_t pageIndex = 0;
-  for (auto& page: pages) {
-    pageNumbers.emplace(page.getObjectHandle().getObjGen(), pageIndex++);
+winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
+  auto weakThis = this->weak_from_this();
+  co_await winrt::resume_background();
+  auto strongThis = weakThis.lock();
+  if (!strongThis) {
+    co_return;
   }
 
-  QPDFOutlineDocumentHelper odh(pdf);
-
-  std::vector<std::vector<NormalizedLink>> ret;
-  for (auto& page: pages) {
-    if (stopToken.stop_requested()) {
-      return {};
-    }
-    // Useful references:
-    // - i7j-rups
-    // -
-    // https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
-    std::vector<NormalizedLink> links;
-    auto pageRect = page.getCropBox().getArrayAsRectangle();
-    const auto pageWidth = static_cast<float>(pageRect.urx - pageRect.llx);
-    const auto pageHeight = static_cast<float>(pageRect.ury - pageRect.lly);
-    for (auto& annotation: page.getAnnotations("/Link")) {
-      auto aoh = annotation.getObjectHandle();
-
-      // Convert bottom-left origin (PDF) to top-left origin (everything else,
-      // including D2D)
-      const auto pdfRect = annotation.getRect();
-      const D2D1_RECT_F rect {
-        .left = static_cast<float>(pdfRect.llx - pageRect.llx) / pageWidth,
-        .top
-        = 1.0f - (static_cast<float>(pdfRect.ury - pageRect.lly) / pageHeight),
-        .right = static_cast<float>(pdfRect.urx - pageRect.llx) / pageWidth,
-        .bottom
-        = 1.0f - (static_cast<float>(pdfRect.lly - pageRect.lly) / pageHeight),
-      };
-
-      if (aoh.hasKey("/Dest")) {
-        auto dest = aoh.getKey("/Dest");
-        auto destPage = pageNumbers.at(dest.getArrayItem(0).getObjGen());
-        auto linkRect = annotation.getRect();
-        links.push_back({
-          rect,
-          {.mType = LinkDestination::Type::Page, .mPageIndex = destPage},
-        });
-        continue;
-      }
-
-      if (aoh.hasKey("/A")) {// action
-        auto action = aoh.getKey("/A");
-        if (!action.hasKey("/S")) {
-          continue;
-        }
-        auto type = action.getKey("/S").getName();
-
-        if (type == "/URI") {
-          if (!action.hasKey("/URI")) {
-            continue;
-          }
-          auto uri = action.getKey("/URI").getStringValue();
-          if (uri.starts_with("openkneeboard://")) {
-            dprintf("Found magic URI in PDF: {}", uri);
-          }
-          links.push_back({
-            rect,
-            {
-              .mType = LinkDestination::Type::URI,
-              .mURI = uri,
-            },
-          });
-          continue;
-        }
-
-        if (type != "/GoTo") {
-          continue;
-        }
-        if (!action.hasKey("/D")) {
-          continue;
-        }
-        auto dest = action.getKey("/D");
-        if (!(dest.isName() || dest.isString())) {
-          continue;
-        }
-        dest = odh.resolveNamedDest(dest);
-        if (!dest.isArray()) {
-          continue;
-        }
-        auto destPage = pageNumbers.at(dest.getArrayItem(0).getObjGen());
-        auto linkRect = annotation.getRect();
-        links.push_back({
-          rect,
-          {
-            .mType = LinkDestination::Type::Page,
-            .mPageIndex = destPage,
-          },
-        });
-        continue;
-      }
-    }
-
-    ret.push_back(links);
+  if (!std::filesystem::is_regular_file(strongThis->p->mPath)) {
+    co_return;
   }
 
-  return ret;
+  auto file = co_await StorageFile::GetFileFromPathAsync(
+    strongThis->p->mPath.wstring());
+  strongThis->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
+
+  const EventDelay eventDelay;
+  strongThis->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
-std::vector<NavigationTab::Entry> ExtractNavigationEntries(
-  const std::map<QPDFObjGen, uint16_t>& pageIndices,
-  std::vector<QPDFOutlineObjectHelper>& outlines) {
-  std::vector<NavigationTab::Entry> entries;
+winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
+  auto weakThis = this->weak_from_this();
+  auto strongThis = this->shared_from_this();
 
-  for (auto& outline: outlines) {
-    auto page = outline.getDestPage();
-    auto key = page.getObjGen();
-    if (!pageIndices.contains(key)) {
-      continue;
-    }
-    entries.push_back(NavigationTab::Entry {
-      .mName = outline.getTitle(),
-      .mPageIndex = pageIndices.at(key),
-    });
-
-    auto kids = outline.getKids();
-    auto kidEntries = ExtractNavigationEntries(pageIndices, kids);
-    if (kidEntries.empty()) {
-      continue;
-    }
-    entries.reserve(entries.size() + kidEntries.size());
-    std::copy(
-      kidEntries.begin(), kidEntries.end(), std::back_inserter(entries));
+  if (!std::filesystem::is_regular_file(strongThis->p->mPath)) {
+    co_return;
   }
 
-  return entries;
-}
+  const auto tempDir = Filesystem::GetTemporaryDirectory();
 
-}// namespace
+  std::random_device randDevice;
+  std::uniform_int_distribution<uint64_t> randDist;
+  const auto randPart = randDist(randDevice);
+  const auto pid = static_cast<uint32_t>(GetCurrentProcessId());
+
+  const auto requestPath = tempDir
+    / std::format("OpenKneeboard-{}-{:016x}-pdf-request.json", pid, randPart);
+  const auto responsePath = tempDir
+    / std::format("OpenKneeboard-{}-{:016x}-pdf-response.json", pid, randPart);
+
+  const Filesystem::ScopedDeleter requestDeleter(requestPath);
+  const Filesystem::ScopedDeleter responseDeleter(responsePath);
+
+  {
+    const PDFIPC::Request request {
+      .mPDFFilePath = to_utf8(strongThis->p->mPath),
+      .mOutputFilePath = to_utf8(responsePath),
+    };
+
+    std::ofstream(requestPath.wstring())
+      << std::setw(2) << nlohmann::json(request) << std::endl;
+  }
+
+  {
+    const auto helperPath
+      = (Filesystem::GetRuntimeDirectory() / RuntimeFiles::PDF_HELPER)
+          .wstring();
+    std::wstring mutableCommandLine
+      = std::format(L"{} {}", helperPath, requestPath.wstring());
+    mutableCommandLine.resize(mutableCommandLine.size() + 1, L'\0');
+    STARTUPINFOW startupInfo {.cb = sizeof(STARTUPINFOW)};
+    PROCESS_INFORMATION processInfo {};
+    if (!CreateProcessW(
+          helperPath.c_str(),
+          mutableCommandLine.data(),
+          nullptr,
+          nullptr,
+          false,
+          0,
+          nullptr,
+          nullptr,
+          &startupInfo,
+          &processInfo)) {
+      dprintf(
+        "PDFHelper CreateProcessW failed: {:#016x}",
+        std::bit_cast<uint32_t>(GetLastError()));
+      co_return;
+    }
+    winrt::handle processHandle {processInfo.hProcess};
+    winrt::handle threadHandle {processInfo.hThread};
+
+    co_await winrt::resume_on_signal(processHandle.get());
+  }
+
+  if (!std::filesystem::is_regular_file(responsePath)) {
+    dprint("No response from PDF helper :'(");
+    co_return;
+  }
+
+  const auto response
+    = nlohmann::json::parse(std::ifstream(responsePath.wstring()))
+        .get<PDFIPC::Response>();
+
+  for (const auto& it: response.mBookmarks) {
+    strongThis->p->mBookmarks.push_back({it.mName, it.mPageIndex});
+  }
+  strongThis->p->mNavigationLoaded = true;
+  {
+    const EventDelay delay;
+    strongThis->evAvailableFeaturesChangedEvent.Emit();
+  }
+
+  for (const auto& ipcPageLinks: response.mLinksByPage) {
+    std::vector<Impl::Link> pageLinks;
+    pageLinks.reserve(ipcPageLinks.size());
+    for (const auto& link: ipcPageLinks) {
+      pageLinks.push_back(
+        {{
+           .left = link.mRect.mLeft,
+           .top = link.mRect.mTop,
+           .right = link.mRect.mRight,
+           .bottom = link.mRect.mBottom,
+         },
+         link.mDestination});
+    }
+
+    auto handler = std::make_shared<Impl::LinkHandler>(pageLinks);
+    strongThis->AddEventListener(
+      handler->evClicked, [this](EventContext ctx, const Impl::Link& link) {
+        const auto& dest = link.mDestination;
+        switch (dest.mType) {
+          case PDFIPC::DestinationType::Page:
+            this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
+            break;
+          case PDFIPC::DestinationType::URI: {
+            [=]() -> winrt::fire_and_forget {
+              co_await LaunchURI(dest.mURI);
+            }();
+            break;
+          }
+        }
+      });
+    strongThis->p->mLinks.push_back(handler);
+  }
+}
 
 void PDFFilePageSource::Reload() {
   p->mBookmarks.clear();
@@ -294,125 +265,8 @@ void PDFFilePageSource::Reload() {
     return;
   }
 
-  auto weakThis = this->weak_from_this();
-
-  // captures are undefined after the first co_await
-  [](auto weakThis) -> winrt::fire_and_forget {
-    co_await winrt::resume_background();
-    auto strongThis = weakThis.lock();
-    if (!strongThis) {
-      co_return;
-    }
-
-    auto file = co_await StorageFile::GetFileFromPathAsync(
-      strongThis->p->mPath.wstring());
-    strongThis->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
-    strongThis->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
-  }(weakThis);
-
-  p->mQPDFThread = {[weakThis, this](std::stop_token stopToken) {
-    const auto stayingAlive = weakThis.lock();
-    if (!stayingAlive) {
-      return;
-    }
-
-    SetThreadDescription(GetCurrentThread(), L"PDFFilePageSource QPDF Thread");
-    const auto startTime = std::chrono::steady_clock::now();
-    scope_guard timer([startTime]() {
-      const auto endTime = std::chrono::steady_clock::now();
-      dprintf(
-        "QPDF processing time: {}ms",
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-          endTime - startTime));
-    });
-
-    const auto fileSize = std::filesystem::file_size(p->mPath);
-    const auto wpath = p->mPath.wstring();
-    winrt::handle file {CreateFileW(
-      wpath.c_str(),
-      GENERIC_READ,
-      FILE_SHARE_READ,
-      nullptr,
-      OPEN_EXISTING,
-      FILE_ATTRIBUTE_NORMAL,
-      NULL)};
-    if (!file) {
-      dprint("Failed to open PDF with CreateFileW");
-      return;
-    }
-    winrt::handle mapping {CreateFileMappingW(
-      file.get(),
-      nullptr,
-      PAGE_READONLY,
-      fileSize >> 32,
-      static_cast<DWORD>(fileSize),
-      nullptr)};
-    if (!mapping) {
-      dprint("Failed to create file mapping of PDF");
-      return;
-    }
-    auto fileView = MapViewOfFile(mapping.get(), FILE_MAP_READ, 0, 0, fileSize);
-    scope_guard fileViewGuard([fileView]() { UnmapViewOfFile(fileView); });
-
-    QPDF qpdf;
-    auto path = to_utf8(wpath);
-    qpdf.processMemoryFile(
-      path.c_str(), reinterpret_cast<const char*>(fileView), fileSize);
-
-    // Page outlines/TOC
-    std::map<QPDFObjGen, uint16_t> pageIndices;
-    {
-      uint16_t nextIndex = 0;
-      for (const auto& page: QPDFPageDocumentHelper(qpdf).getAllPages()) {
-        if (stopToken.stop_requested()) {
-          return;
-        }
-        pageIndices[page.getObjectHandle().getObjGen()] = nextIndex++;
-      }
-    }
-
-    QPDFOutlineDocumentHelper odh(qpdf);
-    auto outlines = odh.getTopLevelOutlines();
-    p->mBookmarks = ExtractNavigationEntries(pageIndices, outlines);
-    if (p->mBookmarks.empty()) {
-      p->mBookmarks.clear();
-      for (uint16_t i = 0; i < pageIndices.size(); ++i) {
-        p->mBookmarks.push_back({std::format(_("Page {}"), i + 1), i});
-      }
-    }
-    p->mNavigationLoaded = true;
-
-    const auto outlineTime
-      = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now() - startTime);
-    dprintf("QPDF outline time: {}ms", outlineTime);
-
-    if (stopToken.stop_requested()) {
-      return;
-    }
-    this->evAvailableFeaturesChangedEvent.Emit();
-
-    const auto links = FindAllHyperlinks(qpdf, stopToken);
-    for (const auto& pageLinks: links) {
-      auto handler = std::make_shared<Impl::LinkHandler>(pageLinks);
-      AddEventListener(
-        handler->evClicked, [this](auto ctx, const NormalizedLink& link) {
-          const auto& dest = link.mDestination;
-          switch (dest.mType) {
-            case LinkDestination::Type::Page:
-              this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
-              break;
-            case LinkDestination::Type::URI: {
-              [=]() -> winrt::fire_and_forget {
-                co_await LaunchURI(dest.mURI);
-              }();
-              break;
-            }
-          }
-        });
-      p->mLinks.push_back(handler);
-    }
-  }};
+  this->ReloadRenderer();
+  this->ReloadNavigation();
 }
 
 uint16_t PDFFilePageSource::GetPageCount() const {

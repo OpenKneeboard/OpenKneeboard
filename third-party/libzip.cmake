@@ -1,3 +1,7 @@
+set(libzipDeps ThirdParty::ZLib)
+add_library(libzipDeps INTERFACE)
+target_link_libraries(libzipDeps INTERFACE ${libzipDeps})
+
 ExternalProject_Add(
   libzipBuild
   URL "https://github.com/nih-at/libzip/releases/download/v1.8.0/libzip-1.8.0.tar.gz"
@@ -17,6 +21,7 @@ ExternalProject_Add(
   INSTALL_COMMAND
     ${CMAKE_COMMAND} --install . --config "$<CONFIG>" --prefix "<INSTALL_DIR>/$<CONFIG>"
   EXCLUDE_FROM_ALL
+  DEPENDS ${libzipDeps}
 )
 add_dependencies(libzipBuild zlibBuild)
 
@@ -25,7 +30,7 @@ ExternalProject_Get_property(libzipBuild INSTALL_DIR)
 
 add_library(libzip INTERFACE)
 add_dependencies(libzip libzipBuild)
-target_link_libraries(libzip INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/zip.lib")
+target_link_libraries(libzip INTERFACE "${INSTALL_DIR}/$<CONFIG>/lib/zip.lib" libzipDeps)
 target_include_directories(libzip INTERFACE "${INSTALL_DIR}/$<CONFIG>/include")
 
 add_library(ThirdParty::LibZip ALIAS libzip)

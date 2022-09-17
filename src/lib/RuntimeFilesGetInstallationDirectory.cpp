@@ -30,16 +30,11 @@
 
 namespace OpenKneeboard::RuntimeFiles {
 
-std::filesystem::path GetDirectory() {
+std::filesystem::path GetInstallationDirectory() {
   static std::filesystem::path sPath;
   if (!sPath.empty()) {
     return sPath;
   }
-
-  wchar_t buf[MAX_PATH];
-  GetModuleFileNameW(NULL, buf, MAX_PATH);
-  const auto executablePath
-    = std::filesystem::canonical(std::filesystem::path(buf).parent_path());
 
   // App bin directory is not readable by other apps if using msix installer,
   // so if we pass a DLL in the app directory to `LoadLibraryW` in another

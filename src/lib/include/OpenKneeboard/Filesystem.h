@@ -17,29 +17,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/FilesDiffer.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/dprint.h>
-#include <shims/winrt/base.h>
+#pragma once
 
-namespace OpenKneeboard::RuntimeFiles {
+#include <shims/filesystem>
 
-void Install() {
-  const auto source = Filesystem::GetRuntimeDirectory();
-  const auto destination = RuntimeFiles::GetInstallationDirectory();
-  std::filesystem::create_directories(destination);
+namespace OpenKneeboard::Filesystem {
 
-#define IT(file) \
-  if (FilesDiffer(source / file, destination / file)) { \
-    std::filesystem::copy( \
-      source / file, \
-      destination / file, \
-      std::filesystem::copy_options::overwrite_existing); \
-  }
+/** Differs from std::filesystem::temp_directory_path() in that
+ * it guarantees to be in canonical form */
+std::filesystem::path GetTemporaryDirectory();
+std::filesystem::path GetRuntimeDirectory();
 
-  OPENKNEEBOARD_PUBLIC_RUNTIME_FILES
-#undef IT
-}
+class ScopedDeleter {
+ public:
+  ScopedDeleter(const std::filesystem::path&);
+  ~ScopedDeleter() noexcept;
 
-}// namespace OpenKneeboard::RuntimeFiles
+  ScopedDeleter() = delete;
+  ScopedDeleter(const ScopedDeleter&) = delete;
+  ScopedDeleter& operator=(const ScopedDeleter&) = delete;
+
+ private:
+  std::filesystem::path mPath;
+};
+
+}// namespace OpenKneeboard::Filesystem

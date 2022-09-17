@@ -78,7 +78,7 @@ HelpPage::HelpPage() {
 
   QuickStartLink().Click([](auto&, auto&) -> winrt::fire_and_forget {
     const auto quickStartPath
-      = RuntimeFiles::GetDirectory() / RuntimeFiles::QUICK_START_PDF;
+      = RuntimeFiles::GetInstallationDirectory() / RuntimeFiles::QUICK_START_PDF;
 
     co_await LaunchURI(to_utf8(quickStartPath));
   });

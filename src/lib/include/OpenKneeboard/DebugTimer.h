@@ -17,29 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/FilesDiffer.h>
-#include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/dprint.h>
-#include <shims/winrt/base.h>
+#pragma once
 
-namespace OpenKneeboard::RuntimeFiles {
+#include <chrono>
+#include <string>
 
-void Install() {
-  const auto source = Filesystem::GetRuntimeDirectory();
-  const auto destination = RuntimeFiles::GetInstallationDirectory();
-  std::filesystem::create_directories(destination);
+namespace OpenKneeboard {
 
-#define IT(file) \
-  if (FilesDiffer(source / file, destination / file)) { \
-    std::filesystem::copy( \
-      source / file, \
-      destination / file, \
-      std::filesystem::copy_options::overwrite_existing); \
-  }
+class DebugTimer {
+ public:
+  DebugTimer(std::string_view label);
+  ~DebugTimer();
 
-  OPENKNEEBOARD_PUBLIC_RUNTIME_FILES
-#undef IT
-}
+  void End();
 
-}// namespace OpenKneeboard::RuntimeFiles
+ private:
+  std::string mLabel;
+  std::chrono::steady_clock::time_point mStart;
+
+  bool mFinished = false;
+};
+
+}// namespace OpenKneeboard

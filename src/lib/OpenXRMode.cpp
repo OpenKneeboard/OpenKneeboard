@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
@@ -41,8 +42,8 @@ enum class RunAs {
 void LaunchAndWaitForOpenXRHelperSubprocess(
   RunAs runas,
   std::wstring_view command) {
-  auto layerPath = RuntimeFiles::GetDirectory().wstring();
-  auto exePath = (RuntimeFiles::GetDirectory()
+  auto layerPath = RuntimeFiles::GetInstallationDirectory().wstring();
+  auto exePath = (Filesystem::GetRuntimeDirectory()
                   / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER)
                    .wstring();
 

@@ -74,6 +74,9 @@ class PDFFilePageSource final
   struct Impl;
   std::shared_ptr<Impl> p;
 
+  winrt::fire_and_forget ReloadRenderer();
+  winrt::fire_and_forget ReloadNavigation();
+
   void RenderPageContent(
     ID2D1DeviceContext*,
     uint16_t pageIndex,

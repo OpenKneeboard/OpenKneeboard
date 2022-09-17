@@ -178,7 +178,7 @@ bool HaveWintab() {
 namespace OpenKneeboard {
 
 GameInjector::GameInjector() {
-  const auto dllPath = RuntimeFiles::GetDirectory();
+  const auto dllPath = RuntimeFiles::GetInstallationDirectory();
   mMarkerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
   mTabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
 

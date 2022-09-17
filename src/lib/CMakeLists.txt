@@ -41,13 +41,29 @@ target_link_libraries(
 add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
 target_link_libraries(
   OpenKneeboard-UTF8
-  PRIVATE
-  _libheaders
-)
-target_link_libraries(
-  OpenKneeboard-UTF8
   PUBLIC
   ThirdParty::JSON
+  _libheaders
+)
+
+add_library(OpenKneeboard-PDFIPC INTERFACE)
+target_link_libraries(
+  OpenKneeboard-PDFIPC
+  INTERFACE
+  _libheaders
+  ThirdParty::JSON
+)
+
+add_library(OpenKneeboard-DebugTimer STATIC DebugTimer.cpp)
+target_link_libraries(
+  OpenKneeboard-DebugTimer
+  PRIVATE
+  OpenKneeboard-dprint
+)
+target_link_libraries(
+  OpenKneeboard-DebugTimer
+  PUBLIC
+  _libheaders
 )
 
 add_library(OpenKneeboard-D3D11 STATIC D3D11.cpp)
@@ -87,7 +103,7 @@ add_library(
   OpenKneeboard-RuntimeFiles
   STATIC
   "${RUNTIME_FILES_CPP}"
-  RuntimeFilesGetDirectory.cpp
+  RuntimeFilesGetInstallationDirectory.cpp
   RuntimeFilesInstall.cpp
 )
 target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
@@ -221,4 +237,12 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-D3D11
   OpenKneeboard-dprint
+)
+
+add_library(OpenKneeboard-Filesystem STATIC Filesystem.cpp)
+target_link_libraries(
+  OpenKneeboard-Filesystem
+  PUBLIC
+  OpenKneeboard-shims
+  _libheaders
 )

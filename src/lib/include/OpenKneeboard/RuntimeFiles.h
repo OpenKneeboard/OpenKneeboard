@@ -23,7 +23,11 @@
 
 namespace OpenKneeboard::RuntimeFiles {
 
-#define OPENKNEEBOARD_RUNTIME_FILES \
+#define OPENKNEEBOARD_PRIVATE_RUNTIME_FILES \
+  IT(OPENXR_REGISTER_LAYER_HELPER) \
+  IT(PDF_HELPER)
+
+#define OPENKNEEBOARD_PUBLIC_RUNTIME_FILES \
   IT(DCSWORLD_HOOK_DLL) \
   IT(DCSWORLD_HOOK_LUA) \
   IT(AUTOINJECT_MARKER_DLL) \
@@ -34,17 +38,20 @@ namespace OpenKneeboard::RuntimeFiles {
   IT(OCULUS_D3D12_DLL) \
   IT(OPENXR_DLL) \
   IT(OPENXR_JSON) \
-  IT(OPENXR_REGISTER_LAYER_HELPER) \
   IT(QUICK_START_PDF) \
   IT(WINDOWSAPP_LAUNCHER)
+
+#define OPENKNEEBOARD_RUNTIME_FILES \
+  OPENKNEEBOARD_PUBLIC_RUNTIME_FILES \
+  OPENKNEEBOARD_PRIVATE_RUNTIME_FILES
 
 #define IT(x) extern const std::filesystem::path x;
 OPENKNEEBOARD_RUNTIME_FILES
 #undef IT
 
-/** Installs to `GetDirectory()`, or throws */
+/** Installs to `GetInstallationDirectory()`, or throws */
 void Install();
 
-std::filesystem::path GetDirectory();
+std::filesystem::path GetInstallationDirectory();
 
 }// namespace OpenKneeboard::RuntimeFiles
