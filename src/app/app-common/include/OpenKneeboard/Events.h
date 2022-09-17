@@ -22,9 +22,9 @@
 #include <cstdint>
 #include <functional>
 #include <list>
-#include <map>
 #include <mutex>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 #include "UniqueID.h"
@@ -33,6 +33,7 @@ namespace OpenKneeboard {
 
 class EventContext final : public UniqueIDBase<EventContext> {};
 class EventHandlerToken final : public UniqueIDBase<EventHandlerToken> {};
+class EventHookToken final : public UniqueIDBase<EventHookToken> {};
 
 template <class... Args>
 using EventHandler = std::function<void(Args...)>;
@@ -160,8 +161,8 @@ class Event final : public EventBase {
 
   void Emit(Args... args);
 
-  void PushHook(Hook);
-  void PopHook();
+  EventHookToken AddHook(Hook, EventHookToken token = {}) noexcept;
+  void RemoveHook(EventHookToken) noexcept;
 
  protected:
   std::shared_ptr<EventConnectionBase> AddHandler(const EventHandler<Args...>&);
@@ -171,7 +172,7 @@ class Event final : public EventBase {
   std::
     unordered_map<EventHandlerToken, std::shared_ptr<EventConnection<Args...>>>
       mReceivers;
-  std::list<Hook> mHooks;
+  std::unordered_map<EventHookToken, Hook> mHooks;
 };
 
 class EventReceiver {
@@ -276,7 +277,7 @@ void Event<Args...>::Emit(Args... args) {
     }
   }
 
-  for (const auto& hook: hooks) {
+  for (const auto& [_, hook]: hooks) {
     if (hook(args...) == HookResult::STOP_PROPAGATION) {
       return;
     }
@@ -302,13 +303,21 @@ Event<Args...>::~Event() {
 }
 
 template <class... Args>
-void Event<Args...>::PushHook(Hook hook) {
-  mHooks.push_front(hook);
+EventHookToken Event<Args...>::AddHook(
+  Hook hook,
+  EventHookToken token) noexcept {
+  std::unique_lock lock(mMutex);
+  mHooks.insert_or_assign(token, hook);
+  return token;
 }
 
 template <class... Args>
-void Event<Args...>::PopHook() {
-  mHooks.pop_front();
+void Event<Args...>::RemoveHook(EventHookToken token) noexcept {
+  std::unique_lock lock(mMutex);
+  auto it = mHooks.find(token);
+  if (it != mHooks.end()) {
+    mHooks.erase(it);
+  }
 }
 
 template <class... Args>

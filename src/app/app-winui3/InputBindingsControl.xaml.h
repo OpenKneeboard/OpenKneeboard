@@ -24,6 +24,8 @@
 #include "InputBindingsControl.g.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
+
 #include <unordered_map>
 
 namespace OpenKneeboard {

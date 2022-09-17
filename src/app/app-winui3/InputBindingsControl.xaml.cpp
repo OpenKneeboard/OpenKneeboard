@@ -132,8 +132,11 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
   bool cancelled = true;
   auto stayingAlive = this->get_strong();
   auto weakThis = this->get_weak();
-  mDevice->evButtonEvent.PushHook(
-    [weakThis, dialog, &pressedButtons, &cancelled](
+  EventHookToken hookToken;
+  auto unhook = scope_guard(
+    [this, hookToken] { mDevice->evButtonEvent.RemoveHook(hookToken); });
+  mDevice->evButtonEvent.AddHook(
+    [hookToken, weakThis, dialog, &pressedButtons, &cancelled](
       const UserInputButtonEvent& ev) {
       auto strongThis = weakThis.get();
       if (!strongThis) {
@@ -152,19 +155,19 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
         return EventBase::HookResult::STOP_PROPAGATION;
       }
       cancelled = false;
-      [](auto uiThread, auto dialog) noexcept -> winrt::fire_and_forget {
+      strongThis->mDevice->evButtonEvent.RemoveHook(hookToken);
+
+      [](auto strongThis, auto dialog) noexcept -> winrt::fire_and_forget {
         // Show the complete combo for a moment
         co_await winrt::resume_after(std::chrono::milliseconds(250));
-        co_await uiThread;
+        co_await strongThis->mUIThread;
         dialog.Hide();
-      }(strongThis->mUIThread, dialog);
+      }(strongThis, dialog);
       return EventBase::HookResult::STOP_PROPAGATION;
-    });
-  {
-    auto unhook = scope_guard(
-      [mDevice = this->mDevice] { mDevice->evButtonEvent.PopHook(); });
-    co_await dialog.ShowAsync();
-  }
+    },
+    hookToken);
+  co_await dialog.ShowAsync();
+
   if (cancelled) {
     co_return;
   }
