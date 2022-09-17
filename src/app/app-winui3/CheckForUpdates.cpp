@@ -23,6 +23,7 @@
 #include "CheckForUpdates.h"
 // clang-format on
 
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/config.h>
@@ -317,11 +318,7 @@ IAsyncAction CheckForUpdates(
     progressRing.Value(100);
     progressRing.IsIndeterminate(true);
 
-    wchar_t tempPath[MAX_PATH];
-    auto tempPathLen = GetTempPathW(MAX_PATH, tempPath);
-
-    const auto destination
-      = std::filesystem::path(std::wstring_view {tempPath, tempPathLen})
+    const auto destination = Filesystem::GetTemporaryDirectory()
       / updateAsset->at("name").get<std::string_view>();
     if (!std::filesystem::exists(destination)) {
       auto tmpFile = destination;

@@ -25,6 +25,7 @@
 
 #include <OpenKneeboard/DCSWorldInstance.h>
 #include <OpenKneeboard/FilesDiffer.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
@@ -79,12 +80,9 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
     co_return;
   }
 
-  const auto hooksDir = savedGamesPath / "Scripts" / "Hooks";
-  wchar_t buffer[MAX_PATH];
-  auto length = GetModuleFileNameW(NULL, buffer, MAX_PATH);
-  const auto exeDir
-    = std::filesystem::path(std::wstring_view(buffer, length)).parent_path();
+  const auto exeDir = Filesystem::GetRuntimeDirectory();
 
+  const auto hooksDir = savedGamesPath / "Scripts" / "Hooks";
   const auto state = GetHookInstallState(hooksDir, exeDir);
 
   if (state == UP_TO_DATE) {

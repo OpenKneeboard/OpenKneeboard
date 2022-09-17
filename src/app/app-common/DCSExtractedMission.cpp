@@ -19,6 +19,7 @@
  */
 
 #include <OpenKneeboard/DCSExtractedMission.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
@@ -37,16 +38,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   std::random_device randDevice;
   std::uniform_int_distribution<uint64_t> randDist;
 
-  wchar_t tempDirBuf[MAX_PATH];
-  auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
-  auto tempDir
-    = std::filesystem::path {std::wstring_view {tempDirBuf, tempDirLen}};
-  if (!std::filesystem::exists(tempDir)) {
-    std::filesystem::create_directory(tempDir);
-  }
-  tempDir = std::filesystem::canonical(tempDir);
-
-  mTempDir = tempDir
+  mTempDir = Filesystem::GetTemporaryDirectory()
     / std::format(
                "OpenKneeboard-{}-{:016x}-{}",
                static_cast<uint32_t>(GetCurrentProcessId()),

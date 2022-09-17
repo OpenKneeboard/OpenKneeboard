@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TabTypes.h>
@@ -91,19 +92,13 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
 }
 
 void TabsList::LoadDefaultConfig() {
-  wchar_t exePathStr[MAX_PATH];
-  auto exePathStrLen = GetModuleFileNameW(NULL, exePathStr, MAX_PATH);
-  const auto exeDir
-    = std::filesystem::path(std::wstring_view {exePathStr, exePathStrLen})
-        .parent_path();
-
   auto kbs = mKneeboard;
   mKneeboard->SetTabs({
     std::make_shared<SingleFileTab>(
       mDXR,
       mKneeboard,
       _("Quick Start"),
-      exeDir / RuntimeFiles::QUICK_START_PDF),
+      Filesystem::GetRuntimeDirectory() / RuntimeFiles::QUICK_START_PDF),
     std::make_shared<DCSRadioLogTab>(mDXR, mKneeboard),
     std::make_shared<DCSBriefingTab>(mDXR, mKneeboard),
     std::make_shared<DCSMissionTab>(mDXR, mKneeboard),

@@ -23,6 +23,7 @@
 #include "HelpPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
@@ -77,8 +78,8 @@ HelpPage::HelpPage() {
     });
 
   QuickStartLink().Click([](auto&, auto&) -> winrt::fire_and_forget {
-    const auto quickStartPath
-      = RuntimeFiles::GetInstallationDirectory() / RuntimeFiles::QUICK_START_PDF;
+    const auto quickStartPath = RuntimeFiles::GetInstallationDirectory()
+      / RuntimeFiles::QUICK_START_PDF;
 
     co_await LaunchURI(to_utf8(quickStartPath));
   });
@@ -343,11 +344,8 @@ winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
 }
 
 void HelpPage::PopulateLicenses() noexcept {
-  wchar_t buffer[MAX_PATH];
-  const auto pathLen = GetModuleFileNameW(NULL, buffer, MAX_PATH);
-  const std::filesystem::path exePath {std::wstring_view {buffer, pathLen}};
-
-  const auto docDir = exePath.parent_path() / "share" / "doc";
+  const auto docDir
+    = Filesystem::GetRuntimeDirectory().parent_path() / "share" / "doc";
 
   if (!std::filesystem::exists(docDir)) {
     return;
