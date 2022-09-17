@@ -106,21 +106,6 @@ target_link_libraries(
   OpenKneeboard-dprint
 )
 
-add_helper_executable(
-  OpenKneeboard-PDF-Helper
-  WIN32
-  pdf-helper.cpp
-)
-target_link_libraries(
-  OpenKneeboard-PDF-Helper
-  PRIVATE
-  OpenKneeboard-DebugTimer
-  OpenKneeboard-PDFIPC
-  OpenKneeboard-UTF8
-  OpenKneeboard-dprint
-  ThirdParty::QPDF
-)
-
 add_executable(OpenKneeboard-Uninstall-Helper WIN32 uninstall-helper.cpp icon.rc)
 add_version_rc(OpenKneeboard-Uninstall-Helper OpenKneeboard-Uninstall-Helper.exe)
 sign_target(OpenKneeboard-Uninstall-Helper)

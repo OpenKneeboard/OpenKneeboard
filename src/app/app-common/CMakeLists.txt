@@ -19,6 +19,7 @@ target_link_libraries(
 	OpenKneeboard-Filesystem
 	OpenKneeboard-GameEvent
 	OpenKneeboard-GetSystemColor
+	OpenKneeboard-PDFNavigation
 	OpenKneeboard-RayIntersectsRect
 	OpenKneeboard-RuntimeFiles
 	OpenKneeboard-OpenVRKneeboard

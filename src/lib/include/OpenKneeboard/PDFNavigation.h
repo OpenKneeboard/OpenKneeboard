@@ -20,26 +20,26 @@
 
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <d2d1.h>
 
-namespace OpenKneeboard::PDFIPC {
+#include <cinttypes>
+#include <map>
+#include <memory>
+#include <shims/filesystem>
+#include <string>
+#include <vector>
+
+namespace OpenKneeboard::PDFNavigation {
 
 struct Bookmark final {
   std::string mName;
   uint16_t mPageIndex;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Bookmark, mName, mPageIndex);
 
 enum class DestinationType {
   Page,
   URI,
 };
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  DestinationType,
-  {
-    {DestinationType::Page, "Page"},
-    {DestinationType::URI, "URI"},
-  });
 
 struct Destination final {
   DestinationType mType;
@@ -47,42 +47,29 @@ struct Destination final {
   std::string mURI;
   auto operator<=>(const Destination&) const = default;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Destination, mType, mPageIndex, mURI)
-
-struct NormalizedRect final {
-  float mLeft;
-  float mTop;
-  float mRight;
-  float mBottom;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-  NormalizedRect,
-  mLeft,
-  mTop,
-  mRight,
-  mBottom);
 
 struct Link final {
-  NormalizedRect mRect;
+  D2D1_RECT_F mRect;
   Destination mDestination;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Link, mRect, mDestination);
 
-struct Request final {
-  std::string mPDFFilePath;
-  std::string mOutputFilePath;
+  constexpr bool operator==(const Link& other) const noexcept {
+    return mDestination == other.mDestination
+      && memcmp(&mRect, &other.mRect, sizeof(mRect)) == 0;
+  }
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Request, mPDFFilePath, mOutputFilePath);
 
-struct Response final {
-  std::string mPDFFilePath;
-  std::vector<Bookmark> mBookmarks;
-  std::vector<std::vector<Link>> mLinksByPage;
+class PDF final {
+ public:
+  PDF() = delete;
+  PDF(const std::filesystem::path&);
+  ~PDF();
+
+  std::vector<Bookmark> GetBookmarks();
+  std::vector<std::vector<Link>> GetLinks();
+
+ private:
+  struct Impl;
+  std::unique_ptr<Impl> p;
 };
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-  Response,
-  mPDFFilePath,
-  mBookmarks,
-  mLinksByPage);
 
-}// namespace OpenKneeboard::PDFIPC
+}// namespace OpenKneeboard::PDFNavigation

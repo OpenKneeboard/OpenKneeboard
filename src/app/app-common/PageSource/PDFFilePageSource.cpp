@@ -26,7 +26,7 @@
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFFilePageSource.h>
-#include <OpenKneeboard/PDFIPC.h>
+#include <OpenKneeboard/PDFNavigation.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -53,16 +53,7 @@ using namespace winrt::Windows::Storage;
 namespace OpenKneeboard {
 
 struct PDFFilePageSource::Impl final {
-  struct Link {
-    D2D1_RECT_F mRect;
-    PDFIPC::Destination mDestination;
-
-    constexpr bool operator==(const Link& other) const noexcept {
-      return mDestination == other.mDestination
-        && memcmp(&mRect, &other.mRect, sizeof(mRect)) == 0;
-    }
-  };
-  using LinkHandler = CursorClickableRegions<Link>;
+  using LinkHandler = CursorClickableRegions<PDFNavigation::Link>;
 
   DXResources mDXR;
   std::filesystem::path mPath;
@@ -142,109 +133,39 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
 
 winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   auto weakThis = this->weak_from_this();
-  auto strongThis = this->shared_from_this();
 
-  if (!std::filesystem::is_regular_file(strongThis->p->mPath)) {
+  co_await winrt::resume_background();
+  auto stayingAlive = weakThis.lock();
+  if (!stayingAlive) {
     co_return;
   }
 
-  const auto tempDir = Filesystem::GetTemporaryDirectory();
-
-  std::random_device randDevice;
-  std::uniform_int_distribution<uint64_t> randDist;
-  const auto randPart = randDist(randDevice);
-  const auto pid = static_cast<uint32_t>(GetCurrentProcessId());
-
-  const auto requestPath = tempDir
-    / std::format("OpenKneeboard-{}-{:016x}-pdf-request.json", pid, randPart);
-  const auto responsePath = tempDir
-    / std::format("OpenKneeboard-{}-{:016x}-pdf-response.json", pid, randPart);
-
-  const Filesystem::ScopedDeleter requestDeleter(requestPath);
-  const Filesystem::ScopedDeleter responseDeleter(responsePath);
-
-  {
-    const PDFIPC::Request request {
-      .mPDFFilePath = to_utf8(strongThis->p->mPath),
-      .mOutputFilePath = to_utf8(responsePath),
-    };
-
-    std::ofstream(requestPath.wstring())
-      << std::setw(2) << nlohmann::json(request) << std::endl;
-  }
-
-  {
-    const auto helperPath
-      = (Filesystem::GetRuntimeDirectory() / RuntimeFiles::PDF_HELPER)
-          .wstring();
-    std::wstring mutableCommandLine
-      = std::format(L"{} {}", helperPath, requestPath.wstring());
-    mutableCommandLine.resize(mutableCommandLine.size() + 1, L'\0');
-    STARTUPINFOW startupInfo {.cb = sizeof(STARTUPINFOW)};
-    PROCESS_INFORMATION processInfo {};
-    if (!CreateProcessW(
-          helperPath.c_str(),
-          mutableCommandLine.data(),
-          nullptr,
-          nullptr,
-          false,
-          0,
-          nullptr,
-          nullptr,
-          &startupInfo,
-          &processInfo)) {
-      dprintf(
-        "PDFHelper CreateProcessW failed: {:#016x}",
-        std::bit_cast<uint32_t>(GetLastError()));
-      co_return;
-    }
-    winrt::handle processHandle {processInfo.hProcess};
-    winrt::handle threadHandle {processInfo.hThread};
-
-    co_await winrt::resume_on_signal(processHandle.get());
-  }
-
-  if (!std::filesystem::is_regular_file(responsePath)) {
-    dprint("No response from PDF helper :'(");
+  auto path = p->mPath;
+  if (!std::filesystem::is_regular_file(path)) {
     co_return;
   }
 
-  const auto response
-    = nlohmann::json::parse(std::ifstream(responsePath.wstring()))
-        .get<PDFIPC::Response>();
-
-  for (const auto& it: response.mBookmarks) {
-    strongThis->p->mBookmarks.push_back({it.mName, it.mPageIndex});
+  PDFNavigation::PDF pdf(path);
+  for (const auto& it: pdf.GetBookmarks()) {
+    p->mBookmarks.push_back({it.mName, it.mPageIndex});
   }
-  strongThis->p->mNavigationLoaded = true;
+  p->mNavigationLoaded = true;
   {
     const EventDelay delay;
-    strongThis->evAvailableFeaturesChangedEvent.Emit();
+    this->evAvailableFeaturesChangedEvent.Emit();
   }
 
-  for (const auto& ipcPageLinks: response.mLinksByPage) {
-    std::vector<Impl::Link> pageLinks;
-    pageLinks.reserve(ipcPageLinks.size());
-    for (const auto& link: ipcPageLinks) {
-      pageLinks.push_back(
-        {{
-           .left = link.mRect.mLeft,
-           .top = link.mRect.mTop,
-           .right = link.mRect.mRight,
-           .bottom = link.mRect.mBottom,
-         },
-         link.mDestination});
-    }
-
+  for (const auto& pageLinks: pdf.GetLinks()) {
     auto handler = std::make_shared<Impl::LinkHandler>(pageLinks);
-    strongThis->AddEventListener(
-      handler->evClicked, [this](EventContext ctx, const Impl::Link& link) {
+    AddEventListener(
+      handler->evClicked,
+      [this](EventContext ctx, const PDFNavigation::Link& link) {
         const auto& dest = link.mDestination;
         switch (dest.mType) {
-          case PDFIPC::DestinationType::Page:
+          case PDFNavigation::DestinationType::Page:
             this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
             break;
-          case PDFIPC::DestinationType::URI: {
+          case PDFNavigation::DestinationType::URI: {
             [=]() -> winrt::fire_and_forget {
               co_await LaunchURI(dest.mURI);
             }();
@@ -252,7 +173,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
           }
         }
       });
-    strongThis->p->mLinks.push_back(handler);
+    p->mLinks.push_back(handler);
   }
 }
 

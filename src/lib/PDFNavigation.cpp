@@ -18,20 +18,8 @@
  * USA.
  */
 
-/** PDFium does not support multithreading, and recommends multiprocessing
- * instead.
- *
- * Command line arguments: temporary file path.
- *
- * Input (in temporary file):
- *   JSON-encoded `OpenKneeboard::PDFIPC::Request`
- *
- * Output (in path indicated in input):
- *   JSON-encoded `OpenKneeboard::PDFIPC::Response`
- */
-
 #include <OpenKneeboard/DebugTimer.h>
-#include <OpenKneeboard/PDFIPC.h>
+#include <OpenKneeboard/PDFNavigation.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
@@ -41,15 +29,34 @@
 
 #include <fstream>
 #include <map>
+#include <optional>
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFOutlineDocumentHelper.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <shims/filesystem>
 
-using namespace OpenKneeboard;
-using namespace OpenKneeboard::PDFIPC;
+namespace OpenKneeboard::PDFNavigation {
 
 using PageIndexMap = std::map<QPDFObjGen, uint16_t>;
+
+struct PDF::Impl {
+  Impl() = delete;
+  Impl(const std::filesystem::path&);
+  ~Impl();
+
+  QPDF mQPDF;
+  std::optional<QPDFOutlineDocumentHelper> mOutlineDocumentHelper;
+  std::vector<QPDFPageObjectHelper> mPages;
+  PageIndexMap mPageIndices;
+  winrt::handle mFile;
+  winrt::handle mMapping;
+  void* mView = nullptr;
+};
+
+PDF::PDF(const std::filesystem::path& path) : p(new Impl(path)) {
+}
+
+PDF::~PDF() = default;
 
 static void ExtractBookmarks(
   std::vector<QPDFOutlineObjectHelper>& outlines,
@@ -88,7 +95,7 @@ static std::vector<Bookmark> ExtractBookmarks(
 static bool PushDestLink(
   QPDFObjectHandle& it,
   const PageIndexMap& pageIndices,
-  const NormalizedRect& rect,
+  const D2D1_RECT_F& rect,
   std::vector<Link>& links) {
   if (!it.hasKey("/Dest")) {
     return false;
@@ -108,7 +115,7 @@ static bool PushDestLink(
 
 static void PushURIActionLink(
   QPDFObjectHandle& action,
-  const NormalizedRect& rect,
+  const D2D1_RECT_F& rect,
   std::vector<Link>& links) {
   if (!action.hasKey("/URI")) {
     return;
@@ -129,7 +136,7 @@ static void PushGoToActionLink(
   QPDFOutlineDocumentHelper& outlineHelper,
   const PageIndexMap& pageIndices,
   QPDFObjectHandle& action,
-  const NormalizedRect& rect,
+  const D2D1_RECT_F& rect,
   std::vector<Link>& links) {
   if (!action.hasKey("/D")) {
     return;
@@ -158,7 +165,7 @@ static bool PushActionLink(
   QPDFOutlineDocumentHelper& outlineHelper,
   const PageIndexMap& pageIndices,
   QPDFObjectHandle& it,
-  const NormalizedRect& rect,
+  const D2D1_RECT_F& rect,
   std::vector<Link>& links) {
   if (!it.hasKey("/A")) {
     return false;
@@ -201,12 +208,12 @@ static std::vector<Link> ExtractLinks(
     // Convert bottom-left origin (PDF) to top-left origin (everything else,
     // including D2D)
     const auto pdfRect = annotation.getRect();
-    const NormalizedRect linkRect {
-      .mLeft = static_cast<float>(pdfRect.llx - pageRect.llx) / pageWidth,
-      .mTop
+    const D2D1_RECT_F linkRect {
+      .left = static_cast<float>(pdfRect.llx - pageRect.llx) / pageWidth,
+      .top
       = 1.0f - (static_cast<float>(pdfRect.ury - pageRect.lly) / pageHeight),
-      .mRight = static_cast<float>(pdfRect.urx - pageRect.llx) / pageWidth,
-      .mBottom
+      .right = static_cast<float>(pdfRect.urx - pageRect.llx) / pageWidth,
+      .bottom
       = 1.0f - (static_cast<float>(pdfRect.lly - pageRect.lly) / pageHeight),
     };
 
@@ -236,45 +243,17 @@ static std::vector<std::vector<Link>> ExtractLinks(
   return allLinks;
 }
 
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
-  DPrintSettings::Set({
-    .prefix = "OpenKneeboard-PDF-Helper",
-  });
-
-  int argc = 0;
-  auto argv = CommandLineToArgvW(commandLine, &argc);
-
-  if (argc != 1) {
-    dprintf("Expected exactly 1 argument, got {}", argc);
-    return 1;
+PDF::Impl::Impl(const std::filesystem::path& path) {
+  if (!std::filesystem::is_regular_file(path)) {
+    dprintf(L"Can't find PDF file {}", path.wstring());
+    return;
   }
 
-  const std::filesystem::path requestPath(argv[0]);
-  dprintf(L"Request file: {}", requestPath.wstring());
+  DebugTimer initTimer("PDF Init");
 
-  if (!std::filesystem::is_regular_file(requestPath)) {
-    dprint("Request file does not exist.");
-    return 2;
-  }
-
-  const auto request
-    = nlohmann::json::parse(std::ifstream(requestPath.wstring()))
-        .get<Request>();
-
-  const std::filesystem::path pdfPath(
-    std::wstring_view {winrt::to_hstring(request.mPDFFilePath)});
-
-  if (!std::filesystem::is_regular_file(pdfPath)) {
-    dprintf(L"Can't find PDF file {}", pdfPath.wstring());
-    return 3;
-  }
-
-  DebugTimer totalTimer(std::format("Total ({})", to_utf8(pdfPath.filename())));
-  DebugTimer initTimer("Init");
-
-  const auto fileSize = std::filesystem::file_size(pdfPath);
-  const auto wpath = pdfPath.wstring();
-  winrt::handle file {CreateFileW(
+  const auto fileSize = std::filesystem::file_size(path);
+  const auto wpath = path.wstring();
+  mFile = {CreateFileW(
     wpath.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ,
@@ -282,46 +261,51 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
     OPEN_EXISTING,
     FILE_ATTRIBUTE_NORMAL,
     NULL)};
-  if (!file) {
+  if (!mFile) {
     dprint("Failed to open PDF with CreateFileW");
-    return 4;
+    return;
   }
-  winrt::handle mapping {CreateFileMappingW(
-    file.get(),
+  mMapping = {CreateFileMappingW(
+    mFile.get(),
     nullptr,
     PAGE_READONLY,
     fileSize >> 32,
     static_cast<DWORD>(fileSize),
     nullptr)};
-  if (!mapping) {
+  if (!mMapping) {
     dprint("Failed to create file mapping of PDF");
-    return 5;
+    return;
   }
-  auto fileView = MapViewOfFile(mapping.get(), FILE_MAP_READ, 0, 0, fileSize);
-  scope_guard fileViewGuard([fileView]() { UnmapViewOfFile(fileView); });
+  mView = MapViewOfFile(mMapping.get(), FILE_MAP_READ, 0, 0, fileSize);
 
-  QPDF qpdf;
-  const auto utf8Path = to_utf8(pdfPath);
-  qpdf.processMemoryFile(
-    utf8Path.c_str(), reinterpret_cast<const char*>(fileView), fileSize);
-  auto pages = QPDFPageDocumentHelper(qpdf).getAllPages();
-  PageIndexMap pageIndices;
-  for (const auto& page: pages) {
-    pageIndices[page.getObjectHandle().getObjGen()] = pageIndices.size();
+  const auto utf8Path = to_utf8(path);
+  mQPDF.processMemoryFile(
+    utf8Path.c_str(), reinterpret_cast<const char*>(mView), fileSize);
+  mPages = QPDFPageDocumentHelper(mQPDF).getAllPages();
+  for (const auto& page: mPages) {
+    mPageIndices[page.getObjectHandle().getObjGen()] = mPageIndices.size();
   }
-  QPDFOutlineDocumentHelper outlineHelper(qpdf);
-
-  initTimer.End();
-
-  const Response response {
-    .mPDFFilePath = request.mPDFFilePath,
-    .mBookmarks = ExtractBookmarks(outlineHelper, pageIndices),
-    .mLinksByPage = ExtractLinks(outlineHelper, pages, pageIndices),
-  };
-
-  std::ofstream output(
-    std::wstring {winrt::to_hstring(request.mOutputFilePath)});
-  output << std::setw(2) << nlohmann::json(response) << std::endl;
-
-  return 0;
+  mOutlineDocumentHelper.emplace(mQPDF);
 }
+
+PDF::Impl::~Impl() {
+  if (mView) {
+    UnmapViewOfFile(mView);
+  }
+}
+
+std::vector<Bookmark> PDF::GetBookmarks() {
+  if (p->mPages.empty()) {
+    return {};
+  }
+  return ExtractBookmarks(*p->mOutlineDocumentHelper, p->mPageIndices);
+}
+
+std::vector<std::vector<Link>> PDF::GetLinks() {
+  if (p->mPages.empty()) {
+    return {};
+  }
+  return ExtractLinks(*p->mOutlineDocumentHelper, p->mPages, p->mPageIndices);
+}
+
+}// namespace OpenKneeboard::PDFNavigation

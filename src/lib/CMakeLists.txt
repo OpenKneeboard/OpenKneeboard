@@ -46,12 +46,20 @@ target_link_libraries(
   _libheaders
 )
 
-add_library(OpenKneeboard-PDFIPC INTERFACE)
+add_library(OpenKneeboard-PDFNavigation STATIC PDFNavigation.cpp)
 target_link_libraries(
-  OpenKneeboard-PDFIPC
-  INTERFACE
+  OpenKneeboard-PDFNavigation
+  PUBLIC
   _libheaders
-  ThirdParty::JSON
+  OpenKneeboard-shims
+)
+target_link_libraries(
+  OpenKneeboard-PDFNavigation
+  PRIVATE
+  OpenKneeboard-DebugTimer
+  OpenKneeboard-UTF8
+  OpenKneeboard-dprint
+  ThirdParty::QPDF
 )
 
 add_library(OpenKneeboard-DebugTimer STATIC DebugTimer.cpp)

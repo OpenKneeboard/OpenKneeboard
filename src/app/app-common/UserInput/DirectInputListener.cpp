@@ -93,6 +93,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
   if (!(mDIDevice && mEventHandle)) {
     co_return;
   }
+
   auto cancelled = co_await winrt::get_cancellation_token();
   cancelled.callback([this]() {
     /** SPAMMM */
