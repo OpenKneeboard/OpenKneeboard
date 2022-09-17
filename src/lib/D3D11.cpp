@@ -23,6 +23,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <shims/winrt/base.h>
+#include <vrperfkit/d3d11_helper.h>
 
 namespace OpenKneeboard::D3D11 {
 
@@ -33,6 +34,12 @@ void CopyTextureWithTint(
   DirectX::FXMVECTOR tint) {
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
+
+  vrperfkit::D3D11State state {};
+  vrperfkit::StoreD3D11State(ctx.get(), state);
+  scope_guard restoreState(
+    [&]() { vrperfkit::RestoreD3D11State(ctx.get(), state); });
+
   ctx->ClearRenderTargetView(dest, DirectX::Colors::Transparent);
   D3D11_VIEWPORT viewport {
     0.0f,
@@ -60,6 +67,12 @@ void DrawTextureWithTint(
   DirectX::FXMVECTOR tint) {
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
+
+  vrperfkit::D3D11State state {};
+  vrperfkit::StoreD3D11State(ctx.get(), state);
+  scope_guard restoreState(
+    [&]() { vrperfkit::RestoreD3D11State(ctx.get(), state); });
+
   D3D11_VIEWPORT viewport {
     0.0f,
     0.0f,

@@ -24,6 +24,7 @@ include(semver.cmake)
 include(system.cmake)
 include(wintab.cmake)
 include(wmm.cmake)
+include(vrperfkit.cmake)
 include(zlib.cmake)
 
 include(libzip.cmake)
