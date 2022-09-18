@@ -1,8 +1,8 @@
 set(LIB "lib/win64/openvr_api.lib")
 ExternalProject_Add(
   openvrBuild
-  URL "https://github.com/ValveSoftware/openvr/archive/refs/tags/v1.16.8.zip"
-  URL_HASH "SHA256=84b99bbdfe00898d74d15d3e127d9236484f581304fff9ebc5317f4700ab1cee"
+  URL "https://github.com/ValveSoftware/openvr/archive/refs/tags/v1.23.7.zip"
+  URL_HASH "SHA256=7ffc01fcda5914cdba555074aa334c2c30c4b07c576d651460420f26d9fb7c6a"
   BUILD_BYPRODUCTS "<SOURCE_DIR>/${LIB}"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
