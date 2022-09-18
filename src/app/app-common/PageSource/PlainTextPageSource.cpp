@@ -187,17 +187,38 @@ void PlainTextPageSource::RenderPage(
   }
 }
 
-void PlainTextPageSource::ClearText() {
+bool PlainTextPageSource::IsEmpty() const {
   std::unique_lock lock(mMutex);
-  mMessages.clear();
-  mCurrentPageLines.clear();
-  mCompletePages.clear();
+  return mMessages.empty() && mCurrentPageLines.empty();
+}
+
+void PlainTextPageSource::ClearText() {
+  {
+    std::unique_lock lock(mMutex);
+    if (IsEmpty()) {
+      return;
+    }
+    mMessages.clear();
+    mCurrentPageLines.clear();
+    mCompletePages.clear();
+  }
+  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
 void PlainTextPageSource::SetText(utf8_string_view text) {
   std::unique_lock lock(mMutex);
   this->ClearText();
   this->PushMessage(text);
+}
+
+void PlainTextPageSource::SetPlaceholderText(utf8_string_view text) {
+  if (std::string_view {text} == mPlaceholderText) {
+    return;
+  }
+  mPlaceholderText = std::string {text};
+  if (IsEmpty()) {
+    this->evContentChangedEvent.Emit(ContentChangeType::Modified);
+  }
 }
 
 void PlainTextPageSource::PushMessage(utf8_string_view message) {

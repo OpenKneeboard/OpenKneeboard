@@ -38,8 +38,10 @@ class PlainTextPageSource final : public IPageSource {
   PlainTextPageSource(const DXResources&, utf8_string_view placeholderText);
   virtual ~PlainTextPageSource();
 
+  bool IsEmpty() const;
   void ClearText();
   void SetText(utf8_string_view text);
+  void SetPlaceholderText(utf8_string_view text);
   void PushMessage(utf8_string_view message);
   void PushFullWidthSeparator();
   void EnsureNewPage();
