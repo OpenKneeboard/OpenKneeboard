@@ -1,7 +1,7 @@
 ExternalProject_Add(
   OpenXRSDKSource
-  URL "https://github.com/KhronosGroup/OpenXR-SDK/archive/refs/tags/release-1.0.22.zip"
-  URL_HASH "SHA256=f0bfc275754f486f995845898002db2bf3225bff563782f66e86906183c702c3"
+  URL "https://github.com/KhronosGroup/OpenXR-SDK/archive/refs/tags/release-1.0.25.zip"
+  URL_HASH "SHA256=a4d3b8877b2ab1fd0ccddeced8e5f7fe7940cf48793bcc29fb0611c6a53af65e"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
