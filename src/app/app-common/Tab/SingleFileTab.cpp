@@ -95,6 +95,7 @@ void SingleFileTab::Reload() {
   auto delegate = FilePageSource::Create(mDXR, mKneeboard, mPath);
   if (!delegate) {
     this->SetDelegates({});
+    return;
   }
 
   if (std::dynamic_pointer_cast<PDFFilePageSource>(delegate)) {

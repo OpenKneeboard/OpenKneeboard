@@ -65,6 +65,15 @@ std::shared_ptr<IPageSource> FilePageSource::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) noexcept {
+  if (!std::filesystem::exists(path)) {
+    dprintf("FilePageSource file '{}' does not exist", path);
+    return {nullptr};
+  }
+  if (!std::filesystem::is_regular_file(path)) {
+    dprintf("FilePageSource file '{}' is not a regular file", path);
+    return {nullptr};
+  }
+
   const auto extension = path.extension().wstring();
 
   if (u_strcasecmp(extension.c_str(), L".pdf", U_FOLD_CASE_DEFAULT) == 0) {
