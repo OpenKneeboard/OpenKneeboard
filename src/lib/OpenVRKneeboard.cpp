@@ -391,7 +391,7 @@ bool OpenVRKneeboard::Run(std::stop_token stopToken) {
     if (
       IsSteamVRRunning() && vr::VR_IsHmdPresent() && this->InitializeOpenVR()) {
       this->Tick();
-      std::this_thread::sleep_for(frameSleep);
+      this->mIVROverlay->WaitFrameSync(frameSleep.count());
       continue;
     }
 
