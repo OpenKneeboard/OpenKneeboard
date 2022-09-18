@@ -104,6 +104,12 @@ winrt::fire_and_forget PlainTextFilePageSource::SubscribeToChanges() noexcept {
 }
 
 void PlainTextFilePageSource::OnFileModified() noexcept {
+  if (!std::filesystem::is_regular_file(mPath)) {
+    mPageSource->SetText({});
+    mPageSource->SetPlaceholderText(_("[file deleted]"));
+    this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+    return;
+  }
   const auto newWriteTime = std::filesystem::last_write_time(mPath);
   if (newWriteTime == mLastWriteTime) {
     return;
@@ -111,6 +117,7 @@ void PlainTextFilePageSource::OnFileModified() noexcept {
 
   mLastWriteTime = newWriteTime;
   mPageSource->SetText(this->GetFileContent());
+  mPageSource->SetPlaceholderText(_("[empty file]"));
   this->evContentChangedEvent.Emit(ContentChangeType::Modified);
 }
 

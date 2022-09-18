@@ -68,6 +68,9 @@ class utf8_string_view final {
   std::string_view mView;
 
  public:
+  constexpr utf8_string_view() {
+  }
+
   constexpr utf8_string_view(std::string_view in) : mView(in) {
   }
 
