@@ -155,7 +155,10 @@ bool InjectDll(HANDLE process, const std::filesystem::path& _dll) {
   DWORD loadLibraryReturn;
   GetExitCodeThread(thread.get(), &loadLibraryReturn);
   if (loadLibraryReturn == 0) {
-    dprintf("Injecting {} failed :'( - {:#x}", dll.string(), loadLibraryReturn);
+    dprintf(
+      "Injecting {} failed :'( - {:#x}",
+      dll.string(),
+      std::bit_cast<uint32_t>(loadLibraryReturn));
     return false;
   }
 
@@ -240,7 +243,7 @@ void GameInjector::CheckProcess(
           L"Failed to OpenProcess() for PID {} ({}): {:#x}",
           processID,
           exeBaseName,
-          GetLastError());
+          std::bit_cast<uint32_t>(GetLastError()));
         return;
       }
 

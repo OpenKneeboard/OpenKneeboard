@@ -212,7 +212,10 @@ void LayerTextureReadResources::Populate(
     DXGI_SHARED_RESOURCE_READ,
     IID_PPV_ARGS(mTexture.put()));
   if (!mTexture) {
-    dprintf(L"Failed to open shared texture {}: {:x}", textureName, result);
+    dprintf(
+      L"Failed to open shared texture {}: {:#x}",
+      textureName,
+      std::bit_cast<uint32_t>(result));
     return;
   }
   dprintf(L"Opened shared texture {}", textureName);
