@@ -1,14 +1,14 @@
 <AppInstaller
   xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
-  Version="2022.9.18.2"
+  Version="2022.9.18.3"
   Uri="https://go.openkneeboard.com/preview.appinstaller">
 
   <MainPackage
     Name="FredEmmott.Self.OpenKneeboard"
     Publisher="CN=Frederick Emmott, O=Frederick Emmott, L=Austin, S=Texas, C=US"
     ProcessorArchitecture="x64"
-    Version="1.2.0.794"
-    Uri="https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.0/OpenKneeboard-v1.2.0.msix"
+    Version="1.2.1.801"
+    Uri="https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.1/OpenKneeboard-v1.2.1.msix"
   />
 
   <UpdateSettings>
