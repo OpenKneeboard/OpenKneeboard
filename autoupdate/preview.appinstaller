@@ -7,7 +7,7 @@
     Name="FredEmmott.Self.OpenKneeboard"
     Publisher="CN=Frederick Emmott, O=Frederick Emmott, L=Austin, S=Texas, C=US"
     Version="1.2.0.794"
-    Uri="https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.1/OpenKneeboard-v1.2.1.msix"
+    Uri="https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.0/OpenKneeboard-v1.2.0.msix"
   />
 
   <UpdateSettings>
