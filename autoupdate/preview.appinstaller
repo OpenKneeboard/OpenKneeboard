@@ -1,6 +1,6 @@
 <AppInstaller
   xmlns="http://schemas.microsoft.com/appx/appinstaller/2018"
-  Version="2022.9.18.1"
+  Version="2022.9.18.2"
   Uri="https://go.openkneeboard.com/preview.appinstaller">
 
   <MainBundle
