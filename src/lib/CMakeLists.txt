@@ -119,7 +119,13 @@ target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
 target_link_libraries(OpenKneeboard-RuntimeFiles PRIVATE OpenKneeboard-dprint)
 
 add_library(OpenKneeboard-SHM STATIC SHM.cpp)
-target_link_libraries(OpenKneeboard-SHM PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
+target_link_libraries(
+  OpenKneeboard-SHM
+  PRIVATE
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+  OpenKneeboard-version
+)
 target_link_libraries(OpenKneeboard-SHM PUBLIC _libheaders)
 
 add_library(OpenKneeboard-dprint STATIC dprint.cpp)
@@ -192,6 +198,7 @@ add_custom_target(
   -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
   -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
   -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+  -DVERSION_BUILD=${CMAKE_PROJECT_VERSION_TWEAK}
   -DRELEASE_NAME=${RELEASE_NAME}
   "-DINPUT_CPP_FILE=${CMAKE_CURRENT_SOURCE_DIR}/version.cpp.in"
   "-DOUTPUT_CPP_FILE=${VERSION_CPP_FILE}"

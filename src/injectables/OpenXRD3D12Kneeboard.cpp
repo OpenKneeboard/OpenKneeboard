@@ -121,7 +121,8 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   bool doubleBuffer = false;
   if (
     IsVarjoRuntime()
-    && (flags & VRRenderConfig::Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER)) {
+    && static_cast<bool>(
+      flags & VRRenderConfig::Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER)) {
     dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
     doubleBuffer = true;
   }

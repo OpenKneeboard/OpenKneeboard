@@ -23,12 +23,13 @@
 
 namespace OpenKneeboard::Version {
 
-extern const unsigned int Major = @VERSION_MAJOR@;
-extern const unsigned int Minor = @VERSION_MINOR@;
-extern const unsigned int Patch = @VERSION_PATCH@;
-extern const unsigned int Build = @VERSION_BUILD@;
+extern const uint16_t Major = @VERSION_MAJOR@;
+extern const uint16_t Minor = @VERSION_MINOR@;
+extern const uint16_t Patch = @VERSION_PATCH@;
+extern const uint16_t Build = @VERSION_BUILD@;
 
-extern const char* CommitID = "@COMMIT_ID@";
+extern const std::string_view CommitIDA { "@COMMIT_ID@" };
+extern const std::wstring_view CommitIDW { L"@COMMIT_ID@" };
 extern const std::string_view ReleaseName { "@RELEASE_NAME@" };
 extern const std::time_t CommitUnixTimestamp = @COMMIT_UNIX_TIMESTAMP@;
 extern const char* ModifiedFiles = "@MODIFIED_FILES@";

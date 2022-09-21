@@ -56,7 +56,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
 
-  auto snapshot = mSHM.MaybeGet();
+  auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::NonVRD3D11);
   if (!snapshot.IsValid()) {
     return passthrough();
   }

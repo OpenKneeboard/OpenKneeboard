@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/bitflags.h>
 #include <Windows.h>
 
 #include <memory>
@@ -27,18 +28,31 @@
 #include <shims/filesystem>
 #include <stop_token>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace OpenKneeboard {
 
 struct GameInstance;
 
+enum class InjectedDlls : uint32_t {
+  None = 0,
+  TabletProxy = 1,
+  AutoDetection = 1 << 1,
+  NonVRD3D11 = 1 << 2,
+  OculusD3D11 = 1 << 3,
+  OculusD3D12 = 1 << 4,
+};
+
+template <>
+constexpr bool is_bitflags_v<InjectedDlls> = true;
+
 class GameInjector final {
  public:
   GameInjector();
   bool Run(std::stop_token);
 
-  Event<std::shared_ptr<GameInstance>> evGameChanged;
+  Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
  private:
@@ -46,12 +60,13 @@ class GameInjector final {
   std::vector<std::shared_ptr<GameInstance>> mGames;
   std::mutex mGamesMutex;
 
-  std::filesystem::path mMarkerDll;
   std::filesystem::path mTabletProxyDll;
   std::filesystem::path mOverlayAutoDetectDll;
   std::filesystem::path mOverlayNonVRD3D11Dll;
   std::filesystem::path mOverlayOculusD3D11Dll;
   std::filesystem::path mOverlayOculusD3D12Dll;
+
+  std::unordered_map<DWORD, InjectedDlls> mProcessCache;
 };
 
 }// namespace OpenKneeboard

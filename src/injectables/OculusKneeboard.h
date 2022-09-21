@@ -72,6 +72,8 @@ class OculusKneeboard::Renderer {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&)
     = 0;
+
+  virtual SHM::ConsumerKind GetConsumerKind() const = 0;
 };
 
 }// namespace OpenKneeboard

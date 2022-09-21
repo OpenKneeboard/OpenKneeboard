@@ -41,6 +41,7 @@ class CursorRenderer;
 class KneeboardState;
 class ITab;
 class TabAction;
+struct GameInstance;
 struct DXResources;
 
 class InterprocessRenderer final : private EventReceiver {
@@ -101,6 +102,8 @@ class InterprocessRenderer final : private EventReceiver {
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   std::unique_ptr<CursorRenderer> mCursorRenderer;
 
+  std::shared_ptr<GameInstance> mCurrentGame;
+
   void RenderNow();
   void Render(Layer&);
   void RenderError(Layer&, utf8_string_view tabTitle, utf8_string_view message);
@@ -116,6 +119,7 @@ class InterprocessRenderer final : private EventReceiver {
 
   void OnLayoutChanged(const std::weak_ptr<IKneeboardView>&);
   void OnCursorEvent(const std::weak_ptr<IKneeboardView>&, const CursorEvent&);
+  void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 };
 
 }// namespace OpenKneeboard

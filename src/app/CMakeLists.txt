@@ -7,7 +7,7 @@ set(
   "$<TARGET_FILE:OpenKneeboard-Launch-WindowsApp>"
   "$<TARGET_FILE:ThirdParty::Lua>"
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
-  "${CMAKE_SOURCE_DIR}/src/injectables/OpenKneeboard-OpenXR.json"
+  "${CMAKE_BINARY_DIR}/src/injectables/OpenKneeboard-OpenXR.json"
   "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>>"
   "${CMAKE_SOURCE_DIR}/docs/Quick Start.pdf"
 )
@@ -15,8 +15,7 @@ install(FILES "${RUNTIME_FILES}" TYPE BIN)
 
 set(
   DLL_TARGETS
-  OpenKneeboard-Injection-Bootstrapper
-  OpenKneeboard-AutoInject-Marker
+  OpenKneeboard-AutoDetect
   OpenKneeboard-TabletProxy
   OpenKneeboard-nonvr-d3d11
   OpenKneeboard-oculus-d3d11

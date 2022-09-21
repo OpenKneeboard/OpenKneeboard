@@ -21,10 +21,27 @@
 
 #include <windows.h>
 
+#include <cinttypes>
 #include <optional>
 
 namespace OpenKneeboard {
 
+#pragma pack(push)
+struct MainWindowInfo {
+  struct VersionInfo {
+    uint16_t mMajor {0};
+    uint16_t mMinor {0};
+    uint16_t mPatch {0};
+    uint16_t mBuild {0};
+    constexpr auto operator<=>(const VersionInfo&) const = default;
+  };
+
+  HWND mHwnd {NULL};
+  VersionInfo mVersion {};
+};
+#pragma pack(pop)
+
+std::optional<MainWindowInfo> GetMainWindowInfo();
 std::optional<HWND> GetMainHWND();
 
-}
+}// namespace OpenKneeboard

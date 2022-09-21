@@ -19,36 +19,16 @@ game's behavior so that the game renders the overlay.
 The vast majority of the injected DLLs in OpenKneeboard are renderers, however
 there are a small number of special ones:
 
-### OpenKneeboard-AutoInject-Marker
+### OpenKneeboard-AutoDetect
 
-Once a game has been configured in the
-main OpenKneeboard app, it will automatically attempt to inject OpenKneeboard
-whenever it sees that game is running. This DLL is also injected, and does
-essentially nothing - however, if it is loaded, OpenKneeboard will not
-to attempt to load anything else.  It's just a marker that the app uses to
-keep track of which apps have already been injected, to avoid injecting
-twice, in a way that keeps working reliably even if the main OpenKneeboard
-app has been restarted.
+This is the default injectable. It intercepts every known API to detect which are in use. Once it's received 30 frames, it will load an actual implementation if there is one.
 
-### OpenKneeboard-Injection-Bootstrapper
+This is also the only injectable that hooks OpenVR/SteamVR: if it
+detects SteamVR is in use, it will will not load any implementation, as the main OpenKneeboard application should be using the OpenVR overlay APIs.
 
-This is the default injectable. It intercepts every known API to detect which
-are in use. Once it's received 30 frames, it will load an actual implementation
-if there is one, and unload itself. It will unload itself even if there is no
-concrete implementation.
+For example, if it detects Oculus and Direct3D 12 in use, it will load `OpenKneeboard-oculus-d3d12`; if it detects Direct3D 11, but does not detect any other APIs, it will load `OpenKneeboard-nonvr-d3d11`.
 
-The bootstrapper is also the only injectable that hooks OpenVR/SteamVR: if it
-detects SteamVR is in use, it will always unload itself without loading another
-implementation, as the main OpenKneeboard application should be using the
-OpenVR overlay APIs.
-
-For example, if it detects Oculus and Direct3D 12 in use, it will load
-`OpenKneeboard-oculus-d3d12`; if it detects Direct3D 11, but does not detect
-any other APIs, it will load `OpenKneeboard-nonvr-d3d11`.
-
-If both Direct3D 11 and Direct3D 12 are detected, Direct3D 12 takes priority:
-it is likely that the game is a Direct3D 12 application using
-https://docs.microsoft.com/en-us/windows/win32/direct3d12/direct3d-11-on-12
+If both Direct3D 11 and Direct3D 12 are detected, Direct3D 12 takes priority: it is likely that the game is a Direct3D 12 application using https://docs.microsoft.com/en-us/windows/win32/direct3d12/direct3d-11-on-12
 
 ## OpenKneeboard-TabletProxy
 

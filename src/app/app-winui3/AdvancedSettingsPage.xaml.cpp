@@ -63,7 +63,7 @@ namespace {
 using Flags = VRRenderConfig::Flags;
 
 bool TestFlag(Flags flag) noexcept {
-  return gKneeboard->GetVRConfig().mFlags & flag;
+  return static_cast<bool>(gKneeboard->GetVRConfig().mFlags & flag);
 }
 
 void SetFlag(Flags flag, bool value) noexcept {

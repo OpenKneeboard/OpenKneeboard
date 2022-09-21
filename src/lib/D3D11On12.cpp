@@ -108,7 +108,7 @@ RenderTargetViewFactory::RenderTargetViewFactory(
   Flags flags)
   : mDeviceResources(deviceResources), mTexture12(texture12) {
   D3D11_RESOURCE_FLAGS resourceFlags11 {};
-  if (!(flags & Flags::DoubleBuffer)) {
+  if (!static_cast<bool>(flags & Flags::DoubleBuffer)) {
     resourceFlags11.BindFlags = D3D11_BIND_RENDER_TARGET;
   }
   winrt::check_hresult(deviceResources.m11on12->CreateWrappedResource(
@@ -118,7 +118,7 @@ RenderTargetViewFactory::RenderTargetViewFactory(
     D3D12_RESOURCE_STATE_COMMON,
     IID_PPV_ARGS(mTexture11.put())));
 
-  if (flags & Flags::DoubleBuffer) {
+  if (static_cast<bool>(flags & Flags::DoubleBuffer)) {
     D3D11_TEXTURE2D_DESC textureDesc {
       .Width = TextureWidth,
       .Height = TextureHeight,

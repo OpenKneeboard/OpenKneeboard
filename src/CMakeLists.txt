@@ -41,6 +41,7 @@ function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC
     -DVERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
     -DVERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
     -DVERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+    -DVERSION_BUILD=${CMAKE_PROJECT_VERSION_TWEAK}
     "-DACTIVE_BUILD_MODE=$<CONFIG>"
     "-DINPUT_RC_FILE=${CMAKE_SOURCE_DIR}/src/version.rc.in"
     "-DOUTPUT_RC_FILE=${OUTPUT_RC_FILE}"
@@ -68,6 +69,11 @@ function(add_module_library TARGET)
   add_library(${TARGET} MODULE ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.dll)
   sign_target(${TARGET})
+  set_target_properties(
+    ${TARGET}
+    PROPERTIES
+    OUTPUT_NAME "${TARGET}-${CMAKE_PROJECT_VERSION}"
+  )
 endfunction()
 
 add_subdirectory(lib)

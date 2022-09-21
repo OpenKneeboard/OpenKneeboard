@@ -25,6 +25,7 @@
 #endif
 // clang-format on
 
+#include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
@@ -126,7 +127,7 @@ MainWindow::MainWindow() {
     nullptr,
     PAGE_READWRITE,
     /* high bits of size = */ 0,
-    sizeof(HWND),
+    sizeof(MainWindowInfo),
     hwndMappingName.c_str()));
   if (!mHwndFile) {
     const auto err = GetLastError();
@@ -136,9 +137,13 @@ MainWindow::MainWindow() {
       std::bit_cast<uint32_t>(err));
     return;
   }
-  void* mapping
-    = MapViewOfFile(mHwndFile.get(), FILE_MAP_WRITE, 0, 0, sizeof(HWND));
-  *reinterpret_cast<HWND*>(mapping) = mHwnd;
+  void* mapping = MapViewOfFile(
+    mHwndFile.get(), FILE_MAP_WRITE, 0, 0, sizeof(MainWindowInfo));
+  *reinterpret_cast<MainWindowInfo*>(mapping) = {
+    .mHwnd = mHwnd,
+    .mVersion
+    = {Version::Major, Version::Minor, Version::Patch, Version::Build},
+  };
   UnmapViewOfFile(mapping);
 
   UpdateTitleBarMargins(nullptr, nullptr);

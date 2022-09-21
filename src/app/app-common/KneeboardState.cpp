@@ -66,6 +66,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+  AddEventListener(mGamesList->evGameChangedEvent, this->evGameChangedEvent);
   mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.Tabs);
   mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(mDXResources, this);
@@ -204,7 +205,7 @@ void KneeboardState::OnUserAction(UserAction action) {
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
       auto& flags = this->mVRConfig.mFlags;
-      if (flags & VRRenderConfig::Flags::FORCE_ZOOM) {
+      if (static_cast<bool>(flags & VRRenderConfig::Flags::FORCE_ZOOM)) {
         flags &= ~VRRenderConfig::Flags::FORCE_ZOOM;
       } else {
         flags |= VRRenderConfig::Flags::FORCE_ZOOM;

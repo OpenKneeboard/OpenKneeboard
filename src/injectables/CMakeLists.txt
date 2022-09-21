@@ -60,9 +60,6 @@ target_link_libraries(
   openvr-headers
   OpenKneeboard-dprint)
 
-# This is a marker library that tells the main app not to inject the DLL
-add_module_library(OpenKneeboard-AutoInject-Marker AutoInjectMarker.cpp)
-
 add_module_library(OpenKneeboard-nonvr-d3d11 NonVRD3D11Kneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-nonvr-d3d11
@@ -136,11 +133,16 @@ target_link_libraries(
   OpenKneeboard-version
 )
 
-install(FILES OpenKneeboard-OpenXR.json TYPE BIN)
+file(
+  GENERATE
+  OUTPUT "OpenKneeboard-OpenXR.json"
+  INPUT "OpenKneeboard-OpenXR.json.in"
+  NEWLINE_STYLE UNIX
+)
 
-add_module_library(OpenKneeboard-Injection-Bootstrapper InjectionBootstrapper.cpp)
+add_module_library(OpenKneeboard-AutoDetect InjectionBootstrapper.cpp)
 target_link_libraries(
-  OpenKneeboard-Injection-Bootstrapper
+  OpenKneeboard-AutoDetect
   PRIVATE
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-version

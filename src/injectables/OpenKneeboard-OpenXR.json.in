@@ -2,7 +2,7 @@
   "file_format_version": "1.0.0",
   "api_layer": {
     "name": "XR_APILAYER_FREDEMMOTT_OpenKneeboard",
-    "library_path": ".\\OpenKneeboard-OpenXR.dll",
+    "library_path": ".\\$<TARGET_FILE_NAME:OpenKneeboard-OpenXR>",
     "api_version": "1.0",
     "implementation_version": "1",
     "description": "OpenKneeboard - https://github.com/OpenKneeboard/OpenKneeboard",

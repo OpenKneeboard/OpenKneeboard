@@ -21,6 +21,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/shm.h>
+#include <OpenKneeboard/version.h>
 #include <Windows.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
@@ -45,8 +46,6 @@ enum class HeaderFlags : ULONG {
 
 #pragma pack(push)
 struct Header final {
-  static constexpr uint16_t VERSION = 2;
-
   uint32_t mSequenceNumber = 0;
   uint64_t mSessionID = CreateSessionID();
   HeaderFlags mFlags;
@@ -133,14 +132,13 @@ auto SHMPath() {
     return sCache;
   }
   sCache = std::format(
-    L"{}/h{}-c{}-lc{}-vrc{}-vrlc{}-fc{}-s{:x}",
+    L"{}/{}.{}.{}.{}-{}-s{:x}",
     ProjectNameW,
-    Header::VERSION,
-    Config::VERSION,
-    LayerConfig::VERSION,
-    VRRenderConfig::VERSION,
-    VRLayerConfig::VERSION,
-    FlatConfig::VERSION,
+    Version::Major,
+    Version::Minor,
+    Version::Patch,
+    Version::Build,
+    Version::CommitIDW.substr(0, 7),
     SHM_SIZE);
   return sCache;
 }
@@ -232,11 +230,13 @@ std::wstring SharedTextureName(
   uint8_t layerIndex,
   uint32_t sequenceNumber) {
   return std::format(
-    L"Local\\{}-texture-hv{}-cv{}-lv{}-s{:x}-l{}-b{}",
+    L"Local\\{}-{}.{}.{}.{}-{}-texture-s{:x}-l{}-b{}",
     ProjectNameW,
-    Header::VERSION,
-    Config::VERSION,
-    LayerConfig::VERSION,
+    Version::Major,
+    Version::Minor,
+    Version::Patch,
+    Version::Build,
+    Version::CommitIDW.substr(0, 7),
     sessionID,
     layerIndex,
     sequenceNumber % TextureCount);
@@ -374,7 +374,8 @@ SharedTexture11 Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
 }
 
 bool Snapshot::IsValid() const {
-  return mHeader && (mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED)
+  return mHeader
+    && static_cast<bool>(mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED)
     && mHeader->mLayerCount > 0;
 }
 
@@ -478,16 +479,21 @@ Reader::~Reader() {
 }
 
 Reader::operator bool() const {
-  return p && (p->mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED);
+  return p
+    && static_cast<bool>(p->mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED);
 }
 
 Writer::operator bool() const {
   return (bool)p;
 }
 
-Snapshot Reader::MaybeGet() const {
+Snapshot Reader::MaybeGet(ConsumerKind kind) const {
   Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_CREATE_FALSEY);
   if (!lock) {
+    return {};
+  }
+
+  if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
     return {};
   }
 
@@ -544,6 +550,17 @@ uint32_t Reader::GetFrameCountForMetricsOnly() const {
     return {};
   }
   return p->mHeader->mSequenceNumber;
+}
+
+ConsumerPattern::ConsumerPattern() = default;
+ConsumerPattern::ConsumerPattern(
+  std::underlying_type_t<ConsumerKind> consumerKindMask)
+  : mKindMask(consumerKindMask) {
+}
+
+bool ConsumerPattern::Matches(ConsumerKind kind) const {
+  return (mKindMask & static_cast<std::underlying_type_t<ConsumerKind>>(kind))
+    == mKindMask;
 }
 
 }// namespace OpenKneeboard::SHM

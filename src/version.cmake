@@ -46,25 +46,9 @@ else()
 endif()
 
 if(DEFINED ENV{GITHUB_RUN_NUMBER})
-  set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
   set(IS_GITHUB_ACTIONS_BUILD "true")
   set(BUILD_TYPE "gha")
 else()
-  if(MATCHING_TAG)
-    execute_process(
-      COMMAND git rev-list --count "${LATEST_GIT_TAG}..HEAD"
-      OUTPUT_VARIABLE VERSION_BUILD
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    )
-  else()
-    execute_process(
-      COMMAND git rev-list --count HEAD
-      OUTPUT_VARIABLE VERSION_BUILD
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    )
-  endif()
   set(IS_GITHUB_ACTIONS_BUILD "false")
   set(BUILD_TYPE "local")
 endif()

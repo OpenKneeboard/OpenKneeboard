@@ -24,6 +24,7 @@
 #include <OpenKneeboard/DoodleSettings.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/FlatConfig.h>
+#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
 #include <shims/winrt/base.h>
@@ -46,6 +47,7 @@ class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
 struct GameEvent;
+struct GameInstance;
 class GameEventServer;
 
 struct ViewRenderInfo {
@@ -76,6 +78,7 @@ class KneeboardState final : private EventReceiver {
   Event<> evSettingsChangedEvent;
   Event<> evViewOrderChangedEvent;
   Event<> evInputDevicesChangedEvent;
+  Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 

@@ -90,15 +90,13 @@ HelpPage::~HelpPage() {
 }
 
 void HelpPage::PopulateVersion() {
-  std::string_view commitID(Version::CommitID);
-
   const auto version = std::format(
     "{}.{}.{}.{}-{}{}{}{}",
     Version::Major,
     Version::Minor,
     Version::Patch,
     Version::Build,
-    commitID.substr(0, 7),
+    Version::CommitIDA.substr(0, 7),
     Version::HaveModifiedFiles ? "-dirty" : "",
     Version::IsGithubActionsBuild ? "-gha" : "-local",
 #ifdef DEBUG
@@ -145,7 +143,7 @@ void HelpPage::PopulateVersion() {
 #endif
 #endif
     commitTime,
-    Version::CommitID);
+    Version::CommitIDA);
   if (Version::HaveModifiedFiles) {
     std::string files = Version::ModifiedFiles;
     details += "\nModified files:\n" + files;

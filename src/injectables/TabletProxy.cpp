@@ -20,6 +20,7 @@
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/version.h>
 #include <Windows.h>
 
 #include <functional>
@@ -63,6 +64,13 @@ class TabletProxy final {
 WNDPROC TabletProxy::mWindowProc;
 HWND TabletProxy::mTargetWindow;
 std::unique_ptr<WintabTablet> TabletProxy::mTablet;
+
+static const MainWindowInfo::VersionInfo gThisVersion {
+  Version::Major,
+  Version::Minor,
+  Version::Patch,
+  Version::Build,
+};
 
 TabletProxy::TabletProxy() {
   Initialize();
@@ -140,9 +148,9 @@ LRESULT TabletProxy::HookedWindowProc(
   WPARAM wParam,
   LPARAM lParam) {
   if (hwnd == mTargetWindow && mTablet->CanProcessMessage(uMsg)) {
-    auto openKneeboard = OpenKneeboard::GetMainHWND();
-    if (openKneeboard) {
-      SendNotifyMessage(*openKneeboard, uMsg, wParam, lParam);
+    const auto openKneeboard = OpenKneeboard::GetMainWindowInfo();
+    if (openKneeboard && openKneeboard->mVersion == gThisVersion) {
+      SendNotifyMessage(openKneeboard->mHwnd, uMsg, wParam, lParam);
     }
     return S_OK;
   }

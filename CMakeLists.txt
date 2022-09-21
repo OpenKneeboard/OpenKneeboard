@@ -61,7 +61,18 @@ set(
 )
 add_compile_options(${COMMON_COMPILE_OPTIONS})
 
-project(com.fredemmott.openkneeboard VERSION 1.3.0 LANGUAGES CXX C)
+if(DEFINED ENV{GITHUB_RUN_NUMBER})
+  set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
+else()
+  execute_process(
+    COMMAND git rev-list --count HEAD
+    OUTPUT_VARIABLE VERSION_BUILD
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  )
+endif()
+project(com.fredemmott.openkneeboard VERSION 1.3.0.${VERSION_BUILD} LANGUAGES CXX C)
+message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
 
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
 

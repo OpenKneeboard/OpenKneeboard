@@ -49,14 +49,37 @@ std::wstring SharedTextureName(
   uint32_t sequenceNumber);
 
 #pragma pack(push)
+
+enum class ConsumerKind : uint32_t {
+  SteamVR = 1 << 0,
+  OpenXR = 1 << 1,
+  OculusD3D11 = 1 << 2,
+  OculusD3D12 = 1 << 3,
+  NonVRD3D11 = 1 << 4,
+  Test = ~(0ui32),
+};
+
+class ConsumerPattern final {
+ public:
+  ConsumerPattern();
+  ConsumerPattern(std::underlying_type_t<ConsumerKind>(consumerKindMask));
+  ConsumerPattern(ConsumerKind kind)
+    : mKindMask(std::underlying_type_t<ConsumerKind>(kind)) {
+  }
+
+  bool Matches(ConsumerKind) const;
+
+ private:
+  std::underlying_type_t<ConsumerKind> mKindMask {0};
+};
+
 struct Config final {
-  static constexpr uint16_t VERSION = 3;
-  uint64_t mGlobalInputLayerID;
-  VRRenderConfig mVR;
-  FlatConfig mFlat;
+  uint64_t mGlobalInputLayerID {};
+  VRRenderConfig mVR {};
+  FlatConfig mFlat {};
+  ConsumerPattern mTarget {};
 };
 struct LayerConfig final {
-  static constexpr uint16_t VERSION = 2;
   uint64_t mLayerID;
   uint16_t mImageWidth, mImageHeight;// Pixels
   VRLayerConfig mVR;
@@ -140,7 +163,7 @@ class Reader final {
   ~Reader();
 
   operator bool() const;
-  Snapshot MaybeGet() const;
+  Snapshot MaybeGet(ConsumerKind) const;
   /// Changes even if the feeder restarts with frame ID 0
   size_t GetRenderCacheKey() const;
   /// Do not use for caching - use GetRenderCacheKey instead

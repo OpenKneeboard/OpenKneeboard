@@ -11,12 +11,9 @@ const std::filesystem::path DCSWORLD_HOOK_DLL(
 const std::filesystem::path DCSWORLD_HOOK_LUA(
   "$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>");
 
-const std::filesystem::path AUTOINJECT_MARKER_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-AutoInject-Marker>");
-
-const std::filesystem::path INJECTION_BOOTSTRAPPER_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-Injection-Bootstrapper>");
-
+const std::filesystem::path AUTODETECTION_DLL(
+  "$<TARGET_FILE_NAME:OpenKneeboard-AutoDetect>");
+  
 const std::filesystem::path TABLET_PROXY_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-TabletProxy>");
 

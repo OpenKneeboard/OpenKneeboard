@@ -56,8 +56,8 @@ Vector2 VRKneeboard::GetKneeboardSize(
 
   const auto sizes = this->GetSizes(config.mVR, layer);
 
-  return (flags & Flags::FORCE_ZOOM)
-      || (isLookingAtKneeboard && (flags & Flags::GAZE_ZOOM))
+  return static_cast<bool>(flags & Flags::FORCE_ZOOM)
+      || (isLookingAtKneeboard && static_cast<bool>(flags & Flags::GAZE_ZOOM))
     ? sizes.mZoomedSize
     : sizes.mNormalSize;
 }
@@ -155,7 +155,8 @@ bool VRKneeboard::IsLookingAtKneeboard(
 
   if (
     isLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID
-    && (config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)) {
+    && static_cast<bool>(
+      config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)) {
     GameEvent {
       GameEvent::EVT_SET_INPUT_FOCUS,
       std::to_string(layer.mLayerID),

@@ -33,29 +33,6 @@ constexpr bool is_bitflags_v = false;
 template <class T>
 concept bitflags = is_bitflags_v<T>;
 
-/// Helper to allow (flags & Foo::Bar) pattern
-template <bitflags T>
-class CoerceableBitflags final {
- private:
-  T value;
-
- public:
-  constexpr CoerceableBitflags(T v) : value(v) {
-  }
-
-  constexpr operator T() const {
-    return value;
-  }
-
-  constexpr operator bool() const {
-    return static_cast<bool>(value);
-  }
-
-  constexpr bool operator==(CoerceableBitflags<T> other) const {
-    return value == other.value;
-  }
-};
-
 template <bitflags T>
 constexpr T operator|(T a, T b) {
   using UT = std::underlying_type_t<T>;
@@ -63,7 +40,7 @@ constexpr T operator|(T a, T b) {
 }
 
 template <bitflags T>
-constexpr CoerceableBitflags<T> operator&(T a, T b) {
+constexpr T operator&(T a, T b) {
   using UT = std::underlying_type_t<T>;
   return static_cast<T>(static_cast<UT>(a) & static_cast<UT>(b));
 }

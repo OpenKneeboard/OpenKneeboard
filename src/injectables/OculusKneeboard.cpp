@@ -97,7 +97,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   if (!(mSHM && mRenderer)) [[unlikely]] {
     return passthrough();
   }
-  auto snapshot = mSHM.MaybeGet();
+  auto snapshot = mSHM.MaybeGet(mRenderer->GetConsumerKind());
   if (!snapshot.IsValid()) {
     return passthrough();
   }
@@ -110,8 +110,9 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   std::vector<const ovrLayerHeader*> newLayers;
   newLayers.reserve(layerCount + snapshot.GetLayerCount());
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
-  const bool discardDepthInformation = config.mVR.mFlags
-    & VRRenderConfig::Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION;
+  const auto discardDepthInformation = static_cast<bool>(
+    config.mVR.mFlags
+    & VRRenderConfig::Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION);
 
   for (unsigned int i = 0; i < layerCount; ++i) {
     const auto layer = layerPtrList[i];

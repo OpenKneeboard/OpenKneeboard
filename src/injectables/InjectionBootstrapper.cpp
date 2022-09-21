@@ -57,6 +57,11 @@ class InjectionBootstrapper final {
   uint64_t mFlags = 0;
   uint64_t mFrames = 0;
 
+  bool mPassthroughAll = false;
+  bool mPassthroughOculus = false;
+  bool mPassthroughDXGI = false;
+  bool mPassthroughSteamVR = false;
+
   OculusEndFrameHook mOculusHook;
   IVRCompositorWaitGetPosesHook mOpenVRHook;
   IDXGISwapChainPresentHook mDXGIHook;
@@ -80,10 +85,6 @@ class InjectionBootstrapper final {
   }
 
   ~InjectionBootstrapper() {
-    this->UninstallHook();
-  }
-
-  void UninstallHook() {
     mOculusHook.UninstallHook();
     mOpenVRHook.UninstallHook();
     mDXGIHook.UninstallHook();
@@ -97,9 +98,11 @@ class InjectionBootstrapper final {
     ovrLayerHeader const* const* layerPtrList,
     unsigned int layerCount,
     const decltype(&ovr_EndFrame)& next) {
-    dprint("Detected Oculus frame");
-    mFlags |= FLAG_OCULUS;
-    mOculusHook.UninstallHook();
+    if (!(mPassthroughAll || mPassthroughOculus)) [[unlikely]] {
+      dprint("Detected Oculus frame");
+      mFlags |= FLAG_OCULUS;
+      mPassthroughOculus = true;
+    }
     return next(session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
   }
 
@@ -129,6 +132,9 @@ class InjectionBootstrapper final {
     UINT syncInterval,
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next) {
+    if (mPassthroughAll || mPassthroughDXGI) [[likely]] {
+      return std::invoke(next, swapChain, syncInterval, flags);
+    }
     if (mFrames == 0) {
       dprint("Got first DXGI frame");
       SetD3DFlags(swapChain);
@@ -137,6 +143,7 @@ class InjectionBootstrapper final {
 
     // Wait for anything else, e.g. SteamVR, Oculus, OpenVR
     if (mFrames >= 100) {
+      mPassthroughDXGI = true;
       Next();
     }
 
@@ -150,9 +157,11 @@ class InjectionBootstrapper final {
     vr::TrackedDevicePose_t* pGamePoseArray,
     uint32_t unGamePoseArrayCount,
     const decltype(&vr::IVRCompositor::WaitGetPoses)& next) {
-    dprint("Detected SteamVR frame");
-    mFlags |= FLAG_STEAMVR;
-    mOpenVRHook.UninstallHook();
+    if (!(mPassthroughAll || mPassthroughSteamVR)) [[unlikely]] {
+      dprint("Detected SteamVR frame");
+      mFlags |= FLAG_STEAMVR;
+      mPassthroughSteamVR = true;
+    }
     return std::invoke(
       next,
       compositor,
@@ -165,51 +174,38 @@ class InjectionBootstrapper final {
  private:
   void Next() {
     dprint("Going Next()");
-    UninstallHook();
+    mPassthroughAll = true;
 
     // Whatever APIs are in use, if SteamVR is one of them, the main app will
     // use the OpenVR overlay API to render from that process, so we don't need
     // to do anything here.
     if ((mFlags & FLAG_STEAMVR)) {
       dprint("Doing nothing as SteamVR is in-process");
-      UnloadWithoutNext();
       return;
     }
 
     // Not looking for an exact match because mixing D3D11 and D3D12 is common
     if ((mFlags & FLAG_D3D12) && (mFlags & FLAG_OCULUS)) {
-      LoadNextThenUnload(RuntimeFiles::OCULUS_D3D12_DLL);
+      LoadNext(RuntimeFiles::OCULUS_D3D12_DLL);
       return;
     }
 
     if (mFlags == (FLAG_D3D11 | FLAG_OCULUS)) {
-      LoadNextThenUnload(RuntimeFiles::OCULUS_D3D11_DLL);
+      LoadNext(RuntimeFiles::OCULUS_D3D11_DLL);
       return;
     }
 
     if (mFlags == FLAG_D3D11) {
-      LoadNextThenUnload(RuntimeFiles::NON_VR_D3D11_DLL);
+      LoadNext(RuntimeFiles::NON_VR_D3D11_DLL);
       return;
     }
 
     dprintf(
       "Don't know how to create a kneeboard from detection flags {:#b}",
       mFlags);
-    UnloadWithoutNext();
   }
 
-  static DWORD WINAPI LoadNextThenUnloadThreadImpl(void* data);
-  static DWORD WINAPI UnloadWithoutNextThreadImpl(void* data);
-
-  void UnloadWithoutNext() {
-    this->UninstallHook();
-
-    CreateThread(nullptr, 0, &UnloadWithoutNextThreadImpl, nullptr, 0, nullptr);
-  }
-
-  void LoadNextThenUnload(const std::filesystem::path& _next) {
-    this->UninstallHook();
-
+  void LoadNext(const std::filesystem::path& _next) {
     std::filesystem::path next(_next);
     if (!next.is_absolute()) {
       wchar_t buf[MAX_PATH];
@@ -217,49 +213,17 @@ class InjectionBootstrapper final {
       next = std::filesystem::path(buf).parent_path() / _next;
     }
 
-    CreateThread(
-      nullptr,
-      0,
-      &LoadNextThenUnloadThreadImpl,
-      new std::filesystem::path(next),
-      0,
-      nullptr);
+    dprintf("----- Loading next: {} -----", next.string());
+    if (!LoadLibraryW(next.wstring().c_str())) {
+      dprintf(
+        "----- Load failed: {:#x} -----",
+        std::bit_cast<uint32_t>(GetLastError()));
+    }
   }
 };
 
 static std::unique_ptr<InjectionBootstrapper> gInstance;
 static HMODULE gModule = nullptr;
-
-static void CleanupHookInstance() {
-  if (gInstance) {
-    dprint("----- Cleaning up bootstrapper instance -----");
-    gInstance->UninstallHook();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    gInstance.reset();
-  }
-}
-
-DWORD InjectionBootstrapper::UnloadWithoutNextThreadImpl(void* unused) {
-  CleanupHookInstance();
-
-  dprint("----- Freeing bootstrapper DLL ----");
-  FreeLibraryAndExitThread(gModule, S_OK);
-
-  return S_OK;
-}
-
-DWORD InjectionBootstrapper::LoadNextThenUnloadThreadImpl(void* data) {
-  CleanupHookInstance();
-
-  auto path = reinterpret_cast<std::filesystem::path*>(data);
-  dprintf("----- Loading next: {} -----", path->string());
-  if (!LoadLibraryW(path->c_str())) {
-    dprintf("----- Load failed: {:#x} -----", GetLastError());
-  }
-  delete path;
-
-  return UnloadWithoutNextThreadImpl(nullptr);
-}
 
 }// namespace OpenKneeboard
 
@@ -277,7 +241,7 @@ DWORD WINAPI ThreadEntry(LPVOID ignored) {
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   gModule = hinst;
   return InjectedDLLMain(
-    "OpenKneeboard-InjectionBootstrapper",
+    "OpenKneeboard-AutoDetect",
     gInstance,
     &ThreadEntry,
     hinst,

@@ -267,13 +267,15 @@ void Event<Args...>::Emit(Args... args) {
   {
     std::unique_lock lock(mMutex);
     hooks = mHooks;
-    for (auto it = mReceivers.begin(); it != mReceivers.end(); ++it) {
+    auto it = mReceivers.begin();
+    while (it != mReceivers.end()) {
       auto receiver = it->second;
       if (!receiver) {
-        mReceivers.erase(it);
+        it = mReceivers.erase(it);
         continue;
       }
       receivers.push_back(receiver);
+      ++it;
     }
   }
 

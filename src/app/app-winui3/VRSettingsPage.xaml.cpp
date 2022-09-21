@@ -306,7 +306,8 @@ void VRSettingsPage::SteamVREnabled(bool enabled) {
 }
 
 bool VRSettingsPage::GazeZoomEnabled() {
-  return (gKneeboard->GetVRConfig().mFlags & VRRenderConfig::Flags::GAZE_ZOOM);
+  return static_cast<bool>(
+    gKneeboard->GetVRConfig().mFlags & VRRenderConfig::Flags::GAZE_ZOOM);
 }
 
 void VRSettingsPage::GazeZoomEnabled(bool enabled) {

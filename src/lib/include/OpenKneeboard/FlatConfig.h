@@ -30,8 +30,6 @@ namespace OpenKneeboard {
 
 #pragma pack(push)
 struct FlatConfig {
-  static constexpr uint16_t VERSION = 1;
-
   enum HorizontalAlignment {
     HALIGN_LEFT,
     HALIGN_CENTER,

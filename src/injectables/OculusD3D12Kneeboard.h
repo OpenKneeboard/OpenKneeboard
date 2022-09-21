@@ -50,6 +50,10 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&) override final;
 
+  virtual SHM::ConsumerKind GetConsumerKind() const override {
+    return SHM::ConsumerKind::OculusD3D12;
+  }
+
  private:
   ID3D12CommandQueueExecuteCommandListsHook mExecuteCommandListsHook;
   OculusKneeboard mOculusKneeboard;

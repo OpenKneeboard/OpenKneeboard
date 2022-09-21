@@ -328,7 +328,7 @@ class TestViewerWindow final {
 
     ctx->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
-    auto snapshot = mSHM.MaybeGet();
+    auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::Test);
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
@@ -342,7 +342,8 @@ class TestViewerWindow final {
     mFirstDetached = true;
 
     const auto config = snapshot.GetConfig();
-    mSetInputFocus = config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS;
+    mSetInputFocus = static_cast<bool>(
+      config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS);
 
     if (mLayerIndex >= snapshot.GetLayerCount()) {
       mErrorRenderer->Render(

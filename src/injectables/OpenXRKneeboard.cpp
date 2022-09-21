@@ -120,7 +120,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto snapshot = mSHM.MaybeGet();
+  auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::OpenXR);
   if (!snapshot.IsValid()) {
     // Don't spam: expected, if OpenKneeboard isn't running
     return mOpenXR->xrEndFrame(session, frameEndInfo);
@@ -151,7 +151,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
     if (
       IsVarjoRuntime()
-      && (config.mVR.mFlags & VRConfig::Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION)) {
+      && static_cast<bool>(
+        config.mVR.mFlags
+        & VRConfig::Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION)) {
       layer.mVR.mEyeY = -layer.mVR.mEyeY;
       layer.mVR.mFloorY = -layer.mVR.mFloorY;
     }

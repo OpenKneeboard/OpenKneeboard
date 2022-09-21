@@ -33,7 +33,6 @@ namespace OpenKneeboard {
 
 #pragma pack(push)
 struct VRLayerConfig {
-  static constexpr uint16_t VERSION = 2;
   // Distances in meters, rotations in radians
   float mX = 0.15f, mFloorY = 0.6f, mEyeY = -0.7f, mZ = -0.4f;
   float mRX = -2 * std::numbers::pi_v<float> / 5,
@@ -43,19 +42,13 @@ struct VRLayerConfig {
 };
 
 struct VRRenderConfig {
-  static constexpr uint16_t VERSION = 5;
-
-  // Old flags can be removed when VERSION is changed
   enum class Flags : uint32_t {
-    // HEADLOCKED = 1 << 0,
-    QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION = 1 << 1,
-    // PREFER_ROOMSCALE_POSITION = 1 << 2,
-    GAZE_ZOOM = 1 << 3,
-    FORCE_ZOOM = 1 << 4,
-    GAZE_INPUT_FOCUS = 1 << 5,
-    // INVERT_OPENXR_Y_POSITION = 1 << 6,
-    QUIRK_VARJO_OPENXR_INVERT_Y_POSITION = 1 << 7,
-    QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER = 1 << 8,
+    QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION = 1 << 0,
+    QUIRK_VARJO_OPENXR_INVERT_Y_POSITION = 1 << 1,
+    QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER = 1 << 2,
+    GAZE_ZOOM = 1 << 16,
+    FORCE_ZOOM = 1 << 17,
+    GAZE_INPUT_FOCUS = 1 << 18,
   };
 
   float mZoomScale = 2.0f;

@@ -43,7 +43,7 @@ void GamesList::StartInjector() {
 
   mInjector = std::make_unique<GameInjector>();
   mInjector->SetGameInstances(mInstances);
-  AddEventListener(mInjector->evGameChanged, this->evGameChanged);
+  AddEventListener(mInjector->evGameChangedEvent, this->evGameChangedEvent);
   mInjectorThread = std::jthread([this](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"GameInjector Thread");
     mInjector->Run(stopToken);

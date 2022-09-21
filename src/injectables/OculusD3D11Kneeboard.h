@@ -48,6 +48,10 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&);
 
+  virtual SHM::ConsumerKind GetConsumerKind() const override {
+    return SHM::ConsumerKind::OculusD3D11;
+  }
+
  protected:
   virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,

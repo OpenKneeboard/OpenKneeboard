@@ -21,26 +21,51 @@
 
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <shims/winrt/base.h>
 
 #include <format>
 
 namespace OpenKneeboard {
 
-std::optional<HWND> GetMainHWND() {
+std::optional<MainWindowInfo> GetMainWindowInfo() {
   auto name = std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectNameW);
   winrt::handle hwndFile {OpenFileMapping(PAGE_READWRITE, FALSE, name.c_str())};
   if (!hwndFile) {
     return {};
   }
-  void* mapping
-    = MapViewOfFile(hwndFile.get(), FILE_MAP_READ, 0, 0, sizeof(HWND));
+
+  void* mapping = MapViewOfFile(
+    hwndFile.get(), FILE_MAP_READ, 0, 0, sizeof(MainWindowInfo));
   if (!mapping) {
     return {};
   }
-  auto hwnd = *reinterpret_cast<HWND*>(mapping);
-  UnmapViewOfFile(mapping);
-  return {hwnd};
+  scope_guard closeView([=]() { UnmapViewOfFile(mapping); });
+
+  MEMORY_BASIC_INFORMATION mappingInfo;
+  VirtualQuery(GetCurrentProcess(), &mappingInfo, sizeof(mappingInfo));
+  if (mappingInfo.RegionSize == sizeof(HWND)) {
+    dprint("Found an existing window with no version information");
+    return MainWindowInfo {.mHwnd = *reinterpret_cast<HWND*>(mapping)};
+  }
+
+  auto info = *reinterpret_cast<MainWindowInfo*>(mapping);
+  dprintf(
+    "Found an existing window for v{}.{}.{}.{}",
+    info.mVersion.mMajor,
+    info.mVersion.mMinor,
+    info.mVersion.mPatch,
+    info.mVersion.mBuild);
+  return info;
+}
+
+std::optional<HWND> GetMainHWND() {
+  auto info = GetMainWindowInfo();
+  if (info) {
+    return info->mHwnd;
+  }
+  return {};
 }
 
 }// namespace OpenKneeboard

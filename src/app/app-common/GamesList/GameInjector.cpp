@@ -35,6 +35,7 @@
 #include <chrono>
 #include <mutex>
 #include <thread>
+#include <unordered_set>
 
 namespace {
 
@@ -106,11 +107,8 @@ bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll) {
   return false;
 }
 
-bool InjectDll(HANDLE process, const std::filesystem::path& _dll) {
-  const auto dll = std::filesystem::canonical(_dll);
+bool InjectDll(HANDLE process, const std::filesystem::path& dll) {
   if (AlreadyInjected(process, dll)) {
-    dprintf(
-      "Asked to load a DLL ({}) that's already loaded", dll.stem().string());
     return false;
   }
 
@@ -122,6 +120,7 @@ bool InjectDll(HANDLE process, const std::filesystem::path& _dll) {
   auto targetBuffer = VirtualAllocEx(
     process, nullptr, dllStrByteLen, MEM_COMMIT, PAGE_READWRITE);
   if (!targetBuffer) {
+    dprint("Failed to VirtualAllocEx");
     return false;
   }
 
@@ -181,11 +180,10 @@ bool HaveWintab() {
 namespace OpenKneeboard {
 
 GameInjector::GameInjector() {
-  const auto dllPath = RuntimeFiles::GetInstallationDirectory();
-  mMarkerDll = dllPath / RuntimeFiles::AUTOINJECT_MARKER_DLL;
+  const auto dllPath
+    = std::filesystem::canonical(RuntimeFiles::GetInstallationDirectory());
   mTabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
-
-  mOverlayAutoDetectDll = dllPath / RuntimeFiles::INJECTION_BOOTSTRAPPER_DLL;
+  mOverlayAutoDetectDll = dllPath / RuntimeFiles::AUTODETECTION_DLL;
   mOverlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
   mOverlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
   mOverlayOculusD3D12Dll = dllPath / RuntimeFiles::OCULUS_D3D12_DLL;
@@ -215,9 +213,20 @@ bool GameInjector::Run(std::stop_token stopToken) {
       return false;
     }
 
+    std::unordered_set<DWORD> seenProcesses;
     do {
+      seenProcesses.insert(process.th32ProcessID);
       CheckProcess(process.th32ProcessID, process.szExeFile);
     } while (Process32Next(snapshot.get(), &process));
+
+    auto it = mProcessCache.begin();
+    while (it != mProcessCache.end()) {
+      if (seenProcesses.contains(it->first)) {
+        ++it;
+        continue;
+      }
+      it = mProcessCache.erase(it);
+    }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
@@ -264,36 +273,28 @@ void GameInjector::CheckProcess(
 
     const auto friendly = game->mGame->GetUserFriendlyName(fullPath);
 
-    if (AlreadyInjected(processHandle.get(), mMarkerDll)) {
-      break;
-    }
-
-    dprintf("Found '{}' - PID {}", friendly, processID);
-    InjectDll(processHandle.get(), mMarkerDll);
+    InjectedDlls wantedDlls {InjectedDlls::None};
 
     if (HaveWintab()) {
-      InjectDll(processHandle.get(), mTabletProxyDll);
+      wantedDlls |= InjectedDlls::TabletProxy;
     }
 
     std::filesystem::path overlayDll;
     switch (game->mOverlayAPI) {
       case OverlayAPI::SteamVR:
-        dprint("SteamVR forced, not injecting any overlay DLL");
-        return;
       case OverlayAPI::OpenXR:
-        dprint("OpenXR forced, not injecting any overlay DLL");
-        return;
+        break;
       case OverlayAPI::AutoDetect:
-        overlayDll = mOverlayAutoDetectDll;
+        wantedDlls |= InjectedDlls::AutoDetection;
         break;
       case OverlayAPI::NonVRD3D11:
-        overlayDll = mOverlayNonVRD3D11Dll;
+        wantedDlls |= InjectedDlls::NonVRD3D11;
         break;
       case OverlayAPI::OculusD3D11:
-        overlayDll = mOverlayOculusD3D11Dll;
+        wantedDlls |= InjectedDlls::OculusD3D11;
         break;
       case OverlayAPI::OculusD3D12:
-        overlayDll = mOverlayOculusD3D12Dll;
+        wantedDlls |= InjectedDlls::OculusD3D12;
         break;
       default:
         dprintf(
@@ -303,19 +304,40 @@ void GameInjector::CheckProcess(
         return;
     }
 
-    if (overlayDll.empty() && std::filesystem::is_regular_file(overlayDll)) {
+    if (!mProcessCache.contains(processID)) {
+      mProcessCache.insert_or_assign(processID, InjectedDlls::None);
       dprintf(
-        "No DLL for OverlayAPI value: {}",
-        static_cast<std::underlying_type_t<OverlayAPI>>(game->mOverlayAPI));
-      OPENKNEEBOARD_BREAK;
+        "Current game changed to {}, PID {}",
+        game->mPath.filename().string(),
+        processID);
+      this->evGameChangedEvent.Emit(processID, game);
+    }
+
+    auto& currentDlls = mProcessCache.at(processID);
+    const auto missingDlls = wantedDlls & ~currentDlls;
+    if (missingDlls == InjectedDlls::None) {
       continue;
     }
 
-    if (!InjectDll(processHandle.get(), overlayDll)) {
-      dprintf(
-        "Failed to inject DLL {}: {}", overlayDll.string(), GetLastError());
-      return;
-    }
+    dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
+
+    const auto injectIfNeeded = [&](const auto dllID, const auto& dllPath) {
+      if (!static_cast<bool>(missingDlls & dllID)) {
+        return;
+      }
+      if (AlreadyInjected(processHandle.get(), dllPath)) {
+        currentDlls |= dllID;
+        return;
+      }
+      InjectDll(processHandle.get(), dllPath);
+      currentDlls |= dllID;
+    };
+
+    injectIfNeeded(InjectedDlls::TabletProxy, mTabletProxyDll);
+    injectIfNeeded(InjectedDlls::AutoDetection, mOverlayAutoDetectDll);
+    injectIfNeeded(InjectedDlls::NonVRD3D11, mOverlayNonVRD3D11Dll);
+    injectIfNeeded(InjectedDlls::OculusD3D11, mOverlayOculusD3D11Dll);
+    injectIfNeeded(InjectedDlls::OculusD3D12, mOverlayOculusD3D12Dll);
   }
 }
 

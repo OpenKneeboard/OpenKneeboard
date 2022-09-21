@@ -21,6 +21,7 @@
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
+#include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
@@ -37,6 +38,40 @@
 #include <ranges>
 
 namespace OpenKneeboard {
+
+static SHM::ConsumerPattern GetConsumerPatternForGame(
+  const std::shared_ptr<GameInstance>& game) {
+  if (!game) {
+    return {};
+  }
+
+  switch (game->mOverlayAPI) {
+    case OverlayAPI::AutoDetect:
+      return {};
+      break;
+    case OverlayAPI::SteamVR:
+      return {SHM::ConsumerKind::SteamVR};
+      break;
+    case OverlayAPI::OpenXR:
+      return {SHM::ConsumerKind::OpenXR};
+      break;
+    case OverlayAPI::OculusD3D11:
+      return {SHM::ConsumerKind::OculusD3D11};
+      break;
+    case OverlayAPI::OculusD3D12:
+      return {SHM::ConsumerKind::OculusD3D12};
+      break;
+    case OverlayAPI::NonVRD3D11:
+      return {SHM::ConsumerKind::NonVRD3D11};
+      break;
+    default:
+      dprintf(
+        "Unhandled overlay API: {}",
+        std::underlying_type_t<OverlayAPI>(game->mOverlayAPI));
+      OPENKNEEBOARD_BREAK;
+      return {};
+  }
+}
 
 bool InterprocessRenderer::Button::operator==(
   const Button& other) const noexcept {
@@ -92,6 +127,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
                              .GetTemporaryValue(),
     .mVR = mKneeboard->GetVRConfig(),
     .mFlat = mKneeboard->GetFlatConfig(),
+    .mTarget = GetConsumerPatternForGame(mCurrentGame),
   };
 
   mSHM.Update(config, shmLayers);
@@ -184,6 +220,9 @@ InterprocessRenderer::InterprocessRenderer(
 
   AddEventListener(
     kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
+  AddEventListener(
+    kneeboard->evGameChangedEvent,
+    std::bind_front(&InterprocessRenderer::OnGameChanged, this));
 
   const auto views = kneeboard->GetAllViewsInFixedOrder();
   for (int i = 0; i < views.size(); ++i) {
@@ -540,6 +579,13 @@ void InterprocessRenderer::RenderNow() {
 
   this->Commit(renderInfos.size());
   mNeedsRepaint = false;
+}
+
+void InterprocessRenderer::OnGameChanged(
+  DWORD processID,
+  const std::shared_ptr<GameInstance>& game) {
+  mCurrentGame = game;
+  this->mNeedsRepaint = true;
 }
 
 }// namespace OpenKneeboard

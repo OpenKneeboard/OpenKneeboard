@@ -51,7 +51,7 @@ class GamesList final : private EventReceiver {
   std::vector<std::shared_ptr<GameInstance>> GetGameInstances() const;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
-  OpenKneeboard::Event<std::shared_ptr<GameInstance>> evGameChanged;
+  OpenKneeboard::Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
   OpenKneeboard::Event<> evSettingsChangedEvent;
 };
 

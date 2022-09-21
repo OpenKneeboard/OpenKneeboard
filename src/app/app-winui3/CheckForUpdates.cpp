@@ -114,7 +114,7 @@ IAsyncAction CheckForUpdates(
        Version::Minor,
        Version::Patch,
        Version::Build,
-       std::wstring_view {to_hstring(Version::CommitID)})});
+       Version::CommitIDW)});
   headers.Accept().Clear();
   headers.Accept().Append(
     Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
