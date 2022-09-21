@@ -22,7 +22,7 @@
 #include <d2d1_2.h>
 #include <d3d11_2.h>
 #include <dwrite.h>
-#include <dxgi1_3.h>
+#include <dxgi1_6.h>
 #include <shims/winrt/base.h>
 #include <wincodec.h>
 
@@ -46,7 +46,7 @@ struct DXResources {
   winrt::com_ptr<ID2D1DeviceContext> mD2DDeviceContext;
 
   winrt::com_ptr<ID2D1Factory> mD2DFactory;
-  winrt::com_ptr<IDXGIFactory2> mDXGIFactory;
+  winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
   winrt::com_ptr<IDWriteFactory> mDWriteFactory;
 
   winrt::com_ptr<IWICImagingFactory> mWIC;

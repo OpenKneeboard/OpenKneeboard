@@ -36,7 +36,6 @@
 #include <Psapi.h>
 #include <ShlObj.h>
 #include <appmodel.h>
-#include <dxgi.h>
 #include <signal.h>
 
 #include <chrono>
@@ -191,27 +190,10 @@ static void LogSystemInformation() {
   dprintf(L"  System locale: {}", localeName);
   LCIDToLocaleName(LOCALE_USER_DEFAULT, localeName, sizeof(localeName), 0);
   dprintf(L"  User locale: {}", localeName);
-  dprint("----------");
-
-  winrt::com_ptr<IDXGIFactory1> dxgi;
-  CreateDXGIFactory1(IID_PPV_ARGS(dxgi.put()));
-  winrt::com_ptr<IDXGIAdapter1> adapter;
 
   uint64_t totalMemoryKB {0};
   GetPhysicallyInstalledSystemMemory(&totalMemoryKB);
   dprintf("  Total RAM: {}mb", totalMemoryKB / 1024);
-  for (unsigned int i = 0; dxgi->EnumAdapters1(i, adapter.put()) == S_OK; ++i) {
-    DXGI_ADAPTER_DESC1 desc {};
-    adapter->GetDesc1(&desc);
-    dprintf(
-      L"  GPU {}: {:04x}:{:04x}: '{}' ({}mb){}",
-      i,
-      desc.VendorId,
-      desc.DeviceId,
-      desc.Description,
-      desc.DedicatedVideoMemory / (1024 * 1024),
-      (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) ? L" (software)" : L"");
-  }
   dprint("----------");
 }
 

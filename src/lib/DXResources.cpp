@@ -18,6 +18,9 @@
  * USA.
  */
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+#include <dxgi1_6.h>
 
 namespace OpenKneeboard {
 
@@ -25,17 +28,45 @@ DXResources DXResources::Create() {
   DXResources ret;
 
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
   UINT dxgiFlags = 0;
 #ifdef DEBUG
   d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
   dxgiFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
-  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
+
+  winrt::check_hresult(
+    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret.mDXGIFactory.put())));
+
+  winrt::com_ptr<IDXGIAdapter1> adapterIt;
+  winrt::com_ptr<IDXGIAdapter1> bestAdapter;
+  for (unsigned int i = 0;
+       ret.mDXGIFactory->EnumAdapterByGpuPreference(
+         i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(adapterIt.put()))
+       == S_OK;
+       ++i) {
+    const scope_guard releaseIt([&]() { adapterIt = {nullptr}; });
+    if (i == 0) {
+      bestAdapter = adapterIt;
+    }
+    DXGI_ADAPTER_DESC1 desc {};
+    adapterIt->GetDesc1(&desc);
+    dprintf(
+      L"  GPU {}: {:04x}:{:04x}: '{}' ({}mb){}",
+      i,
+      desc.VendorId,
+      desc.DeviceId,
+      desc.Description,
+      desc.DedicatedVideoMemory / (1024 * 1024),
+      (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) ? L" (software)" : L"");
+  }
+  dprint("----------");
 
   winrt::com_ptr<ID3D11Device> d3d;
   winrt::check_hresult(D3D11CreateDevice(
-    nullptr,
-    D3D_DRIVER_TYPE_HARDWARE,
+    bestAdapter.get(),
+    // UNKNOWN is required when specifying an adapter
+    D3D_DRIVER_TYPE_UNKNOWN,
     nullptr,
     d3dFlags,
     &d3dLevel,
@@ -49,8 +80,6 @@ DXResources DXResources::Create() {
 
   winrt::check_hresult(
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, ret.mD2DFactory.put()));
-  winrt::check_hresult(
-    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret.mDXGIFactory.put())));
 
   D2D1_DEBUG_LEVEL d2dDebug = D2D1_DEBUG_LEVEL_NONE;
 #ifdef DEBUG
