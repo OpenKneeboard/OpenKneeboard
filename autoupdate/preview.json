@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/77397201",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/77397201/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/77397201/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.1",
-    "id": 77397201,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78052222",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78052222/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78052222/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.2",
+    "id": 78052222,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84EnPzR",
-    "tag_name": "v1.2.1",
-    "target_commitish": "aa911f0988f0700d7bb7e871a9b455d949d860c3",
-    "name": "v1.2.1: crash loading text files",
+    "node_id": "RE_kwDOGk0DR84Epvt-",
+    "tag_name": "v1.2.2",
+    "target_commitish": "712fe9d78e509a5715239b6874e22695b9742411",
+    "name": "v1.2.2: bugfixes",
     "draft": false,
     "prerelease": false,
-    "created_at": "2022-09-16T13:10:48Z",
-    "published_at": "2022-09-16T13:42:02Z",
+    "created_at": "2022-09-24T16:35:48Z",
+    "published_at": "2022-09-24T18:56:43Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78082399",
-        "id": 78082399,
-        "node_id": "RA_kwDOGk0DR84Ep3Ff",
-        "name": "OpenKneeboard-v1.2.1-Symbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78893393",
+        "id": 78893393,
+        "node_id": "RA_kwDOGk0DR84Es9FR",
+        "name": "OpenKneeboard-v1.2.2-Symbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 68623789,
+        "size": 68624983,
         "download_count": 0,
-        "created_at": "2022-09-16T13:40:15Z",
-        "updated_at": "2022-09-16T13:40:17Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.1/OpenKneeboard-v1.2.1-Symbols.zip"
+        "created_at": "2022-09-24T17:10:09Z",
+        "updated_at": "2022-09-24T17:10:11Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.2/OpenKneeboard-v1.2.2-Symbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78082396",
-        "id": 78082396,
-        "node_id": "RA_kwDOGk0DR84Ep3Fc",
-        "name": "OpenKneeboard-v1.2.1-Utilities.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78893392",
+        "id": 78893392,
+        "node_id": "RA_kwDOGk0DR84Es9FQ",
+        "name": "OpenKneeboard-v1.2.2-Utilities.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,17 +96,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 3214969,
+        "size": 3215025,
         "download_count": 0,
-        "created_at": "2022-09-16T13:40:14Z",
-        "updated_at": "2022-09-16T13:40:15Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.1/OpenKneeboard-v1.2.1-Utilities.zip"
+        "created_at": "2022-09-24T17:10:08Z",
+        "updated_at": "2022-09-24T17:10:09Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.2/OpenKneeboard-v1.2.2-Utilities.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78082389",
-        "id": 78082389,
-        "node_id": "RA_kwDOGk0DR84Ep3FV",
-        "name": "OpenKneeboard-v1.2.1.msix",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/78893391",
+        "id": 78893391,
+        "node_id": "RA_kwDOGk0DR84Es9FP",
+        "name": "OpenKneeboard-v1.2.2.msix",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -130,16 +130,16 @@
         },
         "content_type": "application/msix",
         "state": "uploaded",
-        "size": 27301572,
-        "download_count": 0,
-        "created_at": "2022-09-16T13:40:13Z",
-        "updated_at": "2022-09-16T13:40:14Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.1/OpenKneeboard-v1.2.1.msix"
+        "size": 27302198,
+        "download_count": 1,
+        "created_at": "2022-09-24T17:10:07Z",
+        "updated_at": "2022-09-24T17:10:08Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.2/OpenKneeboard-v1.2.2.msix"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2.1",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2.1",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2.1.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.1/OpenKneeboard-v1.2.1.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Changes since v1.2.0\r\n\r\nFixed a crash when loading/updating text files.\r\n\r\n# Changes since v1.1.0\r\n\r\nSee [the announcement for v1.2.0](https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.0)",
-    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/189"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2.2",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2.2",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2.2.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.2/OpenKneeboard-v1.2.2.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Changes since v1.2.1\r\n\r\n- Fixed crash if a single file tab points to a deleted file\r\n- Fixed and re-labelled the 'gaze target size' options\r\n- Fixed OpenKneeboard-Viewer.exe utility crashing on startup\r\n\r\n# Changes since v1.2.0\r\n\r\n- Fixed a crash when loading/updating text files.\r\n\r\n# Changes since v1.1.0\r\n\r\nSee [the announcement for v1.2.0](https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.0)",
+    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/197"
   }
 ]
