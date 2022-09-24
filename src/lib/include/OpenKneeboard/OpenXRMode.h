@@ -19,6 +19,9 @@
  */
 #pragma once
 
+#include <shims/winrt/base.h>
+#include <winrt/Windows.Foundation.h>
+
 #include <optional>
 #include <shims/filesystem>
 
@@ -35,7 +38,7 @@ enum class OpenXRMode {
   AllUsers,
 };
 
-void SetOpenXRModeWithHelperProcess(
+winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
   OpenXRMode newMode,
   std::optional<OpenXRMode> oldMode = {});
 

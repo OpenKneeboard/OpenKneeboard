@@ -336,7 +336,10 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
   }
 
   if (value.mOpenXRMode != mVRConfig.mOpenXRMode) {
-    SetOpenXRModeWithHelperProcess(value.mOpenXRMode, {mVRConfig.mOpenXRMode});
+    [=]() -> winrt::fire_and_forget {
+      co_await SetOpenXRModeWithHelperProcess(
+        value.mOpenXRMode, {mVRConfig.mOpenXRMode});
+    }();
   }
 
   if (

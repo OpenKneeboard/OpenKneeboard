@@ -39,7 +39,7 @@ enum class RunAs {
   Administrator,
 };
 
-void LaunchAndWaitForOpenXRHelperSubprocess(
+winrt::Windows::Foundation::IAsyncAction LaunchAndWaitForOpenXRHelperSubprocess(
   RunAs runas,
   std::wstring_view command) {
   auto layerPath = RuntimeFiles::GetInstallationDirectory().wstring();
@@ -61,22 +61,24 @@ void LaunchAndWaitForOpenXRHelperSubprocess(
     auto error = GetLastError();
     dprintf("Failed to spawn subprocess: {}", error);
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
 
   if (!shellExecuteInfo.hProcess) {
     dprint("No process handle");
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
 
   winrt::handle handle {shellExecuteInfo.hProcess};
   dprint("Waiting for OpenXR helper...");
-  WaitForSingleObject(handle.get(), INFINITE);
+  co_await winrt::resume_on_signal(handle.get());
   dprint("OpenXR helper returned.");
 }
 
-void SetOpenXRModeWithHelperProcessImpl(
+}// namespace
+
+winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
   OpenXRMode mode,
   std::optional<OpenXRMode> oldMode) {
   if (oldMode && mode != *oldMode) {
@@ -84,11 +86,11 @@ void SetOpenXRModeWithHelperProcessImpl(
       case OpenXRMode::Disabled:
         break;
       case OpenXRMode::CurrentUser:
-        LaunchAndWaitForOpenXRHelperSubprocess(
+        co_await LaunchAndWaitForOpenXRHelperSubprocess(
           RunAs::CurrentUser, L"disable-HKCU");
         break;
       case OpenXRMode::AllUsers:
-        LaunchAndWaitForOpenXRHelperSubprocess(
+        co_await LaunchAndWaitForOpenXRHelperSubprocess(
           RunAs::Administrator, L"disable-HKLM");
         break;
     }
@@ -98,27 +100,14 @@ void SetOpenXRModeWithHelperProcessImpl(
     case OpenXRMode::Disabled:
       break;
     case OpenXRMode::CurrentUser:
-      LaunchAndWaitForOpenXRHelperSubprocess(
+      co_await LaunchAndWaitForOpenXRHelperSubprocess(
         RunAs::CurrentUser, L"enable-HKCU");
       break;
     case OpenXRMode::AllUsers:
-      LaunchAndWaitForOpenXRHelperSubprocess(
+      co_await LaunchAndWaitForOpenXRHelperSubprocess(
         RunAs::Administrator, L"enable-HKLM");
       break;
   }
-}
-
-}// namespace
-
-void SetOpenXRModeWithHelperProcess(
-  OpenXRMode mode,
-  std::optional<OpenXRMode> oldMode) {
-  // If we're disabling in HKLM and enabling in HKCU, we want to
-  // run the elevated process first, but don't want to block the UI thread on
-  // UAC, so use a background thread.
-  std::thread([=]() {
-    SetOpenXRModeWithHelperProcessImpl(mode, oldMode);
-  }).detach();
 }
 
 }// namespace OpenKneeboard

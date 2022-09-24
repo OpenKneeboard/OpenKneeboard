@@ -156,7 +156,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
       co_await CheckRuntimeFiles(xamlRoot);
       if (gKneeboard) {
         gKneeboard->GetGamesList()->StartInjector();
-        SetOpenXRModeWithHelperProcess(gKneeboard->GetVRConfig().mOpenXRMode);
+        co_await SetOpenXRModeWithHelperProcess(gKneeboard->GetVRConfig().mOpenXRMode);
       }
       co_await CheckAllDCSHooks(xamlRoot);
     });

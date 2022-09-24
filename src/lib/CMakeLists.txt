@@ -236,6 +236,7 @@ target_link_libraries(
   OpenKneeboard-OpenXRMode
   PRIVATE
   OpenKneeboard-RuntimeFiles
+  ThirdParty::CppWinRT
 )
 
 add_library(OpenKneeboard-OpenVRKneeboard STATIC OpenVRKneeboard.cpp)
