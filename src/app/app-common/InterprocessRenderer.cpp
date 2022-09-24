@@ -136,6 +136,11 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
 InterprocessRenderer::InterprocessRenderer(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
+  auto currentGame = kneeboard->GetCurrentGame();
+  if (currentGame) {
+    mCurrentGame = currentGame->mGameInstance.lock();
+  }
+
   mDXR = dxr;
   mKneeboard = kneeboard;
   mErrorRenderer

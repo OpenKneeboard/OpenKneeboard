@@ -56,6 +56,11 @@ struct ViewRenderInfo {
   bool mIsActiveForInput = false;
 };
 
+struct RunningGame {
+  DWORD mProcessID = 0;
+  std::weak_ptr<GameInstance> mGameInstance;
+};
+
 class KneeboardState final : private EventReceiver {
  public:
   KneeboardState() = delete;
@@ -83,6 +88,7 @@ class KneeboardState final : private EventReceiver {
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;
 
   GamesList* GetGamesList() const;
+  std::optional<RunningGame> GetCurrentGame() const;
 
   FlatConfig GetFlatConfig() const;
   void SetFlatConfig(const FlatConfig&);
@@ -116,12 +122,14 @@ class KneeboardState final : private EventReceiver {
   std::unique_ptr<GameEventServer> mGameEventServer;
   winrt::Windows::Foundation::IAsyncAction mGameEventWorker;
   std::jthread mOpenVRThread;
+  std::optional<RunningGame> mCurrentGame;
 
   VRConfig mVRConfig;
   FlatConfig mFlatConfig;
   AppSettings mAppSettings;
   DoodleSettings mDoodleSettings;
 
+  void OnGameChangedEvent(DWORD processID, std::shared_ptr<GameInstance> game);
   void OnGameEvent(const GameEvent& ev);
   void OnUserAction(UserAction);
 

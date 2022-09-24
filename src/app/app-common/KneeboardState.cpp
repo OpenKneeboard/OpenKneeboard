@@ -66,7 +66,9 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
-  AddEventListener(mGamesList->evGameChangedEvent, this->evGameChangedEvent);
+  AddEventListener(
+    mGamesList->evGameChangedEvent,
+    std::bind_front(&KneeboardState::OnGameChangedEvent, this));
   mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.Tabs);
   mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(mDXResources, this);
@@ -244,6 +246,17 @@ void KneeboardState::SetFirstViewIndex(uint8_t index) {
   this->evViewOrderChangedEvent.Emit();
 }
 
+void KneeboardState::OnGameChangedEvent(
+  DWORD processID,
+  std::shared_ptr<GameInstance> game) {
+  if (processID && game) {
+    mCurrentGame = {processID, {game}};
+  } else {
+    mCurrentGame = {};
+  }
+  this->evGameChangedEvent.Emit(processID, game);
+}
+
 void KneeboardState::OnGameEvent(const GameEvent& ev) {
   TroubleshootingStore::Get()->OnGameEvent(ev);
 
@@ -352,6 +365,10 @@ void KneeboardState::SetAppSettings(const AppSettings& value) {
 
 GamesList* KneeboardState::GetGamesList() const {
   return mGamesList.get();
+}
+
+std::optional<RunningGame> KneeboardState::GetCurrentGame() const {
+  return mCurrentGame;
 }
 
 void KneeboardState::SaveSettings() {
