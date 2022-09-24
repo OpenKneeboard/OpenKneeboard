@@ -12,7 +12,7 @@
       <TextBlock
         Grid.Column="0"
         Style="{ThemeResource TitleTextBlockStyle}">
-          OpenKneeboard Help
+          Help and Support
       </TextBlock>
       <StackPanel
         Orientation="Vertical"
@@ -59,7 +59,7 @@
         <TextBlock
           Grid.Column="0"
           Style="{ThemeResource TitleTextBlockStyle}">
-          About OpenKneeboard
+          About
         </TextBlock>
         <HyperlinkButton Grid.Column="1" Click="OnExportClick">
           Save As...
@@ -100,6 +100,36 @@
         </Expander.Header>
         <TextBlock Style="{ThemeResource BodyTextBlockStyle}" x:Name="VersionText" IsTextSelectionEnabled="true" />
       </Expander>
+			<Expander
+				HorizontalAlignment="Stretch"
+				HorizontalContentAlignment="Stretch">
+				<Expander.Header>
+					<Grid ColumnDefinitions="Auto,*,Auto,Auto">
+						<FontIcon
+							Grid.Column="0"
+							Glyph="&#xEB51;"
+							FontFamily="{StaticResource SymbolThemeFontFamily}"
+							Margin="0,0,12,0"
+							VerticalAlignment="Center"
+						/>
+						<TextBlock
+							Grid.Column="1"
+							Text="Acknowledgements and Licenses"
+							Style="{StaticResource SubtitleTextBlockStyle}"
+							VerticalAlignment="Center"
+						/>
+					</Grid>
+				</Expander.Header>
+				<StackPanel
+					Orientation="Vertical"
+					Spacing="12"
+					x:Name="Licenses">
+					<TextBlock>
+						No copyright files found; please file a bug if this is a
+						released verison.
+					</TextBlock>
+				</StackPanel>
+			</Expander>
       <Expander
         HorizontalAlignment="Stretch"
         HorizontalContentAlignment="Stretch">
@@ -172,36 +202,6 @@
             TextWrapping="NoWrap"
           />
         </ScrollViewer>
-      </Expander>
-      <Expander
-        HorizontalAlignment="Stretch"
-        HorizontalContentAlignment="Stretch">
-        <Expander.Header>
-          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-            <FontIcon
-              Grid.Column="0"
-              Glyph="&#xEB51;"
-              FontFamily="{StaticResource SymbolThemeFontFamily}"
-              Margin="0,0,12,0"
-              VerticalAlignment="Center"
-            />
-            <TextBlock
-              Grid.Column="1"
-              Text="Acknowledgements and Licenses"
-              Style="{StaticResource SubtitleTextBlockStyle}"
-              VerticalAlignment="Center"
-            />
-          </Grid>
-        </Expander.Header>
-        <StackPanel
-          Orientation="Vertical"
-          Spacing="12"
-          x:Name="Licenses">
-          <TextBlock>
-            No copyright files found; please file a bug if this is a
-            released verison.
-          </TextBlock>
-        </StackPanel>
       </Expander>
     </StackPanel>
   </ScrollViewer>
