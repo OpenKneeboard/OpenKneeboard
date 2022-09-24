@@ -381,13 +381,12 @@ bool Snapshot::IsValid() const {
 
 class Impl {
  public:
-  HANDLE mHandle;
+  winrt::handle mHandle;
   std::byte* mMapping = nullptr;
   Header* mHeader = nullptr;
 
   ~Impl() {
     UnmapViewOfFile(mMapping);
-    CloseHandle(mHandle);
   }
 };
 
@@ -404,25 +403,30 @@ class Writer::Impl : public SHM::Impl {
 
 Writer::Writer() {
   const auto path = SHMPath();
+  dprintf(L"Initializing SHM writer with path {}", path);
 
-  HANDLE handle;
-  handle = CreateFileMappingW(
-    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
+  winrt::handle handle {CreateFileMappingW(
+    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str())};
   if (!handle) {
+    dprintf(
+      "CreateFileMappingW failed: {:#x}",
+      std::bit_cast<uint32_t>(GetLastError()));
     return;
   }
   auto mapping = reinterpret_cast<std::byte*>(
-    MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, SHM_SIZE));
+    MapViewOfFile(handle.get(), FILE_MAP_WRITE, 0, 0, SHM_SIZE));
   if (!mapping) {
-    CloseHandle(handle);
+    dprintf(
+      "MapViewOfFile failed: {:#x}", std::bit_cast<uint32_t>(GetLastError()));
     return;
   }
 
   p = std::make_shared<Impl>();
-  p->mHandle = handle;
+  p->mHandle = std::move(handle);
   p->mMapping = mapping;
   p->mHeader = reinterpret_cast<Header*>(mapping);
   *p->mHeader = {};
+  dprint("Writer initialized.");
 }
 
 Writer::~Writer() {
@@ -455,24 +459,29 @@ class Reader::Impl : public SHM::Impl {
 
 Reader::Reader() {
   const auto path = SHMPath();
-  HANDLE handle;
-  handle = CreateFileMappingW(
-    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str());
+  dprintf(L"Initializing SHM reader with path {}", path);
+  winrt::handle handle {CreateFileMappingW(
+    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str())};
   if (!handle) {
+    dprintf(
+      "CreateFileMappingW failed: {:#x}",
+      std::bit_cast<uint32_t>(GetLastError()));
     return;
   }
   auto mapping = reinterpret_cast<std::byte*>(
-    MapViewOfFile(handle, FILE_MAP_WRITE, 0, 0, SHM_SIZE));
+    MapViewOfFile(handle.get(), FILE_MAP_WRITE, 0, 0, SHM_SIZE));
   if (!mapping) {
-    CloseHandle(handle);
+    dprintf(
+      "MapViewOfFile failed: {:#x}", std::bit_cast<uint32_t>(GetLastError()));
     return;
   }
 
   this->p = std::make_shared<Impl>();
-  p->mHandle = handle;
+  p->mHandle = std::move(handle);
   p->mMapping = mapping;
   p->mHeader = reinterpret_cast<Header*>(mapping);
   p->mResources = {TextureCount};
+  dprint("Reader initialized.");
 }
 
 Reader::~Reader() {
