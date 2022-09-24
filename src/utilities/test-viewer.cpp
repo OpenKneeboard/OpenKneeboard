@@ -465,6 +465,7 @@ int WINAPI wWinMain(
   HINSTANCE hPrevInstance,
   PWSTR pCmdLine,
   int nCmdShow) {
+  winrt::init_apartment(winrt::apartment_type::single_threaded);
   TestViewerWindow window(hInstance);
   ShowWindow(window.GetHWND(), nCmdShow);
 
