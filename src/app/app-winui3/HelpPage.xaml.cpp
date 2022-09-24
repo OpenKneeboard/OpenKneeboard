@@ -342,8 +342,7 @@ winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
 }
 
 void HelpPage::PopulateLicenses() noexcept {
-  const auto docDir
-    = Filesystem::GetRuntimeDirectory().parent_path() / "share" / "doc";
+  const auto docDir = Filesystem::GetRuntimeDirectory() / "share" / "doc";
 
   if (!std::filesystem::exists(docDir)) {
     return;
