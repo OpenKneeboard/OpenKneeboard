@@ -561,10 +561,7 @@ uint32_t Reader::GetFrameCountForMetricsOnly() const {
   return p->mHeader->mSequenceNumber;
 }
 
-ConsumerPattern::ConsumerPattern()
-  : mKindMask(~static_cast<std::underlying_type_t<ConsumerKind>>(0)) {
-}
-
+ConsumerPattern::ConsumerPattern() = default;
 ConsumerPattern::ConsumerPattern(
   std::underlying_type_t<ConsumerKind> consumerKindMask)
   : mKindMask(consumerKindMask) {
