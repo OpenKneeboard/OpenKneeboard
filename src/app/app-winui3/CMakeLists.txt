@@ -79,6 +79,12 @@ target_include_directories(
   "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
+target_precompile_headers(
+  OpenKneeboard-App-WinUI3
+  PRIVATE
+  pch.h
+)
+
 target_compile_definitions(
   OpenKneeboard-App-WinUI3
   PRIVATE
@@ -91,6 +97,7 @@ target_compile_options(
   # We intentionally throw from noexcept functions to get more useful
   # backtraces/crash dumps from winrt event handlers
   "/wd4297"
+  "/FI${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/OpenKneeboard-App-WinUI3.dir/$<CONFIG>/cmake_pch.hxx"
 )
 
 set_property(
