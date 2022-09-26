@@ -7,10 +7,23 @@ namespace OpenKneeboardApp
     }
 
     [default_interface]
-    runtimeclass TabUIData
+    unsealed runtimeclass TabUIData
     {
         TabUIData();
         UInt64 InstanceID;
         String Title;
+    }
+
+    [default_interface]
+    runtimeclass DCSRadioLogTabUIData : TabUIData
+    {
+        DCSRadioLogTabUIData();
+    }
+
+    [default_interface]
+    runtimeclass TabUIDataTemplateSelector : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
+        TabUIDataTemplateSelector();
+        Microsoft.UI.Xaml.DataTemplate Generic;
+        Microsoft.UI.Xaml.DataTemplate DCSRadioLog;
     }
 }

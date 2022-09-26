@@ -21,6 +21,8 @@
 #include "pch.h"
 #include "TabSettingsPage.xaml.h"
 #include "TabUIData.g.cpp"
+#include "DCSRadioLogTabUIData.g.cpp"
+#include "TabUIDataTemplateSelector.g.cpp"
 #include "TabSettingsPage.g.cpp"
 // clang-format on
 
@@ -43,15 +45,26 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
+OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
+  const std::shared_ptr<ITab>& tab) {
+  OpenKneeboardApp::TabUIData tabData {nullptr};
+  if (auto radioTab = std::dynamic_pointer_cast<DCSRadioLogTab>(tab)) {
+    auto radioTabData = winrt::make<DCSRadioLogTabUIData>();
+    tabData = std::move(radioTabData);
+  } else {
+    tabData = std::move(winrt::make<TabUIData>());
+  }
+  tabData.Title(to_hstring(tab->GetTitle()));
+  tabData.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
+  return tabData;
+}
+
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
 
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
   for (const auto& tab: gKneeboard->GetTabs()) {
-    auto winrtTab = winrt::make<TabUIData>();
-    winrtTab.Title(to_hstring(tab->GetTitle()));
-    winrtTab.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
-    tabs.Append(winrtTab);
+    tabs.Append(CreateTabUIData(tab));
   }
   List().ItemsSource(tabs);
   tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
@@ -209,10 +222,7 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
                  .ItemsSource()
                  .as<Windows::Foundation::Collections::IVector<IInspectable>>();
   for (const auto& tab: tabs) {
-    auto winrtTab = winrt::make<TabUIData>();
-    winrtTab.Title(to_hstring(tab->GetTitle()));
-    winrtTab.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
-    items.InsertAt(idx++, winrtTab);
+    items.InsertAt(idx++, CreateTabUIData(tab));
   }
 }
 
@@ -260,6 +270,40 @@ uint64_t TabUIData::InstanceID() {
 
 void TabUIData::InstanceID(uint64_t value) {
   mInstanceID = value;
+}
+
+winrt::Microsoft::UI::Xaml::DataTemplate TabUIDataTemplateSelector::Generic() {
+  return mGeneric;
+}
+
+void TabUIDataTemplateSelector::Generic(
+  winrt::Microsoft::UI::Xaml::DataTemplate const& value) {
+  mGeneric = value;
+}
+
+winrt::Microsoft::UI::Xaml::DataTemplate
+TabUIDataTemplateSelector::DCSRadioLog() {
+  return mDCSRadioLog;
+}
+
+void TabUIDataTemplateSelector::DCSRadioLog(
+  winrt::Microsoft::UI::Xaml::DataTemplate const& value) {
+  mDCSRadioLog = value;
+}
+
+DataTemplate TabUIDataTemplateSelector::SelectTemplateCore(
+  const IInspectable& item) {
+  if (item.try_as<winrt::OpenKneeboardApp::DCSRadioLogTabUIData>()) {
+    return mDCSRadioLog;
+  }
+
+  return mGeneric;
+}
+
+DataTemplate TabUIDataTemplateSelector::SelectTemplateCore(
+  const IInspectable& item,
+  const DependencyObject&) {
+  return this->SelectTemplateCore(item);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

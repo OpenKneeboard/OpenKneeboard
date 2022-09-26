@@ -126,6 +126,7 @@
       </Expander>
     </DataTemplate>
   </Page.Resources>
+  <!-- PAGE CONTENT STARTS HERE -->
   <Grid Margin="0,0,0,16" RowDefinitions="Auto,*">
     <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
       <AppBarButton Icon="Add" Label="Add a Game">

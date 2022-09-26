@@ -7,6 +7,49 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
+  <Page.Resources>
+    <!-- Any Tab -->
+    <DataTemplate x:Key="GenericTabTemplate" x:DataType="local:TabUIData">
+      <Grid
+        ColumnDefinitions="*,Auto"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="8"
+        Padding="12"
+        Margin="0,4,0,4">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource BodyStrongTextBlockStyle}"
+          Text="{x:Bind Title}"
+          VerticalAlignment="Center"
+        />
+        <Button Grid.Column="1" Tag="{x:Bind InstanceID}" Click="RemoveTab">
+          <SymbolIcon Symbol="Delete" />
+        </Button>
+      </Grid>
+    </DataTemplate>
+    <!-- DCS Radio Tab -->
+    <DataTemplate x:Key="DCSRadioLogTabTemplate" x:DataType="local:DCSRadioLogTabUIData">
+      <Grid
+        ColumnDefinitions="*,Auto"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="8"
+        Padding="12"
+        Margin="0,4,0,4">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource BodyStrongTextBlockStyle}"
+          Text="{x:Bind Title}"
+          VerticalAlignment="Center"
+        />
+        <Button Grid.Column="1" Tag="{x:Bind InstanceID}" Click="RemoveTab">
+          <SymbolIcon Symbol="Delete" />
+        </Button>
+      </Grid>
+    </DataTemplate>
+  </Page.Resources>
+  <!-- PAGE CONTENT STARTS HERE -->
   <Grid Margin="0,0,0,16" RowDefinitions="Auto,*">
     <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
       <AppBarButton Icon="Add" Label="Add a Tab">
@@ -23,27 +66,12 @@
       CanDragItems="True"
       CanReorderItems="True"
       AllowDrop="True">
-      <ListView.ItemTemplate>
-        <DataTemplate x:DataType="local:TabUIData">
-          <Grid
-            ColumnDefinitions="*,Auto"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            CornerRadius="8"
-            Padding="12"
-            Margin="0,4,0,4">
-						<TextBlock
-							Grid.Column="0"
-							Style="{StaticResource BodyStrongTextBlockStyle}"
-							Text="{x:Bind Title}"
-							VerticalAlignment="Center"
-						/>
-            <Button Grid.Column="1" Tag="{x:Bind InstanceID}" Click="RemoveTab">
-              <SymbolIcon Symbol="Delete" />
-            </Button>
-          </Grid>
-        </DataTemplate>
-      </ListView.ItemTemplate>
+      <ListView.ItemTemplateSelector>
+        <local:TabUIDataTemplateSelector
+          Generic="{StaticResource GenericTabTemplate}"
+          DCSRadioLog="{StaticResource DCSRadioLogTabTemplate}"
+        />
+      </ListView.ItemTemplateSelector>
     </ListView>
   </Grid>
 </Page>

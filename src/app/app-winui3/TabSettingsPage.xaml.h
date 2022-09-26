@@ -23,6 +23,8 @@
 #include "pch.h"
 #include "TabUIData.g.h"
 #include "TabSettingsPage.g.h"
+#include "DCSRadioLogTabUIData.g.h"
+#include "TabUIDataTemplateSelector.g.h"
 // clang-format on
 
 #include <string>
@@ -50,7 +52,8 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   fire_and_forget CreateFolderTab();
 
   void AddTabs(const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
-  std::string mData;
+  static OpenKneeboardApp::TabUIData CreateTabUIData(
+    const std::shared_ptr<OpenKneeboard::ITab>&);
 };
 
 struct TabUIData : TabUIDataT<TabUIData> {
@@ -67,10 +70,42 @@ struct TabUIData : TabUIDataT<TabUIData> {
   uint64_t mInstanceID {~0ui64};
 };
 
+struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
+                                DCSRadioLogTabUIData,
+                                OpenKneeboardApp::implementation::TabUIData> {
+  DCSRadioLogTabUIData() = default;
+};
+
+struct TabUIDataTemplateSelector
+  : TabUIDataTemplateSelectorT<TabUIDataTemplateSelector> {
+  TabUIDataTemplateSelector() = default;
+
+  winrt::Microsoft::UI::Xaml::DataTemplate Generic();
+  void Generic(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
+  winrt::Microsoft::UI::Xaml::DataTemplate DCSRadioLog();
+  void DCSRadioLog(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
+
+  DataTemplate SelectTemplateCore(const IInspectable&);
+  DataTemplate SelectTemplateCore(const IInspectable&, const DependencyObject&);
+
+ private:
+  DataTemplate mGeneric;
+  DataTemplate mDCSRadioLog;
+};
+
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
 struct TabSettingsPage
   : TabSettingsPageT<TabSettingsPage, implementation::TabSettingsPage> {};
 
 struct TabUIData : TabUIDataT<TabUIData, implementation::TabUIData> {};
+struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
+                                DCSRadioLogTabUIData,
+                                implementation::DCSRadioLogTabUIData> {};
+
+struct TabUIDataTemplateSelector
+  : TabUIDataTemplateSelectorT<
+      TabUIDataTemplateSelector,
+      implementation::TabUIDataTemplateSelector> {};
+
 }// namespace winrt::OpenKneeboardApp::factory_implementation
