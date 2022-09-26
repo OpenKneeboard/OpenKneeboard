@@ -32,6 +32,7 @@
 namespace OpenKneeboard {
 class ITab;
 class ITabView;
+class DCSRadioLogTab;
 enum class TabType;
 }// namespace OpenKneeboard
 
@@ -59,10 +60,10 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
 struct TabUIData : TabUIDataT<TabUIData> {
   TabUIData() = default;
 
-  hstring Title();
+  hstring Title() const;
   void Title(hstring);
 
-  uint64_t InstanceID();
+  uint64_t InstanceID() const;
   void InstanceID(uint64_t);
 
  private:
@@ -74,6 +75,13 @@ struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
                                 DCSRadioLogTabUIData,
                                 OpenKneeboardApp::implementation::TabUIData> {
   DCSRadioLogTabUIData() = default;
+  uint8_t MissionStartBehavior() const;
+  void MissionStartBehavior(uint8_t value);
+
+ private:
+  mutable std::weak_ptr<OpenKneeboard::DCSRadioLogTab> mTab;
+
+  std::shared_ptr<OpenKneeboard::DCSRadioLogTab> GetTab() const;
 };
 
 struct TabUIDataTemplateSelector

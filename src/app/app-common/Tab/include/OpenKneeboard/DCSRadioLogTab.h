@@ -22,7 +22,10 @@
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <shims/winrt/base.h>
 
+#include <string>
+
 #include "DCSTab.h"
+#include "ITabWithSettings.h"
 #include "TabBase.h"
 
 namespace OpenKneeboard {
@@ -31,14 +34,30 @@ class PlainTextPageSource;
 
 class DCSRadioLogTab final : public TabBase,
                              public DCSTab,
-                             public PageSourceWithDelegates {
+                             public PageSourceWithDelegates,
+                             public ITabWithSettings {
  public:
-  DCSRadioLogTab(const DXResources&, KneeboardState*);
+  // Indices must match TabSettingsPage.xaml
+  enum class MissionStartBehavior : uint8_t {
+    DrawHorizontalLine = 0,
+    ClearHistory = 1,
+  };
+
+  DCSRadioLogTab(
+    const DXResources&,
+    KneeboardState*,
+    const std::string& title = {},
+    const nlohmann::json& config = {});
   virtual ~DCSRadioLogTab();
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
   virtual uint16_t GetPageCount() const override;
   virtual void Reload() override;
+
+  virtual nlohmann::json GetSettings() const override;
+
+  MissionStartBehavior GetMissionStartBehavior() const;
+  void SetMissionStartBehavior(MissionStartBehavior);
 
  protected:
   virtual void OnGameEvent(
@@ -49,11 +68,15 @@ class DCSRadioLogTab final : public TabBase,
  private:
   winrt::apartment_context mUIThread;
   std::shared_ptr<PlainTextPageSource> mPageSource;
+  MissionStartBehavior mMissionStartBehavior {
+    MissionStartBehavior::DrawHorizontalLine};
 
   winrt::fire_and_forget OnGameEventImpl(
     const GameEvent&,
     const std::filesystem::path& installPath,
     const std::filesystem::path& savedGamesPath);
+
+  void LoadSettings(const nlohmann::json&);
 };
 
 }// namespace OpenKneeboard

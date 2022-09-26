@@ -30,23 +30,28 @@
     </DataTemplate>
     <!-- DCS Radio Tab -->
     <DataTemplate x:Key="DCSRadioLogTabTemplate" x:DataType="local:DCSRadioLogTabUIData">
-      <Grid
-        ColumnDefinitions="*,Auto"
+      <StackPanel
+        Orientation="Vertical"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="8"
-        Padding="12"
-        Margin="0,4,0,4">
-        <TextBlock
-          Grid.Column="0"
-          Style="{StaticResource BodyStrongTextBlockStyle}"
-          Text="{x:Bind Title}"
-          VerticalAlignment="Center"
-        />
-        <Button Grid.Column="1" Tag="{x:Bind InstanceID}" Click="RemoveTab">
-          <SymbolIcon Symbol="Delete" />
-        </Button>
-      </Grid>
+        Padding="12">
+        <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,4">
+          <TextBlock
+            Grid.Column="0"
+            Style="{StaticResource BodyStrongTextBlockStyle}"
+            Text="{x:Bind Title}"
+            VerticalAlignment="Center"
+          />
+          <Button Grid.Column="1" Tag="{x:Bind InstanceID}" Click="RemoveTab">
+            <SymbolIcon Symbol="Delete" />
+          </Button>
+        </Grid>
+        <RadioButtons SelectedIndex="{x:Bind MissionStartBehavior, Mode=TwoWay}" MaxColumns="2" Header="On mission start">
+          <x:String>Draw a separator</x:String>
+          <x:String>Clear history</x:String>
+        </RadioButtons>
+      </StackPanel>
     </DataTemplate>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->

@@ -26,6 +26,7 @@
 #include "TabSettingsPage.g.cpp"
 // clang-format on
 
+#include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/FilePageSource.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -38,6 +39,7 @@
 #include <winrt/windows.storage.pickers.h>
 
 #include <ranges>
+#include <shims/utility>
 
 #include "Globals.h"
 
@@ -261,7 +263,7 @@ void TabSettingsPage::OnTabsChanged(
   tabsList->SetTabs(reorderedTabs);
 }
 
-hstring TabUIData::Title() {
+hstring TabUIData::Title() const {
   return mTitle;
 }
 
@@ -269,12 +271,49 @@ void TabUIData::Title(hstring value) {
   mTitle = value;
 }
 
-uint64_t TabUIData::InstanceID() {
+uint64_t TabUIData::InstanceID() const {
   return mInstanceID;
 }
 
 void TabUIData::InstanceID(uint64_t value) {
   mInstanceID = value;
+}
+
+std::shared_ptr<DCSRadioLogTab> DCSRadioLogTabUIData::GetTab() const {
+  {
+    auto tab = mTab.lock();
+    if (tab) {
+      return tab;
+    }
+  }
+
+  auto tabID = ITab::RuntimeID::FromTemporaryValue(this->InstanceID());
+  for (auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
+    if (tab->GetRuntimeID() == tabID) {
+      auto refined = std::dynamic_pointer_cast<DCSRadioLogTab>(tab);
+      if (!refined) {
+        dprint("Expected a DCSRadioLogTab but didn't get one");
+        OPENKNEEBOARD_BREAK;
+      }
+      mTab = refined;
+      return refined;
+    }
+  }
+  return {};
+}
+
+uint8_t DCSRadioLogTabUIData::MissionStartBehavior() const {
+  auto tab = this->GetTab();
+  return tab ? std23::to_underlying(tab->GetMissionStartBehavior()) : 0;
+}
+
+void DCSRadioLogTabUIData::MissionStartBehavior(uint8_t value) {
+  auto tab = this->GetTab();
+  if (!tab) {
+    return;
+  }
+  tab->SetMissionStartBehavior(
+    static_cast<DCSRadioLogTab::MissionStartBehavior>(value));
 }
 
 winrt::Microsoft::UI::Xaml::DataTemplate TabUIDataTemplateSelector::Generic() {

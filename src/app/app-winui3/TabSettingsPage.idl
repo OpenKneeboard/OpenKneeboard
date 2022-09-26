@@ -18,6 +18,7 @@ namespace OpenKneeboardApp
     runtimeclass DCSRadioLogTabUIData : TabUIData
     {
         DCSRadioLogTabUIData();
+        UInt8 MissionStartBehavior;
     }
 
     [default_interface]

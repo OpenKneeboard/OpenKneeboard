@@ -34,6 +34,7 @@
 
 #include <chrono>
 #include <mutex>
+#include <shims/utility>
 #include <thread>
 #include <unordered_set>
 
@@ -298,8 +299,7 @@ void GameInjector::CheckProcess(
         break;
       default:
         dprintf(
-          "Unhandled OverlayAPI: {}",
-          static_cast<std::underlying_type_t<OverlayAPI>>(game->mOverlayAPI));
+          "Unhandled OverlayAPI: {}", std23::to_underlying(game->mOverlayAPI));
         OPENKNEEBOARD_BREAK;
         return;
     }

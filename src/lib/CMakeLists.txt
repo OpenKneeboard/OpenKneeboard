@@ -124,6 +124,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-shims
   OpenKneeboard-version
 )
 target_link_libraries(OpenKneeboard-SHM PUBLIC _libheaders)

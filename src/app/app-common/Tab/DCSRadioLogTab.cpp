@@ -26,17 +26,55 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  DCSRadioLogTab::MissionStartBehavior,
+  {
+    {DCSRadioLogTab::MissionStartBehavior::DrawHorizontalLine,
+     "DrawHorizontalLine"},
+    {DCSRadioLogTab::MissionStartBehavior::ClearHistory, "ClearHistory"},
+  });
+
+DCSRadioLogTab::DCSRadioLogTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const std::string& /* title */,
+  const nlohmann::json& config)
   : PageSourceWithDelegates(dxr, kbs),
     mPageSource(std::make_shared<PlainTextPageSource>(
       dxr,
       _("[waiting for radio messages]"))) {
   this->SetDelegates({mPageSource});
   AddEventListener(mPageSource->evPageAppendedEvent, this->evPageAppendedEvent);
+  LoadSettings(config);
 }
 
 DCSRadioLogTab::~DCSRadioLogTab() {
   this->RemoveAllEventListeners();
+}
+
+void DCSRadioLogTab::LoadSettings(const nlohmann::json& json) {
+  if (json.is_null()) {
+    return;
+  }
+  if (json.contains("MissionStartBehavior")) {
+    mMissionStartBehavior = json.at("MissionStartBehavior");
+  }
+}
+
+nlohmann::json DCSRadioLogTab::GetSettings() const {
+  return {
+    {"MissionStartBehavior", mMissionStartBehavior},
+  };
+};
+
+DCSRadioLogTab::MissionStartBehavior DCSRadioLogTab::GetMissionStartBehavior()
+  const {
+  return mMissionStartBehavior;
+}
+
+void DCSRadioLogTab::SetMissionStartBehavior(MissionStartBehavior value) {
+  mMissionStartBehavior = value;
+  this->evSettingsChangedEvent.Emit();
 }
 
 utf8_string DCSRadioLogTab::GetGlyph() const {
@@ -68,7 +106,14 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
     co_await mUIThread;
     {
       const EventDelay eventDelay;
-      mPageSource->PushFullWidthSeparator();
+      switch (mMissionStartBehavior) {
+        case MissionStartBehavior::DrawHorizontalLine:
+          mPageSource->PushFullWidthSeparator();
+          break;
+        case MissionStartBehavior::ClearHistory:
+          mPageSource->ClearText();
+          break;
+      }
       this->evNeedsRepaintEvent.Emit();
     }
     co_return;

@@ -29,6 +29,7 @@
 #include <bit>
 #include <format>
 #include <random>
+#include <shims/utility>
 
 namespace OpenKneeboard::SHM {
 
@@ -568,8 +569,7 @@ ConsumerPattern::ConsumerPattern(
 }
 
 bool ConsumerPattern::Matches(ConsumerKind kind) const {
-  return (mKindMask & static_cast<std::underlying_type_t<ConsumerKind>>(kind))
-    == mKindMask;
+  return (mKindMask & std23::to_underlying(kind)) == mKindMask;
 }
 
 }// namespace OpenKneeboard::SHM

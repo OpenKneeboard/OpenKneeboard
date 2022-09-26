@@ -68,6 +68,15 @@ std::shared_ptr<T> load_tab(
   KneeboardState* kbs,
   const std::string& title,
   const nlohmann::json& config) {
+  if constexpr (std::constructible_from<
+                  T,
+                  DXResources,
+                  KneeboardState*,
+                  std::string,
+                  nlohmann::json>) {
+    return std::make_shared<T>(dxr, kbs, title, config);
+  }
+
   if constexpr (std::constructible_from<T, DXResources>) {
     return std::make_shared<T>(dxr);
   }
@@ -79,15 +88,6 @@ std::shared_ptr<T> load_tab(
   if constexpr (
     std::constructible_from<T, DXResources, KneeboardState*, std::string>) {
     return std::make_shared<T>(dxr, kbs, title);
-  }
-
-  if constexpr (std::constructible_from<
-                  T,
-                  DXResources,
-                  KneeboardState*,
-                  std::string,
-                  nlohmann::json>) {
-    return std::make_shared<T>(dxr, kbs, title, config);
   }
 
   static_assert(!std::is_abstract_v<T>);
