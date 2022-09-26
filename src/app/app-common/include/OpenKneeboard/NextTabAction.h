@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
 

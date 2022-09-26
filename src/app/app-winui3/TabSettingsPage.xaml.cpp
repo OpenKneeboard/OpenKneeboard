@@ -31,6 +31,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabTypes.h>
 #include <OpenKneeboard/TabView.h>
+#include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/dprint.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
@@ -63,7 +64,7 @@ TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
 
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
-  for (const auto& tab: gKneeboard->GetTabs()) {
+  for (const auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
     tabs.Append(CreateTabUIData(tab));
   }
   List().ItemsSource(tabs);
@@ -85,7 +86,8 @@ fire_and_forget TabSettingsPage::RemoveTab(
   const RoutedEventArgs&) {
   const auto tabID = ITab::RuntimeID::FromTemporaryValue(
     unbox_value<uint64_t>(sender.as<Button>().Tag()));
-  const auto tabs = gKneeboard->GetTabs();
+  auto tabsList = gKneeboard->GetTabsList();
+  const auto tabs = tabsList->GetTabs();
   auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
   if (it == tabs.end()) {
     co_return;
@@ -109,7 +111,7 @@ fire_and_forget TabSettingsPage::RemoveTab(
   }
 
   auto idx = static_cast<uint8_t>(it - tabs.begin());
-  gKneeboard->RemoveTab(idx);
+  tabsList->RemoveTab(idx);
   List()
     .ItemsSource()
     .as<Windows::Foundation::Collections::IVector<IInspectable>>()
@@ -210,12 +212,14 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     initialIndex = 0;
   }
 
+  auto tabsList = gKneeboard->GetTabsList();
+
   auto idx = initialIndex;
-  auto allTabs = gKneeboard->GetTabs();
+  auto allTabs = tabsList->GetTabs();
   for (const auto& tab: tabs) {
     allTabs.insert(allTabs.begin() + idx++, tab);
   }
-  gKneeboard->SetTabs(allTabs);
+  tabsList->SetTabs(allTabs);
 
   idx = initialIndex;
   auto items = List()
@@ -236,7 +240,8 @@ void TabSettingsPage::OnTabsChanged(
   auto items = List()
                  .ItemsSource()
                  .as<Windows::Foundation::Collections::IVector<IInspectable>>();
-  auto tabs = gKneeboard->GetTabs();
+  auto tabsList = gKneeboard->GetTabsList();
+  auto tabs = tabsList->GetTabs();
   if (items.Size() != tabs.size()) {
     // ignore the deletion ...
     return;
@@ -253,7 +258,7 @@ void TabSettingsPage::OnTabsChanged(
     }
     reorderedTabs.push_back(*it);
   }
-  gKneeboard->SetTabs(reorderedTabs);
+  tabsList->SetTabs(reorderedTabs);
 }
 
 hstring TabUIData::Title() {

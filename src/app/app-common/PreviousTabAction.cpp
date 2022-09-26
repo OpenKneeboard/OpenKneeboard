@@ -21,6 +21,7 @@
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/PreviousTabAction.h>
+#include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
 
@@ -54,7 +55,7 @@ bool PreviousTabAction::IsEnabled() {
     return true;
   }
 
-  if (mKneeboardState->GetTabs().size() < 2) {
+  if (mKneeboardState->GetTabsList()->GetTabs().size() < 2) {
     return false;
   }
 

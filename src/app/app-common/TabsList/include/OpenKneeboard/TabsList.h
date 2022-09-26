@@ -27,20 +27,30 @@
 namespace OpenKneeboard {
 class KneeboardState;
 
-class TabsList final {
+class TabsList final : private EventReceiver {
  public:
   TabsList() = delete;
   TabsList(
     const DXResources&,
     KneeboardState* kneeboard,
     const nlohmann::json& config);
+  ~TabsList();
 
-  virtual ~TabsList();
-  virtual nlohmann::json GetSettings() const;
+  std::vector<std::shared_ptr<ITab>> GetTabs() const;
+  void RemoveTab(uint8_t index);
+  void InsertTab(uint8_t index, const std::shared_ptr<ITab>& tab);
+  void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
+
+  nlohmann::json GetSettings() const;
+
+  Event<> evSettingsChangedEvent;
+  Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
 
  private:
   DXResources mDXR;
   KneeboardState* mKneeboard;
+  std::vector<std::shared_ptr<ITab>> mTabs;
+  std::vector<EventHandlerToken> mTabEvents;
 
   void LoadConfig(const nlohmann::json&);
   void LoadDefaultConfig();

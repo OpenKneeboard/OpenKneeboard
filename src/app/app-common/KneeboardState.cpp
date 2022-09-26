@@ -41,11 +41,6 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
-  mViews = {
-    std::make_shared<KneeboardView>(dxr, this),
-    std::make_shared<KneeboardView>(dxr, this),
-  };
-
   if (!mSettings.NonVR.is_null()) {
     mFlatConfig = mSettings.NonVR;
   }
@@ -59,17 +54,32 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mDoodleSettings = mSettings.Doodle;
   }
 
-  for (const auto& viewState: mViews) {
-    AddEventListener(viewState->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
-  }
-
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
   AddEventListener(
-    mGamesList->evGameChangedEvent,
-    std::bind_front(&KneeboardState::OnGameChangedEvent, this));
+    mGamesList->evGameChangedEvent, &KneeboardState::OnGameChangedEvent, this);
+
   mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.Tabs);
+  AddEventListener(
+    mTabsList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+  AddEventListener(mTabsList->evTabsChangedEvent, [this](const auto& tabs) {
+    for (auto& view: mViews) {
+      view->SetTabs(tabs);
+    }
+  });
+
+  mViews = {
+    std::make_shared<KneeboardView>(dxr, this),
+    std::make_shared<KneeboardView>(dxr, this),
+  };
+
+  auto tabs = mTabsList->GetTabs();
+  for (const auto& viewState: mViews) {
+    AddEventListener(viewState->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+    viewState->SetTabs(tabs);
+  }
+
   mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(mDXResources, this);
 
@@ -150,49 +160,6 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
   return mViews.at(mInputViewIndex);
-}
-
-std::vector<std::shared_ptr<ITab>> KneeboardState::GetTabs() const {
-  return mTabs;
-}
-
-void KneeboardState::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
-  if (std::ranges::equal(tabs, mTabs)) {
-    return;
-  }
-
-  mTabs = tabs;
-  SaveSettings();
-
-  for (const auto& view: mViews) {
-    view->SetTabs(tabs);
-  }
-
-  evTabsChangedEvent.Emit();
-}
-
-void KneeboardState::InsertTab(
-  uint8_t index,
-  const std::shared_ptr<ITab>& tab) {
-  auto tabs = mTabs;
-  tabs.insert(tabs.begin() + index, tab);
-  SetTabs(tabs);
-}
-
-void KneeboardState::AppendTab(const std::shared_ptr<ITab>& tab) {
-  auto tabs = mTabs;
-  tabs.push_back(tab);
-  SetTabs(tabs);
-}
-
-void KneeboardState::RemoveTab(uint8_t index) {
-  if (index >= mTabs.size()) {
-    return;
-  }
-
-  auto tabs = mTabs;
-  tabs.erase(tabs.begin() + index);
-  SetTabs(tabs);
 }
 
 void KneeboardState::OnUserAction(UserAction action) {
@@ -291,7 +258,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
 #undef IT
   }
 
-  for (auto tab: mTabs) {
+  for (auto tab: mTabsList->GetTabs()) {
     auto receiver = std::dynamic_pointer_cast<ITabWithGameEvents>(tab);
     if (receiver) {
       receiver->PostGameEvent(ev);
@@ -368,6 +335,10 @@ void KneeboardState::SetAppSettings(const AppSettings& value) {
 
 GamesList* KneeboardState::GetGamesList() const {
   return mGamesList.get();
+}
+
+TabsList* KneeboardState::GetTabsList() const {
+  return mTabsList.get();
 }
 
 std::optional<RunningGame> KneeboardState::GetCurrentGame() const {

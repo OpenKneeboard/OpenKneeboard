@@ -31,6 +31,7 @@
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/TabView.h>
+#include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/version.h>
@@ -92,7 +93,9 @@ MainWindow::MainWindow() {
     gKneeboard->evViewOrderChangedEvent, &MainWindow::OnViewOrderChanged, this);
 
   AddEventListener(
-    gKneeboard->evTabsChangedEvent, &MainWindow::OnTabsChanged, this);
+    gKneeboard->GetTabsList()->evTabsChangedEvent,
+    &MainWindow::OnTabsChanged,
+    this);
 
   // TODO: add to globals as 'game loop' thread
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
@@ -276,7 +279,7 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
 void MainWindow::OnTabsChanged() {
   auto navItems = this->Navigation().MenuItems();
   navItems.Clear();
-  for (auto tab: gKneeboard->GetTabs()) {
+  for (auto tab: gKneeboard->GetTabsList()->GetTabs()) {
     muxc::NavigationViewItem item;
     item.Content(winrt::box_value(winrt::to_hstring(tab->GetTitle())));
     item.Tag(winrt::box_value(tab->GetRuntimeID().GetTemporaryValue()));

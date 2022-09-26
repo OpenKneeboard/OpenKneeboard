@@ -29,6 +29,7 @@
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <algorithm>
 #include <nlohmann/json.hpp>
 
 namespace OpenKneeboard {
@@ -46,6 +47,7 @@ TabsList::TabsList(
 }
 
 TabsList::~TabsList() {
+  this->RemoveAllEventListeners();
 }
 
 static std::tuple<std::string, nlohmann::json> MigrateTab(
@@ -59,9 +61,10 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
 }
 
 void TabsList::LoadConfig(const nlohmann::json& config) {
-  std::vector<nlohmann::json> tabs = config;
+  std::vector<nlohmann::json> jsonTabs = config;
 
-  for (const auto& tab: tabs) {
+  decltype(mTabs) tabs;
+  for (const auto& tab: jsonTabs) {
     if (!(tab.contains("Type") && tab.contains("Title"))) {
       continue;
     }
@@ -80,7 +83,7 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
   if (type == #it) { \
     auto instance = load_tab<it##Tab>(mDXR, mKneeboard, title, settings); \
     if (instance) { \
-      mKneeboard->AppendTab(instance); \
+      tabs.push_back(instance); \
       continue; \
     } \
   }
@@ -89,11 +92,12 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
     dprintf("Couldn't load tab with type {}", rawType);
     OPENKNEEBOARD_BREAK;
   }
+  this->SetTabs(tabs);
 }
 
 void TabsList::LoadDefaultConfig() {
   auto kbs = mKneeboard;
-  mKneeboard->SetTabs({
+  this->SetTabs({
     std::make_shared<SingleFileTab>(
       mDXR,
       mKneeboard,
@@ -110,7 +114,7 @@ void TabsList::LoadDefaultConfig() {
 nlohmann::json TabsList::GetSettings() const {
   std::vector<nlohmann::json> ret;
 
-  for (const auto& tab: mKneeboard->GetTabs()) {
+  for (const auto& tab: mTabs) {
     std::string type;
 #define IT(_, it) \
   if (type.empty() && std::dynamic_pointer_cast<it##Tab>(tab)) { \
@@ -140,6 +144,45 @@ nlohmann::json TabsList::GetSettings() const {
   }
 
   return ret;
+}
+
+std::vector<std::shared_ptr<ITab>> TabsList::GetTabs() const {
+  return mTabs;
+}
+
+void TabsList::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+  if (std::ranges::equal(tabs, mTabs)) {
+    return;
+  }
+
+  mTabs = tabs;
+  for (auto token: mTabEvents) {
+    RemoveEventListener(token);
+  }
+  mTabEvents.clear();
+  for (const auto& tab: mTabs) {
+    mTabEvents.push_back(AddEventListener(
+      tab->evSettingsChangedEvent, this->evSettingsChangedEvent));
+  }
+
+  evTabsChangedEvent.Emit(mTabs);
+  evSettingsChangedEvent.Emit();
+}
+
+void TabsList::InsertTab(uint8_t index, const std::shared_ptr<ITab>& tab) {
+  auto tabs = mTabs;
+  tabs.insert(tabs.begin() + index, tab);
+  this->SetTabs(tabs);
+}
+
+void TabsList::RemoveTab(uint8_t index) {
+  if (index >= mTabs.size()) {
+    return;
+  }
+
+  auto tabs = mTabs;
+  tabs.erase(tabs.begin() + index);
+  this->SetTabs(tabs);
 }
 
 }// namespace OpenKneeboard

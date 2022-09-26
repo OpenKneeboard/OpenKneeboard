@@ -50,7 +50,7 @@ TabAction::Visibility NextTabAction::GetVisibility(Context ctx) const {
 }
 
 bool NextTabAction::IsEnabled() {
-  const auto count = mKneeboardState->GetTabs().size();
+  const auto count = mKneeboardState->GetTabsList()->GetTabs().size();
 
   if (count < 2) {
     return false;
