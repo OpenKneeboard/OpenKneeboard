@@ -37,7 +37,12 @@ PageSourceWithDelegates::PageSourceWithDelegates(
     AddEventListener(mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent),
     AddEventListener(
       this->evContentChangedEvent,
-      [this]() { this->mContentLayerCache->Reset(); }),
+      [this](ContentChangeType type) {
+        this->mContentLayerCache->Reset();
+        if (type == ContentChangeType::FullyReplaced) {
+          this->mDoodles->Clear();
+        }
+      }),
   };
 }
 
