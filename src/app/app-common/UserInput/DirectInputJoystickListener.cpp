@@ -32,7 +32,7 @@ DirectInputJoystickListener::DirectInputJoystickListener(
 
 DirectInputJoystickListener::~DirectInputJoystickListener() = default;
 
-void DirectInputJoystickListener::Poll() noexcept {
+void DirectInputJoystickListener::Poll() {
   decltype(mState) newState {};
   this->GetState(sizeof(mState), &newState);
   scope_guard updateState([&]() { mState = newState; });

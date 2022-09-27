@@ -31,7 +31,7 @@ class DirectInputJoystickListener final : public DirectInputListener {
   ~DirectInputJoystickListener();
 
  protected:
-  virtual void Poll() noexcept override;
+  virtual void Poll() override;
   virtual void SetDataFormat() noexcept override;
   virtual void OnAcquired() noexcept override;
 

@@ -33,7 +33,7 @@ class DirectInputKeyboardListener final : public DirectInputListener {
   ~DirectInputKeyboardListener();
 
  protected:
-  virtual void Poll() noexcept override;
+  virtual void Poll() override;
   virtual void SetDataFormat() noexcept override;
   virtual void OnAcquired() noexcept override;
 
