@@ -31,7 +31,7 @@ class DirectInputMouseListener final : public DirectInputListener {
   ~DirectInputMouseListener();
 
  protected:
-  virtual void Poll() noexcept override;
+  virtual void Poll() override;
   virtual void SetDataFormat() noexcept override;
   virtual void OnAcquired() noexcept override;
 

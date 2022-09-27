@@ -32,7 +32,7 @@ DirectInputMouseListener::DirectInputMouseListener(
 
 DirectInputMouseListener::~DirectInputMouseListener() = default;
 
-void DirectInputMouseListener::Poll() noexcept {
+void DirectInputMouseListener::Poll() {
   decltype(mState) newState {};
   this->GetState(sizeof(mState), &newState);
   scope_guard updateState([&]() { mState = newState; });

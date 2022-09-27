@@ -107,13 +107,23 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
     const auto pollResult = mDIDevice->Poll();
     if (pollResult != DI_OK && pollResult != DI_NOEFFECT) {
       dprintf(
-        "Abandoning DI device '{}' due to error {} ({:#08x})",
+        "Abandoning DI device '{}' due to DI poll error {} ({:#08x})",
         mDevice->GetName(),
         pollResult,
         std::bit_cast<uint32_t>(pollResult));
       co_return;
     }
-    this->Poll();
+    try {
+      this->Poll();
+    } catch (winrt::hresult_error e) {
+      dprintf(
+        "Abandoning DI device '{}' due to implementation poll error {} "
+        "({:#08x})",
+        mDevice->GetName(),
+        e.code().value,
+        std::bit_cast<uint32_t>(e.code().value));
+      co_return;
+    }
   }
 }
 

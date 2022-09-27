@@ -32,7 +32,7 @@ DirectInputKeyboardListener::DirectInputKeyboardListener(
 
 DirectInputKeyboardListener::~DirectInputKeyboardListener() = default;
 
-void DirectInputKeyboardListener::Poll() noexcept {
+void DirectInputKeyboardListener::Poll() {
   decltype(mState) newState {};
   this->GetState(newState.size(), &newState);
   scope_guard updateState([&]() { mState = newState; });

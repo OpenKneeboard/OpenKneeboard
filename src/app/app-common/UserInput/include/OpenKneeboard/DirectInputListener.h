@@ -43,12 +43,12 @@ class DirectInputListener {
     const winrt::com_ptr<IDirectInput8>& di,
     const std::shared_ptr<DirectInputDevice>& device);
 
-  virtual void Poll() noexcept = 0;
+  virtual void Poll() = 0;
   virtual void SetDataFormat() noexcept = 0;
   virtual void OnAcquired() noexcept = 0;
 
   template <class T>
-  void GetState(DWORD size, T* state) noexcept {
+  void GetState(DWORD size, T* state) {
     winrt::check_hresult(mDIDevice->GetDeviceState(size, state));
   }
 
