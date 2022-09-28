@@ -21,9 +21,7 @@
 
 #include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/DoodleSettings.h>
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/FlatConfig.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
@@ -118,9 +116,7 @@ class KneeboardState final : private EventReceiver {
   std::optional<RunningGame> mCurrentGame;
 
   VRConfig mVRConfig;
-  FlatConfig mFlatConfig;
   AppSettings mAppSettings;
-  DoodleSettings mDoodleSettings;
 
   void OnGameChangedEvent(DWORD processID, std::shared_ptr<GameInstance> game);
   void OnGameEvent(const GameEvent& ev);

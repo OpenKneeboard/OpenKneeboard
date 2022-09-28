@@ -17,31 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
+#include <OpenKneeboard/json.h>
 
-#include <OpenKneeboard/json_fwd.h>
+using namespace OpenKneeboard::detail::SparseJson;
 
 namespace OpenKneeboard {
-struct DoodleSettings final {
-  struct Tool {
-    uint32_t mMinimumRadius;
-    uint32_t mSensitivity;
 
-    constexpr auto operator<=>(const Tool&) const = default;
-  };
+static void StaticTests() {
+  static_assert(
+    ConstStrLowerFirst(Wrap("FooBar")).mBuffer == std::string_view {"fooBar"});
+  static_assert(
+    ConstStrSkipFirst(Wrap("mFooBar")).mBuffer == std::string_view {"FooBar"});
+  static_assert(
+    ConstStrSkipFirstLowerNext(Wrap("mFooBar")).mBuffer
+    == std::string_view {"fooBar"});
+}
 
-  Tool mPen {
-    .mMinimumRadius = 1,
-    .mSensitivity = 15,
-  };
-  Tool mEraser {
-    .mMinimumRadius = 10,
-    .mSensitivity = 150,
-  };
-
-  constexpr auto operator<=>(const DoodleSettings&) const = default;
-};
-
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(DoodleSettings)
-
-}// namespace OpenKneeboard
+};// namespace OpenKneeboard

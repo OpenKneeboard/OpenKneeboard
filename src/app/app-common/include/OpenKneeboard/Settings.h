@@ -19,27 +19,34 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DoodleSettings.h>
+#include <OpenKneeboard/FlatConfig.h>
+
 #include <nlohmann/json.hpp>
 
 namespace OpenKneeboard {
 
+#define OPENKNEEBOARD_SETTINGS_SECTIONS \
+  IT(nlohmann::json, DirectInput) \
+  IT(nlohmann::json, TabletInput) \
+  IT(nlohmann::json, Games) \
+  IT(nlohmann::json, Tabs) \
+  IT(FlatConfig, NonVR) \
+  IT(nlohmann::json, VR) \
+  IT(nlohmann::json, App) \
+  IT(DoodleSettings, Doodle)
+
 struct Settings final {
-  uint32_t Version = 1;
+#define IT(cpptype, name) cpptype name;
+  OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
 
-  nlohmann::json DirectInputV2;
-  nlohmann::json TabletInput;
-  nlohmann::json Games;
-  nlohmann::json Tabs;
-  nlohmann::json NonVR;
-  nlohmann::json VR;
-  nlohmann::json App;
-  nlohmann::json Doodle;
+  static Settings Load(std::string_view profile = {});
+  void Save(std::string_view profile = {});
 
-  static Settings Load();
-  void Save();
+  auto operator<=>(const Settings&) const noexcept = default;
 };
 
 void from_json(const nlohmann::json&, Settings&);
-void to_json(nlohmann::json&, const Settings&);
 
 }// namespace OpenKneeboard

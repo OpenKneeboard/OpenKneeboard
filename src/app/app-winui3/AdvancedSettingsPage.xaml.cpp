@@ -107,42 +107,42 @@ void AdvancedSettingsPage::LoopTabs(bool value) noexcept {
 }
 
 uint32_t AdvancedSettingsPage::MinimumPenRadius() {
-  return gKneeboard->GetDoodleSettings().minimumPenRadius;
+  return gKneeboard->GetDoodleSettings().mPen.mMinimumRadius;
 }
 
 void AdvancedSettingsPage::MinimumPenRadius(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.minimumPenRadius = value;
+  ds.mPen.mMinimumRadius = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::PenSensitivity() {
-  return gKneeboard->GetDoodleSettings().penSensitivity;
+  return gKneeboard->GetDoodleSettings().mPen.mSensitivity;
 }
 
 void AdvancedSettingsPage::PenSensitivity(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.penSensitivity = value;
+  ds.mPen.mSensitivity = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::MinimumEraseRadius() {
-  return gKneeboard->GetDoodleSettings().minimumEraseRadius;
+  return gKneeboard->GetDoodleSettings().mEraser.mMinimumRadius;
 }
 
 void AdvancedSettingsPage::MinimumEraseRadius(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.minimumEraseRadius = value;
+  ds.mEraser.mMinimumRadius = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::EraseSensitivity() {
-  return gKneeboard->GetDoodleSettings().eraseSensitivity;
+  return gKneeboard->GetDoodleSettings().mEraser.mSensitivity;
 }
 
 void AdvancedSettingsPage::EraseSensitivity(uint32_t value) {
   auto ds = gKneeboard->GetDoodleSettings();
-  ds.eraseSensitivity = value;
+  ds.mEraser.mSensitivity = value;
   gKneeboard->SetDoodleSettings(ds);
 }
 

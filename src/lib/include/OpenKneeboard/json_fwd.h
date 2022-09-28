@@ -19,29 +19,19 @@
  */
 #pragma once
 
-#include <OpenKneeboard/json_fwd.h>
+#include <nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
-struct DoodleSettings final {
-  struct Tool {
-    uint32_t mMinimumRadius;
-    uint32_t mSensitivity;
 
-    constexpr auto operator<=>(const Tool&) const = default;
-  };
-
-  Tool mPen {
-    .mMinimumRadius = 1,
-    .mSensitivity = 15,
-  };
-  Tool mEraser {
-    .mMinimumRadius = 10,
-    .mSensitivity = 150,
-  };
-
-  constexpr auto operator<=>(const DoodleSettings&) const = default;
-};
-
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(DoodleSettings)
-
+template <class T>
+void to_json_with_default(nlohmann::json& j, const T& parent_v, const T& v);
 }// namespace OpenKneeboard
+
+#define OPENKNEEBOARD_DECLARE_SPARSE_JSON(T) \
+  void from_json(const nlohmann::json& nlohmann_json_j, T& nlohmann_json_v); \
+  template <> \
+  void to_json_with_default<T>( \
+    nlohmann::json & nlohmann_json_j, \
+    const T& nlohmann_json_default_object, \
+    const T& nlohmann_json_v); \
+  void to_json(nlohmann::json& nlohmann_json_j, const T& nlohmann_json_v);

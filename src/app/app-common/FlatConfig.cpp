@@ -17,31 +17,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <OpenKneeboard/json_fwd.h>
+#include <OpenKneeboard/FlatConfig.h>
+#include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
-struct DoodleSettings final {
-  struct Tool {
-    uint32_t mMinimumRadius;
-    uint32_t mSensitivity;
 
-    constexpr auto operator<=>(const Tool&) const = default;
-  };
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  FlatConfig::HorizontalAlignment,
+  {
+    {FlatConfig::HorizontalAlignment::Left, "Left"},
+    {FlatConfig::HorizontalAlignment::Center, "Center"},
+    {FlatConfig::HorizontalAlignment::Right, "Right"},
+  });
 
-  Tool mPen {
-    .mMinimumRadius = 1,
-    .mSensitivity = 15,
-  };
-  Tool mEraser {
-    .mMinimumRadius = 10,
-    .mSensitivity = 150,
-  };
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  FlatConfig::VerticalAlignment,
+  {
+    {FlatConfig::VerticalAlignment::Top, "Top"},
+    {FlatConfig::VerticalAlignment::Middle, "Middle"},
+    {FlatConfig::VerticalAlignment::Bottom, "Bottom"},
+  });
 
-  constexpr auto operator<=>(const DoodleSettings&) const = default;
-};
-
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(DoodleSettings)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  FlatConfig,
+  SkipFirstLowerNext,
+  mHeightPercent,
+  mPaddingPixels,
+  mOpacity,
+  mHorizontalAlignment,
+  mVerticalAlignment);
 
 }// namespace OpenKneeboard

@@ -73,27 +73,27 @@ fire_and_forget NonVRSettingsPage::RestoreDefaults(
 }
 
 uint8_t NonVRSettingsPage::KneeboardHeightPercent() {
-  return gKneeboard->GetFlatConfig().heightPercent;
+  return gKneeboard->GetFlatConfig().mHeightPercent;
 }
 
 void NonVRSettingsPage::KneeboardHeightPercent(uint8_t value) {
   auto config = gKneeboard->GetFlatConfig();
-  config.heightPercent = value;
+  config.mHeightPercent = value;
   gKneeboard->SetFlatConfig(config);
 }
 
 uint32_t NonVRSettingsPage::KneeboardPaddingPixels() {
-  return gKneeboard->GetFlatConfig().paddingPixels;
+  return gKneeboard->GetFlatConfig().mPaddingPixels;
 }
 
 void NonVRSettingsPage::KneeboardPaddingPixels(uint32_t value) {
   auto config = gKneeboard->GetFlatConfig();
-  config.paddingPixels = value;
+  config.mPaddingPixels = value;
   gKneeboard->SetFlatConfig(config);
 }
 
 float NonVRSettingsPage::KneeboardOpacity() {
-  return gKneeboard->GetFlatConfig().opacity * 100;
+  return gKneeboard->GetFlatConfig().mOpacity * 100;
 }
 
 void NonVRSettingsPage::KneeboardOpacity(float value) {
@@ -101,28 +101,28 @@ void NonVRSettingsPage::KneeboardOpacity(float value) {
     return;
   }
   auto config = gKneeboard->GetFlatConfig();
-  config.opacity = value / 100;
+  config.mOpacity = value / 100;
   gKneeboard->SetFlatConfig(config);
 }
 
 uint8_t NonVRSettingsPage::KneeboardHorizontalPlacement() {
-  return static_cast<uint8_t>(gKneeboard->GetFlatConfig().horizontalAlignment);
+  return static_cast<uint8_t>(gKneeboard->GetFlatConfig().mHorizontalAlignment);
 }
 
 void NonVRSettingsPage::KneeboardHorizontalPlacement(uint8_t value) {
   auto config = gKneeboard->GetFlatConfig();
-  config.horizontalAlignment
+  config.mHorizontalAlignment
     = static_cast<FlatConfig::HorizontalAlignment>(value);
   gKneeboard->SetFlatConfig(config);
 }
 
 uint8_t NonVRSettingsPage::KneeboardVerticalPlacement() {
-  return static_cast<uint8_t>(gKneeboard->GetFlatConfig().verticalAlignment);
+  return static_cast<uint8_t>(gKneeboard->GetFlatConfig().mVerticalAlignment);
 }
 
 void NonVRSettingsPage::KneeboardVerticalPlacement(uint8_t value) {
   auto config = gKneeboard->GetFlatConfig();
-  config.verticalAlignment = static_cast<FlatConfig::VerticalAlignment>(value);
+  config.mVerticalAlignment = static_cast<FlatConfig::VerticalAlignment>(value);
   gKneeboard->SetFlatConfig(config);
 }
 

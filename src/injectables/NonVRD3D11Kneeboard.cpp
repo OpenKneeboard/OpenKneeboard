@@ -73,31 +73,31 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   const LONG canvasHeight = scDesc.BufferDesc.Height;
 
   const LONG renderHeight
-    = (static_cast<long>(canvasHeight) * config.mFlat.heightPercent) / 100;
+    = (static_cast<long>(canvasHeight) * config.mFlat.mHeightPercent) / 100;
   const LONG renderWidth = std::lround(renderHeight * aspectRatio);
 
-  const auto padding = config.mFlat.paddingPixels;
+  const auto padding = config.mFlat.mPaddingPixels;
 
   LONG left = padding;
-  switch (config.mFlat.horizontalAlignment) {
-    case FlatConfig::HALIGN_LEFT:
+  switch (config.mFlat.mHorizontalAlignment) {
+    case FlatConfig::HorizontalAlignment::Left:
       break;
-    case FlatConfig::HALIGN_CENTER:
+    case FlatConfig::HorizontalAlignment::Center:
       left = (canvasWidth - renderWidth) / 2;
       break;
-    case FlatConfig::HALIGN_RIGHT:
+    case FlatConfig::HorizontalAlignment::Right:
       left = canvasWidth - (renderWidth + padding);
       break;
   }
 
   LONG top = padding;
-  switch (config.mFlat.verticalAlignment) {
-    case FlatConfig::VALIGN_TOP:
+  switch (config.mFlat.mVerticalAlignment) {
+    case FlatConfig::VerticalAlignment::Top:
       break;
-    case FlatConfig::VALIGN_MIDDLE:
+    case FlatConfig::VerticalAlignment::Middle:
       top = (canvasHeight - renderHeight) / 2;
       break;
-    case FlatConfig::VALIGN_BOTTOM:
+    case FlatConfig::VerticalAlignment::Bottom:
       top = canvasHeight - (renderHeight + padding);
       break;
   }
@@ -141,7 +141,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       rtv.get(),
       sourceRect,
       destRect,
-      config.mFlat.opacity);
+      config.mFlat.mOpacity);
   }
 
   return passthrough();

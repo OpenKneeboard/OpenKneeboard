@@ -18,7 +18,9 @@
  * USA.
  */
 #include <OpenKneeboard/Settings.h>
+#include <OpenKneeboard/dprint.h>
 #include <ShlObj.h>
+#include <shims/winrt/base.h>
 
 #include <chrono>
 #include <format>
@@ -45,43 +47,97 @@ static std::filesystem::path GetSettingsDirectoryPath() {
   return sPath;
 }
 
-static std::filesystem::path GetSettingsFilePath() {
-  return GetSettingsDirectoryPath() / "Settings.json";
-}
-
-Settings Settings::Load() {
-  const auto path = GetSettingsFilePath();
-  if (!std::filesystem::is_regular_file(path)) {
-    return {};
+template <class T>
+static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
+  const auto fullPath
+    = path.is_absolute() ? path : GetSettingsDirectoryPath() / path;
+  if (!std::filesystem::exists(fullPath)) {
+    return;
   }
 
   try {
-    std::ifstream f(path.c_str());
+    std::ifstream f(fullPath.c_str());
     nlohmann::json json;
     f >> json;
-    // TODO: check version
-    return json;
-  } catch (nlohmann::json::exception&) {
-    std::filesystem::copy_file(
-      path,
-      GetSettingsDirectoryPath()
-        / std::format(
-          "Settings-backup-{:%F-%H%M%S}.json",
-          std::chrono::zoned_time(
-            std::chrono::current_zone(),
-            std::chrono::time_point_cast<std::chrono::seconds>(
-              std::chrono::system_clock::now()))));
-    return {};
+    out = json;
+  } catch (nlohmann::json::exception& e) {
+    return;
   }
 }
 
-void Settings::Save() {
-  // TODO: check not overwritting newer version
-  nlohmann::json j = *this;
+Settings Settings::Load(std::string_view profile) {
+  Settings settings;
+  if (!std::filesystem::exists(GetSettingsDirectoryPath() / "profiles")) {
+    auto legacySettingsFile = GetSettingsDirectoryPath() / "Settings.json";
+    if (std::filesystem::exists(legacySettingsFile)) {
+      dprint("Migrating from legacy Settings.json");
+      MaybeSetFromJSON(settings, legacySettingsFile);
+      std::filesystem::rename(
+        legacySettingsFile,
+        GetSettingsDirectoryPath() / "LegacySettings.json.bak");
+      settings.Save("default");
+    }
+    return std::move(settings);
+  }
 
-  const auto path = GetSettingsFilePath();
-  std::ofstream f(path.c_str());
+  if (profile != "default") {
+    settings = Settings::Load("default");
+  }
+
+  const auto profileDir = std::filesystem::path {"profiles"} / profile;
+#define IT(cpptype, x) MaybeSetFromJSON(settings.x, profileDir / #x##".json");
+  OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
+
+  return settings;
+}
+
+template <class T>
+static void MaybeSaveJSON(
+  const T& parentValue,
+  const T& value,
+  const std::filesystem::path& path) {
+  const auto fullPath
+    = path.is_absolute() ? path : GetSettingsDirectoryPath() / path;
+  if (parentValue == value) {
+    if (std::filesystem::exists(fullPath)) {
+      std::filesystem::remove(fullPath);
+    }
+    return;
+  }
+
+  const auto parentPath = fullPath.parent_path();
+  if (!std::filesystem::exists(parentPath)) {
+    std::filesystem::create_directories(parentPath);
+  }
+
+  nlohmann::json j = value;
+  if (j.is_null()) {
+    return;
+  }
+  std::ofstream f(fullPath.c_str());
   f << std::setw(2) << j << std::endl;
+}
+
+void Settings::Save(std::string_view profile) {
+  const Settings previousSettings = Settings::Load(profile);
+
+  if (previousSettings == *this) {
+    return;
+  }
+
+  Settings parentSettings;
+  if (profile.empty()) {
+    profile = "default";
+  } else if (profile != "default") {
+    parentSettings = Settings::Load("default");
+  }
+
+  const auto profileDir = std::filesystem::path {"profiles"} / profile;
+#define IT(cpptype, x) \
+  MaybeSaveJSON(parentSettings.x, this->x, profileDir / #x##".json");
+  OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
 }
 
 void from_json(const nlohmann::json& j, Settings& s) {
@@ -89,7 +145,7 @@ void from_json(const nlohmann::json& j, Settings& s) {
   s.Tabs = j.at("Tabs");
 
   if (j.contains("DirectInputV2")) {
-    s.DirectInputV2 = j.at("DirectInputV2");
+    s.DirectInput = j.at("DirectInputV2");
   }
   if (j.contains("TabletInput")) {
     s.TabletInput = j.at("TabletInput");
@@ -106,19 +162,6 @@ void from_json(const nlohmann::json& j, Settings& s) {
   if (j.contains("Doodle")) {
     s.Doodle = j.at("Doodle");
   }
-}
-
-void to_json(nlohmann::json& j, const Settings& s) {
-  j = {
-    {"Games", s.Games},
-    {"Tabs", s.Tabs},
-    {"DirectInputV2", s.DirectInputV2},
-    {"TabletInput", s.TabletInput},
-    {"NonVR", s.NonVR},
-    {"VR", s.VR},
-    {"App", s.App},
-    {"Doodle", s.Doodle},
-  };
 }
 
 }// namespace OpenKneeboard

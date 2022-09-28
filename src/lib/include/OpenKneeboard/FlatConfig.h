@@ -19,64 +19,43 @@
  */
 #pragma once
 
+// Don't include in OpenKneeboard-SHM library
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+#include <OpenKneeboard/json_fwd.h>
+#endif
+
 #include <cstdint>
 #include <numbers>
-
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-#include <nlohmann/json.hpp>
-#endif
 
 namespace OpenKneeboard {
 
 #pragma pack(push)
 struct FlatConfig {
-  enum HorizontalAlignment {
-    HALIGN_LEFT,
-    HALIGN_CENTER,
-    HALIGN_RIGHT,
+  enum class HorizontalAlignment : uint8_t {
+    Left,
+    Center,
+    Right,
   };
-  enum VerticalAlignment {
-    VALIGN_TOP,
-    VALIGN_MIDDLE,
-    VALIGN_BOTTOM,
+  enum class VerticalAlignment : uint8_t {
+    Top,
+    Middle,
+    Bottom,
   };
 
-  uint8_t heightPercent = 60;
-  uint32_t paddingPixels = 10;
+  uint8_t mHeightPercent = 60;
+  uint32_t mPaddingPixels = 10;
   // In case it covers up menus etc
-  float opacity = 0.8f;
+  float mOpacity = 0.8f;
 
-  HorizontalAlignment horizontalAlignment = HALIGN_RIGHT;
-  VerticalAlignment verticalAlignment = VALIGN_MIDDLE;
+  HorizontalAlignment mHorizontalAlignment = HorizontalAlignment::Right;
+  VerticalAlignment mVerticalAlignment = VerticalAlignment::Middle;
+
+  constexpr auto operator<=>(const FlatConfig&) const = default;
 };
 #pragma pack(pop)
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
-
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-  FlatConfig,
-  heightPercent,
-  paddingPixels,
-  opacity,
-  horizontalAlignment,
-  verticalAlignment);
-
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  FlatConfig::HorizontalAlignment,
-  {
-    {FlatConfig::HALIGN_LEFT, "Left"},
-    {FlatConfig::HALIGN_CENTER, "Center"},
-    {FlatConfig::HALIGN_RIGHT, "Right"},
-  });
-
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  FlatConfig::VerticalAlignment,
-  {
-    {FlatConfig::VALIGN_TOP, "Top"},
-    {FlatConfig::VALIGN_MIDDLE, "Middle"},
-    {FlatConfig::VALIGN_BOTTOM, "Bottom"},
-  });
-
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(FlatConfig);
 #endif
 
 }// namespace OpenKneeboard

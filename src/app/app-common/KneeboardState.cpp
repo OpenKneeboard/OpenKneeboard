@@ -41,17 +41,11 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
-  if (!mSettings.NonVR.is_null()) {
-    mFlatConfig = mSettings.NonVR;
-  }
-  if (!mSettings.NonVR.is_null()) {
+  if (!mSettings.VR.is_null()) {
     mVRConfig = mSettings.VR;
   }
   if (!mSettings.App.is_null()) {
     mAppSettings = mSettings.App;
-  }
-  if (!mSettings.Doodle.is_null()) {
-    mDoodleSettings = mSettings.Doodle;
   }
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
@@ -91,7 +85,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
 
   mDirectInput
-    = std::make_unique<DirectInputAdapter>(hwnd, mSettings.DirectInputV2);
+    = std::make_unique<DirectInputAdapter>(hwnd, mSettings.DirectInput);
   AddEventListener(
     mDirectInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
   AddEventListener(
@@ -280,11 +274,11 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
 }
 
 FlatConfig KneeboardState::GetFlatConfig() const {
-  return mFlatConfig;
+  return mSettings.NonVR;
 }
 
 void KneeboardState::SetFlatConfig(const FlatConfig& value) {
-  mFlatConfig = value;
+  mSettings.NonVR = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
 }
@@ -356,24 +350,22 @@ void KneeboardState::SaveSettings() {
     mSettings.TabletInput = mTabletInput->GetSettings();
   }
   if (mDirectInput) {
-    mSettings.DirectInputV2 = mDirectInput->GetSettings();
+    mSettings.DirectInput = mDirectInput->GetSettings();
   }
 
-  mSettings.NonVR = mFlatConfig;
   mSettings.VR = mVRConfig;
   mSettings.App = mAppSettings;
-  mSettings.Doodle = mDoodleSettings;
 
   mSettings.Save();
   evSettingsChangedEvent.Emit();
 }
 
 DoodleSettings KneeboardState::GetDoodleSettings() {
-  return mDoodleSettings;
+  return mSettings.Doodle;
 }
 
 void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
-  mDoodleSettings = value;
+  mSettings.Doodle = value;
   this->SaveSettings();
 }
 

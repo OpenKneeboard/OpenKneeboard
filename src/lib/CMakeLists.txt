@@ -240,6 +240,14 @@ target_link_libraries(
   ThirdParty::CppWinRT
 )
 
+add_library(OpenKneeboard-json STATIC json.cpp)
+target_link_libraries(
+  OpenKneeboard-json
+  PUBLIC
+  ThirdParty::JSON
+  _libheaders
+)
+
 add_library(OpenKneeboard-OpenVRKneeboard STATIC OpenVRKneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-OpenVRKneeboard
