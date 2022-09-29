@@ -31,7 +31,6 @@
 
 namespace OpenKneeboard {
 
-#pragma pack(push)
 struct VRLayerConfig {
   // Distances in meters, rotations in radians
   float mX = 0.15f, mFloorY = 0.6f, mEyeY = -0.7f, mZ = -0.4f;
@@ -69,7 +68,7 @@ struct VRRenderConfig {
   float mNormalOpacity = 1.0f;
   float mGazeOpacity = 1.0f;
 };
-#pragma pack(pop)
+static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;

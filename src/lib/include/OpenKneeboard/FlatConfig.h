@@ -29,7 +29,6 @@
 
 namespace OpenKneeboard {
 
-#pragma pack(push)
 struct FlatConfig {
   enum class HorizontalAlignment : uint8_t {
     Left,
@@ -52,7 +51,7 @@ struct FlatConfig {
 
   constexpr auto operator<=>(const FlatConfig&) const = default;
 };
-#pragma pack(pop)
+static_assert(std::is_standard_layout_v<FlatConfig>);
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(FlatConfig);

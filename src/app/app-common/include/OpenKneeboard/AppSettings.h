@@ -19,37 +19,52 @@
  */
 #pragma once
 
-#include <windows.h>
+#include <OpenKneeboard/json_fwd.h>
+#include <shims/Windows.h>
 
-#include <nlohmann/json.hpp>
-#include <optional>
+#include <shims/optional>
 
 namespace OpenKneeboard {
 
-struct AutoUpdateSettings {
+struct AutoUpdateSettings final {
   static constexpr std::string_view StableChannel {"stable"};
   static constexpr std::string_view PreviewChannel {"preview"};
 
-  uint64_t mDisabledUntil = 0;
-  std::string mSkipVersion;
+  uint64_t mDisabledUntil {0};
+  std::string mSkipVersion {};
   std::string mChannel {StableChannel};
 
-  // For testing
-  std::string mBaseURI;
-  std::string mFakeCurrentVersion;
-  std::string mFakeUpdateVersion;
-  bool mAlwaysCheck = false;
+  struct Testing final {
+    std::string mBaseURI {};
+    std::string mFakeCurrentVersion {};
+    std::string mFakeUpdateVersion {};
+    bool mAlwaysCheck {false};
+
+    constexpr auto operator<=>(const Testing&) const noexcept = default;
+  };
+
+  Testing mTesting {};
+
+  constexpr auto operator<=>(
+    const AutoUpdateSettings&) const noexcept = default;
 };
 
 struct AppSettings final {
+  struct DualKneeboardSettings final {
+    bool mEnabled = false;
+    constexpr auto operator<=>(
+      const DualKneeboardSettings&) const noexcept = default;
+  };
+
   std::optional<RECT> mWindowRect;
-  bool mLoopPages = false;
-  bool mLoopTabs = false;
-  bool mDualKneeboards = false;
-  AutoUpdateSettings mAutoUpdate;
+  bool mLoopPages {false};
+  bool mLoopTabs {false};
+  DualKneeboardSettings mDualKneeboards {};
+  AutoUpdateSettings mAutoUpdate {};
+
+  constexpr auto operator<=>(const AppSettings&) const noexcept = default;
 };
 
-void from_json(const nlohmann::json&, AppSettings&);
-void to_json(nlohmann::json&, const AppSettings&);
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(AppSettings);
 
 }// namespace OpenKneeboard

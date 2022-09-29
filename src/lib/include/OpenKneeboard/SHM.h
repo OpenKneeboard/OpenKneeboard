@@ -48,8 +48,6 @@ std::wstring SharedTextureName(
   uint8_t layerIndex,
   uint32_t sequenceNumber);
 
-#pragma pack(push)
-
 enum class ConsumerKind : uint32_t {
   SteamVR = 1 << 0,
   OpenXR = 1 << 1,
@@ -79,6 +77,7 @@ struct Config final {
   FlatConfig mFlat {};
   ConsumerPattern mTarget {};
 };
+static_assert(std::is_standard_layout_v<Config>);
 struct LayerConfig final {
   uint64_t mLayerID;
   uint16_t mImageWidth, mImageHeight;// Pixels
@@ -86,7 +85,7 @@ struct LayerConfig final {
 
   bool IsValid() const;
 };
-#pragma pack(pop)
+static_assert(std::is_standard_layout_v<LayerConfig>);
 
 class Impl;
 

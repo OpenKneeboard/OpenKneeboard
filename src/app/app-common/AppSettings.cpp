@@ -18,110 +18,78 @@
  * USA.
  */
 #include <OpenKneeboard/AppSettings.h>
+#include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
 
-static constexpr auto WindowPositionKey {"WindowPositionV2"};
-static constexpr auto LoopPagesKey {"LoopPages"};
-static constexpr auto LoopTabsKey {"LoopTabs"};
-static constexpr auto DualKneeboardsKey {"DualKneeboards"};
-static constexpr auto AutoUpdateKey {"AutoUpdate"};
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  AutoUpdateSettings::Testing,
+  SkipFirst,
+  mBaseURI,
+  mFakeCurrentVersion,
+  mFakeUpdateVersion,
+  mAlwaysCheck)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  AutoUpdateSettings,
+  SkipFirst,
+  mDisabledUntil,
+  mSkipVersion,
+  mChannel,
+  mTesting)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  AppSettings::DualKneeboardSettings,
+  SkipFirst,
+  mEnabled)
 
-void from_json(const nlohmann::json& j, AppSettings& as) {
-  if (j.is_null()) {
-    return;
-  }
-
-  if (j.contains(LoopTabsKey)) {
-    as.mLoopTabs = j.at(LoopTabsKey);
-  }
-
-  if (j.contains(LoopPagesKey)) {
-    as.mLoopPages = j.at(LoopPagesKey);
-  }
-  if (j.contains(LoopTabsKey)) {
-    as.mLoopTabs = j.at(LoopTabsKey);
-  }
-  if (j.contains(DualKneeboardsKey)) {
-    as.mDualKneeboards = j.at(DualKneeboardsKey).at("Enabled");
-  }
-
-  if (!j.contains(WindowPositionKey)) {
-    return;
-  }
-
-  if (j.contains(AutoUpdateKey)) {
-    auto au = j.at(AutoUpdateKey);
-    as.mAutoUpdate.mDisabledUntil = au.at("DisabledUntil");
-    as.mAutoUpdate.mSkipVersion = au.at("SkipVersion");
-
-    if (au.contains("Channel")) {
-      as.mAutoUpdate.mChannel = au.at("Channel");
-    } else if (au.value<bool>("HaveUsedPrereleases", false)) {
-      as.mAutoUpdate.mChannel = AutoUpdateSettings::PreviewChannel;
-    }
-
-    if (au.contains("Testing")) {
-      auto t = au.at("Testing");
-
-      as.mAutoUpdate.mBaseURI = t.value<std::string>("BaseURI", {});
-      as.mAutoUpdate.mFakeCurrentVersion
-        = t.value<std::string>("FakeCurrentVersion", {});
-      as.mAutoUpdate.mFakeUpdateVersion
-        = t.value<std::string>("FakeUpdateVersion", {});
-
-      if (t.contains("AlwaysCheck")) {
-        as.mAutoUpdate.mAlwaysCheck = t.at("AlwaysCheck");
-      }
-    }
-  }
-
-  auto jrect = j.at(WindowPositionKey);
-  RECT rect;
-  rect.left = jrect.at("Left");
-  rect.top = jrect.at("Top");
-  rect.right = jrect.at("Right");
-  rect.bottom = jrect.at("Bottom");
-  as.mWindowRect = rect;
-}
-
-void to_json(nlohmann::json& j, const AppSettings& as) {
-  j = {
-    {LoopPagesKey, as.mLoopPages},
-    {LoopTabsKey, as.mLoopTabs},
-    {
-      DualKneeboardsKey,
-      {
-        {"Enabled", as.mDualKneeboards},
-      },
-    },
-    {
-      AutoUpdateKey,
-      {
-        {"DisabledUntil", as.mAutoUpdate.mDisabledUntil},
-        {"SkipVersion", as.mAutoUpdate.mSkipVersion},
-        {"Channel", as.mAutoUpdate.mChannel},
-        {
-          "Testing",
-          {
-            {"BaseURI", as.mAutoUpdate.mBaseURI},
-            {"FakeCurrentVersion", as.mAutoUpdate.mFakeCurrentVersion},
-            {"FakeUpdateVersion", as.mAutoUpdate.mFakeUpdateVersion},
-            {"AlwaysCheck", as.mAutoUpdate.mAlwaysCheck},
-          },
-        },
-      },
-    },
-  };
-
-  if (as.mWindowRect) {
-    j[WindowPositionKey] = {
-      {"Left", as.mWindowRect->left},
-      {"Top", as.mWindowRect->top},
-      {"Right", as.mWindowRect->right},
-      {"Bottom", as.mWindowRect->bottom},
+template <>
+void from_json_postprocess<AppSettings>(
+  const nlohmann::json& j,
+  AppSettings& v) {
+  ///// Special handling /////
+  if (j.contains("WindowPositionV2")) {
+    auto jrect = j.at("WindowPositionV2");
+    v.mWindowRect = RECT {
+      .left = jrect.at("Left"),
+      .top = jrect.at("Top"),
+      .right = jrect.at("Right"),
+      .bottom = jrect.at("Bottom"),
     };
   }
+
+  ///// Backwards compatibility /////
+  if (j.contains("AutoUpdate")) {
+    auto au = j.at("AutoUpdate");
+    if (au.value<bool>("HaveUsedPrereleases", false)) {
+      v.mAutoUpdate.mChannel = AutoUpdateSettings::PreviewChannel;
+    }
+  }
 }
+
+template <>
+void to_json_postprocess<AppSettings>(
+  nlohmann::json& j,
+  const AppSettings& parent_v,
+  const AppSettings& v) {
+  ///// Special handling /////
+  if (v.mWindowRect) {
+    j["WindowPositionV2"] = {
+      {"Left", v.mWindowRect->left},
+      {"Top", v.mWindowRect->top},
+      {"Right", v.mWindowRect->right},
+      {"Bottom", v.mWindowRect->bottom},
+    };
+  } else if (j.contains("WindowPositionV2")) {
+    j.erase("WindowPositionV2");
+  }
+}
+
+// mWindowRect is handled by `*_json_postprocess` functions above
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  AppSettings,
+  SkipFirst,
+  mLoopPages,
+  mLoopTabs,
+  mDualKneeboards,
+  mAutoUpdate)
 
 }// namespace OpenKneeboard

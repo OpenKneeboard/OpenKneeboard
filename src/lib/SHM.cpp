@@ -45,7 +45,6 @@ enum class HeaderFlags : ULONG {
   FEEDER_ATTACHED = 1 << 1,
 };
 
-#pragma pack(push)
 struct Header final {
   uint32_t mSequenceNumber = 0;
   uint64_t mSessionID = CreateSessionID();
@@ -57,7 +56,7 @@ struct Header final {
 
   size_t GetRenderCacheKey() const;
 };
-#pragma pack(pop)
+static_assert(std::is_standard_layout_v<Header>);
 
 }// namespace OpenKneeboard::SHM
 

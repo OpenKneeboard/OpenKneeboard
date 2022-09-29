@@ -19,30 +19,10 @@
  */
 #pragma once
 
-#include <windows.h>
+#include <Windows.h>
 
-#include <cinttypes>
-#include <optional>
-
-namespace OpenKneeboard {
-
-// Using pack instead of standard_layout for backwards compatibility
-#pragma pack(push)
-struct MainWindowInfo {
-  struct VersionInfo {
-    uint16_t mMajor {0};
-    uint16_t mMinor {0};
-    uint16_t mPatch {0};
-    uint16_t mBuild {0};
-    constexpr auto operator<=>(const VersionInfo&) const = default;
-  };
-
-  HWND mHwnd {NULL};
-  VersionInfo mVersion {};
-};
-#pragma pack(pop)
-
-std::optional<MainWindowInfo> GetMainWindowInfo();
-std::optional<HWND> GetMainHWND();
-
-}// namespace OpenKneeboard
+/* Pull in `operator==` for `RECT` via type alias `D3D11_RECT`.
+ *
+ * If we directly define the operator, anything using d3d11.h conflicts
+ */
+#include <d3d11.h>

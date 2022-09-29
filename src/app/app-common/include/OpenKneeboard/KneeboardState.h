@@ -19,7 +19,6 @@
  */
 #pragma once
 
-#include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/SHM.h>
@@ -116,7 +115,6 @@ class KneeboardState final : private EventReceiver {
   std::optional<RunningGame> mCurrentGame;
 
   VRConfig mVRConfig;
-  AppSettings mAppSettings;
 
   void OnGameChangedEvent(DWORD processID, std::shared_ptr<GameInstance> game);
   void OnGameEvent(const GameEvent& ev);

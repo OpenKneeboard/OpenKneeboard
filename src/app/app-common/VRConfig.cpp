@@ -70,12 +70,6 @@ void from_json(const nlohmann::json& j, VRConfig& vrc) {
     vrc.mGazeTargetVerticalScale = scale.at("vertical");
   }
 
-  SetQuirkFromBool(
-    j,
-    "discardOculusDepthInformation",
-    vrc,
-    Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION);
-
   if (j.contains("quirks")) {
     auto& q = j.at("quirks");
     SetQuirkFromBool(
@@ -140,9 +134,6 @@ void to_json(nlohmann::json& j, const VRConfig& vrc) {
     {"width", vrc.mMaxWidth},
     {"height", vrc.mMaxHeight},
     {"zoomScale", vrc.mZoomScale},
-    {"invertOpenXRYPosition",
-     static_cast<bool>(
-       vrc.mFlags & Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION)},
     {
       "quirks",
       {

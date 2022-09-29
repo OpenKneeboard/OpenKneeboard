@@ -49,12 +49,12 @@ void AdvancedSettingsPage::PropertyChanged(
 }
 
 bool AdvancedSettingsPage::DualKneeboards() const noexcept {
-  return gKneeboard->GetAppSettings().mDualKneeboards;
+  return gKneeboard->GetAppSettings().mDualKneeboards.mEnabled;
 }
 
 void AdvancedSettingsPage::DualKneeboards(bool value) noexcept {
   auto s = gKneeboard->GetAppSettings();
-  s.mDualKneeboards = value;
+  s.mDualKneeboards.mEnabled = value;
   gKneeboard->SetAppSettings(s);
 }
 

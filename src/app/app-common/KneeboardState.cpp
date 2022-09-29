@@ -44,9 +44,6 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   if (!mSettings.VR.is_null()) {
     mVRConfig = mSettings.VR;
   }
-  if (!mSettings.App.is_null()) {
-    mAppSettings = mSettings.App;
-  }
 
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
@@ -120,7 +117,7 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   const auto primaryVR = mVRConfig.mPrimaryLayer;
-  if (!mAppSettings.mDualKneeboards) {
+  if (!mSettings.App.mDualKneeboards.mEnabled) {
     return {
       {
         .mView = mViews.at(mFirstViewIndex),
@@ -196,12 +193,12 @@ void KneeboardState::OnUserAction(UserAction action) {
 void KneeboardState::SetFirstViewIndex(uint8_t index) {
   const auto inputIsFirst = this->mFirstViewIndex == this->mInputViewIndex;
   this->mFirstViewIndex
-    = std::min<uint8_t>(index, mAppSettings.mDualKneeboards ? 1 : 0);
+    = std::min<uint8_t>(index, mSettings.App.mDualKneeboards.mEnabled ? 1 : 0);
   if (inputIsFirst) {
     this->mInputViewIndex = this->mFirstViewIndex;
   } else {
-    this->mInputViewIndex
-      = std::min<uint8_t>(index, mAppSettings.mDualKneeboards ? 1 : 0);
+    this->mInputViewIndex = std::min<uint8_t>(
+      index, mSettings.App.mDualKneeboards.mEnabled ? 1 : 0);
   }
   this->evNeedsRepaintEvent.Emit();
   this->evViewOrderChangedEvent.Emit();
@@ -316,13 +313,13 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
 }
 
 AppSettings KneeboardState::GetAppSettings() const {
-  return mAppSettings;
+  return mSettings.App;
 }
 
 void KneeboardState::SetAppSettings(const AppSettings& value) {
-  mAppSettings = value;
+  mSettings.App = value;
   this->SaveSettings();
-  if (!value.mDualKneeboards) {
+  if (!value.mDualKneeboards.mEnabled) {
     this->SetFirstViewIndex(0);
   }
 }
@@ -354,7 +351,6 @@ void KneeboardState::SaveSettings() {
   }
 
   mSettings.VR = mVRConfig;
-  mSettings.App = mAppSettings;
 
   mSettings.Save();
   evSettingsChangedEvent.Emit();

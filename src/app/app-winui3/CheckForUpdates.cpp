@@ -89,7 +89,8 @@ IAsyncAction CheckForUpdates(
     settings.mDisabledUntil = 0;
     settings.mSkipVersion = {};
   }
-  if (settings.mAlwaysCheck) {
+  auto& testing = settings.mTesting;
+  if (testing.mAlwaysCheck) {
     settings.mDisabledUntil = 0;
   }
 
@@ -120,10 +121,10 @@ IAsyncAction CheckForUpdates(
     Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(
       hstring {L"application/vnd.github.v3+json"}));
 
-  const auto baseUri = settings.mBaseURI.empty()
+  const auto baseUri = testing.mBaseURI.empty()
     ? "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/"
       "autoupdate"
-    : settings.mBaseURI;
+    : testing.mBaseURI;
 
   const auto uri = std::format("{}/{}.json", baseUri, settings.mChannel);
   dprintf("Starting update check: {}", uri);
@@ -184,12 +185,12 @@ IAsyncAction CheckForUpdates(
   });
 
   const auto currentVersionString = ToSemVerString(
-    settings.mFakeCurrentVersion.empty() ? Version::ReleaseName
-                                         : settings.mFakeCurrentVersion);
+    testing.mFakeCurrentVersion.empty() ? Version::ReleaseName
+                                        : testing.mFakeCurrentVersion);
   const auto latestVersionString = ToSemVerString(
-    settings.mFakeUpdateVersion.empty()
+    testing.mFakeUpdateVersion.empty()
       ? latestRelease.at("tag_name").get<std::string_view>()
-      : settings.mFakeUpdateVersion);
+      : testing.mFakeUpdateVersion);
 
   const version::Semver200_version currentVersion(currentVersionString);
   const version::Semver200_version latestVersion(latestVersionString);

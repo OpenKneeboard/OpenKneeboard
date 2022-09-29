@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/DoodleSettings.h>
 #include <OpenKneeboard/FlatConfig.h>
 
@@ -31,10 +32,10 @@ namespace OpenKneeboard {
   IT(nlohmann::json, TabletInput) \
   IT(nlohmann::json, Games) \
   IT(nlohmann::json, Tabs) \
-  IT(FlatConfig, NonVR) \
   IT(nlohmann::json, VR) \
-  IT(nlohmann::json, App) \
-  IT(DoodleSettings, Doodle)
+  IT(AppSettings, App) \
+  IT(DoodleSettings, Doodle) \
+  IT(FlatConfig, NonVR)
 
 struct Settings final {
 #define IT(cpptype, name) cpptype name;
@@ -44,7 +45,7 @@ struct Settings final {
   static Settings Load(std::string_view profile = {});
   void Save(std::string_view profile = {});
 
-  auto operator<=>(const Settings&) const noexcept = default;
+  constexpr auto operator<=>(const Settings&) const noexcept = default;
 };
 
 void from_json(const nlohmann::json&, Settings&);
