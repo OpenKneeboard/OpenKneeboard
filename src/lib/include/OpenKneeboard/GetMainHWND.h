@@ -26,8 +26,6 @@
 
 namespace OpenKneeboard {
 
-// Using pack instead of standard_layout for backwards compatibility
-#pragma pack(push)
 struct MainWindowInfo {
   struct VersionInfo {
     uint16_t mMajor {0};
@@ -40,7 +38,7 @@ struct MainWindowInfo {
   HWND mHwnd {NULL};
   VersionInfo mVersion {};
 };
-#pragma pack(pop)
+static_assert(std::is_standard_layout_v<MainWindowInfo>);
 
 std::optional<MainWindowInfo> GetMainWindowInfo();
 std::optional<HWND> GetMainHWND();
