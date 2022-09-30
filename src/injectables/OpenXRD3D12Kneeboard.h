@@ -41,7 +41,7 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
 
  protected:
   virtual bool ConfigurationsAreCompatible(
-    const VRRenderConfig&initial,
+    const VRRenderConfig& initial,
     const VRRenderConfig& current) const override;
   virtual XrSwapchain CreateSwapChain(
     XrSession,

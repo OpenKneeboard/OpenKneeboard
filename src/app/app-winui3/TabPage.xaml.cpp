@@ -86,7 +86,8 @@ TabPage::~TabPage() {
   this->RemoveAllEventListeners();
 }
 
-winrt::fire_and_forget TabPage::final_release(std::unique_ptr<TabPage> instance) {
+winrt::fire_and_forget TabPage::final_release(
+  std::unique_ptr<TabPage> instance) {
   co_await instance->mDQC.ShutdownQueueAsync();
   instance->RemoveAllEventListeners();
 }

@@ -41,7 +41,8 @@ InputSettingsPage::InputSettingsPage() {
     if (!strongThis) {
       return;
     }
-    strongThis->mPropertyChangedEvent(*strongThis, PropertyChangedEventArgs(L"Devices"));
+    strongThis->mPropertyChangedEvent(
+      *strongThis, PropertyChangedEventArgs(L"Devices"));
   });
 }
 

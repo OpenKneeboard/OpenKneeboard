@@ -19,8 +19,8 @@
  */
 #pragma once
 
-#include <ctime>
 #include <cinttypes>
+#include <ctime>
 #include <string_view>
 
 namespace OpenKneeboard::Version {

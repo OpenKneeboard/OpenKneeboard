@@ -25,4 +25,4 @@ ITabView::ITabView() = default;
 
 ITabView::~ITabView() = default;
 
-}
+}// namespace OpenKneeboard
