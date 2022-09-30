@@ -342,8 +342,7 @@ class TestViewerWindow final {
     mFirstDetached = true;
 
     const auto config = snapshot.GetConfig();
-    mSetInputFocus = static_cast<bool>(
-      config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS);
+    mSetInputFocus = config.mVR.mEnableGazeInputFocus;
 
     if (mLayerIndex >= snapshot.GetLayerCount()) {
       mErrorRenderer->Render(

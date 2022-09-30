@@ -26,7 +26,7 @@
 #include "bitflags.h"
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
-#include <nlohmann/json_fwd.hpp>
+#include <OpenKneeboard/json_fwd.h>
 #endif
 
 namespace OpenKneeboard {
@@ -38,35 +38,44 @@ struct VRLayerConfig {
         mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
   float mWidth = 0.25f;
   float mHeight = 0.25f;
+
+  constexpr auto operator<=>(const VRLayerConfig&) const noexcept = default;
 };
 
 struct VRRenderConfig {
-  enum class Flags : uint32_t {
-    QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION = 1 << 0,
-    QUIRK_VARJO_OPENXR_INVERT_Y_POSITION = 1 << 1,
-    QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER = 1 << 2,
-    GAZE_ZOOM = 1 << 16,
-    FORCE_ZOOM = 1 << 17,
-    GAZE_INPUT_FOCUS = 1 << 18,
+  struct Quirks final {
+    bool mOculusSDK_DiscardDepthInformation {true};
+    bool mVarjo_OpenXR_InvertYPosition {true};
+    bool mVarjo_OpenXR_D3D12_DoubleBuffer {true};
+    constexpr auto operator<=>(const Quirks&) const noexcept = default;
   };
+  Quirks mQuirks;
+  bool mEnableGazeInputFocus {true};
+  bool mEnableGazeZoom {true};
 
   float mZoomScale = 2.0f;
 
+  struct GazeTargetScale final {
+    float mVertical {1.0f};
+    float mHorizontal {1.0f};
+    constexpr auto operator<=>(const GazeTargetScale&) const noexcept = default;
+  };
+  GazeTargetScale mGazeTargetScale {};
+
+  struct Opacity final {
+    float mNormal {1.0f};
+    float mGaze {1.0f};
+    constexpr auto operator<=>(const Opacity&) const noexcept = default;
+  };
+  Opacity mOpacity {};
+
+  ///// Runtime-only settings (no JSON) ////
+
+  bool mForceZoom {false};
   // Increment every time binding is pressed
   uint64_t mRecenterCount = 0;
 
-  float mGazeTargetVerticalScale = 1.0f;
-  float mGazeTargetHorizontalScale = 1.0f;
-
-  Flags mFlags = static_cast<Flags>(
-    static_cast<uint32_t>(Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION)
-    | static_cast<uint32_t>(Flags::GAZE_ZOOM)
-    | static_cast<uint32_t>(Flags::GAZE_INPUT_FOCUS)
-    | static_cast<uint32_t>(Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER)
-    | static_cast<uint32_t>(Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION));
-
-  float mNormalOpacity = 1.0f;
-  float mGazeOpacity = 1.0f;
+  constexpr auto operator<=>(const VRRenderConfig&) const noexcept = default;
 };
 static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
@@ -76,18 +85,12 @@ struct VRConfig : public VRRenderConfig {
   VRLayerConfig mPrimaryLayer;
   float mMaxWidth = 0.15f;
   float mMaxHeight = 0.25f;
+
+  constexpr auto operator<=>(const VRConfig&) const noexcept = default;
 };
 
-template <>
-constexpr bool is_bitflags_v<VRRenderConfig::Flags> = true;
-
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
-// not using the macros because they use `x`, but we're
-// dealing with coordinates so have an `x`. We'll also
-// likely want custom functions anyway to deal with older
-// configs when we add new fields.
-void from_json(const nlohmann::json& j, VRConfig& vrc);
-void to_json(nlohmann::json& j, const VRConfig& vrc);
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRConfig)
 #endif
 
 }// namespace OpenKneeboard

@@ -149,27 +149,23 @@ XrResult OpenXRKneeboard::xrEndFrame(
       return mOpenXR->xrEndFrame(session, frameEndInfo);
     }
 
-    if (
-      IsVarjoRuntime()
-      && static_cast<bool>(
-        config.mVR.mFlags
-        & VRConfig::Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION)) {
+    if (IsVarjoRuntime() && config.mVR.mQuirks.mVarjo_OpenXR_InvertYPosition) {
       layer.mVR.mEyeY = -layer.mVR.mEyeY;
       layer.mVR.mFloorY = -layer.mVR.mFloorY;
     }
 
     auto& swapchain = mSwapchains.at(layerIndex);
     if (swapchain) {
-      if (!this->FlagsAreCompatible(mInitialFlags, config.mVR.mFlags)) {
-        dprint("Incompatible swapchain due to flags change, recreating");
+      if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {
+        dprint("Incompatible swapchain due to options change, recreating");
         mOpenXR->xrDestroySwapchain(swapchain);
         swapchain = nullptr;
       }
     }
 
     if (!swapchain) {
-      mInitialFlags = config.mVR.mFlags;
-      swapchain = this->CreateSwapChain(session, mInitialFlags, layerIndex);
+      mInitialConfig = config.mVR;
+      swapchain = this->CreateSwapChain(session, mInitialConfig, layerIndex);
       if (!swapchain) {
         dprint("Failed to create swapchain");
         OPENKNEEBOARD_BREAK;

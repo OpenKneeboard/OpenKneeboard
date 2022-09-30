@@ -50,11 +50,11 @@ class OpenXRKneeboard : public VRKneeboard {
   XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo);
 
  protected:
-  virtual bool FlagsAreCompatible(
-    VRRenderConfig::Flags initialFlags,
-    VRRenderConfig::Flags currentFlags) const = 0;
+  virtual bool ConfigurationsAreCompatible(
+    const VRRenderConfig& initial,
+    const VRRenderConfig& current) const = 0;
   virtual XrSwapchain
-  CreateSwapChain(XrSession, VRRenderConfig::Flags flags, uint8_t layerIndex)
+  CreateSwapChain(XrSession, const VRRenderConfig& vrc, uint8_t layerIndex)
     = 0;
   virtual bool Render(
     XrSwapchain swapchain,
@@ -80,7 +80,7 @@ class OpenXRKneeboard : public VRKneeboard {
 
   // For quirks
   bool mIsVarjoRuntime = false;
-  VRRenderConfig::Flags mInitialFlags;
+  VRRenderConfig mInitialConfig;
 
   Pose GetHMDPose(XrTime displayTime);
   YOrigin GetYOrigin() override;

@@ -51,13 +51,10 @@ Vector2 VRKneeboard::GetKneeboardSize(
   const SHM::Config& config,
   const SHM::LayerConfig& layer,
   bool isLookingAtKneeboard) {
-  const auto flags = config.mVR.mFlags;
-  using Flags = VRConfig::Flags;
-
   const auto sizes = this->GetSizes(config.mVR, layer);
 
-  return static_cast<bool>(flags & Flags::FORCE_ZOOM)
-      || (isLookingAtKneeboard && static_cast<bool>(flags & Flags::GAZE_ZOOM))
+  return config.mVR.mForceZoom
+      || (isLookingAtKneeboard && config.mVR.mEnableGazeZoom)
     ? sizes.mZoomedSize
     : sizes.mNormalSize;
 }
@@ -119,8 +116,8 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
     .mKneeboardPose = kneeboardPose,
     .mKneeboardSize
     = this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
-    .mKneeboardOpacity = isLookingAtKneeboard ? config.mVR.mGazeOpacity
-                                              : config.mVR.mNormalOpacity,
+    .mKneeboardOpacity = isLookingAtKneeboard ? config.mVR.mOpacity.mGaze
+                                              : config.mVR.mOpacity.mNormal,
     .mCacheKey = cacheKey,
     .mIsLookingAtKneeboard = isLookingAtKneeboard,
   };
@@ -134,8 +131,8 @@ bool VRKneeboard::IsLookingAtKneeboard(
   auto& isLookingAtKneeboard = mIsLookingAtKneeboard[layer.mLayerID];
 
   if (
-    config.mVR.mGazeTargetHorizontalScale < 0.1
-    || config.mVR.mGazeTargetVerticalScale < 0.1) {
+    config.mVR.mGazeTargetScale.mHorizontal < 0.1
+    || config.mVR.mGazeTargetScale.mVertical < 0.1) {
     return false;
   }
 
@@ -143,8 +140,8 @@ bool VRKneeboard::IsLookingAtKneeboard(
   auto currentSize
     = isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
 
-  currentSize.x *= config.mVR.mGazeTargetHorizontalScale;
-  currentSize.y *= config.mVR.mGazeTargetVerticalScale;
+  currentSize.x *= config.mVR.mGazeTargetScale.mHorizontal;
+  currentSize.y *= config.mVR.mGazeTargetScale.mVertical;
 
   isLookingAtKneeboard = RayIntersectsRect(
     hmdPose.mPosition,
@@ -155,8 +152,7 @@ bool VRKneeboard::IsLookingAtKneeboard(
 
   if (
     isLookingAtKneeboard && config.mGlobalInputLayerID != layer.mLayerID
-    && static_cast<bool>(
-      config.mVR.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)) {
+    && config.mVR.mEnableGazeInputFocus) {
     GameEvent {
       GameEvent::EVT_SET_INPUT_FOCUS,
       std::to_string(layer.mLayerID),

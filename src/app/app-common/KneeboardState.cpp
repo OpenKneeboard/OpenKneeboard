@@ -41,10 +41,6 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
-  if (!mSettings.VR.is_null()) {
-    mVRConfig = mSettings.VR;
-  }
-
   mGamesList = std::make_unique<GamesList>(mSettings.Games);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
@@ -96,7 +92,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mGameEventServer->evGameEvent, &KneeboardState::OnGameEvent, this);
   mGameEventWorker = mGameEventServer->Run();
 
-  if (mVRConfig.mEnableSteamVR) {
+  if (mSettings.VR.mEnableSteamVR) {
     this->StartOpenVRThread();
   }
 }
@@ -116,7 +112,7 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 }
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
-  const auto primaryVR = mVRConfig.mPrimaryLayer;
+  const auto primaryVR = mSettings.VR.mPrimaryLayer;
   if (!mSettings.App.mDualKneeboards.mEnabled) {
     return {
       {
@@ -164,18 +160,14 @@ void KneeboardState::OnUserAction(UserAction action) {
       }
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
-      auto& flags = this->mVRConfig.mFlags;
-      if (static_cast<bool>(flags & VRRenderConfig::Flags::FORCE_ZOOM)) {
-        flags &= ~VRRenderConfig::Flags::FORCE_ZOOM;
-      } else {
-        flags |= VRRenderConfig::Flags::FORCE_ZOOM;
-      }
+      auto& forceZoom = this->mSettings.VR.mForceZoom;
+      forceZoom = !forceZoom;
       this->SaveSettings();
       this->evNeedsRepaintEvent.Emit();
       return;
     }
     case UserAction::RECENTER_VR:
-      this->mVRConfig.mRecenterCount++;
+      this->mSettings.VR.mRecenterCount++;
       this->evNeedsRepaintEvent.Emit();
       return;
     case UserAction::SWITCH_KNEEBOARDS:
@@ -281,11 +273,11 @@ void KneeboardState::SetFlatConfig(const FlatConfig& value) {
 }
 
 VRConfig KneeboardState::GetVRConfig() const {
-  return mVRConfig;
+  return mSettings.VR;
 }
 
 void KneeboardState::SetVRConfig(const VRConfig& value) {
-  if (value.mEnableSteamVR != mVRConfig.mEnableSteamVR) {
+  if (value.mEnableSteamVR != mSettings.VR.mEnableSteamVR) {
     if (!value.mEnableSteamVR) {
       mOpenVRThread.request_stop();
     } else {
@@ -293,21 +285,19 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
     }
   }
 
-  if (value.mOpenXRMode != mVRConfig.mOpenXRMode) {
+  if (value.mOpenXRMode != mSettings.VR.mOpenXRMode) {
     [=]() -> winrt::fire_and_forget {
       co_await SetOpenXRModeWithHelperProcess(
-        value.mOpenXRMode, {mVRConfig.mOpenXRMode});
+        value.mOpenXRMode, {mSettings.VR.mOpenXRMode});
     }();
   }
 
-  if (
-    (value.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)
-    != (mVRConfig.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS)) {
+  if (value.mEnableGazeInputFocus != mSettings.VR.mEnableGazeInputFocus) {
     mInputViewIndex = mFirstViewIndex;
     this->evViewOrderChangedEvent.Emit();
   }
 
-  mVRConfig = value;
+  mSettings.VR = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
 }
@@ -350,7 +340,7 @@ void KneeboardState::SaveSettings() {
     mSettings.DirectInput = mDirectInput->GetSettings();
   }
 
-  mSettings.VR = mVRConfig;
+  mSettings.VR = mSettings.VR;
 
   mSettings.Save();
   evSettingsChangedEvent.Emit();

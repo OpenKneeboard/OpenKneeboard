@@ -18,168 +18,75 @@
  * USA.
  */
 #include <OpenKneeboard/VRConfig.h>
-
-#include <nlohmann/json.hpp>
+#include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
 
-namespace {
-using Flags = VRRenderConfig::Flags;
-}
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRLayerConfig,
+  mX,
+  mFloorY,
+  mEyeY,
+  mZ,
+  mRX,
+  mRY,
+  mRZ,
+  mWidth,
+  mHeight)
 
-void SetFlagFromBool(
-  const nlohmann::json& container,
-  std::string_view key,
-  VRConfig& vrc,
-  const Flags flag,
-  bool defaultValue) {
-  const bool value = container.value<bool>(key, defaultValue);
-  if (value) {
-    vrc.mFlags |= flag;
-  } else {
-    vrc.mFlags &= ~flag;
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRRenderConfig::Quirks,
+  mOculusSDK_DiscardDepthInformation,
+  mVarjo_OpenXR_InvertYPosition,
+  mVarjo_OpenXR_D3D12_DoubleBuffer)
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRRenderConfig::GazeTargetScale,
+  mVertical,
+  mHorizontal);
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRRenderConfig::Opacity, mNormal, mGaze);
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRRenderConfig,
+  mQuirks,
+  mEnableGazeInputFocus,
+  mEnableGazeZoom,
+  mZoomScale,
+  mGazeTargetScale,
+  mOpacity)
+
+template <>
+void from_json_postprocess<VRConfig>(const nlohmann::json& j, VRConfig& v) {
+  from_json(j, static_cast<VRRenderConfig&>(v));
+  from_json(j, v.mPrimaryLayer);
+
+  // Backwards compatibility
+  if (j.contains("height")) {
+    v.mMaxHeight = j.at("height");
   }
-}
-
-void SetQuirkFromBool(
-  const nlohmann::json& container,
-  std::string_view key,
-  VRConfig& vrc,
-  const Flags flag) {
-  SetFlagFromBool(container, key, vrc, flag, /* default = */ true);
-}
-
-void from_json(const nlohmann::json& j, VRConfig& vrc) {
-  auto& l = vrc.mPrimaryLayer;
-  l.mX = j.at("x");
-  l.mEyeY = j.at("eyeY");
-  l.mFloorY = j.at("floorY");
-  l.mZ = j.at("z");
-  l.mRX = j.at("rx");
-  l.mRY = j.at("ry");
-  l.mRZ = j.at("rz");
-  vrc.mMaxHeight = j.at("height");
-  vrc.mZoomScale = j.at("zoomScale");
   if (j.contains("width")) {
-    vrc.mMaxWidth = j.at("width");
-  }
-
-  if (j.contains("gazeTargetScale")) {
-    auto scale = j.at("gazeTargetScale");
-    vrc.mGazeTargetHorizontalScale = scale.at("horizontal");
-    vrc.mGazeTargetVerticalScale = scale.at("vertical");
-  }
-
-  if (j.contains("quirks")) {
-    auto& q = j.at("quirks");
-    SetQuirkFromBool(
-      q,
-      "OculusSDK_DiscardDepthInformation",
-      vrc,
-      Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION);
-    SetQuirkFromBool(
-      q,
-      "Varjo_OpenXR_D3D12_DoubleBuffer",
-      vrc,
-      Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER);
-    SetQuirkFromBool(
-      q,
-      "Varjo_OpenXR_InvertYPosition",
-      vrc,
-      Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION);
-  }
-
-  if (j.contains("enableGazeZoom")) {
-    if (j.at("enableGazeZoom").get<bool>()) {
-      vrc.mFlags |= Flags::GAZE_ZOOM;
-    } else {
-      vrc.mFlags &= ~Flags::GAZE_ZOOM;
-    }
-  }
-
-  if (j.contains("enableSteamVR")) {
-    vrc.mEnableSteamVR = j.at("enableSteamVR").get<bool>();
-  }
-
-  if (j.contains("openXRMode")) {
-    vrc.mOpenXRMode = j.at("openXRMode").get<OpenXRMode>();
-  }
-
-  if (j.contains("opacity")) {
-    auto opacity = j.at("opacity");
-    vrc.mNormalOpacity = opacity.at("normal");
-    vrc.mGazeOpacity = opacity.at("gaze");
-  }
-
-  if (j.contains("dualKneeboards")) {
-    auto dualKneeboards = j.at("dualKneeboards");
-    if (dualKneeboards.at("enableGazeInputFocus").get<bool>()) {
-      vrc.mFlags |= VRConfig::Flags::GAZE_INPUT_FOCUS;
-    } else {
-      vrc.mFlags &= ~VRConfig::Flags::GAZE_INPUT_FOCUS;
-    }
+    v.mMaxWidth = j.at("width");
   }
 }
 
-void to_json(nlohmann::json& j, const VRConfig& vrc) {
-  const auto& l = vrc.mPrimaryLayer;
-  j = {
-    {"x", l.mX},
-    {"eyeY", l.mEyeY},
-    {"floorY", l.mFloorY},
-    {"z", l.mZ},
-    {"rx", l.mRX},
-    {"ry", l.mRY},
-    {"rz", l.mRZ},
-    {"width", vrc.mMaxWidth},
-    {"height", vrc.mMaxHeight},
-    {"zoomScale", vrc.mZoomScale},
-    {
-      "quirks",
-      {
-        {
-          "OculusSDK_DiscardDepthInformation",
-          static_cast<bool>(
-            vrc.mFlags & Flags::QUIRK_OCULUSSDK_DISCARD_DEPTH_INFORMATION),
-        },
-        {
-          "Varjo_OpenXR_D3D12_DoubleBuffer",
-          static_cast<bool>(
-            vrc.mFlags & Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER),
-        },
-        {
-          "Varjo_OpenXR_InvertYPosition",
-          static_cast<bool>(
-            vrc.mFlags & Flags::QUIRK_VARJO_OPENXR_INVERT_Y_POSITION),
-        },
-      },
-    },
-    {
-      "gazeTargetScale",
-      {
-        {"horizontal", vrc.mGazeTargetHorizontalScale},
-        {"vertical", vrc.mGazeTargetVerticalScale},
-      },
-    },
-    {"enableGazeZoom", static_cast<bool>(vrc.mFlags & Flags::GAZE_ZOOM)},
-    {"enableSteamVR", vrc.mEnableSteamVR},
-    {"openXRMode", vrc.mOpenXRMode},
-    {
-      "opacity",
-      {
-        {"normal", vrc.mNormalOpacity},
-        {"gaze", vrc.mGazeOpacity},
-      },
-    },
-    {
-      "dualKneeboards",
-      {
-        {
-          "enableGazeInputFocus",
-          static_cast<bool>(vrc.mFlags & VRConfig::Flags::GAZE_INPUT_FOCUS),
-        },
-      },
-    },
-  };
+template <>
+void to_json_postprocess<VRConfig>(
+  nlohmann::json& j,
+  const VRConfig& parent_v,
+  const VRConfig& v) {
+  to_json_with_default(
+    j,
+    static_cast<const VRRenderConfig&>(parent_v),
+    static_cast<const VRRenderConfig&>(v));
+  to_json_with_default(j, parent_v.mPrimaryLayer, v.mPrimaryLayer);
 }
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRConfig,
+  mEnableSteamVR,
+  mOpenXRMode,
+  mMaxWidth,
+  mMaxHeight)
+
 }// namespace OpenKneeboard

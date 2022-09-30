@@ -69,20 +69,20 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() = default;
 
-bool OpenXRD3D12Kneeboard::FlagsAreCompatible(
-  VRRenderConfig::Flags initialFlags,
-  VRRenderConfig::Flags currentFlags) const {
+bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
+  const VRRenderConfig& initial,
+  const VRRenderConfig& current) const {
   if (!IsVarjoRuntime()) {
     return true;
   }
-  const auto flag
-    = VRRenderConfig::Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER;
-  return (initialFlags & flag) == (currentFlags & flag);
+
+  return initial.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer
+    == current.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
 }
 
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   XrSession session,
-  VRRenderConfig::Flags flags,
+  const VRRenderConfig& vrc,
   uint8_t layerIndex) {
   dprintf("{}", __FUNCTION__);
 
@@ -119,10 +119,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   dprintf("{} images in swapchain", imageCount);
 
   bool doubleBuffer = false;
-  if (
-    IsVarjoRuntime()
-    && static_cast<bool>(
-      flags & VRRenderConfig::Flags::QUIRK_VARJO_OPENXR_D3D12_DOUBLE_BUFFER)) {
+  if (IsVarjoRuntime() && vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer) {
     dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
     doubleBuffer = true;
   }

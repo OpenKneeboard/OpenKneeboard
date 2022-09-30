@@ -248,7 +248,7 @@ void VRSettingsPage::KneeboardZoomScale(float value) {
 }
 
 float VRSettingsPage::KneeboardGazeTargetHorizontalScale() {
-  return gKneeboard->GetVRConfig().mGazeTargetHorizontalScale;
+  return gKneeboard->GetVRConfig().mGazeTargetScale.mHorizontal;
 }
 
 void VRSettingsPage::KneeboardGazeTargetHorizontalScale(float value) {
@@ -256,12 +256,12 @@ void VRSettingsPage::KneeboardGazeTargetHorizontalScale(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mGazeTargetHorizontalScale = value;
+  config.mGazeTargetScale.mHorizontal = value;
   gKneeboard->SetVRConfig(config);
 }
 
 float VRSettingsPage::KneeboardGazeTargetVerticalScale() {
-  return gKneeboard->GetVRConfig().mGazeTargetVerticalScale;
+  return gKneeboard->GetVRConfig().mGazeTargetScale.mVertical;
 }
 
 void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
@@ -269,29 +269,29 @@ void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
     return;
   }
   auto config = gKneeboard->GetVRConfig();
-  config.mGazeTargetVerticalScale = value;
+  config.mGazeTargetScale.mVertical = value;
   gKneeboard->SetVRConfig(config);
 }
 
 uint8_t VRSettingsPage::NormalOpacity() {
   return static_cast<uint8_t>(
-    std::lround(gKneeboard->GetVRConfig().mNormalOpacity * 100));
+    std::lround(gKneeboard->GetVRConfig().mOpacity.mNormal * 100));
 }
 
 void VRSettingsPage::NormalOpacity(uint8_t value) {
   auto config = gKneeboard->GetVRConfig();
-  config.mNormalOpacity = value / 100.0f;
+  config.mOpacity.mNormal = value / 100.0f;
   gKneeboard->SetVRConfig(config);
 }
 
 uint8_t VRSettingsPage::GazeOpacity() {
   return static_cast<uint8_t>(
-    std::lround(gKneeboard->GetVRConfig().mGazeOpacity * 100));
+    std::lround(gKneeboard->GetVRConfig().mOpacity.mGaze * 100));
 }
 
 void VRSettingsPage::GazeOpacity(uint8_t value) {
   auto config = gKneeboard->GetVRConfig();
-  config.mGazeOpacity = value / 100.0f;
+  config.mOpacity.mGaze = value / 100.0f;
   gKneeboard->SetVRConfig(config);
 }
 
@@ -306,17 +306,12 @@ void VRSettingsPage::SteamVREnabled(bool enabled) {
 }
 
 bool VRSettingsPage::GazeZoomEnabled() {
-  return static_cast<bool>(
-    gKneeboard->GetVRConfig().mFlags & VRRenderConfig::Flags::GAZE_ZOOM);
+  return gKneeboard->GetVRConfig().mEnableGazeZoom;
 }
 
 void VRSettingsPage::GazeZoomEnabled(bool enabled) {
   auto config = gKneeboard->GetVRConfig();
-  if (enabled) {
-    config.mFlags |= VRRenderConfig::Flags::GAZE_ZOOM;
-  } else {
-    config.mFlags &= ~VRRenderConfig::Flags::GAZE_ZOOM;
-  }
+  config.mEnableGazeZoom = enabled;
   gKneeboard->SetVRConfig(config);
 }
 

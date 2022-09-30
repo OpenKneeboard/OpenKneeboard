@@ -47,15 +47,15 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
 }
 
-bool OpenXRD3D11Kneeboard::FlagsAreCompatible(
-  VRRenderConfig::Flags,
-  VRRenderConfig::Flags) const {
+bool OpenXRD3D11Kneeboard::ConfigurationsAreCompatible(
+  const VRRenderConfig&,
+  const VRRenderConfig&) const {
   return true;
 }
 
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   XrSession session,
-  VRRenderConfig::Flags,
+  const VRRenderConfig&,
   uint8_t layerIndex) {
   dprintf("{}", __FUNCTION__);
 

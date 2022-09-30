@@ -47,12 +47,12 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const VRKneeboard::RenderParameters&);
 
  protected:
-  virtual bool FlagsAreCompatible(
-    VRRenderConfig::Flags initialFlags,
-    VRRenderConfig::Flags currentFlags) const override;
+  virtual bool ConfigurationsAreCompatible(
+    const VRRenderConfig& initial,
+    const VRRenderConfig& current) const override;
   virtual XrSwapchain CreateSwapChain(
     XrSession,
-    VRRenderConfig::Flags,
+    const VRRenderConfig&,
     uint8_t layerIndex) override;
 
   virtual bool Render(
