@@ -4,13 +4,8 @@
 namespace OpenKneeboard {
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   DoodleSettings::Tool,
-  SkipFirstLowerNext,
   mMinimumRadius,
   mSensitivity)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  DoodleSettings,
-  SkipFirstLowerNext,
-  mPen,
-  mEraser)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(DoodleSettings, mPen, mEraser)
 
 }// namespace OpenKneeboard

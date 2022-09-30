@@ -40,11 +40,10 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   FlatConfig,
-  SkipFirstLowerNext,
   mHeightPercent,
   mPaddingPixels,
   mOpacity,
   mHorizontalAlignment,
-  mVerticalAlignment);
+  mVerticalAlignment)
 
 }// namespace OpenKneeboard

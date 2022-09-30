@@ -24,22 +24,17 @@ namespace OpenKneeboard {
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AutoUpdateSettings::Testing,
-  SkipFirst,
   mBaseURI,
   mFakeCurrentVersion,
   mFakeUpdateVersion,
   mAlwaysCheck)
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AutoUpdateSettings,
-  SkipFirst,
   mDisabledUntil,
   mSkipVersion,
   mChannel,
   mTesting)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  AppSettings::DualKneeboardSettings,
-  SkipFirst,
-  mEnabled)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::DualKneeboardSettings, mEnabled)
 
 template <>
 void from_json_postprocess<AppSettings>(
@@ -86,7 +81,6 @@ void to_json_postprocess<AppSettings>(
 // mWindowRect is handled by `*_json_postprocess` functions above
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AppSettings,
-  SkipFirst,
   mLoopPages,
   mLoopTabs,
   mDualKneeboards,
