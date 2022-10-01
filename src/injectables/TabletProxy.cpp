@@ -152,7 +152,6 @@ LRESULT TabletProxy::HookedWindowProc(
     if (openKneeboard && openKneeboard->mVersion == gThisVersion) {
       SendNotifyMessage(openKneeboard->mHwnd, uMsg, wParam, lParam);
     }
-    return S_OK;
   }
 
   return CallWindowProc(mWindowProc, hwnd, uMsg, wParam, lParam);
