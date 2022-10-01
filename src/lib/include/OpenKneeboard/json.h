@@ -27,6 +27,17 @@ namespace OpenKneeboard {
 
 /* Okay, so this file is every kind of fun: templates, consteval, and macros :D
  *
+ * The intent is to provide an alternative to
+ * NLOHMANN_JSON_DEFINE_TYPE_NONINTRUSIVE() that:
+ *
+ * - only writes JSON for settings that differ from a 'default'; this can either
+ *   be a default-constructed object, or, for example, a parent profile,
+ *   allowing inheritance.
+ * - normalizes written keys to the form `UpperCamelCase`
+ * - supports reading either in that form or `lowerCamelCase` for compatibility
+ * - supports the convention of `mUpperCamelCase` for the C++ structs
+ *
+ *
  * Macros
  * ======
  *
