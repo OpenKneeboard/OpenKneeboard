@@ -83,15 +83,15 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   UpdateLayout();
 }
 
-uint8_t KneeboardView::GetTabIndex() const {
+TabIndex KneeboardView::GetTabIndex() const {
   auto it = std::ranges::find(mTabViews, mCurrentTabView);
   if (it == mTabViews.end()) {
     return 0;
   }
-  return static_cast<uint8_t>(it - mTabViews.begin());
+  return static_cast<TabIndex>(it - mTabViews.begin());
 }
 
-void KneeboardView::SetCurrentTabByIndex(uint8_t index) {
+void KneeboardView::SetCurrentTabByIndex(TabIndex index) {
   if (index >= mTabViews.size()) {
     return;
   }

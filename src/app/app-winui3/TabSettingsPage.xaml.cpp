@@ -34,6 +34,7 @@
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/inttypes.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/windows.storage.pickers.h>
@@ -112,7 +113,7 @@ fire_and_forget TabSettingsPage::RemoveTab(
     co_return;
   }
 
-  auto idx = static_cast<uint8_t>(it - tabs.begin());
+  auto idx = static_cast<OpenKneeboard::TabIndex>(it - tabs.begin());
   tabsList->RemoveTab(idx);
   List()
     .ItemsSource()

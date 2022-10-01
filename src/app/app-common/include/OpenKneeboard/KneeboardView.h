@@ -43,10 +43,10 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
 
   virtual std::shared_ptr<ITabView> GetCurrentTabView() const override;
   virtual std::shared_ptr<ITab> GetCurrentTab() const override;
-  virtual uint8_t GetTabIndex() const override;
+  virtual TabIndex GetTabIndex() const override;
   virtual std::shared_ptr<ITabView> GetTabViewByID(
     ITab::RuntimeID) const override;
-  virtual void SetCurrentTabByIndex(uint8_t) override;
+  virtual void SetCurrentTabByIndex(TabIndex) override;
   virtual void SetCurrentTabByID(ITab::RuntimeID) override;
 
   virtual void PreviousTab() override;

@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/inttypes.h>
 #include <d2d1.h>
 
 #include <memory>
@@ -42,9 +43,9 @@ class IKneeboardView {
 
   virtual std::shared_ptr<ITabView> GetCurrentTabView() const = 0;
   virtual std::shared_ptr<ITab> GetCurrentTab() const = 0;
-  virtual uint8_t GetTabIndex() const = 0;
+  virtual TabIndex GetTabIndex() const = 0;
   virtual std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const = 0;
-  virtual void SetCurrentTabByIndex(uint8_t) = 0;
+  virtual void SetCurrentTabByIndex(TabIndex) = 0;
   virtual void SetCurrentTabByID(ITab::RuntimeID) = 0;
 
   virtual void PreviousTab() = 0;
@@ -59,7 +60,7 @@ class IKneeboardView {
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual const D2D1_SIZE_U& GetContentNativeSize() const = 0;
 
-  Event<uint8_t> evCurrentTabChangedEvent;
+  Event<TabIndex> evCurrentTabChangedEvent;
   Event<> evNeedsRepaintEvent;
   Event<const CursorEvent&> evCursorEvent;
   Event<> evLayoutChangedEvent;

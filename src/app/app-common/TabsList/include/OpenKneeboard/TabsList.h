@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/inttypes.h>
 
 #include <nlohmann/json_fwd.hpp>
 
@@ -37,8 +38,8 @@ class TabsList final : private EventReceiver {
   ~TabsList();
 
   std::vector<std::shared_ptr<ITab>> GetTabs() const;
-  void RemoveTab(uint8_t index);
-  void InsertTab(uint8_t index, const std::shared_ptr<ITab>& tab);
+  void RemoveTab(TabIndex index);
+  void InsertTab(TabIndex index, const std::shared_ptr<ITab>& tab);
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
 
   nlohmann::json GetSettings() const;

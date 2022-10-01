@@ -169,13 +169,13 @@ void TabsList::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   evSettingsChangedEvent.Emit();
 }
 
-void TabsList::InsertTab(uint8_t index, const std::shared_ptr<ITab>& tab) {
+void TabsList::InsertTab(TabIndex index, const std::shared_ptr<ITab>& tab) {
   auto tabs = mTabs;
   tabs.insert(tabs.begin() + index, tab);
   this->SetTabs(tabs);
 }
 
-void TabsList::RemoveTab(uint8_t index) {
+void TabsList::RemoveTab(TabIndex index) {
   if (index >= mTabs.size()) {
     return;
   }
