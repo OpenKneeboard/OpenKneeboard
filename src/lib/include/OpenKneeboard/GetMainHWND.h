@@ -37,6 +37,8 @@ struct MainWindowInfo {
 
   HWND mHwnd {NULL};
   VersionInfo mVersion {};
+
+  constexpr auto operator<=>(const MainWindowInfo&) const = default;
 };
 static_assert(std::is_standard_layout_v<MainWindowInfo>);
 

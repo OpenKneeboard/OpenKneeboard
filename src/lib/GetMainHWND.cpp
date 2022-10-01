@@ -29,7 +29,20 @@
 
 namespace OpenKneeboard {
 
+static struct {
+  std::optional<MainWindowInfo> mInfo {};
+  std::chrono::time_point<std::chrono::steady_clock> mCacheTime {};
+} gCache;
+
 std::optional<MainWindowInfo> GetMainWindowInfo() {
+  const auto now = std::chrono::steady_clock::now();
+  if (now - gCache.mCacheTime < std::chrono::seconds(1)) {
+    return gCache.mInfo;
+  }
+  const auto cached = gCache.mInfo;
+  gCache.mInfo = {};
+  const scope_guard updateCacheTime([&]() { gCache.mCacheTime = now; });
+
   auto name = std::format(L"Local\\{}.hwnd", OpenKneeboard::ProjectNameW);
   winrt::handle hwndFile {OpenFileMapping(PAGE_READWRITE, FALSE, name.c_str())};
   if (!hwndFile) {
@@ -46,18 +59,24 @@ std::optional<MainWindowInfo> GetMainWindowInfo() {
   MEMORY_BASIC_INFORMATION mappingInfo;
   VirtualQuery(GetCurrentProcess(), &mappingInfo, sizeof(mappingInfo));
   if (mappingInfo.RegionSize == sizeof(HWND)) {
-    dprint("Found an existing window with no version information");
-    return MainWindowInfo {.mHwnd = *reinterpret_cast<HWND*>(mapping)};
+    gCache.mInfo = MainWindowInfo {.mHwnd = *reinterpret_cast<HWND*>(mapping)};
+    if (cached != gCache.mInfo) {
+      dprint("Found an existing window with no version information");
+    }
+    return gCache.mInfo;
   }
 
-  auto info = *reinterpret_cast<MainWindowInfo*>(mapping);
-  dprintf(
-    "Found an existing window for v{}.{}.{}.{}",
-    info.mVersion.mMajor,
-    info.mVersion.mMinor,
-    info.mVersion.mPatch,
-    info.mVersion.mBuild);
-  return info;
+  gCache.mInfo = *reinterpret_cast<MainWindowInfo*>(mapping);
+  if (cached != gCache.mInfo) {
+    const auto version = gCache.mInfo->mVersion;
+    dprintf(
+      "Found an existing window for v{}.{}.{}.{}",
+      version.mMajor,
+      version.mMinor,
+      version.mPatch,
+      version.mBuild);
+  }
+  return gCache.mInfo;
 }
 
 std::optional<HWND> GetMainHWND() {
