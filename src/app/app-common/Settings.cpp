@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/json.h>
 #include <ShlObj.h>
 #include <shims/winrt/base.h>
 
@@ -85,7 +86,8 @@ Settings Settings::Load(std::string_view profile) {
   }
 
   const auto profileDir = std::filesystem::path {"profiles"} / profile;
-#define IT(cpptype, x) MaybeSetFromJSON(settings.x, profileDir / #x##".json");
+#define IT(cpptype, x) \
+  MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
@@ -135,33 +137,27 @@ void Settings::Save(std::string_view profile) {
 
   const auto profileDir = std::filesystem::path {"profiles"} / profile;
 #define IT(cpptype, x) \
-  MaybeSaveJSON(parentSettings.x, this->x, profileDir / #x##".json");
+  MaybeSaveJSON(parentSettings.m##x, this->m##x, profileDir / #x##".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 }
 
-void from_json(const nlohmann::json& j, Settings& s) {
-  s.Games = j.at("Games");
-  s.Tabs = j.at("Tabs");
-
+template <>
+void from_json_postprocess<Settings>(const nlohmann::json& j, Settings& s) {
   if (j.contains("DirectInputV2")) {
-    s.DirectInput = j.at("DirectInputV2");
-  }
-  if (j.contains("TabletInput")) {
-    s.TabletInput = j.at("TabletInput");
-  }
-  if (j.contains("NonVR")) {
-    s.NonVR = j.at("NonVR");
-  }
-  if (j.contains("VR")) {
-    s.VR = j.at("VR");
-  }
-  if (j.contains("App")) {
-    s.App = j.at("App");
-  }
-  if (j.contains("Doodle")) {
-    s.Doodle = j.at("Doodle");
+    s.mDirectInput = j.at("DirectInputV2");
   }
 }
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  Settings,
+  mGames,
+  mTabs,
+  mApp,
+  mDirectInput,
+  mDoodle,
+  mNonVR,
+  mTabletInput,
+  mVR)
 
 }// namespace OpenKneeboard

@@ -26,8 +26,6 @@
 #include <OpenKneeboard/TabletSettings.h>
 #include <OpenKneeboard/VRConfig.h>
 
-#include <nlohmann/json.hpp>
-
 namespace OpenKneeboard {
 
 #define OPENKNEEBOARD_SETTINGS_SECTIONS \
@@ -41,7 +39,7 @@ namespace OpenKneeboard {
   IT(VRConfig, VR)
 
 struct Settings final {
-#define IT(cpptype, name) cpptype name;
+#define IT(cpptype, name) cpptype m##name {};
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
@@ -51,6 +49,6 @@ struct Settings final {
   constexpr auto operator<=>(const Settings&) const noexcept = default;
 };
 
-void from_json(const nlohmann::json&, Settings&);
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(Settings);
 
 }// namespace OpenKneeboard

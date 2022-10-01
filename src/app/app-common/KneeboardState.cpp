@@ -41,13 +41,13 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
-  mGamesList = std::make_unique<GamesList>(mSettings.Games);
+  mGamesList = std::make_unique<GamesList>(mSettings.mGames);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
   AddEventListener(
     mGamesList->evGameChangedEvent, &KneeboardState::OnGameChangedEvent, this);
 
-  mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.Tabs);
+  mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.mTabs);
   AddEventListener(
     mTabsList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
   AddEventListener(mTabsList->evTabsChangedEvent, [this](const auto& tabs) {
@@ -71,14 +71,14 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     = std::make_unique<InterprocessRenderer>(mDXResources, this);
 
   mTabletInput
-    = std::make_unique<TabletInputAdapter>(hwnd, this, mSettings.TabletInput);
+    = std::make_unique<TabletInputAdapter>(hwnd, this, mSettings.mTabletInput);
   AddEventListener(
     mTabletInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
   AddEventListener(
     mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
 
   mDirectInput
-    = std::make_unique<DirectInputAdapter>(hwnd, mSettings.DirectInput);
+    = std::make_unique<DirectInputAdapter>(hwnd, mSettings.mDirectInput);
   AddEventListener(
     mDirectInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
   AddEventListener(
@@ -92,7 +92,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mGameEventServer->evGameEvent, &KneeboardState::OnGameEvent, this);
   mGameEventWorker = mGameEventServer->Run();
 
-  if (mSettings.VR.mEnableSteamVR) {
+  if (mSettings.mVR.mEnableSteamVR) {
     this->StartOpenVRThread();
   }
 }
@@ -112,8 +112,8 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 }
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
-  const auto primaryVR = mSettings.VR.mPrimaryLayer;
-  if (!mSettings.App.mDualKneeboards.mEnabled) {
+  const auto primaryVR = mSettings.mVR.mPrimaryLayer;
+  if (!mSettings.mApp.mDualKneeboards.mEnabled) {
     return {
       {
         .mView = mViews.at(mFirstViewIndex),
@@ -160,14 +160,14 @@ void KneeboardState::OnUserAction(UserAction action) {
       }
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
-      auto& forceZoom = this->mSettings.VR.mForceZoom;
+      auto& forceZoom = this->mSettings.mVR.mForceZoom;
       forceZoom = !forceZoom;
       this->SaveSettings();
       this->evNeedsRepaintEvent.Emit();
       return;
     }
     case UserAction::RECENTER_VR:
-      this->mSettings.VR.mRecenterCount++;
+      this->mSettings.mVR.mRecenterCount++;
       this->evNeedsRepaintEvent.Emit();
       return;
     case UserAction::SWITCH_KNEEBOARDS:
@@ -185,12 +185,12 @@ void KneeboardState::OnUserAction(UserAction action) {
 void KneeboardState::SetFirstViewIndex(uint8_t index) {
   const auto inputIsFirst = this->mFirstViewIndex == this->mInputViewIndex;
   this->mFirstViewIndex
-    = std::min<uint8_t>(index, mSettings.App.mDualKneeboards.mEnabled ? 1 : 0);
+    = std::min<uint8_t>(index, mSettings.mApp.mDualKneeboards.mEnabled ? 1 : 0);
   if (inputIsFirst) {
     this->mInputViewIndex = this->mFirstViewIndex;
   } else {
     this->mInputViewIndex = std::min<uint8_t>(
-      index, mSettings.App.mDualKneeboards.mEnabled ? 1 : 0);
+      index, mSettings.mApp.mDualKneeboards.mEnabled ? 1 : 0);
   }
   this->evNeedsRepaintEvent.Emit();
   this->evViewOrderChangedEvent.Emit();
@@ -263,21 +263,21 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
 }
 
 FlatConfig KneeboardState::GetFlatConfig() const {
-  return mSettings.NonVR;
+  return mSettings.mNonVR;
 }
 
 void KneeboardState::SetFlatConfig(const FlatConfig& value) {
-  mSettings.NonVR = value;
+  mSettings.mNonVR = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
 }
 
 VRConfig KneeboardState::GetVRConfig() const {
-  return mSettings.VR;
+  return mSettings.mVR;
 }
 
 void KneeboardState::SetVRConfig(const VRConfig& value) {
-  if (value.mEnableSteamVR != mSettings.VR.mEnableSteamVR) {
+  if (value.mEnableSteamVR != mSettings.mVR.mEnableSteamVR) {
     if (!value.mEnableSteamVR) {
       mOpenVRThread.request_stop();
     } else {
@@ -285,29 +285,29 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
     }
   }
 
-  if (value.mOpenXRMode != mSettings.VR.mOpenXRMode) {
+  if (value.mOpenXRMode != mSettings.mVR.mOpenXRMode) {
     [=]() -> winrt::fire_and_forget {
       co_await SetOpenXRModeWithHelperProcess(
-        value.mOpenXRMode, {mSettings.VR.mOpenXRMode});
+        value.mOpenXRMode, {mSettings.mVR.mOpenXRMode});
     }();
   }
 
-  if (value.mEnableGazeInputFocus != mSettings.VR.mEnableGazeInputFocus) {
+  if (value.mEnableGazeInputFocus != mSettings.mVR.mEnableGazeInputFocus) {
     mInputViewIndex = mFirstViewIndex;
     this->evViewOrderChangedEvent.Emit();
   }
 
-  mSettings.VR = value;
+  mSettings.mVR = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
 }
 
 AppSettings KneeboardState::GetAppSettings() const {
-  return mSettings.App;
+  return mSettings.mApp;
 }
 
 void KneeboardState::SetAppSettings(const AppSettings& value) {
-  mSettings.App = value;
+  mSettings.mApp = value;
   this->SaveSettings();
   if (!value.mDualKneeboards.mEnabled) {
     this->SetFirstViewIndex(0);
@@ -328,16 +328,16 @@ std::optional<RunningGame> KneeboardState::GetCurrentGame() const {
 
 void KneeboardState::SaveSettings() {
   if (mGamesList) {
-    mSettings.Games = mGamesList->GetSettings();
+    mSettings.mGames = mGamesList->GetSettings();
   }
   if (mTabsList) {
-    mSettings.Tabs = mTabsList->GetSettings();
+    mSettings.mTabs = mTabsList->GetSettings();
   }
   if (mTabletInput) {
-    mSettings.TabletInput = mTabletInput->GetSettings();
+    mSettings.mTabletInput = mTabletInput->GetSettings();
   }
   if (mDirectInput) {
-    mSettings.DirectInput = mDirectInput->GetSettings();
+    mSettings.mDirectInput = mDirectInput->GetSettings();
   }
 
   mSettings.Save();
@@ -345,11 +345,11 @@ void KneeboardState::SaveSettings() {
 }
 
 DoodleSettings KneeboardState::GetDoodleSettings() {
-  return mSettings.Doodle;
+  return mSettings.mDoodle;
 }
 
 void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
-  mSettings.Doodle = value;
+  mSettings.mDoodle = value;
   this->SaveSettings();
 }
 
