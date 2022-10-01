@@ -19,26 +19,13 @@
  */
 #pragma once
 
+#include <OpenKneeboard/TabletSettings.h>
+
 #include <nlohmann/json.hpp>
 
 #include "UserInputDevice.h"
 
 namespace OpenKneeboard {
-
-enum class TabletOrientation {
-  Normal,
-  RotateCW90,
-  RotateCW180,
-  RotateCW270,
-};
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  TabletOrientation,
-  {
-    {TabletOrientation::Normal, "Normal"},
-    {TabletOrientation::RotateCW90, "RotateCW90"},
-    {TabletOrientation::RotateCW180, "RotateCW180"},
-    {TabletOrientation::RotateCW270, "RotateCCW270"},
-  })
 
 class TabletInputDevice final : public UserInputDevice {
  public:

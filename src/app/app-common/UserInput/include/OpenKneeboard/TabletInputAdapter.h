@@ -20,10 +20,10 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/TabletSettings.h>
 #include <Windows.h>
 
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <tuple>
 #include <vector>
 
@@ -39,10 +39,10 @@ class TabletInputDevice;
 class TabletInputAdapter final : private EventReceiver {
  public:
   TabletInputAdapter() = delete;
-  TabletInputAdapter(HWND, KneeboardState*, const nlohmann::json& settings);
+  TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
   ~TabletInputAdapter();
 
-  nlohmann::json GetSettings() const;
+  TabletSettings GetSettings() const;
   Event<> evSettingsChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
@@ -52,7 +52,7 @@ class TabletInputAdapter final : private EventReceiver {
  private:
   HWND mWindow;
   KneeboardState* mKneeboard;
-  const nlohmann::json mInitialSettings;
+  const TabletSettings mInitialSettings;
   std::unique_ptr<WintabTablet> mTablet;
   std::shared_ptr<TabletInputDevice> mDevice;
   WNDPROC mPreviousWndProc;

@@ -38,53 +38,13 @@
 
 namespace OpenKneeboard {
 
-namespace {
-
-TabletInputAdapter* gInstance = nullptr;
-
-struct JSONButtonBinding {
-  std::unordered_set<uint64_t> Buttons;
-  UserAction Action;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONButtonBinding, Buttons, Action);
-struct JSONDevice {
-  std::string ID;
-  std::string Name;
-  std::vector<JSONButtonBinding> ExpressKeyBindings;
-  TabletOrientation Orientation {TabletOrientation::RotateCW90};
-};
-
-void to_json(nlohmann::json& j, const JSONDevice& device) {
-  j = {
-    {"ID", device.ID},
-    {"Name", device.Name},
-    {"ExpressKeyBindings", device.ExpressKeyBindings},
-    {"Orientation", device.Orientation},
-  };
-}
-
-void from_json(const nlohmann::json& j, JSONDevice& device) {
-  device.ID = j.at("ID");
-  device.Name = j.at("Name");
-  device.ExpressKeyBindings = j.at("ExpressKeyBindings");
-
-  if (j.contains("Orientation")) {
-    device.Orientation = j.at("Orientation");
-  }
-}
-
-struct JSONSettings {
-  std::unordered_map<std::string, JSONDevice> Devices;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices);
-
-}// namespace
+static TabletInputAdapter* gInstance = nullptr;
 
 TabletInputAdapter::TabletInputAdapter(
   HWND window,
   KneeboardState* kneeboard,
-  const nlohmann::json& jsonSettings)
-  : mWindow(window), mKneeboard(kneeboard), mInitialSettings(jsonSettings) {
+  const TabletSettings& settings)
+  : mWindow(window), mKneeboard(kneeboard), mInitialSettings(settings) {
   if (gInstance != nullptr) {
     throw std::logic_error("There can only be one TabletInputAdapter");
   }
@@ -108,20 +68,15 @@ TabletInputAdapter::TabletInputAdapter(
     mTablet->GetDeviceID(),
     TabletOrientation::RotateCW90);
 
-  JSONSettings settings;
-  if (!jsonSettings.is_null()) {
-    jsonSettings.get_to(settings);
-  }
-
-  if (settings.Devices.contains(mTablet->GetDeviceID())) {
-    auto& jsonDevice = settings.Devices.at(mTablet->GetDeviceID());
-    mDevice->SetOrientation(jsonDevice.Orientation);
+  if (settings.mDevices.contains(mTablet->GetDeviceID())) {
+    auto& jsonDevice = settings.mDevices.at(mTablet->GetDeviceID());
+    mDevice->SetOrientation(jsonDevice.mOrientation);
     std::vector<UserInputButtonBinding> bindings;
-    for (const auto& binding: jsonDevice.ExpressKeyBindings) {
+    for (const auto& binding: jsonDevice.mExpressKeyBindings) {
       bindings.push_back({
         mDevice,
-        binding.Buttons,
-        binding.Action,
+        binding.mButtons,
+        binding.mAction,
       });
     }
     mDevice->SetButtonBindings(bindings);
@@ -267,34 +222,28 @@ void TabletInputAdapter::ProcessTabletMessage(
   }
 }
 
-nlohmann::json TabletInputAdapter::GetSettings() const {
+TabletSettings TabletInputAdapter::GetSettings() const {
   if (!mDevice) {
     return mInitialSettings;
   }
 
-  JSONSettings settings;
-  if (!mInitialSettings.is_null()) {
-    mInitialSettings.get_to(settings);
-  }
+  auto settings = mInitialSettings;
 
   const auto id = mDevice->GetID();
-  if (settings.Devices.contains(id)) {
-    settings.Devices.erase(id);
-  }
+  auto& device = settings.mDevices[id];
+  device = {
+    .mID = id,
+    .mName = mDevice->GetName(),
+    .mExpressKeyBindings = {},
+    .mOrientation = mDevice->GetOrientation(),
+  };
 
-  std::vector<JSONButtonBinding> expressKeyBindings;
   for (const auto& binding: mDevice->GetButtonBindings()) {
-    expressKeyBindings.push_back({
-      .Buttons = binding.GetButtonIDs(),
-      .Action = binding.GetAction(),
+    device.mExpressKeyBindings.push_back({
+      .mButtons = binding.GetButtonIDs(),
+      .mAction = binding.GetAction(),
     });
   }
-  settings.Devices[id] = {
-    .ID = id,
-    .Name = mDevice->GetName(),
-    .ExpressKeyBindings = expressKeyBindings,
-    .Orientation = mDevice->GetOrientation(),
-  };
 
   return settings;
 }

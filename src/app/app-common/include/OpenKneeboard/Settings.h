@@ -23,6 +23,7 @@
 #include <OpenKneeboard/DirectInputSettings.h>
 #include <OpenKneeboard/DoodleSettings.h>
 #include <OpenKneeboard/FlatConfig.h>
+#include <OpenKneeboard/TabletSettings.h>
 #include <OpenKneeboard/VRConfig.h>
 
 #include <nlohmann/json.hpp>
@@ -30,13 +31,13 @@
 namespace OpenKneeboard {
 
 #define OPENKNEEBOARD_SETTINGS_SECTIONS \
-  IT(DirectInputSettings, DirectInput) \
-  IT(nlohmann::json, TabletInput) \
   IT(nlohmann::json, Games) \
   IT(nlohmann::json, Tabs) \
   IT(AppSettings, App) \
+  IT(DirectInputSettings, DirectInput) \
   IT(DoodleSettings, Doodle) \
   IT(FlatConfig, NonVR) \
+  IT(TabletSettings, TabletInput) \
   IT(VRConfig, VR)
 
 struct Settings final {
