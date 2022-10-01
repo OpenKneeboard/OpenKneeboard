@@ -5,8 +5,8 @@ set(
 
 ExternalProject_Add(
   qpdfBuild
-  URL "https://github.com/qpdf/qpdf/releases/download/v11.1.0/qpdf-11.1.0.tar.gz"
-  URL_HASH "SHA256=34a7cf3ac6e239510e9a20d7cbe10a4aff0f572c20e0a9bed0badb820a69e22d"
+  URL "https://github.com/qpdf/qpdf/releases/download/v11.1.1/qpdf-11.1.1.tar.gz"
+  URL_HASH "SHA256=25e8ec60e290cd134405a51920015b6d351d4e0b93b7b736d257f10725f74b5a"
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DREQUIRE_CRYPTO_NATIVE=ON"
