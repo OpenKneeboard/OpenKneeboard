@@ -340,8 +340,6 @@ void KneeboardState::SaveSettings() {
     mSettings.DirectInput = mDirectInput->GetSettings();
   }
 
-  mSettings.VR = mSettings.VR;
-
   mSettings.Save();
   evSettingsChangedEvent.Emit();
 }

@@ -25,7 +25,6 @@
 #include <OpenKneeboard/dprint.h>
 #include <shims/winrt/base.h>
 
-#include <nlohmann/json.hpp>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -39,35 +38,14 @@
 
 using namespace OpenKneeboard;
 
-namespace {
-
-struct JSONButtonBinding {
-  std::unordered_set<uint64_t> Buttons;
-  UserAction Action;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONButtonBinding, Buttons, Action);
-struct JSONDevice {
-  std::string ID;
-  std::string Name;
-  std::string Kind;
-  std::vector<JSONButtonBinding> ButtonBindings;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONDevice, ID, Name, Kind, ButtonBindings);
-struct JSONSettings {
-  std::unordered_map<std::string, JSONDevice> Devices;
-};
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(JSONSettings, Devices);
-
-}// namespace
-
 namespace OpenKneeboard {
 
 DirectInputAdapter* DirectInputAdapter::gInstance = nullptr;
 
 DirectInputAdapter::DirectInputAdapter(
   HWND hwnd,
-  const nlohmann::json& jsonSettings)
-  : mWindow(hwnd), mSettings(jsonSettings) {
+  const DirectInputSettings& settings)
+  : mWindow(hwnd), mSettings(settings) {
   if (gInstance) {
     throw std::logic_error("Only one DirectInputAdapter at a time");
   }
@@ -91,11 +69,6 @@ DirectInputAdapter::DirectInputAdapter(
 void DirectInputAdapter::Reload() {
   this->RemoveAllEventListeners();
 
-  JSONSettings settings;
-  if (!mSettings.is_null()) {
-    mSettings.get_to(settings);
-  }
-
   for (auto& [id, device]: mDevices) {
     device.mListener.Cancel();
   }
@@ -106,14 +79,14 @@ void DirectInputAdapter::Reload() {
     AddEventListener(device->evUserActionEvent, this->evUserActionEvent);
     AddEventListener(
       device->evBindingsChangedEvent, this->evSettingsChangedEvent);
-    if (settings.Devices.contains(device->GetID())) {
+    if (mSettings.mDevices.contains(device->GetID())) {
       std::vector<UserInputButtonBinding> bindings;
       for (const auto& binding:
-           settings.Devices.at(device->GetID()).ButtonBindings) {
+           mSettings.mDevices.at(device->GetID()).mButtonBindings) {
         bindings.push_back({
           device,
-          binding.Buttons,
-          binding.Action,
+          binding.mButtons,
+          binding.mAction,
         });
       }
       device->SetButtonBindings(bindings);
@@ -152,46 +125,35 @@ std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
   return devices;
 }
 
-nlohmann::json DirectInputAdapter::GetSettings() const {
-  JSONSettings settings;
-  if (!mSettings.is_null()) {
-    mSettings.get_to(settings);
-  }
-
+DirectInputSettings DirectInputAdapter::GetSettings() const {
   for (const auto& [deviceID, state]: mDevices) {
-    if (settings.Devices.contains(deviceID)) {
-      settings.Devices.erase(deviceID);
-    }
-
     const auto& device = state.mDevice;
-
-    if (device->GetButtonBindings().empty()) {
-      continue;
-    }
-
-    std::vector<JSONButtonBinding> buttonBindings;
-    for (const auto& binding: device->GetButtonBindings()) {
-      buttonBindings.push_back({
-        .Buttons = binding.GetButtonIDs(),
-        .Action = binding.GetAction(),
-      });
-    }
-
     const auto kind
       = (device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD
       ? "Keyboard"
       : "GameController";
 
-    settings.Devices[deviceID] = {
-      .ID = deviceID,
-      .Name = device->GetName(),
-      .Kind = kind,
-      .ButtonBindings = buttonBindings,
+    auto& deviceSettings = mSettings.mDevices[deviceID];
+    deviceSettings = {
+      .mID = deviceID,
+      .mName = device->GetName(),
+      .mKind = kind,
+      .mButtonBindings = {},
     };
+
+    if (device->GetButtonBindings().empty()) {
+      continue;
+    }
+
+    for (const auto& binding: device->GetButtonBindings()) {
+      deviceSettings.mButtonBindings.push_back({
+        .mButtons = binding.GetButtonIDs(),
+        .mAction = binding.GetAction(),
+      });
+    }
   }
 
-  mSettings = settings;
-  return settings;
+  return mSettings;
 }
 
 LRESULT CALLBACK DirectInputAdapter::WindowProc(

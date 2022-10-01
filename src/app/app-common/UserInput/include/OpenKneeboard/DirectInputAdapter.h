@@ -19,14 +19,15 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DirectInputSettings.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/UserAction.h>
+#include <OpenKneeboard/json_fwd.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
 
 #include <memory>
-#include <nlohmann/json.hpp>
-#include <unordered_map>
+#include <vector>
 
 struct IDirectInput8W;
 
@@ -39,10 +40,10 @@ class UserInputDevice;
 class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
  public:
   DirectInputAdapter() = delete;
-  DirectInputAdapter(HWND mainWindow, const nlohmann::json& settings);
+  DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
   ~DirectInputAdapter();
 
-  nlohmann::json GetSettings() const;
+  DirectInputSettings GetSettings() const;
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
   Event<UserAction> evUserActionEvent;
@@ -63,7 +64,7 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
   };
   std::unordered_map<std::string, DeviceState> mDevices;
 
-  mutable nlohmann::json mSettings;
+  mutable DirectInputSettings mSettings;
 
   static LRESULT CALLBACK WindowProc(
     _In_ HWND hwnd,

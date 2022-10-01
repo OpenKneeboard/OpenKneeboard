@@ -165,7 +165,8 @@ void from_json_postprocess(const nlohmann::json& j, T& v) {
     = detail::SparseJson::ConstStr##KeyTransform(wrapped);
 #define DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON_TRY_KEY(v1, KeyTransform) \
   if (nlohmann_json_j.contains(ok_json_field_key_##KeyTransform)) { \
-    nlohmann_json_v.v1 = nlohmann_json_j.at(ok_json_field_key_##KeyTransform); \
+    nlohmann_json_v.v1 = nlohmann_json_j.at(ok_json_field_key_##KeyTransform) \
+                           .get<decltype(nlohmann_json_v.v1)>(); \
   }
 #define DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON(v1) \
   { \

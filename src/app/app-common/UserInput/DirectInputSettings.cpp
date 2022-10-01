@@ -17,39 +17,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/DirectInputSettings.h>
-#include <OpenKneeboard/DoodleSettings.h>
-#include <OpenKneeboard/FlatConfig.h>
-#include <OpenKneeboard/VRConfig.h>
-
-#include <nlohmann/json.hpp>
+#include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
 
-#define OPENKNEEBOARD_SETTINGS_SECTIONS \
-  IT(DirectInputSettings, DirectInput) \
-  IT(nlohmann::json, TabletInput) \
-  IT(nlohmann::json, Games) \
-  IT(nlohmann::json, Tabs) \
-  IT(AppSettings, App) \
-  IT(DoodleSettings, Doodle) \
-  IT(FlatConfig, NonVR) \
-  IT(VRConfig, VR)
-
-struct Settings final {
-#define IT(cpptype, name) cpptype name;
-  OPENKNEEBOARD_SETTINGS_SECTIONS
-#undef IT
-
-  static Settings Load(std::string_view profile = {});
-  void Save(std::string_view profile = {});
-
-  constexpr auto operator<=>(const Settings&) const noexcept = default;
-};
-
-void from_json(const nlohmann::json&, Settings&);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  DirectInputSettings::ButtonBinding,
+  mButtons,
+  mAction);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  DirectInputSettings::Device,
+  mID,
+  mName,
+  mKind,
+  mButtonBindings);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(DirectInputSettings, mDevices);
 
 }// namespace OpenKneeboard
