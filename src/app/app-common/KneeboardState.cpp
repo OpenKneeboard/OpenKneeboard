@@ -345,11 +345,11 @@ void KneeboardState::SaveSettings() {
 }
 
 DoodleSettings KneeboardState::GetDoodleSettings() {
-  return mSettings.mDoodle;
+  return mSettings.mDoodles;
 }
 
 void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
-  mSettings.mDoodle = value;
+  mSettings.mDoodles = value;
   this->SaveSettings();
 }
 

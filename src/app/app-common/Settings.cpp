@@ -144,8 +144,13 @@ void Settings::Save(std::string_view profile) {
 
 template <>
 void from_json_postprocess<Settings>(const nlohmann::json& j, Settings& s) {
+  // Backwards-compatibility
+
   if (j.contains("DirectInputV2")) {
     s.mDirectInput = j.at("DirectInputV2");
+  }
+  if (j.contains("Doodle")) {
+    s.mDoodles = j.at("Doodle");
   }
 }
 
@@ -155,7 +160,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mTabs,
   mApp,
   mDirectInput,
-  mDoodle,
+  mDoodles,
   mNonVR,
   mTabletInput,
   mVR)

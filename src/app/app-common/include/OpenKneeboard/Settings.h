@@ -33,7 +33,7 @@ namespace OpenKneeboard {
   IT(nlohmann::json, Tabs) \
   IT(AppSettings, App) \
   IT(DirectInputSettings, DirectInput) \
-  IT(DoodleSettings, Doodle) \
+  IT(DoodleSettings, Doodles) \
   IT(FlatConfig, NonVR) \
   IT(TabletSettings, TabletInput) \
   IT(VRConfig, VR)
