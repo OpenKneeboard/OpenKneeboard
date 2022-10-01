@@ -60,7 +60,7 @@ PlainTextPageSource::PlainTextPageSource(
 PlainTextPageSource::~PlainTextPageSource() {
 }
 
-uint16_t PlainTextPageSource::GetPageCount() const {
+PageIndex PlainTextPageSource::GetPageCount() const {
   if (mCompletePages.empty() && mCurrentPageLines.empty()) {
     return 0;
   }
@@ -69,13 +69,13 @@ uint16_t PlainTextPageSource::GetPageCount() const {
   return mCompletePages.size() + 1;
 }
 
-D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(uint16_t pageIndex) {
+D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(PageIndex pageIndex) {
   return {768 * RENDER_SCALE, 1024 * RENDER_SCALE};
 }
 
 void PlainTextPageSource::RenderPage(
   ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   const D2D1_RECT_F& rect) {
   std::unique_lock lock(mMutex);
 
@@ -163,7 +163,7 @@ void PlainTextPageSource::RenderPage(
     auto text = winrt::to_hstring(std::format(
       _("Page {} of {}"),
       pageIndex + 1,
-      std::max<uint16_t>(pageIndex + 1, GetPageCount())));
+      std::max<PageIndex>(pageIndex + 1, GetPageCount())));
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
     ctx->DrawTextW(

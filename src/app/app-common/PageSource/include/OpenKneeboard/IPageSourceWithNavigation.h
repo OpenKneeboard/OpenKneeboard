@@ -26,7 +26,7 @@ namespace OpenKneeboard {
 
 struct NavigationEntry {
   utf8_string mName;
-  uint16_t mPageIndex;
+  PageIndex mPageIndex;
 };
 
 class IPageSourceWithNavigation : public virtual IPageSource {

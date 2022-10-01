@@ -30,7 +30,7 @@ struct CursorEvent;
 class IPageSourceWithCursorEvents : public virtual IPageSource {
  public:
   virtual void
-  PostCursorEvent(EventContext, const CursorEvent&, uint16_t pageIndex)
+  PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex)
     = 0;
 };
 

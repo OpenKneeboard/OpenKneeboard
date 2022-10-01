@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <OpenKneeboard/inttypes.h>
 #include <d2d1.h>
 
 #include <cinttypes>
@@ -33,7 +34,7 @@ namespace OpenKneeboard::PDFNavigation {
 
 struct Bookmark final {
   std::string mName;
-  uint16_t mPageIndex;
+  PageIndex mPageIndex;
 };
 
 enum class DestinationType {
@@ -43,7 +44,7 @@ enum class DestinationType {
 
 struct Destination final {
   DestinationType mType;
-  uint16_t mPageIndex = 0;
+  PageIndex mPageIndex = 0;
   std::string mURI;
   auto operator<=>(const Destination&) const = default;
 };

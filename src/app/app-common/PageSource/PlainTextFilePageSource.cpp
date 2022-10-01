@@ -147,9 +147,9 @@ std::string PlainTextFilePageSource::GetFileContent() const {
   return buffer;
 }
 
-uint16_t PlainTextFilePageSource::GetPageCount() const {
+PageIndex PlainTextFilePageSource::GetPageCount() const {
   // Show placeholder "[empty file]" instead of 'no pages' error
-  return std::max<uint16_t>(1, mPageSource->GetPageCount());
+  return std::max<PageIndex>(1, mPageSource->GetPageCount());
 }
 
 }// namespace OpenKneeboard

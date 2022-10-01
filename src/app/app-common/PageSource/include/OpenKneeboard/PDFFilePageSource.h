@@ -50,8 +50,8 @@ class PDFFilePageSource final
 
   virtual void Reload();
 
-  virtual uint16_t GetPageCount() const final override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) final override;
+  virtual PageIndex GetPageCount() const final override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) final override;
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
@@ -62,11 +62,11 @@ class PDFFilePageSource final
   virtual void PostCursorEvent(
     EventContext ctx,
     const CursorEvent&,
-    uint16_t pageIndex) override;
+    PageIndex pageIndex) override;
 
   virtual void RenderPage(
     ID2D1DeviceContext*,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_RECT_F& rect) override;
 
  private:
@@ -79,11 +79,11 @@ class PDFFilePageSource final
 
   void RenderPageContent(
     ID2D1DeviceContext*,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_RECT_F& rect);
   void RenderOverDoodles(
     ID2D1DeviceContext*,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_RECT_F&);
 };
 

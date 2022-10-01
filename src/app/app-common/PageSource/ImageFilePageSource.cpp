@@ -76,11 +76,11 @@ bool ImageFilePageSource::CanOpenFile(
   return static_cast<bool>(decoder);
 }
 
-uint16_t ImageFilePageSource::GetPageCount() const {
-  return static_cast<uint16_t>(mPages.size());
+PageIndex ImageFilePageSource::GetPageCount() const {
+  return static_cast<PageIndex>(mPages.size());
 }
 
-static bool IsValidPageIndex(uint16_t index, uint16_t count) {
+static bool IsValidPageIndex(PageIndex index, PageIndex count) {
   if (index < count) {
     return true;
   }
@@ -92,7 +92,7 @@ static bool IsValidPageIndex(uint16_t index, uint16_t count) {
   return false;
 }
 
-D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(uint16_t index) {
+D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(PageIndex index) {
   if (!IsValidPageIndex(index, GetPageCount())) {
     return {};
   }
@@ -107,7 +107,7 @@ D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(uint16_t index) {
 
 void ImageFilePageSource::RenderPage(
   ID2D1DeviceContext* ctx,
-  uint16_t index,
+  PageIndex index,
   const D2D1_RECT_F& rect) {
   if (!IsValidPageIndex(index, GetPageCount())) {
     return;
@@ -138,7 +138,8 @@ void ImageFilePageSource::RenderPage(
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
-winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(uint16_t index) {
+winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(
+  PageIndex index) {
   std::unique_lock lock(mMutex);
   if (index >= mPages.size()) [[unlikely]] {
     return {};
@@ -235,7 +236,7 @@ bool ImageFilePageSource::IsNavigationAvailable() const {
 
 std::vector<NavigationEntry> ImageFilePageSource::GetNavigationEntries() const {
   std::vector<NavigationEntry> entries;
-  for (uint16_t i = 0; i < mPages.size(); ++i) {
+  for (PageIndex i = 0; i < mPages.size(); ++i) {
     const auto& page = mPages.at(i);
     entries.push_back({
       page.mPath.stem(),

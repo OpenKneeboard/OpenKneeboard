@@ -146,7 +146,7 @@ std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
   std::vector<NavigationEntry> entries;
 
   const auto textCount = mTextPages->GetPageCount();
-  for (uint16_t i = 0; i < textCount; ++i) {
+  for (PageIndex i = 0; i < textCount; ++i) {
     entries.push_back({
       std::format(_("Transcription {}/{}"), i + 1, textCount),
       i,
@@ -155,9 +155,9 @@ std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
 
   const auto paths = mImagePages->GetPaths();
 
-  for (uint16_t i = 0; i < paths.size(); ++i) {
+  for (PageIndex i = 0; i < paths.size(); ++i) {
     entries.push_back(
-      {paths.at(i).stem(), static_cast<uint16_t>(i + textCount)});
+      {paths.at(i).stem(), static_cast<PageIndex>(i + textCount)});
   }
 
   return entries;

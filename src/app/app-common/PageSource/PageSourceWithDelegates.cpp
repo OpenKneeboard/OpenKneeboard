@@ -79,8 +79,8 @@ void PageSourceWithDelegates::SetDelegates(
           this->evAvailableFeaturesChangedEvent),
         AddEventListener(
           delegate->evPageChangeRequestedEvent,
-          [=](auto ctx, uint16_t requestedPage) {
-            uint16_t offset = 0;
+          [=](auto ctx, PageIndex requestedPage) {
+            PageIndex offset = 0;
             auto strongDelegate = weakDelegate.lock();
             for (const auto& it: mDelegates) {
               if (it != strongDelegate) {
@@ -100,7 +100,7 @@ void PageSourceWithDelegates::SetDelegates(
   this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
-uint16_t PageSourceWithDelegates::GetPageCount() const {
+PageIndex PageSourceWithDelegates::GetPageCount() const {
   return std::accumulate(
     mDelegates.begin(),
     mDelegates.end(),
@@ -110,14 +110,14 @@ uint16_t PageSourceWithDelegates::GetPageCount() const {
     });
 };
 
-D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(uint16_t pageIndex) {
+D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(PageIndex pageIndex) {
   auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
   return delegate->GetNativeContentSize(decodedIndex);
 }
 
 void PageSourceWithDelegates::RenderPage(
   ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   const D2D1_RECT_F& rect) {
   auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
 
@@ -153,7 +153,7 @@ void PageSourceWithDelegates::RenderPage(
 void PageSourceWithDelegates::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& event,
-  uint16_t pageIndex) {
+  PageIndex pageIndex) {
   auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
@@ -172,7 +172,7 @@ bool PageSourceWithDelegates::IsNavigationAvailable() const {
 std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
   const {
   std::vector<NavigationEntry> entries;
-  uint16_t pageOffset = 0;
+  PageIndex pageOffset = 0;
   for (const auto& delegate: mDelegates) {
     const scope_guard updateScopeOffset(
       [&]() { pageOffset += delegate->GetPageCount(); });
@@ -185,15 +185,15 @@ std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
     const auto delegateEntries = withNavigation->GetNavigationEntries();
     for (const auto& entry: delegateEntries) {
       entries.push_back(
-        {entry.mName, static_cast<uint16_t>(entry.mPageIndex + pageOffset)});
+        {entry.mName, static_cast<PageIndex>(entry.mPageIndex + pageOffset)});
     }
   }
   return entries;
 }
 
-std::tuple<std::shared_ptr<IPageSource>, uint16_t>
-PageSourceWithDelegates::DecodePageIndex(uint16_t pageIndex) const {
-  uint16_t offset = 0;
+std::tuple<std::shared_ptr<IPageSource>, PageIndex>
+PageSourceWithDelegates::DecodePageIndex(PageIndex pageIndex) const {
+  PageIndex offset = 0;
   for (auto& delegate: mDelegates) {
     if (pageIndex - offset < delegate->GetPageCount()) {
       return {delegate, pageIndex - offset};

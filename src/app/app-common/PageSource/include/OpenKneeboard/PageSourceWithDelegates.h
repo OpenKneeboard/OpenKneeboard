@@ -44,17 +44,17 @@ class PageSourceWithDelegates : public virtual IPageSource,
   PageSourceWithDelegates(const DXResources&, KneeboardState*);
   virtual ~PageSourceWithDelegates();
 
-  virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
+  virtual PageIndex GetPageCount() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
   virtual void RenderPage(
     ID2D1DeviceContext*,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_RECT_F& rect) override;
 
   virtual void PostCursorEvent(
     EventContext,
     const CursorEvent&,
-    uint16_t pageIndex) override;
+    PageIndex pageIndex) override;
 
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
@@ -67,8 +67,8 @@ class PageSourceWithDelegates : public virtual IPageSource,
   std::vector<EventHandlerToken> mDelegateEvents;
   std::vector<EventHandlerToken> mFixedEvents;
 
-  std::tuple<std::shared_ptr<IPageSource>, uint16_t> DecodePageIndex(
-    uint16_t) const;
+  std::tuple<std::shared_ptr<IPageSource>, PageIndex> DecodePageIndex(
+    PageIndex) const;
 
   std::unique_ptr<CachedLayer> mContentLayerCache;
   std::unique_ptr<DoodleRenderer> mDoodles;

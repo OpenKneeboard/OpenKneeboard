@@ -36,13 +36,13 @@ class TabView final : public ITabView, private EventReceiver {
 
   virtual std::shared_ptr<ITab> GetRootTab() const override;
 
-  virtual void SetPageIndex(uint16_t) override;
+  virtual void SetPageIndex(PageIndex) override;
   virtual void NextPage() override;
   virtual void PreviousPage() override;
 
   virtual std::shared_ptr<ITab> GetTab() const override;
-  virtual uint16_t GetPageCount() const override;
-  virtual uint16_t GetPageIndex() const override;
+  virtual PageIndex GetPageCount() const override;
+  virtual PageIndex GetPageIndex() const override;
 
   virtual D2D1_SIZE_U GetNativeContentSize() const override;
 
@@ -59,11 +59,11 @@ class TabView final : public ITabView, private EventReceiver {
   KneeboardState* mKneeboard;
 
   std::shared_ptr<ITab> mRootTab;
-  uint16_t mRootTabPage;
+  PageIndex mRootTabPage;
 
   // For now, just navigation views, maybe more later
   std::shared_ptr<ITab> mActiveSubTab;
-  uint16_t mActiveSubTabPage;
+  PageIndex mActiveSubTabPage;
 
   TabMode mTabMode = TabMode::NORMAL;
 

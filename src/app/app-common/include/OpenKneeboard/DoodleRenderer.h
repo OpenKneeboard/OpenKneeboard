@@ -22,6 +22,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/inttypes.h>
 
 namespace OpenKneeboard {
 
@@ -34,16 +35,16 @@ class DoodleRenderer final {
 
   void Render(
     ID2D1DeviceContext*,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_RECT_F& targetRect);
   void PostCursorEvent(
     EventContext,
     const CursorEvent&,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_SIZE_U& nativePageSize);
 
   void Clear();
-  void ClearPage(uint16_t pageIndex);
+  void ClearPage(PageIndex pageIndex);
 
   Event<> evNeedsRepaintEvent;
 
@@ -67,7 +68,7 @@ class DoodleRenderer final {
   std::mutex mBufferedEventsMutex;
   std::vector<Drawing> mDrawings;
 
-  ID2D1Bitmap* GetDrawingSurface(uint16_t index);
+  ID2D1Bitmap* GetDrawingSurface(PageIndex index);
 
   void FlushCursorEvents();
 };

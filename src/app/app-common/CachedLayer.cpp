@@ -32,7 +32,7 @@ CachedLayer::~CachedLayer() {
 void CachedLayer::Render(
   const D2D1_RECT_F& where,
   const D2D1_SIZE_U& nativeSize,
-  uint16_t cacheKey,
+  Key cacheKey,
   ID2D1DeviceContext* ctx,
   std::function<void(ID2D1DeviceContext*, const D2D1_SIZE_U&)> impl) {
   std::scoped_lock lock(mCacheMutex);
@@ -79,7 +79,7 @@ void CachedLayer::Render(
 void CachedLayer::Reset() {
   std::scoped_lock lock(mCacheMutex);
 
-  mKey = ~0ui16;
+  mKey = ~Key {0};
   mCache = nullptr;
 }
 

@@ -44,7 +44,7 @@ void DoodleRenderer::Clear() {
   mDrawings.clear();
 }
 
-void DoodleRenderer::ClearPage(uint16_t pageIndex) {
+void DoodleRenderer::ClearPage(PageIndex pageIndex) {
   if (pageIndex >= mDrawings.size()) {
     return;
   }
@@ -55,7 +55,7 @@ void DoodleRenderer::ClearPage(uint16_t pageIndex) {
 void DoodleRenderer::PostCursorEvent(
   EventContext,
   const CursorEvent& event,
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   const D2D1_SIZE_U& nativePageSize) {
   if (nativePageSize.width == 0 || nativePageSize.height == 0) {
     OPENKNEEBOARD_BREAK;
@@ -133,7 +133,7 @@ void DoodleRenderer::FlushCursorEvents() {
   }
 }
 
-ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(uint16_t index) {
+ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageIndex index) {
   if (index >= mDrawings.size()) {
     // Should have been initialized by cursor events
     OPENKNEEBOARD_BREAK;
@@ -183,7 +183,7 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(uint16_t index) {
 
 void DoodleRenderer::Render(
   ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   const D2D1_RECT_F& rect) {
   FlushCursorEvents();
 

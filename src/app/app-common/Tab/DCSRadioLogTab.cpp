@@ -85,7 +85,7 @@ utf8_string DCSRadioLogTab::GetTitle() const {
   return _("Radio Log");
 }
 
-uint16_t DCSRadioLogTab::GetPageCount() const {
+PageIndex DCSRadioLogTab::GetPageCount() const {
   const auto count = mPageSource->GetPageCount();
   // We display a placeholder message
   return count == 0 ? 1 : count;

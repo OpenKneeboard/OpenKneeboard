@@ -51,17 +51,17 @@ class NavigationTab final : public TabBase,
   virtual utf8_string GetTitle() const override;
   virtual void Reload() override;
 
-  virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
+  virtual PageIndex GetPageCount() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
   virtual void RenderPage(
     ID2D1DeviceContext*,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_RECT_F& rect) override;
 
   virtual void PostCursorEvent(
     EventContext,
     const CursorEvent&,
-    uint16_t pageIndex) override;
+    PageIndex pageIndex) override;
 
  private:
   DXResources mDXR;
@@ -73,7 +73,7 @@ class NavigationTab final : public TabBase,
 
   struct Button final {
     winrt::hstring mName;
-    uint16_t mPageIndex;
+    PageIndex mPageIndex;
     D2D1_RECT_F mRect;
     uint16_t mRenderColumn;
 
@@ -90,7 +90,7 @@ class NavigationTab final : public TabBase,
   winrt::com_ptr<ID2D1SolidColorBrush> mPreviewOutlineBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 
-  uint16_t mPreviewMetricsPage = ~0ui16;
+  PageIndex mPreviewMetricsPage = ~PageIndex {0};
   struct {
     float mBleed;
     float mStroke;
@@ -99,7 +99,7 @@ class NavigationTab final : public TabBase,
   } mPreviewMetrics;
 
   void RenderPreviewLayer(
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     ID2D1DeviceContext* ctx,
     const D2D1_SIZE_U& size);
 

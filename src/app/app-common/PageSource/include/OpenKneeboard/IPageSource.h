@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/inttypes.h>
 #include <d2d1_1.h>
 
 #include <cstdint>
@@ -38,16 +39,16 @@ class IPageSource {
  public:
   virtual ~IPageSource();
 
-  virtual uint16_t GetPageCount() const = 0;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) = 0;
+  virtual PageIndex GetPageCount() const = 0;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) = 0;
   virtual void
-  RenderPage(ID2D1DeviceContext*, uint16_t pageIndex, const D2D1_RECT_F& rect)
+  RenderPage(ID2D1DeviceContext*, PageIndex pageIndex, const D2D1_RECT_F& rect)
     = 0;
 
   Event<> evNeedsRepaintEvent;
   Event<> evPageAppendedEvent;
   Event<ContentChangeType> evContentChangedEvent;
-  Event<EventContext, uint16_t> evPageChangeRequestedEvent;
+  Event<EventContext, PageIndex> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
 };
 

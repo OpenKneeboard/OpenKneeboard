@@ -31,19 +31,20 @@ struct DXResources;
 
 class CachedLayer final {
  public:
+  using Key = size_t;
   CachedLayer(const DXResources&);
   ~CachedLayer();
 
   void Render(
     const D2D1_RECT_F& where,
     const D2D1_SIZE_U& nativeSize,
-    uint16_t cacheKey,
+    Key cacheKey,
     ID2D1DeviceContext* ctx,
     std::function<void(ID2D1DeviceContext*, const D2D1_SIZE_U&)> impl);
   void Reset();
 
  private:
-  uint16_t mKey = ~0ui16;
+  Key mKey = ~Key {0};
 
   D2D1_SIZE_U mCacheSize;
   winrt::com_ptr<ID2D1Bitmap1> mCache;

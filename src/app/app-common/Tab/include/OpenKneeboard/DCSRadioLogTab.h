@@ -51,7 +51,7 @@ class DCSRadioLogTab final : public TabBase,
   virtual ~DCSRadioLogTab();
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;
-  virtual uint16_t GetPageCount() const override;
+  virtual PageIndex GetPageCount() const override;
   virtual void Reload() override;
 
   virtual nlohmann::json GetSettings() const override;

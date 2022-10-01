@@ -158,25 +158,25 @@ utf8_string NavigationTab::GetGlyph() const {
   return mRootTab->GetGlyph();
 }
 
-uint16_t NavigationTab::GetPageCount() const {
-  return static_cast<uint16_t>(mButtonTrackers.size());
+PageIndex NavigationTab::GetPageCount() const {
+  return static_cast<PageIndex>(mButtonTrackers.size());
 }
 
-D2D1_SIZE_U NavigationTab::GetNativeContentSize(uint16_t) {
+D2D1_SIZE_U NavigationTab::GetNativeContentSize(PageIndex) {
   return mPreferredSize;
 }
 
 void NavigationTab::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
-  uint16_t pageIndex) {
+  PageIndex pageIndex) {
   scope_guard repaintOnExit([&]() { evNeedsRepaintEvent.Emit(); });
   mButtonTrackers.at(pageIndex)->PostCursorEvent(ctx, ev);
 }
 
 void NavigationTab::RenderPage(
   ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   const D2D1_RECT_F& canvasRect) {
   const auto scale
     = (canvasRect.bottom - canvasRect.top) / mPreferredSize.height;
@@ -262,7 +262,7 @@ void NavigationTab::RenderPage(
 }
 
 void NavigationTab::RenderPreviewLayer(
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   ID2D1DeviceContext* ctx,
   const D2D1_SIZE_U& size) {
   mPreviewMetricsPage = pageIndex;

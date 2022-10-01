@@ -24,5 +24,6 @@
 namespace OpenKneeboard {
 
 using TabIndex = uint32_t;
+using PageIndex = uint32_t;
 
 }// namespace OpenKneeboard

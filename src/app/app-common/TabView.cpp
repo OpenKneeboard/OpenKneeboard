@@ -39,7 +39,7 @@ TabView::TabView(
     tab->evContentChangedEvent, &TabView::OnTabContentChanged, this);
   AddEventListener(tab->evPageAppendedEvent, &TabView::OnTabPageAppended, this);
   AddEventListener(
-    tab->evPageChangeRequestedEvent, [this](EventContext ctx, uint16_t index) {
+    tab->evPageChangeRequestedEvent, [this](EventContext ctx, PageIndex index) {
       if (ctx != mEventContext) {
         return;
       }
@@ -62,7 +62,7 @@ std::shared_ptr<ITab> TabView::GetTab() const {
   return mActiveSubTab ? mActiveSubTab : mRootTab;
 }
 
-uint16_t TabView::GetPageIndex() const {
+PageIndex TabView::GetPageIndex() const {
   return mActiveSubTab ? mActiveSubTabPage : mRootTabPage;
 }
 
@@ -74,11 +74,11 @@ void TabView::PostCursorEvent(const CursorEvent& ev) {
   }
 }
 
-uint16_t TabView::GetPageCount() const {
+PageIndex TabView::GetPageCount() const {
   return this->GetTab()->GetPageCount();
 }
 
-void TabView::SetPageIndex(uint16_t page) {
+void TabView::SetPageIndex(PageIndex page) {
   if (page >= this->GetPageCount()) {
     return;
   }
@@ -137,7 +137,7 @@ void TabView::OnTabContentChanged(ContentChangeType changeType) {
   } else {
     const auto pageCount = mRootTab->GetPageCount();
     if (mRootTabPage >= pageCount) {
-      mRootTabPage = std::max<uint16_t>(pageCount - 1, 0);
+      mRootTabPage = std::max<PageIndex>(pageCount - 1, 0);
       evPageChangedEvent.Emit();
     }
   }
@@ -207,7 +207,7 @@ bool TabView::SetTabMode(TabMode mode) {
         mRootTab->GetNativeContentSize(mRootTabPage));
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
-        [this](EventContext ctx, uint16_t newPage) {
+        [this](EventContext ctx, PageIndex newPage) {
           if (ctx != mEventContext) {
             return;
           }

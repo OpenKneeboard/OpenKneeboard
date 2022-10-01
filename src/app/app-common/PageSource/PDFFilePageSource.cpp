@@ -190,14 +190,14 @@ void PDFFilePageSource::Reload() {
   this->ReloadNavigation();
 }
 
-uint16_t PDFFilePageSource::GetPageCount() const {
+PageIndex PDFFilePageSource::GetPageCount() const {
   if (p->mPDFDocument) {
     return p->mPDFDocument.PageCount();
   }
   return 0;
 }
 
-D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(uint16_t index) {
+D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageIndex index) {
   if (index >= GetPageCount()) {
     return {};
   }
@@ -208,7 +208,7 @@ D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(uint16_t index) {
 
 void PDFFilePageSource::RenderPageContent(
   ID2D1DeviceContext* ctx,
-  uint16_t index,
+  PageIndex index,
   const D2D1_RECT_F& rect) {
   if (index >= GetPageCount()) {
     return;
@@ -238,7 +238,7 @@ void PDFFilePageSource::RenderPageContent(
 void PDFFilePageSource::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
-  uint16_t pageIndex) {
+  PageIndex pageIndex) {
   const auto contentRect = this->GetNativeContentSize(pageIndex);
 
   if (pageIndex >= p->mLinks.size()) {
@@ -268,7 +268,7 @@ void PDFFilePageSource::PostCursorEvent(
 
 void PDFFilePageSource::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   const D2D1_RECT_F& contentRect) {
   if (pageIndex >= p->mLinks.size()) {
     return;
@@ -316,7 +316,7 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
 
 void PDFFilePageSource::RenderPage(
   ID2D1DeviceContext* ctx,
-  uint16_t pageIndex,
+  PageIndex pageIndex,
   const D2D1_RECT_F& rect) {
   const auto size = this->GetNativeContentSize(pageIndex);
   p->mContentLayer->Render(

@@ -46,11 +46,11 @@ class PlainTextPageSource final : public IPageSource {
   void PushFullWidthSeparator();
   void EnsureNewPage();
 
-  virtual uint16_t GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(uint16_t pageIndex) override;
+  virtual PageIndex GetPageCount() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
   virtual void RenderPage(
     ID2D1DeviceContext*,
-    uint16_t pageIndex,
+    PageIndex pageIndex,
     const D2D1_RECT_F& rect) override;
 
  private:

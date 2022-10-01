@@ -47,7 +47,7 @@ class PlainTextFilePageSource final
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
 
-  uint16_t GetPageCount() const override;
+  PageIndex GetPageCount() const override;
 
   void Reload();
 
