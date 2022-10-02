@@ -160,6 +160,9 @@ MainWindow::MainWindow() {
     gKneeboard->evProfileSettingsChangedEvent,
     &MainWindow::UpdateProfileSwitcherVisibility,
     this);
+  AddEventListener(gKneeboard->evCurrentProfileChangedEvent, [this]() {
+    Frame().BackStack().Clear();
+  });
 }
 
 MainWindow::~MainWindow() {
