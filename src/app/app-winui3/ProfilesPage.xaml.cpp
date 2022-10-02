@@ -49,20 +49,7 @@ ProfilesPage::ProfilesPage() {
   InitializeComponent();
 
   const auto profileSettings = gKneeboard->GetProfileSettings();
-  std::vector<ProfileSettings::Profile> profiles;
-  for (const auto& [id, profile]: profileSettings.mProfiles) {
-    profiles.push_back(profile);
-  }
-  std::ranges::sort(profiles, [](const auto& a, const auto& b) {
-    if (a.mID == "default") {
-      return true;
-    }
-    if (b.mID == "default") {
-      return false;
-    }
-    return a.mName < b.mName;
-  });
-
+  const auto profiles = profileSettings.GetSortedProfiles();
   auto uiProfiles = winrt::single_threaded_observable_vector<IInspectable>();
 
   for (const auto& profile: profiles) {

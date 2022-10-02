@@ -40,6 +40,8 @@ struct ProfileSettings final {
   std::unordered_map<std::string, Profile> mProfiles;
   bool mEnabled {false};
 
+  std::vector<Profile> GetSortedProfiles() const;
+
   static ProfileSettings Load();
   void Save();
 

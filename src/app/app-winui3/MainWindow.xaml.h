@@ -55,7 +55,7 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
   winrt::handle mHwndFile;
   std::shared_ptr<IKneeboardView> mKneeboardView;
 
-  NavigationViewItem mProfileSwitcher;
+  FrameworkElement mProfileSwitcher {nullptr};
 
   EventHandlerToken mTabChangedEvent;
   DispatcherQueueController mDQC {nullptr};

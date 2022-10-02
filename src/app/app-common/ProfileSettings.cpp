@@ -22,9 +22,28 @@
 #include <OpenKneeboard/json.h>
 #include <OpenKneeboard/utf8.h>
 
+#include <algorithm>
 #include <fstream>
 
 namespace OpenKneeboard {
+
+std::vector<ProfileSettings::Profile> ProfileSettings::GetSortedProfiles()
+  const {
+  std::vector<ProfileSettings::Profile> ret;
+  for (const auto& [id, profile]: mProfiles) {
+    ret.push_back(profile);
+  }
+  std::ranges::sort(ret, [](const auto& a, const auto& b) {
+    if (a.mID == "default") {
+      return true;
+    }
+    if (b.mID == "default") {
+      return false;
+    }
+    return a.mName < b.mName;
+  });
+  return ret;
+}
 
 ProfileSettings ProfileSettings::Load() {
   ProfileSettings ret;

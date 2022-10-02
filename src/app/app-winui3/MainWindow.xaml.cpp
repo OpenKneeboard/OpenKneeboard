@@ -174,14 +174,33 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
 
   auto footerItems = Navigation().FooterMenuItems();
   auto first = footerItems.First().Current();
-  if (!gKneeboard->GetProfileSettings().mEnabled) {
-    if (first == mProfileSwitcher) {
-      footerItems.RemoveAt(0);
-    }
-  } else if (first != mProfileSwitcher) {
-    footerItems.InsertAt(0, mProfileSwitcher);
+
+  const auto settings = gKneeboard->GetProfileSettings();
+  if (!settings.mEnabled) {
+    Navigation().PaneCustomContent({nullptr});
+    return;
   }
-  // Navigation().FooterMenuItemsSource(footerItems);
+  Navigation().PaneCustomContent(mProfileSwitcher);
+
+  auto uiProfiles = ProfileSwitcherFlyout().Items();
+  uiProfiles.Clear();
+  for (const auto& profile: settings.GetSortedProfiles()) {
+    ToggleMenuFlyoutItem item;
+    auto wname = to_hstring(profile.mName);
+    item.Text(wname);
+    item.Tag(box_value(to_hstring(profile.mID)));
+    uiProfiles.Append(item);
+
+    if (profile.mID == settings.mActiveProfile) {
+      item.IsChecked(true);
+      ProfileSwitcherLabel().Text(wname);
+
+      ToolTip tooltip;
+      tooltip.Content(
+        box_value(std::format(_(L"Switch profiles - current is '{}'"), wname)));
+      ToolTipService::SetToolTip(ProfileSwitcher(), tooltip);
+    }
+  }
 }
 
 void MainWindow::OnViewOrderChanged() {
@@ -330,11 +349,6 @@ void MainWindow::OnNavigationItemInvoked(
 
   auto item = args.InvokedItemContainer().try_as<NavigationViewItem>();
   if (!item) {
-    return;
-  }
-
-  if (item == mProfileSwitcher) {
-    Frame().Navigate(xaml_typename<ProfilesPage>());
     return;
   }
 

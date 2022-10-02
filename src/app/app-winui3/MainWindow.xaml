@@ -42,31 +42,46 @@
       PaneOpening="UpdateTitleBarMargins"
       PaneClosing="UpdateTitleBarMargins"
       BackRequested="OnBackRequested">
-      <NavigationView.FooterMenuItems>
-        <NavigationViewItem
+      <NavigationView.PaneCustomContent>
+        <Button
           x:Name="ProfileSwitcher"
-          Content="Switch Profiles">
-          <NavigationViewItem.Icon>
+          HorizontalAlignment="Stretch"
+          HorizontalContentAlignment="Left"
+          Margin="4,4,4,32">
+          <Grid ColumnDefinitions="Auto,*">
             <FontIcon
+              Grid.Column="0"
               Glyph="&#xE748;"
-							FontFamily="{StaticResource SymbolThemeFontFamily}"
+              FontFamily="{StaticResource SymbolThemeFontFamily}"
             />
-          </NavigationViewItem.Icon>
-          <NavigationViewItem.Resources>
-            <TeachingTip
-              x:Name="ProfileSwitcherTeachingTip"
-              Title="Multiple profiles"
-              PreferredPlacement="Bottom"
-              Subtitle="Switch and set up your profiles from here">
-              <TeachingTip.IconSource>
-                <FontIconSource
-                  Glyph="&#xE82F;"
-							    FontFamily="{StaticResource SymbolThemeFontFamily}"
-                />
-              </TeachingTip.IconSource>
-            </TeachingTip>
-          </NavigationViewItem.Resources>
-        </NavigationViewItem>
+            <TextBlock
+              x:Name="ProfileSwitcherLabel"
+              Margin="8,4,4,4"
+              Grid.Column="1">Default</TextBlock>
+          </Grid>
+          <Button.Flyout>
+            <MenuFlyout
+              x:Name="ProfileSwitcherFlyout"
+              Placement="BottomEdgeAlignedLeft"
+            />
+          </Button.Flyout>
+					<Button.Resources>
+						<TeachingTip
+							x:Name="ProfileSwitcherTeachingTip"
+							Title="Profiles"
+							PreferredPlacement="Bottom"
+							Subtitle="Switch between your profiles here">
+							<TeachingTip.IconSource>
+								<FontIconSource
+									Glyph="&#xE82F;"
+									FontFamily="{StaticResource SymbolThemeFontFamily}"
+								/>
+							</TeachingTip.IconSource>
+						</TeachingTip>
+					</Button.Resources>
+        </Button>
+      </NavigationView.PaneCustomContent>
+      <NavigationView.FooterMenuItems>
         <NavigationViewItem
           x:Name="HelpNavItem"
           Content="Help"
