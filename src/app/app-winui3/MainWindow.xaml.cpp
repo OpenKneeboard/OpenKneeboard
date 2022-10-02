@@ -178,6 +178,7 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
   const auto settings = gKneeboard->GetProfileSettings();
   if (!settings.mEnabled) {
     Navigation().PaneCustomContent({nullptr});
+    AppTitle().Text(L"OpenKneeboard");
     return;
   }
   Navigation().PaneCustomContent(mProfileSwitcher);
@@ -211,6 +212,7 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
       tooltip.Content(
         box_value(std::format(_(L"Switch profiles - current is '{}'"), wname)));
       ToolTipService::SetToolTip(ProfileSwitcher(), tooltip);
+      AppTitle().Text(std::format(_(L"OpenKneeboard - {}"), wname));
     }
   }
 
