@@ -78,6 +78,7 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   auto it = std::ranges::find(viewStates, mCurrentTabView);
   if (it == viewStates.end()) {
     mCurrentTabView = tabs.empty() ? nullptr : viewStates.front();
+    this->evCurrentTabChangedEvent.Emit(this->GetTabIndex());
   }
 
   UpdateLayout();
