@@ -307,19 +307,6 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
 winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   co_await mUIThread;
 
-  // Don't automatically move away from "About" or "Settings"
-  auto currentItem = Navigation().SelectedItem();
-  if (currentItem) {
-    if (currentItem == Navigation().SettingsItem()) {
-      co_return;
-    }
-    for (const auto& item: Navigation().FooterMenuItems()) {
-      if (currentItem == item) {
-        co_return;
-      }
-    }
-  }
-
   const auto tab = mKneeboardView->GetCurrentTab();
   if (!tab) {
     co_return;
@@ -341,8 +328,32 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
       break;
     }
   }
+
+  if (!mSwitchingTabsFromNavSelection) {
+    // Don't automatically move away from "Profiles"
+    if (
+      Frame().CurrentSourcePageType().Name
+      == xaml_typename<ProfilesPage>().Name) {
+      co_return;
+    }
+
+    // Don't automatically move away from "About" or "Settings"
+    auto currentItem = Navigation().SelectedItem();
+    if (currentItem) {
+      if (currentItem == Navigation().SettingsItem()) {
+        co_return;
+      }
+      for (const auto& item: Navigation().FooterMenuItems()) {
+        if (currentItem == item) {
+          co_return;
+        }
+      }
+    }
+  }
+
   this->Frame().Navigate(
     xaml_typename<TabPage>(), winrt::box_value(id.GetTemporaryValue()));
+  mSwitchingTabsFromNavSelection = false;
 }
 
 void MainWindow::OnTabsChanged() {
@@ -394,6 +405,7 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
+  mSwitchingTabsFromNavSelection = true;
   mKneeboardView->SetCurrentTabByID(ITab::RuntimeID::FromTemporaryValue(tabID));
 }
 

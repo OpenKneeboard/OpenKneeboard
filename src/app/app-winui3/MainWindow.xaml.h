@@ -60,6 +60,7 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
   EventHandlerToken mTabChangedEvent;
   DispatcherQueueController mDQC {nullptr};
   DispatcherQueueTimer mFrameTimer {nullptr};
+  bool mSwitchingTabsFromNavSelection = false;
 
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   void OnViewOrderChanged();
