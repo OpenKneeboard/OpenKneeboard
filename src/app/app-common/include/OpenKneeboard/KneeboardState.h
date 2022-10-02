@@ -72,6 +72,8 @@ class KneeboardState final : private EventReceiver {
   Event<> evFrameTimerEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evSettingsChangedEvent;
+  Event<> evProfileSettingsChangedEvent;
+  Event<> evCurrentProfileChangedEvent;
   Event<> evViewOrderChangedEvent;
   Event<> evInputDevicesChangedEvent;
   Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
@@ -81,10 +83,8 @@ class KneeboardState final : private EventReceiver {
   GamesList* GetGamesList() const;
   std::optional<RunningGame> GetCurrentGame() const;
 
-  std::unordered_map<std::string, ProfileSettings::Profile> GetAllProfiles()
-    const;
-  ProfileSettings::Profile GetCurrentProfile() const;
-  void SetCurrentProfile(const ProfileSettings::Profile&);
+  ProfileSettings GetProfileSettings() const;
+  void SetProfileSettings(const ProfileSettings&);
 
   TabsList* GetTabsList() const;
 

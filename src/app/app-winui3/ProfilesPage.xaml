@@ -1,0 +1,51 @@
+﻿<Page
+  x:Class="OpenKneeboardApp.ProfilesPage"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:local="using:OpenKneeboardApp"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  mc:Ignorable="d"
+  Background="{ThemeResource SystemChromeMediumLowColor}">
+  <Page.Resources>
+    <DataTemplate x:Key="ProfileTemplate" x:DataType="local:ProfileUIData">
+      <Grid
+        ColumnDefinitions="*,Auto"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="8"
+        Padding="8"
+        Margin="8">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource BodyStrongTextBlockStyle}"
+          Text="{x:Bind Name}"
+          VerticalAlignment="Center"
+        />
+        <Button Grid.Column="1" Tag="{x:Bind ID}" IsEnabled="{x:Bind CanDelete}" Click="RemoveProfile">
+          <SymbolIcon Symbol="Delete" />
+        </Button>
+      </Grid>
+    </DataTemplate>
+  </Page.Resources>
+  <!-- PAGE CONTENT STARTS HERE -->
+  <Grid Margin="16" RowDefinitions="Auto,*" ColumnDefinitions="*,Auto">
+    <TextBlock
+      Grid.Row="0"
+      Grid.Column="0"
+      Style="{StaticResource TitleTextBlockStyle}"
+      Text="Profiles"
+      Margin="0,0,0,8"
+    />
+    <CommandBar Grid.Row="0" Grid.Column="1" DefaultLabelPosition="Right">
+      <AppBarButton Icon="Add" Label="Add a Profile" />
+    </CommandBar>
+    <ListView
+      Grid.Row="1"
+      Grid.ColumnSpan="2"
+      x:Name="List"
+      SelectionMode="Single"
+      ItemTemplate="{StaticResource ProfileTemplate}"
+    />
+  </Grid>
+</Page>

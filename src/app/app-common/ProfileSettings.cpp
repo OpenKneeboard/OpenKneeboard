@@ -51,9 +51,21 @@ ProfileSettings ProfileSettings::Load() {
 }
 
 void ProfileSettings::Save() {
+  const auto dir = Settings::GetDirectory();
+  if (!std::filesystem::exists(dir)) {
+    std::filesystem::create_directories(dir);
+  }
+  nlohmann::json j = *this;
+
+  std::ofstream f(dir / "Profiles.json");
+  f << std::setw(2) << j << std::endl;
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ProfileSettings::Profile, mName)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ProfileSettings, mActiveProfile, mProfiles)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ProfileSettings::Profile, mID, mName)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  ProfileSettings,
+  mActiveProfile,
+  mProfiles,
+  mEnabled)
 
 }// namespace OpenKneeboard

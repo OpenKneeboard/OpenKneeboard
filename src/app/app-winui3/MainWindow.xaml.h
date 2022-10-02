@@ -54,9 +54,8 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
   HWND mHwnd;
   winrt::handle mHwndFile;
   std::shared_ptr<IKneeboardView> mKneeboardView;
-  NavigationViewItem mTabSettingsItem;
-  NavigationViewItem mGameSettingsItem;
-  NavigationViewItem mBindingSettingsItem;
+
+  NavigationViewItem mProfileSwitcher;
 
   EventHandlerToken mTabChangedEvent;
   DispatcherQueueController mDQC {nullptr};
@@ -66,6 +65,7 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
   void OnViewOrderChanged();
   winrt::fire_and_forget OnTabChanged() noexcept;
   void OnTabsChanged();
+  void UpdateProfileSwitcherVisibility();
 
   void SaveWindowPosition();
 

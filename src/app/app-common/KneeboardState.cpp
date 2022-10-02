@@ -34,6 +34,7 @@
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 
 #include <string>
 
@@ -326,26 +327,27 @@ std::optional<RunningGame> KneeboardState::GetCurrentGame() const {
   return mCurrentGame;
 }
 
-std::unordered_map<std::string, ProfileSettings::Profile>
-KneeboardState::GetAllProfiles() const {
-  return mProfiles.mProfiles;
+ProfileSettings KneeboardState::GetProfileSettings() const {
+  return mProfiles;
 }
 
-ProfileSettings::Profile KneeboardState::GetCurrentProfile() const {
-  return mProfiles.mProfiles.at(mProfiles.mActiveProfile);
-}
+void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
+  const scope_guard emitProfileSettingsChanged(
+    [&]() { this->evProfileSettingsChangedEvent.Emit(); });
 
-void KneeboardState::SetCurrentProfile(
-  const ProfileSettings::Profile& profile) {
   const auto oldID = mProfiles.mActiveProfile;
-  mProfiles.mProfiles[profile.mID] = profile;
-  mProfiles.mActiveProfile = profile.mID;
+  mProfiles = profiles;
+  if (!mProfiles.mEnabled) {
+    mProfiles.mActiveProfile = "default";
+  }
   mProfiles.Save();
 
-  if (oldID == profile.mID) {
+  const auto newID = mProfiles.mActiveProfile;
+  if (oldID == newID) {
     return;
   }
-  const auto newSettings = Settings::Load(profile.mID);
+
+  const auto newSettings = Settings::Load(newID);
   this->SetAppSettings(newSettings.mApp);
   // DirectInput
   this->SetDoodleSettings(newSettings.mDoodles);
@@ -356,6 +358,8 @@ void KneeboardState::SetCurrentProfile(
   this->SetVRConfig(newSettings.mVR);
   mSettings = newSettings;
 
+  this->evSettingsChangedEvent.Emit();
+  this->evCurrentProfileChangedEvent.Emit();
   this->evNeedsRepaintEvent.Emit();
 }
 

@@ -153,10 +153,35 @@ MainWindow::MainWindow() {
 
   RegisterURIHandler(
     "openkneeboard", [this](auto uri) { this->LaunchOpenKneeboardURI(uri); });
+
+  mProfileSwitcher = this->ProfileSwitcher();
+  this->UpdateProfileSwitcherVisibility();
+  AddEventListener(
+    gKneeboard->evProfileSettingsChangedEvent,
+    &MainWindow::UpdateProfileSwitcherVisibility,
+    this);
 }
 
 MainWindow::~MainWindow() {
   gMainWindow = {};
+}
+
+void MainWindow::UpdateProfileSwitcherVisibility() {
+  // As of Windows App SDK v1.1.4, changing the visibility and signalling the
+  // bound property changed doesn't correctly update the navigation view, even
+  // if UpdateLayout() is also called, so we need to manually add/remove the
+  // item
+
+  auto footerItems = Navigation().FooterMenuItems();
+  auto first = footerItems.First().Current();
+  if (!gKneeboard->GetProfileSettings().mEnabled) {
+    if (first == mProfileSwitcher) {
+      footerItems.RemoveAt(0);
+    }
+  } else if (first != mProfileSwitcher) {
+    footerItems.InsertAt(0, mProfileSwitcher);
+  }
+  // Navigation().FooterMenuItemsSource(footerItems);
 }
 
 void MainWindow::OnViewOrderChanged() {
@@ -308,6 +333,11 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
+  if (item == mProfileSwitcher) {
+    Frame().Navigate(xaml_typename<ProfilesPage>());
+    return;
+  }
+
   if (item == HelpNavItem()) {
     Frame().Navigate(xaml_typename<HelpPage>());
     return;
@@ -355,6 +385,12 @@ winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
   }
   if (path == L"Settings/Tabs") {
     Frame().Navigate(xaml_typename<TabSettingsPage>());
+    co_return;
+  }
+
+  if (path == L"TeachingTips/ProfileSwitcher") {
+    ProfileSwitcherTeachingTip().Target(mProfileSwitcher);
+    ProfileSwitcherTeachingTip().IsOpen(true);
     co_return;
   }
 }

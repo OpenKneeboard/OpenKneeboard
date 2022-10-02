@@ -34,6 +34,9 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   bool DualKneeboards() const noexcept;
   void DualKneeboards(bool value) noexcept;
 
+  bool MultipleProfiles() const noexcept;
+  void MultipleProfiles(bool value) noexcept;
+
   bool GazeInputFocus() const noexcept;
   void GazeInputFocus(bool value) noexcept;
 
@@ -66,7 +69,6 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   void Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(bool value) noexcept;
 
   winrt::event_token PropertyChanged(
-
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
       handler);
   void PropertyChanged(winrt::event_token const& token) noexcept;

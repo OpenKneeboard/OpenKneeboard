@@ -45,6 +45,23 @@
         </TextBlock>
       </StackPanel>
       <TextBlock
+        Text="Profiles"
+        Style="{ThemeResource SubtitleTextBlockStyle}"
+      />
+      <StackPanel Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <ToggleSwitch
+          OffContent="Single profile"
+          OnContent="Multiple profiles"
+          IsOn="{x:Bind MultipleProfiles}"
+        />
+			</StackPanel>
+      <TextBlock
         Text="Looping"
         Style="{ThemeResource SubtitleTextBlockStyle}"
       />

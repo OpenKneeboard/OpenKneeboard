@@ -35,6 +35,7 @@ add_executable(
   NonVRSettingsPage.idl NonVRSettingsPage.xaml NonVRSettingsPage.xaml.cpp NonVRSettingsPage.xaml.h
   PercentValueConverter.cpp PercentValueConverter.h PercentValueConverter.idl
   ProcessListPage.idl ProcessListPage.xaml ProcessListPage.xaml.cpp ProcessListPage.xaml.h
+  ProfilesPage.idl ProfilesPage.xaml ProfilesPage.xaml.cpp ProfilesPage.xaml.h
   SettingsPage.idl SettingsPage.xaml SettingsPage.xaml.cpp SettingsPage.xaml.h
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
   TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h

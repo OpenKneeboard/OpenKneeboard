@@ -9,7 +9,8 @@
   >
   <Grid
     ColumnDefinitions="*"
-    Background="{ThemeResource SystemChromeMediumColor}">
+    Background="{ThemeResource SystemChromeMediumColor}"
+    x:Name="RootGrid">
     <Grid.Resources>
       <Thickness x:Key="NavigationViewContentMargin">0,48,0,0</Thickness>
     </Grid.Resources>
@@ -42,6 +43,30 @@
       PaneClosing="UpdateTitleBarMargins"
       BackRequested="OnBackRequested">
       <NavigationView.FooterMenuItems>
+        <NavigationViewItem
+          x:Name="ProfileSwitcher"
+          Content="Switch Profiles">
+          <NavigationViewItem.Icon>
+            <FontIcon
+              Glyph="&#xE748;"
+							FontFamily="{StaticResource SymbolThemeFontFamily}"
+            />
+          </NavigationViewItem.Icon>
+          <NavigationViewItem.Resources>
+            <TeachingTip
+              x:Name="ProfileSwitcherTeachingTip"
+              Title="Multiple profiles"
+              PreferredPlacement="Bottom"
+              Subtitle="Switch and set up your profiles from here">
+              <TeachingTip.IconSource>
+                <FontIconSource
+                  Glyph="&#xE82F;"
+							    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                />
+              </TeachingTip.IconSource>
+            </TeachingTip>
+          </NavigationViewItem.Resources>
+        </NavigationViewItem>
         <NavigationViewItem
           x:Name="HelpNavItem"
           Content="Help"

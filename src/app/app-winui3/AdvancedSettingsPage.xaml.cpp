@@ -25,6 +25,7 @@
 
 #include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/VRConfig.h>
 
 #include "Globals.h"
@@ -56,6 +57,21 @@ void AdvancedSettingsPage::DualKneeboards(bool value) noexcept {
   auto s = gKneeboard->GetAppSettings();
   s.mDualKneeboards.mEnabled = value;
   gKneeboard->SetAppSettings(s);
+}
+
+bool AdvancedSettingsPage::MultipleProfiles() const noexcept {
+  return gKneeboard->GetProfileSettings().mEnabled;
+}
+
+void AdvancedSettingsPage::MultipleProfiles(bool value) noexcept {
+  static bool sHaveShownTip = false;
+  auto s = gKneeboard->GetProfileSettings();
+  if (value && (!s.mEnabled) && !sHaveShownTip) {
+    OpenKneeboard::LaunchURI("openkneeboard:///TeachingTips/ProfileSwitcher");
+    sHaveShownTip = true;
+  }
+  s.mEnabled = value;
+  gKneeboard->SetProfileSettings(s);
 }
 
 bool AdvancedSettingsPage::GazeInputFocus() const noexcept {

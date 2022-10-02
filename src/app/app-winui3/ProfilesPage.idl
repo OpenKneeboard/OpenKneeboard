@@ -1,0 +1,17 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass ProfilesPage: Microsoft.UI.Xaml.Controls.Page
+    {
+        ProfilesPage();
+    }
+
+    [default_interface]
+    unsealed runtimeclass ProfileUIData
+    {
+        ProfileUIData();
+        String ID;
+        String Name;
+        Boolean CanDelete;
+    }
+}

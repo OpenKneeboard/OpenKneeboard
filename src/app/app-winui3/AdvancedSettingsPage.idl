@@ -12,6 +12,8 @@ namespace OpenKneeboardApp
         Boolean LoopPages;
         Boolean LoopTabs;
 
+        Boolean MultipleProfiles;
+
 		UInt32 MinimumPenRadius;
 		UInt32 MinimumEraseRadius;
 		UInt32 PenSensitivity;

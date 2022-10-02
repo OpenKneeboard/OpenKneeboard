@@ -38,6 +38,7 @@ struct ProfileSettings final {
 
   std::string mActiveProfile;
   std::unordered_map<std::string, Profile> mProfiles;
+  bool mEnabled {false};
 
   static ProfileSettings Load();
   void Save();
