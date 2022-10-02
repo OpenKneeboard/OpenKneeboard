@@ -26,6 +26,7 @@
 
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ProfileSettings.h>
+#include <OpenKneeboard/utf8.h>
 
 #include <algorithm>
 
@@ -47,7 +48,10 @@ static OpenKneeboardApp::ProfileUIData CreateProfileUIData(
 
 ProfilesPage::ProfilesPage() {
   InitializeComponent();
+  this->UpdateList();
+}
 
+void ProfilesPage::UpdateList() {
   const auto profileSettings = gKneeboard->GetProfileSettings();
   const auto profiles = profileSettings.GetSortedProfiles();
   auto uiProfiles = winrt::single_threaded_observable_vector<IInspectable>();
@@ -71,9 +75,48 @@ fire_and_forget ProfilesPage::RemoveProfile(
   co_return;
 }
 
-void ProfilesPage::CreateProfile(
+fire_and_forget ProfilesPage::CreateProfile(
   const IInspectable& sender,
   const RoutedEventArgs&) noexcept {
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(_(L"Create profile")));
+  dialog.PrimaryButtonText(_(L"Create"));
+  dialog.IsPrimaryButtonEnabled(false);
+  dialog.CloseButtonText(_(L"Cancel"));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  TextBlock label;
+  label.Text(_(L"What do you want to call your new profile?"));
+
+  TextBox textBox;
+  textBox.TextChanged([=](const auto&, const auto&) {
+    dialog.IsPrimaryButtonEnabled(!textBox.Text().empty());
+  });
+
+  StackPanel layout;
+  layout.Orientation(Orientation::Vertical);
+  layout.Children().Append(label);
+  layout.Children().Append(textBox);
+  dialog.Content(layout);
+
+  auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  auto profileSettings = gKneeboard->GetProfileSettings();
+  const auto name = to_string(textBox.Text());
+  const ProfileSettings::Profile profile {
+    .mID = profileSettings.MakeID(name),
+    .mName = name,
+  };
+
+  profileSettings.mActiveProfile = profile.mID;
+  profileSettings.mProfiles[profile.mID] = profile;
+  gKneeboard->SetProfileSettings(profileSettings);
+
+  this->UpdateList();
 }
 
 hstring ProfileUIData::ID() {

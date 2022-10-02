@@ -23,6 +23,7 @@
 #include <OpenKneeboard/utf8.h>
 
 #include <algorithm>
+#include <format>
 #include <fstream>
 
 namespace OpenKneeboard {
@@ -43,6 +44,31 @@ std::vector<ProfileSettings::Profile> ProfileSettings::GetSortedProfiles()
     return a.mName < b.mName;
   });
   return ret;
+}
+
+std::string ProfileSettings::MakeID(const std::string& name) const {
+  std::string id;
+  for (char it: name) {
+    it = std::tolower(it);
+    if ((it >= 'a' && it <= 'z') || (it >= '0' && it <= '9')) {
+      id += it;
+    }
+  }
+
+  if (id.empty()) {
+    id = "empty";
+  }
+  if (!mProfiles.contains(id)) {
+    return id;
+  }
+
+  size_t i = 1;
+  while (true) {
+    const auto nextID = std::format("{}_{}", id, i++);
+    if (!mProfiles.contains(nextID)) {
+      return nextID;
+    }
+  }
 }
 
 ProfileSettings ProfileSettings::Load() {

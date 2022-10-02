@@ -38,7 +38,7 @@
       Margin="0,0,0,8"
     />
     <CommandBar Grid.Row="0" Grid.Column="1" DefaultLabelPosition="Right">
-      <AppBarButton Icon="Add" Label="Add a Profile" />
+      <AppBarButton Icon="Add" Label="Add a Profile" Click="CreateProfile" />
     </CommandBar>
     <ListView
       Grid.Row="1"

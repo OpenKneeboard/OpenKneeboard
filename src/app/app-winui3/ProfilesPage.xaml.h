@@ -31,11 +31,13 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct ProfilesPage : ProfilesPageT<ProfilesPage> {
   ProfilesPage();
 
-  void CreateProfile(const IInspectable&, const RoutedEventArgs&) noexcept;
-  fire_and_forget RemoveProfile(const IInspectable&, const RoutedEventArgs&);
-  void OnProfilesChanged(
+  fire_and_forget CreateProfile(
     const IInspectable&,
-    const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
+    const RoutedEventArgs&) noexcept;
+  fire_and_forget RemoveProfile(const IInspectable&, const RoutedEventArgs&);
+
+ private:
+  void UpdateList();
 };
 
 struct ProfileUIData : ProfileUIDataT<ProfileUIData> {

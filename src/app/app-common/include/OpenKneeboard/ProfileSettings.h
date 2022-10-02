@@ -41,6 +41,7 @@ struct ProfileSettings final {
   bool mEnabled {false};
 
   std::vector<Profile> GetSortedProfiles() const;
+  std::string MakeID(const std::string& name) const;
 
   static ProfileSettings Load();
   void Save();
