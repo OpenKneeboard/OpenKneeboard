@@ -43,6 +43,7 @@ class TabletInputAdapter final : private EventReceiver {
   ~TabletInputAdapter();
 
   TabletSettings GetSettings() const;
+  void LoadSettings(const TabletSettings&);
   Event<> evSettingsChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
@@ -52,7 +53,7 @@ class TabletInputAdapter final : private EventReceiver {
  private:
   HWND mWindow;
   KneeboardState* mKneeboard;
-  const TabletSettings mInitialSettings;
+  TabletSettings mInitialSettings;
   std::unique_ptr<WintabTablet> mTablet;
   std::shared_ptr<TabletInputDevice> mDevice;
   WNDPROC mPreviousWndProc;

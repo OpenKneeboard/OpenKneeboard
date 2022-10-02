@@ -26,16 +26,18 @@
 #include <OpenKneeboard/TabletSettings.h>
 #include <OpenKneeboard/VRConfig.h>
 
+#include <shims/filesystem>
+
 namespace OpenKneeboard {
 
 #define OPENKNEEBOARD_SETTINGS_SECTIONS \
-  IT(nlohmann::json, Games) \
-  IT(nlohmann::json, Tabs) \
   IT(AppSettings, App) \
   IT(DirectInputSettings, DirectInput) \
   IT(DoodleSettings, Doodles) \
+  IT(nlohmann::json, Games) \
   IT(FlatConfig, NonVR) \
   IT(TabletSettings, TabletInput) \
+  IT(nlohmann::json, Tabs) \
   IT(VRConfig, VR)
 
 struct Settings final {
@@ -43,8 +45,10 @@ struct Settings final {
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
-  static Settings Load(std::string_view profile = {});
-  void Save(std::string_view profile = {});
+  static Settings Load(std::string_view profileID);
+  void Save(std::string_view profileID);
+
+  static std::filesystem::path GetDirectory();
 
   constexpr auto operator<=>(const Settings&) const noexcept = default;
 };

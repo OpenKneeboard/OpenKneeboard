@@ -39,11 +39,7 @@ TabsList::TabsList(
   KneeboardState* kneeboard,
   const nlohmann::json& config)
   : mDXR(dxr), mKneeboard(kneeboard) {
-  if (config.is_null()) {
-    LoadDefaultConfig();
-  } else {
-    LoadConfig(config);
-  }
+  LoadSettings(config);
 }
 
 TabsList::~TabsList() {
@@ -60,7 +56,11 @@ static std::tuple<std::string, nlohmann::json> MigrateTab(
   return {type, settings};
 }
 
-void TabsList::LoadConfig(const nlohmann::json& config) {
+void TabsList::LoadSettings(const nlohmann::json& config) {
+  if (config.is_null()) {
+    LoadDefaultSettings();
+    return;
+  }
   std::vector<nlohmann::json> jsonTabs = config;
 
   decltype(mTabs) tabs;
@@ -95,7 +95,7 @@ void TabsList::LoadConfig(const nlohmann::json& config) {
   this->SetTabs(tabs);
 }
 
-void TabsList::LoadDefaultConfig() {
+void TabsList::LoadDefaultSettings() {
   auto kbs = mKneeboard;
   this->SetTabs({
     std::make_shared<SingleFileTab>(

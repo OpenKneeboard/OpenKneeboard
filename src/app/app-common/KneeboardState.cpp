@@ -326,6 +326,39 @@ std::optional<RunningGame> KneeboardState::GetCurrentGame() const {
   return mCurrentGame;
 }
 
+std::unordered_map<std::string, ProfileSettings::Profile>
+KneeboardState::GetAllProfiles() const {
+  return mProfiles.mProfiles;
+}
+
+ProfileSettings::Profile KneeboardState::GetCurrentProfile() const {
+  return mProfiles.mProfiles.at(mProfiles.mActiveProfile);
+}
+
+void KneeboardState::SetCurrentProfile(
+  const ProfileSettings::Profile& profile) {
+  const auto oldID = mProfiles.mActiveProfile;
+  mProfiles.mProfiles[profile.mID] = profile;
+  mProfiles.mActiveProfile = profile.mID;
+  mProfiles.Save();
+
+  if (oldID == profile.mID) {
+    return;
+  }
+  const auto newSettings = Settings::Load(profile.mID);
+  this->SetAppSettings(newSettings.mApp);
+  // DirectInput
+  this->SetDoodleSettings(newSettings.mDoodles);
+  mGamesList->LoadSettings(newSettings.mGames);
+  this->SetFlatConfig(newSettings.mNonVR);
+  mTabletInput->LoadSettings(newSettings.mTabletInput);
+  mTabsList->LoadSettings(newSettings.mTabs);
+  this->SetVRConfig(newSettings.mVR);
+  mSettings = newSettings;
+
+  this->evNeedsRepaintEvent.Emit();
+}
+
 void KneeboardState::SaveSettings() {
   if (mGamesList) {
     mSettings.mGames = mGamesList->GetSettings();
@@ -340,7 +373,7 @@ void KneeboardState::SaveSettings() {
     mSettings.mDirectInput = mDirectInput->GetSettings();
   }
 
-  mSettings.Save();
+  mSettings.Save(mProfiles.mActiveProfile);
   evSettingsChangedEvent.Emit();
 }
 

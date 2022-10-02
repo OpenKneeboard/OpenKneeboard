@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ProfileSettings.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
@@ -80,6 +81,11 @@ class KneeboardState final : private EventReceiver {
   GamesList* GetGamesList() const;
   std::optional<RunningGame> GetCurrentGame() const;
 
+  std::unordered_map<std::string, ProfileSettings::Profile> GetAllProfiles()
+    const;
+  ProfileSettings::Profile GetCurrentProfile() const;
+  void SetCurrentProfile(const ProfileSettings::Profile&);
+
   TabsList* GetTabsList() const;
 
   FlatConfig GetFlatConfig() const;
@@ -95,7 +101,8 @@ class KneeboardState final : private EventReceiver {
 
  private:
   DXResources mDXResources;
-  Settings mSettings {Settings::Load()};
+  ProfileSettings mProfiles {ProfileSettings::Load()};
+  Settings mSettings {Settings::Load(mProfiles.mActiveProfile)};
 
   uint8_t mFirstViewIndex = 0;
   uint8_t mInputViewIndex = 0;

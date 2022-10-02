@@ -66,6 +66,11 @@ DirectInputAdapter::DirectInputAdapter(
   this->Reload();
 }
 
+void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
+  mSettings = settings;
+  this->Reload();
+}
+
 void DirectInputAdapter::Reload() {
   this->RemoveAllEventListeners();
 
@@ -76,9 +81,6 @@ void DirectInputAdapter::Reload() {
 
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
     auto device = DirectInputDevice::Create(diDeviceInstance);
-    AddEventListener(device->evUserActionEvent, this->evUserActionEvent);
-    AddEventListener(
-      device->evBindingsChangedEvent, this->evSettingsChangedEvent);
     if (mSettings.mDevices.contains(device->GetID())) {
       std::vector<UserInputButtonBinding> bindings;
       for (const auto& binding:
@@ -98,6 +100,10 @@ void DirectInputAdapter::Reload() {
         .mDevice = device,
         .mListener = DirectInputListener::Run(mDI8, device),
       });
+
+    AddEventListener(device->evUserActionEvent, this->evUserActionEvent);
+    AddEventListener(
+      device->evBindingsChangedEvent, this->evSettingsChangedEvent);
   }
 
   this->evAttachedControllersChangedEvent.Emit();

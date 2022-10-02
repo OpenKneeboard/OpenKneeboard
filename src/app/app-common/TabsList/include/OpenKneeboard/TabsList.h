@@ -43,6 +43,7 @@ class TabsList final : private EventReceiver {
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
 
   nlohmann::json GetSettings() const;
+  void LoadSettings(const nlohmann::json&);
 
   Event<> evSettingsChangedEvent;
   Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
@@ -53,8 +54,7 @@ class TabsList final : private EventReceiver {
   std::vector<std::shared_ptr<ITab>> mTabs;
   std::vector<EventHandlerToken> mTabEvents;
 
-  void LoadConfig(const nlohmann::json&);
-  void LoadDefaultConfig();
+  void LoadDefaultSettings();
 };
 
 }// namespace OpenKneeboard

@@ -44,7 +44,7 @@ TabletInputAdapter::TabletInputAdapter(
   HWND window,
   KneeboardState* kneeboard,
   const TabletSettings& settings)
-  : mWindow(window), mKneeboard(kneeboard), mInitialSettings(settings) {
+  : mWindow(window), mKneeboard(kneeboard) {
   if (gInstance != nullptr) {
     throw std::logic_error("There can only be one TabletInputAdapter");
   }
@@ -68,6 +68,18 @@ TabletInputAdapter::TabletInputAdapter(
     mTablet->GetDeviceID(),
     TabletOrientation::RotateCW90);
 
+  AddEventListener(
+    mDevice->evBindingsChangedEvent, this->evSettingsChangedEvent);
+  AddEventListener(mDevice->evOrientationChangedEvent, [this]() {
+    this->evSettingsChangedEvent.Emit();
+  });
+  AddEventListener(mDevice->evUserActionEvent, this->evUserActionEvent);
+
+  LoadSettings(settings);
+}
+
+void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
+  mInitialSettings = settings;
   if (settings.mDevices.contains(mTablet->GetDeviceID())) {
     auto& jsonDevice = settings.mDevices.at(mTablet->GetDeviceID());
     mDevice->SetOrientation(jsonDevice.mOrientation);
@@ -80,14 +92,9 @@ TabletInputAdapter::TabletInputAdapter(
       });
     }
     mDevice->SetButtonBindings(bindings);
+  } else {
+    mDevice->SetButtonBindings({});
   }
-
-  AddEventListener(
-    mDevice->evBindingsChangedEvent, this->evSettingsChangedEvent);
-  AddEventListener(mDevice->evOrientationChangedEvent, [this]() {
-    this->evSettingsChangedEvent.Emit();
-  });
-  AddEventListener(mDevice->evUserActionEvent, this->evUserActionEvent);
 }
 
 TabletInputAdapter::~TabletInputAdapter() {

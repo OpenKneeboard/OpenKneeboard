@@ -30,7 +30,7 @@
 
 namespace OpenKneeboard {
 
-static std::filesystem::path GetSettingsDirectoryPath() {
+std::filesystem::path Settings::GetDirectory() {
   static std::filesystem::path sPath;
   if (!sPath.empty()) {
     return sPath;
@@ -51,7 +51,7 @@ static std::filesystem::path GetSettingsDirectoryPath() {
 template <class T>
 static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
   const auto fullPath
-    = path.is_absolute() ? path : GetSettingsDirectoryPath() / path;
+    = path.is_absolute() ? path : Settings::GetDirectory() / path;
   if (!std::filesystem::exists(fullPath)) {
     return;
   }
@@ -68,14 +68,14 @@ static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
 
 Settings Settings::Load(std::string_view profile) {
   Settings settings;
-  if (!std::filesystem::exists(GetSettingsDirectoryPath() / "profiles")) {
-    auto legacySettingsFile = GetSettingsDirectoryPath() / "Settings.json";
+  if (!std::filesystem::exists(Settings::GetDirectory() / "profiles")) {
+    auto legacySettingsFile = Settings::GetDirectory() / "Settings.json";
     if (std::filesystem::exists(legacySettingsFile)) {
       dprint("Migrating from legacy Settings.json");
       MaybeSetFromJSON(settings, legacySettingsFile);
       std::filesystem::rename(
         legacySettingsFile,
-        GetSettingsDirectoryPath() / "LegacySettings.json.bak");
+        Settings::GetDirectory() / "LegacySettings.json.bak");
       settings.Save("default");
     }
     return std::move(settings);
@@ -100,7 +100,7 @@ static void MaybeSaveJSON(
   const T& value,
   const std::filesystem::path& path) {
   const auto fullPath
-    = path.is_absolute() ? path : GetSettingsDirectoryPath() / path;
+    = path.is_absolute() ? path : Settings::GetDirectory() / path;
   if (parentValue == value) {
     if (std::filesystem::exists(fullPath)) {
       std::filesystem::remove(fullPath);

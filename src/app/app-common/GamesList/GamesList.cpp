@@ -28,12 +28,7 @@
 namespace OpenKneeboard {
 GamesList::GamesList(const nlohmann::json& config) {
   mGames = {std::make_shared<DCSWorld>(), std::make_shared<GenericGame>()};
-
-  if (config.is_null()) {
-    LoadDefaultSettings();
-  } else {
-    LoadSettings(config);
-  }
+  LoadSettings(config);
 }
 
 void GamesList::StartInjector() {
@@ -71,6 +66,13 @@ nlohmann::json GamesList::GetSettings() const {
 }
 
 void GamesList::LoadSettings(const nlohmann::json& config) {
+  mInstances.clear();
+
+  if (config.is_null()) {
+    LoadDefaultSettings();
+    return;
+  }
+
   auto list = config.at("Configured");
 
   for (const auto& instance: list) {
@@ -84,6 +86,8 @@ void GamesList::LoadSettings(const nlohmann::json& config) {
   NEXT_INSTANCE:
     continue;// need statement after label
   }
+
+  this->evSettingsChangedEvent.Emit();
 }
 
 std::vector<std::shared_ptr<Game>> GamesList::GetGames() const {

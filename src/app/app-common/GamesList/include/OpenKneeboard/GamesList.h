@@ -37,13 +37,13 @@ class GamesList final : private EventReceiver {
   std::jthread mInjectorThread;
 
   void LoadDefaultSettings();
-  void LoadSettings(const nlohmann::json&);
 
  public:
   GamesList() = delete;
   GamesList(const nlohmann::json& config);
   virtual ~GamesList();
   virtual nlohmann::json GetSettings() const;
+  void LoadSettings(const nlohmann::json&);
 
   void StartInjector();
 

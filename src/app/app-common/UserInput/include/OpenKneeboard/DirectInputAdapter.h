@@ -44,6 +44,7 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
   ~DirectInputAdapter();
 
   DirectInputSettings GetSettings() const;
+  void LoadSettings(const DirectInputSettings& settings);
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
   Event<UserAction> evUserActionEvent;
