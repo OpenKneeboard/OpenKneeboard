@@ -33,6 +33,9 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
+  void RecenterNow(const IInspectable&, const RoutedEventArgs&);
+  void GoToBindings(const IInspectable&, const RoutedEventArgs&);
+
   float KneeboardX();
   void KneeboardX(float value);
   float KneeboardEyeY();

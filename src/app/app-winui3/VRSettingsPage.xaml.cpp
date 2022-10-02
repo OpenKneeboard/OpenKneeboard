@@ -88,6 +88,14 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   }
 }
 
+void VRSettingsPage::RecenterNow(const IInspectable&, const RoutedEventArgs&) {
+gKneeboard->PostUserAction(UserAction::RECENTER_VR);
+}
+
+void VRSettingsPage::GoToBindings(const IInspectable&, const RoutedEventArgs&) {
+Frame().Navigate(xaml_typename<InputSettingsPage>());
+}
+
 winrt::event_token VRSettingsPage::PropertyChanged(
   winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
     handler) {

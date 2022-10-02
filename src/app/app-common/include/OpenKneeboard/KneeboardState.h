@@ -99,6 +99,8 @@ class KneeboardState final : private EventReceiver {
 
   void SaveSettings();
 
+  void PostUserAction(UserAction action);
+
  private:
   DXResources mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};
@@ -123,7 +125,6 @@ class KneeboardState final : private EventReceiver {
 
   void OnGameChangedEvent(DWORD processID, std::shared_ptr<GameInstance> game);
   void OnGameEvent(const GameEvent& ev);
-  void OnUserAction(UserAction);
 
   void StartOpenVRThread();
 

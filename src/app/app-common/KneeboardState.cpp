@@ -74,14 +74,14 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   mTabletInput
     = std::make_unique<TabletInputAdapter>(hwnd, this, mSettings.mTabletInput);
   AddEventListener(
-    mTabletInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
+    mTabletInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
   AddEventListener(
     mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
 
   mDirectInput
     = std::make_unique<DirectInputAdapter>(hwnd, mSettings.mDirectInput);
   AddEventListener(
-    mDirectInput->evUserActionEvent, &KneeboardState::OnUserAction, this);
+    mDirectInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
   AddEventListener(
     mDirectInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
   AddEventListener(
@@ -150,7 +150,7 @@ std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   return mViews.at(mInputViewIndex);
 }
 
-void KneeboardState::OnUserAction(UserAction action) {
+void KneeboardState::PostUserAction(UserAction action) {
   switch (action) {
     case UserAction::TOGGLE_VISIBILITY:
       if (mInterprocessRenderer) {
@@ -235,7 +235,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
   if (ev.name == GameEvent::EVT_REMOTE_USER_ACTION) {
 #define IT(ACTION) \
   if (ev.value == #ACTION) { \
-    OnUserAction(UserAction::ACTION); \
+    PostUserAction(UserAction::ACTION); \
     return; \
   }
     OPENKNEEBOARD_USER_ACTIONS

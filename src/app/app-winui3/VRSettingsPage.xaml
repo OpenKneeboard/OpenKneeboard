@@ -82,15 +82,14 @@
           SpinButtonPlacementMode="Inline"
           NumberFormatter="{StaticResource MetersFormatter}"
         />
-				<NumberBox
-					Header="Kneeboard height limit, in meters"
-					Value="{x:Bind KneeboardMaxHeight}"
-					SmallChange="0.01"
-					LargeChange="0.05"
-					SpinButtonPlacementMode="Inline"
-					NumberFormatter="{StaticResource MetersFormatter}"
-				/>
-
+        <NumberBox
+          Header="Kneeboard height limit, in meters"
+          Value="{x:Bind KneeboardMaxHeight}"
+          SmallChange="0.01"
+          LargeChange="0.05"
+          SpinButtonPlacementMode="Inline"
+          NumberFormatter="{StaticResource MetersFormatter}"
+        />
         <Slider
           Header="Zoom level when looking at kneeboard"
           Value="{x:Bind KneeboardZoomScale}"
@@ -107,6 +106,37 @@
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
       />
+      <StackPanel
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <TextBlock
+          Style="{ThemeResource BodyTextBlockStyle}"
+          Foreground="{ThemeResource TextFillColorPrimary}"
+          TextWrapping="Wrap">
+          Always recenter the kneeboard and the game before changing these
+          settings; it can be helpful to bind the same combo for recentering
+          in both the game and in OpenKneeboard.
+        </TextBlock>
+        <Grid ColumnDefinitions="Auto,Auto">
+          <Button
+            Grid.Column="0"
+            Style="{StaticResource AccentButtonStyle}" 
+            Content="Recenter now"
+            Click="RecenterNow"
+            Margin="4"
+          />
+          <Button
+            Grid.Column="1"
+            Content="Go to bindings"
+            Click="GoToBindings"
+            Margin="4"
+          />
+        </Grid>
+      </StackPanel>
       <StackPanel
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
