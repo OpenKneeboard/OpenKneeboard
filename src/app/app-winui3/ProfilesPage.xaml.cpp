@@ -69,6 +69,20 @@ void ProfilesPage::UpdateList() {
   }
 }
 
+void ProfilesPage::OnList_SelectionChanged(
+  const IInspectable&,
+  const SelectionChangedEventArgs& args) {
+  const auto selectedID {
+    to_string(args.AddedItems().First().Current().as<ProfileUIData>()->ID())};
+
+  auto profileSettings = gKneeboard->GetProfileSettings();
+  if (profileSettings.mActiveProfile == selectedID) {
+    return;
+  }
+  profileSettings.mActiveProfile = selectedID;
+  gKneeboard->SetProfileSettings(profileSettings);
+}
+
 fire_and_forget ProfilesPage::RemoveProfile(
   const IInspectable& sender,
   const RoutedEventArgs&) {

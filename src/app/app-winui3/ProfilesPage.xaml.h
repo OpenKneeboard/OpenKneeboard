@@ -26,6 +26,7 @@
 // clang-format on
 
 using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct ProfilesPage : ProfilesPageT<ProfilesPage> {
@@ -35,6 +36,10 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage> {
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
   fire_and_forget RemoveProfile(const IInspectable&, const RoutedEventArgs&);
+
+  void OnList_SelectionChanged(
+    const IInspectable&,
+    const SelectionChangedEventArgs&);
 
  private:
   void UpdateList();

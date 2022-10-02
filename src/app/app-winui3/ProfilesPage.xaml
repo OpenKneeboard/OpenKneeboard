@@ -45,6 +45,7 @@
       Grid.ColumnSpan="2"
       x:Name="List"
       SelectionMode="Single"
+      SelectionChanged="OnList_SelectionChanged"
       ItemTemplate="{StaticResource ProfileTemplate}"
     />
   </Grid>
