@@ -46,7 +46,7 @@ struct Settings final {
 #undef IT
 
   static Settings Load(std::string_view profileID);
-  void Save(std::string_view profileID);
+  void Save(std::string_view profileID) const;
 
   static std::filesystem::path GetDirectory();
 

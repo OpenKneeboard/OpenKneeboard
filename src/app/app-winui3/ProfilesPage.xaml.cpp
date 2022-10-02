@@ -72,7 +72,36 @@ void ProfilesPage::UpdateList() {
 fire_and_forget ProfilesPage::RemoveProfile(
   const IInspectable& sender,
   const RoutedEventArgs&) {
-  co_return;
+  const auto id {to_string(unbox_value<hstring>(sender.as<Button>().Tag()))};
+  auto profileSettings = gKneeboard->GetProfileSettings();
+  const auto profile = profileSettings.mProfiles.at(id);
+
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(_(L"Remove profile?")));
+  dialog.Content(box_value(to_hstring(std::format(
+    _("Are you sure you want to delete the profile '{}'?"), profile.mName))));
+  dialog.PrimaryButtonText(
+    to_hstring(std::format(_("Delete '{}'"), profile.mName)));
+  dialog.CloseButtonText(_(L"Cancel"));
+  dialog.DefaultButton(ContentDialogButton::Close);
+
+  const auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  // Actually erase the settings
+  const auto parentSettings = Settings::Load("default");
+  parentSettings.Save(id);
+
+  // ... and remove from the list
+  if (id == profileSettings.mActiveProfile) {
+    profileSettings.mActiveProfile = "default";
+  }
+  profileSettings.mProfiles.erase(id);
+  gKneeboard->SetProfileSettings(profileSettings);
+  this->UpdateList();
 }
 
 fire_and_forget ProfilesPage::CreateProfile(

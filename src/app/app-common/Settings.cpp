@@ -86,6 +86,7 @@ Settings Settings::Load(std::string_view profile) {
   }
 
   const auto profileDir = std::filesystem::path {"profiles"} / profile;
+
 #define IT(cpptype, x) \
   MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
@@ -122,7 +123,7 @@ static void MaybeSaveJSON(
   f << std::setw(2) << j << std::endl;
 }
 
-void Settings::Save(std::string_view profile) {
+void Settings::Save(std::string_view profile) const {
   const Settings previousSettings = Settings::Load(profile);
 
   if (previousSettings == *this) {
@@ -137,6 +138,13 @@ void Settings::Save(std::string_view profile) {
   }
 
   const auto profileDir = std::filesystem::path {"profiles"} / profile;
+  if (parentSettings == *this && std::filesystem::is_directory(profileDir)) {
+    // Ignore, e.g. if a file is open
+    std::error_code ec;
+    std::filesystem::remove_all(profileDir, ec);
+    return;
+  }
+
 #define IT(cpptype, x) \
   MaybeSaveJSON(parentSettings.m##x, this->m##x, profileDir / #x##".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
