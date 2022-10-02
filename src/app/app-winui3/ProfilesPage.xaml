@@ -29,24 +29,35 @@
     </DataTemplate>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
-  <Grid Margin="16" RowDefinitions="Auto,*" ColumnDefinitions="*,Auto">
-    <TextBlock
-      Grid.Row="0"
-      Grid.Column="0"
-      Style="{StaticResource TitleTextBlockStyle}"
-      Text="Profiles"
-      Margin="0,0,0,8"
-    />
-    <CommandBar Grid.Row="0" Grid.Column="1" DefaultLabelPosition="Right">
-      <AppBarButton Icon="Add" Label="Add a Profile" Click="CreateProfile" />
-    </CommandBar>
-    <ListView
-      Grid.Row="1"
-      Grid.ColumnSpan="2"
-      x:Name="List"
-      SelectionMode="Single"
-      SelectionChanged="OnList_SelectionChanged"
-      ItemTemplate="{StaticResource ProfileTemplate}"
-    />
-  </Grid>
+  <ScrollViewer>
+    <StackPanel Orientation="Vertical" Spacing="12">
+      <Grid Margin="16" ColumnDefinitions="*,Auto">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource TitleTextBlockStyle}"
+          Text="Profiles"
+          Margin="0,0,0,8"
+        />
+        <CommandBar Grid.Column="1" DefaultLabelPosition="Right">
+          <AppBarButton Icon="Add" Label="Add a Profile" Click="CreateProfile" />
+        </CommandBar>
+      </Grid>
+			<TextBlock
+				Style="{ThemeResource CaptionTextBlockStyle}"
+				Foreground="{ThemeResource TextFillColorSecondary}"
+        Margin="16,0,16,0"
+        TextWrapping="Wrap">
+				Changes to the "Default" profile will affect all other profiles, except
+				for profiles that already change the same setting.
+			</TextBlock>
+      <ListView
+        Grid.Row="1"
+        Grid.ColumnSpan="2"
+        x:Name="List"
+        SelectionMode="Single"
+        SelectionChanged="OnList_SelectionChanged"
+        ItemTemplate="{StaticResource ProfileTemplate}"
+      />
+    </StackPanel>
+  </ScrollViewer>
 </Page>
