@@ -113,7 +113,8 @@ static void MaybeSaveJSON(
     std::filesystem::create_directories(parentPath);
   }
 
-  nlohmann::json j = value;
+  nlohmann::json j;
+  to_json_with_default(j, parentValue, value);
   if (j.is_null()) {
     return;
   }
