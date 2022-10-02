@@ -49,17 +49,38 @@ static OpenKneeboardApp::ProfileUIData CreateProfileUIData(
 ProfilesPage::ProfilesPage() {
   InitializeComponent();
   this->UpdateList();
+
+  AddEventListener(gKneeboard->evProfileSettingsChangedEvent, [this]() {
+    const auto settings = gKneeboard->GetProfileSettings();
+    const auto sorted = settings.GetSortedProfiles();
+    // Using int32_t and it's what SelectedIndex() requires
+    const auto size = std::min(
+      static_cast<int32_t>(sorted.size()),
+      static_cast<int32_t>(List().Items().Size()));
+    for (int32_t i = 0; i < size; ++i) {
+      if (sorted.at(i).mID != settings.mActiveProfile) {
+        continue;
+      }
+      List().SelectedIndex(i);
+      return;
+    }
+  });
+}
+
+void ProfilesPage::final_release(std::unique_ptr<ProfilesPage> page) {
+  page->RemoveAllEventListeners();
 }
 
 void ProfilesPage::UpdateList() {
   const auto profileSettings = gKneeboard->GetProfileSettings();
   const auto profiles = profileSettings.GetSortedProfiles();
-  auto uiProfiles = winrt::single_threaded_observable_vector<IInspectable>();
+
+  mUIProfiles.Clear();
 
   for (const auto& profile: profiles) {
-    uiProfiles.Append(CreateProfileUIData(profile));
+    mUIProfiles.Append(CreateProfileUIData(profile));
   }
-  List().ItemsSource(uiProfiles);
+  List().ItemsSource(mUIProfiles);
   // Using int32_t to match SelectedIndex
   for (int32_t i = 0; i < profiles.size(); ++i) {
     if (profiles.at(i).mID == profileSettings.mActiveProfile) {
@@ -72,8 +93,11 @@ void ProfilesPage::UpdateList() {
 void ProfilesPage::OnList_SelectionChanged(
   const IInspectable&,
   const SelectionChangedEventArgs& args) {
-  const auto selectedID {
-    to_string(args.AddedItems().First().Current().as<ProfileUIData>()->ID())};
+  auto it = args.AddedItems().First();
+  if (!it.HasCurrent()) {
+    return;
+  }
+  const auto selectedID {to_string(it.Current().as<ProfileUIData>()->ID())};
 
   auto profileSettings = gKneeboard->GetProfileSettings();
   if (profileSettings.mActiveProfile == selectedID) {
@@ -89,6 +113,8 @@ fire_and_forget ProfilesPage::RemoveProfile(
   const auto id {to_string(unbox_value<hstring>(sender.as<Button>().Tag()))};
   auto profileSettings = gKneeboard->GetProfileSettings();
   const auto profile = profileSettings.mProfiles.at(id);
+  const auto sorted = profileSettings.GetSortedProfiles();
+  const auto index = std::ranges::find(sorted, profile) - sorted.begin();
 
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
@@ -115,7 +141,8 @@ fire_and_forget ProfilesPage::RemoveProfile(
   }
   profileSettings.mProfiles.erase(id);
   gKneeboard->SetProfileSettings(profileSettings);
-  this->UpdateList();
+  mUIProfiles.RemoveAt(static_cast<uint32_t>(index));
+  List().SelectedIndex(0);
 }
 
 fire_and_forget ProfilesPage::CreateProfile(
@@ -159,7 +186,16 @@ fire_and_forget ProfilesPage::CreateProfile(
   profileSettings.mProfiles[profile.mID] = profile;
   gKneeboard->SetProfileSettings(profileSettings);
 
-  this->UpdateList();
+  const auto sorted = profileSettings.GetSortedProfiles();
+  for (int32_t i = 0; i < sorted.size(); ++i) {
+    const auto& it = sorted.at(i);
+    if (it.mID != profile.mID) {
+      continue;
+    }
+    mUIProfiles.InsertAt(i, CreateProfileUIData(profile));
+    List().SelectedIndex(i);
+    break;
+  }
 }
 
 hstring ProfileUIData::ID() {

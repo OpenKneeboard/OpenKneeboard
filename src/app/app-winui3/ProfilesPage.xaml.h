@@ -25,12 +25,17 @@
 #include "ProfilesPage.g.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
+
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct ProfilesPage : ProfilesPageT<ProfilesPage> {
+struct ProfilesPage : ProfilesPageT<ProfilesPage>,
+                      private OpenKneeboard::EventReceiver {
   ProfilesPage();
+
+  static void final_release(std::unique_ptr<ProfilesPage>);
 
   fire_and_forget CreateProfile(
     const IInspectable&,
@@ -43,6 +48,7 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage> {
 
  private:
   void UpdateList();
+  Windows::Foundation::Collections::IObservableVector<IInspectable> mUIProfiles {single_threaded_observable_vector<IInspectable>()};
 };
 
 struct ProfileUIData : ProfileUIDataT<ProfileUIData> {
