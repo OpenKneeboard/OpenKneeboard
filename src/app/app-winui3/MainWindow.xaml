@@ -70,7 +70,7 @@
 							x:Name="ProfileSwitcherTeachingTip"
 							Title="Profiles"
 							PreferredPlacement="Bottom"
-							Subtitle="Switch between your profiles here">
+							Subtitle="You can configure and switch between your profiles here">
 							<TeachingTip.IconSource>
 								<FontIconSource
 									Glyph="&#xE82F;"
