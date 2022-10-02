@@ -191,6 +191,18 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
     item.Tag(box_value(to_hstring(profile.mID)));
     uiProfiles.Append(item);
 
+    auto weakItem = make_weak(item);
+    item.Click([profile, weakItem](const auto&, const auto&) {
+      auto settings = gKneeboard->GetProfileSettings();
+      if (settings.mActiveProfile == profile.mID) {
+        weakItem.get().IsChecked(true);
+        return;
+      }
+
+      settings.mActiveProfile = profile.mID;
+      gKneeboard->SetProfileSettings(settings);
+    });
+
     if (profile.mID == settings.mActiveProfile) {
       item.IsChecked(true);
       ProfileSwitcherLabel().Text(wname);
@@ -201,6 +213,14 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
       ToolTipService::SetToolTip(ProfileSwitcher(), tooltip);
     }
   }
+
+  uiProfiles.Append(MenuFlyoutSeparator {});
+  MenuFlyoutItem settingsItem;
+  settingsItem.Text(_(L"Edit profiles..."));
+  settingsItem.Click([this](const auto&, const auto&) {
+    Frame().Navigate(xaml_typename<ProfilesPage>());
+  });
+  uiProfiles.Append(settingsItem);
 }
 
 void MainWindow::OnViewOrderChanged() {
