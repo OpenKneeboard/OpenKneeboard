@@ -102,7 +102,11 @@ static bool PushDestLink(
   }
 
   auto dest = it.getKey("/Dest");
-  auto destPage = pageIndices.at(dest.getArrayItem(0).getObjGen());
+  const auto destRef = dest.getArrayItem(0).getObjGen();
+  if (!pageIndices.contains(destRef)) {
+    return false;
+  }
+  auto destPage = pageIndices.at(destRef);
   links.push_back({
     rect,
     {
@@ -151,7 +155,11 @@ static void PushGoToActionLink(
     return;
   }
 
-  auto destPage = pageIndices.at(dest.getArrayItem(0).getObjGen());
+  const auto pageRef = dest.getArrayItem(0).getObjGen();
+  if (!pageIndices.contains(pageRef)) {
+    return;
+  }
+  auto destPage = pageIndices.at(pageRef);
   links.push_back({
     rect,
     {
