@@ -187,7 +187,11 @@ std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(
 
       if (aoh.hasKey("/Dest")) {
         auto dest = aoh.getKey("/Dest");
-        auto destPage = pageNumbers.at(dest.getArrayItem(0).getObjGen());
+        auto destRef = dest.getArrayItem(0).getObjGen();
+        if (!pageNumbers.contains(destRef)) {
+          continue;
+        }
+        auto destPage = pageNumbers.at(destRef);
         auto linkRect = annotation.getRect();
         links.push_back({
           rect,
@@ -235,7 +239,11 @@ std::vector<std::vector<NormalizedLink>> FindAllHyperlinks(
         if (!dest.isArray()) {
           continue;
         }
-        auto destPage = pageNumbers.at(dest.getArrayItem(0).getObjGen());
+        auto destRef = dest.getArrayItem(0).getObjGen();
+        if (!pageNumbers.contains(destRef)) {
+          continue;
+        }
+        auto destPage = pageNumbers.at(destRef);
         auto linkRect = annotation.getRect();
         links.push_back({
           rect,
