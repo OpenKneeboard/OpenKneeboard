@@ -44,7 +44,9 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
   .position = {0.0f, 0.0f, 0.0f},
 };
 
-const std::string_view OpenXRLayerName {"XR_APILAYER_FREDEMMOTT_OpenKneeboard"};
+constexpr std::string_view OpenXRLayerName {
+  "XR_APILAYER_FREDEMMOTT_OpenKneeboard"};
+static_assert(OpenXRLayerName.size() <= XR_MAX_API_LAYER_NAME_SIZE);
 
 static std::shared_ptr<OpenXRNext> gNext;
 
@@ -348,25 +350,11 @@ XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) {
   return gNext->xrEndFrame(session, frameEndInfo);
 }
 
-XrResult xrEnumerateApiLayerProperties(
-  uint32_t /*propertyCapacityInput*/,
-  uint32_t* propertyCountOutput,
-  XrApiLayerProperties* /*properties*/) {
-  *propertyCountOutput = 0;
-  return XR_SUCCESS;
-}
-
 XrResult xrGetInstanceProcAddr(
   XrInstance instance,
   const char* name_cstr,
   PFN_xrVoidFunction* function) {
   std::string_view name {name_cstr};
-
-  if (name == "xrEnumerateApiLayerProperties") {
-    *function
-      = reinterpret_cast<PFN_xrVoidFunction>(&xrEnumerateApiLayerProperties);
-    return XR_SUCCESS;
-  }
 
   if (name == "xrCreateSession") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateSession);
@@ -385,15 +373,20 @@ XrResult xrGetInstanceProcAddr(
     return XR_SUCCESS;
   }
 
-  if (!gNext) {
-    dprintf(
-      "Unsupported OpenXR call '{}' with instance {:#016x} and no next",
-      name,
-      reinterpret_cast<uintptr_t>(instance));
-    return XR_ERROR_FUNCTION_UNSUPPORTED;
+  if (gNext) {
+    return gNext->xrGetInstanceProcAddr(instance, name_cstr, function);
   }
 
-  return gNext->xrGetInstanceProcAddr(instance, name_cstr, function);
+  if (name == "xrEnumerateApiLayerProperties") {
+    // No need to do anything here; should be implemented by the runtime
+    return XR_SUCCESS;
+  }
+
+  dprintf(
+    "Unsupported OpenXR call '{}' with instance {:#016x} and no next",
+    name,
+    reinterpret_cast<uintptr_t>(instance));
+  return XR_ERROR_FUNCTION_UNSUPPORTED;
 }
 
 XrResult xrCreateApiLayerInstance(
