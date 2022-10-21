@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/shm.h>
 #include <OpenKneeboard/version.h>
 #include <Windows.h>
 #include <d3d11_2.h>
@@ -317,7 +317,7 @@ size_t Snapshot::GetRenderCacheKey() const {
 }
 
 bool LayerConfig::IsValid() const {
-  return this && mImageWidth > 0 && mImageHeight > 0;
+  return mImageWidth > 0 && mImageHeight > 0;
 }
 
 Config Snapshot::GetConfig() const {
@@ -370,7 +370,7 @@ SharedTexture11 Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
     return {};
   }
 
-  return std::move(texture);
+  return texture;
 }
 
 bool Snapshot::IsValid() const {

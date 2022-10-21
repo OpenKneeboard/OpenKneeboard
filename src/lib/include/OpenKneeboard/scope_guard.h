@@ -30,7 +30,7 @@ class scope_guard final {
 
  public:
   scope_guard(std::function<void()> f);
-  ~scope_guard();
+  ~scope_guard() noexcept;
 
   scope_guard(const scope_guard& other) = delete;
   scope_guard& operator=(const scope_guard&) = delete;

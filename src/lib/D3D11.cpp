@@ -17,11 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <DirectXTK/SpriteBatch.h>
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <directxtk/SpriteBatch.h>
 #include <shims/winrt/base.h>
 #include <vrperfkit/d3d11_helper.h>
 
@@ -95,7 +95,11 @@ void CopyTextureWithOpacity(
   ID3D11ShaderResourceView* source,
   ID3D11RenderTargetView* dest,
   float opacity) {
-  CopyTextureWithTint(device, source, dest, DirectX::Colors::White * opacity);
+  CopyTextureWithTint(
+    device,
+    source,
+    dest,
+    DirectX::FXMVECTOR {opacity, opacity, opacity, opacity});
 }
 
 void DrawTextureWithOpacity(
@@ -111,7 +115,7 @@ void DrawTextureWithOpacity(
     dest,
     sourceRect,
     destRect,
-    DirectX::Colors::White * opacity);
+    DirectX::FXMVECTOR {opacity, opacity, opacity, opacity});
 }
 
 IRenderTargetView::IRenderTargetView() = default;

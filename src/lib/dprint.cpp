@@ -163,10 +163,13 @@ void dprint(std::wstring_view message) {
 
   if (IsConsoleOutputEnabled()) {
     if (AllocConsole()) {
+      FILE* inStream {};
+      FILE* outStream {};
+      FILE* errStream {};
       // Gets detour trace working too :)
-      freopen("CONIN$", "r", stdin);
-      freopen("CONOUT$", "w", stdout);
-      freopen("CONOUT$", "w", stderr);
+      freopen_s(&inStream, "CONIN$", "r", stdin);
+      freopen_s(&outStream, "CONOUT$", "w", stdout);
+      freopen_s(&errStream, "CONOUT$", "w", stderr);
     }
     auto handle = GetStdHandle(STD_ERROR_HANDLE);
     if (handle == INVALID_HANDLE_VALUE) {

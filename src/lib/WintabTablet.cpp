@@ -23,11 +23,11 @@
 #include <OpenKneeboard/utf8.h>
 
 // clang-format off
-#include <wintab/WINTAB.h>
+#include <wintab/WINTAB.H>
 #define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE)
 #define PACKETMODE 0
 #define PACKETEXPKEYS PKEXT_ABSOLUTE
-#include <wintab/PKTDEF.h>
+#include <wintab/PKTDEF.H>
 // clang-format on
 
 #define WINTAB_FUNCTIONS \

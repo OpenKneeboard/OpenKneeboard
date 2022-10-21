@@ -2,12 +2,13 @@ cmake_minimum_required(VERSION 3.23)
 
 # Required for ID3D11On12Device2
 set(MINIMUM_WINDOWS_VERSION "10.0.19041.0")
+set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}")
+# Required for XAML resources in self-contained mode
+set(CMAKE_INSTALL_BINDIR "." CACHE STRING "Path to install binaries relative to the root" FORCE)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}")
-set(CMAKE_INSTALL_BINDIR "." CACHE STRING "Path to install binaries relative to the root" FORCE)
 
 set(
   CMAKE_VS_GLOBALS
@@ -51,16 +52,6 @@ set(
 )
 add_link_options("${COMMON_LINK_OPTIONS}")
 
-set(
-  COMMON_COMPILE_OPTIONS
-  "/await:strict"
-  # Synchronous writes to PDB files in case building with parallel CL.exe
-  "/FS"
-  # Include content and marker in error messages
-  "/diagnostics:caret"
-)
-add_compile_options(${COMMON_COMPILE_OPTIONS})
-
 if(DEFINED ENV{GITHUB_RUN_NUMBER})
   set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
 else()
@@ -74,15 +65,40 @@ endif()
 project(com.fredemmott.openkneeboard VERSION 1.3.0.${VERSION_BUILD} LANGUAGES CXX C)
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
 
+if(MSVC AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set(CLANG_CL 1 CACHE BOOL "Whether we're using clang-cl")
+else()
+  set(CLANG_CL 0)
+endif()
+
+message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "Simulated compiler: ${CMAKE_CXX_SIMULATE_ID}")
+message(STATUS "MSVC: ${MSVC}")
+message(STATUS "CLANG_CL: ${CLANG_CL}")
+
+set(COMMON_COMPILE_OPTIONS)
+if(MSVC AND NOT CLANG_CL)
+  list(
+    APPEND COMMON_COMPILE_OPTIONS
+    # Standards-compliant C++20 coroutines
+    "/await:strict"
+    # Synchronous writes to PDB files in case building with parallel CL.exe
+    "/FS"
+    # Include content and marker in error messages
+    "/diagnostics:caret"
+  )
+endif()
+add_compile_options(${COMMON_COMPILE_OPTIONS})
+
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
 
 include(sign_target.cmake)
 
 
 configure_file(
-	"${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props"
-	"${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props"
-	COPYONLY
+  "${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props"
+  "${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props"
+  COPYONLY
 )
 
 add_subdirectory("third-party")

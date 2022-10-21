@@ -19,6 +19,8 @@
  */
 #pragma once
 
+struct ID3D12CommandQueue;
+
 #ifdef __cplusplus
 extern "C" {
 #else

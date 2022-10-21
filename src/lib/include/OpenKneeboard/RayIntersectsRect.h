@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <DirectXTK/SimpleMath.h>
+#include <directxtk/SimpleMath.h>
 
 namespace OpenKneeboard {
 

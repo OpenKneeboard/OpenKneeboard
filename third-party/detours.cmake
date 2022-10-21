@@ -2,6 +2,11 @@ set(DETOURS_CONFIG "$<IF:$<STREQUAL:$<CONFIG>,Debug>,Debug,Release>")
 set(LIB "lib.X64${DETOURS_CONFIG}/detours.lib")
 include(ExternalProject)
 
+# Detours must be built with MSVC, and the MSVC headers
+set(DETOURS_INCLUDE $ENV{INCLUDE})
+list(FILTER DETOURS_INCLUDE EXCLUDE REGEX ".+\\clang\\.+")
+list(JOIN DETOURS_INCLUDE "$<SEMICOLON>" DETOURS_INCLUDE)
+
 # TODO: switch to stable release once 4.x is out (https://github.com/microsoft/Detours/projects/1)
 ExternalProject_Add(
   detoursBuild
@@ -13,7 +18,9 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
     ${CMAKE_COMMAND} -E env
+    "INCLUDE=${DETOURS_INCLUDE}"
     "DETOURS_CONFIG=${DETOURS_CONFIG}"
+    "DETOURS_TARGET_PROCESSOR=X64"
     nmake
   INSTALL_COMMAND ""
 

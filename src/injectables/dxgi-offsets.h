@@ -19,6 +19,8 @@
  */
 #pragma once
 
+struct IDXGISwapChain;
+
 #ifdef __cplusplus
 extern "C" {
 #else
