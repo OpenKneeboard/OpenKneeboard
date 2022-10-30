@@ -19,6 +19,7 @@ namespace OpenKneeboardApp
     {
         DCSRadioLogTabUIData();
         UInt8 MissionStartBehavior;
+        Boolean TimestampsEnabled;
     }
 
     [default_interface]

@@ -77,6 +77,8 @@ struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
   DCSRadioLogTabUIData() = default;
   uint8_t MissionStartBehavior() const;
   void MissionStartBehavior(uint8_t value);
+  bool TimestampsEnabled() const;
+  void TimestampsEnabled(bool value);
 
  private:
   mutable std::weak_ptr<OpenKneeboard::DCSRadioLogTab> mTab;

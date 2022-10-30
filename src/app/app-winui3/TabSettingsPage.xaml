@@ -47,10 +47,19 @@
             <SymbolIcon Symbol="Delete" />
           </Button>
         </Grid>
-        <RadioButtons SelectedIndex="{x:Bind MissionStartBehavior, Mode=TwoWay}" MaxColumns="2" Header="On mission start">
+        <RadioButtons
+          SelectedIndex="{x:Bind MissionStartBehavior, Mode=TwoWay}"
+          MaxColumns="2"
+          Header="On mission start">
           <x:String>Draw a separator</x:String>
           <x:String>Clear history</x:String>
         </RadioButtons>
+        <ToggleSwitch
+          IsOn="{x:Bind TimestampsEnabled, Mode=TwoWay}"
+          Header="Timestamps"
+          OffContent="No Timestamps"
+          OnContent="Show Timestamps"
+        />
       </StackPanel>
     </DataTemplate>
   </Page.Resources>

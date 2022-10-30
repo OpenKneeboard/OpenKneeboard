@@ -83,6 +83,15 @@ void DCSRadioLogTab::SetMissionStartBehavior(MissionStartBehavior value) {
   this->evSettingsChangedEvent.Emit();
 }
 
+bool DCSRadioLogTab::GetTimestampsEnabled() const {
+  return this->mShowTimestamps;
+}
+
+void DCSRadioLogTab::SetTimestampsEnabled(bool value) {
+  this->mShowTimestamps = value;
+  this->evSettingsChangedEvent.Emit();
+}
+
 utf8_string DCSRadioLogTab::GetGlyph() const {
   return "\uF12E";
 }

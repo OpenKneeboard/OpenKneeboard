@@ -317,6 +317,14 @@ void DCSRadioLogTabUIData::MissionStartBehavior(uint8_t value) {
     static_cast<DCSRadioLogTab::MissionStartBehavior>(value));
 }
 
+bool DCSRadioLogTabUIData::TimestampsEnabled() const {
+  return this->GetTab()->GetTimestampsEnabled();
+}
+
+void DCSRadioLogTabUIData::TimestampsEnabled(bool value) {
+  this->GetTab()->SetTimestampsEnabled(value);
+}
+
 winrt::Microsoft::UI::Xaml::DataTemplate TabUIDataTemplateSelector::Generic() {
   return mGeneric;
 }

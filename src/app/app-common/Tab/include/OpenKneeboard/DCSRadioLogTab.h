@@ -59,6 +59,9 @@ class DCSRadioLogTab final : public TabBase,
   MissionStartBehavior GetMissionStartBehavior() const;
   void SetMissionStartBehavior(MissionStartBehavior);
 
+  bool GetTimestampsEnabled() const;
+  void SetTimestampsEnabled(bool);
+
  protected:
   virtual void OnGameEvent(
     const GameEvent&,
