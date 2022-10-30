@@ -106,7 +106,13 @@ void TabletProxy::Initialize() {
     GWLP_WNDPROC,
     reinterpret_cast<LONG_PTR>(&HookedWindowProc)));
   if (!mWindowProc) {
-    dprintf("Failed to install windowproc: {}", GetLastError());
+    const auto err = GetLastError();
+    if (err == ERROR_INVALID_WINDOW_HANDLE) {
+      mTargetWindow = NULL;
+      mTablet = {};
+      return;
+    }
+    dprintf("Failed to install windowproc: {}", err);
     OPENKNEEBOARD_BREAK;
     return;
   }
