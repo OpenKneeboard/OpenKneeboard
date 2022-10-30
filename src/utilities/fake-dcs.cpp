@@ -65,7 +65,12 @@ int main() {
 
   for (int i = 0; i < 4; ++i) {
     for (auto message: messages) {
-      (GameEvent {DCS::EVT_RADIO_MESSAGE, message}).Send();
+      auto payload = DCSWorld::MessageEvent {
+        .message = message,
+        .messageType = DCSWorld::MessageType::Radio,
+        .missionTime = 0,
+      };
+      (GameEvent {DCS::EVT_MESSAGE, (nlohmann::json {payload}).dump()}).Send();
     }
   }
 

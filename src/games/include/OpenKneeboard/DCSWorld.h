@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Game.h>
+#include <OpenKneeboard/json.h>
 
 #include <shims/filesystem>
 #include <string>
@@ -48,30 +49,65 @@ class DCSWorld final : public OpenKneeboard::Game {
   virtual std::shared_ptr<GameInstance> CreateGameInstance(
     const nlohmann::json&) override;
 
-  static constexpr char EVT_AIRCRAFT[]
-    = "com.fredemmott.openkneeboard.dcsext/Aircraft";
-  static constexpr char EVT_INSTALL_PATH[]
-    = "com.fredemmott.openkneeboard.dcsext/InstallPath";
-  static constexpr char EVT_MISSION[]
-    = "com.fredemmott.openkneeboard.dcsext/Mission";
-  static constexpr char EVT_ORIGIN[]
-    = "com.fredemmott.openkneeboard.dcsext/Origin";
-  static constexpr char EVT_SELF_DATA[]
-    = "com.fredemmott.openkneeboard.dcsext/SelfData";
-  static constexpr char EVT_RADIO_MESSAGE[]
-    = "com.fredemmott.openkneeboard.dcsext/RadioMessage";
-  static constexpr char EVT_SAVED_GAMES_PATH[]
-    = "com.fredemmott.openkneeboard.dcsext/SavedGamesPath";
-  static constexpr char EVT_SIMULATION_START[]
-    = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
-  static constexpr char EVT_TERRAIN[]
-    = "com.fredemmott.openkneeboard.dcsext/Terrain";
-
   enum class Coalition {
     Neutral = 0,
     Red = 1,
     Blue = 2,
   };
+
+  static constexpr std::string_view EVT_AIRCRAFT
+    = "com.fredemmott.openkneeboard.dcsext/Aircraft";
+  static constexpr std::string_view EVT_INSTALL_PATH
+    = "com.fredemmott.openkneeboard.dcsext/InstallPath";
+  static constexpr std::string_view EVT_MISSION
+    = "com.fredemmott.openkneeboard.dcsext/Mission";
+  static constexpr std::string_view EVT_ORIGIN
+    = "com.fredemmott.openkneeboard.dcsext/Origin";
+  static constexpr std::string_view EVT_SELF_DATA
+    = "com.fredemmott.openkneeboard.dcsext/SelfData";
+  static constexpr std::string_view EVT_MESSAGE
+    = "com.fredemmott.openkneeboard.dcsext/Message";
+  static constexpr std::string_view EVT_SAVED_GAMES_PATH
+    = "com.fredemmott.openkneeboard.dcsext/SavedGamesPath";
+  static constexpr std::string_view EVT_SIMULATION_START
+    = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
+  static constexpr std::string_view EVT_TERRAIN
+    = "com.fredemmott.openkneeboard.dcsext/Terrain";
+
+  struct SimulationStartEvent {
+    static constexpr auto ID {EVT_SIMULATION_START};
+    int64_t missionStartTime {0};
+  };
+
+  enum class MessageType {
+    Invalid,
+    Radio,
+    Show,
+    Trigger,
+  };
+
+  struct MessageEvent {
+    static constexpr auto ID {EVT_MESSAGE};
+    std::string message;
+    MessageType messageType {MessageType::Invalid};
+    int64_t missionTime {0};
+  };
 };
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  DCSWorld::MessageType,
+  {
+    {DCSWorld::MessageType::Radio, "radio"},
+    {DCSWorld::MessageType::Show, "show"},
+    {DCSWorld::MessageType::Trigger, "trigger"},
+  });
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+  DCSWorld::SimulationStartEvent,
+  missionStartTime)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+  DCSWorld::MessageEvent,
+  message,
+  messageType,
+  missionTime)
 
 }// namespace OpenKneeboard

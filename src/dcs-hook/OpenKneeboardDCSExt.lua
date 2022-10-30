@@ -165,10 +165,14 @@ end
 function callbacks.onSimulationStart()
   l("onSimulationStart")
   updateGeo()
+  
+  local startData = net.lua2json({
+    missionStartTime = Export.LoGetMissionStartTime(),
+  })
 
   local selfData = Export.LoGetSelfData()
   if not selfData then
-    OpenKneeboard.send("SimulationStart", "");
+    OpenKneeboard.send("SimulationStart", startData);
     sendState()
     return
   end
@@ -176,7 +180,7 @@ function callbacks.onSimulationStart()
   state.selfData = selfData
   l("Aircraft: "..state.aircraft)
   sendState()
-  OpenKneeboard.send("SimulationStart", "");
+  OpenKneeboard.send("SimulationStart", startData);
 end
 
 function callbacks.onPlayerChangeSlot(id)
@@ -205,19 +209,30 @@ function callbacks.onSimulationFrame()
   sendState()
 end
 
+function sendMessage(message, messageType)
+  OpenKneeboard.send(
+    "Message",
+    net.lua2json({
+      message = message,
+      messageType = messageType,
+      missionTime = Export.LoGetMissionStartTime() + DCS.getModelTime(),
+    })
+  )
+end
+
 function callbacks.onRadioMessage(message, duration)
-  OpenKneeboard.send("RadioMessage", message)
+  sendMessage(message, "radio")
 end
 
 function callbacks.onShowMessage(message, duration)
-  OpenKneeboard.send("RadioMessage", "[show]"..message);
+  sendMessage(message, "show")
 end
 
 function callbacks.onTriggerMessage(message, duration, clearView)
   if clearView then
     return
   end
-  OpenKneeboard.send("RadioMessage", ">> "..message);
+  sendMessage(message, "trigger")
 end
 
 DCS.setUserCallbacks(callbacks)

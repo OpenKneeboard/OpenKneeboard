@@ -66,10 +66,12 @@ class DCSRadioLogTab final : public TabBase,
     const std::filesystem::path& savedGamesPath) override;
 
  private:
+  struct Settings;
   winrt::apartment_context mUIThread;
   std::shared_ptr<PlainTextPageSource> mPageSource;
   MissionStartBehavior mMissionStartBehavior {
     MissionStartBehavior::DrawHorizontalLine};
+  bool mShowTimestamps = false;
 
   winrt::fire_and_forget OnGameEventImpl(
     const GameEvent&,

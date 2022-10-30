@@ -31,6 +31,7 @@ using DCS = OpenKneeboard::DCSWorld;
 int main() {
   printf("Feeding GameEvents to OpenKneeboard - hit Ctrl-C to exit.\n");
   ConsoleLoopCondition cliLoop;
+  const auto pid = GetCurrentProcessId();
   do {
     (GameEvent {
        .name = DCS::EVT_SAVED_GAMES_PATH,
@@ -42,13 +43,19 @@ int main() {
        .value = DCS::GetInstalledPath(DCS::Version::OPEN_BETA),
      })
       .Send();
+
+    const auto now = std::chrono::system_clock::now();
     (GameEvent {
-       .name = DCS::EVT_RADIO_MESSAGE,
-       .value = std::format(
-         "{}: Test message from PID {}",
-         std::chrono::system_clock::now(),
-         GetCurrentProcessId()),
-     })
+       .name = DCS::EVT_MESSAGE,
+       .value
+       = (nlohmann::json {DCSWorld::MessageEvent {
+            .message = std::format("{}: Test message from PID {}", now, pid),
+            .messageType = DCSWorld::MessageType::Radio,
+            .missionTime = std::chrono::duration_cast<std::chrono::seconds>(
+                             now.time_since_epoch())
+                             .count(),
+          }})
+           .dump()})
       .Send();
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");

@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/json_fwd.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <cstddef>
@@ -29,6 +30,14 @@ namespace OpenKneeboard {
 struct GameEvent final {
   utf8_string name;
   utf8_string value;
+
+  template <class T>
+  T ParsedValue() const {
+    if (name != T::ID) {
+      throw std::logic_error("Parse type does not match event name");
+    }
+    return nlohmann::json::parse(this->value);
+  }
 
   operator bool() const;
 

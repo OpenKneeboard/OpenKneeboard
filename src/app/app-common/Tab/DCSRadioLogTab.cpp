@@ -22,6 +22,8 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 
+#include <chrono>
+
 using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
@@ -59,11 +61,15 @@ void DCSRadioLogTab::LoadSettings(const nlohmann::json& json) {
   if (json.contains("MissionStartBehavior")) {
     mMissionStartBehavior = json.at("MissionStartBehavior");
   }
+  if (json.contains("ShowTimestamps")) {
+    mShowTimestamps = json.at("ShowTimestamps");
+  }
 }
 
 nlohmann::json DCSRadioLogTab::GetSettings() const {
   return {
     {"MissionStartBehavior", mMissionStartBehavior},
+    {"ShowTimestamps", mShowTimestamps},
   };
 };
 
@@ -114,19 +120,44 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
           mPageSource->ClearText();
           break;
       }
+      const auto parsed = event.ParsedValue<DCS::SimulationStartEvent>();
+      mPageSource->PushMessage(std::format(
+        _(">> Mission started at {:%T}"),
+        std::chrono::utc_seconds {
+          std::chrono::seconds {parsed.missionStartTime}}));
+
       this->evNeedsRepaintEvent.Emit();
     }
     co_return;
   }
 
-  if (event.name != DCS::EVT_RADIO_MESSAGE) {
+  if (event.name != DCS::EVT_MESSAGE) {
     co_return;
   }
+
+  const auto parsed = event.ParsedValue<DCS::MessageEvent>();
 
   co_await mUIThread;
 
   const EventDelay delay;
-  mPageSource->PushMessage(event.value);
+  std::string formatted;
+  if (mShowTimestamps) {
+    formatted = std::format(
+      "{:%T} ",
+      std::chrono::utc_seconds {std::chrono::seconds {parsed.missionTime}});
+  }
+  switch (parsed.messageType) {
+    case DCS::MessageType::Radio:
+      break;
+    case DCS::MessageType::Show:
+      formatted += "[show] ";
+      break;
+    case DCS::MessageType::Trigger:
+      formatted += ">> ";
+      break;
+  }
+  formatted += parsed.message;
+  mPageSource->PushMessage(formatted);
 }
 
 void DCSRadioLogTab::Reload() {
