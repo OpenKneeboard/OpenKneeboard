@@ -64,7 +64,7 @@ jobs:
           $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
           $kitBin = "$kitDir\x64"
 
-          echo "::set-output name=KIT_BIN::$kitBin"
+          echo "KIT_BIN=$kitBin" >> $GITHUB_OUTPUT
       - name: Create MSIX
         shell: pwsh
         run: |
