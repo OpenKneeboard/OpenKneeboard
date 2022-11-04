@@ -18,7 +18,6 @@
  * USA.
  */
 #include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/config.h>
 #include <Windows.h>
 
 #include <format>
@@ -29,7 +28,7 @@ static std::filesystem::path GetTemporaryDirectoryRoot() {
   wchar_t tempDirBuf[MAX_PATH];
   auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
   return std::filesystem::path {std::wstring_view {tempDirBuf, tempDirLen}}
-  / ProjectNameW;
+  / L"OpenKneeboard";
 }
 
 std::filesystem::path GetTemporaryDirectory() {
@@ -46,7 +45,7 @@ std::filesystem::path GetTemporaryDirectory() {
                   GetCurrentProcessId());
 
   if (!std::filesystem::exists(tempDir)) {
-    std::filesystem::create_directory(tempDir);
+    std::filesystem::create_directories(tempDir);
   }
 
   sCache = std::filesystem::canonical(tempDir);
