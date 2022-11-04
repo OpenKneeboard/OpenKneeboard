@@ -270,5 +270,6 @@ target_link_libraries(
   OpenKneeboard-Filesystem
   PUBLIC
   OpenKneeboard-shims
+  OpenKneeboard-config
   _libheaders
 )

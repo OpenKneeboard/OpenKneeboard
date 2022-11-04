@@ -23,6 +23,7 @@
 // clang-format on
 
 #include <Dbghelp.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -246,6 +247,13 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
 
   auto troubleshootingStore = TroubleshootingStore::Get();
   LogSystemInformation();
+
+  dprint("Cleaning up temporary directories...");
+  Filesystem::CleanupTemporaryDirectories();
+  dprint("Cleaning up stale runtime files...");
+  RuntimeFiles::RemoveStaleFiles();
+
+  dprint("Starting Xaml application");
 
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();

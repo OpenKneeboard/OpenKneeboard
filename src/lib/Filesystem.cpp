@@ -18,9 +18,19 @@
  * USA.
  */
 #include <OpenKneeboard/Filesystem.h>
+#include <OpenKneeboard/config.h>
 #include <Windows.h>
 
+#include <format>
+
 namespace OpenKneeboard::Filesystem {
+
+static std::filesystem::path GetTemporaryDirectoryRoot() {
+  wchar_t tempDirBuf[MAX_PATH];
+  auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
+  return std::filesystem::path {std::wstring_view {tempDirBuf, tempDirLen}}
+  / ProjectNameW;
+}
 
 std::filesystem::path GetTemporaryDirectory() {
   static std::filesystem::path sCache;
@@ -30,14 +40,30 @@ std::filesystem::path GetTemporaryDirectory() {
 
   wchar_t tempDirBuf[MAX_PATH];
   auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
-  auto tempDir
-    = std::filesystem::path {std::wstring_view {tempDirBuf, tempDirLen}};
+  auto tempDir = GetTemporaryDirectoryRoot()
+    / std::format("{:%F %H-%M-%S} {}",
+                  std::chrono::system_clock::now(),
+                  GetCurrentProcessId());
+
   if (!std::filesystem::exists(tempDir)) {
     std::filesystem::create_directory(tempDir);
   }
 
   sCache = std::filesystem::canonical(tempDir);
+
   return sCache;
+}
+
+void CleanupTemporaryDirectories() {
+  const auto root = GetTemporaryDirectoryRoot();
+  if (!std::filesystem::exists(root)) {
+    return;
+  }
+
+  std::error_code ignored;
+  for (const auto& it: std::filesystem::directory_iterator(root)) {
+    std::filesystem::remove_all(it.path(), ignored);
+  }
 }
 
 std::filesystem::path GetRuntimeDirectory() {

@@ -30,7 +30,7 @@ class DCSExtractedMission final {
   DCSExtractedMission& operator=(const DCSExtractedMission&) = delete;
 
   DCSExtractedMission();
-  ~DCSExtractedMission();
+  ~DCSExtractedMission() noexcept;
 
   static std::shared_ptr<DCSExtractedMission> Get(
     const std::filesystem::path& zipPath);

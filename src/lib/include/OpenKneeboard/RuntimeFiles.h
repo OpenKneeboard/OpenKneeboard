@@ -48,6 +48,8 @@ OPENKNEEBOARD_RUNTIME_FILES
 
 /** Installs to `GetInstallationDirectory()`, or throws */
 void Install();
+/** Cleans up any files that are no longer needed */
+void RemoveStaleFiles() noexcept;
 
 std::filesystem::path GetInstallationDirectory();
 

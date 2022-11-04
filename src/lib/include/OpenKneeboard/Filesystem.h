@@ -28,6 +28,8 @@ namespace OpenKneeboard::Filesystem {
 std::filesystem::path GetTemporaryDirectory();
 std::filesystem::path GetRuntimeDirectory();
 
+void CleanupTemporaryDirectories();
+
 class ScopedDeleter {
  public:
   ScopedDeleter(const std::filesystem::path&);

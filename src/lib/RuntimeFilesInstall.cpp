@@ -160,4 +160,26 @@ void Install() {
 #undef IT
 }
 
+void RemoveStaleFiles() noexcept {
+  const auto source = Filesystem::GetRuntimeDirectory();
+  const auto destination = RuntimeFiles::GetInstallationDirectory();
+  if (!std::filesystem::exists(destination)) {
+    return;
+  }
+
+  for (const auto& it: std::filesystem::directory_iterator(destination)) {
+    const auto path = it.path();
+    const auto filename = path.filename();
+    if (std::filesystem::exists(source / filename)) {
+      dprintf("Keeping file {}", to_utf8(path));
+      continue;
+    }
+    dprintf("Removing stale file: {}", to_utf8(path));
+    std::error_code ec;
+    if (!std::filesystem::remove(path, ec)) {
+      dprintf("Removing file failed: {}", ec.message());
+    }
+  }
+}
+
 }// namespace OpenKneeboard::RuntimeFiles

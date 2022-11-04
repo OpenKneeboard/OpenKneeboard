@@ -39,11 +39,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   std::uniform_int_distribution<uint64_t> randDist;
 
   mTempDir = Filesystem::GetTemporaryDirectory()
-    / std::format(
-               "OpenKneeboard-{}-{:016x}-{}",
-               static_cast<uint32_t>(GetCurrentProcessId()),
-               randDist(randDevice),
-               zipPath.stem().string());
+    / std::format("{:016x}-{}", randDist(randDevice), zipPath.stem().string());
   dprintf(
     L"Extracting DCS mission {} to {}", zipPath.wstring(), mTempDir.wstring());
   std::filesystem::create_directories(mTempDir);
@@ -93,7 +89,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   }
 }
 
-DCSExtractedMission::~DCSExtractedMission() {
+DCSExtractedMission::~DCSExtractedMission() noexcept {
   std::filesystem::remove_all(mTempDir);
 }
 

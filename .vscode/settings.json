@@ -96,7 +96,8 @@
     "resumable": "cpp",
     "ranges": "cpp",
     "shared_mutex": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "cinttypes": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",
