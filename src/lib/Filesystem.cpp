@@ -41,7 +41,9 @@ std::filesystem::path GetTemporaryDirectory() {
   auto tempDirLen = GetTempPathW(MAX_PATH, tempDirBuf);
   auto tempDir = GetTemporaryDirectoryRoot()
     / std::format("{:%F %H-%M-%S} {}",
-                  std::chrono::system_clock::now(),
+
+                  std::chrono::floor<std::chrono::seconds>(
+                    std::chrono::system_clock::now()),
                   GetCurrentProcessId());
 
   if (!std::filesystem::exists(tempDir)) {
