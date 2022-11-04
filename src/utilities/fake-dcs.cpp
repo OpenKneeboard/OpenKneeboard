@@ -70,7 +70,8 @@ int main() {
         .messageType = DCSWorld::MessageType::Radio,
         .missionTime = 0,
       };
-      (GameEvent {DCS::EVT_MESSAGE, (nlohmann::json {payload}).dump()}).Send();
+      nlohmann::json j = payload;
+      (GameEvent {DCS::EVT_MESSAGE, j.dump()}).Send();
     }
   }
 

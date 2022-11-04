@@ -48,13 +48,13 @@ int main() {
     (GameEvent {
        .name = DCS::EVT_MESSAGE,
        .value
-       = (nlohmann::json {DCSWorld::MessageEvent {
+       = (nlohmann::json(DCSWorld::MessageEvent {
             .message = std::format("{}: Test message from PID {}", now, pid),
             .messageType = DCSWorld::MessageType::Radio,
             .missionTime = std::chrono::duration_cast<std::chrono::seconds>(
                              now.time_since_epoch())
                              .count(),
-          }})
+          }))
            .dump()})
       .Send();
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
