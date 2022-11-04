@@ -405,7 +405,7 @@ void KneeboardState::SetTabsSettings(const nlohmann::json& j) {
   void KneeboardState::Reset##name##Settings() { \
     auto newSettings = mSettings; \
     newSettings.Reset##name##Section(mProfiles.mActiveProfile); \
-    /*this->Set##name##Settings(newSettings.m##name);*/ \
+    this->Set##name##Settings(newSettings.m##name); \
   }
 OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
