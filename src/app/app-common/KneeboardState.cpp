@@ -263,21 +263,13 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
-FlatConfig KneeboardState::GetFlatConfig() const {
-  return mSettings.mNonVR;
-}
-
-void KneeboardState::SetFlatConfig(const FlatConfig& value) {
+void KneeboardState::SetNonVRSettings(const FlatConfig& value) {
   mSettings.mNonVR = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
 }
 
-VRConfig KneeboardState::GetVRConfig() const {
-  return mSettings.mVR;
-}
-
-void KneeboardState::SetVRConfig(const VRConfig& value) {
+void KneeboardState::SetVRSettings(const VRConfig& value) {
   if (value.mEnableSteamVR != mSettings.mVR.mEnableSteamVR) {
     if (!value.mEnableSteamVR) {
       mOpenVRThread.request_stop();
@@ -301,10 +293,6 @@ void KneeboardState::SetVRConfig(const VRConfig& value) {
   mSettings.mVR = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
-}
-
-AppSettings KneeboardState::GetAppSettings() const {
-  return mSettings.mApp;
 }
 
 void KneeboardState::SetAppSettings(const AppSettings& value) {
@@ -350,12 +338,12 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   const auto newSettings = Settings::Load(newID);
   this->SetAppSettings(newSettings.mApp);
   // DirectInput
-  this->SetDoodleSettings(newSettings.mDoodles);
+  this->SetDoodlesSettings(newSettings.mDoodles);
   mGamesList->LoadSettings(newSettings.mGames);
-  this->SetFlatConfig(newSettings.mNonVR);
+  this->SetNonVRSettings(newSettings.mNonVR);
   mTabletInput->LoadSettings(newSettings.mTabletInput);
   mTabsList->LoadSettings(newSettings.mTabs);
-  this->SetVRConfig(newSettings.mVR);
+  this->SetVRSettings(newSettings.mVR);
   mSettings = newSettings;
 
   this->evSettingsChangedEvent.Emit();
@@ -381,11 +369,7 @@ void KneeboardState::SaveSettings() {
   evSettingsChangedEvent.Emit();
 }
 
-DoodleSettings KneeboardState::GetDoodleSettings() {
-  return mSettings.mDoodles;
-}
-
-void KneeboardState::SetDoodleSettings(const DoodleSettings& value) {
+void KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
   mSettings.mDoodles = value;
   this->SaveSettings();
 }
@@ -396,5 +380,34 @@ void KneeboardState::StartOpenVRThread() {
     OpenVRKneeboard().Run(stopToken);
   });
 }
+
+void KneeboardState::SetDirectInputSettings(
+  const DirectInputSettings& settings) {
+  mDirectInput->LoadSettings(settings);
+}
+
+void KneeboardState::SetTabletInputSettings(const TabletSettings& settings) {
+  mTabletInput->LoadSettings(settings);
+}
+
+void KneeboardState::SetGamesSettings(const nlohmann::json& j) {
+  mGamesList->LoadSettings(j);
+}
+
+void KneeboardState::SetTabsSettings(const nlohmann::json& j) {
+  mTabsList->LoadSettings(j);
+}
+
+#define IT(cpptype, name) \
+  cpptype KneeboardState::Get##name##Settings() const { \
+    return mSettings.m##name; \
+  } \
+  void KneeboardState::Reset##name##Settings() { \
+    auto newSettings = mSettings; \
+    newSettings.Reset##name##Section(mProfiles.mActiveProfile); \
+    /*this->Set##name##Settings(newSettings.m##name);*/ \
+  }
+OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
 
 }// namespace OpenKneeboard

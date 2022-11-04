@@ -203,4 +203,20 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mTabletInput,
   mVR)
 
+#define IT(cpptype, name) \
+  void Settings::Reset##name##Section(std::string_view profileID) { \
+    if (profileID == "default") { \
+      m##name = {}; \
+    } else { \
+      m##name = Settings::Load("default").m##name; \
+    } \
+    const auto path \
+      = Settings::GetDirectory() / "profiles" / profileID / #name ".json"; \
+    if (std::filesystem::exists(path)) { \
+      std::filesystem::remove(path); \
+    } \
+  }
+OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
+
 }// namespace OpenKneeboard

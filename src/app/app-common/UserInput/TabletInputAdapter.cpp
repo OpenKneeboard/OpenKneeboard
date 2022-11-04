@@ -95,6 +95,7 @@ void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
   } else {
     mDevice->SetButtonBindings({});
   }
+  this->evSettingsChangedEvent.Emit();
 }
 
 TabletInputAdapter::~TabletInputAdapter() {

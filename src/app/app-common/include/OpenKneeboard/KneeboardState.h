@@ -88,14 +88,12 @@ class KneeboardState final : private EventReceiver {
 
   TabsList* GetTabsList() const;
 
-  FlatConfig GetFlatConfig() const;
-  void SetFlatConfig(const FlatConfig&);
-  VRConfig GetVRConfig() const;
-  void SetVRConfig(const VRConfig&);
-  AppSettings GetAppSettings() const;
-  void SetAppSettings(const AppSettings&);
-  DoodleSettings GetDoodleSettings();
-  void SetDoodleSettings(const DoodleSettings&);
+#define IT(cpptype, name) \
+  cpptype Get##name##Settings() const; \
+  void Set##name##Settings(const cpptype&); \
+  void Reset##name##Settings();
+  OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
 
   void SaveSettings();
 

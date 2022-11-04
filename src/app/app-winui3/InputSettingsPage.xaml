@@ -66,11 +66,21 @@
   </Page.Resources>
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
     <StackPanel Orientation="Vertical">
-      <TextBlock
-        Style="{StaticResource TitleTextBlockStyle}"
-        Text="Input Settings"
-        Margin="0,0,0,8"
-      />
+      <Grid
+        ColumnDefinitions="*, Auto"
+        Margin="0,0,0,8">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource TitleTextBlockStyle}"
+          Text="Input Settings"
+          Margin="0,0,0,8"
+        />
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreDefaults"
+        />
+      </Grid>
       <ItemsRepeater ItemsSource="{x:Bind Devices, Mode=OneWay}">
         <ItemsRepeater.Layout>
           <StackLayout Orientation="Vertical" Spacing="24" />

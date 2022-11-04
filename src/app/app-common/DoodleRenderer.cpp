@@ -108,7 +108,7 @@ void DoodleRenderer::FlushCursorEvents() {
 
       const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
 
-      auto ds = mKneeboard->GetDoodleSettings();
+      auto ds = mKneeboard->GetDoodlesSettings();
       const auto tool = erasing ? ds.mEraser : ds.mPen;
       auto radius = tool.mMinimumRadius + (tool.mSensitivity * pressure);
 

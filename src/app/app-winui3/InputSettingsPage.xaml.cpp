@@ -26,6 +26,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserInputDevice.h>
+#include <OpenKneeboard/utf8.h>
 
 #include "Globals.h"
 
@@ -48,6 +49,29 @@ InputSettingsPage::InputSettingsPage() {
 
 InputSettingsPage::~InputSettingsPage() {
   this->RemoveAllEventListeners();
+}
+
+fire_and_forget InputSettingsPage::RestoreDefaults(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
+  dialog.Content(
+    box_value(to_hstring(_("Do you want to restore the default input settings, "
+                           "removing your preferences?"))));
+  dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
+  dialog.CloseButtonText(to_hstring(_("Cancel")));
+  dialog.DefaultButton(ContentDialogButton::Close);
+
+  if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  gKneeboard->ResetDirectInputSettings();
+  gKneeboard->ResetTabletInputSettings();
+
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Devices"));
 }
 
 winrt::event_token InputSettingsPage::PropertyChanged(

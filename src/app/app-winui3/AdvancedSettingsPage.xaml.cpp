@@ -75,13 +75,13 @@ void AdvancedSettingsPage::MultipleProfiles(bool value) noexcept {
 }
 
 bool AdvancedSettingsPage::GazeInputFocus() const noexcept {
-  return gKneeboard->GetVRConfig().mEnableGazeInputFocus;
+  return gKneeboard->GetVRSettings().mEnableGazeInputFocus;
 }
 
 void AdvancedSettingsPage::GazeInputFocus(bool enabled) noexcept {
-  auto vrc = gKneeboard->GetVRConfig();
+  auto vrc = gKneeboard->GetVRSettings();
   vrc.mEnableGazeInputFocus = enabled;
-  gKneeboard->SetVRConfig(vrc);
+  gKneeboard->SetVRSettings(vrc);
 }
 
 bool AdvancedSettingsPage::LoopPages() const noexcept {
@@ -105,49 +105,49 @@ void AdvancedSettingsPage::LoopTabs(bool value) noexcept {
 }
 
 uint32_t AdvancedSettingsPage::MinimumPenRadius() {
-  return gKneeboard->GetDoodleSettings().mPen.mMinimumRadius;
+  return gKneeboard->GetDoodlesSettings().mPen.mMinimumRadius;
 }
 
 void AdvancedSettingsPage::MinimumPenRadius(uint32_t value) {
-  auto ds = gKneeboard->GetDoodleSettings();
+  auto ds = gKneeboard->GetDoodlesSettings();
   ds.mPen.mMinimumRadius = value;
-  gKneeboard->SetDoodleSettings(ds);
+  gKneeboard->SetDoodlesSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::PenSensitivity() {
-  return gKneeboard->GetDoodleSettings().mPen.mSensitivity;
+  return gKneeboard->GetDoodlesSettings().mPen.mSensitivity;
 }
 
 void AdvancedSettingsPage::PenSensitivity(uint32_t value) {
-  auto ds = gKneeboard->GetDoodleSettings();
+  auto ds = gKneeboard->GetDoodlesSettings();
   ds.mPen.mSensitivity = value;
-  gKneeboard->SetDoodleSettings(ds);
+  gKneeboard->SetDoodlesSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::MinimumEraseRadius() {
-  return gKneeboard->GetDoodleSettings().mEraser.mMinimumRadius;
+  return gKneeboard->GetDoodlesSettings().mEraser.mMinimumRadius;
 }
 
 void AdvancedSettingsPage::MinimumEraseRadius(uint32_t value) {
-  auto ds = gKneeboard->GetDoodleSettings();
+  auto ds = gKneeboard->GetDoodlesSettings();
   ds.mEraser.mMinimumRadius = value;
-  gKneeboard->SetDoodleSettings(ds);
+  gKneeboard->SetDoodlesSettings(ds);
 }
 
 uint32_t AdvancedSettingsPage::EraseSensitivity() {
-  return gKneeboard->GetDoodleSettings().mEraser.mSensitivity;
+  return gKneeboard->GetDoodlesSettings().mEraser.mSensitivity;
 }
 
 void AdvancedSettingsPage::EraseSensitivity(uint32_t value) {
-  auto ds = gKneeboard->GetDoodleSettings();
+  auto ds = gKneeboard->GetDoodlesSettings();
   ds.mEraser.mSensitivity = value;
-  gKneeboard->SetDoodleSettings(ds);
+  gKneeboard->SetDoodlesSettings(ds);
 }
 
 void AdvancedSettingsPage::RestoreDoodleDefaults(
   const IInspectable&,
   const IInspectable&) noexcept {
-  gKneeboard->SetDoodleSettings({});
+  gKneeboard->ResetDoodlesSettings();
 
   for (auto prop: {
          L"MinimumPenRadius",
@@ -162,9 +162,9 @@ void AdvancedSettingsPage::RestoreDoodleDefaults(
 void AdvancedSettingsPage::RestoreQuirkDefaults(
   const IInspectable&,
   const IInspectable&) noexcept {
-  auto vr = gKneeboard->GetVRConfig();
+  auto vr = gKneeboard->GetVRSettings();
   vr.mQuirks = {};
-  gKneeboard->SetVRConfig(vr);
+  gKneeboard->SetVRSettings(vr);
   for (auto prop: {
          L"Quirk_OculusSDK_DiscardDepthInformation",
          L"Quirk_Varjo_OpenXR_InvertYPosition",
@@ -176,37 +176,37 @@ void AdvancedSettingsPage::RestoreQuirkDefaults(
 
 bool AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation()
   const noexcept {
-  return gKneeboard->GetVRConfig().mQuirks.mOculusSDK_DiscardDepthInformation;
+  return gKneeboard->GetVRSettings().mQuirks.mOculusSDK_DiscardDepthInformation;
 }
 
 void AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
   bool value) noexcept {
-  auto vrc = gKneeboard->GetVRConfig();
+  auto vrc = gKneeboard->GetVRSettings();
   vrc.mQuirks.mOculusSDK_DiscardDepthInformation = value;
-  gKneeboard->SetVRConfig(vrc);
+  gKneeboard->SetVRSettings(vrc);
 }
 
 bool AdvancedSettingsPage::Quirk_Varjo_OpenXR_InvertYPosition() const noexcept {
-  return gKneeboard->GetVRConfig().mQuirks.mVarjo_OpenXR_InvertYPosition;
+  return gKneeboard->GetVRSettings().mQuirks.mVarjo_OpenXR_InvertYPosition;
 }
 
 void AdvancedSettingsPage::Quirk_Varjo_OpenXR_InvertYPosition(
   bool value) noexcept {
-  auto vrc = gKneeboard->GetVRConfig();
+  auto vrc = gKneeboard->GetVRSettings();
   vrc.mQuirks.mVarjo_OpenXR_InvertYPosition = value;
-  gKneeboard->SetVRConfig(vrc);
+  gKneeboard->SetVRSettings(vrc);
 }
 
 bool AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer()
   const noexcept {
-  return gKneeboard->GetVRConfig().mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
+  return gKneeboard->GetVRSettings().mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
 }
 
 void AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(
   bool value) noexcept {
-  auto vrc = gKneeboard->GetVRConfig();
+  auto vrc = gKneeboard->GetVRSettings();
   vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
-  gKneeboard->SetVRConfig(vrc);
+  gKneeboard->SetVRSettings(vrc);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

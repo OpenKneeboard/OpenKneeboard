@@ -47,6 +47,9 @@ struct Settings final {
 
   static Settings Load(std::string_view profileID);
   void Save(std::string_view profileID) const;
+#define IT(cpptype, name) void Reset##name##Section(std::string_view profileID);
+  OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
 
   static std::filesystem::path GetDirectory();
 

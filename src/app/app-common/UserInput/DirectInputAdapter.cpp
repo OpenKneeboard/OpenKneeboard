@@ -69,6 +69,7 @@ DirectInputAdapter::DirectInputAdapter(
 void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
   mSettings = settings;
   this->Reload();
+  this->evSettingsChangedEvent.Emit();
 }
 
 void DirectInputAdapter::Reload() {

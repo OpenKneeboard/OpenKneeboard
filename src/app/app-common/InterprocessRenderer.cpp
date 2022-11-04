@@ -125,8 +125,8 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     .mGlobalInputLayerID = mKneeboard->GetActiveViewForGlobalInput()
                              ->GetRuntimeID()
                              .GetTemporaryValue(),
-    .mVR = mKneeboard->GetVRConfig(),
-    .mFlat = mKneeboard->GetFlatConfig(),
+    .mVR = mKneeboard->GetVRSettings(),
+    .mFlat = mKneeboard->GetNonVRSettings(),
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
   };
 
@@ -273,7 +273,7 @@ void InterprocessRenderer::Render(Layer& layer) {
   layer.mConfig.mImageWidth = usedSize.width;
   layer.mConfig.mImageHeight = usedSize.height;
 
-  const auto vrc = mKneeboard->GetVRConfig();
+  const auto vrc = mKneeboard->GetVRSettings();
   const auto xFitScale = vrc.mMaxWidth / usedSize.width;
   const auto yFitScale = vrc.mMaxHeight / usedSize.height;
   const auto scale = std::min<float>(xFitScale, yFitScale);
