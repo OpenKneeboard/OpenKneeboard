@@ -307,28 +307,6 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
 winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   co_await mUIThread;
 
-  const auto tab = mKneeboardView->GetCurrentTab();
-  if (!tab) {
-    co_return;
-  }
-
-  const auto id = tab->GetRuntimeID();
-
-  for (auto it: this->Navigation().MenuItems()) {
-    auto item = it.try_as<Control>();
-    if (!item) {
-      continue;
-    }
-    auto tag = item.Tag();
-    if (!tag) {
-      continue;
-    }
-    if (winrt::unbox_value<uint64_t>(tag) == id) {
-      Navigation().SelectedItem(item);
-      break;
-    }
-  }
-
   if (!mSwitchingTabsFromNavSelection) {
     // Don't automatically move away from "Profiles"
     if (
@@ -348,6 +326,28 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
           co_return;
         }
       }
+    }
+  }
+
+  const auto tab = mKneeboardView->GetCurrentTab();
+  if (!tab) {
+    co_return;
+  }
+
+  const auto id = tab->GetRuntimeID();
+
+  for (auto it: this->Navigation().MenuItems()) {
+    auto item = it.try_as<Control>();
+    if (!item) {
+      continue;
+    }
+    auto tag = item.Tag();
+    if (!tag) {
+      continue;
+    }
+    if (winrt::unbox_value<uint64_t>(tag) == id) {
+      Navigation().SelectedItem(item);
+      break;
     }
   }
 
