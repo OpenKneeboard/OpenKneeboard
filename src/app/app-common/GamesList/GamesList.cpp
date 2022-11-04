@@ -23,6 +23,7 @@
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GenericGame.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <windows.h>
 
 namespace OpenKneeboard {
@@ -67,6 +68,8 @@ nlohmann::json GamesList::GetSettings() const {
 
 void GamesList::LoadSettings(const nlohmann::json& config) {
   mInstances.clear();
+  const scope_guard emitOnExit(
+    [this]() { this->evSettingsChangedEvent.Emit(); });
 
   if (config.is_null()) {
     LoadDefaultSettings();
@@ -86,8 +89,6 @@ void GamesList::LoadSettings(const nlohmann::json& config) {
   NEXT_INSTANCE:
     continue;// need statement after label
   }
-
-  this->evSettingsChangedEvent.Emit();
 }
 
 std::vector<std::shared_ptr<Game>> GamesList::GetGames() const {
