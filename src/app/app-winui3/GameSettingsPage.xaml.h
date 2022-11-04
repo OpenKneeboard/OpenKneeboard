@@ -46,6 +46,10 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
   GameSettingsPage();
   ~GameSettingsPage();
 
+  winrt::fire_and_forget RestoreDefaults(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+
   winrt::fire_and_forget AddRunningProcess(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
