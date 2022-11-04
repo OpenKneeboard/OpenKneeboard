@@ -34,6 +34,7 @@
         Orientation="Vertical"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        Margin="0,4,0,4"
         CornerRadius="8"
         Padding="12">
         <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,4">
@@ -64,28 +65,58 @@
     </DataTemplate>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
-  <Grid Margin="0,0,0,16" RowDefinitions="Auto,*">
-    <CommandBar Grid.Row="0" DefaultLabelPosition="Right">
-      <AppBarButton Icon="Add" Label="Add a Tab">
-        <AppBarButton.Flyout>
-          <MenuFlyout x:Name="AddTabFlyout">
-          </MenuFlyout>
-        </AppBarButton.Flyout>
-      </AppBarButton>
-    </CommandBar>
-    <ListView
-      Grid.Row="1"
-      x:Name="List"
-      SelectionMode="None"
-      CanDragItems="True"
-      CanReorderItems="True"
-      AllowDrop="True">
-      <ListView.ItemTemplateSelector>
-        <local:TabUIDataTemplateSelector
-          Generic="{StaticResource GenericTabTemplate}"
-          DCSRadioLog="{StaticResource DCSRadioLogTabTemplate}"
+  <ScrollViewer VerticalScrollMode="Auto" Padding="24">
+    <StackPanel Margin="0,0,0,16">
+      <Grid
+        ColumnDefinitions="*, Auto"
+        Margin="0,0,0,8">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource TitleTextBlockStyle}"
+          Text="Tab Settings"
+          Margin="0,0,0,8"
         />
-      </ListView.ItemTemplateSelector>
-    </ListView>
-  </Grid>
+        <Button
+          Grid.Column="1"
+          Content="Restore defaults"
+          Click="RestoreDefaults"
+        />
+      </Grid>
+      <ListView
+        Grid.Row="1"
+        x:Name="List"
+        SelectionMode="None"
+        CanDragItems="True"
+        CanReorderItems="True"
+        AllowDrop="True">
+        <ListView.ItemTemplateSelector>
+          <local:TabUIDataTemplateSelector
+            Generic="{StaticResource GenericTabTemplate}"
+            DCSRadioLog="{StaticResource DCSRadioLogTabTemplate}"
+          />
+        </ListView.ItemTemplateSelector>
+      </ListView>
+      <Button
+        Margin="0,24,0,0"
+        HorizontalAlignment="Center"
+        Style="{StaticResource AccentButtonStyle}">
+        <Grid ColumnDefinitions="Auto,*">
+          <FontIcon
+            Grid.Column="0"
+            Glyph="&#xE710;"
+            FontFamily="{StaticResource SymbolThemeFontFamily}"
+          />
+          <TextBlock
+            x:Name="ProfileSwitcherLabel"
+            Margin="8,4,4,4"
+            Grid.Column="1">
+            Add a tab
+          </TextBlock>
+        </Grid>
+        <Button.Flyout>
+          <MenuFlyout x:Name="AddTabFlyout" />
+        </Button.Flyout>
+      </Button>
+    </StackPanel>
+  </ScrollViewer>
 </Page>

@@ -42,6 +42,8 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   TabSettingsPage();
 
+  fire_and_forget RestoreDefaults(const IInspectable&, const RoutedEventArgs&);
+
   void CreateTab(const IInspectable&, const RoutedEventArgs&) noexcept;
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
   void OnTabsChanged(
