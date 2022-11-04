@@ -102,10 +102,44 @@ static void MaybeSaveJSON(
   const std::filesystem::path& path) {
   const auto fullPath
     = path.is_absolute() ? path : Settings::GetDirectory() / path;
-  if (parentValue == value) {
-    if (std::filesystem::exists(fullPath)) {
-      std::filesystem::remove(fullPath);
-    }
+
+  nlohmann::json j;
+  // If a profile already modified a setting, keep that setting even if it
+  // matches the parent now
+  if (std::filesystem::exists(fullPath)) {
+    std::ifstream f(fullPath);
+    f >> j;
+  }
+
+  const auto parentPath = fullPath.parent_path();
+  if (!std::filesystem::exists(parentPath)) {
+    std::filesystem::create_directories(parentPath);
+  }
+
+  to_json_with_default(j, parentValue, value);
+  if (j.is_object() && j.size() > 0) {
+    std::ofstream f(fullPath);
+    f << std::setw(2) << j << std::endl;
+    return;
+  }
+
+  if (std::filesystem::exists(fullPath)) {
+    std::filesystem::remove(fullPath);
+  }
+}
+
+/** Used for GamesList and TabsList, where we don't want to merge configs -
+ * either inherit, or overwrite */
+template <>
+static void MaybeSaveJSON<nlohmann::json>(
+  const nlohmann::json& parentValue,
+  const nlohmann::json& value,
+  const std::filesystem::path& path) {
+  const auto fullPath
+    = path.is_absolute() ? path : Settings::GetDirectory() / path;
+
+  if (value == parentValue && std::filesystem::exists(fullPath)) {
+    std::filesystem::remove(fullPath);
     return;
   }
 
@@ -114,13 +148,8 @@ static void MaybeSaveJSON(
     std::filesystem::create_directories(parentPath);
   }
 
-  nlohmann::json j;
-  to_json_with_default(j, parentValue, value);
-  if (j.is_null()) {
-    return;
-  }
-  std::ofstream f(fullPath.c_str());
-  f << std::setw(2) << j << std::endl;
+  std::ofstream f(fullPath);
+  f << std::setw(2) << value << std::endl;
 }
 
 void Settings::Save(std::string_view profile) const {

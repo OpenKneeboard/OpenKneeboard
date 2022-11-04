@@ -189,11 +189,13 @@ void from_json_postprocess(const nlohmann::json& j, T& v) {
   }
 
 #define DETAIL_OPENKNEEBOARD_TO_SPARSE_JSON(v1) \
-  if (nlohmann_json_default_object.v1 != nlohmann_json_v.v1) { \
-    constexpr auto ok_json_field_key \
-      = detail::SparseJson::ConstStrSkipFirst(detail::SparseJson::Wrap(#v1)); \
+  constexpr auto ok_json_field_key_##v1 \
+    = detail::SparseJson::ConstStrSkipFirst(detail::SparseJson::Wrap(#v1)); \
+  const bool persist_##v1 = nlohmann_json_j.contains(ok_json_field_key_##v1) \
+    || (nlohmann_json_default_object.v1 != nlohmann_json_v.v1); \
+  if (persist_##v1) { \
     SparseJsonDetail<decltype(nlohmann_json_v.v1)>::Encode( \
-      nlohmann_json_j[ok_json_field_key], \
+      nlohmann_json_j[ok_json_field_key_##v1], \
       nlohmann_json_default_object.v1, \
       nlohmann_json_v.v1); \
   }
