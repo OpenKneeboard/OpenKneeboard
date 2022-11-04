@@ -26,6 +26,7 @@
 #include "GameInstanceUIDataTemplateSelector.g.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/GameInstance.h>
 
 #include <shims/filesystem>
@@ -42,9 +43,9 @@ using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct GameSettingsPage : GameSettingsPageT<GameSettingsPage> {
+struct GameSettingsPage : GameSettingsPageT<GameSettingsPage>, EventReceiver {
   GameSettingsPage();
-  ~GameSettingsPage();
+  ~GameSettingsPage() noexcept;
 
   winrt::fire_and_forget RestoreDefaults(
     const IInspectable&,

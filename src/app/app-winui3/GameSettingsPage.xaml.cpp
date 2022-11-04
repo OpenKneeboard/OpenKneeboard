@@ -53,6 +53,10 @@ GameSettingsPage::GameSettingsPage() {
   InitializeComponent();
   mIconFactory = std::make_unique<ExecutableIconFactory>();
   UpdateGames();
+
+  AddEventListener(
+    gKneeboard->GetGamesList()->evSettingsChangedEvent,
+    [this]() { this->UpdateGames(); });
 }
 
 fire_and_forget GameSettingsPage::RestoreDefaults(
@@ -73,8 +77,6 @@ fire_and_forget GameSettingsPage::RestoreDefaults(
   }
 
   gKneeboard->ResetGamesSettings();
-
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Games"));
 }
 
 void GameSettingsPage::UpdateGames() {
@@ -115,7 +117,8 @@ IVector<IInspectable> GameSettingsPage::Games() noexcept {
   return winrtGames;
 }
 
-GameSettingsPage::~GameSettingsPage() {
+GameSettingsPage::~GameSettingsPage() noexcept {
+  this->RemoveAllEventListeners();
 }
 
 winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
