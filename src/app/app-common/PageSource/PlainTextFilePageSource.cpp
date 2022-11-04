@@ -87,7 +87,7 @@ void PlainTextFilePageSource::Reload() {
 
 winrt::fire_and_forget PlainTextFilePageSource::SubscribeToChanges() noexcept {
   auto weakThis = this->weak_from_this();
-  auto strongThis = this->shared_from_this();
+  auto stayingAlive = this->shared_from_this();
 
   auto folder = co_await StorageFolder::GetFolderFromPathAsync(
     mPath.parent_path().wstring());

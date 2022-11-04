@@ -59,14 +59,23 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
 
     auto viewState = std::make_shared<TabView>(mDXR, mKneeboard, tab);
     viewStates.push_back(viewState);
+    auto weakState = std::weak_ptr(viewState);
 
-    AddEventListener(viewState->evNeedsRepaintEvent, [=]() {
-      if (viewState == this->GetCurrentTabView()) {
+    AddEventListener(viewState->evNeedsRepaintEvent, [weakState, this]() {
+      auto strongState = weakState.lock();
+      if (!strongState) {
+        return;
+      }
+      if (strongState == this->GetCurrentTabView()) {
         this->evNeedsRepaintEvent.Emit();
       }
     });
-    AddEventListener(tab->evAvailableFeaturesChangedEvent, [=]() {
-      if (viewState == this->GetCurrentTabView()) {
+    AddEventListener(tab->evAvailableFeaturesChangedEvent, [weakState, this]() {
+      auto strongState = weakState.lock();
+      if (!strongState) {
+        return;
+      }
+      if (strongState == this->GetCurrentTabView()) {
         this->evNeedsRepaintEvent.Emit();
       }
     });
