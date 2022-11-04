@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78765245",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78765245/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78765245/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.3",
-    "id": 78765245,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/81464404",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/81464404/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/81464404/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3-beta1",
+    "id": 81464404,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Esdy9",
-    "tag_name": "v1.2.3",
-    "target_commitish": "0fe9cb28303bbdc13aef0f044d5495a44ac7302a",
-    "name": "v1.2.3: fix crash when DirectInput device is disconnected",
+    "node_id": "RE_kwDOGk0DR84E2wxU",
+    "tag_name": "v1.3-beta1",
+    "target_commitish": "fe04a5fc78a9c40380f356163d2bbaab5614af55",
+    "name": "v1.3-beta1: multiple profiles",
     "draft": false,
-    "prerelease": false,
-    "created_at": "2022-10-01T16:18:28Z",
-    "published_at": "2022-10-01T16:48:48Z",
+    "prerelease": true,
+    "created_at": "2022-10-29T16:54:32Z",
+    "published_at": "2022-10-29T17:23:02Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/79652110",
-        "id": 79652110,
-        "node_id": "RA_kwDOGk0DR84Ev2UO",
-        "name": "OpenKneeboard-v1.2.3-Symbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/82727067",
+        "id": 82727067,
+        "node_id": "RA_kwDOGk0DR84E7lCb",
+        "name": "OpenKneeboard-v1.3-beta1-Symbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 68628509,
-        "download_count": 0,
-        "created_at": "2022-10-01T16:43:20Z",
-        "updated_at": "2022-10-01T16:43:23Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3-Symbols.zip"
+        "size": 70557095,
+        "download_count": 1,
+        "created_at": "2022-10-29T17:21:31Z",
+        "updated_at": "2022-10-29T17:21:32Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta1/OpenKneeboard-v1.3-beta1-Symbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/79652105",
-        "id": 79652105,
-        "node_id": "RA_kwDOGk0DR84Ev2UJ",
-        "name": "OpenKneeboard-v1.2.3-Utilities.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/82727066",
+        "id": 82727066,
+        "node_id": "RA_kwDOGk0DR84E7lCa",
+        "name": "OpenKneeboard-v1.3-beta1-Utilities.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,17 +96,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 3215060,
+        "size": 3216543,
         "download_count": 0,
-        "created_at": "2022-10-01T16:43:19Z",
-        "updated_at": "2022-10-01T16:43:20Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3-Utilities.zip"
+        "created_at": "2022-10-29T17:21:29Z",
+        "updated_at": "2022-10-29T17:21:30Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta1/OpenKneeboard-v1.3-beta1-Utilities.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/79652104",
-        "id": 79652104,
-        "node_id": "RA_kwDOGk0DR84Ev2UI",
-        "name": "OpenKneeboard-v1.2.3.msix",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/82727065",
+        "id": 82727065,
+        "node_id": "RA_kwDOGk0DR84E7lCZ",
+        "name": "OpenKneeboard-v1.3-beta1.msix",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -130,16 +130,15 @@
         },
         "content_type": "application/msix",
         "state": "uploaded",
-        "size": 27302439,
-        "download_count": 0,
-        "created_at": "2022-10-01T16:43:18Z",
-        "updated_at": "2022-10-01T16:43:19Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3.msix"
+        "size": 27356726,
+        "download_count": 20,
+        "created_at": "2022-10-29T17:21:28Z",
+        "updated_at": "2022-10-29T17:21:29Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta1/OpenKneeboard-v1.3-beta1.msix"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2.3",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2.3",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2.3.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Changes since v1.2.2\r\n\r\n- Fixed crash if a DirectInput device (game controllers, e.g. throttles, joysticks etc) is disconnected or unresponsive\r\n\r\n# Changes since v1.2.1\r\n\r\n- Fixed crash if a single file tab points to a deleted file\r\n- Fixed and re-labelled the 'gaze target size' options\r\n- Fixed OpenKneeboard-Viewer.exe utility crashing on startup\r\n\r\n# Changes since v1.2.0\r\n\r\n- Fixed a crash when loading/updating text files.\r\n\r\n# Changes since v1.1.0\r\n\r\nSee [the announcement for v1.2.0](https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.0)",
-    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/201"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3-beta1",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3-beta1",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.3-beta1.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta1/OpenKneeboard-v1.3-beta1.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n- Added support for multiple profiles (enable in advanced settings)\r\n- Added option to make the Radio Log tab clear itself when the DCS mission is changed or restarted\r\n- SteamVR support now attempts to sync frames with SteamVR itself; because of this, if you use SteamVR, you may need to update it\r\n- OpenKneeboard will now automatically use the graphics card that Windows considers 'highest performance'; it *must* use the same graphics card as the game to work correctly. This should have no effect on most people, but makes things more likely to work by default for people with multiple graphics cards.\r\n- It is no longer necessary to restart games when changing rendering options in OpenKneeboard\r\n- It is no longer necessary to restart games when upgrading OpenKneeboard, though probably a good idea :p\r\n- Added note and recenter button next to the VR position options\r\n- Updated all dependencies for improved reliability and performance, especially for PDF rendering\r\n- Fix crash when loading PDFs that contain invalid internal hyperlinks, e.g. a 10 page PDF containing a link to 'page 20'\r\n- \"All Users\" OpenXR installations are now compatible with \"OpenXR Tools for Windows Mixed Reality\"; as this tool is sandboxed, the information it displays can be misleading - I recommend [OpenXR-Explorer](https://github.com/maluoi/openxr-explorer) instead.\r\n"
   }
 ]
