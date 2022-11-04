@@ -57,6 +57,7 @@ struct PDFFilePageSource::Impl final {
 
   DXResources mDXR;
   std::filesystem::path mPath;
+  std::unique_ptr<Filesystem::TemporaryCopy> mCopy;
 
   IPdfDocument mPDFDocument;
   winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
@@ -119,12 +120,13 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
     co_return;
   }
 
-  if (!std::filesystem::is_regular_file(strongThis->p->mPath)) {
+  auto path = strongThis->p->mCopy->GetPath();
+
+  if (!std::filesystem::is_regular_file(path)) {
     co_return;
   }
 
-  auto file = co_await StorageFile::GetFileFromPathAsync(
-    strongThis->p->mPath.wstring());
+  auto file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
   strongThis->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
 
   const EventDelay eventDelay;
@@ -140,7 +142,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
     co_return;
   }
 
-  auto path = p->mPath;
+  auto path = p->mCopy->GetPath();
   if (!std::filesystem::is_regular_file(path)) {
     co_return;
   }
@@ -178,6 +180,9 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
 }
 
 void PDFFilePageSource::Reload() {
+  static uint64_t sCount = 0;
+
+  p->mCopy = {};
   p->mBookmarks.clear();
   p->mLinks.clear();
   p->mNavigationLoaded = false;
@@ -185,6 +190,13 @@ void PDFFilePageSource::Reload() {
   if (!std::filesystem::is_regular_file(p->mPath)) {
     return;
   }
+
+  auto tempPath = Filesystem::GetTemporaryDirectory()
+    / std::format(L"{:08x}-{}{}",
+                  ++sCount,
+                  p->mPath.stem().wstring().substr(0, 16),
+                  p->mPath.extension());
+  p->mCopy = std::make_unique<Filesystem::TemporaryCopy>(p->mPath, tempPath);
 
   this->ReloadRenderer();
   this->ReloadNavigation();

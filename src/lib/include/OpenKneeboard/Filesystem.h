@@ -43,4 +43,21 @@ class ScopedDeleter {
   std::filesystem::path mPath;
 };
 
+class TemporaryCopy final {
+ public:
+  TemporaryCopy(
+    const std::filesystem::path& source,
+    const std::filesystem::path& destination);
+  ~TemporaryCopy() noexcept;
+
+  TemporaryCopy() = delete;
+  TemporaryCopy(const TemporaryCopy&) = delete;
+  TemporaryCopy& operator=(const TemporaryCopy&) = delete;
+
+  std::filesystem::path GetPath() const noexcept;
+
+ private:
+  std::filesystem::path mCopy;
+};
+
 }// namespace OpenKneeboard::Filesystem

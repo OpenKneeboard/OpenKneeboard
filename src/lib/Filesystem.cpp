@@ -92,4 +92,26 @@ ScopedDeleter::~ScopedDeleter() noexcept {
   }
 }
 
+TemporaryCopy::TemporaryCopy(
+  const std::filesystem::path& source,
+  const std::filesystem::path& destination) {
+  if (!std::filesystem::exists(source)) {
+    throw std::logic_error("TemporaryCopy created without a source file");
+  }
+  if (std::filesystem::exists(destination)) {
+    throw std::logic_error(
+      "TemporaryCopy created, but destination already exists");
+  }
+  std::filesystem::copy(source, destination);
+  mCopy = destination;
+}
+
+TemporaryCopy::~TemporaryCopy() noexcept {
+  std::filesystem::remove(mCopy);
+}
+
+std::filesystem::path TemporaryCopy::GetPath() const noexcept {
+  return mCopy;
+}
+
 };// namespace OpenKneeboard::Filesystem
