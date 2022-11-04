@@ -10,120 +10,112 @@
   <Page.Resources>
     <!-- Generic Games -->
     <DataTemplate x:Key="GenericGameTemplate" x:DataType="local:GameInstanceUIData">
-      <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-        <Expander.Header>
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <Grid
-              Grid.Column="0"
-              Margin="0,8,8,8"
-              Height="48"
-              Width="48"
-              CornerRadius="8"
-              Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-              <Image Height="32" Width="32" Source="{x:Bind Icon}" />
-            </Grid>
-            <TextBlock
-              Grid.Column="1"
-              Style="{StaticResource SubtitleTextBlockStyle}"
-              Text="{x:Bind Name}"
-              VerticalAlignment="Center"
-            />
-            <TextBlock
-              Grid.Column="2"
-              Style="{ThemeResource CaptionTextBlockStyle}"
-              VerticalAlignment="Center"
-              Text="{x:Bind Type}"
-            />
+      <StackPanel
+        Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="12"
+        Spacing="12">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Grid
+            Grid.Column="0"
+            Height="48"
+            Width="48"
+            CornerRadius="8"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+            <Image Height="32" Width="32" Source="{x:Bind Icon}" />
           </Grid>
-        </Expander.Header>
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-          <Button
+          <TextBlock
             Grid.Column="1"
-            VerticalAlignment="Top"
-            Tag="{x:Bind InstanceID}"
-            Click="RemoveGame">
-            <SymbolIcon Symbol="Delete" />
-          </Button>
-          <StackPanel Orientation="Vertical" Spacing="12">
-            <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Path" />
-            <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Margin="16,0,0,0" Text="{x:Bind Path}" />
-            <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Rendering API" />
-            <ComboBox
-              Tag="{x:Bind InstanceID}"
-              SelectedIndex="{x:Bind OverlayAPI}"
-              SelectionChanged="OnOverlayAPIChanged">
-              <x:String>Auto-detect</x:String>
-              <x:String>SteamVR</x:String>
-              <x:String>OpenXR</x:String>
-              <x:String>Oculus + Direct3D 11</x:String>
-              <x:String>Oculus + Direct3D 12</x:String>
-              <x:String>Direct3D 11 (Non-VR)</x:String>
-            </ComboBox>
-          </StackPanel>
+            Margin="8,0,0,0"
+            Style="{StaticResource SubtitleTextBlockStyle}"
+            Text="{x:Bind Name}"
+            VerticalAlignment="Center"
+          />
+					<Button
+						Grid.Column="2"
+						VerticalAlignment="Top"
+						Tag="{x:Bind InstanceID}"
+						Click="RemoveGame">
+						<SymbolIcon Symbol="Delete" />
+					</Button>
         </Grid>
-      </Expander>
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Path" />
+        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Margin="16,0,0,0" Text="{x:Bind Path}" />
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Rendering API" />
+        <ComboBox
+          Margin="16,0,0,0"
+          Tag="{x:Bind InstanceID}"
+          SelectedIndex="{x:Bind OverlayAPI}"
+          SelectionChanged="OnOverlayAPIChanged">
+          <x:String>Auto-detect</x:String>
+          <x:String>SteamVR</x:String>
+          <x:String>OpenXR</x:String>
+          <x:String>Oculus + Direct3D 11</x:String>
+          <x:String>Oculus + Direct3D 12</x:String>
+          <x:String>Direct3D 11 (Non-VR)</x:String>
+        </ComboBox>
+      </StackPanel>
     </DataTemplate>
     <!-- DCS World -->
     <DataTemplate x:Key="DCSWorldTemplate" x:DataType="local:DCSWorldInstanceUIData">
-      <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-        <Expander.Header>
-          <Grid ColumnDefinitions="Auto,*,Auto">
-            <Grid
-              Grid.Column="0"
-              Grid.RowSpan="2"
-              Margin="0,8,8,8"
-              Height="48"
-              Width="48"
-              CornerRadius="8"
-              Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-              <Image Height="32" Width="32" Source="{x:Bind Icon}" />
-            </Grid>
-            <TextBlock
-              Grid.Column="1"
-              Style="{StaticResource SubtitleTextBlockStyle}"
-              Text="{x:Bind Name}"
-              VerticalAlignment="Center"
-            />
-            <TextBlock
-              Grid.Column="2"
-              Style="{ThemeResource CaptionTextBlockStyle}"
-              VerticalAlignment="Center"
-              Text="{x:Bind Type}"
-            />
+      <StackPanel
+        Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="12"
+        Spacing="12">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Grid
+            Grid.Column="0"
+            Height="48"
+            Width="48"
+            CornerRadius="8"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+            <Image Height="32" Width="32" Source="{x:Bind Icon}" />
           </Grid>
-        </Expander.Header>
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-          <Button
+          <TextBlock
             Grid.Column="1"
-            VerticalAlignment="Top"
-            Tag="{x:Bind InstanceID}"
-            Click="RemoveGame">
-            <SymbolIcon Symbol="Delete" />
-          </Button>
-          <StackPanel Orientation="Vertical" Spacing="12">
-            <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Path" />
-            <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Margin="16,0,0,0" Text="{x:Bind Path}" />
-            <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Rendering API" />
-            <ComboBox
-              Tag="{x:Bind InstanceID}"
-              SelectedIndex="{x:Bind OverlayAPI}"
-              SelectionChanged="OnOverlayAPIChanged">
-              <x:String>Auto-detect</x:String>
-              <x:String>SteamVR</x:String>
-              <x:String>OpenXR</x:String>
-              <x:String>Oculus + Direct3D 11</x:String>
-              <x:String>Oculus + Direct3D 12</x:String>
-              <x:String>Direct3D 11 (Non-VR)</x:String>
-            </ComboBox>
-            <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Saved Games path" />
-            <HyperlinkButton
-              Tag="{x:Bind InstanceID}"
-              Content="{x:Bind SavedGamesPath}"
-              Click="ChangeDCSSavedGamesPath"
-            />
-          </StackPanel>
+            Margin="8,0,0,0"
+            Style="{StaticResource SubtitleTextBlockStyle}"
+            Text="{x:Bind Name}"
+            VerticalAlignment="Center"
+          />
+					<Button
+						Grid.Column="2"
+						VerticalAlignment="Top"
+						Tag="{x:Bind InstanceID}"
+						Click="RemoveGame">
+						<SymbolIcon Symbol="Delete" />
+					</Button>
         </Grid>
-      </Expander>
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Path" />
+        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Margin="16,0,0,0" Text="{x:Bind Path}" />
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Rendering API" />
+        <ComboBox
+          Margin="16,0,0,0"
+          Tag="{x:Bind InstanceID}"
+          SelectedIndex="{x:Bind OverlayAPI}"
+          SelectionChanged="OnOverlayAPIChanged">
+          <x:String>Auto-detect</x:String>
+          <x:String>SteamVR</x:String>
+          <x:String>OpenXR</x:String>
+          <x:String>Oculus + Direct3D 11</x:String>
+          <x:String>Oculus + Direct3D 12</x:String>
+          <x:String>Direct3D 11 (Non-VR)</x:String>
+        </ComboBox>
+        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Saved Games path" />
+        <HyperlinkButton
+          Tag="{x:Bind InstanceID}"
+          Margin="12,0,0,0"
+          Content="{x:Bind SavedGamesPath}"
+          Click="ChangeDCSSavedGamesPath"
+        />
+      </StackPanel>
     </DataTemplate>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
