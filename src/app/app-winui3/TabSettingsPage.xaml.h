@@ -27,6 +27,8 @@
 #include "TabUIDataTemplateSelector.g.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
+
 #include <string>
 
 namespace OpenKneeboard {
@@ -37,18 +39,30 @@ enum class TabType;
 }// namespace OpenKneeboard
 
 using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
+struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
+                         OpenKneeboard::EventReceiver {
   TabSettingsPage();
+  ~TabSettingsPage() noexcept;
 
-  fire_and_forget RestoreDefaults(const IInspectable&, const RoutedEventArgs&);
+  IVector<IInspectable> Tabs() noexcept;
+
+  fire_and_forget RestoreDefaults(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
 
   void CreateTab(const IInspectable&, const RoutedEventArgs&) noexcept;
   fire_and_forget RemoveTab(const IInspectable&, const RoutedEventArgs&);
   void OnTabsChanged(
     const IInspectable&,
     const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
+
+  winrt::event_token PropertyChanged(
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+      handler);
+  void PropertyChanged(winrt::event_token const& token) noexcept;
 
  private:
   fire_and_forget CreateFileTab();
@@ -57,6 +71,9 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage> {
   void AddTabs(const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
   static OpenKneeboardApp::TabUIData CreateTabUIData(
     const std::shared_ptr<OpenKneeboard::ITab>&);
+
+  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
+    mPropertyChangedEvent;
 };
 
 struct TabUIData : TabUIDataT<TabUIData> {

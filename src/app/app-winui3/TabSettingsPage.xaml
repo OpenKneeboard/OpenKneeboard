@@ -84,6 +84,7 @@
       </Grid>
       <ListView
         Grid.Row="1"
+        ItemsSource="{x:Bind Tabs, Mode=OneWay}"
         x:Name="List"
         SelectionMode="None"
         CanDragItems="True"

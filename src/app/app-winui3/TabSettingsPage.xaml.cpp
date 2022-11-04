@@ -66,11 +66,24 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
 
+  auto weakThis = get_weak();
+  AddEventListener(gKneeboard->GetTabsList()->evTabsChangedEvent, [weakThis]() {
+    auto strongThis = weakThis.get();
+    if (!strongThis) {
+      return;
+    }
+    if (strongThis->mPropertyChangedEvent) {
+      strongThis->mPropertyChangedEvent(
+        *strongThis, PropertyChangedEventArgs(L"Tabs"));
+    }
+  });
+}
+
+IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
   for (const auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
     tabs.Append(CreateTabUIData(tab));
   }
-  List().ItemsSource(tabs);
   tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
 
   auto tabTypes = AddTabFlyout().Items();
@@ -82,6 +95,11 @@ TabSettingsPage::TabSettingsPage() {
   tabTypes.Append(name##Item);
   OPENKNEEBOARD_TAB_TYPES
 #undef IT
+  return tabs;
+}
+
+TabSettingsPage::~TabSettingsPage() {
+  this->RemoveAllEventListeners();
 }
 
 fire_and_forget TabSettingsPage::RestoreDefaults(
@@ -135,10 +153,6 @@ fire_and_forget TabSettingsPage::RemoveTab(
 
   auto idx = static_cast<OpenKneeboard::TabIndex>(it - tabs.begin());
   tabsList->RemoveTab(idx);
-  List()
-    .ItemsSource()
-    .as<Windows::Foundation::Collections::IVector<IInspectable>>()
-    .RemoveAt(idx);
 }
 
 void TabSettingsPage::CreateTab(
@@ -243,14 +257,6 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     allTabs.insert(allTabs.begin() + idx++, tab);
   }
   tabsList->SetTabs(allTabs);
-
-  idx = initialIndex;
-  auto items = List()
-                 .ItemsSource()
-                 .as<Windows::Foundation::Collections::IVector<IInspectable>>();
-  for (const auto& tab: tabs) {
-    items.InsertAt(idx++, CreateTabUIData(tab));
-  }
 }
 
 void TabSettingsPage::OnTabsChanged(
@@ -377,6 +383,17 @@ DataTemplate TabUIDataTemplateSelector::SelectTemplateCore(
   const IInspectable& item,
   const DependencyObject&) {
   return this->SelectTemplateCore(item);
+}
+
+winrt::event_token TabSettingsPage::PropertyChanged(
+  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+    handler) {
+  return mPropertyChangedEvent.add(handler);
+}
+
+void TabSettingsPage::PropertyChanged(
+  winrt::event_token const& token) noexcept {
+  mPropertyChangedEvent.remove(token);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
