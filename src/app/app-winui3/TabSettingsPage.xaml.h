@@ -74,6 +74,8 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
 
   winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
     mPropertyChangedEvent;
+
+  bool mUIIsChangingTabs = false;
 };
 
 struct TabUIData : TabUIDataT<TabUIData> {

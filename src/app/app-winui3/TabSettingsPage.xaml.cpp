@@ -35,6 +35,7 @@
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/inttypes.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/windows.storage.pickers.h>
@@ -70,6 +71,9 @@ TabSettingsPage::TabSettingsPage() {
   AddEventListener(gKneeboard->GetTabsList()->evTabsChangedEvent, [weakThis]() {
     auto strongThis = weakThis.get();
     if (!strongThis) {
+      return;
+    }
+    if (strongThis->mUIIsChangingTabs) {
       return;
     }
     if (strongThis->mPropertyChangedEvent) {
@@ -151,8 +155,15 @@ fire_and_forget TabSettingsPage::RemoveTab(
     co_return;
   }
 
+  mUIIsChangingTabs = true;
+  const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
+
   auto idx = static_cast<OpenKneeboard::TabIndex>(it - tabs.begin());
   tabsList->RemoveTab(idx);
+  List()
+    .ItemsSource()
+    .as<Windows::Foundation::Collections::IVector<IInspectable>>()
+    .RemoveAt(idx);
 }
 
 void TabSettingsPage::CreateTab(
@@ -244,6 +255,9 @@ fire_and_forget TabSettingsPage::CreateFolderTab() {
 }
 
 void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+  mUIIsChangingTabs = true;
+  const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
+
   auto initialIndex = List().SelectedIndex();
   if (initialIndex == -1) {
     initialIndex = 0;
@@ -257,6 +271,14 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     allTabs.insert(allTabs.begin() + idx++, tab);
   }
   tabsList->SetTabs(allTabs);
+
+  idx = initialIndex;
+  auto items = List()
+                 .ItemsSource()
+                 .as<Windows::Foundation::Collections::IVector<IInspectable>>();
+  for (const auto& tab: tabs) {
+    items.InsertAt(idx++, CreateTabUIData(tab));
+  }
 }
 
 void TabSettingsPage::OnTabsChanged(
@@ -276,6 +298,8 @@ void TabSettingsPage::OnTabsChanged(
     return;
   }
   // ... but act on the insert :)
+  mUIIsChangingTabs = true;
+  const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
 
   std::vector<std::shared_ptr<ITab>> reorderedTabs;
   for (auto item: items) {
