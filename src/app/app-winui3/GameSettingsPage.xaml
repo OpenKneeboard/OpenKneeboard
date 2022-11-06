@@ -158,7 +158,6 @@
             FontFamily="{StaticResource SymbolThemeFontFamily}"
           />
           <TextBlock
-            x:Name="ProfileSwitcherLabel"
             Margin="8,4,4,4"
             Grid.Column="1">Add a game</TextBlock>
           </Grid>

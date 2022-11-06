@@ -150,7 +150,7 @@ fire_and_forget ProfilesPage::CreateProfile(
   const RoutedEventArgs&) noexcept {
   ContentDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
-  dialog.Title(box_value(_(L"Create profile")));
+  dialog.Title(box_value(_(L"Create a profile")));
   dialog.PrimaryButtonText(_(L"Create"));
   dialog.IsPrimaryButtonEnabled(false);
   dialog.CloseButtonText(_(L"Cancel"));

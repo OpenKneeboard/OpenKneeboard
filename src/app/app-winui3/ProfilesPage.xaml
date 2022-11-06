@@ -31,17 +31,12 @@
   <!-- PAGE CONTENT STARTS HERE -->
   <ScrollViewer>
     <StackPanel Orientation="Vertical" Spacing="12">
-      <Grid Margin="16" ColumnDefinitions="*,Auto">
-        <TextBlock
-          Grid.Column="0"
-          Style="{StaticResource TitleTextBlockStyle}"
-          Text="Profiles"
-          Margin="0,0,0,8"
-        />
-        <CommandBar Grid.Column="1" DefaultLabelPosition="Right">
-          <AppBarButton Icon="Add" Label="Add a Profile" Click="CreateProfile" />
-        </CommandBar>
-      </Grid>
+      <TextBlock
+        Grid.Column="0"
+        Style="{StaticResource TitleTextBlockStyle}"
+        Text="Profiles"
+        Margin="16"
+      />
 			<TextBlock
 				Style="{ThemeResource CaptionTextBlockStyle}"
 				Foreground="{ThemeResource TextFillColorSecondary}"
@@ -58,6 +53,24 @@
         SelectionChanged="OnList_SelectionChanged"
         ItemTemplate="{StaticResource ProfileTemplate}"
       />
+      <Button
+        Margin="0,24,0,0"
+        HorizontalAlignment="Center"
+        Style="{StaticResource AccentButtonStyle}"
+        Click="CreateProfile">
+        <Grid ColumnDefinitions="Auto,*">
+          <FontIcon
+            Grid.Column="0"
+            Glyph="&#xE710;"
+            FontFamily="{StaticResource SymbolThemeFontFamily}"
+          />
+          <TextBlock
+            Margin="8,4,4,4"
+            Grid.Column="1">
+            Create a profile
+          </TextBlock>
+        </Grid>
+      </Button>
     </StackPanel>
   </ScrollViewer>
 </Page>
