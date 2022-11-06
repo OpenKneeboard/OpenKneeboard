@@ -25,7 +25,7 @@ namespace OpenKneeboard {
 // Not using sparse json as an individual binding should not be diffed/merged:
 // if either the buttons or actions differ, it's a different binding, not a
 // modified one.
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+OPENKNEEBOARD_DEFINE_JSON(
   DirectInputSettings::ButtonBinding,
   mButtons,
   mAction);

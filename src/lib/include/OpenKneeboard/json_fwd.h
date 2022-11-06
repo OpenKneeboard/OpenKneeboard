@@ -22,7 +22,6 @@
 #include <nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
-
 template <class T>
 void to_json_with_default(nlohmann::json& j, const T& parent_v, const T& v);
 }// namespace OpenKneeboard
@@ -34,4 +33,8 @@ void to_json_with_default(nlohmann::json& j, const T& parent_v, const T& v);
     nlohmann::json & nlohmann_json_j, \
     const T& nlohmann_json_default_object, \
     const T& nlohmann_json_v); \
+  void to_json(nlohmann::json& nlohmann_json_j, const T& nlohmann_json_v);
+
+#define OPENKNEEBOARD_DECLARE_JSON(T) \
+  void from_json(const nlohmann::json& nlohmann_json_j, T& nlohmann_json_v); \
   void to_json(nlohmann::json& nlohmann_json_j, const T& nlohmann_json_v);

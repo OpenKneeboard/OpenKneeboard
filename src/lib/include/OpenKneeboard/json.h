@@ -41,18 +41,26 @@ namespace OpenKneeboard {
  * Macros
  * ======
  *
- * `OPENKNEEBOARD_DEFINE_SPARSE_JSON(T, ...)`
- * --------------------------------------------------------
+ * `OPENKNEEBOARD_DEFINE_JSON(T, ...)`
+ * -----------------------------------
  *
  * Conceptually similar to `NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE()`, however:
  * - can compile-time transform keys, e.g. `mFoo` -> `foo`
  * - ignores empty keys when reading
- * - skips keys that match the 'default' object
- *   - for `to_json()`, this is default-constructed
- *   - it also adds `to_json_with_default()` taking an explicit default/parent
+ *
+ * The variadic arguments are the struct members.
+
+ * `OPENKNEEBOARD_DEFINE_SPARSE_JSON(T, ...)`
+ * ------------------------------------------
+ *
+ * Similar to `OPENKNEEBOARD_DEFINE_JSON`, but it skips keys that match the
+ * 'default' object, unless they are already present in the JSON.
+ * - for `to_json()`, this is default-constructed
+ * - it also adds `to_json_with_default()` taking an explicit default/parent
  *     object
  *
  * The variadic arguments are the struct members.
+ *
  *
  * `OPENKNEEBOARD_DECLARE_SPARSE_JSON(T)`
  * --------------------------------------
@@ -168,24 +176,28 @@ void to_json_postprocess(nlohmann::json& j, const T& parent_v, const T& v) {
 }
 
 template <class T>
+void to_json_postprocess(nlohmann::json& j, const T& v) {
+}
+
+template <class T>
 void from_json_postprocess(const nlohmann::json& j, T& v) {
 }
 
-#define DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON_DECLARE_KEY(KeyTransform) \
+#define DETAIL_OPENKNEEBOARD_FROM_JSON_DECLARE_KEY(KeyTransform) \
   constexpr auto ok_json_field_key_##KeyTransform \
     = detail::SparseJson::ConstStr##KeyTransform(wrapped);
-#define DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON_TRY_KEY(v1, KeyTransform) \
+#define DETAIL_OPENKNEEBOARD_FROM_JSON_TRY_KEY(v1, KeyTransform) \
   if (nlohmann_json_j.contains(ok_json_field_key_##KeyTransform)) { \
     nlohmann_json_v.v1 = nlohmann_json_j.at(ok_json_field_key_##KeyTransform) \
                            .get<decltype(nlohmann_json_v.v1)>(); \
   }
-#define DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON(v1) \
+#define DETAIL_OPENKNEEBOARD_FROM_JSON(v1) \
   { \
     constexpr auto wrapped = detail::SparseJson::Wrap(#v1); \
-    DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON_DECLARE_KEY(SkipFirst) \
-    DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON_DECLARE_KEY(SkipFirstLowerNext) \
-    DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON_TRY_KEY(v1, SkipFirst) \
-    else DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON_TRY_KEY(v1, SkipFirstLowerNext) \
+    DETAIL_OPENKNEEBOARD_FROM_JSON_DECLARE_KEY(SkipFirst) \
+    DETAIL_OPENKNEEBOARD_FROM_JSON_DECLARE_KEY(SkipFirstLowerNext) \
+    DETAIL_OPENKNEEBOARD_FROM_JSON_TRY_KEY(v1, SkipFirst) \
+    else DETAIL_OPENKNEEBOARD_FROM_JSON_TRY_KEY(v1, SkipFirstLowerNext) \
   }
 
 #define DETAIL_OPENKNEEBOARD_TO_SPARSE_JSON(v1) \
@@ -204,6 +216,7 @@ void from_json_postprocess(const nlohmann::json& j, T& v) {
 // but `FOO(OPENKNEEBOARD_IDVA(__VA_ARGS__))` will pass as multiple
 // arguments
 #define OPENKNEEBOARD_IDVA(...) __VA_ARGS__
+
 #define OPENKNEEBOARD_DEFINE_SPARSE_JSON_DETAILS(T) \
   OPENKNEEBOARD_DECLARE_SPARSE_JSON(T) \
   template <> \
@@ -214,10 +227,10 @@ void from_json_postprocess(const nlohmann::json& j, T& v) {
     } \
   };
 
-#define OPENKNEEBOARD_DEFINE_SPARSE_JSON_FROM_JSON(T, ...) \
+#define OPENKNEEBOARD_DEFINE_FROM_JSON(T, ...) \
   void from_json(const nlohmann::json& nlohmann_json_j, T& nlohmann_json_v) { \
     NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE( \
-      DETAIL_OPENKNEEBOARD_FROM_SPARSE_JSON, OPENKNEEBOARD_IDVA(__VA_ARGS__))) \
+      DETAIL_OPENKNEEBOARD_FROM_JSON, OPENKNEEBOARD_IDVA(__VA_ARGS__))) \
     from_json_postprocess<T>(nlohmann_json_j, nlohmann_json_v); \
   }
 
@@ -242,10 +255,34 @@ void from_json_postprocess(const nlohmann::json& j, T& v) {
 
 #define OPENKNEEBOARD_DEFINE_SPARSE_JSON(T, ...) \
   OPENKNEEBOARD_DEFINE_SPARSE_JSON_DETAILS(T) \
-  OPENKNEEBOARD_DEFINE_SPARSE_JSON_FROM_JSON( \
-    T, OPENKNEEBOARD_IDVA(__VA_ARGS__)) \
+  OPENKNEEBOARD_DEFINE_FROM_JSON(T, OPENKNEEBOARD_IDVA(__VA_ARGS__)) \
   OPENKNEEBOARD_DEFINE_SPARSE_JSON_TO_JSON_WITH_DEFAULT( \
     T, OPENKNEEBOARD_IDVA(__VA_ARGS__)) \
   OPENKNEEBOARD_DEFINE_SPARSE_JSON_TO_JSON(T)
+
+#define OPENKNEEBOARD_DEFINE_JSON_DETAILS(T) \
+  OPENKNEEBOARD_DECLARE_JSON(T) \
+  template <> \
+  struct SparseJsonDetail<T> { \
+    static inline void \
+    Encode(nlohmann::json& j, const T& /*parent_v*/, const T& v) { \
+      to_json(j, v); \
+    } \
+  };
+#define DETAIL_OPENKNEEBOARD_TO_JSON(v1) \
+  constexpr auto ok_json_field_key_##v1 \
+    = detail::SparseJson::ConstStrSkipFirst(detail::SparseJson::Wrap(#v1)); \
+  SparseJsonDetail<decltype(nlohmann_json_v.v1)>::Encode( \
+    nlohmann_json_j[ok_json_field_key_##v1], {}, nlohmann_json_v.v1);
+#define OPENKNEEBOARD_DEFINE_TO_JSON(T, ...) \
+  void to_json(nlohmann::json& nlohmann_json_j, const T& nlohmann_json_v) { \
+    NLOHMANN_JSON_EXPAND(NLOHMANN_JSON_PASTE( \
+      DETAIL_OPENKNEEBOARD_TO_JSON, OPENKNEEBOARD_IDVA(__VA_ARGS__))) \
+    to_json_postprocess<T>(nlohmann_json_j, nlohmann_json_v); \
+  }
+#define OPENKNEEBOARD_DEFINE_JSON(T, ...) \
+  OPENKNEEBOARD_DEFINE_JSON_DETAILS(T) \
+  OPENKNEEBOARD_DEFINE_FROM_JSON(T, OPENKNEEBOARD_IDVA(__VA_ARGS__)) \
+  OPENKNEEBOARD_DEFINE_TO_JSON(T, OPENKNEEBOARD_IDVA(__VA_ARGS__))
 
 }// namespace OpenKneeboard
