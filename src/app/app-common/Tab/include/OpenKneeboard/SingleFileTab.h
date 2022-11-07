@@ -42,14 +42,14 @@ class SingleFileTab final : public TabBase,
     PlainTextFile,
     ImageFile,
   };
-  explicit SingleFileTab(
+  SingleFileTab(
     const DXResources&,
     KneeboardState*,
-    utf8_string_view title,
     const std::filesystem::path& path);
-  explicit SingleFileTab(
+  SingleFileTab(
     const DXResources&,
     KneeboardState*,
+    const winrt::guid& persistentID,
     utf8_string_view title,
     const nlohmann::json&);
   virtual ~SingleFileTab();
@@ -64,6 +64,12 @@ class SingleFileTab final : public TabBase,
   virtual void SetPath(const std::filesystem::path& path);
 
  private:
+  SingleFileTab(
+    const DXResources&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    utf8_string_view title,
+    const std::filesystem::path& path);
   DXResources mDXR;
   KneeboardState* mKneeboard;
 

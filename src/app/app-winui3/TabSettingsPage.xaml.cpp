@@ -221,10 +221,9 @@ fire_and_forget TabSettingsPage::CreateFileTab() {
 
     const auto path
       = std::filesystem::canonical(std::wstring_view {stringPath});
-    const auto title = path.stem();
 
-    newTabs.push_back(std::make_shared<SingleFileTab>(
-      gDXResources, gKneeboard.get(), title, path));
+    newTabs.push_back(
+      std::make_shared<SingleFileTab>(gDXResources, gKneeboard.get(), path));
   }
 
   this->AddTabs(newTabs);
@@ -248,10 +247,9 @@ fire_and_forget TabSettingsPage::CreateFolderTab() {
   }
 
   const auto path = std::filesystem::canonical(std::wstring_view {stringPath});
-  const auto title = path.stem();
 
   this->AddTabs(
-    {std::make_shared<FolderTab>(gDXResources, gKneeboard.get(), title, path)});
+    {std::make_shared<FolderTab>(gDXResources, gKneeboard.get(), path)});
 }
 
 void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {

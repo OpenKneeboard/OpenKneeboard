@@ -66,35 +66,6 @@ static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
   }
 }
 
-Settings Settings::Load(std::string_view profile) {
-  Settings settings;
-  if (!std::filesystem::exists(Settings::GetDirectory() / "profiles")) {
-    auto legacySettingsFile = Settings::GetDirectory() / "Settings.json";
-    if (std::filesystem::exists(legacySettingsFile)) {
-      dprint("Migrating from legacy Settings.json");
-      MaybeSetFromJSON(settings, legacySettingsFile);
-      std::filesystem::rename(
-        legacySettingsFile,
-        Settings::GetDirectory() / "LegacySettings.json.bak");
-      settings.Save("default");
-    }
-    return std::move(settings);
-  }
-
-  if (profile != "default") {
-    settings = Settings::Load("default");
-  }
-
-  const auto profileDir = std::filesystem::path {"profiles"} / profile;
-
-#define IT(cpptype, x) \
-  MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
-  OPENKNEEBOARD_SETTINGS_SECTIONS
-#undef IT
-
-  return settings;
-}
-
 template <class T>
 static void MaybeSaveJSON(
   const T& parentValue,
@@ -218,5 +189,35 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   }
 OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
+
+Settings Settings::Load(std::string_view profile) {
+  Settings settings;
+  if (!std::filesystem::exists(Settings::GetDirectory() / "profiles")) {
+    auto legacySettingsFile = Settings::GetDirectory() / "Settings.json";
+    if (std::filesystem::exists(legacySettingsFile)) {
+      dprint("Migrating from legacy Settings.json");
+      MaybeSetFromJSON(settings, legacySettingsFile);
+      std::filesystem::rename(
+        legacySettingsFile,
+        Settings::GetDirectory() / "LegacySettings.json.bak");
+      settings.Save("default");
+    }
+    return std::move(settings);
+  }
+
+  if (profile != "default") {
+    settings = Settings::Load("default");
+  }
+  const auto parentSettings = settings;
+
+  const auto profileDir = std::filesystem::path {"profiles"} / profile;
+
+#define IT(cpptype, x) \
+  MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
+  OPENKNEEBOARD_SETTINGS_SECTIONS
+#undef IT
+
+  return settings;
+}
 
 }// namespace OpenKneeboard

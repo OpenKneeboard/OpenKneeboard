@@ -36,12 +36,18 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {DCSRadioLogTab::MissionStartBehavior::ClearHistory, "ClearHistory"},
   });
 
+DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
+  : DCSRadioLogTab(dxr, kbs, {}, {}, {}) {
+}
+
 DCSRadioLogTab::DCSRadioLogTab(
   const DXResources& dxr,
   KneeboardState* kbs,
+  const winrt::guid& persistentID,
   const std::string& /* title */,
   const nlohmann::json& config)
-  : PageSourceWithDelegates(dxr, kbs),
+  : TabBase(persistentID),
+    PageSourceWithDelegates(dxr, kbs),
     mPageSource(std::make_shared<PlainTextPageSource>(
       dxr,
       _("[waiting for radio messages]"))) {

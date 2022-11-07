@@ -33,7 +33,10 @@ class DCSTerrainTab final : public TabBase,
                             public DCSTab,
                             public PageSourceWithDelegates {
  public:
-  DCSTerrainTab(const DXResources&, KneeboardState*);
+  DCSTerrainTab(
+    const DXResources&,
+    KneeboardState*,
+    const winrt::guid& persistentID = {});
   ~DCSTerrainTab();
 
   virtual void Reload() override;

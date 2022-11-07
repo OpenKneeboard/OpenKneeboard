@@ -42,6 +42,7 @@ namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mDXResources(dxr) {
+  const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
   mGamesList = std::make_unique<GamesList>(mSettings.mGames);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);

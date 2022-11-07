@@ -34,7 +34,10 @@ class DCSMissionTab final : public TabBase,
                             public DCSTab,
                             public PageSourceWithDelegates {
  public:
-  DCSMissionTab(const DXResources&, KneeboardState*);
+  DCSMissionTab(
+    const DXResources&,
+    KneeboardState*,
+    const winrt::guid& persistentID = {});
   virtual ~DCSMissionTab();
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;

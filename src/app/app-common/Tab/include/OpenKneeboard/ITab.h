@@ -23,6 +23,7 @@
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/utf8.h>
 #include <d2d1_1.h>
+#include <shims/winrt/base.h>
 
 #include <string>
 
@@ -33,6 +34,7 @@ class ITab : public virtual IPageSource {
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
   virtual ~ITab();
 
+  virtual winrt::guid GetPersistentID() const = 0;
   virtual utf8_string GetGlyph() const = 0;
   virtual utf8_string GetTitle() const = 0;
   virtual RuntimeID GetRuntimeID() const = 0;

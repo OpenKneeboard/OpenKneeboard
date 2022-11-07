@@ -38,7 +38,10 @@ class DCSBriefingTab final : public TabBase,
                              public virtual DCSTab,
                              public virtual PageSourceWithDelegates {
  public:
-  DCSBriefingTab(const DXResources&, KneeboardState*);
+  DCSBriefingTab(
+    const DXResources&,
+    KneeboardState*,
+    const winrt::guid& persistentID = {});
   virtual ~DCSBriefingTab();
   virtual utf8_string GetGlyph() const override;
   virtual utf8_string GetTitle() const override;

@@ -33,8 +33,12 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
-  : PageSourceWithDelegates(dxr, kbs),
+DCSBriefingTab::DCSBriefingTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID)
+  : TabBase(persistentID),
+    PageSourceWithDelegates(dxr, kbs),
     mImagePages(std::make_unique<ImageFilePageSource>(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
   this->SetDelegates({

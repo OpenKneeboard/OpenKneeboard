@@ -36,7 +36,8 @@ NavigationTab::NavigationTab(
   const std::shared_ptr<ITab>& rootTab,
   const std::vector<NavigationEntry>& entries,
   const D2D1_SIZE_U& _ignoredPreferredSize)
-  : mDXR(dxr),
+  : TabBase(winrt::guid {}),
+    mDXR(dxr),
     mRootTab(rootTab),
     mPreferredSize({768, 1024}),
     mPreviewLayer(dxr) {

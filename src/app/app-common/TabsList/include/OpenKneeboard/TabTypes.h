@@ -66,28 +66,31 @@ template <std::derived_from<ITab> T>
 std::shared_ptr<T> load_tab(
   const DXResources& dxr,
   KneeboardState* kbs,
+  const winrt::guid& persistentID,
   const std::string& title,
   const nlohmann::json& config) {
   if constexpr (std::constructible_from<
                   T,
                   DXResources,
                   KneeboardState*,
+                  winrt::guid,
                   std::string,
                   nlohmann::json>) {
-    return std::make_shared<T>(dxr, kbs, title, config);
+    return std::make_shared<T>(dxr, kbs, persistentID, title, config);
   }
 
-  if constexpr (std::constructible_from<T, DXResources>) {
-    return std::make_shared<T>(dxr);
-  }
-
-  if constexpr (std::constructible_from<T, DXResources, KneeboardState*>) {
-    return std::make_shared<T>(dxr, kbs);
+  if constexpr (std::constructible_from<
+                  T,
+                  DXResources,
+                  KneeboardState*,
+                  winrt::guid,
+                  std::string>) {
+    return std::make_shared<T>(dxr, kbs, persistentID, title);
   }
 
   if constexpr (
-    std::constructible_from<T, DXResources, KneeboardState*, std::string>) {
-    return std::make_shared<T>(dxr, kbs, title);
+    std::constructible_from<T, DXResources, KneeboardState*, winrt::guid>) {
+    return std::make_shared<T>(dxr, kbs, persistentID);
   }
 
   static_assert(!std::is_abstract_v<T>);

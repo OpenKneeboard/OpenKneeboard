@@ -79,9 +79,16 @@ void TabsList::LoadSettings(const nlohmann::json& config) {
 
     const auto [type, settings] = MigrateTab(rawType, rawSettings);
 
+    winrt::guid persistentID {};
+    if (tab.contains("ID")) {
+      persistentID = winrt::guid {tab.at("ID").get<std::string>()};
+      // else handled by TabBase
+    }
+
 #define IT(_, it) \
   if (type == #it) { \
-    auto instance = load_tab<it##Tab>(mDXR, mKneeboard, title, settings); \
+    auto instance \
+      = load_tab<it##Tab>(mDXR, mKneeboard, persistentID, title, settings); \
     if (instance) { \
       tabs.push_back(instance); \
       continue; \
@@ -101,7 +108,6 @@ void TabsList::LoadDefaultSettings() {
     std::make_shared<SingleFileTab>(
       mDXR,
       mKneeboard,
-      _("Quick Start"),
       Filesystem::GetRuntimeDirectory() / RuntimeFiles::QUICK_START_PDF),
     std::make_shared<DCSRadioLogTab>(mDXR, mKneeboard),
     std::make_shared<DCSBriefingTab>(mDXR, mKneeboard),
@@ -130,6 +136,7 @@ nlohmann::json TabsList::GetSettings() const {
     nlohmann::json savedTab {
       {"Type", type},
       {"Title", tab->GetTitle()},
+      {"ID", winrt::to_string(winrt::to_hstring(tab->GetPersistentID()))},
     };
 
     auto withSettings = std::dynamic_pointer_cast<ITabWithSettings>(tab);

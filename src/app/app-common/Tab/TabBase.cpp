@@ -26,4 +26,22 @@ ITab::RuntimeID TabBase::GetRuntimeID() const {
   return mRuntimeID;
 }
 
+winrt::guid TabBase::GetPersistentID() const {
+  return mPersistentID;
+}
+
+static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
+  if (guid != winrt::guid {}) {
+    return guid;
+  }
+
+  winrt::guid newGuid;
+  winrt::check_hresult(CoCreateGuid(reinterpret_cast<GUID*>(&newGuid)));
+  return newGuid;
+}
+
+TabBase::TabBase(const winrt::guid& persistentID)
+  : mPersistentID(EnsureNonNullGuid(persistentID)) {
+}
+
 }// namespace OpenKneeboard

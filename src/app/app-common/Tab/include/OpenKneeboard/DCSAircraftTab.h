@@ -36,7 +36,10 @@ class DCSAircraftTab final : public TabBase,
                              public DCSTab,
                              public PageSourceWithDelegates {
  public:
-  DCSAircraftTab(const DXResources&, KneeboardState*);
+  DCSAircraftTab(
+    const DXResources&,
+    KneeboardState*,
+    const winrt::guid& persistentID = {});
   ~DCSAircraftTab();
 
   virtual void Reload() override;

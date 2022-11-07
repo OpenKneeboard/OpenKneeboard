@@ -27,8 +27,14 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSAircraftTab::DCSAircraftTab(const DXResources& dxr, KneeboardState* kbs)
-  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
+DCSAircraftTab::DCSAircraftTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID)
+  : TabBase(persistentID),
+    PageSourceWithDelegates(dxr, kbs),
+    mDXR(dxr),
+    mKneeboard(kbs) {
 }
 
 DCSAircraftTab::~DCSAircraftTab() {

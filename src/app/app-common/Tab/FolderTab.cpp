@@ -28,9 +28,11 @@ namespace OpenKneeboard {
 FolderTab::FolderTab(
   const DXResources& dxr,
   KneeboardState* kbs,
+  const winrt::guid& persistentID,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : PageSourceWithDelegates(dxr, kbs),
+  : TabBase(persistentID),
+    PageSourceWithDelegates(dxr, kbs),
     mPageSource(FolderPageSource::Create(dxr, kbs, path)),
     mPath {path} {
   this->SetDelegates({mPageSource});
@@ -39,11 +41,20 @@ FolderTab::FolderTab(
 FolderTab::FolderTab(
   const DXResources& dxr,
   KneeboardState* kbs,
+  const std::filesystem::path& path)
+  : FolderTab(dxr, kbs, winrt::guid {}, path.filename(), path) {
+}
+
+FolderTab::FolderTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
   utf8_string_view title,
   const nlohmann::json& settings)
   : FolderTab(
     dxr,
     kbs,
+    persistentID,
     title,
     settings.at("Path").get<std::filesystem::path>()) {
 }

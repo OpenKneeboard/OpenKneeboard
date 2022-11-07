@@ -31,20 +31,33 @@ namespace OpenKneeboard {
 SingleFileTab::SingleFileTab(
   const DXResources& dxr,
   KneeboardState* kbs,
+  const winrt::guid& persistentID,
   utf8_string_view /* title */,
   const std::filesystem::path& path)
-  : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
+  : TabBase(persistentID),
+    PageSourceWithDelegates(dxr, kbs),
+    mDXR(dxr),
+    mKneeboard(kbs) {
   this->SetPath(path);
 }
 
 SingleFileTab::SingleFileTab(
   const DXResources& dxr,
   KneeboardState* kbs,
+  const std::filesystem::path& path)
+  : SingleFileTab(dxr, kbs, winrt::guid {}, path.stem(), path) {
+}
+
+SingleFileTab::SingleFileTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
   utf8_string_view title,
   const nlohmann::json& settings)
   : SingleFileTab(
     dxr,
     kbs,
+    persistentID,
     title,
     settings.at("Path").get<std::filesystem::path>()) {
 }

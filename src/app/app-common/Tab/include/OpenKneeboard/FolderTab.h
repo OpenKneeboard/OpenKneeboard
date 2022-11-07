@@ -33,14 +33,14 @@ class FolderTab final : public TabBase,
                         public PageSourceWithDelegates,
                         public ITabWithSettings {
  public:
-  FolderTab(
+  explicit FolderTab(
     const DXResources&,
     KneeboardState*,
-    utf8_string_view title,
     const std::filesystem::path& path);
   explicit FolderTab(
     const DXResources&,
     KneeboardState*,
+    const winrt::guid& persistentID,
     utf8_string_view title,
     const nlohmann::json&);
   virtual ~FolderTab();
@@ -55,6 +55,13 @@ class FolderTab final : public TabBase,
   virtual void SetPath(const std::filesystem::path& path);
 
  private:
+  FolderTab(
+    const DXResources&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    utf8_string_view title,
+    const std::filesystem::path& path);
+
   std::shared_ptr<FolderPageSource> mPageSource;
   std::filesystem::path mPath;
 };

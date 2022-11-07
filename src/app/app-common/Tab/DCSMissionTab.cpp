@@ -28,8 +28,11 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSMissionTab::DCSMissionTab(const DXResources& dxr, KneeboardState* kbs)
-  : PageSourceWithDelegates(dxr, kbs) {
+DCSMissionTab::DCSMissionTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID)
+  : TabBase(persistentID), PageSourceWithDelegates(dxr, kbs) {
   mPageSource = FolderPageSource::Create(dxr, kbs);
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
 }

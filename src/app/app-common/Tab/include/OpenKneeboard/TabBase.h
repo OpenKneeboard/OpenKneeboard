@@ -26,8 +26,13 @@ namespace OpenKneeboard {
 class TabBase : public virtual ITab {
  public:
   virtual RuntimeID GetRuntimeID() const override;
+  virtual winrt::guid GetPersistentID() const override;
+
+ protected:
+  TabBase(const winrt::guid& persistentID);
 
  private:
+  const winrt::guid mPersistentID;
   const RuntimeID mRuntimeID;
 };
 
