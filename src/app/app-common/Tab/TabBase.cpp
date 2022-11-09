@@ -22,14 +22,6 @@
 
 namespace OpenKneeboard {
 
-ITab::RuntimeID TabBase::GetRuntimeID() const {
-  return mRuntimeID;
-}
-
-winrt::guid TabBase::GetPersistentID() const {
-  return mPersistentID;
-}
-
 static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
   if (guid != winrt::guid {}) {
     return guid;
@@ -40,8 +32,20 @@ static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
   return newGuid;
 }
 
-TabBase::TabBase(const winrt::guid& persistentID)
-  : mPersistentID(EnsureNonNullGuid(persistentID)) {
+TabBase::TabBase(const winrt::guid& persistentID, utf8_string_view title)
+  : mPersistentID(EnsureNonNullGuid(persistentID)), mTitle(title) {
+}
+
+ITab::RuntimeID TabBase::GetRuntimeID() const {
+  return mRuntimeID;
+}
+
+winrt::guid TabBase::GetPersistentID() const {
+  return mPersistentID;
+}
+
+utf8_string TabBase::GetTitle() const {
+  return mTitle;
 }
 
 }// namespace OpenKneeboard

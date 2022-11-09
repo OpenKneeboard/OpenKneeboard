@@ -48,12 +48,11 @@ class DCSRadioLogTab final : public TabBase,
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    const std::string& title,
+    utf8_string_view title,
     const nlohmann::json& config);
   virtual ~DCSRadioLogTab();
 
   virtual utf8_string GetGlyph() const override;
-  virtual utf8_string GetTitle() const override;
   virtual PageIndex GetPageCount() const override;
   virtual void Reload() override;
 

@@ -32,9 +32,9 @@ SingleFileTab::SingleFileTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view /* title */,
+  utf8_string_view title,
   const std::filesystem::path& path)
-  : TabBase(persistentID),
+  : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs) {
@@ -80,10 +80,6 @@ utf8_string SingleFileTab::GetGlyph() const {
     default:
       return "";
   }
-}
-
-utf8_string SingleFileTab::GetTitle() const {
-  return mPath.stem();
 }
 
 std::filesystem::path SingleFileTab::GetPath() const {

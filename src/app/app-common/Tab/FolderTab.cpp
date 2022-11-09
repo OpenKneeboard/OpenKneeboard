@@ -29,9 +29,9 @@ FolderTab::FolderTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view /* title */,
+  utf8_string_view title,
   const std::filesystem::path& path)
-  : TabBase(persistentID),
+  : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mPageSource(FolderPageSource::Create(dxr, kbs, path)),
     mPath {path} {
@@ -68,10 +68,6 @@ nlohmann::json FolderTab::GetSettings() const {
 
 utf8_string FolderTab::GetGlyph() const {
   return "\uE838";
-}
-
-utf8_string FolderTab::GetTitle() const {
-  return mPath.filename();
 }
 
 void FolderTab::Reload() {

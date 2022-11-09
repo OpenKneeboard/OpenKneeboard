@@ -45,7 +45,6 @@ class FolderTab final : public TabBase,
     const nlohmann::json&);
   virtual ~FolderTab();
   virtual utf8_string GetGlyph() const override;
-  virtual utf8_string GetTitle() const override;
 
   virtual nlohmann::json GetSettings() const final override;
 

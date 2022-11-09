@@ -36,7 +36,7 @@ NavigationTab::NavigationTab(
   const std::shared_ptr<ITab>& rootTab,
   const std::vector<NavigationEntry>& entries,
   const D2D1_SIZE_U& _ignoredPreferredSize)
-  : TabBase(winrt::guid {}),
+  : TabBase(winrt::guid {}, rootTab->GetTitle()),
     mDXR(dxr),
     mRootTab(rootTab),
     mPreferredSize({768, 1024}),
@@ -149,10 +149,6 @@ NavigationTab::NavigationTab(
 
 NavigationTab::~NavigationTab() {
   this->RemoveAllEventListeners();
-}
-
-utf8_string NavigationTab::GetTitle() const {
-  return mRootTab->GetTitle();
 }
 
 utf8_string NavigationTab::GetGlyph() const {

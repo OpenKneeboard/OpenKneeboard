@@ -48,7 +48,6 @@ class NavigationTab final : public TabBase,
   ~NavigationTab();
 
   virtual utf8_string GetGlyph() const override;
-  virtual utf8_string GetTitle() const override;
   virtual void Reload() override;
 
   virtual PageIndex GetPageCount() const override;

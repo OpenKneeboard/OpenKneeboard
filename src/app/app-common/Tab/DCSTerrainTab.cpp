@@ -27,11 +27,16 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
+DCSTerrainTab::DCSTerrainTab(const DXResources& dxr, KneeboardState* kbs)
+  : DCSTerrainTab(dxr, kbs, {}, _("Theater")) {
+}
+
 DCSTerrainTab::DCSTerrainTab(
   const DXResources& dxr,
   KneeboardState* kbs,
-  const winrt::guid& persistentID)
-  : TabBase(persistentID),
+  const winrt::guid& persistentID,
+  utf8_string_view title)
+  : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs) {
@@ -43,10 +48,6 @@ DCSTerrainTab::~DCSTerrainTab() {
 
 utf8_string DCSTerrainTab::GetGlyph() const {
   return "\uE909";
-}
-
-utf8_string DCSTerrainTab::GetTitle() const {
-  return _("Theater");
 }
 
 void DCSTerrainTab::Reload() {

@@ -28,11 +28,16 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
+DCSMissionTab::DCSMissionTab(const DXResources& dxr, KneeboardState* kbs)
+  : DCSMissionTab(dxr, kbs, {}, _("Mission")) {
+}
+
 DCSMissionTab::DCSMissionTab(
   const DXResources& dxr,
   KneeboardState* kbs,
-  const winrt::guid& persistentID)
-  : TabBase(persistentID), PageSourceWithDelegates(dxr, kbs) {
+  const winrt::guid& persistentID,
+  utf8_string_view title)
+  : TabBase(persistentID, title), PageSourceWithDelegates(dxr, kbs) {
   mPageSource = FolderPageSource::Create(dxr, kbs);
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
 }
@@ -43,10 +48,6 @@ DCSMissionTab::~DCSMissionTab() {
 
 utf8_string DCSMissionTab::GetGlyph() const {
   return "\uF0E3";
-}
-
-utf8_string DCSMissionTab::GetTitle() const {
-  return _("Mission");
 }
 
 void DCSMissionTab::Reload() {

@@ -33,11 +33,16 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
+DCSBriefingTab::DCSBriefingTab(const DXResources& dxr, KneeboardState* kbs)
+  : DCSBriefingTab(dxr, kbs, {}, _("Briefing")) {
+}
+
 DCSBriefingTab::DCSBriefingTab(
   const DXResources& dxr,
   KneeboardState* kbs,
-  const winrt::guid& persistentID)
-  : TabBase(persistentID),
+  const winrt::guid& persistentID,
+  utf8_string_view title)
+  : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mImagePages(std::make_unique<ImageFilePageSource>(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
@@ -53,10 +58,6 @@ DCSBriefingTab::~DCSBriefingTab() {
 
 utf8_string DCSBriefingTab::GetGlyph() const {
   return "\uE95D";
-}
-
-utf8_string DCSBriefingTab::GetTitle() const {
-  return _("Briefing");
 }
 
 void DCSBriefingTab::Reload() noexcept {

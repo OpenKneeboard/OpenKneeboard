@@ -27,11 +27,16 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
+DCSAircraftTab::DCSAircraftTab(const DXResources& dxr, KneeboardState* kbs)
+  : DCSAircraftTab(dxr, kbs, {}, _("Aircraft")) {
+}
+
 DCSAircraftTab::DCSAircraftTab(
   const DXResources& dxr,
   KneeboardState* kbs,
-  const winrt::guid& persistentID)
-  : TabBase(persistentID),
+  const winrt::guid& persistentID,
+  utf8_string_view title)
+  : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs) {
@@ -43,10 +48,6 @@ DCSAircraftTab::~DCSAircraftTab() {
 
 utf8_string DCSAircraftTab::GetGlyph() const {
   return "\uE709";
-}
-
-utf8_string DCSAircraftTab::GetTitle() const {
-  return _("Aircraft");
 }
 
 void DCSAircraftTab::Reload() {

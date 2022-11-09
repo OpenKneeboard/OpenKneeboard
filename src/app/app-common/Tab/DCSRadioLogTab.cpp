@@ -37,16 +37,16 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
   });
 
 DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
-  : DCSRadioLogTab(dxr, kbs, {}, {}, {}) {
+  : DCSRadioLogTab(dxr, kbs, {}, _("Radio Log"), {}) {
 }
 
 DCSRadioLogTab::DCSRadioLogTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  const std::string& /* title */,
+  utf8_string_view title,
   const nlohmann::json& config)
-  : TabBase(persistentID),
+  : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mPageSource(std::make_shared<PlainTextPageSource>(
       dxr,
@@ -100,10 +100,6 @@ void DCSRadioLogTab::SetTimestampsEnabled(bool value) {
 
 utf8_string DCSRadioLogTab::GetGlyph() const {
   return "\uF12E";
-}
-
-utf8_string DCSRadioLogTab::GetTitle() const {
-  return _("Radio Log");
 }
 
 PageIndex DCSRadioLogTab::GetPageCount() const {

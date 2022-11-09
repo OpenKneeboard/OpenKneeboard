@@ -88,11 +88,6 @@ std::shared_ptr<T> load_tab(
     return std::make_shared<T>(dxr, kbs, persistentID, title);
   }
 
-  if constexpr (
-    std::constructible_from<T, DXResources, KneeboardState*, winrt::guid>) {
-    return std::make_shared<T>(dxr, kbs, persistentID);
-  }
-
   static_assert(!std::is_abstract_v<T>);
 }
 

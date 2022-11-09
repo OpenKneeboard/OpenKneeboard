@@ -55,7 +55,6 @@ class SingleFileTab final : public TabBase,
   virtual ~SingleFileTab();
 
   virtual utf8_string GetGlyph() const override;
-  virtual utf8_string GetTitle() const override;
   virtual void Reload() override;
 
   virtual nlohmann::json GetSettings() const override;
