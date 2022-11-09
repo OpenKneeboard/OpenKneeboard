@@ -38,8 +38,9 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
 
 ## Releasing
 
-* Check `Quick Start.pdf` is up to date
-* Check version number in CMakeLists.txt is up to date
+* Update `Quick Start.pdf`
+* Update the `GameEvent` path if the format of existing messages has changed in a backwards-incompatible way
+* Check version number in CMakeLists.txt
 * Test msix from GitHub Actions as above
 * Push tag
 * Wait for GitHub Actions to create a draft release with files and template release notes

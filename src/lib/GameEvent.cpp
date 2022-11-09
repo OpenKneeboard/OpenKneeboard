@@ -20,6 +20,7 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/json.h>
 #include <Windows.h>
 #include <shims/winrt/base.h>
 
@@ -125,9 +126,12 @@ const char* GameEvent::GetMailslotPath() {
   static std::string sPath;
   if (sPath.empty()) {
     sPath = std::format(
-      "\\\\.\\mailslot\\{}.events.v1", OpenKneeboard::ProjectNameA);
+      "\\\\.\\mailslot\\{}.events.v1.3", OpenKneeboard::ProjectNameA);
   }
   return sPath.c_str();
 }
+
+OPENKNEEBOARD_DEFINE_JSON(SetTabByIDEvent, mID, mPageNumber);
+OPENKNEEBOARD_DEFINE_JSON(SetTabByNameEvent, mName, mPageNumber);
 
 }// namespace OpenKneeboard

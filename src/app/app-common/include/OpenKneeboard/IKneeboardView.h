@@ -46,7 +46,7 @@ class IKneeboardView {
   virtual TabIndex GetTabIndex() const = 0;
   virtual std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const = 0;
   virtual void SetCurrentTabByIndex(TabIndex) = 0;
-  virtual void SetCurrentTabByID(ITab::RuntimeID) = 0;
+  virtual void SetCurrentTabByRuntimeID(ITab::RuntimeID) = 0;
 
   virtual void PreviousTab() = 0;
   virtual void NextTab() = 0;

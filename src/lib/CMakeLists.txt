@@ -142,7 +142,7 @@ target_link_libraries(OpenKneeboard-consolelib PUBLIC _libheaders)
 
 add_library(OpenKneeboard-GameEvent STATIC GameEvent.cpp)
 target_link_libraries(OpenKneeboard-GameEvent PRIVATE OpenKneeboard-config OpenKneeboard-dprint)
-target_link_libraries(OpenKneeboard-GameEvent PUBLIC _libheaders OpenKneeboard-UTF8)
+target_link_libraries(OpenKneeboard-GameEvent PUBLIC _libheaders OpenKneeboard-UTF8 OpenKneeboard-json)
 
 add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
 target_link_libraries(

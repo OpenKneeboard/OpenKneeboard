@@ -406,7 +406,8 @@ void MainWindow::OnNavigationItemInvoked(
   }
 
   mSwitchingTabsFromNavSelection = true;
-  mKneeboardView->SetCurrentTabByID(ITab::RuntimeID::FromTemporaryValue(tabID));
+  mKneeboardView->SetCurrentTabByRuntimeID(
+    ITab::RuntimeID::FromTemporaryValue(tabID));
 }
 
 void MainWindow::OnBackRequested(

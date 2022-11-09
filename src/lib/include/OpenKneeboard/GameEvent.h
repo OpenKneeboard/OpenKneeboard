@@ -39,6 +39,13 @@ struct GameEvent final {
     return nlohmann::json::parse(this->value);
   }
 
+  template <class T>
+  static GameEvent FromStruct(const T& v) {
+    nlohmann::json j;
+    j = v;
+    return {T::ID, j.dump()};
+  }
+
   operator bool() const;
 
   static GameEvent Unserialize(const std::vector<std::byte>& payload);
@@ -47,10 +54,34 @@ struct GameEvent final {
 
   static const char* GetMailslotPath();
 
-  static constexpr char EVT_REMOTE_USER_ACTION[]
+  static constexpr std::string_view EVT_REMOTE_USER_ACTION
     = "com.fredemmott.openkneeboard/RemoteUserAction";
 
-  static constexpr char EVT_SET_INPUT_FOCUS[]
+  static constexpr std::string_view EVT_SET_INPUT_FOCUS
     = "com.fredemmott.openkneeboard/SetInputFocus";
+
+  static constexpr std::string_view EVT_SET_TAB_BY_ID
+    = "com.fredemmott.openkneeboard/SetTabByID";
+  static constexpr std::string_view EVT_SET_TAB_BY_NAME
+    = "com.fredemmott.openkneeboard/SetTabByName";
 };
+
+// Use a struct to allow specifying which kneeboard in the future
+struct SetTabByIDEvent {
+  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_ID};
+  std::string mID;
+  // 0 = no change
+  uint64_t mPageNumber {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(SetTabByIDEvent);
+
+// Use a struct to allow specifying which kneeboard in the future
+struct SetTabByNameEvent {
+  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_NAME};
+  std::string mName;
+  // 0 = no change
+  uint64_t mPageNumber {0};
+};
+OPENKNEEBOARD_DECLARE_JSON(SetTabByNameEvent);
+
 }// namespace OpenKneeboard

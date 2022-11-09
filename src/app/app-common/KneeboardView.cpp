@@ -116,7 +116,7 @@ void KneeboardView::SetCurrentTabByIndex(TabIndex index) {
   evCurrentTabChangedEvent.Emit(index);
 }
 
-void KneeboardView::SetCurrentTabByID(ITab::RuntimeID id) {
+void KneeboardView::SetCurrentTabByRuntimeID(ITab::RuntimeID id) {
   const auto it = std::ranges::find(mTabViews, id, [](const auto& view) {
     return view->GetRootTab()->GetRuntimeID();
   });

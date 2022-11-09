@@ -47,6 +47,14 @@ add_custom_command(
   "$<TARGET_FILE_DIR:test-feeder>/openvr_api.dll"
 )
 
+add_remote_control_executable(OpenKneeboard-RemoteControl-SET_TAB WIN32 set-tab-remote.cpp)
+target_link_libraries(
+  OpenKneeboard-RemoteControl-SET_TAB
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-GameEvent
+)
+
 add_remote_control_executable(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
 target_link_libraries(
   OpenKneeboard-Viewer

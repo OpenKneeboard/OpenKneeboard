@@ -243,6 +243,65 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
 #undef IT
   }
 
+  if (ev.name == GameEvent::EVT_SET_TAB_BY_ID) {
+    const auto parsed = ev.ParsedValue<SetTabByIDEvent>();
+    winrt::guid guid;
+    try {
+      guid = winrt::guid {parsed.mID};
+    } catch (const std::invalid_argument&) {
+      dprintf("Failed to set tab by ID: '{}' is not a valid GUID", parsed.mID);
+      return;
+    }
+    for (auto tab: mTabsList->GetTabs()) {
+      if (tab->GetPersistentID() == guid) {
+        this->GetActiveViewForGlobalInput()->SetCurrentTabByRuntimeID(
+          tab->GetRuntimeID());
+        const auto pageCount = tab->GetPageCount();
+        if (parsed.mPageNumber != 0 && pageCount > 1) {
+          const auto pageIndex = parsed.mPageNumber - 1;
+          if (pageIndex < pageCount) {
+            this->GetActiveViewForGlobalInput()
+              ->GetCurrentTabView()
+              ->SetPageIndex(pageIndex);
+          } else {
+            dprintf(
+              "Requested page index {} >= count {}", pageIndex, pageCount);
+          }
+        }
+        return;
+      }
+    }
+    dprintf(
+      "Asked to switch to tab with ID '{}', but can't find it", parsed.mID);
+    return;
+  }
+
+  if (ev.name == GameEvent::EVT_SET_TAB_BY_NAME) {
+    const auto parsed = ev.ParsedValue<SetTabByNameEvent>();
+    for (auto tab: mTabsList->GetTabs()) {
+      if (tab->GetTitle() == parsed.mName) {
+        this->GetActiveViewForGlobalInput()->SetCurrentTabByRuntimeID(
+          tab->GetRuntimeID());
+        const auto pageCount = tab->GetPageCount();
+        if (parsed.mPageNumber != 0 && pageCount > 1) {
+          const auto pageIndex = parsed.mPageNumber - 1;
+          if (pageIndex < pageCount) {
+            this->GetActiveViewForGlobalInput()
+              ->GetCurrentTabView()
+              ->SetPageIndex(pageIndex);
+          } else {
+            dprintf(
+              "Requested page index {} >= count {}", pageIndex, pageCount);
+          }
+        }
+        return;
+      }
+    }
+    dprintf(
+      "Asked to switch to tab with name '{}', but can't find it", parsed.mName);
+    return;
+  }
+
   for (auto tab: mTabsList->GetTabs()) {
     auto receiver = std::dynamic_pointer_cast<ITabWithGameEvents>(tab);
     if (receiver) {
