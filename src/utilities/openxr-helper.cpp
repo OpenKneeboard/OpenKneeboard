@@ -38,7 +38,7 @@ using namespace OpenKneeboard;
 
 static HKEY OpenOrCreateImplicitLayerRegistryKey(HKEY root) {
   HKEY openXRKey {0};
-  RegCreateKeyExW(
+  const auto result = RegCreateKeyExW(
     root,
     L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
     0,
@@ -48,6 +48,9 @@ static HKEY OpenOrCreateImplicitLayerRegistryKey(HKEY root) {
     nullptr,
     &openXRKey,
     nullptr);
+  if (result != ERROR_SUCCESS) {
+    dprintf("Failed to open OpenXR implicit layer key: {}", result);
+  }
   return openXRKey;
 }
 
@@ -121,13 +124,16 @@ static void EnableOpenXRLayer(
   });
 
   DWORD disabled = 0;
-  RegSetValueExW(
+  const auto success = RegSetValueExW(
     openXRKey,
     jsonPath.c_str(),
     0,
     REG_DWORD,
     reinterpret_cast<const BYTE*>(&disabled),
     sizeof(disabled));
+  if (success != ERROR_SUCCESS) {
+    dprintf("Failed to set OpenXR key: {}", success);
+  }
 
   RegCloseKey(openXRKey);
 }
