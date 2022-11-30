@@ -29,7 +29,6 @@ namespace OpenKneeboard {
 #define OPENKNEEBOARD_OVRPROXY_FUNCS \
   X(ovr_GetTrackingState) \
   X(ovr_GetPredictedDisplayTime) \
-  X(ovr_GetTrackingOriginType) \
   X(ovr_CreateTextureSwapChainDX) \
   X(ovr_GetTextureSwapChainLength) \
   X(ovr_GetTextureSwapChainBufferDX) \

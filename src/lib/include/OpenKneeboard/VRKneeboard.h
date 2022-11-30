@@ -51,8 +51,6 @@ class VRKneeboard {
     EYE_LEVEL,
   };
 
-  virtual YOrigin GetYOrigin() = 0;
-
   RenderParameters GetRenderParameters(
     const SHM::Snapshot&,
     const SHM::LayerConfig&,
@@ -67,6 +65,7 @@ class VRKneeboard {
   uint64_t mRecenterCount = 0;
   Matrix mRecenter = Matrix::Identity;
   std::unordered_map<uint64_t, bool> mIsLookingAtKneeboard;
+  std::optional<float> mEyeHeight;
 
   Pose GetKneeboardPose(
     const VRRenderConfig& vr,
@@ -86,6 +85,7 @@ class VRKneeboard {
 
   Sizes GetSizes(const VRRenderConfig&, const SHM::LayerConfig&) const;
 
+  void MaybeRecenter(const VRRenderConfig& vr, const Pose& hmdPose);
   void Recenter(const VRRenderConfig& vr, const Pose& hmdPose);
 };
 

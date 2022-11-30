@@ -68,15 +68,6 @@ OculusKneeboard::Pose OculusKneeboard::GetHMDPose(double predictedTime) {
   };
 }
 
-OculusKneeboard::YOrigin OculusKneeboard::GetYOrigin() {
-  if (
-    OVRProxy::Get()->ovr_GetTrackingOriginType(mSession)
-    == ovrTrackingOrigin_EyeLevel) {
-    return YOrigin::EYE_LEVEL;
-  }
-  return YOrigin::FLOOR_LEVEL;
-}
-
 ovrResult OculusKneeboard::OnOVREndFrame(
   ovrSession session,
   long long frameIndex,

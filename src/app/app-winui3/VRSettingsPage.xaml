@@ -146,18 +146,8 @@
         Spacing="12">
         <Grid ColumnDefinitions="Auto,Auto,*">
           <NumberBox
-            Header="Vertical distance from seated eye level, in meters"
+            Header="Vertical distance from eye level, in meters"
             Value="{x:Bind KneeboardEyeY}"
-            SmallChange="0.01"
-            LargeChange="0.05"
-            SpinButtonPlacementMode="Inline"
-            NumberFormatter="{StaticResource MetersFormatter}"
-          />
-          <NumberBox
-            Grid.Column="1"
-            Margin="20,0,0,0"
-            Header="Vertical distance from floor level, in meters"
-            Value="{x:Bind KneeboardFloorY}"
             SmallChange="0.01"
             LargeChange="0.05"
             SpinButtonPlacementMode="Inline"

@@ -38,7 +38,6 @@ class OculusKneeboard final : private VRKneeboard {
 
  protected:
   Pose GetHMDPose(double predictedTime);
-  YOrigin GetYOrigin() override;
 
  private:
   std::array<ovrTextureSwapChain, MaxLayers> mSwapChains;

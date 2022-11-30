@@ -42,7 +42,6 @@ class OpenVRKneeboard final : private VRKneeboard {
 
  protected:
   Pose GetHMDPose(float);
-  YOrigin GetYOrigin() override;
 
  private:
   using Matrix = DirectX::SimpleMath::Matrix;

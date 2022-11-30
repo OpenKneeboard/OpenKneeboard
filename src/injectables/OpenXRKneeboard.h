@@ -83,7 +83,6 @@ class OpenXRKneeboard : public VRKneeboard {
   VRRenderConfig mInitialConfig;
 
   Pose GetHMDPose(XrTime displayTime);
-  YOrigin GetYOrigin() override;
   static XrPosef GetXrPosef(const Pose& pose);
 };
 

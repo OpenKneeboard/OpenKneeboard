@@ -153,7 +153,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
     if (IsVarjoRuntime() && config.mVR.mQuirks.mVarjo_OpenXR_InvertYPosition) {
       layer.mVR.mEyeY = -layer.mVR.mEyeY;
-      layer.mVR.mFloorY = -layer.mVR.mFloorY;
     }
 
     auto& swapchain = mSwapchains.at(layerIndex);
@@ -258,10 +257,6 @@ OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
   };
   sCacheKey = displayTime;
   return sCache;
-}
-
-OpenXRKneeboard::YOrigin OpenXRKneeboard::GetYOrigin() {
-  return YOrigin::EYE_LEVEL;
 }
 
 XrPosef OpenXRKneeboard::GetXrPosef(const Pose& pose) {

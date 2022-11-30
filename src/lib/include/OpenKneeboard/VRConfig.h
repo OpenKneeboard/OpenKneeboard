@@ -33,7 +33,7 @@ namespace OpenKneeboard {
 
 struct VRLayerConfig {
   // Distances in meters, rotations in radians
-  float mX = 0.15f, mFloorY = 0.6f, mEyeY = -0.7f, mZ = -0.4f;
+  float mX = 0.15f, mEyeY = -0.7f, mZ = -0.4f;
   float mRX = -2 * std::numbers::pi_v<float> / 5,
         mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
   float mWidth = 0.25f;

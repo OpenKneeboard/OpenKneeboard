@@ -40,8 +40,6 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
   void KneeboardX(float value);
   float KneeboardEyeY();
   void KneeboardEyeY(float value);
-  float KneeboardFloorY();
-  void KneeboardFloorY(float value);
   float KneeboardZ();
   void KneeboardZ(float value);
   float KneeboardRX();

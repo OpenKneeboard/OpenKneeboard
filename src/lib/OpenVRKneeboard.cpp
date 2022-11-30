@@ -304,12 +304,6 @@ void OpenVRKneeboard::Tick() {
 #undef CHECK
 }
 
-OpenVRKneeboard::YOrigin OpenVRKneeboard::GetYOrigin() {
-  // Always use floor level due to
-  // https://github.com/ValveSoftware/openvr/issues/830
-  return YOrigin::FLOOR_LEVEL;
-}
-
 OpenVRKneeboard::Pose OpenVRKneeboard::GetHMDPose(float displayTime) {
   static uint64_t sCacheKey = ~(0ui64);
   static Pose sCache {};

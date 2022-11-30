@@ -29,18 +29,20 @@ VRKneeboard::Pose VRKneeboard::GetKneeboardPose(
   const VRRenderConfig& vr,
   const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
+  if (!mEyeHeight) {
+    mEyeHeight = {hmdPose.mPosition.y};
+  }
   const auto& vrl = layer.mVR;
-  this->Recenter(vr, hmdPose);
-  // clang-format off
-    auto matrix =
-      Matrix::CreateRotationX(vrl.mRX)
-      * Matrix::CreateRotationY(vrl.mRY)
-      * Matrix::CreateRotationZ(vrl.mRZ)
-      * Matrix::CreateTranslation({
-        vrl.mX,
-        this->GetYOrigin() == YOrigin::EYE_LEVEL ? vrl.mEyeY : vrl.mFloorY, vrl.mZ})
-      * mRecenter;
-  // clang-format on
+  this->MaybeRecenter(vr, hmdPose);
+  auto matrix = Matrix::CreateRotationX(vrl.mRX)
+    * Matrix::CreateRotationY(vrl.mRY) * Matrix::CreateRotationZ(vrl.mRZ)
+    * Matrix::CreateTranslation({
+      vrl.mX,
+      vrl.mEyeY + *mEyeHeight,
+      vrl.mZ,
+    })
+    * mRecenter;
+
   return {
     .mPosition = matrix.Translation(),
     .mOrientation = Quaternion::CreateFromRotationMatrix(matrix),
@@ -74,13 +76,17 @@ VRKneeboard::Sizes VRKneeboard::GetSizes(
   };
 }
 
-void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
+void VRKneeboard::MaybeRecenter(const VRRenderConfig& vr, const Pose& hmdPose) {
   if (vr.mRecenterCount == mRecenterCount) {
     return;
   }
+  this->Recenter(vr, hmdPose);
+}
 
+void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
   auto pos = hmdPose.mPosition;
-  pos.y = 0;// don't adjust floor level
+  mEyeHeight = {pos.y};
+  pos.y = 0;
 
   // We're only going to respect ry (yaw) as we want the new
   // center to remain gravity-aligned
@@ -100,6 +106,9 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
   const SHM::Snapshot& snapshot,
   const SHM::LayerConfig& layer,
   const Pose& hmdPose) {
+  if (!mEyeHeight) {
+    mEyeHeight = {hmdPose.mPosition.y};
+  }
   auto config = snapshot.GetConfig();
   const auto kneeboardPose = this->GetKneeboardPose(config.mVR, layer, hmdPose);
   const auto isLookingAtKneeboard

@@ -69,7 +69,6 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   for (auto prop: {
          L"KneeboardX",
          L"KneeboardEyeY",
-         L"KneeboardFloorY",
          L"KneeboardZ",
          L"KneeboardRX",
          L"KneeboardRY",
@@ -129,19 +128,6 @@ void VRSettingsPage::KneeboardEyeY(float value) {
   }
   auto config = gKneeboard->GetVRSettings();
   config.mPrimaryLayer.mEyeY = -value;
-  gKneeboard->SetVRSettings(config);
-}
-
-float VRSettingsPage::KneeboardFloorY() {
-  return gKneeboard->GetVRSettings().mPrimaryLayer.mFloorY;
-}
-
-void VRSettingsPage::KneeboardFloorY(float value) {
-  if (std::isnan(value)) {
-    return;
-  }
-  auto config = gKneeboard->GetVRSettings();
-  config.mPrimaryLayer.mFloorY = value;
   gKneeboard->SetVRSettings(config);
 }
 
