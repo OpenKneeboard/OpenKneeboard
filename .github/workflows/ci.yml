@@ -91,7 +91,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}-Symbols
-          path:
           path: ${{steps.installDebugSymbols.outputs.PREFIX}}
     strategy:
       matrix:
