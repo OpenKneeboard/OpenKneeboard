@@ -8,7 +8,7 @@ install(
 install(
   FILES
   RemoveMSIX.ps1
-  TYPE BIN
+  DESTINATION "installer"
   COMPONENT Installer
 )
 
@@ -31,7 +31,6 @@ list(
   APPEND
   CPACK_WIX_EXTRA_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/OpenXRAPILayerRegistration.wxs"
-  "${CMAKE_CURRENT_SOURCE_DIR}/Powershell.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/RemoveMSIX.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/WixUI_Minimal_NoEULA.wxs"
 )
@@ -49,10 +48,6 @@ list(
 include(CPack)
 cpack_add_component(
   Default
-  HIDDEN
-)
-cpack_add_component(
-  Utilities
   HIDDEN
 )
 cpack_add_component(

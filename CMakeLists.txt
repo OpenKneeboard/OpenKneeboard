@@ -3,8 +3,6 @@ cmake_minimum_required(VERSION 3.23)
 # Required for ID3D11On12Device2
 set(MINIMUM_WINDOWS_VERSION "10.0.19041.0")
 set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}")
-# Required for XAML resources in self-contained mode
-set(CMAKE_INSTALL_BINDIR "." CACHE STRING "Path to install binaries relative to the root" FORCE)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

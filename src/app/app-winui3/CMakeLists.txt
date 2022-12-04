@@ -117,7 +117,7 @@ install(
 install(
   FILES
   "$<TARGET_PDB_FILE:OpenKneeboard-App-WinUI3>"
-  TYPE BIN
+  DESTINATION "."
   COMPONENT DebugSymbols
 )
 

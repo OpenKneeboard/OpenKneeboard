@@ -5,14 +5,15 @@ function(add_helper_executable TARGET)
   add_version_rc(${TARGET} ${TARGET}.exe)
   sign_target(${TARGET})
   install(TARGETS "${TARGET}")
-  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
+  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endfunction()
 
 function(add_remote_control_executable TARGET)
   add_executable(${TARGET} ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.exe)
   sign_target(${TARGET})
-  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
+  install(TARGETS "${TARGET}" DESTINATION "utilities")
+  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endfunction()
 
 add_executable(test-gameevent-feeder test-gameevent-feeder.cpp)
@@ -109,21 +110,3 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-dprint
 )
-
-add_executable(OpenKneeboard-Uninstall-Helper WIN32 uninstall-helper.cpp icon.rc)
-add_version_rc(OpenKneeboard-Uninstall-Helper OpenKneeboard-Uninstall-Helper.exe)
-sign_target(OpenKneeboard-Uninstall-Helper)
-target_link_libraries(
-  OpenKneeboard-Uninstall-Helper
-  PRIVATE
-  OpenKneeboard-RuntimeFiles
-  OpenKneeboard-UTF8
-  ThirdParty::CppWinRT)
-target_link_options(OpenKneeboard-Uninstall-Helper PRIVATE "/MANIFESTUAC:level='requireAdministrator'")
-install(
-  TARGETS
-  OpenKneeboard-Uninstall-Helper
-  COMPONENT
-  Utilities 
-  EXCLUDE_FROM_ALL)
-install(FILES "$<TARGET_PDB_FILE:OpenKneeboard-Uninstall-Helper>" TYPE BIN COMPONENT DebugSymbols)
