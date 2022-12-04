@@ -116,7 +116,12 @@ add_library(
   RuntimeFilesInstall.cpp
 )
 target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
-target_link_libraries(OpenKneeboard-RuntimeFiles PRIVATE OpenKneeboard-dprint)
+target_link_libraries(
+  OpenKneeboard-RuntimeFiles
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-Filesystem
+)
 
 add_library(OpenKneeboard-SHM STATIC SHM.cpp)
 target_link_libraries(

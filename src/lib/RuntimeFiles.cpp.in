@@ -32,7 +32,4 @@ const std::filesystem::path OPENXR_DLL(
 const std::filesystem::path OPENXR_REGISTER_LAYER_HELPER(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR-Helper>");
 
-const std::filesystem::path WINDOWSAPP_LAUNCHER(
-  "$<TARGET_FILE_NAME:OpenKneeboard-Launch-WindowsApp>");
-
 }
