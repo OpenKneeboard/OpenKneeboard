@@ -104,6 +104,7 @@ set_property(
   TARGET OpenKneeboard-App-WinUI3
   PROPERTY OUTPUT_NAME OpenKneeboardApp # .exe
 )
+sign_target(OpenKneeboard-App-WinUI3)
 
 install(
   DIRECTORY
