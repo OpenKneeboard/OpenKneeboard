@@ -12,7 +12,6 @@ function(add_remote_control_executable TARGET)
   add_executable(${TARGET} ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.exe)
   sign_target(${TARGET})
-  install(TARGETS "${TARGET}" COMPONENT Utilities)
   install(FILES "$<TARGET_PDB_FILE:${TARGET}>" TYPE BIN COMPONENT DebugSymbols)
 endfunction()
 
@@ -74,8 +73,7 @@ target_link_libraries(
 add_executable(fake-dcs fake-dcs.cpp)
 target_link_libraries(fake-dcs OpenKneeboard-games OpenKneeboard-GameEvent)
 
-add_remote_control_executable(OpenKneeboard-Launch-WindowsApp WIN32 launch-msix.cpp icon.rc)
-install(TARGETS OpenKneeboard-Launch-WindowsApp)
+add_helper_executable(OpenKneeboard-Launch-WindowsApp WIN32 launch-msix.cpp icon.rc)
 
 # Mostly to workaround Huion driver limitations, but maybe also useful for
 # StreamDeck
