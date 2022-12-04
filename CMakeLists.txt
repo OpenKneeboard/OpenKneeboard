@@ -64,6 +64,8 @@ else()
 endif()
 project(com.fredemmott.openkneeboard VERSION 1.3.0.${VERSION_BUILD} LANGUAGES CXX C)
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
+# Handy for CI
+file(WRITE "${CMAKE_BINARY_DIR}/version.txt" "${CMAKE_PROJECT_VERSION}")
 
 if(MSVC AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(CLANG_CL 1 CACHE BOOL "Whether we're using clang-cl")
