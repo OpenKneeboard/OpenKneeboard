@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <Property Id="POWERSHELLEXE">
+            <RegistrySearch
+                Id="POWERSHELLEXE"
+                Type="raw"
+                Root="HKLM"
+                Key="SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell"
+                Name="Path"
+                Win64="yes"
+            />
+        </Property>
+        <Condition Message="This application requires Windows PowerShell.">
+            Installed OR POWERSHELLEXE
+        </Condition>
+    </Fragment>
+</Wix>

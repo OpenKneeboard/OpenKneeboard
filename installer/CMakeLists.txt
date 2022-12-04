@@ -31,6 +31,7 @@ list(
   APPEND
   CPACK_WIX_EXTRA_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/OpenXRAPILayerRegistration.wxs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Powershell.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/RemoveMSIX.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/WixUI_Minimal_NoEULA.wxs"
 )
