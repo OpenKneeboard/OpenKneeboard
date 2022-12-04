@@ -153,18 +153,6 @@
             NumberFormatter="{StaticResource MetersFormatter}"
           />
         </Grid>
-        <TextBlock
-          Style="{ThemeResource CaptionTextBlockStyle}"
-          Foreground="{ThemeResource TextFillColorSecondary}">
-          For SteamVR, the vertical position of the kneeboard is always based
-          on the floor level.
-          <LineBreak />
-          <LineBreak />
-          For the Oculus SDK, it varies by game: most cockpit-based games and
-          games that were designed for the original Rift use a calibrated seated
-          eye level, but newer 'roomscale' games tend to use the floor level
-          instead.
-        </TextBlock>
         <Grid ColumnDefinitions="Auto,*">
           <NumberBox
             Header="Left-to-right position, in meters"
