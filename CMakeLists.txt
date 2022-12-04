@@ -55,12 +55,9 @@ add_link_options("${COMMON_LINK_OPTIONS}")
 if(DEFINED ENV{GITHUB_RUN_NUMBER})
   set(VERSION_BUILD $ENV{GITHUB_RUN_NUMBER})
 else()
-  execute_process(
-    COMMAND git rev-list --count HEAD
-    OUTPUT_VARIABLE VERSION_BUILD
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-  )
+  # Make it so that local builds are easily identifiable, and don't intefere with
+  # upgrade logic
+  set(VERSION_BUILD 0)
 endif()
 project(com.fredemmott.openkneeboard VERSION 1.3.0.${VERSION_BUILD} LANGUAGES CXX C)
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
