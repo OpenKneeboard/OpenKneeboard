@@ -45,11 +45,6 @@ namespace OpenKneeboard::RuntimeFiles {
 OPENKNEEBOARD_RUNTIME_FILES
 #undef IT
 
-/** Installs to `GetInstallationDirectory()`, or throws */
-void Install();
-/** Cleans up any files that are no longer needed */
-void RemoveStaleFiles() noexcept;
-
 std::filesystem::path GetInstallationDirectory();
 
 }// namespace OpenKneeboard::RuntimeFiles

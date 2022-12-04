@@ -46,7 +46,6 @@
 
 #include "CheckDCSHooks.h"
 #include "CheckForUpdates.h"
-#include "CheckRuntimeFiles.h"
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
@@ -154,7 +153,6 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
     [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
       auto xamlRoot = window.Content().XamlRoot();
       co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
-      co_await CheckRuntimeFiles(xamlRoot);
       if (gKneeboard) {
         gKneeboard->GetGamesList()->StartInjector();
         co_await SetOpenXRModeWithHelperProcess(
@@ -250,8 +248,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
 
   dprint("Cleaning up temporary directories...");
   Filesystem::CleanupTemporaryDirectories();
-  dprint("Cleaning up stale runtime files...");
-  RuntimeFiles::RemoveStaleFiles();
 
   dprint("Starting Xaml application");
 

@@ -113,7 +113,6 @@ add_library(
   STATIC
   "${RUNTIME_FILES_CPP}"
   RuntimeFilesGetInstallationDirectory.cpp
-  RuntimeFilesInstall.cpp
 )
 target_link_libraries(OpenKneeboard-RuntimeFiles PUBLIC _libheaders)
 target_link_libraries(

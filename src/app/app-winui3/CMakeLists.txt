@@ -21,7 +21,6 @@ add_executable(
   App.idl App.xaml App.xaml.cpp App.xaml.h
   CheckDCSHooks.cpp CheckDCSHooks.h
   CheckForUpdates.cpp CheckForUpdates.h
-  CheckRuntimeFiles.cpp CheckRuntimeFiles.h
   DegreesValueConverter.cpp DegreesValueConverter.h DegreesValueConverter.idl
   ExecutableIconFactory.cpp ExecutableIconFactory.h
   GameSettingsPage.idl GameSettingsPage.xaml GameSettingsPage.xaml.cpp GameSettingsPage.xaml.h
