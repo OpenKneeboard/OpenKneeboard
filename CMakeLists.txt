@@ -100,7 +100,6 @@ configure_file(
 
 add_subdirectory("third-party")
 add_subdirectory("src")
-add_subdirectory("assets")
 
 install(
   FILES LICENSE

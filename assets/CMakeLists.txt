@@ -1,6 +1,0 @@
-file(GLOB PNG_FILES CONFIGURE_DEPENDS "*.png")
-install(
-  FILES
-  ${PNG_FILES}
-  TYPE DATA
-)
