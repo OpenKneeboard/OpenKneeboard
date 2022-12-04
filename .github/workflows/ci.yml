@@ -78,14 +78,14 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}.msi
-          path:
-            ${{steps.createMSI.outputs.MSI_PATH}}
+          path: ${{steps.createMSI.outputs.MSI_PATH}}
       - name: Install debug symbols
         id: installDebugSymbols
         working-directory: build
         shell: pwsh
-        run:
+        run: |
           $prefix="${{runner.temp}}/OpenKneeboard-${{steps.build.outputs.VERSION}}-Symbols"
+
           cmake --install . `
             --config ${{matrix.config}} `
             --component DebugSymbols `
