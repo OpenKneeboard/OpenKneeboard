@@ -14,8 +14,9 @@ jobs:
           CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
         id: FetchKey
         if: ${{ (matrix.config != 'Debug') && (github.repository == 'OpenKneeboard/OpenKneeboard') && (github.event_name == 'push')}}
+        shell: pwsh
         run: |
-          '[System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content ${{runner.temp}}/MyCert.pfx -AsByteStream'
+          [System.Convert]::FromBase64String($Env:CODE_SIGNING_PFX_BASE64) | Set-Content ${{runner.temp}}/MyCert.pfx -AsByteStream
           Add-Content $Env:GITHUB_OUTPUT "HAVE_KEY=true"
       - name: Make build directory
         run: cmake -E make_directory build
@@ -51,12 +52,16 @@ jobs:
           $installer=(Get-ChildItem $installer).FullName
           Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
           echo "::endgroup::"
-          if (Test-Path -Path "${{runner.temp}}/MyCert.pfx") {
+          if (Test-Path -Path "${{runner.temp}}\MyCert.pfx") {
             echo "::group::Signing MSI"
             // Known path for the GitHub Actions windows 2022 runner, may need updating
             C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe `
             echo "Signing $installer..."
-            sign /f ${{runner.temp}}/MyCert.pfx /t http://timestamp.digicert.com /fd sha256 $installer
+            signtool sign `
+              /t http://timestamp.digicert.com `
+              /fd SHA256 `
+              /f "${{runner.temp}}/MyCert.pfx" `
+              $installer
             echo "::endgroup::"
           }
       - name: Attach MSI to build
