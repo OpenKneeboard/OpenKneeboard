@@ -8,7 +8,7 @@
                     Key="SOFTWARE\Khronos\OpenXR\1\ApiLayers\Implicit">
                     <RegistryValue
                         Type="integer"
-                        Name="[INSTALL_ROOT]OpenKneeboard-OpenXR.json"
+                        Name="[INSTALL_ROOT]bin\OpenKneeboard-OpenXR.json"
                         Value="0"
                         KeyPath="yes"
                     />
