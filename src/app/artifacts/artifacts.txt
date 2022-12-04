@@ -1,2 +1,0 @@
-[PublisherBridging]
-"artifact.xml" "artifact.cat"

@@ -23,6 +23,7 @@ jobs:
       - name: Configure
         working-directory: build
         shell: pwsh
+        id: configure
         run: |
           $args = @(
             "-DGITHUB_REF_TYPE=${{github.ref_type}}",
@@ -32,6 +33,8 @@ jobs:
             $args += "-DSIGNTOOL_KEY_ARGS=/f;${{runner.temp}}/MyCert.pfx" `
           }
           cmake ${{github.workspace}}/source @args
+          $version ="$(Get-Content version.txt)"
+          Add-Content $Env:GITHUB_OUTPUT "VERSION=${version}"
       - name: Compile
         working-directory: build
         run: |
@@ -49,6 +52,7 @@ jobs:
             --config ${{matrix.config}} `
             --target package
           $installer="OpenKneeboard-$(Get-Content version.txt).msi"
+          Add-Content $Env:GITHUB_OUTPUT "MSI_NAME=$installer"
           $installer=(Get-ChildItem $installer).FullName
           Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
           echo "::endgroup::"
@@ -63,114 +67,32 @@ jobs:
               $installer
             echo "::endgroup::"
           }
-      - name: Attach MSI to build
+      - name: Attach MSI
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}.msi
+          name: OpenKneeboard-GHA-${{github.run_number}}.msi
           path:
             ${{steps.createMSI.outputs.MSI_PATH}}
-      - name: Install Default Components
+      - name: Install debug symbols
+        id: installDebugSymbols
         working-directory: build
         shell: pwsh
         run:
-          cmake --install . `
-            --config ${{matrix.config}} `
-            --component Default `
-            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
-      - name: Upload Executable Zips
-        if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: OpenKneeboard-${{matrix.config}}
-          path:
-            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}
-      - name: Fetch MSIX build tools
-        id: windowsSdkBuildTools
-        shell: pwsh
-        run: |
-          Invoke-WebRequest `
-            -Uri "https://www.nuget.org/api/v2/package/Microsoft.Windows.SDK.BuildTools/10.0.22621.1" `
-            -OutFile sdk-build-tools.zip
-          Expand-Archive sdk-build-tools.zip
-          $kitsRoot = "sdk-build-tools"
-          $kitDir = (Get-ChildItem $kitsRoot/bin -Filter '10.0.*.*' | Select-Object -Last 1).FullName
-          $kitBin = "$kitDir\x64"
-
-          Add-Content $Env:GITHUB_OUTPUT "KIT_BIN=$kitBin"
-      - name: Create MSIX
-        shell: pwsh
-        run: |
-          $kitBin = "${{steps.windowsSdkBuildTools.outputs.KIT_BIN}}"
-
-          Copy-Item -Path ${{github.workspace}}\source\src\app\artifacts\* -Destination $(Get-Location)
-
-          Push-Location ${{runner.temp}}\OpenKneeboard-${{matrix.config}}
-          
-          & "$kitBin\makepri.exe" `
-            createconfig `
-            /cf priconfig.xml `
-            /dq lang-en-US 
-
-          & "$kitBin\makepri.exe" `
-            new /o `
-            /cf priconfig.xml `
-            /mn appxmanifest.xml `
-            /pr .
-
-          & "$kitBin\makeappx.exe" `
-            pack `
-            /d ${{runner.temp}}/OpenKneeboard-${{matrix.config}} `
-            /p ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
-      - name: Sign MSIX
-        shell: pwsh
-        if: ${{ (matrix.config != 'Debug') && (github.repository == 'OpenKneeboard/OpenKneeboard') && (github.event_name == 'push')}}
-        run: |
-          $kitBin = "${{steps.windowsSdkBuildTools.outputs.KIT_BIN}}"
-
-          & "$kitBin\signtool.exe" `
-            sign `
-            /t http://timestamp.digicert.com `
-            /fd SHA256 `
-            /f "${{runner.temp}}/MyCert.pfx" `
-            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
-      - name: Upload MSIX
-        if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: OpenKneeboard-${{matrix.config}}.msix
-          path:
-            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}.msix
-      - name: Install utility apps
-        working-directory: build
-        shell: pwsh
-        run:
-          cmake --install . `
-            --config ${{matrix.config}} `
-            --component Utilities `
-            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Utilities
-      - name: Upload utilities zip
-        if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: OpenKneeboard-${{matrix.config}}-Utilities
-          path:
-            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Utilities
-      - name: Install Debug Symbols
-        working-directory: build
-        shell: pwsh
-        run:
+          $prefix="${{runner.temp}}/OpenKneeboard-${{steps.configure.outputs.VERSION}}-Symbols"
           cmake --install . `
             --config ${{matrix.config}} `
             --component DebugSymbols `
-            --prefix ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
-      - name: Upload Symbol Zips
+            --prefix "${prefix}"
+
+          Add-Content $Env:GITHUB_OUTPUT "PREFIX=$prefix"
+      - name: Attach debug symbols
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v2
         with:
-          name: OpenKneeboard-${{matrix.config}}-Symbols
+          name: OpenKneeboard-GHA-${{github.run_number}}-Symbols
           path:
-            ${{runner.temp}}/OpenKneeboard-${{matrix.config}}-Symbols
+          path: ${{steps.installDebugSymbols.outputs.PREFIX}}
     strategy:
       matrix:
         config: [RelWithDebInfo, Debug]
@@ -194,16 +116,14 @@ jobs:
         working-directory: ${{runner.temp}}/artifacts
       - name: Create zip files
         run: |
-          for CONFIG in RelWithDebInfo; do
-            for ZIP_ARTIFACT in "" "-Utilities" "-Symbols"; do
-              (
-                cd ${{runner.temp}}/artifacts/OpenKneeboard-${CONFIG}${ZIP_ARTIFACT}
-                zip -r \
-                  "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-${CONFIG}${ZIP_ARTIFACT}.zip" \
-                  ./
-              )
-            done
-          done
+          ZIP_ARTIFACT="-Symbols"
+          cd ${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}${ZIP_ARTIFACT}
+          zip -r \
+            "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}${ZIP_ARTIFACT}.zip" \
+            ./
+
+          cd ${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}.msi
+          mv *.msi OpenKneeboard-${{github.ref_name}}.msi
       - name: Create draft release
         id: create-release
         uses: actions/create-release@v1
@@ -214,30 +134,21 @@ jobs:
           tag_name: ${{github.ref_name}}
           draft: true
           body_path: ${{runner.temp}}/release_notes.md
-      - name: Attach -RelWithDebInfo.msix
+      - name: Attach MSI
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/artifacts/OpenKneeboard-RelWithDebInfo.msix/OpenKneeboard-RelWithDebInfo.msix
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}.msi
           asset_name: OpenKneeboard-${{github.ref_name}}.msix
           asset_content_type: application/msix
-      - name: Attach -RelWithDebInfo-Utilities.zip
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-Utilities.zip
-          asset_name: OpenKneeboard-${{github.ref_name}}-Utilities.zip
-          asset_content_type: application/zip
       - name: Attach -RelWithDebInfo-Symbols.zip
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-RelWithDebInfo-Symbols.zip
+          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Symbols.zip
           asset_name: OpenKneeboard-${{github.ref_name}}-Symbols.zip
           asset_content_type: application/zip
