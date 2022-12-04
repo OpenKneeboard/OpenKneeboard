@@ -69,16 +69,6 @@ function(add_module_library TARGET)
   add_library(${TARGET} MODULE ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.dll)
   sign_target(${TARGET})
-  if(DEFINED ENV{GITHUB_RUN_NUMBER})
-    set(BUILD_LOCATION "gha")
-  else()
-    set(BUILD_LOCATION "dev")
-  endif()
-  set_target_properties(
-    ${TARGET}
-    PROPERTIES
-    OUTPUT_NAME "${TARGET}-${BUILD_LOCATION}-${CMAKE_PROJECT_VERSION}"
-  )
 endfunction()
 
 add_subdirectory(lib)
