@@ -2,4 +2,9 @@
   <CPackWiXFragment Id="CM_C_Default">
     <ComponentRef Id="OpenXRAPILayerRegistration" />
   </CPackWiXFragment>
+  <CPackWiXFragment Id="#PRODUCT">
+    <InstallExecuteSequence>
+      <Custom Action="RemoveMSIX" After="InstallFiles">NOT Installed AND NOT PATCH</Custom>
+    </InstallExecuteSequence>
+  </CPackWiXFragment>
 </CPackWiXPatch>

@@ -3,6 +3,13 @@ install(
   "WiX-LICENSE.txt"
   TYPE DOC
   RENAME "LICENSE-WiX.txt"
+  COMPONENT Installer
+)
+install(
+  FILES
+  RemoveMSIX.ps1
+  TYPE BIN
+  COMPONENT Installer
 )
 
 ##### CPack (MSI) Config #####
@@ -25,12 +32,18 @@ list(
   APPEND
   CPACK_WIX_EXTRA_SOURCES
   "${CMAKE_CURRENT_SOURCE_DIR}/OpenXRAPILayerRegistration.wxs"
+  "${CMAKE_CURRENT_SOURCE_DIR}/RemoveMSIX.wxs"
   "${CMAKE_CURRENT_SOURCE_DIR}/WixUI_Minimal_NoEULA.wxs"
 )
 list(
   APPEND
   CPACK_WIX_PATCH_FILE
   "${CMAKE_CURRENT_SOURCE_DIR}/patch.xml"
+)
+list(
+  APPEND
+  CPACK_WIX_EXTENSIONS
+  "WixUtilExtension"
 )
 
 include(CPack)
@@ -40,5 +53,9 @@ cpack_add_component(
 )
 cpack_add_component(
   Utilities
+  HIDDEN
+)
+cpack_add_component(
+  Installer
   HIDDEN
 )
