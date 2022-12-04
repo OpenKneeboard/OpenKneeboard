@@ -114,3 +114,5 @@ install(
   FILES gpl-2.0.txt
   TYPE DOC
 )
+
+add_subdirectory("installer")
