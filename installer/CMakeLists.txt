@@ -2,7 +2,7 @@ install(
   FILES
   "WiX-LICENSE.txt"
   TYPE DOC
-  RENAME "LICENSE-WiX.txt"
+  RENAME "LICENSE-ThirdParty-WiX.txt"
   COMPONENT Installer
 )
 install(
