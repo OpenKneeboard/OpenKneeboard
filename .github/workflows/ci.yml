@@ -36,17 +36,23 @@ jobs:
         id: build
         working-directory: build
         run: |
+          # Build
+          echo "::group::Running cmake --build"
           cmake --build . `
             --config ${{matrix.config}} `
             --parallel `
             -- `
             /p:CL_MPCount=
-          $version ="$(Get-Content version.txt)"
+          echo "::endgroup::"
+          echo "::group::Setting version"
+          $version="$(Get-Content version.txt)"
           Add-Content $Env:GITHUB_OUTPUT "VERSION=${version}"
+          echo "::endgroup::"
       - name: Create MSI
         working-directory: build
         id: createMSI
         run: |
+          # Create MSI
           echo "::group::Running CPack"
           cmake --build . `
             --config ${{matrix.config}} `
