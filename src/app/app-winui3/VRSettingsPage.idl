@@ -20,9 +20,8 @@ namespace OpenKneeboardApp
         Single KneeboardGazeTargetVerticalScale;
 
         Boolean SteamVREnabled;
+        Boolean OpenXREnabled;
         Boolean GazeZoomEnabled;
-
-        UInt8 OpenXRMode;
 
         UInt8 NormalOpacity;
         UInt8 GazeOpacity;

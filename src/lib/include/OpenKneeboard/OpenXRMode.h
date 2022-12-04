@@ -25,31 +25,14 @@
 #include <optional>
 #include <shims/filesystem>
 
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-// Using json.hpp instead of json_fwd.hpp for the enum macro
-#include <nlohmann/json.hpp>
-#endif
-
 namespace OpenKneeboard {
 
 enum class OpenXRMode {
   Disabled,
-  CurrentUser,
   AllUsers,
 };
 
 winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
   OpenXRMode newMode,
   std::optional<OpenXRMode> oldMode = {});
-
-#ifdef OPENKNEEBOARD_JSON_SERIALIZE
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  OpenXRMode,
-  {
-    {OpenXRMode::Disabled, "Disabled"},
-    {OpenXRMode::CurrentUser, "EnabledForCurrentUser"},
-    {OpenXRMode::AllUsers, "EnabledForAllUsers"},
-  })
-#endif
-
 }// namespace OpenKneeboard

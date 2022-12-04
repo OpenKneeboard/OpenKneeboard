@@ -22,7 +22,6 @@
 #include <cstdint>
 #include <numbers>
 
-#include "OpenXRMode.h"
 #include "bitflags.h"
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
@@ -81,7 +80,6 @@ static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
-  OpenXRMode mOpenXRMode = OpenXRMode::CurrentUser;
   VRLayerConfig mPrimaryLayer;
   float mMaxWidth = 0.15f;
   float mMaxHeight = 0.25f;

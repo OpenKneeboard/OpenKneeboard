@@ -60,7 +60,6 @@ winrt::Windows::Foundation::IAsyncAction LaunchAndWaitForOpenXRHelperSubprocess(
   if (!ShellExecuteExW(&shellExecuteInfo)) {
     auto error = GetLastError();
     dprintf("Failed to spawn subprocess: {}", error);
-    OPENKNEEBOARD_BREAK;
     co_return;
   }
 
@@ -85,10 +84,6 @@ winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
     switch (*oldMode) {
       case OpenXRMode::Disabled:
         break;
-      case OpenXRMode::CurrentUser:
-        co_await LaunchAndWaitForOpenXRHelperSubprocess(
-          RunAs::CurrentUser, L"disable-HKCU");
-        break;
       case OpenXRMode::AllUsers:
         co_await LaunchAndWaitForOpenXRHelperSubprocess(
           RunAs::Administrator, L"disable-HKLM");
@@ -98,10 +93,6 @@ winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
 
   switch (mode) {
     case OpenXRMode::Disabled:
-      break;
-    case OpenXRMode::CurrentUser:
-      co_await LaunchAndWaitForOpenXRHelperSubprocess(
-        RunAs::CurrentUser, L"enable-HKCU");
       break;
     case OpenXRMode::AllUsers:
       co_await LaunchAndWaitForOpenXRHelperSubprocess(

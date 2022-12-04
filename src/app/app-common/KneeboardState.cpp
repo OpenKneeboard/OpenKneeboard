@@ -338,13 +338,6 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
     }
   }
 
-  if (value.mOpenXRMode != mSettings.mVR.mOpenXRMode) {
-    [=]() -> winrt::fire_and_forget {
-      co_await SetOpenXRModeWithHelperProcess(
-        value.mOpenXRMode, {mSettings.mVR.mOpenXRMode});
-    }();
-  }
-
   if (value.mEnableGazeInputFocus != mSettings.mVR.mEnableGazeInputFocus) {
     mInputViewIndex = mFirstViewIndex;
     this->evViewOrderChangedEvent.Emit();

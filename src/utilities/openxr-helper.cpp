@@ -24,7 +24,6 @@
  * If done from the main process, the registry write will be app-specific.
  */
 
-#include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
 #include <Windows.h>

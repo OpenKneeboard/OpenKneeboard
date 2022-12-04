@@ -61,11 +61,10 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
 
   bool SteamVREnabled();
   void SteamVREnabled(bool);
+  bool OpenXREnabled() noexcept;
+  fire_and_forget OpenXREnabled(bool) noexcept;
   bool GazeZoomEnabled();
   void GazeZoomEnabled(bool);
-
-  uint8_t OpenXRMode();
-  void OpenXRMode(uint8_t);
 
   uint8_t NormalOpacity();
   void NormalOpacity(uint8_t);

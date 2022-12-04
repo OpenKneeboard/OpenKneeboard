@@ -25,10 +25,12 @@
 
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenXRMode.h>
+#include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <cmath>
 #include <numbers>
+#include <shims/filesystem>
 
 #include "Globals.h"
 
@@ -37,6 +39,9 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Microsoft::UI::Xaml::Data;
 
 namespace winrt::OpenKneeboardApp::implementation {
+
+static const wchar_t gOpenXRLayerSubkey[]
+  = L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
 
 VRSettingsPage::VRSettingsPage() {
   this->InitializeComponent();
@@ -310,14 +315,37 @@ void VRSettingsPage::GazeZoomEnabled(bool enabled) {
   gKneeboard->SetVRSettings(config);
 }
 
-uint8_t VRSettingsPage::OpenXRMode() {
-  return static_cast<uint8_t>(gKneeboard->GetVRSettings().mOpenXRMode);
+bool VRSettingsPage::OpenXREnabled() noexcept {
+  DWORD data {};
+  DWORD dataSize = sizeof(data);
+  const auto jsonPath
+    = std::filesystem::canonical(
+        RuntimeFiles::GetInstallationDirectory() / RuntimeFiles::OPENXR_JSON)
+        .wstring();
+  const auto result = RegGetValueW(
+    HKEY_LOCAL_MACHINE,
+    gOpenXRLayerSubkey,
+    jsonPath.c_str(),
+    RRF_RT_DWORD,
+    nullptr,
+    &data,
+    &dataSize);
+  if (result != ERROR_SUCCESS) {
+    return false;
+  }
+  const auto disabled = static_cast<bool>(data);
+  return !disabled;
 }
 
-void VRSettingsPage::OpenXRMode(uint8_t value) {
-  auto config = gKneeboard->GetVRSettings();
-  config.mOpenXRMode = static_cast<OpenKneeboard::OpenXRMode>(value);
-  gKneeboard->SetVRSettings(config);
+fire_and_forget VRSettingsPage::OpenXREnabled(bool enabled) noexcept {
+  if (enabled == OpenXREnabled()) {
+    co_return;
+  }
+
+  const auto newValue = enabled ? OpenXRMode::AllUsers : OpenXRMode::Disabled;
+  const auto oldValue = enabled ? OpenXRMode::Disabled : OpenXRMode::AllUsers;
+  co_await SetOpenXRModeWithHelperProcess(newValue, {oldValue});
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"OpenXREnabled"));
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

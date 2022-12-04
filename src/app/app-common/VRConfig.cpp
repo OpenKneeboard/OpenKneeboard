@@ -84,7 +84,6 @@ void to_json_postprocess<VRConfig>(
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRConfig,
   mEnableSteamVR,
-  mOpenXRMode,
   mMaxWidth,
   mMaxHeight)
 

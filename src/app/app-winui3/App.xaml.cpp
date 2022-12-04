@@ -155,8 +155,6 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
       co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
       if (gKneeboard) {
         gKneeboard->GetGamesList()->StartInjector();
-        co_await SetOpenXRModeWithHelperProcess(
-          gKneeboard->GetVRSettings().mOpenXRMode);
       }
       co_await CheckAllDCSHooks(xamlRoot);
     });
