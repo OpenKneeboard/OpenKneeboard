@@ -160,6 +160,6 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{steps.symbols.outputs.PATH}}
+          asset_path: ${{steps.symbolsZip.outputs.PATH}}
           asset_name: OpenKneeboard-${{github.ref_name}}-DebugSymbols.zip
           asset_content_type: application/zip
