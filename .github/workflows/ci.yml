@@ -124,17 +124,17 @@ jobs:
         run: |
           # Create Symbols Zip
           ZIP_ARTIFACT="-Symbols"
-          cd ${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}${ZIP_ARTIFACT}
-          $zipPath="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}${ZIP_ARTIFACT}.zip"
-          zip -r "$zipPath" ./
-          Add-Content $Env:GITHUB_OUTPUT "PATH=${zipPath}"
+          cd "${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}${ZIP_ARTIFACT}"
+          ZIP_PATH="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}${ZIP_ARTIFACT}.zip"
+          zip -r "${ZIP_PATH}" ./
+          echo "PATH=${ZIP_PATH}" >> $Env:GITHUB_OUTPUT
       - name: Rename MSI
         id: msi
         run: |
-          cd ${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}.msi
-          $msiPath="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}.msi
-          mv *.msi "${msiPath}"
-          Add-Content $Env:GITHUB_OUTPUT "PATH=${msiPath}"
+          cd "${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}.msi"
+          MSI_PATH="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}.msi"
+          mv *.msi "${MSI_PATH}"
+          echo "PATH=${MSI_PATH}" >> $Env:GITHUB_OUTPUT
       - name: Create draft release
         id: create-release
         uses: actions/create-release@v1
