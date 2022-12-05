@@ -119,16 +119,22 @@ jobs:
       - name: Display downloaded files
         run: ls -R
         working-directory: ${{runner.temp}}/artifacts
-      - name: Create zip files
+      - name: Create symbols zip file
+        id: symbolsZip
         run: |
+          # Create Symbols Zip
           ZIP_ARTIFACT="-Symbols"
           cd ${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}${ZIP_ARTIFACT}
-          zip -r \
-            "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}${ZIP_ARTIFACT}.zip" \
-            ./
-
+          $zipPath="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}${ZIP_ARTIFACT}.zip"
+          zip -r "$zipPath" ./
+          Add-Content $Env:GITHUB_OUTPUT "PATH=${zipPath}"
+      - name: Rename MSI
+        id: msi
+        run: |
           cd ${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}.msi
-          mv *.msi OpenKneeboard-${{github.ref_name}}.msi
+          $msiPath="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}.msi
+          mv *.msi "${msiPath}"
+          Add-Content $Env:GITHUB_OUTPUT "PATH=${msiPath}"
       - name: Create draft release
         id: create-release
         uses: actions/create-release@v1
@@ -145,7 +151,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}.msi
+          asset_path: ${{steps.msi.outputs.PATH}}
           asset_name: OpenKneeboard-${{github.ref_name}}.msix
           asset_content_type: application/msix
       - name: Attach -RelWithDebInfo-Symbols.zip
@@ -154,6 +160,6 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-Symbols.zip
+          asset_path: ${{steps.symbols.outputs.PATH}}
           asset_name: OpenKneeboard-${{github.ref_name}}-Symbols.zip
           asset_content_type: application/zip
