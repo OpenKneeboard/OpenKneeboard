@@ -80,6 +80,10 @@ TabletInputAdapter::TabletInputAdapter(
 
 void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
   mInitialSettings = settings;
+  if (!mDevice) {
+    return;
+  }
+
   if (settings.mDevices.contains(mTablet->GetDeviceID())) {
     auto& jsonDevice = settings.mDevices.at(mTablet->GetDeviceID());
     mDevice->SetOrientation(jsonDevice.mOrientation);
