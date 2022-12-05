@@ -24,11 +24,10 @@
 
 using namespace OpenKneeboard;
 
-#define STRINGIFY_INNER(x) #x
-#define STRINGIFY(x) STRINGIFY_INNER(x)
-
 #include <Windows.h>
 #include <shellapi.h>
+
+#include <cstdlib>
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
@@ -45,39 +44,42 @@ int WINAPI wWinMain(
   auto argv = CommandLineToArgvW(pCmdLine, &argc);
 
   if (argc < 2 || argc > 4) {
-    dprint("Usage: (id|name) IDENTIFIER [PAGE] [KNEEBOARD]");
+    dprint("Usage: (id|name|position) IDENTIFIER [PAGE] [KNEEBOARD]");
     return 0;
   }
 
   const auto kind = std::wstring_view(argv[0]);
   const auto identifier = winrt::to_string(std::wstring_view(argv[1]));
-  uint64_t pageNumber = 0;
-  uint8_t kneeboard = 0;
+
+  BaseSetTabEvent base {};
+
   if (argc >= 3) {
-    pageNumber = wcstoull(argv[2], nullptr, 10);
+    base.mPageNumber = wcstoull(argv[2], nullptr, 10);
   }
   if (argc >= 4) {
-    kneeboard = wcstoull(argv[3], nullptr, 10);
+    base.mKneeboard = wcstoull(argv[3], nullptr, 10);
   }
 
   if (kind == L"id") {
-    GameEvent::FromStruct(SetTabByIDEvent {
-                            .mID = identifier,
-                            .mPageNumber = pageNumber,
-                            .mKneeboard = kneeboard,
-                          })
-      .Send();
+    GameEvent::FromStruct(SetTabByIDEvent {base, identifier}).Send();
     return 0;
   }
+
   if (kind == L"name") {
-    GameEvent::FromStruct(SetTabByNameEvent {
-                            .mName = identifier,
-                            .mPageNumber = pageNumber,
-                            .mKneeboard = kneeboard,
-                          })
-      .Send();
+    GameEvent::FromStruct(SetTabByNameEvent {base, identifier}).Send();
     return 0;
   }
+
+  if (kind == L"position") {
+    const auto position = std::strtoull(identifier.c_str(), nullptr, 10);
+    if (position < 1) {
+      dprint("Error: position must start at 1");
+      return 0;
+    }
+    GameEvent::FromStruct(SetTabByIndexEvent {base, position - 1}).Send();
+    return 0;
+  }
+
   dprintf(
     L"Error: first argument must be 'id' or 'name', but '{}' given", kind);
   return 1;

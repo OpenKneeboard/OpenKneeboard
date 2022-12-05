@@ -35,6 +35,12 @@ You can also jump to a specific page:
 
 If you don't specify a page number, or you specify '0', the tab will be selected without changing page within that tab.
 
+### Setting the current tab by position (v1.3-beta4 and above)
+
+Run with `position POSITION` replacing 'POSITION' with the position of the tab you want to switch to, starting at 1. For example, to switch to the first tab:
+
+    OpenKneeboard-RemoteControl-SET_TAB.exe position 1
+
 ### Setting the current tab by ID
 
 This is more precise, but more work to set up.

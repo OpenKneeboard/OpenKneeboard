@@ -298,15 +298,31 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     for (auto tab: mTabsList->GetTabs()) {
       if (tab->GetTitle() == parsed.mName) {
         this->OnGameEvent(GameEvent::FromStruct(SetTabByIDEvent {
-          .mID = winrt::to_string(winrt::to_hstring(tab->GetPersistentID())),
-          .mPageNumber = parsed.mPageNumber,
-          .mKneeboard = parsed.mKneeboard,
+          parsed,
+          winrt::to_string(winrt::to_hstring(tab->GetPersistentID())),
         }));
         return;
       }
     }
     dprintf(
       "Asked to switch to tab with name '{}', but can't find it", parsed.mName);
+    return;
+  }
+
+  if (ev.name == GameEvent::EVT_SET_TAB_BY_INDEX) {
+    const auto parsed = ev.ParsedValue<SetTabByIndexEvent>();
+    const auto tabs = mTabsList->GetTabs();
+    if (parsed.mIndex >= tabs.size()) {
+      dprintf(
+        "Asked to switch to tab index {}, but there aren't that many tabs",
+        parsed.mIndex);
+      return;
+    }
+    this->OnGameEvent(GameEvent::FromStruct(SetTabByIDEvent {
+      parsed,
+      winrt::to_string(
+        winrt::to_hstring(tabs.at(parsed.mIndex)->GetPersistentID())),
+    }));
     return;
   }
 

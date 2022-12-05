@@ -64,28 +64,33 @@ struct GameEvent final {
     = "com.fredemmott.openkneeboard/SetTabByID";
   static constexpr std::string_view EVT_SET_TAB_BY_NAME
     = "com.fredemmott.openkneeboard/SetTabByName";
+  static constexpr std::string_view EVT_SET_TAB_BY_INDEX
+    = "com.fredemmott.openkneeboard/SetTabByIndex";
 };
 
-// Use a struct to allow specifying which kneeboard in the future
-struct SetTabByIDEvent {
-  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_ID};
-  std::string mID;
+struct BaseSetTabEvent {
   // 0 = no change
   uint64_t mPageNumber {0};
   // 0 = 'active', 1 = primary, 2 = secondary
   uint8_t mKneeboard {0};
+};
+
+struct SetTabByIDEvent : public BaseSetTabEvent {
+  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_ID};
+  std::string mID;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByIDEvent);
 
-// Use a struct to allow specifying which kneeboard in the future
-struct SetTabByNameEvent {
+struct SetTabByNameEvent : public BaseSetTabEvent {
   static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_NAME};
   std::string mName;
-  // 0 = no change
-  uint64_t mPageNumber {0};
-  // 0 = 'active', 1 = primary, 2 = secondary
-  uint8_t mKneeboard {0};
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByNameEvent);
+
+struct SetTabByIndexEvent : public BaseSetTabEvent {
+  static constexpr auto ID {GameEvent::EVT_SET_TAB_BY_INDEX};
+  uint64_t mIndex {};
+};
+OPENKNEEBOARD_DECLARE_JSON(SetTabByIndexEvent);
 
 }// namespace OpenKneeboard
