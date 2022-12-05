@@ -152,9 +152,9 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ${{steps.msi.outputs.PATH}}
-          asset_name: OpenKneeboard-${{github.ref_name}}.msix
-          asset_content_type: application/msix
-      - name: Attach -RelWithDebInfo-Symbols.zip
+          asset_name: OpenKneeboard-${{github.ref_name}}.msi
+          asset_content_type: application/msi
+      - name: Attach debug symbols
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
