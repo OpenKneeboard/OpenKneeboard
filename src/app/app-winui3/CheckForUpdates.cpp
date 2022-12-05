@@ -115,7 +115,7 @@ IAsyncAction CheckForUpdates(
        Version::Minor,
        Version::Patch,
        Version::Build,
-       Version::CommitIDW)});
+       Version::IsGithubActionsBuild ? L"GHA" : L"local")});
   headers.Accept().Clear();
   headers.Accept().Append(
     Windows::Web::Http::Headers::HttpMediaTypeWithQualityHeaderValue(

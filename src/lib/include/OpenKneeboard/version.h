@@ -30,14 +30,7 @@ extern const uint16_t Minor;
 extern const uint16_t Patch;
 extern const uint16_t Build;
 
-extern const std::string_view CommitIDA;
-extern const std::wstring_view CommitIDW;
 extern const std::string_view ReleaseName;
-// Didn't see a clean way to get this formatted by CMake as UTC :(
-extern const std::time_t CommitUnixTimestamp;
-extern const char* ModifiedFiles;
-extern const bool HaveModifiedFiles;
-extern const char* BuildTimestamp;
 extern const bool IsGithubActionsBuild;
 
 }// namespace OpenKneeboard::Version

@@ -26,13 +26,7 @@ const uint16_t Minor = @VERSION_MINOR@;
 const uint16_t Patch = @VERSION_PATCH@;
 const uint16_t Build = @VERSION_BUILD@;
 
-const std::string_view CommitIDA { "@COMMIT_ID@" };
-const std::wstring_view CommitIDW { L"@COMMIT_ID@" };
 const std::string_view ReleaseName { "@RELEASE_NAME@" };
-const std::time_t CommitUnixTimestamp = @COMMIT_UNIX_TIMESTAMP@;
-const char* ModifiedFiles = "@MODIFIED_FILES@";
-const bool HaveModifiedFiles = @DIRTY@;
-const char* BuildTimestamp = "@BUILD_TIMESTAMP@";
 const bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
 
 }// namespace OpenKneeboard::Version

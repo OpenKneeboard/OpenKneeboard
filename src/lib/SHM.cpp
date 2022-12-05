@@ -132,13 +132,12 @@ auto SHMPath() {
     return sCache;
   }
   sCache = std::format(
-    L"{}/{}.{}.{}.{}-{}-s{:x}",
+    L"{}/{}.{}.{}.{}-s{:x}",
     ProjectNameW,
     Version::Major,
     Version::Minor,
     Version::Patch,
     Version::Build,
-    Version::CommitIDW.substr(0, 7),
     SHM_SIZE);
   return sCache;
 }
@@ -230,13 +229,12 @@ std::wstring SharedTextureName(
   uint8_t layerIndex,
   uint32_t sequenceNumber) {
   return std::format(
-    L"Local\\{}-{}.{}.{}.{}-{}-texture-s{:x}-l{}-b{}",
+    L"Local\\{}-{}.{}.{}.{}--texture-s{:x}-l{}-b{}",
     ProjectNameW,
     Version::Major,
     Version::Minor,
     Version::Patch,
     Version::Build,
-    Version::CommitIDW.substr(0, 7),
     sessionID,
     layerIndex,
     sequenceNumber % TextureCount);

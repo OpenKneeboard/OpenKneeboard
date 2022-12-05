@@ -90,25 +90,6 @@ HelpPage::~HelpPage() {
 }
 
 void HelpPage::PopulateVersion() {
-  const auto version = std::format(
-    "{}.{}.{}.{}-{}{}{}{}",
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build,
-    Version::CommitIDA.substr(0, 7),
-    Version::HaveModifiedFiles ? "-dirty" : "",
-    Version::IsGithubActionsBuild ? "-gha" : "-local",
-#ifdef DEBUG
-    "-debug"
-#else
-    ""
-#endif
-  );
-
-  auto commitTime = std::chrono::time_point_cast<std::chrono::seconds>(
-    std::chrono::system_clock::from_time_t(Version::CommitUnixTimestamp));
-
   UINT32 packageNameLen = MAX_PATH;
   wchar_t packageName[MAX_PATH];
   if (
@@ -123,17 +104,11 @@ void HelpPage::PopulateVersion() {
     "Copyright © 2021-2022 Frederick Emmott.\n\n"
     "With thanks to Paul 'Goldwolf' Whittingham for the logo and banner "
     "artwork.\n\n"
-    "v{}\n"
-    "Package: {}\n"
-    "Built at: {}\n"
-    "Build type: {}-{}\n"
-    "Commited at: {:%Y-%m-%dT%H:%M:%SZ}\n"
-    "Commit ID: {}\n",
+    "Build: {}-{}-{}\n"
+    "Package: {}\n",
     Version::ReleaseName,
-    version,
-    packageNameLen ? to_utf8(std::wstring_view(packageName, packageNameLen))
-                   : "Unpackaged",
-    Version::BuildTimestamp,
+    Version::IsGithubActionsBuild ? std::format("GHA-{}", Version::Build)
+                                  : "local",
     BUILD_CONFIG,
 #ifdef _WIN32
 #ifdef _WIN64
@@ -142,12 +117,8 @@ void HelpPage::PopulateVersion() {
     "Win32",
 #endif
 #endif
-    commitTime,
-    Version::CommitIDA);
-  if (Version::HaveModifiedFiles) {
-    std::string files = Version::ModifiedFiles;
-    details += "\nModified files:\n" + files;
-  }
+    packageNameLen ? to_utf8(std::wstring_view(packageName, packageNameLen))
+                   : "unpackaged");
   VersionText().Text(winrt::to_hstring(details));
 
   mVersionClipboardData = details;
@@ -342,7 +313,8 @@ winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
 }
 
 void HelpPage::PopulateLicenses() noexcept {
-  const auto docDir = Filesystem::GetRuntimeDirectory().parent_path() / "share" / "doc";
+  const auto docDir
+    = Filesystem::GetRuntimeDirectory().parent_path() / "share" / "doc";
 
   if (!std::filesystem::exists(docDir)) {
     return;
