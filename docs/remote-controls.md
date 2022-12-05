@@ -75,6 +75,20 @@ If you don't specify a page number, or you specify '0', the tab will be selected
 
 **The Radio Log tab will have a different ID on your installation.**
 
+### Setting the tab/page for a particular kneeboard (dual kneeboards, v1.3-beta4 and above)
+
+After the page number, you can also add:
+
+- 0: change the current active kneeboard (default)
+- 1: change the primary (left) kneeboard
+- 2: change the secondary (right) kneeboard
+
+For example:
+
+    OpenKneeboard-RemoteControl-SET_TAB.exe name "Radio Log" 0 1
+
+In this example, `0` is the page number (0 is "don't change"), and 1 specifies the primary kneeboard.
+
 ### StreamDeck
 
 Add an 'Open' action, select the SET_TAB exe, then add a space then the arguments at the end of the 'App / File' box, after the closing quotation marks. For example:

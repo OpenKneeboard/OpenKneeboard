@@ -72,6 +72,8 @@ struct SetTabByIDEvent {
   std::string mID;
   // 0 = no change
   uint64_t mPageNumber {0};
+  // 0 = 'active', 1 = primary, 2 = secondary
+  uint8_t mKneeboard {0};
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByIDEvent);
 
@@ -81,6 +83,8 @@ struct SetTabByNameEvent {
   std::string mName;
   // 0 = no change
   uint64_t mPageNumber {0};
+  // 0 = 'active', 1 = primary, 2 = secondary
+  uint8_t mKneeboard {0};
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByNameEvent);
 

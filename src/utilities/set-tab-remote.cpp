@@ -38,32 +38,43 @@ int WINAPI wWinMain(
   PWSTR pCmdLine,
   int nCmdShow) {
   DPrintSettings::Set({
-    .prefix = "OpenKneeboard-SetTab-Remote",
+    .prefix = "SetTab-Remote",
+    .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,
   });
   int argc = 0;
   auto argv = CommandLineToArgvW(pCmdLine, &argc);
 
-  if (argc < 2 || argc > 3) {
-    dprint("Usage: (id|name) IDENTIFIER [PAGE]");
+  if (argc < 2 || argc > 4) {
+    dprint("Usage: (id|name) IDENTIFIER [PAGE] [KNEEBOARD]");
     return 0;
   }
 
   const auto kind = std::wstring_view(argv[0]);
   const auto identifier = winrt::to_string(std::wstring_view(argv[1]));
   uint64_t pageNumber = 0;
+  uint8_t kneeboard = 0;
   if (argc >= 3) {
     pageNumber = wcstoull(argv[2], nullptr, 10);
   }
+  if (argc >= 4) {
+    kneeboard = wcstoull(argv[3], nullptr, 10);
+  }
 
   if (kind == L"id") {
-    GameEvent::FromStruct(
-      SetTabByIDEvent {.mID = identifier, .mPageNumber = pageNumber})
+    GameEvent::FromStruct(SetTabByIDEvent {
+                            .mID = identifier,
+                            .mPageNumber = pageNumber,
+                            .mKneeboard = kneeboard,
+                          })
       .Send();
     return 0;
   }
   if (kind == L"name") {
-    GameEvent::FromStruct(
-      SetTabByNameEvent {.mName = identifier, .mPageNumber = pageNumber})
+    GameEvent::FromStruct(SetTabByNameEvent {
+                            .mName = identifier,
+                            .mPageNumber = pageNumber,
+                            .mKneeboard = kneeboard,
+                          })
       .Send();
     return 0;
   }

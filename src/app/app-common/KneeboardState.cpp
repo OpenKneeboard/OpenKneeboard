@@ -139,7 +139,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
       .mIsActiveForInput = mFirstViewIndex == mInputViewIndex,
     },
     {
-      .mView = mViews.at((mFirstViewIndex + 1) % 2),
+      .mView = mViews.at((mFirstViewIndex + 1) % mViews.size()),
       .mVR = secondaryVR,
       .mIsActiveForInput = mFirstViewIndex != mInputViewIndex,
     },
@@ -209,7 +209,7 @@ void KneeboardState::OnGameChangedEvent(
   this->evGameChangedEvent.Emit(processID, game);
 }
 
-void KneeboardState::OnGameEvent(const GameEvent& ev) {
+void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
   TroubleshootingStore::Get()->OnGameEvent(ev);
 
   if (ev.name == GameEvent::EVT_SET_INPUT_FOCUS) {
@@ -253,23 +253,40 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
       return;
     }
     for (auto tab: mTabsList->GetTabs()) {
-      if (tab->GetPersistentID() == guid) {
-        this->GetActiveViewForGlobalInput()->SetCurrentTabByRuntimeID(
-          tab->GetRuntimeID());
-        const auto pageCount = tab->GetPageCount();
-        if (parsed.mPageNumber != 0 && pageCount > 1) {
-          const auto pageIndex = parsed.mPageNumber - 1;
-          if (pageIndex < pageCount) {
-            this->GetActiveViewForGlobalInput()
-              ->GetCurrentTabView()
-              ->SetPageIndex(pageIndex);
-          } else {
-            dprintf(
-              "Requested page index {} >= count {}", pageIndex, pageCount);
-          }
-        }
-        return;
+      if (tab->GetPersistentID() != guid) {
+        continue;
       }
+      auto view = this->GetActiveViewForGlobalInput();
+      switch (parsed.mKneeboard) {
+        case 0:
+          // Primary, as above.
+          break;
+        case 1:
+          view = mViews.at(mFirstViewIndex);
+          break;
+        case 2:
+          view = mViews.at((mFirstViewIndex + 1) % mViews.size());
+          break;
+        default:
+          dprintf(
+            "Requested kneeboard index {} does not exist, using active "
+            "kneeboard",
+            parsed.mKneeboard);
+          break;
+      }
+      view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
+      const auto pageCount = tab->GetPageCount();
+      if (parsed.mPageNumber != 0 && pageCount > 1) {
+        const auto pageIndex = parsed.mPageNumber - 1;
+        if (pageIndex < pageCount) {
+          this->GetActiveViewForGlobalInput()
+            ->GetCurrentTabView()
+            ->SetPageIndex(pageIndex);
+        } else {
+          dprintf("Requested page index {} >= count {}", pageIndex, pageCount);
+        }
+      }
+      return;
     }
     dprintf(
       "Asked to switch to tab with ID '{}', but can't find it", parsed.mID);
@@ -280,20 +297,11 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) {
     const auto parsed = ev.ParsedValue<SetTabByNameEvent>();
     for (auto tab: mTabsList->GetTabs()) {
       if (tab->GetTitle() == parsed.mName) {
-        this->GetActiveViewForGlobalInput()->SetCurrentTabByRuntimeID(
-          tab->GetRuntimeID());
-        const auto pageCount = tab->GetPageCount();
-        if (parsed.mPageNumber != 0 && pageCount > 1) {
-          const auto pageIndex = parsed.mPageNumber - 1;
-          if (pageIndex < pageCount) {
-            this->GetActiveViewForGlobalInput()
-              ->GetCurrentTabView()
-              ->SetPageIndex(pageIndex);
-          } else {
-            dprintf(
-              "Requested page index {} >= count {}", pageIndex, pageCount);
-          }
-        }
+        this->OnGameEvent(GameEvent::FromStruct(SetTabByIDEvent {
+          .mID = winrt::to_string(winrt::to_hstring(tab->GetPersistentID())),
+          .mPageNumber = parsed.mPageNumber,
+          .mKneeboard = parsed.mKneeboard,
+        }));
         return;
       }
     }

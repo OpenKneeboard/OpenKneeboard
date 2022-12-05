@@ -122,7 +122,7 @@ class KneeboardState final : private EventReceiver {
   std::optional<RunningGame> mCurrentGame;
 
   void OnGameChangedEvent(DWORD processID, std::shared_ptr<GameInstance> game);
-  void OnGameEvent(const GameEvent& ev);
+  void OnGameEvent(const GameEvent& ev) noexcept;
 
   void StartOpenVRThread();
 
