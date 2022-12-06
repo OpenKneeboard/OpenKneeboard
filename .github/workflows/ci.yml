@@ -71,7 +71,7 @@ jobs:
             sign `
             /t http://timestamp.digicert.com `
             /fd SHA256 `
-            /f "${{steps.FetchKey.PATH}}" `
+            /f "${{steps.FetchKey.outputs.PATH}}" `
             "${{steps.createMSI.outputs.MSI_PATH}}"
       - name: Attach MSI
         if: ${{matrix.config != 'Debug' }}
