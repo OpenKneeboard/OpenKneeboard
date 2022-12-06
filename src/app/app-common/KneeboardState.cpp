@@ -36,6 +36,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
+#include <algorithm>
 #include <string>
 
 namespace OpenKneeboard {
@@ -212,6 +213,8 @@ void KneeboardState::OnGameChangedEvent(
 void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
   TroubleshootingStore::Get()->OnGameEvent(ev);
 
+  const auto tabs = mTabsList->GetTabs();
+
   if (ev.name == GameEvent::EVT_SET_INPUT_FOCUS) {
     const auto viewID = std::stoull(ev.value);
     for (int i = 0; i < mViews.size(); ++i) {
@@ -252,84 +255,82 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
       dprintf("Failed to set tab by ID: '{}' is not a valid GUID", parsed.mID);
       return;
     }
-    for (auto tab: mTabsList->GetTabs()) {
-      if (tab->GetPersistentID() != guid) {
-        continue;
-      }
-      auto view = this->GetActiveViewForGlobalInput();
-      switch (parsed.mKneeboard) {
-        case 0:
-          // Primary, as above.
-          break;
-        case 1:
-          view = mViews.at(mFirstViewIndex);
-          break;
-        case 2:
-          view = mViews.at((mFirstViewIndex + 1) % mViews.size());
-          break;
-        default:
-          dprintf(
-            "Requested kneeboard index {} does not exist, using active "
-            "kneeboard",
-            parsed.mKneeboard);
-          break;
-      }
-      view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
-      const auto pageCount = tab->GetPageCount();
-      if (parsed.mPageNumber != 0 && pageCount > 1) {
-        const auto pageIndex = parsed.mPageNumber - 1;
-        if (pageIndex < pageCount) {
-          this->GetActiveViewForGlobalInput()
-            ->GetCurrentTabView()
-            ->SetPageIndex(pageIndex);
-        } else {
-          dprintf("Requested page index {} >= count {}", pageIndex, pageCount);
-        }
-      }
+    const auto tab = std::ranges::find_if(
+      tabs, [guid](const auto& tab) { return tab->GetPersistentID() == guid; });
+    if (tab == tabs.end()) {
+      dprintf(
+        "Asked to switch to tab with ID '{}', but can't find it", parsed.mID);
       return;
     }
-    dprintf(
-      "Asked to switch to tab with ID '{}', but can't find it", parsed.mID);
+    this->SetCurrentTab(*tab, parsed);
     return;
   }
 
   if (ev.name == GameEvent::EVT_SET_TAB_BY_NAME) {
     const auto parsed = ev.ParsedValue<SetTabByNameEvent>();
-    for (auto tab: mTabsList->GetTabs()) {
-      if (tab->GetTitle() == parsed.mName) {
-        this->OnGameEvent(GameEvent::FromStruct(SetTabByIDEvent {
-          parsed,
-          winrt::to_string(winrt::to_hstring(tab->GetPersistentID())),
-        }));
-        return;
-      }
+    const auto tab = std::ranges::find_if(tabs, [parsed](const auto& tab) {
+      return parsed.mName == tab->GetTitle();
+    });
+    if (tab == tabs.end()) {
+      dprintf(
+        "Asked to switch to tab with name '{}', but can't find it",
+        parsed.mName);
+      return;
     }
-    dprintf(
-      "Asked to switch to tab with name '{}', but can't find it", parsed.mName);
+    this->SetCurrentTab(*tab, parsed);
     return;
   }
 
   if (ev.name == GameEvent::EVT_SET_TAB_BY_INDEX) {
     const auto parsed = ev.ParsedValue<SetTabByIndexEvent>();
-    const auto tabs = mTabsList->GetTabs();
     if (parsed.mIndex >= tabs.size()) {
       dprintf(
         "Asked to switch to tab index {}, but there aren't that many tabs",
         parsed.mIndex);
       return;
     }
-    this->OnGameEvent(GameEvent::FromStruct(SetTabByIDEvent {
-      parsed,
-      winrt::to_string(
-        winrt::to_hstring(tabs.at(parsed.mIndex)->GetPersistentID())),
-    }));
+    this->SetCurrentTab(tabs.at(parsed.mIndex), parsed);
     return;
   }
 
-  for (auto tab: mTabsList->GetTabs()) {
+  for (auto tab: tabs) {
     auto receiver = std::dynamic_pointer_cast<ITabWithGameEvents>(tab);
     if (receiver) {
       receiver->PostGameEvent(ev);
+    }
+  }
+}
+
+void KneeboardState::SetCurrentTab(
+  const std::shared_ptr<ITab>& tab,
+  const BaseSetTabEvent& extra) {
+  auto view = this->GetActiveViewForGlobalInput();
+  switch (extra.mKneeboard) {
+    case 0:
+      // Primary, as above.
+      break;
+    case 1:
+      view = mViews.at(mFirstViewIndex);
+      break;
+    case 2:
+      view = mViews.at((mFirstViewIndex + 1) % mViews.size());
+      break;
+    default:
+      dprintf(
+        "Requested kneeboard index {} does not exist, using active "
+        "kneeboard",
+        extra.mKneeboard);
+      break;
+  }
+  view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
+  const auto pageCount = tab->GetPageCount();
+  if (extra.mPageNumber != 0 && pageCount > 1) {
+    const auto pageIndex = extra.mPageNumber - 1;
+    if (pageIndex < pageCount) {
+      this->GetActiveViewForGlobalInput()->GetCurrentTabView()->SetPageIndex(
+        pageIndex);
+    } else {
+      dprintf("Requested page index {} >= count {}", pageIndex, pageCount);
     }
   }
 }

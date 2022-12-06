@@ -44,6 +44,7 @@ class ITab;
 class TabletInputAdapter;
 class TabsList;
 class UserInputDevice;
+struct BaseSetTabEvent;
 struct GameEvent;
 struct GameInstance;
 class GameEventServer;
@@ -127,6 +128,9 @@ class KneeboardState final : private EventReceiver {
   void StartOpenVRThread();
 
   void SetFirstViewIndex(uint8_t index);
+  void SetCurrentTab(
+    const std::shared_ptr<ITab>& tab,
+    const BaseSetTabEvent& metadata);
 };
 
 }// namespace OpenKneeboard
