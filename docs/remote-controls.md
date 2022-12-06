@@ -86,8 +86,8 @@ If you don't specify a page number, or you specify '0', the tab will be selected
 After the page number, you can also add:
 
 - 0: change the current active kneeboard (default)
-- 1: change the primary (left) kneeboard
-- 2: change the secondary (right) kneeboard
+- 1: change the first (right) kneeboard
+- 2: change the second (left) kneeboard
 
 For example:
 
