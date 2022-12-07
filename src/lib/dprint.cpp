@@ -23,6 +23,7 @@
 #include <Windows.h>
 #include <shims/winrt/base.h>
 
+#include <iostream>
 #include <optional>
 #include <shims/filesystem>
 
@@ -162,27 +163,21 @@ void dprint(std::wstring_view message) {
   }
 
   if (IsConsoleOutputEnabled()) {
-    if (AllocConsole()) {
+    static bool sFirst = true;
+    if (sFirst) {
+      sFirst = false;
+      if (!AttachConsole(ATTACH_PARENT_PROCESS)) {
+        AllocConsole();
+      }
       FILE* inStream {};
       FILE* outStream {};
       FILE* errStream {};
-      // Gets detour trace working too :)
       freopen_s(&inStream, "CONIN$", "r", stdin);
       freopen_s(&outStream, "CONOUT$", "w", stdout);
       freopen_s(&errStream, "CONOUT$", "w", stderr);
     }
-    auto handle = GetStdHandle(STD_ERROR_HANDLE);
-    if (handle == INVALID_HANDLE_VALUE) {
-      return;
-    }
 
-    const auto withNewline = std::format(L"{}\n", message);
-    WriteConsoleW(
-      handle,
-      withNewline.data(),
-      static_cast<DWORD>(withNewline.size()),
-      nullptr,
-      nullptr);
+    std::wcout << message << std::endl;
   }
 
   WriteIPCMessage(message);
