@@ -24,7 +24,7 @@
 
 // clang-format off
 #include <wintab/WINTAB.H>
-#define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE)
+#define PACKETDATA (PK_X | PK_Y | PK_BUTTONS | PK_NORMAL_PRESSURE | PK_CHANGED)
 #define PACKETMODE 0
 #define PACKETEXPKEYS PKEXT_ABSOLUTE
 #include <wintab/PKTDEF.H>
@@ -231,10 +231,18 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     if (!p->mWintab.WTPacket(ctx, static_cast<UINT>(wParam), &packet)) {
       return false;
     }
-    p->mState.x = packet.pkX;
-    p->mState.y = packet.pkY;
-    p->mState.pressure = packet.pkNormalPressure;
-    p->mState.penButtons = static_cast<uint16_t>(packet.pkButtons);
+    if (packet.pkChanged & PK_X) {
+      p->mState.x = packet.pkX;
+    }
+    if (packet.pkChanged & PK_Y) {
+      p->mState.y = packet.pkY;
+    }
+    if (packet.pkChanged & PK_NORMAL_PRESSURE) {
+      p->mState.pressure = packet.pkNormalPressure;
+    }
+    if (packet.pkChanged & PK_BUTTONS) {
+      p->mState.penButtons = static_cast<uint16_t>(packet.pkButtons);
+    }
     return true;
   }
 
