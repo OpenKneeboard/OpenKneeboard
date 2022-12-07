@@ -46,11 +46,6 @@ class VRKneeboard {
   };
 
  protected:
-  enum class YOrigin {
-    FLOOR_LEVEL,
-    EYE_LEVEL,
-  };
-
   RenderParameters GetRenderParameters(
     const SHM::Snapshot&,
     const SHM::LayerConfig&,
