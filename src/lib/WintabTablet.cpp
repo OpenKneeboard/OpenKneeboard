@@ -116,13 +116,15 @@ WintabTablet::Impl::Impl(HWND window) {
   }
 
   LOGCONTEXT logicalContext;
-  mWintab.WTInfoW(WTI_DEFSYSCTX, 0, &logicalContext);
+  mWintab.WTInfoW(WTI_DEFCONTEXT, 0, &logicalContext);
   logicalContext.lcPktData = PACKETDATA;
   logicalContext.lcMoveMask = PACKETDATA;
   logicalContext.lcPktMode = PACKETMODE;
-  logicalContext.lcOptions = CXO_MESSAGES;
+  logicalContext.lcOptions |= CXO_MESSAGES;
+  logicalContext.lcOptions &= ~CXO_SYSTEM;
   logicalContext.lcBtnDnMask = ~0;
   logicalContext.lcBtnUpMask = ~0;
+  logicalContext.lcSysMode = false;
 
   AXIS axis;
 
@@ -139,7 +141,6 @@ WintabTablet::Impl::Impl(HWND window) {
   // then the tablet coord. range is mapped to full desktop, intead
   // of only the display tablet active area.
   logicalContext.lcOutExtX = axis.axMax - axis.axMin + 2;
-  ;
 
   mWintab.WTInfoW(WTI_DEVICES, DVC_Y, &axis);
   logicalContext.lcInOrgY = axis.axMin;
