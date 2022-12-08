@@ -20,7 +20,11 @@
 
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/utf8.h>
+
+#include <stdexcept>
+#include <thread>
 
 // clang-format off
 #include <wintab/WINTAB.H>
@@ -33,33 +37,29 @@
 #define WINTAB_FUNCTIONS \
   IT(WTInfoW) \
   IT(WTOpenW) \
-  IT(WTGetW) \
   IT(WTClose) \
+  IT(WTOverlap) \
   IT(WTPacket)
 
+namespace OpenKneeboard {
+
 namespace {
+
 class LibWintab {
  public:
 #define IT(x) decltype(&x) x = nullptr;
   WINTAB_FUNCTIONS
 #undef IT
 
-  LibWintab() {
-    mWintab = LoadLibraryW(L"WINTAB32.dll");
+  LibWintab() : mWintab(LoadLibraryW(L"WINTAB32.dll")) {
     if (!mWintab) {
       return;
     }
 
 #define IT(x) \
-  this->x = reinterpret_cast<decltype(&::x)>(GetProcAddress(mWintab, #x));
+  this->x = reinterpret_cast<decltype(&::x)>(GetProcAddress(mWintab.get(), #x));
     WINTAB_FUNCTIONS
 #undef IT
-  }
-
-  ~LibWintab() {
-    if (mWintab) {
-      FreeLibrary(mWintab);
-    }
   }
 
   operator bool() const {
@@ -70,11 +70,11 @@ class LibWintab {
   LibWintab& operator=(const LibWintab&) = delete;
 
  private:
-  HMODULE mWintab = 0;
+  unique_hmodule mWintab = 0;
 };
 }// namespace
 
-namespace OpenKneeboard {
+static WintabTablet* gInstance {nullptr};
 
 struct WintabTablet::Impl {
   Impl(HWND window);
@@ -84,12 +84,20 @@ struct WintabTablet::Impl {
   Limits mLimits {};
   LibWintab mWintab {};
   HCTX mCtx {nullptr};
+
+  std::jthread mOverlapThread;
+  unique_hwineventhook mEventHook;
 };
 
 WintabTablet::WintabTablet(HWND window) : p(std::make_unique<Impl>(window)) {
+  if (gInstance) {
+    throw std::runtime_error("Only one WintabTablet at a time!");
+  }
+  gInstance = this;
 }
 
 WintabTablet::~WintabTablet() {
+  gInstance = nullptr;
 }
 
 WintabTablet::State WintabTablet::GetState() const {
@@ -110,18 +118,49 @@ bool WintabTablet::IsValid() const {
   return p && p->mCtx;
 }
 
+void CALLBACK WintabTablet::WinEventProc_SetOverlap(
+  HWINEVENTHOOK hWinEventHook,
+  DWORD event,
+  HWND hwnd,
+  LONG idObject,
+  LONG idChild,
+  DWORD idEventThread,
+  DWORD dwmsEventTime) {
+  if (!gInstance) {
+    return;
+  }
+
+  gInstance->p->mOverlapThread = {[](std::stop_token stop) {
+    // We're racing the tablet driver; give it some time to catch up
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (stop.stop_requested()) {
+      return;
+    }
+    if (gInstance->p->mCtx) {
+      gInstance->p->mWintab.WTOverlap(gInstance->p->mCtx, true);
+    }
+  }};
+}
+
 WintabTablet::Impl::Impl(HWND window) {
   if (!mWintab) {
     return;
   }
 
-  LOGCONTEXT logicalContext;
+  constexpr std::wstring_view contextName {L"OpenKneeboard"};
+
+  LOGCONTEXTW logicalContext {};
   mWintab.WTInfoW(WTI_DEFCONTEXT, 0, &logicalContext);
+  wcsncpy_s(
+    static_cast<wchar_t*>(logicalContext.lcName),
+    _countof(logicalContext.lcName),
+    contextName.data(),
+    contextName.size());
   logicalContext.lcPktData = PACKETDATA;
   logicalContext.lcMoveMask = PACKETDATA;
   logicalContext.lcPktMode = PACKETMODE;
   logicalContext.lcOptions |= CXO_MESSAGES;
-  logicalContext.lcOptions &= ~CXO_SYSTEM;
+  logicalContext.lcOptions &= ~static_cast<UINT>(CXO_SYSTEM);
   logicalContext.lcBtnDnMask = ~0;
   logicalContext.lcBtnUpMask = ~0;
   logicalContext.lcSysMode = false;
@@ -157,22 +196,30 @@ WintabTablet::Impl::Impl(HWND window) {
     .pressure = static_cast<uint32_t>(axis.axMax),
   };
 
-  for (UINT i = 0, tag; mWintab.WTInfo(WTI_EXTENSIONS + i, EXT_TAG, &tag);
+  for (UINT i = 0, tag; mWintab.WTInfoW(WTI_EXTENSIONS + i, EXT_TAG, &tag);
        ++i) {
     if (tag == WTX_EXPKEYS2 || tag == WTX_OBT) {
       UINT mask = 0;
-      mWintab.WTInfo(WTI_EXTENSIONS + i, EXT_MASK, &mask);
+      mWintab.WTInfoW(WTI_EXTENSIONS + i, EXT_MASK, &mask);
       logicalContext.lcPktData |= mask;
       break;
     }
   }
 
-  mCtx = mWintab.WTOpen(window, &logicalContext, true);
+  mCtx = mWintab.WTOpenW(window, &logicalContext, true);
   if (!mCtx) {
     dprint("Failed to open wintab tablet");
     return;
   }
   dprint("Opened wintab tablet");
+  mEventHook.reset(SetWinEventHook(
+    EVENT_SYSTEM_FOREGROUND,
+    EVENT_SYSTEM_FOREGROUND,
+    NULL,
+    &WinEventProc_SetOverlap,
+    NULL,
+    NULL,
+    WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
 }
 
 std::string WintabTablet::GetDeviceName() const {

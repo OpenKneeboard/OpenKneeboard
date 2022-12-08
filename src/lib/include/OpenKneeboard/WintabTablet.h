@@ -55,6 +55,15 @@ class WintabTablet final {
  private:
   struct Impl;
   std::unique_ptr<Impl> p;
+
+  static void CALLBACK WinEventProc_SetOverlap(
+    HWINEVENTHOOK hWinEventHook,
+    DWORD event,
+    HWND hwnd,
+    LONG idObject,
+    LONG idChild,
+    DWORD idEventThread,
+    DWORD dwmsEventTime);
 };
 
-};// namespace OpenKneeboard
+}// namespace OpenKneeboard
