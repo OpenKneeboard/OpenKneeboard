@@ -166,16 +166,6 @@ bool InjectDll(HANDLE process, const std::filesystem::path& dll) {
   return true;
 }
 
-bool HaveWintab() {
-  // Don't bother installing wintab support if the user doesn't have any
-  // wintab drivers installed
-
-  auto wintab = LoadLibraryW(L"WINTAB32.dll");
-  FreeLibrary(wintab);
-
-  return (bool)wintab;
-}
-
 }// namespace
 
 namespace OpenKneeboard {
@@ -183,7 +173,6 @@ namespace OpenKneeboard {
 GameInjector::GameInjector() {
   const auto dllPath
     = std::filesystem::canonical(RuntimeFiles::GetInstallationDirectory());
-  mTabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
   mOverlayAutoDetectDll = dllPath / RuntimeFiles::AUTODETECTION_DLL;
   mOverlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
   mOverlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
@@ -276,10 +265,6 @@ void GameInjector::CheckProcess(
 
     InjectedDlls wantedDlls {InjectedDlls::None};
 
-    if (HaveWintab()) {
-      wantedDlls |= InjectedDlls::TabletProxy;
-    }
-
     std::filesystem::path overlayDll;
     switch (game->mOverlayAPI) {
       case OverlayAPI::SteamVR:
@@ -333,7 +318,6 @@ void GameInjector::CheckProcess(
       currentDlls |= dllID;
     };
 
-    injectIfNeeded(InjectedDlls::TabletProxy, mTabletProxyDll);
     injectIfNeeded(InjectedDlls::AutoDetection, mOverlayAutoDetectDll);
     injectIfNeeded(InjectedDlls::NonVRD3D11, mOverlayNonVRD3D11Dll);
     injectIfNeeded(InjectedDlls::OculusD3D11, mOverlayOculusD3D11Dll);

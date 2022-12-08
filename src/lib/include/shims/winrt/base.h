@@ -22,4 +22,6 @@
 // <Unknwn.h> must be included before <winrt/base.h> for com_ptr::as<> to work
 // correctly
 #include <Unknwn.h>
+#include <pplawait.h>
+#include <ppltasks.h>
 #include <winrt/base.h>
