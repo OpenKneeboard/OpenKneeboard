@@ -11,19 +11,26 @@
     <!-- Any Tab -->
     <DataTemplate x:Key="GenericTabTemplate" x:DataType="local:TabUIData">
       <Grid
-        ColumnDefinitions="*,Auto"
+        ColumnDefinitions="Auto,*,Auto"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="8"
         Padding="12"
         Margin="0,4,0,4">
-        <TextBlock
+        <Button
           Grid.Column="0"
+          Tag="{x:Bind InstanceID}"
+          ToolTipService.ToolTip="Rename tab"
+          Margin="0,0,8,0">
+          <SymbolIcon Symbol="Edit" />
+        </Button>
+        <TextBlock
+          Grid.Column="1"
           Style="{StaticResource BodyStrongTextBlockStyle}"
           Text="{x:Bind Title}"
           VerticalAlignment="Center"
         />
-        <Button Grid.Column="1" Tag="{x:Bind InstanceID}" Click="RemoveTab">
+        <Button Grid.Column="2" Tag="{x:Bind InstanceID}" Click="RemoveTab">
           <SymbolIcon Symbol="Delete" />
         </Button>
       </Grid>
