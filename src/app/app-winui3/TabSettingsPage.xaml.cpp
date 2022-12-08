@@ -145,6 +145,8 @@ fire_and_forget TabSettingsPage::RenameTab(
   TextBox tabName;
   tabName.Text(to_hstring(tab->GetTitle()));
   tabName.PlaceholderText(to_hstring(tab->GetTitle()));
+  tabName.Focus(FocusState::Programmatic);
+  tabName.SelectAll();
 
   StackPanel layout;
   layout.Margin({8, 8, 8, 8});
