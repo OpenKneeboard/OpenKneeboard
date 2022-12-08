@@ -8,15 +8,10 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
-    <!-- Generic Games -->
-    <DataTemplate x:Key="GenericGameTemplate" x:DataType="local:GameInstanceUIData">
+    <!-- Common Settings-->
+    <DataTemplate x:Key="CommonSettings" x:DataType="local:GameInstanceUIData">
       <StackPanel
         Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="12"
         Spacing="12">
         <Grid ColumnDefinitions="Auto,*,Auto">
           <Grid
@@ -34,13 +29,13 @@
             Text="{x:Bind Name}"
             VerticalAlignment="Center"
           />
-					<Button
-						Grid.Column="2"
-						VerticalAlignment="Top"
-						Tag="{x:Bind InstanceID}"
-						Click="RemoveGame">
-						<SymbolIcon Symbol="Delete" />
-					</Button>
+          <Button
+            Grid.Column="2"
+            VerticalAlignment="Top"
+            Tag="{x:Bind InstanceID}"
+            Click="RemoveGame">
+            <SymbolIcon Symbol="Delete" />
+          </Button>
         </Grid>
         <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Path" />
         <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Margin="16,0,0,0" Text="{x:Bind Path}" />
@@ -59,6 +54,18 @@
         </ComboBox>
       </StackPanel>
     </DataTemplate>
+    <!-- Generic games - common settings only -->
+    <DataTemplate x:Key="GenericGameTemplate" x:DataType="local:GameInstanceUIData">
+      <ContentPresenter 
+        Content="{x:Bind}"
+        ContentTemplate="{StaticResource CommonSettings}"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="12"
+      />
+    </DataTemplate>
     <!-- DCS World -->
     <DataTemplate x:Key="DCSWorldTemplate" x:DataType="local:DCSWorldInstanceUIData">
       <StackPanel
@@ -69,45 +76,10 @@
         BorderThickness="1"
         Padding="12"
         Spacing="12">
-        <Grid ColumnDefinitions="Auto,*,Auto">
-          <Grid
-            Grid.Column="0"
-            Height="48"
-            Width="48"
-            CornerRadius="8"
-            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-            <Image Height="32" Width="32" Source="{x:Bind Icon}" />
-          </Grid>
-          <TextBlock
-            Grid.Column="1"
-            Margin="8,0,0,0"
-            Style="{StaticResource SubtitleTextBlockStyle}"
-            Text="{x:Bind Name}"
-            VerticalAlignment="Center"
-          />
-					<Button
-						Grid.Column="2"
-						VerticalAlignment="Top"
-						Tag="{x:Bind InstanceID}"
-						Click="RemoveGame">
-						<SymbolIcon Symbol="Delete" />
-					</Button>
-        </Grid>
-        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Path" />
-        <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Margin="16,0,0,0" Text="{x:Bind Path}" />
-        <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Rendering API" />
-        <ComboBox
-          Margin="16,0,0,0"
-          Tag="{x:Bind InstanceID}"
-          SelectedIndex="{x:Bind OverlayAPI}"
-          SelectionChanged="OnOverlayAPIChanged">
-          <x:String>Auto-detect</x:String>
-          <x:String>SteamVR</x:String>
-          <x:String>OpenXR</x:String>
-          <x:String>Oculus + Direct3D 11</x:String>
-          <x:String>Oculus + Direct3D 12</x:String>
-          <x:String>Direct3D 11 (Non-VR)</x:String>
-        </ComboBox>
+        <ContentPresenter 
+          Content="{x:Bind}"
+          ContentTemplate="{StaticResource CommonSettings}"
+        />
         <TextBlock Style="{ThemeResource BodyStrongTextBlockStyle}" Text="Saved Games path" />
         <HyperlinkButton
           Tag="{x:Bind InstanceID}"
