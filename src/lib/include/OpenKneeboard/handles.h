@@ -49,19 +49,28 @@ struct Handle {
   auto operator<=>(const Handle<T>&) const noexcept = default;
 };
 
-template <class T, class TRet, TRet (*TDeleter)(T)>
+template <class TPtr, auto TDeleter>
 struct CDeleter {
-  using pointer = Handle<T>;
-  void operator()(pointer v) const {
+  using pointer = TPtr;
+  // Auto allows implicit cast to void* where appropriate
+  void operator()(auto v) const {
     if (v) {
-      TDeleter(v.mHandle);
+      TDeleter(v);
     }
   }
 };
 
+template <class T, auto TDeleter>
+using CHandleDeleter = CDeleter<Handle<T>, TDeleter>;
+template <class T, auto TDeleter>
+using CPtrDeleter = CDeleter<T, TDeleter>;
+
+template <class T>
+using unique_co_task_ptr = std::unique_ptr<T, CPtrDeleter<T*, &CoTaskMemFree>>;
+
 using unique_hwineventhook = std::
-  unique_ptr<HWINEVENTHOOK, CDeleter<HWINEVENTHOOK, BOOL, &UnhookWinEvent>>;
+  unique_ptr<HWINEVENTHOOK, CHandleDeleter<HWINEVENTHOOK, &UnhookWinEvent>>;
 using unique_hmodule
-  = std::unique_ptr<HMODULE, CDeleter<HMODULE, BOOL, &FreeLibrary>>;
+  = std::unique_ptr<HMODULE, CHandleDeleter<HMODULE, &FreeLibrary>>;
 
 }// namespace OpenKneeboard

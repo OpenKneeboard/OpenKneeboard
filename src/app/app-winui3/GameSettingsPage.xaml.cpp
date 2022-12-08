@@ -34,13 +34,13 @@
 #include <OpenKneeboard/utf8.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
-#include <winrt/windows.storage.pickers.h>
 
 #include <algorithm>
 #include <format>
 
 #include "CheckDCSHooks.h"
 #include "ExecutableIconFactory.h"
+#include "FilePicker.h"
 #include "Globals.h"
 
 using namespace winrt::Windows::Foundation::Collections;
@@ -155,22 +155,22 @@ winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
 winrt::fire_and_forget GameSettingsPage::AddExe(
   const IInspectable& sender,
   const RoutedEventArgs&) noexcept {
-  auto picker = Windows::Storage::Pickers::FileOpenPicker();
-  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
-  picker.SettingsIdentifier(L"openkneeboard/addGameExe");
-  picker.SuggestedStartLocation(
-    Windows::Storage::Pickers::PickerLocationId::ComputerFolder);
-  picker.FileTypeFilter().Append(L".exe");
-  auto file = co_await picker.PickSingleFileAsync();
+  constexpr winrt::guid thisCall {
+    0x01944f0a,
+    0x58a5,
+    0x42ca,
+    {0xb1, 0x45, 0x6e, 0xf5, 0x07, 0x2b, 0xab, 0x34}};
+
+  FilePicker picker(gMainWindow);
+  picker.SettingsIdentifier(thisCall);
+  picker.SuggestedStartLocation(FOLDERID_ProgramFiles);
+  picker.AppendFileType(L"Application", {L".exe"});
+  auto file = picker.PickSingleFile();
   if (!file) {
     co_return;
   }
-  auto path = file.Path();
-  if (path.empty()) {
-    co_return;
-  }
 
-  AddPath(std::wstring_view {path});
+  AddPath(*file);
 }
 
 static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
@@ -250,16 +250,14 @@ winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
     co_return;
   }
 
-  hstring stringPath = co_await ChooseDCSSavedGamesFolder(
+  const auto path = co_await ChooseDCSSavedGamesFolder(
     this->XamlRoot(), DCSSavedGamesSelectionTrigger::EXPLICIT);
 
-  if (stringPath.empty()) {
+  if (!path) {
     co_return;
   }
 
-  instance->mSavedGamesPath
-    = std::filesystem::canonical(std::wstring_view {stringPath});
-
+  instance->mSavedGamesPath = *path;
   CheckDCSHooks(this->XamlRoot(), instance->mSavedGamesPath);
 
   gKneeboard->SaveSettings();
@@ -287,11 +285,10 @@ winrt::fire_and_forget GameSettingsPage::AddPath(
     auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(instance);
     if (dcs) {
       if (dcs->mSavedGamesPath.empty()) {
-        winrt::hstring stringPath = co_await ChooseDCSSavedGamesFolder(
+        const auto path = co_await ChooseDCSSavedGamesFolder(
           this->XamlRoot(), DCSSavedGamesSelectionTrigger::IMPLICIT);
-        if (!stringPath.empty()) {
-          dcs->mSavedGamesPath
-            = std::filesystem::canonical(std::wstring_view {stringPath});
+        if (path) {
+          dcs->mSavedGamesPath = *path;
         }
       }
 

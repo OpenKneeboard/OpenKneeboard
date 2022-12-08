@@ -38,6 +38,13 @@ target_link_libraries(
   PUBLIC
   _libheaders)
 
+add_library(OpenKneeboard-handles INTERFACE)
+target_link_libraries(
+  OpenKneeboard-handles
+  INTERFACE
+  _libheaders
+  ThirdParty::OutPtr)
+
 add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
 target_link_libraries(
   OpenKneeboard-UTF8

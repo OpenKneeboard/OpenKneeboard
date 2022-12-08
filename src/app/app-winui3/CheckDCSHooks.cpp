@@ -33,7 +33,6 @@
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 #include <winrt/microsoft.ui.xaml.controls.h>
-#include <winrt/windows.storage.pickers.h>
 
 #include <format>
 #include <set>
@@ -152,7 +151,7 @@ winrt::Windows::Foundation::IAsyncAction CheckDCSHooks(
   } while (true);
 }
 
-winrt::Windows::Foundation::IAsyncOperation<winrt::hstring>
+concurrency::task<std::optional<std::filesystem::path>>
 ChooseDCSSavedGamesFolder(
   const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
   DCSSavedGamesSelectionTrigger trigger) {
@@ -173,19 +172,21 @@ ChooseDCSSavedGamesFolder(
     }
   }
 
-  auto picker = Windows::Storage::Pickers::FolderPicker();
-  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
-  picker.SettingsIdentifier(L"chooseDCSSavedGames");
-  picker.FileTypeFilter().Append(L"*");
-  picker.SuggestedStartLocation(
-    Windows::Storage::Pickers::PickerLocationId::DocumentsLibrary);
+  constexpr winrt::guid thisCall {
+    0xa6605cee,
+    0x16ef,
+    0x4bbb,
+    {0x8d, 0x80, 0xf5, 0x73, 0xac, 0x5b, 0x0c, 0x95}};
+  FilePicker picker(gMainWindow);
+  picker.SettingsIdentifier(thisCall);
+  picker.SuggestedStartLocation(FOLDERID_SavedGames);
+  const auto folder = picker.PickSingleFolder();
 
-  auto folder = co_await picker.PickSingleFolderAsync();
   if (!folder) {
     co_return {};
   }
 
-  co_return folder.Path();
+  co_return *folder;
 }
 
 winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
@@ -198,12 +199,12 @@ winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
     }
     auto& path = dcs->mSavedGamesPath;
     if (path.empty()) {
-      auto stringPath = co_await ChooseDCSSavedGamesFolder(
+      auto chosenPath = co_await ChooseDCSSavedGamesFolder(
         root, DCSSavedGamesSelectionTrigger::IMPLICIT);
-      if (stringPath.empty()) {
+      if (!chosenPath) {
         continue;
       }
-      path = std::filesystem::canonical(std::wstring_view {stringPath});
+      path = *chosenPath;
       gKneeboard->SaveSettings();
     }
 

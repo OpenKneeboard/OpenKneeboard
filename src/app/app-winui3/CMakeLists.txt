@@ -23,6 +23,7 @@ add_executable(
   CheckForUpdates.cpp CheckForUpdates.h
   DegreesValueConverter.cpp DegreesValueConverter.h DegreesValueConverter.idl
   ExecutableIconFactory.cpp ExecutableIconFactory.h
+  FilePicker.cpp FilePicker.h
   GameSettingsPage.idl GameSettingsPage.xaml GameSettingsPage.xaml.cpp GameSettingsPage.xaml.h
   Globals.cpp Globals.h
   InputBindingsControl.idl InputBindingsControl.xaml InputBindingsControl.xaml.cpp InputBindingsControl.xaml.h
@@ -65,6 +66,7 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-games
+  OpenKneeboard-handles
   OpenKneeboard-version
   System::Dbghelp
   System::Dxgi

@@ -38,11 +38,11 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
-#include <winrt/windows.storage.pickers.h>
 
 #include <ranges>
 #include <shims/utility>
 
+#include "FilePicker.h"
 #include "Globals.h"
 
 using namespace OpenKneeboard;
@@ -198,30 +198,32 @@ void TabSettingsPage::CreateTab(
     std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
 }
 
-fire_and_forget TabSettingsPage::CreateFileTab() {
-  auto picker = Windows::Storage::Pickers::FileOpenPicker();
-  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
-  picker.SettingsIdentifier(L"chooseFileForTab");
-  picker.SuggestedStartLocation(
-    Windows::Storage::Pickers::PickerLocationId::DocumentsLibrary);
-  auto filter = picker.FileTypeFilter();
-  for (const auto& extension:
-       FilePageSource::GetSupportedExtensions(gDXResources)) {
-    picker.FileTypeFilter().Append(winrt::to_hstring(extension));
+void TabSettingsPage::CreateFileTab() {
+  constexpr winrt::guid thisCall {
+    0x207fb217,
+    0x12fc,
+    0x473c,
+    {0xad, 0x36, 0x6d, 0x2c, 0xdb, 0xed, 0xa9, 0xc0}};
+
+  FilePicker picker(gMainWindow);
+  picker.SettingsIdentifier(thisCall);
+  picker.SuggestedStartLocation(FOLDERID_Documents);
+  std::vector<std::wstring> extensions;
+  for (const auto& utf8: FilePageSource::GetSupportedExtensions(gDXResources)) {
+    extensions.push_back(std::wstring {to_hstring(utf8)});
+  }
+  picker.AppendFileType(L"Supported files", extensions);
+  for (const auto& extension: extensions) {
+    picker.AppendFileType(std::format(L"{} files", extension), {extension});
   }
 
-  auto files = co_await picker.PickMultipleFilesAsync();
+  auto files = picker.PickMultipleFiles();
+  if (files.empty()) {
+    return;
+  }
 
   std::vector<std::shared_ptr<OpenKneeboard::ITab>> newTabs;
-  for (const auto& file: files) {
-    auto stringPath = file.Path();
-    if (stringPath.empty()) {
-      continue;
-    }
-
-    const auto path
-      = std::filesystem::canonical(std::wstring_view {stringPath});
-
+  for (const auto& path: files) {
     newTabs.push_back(
       std::make_shared<SingleFileTab>(gDXResources, gKneeboard.get(), path));
   }
@@ -229,27 +231,23 @@ fire_and_forget TabSettingsPage::CreateFileTab() {
   this->AddTabs(newTabs);
 }
 
-fire_and_forget TabSettingsPage::CreateFolderTab() {
-  auto picker = Windows::Storage::Pickers::FolderPicker();
-  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
-  picker.SettingsIdentifier(L"chooseFileForTab");
-  picker.FileTypeFilter().Append(L"*");
-  picker.SuggestedStartLocation(
-    Windows::Storage::Pickers::PickerLocationId::DocumentsLibrary);
+void TabSettingsPage::CreateFolderTab() {
+  constexpr winrt::guid thisCall {
+    0xae9b7e43,
+    0x5109,
+    0x4b16,
+    {0x8d, 0xfa, 0xef, 0xf6, 0xe6, 0xaf, 0x06, 0x28}};
+  FilePicker picker(gMainWindow);
+  picker.SettingsIdentifier(thisCall);
+  picker.SuggestedStartLocation(FOLDERID_Documents);
 
-  auto folder = co_await picker.PickSingleFolderAsync();
+  auto folder = picker.PickSingleFolder();
   if (!folder) {
-    co_return;
+    return;
   }
-  auto stringPath = folder.Path();
-  if (stringPath.empty()) {
-    co_return;
-  }
-
-  const auto path = std::filesystem::canonical(std::wstring_view {stringPath});
 
   this->AddTabs(
-    {std::make_shared<FolderTab>(gDXResources, gKneeboard.get(), path)});
+    {std::make_shared<FolderTab>(gDXResources, gKneeboard.get(), *folder)});
 }
 
 void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {

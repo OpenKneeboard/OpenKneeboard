@@ -36,13 +36,13 @@
 #include <shobjidl.h>
 #include <time.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
-#include <winrt/windows.storage.pickers.h>
 
 #include <format>
 #include <fstream>
 #include <string>
 
 #include "CheckForUpdates.h"
+#include "FilePicker.h"
 
 using namespace OpenKneeboard;
 
@@ -151,46 +151,43 @@ void HelpPage::OnCopyGameEventsClick(
 winrt::fire_and_forget HelpPage::OnExportClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
-  Windows::Storage::Pickers::FileSavePicker picker;
+  constexpr winrt::guid thisCall {
+    0x02308bd3,
+    0x2b00,
+    0x4b7c,
+    {0x84, 0xa8, 0x61, 0xfc, 0xcd, 0xb7, 0xe5, 0x42}};
 
-  picker.as<IInitializeWithWindow>()->Initialize(gMainWindow);
-  picker.SettingsIdentifier(L"openkneeboard/exportDebugInfo");
-  picker.SuggestedStartLocation(
-    Windows::Storage::Pickers::PickerLocationId::Desktop);
-
-  auto plainTextExtensions {winrt::single_threaded_vector<winrt::hstring>()};
-  plainTextExtensions.Append(L".txt");
-
-  picker.FileTypeChoices().Insert(L"Plain Text", plainTextExtensions);
+  FilePicker picker(gMainWindow);
+  picker.SettingsIdentifier(thisCall);
+  picker.SuggestedStartLocation(FOLDERID_Desktop);
+  picker.AppendFileType(_(L"Plain Text"), {L".txt"});
   picker.SuggestedFileName(std::format(
-    L"OpenKneeboard-{}.{}.{}.{}.txt",
+    L"OpenKneeboard-{:%F-%H-%M}-{}.{}.{}.{}.txt",
+    std::chrono::zoned_time(
+      std::chrono::current_zone(), std::chrono::system_clock::now()),
     Version::Major,
     Version::Minor,
     Version::Patch,
     Version::Build));
 
-  auto file = co_await picker.PickSaveFileAsync();
-  if (!file) {
+  const auto maybePath = picker.PickSaveFile();
+  if (!maybePath) {
     co_return;
   }
-
-  auto path = file.Path();
-  if (path.empty()) {
-    co_return;
-  }
+  const auto path = *maybePath;
 
   auto sep = "\n\n--------------------------------\n\n";
 
   auto now = std::chrono::time_point_cast<std::chrono::seconds>(
     std::chrono::system_clock::now());
-  std::ofstream(std::filesystem::path {std::wstring_view {path}})
-    << std::format(
-         "Local time: {:%F %T%z}\n"
-         "UTC time:   {:%F %T}",
-         std::chrono::zoned_time(std::chrono::current_zone(), now),
-         std::chrono::zoned_time("UTC", now))
-    << sep << mVersionClipboardData << sep << mGameEventsClipboardData << sep
-    << winrt::to_string(mDPrintClipboardData) << std::endl;
+  std::ofstream(path) << std::format(
+    "Local time: {:%F %T%z}\n"
+    "UTC time:   {:%F %T}",
+    std::chrono::zoned_time(std::chrono::current_zone(), now),
+    std::chrono::zoned_time("UTC", now))
+                      << sep << mVersionClipboardData << sep
+                      << mGameEventsClipboardData << sep
+                      << winrt::to_string(mDPrintClipboardData) << std::endl;
 }
 
 void HelpPage::OnCopyDPrintClick(

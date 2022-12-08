@@ -97,7 +97,8 @@
     "ranges": "cpp",
     "shared_mutex": "cpp",
     "span": "cpp",
-    "cinttypes": "cpp"
+    "cinttypes": "cpp",
+    "*.idl": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",
@@ -113,5 +114,6 @@
   "C_Cpp.default.compilerArgs": [
     "/DNOMINMAX=1",
     "/DOPENKNEEBOARD_BREAK"
-  ]
+  ],
+  "editor.formatOnSave": true
 }

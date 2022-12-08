@@ -19,16 +19,13 @@
  */
 #pragma once
 
-// clang-format off
-#include "pch.h"
-#include <Unknwn.h>
-// clang-format on
-
-#include <winrt/base.h>
+#include <shims/winrt/base.h>
 #include <winrt/microsoft.ui.xaml.h>
 #include <winrt/windows.foundation.h>
 
 #include <shims/filesystem>
+
+#include "FilePicker.h"
 
 namespace OpenKneeboard {
 
@@ -51,7 +48,7 @@ enum class DCSSavedGamesSelectionTrigger {
   EXPLICIT,
 };
 
-winrt::Windows::Foundation::IAsyncOperation<winrt::hstring>
+concurrency::task<std::optional<std::filesystem::path>>
 ChooseDCSSavedGamesFolder(
   const winrt::Microsoft::UI::Xaml::XamlRoot& xamlRoot,
   DCSSavedGamesSelectionTrigger trigger);
