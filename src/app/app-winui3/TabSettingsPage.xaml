@@ -8,15 +8,8 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
-    <!-- Any Tab -->
-    <DataTemplate x:Key="GenericTabTemplate" x:DataType="local:TabUIData">
-      <Grid
-        ColumnDefinitions="Auto,*,Auto"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="8"
-        Padding="12"
-        Margin="0,4,0,4">
+    <DataTemplate x:Key="TabHeader" x:DataType="local:TabUIData">
+      <Grid ColumnDefinitions="Auto,*,Auto">
         <Button
           Grid.Column="0"
           Tag="{x:Bind InstanceID}"
@@ -35,26 +28,31 @@
         </Button>
       </Grid>
     </DataTemplate>
+    <!-- Any Tab -->
+    <DataTemplate x:Key="GenericTabTemplate" x:DataType="local:TabUIData">
+      <ContentPresenter 
+        Content="{x:Bind}"
+        ContentTemplate="{StaticResource TabHeader}"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="8"
+        Padding="8"
+        Margin="4"
+      />
+    </DataTemplate>
     <!-- DCS Radio Tab -->
     <DataTemplate x:Key="DCSRadioLogTabTemplate" x:DataType="local:DCSRadioLogTabUIData">
       <StackPanel
         Orientation="Vertical"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        Margin="0,4,0,4"
         CornerRadius="8"
-        Padding="12">
-        <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,4">
-          <TextBlock
-            Grid.Column="0"
-            Style="{StaticResource BodyStrongTextBlockStyle}"
-            Text="{x:Bind Title}"
-            VerticalAlignment="Center"
-          />
-          <Button Grid.Column="1" Tag="{x:Bind InstanceID}" Click="RemoveTab">
-            <SymbolIcon Symbol="Delete" />
-          </Button>
-        </Grid>
+        Margin="4"
+        Padding="8">
+        <ContentPresenter 
+          Content="{x:Bind}"
+          ContentTemplate="{StaticResource TabHeader}"
+          Margin="0,0,0,8"
+        />
         <RadioButtons
           SelectedIndex="{x:Bind MissionStartBehavior, Mode=TwoWay}"
           MaxColumns="2"
