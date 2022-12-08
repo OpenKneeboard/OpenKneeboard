@@ -48,4 +48,9 @@ utf8_string TabBase::GetTitle() const {
   return mTitle;
 }
 
+void TabBase::SetTitle(const utf8_string& title) {
+  mTitle = title;
+  evSettingsChangedEvent.Emit();
+}
+
 }// namespace OpenKneeboard

@@ -14,7 +14,8 @@
           Grid.Column="0"
           Tag="{x:Bind InstanceID}"
           ToolTipService.ToolTip="Rename tab"
-          Margin="0,0,8,0">
+          Margin="0,0,8,0"
+          Click="RenameTab">
           <SymbolIcon Symbol="Edit" />
         </Button>
         <TextBlock

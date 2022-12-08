@@ -126,6 +126,55 @@ fire_and_forget TabSettingsPage::RestoreDefaults(
   gKneeboard->ResetTabsSettings();
 }
 
+fire_and_forget TabSettingsPage::RenameTab(
+  const IInspectable& sender,
+  const RoutedEventArgs&) {
+  const auto tabID = ITab::RuntimeID::FromTemporaryValue(
+    unbox_value<uint64_t>(sender.as<Button>().Tag()));
+  auto tabsList = gKneeboard->GetTabsList();
+  const auto tabs = tabsList->GetTabs();
+  auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
+  if (it == tabs.end()) {
+    co_return;
+  }
+  const auto& tab = *it;
+
+  TextBlock promptText;
+  promptText.Text(_(L"What would you like to rename this tab to?"));
+
+  TextBox tabName;
+  tabName.Text(to_hstring(tab->GetTitle()));
+  tabName.PlaceholderText(to_hstring(tab->GetTitle()));
+
+  StackPanel layout;
+  layout.Margin({8, 8, 8, 8});
+  layout.Spacing(4);
+  layout.Orientation(Orientation::Vertical);
+  layout.Children().Append(promptText);
+  layout.Children().Append(tabName);
+
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(
+    box_value(to_hstring(std::format(_("Rename '{}'"), tab->GetTitle()))));
+  dialog.Content(layout);
+
+  dialog.PrimaryButtonText(to_hstring(_("Rename")));
+  dialog.CloseButtonText(to_hstring(_("Cancel")));
+  dialog.DefaultButton(ContentDialogButton::Close);
+
+  auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  const auto newName = to_string(tabName.Text());
+  if (newName.empty()) {
+    co_return;
+  }
+  tab->SetTitle(newName);
+}
+
 fire_and_forget TabSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
