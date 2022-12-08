@@ -162,7 +162,7 @@ fire_and_forget TabSettingsPage::RenameTab(
 
   dialog.PrimaryButtonText(to_hstring(_("Rename")));
   dialog.CloseButtonText(to_hstring(_("Cancel")));
-  dialog.DefaultButton(ContentDialogButton::Close);
+  dialog.DefaultButton(ContentDialogButton::Primary);
 
   auto result = co_await dialog.ShowAsync();
   if (result != ContentDialogResult::Primary) {
