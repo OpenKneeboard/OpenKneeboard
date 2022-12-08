@@ -15,6 +15,7 @@ install(FILES "${RUNTIME_FILES}" TYPE BIN)
 set(
   DLL_TARGETS
   OpenKneeboard-AutoDetect
+  OpenKneeboard-TabletProxy
   OpenKneeboard-nonvr-d3d11
   OpenKneeboard-oculus-d3d11
   OpenKneeboard-oculus-d3d12

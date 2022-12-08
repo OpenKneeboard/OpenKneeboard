@@ -37,10 +37,11 @@ struct GameInstance;
 
 enum class InjectedDlls : uint32_t {
   None = 0,
-  AutoDetection = 1,
-  NonVRD3D11 = 1 << 1,
-  OculusD3D11 = 1 << 2,
-  OculusD3D12 = 1 << 3,
+  TabletProxy = 1,
+  AutoDetection = 1 << 1,
+  NonVRD3D11 = 1 << 2,
+  OculusD3D11 = 1 << 3,
+  OculusD3D12 = 1 << 4,
 };
 
 template <>
@@ -59,6 +60,7 @@ class GameInjector final {
   std::vector<std::shared_ptr<GameInstance>> mGames;
   std::mutex mGamesMutex;
 
+  std::filesystem::path mTabletProxyDll;
   std::filesystem::path mOverlayAutoDetectDll;
   std::filesystem::path mOverlayNonVRD3D11Dll;
   std::filesystem::path mOverlayOculusD3D11Dll;
