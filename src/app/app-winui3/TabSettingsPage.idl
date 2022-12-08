@@ -1,33 +1,28 @@
-namespace OpenKneeboardApp
-{
-    [default_interface]
-    runtimeclass TabSettingsPage: Microsoft.UI.Xaml.Controls.Page,
-                                  Microsoft.UI.Xaml.Data.INotifyPropertyChanged
-    {
-        TabSettingsPage();
-        Windows.Foundation.Collections.IVector<IInspectable> Tabs { get; };
-    }
-
-    [default_interface]
-    unsealed runtimeclass TabUIData
-    {
-        TabUIData();
-        UInt64 InstanceID;
-        String Title;
-    }
-
-    [default_interface]
-    runtimeclass DCSRadioLogTabUIData : TabUIData
-    {
-        DCSRadioLogTabUIData();
-        UInt8 MissionStartBehavior;
-        Boolean TimestampsEnabled;
-    }
-
-    [default_interface]
-    runtimeclass TabUIDataTemplateSelector : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
-        TabUIDataTemplateSelector();
-        Microsoft.UI.Xaml.DataTemplate Generic;
-        Microsoft.UI.Xaml.DataTemplate DCSRadioLog;
-    }
+namespace OpenKneeboardApp {
+[default_interface] runtimeclass TabSettingsPage
+  : Microsoft.UI.Xaml.Controls.Page,
+  Microsoft.UI.Xaml.Data.INotifyPropertyChanged {
+  TabSettingsPage();
+  Windows.Foundation.Collections.IVector<IInspectable> Tabs { get; };
 }
+
+[default_interface] unsealed runtimeclass TabUIData
+  : Microsoft.UI.Xaml.Data.INotifyPropertyChanged {
+  TabUIData();
+  UInt64 InstanceID;
+  String Title { get; };
+}
+
+[default_interface] runtimeclass DCSRadioLogTabUIData : TabUIData {
+  DCSRadioLogTabUIData();
+  UInt8 MissionStartBehavior;
+  Boolean TimestampsEnabled;
+}
+
+[default_interface] runtimeclass TabUIDataTemplateSelector
+  : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
+  TabUIDataTemplateSelector();
+  Microsoft.UI.Xaml.DataTemplate Generic;
+  Microsoft.UI.Xaml.DataTemplate DCSRadioLog;
+}
+}// namespace OpenKneeboardApp

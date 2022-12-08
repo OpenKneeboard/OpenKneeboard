@@ -98,15 +98,15 @@
     "shared_mutex": "cpp",
     "span": "cpp",
     "cinttypes": "cpp",
-    "*.idl": "cpp"
+    "*.idl": "idl"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",
   "[xml]": {
     "editor.formatOnSave": false
   },
-  "[cpp]": {
-    "editor.formatOnSave": true
+  "[idl]": {
+    "editor.formatOnSave": false
   },
   "cmake.buildToolArgs": [
     "/p:CL_MPCount="

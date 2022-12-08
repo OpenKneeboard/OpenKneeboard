@@ -79,18 +79,25 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
   bool mUIIsChangingTabs = false;
 };
 
-struct TabUIData : TabUIDataT<TabUIData> {
+struct TabUIData : TabUIDataT<TabUIData>, private OpenKneeboard::EventReceiver {
   TabUIData() = default;
+  ~TabUIData();
 
   hstring Title() const;
-  void Title(hstring);
 
   uint64_t InstanceID() const;
   void InstanceID(uint64_t);
 
- private:
-  hstring mTitle;
-  uint64_t mInstanceID {~0ui64};
+  winrt::event_token PropertyChanged(
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+      handler);
+  void PropertyChanged(winrt::event_token const& token) noexcept;
+
+ protected:
+  std::weak_ptr<OpenKneeboard::ITab> mTab;
+
+  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
+    mPropertyChangedEvent;
 };
 
 struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
@@ -103,8 +110,6 @@ struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
   void TimestampsEnabled(bool value);
 
  private:
-  mutable std::weak_ptr<OpenKneeboard::DCSRadioLogTab> mTab;
-
   std::shared_ptr<OpenKneeboard::DCSRadioLogTab> GetTab() const;
 };
 

@@ -21,7 +21,7 @@
         <TextBlock
           Grid.Column="1"
           Style="{StaticResource BodyStrongTextBlockStyle}"
-          Text="{x:Bind Title}"
+          Text="{x:Bind Title,Mode=OneWay}"
           VerticalAlignment="Center"
         />
         <Button Grid.Column="2" Tag="{x:Bind InstanceID}" Click="RemoveTab">

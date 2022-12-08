@@ -59,7 +59,6 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
   } else {
     tabData = std::move(winrt::make<TabUIData>());
   }
-  tabData.Title(to_hstring(tab->GetTitle()));
   tabData.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
   return tabData;
 }
@@ -361,43 +360,61 @@ void TabSettingsPage::OnTabsChanged(
   tabsList->SetTabs(reorderedTabs);
 }
 
-hstring TabUIData::Title() const {
-  return mTitle;
+TabUIData::~TabUIData() {
+  this->RemoveAllEventListeners();
 }
 
-void TabUIData::Title(hstring value) {
-  mTitle = value;
+hstring TabUIData::Title() const {
+  const auto tab = mTab.lock();
+  if (!tab) {
+    return {};
+  }
+  return to_hstring(tab->GetTitle());
 }
 
 uint64_t TabUIData::InstanceID() const {
-  return mInstanceID;
+  const auto tab = mTab.lock();
+  if (!tab) {
+    return {};
+  }
+  return tab->GetRuntimeID().GetTemporaryValue();
 }
 
 void TabUIData::InstanceID(uint64_t value) {
-  mInstanceID = value;
+  this->RemoveAllEventListeners();
+  mTab = {};
+
+  const auto tabs = gKneeboard->GetTabsList()->GetTabs();
+  const auto it = std::ranges::find_if(
+    tabs, [value](const auto& tab) { return tab->GetRuntimeID() == value; });
+  if (it == tabs.end()) {
+    return;
+  }
+
+  const auto tab = *it;
+  mTab = tab;
+
+  AddEventListener(tab->evSettingsChangedEvent, [weakThis = get_weak()]() {
+    auto strongThis = weakThis.get();
+    if (!strongThis) {
+      return;
+    }
+    strongThis->mPropertyChangedEvent(
+      *strongThis, PropertyChangedEventArgs(L"Title"));
+  });
 }
 
 std::shared_ptr<DCSRadioLogTab> DCSRadioLogTabUIData::GetTab() const {
-  {
-    auto tab = mTab.lock();
-    if (tab) {
-      return tab;
-    }
+  auto tab = mTab.lock();
+  if (!tab) {
+    return {};
   }
-
-  auto tabID = ITab::RuntimeID::FromTemporaryValue(this->InstanceID());
-  for (auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
-    if (tab->GetRuntimeID() == tabID) {
-      auto refined = std::dynamic_pointer_cast<DCSRadioLogTab>(tab);
-      if (!refined) {
-        dprint("Expected a DCSRadioLogTab but didn't get one");
-        OPENKNEEBOARD_BREAK;
-      }
-      mTab = refined;
-      return refined;
-    }
+  auto refined = std::dynamic_pointer_cast<DCSRadioLogTab>(tab);
+  if (!refined) {
+    dprint("Expected a DCSRadioLogTab but didn't get one");
+    OPENKNEEBOARD_BREAK;
   }
-  return {};
+  return refined;
 }
 
 uint8_t DCSRadioLogTabUIData::MissionStartBehavior() const {
@@ -464,6 +481,16 @@ winrt::event_token TabSettingsPage::PropertyChanged(
 
 void TabSettingsPage::PropertyChanged(
   winrt::event_token const& token) noexcept {
+  mPropertyChangedEvent.remove(token);
+}
+
+winrt::event_token TabUIData::PropertyChanged(
+  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
+    handler) {
+  return mPropertyChangedEvent.add(handler);
+}
+
+void TabUIData::PropertyChanged(winrt::event_token const& token) noexcept {
   mPropertyChangedEvent.remove(token);
 }
 
