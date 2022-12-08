@@ -21,7 +21,6 @@
 #include <OpenKneeboard/DebugTimer.h>
 #include <OpenKneeboard/PDFNavigation.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <Windows.h>
 #include <shellapi.h>

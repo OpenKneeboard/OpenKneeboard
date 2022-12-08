@@ -23,13 +23,14 @@ target_link_libraries(
 	OpenKneeboard-RayIntersectsRect
 	OpenKneeboard-RuntimeFiles
 	OpenKneeboard-OpenVRKneeboard
-	OpenKneeboard-scope_guard
 	OpenKneeboard-SHM
 	OpenKneeboard-OpenXRMode
 	OpenKneeboard-UTF8
 	OpenKneeboard-config
 	OpenKneeboard-dprint
 	OpenKneeboard-games
+	OpenKneeboard-handles
+	OpenKneeboard-scope_guard
 	OpenKneeboard-tablets
 	System::D2d1
 	System::Dinput8

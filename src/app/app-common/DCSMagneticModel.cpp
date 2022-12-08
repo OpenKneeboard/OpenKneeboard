@@ -20,7 +20,7 @@
 
 #include <OpenKneeboard/DCSMagneticModel.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/handles.h>
 
 namespace OpenKneeboard {
 
@@ -101,12 +101,14 @@ float DCSMagneticModel::GetMagneticVariation(
   MAG_GeodeticToSpherical(ellipsoid, geoCoord, &sphereCoord);
 
   MAGtype_MagneticModel* model = this->GetModel(date);
-  MAGtype_MagneticModel* timedModel;
-  const auto nMax = model->nMax;
+  using unique_magmodel_ptr = std::unique_ptr<
+    MAGtype_MagneticModel,
+    CPtrDeleter<MAGtype_MagneticModel, &MAG_FreeMagneticModelMemory>>;
+
   // Taken from wmm_point.c sample
-  timedModel = MAG_AllocateModelMemory((nMax + 1) * (nMax + 2) / 2);
-  scope_guard freeTimedModel(
-    [=]() { MAG_FreeMagneticModelMemory(timedModel); });
+  const auto nMax = model->nMax;
+  const unique_magmodel_ptr timedModel {
+    MAG_AllocateModelMemory((nMax + 1) * (nMax + 2) / 2)};
 
   MAGtype_Date magDate {
     static_cast<int>(date.year()),
@@ -115,10 +117,10 @@ float DCSMagneticModel::GetMagneticVariation(
   };
   char error[512];
   MAG_DateToYear(&magDate, error);
-  MAG_TimelyModifyMagneticModel(magDate, model, timedModel);
+  MAG_TimelyModifyMagneticModel(magDate, model, timedModel.get());
 
   MAGtype_GeoMagneticElements geoElements {};
-  MAG_Geomag(ellipsoid, sphereCoord, geoCoord, timedModel, &geoElements);
+  MAG_Geomag(ellipsoid, sphereCoord, geoCoord, timedModel.get(), &geoElements);
 
   return geoElements.Decl;
 }

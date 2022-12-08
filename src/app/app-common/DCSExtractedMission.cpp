@@ -21,7 +21,7 @@
 #include <OpenKneeboard/DCSExtractedMission.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/handles.h>
 #include <Windows.h>
 #include <zip.h>
 
@@ -45,18 +45,19 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
   std::filesystem::create_directories(mTempDir);
   int err = 0;
   auto zipPathString = zipPath.string();
-  auto zip = zip_open(zipPathString.c_str(), 0, &err);
+
+  using unique_zip_ptr = std::unique_ptr<zip_t, CPtrDeleter<zip_t, &zip_close>>;
+  unique_zip_ptr zip {zip_open(zipPathString.c_str(), 0, &err)};
   if (err) {
     dprintf("Failed to open zip '{}': {}", zipPathString, err);
     return;
   }
-  auto closeZip = scope_guard([=] { zip_close(zip); });
 
   // 4k limit for all stack variables
   auto fileBuffer = std::make_unique<std::array<char, 1024 * 1024>>();
-  for (auto i = 0; i < zip_get_num_entries(zip, 0); i++) {
+  for (auto i = 0; i < zip_get_num_entries(zip.get(), 0); i++) {
     zip_stat_t zstat;
-    if (zip_stat_index(zip, i, 0, &zstat) != 0) {
+    if (zip_stat_index(zip.get(), i, 0, &zstat) != 0) {
       continue;
     }
     std::string_view name(zstat.name);
@@ -64,12 +65,13 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
       continue;
     }
 
-    auto zipFile = zip_fopen_index(zip, i, 0);
+    using unique_zip_file_ptr
+      = std::unique_ptr<zip_file_t, CPtrDeleter<zip_file_t, &zip_fclose>>;
+    unique_zip_file_ptr zipFile {zip_fopen_index(zip.get(), i, 0)};
     if (!zipFile) {
       dprintf("Failed to open zip index {}", i);
       continue;
     }
-    auto closeZipFile = scope_guard([=] { zip_fclose(zipFile); });
 
     const auto filePath = mTempDir / name;
     std::filesystem::create_directories(filePath.parent_path());
@@ -78,7 +80,7 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
     size_t toCopy = zstat.size;
     while (toCopy > 0) {
       size_t toWrite
-        = zip_fread(zipFile, fileBuffer->data(), fileBuffer->size());
+        = zip_fread(zipFile.get(), fileBuffer->data(), fileBuffer->size());
       if (toWrite <= 0) {
         break;
       }

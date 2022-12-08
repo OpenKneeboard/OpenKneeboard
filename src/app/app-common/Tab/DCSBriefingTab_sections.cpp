@@ -29,7 +29,6 @@
 #include <OpenKneeboard/Lua.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
 
 #include <chrono>
 #include <cmath>

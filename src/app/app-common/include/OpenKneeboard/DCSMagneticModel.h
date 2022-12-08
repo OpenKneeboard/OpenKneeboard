@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/handles.h>
+
 #include <chrono>
 #include <shims/filesystem>
 #include <vector>

@@ -63,10 +63,10 @@ struct CDeleter {
 template <class T, auto TDeleter>
 using CHandleDeleter = CDeleter<Handle<T>, TDeleter>;
 template <class T, auto TDeleter>
-using CPtrDeleter = CDeleter<T, TDeleter>;
+using CPtrDeleter = CDeleter<T*, TDeleter>;
 
 template <class T>
-using unique_co_task_ptr = std::unique_ptr<T, CPtrDeleter<T*, &CoTaskMemFree>>;
+using unique_co_task_ptr = std::unique_ptr<T, CPtrDeleter<T, &CoTaskMemFree>>;
 
 using unique_hwineventhook = std::
   unique_ptr<HWINEVENTHOOK, CHandleDeleter<HWINEVENTHOOK, &UnhookWinEvent>>;
