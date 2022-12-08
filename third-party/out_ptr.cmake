@@ -13,7 +13,7 @@ target_include_directories(outptr INTERFACE "${SOURCE_DIR}/include")
 add_library(ThirdParty::OutPtr ALIAS outptr)
 
 install(
-	FILES "${SOURCE_DIR}/out_ptr/LICENSE"
+	FILES "${SOURCE_DIR}/LICENSE"
 	TYPE DOC
 	RENAME "LICENSE-ThirdParty-out_ptr.txt"
 )
