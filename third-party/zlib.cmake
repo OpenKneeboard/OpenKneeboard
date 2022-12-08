@@ -1,7 +1,7 @@
 ExternalProject_Add(
   zlibBuild
-  URL "https://zlib.net/fossils/zlib-1.2.12.tar.gz"
-  URL_HASH "SHA256=91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9"
+  URL "https://github.com/madler/zlib/releases/download/v1.2.13/zlib-1.2.13.tar.gz"
+  URL_HASH "SHA256=b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30"
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
