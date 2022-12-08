@@ -361,8 +361,8 @@ void MainWindow::OnTabsChanged() {
   navItems.Clear();
   for (auto tab: gKneeboard->GetTabsList()->GetTabs()) {
     muxc::NavigationViewItem item;
-    item.Content(winrt::box_value(winrt::to_hstring(tab->GetTitle())));
-    item.Tag(winrt::box_value(tab->GetRuntimeID().GetTemporaryValue()));
+    item.Content(box_value(to_hstring(tab->GetTitle())));
+    item.Tag(box_value(tab->GetRuntimeID().GetTemporaryValue()));
 
     auto glyph = tab->GetGlyph();
     if (!glyph.empty()) {
@@ -372,6 +372,20 @@ void MainWindow::OnTabsChanged() {
     }
 
     navItems.Append(item);
+
+    auto weakTab = std::weak_ptr(tab);
+    AddEventListener(
+      tab->evSettingsChangedEvent, [weakTab, weakItem = make_weak(item)]() {
+        auto tab = weakTab.lock();
+        if (!tab) {
+          return;
+        }
+        auto item = weakItem.get();
+        if (!item) {
+          return;
+        }
+        item.Content(box_value(to_hstring(tab->GetTitle())));
+      });
   }
 }
 
