@@ -34,13 +34,14 @@
 
 namespace OpenKneeboard {
 
-/// Translation marker
+/// Translation marker which requires a literal string
 #ifdef _
 #undef _
 #endif
-template <class T>
-constexpr auto _(T&& x) {
-  return std::forward<T>(x);
+template <class T, size_t N>
+  requires std::same_as<T, typename std::char_traits<T>::char_type>
+constexpr auto _(const T (&str)[N]) {
+  return str;
 }
 
 class utf8_string_view;
