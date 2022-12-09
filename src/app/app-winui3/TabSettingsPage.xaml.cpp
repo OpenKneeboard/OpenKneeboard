@@ -36,6 +36,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/inttypes.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/weak_wrap.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 
@@ -66,20 +67,18 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
 
-  auto weakThis = get_weak();
-  AddEventListener(gKneeboard->GetTabsList()->evTabsChangedEvent, [weakThis]() {
-    auto strongThis = weakThis.get();
-    if (!strongThis) {
-      return;
-    }
-    if (strongThis->mUIIsChangingTabs) {
-      return;
-    }
-    if (strongThis->mPropertyChangedEvent) {
-      strongThis->mPropertyChangedEvent(
-        *strongThis, PropertyChangedEventArgs(L"Tabs"));
-    }
-  });
+  AddEventListener(
+    gKneeboard->GetTabsList()->evTabsChangedEvent,
+    weak_wrap(
+      [this](auto) {
+        if (mUIIsChangingTabs) {
+          return;
+        }
+        if (mPropertyChangedEvent) {
+          mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Tabs"));
+        }
+      },
+      this));
 }
 
 IVector<IInspectable> TabSettingsPage::Tabs() noexcept {

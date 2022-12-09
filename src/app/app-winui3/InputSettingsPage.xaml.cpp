@@ -27,6 +27,7 @@
 #include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserInputDevice.h>
 #include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/weak_wrap.h>
 
 #include "Globals.h"
 
@@ -36,15 +37,12 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
-  auto weakThis = get_weak();
-  AddEventListener(gKneeboard->evInputDevicesChangedEvent, [weakThis]() {
-    auto strongThis = weakThis.get();
-    if (!strongThis) {
-      return;
-    }
+  AddEventListener(gKneeboard->evInputDevicesChangedEvent,
+  weak_wrap(
+  [](const auto& strongThis) {
     strongThis->mPropertyChangedEvent(
       *strongThis, PropertyChangedEventArgs(L"Devices"));
-  });
+  }, this));
 }
 
 InputSettingsPage::~InputSettingsPage() {
