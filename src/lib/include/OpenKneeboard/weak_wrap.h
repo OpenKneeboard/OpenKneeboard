@@ -27,6 +27,8 @@ namespace OpenKneeboard {
 
 namespace WeakWrap {
 
+namespace detail {
+
 ///// std::shared_ptr /////
 
 template <class T>
@@ -57,6 +59,27 @@ auto make_strong(const winrt::weak_ref<T>& p) {
   return p.get();
 }
 
+// "customization point objects" - ADL without the two-step
+
+struct __make_weak {
+  template <class T>
+  auto operator()(T&& x) const {
+    return make_weak(std::forward<T>(x));
+  }
+};
+
+struct __make_strong {
+  template <class T>
+  auto operator()(T&& x) const {
+    return make_strong(std::forward<T>(x));
+  }
+};
+
+}// namespace detail
+
+inline constexpr detail::__make_weak make_weak {};
+inline constexpr detail::__make_strong make_strong {};
+
 }// namespace WeakWrap
 
 /** Wrap a function with one that captures weak pointers, but passes strong
@@ -71,16 +94,12 @@ auto make_strong(const winrt::weak_ref<T>& p) {
  */
 template <class... TPtrs>
 auto weak_wrap(auto func, TPtrs... ptrs) {
-  // ADL two-step
-  using WeakWrap::make_strong;
-  using WeakWrap::make_weak;
-
-  auto weak_ptrs = std::make_tuple(make_weak(ptrs)...);
+  auto weak_ptrs = std::make_tuple(WeakWrap::make_weak(ptrs)...);
 
   return [func, weak_ptrs]() {
     const auto strong_ptrs = std::apply(
       [](auto&&... weak_ptrs) {
-        return std::make_tuple(make_strong(weak_ptrs)...);
+        return std::make_tuple(WeakWrap::make_strong(weak_ptrs)...);
       },
       weak_ptrs);
 
