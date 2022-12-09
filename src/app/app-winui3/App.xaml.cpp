@@ -26,6 +26,7 @@
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GetMainHWND.h>
+#include <OpenKneeboard/IsElevated.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
@@ -164,6 +165,7 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
 static void LogSystemInformation() {
   dprintf("{} {}", ProjectNameA, Version::ReleaseName);
   dprint("----------");
+  dprintf("  Elevated: {}", IsElevated());
 
   CPINFOEXW codePageInfo;
   GetCPInfoExW(CP_ACP, 0, &codePageInfo);
@@ -248,6 +250,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   Filesystem::CleanupTemporaryDirectories();
 
   dprint("Starting Xaml application");
+  dprint("----------");
 
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();

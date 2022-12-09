@@ -27,6 +27,7 @@
 
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/IsElevated.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/LaunchURI.h>
@@ -34,6 +35,7 @@
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/version.h>
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/Microsoft.UI.Interop.h>
@@ -178,10 +180,18 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
   auto footerItems = Navigation().FooterMenuItems();
   auto first = footerItems.First().Current();
 
+  std::wstring title(L"OpenKneeboard");
+  const scope_guard setTitle([&title, this]() {
+    if (IsElevated()) {
+      title += L" [Administrator]";
+    }
+    Title(title);
+    AppTitle().Text(title);
+  });
+
   const auto settings = gKneeboard->GetProfileSettings();
   if (!settings.mEnabled) {
     Navigation().PaneCustomContent({nullptr});
-    AppTitle().Text(L"OpenKneeboard");
     return;
   }
   Navigation().PaneCustomContent(mProfileSwitcher);
@@ -215,7 +225,7 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
       tooltip.Content(
         box_value(std::format(_(L"Switch profiles - current is '{}'"), wname)));
       ToolTipService::SetToolTip(ProfileSwitcher(), tooltip);
-      AppTitle().Text(std::format(_(L"OpenKneeboard - {}"), wname));
+      title += std::format(L" - {}", wname);
     }
   }
 

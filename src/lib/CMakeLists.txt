@@ -45,6 +45,14 @@ target_link_libraries(
   _libheaders
   ThirdParty::OutPtr)
 
+add_library(OpenKneeboard-IsElevated STATIC IsElevated.cpp)
+target_link_libraries(
+  OpenKneeboard-IsElevated
+  PUBLIC
+  ThirdParty::CppWinRT
+  _libheaders
+)
+
 add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
 target_link_libraries(
   OpenKneeboard-UTF8

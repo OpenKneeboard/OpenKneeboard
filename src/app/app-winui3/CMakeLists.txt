@@ -8,6 +8,7 @@ create_version_rc(
 
 set(
   CMAKE_CXX_STANDARD_LIBRARIES
+
   # Keep stuff that NuGet package references added
   "%(AdditionalDependencies)"
 )
@@ -63,6 +64,7 @@ target_link_libraries(
   OpenKneeboard-FilesDiffer
   OpenKneeboard-GetMainHWND
   OpenKneeboard-RuntimeFiles
+  OpenKneeboard-IsElevated
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-games
@@ -96,6 +98,7 @@ target_compile_definitions(
 target_compile_options(
   OpenKneeboard-App-WinUI3
   PRIVATE
+
   # We intentionally throw from noexcept functions to get more useful
   # backtraces/crash dumps from winrt event handlers
   "/wd4297"
@@ -110,6 +113,7 @@ sign_target(OpenKneeboard-App-WinUI3)
 
 install(
   DIRECTORY
+
   # Trailing / copies the contents instead of the directory itself,
   # i.e. avoids installing `bin/Debug/`
   "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/"
