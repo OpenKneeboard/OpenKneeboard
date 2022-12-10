@@ -89,6 +89,8 @@ class KneeboardState final : private EventReceiver {
 
   TabsList* GetTabsList() const;
 
+  void ReleaseExclusiveResources();
+  void AcquireExclusiveResources();
 #define IT(cpptype, name) \
   cpptype Get##name##Settings() const; \
   void Set##name##Settings(const cpptype&); \
@@ -101,6 +103,7 @@ class KneeboardState final : private EventReceiver {
   void PostUserAction(UserAction action);
 
  private:
+  HWND mHwnd;
   DXResources mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};
   Settings mSettings {Settings::Load(mProfiles.mActiveProfile)};
@@ -126,6 +129,7 @@ class KneeboardState final : private EventReceiver {
   void OnGameEvent(const GameEvent& ev) noexcept;
 
   void StartOpenVRThread();
+  void StartTabletInput();
 
   void SetFirstViewIndex(uint8_t index);
   void SetCurrentTab(

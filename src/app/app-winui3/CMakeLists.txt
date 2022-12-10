@@ -64,7 +64,9 @@ target_link_libraries(
   OpenKneeboard-FilesDiffer
   OpenKneeboard-GetMainHWND
   OpenKneeboard-RuntimeFiles
-  OpenKneeboard-IsElevated
+  OpenKneeboard-Elevation
+  OpenKneeboard-OpenXRMode
+  OpenKneeboard-RunSubprocessAsync
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-games

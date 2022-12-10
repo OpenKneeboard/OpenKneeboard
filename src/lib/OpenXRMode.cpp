@@ -19,63 +19,25 @@
  */
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/OpenXRMode.h>
+#include <OpenKneeboard/RunSubprocessAsync.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
-#include <shims/winrt/base.h>
 
 #include <format>
 
-// clang-format off
-#include <Windows.h>
-#include <Psapi.h>
-#include <shellapi.h>
-// clang-format on
-
 namespace OpenKneeboard {
 
-namespace {
-enum class RunAs {
-  CurrentUser,
-  Administrator,
-};
-
-winrt::Windows::Foundation::IAsyncAction LaunchAndWaitForOpenXRHelperSubprocess(
+static auto LaunchAndWaitForOpenXRHelperSubprocess(
   RunAs runas,
   std::wstring_view command) {
-  auto layerPath = RuntimeFiles::GetInstallationDirectory().wstring();
-  auto exePath = (Filesystem::GetRuntimeDirectory()
-                  / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER)
-                   .wstring();
+  const auto layerPath = RuntimeFiles::GetInstallationDirectory().wstring();
+  const auto exePath = (Filesystem::GetRuntimeDirectory()
+                        / RuntimeFiles::OPENXR_REGISTER_LAYER_HELPER)
+                         .wstring();
 
-  auto commandLine = std::format(L"{} \"{}\"", command, layerPath);
-
-  SHELLEXECUTEINFOW shellExecuteInfo {
-    .cbSize = sizeof(SHELLEXECUTEINFOW),
-    .fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NOASYNC | SEE_MASK_NO_CONSOLE,
-    .lpVerb = runas == RunAs::CurrentUser ? L"open" : L"runas",
-    .lpFile = exePath.c_str(),
-    .lpParameters = commandLine.c_str(),
-  };
-
-  if (!ShellExecuteExW(&shellExecuteInfo)) {
-    auto error = GetLastError();
-    dprintf("Failed to spawn subprocess: {}", error);
-    co_return;
-  }
-
-  if (!shellExecuteInfo.hProcess) {
-    dprint("No process handle");
-    OPENKNEEBOARD_BREAK;
-    co_return;
-  }
-
-  winrt::handle handle {shellExecuteInfo.hProcess};
-  dprint("Waiting for OpenXR helper...");
-  co_await winrt::resume_on_signal(handle.get());
-  dprint("OpenXR helper returned.");
+  const auto commandLine = std::format(L"{} \"{}\"", command, layerPath);
+  return RunSubprocessAsync(exePath, commandLine, runas);
 }
-
-}// namespace
 
 winrt::Windows::Foundation::IAsyncAction SetOpenXRModeWithHelperProcess(
   OpenXRMode mode,

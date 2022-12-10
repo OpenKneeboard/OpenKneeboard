@@ -24,11 +24,14 @@
 #include "Globals.h"
 
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/TroubleshootingStore.h>
 
 namespace OpenKneeboard {
 
 HWND gMainWindow {};
 std::shared_ptr<KneeboardState> gKneeboard;
+std::shared_ptr<TroubleshootingStore> gTroubleshootingStore;
 DXResources gDXResources;
+winrt::handle gMutex {};
 
 }// namespace OpenKneeboard

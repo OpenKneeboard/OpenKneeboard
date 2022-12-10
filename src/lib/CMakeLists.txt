@@ -26,6 +26,18 @@ target_link_libraries(
   OpenKneeboard-shims
 )
 
+add_library(OpenKneeboard-RunSubprocessAsync STATIC RunSubprocessAsync.cpp)
+target_link_libraries(
+  OpenKneeboard-RunSubprocessAsync
+  PUBLIC
+  OpenKneeboard-shims
+)
+target_link_libraries(
+  OpenKneeboard-RunSubprocessAsync
+  PRIVATE
+  OpenKneeboard-dprint
+)
+
 add_library(OpenKneeboard-GetSystemColor STATIC GetSystemColor.cpp)
 target_link_libraries(
   OpenKneeboard-GetSystemColor
@@ -45,12 +57,20 @@ target_link_libraries(
   _libheaders
   ThirdParty::OutPtr)
 
-add_library(OpenKneeboard-IsElevated STATIC IsElevated.cpp)
+add_library(OpenKneeboard-Elevation STATIC Elevation.cpp)
 target_link_libraries(
-  OpenKneeboard-IsElevated
+  OpenKneeboard-Elevation
   PUBLIC
-  ThirdParty::CppWinRT
   _libheaders
+)
+target_link_libraries(
+  OpenKneeboard-Elevation
+  PRIVATE
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+  OpenKneeboard-scope_guard
+  ThirdParty::CppWinRT
+  System::Shell32
 )
 
 add_library(OpenKneeboard-UTF8 STATIC utf8.cpp)
@@ -255,6 +275,7 @@ target_link_libraries(
 target_link_libraries(
   OpenKneeboard-OpenXRMode
   PRIVATE
+  OpenKneeboard-RunSubprocessAsync
   OpenKneeboard-RuntimeFiles
   ThirdParty::CppWinRT
 )

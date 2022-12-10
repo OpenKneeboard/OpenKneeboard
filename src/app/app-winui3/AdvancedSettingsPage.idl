@@ -22,6 +22,8 @@ namespace OpenKneeboardApp
         Boolean Quirk_OculusSDK_DiscardDepthInformation;
         Boolean Quirk_Varjo_OpenXR_InvertYPosition;
         Boolean Quirk_Varjo_OpenXR_D3D12_DoubleBuffer;
-    }
 
+        Boolean CanChangeElevation { get; };
+        Int32 DesiredElevation;
+    }
 }

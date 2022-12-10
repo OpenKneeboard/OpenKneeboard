@@ -60,9 +60,11 @@ TroubleshootingStore::TroubleshootingStore() {
   }};
 
   AddEventListener(mDPrint->evMessageReceived, this->evDPrintMessageReceived);
+  dprintf("{}()", __FUNCTION__);
 }
 
 TroubleshootingStore::~TroubleshootingStore() {
+  dprintf("{}()", __FUNCTION__);
   this->RemoveAllEventListeners();
 }
 

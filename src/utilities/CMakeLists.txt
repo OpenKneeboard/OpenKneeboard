@@ -87,6 +87,7 @@ set(
   SWITCH_KNEEBOARDS
   RECENTER_VR
 )
+
 foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
   add_remote_control_executable("${TARGET}" WIN32 simple-remote.cpp)
@@ -105,8 +106,21 @@ add_helper_executable(
   icon.rc
 )
 target_link_libraries(
-  OpenKneeboard-OpenXR-Helper 
+  OpenKneeboard-OpenXR-Helper
   PRIVATE
   OpenKneeboard-RuntimeFiles
+  OpenKneeboard-dprint
+)
+
+add_helper_executable(
+  OpenKneeboard-Set-Desired-Elevation-Helper
+  WIN32
+  set-desired-elevation-helper.cpp
+  icon.rc
+)
+target_link_libraries(
+  OpenKneeboard-Set-Desired-Elevation-Helper
+  PRIVATE
+  OpenKneeboard-Elevation
   OpenKneeboard-dprint
 )

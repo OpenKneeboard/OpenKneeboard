@@ -17,27 +17,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/IsElevated.h>
+#pragma once
+
 #include <shims/winrt/base.h>
+
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
-bool IsElevated() noexcept {
-  winrt::handle token;
-  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, token.put())) {
-    return false;
-  }
-  TOKEN_ELEVATION elevation {};
-  DWORD elevationSize = sizeof(TOKEN_ELEVATION);
-  if (!GetTokenInformation(
-        token.get(),
-        TokenElevation,
-        &elevation,
-        sizeof(elevation),
-        &elevationSize)) {
-    return false;
-  }
-  return elevation.TokenIsElevated;
-}
+enum class RunAs {
+  CurrentUser,
+  Administrator,
+};
 
-}// namespace OpenKneeboard
+enum class SubprocessResult : int {
+  Success,
+  NonZeroExit,
+  DoesNotExist,
+  FailedToSpawn,
+  NoProcessHandle,
+};
+
+concurrency::task<SubprocessResult> RunSubprocessAsync(
+  const std::filesystem::path& path,
+  const std::wstring& commandLine,
+  RunAs) noexcept;
+};// namespace OpenKneeboard

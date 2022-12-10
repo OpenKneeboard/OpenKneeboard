@@ -24,13 +24,25 @@
 // clang-format on
 
 #include <OpenKneeboard/AppSettings.h>
+#include <OpenKneeboard/Elevation.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/LaunchURI.h>
+#include <OpenKneeboard/RunSubprocessAsync.h>
+#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/VRConfig.h>
+#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/weak_wrap.h>
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
 
 #include "Globals.h"
 
 using namespace OpenKneeboard;
+using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
@@ -207,6 +219,90 @@ void AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(
   auto vrc = gKneeboard->GetVRSettings();
   vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
   gKneeboard->SetVRSettings(vrc);
+}
+
+bool AdvancedSettingsPage::CanChangeElevation() const noexcept {
+  return !IsShellElevated();
+}
+
+int32_t AdvancedSettingsPage::DesiredElevation() const noexcept {
+  return static_cast<int32_t>(GetDesiredElevation());
+}
+
+winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
+  int32_t value) noexcept {
+  if (value == DesiredElevation()) {
+    co_return;
+  }
+
+  const scope_guard propertyChanged(weak_wrap(
+    [this](const auto&) -> winrt::fire_and_forget {
+      co_await mUIThread;
+      mPropertyChangedEvent(
+        *this, PropertyChangedEventArgs(L"DesiredElevation"));
+    },
+    this));
+
+  // Always use the helper; while it's not needed, it never hurts, and gives us
+  // a single path to act
+
+  const auto path = (Filesystem::GetRuntimeDirectory()
+                     / RuntimeFiles::SET_DESIRED_ELEVATION_HELPER)
+                      .wstring();
+
+  const auto cmdline = std::format(L"{}", value);
+  if (
+    co_await RunSubprocessAsync(path, cmdline, RunAs::Administrator)
+    != SubprocessResult::Success) {
+    co_return;
+  }
+  if (IsShellElevated()) {
+    // The UI should have been disabled
+    OPENKNEEBOARD_BREAK;
+    co_return;
+  }
+
+  const auto desired = GetDesiredElevation();
+
+  const auto isElevated = IsElevated();
+  const bool elevate = (!isElevated) && desired == DesiredElevation::Elevated;
+  const bool deElevate
+    = (isElevated) && desired == DesiredElevation::NotElevated;
+  if (!(elevate || deElevate)) {
+    co_return;
+  }
+
+  co_await mUIThread;
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(to_hstring(_(L"Restart OpenKneeboard?"))));
+  dialog.Content(
+    box_value(to_hstring(_(L"OpenKneeboard needs to be restarted to change "
+                           L"elevation. Would you like to restart it now?"))));
+  dialog.PrimaryButtonText(_(L"Restart Now"));
+  dialog.CloseButtonText(_(L"Later"));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  dprint("Tearing down exclusive resources for relaunch");
+  gMutex = {};
+  gTroubleshootingStore = {};
+  gKneeboard->ReleaseExclusiveResources();
+
+  const auto restarted = RelaunchWithDesiredElevation(desired, SW_SHOWNORMAL);
+  if (restarted) {
+    Application::Current().Exit();
+    co_return;
+  }
+
+  // Failed to spawn, e.g. UAC deny
+  gTroubleshootingStore = TroubleshootingStore::Get();
+  dprint("Relaunch failed, coming back up!");
+  gMutex = {CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
+  gKneeboard->AcquireExclusiveResources();
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

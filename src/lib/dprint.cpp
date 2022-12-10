@@ -123,7 +123,7 @@ static bool IsDebugStreamEnabledInRegistry() {
     if (
       RegGetValueW(
         hkey,
-        L"SOFTWARE\\Fred Emmott\\OpenKneeboard",
+        RegistrySubKey,
         L"AlwaysWriteToDebugStream",
         RRF_RT_REG_DWORD,
         nullptr,

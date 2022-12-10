@@ -4,6 +4,7 @@ add_subdirectory(app-winui3)
 set(
   RUNTIME_FILES
   "$<TARGET_FILE:OpenKneeboard-OpenXR-Helper>"
+  "$<TARGET_FILE:OpenKneeboard-Set-Desired-Elevation-Helper>"
   "$<TARGET_FILE:ThirdParty::Lua>"
   "${CMAKE_SOURCE_DIR}/src/dcs-hook/OpenKneeboardDCSExt.lua"
   "${CMAKE_BINARY_DIR}/src/injectables/OpenKneeboard-OpenXR.json"
@@ -30,15 +31,15 @@ foreach(TARGET ${DLL_TARGETS})
 endforeach()
 
 add_custom_target(
-	CopyRuntimeFiles
-	ALL
-	COMMAND
-	"${CMAKE_COMMAND}" -E make_directory
-	"$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
-	&&
-	${CMAKE_COMMAND} -E copy_if_different
-	"${RUNTIME_FILES}"
-	"$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
-	COMMAND_EXPAND_LISTS
+  CopyRuntimeFiles
+  ALL
+  COMMAND
+  "${CMAKE_COMMAND}" -E make_directory
+  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
+  &&
+  ${CMAKE_COMMAND} -E copy_if_different
+  "${RUNTIME_FILES}"
+  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
+  COMMAND_EXPAND_LISTS
 )
 add_dependencies(CopyRuntimeFiles ThirdParty::OpenVR)

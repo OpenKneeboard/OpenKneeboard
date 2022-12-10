@@ -27,7 +27,7 @@
 
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/IsElevated.h>
+#include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/LaunchURI.h>

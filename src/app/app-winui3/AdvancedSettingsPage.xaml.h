@@ -68,6 +68,11 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
   bool Quirk_Varjo_OpenXR_D3D12_DoubleBuffer() const noexcept;
   void Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(bool value) noexcept;
 
+  bool CanChangeElevation() const noexcept;
+
+  int32_t DesiredElevation() const noexcept;
+  fire_and_forget DesiredElevation(int32_t value) noexcept;
+
   winrt::event_token PropertyChanged(
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
       handler);
@@ -76,6 +81,7 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
  private:
   winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
     mPropertyChangedEvent;
+  winrt::apartment_context mUIThread {};
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

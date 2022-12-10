@@ -32,4 +32,7 @@ const std::filesystem::path OPENXR_DLL(
 const std::filesystem::path OPENXR_REGISTER_LAYER_HELPER(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR-Helper>");
 
+const std::filesystem::path SET_DESIRED_ELEVATION_HELPER(
+  "$<TARGET_FILE_NAME:OpenKneeboard-Set-Desired-Elevation-Helper>");
+
 }

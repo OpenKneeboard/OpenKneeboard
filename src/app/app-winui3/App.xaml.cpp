@@ -23,10 +23,10 @@
 // clang-format on
 
 #include <Dbghelp.h>
+#include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GetMainHWND.h>
-#include <OpenKneeboard/IsElevated.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
@@ -34,10 +34,12 @@
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/version.h>
 #include <Psapi.h>
 #include <ShlObj.h>
 #include <appmodel.h>
+#include <shellapi.h>
 #include <signal.h>
 
 #include <chrono>
@@ -166,6 +168,7 @@ static void LogSystemInformation() {
   dprintf("{} {}", ProjectNameA, Version::ReleaseName);
   dprint("----------");
   dprintf("  Elevated: {}", IsElevated());
+  dprintf("  Shell Elevated: {}", IsShellElevated());
 
   CPINFOEXW codePageInfo;
   GetCPInfoExW(CP_ACP, 0, &codePageInfo);
@@ -197,7 +200,7 @@ static void LogSystemInformation() {
   dprint("----------");
 }
 
-int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
+int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   wchar_t* savedGamesBuffer = nullptr;
   winrt::check_hresult(
     SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &savedGamesBuffer));
@@ -207,8 +210,11 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
   SetUnhandledExceptionFilter(&OnUnhandledException);
   set_terminate(&OnTerminate);
 
-  winrt::handle mutex {
-    CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
+  if (RelaunchWithDesiredElevation(GetDesiredElevation(), showCommand)) {
+    return 0;
+  }
+
+  gMutex = {CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
     const auto hwnd = GetMainHWND();
     if (!hwnd) {
@@ -243,7 +249,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int) {
 
   winrt::init_apartment(winrt::apartment_type::single_threaded);
 
-  auto troubleshootingStore = TroubleshootingStore::Get();
+  gTroubleshootingStore = TroubleshootingStore::Get();
   LogSystemInformation();
 
   dprint("Cleaning up temporary directories...");

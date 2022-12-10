@@ -42,7 +42,7 @@
 namespace OpenKneeboard {
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
-  : mDXResources(dxr) {
+  : mHwnd(hwnd), mDXResources(dxr) {
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
   mGamesList = std::make_unique<GamesList>(mSettings.mGames);
   AddEventListener(
@@ -70,16 +70,6 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     viewState->SetTabs(tabs);
   }
 
-  mInterprocessRenderer
-    = std::make_unique<InterprocessRenderer>(mDXResources, this);
-
-  mTabletInput
-    = std::make_unique<TabletInputAdapter>(hwnd, this, mSettings.mTabletInput);
-  AddEventListener(
-    mTabletInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
-  AddEventListener(
-    mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
-
   mDirectInput
     = std::make_unique<DirectInputAdapter>(hwnd, mSettings.mDirectInput);
   AddEventListener(
@@ -93,11 +83,8 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   mGameEventServer = std::make_unique<GameEventServer>();
   AddEventListener(
     mGameEventServer->evGameEvent, &KneeboardState::OnGameEvent, this);
-  mGameEventWorker = mGameEventServer->Run();
 
-  if (mSettings.mVR.mEnableSteamVR) {
-    this->StartOpenVRThread();
-  }
+  AcquireExclusiveResources();
 }
 
 KneeboardState::~KneeboardState() noexcept {
@@ -459,6 +446,15 @@ void KneeboardState::StartOpenVRThread() {
   });
 }
 
+void KneeboardState::StartTabletInput() {
+  mTabletInput
+    = std::make_unique<TabletInputAdapter>(mHwnd, this, mSettings.mTabletInput);
+  AddEventListener(
+    mTabletInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
+  AddEventListener(
+    mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+}
+
 void KneeboardState::SetDirectInputSettings(
   const DirectInputSettings& settings) {
   mDirectInput->LoadSettings(settings);
@@ -474,6 +470,24 @@ void KneeboardState::SetGamesSettings(const nlohmann::json& j) {
 
 void KneeboardState::SetTabsSettings(const nlohmann::json& j) {
   mTabsList->LoadSettings(j);
+}
+
+void KneeboardState::ReleaseExclusiveResources() {
+  mOpenVRThread = {};
+  mInterprocessRenderer = {};
+  mTabletInput = {};
+  mGameEventWorker.Cancel();
+}
+
+void KneeboardState::AcquireExclusiveResources() {
+  mGameEventWorker = mGameEventServer->Run();
+  mInterprocessRenderer
+    = std::make_unique<InterprocessRenderer>(mDXResources, this);
+  if (mSettings.mVR.mEnableSteamVR) {
+    StartOpenVRThread();
+  }
+
+  StartTabletInput();
 }
 
 #define IT(cpptype, name) \

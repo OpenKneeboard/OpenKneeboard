@@ -25,9 +25,12 @@
 
 namespace OpenKneeboard {
 class KneeboardState;
+class TroubleshootingStore;
 
 extern HWND gMainWindow;
 extern std::shared_ptr<KneeboardState> gKneeboard;
 extern DXResources gDXResources;
+extern winrt::handle gMutex;
+extern std::shared_ptr<TroubleshootingStore> gTroubleshootingStore;
 
 }// namespace OpenKneeboard

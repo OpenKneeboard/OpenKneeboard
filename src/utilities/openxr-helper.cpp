@@ -139,7 +139,8 @@ static void EnableOpenXRLayer(
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   DPrintSettings::Set({
-    .prefix = "OpenKneeboard-OpenXR-Helper",
+    .prefix = "OpenXR-Helper",
+    .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,
   });
   int argc = 0;
   auto argv = CommandLineToArgvW(commandLine, &argc);
