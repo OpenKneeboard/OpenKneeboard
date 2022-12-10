@@ -44,7 +44,7 @@ struct VRLayerConfig {
 struct VRRenderConfig {
   struct Quirks final {
     bool mOculusSDK_DiscardDepthInformation {true};
-    bool mVarjo_OpenXR_InvertYPosition {true};
+    bool mVarjo_OpenXR_InvertYPosition {false};
     bool mVarjo_OpenXR_D3D12_DoubleBuffer {true};
     constexpr auto operator<=>(const Quirks&) const noexcept = default;
   };
