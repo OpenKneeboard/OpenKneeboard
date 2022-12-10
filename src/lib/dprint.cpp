@@ -145,9 +145,6 @@ static inline bool IsDebugStreamEnabled() {
 }
 
 static inline bool IsConsoleOutputEnabled() {
-#ifdef DEBUG
-  return true;
-#endif
   return gSettings.consoleOutput == DPrintSettings::ConsoleOutputMode::ALWAYS;
 }
 

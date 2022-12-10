@@ -44,12 +44,12 @@ void dprintf(std::_Fmt_wstring<Args...> fmt, Args&&... args) {
 
 struct DPrintSettings {
   enum class ConsoleOutputMode {
-    DEBUG_ONLY,
+    NEVER,
     ALWAYS,
   };
 
   std::string prefix = "OpenKneeboard";
-  ConsoleOutputMode consoleOutput = ConsoleOutputMode::DEBUG_ONLY;
+  ConsoleOutputMode consoleOutput = ConsoleOutputMode::NEVER;
 
   static void Set(const DPrintSettings&);
 };
