@@ -30,8 +30,11 @@ jobs:
             "-DGITHUB_REF_TYPE=${{github.ref_type}}",
             "-DGITHUB_REF_NAME=${{github.ref_name}}"
           )
-          if (Test-Path -Path "${{steps.FetchKey.outputs.HAVE_KEY}}") {
+          if ( "${{steps.FetchKey.outputs.HAVE_KEY}}" -eq "true" ) {
+            echo "::notice::Signing build targets"
             $args += "-DSIGNTOOL_KEY_ARGS=/f;${{steps.FetchKey.outputs.PATH}}" `
+          } else {
+            echo "::warning::Not signing targets"
           }
           cmake ${{github.workspace}}/source @args
       - name: Build
