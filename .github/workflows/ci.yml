@@ -4,6 +4,9 @@ jobs:
   build:
     name: Build (${{matrix.config}})
     runs-on: windows-2022
+    strategy:
+      matrix:
+        config: [RelWithDebInfo, Debug]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -12,7 +15,7 @@ jobs:
       - name: Fetch code-signing key
         env:
           CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
-        id: FetchKey
+        id: fetch-key
         if: ${{ (github.repository == 'OpenKneeboard/OpenKneeboard') && (github.event_name == 'push')}}
         shell: pwsh
         run: |
@@ -30,9 +33,9 @@ jobs:
             "-DGITHUB_REF_TYPE=${{github.ref_type}}",
             "-DGITHUB_REF_NAME=${{github.ref_name}}"
           )
-          if ( "${{steps.FetchKey.outputs.HAVE_KEY}}" -eq "true" ) {
+          if ( "${{steps.fetch-key.outputs.HAVE_KEY}}" -eq "true" ) {
             echo "::notice::Signing build targets"
-            $args += "-DSIGNTOOL_KEY_ARGS=/f;${{steps.FetchKey.outputs.PATH}}" `
+            $args += "-DSIGNTOOL_KEY_ARGS=/f;${{steps.fetch-key.outputs.PATH}}" `
           } else {
             echo "::warning::Not signing targets"
           }
@@ -55,7 +58,7 @@ jobs:
           echo "::endgroup::"
       - name: Create MSI
         working-directory: build
-        id: createMSI
+        id: create-msi
         run: |
           # Create MSI
           cmake --build . `
@@ -67,79 +70,64 @@ jobs:
           Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
       - name: Sign MSI
         working-directory: build
-        if: ${{steps.FetchKey.outputs.HAVE_KEY}}
+        if: ${{steps.fetch-key.outputs.HAVE_KEY}}
         run: |
           # Known path for the GitHub Actions windows 2022 runner, may need updating
           & 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe' `
             sign `
             /t http://timestamp.digicert.com `
             /fd SHA256 `
-            /f "${{steps.FetchKey.outputs.PATH}}" `
-            "${{steps.createMSI.outputs.MSI_PATH}}"
+            /f "${{steps.fetch-key.outputs.PATH}}" `
+            "${{steps.create-msi.outputs.MSI_PATH}}"
       - name: Attach MSI
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}.msi
-          path: ${{steps.createMSI.outputs.MSI_PATH}}
+          path: ${{steps.create-msi.outputs.MSI_PATH}}
       - name: Install debug symbols
-        id: installDebugSymbols
+        id: debug-symbols
         working-directory: build
         shell: pwsh
         run: |
           $prefix="${{runner.temp}}/OpenKneeboard-${{steps.build.outputs.VERSION}}-Symbols"
 
+          echo "::group::Running cmake"
+
           cmake --install . `
             --config ${{matrix.config}} `
             --component DebugSymbols `
             --prefix "${prefix}"
-
           Add-Content $Env:GITHUB_OUTPUT "PREFIX=$prefix"
+
+          echo "::endgroup::"
+
+          echo "::group::Creating zip"
+          $zip = "${{runner.temp}}/DebugSymbols.zip"
+          cd $prefix
+          Compress-Archive `
+            -Path *.pdb `
+            -DestinationPath $zip
+          Add-Content $Env:GITHUB_OUTPUT "ZIP_PATH=$zip"
+          echo "::endgroup::"
       - name: Attach debug symbols
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v2
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}-Symbols
-          path: ${{steps.installDebugSymbols.outputs.PREFIX}}
-    strategy:
-      matrix:
-        config: [RelWithDebInfo, Debug]
-  release:
-    name: Prepare Draft Release
-    runs-on: ubuntu-latest
-    if: github.ref_type == 'tag'
-    needs: [build]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          path: source
+          path: ${{steps.debug-symbols.outputs.PREFIX}}
       - name: Generate release notes
-        run: sed 's/@TAG@/${{github.ref_name}}/g' source/.github/workflows/release_notes.md > ${{runner.temp}}/release_notes.md
-      - name: Download build artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: ${{runner.temp}}/artifacts
-      - name: Display downloaded files
-        run: ls -R
-        working-directory: ${{runner.temp}}/artifacts
-      - name: Create symbols zip file
-        id: symbolsZip
+        if: github.ref_type == 'tag' && matrix.config != 'Debug'
+        id: release-notes
         run: |
-          # Create Symbols Zip
-          ZIP_ARTIFACT="-Symbols"
-          cd "${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}${ZIP_ARTIFACT}"
-          ZIP_PATH="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}${ZIP_ARTIFACT}.zip"
-          zip -r "${ZIP_PATH}" ./
-          echo "PATH=${ZIP_PATH}" >> "${GITHUB_OUTPUT}"
-      - name: Rename MSI
-        id: msi
-        run: |
-          cd "${{runner.temp}}/artifacts/OpenKneeboard-GHA-${{github.run_number}}.msi"
-          MSI_PATH="${{runner.temp}}/OpenKneeboard-${{github.ref_name}}.msi"
-          mv *.msi "${MSI_PATH}"
-          echo "PATH=${MSI_PATH}" >> "${GITHUB_OUTPUT}"
+          $out = "${{runner.temp}}/release_notes.md"
+            (Get-Content -Path source/.github/workflows/release_notes.md -raw) `
+            -replace '@TAG@','${{github.ref_name}}' | `
+            Set-Content -Path $out -Encoding UTF8
+          Add-Content $Env:GITHUB_OUTPUT "PATH=$out"
       - name: Create draft release
         id: create-release
+        if: github.ref_type == 'tag' && matrix.config != 'Debug'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -147,22 +135,24 @@ jobs:
           release_name: Release ${{github.ref_name}}
           tag_name: ${{github.ref_name}}
           draft: true
-          body_path: ${{runner.temp}}/release_notes.md
-      - name: Attach MSI
+          body_path: ${{steps.release-notes.outputs.PATH}}
+      - name: Attach MSI to release
+        if: github.ref_type == 'tag' && matrix.config != 'Debug'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{steps.msi.outputs.PATH}}
+          asset_path: ${{ steps.create-msi.outputs.MSI_PATH }}
           asset_name: OpenKneeboard-${{github.ref_name}}.msi
           asset_content_type: application/msi
-      - name: Attach debug symbols
+      - name: Attach debug symbols to release
+        if: github.ref_type == 'tag' && matrix.config != 'Debug'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{steps.symbolsZip.outputs.PATH}}
+          asset_path: ${{ steps.debug-symbols.outputs.ZIP_PATH}}
           asset_name: OpenKneeboard-${{github.ref_name}}-DebugSymbols.zip
           asset_content_type: application/zip
