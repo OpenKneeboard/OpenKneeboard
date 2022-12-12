@@ -63,10 +63,10 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
   bool mSwitchingTabsFromNavSelection = false;
 
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
-  void OnViewOrderChanged();
+  winrt::fire_and_forget OnViewOrderChanged();
   winrt::fire_and_forget OnTabChanged() noexcept;
-  void OnTabsChanged();
-  void UpdateProfileSwitcherVisibility();
+  winrt::fire_and_forget OnTabsChanged();
+  winrt::fire_and_forget UpdateProfileSwitcherVisibility();
 
   void SaveWindowPosition();
 

@@ -280,6 +280,43 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
+  if (ev.name == GameEvent::EVT_SET_PROFILE_BY_ID) {
+    const auto parsed = ev.ParsedValue<SetProfileByIDEvent>();
+    if (!mProfiles.mEnabled) {
+      dprint("Asked to switch profiles, but profiles are disabled");
+    }
+    if (!mProfiles.mProfiles.contains(parsed.mID)) {
+      dprintf(
+        "Asked to switch to profile with ID '{}', but it doesn't exist",
+        parsed.mID);
+      return;
+    }
+    ProfileSettings newSettings(mProfiles);
+    newSettings.mActiveProfile = parsed.mID;
+    this->SetProfileSettings(newSettings);
+    return;
+  }
+
+  if (ev.name == GameEvent::EVT_SET_PROFILE_BY_NAME) {
+    const auto parsed = ev.ParsedValue<SetProfileByNameEvent>();
+    if (!mProfiles.mEnabled) {
+      dprint("Asked to switch profiles, but profiles are disabled");
+    }
+    auto it = std::ranges::find_if(
+      mProfiles.mProfiles,
+      [name = parsed.mName](const auto& p) { return p.second.mName == name; });
+    if (it == mProfiles.mProfiles.end()) {
+      dprintf(
+        "Asked to switch to profile with ID '{}', but it doesn't exist",
+        parsed.mName);
+      return;
+    }
+    ProfileSettings newSettings(mProfiles);
+    newSettings.mActiveProfile = it->first;
+    this->SetProfileSettings(newSettings);
+    return;
+  }
+
   for (auto tab: tabs) {
     auto receiver = std::dynamic_pointer_cast<ITabWithGameEvents>(tab);
     if (receiver) {

@@ -17,6 +17,15 @@ Most of these are relatively self-explanatory:
 - `OpenKneeboard-RemoteControl-TOGGLE_FORCE_ZOOM.exe`: in VR mode, toggle 'always zoom' on or off; if off, by default, OpenKneeboard will enlarge the kneeboard when you're looking directly at it.
 - `OpenKneeboard-RemoteControl-TOGGLE_VISIBILITY.exe`: show/hide the kneeboard in-game
 
+## `OpenKneeboard-RemoteControl-SET_PROFILE.exe` (v1.3-beta4 and above)
+
+This must be ran with parameters:
+
+- set profile by name: `OpenKneeboard-RemoteControl-SET_PROFILE.exe name "My Profile"`
+- set profile by ID: `OpenKneeboard-RemoteControl-SET_PROFILE.exe id myprofile` (doesn't change if the profile is renamed)
+
+You can find IDs by looking in `Saved Games\OpenKneeboard\profiles.json` or the folder names inside `Saved Games\OpenKneeboard\profiles\`.
+
 ## `OpenKneeboard-RemoteControl-SET_TAB.exe` (v1.3-beta3 and above)
 
 This must be ran with parameters.

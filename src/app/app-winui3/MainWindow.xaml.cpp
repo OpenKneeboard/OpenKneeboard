@@ -25,9 +25,9 @@
 #endif
 // clang-format on
 
+#include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/LaunchURI.h>
@@ -162,16 +162,20 @@ MainWindow::MainWindow() {
     gKneeboard->evProfileSettingsChangedEvent,
     &MainWindow::UpdateProfileSwitcherVisibility,
     this);
-  AddEventListener(gKneeboard->evCurrentProfileChangedEvent, [this]() {
-    Frame().BackStack().Clear();
-  });
+  AddEventListener(
+    gKneeboard->evCurrentProfileChangedEvent,
+    [this]() -> winrt::fire_and_forget {
+      co_await mUIThread;
+      Frame().BackStack().Clear();
+    });
 }
 
 MainWindow::~MainWindow() {
   gMainWindow = {};
 }
 
-void MainWindow::UpdateProfileSwitcherVisibility() {
+winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
+  co_await mUIThread;
   // As of Windows App SDK v1.1.4, changing the visibility and signalling the
   // bound property changed doesn't correctly update the navigation view, even
   // if UpdateLayout() is also called, so we need to manually add/remove the
@@ -192,7 +196,7 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
   const auto settings = gKneeboard->GetProfileSettings();
   if (!settings.mEnabled) {
     Navigation().PaneCustomContent({nullptr});
-    return;
+    co_return;
   }
   Navigation().PaneCustomContent(mProfileSwitcher);
 
@@ -238,7 +242,8 @@ void MainWindow::UpdateProfileSwitcherVisibility() {
   uiProfiles.Append(settingsItem);
 }
 
-void MainWindow::OnViewOrderChanged() {
+winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
+  co_await mUIThread;
   RemoveEventListener(mTabChangedEvent);
   mKneeboardView = gKneeboard->GetActiveViewForGlobalInput();
 
@@ -366,7 +371,8 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
   mSwitchingTabsFromNavSelection = false;
 }
 
-void MainWindow::OnTabsChanged() {
+winrt::fire_and_forget MainWindow::OnTabsChanged() {
+  co_await mUIThread;
   auto navItems = this->Navigation().MenuItems();
   navItems.Clear();
   for (auto tab: gKneeboard->GetTabsList()->GetTabs()) {

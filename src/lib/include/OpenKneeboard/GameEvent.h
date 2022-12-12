@@ -66,6 +66,11 @@ struct GameEvent final {
     = "com.fredemmott.openkneeboard/SetTabByName";
   static constexpr std::string_view EVT_SET_TAB_BY_INDEX
     = "com.fredemmott.openkneeboard/SetTabByIndex";
+
+  static constexpr std::string_view EVT_SET_PROFILE_BY_ID
+    = "com.fredemmott.openkneeboard/SetProfileByID";
+  static constexpr std::string_view EVT_SET_PROFILE_BY_NAME
+    = "com.fredemmott.openkneeboard/SetProfileByName";
 };
 
 struct BaseSetTabEvent {
@@ -92,5 +97,17 @@ struct SetTabByIndexEvent : public BaseSetTabEvent {
   uint64_t mIndex {};
 };
 OPENKNEEBOARD_DECLARE_JSON(SetTabByIndexEvent);
+
+struct SetProfileByIDEvent {
+  static constexpr auto ID {GameEvent::EVT_SET_PROFILE_BY_ID};
+  std::string mID;
+};
+OPENKNEEBOARD_DECLARE_JSON(SetProfileByIDEvent);
+
+struct SetProfileByNameEvent {
+  static constexpr auto ID {GameEvent::EVT_SET_PROFILE_BY_NAME};
+  std::string mName;
+};
+OPENKNEEBOARD_DECLARE_JSON(SetProfileByNameEvent);
 
 }// namespace OpenKneeboard

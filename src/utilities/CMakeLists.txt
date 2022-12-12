@@ -8,7 +8,7 @@ function(add_helper_executable TARGET)
   install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endfunction()
 
-function(add_remote_control_executable TARGET)
+function(add_utility_executable TARGET)
   add_executable(${TARGET} ${ARGN})
   add_version_rc(${TARGET} ${TARGET}.exe)
   sign_target(${TARGET})
@@ -47,7 +47,10 @@ add_custom_command(
   "$<TARGET_FILE_DIR:test-feeder>/openvr_api.dll"
 )
 
-add_remote_control_executable(OpenKneeboard-RemoteControl-SET_TAB WIN32 set-tab-remote.cpp)
+add_utility_executable(
+  OpenKneeboard-RemoteControl-SET_TAB
+  WIN32 set-tab-remote.cpp
+)
 target_link_libraries(
   OpenKneeboard-RemoteControl-SET_TAB
   PRIVATE
@@ -55,7 +58,18 @@ target_link_libraries(
   OpenKneeboard-GameEvent
 )
 
-add_remote_control_executable(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
+add_utility_executable(
+  OpenKneeboard-RemoteControl-SET_PROFILE
+  WIN32 set-profile-remote.cpp
+)
+target_link_libraries(
+  OpenKneeboard-RemoteControl-SET_PROFILE
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-GameEvent
+)
+
+add_utility_executable(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
 target_link_libraries(
   OpenKneeboard-Viewer
   PRIVATE
@@ -90,7 +104,7 @@ set(
 
 foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
-  add_remote_control_executable("${TARGET}" WIN32 simple-remote.cpp)
+  add_utility_executable("${TARGET}" WIN32 simple-remote.cpp)
   target_compile_definitions(
     "${TARGET}"
     PUBLIC

@@ -134,5 +134,7 @@ const char* GameEvent::GetMailslotPath() {
 OPENKNEEBOARD_DEFINE_JSON(SetTabByIDEvent, mID, mPageNumber, mKneeboard);
 OPENKNEEBOARD_DEFINE_JSON(SetTabByNameEvent, mName, mPageNumber, mKneeboard);
 OPENKNEEBOARD_DEFINE_JSON(SetTabByIndexEvent, mIndex, mPageNumber, mKneeboard);
+OPENKNEEBOARD_DEFINE_JSON(SetProfileByIDEvent, mID);
+OPENKNEEBOARD_DEFINE_JSON(SetProfileByNameEvent, mName);
 
 }// namespace OpenKneeboard
