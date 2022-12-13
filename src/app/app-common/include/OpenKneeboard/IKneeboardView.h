@@ -60,9 +60,9 @@ class IKneeboardView {
   virtual void NextPage() = 0;
   virtual void PreviousPage() = 0;
 
-  virtual const D2D1_SIZE_U& GetCanvasSize() const = 0;
+  virtual D2D1_SIZE_U GetCanvasSize() const = 0;
   /// ContentRenderRect may be scaled; this is the 'real' size.
-  virtual const D2D1_SIZE_U& GetContentNativeSize() const = 0;
+  virtual D2D1_SIZE_U GetContentNativeSize() const = 0;
 
   Event<TabIndex> evCurrentTabChangedEvent;
   // TODO - cursor and repaint?

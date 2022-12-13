@@ -43,9 +43,7 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
 std::shared_ptr<KneeboardView> KneeboardView::Create(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
-  auto it = std::shared_ptr<KneeboardView>(new KneeboardView(dxr, kneeboard));
-  it->UpdateLayout();
-  return it;
+  return std::shared_ptr<KneeboardView>(new KneeboardView(dxr, kneeboard));
 }
 
 KneeboardView::~KneeboardView() {
@@ -92,8 +90,6 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
         this->evNeedsRepaintEvent.Emit();
       }
     });
-    AddEventListener(
-      viewState->evPageChangedEvent, &KneeboardView::UpdateLayout, this);
   }
 
   mTabViews = viewStates;
@@ -102,8 +98,6 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     mCurrentTabView = tabs.empty() ? nullptr : viewStates.front();
     this->evCurrentTabChangedEvent.Emit(this->GetTabIndex());
   }
-
-  UpdateLayout();
 }
 
 TabIndex KneeboardView::GetTabIndex() const {
@@ -125,7 +119,6 @@ void KneeboardView::SetCurrentTabByIndex(TabIndex index) {
     mCurrentTabView->PostCursorEvent({});
   }
   mCurrentTabView = mTabViews.at(index);
-  UpdateLayout();
   evCurrentTabChangedEvent.Emit(index);
 }
 
@@ -208,57 +201,47 @@ std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
 void KneeboardView::NextPage() {
   if (mCurrentTabView) {
     mCurrentTabView->NextPage();
-    UpdateLayout();
   }
 }
 
 void KneeboardView::PreviousPage() {
   if (mCurrentTabView) {
     mCurrentTabView->PreviousPage();
-    UpdateLayout();
   }
 }
 
-void KneeboardView::UpdateLayout() {
-  if (mCurrentTabView) {
-    mContentNativeSize = mCurrentTabView->GetNativeContentSize();
-  } else {
-    mContentNativeSize = {768, 1024};
+D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
+  if (!mCurrentTabView) {
+    return {};
   }
 
   std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
-  const auto mapping = mHeaderUILayer->GetMetrics(
-    nextLayers,
-    {
-      .mTabView = mCurrentTabView,
-      .mKneeboardView = std::static_pointer_cast<IKneeboardView>(
-        std::const_pointer_cast<KneeboardView>(this->shared_from_this())),
-      .mIsActiveForInput = true,
-    });
-
-  const auto canvasPreferredSize = mapping.mCanvasSize;
-
-  const auto scaleX
-    = static_cast<float>(TextureWidth) / canvasPreferredSize.width;
-  const auto scaleY
-    = static_cast<float>(TextureHeight) / canvasPreferredSize.height;
-  const auto scale = std::min(scaleX, scaleY);
-
-  mCanvasSize = {
-    static_cast<UINT>(std::roundl(canvasPreferredSize.width * scale)),
-    static_cast<UINT>(std::roundl(canvasPreferredSize.height * scale)),
+  const auto idealSize
+    = mHeaderUILayer
+        ->GetMetrics(
+          nextLayers,
+          {
+            .mTabView = mCurrentTabView,
+            .mKneeboardView
+            = std::const_pointer_cast<KneeboardView>(this->shared_from_this()),
+            .mIsActiveForInput = false,
+          })
+        .mCanvasSize;
+  const auto xScale = TextureWidth / idealSize.width;
+  const auto yScale = TextureHeight / idealSize.height;
+  const auto scale = std::min(xScale, yScale);
+  const D2D1_SIZE_U canvas {
+    static_cast<UINT>(std::roundl(idealSize.width * scale)),
+    static_cast<UINT>(std::roundl(idealSize.height * scale)),
   };
-
-  evLayoutChangedEvent.Emit();
-  evNeedsRepaintEvent.Emit();
+  return canvas;
 }
 
-const D2D1_SIZE_U& KneeboardView::GetCanvasSize() const {
-  return mCanvasSize;
-}
-
-const D2D1_SIZE_U& KneeboardView::GetContentNativeSize() const {
-  return mContentNativeSize;
+D2D1_SIZE_U KneeboardView::GetContentNativeSize() const {
+  if (!mCurrentTabView) {
+    return {768, 1024};
+  }
+  return mCurrentTabView->GetNativeContentSize();
 }
 
 void KneeboardView::PostCursorEvent(const CursorEvent& ev) {

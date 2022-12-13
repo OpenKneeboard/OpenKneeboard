@@ -64,9 +64,9 @@ class KneeboardView final : public IKneeboardView,
   virtual void NextPage() override;
   virtual void PreviousPage() override;
 
-  virtual const D2D1_SIZE_U& GetCanvasSize() const override;
+  virtual D2D1_SIZE_U GetCanvasSize() const override;
   /// ContentRenderRect may be scaled; this is the 'real' size.
-  virtual const D2D1_SIZE_U& GetContentNativeSize() const override;
+  virtual D2D1_SIZE_U GetContentNativeSize() const override;
 
   virtual void RenderWithChrome(
     ID2D1DeviceContext* d2d,
@@ -87,16 +87,11 @@ class KneeboardView final : public IKneeboardView,
   std::vector<std::shared_ptr<ITabView>> mTabViews;
   std::shared_ptr<ITabView> mCurrentTabView;
 
-  D2D1_SIZE_U mCanvasSize;
-  D2D1_SIZE_U mContentNativeSize;
-
   std::optional<D2D1_POINT_2F> mCursorCanvasPoint;
 
   std::unique_ptr<CursorRenderer> mCursorRenderer;
   std::unique_ptr<IUILayer> mHeaderUILayer;
   std::unique_ptr<TabViewUILayer> mTabViewUILayer;
-
-  void UpdateLayout();
 };
 
 }// namespace OpenKneeboard
