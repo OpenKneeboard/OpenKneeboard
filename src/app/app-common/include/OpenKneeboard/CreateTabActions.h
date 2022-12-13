@@ -29,9 +29,24 @@ class TabAction;
 class ITabView;
 class IKneeboardView;
 
-std::vector<std::shared_ptr<TabAction>> CreateTabActions(
-  KneeboardState* kneeboard,
-  const std::shared_ptr<IKneeboardView>& kneeboardView,
-  const std::shared_ptr<ITabView>& tab);
+struct InGameActions {
+  std::vector<std::shared_ptr<TabAction>> mLeft;
+  std::vector<std::shared_ptr<TabAction>> mRight;
+
+  static InGameActions Create(
+    KneeboardState* kneeboard,
+    const std::shared_ptr<IKneeboardView>& kneeboardView,
+    const std::shared_ptr<ITabView>& tab);
+};
+
+struct InAppActions {
+  std::vector<std::shared_ptr<TabAction>> mPrimary;
+  std::vector<std::shared_ptr<TabAction>> mSecondary;
+
+  static InAppActions Create(
+    KneeboardState* kneeboard,
+    const std::shared_ptr<IKneeboardView>& kneeboardView,
+    const std::shared_ptr<ITabView>& tab);
+};
 
 }// namespace OpenKneeboard

@@ -35,8 +35,6 @@ class NextTabAction final : public TabAction, private EventReceiver {
   NextTabAction(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
   ~NextTabAction();
 
-  virtual Visibility GetVisibility(Context) const override;
-
   virtual bool IsEnabled() override;
   virtual void Execute() override;
 

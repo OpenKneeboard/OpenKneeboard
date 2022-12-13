@@ -26,20 +26,9 @@ namespace OpenKneeboard {
 
 class TabAction {
  public:
-  enum class Visibility {
-    Primary,
-    Secondary,
-    None,
-  };
-  enum class Context {
-    WindowToolbar,
-    InGameToolbar,
-  };
-
   virtual ~TabAction();
   utf8_string_view GetGlyph() const;
   utf8_string_view GetLabel() const;
-  virtual Visibility GetVisibility(Context) const;
 
   virtual bool IsEnabled() = 0;
   virtual void Execute() = 0;

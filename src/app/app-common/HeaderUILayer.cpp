@@ -244,53 +244,41 @@ void HeaderUILayer::LayoutToolbar(
   }
 
   const auto& kneeboardView = context.mKneeboardView;
-  auto allActions = CreateTabActions(mKneeboard, kneeboardView, tabView);
-  std::vector<std::shared_ptr<TabAction>> actions;
-
-  std::ranges::copy_if(
-    allActions, std::back_inserter(actions), [](const auto& action) {
-      return action->GetVisibility(TabAction::Context::InGameToolbar)
-        == TabAction::Visibility::Primary;
-    });
-  std::ranges::copy_if(
-    allActions | std::ranges::views::reverse,
-    std::back_inserter(actions),
-    [](const auto& action) {
-      return action->GetVisibility(TabAction::Context::InGameToolbar)
-        == TabAction::Visibility::Secondary;
-    });
-  allActions.clear();
-
+  const auto actions
+    = InGameActions::Create(mKneeboard, kneeboardView, tabView);
   std::vector<Button> buttons;
 
   const auto buttonHeight = headerSize.height * 0.75f;
   const auto margin = (headerSize.height - buttonHeight) / 2.0f;
 
   auto primaryLeft = headerRect.left + (2 * margin);
-  auto secondaryRight = headerRect.right - (2 * margin);
 
-  for (const auto& action: actions) {
-    const auto visibility
-      = action->GetVisibility(TabAction::Context::InGameToolbar);
-    if (visibility == TabAction::Visibility::None) [[unlikely]] {
-      throw std::logic_error("Should not have been copied to actions local");
-    }
-
+  for (const auto& action: actions.mLeft) {
     AddEventListener(action->evStateChangedEvent, this->evNeedsRepaintEvent);
 
     D2D1_RECT_F button {
       .top = margin,
       .bottom = margin + buttonHeight,
     };
-    if (visibility == TabAction::Visibility::Primary) {
-      button.left = primaryLeft;
-      button.right = primaryLeft + buttonHeight,
-      primaryLeft = button.right + margin;
-    } else {
-      button.right = secondaryRight;
-      button.left = secondaryRight - buttonHeight;
-      secondaryRight = button.left - margin;
-    }
+    button.left = primaryLeft;
+    button.right = primaryLeft + buttonHeight,
+    primaryLeft = button.right + margin;
+
+    buttons.push_back({button, action});
+  }
+
+  auto secondaryRight = headerRect.right - (2 * margin);
+  for (const auto& action: actions.mRight) {
+    AddEventListener(action->evStateChangedEvent, this->evNeedsRepaintEvent);
+
+    D2D1_RECT_F button {
+      .top = margin,
+      .bottom = margin + buttonHeight,
+    };
+    button.right = secondaryRight;
+    button.left = secondaryRight - buttonHeight;
+    secondaryRight = button.left - margin;
+
     buttons.push_back({button, action});
   }
 

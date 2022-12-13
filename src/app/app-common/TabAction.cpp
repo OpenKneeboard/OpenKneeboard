@@ -36,10 +36,6 @@ utf8_string_view TabAction::GetLabel() const {
   return mLabel;
 }
 
-TabAction::Visibility TabAction::GetVisibility(Context) const {
-  return Visibility::Primary;
-}
-
 void TabToggleAction::Execute() {
   if (this->IsActive()) {
     this->Deactivate();

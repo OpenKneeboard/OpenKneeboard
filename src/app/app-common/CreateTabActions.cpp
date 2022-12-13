@@ -28,17 +28,34 @@
 
 namespace OpenKneeboard {
 
-std::vector<std::shared_ptr<TabAction>> CreateTabActions(
+InGameActions InGameActions::Create(
   KneeboardState* kneeboardState,
   const std::shared_ptr<IKneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tabView) {
   return {
+      .mLeft = {
+    std::make_shared<TabNavigationAction>(tabView),
+    std::make_shared<TabFirstPageAction>(tabView),
+    std::make_shared<TabPreviousPageAction>(kneeboardState, tabView),
+      },
+      .mRight = {
+    std::make_shared<PreviousTabAction>(kneeboardState, kneeboardView),
+    std::make_shared<NextTabAction>(kneeboardState, kneeboardView),
+      },
+  };
+}
+
+InAppActions InAppActions::Create(
+  KneeboardState* kneeboardState,
+  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<ITabView>& tabView) {
+  return {
+    .mPrimary = {
     std::make_shared<TabNavigationAction>(tabView),
     std::make_shared<TabFirstPageAction>(tabView),
     std::make_shared<TabPreviousPageAction>(kneeboardState, tabView),
     std::make_shared<TabNextPageAction>(kneeboardState, tabView),
-    std::make_shared<PreviousTabAction>(kneeboardState, kneeboardView),
-    std::make_shared<NextTabAction>(kneeboardState, kneeboardView),
+    },
   };
 }
 

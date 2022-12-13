@@ -40,15 +40,6 @@ NextTabAction::~NextTabAction() {
   this->RemoveAllEventListeners();
 }
 
-TabAction::Visibility NextTabAction::GetVisibility(Context ctx) const {
-  switch (ctx) {
-    case Context::InGameToolbar:
-      return Visibility::Secondary;
-    default:
-      return Visibility::None;
-  }
-}
-
 bool NextTabAction::IsEnabled() {
   const auto count = mKneeboardState->GetTabsList()->GetTabs().size();
 

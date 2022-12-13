@@ -45,6 +45,7 @@
 using namespace ::OpenKneeboard;
 
 namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
+namespace muxcp = winrt::Microsoft::UI::Xaml::Controls::Primitives;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
@@ -123,66 +124,80 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   this->SetTab(mKneeboardView->GetTabViewByID(id));
 }
 
+muxc::ICommandBarElement TabPage::CreateCommandBarElement(
+  const std::shared_ptr<TabAction>& action) {
+  auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
+  if (toggle) {
+    return CreateAppBarToggleButton(toggle);
+  }
+
+  return CreateAppBarButton(action);
+}
+
+muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
+  const std::shared_ptr<TabToggleAction>& action) {
+  muxc::AppBarToggleButton button;
+
+  muxc::FontIcon icon;
+  icon.Glyph(winrt::to_hstring(action->GetGlyph()));
+  button.Icon(icon);
+
+  button.Label(winrt::to_hstring(action->GetLabel()));
+  button.IsEnabled(action->IsEnabled());
+
+  button.IsChecked(action->IsActive());
+  button.Checked([action](auto, auto) { action->Activate(); });
+  button.Unchecked([action](auto, auto) { action->Deactivate(); });
+
+  AddEventListener(
+    action->evStateChangedEvent,
+    [this, action, button]() noexcept -> winrt::fire_and_forget {
+      auto [action, button] = std::make_tuple(action, button);
+      co_await mUIThread;
+      button.IsChecked(action->IsActive());
+      button.IsEnabled(action->IsEnabled());
+    });
+
+  return button;
+}
+
+muxc::AppBarButton TabPage::CreateAppBarButton(
+  const std::shared_ptr<TabAction>& action) {
+  muxc::AppBarButton button;
+
+  muxc::FontIcon icon;
+  icon.Glyph(winrt::to_hstring(action->GetGlyph()));
+  button.Icon(icon);
+
+  button.Label(winrt::to_hstring(action->GetLabel()));
+  button.IsEnabled(action->IsEnabled());
+
+  button.Click([action](auto, auto) { action->Execute(); });
+
+  AddEventListener(
+    action->evStateChangedEvent,
+    [this, action, button]() noexcept -> winrt::fire_and_forget {
+      auto [action, button] = std::make_tuple(action, button);
+      co_await mUIThread;
+      button.IsEnabled(action->IsEnabled());
+    });
+  return button;
+}
+
 void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mTabView = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 
-  auto actions = CreateTabActions(gKneeboard.get(), mKneeboardView, state);
+  auto actions = InAppActions::Create(gKneeboard.get(), mKneeboardView, state);
 
   auto primary = CommandBar().PrimaryCommands();
+  for (const auto& action: actions.mPrimary) {
+    primary.Append(CreateCommandBarElement(action));
+  }
+
   auto secondary = CommandBar().SecondaryCommands();
-  for (const auto& action: actions) {
-    const auto visibility
-      = action->GetVisibility(TabAction::Context::WindowToolbar);
-    if (visibility == TabAction::Visibility::None) {
-      continue;
-    }
-
-    auto& commands
-      = (visibility == TabAction::Visibility::Primary) ? primary : secondary;
-    auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
-    muxc::FontIcon icon;
-    icon.Glyph(winrt::to_hstring(action->GetGlyph()));
-
-    if (toggle) {
-      muxc::AppBarToggleButton button;
-      button.Label(winrt::to_hstring(action->GetLabel()));
-      button.Icon(icon);
-      button.IsEnabled(action->IsEnabled());
-
-      button.IsChecked(toggle->IsActive());
-      button.Checked([toggle](auto, auto) { toggle->Activate(); });
-      button.Unchecked([toggle](auto, auto) { toggle->Deactivate(); });
-
-      AddEventListener(
-        toggle->evStateChangedEvent,
-        [this, toggle, button]() noexcept -> winrt::fire_and_forget {
-          auto [toggle, button] = std::make_tuple(toggle, button);
-          co_await mUIThread;
-          button.IsChecked(toggle->IsActive());
-          button.IsEnabled(toggle->IsEnabled());
-        });
-
-      commands.Append(button);
-      continue;
-    }
-
-    muxc::AppBarButton button;
-    button.Label(winrt::to_hstring(action->GetLabel()));
-    button.Icon(icon);
-    button.IsEnabled(action->IsEnabled());
-
-    button.Click([action](auto, auto) { action->Execute(); });
-
-    AddEventListener(
-      action->evStateChangedEvent,
-      [this, action, button]() noexcept -> winrt::fire_and_forget {
-        auto [action, button] = std::make_tuple(action, button);
-        co_await mUIThread;
-        button.IsEnabled(action->IsEnabled());
-      });
-
-    commands.Append(button);
+  for (const auto& action: actions.mSecondary) {
+    secondary.Append(CreateCommandBarElement(action));
   }
 }
 

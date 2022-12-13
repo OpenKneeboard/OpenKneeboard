@@ -41,15 +41,6 @@ PreviousTabAction::~PreviousTabAction() {
   this->RemoveAllEventListeners();
 }
 
-TabAction::Visibility PreviousTabAction::GetVisibility(Context ctx) const {
-  switch (ctx) {
-    case Context::InGameToolbar:
-      return Visibility::Secondary;
-    default:
-      return Visibility::None;
-  }
-}
-
 bool PreviousTabAction::IsEnabled() {
   if (mKneeboardView->GetTabIndex() > 0) {
     return true;

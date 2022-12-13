@@ -33,6 +33,8 @@ namespace OpenKneeboard {
 class CursorRenderer;
 class D2DErrorRenderer;
 class ITabView;
+class TabAction;
+class TabToggleAction;
 class IKneeboardView;
 }// namespace OpenKneeboard
 
@@ -42,6 +44,8 @@ using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Input;
 using namespace winrt::Microsoft::UI::Xaml::Navigation;
 using namespace OpenKneeboard;
+
+namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct TabPage : TabPageT<TabPage>, EventReceiver {
@@ -92,6 +96,12 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     float mScale;
   };
   PageMetrics GetPageMetrics();
+
+  muxc::ICommandBarElement CreateCommandBarElement(
+    const std::shared_ptr<TabAction>&);
+  muxc::AppBarButton CreateAppBarButton(const std::shared_ptr<TabAction>&);
+  muxc::AppBarToggleButton CreateAppBarToggleButton(
+    const std::shared_ptr<TabToggleAction>&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
