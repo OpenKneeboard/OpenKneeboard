@@ -97,20 +97,21 @@ void HeaderUILayer::PostCursorEvent(
 IUILayer::Metrics HeaderUILayer::GetMetrics(
   const IUILayer::NextList& next,
   const Context& context) const {
-  const auto nextMapping = next.front()->GetMetrics(next.subspan(1), context);
+  const auto nextMetrics = next.front()->GetMetrics(next.subspan(1), context);
 
-  const auto headerHeight
-    = nextMapping.mCanvasSize.height * (HeaderPercent / 100.0f);
+  const auto contentHeight
+    = nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top;
+  const auto headerHeight = contentHeight * (HeaderPercent / 100.0f);
   return {
     {
-      nextMapping.mCanvasSize.width,
-      nextMapping.mCanvasSize.height + headerHeight,
+      nextMetrics.mCanvasSize.width,
+      nextMetrics.mCanvasSize.height + headerHeight,
     },
     {
-      nextMapping.mContentArea.left,
-      nextMapping.mContentArea.top + headerHeight,
-      nextMapping.mContentArea.right,
-      nextMapping.mContentArea.bottom + headerHeight,
+      nextMetrics.mContentArea.left,
+      nextMetrics.mContentArea.top + headerHeight,
+      nextMetrics.mContentArea.right,
+      nextMetrics.mContentArea.bottom + headerHeight,
     },
   };
 }
@@ -122,15 +123,19 @@ void HeaderUILayer::Render(
   const D2D1_RECT_F& rect) {
   const auto tabView = context.mTabView;
 
-  const auto totalHeight = rect.bottom - rect.top;
-  const auto preferredSize = this->GetMetrics(next, context).mCanvasSize;
+  const auto metrics = this->GetMetrics(next, context);
+  const auto preferredSize = metrics.mCanvasSize;
 
-  const constexpr auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
-  const auto contentHeight = totalHeight / totalHeightRatio;
+  const auto totalHeight = rect.bottom - rect.top;
+  const auto scale = totalHeight / preferredSize.height;
+
+  const auto contentHeight
+    = scale * (metrics.mContentArea.bottom - metrics.mContentArea.top);
+  const auto headerHeight = contentHeight * (HeaderPercent / 100.0f);
 
   const D2D1_SIZE_F headerSize {
     rect.right - rect.left,
-    totalHeight - contentHeight,
+    headerHeight,
   };
   const D2D1_RECT_F headerRect {
     rect.left,
