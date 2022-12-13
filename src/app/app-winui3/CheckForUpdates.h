@@ -35,7 +35,12 @@ enum class UpdateCheckType {
   Manual,
 };
 
-winrt::Windows::Foundation::IAsyncAction CheckForUpdates(
+enum class UpdateResult {
+  InstallingUpdate,
+  NotInstallingUpdate,
+};
+
+concurrency::task<UpdateResult> CheckForUpdates(
   UpdateCheckType,
   const winrt::Microsoft::UI::Xaml::XamlRoot&);
 

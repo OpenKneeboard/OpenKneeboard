@@ -155,7 +155,11 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
     [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
       auto xamlRoot = window.Content().XamlRoot();
-      co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
+      const auto updateResult
+        = co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
+      if (updateResult == UpdateResult::InstallingUpdate) {
+        co_return;
+      }
       if (gKneeboard) {
         gKneeboard->GetGamesList()->StartInjector();
       }

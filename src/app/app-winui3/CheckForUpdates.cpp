@@ -76,7 +76,7 @@ static fire_and_forget ShowResultDialog(
   winrt::apartment_context& uiThread,
   const XamlRoot& xamlRoot);
 
-IAsyncAction CheckForUpdates(
+concurrency::task<UpdateResult> CheckForUpdates(
   UpdateCheckType checkType,
   const XamlRoot& xamlRoot) {
   winrt::apartment_context uiThread;
@@ -96,7 +96,7 @@ IAsyncAction CheckForUpdates(
 
   if (settings.mDisabledUntil > static_cast<uint64_t>(now)) {
     dprint("Not checking for update, too soon");
-    co_return;
+    co_return UpdateResult::NotInstallingUpdate;
   }
 
   const auto isPreRelease
@@ -151,7 +151,7 @@ IAsyncAction CheckForUpdates(
     if (checkType == UpdateCheckType::Manual) {
       ShowResultDialog(message, uiThread, xamlRoot);
     }
-    co_return;
+    co_return UpdateResult::NotInstallingUpdate;
   } catch (const winrt::hresult_error& hr) {
     const auto message = std::format(
       "Error fetching releases from GitHub API: {} ({:#08x}) - {}",
@@ -162,7 +162,7 @@ IAsyncAction CheckForUpdates(
     if (checkType == UpdateCheckType::Manual) {
       ShowResultDialog(message, uiThread, xamlRoot);
     }
-    co_return;
+    co_return UpdateResult::NotInstallingUpdate;
   }
   if (releases.empty()) {
     dprint("Didn't get any releases from github API :/");
@@ -170,7 +170,7 @@ IAsyncAction CheckForUpdates(
       ShowResultDialog(
         _("Error: API did not return any releases."), uiThread, xamlRoot);
     }
-    co_return;
+    co_return UpdateResult::NotInstallingUpdate;
   }
 
   auto latestRelease = releases.front();
@@ -204,7 +204,7 @@ IAsyncAction CheckForUpdates(
       ShowResultDialog(
         _("You're running the latest version!"), uiThread, xamlRoot);
     }
-    co_return;
+    co_return UpdateResult::NotInstallingUpdate;
   } else {
     dprintf(
       "Current version '{}' < latest '{}'",
@@ -218,7 +218,7 @@ IAsyncAction CheckForUpdates(
   dprintf("Found upgrade {} to {}", oldName, newName);
   if (newName == settings.mSkipVersion) {
     dprintf("Skipping {} at user request.", newName);
-    co_return;
+    co_return UpdateResult::NotInstallingUpdate;
   }
   const auto assets = latestRelease.at("assets");
   auto updateAsset = std::ranges::find_if(assets, [=](const auto& asset) {
@@ -242,7 +242,7 @@ IAsyncAction CheckForUpdates(
           uiThread,
           xamlRoot);
       }
-      co_return;
+      co_return UpdateResult::NotInstallingUpdate;
     }
   }
   const auto updateURL
@@ -364,7 +364,7 @@ IAsyncAction CheckForUpdates(
         if (std::filesystem::exists(tmpFile)) {
           std::filesystem::remove(tmpFile);
         }
-        co_return;
+        co_return UpdateResult::NotInstallingUpdate;
       }
       std::filesystem::rename(tmpFile, destination);
     }
@@ -384,13 +384,13 @@ IAsyncAction CheckForUpdates(
         co_await resume_after(std::chrono::seconds(1));
       }());
     if (cancelled) {
-      co_return;
+      co_return UpdateResult::NotInstallingUpdate;
     }
     // Settings saved by scope guard
     co_await uiThread;
     co_await OpenKneeboard::LaunchURI(to_utf8(destination));
     Application::Current().Exit();
-    co_return;
+    co_return UpdateResult::InstallingUpdate;
   }
 
   if (result == ContentDialogResult::Secondary) {
@@ -398,6 +398,7 @@ IAsyncAction CheckForUpdates(
     settings.mSkipVersion = newName;
   }
   // Settings saved by scope guard
+  co_return UpdateResult::NotInstallingUpdate;
 }
 
 static fire_and_forget ShowResultDialog(
