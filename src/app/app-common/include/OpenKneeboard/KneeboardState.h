@@ -77,6 +77,7 @@ class KneeboardState final : private EventReceiver {
   Event<> evCurrentProfileChangedEvent;
   Event<> evViewOrderChangedEvent;
   Event<> evInputDevicesChangedEvent;
+  Event<GameEvent> evGameEvent;
   Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
 
   std::vector<std::shared_ptr<UserInputDevice>> GetInputDevices() const;

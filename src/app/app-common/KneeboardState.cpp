@@ -323,6 +323,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
       receiver->PostGameEvent(ev);
     }
   }
+  this->evGameEvent.Emit(ev);
 }
 
 void KneeboardState::SetCurrentTab(

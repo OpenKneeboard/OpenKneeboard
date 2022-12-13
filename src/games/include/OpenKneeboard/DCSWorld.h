@@ -61,6 +61,8 @@ class DCSWorld final : public OpenKneeboard::Game {
     = "com.fredemmott.openkneeboard.dcsext/InstallPath";
   static constexpr std::string_view EVT_MISSION
     = "com.fredemmott.openkneeboard.dcsext/Mission";
+  static constexpr std::string_view EVT_MISSION_TIME
+    = "com.fredemmott.openkneeboard.dcsext/MissionTime";
   static constexpr std::string_view EVT_ORIGIN
     = "com.fredemmott.openkneeboard.dcsext/Origin";
   static constexpr std::string_view EVT_SELF_DATA
@@ -77,6 +79,13 @@ class DCSWorld final : public OpenKneeboard::Game {
   struct SimulationStartEvent {
     static constexpr auto ID {EVT_SIMULATION_START};
     int64_t missionStartTime {0};
+  };
+
+  struct MissionTimeEvent {
+    static constexpr auto ID {EVT_MISSION_TIME};
+    int64_t startTime {};
+    float secondsSinceStart {};
+    float currentTime {};
   };
 
   enum class MessageType {
@@ -104,6 +113,11 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
   DCSWorld::SimulationStartEvent,
   missionStartTime)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
+  DCSWorld::MissionTimeEvent,
+  startTime,
+  secondsSinceStart,
+  currentTime)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
   DCSWorld::MessageEvent,
   message,

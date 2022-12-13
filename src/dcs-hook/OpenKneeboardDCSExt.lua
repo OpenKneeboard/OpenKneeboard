@@ -82,9 +82,6 @@ function sendState()
   if state.aircraft then
     OpenKneeboard.send("Aircraft", state.aircraft)
   end
-  if state.mission then
-    OpenKneeboard.send("Mission", state.mission)
-  end
   if state.terrain then
     OpenKneeboard.send("Terrain", state.terrain)
   end
@@ -96,6 +93,19 @@ function sendState()
   end
   if state.origin then
     OpenKneeboard.send("Origin", net.lua2json(state.origin))
+  end
+  if state.mission then
+    OpenKneeboard.send("Mission", state.mission)
+
+    local startTime = Export.LoGetMissionStartTime()
+    local secondsSinceStart = DCS.getModelTime()
+
+    local missionTime = {
+      startTime = startTime,
+      secondsSinceStart = secondsSinceStart,
+      currentTime = startTime + secondsSinceStart,
+    }
+    OpenKneeboard.send("MissionTime", net.lua2json(missionTime))
   end
 end
 
@@ -165,7 +175,7 @@ end
 function callbacks.onSimulationStart()
   l("onSimulationStart")
   updateGeo()
-  
+
   local startData = net.lua2json({
     missionStartTime = Export.LoGetMissionStartTime(),
   })
@@ -193,12 +203,13 @@ function callbacks.onPlayerChangeSlot(id)
   end
 end
 
-lastUpdate = DCS.getModelTime()
+lastUpdate = DCS.getRealTime()
 function callbacks.onSimulationFrame()
-  if DCS.getModelTime() < lastUpdate + 1 then
+  local now = DCS.getRealTime()
+  if now >= lastUpdate and now < lastUpdate + 0.5 then
     return
   end
-  lastUpdate = DCS.getModelTime()
+  lastUpdate = now
 
   -- Workaround onPlayerChangeSlot not being called for single player
   state.selfData = Export.LoGetSelfData()

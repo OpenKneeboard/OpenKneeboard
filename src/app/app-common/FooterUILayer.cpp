@@ -18,8 +18,10 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/FooterUILayer.h>
+#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/config.h>
 
@@ -29,6 +31,14 @@ namespace OpenKneeboard {
 
 FooterUILayer::FooterUILayer(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXResources(dxr) {
+  AddEventListener(
+    kneeboard->evFrameTimerEvent, std::bind_front(&FooterUILayer::Tick, this));
+  AddEventListener(
+    kneeboard->evGameEvent, std::bind_front(&FooterUILayer::OnGameEvent, this));
+  AddEventListener(
+    kneeboard->evGameChangedEvent,
+    std::bind_front(&FooterUILayer::OnGameChanged, this));
+
   auto ctx = dxr.mD2DDeviceContext;
 
   ctx->CreateSolidColorBrush(
@@ -39,8 +49,6 @@ FooterUILayer::FooterUILayer(const DXResources& dxr, KneeboardState* kneeboard)
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mForegroundBrush.put()));
-
-  AddEventListener(kneeboard->evFrameTimerEvent, [this]() { this->Tick(); });
 }
 
 FooterUILayer::~FooterUILayer() {
@@ -153,26 +161,74 @@ void FooterUILayer::Render(
 
   const auto margin = footerHeight / 4;
 
-  winrt::com_ptr<IDWriteTextLayout> clockLayout;
   const auto now
     = std::chrono::time_point_cast<Duration>(std::chrono::system_clock::now());
-  const auto clock = std::format(
-    L"{:%T}", std::chrono::zoned_time(std::chrono::current_zone(), now));
   mLastRenderAt = std::chrono::time_point_cast<Duration>(Clock::now());
 
-  winrt::check_hresult(dwf->CreateTextLayout(
-    clock.c_str(),
-    static_cast<UINT32>(clock.size()),
-    clockFormat.get(),
-    float(mLastRenderSize->width - (2 * margin)),
-    float(footerHeight),
-    clockLayout.put()));
-  clockLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
-  clockLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-  d2d->DrawTextLayout(
-    {margin, rect.bottom - footerHeight},
-    clockLayout.get(),
-    mForegroundBrush.get());
+  const auto drawClock
+    = [&](const std::wstring& clock, DWRITE_TEXT_ALIGNMENT alignment) {
+        winrt::com_ptr<IDWriteTextLayout> clockLayout;
+        winrt::check_hresult(dwf->CreateTextLayout(
+          clock.c_str(),
+          static_cast<UINT32>(clock.size()),
+          clockFormat.get(),
+          float(mLastRenderSize->width - (2 * margin)),
+          float(footerHeight),
+          clockLayout.put()));
+        clockLayout->SetTextAlignment(alignment);
+        clockLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+        d2d->DrawTextLayout(
+          {margin, rect.bottom - footerHeight},
+          clockLayout.get(),
+          mForegroundBrush.get());
+      };
+
+  // Mission time
+  if (mMissionTime) {
+    const auto missionTime = std::chrono::utc_seconds(*mMissionTime);
+    drawClock(
+      std::format(L"{:%T}", missionTime), DWRITE_TEXT_ALIGNMENT_LEADING);
+  }
+
+  // Real time
+  drawClock(
+    std::format(
+      L"{:%T}", std::chrono::zoned_time(std::chrono::current_zone(), now)),
+    DWRITE_TEXT_ALIGNMENT_TRAILING);
+}
+
+void FooterUILayer::OnGameEvent(const GameEvent& ev) {
+  if (ev.name == DCSWorld::EVT_SIMULATION_START) {
+    const auto mission = ev.ParsedValue<DCSWorld::SimulationStartEvent>();
+
+    const auto startTime = std::chrono::seconds(mission.missionStartTime);
+
+    mMissionTime = startTime;
+    return;
+  }
+
+  if (ev.name == DCSWorld::EVT_MISSION_TIME) {
+    const auto times = ev.ParsedValue<DCSWorld::MissionTimeEvent>();
+    const auto currentTime
+      = std::chrono::seconds(static_cast<uint64_t>(times.currentTime));
+
+    if ((!mMissionTime) || mMissionTime != currentTime) {
+      mMissionTime = currentTime;
+      evNeedsRepaintEvent.Emit();
+    }
+    return;
+  }
+}
+
+void FooterUILayer::OnGameChanged(
+  DWORD processID,
+  const std::shared_ptr<GameInstance>&) {
+  if (processID == mCurrentGamePID) {
+    return;
+  }
+
+  mCurrentGamePID = processID;
+  mMissionTime = {};
 }
 
 }// namespace OpenKneeboard
