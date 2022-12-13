@@ -237,6 +237,8 @@ void PDFFilePageSource::RenderPageContent(
   };
 
   ctx->SetTransform(D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
+  scope_guard resetTransform(
+    [ctx]() { ctx->SetTransform(D2D1::Matrix3x2F::Identity()); });
 
   winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
     winrt::get_unknown(page), ctx, &params));

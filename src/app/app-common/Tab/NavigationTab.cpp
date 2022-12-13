@@ -214,6 +214,9 @@ void NavigationTab::RenderPage(
     std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageIndex));
 
   ctx->SetTransform(pageTransform);
+  scope_guard resetTransform(
+    [ctx]() { ctx->SetTransform(D2D1::Matrix3x2F::Identity()); });
+
   std::vector<float> columnPreviewRightEdge(mRenderColumns);
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
