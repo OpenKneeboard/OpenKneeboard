@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
+#include <OpenKneeboard/FooterUILayer.h>
 #include <OpenKneeboard/HeaderUILayer.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -37,7 +38,19 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
   mHeaderUILayer = std::make_unique<HeaderUILayer>(dxr, kneeboard);
+  mFooterUILayer = std::make_unique<FooterUILayer>(dxr);
   mTabViewUILayer = std::make_unique<TabViewUILayer>(dxr);
+
+  mUILayers = {
+    mHeaderUILayer.get(),
+    mFooterUILayer.get(),
+    mTabViewUILayer.get(),
+  };
+}
+
+std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
+  std::span span(const_cast<KneeboardView*>(this)->mUILayers);
+  return std::make_tuple(span.front(), span.subspan(1));
 }
 
 std::shared_ptr<KneeboardView> KneeboardView::Create(
@@ -215,11 +228,11 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
     return {};
   }
 
-  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
+  auto [first, rest] = this->GetUILayers();
   const auto idealSize
-    = mHeaderUILayer
+    = first
         ->GetMetrics(
-          nextLayers,
+          rest,
           {
             .mTabView = mCurrentTabView,
             .mKneeboardView
@@ -251,9 +264,9 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
     mCursorCanvasPoint = {ev.mX, ev.mY};
   }
 
-  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
-  mHeaderUILayer->PostCursorEvent(
-    nextLayers,
+  auto [first, rest] = this->GetUILayers();
+  first->PostCursorEvent(
+    rest,
     {
       .mTabView = mCurrentTabView,
       .mKneeboardView = this->shared_from_this(),
@@ -269,9 +282,9 @@ void KneeboardView::RenderWithChrome(
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect,
   bool isActiveForInput) noexcept {
-  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
-  mHeaderUILayer->Render(
-    nextLayers,
+  auto [first, rest] = this->GetUILayers();
+  first->Render(
+    rest,
     {
       .mTabView = mCurrentTabView,
       .mKneeboardView = this->shared_from_this(),
@@ -327,9 +340,9 @@ std::optional<D2D1_POINT_2F> KneeboardView::GetCursorContentPoint() const {
 
 D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   const D2D1_POINT_2F& contentPoint) const {
-  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
-  const auto mapping = mHeaderUILayer->GetMetrics(
-    nextLayers,
+  auto [first, rest] = this->GetUILayers();
+  const auto mapping = first->GetMetrics(
+    rest,
     {
       .mTabView = mCurrentTabView,
       .mKneeboardView = std::static_pointer_cast<IKneeboardView>(

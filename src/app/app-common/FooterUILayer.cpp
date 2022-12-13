@@ -1,0 +1,128 @@
+/*
+ * OpenKneeboard
+ *
+ * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; version 2.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ */
+#include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/FooterUILayer.h>
+#include <OpenKneeboard/config.h>
+
+#include <algorithm>
+
+namespace OpenKneeboard {
+
+FooterUILayer::FooterUILayer(const DXResources& dxr) {
+  auto ctx = dxr.mD2DDeviceContext;
+
+  ctx->CreateSolidColorBrush(
+    {0.7f, 0.7f, 0.7f, 0.8f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(mBackgroundBrush.put()));
+  ctx->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 1.0f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(mForegroundBrush.put()));
+}
+
+FooterUILayer::~FooterUILayer() {
+  this->RemoveAllEventListeners();
+}
+
+void FooterUILayer::PostCursorEvent(
+  const IUILayer::NextList& next,
+  const Context& context,
+  const EventContext& eventContext,
+  const CursorEvent& cursorEvent) {
+  if (!mLastRenderSize) {
+    return;
+  }
+  const auto renderSize = *mLastRenderSize;
+
+  constexpr auto contentRatio = 1 / (1 + (FooterPercent / 100.0f));
+  constexpr auto footerRatio = 1 - contentRatio;
+  if (cursorEvent.mY > contentRatio) {
+    next.front()->PostCursorEvent(next.subspan(1), context, eventContext, {});
+    return;
+  }
+
+  CursorEvent nextEvent {cursorEvent};
+  nextEvent.mY = cursorEvent.mY / contentRatio;
+  next.front()->PostCursorEvent(
+    next.subspan(1), context, eventContext, nextEvent);
+}
+
+IUILayer::Metrics FooterUILayer::GetMetrics(
+  const IUILayer::NextList& next,
+  const Context& context) const {
+  const auto nextMetrics = next.front()->GetMetrics(next.subspan(1), context);
+
+  const auto contentHeight
+    = nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top;
+  const auto footerHeight = contentHeight * (FooterPercent / 100.0f);
+  return {
+    {
+      nextMetrics.mCanvasSize.width,
+      nextMetrics.mCanvasSize.height + footerHeight,
+    },
+    {
+      nextMetrics.mContentArea.left,
+      nextMetrics.mContentArea.top,
+      nextMetrics.mContentArea.right,
+      nextMetrics.mContentArea.bottom - footerHeight,
+    },
+  };
+}
+
+void FooterUILayer::Render(
+  const IUILayer::NextList& next,
+  const Context& context,
+  ID2D1DeviceContext* d2d,
+  const D2D1_RECT_F& rect) {
+  const auto tabView = context.mTabView;
+
+  const auto metrics = this->GetMetrics(next, context);
+  const auto preferredSize = metrics.mCanvasSize;
+
+  const auto totalHeight = rect.bottom - rect.top;
+  const auto scale = totalHeight / preferredSize.height;
+
+  const auto contentHeight
+    = scale * (metrics.mContentArea.bottom - metrics.mContentArea.top);
+  const auto footerHeight = contentHeight * (FooterPercent / 100.0f);
+
+  const D2D1_RECT_F footerRect {
+    rect.left,
+    rect.bottom - footerHeight,
+    rect.right,
+    rect.bottom,
+  };
+
+  mLastRenderSize = {
+    rect.right - rect.left,
+    rect.bottom - rect.top,
+  };
+  d2d->SetTransform(D2D1::Matrix3x2F::Identity());
+  d2d->FillRectangle(footerRect, mBackgroundBrush.get());
+  next.front()->Render(
+    next.subspan(1),
+    context,
+    d2d,
+    {rect.left, rect.top, rect.right, rect.bottom - footerHeight});
+}
+
+}// namespace OpenKneeboard

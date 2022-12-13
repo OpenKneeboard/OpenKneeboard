@@ -90,8 +90,13 @@ class KneeboardView final : public IKneeboardView,
   std::optional<D2D1_POINT_2F> mCursorCanvasPoint;
 
   std::unique_ptr<CursorRenderer> mCursorRenderer;
+
+  std::vector<IUILayer*> mUILayers {};
   std::unique_ptr<IUILayer> mHeaderUILayer;
+  std::unique_ptr<IUILayer> mFooterUILayer;
   std::unique_ptr<TabViewUILayer> mTabViewUILayer;
+
+  std::tuple<IUILayer*, std::span<IUILayer*>> GetUILayers() const;
 };
 
 }// namespace OpenKneeboard

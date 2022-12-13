@@ -19,23 +19,35 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/IUILayer.h>
+#include <shims/winrt/base.h>
+
+#include <memory>
+
 namespace OpenKneeboard {
 
-constexpr unsigned int TextureCount = 2;
-constexpr unsigned int TextureWidth = 2048;
-constexpr unsigned int TextureHeight = 2048;
-constexpr unsigned char MaxLayers = 2;
+class FooterUILayer final : public IUILayer, private EventReceiver {
+ public:
+  FooterUILayer(const DXResources& dxr);
+  virtual ~FooterUILayer();
 
-constexpr float CursorRadiusDivisor = 400.0f;
-constexpr float CursorStrokeDivisor = CursorRadiusDivisor;
+  virtual void PostCursorEvent(
+    const NextList&,
+    const Context&,
+    const EventContext&,
+    const CursorEvent&) override;
+  virtual Metrics GetMetrics(const NextList&, const Context&) const override;
+  virtual void Render(
+    const NextList&,
+    const Context&,
+    ID2D1DeviceContext*,
+    const D2D1_RECT_F&) override;
 
-constexpr unsigned int HeaderPercent = 5;
-constexpr unsigned int FooterPercent = HeaderPercent;
-
-constexpr const char ProjectNameA[] {"@CMAKE_PROJECT_NAME@"};
-constexpr const wchar_t ProjectNameW[] {L"@CMAKE_PROJECT_NAME@"};
-
-constexpr const wchar_t RegistrySubKey[] {
-  L"SOFTWARE\\Fred Emmott\\OpenKneeboard"};
+ private:
+  winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1Brush> mForegroundBrush;
+  std::optional<D2D1_SIZE_F> mLastRenderSize;
+};
 
 }// namespace OpenKneeboard
