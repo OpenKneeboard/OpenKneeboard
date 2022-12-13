@@ -25,7 +25,21 @@
             - double quotes for the whole powershell 'command' arg
         -->
         <CustomAction
-            Id="RemoveMSIX" 
+            Id="RemoveMSIXElevated" 
+            BinaryKey="WixCA" 
+            DllEntry="WixQuietExec64"
+            Execute="deferred" 
+            Return="check" 
+            Impersonate="no"
+        />
+        <SetProperty
+            Id="RemoveMSIXElevated"
+            Before="RemoveMSIXElevated"
+            Value="&quot;[POWERSHELLEXE]&quot; -NonInteractive -NoProfile -ExecutionPolicy bypass -Command &quot;&amp; '[#CM_FP_Installer.installer.RemoveMSIX.ps1]'&quot;"
+            Sequence="execute"
+        />
+        <CustomAction
+            Id="RemoveMSIXImpersonated" 
             BinaryKey="WixCA" 
             DllEntry="WixQuietExec64"
             Execute="deferred" 
@@ -33,8 +47,8 @@
             Impersonate="yes"
         />
         <SetProperty
-            Id="RemoveMSIX"
-            Before="RemoveMSIX"
+            Id="RemoveMSIXImpersonated"
+            Before="RemoveMSIXImpersonated"
             Value="&quot;[POWERSHELLEXE]&quot; -NonInteractive -NoProfile -ExecutionPolicy bypass -Command &quot;&amp; '[#CM_FP_Installer.installer.RemoveMSIX.ps1]'&quot;"
             Sequence="execute"
         />
