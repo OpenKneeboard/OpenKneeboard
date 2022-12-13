@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/LaunchURI.h>
+#include <shellapi.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.System.h>
@@ -45,7 +46,9 @@ winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uriStr) {
     gHandlers.at(scheme)(uriStr);
     co_return;
   }
-  co_await winrt::Windows::System::Launcher::LaunchUriAsync(uri);
+
+  std::wstring uriWstr(winrt::to_hstring(uriStr));
+  ShellExecuteW(NULL, L"open", uriWstr.c_str(), nullptr, nullptr, SW_NORMAL);
 }
 
 }// namespace OpenKneeboard
