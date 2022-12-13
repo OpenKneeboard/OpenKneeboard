@@ -38,7 +38,7 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
   mHeaderUILayer = std::make_unique<HeaderUILayer>(dxr, kneeboard);
-  mFooterUILayer = std::make_unique<FooterUILayer>(dxr);
+  mFooterUILayer = std::make_unique<FooterUILayer>(dxr, kneeboard);
   mTabViewUILayer = std::make_unique<TabViewUILayer>(dxr);
 
   mUILayers = {
@@ -46,6 +46,10 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
     mFooterUILayer.get(),
     mTabViewUILayer.get(),
   };
+
+  for (auto layer: mUILayers) {
+    AddEventListener(layer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  }
 }
 
 std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {

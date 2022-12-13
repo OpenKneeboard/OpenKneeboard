@@ -20,13 +20,15 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/FooterUILayer.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/config.h>
 
 #include <algorithm>
 
 namespace OpenKneeboard {
 
-FooterUILayer::FooterUILayer(const DXResources& dxr) {
+FooterUILayer::FooterUILayer(const DXResources& dxr, KneeboardState* kneeboard)
+  : mDXResources(dxr) {
   auto ctx = dxr.mD2DDeviceContext;
 
   ctx->CreateSolidColorBrush(
@@ -37,10 +39,19 @@ FooterUILayer::FooterUILayer(const DXResources& dxr) {
     {0.0f, 0.0f, 0.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mForegroundBrush.put()));
+
+  AddEventListener(kneeboard->evFrameTimerEvent, [this]() { this->Tick(); });
 }
 
 FooterUILayer::~FooterUILayer() {
   this->RemoveAllEventListeners();
+}
+
+void FooterUILayer::Tick() {
+  const auto now = std::chrono::time_point_cast<Duration>(Clock::now());
+  if (now > mLastRenderAt) {
+    evNeedsRepaintEvent.Emit();
+  }
 }
 
 void FooterUILayer::PostCursorEvent(
@@ -93,6 +104,11 @@ void FooterUILayer::Render(
   const Context& context,
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
+  mLastRenderSize = {
+    rect.right - rect.left,
+    rect.bottom - rect.top,
+  };
+
   const auto tabView = context.mTabView;
 
   const auto metrics = this->GetMetrics(next, context);
@@ -112,17 +128,49 @@ void FooterUILayer::Render(
     rect.bottom,
   };
 
-  mLastRenderSize = {
-    rect.right - rect.left,
-    rect.bottom - rect.top,
-  };
-  d2d->SetTransform(D2D1::Matrix3x2F::Identity());
-  d2d->FillRectangle(footerRect, mBackgroundBrush.get());
   next.front()->Render(
     next.subspan(1),
     context,
     d2d,
     {rect.left, rect.top, rect.right, rect.bottom - footerHeight});
+
+  d2d->SetTransform(D2D1::Matrix3x2F::Identity());
+  d2d->FillRectangle(footerRect, mBackgroundBrush.get());
+
+  FLOAT dpix, dpiy;
+  d2d->GetDpi(&dpix, &dpiy);
+  const auto& dwf = mDXResources.mDWriteFactory;
+  winrt::com_ptr<IDWriteTextFormat> clockFormat;
+  winrt::check_hresult(dwf->CreateTextFormat(
+    L"Consolas",
+    nullptr,
+    DWRITE_FONT_WEIGHT_BOLD,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    (footerHeight * 96) / (2 * dpiy),
+    L"",
+    clockFormat.put()));
+
+  const auto margin = footerHeight / 4;
+
+  winrt::com_ptr<IDWriteTextLayout> clockLayout;
+  const auto now = std::chrono::time_point_cast<Duration>(Clock::now());
+  const auto clock = std::format(
+    L"{:%T}", std::chrono::zoned_time(std::chrono::current_zone(), now));
+  mLastRenderAt = now;
+  winrt::check_hresult(dwf->CreateTextLayout(
+    clock.c_str(),
+    static_cast<UINT32>(clock.size()),
+    clockFormat.get(),
+    float(mLastRenderSize->width - (2 * margin)),
+    float(footerHeight),
+    clockLayout.put()));
+  clockLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
+  clockLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  d2d->DrawTextLayout(
+    {margin, rect.bottom - footerHeight},
+    clockLayout.get(),
+    mForegroundBrush.get());
 }
 
 }// namespace OpenKneeboard

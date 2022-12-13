@@ -23,13 +23,16 @@
 #include <OpenKneeboard/IUILayer.h>
 #include <shims/winrt/base.h>
 
+#include <chrono>
 #include <memory>
 
 namespace OpenKneeboard {
 
+class KneeboardState;
+
 class FooterUILayer final : public IUILayer, private EventReceiver {
  public:
-  FooterUILayer(const DXResources& dxr);
+  FooterUILayer(const DXResources& dxr, KneeboardState*);
   virtual ~FooterUILayer();
 
   virtual void PostCursorEvent(
@@ -45,9 +48,16 @@ class FooterUILayer final : public IUILayer, private EventReceiver {
     const D2D1_RECT_F&) override;
 
  private:
+  void Tick();
+  DXResources mDXResources;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
   winrt::com_ptr<ID2D1Brush> mForegroundBrush;
   std::optional<D2D1_SIZE_F> mLastRenderSize;
+
+  using Clock = std::chrono::system_clock;
+  using Duration = std::chrono::seconds;
+  using TimePoint = std::chrono::time_point<Clock, Duration>;
+  TimePoint mLastRenderAt {};
 };
 
 }// namespace OpenKneeboard
