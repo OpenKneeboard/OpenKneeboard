@@ -43,9 +43,7 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
     const Context&,
     const EventContext&,
     const CursorEvent&) override;
-  virtual CoordinateMapping GetCoordinateMapping(
-    const NextList&,
-    const Context&) const override;
+  virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(
     const NextList&,
     const Context&,

@@ -94,11 +94,10 @@ void HeaderUILayer::PostCursorEvent(
     next.subspan(1), context, eventContext, nextEvent);
 }
 
-IUILayer::CoordinateMapping HeaderUILayer::GetCoordinateMapping(
+IUILayer::Metrics HeaderUILayer::GetMetrics(
   const IUILayer::NextList& next,
   const Context& context) const {
-  const auto nextMapping
-    = next.front()->GetCoordinateMapping(next.subspan(1), context);
+  const auto nextMapping = next.front()->GetMetrics(next.subspan(1), context);
 
   const auto headerHeight
     = nextMapping.mCanvasSize.height * (HeaderPercent / 100.0f);
@@ -124,8 +123,7 @@ void HeaderUILayer::Render(
   const auto tabView = context.mTabView;
 
   const auto totalHeight = rect.bottom - rect.top;
-  const auto preferredSize
-    = this->GetCoordinateMapping(next, context).mCanvasSize;
+  const auto preferredSize = this->GetMetrics(next, context).mCanvasSize;
 
   const constexpr auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
   const auto contentHeight = totalHeight / totalHeightRatio;

@@ -58,15 +58,12 @@ class IUILayer {
     const D2D1_RECT_F&)
     = 0;
 
-  struct CoordinateMapping {
+  struct Metrics {
     D2D1_SIZE_F mCanvasSize {};
     D2D1_RECT_F mContentArea {};
   };
 
-  virtual CoordinateMapping GetCoordinateMapping(
-    const NextList&,
-    const Context&) const
-    = 0;
+  virtual Metrics GetMetrics(const NextList&, const Context&) const = 0;
 
   Event<> evNeedsRepaintEvent;
 };

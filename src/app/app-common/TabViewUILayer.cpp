@@ -51,10 +51,10 @@ void TabViewUILayer::PostCursorEvent(
   mCursorPoint = {tabEvent.mX, tabEvent.mY};
 }
 
-IUILayer::CoordinateMapping TabViewUILayer::GetCoordinateMapping(
+IUILayer::Metrics TabViewUILayer::GetMetrics(
   const IUILayer::NextList&,
   const Context& context) const {
-  const constexpr CoordinateMapping errorMapping {
+  const constexpr Metrics errorMapping {
     {768, 1024},
     {0, 0, 768, 1024},
   };

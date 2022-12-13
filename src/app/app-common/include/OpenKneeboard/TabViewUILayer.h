@@ -39,7 +39,7 @@ class TabViewUILayer final : public IUILayer {
     const Context&,
     const EventContext&,
     const CursorEvent&) override;
-  virtual CoordinateMapping GetCoordinateMapping(
+  virtual Metrics GetMetrics(
     const NextList&,
     const Context&) const override;
   virtual void Render(

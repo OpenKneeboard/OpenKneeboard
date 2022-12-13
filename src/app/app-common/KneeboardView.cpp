@@ -227,7 +227,7 @@ void KneeboardView::UpdateLayout() {
   }
 
   std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
-  const auto mapping = mHeaderUILayer->GetCoordinateMapping(
+  const auto mapping = mHeaderUILayer->GetMetrics(
     nextLayers,
     {
       .mTabView = mCurrentTabView,
@@ -345,7 +345,7 @@ std::optional<D2D1_POINT_2F> KneeboardView::GetCursorContentPoint() const {
 D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   const D2D1_POINT_2F& contentPoint) const {
   std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
-  const auto mapping = mHeaderUILayer->GetCoordinateMapping(
+  const auto mapping = mHeaderUILayer->GetMetrics(
     nextLayers,
     {
       .mTabView = mCurrentTabView,
