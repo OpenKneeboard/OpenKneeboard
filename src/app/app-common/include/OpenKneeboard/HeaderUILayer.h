@@ -43,8 +43,9 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
     const Context&,
     const EventContext&,
     const CursorEvent&) override;
-  virtual D2D1_SIZE_F GetPreferredSize(const NextList&, const Context&)
-    const override;
+  virtual CoordinateMapping GetCoordinateMapping(
+    const NextList&,
+    const Context&) const override;
   virtual void Render(
     const NextList&,
     const Context&,
@@ -60,12 +61,14 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
   void DrawToolbar(
     const Context&,
     ID2D1DeviceContext*,
-    const D2D1_RECT_F& rect,
+    const D2D1_RECT_F& fullRect,
+    const D2D1_RECT_F& headerRect,
     const D2D1_SIZE_F& size);
   void LayoutToolbar(
     const Context&,
-    const D2D1_RECT_F& rect,
-    const D2D1_SIZE_F& size);
+    const D2D1_RECT_F& fullRect,
+    const D2D1_RECT_F& headerRect,
+    const D2D1_SIZE_F& headerSize);
 
   DXResources mDXResources;
   KneeboardState* mKneeboard {nullptr};
@@ -89,6 +92,7 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
     D2D1_RECT_F mRect {};
     std::unique_ptr<CursorClickableRegions<Button>> mButtons;
   };
+  std::optional<D2D1_SIZE_F> mLastRenderSize;
   std::optional<Toolbar> mToolbar;
 };
 

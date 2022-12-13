@@ -50,13 +50,22 @@ class IUILayer {
     const EventContext&,
     const CursorEvent&)
     = 0;
-  virtual D2D1_SIZE_F GetPreferredSize(const NextList&, const Context&) const
-    = 0;
+
   virtual void Render(
     const NextList&,
     const Context&,
     ID2D1DeviceContext*,
     const D2D1_RECT_F&)
+    = 0;
+
+  struct CoordinateMapping {
+    D2D1_SIZE_F mCanvasSize {};
+    D2D1_RECT_F mContentArea {};
+  };
+
+  virtual CoordinateMapping GetCoordinateMapping(
+    const NextList&,
+    const Context&) const
     = 0;
 
   Event<> evNeedsRepaintEvent;

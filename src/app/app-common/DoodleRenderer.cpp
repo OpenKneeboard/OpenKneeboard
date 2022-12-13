@@ -87,9 +87,7 @@ void DoodleRenderer::FlushCursorEvents() {
 
     bool drawing = false;
     for (const auto& event: page.mBufferedEvents) {
-      if (
-        event.mTouchState != CursorTouchState::TOUCHING_SURFACE
-        || event.mPositionState != CursorPositionState::IN_CONTENT_RECT) {
+      if (event.mTouchState != CursorTouchState::TOUCHING_SURFACE) {
         page.mHaveCursor = false;
         continue;
       }

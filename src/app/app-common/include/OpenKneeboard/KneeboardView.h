@@ -26,15 +26,24 @@
 
 namespace OpenKneeboard {
 
-enum class UserAction;
+class CursorRenderer;
 class ITabView;
-struct CursorEvent;
+class IUILayer;
 class KneeboardState;
+class TabViewUILayer;
+enum class UserAction;
+struct CursorEvent;
 
-class KneeboardView final : public IKneeboardView, private EventReceiver {
+class KneeboardView final : public IKneeboardView,
+                            private EventReceiver,
+                            public std::enable_shared_from_this<KneeboardView> {
  public:
-  KneeboardView(const DXResources&, KneeboardState*);
+  KneeboardView() = delete;
   ~KneeboardView();
+
+  [[nodiscard]] static std::shared_ptr<KneeboardView> Create(
+    const DXResources&,
+    KneeboardState*);
 
   virtual KneeboardViewID GetRuntimeID() const override;
 
@@ -56,33 +65,36 @@ class KneeboardView final : public IKneeboardView, private EventReceiver {
   virtual void PreviousPage() override;
 
   virtual const D2D1_SIZE_U& GetCanvasSize() const override;
-  virtual const D2D1_RECT_F& GetHeaderRenderRect() const override;
-  virtual const D2D1_RECT_F& GetContentRenderRect() const override;
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual const D2D1_SIZE_U& GetContentNativeSize() const override;
 
-  virtual bool HaveCursor() const override;
-  virtual D2D1_POINT_2F GetCursorPoint() const override;
-  virtual D2D1_POINT_2F GetCursorCanvasPoint() const override;
+  virtual void RenderWithChrome(
+    ID2D1DeviceContext* d2d,
+    const D2D1_RECT_F& rect,
+    bool isActiveForInput) noexcept override;
+  virtual std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const override;
+  virtual std::optional<D2D1_POINT_2F> GetCursorContentPoint() const override;
   virtual D2D1_POINT_2F GetCursorCanvasPoint(
-    const D2D1_POINT_2F&) const override;
-
+    const D2D1_POINT_2F& contentPoint) const override;
   virtual void PostCursorEvent(const CursorEvent& ev) override;
 
  private:
+  KneeboardView(const DXResources&, KneeboardState*);
   KneeboardViewID mID;
   DXResources mDXR;
   KneeboardState* mKneeboard;
+  EventContext mEventContext;
   std::vector<std::shared_ptr<ITabView>> mTabViews;
   std::shared_ptr<ITabView> mCurrentTabView;
 
   D2D1_SIZE_U mCanvasSize;
   D2D1_SIZE_U mContentNativeSize;
-  D2D1_RECT_F mHeaderRenderRect;
-  D2D1_RECT_F mContentRenderRect;
 
-  bool mHaveCursor = false;
-  D2D1_POINT_2F mCursorPoint;
+  std::optional<D2D1_POINT_2F> mCursorCanvasPoint;
+
+  std::unique_ptr<CursorRenderer> mCursorRenderer;
+  std::unique_ptr<IUILayer> mHeaderUILayer;
+  std::unique_ptr<TabViewUILayer> mTabViewUILayer;
 
   void UpdateLayout();
 };

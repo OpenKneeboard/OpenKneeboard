@@ -101,6 +101,9 @@ void TabPage::InitializePointerSource() {
     mInputPointerSource.PointerMoved({this, &TabPage::OnPointerEvent});
     mInputPointerSource.PointerPressed({this, &TabPage::OnPointerEvent});
     mInputPointerSource.PointerReleased({this, &TabPage::OnPointerEvent});
+    mInputPointerSource.PointerExited([this](const auto&, const auto&) {
+      mKneeboardView->PostCursorEvent({});
+    });
   });
 }
 
@@ -288,8 +291,12 @@ void TabPage::PaintNow() noexcept {
     return;
   }
 
+  auto maybePoint = mKneeboardView->GetCursorContentPoint();
+  if (!maybePoint) {
+    return;
+  }
+  auto point = *maybePoint;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  auto point = mKneeboardView->GetCursorPoint();
   point.x *= metrics.mScale;
   point.y *= metrics.mScale;
   point.x += metrics.mRenderRect.left;
@@ -348,12 +355,6 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   auto x = static_cast<FLOAT>(pp.Position().X);
   auto y = static_cast<FLOAT>(pp.Position().Y);
 
-  auto positionState
-    = (x >= metrics.mRenderRect.left && x <= metrics.mRenderRect.right
-       && y >= metrics.mRenderRect.top && y <= metrics.mRenderRect.bottom)
-    ? CursorPositionState::IN_CONTENT_RECT
-    : CursorPositionState::NOT_IN_CONTENT_RECT;
-
   x -= metrics.mRenderRect.left;
   y -= metrics.mRenderRect.top;
   x /= metrics.mScale;
@@ -364,14 +365,22 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   const bool leftClick = ppp.IsLeftButtonPressed();
   const bool rightClick = ppp.IsRightButtonPressed();
 
+  const auto canvasPoint = mKneeboardView->GetCursorCanvasPoint({x, y});
+
+  if (
+    canvasPoint.x < 0 || canvasPoint.x > 1 || canvasPoint.y < 0
+    || canvasPoint.y > 1) {
+    mKneeboardView->PostCursorEvent({});
+    return;
+  }
+
   mKneeboardView->PostCursorEvent({
     .mSource = CursorSource::WINDOW_POINTER,
-    .mPositionState = positionState,
     .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE
       : CursorTouchState::NEAR_SURFACE,
-    .mX = x,
-    .mY = y,
+    .mX = canvasPoint.x,
+    .mY = canvasPoint.y,
     .mPressure = rightClick ? 0.8f : 0.0f,
     .mButtons = rightClick ? (1ui32 << 1) : 1ui32,
   });

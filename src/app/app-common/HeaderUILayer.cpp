@@ -65,26 +65,55 @@ HeaderUILayer::~HeaderUILayer() {
 }
 
 void HeaderUILayer::PostCursorEvent(
-  const IUILayer::NextList&,
-  const Context&,
+  const IUILayer::NextList& next,
+  const Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
-  if (!mToolbar) {
-    // FIXME: delegate
+  if (!mLastRenderSize) {
+    return;
+  }
+  const auto renderSize = *mLastRenderSize;
+  if (mToolbar) {
+    scope_guard repaintOnExit([this]() { evNeedsRepaintEvent.Emit(); });
+    CursorEvent toolbarEvent {cursorEvent};
+    toolbarEvent.mX *= renderSize.width;
+    toolbarEvent.mY *= renderSize.height;
+    mToolbar->mButtons->PostCursorEvent(eventContext, toolbarEvent);
   }
 
-  scope_guard repaintOnExit([this]() { evNeedsRepaintEvent.Emit(); });
-  mToolbar->mButtons->PostCursorEvent(eventContext, cursorEvent);
+  constexpr auto contentRatio = 1 / (1 + (HeaderPercent / 100.0f));
+  constexpr auto headerRatio = 1 - contentRatio;
+  if (cursorEvent.mY <= headerRatio) {
+    next.front()->PostCursorEvent(next.subspan(1), context, eventContext, {});
+    return;
+  }
+
+  CursorEvent nextEvent {cursorEvent};
+  nextEvent.mY = (cursorEvent.mY - headerRatio) / contentRatio;
+  next.front()->PostCursorEvent(
+    next.subspan(1), context, eventContext, nextEvent);
 }
 
-D2D1_SIZE_F
-HeaderUILayer::GetPreferredSize(
+IUILayer::CoordinateMapping HeaderUILayer::GetCoordinateMapping(
   const IUILayer::NextList& next,
   const Context& context) const {
-  const auto nextSize
-    = next.front()->GetPreferredSize(next.subspan(1), context);
-  const constexpr auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
-  return {nextSize.width, nextSize.height * totalHeightRatio};
+  const auto nextMapping
+    = next.front()->GetCoordinateMapping(next.subspan(1), context);
+
+  const auto headerHeight
+    = nextMapping.mCanvasSize.height * (HeaderPercent / 100.0f);
+  return {
+    {
+      nextMapping.mCanvasSize.width,
+      nextMapping.mCanvasSize.height + headerHeight,
+    },
+    {
+      nextMapping.mContentArea.left,
+      nextMapping.mContentArea.top + headerHeight,
+      nextMapping.mContentArea.right,
+      nextMapping.mContentArea.bottom + headerHeight,
+    },
+  };
 }
 
 void HeaderUILayer::Render(
@@ -95,11 +124,11 @@ void HeaderUILayer::Render(
   const auto tabView = context.mTabView;
 
   const auto totalHeight = rect.bottom - rect.top;
-  const auto preferredSize = this->GetPreferredSize(next, context);
+  const auto preferredSize
+    = this->GetCoordinateMapping(next, context).mCanvasSize;
 
   const constexpr auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
-  const auto contentHeight
-    = totalHeight * (preferredSize.height / totalHeightRatio);
+  const auto contentHeight = totalHeight / totalHeightRatio;
 
   const D2D1_SIZE_F headerSize {
     rect.right - rect.left,
@@ -112,10 +141,14 @@ void HeaderUILayer::Render(
     rect.top + headerSize.height,
   };
 
+  mLastRenderSize = {
+    rect.right - rect.left,
+    rect.bottom - rect.top,
+  };
   d2d->SetTransform(D2D1::Matrix3x2F::Identity());
   d2d->FillRectangle(headerRect, mHeaderBGBrush.get());
   this->DrawHeaderText(tabView, d2d, headerRect, headerSize);
-  this->DrawToolbar(context, d2d, headerRect, headerSize);
+  this->DrawToolbar(context, d2d, rect, headerRect, headerSize);
 
   next.front()->Render(
     next.subspan(1),
@@ -127,12 +160,13 @@ void HeaderUILayer::Render(
 void HeaderUILayer::DrawToolbar(
   const Context& context,
   ID2D1DeviceContext* d2d,
+  const D2D1_RECT_F& fullRect,
   const D2D1_RECT_F& headerRect,
   const D2D1_SIZE_F& headerSize) {
   if (!context.mIsActiveForInput) {
     return;
   }
-  this->LayoutToolbar(context, headerRect, headerSize);
+  this->LayoutToolbar(context, fullRect, headerRect, headerSize);
   if (!mToolbar) {
     return;
   }
@@ -193,13 +227,14 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
 
 void HeaderUILayer::LayoutToolbar(
   const Context& context,
+  const D2D1_RECT_F& fullRect,
   const D2D1_RECT_F& headerRect,
   const D2D1_SIZE_F& headerSize) {
   const auto& tabView = context.mTabView;
 
   if (
     mToolbar && tabView && tabView == mToolbar->mTabView.lock()
-    && mToolbar->mRect == headerRect) {
+    && mToolbar->mRect == fullRect) {
     return;
   }
 
@@ -266,7 +301,7 @@ void HeaderUILayer::LayoutToolbar(
 
   mToolbar = {
     .mTabView = tabView,
-    .mRect = headerRect,
+    .mRect = fullRect,
     .mButtons = std::move(toolbar),
   };
 }
@@ -283,7 +318,7 @@ void HeaderUILayer::DrawHeaderText(
   FLOAT dpix, dpiy;
   ctx->GetDpi(&dpix, &dpiy);
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
-  dwf->CreateTextFormat(
+  winrt::check_hresult(dwf->CreateTextFormat(
     L"Consolas",
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
@@ -291,16 +326,16 @@ void HeaderUILayer::DrawHeaderText(
     DWRITE_FONT_STRETCH_NORMAL,
     (headerSize.height * 96) / (2 * dpiy),
     L"",
-    headerFormat.put());
+    headerFormat.put()));
 
   winrt::com_ptr<IDWriteTextLayout> headerLayout;
-  dwf->CreateTextLayout(
+  winrt::check_hresult(dwf->CreateTextLayout(
     title.data(),
     static_cast<UINT32>(title.size()),
     headerFormat.get(),
     float(headerSize.width),
     float(headerSize.height),
-    headerLayout.put());
+    headerLayout.put()));
   headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 

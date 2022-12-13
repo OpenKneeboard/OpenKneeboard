@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/ITab.h>
@@ -34,29 +35,48 @@ TabViewUILayer::~TabViewUILayer() = default;
 
 void TabViewUILayer::PostCursorEvent(
   const IUILayer::NextList&,
-  const Context&,
+  const Context& context,
   const EventContext&,
-  const CursorEvent&) {
-  // FIXME: delegate
+  const CursorEvent& ev) {
+  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    mCursorPoint.reset();
+    context.mTabView->PostCursorEvent({});
+    return;
+  }
+  const auto size = context.mTabView->GetNativeContentSize();
+  auto tabEvent {ev};
+  tabEvent.mX *= size.width;
+  tabEvent.mY *= size.height;
+  context.mTabView->PostCursorEvent(tabEvent);
+  mCursorPoint = {tabEvent.mX, tabEvent.mY};
 }
 
-D2D1_SIZE_F
-TabViewUILayer::GetPreferredSize(
+IUILayer::CoordinateMapping TabViewUILayer::GetCoordinateMapping(
   const IUILayer::NextList&,
   const Context& context) const {
-  const constexpr D2D1_SIZE_F errorSize {768, 1024};
+  const constexpr CoordinateMapping errorMapping {
+    {768, 1024},
+    {0, 0, 768, 1024},
+  };
   auto tabView = context.mTabView;
   if (!tabView) {
-    return errorSize;
+    return errorMapping;
   }
   const auto nextSize = tabView->GetNativeContentSize();
 
   if (nextSize.width == 0 || nextSize.height == 0) {
-    return errorSize;
+    return errorMapping;
   }
 
+  const D2D1_SIZE_F size {
+    static_cast<FLOAT>(nextSize.width),
+    static_cast<FLOAT>(nextSize.height),
+  };
+
   return {
-    static_cast<FLOAT>(nextSize.width), static_cast<FLOAT>(nextSize.height)};
+    size,
+    {0, 0, size.width, size.height},
+  };
 }
 
 void TabViewUILayer::Render(
@@ -88,6 +108,10 @@ void TabViewUILayer::Render(
   }
 
   tab->RenderPage(d2d, pageIndex, rect);
+}
+
+std::optional<D2D1_POINT_2F> TabViewUILayer::GetCursorPoint() const {
+  return mCursorPoint;
 }
 
 }// namespace OpenKneeboard

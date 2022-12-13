@@ -159,6 +159,9 @@ void TabView::OnTabPageAppended() {
 }
 
 D2D1_SIZE_U TabView::GetNativeContentSize() const {
+  if (GetPageIndex() >= GetPageCount()) {
+    return {768, 1024};
+  }
   return GetTab()->GetNativeContentSize(GetPageIndex());
 }
 

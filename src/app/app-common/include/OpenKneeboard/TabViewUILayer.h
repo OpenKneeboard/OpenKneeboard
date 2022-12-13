@@ -24,6 +24,7 @@
 #include <memory>
 
 namespace OpenKneeboard {
+struct D2DErrorRenderer;
 struct DXResources;
 
 class TabViewUILayer final : public IUILayer {
@@ -31,13 +32,16 @@ class TabViewUILayer final : public IUILayer {
   TabViewUILayer(const DXResources& dxr);
   virtual ~TabViewUILayer();
 
+  std::optional<D2D1_POINT_2F> GetCursorPoint() const;
+
   virtual void PostCursorEvent(
     const NextList&,
     const Context&,
     const EventContext&,
     const CursorEvent&) override;
-  virtual D2D1_SIZE_F GetPreferredSize(const NextList&, const Context&)
-    const override;
+  virtual CoordinateMapping GetCoordinateMapping(
+    const NextList&,
+    const Context&) const override;
   virtual void Render(
     const NextList&,
     const Context&,
@@ -46,6 +50,7 @@ class TabViewUILayer final : public IUILayer {
 
  private:
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+  std::optional<D2D1_POINT_2F> mCursorPoint;
 };
 
 }// namespace OpenKneeboard

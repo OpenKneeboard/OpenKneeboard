@@ -19,8 +19,6 @@
  */
 #pragma once
 
-#include <OpenKneeboard/CursorClickableRegions.h>
-#include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
@@ -82,43 +80,13 @@ class InterprocessRenderer final : private EventReceiver {
   };
   std::array<Layer, MaxLayers> mLayers;
 
-  struct Button {
-    D2D1_RECT_F mRect;
-    std::shared_ptr<TabAction> mAction;
-
-    bool operator==(const Button&) const noexcept;
-  };
-  using Toolbar = CursorClickableRegions<Button>;
-  std::unordered_map<KneeboardViewID, std::shared_ptr<Toolbar>> mToolbars;
-
-  winrt::com_ptr<ID2D1Brush> mErrorBGBrush;
-  winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
-  winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
-  winrt::com_ptr<ID2D1Brush> mButtonBrush;
-  winrt::com_ptr<ID2D1Brush> mDisabledButtonBrush;
-  winrt::com_ptr<ID2D1Brush> mHoverButtonBrush;
-  winrt::com_ptr<ID2D1Brush> mActiveButtonBrush;
-
-  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
-  std::unique_ptr<CursorRenderer> mCursorRenderer;
-
   std::shared_ptr<GameInstance> mCurrentGame;
 
   void RenderNow();
   void Render(Layer&);
-  void RenderError(Layer&, utf8_string_view tabTitle, utf8_string_view message);
-  void RenderErrorImpl(utf8_string_view message, const D2D1_RECT_F&);
-  void RenderWithChrome(
-    Layer&,
-    const std::string_view tabTitle,
-    const D2D1_SIZE_U& preferredContentSize,
-    const std::function<void(const D2D1_RECT_F&)>& contentRenderer);
-  void RenderToolbar(Layer&);
 
   void Commit(uint8_t layerCount);
 
-  void OnLayoutChanged(const std::weak_ptr<IKneeboardView>&);
-  void OnCursorEvent(const std::weak_ptr<IKneeboardView>&, const CursorEvent&);
   void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 };
 

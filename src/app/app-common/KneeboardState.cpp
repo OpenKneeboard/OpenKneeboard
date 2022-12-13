@@ -60,8 +60,8 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   });
 
   mViews = {
-    std::make_shared<KneeboardView>(dxr, this),
-    std::make_shared<KneeboardView>(dxr, this),
+    KneeboardView::Create(dxr, this),
+    KneeboardView::Create(dxr, this),
   };
 
   auto tabs = mTabsList->GetTabs();

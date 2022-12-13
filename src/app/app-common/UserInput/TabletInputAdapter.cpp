@@ -182,8 +182,8 @@ void TabletInputAdapter::ProcessTabletMessage(
         break;
     }
 
-    // Cursor events use content coordinates, but as as the content isn't at
-    // the origin, we need a few transformations:
+    // Cursor events use 0..1 in canvas coordinates, so we need
+    // to adapt for the aspect ratio
 
     // 1. scale to canvas size
     auto canvasSize = view->GetCanvasSize();
@@ -198,35 +198,18 @@ void TabletInputAdapter::ProcessTabletMessage(
     x *= scale;
     y *= scale;
 
-    // 2. translate to content origgin
-
-    const auto contentRenderRect = view->GetContentRenderRect();
-    x -= contentRenderRect.left;
-    y -= contentRenderRect.top;
-
-    // 3. scale to content size;
-    const auto contentNativeSize = view->GetContentNativeSize();
-    const auto contentScale = contentNativeSize.width
-      / (contentRenderRect.right - contentRenderRect.left);
-    x *= contentScale;
-    y *= contentScale;
+    // 2. get back to 0..1
+    x /= canvasSize.width;
+    y /= canvasSize.height;
 
     CursorEvent event {
       .mTouchState = (state.penButtons & 1) ? CursorTouchState::TOUCHING_SURFACE
                                             : CursorTouchState::NEAR_SURFACE,
-      .mX = x,
-      .mY = y,
+      .mX = std::clamp<float>(x, 0, 1),
+      .mY = std::clamp<float>(y, 0, 1),
       .mPressure = static_cast<float>(state.pressure) / tabletLimits.pressure,
       .mButtons = state.penButtons,
     };
-
-    if (
-      x >= 0 && x <= contentNativeSize.width && y >= 0
-      && y <= contentNativeSize.height) {
-      event.mPositionState = CursorPositionState::IN_CONTENT_RECT;
-    } else {
-      event.mPositionState = CursorPositionState::NOT_IN_CONTENT_RECT;
-    }
 
     view->PostCursorEvent(event);
   } else {

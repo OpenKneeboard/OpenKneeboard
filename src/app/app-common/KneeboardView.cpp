@@ -18,10 +18,13 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/CursorRenderer.h>
+#include <OpenKneeboard/HeaderUILayer.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/TabView.h>
+#include <OpenKneeboard/TabViewUILayer.h>
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -32,7 +35,17 @@ namespace OpenKneeboard {
 
 KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
-  UpdateLayout();
+  mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
+  mHeaderUILayer = std::make_unique<HeaderUILayer>(dxr, kneeboard);
+  mTabViewUILayer = std::make_unique<TabViewUILayer>(dxr);
+}
+
+std::shared_ptr<KneeboardView> KneeboardView::Create(
+  const DXResources& dxr,
+  KneeboardState* kneeboard) {
+  auto it = std::shared_ptr<KneeboardView>(new KneeboardView(dxr, kneeboard));
+  it->UpdateLayout();
+  return it;
 }
 
 KneeboardView::~KneeboardView() {
@@ -207,47 +220,33 @@ void KneeboardView::PreviousPage() {
 }
 
 void KneeboardView::UpdateLayout() {
-  const auto totalHeightRatio = 1 + (HeaderPercent / 100.0f);
-
-  mContentNativeSize = {768, 1024};
-  auto tab = GetCurrentTabView();
-  if (tab && tab->GetPageCount() > 0) {
-    mContentNativeSize = tab->GetNativeContentSize();
-  }
-
-  if (mContentNativeSize.width == 0 || mContentNativeSize.height == 0) {
+  if (mCurrentTabView) {
+    mContentNativeSize = mCurrentTabView->GetNativeContentSize();
+  } else {
     mContentNativeSize = {768, 1024};
   }
 
+  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
+  const auto mapping = mHeaderUILayer->GetCoordinateMapping(
+    nextLayers,
+    {
+      .mTabView = mCurrentTabView,
+      .mKneeboardView = std::static_pointer_cast<IKneeboardView>(
+        std::const_pointer_cast<KneeboardView>(this->shared_from_this())),
+      .mIsActiveForInput = true,
+    });
+
+  const auto canvasPreferredSize = mapping.mCanvasSize;
+
   const auto scaleX
-    = static_cast<float>(TextureWidth) / mContentNativeSize.width;
-  const auto scaleY = static_cast<float>(TextureHeight)
-    / (totalHeightRatio * mContentNativeSize.height);
+    = static_cast<float>(TextureWidth) / canvasPreferredSize.width;
+  const auto scaleY
+    = static_cast<float>(TextureHeight) / canvasPreferredSize.height;
   const auto scale = std::min(scaleX, scaleY);
-  const D2D1_SIZE_F contentRenderSize {
-    mContentNativeSize.width * scale,
-    mContentNativeSize.height * scale,
-  };
-  const D2D1_SIZE_F headerRenderSize {
-    static_cast<FLOAT>(contentRenderSize.width),
-    contentRenderSize.height * (HeaderPercent / 100.0f),
-  };
 
   mCanvasSize = {
-    static_cast<UINT>(contentRenderSize.width),
-    static_cast<UINT>(contentRenderSize.height + headerRenderSize.height),
-  };
-  mHeaderRenderRect = {
-    .left = 0,
-    .top = 0,
-    .right = headerRenderSize.width,
-    .bottom = headerRenderSize.height,
-  };
-  mContentRenderRect = {
-    .left = 0,
-    .top = mHeaderRenderRect.bottom,
-    .right = contentRenderSize.width,
-    .bottom = mHeaderRenderRect.bottom + contentRenderSize.height,
+    static_cast<UINT>(std::roundl(canvasPreferredSize.width * scale)),
+    static_cast<UINT>(std::roundl(canvasPreferredSize.height * scale)),
   };
 
   evLayoutChangedEvent.Emit();
@@ -262,23 +261,54 @@ const D2D1_SIZE_U& KneeboardView::GetContentNativeSize() const {
   return mContentNativeSize;
 }
 
-const D2D1_RECT_F& KneeboardView::GetHeaderRenderRect() const {
-  return mHeaderRenderRect;
-}
-
-const D2D1_RECT_F& KneeboardView::GetContentRenderRect() const {
-  return mContentRenderRect;
-}
-
 void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
-  mCursorPoint = {ev.mX, ev.mY};
-  mHaveCursor = ev.mTouchState != CursorTouchState::NOT_NEAR_SURFACE;
-
-  if (mCurrentTabView) {
-    mCurrentTabView->PostCursorEvent(ev);
+  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    mCursorCanvasPoint.reset();
+  } else {
+    mCursorCanvasPoint = {ev.mX, ev.mY};
   }
 
+  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
+  mHeaderUILayer->PostCursorEvent(
+    nextLayers,
+    {
+      .mTabView = mCurrentTabView,
+      .mKneeboardView = this->shared_from_this(),
+      .mIsActiveForInput = true,
+    },
+    mEventContext,
+    ev);
+
   evCursorEvent.Emit(ev);
+}
+
+void KneeboardView::RenderWithChrome(
+  ID2D1DeviceContext* d2d,
+  const D2D1_RECT_F& rect,
+  bool isActiveForInput) noexcept {
+  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
+  mHeaderUILayer->Render(
+    nextLayers,
+    {
+      .mTabView = mCurrentTabView,
+      .mKneeboardView = this->shared_from_this(),
+      .mIsActiveForInput = isActiveForInput,
+    },
+    d2d,
+    rect);
+  if (mCursorCanvasPoint) {
+    const D2D1_SIZE_F size {
+      rect.right - rect.left,
+      rect.bottom - rect.top,
+    };
+    mCursorRenderer->Render(
+      d2d,
+      {
+        mCursorCanvasPoint->x * size.width,
+        mCursorCanvasPoint->y * size.height,
+      },
+      size);
+  }
 }
 
 void KneeboardView::PostUserAction(UserAction action) {
@@ -304,34 +334,37 @@ void KneeboardView::PostUserAction(UserAction action) {
   OPENKNEEBOARD_BREAK;
 }
 
-bool KneeboardView::HaveCursor() const {
-  return mHaveCursor;
+std::optional<D2D1_POINT_2F> KneeboardView::GetCursorCanvasPoint() const {
+  return mCursorCanvasPoint;
 }
 
-D2D1_POINT_2F KneeboardView::GetCursorPoint() const {
-  return mCursorPoint;
-}
-
-D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint() const {
-  return this->GetCursorCanvasPoint(this->GetCursorPoint());
+std::optional<D2D1_POINT_2F> KneeboardView::GetCursorContentPoint() const {
+  return mTabViewUILayer->GetCursorPoint();
 }
 
 D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   const D2D1_POINT_2F& contentPoint) const {
-  const auto contentRect = this->GetContentRenderRect();
-  const D2D1_SIZE_F contentSize = {
-    contentRect.right - contentRect.left,
-    contentRect.bottom - contentRect.top,
-  };
-  const auto contentNativeSize = this->GetContentNativeSize();
-  const auto scale = contentSize.height / contentNativeSize.height;
+  std::array<IUILayer*, 1> nextLayers {mTabViewUILayer.get()};
+  const auto mapping = mHeaderUILayer->GetCoordinateMapping(
+    nextLayers,
+    {
+      .mTabView = mCurrentTabView,
+      .mKneeboardView = std::static_pointer_cast<IKneeboardView>(
+        std::const_pointer_cast<KneeboardView>(this->shared_from_this())),
+      .mIsActiveForInput = true,
+    });
 
-  auto cursorPoint = contentPoint;
-  cursorPoint.x *= scale;
-  cursorPoint.y *= scale;
-  cursorPoint.x += contentRect.left;
-  cursorPoint.y += contentRect.top;
-  return cursorPoint;
+  const auto& contentArea = mapping.mContentArea;
+  const D2D1_SIZE_F contentSize {
+    contentArea.right - contentArea.left,
+    contentArea.bottom - contentArea.top,
+  };
+  const auto& canvasSize = mapping.mCanvasSize;
+
+  return {
+    (contentPoint.x + contentArea.left) / canvasSize.width,
+    (contentPoint.y + contentArea.top) / canvasSize.height,
+  };
 }
 
 }// namespace OpenKneeboard

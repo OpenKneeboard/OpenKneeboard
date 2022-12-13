@@ -34,6 +34,12 @@ struct CursorEvent;
 
 struct KneeboardViewID final : public UniqueIDBase<KneeboardViewID> {};
 
+enum class CursorPositionState {
+  IN_CONTENT_RECT,
+  IN_CANVAS_RECT,
+  NO_CURSOR_POSITION
+};
+
 class IKneeboardView {
  public:
   IKneeboardView();
@@ -55,20 +61,26 @@ class IKneeboardView {
   virtual void PreviousPage() = 0;
 
   virtual const D2D1_SIZE_U& GetCanvasSize() const = 0;
-  virtual const D2D1_RECT_F& GetHeaderRenderRect() const = 0;
-  virtual const D2D1_RECT_F& GetContentRenderRect() const = 0;
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual const D2D1_SIZE_U& GetContentNativeSize() const = 0;
 
   Event<TabIndex> evCurrentTabChangedEvent;
+  // TODO - cursor and repaint?
   Event<> evNeedsRepaintEvent;
-  Event<const CursorEvent&> evCursorEvent;
+  Event<CursorEvent> evCursorEvent;
   Event<> evLayoutChangedEvent;
 
-  virtual bool HaveCursor() const = 0;
-  virtual D2D1_POINT_2F GetCursorPoint() const = 0;
-  virtual D2D1_POINT_2F GetCursorCanvasPoint() const = 0;
-  virtual D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F&) const = 0;
+  virtual void RenderWithChrome(
+    ID2D1DeviceContext* d2d,
+    const D2D1_RECT_F& rect,
+    bool isActiveForInput) noexcept
+    = 0;
+
+  virtual std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const = 0;
+  virtual std::optional<D2D1_POINT_2F> GetCursorContentPoint() const = 0;
+  virtual D2D1_POINT_2F GetCursorCanvasPoint(
+    const D2D1_POINT_2F& contentPoint) const
+    = 0;
 
   virtual void PostCursorEvent(const CursorEvent& ev) = 0;
 };

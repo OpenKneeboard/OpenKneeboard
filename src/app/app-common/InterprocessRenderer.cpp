@@ -73,32 +73,6 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
   }
 }
 
-bool InterprocessRenderer::Button::operator==(
-  const Button& other) const noexcept {
-  return mAction == other.mAction;
-}
-
-void InterprocessRenderer::RenderError(
-  Layer& layer,
-  utf8_string_view tabTitle,
-  utf8_string_view message) {
-  this->RenderWithChrome(
-    layer,
-    tabTitle,
-    {768, 1024},
-    std::bind_front(&InterprocessRenderer::RenderErrorImpl, this, message));
-}
-
-void InterprocessRenderer::RenderErrorImpl(
-  utf8_string_view message,
-  const D2D1_RECT_F& rect) {
-  auto ctx = mDXR.mD2DDeviceContext.get();
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  ctx->FillRectangle(rect, mErrorBGBrush.get());
-
-  mErrorRenderer->Render(ctx, message, rect);
-}
-
 void InterprocessRenderer::Commit(uint8_t layerCount) {
   if (!mSHM) {
     return;
@@ -143,9 +117,6 @@ InterprocessRenderer::InterprocessRenderer(
 
   mDXR = dxr;
   mKneeboard = kneeboard;
-  mErrorRenderer
-    = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
-  mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
 
   dxr.mD3DDevice->GetImmediateContext(mD3DContext.put());
 
@@ -192,37 +163,6 @@ InterprocessRenderer::InterprocessRenderer(
     }
   }
 
-  auto ctx = dxr.mD2DDeviceContext;
-
-  ctx->CreateSolidColorBrush(
-    {0.7f, 0.7f, 0.7f, 0.8f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderBGBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mHeaderTextBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.4f, 0.4f, 0.4f, 0.5f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mDisabledButtonBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mButtonBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.8f, 1.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mHoverButtonBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mActiveButtonBrush.put()));
-
-  ctx->CreateSolidColorBrush(
-    GetSystemColor(COLOR_WINDOW),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mErrorBGBrush.put()));
-
   AddEventListener(
     kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
   AddEventListener(
@@ -234,15 +174,9 @@ InterprocessRenderer::InterprocessRenderer(
     auto view = views.at(i);
     mLayers.at(i).mKneeboardView = view;
 
-    const std::weak_ptr<IKneeboardView> weakView(view);
-    AddEventListener(view->evCursorEvent, [=](const CursorEvent& ev) {
-      this->OnCursorEvent(weakView, ev);
-    });
-    AddEventListener(
-      view->evLayoutChangedEvent, [=]() { this->OnLayoutChanged(weakView); });
     AddEventListener(
       view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
-    this->OnLayoutChanged(weakView);
+    AddEventListener(view->evCursorEvent, [this]() { mNeedsRepaint = true; });
   }
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
@@ -277,297 +211,19 @@ void InterprocessRenderer::Render(Layer& layer) {
   const auto xFitScale = vrc.mMaxWidth / usedSize.width;
   const auto yFitScale = vrc.mMaxHeight / usedSize.height;
   const auto scale = std::min<float>(xFitScale, yFitScale);
+
   layer.mConfig.mVR.mWidth = usedSize.width * scale;
   layer.mConfig.mVR.mHeight = usedSize.height * scale;
 
-  const auto tabView = view->GetCurrentTabView();
-  if (!tabView) {
-    auto msg = _("No Tab");
-    this->RenderError(layer, msg, msg);
-    return;
-  }
-
-  const auto tab = tabView->GetTab();
-
-  if (!tab) {
-    auto msg = _("No Tab");
-    this->RenderError(layer, msg, msg);
-    return;
-  }
-
-  const auto pageIndex = tabView->GetPageIndex();
-
-  const auto title = tab->GetTitle();
-  const auto pageCount = tab->GetPageCount();
-  if (pageCount == 0) {
-    this->RenderError(layer, title, _("No Pages"));
-    return;
-  }
-
-  if (pageIndex >= pageCount) {
-    this->RenderError(layer, title, _("Invalid Page Number"));
-    return;
-  }
-
-  const auto pageSize = tab->GetNativeContentSize(pageIndex);
-  if (pageSize.width == 0 || pageSize.height == 0) {
-    this->RenderError(layer, title, _("Invalid Page Size"));
-    return;
-  }
-
-  this->RenderWithChrome(
-    layer,
-    title,
-    pageSize,
-    std::bind_front(
-      &ITab::RenderPage, tab, mDXR.mD2DDeviceContext.get(), pageIndex));
-}
-
-void InterprocessRenderer::RenderWithChrome(
-  Layer& layer,
-  std::string_view tabTitle,
-  const D2D1_SIZE_U& preferredContentSize,
-  const std::function<void(const D2D1_RECT_F&)>& renderContent) {
-  const auto view = layer.mKneeboardView;
-  const auto contentRect = view->GetContentRenderRect();
-  renderContent(contentRect);
-
-  const auto headerRect = view->GetHeaderRenderRect();
-
-  auto ctx = mDXR.mD2DDeviceContext;
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  ctx->FillRectangle(headerRect, mHeaderBGBrush.get());
-
-  const D2D1_SIZE_F headerSize {
-    headerRect.right - headerRect.left,
-    headerRect.bottom - headerRect.top,
-  };
-
-  FLOAT dpix, dpiy;
-  ctx->GetDpi(&dpix, &dpiy);
-
-  winrt::com_ptr<IDWriteTextFormat> headerFormat;
-  auto dwf = mDXR.mDWriteFactory;
-  dwf->CreateTextFormat(
-    L"Consolas",
-    nullptr,
-    DWRITE_FONT_WEIGHT_BOLD,
-    DWRITE_FONT_STYLE_NORMAL,
-    DWRITE_FONT_STRETCH_NORMAL,
-    (headerSize.height * 96) / (2 * dpiy),
-    L"",
-    headerFormat.put());
-
-  auto title = winrt::to_hstring(tabTitle);
-  winrt::com_ptr<IDWriteTextLayout> headerLayout;
-  dwf->CreateTextLayout(
-    title.data(),
-    static_cast<UINT32>(title.size()),
-    headerFormat.get(),
-    float(headerSize.width),
-    float(headerSize.height),
-    headerLayout.put());
-  headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-  headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-
-  ctx->DrawTextLayout({0.0f, 0.0f}, headerLayout.get(), mHeaderTextBrush.get());
-
-#ifdef DEBUG
-  auto frameText = std::format(L"Frame {}", mSHM.GetNextSequenceNumber());
-  headerFormat = nullptr;
-  dwf->CreateTextFormat(
-    L"Consolas",
-    nullptr,
-    DWRITE_FONT_WEIGHT_NORMAL,
-    DWRITE_FONT_STYLE_NORMAL,
-    DWRITE_FONT_STRETCH_NORMAL,
-    0.67f * (headerSize.height * 96) / (2 * dpiy),
-    L"",
-    headerFormat.put());
-  headerLayout = nullptr;
-  dwf->CreateTextLayout(
-    frameText.data(),
-    static_cast<UINT32>(frameText.size()),
-    headerFormat.get(),
-    float(headerSize.width),
-    float(headerSize.height),
-    headerLayout.put());
-  headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-  headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
-  ctx->DrawTextLayout({0.0f, 0.0f}, headerLayout.get(), mHeaderTextBrush.get());
-#endif
-
-  auto cursorPoint = view->GetCursorCanvasPoint();
-
-  this->RenderToolbar(layer);
-
-  if (!view->HaveCursor()) {
-    return;
-  }
-
-  const D2D1_SIZE_F contentSize = {
-    contentRect.right - contentRect.left,
-    contentRect.bottom - contentRect.top,
-  };
-
-  mCursorRenderer->Render(ctx.get(), cursorPoint, contentSize);
-}
-
-void InterprocessRenderer::RenderToolbar(Layer& layer) {
-  if (!layer.mIsActiveForInput) {
-    return;
-  }
-
-  const auto view = layer.mKneeboardView;
-  const auto toolbar = mToolbars[view->GetRuntimeID()];
-  if (!toolbar) {
-    return;
-  }
-
-  const auto [hoverButton, buttons] = toolbar->GetState();
-  if (buttons.empty()) {
-    return;
-  }
-
-  const auto cursor = view->GetCursorCanvasPoint();
-  const auto ctx = mDXR.mD2DDeviceContext;
-
-  const auto buttonHeight
-    = buttons.front().mRect.bottom - buttons.front().mRect.top;
-  const auto strokeWidth = buttonHeight / 15;
-
-  FLOAT dpix, dpiy;
-  ctx->GetDpi(&dpix, &dpiy);
-  winrt::com_ptr<IDWriteTextFormat> glyphFormat;
-  winrt::check_hresult(mDXR.mDWriteFactory->CreateTextFormat(
-    L"Segoe MDL2 Assets",
-    nullptr,
-    DWRITE_FONT_WEIGHT_EXTRA_BOLD,
-    DWRITE_FONT_STYLE_NORMAL,
-    DWRITE_FONT_STRETCH_NORMAL,
-    (buttonHeight * 96) * 0.66f / dpiy,
-    L"en-us",
-    glyphFormat.put()));
-  glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
-  glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
-
-  for (auto button: buttons) {
-    auto& action = button.mAction;
-    ID2D1Brush* brush = mButtonBrush.get();
-    if (!action->IsEnabled()) {
-      brush = mDisabledButtonBrush.get();
-    } else if (hoverButton == button) {
-      brush = mHoverButtonBrush.get();
-    } else {
-      auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
-      if (toggle && toggle->IsActive()) {
-        brush = mActiveButtonBrush.get();
-      }
-    }
-
-    ctx->DrawRoundedRectangle(
-      D2D1::RoundedRect(button.mRect, buttonHeight / 4, buttonHeight / 4),
-      brush,
-      strokeWidth);
-    auto glyph = winrt::to_hstring(action->GetGlyph());
-    ctx->DrawTextW(
-      glyph.c_str(), glyph.size(), glyphFormat.get(), button.mRect, brush);
-  }
-}
-
-void InterprocessRenderer::OnCursorEvent(
-  const std::weak_ptr<IKneeboardView>& weakView,
-  const CursorEvent& ev) {
-  const auto view = weakView.lock();
-  if (!view) {
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-
-  auto toolbar = mToolbars[view->GetRuntimeID()];
-  if (!toolbar) {
-    return;
-  }
-  scope_guard repaintOnExit([this]() { mNeedsRepaint = true; });
-
-  const auto cursor = view->GetCursorCanvasPoint({ev.mX, ev.mY});
-  CursorEvent canvasEvent {ev};
-  canvasEvent.mX = cursor.x;
-  canvasEvent.mY = cursor.y;
-  toolbar->PostCursorEvent(mEventContext, canvasEvent);
-}
-
-void InterprocessRenderer::OnLayoutChanged(
-  const std::weak_ptr<IKneeboardView>& weakView) {
-  const auto view = weakView.lock();
-  if (!view) {
-    OPENKNEEBOARD_BREAK;
-    return;
-  }
-
-  auto tab = view->GetCurrentTabView();
-  if (!tab) {
-    return;
-  }
-
-  auto allActions = CreateTabActions(mKneeboard, view, tab);
-  std::vector<std::shared_ptr<TabAction>> actions;
-
-  std::ranges::copy_if(
-    allActions, std::back_inserter(actions), [](const auto& action) {
-      return action->GetVisibility(TabAction::Context::InGameToolbar)
-        == TabAction::Visibility::Primary;
-    });
-  std::ranges::copy_if(
-    allActions | std::ranges::views::reverse,
-    std::back_inserter(actions),
-    [](const auto& action) {
-      return action->GetVisibility(TabAction::Context::InGameToolbar)
-        == TabAction::Visibility::Secondary;
-    });
-  allActions.clear();
-
-  std::vector<Button> buttons;
-
-  const auto header = view->GetHeaderRenderRect();
-  const auto headerHeight = (header.bottom - header.top);
-  const auto buttonHeight = headerHeight * 0.75f;
-  const auto margin = (headerHeight - buttonHeight) / 2.0f;
-
-  auto primaryLeft = 2 * margin;
-  auto secondaryRight = header.right - primaryLeft;
-
-  for (const auto& action: actions) {
-    const auto visibility
-      = action->GetVisibility(TabAction::Context::InGameToolbar);
-    if (visibility == TabAction::Visibility::None) [[unlikely]] {
-      throw std::logic_error("Should not have been copied to actions local");
-    }
-
-    AddEventListener(
-      action->evStateChangedEvent, [this]() { mNeedsRepaint = true; });
-
-    D2D1_RECT_F button {
-      .top = margin,
-      .bottom = margin + buttonHeight,
-    };
-    if (visibility == TabAction::Visibility::Primary) {
-      button.left = primaryLeft;
-      button.right = primaryLeft + buttonHeight,
-      primaryLeft = button.right + margin;
-    } else {
-      button.right = secondaryRight;
-      button.left = secondaryRight - buttonHeight;
-      secondaryRight = button.left - margin;
-    }
-    buttons.push_back({button, action});
-  }
-
-  auto toolbar = std::make_shared<Toolbar>(buttons);
-  AddEventListener(toolbar->evClicked, [](auto, const Button& button) {
-    button.mAction->Execute();
-  });
-  mToolbars[view->GetRuntimeID()] = toolbar;
+  view->RenderWithChrome(
+    ctx.get(),
+    {
+      0,
+      0,
+      static_cast<FLOAT>(usedSize.width),
+      static_cast<FLOAT>(usedSize.height),
+    },
+    layer.mIsActiveForInput);
 }
 
 void InterprocessRenderer::RenderNow() {
