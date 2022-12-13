@@ -154,10 +154,12 @@ void FooterUILayer::Render(
   const auto margin = footerHeight / 4;
 
   winrt::com_ptr<IDWriteTextLayout> clockLayout;
-  const auto now = std::chrono::time_point_cast<Duration>(Clock::now());
+  const auto now
+    = std::chrono::time_point_cast<Duration>(std::chrono::system_clock::now());
   const auto clock = std::format(
     L"{:%T}", std::chrono::zoned_time(std::chrono::current_zone(), now));
-  mLastRenderAt = now;
+  mLastRenderAt = std::chrono::time_point_cast<Duration>(Clock::now());
+
   winrt::check_hresult(dwf->CreateTextLayout(
     clock.c_str(),
     static_cast<UINT32>(clock.size()),

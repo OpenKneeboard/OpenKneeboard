@@ -54,7 +54,9 @@ class FooterUILayer final : public IUILayer, private EventReceiver {
   winrt::com_ptr<ID2D1Brush> mForegroundBrush;
   std::optional<D2D1_SIZE_F> mLastRenderSize;
 
-  using Clock = std::chrono::system_clock;
+  // Using steady_clock because it's much more efficient; only use
+  // system_clock for display.
+  using Clock = std::chrono::steady_clock;
   using Duration = std::chrono::seconds;
   using TimePoint = std::chrono::time_point<Clock, Duration>;
   TimePoint mLastRenderAt {};
