@@ -1,4 +1,4 @@
-add_library(
+ok_add_library(
   OpenKneeboard-games
   STATIC
   DCSWorld.cpp

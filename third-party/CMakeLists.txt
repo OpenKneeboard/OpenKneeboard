@@ -30,3 +30,4 @@ include(zlib.cmake)
 
 include(libzip.cmake)
 include(qpdf.cmake)
+include(windowsappsdk.cmake)

@@ -2,10 +2,13 @@
 add_compile_options(
   "/Zc:__cplusplus"
   "/utf-8"
+
   # All warnings as errors
   "/WX"
+
   # Lots of legacy C functions are unsafe, and raise warnings in third-party code
   "/wd4996"
+
   # Informational 'warning' describing how diamond inheritance works
   "/wd4250"
 )
@@ -22,9 +25,9 @@ add_compile_definitions(
 
 # Always link this so we never accidentally use the SDK version
 link_libraries(ThirdParty::CppWinRT)
-
 set(GITHUB_REF_TYPE "" CACHE STRING "For GitHub Actions: 'tag' or 'branch'")
 set(GITHUB_REF_NAME "" CACHE STRING "For GitHub Actions: the name of the branch or tag being built")
+
 if(GITHUB_REF_TYPE STREQUAL "tag")
   set(DEFAULT_RELEASE_NAME "${GITHUB_REF_NAME}")
 else()
@@ -65,10 +68,36 @@ function(add_version_rc TARGET ORIGINAL_FILENAME)
   target_sources("${TARGET}" PRIVATE "${VERSION_RC_FILE}")
 endfunction()
 
-function(add_module_library TARGET)
-  add_library(${TARGET} MODULE ${ARGN})
-  add_version_rc(${TARGET} ${TARGET}.dll)
+function(ok_postprocess_target TARGET)
+  get_target_property(ALIAS "${TARGET}" ALIASED_TARGET)
+
+  if(ALIAS)
+    return()
+  endif()
+
+  get_target_property(TARGET_TYPE "${TARGET}" TYPE)
+
+  if(NOT TARGET_TYPE MATCHES "^(EXECUTABLE|(SHARED|MODULE)_LIBRARY)$")
+    return()
+  endif()
+
+  add_version_rc(${TARGET} "${TARGET}.dll")
   sign_target(${TARGET})
+  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
+endfunction()
+
+function(ok_add_library TARGET)
+  add_library("${TARGET}" ${ARGN})
+  ok_postprocess_target("${TARGET}")
+endfunction()
+
+function(ok_add_executable TARGET)
+  add_executable("${TARGET}" ${ARGN})
+  ok_postprocess_target("${TARGET}")
+endfunction()
+
+function(add_module_library TARGET)
+  ok_add_library(${TARGET} MODULE ${ARGN})
 endfunction()
 
 add_subdirectory(lib)

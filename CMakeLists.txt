@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.23)
 
 # Required for ID3D11On12Device2
-set(MINIMUM_WINDOWS_VERSION "10.0.19041.0")
-set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}")
-
+# set(MINIMUM_WINDOWS_VERSION "10.0.19041.0")
+# Required for GraphicsCaptureItem.TryCreateFromWindowId
+set(MINIMUM_WINDOWS_VERSION "10.0.20348.0")
+set(CMAKE_SYSTEM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum Windows Version" FORCE)
+set(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION "${MINIMUM_WINDOWS_VERSION}" CACHE INTERNAL "Minimum windows version" FORCE)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -18,6 +20,7 @@ set(
 )
 
 add_compile_options(
+
   # Standard C++ exception behavior
   "/EHsc"
 )
@@ -38,6 +41,7 @@ set(
   CMAKE_MSVC_RUNTIME_LIBRARY
   "MultiThreaded$<$<CONFIG:Debug>:Debug>"
 )
+
 # For backwards-compat with third-party projects that don't have CMP0091 set
 set(
   MSVC_RUNTIME_LIBRARY_COMPILE_OPTION
@@ -57,8 +61,15 @@ else()
   # upgrade logic
   set(VERSION_BUILD 0)
 endif()
+
+message(STATUS "1 ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+message(STATUS "2 ${CMAKE_SYSTEM_VERSION}")
 project(com.fredemmott.openkneeboard VERSION 1.3.0.${VERSION_BUILD} LANGUAGES CXX C)
+message(STATUS "3 ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
+message(STATUS "4 ${CMAKE_SYSTEM_VERSION}")
+
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
+
 # Handy for CI
 file(WRITE "${CMAKE_BINARY_DIR}/version.txt" "${CMAKE_PROJECT_VERSION}")
 
@@ -74,23 +85,27 @@ message(STATUS "MSVC: ${MSVC}")
 message(STATUS "CLANG_CL: ${CLANG_CL}")
 
 set(COMMON_COMPILE_OPTIONS)
+
 if(MSVC AND NOT CLANG_CL)
   list(
     APPEND COMMON_COMPILE_OPTIONS
+
     # Standards-compliant C++20 coroutines
     "/await:strict"
+
     # Synchronous writes to PDB files in case building with parallel CL.exe
     "/FS"
+
     # Include content and marker in error messages
     "/diagnostics:caret"
   )
 endif()
+
 add_compile_options(${COMMON_COMPILE_OPTIONS})
 
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
 
 include(sign_target.cmake)
-
 
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props"

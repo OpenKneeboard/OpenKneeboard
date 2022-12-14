@@ -1,5 +1,5 @@
 file(GLOB_RECURSE APP_COMMON_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
-add_library(OpenKneeboard-App-Common STATIC ${APP_COMMON_SOURCES})
+ok_add_library(OpenKneeboard-App-Common STATIC ${APP_COMMON_SOURCES})
 target_compile_definitions(
 	OpenKneeboard-App-Common
 	PUBLIC
@@ -43,6 +43,8 @@ target_link_libraries(
 	ThirdParty::OpenVR
 	ThirdParty::WMM
 )
+target_link_windows_app_sdk(OpenKneeboard-App-Common)
+
 target_include_directories(
 	OpenKneeboard-App-Common
 	PUBLIC
@@ -54,4 +56,4 @@ target_include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/PageSource/include
 )
 
-add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)
+ok_add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)

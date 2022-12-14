@@ -1,22 +1,22 @@
-add_library(detours-ext STATIC detours-ext.cpp)
+ok_add_library(detours-ext STATIC detours-ext.cpp)
 target_link_libraries(detours-ext PUBLIC detours OpenKneeboard-dprint)
 
-add_library(OpenKneeboard-DllLoadWatcher STATIC DllLoadWatcher.cpp)
+ok_add_library(OpenKneeboard-DllLoadWatcher STATIC DllLoadWatcher.cpp)
 target_link_libraries(
   OpenKneeboard-DllLoadWatcher
   PRIVATE
   detours-ext
   OpenKneeboard-dprint)
 
-add_library(OpenKneeboard-function-patterns STATIC function-patterns.cpp)
+ok_add_library(OpenKneeboard-function-patterns STATIC function-patterns.cpp)
 target_link_libraries(
   OpenKneeboard-function-patterns
   PRIVATE
   OpenKneeboard-dprint)
 
-add_library(OpenKneeboard-FindMainWindow STATIC FindMainWindow.cpp)
+ok_add_library(OpenKneeboard-FindMainWindow STATIC FindMainWindow.cpp)
 
-add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
+ok_add_library(dxgi-hooks STATIC dxgi-offsets.c IDXGISwapChainPresentHook.cpp)
 target_link_libraries(
   dxgi-hooks
   PRIVATE
@@ -25,12 +25,12 @@ target_link_libraries(
   OpenKneeboard-function-patterns
   OpenKneeboard-FindMainWindow)
 
-add_library(d3d12-hooks STATIC d3d12-offsets.c ID3D12CommandQueueExecuteCommandListsHook.cpp)
+ok_add_library(d3d12-hooks STATIC d3d12-offsets.c ID3D12CommandQueueExecuteCommandListsHook.cpp)
 target_link_libraries(d3d12-hooks PRIVATE detours-ext OpenKneeboard-dprint System::D3d12)
 
-add_library(OpenKneeboard-ScopedRWX STATIC ScopedRWX.cpp)
+ok_add_library(OpenKneeboard-ScopedRWX STATIC ScopedRWX.cpp)
 
-add_library(
+ok_add_library(
   oculus-hooks
   STATIC
   OculusEndFrameHook.cpp
@@ -50,7 +50,7 @@ target_link_libraries(
   oculus-sdk-headers
 )
 
-add_library(openvr-hooks STATIC IVRCompositorWaitGetPosesHook.cpp)
+ok_add_library(openvr-hooks STATIC IVRCompositorWaitGetPosesHook.cpp)
 target_link_libraries(
   openvr-hooks
   PUBLIC

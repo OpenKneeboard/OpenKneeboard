@@ -7,13 +7,14 @@ ExternalProject_Add(
 
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
-    "<SOURCE_DIR>/bin/cppwinrt.exe"
-    -in "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}"
-    -output "<BINARY_DIR>/include"
+  "<SOURCE_DIR>/bin/cppwinrt.exe"
+  -in "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}"
+  -output "<BINARY_DIR>/include"
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
 )
+message(STATUS "Windows target version: ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 
 ExternalProject_Get_property(CppWinRTNuget SOURCE_DIR)
 ExternalProject_Get_property(CppWinRTNuget BINARY_DIR)

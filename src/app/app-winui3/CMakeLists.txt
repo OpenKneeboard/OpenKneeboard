@@ -1,11 +1,3 @@
-set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/version.rc")
-create_version_rc(
-  OpenKneeboard-App-WinUI3_version-rc
-  OpenKneeboard-App-WinUI3
-  OpenKneeboardApp.exe
-  ${VERSION_RC_FILE}
-)
-
 set(
   CMAKE_CXX_STANDARD_LIBRARIES
 
@@ -13,10 +5,10 @@ set(
   "%(AdditionalDependencies)"
 )
 
-add_executable(
+ok_add_executable(
   OpenKneeboard-App-WinUI3
   WIN32
-  Resource.rc ${VERSION_RC_FILE} app.manifest
+  Resource.rc app.manifest
   HelpPage.idl HelpPage.xaml HelpPage.xaml.cpp HelpPage.xaml.h
   AdvancedSettingsPage.idl AdvancedSettingsPage.xaml AdvancedSettingsPage.xaml.cpp AdvancedSettingsPage.xaml.h
   App.idl App.xaml App.xaml.cpp App.xaml.h
@@ -111,7 +103,6 @@ set_property(
   TARGET OpenKneeboard-App-WinUI3
   PROPERTY OUTPUT_NAME OpenKneeboardApp # .exe
 )
-sign_target(OpenKneeboard-App-WinUI3)
 
 install(
   DIRECTORY
@@ -122,12 +113,6 @@ install(
   TYPE BIN
   PATTERN "*.pdb" EXCLUDE
   PATTERN "*.lib" EXCLUDE
-)
-install(
-  FILES
-  "$<TARGET_PDB_FILE:OpenKneeboard-App-WinUI3>"
-  DESTINATION "."
-  COMPONENT DebugSymbols
 )
 
 set_property(

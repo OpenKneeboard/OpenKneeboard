@@ -5,18 +5,12 @@ configure_file(
   COPYONLY
 )
 
-set_property(
-  TARGET OpenKneeboard-App-WinUI3
-  PROPERTY VS_PACKAGE_REFERENCES
-  "Microsoft.Windows.CppWinRT_2.0.220912.1"
-  "Microsoft.WindowsAppSDK_1.1.4"
-  "Microsoft.Windows.SDK.BuildTools_10.0.22621.1"
-  "Microsoft.Windows.ImplementationLibrary_1.0.220201.1"
-)
+target_link_windows_app_sdk(OpenKneeboard-App-WinUI3)
 
 set_target_properties(
   OpenKneeboard-App-WinUI3
   PROPERTIES
+
   # ----- C++/WinRT, Windows App SDK, and WinUI stuff starts here -----
   VS_GLOBAL_RootNamespace OpenKneeboardApp
   VS_GLOBAL_AppContainerApplication false
@@ -30,7 +24,7 @@ set_target_properties(
   VS_GLOBAL_WindowsTargetPlatformMinVersion ${MINIMUM_WINDOWS_VERSION}
   VS_GLOBAL_WindowsPackageType None
   VS_GLOBAL_EnablePreviewMsixTooling true
-  VS_GLOBAL_WindowsAppSDKSelfContained true 
+  VS_GLOBAL_WindowsAppSDKSelfContained true
   VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnNoMatch_ShowUI true
   VS_GLOBAL_WindowsAppSDKBootstrapAutoInitializeOptions_OnPackageIdentity_NoOp true
 )
@@ -41,15 +35,19 @@ set_target_properties(
 # Without this, `module.g.cpp` will not include the necessary headers
 # for non-Xaml IDL files, e.g. value converters
 get_target_property(SOURCES OpenKneeboard-App-WinUI3 SOURCES)
+
 foreach(SOURCE ${SOURCES})
   cmake_path(GET SOURCE EXTENSION LAST_ONLY EXTENSION)
+
   if(NOT "${EXTENSION}" STREQUAL ".idl")
     continue()
   endif()
+
   set(IDL_SOURCE "${SOURCE}")
 
   cmake_path(REMOVE_EXTENSION SOURCE LAST_ONLY OUTPUT_VARIABLE BASENAME)
   set(XAML_SOURCE "${BASENAME}.xaml")
+
   if("${XAML_SOURCE}" IN_LIST SOURCES)
     set_property(
       SOURCE "${IDL_SOURCE}"

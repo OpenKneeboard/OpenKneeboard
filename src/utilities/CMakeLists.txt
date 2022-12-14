@@ -1,22 +1,16 @@
 include(GNUInstallDirs)
 
 function(add_helper_executable TARGET)
-  add_executable(${TARGET} ${ARGN})
-  add_version_rc(${TARGET} ${TARGET}.exe)
-  sign_target(${TARGET})
+  ok_add_executable(${TARGET} ${ARGN})
   install(TARGETS "${TARGET}")
-  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endfunction()
 
 function(add_utility_executable TARGET)
-  add_executable(${TARGET} ${ARGN})
-  add_version_rc(${TARGET} ${TARGET}.exe)
-  sign_target(${TARGET})
+  ok_add_executable(${TARGET} ${ARGN})
   install(TARGETS "${TARGET}" DESTINATION "utilities")
-  install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endfunction()
 
-add_executable(test-gameevent-feeder test-gameevent-feeder.cpp)
+ok_add_executable(test-gameevent-feeder test-gameevent-feeder.cpp)
 target_link_libraries(
   test-gameevent-feeder
   OpenKneeboard-GameEvent
@@ -24,7 +18,7 @@ target_link_libraries(
   OpenKneeboard-games
 )
 
-add_executable(test-feeder test-feeder.cpp)
+ok_add_executable(test-feeder test-feeder.cpp)
 target_link_libraries(
   test-feeder
   OpenKneeboard-config
@@ -85,7 +79,7 @@ target_link_libraries(
   System::Dxgi
 )
 
-add_executable(fake-dcs fake-dcs.cpp)
+ok_add_executable(fake-dcs fake-dcs.cpp)
 target_link_libraries(fake-dcs OpenKneeboard-games OpenKneeboard-GameEvent)
 
 # Mostly to workaround Huion driver limitations, but maybe also useful for
