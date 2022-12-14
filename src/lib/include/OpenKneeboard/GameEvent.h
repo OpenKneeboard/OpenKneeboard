@@ -54,23 +54,34 @@ struct GameEvent final {
 
   static const char* GetMailslotPath();
 
+  /// String name of OpenKneeboard::UserAction enum member
   static constexpr std::string_view EVT_REMOTE_USER_ACTION
     = "com.fredemmott.openkneeboard/RemoteUserAction";
 
+  /// String KneeboardViewID
   static constexpr std::string_view EVT_SET_INPUT_FOCUS
     = "com.fredemmott.openkneeboard/SetInputFocus";
 
+  /// struct SetTabByIDEvent
   static constexpr std::string_view EVT_SET_TAB_BY_ID
     = "com.fredemmott.openkneeboard/SetTabByID";
+  /// struct SetTabByNameEvent
   static constexpr std::string_view EVT_SET_TAB_BY_NAME
     = "com.fredemmott.openkneeboard/SetTabByName";
+  /// struct SetTabByIndexEvent
   static constexpr std::string_view EVT_SET_TAB_BY_INDEX
     = "com.fredemmott.openkneeboard/SetTabByIndex";
 
+  /// struct SetProfileByIDEvent
   static constexpr std::string_view EVT_SET_PROFILE_BY_ID
     = "com.fredemmott.openkneeboard/SetProfileByID";
+  /// struct SetProfileByNameEvent
   static constexpr std::string_view EVT_SET_PROFILE_BY_NAME
     = "com.fredemmott.openkneeboard/SetProfileByName";
+
+  /// JSON: "[ [name, value], [name, value], ... ]"
+  static constexpr std::string_view EVT_MULTI_EVENT
+    = "com.fredemmott.openkneeboard/MultiEvent";
 };
 
 struct BaseSetTabEvent {

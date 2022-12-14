@@ -20,6 +20,7 @@
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/json.h>
 #include <Windows.h>
 
 #include <thread>
@@ -64,7 +65,17 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
       continue;
     }
 
-    evGameEvent.Emit(GameEvent::Unserialize(buffer));
+    auto event = GameEvent::Unserialize(buffer);
+    if (event.name != GameEvent::EVT_MULTI_EVENT) {
+      evGameEvent.Emit(event);
+      continue;
+    }
+
+    std::vector<std::tuple<std::string, std::string>> events;
+    events = nlohmann::json::parse(event.value);
+    for (const auto& [name, value]: events) {
+      evGameEvent.Emit({name, value});
+    }
   }
 
   co_return;

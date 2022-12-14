@@ -25,7 +25,7 @@ l("Init")
 
 package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath
 l("Loading DLL - search path: "..package.cpath)
-local status, ret = pcall(require, "OpenKneeboardDCSExt")
+local status, ext = pcall(require, "OpenKneeboardDCSExt")
 if status then
   l("DLL Loaded")
 else
@@ -33,7 +33,22 @@ else
   return
 end
 
-OpenKneeboard = ret
+local OpenKneeboard = ext;
+OpenKneeboard.EventPrefix = "com.fredemmott.openkneeboard.dcsext/"
+function OpenKneeboard.send(name, value)
+  OpenKneeboard.sendRaw(OpenKneeboard.EventPrefix..name, value)
+end
+function OpenKneeboard.sendMulti(events)
+  local prefixed = {}
+  for k,event in ipairs(events) do
+    local name, value = unpack(event)
+    table.insert(prefixed, { OpenKneeboard.EventPrefix..name, value })
+  end
+  OpenKneeboard.sendRaw(
+    "com.fredemmott.openkneeboard/MultiEvent",
+    net.lua2json(prefixed)
+  )
+end
 
 local callbacks = {}
 
@@ -80,25 +95,28 @@ function updateGeo()
 end
 
 function sendState()
-  OpenKneeboard.send("InstallPath", lfs.currentdir());
-  OpenKneeboard.send("SavedGamesPath", lfs.writedir());
+  -- Batch up and use sendMulti to reduce the amount of IPC operations
+  local events = {
+    {"InstallPath", lfs.currentdir()},
+    {"SavedGamesPath", lfs.writedir()},
+  } 
   if state.aircraft then
-    OpenKneeboard.send("Aircraft", state.aircraft)
+    events[#events+1] = {"Aircraft", state.aircraft}
   end
   if state.terrain then
-    OpenKneeboard.send("Terrain", state.terrain)
+    events[#events+1] = {"Terrain", state.terrain}
   end
   if (state.selfData) then
-    OpenKneeboard.send("SelfData", net.lua2json(state.selfData))
+    events[#events+1] =  {"SelfData", net.lua2json(state.selfData)}
   end
   if state.bullseye then
-    OpenKneeboard.send("Bullseye", net.lua2json(state.bullseye))
+    events[#events+1] = {"Bullseye", net.lua2json(state.bullseye)}
   end
   if state.origin then
-    OpenKneeboard.send("Origin", net.lua2json(state.origin))
+    events[#events+1] = {"Origin", net.lua2json(state.origin)}
   end
   if state.mission then
-    OpenKneeboard.send("Mission", state.mission)
+    events[#events+1] = {"Mission", state.mission}
 
     local startTime = Export.LoGetMissionStartTime()
     local secondsSinceStart = DCS.getModelTime()
@@ -109,8 +127,10 @@ function sendState()
       currentTime = startTime + secondsSinceStart,
       utcOffset = state.utcOffset,
     }
-    OpenKneeboard.send("MissionTime", net.lua2json(missionTime))
+    events[#events+1] = {"MissionTime", net.lua2json(missionTime)}
   end
+
+  OpenKneeboard.sendMulti(events)
 end
 
 --[[

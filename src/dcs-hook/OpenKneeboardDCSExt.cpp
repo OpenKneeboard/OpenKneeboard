@@ -51,10 +51,8 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  auto ge = OpenKneeboard::GameEvent {
-    std::format(
-      "com.fredemmott.openkneeboard.dcsext/{}", lua_tostring(state, 1)),
-    lua_tostring(state, 2)};
+  auto ge
+    = OpenKneeboard::GameEvent {lua_tostring(state, 1), lua_tostring(state, 2)};
   ge.Send();
 
   return 0;
@@ -67,6 +65,6 @@ extern "C" int __declspec(dllexport)
   });
   lua_createtable(state, 0, 1);
   lua_pushcfunction(state, &SendToOpenKneeboard);
-  lua_setfield(state, -2, "send");
+  lua_setfield(state, -2, "sendRaw");
   return 1;
 }
