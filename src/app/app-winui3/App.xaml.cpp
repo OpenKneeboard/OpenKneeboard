@@ -154,9 +154,11 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
 
   window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
     [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
+      auto uiThread = winrt::apartment_context {};
       auto xamlRoot = window.Content().XamlRoot();
       const auto updateResult
         = co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
+      co_await uiThread;
       if (updateResult == UpdateResult::InstallingUpdate) {
         co_return;
       }
