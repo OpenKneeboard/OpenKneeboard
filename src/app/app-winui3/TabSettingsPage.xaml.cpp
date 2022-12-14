@@ -67,6 +67,16 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
 
+  auto tabTypes = AddTabFlyout().Items();
+#define IT(label, name) \
+  MenuFlyoutItem name##Item; \
+  name##Item.Text(to_hstring(label)); \
+  name##Item.Tag(box_value<uint64_t>(TABTYPE_IDX_##name)); \
+  name##Item.Click({this, &TabSettingsPage::CreateTab}); \
+  tabTypes.Append(name##Item);
+  OPENKNEEBOARD_TAB_TYPES
+#undef IT
+
   AddEventListener(
     gKneeboard->GetTabsList()->evTabsChangedEvent,
     weak_wrap(
@@ -87,16 +97,6 @@ IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
     tabs.Append(CreateTabUIData(tab));
   }
   tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
-
-  auto tabTypes = AddTabFlyout().Items();
-#define IT(label, name) \
-  MenuFlyoutItem name##Item; \
-  name##Item.Text(to_hstring(label)); \
-  name##Item.Tag(box_value<uint64_t>(TABTYPE_IDX_##name)); \
-  name##Item.Click({this, &TabSettingsPage::CreateTab}); \
-  tabTypes.Append(name##Item);
-  OPENKNEEBOARD_TAB_TYPES
-#undef IT
   return tabs;
 }
 
