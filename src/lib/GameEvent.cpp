@@ -25,6 +25,7 @@
 #include <shims/winrt/base.h>
 
 #include <charconv>
+#include <chrono>
 #include <string_view>
 
 static uint32_t hex_to_ui32(const std::string_view& sv) {
@@ -40,17 +41,27 @@ static uint32_t hex_to_ui32(const std::string_view& sv) {
 static winrt::file_handle gMailslotHandle;
 
 static bool OpenMailslotHandle() {
-  if (!gMailslotHandle) {
-    gMailslotHandle = {CreateFileA(
-      OpenKneeboard::GameEvent::GetMailslotPath(),
-      GENERIC_WRITE,
-      FILE_SHARE_READ,
-      nullptr,
-      OPEN_EXISTING,
-      0,
-      NULL)};
+  if (gMailslotHandle) {
+    return true;
   }
-  return (bool)gMailslotHandle;
+
+  static std::chrono::steady_clock::time_point sLastAttempt {};
+  const auto now = std::chrono::steady_clock::now();
+  if (now - sLastAttempt < std::chrono::seconds(1)) {
+    return false;
+  }
+  sLastAttempt = now;
+
+  gMailslotHandle = {CreateFileA(
+    OpenKneeboard::GameEvent::GetMailslotPath(),
+    GENERIC_WRITE,
+    FILE_SHARE_READ,
+    nullptr,
+    OPEN_EXISTING,
+    0,
+    NULL)};
+
+  return static_cast<bool>(gMailslotHandle);
 }
 
 namespace OpenKneeboard {
