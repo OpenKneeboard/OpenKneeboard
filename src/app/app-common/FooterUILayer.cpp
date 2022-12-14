@@ -186,8 +186,17 @@ void FooterUILayer::Render(
   // Mission time
   if (mMissionTime) {
     const auto missionTime = std::chrono::utc_seconds(*mMissionTime);
-    drawClock(
-      std::format(L"{:%T}", missionTime), DWRITE_TEXT_ALIGNMENT_LEADING);
+    if (mUTCOffset) {
+      const auto zuluTime = missionTime - *mUTCOffset;
+      // Don't use a dash to separate local from zulu - easy to misread
+      // as an offset
+      drawClock(
+        std::format(L"{:%T} ({:%T}Z)", missionTime, zuluTime),
+        DWRITE_TEXT_ALIGNMENT_LEADING);
+    } else {
+      drawClock(
+        std::format(L"{:%T}", missionTime), DWRITE_TEXT_ALIGNMENT_LEADING);
+    }
   }
 
   // Real time
@@ -214,6 +223,7 @@ void FooterUILayer::OnGameEvent(const GameEvent& ev) {
 
     if ((!mMissionTime) || mMissionTime != currentTime) {
       mMissionTime = currentTime;
+      mUTCOffset = std::chrono::hours(times.utcOffset);
       evNeedsRepaintEvent.Emit();
     }
     return;

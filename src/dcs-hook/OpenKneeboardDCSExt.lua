@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ]]--
+local Terrain = require('terrain')
+
 function l(msg)
   log.write("OpenKneeboard", log.INFO, msg)
 end
@@ -42,6 +44,7 @@ state = {
   selfData = nil,
   bullseye = nil,
   origin = nil,
+  utcOffset = nil,
 }
 
 function updateGeo()
@@ -104,6 +107,7 @@ function sendState()
       startTime = startTime,
       secondsSinceStart = secondsSinceStart,
       currentTime = startTime + secondsSinceStart,
+      utcOffset = state.utcOffset,
     }
     OpenKneeboard.send("MissionTime", net.lua2json(missionTime))
   end
@@ -166,6 +170,7 @@ function callbacks.onMissionLoadBegin()
   local mission = DCS.getCurrentMission()
   if mission and mission.mission and mission.mission.theatre then
     state.terrain = mission.mission.theatre
+    state.utcOffset = Terrain.GetTerrainConfig('SummerTimeDelta')
     l("Terrain: "..state.terrain)
   end
   state.selfData = Export.LoGetSelfData()

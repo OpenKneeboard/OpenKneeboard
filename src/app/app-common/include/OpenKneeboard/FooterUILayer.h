@@ -61,6 +61,7 @@ class FooterUILayer final : public IUILayer, private EventReceiver {
 
   DWORD mCurrentGamePID {};
   std::optional<std::chrono::seconds> mMissionTime;
+  std::optional<std::chrono::seconds> mUTCOffset;
 
   // Using steady_clock because it's much more efficient; only use
   // system_clock for display.

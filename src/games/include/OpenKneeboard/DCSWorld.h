@@ -86,6 +86,7 @@ class DCSWorld final : public OpenKneeboard::Game {
     int64_t startTime {};
     float secondsSinceStart {};
     float currentTime {};
+    int64_t utcOffset {};
   };
 
   enum class MessageType {
@@ -117,7 +118,8 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
   DCSWorld::MissionTimeEvent,
   startTime,
   secondsSinceStart,
-  currentTime)
+  currentTime,
+  utcOffset)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
   DCSWorld::MessageEvent,
   message,
