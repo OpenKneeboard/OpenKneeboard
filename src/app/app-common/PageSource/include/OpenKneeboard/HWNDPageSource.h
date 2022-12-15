@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
+#include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Graphics.Capture.h>
 
@@ -29,7 +30,9 @@ namespace OpenKneeboard {
 
 class KneeboardState;
 
-class HWNDPageSource final : public virtual IPageSource, public EventReceiver {
+class HWNDPageSource final : public virtual IPageSource,
+                             public IPageSourceWithCursorEvents,
+                             public EventReceiver {
  public:
   HWNDPageSource() = delete;
   HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
@@ -43,10 +46,14 @@ class HWNDPageSource final : public virtual IPageSource, public EventReceiver {
     PageIndex pageIndex,
     const D2D1_RECT_F& rect) final override;
 
+  virtual void
+  PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex) final;
+
  private:
   void OnFrame();
 
   DXResources mDXR;
+  HWND mWindow {};
 
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
     nullptr};

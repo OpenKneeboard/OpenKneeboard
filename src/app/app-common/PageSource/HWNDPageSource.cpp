@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -37,7 +38,7 @@ HWNDPageSource::HWNDPageSource(
   const DXResources& dxr,
   KneeboardState* kneeboard,
   HWND window)
-  : mDXR(dxr) {
+  : mDXR(dxr), mWindow(window) {
   if (!window) {
     return;
   }
@@ -86,7 +87,7 @@ PageIndex HWNDPageSource::GetPageCount() const {
   return 0;
 }
 
-D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageIndex index) {
+D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageIndex) {
   std::unique_lock lock(mTextureMutex);
   if (!mTexture) {
     return {};
@@ -157,6 +158,32 @@ void HWNDPageSource::OnFrame() {
     static_cast<UINT>(contentSize.Height)};
   ctx->CopyResource(mTexture.get(), d3dSurface.get());
   mNeedsRepaint = true;
+}
+
+void HWNDPageSource::PostCursorEvent(
+  EventContext,
+  const CursorEvent& ev,
+  PageIndex) {
+  if (!mTexture) {
+    return;
+  }
+
+  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    // TODO: WM_MOUSELEAVE
+    return;
+  }
+
+  WPARAM wParam {};
+  if (ev.mButtons & 1) {
+    wParam |= MK_LBUTTON;
+  }
+  if (ev.mButtons & (1 << 1)) {
+    wParam |= MK_RBUTTON;
+  }
+  // Should already be scaled to native content size
+  LPARAM lParam = MAKELPARAM(ev.mX, ev.mY);
+
+  PostMessage(mWindow, WM_MOUSEMOVE, wParam, lParam);
 }
 
 }// namespace OpenKneeboard
