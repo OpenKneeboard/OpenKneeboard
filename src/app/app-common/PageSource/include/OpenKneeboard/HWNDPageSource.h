@@ -20,16 +20,19 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Graphics.Capture.h>
 
 namespace OpenKneeboard {
 
-class HWNDPageSource final : public virtual IPageSource {
+class KneeboardState;
+
+class HWNDPageSource final : public virtual IPageSource, public EventReceiver {
  public:
   HWNDPageSource() = delete;
-  HWNDPageSource(const DXResources&, HWND window);
+  HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
   virtual ~HWNDPageSource();
 
   virtual PageIndex GetPageCount() const final override;
@@ -43,6 +46,8 @@ class HWNDPageSource final : public virtual IPageSource {
  private:
   void OnFrame();
 
+  winrt::apartment_context mUIThread;
+
   DXResources mDXR;
 
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
@@ -54,6 +59,7 @@ class HWNDPageSource final : public virtual IPageSource {
   D2D1_SIZE_U mContentSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID2D1Bitmap1> mBitmap;
+  bool mNeedsRepaint {true};
 };
 
 }// namespace OpenKneeboard

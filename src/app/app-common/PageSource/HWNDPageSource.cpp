@@ -18,6 +18,8 @@
  * USA.
  */
 #include <OpenKneeboard/HWNDPageSource.h>
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 #include <winrt/Windows.Foundation.h>
@@ -31,7 +33,10 @@ namespace WGDX = winrt::Windows::Graphics::DirectX;
 
 namespace OpenKneeboard {
 
-HWNDPageSource::HWNDPageSource(const DXResources& dxr, HWND window)
+HWNDPageSource::HWNDPageSource(
+  const DXResources& dxr,
+  KneeboardState* kneeboard,
+  HWND window)
   : mDXR(dxr) {
   if (!window) {
     return;
@@ -58,8 +63,13 @@ HWNDPageSource::HWNDPageSource(const DXResources& dxr, HWND window)
 
   mCaptureSession = mFramePool.CreateCaptureSession(item);
   mCaptureSession.IsCursorCaptureEnabled(false);
-  mCaptureSession.IsCursorCaptureEnabled(false);
   mCaptureSession.StartCapture();
+
+  AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
+    if (mNeedsRepaint) {
+      evContentChangedEvent.Emit(ContentChangeType::Modified);
+    }
+  });
 }
 
 HWNDPageSource::~HWNDPageSource() {
@@ -104,6 +114,7 @@ void HWNDPageSource::RenderPage(
       static_cast<FLOAT>(mContentSize.width),
       static_cast<FLOAT>(mContentSize.height),
     });
+  mNeedsRepaint = false;
 }
 
 void HWNDPageSource::OnFrame() {
@@ -145,7 +156,7 @@ void HWNDPageSource::OnFrame() {
     static_cast<UINT>(contentSize.Width),
     static_cast<UINT>(contentSize.Height)};
   ctx->CopyResource(mTexture.get(), d3dSurface.get());
-  evNeedsRepaintEvent.Emit();
+  mNeedsRepaint = true;
 }
 
 }// namespace OpenKneeboard

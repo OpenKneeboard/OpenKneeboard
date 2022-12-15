@@ -82,7 +82,7 @@ WindowCaptureTab::WindowCaptureTab(
     return;
   }
 
-  mPageSource = std::make_shared<HWNDPageSource>(dxr, hwnd);
+  mPageSource = std::make_shared<HWNDPageSource>(dxr, kbs, hwnd);
   this->SetDelegates({mPageSource});
 }
 
