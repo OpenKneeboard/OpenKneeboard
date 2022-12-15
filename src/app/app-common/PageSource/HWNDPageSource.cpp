@@ -20,6 +20,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
@@ -34,6 +35,9 @@ namespace WGDX = winrt::Windows::Graphics::DirectX;
 
 namespace OpenKneeboard {
 
+static std::unordered_map<HWND, HWNDPageSource*> gInstances;
+static unique_hhook gHook;
+
 HWNDPageSource::HWNDPageSource(
   const DXResources& dxr,
   KneeboardState* kneeboard,
@@ -45,6 +49,7 @@ HWNDPageSource::HWNDPageSource(
   if (!WGC::GraphicsCaptureSession::IsSupported()) {
     return;
   }
+
   auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
   auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
   WGC::GraphicsCaptureItem item {nullptr};
@@ -168,10 +173,8 @@ void HWNDPageSource::PostCursorEvent(
     return;
   }
 
-  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
-    // TODO: WM_MOUSELEAVE
-    return;
-  }
+  const auto target
+    = ChildWindowFromPoint(mWindow, {std::lround(ev.mX), std::lround(ev.mY)});
 
   WPARAM wParam {};
   if (ev.mButtons & 1) {
@@ -183,7 +186,44 @@ void HWNDPageSource::PostCursorEvent(
   // Should already be scaled to native content size
   LPARAM lParam = MAKELPARAM(ev.mX, ev.mY);
 
-  PostMessage(mWindow, WM_MOUSEMOVE, wParam, lParam);
+  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    if (mMouseButtons & 1) {
+      PostMessage(mWindow, WM_LBUTTONUP, wParam, lParam);
+    }
+    if (mMouseButtons & (1 << 1)) {
+      PostMessage(mWindow, WM_RBUTTONUP, wParam, lParam);
+    }
+    mMouseButtons = {};
+    PostMessage(mWindow, WM_MOUSELEAVE, 0, 0);
+    return;
+  }
+
+  // We only pay attention to buttons (1) and (1 << 1)
+  const auto buttons = ev.mButtons & 3;
+  // if (buttons == mMouseButtons) {
+  SendMessage(target, WM_MOUSEMOVE, wParam, lParam);
+  return;
+  //}
+
+  const scope_guard restoreFgWindow(
+    [window = GetForegroundWindow()]() { SetForegroundWindow(window); });
+
+  const auto down = (ev.mButtons & ~mMouseButtons);
+  const auto up = (mMouseButtons & ~ev.mButtons);
+  mMouseButtons = buttons;
+
+  if (down & 1) {
+    SendMessage(mWindow, WM_LBUTTONDOWN, wParam, lParam);
+  }
+  if (down & (1 << 1)) {
+    SendMessage(mWindow, WM_RBUTTONDOWN, wParam, lParam);
+  }
+  if (up & 1) {
+    SendMessage(mWindow, WM_LBUTTONUP, wParam, lParam);
+  }
+  if (up & (1 << 1)) {
+    SendMessage(mWindow, WM_RBUTTONUP, wParam, lParam);
+  }
 }
 
 }// namespace OpenKneeboard

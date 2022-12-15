@@ -70,6 +70,8 @@ using unique_co_task_ptr = std::unique_ptr<T, CPtrDeleter<T, &CoTaskMemFree>>;
 
 using unique_hwineventhook = std::
   unique_ptr<HWINEVENTHOOK, CHandleDeleter<HWINEVENTHOOK, &UnhookWinEvent>>;
+using unique_hhook
+  = std::unique_ptr<HHOOK, CHandleDeleter<HHOOK, &UnhookWindowsHookEx>>;
 using unique_hmodule
   = std::unique_ptr<HMODULE, CHandleDeleter<HMODULE, &FreeLibrary>>;
 
