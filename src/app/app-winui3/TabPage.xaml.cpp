@@ -389,6 +389,14 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     return;
   }
 
+  uint32_t buttons = 0;
+  if (leftClick) {
+    buttons |= 1;
+  }
+  if (rightClick) {
+    buttons |= (1 << 1);
+  }
+
   mKneeboardView->PostCursorEvent({
     .mSource = CursorSource::WINDOW_POINTER,
     .mTouchState = (leftClick || rightClick)
@@ -397,7 +405,7 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     .mX = canvasPoint.x,
     .mY = canvasPoint.y,
     .mPressure = rightClick ? 0.8f : 0.0f,
-    .mButtons = rightClick ? (1ui32 << 1) : 1ui32,
+    .mButtons = buttons,
   });
 }
 
