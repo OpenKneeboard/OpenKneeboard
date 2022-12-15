@@ -65,7 +65,7 @@ HWNDPageSource::HWNDPageSource(
   mCaptureSession.IsCursorCaptureEnabled(false);
   mCaptureSession.StartCapture();
 
-  AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
+  AddEventListener(kneeboard->evFrameTimerPrepareEvent, [this]() {
     if (mNeedsRepaint) {
       evContentChangedEvent.Emit(ContentChangeType::Modified);
     }

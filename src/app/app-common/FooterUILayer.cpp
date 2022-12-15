@@ -32,7 +32,8 @@ namespace OpenKneeboard {
 FooterUILayer::FooterUILayer(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXResources(dxr) {
   AddEventListener(
-    kneeboard->evFrameTimerEvent, std::bind_front(&FooterUILayer::Tick, this));
+    kneeboard->evFrameTimerPrepareEvent,
+    std::bind_front(&FooterUILayer::Tick, this));
   AddEventListener(
     kneeboard->evGameEvent, std::bind_front(&FooterUILayer::OnGameEvent, this));
   AddEventListener(

@@ -103,7 +103,10 @@ MainWindow::MainWindow() {
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
   mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
   mFrameTimer.Interval(std::chrono::milliseconds(1000 / 60));
-  mFrameTimer.Tick([=](auto&, auto&) { gKneeboard->evFrameTimerEvent.Emit(); });
+  mFrameTimer.Tick([=](auto&, auto&) {
+    gKneeboard->evFrameTimerPrepareEvent.Emit();
+    gKneeboard->evFrameTimerEvent.Emit();
+  });
   mFrameTimer.Start();
 
   auto settings = gKneeboard->GetAppSettings();

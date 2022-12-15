@@ -70,6 +70,7 @@ class KneeboardState final : private EventReceiver {
   std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 
+  Event<> evFrameTimerPrepareEvent;
   Event<> evFrameTimerEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evSettingsChangedEvent;
