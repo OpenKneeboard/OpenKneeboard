@@ -46,8 +46,6 @@ class HWNDPageSource final : public virtual IPageSource, public EventReceiver {
  private:
   void OnFrame();
 
-  winrt::apartment_context mUIThread;
-
   DXResources mDXR;
 
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
