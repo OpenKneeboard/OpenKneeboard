@@ -26,6 +26,7 @@
 #include <OpenKneeboard/DCSTerrainTab.h>
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/SingleFileTab.h>
+#include <OpenKneeboard/WindowCaptureTab.h>
 #include <shims/winrt/base.h>
 
 #include <concepts>
@@ -33,6 +34,7 @@
 #define OPENKNEEBOARD_TAB_TYPES \
   IT(_("Files (one per tab)"), SingleFile) \
   IT(_("Folder"), Folder) \
+  IT(_("Window Capture"), WindowCapture) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Briefing"), DCSBriefing) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \

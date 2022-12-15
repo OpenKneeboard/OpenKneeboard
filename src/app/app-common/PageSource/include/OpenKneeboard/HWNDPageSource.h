@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <shims/winrt/base.h>
+#include <winrt/Windows.Graphics.Capture.h>
 
 namespace OpenKneeboard {
 
@@ -40,9 +41,19 @@ class HWNDPageSource final : public virtual IPageSource {
     const D2D1_RECT_F& rect) final override;
 
  private:
+  void OnFrame();
+
   DXResources mDXR;
 
-  std::mutex mMutex;
+  winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
+    nullptr};
+  winrt::Windows::Graphics::Capture::GraphicsCaptureSession mCaptureSession {
+    nullptr};
+
+  std::mutex mTextureMutex;
+  D2D1_SIZE_U mContentSize {};
+  winrt::com_ptr<ID3D11Texture2D> mTexture;
+  winrt::com_ptr<ID2D1Bitmap1> mBitmap;
 };
 
 }// namespace OpenKneeboard
