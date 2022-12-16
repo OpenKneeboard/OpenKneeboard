@@ -25,18 +25,27 @@
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Graphics.Capture.h>
+#include <winrt/Windows.System.h>
+
+#include <memory>
 
 namespace OpenKneeboard {
 
 class KneeboardState;
 
-class HWNDPageSource final : public virtual IPageSource,
-                             public IPageSourceWithCursorEvents,
-                             public EventReceiver {
+class HWNDPageSource final
+  : public virtual IPageSource,
+    public IPageSourceWithCursorEvents,
+    public EventReceiver,
+    public std::enable_shared_from_this<HWNDPageSource> {
  public:
-  HWNDPageSource() = delete;
-  HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
+  static std::shared_ptr<HWNDPageSource>
+  Create(const DXResources&, KneeboardState*, HWND window) noexcept;
+
   virtual ~HWNDPageSource();
+  static winrt::fire_and_forget final_release(std::unique_ptr<HWNDPageSource>);
+
+  bool HaveWindow() const;
 
   virtual PageIndex GetPageCount() const final override;
   virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) final override;
@@ -52,6 +61,9 @@ class HWNDPageSource final : public virtual IPageSource,
   Event<> evWindowClosedEvent;
 
  private:
+  HWNDPageSource() = delete;
+  HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
+  void InitializeOnWorkerThread() noexcept;
   void OnFrame() noexcept;
 
   DXResources mDXR;
@@ -61,6 +73,9 @@ class HWNDPageSource final : public virtual IPageSource,
     nullptr};
   winrt::Windows::Graphics::Capture::GraphicsCaptureSession mCaptureSession {
     nullptr};
+  winrt::Windows::Graphics::Capture::GraphicsCaptureItem mCaptureItem {nullptr};
+
+  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
 
   D2D1_SIZE_U mContentSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;

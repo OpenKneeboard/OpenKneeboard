@@ -20,6 +20,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.Graphics.Capture.Interop.h>
@@ -38,6 +39,48 @@ namespace OpenKneeboard {
 static std::unordered_map<HWND, HWNDPageSource*> gInstances;
 static unique_hhook gHook;
 
+std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
+  const DXResources& dxr,
+  KneeboardState* kneeboard,
+  HWND window) noexcept {
+  static_assert(with_final_release<HWNDPageSource>);
+  auto ret
+    = shared_with_final_release(new HWNDPageSource(dxr, kneeboard, window));
+  if (ret->HaveWindow()) {
+    return ret;
+  }
+  return nullptr;
+}
+void HWNDPageSource::InitializeOnWorkerThread() noexcept {
+  auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
+  auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
+  WGC::GraphicsCaptureItem item {nullptr};
+  winrt::check_hresult(interopFactory->CreateForWindow(
+    mWindow, winrt::guid_of<WGC::GraphicsCaptureItem>(), winrt::put_abi(item)));
+
+  winrt::com_ptr<IInspectable> inspectable {nullptr};
+  WGDX::Direct3D11::IDirect3DDevice winrtD3D {nullptr};
+  winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
+
+    mDXR.mDXGIDevice.get(),
+    reinterpret_cast<IInspectable**>(winrt::put_abi(winrtD3D))));
+
+  mFramePool = WGC::Direct3D11CaptureFramePool::Create(
+    winrtD3D, WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 2, item.Size());
+  mFramePool.FrameArrived(
+    [this](const auto&, const auto&) { this->OnFrame(); });
+
+  mCaptureSession = mFramePool.CreateCaptureSession(item);
+  mCaptureSession.IsCursorCaptureEnabled(false);
+  mCaptureSession.StartCapture();
+
+  mCaptureItem = item;
+  mCaptureItem.Closed([this](auto&, auto&) {
+    this->mWindow = {};
+    this->evWindowClosedEvent.Emit();
+  });
+}
+
 HWNDPageSource::HWNDPageSource(
   const DXResources& dxr,
   KneeboardState* kneeboard,
@@ -50,50 +93,45 @@ HWNDPageSource::HWNDPageSource(
     return;
   }
 
-  auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
-  auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
-  WGC::GraphicsCaptureItem item {nullptr};
-  winrt::check_hresult(interopFactory->CreateForWindow(
-    window, winrt::guid_of<WGC::GraphicsCaptureItem>(), winrt::put_abi(item)));
-
-  winrt::com_ptr<IInspectable> inspectable {nullptr};
-  WGDX::Direct3D11::IDirect3DDevice winrtD3D {nullptr};
-  winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
-    dxr.mDXGIDevice.get(),
-    reinterpret_cast<IInspectable**>(winrt::put_abi(winrtD3D))));
-
-  mFramePool = WGC::Direct3D11CaptureFramePool::CreateFreeThreaded(
-    winrtD3D, WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 2, item.Size());
-  mFramePool.FrameArrived(
-    [this](const auto&, const auto&) { this->OnFrame(); });
-
-  mCaptureSession = mFramePool.CreateCaptureSession(item);
-  mCaptureSession.IsCursorCaptureEnabled(false);
-  mCaptureSession.StartCapture();
-
   AddEventListener(kneeboard->evFrameTimerPrepareEvent, [this]() {
     if (mNeedsRepaint) {
       evContentChangedEvent.Emit(ContentChangeType::Modified);
     }
   });
+
+  mDQC = winrt::Windows::System::DispatcherQueueController::
+    CreateOnDedicatedThread();
+  mDQC.DispatcherQueue().TryEnqueue(
+    [this]() { this->InitializeOnWorkerThread(); });
 }
 
-HWNDPageSource::~HWNDPageSource() {
-  if (mCaptureSession) {
-    mCaptureSession.Close();
-    mFramePool.Close();
+bool HWNDPageSource::HaveWindow() const {
+  return static_cast<bool>(mWindow);
+}
+
+// Destruction is handled in final_release instead
+HWNDPageSource::~HWNDPageSource() = default;
+
+winrt::fire_and_forget HWNDPageSource::final_release(
+  std::unique_ptr<HWNDPageSource> p) {
+  if (p->mCaptureSession) {
+    p->mCaptureSession.Close();
+    p->mFramePool.Close();
+  }
+  if (p->mDQC) {
+    co_await p->mDQC.ShutdownQueueAsync();
   }
 }
 
 PageIndex HWNDPageSource::GetPageCount() const {
-  if (mFramePool) {
+  if (this->HaveWindow()) {
     return 1;
   }
   return 0;
 }
 
 D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageIndex) {
-  if (!mTexture) {
+  if (!mBitmap) {
     return {};
   }
   return {mContentSize.width, mContentSize.height};
@@ -104,6 +142,9 @@ void HWNDPageSource::RenderPage(
   PageIndex index,
   const D2D1_RECT_F& rect) {
   if (!mBitmap) {
+    return;
+  }
+  if (!this->HaveWindow()) {
     return;
   }
 

@@ -83,14 +83,14 @@ TabPage::TabPage() {
   });
 }
 
-TabPage::~TabPage() {
-  this->RemoveAllEventListeners();
-}
+TabPage::~TabPage() = default;
 
 winrt::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
-  co_await instance->mDQC.ShutdownQueueAsync();
   instance->RemoveAllEventListeners();
+  co_await instance->mDQC.ShutdownQueueAsync();
+  std::scoped_lock lock(instance->mSwapChainMutex);
+  instance->mSwapChain = {nullptr};
 }
 
 void TabPage::InitializePointerSource() {

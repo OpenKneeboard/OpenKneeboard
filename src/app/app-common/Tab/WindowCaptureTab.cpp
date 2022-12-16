@@ -110,8 +110,8 @@ winrt::fire_and_forget WindowCaptureTab::TryToStartCapture() {
     }
 
     co_await mUIThread;
-    auto source = std::make_shared<HWNDPageSource>(mDXR, mKneeboard, hwnd);
-    if (source->GetPageCount() == 0) {
+    auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd);
+    if (!(source && source->GetPageCount() > 0)) {
       continue;
     }
     this->SetDelegates({source});
