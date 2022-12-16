@@ -49,8 +49,10 @@ class HWNDPageSource final : public virtual IPageSource,
   virtual void
   PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex) final;
 
+  Event<> evWindowClosedEvent;
+
  private:
-  void OnFrame();
+  void OnFrame() noexcept;
 
   DXResources mDXR;
   HWND mWindow {};
@@ -60,7 +62,6 @@ class HWNDPageSource final : public virtual IPageSource,
   winrt::Windows::Graphics::Capture::GraphicsCaptureSession mCaptureSession {
     nullptr};
 
-  std::mutex mTextureMutex;
   D2D1_SIZE_U mContentSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID2D1Bitmap1> mBitmap;

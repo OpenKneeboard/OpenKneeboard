@@ -73,7 +73,13 @@ class WindowCaptureTab final : public TabBase,
     const winrt::guid& persistentID,
     utf8_string_view title,
     const MatchSpecification&);
+  winrt::fire_and_forget TryToStartCapture();
 
+  winrt::fire_and_forget OnWindowClosed();
+
+  winrt::apartment_context mUIThread;
+  DXResources mDXR;
+  KneeboardState* mKneeboard {nullptr};
   MatchSpecification mSpec;
 };
 

@@ -111,4 +111,17 @@ DXResources DXResources::Create() {
   return ret;
 }
 
+DXResources::Lock::Lock(const winrt::com_ptr<ID2D1Multithread>& impl)
+  : mImpl(impl) {
+  mImpl->Enter();
+}
+
+DXResources::Lock::~Lock() {
+  mImpl->Leave();
+}
+
+DXResources::Lock DXResources::AcquireD2DLockout() const {
+  return {mD2DFactory.as<ID2D1Multithread>()};
+}
+
 };// namespace OpenKneeboard

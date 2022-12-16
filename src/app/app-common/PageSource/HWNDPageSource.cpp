@@ -93,7 +93,6 @@ PageIndex HWNDPageSource::GetPageCount() const {
 }
 
 D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageIndex) {
-  std::unique_lock lock(mTextureMutex);
   if (!mTexture) {
     return {};
   }
@@ -104,7 +103,6 @@ void HWNDPageSource::RenderPage(
   ID2D1DeviceContext* ctx,
   PageIndex index,
   const D2D1_RECT_F& rect) {
-  std::unique_lock lock(mTextureMutex);
   if (!mBitmap) {
     return;
   }
@@ -123,7 +121,7 @@ void HWNDPageSource::RenderPage(
   mNeedsRepaint = false;
 }
 
-void HWNDPageSource::OnFrame() {
+void HWNDPageSource::OnFrame() noexcept {
   auto frame = mFramePool.TryGetNextFrame();
   if (!frame) {
     return;
@@ -142,7 +140,6 @@ void HWNDPageSource::OnFrame() {
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 
-  std::unique_lock lock(mTextureMutex);
   if (mTexture) {
     D3D11_TEXTURE2D_DESC desc {};
     mTexture->GetDesc(&desc);
@@ -161,6 +158,7 @@ void HWNDPageSource::OnFrame() {
   mContentSize = {
     static_cast<UINT>(contentSize.Width),
     static_cast<UINT>(contentSize.Height)};
+  auto lock = mDXR.AcquireD2DLockout();
   ctx->CopyResource(mTexture.get(), d3dSurface.get());
   mNeedsRepaint = true;
 }

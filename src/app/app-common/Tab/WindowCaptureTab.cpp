@@ -63,7 +63,14 @@ WindowCaptureTab::WindowCaptureTab(
   const MatchSpecification& spec)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
+    mDXR(dxr),
+    mKneeboard(kbs),
     mSpec(spec) {
+  this->TryToStartCapture();
+}
+
+winrt::fire_and_forget WindowCaptureTab::TryToStartCapture() {
+  co_await winrt::resume_background();
   const HWND desktop = GetDesktopWindow();
   HWND hwnd = NULL;
   while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
@@ -72,29 +79,29 @@ WindowCaptureTab::WindowCaptureTab(
       continue;
     }
 
-    if (spec.mMatchExecutable) {
-      if (spec.mExecutable != window->mExecutable) {
+    if (mSpec.mMatchExecutable) {
+      if (mSpec.mExecutable != window->mExecutable) {
         continue;
       }
     }
 
-    if (spec.mMatchWindowClass) {
-      if (spec.mWindowClass != window->mWindowClass) {
+    if (mSpec.mMatchWindowClass) {
+      if (mSpec.mWindowClass != window->mWindowClass) {
         continue;
       }
     }
 
-    switch (spec.mMatchTitle) {
+    switch (mSpec.mMatchTitle) {
       case TitleMatchKind::Ignore:
         break;
       case TitleMatchKind::Exact:
-        if (spec.mTitle != window->mTitle) {
+        if (mSpec.mTitle != window->mTitle) {
           continue;
         }
         break;
       case TitleMatchKind::Glob: {
         const auto title = winrt::to_hstring(window->mTitle);
-        const auto pattern = winrt::to_hstring(spec.mTitle);
+        const auto pattern = winrt::to_hstring(mSpec.mTitle);
         if (!PathMatchSpecW(title.c_str(), pattern.c_str())) {
           continue;
         }
@@ -102,12 +109,28 @@ WindowCaptureTab::WindowCaptureTab(
       }
     }
 
-    this->SetDelegates({std::make_shared<HWNDPageSource>(dxr, kbs, hwnd)});
-    break;
+    co_await mUIThread;
+    auto source = std::make_shared<HWNDPageSource>(mDXR, mKneeboard, hwnd);
+    if (source->GetPageCount() == 0) {
+      continue;
+    }
+    this->SetDelegates({source});
+    this->AddEventListener(
+      source->evWindowClosedEvent,
+      std::bind_front(&WindowCaptureTab::OnWindowClosed, this));
+    co_return;
   }
 }
 
-WindowCaptureTab::~WindowCaptureTab() = default;
+WindowCaptureTab::~WindowCaptureTab() {
+  this->RemoveAllEventListeners();
+}
+
+winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
+  co_await mUIThread;
+  this->SetDelegates({});
+  this->TryToStartCapture();
+}
 
 utf8_string WindowCaptureTab::GetGlyph() const {
   return {};
