@@ -124,7 +124,7 @@ IAsyncAction CheckForUpdates(
       "autoupdate"
     : settings.mBaseURI;
 
-  const auto uri = std::format("{}/{}.json", baseUri, settings.mChannel);
+  const auto uri = std::format("{}/{}-msi.json", baseUri, settings.mChannel);
   dprintf("Starting update check: {}", uri);
 
   nlohmann::json releases;
