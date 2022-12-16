@@ -5,6 +5,7 @@ set(
   D3d12
   Dbghelp
   Dinput8
+  Dwmapi
   Dwrite
   Dxgi
   Dxguid
@@ -13,6 +14,7 @@ set(
   User32
   WindowsApp
 )
+
 foreach(LIBRARY ${SYSTEM_LIBRARIES})
   add_library("System::${LIBRARY}" INTERFACE IMPORTED GLOBAL)
   set_property(

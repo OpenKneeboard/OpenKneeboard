@@ -37,6 +37,7 @@
 #include <OpenKneeboard/inttypes.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
+#include <dwmapi.h>
 #include <microsoft.ui.xaml.window.h>
 #include <shobjidl.h>
 
@@ -48,6 +49,8 @@
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
+
+using WindowSpec = WindowCaptureTab::WindowSpecification;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
@@ -227,6 +230,9 @@ void TabSettingsPage::CreateTab(
     case TabType::SingleFile:
       CreateFileTab();
       return;
+    case TabType::WindowCapture:
+      CreateWindowCaptureTab();
+      return;
   }
 #define IT(_, type) \
   if (tabType == TabType::type) { \
@@ -245,6 +251,99 @@ void TabSettingsPage::CreateTab(
 #undef IT
   throw std::logic_error(
     std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
+}
+
+static std::vector<WindowSpec> GetTopLevelWindows() noexcept {
+  std::vector<WindowSpec> ret;
+
+  const HWND desktop = GetDesktopWindow();
+  HWND hwnd = NULL;
+  while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
+    // Top level windows only
+    const auto style = GetWindowLongPtr(hwnd, GWL_STYLE);
+    if (style & WS_CHILD) {
+      continue;
+    }
+    // Ignore the system tray etc
+    if (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) {
+      continue;
+    }
+
+    // Ignore 'cloaked' windows:
+    // https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507
+    if (!(style & WS_VISIBLE)) {
+      // IsWindowVisible() is equivalent as we know the parent (the desktop) is
+      // visible
+      continue;
+    }
+    BOOL cloaked {false};
+    if (
+      DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked))
+      != S_OK) {
+      continue;
+    }
+    if (cloaked) {
+      continue;
+    }
+
+    // Ignore invisible special windows, like
+    // "ApplicationManager_ImmersiveShellWindow"
+    RECT rect {};
+    GetWindowRect(hwnd, &rect);
+    if ((rect.bottom - rect.top) == 0 || (rect.right - rect.left) == 0) {
+      continue;
+    }
+    // Ignore 'minimized' windows, which includes both minimized and more
+    // special windows...
+    if (IsIconic(hwnd)) {
+      continue;
+    }
+
+    wchar_t classBuf[256];
+    const auto classLen = GetClassName(hwnd, classBuf, 256);
+    // UWP apps like 'snip & sketch' and Windows 10's calculator
+    // - can't actually capture them
+    // - retrieved information isn't usable for matching
+    constexpr std::wstring_view uwpClass {L"ApplicationFrameWindow"};
+    if (classBuf == uwpClass) {
+      continue;
+    }
+
+    DWORD processID {};
+    if (!GetWindowThreadProcessId(hwnd, &processID)) {
+      continue;
+    }
+
+    winrt::handle process {
+      OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID)};
+    if (!process) {
+      continue;
+    }
+
+    wchar_t pathBuf[MAX_PATH];
+    DWORD pathLen = MAX_PATH;
+    if (!QueryFullProcessImageNameW(process.get(), 0, pathBuf, &pathLen)) {
+      continue;
+    }
+
+    const auto titleBufSize = GetWindowTextLengthW(hwnd) + 1;
+    std::wstring titleBuf(titleBufSize, L'\0');
+    const auto titleLen = GetWindowTextW(hwnd, titleBuf.data(), titleBufSize);
+    titleBuf.resize(std::min(titleLen + 1, titleBufSize));
+
+    ret.push_back({
+      .mExecutable = {std::wstring_view {pathBuf, pathLen}},
+      .mWindowClass
+      = to_string(std::wstring_view {classBuf, static_cast<size_t>(classLen)}),
+      .mTitle = to_string(titleBuf),
+    });
+  }
+  return ret;
+}
+
+winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
+  const auto windows = GetTopLevelWindows();
+  co_return;
 }
 
 void TabSettingsPage::CreateFileTab() {

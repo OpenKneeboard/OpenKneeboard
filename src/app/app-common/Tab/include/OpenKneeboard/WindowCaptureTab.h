@@ -28,6 +28,23 @@ class HWNDPageSource;
 
 class WindowCaptureTab final : public TabBase, public PageSourceWithDelegates {
  public:
+  struct WindowSpecification {
+    std::filesystem::path mExecutable;
+    std::string mWindowClass;
+    std::string mTitle;
+  };
+  struct MatchSpecification : public WindowSpecification {
+    enum class TitleMatchKind {
+      None,
+      Exact,
+      Glob,
+    };
+
+    TitleMatchKind mMatchTitle {TitleMatchKind::Exact};
+    bool mMatchWindowClass {true};
+    bool mMatchExecutable {true};
+  };
+
   WindowCaptureTab() = delete;
   explicit WindowCaptureTab(const DXResources&, KneeboardState*);
   explicit WindowCaptureTab(

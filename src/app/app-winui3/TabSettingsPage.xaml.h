@@ -68,6 +68,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
  private:
   void CreateFileTab();
   void CreateFolderTab();
+  winrt::fire_and_forget CreateWindowCaptureTab();
 
   void AddTabs(const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
   static OpenKneeboardApp::TabUIData CreateTabUIData(

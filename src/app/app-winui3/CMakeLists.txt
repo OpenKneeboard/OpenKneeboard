@@ -65,6 +65,7 @@ target_link_libraries(
   OpenKneeboard-handles
   OpenKneeboard-version
   System::Dbghelp
+  System::Dwmapi
   System::Dxgi
   System::Shell32
   System::User32
