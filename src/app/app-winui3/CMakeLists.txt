@@ -27,7 +27,7 @@ ok_add_executable(
   MultiplierValueConverter.cpp MultiplierValueConverter.h MultiplierValueConverter.idl
   NonVRSettingsPage.idl NonVRSettingsPage.xaml NonVRSettingsPage.xaml.cpp NonVRSettingsPage.xaml.h
   PercentValueConverter.cpp PercentValueConverter.h PercentValueConverter.idl
-  ProcessListPage.idl ProcessListPage.xaml ProcessListPage.xaml.cpp ProcessListPage.xaml.h
+  ProcessPickerDialog.idl ProcessPickerDialog.xaml ProcessPickerDialog.xaml.cpp ProcessPickerDialog.xaml.h
   ProfilesPage.idl ProfilesPage.xaml ProfilesPage.xaml.cpp ProfilesPage.xaml.h
   SettingsPage.idl SettingsPage.xaml SettingsPage.xaml.cpp SettingsPage.xaml.h
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h

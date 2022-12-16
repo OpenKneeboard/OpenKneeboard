@@ -124,27 +124,15 @@ GameSettingsPage::~GameSettingsPage() noexcept {
 winrt::fire_and_forget GameSettingsPage::AddRunningProcess(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
-  ContentDialog dialog;
-  dialog.XamlRoot(this->XamlRoot());
+  ::winrt::OpenKneeboardApp::ProcessPickerDialog picker;
+  picker.XamlRoot(this->XamlRoot());
 
-  ::winrt::OpenKneeboardApp::ProcessListPage processList;
-  dialog.Title(winrt::box_value(to_hstring(_("Select a Game"))));
-  dialog.Content(processList);
-
-  dialog.IsPrimaryButtonEnabled(false);
-  dialog.PrimaryButtonText(to_hstring(_("Add Game")));
-  dialog.CloseButtonText(to_hstring(_("Cancel")));
-  dialog.DefaultButton(ContentDialogButton::Primary);
-
-  processList.SelectionChanged(
-    [&](auto&, auto&) { dialog.IsPrimaryButtonEnabled(true); });
-
-  auto result = co_await dialog.ShowAsync();
+  auto result = co_await picker.ShowAsync();
   if (result != ContentDialogResult::Primary) {
     co_return;
   }
 
-  auto path = processList.SelectedPath();
+  auto path = picker.SelectedPath();
   if (path.empty()) {
     co_return;
   }

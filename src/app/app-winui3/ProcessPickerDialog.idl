@@ -1,0 +1,9 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass ProcessPickerDialog: Microsoft.UI.Xaml.Controls.ContentDialog
+    {
+        ProcessPickerDialog();
+        String SelectedPath { get; };
+    }
+}

@@ -19,8 +19,8 @@
  */
 // clang-format off
 #include "pch.h"
-#include "ProcessListPage.xaml.h"
-#include "ProcessListPage.g.cpp"
+#include "ProcessPickerDialog.xaml.h"
+#include "ProcessPickerDialog.g.cpp"
 // clang-format on
 
 #include <TlHelp32.h>
@@ -52,7 +52,7 @@ static std::filesystem::path GetFullPathFromPID(DWORD pid) {
   return std::wstring_view(&path[0], pathLen);
 }
 
-ProcessListPage::ProcessListPage() {
+ProcessPickerDialog::ProcessPickerDialog() {
   InitializeComponent();
   ExecutableIconFactory iconFactory;
 
@@ -91,14 +91,14 @@ ProcessListPage::ProcessListPage() {
   List().ItemsSource(winrtGames);
 }
 
-ProcessListPage::~ProcessListPage() {
+ProcessPickerDialog::~ProcessPickerDialog() {
 }
 
-hstring ProcessListPage::SelectedPath() noexcept {
+hstring ProcessPickerDialog::SelectedPath() noexcept {
   return mSelectedPath;
 }
 
-void ProcessListPage::OnListSelectionChanged(
+void ProcessPickerDialog::OnListSelectionChanged(
   const IInspectable&,
   const SelectionChangedEventArgs& args) noexcept {
   if (args.AddedItems().Size() == 0) {
@@ -107,16 +107,8 @@ void ProcessListPage::OnListSelectionChanged(
     auto selected = args.AddedItems().GetAt(0).as<GameInstanceUIData>();
     mSelectedPath = selected.Path();
   }
-  mSelectionChangedEvent(*this, mSelectedPath);
+
+  this->IsPrimaryButtonEnabled(true);
 }
 
-winrt::event_token ProcessListPage::SelectionChanged(
-  winrt::Windows::Foundation::EventHandler<hstring> const& handler) noexcept {
-  return mSelectionChangedEvent.add(handler);
-}
-
-void ProcessListPage::SelectionChanged(
-  winrt::event_token const& token) noexcept {
-  mSelectionChangedEvent.remove(token);
-}
 }// namespace winrt::OpenKneeboardApp::implementation

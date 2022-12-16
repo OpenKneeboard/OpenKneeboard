@@ -20,34 +20,30 @@
 #pragma once
 // clang-format off
 #include "pch.h"
-#include "ProcessListPage.g.h"
+#include "ProcessPickerDialog.g.h"
 // clang-format on
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct ProcessListPage : ProcessListPageT<ProcessListPage> {
-  ProcessListPage();
-  ~ProcessListPage();
+struct ProcessPickerDialog : ProcessPickerDialogT<ProcessPickerDialog> {
+  ProcessPickerDialog();
+  ~ProcessPickerDialog();
 
   hstring SelectedPath() noexcept;
-  winrt::event_token SelectionChanged(
-    winrt::Windows::Foundation::EventHandler<hstring> const& handler) noexcept;
-  void SelectionChanged(winrt::event_token const& token) noexcept;
 
   void OnListSelectionChanged(
     const IInspectable&,
     const SelectionChangedEventArgs&) noexcept;
 
  private:
-  winrt::event<Windows::Foundation::EventHandler<hstring>>
-    mSelectionChangedEvent;
   hstring mSelectedPath;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 
 namespace winrt::OpenKneeboardApp::factory_implementation {
-struct ProcessListPage
-  : ProcessListPageT<ProcessListPage, implementation::ProcessListPage> {};
+struct ProcessPickerDialog : ProcessPickerDialogT<
+                               ProcessPickerDialog,
+                               implementation::ProcessPickerDialog> {};
 }// namespace winrt::OpenKneeboardApp::factory_implementation
