@@ -1,0 +1,20 @@
+namespace OpenKneeboardApp {
+  [default_interface] runtimeclass WindowPickerDialog
+    : Microsoft.UI.Xaml.Controls.ContentDialog {
+    WindowPickerDialog();
+
+    UInt64 Hwnd { get ; };
+  }
+
+	[default_interface]
+	unsealed runtimeclass WindowPickerUIData
+	{
+		WindowPickerUIData();
+		Microsoft.UI.Xaml.Media.Imaging.BitmapSource Icon;
+
+		UInt64 Hwnd;
+		String Title;
+		String Path;
+	}
+
+}

@@ -11,6 +11,7 @@ set(
   Dxguid
   Rpcrt4
   Shell32
+  Shlwapi
   User32
   WindowsApp
 )

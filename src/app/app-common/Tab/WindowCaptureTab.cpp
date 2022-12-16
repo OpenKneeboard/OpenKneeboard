@@ -19,52 +19,24 @@
  */
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/WindowCaptureTab.h>
+#include <OpenKneeboard/json.h>
 #include <Psapi.h>
+#include <Shlwapi.h>
+#include <dwmapi.h>
 
 namespace OpenKneeboard {
 
-namespace {
+using WindowSpecification = WindowCaptureTab::WindowSpecification;
+using MatchSpecification = WindowCaptureTab::MatchSpecification;
+using TitleMatchKind = MatchSpecification::TitleMatchKind;
 
-struct FindCaptureTargetData {
-  std::string mTitlePattern;
-  std::filesystem::path mPath;
-  HWND mHwnd {};
-};
+OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
 
-BOOL EnumWindowsProc_FindCaptureTarget(HWND hwnd, LPARAM lParam) {
-  auto data = reinterpret_cast<FindCaptureTargetData*>(lParam);
-
-  DWORD processID {};
-  if (!GetWindowThreadProcessId(hwnd, &processID)) {
-    return TRUE;
-  }
-
-  winrt::handle process {
-    OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processID)};
-  if (!process) {
-    return TRUE;
-  }
-
-  wchar_t pathBuf[MAX_PATH];
-  DWORD pathLen {MAX_PATH};
-  if (!QueryFullProcessImageNameW(process.get(), 0, pathBuf, &pathLen)) {
-    return true;
-  }
-
-  const std::filesystem::path path {std::wstring_view {pathBuf, pathLen}};
-  // FIXME: mTitlePattern and mPath
-  if (path.filename() == L"Code.exe") {
-    data->mHwnd = hwnd;
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-}// namespace
-
-WindowCaptureTab::WindowCaptureTab(const DXResources& dxr, KneeboardState* kbs)
-  : WindowCaptureTab(dxr, kbs, {}, L"Window Capture") {
+WindowCaptureTab::WindowCaptureTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const MatchSpecification& spec)
+  : WindowCaptureTab(dxr, kbs, {}, spec.mTitle, spec) {
   // Delegating constructor - you probably want nothing here
 }
 
@@ -72,18 +44,67 @@ WindowCaptureTab::WindowCaptureTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title)
-  : TabBase(persistentID, title), PageSourceWithDelegates(dxr, kbs) {
-  FindCaptureTargetData targetData {};
-  EnumWindows(
-    &EnumWindowsProc_FindCaptureTarget, reinterpret_cast<LPARAM>(&targetData));
-  const auto hwnd = targetData.mHwnd;
-  if (!hwnd) {
-    return;
-  }
+  utf8_string_view title,
+  const nlohmann::json& settings)
+  : WindowCaptureTab(
+    dxr,
+    kbs,
+    persistentID,
+    title,
+    settings.at("Spec").get<MatchSpecification>()) {
+  // Delegating constructor - you probably want nothing here
+}
 
-  mPageSource = std::make_shared<HWNDPageSource>(dxr, kbs, hwnd);
-  this->SetDelegates({mPageSource});
+WindowCaptureTab::WindowCaptureTab(
+  const DXResources& dxr,
+  KneeboardState* kbs,
+  const winrt::guid& persistentID,
+  utf8_string_view title,
+  const MatchSpecification& spec)
+  : TabBase(persistentID, title),
+    PageSourceWithDelegates(dxr, kbs),
+    mSpec(spec) {
+  const HWND desktop = GetDesktopWindow();
+  HWND hwnd = NULL;
+  while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
+    const auto window = GetWindowSpecification(hwnd);
+    if (!window) {
+      continue;
+    }
+
+    if (spec.mMatchExecutable) {
+      if (spec.mExecutable != window->mExecutable) {
+        continue;
+      }
+    }
+
+    if (spec.mMatchWindowClass) {
+      if (spec.mWindowClass != window->mWindowClass) {
+        continue;
+      }
+    }
+
+    switch (spec.mMatchTitle) {
+      case TitleMatchKind::Ignore:
+        break;
+      case TitleMatchKind::Exact:
+        if (spec.mTitle != window->mTitle) {
+          continue;
+        }
+        break;
+      case TitleMatchKind::Glob: {
+        const auto title = winrt::to_hstring(window->mTitle);
+        const auto pattern = winrt::to_hstring(spec.mTitle);
+        if (!PathMatchSpecW(title.c_str(), pattern.c_str())) {
+          continue;
+        }
+        break;
+      }
+    }
+
+    this->SetDelegates({std::make_shared<HWNDPageSource>(dxr, kbs, hwnd)});
+    break;
+  }
 }
 
 WindowCaptureTab::~WindowCaptureTab() = default;
@@ -94,5 +115,122 @@ utf8_string WindowCaptureTab::GetGlyph() const {
 
 void WindowCaptureTab::Reload() {
 }
+
+nlohmann::json WindowCaptureTab::GetSettings() const {
+  return {{"Spec", mSpec}};
+}
+
+std::unordered_map<HWND, WindowSpecification>
+WindowCaptureTab::GetTopLevelWindows() {
+  std::unordered_map<HWND, WindowSpecification> ret;
+
+  const HWND desktop = GetDesktopWindow();
+  HWND hwnd = NULL;
+  while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
+    auto spec = GetWindowSpecification(hwnd);
+    if (spec) {
+      ret[hwnd] = *spec;
+    }
+  }
+  return ret;
+}
+
+std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
+  HWND hwnd) {
+  // Top level windows only
+  const auto style = GetWindowLongPtr(hwnd, GWL_STYLE);
+  if (style & WS_CHILD) {
+    return {};
+  }
+  // Ignore the system tray etc
+  if (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) {
+    return {};
+  }
+
+  // Ignore 'cloaked' windows:
+  // https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507
+  if (!(style & WS_VISIBLE)) {
+    // IsWindowVisible() is equivalent as we know the parent (the desktop) is
+    // visible
+    return {};
+  }
+  BOOL cloaked {false};
+  if (
+    DwmGetWindowAttribute(hwnd, DWMWA_CLOAKED, &cloaked, sizeof(cloaked))
+    != S_OK) {
+    return {};
+  }
+  if (cloaked) {
+    return {};
+  }
+
+  // Ignore invisible special windows, like
+  // "ApplicationManager_ImmersiveShellWindow"
+  RECT rect {};
+  GetWindowRect(hwnd, &rect);
+  if ((rect.bottom - rect.top) == 0 || (rect.right - rect.left) == 0) {
+    return {};
+  }
+  // Ignore 'minimized' windows, which includes both minimized and more
+  // special windows...
+  if (IsIconic(hwnd)) {
+    return {};
+  }
+
+  wchar_t classBuf[256];
+  const auto classLen = GetClassName(hwnd, classBuf, 256);
+  // UWP apps like 'snip & sketch' and Windows 10's calculator
+  // - can't actually capture them
+  // - retrieved information isn't usable for matching
+  constexpr std::wstring_view uwpClass {L"ApplicationFrameWindow"};
+  if (classBuf == uwpClass) {
+    return {};
+  }
+
+  DWORD processID {};
+  if (!GetWindowThreadProcessId(hwnd, &processID)) {
+    return {};
+  }
+
+  winrt::handle process {
+    OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID)};
+  if (!process) {
+    return {};
+  }
+
+  wchar_t pathBuf[MAX_PATH];
+  DWORD pathLen = MAX_PATH;
+  if (!QueryFullProcessImageNameW(process.get(), 0, pathBuf, &pathLen)) {
+    return {};
+  }
+
+  const auto titleBufSize = GetWindowTextLengthW(hwnd) + 1;
+  std::wstring titleBuf(titleBufSize, L'\0');
+  const auto titleLen = GetWindowTextW(hwnd, titleBuf.data(), titleBufSize);
+  titleBuf.resize(std::min(titleLen + 1, titleBufSize));
+
+  return WindowSpecification {
+    .mExecutable = {std::wstring_view {pathBuf, pathLen}},
+    .mWindowClass = winrt::to_string(
+      std::wstring_view {classBuf, static_cast<size_t>(classLen)}),
+    .mTitle = winrt::to_string(titleBuf),
+  };
+}
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  TitleMatchKind,
+  {
+    {TitleMatchKind::Ignore, "Ignore"},
+    {TitleMatchKind::Exact, "Exact"},
+    {TitleMatchKind::Glob, "Glob"},
+  })
+OPENKNEEBOARD_DEFINE_JSON(
+  MatchSpecification,
+  mExecutable,
+  mWindowClass,
+  mTitle,
+  mMatchTitle,
+  mMatchWindowClass,
+  mMatchExecutable)
 
 }// namespace OpenKneeboard

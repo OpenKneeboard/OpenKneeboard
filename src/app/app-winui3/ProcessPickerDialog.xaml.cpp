@@ -103,12 +103,12 @@ void ProcessPickerDialog::OnListSelectionChanged(
   const SelectionChangedEventArgs& args) noexcept {
   if (args.AddedItems().Size() == 0) {
     mSelectedPath = {};
+    this->IsPrimaryButtonEnabled(false);
   } else {
     auto selected = args.AddedItems().GetAt(0).as<GameInstanceUIData>();
     mSelectedPath = selected.Path();
+    this->IsPrimaryButtonEnabled(true);
   }
-
-  this->IsPrimaryButtonEnabled(true);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

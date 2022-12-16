@@ -19,14 +19,15 @@
  */
 #pragma once
 
+#include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <OpenKneeboard/TabBase.h>
 
 namespace OpenKneeboard {
 
-class HWNDPageSource;
-
-class WindowCaptureTab final : public TabBase, public PageSourceWithDelegates {
+class WindowCaptureTab final : public TabBase,
+                               public ITabWithSettings,
+                               public PageSourceWithDelegates {
  public:
   struct WindowSpecification {
     std::filesystem::path mExecutable;
@@ -35,7 +36,7 @@ class WindowCaptureTab final : public TabBase, public PageSourceWithDelegates {
   };
   struct MatchSpecification : public WindowSpecification {
     enum class TitleMatchKind {
-      None,
+      Ignore,
       Exact,
       Glob,
     };
@@ -46,19 +47,34 @@ class WindowCaptureTab final : public TabBase, public PageSourceWithDelegates {
   };
 
   WindowCaptureTab() = delete;
-  explicit WindowCaptureTab(const DXResources&, KneeboardState*);
+  explicit WindowCaptureTab(
+    const DXResources&,
+    KneeboardState*,
+    const MatchSpecification&);
   explicit WindowCaptureTab(
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    utf8_string_view title);
+    utf8_string_view title,
+    const nlohmann::json& settings);
   virtual ~WindowCaptureTab();
   virtual utf8_string GetGlyph() const override;
 
   virtual void Reload() final override;
+  virtual nlohmann::json GetSettings() const override;
+
+  static std::unordered_map<HWND, WindowSpecification> GetTopLevelWindows();
+  static std::optional<WindowSpecification> GetWindowSpecification(HWND);
 
  private:
-  std::shared_ptr<HWNDPageSource> mPageSource;
+  WindowCaptureTab(
+    const DXResources&,
+    KneeboardState*,
+    const winrt::guid& persistentID,
+    utf8_string_view title,
+    const MatchSpecification&);
+
+  MatchSpecification mSpec;
 };
 
 }// namespace OpenKneeboard

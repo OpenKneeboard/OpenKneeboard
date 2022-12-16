@@ -33,6 +33,7 @@ ok_add_executable(
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
   TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
+  WindowPickerDialog.idl WindowPickerDialog.xaml WindowPickerDialog.xaml.h WindowPickerDialog.xaml.cpp
 )
 
 include(winui3-boilerplate.cmake)
@@ -65,7 +66,6 @@ target_link_libraries(
   OpenKneeboard-handles
   OpenKneeboard-version
   System::Dbghelp
-  System::Dwmapi
   System::Dxgi
   System::Shell32
   System::User32
