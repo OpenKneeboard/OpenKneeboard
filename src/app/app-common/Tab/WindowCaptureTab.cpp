@@ -207,7 +207,7 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
   const auto titleBufSize = GetWindowTextLengthW(hwnd) + 1;
   std::wstring titleBuf(titleBufSize, L'\0');
   const auto titleLen = GetWindowTextW(hwnd, titleBuf.data(), titleBufSize);
-  titleBuf.resize(std::min(titleLen + 1, titleBufSize));
+  titleBuf.resize(std::min(titleLen, titleBufSize));
 
   return WindowSpecification {
     .mExecutable = {std::wstring_view {pathBuf, pathLen}},
