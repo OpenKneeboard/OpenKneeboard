@@ -25,9 +25,11 @@
 
 namespace OpenKneeboard {
 
-class WindowCaptureTab final : public TabBase,
-                               public ITabWithSettings,
-                               public PageSourceWithDelegates {
+class WindowCaptureTab final
+  : public TabBase,
+    public ITabWithSettings,
+    public PageSourceWithDelegates,
+    public std::enable_shared_from_this<WindowCaptureTab> {
  public:
   struct WindowSpecification {
     std::filesystem::path mExecutable;
@@ -47,11 +49,9 @@ class WindowCaptureTab final : public TabBase,
   };
 
   WindowCaptureTab() = delete;
-  explicit WindowCaptureTab(
-    const DXResources&,
-    KneeboardState*,
-    const MatchSpecification&);
-  explicit WindowCaptureTab(
+  static std::shared_ptr<WindowCaptureTab>
+  Create(const DXResources&, KneeboardState*, const MatchSpecification&);
+  static std::shared_ptr<WindowCaptureTab> Create(
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,

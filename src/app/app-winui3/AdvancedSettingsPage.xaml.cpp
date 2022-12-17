@@ -236,9 +236,9 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
   }
 
   const scope_guard propertyChanged(weak_wrap(
-    [this](const auto&) -> winrt::fire_and_forget {
-      co_await mUIThread;
-      mPropertyChangedEvent(
+    [](const auto& self) -> winrt::fire_and_forget {
+      co_await self.mUIThread;
+      self.mPropertyChangedEvent(
         *this, PropertyChangedEventArgs(L"DesiredElevation"));
     },
     this));

@@ -271,8 +271,8 @@ winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
   }
 
   WindowCaptureTab::MatchSpecification matchSpec {*windowSpec};
-  this->AddTabs({std::make_shared<WindowCaptureTab>(
-    gDXResources, gKneeboard.get(), matchSpec)});
+  this->AddTabs(
+    {WindowCaptureTab::Create(gDXResources, gKneeboard.get(), matchSpec)});
 }
 
 void TabSettingsPage::CreateFileTab() {

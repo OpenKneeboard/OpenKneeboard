@@ -32,27 +32,26 @@ using TitleMatchKind = MatchSpecification::TitleMatchKind;
 
 OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
 
-WindowCaptureTab::WindowCaptureTab(
+std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
-  const MatchSpecification& spec)
-  : WindowCaptureTab(dxr, kbs, {}, spec.mTitle, spec) {
-  // Delegating constructor - you probably want nothing here
+  const MatchSpecification& spec) {
+  return std::shared_ptr<WindowCaptureTab>(
+    new WindowCaptureTab(dxr, kbs, {}, spec.mTitle, spec));
 }
 
-WindowCaptureTab::WindowCaptureTab(
+std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   utf8_string_view title,
-  const nlohmann::json& settings)
-  : WindowCaptureTab(
+  const nlohmann::json& settings) {
+  return std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
     dxr,
     kbs,
     persistentID,
     title,
-    settings.at("Spec").get<MatchSpecification>()) {
-  // Delegating constructor - you probably want nothing here
+    settings.at("Spec").get<MatchSpecification>()));
 }
 
 WindowCaptureTab::WindowCaptureTab(

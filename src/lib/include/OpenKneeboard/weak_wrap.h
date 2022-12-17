@@ -32,17 +32,17 @@ namespace detail {
 ///// std::shared_ptr /////
 
 template <class T>
-auto make_weak(const std::shared_ptr<T>& p) {
+auto convert_to_weak(const std::shared_ptr<T>& p) {
   return std::weak_ptr(p);
 }
 
 template <class T>
-auto make_weak(std::enable_shared_from_this<T>* p) {
+auto convert_to_weak(std::enable_shared_from_this<T>* p) {
   return p->weak_from_this();
 }
 
 template <class T>
-auto make_strong(const std::weak_ptr<T>& p) {
+auto convert_to_strong(const std::weak_ptr<T>& p) {
   return p.lock();
 }
 
@@ -50,35 +50,35 @@ auto make_strong(const std::weak_ptr<T>& p) {
 
 template <class T>
   requires requires(T t) { t->get_weak(); }
-auto make_weak(const T& t) {
+auto convert_to_weak(const T& t) {
   return t->get_weak();
 }
 
 template <class T>
-auto make_strong(const winrt::weak_ref<T>& p) {
+auto convert_to_strong(const winrt::weak_ref<T>& p) {
   return p.get();
 }
 
 // "customization point objects" - ADL without the two-step
 
-struct __make_weak {
+struct __convert_to_weak {
   template <class T>
   auto operator()(T&& x) const {
-    return make_weak(std::forward<T>(x));
+    return convert_to_weak(std::forward<T>(x));
   }
 };
 
-struct __make_strong {
+struct __convert_to_strong {
   template <class T>
   auto operator()(T&& x) const {
-    return make_strong(std::forward<T>(x));
+    return convert_to_strong(std::forward<T>(x));
   }
 };
 
 }// namespace detail
 
-inline constexpr detail::__make_weak make_weak {};
-inline constexpr detail::__make_strong make_strong {};
+inline constexpr detail::__convert_to_weak convert_to_weak {};
+inline constexpr detail::__convert_to_strong convert_to_strong {};
 
 }// namespace WeakWrap
 
@@ -94,12 +94,12 @@ inline constexpr detail::__make_strong make_strong {};
  */
 template <class... TPtrs>
 auto weak_wrap(auto func, TPtrs... ptrs) {
-  auto weak_ptrs = std::make_tuple(WeakWrap::make_weak(ptrs)...);
+  auto weak_ptrs = std::make_tuple(WeakWrap::convert_to_weak(ptrs)...);
 
   return [func, weak_ptrs]() {
     const auto strong_ptrs = std::apply(
       [](auto&&... weak_ptrs) {
-        return std::make_tuple(WeakWrap::make_strong(weak_ptrs)...);
+        return std::make_tuple(WeakWrap::convert_to_strong(weak_ptrs)...);
       },
       weak_ptrs);
 

@@ -63,6 +63,56 @@ enum class TabType {
 
 struct DXResources;
 
+/** Uniform construction classes, regardless of how their memory is managed.
+ *
+ * - `new Foo(args...)`: self explanatory
+ * - `Foo::Create(args...)`: generally used in combination with
+ *   `std::enable_shared_from_this`.
+ *
+ * In traditional code, `std::enable_shared_from_this` is usually an
+ * anti-pattern, but when async callbacks are involved, it's essential
+ * for safety; callbacks should capture a weak_ptr and abort if it can't be
+ * locked.
+ */
+namespace detail {
+template <class T, class... TArgs>
+  requires std::constructible_from<T, TArgs...>
+auto make_shared(TArgs&&... args) {
+  return std::make_shared<T>(std::forward<TArgs>(args)...);
+}
+
+template <class T, class... TArgs>
+  requires requires(TArgs... args) {
+             { T::Create(args...) } -> std::same_as<std::shared_ptr<T>>;
+           }
+auto make_shared(TArgs&&... args) {
+  return T::Create(std::forward<TArgs>(args)...);
+}
+
+template <class T, class... TArgs>
+concept shared_constructible_from = requires(TArgs... args) {
+                                      {
+                                        detail::make_shared<T>(args...)
+                                        } -> std::same_as<std::shared_ptr<T>>;
+                                    };
+
+}// namespace detail
+
+// Public constructor
+static_assert(detail::shared_constructible_from<
+              SingleFileTab,
+              const DXResources&,
+              KneeboardState*,
+              const std::filesystem::path&>);
+// Static method
+static_assert(detail::shared_constructible_from<
+              WindowCaptureTab,
+              const DXResources&,
+              KneeboardState*,
+              const winrt::guid&,
+              const std::string&,
+              const nlohmann::json&>);
+
 /** Create a `shared_ptr<ITab>` with existing config */
 template <std::derived_from<ITab> T>
 std::shared_ptr<T> load_tab(
@@ -71,26 +121,40 @@ std::shared_ptr<T> load_tab(
   const winrt::guid& persistentID,
   const std::string& title,
   const nlohmann::json& config) {
-  if constexpr (std::constructible_from<
+  if constexpr (detail::shared_constructible_from<
                   T,
                   DXResources,
                   KneeboardState*,
                   winrt::guid,
                   std::string,
                   nlohmann::json>) {
-    return std::make_shared<T>(dxr, kbs, persistentID, title, config);
+    return detail::make_shared<T>(dxr, kbs, persistentID, title, config);
   }
 
-  if constexpr (std::constructible_from<
+  if constexpr (detail::shared_constructible_from<
                   T,
                   DXResources,
                   KneeboardState*,
                   winrt::guid,
                   std::string>) {
-    return std::make_shared<T>(dxr, kbs, persistentID, title);
+    return detail::make_shared<T>(dxr, kbs, persistentID, title);
   }
 
   static_assert(!std::is_abstract_v<T>);
 }
+
+template <class T>
+concept loadable_tab = std::is_invocable_r_v<
+  std::shared_ptr<T>,
+  decltype(&load_tab<T>),
+  const DXResources&,
+  KneeboardState*,
+  const winrt::guid&,
+  const std::string&,
+  const nlohmann::json&>;
+
+#define IT(_, T) static_assert(loadable_tab<T##Tab>);
+OPENKNEEBOARD_TAB_TYPES
+#undef IT
 
 }// namespace OpenKneeboard
