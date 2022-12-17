@@ -82,6 +82,7 @@ class HWNDPageSource final
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID2D1Bitmap1> mBitmap;
   bool mNeedsRepaint {true};
+  uint32_t mMouseButtons {};
 };
 
 }// namespace OpenKneeboard

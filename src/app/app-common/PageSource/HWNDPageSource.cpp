@@ -221,14 +221,63 @@ void HWNDPageSource::OnFrame() noexcept {
 
 void HWNDPageSource::PostCursorEvent(
   EventContext,
-  const CursorEvent&,
+  const CursorEvent& ev,
   PageIndex) {
-  // Do nothing for now:
-  // - sending WM_MOUSEMOVE automatically triggers a WM_MOUSELEAVE
-  // - doodling is *probably* unwanted
-  // - don't want to add doodling now and remove it later
+  if (!mTexture) {
+    return;
+  }
 
-  // Can probably fix this by adding a window hook to the captured process
+  const auto target
+    = ChildWindowFromPoint(mWindow, {std::lround(ev.mX), std::lround(ev.mY)});
+
+  WPARAM wParam {};
+  if (ev.mButtons & 1) {
+    wParam |= MK_LBUTTON;
+  }
+  if (ev.mButtons & (1 << 1)) {
+    wParam |= MK_RBUTTON;
+  }
+  // Should already be scaled to native content size
+  LPARAM lParam = MAKELPARAM(ev.mX, ev.mY);
+
+  if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    if (mMouseButtons & 1) {
+      PostMessage(mWindow, WM_LBUTTONUP, wParam, lParam);
+    }
+    if (mMouseButtons & (1 << 1)) {
+      PostMessage(mWindow, WM_RBUTTONUP, wParam, lParam);
+    }
+    mMouseButtons = {};
+    PostMessage(mWindow, WM_MOUSELEAVE, 0, 0);
+    return;
+  }
+
+  // We only pay attention to buttons (1) and (1 << 1)
+  const auto buttons = ev.mButtons & 3;
+  // if (buttons == mMouseButtons) {
+  SendMessage(target, WM_MOUSEMOVE, wParam, lParam);
+  return;
+  //}
+
+  const scope_guard restoreFgWindow(
+    [window = GetForegroundWindow()]() { SetForegroundWindow(window); });
+
+  const auto down = (ev.mButtons & ~mMouseButtons);
+  const auto up = (mMouseButtons & ~ev.mButtons);
+  mMouseButtons = buttons;
+
+  if (down & 1) {
+    SendMessage(mWindow, WM_LBUTTONDOWN, wParam, lParam);
+  }
+  if (down & (1 << 1)) {
+    SendMessage(mWindow, WM_RBUTTONDOWN, wParam, lParam);
+  }
+  if (up & 1) {
+    SendMessage(mWindow, WM_LBUTTONUP, wParam, lParam);
+  }
+  if (up & (1 << 1)) {
+    SendMessage(mWindow, WM_RBUTTONUP, wParam, lParam);
+  }
 }
 
 }// namespace OpenKneeboard
