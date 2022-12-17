@@ -51,6 +51,7 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   }
   return nullptr;
 }
+
 void HWNDPageSource::InitializeOnWorkerThread() noexcept {
   auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
   auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
@@ -115,13 +116,25 @@ HWNDPageSource::~HWNDPageSource() = default;
 winrt::fire_and_forget HWNDPageSource::final_release(
   std::unique_ptr<HWNDPageSource> p) {
   p->RemoveAllEventListeners();
-  if (p->mCaptureSession) {
+  if (!p->mDQC) {
+    co_await p->mUIThread;
+    co_return;
+  }
+
+  p->mDQC.DispatcherQueue().TryEnqueue([p = p.get()]() {
     p->mCaptureSession.Close();
     p->mFramePool.Close();
-  }
-  if (p->mDQC) {
-    co_await p->mDQC.ShutdownQueueAsync();
-  }
+    p->mCaptureSession = {nullptr};
+    p->mCaptureItem = {nullptr};
+    p->mFramePool = {nullptr};
+  });
+
+  co_await p->mUIThread;
+  co_await p->mDQC.ShutdownQueueAsync();
+  p->mDQC = {nullptr};
+  const auto lock = p->mDXR.AcquireD2DLockout();
+  p->mTexture = nullptr;
+  p->mBitmap = nullptr;
 }
 
 PageIndex HWNDPageSource::GetPageCount() const {

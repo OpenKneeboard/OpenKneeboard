@@ -66,6 +66,7 @@ class HWNDPageSource final
   void InitializeOnWorkerThread() noexcept;
   void OnFrame() noexcept;
 
+  winrt::apartment_context mUIThread;
   DXResources mDXR;
   HWND mWindow {};
 
