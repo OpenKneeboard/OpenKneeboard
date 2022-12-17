@@ -121,13 +121,14 @@ winrt::fire_and_forget HWNDPageSource::final_release(
     co_return;
   }
 
-  p->mDQC.DispatcherQueue().TryEnqueue([p = p.get()]() {
-    p->mCaptureSession.Close();
-    p->mFramePool.Close();
-    p->mCaptureSession = {nullptr};
-    p->mCaptureItem = {nullptr};
-    p->mFramePool = {nullptr};
-  });
+  // Switch to DQ thread to clean up the Windows.Graphics.Capture objects that
+  // were created in that thread
+  co_await p->mDQC.DispatcherQueue();
+  p->mCaptureSession.Close();
+  p->mFramePool.Close();
+  p->mCaptureSession = {nullptr};
+  p->mCaptureItem = {nullptr};
+  p->mFramePool = {nullptr};
 
   co_await p->mUIThread;
   co_await p->mDQC.ShutdownQueueAsync();
