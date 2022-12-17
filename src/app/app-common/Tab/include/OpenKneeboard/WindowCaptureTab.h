@@ -22,6 +22,7 @@
 #include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <OpenKneeboard/TabBase.h>
+#include <OpenKneeboard/handles.h>
 
 namespace OpenKneeboard {
 
@@ -74,13 +75,29 @@ class WindowCaptureTab final
     utf8_string_view title,
     const MatchSpecification&);
   winrt::fire_and_forget TryToStartCapture();
+  concurrency::task<bool> TryToStartCapture(HWND hwnd);
+  bool WindowMatches(HWND hwnd) const;
 
   winrt::fire_and_forget OnWindowClosed();
+
+  static void WinEventProc_NewWindowHook(
+    HWINEVENTHOOK,
+    DWORD event,
+    HWND hwnd,
+    LONG idObject,
+    LONG idChild,
+    DWORD idEventThread,
+    DWORD dwmsEventTime);
+  concurrency::task<void> OnNewWindow(HWND hwnd);
 
   winrt::apartment_context mUIThread;
   DXResources mDXR;
   KneeboardState* mKneeboard {nullptr};
   MatchSpecification mSpec;
+
+  unique_hwineventhook mEventHook;
+  static std::mutex gHookMutex;
+  static std::map<HWINEVENTHOOK, std::weak_ptr<WindowCaptureTab>> gHooks;
 };
 
 }// namespace OpenKneeboard

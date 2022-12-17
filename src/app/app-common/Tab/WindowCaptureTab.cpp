@@ -30,6 +30,10 @@ using WindowSpecification = WindowCaptureTab::WindowSpecification;
 using MatchSpecification = WindowCaptureTab::MatchSpecification;
 using TitleMatchKind = MatchSpecification::TitleMatchKind;
 
+std::mutex WindowCaptureTab::gHookMutex;
+std::map<HWINEVENTHOOK, std::weak_ptr<WindowCaptureTab>>
+  WindowCaptureTab::gHooks;
+
 OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
@@ -68,61 +72,92 @@ WindowCaptureTab::WindowCaptureTab(
   this->TryToStartCapture();
 }
 
+bool WindowCaptureTab::WindowMatches(HWND hwnd) const {
+  const auto window = GetWindowSpecification(hwnd);
+  if (!window) {
+    return false;
+  }
+
+  if (mSpec.mMatchExecutable) {
+    if (mSpec.mExecutable != window->mExecutable) {
+      return false;
+    }
+  }
+
+  if (mSpec.mMatchWindowClass) {
+    if (mSpec.mWindowClass != window->mWindowClass) {
+      return false;
+    }
+  }
+
+  switch (mSpec.mMatchTitle) {
+    case TitleMatchKind::Ignore:
+      break;
+    case TitleMatchKind::Exact:
+      if (mSpec.mTitle != window->mTitle) {
+        return false;
+      }
+      break;
+    case TitleMatchKind::Glob: {
+      const auto title = winrt::to_hstring(window->mTitle);
+      const auto pattern = winrt::to_hstring(mSpec.mTitle);
+      if (!PathMatchSpecW(title.c_str(), pattern.c_str())) {
+        return false;
+      }
+      break;
+    }
+  }
+
+  return true;
+}
+
+concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
+  co_await mUIThread;
+  auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd);
+  if (!(source && source->GetPageCount() > 0)) {
+    co_return false;
+  }
+  this->SetDelegates({source});
+  this->AddEventListener(
+    source->evWindowClosedEvent,
+    std::bind_front(&WindowCaptureTab::OnWindowClosed, this));
+  co_return true;
+}
+
 winrt::fire_and_forget WindowCaptureTab::TryToStartCapture() {
   co_await winrt::resume_background();
   const HWND desktop = GetDesktopWindow();
   HWND hwnd = NULL;
   while (hwnd = FindWindowExW(desktop, hwnd, nullptr, nullptr)) {
-    const auto window = GetWindowSpecification(hwnd);
-    if (!window) {
+    if (!this->WindowMatches(hwnd)) {
       continue;
     }
 
-    if (mSpec.mMatchExecutable) {
-      if (mSpec.mExecutable != window->mExecutable) {
-        continue;
-      }
+    if (co_await this->TryToStartCapture(hwnd)) {
+      co_return;
     }
-
-    if (mSpec.mMatchWindowClass) {
-      if (mSpec.mWindowClass != window->mWindowClass) {
-        continue;
-      }
-    }
-
-    switch (mSpec.mMatchTitle) {
-      case TitleMatchKind::Ignore:
-        break;
-      case TitleMatchKind::Exact:
-        if (mSpec.mTitle != window->mTitle) {
-          continue;
-        }
-        break;
-      case TitleMatchKind::Glob: {
-        const auto title = winrt::to_hstring(window->mTitle);
-        const auto pattern = winrt::to_hstring(mSpec.mTitle);
-        if (!PathMatchSpecW(title.c_str(), pattern.c_str())) {
-          continue;
-        }
-        break;
-      }
-    }
-
-    co_await mUIThread;
-    auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd);
-    if (!(source && source->GetPageCount() > 0)) {
-      continue;
-    }
-    this->SetDelegates({source});
-    this->AddEventListener(
-      source->evWindowClosedEvent,
-      std::bind_front(&WindowCaptureTab::OnWindowClosed, this));
-    co_return;
   }
+
+  // No window :( let's set a hook
+  co_await mUIThread;
+  const std::unique_lock lock(gHookMutex);
+  mEventHook.reset(SetWinEventHook(
+    EVENT_OBJECT_CREATE,
+    EVENT_OBJECT_CREATE,
+    NULL,
+    &WindowCaptureTab::WinEventProc_NewWindowHook,
+    0,
+    0,
+    WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
+  gHooks[mEventHook.get()] = weak_from_this();
 }
 
 WindowCaptureTab::~WindowCaptureTab() {
   this->RemoveAllEventListeners();
+  std::unique_lock lock(gHookMutex);
+  if (mEventHook) {
+    gHooks.erase(mEventHook.get());
+  }
 }
 
 winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
@@ -238,6 +273,56 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
       std::wstring_view {classBuf, static_cast<size_t>(classLen)}),
     .mTitle = winrt::to_string(titleBuf),
   };
+}
+
+concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
+  if (!this->WindowMatches(hwnd)) {
+    co_return;
+  }
+
+  if (!co_await this->TryToStartCapture(hwnd)) {
+    co_return;
+  }
+
+  const std::unique_lock lock(gHookMutex);
+  gHooks.erase(mEventHook.get());
+  mEventHook.reset();
+}
+
+void WindowCaptureTab::WinEventProc_NewWindowHook(
+  HWINEVENTHOOK hook,
+  DWORD event,
+  HWND hwnd,
+  LONG idObject,
+  LONG idChild,
+  DWORD idEventThread,
+  DWORD dwmsEventTime) {
+  if (event != EVENT_OBJECT_CREATE) {
+    return;
+  }
+  if (idObject != OBJID_WINDOW) {
+    return;
+  }
+  if (idChild != CHILDID_SELF) {
+    return;
+  }
+
+  std::shared_ptr<WindowCaptureTab> instance;
+  {
+    std::unique_lock lock(gHookMutex);
+    auto it = gHooks.find(hook);
+    if (it == gHooks.end()) {
+      return;
+    }
+    instance = it->second.lock();
+    if (!instance) {
+      return;
+    }
+  }
+
+  [hwnd](const auto& instance) -> winrt::fire_and_forget {
+    co_await instance->OnNewWindow(hwnd);
+  }(instance);
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
