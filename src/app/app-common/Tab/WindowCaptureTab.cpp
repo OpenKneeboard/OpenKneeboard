@@ -133,7 +133,8 @@ winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
 }
 
 utf8_string WindowCaptureTab::GetGlyph() const {
-  return {};
+  // TVMonitor
+  return {"\ue7f4"};
 }
 
 void WindowCaptureTab::Reload() {
