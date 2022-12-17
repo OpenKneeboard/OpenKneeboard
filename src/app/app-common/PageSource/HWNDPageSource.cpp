@@ -114,6 +114,7 @@ HWNDPageSource::~HWNDPageSource() = default;
 
 winrt::fire_and_forget HWNDPageSource::final_release(
   std::unique_ptr<HWNDPageSource> p) {
+  p->RemoveAllEventListeners();
   if (p->mCaptureSession) {
     p->mCaptureSession.Close();
     p->mFramePool.Close();
