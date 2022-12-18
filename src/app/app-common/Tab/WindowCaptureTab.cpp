@@ -195,11 +195,6 @@ WindowCaptureTab::GetTopLevelWindows() {
 
 std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
   HWND hwnd) {
-  // Top level windows only
-  const auto style = GetWindowLongPtr(hwnd, GWL_STYLE);
-  if (style & WS_CHILD) {
-    return {};
-  }
   // Ignore the system tray etc
   if (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW) {
     return {};
@@ -207,7 +202,7 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
 
   // Ignore 'cloaked' windows:
   // https://devblogs.microsoft.com/oldnewthing/20200302-00/?p=103507
-  if (!(style & WS_VISIBLE)) {
+  if (!(GetWindowLongPtr(hwnd, GWL_STYLE) & WS_VISIBLE)) {
     // IsWindowVisible() is equivalent as we know the parent (the desktop) is
     // visible
     return {};
@@ -235,6 +230,11 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
     return {};
   }
 
+  DWORD processID {};
+  if (!GetWindowThreadProcessId(hwnd, &processID)) {
+    return {};
+  }
+
   wchar_t classBuf[256];
   const auto classLen = GetClassName(hwnd, classBuf, 256);
   // UWP apps like 'snip & sketch' and Windows 10's calculator
@@ -242,11 +242,14 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
   // - retrieved information isn't usable for matching
   constexpr std::wstring_view uwpClass {L"ApplicationFrameWindow"};
   if (classBuf == uwpClass) {
-    return {};
-  }
-
-  DWORD processID {};
-  if (!GetWindowThreadProcessId(hwnd, &processID)) {
+    HWND child {};
+    while (child = FindWindowExW(hwnd, child, nullptr, nullptr)) {
+      DWORD childProcessID {};
+      GetWindowThreadProcessId(child, &childProcessID);
+      if (childProcessID != processID) {
+        return GetWindowSpecification(child);
+      }
+    }
     return {};
   }
 
