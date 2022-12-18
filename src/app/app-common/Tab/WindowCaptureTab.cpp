@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/WindowCaptureTab.h>
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
 #include <Psapi.h>
 #include <Shlwapi.h>
@@ -117,6 +118,12 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
   if (!(source && source->GetPageCount() > 0)) {
     co_return false;
   }
+
+  dprintf(
+    "Attaching to {:016x} with parent {:016x} (desktop {:016x})",
+    reinterpret_cast<uint64_t>(hwnd),
+    reinterpret_cast<uint64_t>(GetParent(hwnd)),
+    reinterpret_cast<uint64_t>(GetDesktopWindow()));
   this->SetDelegates({source});
   this->AddEventListener(
     source->evWindowClosedEvent,
@@ -279,7 +286,17 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
 }
 
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
+  // Give new windows (especially UWP) a chance to settle before checking
+  // if they match
+  co_await winrt::resume_after(std::chrono::seconds(1));
+
   if (!this->WindowMatches(hwnd)) {
+    co_return;
+  }
+
+  // Sometimes we want to attach to a child (e.g. for UWP apps); make
+  // sure we're actually connecting where we want in the tree
+  if (!GetTopLevelWindows().contains(hwnd)) {
     co_return;
   }
 
