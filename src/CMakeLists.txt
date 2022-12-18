@@ -57,12 +57,12 @@ function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC
   )
 endfunction()
 
-function(add_version_rc TARGET ORIGINAL_FILENAME)
+function(add_version_rc TARGET)
   set(VERSION_RC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET}.version.rc")
   create_version_rc(
     "${TARGET}-version-rc"
-    "${TARGET}"
-    "${ORIGINAL_FILENAME}"
+    "$<TARGET_FILE_BASE_NAME:${TARGET}>"
+    "$<TARGET_FILE_NAME:${TARGET}>"
     "${VERSION_RC_FILE}"
   )
   target_sources("${TARGET}" PRIVATE "${VERSION_RC_FILE}")
@@ -81,7 +81,7 @@ function(ok_postprocess_target TARGET)
     return()
   endif()
 
-  add_version_rc(${TARGET} "${TARGET}.dll")
+  add_version_rc(${TARGET})
   sign_target(${TARGET})
   install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endfunction()

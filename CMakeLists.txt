@@ -109,6 +109,12 @@ configure_file(
   COPYONLY
 )
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(BUILD_BITNESS 32 CACHE INTERNAL "")
+else()
+  set(BUILD_BITNESS 64 CACHE INTERNAL "")
+endif()
+
 add_subdirectory("third-party")
 add_subdirectory("src")
 
@@ -121,5 +127,7 @@ install(
   FILES gpl-2.0.txt
   TYPE DOC
 )
+
+include(dualarch.cmake)
 
 add_subdirectory("installer")

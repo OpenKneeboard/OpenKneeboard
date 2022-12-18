@@ -11,6 +11,14 @@ set(
   "$<GENEX_EVAL:$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>>"
   "${CMAKE_SOURCE_DIR}/docs/Quick Start.pdf"
 )
+
+if(BUILD_BITNESS EQUAL 64)
+  list(
+    APPEND RUNTIME_FILES
+    "$<GENEX_EVAL:$<TARGET_PROPERTY:OpenKneeboard-WindowCaptureHook32,IMPORTED_LOCATION>>"
+  )
+endif()
+
 install(FILES "${RUNTIME_FILES}" TYPE BIN)
 
 set(

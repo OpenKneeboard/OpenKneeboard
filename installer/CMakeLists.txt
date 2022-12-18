@@ -12,7 +12,7 @@ install(
   COMPONENT Installer
 )
 
-##### CPack (MSI) Config #####
+# #### CPack (MSI) Config #####
 set(CPACK_GENERATOR "WIX")
 set(CPACK_PACKAGE_NAME "OpenKneeboard")
 set(CPACK_PACKAGE_VENDOR "Fred Emmott")
@@ -30,6 +30,8 @@ set(CPACK_WIX_UI_BANNER "${CMAKE_SOURCE_DIR}/assets/WixUIBanner.png")
 
 get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
 list(REMOVE_ITEM CPACK_COMPONENTS_ALL DebugSymbols)
+list(REMOVE_ITEM CPACK_COMPONENTS_ALL DualArch)
+list(REMOVE_ITEM CPACK_COMPONENTS_ALL DualArchDebugSymbols)
 
 list(
   APPEND
