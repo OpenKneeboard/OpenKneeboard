@@ -1,6 +1,8 @@
 set(
   DUAL_ARCH_COMPONENTS
   OpenKneeboard-WindowCaptureHook
+  OpenKneeboard-WindowCaptureHook-Helper
+  CACHE INTERNAL ""
 )
 
 if(BUILD_BITNESS EQUAL 32)
@@ -16,7 +18,14 @@ if(BUILD_BITNESS EQUAL 32)
 
     set_target_properties("${TARGET}" PROPERTIES OUTPUT_NAME "${OUTPUT_NAME}32")
 
-    install(TARGETS "${TARGET}" LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT DualArch)
+    get_target_property(TARGET_TYPE "${TARGET}" TYPE)
+
+    if(TARGET_TYPE STREQUAL "EXECUTABLE")
+      install(TARGETS "${TARGET}" COMPONENT DualArch)
+    else()
+      install(TARGETS "${TARGET}" LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT DualArch)
+    endif()
+
     install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DualArchDebugSymbols)
   endforeach()
   return()
@@ -38,15 +47,20 @@ include(ExternalProject)
 ExternalProject_Add(
   build-32bit-components
   SOURCE_DIR "${CMAKE_SOURCE_DIR}"
+  STAMP_DIR "${CMAKE_BINARY_DIR}/stamp32"
+  BINARY_DIR "${CMAKE_BINARY_DIR}/build32"
+  INSTALL_DIR "${CMAKE_BINARY_DIR}/install32"
   DOWNLOAD_COMMAND ""
   CONFIGURE_COMMAND
   "${CMAKE_COMMAND}"
   "${CMAKE_SOURCE_DIR}"
   -A Win32
+  "-DSIGNTOOL_KEY_ARGS=${SIGNTOOL_KEY_ARGS}"
   BUILD_COMMAND
   "${CMAKE_COMMAND}"
+  --build .
   --config "$<CONFIG>"
-  --build . --target OpenKneeboard-dual-arch-components
+  --target OpenKneeboard-dual-arch-components
   INSTALL_COMMAND
   "${CMAKE_COMMAND}"
   --install .
@@ -64,13 +78,25 @@ ExternalProject_Add(
 ExternalProject_Get_property(build-32bit-components INSTALL_DIR)
 
 foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
-  add_library("${TARGET}32" INTERFACE)
+  add_library("${TARGET}32" INTERFACE IMPORTED GLOBAL)
   add_dependencies("${TARGET}32" build-32bit-components)
-  set_target_properties(
-    "${TARGET}32"
-    PROPERTIES
-    IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${TARGET}32.dll"
-  )
+
+  get_target_property(TARGET_TYPE "${TARGET}" TYPE)
+
+  if(TARGET_TYPE STREQUAL "EXECUTABLE")
+    set_target_properties(
+      "${TARGET}32"
+      PROPERTIES
+      IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${TARGET}32.exe"
+    )
+  else()
+    set_target_properties(
+      "${TARGET}32"
+      PROPERTIES
+      IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${TARGET}32.dll"
+    )
+  endif()
+
   install(
     FILES
     "${INSTALL_DIR}/$<CONFIG>/${TARGET}32.pdb"

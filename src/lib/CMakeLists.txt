@@ -313,3 +313,18 @@ target_link_libraries(
   OpenKneeboard-config
   _libheaders
 )
+
+ok_add_library(OpenKneeboard-WindowCaptureControl STATIC WindowCaptureControl.cpp)
+target_link_libraries(
+  OpenKneeboard-WindowCaptureControl
+  PRIVATE
+  OpenKneeboard-RuntimeFiles
+  OpenKneeboard-dprint
+  OpenKneeboard-shims
+)
+target_link_libraries(
+  OpenKneeboard-WindowCaptureControl
+  PUBLIC
+  OpenKneeboard-handles
+  _libheaders
+)

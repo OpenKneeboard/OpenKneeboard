@@ -23,9 +23,10 @@ target_link_libraries(
 	OpenKneeboard-RayIntersectsRect
 	OpenKneeboard-RuntimeFiles
 	OpenKneeboard-OpenVRKneeboard
-	OpenKneeboard-SHM
 	OpenKneeboard-OpenXRMode
+	OpenKneeboard-SHM
 	OpenKneeboard-UTF8
+	OpenKneeboard-WindowCaptureControl
 	OpenKneeboard-config
 	OpenKneeboard-dprint
 	OpenKneeboard-games

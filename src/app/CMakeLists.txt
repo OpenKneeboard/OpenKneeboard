@@ -13,10 +13,12 @@ set(
 )
 
 if(BUILD_BITNESS EQUAL 64)
-  list(
-    APPEND RUNTIME_FILES
-    "$<GENEX_EVAL:$<TARGET_PROPERTY:OpenKneeboard-WindowCaptureHook32,IMPORTED_LOCATION>>"
-  )
+  foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
+    list(
+      APPEND RUNTIME_FILES
+      "$<GENEX_EVAL:$<TARGET_PROPERTY:${TARGET}32,IMPORTED_LOCATION>>"
+    )
+  endforeach()
 endif()
 
 install(FILES "${RUNTIME_FILES}" TYPE BIN)
@@ -51,4 +53,11 @@ add_custom_target(
   "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
   COMMAND_EXPAND_LISTS
 )
+
 add_dependencies(CopyRuntimeFiles ThirdParty::OpenVR)
+
+if(BUILD_BITNESS EQUAL 64)
+  foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
+    add_dependencies(CopyRuntimeFiles "${TARGET}32")
+  endforeach()
+endif()

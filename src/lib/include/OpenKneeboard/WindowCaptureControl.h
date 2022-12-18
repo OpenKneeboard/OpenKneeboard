@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include <OpenKneeboard/handles.h>
+
 namespace OpenKneeboard::WindowCaptureControl {
 
 constexpr const wchar_t WindowMessageName[] {
@@ -29,5 +31,14 @@ enum class WParam : unsigned int {
   Disable_WM_MOUSELEAVE = 1,
   Enable_WM_MOUSELEAVE = 2,
 };
+
+struct Handles {
+  unique_hmodule mLibrary;
+  unique_hhook mMessageHook;
+  unique_hhook mWindowProcHook;
+
+  bool IsValid() const;
+};
+Handles InstallHooks(HWND hwnd);
 
 }// namespace OpenKneeboard::WindowCaptureControl

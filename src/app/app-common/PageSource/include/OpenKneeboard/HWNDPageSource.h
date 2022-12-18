@@ -23,6 +23,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
+#include <OpenKneeboard/WindowCaptureControl.h>
 #include <OpenKneeboard/handles.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Graphics.Capture.h>
@@ -71,9 +72,7 @@ class HWNDPageSource final
   winrt::apartment_context mUIThread;
   DXResources mDXR;
   HWND mWindow {};
-  unique_hmodule mHookLibrary {};
-  unique_hhook mWindowMessageHook {};
-  unique_hhook mWindowProcHook {};
+  WindowCaptureControl::Handles mHooks {};
 
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
     nullptr};

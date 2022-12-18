@@ -132,3 +132,18 @@ target_link_libraries(
   OpenKneeboard-Elevation
   OpenKneeboard-dprint
 )
+
+add_helper_executable(
+  OpenKneeboard-WindowCaptureHook-Helper
+  WIN32
+  WindowCaptureHook-helper.cpp
+)
+target_link_libraries(
+  OpenKneeboard-WindowCaptureHook-Helper
+  PRIVATE
+  OpenKneeboard-WindowCaptureControl
+  OpenKneeboard-consolelib
+  OpenKneeboard-dprint
+  OpenKneeboard-shims
+  System::Shell32
+)

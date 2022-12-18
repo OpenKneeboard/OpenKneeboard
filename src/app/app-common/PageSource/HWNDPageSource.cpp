@@ -20,7 +20,6 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
@@ -302,47 +301,7 @@ void HWNDPageSource::PostCursorEvent(
 }
 
 void HWNDPageSource::InstallWindowHooks() {
-  DWORD processID {};
-  auto threadID = GetWindowThreadProcessId(mWindow, &processID);
-  if (processID == GetCurrentProcessId()) {
-    dprint("Cowardly refusing to move my own mouse cursor.");
-    return;
-  }
-  if (!threadID) {
-    dprint("Failed to find thread for window.");
-    return;
-  }
-
-  const auto hookPath = (RuntimeFiles::GetInstallationDirectory()
-                         / RuntimeFiles::WINDOW_CAPTURE_HOOK_DLL)
-                          .wstring();
-
-  mHookLibrary.reset(LoadLibraryW(hookPath.c_str()));
-  if (!mHookLibrary) {
-    dprintf("Failed to load hook library: {}", GetLastError());
-  }
-
-  auto msgProc
-    = GetProcAddress(mHookLibrary.get(), "GetMsgProc_WindowCaptureHook");
-  auto wndProc
-    = GetProcAddress(mHookLibrary.get(), "CallWndProc_WindowCaptureHook");
-
-  mWindowMessageHook.reset(SetWindowsHookExW(
-    WH_GETMESSAGE,
-    reinterpret_cast<HOOKPROC>(msgProc),
-    mHookLibrary.get(),
-    threadID));
-  if (!mWindowMessageHook) {
-    dprintf("Failed to set WH_GETMESSAGE: {}", GetLastError());
-  }
-  mWindowProcHook.reset(SetWindowsHookExW(
-    WH_CALLWNDPROC,
-    reinterpret_cast<HOOKPROC>(wndProc),
-    mHookLibrary.get(),
-    threadID));
-  if (!mWindowProcHook) {
-    dprintf("Failed to set WH_CALLWNDPROC: {}", GetLastError());
-  }
+  mHooks = WindowCaptureControl::InstallHooks(mWindow);
 }
 
 }// namespace OpenKneeboard
