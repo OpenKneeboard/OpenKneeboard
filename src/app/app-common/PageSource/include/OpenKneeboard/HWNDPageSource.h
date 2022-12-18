@@ -66,6 +66,7 @@ class HWNDPageSource final
   HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
   void InitializeOnWorkerThread() noexcept;
   void OnFrame() noexcept;
+  void InstallWindowHooks();
 
   winrt::apartment_context mUIThread;
   DXResources mDXR;

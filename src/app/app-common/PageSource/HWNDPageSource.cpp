@@ -98,29 +98,6 @@ HWNDPageSource::HWNDPageSource(
     return;
   }
 
-  const auto hookPath = (RuntimeFiles::GetInstallationDirectory()
-                         / RuntimeFiles::WINDOW_CAPTURE_HOOK_DLL)
-                          .wstring();
-  auto threadID = GetWindowThreadProcessId(window, nullptr);
-
-  mHookLibrary.reset(LoadLibraryW(hookPath.c_str()));
-  if (mHookLibrary && threadID) {
-    auto msgProc
-      = GetProcAddress(mHookLibrary.get(), "GetMsgProc_WindowCaptureHook");
-    auto wndProc
-      = GetProcAddress(mHookLibrary.get(), "CallWndProc_WindowCaptureHook");
-    mWindowMessageHook.reset(SetWindowsHookExW(
-      WH_GETMESSAGE,
-      reinterpret_cast<HOOKPROC>(msgProc),
-      mHookLibrary.get(),
-      threadID));
-    mWindowProcHook.reset(SetWindowsHookExW(
-      WH_CALLWNDPROC,
-      reinterpret_cast<HOOKPROC>(wndProc),
-      mHookLibrary.get(),
-      threadID));
-  }
-
   AddEventListener(kneeboard->evFrameTimerPrepareEvent, [this]() {
     if (mNeedsRepaint) {
       evContentChangedEvent.Emit(ContentChangeType::Modified);
@@ -131,6 +108,8 @@ HWNDPageSource::HWNDPageSource(
     CreateOnDedicatedThread();
   mDQC.DispatcherQueue().TryEnqueue(
     [this]() { this->InitializeOnWorkerThread(); });
+
+  this->InstallWindowHooks();
 }
 
 bool HWNDPageSource::HaveWindow() const {
@@ -317,6 +296,50 @@ void HWNDPageSource::PostCursorEvent(
   }
   if (up & (1 << 1)) {
     SendMessage(mWindow, WM_RBUTTONUP, wParam, lParam);
+  }
+}
+
+void HWNDPageSource::InstallWindowHooks() {
+  DWORD processID {};
+  auto threadID = GetWindowThreadProcessId(mWindow, &processID);
+  if (processID == GetCurrentProcessId()) {
+    dprint("Cowardly refusing to move my own mouse cursor.");
+    return;
+  }
+  if (!threadID) {
+    dprint("Failed to find thread for window.");
+    return;
+  }
+
+  const auto hookPath = (RuntimeFiles::GetInstallationDirectory()
+                         / RuntimeFiles::WINDOW_CAPTURE_HOOK_DLL)
+                          .wstring();
+
+  mHookLibrary.reset(LoadLibraryW(hookPath.c_str()));
+  if (!mHookLibrary) {
+    dprintf("Failed to load hook library: {}", GetLastError());
+  }
+
+  auto msgProc
+    = GetProcAddress(mHookLibrary.get(), "GetMsgProc_WindowCaptureHook");
+  auto wndProc
+    = GetProcAddress(mHookLibrary.get(), "CallWndProc_WindowCaptureHook");
+
+  mWindowMessageHook.reset(SetWindowsHookExW(
+    WH_GETMESSAGE,
+    reinterpret_cast<HOOKPROC>(msgProc),
+    mHookLibrary.get(),
+    threadID));
+  if (!mWindowMessageHook) {
+    dprintf("Failed to set WH_GETMESSAGE: {}", GetLastError());
+  }
+  mWindowProcHook.reset(SetWindowsHookExW(
+    WH_CALLWNDPROC,
+    reinterpret_cast<HOOKPROC>(wndProc),
+    mHookLibrary.get(),
+    threadID));
+  if (!mWindowProcHook) {
+    dprintf("Failed to set WH_CALLWNDPROC: {}", GetLastError());
   }
 }
 
