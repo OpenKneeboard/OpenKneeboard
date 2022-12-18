@@ -5,6 +5,13 @@ set(
   CACHE INTERNAL ""
 )
 
+# TODO (CMake 3.24+): use PATH:GET_FILENAME generator expression
+# to infer this from IMPORTED_LOCATION
+define_property(
+  TARGET PROPERTY IMPORTED_FILENAME
+  BRIEF_DOCS ""
+  FULL_DOCS "")
+
 if(BUILD_BITNESS EQUAL 32)
   add_custom_target(OpenKneeboard-dual-arch-components)
   add_dependencies(OpenKneeboard-dual-arch-components ${DUAL_ARCH_COMPONENTS})
@@ -88,12 +95,14 @@ foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
       "${TARGET}32"
       PROPERTIES
       IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${TARGET}32.exe"
+      IMPORTED_FILENAME "${TARGET}32.exe"
     )
   else()
     set_target_properties(
       "${TARGET}32"
       PROPERTIES
       IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${TARGET}32.dll"
+      IMPORTED_FILENAME "${TARGET}32.exe"
     )
   endif()
 
