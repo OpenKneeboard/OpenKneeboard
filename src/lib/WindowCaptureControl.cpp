@@ -42,6 +42,8 @@ Handles InstallHooks(HWND hwnd) {
                          / RuntimeFiles::WINDOW_CAPTURE_HOOK_DLL)
                           .wstring();
 
+  dprintf(L"Loading hook library: {}", hookPath);
+
   ret.mLibrary.reset(LoadLibraryW(hookPath.c_str()));
   if (!ret.mLibrary) {
     dprintf("Failed to load hook library: {}", GetLastError());
@@ -49,8 +51,14 @@ Handles InstallHooks(HWND hwnd) {
 
   auto msgProc
     = GetProcAddress(ret.mLibrary.get(), "GetMsgProc_WindowCaptureHook");
+  if (!msgProc) {
+    dprintf("Failed to find msgProc hook address: {}", GetLastError());
+  }
   auto wndProc
     = GetProcAddress(ret.mLibrary.get(), "CallWndProc_WindowCaptureHook");
+  if (!msgProc) {
+    dprintf("Failed to find wndProc hook address: {}", GetLastError());
+  }
 
   ret.mMessageHook.reset(SetWindowsHookExW(
     WH_GETMESSAGE,

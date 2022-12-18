@@ -18,8 +18,10 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
@@ -28,9 +30,11 @@
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 #include <libloaderapi.h>
+#include <shellapi.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
+#include <wow64apiset.h>
 
 namespace WGC = winrt::Windows::Graphics::Capture;
 namespace WGDX = winrt::Windows::Graphics::DirectX;
@@ -301,7 +305,42 @@ void HWNDPageSource::PostCursorEvent(
 }
 
 void HWNDPageSource::InstallWindowHooks() {
-  mHooks = WindowCaptureControl::InstallHooks(mWindow);
+  BOOL is32Bit {FALSE};
+  {
+    DWORD processID {};
+    GetWindowThreadProcessId(mWindow, &processID);
+    winrt::handle process {
+      OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID)};
+    if (!process) {
+      return;
+    }
+    winrt::check_bool(IsWow64Process(process.get(), &is32Bit));
+  }
+
+  if (!is32Bit) {
+    // Natively use SetWindowsHookEx()
+    mHooks = WindowCaptureControl::InstallHooks(mWindow);
+    return;
+  }
+
+  // We need a 32-bit subprocess to install our hook
+
+  const auto helper = (Filesystem::GetRuntimeDirectory()
+                       / RuntimeFiles::WINDOW_CAPTURE_HOOK_32BIT_HELPER)
+                        .wstring();
+  const auto commandLine = std::format(
+    L"{} {}",
+    reinterpret_cast<uint64_t>(mWindow),
+    static_cast<uint64_t>(GetCurrentProcessId()));
+
+  SHELLEXECUTEINFOW shellExecuteInfo {
+    .cbSize = sizeof(SHELLEXECUTEINFOW),
+    .fMask = SEE_MASK_NO_CONSOLE,
+    .lpVerb = L"open",
+    .lpFile = helper.c_str(),
+    .lpParameters = commandLine.c_str(),
+  };
+  winrt::check_bool(ShellExecuteExW(&shellExecuteInfo));
 }
 
 }// namespace OpenKneeboard

@@ -170,3 +170,10 @@ target_link_libraries(
   OpenKneeboard-config
   _libheaders
 )
+set_target_properties(
+  OpenKneeboard-WindowCaptureHook
+  PROPERTIES
+
+  # Needed to avoid C function name mangling on 32-bit builds
+  WINDOWS_EXPORT_ALL_SYMBOLS ON
+)

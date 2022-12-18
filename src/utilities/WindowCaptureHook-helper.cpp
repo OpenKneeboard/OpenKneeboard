@@ -22,6 +22,7 @@
 #include <OpenKneeboard/ConsoleLoopCondition.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/handles.h>
 #include <shellapi.h>
 #include <shims/Windows.h>
 
@@ -43,8 +44,8 @@ int WINAPI wWinMain(
   int argc = 0;
   auto argv = CommandLineToArgvW(pCmdLine, &argc);
 
-  if (argc != 1) {
-    dprint("Usage: HWND");
+  if (argc != 2) {
+    dprint("Usage: HWND PARENTPROCESS");
     return 1;
   }
 
@@ -53,6 +54,19 @@ int WINAPI wWinMain(
     dprint("Unable to parse an hwnd");
     return 1;
   }
+  const auto parentID = static_cast<DWORD>(_wcstoui64(argv[1], nullptr, 10));
+  if (!parentID) {
+    dprint("Unable to parse parent ID");
+    return 1;
+  }
+
+  dprintf(
+    "Attaching to HWND {:016x} from parent {}",
+    reinterpret_cast<uint64_t>(hwnd),
+    parentID);
+
+  winrt::handle parent {
+    OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, parentID)};
 
   auto handles = WindowCaptureControl::InstallHooks(hwnd);
   if (!handles.IsValid()) {
@@ -62,6 +76,12 @@ int WINAPI wWinMain(
 
   ConsoleLoopCondition loop;
   while (loop.Sleep(std::chrono::seconds(1))) {
+    DWORD exitCode {};
+    GetExitCodeProcess(parent.get(), &exitCode);
+    if (exitCode != STILL_ACTIVE) {
+      dprint("Parent quit, closing");
+      return 0;
+    }
     // do nothing
   }
   return 0;

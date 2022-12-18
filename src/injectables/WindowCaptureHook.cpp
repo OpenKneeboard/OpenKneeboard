@@ -34,13 +34,12 @@ ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
     return false;
   }
 
-  switch (wParam) {
-    case static_cast<WPARAM>(
-      WindowCaptureControl::WParam::Disable_WM_MOUSELEAVE):
+  using WParam = WindowCaptureControl::WParam;
+  switch (static_cast<WParam>(wParam)) {
+    case WParam::Disable_WM_MOUSELEAVE:
       gDisableMouseLeave++;
       break;
-    case static_cast<WPARAM>(
-      WindowCaptureControl::WParam::Enable_WM_MOUSELEAVE):
+    case WParam::Enable_WM_MOUSELEAVE:
       gDisableMouseLeave--;
       break;
   }
