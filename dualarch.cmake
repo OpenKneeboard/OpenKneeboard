@@ -14,7 +14,7 @@ define_property(
 
 if(BUILD_BITNESS EQUAL 32)
   message(STATUS "Preparing 32-bit build of 32bit-runtime-components")
-  add_library(OpenKneeboard-32bit-runtime-components INTERFACE)
+  add_custom_target(OpenKneeboard-32bit-runtime-components)
   add_dependencies(OpenKneeboard-32bit-runtime-components ${DUAL_ARCH_COMPONENTS})
 
   foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
@@ -63,7 +63,7 @@ include(ExternalProject)
 message(STATUS "Preparing 64-bit -> 32-bit subbuild of dual-arch components")
 
 ExternalProject_Add(
-  build-32bit-components
+  thirtyTwoBitBuild
   SOURCE_DIR "${CMAKE_SOURCE_DIR}"
   STAMP_DIR "${CMAKE_BINARY_DIR}/stamp32"
   BINARY_DIR "${CMAKE_BINARY_DIR}/build32"
@@ -71,34 +71,37 @@ ExternalProject_Add(
   DOWNLOAD_COMMAND ""
   CONFIGURE_COMMAND
   "${CMAKE_COMMAND}"
-  "${CMAKE_SOURCE_DIR}"
+  -S "<SOURCE_DIR>"
+  -B "<BINARY_DIR>"
   -A Win32
   BUILD_COMMAND
+  echo "${CMAKE_COMMAND}"
+  &&
   "${CMAKE_COMMAND}"
-  --build .
+  --build "<BINARY_DIR>"
   --config "$<CONFIG>"
   --target OpenKneeboard-32bit-runtime-components
   INSTALL_COMMAND
   "${CMAKE_COMMAND}"
-  --install .
+  --install "<BINARY_DIR>"
   --prefix "<INSTALL_DIR>/$<CONFIG>"
   --config "$<CONFIG>"
   --component DualArch
   &&
   "${CMAKE_COMMAND}"
-  --install .
+  --install "<BINARY_DIR>"
   --config "$<CONFIG>"
   --prefix "<INSTALL_DIR>/$<CONFIG>"
   --component DualArchDebugSymbols
 )
 
-ExternalProject_Get_property(build-32bit-components INSTALL_DIR)
+ExternalProject_Get_property(thirtyTwoBitBuild INSTALL_DIR)
 
 add_library(OpenKneeboard-32bit-runtime-components INTERFACE)
 
 foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
   add_library("${TARGET}32" INTERFACE IMPORTED GLOBAL)
-  add_dependencies("${TARGET}32" build-32bit-components)
+  add_dependencies("${TARGET}32" thirtyTwoBitBuild)
   add_dependencies(OpenKneeboard-32bit-runtime-components "${TARGET}32")
 
   get_target_property(TARGET_TYPE "${TARGET}" TYPE)
@@ -117,7 +120,7 @@ foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
     IMPORTED_FILENAME "${IMPORTED_FILENAME}"
   )
   sign_target_file(
-    build-32bit-components
+    thirtyTwoBitBuild
     "${IMPORTED_LOCATION}"
   )
 
