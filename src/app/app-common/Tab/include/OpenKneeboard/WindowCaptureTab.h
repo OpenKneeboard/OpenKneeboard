@@ -64,6 +64,9 @@ class WindowCaptureTab final
   virtual void Reload() final override;
   virtual nlohmann::json GetSettings() const override;
 
+  MatchSpecification GetMatchSpecification() const;
+  void SetMatchSpecification(const MatchSpecification&);
+
   static std::unordered_map<HWND, WindowSpecification> GetTopLevelWindows();
   static std::optional<WindowSpecification> GetWindowSpecification(HWND);
 
@@ -94,6 +97,7 @@ class WindowCaptureTab final
   DXResources mDXR;
   KneeboardState* mKneeboard {nullptr};
   MatchSpecification mSpec;
+  HWND mHwnd {};
 
   unique_hwineventhook mEventHook;
   static std::mutex gHookMutex;

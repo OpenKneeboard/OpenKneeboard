@@ -128,6 +128,7 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
   this->AddEventListener(
     source->evWindowClosedEvent,
     std::bind_front(&WindowCaptureTab::OnWindowClosed, this));
+  mHwnd = hwnd;
   co_return true;
 }
 
@@ -169,8 +170,7 @@ WindowCaptureTab::~WindowCaptureTab() {
 
 winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
   co_await mUIThread;
-  this->SetDelegates({});
-  this->TryToStartCapture();
+  this->Reload();
 }
 
 utf8_string WindowCaptureTab::GetGlyph() const {
@@ -179,6 +179,9 @@ utf8_string WindowCaptureTab::GetGlyph() const {
 }
 
 void WindowCaptureTab::Reload() {
+  mHwnd = {};
+  this->SetDelegates({});
+  this->TryToStartCapture();
 }
 
 nlohmann::json WindowCaptureTab::GetSettings() const {
@@ -283,6 +286,19 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
       std::wstring_view {classBuf, static_cast<size_t>(classLen)}),
     .mTitle = winrt::to_string(titleBuf),
   };
+}
+
+WindowCaptureTab::MatchSpecification WindowCaptureTab::GetMatchSpecification()
+  const {
+  return mSpec;
+}
+
+void WindowCaptureTab::SetMatchSpecification(const MatchSpecification& spec) {
+  mSpec = spec;
+  this->evSettingsChangedEvent.Emit();
+  if (!this->WindowMatches(mHwnd)) {
+    this->Reload();
+  }
 }
 
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
