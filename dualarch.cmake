@@ -13,8 +13,9 @@ define_property(
   FULL_DOCS "")
 
 if(BUILD_BITNESS EQUAL 32)
-  add_custom_target(OpenKneeboard-dual-arch-components)
-  add_dependencies(OpenKneeboard-dual-arch-components ${DUAL_ARCH_COMPONENTS})
+  message(STATUS "Preparing 32-bit build of 32bit-runtime-components")
+  add_library(OpenKneeboard-32bit-runtime-components INTERFACE)
+  add_dependencies(OpenKneeboard-32bit-runtime-components ${DUAL_ARCH_COMPONENTS})
 
   foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
     add_custom_target("${TARGET}32" INTERFACE IMPORTED GLOBAL)
@@ -59,6 +60,8 @@ endforeach()
 
 include(ExternalProject)
 
+message(STATUS "Preparing 64-bit -> 32-bit subbuild of dual-arch components")
+
 ExternalProject_Add(
   build-32bit-components
   SOURCE_DIR "${CMAKE_SOURCE_DIR}"
@@ -74,7 +77,7 @@ ExternalProject_Add(
   "${CMAKE_COMMAND}"
   --build .
   --config "$<CONFIG>"
-  --target OpenKneeboard-dual-arch-components
+  --target OpenKneeboard-32bit-runtime-components
   INSTALL_COMMAND
   "${CMAKE_COMMAND}"
   --install .
@@ -91,9 +94,12 @@ ExternalProject_Add(
 
 ExternalProject_Get_property(build-32bit-components INSTALL_DIR)
 
+add_library(OpenKneeboard-32bit-runtime-components INTERFACE)
+
 foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
   add_library("${TARGET}32" INTERFACE IMPORTED GLOBAL)
   add_dependencies("${TARGET}32" build-32bit-components)
+  add_dependencies(OpenKneeboard-32bit-runtime-components "${TARGET}32")
 
   get_target_property(TARGET_TYPE "${TARGET}" TYPE)
 
@@ -115,6 +121,12 @@ foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
     "${IMPORTED_LOCATION}"
   )
 
+  install(
+    FILES
+    "${IMPORTED_LOCATION}"
+    TYPE BIN
+    COMPONENT Default
+  )
   install(
     FILES
     "${INSTALL_DIR}/$<CONFIG>/${TARGET}32.pdb"

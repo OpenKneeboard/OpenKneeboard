@@ -62,6 +62,7 @@ target_link_libraries(
   OpenKneeboard-RunSubprocessAsync
   OpenKneeboard-config
   OpenKneeboard-dprint
+  OpenKneeboard-32bit-runtime-components
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-version
