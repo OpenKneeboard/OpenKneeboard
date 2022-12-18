@@ -62,11 +62,7 @@ else()
   set(VERSION_BUILD 0)
 endif()
 
-message(STATUS "1 ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
-message(STATUS "2 ${CMAKE_SYSTEM_VERSION}")
 project(com.fredemmott.openkneeboard VERSION 1.3.0.${VERSION_BUILD} LANGUAGES CXX C)
-message(STATUS "3 ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
-message(STATUS "4 ${CMAKE_SYSTEM_VERSION}")
 
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
 
