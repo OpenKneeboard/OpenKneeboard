@@ -125,6 +125,11 @@ HWNDPageSource::~HWNDPageSource() = default;
 
 winrt::fire_and_forget HWNDPageSource::final_release(
   std::unique_ptr<HWNDPageSource> p) {
+  if (p->mHook32Subprocess) {
+    TerminateProcess(p->mHook32Subprocess.get(), 0);
+    p->mHook32Subprocess = {};
+  }
+
   p->RemoveAllEventListeners();
   if (!p->mDQC) {
     co_await p->mUIThread;
@@ -319,7 +324,7 @@ void HWNDPageSource::InstallWindowHooks() {
 
   if (!is32Bit) {
     // Natively use SetWindowsHookEx()
-    mHooks = WindowCaptureControl::InstallHooks(mWindow);
+    mHooks64 = WindowCaptureControl::InstallHooks(mWindow);
     return;
   }
 
@@ -335,12 +340,14 @@ void HWNDPageSource::InstallWindowHooks() {
 
   SHELLEXECUTEINFOW shellExecuteInfo {
     .cbSize = sizeof(SHELLEXECUTEINFOW),
-    .fMask = SEE_MASK_NO_CONSOLE,
+    .fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS,
     .lpVerb = L"open",
     .lpFile = helper.c_str(),
     .lpParameters = commandLine.c_str(),
   };
   winrt::check_bool(ShellExecuteExW(&shellExecuteInfo));
+
+  mHook32Subprocess.attach(shellExecuteInfo.hProcess);
 }
 
 }// namespace OpenKneeboard

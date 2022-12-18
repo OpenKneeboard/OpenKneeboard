@@ -72,7 +72,8 @@ class HWNDPageSource final
   winrt::apartment_context mUIThread;
   DXResources mDXR;
   HWND mWindow {};
-  WindowCaptureControl::Handles mHooks {};
+  WindowCaptureControl::Handles mHooks64 {};
+  winrt::handle mHook32Subprocess;
 
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
     nullptr};
