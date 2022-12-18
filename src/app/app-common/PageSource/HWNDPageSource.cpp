@@ -233,8 +233,10 @@ void HWNDPageSource::PostCursorEvent(
     return;
   }
 
-  const auto target
-    = ChildWindowFromPoint(mWindow, {std::lround(ev.mX), std::lround(ev.mY)});
+  // The event point should already be scaled to native content size
+  POINT point {std::lround(ev.mX), std::lround(ev.mY)};
+  const auto target = ChildWindowFromPoint(mWindow, point);
+  MapWindowPoints(mWindow, target, &point, 1);
 
   WPARAM wParam {};
   if (ev.mButtons & 1) {
@@ -243,8 +245,7 @@ void HWNDPageSource::PostCursorEvent(
   if (ev.mButtons & (1 << 1)) {
     wParam |= MK_RBUTTON;
   }
-  // Should already be scaled to native content size
-  LPARAM lParam = MAKELPARAM(ev.mX, ev.mY);
+  LPARAM lParam = MAKELPARAM(point.x, point.y);
 
   if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
     if (mMouseButtons & 1) {
