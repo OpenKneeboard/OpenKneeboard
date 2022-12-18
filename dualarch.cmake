@@ -17,6 +17,14 @@ if(BUILD_BITNESS EQUAL 32)
   add_dependencies(OpenKneeboard-dual-arch-components ${DUAL_ARCH_COMPONENTS})
 
   foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
+    add_custom_target("${TARGET}32" INTERFACE IMPORTED GLOBAL)
+    set_target_properties(
+      "${TARGET}32"
+      PROPERTIES
+      IMPORTED_LOCATION "IGNORE"
+      IMPORTED_FILENAME "IGNORE"
+    )
+
     get_target_property(OUTPUT_NAME "${TARGET}" OUTPUT_NAME)
 
     if(NOT OUTPUT_NAME)
