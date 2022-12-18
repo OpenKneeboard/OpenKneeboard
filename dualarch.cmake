@@ -70,7 +70,6 @@ ExternalProject_Add(
   "${CMAKE_COMMAND}"
   "${CMAKE_SOURCE_DIR}"
   -A Win32
-  "-DSIGNTOOL_KEY_ARGS=${SIGNTOOL_KEY_ARGS}"
   BUILD_COMMAND
   "${CMAKE_COMMAND}"
   --build .
@@ -99,20 +98,22 @@ foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
   get_target_property(TARGET_TYPE "${TARGET}" TYPE)
 
   if(TARGET_TYPE STREQUAL "EXECUTABLE")
-    set_target_properties(
-      "${TARGET}32"
-      PROPERTIES
-      IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${TARGET}32.exe"
-      IMPORTED_FILENAME "${TARGET}32.exe"
-    )
+    set(IMPORTED_FILENAME "${TARGET}32.exe")
   else()
-    set_target_properties(
-      "${TARGET}32"
-      PROPERTIES
-      IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${TARGET}32.dll"
-      IMPORTED_FILENAME "${TARGET}32.exe"
-    )
+    set(IMPORTED_FILENAME "${TARGET}32.dll")
   endif()
+
+  set(IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${IMPORTED_FILENAME}")
+  set_target_properties(
+    "${TARGET}32"
+    PROPERTIES
+    IMPORTED_LOCATION "${IMPORTED_LOCATION}"
+    IMPORTED_FILENAME "${IMPORTED_FILENAME}"
+  )
+  sign_target_file(
+    build-32bit-components
+    "${IMPORTED_LOCATION}"
+  )
 
   install(
     FILES
