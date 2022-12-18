@@ -21,9 +21,12 @@
 
 // clang-format off
 #include "pch.h"
-#include "TabUIData.g.h"
 #include "TabSettingsPage.g.h"
+
+#include "TabUIData.g.h"
 #include "DCSRadioLogTabUIData.g.h"
+#include "WindowCaptureTabUIData.g.h"
+
 #include "TabUIDataTemplateSelector.g.h"
 // clang-format on
 
@@ -35,6 +38,7 @@ namespace OpenKneeboard {
 class ITab;
 class ITabView;
 class DCSRadioLogTab;
+class WindowCaptureTab;
 enum class TabType;
 }// namespace OpenKneeboard
 
@@ -114,6 +118,22 @@ struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
   std::shared_ptr<OpenKneeboard::DCSRadioLogTab> GetTab() const;
 };
 
+struct WindowCaptureTabUIData : WindowCaptureTabUIDataT<
+                                  WindowCaptureTabUIData,
+                                  OpenKneeboardApp::implementation::TabUIData> {
+  WindowCaptureTabUIData() = default;
+
+  hstring WindowTitle();
+  void WindowTitle(hstring const& value);
+  bool MatchWindowClass();
+  void MatchWindowClass(bool value);
+  uint8_t MatchWindowTitle();
+  void MatchWindowTitle(uint8_t value);
+
+ private:
+  std::shared_ptr<OpenKneeboard::WindowCaptureTab> GetTab() const;
+};
+
 struct TabUIDataTemplateSelector
   : TabUIDataTemplateSelectorT<TabUIDataTemplateSelector> {
   TabUIDataTemplateSelector() = default;
@@ -122,6 +142,8 @@ struct TabUIDataTemplateSelector
   void Generic(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
   winrt::Microsoft::UI::Xaml::DataTemplate DCSRadioLog();
   void DCSRadioLog(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
+  winrt::Microsoft::UI::Xaml::DataTemplate WindowCapture();
+  void WindowCapture(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
 
   DataTemplate SelectTemplateCore(const IInspectable&);
   DataTemplate SelectTemplateCore(const IInspectable&, const DependencyObject&);
@@ -129,6 +151,7 @@ struct TabUIDataTemplateSelector
  private:
   DataTemplate mGeneric;
   DataTemplate mDCSRadioLog;
+  DataTemplate mWindowCapture;
 };
 
 }// namespace winrt::OpenKneeboardApp::implementation
@@ -140,6 +163,9 @@ struct TabUIData : TabUIDataT<TabUIData, implementation::TabUIData> {};
 struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
                                 DCSRadioLogTabUIData,
                                 implementation::DCSRadioLogTabUIData> {};
+struct WindowCaptureTabUIData : WindowCaptureTabUIDataT<
+                                  WindowCaptureTabUIData,
+                                  implementation::WindowCaptureTabUIData> {};
 
 struct TabUIDataTemplateSelector
   : TabUIDataTemplateSelectorT<

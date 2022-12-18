@@ -48,6 +48,7 @@
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         CornerRadius="8"
         Margin="4"
+        Spacing="8"
         Padding="8">
         <ContentPresenter 
           Content="{x:Bind}"
@@ -66,6 +67,35 @@
           Header="Timestamps"
           OffContent="No Timestamps"
           OnContent="Show Timestamps"
+        />
+      </StackPanel>
+    </DataTemplate>
+    <!-- Window Capture Tab -->
+    <DataTemplate x:Key="WindowCaptureTabTemplate" x:DataType="local:WindowCaptureTabUIData">
+      <StackPanel
+        Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        CornerRadius="8"
+        Margin="4"
+        Padding="8"
+        Spacing="8"
+        x:DefaultBindMode="TwoWay">
+        <ContentPresenter 
+          Content="{x:Bind Mode=OneWay}"
+          ContentTemplate="{StaticResource TabHeader}"
+          Margin="0,0,0,8"
+        />
+        <ComboBox
+          Header="Match window title"
+          SelectedIndex="{x:Bind MatchWindowTitle}">
+          <x:String>Do not match</x:String>
+          <x:String>Match exactly</x:String>
+          <x:String>Match with pattern (use '*' and '?')</x:String>
+        </ComboBox>
+        <TextBox
+          Header="Window title"
+          Text="{x:Bind WindowTitle}"
+          PlaceholderText="Window title"
         />
       </StackPanel>
     </DataTemplate>
@@ -100,6 +130,7 @@
           <local:TabUIDataTemplateSelector
             Generic="{StaticResource GenericTabTemplate}"
             DCSRadioLog="{StaticResource DCSRadioLogTabTemplate}"
+            WindowCapture="{StaticResource WindowCaptureTabTemplate}"
           />
         </ListView.ItemTemplateSelector>
       </ListView>

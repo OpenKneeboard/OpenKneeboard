@@ -19,10 +19,18 @@ namespace OpenKneeboardApp {
   Boolean TimestampsEnabled;
 }
 
+[default_interface] runtimeclass WindowCaptureTabUIData : TabUIData {
+  WindowCaptureTabUIData();
+  String WindowTitle; 
+  Boolean MatchWindowClass;
+  UInt8 MatchWindowTitle;
+}
+
 [default_interface] runtimeclass TabUIDataTemplateSelector
   : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
   TabUIDataTemplateSelector();
   Microsoft.UI.Xaml.DataTemplate Generic;
   Microsoft.UI.Xaml.DataTemplate DCSRadioLog;
+  Microsoft.UI.Xaml.DataTemplate WindowCapture;
 }
 }// namespace OpenKneeboardApp

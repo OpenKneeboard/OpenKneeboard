@@ -20,10 +20,13 @@
 // clang-format off
 #include "pch.h"
 #include "TabSettingsPage.xaml.h"
+#include "TabSettingsPage.g.cpp"
+
 #include "TabUIData.g.cpp"
 #include "DCSRadioLogTabUIData.g.cpp"
+#include "WindowCaptureTabUIData.g.cpp"
+
 #include "TabUIDataTemplateSelector.g.cpp"
-#include "TabSettingsPage.g.cpp"
 // clang-format on
 
 #include <OpenKneeboard/DCSRadioLogTab.h>
@@ -56,11 +59,12 @@ namespace winrt::OpenKneeboardApp::implementation {
 OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
   const std::shared_ptr<ITab>& tab) {
   OpenKneeboardApp::TabUIData tabData {nullptr};
-  if (auto radioTab = std::dynamic_pointer_cast<DCSRadioLogTab>(tab)) {
-    auto radioTabData = winrt::make<DCSRadioLogTabUIData>();
-    tabData = std::move(radioTabData);
+  if (std::dynamic_pointer_cast<DCSRadioLogTab>(tab)) {
+    tabData = winrt::make<DCSRadioLogTabUIData>();
+  } else if (std::dynamic_pointer_cast<WindowCaptureTab>(tab)) {
+    tabData = winrt::make<WindowCaptureTabUIData>();
   } else {
-    tabData = std::move(winrt::make<TabUIData>());
+    tabData = winrt::make<TabUIData>();
   }
   tabData.InstanceID(tab->GetRuntimeID().GetTemporaryValue());
   return tabData;
@@ -466,6 +470,50 @@ void DCSRadioLogTabUIData::TimestampsEnabled(bool value) {
   this->GetTab()->SetTimestampsEnabled(value);
 }
 
+winrt::hstring WindowCaptureTabUIData::WindowTitle() {
+  return to_hstring(GetTab()->GetMatchSpecification().mTitle);
+}
+
+void WindowCaptureTabUIData::WindowTitle(const hstring& title) {
+  auto spec = GetTab()->GetMatchSpecification();
+  spec.mTitle = to_string(title);
+  GetTab()->SetMatchSpecification(spec);
+}
+
+bool WindowCaptureTabUIData::MatchWindowClass() {
+  return GetTab()->GetMatchSpecification().mMatchWindowClass;
+}
+
+void WindowCaptureTabUIData::MatchWindowClass(bool value) {
+  auto spec = GetTab()->GetMatchSpecification();
+  spec.mMatchWindowClass = value;
+  GetTab()->SetMatchSpecification(spec);
+}
+
+uint8_t WindowCaptureTabUIData::MatchWindowTitle() {
+  return static_cast<uint8_t>(GetTab()->GetMatchSpecification().mMatchTitle);
+}
+
+void WindowCaptureTabUIData::MatchWindowTitle(uint8_t value) {
+  auto spec = GetTab()->GetMatchSpecification();
+  spec.mMatchTitle
+    = static_cast<WindowCaptureTab::MatchSpecification::TitleMatchKind>(value);
+  GetTab()->SetMatchSpecification(spec);
+}
+
+std::shared_ptr<WindowCaptureTab> WindowCaptureTabUIData::GetTab() const {
+  auto tab = mTab.lock();
+  if (!tab) {
+    return {};
+  }
+  auto refined = std::dynamic_pointer_cast<WindowCaptureTab>(tab);
+  if (!refined) {
+    dprint("Expected a WindowCaptureTab but didn't get one");
+    OPENKNEEBOARD_BREAK;
+  }
+  return refined;
+}
+
 winrt::Microsoft::UI::Xaml::DataTemplate TabUIDataTemplateSelector::Generic() {
   return mGeneric;
 }
@@ -485,10 +533,24 @@ void TabUIDataTemplateSelector::DCSRadioLog(
   mDCSRadioLog = value;
 }
 
+winrt::Microsoft::UI::Xaml::DataTemplate
+TabUIDataTemplateSelector::WindowCapture() {
+  return mWindowCapture;
+}
+
+void TabUIDataTemplateSelector::WindowCapture(
+  winrt::Microsoft::UI::Xaml::DataTemplate const& value) {
+  mWindowCapture = value;
+}
+
 DataTemplate TabUIDataTemplateSelector::SelectTemplateCore(
   const IInspectable& item) {
   if (item.try_as<winrt::OpenKneeboardApp::DCSRadioLogTabUIData>()) {
     return mDCSRadioLog;
+  }
+
+  if (item.try_as<winrt::OpenKneeboardApp::WindowCaptureTabUIData>()) {
+    return mWindowCapture;
   }
 
   return mGeneric;

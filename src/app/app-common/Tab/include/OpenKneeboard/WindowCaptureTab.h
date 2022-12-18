@@ -38,10 +38,10 @@ class WindowCaptureTab final
     std::string mTitle;
   };
   struct MatchSpecification : public WindowSpecification {
-    enum class TitleMatchKind {
-      Ignore,
-      Exact,
-      Glob,
+    enum class TitleMatchKind : uint8_t {
+      Ignore = 0,
+      Exact = 1,
+      Glob = 2,
     };
 
     TitleMatchKind mMatchTitle {TitleMatchKind::Ignore};
