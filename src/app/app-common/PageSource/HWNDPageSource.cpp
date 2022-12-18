@@ -70,6 +70,7 @@ void HWNDPageSource::InitializeOnWorkerThread() noexcept {
     mDXR.mDXGIDevice.get(),
     reinterpret_cast<IInspectable**>(winrt::put_abi(winrtD3D))));
 
+  auto lock = mDXR.AcquireD2DLockout();
   mFramePool = WGC::Direct3D11CaptureFramePool::Create(
     winrtD3D, WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 2, item.Size());
   mFramePool.FrameArrived(
