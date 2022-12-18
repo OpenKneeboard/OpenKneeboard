@@ -37,10 +37,14 @@ class DirectInputDevice;
 class UserInputButtonBinding;
 class UserInputDevice;
 
-class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
+class DirectInputAdapter final
+  : private OpenKneeboard::EventReceiver,
+    public std::enable_shared_from_this<DirectInputAdapter> {
  public:
   DirectInputAdapter() = delete;
-  DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
+  static std::shared_ptr<DirectInputAdapter> Create(
+    HWND mainWindow,
+    const DirectInputSettings& settings);
   ~DirectInputAdapter();
 
   DirectInputSettings GetSettings() const;
@@ -52,6 +56,7 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
   Event<> evAttachedControllersChangedEvent;
 
  private:
+  DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
   void Reload();
 
   HWND mWindow;
@@ -73,7 +78,7 @@ class DirectInputAdapter final : private OpenKneeboard::EventReceiver {
     _In_ WPARAM wParam,
     _In_ LPARAM lParam);
 
-  static DirectInputAdapter* gInstance;
+  static std::weak_ptr<DirectInputAdapter> gInstance;
 };
 
 }// namespace OpenKneeboard

@@ -40,17 +40,25 @@ using namespace OpenKneeboard;
 
 namespace OpenKneeboard {
 
-DirectInputAdapter* DirectInputAdapter::gInstance = nullptr;
+std::weak_ptr<DirectInputAdapter> DirectInputAdapter::gInstance;
+
+std::shared_ptr<DirectInputAdapter> DirectInputAdapter::Create(
+  HWND hwnd,
+  const DirectInputSettings& settings) {
+  if (gInstance.lock()) {
+    throw std::logic_error("Only one DirectInputAdapter at a time");
+  }
+
+  auto ret = std::shared_ptr<DirectInputAdapter>(
+    new DirectInputAdapter(hwnd, settings));
+  gInstance = ret->weak_from_this();
+  return ret;
+}
 
 DirectInputAdapter::DirectInputAdapter(
   HWND hwnd,
   const DirectInputSettings& settings)
   : mWindow(hwnd), mSettings(settings) {
-  if (gInstance) {
-    throw std::logic_error("Only one DirectInputAdapter at a time");
-  }
-  gInstance = this;
-
   mPreviousWindowProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
     hwnd,
     GWLP_WNDPROC,
@@ -119,7 +127,7 @@ DirectInputAdapter::~DirectInputAdapter() {
   for (auto& [id, device]: mDevices) {
     device.mListener.Cancel();
   }
-  gInstance = nullptr;
+  gInstance.reset();
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
@@ -168,13 +176,19 @@ LRESULT CALLBACK DirectInputAdapter::WindowProc(
   _In_ UINT uMsg,
   _In_ WPARAM wParam,
   _In_ LPARAM lParam) {
+  auto instance = gInstance.lock();
+  if (!instance) {
+    OPENKNEEBOARD_BREAK;
+    return 0;
+  }
+
   if (uMsg == WM_DEVICECHANGE && wParam == DBT_DEVNODES_CHANGED) {
     dprint("Devices changed, reloading DirectInput device list");
-    gInstance->Reload();
+    instance->Reload();
   }
 
   return CallWindowProc(
-    gInstance->mPreviousWindowProc, hwnd, uMsg, wParam, lParam);
+    instance->mPreviousWindowProc, hwnd, uMsg, wParam, lParam);
 }
 
 }// namespace OpenKneeboard

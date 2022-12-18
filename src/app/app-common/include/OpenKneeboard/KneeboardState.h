@@ -120,7 +120,7 @@ class KneeboardState final : private EventReceiver {
   // Initalization and destruction order must match as they both use
   // SetWindowLongPtr
   std::unique_ptr<TabletInputAdapter> mTabletInput;
-  std::unique_ptr<DirectInputAdapter> mDirectInput;
+  std::shared_ptr<DirectInputAdapter> mDirectInput;
 
   std::unique_ptr<GameEventServer> mGameEventServer;
   winrt::Windows::Foundation::IAsyncAction mGameEventWorker;

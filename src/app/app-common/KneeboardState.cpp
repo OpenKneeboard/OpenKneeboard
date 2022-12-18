@@ -70,8 +70,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     viewState->SetTabs(tabs);
   }
 
-  mDirectInput
-    = std::make_unique<DirectInputAdapter>(hwnd, mSettings.mDirectInput);
+  mDirectInput = DirectInputAdapter::Create(hwnd, mSettings.mDirectInput);
   AddEventListener(
     mDirectInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
   AddEventListener(
