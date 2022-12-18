@@ -44,7 +44,7 @@ class WindowCaptureTab final
       Glob,
     };
 
-    TitleMatchKind mMatchTitle {TitleMatchKind::Exact};
+    TitleMatchKind mMatchTitle {TitleMatchKind::Ignore};
     bool mMatchWindowClass {true};
     bool mMatchExecutable {true};
   };

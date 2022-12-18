@@ -42,7 +42,7 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   KneeboardState* kbs,
   const MatchSpecification& spec) {
   return std::shared_ptr<WindowCaptureTab>(
-    new WindowCaptureTab(dxr, kbs, {}, spec.mTitle, spec));
+    new WindowCaptureTab(dxr, kbs, {}, spec.mExecutable.stem(), spec));
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
