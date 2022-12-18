@@ -286,12 +286,13 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
 }
 
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
-  // Give new windows (especially UWP) a chance to settle before checking
-  // if they match
-  co_await winrt::resume_after(std::chrono::seconds(1));
-
   if (!this->WindowMatches(hwnd)) {
-    co_return;
+    // Give new windows (especially UWP) a chance to settle before checking
+    // if they match
+    co_await winrt::resume_after(std::chrono::seconds(1));
+    if (!this->WindowMatches(hwnd)) {
+      co_return;
+    }
   }
 
   // Sometimes we want to attach to a child (e.g. for UWP apps); make
