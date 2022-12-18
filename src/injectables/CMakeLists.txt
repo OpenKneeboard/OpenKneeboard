@@ -162,3 +162,11 @@ target_link_libraries(
   OpenKneeboard-tablets
   OpenKneeboard-version
 )
+
+add_module_library(OpenKneeboard-WindowCaptureHook WindowCaptureHook.cpp)
+target_link_libraries(
+  OpenKneeboard-WindowCaptureHook
+  PRIVATE
+  OpenKneeboard-config
+  _libheaders
+)

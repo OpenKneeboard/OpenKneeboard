@@ -20,11 +20,15 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/WindowCaptureControl.h>
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
+#include <libloaderapi.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
@@ -92,6 +96,29 @@ HWNDPageSource::HWNDPageSource(
   }
   if (!WGC::GraphicsCaptureSession::IsSupported()) {
     return;
+  }
+
+  const auto hookPath = (RuntimeFiles::GetInstallationDirectory()
+                         / RuntimeFiles::WINDOW_CAPTURE_HOOK_DLL)
+                          .wstring();
+  auto threadID = GetWindowThreadProcessId(window, nullptr);
+
+  mHookLibrary.reset(LoadLibraryW(hookPath.c_str()));
+  if (mHookLibrary && threadID) {
+    auto msgProc
+      = GetProcAddress(mHookLibrary.get(), "GetMsgProc_WindowCaptureHook");
+    auto wndProc
+      = GetProcAddress(mHookLibrary.get(), "CallWndProc_WindowCaptureHook");
+    mWindowMessageHook.reset(SetWindowsHookExW(
+      WH_GETMESSAGE,
+      reinterpret_cast<HOOKPROC>(msgProc),
+      mHookLibrary.get(),
+      threadID));
+    mWindowProcHook.reset(SetWindowsHookExW(
+      WH_CALLWNDPROC,
+      reinterpret_cast<HOOKPROC>(wndProc),
+      mHookLibrary.get(),
+      threadID));
   }
 
   AddEventListener(kneeboard->evFrameTimerPrepareEvent, [this]() {
@@ -252,12 +279,25 @@ void HWNDPageSource::PostCursorEvent(
     return;
   }
 
+  static auto sControlMessage
+    = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
+
   // We only pay attention to buttons (1) and (1 << 1)
   const auto buttons = ev.mButtons & 3;
-  // if (buttons == mMouseButtons) {
-  SendMessage(target, WM_MOUSEMOVE, wParam, lParam);
-  return;
-  //}
+  if (buttons == mMouseButtons) {
+    SendMessage(
+      target,
+      sControlMessage,
+      static_cast<WPARAM>(WindowCaptureControl::WParam::Disable_WM_MOUSELEAVE),
+      0);
+    SendMessage(target, WM_MOUSEMOVE, wParam, lParam);
+    SendMessage(
+      target,
+      sControlMessage,
+      static_cast<WPARAM>(WindowCaptureControl::WParam::Enable_WM_MOUSELEAVE),
+      0);
+    return;
+  }
 
   const scope_guard restoreFgWindow(
     [window = GetForegroundWindow()]() { SetForegroundWindow(window); });

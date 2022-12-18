@@ -81,91 +81,6 @@ class DebugPrivileges final {
   }
 };
 
-bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll) {
-  DWORD neededBytes = 0;
-  EnumProcessModules(process, nullptr, 0, &neededBytes);
-  std::vector<HMODULE> modules(neededBytes / sizeof(HMODULE));
-  DWORD requestedBytes = neededBytes;
-  if (!EnumProcessModules(
-        process, modules.data(), requestedBytes, &neededBytes)) {
-    // Maybe a lie, but if we can't list modules, we definitely can't inject one
-    return true;
-  }
-  if (neededBytes < requestedBytes) {
-    modules.resize(neededBytes / sizeof(HMODULE));
-  }
-
-  auto dllBaseName = dll.filename().wstring();
-
-  wchar_t buf[MAX_PATH];
-  for (auto module: modules) {
-    auto length = GetModuleBaseNameW(process, module, buf, MAX_PATH);
-    if (std::wstring_view(buf, length) == dllBaseName) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool InjectDll(HANDLE process, const std::filesystem::path& dll) {
-  if (AlreadyInjected(process, dll)) {
-    return false;
-  }
-
-  DebugPrivileges privileges;
-
-  auto dllStr = dll.wstring();
-
-  const auto dllStrByteLen = (dllStr.size() + 1) * sizeof(wchar_t);
-  auto targetBuffer = VirtualAllocEx(
-    process, nullptr, dllStrByteLen, MEM_COMMIT, PAGE_READWRITE);
-  if (!targetBuffer) {
-    dprint("Failed to VirtualAllocEx");
-    return false;
-  }
-
-  const auto cleanup
-    = scope_guard([&]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
-  WriteProcessMemory(
-    process, targetBuffer, dllStr.c_str(), dllStrByteLen, nullptr);
-
-  auto kernel32 = GetModuleHandleA("Kernel32");
-  if (!kernel32) {
-    dprint("Failed to open kernel32");
-    return false;
-  }
-
-  auto loadLibraryW = reinterpret_cast<PTHREAD_START_ROUTINE>(
-    GetProcAddress(kernel32, "LoadLibraryW"));
-  if (!loadLibraryW) {
-    dprint("Failed to find loadLibraryW");
-    return false;
-  }
-
-  winrt::handle thread {CreateRemoteThread(
-    process, nullptr, 0, loadLibraryW, targetBuffer, 0, nullptr)};
-
-  if (!thread) {
-    dprint("Failed to create remote thread");
-    return false;
-  }
-
-  WaitForSingleObject(thread.get(), INFINITE);
-  DWORD loadLibraryReturn;
-  GetExitCodeThread(thread.get(), &loadLibraryReturn);
-  if (loadLibraryReturn == 0) {
-    dprintf(
-      "Injecting {} failed :'( - {:#x}",
-      dll.string(),
-      std::bit_cast<uint32_t>(loadLibraryReturn));
-    return false;
-  }
-
-  dprintf("Injected {}", dll.string());
-  return true;
-}
-
 bool HaveWintab() {
   // Don't bother installing wintab support if the user doesn't have any
   // wintab drivers installed
@@ -339,6 +254,93 @@ void GameInjector::CheckProcess(
     injectIfNeeded(InjectedDlls::OculusD3D11, mOverlayOculusD3D11Dll);
     injectIfNeeded(InjectedDlls::OculusD3D12, mOverlayOculusD3D12Dll);
   }
+}
+
+bool GameInjector::AlreadyInjected(
+  HANDLE process,
+  const std::filesystem::path& dll) {
+  DWORD neededBytes = 0;
+  EnumProcessModules(process, nullptr, 0, &neededBytes);
+  std::vector<HMODULE> modules(neededBytes / sizeof(HMODULE));
+  DWORD requestedBytes = neededBytes;
+  if (!EnumProcessModules(
+        process, modules.data(), requestedBytes, &neededBytes)) {
+    // Maybe a lie, but if we can't list modules, we definitely can't inject one
+    return true;
+  }
+  if (neededBytes < requestedBytes) {
+    modules.resize(neededBytes / sizeof(HMODULE));
+  }
+
+  auto dllBaseName = dll.filename().wstring();
+
+  wchar_t buf[MAX_PATH];
+  for (auto module: modules) {
+    auto length = GetModuleBaseNameW(process, module, buf, MAX_PATH);
+    if (std::wstring_view(buf, length) == dllBaseName) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
+  if (AlreadyInjected(process, dll)) {
+    return false;
+  }
+
+  DebugPrivileges privileges;
+
+  auto dllStr = dll.wstring();
+
+  const auto dllStrByteLen = (dllStr.size() + 1) * sizeof(wchar_t);
+  auto targetBuffer = VirtualAllocEx(
+    process, nullptr, dllStrByteLen, MEM_COMMIT, PAGE_READWRITE);
+  if (!targetBuffer) {
+    dprint("Failed to VirtualAllocEx");
+    return false;
+  }
+
+  const auto cleanup
+    = scope_guard([&]() { VirtualFree(targetBuffer, 0, MEM_RELEASE); });
+  WriteProcessMemory(
+    process, targetBuffer, dllStr.c_str(), dllStrByteLen, nullptr);
+
+  auto kernel32 = GetModuleHandleA("Kernel32");
+  if (!kernel32) {
+    dprint("Failed to open kernel32");
+    return false;
+  }
+
+  auto loadLibraryW = reinterpret_cast<PTHREAD_START_ROUTINE>(
+    GetProcAddress(kernel32, "LoadLibraryW"));
+  if (!loadLibraryW) {
+    dprint("Failed to find loadLibraryW");
+    return false;
+  }
+
+  winrt::handle thread {CreateRemoteThread(
+    process, nullptr, 0, loadLibraryW, targetBuffer, 0, nullptr)};
+
+  if (!thread) {
+    dprint("Failed to create remote thread");
+    return false;
+  }
+
+  WaitForSingleObject(thread.get(), INFINITE);
+  DWORD loadLibraryReturn;
+  GetExitCodeThread(thread.get(), &loadLibraryReturn);
+  if (loadLibraryReturn == 0) {
+    dprintf(
+      "Injecting {} failed :'( - {:#x}",
+      dll.string(),
+      std::bit_cast<uint32_t>(loadLibraryReturn));
+    return false;
+  }
+
+  dprintf("Injected {}", dll.string());
+  return true;
 }
 
 }// namespace OpenKneeboard

@@ -55,6 +55,9 @@ class GameInjector final {
   Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
+  static bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll);
+  static bool InjectDll(HANDLE process, const std::filesystem::path& dll);
+
  private:
   void CheckProcess(DWORD processID, std::wstring_view exeBaseName);
   std::vector<std::shared_ptr<GameInstance>> mGames;

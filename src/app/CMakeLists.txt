@@ -17,6 +17,7 @@ set(
   DLL_TARGETS
   OpenKneeboard-AutoDetect
   OpenKneeboard-TabletProxy
+  OpenKneeboard-WindowCaptureHook
   OpenKneeboard-nonvr-d3d11
   OpenKneeboard-oculus-d3d11
   OpenKneeboard-oculus-d3d12
