@@ -30,6 +30,10 @@ namespace OpenKneeboard {
 TabViewUILayer::TabViewUILayer(const DXResources& dxr) {
   mErrorRenderer
     = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
+  dxr.mD2DDeviceContext->CreateSolidColorBrush(
+    {1.0f, 1.0f, 1.0f, 1.0f},
+    D2D1::BrushProperties(),
+    mErrorBackgroundBrush.put());
 }
 TabViewUILayer::~TabViewUILayer() = default;
 
@@ -87,27 +91,35 @@ void TabViewUILayer::Render(
   const auto tabView = context.mTabView;
 
   if (!tabView) {
-    mErrorRenderer->Render(d2d, _("No Tab View"), rect);
+    this->RenderError(d2d, _("No Tab View"), rect);
     return;
   }
   auto tab = tabView->GetTab();
   if (!tab) {
-    mErrorRenderer->Render(d2d, _("No Tab"), rect);
+    this->RenderError(d2d, _("No Tab"), rect);
     return;
   }
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
-    mErrorRenderer->Render(d2d, _("No Pages"), rect);
+    this->RenderError(d2d, _("No Pages"), rect);
     return;
   }
 
   const auto pageIndex = tabView->GetPageIndex();
   if (pageIndex >= pageCount) {
-    mErrorRenderer->Render(d2d, _("Invalid Page Number"), rect);
+    this->RenderError(d2d, _("Invalid Page Number"), rect);
     return;
   }
 
   tab->RenderPage(d2d, pageIndex, rect);
+}
+
+void TabViewUILayer::RenderError(
+  ID2D1DeviceContext* d2d,
+  utf8_string_view text,
+  const D2D1_RECT_F& rect) {
+  d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
+  mErrorRenderer->Render(d2d, text, rect);
 }
 
 std::optional<D2D1_POINT_2F> TabViewUILayer::GetCursorPoint() const {

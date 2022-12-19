@@ -39,9 +39,7 @@ class TabViewUILayer final : public IUILayer {
     const Context&,
     const EventContext&,
     const CursorEvent&) override;
-  virtual Metrics GetMetrics(
-    const NextList&,
-    const Context&) const override;
+  virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(
     const NextList&,
     const Context&,
@@ -49,8 +47,14 @@ class TabViewUILayer final : public IUILayer {
     const D2D1_RECT_F&) override;
 
  private:
+  void RenderError(
+    ID2D1DeviceContext*,
+    utf8_string_view text,
+    const D2D1_RECT_F& rect);
+
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   std::optional<D2D1_POINT_2F> mCursorPoint;
+  winrt::com_ptr<ID2D1SolidColorBrush> mErrorBackgroundBrush;
 };
 
 }// namespace OpenKneeboard
