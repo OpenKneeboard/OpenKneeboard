@@ -273,25 +273,29 @@ void HWNDPageSource::PostCursorEvent(
   static auto sControlMessage
     = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
 
-  // We only pay attention to buttons (1) and (1 << 1)
-  const auto buttons = ev.mButtons & 3;
-  if (buttons == mMouseButtons) {
-    SendMessage(
-      target,
-      sControlMessage,
-      static_cast<WPARAM>(WindowCaptureControl::WParam::Disable_WM_MOUSELEAVE),
-      0);
-    SendMessage(target, WM_MOUSEMOVE, wParam, lParam);
+  SendMessage(
+    target,
+    sControlMessage,
+    static_cast<WPARAM>(WindowCaptureControl::WParam::Disable_WM_MOUSELEAVE),
+    0);
+  const scope_guard unhook([=]() {
     SendMessage(
       target,
       sControlMessage,
       static_cast<WPARAM>(WindowCaptureControl::WParam::Enable_WM_MOUSELEAVE),
       0);
+  });
+
+  // We only pay attention to buttons (1) and (1 << 1)
+  const auto buttons = ev.mButtons & 3;
+  if (buttons == mMouseButtons) {
+    SendMessage(target, WM_MOUSEMOVE, wParam, lParam);
     return;
   }
 
   const scope_guard restoreFgWindow(
     [window = GetForegroundWindow()]() { SetForegroundWindow(window); });
+  SetForegroundWindow(target);
 
   const auto down = (ev.mButtons & ~mMouseButtons);
   const auto up = (mMouseButtons & ~ev.mButtons);
