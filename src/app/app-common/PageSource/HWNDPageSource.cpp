@@ -296,16 +296,16 @@ void HWNDPageSource::PostCursorEvent(
   mMouseButtons = buttons;
 
   if (down & 1) {
-    SendMessage(mWindow, WM_LBUTTONDOWN, wParam, lParam);
-  }
-  if (down & (1 << 1)) {
-    SendMessage(mWindow, WM_RBUTTONDOWN, wParam, lParam);
+    SendMessage(target, WM_LBUTTONDOWN, wParam, lParam);
   }
   if (up & 1) {
-    SendMessage(mWindow, WM_LBUTTONUP, wParam, lParam);
+    SendMessage(target, WM_LBUTTONUP, wParam, lParam);
+  }
+  if (down & (1 << 1)) {
+    SendMessage(target, WM_RBUTTONDOWN, wParam, lParam);
   }
   if (up & (1 << 1)) {
-    SendMessage(mWindow, WM_RBUTTONUP, wParam, lParam);
+    SendMessage(target, WM_RBUTTONUP, wParam, lParam);
   }
 }
 
