@@ -244,8 +244,10 @@ void HWNDPageSource::PostCursorEvent(
 
   // The event point should already be scaled to native content size
   POINT point {std::lround(ev.mX), std::lround(ev.mY)};
-  const auto target = ChildWindowFromPoint(mWindow, point);
-  MapWindowPoints(mWindow, target, &point, 1);
+  const auto target = mWindow;
+  // In theory, we might be supposed to use ChildWindowFromPoint()
+  // and MapWindowPoints() - on the other hand, doing that doesn't
+  // seem to fix anything, but breaks Chrome
 
   WPARAM wParam {};
   if (ev.mButtons & 1) {
