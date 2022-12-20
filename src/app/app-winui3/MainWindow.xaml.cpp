@@ -169,7 +169,16 @@ MainWindow::MainWindow() {
     gKneeboard->evCurrentProfileChangedEvent,
     [this]() -> winrt::fire_and_forget {
       co_await mUIThread;
-      Frame().BackStack().Clear();
+      auto backStack = Frame().BackStack();
+      std::vector<PageStackEntry> newBackStack;
+      for (auto entry: backStack) {
+        if (entry.SourcePageType().Name == xaml_typename<TabPage>().Name) {
+          newBackStack.clear();
+          continue;
+        }
+        newBackStack.push_back(entry);
+      }
+      backStack.ReplaceAll(newBackStack);
     });
 }
 
