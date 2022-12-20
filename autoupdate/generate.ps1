@@ -12,6 +12,7 @@ $AllReleases
   | Out-File -Encoding utf8NoBOM -FilePath preview-msi.json
 # As above, but only MSIX releases, for compatibility with older autoupdaters
 $AllReleases
+  | Where-Object { $_.assets.Where( {$_.name -Like "*.msix" } ).Count -gt 0 }
   | Select-Object -First 1
   | ConvertTo-Json -Depth 8 -AsArray
   | Out-File -Encoding utf8NoBOM -FilePath preview.json
