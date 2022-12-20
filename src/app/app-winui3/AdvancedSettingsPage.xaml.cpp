@@ -49,7 +49,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 AdvancedSettingsPage::AdvancedSettingsPage() {
   InitializeComponent();
   AddEventListener(
-    gKneeboard->evProfileSettingsChangedEvent,
+    gKneeboard->evCurrentProfileChangedEvent,
     weak_wrap(
       [](auto self) {
         self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L""));
