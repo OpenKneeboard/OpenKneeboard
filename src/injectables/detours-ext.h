@@ -58,6 +58,11 @@ LONG DetourSingleAttach(T* ppPointer, T pDetour) {
     reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));
 }
 
+template <detours_function_pointer T>
+LONG DetourAttach(T* ppPointer, T pDetour) {
+  return DetourAttach(reinterpret_cast<void**>(ppPointer), pDetour);
+}
+
 /// Create a transaction, detach a single detour, and submit the transaction
 LONG DetourSingleDetach(void** ppPointer, void* pDetour);
 

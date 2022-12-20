@@ -129,7 +129,7 @@ void OculusEndFrameHook::Impl::InstallHook() {
 
   {
     DetourTransaction dt;
-#define IT(x) DetourAttach(reinterpret_cast<void**>(&next_##x), x##_hook);
+#define IT(x) DetourAttach(&next_##x, x##_hook);
     HOOKED_ENDFRAME_FUNCS
 #undef IT
   }
