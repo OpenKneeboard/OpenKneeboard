@@ -27,6 +27,7 @@
 #include <OpenKneeboard/OpenXRMode.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/weak_wrap.h>
 
 #include <cmath>
 #include <numbers>
@@ -45,6 +46,18 @@ static const wchar_t gOpenXRLayerSubkey[]
 
 VRSettingsPage::VRSettingsPage() {
   this->InitializeComponent();
+
+  AddEventListener(
+    gKneeboard->evProfileSettingsChangedEvent,
+    weak_wrap(
+      [](auto self) {
+        self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L""));
+      },
+      this));
+}
+
+VRSettingsPage::~VRSettingsPage() {
+  this->RemoveAllEventListeners();
 }
 
 fire_and_forget VRSettingsPage::RestoreDefaults(
@@ -70,26 +83,7 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  // Tell the XAML UI elements to update to the new values
-  for (auto prop: {
-         L"KneeboardX",
-         L"KneeboardEyeY",
-         L"KneeboardZ",
-         L"KneeboardRX",
-         L"KneeboardRY",
-         L"KneeboardRZ",
-         L"KneeboardMaxWidth",
-         L"KneeboardMaxHeight",
-         L"KneeboardZoomScale",
-         L"KneeboardGazeTargetHorizontalScale",
-         L"KneeboardGazeTargetVerticalScale",
-         L"SteamVREnabled",
-         L"GazeZoomEnabled",
-         L"NormalOpacity",
-         L"GazeOpacity",
-       }) {
-    mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
-  }
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
 void VRSettingsPage::RecenterNow(const IInspectable&, const RoutedEventArgs&) {

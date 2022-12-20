@@ -23,11 +23,15 @@
 #include "VRSettingsPage.g.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
+
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct VRSettingsPage : VRSettingsPageT<VRSettingsPage> {
+struct VRSettingsPage : VRSettingsPageT<VRSettingsPage>,
+                        OpenKneeboard::EventReceiver {
   VRSettingsPage();
+  ~VRSettingsPage();
 
   fire_and_forget RestoreDefaults(
     const IInspectable&,
