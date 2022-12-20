@@ -88,9 +88,21 @@ TabPage::~TabPage() = default;
 winrt::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
   instance->RemoveAllEventListeners();
+
   co_await instance->mDQC.ShutdownQueueAsync();
-  std::scoped_lock lock(instance->mSwapChainMutex);
-  instance->mSwapChain = {nullptr};
+
+  // Work around https://github.com/microsoft/microsoft-ui-xaml/issues/7254
+  auto uiThread = instance->mUIThread;
+  co_await uiThread;
+  auto swapChain = instance->mSwapChain;
+  auto swapChainPanel = instance->Canvas();
+  instance.reset();
+  // 0 doesn't work - I think we just need to re-enter the message pump/event
+  // loop
+  co_await winrt::resume_after(std::chrono::milliseconds(1));
+  co_await uiThread;
+  swapChainPanel = {nullptr};
+  swapChain = {nullptr};
 }
 
 void TabPage::InitializePointerSource() {

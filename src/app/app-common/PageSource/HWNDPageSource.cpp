@@ -113,7 +113,7 @@ HWNDPageSource::HWNDPageSource(
   mDQC.DispatcherQueue().TryEnqueue(
     [this]() { this->InitializeOnWorkerThread(); });
 
-  this->InstallWindowHooks();
+  this->InstallWindowHooks(mWindow);
 }
 
 bool HWNDPageSource::HaveWindow() const {
@@ -125,9 +125,11 @@ HWNDPageSource::~HWNDPageSource() = default;
 
 winrt::fire_and_forget HWNDPageSource::final_release(
   std::unique_ptr<HWNDPageSource> p) {
-  if (p->mHook32Subprocess) {
-    TerminateProcess(p->mHook32Subprocess.get(), 0);
-    p->mHook32Subprocess = {};
+  for (auto& [hwnd, handles]: p->mHooks) {
+    if (handles.mHook32Subprocess) {
+      TerminateProcess(handles.mHook32Subprocess.get(), 0);
+      handles.mHook32Subprocess = {};
+    }
   }
 
   p->RemoveAllEventListeners();
@@ -234,6 +236,21 @@ void HWNDPageSource::OnFrame() noexcept {
   mNeedsRepaint = true;
 }
 
+static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
+  HWND parent,
+  const POINT& originalPoint) {
+  POINT point {originalPoint};
+  while (auto child
+         = ChildWindowFromPointEx(parent, point, CWP_SKIPTRANSPARENT)) {
+    if (child == parent) {
+      break;
+    }
+    MapWindowPoints(parent, child, &point, 1);
+    parent = child;
+  }
+  return {parent, point};
+}
+
 void HWNDPageSource::PostCursorEvent(
   EventContext,
   const CursorEvent& ev,
@@ -243,8 +260,13 @@ void HWNDPageSource::PostCursorEvent(
   }
 
   // The event point should already be scaled to native content size
-  POINT point {std::lround(ev.mX), std::lround(ev.mY)};
-  const auto target = mWindow;
+  const auto [target, point] = RecursivelyResolveWindowAndPoint(
+    mWindow, {std::lround(ev.mX), std::lround(ev.mY)});
+  if (!target) {
+    return;
+  }
+
+  InstallWindowHooks(target);
   // In theory, we might be supposed to use ChildWindowFromPoint()
   // and MapWindowPoints() - on the other hand, doing that doesn't
   // seem to fix anything, but breaks Chrome
@@ -260,13 +282,13 @@ void HWNDPageSource::PostCursorEvent(
 
   if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
     if (mMouseButtons & 1) {
-      PostMessage(mWindow, WM_LBUTTONUP, wParam, lParam);
+      PostMessage(target, WM_LBUTTONUP, wParam, lParam);
     }
     if (mMouseButtons & (1 << 1)) {
-      PostMessage(mWindow, WM_RBUTTONUP, wParam, lParam);
+      PostMessage(target, WM_RBUTTONUP, wParam, lParam);
     }
     mMouseButtons = {};
-    PostMessage(mWindow, WM_MOUSELEAVE, 0, 0);
+    PostMessage(target, WM_MOUSELEAVE, 0, 0);
     return;
   }
 
@@ -295,7 +317,7 @@ void HWNDPageSource::PostCursorEvent(
 
   const scope_guard restoreFgWindow(
     [window = GetForegroundWindow()]() { SetForegroundWindow(window); });
-  SetForegroundWindow(target);
+  SetForegroundWindow(mWindow);
 
   const auto down = (ev.mButtons & ~mMouseButtons);
   const auto up = (mMouseButtons & ~ev.mButtons);
@@ -315,11 +337,15 @@ void HWNDPageSource::PostCursorEvent(
   }
 }
 
-void HWNDPageSource::InstallWindowHooks() {
+void HWNDPageSource::InstallWindowHooks(HWND target) {
+  if (mHooks.contains(target)) {
+    return;
+  }
+
   BOOL is32Bit {FALSE};
   {
     DWORD processID {};
-    GetWindowThreadProcessId(mWindow, &processID);
+    GetWindowThreadProcessId(target, &processID);
     winrt::handle process {
       OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID)};
     if (!process) {
@@ -330,7 +356,7 @@ void HWNDPageSource::InstallWindowHooks() {
 
   if (!is32Bit) {
     // Natively use SetWindowsHookEx()
-    mHooks64 = WindowCaptureControl::InstallHooks(mWindow);
+    mHooks[target].mHooks64 = WindowCaptureControl::InstallHooks(target);
     return;
   }
 
@@ -341,7 +367,7 @@ void HWNDPageSource::InstallWindowHooks() {
                         .wstring();
   const auto commandLine = std::format(
     L"{} {}",
-    reinterpret_cast<uint64_t>(mWindow),
+    reinterpret_cast<uint64_t>(target),
     static_cast<uint64_t>(GetCurrentProcessId()));
 
   SHELLEXECUTEINFOW shellExecuteInfo {
@@ -353,7 +379,7 @@ void HWNDPageSource::InstallWindowHooks() {
   };
   winrt::check_bool(ShellExecuteExW(&shellExecuteInfo));
 
-  mHook32Subprocess.attach(shellExecuteInfo.hProcess);
+  mHooks[target].mHook32Subprocess = {shellExecuteInfo.hProcess};
 }
 
 }// namespace OpenKneeboard

@@ -67,13 +67,16 @@ class HWNDPageSource final
   HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
   void InitializeOnWorkerThread() noexcept;
   void OnFrame() noexcept;
-  void InstallWindowHooks();
+  void InstallWindowHooks(HWND);
 
   winrt::apartment_context mUIThread;
   DXResources mDXR;
   HWND mWindow {};
-  WindowCaptureControl::Handles mHooks64 {};
-  winrt::handle mHook32Subprocess;
+  struct HookHandles {
+    WindowCaptureControl::Handles mHooks64 {};
+    winrt::handle mHook32Subprocess;
+  };
+  std::unordered_map<HWND, HookHandles> mHooks;
 
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
     nullptr};
