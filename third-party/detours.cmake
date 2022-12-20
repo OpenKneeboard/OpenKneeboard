@@ -1,6 +1,13 @@
 set(DETOURS_CONFIG "$<IF:$<STREQUAL:$<CONFIG>,Debug>,Debug,Release>")
-set(LIB "lib.X64${DETOURS_CONFIG}/detours.lib")
 include(ExternalProject)
+
+if(BUILD_BITNESS EQUAL 32)
+  set(DETOURS_TARGET_PROCESSOR x86)
+  set(LIB "lib.X86${DETOURS_CONFIG}/detours.lib")
+else()
+  set(DETOURS_TARGET_PROCESSOR x64)
+  set(LIB "lib.X64${DETOURS_CONFIG}/detours.lib")
+endif()
 
 # TODO: switch to stable release once 4.x is out (https://github.com/microsoft/Detours/projects/1)
 ExternalProject_Add(
@@ -12,9 +19,10 @@ ExternalProject_Add(
   BUILD_BYPRODUCTS "<SOURCE_DIR>/${LIB}"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
-    ${CMAKE_COMMAND} -E env
-    "DETOURS_CONFIG=${DETOURS_CONFIG}"
-    nmake
+  ${CMAKE_COMMAND} -E env
+  "DETOURS_CONFIG=${DETOURS_CONFIG}"
+  "DETOURS_TARGET_PROCESSOR=${DETOURS_TARGET_PROCESSOR}"
+  nmake
   INSTALL_COMMAND ""
 
   EXCLUDE_FROM_ALL
