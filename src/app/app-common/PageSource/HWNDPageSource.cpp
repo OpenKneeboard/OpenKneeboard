@@ -27,6 +27,7 @@
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/weak_wrap.h>
 #include <Windows.Graphics.Capture.Interop.h>
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 #include <libloaderapi.h>
@@ -315,8 +316,23 @@ void HWNDPageSource::PostCursorEvent(
     return;
   }
 
-  const scope_guard restoreFgWindow(
-    [window = GetForegroundWindow()]() { SetForegroundWindow(window); });
+  if (!mRestoringHWND) {
+    mRestoringHWND = GetForegroundWindow();
+    weak_wrap(
+      [](auto self) -> winrt::fire_and_forget {
+        // Seems like we just need to re-enter the event loop
+        co_await winrt::resume_after(std::chrono::milliseconds(1));
+        if (!self->mRestoringHWND) {
+          co_return;
+        }
+        dprintf(
+          "Restoring hwnd: {:016x}",
+          reinterpret_cast<uint64_t>(*self->mRestoringHWND));
+        SetForegroundWindow(*self->mRestoringHWND);
+        self->mRestoringHWND = {};
+      },
+      this)();
+  }
   SetForegroundWindow(mWindow);
 
   const auto down = (ev.mButtons & ~mMouseButtons);

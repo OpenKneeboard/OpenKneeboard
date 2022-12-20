@@ -77,6 +77,7 @@ class HWNDPageSource final
     winrt::handle mHook32Subprocess;
   };
   std::unordered_map<HWND, HookHandles> mHooks;
+  std::optional<HWND> mRestoringHWND;
 
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
     nullptr};
