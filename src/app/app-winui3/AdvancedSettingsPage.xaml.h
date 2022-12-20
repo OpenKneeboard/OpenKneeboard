@@ -23,13 +23,17 @@
 #include "pch.h"
 // clang-format on
 
+#include <OpenKneeboard/Events.h>
+
 #include "AdvancedSettingsPage.g.h"
 
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage> {
+struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage>,
+                              OpenKneeboard::EventReceiver {
   AdvancedSettingsPage();
+  ~AdvancedSettingsPage();
 
   bool DualKneeboards() const noexcept;
   void DualKneeboards(bool value) noexcept;

@@ -48,6 +48,17 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 AdvancedSettingsPage::AdvancedSettingsPage() {
   InitializeComponent();
+  AddEventListener(
+    gKneeboard->evProfileSettingsChangedEvent,
+    weak_wrap(
+      [](auto self) {
+        self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L""));
+      },
+      this));
+}
+
+AdvancedSettingsPage::~AdvancedSettingsPage() {
+  RemoveAllEventListeners();
 }
 
 winrt::event_token AdvancedSettingsPage::PropertyChanged(
@@ -161,14 +172,7 @@ void AdvancedSettingsPage::RestoreDoodleDefaults(
   const IInspectable&) noexcept {
   gKneeboard->ResetDoodlesSettings();
 
-  for (auto prop: {
-         L"MinimumPenRadius",
-         L"PenSensitivity",
-         L"MinimumEraseRadius",
-         L"EraseSensitivity",
-       }) {
-    mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
-  }
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
 void AdvancedSettingsPage::RestoreQuirkDefaults(
@@ -177,13 +181,7 @@ void AdvancedSettingsPage::RestoreQuirkDefaults(
   auto vr = gKneeboard->GetVRSettings();
   vr.mQuirks = {};
   gKneeboard->SetVRSettings(vr);
-  for (auto prop: {
-         L"Quirk_OculusSDK_DiscardDepthInformation",
-         L"Quirk_Varjo_OpenXR_InvertYPosition",
-         L"Quirk_Varjo_OpenXR_D3D12_DoubleBuffer",
-       }) {
-    mPropertyChangedEvent(*this, PropertyChangedEventArgs(prop));
-  }
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
 bool AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation()
