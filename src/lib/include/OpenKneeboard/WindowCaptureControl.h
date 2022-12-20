@@ -28,8 +28,8 @@ constexpr const wchar_t WindowMessageName[] {
   L"OpenKneeboard_WindowCaptureControl"};
 
 enum class WParam : unsigned int {
-  StartInjection = 1,
-  EndInjection = 2,
+  Disable_WM_MOUSELEAVE = 1,
+  Enable_WM_MOUSELEAVE = 2,
 };
 
 struct Handles {
