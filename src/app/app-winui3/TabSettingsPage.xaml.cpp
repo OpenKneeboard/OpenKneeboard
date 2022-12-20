@@ -562,25 +562,4 @@ DataTemplate TabUIDataTemplateSelector::SelectTemplateCore(
   return this->SelectTemplateCore(item);
 }
 
-winrt::event_token TabSettingsPage::PropertyChanged(
-  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-    handler) {
-  return mPropertyChangedEvent.add(handler);
-}
-
-void TabSettingsPage::PropertyChanged(
-  winrt::event_token const& token) noexcept {
-  mPropertyChangedEvent.remove(token);
-}
-
-winrt::event_token TabUIData::PropertyChanged(
-  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-    handler) {
-  return mPropertyChangedEvent.add(handler);
-}
-
-void TabUIData::PropertyChanged(winrt::event_token const& token) noexcept {
-  mPropertyChangedEvent.remove(token);
-}
-
 }// namespace winrt::OpenKneeboardApp::implementation

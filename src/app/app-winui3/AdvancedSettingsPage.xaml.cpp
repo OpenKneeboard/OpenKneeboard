@@ -48,28 +48,6 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 AdvancedSettingsPage::AdvancedSettingsPage() {
   InitializeComponent();
-  AddEventListener(
-    gKneeboard->evCurrentProfileChangedEvent,
-    weak_wrap(
-      [](auto self) {
-        self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L""));
-      },
-      this));
-}
-
-AdvancedSettingsPage::~AdvancedSettingsPage() {
-  RemoveAllEventListeners();
-}
-
-winrt::event_token AdvancedSettingsPage::PropertyChanged(
-  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-    handler) {
-  return mPropertyChangedEvent.add(handler);
-}
-
-void AdvancedSettingsPage::PropertyChanged(
-  winrt::event_token const& token) noexcept {
-  mPropertyChangedEvent.remove(token);
 }
 
 bool AdvancedSettingsPage::DualKneeboards() const noexcept {

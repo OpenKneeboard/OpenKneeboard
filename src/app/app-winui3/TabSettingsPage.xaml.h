@@ -34,6 +34,8 @@
 
 #include <string>
 
+#include "WithPropertyChangedEvent.h"
+
 namespace OpenKneeboard {
 class ITab;
 class ITabView;
@@ -47,7 +49,8 @@ using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
-                         OpenKneeboard::EventReceiver {
+                         OpenKneeboard::EventReceiver,
+                         OpenKneeboard::WithPropertyChangedEvent {
   TabSettingsPage();
   ~TabSettingsPage() noexcept;
 
@@ -64,11 +67,6 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
     const IInspectable&,
     const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
 
-  winrt::event_token PropertyChanged(
-    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-      handler);
-  void PropertyChanged(winrt::event_token const& token) noexcept;
-
  private:
   void CreateFileTab();
   void CreateFolderTab();
@@ -78,13 +76,12 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
   static OpenKneeboardApp::TabUIData CreateTabUIData(
     const std::shared_ptr<OpenKneeboard::ITab>&);
 
-  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
-    mPropertyChangedEvent;
-
   bool mUIIsChangingTabs = false;
 };
 
-struct TabUIData : TabUIDataT<TabUIData>, private OpenKneeboard::EventReceiver {
+struct TabUIData : TabUIDataT<TabUIData>,
+                   OpenKneeboard::EventReceiver,
+                   OpenKneeboard::WithPropertyChangedEvent {
   TabUIData() = default;
   ~TabUIData();
 
@@ -93,16 +90,8 @@ struct TabUIData : TabUIDataT<TabUIData>, private OpenKneeboard::EventReceiver {
   uint64_t InstanceID() const;
   void InstanceID(uint64_t);
 
-  winrt::event_token PropertyChanged(
-    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-      handler);
-  void PropertyChanged(winrt::event_token const& token) noexcept;
-
  protected:
   std::weak_ptr<OpenKneeboard::ITab> mTab;
-
-  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
-    mPropertyChangedEvent;
 };
 
 struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<

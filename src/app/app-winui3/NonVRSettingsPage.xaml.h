@@ -23,10 +23,14 @@
 #include "NonVRSettingsPage.g.h"
 // clang-format on
 
+#include "WithPropertyChangedEvent.h"
+
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct NonVRSettingsPage : NonVRSettingsPageT<NonVRSettingsPage> {
+struct NonVRSettingsPage
+  : NonVRSettingsPageT<NonVRSettingsPage>,
+    OpenKneeboard::WithPropertyChangedEventOnProfileChange<NonVRSettingsPage> {
   NonVRSettingsPage();
 
   fire_and_forget RestoreDefaults(
@@ -43,15 +47,6 @@ struct NonVRSettingsPage : NonVRSettingsPageT<NonVRSettingsPage> {
   void KneeboardHorizontalPlacement(uint8_t value);
   uint8_t KneeboardVerticalPlacement();
   void KneeboardVerticalPlacement(uint8_t value);
-
-  winrt::event_token PropertyChanged(
-    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-      handler);
-  void PropertyChanged(winrt::event_token const& token) noexcept;
-
- private:
-  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
-    mPropertyChangedEvent;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

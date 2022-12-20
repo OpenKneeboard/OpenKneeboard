@@ -80,9 +80,6 @@ fire_and_forget GameSettingsPage::RestoreDefaults(
 }
 
 void GameSettingsPage::UpdateGames() {
-  if (!mPropertyChangedEvent) {
-    return;
-  }
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Games"));
 }
 
@@ -382,17 +379,6 @@ DataTemplate GameInstanceUIDataTemplateSelector::SelectTemplateCore(
   const IInspectable& item,
   const DependencyObject&) {
   return this->SelectTemplateCore(item);
-}
-
-winrt::event_token GameSettingsPage::PropertyChanged(
-  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-    handler) {
-  return mPropertyChangedEvent.add(handler);
-}
-
-void GameSettingsPage::PropertyChanged(
-  winrt::event_token const& token) noexcept {
-  mPropertyChangedEvent.remove(token);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

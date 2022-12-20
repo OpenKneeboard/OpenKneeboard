@@ -37,12 +37,14 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
-  AddEventListener(gKneeboard->evInputDevicesChangedEvent,
-  weak_wrap(
-  [](const auto& strongThis) {
-    strongThis->mPropertyChangedEvent(
-      *strongThis, PropertyChangedEventArgs(L"Devices"));
-  }, this));
+  AddEventListener(
+    gKneeboard->evInputDevicesChangedEvent,
+    weak_wrap(
+      [](const auto& strongThis) {
+        strongThis->mPropertyChangedEvent(
+          *strongThis, PropertyChangedEventArgs(L"Devices"));
+      },
+      this));
 }
 
 InputSettingsPage::~InputSettingsPage() {
@@ -70,17 +72,6 @@ fire_and_forget InputSettingsPage::RestoreDefaults(
   gKneeboard->ResetTabletInputSettings();
 
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Devices"));
-}
-
-winrt::event_token InputSettingsPage::PropertyChanged(
-  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-    handler) {
-  return mPropertyChangedEvent.add(handler);
-}
-
-void InputSettingsPage::PropertyChanged(
-  winrt::event_token const& token) noexcept {
-  mPropertyChangedEvent.remove(token);
 }
 
 IVector<IInspectable> InputSettingsPage::Devices() noexcept {

@@ -26,14 +26,16 @@
 #include <OpenKneeboard/Events.h>
 
 #include "AdvancedSettingsPage.g.h"
+#include "WithPropertyChangedEvent.h"
 
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage>,
-                              OpenKneeboard::EventReceiver {
+struct AdvancedSettingsPage
+  : AdvancedSettingsPageT<AdvancedSettingsPage>,
+    OpenKneeboard::WithPropertyChangedEventOnProfileChange<
+      AdvancedSettingsPage> {
   AdvancedSettingsPage();
-  ~AdvancedSettingsPage();
 
   bool DualKneeboards() const noexcept;
   void DualKneeboards(bool value) noexcept;
@@ -76,11 +78,6 @@ struct AdvancedSettingsPage : AdvancedSettingsPageT<AdvancedSettingsPage>,
 
   int32_t DesiredElevation() const noexcept;
   fire_and_forget DesiredElevation(int32_t value) noexcept;
-
-  winrt::event_token PropertyChanged(
-    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-      handler);
-  void PropertyChanged(winrt::event_token const& token) noexcept;
 
  private:
   winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>

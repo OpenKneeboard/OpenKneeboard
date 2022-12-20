@@ -61,15 +61,7 @@ fire_and_forget NonVRSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"KneeboardHeightPercent"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"KneeboardPaddingPixels"));
-  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"KneeboardOpacity"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"KneeboardHorizontalPlacement"));
-  mPropertyChangedEvent(
-    *this, PropertyChangedEventArgs(L"KneeboardVerticalPlacement"));
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
 uint8_t NonVRSettingsPage::KneeboardHeightPercent() {
@@ -126,17 +118,6 @@ void NonVRSettingsPage::KneeboardVerticalPlacement(uint8_t value) {
   auto config = gKneeboard->GetNonVRSettings();
   config.mVerticalAlignment = static_cast<FlatConfig::VerticalAlignment>(value);
   gKneeboard->SetNonVRSettings(config);
-}
-
-winrt::event_token NonVRSettingsPage::PropertyChanged(
-  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-    handler) {
-  return mPropertyChangedEvent.add(handler);
-}
-
-void NonVRSettingsPage::PropertyChanged(
-  winrt::event_token const& token) noexcept {
-  mPropertyChangedEvent.remove(token);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

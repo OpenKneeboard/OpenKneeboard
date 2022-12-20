@@ -31,6 +31,8 @@
 
 #include <shims/filesystem>
 
+#include "WithPropertyChangedEvent.h"
+
 namespace OpenKneeboard {
 class ExecutableIconFactory;
 }
@@ -43,7 +45,9 @@ using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct GameSettingsPage : GameSettingsPageT<GameSettingsPage>, EventReceiver {
+struct GameSettingsPage
+  : GameSettingsPageT<GameSettingsPage>,
+    OpenKneeboard::WithPropertyChangedEventOnProfileChange<GameSettingsPage> {
   GameSettingsPage();
   ~GameSettingsPage() noexcept;
 
@@ -70,18 +74,11 @@ struct GameSettingsPage : GameSettingsPageT<GameSettingsPage>, EventReceiver {
     const IInspectable&,
     const SelectionChangedEventArgs&) noexcept;
 
-  winrt::event_token PropertyChanged(
-    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-      handler);
-  void PropertyChanged(winrt::event_token const& token) noexcept;
-
  private:
   void UpdateGames();
   fire_and_forget AddPath(const std::filesystem::path&);
 
   std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
-  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
-    mPropertyChangedEvent;
 };
 
 struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {

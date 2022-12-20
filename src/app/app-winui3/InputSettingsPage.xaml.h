@@ -28,13 +28,16 @@
 
 #include <string>
 
+#include "WithPropertyChangedEvent.h"
+
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct InputSettingsPage : InputSettingsPageT<InputSettingsPage>,
-                           private OpenKneeboard::EventReceiver {
+struct InputSettingsPage
+  : InputSettingsPageT<InputSettingsPage>,
+    OpenKneeboard::WithPropertyChangedEventOnProfileChange<InputSettingsPage> {
   InputSettingsPage();
   ~InputSettingsPage();
 
@@ -46,15 +49,6 @@ struct InputSettingsPage : InputSettingsPageT<InputSettingsPage>,
   void OnOrientationChanged(
     const IInspectable&,
     const SelectionChangedEventArgs&);
-
-  winrt::event_token PropertyChanged(
-    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-      handler);
-  void PropertyChanged(winrt::event_token const& token) noexcept;
-
- private:
-  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
-    mPropertyChangedEvent;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

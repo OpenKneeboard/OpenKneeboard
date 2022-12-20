@@ -1,7 +1,8 @@
 namespace OpenKneeboardApp
 {
     [default_interface]
-    runtimeclass GameSettingsPage: Microsoft.UI.Xaml.Controls.Page, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    runtimeclass GameSettingsPage: Microsoft.UI.Xaml.Controls.Page,
+                                   Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         GameSettingsPage();
         Windows.Foundation.Collections.IVector<IInspectable> Games { get; };

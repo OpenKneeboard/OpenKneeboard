@@ -34,6 +34,7 @@ ok_add_executable(
   TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
   WindowPickerDialog.idl WindowPickerDialog.xaml WindowPickerDialog.xaml.h WindowPickerDialog.xaml.cpp
+  WithPropertyChangedEvent.cpp WithPropertyChangedEvent.h
 )
 
 include(winui3-boilerplate.cmake)

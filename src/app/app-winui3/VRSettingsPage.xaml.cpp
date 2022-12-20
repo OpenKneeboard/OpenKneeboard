@@ -46,18 +46,6 @@ static const wchar_t gOpenXRLayerSubkey[]
 
 VRSettingsPage::VRSettingsPage() {
   this->InitializeComponent();
-
-  AddEventListener(
-    gKneeboard->evCurrentProfileChangedEvent,
-    weak_wrap(
-      [](auto self) {
-        self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L""));
-      },
-      this));
-}
-
-VRSettingsPage::~VRSettingsPage() {
-  this->RemoveAllEventListeners();
 }
 
 fire_and_forget VRSettingsPage::RestoreDefaults(
@@ -92,16 +80,6 @@ void VRSettingsPage::RecenterNow(const IInspectable&, const RoutedEventArgs&) {
 
 void VRSettingsPage::GoToBindings(const IInspectable&, const RoutedEventArgs&) {
   Frame().Navigate(xaml_typename<InputSettingsPage>());
-}
-
-winrt::event_token VRSettingsPage::PropertyChanged(
-  winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-    handler) {
-  return mPropertyChangedEvent.add(handler);
-}
-
-void VRSettingsPage::PropertyChanged(winrt::event_token const& token) noexcept {
-  mPropertyChangedEvent.remove(token);
 }
 
 float VRSettingsPage::KneeboardX() {

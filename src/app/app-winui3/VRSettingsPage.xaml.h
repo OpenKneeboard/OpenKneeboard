@@ -25,13 +25,15 @@
 
 #include <OpenKneeboard/Events.h>
 
+#include "WithPropertyChangedEvent.h"
+
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct VRSettingsPage : VRSettingsPageT<VRSettingsPage>,
-                        OpenKneeboard::EventReceiver {
+struct VRSettingsPage
+  : VRSettingsPageT<VRSettingsPage>,
+    OpenKneeboard::WithPropertyChangedEventOnProfileChange<VRSettingsPage> {
   VRSettingsPage();
-  ~VRSettingsPage();
 
   fire_and_forget RestoreDefaults(
     const IInspectable&,
@@ -74,15 +76,6 @@ struct VRSettingsPage : VRSettingsPageT<VRSettingsPage>,
   void NormalOpacity(uint8_t);
   uint8_t GazeOpacity();
   void GazeOpacity(uint8_t);
-
-  winrt::event_token PropertyChanged(
-    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler const&
-      handler);
-  void PropertyChanged(winrt::event_token const& token) noexcept;
-
- private:
-  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
-    mPropertyChangedEvent;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

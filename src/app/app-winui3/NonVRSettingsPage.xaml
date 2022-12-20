@@ -10,7 +10,7 @@
   <Page.Resources>
     <local:PercentValueConverter x:Key="PercentConverter" />
   </Page.Resources>
-  <Grid RowDefinitions="Auto,Auto" Margin="16">
+  <Grid RowDefinitions="Auto,Auto" Margin="16" x:DefaultBindMode="TwoWay">
     <Grid
       Grid.Row="0"
       ColumnDefinitions="*, Auto"
@@ -33,8 +33,7 @@
       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
       CornerRadius="4"
       BorderThickness="1"
-      Padding="8"
-      x:DefaultBindMode="TwoWay">
+      Padding="8">
       <StackPanel Spacing="12">
         <Slider
           Header="Kneeboard height, as a percentage of the window height"
