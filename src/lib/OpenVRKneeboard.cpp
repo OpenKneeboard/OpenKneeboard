@@ -216,7 +216,11 @@ void OpenVRKneeboard::Tick() {
   }
 
   const auto displayTime = this->GetDisplayTime();
-  const auto hmdPose = this->GetHMDPose(displayTime);
+  const auto maybeHMDPose = this->GetHMDPose(displayTime);
+  if (!maybeHMDPose) {
+    return;
+  }
+  const auto hmdPose = *maybeHMDPose;
 
   const auto config = snapshot.GetConfig();
 
@@ -308,7 +312,8 @@ void OpenVRKneeboard::Tick() {
 #undef CHECK
 }
 
-OpenVRKneeboard::Pose OpenVRKneeboard::GetHMDPose(float displayTime) {
+std::optional<OpenVRKneeboard::Pose> OpenVRKneeboard::GetHMDPose(
+  float displayTime) {
   static uint64_t sCacheKey = ~(0ui64);
   static Pose sCache {};
 

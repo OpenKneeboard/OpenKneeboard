@@ -28,6 +28,7 @@
 #include <shims/winrt/base.h>
 
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <vector>
 
@@ -41,7 +42,7 @@ class OpenVRKneeboard final : private VRKneeboard {
   bool Run(std::stop_token);
 
  protected:
-  Pose GetHMDPose(float);
+  std::optional<Pose> GetHMDPose(float);
 
  private:
   using Matrix = DirectX::SimpleMath::Matrix;
