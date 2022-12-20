@@ -72,8 +72,12 @@ OpenVRKneeboard::OpenVRKneeboard() {
   };
 
   for (uint8_t i = 0; i < MaxLayers; ++i) {
-    winrt::check_hresult(device->CreateTexture2D(
-      &desc, nullptr, mLayers.at(i).mOpenVRTexture.put()));
+    auto& layer = mLayers.at(i);
+    winrt::check_hresult(
+      device->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
+    winrt::check_hresult(
+      layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
+        &layer.mSharedHandle));
   }
 
   desc.MiscFlags = {};
@@ -102,7 +106,10 @@ void OpenVRKneeboard::Reset() {
   vr::VR_Shutdown();
   mIVRSystem = {};
   mIVROverlay = {};
-  mLayers = {};
+  for (auto& layer: mLayers) {
+    layer.mVisible = false;
+    layer.mOverlay = {};
+  }
 }
 
 static bool overlay_check(vr::EVROverlayError err, const char* method) {
@@ -155,11 +162,8 @@ bool OpenVRKneeboard::InitializeOpenVR() {
 
     dprintf("Created OpenVR overlay {}", layerIndex);
 
-    HANDLE handle = INVALID_HANDLE_VALUE;
-    winrt::check_hresult(
-      layerState.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(&handle));
     vr::Texture_t vrt {
-      .handle = handle,
+      .handle = layerState.mSharedHandle,
       .eType = vr::TextureType_DXGISharedHandle,
       .eColorSpace = vr::ColorSpace_Auto,
     };

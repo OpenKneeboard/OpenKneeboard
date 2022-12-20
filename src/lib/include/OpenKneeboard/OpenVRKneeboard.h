@@ -66,6 +66,8 @@ class OpenVRKneeboard final : private VRKneeboard {
     winrt::com_ptr<ID3D11Texture2D> mOpenVRTexture;
     vr::VROverlayHandle_t mOverlay {};
     uint64_t mCacheKey = ~(0ui64);
+    // *NOT* an NT handle. Do not use CloseHandle() or winrt::Handle
+    HANDLE mSharedHandle {};
   };
   std::array<LayerState, MaxLayers> mLayers;
 };
