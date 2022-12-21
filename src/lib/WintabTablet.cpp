@@ -153,7 +153,7 @@ WintabTablet::Impl::Impl(HWND window) {
   mWintab.WTInfoW(WTI_DEFCONTEXT, 0, &logicalContext);
   wcsncpy_s(
     static_cast<wchar_t*>(logicalContext.lcName),
-    _countof(logicalContext.lcName),
+    std::size(logicalContext.lcName),
     contextName.data(),
     contextName.size());
   logicalContext.lcPktData = PACKETDATA;
