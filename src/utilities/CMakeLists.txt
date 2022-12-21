@@ -63,7 +63,12 @@ target_link_libraries(
   OpenKneeboard-GameEvent
 )
 
-add_utility_executable(OpenKneeboard-Viewer WIN32 test-viewer.cpp)
+add_utility_executable(
+  OpenKneeboard-Viewer
+  WIN32
+  test-viewer.cpp
+  icon.rc
+)
 target_link_libraries(
   OpenKneeboard-Viewer
   PRIVATE
