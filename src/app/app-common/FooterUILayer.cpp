@@ -218,13 +218,16 @@ void FooterUILayer::OnGameEvent(const GameEvent& ev) {
   }
 
   if (ev.name == DCSWorld::EVT_MISSION_TIME) {
-    const auto times = ev.ParsedValue<DCSWorld::MissionTimeEvent>();
+    const auto times = ev.TryParsedValue<DCSWorld::MissionTimeEvent>();
+    if (!times) {
+      return;
+    }
     const auto currentTime
-      = std::chrono::seconds(static_cast<uint64_t>(times.currentTime));
+      = std::chrono::seconds(static_cast<uint64_t>(times->currentTime));
 
     if ((!mMissionTime) || mMissionTime != currentTime) {
       mMissionTime = currentTime;
-      mUTCOffset = std::chrono::hours(times.utcOffset);
+      mUTCOffset = std::chrono::hours(times->utcOffset);
       evNeedsRepaintEvent.Emit();
     }
     return;

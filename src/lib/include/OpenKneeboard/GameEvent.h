@@ -23,6 +23,7 @@
 #include <OpenKneeboard/utf8.h>
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -37,6 +38,17 @@ struct GameEvent final {
       throw std::logic_error("Parse type does not match event name");
     }
     return nlohmann::json::parse(this->value);
+  }
+
+  // TODO (C++23): std::expected with exception
+  template <class T>
+  std::optional<T> TryParsedValue() const {
+    // Intentionally not propagating the std::logic_error
+    try {
+      return ParsedValue<T>();
+    } catch (const nlohmann::json::exception& e) {
+      return {};
+    }
   }
 
   template <class T>
