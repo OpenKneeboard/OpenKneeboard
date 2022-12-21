@@ -50,6 +50,9 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   for (auto layer: mUILayers) {
     AddEventListener(layer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
+
+  dprintf(
+    "Created kneeboard view ID {}", this->GetRuntimeID().GetTemporaryValue());
 }
 
 std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
