@@ -24,6 +24,7 @@
 #include <OpenKneeboard/DirectInputMouseListener.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 
 #include <array>
 
@@ -96,6 +97,15 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
   if (!(mDIDevice && mEventHandle)) {
     co_return;
   }
+
+  auto deviceName = mDevice->GetName();
+  dprintf("Starting DirectInputListener::Run() for {}", deviceName);
+  const scope_guard logOnExit([deviceName]() {
+    dprintf(
+      "Exiting DirectInputListener::Run() for {}, with {} uncaught exceptions",
+      deviceName,
+      std::uncaught_exceptions());
+  });
 
   auto cancelled = co_await winrt::get_cancellation_token();
   cancelled.callback([this]() {
