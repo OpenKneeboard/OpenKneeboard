@@ -206,6 +206,71 @@ static void LogSystemInformation() {
   dprint("----------");
 }
 
+static void LogInstallationInformation() {
+  const auto dir = Filesystem::GetRuntimeDirectory();
+  dprintf(L"Installation directory: {}", dir.wstring());
+  for (const auto& entry: std::filesystem::directory_iterator(dir)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    const auto path = entry.path();
+    const auto ext = path.extension();
+    if (ext != L".dll" && ext != L".exe") {
+      continue;
+    }
+    if (!path.filename().wstring().starts_with(L"OpenKneeboard-")) {
+      continue;
+    }
+
+    const auto pathStr = path.wstring();
+    DWORD ignored {};
+    const auto versionSize = GetFileVersionInfoSizeExW(
+      FILE_VER_GET_NEUTRAL, pathStr.c_str(), &ignored);
+    if (versionSize == 0) {
+      dprintf(
+        L"Failed to get version info size for {}: {}",
+        path.filename().wstring(),
+        GetLastError());
+      continue;
+    }
+
+    std::vector<char*> versionBuf(versionSize);
+    if (!GetFileVersionInfoExW(
+          FILE_VER_GET_NEUTRAL | FILE_VER_GET_PREFETCHED,
+          pathStr.c_str(),
+          NULL,
+          static_cast<DWORD>(versionBuf.size()),
+          versionBuf.data())) {
+      dprintf(
+        L"Failed to get version info for {}: {}",
+        path.filename().wstring(),
+        GetLastError());
+      continue;
+    }
+
+    wchar_t* versionStr {nullptr};
+    UINT versionStrSize {};
+    if (!VerQueryValueW(
+          versionBuf.data(),
+          L"\\StringFileInfo\\040904E4\\FileVersion",
+          reinterpret_cast<void**>(&versionStr),
+          &versionStrSize)) {
+      dprintf(L"Failed to read FileVersion for {}", path.filename().wstring());
+      continue;
+    }
+    const auto versionStrLen = versionStrSize - 1;
+
+    const auto modifiedAt = std::filesystem::last_write_time(path);
+
+    dprintf(
+      L"{:<48s} v{}\t{}",
+      path.filename().wstring(),
+      std::wstring_view {versionStr, versionStrLen},
+      modifiedAt);
+  }
+  dprint("----------");
+}
+
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   wchar_t* savedGamesBuffer = nullptr;
   winrt::check_hresult(
@@ -257,6 +322,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
   gTroubleshootingStore = TroubleshootingStore::Get();
   LogSystemInformation();
+  LogInstallationInformation();
 
   dprint("Cleaning up temporary directories...");
   Filesystem::CleanupTemporaryDirectories();
