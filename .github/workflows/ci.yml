@@ -64,7 +64,7 @@ jobs:
           cmake --build . `
             --config ${{matrix.config}} `
             --target package
-          $installer="OpenKneeboard-$(Get-Content version.txt).msi"
+          $installer="OpenKneeboard-v$(Get-Content version.txt).msi"
           Add-Content $Env:GITHUB_OUTPUT "MSI_NAME=$installer"
           $installer=(Get-ChildItem $installer).FullName
           Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
@@ -75,7 +75,7 @@ jobs:
           # Known path for the GitHub Actions windows 2022 runner, may need updating
           & 'C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x86\signtool.exe' `
             sign `
-            /d "OpenKneeboard" `
+            /d "{{steps.create-msi.outputs.MSI_NAME}}" `
             /t http://timestamp.digicert.com `
             /fd SHA256 `
             /f "${{steps.fetch-key.outputs.PATH}}" `
