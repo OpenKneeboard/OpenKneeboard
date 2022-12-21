@@ -49,8 +49,9 @@ std::shared_ptr<DirectInputAdapter> DirectInputAdapter::Create(
     throw std::logic_error("Only one DirectInputAdapter at a time");
   }
 
-  auto ret = std::shared_ptr<DirectInputAdapter>(
+  auto ret = shared_with_final_release<DirectInputAdapter>(
     new DirectInputAdapter(hwnd, settings));
+  ret->Reload();
   gInstance = ret->weak_from_this();
   return ret;
 }
@@ -70,8 +71,6 @@ DirectInputAdapter::DirectInputAdapter(
     IID_IDirectInput8,
     mDI8.put_void(),
     NULL));
-
-  this->Reload();
 }
 
 void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
@@ -80,13 +79,24 @@ void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
   this->evSettingsChangedEvent.Emit();
 }
 
-void DirectInputAdapter::Reload() {
+winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
   this->RemoveAllEventListeners();
 
   for (auto& [id, device]: mDevices) {
     device.mListener.Cancel();
+    try {
+      co_await device.mListener;
+    } catch (winrt::hresult_canceled) {
+      dprintf("Device polling cancelled: {}", device.mDevice->GetName());
+    }
   }
   mDevices.clear();
+}
+
+winrt::fire_and_forget DirectInputAdapter::Reload() {
+  const auto keepAlive = shared_from_this();
+
+  co_await this->ReleaseDevices();
 
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
     auto device = DirectInputDevice::Create(diDeviceInstance);
@@ -118,14 +128,16 @@ void DirectInputAdapter::Reload() {
   this->evAttachedControllersChangedEvent.Emit();
 }
 
+winrt::fire_and_forget DirectInputAdapter::final_release(
+  std::unique_ptr<DirectInputAdapter> self) {
+  co_await self->ReleaseDevices();
+}
+
 DirectInputAdapter::~DirectInputAdapter() {
   this->RemoveAllEventListeners();
   if (mPreviousWindowProc) {
     SetWindowLongPtrW(
       mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWindowProc));
-  }
-  for (auto& [id, device]: mDevices) {
-    device.mListener.Cancel();
   }
   gInstance.reset();
 }

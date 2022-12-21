@@ -36,7 +36,7 @@ class DirectInputListener {
 
   static winrt::Windows::Foundation::IAsyncAction Run(
     const winrt::com_ptr<IDirectInput8>& di,
-    const std::shared_ptr<DirectInputDevice>& device) noexcept;
+    const std::shared_ptr<DirectInputDevice>& device);
 
  protected:
   DirectInputListener(

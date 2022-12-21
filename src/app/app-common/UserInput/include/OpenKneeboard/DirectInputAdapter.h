@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DirectInputSettings.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/UserAction.h>
+#include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json_fwd.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
@@ -46,6 +47,8 @@ class DirectInputAdapter final
     HWND mainWindow,
     const DirectInputSettings& settings);
   ~DirectInputAdapter();
+  static winrt::fire_and_forget final_release(
+    std::unique_ptr<DirectInputAdapter>);
 
   DirectInputSettings GetSettings() const;
   void LoadSettings(const DirectInputSettings& settings);
@@ -57,7 +60,8 @@ class DirectInputAdapter final
 
  private:
   DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
-  void Reload();
+  winrt::Windows::Foundation::IAsyncAction ReleaseDevices();
+  winrt::fire_and_forget Reload();
 
   HWND mWindow;
   WNDPROC mPreviousWindowProc;
