@@ -21,6 +21,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
 
 #include <thread>
@@ -36,6 +37,11 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
   }
 
   dprint("Started listening for game events");
+  const scope_guard logOnExit([]() {
+    dprintf(
+      "GameEventServer shutting down with {} uncaught exceptions",
+      std::uncaught_exceptions());
+  });
 
   auto cancelled = co_await winrt::get_cancellation_token();
 
