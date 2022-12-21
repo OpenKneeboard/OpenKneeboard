@@ -137,6 +137,12 @@ class KneeboardState final : private EventReceiver {
   void SetCurrentTab(
     const std::shared_ptr<ITab>& tab,
     const BaseSetTabEvent& metadata);
+
+  enum class Direction {
+    Previous,
+    Next,
+  };
+  void SwitchProfile(Direction);
 };
 
 }// namespace OpenKneeboard

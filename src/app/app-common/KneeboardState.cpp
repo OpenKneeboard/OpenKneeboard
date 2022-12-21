@@ -178,7 +178,14 @@ void KneeboardState::PostUserAction(UserAction action) {
     case UserAction::NEXT_PAGE:
       mViews.at(mInputViewIndex)->PostUserAction(action);
       return;
+    case UserAction::PREVIOUS_PROFILE:
+      this->SwitchProfile(Direction::Previous);
+      return;
+    case UserAction::NEXT_PROFILE:
+      this->SwitchProfile(Direction::Next);
+      return;
   }
+  // Use `return` instead of `break` above
   OPENKNEEBOARD_BREAK;
 }
 void KneeboardState::SetFirstViewIndex(uint8_t index) {
@@ -535,6 +542,39 @@ void KneeboardState::AcquireExclusiveResources() {
   }
 
   StartTabletInput();
+}
+
+void KneeboardState::SwitchProfile(Direction direction) {
+  if (!mProfiles.mEnabled) {
+    return;
+  }
+  const auto count = mProfiles.mProfiles.size();
+  if (count < 2) {
+    return;
+  }
+  const auto profiles = mProfiles.GetSortedProfiles();
+  const auto it = std::ranges::find_if(
+    profiles,
+    [id = mProfiles.mActiveProfile](const auto& it) { return it.mID == id; });
+  if (it == profiles.end()) {
+    dprintf(
+      "Current profile '{}' is not in profiles list.",
+      mProfiles.mActiveProfile);
+    return;
+  }
+  const auto oldIdx = it - profiles.begin();
+  const auto nextIdx
+    = (direction == Direction::Previous) ? (oldIdx - 1) : (oldIdx + 1);
+  if (!mProfiles.mLoopProfiles) {
+    if (nextIdx < 0 || nextIdx >= count) {
+      dprint("Ignoring profile switch request, looping disabled");
+      return;
+    }
+  }
+
+  auto settings = mProfiles;
+  settings.mActiveProfile = profiles.at((nextIdx + count) % count).mID;
+  this->SetProfileSettings(settings);
 }
 
 #define IT(cpptype, name) \

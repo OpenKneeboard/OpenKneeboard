@@ -111,6 +111,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   ProfileSettings,
   mActiveProfile,
   mProfiles,
+  mLoopProfiles,
   mEnabled)
 
 }// namespace OpenKneeboard

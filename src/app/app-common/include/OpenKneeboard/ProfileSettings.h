@@ -39,6 +39,9 @@ struct ProfileSettings final {
   std::string mActiveProfile;
   std::unordered_map<std::string, Profile> mProfiles;
   bool mEnabled {false};
+  // If you're on the first profile and press 'previous', do you go to the last
+  // profile?
+  bool mLoopProfiles {false};
 
   std::vector<Profile> GetSortedProfiles() const;
   std::string MakeID(const std::string& name) const;
