@@ -162,13 +162,13 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   picker.SuggestedStartLocation(FOLDERID_Desktop);
   picker.AppendFileType(_(L"Plain Text"), {L".txt"});
   picker.SuggestedFileName(std::format(
-    L"OpenKneeboard-{:%F-%H-%M}-{}.{}.{}.{}.txt",
-    std::chrono::zoned_time(
-      std::chrono::current_zone(), std::chrono::system_clock::now()),
+    L"OpenKneeboard-v{}.{}.{}.{}-{:%F-%H-%M}.txt",
     Version::Major,
     Version::Minor,
     Version::Patch,
-    Version::Build));
+    Version::Build,
+    std::chrono::zoned_time(
+      std::chrono::current_zone(), std::chrono::system_clock::now())));
 
   const auto maybePath = picker.PickSaveFile();
   if (!maybePath) {
