@@ -51,8 +51,8 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
     AddEventListener(layer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
 
-  dprintf(
-    "Created kneeboard view ID {}", this->GetRuntimeID().GetTemporaryValue());
+  const auto id = this->GetRuntimeID().GetTemporaryValue();
+  dprintf("Created kneeboard view ID {:#016x} ({})", id, id);
 }
 
 std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
