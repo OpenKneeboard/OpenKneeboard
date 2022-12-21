@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/dprint.h>
+
 #include <cstdint>
 #include <functional>
 #include <list>
@@ -131,7 +133,23 @@ class EventConnection final
       handler = mHandler;
     }
     if (handler) {
-      handler(args...);
+      // In release builds, ignore but drop unhandled exceptions from handlers.
+      // In debug builds, break (or crash)
+      try {
+        handler(args...);
+      } catch (const std::exception& e) {
+        dprintf("Uncaught std::exception from event handler: {}", e.what());
+        OPENKNEEBOARD_BREAK;
+      } catch (const winrt::hresult_error& e) {
+        dprintf(
+          L"Uncaught hresult error from event handler: {} - {}",
+          e.code().value,
+          std::wstring_view {e.message()});
+        OPENKNEEBOARD_BREAK;
+      } catch (...) {
+        dprint("Uncaught unknown exception from event handler");
+        OPENKNEEBOARD_BREAK;
+      }
     }
   }
 
@@ -349,9 +367,8 @@ EventHandlerToken EventReceiver::AddEventListener(
 
 template <class... Args>
   requires(sizeof...(Args) > 0)
-EventHandlerToken EventReceiver::AddEventListener(
-  Event<Args...>& event,
-  Event<>& forwardTo) {
+EventHandlerToken
+  EventReceiver::AddEventListener(Event<Args...>& event, Event<>& forwardTo) {
   return AddEventListener(event, [&forwardTo](Args...) { forwardTo.Emit(); });
 }
 
