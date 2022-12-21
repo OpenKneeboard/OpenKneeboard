@@ -201,6 +201,10 @@ function callbacks.onSimulationStart()
   l("onSimulationStart")
   updateGeo()
 
+  if not state.utcOffset then
+    state.utcOffset = Terrain.GetTerrainConfig('SummerTimeDelta')
+  end
+
   local startData = net.lua2json({
     missionStartTime = Export.LoGetMissionStartTime(),
   })
