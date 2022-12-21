@@ -148,6 +148,16 @@ void KneeboardState::PostUserAction(UserAction action) {
           = std::make_unique<InterprocessRenderer>(mDXResources, this);
       }
       return;
+    case UserAction::HIDE:
+      mInterprocessRenderer.reset();
+      return;
+    case UserAction::SHOW:
+      if (mInterprocessRenderer) {
+        return;
+      }
+      mInterprocessRenderer
+        = std::make_unique<InterprocessRenderer>(mDXResources, this);
+      return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
       auto& forceZoom = this->mSettings.mVR.mForceZoom;
       forceZoom = !forceZoom;
