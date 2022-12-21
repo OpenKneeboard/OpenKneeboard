@@ -130,11 +130,15 @@ std::optional<std::filesystem::path> FilePicker::PickSaveFile() const {
 }
 
 std::filesystem::path FilePicker::GetPathFromShellItem(IShellItem* shellItem) {
-  unique_co_task_ptr<wchar_t> path;
+  unique_co_task_ptr<wchar_t> pathStr;
   winrt::check_hresult(
-    shellItem->GetDisplayName(SIGDN_FILESYSPATH, zop::out_ptr(path)));
-
-  return std::filesystem::canonical(std::wstring_view(path.get()));
+    shellItem->GetDisplayName(SIGDN_FILESYSPATH, zop::out_ptr(pathStr)));
+  const std::filesystem::path path(std::wstring_view(pathStr.get()));
+  if (std::filesystem::exists(path)) {
+    return std::filesystem::canonical(path);
+  } else {
+    return std::filesystem::weakly_canonical(path);
+  }
 }
 
 std::vector<std::filesystem::path> FilePicker::PickMultipleFiles() const {
