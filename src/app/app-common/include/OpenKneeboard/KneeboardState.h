@@ -60,11 +60,16 @@ struct RunningGame {
   std::weak_ptr<GameInstance> mGameInstance;
 };
 
-class KneeboardState final : private EventReceiver {
+class KneeboardState final
+  : private EventReceiver,
+    public std::enable_shared_from_this<KneeboardState> {
  public:
   KneeboardState() = delete;
-  KneeboardState(HWND mainWindow, const DXResources&);
+  static std::shared_ptr<KneeboardState> Create(
+    HWND mainWindow,
+    const DXResources&);
   ~KneeboardState() noexcept;
+  static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
 
   std::shared_ptr<IKneeboardView> GetActiveViewForGlobalInput() const;
   std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
@@ -91,7 +96,7 @@ class KneeboardState final : private EventReceiver {
 
   TabsList* GetTabsList() const;
 
-  void ReleaseExclusiveResources();
+  winrt::Windows::Foundation::IAsyncAction ReleaseExclusiveResources();
   void AcquireExclusiveResources();
 #define IT(cpptype, name) \
   cpptype Get##name##Settings() const; \
@@ -105,6 +110,8 @@ class KneeboardState final : private EventReceiver {
   void PostUserAction(UserAction action);
 
  private:
+  KneeboardState(HWND mainWindow, const DXResources&);
+
   HWND mHwnd;
   DXResources mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};

@@ -266,7 +266,7 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
   dprint("Tearing down exclusive resources for relaunch");
   gMutex = {};
   gTroubleshootingStore = {};
-  gKneeboard->ReleaseExclusiveResources();
+  co_await gKneeboard->ReleaseExclusiveResources();
 
   const auto restarted = RelaunchWithDesiredElevation(desired, SW_SHOWNORMAL);
   if (restarted) {

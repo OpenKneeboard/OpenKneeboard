@@ -86,7 +86,7 @@ MainWindow::MainWindow() {
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
 
   gDXResources = DXResources::Create();
-  gKneeboard = std::make_shared<KneeboardState>(mHwnd, gDXResources);
+  gKneeboard = KneeboardState::Create(mHwnd, gDXResources);
 
   OnTabsChanged();
   OnViewOrderChanged();

@@ -34,12 +34,19 @@
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/scope_guard.h>
 
 #include <algorithm>
 #include <string>
 
 namespace OpenKneeboard {
+
+std::shared_ptr<KneeboardState> KneeboardState::Create(
+  HWND hwnd,
+  const DXResources& dxr) {
+  return shared_with_final_release(new KneeboardState(hwnd, dxr));
+}
 
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
@@ -86,13 +93,12 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   AcquireExclusiveResources();
 }
 
-KneeboardState::~KneeboardState() noexcept {
-  this->RemoveAllEventListeners();
-  mGameEventWorker.Cancel();
-  if (mOpenVRThread.get_id() != std::thread::id {}) {
-    mOpenVRThread.request_stop();
-    mOpenVRThread.join();
-  }
+KneeboardState::~KneeboardState() noexcept = default;
+
+winrt::fire_and_forget KneeboardState::final_release(
+  std::unique_ptr<KneeboardState> self) {
+  self->RemoveAllEventListeners();
+  co_await self->ReleaseExclusiveResources();
 }
 
 std::vector<std::shared_ptr<IKneeboardView>>
@@ -526,11 +532,17 @@ void KneeboardState::SetTabsSettings(const nlohmann::json& j) {
   mTabsList->LoadSettings(j);
 }
 
-void KneeboardState::ReleaseExclusiveResources() {
+winrt::Windows::Foundation::IAsyncAction
+KneeboardState::ReleaseExclusiveResources() {
   mOpenVRThread = {};
   mInterprocessRenderer = {};
   mTabletInput = {};
   mGameEventWorker.Cancel();
+  try {
+    co_await mGameEventWorker;
+  } catch (winrt::hresult_canceled) {
+    // ignore
+  }
 }
 
 void KneeboardState::AcquireExclusiveResources() {
