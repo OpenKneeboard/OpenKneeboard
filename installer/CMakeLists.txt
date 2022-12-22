@@ -28,6 +28,9 @@ set(CPACK_CREATE_DESKTOP_LINKS "OpenKneeboardApp")
 set(CPACK_WIX_UI_DIALOG "${CMAKE_SOURCE_DIR}/assets/WiXUIDialog.png")
 set(CPACK_WIX_UI_BANNER "${CMAKE_SOURCE_DIR}/assets/WixUIBanner.png")
 
+# For CI
+file(WRITE "${CMAKE_BINARY_DIR}/installer-name.txt" "${CPACK_PACKAGE_FILE_NAME}.msi")
+
 get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
 list(REMOVE_ITEM CPACK_COMPONENTS_ALL DebugSymbols)
 list(REMOVE_ITEM CPACK_COMPONENTS_ALL DualArch)

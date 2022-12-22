@@ -64,7 +64,7 @@ jobs:
           cmake --build . `
             --config ${{matrix.config}} `
             --target package
-          $installer="OpenKneeboard-v$(Get-Content version.txt).msi"
+          $installer="$(Get-Content installer-name.txt)"
           Add-Content $Env:GITHUB_OUTPUT "MSI_NAME=$installer"
           $installer=(Get-ChildItem $installer).FullName
           Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
