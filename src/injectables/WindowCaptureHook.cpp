@@ -21,23 +21,94 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <shims/Windows.h>
+#include <windowsx.h>
 
 #include <atomic>
+#include <optional>
 
 #include "detours-ext.h"
 
 using namespace OpenKneeboard;
 
+namespace {
+struct InjectedPoint {
+  HWND mHwnd;
+  POINT mClientPoint;
+  POINT mScreenPoint;
+};
+}// namespace
+
 static unsigned int gInjecting = 0;
+static std::optional<InjectedPoint> gInjectedPoint;
 static std::atomic_flag gHaveDetours;
+
+static auto gPFN_GetForegroundWindow = &GetForegroundWindow;
 static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
+static auto gPFN_GetCursorPos = &GetCursorPos;
+static auto gPFN_ClientToScreen = &ClientToScreen;
+static auto gPFN_ScreenToClient = &ScreenToClient;
+
+static HWND gLastSetForegroundWindow {};
 
 static BOOL WINAPI SetForegroundWindow_Hook(HWND hwnd) {
+  gLastSetForegroundWindow = hwnd;
   if (gInjecting) {
-    dprint("Suppressing SetForegroundWindow()");
-    return true;
+    return TRUE;
   }
   return gPFN_SetForegroundWindow(hwnd);
+}
+
+static HWND WINAPI GetForegroundWindow_Hook() {
+  if (gInjecting) {
+    return gLastSetForegroundWindow;
+  }
+  return gPFN_GetForegroundWindow();
+}
+
+static BOOL WINAPI GetCursorPos_Hook(LPPOINT lpPoint) {
+  if (gInjectedPoint) {
+    *lpPoint = gInjectedPoint->mScreenPoint;
+    return TRUE;
+  }
+  return gPFN_GetCursorPos(lpPoint);
+}
+
+static BOOL WINAPI ClientToScreen_Hook(HWND hwnd, LPPOINT lpPoint) {
+  if (!gInjectedPoint) {
+    return gPFN_ClientToScreen(hwnd, lpPoint);
+  }
+
+  const auto screenPoint = gInjectedPoint->mScreenPoint;
+  auto clientPoint = gInjectedPoint->mClientPoint;
+
+  if (hwnd != gInjectedPoint->mHwnd) {
+    MapWindowPoints(gInjectedPoint->mHwnd, hwnd, &clientPoint, 1);
+  }
+
+  *lpPoint = {
+    screenPoint.x + lpPoint->x - clientPoint.x,
+    screenPoint.y + lpPoint->y - clientPoint.y,
+  };
+  return TRUE;
+}
+
+static BOOL WINAPI ScreenToClient_Hook(HWND hwnd, LPPOINT lpPoint) {
+  if (!gInjectedPoint) {
+    return gPFN_ScreenToClient(hwnd, lpPoint);
+  }
+
+  const auto screenPoint = gInjectedPoint->mScreenPoint;
+  auto clientPoint = gInjectedPoint->mClientPoint;
+
+  if (hwnd != gInjectedPoint->mHwnd) {
+    MapWindowPoints(gInjectedPoint->mHwnd, hwnd, &clientPoint, 1);
+  }
+
+  *lpPoint = {
+    (lpPoint->x - clientPoint.x) - screenPoint.x,
+    (lpPoint->y - clientPoint.y) - screenPoint.y,
+  };
+  return TRUE;
 }
 
 static void InstallDetours() {
@@ -46,7 +117,12 @@ static void InstallDetours() {
   }
 
   dprint("Installing detours");
-  DetourSingleAttach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+  DetourTransaction transcation;
+  DetourAttach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
+  DetourAttach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+  DetourAttach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
+  DetourAttach(&gPFN_ClientToScreen, &ClientToScreen_Hook);
+  DetourAttach(&gPFN_ScreenToClient, &ScreenToClient_Hook);
 }
 
 static void UninstallDetours() {
@@ -55,7 +131,12 @@ static void UninstallDetours() {
   }
 
   dprint("Removing detours");
-  DetourSingleDetach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+  DetourTransaction transaction;
+  DetourDetach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
+  DetourDetach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+  DetourDetach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
+  DetourDetach(&gPFN_ClientToScreen, &ClientToScreen_Hook);
+  DetourDetach(&gPFN_ScreenToClient, &ScreenToClient_Hook);
 }
 
 static bool
@@ -75,13 +156,18 @@ ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
       break;
     case WParam::EndInjection:
       gInjecting--;
+      if (!gInjecting) {
+        gInjectedPoint = {};
+        gLastSetForegroundWindow = {};
+      }
       break;
   }
 
   return true;
 }
 
-static bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
+static bool
+ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
   if (ProcessControlMessage(message, wParam, lParam)) {
     return true;
   }
@@ -91,8 +177,18 @@ static bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
   }
 
   switch (message) {
+    case WM_MOUSEMOVE: {
+      const POINT clientPoint {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+      POINT screenPoint {clientPoint};
+      gPFN_ClientToScreen(hwnd, &screenPoint);
+      gInjectedPoint = InjectedPoint {
+        .mHwnd = hwnd,
+        .mClientPoint = clientPoint,
+        .mScreenPoint = screenPoint,
+      };
+    }
+      return false;
     case WM_ACTIVATE:
-      return true;
     case WM_MOUSELEAVE:
       return true;
     default:
@@ -104,7 +200,7 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK
   GetMsgProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PMSG>(lParam);
 
-  if (ProcessMessage(msg.message, msg.wParam, msg.lParam)) {
+  if (ProcessMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam)) {
     msg.message = WM_NULL;
     return 0;
   }
@@ -115,7 +211,7 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK
 extern "C" __declspec(dllexport) LRESULT CALLBACK
   CallWndProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PCWPSTRUCT>(lParam);
-  if (ProcessMessage(msg.message, msg.wParam, msg.lParam)) {
+  if (ProcessMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam)) {
     return 0;
   }
   return CallNextHookEx(NULL, code, wParam, lParam);
