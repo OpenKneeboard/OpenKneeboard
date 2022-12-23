@@ -308,16 +308,13 @@ void HWNDPageSource::PostCursorEvent(
   static auto sControlMessage
     = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
 
-  SendMessage(
+  SendMessageW(
     target,
     sControlMessage,
     static_cast<WPARAM>(WindowCaptureControl::WParam::StartInjection),
     reinterpret_cast<LPARAM>(mWindow));
   const scope_guard unhook([=]() {
-    RedrawWindow(mWindow, nullptr, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
-    SendMessage(mWindow, WM_PAINT, 0, 0);
-    SendMessage(mWindow, WM_NCPAINT, 0, 0);
-    SendMessage(
+    SendMessageW(
       target,
       sControlMessage,
       static_cast<WPARAM>(WindowCaptureControl::WParam::EndInjection),
@@ -327,7 +324,7 @@ void HWNDPageSource::PostCursorEvent(
   // We only pay attention to buttons (1) and (1 << 1)
   const auto buttons = ev.mButtons & 3;
   if (buttons == mMouseButtons) {
-    SendMessage(target, WM_MOUSEMOVE, wParam, lParam);
+    SendMessageW(target, WM_MOUSEMOVE, wParam, lParam);
     return;
   }
 
@@ -336,16 +333,16 @@ void HWNDPageSource::PostCursorEvent(
   mMouseButtons = buttons;
 
   if (down & 1) {
-    SendMessage(target, WM_LBUTTONDOWN, wParam, lParam);
+    SendMessageW(target, WM_LBUTTONDOWN, wParam, lParam);
   }
   if (up & 1) {
-    SendMessage(target, WM_LBUTTONUP, wParam, lParam);
+    SendMessageW(target, WM_LBUTTONUP, wParam, lParam);
   }
   if (down & (1 << 1)) {
-    SendMessage(target, WM_RBUTTONDOWN, wParam, lParam);
+    SendMessageW(target, WM_RBUTTONDOWN, wParam, lParam);
   }
   if (up & (1 << 1)) {
-    SendMessage(target, WM_RBUTTONUP, wParam, lParam);
+    SendMessageW(target, WM_RBUTTONUP, wParam, lParam);
   }
 }
 
