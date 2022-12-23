@@ -20,6 +20,7 @@
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/version.h>
 #include <Windows.h>
 
@@ -92,6 +93,16 @@ void TabletProxy::Initialize() {
   if (!mTargetWindow) {
     return;
   }
+
+  const scope_guard cleanupOnFailure([this]() {
+    if (mInitialized) {
+      return;
+    }
+    dprint("Failed to initialize TabletProxy, cleaning up");
+    mTargetWindow = {};
+    mTablet = {};
+  });
+
   char title[256];
   auto titleLen = GetWindowTextA(mTargetWindow, title, sizeof(title));
   dprintf("Main window: {}", std::string_view(title, titleLen));
@@ -109,8 +120,6 @@ void TabletProxy::Initialize() {
   if (!mWindowProc) {
     const auto err = GetLastError();
     if (err == ERROR_INVALID_WINDOW_HANDLE) {
-      mTargetWindow = NULL;
-      mTablet = {};
       return;
     }
     dprintf("Failed to install windowproc: {}", err);
