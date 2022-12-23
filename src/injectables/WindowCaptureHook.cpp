@@ -28,12 +28,12 @@
 
 using namespace OpenKneeboard;
 
-static unsigned int gDisableMouseLeave = 0;
+static unsigned int gInjecting = 0;
 static std::atomic_flag gHaveDetours;
 static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
 
 static BOOL WINAPI SetForegroundWindow_Hook(HWND hwnd) {
-  if (gDisableMouseLeave) {
+  if (gInjecting) {
     dprint("Suppressing SetForegroundWindow()");
     return true;
   }
@@ -70,11 +70,11 @@ ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
 
   using WParam = WindowCaptureControl::WParam;
   switch (static_cast<WParam>(wParam)) {
-    case WParam::Disable_WM_MOUSELEAVE:
-      gDisableMouseLeave++;
+    case WParam::StartInjection:
+      gInjecting++;
       break;
-    case WParam::Enable_WM_MOUSELEAVE:
-      gDisableMouseLeave--;
+    case WParam::EndInjection:
+      gInjecting--;
       break;
   }
 
@@ -86,7 +86,7 @@ static bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     return true;
   }
 
-  if (!gDisableMouseLeave) {
+  if (!gInjecting) {
     return false;
   }
 

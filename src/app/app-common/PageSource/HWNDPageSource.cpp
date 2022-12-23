@@ -311,13 +311,13 @@ void HWNDPageSource::PostCursorEvent(
   SendMessage(
     target,
     sControlMessage,
-    static_cast<WPARAM>(WindowCaptureControl::WParam::Disable_WM_MOUSELEAVE),
+    static_cast<WPARAM>(WindowCaptureControl::WParam::StartInjection),
     0);
   const scope_guard unhook([=]() {
     SendMessage(
       target,
       sControlMessage,
-      static_cast<WPARAM>(WindowCaptureControl::WParam::Enable_WM_MOUSELEAVE),
+      static_cast<WPARAM>(WindowCaptureControl::WParam::EndInjection),
       0);
   });
 
