@@ -60,7 +60,7 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   return nullptr;
 }
 
-void HWNDPageSource::InitializeOnWorkerThread() noexcept {
+winrt::fire_and_forget HWNDPageSource::InitializeOnWorkerThread() noexcept {
   auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
   auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
   WGC::GraphicsCaptureItem item {nullptr};
@@ -89,6 +89,16 @@ void HWNDPageSource::InitializeOnWorkerThread() noexcept {
     this->mWindow = {};
     this->evWindowClosedEvent.Emit();
   });
+
+  const auto keepAlive = shared_from_this();
+  co_await std::chrono::milliseconds(100);
+  static auto sControlMessage
+    = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
+  PostMessageW(
+    mWindow,
+    sControlMessage,
+    static_cast<WPARAM>(WindowCaptureControl::WParam::Initialize),
+    reinterpret_cast<LPARAM>(mWindow));
 }
 
 HWNDPageSource::HWNDPageSource(
@@ -109,12 +119,12 @@ HWNDPageSource::HWNDPageSource(
     }
   });
 
+  this->InstallWindowHooks(mWindow);
+
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
   mDQC.DispatcherQueue().TryEnqueue(
     [this]() { this->InitializeOnWorkerThread(); });
-
-  this->InstallWindowHooks(mWindow);
 }
 
 bool HWNDPageSource::HaveWindow() const {

@@ -39,8 +39,10 @@ struct InjectedPoint {
 }// namespace
 
 static unsigned int gInjecting = 0;
+static std::chrono::steady_clock::time_point gLastInjectedAt {};
 static std::optional<InjectedPoint> gInjectedPoint;
 static std::atomic_flag gHaveDetours;
+static HWND gTopLevelWindow {};
 
 static auto gPFN_GetForegroundWindow = &GetForegroundWindow;
 static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
@@ -52,16 +54,22 @@ static auto gPFN_IsWindowVisible = &IsWindowVisible;
 
 static HWND gLastSetForegroundWindow {};
 
+static bool ShouldInject() {
+  return gInjecting
+    || (std::chrono::steady_clock::now() - gLastInjectedAt
+        > std::chrono::milliseconds(100));
+}
+
 static BOOL WINAPI SetForegroundWindow_Hook(HWND hwnd) {
   gLastSetForegroundWindow = hwnd;
-  if (gInjecting) {
+  if (ShouldInject()) {
     return TRUE;
   }
   return gPFN_SetForegroundWindow(hwnd);
 }
 
 static HWND WINAPI GetForegroundWindow_Hook() {
-  if (gInjecting) {
+  if (ShouldInject()) {
     return gLastSetForegroundWindow;
   }
   return gPFN_GetForegroundWindow();
@@ -114,17 +122,17 @@ static BOOL WINAPI ScreenToClient_Hook(HWND hwnd, LPPOINT lpPoint) {
 }
 
 static HWND WINAPI GetFocus_Hook() {
-  if (gInjecting) {
+  if (ShouldInject()) {
     return gLastSetForegroundWindow;
   }
   return gPFN_GetFocus();
 }
 
 static BOOL WINAPI IsWindowVisible_Hook(HWND hwnd) {
-  if (gInjecting) {
-    return TRUE;
+  if (!gTopLevelWindow) {
+    return gPFN_IsWindowVisible(hwnd);
   }
-  return gPFN_IsWindowVisible(hwnd);
+  return GetAncestor(hwnd, GA_ROOTOWNER) == gTopLevelWindow;
 }
 
 static void InstallDetours() {
@@ -174,9 +182,15 @@ static bool ProcessControlMessage(
 
   using WParam = WindowCaptureControl::WParam;
   switch (static_cast<WParam>(wParam)) {
+    case WParam::Initialize:
+      gTopLevelWindow = reinterpret_cast<HWND>(lParam);
+      InstallDetours();
+      break;
     case WParam::StartInjection:
       gInjecting++;
-      gLastSetForegroundWindow = reinterpret_cast<HWND>(lParam);
+      gTopLevelWindow = reinterpret_cast<HWND>(lParam);
+      gLastSetForegroundWindow = gTopLevelWindow;
+      gLastInjectedAt = std::chrono::steady_clock::now();
       InstallDetours();
       break;
     case WParam::EndInjection:
@@ -214,6 +228,7 @@ ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     }
       return false;
     case WM_MOUSELEAVE:
+    case WM_NCMOUSELEAVE:
       return true;
     default:
       return false;
