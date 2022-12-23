@@ -47,6 +47,8 @@ static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
 static auto gPFN_GetCursorPos = &GetCursorPos;
 static auto gPFN_ClientToScreen = &ClientToScreen;
 static auto gPFN_ScreenToClient = &ScreenToClient;
+static auto gPFN_GetFocus = &GetFocus;
+static auto gPFN_IsWindowVisible = &IsWindowVisible;
 
 static HWND gLastSetForegroundWindow {};
 
@@ -111,6 +113,20 @@ static BOOL WINAPI ScreenToClient_Hook(HWND hwnd, LPPOINT lpPoint) {
   return TRUE;
 }
 
+static HWND WINAPI GetFocus_Hook() {
+  if (gInjecting) {
+    return gLastSetForegroundWindow;
+  }
+  return gPFN_GetFocus();
+}
+
+static BOOL WINAPI IsWindowVisible_Hook(HWND hwnd) {
+  if (gInjecting) {
+    return TRUE;
+  }
+  return gPFN_IsWindowVisible(hwnd);
+}
+
 static void InstallDetours() {
   if (gHaveDetours.test_and_set()) {
     return;
@@ -123,6 +139,8 @@ static void InstallDetours() {
   DetourAttach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
   DetourAttach(&gPFN_ClientToScreen, &ClientToScreen_Hook);
   DetourAttach(&gPFN_ScreenToClient, &ScreenToClient_Hook);
+  DetourAttach(&gPFN_GetFocus, &GetFocus_Hook);
+  DetourAttach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
 }
 
 static void UninstallDetours() {
@@ -137,11 +155,15 @@ static void UninstallDetours() {
   DetourDetach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
   DetourDetach(&gPFN_ClientToScreen, &ClientToScreen_Hook);
   DetourDetach(&gPFN_ScreenToClient, &ScreenToClient_Hook);
+  DetourDetach(&gPFN_GetFocus, &GetFocus_Hook);
+  DetourDetach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
 }
 
-static bool
-ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
-  InstallDetours();
+static bool ProcessControlMessage(
+  HWND hwnd,
+  unsigned int message,
+  WPARAM wParam,
+  LPARAM lParam) {
   static UINT sControlMessage
     = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
 
@@ -153,6 +175,8 @@ ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
   switch (static_cast<WParam>(wParam)) {
     case WParam::StartInjection:
       gInjecting++;
+      gLastSetForegroundWindow = reinterpret_cast<HWND>(lParam);
+      InstallDetours();
       break;
     case WParam::EndInjection:
       gInjecting--;
@@ -168,7 +192,7 @@ ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
 
 static bool
 ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
-  if (ProcessControlMessage(message, wParam, lParam)) {
+  if (ProcessControlMessage(hwnd, message, wParam, lParam)) {
     return true;
   }
 
@@ -188,7 +212,6 @@ ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
       };
     }
       return false;
-    case WM_ACTIVATE:
     case WM_MOUSELEAVE:
       return true;
     default:

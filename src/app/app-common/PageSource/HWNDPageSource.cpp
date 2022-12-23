@@ -312,8 +312,11 @@ void HWNDPageSource::PostCursorEvent(
     target,
     sControlMessage,
     static_cast<WPARAM>(WindowCaptureControl::WParam::StartInjection),
-    0);
+    reinterpret_cast<LPARAM>(mWindow));
   const scope_guard unhook([=]() {
+    RedrawWindow(mWindow, nullptr, NULL, RDW_INVALIDATE | RDW_UPDATENOW);
+    SendMessage(mWindow, WM_PAINT, 0, 0);
+    SendMessage(mWindow, WM_NCPAINT, 0, 0);
     SendMessage(
       target,
       sControlMessage,

@@ -28,7 +28,7 @@ constexpr const wchar_t WindowMessageName[] {
   L"OpenKneeboard_WindowCaptureControl"};
 
 enum class WParam : unsigned int {
-  StartInjection = 1,
+  StartInjection = 1,// LPARAM: target top-level window
   EndInjection = 2,
 };
 
