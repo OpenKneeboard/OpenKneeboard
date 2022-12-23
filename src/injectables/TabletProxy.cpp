@@ -96,7 +96,8 @@ void TabletProxy::Initialize() {
   auto titleLen = GetWindowTextA(mTargetWindow, title, sizeof(title));
   dprintf("Main window: {}", std::string_view(title, titleLen));
 
-  mTablet = std::make_unique<WintabTablet>(mTargetWindow);
+  mTablet = std::make_unique<WintabTablet>(
+    mTargetWindow, WintabTablet::Priority::ForegroundOnly);
   if (!mTablet->IsValid()) {
     return;
   }

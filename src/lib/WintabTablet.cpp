@@ -77,19 +77,21 @@ class LibWintab {
 static WintabTablet* gInstance {nullptr};
 
 struct WintabTablet::Impl {
-  Impl(HWND window);
+  Impl() = delete;
+  Impl(HWND window, Priority priority);
   ~Impl();
 
+  Priority mPriority;
   State mState {};
   Limits mLimits {};
   LibWintab mWintab {};
   HCTX mCtx {nullptr};
 
-  std::jthread mOverlapThread;
   unique_hwineventhook mEventHook;
 };
 
-WintabTablet::WintabTablet(HWND window) : p(std::make_unique<Impl>(window)) {
+WintabTablet::WintabTablet(HWND window, Priority priority)
+  : p(std::make_unique<Impl>(window, priority)) {
   if (gInstance) {
     throw std::runtime_error("Only one WintabTablet at a time!");
   }
@@ -118,31 +120,7 @@ bool WintabTablet::IsValid() const {
   return p && p->mCtx;
 }
 
-void CALLBACK WintabTablet::WinEventProc_SetOverlap(
-  HWINEVENTHOOK hWinEventHook,
-  DWORD event,
-  HWND hwnd,
-  LONG idObject,
-  LONG idChild,
-  DWORD idEventThread,
-  DWORD dwmsEventTime) {
-  if (!gInstance) {
-    return;
-  }
-
-  gInstance->p->mOverlapThread = {[](std::stop_token stop) {
-    // We're racing the tablet driver; give it some time to catch up
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if (stop.stop_requested()) {
-      return;
-    }
-    if (gInstance->p->mCtx) {
-      gInstance->p->mWintab.WTOverlap(gInstance->p->mCtx, true);
-    }
-  }};
-}
-
-WintabTablet::Impl::Impl(HWND window) {
+WintabTablet::Impl::Impl(HWND window, Priority priority) : mPriority(priority) {
   if (!mWintab) {
     return;
   }
@@ -212,14 +190,6 @@ WintabTablet::Impl::Impl(HWND window) {
     return;
   }
   dprint("Opened wintab tablet");
-  mEventHook.reset(SetWinEventHook(
-    EVENT_SYSTEM_FOREGROUND,
-    EVENT_SYSTEM_FOREGROUND,
-    NULL,
-    &WinEventProc_SetOverlap,
-    NULL,
-    NULL,
-    WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS));
 }
 
 std::string WintabTablet::GetDeviceName() const {
@@ -258,7 +228,7 @@ WintabTablet::Impl::~Impl() {
 
 bool WintabTablet::CanProcessMessage(UINT message) const {
   return message == WT_PROXIMITY || message == WT_PACKET
-    || message == WT_PACKETEXT;
+    || message == WT_PACKETEXT || message == WT_CTXOVERLAP;
 }
 
 bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
@@ -268,6 +238,14 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     p->mState.active = lParam & 0xffff;
     return true;
   }
+
+  if (message == WT_CTXOVERLAP && p->mPriority == Priority::AlwaysActive) {
+    if (
+      reinterpret_cast<HCTX>(wParam) == gInstance->p->mCtx
+      && !(static_cast<UINT>(lParam) & CXS_ONTOP)) {
+      gInstance->p->mWintab.WTOverlap(gInstance->p->mCtx, TRUE);
+    }
+  };
 
   // Use the context from the param instead of our stored context so we
   // can also handle messages forwarded from another window/process,

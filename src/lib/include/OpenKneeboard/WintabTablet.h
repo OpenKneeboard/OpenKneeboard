@@ -37,8 +37,13 @@ class WintabTablet final {
     uint32_t x = 0, y = 0, pressure = 0;
     uint16_t penButtons = 0, tabletButtons = 0;
   };
+  enum class Priority {
+    AlwaysActive,
+    ForegroundOnly,
+  };
 
-  WintabTablet(HWND window);
+  WintabTablet() = delete;
+  WintabTablet(HWND window, Priority priority);
   ~WintabTablet();
 
   bool IsValid() const;
@@ -55,15 +60,6 @@ class WintabTablet final {
  private:
   struct Impl;
   std::unique_ptr<Impl> p;
-
-  static void CALLBACK WinEventProc_SetOverlap(
-    HWINEVENTHOOK hWinEventHook,
-    DWORD event,
-    HWND hwnd,
-    LONG idObject,
-    LONG idChild,
-    DWORD idEventThread,
-    DWORD dwmsEventTime);
 };
 
 }// namespace OpenKneeboard

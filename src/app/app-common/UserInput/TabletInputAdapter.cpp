@@ -50,7 +50,8 @@ TabletInputAdapter::TabletInputAdapter(
   }
   gInstance = this;
 
-  mTablet = std::make_unique<WintabTablet>(window);
+  mTablet = std::make_unique<WintabTablet>(
+    window, WintabTablet::Priority::AlwaysActive);
   if (!mTablet->IsValid()) {
     return;
   }
