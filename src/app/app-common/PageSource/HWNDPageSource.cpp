@@ -328,18 +328,31 @@ void HWNDPageSource::PostCursorEvent(
     return;
   }
 
+  mRestoreHWNDAfter
+    = std::chrono::steady_clock::now() + std::chrono::milliseconds(10);
   if (!mRestoringHWND) {
     mRestoringHWND = GetForegroundWindow();
     weak_wrap(
       [](auto self) -> winrt::fire_and_forget {
-        // Seems like we just need to re-enter the event loop
-        co_await winrt::resume_after(std::chrono::milliseconds(1));
+        while (true) {
+          // It may have been increased by another event
+          const auto sleepFor
+            = self->mRestoreHWNDAfter - std::chrono::steady_clock::now();
+          if (sleepFor <= std::chrono::milliseconds::zero()) {
+            break;
+          }
+          co_await winrt::resume_after(
+            std::chrono::duration_cast<std::chrono::milliseconds>(sleepFor));
+        }
         if (!self->mRestoringHWND) {
           co_return;
         }
         dprintf(
           "Restoring hwnd: {:016x}",
           reinterpret_cast<uint64_t>(*self->mRestoringHWND));
+        SetForegroundWindow(*self->mRestoringHWND);
+        // Do it again, just to be sure
+        co_await winrt::resume_after(std::chrono::milliseconds(150));
         SetForegroundWindow(*self->mRestoringHWND);
         self->mRestoringHWND = {};
       },
