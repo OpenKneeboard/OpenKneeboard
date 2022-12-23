@@ -19,14 +19,48 @@
  */
 #include <OpenKneeboard/WindowCaptureControl.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <shims/Windows.h>
+
+#include <atomic>
+
+#include "detours-ext.h"
 
 using namespace OpenKneeboard;
 
 static unsigned int gDisableMouseLeave = 0;
+static std::atomic_flag gHaveDetours;
+static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
+
+static BOOL WINAPI SetForegroundWindow_Hook(HWND hwnd) {
+  if (gDisableMouseLeave) {
+    dprint("Suppressing SetForegroundWindow()");
+    return true;
+  }
+  return gPFN_SetForegroundWindow(hwnd);
+}
+
+static void InstallDetours() {
+  if (gHaveDetours.test_and_set()) {
+    return;
+  }
+
+  dprint("Installing detours");
+  DetourSingleAttach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+}
+
+static void UninstallDetours() {
+  if (!gHaveDetours.test()) {
+    return;
+  }
+
+  dprint("Removing detours");
+  DetourSingleDetach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
+}
 
 static bool
 ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
+  InstallDetours();
   static UINT sControlMessage
     = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
 
@@ -47,16 +81,30 @@ ProcessControlMessage(unsigned int message, WPARAM wParam, LPARAM lParam) {
   return true;
 }
 
+static bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
+  if (ProcessControlMessage(message, wParam, lParam)) {
+    return true;
+  }
+
+  if (!gDisableMouseLeave) {
+    return false;
+  }
+
+  switch (message) {
+    case WM_ACTIVATE:
+      return true;
+    case WM_MOUSELEAVE:
+      return true;
+    default:
+      return false;
+  }
+}
+
 extern "C" __declspec(dllexport) LRESULT CALLBACK
   GetMsgProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PMSG>(lParam);
 
-  if (ProcessControlMessage(msg.message, msg.wParam, msg.lParam)) {
-    msg.message = WM_NULL;
-    return 0;
-  }
-
-  if (gDisableMouseLeave && msg.message == WM_MOUSELEAVE) {
+  if (ProcessMessage(msg.message, msg.wParam, msg.lParam)) {
     msg.message = WM_NULL;
     return 0;
   }
@@ -67,8 +115,23 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK
 extern "C" __declspec(dllexport) LRESULT CALLBACK
   CallWndProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PCWPSTRUCT>(lParam);
-  if (ProcessControlMessage(msg.message, msg.wParam, msg.lParam)) {
+  if (ProcessMessage(msg.message, msg.wParam, msg.lParam)) {
     return 0;
   }
   return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  // Per https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain :
+  //
+  // - lpreserved is NULL if DLL is being unloaded, non-null if the process
+  //   is terminating.
+  // - if the process is terminating, it is unsafe to attempt to cleanup
+  //   heap resources, and they *should* leave resource reclamation to the
+  //   kernel; our destructors etc may depend on dlls that have already
+  //   been unloaded.
+  if (dwReason == DLL_PROCESS_DETACH && !reserved) {
+    UninstallDetours();
+  }
+  return TRUE;
 }

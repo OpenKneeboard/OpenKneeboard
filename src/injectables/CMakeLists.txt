@@ -169,6 +169,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-config
   _libheaders
+  detours-ext
 )
 set_target_properties(
   OpenKneeboard-WindowCaptureHook
