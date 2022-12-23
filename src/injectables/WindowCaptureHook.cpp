@@ -147,6 +147,7 @@ static void UninstallDetours() {
   if (!gHaveDetours.test()) {
     return;
   }
+  gHaveDetours.clear();
 
   dprint("Removing detours");
   DetourTransaction transaction;
