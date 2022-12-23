@@ -19,41 +19,13 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/IToolbarItem.h >
 
 namespace OpenKneeboard {
 
-class TabAction {
+class ToolbarSeparator final : public IToolbarItem {
  public:
-  virtual ~TabAction();
-  utf8_string_view GetGlyph() const;
-  utf8_string_view GetLabel() const;
-
-  virtual bool IsEnabled() = 0;
-  virtual void Execute() = 0;
-
-  Event<> evStateChangedEvent;
-
- protected:
-  TabAction() = delete;
-  TabAction(utf8_string glyph, utf8_string label);
-
- private:
-  utf8_string mGlyph;
-  utf8_string mLabel;
-};
-
-class TabToggleAction : public TabAction {
- public:
-  virtual void Execute() override final;
-
-  virtual bool IsActive() = 0;
-  virtual void Activate() = 0;
-  virtual void Deactivate() = 0;
-
- protected:
-  using TabAction::TabAction;
+  virtual ~ToolbarSeparator();
 };
 
 }// namespace OpenKneeboard

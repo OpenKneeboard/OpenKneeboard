@@ -1,61 +1,62 @@
 file(GLOB_RECURSE APP_COMMON_SOURCES CONFIGURE_DEPENDS "*.cpp" "*.h")
 ok_add_library(OpenKneeboard-App-Common STATIC ${APP_COMMON_SOURCES})
 target_compile_definitions(
-	OpenKneeboard-App-Common
-	PUBLIC
-	"DIRECTINPUT_VERSION=0x0800"
-	"OPENKNEEBOARD_JSON_SERIALIZE=1"
+  OpenKneeboard-App-Common
+  PUBLIC
+  "DIRECTINPUT_VERSION=0x0800"
+  "OPENKNEEBOARD_JSON_SERIALIZE=1"
 )
 target_link_libraries(
-	OpenKneeboard-App-Common
-	PUBLIC
-	ThirdParty::JSON
+  OpenKneeboard-App-Common
+  PUBLIC
+  ThirdParty::JSON
 )
 target_link_libraries(
-	OpenKneeboard-App-Common
-	PRIVATE
-	OpenKneeboard-D2DErrorRenderer
-	OpenKneeboard-DXResources
-	OpenKneeboard-Filesystem
-	OpenKneeboard-GameEvent
-	OpenKneeboard-GetSystemColor
-	OpenKneeboard-PDFNavigation
-	OpenKneeboard-RayIntersectsRect
-	OpenKneeboard-RuntimeFiles
-	OpenKneeboard-OpenVRKneeboard
-	OpenKneeboard-OpenXRMode
-	OpenKneeboard-SHM
-	OpenKneeboard-UTF8
-	OpenKneeboard-WindowCaptureControl
-	OpenKneeboard-config
-	OpenKneeboard-dprint
-	OpenKneeboard-games
-	OpenKneeboard-handles
-	OpenKneeboard-scope_guard
-	OpenKneeboard-tablets
-	System::D2d1
-	System::Dinput8
-	System::Dwmapi
-	System::Dxguid
-	System::Rpcrt4
-	System::Shlwapi
-	ThirdParty::DirectXTK
-	ThirdParty::GeographicLib
-	ThirdParty::LibZip
-	ThirdParty::Lua
-	ThirdParty::OpenVR
-	ThirdParty::WMM
+  OpenKneeboard-App-Common
+  PRIVATE
+  OpenKneeboard-D2DErrorRenderer
+  OpenKneeboard-DXResources
+  OpenKneeboard-Filesystem
+  OpenKneeboard-GameEvent
+  OpenKneeboard-GetSystemColor
+  OpenKneeboard-PDFNavigation
+  OpenKneeboard-RayIntersectsRect
+  OpenKneeboard-RuntimeFiles
+  OpenKneeboard-OpenVRKneeboard
+  OpenKneeboard-OpenXRMode
+  OpenKneeboard-SHM
+  OpenKneeboard-UTF8
+  OpenKneeboard-WindowCaptureControl
+  OpenKneeboard-config
+  OpenKneeboard-dprint
+  OpenKneeboard-games
+  OpenKneeboard-handles
+  OpenKneeboard-scope_guard
+  OpenKneeboard-tablets
+  System::D2d1
+  System::Dinput8
+  System::Dwmapi
+  System::Dxguid
+  System::Rpcrt4
+  System::Shlwapi
+  ThirdParty::DirectXTK
+  ThirdParty::GeographicLib
+  ThirdParty::LibZip
+  ThirdParty::Lua
+  ThirdParty::OpenVR
+  ThirdParty::WMM
 )
 
 target_include_directories(
-	OpenKneeboard-App-Common
-	PUBLIC
-	${CMAKE_CURRENT_SOURCE_DIR}/include
-	${CMAKE_CURRENT_SOURCE_DIR}/UserInput/include
-	${CMAKE_CURRENT_SOURCE_DIR}/GamesList/include
-	${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include
-	${CMAKE_CURRENT_SOURCE_DIR}/Tab/include
-	${CMAKE_CURRENT_SOURCE_DIR}/PageSource/include
+  OpenKneeboard-App-Common
+  PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/GamesList/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/PageSource/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/Tab/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/ToolbarItems/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/UserInput/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 ok_add_library(OpenKneeboard::App::Common ALIAS OpenKneeboard-App-Common)
