@@ -20,17 +20,9 @@
 #pragma once
 
 #include <concepts>
-#include <functional>
+#include <nlohmann/json.hpp>
 #include <shims/filesystem>
 #include <string>
-#include <type_traits>
-
-/** This file exists to workaround the fact that `std::u8string`
- * and `char8_t` are not widely supported as of early 2022.
- *
- * Hopefully it can be removed in the future as library support
- * improves.
- */
 
 namespace OpenKneeboard {
 
@@ -55,26 +47,22 @@ constexpr std::string_view to_utf8(const char* in) {
   return in;
 }
 
+template <size_t N>
+constexpr std::string_view to_utf8(const char (&in)[N]) {
+  return {in, N};
+}
+
 std::string to_utf8(const std::wstring&);
 std::string to_utf8(std::wstring_view);
 std::string to_utf8(const wchar_t*);
 std::string to_utf8(const std::filesystem::path&);
 
-struct utf8_string : std::basic_string<char> {
-  constexpr utf8_string() = default;
-
-  template <class T>
-  utf8_string(T&& x) : std::basic_string<char>(to_utf8(std::forward<T>(x))) {
-  }
-
-  inline operator std::filesystem::path() const noexcept {
-    const auto first = reinterpret_cast<const char8_t*>(data());
-    return {first, first + size()};
-  }
-};
+template <size_t N>
+constexpr std::string to_utf8(const wchar_t (&in)[N]) {
+  return to_utf8(std::wstring_view {in, N});
+}
 
 }// namespace OpenKneeboard
-#include <nlohmann/json.hpp>
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
