@@ -24,7 +24,8 @@
 namespace OpenKneeboard {
 
 std::string to_utf8(const std::filesystem::path& in) {
-  return winrt::to_string(in.wstring());
+  const auto yaycpp20 = in.generic_u8string();
+  return {reinterpret_cast<const char*>(yaycpp20.data()), yaycpp20.size()};
 }
 
 std::string to_utf8(const std::wstring& in) {
@@ -46,12 +47,14 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 void adl_serializer<std::filesystem::path>::from_json(
   const nlohmann::json& j,
   std::filesystem::path& p) {
-  p = static_cast<std::wstring_view>(winrt::to_hstring(j.get<std::string>()));
+  const auto utf8 = j.get<std::string>();
+  const auto first = reinterpret_cast<const char8_t*>(utf8.data());
+  p = std::filesystem::path {first, first + utf8.size()};
 }
 void adl_serializer<std::filesystem::path>::to_json(
   nlohmann::json& j,
   const std::filesystem::path& p) {
-  j = winrt::to_string(p.wstring());
+  j = OpenKneeboard::to_utf8(p);
 }
 
 NLOHMANN_JSON_NAMESPACE_END
