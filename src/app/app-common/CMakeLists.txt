@@ -55,6 +55,7 @@ target_include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Tab/include
   ${CMAKE_CURRENT_SOURCE_DIR}/TabsList/include
   ${CMAKE_CURRENT_SOURCE_DIR}/ToolbarItems/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/UILayers/include
   ${CMAKE_CURRENT_SOURCE_DIR}/UserInput/include
   ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
