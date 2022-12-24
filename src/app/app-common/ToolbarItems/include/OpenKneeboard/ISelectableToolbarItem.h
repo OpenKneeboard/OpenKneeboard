@@ -26,9 +26,13 @@ namespace OpenKneeboard {
 
 class ISelectableToolbarItem : public IToolbarItem {
  public:
+  virtual ~ISelectableToolbarItem() = default;
+
   virtual std::string_view GetGlyph() const = 0;
   virtual std::string_view GetLabel() const = 0;
   virtual bool IsEnabled() = 0;
+
+  Event<> evStateChangedEvent;
 };
 
 }// namespace OpenKneeboard

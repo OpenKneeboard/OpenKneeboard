@@ -256,7 +256,12 @@ void HeaderUILayer::LayoutToolbar(
 
   auto primaryLeft = headerRect.left + (2 * margin);
 
-  for (const auto& action: actions.mLeft) {
+  for (const auto& item: actions.mLeft) {
+    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
+    if (!action) {
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
     AddEventListener(action->evStateChangedEvent, this->evNeedsRepaintEvent);
 
     D2D1_RECT_F button {
@@ -271,7 +276,12 @@ void HeaderUILayer::LayoutToolbar(
   }
 
   auto secondaryRight = headerRect.right - (2 * margin);
-  for (const auto& action: actions.mRight) {
+  for (const auto& item: actions.mRight) {
+    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
+    if (!action) {
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
     AddEventListener(action->evStateChangedEvent, this->evNeedsRepaintEvent);
 
     D2D1_RECT_F button {

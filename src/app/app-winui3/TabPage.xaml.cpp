@@ -203,12 +203,22 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   auto actions = InAppActions::Create(gKneeboard.get(), mKneeboardView, state);
 
   auto primary = CommandBar().PrimaryCommands();
-  for (const auto& action: actions.mPrimary) {
+  for (const auto& item: actions.mPrimary) {
+    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
+    if (!action) {
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
     primary.Append(CreateCommandBarElement(action));
   }
 
   auto secondary = CommandBar().SecondaryCommands();
-  for (const auto& action: actions.mSecondary) {
+  for (const auto& item: actions.mSecondary) {
+    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
+    if (!action) {
+      OPENKNEEBOARD_BREAK;
+      continue;
+    }
     secondary.Append(CreateCommandBarElement(action));
   }
 }
