@@ -27,7 +27,7 @@
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>

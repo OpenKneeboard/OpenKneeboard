@@ -17,22 +17,22 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ToolbarAction.h>
 
 namespace OpenKneeboard {
 
-TabAction::TabAction(std::string glyph, std::string label)
+ToolbarAction::ToolbarAction(std::string glyph, std::string label)
   : mGlyph(glyph), mLabel(label) {
 }
 
-TabAction::~TabAction() {
+ToolbarAction::~ToolbarAction() {
 }
 
-std::string_view TabAction::GetGlyph() const {
+std::string_view ToolbarAction::GetGlyph() const {
   return mGlyph;
 }
 
-std::string_view TabAction::GetLabel() const {
+std::string_view ToolbarAction::GetLabel() const {
   return mLabel;
 }
 

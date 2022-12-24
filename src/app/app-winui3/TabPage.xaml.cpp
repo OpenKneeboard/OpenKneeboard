@@ -31,7 +31,7 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <microsoft.ui.xaml.media.dxinterop.h>
@@ -137,7 +137,7 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
 }
 
 muxc::ICommandBarElement TabPage::CreateCommandBarElement(
-  const std::shared_ptr<TabAction>& action) {
+  const std::shared_ptr<ToolbarAction>& action) {
   auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
   if (toggle) {
     return CreateAppBarToggleButton(toggle);
@@ -174,7 +174,7 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 }
 
 muxc::AppBarButton TabPage::CreateAppBarButton(
-  const std::shared_ptr<TabAction>& action) {
+  const std::shared_ptr<ToolbarAction>& action) {
   muxc::AppBarButton button;
 
   muxc::FontIcon icon;

@@ -38,7 +38,7 @@ class CursorEvent;
 class CursorRenderer;
 class KneeboardState;
 class ITab;
-class TabAction;
+class ToolbarAction;
 struct GameInstance;
 struct DXResources;
 

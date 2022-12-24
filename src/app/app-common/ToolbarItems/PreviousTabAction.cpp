@@ -28,7 +28,7 @@ namespace OpenKneeboard {
 PreviousTabAction::PreviousTabAction(
   KneeboardState* kneeboardState,
   const std::shared_ptr<IKneeboardView>& kneeboardView)
-  : TabAction("\uE74A", _("Previous Tab")),
+  : ToolbarAction("\uE74A", _("Previous Tab")),
     mKneeboardState(kneeboardState),
     mKneeboardView(kneeboardView) {
   AddEventListener(

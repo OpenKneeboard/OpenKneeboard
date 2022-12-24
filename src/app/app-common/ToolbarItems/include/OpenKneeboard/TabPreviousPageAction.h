@@ -19,13 +19,13 @@
  */
 #pragma once
 
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ToolbarAction.h>
 
 namespace OpenKneeboard {
 
 class ITabView;
 
-class TabPreviousPageAction final : public TabAction, private EventReceiver {
+class TabPreviousPageAction final : public ToolbarAction, private EventReceiver {
  public:
   TabPreviousPageAction() = delete;
 

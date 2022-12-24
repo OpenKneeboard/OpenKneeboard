@@ -33,7 +33,7 @@ namespace OpenKneeboard {
 class CursorRenderer;
 class D2DErrorRenderer;
 class ITabView;
-class TabAction;
+class ToolbarAction;
 class TabToggleAction;
 class IKneeboardView;
 }// namespace OpenKneeboard
@@ -98,8 +98,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   PageMetrics GetPageMetrics();
 
   muxc::ICommandBarElement CreateCommandBarElement(
-    const std::shared_ptr<TabAction>&);
-  muxc::AppBarButton CreateAppBarButton(const std::shared_ptr<TabAction>&);
+    const std::shared_ptr<ToolbarAction>&);
+  muxc::AppBarButton CreateAppBarButton(const std::shared_ptr<ToolbarAction>&);
   muxc::AppBarToggleButton CreateAppBarToggleButton(
     const std::shared_ptr<TabToggleAction>&);
 };

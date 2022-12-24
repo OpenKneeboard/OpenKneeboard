@@ -20,7 +20,7 @@
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/NextTabAction.h>
 #include <OpenKneeboard/PreviousTabAction.h>
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/TabFirstPageAction.h>
 #include <OpenKneeboard/TabNavigationAction.h>
 #include <OpenKneeboard/TabNextPageAction.h>

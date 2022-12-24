@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
@@ -28,7 +28,7 @@ class KneeboardState;
 class IKneeboardView;
 class IKneeboardView;
 
-class NextTabAction final : public TabAction, private EventReceiver {
+class NextTabAction final : public ToolbarAction, private EventReceiver {
  public:
   NextTabAction() = delete;
 

@@ -27,7 +27,7 @@ namespace OpenKneeboard {
 TabNextPageAction::TabNextPageAction(
   KneeboardState* kneeboard,
   const std::shared_ptr<ITabView>& tabView)
-  : TabAction("\uE761", _("Next Page")),
+  : ToolbarAction("\uE761", _("Next Page")),
     mKneeboard(kneeboard),
     mTabView(tabView) {
   AddEventListener(tabView->evPageChangedEvent, this->evStateChangedEvent);

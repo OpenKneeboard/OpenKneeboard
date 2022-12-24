@@ -25,13 +25,13 @@
 namespace OpenKneeboard {
 
 class KneeboardState;
-class TabAction;
+class ToolbarAction;
 class ITabView;
 class IKneeboardView;
 
 struct InGameActions {
-  std::vector<std::shared_ptr<TabAction>> mLeft;
-  std::vector<std::shared_ptr<TabAction>> mRight;
+  std::vector<std::shared_ptr<ToolbarAction>> mLeft;
+  std::vector<std::shared_ptr<ToolbarAction>> mRight;
 
   static InGameActions Create(
     KneeboardState* kneeboard,
@@ -40,8 +40,8 @@ struct InGameActions {
 };
 
 struct InAppActions {
-  std::vector<std::shared_ptr<TabAction>> mPrimary;
-  std::vector<std::shared_ptr<TabAction>> mSecondary;
+  std::vector<std::shared_ptr<ToolbarAction>> mPrimary;
+  std::vector<std::shared_ptr<ToolbarAction>> mSecondary;
 
   static InAppActions Create(
     KneeboardState* kneeboard,

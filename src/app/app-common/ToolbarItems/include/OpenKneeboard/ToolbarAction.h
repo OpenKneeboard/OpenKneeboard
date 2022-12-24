@@ -25,9 +25,9 @@
 
 namespace OpenKneeboard {
 
-class TabAction : public ISelectableToolbarItem {
+class ToolbarAction : public ISelectableToolbarItem {
  public:
-  virtual ~TabAction();
+  virtual ~ToolbarAction();
   std::string_view GetGlyph() const override final;
   std::string_view GetLabel() const override final;
 
@@ -36,15 +36,15 @@ class TabAction : public ISelectableToolbarItem {
   Event<> evStateChangedEvent;
 
  protected:
-  TabAction() = delete;
-  TabAction(std::string glyph, std::string label);
+  ToolbarAction() = delete;
+  ToolbarAction(std::string glyph, std::string label);
 
  private:
   std::string mGlyph;
   std::string mLabel;
 };
 
-class TabToggleAction : public TabAction {
+class TabToggleAction : public ToolbarAction {
  public:
   virtual void Execute() override final;
 
@@ -53,7 +53,7 @@ class TabToggleAction : public TabAction {
   virtual void Deactivate() = 0;
 
  protected:
-  using TabAction::TabAction;
+  using ToolbarAction::ToolbarAction;
 };
 
 }// namespace OpenKneeboard

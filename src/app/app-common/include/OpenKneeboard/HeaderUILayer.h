@@ -24,7 +24,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IUILayer.h>
-#include <OpenKneeboard/TabAction.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -80,7 +80,7 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
 
   struct Button {
     D2D1_RECT_F mRect {};
-    std::shared_ptr<TabAction> mAction;
+    std::shared_ptr<ToolbarAction> mAction;
 
     bool operator==(const Button&) const noexcept;
   };
