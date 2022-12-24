@@ -29,8 +29,9 @@
 
 namespace OpenKneeboard {
 struct GameEvent final {
-  utf8_string name;
-  utf8_string value;
+  // These are both required to be UTF-8
+  std::string name;
+  std::string value;
 
   template <class T>
   T ParsedValue() const {
