@@ -19,20 +19,17 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/IToolbarItem.h>
+#include <OpenKneeboard/ISelectableToolbarItem.h>
+
+#include <vector>
 
 namespace OpenKneeboard {
 
-class ISelectableToolbarItem : public IToolbarItem {
+class IToolbarFlyout : public ISelectableToolbarItem {
  public:
-  virtual ~ISelectableToolbarItem() = default;
+  virtual ~IToolbarFlyout();
 
-  virtual std::string_view GetGlyph() const = 0;
-  virtual std::string_view GetLabel() const = 0;
-  virtual bool IsEnabled() = 0;
-
-  Event<> evStateChangedEvent;
+  virtual std::vector<std::shared_ptr<IToolbarItem>> GetSubItems() const = 0;
 };
 
 }// namespace OpenKneeboard

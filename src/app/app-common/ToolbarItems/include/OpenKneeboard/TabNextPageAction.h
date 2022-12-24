@@ -27,9 +27,8 @@ class ITabView;
 
 class TabNextPageAction final : public ToolbarAction, private EventReceiver {
  public:
-  TabNextPageAction() = delete;
-
   TabNextPageAction(KneeboardState*, const std::shared_ptr<ITabView>& state);
+  TabNextPageAction() = delete;
 
   ~TabNextPageAction();
 

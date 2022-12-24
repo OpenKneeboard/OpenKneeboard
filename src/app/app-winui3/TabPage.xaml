@@ -11,8 +11,7 @@
   <Grid RowDefinitions="Auto,*">
     <CommandBar
       x:Name="CommandBar"
-      Grid.Row="0"
-    />
+      Grid.Row="0" />
 
     <SwapChainPanel
       x:Name="Canvas"

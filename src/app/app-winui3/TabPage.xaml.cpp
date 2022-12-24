@@ -30,6 +30,7 @@
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/IToolbarFlyout.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/config.h>
@@ -137,13 +138,24 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
 }
 
 muxc::ICommandBarElement TabPage::CreateCommandBarElement(
-  const std::shared_ptr<ToolbarAction>& action) {
-  auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
+  const std::shared_ptr<IToolbarItem>& item) {
+  auto toggle = std::dynamic_pointer_cast<TabToggleAction>(item);
   if (toggle) {
     return CreateAppBarToggleButton(toggle);
   }
 
-  return CreateAppBarButton(action);
+  auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
+  if (action) {
+    return CreateAppBarButton(action);
+  }
+
+  auto flyout = std::dynamic_pointer_cast<IToolbarFlyout>(item);
+  if (flyout) {
+    return CreateAppBarFlyout(flyout);
+  }
+
+  OPENKNEEBOARD_BREAK;
+  return {nullptr};
 }
 
 muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
@@ -173,18 +185,18 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
   return button;
 }
 
-muxc::AppBarButton TabPage::CreateAppBarButton(
-  const std::shared_ptr<ToolbarAction>& action) {
+muxc::AppBarButton TabPage::CreateAppBarButtonBase(
+  const std::shared_ptr<ISelectableToolbarItem>& action) {
   muxc::AppBarButton button;
 
-  muxc::FontIcon icon;
-  icon.Glyph(winrt::to_hstring(action->GetGlyph()));
-  button.Icon(icon);
+  if (!action->GetGlyph().empty()) {
+    muxc::FontIcon icon;
+    icon.Glyph(winrt::to_hstring(action->GetGlyph()));
+    button.Icon(icon);
+  }
 
   button.Label(winrt::to_hstring(action->GetLabel()));
   button.IsEnabled(action->IsEnabled());
-
-  button.Click([action](auto, auto) { action->Execute(); });
 
   AddEventListener(
     action->evStateChangedEvent,
@@ -193,6 +205,56 @@ muxc::AppBarButton TabPage::CreateAppBarButton(
       co_await mUIThread;
       button.IsEnabled(action->IsEnabled());
     });
+
+  return button;
+}
+
+muxc::AppBarButton TabPage::CreateAppBarButton(
+  const std::shared_ptr<ToolbarAction>& action) {
+  auto button = CreateAppBarButtonBase(action);
+  button.Click([action](auto, auto) { action->Execute(); });
+  return button;
+}
+
+muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
+  const std::shared_ptr<IToolbarItem>& item) {
+  const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
+  if (!action) {
+    OPENKNEEBOARD_BREAK;
+    return nullptr;
+  }
+
+  muxc::MenuFlyoutItem ret;
+  ret.Text(winrt::to_hstring(action->GetLabel()));
+  ret.IsEnabled(action->IsEnabled());
+  ret.Click([action](auto, auto) { action->Execute(); });
+
+  AddEventListener(
+    action->evStateChangedEvent,
+    [this, action, ret]() noexcept -> winrt::fire_and_forget {
+      auto [action, ret] = std::make_tuple(action, ret);
+      co_await mUIThread;
+      ret.IsEnabled(action->IsEnabled());
+    });
+  return ret;
+}
+
+muxc::AppBarButton TabPage::CreateAppBarFlyout(
+  const std::shared_ptr<IToolbarFlyout>& item) {
+  // TODO (WinUI upgrade): there should be chevrons for these, but aren't
+  // even when done in the XAML. Report bug if still present in latest
+  auto button = CreateAppBarButtonBase(item);
+
+  muxc::MenuFlyout flyout;
+  for (auto& item: item->GetSubItems()) {
+    const auto flyoutItem = CreateMenuFlyoutItem(item);
+    if (flyoutItem) {
+      flyout.Items().Append(flyoutItem);
+    }
+  }
+
+  button.Flyout(flyout);
+
   return button;
 }
 
@@ -204,22 +266,18 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
 
   auto primary = CommandBar().PrimaryCommands();
   for (const auto& item: actions.mPrimary) {
-    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
-    if (!action) {
-      OPENKNEEBOARD_BREAK;
-      continue;
+    auto element = CreateCommandBarElement(item);
+    if (element) {
+      primary.Append(element);
     }
-    primary.Append(CreateCommandBarElement(action));
   }
 
   auto secondary = CommandBar().SecondaryCommands();
   for (const auto& item: actions.mSecondary) {
-    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
-    if (!action) {
-      OPENKNEEBOARD_BREAK;
-      continue;
+    auto element = CreateCommandBarElement(item);
+    if (element) {
+      secondary.Append(element);
     }
-    secondary.Append(CreateCommandBarElement(action));
   }
 }
 
