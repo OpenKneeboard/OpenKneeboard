@@ -20,13 +20,24 @@
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/NextTabAction.h>
 #include <OpenKneeboard/PreviousTabAction.h>
-#include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/ReloadFlyout.h>
 #include <OpenKneeboard/TabFirstPageAction.h>
 #include <OpenKneeboard/TabNavigationAction.h>
 #include <OpenKneeboard/TabNextPageAction.h>
 #include <OpenKneeboard/TabPreviousPageAction.h>
+#include <OpenKneeboard/TabView.h>
+#include <OpenKneeboard/ToolbarAction.h>
 
 namespace OpenKneeboard {
+
+static std::vector<std::shared_ptr<IToolbarItem>> CreateDropDownItems(
+  KneeboardState* kneeboardState,
+  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<ITabView>& tabView) {
+  return {
+    std::make_shared<ReloadFlyout>(kneeboardState, tabView->GetRootTab()),
+  };
+}
 
 InGameActions InGameActions::Create(
   KneeboardState* kneeboardState,
@@ -56,6 +67,7 @@ InAppActions InAppActions::Create(
     std::make_shared<TabPreviousPageAction>(kneeboardState, tabView),
     std::make_shared<TabNextPageAction>(kneeboardState, tabView),
     },
+    .mSecondary = CreateDropDownItems(kneeboardState, kneeboardView, tabView),
   };
 }
 
