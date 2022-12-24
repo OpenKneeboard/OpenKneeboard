@@ -35,8 +35,6 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
-#include <winrt/Windows.System.h>
-#include <winrt/Windows.UI.Core.h>
 #include <wow64apiset.h>
 
 namespace WGC = winrt::Windows::Graphics::Capture;
@@ -93,7 +91,7 @@ winrt::fire_and_forget HWNDPageSource::InitializeOnWorkerThread() noexcept {
   });
 
   const auto keepAlive = shared_from_this();
-  co_await winrt::resume_after(std::chrono::milliseconds(100));
+  co_await std::chrono::milliseconds(100);
   static auto sControlMessage
     = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
   PostMessageW(
@@ -153,7 +151,7 @@ winrt::fire_and_forget HWNDPageSource::final_release(
 
   // Switch to DQ thread to clean up the Windows.Graphics.Capture objects that
   // were created in that thread
-  co_await winrt::resume_foreground(p->mDQC.DispatcherQueue());
+  co_await p->mDQC.DispatcherQueue();
   p->mCaptureSession.Close();
   p->mFramePool.Close();
   p->mCaptureSession = {nullptr};
