@@ -39,17 +39,19 @@ std::string to_utf8(const wchar_t* in) {
   return to_utf8(std::wstring_view(in));
 }
 
-utf8_string_view::operator std::filesystem::path() const {
-  return std::filesystem::path(std::wstring_view(winrt::to_hstring(*this)));
-}
-
 }// namespace OpenKneeboard
 
-namespace std::filesystem {
-void from_json(const nlohmann::json& j, std::filesystem::path& p) {
+NLOHMANN_JSON_NAMESPACE_BEGIN
+
+void adl_serializer<std::filesystem::path>::from_json(
+  const nlohmann::json& j,
+  std::filesystem::path& p) {
   p = static_cast<std::wstring_view>(winrt::to_hstring(j.get<std::string>()));
 }
-void to_json(nlohmann::json& j, const std::filesystem::path& p) {
+void adl_serializer<std::filesystem::path>::to_json(
+  nlohmann::json& j,
+  const std::filesystem::path& p) {
   j = winrt::to_string(p.wstring());
 }
-}// namespace std::filesystem
+
+NLOHMANN_JSON_NAMESPACE_END

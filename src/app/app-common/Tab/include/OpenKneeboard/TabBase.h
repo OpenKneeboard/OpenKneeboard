@@ -27,11 +27,11 @@ class TabBase : public virtual ITab {
  public:
   virtual RuntimeID GetRuntimeID() const override final;
   virtual winrt::guid GetPersistentID() const override final;
-  virtual utf8_string GetTitle() const override final;
-  virtual void SetTitle(const utf8_string&) override final;
+  virtual std::string GetTitle() const override final;
+  virtual void SetTitle(const std::string&) override final;
 
  protected:
-  TabBase(const winrt::guid& persistentID, utf8_string_view title);
+  TabBase(const winrt::guid& persistentID, std::string_view title);
 
  private:
   const winrt::guid mPersistentID;

@@ -29,7 +29,7 @@ FolderTab::FolderTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title,
+  std::string_view title,
   const std::filesystem::path& path)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
@@ -42,14 +42,14 @@ FolderTab::FolderTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path)
-  : FolderTab(dxr, kbs, winrt::guid {}, path.filename(), path) {
+  : FolderTab(dxr, kbs, winrt::guid {}, to_utf8(path.filename()), path) {
 }
 
 FolderTab::FolderTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title,
+  std::string_view title,
   const nlohmann::json& settings)
   : FolderTab(
     dxr,
@@ -66,7 +66,7 @@ nlohmann::json FolderTab::GetSettings() const {
   return {{"Path", GetPath()}};
 }
 
-utf8_string FolderTab::GetGlyph() const {
+std::string FolderTab::GetGlyph() const {
   return "\uE838";
 }
 

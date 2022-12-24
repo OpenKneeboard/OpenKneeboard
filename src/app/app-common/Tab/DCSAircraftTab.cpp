@@ -35,7 +35,7 @@ DCSAircraftTab::DCSAircraftTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title)
+  std::string_view title)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
@@ -46,7 +46,7 @@ DCSAircraftTab::~DCSAircraftTab() {
   this->RemoveAllEventListeners();
 }
 
-utf8_string DCSAircraftTab::GetGlyph() const {
+std::string DCSAircraftTab::GetGlyph() const {
   return "\uE709";
 }
 

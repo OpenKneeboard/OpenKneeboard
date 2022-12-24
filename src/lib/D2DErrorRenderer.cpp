@@ -44,7 +44,7 @@ D2DErrorRenderer::~D2DErrorRenderer() {
 
 void D2DErrorRenderer::Render(
   ID2D1DeviceContext* ctx,
-  utf8_string_view utf8,
+  std::string_view utf8,
   const D2D1_RECT_F& where,
   ID2D1Brush* brush) {
   if (!brush) {

@@ -35,14 +35,14 @@ struct DXResources;
 class PlainTextPageSource final : public IPageSource {
  public:
   PlainTextPageSource() = delete;
-  PlainTextPageSource(const DXResources&, utf8_string_view placeholderText);
+  PlainTextPageSource(const DXResources&, std::string_view placeholderText);
   virtual ~PlainTextPageSource();
 
   bool IsEmpty() const;
   void ClearText();
-  void SetText(utf8_string_view text);
-  void SetPlaceholderText(utf8_string_view text);
-  void PushMessage(utf8_string_view message);
+  void SetText(std::string_view text);
+  void SetPlaceholderText(std::string_view text);
+  void PushMessage(std::string_view message);
   void PushFullWidthSeparator();
   void EnsureNewPage();
 
@@ -59,7 +59,7 @@ class PlainTextPageSource final : public IPageSource {
   mutable std::recursive_mutex mMutex;
   std::vector<std::vector<winrt::hstring>> mCompletePages;
   std::vector<winrt::hstring> mCurrentPageLines;
-  std::vector<utf8_string> mMessages;
+  std::vector<std::string> mMessages;
 
   float mPadding = -1.0f;
   float mRowHeight = -1.0f;
@@ -68,7 +68,7 @@ class PlainTextPageSource final : public IPageSource {
 
   DXResources mDXR;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
-  utf8_string mPlaceholderText;
+  std::string mPlaceholderText;
 
   void LayoutMessages();
   void PushPage();

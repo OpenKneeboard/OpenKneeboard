@@ -32,7 +32,7 @@ SingleFileTab::SingleFileTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title,
+  std::string_view title,
   const std::filesystem::path& path)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
@@ -45,14 +45,14 @@ SingleFileTab::SingleFileTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path)
-  : SingleFileTab(dxr, kbs, winrt::guid {}, path.stem(), path) {
+  : SingleFileTab(dxr, kbs, winrt::guid {}, to_utf8(path.stem()), path) {
 }
 
 SingleFileTab::SingleFileTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title,
+  std::string_view title,
   const nlohmann::json& settings)
   : SingleFileTab(
     dxr,
@@ -69,7 +69,7 @@ nlohmann::json SingleFileTab::GetSettings() const {
   return {{"Path", GetPath()}};
 }
 
-utf8_string SingleFileTab::GetGlyph() const {
+std::string SingleFileTab::GetGlyph() const {
   switch (mKind) {
     case Kind::PDFFile:
       return "\uEA90";

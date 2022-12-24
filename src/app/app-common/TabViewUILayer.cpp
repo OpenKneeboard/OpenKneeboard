@@ -116,7 +116,7 @@ void TabViewUILayer::Render(
 
 void TabViewUILayer::RenderError(
   ID2D1DeviceContext* d2d,
-  utf8_string_view text,
+  std::string_view text,
   const D2D1_RECT_F& rect) {
   d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
   mErrorRenderer->Render(d2d, text, rect);

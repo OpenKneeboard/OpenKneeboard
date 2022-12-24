@@ -35,7 +35,7 @@ DCSTerrainTab::DCSTerrainTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title)
+  std::string_view title)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
@@ -46,7 +46,7 @@ DCSTerrainTab::~DCSTerrainTab() {
   this->RemoveAllEventListeners();
 }
 
-utf8_string DCSTerrainTab::GetGlyph() const {
+std::string DCSTerrainTab::GetGlyph() const {
   return "\uE909";
 }
 

@@ -36,7 +36,7 @@ DCSMissionTab::DCSMissionTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title)
+  std::string_view title)
   : TabBase(persistentID, title), PageSourceWithDelegates(dxr, kbs) {
   mPageSource = FolderPageSource::Create(dxr, kbs);
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
@@ -46,7 +46,7 @@ DCSMissionTab::~DCSMissionTab() {
   this->RemoveAllEventListeners();
 }
 
-utf8_string DCSMissionTab::GetGlyph() const {
+std::string DCSMissionTab::GetGlyph() const {
   return "\uF0E3";
 }
 

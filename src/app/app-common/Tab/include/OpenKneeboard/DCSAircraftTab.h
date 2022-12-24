@@ -41,12 +41,12 @@ class DCSAircraftTab final : public TabBase,
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    utf8_string_view title);
+    std::string_view title);
   ~DCSAircraftTab();
 
   virtual void Reload() override;
 
-  virtual utf8_string GetGlyph() const override;
+  virtual std::string GetGlyph() const override;
 
  protected:
   DXResources mDXR;

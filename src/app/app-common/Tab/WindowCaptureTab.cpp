@@ -42,14 +42,14 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   KneeboardState* kbs,
   const MatchSpecification& spec) {
   return std::shared_ptr<WindowCaptureTab>(
-    new WindowCaptureTab(dxr, kbs, {}, spec.mExecutable.stem(), spec));
+    new WindowCaptureTab(dxr, kbs, {}, to_utf8(spec.mExecutable.stem()), spec));
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title,
+  std::string_view title,
   const nlohmann::json& settings) {
   return std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
     dxr,
@@ -63,7 +63,7 @@ WindowCaptureTab::WindowCaptureTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title,
+  std::string_view title,
   const MatchSpecification& spec)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
@@ -173,7 +173,7 @@ winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
   this->Reload();
 }
 
-utf8_string WindowCaptureTab::GetGlyph() const {
+std::string WindowCaptureTab::GetGlyph() const {
   // TVMonitor
   return {"\ue7f4"};
 }

@@ -49,7 +49,7 @@ class TabViewUILayer final : public IUILayer {
  private:
   void RenderError(
     ID2D1DeviceContext*,
-    utf8_string_view text,
+    std::string_view text,
     const D2D1_RECT_F& rect);
 
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;

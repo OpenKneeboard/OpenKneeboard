@@ -35,9 +35,9 @@ class ITab : public virtual IPageSource {
   virtual ~ITab();
 
   virtual winrt::guid GetPersistentID() const = 0;
-  virtual utf8_string GetGlyph() const = 0;
-  virtual utf8_string GetTitle() const = 0;
-  virtual void SetTitle(const utf8_string&) = 0;
+  virtual std::string GetGlyph() const = 0;
+  virtual std::string GetTitle() const = 0;
+  virtual void SetTitle(const std::string&) = 0;
   virtual RuntimeID GetRuntimeID() const = 0;
   virtual void Reload() = 0;
 

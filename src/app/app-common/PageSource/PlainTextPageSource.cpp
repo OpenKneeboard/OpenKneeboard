@@ -32,7 +32,7 @@ namespace OpenKneeboard {
 
 PlainTextPageSource::PlainTextPageSource(
   const DXResources& dxr,
-  utf8_string_view placeholderText)
+  std::string_view placeholderText)
   : mDXR(dxr), mPlaceholderText(placeholderText) {
   auto dwf = mDXR.mDWriteFactory;
   dwf->CreateTextFormat(
@@ -205,13 +205,13 @@ void PlainTextPageSource::ClearText() {
   this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
-void PlainTextPageSource::SetText(utf8_string_view text) {
+void PlainTextPageSource::SetText(std::string_view text) {
   std::unique_lock lock(mMutex);
   this->ClearText();
   this->PushMessage(text);
 }
 
-void PlainTextPageSource::SetPlaceholderText(utf8_string_view text) {
+void PlainTextPageSource::SetPlaceholderText(std::string_view text) {
   if (std::string_view {text} == mPlaceholderText) {
     return;
   }
@@ -221,9 +221,9 @@ void PlainTextPageSource::SetPlaceholderText(utf8_string_view text) {
   }
 }
 
-void PlainTextPageSource::PushMessage(utf8_string_view message) {
+void PlainTextPageSource::PushMessage(std::string_view message) {
   std::unique_lock lock(mMutex);
-  mMessages.push_back(utf8_string(message));
+  mMessages.push_back(std::string(message));
   LayoutMessages();
 }
 

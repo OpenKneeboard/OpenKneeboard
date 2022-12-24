@@ -55,25 +55,25 @@ class DCSWorld final : public OpenKneeboard::Game {
     Blue = 2,
   };
 
-  static constexpr std::string_view EVT_AIRCRAFT
+  static constexpr char EVT_AIRCRAFT[]
     = "com.fredemmott.openkneeboard.dcsext/Aircraft";
-  static constexpr std::string_view EVT_INSTALL_PATH
+  static constexpr char EVT_INSTALL_PATH[]
     = "com.fredemmott.openkneeboard.dcsext/InstallPath";
-  static constexpr std::string_view EVT_MISSION
+  static constexpr char EVT_MISSION[]
     = "com.fredemmott.openkneeboard.dcsext/Mission";
-  static constexpr std::string_view EVT_MISSION_TIME
+  static constexpr char EVT_MISSION_TIME[]
     = "com.fredemmott.openkneeboard.dcsext/MissionTime";
-  static constexpr std::string_view EVT_ORIGIN
+  static constexpr char EVT_ORIGIN[]
     = "com.fredemmott.openkneeboard.dcsext/Origin";
-  static constexpr std::string_view EVT_SELF_DATA
+  static constexpr char EVT_SELF_DATA[]
     = "com.fredemmott.openkneeboard.dcsext/SelfData";
-  static constexpr std::string_view EVT_MESSAGE
+  static constexpr char EVT_MESSAGE[]
     = "com.fredemmott.openkneeboard.dcsext/Message";
-  static constexpr std::string_view EVT_SAVED_GAMES_PATH
+  static constexpr char EVT_SAVED_GAMES_PATH[]
     = "com.fredemmott.openkneeboard.dcsext/SavedGamesPath";
-  static constexpr std::string_view EVT_SIMULATION_START
+  static constexpr char EVT_SIMULATION_START[]
     = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
-  static constexpr std::string_view EVT_TERRAIN
+  static constexpr char EVT_TERRAIN[]
     = "com.fredemmott.openkneeboard.dcsext/Terrain";
 
   struct SimulationStartEvent {

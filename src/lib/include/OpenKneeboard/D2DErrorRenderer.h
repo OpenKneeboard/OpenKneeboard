@@ -39,7 +39,7 @@ class D2DErrorRenderer final {
 
   void Render(
     ID2D1DeviceContext*,
-    utf8_string_view text,
+    std::string_view text,
     const D2D1_RECT_F& where,
     ID2D1Brush* brush = nullptr);
 };

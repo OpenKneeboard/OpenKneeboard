@@ -26,8 +26,8 @@ namespace OpenKneeboard {
 
 class ISelectableToolbarItem : public IToolbarItem {
  public:
-  virtual utf8_string_view GetGlyph() const = 0;
-  virtual utf8_string_view GetLabel() const = 0;
+  virtual std::string_view GetGlyph() const = 0;
+  virtual std::string_view GetLabel() const = 0;
   virtual bool IsEnabled() = 0;
 };
 

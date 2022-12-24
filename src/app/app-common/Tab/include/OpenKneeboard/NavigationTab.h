@@ -47,7 +47,7 @@ class NavigationTab final : public TabBase,
     const D2D1_SIZE_U& preferredSize);
   ~NavigationTab();
 
-  virtual utf8_string GetGlyph() const override;
+  virtual std::string GetGlyph() const override;
   virtual void Reload() override;
 
   virtual PageIndex GetPageCount() const override;

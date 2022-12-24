@@ -41,10 +41,10 @@ class FolderTab final : public TabBase,
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    utf8_string_view title,
+    std::string_view title,
     const nlohmann::json&);
   virtual ~FolderTab();
-  virtual utf8_string GetGlyph() const override;
+  virtual std::string GetGlyph() const override;
 
   virtual nlohmann::json GetSettings() const final override;
 
@@ -58,7 +58,7 @@ class FolderTab final : public TabBase,
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    utf8_string_view title,
+    std::string_view title,
     const std::filesystem::path& path);
 
   std::shared_ptr<FolderPageSource> mPageSource;

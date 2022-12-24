@@ -32,7 +32,7 @@ static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
   return newGuid;
 }
 
-TabBase::TabBase(const winrt::guid& persistentID, utf8_string_view title)
+TabBase::TabBase(const winrt::guid& persistentID, std::string_view title)
   : mPersistentID(EnsureNonNullGuid(persistentID)), mTitle(title) {
 }
 
@@ -44,11 +44,11 @@ winrt::guid TabBase::GetPersistentID() const {
   return mPersistentID;
 }
 
-utf8_string TabBase::GetTitle() const {
+std::string TabBase::GetTitle() const {
   return mTitle;
 }
 
-void TabBase::SetTitle(const utf8_string& title) {
+void TabBase::SetTitle(const std::string& title) {
   mTitle = title;
   evSettingsChangedEvent.Emit();
 }

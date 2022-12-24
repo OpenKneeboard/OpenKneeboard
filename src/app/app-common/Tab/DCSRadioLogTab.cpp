@@ -44,7 +44,7 @@ DCSRadioLogTab::DCSRadioLogTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title,
+  std::string_view title,
   const nlohmann::json& config)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
@@ -98,7 +98,7 @@ void DCSRadioLogTab::SetTimestampsEnabled(bool value) {
   this->evSettingsChangedEvent.Emit();
 }
 
-utf8_string DCSRadioLogTab::GetGlyph() const {
+std::string DCSRadioLogTab::GetGlyph() const {
   return "\uF12E";
 }
 

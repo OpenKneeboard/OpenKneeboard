@@ -21,18 +21,18 @@
 
 namespace OpenKneeboard {
 
-TabAction::TabAction(utf8_string glyph, utf8_string label)
+TabAction::TabAction(std::string glyph, std::string label)
   : mGlyph(glyph), mLabel(label) {
 }
 
 TabAction::~TabAction() {
 }
 
-utf8_string_view TabAction::GetGlyph() const {
+std::string_view TabAction::GetGlyph() const {
   return mGlyph;
 }
 
-utf8_string_view TabAction::GetLabel() const {
+std::string_view TabAction::GetLabel() const {
   return mLabel;
 }
 

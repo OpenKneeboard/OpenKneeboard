@@ -151,7 +151,7 @@ NavigationTab::~NavigationTab() {
   this->RemoveAllEventListeners();
 }
 
-utf8_string NavigationTab::GetGlyph() const {
+std::string NavigationTab::GetGlyph() const {
   return mRootTab->GetGlyph();
 }
 

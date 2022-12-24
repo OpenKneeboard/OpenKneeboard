@@ -56,10 +56,10 @@ class WindowCaptureTab final
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    utf8_string_view title,
+    std::string_view title,
     const nlohmann::json& settings);
   virtual ~WindowCaptureTab();
-  virtual utf8_string GetGlyph() const override;
+  virtual std::string GetGlyph() const override;
 
   virtual void Reload() final override;
   virtual nlohmann::json GetSettings() const override;
@@ -75,7 +75,7 @@ class WindowCaptureTab final
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    utf8_string_view title,
+    std::string_view title,
     const MatchSpecification&);
   winrt::fire_and_forget TryToStartCapture();
   concurrency::task<bool> TryToStartCapture(HWND hwnd);

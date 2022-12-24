@@ -44,10 +44,7 @@ constexpr auto _(const T (&str)[N]) {
   return str;
 }
 
-class utf8_string_view;
-class utf8_string;
-
-// Allow construction of utf8_string and utf8_string_view
+// Allow construction of std::string and std::string_view
 constexpr std::string to_utf8(const std::string& in) {
   return in;
 }
@@ -63,70 +60,45 @@ std::string to_utf8(std::wstring_view);
 std::string to_utf8(const wchar_t*);
 std::string to_utf8(const std::filesystem::path&);
 
-class utf8_string_view final {
- private:
-  std::string mBuffer;
-  std::string_view mView;
-
- public:
-  constexpr utf8_string_view() {
-  }
-
-  constexpr utf8_string_view(std::string_view in) : mView(in) {
-  }
+struct utf8_string : std::basic_string<char> {
+  constexpr utf8_string() = default;
 
   template <class T>
-  utf8_string_view(T in) : mBuffer(to_utf8(in)), mView(mBuffer) {
+  utf8_string(T&& x) : std::basic_string<char>(to_utf8(std::forward<T>(x))) {
   }
 
-  operator std::filesystem::path() const;
-
-  constexpr operator std::string_view() const {
-    return mView;
-  }
-};
-
-class utf8_string final : public std::string {
- public:
-  using std::string::string;
-
-  template <class T>
-  utf8_string(T in) : std::string(to_utf8(in)) {
-  }
-
-  explicit constexpr utf8_string(utf8_string_view in) : std::string(in) {
-  }
-
-  constexpr operator utf8_string_view() const {
-    return utf8_string_view(static_cast<std::string_view>(*this));
-  }
-
-  // clang-format off
-  template <class T>
-  requires (
-    std::convertible_to<utf8_string_view, T>
-    && !std::same_as<utf8_string_view, std::decay_t<T>>
-  )
-  // clang-format on
-  operator T() const {
-    return static_cast<utf8_string_view>(*this);
+  inline operator std::filesystem::path() const noexcept {
+    const auto first = reinterpret_cast<const char8_t*>(data());
+    return {first, first + size()};
   }
 };
 
 }// namespace OpenKneeboard
-
 #include <nlohmann/json.hpp>
 
-namespace std::filesystem {
-void from_json(const nlohmann::json&, std::filesystem::path&);
-void to_json(nlohmann::json&, const std::filesystem::path&);
-}// namespace std::filesystem
+NLOHMANN_JSON_NAMESPACE_BEGIN
 
-namespace std {
-void from_json(const nlohmann::json&, std::wstring&) = delete;
-void to_json(nlohmann::json&, const std::wstring&) = delete;
-void from_json(const nlohmann::json&, std::wstring_view&) = delete;
-void to_json(nlohmann::json&, const std::wstring_view&) = delete;
-void from_json(const nlohmann::json&, wchar_t*) = delete;
-void to_json(nlohmann::json&, const wchar_t*) = delete;
-}// namespace std
+template <>
+struct adl_serializer<std::filesystem::path> {
+  static void to_json(nlohmann::json&, const std::filesystem::path&);
+  static void from_json(const nlohmann::json&, std::filesystem::path&);
+};
+
+template <>
+struct adl_serializer<std::wstring> {
+  static void from_json(const nlohmann::json&, std::wstring&) = delete;
+  static void to_json(nlohmann::json&, const std::wstring&) = delete;
+};
+
+template <>
+struct adl_serializer<std::wstring_view> {
+  static void from_json(const nlohmann::json&, std::wstring_view&) = delete;
+  static void to_json(nlohmann::json&, const std::wstring_view&) = delete;
+};
+template <>
+struct adl_serializer<wchar_t*> {
+  static void from_json(const nlohmann::json&, wchar_t*) = delete;
+  static void to_json(nlohmann::json&, const wchar_t*) = delete;
+};
+
+NLOHMANN_JSON_NAMESPACE_END

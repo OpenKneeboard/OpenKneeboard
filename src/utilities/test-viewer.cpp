@@ -333,7 +333,7 @@ class TestViewerWindow final {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
           ctx,
-          L"No Feeder",
+          "No Feeder",
           {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       }
       mFirstDetached = false;

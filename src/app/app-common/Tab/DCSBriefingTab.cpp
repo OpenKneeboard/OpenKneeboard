@@ -41,7 +41,7 @@ DCSBriefingTab::DCSBriefingTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  utf8_string_view title)
+  std::string_view title)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mImagePages(std::make_unique<ImageFilePageSource>(dxr)),
@@ -56,7 +56,7 @@ DCSBriefingTab::~DCSBriefingTab() {
   this->RemoveAllEventListeners();
 }
 
-utf8_string DCSBriefingTab::GetGlyph() const {
+std::string DCSBriefingTab::GetGlyph() const {
   return "\uE95D";
 }
 
