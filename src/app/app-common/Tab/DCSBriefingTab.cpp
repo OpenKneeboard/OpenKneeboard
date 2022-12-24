@@ -161,8 +161,10 @@ std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
   const auto paths = mImagePages->GetPaths();
 
   for (PageIndex i = 0; i < paths.size(); ++i) {
-    entries.push_back(
-      {paths.at(i).stem(), static_cast<PageIndex>(i + textCount)});
+    entries.push_back({
+      to_utf8(paths.at(i).stem()),
+      static_cast<PageIndex>(i + textCount),
+    });
   }
 
   return entries;

@@ -239,7 +239,7 @@ std::vector<NavigationEntry> ImageFilePageSource::GetNavigationEntries() const {
   for (PageIndex i = 0; i < mPages.size(); ++i) {
     const auto& page = mPages.at(i);
     entries.push_back({
-      page.mPath.stem(),
+      to_utf8(page.mPath.stem()),
       i,
     });
   }

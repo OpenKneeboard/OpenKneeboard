@@ -25,7 +25,7 @@
 namespace OpenKneeboard {
 
 struct NavigationEntry {
-  utf8_string mName;
+  std::string mName;
   PageIndex mPageIndex;
 };
 
