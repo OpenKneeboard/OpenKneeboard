@@ -50,9 +50,9 @@ TabletInputAdapter::TabletInputAdapter(
   }
   gInstance = this;
 
-  mTablet = std::make_unique<WintabTablet>(
+  mWintabTablet = std::make_unique<WintabTablet>(
     window, WintabTablet::Priority::AlwaysActive);
-  if (!mTablet->IsValid()) {
+  if (!mWintabTablet->IsValid()) {
     return;
   }
 
@@ -64,7 +64,7 @@ TabletInputAdapter::TabletInputAdapter(
     return;
   }
 
-  auto info = mTablet->GetDeviceInfo();
+  auto info = mWintabTablet->GetDeviceInfo();
 
   mDevice = std::make_shared<TabletInputDevice>(
     info.mDeviceName, info.mDeviceID, TabletOrientation::RotateCW90);
@@ -85,7 +85,7 @@ void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
     return;
   }
 
-  const auto deviceID = mTablet->GetDeviceInfo().mDeviceID;
+  const auto deviceID = mWintabTablet->GetDeviceInfo().mDeviceID;
   if (settings.mDevices.contains(deviceID)) {
     auto& jsonDevice = settings.mDevices.at(deviceID);
     mDevice->SetOrientation(jsonDevice.mOrientation);
@@ -138,11 +138,11 @@ void TabletInputAdapter::ProcessTabletMessage(
   UINT uMsg,
   WPARAM wParam,
   LPARAM lParam) {
-  if (!mTablet->ProcessMessage(uMsg, wParam, lParam)) {
+  if (!mWintabTablet->ProcessMessage(uMsg, wParam, lParam)) {
     return;
   }
 
-  const auto state = mTablet->GetState();
+  const auto state = mWintabTablet->GetState();
   if (state.mAuxButtons != mAuxButtons) {
     const uint16_t changedMask = state.mAuxButtons ^ mAuxButtons;
     const bool pressed = state.mAuxButtons & changedMask;
@@ -160,7 +160,7 @@ void TabletInputAdapter::ProcessTabletMessage(
   const auto view = mKneeboard->GetActiveViewForGlobalInput();
 
   if (state.mIsActive) {
-    auto tabletLimits = mTablet->GetDeviceInfo();
+    auto tabletLimits = mWintabTablet->GetDeviceInfo();
 
     float x, y;
     switch (mDevice->GetOrientation()) {

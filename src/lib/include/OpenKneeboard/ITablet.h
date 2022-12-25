@@ -19,37 +19,19 @@
  */
 #pragma once
 
-#include <OpenKneeboard/ITablet.h>
-#include <Windows.h>
-
-#include <cstdint>
-#include <memory>
-#include <string>
+#include <OpenKneeboard/TabletInfo.h>
+#include <OpenKneeboard/TabletState.h>
 
 namespace OpenKneeboard {
 
-class WintabTablet final : public ITablet {
+class ITablet {
  public:
-  enum class Priority {
-    AlwaysActive,
-    ForegroundOnly,
-  };
+  virtual ~ITablet();
 
-  WintabTablet() = delete;
-  WintabTablet(HWND window, Priority priority);
-  ~WintabTablet();
+  virtual bool IsValid() const = 0;
 
-  bool IsValid() const;
-
-  bool CanProcessMessage(UINT message) const;
-  bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
-
-  TabletState GetState() const;
-  TabletInfo GetDeviceInfo() const;
-
- private:
-  struct Impl;
-  std::unique_ptr<Impl> p;
+  virtual TabletState GetState() const = 0;
+  virtual TabletInfo GetDeviceInfo() const = 0;
 };
 
 }// namespace OpenKneeboard

@@ -17,39 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
 
 #include <OpenKneeboard/ITablet.h>
-#include <Windows.h>
-
-#include <cstdint>
-#include <memory>
-#include <string>
 
 namespace OpenKneeboard {
 
-class WintabTablet final : public ITablet {
- public:
-  enum class Priority {
-    AlwaysActive,
-    ForegroundOnly,
-  };
-
-  WintabTablet() = delete;
-  WintabTablet(HWND window, Priority priority);
-  ~WintabTablet();
-
-  bool IsValid() const;
-
-  bool CanProcessMessage(UINT message) const;
-  bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);
-
-  TabletState GetState() const;
-  TabletInfo GetDeviceInfo() const;
-
- private:
-  struct Impl;
-  std::unique_ptr<Impl> p;
-};
+ITablet::~ITablet() {
+}
 
 }// namespace OpenKneeboard

@@ -54,7 +54,7 @@ class TabletInputAdapter final : private EventReceiver {
   HWND mWindow;
   KneeboardState* mKneeboard;
   TabletSettings mInitialSettings;
-  std::unique_ptr<WintabTablet> mTablet;
+  std::unique_ptr<WintabTablet> mWintabTablet;
   std::shared_ptr<TabletInputDevice> mDevice;
   WNDPROC mPreviousWndProc;
   uint32_t mAuxButtons = 0;

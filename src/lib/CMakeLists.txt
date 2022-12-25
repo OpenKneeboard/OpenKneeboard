@@ -209,7 +209,11 @@ target_link_libraries(
   PUBLIC
   _libheaders)
 
-ok_add_library(OpenKneeboard-tablets STATIC WintabTablet.cpp)
+ok_add_library(OpenKneeboard-tablets
+  STATIC
+  WintabTablet.cpp
+  ITablet.cpp
+)
 target_link_libraries(
   OpenKneeboard-tablets
   PRIVATE
