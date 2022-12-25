@@ -86,7 +86,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
 
   DirectInputJoystickListener listener {di, device};
   co_await listener.Run();
-} catch (winrt::hresult_canceled) {
+} catch (const winrt::hresult_canceled&) {
   dprintf("DI device Run() cancelled: {}", device->GetName());
   co_return;
 }
@@ -129,7 +129,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
     }
     try {
       this->Poll();
-    } catch (winrt::hresult_error e) {
+    } catch (const winrt::hresult_error& e) {
       dprintf(
         "Abandoning DI device '{}' due to implementation poll error {} "
         "({:#08x})",

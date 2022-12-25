@@ -61,8 +61,7 @@ static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
     nlohmann::json json;
     f >> json;
     out = json;
-  } catch (nlohmann::json::exception& e) {
-    return;
+  } catch (const nlohmann::json::exception& e) {
   }
 }
 

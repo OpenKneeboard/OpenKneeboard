@@ -86,7 +86,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
     device.mListener.Cancel();
     try {
       co_await device.mListener;
-    } catch (winrt::hresult_canceled) {
+    } catch (const winrt::hresult_canceled&) {
       dprintf("Device polling cancelled: {}", device.mDevice->GetName());
     }
   }

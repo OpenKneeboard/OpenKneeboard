@@ -540,7 +540,7 @@ KneeboardState::ReleaseExclusiveResources() {
   mGameEventWorker.Cancel();
   try {
     co_await mGameEventWorker;
-  } catch (winrt::hresult_canceled) {
+  } catch (const winrt::hresult_canceled&) {
     // ignore
   }
 }
