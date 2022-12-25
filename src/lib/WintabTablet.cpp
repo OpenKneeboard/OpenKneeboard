@@ -82,7 +82,7 @@ struct WintabTablet::Impl {
   ~Impl();
 
   Priority mPriority;
-  State mState {};
+  TabletState mState {};
   TabletInfo mDeviceInfo {};
   LibWintab mWintab {};
   HCTX mCtx {nullptr};
@@ -102,7 +102,7 @@ WintabTablet::~WintabTablet() {
   gInstance = nullptr;
 }
 
-WintabTablet::State WintabTablet::GetState() const {
+TabletState WintabTablet::GetState() const {
   if (!p) {
     return {};
   }
@@ -227,7 +227,7 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
   if (message == WT_PROXIMITY) {
     // high word indicates hardware events, low word indicates
     // context enter/leave
-    p->mState.active = lParam & 0xffff;
+    p->mState.mIsActive = lParam & 0xffff;
     return true;
   }
 
@@ -250,16 +250,16 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
       return false;
     }
     if (packet.pkChanged & PK_X) {
-      p->mState.x = packet.pkX;
+      p->mState.mX = static_cast<float>(packet.pkX);
     }
     if (packet.pkChanged & PK_Y) {
-      p->mState.y = packet.pkY;
+      p->mState.mY = static_cast<float>(packet.pkY);
     }
     if (packet.pkChanged & PK_NORMAL_PRESSURE) {
-      p->mState.pressure = packet.pkNormalPressure;
+      p->mState.mPressure = packet.pkNormalPressure;
     }
     if (packet.pkChanged & PK_BUTTONS) {
-      p->mState.penButtons = static_cast<uint16_t>(packet.pkButtons);
+      p->mState.mPenButtons = static_cast<uint32_t>(packet.pkButtons);
     }
     return true;
   }
@@ -272,9 +272,9 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     }
     const uint16_t mask = 1ui16 << packet.pkExpKeys.nControl;
     if (packet.pkExpKeys.nState) {
-      p->mState.auxButtons |= mask;
+      p->mState.mAuxButtons |= mask;
     } else {
-      p->mState.auxButtons &= ~mask;
+      p->mState.mAuxButtons &= ~mask;
     }
     return true;
   }

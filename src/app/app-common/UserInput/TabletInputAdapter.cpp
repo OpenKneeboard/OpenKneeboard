@@ -143,11 +143,11 @@ void TabletInputAdapter::ProcessTabletMessage(
   }
 
   const auto state = mTablet->GetState();
-  if (state.auxButtons != mAuxButtons) {
-    const uint16_t changedMask = state.auxButtons ^ mAuxButtons;
-    const bool pressed = state.auxButtons & changedMask;
+  if (state.mAuxButtons != mAuxButtons) {
+    const uint16_t changedMask = state.mAuxButtons ^ mAuxButtons;
+    const bool pressed = state.mAuxButtons & changedMask;
     const uint64_t buttonIndex = std::countr_zero(changedMask);
-    mAuxButtons = state.auxButtons;
+    mAuxButtons = state.mAuxButtons;
 
     mDevice->evButtonEvent.Emit({
       mDevice,
@@ -159,27 +159,27 @@ void TabletInputAdapter::ProcessTabletMessage(
 
   const auto view = mKneeboard->GetActiveViewForGlobalInput();
 
-  if (state.active) {
+  if (state.mIsActive) {
     auto tabletLimits = mTablet->GetDeviceInfo();
 
     float x, y;
     switch (mDevice->GetOrientation()) {
       case TabletOrientation::Normal:
-        x = static_cast<float>(state.x);
-        y = static_cast<float>(state.y);
+        x = state.mX;
+        y = state.mY;
         break;
       case TabletOrientation::RotateCW90:
-        x = static_cast<float>(tabletLimits.mMaxY - state.y);
-        y = static_cast<float>(state.x);
+        x = tabletLimits.mMaxY - state.mY;
+        y = state.mX;
         std::swap(tabletLimits.mMaxX, tabletLimits.mMaxY);
         break;
       case TabletOrientation::RotateCW180:
-        x = static_cast<float>(tabletLimits.mMaxX - state.x);
-        y = static_cast<float>(tabletLimits.mMaxY - state.y);
+        x = tabletLimits.mMaxX - state.mX;
+        y = tabletLimits.mMaxY - state.mY;
         break;
       case TabletOrientation::RotateCW270:
-        x = static_cast<float>(state.y);
-        y = static_cast<float>(tabletLimits.mMaxX - state.x);
+        x = state.mY;
+        y = tabletLimits.mMaxX - state.mX;
         std::swap(tabletLimits.mMaxX, tabletLimits.mMaxY);
         break;
     }
@@ -207,13 +207,14 @@ void TabletInputAdapter::ProcessTabletMessage(
     y /= canvasSize.height;
 
     CursorEvent event {
-      .mTouchState = (state.penButtons & 1) ? CursorTouchState::TOUCHING_SURFACE
-                                            : CursorTouchState::NEAR_SURFACE,
+      .mTouchState = (state.mPenButtons & 1)
+        ? CursorTouchState::TOUCHING_SURFACE
+        : CursorTouchState::NEAR_SURFACE,
       .mX = std::clamp<float>(x, 0, 1),
       .mY = std::clamp<float>(y, 0, 1),
       .mPressure
-      = static_cast<float>(state.pressure) / tabletLimits.mMaxPressure,
-      .mButtons = state.penButtons,
+      = static_cast<float>(state.mPressure) / tabletLimits.mMaxPressure,
+      .mButtons = state.mPenButtons,
     };
 
     view->PostCursorEvent(event);
