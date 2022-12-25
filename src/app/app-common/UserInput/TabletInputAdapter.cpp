@@ -64,10 +64,10 @@ TabletInputAdapter::TabletInputAdapter(
     return;
   }
 
+  auto info = mTablet->GetDeviceInfo();
+
   mDevice = std::make_shared<TabletInputDevice>(
-    mTablet->GetDeviceName(),
-    mTablet->GetDeviceID(),
-    TabletOrientation::RotateCW90);
+    info.mDeviceName, info.mDeviceID, TabletOrientation::RotateCW90);
 
   AddEventListener(
     mDevice->evBindingsChangedEvent, this->evSettingsChangedEvent);
@@ -85,8 +85,9 @@ void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
     return;
   }
 
-  if (settings.mDevices.contains(mTablet->GetDeviceID())) {
-    auto& jsonDevice = settings.mDevices.at(mTablet->GetDeviceID());
+  const auto deviceID = mTablet->GetDeviceInfo().mDeviceID;
+  if (settings.mDevices.contains(deviceID)) {
+    auto& jsonDevice = settings.mDevices.at(deviceID);
     mDevice->SetOrientation(jsonDevice.mOrientation);
     std::vector<UserInputButtonBinding> bindings;
     for (const auto& binding: jsonDevice.mExpressKeyBindings) {
@@ -142,11 +143,11 @@ void TabletInputAdapter::ProcessTabletMessage(
   }
 
   const auto state = mTablet->GetState();
-  if (state.tabletButtons != mTabletButtons) {
-    const uint16_t changedMask = state.tabletButtons ^ mTabletButtons;
-    const bool pressed = state.tabletButtons & changedMask;
+  if (state.auxButtons != mAuxButtons) {
+    const uint16_t changedMask = state.auxButtons ^ mAuxButtons;
+    const bool pressed = state.auxButtons & changedMask;
     const uint64_t buttonIndex = std::countr_zero(changedMask);
-    mTabletButtons = state.tabletButtons;
+    mAuxButtons = state.auxButtons;
 
     mDevice->evButtonEvent.Emit({
       mDevice,
@@ -159,7 +160,7 @@ void TabletInputAdapter::ProcessTabletMessage(
   const auto view = mKneeboard->GetActiveViewForGlobalInput();
 
   if (state.active) {
-    auto tabletLimits = mTablet->GetLimits();
+    auto tabletLimits = mTablet->GetDeviceInfo();
 
     float x, y;
     switch (mDevice->GetOrientation()) {
@@ -168,18 +169,18 @@ void TabletInputAdapter::ProcessTabletMessage(
         y = static_cast<float>(state.y);
         break;
       case TabletOrientation::RotateCW90:
-        x = static_cast<float>(tabletLimits.y - state.y);
+        x = static_cast<float>(tabletLimits.mMaxY - state.y);
         y = static_cast<float>(state.x);
-        std::swap(tabletLimits.x, tabletLimits.y);
+        std::swap(tabletLimits.mMaxX, tabletLimits.mMaxY);
         break;
       case TabletOrientation::RotateCW180:
-        x = static_cast<float>(tabletLimits.x - state.x);
-        y = static_cast<float>(tabletLimits.y - state.y);
+        x = static_cast<float>(tabletLimits.mMaxX - state.x);
+        y = static_cast<float>(tabletLimits.mMaxY - state.y);
         break;
       case TabletOrientation::RotateCW270:
         x = static_cast<float>(state.y);
-        y = static_cast<float>(tabletLimits.x - state.x);
-        std::swap(tabletLimits.x, tabletLimits.y);
+        y = static_cast<float>(tabletLimits.mMaxX - state.x);
+        std::swap(tabletLimits.mMaxX, tabletLimits.mMaxY);
         break;
     }
 
@@ -189,8 +190,10 @@ void TabletInputAdapter::ProcessTabletMessage(
     // 1. scale to canvas size
     auto canvasSize = view->GetCanvasSize();
 
-    const auto scaleX = static_cast<float>(canvasSize.width) / tabletLimits.x;
-    const auto scaleY = static_cast<float>(canvasSize.height) / tabletLimits.y;
+    const auto scaleX
+      = static_cast<float>(canvasSize.width) / tabletLimits.mMaxX;
+    const auto scaleY
+      = static_cast<float>(canvasSize.height) / tabletLimits.mMaxY;
     // in most cases, we use `std::min` - that would be for fitting the tablet
     // in the canvas bounds, but we want to fit the canvas in the tablet, so
     // doing the opposite
@@ -208,7 +211,8 @@ void TabletInputAdapter::ProcessTabletMessage(
                                             : CursorTouchState::NEAR_SURFACE,
       .mX = std::clamp<float>(x, 0, 1),
       .mY = std::clamp<float>(y, 0, 1),
-      .mPressure = static_cast<float>(state.pressure) / tabletLimits.pressure,
+      .mPressure
+      = static_cast<float>(state.pressure) / tabletLimits.mMaxPressure,
       .mButtons = state.penButtons,
     };
 

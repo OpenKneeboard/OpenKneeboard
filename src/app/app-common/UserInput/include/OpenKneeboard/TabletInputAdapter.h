@@ -57,7 +57,7 @@ class TabletInputAdapter final : private EventReceiver {
   std::unique_ptr<WintabTablet> mTablet;
   std::shared_ptr<TabletInputDevice> mDevice;
   WNDPROC mPreviousWndProc;
-  uint16_t mTabletButtons = 0;
+  uint16_t mAuxButtons = 0;
 
   void ProcessTabletMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 
