@@ -106,15 +106,29 @@ winrt::fire_and_forget TabPage::final_release(
 
 void TabPage::InitializePointerSource() {
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
-  mDQC.DispatcherQueue().TryEnqueue([this]() {
-    mInputPointerSource = this->Canvas().CreateCoreIndependentInputSource(
+  mDQC.DispatcherQueue().TryEnqueue([weak = get_weak()]() {
+    auto self = weak.get();
+    if (!self) {
+      return;
+    }
+
+    auto& ips = self->mInputPointerSource;
+    ips = self->Canvas().CreateCoreIndependentInputSource(
       InputPointerSourceDeviceKinds::Mouse | InputPointerSourceDeviceKinds::Pen
       | InputPointerSourceDeviceKinds::Touch);
-    mInputPointerSource.PointerMoved({this, &TabPage::OnPointerEvent});
-    mInputPointerSource.PointerPressed({this, &TabPage::OnPointerEvent});
-    mInputPointerSource.PointerReleased({this, &TabPage::OnPointerEvent});
-    mInputPointerSource.PointerExited([this](const auto&, const auto&) {
-      mKneeboardView->PostCursorEvent({});
+
+    auto onPointerEvent = [weak](const auto& a, const auto& b) {
+      if (auto self = weak.get()) {
+        self->OnPointerEvent(a, b);
+      }
+    };
+    ips.PointerMoved(onPointerEvent);
+    ips.PointerPressed(onPointerEvent);
+    ips.PointerReleased(onPointerEvent);
+    ips.PointerExited([weak](const auto&, const auto&) {
+      if (auto self = weak.get()) {
+        self->mKneeboardView->PostCursorEvent({});
+      }
     });
   });
 }
