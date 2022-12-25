@@ -232,6 +232,8 @@ void HWNDPageSource::OnFrame() noexcept {
       mBitmap = nullptr;
     }
   }
+
+  auto lock = mDXR.AcquireD2DLockout();
   if (!mTexture) {
     winrt::check_hresult(
       mDXR.mD3DDevice->CreateTexture2D(&surfaceDesc, nullptr, mTexture.put()));
@@ -242,7 +244,6 @@ void HWNDPageSource::OnFrame() noexcept {
   mContentSize = {
     static_cast<UINT>(contentSize.Width),
     static_cast<UINT>(contentSize.Height)};
-  auto lock = mDXR.AcquireD2DLockout();
   ctx->CopyResource(mTexture.get(), d3dSurface.get());
   mNeedsRepaint = true;
 }

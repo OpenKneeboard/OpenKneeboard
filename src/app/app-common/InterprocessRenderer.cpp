@@ -27,8 +27,8 @@
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
-#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/TabView.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <dwrite.h>
@@ -86,6 +86,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     auto& layer = mLayers.at(layerIndex);
     auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
 
+    auto lock = mDXR.AcquireD2DLockout();
     it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
     mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
     mD3DContext->Flush();
