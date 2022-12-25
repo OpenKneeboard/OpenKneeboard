@@ -90,8 +90,6 @@ winrt::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
   instance->RemoveAllEventListeners();
 
-  co_await instance->mDQC.ShutdownQueueAsync();
-
   // Work around https://github.com/microsoft/microsoft-ui-xaml/issues/7254
   auto uiThread = instance->mUIThread;
   co_await uiThread;
