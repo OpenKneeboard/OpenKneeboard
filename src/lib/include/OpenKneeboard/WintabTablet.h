@@ -19,7 +19,8 @@
  */
 #pragma once
 
-#include <OpenKneeboard/ITablet.h>
+#include <OpenKneeboard/TabletInfo.h>
+#include <OpenKneeboard/TabletState.h>
 #include <Windows.h>
 
 #include <cstdint>
@@ -28,7 +29,7 @@
 
 namespace OpenKneeboard {
 
-class WintabTablet final : public ITablet {
+class WintabTablet final {
  public:
   enum class Priority {
     AlwaysActive,
