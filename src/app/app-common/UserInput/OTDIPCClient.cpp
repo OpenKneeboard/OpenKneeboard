@@ -54,6 +54,7 @@ winrt::fire_and_forget OTDIPCClient::final_release(
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
+  auto keepAlive = shared_from_this();
   dprint("Starting OTD-IPC client");
   const scope_guard exitMessage([]() {
     dprintf(
