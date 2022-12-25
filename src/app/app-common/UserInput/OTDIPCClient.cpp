@@ -34,11 +34,12 @@ using namespace OTDIPC::Messages;
 namespace OpenKneeboard {
 
 std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
-  return shared_with_final_release(new OTDIPCClient());
+  auto ret = shared_with_final_release(new OTDIPCClient());
+  ret->mRunner = ret->Run();
+  return ret;
 }
 
 OTDIPCClient::OTDIPCClient() {
-  mRunner = this->Run();
 }
 
 OTDIPCClient::~OTDIPCClient() = default;
@@ -48,7 +49,7 @@ winrt::fire_and_forget OTDIPCClient::final_release(
   try {
     self->mRunner.Cancel();
     co_await self->mRunner;
-  } catch (winrt::hresult_canceled) {
+  } catch (const winrt::hresult_canceled&) {
   }
 }
 
@@ -86,6 +87,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
+  auto keepAlive = shared_from_this();
   auto cancelled = co_await winrt::get_cancellation_token();
 
   winrt::file_handle connection {CreateFileW(
