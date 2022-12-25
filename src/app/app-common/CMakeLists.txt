@@ -32,7 +32,7 @@ target_link_libraries(
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-scope_guard
-  OpenKneeboard-tablets
+  OpenKneeboard-Wintab
   System::D2d1
   System::Dinput8
   System::Dwmapi
@@ -43,6 +43,7 @@ target_link_libraries(
   ThirdParty::GeographicLib
   ThirdParty::LibZip
   ThirdParty::Lua
+  ThirdParty::OTDIPC
   ThirdParty::OpenVR
   ThirdParty::WMM
 )

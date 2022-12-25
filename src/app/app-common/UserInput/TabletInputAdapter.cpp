@@ -21,6 +21,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/OTDIPCClient.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserAction.h>
@@ -50,6 +51,11 @@ TabletInputAdapter::TabletInputAdapter(
   }
   gInstance = this;
 
+  mOTDIPC = OTDIPCClient::Create();
+  AddEventListener(
+    mOTDIPC->evTabletInputEvent,
+    std::bind_front(&TabletInputAdapter::OnOTDInput, this));
+
   mWintabTablet = std::make_unique<WintabTablet>(
     window, WintabTablet::Priority::AlwaysActive);
   if (!mWintabTablet->IsValid()) {
@@ -59,47 +65,55 @@ TabletInputAdapter::TabletInputAdapter(
   mPreviousWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
     window,
     GWLP_WNDPROC,
-    reinterpret_cast<LONG_PTR>(&TabletInputAdapter::WindowProc)));
+    reinterpret_cast<LONG_PTR>(&TabletInputAdapter::WindowProc_Wintab)));
   if (!mPreviousWndProc) {
     return;
   }
 
   auto info = mWintabTablet->GetDeviceInfo();
-
-  mDevice = std::make_shared<TabletInputDevice>(
-    info.mDeviceName, info.mDeviceID, TabletOrientation::RotateCW90);
-
-  AddEventListener(
-    mDevice->evBindingsChangedEvent, this->evSettingsChangedEvent);
-  AddEventListener(mDevice->evOrientationChangedEvent, [this]() {
-    this->evSettingsChangedEvent.Emit();
-  });
-  AddEventListener(mDevice->evUserActionEvent, this->evUserActionEvent);
+  mWintabDevice = this->CreateDevice(info.mDeviceName, info.mDeviceID);
 
   LoadSettings(settings);
 }
 
+std::shared_ptr<TabletInputDevice> TabletInputAdapter::CreateDevice(
+  const std::string& name,
+  const std::string& id) {
+  auto device = std::make_shared<TabletInputDevice>(
+    name, id, TabletOrientation::RotateCW90);
+
+  AddEventListener(
+    device->evBindingsChangedEvent, this->evSettingsChangedEvent);
+  AddEventListener(device->evOrientationChangedEvent, [this]() {
+    this->evSettingsChangedEvent.Emit();
+  });
+  AddEventListener(device->evUserActionEvent, this->evUserActionEvent);
+
+  return device;
+}
+
 void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
   mInitialSettings = settings;
-  if (!mDevice) {
-    return;
-  }
 
-  const auto deviceID = mWintabTablet->GetDeviceInfo().mDeviceID;
-  if (settings.mDevices.contains(deviceID)) {
-    auto& jsonDevice = settings.mDevices.at(deviceID);
-    mDevice->SetOrientation(jsonDevice.mOrientation);
-    std::vector<UserInputButtonBinding> bindings;
-    for (const auto& binding: jsonDevice.mExpressKeyBindings) {
-      bindings.push_back({
-        mDevice,
-        binding.mButtons,
-        binding.mAction,
-      });
+  for (auto& device: this->GetDevices()) {
+    const auto deviceID = device->GetID();
+    if (settings.mDevices.contains(deviceID)) {
+      auto tabletDevice = std::static_pointer_cast<TabletInputDevice>(device);
+
+      auto& jsonDevice = settings.mDevices.at(deviceID);
+      tabletDevice->SetOrientation(jsonDevice.mOrientation);
+      std::vector<UserInputButtonBinding> bindings;
+      for (const auto& binding: jsonDevice.mExpressKeyBindings) {
+        bindings.push_back({
+          device,
+          binding.mButtons,
+          binding.mAction,
+        });
+      }
+      device->SetButtonBindings(bindings);
+    } else {
+      device->SetButtonBindings({});
     }
-    mDevice->SetButtonBindings(bindings);
-  } else {
-    mDevice->SetButtonBindings({});
   }
   this->evSettingsChangedEvent.Emit();
 }
@@ -113,74 +127,88 @@ TabletInputAdapter::~TabletInputAdapter() {
   gInstance = nullptr;
 }
 
-LRESULT CALLBACK TabletInputAdapter::WindowProc(
+LRESULT CALLBACK TabletInputAdapter::WindowProc_Wintab(
   HWND hwnd,
   UINT uMsg,
   WPARAM wParam,
   LPARAM lParam) {
-  gInstance->ProcessTabletMessage(uMsg, wParam, lParam);
+  gInstance->OnWintabMessage(uMsg, wParam, lParam);
   return CallWindowProc(
     gInstance->mPreviousWndProc, hwnd, uMsg, wParam, lParam);
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> TabletInputAdapter::GetDevices()
   const {
-  if (!mDevice) {
-    return {};
+  std::vector<std::shared_ptr<UserInputDevice>> ret;
+
+  if (mWintabDevice) {
+    ret.push_back(std::static_pointer_cast<UserInputDevice>(mWintabDevice));
   }
 
-  std::vector<std::shared_ptr<UserInputDevice>> out;
-  out.push_back(std::static_pointer_cast<UserInputDevice>(mDevice));
-  return out;
+  for (const auto& [_, device]: mOTDDevices) {
+    ret.push_back(device);
+  }
+
+  return ret;
 }
 
-void TabletInputAdapter::ProcessTabletMessage(
+void TabletInputAdapter::OnWintabMessage(
   UINT uMsg,
   WPARAM wParam,
   LPARAM lParam) {
   if (!mWintabTablet->ProcessMessage(uMsg, wParam, lParam)) {
     return;
   }
-
+  const auto tablet = mWintabTablet->GetDeviceInfo();
   const auto state = mWintabTablet->GetState();
-  if (state.mAuxButtons != mAuxButtons) {
-    const uint16_t changedMask = state.mAuxButtons ^ mAuxButtons;
-    const bool pressed = state.mAuxButtons & changedMask;
-    const uint64_t buttonIndex = std::countr_zero(changedMask);
-    mAuxButtons = state.mAuxButtons;
+  this->OnTabletInput(tablet, state, mWintabDevice);
+}
 
-    mDevice->evButtonEvent.Emit({
-      mDevice,
+void TabletInputAdapter::OnTabletInput(
+  const TabletInfo& tablet,
+  const TabletState& state,
+  const std::shared_ptr<TabletInputDevice>& device) {
+  auto& auxButtons = mAuxButtons[tablet.mDeviceID];
+
+  if (state.mAuxButtons != auxButtons) {
+    const uint32_t changedMask = state.mAuxButtons ^ auxButtons;
+    const bool isPressed = state.mAuxButtons & changedMask;
+    const uint64_t buttonIndex = std::countr_zero(changedMask);
+    auxButtons = state.mAuxButtons;
+
+    device->evButtonEvent.Emit({
+      device,
       buttonIndex,
-      pressed,
+      isPressed,
     });
     return;
   }
 
   const auto view = mKneeboard->GetActiveViewForGlobalInput();
 
-  if (state.mIsActive) {
-    auto tabletLimits = mWintabTablet->GetDeviceInfo();
+  auto maxX = tablet.mMaxX;
+  auto maxY = tablet.mMaxY;
 
+  if (state.mIsActive) {
     float x, y;
-    switch (mDevice->GetOrientation()) {
+    switch (device->GetOrientation()) {
       case TabletOrientation::Normal:
         x = state.mX;
         y = state.mY;
         break;
       case TabletOrientation::RotateCW90:
-        x = tabletLimits.mMaxY - state.mY;
+        x = maxY - state.mY;
         y = state.mX;
-        std::swap(tabletLimits.mMaxX, tabletLimits.mMaxY);
+        std::swap(maxX, maxY);
         break;
       case TabletOrientation::RotateCW180:
-        x = tabletLimits.mMaxX - state.mX;
-        y = tabletLimits.mMaxY - state.mY;
+        x = maxX - state.mX;
+        y = maxY - state.mY;
         break;
       case TabletOrientation::RotateCW270:
         x = state.mY;
-        y = tabletLimits.mMaxX - state.mX;
-        std::swap(tabletLimits.mMaxX, tabletLimits.mMaxY);
+        y = maxX - state.mX;
+        std::swap(maxX, maxY);
         break;
     }
 
@@ -190,10 +218,8 @@ void TabletInputAdapter::ProcessTabletMessage(
     // 1. scale to canvas size
     auto canvasSize = view->GetCanvasSize();
 
-    const auto scaleX
-      = static_cast<float>(canvasSize.width) / tabletLimits.mMaxX;
-    const auto scaleY
-      = static_cast<float>(canvasSize.height) / tabletLimits.mMaxY;
+    const auto scaleX = canvasSize.width / maxX;
+    const auto scaleY = canvasSize.height / maxY;
     // in most cases, we use `std::min` - that would be for fitting the tablet
     // in the canvas bounds, but we want to fit the canvas in the tablet, so
     // doing the opposite
@@ -212,8 +238,7 @@ void TabletInputAdapter::ProcessTabletMessage(
         : CursorTouchState::NEAR_SURFACE,
       .mX = std::clamp<float>(x, 0, 1),
       .mY = std::clamp<float>(y, 0, 1),
-      .mPressure
-      = static_cast<float>(state.mPressure) / tabletLimits.mMaxPressure,
+      .mPressure = static_cast<float>(state.mPressure) / tablet.mMaxPressure,
       .mButtons = state.mPenButtons,
     };
 
@@ -224,29 +249,66 @@ void TabletInputAdapter::ProcessTabletMessage(
 }
 
 TabletSettings TabletInputAdapter::GetSettings() const {
-  if (!mDevice) {
-    return mInitialSettings;
-  }
-
   auto settings = mInitialSettings;
 
-  const auto id = mDevice->GetID();
-  auto& device = settings.mDevices[id];
-  device = {
-    .mID = id,
-    .mName = mDevice->GetName(),
-    .mExpressKeyBindings = {},
-    .mOrientation = mDevice->GetOrientation(),
-  };
+  for (auto& device: this->GetDevices()) {
+    auto tablet = std::static_pointer_cast<TabletInputDevice>(device);
+    const auto id = device->GetID();
+    auto& deviceSettings = settings.mDevices[id];
+    deviceSettings = {
+      .mID = id,
+      .mName = device->GetName(),
+      .mExpressKeyBindings = {},
+      .mOrientation = tablet->GetOrientation(),
+    };
 
-  for (const auto& binding: mDevice->GetButtonBindings()) {
-    device.mExpressKeyBindings.push_back({
-      .mButtons = binding.GetButtonIDs(),
-      .mAction = binding.GetAction(),
-    });
+    for (const auto& binding: device->GetButtonBindings()) {
+      deviceSettings.mExpressKeyBindings.push_back({
+        .mButtons = binding.GetButtonIDs(),
+        .mAction = binding.GetAction(),
+      });
+    }
   }
 
   return settings;
+}
+
+std::shared_ptr<TabletInputDevice> TabletInputAdapter::GetOTDDevice(
+  const std::string& id) {
+  auto it = mOTDDevices.find(id);
+  if (it != mOTDDevices.end()) {
+    return it->second;
+  }
+
+  auto info = mOTDIPC->GetTablet(id);
+  if (!info) {
+    return nullptr;
+  }
+
+  auto device = CreateDevice(info->mDeviceName, info->mDeviceID);
+  mOTDDevices[info->mDeviceID] = device;
+  evDeviceConnectedEvent.Emit(device);
+  return device;
+}
+
+void TabletInputAdapter::OnOTDInput(
+  const std::string& id,
+  const TabletState& state) {
+  auto tablet = mOTDIPC->GetTablet(id);
+  if (!tablet) {
+    dprint("Received OTD input without device info");
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  auto device = GetOTDDevice(id);
+  if (!device) {
+    dprint("Received OTD input but couldn't create a TabletInputDevice");
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  this->OnTabletInput(*tablet, state, device);
 }
 
 }// namespace OpenKneeboard

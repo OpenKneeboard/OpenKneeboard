@@ -168,31 +168,6 @@ WintabTablet::Impl::Impl(HWND window, Priority priority) : mPriority(priority) {
 
   mWintab.WTInfoW(WTI_DEVICES, DVC_NPRESSURE, &axis);
 
-  mDeviceInfo = {
-    .mMaxX = static_cast<float>(logicalContext.lcOutExtX),
-    .mMaxY = static_cast<float>(-logicalContext.lcOutExtY),
-    .mMaxPressure = static_cast<uint32_t>(axis.axMax),
-  };
-
-  // Populate name
-  {
-    std::wstring buf;
-    buf.resize(
-      mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, nullptr) / sizeof(wchar_t));
-    const auto actualSize = mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, buf.data());
-    buf.resize((actualSize / sizeof(wchar_t)) - 1);
-    mDeviceInfo.mDeviceName = to_utf8(buf);
-  }
-  // Populate ID
-  {
-    std::wstring buf;
-    buf.resize(
-      mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, nullptr) / sizeof(wchar_t));
-    const auto actualSize = mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, buf.data());
-    buf.resize((actualSize / sizeof(wchar_t)) - 1);
-    mDeviceInfo.mDeviceID = to_utf8(buf);
-  }
-
   for (UINT i = 0, tag; mWintab.WTInfoW(WTI_EXTENSIONS + i, EXT_TAG, &tag);
        ++i) {
     if (tag == WTX_EXPKEYS2 || tag == WTX_OBT) {
@@ -209,6 +184,32 @@ WintabTablet::Impl::Impl(HWND window, Priority priority) : mPriority(priority) {
     return;
   }
   dprint("Opened wintab tablet");
+
+  mDeviceInfo = {
+    .mMaxX = static_cast<float>(logicalContext.lcOutExtX),
+    .mMaxY = static_cast<float>(-logicalContext.lcOutExtY),
+    .mMaxPressure = static_cast<uint32_t>(axis.axMax),
+  };
+
+  // Populate name
+  {
+    std::wstring buf;
+    buf.resize(
+      mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, nullptr) / sizeof(wchar_t));
+    const auto actualSize = mWintab.WTInfoW(WTI_DEVICES, DVC_NAME, buf.data());
+    buf.resize((actualSize / sizeof(wchar_t)) - 1);
+    mDeviceInfo.mDeviceName = to_utf8(buf);
+  }
+
+  // Populate ID
+  {
+    std::wstring buf;
+    buf.resize(
+      mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, nullptr) / sizeof(wchar_t));
+    const auto actualSize = mWintab.WTInfoW(WTI_DEVICES, DVC_PNPID, buf.data());
+    buf.resize((actualSize / sizeof(wchar_t)) - 1);
+    mDeviceInfo.mDeviceID = to_utf8(buf);
+  }
 }
 
 WintabTablet::Impl::~Impl() {

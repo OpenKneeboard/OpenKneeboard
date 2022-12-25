@@ -159,7 +159,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-FindMainWindow
   OpenKneeboard-GetMainHWND
-  OpenKneeboard-tablets
+  OpenKneeboard-Wintab
   OpenKneeboard-version
 )
 

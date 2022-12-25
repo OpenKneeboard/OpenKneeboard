@@ -29,12 +29,17 @@
 
 namespace OpenKneeboard {
 
-enum class UserAction;
-class UserInputDevice;
-struct CursorEvent;
 class KneeboardState;
-class WintabTablet;
+class OTDIPCClient;
 class TabletInputDevice;
+class UserInputDevice;
+class WintabTablet;
+
+enum class UserAction;
+
+struct CursorEvent;
+struct TabletInfo;
+struct TabletState;
 
 class TabletInputAdapter final : private EventReceiver {
  public:
@@ -49,23 +54,44 @@ class TabletInputAdapter final : private EventReceiver {
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
   Event<UserAction> evUserActionEvent;
+  Event<std::shared_ptr<UserInputDevice>> evDeviceConnectedEvent;
 
  private:
-  HWND mWindow;
   KneeboardState* mKneeboard;
   TabletSettings mInitialSettings;
-  std::unique_ptr<WintabTablet> mWintabTablet;
-  std::shared_ptr<TabletInputDevice> mDevice;
-  WNDPROC mPreviousWndProc;
-  uint32_t mAuxButtons = 0;
+  std::unordered_map<std::string, uint32_t> mAuxButtons;
 
-  void ProcessTabletMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+  void OnTabletInput(
+    const TabletInfo& tablet,
+    const TabletState& state,
+    const std::shared_ptr<TabletInputDevice>&);
 
-  static LRESULT CALLBACK WindowProc(
+  std::shared_ptr<TabletInputDevice> CreateDevice(
+    const std::string& name,
+    const std::string& id);
+
+  ///// OpenTabletDriver /////
+
+  void OnOTDInput(const std::string& id, const TabletState&);
+  std::shared_ptr<TabletInputDevice> GetOTDDevice(const std::string& id);
+
+  std::shared_ptr<OTDIPCClient> mOTDIPC;
+  std::unordered_map<std::string, std::shared_ptr<TabletInputDevice>>
+    mOTDDevices;
+
+  ///// Wintab /////
+
+  void OnWintabMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+  static LRESULT CALLBACK WindowProc_Wintab(
     _In_ HWND hwnd,
     _In_ UINT uMsg,
     _In_ WPARAM wParam,
     _In_ LPARAM lParam);
+
+  HWND mWindow {};
+  std::unique_ptr<WintabTablet> mWintabTablet;
+  std::shared_ptr<TabletInputDevice> mWintabDevice;
+  WNDPROC mPreviousWndProc;
 };
 
 }// namespace OpenKneeboard
