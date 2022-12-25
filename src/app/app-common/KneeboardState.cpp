@@ -510,6 +510,8 @@ void KneeboardState::StartTabletInput() {
   mTabletInput
     = std::make_unique<TabletInputAdapter>(mHwnd, this, mSettings.mTabletInput);
   AddEventListener(
+    mTabletInput->evDeviceConnectedEvent, this->evInputDevicesChangedEvent);
+  AddEventListener(
     mTabletInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
   AddEventListener(
     mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);

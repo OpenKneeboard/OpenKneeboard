@@ -49,6 +49,9 @@ struct InputSettingsPage
   void OnOrientationChanged(
     const IInspectable&,
     const SelectionChangedEventArgs&);
+
+ private:
+  winrt::apartment_context mUIThread;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

@@ -40,9 +40,10 @@ InputSettingsPage::InputSettingsPage() {
   AddEventListener(
     gKneeboard->evInputDevicesChangedEvent,
     weak_wrap(
-      [](const auto& strongThis) {
-        strongThis->mPropertyChangedEvent(
-          *strongThis, PropertyChangedEventArgs(L"Devices"));
+      [](const auto& self) -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        self->mPropertyChangedEvent(
+          *self, PropertyChangedEventArgs(L"Devices"));
       },
       this));
 }
