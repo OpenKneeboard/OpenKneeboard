@@ -50,6 +50,7 @@ TabletInputAdapter::TabletInputAdapter(
     throw std::logic_error("There can only be one TabletInputAdapter");
   }
   gInstance = this;
+  LoadSettings(settings);
 
   mOTDIPC = OTDIPCClient::Create();
   AddEventListener(
@@ -72,8 +73,6 @@ TabletInputAdapter::TabletInputAdapter(
 
   auto info = mWintabTablet->GetDeviceInfo();
   mWintabDevice = this->CreateDevice(info.mDeviceName, info.mDeviceID);
-
-  LoadSettings(settings);
 }
 
 std::shared_ptr<TabletInputDevice> TabletInputAdapter::CreateDevice(
@@ -81,6 +80,7 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::CreateDevice(
   const std::string& id) {
   auto device = std::make_shared<TabletInputDevice>(
     name, id, TabletOrientation::RotateCW90);
+  LoadSettings(mInitialSettings, device);
 
   AddEventListener(
     device->evBindingsChangedEvent, this->evSettingsChangedEvent);
@@ -96,26 +96,32 @@ void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
   mInitialSettings = settings;
 
   for (auto& device: this->GetDevices()) {
-    const auto deviceID = device->GetID();
-    if (settings.mDevices.contains(deviceID)) {
-      auto tabletDevice = std::static_pointer_cast<TabletInputDevice>(device);
-
-      auto& jsonDevice = settings.mDevices.at(deviceID);
-      tabletDevice->SetOrientation(jsonDevice.mOrientation);
-      std::vector<UserInputButtonBinding> bindings;
-      for (const auto& binding: jsonDevice.mExpressKeyBindings) {
-        bindings.push_back({
-          device,
-          binding.mButtons,
-          binding.mAction,
-        });
-      }
-      device->SetButtonBindings(bindings);
-    } else {
-      device->SetButtonBindings({});
-    }
+    auto tabletDevice = std::static_pointer_cast<TabletInputDevice>(device);
+    LoadSettings(settings, tabletDevice);
   }
   this->evSettingsChangedEvent.Emit();
+}
+
+void TabletInputAdapter::LoadSettings(
+  const TabletSettings& settings,
+  const std::shared_ptr<TabletInputDevice>& tablet) {
+  const auto deviceID = tablet->GetID();
+  if (!settings.mDevices.contains(deviceID)) {
+    tablet->SetButtonBindings({});
+    return;
+  }
+
+  auto& jsonDevice = settings.mDevices.at(deviceID);
+  tablet->SetOrientation(jsonDevice.mOrientation);
+  std::vector<UserInputButtonBinding> bindings;
+  for (const auto& binding: jsonDevice.mExpressKeyBindings) {
+    bindings.push_back({
+      tablet,
+      binding.mButtons,
+      binding.mAction,
+    });
+  }
+  tablet->SetButtonBindings(bindings);
 }
 
 TabletInputAdapter::~TabletInputAdapter() {

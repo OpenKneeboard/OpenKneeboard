@@ -69,6 +69,9 @@ class TabletInputAdapter final : private EventReceiver {
   std::shared_ptr<TabletInputDevice> CreateDevice(
     const std::string& name,
     const std::string& id);
+  void LoadSettings(
+    const TabletSettings&,
+    const std::shared_ptr<TabletInputDevice>& device);
 
   ///// OpenTabletDriver /////
 
