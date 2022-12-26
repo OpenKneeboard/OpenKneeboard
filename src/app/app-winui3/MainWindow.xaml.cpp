@@ -37,6 +37,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/version.h>
+#include <OpenKneeboard/weak_wrap.h>
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
@@ -108,7 +109,8 @@ MainWindow::MainWindow() {
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     gKneeboard->evFrameTimerEvent.Emit();
   });
-  mFrameTimer.Start();
+  RootGrid().Loaded(discard_winrt_event_args(
+    weak_wrap([](const auto& self) { self->mFrameTimer.Start(); }, this)));
 
   auto settings = gKneeboard->GetAppSettings();
   if (settings.mWindowRect) {

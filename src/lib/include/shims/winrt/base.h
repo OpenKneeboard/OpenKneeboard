@@ -25,3 +25,13 @@
 #include <pplawait.h>
 #include <ppltasks.h>
 #include <winrt/base.h>
+
+namespace OpenKneeboard {
+
+auto discard_winrt_event_args(auto func) {
+  return [func](const winrt::Windows::Foundation::IInspectable&, const auto&) {
+    return func();
+  };
+}
+
+};// namespace OpenKneeboard

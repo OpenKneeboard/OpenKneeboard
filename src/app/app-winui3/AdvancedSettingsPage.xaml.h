@@ -80,8 +80,6 @@ struct AdvancedSettingsPage
   fire_and_forget DesiredElevation(int32_t value) noexcept;
 
  private:
-  winrt::event<winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventHandler>
-    mPropertyChangedEvent;
   winrt::apartment_context mUIThread {};
 };
 }// namespace winrt::OpenKneeboardApp::implementation
