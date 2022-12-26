@@ -35,6 +35,7 @@
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/weak_wrap.h>
 #include <microsoft.ui.xaml.media.dxinterop.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -77,11 +78,15 @@ TabPage::TabPage() {
     = std::make_unique<D2DErrorRenderer>(gDXResources.mD2DDeviceContext.get());
 
   this->InitializePointerSource();
-  AddEventListener(gKneeboard->evFrameTimerEvent, [this]() {
-    if (mNeedsFrame) {
-      PaintNow();
-    }
-  });
+  AddEventListener(
+    gKneeboard->evFrameTimerEvent,
+    weak_wrap(
+      [](const auto& self) {
+        if (self->mNeedsFrame) {
+          self->PaintNow();
+        }
+      },
+      this));
 }
 
 TabPage::~TabPage() = default;
