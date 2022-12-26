@@ -33,8 +33,6 @@ class ToolbarAction : public ISelectableToolbarItem {
 
   virtual void Execute() = 0;
 
-  Event<> evStateChangedEvent;
-
  protected:
   ToolbarAction() = delete;
   ToolbarAction(std::string glyph, std::string label);
