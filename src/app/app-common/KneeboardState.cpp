@@ -86,10 +86,6 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mDirectInput->evAttachedControllersChangedEvent,
     this->evInputDevicesChangedEvent);
 
-  mGameEventServer = std::make_unique<GameEventServer>();
-  AddEventListener(
-    mGameEventServer->evGameEvent, &KneeboardState::OnGameEvent, this);
-
   AcquireExclusiveResources();
 }
 
@@ -539,16 +535,11 @@ KneeboardState::ReleaseExclusiveResources() {
   mOpenVRThread = {};
   mInterprocessRenderer = {};
   mTabletInput = {};
-  mGameEventWorker.Cancel();
-  try {
-    co_await mGameEventWorker;
-  } catch (const winrt::hresult_canceled&) {
-    // ignore
-  }
+  mGameEventServer = {};
+  co_return;
 }
 
 void KneeboardState::AcquireExclusiveResources() {
-  mGameEventWorker = mGameEventServer->Run();
   mInterprocessRenderer
     = std::make_unique<InterprocessRenderer>(mDXResources, this);
   if (mSettings.mVR.mEnableSteamVR) {
@@ -556,6 +547,10 @@ void KneeboardState::AcquireExclusiveResources() {
   }
 
   StartTabletInput();
+
+  mGameEventServer = GameEventServer::Create();
+  AddEventListener(
+    mGameEventServer->evGameEvent, &KneeboardState::OnGameEvent, this);
 }
 
 void KneeboardState::SwitchProfile(Direction direction) {

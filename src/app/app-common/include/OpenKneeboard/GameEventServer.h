@@ -24,13 +24,30 @@
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Foundation.h>
 
+#include <memory>
+
 namespace OpenKneeboard {
 
-class GameEventServer final {
+class GameEventServer final
+  : public std::enable_shared_from_this<GameEventServer> {
  public:
+  static std::shared_ptr<GameEventServer> Create();
+  static winrt::fire_and_forget final_release(std::unique_ptr<GameEventServer>);
+  ~GameEventServer();
+
   Event<GameEvent> evGameEvent;
 
+ private:
+  GameEventServer();
+  winrt::Windows::Foundation::IAsyncAction mRunner;
+
+  void Start();
+
   winrt::Windows::Foundation::IAsyncAction Run();
+  static concurrency::task<bool> RunSingle(
+    const std::weak_ptr<GameEventServer>&,
+    const winrt::handle& event,
+    const winrt::file_handle&);
 };
 
 }// namespace OpenKneeboard

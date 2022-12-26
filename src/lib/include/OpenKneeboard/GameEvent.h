@@ -61,7 +61,7 @@ struct GameEvent final {
 
   operator bool() const;
 
-  static GameEvent Unserialize(const std::vector<std::byte>& payload);
+  static GameEvent Unserialize(std::string_view packet);
   std::vector<std::byte> Serialize() const;
   void Send() const;
 

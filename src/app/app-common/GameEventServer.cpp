@@ -20,6 +20,7 @@
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
@@ -28,7 +29,33 @@
 
 namespace OpenKneeboard {
 
+std::shared_ptr<GameEventServer> GameEventServer::Create() {
+  auto ret = shared_with_final_release(new GameEventServer());
+  ret->Start();
+  return ret;
+}
+
+winrt::fire_and_forget GameEventServer::final_release(
+  std::unique_ptr<GameEventServer> self) {
+  try {
+    self->mRunner.Cancel();
+    co_await self->mRunner;
+  } catch (const winrt::hresult_canceled&) {
+    // ignore
+  }
+}
+
+GameEventServer::GameEventServer() {
+}
+
+void GameEventServer::Start() {
+  mRunner = this->Run();
+}
+
+GameEventServer::~GameEventServer() = default;
+
 winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
+  auto weak = weak_from_this();
   winrt::file_handle handle {CreateMailslotA(
     GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr)};
   if (!handle) {
@@ -45,46 +72,61 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
 
   auto cancelled = co_await winrt::get_cancellation_token();
 
-  while (!cancelled()) {
-    DWORD unreadMessageCount = 0;
-    DWORD nextMessageSize = 0;
-    GetMailslotInfo(
-      handle.get(), nullptr, &nextMessageSize, &unreadMessageCount, nullptr);
-    if (unreadMessageCount == 0) {
-      co_await winrt::resume_after(std::chrono::milliseconds(100));
-      continue;
-    }
+  winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
 
-    std::vector<std::byte> buffer(nextMessageSize);
-    DWORD bytesRead;
-    if (!ReadFile(
-          handle.get(),
-          reinterpret_cast<void*>(buffer.data()),
-          static_cast<DWORD>(buffer.size()),
-          &bytesRead,
-          nullptr)) {
-      dprintf("GameEvent ReadFile failed: {}", GetLastError());
-      continue;
-    }
-
-    if (bytesRead == 0) {
-      continue;
-    }
-
-    auto event = GameEvent::Unserialize(buffer);
-    if (event.name != GameEvent::EVT_MULTI_EVENT) {
-      evGameEvent.Emit(event);
-      continue;
-    }
-
-    std::vector<std::tuple<std::string, std::string>> events;
-    events = nlohmann::json::parse(event.value);
-    for (const auto& [name, value]: events) {
-      evGameEvent.Emit({name, value});
-    }
+  while ((!cancelled()) && co_await RunSingle(weak, event, handle)) {
+    // repeat!
   }
 
   co_return;
+}
+
+concurrency::task<bool> GameEventServer::RunSingle(
+  const std::weak_ptr<GameEventServer>& instance,
+  const winrt::handle& notifyEvent,
+  const winrt::file_handle& handle) {
+  OVERLAPPED overlapped {
+    .hEvent = notifyEvent.get(),
+  };
+
+  char buffer[4096];
+  DWORD bytesRead {};
+  const auto readFileResult = ReadFile(
+    handle.get(),
+    buffer,
+    static_cast<DWORD>(std::size(buffer)),
+    &bytesRead,
+    &overlapped);
+  const auto readFileError = GetLastError();
+  if ((!readFileResult) && readFileError != ERROR_IO_PENDING) {
+    dprintf("GameEvent ReadFile failed: {}", GetLastError());
+    co_return true;
+  }
+
+  co_await winrt::resume_on_signal(notifyEvent.get());
+  GetOverlappedResult(handle.get(), &overlapped, &bytesRead, TRUE);
+
+  if (bytesRead == 0) {
+    dprint("Read 0-byte GameEvent message");
+    co_return true;
+  }
+
+  auto self = instance.lock();
+  if (!self) {
+    co_return false;
+  }
+
+  auto event = GameEvent::Unserialize({buffer, bytesRead});
+  if (event.name != GameEvent::EVT_MULTI_EVENT) {
+    self->evGameEvent.Emit(event);
+    co_return true;
+  }
+
+  std::vector<std::tuple<std::string, std::string>> events;
+  events = nlohmann::json::parse(event.value);
+  for (const auto& [name, value]: events) {
+    self->evGameEvent.Emit({name, value});
+  }
 }
 
 }// namespace OpenKneeboard

@@ -76,10 +76,8 @@ GameEvent::operator bool() const {
   return !(name.empty() || value.empty());
 }
 
-GameEvent GameEvent::Unserialize(const std::vector<std::byte>& buffer) {
+GameEvent GameEvent::Unserialize(std::string_view packet) {
   // "{:08x}!{}!{:08x}!{}!", name size, name, value size, value
-  const std::string_view packet(
-    reinterpret_cast<const char*>(buffer.data()), buffer.size());
   CHECK_PACKET(packet.ends_with("!"));
   CHECK_PACKET(packet.size() >= sizeof("12345678!!12345678!!") - 1);
 

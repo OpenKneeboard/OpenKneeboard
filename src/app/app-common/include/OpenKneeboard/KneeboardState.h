@@ -129,8 +129,7 @@ class KneeboardState final
   std::shared_ptr<TabletInputAdapter> mTabletInput;
   std::shared_ptr<DirectInputAdapter> mDirectInput;
 
-  std::unique_ptr<GameEventServer> mGameEventServer;
-  winrt::Windows::Foundation::IAsyncAction mGameEventWorker;
+  std::shared_ptr<GameEventServer> mGameEventServer;
   std::jthread mOpenVRThread;
   std::optional<RunningGame> mCurrentGame;
 
