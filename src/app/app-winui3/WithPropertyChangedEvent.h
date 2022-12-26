@@ -50,8 +50,8 @@ struct WithPropertyChangedEventOnProfileChange
     mProfileChangedEvent = AddEventListener(
       gKneeboard->evCurrentProfileChangedEvent,
       weak_wrap(
-        [this](auto self) {
-          this->mPropertyChangedEvent(
+        [](auto self) {
+          self->mPropertyChangedEvent(
             *self,
             winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
         },
