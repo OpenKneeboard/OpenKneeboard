@@ -77,6 +77,7 @@ PDFFilePageSource::PDFFilePageSource(
   const DXResources& dxr,
   KneeboardState* kbs)
   : p(new Impl {.mDXR = dxr}) {
+  const auto d2dLock = dxr.AcquireD2DLockout();
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
@@ -240,8 +241,11 @@ void PDFFilePageSource::RenderPageContent(
   scope_guard resetTransform(
     [ctx]() { ctx->SetTransform(D2D1::Matrix3x2F::Identity()); });
 
-  winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
-    winrt::get_unknown(page), ctx, &params));
+  {
+    const auto d2dLock = p->mDXR.AcquireD2DLockout();
+    winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
+      winrt::get_unknown(page), ctx, &params));
+  }
 
   // `RenderPageToDeviceContext()` starts a multi-threaded job, but needs
   // the `page` pointer to stay valid until it has finished - so, flush to

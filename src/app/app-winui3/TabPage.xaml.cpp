@@ -326,6 +326,8 @@ void TabPage::ResizeSwapChain() {
 }
 
 void TabPage::InitializeSwapChain() {
+  const DXResources& dxr = gDXResources;
+  const auto d2dLock = dxr.AcquireD2DLockout();
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
     .Width
     = static_cast<UINT>(mCanvasSize.width * Canvas().CompositionScaleX()),
@@ -338,7 +340,6 @@ void TabPage::InitializeSwapChain() {
     .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
     .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
   };
-  const DXResources& dxr = gDXResources;
   winrt::check_hresult(dxr.mDXGIFactory->CreateSwapChainForComposition(
     dxr.mDXGIDevice.get(), &swapChainDesc, nullptr, mSwapChain.put()));
   Canvas().as<ISwapChainPanelNative>()->SetSwapChain(mSwapChain.get());
