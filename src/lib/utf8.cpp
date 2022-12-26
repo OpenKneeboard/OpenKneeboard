@@ -24,7 +24,7 @@
 namespace OpenKneeboard {
 
 std::string to_utf8(const std::filesystem::path& in) {
-  const auto yaycpp20 = in.generic_u8string();
+  const auto yaycpp20 = in.u8string();
   return {reinterpret_cast<const char*>(yaycpp20.data()), yaycpp20.size()};
 }
 
