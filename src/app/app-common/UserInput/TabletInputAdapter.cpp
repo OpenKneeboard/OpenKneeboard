@@ -31,6 +31,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <atomic>
 #include <bit>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
@@ -39,17 +40,29 @@
 
 namespace OpenKneeboard {
 
-static TabletInputAdapter* gInstance = nullptr;
+static std::atomic_flag gHaveInstance;
+static std::weak_ptr<TabletInputAdapter> gInstance;
+
+std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
+  HWND hwnd,
+  KneeboardState* kbs,
+  const TabletSettings& tablet) {
+  auto ret = std::shared_ptr<TabletInputAdapter>(
+    new TabletInputAdapter(hwnd, kbs, tablet));
+  ret->Init();
+
+  gInstance = ret;
+  return ret;
+}
 
 TabletInputAdapter::TabletInputAdapter(
   HWND window,
   KneeboardState* kneeboard,
   const TabletSettings& settings)
   : mWindow(window), mKneeboard(kneeboard) {
-  if (gInstance != nullptr) {
+  if (gHaveInstance.test_and_set()) {
     throw std::logic_error("There can only be one TabletInputAdapter");
   }
-  gInstance = this;
   LoadSettings(settings);
 
   mOTDIPC = OTDIPCClient::Create();
@@ -59,12 +72,15 @@ TabletInputAdapter::TabletInputAdapter(
 
   mWintabTablet = std::make_unique<WintabTablet>(
     window, WintabTablet::Priority::AlwaysActive);
+}
+
+void TabletInputAdapter::Init() {
   if (!mWintabTablet->IsValid()) {
     return;
   }
 
   mPreviousWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
-    window,
+    mWindow,
     GWLP_WNDPROC,
     reinterpret_cast<LONG_PTR>(&TabletInputAdapter::WindowProc_Wintab)));
   if (!mPreviousWndProc) {
@@ -130,7 +146,7 @@ TabletInputAdapter::~TabletInputAdapter() {
     SetWindowLongPtrW(
       mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWndProc));
   }
-  gInstance = nullptr;
+  gHaveInstance.clear();
 }
 
 LRESULT CALLBACK TabletInputAdapter::WindowProc_Wintab(
@@ -138,9 +154,14 @@ LRESULT CALLBACK TabletInputAdapter::WindowProc_Wintab(
   UINT uMsg,
   WPARAM wParam,
   LPARAM lParam) {
-  gInstance->OnWintabMessage(uMsg, wParam, lParam);
-  return CallWindowProc(
-    gInstance->mPreviousWndProc, hwnd, uMsg, wParam, lParam);
+  auto instance = gInstance.lock();
+  if (!instance) {
+    OPENKNEEBOARD_BREAK;
+    return 0;
+  }
+
+  instance->OnWintabMessage(uMsg, wParam, lParam);
+  return CallWindowProc(instance->mPreviousWndProc, hwnd, uMsg, wParam, lParam);
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> TabletInputAdapter::GetDevices()

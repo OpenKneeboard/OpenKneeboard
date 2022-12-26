@@ -138,8 +138,8 @@ DirectInputAdapter::~DirectInputAdapter() {
   if (mPreviousWindowProc) {
     SetWindowLongPtrW(
       mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWindowProc));
+    mPreviousWindowProc = nullptr;
   }
-  gInstance.reset();
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()

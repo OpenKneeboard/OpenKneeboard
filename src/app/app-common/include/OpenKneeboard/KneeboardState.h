@@ -126,7 +126,7 @@ class KneeboardState final
   std::unique_ptr<InterprocessRenderer> mInterprocessRenderer;
   // Initalization and destruction order must match as they both use
   // SetWindowLongPtr
-  std::unique_ptr<TabletInputAdapter> mTabletInput;
+  std::shared_ptr<TabletInputAdapter> mTabletInput;
   std::shared_ptr<DirectInputAdapter> mDirectInput;
 
   std::unique_ptr<GameEventServer> mGameEventServer;

@@ -41,10 +41,14 @@ struct CursorEvent;
 struct TabletInfo;
 struct TabletState;
 
-class TabletInputAdapter final : private EventReceiver {
+class TabletInputAdapter final
+  : private EventReceiver,
+    public std::enable_shared_from_this<TabletInputAdapter> {
  public:
+  static std::shared_ptr<TabletInputAdapter>
+  Create(HWND, KneeboardState*, const TabletSettings&);
+
   TabletInputAdapter() = delete;
-  TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
   ~TabletInputAdapter();
 
   TabletSettings GetSettings() const;
@@ -57,6 +61,8 @@ class TabletInputAdapter final : private EventReceiver {
   Event<std::shared_ptr<UserInputDevice>> evDeviceConnectedEvent;
 
  private:
+  TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
+  void Init();
   KneeboardState* mKneeboard;
   TabletSettings mInitialSettings;
   std::unordered_map<std::string, uint32_t> mAuxButtons;
@@ -94,7 +100,7 @@ class TabletInputAdapter final : private EventReceiver {
   HWND mWindow {};
   std::unique_ptr<WintabTablet> mWintabTablet;
   std::shared_ptr<TabletInputDevice> mWintabDevice;
-  WNDPROC mPreviousWndProc;
+  WNDPROC mPreviousWndProc {};
 };
 
 }// namespace OpenKneeboard

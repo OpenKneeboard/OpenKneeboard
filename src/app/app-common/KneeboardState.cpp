@@ -508,7 +508,7 @@ void KneeboardState::StartOpenVRThread() {
 
 void KneeboardState::StartTabletInput() {
   mTabletInput
-    = std::make_unique<TabletInputAdapter>(mHwnd, this, mSettings.mTabletInput);
+    = TabletInputAdapter::Create(mHwnd, this, mSettings.mTabletInput);
   AddEventListener(
     mTabletInput->evDeviceConnectedEvent, this->evInputDevicesChangedEvent);
   AddEventListener(
