@@ -78,7 +78,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     return;
   }
 
-  auto d2dLock = mDXR.AcquireD2DLockout();
+  auto d2dLock = mDXR.AcquireLock();
   mD3DContext->Flush();
 
   std::vector<SHM::LayerConfig> shmLayers;
@@ -119,7 +119,7 @@ InterprocessRenderer::InterprocessRenderer(
   mDXR = dxr;
   mKneeboard = kneeboard;
 
-  auto d2dLock = mDXR.AcquireD2DLockout();
+  auto d2dLock = mDXR.AcquireLock();
   dxr.mD3DDevice->GetImmediateContext(mD3DContext.put());
 
   D3D11_TEXTURE2D_DESC textureDesc {
@@ -190,7 +190,7 @@ InterprocessRenderer::InterprocessRenderer(
 
 InterprocessRenderer::~InterprocessRenderer() {
   this->RemoveAllEventListeners();
-  auto d2dLock = mDXR.AcquireD2DLockout();
+  auto d2dLock = mDXR.AcquireLock();
   auto ctx = mD3DContext;
   ctx->Flush();
 }

@@ -77,7 +77,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   DispatcherQueueController mDQC {nullptr};
   InputPointerSource mInputPointerSource {nullptr};
-  std::mutex mSwapChainMutex;
   bool mDrawCursor = false;
   void InitializePointerSource();
   void QueuePointerPoint(const PointerPoint&);

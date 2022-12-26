@@ -61,7 +61,7 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
 }
 
 winrt::fire_and_forget HWNDPageSource::InitializeOnWorkerThread() noexcept {
-  const auto d2dLock = mDXR.AcquireD2DLockout();
+  const auto d2dLock = mDXR.AcquireLock();
 
   auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
   auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
@@ -162,7 +162,7 @@ winrt::fire_and_forget HWNDPageSource::final_release(
   co_await p->mUIThread;
   co_await p->mDQC.ShutdownQueueAsync();
   p->mDQC = {nullptr};
-  const auto lock = p->mDXR.AcquireD2DLockout();
+  const auto lock = p->mDXR.AcquireLock();
   p->mTexture = nullptr;
   p->mBitmap = nullptr;
 }
@@ -222,7 +222,7 @@ void HWNDPageSource::OnFrame() noexcept {
   d3dSurface->GetDesc(&surfaceDesc);
   const auto contentSize = frame.ContentSize();
 
-  auto lock = mDXR.AcquireD2DLockout();
+  auto lock = mDXR.AcquireLock();
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 

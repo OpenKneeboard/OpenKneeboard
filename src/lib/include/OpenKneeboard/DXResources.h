@@ -59,17 +59,20 @@ struct DXResources {
     Lock(const Lock&) = delete;
     Lock(Lock&&) = delete;
 
-    Lock(const winrt::com_ptr<ID2D1Multithread>&);
+    Lock(
+      const winrt::com_ptr<ID2D1Multithread>&,
+      const winrt::com_ptr<ID3D10Multithread>&);
     ~Lock();
 
     auto operator=(const Lock&) = delete;
     auto operator=(Lock&&) = delete;
 
    private:
-    winrt::com_ptr<ID2D1Multithread> mImpl;
+    winrt::com_ptr<ID2D1Multithread> mD2D;
+    winrt::com_ptr<ID3D10Multithread> mD3D;
   };
 
-  Lock AcquireD2DLockout() const;
+  Lock AcquireLock() const;
 };
 
 }// namespace OpenKneeboard

@@ -77,6 +77,7 @@ DXResources DXResources::Create() {
     nullptr));
   ret.mD3DDevice = d3d.as<ID3D11Device2>();
   ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
+  d3d.as<ID3D10Multithread>()->SetMultithreadProtected(TRUE);
 
   winrt::check_hresult(
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, ret.mD2DFactory.put()));
@@ -111,17 +112,44 @@ DXResources DXResources::Create() {
   return ret;
 }
 
-DXResources::Lock::Lock(const winrt::com_ptr<ID2D1Multithread>& impl)
-  : mImpl(impl) {
-  mImpl->Enter();
+DXResources::Lock::Lock(
+  const winrt::com_ptr<ID2D1Multithread>& d2d,
+  const winrt::com_ptr<ID3D10Multithread>& d3d)
+  : mD2D(d2d), mD3D(d3d) {
+  // If we've locked D2D, we don't need to separately lock D3D; keeping it here
+  // anyway as:
+  // - might as well check it's in multithreaded mode in debug builds
+  // - keep it in the API :)
+
+  // If we have just a D2D lock, attempting to acquire a second can lead to
+  // an error inside D2D when it tries to acquire the lock in D3D but it's
+  // already active
+#ifdef DEBUG
+  static bool sChecked = false;
+  if (!sChecked) [[unlikely]] {
+    sChecked = true;
+    if (!d2d->GetMultithreadProtected()) {
+      __debugbreak();
+      throw std::logic_error("Single-threaded D2D");
+    }
+    if (!d3d->GetMultithreadProtected()) {
+      __debugbreak();
+      throw std::logic_error("Single-threaded D3D");
+    }
+  }
+#endif
+  mD3D->Enter();
 }
 
 DXResources::Lock::~Lock() {
-  mImpl->Leave();
+  mD3D->Leave();
 }
 
-DXResources::Lock DXResources::AcquireD2DLockout() const {
-  return {mD2DFactory.as<ID2D1Multithread>()};
+DXResources::Lock DXResources::AcquireLock() const {
+  return {
+    mD2DFactory.as<ID2D1Multithread>(),
+    mD3DDevice.as<ID3D10Multithread>(),
+  };
 }
 
 };// namespace OpenKneeboard

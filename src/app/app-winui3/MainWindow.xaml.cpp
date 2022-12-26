@@ -102,8 +102,9 @@ MainWindow::MainWindow() {
   // TODO: add to globals as 'game loop' thread
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
   mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
-  mFrameTimer.Interval(std::chrono::milliseconds(1000 / 60));
+  mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
   mFrameTimer.Tick([=](auto&, auto&) {
+    const auto lock = gDXResources.AcquireLock();
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     gKneeboard->evFrameTimerEvent.Emit();
   });
