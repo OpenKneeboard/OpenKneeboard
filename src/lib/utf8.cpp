@@ -21,6 +21,8 @@
 #include <OpenKneeboard/utf8.h>
 #include <shims/winrt/base.h>
 
+#include <regex>
+
 namespace OpenKneeboard {
 
 std::string to_utf8(const std::filesystem::path& in) {
@@ -49,7 +51,10 @@ void adl_serializer<std::filesystem::path>::from_json(
   std::filesystem::path& p) {
   const auto utf8 = j.get<std::string>();
   const auto first = reinterpret_cast<const char8_t*>(utf8.data());
+
   p = std::filesystem::path {first, first + utf8.size()};
+  // forward slashes to backslashes
+  p.make_preferred();
 }
 void adl_serializer<std::filesystem::path>::to_json(
   nlohmann::json& j,
