@@ -98,7 +98,8 @@
     "shared_mutex": "cpp",
     "span": "cpp",
     "cinttypes": "cpp",
-    "*.idl": "idl"
+    "*.idl": "idl",
+    "source_location": "cpp"
   },
   "cmake.configureOnOpen": true,
   "C_Cpp.default.cppStandard": "c++20",

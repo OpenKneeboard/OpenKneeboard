@@ -112,18 +112,14 @@ DXResources DXResources::Create() {
   return ret;
 }
 
+std::source_location DXResources::Lock::gOwner;
+static std::recursive_mutex gMutex;
+
 DXResources::Lock::Lock(
   const winrt::com_ptr<ID2D1Multithread>& d2d,
-  const winrt::com_ptr<ID3D10Multithread>& d3d)
+  const winrt::com_ptr<ID3D10Multithread>& d3d,
+  const std::source_location location)
   : mD2D(d2d), mD3D(d3d) {
-  // If we've locked D2D, we don't need to separately lock D3D; keeping it here
-  // anyway as:
-  // - might as well check it's in multithreaded mode in debug builds
-  // - keep it in the API :)
-
-  // If we have just a D2D lock, attempting to acquire a second can lead to
-  // an error inside D2D when it tries to acquire the lock in D3D but it's
-  // already active
 #ifdef DEBUG
   static bool sChecked = false;
   if (!sChecked) [[unlikely]] {
@@ -138,17 +134,33 @@ DXResources::Lock::Lock(
     }
   }
 #endif
-  mD3D->Enter();
+  // If we've locked D2D, we don't need to separately lock D3D; keeping it here
+  // anyway as:
+  // - might as well check it's in multithreaded mode in debug builds
+  // - keep it in the API :)
+
+  // If we have just a D2D lock, attempting to acquire a second can lead to
+  // an error inside D2D when it tries to acquire the lock in D3D but it's
+  // already active
+
+  // In the end, we use an std::recursive_mutex anyway:
+  // - it's sufficient
+  // - it avoids interferring with XAML, or the WinRT PDF renderer
+  gMutex.lock();
+  gOwner = location;
 }
 
 DXResources::Lock::~Lock() {
-  mD3D->Leave();
+  gOwner = {};
+  gMutex.unlock();
 }
 
-DXResources::Lock DXResources::AcquireLock() const {
+DXResources::Lock DXResources::AcquireLock(
+  const std::source_location location) const {
   return {
     mD2DFactory.as<ID2D1Multithread>(),
     mD3DDevice.as<ID3D10Multithread>(),
+    location,
   };
 }
 
