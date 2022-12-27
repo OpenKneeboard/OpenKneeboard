@@ -30,6 +30,7 @@
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
+#include <OpenKneeboard/ToolbarSeparator.h>
 
 namespace OpenKneeboard {
 
@@ -43,7 +44,7 @@ static Items CreateDropDownItems(
   const std::shared_ptr<ITabView>& tabView) {
   return {
     std::make_shared<SetTabFlyout>(kbs, kneeboardView),
-    // FIXME: add separator
+    std::make_shared<ToolbarSeparator>(),
     std::make_shared<ToolbarFlyout>(
       "\ued60",// StrokeErase
       "Clear notes",

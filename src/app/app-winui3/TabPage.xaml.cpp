@@ -34,6 +34,7 @@
 #include <OpenKneeboard/IToolbarFlyout.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
@@ -157,6 +158,11 @@ void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
 
 muxc::ICommandBarElement TabPage::CreateCommandBarElement(
   const std::shared_ptr<IToolbarItem>& item) {
+  auto sep = std::dynamic_pointer_cast<ToolbarSeparator>(item);
+  if (sep) {
+    return muxc::AppBarSeparator {};
+  }
+
   auto toggle = std::dynamic_pointer_cast<TabToggleAction>(item);
   if (toggle) {
     return CreateAppBarToggleButton(toggle);
