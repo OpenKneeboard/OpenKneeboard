@@ -16,24 +16,11 @@
           Text="Settings"
           Margin="0,0,0,8"
         />
-        <Button
+        <local:SponsorButton
           Margin="0,0,0,8"
           Grid.Column="1"
           VerticalAlignment="Top"
-          Click="OnSponsorClick">
-          <Grid ColumnDefinitions="Auto,Auto">
-            <FontIcon
-              Grid.Column="0"
-              Glyph="&#xEB51;"
-              VerticalAlignment="Center"
-              HorizontalAlignment="Center"
-              Foreground="#db61a2"
-            />
-            <TextBlock Grid.Column="1" Margin="8,0,0,0">
-              Support OpenKneeboard
-            </TextBlock>
-          </Grid>
-			  </Button>
+        />
       </Grid>
       <GridView
         Grid.Row="1"

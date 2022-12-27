@@ -24,8 +24,6 @@
 #include "SettingsSubpageData.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/LaunchURI.h>
-
 namespace winrt::OpenKneeboardApp::implementation {
 
 SettingsPage::SettingsPage() {
@@ -60,12 +58,6 @@ void SettingsPage::OnItemClick(
       Frame().Navigate(xaml_typename<AdvancedSettingsPage>());
       return;
   }
-}
-
-winrt::fire_and_forget SettingsPage::OnSponsorClick(
-  const IInspectable&,
-  const RoutedEventArgs&) noexcept {
-  co_await OpenKneeboard::LaunchSponsorURI();
 }
 
 hstring SettingsSubpageData::Title() {

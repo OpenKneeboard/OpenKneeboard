@@ -30,6 +30,7 @@ ok_add_executable(
   ProcessPickerDialog.idl ProcessPickerDialog.xaml ProcessPickerDialog.xaml.cpp ProcessPickerDialog.xaml.h
   ProfilesPage.idl ProfilesPage.xaml ProfilesPage.xaml.cpp ProfilesPage.xaml.h
   SettingsPage.idl SettingsPage.xaml SettingsPage.xaml.cpp SettingsPage.xaml.h
+  SponsorButton.idl SponsorButton.xaml SponsorButton.xaml.cpp SponsorButton.xaml.h
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
   TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h

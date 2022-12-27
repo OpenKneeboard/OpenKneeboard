@@ -9,11 +9,14 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <ScrollViewer>
     <StackPanel Orientation="Vertical" Margin="12" Spacing="12">
-      <TextBlock
-        Grid.Column="0"
-        Style="{ThemeResource TitleTextBlockStyle}">
-          Help and Support
-      </TextBlock>
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock
+          Grid.Column="0"
+          Style="{ThemeResource TitleTextBlockStyle}">
+            Help and Support
+        </TextBlock>
+        <local:SponsorButton Grid.Column="1" />
+      </Grid>
       <StackPanel
         Orientation="Vertical"
         Spacing="4"
