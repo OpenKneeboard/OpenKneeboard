@@ -32,9 +32,10 @@ PageSourceWithDelegates::PageSourceWithDelegates(
   KneeboardState* kbs) {
   mContentLayerCache = std::make_unique<CachedLayer>(dxr);
   mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
-
   mFixedEvents = {
     AddEventListener(mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent),
+    AddEventListener(
+      mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent),
     AddEventListener(
       this->evContentChangedEvent,
       [this](ContentChangeType type) {
@@ -151,13 +152,12 @@ void PageSourceWithDelegates::RenderPage(
 }
 
 bool PageSourceWithDelegates::CanClearUserInput() const {
+  if (mDoodles->HaveDoodles()) {
+    return true;
+  }
   for (const auto& delegate: mDelegates) {
     auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
-    if (!wce) {
-      // doodles
-      return true;
-    }
-    if (wce->CanClearUserInput()) {
+    if (wce && wce->CanClearUserInput()) {
       return true;
     }
   }
@@ -168,8 +168,7 @@ bool PageSourceWithDelegates::CanClearUserInput(PageIndex pageIndex) const {
   const auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
   auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (!wce) {
-    // doodles
-    return true;
+    return mDoodles->HaveDoodles(pageIndex);
   }
   return wce->CanClearUserInput(decodedIndex);
 }
@@ -190,6 +189,9 @@ void PageSourceWithDelegates::PostCursorEvent(
 }
 
 void PageSourceWithDelegates::ClearUserInput(PageIndex pageIndex) {
+  const scope_guard updateState(
+    [this]() { this->evAvailableFeaturesChangedEvent.Emit(); });
+
   auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
@@ -201,6 +203,9 @@ void PageSourceWithDelegates::ClearUserInput(PageIndex pageIndex) {
 }
 
 void PageSourceWithDelegates::ClearUserInput() {
+  const scope_guard updateState(
+    [this]() { this->evAvailableFeaturesChangedEvent.Emit(); });
+
   mDoodles->Clear();
   for (const auto& delegate: mDelegates) {
     auto withCursorEvents

@@ -51,6 +51,22 @@ void DoodleRenderer::ClearPage(PageIndex pageIndex) {
   mDrawings.at(pageIndex) = {};
 }
 
+bool DoodleRenderer::HaveDoodles() const {
+  for (const auto& drawing: mDrawings) {
+    if (drawing.mBitmap) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool DoodleRenderer::HaveDoodles(PageIndex pageIndex) const {
+  if (pageIndex >= mDrawings.size()) {
+    return false;
+  }
+  return static_cast<bool>(mDrawings.at(pageIndex).mBitmap);
+}
+
 void DoodleRenderer::PostCursorEvent(
   EventContext,
   const CursorEvent& event,
@@ -175,6 +191,8 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageIndex index) {
 
   mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
     page.mSurface.get(), nullptr, page.mBitmap.put());
+
+  evAddedPageEvent.Emit();
 
   return page.mBitmap.get();
 }

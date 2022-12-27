@@ -43,10 +43,13 @@ class DoodleRenderer final {
     PageIndex pageIndex,
     const D2D1_SIZE_U& nativePageSize);
 
+  bool HaveDoodles() const;
+  bool HaveDoodles(PageIndex pageIndex) const;
   void Clear();
   void ClearPage(PageIndex pageIndex);
 
   Event<> evNeedsRepaintEvent;
+  Event<> evAddedPageEvent;
 
  private:
   DXResources mDXR;

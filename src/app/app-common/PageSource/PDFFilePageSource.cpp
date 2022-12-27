@@ -87,6 +87,8 @@ PDFFilePageSource::PDFFilePageSource(
 
   p->mContentLayer = std::make_unique<CachedLayer>(dxr);
   p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
+  AddEventListener(
+    p->mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
 }
 
 PDFFilePageSource::~PDFFilePageSource() {
@@ -284,12 +286,12 @@ void PDFFilePageSource::PostCursorEvent(
   p->mDoodles->PostCursorEvent(ctx, ev, pageIndex, contentRect);
 }
 
-bool PDFFilePageSource::CanClearUserInput(PageIndex) const {
-  return true;
+bool PDFFilePageSource::CanClearUserInput(PageIndex index) const {
+  return p->mDoodles->HaveDoodles(index);
 }
 
 bool PDFFilePageSource::CanClearUserInput() const {
-  return true;
+  return p->mDoodles->HaveDoodles();
 }
 
 void PDFFilePageSource::ClearUserInput(PageIndex pageIndex) {
