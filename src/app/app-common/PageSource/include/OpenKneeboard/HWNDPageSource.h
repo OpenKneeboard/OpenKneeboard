@@ -69,7 +69,7 @@ class HWNDPageSource final
  private:
   HWNDPageSource() = delete;
   HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
-  winrt::fire_and_forget InitializeOnWorkerThread() noexcept;
+  winrt::fire_and_forget Init() noexcept;
   void OnFrame() noexcept;
   void InstallWindowHooks(HWND);
 

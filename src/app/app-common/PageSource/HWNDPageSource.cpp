@@ -32,9 +32,12 @@
 #include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 #include <libloaderapi.h>
 #include <shellapi.h>
+#include <wil/cppwinrt.h>
+#include <wil/cppwinrt_helpers.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
+#include <winrt/Windows.System.h>
 #include <wow64apiset.h>
 
 namespace WGC = winrt::Windows::Graphics::Capture;
@@ -54,13 +57,16 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   static_assert(with_final_release<HWNDPageSource>);
   auto ret
     = shared_with_final_release(new HWNDPageSource(dxr, kneeboard, window));
-  if (ret->HaveWindow()) {
-    return ret;
+  if (!ret->HaveWindow()) {
+    return nullptr;
   }
-  return nullptr;
+  ret->Init();
+  return ret;
 }
 
-winrt::fire_and_forget HWNDPageSource::InitializeOnWorkerThread() noexcept {
+winrt::fire_and_forget HWNDPageSource::Init() noexcept {
+  const auto keepAlive = shared_from_this();
+  co_await wil::resume_foreground(mDQC.DispatcherQueue());
   {
     const auto d2dLock = mDXR.AcquireLock();
 
@@ -98,7 +104,6 @@ winrt::fire_and_forget HWNDPageSource::InitializeOnWorkerThread() noexcept {
     });
   }
 
-  const auto keepAlive = shared_from_this();
   co_await std::chrono::milliseconds(100);
   static auto sControlMessage
     = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
@@ -131,8 +136,6 @@ HWNDPageSource::HWNDPageSource(
 
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
-  mDQC.DispatcherQueue().TryEnqueue(
-    [this]() { this->InitializeOnWorkerThread(); });
 }
 
 bool HWNDPageSource::HaveWindow() const {

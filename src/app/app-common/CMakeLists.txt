@@ -47,6 +47,7 @@ target_link_libraries(
   ThirdParty::OpenVR
   ThirdParty::WMM
 )
+target_link_windows_app_sdk(OpenKneeboard-App-Common)
 
 target_include_directories(
   OpenKneeboard-App-Common
