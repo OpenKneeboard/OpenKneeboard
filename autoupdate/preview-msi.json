@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/86480636",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/86480636/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/86480636/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3-beta4",
-    "id": 86480636,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/87219720",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/87219720/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/87219720/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3-beta8",
+    "id": 87219720,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FJ5b8",
-    "tag_name": "v1.3-beta4",
-    "target_commitish": "486f09d957a5bc93d9348babf739b7fdabdedb67",
-    "name": "v1.3-beta4: Window capture tabs, clocks",
+    "node_id": "RE_kwDOGk0DR84FMt4I",
+    "tag_name": "v1.3-beta8",
+    "target_commitish": "f874149d02174c286fef00a8d68422dfa3649702",
+    "name": "v1.3-beta8: OpenTabletDriver, Window Capture improvements, and bugfixes",
     "draft": false,
     "prerelease": true,
-    "created_at": "2022-12-19T01:43:57Z",
-    "published_at": "2022-12-19T02:18:14Z",
+    "created_at": "2022-12-26T02:53:03Z",
+    "published_at": "2022-12-26T03:38:02Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/88723068",
-        "id": 88723068,
-        "node_id": "RA_kwDOGk0DR84FSc58",
-        "name": "OpenKneeboard-v1.3-beta4-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/89503489",
+        "id": 89503489,
+        "node_id": "RA_kwDOGk0DR84FVbcB",
+        "name": "OpenKneeboard-v1.3-beta8-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 94478486,
-        "download_count": 2,
-        "created_at": "2022-12-19T02:13:05Z",
-        "updated_at": "2022-12-19T02:13:10Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta4/OpenKneeboard-v1.3-beta4-DebugSymbols.zip"
+        "size": 106481826,
+        "download_count": 1,
+        "created_at": "2022-12-26T03:29:10Z",
+        "updated_at": "2022-12-26T03:29:15Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta8/OpenKneeboard-v1.3-beta8-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/88723066",
-        "id": 88723066,
-        "node_id": "RA_kwDOGk0DR84FSc56",
-        "name": "OpenKneeboard-v1.3-beta4.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/89503486",
+        "id": 89503486,
+        "node_id": "RA_kwDOGk0DR84FVbb-",
+        "name": "OpenKneeboard-v1.3-beta8.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,16 +96,15 @@
         },
         "content_type": "application/msi",
         "state": "uploaded",
-        "size": 30744576,
-        "download_count": 34,
-        "created_at": "2022-12-19T02:13:02Z",
-        "updated_at": "2022-12-19T02:13:04Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta4/OpenKneeboard-v1.3-beta4.msi"
+        "size": 32620544,
+        "download_count": 21,
+        "created_at": "2022-12-26T03:29:06Z",
+        "updated_at": "2022-12-26T03:29:08Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta8/OpenKneeboard-v1.3-beta8.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3-beta4",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3-beta4",
-    "body": "Start by downloading [OpenKneeboard-v1.3-beta4.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta4/OpenKneeboard-v1.3-beta4.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# New Features\r\n\r\n- Added \"Window Capture\" tab type. This will also forward the mouse/tablet for *most* applications, but not 'UWP' apps; these are mostly Windows Store apps, or apps included with Windows, such as the calculator.\r\n- Added UI for renaming tabs\r\n- Added in-game real-world clock\r\n- Added in-game DCS mission clock (local and zulu)\r\n- Fix crash when switching profiles if no wintab tablet driver is installed\r\n- SET_TAB remote now lets you (optionally) specify a kneeboard\r\n- SET_TAB remote now supports setting the current tab by position, in addition to by ID or Title\r\n- Added SET_PROFILE remote (supports by ID or name)\r\n- Added \"[Administrator]\" to title bar when running as administrator\r\n- Added option to run as administrator, normal user, or just go along with however it was launched\r\n\r\n# Bug Fixes and Improvements\r\n\r\n- Wacom tablets are now more reliable when OpenKneeboard is not the active Window (thanks to @BeamRider). No change on Huion devices due to a bug in their wintab implementation.\r\n- Flipped default of Varjo Y-axis quirk; this seems to no longer be needed\r\n- Replaced the modern file/folder picker windows with the Windows Vista ones, as [the modern ones crash as administrator](https://github.com/microsoft/WindowsAppSDK/issues/2504)\r\n- Made autoupdater compatible with MSI installers\r\n- Fixed bug which would make the 'add tab' menu duplicate the tab types every time the profile is changed\r\n- Improved efficency of DCS -> OpenKneeboard communication\r\n- Rewrote how the in-game UI is constructed. This makes it much easier to add new features with in-game UI, such as the new clocks.",
-    "mentions_count": 1
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3-beta8",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3-beta8",
+    "body": "Start by downloading [OpenKneeboard-v1.3-beta8.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3-beta8/OpenKneeboard-v1.3-beta8.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n\r\nYou can now ❤️ [sponsor OpenKneeboard] ❤️ - donations are optional, but greatly appreciated!\r\n\r\n# Changes since -beta6\r\n\r\n## OpenTabletDriver\r\n\r\n[OpenTabletDriver] is now supported via the [OpenKneeboard OTD-IPC] plugin; you might want to use this if:\r\n- you want to try an alternative to unreliable manufacturer drivers\r\n- you have a Huion tablet and want to directly bind the buttons\r\n- you have any brand of tablet that OpenTabletDriver supports\r\n- you have multiple tablets\r\n- you play osu!\r\n\r\nCheck out the [OTD-IPC guide] to get started!\r\n\r\n## Window Capture\r\n\r\n- Improved foreground window handling:\\\r\n- Improved cursor handling for Electron/Chrome/Chromium-based apps when they are fully covered by other windows\r\n\r\n## Other Changes\r\n\r\n- Added reload menu icons for the current tab and all tabs\r\n\r\n[sponsor OpenKneeboard]: https://github.com/sponsors/fredemmott\r\n[OpenTabletDriver]: https://opentabletdriver.net/\r\n[OpenKneeboard OTD-IPC]: https://github.com/OpenKneeboard/OTD-IPC\r\n[OTD-IPC guide]: https://github.com/OpenKneeboard/OTD-IPC/blob/master/docs/getting-started.md\r\n\r\n# Changes since -beta7\r\n\r\n- Fix bug with paths being incorrectly stored as `C:/Foo/Bar` instead of `C:\\Foo\\Bar`, leading to crashes in folder tabs\r\n- Fix bug with toolbar icons not updating properly\r\n- Add OpenTabletDriver tablets to the input settings page if they're activated while the page is open."
   }
 ]
