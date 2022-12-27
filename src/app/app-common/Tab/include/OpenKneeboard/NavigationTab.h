@@ -61,6 +61,8 @@ class NavigationTab final : public TabBase,
     EventContext,
     const CursorEvent&,
     PageIndex pageIndex) override;
+  virtual bool CanClearUserInput(PageIndex) const override;
+  virtual bool CanClearUserInput() const override;
   virtual void ClearUserInput(PageIndex) override;
   virtual void ClearUserInput() override;
 

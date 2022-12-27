@@ -33,6 +33,8 @@ class IPageSourceWithCursorEvents : public virtual IPageSource {
   PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex)
     = 0;
 
+  virtual bool CanClearUserInput(PageIndex) const = 0;
+  virtual bool CanClearUserInput() const = 0;
   virtual void ClearUserInput(PageIndex) = 0;
   virtual void ClearUserInput() = 0;
 };

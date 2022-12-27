@@ -365,6 +365,14 @@ void HWNDPageSource::PostCursorEvent(
   }
 }
 
+bool HWNDPageSource::CanClearUserInput() const {
+  return false;
+}
+
+bool HWNDPageSource::CanClearUserInput(PageIndex) const {
+  return false;
+}
+
 void HWNDPageSource::ClearUserInput(PageIndex) {
   // nothing to do here
 }

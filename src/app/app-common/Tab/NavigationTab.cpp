@@ -171,6 +171,14 @@ void NavigationTab::PostCursorEvent(
   mButtonTrackers.at(pageIndex)->PostCursorEvent(ctx, ev);
 }
 
+bool NavigationTab::CanClearUserInput(PageIndex) const {
+  return false;
+}
+
+bool NavigationTab::CanClearUserInput() const {
+  return false;
+}
+
 void NavigationTab::ClearUserInput(PageIndex) {
   // nothing to do here
 }

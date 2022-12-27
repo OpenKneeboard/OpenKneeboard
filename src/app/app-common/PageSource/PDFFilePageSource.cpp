@@ -284,6 +284,14 @@ void PDFFilePageSource::PostCursorEvent(
   p->mDoodles->PostCursorEvent(ctx, ev, pageIndex, contentRect);
 }
 
+bool PDFFilePageSource::CanClearUserInput(PageIndex) const {
+  return true;
+}
+
+bool PDFFilePageSource::CanClearUserInput() const {
+  return true;
+}
+
 void PDFFilePageSource::ClearUserInput(PageIndex pageIndex) {
   p->mDoodles->ClearPage(pageIndex);
 }

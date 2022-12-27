@@ -150,6 +150,30 @@ void PageSourceWithDelegates::RenderPage(
   mDoodles->Render(ctx, pageIndex, rect);
 }
 
+bool PageSourceWithDelegates::CanClearUserInput() const {
+  for (const auto& delegate: mDelegates) {
+    auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+    if (!wce) {
+      // doodles
+      return true;
+    }
+    if (wce->CanClearUserInput()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool PageSourceWithDelegates::CanClearUserInput(PageIndex pageIndex) const {
+  const auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
+  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+  if (!wce) {
+    // doodles
+    return true;
+  }
+  return wce->CanClearUserInput(decodedIndex);
+}
+
 void PageSourceWithDelegates::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& event,

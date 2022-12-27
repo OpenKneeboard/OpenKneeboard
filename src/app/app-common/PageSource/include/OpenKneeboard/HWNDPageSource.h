@@ -59,6 +59,8 @@ class HWNDPageSource final
 
   virtual void
   PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex) final;
+  virtual bool CanClearUserInput() const override;
+  virtual bool CanClearUserInput(PageIndex) const override;
   virtual void ClearUserInput(PageIndex) override;
   virtual void ClearUserInput() override;
 
