@@ -27,6 +27,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/ICheckableToolbarItem.h>
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
@@ -241,7 +242,25 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     return nullptr;
   }
 
-  muxc::MenuFlyoutItem ret;
+  muxc::MenuFlyoutItem ret {nullptr};
+  auto checkable = std::dynamic_pointer_cast<ICheckableToolbarItem>(item);
+  if (checkable) {
+    auto tmfi = muxc::ToggleMenuFlyoutItem {};
+    ret = tmfi;
+    tmfi.IsChecked(checkable->IsChecked());
+    AddEventListener(
+      checkable->evStateChangedEvent,
+      weak_wrap(
+        [tmfi, checkable](const auto& self) -> winrt::fire_and_forget {
+          // coroutines are fun
+          auto [tmfi, checkable] = std::make_tuple(tmfi, checkable);
+          co_await self->mUIThread;
+          tmfi.IsChecked(checkable->IsChecked());
+        },
+        this));
+  } else {
+    ret = {};
+  }
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
   ret.Click([action](auto, auto) { action->Execute(); });
