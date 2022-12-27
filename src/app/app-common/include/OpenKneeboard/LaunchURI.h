@@ -32,5 +32,6 @@ void RegisterURIHandler(
   std::function<void(std::string_view)> handler);
 
 winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uri);
+winrt::Windows::Foundation::IAsyncAction LaunchSponsorURI();
 
 }// namespace OpenKneeboard

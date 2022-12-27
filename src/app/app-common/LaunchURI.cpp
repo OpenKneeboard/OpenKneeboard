@@ -47,8 +47,17 @@ winrt::Windows::Foundation::IAsyncAction LaunchURI(std::string_view uriStr) {
     co_return;
   }
 
+  if (scheme == L"https" || scheme == L"http") {
+    co_await winrt::Windows::System::Launcher::LaunchUriAsync(uri);
+    co_return;
+  }
+
   std::wstring uriWstr(winrt::to_hstring(uriStr));
   ShellExecuteW(NULL, L"open", uriWstr.c_str(), nullptr, nullptr, SW_NORMAL);
+}
+
+winrt::Windows::Foundation::IAsyncAction LaunchSponsorURI() {
+  co_await LaunchURI("https://github.com/sponsors/fredemmott");
 }
 
 }// namespace OpenKneeboard

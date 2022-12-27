@@ -35,6 +35,10 @@ namespace winrt::OpenKneeboardApp::implementation {
 struct SettingsPage : SettingsPageT<SettingsPage> {
   SettingsPage();
   void OnItemClick(const IInspectable&, const ItemClickEventArgs&) noexcept;
+  winrt::fire_and_forget OnSponsorClick(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+
 };
 
 struct SettingsSubpageData : SettingsSubpageDataT<SettingsSubpageData> {

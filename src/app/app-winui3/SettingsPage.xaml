@@ -7,91 +7,109 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
-  <Grid RowDefinitions="Auto,*" Margin="16">
-    <TextBlock
-      Grid.Row="0"
-      Style="{StaticResource TitleTextBlockStyle}"
-      Text="Settings"
-      Margin="0,0,0,8"
-    />
-    <GridView
-      Grid.Row="1"
-      IsItemClickEnabled="True"
-      ItemClick="OnItemClick">
-      <GridView.ItemTemplate>
-        <DataTemplate x:Key="SettingsSubpageTemplate" x:DataType="local:SettingsSubpageData">
-          <Grid
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            CornerRadius="4"
-            BorderThickness="1"
-            ColumnDefinitions="Auto,*"
-            Padding="12"
-            Height="96"
-            Width="360">
-            <Grid
+  <ScrollViewer VerticalScrollMode="Auto">
+    <StackPanel Margin="16">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource TitleTextBlockStyle}"
+          Text="Settings"
+          Margin="0,0,0,8"
+        />
+        <Button
+          Margin="0,0,0,8"
+          Grid.Column="1"
+          VerticalAlignment="Top"
+          Click="OnSponsorClick">
+          <Grid ColumnDefinitions="Auto,Auto">
+            <FontIcon
               Grid.Column="0"
-              Width="72"
-              Height="72"
-              CornerRadius="8"
-              Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
-              <FontIcon
-                Glyph="{x:Bind Glyph}"
-                FontSize="40"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-              />
-            </Grid>
-            <Grid RowDefinitions="Auto,*" Grid.Column="1" Margin="8,0,0,0">
-              <TextBlock
-                Grid.Row="0"
-                Text="{x:Bind Title}"
-                Style="{StaticResource BodyStrongTextBlockStyle}"
-                TextWrapping="NoWrap"
-              />
-              <TextBlock
-                Grid.Row="1"
-                Text="{x:Bind Description}"
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                VerticalAlignment="Stretch"
-              />
-            </Grid>
+              Glyph="&#xEB51;"
+              VerticalAlignment="Center"
+              HorizontalAlignment="Center"
+              Foreground="#db61a2"
+            />
+            <TextBlock Grid.Column="1" Margin="8,0,0,0">
+              Support OpenKneeboard
+            </TextBlock>
           </Grid>
-        </DataTemplate>
-      </GridView.ItemTemplate>
-      <GridView.Items>
-        <!-- Glyph reference: https://docs.microsoft.com/en-us/windows/apps/design/style/segoe-ui-symbol-font -->
-        <!-- F119 HMD -->
-        <local:SettingsSubpageData ID="VRConfig" Glyph="&#xF119;" Title="Virtual Reality">
-          Adjust how OpenKneeboard appears in games and applications when using a virtual reality headset.
-        </local:SettingsSubpageData>
-        <!-- E7F4 ThisPC -->
-        <local:SettingsSubpageData ID="NonVRConfig" Glyph="&#xEC4E;" Title="Retro Gaming">
-          Adjust how OpenKneeboard appears in windowed or full-screen games and applications.
-        </local:SettingsSubpageData>
-        <!-- E7FC Game -->
-        <local:SettingsSubpageData ID="Games" Glyph="&#xE7FC;" Title="Games">
-          Use your kneeboard with a graphics tablet, and Oculus and non-VR games. SteamVR is always enabled.
-        </local:SettingsSubpageData>
-        <!-- F571 PrintAllPages -->
-        <local:SettingsSubpageData ID="Tabs" Glyph="&#xF571;" Title="Tabs">
-          Add, remove, and re-order sections in your kneeboard.
-        </local:SettingsSubpageData>
-        <!-- E961 Input -->
-        <local:SettingsSubpageData ID="Input" Glyph="&#xE961;" Title="Input">
-          Control your kneeboard with your keyboard, joystick, or graphics tablet buttons.
-        </local:SettingsSubpageData>
-        <!-- E9E9 Equalizer-->
-        <local:SettingsSubpageData ID="Advanced" Glyph="&#xE9E9;" Title="Advanced">
-          Advanced features and behavior tweaks.
-        </local:SettingsSubpageData>
-        <!-- EB51 Heart -->
-        <local:SettingsSubpageData ID="Sponsor" Glyph="&#xE9E9;" Title="Sponsor">
-          You can support OpenKneeboard's development; donations are optional, but 
-          appreciated!
-        </local:SettingsSubpageData>
-      </GridView.Items>
-    </GridView>
-  </Grid>
+			  </Button>
+      </Grid>
+      <GridView
+        Grid.Row="1"
+        IsItemClickEnabled="True"
+        ItemClick="OnItemClick">
+        <GridView.ItemTemplate>
+          <DataTemplate x:Key="SettingsSubpageTemplate" x:DataType="local:SettingsSubpageData">
+            <Grid
+              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+              CornerRadius="4"
+              BorderThickness="1"
+              ColumnDefinitions="Auto,*"
+              Padding="12"
+              Height="96"
+              Width="360">
+              <Grid
+                Grid.Column="0"
+                Width="72"
+                Height="72"
+                CornerRadius="8"
+                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+                <FontIcon
+                  Glyph="{x:Bind Glyph}"
+                  FontSize="40"
+                  VerticalAlignment="Center"
+                  HorizontalAlignment="Center"
+                />
+              </Grid>
+              <Grid RowDefinitions="Auto,*" Grid.Column="1" Margin="8,0,0,0">
+                <TextBlock
+                  Grid.Row="0"
+                  Text="{x:Bind Title}"
+                  Style="{StaticResource BodyStrongTextBlockStyle}"
+                  TextWrapping="NoWrap"
+                />
+                <TextBlock
+                  Margin="8,0,0,0"
+                  Grid.Row="1"
+                  Text="{x:Bind Description}"
+                  Style="{StaticResource CaptionTextBlockStyle}"
+                  Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                  VerticalAlignment="Stretch"
+                />
+              </Grid>
+            </Grid>
+          </DataTemplate>
+        </GridView.ItemTemplate>
+        <GridView.Items>
+          <!-- Glyph reference: https://docs.microsoft.com/en-us/windows/apps/design/style/segoe-ui-symbol-font -->
+          <!-- F119 HMD -->
+          <local:SettingsSubpageData ID="VRConfig" Glyph="&#xF119;" Title="Virtual Reality">
+            Adjust how OpenKneeboard appears in games and applications when using a virtual reality headset.
+          </local:SettingsSubpageData>
+          <!-- E7F4 ThisPC -->
+          <local:SettingsSubpageData ID="NonVRConfig" Glyph="&#xEC4E;" Title="Retro Gaming">
+            Adjust how OpenKneeboard appears in windowed or full-screen games and applications.
+          </local:SettingsSubpageData>
+          <!-- E7FC Game -->
+          <local:SettingsSubpageData ID="Games" Glyph="&#xE7FC;" Title="Games">
+            Use your kneeboard with a graphics tablet, and Oculus and non-VR games. SteamVR is always enabled.
+          </local:SettingsSubpageData>
+          <!-- F571 PrintAllPages -->
+          <local:SettingsSubpageData ID="Tabs" Glyph="&#xF571;" Title="Tabs">
+            Add, remove, and re-order sections in your kneeboard.
+          </local:SettingsSubpageData>
+          <!-- E961 Input -->
+          <local:SettingsSubpageData ID="Input" Glyph="&#xE961;" Title="Input">
+            Control your kneeboard with your keyboard, joystick, or graphics tablet buttons.
+          </local:SettingsSubpageData>
+          <!-- E9E9 Equalizer-->
+          <local:SettingsSubpageData ID="Advanced" Glyph="&#xE9E9;" Title="Advanced">
+            Advanced features and behavior tweaks.
+          </local:SettingsSubpageData>
+        </GridView.Items>
+      </GridView>
+    </StackPanel>
+  </ScrollViewer>
 </Page>
