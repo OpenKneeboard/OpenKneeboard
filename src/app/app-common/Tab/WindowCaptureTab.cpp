@@ -51,12 +51,14 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const winrt::guid& persistentID,
   std::string_view title,
   const nlohmann::json& settings) {
-  return std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
+  auto ret = std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
     dxr,
     kbs,
     persistentID,
     title,
     settings.at("Spec").get<MatchSpecification>()));
+  ret->TryToStartCapture();
+  return ret;
 }
 
 WindowCaptureTab::WindowCaptureTab(
@@ -70,7 +72,6 @@ WindowCaptureTab::WindowCaptureTab(
     mDXR(dxr),
     mKneeboard(kbs),
     mSpec(spec) {
-  this->TryToStartCapture();
 }
 
 bool WindowCaptureTab::WindowMatches(HWND hwnd) const {
