@@ -86,6 +86,11 @@
         <local:SettingsSubpageData ID="Advanced" Glyph="&#xE9E9;" Title="Advanced">
           Advanced features and behavior tweaks.
         </local:SettingsSubpageData>
+        <!-- EB51 Heart -->
+        <local:SettingsSubpageData ID="Sponsor" Glyph="&#xE9E9;" Title="Sponsor">
+          You can support OpenKneeboard's development; donations are optional, but 
+          appreciated!
+        </local:SettingsSubpageData>
       </GridView.Items>
     </GridView>
   </Grid>

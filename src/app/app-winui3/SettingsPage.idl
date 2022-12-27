@@ -13,6 +13,7 @@ namespace OpenKneeboardApp
         VRConfig,
         NonVRConfig,
         Advanced,
+        Sponsor,
     };
 
     [default_interface]
