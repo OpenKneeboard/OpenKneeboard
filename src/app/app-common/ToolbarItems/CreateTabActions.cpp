@@ -48,7 +48,6 @@ static Items CreateDropDownItems(
       "\ued60",// StrokeErase
       "Clear notes",
       Items {
-        // FIXME: pass in ITabView
         std::make_shared<ClearUserInputAction>(tabView, CurrentPage),
         std::make_shared<ClearUserInputAction>(tabView, AllPages),
         std::make_shared<ClearUserInputAction>(kbs, AllTabs),
