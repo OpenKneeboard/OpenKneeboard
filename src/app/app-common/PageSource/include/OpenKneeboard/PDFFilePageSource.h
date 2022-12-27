@@ -63,6 +63,8 @@ class PDFFilePageSource final
     EventContext ctx,
     const CursorEvent&,
     PageIndex pageIndex) override;
+  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput() override;
 
   virtual void RenderPage(
     ID2D1DeviceContext*,

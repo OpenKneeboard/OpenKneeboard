@@ -32,6 +32,9 @@ class IPageSourceWithCursorEvents : public virtual IPageSource {
   virtual void
   PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex)
     = 0;
+
+  virtual void ClearUserInput(PageIndex) = 0;
+  virtual void ClearUserInput() = 0;
 };
 
 }// namespace OpenKneeboard

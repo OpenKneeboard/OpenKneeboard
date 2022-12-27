@@ -61,6 +61,8 @@ class NavigationTab final : public TabBase,
     EventContext,
     const CursorEvent&,
     PageIndex pageIndex) override;
+  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput() override;
 
  private:
   DXResources mDXR;

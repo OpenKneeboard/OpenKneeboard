@@ -165,6 +165,28 @@ void PageSourceWithDelegates::PostCursorEvent(
   }
 }
 
+void PageSourceWithDelegates::ClearUserInput(PageIndex pageIndex) {
+  auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
+  auto withCursorEvents
+    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+  if (withCursorEvents) {
+    withCursorEvents->ClearUserInput(pageIndex);
+  } else {
+    mDoodles->ClearPage(pageIndex);
+  }
+}
+
+void PageSourceWithDelegates::ClearUserInput() {
+  mDoodles->Clear();
+  for (const auto& delegate: mDelegates) {
+    auto withCursorEvents
+      = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+    if (withCursorEvents) {
+      withCursorEvents->ClearUserInput();
+    }
+  }
+}
+
 bool PageSourceWithDelegates::IsNavigationAvailable() const {
   return this->GetPageCount() > 2 && !this->GetNavigationEntries().empty();
 }

@@ -284,6 +284,14 @@ void PDFFilePageSource::PostCursorEvent(
   p->mDoodles->PostCursorEvent(ctx, ev, pageIndex, contentRect);
 }
 
+void PDFFilePageSource::ClearUserInput(PageIndex pageIndex) {
+  p->mDoodles->ClearPage(pageIndex);
+}
+
+void PDFFilePageSource::ClearUserInput() {
+  p->mDoodles->Clear();
+}
+
 void PDFFilePageSource::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
   PageIndex pageIndex,

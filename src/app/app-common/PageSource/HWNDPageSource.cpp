@@ -358,6 +358,14 @@ void HWNDPageSource::PostCursorEvent(
   }
 }
 
+void HWNDPageSource::ClearUserInput(PageIndex) {
+  // nothing to do here
+}
+
+void HWNDPageSource::ClearUserInput() {
+  // nothing to do here
+}
+
 void HWNDPageSource::InstallWindowHooks(HWND target) {
   if (mHooks.contains(target)) {
     return;

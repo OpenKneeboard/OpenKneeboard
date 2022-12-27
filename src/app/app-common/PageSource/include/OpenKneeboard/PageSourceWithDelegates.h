@@ -55,6 +55,8 @@ class PageSourceWithDelegates : public virtual IPageSource,
     EventContext,
     const CursorEvent&,
     PageIndex pageIndex) override;
+  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput() override;
 
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;

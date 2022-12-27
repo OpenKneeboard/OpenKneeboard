@@ -59,6 +59,8 @@ class HWNDPageSource final
 
   virtual void
   PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex) final;
+  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput() override;
 
   Event<> evWindowClosedEvent;
 

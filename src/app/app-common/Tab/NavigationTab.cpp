@@ -171,6 +171,14 @@ void NavigationTab::PostCursorEvent(
   mButtonTrackers.at(pageIndex)->PostCursorEvent(ctx, ev);
 }
 
+void NavigationTab::ClearUserInput(PageIndex) {
+  // nothing to do here
+}
+
+void NavigationTab::ClearUserInput() {
+  // nothing to do here
+}
+
 void NavigationTab::RenderPage(
   ID2D1DeviceContext* ctx,
   PageIndex pageIndex,
