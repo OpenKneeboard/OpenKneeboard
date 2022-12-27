@@ -25,6 +25,7 @@
 #endif
 // clang-format on
 
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/ITab.h>
@@ -336,6 +337,12 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   dprint("Frame thread shutdown.");
 
   gKneeboard = {};
+  // the mutex gets sad if it gets destroyed while held;
+  // reduce the chances of that a bit.
+  //
+  // FIXME: This isn't a real fix, because XAML holds the pages
+  // open, and renders could be waiting on the lock
+  auto lock = gDXResources.AcquireLock();
   gDXResources = {};
 }
 
