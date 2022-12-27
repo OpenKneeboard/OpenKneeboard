@@ -25,7 +25,7 @@
 
 namespace OpenKneeboard {
 
-class IToolbarFlyout : public ISelectableToolbarItem {
+class IToolbarFlyout : public virtual ISelectableToolbarItem {
  public:
   virtual ~IToolbarFlyout();
 

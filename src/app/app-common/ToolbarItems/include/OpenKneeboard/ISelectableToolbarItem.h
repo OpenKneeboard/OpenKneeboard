@@ -39,7 +39,7 @@ struct AllTabs_t {
 };
 static constexpr AllTabs_t AllTabs;
 
-class ISelectableToolbarItem : public IToolbarItem {
+class ISelectableToolbarItem : public virtual IToolbarItem {
  public:
   virtual ~ISelectableToolbarItem() = default;
 

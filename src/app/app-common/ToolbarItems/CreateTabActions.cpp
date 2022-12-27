@@ -22,6 +22,7 @@
 #include <OpenKneeboard/NextTabAction.h>
 #include <OpenKneeboard/PreviousTabAction.h>
 #include <OpenKneeboard/ReloadTabAction.h>
+#include <OpenKneeboard/SetTabFlyout.h>
 #include <OpenKneeboard/TabFirstPageAction.h>
 #include <OpenKneeboard/TabNavigationAction.h>
 #include <OpenKneeboard/TabNextPageAction.h>
@@ -32,15 +33,21 @@
 
 namespace OpenKneeboard {
 
-static std::vector<std::shared_ptr<IToolbarItem>> CreateDropDownItems(
+namespace {
+using Items = std::vector<std::shared_ptr<IToolbarItem>>;
+}
+
+static Items CreateDropDownItems(
   KneeboardState* kbs,
   const std::shared_ptr<IKneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tabView) {
   return {
+    std::make_shared<SetTabFlyout>(kbs, kneeboardView),
+    // FIXME: add separator
     std::make_shared<ToolbarFlyout>(
       "\ued60",// StrokeErase
       "Clear notes",
-      std::vector<std::shared_ptr<IToolbarItem>> {
+      Items {
         // FIXME: pass in ITabView
         std::make_shared<ClearUserInputAction>(tabView, CurrentPage),
         std::make_shared<ClearUserInputAction>(tabView, AllPages),
@@ -49,7 +56,7 @@ static std::vector<std::shared_ptr<IToolbarItem>> CreateDropDownItems(
     std::make_shared<ToolbarFlyout>(
       "\ue72c",// Refresh
       "Reload",
-      std::vector<std::shared_ptr<IToolbarItem>> {
+      Items {
         std::make_shared<ReloadTabAction>(kbs, tabView),
         std::make_shared<ReloadTabAction>(kbs, AllTabs),
       }),

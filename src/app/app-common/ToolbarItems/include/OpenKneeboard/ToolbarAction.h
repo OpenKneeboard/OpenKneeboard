@@ -25,7 +25,7 @@
 
 namespace OpenKneeboard {
 
-class ToolbarAction : public ISelectableToolbarItem {
+class ToolbarAction : public virtual ISelectableToolbarItem {
  public:
   virtual ~ToolbarAction();
   std::string_view GetGlyph() const override final;
