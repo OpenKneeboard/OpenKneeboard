@@ -33,7 +33,7 @@ ReloadTabAction::ReloadTabAction(
   }
 }
 
-ReloadTabAction::ReloadTabAction(KneeboardState* kbs, ReloadAllTabs_t)
+ReloadTabAction::ReloadTabAction(KneeboardState* kbs, AllTabs_t)
   : ToolbarAction({}, _("All tabs")), mKneeboardState(kbs) {
 }
 

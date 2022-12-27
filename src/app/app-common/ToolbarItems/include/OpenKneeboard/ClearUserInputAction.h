@@ -19,17 +19,33 @@
  */
 #pragma once
 
-#include <OpenKneeboard/ToolbarFlyout.h>
+#include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/inttypes.h>
 
 namespace OpenKneeboard {
 
-class KneeboardState;
 class ITab;
+class KneeboardState;
+class IKneeboardView;
 
-class ReloadFlyout final : public ToolbarFlyout {
+class ClearUserInputAction final : public ToolbarAction {
  public:
-  ReloadFlyout(KneeboardState*, const std::shared_ptr<ITab>&);
-  ReloadFlyout() = delete;
+  ClearUserInputAction(const std::shared_ptr<ITab>&, PageIndex);
+  ClearUserInputAction(const std::shared_ptr<ITab>&, AllPages_t);
+  ClearUserInputAction(KneeboardState*, AllTabs_t);
+  ClearUserInputAction() = delete;
+
+  ~ClearUserInputAction();
+
+  virtual bool IsEnabled() override;
+  virtual void Execute() override;
+
+ private:
+  enum class Mode { ThisPage, ThisTab, AllTabs };
+  Mode mMode;
+  KneeboardState* mKneeboardState = nullptr;
+  std::shared_ptr<ITab> mTab;
+  PageIndex mPageIndex;
 };
 
 }// namespace OpenKneeboard

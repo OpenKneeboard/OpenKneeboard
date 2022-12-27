@@ -24,6 +24,16 @@
 
 namespace OpenKneeboard {
 
+struct AllPages_t {
+  explicit AllPages_t() = default;
+};
+static constexpr AllPages_t AllPages;
+
+struct AllTabs_t {
+  explicit AllTabs_t() = default;
+};
+static constexpr AllTabs_t AllTabs;
+
 class ISelectableToolbarItem : public IToolbarItem {
  public:
   virtual ~ISelectableToolbarItem() = default;

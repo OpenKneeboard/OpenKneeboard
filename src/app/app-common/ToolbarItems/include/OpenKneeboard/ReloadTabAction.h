@@ -29,11 +29,8 @@ class IKneeboardView;
 
 class ReloadTabAction final : public ToolbarAction {
  public:
-  struct ReloadAllTabs_t {};
-  static constexpr ReloadAllTabs_t ReloadAllTabs {};
-
   ReloadTabAction(KneeboardState*, const std::shared_ptr<ITab>&);
-  ReloadTabAction(KneeboardState*, ReloadAllTabs_t);
+  ReloadTabAction(KneeboardState*, AllTabs_t);
   ReloadTabAction() = delete;
 
   ~ReloadTabAction();

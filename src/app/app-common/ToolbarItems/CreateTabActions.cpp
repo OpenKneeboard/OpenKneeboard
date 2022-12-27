@@ -17,25 +17,44 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/ClearUserInputAction.h>
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/NextTabAction.h>
 #include <OpenKneeboard/PreviousTabAction.h>
-#include <OpenKneeboard/ReloadFlyout.h>
+#include <OpenKneeboard/ReloadTabAction.h>
 #include <OpenKneeboard/TabFirstPageAction.h>
 #include <OpenKneeboard/TabNavigationAction.h>
 #include <OpenKneeboard/TabNextPageAction.h>
 #include <OpenKneeboard/TabPreviousPageAction.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/ToolbarFlyout.h>
 
 namespace OpenKneeboard {
 
 static std::vector<std::shared_ptr<IToolbarItem>> CreateDropDownItems(
-  KneeboardState* kneeboardState,
+  KneeboardState* kbs,
   const std::shared_ptr<IKneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tabView) {
+  auto rootTab = tabView->GetRootTab();
   return {
-    std::make_shared<ReloadFlyout>(kneeboardState, tabView->GetRootTab()),
+    std::make_shared<ToolbarFlyout>(
+      "\ued60",// StrokeErase
+      "Clear notes",
+      std::vector<std::shared_ptr<IToolbarItem>> {
+        // FIXME: pass in ITabView
+        std::make_shared<ClearUserInputAction>(
+          rootTab, tabView->GetPageIndex()),
+        std::make_shared<ClearUserInputAction>(rootTab, AllPages),
+        std::make_shared<ClearUserInputAction>(kbs, AllTabs),
+      }),
+    std::make_shared<ToolbarFlyout>(
+      "\ue72c",// Refresh
+      "Reload",
+      std::vector<std::shared_ptr<IToolbarItem>> {
+        std::make_shared<ReloadTabAction>(kbs, rootTab),
+        std::make_shared<ReloadTabAction>(kbs, AllTabs),
+      }),
   };
 }
 
