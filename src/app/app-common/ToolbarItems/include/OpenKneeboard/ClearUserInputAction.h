@@ -24,14 +24,14 @@
 
 namespace OpenKneeboard {
 
-class ITab;
+class ITabView;
 class KneeboardState;
 class IKneeboardView;
 
-class ClearUserInputAction final : public ToolbarAction {
+class ClearUserInputAction final : public ToolbarAction, public EventReceiver {
  public:
-  ClearUserInputAction(const std::shared_ptr<ITab>&, PageIndex);
-  ClearUserInputAction(const std::shared_ptr<ITab>&, AllPages_t);
+  ClearUserInputAction(const std::shared_ptr<ITabView>&, CurrentPage_t);
+  ClearUserInputAction(const std::shared_ptr<ITabView>&, AllPages_t);
   ClearUserInputAction(KneeboardState*, AllTabs_t);
   ClearUserInputAction() = delete;
 
@@ -41,11 +41,12 @@ class ClearUserInputAction final : public ToolbarAction {
   virtual void Execute() override;
 
  private:
-  enum class Mode { ThisPage, ThisTab, AllTabs };
+  void SubscribeToTabView();
+
+  enum class Mode { CurrentPage, ThisTab, AllTabs };
   Mode mMode;
   KneeboardState* mKneeboardState = nullptr;
-  std::shared_ptr<ITab> mTab;
-  PageIndex mPageIndex;
+  std::shared_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

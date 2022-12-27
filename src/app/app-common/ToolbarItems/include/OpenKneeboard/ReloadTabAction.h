@@ -23,13 +23,13 @@
 
 namespace OpenKneeboard {
 
-class ITab;
+class ITabView;
 class KneeboardState;
 class IKneeboardView;
 
-class ReloadTabAction final : public ToolbarAction {
+class ReloadTabAction final : public ToolbarAction, public EventReceiver {
  public:
-  ReloadTabAction(KneeboardState*, const std::shared_ptr<ITab>&);
+  ReloadTabAction(KneeboardState*, const std::shared_ptr<ITabView>&);
   ReloadTabAction(KneeboardState*, AllTabs_t);
   ReloadTabAction() = delete;
 
@@ -41,7 +41,7 @@ class ReloadTabAction final : public ToolbarAction {
  private:
   KneeboardState* mKneeboardState;
 
-  std::shared_ptr<ITab> mTab;
+  std::shared_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ReloadTabAction.h>
 #include <OpenKneeboard/TabsList.h>
@@ -26,8 +27,8 @@ namespace OpenKneeboard {
 
 ReloadTabAction::ReloadTabAction(
   KneeboardState* kbs,
-  const std::shared_ptr<ITab>& tab)
-  : ToolbarAction({}, _("This tab")), mKneeboardState(kbs), mTab(tab) {
+  const std::shared_ptr<ITabView>& tab)
+  : ToolbarAction({}, _("This tab")), mKneeboardState(kbs), mTabView(tab) {
   if (!tab) {
     throw std::logic_error("Bad itab");
   }
@@ -37,15 +38,20 @@ ReloadTabAction::ReloadTabAction(KneeboardState* kbs, AllTabs_t)
   : ToolbarAction({}, _("All tabs")), mKneeboardState(kbs) {
 }
 
-ReloadTabAction::~ReloadTabAction() = default;
+ReloadTabAction::~ReloadTabAction() {
+  this->RemoveAllEventListeners();
+}
 
 bool ReloadTabAction::IsEnabled() {
   return true;
 }
 
 void ReloadTabAction::Execute() {
-  if (mTab) {
-    mTab->Reload();
+  if (mTabView) {
+    auto tab = mTabView->GetTab();
+    if (tab) {
+      tab->Reload();
+    }
     return;
   }
 

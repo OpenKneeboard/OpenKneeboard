@@ -24,6 +24,11 @@
 
 namespace OpenKneeboard {
 
+struct CurrentPage_t {
+  explicit CurrentPage_t() = default;
+};
+static constexpr CurrentPage_t CurrentPage;
+
 struct AllPages_t {
   explicit AllPages_t() = default;
 };

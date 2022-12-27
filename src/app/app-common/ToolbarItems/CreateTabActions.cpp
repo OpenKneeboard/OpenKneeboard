@@ -36,23 +36,21 @@ static std::vector<std::shared_ptr<IToolbarItem>> CreateDropDownItems(
   KneeboardState* kbs,
   const std::shared_ptr<IKneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tabView) {
-  auto rootTab = tabView->GetRootTab();
   return {
     std::make_shared<ToolbarFlyout>(
       "\ued60",// StrokeErase
       "Clear notes",
       std::vector<std::shared_ptr<IToolbarItem>> {
         // FIXME: pass in ITabView
-        std::make_shared<ClearUserInputAction>(
-          rootTab, tabView->GetPageIndex()),
-        std::make_shared<ClearUserInputAction>(rootTab, AllPages),
+        std::make_shared<ClearUserInputAction>(tabView, CurrentPage),
+        std::make_shared<ClearUserInputAction>(tabView, AllPages),
         std::make_shared<ClearUserInputAction>(kbs, AllTabs),
       }),
     std::make_shared<ToolbarFlyout>(
       "\ue72c",// Refresh
       "Reload",
       std::vector<std::shared_ptr<IToolbarItem>> {
-        std::make_shared<ReloadTabAction>(kbs, rootTab),
+        std::make_shared<ReloadTabAction>(kbs, tabView),
         std::make_shared<ReloadTabAction>(kbs, AllTabs),
       }),
   };

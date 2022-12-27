@@ -19,31 +19,34 @@
  */
 #include <OpenKneeboard/ClearUserInputAction.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
-#include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
 
 ClearUserInputAction::ClearUserInputAction(
-  const std::shared_ptr<ITab>& tab,
-  PageIndex pageIndex)
-  : ToolbarAction({}, _("This page")),
-    mMode(Mode::ThisPage),
-    mTab(tab),
-    mPageIndex(pageIndex) {
-  if (!tab) {
-    throw std::logic_error("Bad itab");
-  }
+  const std::shared_ptr<ITabView>& tab,
+  CurrentPage_t)
+  : ToolbarAction({}, _("This page")), mMode(Mode::CurrentPage), mTabView(tab) {
+  SubscribeToTabView();
 }
 
 ClearUserInputAction::ClearUserInputAction(
-  const std::shared_ptr<ITab>& tab,
+  const std::shared_ptr<ITabView>& tab,
   AllPages_t)
-  : ToolbarAction({}, _("All pages")), mMode(Mode::ThisTab), mTab(tab) {
-  if (!tab) {
-    throw std::logic_error("Bad itab");
+  : ToolbarAction({}, _("All pages")), mMode(Mode::ThisTab), mTabView(tab) {
+  SubscribeToTabView();
+}
+
+void ClearUserInputAction::SubscribeToTabView() {
+  if (!mTabView) {
+    throw std::logic_error("Bad tab view");
   }
+
+  AddEventListener(mTabView->evPageChangedEvent, this->evStateChangedEvent);
+  AddEventListener(
+    mTabView->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);
 }
 
 ClearUserInputAction::ClearUserInputAction(KneeboardState* kbs, AllTabs_t)
@@ -52,14 +55,19 @@ ClearUserInputAction::ClearUserInputAction(KneeboardState* kbs, AllTabs_t)
     mKneeboardState(kbs) {
 }
 
-ClearUserInputAction::~ClearUserInputAction() = default;
+ClearUserInputAction::~ClearUserInputAction() {
+  this->RemoveAllEventListeners();
+}
 
 bool ClearUserInputAction::IsEnabled() {
+  auto wce = mTabView
+    ? std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(mTabView->GetTab())
+    : nullptr;
   switch (mMode) {
-    case Mode::ThisPage:
+    case Mode::CurrentPage:
+      return wce && wce->CanClearUserInput(mTabView->GetPageIndex());
     case Mode::ThisTab:
-      return static_cast<bool>(
-        std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(mTab));
+      return wce && wce->CanClearUserInput();
     case Mode::AllTabs:
       return true;
   }
@@ -78,7 +86,8 @@ void ClearUserInputAction::Execute() {
     return;
   }
 
-  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(mTab);
+  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(
+    mTabView->GetTab());
   if (!wce) {
     return;
   }
@@ -87,8 +96,8 @@ void ClearUserInputAction::Execute() {
     case Mode::ThisTab:
       wce->ClearUserInput();
       return;
-    case Mode::ThisPage:
-      wce->ClearUserInput(mPageIndex);
+    case Mode::CurrentPage:
+      wce->ClearUserInput(mTabView->GetPageIndex());
       return;
     case Mode::AllTabs:
       throw new std::logic_error("Unreachable");
