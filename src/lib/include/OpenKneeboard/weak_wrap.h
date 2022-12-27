@@ -49,9 +49,20 @@ auto convert_to_strong(const std::weak_ptr<T>& p) {
 ///// C++/WinRT /////
 
 template <class T>
-  requires requires(T t) { t->get_weak(); }
+concept with_get_weak = requires(T t) { t->get_weak(); };
+
+template <class T>
+concept with_winrt_make_weak = requires(T t) { winrt::make_weak(t); } && !
+with_get_weak<T>;
+
+template <with_get_weak T>
 auto convert_to_weak(const T& t) {
   return t->get_weak();
+}
+
+template <with_winrt_make_weak T>
+auto convert_to_weak(const T& t) {
+  return winrt::make_weak(t);
 }
 
 template <class T>

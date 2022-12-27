@@ -88,7 +88,7 @@ The lambda callback case is pretty verbose, so OpenKneeboard includes `OpenKneeb
 
 ```C++
 foo.OnSomeEvent(
-  [](const auto& self) {
+  [](auto self) {
     // `self` is an `std::shared_ptr<decltype(this)>`
     self->SomeMethod();
   },
@@ -113,12 +113,13 @@ auto lambda = [this, bar] () -> winrt::fire_and_forget {
 Lambda captures are only guaranteed to be valid for the lifetime of the lambda - which *returns* a coroutine. Once the coroutine is started:
 - the lambda may no longer exist
 - even if it does, the captures may be referencing stack values which are no longer valid
+- take parameters by value
 
 **DO NOT USE CAPTURES FOR COROUTINE LAMBDAS**. Instead:
 
 ```C++
 auto lambda = [this, bar] () {
-  return [](auto& weakThis, auto& bar) -> winrt::fire_and_forget {
+  return [](auto& weakThis, auto bar) -> winrt::fire_and_forget {
     // ...
   }(weak_from_this(), bar);
 }();

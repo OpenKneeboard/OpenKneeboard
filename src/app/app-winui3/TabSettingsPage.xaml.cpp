@@ -86,12 +86,12 @@ TabSettingsPage::TabSettingsPage() {
   AddEventListener(
     gKneeboard->GetTabsList()->evTabsChangedEvent,
     weak_wrap(
-      [this](auto) {
-        if (mUIIsChangingTabs) {
+      [](auto self) {
+        if (self->mUIIsChangingTabs) {
           return;
         }
-        if (mPropertyChangedEvent) {
-          mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Tabs"));
+        if (self->mPropertyChangedEvent) {
+          self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Tabs"));
         }
       },
       this));

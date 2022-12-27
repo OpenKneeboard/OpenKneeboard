@@ -82,7 +82,7 @@ TabPage::TabPage() {
   AddEventListener(
     gKneeboard->evFrameTimerEvent,
     weak_wrap(
-      [](const auto& self) {
+      [](auto self) {
         if (self->mNeedsFrame) {
           self->PaintNow();
         }
@@ -193,12 +193,16 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   AddEventListener(
     action->evStateChangedEvent,
-    [this, action, button]() noexcept -> winrt::fire_and_forget {
-      auto [action, button] = std::make_tuple(action, button);
-      co_await mUIThread;
-      button.IsChecked(action->IsActive());
-      button.IsEnabled(action->IsEnabled());
-    });
+    weak_wrap(
+      [](auto self, auto action, auto button) noexcept
+      -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        button.IsChecked(action->IsActive());
+        button.IsEnabled(action->IsEnabled());
+      },
+      this,
+      action,
+      button));
 
   return button;
 }
@@ -218,11 +222,15 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
   AddEventListener(
     action->evStateChangedEvent,
-    [this, action, button]() noexcept -> winrt::fire_and_forget {
-      auto [action, button] = std::make_tuple(action, button);
-      co_await mUIThread;
-      button.IsEnabled(action->IsEnabled());
-    });
+    weak_wrap(
+      [](auto self, auto action, auto button) noexcept
+      -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        button.IsEnabled(action->IsEnabled());
+      },
+      this,
+      action,
+      button));
 
   return button;
 }
@@ -251,13 +259,13 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     AddEventListener(
       checkable->evStateChangedEvent,
       weak_wrap(
-        [tmfi, checkable](const auto& self) -> winrt::fire_and_forget {
-          // coroutines are fun
-          auto [tmfi, checkable] = std::make_tuple(tmfi, checkable);
+        [](auto self, auto tmfi, auto checkable) -> winrt::fire_and_forget {
           co_await self->mUIThread;
           tmfi.IsChecked(checkable->IsChecked());
         },
-        this));
+        this,
+        tmfi,
+        checkable));
   } else {
     ret = {};
   }
@@ -267,11 +275,14 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
 
   AddEventListener(
     action->evStateChangedEvent,
-    [this, action, ret]() noexcept -> winrt::fire_and_forget {
-      auto [action, ret] = std::make_tuple(action, ret);
-      co_await mUIThread;
-      ret.IsEnabled(action->IsEnabled());
-    });
+    weak_wrap(
+      [](auto self, auto action, auto ret) noexcept -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        ret.IsEnabled(action->IsEnabled());
+      },
+      this,
+      action,
+      ret));
   return ret;
 }
 
