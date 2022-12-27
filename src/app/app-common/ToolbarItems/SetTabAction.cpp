@@ -43,7 +43,7 @@ bool SetTabAction::IsChecked() const {
     == mTabID;
 }
 
-bool SetTabAction::IsEnabled() {
+bool SetTabAction::IsEnabled() const {
   return true;
 }
 

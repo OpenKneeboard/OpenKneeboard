@@ -34,7 +34,7 @@ class ToolbarFlyout : public IToolbarFlyout {
   ToolbarFlyout() = delete;
   virtual ~ToolbarFlyout();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
 
   std::string_view GetGlyph() const override final;
   std::string_view GetLabel() const override final;

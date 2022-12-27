@@ -37,7 +37,7 @@ class ClearUserInputAction final : public ToolbarAction, public EventReceiver {
 
   ~ClearUserInputAction();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
   virtual void Execute() override;
 
  private:

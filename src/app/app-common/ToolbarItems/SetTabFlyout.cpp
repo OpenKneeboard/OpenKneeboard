@@ -43,7 +43,7 @@ std::string_view SetTabFlyout::GetLabel() const {
   return _("Switch Tab");
 }
 
-bool SetTabFlyout::IsEnabled() {
+bool SetTabFlyout::IsEnabled() const {
   return true;
 }
 

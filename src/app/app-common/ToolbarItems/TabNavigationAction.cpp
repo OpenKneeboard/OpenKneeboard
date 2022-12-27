@@ -33,7 +33,7 @@ TabNavigationAction::~TabNavigationAction() {
   this->RemoveAllEventListeners();
 }
 
-bool TabNavigationAction::IsEnabled() {
+bool TabNavigationAction::IsEnabled() const {
   return mState->SupportsTabMode(TabMode::NAVIGATION);
 }
 

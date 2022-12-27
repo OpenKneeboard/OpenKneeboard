@@ -31,7 +31,7 @@ class TabFirstPageAction final : public ToolbarAction, private EventReceiver {
   TabFirstPageAction(const std::shared_ptr<ITabView>& state);
   ~TabFirstPageAction();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
   virtual void Execute() override;
 
  private:

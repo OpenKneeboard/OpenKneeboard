@@ -32,7 +32,7 @@ TabFirstPageAction::~TabFirstPageAction() {
   this->RemoveAllEventListeners();
 }
 
-bool TabFirstPageAction::IsEnabled() {
+bool TabFirstPageAction::IsEnabled() const {
   return mState->GetPageCount() > 1 && mState->GetPageIndex() > 0;
 }
 

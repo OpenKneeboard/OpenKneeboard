@@ -42,7 +42,7 @@ ReloadTabAction::~ReloadTabAction() {
   this->RemoveAllEventListeners();
 }
 
-bool ReloadTabAction::IsEnabled() {
+bool ReloadTabAction::IsEnabled() const {
   return true;
 }
 

@@ -35,7 +35,8 @@ class SetTabFlyout final : public IToolbarFlyout {
 
   std::string_view GetGlyph() const override;
   std::string_view GetLabel() const override;
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;
+  ;
 
   virtual std::vector<std::shared_ptr<IToolbarItem>> GetSubItems()
     const override;

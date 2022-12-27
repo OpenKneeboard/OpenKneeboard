@@ -30,7 +30,7 @@ ToolbarFlyout::ToolbarFlyout(
 
 ToolbarFlyout::~ToolbarFlyout() = default;
 
-bool ToolbarFlyout::IsEnabled() {
+bool ToolbarFlyout::IsEnabled() const {
   for (auto& item: this->GetSubItems()) {
     const auto selectable
       = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);

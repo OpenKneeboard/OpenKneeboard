@@ -34,7 +34,7 @@ class TabPreviousPageAction final : public ToolbarAction, private EventReceiver 
     const std::shared_ptr<ITabView>& state);
   ~TabPreviousPageAction();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
   virtual void Execute() override;
 
  private:

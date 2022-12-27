@@ -33,7 +33,7 @@ class TabNavigationAction final : public TabToggleAction,
   ~TabNavigationAction();
 
   virtual bool IsActive() override;
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
 
   virtual void Activate() override;
   virtual void Deactivate() override;

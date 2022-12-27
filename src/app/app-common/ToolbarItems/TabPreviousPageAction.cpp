@@ -43,7 +43,7 @@ TabPreviousPageAction::~TabPreviousPageAction() {
   this->RemoveAllEventListeners();
 }
 
-bool TabPreviousPageAction::IsEnabled() {
+bool TabPreviousPageAction::IsEnabled() const {
   if (mKneeboard->GetAppSettings().mLoopPages) {
     return mTabView->GetPageCount() > 1;
   }

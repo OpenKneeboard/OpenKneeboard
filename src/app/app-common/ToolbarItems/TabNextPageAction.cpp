@@ -42,7 +42,7 @@ TabNextPageAction::~TabNextPageAction() {
   this->RemoveAllEventListeners();
 }
 
-bool TabNextPageAction::IsEnabled() {
+bool TabNextPageAction::IsEnabled() const {
   const auto count = mTabView->GetPageCount();
   if (count < 2) {
     return false;

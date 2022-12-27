@@ -59,7 +59,7 @@ ClearUserInputAction::~ClearUserInputAction() {
   this->RemoveAllEventListeners();
 }
 
-bool ClearUserInputAction::IsEnabled() {
+bool ClearUserInputAction::IsEnabled() const {
   auto wce = mTabView
     ? std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(mTabView->GetTab())
     : nullptr;

@@ -35,7 +35,7 @@ class ReloadTabAction final : public ToolbarAction, public EventReceiver {
 
   ~ReloadTabAction();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
   virtual void Execute() override;
 
  private:

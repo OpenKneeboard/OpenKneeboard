@@ -40,7 +40,7 @@ NextTabAction::~NextTabAction() {
   this->RemoveAllEventListeners();
 }
 
-bool NextTabAction::IsEnabled() {
+bool NextTabAction::IsEnabled() const {
   const auto count = mKneeboardState->GetTabsList()->GetTabs().size();
 
   if (count < 2) {

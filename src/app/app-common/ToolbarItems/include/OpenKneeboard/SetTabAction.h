@@ -36,7 +36,8 @@ class SetTabAction final : public ToolbarAction,
     const std::shared_ptr<ITab>&);
   ~SetTabAction();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;
+  ;
   virtual bool IsChecked() const override;
   virtual void Execute() override;
 

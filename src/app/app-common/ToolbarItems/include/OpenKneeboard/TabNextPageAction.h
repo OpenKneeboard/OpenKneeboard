@@ -32,7 +32,7 @@ class TabNextPageAction final : public ToolbarAction, private EventReceiver {
 
   ~TabNextPageAction();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
   virtual void Execute() override;
 
  private:

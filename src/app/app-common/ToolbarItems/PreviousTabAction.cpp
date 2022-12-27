@@ -41,7 +41,7 @@ PreviousTabAction::~PreviousTabAction() {
   this->RemoveAllEventListeners();
 }
 
-bool PreviousTabAction::IsEnabled() {
+bool PreviousTabAction::IsEnabled() const {
   if (mKneeboardView->GetTabIndex() > 0) {
     return true;
   }

@@ -35,7 +35,7 @@ class NextTabAction final : public ToolbarAction, private EventReceiver {
   NextTabAction(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
   ~NextTabAction();
 
-  virtual bool IsEnabled() override;
+  virtual bool IsEnabled() const override;;
   virtual void Execute() override;
 
  private:
