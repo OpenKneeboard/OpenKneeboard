@@ -61,35 +61,42 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
 }
 
 winrt::fire_and_forget HWNDPageSource::InitializeOnWorkerThread() noexcept {
-  const auto d2dLock = mDXR.AcquireLock();
+  {
+    const auto d2dLock = mDXR.AcquireLock();
 
-  auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
-  auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
-  WGC::GraphicsCaptureItem item {nullptr};
-  winrt::check_hresult(interopFactory->CreateForWindow(
-    mWindow, winrt::guid_of<WGC::GraphicsCaptureItem>(), winrt::put_abi(item)));
+    auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
+    auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
+    WGC::GraphicsCaptureItem item {nullptr};
+    winrt::check_hresult(interopFactory->CreateForWindow(
+      mWindow,
+      winrt::guid_of<WGC::GraphicsCaptureItem>(),
+      winrt::put_abi(item)));
 
-  winrt::com_ptr<IInspectable> inspectable {nullptr};
-  WGDX::Direct3D11::IDirect3DDevice winrtD3D {nullptr};
-  winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
+    winrt::com_ptr<IInspectable> inspectable {nullptr};
+    WGDX::Direct3D11::IDirect3DDevice winrtD3D {nullptr};
+    winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
 
-    mDXR.mDXGIDevice.get(),
-    reinterpret_cast<IInspectable**>(winrt::put_abi(winrtD3D))));
+      mDXR.mDXGIDevice.get(),
+      reinterpret_cast<IInspectable**>(winrt::put_abi(winrtD3D))));
 
-  mFramePool = WGC::Direct3D11CaptureFramePool::Create(
-    winrtD3D, WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 2, item.Size());
-  mFramePool.FrameArrived(
-    [this](const auto&, const auto&) { this->OnFrame(); });
+    mFramePool = WGC::Direct3D11CaptureFramePool::Create(
+      winrtD3D,
+      WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
+      2,
+      item.Size());
+    mFramePool.FrameArrived(
+      [this](const auto&, const auto&) { this->OnFrame(); });
 
-  mCaptureSession = mFramePool.CreateCaptureSession(item);
-  mCaptureSession.IsCursorCaptureEnabled(false);
-  mCaptureSession.StartCapture();
+    mCaptureSession = mFramePool.CreateCaptureSession(item);
+    mCaptureSession.IsCursorCaptureEnabled(false);
+    mCaptureSession.StartCapture();
 
-  mCaptureItem = item;
-  mCaptureItem.Closed([this](auto&, auto&) {
-    this->mWindow = {};
-    this->evWindowClosedEvent.Emit();
-  });
+    mCaptureItem = item;
+    mCaptureItem.Closed([this](auto&, auto&) {
+      this->mWindow = {};
+      this->evWindowClosedEvent.Emit();
+    });
+  }
 
   const auto keepAlive = shared_from_this();
   co_await std::chrono::milliseconds(100);
