@@ -30,6 +30,9 @@ cmake_policy(SET CMP0079 NEW)
 set(CMAKE_LINK_LIBRARIES_ONLY_TARGETS ON)
 cmake_policy(SET CMP0028 NEW)
 
+# Extract with current timestamps
+cmake_policy(SET CMP0135 NEW)
+
 # We're going to use the 'Hybrid CRT' approach, which is the combination of the
 # UCRT and the static C++ Runtime
 #
