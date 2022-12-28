@@ -47,11 +47,15 @@ std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
   HWND hwnd,
   KneeboardState* kbs,
   const TabletSettings& tablet) {
+  if (gHaveInstance.test_and_set()) {
+    throw std::logic_error("There can only be one TabletInputAdapter");
+  }
   auto ret = std::shared_ptr<TabletInputAdapter>(
     new TabletInputAdapter(hwnd, kbs, tablet));
-  ret->Init();
 
   gInstance = ret;
+  ret->Init();
+
   return ret;
 }
 
@@ -60,9 +64,6 @@ TabletInputAdapter::TabletInputAdapter(
   KneeboardState* kneeboard,
   const TabletSettings& settings)
   : mWindow(window), mKneeboard(kneeboard) {
-  if (gHaveInstance.test_and_set()) {
-    throw std::logic_error("There can only be one TabletInputAdapter");
-  }
   LoadSettings(settings);
 
   mOTDIPC = OTDIPCClient::Create();
