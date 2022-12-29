@@ -54,7 +54,6 @@ winrt::fire_and_forget OTDIPCClient::final_release(
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
-  auto weakThis = weak_from_this();
   dprint("Starting OTD-IPC client");
   const scope_guard exitMessage([]() {
     dprintf(
@@ -62,15 +61,14 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
       std::uncaught_exceptions());
   });
   auto cancelled = co_await winrt::get_cancellation_token();
-  while (true) {
-    try {
-      auto keepAlive = weakThis.lock();
+  try {
+    while (true) {
       co_await this->RunSingle();
-    } catch (const winrt::hresult_canceled&) {
-      dprint("OTD-IPC coroutine cancelled, assuming clean shutdown");
-      co_return;
+      co_await winrt::resume_after(std::chrono::seconds(1));
     }
-    co_await winrt::resume_after(std::chrono::seconds(1));
+  } catch (const winrt::hresult_canceled&) {
+    dprint("OTD-IPC coroutine cancelled, assuming clean shutdown");
+    co_return;
   }
 }
 
@@ -91,7 +89,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
-  auto keepAlive = shared_from_this();
+  auto weak = this->weak_from_this();
   auto cancelled = co_await winrt::get_cancellation_token();
 
   winrt::file_handle connection {CreateFileW(
@@ -138,6 +136,11 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
       co_return;
     }
     if (readFileError == ERROR_IO_PENDING) {
+      auto keepAlive = weak.lock();
+      if (!keepAlive) {
+        co_return;
+      }
+
       bool haveEvent = false;
       while (!mTabletsToTimeout.empty()) {
         const auto first = mTabletsToTimeout.begin();
@@ -190,7 +193,11 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
       co_return;
     }
 
-    ProcessMessage(header);
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
+    self->ProcessMessage(header);
   }
 }
 

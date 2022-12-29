@@ -47,8 +47,6 @@ class TabletInputAdapter final
  public:
   static std::shared_ptr<TabletInputAdapter>
   Create(HWND, KneeboardState*, const TabletSettings&);
-
-  TabletInputAdapter() = delete;
   ~TabletInputAdapter();
 
   TabletSettings GetSettings() const;
@@ -66,8 +64,11 @@ class TabletInputAdapter final
   Event<UserAction> evUserActionEvent;
   Event<std::shared_ptr<UserInputDevice>> evDeviceConnectedEvent;
 
+  TabletInputAdapter() = delete;
+
  private:
   TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
+  void Init();
   void StartWintab();
   void StopWintab();
   void StartOTDIPC();

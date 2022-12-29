@@ -41,6 +41,12 @@ struct InputSettingsPage
   InputSettingsPage();
   ~InputSettingsPage();
 
+  uint8_t WintabMode() const;
+  winrt::Windows::Foundation::IAsyncAction WintabMode(uint8_t) const;
+
+  bool IsOpenTabletDriverEnabled() const;
+  void IsOpenTabletDriverEnabled(bool);
+
   winrt::fire_and_forget RestoreDefaults(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;

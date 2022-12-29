@@ -25,6 +25,10 @@ namespace OpenKneeboardApp
                                     Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         InputSettingsPage();
+
+        UInt8 WintabMode;
+        Boolean IsOpenTabletDriverEnabled;
+        
         Windows.Foundation.Collections.IVector<IInspectable> Devices { get; };
     }
 

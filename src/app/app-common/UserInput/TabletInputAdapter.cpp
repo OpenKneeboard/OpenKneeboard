@@ -55,7 +55,7 @@ std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
     new TabletInputAdapter(hwnd, kbs, tablet));
 
   gInstance = ret;
-  ret->StartWintab();
+  ret->Init();
 
   return ret;
 }
@@ -68,6 +68,11 @@ TabletInputAdapter::TabletInputAdapter(
   LoadSettings(settings);
 }
 
+void TabletInputAdapter::Init() {
+  this->StartWintab();
+  this->StartOTDIPC();
+}
+
 bool TabletInputAdapter::IsOTDIPCEnabled() const {
   return mSettings.mOTDIPC;
 }
@@ -77,12 +82,12 @@ void TabletInputAdapter::SetIsOTDIPCEnabled(bool value) {
     return;
   }
 
+  mSettings.mOTDIPC = value;
   if (value) {
     StartOTDIPC();
   } else {
     StopOTDIPC();
   }
-  mSettings.mOTDIPC = value;
   evSettingsChangedEvent.Emit();
 }
 

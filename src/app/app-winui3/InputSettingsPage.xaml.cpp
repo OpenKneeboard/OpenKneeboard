@@ -24,6 +24,7 @@
 // clang-format on
 
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserInputDevice.h>
 #include <OpenKneeboard/utf8.h>
@@ -111,4 +112,28 @@ void InputSettingsPage::OnOrientationChanged(
   std::dynamic_pointer_cast<TabletInputDevice>(device)->SetOrientation(
     static_cast<TabletOrientation>(combo.SelectedIndex()));
 }
+
+uint8_t InputSettingsPage::WintabMode() const {
+  return static_cast<uint8_t>(
+    gKneeboard->GetTabletInputAdapter()->GetWintabMode());
+}
+
+winrt::Windows::Foundation::IAsyncAction InputSettingsPage::WintabMode(
+  uint8_t rawMode) const {
+  auto t = gKneeboard->GetTabletInputAdapter();
+  const auto mode = static_cast<OpenKneeboard::WintabMode>(rawMode);
+  if (mode == t->GetWintabMode()) {
+    co_return;
+  }
+  co_await t->SetWintabMode(mode);
+}
+
+bool InputSettingsPage::IsOpenTabletDriverEnabled() const {
+  return gKneeboard->GetTabletInputAdapter()->IsOTDIPCEnabled();
+}
+
+void InputSettingsPage::IsOpenTabletDriverEnabled(bool value) {
+  gKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation

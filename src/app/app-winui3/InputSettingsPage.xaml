@@ -28,7 +28,7 @@
     </DataTemplate>
     <!-- Tablet Device Settings -->
     <DataTemplate x:Key="TabletDeviceTemplate" x:DataType="local:TabletInputDeviceUIData">
-      <StackPanel Orientation="Vertical">
+      <StackPanel Orientation="Vertical" Spacing="8">
         <TextBlock
           Text="{x:Bind Name}"
           Style="{StaticResource SubtitleTextBlockStyle}"
@@ -39,8 +39,7 @@
           BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
           CornerRadius="4"
           BorderThickness="1"
-          Padding="8"
-          Margin="0,0,0,8">
+          Padding="8">
           <ComboBox
             Header="Orientation"
             x:Name="OrientationRadioButtons"
@@ -64,8 +63,9 @@
       </StackPanel>
     </DataTemplate>
   </Page.Resources>
+  <!-- Content Starts Here -->
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
-    <StackPanel Orientation="Vertical">
+    <StackPanel Orientation="Vertical" Spacing="12">
       <Grid
         ColumnDefinitions="*, Auto"
         Margin="0,0,0,8">
@@ -81,6 +81,55 @@
           Click="RestoreDefaults"
         />
       </Grid>
+      <TextBlock
+        Text="Tablet Support"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,0,0,16"
+      />
+      <StackPanel
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Spacing="8"
+        Padding="8">
+        <ComboBox
+          Header="Wintab"
+          SelectedIndex="{x:Bind WintabMode, Mode=TwoWay}">
+          <x:String>Disabled</x:String>
+          <x:String>Standard</x:String>
+          <x:String>Invasive</x:String>
+        </ComboBox>
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          If your tablet only works when OpenKneeboard is the active window,
+          try invasive mode, or OpenTabletDriver. Invasive mode can cause game
+          issues, but may be required by buggy drivers.
+				</TextBlock>
+      </StackPanel>
+      <StackPanel
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Spacing="8"
+        Padding="8">
+        <ToggleSwitch
+          Header="OpenTabletDriver IPC"
+          IsOn="{x:Bind IsOpenTabletDriverEnabled, Mode=TwoWay}"
+          OffContent="Disabled"
+          OnContent="Enabled"
+        />
+        <HyperlinkButton
+          Content="Get OpenTabletDriver"
+          NavigateUri="https://opentabletdriver.net/"
+        />
+        <HyperlinkButton
+          Content="Get the IPC Plugin"
+          NavigateUri="https://go.openkneeboard.com/otd-ipc"
+        />
+      </StackPanel>
       <ItemsRepeater ItemsSource="{x:Bind Devices, Mode=OneWay}">
         <ItemsRepeater.Layout>
           <StackLayout Orientation="Vertical" Spacing="24" />
