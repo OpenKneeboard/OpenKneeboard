@@ -91,6 +91,8 @@ class KneeboardState final
   GamesList* GetGamesList() const;
   std::optional<RunningGame> GetCurrentGame() const;
 
+  std::shared_ptr<TabletInputAdapter> GetTabletInputAdapter() const;
+
   ProfileSettings GetProfileSettings() const;
   void SetProfileSettings(const ProfileSettings&);
 

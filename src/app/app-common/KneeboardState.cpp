@@ -51,7 +51,7 @@ std::shared_ptr<KneeboardState> KneeboardState::Create(
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
-  mGamesList = std::make_unique<GamesList>(mSettings.mGames);
+  mGamesList = std::make_unique<GamesList>(this, mSettings.mGames);
   AddEventListener(
     mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
   AddEventListener(
@@ -430,6 +430,11 @@ GamesList* KneeboardState::GetGamesList() const {
 
 TabsList* KneeboardState::GetTabsList() const {
   return mTabsList.get();
+}
+
+std::shared_ptr<TabletInputAdapter> KneeboardState::GetTabletInputAdapter()
+  const {
+  return mTabletInput;
 }
 
 std::optional<RunningGame> KneeboardState::GetCurrentGame() const {

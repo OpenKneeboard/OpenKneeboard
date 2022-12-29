@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/UserAction.h>
+#include <OpenKneeboard/WintabMode.h>
 #include <OpenKneeboard/json_fwd.h>
 
 #include <cinttypes>
@@ -51,6 +52,9 @@ struct TabletSettings final {
 
     constexpr auto operator<=>(const Device&) const noexcept = default;
   };
+
+  WintabMode mWintab {WintabMode::Disabled};
+  bool mOTDIPC {true};
 
   std::unordered_map<std::string, Device> mDevices;
 

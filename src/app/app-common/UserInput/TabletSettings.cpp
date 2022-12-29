@@ -31,6 +31,14 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {TabletOrientation::RotateCW270, "RotateCCW270"},
   })
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  WintabMode,
+  {
+    {WintabMode::Disabled, "Disabled"},
+    {WintabMode::Enabled, "Enabled"},
+    {WintabMode::EnabledInvasive, "EnabledInvasive"},
+  })
+
 // Not using sparse json as an individual binding should not be diffed/merged:
 // if either the buttons or actions differ, it's a different binding, not a
 // modified one.
@@ -41,6 +49,6 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mName,
   mExpressKeyBindings,
   mOrientation)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(TabletSettings, mDevices)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(TabletSettings, mDevices, mWintab, mOTDIPC)
 
 }// namespace OpenKneeboard

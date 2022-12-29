@@ -30,6 +30,7 @@
 #include <OpenKneeboard/WintabTablet.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/handles.h>
 
 #include <atomic>
 #include <bit>
@@ -54,7 +55,7 @@ std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
     new TabletInputAdapter(hwnd, kbs, tablet));
 
   gInstance = ret;
-  ret->Init();
+  ret->StartWintab();
 
   return ret;
 }
@@ -70,13 +71,56 @@ TabletInputAdapter::TabletInputAdapter(
   AddEventListener(
     mOTDIPC->evTabletInputEvent,
     std::bind_front(&TabletInputAdapter::OnOTDInput, this));
-
-  mWintabTablet = std::make_unique<WintabTablet>(
-    window, WintabTablet::Priority::AlwaysActive);
 }
 
-void TabletInputAdapter::Init() {
-  if (!mWintabTablet->IsValid()) {
+WintabMode TabletInputAdapter::GetWintabMode() const {
+  return mSettings.mWintab;
+}
+
+winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
+  WintabMode mode) {
+  if (mode == GetWintabMode()) {
+    co_return;
+  }
+
+  if (mode == WintabMode::Disabled) {
+    mSettings.mWintab = mode;
+    StopWintab();
+    evSettingsChangedEvent.Emit();
+    co_return;
+  }
+
+  // Check that we can actually load Wintab before we save it; some drivers
+  // - especially XP-Pen - will crash as soon as they're loaded
+  {
+    dprint("Attempting to load wintab");
+    unique_hmodule wintab {LoadLibraryW(L"WINTAB32.dll")};
+    co_await winrt::resume_after(std::chrono::milliseconds(100));
+    dprint("Loaded wintab!");
+  }
+
+  mSettings.mWintab = mode;
+  StartWintab();
+  // Again, make sure that doesn't crash :)
+  co_await winrt::resume_after(std::chrono::milliseconds(100));
+  evSettingsChangedEvent.Emit();
+}
+
+void TabletInputAdapter::StartWintab() {
+  if (mSettings.mWintab == WintabMode::Disabled) {
+    return;
+  }
+
+  if (!mWintabTablet) {
+    mWintabTablet = std::make_unique<WintabTablet>(
+      mWindow, WintabTablet::Priority::AlwaysActive);
+    if (!mWintabTablet->IsValid()) {
+      mWintabTablet.reset();
+      return;
+    }
+  }
+
+  if (mPreviousWndProc) {
     return;
   }
 
@@ -97,7 +141,7 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::CreateDevice(
   const std::string& id) {
   auto device = std::make_shared<TabletInputDevice>(
     name, id, TabletOrientation::RotateCW90);
-  LoadSettings(mInitialSettings, device);
+  LoadSettings(mSettings, device);
 
   AddEventListener(
     device->evBindingsChangedEvent, this->evSettingsChangedEvent);
@@ -110,7 +154,7 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::CreateDevice(
 }
 
 void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
-  mInitialSettings = settings;
+  mSettings = settings;
 
   for (auto& device: this->GetDevices()) {
     auto tabletDevice = std::static_pointer_cast<TabletInputDevice>(device);
@@ -143,11 +187,20 @@ void TabletInputAdapter::LoadSettings(
 
 TabletInputAdapter::~TabletInputAdapter() {
   this->RemoveAllEventListeners();
-  if (mPreviousWndProc) {
-    SetWindowLongPtrW(
-      mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWndProc));
-  }
   gHaveInstance.clear();
+}
+
+void TabletInputAdapter::StopWintab() {
+  if (!mWintabTablet) {
+    return;
+  }
+  if (!mPreviousWndProc) {
+    return;
+  }
+  SetWindowLongPtrW(
+    mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWndProc));
+  mWintabTablet = {};
+  mPreviousWndProc = {};
 }
 
 LRESULT CALLBACK TabletInputAdapter::WindowProc_Wintab(
@@ -277,7 +330,7 @@ void TabletInputAdapter::OnTabletInput(
 }
 
 TabletSettings TabletInputAdapter::GetSettings() const {
-  auto settings = mInitialSettings;
+  auto settings = mSettings;
 
   for (auto& device: this->GetDevices()) {
     auto tablet = std::static_pointer_cast<TabletInputDevice>(device);

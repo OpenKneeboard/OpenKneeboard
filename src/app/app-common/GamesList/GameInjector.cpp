@@ -27,9 +27,12 @@
 
 #include <OpenKneeboard/GameInjector.h>
 #include <OpenKneeboard/GameInstance.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/weak_wrap.h>
 #include <shims/winrt/base.h>
 
 #include <chrono>
@@ -81,21 +84,15 @@ class DebugPrivileges final {
   }
 };
 
-bool HaveWintab() {
-  // Don't bother installing wintab support if the user doesn't have any
-  // wintab drivers installed
-
-  auto wintab = LoadLibraryW(L"WINTAB32.dll");
-  FreeLibrary(wintab);
-
-  return (bool)wintab;
-}
-
 }// namespace
 
 namespace OpenKneeboard {
 
-GameInjector::GameInjector() {
+std::shared_ptr<GameInjector> GameInjector::Create(KneeboardState* state) {
+  return std::shared_ptr<GameInjector>(new GameInjector(state));
+}
+
+GameInjector::GameInjector(KneeboardState* state) : mKneeboardState(state) {
   const auto dllPath
     = std::filesystem::canonical(RuntimeFiles::GetInstallationDirectory());
   mTabletProxyDll = dllPath / RuntimeFiles::TABLET_PROXY_DLL;
@@ -103,6 +100,10 @@ GameInjector::GameInjector() {
   mOverlayNonVRD3D11Dll = dllPath / RuntimeFiles::NON_VR_D3D11_DLL;
   mOverlayOculusD3D11Dll = dllPath / RuntimeFiles::OCULUS_D3D11_DLL;
   mOverlayOculusD3D12Dll = dllPath / RuntimeFiles::OCULUS_D3D12_DLL;
+}
+
+GameInjector::~GameInjector() {
+  RemoveAllEventListeners();
 }
 
 void GameInjector::SetGameInstances(
@@ -116,6 +117,23 @@ bool GameInjector::Run(std::stop_token stopToken) {
   process.dwSize = sizeof(process);
   MODULEENTRY32 module;
   module.dwSize = sizeof(module);
+
+  this->RemoveEventListener(mTabletSettingsChangeToken);
+  auto tablet = mKneeboardState->GetTabletInputAdapter();
+  if (tablet) {
+    mWintabMode = tablet->GetWintabMode();
+    mTabletSettingsChangeToken = AddEventListener(
+      tablet->evSettingsChangedEvent,
+      weak_wrap(
+        [](auto self, auto tablet) {
+          self->mWintabMode = tablet->GetWintabMode();
+        },
+        this,
+        tablet));
+  } else {
+    mWintabMode = WintabMode::Disabled;
+  }
+
   dprint("Watching for game processes");
   while (!stopToken.stop_requested()) {
     winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
@@ -191,7 +209,7 @@ void GameInjector::CheckProcess(
 
     InjectedDlls wantedDlls {InjectedDlls::None};
 
-    if (HaveWintab()) {
+    if (mWintabMode == WintabMode::EnabledInvasive) {
       wantedDlls |= InjectedDlls::TabletProxy;
     }
 

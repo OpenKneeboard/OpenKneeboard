@@ -23,12 +23,14 @@
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GenericGame.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <windows.h>
 
 namespace OpenKneeboard {
-GamesList::GamesList(const nlohmann::json& config) {
-  mGames = {std::make_shared<DCSWorld>(), std::make_shared<GenericGame>()};
+GamesList::GamesList(KneeboardState* state, const nlohmann::json& config)
+  : mKneeboardState(state),
+    mGames({std::make_shared<DCSWorld>(), std::make_shared<GenericGame>()}) {
   LoadSettings(config);
 }
 
@@ -37,7 +39,7 @@ void GamesList::StartInjector() {
     return;
   }
 
-  mInjector = std::make_unique<GameInjector>();
+  mInjector = GameInjector::Create(mKneeboardState);
   mInjector->SetGameInstances(mInstances);
   AddEventListener(mInjector->evGameChangedEvent, this->evGameChangedEvent);
   mInjectorThread = std::jthread([this](std::stop_token stopToken) {

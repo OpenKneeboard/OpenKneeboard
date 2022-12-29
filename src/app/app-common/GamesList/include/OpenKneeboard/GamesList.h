@@ -28,19 +28,21 @@ namespace OpenKneeboard {
 class Game;
 struct GameInstance;
 class GameInjector;
+class KneeboardState;
 
 class GamesList final : private EventReceiver {
  private:
+  KneeboardState* mKneeboardState {nullptr};
   std::vector<std::shared_ptr<Game>> mGames;
   std::vector<std::shared_ptr<GameInstance>> mInstances;
-  std::unique_ptr<GameInjector> mInjector;
+  std::shared_ptr<GameInjector> mInjector;
   std::jthread mInjectorThread;
 
   void LoadDefaultSettings();
 
  public:
   GamesList() = delete;
-  GamesList(const nlohmann::json& config);
+  GamesList(KneeboardState*, const nlohmann::json& config);
   virtual ~GamesList();
   virtual nlohmann::json GetSettings() const;
   void LoadSettings(const nlohmann::json&);
@@ -51,8 +53,8 @@ class GamesList final : private EventReceiver {
   std::vector<std::shared_ptr<GameInstance>> GetGameInstances() const;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
-  OpenKneeboard::Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
-  OpenKneeboard::Event<> evSettingsChangedEvent;
+  Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
+  Event<> evSettingsChangedEvent;
 };
 
 }// namespace OpenKneeboard

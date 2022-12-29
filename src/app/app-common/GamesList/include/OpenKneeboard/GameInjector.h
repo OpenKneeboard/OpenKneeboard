@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/WintabMode.h>
 #include <OpenKneeboard/bitflags.h>
 #include <Windows.h>
 
@@ -47,9 +48,13 @@ enum class InjectedDlls : uint32_t {
 template <>
 constexpr bool is_bitflags_v<InjectedDlls> = true;
 
-class GameInjector final {
+class KneeboardState;
+
+class GameInjector final : public EventReceiver,
+                           public std::enable_shared_from_this<GameInjector> {
  public:
-  GameInjector();
+  static std::shared_ptr<GameInjector> Create(KneeboardState* kneeboardState);
+  ~GameInjector();
   bool Run(std::stop_token);
 
   Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
@@ -58,8 +63,12 @@ class GameInjector final {
   static bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll);
   static bool InjectDll(HANDLE process, const std::filesystem::path& dll);
 
+  GameInjector() = delete;
+
  private:
+  GameInjector(KneeboardState* kneeboardState);
   void CheckProcess(DWORD processID, std::wstring_view exeBaseName);
+  KneeboardState* mKneeboardState {nullptr};
   std::vector<std::shared_ptr<GameInstance>> mGames;
   std::mutex mGamesMutex;
 
@@ -70,6 +79,10 @@ class GameInjector final {
   std::filesystem::path mOverlayOculusD3D12Dll;
 
   std::unordered_map<DWORD, InjectedDlls> mProcessCache;
+
+  WintabMode mWintabMode {WintabMode::Disabled};
+
+  EventHandlerToken mTabletSettingsChangeToken {};
 };
 
 }// namespace OpenKneeboard

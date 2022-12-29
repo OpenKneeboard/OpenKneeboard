@@ -55,6 +55,9 @@ class TabletInputAdapter final
   void LoadSettings(const TabletSettings&);
   Event<> evSettingsChangedEvent;
 
+  WintabMode GetWintabMode() const;
+  winrt::Windows::Foundation::IAsyncAction SetWintabMode(WintabMode);
+
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
   Event<UserAction> evUserActionEvent;
@@ -62,9 +65,11 @@ class TabletInputAdapter final
 
  private:
   TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
-  void Init();
+  void StartWintab();
+  void StopWintab();
+
   KneeboardState* mKneeboard;
-  TabletSettings mInitialSettings;
+  TabletSettings mSettings;
   std::unordered_map<std::string, uint32_t> mAuxButtons;
 
   void OnTabletInput(
