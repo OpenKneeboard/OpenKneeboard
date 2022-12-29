@@ -232,7 +232,7 @@ void KneeboardView::PreviousPage() {
 
 D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
   if (!mCurrentTabView) {
-    return {768, 1024};
+    return {ErrorRenderWidth, ErrorRenderHeight};
   }
 
   auto [first, rest] = this->GetUILayers();
@@ -259,7 +259,7 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
 
 D2D1_SIZE_U KneeboardView::GetContentNativeSize() const {
   if (!mCurrentTabView) {
-    return {768, 1024};
+    return {ErrorRenderWidth, ErrorRenderHeight};
   }
   return mCurrentTabView->GetNativeContentSize();
 }
