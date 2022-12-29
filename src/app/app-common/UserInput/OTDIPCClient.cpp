@@ -54,7 +54,7 @@ winrt::fire_and_forget OTDIPCClient::final_release(
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
-  auto keepAlive = shared_from_this();
+  auto weakThis = weak_from_this();
   dprint("Starting OTD-IPC client");
   const scope_guard exitMessage([]() {
     dprintf(
@@ -63,9 +63,12 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
   });
   auto cancelled = co_await winrt::get_cancellation_token();
   while (true) {
-    co_await this->RunSingle();
-    if (cancelled()) {
-      break;
+    try {
+      auto keepAlive = weakThis.lock();
+      co_await this->RunSingle();
+    } catch (const winrt::hresult_canceled&) {
+      dprint("OTD-IPC coroutine cancelled, assuming clean shutdown");
+      co_return;
     }
     co_await winrt::resume_after(std::chrono::seconds(1));
   }
