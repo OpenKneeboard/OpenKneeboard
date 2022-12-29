@@ -127,6 +127,8 @@ concurrency::task<bool> GameEventServer::RunSingle(
   for (const auto& [name, value]: events) {
     self->evGameEvent.Emit({name, value});
   }
+
+  co_return true;
 }
 
 }// namespace OpenKneeboard
