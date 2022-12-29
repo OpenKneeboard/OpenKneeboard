@@ -66,11 +66,42 @@ TabletInputAdapter::TabletInputAdapter(
   const TabletSettings& settings)
   : mWindow(window), mKneeboard(kneeboard) {
   LoadSettings(settings);
+}
+
+bool TabletInputAdapter::IsOTDIPCEnabled() const {
+  return mSettings.mOTDIPC;
+}
+
+void TabletInputAdapter::SetIsOTDIPCEnabled(bool value) {
+  if (value == IsOTDIPCEnabled()) {
+    return;
+  }
+
+  if (value) {
+    StartOTDIPC();
+  } else {
+    StopOTDIPC();
+  }
+  mSettings.mOTDIPC = value;
+  evSettingsChangedEvent.Emit();
+}
+
+void TabletInputAdapter::StartOTDIPC() {
+  if (mOTDIPC) {
+    return;
+  }
+  if (!mSettings.mOTDIPC) {
+    return;
+  }
 
   mOTDIPC = OTDIPCClient::Create();
   AddEventListener(
     mOTDIPC->evTabletInputEvent,
     std::bind_front(&TabletInputAdapter::OnOTDInput, this));
+}
+
+void TabletInputAdapter::StopOTDIPC() {
+  mOTDIPC.reset();
 }
 
 WintabMode TabletInputAdapter::GetWintabMode() const {
@@ -186,6 +217,8 @@ void TabletInputAdapter::LoadSettings(
 }
 
 TabletInputAdapter::~TabletInputAdapter() {
+  StopWintab();
+  StopOTDIPC();
   this->RemoveAllEventListeners();
   gHaveInstance.clear();
 }

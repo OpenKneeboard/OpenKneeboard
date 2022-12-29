@@ -58,6 +58,9 @@ class TabletInputAdapter final
   WintabMode GetWintabMode() const;
   winrt::Windows::Foundation::IAsyncAction SetWintabMode(WintabMode);
 
+  bool IsOTDIPCEnabled() const;
+  void SetIsOTDIPCEnabled(bool);
+
   std::vector<std::shared_ptr<UserInputDevice>> GetDevices() const;
 
   Event<UserAction> evUserActionEvent;
@@ -67,6 +70,8 @@ class TabletInputAdapter final
   TabletInputAdapter(HWND, KneeboardState*, const TabletSettings&);
   void StartWintab();
   void StopWintab();
+  void StartOTDIPC();
+  void StopOTDIPC();
 
   KneeboardState* mKneeboard;
   TabletSettings mSettings;
