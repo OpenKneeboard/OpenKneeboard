@@ -399,7 +399,7 @@ void FlyoutMenuUILayer::UpdateLayout(
     const D2D1_RECT_F labelRect {
       origin.x + leftMargin,
       origin.y,
-      origin.x + maxItemWidth - rightMargin,
+      origin.x + leftMargin + maxTextWidth + 1,// D2D considers it exclusive
       origin.y + selectableItemHeight,
     };
     const D2D1_RECT_F glyphRect {
