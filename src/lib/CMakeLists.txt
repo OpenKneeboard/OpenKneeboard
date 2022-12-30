@@ -188,6 +188,7 @@ target_link_libraries(
   OpenKneeboard-D2DErrorRenderer
   PUBLIC
   OpenKneeboard-UTF8
+  OpenKneeboard-config
   System::D2d1
   System::Dwrite
   _libheaders)

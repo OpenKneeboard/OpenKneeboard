@@ -55,7 +55,7 @@ NavigationTab::NavigationTab(
 
   auto dwf = mDXR.mDWriteFactory;
   winrt::check_hresult(dwf->CreateTextFormat(
-    L"Segoe UI",
+    VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
@@ -75,7 +75,7 @@ NavigationTab::NavigationTab(
   winrt::check_hresult(mTextFormat->SetTrimming(&trimming, ellipsis.get()));
 
   winrt::check_hresult(dwf->CreateTextFormat(
-    L"Segoe UI",
+    VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,

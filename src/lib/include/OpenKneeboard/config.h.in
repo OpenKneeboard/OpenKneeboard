@@ -40,4 +40,9 @@ constexpr const wchar_t ProjectNameW[] {L"@CMAKE_PROJECT_NAME@"};
 constexpr const wchar_t RegistrySubKey[] {
   L"SOFTWARE\\Fred Emmott\\OpenKneeboard"};
 
+constexpr const wchar_t VariableWidthUIFont[] {L"Segoe UI"};
+constexpr const wchar_t GlyphFont[] {L"Segoe MDL2 Assets"};
+constexpr const wchar_t FixedWidthUIFont[] {L"Consolas"};
+constexpr const wchar_t FixedWidthContentFont[] {L"Consolas"};
+
 }// namespace OpenKneeboard

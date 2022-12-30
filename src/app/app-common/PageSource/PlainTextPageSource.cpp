@@ -20,6 +20,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <Unknwn.h>
@@ -36,7 +37,7 @@ PlainTextPageSource::PlainTextPageSource(
   : mDXR(dxr), mPlaceholderText(placeholderText) {
   auto dwf = mDXR.mDWriteFactory;
   dwf->CreateTextFormat(
-    L"Consolas",
+    FixedWidthContentFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,

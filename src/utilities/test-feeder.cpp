@@ -103,7 +103,7 @@ int main() {
     reinterpret_cast<IUnknown**>(dwrite.put()));
   winrt::com_ptr<IDWriteTextFormat> textFormat;
   dwrite->CreateTextFormat(
-    L"Segoe UI",
+    VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
     DWRITE_FONT_STYLE_NORMAL,

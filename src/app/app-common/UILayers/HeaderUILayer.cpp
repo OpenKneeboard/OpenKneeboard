@@ -236,7 +236,7 @@ void HeaderUILayer::DrawToolbar(
   d2d->GetDpi(&dpix, &dpiy);
   winrt::com_ptr<IDWriteTextFormat> glyphFormat;
   winrt::check_hresult(mDXResources.mDWriteFactory->CreateTextFormat(
-    L"Segoe MDL2 Assets",
+    GlyphFont,
     nullptr,
     DWRITE_FONT_WEIGHT_EXTRA_BOLD,
     DWRITE_FONT_STYLE_NORMAL,
@@ -389,7 +389,7 @@ void HeaderUILayer::DrawHeaderText(
   ctx->GetDpi(&dpix, &dpiy);
   winrt::com_ptr<IDWriteTextFormat> headerFormat;
   winrt::check_hresult(dwf->CreateTextFormat(
-    L"Consolas",
+    FixedWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
     DWRITE_FONT_STYLE_NORMAL,

@@ -17,13 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/Config.h>
 #include <OpenKneeboard/FlyoutMenuUILayer.h>
 #include <OpenKneeboard/ICheckableToolbarItem.h>
 #include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <dwrite.h>
 
@@ -246,7 +246,7 @@ void FlyoutMenuUILayer::UpdateLayout(
 
   winrt::com_ptr<IDWriteTextFormat> textFormat;
   winrt::check_hresult(dwf->CreateTextFormat(
-    L"Segoe UI",
+    VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
@@ -258,7 +258,7 @@ void FlyoutMenuUILayer::UpdateLayout(
   textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
   winrt::com_ptr<IDWriteTextFormat> glyphFormat;
   winrt::check_hresult(dwf->CreateTextFormat(
-    L"Segoe MDL2 Assets",
+    GlyphFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,

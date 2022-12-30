@@ -151,7 +151,7 @@ void FooterUILayer::Render(
   const auto& dwf = mDXResources.mDWriteFactory;
   winrt::com_ptr<IDWriteTextFormat> clockFormat;
   winrt::check_hresult(dwf->CreateTextFormat(
-    L"Consolas",
+    FixedWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_BOLD,
     DWRITE_FONT_STYLE_NORMAL,

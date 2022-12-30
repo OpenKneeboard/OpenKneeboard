@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/config.h>
 #include <Unknwn.h>
 #include <dwrite.h>
 
@@ -59,7 +60,7 @@ void D2DErrorRenderer::Render(
   winrt::com_ptr<IDWriteTextFormat> textFormat;
 
   p->mDWrite->CreateTextFormat(
-    L"Segoe UI",
+    VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
