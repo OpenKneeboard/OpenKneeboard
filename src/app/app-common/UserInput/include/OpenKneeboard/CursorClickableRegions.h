@@ -30,8 +30,8 @@ namespace OpenKneeboard {
 
 template <class T>
 concept ClickableRegion = requires(T a) {
-  { a.mRect } -> std::convertible_to<D2D1_RECT_F>;
-};
+                            { a.mRect } -> std::convertible_to<D2D1_RECT_F>;
+                          };
 
 template <ClickableRegion Button>
 class CursorClickableRegions final {
@@ -61,6 +61,7 @@ class CursorClickableRegions final {
   }
 
   Event<EventContext, const Button&> evClicked;
+  Event<EventContext> evClickedWithoutButton;
 
   void PostCursorEvent(EventContext ec, const CursorEvent& ev) {
     const D2D1_POINT_2F cursor {ev.mX, ev.mY};
@@ -99,6 +100,9 @@ class CursorClickableRegions final {
 
     // Touch end
     if (!mPressedButton) {
+      if (!buttonUnderCursor) {
+        evClickedWithoutButton.Emit(ec);
+      }
       return;
     }
     const auto pressedButton = *mPressedButton;

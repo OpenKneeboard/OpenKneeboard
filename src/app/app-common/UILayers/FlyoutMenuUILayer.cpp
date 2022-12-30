@@ -423,6 +423,12 @@ void FlyoutMenuUILayer::UpdateLayout(
   auto cursorImpl
     = std::make_unique<CursorClickableRegions<MenuItem>>(std::move(menuItems));
   AddEventListener(
+    cursorImpl->evClickedWithoutButton, [weak = weak_from_this()]() {
+      if (auto self = weak.lock()) {
+        self->evCloseMenuRequestedEvent.Emit();
+      }
+    });
+  AddEventListener(
     cursorImpl->evClicked, [weak = weak_from_this()](auto, const auto& item) {
       if (auto self = weak.lock()) {
         self->OnClick(item);
