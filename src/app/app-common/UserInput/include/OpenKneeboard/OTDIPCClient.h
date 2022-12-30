@@ -58,7 +58,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
  private:
   OTDIPCClient();
   winrt::Windows::Foundation::IAsyncAction Run();
-  winrt::Windows::Foundation::IAsyncAction RunSingle();
+  winrt::Windows::Foundation::IAsyncAction RunSingle(
+    const std::weak_ptr<OTDIPCClient>&);
 
   void ProcessMessage(const OTDIPC::Messages::Header* const);
   void ProcessMessage(const OTDIPC::Messages::DeviceInfo* const);
