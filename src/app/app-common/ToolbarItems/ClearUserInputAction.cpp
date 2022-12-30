@@ -157,7 +157,15 @@ std::string_view ClearUserInputAction::GetConfirmationDescription() const {
 }
 
 std::string_view ClearUserInputAction::GetConfirmButtonLabel() const {
-  return _("Clear");
+  switch (mMode) {
+    case Mode::CurrentPage:
+      return _("Clear page");
+    case Mode::ThisTab:
+      return _("Clear tab");
+    case Mode::AllTabs:
+      return _("Clear all pages and tabs");
+  }
+  OPENKNEEBOARD_UNREACHABLE;
 }
 std::string_view ClearUserInputAction::GetCancelButtonLabel() const {
   return _("Cancel");
