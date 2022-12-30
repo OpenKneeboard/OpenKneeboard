@@ -89,6 +89,12 @@ void HeaderUILayer::PostCursorEvent(
   const Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
+  if (cursorEvent.mSource == CursorSource::WINDOW_POINTER) {
+    next.front()->PostCursorEvent(
+      next.subspan(1), context, eventContext, cursorEvent);
+    return;
+  }
+
   if (!mLastRenderSize) {
     return;
   }

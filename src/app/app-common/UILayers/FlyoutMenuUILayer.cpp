@@ -132,7 +132,10 @@ void FlyoutMenuUILayer::Render(
     next.front()->Render(next.subspan(1), context, d2d, rect);
   }
 
-  if (!mMenu) {
+  Menu menu {};
+  try {
+    menu = mMenu.value();
+  } catch (const std::bad_optional_access&) {
     return;
   }
 
@@ -143,7 +146,6 @@ void FlyoutMenuUILayer::Render(
     d2d->FillRectangle(rect, mBGOverpaintBrush.get());
   }
 
-  const auto& menu = *mMenu;
   d2d->FillRoundedRectangle(
     D2D1::RoundedRect(menu.mRect, menu.mMargin, menu.mMargin),
     mMenuBGBrush.get());
@@ -434,7 +436,7 @@ void FlyoutMenuUILayer::UpdateLayout(
   winrt::check_hresult(textFormat->SetTrimming(&trimming, ellipsis.get()));
 
   auto cursorImpl
-    = std::make_unique<CursorClickableRegions<MenuItem>>(std::move(menuItems));
+    = std::make_shared<CursorClickableRegions<MenuItem>>(std::move(menuItems));
   AddEventListener(
     cursorImpl->evClickedWithoutButton, [weak = weak_from_this()]() {
       if (auto self = weak.lock()) {

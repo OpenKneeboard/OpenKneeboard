@@ -104,7 +104,7 @@ class FlyoutMenuUILayer final
   struct Menu {
     FLOAT mMargin {};
     D2D1_RECT_F mRect {};
-    std::unique_ptr<CursorClickableRegions<MenuItem>> mCursorImpl;
+    std::shared_ptr<CursorClickableRegions<MenuItem>> mCursorImpl;
     std::vector<D2D1_RECT_F> mSeparatorRects;
     winrt::com_ptr<IDWriteTextFormat> mTextFormat;
     winrt::com_ptr<IDWriteTextFormat> mGlyphFormat;
