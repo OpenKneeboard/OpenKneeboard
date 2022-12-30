@@ -19,12 +19,26 @@
  */
 #include <OpenKneeboard/ConfirmationUILayer.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
+#include <OpenKneeboard/config.h>
+
+static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
+  return memcmp(&a, &b, sizeof(D2D1_RECT_F)) == 0;
+}
 
 namespace OpenKneeboard {
 
 ConfirmationUILayer::ConfirmationUILayer(
+  const DXResources& dxr,
   const std::shared_ptr<IToolbarItemWithConfirmation>& item)
-  : mItem(item) {
+  : mDXResources(dxr), mItem(item) {
+  auto d2d = dxr.mD2DDeviceContext.get();
+
+  d2d->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 0.6f}, D2D1::BrushProperties(), mOverpaintBrush.put());
+  d2d->CreateSolidColorBrush(
+    {1.0f, 1.0f, 1.0f, 1.0f}, D2D1::BrushProperties(), mDialogBGBrush.put());
+  d2d->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mTextBrush.put());
 }
 
 ConfirmationUILayer::~ConfirmationUILayer() = default;
@@ -44,6 +58,273 @@ void ConfirmationUILayer::Render(
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
   next.front()->Render(next.subspan(1), context, d2d, rect);
+
+  if (rect != mCanvasRect) {
+    UpdateLayout(d2d, rect);
+  }
+
+  if (!mCanvasRect) {
+    return;
+  }
+
+  Dialog dialog {};
+  try {
+    dialog = mDialog.value();
+  } catch (const std::bad_optional_access&) {
+    return;
+  }
+
+  d2d->FillRectangle(rect, mOverpaintBrush.get());
+  d2d->FillRoundedRectangle(
+    D2D1::RoundedRect(dialog.mBoundingBox, dialog.mMargin, dialog.mMargin),
+    mDialogBGBrush.get());
+
+  d2d->DrawTextW(
+    dialog.mTitle.data(),
+    dialog.mTitle.size(),
+    dialog.mTitleFormat.get(),
+    dialog.mTitleRect,
+    mTextBrush.get());
+
+  d2d->DrawTextW(
+    dialog.mDetails.data(),
+    dialog.mDetails.size(),
+    dialog.mDetailsFormat.get(),
+    dialog.mDetailsRect,
+    mTextBrush.get());
+
+  const auto [hoverButton, buttons] = dialog.mButtons->GetState();
+  for (const auto& button: buttons) {
+    d2d->DrawRoundedRectangle(
+      D2D1::RoundedRect(button.mRect, dialog.mMargin, dialog.mMargin),
+      mTextBrush.get());
+    d2d->DrawTextW(
+      button.mLabel.data(),
+      button.mLabel.size(),
+      dialog.mButtonsFormat.get(),
+      button.mRect,
+      mTextBrush.get());
+  }
+}
+
+void ConfirmationUILayer::UpdateLayout(
+  ID2D1DeviceContext* d2d,
+  const D2D1_RECT_F& canvasRect) {
+  const D2D1_SIZE_F canvasSize {
+    canvasRect.right - canvasRect.left,
+    canvasRect.bottom - canvasRect.top,
+  };
+
+  const auto titleFontSize
+    = canvasSize.height * (HeaderPercent / 100.0f) * 0.5f;
+  const auto maxTextWidth
+    = std::min(titleFontSize * 40, canvasSize.width * 0.8f);
+
+  auto dwf = mDXResources.mDWriteFactory;
+
+  const auto textFontSize = titleFontSize * 0.6f;
+  winrt::com_ptr<IDWriteTextFormat> titleFormat;
+  winrt::check_hresult(dwf->CreateTextFormat(
+    VariableWidthUIFont,
+    nullptr,
+    DWRITE_FONT_WEIGHT_BOLD,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    titleFontSize,
+    L"en-us",
+    titleFormat.put()));
+  titleFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  titleFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+  titleFormat->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+
+  const auto detailsFontSize = titleFontSize * 0.6f;
+  winrt::com_ptr<IDWriteTextFormat> detailsFormat;
+  winrt::check_hresult(dwf->CreateTextFormat(
+    VariableWidthUIFont,
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    detailsFontSize,
+    L"en-us",
+    detailsFormat.put()));
+  detailsFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  detailsFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+
+  const auto buttonFontSize = titleFontSize * 0.6f;
+  winrt::com_ptr<IDWriteTextFormat> buttonFormat;
+  winrt::check_hresult(dwf->CreateTextFormat(
+    VariableWidthUIFont,
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    buttonFontSize,
+    L"en-us",
+    buttonFormat.put()));
+  buttonFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  buttonFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+
+  auto titleTextInfo = GetTextRenderInfo(
+    titleFormat, maxTextWidth, mItem->GetConfirmationTitle());
+  auto detailsTextInfo = GetTextRenderInfo(
+    detailsFormat, maxTextWidth, mItem->GetConfirmationDescription());
+  auto confirmButtonTextInfo = GetTextRenderInfo(
+    buttonFormat, maxTextWidth / 2, mItem->GetConfirmButtonLabel());
+  auto cancelButtonTextInfo = GetTextRenderInfo(
+    buttonFormat, maxTextWidth / 2, mItem->GetCancelButtonLabel());
+
+  const auto margin = titleFontSize / 3;
+  /* Horizontal margins:
+   *
+   * - left -> content
+   * - content -> right
+   *
+   * - button left -> button text
+   * - button right -> button text
+   * - space between buttons
+   * - button left -> button text
+   * - button text -> button right
+   *
+   * Vertical margins:
+   *
+   * - top -> title
+   * - title -> detail
+   * - detail -> buttons
+   * - button top -> button text
+   * - button text -> button bottom
+   * - button bottom -> bottom
+   */
+  const D2D1_SIZE_F dialogSize = {
+    std::max({
+      titleTextInfo.mSize.width,
+      detailsTextInfo.mSize.width,
+      confirmButtonTextInfo.mSize.width + cancelButtonTextInfo.mSize.width
+        + (margin * 5),
+    }) + (margin * 2),
+    (margin * 6) + titleTextInfo.mSize.height + detailsTextInfo.mSize.height
+      + std::max(
+        confirmButtonTextInfo.mSize.height, cancelButtonTextInfo.mSize.height),
+  };
+
+  const D2D1_POINT_2F dialogOrigin {
+    canvasRect.left + ((canvasSize.width - dialogSize.width) / 2),
+    canvasRect.top + ((canvasSize.height - dialogSize.height) / 2),
+  };
+
+  const D2D1_RECT_F dialogRect {
+    dialogOrigin.x,
+    dialogOrigin.y,
+    dialogOrigin.x + dialogSize.width,
+    dialogOrigin.y + dialogSize.height,
+  };
+
+  D2D1_POINT_2F cursor {
+    dialogOrigin.x + margin,
+    dialogOrigin.y + margin,
+  };
+
+  const D2D1_RECT_F titleRect {
+    cursor.x,
+    cursor.y,
+    dialogRect.right - margin,
+    cursor.y + titleTextInfo.mSize.height,
+  };
+
+  cursor.y = titleRect.bottom + margin;
+
+  const D2D1_RECT_F detailsRect {
+    cursor.x,
+    cursor.y,
+    dialogRect.right - margin,
+    cursor.y + detailsTextInfo.mSize.height,
+  };
+
+  cursor.y = detailsRect.bottom + margin;
+
+  const D2D1_SIZE_F confirmButtonSize {
+    confirmButtonTextInfo.mSize.width + (2 * margin),
+    confirmButtonTextInfo.mSize.height + (2 * margin),
+  };
+
+  const D2D1_SIZE_F cancelButtonSize {
+    cancelButtonTextInfo.mSize.width + (2 * margin),
+    confirmButtonSize.height,
+  };
+
+  const auto buttonsWidth
+    = confirmButtonSize.width + cancelButtonSize.width + margin;
+
+  cursor.x = canvasRect.left + ((dialogSize.width - buttonsWidth) / 2);
+
+  const D2D1_RECT_F confirmButtonRect {
+    cursor.x,
+    cursor.y,
+    cursor.x + confirmButtonSize.width,
+    cursor.y + confirmButtonSize.height,
+  };
+
+  cursor.x = confirmButtonRect.right + margin;
+
+  const D2D1_RECT_F cancelButtonRect {
+    cursor.x,
+    cursor.y,
+    cursor.x + cancelButtonSize.width,
+    cursor.y + cancelButtonSize.height,
+  };
+
+  auto buttons
+    = std::make_shared<CursorClickableRegions<Button>>(std::vector<Button> {
+      Button {
+        .mAction = ButtonAction::Confirm,
+        .mRect = confirmButtonRect,
+        .mLabel = confirmButtonTextInfo.mWinString,
+      },
+      Button {
+        .mAction = ButtonAction::Cancel,
+        .mRect = cancelButtonRect,
+        .mLabel = cancelButtonTextInfo.mWinString,
+      },
+    });
+
+  mDialog = Dialog {
+    .mMargin = margin,
+    .mBoundingBox = dialogRect,
+    .mTitle = titleTextInfo.mWinString,
+    .mTitleFormat = std::move(titleFormat),
+    .mTitleRect = titleRect,
+    .mDetails = detailsTextInfo.mWinString,
+    .mDetailsFormat = std::move(detailsFormat),
+    .mDetailsRect = detailsRect,
+    .mButtons = std::move(buttons),
+    .mButtonsFormat = std::move(buttonFormat),
+  };
+  mCanvasRect = canvasRect;
+}
+
+ConfirmationUILayer::TextRenderInfo ConfirmationUILayer::GetTextRenderInfo(
+  const winrt::com_ptr<IDWriteTextFormat>& format,
+  FLOAT maxWidth,
+  std::string_view utf8) const {
+  const auto inf = std::numeric_limits<FLOAT>::infinity();
+
+  TextRenderInfo ret {
+    .mWinString = winrt::to_hstring(utf8),
+  };
+
+  auto dwf = mDXResources.mDWriteFactory;
+  winrt::com_ptr<IDWriteTextLayout> layout;
+  winrt::check_hresult(dwf->CreateTextLayout(
+    ret.mWinString.data(),
+    ret.mWinString.size(),
+    format.get(),
+    maxWidth,
+    inf,
+    layout.put()));
+  DWRITE_TEXT_METRICS metrics {};
+  winrt::check_hresult(layout->GetMetrics(&metrics));
+  ret.mSize = {metrics.width, metrics.height};
+  return ret;
 }
 
 IUILayer::Metrics ConfirmationUILayer::GetMetrics(

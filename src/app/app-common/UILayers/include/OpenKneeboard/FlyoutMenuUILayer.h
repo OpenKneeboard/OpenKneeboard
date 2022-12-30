@@ -86,7 +86,7 @@ class FlyoutMenuUILayer final
 
   std::optional<D2D1_RECT_F> mLastRenderRect;
 
-  std::shared_ptr<FlyoutMenuUILayer> mSubMenu;
+  std::shared_ptr<IUILayer> mPrevious;
 
   struct MenuItem {
     D2D1_RECT_F mRect {};

@@ -17,10 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/ConfirmationUILayer.h>
 #include <OpenKneeboard/FlyoutMenuUILayer.h>
 #include <OpenKneeboard/ICheckableToolbarItem.h>
 #include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
+#include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/config.h>
@@ -84,8 +86,8 @@ void FlyoutMenuUILayer::PostCursorEvent(
     return;
   }
 
-  if (mSubMenu) {
-    mSubMenu->PostCursorEvent(next, context, eventContext, cursorEvent);
+  if (mPrevious) {
+    mPrevious->PostCursorEvent(next, context, eventContext, cursorEvent);
     return;
   }
 
@@ -108,7 +110,7 @@ void FlyoutMenuUILayer::Render(
   const Context& context,
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
-  if (mSubMenu && !mRecursiveCall) {
+  if (mPrevious && !mRecursiveCall) {
     mRecursiveCall = true;
     const scope_guard endRecursive([this]() { mRecursiveCall = false; });
 
@@ -116,7 +118,7 @@ void FlyoutMenuUILayer::Render(
     submenuNext.reserve(next.size() + 1);
     std::ranges::copy(next, std::back_inserter(submenuNext));
 
-    mSubMenu->Render(submenuNext, context, d2d, rect);
+    mPrevious->Render(submenuNext, context, d2d, rect);
     return;
   }
 
@@ -142,7 +144,7 @@ void FlyoutMenuUILayer::Render(
   d2d->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
   const scope_guard popClip([d2d]() { d2d->PopAxisAlignedClip(); });
 
-  if (!mSubMenu) {
+  if (!mPrevious) {
     d2d->FillRectangle(rect, mBGOverpaintBrush.get());
   }
 
@@ -472,6 +474,23 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
     return;
   }
 
+  auto confirmable
+    = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(item.mItem);
+  if (confirmable) {
+    auto prev
+      = std::make_shared<ConfirmationUILayer>(mDXResources, confirmable);
+    AddEventListener(prev->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+    AddEventListener(prev->evClosedEvent, [weak = weak_from_this()]() {
+      if (auto self = weak.lock()) {
+        self->mPrevious = {};
+        self->evNeedsRepaintEvent.Emit();
+      }
+    });
+    mPrevious = prev;
+    evNeedsRepaintEvent.Emit();
+    return;
+  }
+
   auto action = std::dynamic_pointer_cast<ToolbarAction>(item.mItem);
   if (action) {
     action->Execute();
@@ -490,7 +509,7 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
     mLastRenderRect->bottom - mLastRenderRect->top,
   };
 
-  mSubMenu = FlyoutMenuUILayer::Create(
+  auto subMenu = FlyoutMenuUILayer::Create(
     mDXResources,
     flyout->GetSubItems(),
     {(rect.right - mMenu->mMargin) / renderSize.width,
@@ -499,8 +518,9 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
      rect.top / renderSize.height},// Put top-right corner here
     mPreferredAnchor);
   AddEventListener(
-    mSubMenu->evCloseMenuRequestedEvent, this->evCloseMenuRequestedEvent);
-  AddEventListener(mSubMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+    subMenu->evCloseMenuRequestedEvent, this->evCloseMenuRequestedEvent);
+  AddEventListener(subMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  mPrevious = subMenu;
   evNeedsRepaintEvent.Emit();
 }
 
