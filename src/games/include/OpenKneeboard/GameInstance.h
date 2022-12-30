@@ -28,6 +28,7 @@ namespace OpenKneeboard {
 
 // This must match the values in the Game Settings UI
 #define OPENKNEEBOARD_OVERLAY_APIS \
+  IT(None) \
   IT(AutoDetect) \
   IT(SteamVR) \
   IT(OpenXR) \

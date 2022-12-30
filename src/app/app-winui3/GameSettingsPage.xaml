@@ -45,6 +45,7 @@
           Tag="{x:Bind InstanceID}"
           SelectedIndex="{x:Bind OverlayAPI}"
           SelectionChanged="OnOverlayAPIChanged">
+          <x:String>No overlay</x:String>
           <x:String>Auto-detect</x:String>
           <x:String>SteamVR</x:String>
           <x:String>OpenXR</x:String>
