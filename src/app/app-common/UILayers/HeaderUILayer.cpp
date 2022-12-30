@@ -329,33 +329,8 @@ void HeaderUILayer::LayoutToolbar(
   AddEventListener(
     toolbar->evClicked, [weak = weak_from_this()](auto, const Button& button) {
       auto self = weak.lock();
-      if (!self) {
-        return;
-      }
-
-      auto action = std::dynamic_pointer_cast<ToolbarAction>(button.mAction);
-      if (action) {
-        action->Execute();
-        return;
-      }
-      auto flyout = std::dynamic_pointer_cast<IToolbarFlyout>(button.mAction);
-      if (flyout) {
-        if (self->mSecondaryMenu) {
-          self->mSecondaryMenu.reset();
-          self->evNeedsRepaintEvent.Emit();
-          return;
-        }
-        self->mSecondaryMenu = std::make_shared<FlyoutMenuUILayer>(
-          self->mDXResources,
-          flyout->GetSubItems(),
-          D2D1_POINT_2F {0.0f, HeaderPercent / 100.0f},
-          D2D1_POINT_2F {1.0f, HeaderPercent / 100.0f},
-          FlyoutMenuUILayer::Corner::TopRight);
-        self->AddEventListener(
-          self->mSecondaryMenu->evNeedsRepaintEvent, self->evNeedsRepaintEvent);
-        self->evNeedsRepaintEvent.Emit();
-
-        return;
+      if (auto self = weak.lock()) {
+        self->OnClick(button);
       }
     });
 
@@ -404,6 +379,34 @@ void HeaderUILayer::DrawHeaderText(
 
 bool HeaderUILayer::Button::operator==(const Button& other) const noexcept {
   return mAction == other.mAction;
+}
+
+void HeaderUILayer::OnClick(const Button& button) {
+  auto action = std::dynamic_pointer_cast<ToolbarAction>(button.mAction);
+  if (action) {
+    action->Execute();
+    return;
+  }
+
+  auto flyout = std::dynamic_pointer_cast<IToolbarFlyout>(button.mAction);
+  if (!flyout) {
+    return;
+  }
+
+  if (mSecondaryMenu) {
+    mSecondaryMenu.reset();
+    evNeedsRepaintEvent.Emit();
+    return;
+  }
+  mSecondaryMenu = FlyoutMenuUILayer::Create(
+    mDXResources,
+    flyout->GetSubItems(),
+    D2D1_POINT_2F {0.0f, HeaderPercent / 100.0f},
+    D2D1_POINT_2F {1.0f, HeaderPercent / 100.0f},
+    FlyoutMenuUILayer::Corner::TopRight);
+  AddEventListener(
+    mSecondaryMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  evNeedsRepaintEvent.Emit();
 }
 
 }// namespace OpenKneeboard

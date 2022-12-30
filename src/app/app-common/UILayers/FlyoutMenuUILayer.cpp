@@ -22,6 +22,7 @@
 #include <OpenKneeboard/ICheckableToolbarItem.h>
 #include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <dwrite.h>
@@ -31,6 +32,16 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) {
 }
 
 namespace OpenKneeboard {
+
+std::shared_ptr<FlyoutMenuUILayer> FlyoutMenuUILayer::Create(
+  const DXResources& dxr,
+  const std::vector<std::shared_ptr<IToolbarItem>>& items,
+  D2D1_POINT_2F preferredTopLeft01,
+  D2D1_POINT_2F preferredTopRight01,
+  Corner preferredCorner) {
+  return std::shared_ptr<FlyoutMenuUILayer>(new FlyoutMenuUILayer(
+    dxr, items, preferredTopLeft01, preferredTopRight01, preferredCorner));
+}
 
 FlyoutMenuUILayer::FlyoutMenuUILayer(
   const DXResources& dxr,
@@ -52,7 +63,9 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
     {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mMenuFGBrush.put());
 }
 
-FlyoutMenuUILayer::~FlyoutMenuUILayer() = default;
+FlyoutMenuUILayer::~FlyoutMenuUILayer() {
+  RemoveAllEventListeners();
+}
 
 void FlyoutMenuUILayer::PostCursorEvent(
   const NextList& next,
@@ -65,10 +78,15 @@ void FlyoutMenuUILayer::PostCursorEvent(
     return;
   }
 
+  if (mSubMenu) {
+    mSubMenu->PostCursorEvent(next, context, eventContext, cursorEvent);
+    return;
+  }
+
   CursorEvent menuEvent {cursorEvent};
   menuEvent.mX *= (mLastRenderRect->right - mLastRenderRect->left);
   menuEvent.mY *= (mLastRenderRect->bottom - mLastRenderRect->top);
-  mMenu->mItems->PostCursorEvent(eventContext, menuEvent);
+  mMenu->mCursorImpl->PostCursorEvent(eventContext, menuEvent);
   evNeedsRepaintEvent.Emit();
 }
 
@@ -83,6 +101,18 @@ void FlyoutMenuUILayer::Render(
   const Context& context,
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
+  if (mSubMenu && !mRecursiveCall) {
+    mRecursiveCall = true;
+    const scope_guard endRecursive([this]() { mRecursiveCall = false; });
+
+    std::vector<IUILayer*> submenuNext {this};
+    submenuNext.reserve(next.size() + 1);
+    std::ranges::copy(next, std::back_inserter(submenuNext));
+
+    mSubMenu->Render(next, context, d2d, rect);
+    return;
+  }
+
   if ((!mLastRenderRect) || rect != mLastRenderRect) {
     this->UpdateLayout(d2d, rect);
     if (!mMenu) {
@@ -110,7 +140,7 @@ void FlyoutMenuUILayer::Render(
   std::wstring chevron {L"\ue76c"};// ChevronRight
   std::wstring checkmark {L"\ue73e"};// CheckMark
 
-  auto [hoverMenuItem, menuItems] = menu.mItems->GetState();
+  auto [hoverMenuItem, menuItems] = menu.mCursorImpl->GetState();
 
   for (const auto& menuItem: menuItems) {
     auto selectable
@@ -387,11 +417,19 @@ void FlyoutMenuUILayer::UpdateLayout(
   DWRITE_TRIMMING trimming {DWRITE_TRIMMING_GRANULARITY_CHARACTER};
   winrt::check_hresult(textFormat->SetTrimming(&trimming, ellipsis.get()));
 
+  auto cursorImpl
+    = std::make_unique<CursorClickableRegions<MenuItem>>(std::move(menuItems));
+  AddEventListener(
+    cursorImpl->evClicked, [weak = weak_from_this()](auto, const auto& item) {
+      if (auto self = weak.lock()) {
+        self->OnClick(item);
+      }
+    });
+
   mMenu = {
     .mMargin = margin,
     .mRect = menuRect,
-    .mItems
-    = std::make_unique<CursorClickableRegions<MenuItem>>(std::move(menuItems)),
+    .mCursorImpl = std::move(cursorImpl),
     .mSeparatorRects = std::move(separators),
     .mTextFormat = std::move(textFormat),
     .mGlyphFormat = std::move(glyphFormat),
@@ -401,6 +439,44 @@ void FlyoutMenuUILayer::UpdateLayout(
 bool FlyoutMenuUILayer::MenuItem::operator==(
   const MenuItem& other) const noexcept {
   return mItem == other.mItem;
+}
+
+void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
+  auto checkable = std::dynamic_pointer_cast<ICheckableToolbarItem>(item.mItem);
+  if (checkable && checkable->IsChecked()) {
+    return;
+  }
+
+  auto action = std::dynamic_pointer_cast<ToolbarAction>(item.mItem);
+  if (action) {
+    action->Execute();
+    evCloseMenuRequestedEvent.Emit();
+    return;
+  }
+
+  auto flyout = std::dynamic_pointer_cast<IToolbarFlyout>(item.mItem);
+  if (!flyout) {
+    return;
+  }
+
+  auto rect = item.mRect;
+  const D2D1_SIZE_F renderSize = {
+    mLastRenderRect->right - mLastRenderRect->left,
+    mLastRenderRect->bottom - mLastRenderRect->top,
+  };
+
+  mSubMenu = FlyoutMenuUILayer::Create(
+    mDXResources,
+    flyout->GetSubItems(),
+    {(rect.left + mMenu->mMargin) / renderSize.width,
+     rect.top / renderSize.height},// TL
+    {(rect.right - mMenu->mMargin) / renderSize.width,
+     rect.top / renderSize.height},// TR,
+    mPreferredAnchor);
+  AddEventListener(
+    mSubMenu->evCloseMenuRequestedEvent, this->evCloseMenuRequestedEvent);
+  AddEventListener(mSubMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  evNeedsRepaintEvent.Emit();
 }
 
 }// namespace OpenKneeboard

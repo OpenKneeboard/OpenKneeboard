@@ -104,6 +104,8 @@ class HeaderUILayer final : public IUILayer,
   std::optional<Toolbar> mToolbar;
   std::shared_ptr<FlyoutMenuUILayer> mSecondaryMenu;
 
+  void OnClick(const Button&);
+
   bool mRecursiveCall = false;
 };
 

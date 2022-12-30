@@ -32,13 +32,16 @@ namespace OpenKneeboard {
 
 class KneeboardState;
 
-class FlyoutMenuUILayer final : public IUILayer {
+class FlyoutMenuUILayer final
+  : public IUILayer,
+    public EventReceiver,
+    public std::enable_shared_from_this<FlyoutMenuUILayer> {
  public:
   enum class Corner {
     TopLeft,
     TopRight,
   };
-  FlyoutMenuUILayer(
+  static std::shared_ptr<FlyoutMenuUILayer> Create(
     const DXResources& dxr,
     const std::vector<std::shared_ptr<IToolbarItem>>& items,
     D2D1_POINT_2F preferredTopLeft01,
@@ -58,9 +61,17 @@ class FlyoutMenuUILayer final : public IUILayer {
     ID2D1DeviceContext*,
     const D2D1_RECT_F&) override;
 
+  Event<> evCloseMenuRequestedEvent;
+
   FlyoutMenuUILayer() = delete;
 
  private:
+  FlyoutMenuUILayer(
+    const DXResources& dxr,
+    const std::vector<std::shared_ptr<IToolbarItem>>& items,
+    D2D1_POINT_2F preferredTopLeft01,
+    D2D1_POINT_2F preferredTopRight01,
+    Corner preferredCorner);
   DXResources mDXResources;
   std::vector<std::shared_ptr<IToolbarItem>> mItems;
   D2D1_POINT_2F mPreferredTopLeft01 {};
@@ -72,6 +83,8 @@ class FlyoutMenuUILayer final : public IUILayer {
   winrt::com_ptr<ID2D1SolidColorBrush> mMenuFGBrush;
 
   std::optional<D2D1_RECT_F> mLastRenderRect;
+
+  std::shared_ptr<FlyoutMenuUILayer> mSubMenu;
 
   struct MenuItem {
     D2D1_RECT_F mRect {};
@@ -89,7 +102,7 @@ class FlyoutMenuUILayer final : public IUILayer {
   struct Menu {
     FLOAT mMargin {};
     D2D1_RECT_F mRect {};
-    std::unique_ptr<CursorClickableRegions<MenuItem>> mItems;
+    std::unique_ptr<CursorClickableRegions<MenuItem>> mCursorImpl;
     std::vector<D2D1_RECT_F> mSeparatorRects;
     winrt::com_ptr<IDWriteTextFormat> mTextFormat;
     winrt::com_ptr<IDWriteTextFormat> mGlyphFormat;
@@ -97,6 +110,9 @@ class FlyoutMenuUILayer final : public IUILayer {
   std::optional<Menu> mMenu;
 
   void UpdateLayout(ID2D1DeviceContext*, const D2D1_RECT_F&);
+  void OnClick(const MenuItem&);
+
+  bool mRecursiveCall = false;
 };
 
 }// namespace OpenKneeboard
