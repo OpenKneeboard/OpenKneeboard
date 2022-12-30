@@ -68,10 +68,11 @@ NavigationTab::NavigationTab(
   mTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
   winrt::com_ptr<IDWriteInlineObject> ellipsis;
-  dwf->CreateEllipsisTrimmingSign(mTextFormat.get(), ellipsis.put());
+  winrt::check_hresult(
+    dwf->CreateEllipsisTrimmingSign(mTextFormat.get(), ellipsis.put()));
   DWRITE_TRIMMING trimming {
     .granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER};
-  mTextFormat->SetTrimming(&trimming, ellipsis.get());
+  winrt::check_hresult(mTextFormat->SetTrimming(&trimming, ellipsis.get()));
 
   winrt::check_hresult(dwf->CreateTextFormat(
     L"Segoe UI",

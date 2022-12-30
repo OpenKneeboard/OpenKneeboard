@@ -391,6 +391,12 @@ void HeaderUILayer::DrawHeaderText(
     (textSize.height * 96) / (2 * dpiy),
     L"",
     headerFormat.put()));
+  winrt::com_ptr<IDWriteInlineObject> ellipsis;
+  winrt::check_hresult(
+    dwf->CreateEllipsisTrimmingSign(headerFormat.get(), ellipsis.put()));
+  DWRITE_TRIMMING trimming {
+    .granularity = DWRITE_TRIMMING_GRANULARITY_CHARACTER};
+  winrt::check_hresult(headerFormat->SetTrimming(&trimming, ellipsis.get()));
 
   winrt::com_ptr<IDWriteTextLayout> headerLayout;
   winrt::check_hresult(dwf->CreateTextLayout(
