@@ -109,7 +109,7 @@ void FlyoutMenuUILayer::Render(
     submenuNext.reserve(next.size() + 1);
     std::ranges::copy(next, std::back_inserter(submenuNext));
 
-    mSubMenu->Render(next, context, d2d, rect);
+    mSubMenu->Render(submenuNext, context, d2d, rect);
     return;
   }
 
@@ -469,10 +469,10 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
   mSubMenu = FlyoutMenuUILayer::Create(
     mDXResources,
     flyout->GetSubItems(),
-    {(rect.left + mMenu->mMargin) / renderSize.width,
-     rect.top / renderSize.height},// TL
     {(rect.right - mMenu->mMargin) / renderSize.width,
-     rect.top / renderSize.height},// TR,
+     rect.top / renderSize.height},// Put top-left corner here
+    {(rect.left + mMenu->mMargin) / renderSize.width,
+     rect.top / renderSize.height},// Put top-right corner here
     mPreferredAnchor);
   AddEventListener(
     mSubMenu->evCloseMenuRequestedEvent, this->evCloseMenuRequestedEvent);
