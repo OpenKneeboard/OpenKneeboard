@@ -66,18 +66,6 @@ static ItemPtr CreateReloadItem(
     });
 }
 
-static Items CreateDropDownItems(
-  KneeboardState* kbs,
-  const std::shared_ptr<IKneeboardView>& kneeboardView,
-  const std::shared_ptr<ITabView>& tabView) {
-  return {
-    std::make_shared<SetTabFlyout>(kbs, kneeboardView),
-    std::make_shared<ToolbarSeparator>(),
-    CreateClearNotesItem(kbs, kneeboardView, tabView),
-    CreateReloadItem(kbs, kneeboardView, tabView),
-  };
-}
-
 InGameActions InGameActions::Create(
   KneeboardState* kneeboardState,
   const std::shared_ptr<IKneeboardView>& kneeboardView,
@@ -93,7 +81,12 @@ InGameActions InGameActions::Create(
     std::make_shared<ToolbarFlyout>(
       "\ue712",
       _("More"),
-      CreateDropDownItems(kneeboardState, kneeboardView, tabView)),
+      Items {
+        std::make_shared<SetTabFlyout>(kneeboardState, kneeboardView),
+        std::make_shared<ToolbarSeparator>(),
+        CreateClearNotesItem(kneeboardState, kneeboardView, tabView),
+        CreateReloadItem(kneeboardState, kneeboardView, tabView),
+      }),
     std::make_shared<PreviousTabAction>(kneeboardState, kneeboardView),
     std::make_shared<NextTabAction>(kneeboardState, kneeboardView),
       },
@@ -111,7 +104,10 @@ InAppActions InAppActions::Create(
     std::make_shared<TabPreviousPageAction>(kneeboardState, tabView),
     std::make_shared<TabNextPageAction>(kneeboardState, tabView),
     },
-    .mSecondary = CreateDropDownItems(kneeboardState, kneeboardView, tabView),
+    .mSecondary = {
+      CreateClearNotesItem(kneeboardState, kneeboardView, tabView),
+      CreateReloadItem(kneeboardState, kneeboardView, tabView),
+    },
   };
 }
 
