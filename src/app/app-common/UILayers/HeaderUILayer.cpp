@@ -183,8 +183,10 @@ void HeaderUILayer::Render(
   };
   d2d->SetTransform(D2D1::Matrix3x2F::Identity());
   d2d->FillRectangle(headerRect, mHeaderBGBrush.get());
-  this->DrawHeaderText(tabView, d2d, headerRect, headerSize);
-  this->DrawToolbar(context, d2d, rect, headerRect, headerSize);
+  auto headerTextRect = headerRect;
+  this->DrawToolbar(
+    context, d2d, rect, headerRect, headerSize, &headerTextRect);
+  this->DrawHeaderText(tabView, d2d, headerTextRect);
 
   next.front()->Render(
     next.subspan(1),
@@ -202,11 +204,13 @@ void HeaderUILayer::DrawToolbar(
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& fullRect,
   const D2D1_RECT_F& headerRect,
-  const D2D1_SIZE_F& headerSize) {
+  const D2D1_SIZE_F& headerSize,
+  D2D1_RECT_F* headerTextRect) {
   if (!context.mIsActiveForInput) {
     return;
   }
-  this->LayoutToolbar(context, fullRect, headerRect, headerSize);
+  this->LayoutToolbar(
+    context, fullRect, headerRect, headerSize, headerTextRect);
   if (!mToolbar) {
     return;
   }
@@ -269,12 +273,14 @@ void HeaderUILayer::LayoutToolbar(
   const Context& context,
   const D2D1_RECT_F& fullRect,
   const D2D1_RECT_F& headerRect,
-  const D2D1_SIZE_F& headerSize) {
+  const D2D1_SIZE_F& headerSize,
+  D2D1_RECT_F* headerTextRect) {
   const auto& tabView = context.mTabView;
 
   if (
     mToolbar && tabView && tabView == mToolbar->mTabView.lock()
     && mToolbar->mRect == fullRect) {
+    *headerTextRect = mToolbar->mTextRect;
     return;
   }
 
@@ -345,9 +351,17 @@ void HeaderUILayer::LayoutToolbar(
       }
     });
 
+  *headerTextRect = {
+    primaryLeft,
+    headerRect.top,
+    secondaryRight,
+    headerRect.bottom,
+  };
+
   mToolbar = {
     .mTabView = tabView,
     .mRect = fullRect,
+    .mTextRect = *headerTextRect,
     .mButtons = std::move(toolbar),
   };
 }
@@ -355,11 +369,15 @@ void HeaderUILayer::LayoutToolbar(
 void HeaderUILayer::DrawHeaderText(
   const std::shared_ptr<ITabView>& tabView,
   ID2D1DeviceContext* ctx,
-  const D2D1_RECT_F& headerRect,
-  const D2D1_SIZE_F& headerSize) const {
+  const D2D1_RECT_F& textRect) const {
   const auto tab = tabView ? tabView->GetRootTab().get() : nullptr;
   const auto title = tab ? winrt::to_hstring(tab->GetTitle()) : _(L"No Tab");
   auto& dwf = mDXResources.mDWriteFactory;
+
+  const D2D1_SIZE_F textSize {
+    textRect.right - textRect.left,
+    textRect.bottom - textRect.top,
+  };
 
   FLOAT dpix, dpiy;
   ctx->GetDpi(&dpix, &dpiy);
@@ -370,7 +388,7 @@ void HeaderUILayer::DrawHeaderText(
     DWRITE_FONT_WEIGHT_BOLD,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    (headerSize.height * 96) / (2 * dpiy),
+    (textSize.height * 96) / (2 * dpiy),
     L"",
     headerFormat.put()));
 
@@ -379,13 +397,14 @@ void HeaderUILayer::DrawHeaderText(
     title.data(),
     static_cast<UINT32>(title.size()),
     headerFormat.get(),
-    float(headerSize.width),
-    float(headerSize.height),
+    textSize.width,
+    textSize.height,
     headerLayout.put()));
   headerLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   headerLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  ctx->DrawTextLayout({0.0f, 0.0f}, headerLayout.get(), mHeaderTextBrush.get());
+  ctx->DrawTextLayout(
+    {textRect.left, textRect.top}, headerLayout.get(), mHeaderTextBrush.get());
 }
 
 bool HeaderUILayer::Button::operator==(const Button& other) const noexcept {

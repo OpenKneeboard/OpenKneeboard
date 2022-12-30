@@ -64,19 +64,20 @@ class HeaderUILayer final : public IUILayer,
   void DrawHeaderText(
     const std::shared_ptr<ITabView>&,
     ID2D1DeviceContext*,
-    const D2D1_RECT_F& rect,
-    const D2D1_SIZE_F& size) const;
+    const D2D1_RECT_F& rect) const;
   void DrawToolbar(
     const Context&,
     ID2D1DeviceContext*,
     const D2D1_RECT_F& fullRect,
     const D2D1_RECT_F& headerRect,
-    const D2D1_SIZE_F& size);
+    const D2D1_SIZE_F& size,
+    D2D1_RECT_F* headerTextRect);
   void LayoutToolbar(
     const Context&,
     const D2D1_RECT_F& fullRect,
     const D2D1_RECT_F& headerRect,
-    const D2D1_SIZE_F& headerSize);
+    const D2D1_SIZE_F& headerSize,
+    D2D1_RECT_F* headerTextRect);
 
   DXResources mDXResources;
   KneeboardState* mKneeboardState {nullptr};
@@ -98,6 +99,7 @@ class HeaderUILayer final : public IUILayer,
   struct Toolbar {
     std::weak_ptr<ITabView> mTabView {};
     D2D1_RECT_F mRect {};
+    D2D1_RECT_F mTextRect {};
     std::unique_ptr<CursorClickableRegions<Button>> mButtons;
   };
   std::optional<D2D1_SIZE_F> mLastRenderSize;
