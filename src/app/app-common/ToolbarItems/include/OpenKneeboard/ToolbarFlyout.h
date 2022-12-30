@@ -25,7 +25,7 @@
 
 namespace OpenKneeboard {
 
-class ToolbarFlyout : public IToolbarFlyout {
+class ToolbarFlyout : public IToolbarFlyout, public EventReceiver {
  public:
   ToolbarFlyout(
     std::string glyph,
@@ -34,7 +34,7 @@ class ToolbarFlyout : public IToolbarFlyout {
   ToolbarFlyout() = delete;
   virtual ~ToolbarFlyout();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
 
   std::string_view GetGlyph() const override final;
   std::string_view GetLabel() const override final;

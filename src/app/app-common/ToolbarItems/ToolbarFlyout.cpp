@@ -26,9 +26,18 @@ ToolbarFlyout::ToolbarFlyout(
   std::string label,
   const std::vector<std::shared_ptr<IToolbarItem>>& items)
   : mGlyph(glyph), mLabel(label), mSubItems(items) {
+  for (const auto& item: items) {
+    auto selectable = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
+    if (selectable) {
+      AddEventListener(
+        selectable->evStateChangedEvent, this->evStateChangedEvent);
+    }
+  }
 }
 
-ToolbarFlyout::~ToolbarFlyout() = default;
+ToolbarFlyout::~ToolbarFlyout() {
+  RemoveAllEventListeners();
+}
 
 bool ToolbarFlyout::IsEnabled() const {
   for (auto& item: this->GetSubItems()) {
