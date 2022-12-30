@@ -19,6 +19,7 @@
  */
 
 #include <OpenKneeboard/NavigationTab.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
