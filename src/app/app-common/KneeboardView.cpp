@@ -37,7 +37,7 @@ namespace OpenKneeboard {
 KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
-  mHeaderUILayer = HeaderUILayer::Create(dxr, kneeboard);
+  mHeaderUILayer = HeaderUILayer::Create(dxr, kneeboard, this);
   mFooterUILayer = std::make_unique<FooterUILayer>(dxr, kneeboard);
   mTabViewUILayer = std::make_unique<TabViewUILayer>(dxr);
 

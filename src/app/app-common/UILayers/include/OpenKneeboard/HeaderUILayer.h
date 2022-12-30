@@ -34,14 +34,14 @@ namespace OpenKneeboard {
 
 class FlyoutMenuUILayer;
 class KneeboardState;
+class IKneeboardView;
 
 class HeaderUILayer final : public IUILayer,
                             private EventReceiver,
                             public std::enable_shared_from_this<HeaderUILayer> {
  public:
-  static std::shared_ptr<HeaderUILayer> Create(
-    const DXResources& dxr,
-    KneeboardState*);
+  static std::shared_ptr<HeaderUILayer>
+  Create(const DXResources& dxr, KneeboardState*, IKneeboardView*);
   virtual ~HeaderUILayer();
 
   virtual void PostCursorEvent(
@@ -59,7 +59,7 @@ class HeaderUILayer final : public IUILayer,
   HeaderUILayer() = delete;
 
  private:
-  HeaderUILayer(const DXResources& dxr, KneeboardState*);
+  HeaderUILayer(const DXResources& dxr, KneeboardState*, IKneeboardView*);
 
   void DrawHeaderText(
     const std::shared_ptr<ITabView>&,
@@ -79,7 +79,7 @@ class HeaderUILayer final : public IUILayer,
     const D2D1_SIZE_F& headerSize);
 
   DXResources mDXResources;
-  KneeboardState* mKneeboard {nullptr};
+  KneeboardState* mKneeboardState {nullptr};
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;
   winrt::com_ptr<ID2D1Brush> mButtonBrush;

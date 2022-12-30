@@ -20,6 +20,7 @@
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/HeaderUILayer.h>
+#include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/ToolbarAction.h>
@@ -36,13 +37,22 @@ namespace OpenKneeboard {
 
 std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
   const DXResources& dxr,
-  KneeboardState* kneeboard) {
-  return std::shared_ptr<HeaderUILayer>(new HeaderUILayer(dxr, kneeboard));
+  KneeboardState* kneeboardState,
+  IKneeboardView* kneeboardView) {
+  return std::shared_ptr<HeaderUILayer>(
+    new HeaderUILayer(dxr, kneeboardState, kneeboardView));
 }
 
-HeaderUILayer::HeaderUILayer(const DXResources& dxr, KneeboardState* kneeboard)
-  : mDXResources(dxr), mKneeboard(kneeboard) {
+HeaderUILayer::HeaderUILayer(
+  const DXResources& dxr,
+  KneeboardState* kneeboardState,
+  IKneeboardView* kneeboardView)
+  : mDXResources(dxr), mKneeboardState(kneeboardState) {
   auto ctx = dxr.mD2DDeviceContext;
+
+  AddEventListener(kneeboardView->evCurrentTabChangedEvent, [this]() {
+    this->mSecondaryMenu = {};
+  });
 
   ctx->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.8f},
@@ -275,7 +285,7 @@ void HeaderUILayer::LayoutToolbar(
 
   const auto& kneeboardView = context.mKneeboardView;
   const auto actions
-    = InGameActions::Create(mKneeboard, kneeboardView, tabView);
+    = InGameActions::Create(mKneeboardState, kneeboardView, tabView);
   std::vector<Button> buttons;
 
   const auto buttonHeight = headerSize.height * 0.75f;
