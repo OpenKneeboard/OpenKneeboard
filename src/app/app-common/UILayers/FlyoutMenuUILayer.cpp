@@ -56,6 +56,8 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
     mPreferredAnchor(preferredAnchor) {
   auto ctx = dxr.mD2DDeviceContext;
   ctx->CreateSolidColorBrush(
+    {1.0f, 1.0f, 1.0f, 0.6f}, D2D1::BrushProperties(), mBGOverpaintBrush.put());
+  ctx->CreateSolidColorBrush(
     {0.8f, 0.8f, 0.8f, 0.8f}, D2D1::BrushProperties(), mMenuBGBrush.put());
   ctx->CreateSolidColorBrush(
     {0.0f, 0.8f, 1.0f, 1.0f}, D2D1::BrushProperties(), mMenuHoverBGBrush.put());
@@ -136,6 +138,10 @@ void FlyoutMenuUILayer::Render(
 
   d2d->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
   const scope_guard popClip([d2d]() { d2d->PopAxisAlignedClip(); });
+
+  if (!mSubMenu) {
+    d2d->FillRectangle(rect, mBGOverpaintBrush.get());
+  }
 
   const auto& menu = *mMenu;
   d2d->FillRoundedRectangle(

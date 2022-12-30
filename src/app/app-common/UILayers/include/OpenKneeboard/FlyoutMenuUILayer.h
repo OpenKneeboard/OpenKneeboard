@@ -78,6 +78,7 @@ class FlyoutMenuUILayer final
   D2D1_POINT_2F mPreferredTopRight01 {};
   Corner mPreferredAnchor;
 
+  winrt::com_ptr<ID2D1SolidColorBrush> mBGOverpaintBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mMenuBGBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mMenuHoverBGBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mMenuFGBrush;
