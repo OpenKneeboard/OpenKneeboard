@@ -22,6 +22,7 @@
 #include <OpenKneeboard/ICheckableToolbarItem.h>
 #include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
+#include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <dwrite.h>
 
@@ -143,6 +144,13 @@ void FlyoutMenuUILayer::Render(
       }
     }
   }
+
+  for (const auto& rect: menu.mSeparatorRects) {
+    const auto y = rect.top + ((rect.bottom - rect.top) / 2) - 1;
+    D2D1_POINT_2F left {rect.left + (menu.mMargin * 2), y};
+    D2D1_POINT_2F right {rect.right - (menu.mMargin * 2), y};
+    d2d->DrawLine(left, right, mMenuFGBrush.get());
+  }
 }
 
 void FlyoutMenuUILayer::UpdateLayout(
@@ -163,6 +171,7 @@ void FlyoutMenuUILayer::UpdateLayout(
   const auto selectableItemHeight
     = canvasSize.height * 0.5f * (HeaderPercent / 100.0f);
   const auto textHeight = selectableItemHeight * 0.67f;
+  const auto separatorHeight = selectableItemHeight / 3;
 
   FLOAT dpix, dpiy;
   d2d->GetDpi(&dpix, &dpiy);
@@ -199,16 +208,18 @@ void FlyoutMenuUILayer::UpdateLayout(
   float maxTextWidth = 0;
   bool haveChevron = false;
   bool haveGlyphOrCheck = false;
-  uint32_t rowCount = 0;
 
   for (const auto& item: mItems) {
+    if (std::dynamic_pointer_cast<ToolbarSeparator>(item)) {
+      totalHeight += separatorHeight;
+      continue;
+    }
     auto selectable = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
     if (!selectable) {
       continue;
     }
 
     totalHeight += selectableItemHeight;
-    rowCount++;
 
     if ((!haveChevron) && std::dynamic_pointer_cast<IToolbarFlyout>(item)) {
       haveChevron = true;
@@ -298,7 +309,20 @@ void FlyoutMenuUILayer::UpdateLayout(
   origin = {menuRect.left, menuRect.top + margin};
 
   std::vector<MenuItem> menuItems;
+  std::vector<D2D1_RECT_F> separators;
   for (const auto& item: mItems) {
+    if (std::dynamic_pointer_cast<ToolbarSeparator>(item)) {
+      origin.y += separatorHeight;
+
+      separators.push_back({
+        origin.x,
+        origin.y,
+        origin.x + maxItemWidth,
+        origin.y,
+      });
+      continue;
+    }
+
     auto selectable = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
     if (!selectable) {
       continue;
@@ -347,9 +371,11 @@ void FlyoutMenuUILayer::UpdateLayout(
   winrt::check_hresult(textFormat->SetTrimming(&trimming, ellipsis.get()));
 
   mMenu = {
+    .mMargin = margin,
     .mRect = menuRect,
     .mItems
     = std::make_unique<CursorClickableRegions<MenuItem>>(std::move(menuItems)),
+    .mSeparatorRects = std::move(separators),
     .mTextFormat = std::move(textFormat),
     .mGlyphFormat = std::move(glyphFormat),
   };
