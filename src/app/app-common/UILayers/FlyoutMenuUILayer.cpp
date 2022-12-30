@@ -61,6 +61,10 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
     {0.0f, 0.8f, 1.0f, 1.0f}, D2D1::BrushProperties(), mMenuHoverBGBrush.put());
   ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mMenuFGBrush.put());
+  ctx->CreateSolidColorBrush(
+    {0.4f, 0.4f, 0.4f, 0.5f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(mMenuDisabledFGBrush.put()));
 }
 
 FlyoutMenuUILayer::~FlyoutMenuUILayer() {
@@ -156,12 +160,15 @@ void FlyoutMenuUILayer::Render(
       d2d->FillRectangle(menuItem.mRect, mMenuHoverBGBrush.get());
     }
 
+    auto fgBrush = selectable->IsEnabled() ? mMenuFGBrush.get()
+                                           : mMenuDisabledFGBrush.get();
+
     d2d->DrawTextW(
       menuItem.mLabel.data(),
       menuItem.mLabel.size(),
       menu.mTextFormat.get(),
       menuItem.mLabelRect,
-      mMenuFGBrush.get());
+      fgBrush);
 
     auto submenu = std::dynamic_pointer_cast<IToolbarFlyout>(menuItem.mItem);
     if (submenu) {
@@ -170,7 +177,7 @@ void FlyoutMenuUILayer::Render(
         chevron.size(),
         menu.mGlyphFormat.get(),
         menuItem.mChevronRect,
-        mMenuFGBrush.get());
+        fgBrush);
     }
 
     auto checkable
@@ -181,7 +188,7 @@ void FlyoutMenuUILayer::Render(
         checkmark.size(),
         menu.mGlyphFormat.get(),
         menuItem.mGlyphRect,
-        mMenuFGBrush.get());
+        fgBrush);
     } else if (!checkable) {
       auto glyph = menuItem.mGlyph;
       if (!glyph.empty()) {
@@ -190,7 +197,7 @@ void FlyoutMenuUILayer::Render(
           glyph.size(),
           menu.mGlyphFormat.get(),
           menuItem.mGlyphRect,
-          mMenuFGBrush.get());
+          fgBrush);
       }
     }
   }
