@@ -255,7 +255,7 @@ void ConfirmationUILayer::UpdateLayout(
   const auto buttonsWidth
     = confirmButtonSize.width + cancelButtonSize.width + margin;
 
-  cursor.x = canvasRect.left + ((dialogSize.width - buttonsWidth) / 2);
+  cursor.x = dialogRect.left + ((dialogSize.width - buttonsWidth) / 2);
 
   const D2D1_RECT_F confirmButtonRect {
     cursor.x,
