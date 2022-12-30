@@ -39,6 +39,10 @@ ConfirmationUILayer::ConfirmationUILayer(
     {1.0f, 1.0f, 1.0f, 1.0f}, D2D1::BrushProperties(), mDialogBGBrush.put());
   d2d->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mTextBrush.put());
+  d2d->CreateSolidColorBrush(
+    {0.3f, 0.3f, 0.3f, 1.0f},
+    D2D1::BrushProperties(),
+    mButtonBorderBrush.put());
 }
 
 ConfirmationUILayer::~ConfirmationUILayer() = default;
@@ -97,7 +101,8 @@ void ConfirmationUILayer::Render(
   for (const auto& button: buttons) {
     d2d->DrawRoundedRectangle(
       D2D1::RoundedRect(button.mRect, dialog.mMargin, dialog.mMargin),
-      mTextBrush.get());
+      mButtonBorderBrush.get(),
+      2.0f);
     d2d->DrawTextW(
       button.mLabel.data(),
       button.mLabel.size(),
@@ -191,8 +196,8 @@ void ConfirmationUILayer::UpdateLayout(
    * - top -> title
    * - title -> detail
    * - detail -> buttons
-   * - button top -> button text
-   * - button text -> button bottom
+   * - 0.5: button top -> button text
+   * - 0.5: button text -> button bottom
    * - button bottom -> bottom
    */
   const D2D1_SIZE_F dialogSize = {
@@ -202,7 +207,7 @@ void ConfirmationUILayer::UpdateLayout(
       confirmButtonTextInfo.mSize.width + cancelButtonTextInfo.mSize.width
         + (margin * 5),
     }) + (margin * 2),
-    (margin * 6) + titleTextInfo.mSize.height + detailsTextInfo.mSize.height
+    (margin * 5) + titleTextInfo.mSize.height + detailsTextInfo.mSize.height
       + std::max(
         confirmButtonTextInfo.mSize.height, cancelButtonTextInfo.mSize.height),
   };
@@ -244,7 +249,7 @@ void ConfirmationUILayer::UpdateLayout(
 
   const D2D1_SIZE_F confirmButtonSize {
     confirmButtonTextInfo.mSize.width + (2 * margin),
-    confirmButtonTextInfo.mSize.height + (2 * margin),
+    confirmButtonTextInfo.mSize.height + margin,
   };
 
   const D2D1_SIZE_F cancelButtonSize {

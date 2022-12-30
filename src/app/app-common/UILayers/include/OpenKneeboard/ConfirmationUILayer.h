@@ -61,6 +61,7 @@ class ConfirmationUILayer final : public IUILayer {
   winrt::com_ptr<ID2D1SolidColorBrush> mOverpaintBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mDialogBGBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mButtonBorderBrush;
 
   void UpdateLayout(ID2D1DeviceContext*, const D2D1_RECT_F&);
 
