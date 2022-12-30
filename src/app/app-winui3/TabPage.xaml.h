@@ -89,7 +89,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void PaintLater();
   void PaintNow() noexcept;
 
-  winrt::fire_and_forget OnToolbarActionClick(const std::shared_ptr<ToolbarAction>&);
+  winrt::fire_and_forget OnToolbarActionClick(std::shared_ptr<ToolbarAction>);
 
   D2D1_SIZE_F mCanvasSize;
 
@@ -100,6 +100,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     float mScale;
   };
   PageMetrics GetPageMetrics();
+
+  std::vector<std::shared_ptr<IToolbarItem>> mToolbarItems;
 
   muxc::ICommandBarElement CreateCommandBarElement(
     const std::shared_ptr<IToolbarItem>&);

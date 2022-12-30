@@ -195,8 +195,10 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
   button.IsEnabled(action->IsEnabled());
 
   button.IsChecked(action->IsActive());
-  button.Checked([action](auto, auto) { action->Activate(); });
-  button.Unchecked([action](auto, auto) { action->Deactivate(); });
+  button.Checked(discard_winrt_event_args(
+    weak_wrap([](auto action) { action->Activate(); }, action)));
+  button.Unchecked(discard_winrt_event_args(
+    weak_wrap([](auto action) { action->Deactivate(); }, action)));
 
   AddEventListener(
     action->evStateChangedEvent,
@@ -243,7 +245,7 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 }
 
 winrt::fire_and_forget TabPage::OnToolbarActionClick(
-  const std::shared_ptr<ToolbarAction>& action) {
+  std::shared_ptr<ToolbarAction> action) {
   auto confirm
     = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(action);
   if (!confirm) {
@@ -258,6 +260,7 @@ winrt::fire_and_forget TabPage::OnToolbarActionClick(
   dialog.Content(box_value(to_hstring(confirm->GetConfirmationDescription())));
   dialog.PrimaryButtonText(to_hstring(confirm->GetConfirmButtonLabel()));
   dialog.CloseButtonText(to_hstring(confirm->GetCancelButtonLabel()));
+  dialog.DefaultButton(muxc::ContentDialogButton::Primary);
 
   if (co_await dialog.ShowAsync() != muxc::ContentDialogResult::Primary) {
     co_return;
@@ -270,7 +273,9 @@ muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
   button.Click(discard_winrt_event_args(weak_wrap(
-    [action](auto self) { self->OnToolbarActionClick(action); }, this)));
+    [](auto self, auto action) { self->OnToolbarActionClick(action); },
+    this,
+    action)));
   return button;
 }
 
@@ -304,7 +309,9 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
   ret.Click(discard_winrt_event_args(weak_wrap(
-    [action](auto self) { self->OnToolbarActionClick(action); }, this)));
+    [](auto self, auto action) { self->OnToolbarActionClick(action); },
+    this,
+    action)));
 
   AddEventListener(
     action->evStateChangedEvent,
@@ -343,6 +350,12 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
 
   auto actions = InAppActions::Create(gKneeboard.get(), mKneeboardView, state);
+  {
+    std::vector keepAlive = actions.mPrimary;
+    keepAlive.reserve(keepAlive.size() + actions.mSecondary.size());
+    std::ranges::copy(actions.mSecondary, std::back_inserter(keepAlive));
+    mToolbarItems = keepAlive;
+  }
 
   auto primary = CommandBar().PrimaryCommands();
   for (const auto& item: actions.mPrimary) {
