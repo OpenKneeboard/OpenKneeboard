@@ -27,10 +27,10 @@ enum class CursorTouchState {
   NEAR_SURFACE,
   NOT_NEAR_SURFACE,
 };
-enum class CursorSource { WINDOW_POINTER, OTHER };
+enum class CursorSource { WINDOW_POINTER, TABLET };
 
 struct CursorEvent {
-  CursorSource mSource = CursorSource::OTHER;
+  CursorSource mSource = CursorSource::TABLET;
   CursorTouchState mTouchState = CursorTouchState::NOT_NEAR_SURFACE;
   float mX = 0, mY = 0, mPressure = 0;
   uint32_t mButtons = 0;
