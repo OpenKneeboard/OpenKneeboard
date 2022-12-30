@@ -40,7 +40,7 @@ std::string_view SetTabFlyout::GetGlyph() const {
   return {};
 }
 std::string_view SetTabFlyout::GetLabel() const {
-  return _("Switch Tab");
+  return _("Switch tab");
 }
 
 bool SetTabFlyout::IsEnabled() const {
