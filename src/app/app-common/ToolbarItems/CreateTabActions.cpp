@@ -47,8 +47,8 @@ static ItemPtr CreateClearNotesItem(
     "\ued60",// StrokeErase
     "Clear notes",
     Items {
-      std::make_shared<ClearUserInputAction>(tabView, CurrentPage),
-      std::make_shared<ClearUserInputAction>(tabView, AllPages),
+      std::make_shared<ClearUserInputAction>(kbs, tabView, CurrentPage),
+      std::make_shared<ClearUserInputAction>(kbs, tabView, AllPages),
       std::make_shared<ClearUserInputAction>(kbs, AllTabs),
     });
 }

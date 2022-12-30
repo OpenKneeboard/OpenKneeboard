@@ -33,8 +33,14 @@ class ClearUserInputAction final : public ToolbarAction,
                                    public EventReceiver,
                                    public virtual IToolbarItemWithConfirmation {
  public:
-  ClearUserInputAction(const std::shared_ptr<ITabView>&, CurrentPage_t);
-  ClearUserInputAction(const std::shared_ptr<ITabView>&, AllPages_t);
+  ClearUserInputAction(
+    KneeboardState*,
+    const std::shared_ptr<ITabView>&,
+    CurrentPage_t);
+  ClearUserInputAction(
+    KneeboardState*,
+    const std::shared_ptr<ITabView>&,
+    AllPages_t);
   ClearUserInputAction(KneeboardState*, AllTabs_t);
   ClearUserInputAction() = delete;
 
@@ -49,7 +55,7 @@ class ClearUserInputAction final : public ToolbarAction,
   virtual std::string_view GetCancelButtonLabel() const override;
 
  private:
-  void SubscribeToTabView();
+  void SubscribeToEvents();
 
   enum class Mode { CurrentPage, ThisTab, AllTabs };
   Mode mMode;

@@ -26,22 +26,38 @@
 namespace OpenKneeboard {
 
 ClearUserInputAction::ClearUserInputAction(
+  KneeboardState* kbs,
   const std::shared_ptr<ITabView>& tab,
   CurrentPage_t)
-  : ToolbarAction({}, _("This page")), mMode(Mode::CurrentPage), mTabView(tab) {
-  SubscribeToTabView();
+  : ToolbarAction({}, _("This page")),
+    mMode(Mode::CurrentPage),
+    mKneeboardState(kbs),
+    mTabView(tab) {
+  SubscribeToEvents();
 }
 
 ClearUserInputAction::ClearUserInputAction(
+  KneeboardState* kbs,
   const std::shared_ptr<ITabView>& tab,
   AllPages_t)
-  : ToolbarAction({}, _("All pages")), mMode(Mode::ThisTab), mTabView(tab) {
-  SubscribeToTabView();
+  : ToolbarAction({}, _("All pages")),
+    mMode(Mode::ThisTab),
+    mKneeboardState(kbs),
+    mTabView(tab) {
+  SubscribeToEvents();
 }
 
-void ClearUserInputAction::SubscribeToTabView() {
+void ClearUserInputAction::SubscribeToEvents() {
+  for (const auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
+    AddEventListener(
+      tab->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);
+  }
+  AddEventListener(
+    mKneeboardState->GetTabsList()->evTabsChangedEvent,
+    this->evStateChangedEvent);
+
   if (!mTabView) {
-    throw std::logic_error("Bad tab view");
+    return;
   }
 
   AddEventListener(mTabView->evPageChangedEvent, this->evStateChangedEvent);
@@ -53,6 +69,7 @@ ClearUserInputAction::ClearUserInputAction(KneeboardState* kbs, AllTabs_t)
   : ToolbarAction({}, _("All tabs")),
     mMode(Mode::AllTabs),
     mKneeboardState(kbs) {
+  SubscribeToEvents();
 }
 
 ClearUserInputAction::~ClearUserInputAction() {
@@ -69,7 +86,14 @@ bool ClearUserInputAction::IsEnabled() const {
     case Mode::ThisTab:
       return wce && wce->CanClearUserInput();
     case Mode::AllTabs:
-      return true;
+      for (const auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
+        auto tabWce
+          = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tab);
+        if (tabWce && tabWce->CanClearUserInput()) {
+          return true;
+        }
+      }
+      return false;
   }
   OPENKNEEBOARD_UNREACHABLE;
 }
