@@ -22,20 +22,26 @@
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/FlyoutMenuUILayer.h>
+#include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IUILayer.h>
-#include <OpenKneeboard/ToolbarAction.h>
 #include <shims/winrt/base.h>
 
 #include <memory>
 
 namespace OpenKneeboard {
 
+class FlyoutMenuUILayer;
 class KneeboardState;
 
-class HeaderUILayer final : public IUILayer, private EventReceiver {
+class HeaderUILayer final : public IUILayer,
+                            private EventReceiver,
+                            public std::enable_shared_from_this<HeaderUILayer> {
  public:
-  HeaderUILayer(const DXResources& dxr, KneeboardState*);
+  static std::shared_ptr<HeaderUILayer> Create(
+    const DXResources& dxr,
+    KneeboardState*);
   virtual ~HeaderUILayer();
 
   virtual void PostCursorEvent(
@@ -50,7 +56,11 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
     ID2D1DeviceContext*,
     const D2D1_RECT_F&) override;
 
+  HeaderUILayer() = delete;
+
  private:
+  HeaderUILayer(const DXResources& dxr, KneeboardState*);
+
   void DrawHeaderText(
     const std::shared_ptr<ITabView>&,
     ID2D1DeviceContext*,
@@ -80,7 +90,7 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
 
   struct Button {
     D2D1_RECT_F mRect {};
-    std::shared_ptr<ToolbarAction> mAction;
+    std::shared_ptr<ISelectableToolbarItem> mAction;
 
     bool operator==(const Button&) const noexcept;
   };
@@ -92,6 +102,7 @@ class HeaderUILayer final : public IUILayer, private EventReceiver {
   };
   std::optional<D2D1_SIZE_F> mLastRenderSize;
   std::optional<Toolbar> mToolbar;
+  std::shared_ptr<FlyoutMenuUILayer> mSecondaryMenu;
 };
 
 }// namespace OpenKneeboard

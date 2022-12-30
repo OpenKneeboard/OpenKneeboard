@@ -92,7 +92,7 @@ class KneeboardView final : public IKneeboardView,
   std::unique_ptr<CursorRenderer> mCursorRenderer;
 
   std::vector<IUILayer*> mUILayers {};
-  std::unique_ptr<IUILayer> mHeaderUILayer;
+  std::shared_ptr<IUILayer> mHeaderUILayer;
   std::unique_ptr<IUILayer> mFooterUILayer;
   std::unique_ptr<TabViewUILayer> mTabViewUILayer;
 

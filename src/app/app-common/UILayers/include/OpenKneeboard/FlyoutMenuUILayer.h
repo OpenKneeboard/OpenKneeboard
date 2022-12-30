@@ -67,6 +67,9 @@ class FlyoutMenuUILayer final : public IUILayer {
   D2D1_POINT_2F mPreferredTopRight01 {};
   Corner mPreferredAnchor;
 
+  winrt::com_ptr<ID2D1SolidColorBrush> mMenuBGBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mMenuFGBrush;
+
   std::optional<D2D1_RECT_F> mLastRenderRect;
 
   struct MenuItem {

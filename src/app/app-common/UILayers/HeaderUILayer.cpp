@@ -22,6 +22,9 @@
 #include <OpenKneeboard/HeaderUILayer.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/ToolbarFlyout.h>
+#include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
@@ -29,6 +32,12 @@
 #include <algorithm>
 
 namespace OpenKneeboard {
+
+std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
+  const DXResources& dxr,
+  KneeboardState* kneeboard) {
+  return std::shared_ptr<HeaderUILayer>(new HeaderUILayer(dxr, kneeboard));
+}
 
 HeaderUILayer::HeaderUILayer(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXResources(dxr), mKneeboard(kneeboard) {
@@ -158,6 +167,10 @@ void HeaderUILayer::Render(
     context,
     d2d,
     {rect.left, rect.top + headerSize.height, rect.right, rect.bottom});
+
+  if (mSecondaryMenu) {
+    mSecondaryMenu->Render({}, context, d2d, rect);
+  }
 }
 
 void HeaderUILayer::DrawToolbar(
@@ -257,12 +270,14 @@ void HeaderUILayer::LayoutToolbar(
   auto primaryLeft = headerRect.left + (2 * margin);
 
   for (const auto& item: actions.mLeft) {
-    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
-    if (!action) {
+    const auto selectable
+      = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
+    if (!selectable) {
       OPENKNEEBOARD_BREAK;
       continue;
     }
-    AddEventListener(action->evStateChangedEvent, this->evNeedsRepaintEvent);
+    AddEventListener(
+      selectable->evStateChangedEvent, this->evNeedsRepaintEvent);
 
     D2D1_RECT_F button {
       .top = margin,
@@ -272,17 +287,19 @@ void HeaderUILayer::LayoutToolbar(
     button.right = primaryLeft + buttonHeight,
     primaryLeft = button.right + margin;
 
-    buttons.push_back({button, action});
+    buttons.push_back({button, selectable});
   }
 
   auto secondaryRight = headerRect.right - (2 * margin);
   for (const auto& item: actions.mRight) {
-    const auto action = std::dynamic_pointer_cast<ToolbarAction>(item);
-    if (!action) {
+    const auto selectable
+      = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
+    if (!selectable) {
       OPENKNEEBOARD_BREAK;
       continue;
     }
-    AddEventListener(action->evStateChangedEvent, this->evNeedsRepaintEvent);
+    AddEventListener(
+      selectable->evStateChangedEvent, this->evNeedsRepaintEvent);
 
     D2D1_RECT_F button {
       .top = margin,
@@ -292,13 +309,42 @@ void HeaderUILayer::LayoutToolbar(
     button.left = secondaryRight - buttonHeight;
     secondaryRight = button.left - margin;
 
-    buttons.push_back({button, action});
+    buttons.push_back({button, selectable});
   }
 
   auto toolbar = std::make_unique<CursorClickableRegions<Button>>(buttons);
-  AddEventListener(toolbar->evClicked, [](auto, const Button& button) {
-    button.mAction->Execute();
-  });
+  AddEventListener(
+    toolbar->evClicked, [weak = weak_from_this()](auto, const Button& button) {
+      auto self = weak.lock();
+      if (!self) {
+        return;
+      }
+
+      auto action = std::dynamic_pointer_cast<ToolbarAction>(button.mAction);
+      if (action) {
+        action->Execute();
+        return;
+      }
+      auto flyout = std::dynamic_pointer_cast<IToolbarFlyout>(button.mAction);
+      if (flyout) {
+        if (self->mSecondaryMenu) {
+          self->mSecondaryMenu.reset();
+          self->evNeedsRepaintEvent.Emit();
+          return;
+        }
+        self->mSecondaryMenu = std::make_shared<FlyoutMenuUILayer>(
+          self->mDXResources,
+          flyout->GetSubItems(),
+          D2D1_POINT_2F {0.0f, HeaderPercent / 100.0f},
+          D2D1_POINT_2F {1.0f, HeaderPercent / 100.0f},
+          FlyoutMenuUILayer::Corner::TopRight);
+        self->AddEventListener(
+          self->mSecondaryMenu->evNeedsRepaintEvent, self->evNeedsRepaintEvent);
+        self->evNeedsRepaintEvent.Emit();
+
+        return;
+      }
+    });
 
   mToolbar = {
     .mTabView = tabView,

@@ -42,6 +42,11 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
     mPreferredTopLeft01(preferredTopLeft01),
     mPreferredTopRight01(preferredTopRight01),
     mPreferredAnchor(preferredAnchor) {
+  auto ctx = dxr.mD2DDeviceContext;
+  ctx->CreateSolidColorBrush(
+    {0.8f, 0.8f, 0.8f, 0.8f}, D2D1::BrushProperties(), mMenuBGBrush.put());
+  ctx->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mMenuFGBrush.put());
 }
 
 FlyoutMenuUILayer::~FlyoutMenuUILayer() = default;
@@ -68,12 +73,21 @@ void FlyoutMenuUILayer::Render(
   const D2D1_RECT_F& rect) {
   if ((!mLastRenderRect) || rect != mLastRenderRect) {
     this->UpdateLayout(d2d, rect);
+    if (!mMenu) {
+      OPENKNEEBOARD_BREAK;
+      return;
+    }
   }
-  next.front()->Render(next.subspan(1), context, d2d, rect);
-  // TODO:
-  // - semi-transparent over everything
+
+  if (!next.empty()) {
+    next.front()->Render(next.subspan(1), context, d2d, rect);
+  }
+
   d2d->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
   const scope_guard popClip([d2d]() { d2d->PopAxisAlignedClip(); });
+
+  const auto& menu = *mMenu;
+  d2d->FillRectangle(menu.mRect, mMenuBGBrush.get());
 }
 
 void FlyoutMenuUILayer::UpdateLayout(
@@ -90,7 +104,6 @@ void FlyoutMenuUILayer::UpdateLayout(
   };
 
   // 1. How much space do we need?
-  // 2. Where can we put it?
 
   const auto selectableItemHeight
     = canvasSize.height * 0.8f * (HeaderPercent / 100.0f);
@@ -118,6 +131,11 @@ void FlyoutMenuUILayer::UpdateLayout(
   uint32_t rowCount = 0;
 
   for (const auto& item: mItems) {
+    auto selectable = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
+    if (!selectable) {
+      continue;
+    }
+
     if ((!haveChevron) && std::dynamic_pointer_cast<IToolbarFlyout>(item)) {
       haveChevron = true;
     }
@@ -127,25 +145,23 @@ void FlyoutMenuUILayer::UpdateLayout(
       haveGlyphOrCheck = true;
     }
 
-    auto selectable = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
-    if (selectable) {
-      totalHeight += selectableItemHeight;
-      if (!selectable->GetGlyph().empty()) {
-        haveGlyphOrCheck = true;
-      }
-      winrt::com_ptr<IDWriteTextLayout> layout;
-      auto label = winrt::to_hstring(selectable->GetLabel());
-      winrt::check_hresult(dwf->CreateTextLayout(
-        label.data(), label.size(), textFormat.get(), 0, 0, layout.put()));
-      DWRITE_TEXT_METRICS metrics {};
-      layout->GetMetrics(&metrics);
-      auto width = metrics.width;
-      if (width > maxTextWidth) {
-        maxTextWidth = width;
-      }
-      totalHeight += selectableItemHeight;
-      rowCount++;
+    totalHeight += selectableItemHeight;
+    if (!selectable->GetGlyph().empty()) {
+      haveGlyphOrCheck = true;
     }
+    winrt::com_ptr<IDWriteTextLayout> layout;
+    auto label = winrt::to_hstring(selectable->GetLabel());
+    auto inf = std::numeric_limits<FLOAT>::infinity();
+    winrt::check_hresult(dwf->CreateTextLayout(
+      label.data(), label.size(), textFormat.get(), inf, inf, layout.put()));
+    DWRITE_TEXT_METRICS metrics {};
+    winrt::check_hresult(layout->GetMetrics(&metrics));
+    auto width = metrics.width;
+    if (width > maxTextWidth) {
+      maxTextWidth = width;
+    }
+    totalHeight += selectableItemHeight;
+    rowCount++;
   }
 
   const auto margin = selectableItemHeight / 2;
@@ -171,6 +187,8 @@ void FlyoutMenuUILayer::UpdateLayout(
   if (maxTextWidth < 0) {
     return;
   }
+
+  // 2. Where can we put it?
 
   const D2D1_POINT_2F topLeft {
     mPreferredTopLeft01.x * canvasSize.width,

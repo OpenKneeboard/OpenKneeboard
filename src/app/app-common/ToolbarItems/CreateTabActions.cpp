@@ -35,7 +35,35 @@
 namespace OpenKneeboard {
 
 namespace {
-using Items = std::vector<std::shared_ptr<IToolbarItem>>;
+using ItemPtr = std::shared_ptr<IToolbarItem>;
+using Items = std::vector<ItemPtr>;
+}// namespace
+
+static ItemPtr CreateClearNotesItem(
+  KneeboardState* kbs,
+  const std::shared_ptr<IKneeboardView>&,
+  const std::shared_ptr<ITabView>& tabView) {
+  return std::make_shared<ToolbarFlyout>(
+    "\ued60",// StrokeErase
+    "Clear notes",
+    Items {
+      std::make_shared<ClearUserInputAction>(tabView, CurrentPage),
+      std::make_shared<ClearUserInputAction>(tabView, AllPages),
+      std::make_shared<ClearUserInputAction>(kbs, AllTabs),
+    });
+}
+
+static ItemPtr CreateReloadItem(
+  KneeboardState* kbs,
+  const std::shared_ptr<IKneeboardView>&,
+  const std::shared_ptr<ITabView>& tabView) {
+  return std::make_shared<ToolbarFlyout>(
+    "\ue72c",// Refresh
+    "Reload",
+    Items {
+      std::make_shared<ReloadTabAction>(kbs, tabView),
+      std::make_shared<ReloadTabAction>(kbs, AllTabs),
+    });
 }
 
 static Items CreateDropDownItems(
@@ -45,21 +73,8 @@ static Items CreateDropDownItems(
   return {
     std::make_shared<SetTabFlyout>(kbs, kneeboardView),
     std::make_shared<ToolbarSeparator>(),
-    std::make_shared<ToolbarFlyout>(
-      "\ued60",// StrokeErase
-      "Clear notes",
-      Items {
-        std::make_shared<ClearUserInputAction>(tabView, CurrentPage),
-        std::make_shared<ClearUserInputAction>(tabView, AllPages),
-        std::make_shared<ClearUserInputAction>(kbs, AllTabs),
-      }),
-    std::make_shared<ToolbarFlyout>(
-      "\ue72c",// Refresh
-      "Reload",
-      Items {
-        std::make_shared<ReloadTabAction>(kbs, tabView),
-        std::make_shared<ReloadTabAction>(kbs, AllTabs),
-      }),
+    CreateClearNotesItem(kbs, kneeboardView, tabView),
+    CreateReloadItem(kbs, kneeboardView, tabView),
   };
 }
 
@@ -72,8 +87,13 @@ InGameActions InGameActions::Create(
     std::make_shared<TabNavigationAction>(tabView),
     std::make_shared<TabFirstPageAction>(tabView),
     std::make_shared<TabPreviousPageAction>(kneeboardState, tabView),
+    std::make_shared<TabNextPageAction>(kneeboardState, tabView),
       },
       .mRight = {
+    std::make_shared<ToolbarFlyout>(
+      "\ue712",
+      _("More"),
+      CreateDropDownItems(kneeboardState, kneeboardView, tabView)),
     std::make_shared<PreviousTabAction>(kneeboardState, kneeboardView),
     std::make_shared<NextTabAction>(kneeboardState, kneeboardView),
       },
