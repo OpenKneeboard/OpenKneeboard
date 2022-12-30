@@ -236,10 +236,6 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
     if (
       reinterpret_cast<HCTX>(wParam) == gInstance->p->mCtx
       && !(static_cast<UINT>(lParam) & CXS_ONTOP)) {
-      if (p->mDeviceInfo.mDeviceID == "non-pluginplay") {
-        // Guessing it's a huion, with a buggy WTOverlap function
-        return false;
-      }
       gInstance->p->mWintab.WTOverlap(gInstance->p->mCtx, TRUE);
     }
   };
@@ -285,6 +281,14 @@ bool WintabTablet::ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam) {
   }
 
   return false;
+}
+
+WintabTablet::Priority WintabTablet::GetPriority() const {
+  return p->mPriority;
+}
+
+void WintabTablet::SetPriority(Priority priority) {
+  p->mPriority = priority;
 }
 
 }// namespace OpenKneeboard

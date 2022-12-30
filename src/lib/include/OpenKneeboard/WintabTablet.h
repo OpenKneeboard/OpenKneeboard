@@ -41,6 +41,8 @@ class WintabTablet final {
   ~WintabTablet();
 
   bool IsValid() const;
+  Priority GetPriority() const;
+  void SetPriority(Priority);
 
   bool CanProcessMessage(UINT message) const;
   bool ProcessMessage(UINT message, WPARAM wParam, LPARAM lParam);

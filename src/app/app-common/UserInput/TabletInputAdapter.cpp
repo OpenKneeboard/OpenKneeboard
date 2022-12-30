@@ -128,7 +128,7 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
 
   // Check that we can actually load Wintab before we save it; some drivers
   // - especially XP-Pen - will crash as soon as they're loaded
-  {
+  if (!mWintabTablet) {
     dprint("Attempting to load wintab");
     unique_hmodule wintab {LoadLibraryW(L"WINTAB32.dll")};
     co_await winrt::resume_after(std::chrono::milliseconds(100));
@@ -137,6 +137,10 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
 
   mSettings.mWintab = mode;
   StartWintab();
+  auto priority = (mSettings.mWintab == WintabMode::Enabled)
+    ? WintabTablet::Priority::AlwaysActive
+    : WintabTablet::Priority::ForegroundOnly;
+  mWintabTablet->SetPriority(priority);
   // Again, make sure that doesn't crash :)
   co_await winrt::resume_after(std::chrono::milliseconds(100));
   evSettingsChangedEvent.Emit();
@@ -148,8 +152,13 @@ void TabletInputAdapter::StartWintab() {
   }
 
   if (!mWintabTablet) {
-    mWintabTablet = std::make_unique<WintabTablet>(
-      mWindow, WintabTablet::Priority::AlwaysActive);
+    // If mode is 'Invasive', we manage background access by
+    // injecting a DLL, so as far as our wintab is concerned,
+    // it's only dealing with the foreground
+    auto priority = (mSettings.mWintab == WintabMode::Enabled)
+      ? WintabTablet::Priority::AlwaysActive
+      : WintabTablet::Priority::ForegroundOnly;
+    mWintabTablet = std::make_unique<WintabTablet>(mWindow, priority);
     if (!mWintabTablet->IsValid()) {
       mWintabTablet.reset();
       return;
