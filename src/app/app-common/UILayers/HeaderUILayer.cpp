@@ -81,6 +81,19 @@ void HeaderUILayer::PostCursorEvent(
   if (!mLastRenderSize) {
     return;
   }
+
+  if (mSecondaryMenu && !mRecursiveCall) {
+    mRecursiveCall = true;
+    const scope_guard endRecursive([this]() { mRecursiveCall = false; });
+
+    std::vector<IUILayer*> menuNext {this};
+    std::ranges::copy(next, std::back_inserter(menuNext));
+
+    mSecondaryMenu->PostCursorEvent(
+      menuNext, context, eventContext, cursorEvent);
+    return;
+  }
+
   const auto renderSize = *mLastRenderSize;
   if (mToolbar) {
     scope_guard repaintOnExit([this]() { evNeedsRepaintEvent.Emit(); });

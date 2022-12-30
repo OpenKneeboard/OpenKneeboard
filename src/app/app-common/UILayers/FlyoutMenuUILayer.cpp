@@ -27,7 +27,7 @@
 #include <dwrite.h>
 
 static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) {
-  return false;
+  return memcmp(&a, &b, sizeof(D2D1_RECT_F)) == 0;
 }
 
 namespace OpenKneeboard {
@@ -47,6 +47,8 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
   ctx->CreateSolidColorBrush(
     {0.8f, 0.8f, 0.8f, 0.8f}, D2D1::BrushProperties(), mMenuBGBrush.put());
   ctx->CreateSolidColorBrush(
+    {0.0f, 0.8f, 1.0f, 1.0f}, D2D1::BrushProperties(), mMenuHoverBGBrush.put());
+  ctx->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mMenuFGBrush.put());
 }
 
@@ -57,8 +59,17 @@ void FlyoutMenuUILayer::PostCursorEvent(
   const Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
-  next.front()->PostCursorEvent(
-    next.subspan(1), context, eventContext, cursorEvent);
+  if (!(mMenu && mLastRenderRect)) {
+    next.front()->PostCursorEvent(
+      next.subspan(1), context, eventContext, cursorEvent);
+    return;
+  }
+
+  CursorEvent menuEvent {cursorEvent};
+  menuEvent.mX *= (mLastRenderRect->right - mLastRenderRect->left);
+  menuEvent.mY *= (mLastRenderRect->bottom - mLastRenderRect->top);
+  mMenu->mItems->PostCursorEvent(eventContext, menuEvent);
+  evNeedsRepaintEvent.Emit();
 }
 
 IUILayer::Metrics FlyoutMenuUILayer::GetMetrics(
@@ -99,11 +110,17 @@ void FlyoutMenuUILayer::Render(
   std::wstring chevron {L"\ue76c"};// ChevronRight
   std::wstring checkmark {L"\ue73e"};// CheckMark
 
-  for (const auto& menuItem: menu.mItems->GetButtons()) {
+  auto [hoverMenuItem, menuItems] = menu.mItems->GetState();
+
+  for (const auto& menuItem: menuItems) {
     auto selectable
       = std::dynamic_pointer_cast<ISelectableToolbarItem>(menuItem.mItem);
     if (!selectable) {
       continue;
+    }
+
+    if (menuItem == hoverMenuItem && selectable->IsEnabled()) {
+      d2d->FillRectangle(menuItem.mRect, mMenuHoverBGBrush.get());
     }
 
     d2d->DrawTextW(

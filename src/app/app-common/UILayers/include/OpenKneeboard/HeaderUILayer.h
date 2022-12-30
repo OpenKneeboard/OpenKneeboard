@@ -103,6 +103,8 @@ class HeaderUILayer final : public IUILayer,
   std::optional<D2D1_SIZE_F> mLastRenderSize;
   std::optional<Toolbar> mToolbar;
   std::shared_ptr<FlyoutMenuUILayer> mSecondaryMenu;
+
+  bool mRecursiveCall = false;
 };
 
 }// namespace OpenKneeboard
