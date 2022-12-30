@@ -477,13 +477,12 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
   auto confirmable
     = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(item.mItem);
   if (confirmable) {
-    auto prev
-      = std::make_shared<ConfirmationUILayer>(mDXResources, confirmable);
+    auto prev = ConfirmationUILayer::Create(mDXResources, confirmable);
     AddEventListener(prev->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
     AddEventListener(prev->evClosedEvent, [weak = weak_from_this()]() {
       if (auto self = weak.lock()) {
         self->mPrevious = {};
-        self->evNeedsRepaintEvent.Emit();
+        self->evCloseMenuRequestedEvent.Emit();
       }
     });
     mPrevious = prev;

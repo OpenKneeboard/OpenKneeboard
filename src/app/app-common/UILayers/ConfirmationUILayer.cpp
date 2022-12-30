@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/ConfirmationUILayer.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/config.h>
 
 static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
@@ -26,6 +27,13 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
 }
 
 namespace OpenKneeboard {
+
+std::shared_ptr<ConfirmationUILayer> ConfirmationUILayer::Create(
+  const DXResources& dxr,
+  const std::shared_ptr<IToolbarItemWithConfirmation>& item) {
+  return std::shared_ptr<ConfirmationUILayer>(
+    new ConfirmationUILayer(dxr, item));
+}
 
 ConfirmationUILayer::ConfirmationUILayer(
   const DXResources& dxr,
@@ -43,17 +51,37 @@ ConfirmationUILayer::ConfirmationUILayer(
     {0.3f, 0.3f, 0.3f, 1.0f},
     D2D1::BrushProperties(),
     mButtonBorderBrush.put());
+  d2d->CreateSolidColorBrush(
+    {0.0f, 0.8f, 1.0f, 1.0f},
+    D2D1::BrushProperties(),
+    mHoverButtonFillBrush.put());
 }
 
-ConfirmationUILayer::~ConfirmationUILayer() = default;
+ConfirmationUILayer::~ConfirmationUILayer() {
+  RemoveAllEventListeners();
+}
 
 void ConfirmationUILayer::PostCursorEvent(
   const NextList& next,
   const Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
-  next.front()->PostCursorEvent(
-    next.subspan(1), context, eventContext, cursorEvent);
+  D2D1_RECT_F rect;
+  Dialog dialog;
+  try {
+    rect = mCanvasRect.value();
+    dialog = mDialog.value();
+  } catch (const std::bad_optional_access&) {
+    next.front()->PostCursorEvent(
+      next.subspan(1), context, eventContext, cursorEvent);
+    return;
+  }
+
+  CursorEvent canvasEvent {cursorEvent};
+  canvasEvent.mX *= (rect.right - rect.left);
+  canvasEvent.mY *= (rect.bottom - rect.top);
+
+  dialog.mButtons->PostCursorEvent(eventContext, canvasEvent);
 }
 
 void ConfirmationUILayer::Render(
@@ -99,10 +127,13 @@ void ConfirmationUILayer::Render(
 
   const auto [hoverButton, buttons] = dialog.mButtons->GetState();
   for (const auto& button: buttons) {
-    d2d->DrawRoundedRectangle(
-      D2D1::RoundedRect(button.mRect, dialog.mMargin, dialog.mMargin),
-      mButtonBorderBrush.get(),
-      2.0f);
+    const auto rr
+      = D2D1::RoundedRect(button.mRect, dialog.mMargin, dialog.mMargin);
+    if (button == hoverButton) {
+      d2d->FillRoundedRectangle(rr, mHoverButtonFillBrush.get());
+    }
+
+    d2d->DrawRoundedRectangle(rr, mButtonBorderBrush.get(), 2.0f);
     d2d->DrawTextW(
       button.mLabel.data(),
       button.mLabel.size(),
@@ -290,6 +321,20 @@ void ConfirmationUILayer::UpdateLayout(
         .mRect = cancelButtonRect,
         .mLabel = cancelButtonTextInfo.mWinString,
       },
+    });
+  AddEventListener(
+    buttons->evClicked, [weak = weak_from_this()](auto, auto button) {
+      auto self = weak.lock();
+      if (!self) {
+        return;
+      }
+      if (button.mAction == ButtonAction::Confirm) {
+        auto action = std::dynamic_pointer_cast<ToolbarAction>(self->mItem);
+        if (action) {
+          action->Execute();
+        }
+      }
+      self->evClosedEvent.Emit();
     });
 
   mDialog = Dialog {

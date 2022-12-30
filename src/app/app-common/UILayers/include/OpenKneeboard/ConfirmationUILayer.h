@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IUILayer.h>
 
 namespace OpenKneeboard {
@@ -28,9 +29,12 @@ namespace OpenKneeboard {
 struct CursorEvent;
 class IToolbarItemWithConfirmation;
 
-class ConfirmationUILayer final : public IUILayer {
+class ConfirmationUILayer final
+  : public IUILayer,
+    public EventReceiver,
+    public std::enable_shared_from_this<ConfirmationUILayer> {
  public:
-  ConfirmationUILayer(
+  static std::shared_ptr<ConfirmationUILayer> Create(
     const DXResources& dxr,
     const std::shared_ptr<IToolbarItemWithConfirmation>&);
   virtual ~ConfirmationUILayer();
@@ -49,11 +53,14 @@ class ConfirmationUILayer final : public IUILayer {
 
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
 
-  ConfirmationUILayer() = delete;
-
   Event<> evClosedEvent;
 
+  ConfirmationUILayer() = delete;
  private:
+  ConfirmationUILayer(
+    const DXResources& dxr,
+    const std::shared_ptr<IToolbarItemWithConfirmation>&);
+
   DXResources mDXResources;
   std::shared_ptr<IToolbarItemWithConfirmation> mItem;
   std::optional<D2D1_RECT_F> mCanvasRect;
@@ -62,6 +69,7 @@ class ConfirmationUILayer final : public IUILayer {
   winrt::com_ptr<ID2D1SolidColorBrush> mDialogBGBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mButtonBorderBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mHoverButtonFillBrush;
 
   void UpdateLayout(ID2D1DeviceContext*, const D2D1_RECT_F&);
 
