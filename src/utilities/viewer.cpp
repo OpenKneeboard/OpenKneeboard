@@ -434,6 +434,12 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
   WPARAM wParam,
   LPARAM lParam) {
   switch (uMsg) {
+    case WM_SETCURSOR:
+      if (LOWORD(lParam) == HTCLIENT) {
+        SetCursor(LoadCursorW(nullptr, IDC_ARROW));
+        return 0;
+      }
+      break;
     case WM_SETFOCUS:
       gInstance->OnFocus();
       return 0;
