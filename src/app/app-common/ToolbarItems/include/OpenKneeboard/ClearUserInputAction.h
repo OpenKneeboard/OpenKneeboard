@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/inttypes.h>
 
@@ -28,7 +29,9 @@ class ITabView;
 class KneeboardState;
 class IKneeboardView;
 
-class ClearUserInputAction final : public ToolbarAction, public EventReceiver {
+class ClearUserInputAction final : public ToolbarAction,
+                                   public EventReceiver,
+                                   public virtual IToolbarItemWithConfirmation {
  public:
   ClearUserInputAction(const std::shared_ptr<ITabView>&, CurrentPage_t);
   ClearUserInputAction(const std::shared_ptr<ITabView>&, AllPages_t);
@@ -37,8 +40,13 @@ class ClearUserInputAction final : public ToolbarAction, public EventReceiver {
 
   ~ClearUserInputAction();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
   virtual void Execute() override;
+
+  virtual std::string_view GetConfirmationTitle() const override;
+  virtual std::string_view GetConfirmationDescription() const override;
+  virtual std::string_view GetConfirmButtonLabel() const override;
+  virtual std::string_view GetCancelButtonLabel() const override;
 
  private:
   void SubscribeToTabView();

@@ -27,7 +27,7 @@ namespace OpenKneeboard {
 
 class IToolbarFlyout : public virtual ISelectableToolbarItem {
  public:
-  virtual ~IToolbarFlyout();
+  virtual ~IToolbarFlyout() = default;
 
   virtual std::vector<std::shared_ptr<IToolbarItem>> GetSubItems() const = 0;
 };

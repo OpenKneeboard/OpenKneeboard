@@ -32,6 +32,7 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
+#include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
@@ -241,10 +242,35 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
   return button;
 }
 
+winrt::fire_and_forget TabPage::OnToolbarActionClick(
+  const std::shared_ptr<ToolbarAction>& action) {
+  auto confirm
+    = std::dynamic_pointer_cast<IToolbarItemWithConfirmation>(action);
+  if (!confirm) {
+    action->Execute();
+    co_return;
+  }
+
+  co_await mUIThread;
+  muxc::ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(to_hstring(confirm->GetConfirmationTitle())));
+  dialog.Content(box_value(to_hstring(confirm->GetConfirmationDescription())));
+  dialog.PrimaryButtonText(to_hstring(confirm->GetConfirmButtonLabel()));
+  dialog.CloseButtonText(to_hstring(confirm->GetCancelButtonLabel()));
+
+  if (co_await dialog.ShowAsync() != muxc::ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  action->Execute();
+}
+
 muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
-  button.Click([action](auto, auto) { action->Execute(); });
+  button.Click(discard_winrt_event_args(weak_wrap(
+    [action](auto self) { self->OnToolbarActionClick(action); }, this)));
   return button;
 }
 
@@ -277,7 +303,8 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
   }
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
-  ret.Click([action](auto, auto) { action->Execute(); });
+  ret.Click(discard_winrt_event_args(weak_wrap(
+    [action](auto self) { self->OnToolbarActionClick(action); }, this)));
 
   AddEventListener(
     action->evStateChangedEvent,

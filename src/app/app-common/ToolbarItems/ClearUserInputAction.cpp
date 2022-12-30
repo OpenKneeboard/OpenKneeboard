@@ -71,8 +71,7 @@ bool ClearUserInputAction::IsEnabled() const {
     case Mode::AllTabs:
       return true;
   }
-  OPENKNEEBOARD_BREAK;
-  throw std::logic_error("Invalid mode");
+  OPENKNEEBOARD_UNREACHABLE;
 }
 
 void ClearUserInputAction::Execute() {
@@ -100,10 +99,44 @@ void ClearUserInputAction::Execute() {
       wce->ClearUserInput(mTabView->GetPageIndex());
       return;
     case Mode::AllTabs:
-      throw new std::logic_error("Unreachable");
+      OPENKNEEBOARD_UNREACHABLE;
   }
-  OPENKNEEBOARD_BREAK;
-  throw std::logic_error("Invalid mode");
+  OPENKNEEBOARD_UNREACHABLE;
+}
+
+std::string_view ClearUserInputAction::GetConfirmationTitle() const {
+  switch (mMode) {
+    case Mode::CurrentPage:
+      return _("Clear this page?");
+    case Mode::ThisTab:
+      return _("Clear this tab?");
+    case Mode::AllTabs:
+      return _("Clear all tabs?");
+  }
+  OPENKNEEBOARD_UNREACHABLE;
+}
+
+std::string_view ClearUserInputAction::GetConfirmationDescription() const {
+  switch (mMode) {
+    case Mode::CurrentPage:
+      return _("Do you want to clear all notes and drawings on this page?");
+    case Mode::ThisTab:
+      return _(
+        "Do you want to clear all notes and drawings on ALL PAGES in the "
+        "current tab?");
+    case Mode::AllTabs:
+      return _(
+        "Do you want to clear all notes and drawings on ALL PAGES in ALL "
+        "TABS?");
+  }
+  OPENKNEEBOARD_UNREACHABLE;
+}
+
+std::string_view ClearUserInputAction::GetConfirmButtonLabel() const {
+  return _("Clear");
+}
+std::string_view ClearUserInputAction::GetCancelButtonLabel() const {
+  return _("Cancel");
 }
 
 }// namespace OpenKneeboard

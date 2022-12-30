@@ -17,10 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/IToolbarFlyout.h>
+#pragma once
+
+#include <OpenKneeboard/ISelectableToolbarItem.h>
 
 namespace OpenKneeboard {
 
-IToolbarFlyout::~IToolbarFlyout() = default;
+class IToolbarItemWithConfirmation : public virtual ISelectableToolbarItem {
+ public:
+  virtual ~IToolbarItemWithConfirmation() = default;
+
+  virtual std::string_view GetConfirmationTitle() const = 0;
+  virtual std::string_view GetConfirmationDescription() const = 0;
+  virtual std::string_view GetConfirmButtonLabel() const = 0;
+  virtual std::string_view GetCancelButtonLabel() const = 0;
+};
 
 }// namespace OpenKneeboard

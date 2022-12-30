@@ -23,6 +23,11 @@ add_compile_definitions(
   "BUILD_CONFIG=\"$<CONFIG>\""
 )
 
+# TODO (C++23): replace all calls with std::unreachable()
+add_compile_definitions(
+  "OPENKNEEBOARD_UNREACHABLE=__assume(false)"
+)
+
 # Always link this so we never accidentally use the SDK version
 link_libraries(ThirdParty::CppWinRT)
 set(GITHUB_REF_TYPE "" CACHE STRING "For GitHub Actions: 'tag' or 'branch'")

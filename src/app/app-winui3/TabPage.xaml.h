@@ -89,6 +89,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void PaintLater();
   void PaintNow() noexcept;
 
+  winrt::fire_and_forget OnToolbarActionClick(const std::shared_ptr<ToolbarAction>&);
+
   D2D1_SIZE_F mCanvasSize;
 
   struct PageMetrics {
