@@ -87,6 +87,7 @@ void FlyoutMenuUILayer::PostCursorEvent(
   menuEvent.mX *= (mLastRenderRect->right - mLastRenderRect->left);
   menuEvent.mY *= (mLastRenderRect->bottom - mLastRenderRect->top);
   mMenu->mCursorImpl->PostCursorEvent(eventContext, menuEvent);
+
   evNeedsRepaintEvent.Emit();
 }
 
@@ -133,7 +134,9 @@ void FlyoutMenuUILayer::Render(
   const scope_guard popClip([d2d]() { d2d->PopAxisAlignedClip(); });
 
   const auto& menu = *mMenu;
-  d2d->FillRectangle(menu.mRect, mMenuBGBrush.get());
+  d2d->FillRoundedRectangle(
+    D2D1::RoundedRect(menu.mRect, menu.mMargin, menu.mMargin),
+    mMenuBGBrush.get());
 
   auto dwf = mDXResources.mDWriteFactory;
 
