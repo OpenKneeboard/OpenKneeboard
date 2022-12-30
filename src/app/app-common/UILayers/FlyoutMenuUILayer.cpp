@@ -312,14 +312,14 @@ void FlyoutMenuUILayer::UpdateLayout(
   std::vector<D2D1_RECT_F> separators;
   for (const auto& item: mItems) {
     if (std::dynamic_pointer_cast<ToolbarSeparator>(item)) {
-      origin.y += separatorHeight;
-
       separators.push_back({
         origin.x,
         origin.y,
         origin.x + maxItemWidth,
-        origin.y,
+        origin.y + separatorHeight,
       });
+      origin.y += separatorHeight;
+
       continue;
     }
 
