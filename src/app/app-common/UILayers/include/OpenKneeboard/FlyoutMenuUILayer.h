@@ -78,6 +78,8 @@ class FlyoutMenuUILayer final : public IUILayer {
 
     winrt::hstring mLabel;
     D2D1_RECT_F mLabelRect {};
+    D2D1_RECT_F mGlyphRect {};
+    D2D1_RECT_F mChevronRect {};
 
     bool operator==(const MenuItem&) const noexcept;
   };
@@ -86,6 +88,7 @@ class FlyoutMenuUILayer final : public IUILayer {
     D2D1_RECT_F mRect {};
     std::unique_ptr<CursorClickableRegions<MenuItem>> mItems;
     winrt::com_ptr<IDWriteTextFormat> mTextFormat;
+    winrt::com_ptr<IDWriteTextFormat> mGlyphFormat;
   };
   std::optional<Menu> mMenu;
 

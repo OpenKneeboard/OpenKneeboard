@@ -95,6 +95,8 @@ void FlyoutMenuUILayer::Render(
 
   auto dwf = mDXResources.mDWriteFactory;
 
+  std::wstring chevron {L"\ue76c"};// ChevronRight
+
   for (const auto& menuItem: menu.mItems->GetButtons()) {
     auto selectable
       = std::dynamic_pointer_cast<ISelectableToolbarItem>(menuItem.mItem);
@@ -108,6 +110,16 @@ void FlyoutMenuUILayer::Render(
       menu.mTextFormat.get(),
       menuItem.mLabelRect,
       mMenuFGBrush.get());
+
+    auto submenu = std::dynamic_pointer_cast<IToolbarFlyout>(menuItem.mItem);
+    if (submenu) {
+      d2d->DrawTextW(
+        chevron.data(),
+        chevron.size(),
+        menu.mGlyphFormat.get(),
+        menuItem.mChevronRect,
+        mMenuFGBrush.get());
+    }
   }
 }
 
@@ -132,19 +144,34 @@ void FlyoutMenuUILayer::UpdateLayout(
 
   FLOAT dpix, dpiy;
   d2d->GetDpi(&dpix, &dpiy);
-  winrt::com_ptr<IDWriteTextFormat> textFormat;
   auto dwf = mDXResources.mDWriteFactory;
+
+  const auto fontSize = textHeight * 96 / dpiy;
+
+  winrt::com_ptr<IDWriteTextFormat> textFormat;
   winrt::check_hresult(dwf->CreateTextFormat(
     L"Segoe UI",
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    textHeight * 96 / dpiy,
+    fontSize,
     L"en-us",
     textFormat.put()));
   textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
   textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+  winrt::com_ptr<IDWriteTextFormat> glyphFormat;
+  winrt::check_hresult(dwf->CreateTextFormat(
+    L"Segoe MDL2 Assets",
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    fontSize,
+    L"en-us",
+    glyphFormat.put()));
+  glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 
   float totalHeight = 0;
   float maxTextWidth = 0;
@@ -157,6 +184,9 @@ void FlyoutMenuUILayer::UpdateLayout(
     if (!selectable) {
       continue;
     }
+
+    totalHeight += selectableItemHeight;
+    rowCount++;
 
     if ((!haveChevron) && std::dynamic_pointer_cast<IToolbarFlyout>(item)) {
       haveChevron = true;
@@ -181,8 +211,6 @@ void FlyoutMenuUILayer::UpdateLayout(
     if (width > maxTextWidth) {
       maxTextWidth = width;
     }
-    totalHeight += selectableItemHeight;
-    rowCount++;
   }
 
   const auto margin = selectableItemHeight / 4;
@@ -265,6 +293,18 @@ void FlyoutMenuUILayer::UpdateLayout(
       origin.x + maxItemWidth - rightMargin,
       origin.y + selectableItemHeight,
     };
+    const D2D1_RECT_F glyphRect {
+      origin.x + margin,
+      origin.y,
+      origin.x + selectableItemHeight,
+      origin.y + selectableItemHeight,
+    };
+    const D2D1_RECT_F chevronRect {
+      labelRect.right + margin,
+      origin.y,
+      itemRect.right - margin,
+      origin.y + selectableItemHeight,
+    };
     origin.y += selectableItemHeight;
 
     menuItems.push_back({
@@ -272,6 +312,8 @@ void FlyoutMenuUILayer::UpdateLayout(
       .mItem = item,
       .mLabel = winrt::to_hstring(selectable->GetLabel()),
       .mLabelRect = labelRect,
+      .mGlyphRect = glyphRect,
+      .mChevronRect = chevronRect,
     });
   }
 
@@ -286,6 +328,7 @@ void FlyoutMenuUILayer::UpdateLayout(
     .mItems
     = std::make_unique<CursorClickableRegions<MenuItem>>(std::move(menuItems)),
     .mTextFormat = std::move(textFormat),
+    .mGlyphFormat = std::move(glyphFormat),
   };
 }
 
