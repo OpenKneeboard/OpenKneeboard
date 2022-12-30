@@ -46,24 +46,20 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
   }
 
   switch (game->mOverlayAPI) {
+    case OverlayAPI::None:
+      return {SHM::ConsumerKind::Test};
     case OverlayAPI::AutoDetect:
       return {};
-      break;
     case OverlayAPI::SteamVR:
       return {SHM::ConsumerKind::SteamVR};
-      break;
     case OverlayAPI::OpenXR:
       return {SHM::ConsumerKind::OpenXR};
-      break;
     case OverlayAPI::OculusD3D11:
       return {SHM::ConsumerKind::OculusD3D11};
-      break;
     case OverlayAPI::OculusD3D12:
       return {SHM::ConsumerKind::OculusD3D12};
-      break;
     case OverlayAPI::NonVRD3D11:
       return {SHM::ConsumerKind::NonVRD3D11};
-      break;
     default:
       dprintf(
         "Unhandled overlay API: {}",

@@ -215,6 +215,7 @@ void GameInjector::CheckProcess(
 
     std::filesystem::path overlayDll;
     switch (game->mOverlayAPI) {
+      case OverlayAPI::None:
       case OverlayAPI::SteamVR:
       case OverlayAPI::OpenXR:
         break;
