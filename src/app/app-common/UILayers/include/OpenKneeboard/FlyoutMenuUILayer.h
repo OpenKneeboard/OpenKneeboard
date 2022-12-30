@@ -78,6 +78,7 @@ class FlyoutMenuUILayer final : public IUILayer {
 
     winrt::hstring mLabel;
     D2D1_RECT_F mLabelRect {};
+    winrt::hstring mGlyph;
     D2D1_RECT_F mGlyphRect {};
     D2D1_RECT_F mChevronRect {};
 

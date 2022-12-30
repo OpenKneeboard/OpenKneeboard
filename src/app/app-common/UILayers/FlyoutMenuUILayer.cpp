@@ -96,6 +96,7 @@ void FlyoutMenuUILayer::Render(
   auto dwf = mDXResources.mDWriteFactory;
 
   std::wstring chevron {L"\ue76c"};// ChevronRight
+  std::wstring checkmark {L"\ue73e"};// CheckMark
 
   for (const auto& menuItem: menu.mItems->GetButtons()) {
     auto selectable
@@ -119,6 +120,27 @@ void FlyoutMenuUILayer::Render(
         menu.mGlyphFormat.get(),
         menuItem.mChevronRect,
         mMenuFGBrush.get());
+    }
+
+    auto checkable
+      = std::dynamic_pointer_cast<ICheckableToolbarItem>(menuItem.mItem);
+    if (checkable && checkable->IsChecked()) {
+      d2d->DrawTextW(
+        checkmark.data(),
+        checkmark.size(),
+        menu.mGlyphFormat.get(),
+        menuItem.mGlyphRect,
+        mMenuFGBrush.get());
+    } else if (!checkable) {
+      auto glyph = menuItem.mGlyph;
+      if (!glyph.empty()) {
+        d2d->DrawTextW(
+          glyph.data(),
+          glyph.size(),
+          menu.mGlyphFormat.get(),
+          menuItem.mGlyphRect,
+          mMenuFGBrush.get());
+      }
     }
   }
 }
@@ -312,6 +334,7 @@ void FlyoutMenuUILayer::UpdateLayout(
       .mItem = item,
       .mLabel = winrt::to_hstring(selectable->GetLabel()),
       .mLabelRect = labelRect,
+      .mGlyph = winrt::to_hstring(selectable->GetGlyph()),
       .mGlyphRect = glyphRect,
       .mChevronRect = chevronRect,
     });
