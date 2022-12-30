@@ -66,7 +66,7 @@ target_link_libraries(
 add_utility_executable(
   OpenKneeboard-Viewer
   WIN32
-  test-viewer.cpp
+  viewer.cpp
   icon.rc
 )
 target_link_libraries(
