@@ -34,7 +34,7 @@ class KneeboardState;
 
 class FlyoutMenuUILayer final : public IUILayer {
  public:
-  enum class PreferredAnchor {
+  enum class Corner {
     TopLeft,
     TopRight,
   };
@@ -43,7 +43,7 @@ class FlyoutMenuUILayer final : public IUILayer {
     const std::vector<std::shared_ptr<IToolbarItem>>& items,
     D2D1_POINT_2F preferredTopLeft01,
     D2D1_POINT_2F preferredTopRight01,
-    PreferredAnchor);
+    Corner preferredCorner);
   virtual ~FlyoutMenuUILayer();
 
   virtual void PostCursorEvent(
@@ -65,21 +65,27 @@ class FlyoutMenuUILayer final : public IUILayer {
   std::vector<std::shared_ptr<IToolbarItem>> mItems;
   D2D1_POINT_2F mPreferredTopLeft01 {};
   D2D1_POINT_2F mPreferredTopRight01 {};
-  PreferredAnchor mPreferredAnchor;
+  Corner mPreferredAnchor;
 
-  std::optional<D2D1_SIZE_F> mLastRenderSize;
+  std::optional<D2D1_RECT_F> mLastRenderRect;
 
-  struct Item {
+  struct MenuItem {
     D2D1_RECT_F mRect {};
     std::shared_ptr<IToolbarItem> mItem;
-    bool operator==(const Item&) const noexcept;
+
+    winrt::hstring mLabel;
+    D2D1_RECT_F mLabelRect {};
+
+    bool operator==(const MenuItem&) const noexcept;
   };
 
   struct Menu {
     D2D1_RECT_F mRect {};
-    std::unique_ptr<CursorClickableRegions<Item>> mItems;
+    std::unique_ptr<CursorClickableRegions<MenuItem>> mItems;
   };
   std::optional<Menu> mMenu;
+
+  void UpdateLayout(ID2D1DeviceContext*, const D2D1_RECT_F&);
 };
 
 }// namespace OpenKneeboard
