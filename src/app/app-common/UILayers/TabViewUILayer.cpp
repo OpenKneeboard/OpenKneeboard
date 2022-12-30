@@ -23,6 +23,7 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/TabViewUILayer.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/utf8.h>
 
 namespace OpenKneeboard {
