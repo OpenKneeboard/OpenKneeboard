@@ -48,6 +48,7 @@ class HWNDPageSource final
   static winrt::fire_and_forget final_release(std::unique_ptr<HWNDPageSource>);
 
   bool HaveWindow() const;
+  void InstallWindowHooks(HWND);
 
   virtual PageIndex GetPageCount() const final override;
   virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) final override;
@@ -57,8 +58,10 @@ class HWNDPageSource final
     PageIndex pageIndex,
     const D2D1_RECT_F& rect) final override;
 
-  virtual void
-  PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex) final;
+  virtual void PostCursorEvent(
+    EventContext,
+    const CursorEvent&,
+    PageIndex pageIndex) override final;
   virtual bool CanClearUserInput() const override;
   virtual bool CanClearUserInput(PageIndex) const override;
   virtual void ClearUserInput(PageIndex) override;
@@ -71,7 +74,6 @@ class HWNDPageSource final
   HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
   winrt::fire_and_forget Init() noexcept;
   void OnFrame() noexcept;
-  void InstallWindowHooks(HWND);
 
   winrt::apartment_context mUIThread;
   DXResources mDXR;

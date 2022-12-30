@@ -501,6 +501,14 @@ void WindowCaptureTabUIData::MatchWindowTitle(uint8_t value) {
   GetTab()->SetMatchSpecification(spec);
 }
 
+bool WindowCaptureTabUIData::IsInputEnabled() const {
+  return GetTab()->IsInputEnabled();
+}
+
+void WindowCaptureTabUIData::IsInputEnabled(bool value) {
+  GetTab()->SetIsInputEnabled(value);
+}
+
 std::shared_ptr<WindowCaptureTab> WindowCaptureTabUIData::GetTab() const {
   auto tab = mTab.lock();
   if (!tab) {

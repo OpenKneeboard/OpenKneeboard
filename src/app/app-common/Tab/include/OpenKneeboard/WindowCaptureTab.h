@@ -26,12 +26,15 @@
 
 namespace OpenKneeboard {
 
+class HWNDPageSource;
+
 class WindowCaptureTab final
   : public TabBase,
     public ITabWithSettings,
     public PageSourceWithDelegates,
     public std::enable_shared_from_this<WindowCaptureTab> {
  public:
+  struct Settings;
   struct WindowSpecification {
     std::filesystem::path mExecutable;
     std::string mWindowClass;
@@ -67,8 +70,16 @@ class WindowCaptureTab final
   MatchSpecification GetMatchSpecification() const;
   void SetMatchSpecification(const MatchSpecification&);
 
+  bool IsInputEnabled() const;
+  void SetIsInputEnabled(bool);
+
   static std::unordered_map<HWND, WindowSpecification> GetTopLevelWindows();
   static std::optional<WindowSpecification> GetWindowSpecification(HWND);
+
+  virtual void PostCursorEvent(
+    EventContext,
+    const CursorEvent&,
+    PageIndex pageIndex) override final;
 
  private:
   WindowCaptureTab(
@@ -76,7 +87,7 @@ class WindowCaptureTab final
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
-    const MatchSpecification&);
+    const Settings&);
   winrt::fire_and_forget TryToStartCapture();
   concurrency::task<bool> TryToStartCapture(HWND hwnd);
   bool WindowMatches(HWND hwnd) const;
@@ -97,7 +108,9 @@ class WindowCaptureTab final
   DXResources mDXR;
   KneeboardState* mKneeboard {nullptr};
   MatchSpecification mSpec;
+  bool mSendInput = false;
   HWND mHwnd {};
+  std::shared_ptr<HWNDPageSource> mDelegate;
 
   unique_hwineventhook mEventHook;
   static std::mutex gHookMutex;

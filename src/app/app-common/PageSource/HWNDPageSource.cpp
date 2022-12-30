@@ -132,8 +132,6 @@ HWNDPageSource::HWNDPageSource(
     }
   });
 
-  this->InstallWindowHooks(mWindow);
-
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
 }

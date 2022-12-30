@@ -37,12 +37,20 @@ std::map<HWINEVENTHOOK, std::weak_ptr<WindowCaptureTab>>
 
 OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
 
+struct WindowCaptureTab::Settings {
+  MatchSpecification mSpec {};
+  bool mSendInput = false;
+
+  constexpr auto operator<=>(const Settings&) const noexcept = default;
+};
+OPENKNEEBOARD_DECLARE_JSON(WindowCaptureTab::Settings);
+
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const MatchSpecification& spec) {
-  return std::shared_ptr<WindowCaptureTab>(
-    new WindowCaptureTab(dxr, kbs, {}, to_utf8(spec.mExecutable.stem()), spec));
+  return std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
+    dxr, kbs, {}, to_utf8(spec.mExecutable.stem()), {.mSpec = spec}));
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
@@ -50,15 +58,22 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
-  const nlohmann::json& settings) {
-  auto ret = std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
-    dxr,
-    kbs,
-    persistentID,
-    title,
-    settings.at("Spec").get<MatchSpecification>()));
+  const nlohmann::json& jsonSettings) {
+  auto settings = jsonSettings.get<Settings>();
+
+  auto ret = std::shared_ptr<WindowCaptureTab>(
+    new WindowCaptureTab(dxr, kbs, persistentID, title, settings));
   ret->TryToStartCapture();
   return ret;
+}
+
+void WindowCaptureTab::PostCursorEvent(
+  EventContext ec,
+  const CursorEvent& ev,
+  PageIndex pageIndex) {
+  if (mSendInput) {
+    PageSourceWithDelegates::PostCursorEvent(ec, ev, pageIndex);
+  }
 }
 
 WindowCaptureTab::WindowCaptureTab(
@@ -66,12 +81,13 @@ WindowCaptureTab::WindowCaptureTab(
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
-  const MatchSpecification& spec)
+  const Settings& settings)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs),
-    mSpec(spec) {
+    mSpec(settings.mSpec),
+    mSendInput(settings.mSendInput) {
 }
 
 bool WindowCaptureTab::WindowMatches(HWND hwnd) const {
@@ -125,6 +141,7 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
     reinterpret_cast<uint64_t>(hwnd),
     reinterpret_cast<uint64_t>(GetParent(hwnd)),
     reinterpret_cast<uint64_t>(GetDesktopWindow()));
+  mDelegate = source;
   this->SetDelegates({source});
   this->AddEventListener(
     source->evWindowClosedEvent,
@@ -181,12 +198,16 @@ std::string WindowCaptureTab::GetGlyph() const {
 
 void WindowCaptureTab::Reload() {
   mHwnd = {};
+  mDelegate = {};
   this->SetDelegates({});
   this->TryToStartCapture();
 }
 
 nlohmann::json WindowCaptureTab::GetSettings() const {
-  return {{"Spec", mSpec}};
+  return Settings {
+    .mSpec = mSpec,
+    .mSendInput = mSendInput,
+  };
 }
 
 std::unordered_map<HWND, WindowSpecification>
@@ -302,6 +323,21 @@ void WindowCaptureTab::SetMatchSpecification(const MatchSpecification& spec) {
   }
 }
 
+bool WindowCaptureTab::IsInputEnabled() const {
+  return mSendInput;
+}
+
+void WindowCaptureTab::SetIsInputEnabled(bool value) {
+  if (value == mSendInput) {
+    return;
+  }
+  mSendInput = value;
+  if (mSendInput) {
+    mDelegate->InstallWindowHooks(mHwnd);
+  }
+  evSettingsChangedEvent.Emit();
+}
+
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
   if (!this->WindowMatches(hwnd)) {
     // Give new windows (especially UWP) a chance to settle before checking
@@ -378,5 +414,7 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMatchTitle,
   mMatchWindowClass,
   mMatchExecutable)
+
+OPENKNEEBOARD_DEFINE_JSON(WindowCaptureTab::Settings, mSpec, mSendInput);
 
 }// namespace OpenKneeboard
