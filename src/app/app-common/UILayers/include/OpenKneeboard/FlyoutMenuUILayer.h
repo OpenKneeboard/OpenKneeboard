@@ -85,6 +85,7 @@ class FlyoutMenuUILayer final : public IUILayer {
   struct Menu {
     D2D1_RECT_F mRect {};
     std::unique_ptr<CursorClickableRegions<MenuItem>> mItems;
+    winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   };
   std::optional<Menu> mMenu;
 

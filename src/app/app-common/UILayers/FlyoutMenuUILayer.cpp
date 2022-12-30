@@ -83,11 +83,32 @@ void FlyoutMenuUILayer::Render(
     next.front()->Render(next.subspan(1), context, d2d, rect);
   }
 
+  if (!mMenu) {
+    return;
+  }
+
   d2d->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
   const scope_guard popClip([d2d]() { d2d->PopAxisAlignedClip(); });
 
   const auto& menu = *mMenu;
   d2d->FillRectangle(menu.mRect, mMenuBGBrush.get());
+
+  auto dwf = mDXResources.mDWriteFactory;
+
+  for (const auto& menuItem: menu.mItems->GetButtons()) {
+    auto selectable
+      = std::dynamic_pointer_cast<ISelectableToolbarItem>(menuItem.mItem);
+    if (!selectable) {
+      continue;
+    }
+
+    d2d->DrawTextW(
+      menuItem.mLabel.data(),
+      menuItem.mLabel.size(),
+      menu.mTextFormat.get(),
+      menuItem.mLabelRect,
+      mMenuFGBrush.get());
+  }
 }
 
 void FlyoutMenuUILayer::UpdateLayout(
@@ -99,14 +120,14 @@ void FlyoutMenuUILayer::UpdateLayout(
     renderRect.bottom - renderRect.top,
   };
   const D2D1_SIZE_F maxMenuSize = {
-    canvasSize.width / 3,
+    canvasSize.width / 2,
     canvasSize.height,
   };
 
   // 1. How much space do we need?
 
   const auto selectableItemHeight
-    = canvasSize.height * 0.8f * (HeaderPercent / 100.0f);
+    = canvasSize.height * 0.5f * (HeaderPercent / 100.0f);
   const auto textHeight = selectableItemHeight * 0.67f;
 
   FLOAT dpix, dpiy;
@@ -114,7 +135,7 @@ void FlyoutMenuUILayer::UpdateLayout(
   winrt::com_ptr<IDWriteTextFormat> textFormat;
   auto dwf = mDXResources.mDWriteFactory;
   winrt::check_hresult(dwf->CreateTextFormat(
-    L"Consolas",
+    L"Segoe UI",
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
@@ -123,6 +144,7 @@ void FlyoutMenuUILayer::UpdateLayout(
     L"en-us",
     textFormat.put()));
   textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
 
   float totalHeight = 0;
   float maxTextWidth = 0;
@@ -145,7 +167,6 @@ void FlyoutMenuUILayer::UpdateLayout(
       haveGlyphOrCheck = true;
     }
 
-    totalHeight += selectableItemHeight;
     if (!selectable->GetGlyph().empty()) {
       haveGlyphOrCheck = true;
     }
@@ -164,7 +185,7 @@ void FlyoutMenuUILayer::UpdateLayout(
     rowCount++;
   }
 
-  const auto margin = selectableItemHeight / 2;
+  const auto margin = selectableItemHeight / 4;
   auto maxItemWidth = maxTextWidth + (2 * margin);
   if (haveGlyphOrCheck) {
     maxItemWidth += selectableItemHeight;
@@ -174,14 +195,14 @@ void FlyoutMenuUILayer::UpdateLayout(
   }
 
   maxItemWidth = std::min(maxItemWidth, maxMenuSize.width);
-  maxTextWidth = maxItemWidth - (2 * margin);
+  maxTextWidth = maxItemWidth;
   float leftMargin = margin;
   if (haveGlyphOrCheck) {
-    leftMargin += selectableItemHeight + margin;
+    leftMargin += selectableItemHeight;
   }
   float rightMargin = margin;
   if (haveChevron) {
-    rightMargin += selectableItemHeight + margin;
+    rightMargin += selectableItemHeight;
   }
   maxTextWidth -= (leftMargin + rightMargin);
   if (maxTextWidth < 0) {
@@ -191,11 +212,13 @@ void FlyoutMenuUILayer::UpdateLayout(
   // 2. Where can we put it?
 
   const D2D1_POINT_2F topLeft {
-    mPreferredTopLeft01.x * canvasSize.width,
+    std::max(margin, mPreferredTopLeft01.x * canvasSize.width),
     mPreferredTopLeft01.y * canvasSize.height,
   };
   const D2D1_POINT_2F topRight {
-    (mPreferredTopRight01.x * canvasSize.width) - maxItemWidth,
+    std::min(
+      (mPreferredTopRight01.x * canvasSize.width) - maxItemWidth,
+      canvasSize.width - margin),
     mPreferredTopRight01.y * canvasSize.height,
   };
   const auto preferred
@@ -219,10 +242,10 @@ void FlyoutMenuUILayer::UpdateLayout(
     renderRect.left + origin.x,
     renderRect.top + origin.y,
     renderRect.left + origin.x + maxItemWidth,
-    renderRect.top + origin.y + totalHeight,
+    renderRect.top + origin.y + totalHeight + (2 * margin),
   };
 
-  origin = {menuRect.left, menuRect.top};
+  origin = {menuRect.left, menuRect.top + margin};
 
   std::vector<MenuItem> menuItems;
   for (const auto& item: mItems) {
@@ -252,10 +275,17 @@ void FlyoutMenuUILayer::UpdateLayout(
     });
   }
 
+  winrt::com_ptr<IDWriteInlineObject> ellipsis;
+  winrt::check_hresult(
+    dwf->CreateEllipsisTrimmingSign(textFormat.get(), ellipsis.put()));
+  DWRITE_TRIMMING trimming {DWRITE_TRIMMING_GRANULARITY_CHARACTER};
+  winrt::check_hresult(textFormat->SetTrimming(&trimming, ellipsis.get()));
+
   mMenu = {
     .mRect = menuRect,
     .mItems
     = std::make_unique<CursorClickableRegions<MenuItem>>(std::move(menuItems)),
+    .mTextFormat = std::move(textFormat),
   };
 }
 
