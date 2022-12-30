@@ -171,7 +171,7 @@ void FlyoutMenuUILayer::UpdateLayout(
   const auto selectableItemHeight
     = canvasSize.height * 0.5f * (HeaderPercent / 100.0f);
   const auto textHeight = selectableItemHeight * 0.67f;
-  const auto separatorHeight = selectableItemHeight / 3;
+  const auto separatorHeight = selectableItemHeight;
 
   FLOAT dpix, dpiy;
   d2d->GetDpi(&dpix, &dpiy);
