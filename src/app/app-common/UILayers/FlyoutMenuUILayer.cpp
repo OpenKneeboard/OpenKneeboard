@@ -444,6 +444,7 @@ bool FlyoutMenuUILayer::MenuItem::operator==(
 void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
   auto checkable = std::dynamic_pointer_cast<ICheckableToolbarItem>(item.mItem);
   if (checkable && checkable->IsChecked()) {
+    evCloseMenuRequestedEvent.Emit();
     return;
   }
 

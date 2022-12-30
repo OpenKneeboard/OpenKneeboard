@@ -28,6 +28,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/weak_wrap.h>
 
 #include <algorithm>
 
@@ -406,6 +407,14 @@ void HeaderUILayer::OnClick(const Button& button) {
     FlyoutMenuUILayer::Corner::TopRight);
   AddEventListener(
     mSecondaryMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  AddEventListener(
+    mSecondaryMenu->evCloseMenuRequestedEvent,
+    weak_wrap(
+      [](auto self) {
+        self->mSecondaryMenu = {};
+        self->evNeedsRepaintEvent.Emit();
+      },
+      this));
   evNeedsRepaintEvent.Emit();
 }
 
