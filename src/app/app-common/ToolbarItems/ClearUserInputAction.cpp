@@ -133,26 +133,15 @@ std::string_view ClearUserInputAction::GetConfirmationTitle() const {
     case Mode::CurrentPage:
       return _("Clear this page?");
     case Mode::ThisTab:
-      return _("Clear this tab?");
+      return _("Clear all pages in this tab?");
     case Mode::AllTabs:
-      return _("Clear all tabs?");
+      return _("Clear all pages in every tab?");
   }
   OPENKNEEBOARD_UNREACHABLE;
 }
 
 std::string_view ClearUserInputAction::GetConfirmationDescription() const {
-  switch (mMode) {
-    case Mode::CurrentPage:
-      return _("Do you want to clear all notes and drawings on this page?");
-    case Mode::ThisTab:
-      return _(
-        "Do you want to clear all notes and drawings on ALL PAGES in the "
-        "current tab?");
-    case Mode::AllTabs:
-      return _(
-        "Do you want to clear all notes and drawings on ALL PAGES in ALL "
-        "TABS?");
-  }
+  return _("This will erase all notes, drawings, or other annotations.");
   OPENKNEEBOARD_UNREACHABLE;
 }
 
