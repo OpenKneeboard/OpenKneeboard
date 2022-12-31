@@ -96,8 +96,9 @@ void FlyoutMenuUILayer::PostCursorEvent(
     return;
   }
 
-  if (mPrevious) {
-    mPrevious->PostCursorEvent(next, context, eventContext, cursorEvent);
+  auto previous = mPrevious;
+  if (previous) {
+    previous->PostCursorEvent(next, context, eventContext, cursorEvent);
     return;
   }
 
@@ -120,7 +121,8 @@ void FlyoutMenuUILayer::Render(
   const Context& context,
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
-  if (mPrevious && !mRecursiveCall) {
+  auto previous = mPrevious;
+  if (previous && !mRecursiveCall) {
     mRecursiveCall = true;
     const scope_guard endRecursive([this]() { mRecursiveCall = false; });
 
@@ -128,7 +130,7 @@ void FlyoutMenuUILayer::Render(
     submenuNext.reserve(next.size() + 1);
     std::ranges::copy(next, std::back_inserter(submenuNext));
 
-    mPrevious->Render(submenuNext, context, d2d, rect);
+    previous->Render(submenuNext, context, d2d, rect);
     return;
   }
 

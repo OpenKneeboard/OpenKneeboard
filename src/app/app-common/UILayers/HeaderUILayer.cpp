@@ -99,14 +99,15 @@ void HeaderUILayer::PostCursorEvent(
     return;
   }
 
-  if (mSecondaryMenu && !mRecursiveCall) {
+  auto secondaryMenu = mSecondaryMenu;
+  if (secondaryMenu && !mRecursiveCall) {
     mRecursiveCall = true;
     const scope_guard endRecursive([this]() { mRecursiveCall = false; });
 
     std::vector<IUILayer*> menuNext {this};
     std::ranges::copy(next, std::back_inserter(menuNext));
 
-    mSecondaryMenu->PostCursorEvent(
+    secondaryMenu->PostCursorEvent(
       menuNext, context, eventContext, cursorEvent);
     return;
   }
@@ -200,8 +201,9 @@ void HeaderUILayer::Render(
     d2d,
     {rect.left, rect.top + headerSize.height, rect.right, rect.bottom});
 
-  if (mSecondaryMenu) {
-    mSecondaryMenu->Render({}, context, d2d, rect);
+  auto secondaryMenu = mSecondaryMenu;
+  if (secondaryMenu) {
+    secondaryMenu->Render({}, context, d2d, rect);
   }
 }
 
@@ -435,27 +437,29 @@ void HeaderUILayer::OnClick(const Button& button) {
     return;
   }
 
-  if (mSecondaryMenu) {
-    mSecondaryMenu.reset();
+  auto secondaryMenu = mSecondaryMenu;
+  if (secondaryMenu) {
+    secondaryMenu.reset();
     evNeedsRepaintEvent.Emit();
     return;
   }
-  mSecondaryMenu = FlyoutMenuUILayer::Create(
+  secondaryMenu = FlyoutMenuUILayer::Create(
     mDXResources,
     flyout->GetSubItems(),
     D2D1_POINT_2F {0.0f, HeaderPercent / 100.0f},
     D2D1_POINT_2F {1.0f, HeaderPercent / 100.0f},
     FlyoutMenuUILayer::Corner::TopRight);
   AddEventListener(
-    mSecondaryMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+    secondaryMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
-    mSecondaryMenu->evCloseMenuRequestedEvent,
+    secondaryMenu->evCloseMenuRequestedEvent,
     weak_wrap(
       [](auto self) {
         self->mSecondaryMenu = {};
         self->evNeedsRepaintEvent.Emit();
       },
       this));
+  mSecondaryMenu = secondaryMenu;
   evNeedsRepaintEvent.Emit();
 }
 
