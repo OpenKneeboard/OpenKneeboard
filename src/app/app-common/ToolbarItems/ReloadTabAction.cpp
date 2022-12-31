@@ -60,4 +60,28 @@ void ReloadTabAction::Execute() {
   }
 }
 
+std::string_view ReloadTabAction::GetConfirmationTitle() const {
+  if (mTabView) {
+    return _("Reload this tab?");
+  }
+  return _("Reload OpenKneeboard?");
+}
+
+std::string_view ReloadTabAction::GetConfirmationDescription() const {
+  return _(
+    "This will erase all notes and drawings, and any information that was "
+    "added since OpenKneeboard started.");
+}
+
+std::string_view ReloadTabAction::GetConfirmButtonLabel() const {
+  if (mTabView) {
+    return _("Reload this tab");
+  }
+  return _("Reload every tab");
+}
+
+std::string_view ReloadTabAction::GetCancelButtonLabel() const {
+  return _("Cancel");
+}
+
 }// namespace OpenKneeboard

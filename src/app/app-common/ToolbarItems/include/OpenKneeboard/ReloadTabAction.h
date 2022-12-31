@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/ToolbarAction.h>
 
 namespace OpenKneeboard {
@@ -27,16 +28,24 @@ class ITabView;
 class KneeboardState;
 class IKneeboardView;
 
-class ReloadTabAction final : public ToolbarAction, public EventReceiver {
+class ReloadTabAction final : public ToolbarAction,
+                              public EventReceiver,
+                              public virtual IToolbarItemWithConfirmation {
  public:
   ReloadTabAction(KneeboardState*, const std::shared_ptr<ITabView>&);
   ReloadTabAction(KneeboardState*, AllTabs_t);
-  ReloadTabAction() = delete;
 
   ~ReloadTabAction();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
   virtual void Execute() override;
+
+  virtual std::string_view GetConfirmationTitle() const override;
+  virtual std::string_view GetConfirmationDescription() const override;
+  virtual std::string_view GetConfirmButtonLabel() const override;
+  virtual std::string_view GetCancelButtonLabel() const override;
+
+  ReloadTabAction() = delete;
 
  private:
   KneeboardState* mKneeboardState;
