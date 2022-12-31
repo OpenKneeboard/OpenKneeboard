@@ -57,6 +57,10 @@ DCSBriefingTab::~DCSBriefingTab() {
 }
 
 std::string DCSBriefingTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string DCSBriefingTab::GetStaticGlyph() {
   return "\uE95D";
 }
 

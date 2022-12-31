@@ -42,6 +42,7 @@ class DCSMissionTab final : public TabBase,
     std::string_view title);
   virtual ~DCSMissionTab();
   virtual std::string GetGlyph() const override;
+  static std::string GetStaticGlyph();
 
   virtual void Reload() override;
 

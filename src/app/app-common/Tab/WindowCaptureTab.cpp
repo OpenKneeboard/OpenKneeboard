@@ -192,6 +192,10 @@ winrt::fire_and_forget WindowCaptureTab::OnWindowClosed() {
 }
 
 std::string WindowCaptureTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string WindowCaptureTab::GetStaticGlyph() {
   // TVMonitor
   return {"\ue7f4"};
 }

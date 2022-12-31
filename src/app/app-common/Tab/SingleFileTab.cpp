@@ -82,6 +82,10 @@ std::string SingleFileTab::GetGlyph() const {
   }
 }
 
+std::string SingleFileTab::GetStaticGlyph() {
+  return "\ue8e5";
+}
+
 std::filesystem::path SingleFileTab::GetPath() const {
   return mPath;
 }

@@ -70,6 +70,10 @@ nlohmann::json EndlessNotebookTab::GetSettings() const {
 }
 
 std::string EndlessNotebookTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string EndlessNotebookTab::GetStaticGlyph() {
   return "\ue8ed";// RepeatOne
 }
 

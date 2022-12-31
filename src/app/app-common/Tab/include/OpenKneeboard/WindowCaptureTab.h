@@ -63,6 +63,7 @@ class WindowCaptureTab final
     const nlohmann::json& settings);
   virtual ~WindowCaptureTab();
   virtual std::string GetGlyph() const override;
+  static std::string GetStaticGlyph();
 
   virtual void Reload() final override;
   virtual nlohmann::json GetSettings() const override;

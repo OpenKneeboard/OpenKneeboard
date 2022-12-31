@@ -47,6 +47,10 @@ DCSMissionTab::~DCSMissionTab() {
 }
 
 std::string DCSMissionTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string DCSMissionTab::GetStaticGlyph() {
   return "\uF0E3";
 }
 

@@ -47,6 +47,7 @@ class DCSAircraftTab final : public TabBase,
   virtual void Reload() override;
 
   virtual std::string GetGlyph() const override;
+  static std::string GetStaticGlyph();
 
  protected:
   DXResources mDXR;

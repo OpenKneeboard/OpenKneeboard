@@ -47,6 +47,10 @@ DCSTerrainTab::~DCSTerrainTab() {
 }
 
 std::string DCSTerrainTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string DCSTerrainTab::GetStaticGlyph() {
   return "\uE909";
 }
 

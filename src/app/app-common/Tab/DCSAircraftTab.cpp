@@ -47,6 +47,10 @@ DCSAircraftTab::~DCSAircraftTab() {
 }
 
 std::string DCSAircraftTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string DCSAircraftTab::GetStaticGlyph() {
   return "\uE709";
 }
 

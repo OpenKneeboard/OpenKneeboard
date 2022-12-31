@@ -67,6 +67,10 @@ nlohmann::json FolderTab::GetSettings() const {
 }
 
 std::string FolderTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string FolderTab::GetStaticGlyph() {
   return "\uE838";
 }
 

@@ -99,6 +99,10 @@ void DCSRadioLogTab::SetTimestampsEnabled(bool value) {
 }
 
 std::string DCSRadioLogTab::GetGlyph() const {
+  return GetStaticGlyph();
+}
+
+std::string DCSRadioLogTab::GetStaticGlyph() {
   return "\uF12E";
 }
 

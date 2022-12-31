@@ -46,6 +46,7 @@ class DCSBriefingTab final : public TabBase,
     std::string_view title);
   virtual ~DCSBriefingTab();
   virtual std::string GetGlyph() const override;
+  static std::string GetStaticGlyph();
 
   virtual void Reload() noexcept override;
 

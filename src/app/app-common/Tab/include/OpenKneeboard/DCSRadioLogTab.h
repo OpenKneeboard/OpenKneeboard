@@ -53,6 +53,8 @@ class DCSRadioLogTab final : public TabBase,
   virtual ~DCSRadioLogTab();
 
   virtual std::string GetGlyph() const override;
+  static std::string GetStaticGlyph();
+
   virtual PageIndex GetPageCount() const override;
   virtual void Reload() override;
 

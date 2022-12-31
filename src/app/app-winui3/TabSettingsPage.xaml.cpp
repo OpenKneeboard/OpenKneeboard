@@ -75,11 +75,19 @@ TabSettingsPage::TabSettingsPage() {
 
   auto tabTypes = AddTabFlyout().Items();
 #define IT(label, name) \
-  MenuFlyoutItem name##Item; \
-  name##Item.Text(to_hstring(label)); \
-  name##Item.Tag(box_value<uint64_t>(TABTYPE_IDX_##name)); \
-  name##Item.Click({this, &TabSettingsPage::CreateTab}); \
-  tabTypes.Append(name##Item);
+  { \
+    MenuFlyoutItem item; \
+    item.Text(to_hstring(label)); \
+    item.Tag(box_value<uint64_t>(TABTYPE_IDX_##name)); \
+    item.Click({this, &TabSettingsPage::CreateTab}); \
+    auto glyph = name##Tab::GetStaticGlyph(); \
+    if (!glyph.empty()) { \
+      FontIcon fontIcon; \
+      fontIcon.Glyph(winrt::to_hstring(glyph)); \
+      item.Icon(fontIcon); \
+    } \
+    tabTypes.Append(item); \
+  }
   OPENKNEEBOARD_TAB_TYPES
 #undef IT
 
@@ -95,7 +103,7 @@ TabSettingsPage::TabSettingsPage() {
         }
       },
       this));
-}
+}// namespace winrt::OpenKneeboardApp::implementation
 
 IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
