@@ -31,10 +31,13 @@ SwitchTabFlyout::SwitchTabFlyout(
   KneeboardState* kbs,
   const std::shared_ptr<IKneeboardView>& kneeboardView)
   : mKneeboardState(kbs), mKneeboardView(kneeboardView) {
-  // FIXME: update when tabs changed
+  AddEventListener(
+    kbs->GetTabsList()->evTabsChangedEvent, this->evStateChangedEvent);
 }
 
-SwitchTabFlyout::~SwitchTabFlyout() = default;
+SwitchTabFlyout::~SwitchTabFlyout() {
+  RemoveAllEventListeners();
+}
 
 std::string_view SwitchTabFlyout::GetGlyph() const {
   return {};
@@ -47,7 +50,8 @@ bool SwitchTabFlyout::IsEnabled() const {
   return true;
 }
 
-std::vector<std::shared_ptr<IToolbarItem>> SwitchTabFlyout::GetSubItems() const {
+std::vector<std::shared_ptr<IToolbarItem>> SwitchTabFlyout::GetSubItems()
+  const {
   std::vector<std::shared_ptr<IToolbarItem>> ret;
   for (const auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
     ret.push_back(std::make_shared<SwitchTabAction>(mKneeboardView, tab));

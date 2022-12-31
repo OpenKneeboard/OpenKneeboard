@@ -28,7 +28,7 @@ namespace OpenKneeboard {
 class KneeboardState;
 class IKneeboardView;
 
-class SwitchTabFlyout final : public IToolbarFlyout {
+class SwitchTabFlyout final : public IToolbarFlyout, public EventReceiver {
  public:
   SwitchTabFlyout(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
   ~SwitchTabFlyout();

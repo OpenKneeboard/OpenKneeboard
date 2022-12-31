@@ -31,7 +31,8 @@ SwitchTabAction::SwitchTabAction(
   : ToolbarAction({}, tab->GetTitle()),
     mKneeboardView(kneeboardView),
     mTabID(tab->GetRuntimeID()) {
-  // FIXME: update state
+  AddEventListener(
+    kneeboardView->evCurrentTabChangedEvent, this->evStateChangedEvent);
 }
 
 SwitchTabAction::~SwitchTabAction() {
