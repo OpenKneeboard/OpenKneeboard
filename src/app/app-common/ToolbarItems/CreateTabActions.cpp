@@ -23,8 +23,8 @@
 #include <OpenKneeboard/NextTabAction.h>
 #include <OpenKneeboard/PreviousTabAction.h>
 #include <OpenKneeboard/ReloadTabAction.h>
-#include <OpenKneeboard/SetTabFlyout.h>
 #include <OpenKneeboard/SwitchProfileFlyout.h>
+#include <OpenKneeboard/SwitchTabFlyout.h>
 #include <OpenKneeboard/TabFirstPageAction.h>
 #include <OpenKneeboard/TabNavigationAction.h>
 #include <OpenKneeboard/TabNextPageAction.h>
@@ -87,7 +87,7 @@ InGameActions InGameActions::Create(
       _("More"),
       Items {
         std::make_shared<SwitchProfileFlyout>(kneeboardState),
-        std::make_shared<SetTabFlyout>(kneeboardState, kneeboardView),
+        std::make_shared<SwitchTabFlyout>(kneeboardState, kneeboardView),
         std::make_shared<ToolbarSeparator>(),
         CreateClearNotesItem(kneeboardState, kneeboardView, tabView),
         CreateReloadItem(kneeboardState, kneeboardView, tabView),

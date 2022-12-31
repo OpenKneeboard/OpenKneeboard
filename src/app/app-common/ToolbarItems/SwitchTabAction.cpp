@@ -20,12 +20,12 @@
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
-#include <OpenKneeboard/SetTabAction.h>
+#include <OpenKneeboard/SwitchTabAction.h>
 #include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
 
-SetTabAction::SetTabAction(
+SwitchTabAction::SwitchTabAction(
   const std::shared_ptr<IKneeboardView>& kneeboardView,
   const std::shared_ptr<ITab>& tab)
   : ToolbarAction({}, tab->GetTitle()),
@@ -34,20 +34,20 @@ SetTabAction::SetTabAction(
   // FIXME: update state
 }
 
-SetTabAction::~SetTabAction() {
+SwitchTabAction::~SwitchTabAction() {
   this->RemoveAllEventListeners();
 }
 
-bool SetTabAction::IsChecked() const {
+bool SwitchTabAction::IsChecked() const {
   return mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()
     == mTabID;
 }
 
-bool SetTabAction::IsEnabled() const {
+bool SwitchTabAction::IsEnabled() const {
   return true;
 }
 
-void SetTabAction::Execute() {
+void SwitchTabAction::Execute() {
   mKneeboardView->SetCurrentTabByRuntimeID(mTabID);
 }
 

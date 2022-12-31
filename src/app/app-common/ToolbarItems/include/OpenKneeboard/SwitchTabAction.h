@@ -19,32 +19,33 @@
  */
 #pragma once
 
-#include <OpenKneeboard/IToolbarFlyout.h>
-
-#include <vector>
+#include <OpenKneeboard/ICheckableToolbarItem.h>
+#include <OpenKneeboard/ToolbarAction.h>
 
 namespace OpenKneeboard {
 
-class KneeboardState;
+class ITab;
 class IKneeboardView;
 
-class SetTabFlyout final : public IToolbarFlyout {
+class SwitchTabAction final : public ToolbarAction,
+                           public EventReceiver,
+                           public ICheckableToolbarItem {
  public:
-  SetTabFlyout(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
-  ~SetTabFlyout();
+  SwitchTabAction(
+    const std::shared_ptr<IKneeboardView>&,
+    const std::shared_ptr<ITab>&);
+  ~SwitchTabAction();
 
-  std::string_view GetGlyph() const override;
-  std::string_view GetLabel() const override;
   virtual bool IsEnabled() const override;
+  ;
+  virtual bool IsChecked() const override;
+  virtual void Execute() override;
 
-  virtual std::vector<std::shared_ptr<IToolbarItem>> GetSubItems()
-    const override;
-
-  SetTabFlyout() = delete;
+  SwitchTabAction() = delete;
 
  private:
-  KneeboardState* mKneeboardState {nullptr};
   std::shared_ptr<IKneeboardView> mKneeboardView;
+  ITab::RuntimeID mTabID;
 };
 
 }// namespace OpenKneeboard

@@ -21,36 +21,36 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/SetTabAction.h>
-#include <OpenKneeboard/SetTabFlyout.h>
+#include <OpenKneeboard/SwitchTabAction.h>
+#include <OpenKneeboard/SwitchTabFlyout.h>
 #include <OpenKneeboard/TabsList.h>
 
 namespace OpenKneeboard {
 
-SetTabFlyout::SetTabFlyout(
+SwitchTabFlyout::SwitchTabFlyout(
   KneeboardState* kbs,
   const std::shared_ptr<IKneeboardView>& kneeboardView)
   : mKneeboardState(kbs), mKneeboardView(kneeboardView) {
   // FIXME: update when tabs changed
 }
 
-SetTabFlyout::~SetTabFlyout() = default;
+SwitchTabFlyout::~SwitchTabFlyout() = default;
 
-std::string_view SetTabFlyout::GetGlyph() const {
+std::string_view SwitchTabFlyout::GetGlyph() const {
   return {};
 }
-std::string_view SetTabFlyout::GetLabel() const {
+std::string_view SwitchTabFlyout::GetLabel() const {
   return _("Switch tab");
 }
 
-bool SetTabFlyout::IsEnabled() const {
+bool SwitchTabFlyout::IsEnabled() const {
   return true;
 }
 
-std::vector<std::shared_ptr<IToolbarItem>> SetTabFlyout::GetSubItems() const {
+std::vector<std::shared_ptr<IToolbarItem>> SwitchTabFlyout::GetSubItems() const {
   std::vector<std::shared_ptr<IToolbarItem>> ret;
   for (const auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
-    ret.push_back(std::make_shared<SetTabAction>(mKneeboardView, tab));
+    ret.push_back(std::make_shared<SwitchTabAction>(mKneeboardView, tab));
   }
   return ret;
 }
