@@ -17,34 +17,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <OpenKneeboard/IToolbarFlyout.h>
-
-#include <vector>
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/SwitchProfileAction.h>
 
 namespace OpenKneeboard {
 
-class KneeboardState;
-class IKneeboardView;
+SwitchProfileAction::SwitchProfileAction(
+  KneeboardState* kbs,
+  const std::string& profileID,
+  const std::string& profileName)
+  : ToolbarAction({}, profileName),
+    mKneeboardState(kbs),
+    mProfileID(profileID) {
+}
 
-class SetTabFlyout final : public IToolbarFlyout {
- public:
-  SetTabFlyout(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
-  ~SetTabFlyout();
+SwitchProfileAction::~SwitchProfileAction() {
+  this->RemoveAllEventListeners();
+}
 
-  std::string_view GetGlyph() const override;
-  std::string_view GetLabel() const override;
-  virtual bool IsEnabled() const override;
+bool SwitchProfileAction::IsChecked() const {
+  return mKneeboardState->GetProfileSettings().mActiveProfile == mProfileID;
+}
 
-  virtual std::vector<std::shared_ptr<IToolbarItem>> GetSubItems()
-    const override;
+bool SwitchProfileAction::IsEnabled() const {
+  return true;
+}
 
-  SetTabFlyout() = delete;
-
- private:
-  KneeboardState* mKneeboardState {nullptr};
-  std::shared_ptr<IKneeboardView> mKneeboardView;
-};
+void SwitchProfileAction::Execute() {
+  auto profileSettings = mKneeboardState->GetProfileSettings();
+  profileSettings.mActiveProfile = mProfileID;
+  mKneeboardState->SetProfileSettings(profileSettings);
+}
 
 }// namespace OpenKneeboard

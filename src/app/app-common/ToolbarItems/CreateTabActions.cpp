@@ -19,10 +19,12 @@
  */
 #include <OpenKneeboard/ClearUserInputAction.h>
 #include <OpenKneeboard/CreateTabActions.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/NextTabAction.h>
 #include <OpenKneeboard/PreviousTabAction.h>
 #include <OpenKneeboard/ReloadTabAction.h>
 #include <OpenKneeboard/SetTabFlyout.h>
+#include <OpenKneeboard/SwitchProfileFlyout.h>
 #include <OpenKneeboard/TabFirstPageAction.h>
 #include <OpenKneeboard/TabNavigationAction.h>
 #include <OpenKneeboard/TabNextPageAction.h>
@@ -31,6 +33,8 @@
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
+
+#include <ranges>
 
 namespace OpenKneeboard {
 
@@ -82,6 +86,7 @@ InGameActions InGameActions::Create(
       "\ue712",
       _("More"),
       Items {
+        std::make_shared<SwitchProfileFlyout>(kneeboardState),
         std::make_shared<SetTabFlyout>(kneeboardState, kneeboardView),
         std::make_shared<ToolbarSeparator>(),
         CreateClearNotesItem(kneeboardState, kneeboardView, tabView),

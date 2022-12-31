@@ -50,7 +50,10 @@ struct WithPropertyChangedEventOnProfileChange
     mProfileChangedEvent = AddEventListener(
       gKneeboard->evCurrentProfileChangedEvent,
       weak_wrap(
-        [](auto self) {
+        [](auto self) -> winrt::fire_and_forget {
+          co_await static_cast<WithPropertyChangedEventOnProfileChange<T>*>(
+            self.get())
+            ->mUIThread;
           self->mPropertyChangedEvent(
             *self,
             winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
@@ -63,6 +66,7 @@ struct WithPropertyChangedEventOnProfileChange
   }
 
  private:
+  winrt::apartment_context mUIThread;
   EventHandlerToken mProfileChangedEvent {};
 };
 

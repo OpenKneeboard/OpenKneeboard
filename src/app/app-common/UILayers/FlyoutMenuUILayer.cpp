@@ -23,6 +23,7 @@
 #include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
+#include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/config.h>
@@ -69,6 +70,15 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
     {0.4f, 0.4f, 0.4f, 0.5f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mMenuDisabledFGBrush.put()));
+
+  for (const auto& item: mItems) {
+    auto visibility
+      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    if (visibility) {
+      AddEventListener(
+        visibility->evStateChangedEvent, this->evNeedsRepaintEvent);
+    }
+  }
 }
 
 FlyoutMenuUILayer::~FlyoutMenuUILayer() {
@@ -277,6 +287,12 @@ void FlyoutMenuUILayer::UpdateLayout(
   bool haveGlyphOrCheck = false;
 
   for (const auto& item: mItems) {
+    auto visibility
+      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    if (visibility && !visibility->IsVisible()) {
+      continue;
+    }
+
     if (std::dynamic_pointer_cast<ToolbarSeparator>(item)) {
       totalHeight += separatorHeight;
       continue;

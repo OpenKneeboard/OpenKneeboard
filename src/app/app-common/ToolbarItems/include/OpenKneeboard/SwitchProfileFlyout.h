@@ -19,7 +19,9 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
+#include <OpenKneeboard/IToolbarItemWithVisibility.h>
 
 #include <vector>
 
@@ -28,23 +30,26 @@ namespace OpenKneeboard {
 class KneeboardState;
 class IKneeboardView;
 
-class SetTabFlyout final : public IToolbarFlyout {
+class SwitchProfileFlyout final : public EventReceiver,
+                                  public virtual IToolbarFlyout,
+                                  public virtual IToolbarItemWithVisibility {
  public:
-  SetTabFlyout(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
-  ~SetTabFlyout();
+  SwitchProfileFlyout(KneeboardState*);
+  ~SwitchProfileFlyout();
 
   std::string_view GetGlyph() const override;
   std::string_view GetLabel() const override;
   virtual bool IsEnabled() const override;
 
+  virtual bool IsVisible() const override;
+
   virtual std::vector<std::shared_ptr<IToolbarItem>> GetSubItems()
     const override;
 
-  SetTabFlyout() = delete;
+  SwitchProfileFlyout() = delete;
 
  private:
   KneeboardState* mKneeboardState {nullptr};
-  std::shared_ptr<IKneeboardView> mKneeboardView;
 };
 
 }// namespace OpenKneeboard

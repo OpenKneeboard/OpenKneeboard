@@ -19,7 +19,6 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IToolbarItem.h>
 
 namespace OpenKneeboard {
@@ -46,8 +45,6 @@ class ISelectableToolbarItem : public virtual IToolbarItem {
   virtual std::string_view GetGlyph() const = 0;
   virtual std::string_view GetLabel() const = 0;
   virtual bool IsEnabled() const = 0;
-
-  Event<> evStateChangedEvent;
 };
 
 }// namespace OpenKneeboard

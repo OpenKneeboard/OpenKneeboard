@@ -19,11 +19,15 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
+
 namespace OpenKneeboard {
 
 class IToolbarItem {
  public:
   virtual ~IToolbarItem();
+
+  Event<> evStateChangedEvent;
 };
 
 }// namespace OpenKneeboard
