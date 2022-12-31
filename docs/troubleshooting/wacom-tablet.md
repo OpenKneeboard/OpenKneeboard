@@ -1,5 +1,6 @@
 # Troubleshooting Wacom Tablets
 
+If you're on v1.3+ and having problems, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc); the rest of this document only applies to Wacom's driver.
 
 ## Tablet only works properly when OpenKneeboard is the active window
 
@@ -11,16 +12,9 @@
 
 ### Fixes
 
-1. Make the sure the game (and any launchers, e.g. Skatezilla) are not running elevated/as administrator
-2. Make sure the game is listed in OpenKneeboard's settings and the path is correct
-3. Either make sure both the pen and button settings are set for 'all applications', or set them both for OpenKneeboard and the game
-4. Reinstall the latest drivers from Wacom
-5. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
-
-### Root cause
-
-Wintab tablets always only work with the currently active window. OpenKneeboard extends the games to support the tablet, and pass your pen strokes and button presses back to OpenKneeboard.
-
-As Windows will not allow a non-elevated process to modify an elevated process, the game can not run elevated.
-
-OpenKneeboard will only modify processes in its' games list to reduce the chances of side-effects on other processes.
+1. (v1.3+): make sure that wintab is set to 'standard' in OpenKneeboard's input settings
+2. Make the sure the game (and any launchers, e.g. Skatezilla) are not running elevated/as administrator
+3. Make sure the game is listed in OpenKneeboard's settings and the path is correct
+4. Either make sure both the pen and button settings are set for 'all applications', or set them both for OpenKneeboard and the game
+5. Reinstall the latest drivers from Wacom
+6. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)

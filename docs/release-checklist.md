@@ -2,7 +2,7 @@
 
 ## Testing
 
-Test all of these with the `RelWithDebInfo` msix package, as it's the most restricted form of installation.
+Test all of these with the `RelWithDebInfo` msi package, as it's the most restricted form of installation.
 
 * SteamVR
 * Oculus: DX11 and DX12
@@ -35,13 +35,14 @@ Test all of these with the `RelWithDebInfo` msix package, as it's the most restr
   * Theater kneeboard (only in Caucasus and NTTR)
 * DCS: restart mission
 * DCS: switch to a different campaign
+* DCS: restart DCS. Start multiplayer mission. Check DCS tabs.
 
 ## Releasing
 
 * Update `Quick Start.pdf`
 * Update the `GameEvent` path if the format of existing messages has changed in a backwards-incompatible way
 * Check version number in CMakeLists.txt
-* Test msix from GitHub Actions as above
+* Test msi from GitHub Actions as above
 * Push tag
 * Wait for GitHub Actions to create a draft release with files and template release notes
 * Edit release notes
