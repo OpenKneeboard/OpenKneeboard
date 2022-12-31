@@ -24,6 +24,7 @@
 #include <OpenKneeboard/DCSMissionTab.h>
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/DCSTerrainTab.h>
+#include <OpenKneeboard/EndlessNotebookTab.h>
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/SingleFileTab.h>
 #include <OpenKneeboard/WindowCaptureTab.h>
@@ -35,6 +36,7 @@
   IT(_("Files (one per tab)"), SingleFile) \
   IT(_("Folder"), Folder) \
   IT(_("Window Capture"), WindowCapture) \
+  IT(_("Endless Notebook (from template file)"), EndlessNotebook) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Briefing"), DCSBriefing) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \

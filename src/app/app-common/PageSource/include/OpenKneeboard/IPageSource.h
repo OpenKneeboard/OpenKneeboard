@@ -35,6 +35,11 @@ enum class ContentChangeType {
   Modified,
 };
 
+enum class SuggestedPageAppendAction {
+  SwitchToNewPage,
+  KeepOnCurrentPage,
+};
+
 class IPageSource {
  public:
   virtual ~IPageSource();
@@ -46,7 +51,7 @@ class IPageSource {
     = 0;
 
   Event<> evNeedsRepaintEvent;
-  Event<> evPageAppendedEvent;
+  Event<SuggestedPageAppendAction> evPageAppendedEvent;
   Event<ContentChangeType> evContentChangedEvent;
   Event<EventContext, PageIndex> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;

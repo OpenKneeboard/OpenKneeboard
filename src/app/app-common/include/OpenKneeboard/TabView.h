@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/ITabView.h>
 
 #include <vector>
@@ -68,7 +69,7 @@ class TabView final : public ITabView, private EventReceiver {
   TabMode mTabMode = TabMode::NORMAL;
 
   void OnTabContentChanged(ContentChangeType);
-  void OnTabPageAppended();
+  void OnTabPageAppended(SuggestedPageAppendAction);
 };
 
 }// namespace OpenKneeboard

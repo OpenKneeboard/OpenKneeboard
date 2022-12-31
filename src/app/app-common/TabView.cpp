@@ -147,7 +147,11 @@ void TabView::OnTabContentChanged(ContentChangeType changeType) {
   }
 }
 
-void TabView::OnTabPageAppended() {
+void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
+  if (suggestedAction == SuggestedPageAppendAction::KeepOnCurrentPage) {
+    return;
+  }
+
   const auto count = mRootTab->GetPageCount();
   if (mRootTabPage == count - 2) {
     if (mActiveSubTab) {

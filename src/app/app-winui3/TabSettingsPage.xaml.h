@@ -68,6 +68,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
     const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
 
  private:
+  template <class T>
   void CreateFileTab();
   void CreateFolderTab();
   winrt::fire_and_forget CreateWindowCaptureTab();

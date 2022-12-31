@@ -231,7 +231,10 @@ void TabSettingsPage::CreateTab(
       CreateFolderTab();
       return;
     case TabType::SingleFile:
-      CreateFileTab();
+      CreateFileTab<SingleFileTab>();
+      return;
+    case TabType::EndlessNotebook:
+      CreateFileTab<EndlessNotebookTab>();
       return;
     case TabType::WindowCapture:
       CreateWindowCaptureTab();
@@ -279,6 +282,7 @@ winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
     {WindowCaptureTab::Create(gDXResources, gKneeboard.get(), matchSpec)});
 }
 
+template <class T>
 void TabSettingsPage::CreateFileTab() {
   constexpr winrt::guid thisCall {
     0x207fb217,
@@ -306,7 +310,7 @@ void TabSettingsPage::CreateFileTab() {
   std::vector<std::shared_ptr<OpenKneeboard::ITab>> newTabs;
   for (const auto& path: files) {
     newTabs.push_back(
-      std::make_shared<SingleFileTab>(gDXResources, gKneeboard.get(), path));
+      std::make_shared<T>(gDXResources, gKneeboard.get(), path));
   }
 
   this->AddTabs(newTabs);

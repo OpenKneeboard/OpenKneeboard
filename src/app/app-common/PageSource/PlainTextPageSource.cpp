@@ -238,7 +238,7 @@ void PlainTextPageSource::EnsureNewPage() {
 void PlainTextPageSource::PushPage() {
   mCompletePages.push_back(mCurrentPageLines);
   mCurrentPageLines.clear();
-  this->evPageAppendedEvent.Emit();
+  this->evPageAppendedEvent.Emit(SuggestedPageAppendAction::SwitchToNewPage);
 }
 
 void PlainTextPageSource::LayoutMessages() {
