@@ -9,14 +9,10 @@
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <ScrollViewer>
     <StackPanel Orientation="Vertical" Margin="12" Spacing="12">
-      <Grid ColumnDefinitions="*,Auto">
-        <TextBlock
-          Grid.Column="0"
-          Style="{ThemeResource TitleTextBlockStyle}">
-            Help and Support
-        </TextBlock>
-        <local:SponsorButton Grid.Column="1" />
-      </Grid>
+      <TextBlock
+        Style="{ThemeResource TitleTextBlockStyle}">
+        Help and Support
+      </TextBlock>
       <StackPanel
         Orientation="Vertical"
         Spacing="4"
@@ -58,6 +54,31 @@
           channel in Discord instead.
         </TextBlock>
       </StackPanel>
+      <TextBlock
+        Style="{ThemeResource TitleTextBlockStyle}">
+        Supporters
+      </TextBlock>
+			<Grid
+        ColumnDefinitions="Auto,*,Auto"
+				ColumnSpacing="8"
+				Padding="8"
+				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+				CornerRadius="4"
+				BorderThickness="1">
+        <FontIcon
+          Grid.Column="0"
+          Glyph="&#xEB51;"
+          VerticalAlignment="Center"
+          HorizontalAlignment="Center"
+          Foreground="#db61a2"
+          FontSize="48"
+        />
+        <TextBlock Grid.Column="1">
+          I'm extremely grateful to @WookDCS and @AMVIBoomer for their support of OpenKneeboard.
+        </TextBlock>
+        <local:SponsorButton Grid.Column="2" VerticalAlignment="Top" />
+			</Grid>
       <Grid ColumnDefinitions="*,Auto">
         <TextBlock
           Grid.Column="0"
@@ -103,36 +124,36 @@
         </Expander.Header>
         <TextBlock Style="{ThemeResource BodyTextBlockStyle}" x:Name="VersionText" IsTextSelectionEnabled="true" />
       </Expander>
-			<Expander
-				HorizontalAlignment="Stretch"
-				HorizontalContentAlignment="Stretch">
-				<Expander.Header>
-					<Grid ColumnDefinitions="Auto,*,Auto,Auto">
-						<FontIcon
-							Grid.Column="0"
-							Glyph="&#xEB51;"
-							FontFamily="{StaticResource SymbolThemeFontFamily}"
-							Margin="0,0,12,0"
-							VerticalAlignment="Center"
-						/>
-						<TextBlock
-							Grid.Column="1"
-							Text="Acknowledgements and Licenses"
-							Style="{StaticResource SubtitleTextBlockStyle}"
-							VerticalAlignment="Center"
-						/>
-					</Grid>
-				</Expander.Header>
-				<StackPanel
-					Orientation="Vertical"
-					Spacing="12"
-					x:Name="Licenses">
-					<TextBlock>
-						No copyright files found; please file a bug if this is a
-						released verison.
-					</TextBlock>
-				</StackPanel>
-			</Expander>
+      <Expander
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Stretch">
+        <Expander.Header>
+          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+            <FontIcon
+              Grid.Column="0"
+              Glyph="&#xEB51;"
+              FontFamily="{StaticResource SymbolThemeFontFamily}"
+              Margin="0,0,12,0"
+              VerticalAlignment="Center"
+            />
+            <TextBlock
+              Grid.Column="1"
+              Text="Acknowledgements and Licenses"
+              Style="{StaticResource SubtitleTextBlockStyle}"
+              VerticalAlignment="Center"
+            />
+          </Grid>
+        </Expander.Header>
+        <StackPanel
+          Orientation="Vertical"
+          Spacing="12"
+          x:Name="Licenses">
+          <TextBlock>
+            No copyright files found; please file a bug if this is a
+            released verison.
+          </TextBlock>
+        </StackPanel>
+      </Expander>
       <Expander
         HorizontalAlignment="Stretch"
         HorizontalContentAlignment="Stretch">
