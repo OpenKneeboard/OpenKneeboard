@@ -336,7 +336,7 @@ void WindowCaptureTab::SetIsInputEnabled(bool value) {
     return;
   }
   mSendInput = value;
-  if (mSendInput) {
+  if (mSendInput && mDelegate) {
     mDelegate->InstallWindowHooks(mHwnd);
   }
   evSettingsChangedEvent.Emit();
