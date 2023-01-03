@@ -151,10 +151,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
       return mOpenXR->xrEndFrame(session, frameEndInfo);
     }
 
-    if (IsVarjoRuntime() && config.mVR.mQuirks.mVarjo_OpenXR_InvertYPosition) {
-      layer.mVR.mEyeY = -layer.mVR.mEyeY;
-    }
-
     auto& swapchain = mSwapchains.at(layerIndex);
     if (swapchain) {
       if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {

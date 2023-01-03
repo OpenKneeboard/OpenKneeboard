@@ -184,12 +184,6 @@
           IsOn="{x:Bind Quirk_OculusSDK_DiscardDepthInformation}"
         />
         <ToggleSwitch
-					Header="Varjo OpenXR: Invert Y position"
-          OffContent="Disabled"
-          OnContent="Enabled"
-          IsOn="{x:Bind Quirk_Varjo_OpenXR_InvertYPosition}"
-        />
-        <ToggleSwitch
 					Header="Varjo OpenXR: Double buffer Direct3D 11-on-12"
           OffContent="Disabled"
           OnContent="Enabled"

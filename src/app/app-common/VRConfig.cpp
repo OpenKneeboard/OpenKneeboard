@@ -36,7 +36,6 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderConfig::Quirks,
   mOculusSDK_DiscardDepthInformation,
-  mVarjo_OpenXR_InvertYPosition,
   mVarjo_OpenXR_D3D12_DoubleBuffer)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(

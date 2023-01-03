@@ -174,17 +174,6 @@ void AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
   gKneeboard->SetVRSettings(vrc);
 }
 
-bool AdvancedSettingsPage::Quirk_Varjo_OpenXR_InvertYPosition() const noexcept {
-  return gKneeboard->GetVRSettings().mQuirks.mVarjo_OpenXR_InvertYPosition;
-}
-
-void AdvancedSettingsPage::Quirk_Varjo_OpenXR_InvertYPosition(
-  bool value) noexcept {
-  auto vrc = gKneeboard->GetVRSettings();
-  vrc.mQuirks.mVarjo_OpenXR_InvertYPosition = value;
-  gKneeboard->SetVRSettings(vrc);
-}
-
 bool AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer()
   const noexcept {
   return gKneeboard->GetVRSettings().mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
