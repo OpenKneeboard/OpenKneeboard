@@ -260,8 +260,6 @@ void HWNDPageSource::OnFrame() noexcept {
 static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
   HWND parent,
   const POINT& originalPoint) {
-  POINT point {originalPoint};
-
   // Adjust to client rect
   POINT clientScreenOrigin {0, 0};
   ClientToScreen(parent, &clientScreenOrigin);
@@ -269,19 +267,23 @@ static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
   GetWindowRect(parent, &windowRect);
   const auto clientLeft = clientScreenOrigin.x - windowRect.left;
   const auto clientTop = clientScreenOrigin.y - windowRect.top;
-  point.x -= clientLeft;
-  point.y -= clientTop;
+  dprintf("ClientOrigin: ({} , {})", clientLeft, clientTop);
+
+  POINT clientPoint {originalPoint.x - clientLeft, originalPoint.y - clientTop};
+  ClientToScreen(parent, &clientPoint);
+  const POINT screenPoint {clientPoint};
 
   while (true) {
+    clientPoint = screenPoint;
+    ScreenToClient(parent, &clientPoint);
     const auto child
-      = ChildWindowFromPointEx(parent, point, CWP_SKIPTRANSPARENT);
+      = ChildWindowFromPointEx(parent, clientPoint, CWP_SKIPTRANSPARENT);
     if (child == parent) {
       break;
     }
-    MapWindowPoints(parent, child, &point, 1);
     parent = child;
   }
-  return {parent, point};
+  return {parent, clientPoint};
 }
 
 void HWNDPageSource::PostCursorEvent(
