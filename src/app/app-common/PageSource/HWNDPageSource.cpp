@@ -267,7 +267,6 @@ static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
   GetWindowRect(parent, &windowRect);
   const auto clientLeft = clientScreenOrigin.x - windowRect.left;
   const auto clientTop = clientScreenOrigin.y - windowRect.top;
-  dprintf("ClientOrigin: ({} , {})", clientLeft, clientTop);
 
   POINT clientPoint {originalPoint.x - clientLeft, originalPoint.y - clientTop};
   ClientToScreen(parent, &clientPoint);
