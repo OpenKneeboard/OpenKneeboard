@@ -97,7 +97,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     D2D1_SIZE_U mNativeSize;
     D2D1_RECT_F mRenderRect;
     D2D1_SIZE_F mRenderSize;
-    float mScale;
   };
   PageMetrics GetPageMetrics();
 

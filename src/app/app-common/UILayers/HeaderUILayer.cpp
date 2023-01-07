@@ -90,8 +90,7 @@ void HeaderUILayer::PostCursorEvent(
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
   if (cursorEvent.mSource == CursorSource::WINDOW_POINTER) {
-    next.front()->PostCursorEvent(
-      next.subspan(1), context, eventContext, cursorEvent);
+    this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
     return;
   }
 
@@ -121,17 +120,7 @@ void HeaderUILayer::PostCursorEvent(
     mToolbar->mButtons->PostCursorEvent(eventContext, toolbarEvent);
   }
 
-  constexpr auto contentRatio = 1 / (1 + (HeaderPercent / 100.0f));
-  constexpr auto headerRatio = 1 - contentRatio;
-  if (cursorEvent.mY <= headerRatio) {
-    next.front()->PostCursorEvent(next.subspan(1), context, eventContext, {});
-    return;
-  }
-
-  CursorEvent nextEvent {cursorEvent};
-  nextEvent.mY = (cursorEvent.mY - headerRatio) / contentRatio;
-  next.front()->PostCursorEvent(
-    next.subspan(1), context, eventContext, nextEvent);
+  this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
 }
 
 IUILayer::Metrics HeaderUILayer::GetMetrics(
@@ -144,6 +133,12 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
   const auto headerHeight = contentHeight * (HeaderPercent / 100.0f);
   return {
     {
+      nextMetrics.mCanvasSize.width,
+      nextMetrics.mCanvasSize.height + headerHeight,
+    },
+    {
+      0.0f,
+      headerHeight,
       nextMetrics.mCanvasSize.width,
       nextMetrics.mCanvasSize.height + headerHeight,
     },

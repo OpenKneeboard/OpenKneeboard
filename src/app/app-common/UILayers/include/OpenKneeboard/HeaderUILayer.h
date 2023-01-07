@@ -25,7 +25,7 @@
 #include <OpenKneeboard/FlyoutMenuUILayer.h>
 #include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/ITabView.h>
-#include <OpenKneeboard/IUILayer.h>
+#include <OpenKneeboard/UILayerBase.h>
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -36,7 +36,7 @@ class FlyoutMenuUILayer;
 class KneeboardState;
 class IKneeboardView;
 
-class HeaderUILayer final : public IUILayer,
+class HeaderUILayer final : public UILayerBase,
                             private EventReceiver,
                             public std::enable_shared_from_this<HeaderUILayer> {
  public:

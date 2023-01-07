@@ -68,22 +68,7 @@ void FooterUILayer::PostCursorEvent(
   const Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
-  if (!mLastRenderSize) {
-    return;
-  }
-  const auto renderSize = *mLastRenderSize;
-
-  constexpr auto contentRatio = 1 / (1 + (FooterPercent / 100.0f));
-  constexpr auto footerRatio = 1 - contentRatio;
-  if (cursorEvent.mY > contentRatio) {
-    next.front()->PostCursorEvent(next.subspan(1), context, eventContext, {});
-    return;
-  }
-
-  CursorEvent nextEvent {cursorEvent};
-  nextEvent.mY = cursorEvent.mY / contentRatio;
-  next.front()->PostCursorEvent(
-    next.subspan(1), context, eventContext, nextEvent);
+  this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
 }
 
 IUILayer::Metrics FooterUILayer::GetMetrics(
@@ -100,10 +85,17 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
       nextMetrics.mCanvasSize.height + footerHeight,
     },
     {
+      0.0f,
+      0.0f,
+      nextMetrics.mCanvasSize.width,
+      nextMetrics.mCanvasSize.height,
+    },
+
+    {
       nextMetrics.mContentArea.left,
       nextMetrics.mContentArea.top,
       nextMetrics.mContentArea.right,
-      nextMetrics.mContentArea.bottom - footerHeight,
+      nextMetrics.mContentArea.bottom,
     },
   };
 }

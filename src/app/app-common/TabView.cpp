@@ -70,7 +70,11 @@ void TabView::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
   if (receiver && (this->GetPageIndex() < this->GetPageCount())) {
-    receiver->PostCursorEvent(mEventContext, ev, this->GetPageIndex());
+    const auto size = this->GetNativeContentSize();
+    CursorEvent tabEvent {ev};
+    tabEvent.mX *= size.width;
+    tabEvent.mY *= size.height;
+    receiver->PostCursorEvent(mEventContext, tabEvent, this->GetPageIndex());
   }
 }
 

@@ -60,6 +60,7 @@ class IUILayer {
 
   struct Metrics {
     D2D1_SIZE_F mCanvasSize {};
+    D2D1_RECT_F mNextArea {};
     D2D1_RECT_F mContentArea {};
   };
 

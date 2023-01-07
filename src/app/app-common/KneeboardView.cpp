@@ -364,9 +364,15 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   };
   const auto& canvasSize = mapping.mCanvasSize;
 
+  D2D1_POINT_2F point {contentPoint};
+  point.x *= contentSize.width;
+  point.y *= contentSize.height;
+  point.x += contentArea.left;
+  point.y += contentArea.top;
+
   return {
-    (contentPoint.x + contentArea.left) / canvasSize.width,
-    (contentPoint.y + contentArea.top) / canvasSize.height,
+    point.x / canvasSize.width,
+    point.y / canvasSize.height,
   };
 }
 

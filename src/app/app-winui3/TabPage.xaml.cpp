@@ -485,8 +485,8 @@ void TabPage::PaintNow() noexcept {
   }
   auto point = *maybePoint;
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
-  point.x *= metrics.mScale;
-  point.y *= metrics.mScale;
+  point.x *= metrics.mRenderSize.width;
+  point.y *= metrics.mRenderSize.height;
   point.x += metrics.mRenderRect.left;
   point.y += metrics.mRenderRect.top;
   mCursorRenderer->Render(ctx, point, metrics.mRenderSize);
@@ -519,7 +519,7 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
     .bottom = mCanvasSize.height - padY,
   };
 
-  return {contentNativeSize, contentRenderRect, contentRenderSize, scale};
+  return {contentNativeSize, contentRenderRect, contentRenderSize};
 }
 
 void TabPage::OnPointerEvent(
@@ -545,22 +545,20 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
 
   x -= metrics.mRenderRect.left;
   y -= metrics.mRenderRect.top;
-  x /= metrics.mScale;
-  y /= metrics.mScale;
+  x /= metrics.mRenderSize.width;
+  y /= metrics.mRenderSize.height;
 
   auto ppp = pp.Properties();
 
   const bool leftClick = ppp.IsLeftButtonPressed();
   const bool rightClick = ppp.IsRightButtonPressed();
 
-  const auto canvasPoint = mKneeboardView->GetCursorCanvasPoint({x, y});
-
-  if (
-    canvasPoint.x < 0 || canvasPoint.x > 1 || canvasPoint.y < 0
-    || canvasPoint.y > 1) {
+  if (x < 0 || x > 1 || y < 0 || y > 1) {
     mKneeboardView->PostCursorEvent({});
     return;
   }
+
+  const auto canvasPoint = mKneeboardView->GetCursorCanvasPoint({x, y});
 
   uint32_t buttons = 0;
   if (leftClick) {

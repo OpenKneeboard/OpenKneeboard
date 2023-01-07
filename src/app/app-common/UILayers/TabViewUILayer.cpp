@@ -48,12 +48,8 @@ void TabViewUILayer::PostCursorEvent(
     context.mTabView->PostCursorEvent({});
     return;
   }
-  const auto size = context.mTabView->GetNativeContentSize();
-  auto tabEvent {ev};
-  tabEvent.mX *= size.width;
-  tabEvent.mY *= size.height;
-  context.mTabView->PostCursorEvent(tabEvent);
-  mCursorPoint = {tabEvent.mX, tabEvent.mY};
+  mCursorPoint = {ev.mX, ev.mY};
+  context.mTabView->PostCursorEvent(ev);
 }
 
 IUILayer::Metrics TabViewUILayer::GetMetrics(
@@ -80,6 +76,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
 
   return {
     size,
+    {0, 0, size.width, size.height},
     {0, 0, size.width, size.height},
   };
 }

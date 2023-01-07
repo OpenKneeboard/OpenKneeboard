@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/IUILayer.h>
+#include <OpenKneeboard/UILayerBase.h>
 #include <shims/winrt/base.h>
 
 #include <chrono>
@@ -32,7 +32,7 @@ class KneeboardState;
 struct GameEvent;
 struct GameInstance;
 
-class FooterUILayer final : public IUILayer, private EventReceiver {
+class FooterUILayer final : public UILayerBase, private EventReceiver {
  public:
   FooterUILayer(const DXResources& dxr, KneeboardState*);
   virtual ~FooterUILayer();
