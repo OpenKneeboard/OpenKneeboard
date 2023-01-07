@@ -58,6 +58,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
   const constexpr Metrics errorMapping {
     {ErrorRenderWidth, ErrorRenderHeight},
     {0, 0, ErrorRenderWidth, ErrorRenderHeight},
+    {0, 0, ErrorRenderWidth, ErrorRenderHeight},
   };
   auto tabView = context.mTabView;
   if (!tabView) {
