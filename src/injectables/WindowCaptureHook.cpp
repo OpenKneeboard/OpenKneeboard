@@ -33,7 +33,6 @@ using namespace OpenKneeboard;
 namespace {
 struct InjectedPoint {
   HWND mHwnd;
-  POINT mClientPoint;
   POINT mScreenPoint;
 };
 }// namespace
@@ -47,8 +46,6 @@ static HWND gTopLevelWindow {};
 static auto gPFN_GetForegroundWindow = &GetForegroundWindow;
 static auto gPFN_SetForegroundWindow = &SetForegroundWindow;
 static auto gPFN_GetCursorPos = &GetCursorPos;
-static auto gPFN_ClientToScreen = &ClientToScreen;
-static auto gPFN_ScreenToClient = &ScreenToClient;
 static auto gPFN_GetFocus = &GetFocus;
 static auto gPFN_IsWindowVisible = &IsWindowVisible;
 
@@ -83,44 +80,6 @@ static BOOL WINAPI GetCursorPos_Hook(LPPOINT lpPoint) {
   return gPFN_GetCursorPos(lpPoint);
 }
 
-static BOOL WINAPI ClientToScreen_Hook(HWND hwnd, LPPOINT lpPoint) {
-  if (!gInjectedPoint) {
-    return gPFN_ClientToScreen(hwnd, lpPoint);
-  }
-
-  const auto screenPoint = gInjectedPoint->mScreenPoint;
-  auto clientPoint = gInjectedPoint->mClientPoint;
-
-  if (hwnd != gInjectedPoint->mHwnd) {
-    MapWindowPoints(gInjectedPoint->mHwnd, hwnd, &clientPoint, 1);
-  }
-
-  *lpPoint = {
-    screenPoint.x + lpPoint->x - clientPoint.x,
-    screenPoint.y + lpPoint->y - clientPoint.y,
-  };
-  return TRUE;
-}
-
-static BOOL WINAPI ScreenToClient_Hook(HWND hwnd, LPPOINT lpPoint) {
-  if (!gInjectedPoint) {
-    return gPFN_ScreenToClient(hwnd, lpPoint);
-  }
-
-  const auto screenPoint = gInjectedPoint->mScreenPoint;
-  auto clientPoint = gInjectedPoint->mClientPoint;
-
-  if (hwnd != gInjectedPoint->mHwnd) {
-    MapWindowPoints(gInjectedPoint->mHwnd, hwnd, &clientPoint, 1);
-  }
-
-  *lpPoint = {
-    (lpPoint->x - clientPoint.x) - screenPoint.x,
-    (lpPoint->y - clientPoint.y) - screenPoint.y,
-  };
-  return TRUE;
-}
-
 static HWND WINAPI GetFocus_Hook() {
   if (ShouldInject()) {
     return gLastSetForegroundWindow;
@@ -145,8 +104,6 @@ static void InstallDetours() {
   DetourAttach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
   DetourAttach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
   DetourAttach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
-  DetourAttach(&gPFN_ClientToScreen, &ClientToScreen_Hook);
-  DetourAttach(&gPFN_ScreenToClient, &ScreenToClient_Hook);
   DetourAttach(&gPFN_GetFocus, &GetFocus_Hook);
   DetourAttach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
 }
@@ -162,8 +119,6 @@ static void UninstallDetours() {
   DetourDetach(&gPFN_GetForegroundWindow, &GetForegroundWindow_Hook);
   DetourDetach(&gPFN_SetForegroundWindow, &SetForegroundWindow_Hook);
   DetourDetach(&gPFN_GetCursorPos, &GetCursorPos_Hook);
-  DetourDetach(&gPFN_ClientToScreen, &ClientToScreen_Hook);
-  DetourDetach(&gPFN_ScreenToClient, &ScreenToClient_Hook);
   DetourDetach(&gPFN_GetFocus, &GetFocus_Hook);
   DetourDetach(&gPFN_IsWindowVisible, &IsWindowVisible_Hook);
 }
@@ -219,10 +174,9 @@ ProcessMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     case WM_MOUSEMOVE: {
       const POINT clientPoint {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
       POINT screenPoint {clientPoint};
-      gPFN_ClientToScreen(hwnd, &screenPoint);
+      ClientToScreen(hwnd, &screenPoint);
       gInjectedPoint = InjectedPoint {
         .mHwnd = hwnd,
-        .mClientPoint = clientPoint,
         .mScreenPoint = screenPoint,
       };
     }
