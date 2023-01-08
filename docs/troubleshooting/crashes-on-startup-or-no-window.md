@@ -14,6 +14,8 @@ XP-Pen's WinTab driver crashes OpenKneeboard on startup; either XP-Pen's drivers
 
 If you do not have a graphics tablet (Wacom, Huion etc - not a tablet computer like an iPad or MS Surface tablet) but do have a `C:\Windows\System32\WinTab32.dll`, back up and delete this file; it should only be present on systems with a graphics tablet driver installed.
 
+If you have an unsupported tablet driver, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc) instead.
+
 ## Corrupt settings
 
 Try renaming `Saved Games\OpenKneeboard` to anything else; this will remove your OpenKneeboard settings.
@@ -24,6 +26,8 @@ Please do not report crashes if you have:
 - an XP-Pen tablet driver installed
 - a Gaomon tablet driver installed
 - `C:\Windows\System32\WinTab32.dll` with that specific capitalization of `WinTab`
+
+If you have an unsupported tablet driver, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc) instead.
 
 When reporting crashes:
 - please report via [GitHub issues](https://go.openkneeboard.com/issues)

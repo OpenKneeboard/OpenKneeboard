@@ -45,8 +45,8 @@ Taking notes and using the in-game toolbar requires a WinTab-compatible graphics
 
 The following are **not compatible** with OpenKneeboard:
 
-- Any XP-Pen tablets
-- Any Gaomon tablets
+- Any XP-Pen tablets with the XP-Pen drivers; *might* work [with OpenTabletDriver]
+- Any Gaomon tablets with the Gaomon drivers; *might* work [with OpenTabletDriver]
 - Any tablet computers, regardless of manufacturer; this includes Apple iPads, Microsoft Surface, etc.
 
 ### Games
@@ -102,3 +102,4 @@ This project uses several third-party libraries, which are used and distributed 
 ![Screenshot of the main app](docs/screenshots/config-app.png)
 ![Non-VR Screenshot](docs/screenshots/non-vr.png)
 ![VR Screenshot](docs/screenshots/theater.png)
+![with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc)
