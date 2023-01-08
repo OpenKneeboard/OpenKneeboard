@@ -20,17 +20,23 @@
 #include <OpenKneeboard/DCSTab.h>
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/dprint.h>
 
 using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSTab::DCSTab() = default;
+DCSTab::DCSTab(KneeboardState* kbs) {
+  mGameEventToken = AddEventListener(
+    kbs->evGameEvent, [this](const GameEvent& ev) { this->OnGameEvent(ev); });
+}
 
-DCSTab::~DCSTab() = default;
+DCSTab::~DCSTab() {
+  this->RemoveEventListener(mGameEventToken);
+}
 
-void DCSTab::PostGameEvent(const GameEvent& event) {
+void DCSTab::OnGameEvent(const GameEvent& event) {
   if (event.name == DCS::EVT_INSTALL_PATH) {
     mInstallPath = std::filesystem::canonical(event.value);
   }

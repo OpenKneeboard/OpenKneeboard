@@ -38,7 +38,7 @@ class KneeboardState;
 class PageSourceWithDelegates : public virtual IPageSource,
                                 public virtual IPageSourceWithCursorEvents,
                                 public virtual IPageSourceWithNavigation,
-                                protected EventReceiver {
+                                public virtual EventReceiver {
  public:
   PageSourceWithDelegates() = delete;
   PageSourceWithDelegates(const DXResources&, KneeboardState*);

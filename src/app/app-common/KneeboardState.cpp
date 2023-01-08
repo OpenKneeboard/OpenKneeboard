@@ -21,7 +21,6 @@
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/ITabWithGameEvents.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
@@ -335,12 +334,6 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
-  for (auto tab: tabs) {
-    auto receiver = std::dynamic_pointer_cast<ITabWithGameEvents>(tab);
-    if (receiver) {
-      receiver->PostGameEvent(ev);
-    }
-  }
   this->evGameEvent.Emit(ev);
 }
 

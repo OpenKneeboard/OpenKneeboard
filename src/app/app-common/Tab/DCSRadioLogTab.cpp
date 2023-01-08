@@ -47,6 +47,7 @@ DCSRadioLogTab::DCSRadioLogTab(
   std::string_view title,
   const nlohmann::json& config)
   : TabBase(persistentID, title),
+    DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
     mPageSource(std::make_shared<PlainTextPageSource>(
       dxr,

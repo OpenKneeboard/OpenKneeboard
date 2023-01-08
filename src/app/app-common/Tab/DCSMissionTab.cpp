@@ -37,7 +37,9 @@ DCSMissionTab::DCSMissionTab(
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)
-  : TabBase(persistentID, title), PageSourceWithDelegates(dxr, kbs) {
+  : TabBase(persistentID, title),
+    DCSTab(kbs),
+    PageSourceWithDelegates(dxr, kbs) {
   mPageSource = FolderPageSource::Create(dxr, kbs);
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
 }

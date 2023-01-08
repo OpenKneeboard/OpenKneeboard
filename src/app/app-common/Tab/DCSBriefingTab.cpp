@@ -43,6 +43,7 @@ DCSBriefingTab::DCSBriefingTab(
   const winrt::guid& persistentID,
   std::string_view title)
   : TabBase(persistentID, title),
+    DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
     mImagePages(std::make_unique<ImageFilePageSource>(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {

@@ -37,6 +37,7 @@ DCSTerrainTab::DCSTerrainTab(
   const winrt::guid& persistentID,
   std::string_view title)
   : TabBase(persistentID, title),
+    DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
     mKneeboard(kbs) {

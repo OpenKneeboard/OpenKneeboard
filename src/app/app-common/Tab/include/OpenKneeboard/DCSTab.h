@@ -20,17 +20,23 @@
 #pragma once
 
 #include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/ITabWithGameEvents.h>
+#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ITab.h>
 
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
 
-class DCSTab : public virtual ITabWithGameEvents {
+class KneeboardState;
+
+struct GameEvent;
+
+class DCSTab : public virtual ITab, public virtual EventReceiver {
  public:
-  DCSTab();
+  DCSTab(KneeboardState*);
   virtual ~DCSTab();
-  virtual void PostGameEvent(const GameEvent&) override final;
+
+  DCSTab() = delete;
 
  protected:
   virtual void OnGameEvent(
@@ -42,6 +48,9 @@ class DCSTab : public virtual ITabWithGameEvents {
  private:
   std::filesystem::path mInstallPath;
   std::filesystem::path mSavedGamesPath;
+  EventHandlerToken mGameEventToken;
+
+  void OnGameEvent(const GameEvent&);
 };
 
 }// namespace OpenKneeboard
