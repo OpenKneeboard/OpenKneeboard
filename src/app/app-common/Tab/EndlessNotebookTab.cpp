@@ -38,6 +38,7 @@ EndlessNotebookTab::EndlessNotebookTab(
 
   AddEventListener(
     mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
+  AddEventListener(mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
 }
 
 EndlessNotebookTab::EndlessNotebookTab(
