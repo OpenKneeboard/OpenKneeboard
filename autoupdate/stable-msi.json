@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78765245",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78765245/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/78765245/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.3",
-    "id": 78765245,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/88220799",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/88220799/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/88220799/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3.0",
+    "id": 88220799,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Esdy9",
-    "tag_name": "v1.2.3",
-    "target_commitish": "0fe9cb28303bbdc13aef0f044d5495a44ac7302a",
-    "name": "v1.2.3: fix crash when DirectInput device is disconnected",
+    "node_id": "RE_kwDOGk0DR84FQiR_",
+    "tag_name": "v1.3.0",
+    "target_commitish": "48b579cbaafdb57c8dbd5dcbf1bde567acfd2601",
+    "name": "v1.3.0: multiple profiles, window capture tabs, endless notebook, ...",
     "draft": false,
     "prerelease": false,
-    "created_at": "2022-10-01T16:18:28Z",
-    "published_at": "2022-10-01T16:48:48Z",
+    "created_at": "2023-01-07T21:36:36Z",
+    "published_at": "2023-01-07T22:21:16Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/79652110",
-        "id": 79652110,
-        "node_id": "RA_kwDOGk0DR84Ev2UO",
-        "name": "OpenKneeboard-v1.2.3-Symbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/90868543",
+        "id": 90868543,
+        "node_id": "RA_kwDOGk0DR84Faos_",
+        "name": "OpenKneeboard-v1.3.0-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 68628509,
-        "download_count": 165,
-        "created_at": "2022-10-01T16:43:20Z",
-        "updated_at": "2022-10-01T16:43:23Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3-Symbols.zip"
+        "size": 107988055,
+        "download_count": 6,
+        "created_at": "2023-01-07T22:20:02Z",
+        "updated_at": "2023-01-07T22:20:05Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.0/OpenKneeboard-v1.3.0-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/79652105",
-        "id": 79652105,
-        "node_id": "RA_kwDOGk0DR84Ev2UJ",
-        "name": "OpenKneeboard-v1.2.3-Utilities.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/90868541",
+        "id": 90868541,
+        "node_id": "RA_kwDOGk0DR84Faos9",
+        "name": "OpenKneeboard-v1.3.0.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -94,52 +94,18 @@
           "type": "Bot",
           "site_admin": false
         },
-        "content_type": "application/zip",
+        "content_type": "application/msi",
         "state": "uploaded",
-        "size": 3215060,
-        "download_count": 158,
-        "created_at": "2022-10-01T16:43:19Z",
-        "updated_at": "2022-10-01T16:43:20Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3-Utilities.zip"
-      },
-      {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/79652104",
-        "id": 79652104,
-        "node_id": "RA_kwDOGk0DR84Ev2UI",
-        "name": "OpenKneeboard-v1.2.3.msix",
-        "label": "",
-        "uploader": {
-          "login": "github-actions[bot]",
-          "id": 41898282,
-          "node_id": "MDM6Qm90NDE4OTgyODI=",
-          "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
-          "gravatar_id": "",
-          "url": "https://api.github.com/users/github-actions%5Bbot%5D",
-          "html_url": "https://github.com/apps/github-actions",
-          "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
-          "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
-          "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
-          "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
-          "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
-          "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
-          "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
-          "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
-          "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
-          "type": "Bot",
-          "site_admin": false
-        },
-        "content_type": "application/msix",
-        "state": "uploaded",
-        "size": 27302439,
-        "download_count": 1602,
-        "created_at": "2022-10-01T16:43:18Z",
-        "updated_at": "2022-10-01T16:43:19Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3.msix"
+        "size": 32710656,
+        "download_count": 247,
+        "created_at": "2023-01-07T22:19:59Z",
+        "updated_at": "2023-01-07T22:20:00Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.0/OpenKneeboard-v1.3.0.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.2.3",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.2.3",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.2.3.msix](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.2.3/OpenKneeboard-v1.2.3.msix), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# Changes since v1.2.2\r\n\r\n- Fixed intermittent crash if a DirectInput device (game controllers, e.g. throttles, joysticks etc) is disconnected or unresponsive\r\n\r\n# Changes since v1.2.1\r\n\r\n- Fixed crash if a single file tab points to a deleted file\r\n- Fixed and re-labelled the 'gaze target size' options\r\n- Fixed OpenKneeboard-Viewer.exe utility crashing on startup\r\n\r\n# Changes since v1.2.0\r\n\r\n- Fixed a crash when loading/updating text files.\r\n\r\n# Changes since v1.1.0\r\n\r\nSee [the announcement for v1.2.0](https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.2.0)",
-    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/201"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3.0",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3.0",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.3.0.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.0/OpenKneeboard-v1.3.0.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\nYou can now ❤️ [sponsor OpenKneeboard](https://github.com/sponsors/fredemmott) ❤️ - donations are optional, but greatly appreciated!\r\n\r\nBig thanks to :sparkles: @WookDCS :sparkles:, @AMVIBoomer, and @SPAS79 for their support!\r\n\r\n# Upgrade Notes\r\n\r\n- Tablets are disabled by default; for Wacom, enable 'Wintab - Standard' in Settings -> Input, and for Huion enable 'Wintab - Invasive'.\r\n- You may need to reset the position (after recentering), as the positioning method has changed.\r\n- Removed `OpenKneeboard-Launch-WindowsApp.exe`; launch `C:\\Program Files\\OpenKneeboard\\bin\\OpenKneeboardApp.exe` directly instead\r\n- The remote control utilities are now included in the main installer, and installed to `C:\\Program Files\\OpenKneeboard\\utilities`\r\n\r\n# Major New Features\r\n\r\n- ⚙️ Multiple profiles are now supported (e.g. one per game, one per aircraft - whatever you want) - enable in advanced settings\r\n- 🖥️ Added \"Window Capture\" tab type; this can optionally forward tablet events as mouse input to *most* applications, including Chrome, Edge, and Discord. YouTube seems to work fine\r\n- ∞ Added \"Endless Notebook\" tab type; select a PDF or image to use as a template, and whenever you draw on the last page, a new page will be added from the same template, but with no drawings/notes\r\n- ↕ VR recentering now also recenters vertical position; 'position from eye level' is now always used, and 'position from floor level' has been removed\r\n- ⌚ Added a footer showing the current real-world time, and DCS in-game time (both Zulu and local)\r\n- ✏️ [OpenTabletDriver](https://opentabletdriver.net/) is now supported via [a plugin](https://github.com/OpenKneeboard/OTD-IPC/blob/master/docs/getting-started.md)\r\n- ↻ Added in-game and in-app options to reload tabs, or clear drawings/notes.\r\n- ≡ Added in-game profile and tab switching menus.\r\n\r\nYou might want to [try OpenTabletDriver](https://github.com/OpenKneeboard/OTD-IPC/blob/master/docs/getting-started.md) if:\r\n- you want to try an alternative to unreliable manufacturer drivers\r\n- you have a Huion tablet and want to directly bind the buttons\r\n- your driver has issues with the tablet when OpenKneeboard is not the active window\r\n- you have any brand of tablet that OpenTabletDriver supports - not just Huion or Wacom\r\n- you have multiple tablets\r\n- you play osu!\r\n\r\n# Other new features\r\n\r\n- Added option to make the DCS Radio Log tab clear itself when the DCS mission is changed or restarted\r\n- Added option to show timestamps in the DCS Radio Log tab\r\n- Tabs can now be renamed via tab settings\r\n- Added '[Administrator]' to title bar when running as administrator to help debugging\r\n- Added option to run as administrator, normal user, or just go along with however it was launched\r\n- Added [remote controls](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/docs/remote-controls.md) to switch to specific tabs, pages, or profiles\r\n- Added remote controls for SHOW and HIDE, in addition to the previous TOGGLE_VISIBILITY\r\n\r\n# Other changes\r\n\r\n- The MSIX installer has been replaced with a classic MSI installer, which installs to `C:\\Program Files\\OpenKneeboard`\r\n  - This is because changes in Windows updates (including Windows 10) made some aspects of OpenKneeboard unreliable when running as an MSIX-installed 'Windows App'\r\n  - `C:\\ProgramData\\OpenKneeboard` is no longer used\r\n  - MSIX installation issues and 'windowsApps' permissions are a frequent problem for users\r\n  - The MSI installer will automatically remove the MSIX version of the app and `C:\\ProgramData\\OpenKneeboard`\r\n- OpenXR is now an on-off option affecting all users. \"Enabled for the current user\" is no longer supported.\r\n  - This increases compatibility with sandboxed apps like OpenXR Tools for Windows Mixed Reality\r\n  - \"Enabled for the current user\" would no longer work within MSIX with recent windows updates\r\n- The installer now includes the remote control programs; these are in `C:\\Program Files\\OpenKneeboard\\utilities`\r\n- OpenKneeboard will now automatically use the graphics card that Windows considers 'highest performance'; it must use the same graphics card as the game to work correctly. This should have no effect on most people, but makes things more likely to work by default for people with multiple graphics cards\r\n- SteamVR support now attempts to sync frames with SteamVR; because of this, if you use SteamVR, you may need to update to the latest version of SteamVR\r\n- Added recenter button and note about recentering next to position settings\r\n- Updated all dependencies for improved reliability and performance, especially in PDF documents\r\n- It should now be possible to replace a PDF while OpenKneeboard has it open\r\n- Settings pages now have a more consistent UI, and 'add' buttons are more prominent\r\n- Fixed game crash during splash screen if the splash screen is closed within a few microseconds after graphics tablets are initialized\r\n- Wacom tablets are now more reliable (thanks to @BeamRider)\r\n- Replaced the modern file/folder picker windows with the Windows Vista ones, as [the modern ones crash as administrator](https://github.com/microsoft/WindowsAppSDK/issues/2504)\r\n- Improved efficency of DCS -> OpenKneeboard communication\r\n- Rewrote how the in-game UI is constructed. This makes it much easier to add new features with in-game UI, such as the new clocks.\r\n- Delay SteamVR initialization until headset position is available. This fixes a bug where OpenKneeboard can appear underneath the floor if SteamVR is started after OpenKneeboard\r\n- Improved reliability of input handling when a device is plugged in or unplugged.\r\n- Removed the Varjo \"Invert Y position\" option as the changes to recentering make it unnecessary and unwanted.\r\n\r\n# Changes since v1.3-beta9\r\n\r\n- Fixed cursor position in Window Capture tabs for WPF or classic HWND-based apps like LittleNavMap\r\n- Fixed mouse cursor position being shown in the wrong place when using the mouse in the app rather than a tablet.\r\n- Fixed crash enabling tablet-as-mouse in Window Capture tabs if the window isn't present\r\n\r\n",
+    "mentions_count": 4
   }
 ]
