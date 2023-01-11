@@ -31,12 +31,32 @@
   <!-- PAGE CONTENT STARTS HERE -->
   <ScrollViewer>
     <StackPanel Orientation="Vertical" Spacing="12">
-      <TextBlock
-        Grid.Column="0"
-        Style="{StaticResource TitleTextBlockStyle}"
-        Text="Profiles"
-        Margin="16"
-      />
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock
+          Grid.Column="0"
+          Style="{StaticResource TitleTextBlockStyle}"
+          Text="Profiles"
+          Margin="16"
+        />
+        <Button
+          Grid.Column="1"
+          HorizontalAlignment="Center"
+          Style="{StaticResource AccentButtonStyle}"
+          Click="CreateProfile">
+          <Grid ColumnDefinitions="Auto,*">
+            <FontIcon
+              Grid.Column="0"
+              Glyph="&#xE710;"
+              FontFamily="{StaticResource SymbolThemeFontFamily}"
+            />
+            <TextBlock
+              Margin="4,0,0,0"
+              Grid.Column="1">
+              Create a profile
+            </TextBlock>
+          </Grid>
+        </Button>
+      </Grid>
 			<TextBlock
 				Style="{ThemeResource CaptionTextBlockStyle}"
 				Foreground="{ThemeResource TextFillColorSecondary}"
