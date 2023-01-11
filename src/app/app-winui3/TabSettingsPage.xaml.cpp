@@ -73,7 +73,41 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
 
-  auto tabTypes = AddTabFlyout().Items();
+  AddEventListener(
+    gKneeboard->GetTabsList()->evTabsChangedEvent,
+    weak_wrap(
+      [](auto self) {
+        if (self->mUIIsChangingTabs) {
+          return;
+        }
+        if (self->mPropertyChangedEvent) {
+          self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Tabs"));
+        }
+      },
+      this));
+
+  CreateAddTabMenu(AddTabTopButton(), FlyoutPlacementMode::Bottom);
+  CreateAddTabMenu(AddTabBottomButton(), FlyoutPlacementMode::Top);
+}
+
+IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
+  auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
+  for (const auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
+    tabs.Append(CreateTabUIData(tab));
+  }
+  tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
+  return tabs;
+}
+
+TabSettingsPage::~TabSettingsPage() {
+  this->RemoveAllEventListeners();
+}
+
+void TabSettingsPage::CreateAddTabMenu(
+  const Button& button,
+  FlyoutPlacementMode placement) {
+  MenuFlyout flyout;
+  auto tabTypes = flyout.Items();
 #define IT(label, name) \
   { \
     MenuFlyoutItem item; \
@@ -90,32 +124,8 @@ TabSettingsPage::TabSettingsPage() {
   }
   OPENKNEEBOARD_TAB_TYPES
 #undef IT
-
-  AddEventListener(
-    gKneeboard->GetTabsList()->evTabsChangedEvent,
-    weak_wrap(
-      [](auto self) {
-        if (self->mUIIsChangingTabs) {
-          return;
-        }
-        if (self->mPropertyChangedEvent) {
-          self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Tabs"));
-        }
-      },
-      this));
-}// namespace winrt::OpenKneeboardApp::implementation
-
-IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
-  auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
-  for (const auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
-    tabs.Append(CreateTabUIData(tab));
-  }
-  tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
-  return tabs;
-}
-
-TabSettingsPage::~TabSettingsPage() {
-  this->RemoveAllEventListeners();
+  flyout.Placement(placement);
+  button.Flyout(flyout);
 }
 
 fire_and_forget TabSettingsPage::RestoreDefaults(

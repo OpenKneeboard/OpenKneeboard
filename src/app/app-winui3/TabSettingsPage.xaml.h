@@ -45,6 +45,8 @@ enum class TabType;
 }// namespace OpenKneeboard
 
 using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Microsoft::UI::Xaml::Controls::Primitives;
 using namespace winrt::Windows::Foundation::Collections;
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -68,6 +70,8 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
     const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
 
  private:
+  void CreateAddTabMenu(const Button& button, FlyoutPlacementMode);
+
   template <class T>
   void CreateFileTab();
   void CreateFolderTab();

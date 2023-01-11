@@ -110,7 +110,7 @@
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
     <StackPanel Margin="0,0,0,16">
       <Grid
-        ColumnDefinitions="*, Auto"
+        ColumnDefinitions="*,Auto,Auto"
         Margin="0,0,0,8">
         <TextBlock
           Grid.Column="0"
@@ -120,6 +120,25 @@
         />
         <Button
           Grid.Column="1"
+          Margin="0,0,8,0"
+          HorizontalAlignment="Center"
+          Style="{StaticResource AccentButtonStyle}"
+          x:Name="AddTabTopButton">
+          <Grid ColumnDefinitions="Auto,*">
+            <FontIcon
+              Grid.Column="0"
+              Glyph="&#xE710;"
+              FontFamily="{StaticResource SymbolThemeFontFamily}"
+            />
+            <TextBlock
+              Margin="4,0,0,0"
+              Grid.Column="1">
+              Add a tab
+            </TextBlock>
+          </Grid>
+        </Button>
+        <Button
+          Grid.Column="2"
           Content="Restore defaults"
           Click="RestoreDefaults"
         />
@@ -143,7 +162,8 @@
       <Button
         Margin="0,24,0,0"
         HorizontalAlignment="Center"
-        Style="{StaticResource AccentButtonStyle}">
+        Style="{StaticResource AccentButtonStyle}"
+        x:Name="AddTabBottomButton">
         <Grid ColumnDefinitions="Auto,*">
           <FontIcon
             Grid.Column="0"
@@ -156,9 +176,6 @@
             Add a tab
           </TextBlock>
         </Grid>
-        <Button.Flyout>
-          <MenuFlyout x:Name="AddTabFlyout" />
-        </Button.Flyout>
       </Button>
     </StackPanel>
   </ScrollViewer>
