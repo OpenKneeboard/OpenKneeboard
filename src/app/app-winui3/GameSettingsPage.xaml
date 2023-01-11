@@ -95,7 +95,7 @@
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
     <StackPanel Margin="0,0,0,16">
       <Grid
-        ColumnDefinitions="*, Auto"
+        ColumnDefinitions="*, Auto, Auto"
         Margin="0,0,0,8">
         <TextBlock
           Grid.Column="0"
@@ -105,9 +105,41 @@
         />
         <Button
           Grid.Column="1"
-          Content="Restore defaults"
-          Click="RestoreDefaults"
-        />
+          Margin="0,0,8,0"
+          HorizontalAlignment="Center"
+          Style="{StaticResource AccentButtonStyle}">
+          <Grid ColumnDefinitions="Auto,*">
+            <FontIcon
+              Grid.Column="0"
+              Glyph="&#xE710;"
+              FontFamily="{StaticResource SymbolThemeFontFamily}"
+            />
+            <TextBlock
+              Margin="4,0,0,0"
+              Grid.Column="1">Add a game</TextBlock>
+          </Grid>
+          <Button.Flyout>
+            <MenuFlyout Placement="Bottom">
+              <MenuFlyoutItem
+                Click="AddRunningProcess"
+                Text="Add a game that's running">
+                <MenuFlyoutItem.Icon>
+                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE768;"/>
+                </MenuFlyoutItem.Icon>
+              </MenuFlyoutItem>
+              <MenuFlyoutItem Text="Add an exe file" Click="AddExe">
+                <MenuFlyoutItem.Icon>
+                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
+                </MenuFlyoutItem.Icon>
+              </MenuFlyoutItem>
+            </MenuFlyout>
+          </Button.Flyout>
+        </Button>
+				<Button
+					Grid.Column="2"
+					Content="Restore defaults"
+					Click="RestoreDefaults"
+				/>
       </Grid>
       <ItemsRepeater ItemsSource="{x:Bind Games, Mode=OneWay}" Margin="8,8,8,8">
         <ItemsRepeater.Layout>
@@ -133,24 +165,24 @@
           <TextBlock
             Margin="8,4,4,4"
             Grid.Column="1">Add a game</TextBlock>
-          </Grid>
-          <Button.Flyout>
-            <MenuFlyout>
-              <MenuFlyoutItem
-                Click="AddRunningProcess"
-                Text="Add a game that's running">
-                <MenuFlyoutItem.Icon>
-                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE768;"/>
-                </MenuFlyoutItem.Icon>
-              </MenuFlyoutItem>
-              <MenuFlyoutItem Text="Add an exe file" Click="AddExe">
-                <MenuFlyoutItem.Icon>
-                  <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
-                </MenuFlyoutItem.Icon>
-              </MenuFlyoutItem>
-            </MenuFlyout>
-          </Button.Flyout>
-        </Button>
+        </Grid>
+        <Button.Flyout>
+          <MenuFlyout>
+            <MenuFlyoutItem
+              Click="AddRunningProcess"
+              Text="Add a game that's running">
+              <MenuFlyoutItem.Icon>
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE768;"/>
+              </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Text="Add an exe file" Click="AddExe">
+              <MenuFlyoutItem.Icon>
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE838;"/>
+              </MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+          </MenuFlyout>
+        </Button.Flyout>
+      </Button>
     </StackPanel>
   </ScrollViewer>
 </Page>
