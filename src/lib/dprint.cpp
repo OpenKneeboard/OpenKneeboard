@@ -60,9 +60,6 @@ static void WriteIPCMessage(std::wstring_view message) {
     if (!mutex) {
       return;
     }
-    if (GetLastError() == ERROR_FILE_NOT_FOUND) {
-      return;
-    }
   }
 
   winrt::handle bufferReadyEvent {
