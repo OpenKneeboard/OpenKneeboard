@@ -23,6 +23,7 @@
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <d3d11.h>
 #include <shims/winrt/base.h>
 
@@ -163,6 +164,13 @@ bool OpenXRD3D11Kneeboard::Render(
     return false;
   }
 
+  const scope_guard releaseSwapchainImage([swapchain, oxr]() {
+    auto nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
+    if (nextResult != XR_SUCCESS) {
+      dprintf("Failed to release swapchain image: {}", nextResult);
+    }
+  });
+
   XrSwapchainImageWaitInfo waitInfo {
     .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
     .timeout = XR_INFINITE_DURATION,
@@ -170,10 +178,6 @@ bool OpenXRD3D11Kneeboard::Render(
   nextResult = oxr->xrWaitSwapchainImage(swapchain, &waitInfo);
   if (nextResult != XR_SUCCESS) {
     dprintf("Failed to wait for swapchain image: {}", nextResult);
-    nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
-    if (nextResult != XR_SUCCESS) {
-      dprintf("Failed to release swapchain image: {}", nextResult);
-    }
     return false;
   }
 
@@ -190,10 +194,7 @@ bool OpenXRD3D11Kneeboard::Render(
       rtv->Get(),
       renderParameters.mKneeboardOpacity);
   }
-  nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to release swapchain: {}", nextResult);
-  }
+
   return true;
 }
 
