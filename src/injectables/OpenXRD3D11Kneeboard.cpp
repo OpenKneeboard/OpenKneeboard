@@ -77,7 +77,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   XrSwapchain swapchain {nullptr};
 
   auto nextResult = oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain);
-  if (nextResult != XR_SUCCESS) {
+  if (XR_FAILED(nextResult)) {
     dprintf("Failed to create swapchain: {}", nextResult);
     return nullptr;
   }
@@ -85,7 +85,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   uint32_t imageCount = 0;
   nextResult
     = oxr->xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
-  if (imageCount == 0 || nextResult != XR_SUCCESS) {
+  if (imageCount == 0 || XR_FAILED(nextResult)) {
     dprintf("No images in swapchain: {}", nextResult);
     return nullptr;
   }
@@ -103,7 +103,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     imageCount,
     &imageCount,
     reinterpret_cast<XrSwapchainImageBaseHeader*>(images.data()));
-  if (nextResult != XR_SUCCESS) {
+  if (XR_FAILED(nextResult)) {
     dprintf("Failed to enumerate images in swapchain: {}", nextResult);
     oxr->xrDestroySwapchain(swapchain);
     return nullptr;
@@ -159,14 +159,14 @@ bool OpenXRD3D11Kneeboard::Render(
   uint32_t textureIndex;
   auto nextResult
     = oxr->xrAcquireSwapchainImage(swapchain, nullptr, &textureIndex);
-  if (nextResult != XR_SUCCESS) {
+  if (XR_FAILED(nextResult)) {
     dprintf("Failed to acquire swapchain image: {}", nextResult);
     return false;
   }
 
   const scope_guard releaseSwapchainImage([swapchain, oxr]() {
     auto nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
-    if (nextResult != XR_SUCCESS) {
+    if (XR_FAILED(nextResult)) {
       dprintf("Failed to release swapchain image: {}", nextResult);
     }
   });
@@ -176,7 +176,7 @@ bool OpenXRD3D11Kneeboard::Render(
     .timeout = XR_INFINITE_DURATION,
   };
   nextResult = oxr->xrWaitSwapchainImage(swapchain, &waitInfo);
-  if (nextResult != XR_SUCCESS) {
+  if (XR_FAILED(nextResult)) {
     dprintf("Failed to wait for swapchain image: {}", nextResult);
     return false;
   }
