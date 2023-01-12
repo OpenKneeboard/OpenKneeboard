@@ -287,7 +287,7 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State* const msg) {
 
   if (msg->pressureValid) {
     state.mPressure = msg->pressure;
-    if (state.mPressure > 0.01) {
+    if (state.mPressure > 0) {
       state.mPenButtons |= 1;
     } else {
       state.mPenButtons &= ~1;
