@@ -145,7 +145,8 @@ std::vector<std::filesystem::path> FilePicker::PickMultipleFiles() const {
   auto picker
     = winrt::create_instance<IFileOpenDialog>(CLSID_FileOpenDialog, CLSCTX_ALL);
   picker->SetOptions(
-    FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM | FOS_ALLOWMULTISELECT);
+    FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST | FOS_FORCEFILESYSTEM
+    | FOS_ALLOWMULTISELECT);
   ApplySettings(picker);
 
   if (picker->Show(mParent) != S_OK) {
