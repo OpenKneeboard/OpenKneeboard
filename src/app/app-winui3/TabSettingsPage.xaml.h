@@ -73,7 +73,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
   void CreateAddTabMenu(const Button& button, FlyoutPlacementMode);
 
   template <class T>
-  void CreateFileTab();
+  void CreateFileTab(const std::string& pickerDialogTitle = {});
   void CreateFolderTab();
   winrt::fire_and_forget CreateWindowCaptureTab();
 

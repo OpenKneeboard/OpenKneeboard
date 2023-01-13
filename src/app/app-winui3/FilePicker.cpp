@@ -82,6 +82,10 @@ void FilePicker::ApplySettings(
     picker->SetFileName(mSuggestedFileName.c_str());
   }
 
+  if (!mTitle.empty()) {
+    picker->SetTitle(mTitle.c_str());
+  }
+
   // Keep alive until after we're done with the dialog
   std::vector<COMDLG_FILTERSPEC> fileTypes;
   if (!mFileTypes.empty()) {
@@ -139,6 +143,10 @@ std::filesystem::path FilePicker::GetPathFromShellItem(IShellItem* shellItem) {
   } else {
     return std::filesystem::weakly_canonical(path);
   }
+}
+
+void FilePicker::SetTitle(const std::wstring& title) {
+  mTitle = title;
 }
 
 std::vector<std::filesystem::path> FilePicker::PickMultipleFiles() const {

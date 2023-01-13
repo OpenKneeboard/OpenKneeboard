@@ -39,6 +39,7 @@ class FilePicker final {
   FilePicker() = delete;
   FilePicker(HWND parent);
 
+  void SetTitle(const std::wstring&);
   void SettingsIdentifier(const winrt::guid&);
   void SuggestedStartLocation(REFKNOWNFOLDERID);
   void SuggestedFileName(const std::wstring&);
@@ -60,6 +61,7 @@ class FilePicker final {
   HWND mParent {};
   std::optional<winrt::guid> mSettingsIdentifier;
   const KNOWNFOLDERID* mSuggestedStartLocation {&FOLDERID_Documents};
+  std::wstring mTitle;
 
   std::wstring mSuggestedFileName;
 

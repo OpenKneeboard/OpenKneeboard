@@ -252,7 +252,7 @@ void TabSettingsPage::CreateTab(
       CreateFileTab<SingleFileTab>();
       return;
     case TabType::EndlessNotebook:
-      CreateFileTab<EndlessNotebookTab>();
+      CreateFileTab<EndlessNotebookTab>(_("Open Template"));
       return;
     case TabType::WindowCapture:
       CreateWindowCaptureTab();
@@ -301,7 +301,7 @@ winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
 }
 
 template <class T>
-void TabSettingsPage::CreateFileTab() {
+void TabSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
   constexpr winrt::guid thisCall {
     0x207fb217,
     0x12fc,
@@ -318,6 +318,11 @@ void TabSettingsPage::CreateFileTab() {
   picker.AppendFileType(L"Supported files", extensions);
   for (const auto& extension: extensions) {
     picker.AppendFileType(std::format(L"{} files", extension), {extension});
+  }
+
+  if (!pickerDialogTitle.empty()) {
+    std::wstring utf16(to_hstring(pickerDialogTitle));
+    picker.SetTitle(utf16);
   }
 
   auto files = picker.PickMultipleFiles();
