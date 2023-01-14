@@ -61,7 +61,8 @@ GamesList::~GamesList() {
 }
 
 nlohmann::json GamesList::GetSettings() const {
-  nlohmann::json games {};
+  auto games = nlohmann::json::array();
+
   for (const auto& game: mInstances) {
     games.push_back(game->ToJson());
   }
