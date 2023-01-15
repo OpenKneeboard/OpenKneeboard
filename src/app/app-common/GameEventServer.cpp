@@ -71,6 +71,7 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
   });
 
   auto cancelled = co_await winrt::get_cancellation_token();
+  cancelled.enable_propagation();
 
   winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
 

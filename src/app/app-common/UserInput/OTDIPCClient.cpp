@@ -62,6 +62,7 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
       std::uncaught_exceptions());
   });
   auto cancelled = co_await winrt::get_cancellation_token();
+  cancelled.enable_propagation();
   try {
     while (true) {
       co_await this->RunSingle(weakThis);
@@ -92,6 +93,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
   const std::weak_ptr<OTDIPCClient>& weakThis) {
   auto cancelled = co_await winrt::get_cancellation_token();
+  cancelled.enable_propagation();
 
   winrt::file_handle connection {CreateFileW(
     OTDIPC::NamedPipePathW,
