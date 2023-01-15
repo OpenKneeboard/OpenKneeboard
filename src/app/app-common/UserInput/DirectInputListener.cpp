@@ -72,6 +72,9 @@ DirectInputListener::~DirectInputListener() {
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
   const winrt::com_ptr<IDirectInput8>& di,
   const std::shared_ptr<DirectInputDevice>& device) try {
+  auto cancelToken = co_await winrt::get_cancellation_token();
+  cancelToken.enable_propagation();
+
   if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
     DirectInputKeyboardListener listener {di, device};
     co_await listener.Run();
@@ -86,6 +89,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
 
   DirectInputJoystickListener listener {di, device};
   co_await listener.Run();
+  co_return;
 } catch (const winrt::hresult_canceled&) {
   dprintf("DI device Run() cancelled: {}", device->GetName());
   co_return;
@@ -108,10 +112,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
   });
 
   auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.callback([this]() {
-    /** SPAMMM */
-    SetEvent(mEventHandle.get());
-  });
+  cancelled.callback([event = mEventHandle.get()]() { SetEvent(event); });
   while (!cancelled()) {
     co_await winrt::resume_on_signal(mEventHandle.get());
     if (cancelled()) {
