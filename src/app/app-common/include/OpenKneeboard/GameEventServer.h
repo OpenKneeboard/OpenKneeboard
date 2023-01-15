@@ -40,11 +40,12 @@ class GameEventServer final
  private:
   GameEventServer();
   winrt::Windows::Foundation::IAsyncAction mRunner;
+  winrt::handle mCompletionHandle {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
 
   void Start();
 
   winrt::Windows::Foundation::IAsyncAction Run();
-  static concurrency::task<bool> RunSingle(
+  static winrt::Windows::Foundation::IAsyncOperation<bool> RunSingle(
     const std::weak_ptr<GameEventServer>&,
     const winrt::handle& event,
     const winrt::file_handle&);

@@ -37,24 +37,26 @@ std::shared_ptr<GameEventServer> GameEventServer::Create() {
 
 winrt::fire_and_forget GameEventServer::final_release(
   std::unique_ptr<GameEventServer> self) {
-  try {
-    self->mRunner.Cancel();
-    co_await self->mRunner;
-  } catch (const winrt::hresult_canceled&) {
-    // ignore
-  }
+  self->mRunner.Cancel();
+  co_await winrt::resume_on_signal(self->mCompletionHandle.get());
 }
 
 GameEventServer::GameEventServer() {
+  dprintf("{}", __FUNCTION__);
 }
 
 void GameEventServer::Start() {
   mRunner = this->Run();
 }
 
-GameEventServer::~GameEventServer() = default;
+GameEventServer::~GameEventServer() {
+  dprintf("{}", __FUNCTION__);
+}
 
 winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
+  const scope_guard markCompletion(
+    [handle = mCompletionHandle.get()]() { SetEvent(handle); });
+
   auto weak = weak_from_this();
   winrt::file_handle handle {CreateMailslotA(
     GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr)};
@@ -75,17 +77,24 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
 
   winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
 
-  while ((!cancelled()) && co_await RunSingle(weak, event, handle)) {
-    // repeat!
+  try {
+    while ((!cancelled()) && co_await RunSingle(weak, event, handle)) {
+      // repeat!
+    }
+  } catch (const winrt::hresult_canceled&) {
+    co_return;
   }
 
   co_return;
 }
 
-concurrency::task<bool> GameEventServer::RunSingle(
+winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   const std::weak_ptr<GameEventServer>& instance,
   const winrt::handle& notifyEvent,
   const winrt::file_handle& handle) {
+  auto cancelled = co_await winrt::get_cancellation_token();
+  cancelled.enable_propagation();
+
   OVERLAPPED overlapped {
     .hEvent = notifyEvent.get(),
   };
