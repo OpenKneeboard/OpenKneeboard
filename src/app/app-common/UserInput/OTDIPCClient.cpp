@@ -40,20 +40,22 @@ std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
 }
 
 OTDIPCClient::OTDIPCClient() {
+  dprintf("{}", __FUNCTION__);
 }
 
-OTDIPCClient::~OTDIPCClient() = default;
+OTDIPCClient::~OTDIPCClient() {
+  dprintf("{}", __FUNCTION__);
+}
 
 winrt::fire_and_forget OTDIPCClient::final_release(
   std::unique_ptr<OTDIPCClient> self) {
-  try {
-    self->mRunner.Cancel();
-    co_await self->mRunner;
-  } catch (const winrt::hresult_canceled&) {
-  }
+  self->mRunner.Cancel();
+  co_await winrt::resume_on_signal(self->mCompletionHandle.get());
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
+  const scope_guard markCompletion(
+    [handle = mCompletionHandle.get()]() { SetEvent(handle); });
   auto weakThis = weak_from_this();
   dprint("Starting OTD-IPC client");
   const scope_guard exitMessage([]() {

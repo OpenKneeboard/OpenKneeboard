@@ -67,6 +67,7 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   void TimeoutTablet(const std::string& id);
 
   winrt::Windows::Foundation::IAsyncAction mRunner;
+  winrt::handle mCompletionHandle { CreateEventW(nullptr, TRUE, FALSE, nullptr) };
 
   struct Tablet {
     TabletInfo mDevice;
