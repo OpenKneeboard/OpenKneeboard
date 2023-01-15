@@ -72,9 +72,12 @@ DirectInputListener::~DirectInputListener() {
 
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
   winrt::com_ptr<IDirectInput8> di,
-  std::shared_ptr<DirectInputDevice> device) try {
+  std::shared_ptr<DirectInputDevice> device,
+  HANDLE completionHandle) try {
   auto cancelToken = co_await winrt::get_cancellation_token();
   cancelToken.enable_propagation();
+  const scope_guard markComplete(
+    [completionHandle]() { SetEvent(completionHandle); });
 
   if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
     DirectInputKeyboardListener listener {di, device};

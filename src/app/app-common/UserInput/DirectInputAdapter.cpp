@@ -84,11 +84,9 @@ winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
 
   for (auto& [id, device]: mDevices) {
     device.mListener.Cancel();
-    try {
-      co_await device.mListener;
-    } catch (const winrt::hresult_canceled&) {
-      dprintf("Device polling cancelled: {}", device.mDevice->GetName());
-    }
+  }
+  for (auto& [id, device]: mDevices) {
+    co_await winrt::resume_on_signal(device.mListenerCompletionHandle.get());
   }
   mDevices.clear();
 }
@@ -113,11 +111,15 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
       device->SetButtonBindings(bindings);
     }
 
+    winrt::handle completionHandle {CreateEvent(nullptr, TRUE, FALSE, nullptr)};
+
     mDevices.insert_or_assign(
       device->GetID(),
       DeviceState {
         .mDevice = device,
-        .mListener = DirectInputListener::Run(mDI8, device),
+        .mListener
+        = DirectInputListener::Run(mDI8, device, completionHandle.get()),
+        .mListenerCompletionHandle = std::move(completionHandle),
       });
 
     AddEventListener(device->evUserActionEvent, this->evUserActionEvent);

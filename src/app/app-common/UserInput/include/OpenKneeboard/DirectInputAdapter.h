@@ -71,6 +71,7 @@ class DirectInputAdapter final
   struct DeviceState {
     std::shared_ptr<DirectInputDevice> mDevice;
     winrt::Windows::Foundation::IAsyncAction mListener;
+    winrt::handle mListenerCompletionHandle;
   };
   std::unordered_map<std::string, DeviceState> mDevices;
 
