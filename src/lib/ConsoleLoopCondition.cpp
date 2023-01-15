@@ -37,7 +37,7 @@ class ConsoleLoopCondition::Impl final {
 };
 
 ConsoleLoopCondition::ConsoleLoopCondition() : p(std::make_shared<Impl>()) {
-  gExitEvent = CreateEvent(nullptr, false, false, nullptr);
+  gExitEvent = CreateEventW(nullptr, false, false, nullptr);
   p->mTimerEvent = CreateWaitableTimer(nullptr, true, nullptr);
   SetConsoleCtrlHandler(&ExitHandler, true);
 }

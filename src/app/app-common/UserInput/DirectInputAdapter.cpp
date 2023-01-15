@@ -111,7 +111,8 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
       device->SetButtonBindings(bindings);
     }
 
-    winrt::handle completionHandle {CreateEvent(nullptr, TRUE, FALSE, nullptr)};
+    winrt::handle completionHandle {
+      CreateEventW(nullptr, TRUE, FALSE, nullptr)};
 
     mDevices.insert_or_assign(
       device->GetID(),

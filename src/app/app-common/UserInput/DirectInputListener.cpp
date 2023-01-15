@@ -47,7 +47,7 @@ void DirectInputListener::Initialize() {
   }
   mInitialized = true;
 
-  mEventHandle.attach(CreateEvent(nullptr, false, false, nullptr));
+  mEventHandle.attach(CreateEventW(nullptr, false, false, nullptr));
   if (!mEventHandle) {
     return;
   }
