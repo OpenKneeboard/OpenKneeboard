@@ -71,8 +71,8 @@ DirectInputListener::~DirectInputListener() {
 }
 
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
-  const winrt::com_ptr<IDirectInput8>& di,
-  const std::shared_ptr<DirectInputDevice>& device) try {
+  winrt::com_ptr<IDirectInput8> di,
+  std::shared_ptr<DirectInputDevice> device) try {
   auto cancelToken = co_await winrt::get_cancellation_token();
   cancelToken.enable_propagation();
 
