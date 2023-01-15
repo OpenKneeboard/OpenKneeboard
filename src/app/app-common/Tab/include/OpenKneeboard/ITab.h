@@ -32,6 +32,7 @@ namespace OpenKneeboard {
 class ITab : public virtual IPageSource {
  public:
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
+  ITab();
   virtual ~ITab();
 
   virtual winrt::guid GetPersistentID() const = 0;

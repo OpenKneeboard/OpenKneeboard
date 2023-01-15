@@ -48,9 +48,14 @@ class ReloadTabAction final : public ToolbarAction,
   ReloadTabAction() = delete;
 
  private:
+  enum class Mode {
+    AllTabs,
+    ThisTab,
+  };
+  Mode mMode;
   KneeboardState* mKneeboardState;
 
-  std::shared_ptr<ITabView> mTabView;
+  std::weak_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

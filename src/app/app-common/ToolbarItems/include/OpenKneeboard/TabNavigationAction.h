@@ -33,13 +33,13 @@ class TabNavigationAction final : public TabToggleAction,
   ~TabNavigationAction();
 
   virtual bool IsActive() override;
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
 
   virtual void Activate() override;
   virtual void Deactivate() override;
 
  private:
-  std::shared_ptr<ITabView> mState = nullptr;
+  std::weak_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

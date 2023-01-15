@@ -34,12 +34,12 @@ class PreviousTabAction final : public ToolbarAction, private EventReceiver {
   PreviousTabAction(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
   ~PreviousTabAction();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
   virtual void Execute() override;
 
  private:
   KneeboardState* mKneeboardState;
-  std::shared_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<IKneeboardView> mKneeboardView;
 };
 
 }// namespace OpenKneeboard

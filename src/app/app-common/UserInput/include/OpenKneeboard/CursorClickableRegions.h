@@ -38,6 +38,12 @@ class CursorClickableRegions final {
  public:
   CursorClickableRegions(const std::vector<Button>& buttons)
     : mButtons(buttons) {
+    mButtons.clear();
+  }
+
+  ~CursorClickableRegions() {
+    std::unique_lock lock(mMutex);
+    mButtons.clear();
   }
 
   std::optional<Button> GetHoverButton() const {

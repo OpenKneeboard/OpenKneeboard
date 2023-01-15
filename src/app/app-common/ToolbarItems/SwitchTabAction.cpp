@@ -40,8 +40,11 @@ SwitchTabAction::~SwitchTabAction() {
 }
 
 bool SwitchTabAction::IsChecked() const {
-  return mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()
-    == mTabID;
+  auto kbv = mKneeboardView.lock();
+  if (!kbv) {
+    return false;
+  }
+  return kbv->GetCurrentTabView()->GetRootTab()->GetRuntimeID() == mTabID;
 }
 
 bool SwitchTabAction::IsEnabled() const {
@@ -49,7 +52,9 @@ bool SwitchTabAction::IsEnabled() const {
 }
 
 void SwitchTabAction::Execute() {
-  mKneeboardView->SetCurrentTabByRuntimeID(mTabID);
+  if (auto kbv = mKneeboardView.lock()) {
+    kbv->SetCurrentTabByRuntimeID(mTabID);
+  }
 }
 
 }// namespace OpenKneeboard

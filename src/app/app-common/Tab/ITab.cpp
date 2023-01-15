@@ -18,9 +18,28 @@
  * USA.
  */
 #include <OpenKneeboard/ITab.h>
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+
+#include <atomic>
 
 namespace OpenKneeboard {
 
-ITab::~ITab() = default;
+static std::atomic_size_t gTabCount {0};
+static const scope_guard gCheckForTabLeaks([]() {
+  const auto count = gTabCount.load();
+  if (count > 0) {
+    dprintf("Leaking {} tabs", count);
+    OPENKNEEBOARD_BREAK;
+  }
+});
 
+ITab::ITab() {
+  gTabCount.fetch_add(1);
 }
+
+ITab::~ITab() {
+  gTabCount.fetch_sub(1);
+}
+
+}// namespace OpenKneeboard

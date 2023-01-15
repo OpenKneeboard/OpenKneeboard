@@ -51,11 +51,15 @@ bool NextTabAction::IsEnabled() const {
     return true;
   }
 
-  return (mKneeboardView->GetTabIndex() + 1) < count;
+  auto kbv = mKneeboardView.lock();
+  return kbv && ((kbv->GetTabIndex() + 1) < count);
 }
 
 void NextTabAction::Execute() {
-  mKneeboardView->NextTab();
+  auto kbv = mKneeboardView.lock();
+  if (kbv) {
+    kbv->NextTab();
+  }
 }
 
 }// namespace OpenKneeboard

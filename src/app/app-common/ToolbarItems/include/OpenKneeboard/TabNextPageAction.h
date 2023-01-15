@@ -32,12 +32,12 @@ class TabNextPageAction final : public ToolbarAction, private EventReceiver {
 
   ~TabNextPageAction();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
   virtual void Execute() override;
 
  private:
   KneeboardState* mKneeboard = nullptr;
-  std::shared_ptr<ITabView> mTabView = nullptr;
+  std::weak_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

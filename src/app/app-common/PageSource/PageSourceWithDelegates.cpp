@@ -80,12 +80,12 @@ void PageSourceWithDelegates::SetDelegates(
           this->evAvailableFeaturesChangedEvent),
         AddEventListener(
           delegate->evPageChangeRequestedEvent,
-          [=](auto ctx, PageIndex requestedPage) {
+          [this, weakDelegate](auto ctx, PageIndex requestedPage) {
             PageIndex offset = 0;
             auto strongDelegate = weakDelegate.lock();
             for (const auto& it: mDelegates) {
               if (it != strongDelegate) {
-                offset += delegate->GetPageCount();
+                offset += strongDelegate->GetPageCount();
                 continue;
               }
               this->evPageChangeRequestedEvent.Emit(

@@ -105,7 +105,7 @@ MainWindow::MainWindow() {
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
   mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
   mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
-  mFrameTimer.Tick([=](auto&, auto&) {
+  mFrameTimer.Tick([](auto&, auto&) {
     const auto lock = gDXResources.AcquireLock();
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     gKneeboard->evFrameTimerEvent.Emit();
@@ -335,6 +335,15 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   co_await mDQC.ShutdownQueueAsync();
   mDQC = {nullptr};
   dprint("Frame thread shutdown.");
+  mKneeboardView = {};
+
+  for (const auto& weakTab: gTabs) {
+    auto tab = weakTab.get();
+    if (!tab) {
+      continue;
+    }
+    co_await tab.ReleaseDXResources();
+  }
 
   gKneeboard = {};
   // the mutex gets sad if it gets destroyed while held;

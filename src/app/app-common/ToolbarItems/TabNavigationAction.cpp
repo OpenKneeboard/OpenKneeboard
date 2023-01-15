@@ -23,7 +23,7 @@
 namespace OpenKneeboard {
 
 TabNavigationAction::TabNavigationAction(const std::shared_ptr<ITabView>& state)
-  : TabToggleAction("\uE700", _("Contents")), mState(state) {
+  : TabToggleAction("\uE700", _("Contents")), mTabView(state) {
   AddEventListener(
     state->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);
   AddEventListener(state->evContentChangedEvent, this->evStateChangedEvent);
@@ -34,19 +34,28 @@ TabNavigationAction::~TabNavigationAction() {
 }
 
 bool TabNavigationAction::IsEnabled() const {
-  return mState->SupportsTabMode(TabMode::NAVIGATION);
+  auto tv = mTabView.lock();
+  if (!tv) {
+    return false;
+  }
+  return tv->SupportsTabMode(TabMode::NAVIGATION);
 }
 
 bool TabNavigationAction::IsActive() {
-  return mState->GetTabMode() == TabMode::NAVIGATION;
+  auto tv = mTabView.lock();
+  return tv && tv->GetTabMode() == TabMode::NAVIGATION;
 }
 
 void TabNavigationAction::Activate() {
-  mState->SetTabMode(TabMode::NAVIGATION);
+  if (auto tv = mTabView.lock()) {
+    tv->SetTabMode(TabMode::NAVIGATION);
+  }
 }
 
 void TabNavigationAction::Deactivate() {
-  mState->SetTabMode(TabMode::NORMAL);
+  if (auto tv = mTabView.lock()) {
+    tv->SetTabMode(TabMode::NORMAL);
+  }
 }
 
 }// namespace OpenKneeboard

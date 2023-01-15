@@ -60,7 +60,7 @@ class ClearUserInputAction final : public ToolbarAction,
   enum class Mode { CurrentPage, ThisTab, AllTabs };
   Mode mMode;
   KneeboardState* mKneeboardState = nullptr;
-  std::shared_ptr<ITabView> mTabView;
+  std::weak_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

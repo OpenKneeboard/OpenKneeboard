@@ -44,7 +44,7 @@ class SwitchTabFlyout final : public IToolbarFlyout, public EventReceiver {
 
  private:
   KneeboardState* mKneeboardState {nullptr};
-  std::shared_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<IKneeboardView> mKneeboardView;
 };
 
 }// namespace OpenKneeboard

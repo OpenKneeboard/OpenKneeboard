@@ -90,6 +90,8 @@ TabPage::TabPage() {
         }
       },
       this));
+  OpenKneeboardApp::TabPage projected {*this};
+  gTabs.push_back(winrt::make_weak(projected));
 }
 
 TabPage::~TabPage() = default;
@@ -100,16 +102,36 @@ winrt::fire_and_forget TabPage::final_release(
 
   // Work around https://github.com/microsoft/microsoft-ui-xaml/issues/7254
   auto uiThread = instance->mUIThread;
-  co_await uiThread;
   auto swapChain = instance->mSwapChain;
-  auto swapChainPanel = instance->Canvas();
+  co_await instance->ReleaseDXResources();
+  co_await uiThread;
   instance.reset();
   // 0 doesn't work - I think we just need to re-enter the message pump/event
   // loop
   co_await winrt::resume_after(std::chrono::milliseconds(1));
   co_await uiThread;
-  swapChainPanel = {nullptr};
   swapChain = {nullptr};
+}
+
+winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
+  auto keepAlive = this->get_strong();
+  mShuttingDown = true;
+
+  co_await mUIThread;
+  {
+    auto lock = gDXResources.AcquireLock();
+    Canvas().as<ISwapChainPanelNative>()->SetSwapChain(nullptr);
+    mKneeboardView = {};
+    mTabView = {};
+    mCursorRenderer = {};
+    mErrorRenderer = {};
+    mSwapChain = {};
+    mForegroundBrush = {};
+    mToolbarItems = {};
+
+    CommandBar().PrimaryCommands().Clear();
+    CommandBar().SecondaryCommands().Clear();
+  }
 }
 
 void TabPage::InitializePointerSource() {
@@ -407,6 +429,9 @@ void TabPage::ResizeSwapChain() {
 }
 
 void TabPage::InitializeSwapChain() {
+  if (mShuttingDown) {
+    return;
+  }
   const DXResources& dxr = gDXResources;
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
     .Width

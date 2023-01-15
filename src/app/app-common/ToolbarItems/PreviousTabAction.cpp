@@ -42,7 +42,12 @@ PreviousTabAction::~PreviousTabAction() {
 }
 
 bool PreviousTabAction::IsEnabled() const {
-  if (mKneeboardView->GetTabIndex() > 0) {
+  auto kbv = mKneeboardView.lock();
+  if (!kbv) {
+    return false;
+  }
+
+  if (kbv->GetTabIndex() > 0) {
     return true;
   }
 
@@ -54,7 +59,9 @@ bool PreviousTabAction::IsEnabled() const {
 }
 
 void PreviousTabAction::Execute() {
-  mKneeboardView->PreviousTab();
+  if (auto kbv = mKneeboardView.lock()) {
+    kbv->PreviousTab();
+  }
 }
 
 }// namespace OpenKneeboard

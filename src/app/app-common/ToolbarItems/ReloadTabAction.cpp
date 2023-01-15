@@ -28,14 +28,19 @@ namespace OpenKneeboard {
 ReloadTabAction::ReloadTabAction(
   KneeboardState* kbs,
   const std::shared_ptr<ITabView>& tab)
-  : ToolbarAction({}, _("This tab")), mKneeboardState(kbs), mTabView(tab) {
+  : ToolbarAction({}, _("This tab")),
+    mMode(Mode::ThisTab),
+    mKneeboardState(kbs),
+    mTabView(tab) {
   if (!tab) {
     throw std::logic_error("Bad itab");
   }
 }
 
 ReloadTabAction::ReloadTabAction(KneeboardState* kbs, AllTabs_t)
-  : ToolbarAction({}, _("All tabs")), mKneeboardState(kbs) {
+  : ToolbarAction({}, _("All tabs")),
+    mMode(Mode::AllTabs),
+    mKneeboardState(kbs) {
 }
 
 ReloadTabAction::~ReloadTabAction() {
@@ -47,8 +52,12 @@ bool ReloadTabAction::IsEnabled() const {
 }
 
 void ReloadTabAction::Execute() {
-  if (mTabView) {
-    auto tab = mTabView->GetTab();
+  if (mMode == Mode::ThisTab) {
+    auto tv = mTabView.lock();
+    if (!tv) {
+      return;
+    }
+    auto tab = tv->GetTab();
     if (tab) {
       tab->Reload();
     }
@@ -61,7 +70,7 @@ void ReloadTabAction::Execute() {
 }
 
 std::string_view ReloadTabAction::GetConfirmationTitle() const {
-  if (mTabView) {
+  if (mMode == Mode::ThisTab) {
     return _("Reload this tab?");
   }
   return _("Reload OpenKneeboard?");
@@ -74,7 +83,7 @@ std::string_view ReloadTabAction::GetConfirmationDescription() const {
 }
 
 std::string_view ReloadTabAction::GetConfirmButtonLabel() const {
-  if (mTabView) {
+  if (mMode == Mode::ThisTab) {
     return _("Reload this tab");
   }
   return _("Reload every tab");

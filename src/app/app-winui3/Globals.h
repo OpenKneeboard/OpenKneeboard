@@ -20,8 +20,10 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <winrt/OpenKneeboardApp.h>
 
 #include <memory>
+#include <vector>
 
 namespace OpenKneeboard {
 class KneeboardState;
@@ -32,5 +34,6 @@ extern std::shared_ptr<KneeboardState> gKneeboard;
 extern DXResources gDXResources;
 extern winrt::handle gMutex;
 extern std::shared_ptr<TroubleshootingStore> gTroubleshootingStore;
+extern std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
 
 }// namespace OpenKneeboard

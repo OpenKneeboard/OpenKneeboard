@@ -28,8 +28,8 @@ class ITab;
 class IKneeboardView;
 
 class SwitchTabAction final : public ToolbarAction,
-                           public EventReceiver,
-                           public ICheckableToolbarItem {
+                              public EventReceiver,
+                              public ICheckableToolbarItem {
  public:
   SwitchTabAction(
     const std::shared_ptr<IKneeboardView>&,
@@ -44,7 +44,7 @@ class SwitchTabAction final : public ToolbarAction,
   SwitchTabAction() = delete;
 
  private:
-  std::shared_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<IKneeboardView> mKneeboardView;
   ITab::RuntimeID mTabID;
 };
 

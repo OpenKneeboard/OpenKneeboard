@@ -44,15 +44,22 @@ TabPreviousPageAction::~TabPreviousPageAction() {
 }
 
 bool TabPreviousPageAction::IsEnabled() const {
-  if (mKneeboard->GetAppSettings().mLoopPages) {
-    return mTabView->GetPageCount() > 1;
+  auto tv = mTabView.lock();
+  if (!tv) {
+    return false;
   }
 
-  return mTabView->GetPageIndex() > 0;
+  if (mKneeboard->GetAppSettings().mLoopPages) {
+    return tv->GetPageCount() > 1;
+  }
+
+  return tv->GetPageIndex() > 0;
 }
 
 void TabPreviousPageAction::Execute() {
-  mTabView->PreviousPage();
+  if (auto tv = mTabView.lock()) {
+    tv->PreviousPage();
+  }
 }
 
 }// namespace OpenKneeboard

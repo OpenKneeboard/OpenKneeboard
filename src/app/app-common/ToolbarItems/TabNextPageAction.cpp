@@ -43,7 +43,12 @@ TabNextPageAction::~TabNextPageAction() {
 }
 
 bool TabNextPageAction::IsEnabled() const {
-  const auto count = mTabView->GetPageCount();
+  auto tv = mTabView.lock();
+  if (!tv) {
+    return false;
+  }
+
+  const auto count = tv->GetPageCount();
   if (count < 2) {
     return false;
   }
@@ -52,11 +57,13 @@ bool TabNextPageAction::IsEnabled() const {
     return true;
   }
 
-  return mTabView->GetPageIndex() + 1 < count;
+  return tv->GetPageIndex() + 1 < count;
 }
 
 void TabNextPageAction::Execute() {
-  mTabView->NextPage();
+  if (auto tv = mTabView.lock()) {
+    tv->NextPage();
+  }
 }
 
 }// namespace OpenKneeboard

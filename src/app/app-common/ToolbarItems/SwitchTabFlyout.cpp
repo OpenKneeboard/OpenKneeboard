@@ -53,8 +53,13 @@ bool SwitchTabFlyout::IsEnabled() const {
 std::vector<std::shared_ptr<IToolbarItem>> SwitchTabFlyout::GetSubItems()
   const {
   std::vector<std::shared_ptr<IToolbarItem>> ret;
+  auto kbv = mKneeboardView.lock();
+  if (!kbv) {
+    return ret;
+  }
+
   for (const auto& tab: mKneeboardState->GetTabsList()->GetTabs()) {
-    ret.push_back(std::make_shared<SwitchTabAction>(mKneeboardView, tab));
+    ret.push_back(std::make_shared<SwitchTabAction>(kbv, tab));
   }
   return ret;
 }

@@ -31,11 +31,11 @@ class TabFirstPageAction final : public ToolbarAction, private EventReceiver {
   TabFirstPageAction(const std::shared_ptr<ITabView>& state);
   ~TabFirstPageAction();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
   virtual void Execute() override;
 
  private:
-  std::shared_ptr<ITabView> mState = nullptr;
+  std::weak_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

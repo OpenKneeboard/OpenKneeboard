@@ -19,8 +19,8 @@
  */
 #pragma once
 
-#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/TabsList.h>
+#include <OpenKneeboard/ToolbarAction.h>
 
 namespace OpenKneeboard {
 
@@ -35,12 +35,12 @@ class NextTabAction final : public ToolbarAction, private EventReceiver {
   NextTabAction(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
   ~NextTabAction();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
   virtual void Execute() override;
 
  private:
   KneeboardState* mKneeboardState;
-  std::shared_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<IKneeboardView> mKneeboardView;
 };
 
 }// namespace OpenKneeboard

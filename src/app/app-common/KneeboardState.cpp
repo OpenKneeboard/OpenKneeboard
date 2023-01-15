@@ -92,8 +92,9 @@ KneeboardState::~KneeboardState() noexcept = default;
 
 winrt::fire_and_forget KneeboardState::final_release(
   std::unique_ptr<KneeboardState> self) {
-  self->RemoveAllEventListeners();
   co_await self->ReleaseExclusiveResources();
+
+  self->RemoveAllEventListeners();
 }
 
 std::vector<std::shared_ptr<IKneeboardView>>

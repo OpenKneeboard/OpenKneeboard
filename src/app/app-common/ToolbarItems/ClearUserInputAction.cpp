@@ -56,13 +56,15 @@ void ClearUserInputAction::SubscribeToEvents() {
     mKneeboardState->GetTabsList()->evTabsChangedEvent,
     this->evStateChangedEvent);
 
-  if (!mTabView) {
+  auto tabView = mTabView.lock();
+
+  if (!tabView) {
     return;
   }
 
-  AddEventListener(mTabView->evPageChangedEvent, this->evStateChangedEvent);
+  AddEventListener(tabView->evPageChangedEvent, this->evStateChangedEvent);
   AddEventListener(
-    mTabView->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);
+    tabView->evAvailableFeaturesChangedEvent, this->evStateChangedEvent);
 }
 
 ClearUserInputAction::ClearUserInputAction(KneeboardState* kbs, AllTabs_t)
@@ -77,12 +79,13 @@ ClearUserInputAction::~ClearUserInputAction() {
 }
 
 bool ClearUserInputAction::IsEnabled() const {
-  auto wce = mTabView
-    ? std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(mTabView->GetTab())
+  auto tabView = mTabView.lock();
+  auto wce = tabView
+    ? std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tabView->GetTab())
     : nullptr;
   switch (mMode) {
     case Mode::CurrentPage:
-      return wce && wce->CanClearUserInput(mTabView->GetPageIndex());
+      return wce && tabView && wce->CanClearUserInput(tabView->GetPageIndex());
     case Mode::ThisTab:
       return wce && wce->CanClearUserInput();
     case Mode::AllTabs:
@@ -109,8 +112,13 @@ void ClearUserInputAction::Execute() {
     return;
   }
 
-  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(
-    mTabView->GetTab());
+  auto tabView = mTabView.lock();
+  if (!tabView) {
+    return;
+  }
+
+  auto wce
+    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(tabView->GetTab());
   if (!wce) {
     return;
   }
@@ -120,7 +128,7 @@ void ClearUserInputAction::Execute() {
       wce->ClearUserInput();
       return;
     case Mode::CurrentPage:
-      wce->ClearUserInput(mTabView->GetPageIndex());
+      wce->ClearUserInput(tabView->GetPageIndex());
       return;
     case Mode::AllTabs:
       OPENKNEEBOARD_UNREACHABLE;

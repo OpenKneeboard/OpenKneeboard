@@ -25,7 +25,8 @@ namespace OpenKneeboard {
 
 class ITabView;
 
-class TabPreviousPageAction final : public ToolbarAction, private EventReceiver {
+class TabPreviousPageAction final : public ToolbarAction,
+                                    private EventReceiver {
  public:
   TabPreviousPageAction() = delete;
 
@@ -34,12 +35,12 @@ class TabPreviousPageAction final : public ToolbarAction, private EventReceiver 
     const std::shared_ptr<ITabView>& state);
   ~TabPreviousPageAction();
 
-  virtual bool IsEnabled() const override;;
+  virtual bool IsEnabled() const override;
   virtual void Execute() override;
 
  private:
   KneeboardState* mKneeboard;
-  std::shared_ptr<ITabView> mTabView;
+  std::weak_ptr<ITabView> mTabView;
 };
 
 }// namespace OpenKneeboard

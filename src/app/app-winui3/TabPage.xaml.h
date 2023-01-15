@@ -65,7 +65,10 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     const SizeChangedEventArgs&) noexcept;
   void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
 
+  winrt::Windows::Foundation::IAsyncAction ReleaseDXResources();
+
  private:
+  bool mShuttingDown = false;
   winrt::apartment_context mUIThread;
   std::shared_ptr<IKneeboardView> mKneeboardView;
   std::shared_ptr<ITabView> mTabView;

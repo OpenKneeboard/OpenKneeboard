@@ -23,7 +23,7 @@
 namespace OpenKneeboard {
 
 TabFirstPageAction::TabFirstPageAction(const std::shared_ptr<ITabView>& state)
-  : ToolbarAction("\uE892", _("First Page")), mState(state) {
+  : ToolbarAction("\uE892", _("First Page")), mTabView(state) {
   AddEventListener(state->evPageChangedEvent, this->evStateChangedEvent);
   AddEventListener(state->evContentChangedEvent, this->evStateChangedEvent);
 }
@@ -33,11 +33,14 @@ TabFirstPageAction::~TabFirstPageAction() {
 }
 
 bool TabFirstPageAction::IsEnabled() const {
-  return mState->GetPageCount() > 1 && mState->GetPageIndex() > 0;
+  auto tv = mTabView.lock();
+  return tv && tv->GetPageCount() > 1 && tv->GetPageIndex() > 0;
 }
 
 void TabFirstPageAction::Execute() {
-  mState->SetPageIndex(0);
+  if (auto tv = mTabView.lock()) {
+    tv->SetPageIndex(0);
+  }
 }
 
 }// namespace OpenKneeboard
