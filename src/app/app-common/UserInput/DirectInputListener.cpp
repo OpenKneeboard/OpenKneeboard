@@ -66,6 +66,7 @@ DirectInputListener::~DirectInputListener() {
   if (mDIDevice) {
     // Must detach the event handle before winrt::handle destroys it
     mDIDevice->SetEventNotification(NULL);
+    mDIDevice->Unacquire();
   }
 }
 
