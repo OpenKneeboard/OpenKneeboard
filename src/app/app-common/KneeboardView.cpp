@@ -50,6 +50,7 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   for (auto layer: mUILayers) {
     AddEventListener(layer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
+  AddEventListener(this->evCurrentTabChangedEvent, this->evNeedsRepaintEvent);
 
   const auto id = this->GetRuntimeID().GetTemporaryValue();
   dprintf("Created kneeboard view ID {:#016x} ({})", id, id);
