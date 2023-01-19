@@ -18,7 +18,7 @@ Once this is done, you can bind it through Settings -> DirectInput -> Keyboard i
 
 This needs a bit more work to set up, but you don't need to worry about finding a unique key combination.
 
-The `OpenKneeboard-RelWithDebInfo-RemoteControl` zip from [the latest release](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest) contains several remote control executables that can be used with StreamDeck's "Open" action - extract them somewhere where you're unlikely to unintentionally delete them:
+`C:\Program Files\OpenKneeboard\utilities` contains several remote control executables that can be used with StreamDeck's "Open" action:
 
 ![OpenKneeboard-Remote-PREVIOUS_PAGE.exe, -NEXT_PAGE.exe, -NEXT_TAB.exe, etc](screenshots/remote-controls.png)
 

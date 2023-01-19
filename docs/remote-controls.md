@@ -1,6 +1,6 @@
 # 'RemoteControl' exe files
 
-These are included in the 'utilities' zip, and can be used to control OpenKneeboard from other programs, e.g.:
+These are installed to `C:\Program Files\OpenKneeboard\utilities`, and can be used to control OpenKneeboard from other programs, e.g.:
 
 - the Elgato StreamDeck software via 'System' -> 'Open'
 - Huion tablets by binding to an executable
@@ -17,7 +17,7 @@ Most of these are relatively self-explanatory:
 - `OpenKneeboard-RemoteControl-TOGGLE_FORCE_ZOOM.exe`: in VR mode, toggle 'always zoom' on or off; if off, by default, OpenKneeboard will enlarge the kneeboard when you're looking directly at it.
 - `OpenKneeboard-RemoteControl-TOGGLE_VISIBILITY.exe`: show/hide the kneeboard in-game
 
-## `OpenKneeboard-RemoteControl-SET_PROFILE.exe` (v1.3-beta4 and above)
+## `OpenKneeboard-RemoteControl-SET_PROFILE.exe`
 
 This must be ran with parameters:
 
@@ -26,7 +26,7 @@ This must be ran with parameters:
 
 You can find IDs by looking in `Saved Games\OpenKneeboard\profiles.json` or the folder names inside `Saved Games\OpenKneeboard\profiles\`.
 
-## `OpenKneeboard-RemoteControl-SET_TAB.exe` (v1.3-beta3 and above)
+## `OpenKneeboard-RemoteControl-SET_TAB.exe`
 
 This must be ran with parameters.
 
@@ -44,7 +44,7 @@ You can also jump to a specific page:
 
 If you don't specify a page number, or you specify '0', the tab will be selected without changing page within that tab.
 
-### Setting the current tab by position (v1.3-beta4 and above)
+### Setting the current tab by position
 
 Run with `position POSITION` replacing 'POSITION' with the position of the tab you want to switch to, starting at 1. For example, to switch to the first tab:
 
@@ -90,7 +90,7 @@ If you don't specify a page number, or you specify '0', the tab will be selected
 
 **The Radio Log tab will have a different ID on your installation.**
 
-### Setting the tab/page for a particular kneeboard (dual kneeboards, v1.3-beta4 and above)
+### Setting the tab/page for a particular kneeboard (dual kneeboards)
 
 After the page number, you can also add:
 

@@ -22,11 +22,11 @@ To use the pen for drawing or UIs (e.g. PDF table of contents), you need to set 
 
 If an on-pen button is being held while drawing, the pen will act as an eraser.
 
-If you also want to use the on-tablet 'Press Keys' to change page/tabs, you'll need to download the `OpenKneeboard-RelWithDebInfo-RemoteControl` zip from [the latest release](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest), and extract it somewhere to keep. This contains several remote control executables:
+If you also want to use the on-tablet 'Press Keys' to change page/tabs, there are several remote control executables in `C:\Program Files\OpenKneeboard\utilities`:.
 
 ![OpenKneeboard-Remote-PREVIOUS_PAGE.exe, -NEXT_PAGE.exe, -NEXT_TAB.exe, etc](screenshots/remote-controls.png)
 
-To use these, open the Huion settings app, and set the press keys to 'run program', and browse to the downloaded executable you want. For example, if you want a press key to move to the next kneeboard page, select 'Run Program', then browse to and select `OpenKneeboard-RemoteControl-NEXT_PAGE.exe`:
+To use these, open the Huion settings app, and set the press keys to 'run program', and browse to the executable you want. For example, if you want a press key to move to the next kneeboard page, select 'Run Program', then browse to and select `OpenKneeboard-RemoteControl-NEXT_PAGE.exe`:
 
 ![screenshot of run program -> NEXT_PAGE.exe](screenshots/huion-presskeys.png)
 
