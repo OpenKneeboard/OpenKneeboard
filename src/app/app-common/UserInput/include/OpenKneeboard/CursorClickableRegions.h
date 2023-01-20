@@ -38,7 +38,6 @@ class CursorClickableRegions final {
  public:
   CursorClickableRegions(const std::vector<Button>& buttons)
     : mButtons(buttons) {
-    mButtons.clear();
   }
 
   ~CursorClickableRegions() {
