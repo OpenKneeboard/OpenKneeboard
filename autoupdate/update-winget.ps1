@@ -1,6 +1,7 @@
 param(
   [switch] $Submit = $false,
-  [switch] $Preview = $false
+  [switch] $Preview = $false,
+  [switch] $Stable = $false
 )
 
 function Get-MSIVersion {
@@ -63,4 +64,9 @@ function Update-Winget {
 if ($Preview) {
   $apiData = Get-Content preview-msi.json | ConvertFrom-Json
   Update-Winget -ApiData $apiData -PackageID FredEmmott.OpenKneeboard.Preview
+}
+
+if ($Stable) {
+  $apiData = Get-Content stable-msi.json | ConvertFrom-Json
+  Update-Winget -ApiData $apiData -PackageID FredEmmott.OpenKneeboard
 }
