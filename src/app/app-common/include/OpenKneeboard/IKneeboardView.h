@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/inttypes.h>
@@ -53,6 +54,11 @@ class IKneeboardView {
   virtual std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const = 0;
   virtual void SetCurrentTabByIndex(TabIndex) = 0;
   virtual void SetCurrentTabByRuntimeID(ITab::RuntimeID) = 0;
+
+  virtual std::optional<Bookmark> AddBookmark() = 0;
+  virtual std::vector<Bookmark> GetBookmarks() const = 0;
+  virtual void RemoveBookmark(const Bookmark&) = 0;
+  virtual void GoToBookmark(const Bookmark&) = 0;
 
   virtual void PreviousTab() = 0;
   virtual void NextTab() = 0;

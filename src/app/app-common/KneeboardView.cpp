@@ -30,6 +30,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <algorithm>
 #include <ranges>
 
 namespace OpenKneeboard {
@@ -375,6 +376,47 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
     point.x / canvasSize.width,
     point.y / canvasSize.height,
   };
+}
+
+std::optional<Bookmark> KneeboardView::AddBookmark() {
+  auto view = this->GetCurrentTabView();
+  auto tab = view->GetRootTab();
+  auto page = view->GetPageIndex();
+  if (page >= tab->GetPageCount()) {
+    return {};
+  }
+
+  Bookmark ret {
+    .mTabID = tab->GetRuntimeID(),
+    .mPageIndex = page,
+    .mTitle = std::format(_("{} Page {}"), tab->GetTitle(), page),
+  };
+  mBookmarks.push_back(ret);
+  return ret;
+}
+
+std::vector<Bookmark> KneeboardView::GetBookmarks() const {
+  return mBookmarks;
+}
+
+void KneeboardView::RemoveBookmark(const Bookmark& bookmark) {
+  const auto it = std::ranges::find(mBookmarks, bookmark);
+  if (it != mBookmarks.end()) {
+    mBookmarks.erase(it);
+  }
+}
+
+void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
+  const auto it
+    = std::ranges::find(mTabViews, bookmark.mTabID, [](const auto& view) {
+        return view->GetRootTab()->GetRuntimeID();
+      });
+
+  if (it == mTabViews.end()) {
+    return;
+  }
+  SetCurrentTabByIndex(it - mTabViews.begin());
+  (*it)->SetPageIndex(bookmark.mPageIndex);
 }
 
 }// namespace OpenKneeboard

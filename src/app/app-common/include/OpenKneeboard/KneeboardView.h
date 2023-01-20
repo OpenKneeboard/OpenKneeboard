@@ -78,12 +78,18 @@ class KneeboardView final : public IKneeboardView,
     const D2D1_POINT_2F& contentPoint) const override;
   virtual void PostCursorEvent(const CursorEvent& ev) override;
 
+  virtual std::optional<Bookmark> AddBookmark() override;
+  virtual std::vector<Bookmark> GetBookmarks() const override;
+  virtual void RemoveBookmark(const Bookmark&) override;
+  virtual void GoToBookmark(const Bookmark&) override;
+
  private:
   KneeboardView(const DXResources&, KneeboardState*);
   KneeboardViewID mID;
   DXResources mDXR;
   KneeboardState* mKneeboard;
   EventContext mEventContext;
+  std::vector<Bookmark> mBookmarks;
   std::vector<std::shared_ptr<ITabView>> mTabViews;
   std::shared_ptr<ITabView> mCurrentTabView;
 
