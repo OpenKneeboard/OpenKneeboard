@@ -85,6 +85,7 @@ class KneeboardView final : public IKneeboardView,
   virtual std::vector<Bookmark> GetBookmarks() const override;
   virtual void RemoveBookmark(const Bookmark&) override;
   virtual void GoToBookmark(const Bookmark&) override;
+  virtual void ToggleBookmark() override;
 
  private:
   enum class RelativePosition {

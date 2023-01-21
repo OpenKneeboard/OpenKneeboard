@@ -378,6 +378,23 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   };
 }
 
+void KneeboardView::ToggleBookmark() {
+  auto view = this->GetCurrentTabView();
+  auto tab = view->GetRootTab();
+  auto page = view->GetPageIndex();
+
+  auto it = std::ranges::find_if(mBookmarks, [=](const auto& bm) {
+    return bm.mTabID == tab->GetRuntimeID() && bm.mPageIndex == page;
+  });
+
+  if (it == mBookmarks.end()) {
+    this->AddBookmark();
+    return;
+  }
+
+  mBookmarks.erase(it);
+}
+
 std::optional<Bookmark> KneeboardView::AddBookmark() {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();
