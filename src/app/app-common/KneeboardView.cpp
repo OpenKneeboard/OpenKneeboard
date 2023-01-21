@@ -392,16 +392,18 @@ void KneeboardView::ToggleBookmark() {
   auto tab = view->GetRootTab();
   auto page = view->GetPageIndex();
 
-  auto it = std::ranges::find_if(mBookmarks, [=](const auto& bm) {
+  auto bookmarks = tab->GetBookmarks();
+  auto it = std::ranges::find_if(bookmarks, [=](const auto& bm) {
     return bm.mTabID == tab->GetRuntimeID() && bm.mPageIndex == page;
   });
 
-  if (it == mBookmarks.end()) {
+  if (it == bookmarks.end()) {
     this->AddBookmark();
     return;
   }
 
-  mBookmarks.erase(it);
+  bookmarks.erase(it);
+  tab->SetBookmarks(bookmarks);
 }
 
 std::optional<Bookmark> KneeboardView::AddBookmark() {
@@ -417,38 +419,39 @@ std::optional<Bookmark> KneeboardView::AddBookmark() {
     .mPageIndex = page,
     .mTitle = std::format(_("{} Page {}"), tab->GetTitle(), page),
   };
-  auto bookmarks = mBookmarks;
+
+  auto bookmarks = tab->GetBookmarks();
   bookmarks.push_back(ret);
+  tab->SetBookmarks(bookmarks);
 
-  mBookmarks.clear();
-  for (const auto tv: mTabViews) {
-    const auto id = tv->GetRootTab()->GetRuntimeID();
-    std::vector<Bookmark> tabBookmarks;
-    for (const auto& bookmark: bookmarks) {
-      if (bookmark.mTabID == id) {
-        tabBookmarks.push_back(bookmark);
-      }
-    }
-
-    std::sort(
-      tabBookmarks.begin(),
-      tabBookmarks.end(),
-      [](const auto& a, const auto& b) { return a.mPageIndex < b.mPageIndex; });
-    std::copy(
-      tabBookmarks.begin(), tabBookmarks.end(), std::back_inserter(mBookmarks));
-  }
   return ret;
 }
 
 std::vector<Bookmark> KneeboardView::GetBookmarks() const {
-  return mBookmarks;
+  std::vector<Bookmark> ret;
+  auto inserter = std::back_inserter(ret);
+  for (const auto& tv: mTabViews) {
+    std::ranges::copy(tv->GetRootTab()->GetBookmarks(), inserter);
+  }
+  return ret;
 }
 
 void KneeboardView::RemoveBookmark(const Bookmark& bookmark) {
-  const auto it = std::ranges::find(mBookmarks, bookmark);
-  if (it != mBookmarks.end()) {
-    mBookmarks.erase(it);
+  auto tabIt = std::ranges::find_if(mTabViews, [&](const auto& tv) {
+    return tv->GetRootTab()->GetRuntimeID() == bookmark.mTabID;
+  });
+  if (tabIt == mTabViews.end()) {
+    return;
   }
+  auto tab = (*tabIt)->GetRootTab();
+
+  auto bookmarks = tab->GetBookmarks();
+  auto it = std::ranges::find(bookmarks, bookmark);
+  if (it == bookmarks.end()) {
+    return;
+  }
+  bookmarks.erase(it);
+  tab->SetBookmarks(bookmarks);
 }
 
 void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
@@ -474,10 +477,6 @@ void KneeboardView::NextBookmark() {
 }
 
 void KneeboardView::SetBookmark(RelativePosition pos) {
-  if (mBookmarks.empty()) {
-    return;
-  }
-
   auto bookmark = this->GetBookmark(pos);
   if (bookmark) {
     GoToBookmark(*bookmark);
@@ -488,10 +487,15 @@ void KneeboardView::SetBookmark(RelativePosition pos) {
     return;
   }
 
+  const auto bookmarks = this->GetBookmarks();
+  if (bookmarks.empty()) {
+    return;
+  }
+
   if (pos == RelativePosition::Previous) {
-    GoToBookmark(mBookmarks.back());
+    GoToBookmark(bookmarks.back());
   } else {
-    GoToBookmark(mBookmarks.front());
+    GoToBookmark(bookmarks.front());
   }
 }
 
@@ -501,7 +505,7 @@ std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
 
   std::optional<Bookmark> prev;
   bool reachedCurrentTab = false;
-  for (const auto& bookmark: mBookmarks) {
+  for (const auto& bookmark: this->GetBookmarks()) {
     const bool isCurrentTab = bookmark.mTabID == currentTabID;
     if (reachedCurrentTab && !isCurrentTab) {
       switch (pos) {

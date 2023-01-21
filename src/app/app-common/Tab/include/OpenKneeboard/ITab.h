@@ -29,6 +29,8 @@
 
 namespace OpenKneeboard {
 
+struct Bookmark;
+
 class ITab : public virtual IPageSource {
  public:
   class RuntimeID final : public UniqueIDBase<RuntimeID> {};
@@ -41,6 +43,9 @@ class ITab : public virtual IPageSource {
   virtual void SetTitle(const std::string&) = 0;
   virtual RuntimeID GetRuntimeID() const = 0;
   virtual void Reload() = 0;
+
+  virtual std::vector<Bookmark> GetBookmarks() const = 0;
+  virtual void SetBookmarks(const std::vector<Bookmark>&) = 0;
 
   Event<> evSettingsChangedEvent;
 };

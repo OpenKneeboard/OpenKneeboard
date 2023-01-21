@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Bookmark.h>
+
 #include "ITab.h"
 
 namespace OpenKneeboard {
@@ -30,6 +32,9 @@ class TabBase : public virtual ITab {
   virtual std::string GetTitle() const override final;
   virtual void SetTitle(const std::string&) override final;
 
+  virtual std::vector<Bookmark> GetBookmarks() const override final;
+  virtual void SetBookmarks(const std::vector<Bookmark>&) override final;
+
  protected:
   TabBase(const winrt::guid& persistentID, std::string_view title);
 
@@ -37,6 +42,7 @@ class TabBase : public virtual ITab {
   const winrt::guid mPersistentID;
   const RuntimeID mRuntimeID;
   std::string mTitle;
+  std::vector<Bookmark> mBookmarks;
 };
 
 }// namespace OpenKneeboard

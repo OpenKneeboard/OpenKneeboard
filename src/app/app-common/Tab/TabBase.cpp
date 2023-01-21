@@ -20,6 +20,8 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/TabBase.h>
 
+#include <unordered_set>
+
 namespace OpenKneeboard {
 
 static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
@@ -51,6 +53,30 @@ std::string TabBase::GetTitle() const {
 void TabBase::SetTitle(const std::string& title) {
   mTitle = title;
   evSettingsChangedEvent.Emit();
+}
+
+std::vector<Bookmark> TabBase::GetBookmarks() const {
+  return mBookmarks;
+}
+
+void TabBase::SetBookmarks(const std::vector<Bookmark>& bookmarks) {
+  std::unordered_set<PageIndex> seenPages;
+  for (const auto& bookmark: bookmarks) {
+    if (bookmark.mTabID != mRuntimeID) {
+      throw std::logic_error("Trying to set bookmark for a different tab");
+    }
+
+    if (seenPages.contains(bookmark.mPageIndex)) {
+      throw std::logic_error("Trying to add two bookmarks for the same page");
+    }
+    seenPages.insert(bookmark.mPageIndex);
+  }
+
+  mBookmarks = bookmarks;
+  std::sort(
+    mBookmarks.begin(), mBookmarks.end(), [](const auto& a, const auto& b) {
+      return a.mPageIndex < b.mPageIndex;
+    });
 }
 
 }// namespace OpenKneeboard

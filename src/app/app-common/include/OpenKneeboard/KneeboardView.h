@@ -100,7 +100,6 @@ class KneeboardView final : public IKneeboardView,
   DXResources mDXR;
   KneeboardState* mKneeboard;
   EventContext mEventContext;
-  std::vector<Bookmark> mBookmarks;
   std::vector<std::shared_ptr<ITabView>> mTabViews;
   std::shared_ptr<ITabView> mCurrentTabView;
 
