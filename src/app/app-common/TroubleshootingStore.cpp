@@ -19,7 +19,12 @@
  */
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/settings.h>
+#include <OpenKneeboard/version.h>
+
+#include <chrono>
 
 namespace OpenKneeboard {
 
@@ -60,12 +65,93 @@ TroubleshootingStore::TroubleshootingStore() {
   }};
 
   AddEventListener(mDPrint->evMessageReceived, this->evDPrintMessageReceived);
+
+  this->InitializeLogFile();
+
   dprintf("{}()", __FUNCTION__);
+}
+
+void TroubleshootingStore::InitializeLogFile() {
+  DWORD maxLogFiles = 0;
+  for (auto hkey: {HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE}) {
+    DWORD size = sizeof(maxLogFiles);
+    if (
+      RegGetValueW(
+        hkey,
+        RegistrySubKey,
+        L"MaxLogFiles",
+        RRF_RT_REG_DWORD,
+        nullptr,
+        &maxLogFiles,
+        &size)
+      == ERROR_SUCCESS) {
+      break;
+    }
+  }
+
+  if (maxLogFiles == 0) {
+    return;
+  }
+
+  const auto directory = Settings::GetDirectory() / "logs";
+  std::filesystem::create_directories(directory);
+
+  std::vector<std::filesystem::path> existingFiles;
+  for (const auto& it: std::filesystem::directory_iterator(directory)) {
+    if (!it.is_regular_file()) {
+      continue;
+    }
+    existingFiles.push_back(it.path());
+  }
+  std::sort(existingFiles.begin(), existingFiles.end());
+
+  const auto file = directory
+    / std::format(L"OpenKneeboard-{:%Y%m%dT%H%M%S}-{}.{}.{}.{}-{}.log",
+                  std::chrono::system_clock::now(),
+                  Version::Major,
+                  Version::Minor,
+                  Version::Patch,
+                  Version::Build,
+                  GetCurrentProcessId());
+  mLogFile = std::ofstream(file, std::ios::binary);
+
+  AddEventListener(
+    this->evDPrintMessageReceived,
+    std::bind_front(&TroubleshootingStore::WriteDPrintMessageToLogFile, this));
+
+  if (existingFiles.size() < maxLogFiles) {
+    return;
+  }
+  const auto toDelete = std::vector<std::filesystem::path> {
+    existingFiles.begin(),
+    existingFiles.begin() + (existingFiles.size() + 1 - maxLogFiles)};
+  for (const auto& it: toDelete) {
+    dprintf("Deleting stale log file {}", it.string());
+    std::filesystem::remove(it);
+  }
 }
 
 TroubleshootingStore::~TroubleshootingStore() {
   dprintf("{}()", __FUNCTION__);
   this->RemoveAllEventListeners();
+}
+
+void TroubleshootingStore::WriteDPrintMessageToLogFile(
+  const DPrintEntry& entry) {
+  if (!mLogFile) {
+    return;
+  }
+
+  *mLogFile << std::format(
+    "[{:%F %T} {} ({})] {}: {}",
+    std::chrono::zoned_time(
+      std::chrono::current_zone(),
+      std::chrono::time_point_cast<std::chrono::seconds>(entry.mWhen)),
+    std::filesystem::path(entry.mMessage.mExecutable).filename().string(),
+    entry.mMessage.mProcessID,
+    winrt::to_string(entry.mMessage.mPrefix),
+    winrt::to_string(entry.mMessage.mMessage))
+            << std::endl;
 }
 
 void TroubleshootingStore::OnGameEvent(const GameEvent& ev) {

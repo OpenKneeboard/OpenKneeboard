@@ -23,6 +23,7 @@
 #include <OpenKneeboard/dprint.h>
 
 #include <chrono>
+#include <fstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -65,6 +66,10 @@ class TroubleshootingStore final : private EventReceiver {
   std::unique_ptr<DPrintReceiver> mDPrint;
   std::jthread mDPrintThread;
   std::map<std::string, GameEventEntry> mGameEvents;
+  std::optional<std::ofstream> mLogFile;
+
+  void InitializeLogFile();
+  void WriteDPrintMessageToLogFile(const DPrintEntry&);
 
   TroubleshootingStore();
 };
