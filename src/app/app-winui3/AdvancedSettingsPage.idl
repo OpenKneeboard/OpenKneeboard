@@ -9,10 +9,14 @@ namespace OpenKneeboardApp
         Boolean DualKneeboards;
         Boolean GazeInputFocus;
 
+        Boolean MultipleProfiles;
+
+        Boolean Bookmarks;
+
         Boolean LoopPages;
         Boolean LoopTabs;
-
-        Boolean MultipleProfiles;
+        Boolean LoopProfiles;
+        Boolean LoopBookmarks;
 
 		UInt32 MinimumPenRadius;
 		UInt32 MinimumEraseRadius;

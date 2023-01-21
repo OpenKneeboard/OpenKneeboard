@@ -43,6 +43,9 @@ struct AdvancedSettingsPage
   bool MultipleProfiles() const noexcept;
   void MultipleProfiles(bool value) noexcept;
 
+  bool Bookmarks() const noexcept;
+  void Bookmarks(bool value) noexcept;
+
   bool GazeInputFocus() const noexcept;
   void GazeInputFocus(bool value) noexcept;
 
@@ -51,6 +54,12 @@ struct AdvancedSettingsPage
 
   bool LoopTabs() const noexcept;
   void LoopTabs(bool) noexcept;
+
+  bool LoopProfiles() const noexcept;
+  void LoopProfiles(bool) noexcept;
+
+  bool LoopBookmarks() const noexcept;
+  void LoopBookmarks(bool) noexcept;
 
   void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
   void RestoreQuirkDefaults(const IInspectable&, const IInspectable&) noexcept;

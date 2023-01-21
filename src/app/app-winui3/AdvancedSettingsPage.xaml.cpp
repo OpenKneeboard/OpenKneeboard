@@ -60,6 +60,20 @@ void AdvancedSettingsPage::DualKneeboards(bool value) noexcept {
   gKneeboard->SetAppSettings(s);
 }
 
+bool AdvancedSettingsPage::Bookmarks() const noexcept {
+  return gKneeboard->GetAppSettings().mBookmarks.mEnabled;
+}
+
+void AdvancedSettingsPage::Bookmarks(bool value) noexcept {
+  auto s = gKneeboard->GetAppSettings();
+  s.mBookmarks.mEnabled = value;
+  gKneeboard->SetAppSettings(s);
+
+  mPropertyChangedEvent(
+    *this,
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"Bookmarks"));
+}
+
 bool AdvancedSettingsPage::MultipleProfiles() const noexcept {
   return gKneeboard->GetProfileSettings().mEnabled;
 }
@@ -73,6 +87,11 @@ void AdvancedSettingsPage::MultipleProfiles(bool value) noexcept {
   }
   s.mEnabled = value;
   gKneeboard->SetProfileSettings(s);
+
+  mPropertyChangedEvent(
+    *this,
+    winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(
+      L"MultipleProfiles"));
 }
 
 bool AdvancedSettingsPage::GazeInputFocus() const noexcept {
@@ -102,6 +121,26 @@ bool AdvancedSettingsPage::LoopTabs() const noexcept {
 void AdvancedSettingsPage::LoopTabs(bool value) noexcept {
   auto s = gKneeboard->GetAppSettings();
   s.mLoopTabs = value;
+  gKneeboard->SetAppSettings(s);
+}
+
+bool AdvancedSettingsPage::LoopProfiles() const noexcept {
+  return gKneeboard->GetProfileSettings().mLoopProfiles;
+}
+
+void AdvancedSettingsPage::LoopProfiles(bool value) noexcept {
+  auto s = gKneeboard->GetProfileSettings();
+  s.mLoopProfiles = value;
+  gKneeboard->SetProfileSettings(s);
+}
+
+bool AdvancedSettingsPage::LoopBookmarks() const noexcept {
+  return gKneeboard->GetAppSettings().mBookmarks.mLoop;
+}
+
+void AdvancedSettingsPage::LoopBookmarks(bool value) noexcept {
+  auto s = gKneeboard->GetAppSettings();
+  s.mBookmarks.mLoop = value;
   gKneeboard->SetAppSettings(s);
 }
 
