@@ -68,7 +68,7 @@ class TestViewerWindow final {
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mStreamerModeBackgroundBrush;
 
-  HWND mHwnd;
+  HWND mHwnd {};
 
   static TestViewerWindow* gInstance;
   static LRESULT CALLBACK
@@ -221,6 +221,18 @@ class TestViewerWindow final {
         mShowInformationOverlay = !mShowInformationOverlay;
         this->PaintNow();
         return;
+      case 'B': {
+        auto style = GetWindowLongPtrW(mHwnd, GWL_STYLE);
+        if ((style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
+          style &= ~WS_OVERLAPPEDWINDOW;
+          style |= WS_POPUP;
+        } else {
+          style &= ~WS_POPUP;
+          style |= WS_OVERLAPPEDWINDOW;
+        }
+        SetWindowLongPtrW(mHwnd, GWL_STYLE, style);
+        return;
+      }
     }
 
     if (vkk >= '1' && vkk <= '9') {
@@ -238,6 +250,9 @@ class TestViewerWindow final {
   }
 
   void PaintNow() {
+    if (!mHwnd) {
+      return;
+    }
     this->InitSwapChain();
 
     winrt::com_ptr<IDXGISurface> surface;
