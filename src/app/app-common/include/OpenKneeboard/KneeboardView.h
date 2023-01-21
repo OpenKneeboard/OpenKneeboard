@@ -64,6 +64,9 @@ class KneeboardView final : public IKneeboardView,
   virtual void NextPage() override;
   virtual void PreviousPage() override;
 
+  virtual void PreviousBookmark() override;
+  virtual void NextBookmark() override;
+
   virtual D2D1_SIZE_U GetCanvasSize() const override;
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual D2D1_SIZE_U GetContentNativeSize() const override;
@@ -84,6 +87,13 @@ class KneeboardView final : public IKneeboardView,
   virtual void GoToBookmark(const Bookmark&) override;
 
  private:
+  enum class RelativePosition {
+    Previous,
+    Next,
+  };
+  std::optional<Bookmark> GetBookmark(RelativePosition) const;
+  void SetBookmark(RelativePosition);
+
   KneeboardView(const DXResources&, KneeboardState*);
   KneeboardViewID mID;
   DXResources mDXR;

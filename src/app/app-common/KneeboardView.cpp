@@ -391,7 +391,26 @@ std::optional<Bookmark> KneeboardView::AddBookmark() {
     .mPageIndex = page,
     .mTitle = std::format(_("{} Page {}"), tab->GetTitle(), page),
   };
-  mBookmarks.push_back(ret);
+  auto bookmarks = mBookmarks;
+  bookmarks.push_back(ret);
+
+  mBookmarks.clear();
+  for (const auto tv: mTabViews) {
+    const auto id = tv->GetRootTab()->GetRuntimeID();
+    std::vector<Bookmark> tabBookmarks;
+    for (const auto& bookmark: bookmarks) {
+      if (bookmark.mTabID == id) {
+        tabBookmarks.push_back(bookmark);
+      }
+    }
+
+    std::sort(
+      tabBookmarks.begin(),
+      tabBookmarks.end(),
+      [](const auto& a, const auto& b) { return a.mPageIndex < b.mPageIndex; });
+    std::copy(
+      tabBookmarks.begin(), tabBookmarks.end(), std::back_inserter(mBookmarks));
+  }
   return ret;
 }
 
@@ -416,7 +435,71 @@ void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
     return;
   }
   SetCurrentTabByIndex(it - mTabViews.begin());
+  (*it)->SetTabMode(TabMode::NORMAL);
   (*it)->SetPageIndex(bookmark.mPageIndex);
+}
+
+void KneeboardView::PreviousBookmark() {
+  this->SetBookmark(RelativePosition::Previous);
+}
+
+void KneeboardView::NextBookmark() {
+  this->SetBookmark(RelativePosition::Next);
+}
+
+void KneeboardView::SetBookmark(RelativePosition pos) {
+  auto bookmark = this->GetBookmark(pos);
+  if (!bookmark) {
+    return;
+  }
+  GoToBookmark(*bookmark);
+}
+
+std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
+  const auto currentTabID = mCurrentTabView->GetRootTab()->GetRuntimeID();
+  const auto currentPageIndex = mCurrentTabView->GetPageIndex();
+
+  std::optional<Bookmark> prev;
+  bool reachedCurrentTab = false;
+  for (const auto& bookmark: mBookmarks) {
+    const bool isCurrentTab = bookmark.mTabID == currentTabID;
+    if (reachedCurrentTab && !isCurrentTab) {
+      switch (pos) {
+        case RelativePosition::Previous:
+          return prev;
+        case RelativePosition::Next:
+          return bookmark;
+      }
+      return {};
+    }
+
+    if (!(isCurrentTab || reachedCurrentTab)) {
+      prev = bookmark;
+      continue;
+    }
+
+    if (!isCurrentTab) {
+      throw std::logic_error("Should be current tab");
+    }
+
+    if (bookmark.mPageIndex < currentPageIndex) {
+      prev = bookmark;
+      continue;
+    }
+    if (bookmark.mPageIndex == currentPageIndex) {
+      continue;
+    }
+
+    if (pos == RelativePosition::Previous) {
+      return prev;
+    }
+    return bookmark;
+  }
+
+  if (pos == RelativePosition::Previous) {
+    return prev;
+  }
+  return {};
 }
 
 }// namespace OpenKneeboard
