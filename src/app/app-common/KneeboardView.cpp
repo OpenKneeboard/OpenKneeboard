@@ -481,6 +481,7 @@ std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
     if (!isCurrentTab) {
       throw std::logic_error("Should be current tab");
     }
+    reachedCurrentTab = true;
 
     if (bookmark.mPageIndex < currentPageIndex) {
       prev = bookmark;
