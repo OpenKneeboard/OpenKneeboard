@@ -34,6 +34,7 @@
 #include <shellapi.h>
 #include <wil/cppwinrt.h>
 #include <wil/cppwinrt_helpers.h>
+#include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
@@ -66,6 +67,21 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
 
 winrt::fire_and_forget HWNDPageSource::Init() noexcept {
   const auto keepAlive = shared_from_this();
+  bool supportsBorderRemoval = false;
+  try {
+    supportsBorderRemoval
+      = winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(
+        L"Windows.Graphics.Capture.GraphicsCaptureSession",
+        L"IsBorderRequired");
+    if (supportsBorderRemoval) {
+      co_await WGC::GraphicsCaptureAccess::RequestAccessAsync(
+        WGC::GraphicsCaptureAccessKind::Borderless);
+    }
+
+  } catch (const winrt::hresult_class_not_registered&) {
+    supportsBorderRemoval = false;
+  }
+
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
   {
     const auto d2dLock = mDXR.AcquireLock();
@@ -95,6 +111,9 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
     mCaptureSession = mFramePool.CreateCaptureSession(item);
     mCaptureSession.IsCursorCaptureEnabled(false);
+    if (supportsBorderRemoval) {
+      mCaptureSession.IsBorderRequired(false);
+    }
     mCaptureSession.StartCapture();
 
     mCaptureItem = item;
