@@ -61,6 +61,12 @@ struct AdvancedSettingsPage
   bool LoopBookmarks() const noexcept;
   void LoopBookmarks(bool) noexcept;
 
+  bool InGameHeader() const noexcept;
+  void InGameHeader(bool) noexcept;
+
+  bool InGameFooter() const noexcept;
+  void InGameFooter(bool) noexcept;
+
   void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
   void RestoreQuirkDefaults(const IInspectable&, const IInspectable&) noexcept;
 

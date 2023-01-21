@@ -36,6 +36,10 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mTesting)
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::DualKneeboardSettings, mEnabled)
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::BookmarkSettings, mEnabled, mLoop)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  AppSettings::InGameUISettings,
+  mHeaderEnabled,
+  mFooterEnabled)
 
 template <>
 void from_json_postprocess<AppSettings>(
@@ -86,6 +90,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mLoopTabs,
   mDualKneeboards,
   mAutoUpdate,
-  mBookmarks)
+  mBookmarks,
+  mInGameUI)
 
 }// namespace OpenKneeboard

@@ -64,12 +64,20 @@ struct AppSettings final {
       = default;
   };
 
+  struct InGameUISettings final {
+    bool mHeaderEnabled = true;
+    bool mFooterEnabled = true;
+    constexpr auto operator<=>(const InGameUISettings&) const noexcept
+      = default;
+  };
+
   std::optional<RECT> mWindowRect;
   bool mLoopPages {false};
   bool mLoopTabs {false};
   DualKneeboardSettings mDualKneeboards {};
   AutoUpdateSettings mAutoUpdate {};
   BookmarkSettings mBookmarks {};
+  InGameUISettings mInGameUI {};
 
   constexpr auto operator<=>(const AppSettings&) const noexcept = default;
 };

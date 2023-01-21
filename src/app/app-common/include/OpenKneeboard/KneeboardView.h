@@ -88,6 +88,7 @@ class KneeboardView final : public IKneeboardView,
   virtual void ToggleBookmark() override;
 
  private:
+  void UpdateUILayers();
   enum class RelativePosition {
     Previous,
     Next,

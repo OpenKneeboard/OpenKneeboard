@@ -18,6 +18,9 @@ namespace OpenKneeboardApp
         Boolean LoopProfiles;
         Boolean LoopBookmarks;
 
+        Boolean InGameHeader;
+        Boolean InGameFooter;
+
 		UInt32 MinimumPenRadius;
 		UInt32 MinimumEraseRadius;
 		UInt32 PenSensitivity;

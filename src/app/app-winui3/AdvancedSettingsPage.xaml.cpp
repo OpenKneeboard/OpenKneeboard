@@ -144,6 +144,26 @@ void AdvancedSettingsPage::LoopBookmarks(bool value) noexcept {
   gKneeboard->SetAppSettings(s);
 }
 
+bool AdvancedSettingsPage::InGameHeader() const noexcept {
+  return gKneeboard->GetAppSettings().mInGameUI.mHeaderEnabled;
+}
+
+void AdvancedSettingsPage::InGameHeader(bool value) noexcept {
+  auto s = gKneeboard->GetAppSettings();
+  s.mInGameUI.mHeaderEnabled = value;
+  gKneeboard->SetAppSettings(s);
+}
+
+bool AdvancedSettingsPage::InGameFooter() const noexcept {
+  return gKneeboard->GetAppSettings().mInGameUI.mFooterEnabled;
+}
+
+void AdvancedSettingsPage::InGameFooter(bool value) noexcept {
+  auto s = gKneeboard->GetAppSettings();
+  s.mInGameUI.mFooterEnabled = value;
+  gKneeboard->SetAppSettings(s);
+}
+
 uint32_t AdvancedSettingsPage::MinimumPenRadius() {
   return gKneeboard->GetDoodlesSettings().mPen.mMinimumRadius;
 }

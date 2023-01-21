@@ -42,16 +42,15 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   mFooterUILayer = std::make_unique<FooterUILayer>(dxr, kneeboard);
   mTabViewUILayer = std::make_unique<TabViewUILayer>(dxr);
 
-  mUILayers = {
-    mHeaderUILayer.get(),
-    mFooterUILayer.get(),
-    mTabViewUILayer.get(),
-  };
+  this->UpdateUILayers();
 
   for (auto layer: mUILayers) {
     AddEventListener(layer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
   AddEventListener(this->evCurrentTabChangedEvent, this->evNeedsRepaintEvent);
+  AddEventListener(
+    kneeboard->evSettingsChangedEvent,
+    std::bind_front(&KneeboardView::UpdateUILayers, this));
 
   const auto id = this->GetRuntimeID().GetTemporaryValue();
   dprintf("Created kneeboard view ID {:#016x} ({})", id, id);
@@ -66,6 +65,21 @@ std::shared_ptr<KneeboardView> KneeboardView::Create(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
   return std::shared_ptr<KneeboardView>(new KneeboardView(dxr, kneeboard));
+}
+
+void KneeboardView::UpdateUILayers() {
+  decltype(mUILayers) layers;
+
+  const auto settings = mKneeboard->GetAppSettings().mInGameUI;
+  if (settings.mHeaderEnabled) {
+    layers.push_back(mHeaderUILayer.get());
+  }
+  if (settings.mFooterEnabled) {
+    layers.push_back(mFooterUILayer.get());
+  }
+
+  layers.push_back(mTabViewUILayer.get());
+  mUILayers = layers;
 }
 
 KneeboardView::~KneeboardView() {

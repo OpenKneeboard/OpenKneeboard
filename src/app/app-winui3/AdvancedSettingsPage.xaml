@@ -182,6 +182,30 @@
 					Minimum="1.0"
 				/>
 			</StackPanel>
+      <TextBlock
+        Text="In-Game Interface"
+        Style="{ThemeResource SubtitleTextBlockStyle}"
+      />
+      <StackPanel Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <ToggleSwitch
+          Header="Header and toolbar"
+          OffContent="No in-game header or toolbar"
+          OnContent="In-game header and toolbar are shown"
+          IsOn="{x:Bind InGameHeader}"
+        />
+        <ToggleSwitch
+          Header="Footer and clock"
+          OffContent="No in-game footer or clock"
+          OnContent="In-game footer and clock are shown"
+          IsOn="{x:Bind InGameFooter}"
+        />
+      </StackPanel>
 			<Grid ColumnDefinitions="*, Auto">
 				<TextBlock 
 					Grid.Column="0"
