@@ -35,6 +35,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mChannel,
   mTesting)
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::DualKneeboardSettings, mEnabled)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::BookmarkSettings, mEnabled, mLoop)
 
 template <>
 void from_json_postprocess<AppSettings>(
@@ -84,6 +85,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mLoopPages,
   mLoopTabs,
   mDualKneeboards,
-  mAutoUpdate)
+  mAutoUpdate,
+  mBookmarks)
 
 }// namespace OpenKneeboard

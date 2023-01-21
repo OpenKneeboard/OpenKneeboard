@@ -45,15 +45,23 @@ struct AutoUpdateSettings final {
 
   Testing mTesting {};
 
-  constexpr auto operator<=>(
-    const AutoUpdateSettings&) const noexcept = default;
+  constexpr auto operator<=>(const AutoUpdateSettings&) const noexcept
+    = default;
 };
 
 struct AppSettings final {
   struct DualKneeboardSettings final {
     bool mEnabled = false;
-    constexpr auto operator<=>(
-      const DualKneeboardSettings&) const noexcept = default;
+    constexpr auto operator<=>(const DualKneeboardSettings&) const noexcept
+      = default;
+  };
+
+  struct BookmarkSettings final {
+    bool mEnabled = false;
+    bool mLoop = false;
+
+    constexpr auto operator<=>(const BookmarkSettings&) const noexcept
+      = default;
   };
 
   std::optional<RECT> mWindowRect;
@@ -61,6 +69,7 @@ struct AppSettings final {
   bool mLoopTabs {false};
   DualKneeboardSettings mDualKneeboards {};
   AutoUpdateSettings mAutoUpdate {};
+  BookmarkSettings mBookmarks {};
 
   constexpr auto operator<=>(const AppSettings&) const noexcept = default;
 };

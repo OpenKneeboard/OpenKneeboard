@@ -474,11 +474,25 @@ void KneeboardView::NextBookmark() {
 }
 
 void KneeboardView::SetBookmark(RelativePosition pos) {
-  auto bookmark = this->GetBookmark(pos);
-  if (!bookmark) {
+  if (mBookmarks.empty()) {
     return;
   }
-  GoToBookmark(*bookmark);
+
+  auto bookmark = this->GetBookmark(pos);
+  if (bookmark) {
+    GoToBookmark(*bookmark);
+    return;
+  }
+
+  if (!mKneeboard->GetAppSettings().mBookmarks.mLoop) {
+    return;
+  }
+
+  if (pos == RelativePosition::Previous) {
+    GoToBookmark(mBookmarks.back());
+  } else {
+    GoToBookmark(mBookmarks.front());
+  }
 }
 
 std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
