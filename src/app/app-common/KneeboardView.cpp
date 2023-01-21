@@ -330,6 +330,15 @@ void KneeboardView::PostUserAction(UserAction action) {
     case UserAction::NEXT_PAGE:
       this->NextPage();
       return;
+    case UserAction::PREVIOUS_BOOKMARK:
+      this->PreviousBookmark();
+      return;
+    case UserAction::NEXT_BOOKMARK:
+      this->NextBookmark();
+      return;
+    case UserAction::TOGGLE_BOOKMARK:
+      this->ToggleBookmark();
+      return;
     case UserAction::TOGGLE_VISIBILITY:
     case UserAction::TOGGLE_FORCE_ZOOM:
     case UserAction::RECENTER_VR:

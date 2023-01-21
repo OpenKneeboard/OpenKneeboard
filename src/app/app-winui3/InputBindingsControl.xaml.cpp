@@ -54,6 +54,10 @@ void InputBindingsControl::PopulateUI() {
   AppendUIRow(UserAction::TOGGLE_VISIBILITY, _(L"Show/hide"));
   AppendUIRow(UserAction::TOGGLE_FORCE_ZOOM, _(L"Toggle forced VR zoom"));
 
+  AppendUIRow(UserAction::PREVIOUS_BOOKMARK, _(L"Previous bookmark"));
+  AppendUIRow(UserAction::NEXT_BOOKMARK, _(L"Next bookmark"));
+  AppendUIRow(UserAction::TOGGLE_BOOKMARK, _(L"Add/remove bookmark"));
+
   ContentGrid().UpdateLayout();
 }
 

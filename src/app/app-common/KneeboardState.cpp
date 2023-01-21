@@ -178,6 +178,9 @@ void KneeboardState::PostUserAction(UserAction action) {
     case UserAction::NEXT_TAB:
     case UserAction::PREVIOUS_PAGE:
     case UserAction::NEXT_PAGE:
+    case UserAction::PREVIOUS_BOOKMARK:
+    case UserAction::NEXT_BOOKMARK:
+    case UserAction::TOGGLE_BOOKMARK:
       mViews.at(mInputViewIndex)->PostUserAction(action);
       return;
     case UserAction::PREVIOUS_PROFILE:
