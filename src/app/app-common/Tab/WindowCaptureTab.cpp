@@ -130,6 +130,9 @@ bool WindowCaptureTab::WindowMatches(HWND hwnd) const {
 }
 
 concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
+  if (!hwnd) {
+    co_return false;
+  }
   co_await mUIThread;
   auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd);
   if (!(source && source->GetPageCount() > 0)) {

@@ -89,10 +89,19 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
     auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
     auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
     WGC::GraphicsCaptureItem item {nullptr};
-    winrt::check_hresult(interopFactory->CreateForWindow(
-      mWindow,
-      winrt::guid_of<WGC::GraphicsCaptureItem>(),
-      winrt::put_abi(item)));
+    try {
+      winrt::check_hresult(interopFactory->CreateForWindow(
+        mWindow,
+        winrt::guid_of<WGC::GraphicsCaptureItem>(),
+        winrt::put_abi(item)));
+    } catch (const winrt::hresult_error& e) {
+      dprintf(
+        "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem: "
+        "{} ({})",
+        winrt::to_string(e.message()),
+        static_cast<int64_t>(e.code().value));
+      co_return;
+    }
 
     winrt::com_ptr<IInspectable> inspectable {nullptr};
     WGDX::Direct3D11::IDirect3DDevice winrtD3D {nullptr};
