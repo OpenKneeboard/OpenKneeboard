@@ -39,6 +39,8 @@ TabView::TabView(
     tab->evContentChangedEvent, &TabView::OnTabContentChanged, this);
   AddEventListener(tab->evPageAppendedEvent, &TabView::OnTabPageAppended, this);
   AddEventListener(
+    this->evPageChangedEvent, this->evAvailableFeaturesChangedEvent);
+  AddEventListener(
     tab->evPageChangeRequestedEvent, [this](EventContext ctx, PageIndex index) {
       if (ctx != mEventContext) {
         return;
@@ -239,7 +241,6 @@ bool TabView::SetTabMode(TabMode mode) {
   evNeedsRepaintEvent.Emit();
   evTabModeChangedEvent.Emit();
   evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
-  evAvailableFeaturesChangedEvent.Emit();
 
   return true;
 }
