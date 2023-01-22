@@ -29,6 +29,7 @@ ok_add_executable(
   PercentValueConverter.cpp PercentValueConverter.h PercentValueConverter.idl
   ProcessPickerDialog.idl ProcessPickerDialog.xaml ProcessPickerDialog.xaml.cpp ProcessPickerDialog.xaml.h
   ProfilesPage.idl ProfilesPage.xaml ProfilesPage.xaml.cpp ProfilesPage.xaml.h
+  RenameTabDialog.idl RenameTabDialog.xaml RenameTabDialog.xaml.cpp RenameTabDialog.xaml.h
   SettingsPage.idl SettingsPage.xaml SettingsPage.xaml.cpp SettingsPage.xaml.h
   SponsorButton.idl SponsorButton.xaml SponsorButton.xaml.cpp SponsorButton.xaml.h
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h

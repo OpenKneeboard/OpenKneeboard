@@ -161,38 +161,16 @@ fire_and_forget TabSettingsPage::RenameTab(
   }
   const auto& tab = *it;
 
-  TextBlock promptText;
-  promptText.Text(_(L"What would you like to rename this tab to?"));
-
-  TextBox tabName;
-  tabName.Text(to_hstring(tab->GetTitle()));
-  tabName.PlaceholderText(to_hstring(tab->GetTitle()));
-  tabName.Focus(FocusState::Programmatic);
-  tabName.SelectAll();
-
-  StackPanel layout;
-  layout.Margin({8, 8, 8, 8});
-  layout.Spacing(4);
-  layout.Orientation(Orientation::Vertical);
-  layout.Children().Append(promptText);
-  layout.Children().Append(tabName);
-
-  ContentDialog dialog;
+  OpenKneeboardApp::RenameTabDialog dialog;
   dialog.XamlRoot(this->XamlRoot());
-  dialog.Title(
-    box_value(to_hstring(std::format(_("Rename '{}'"), tab->GetTitle()))));
-  dialog.Content(layout);
-
-  dialog.PrimaryButtonText(to_hstring(_("Rename")));
-  dialog.CloseButtonText(to_hstring(_("Cancel")));
-  dialog.DefaultButton(ContentDialogButton::Primary);
+  dialog.TabTitle(to_hstring(tab->GetTitle()));
 
   auto result = co_await dialog.ShowAsync();
   if (result != ContentDialogResult::Primary) {
     co_return;
   }
 
-  const auto newName = to_string(tabName.Text());
+  const auto newName = to_string(dialog.TabTitle());
   if (newName.empty()) {
     co_return;
   }
