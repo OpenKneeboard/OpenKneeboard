@@ -55,14 +55,16 @@ class IKneeboardView {
   virtual void SetCurrentTabByIndex(TabIndex) = 0;
   virtual void SetCurrentTabByRuntimeID(ITab::RuntimeID) = 0;
 
-  virtual std::optional<Bookmark> AddBookmark() = 0;
   virtual std::vector<Bookmark> GetBookmarks() const = 0;
   virtual void RemoveBookmark(const Bookmark&) = 0;
-  virtual void RemoveBookmark() = 0;
   virtual void GoToBookmark(const Bookmark&) = 0;
-  virtual void ToggleBookmark() = 0;
-  virtual void PreviousBookmark() = 0;
-  virtual void NextBookmark() = 0;
+
+  virtual std::optional<Bookmark> AddBookmarkForCurrentPage() = 0;
+  virtual void RemoveBookmarkForCurrentPage() = 0;
+  virtual void ToggleBookmarkForCurrentPage() = 0;
+
+  virtual void GoToPreviousBookmark() = 0;
+  virtual void GoToNextBookmark() = 0;
 
   virtual void PreviousTab() = 0;
   virtual void NextTab() = 0;

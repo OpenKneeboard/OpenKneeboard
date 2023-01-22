@@ -345,13 +345,13 @@ void KneeboardView::PostUserAction(UserAction action) {
       this->NextPage();
       return;
     case UserAction::PREVIOUS_BOOKMARK:
-      this->PreviousBookmark();
+      this->GoToPreviousBookmark();
       return;
     case UserAction::NEXT_BOOKMARK:
-      this->NextBookmark();
+      this->GoToNextBookmark();
       return;
     case UserAction::TOGGLE_BOOKMARK:
-      this->ToggleBookmark();
+      this->ToggleBookmarkForCurrentPage();
       return;
     case UserAction::TOGGLE_VISIBILITY:
     case UserAction::TOGGLE_FORCE_ZOOM:
@@ -401,7 +401,7 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   };
 }
 
-void KneeboardView::ToggleBookmark() {
+void KneeboardView::ToggleBookmarkForCurrentPage() {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();
   auto page = view->GetPageIndex();
@@ -412,7 +412,7 @@ void KneeboardView::ToggleBookmark() {
   });
 
   if (it == bookmarks.end()) {
-    this->AddBookmark();
+    this->AddBookmarkForCurrentPage();
     return;
   }
 
@@ -420,7 +420,7 @@ void KneeboardView::ToggleBookmark() {
   tab->SetBookmarks(bookmarks);
 }
 
-void KneeboardView::RemoveBookmark() {
+void KneeboardView::RemoveBookmarkForCurrentPage() {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();
   auto page = view->GetPageIndex();
@@ -438,7 +438,7 @@ void KneeboardView::RemoveBookmark() {
   tab->SetBookmarks(bookmarks);
 }
 
-std::optional<Bookmark> KneeboardView::AddBookmark() {
+std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();
   auto page = view->GetPageIndex();
@@ -500,11 +500,11 @@ void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
   (*it)->SetPageIndex(bookmark.mPageIndex);
 }
 
-void KneeboardView::PreviousBookmark() {
+void KneeboardView::GoToPreviousBookmark() {
   this->SetBookmark(RelativePosition::Previous);
 }
 
-void KneeboardView::NextBookmark() {
+void KneeboardView::GoToNextBookmark() {
   this->SetBookmark(RelativePosition::Next);
 }
 

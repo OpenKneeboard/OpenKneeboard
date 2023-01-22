@@ -64,9 +64,6 @@ class KneeboardView final : public IKneeboardView,
   virtual void NextPage() override;
   virtual void PreviousPage() override;
 
-  virtual void PreviousBookmark() override;
-  virtual void NextBookmark() override;
-
   virtual D2D1_SIZE_U GetCanvasSize() const override;
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual D2D1_SIZE_U GetContentNativeSize() const override;
@@ -81,12 +78,16 @@ class KneeboardView final : public IKneeboardView,
     const D2D1_POINT_2F& contentPoint) const override;
   virtual void PostCursorEvent(const CursorEvent& ev) override;
 
-  virtual std::optional<Bookmark> AddBookmark() override;
   virtual std::vector<Bookmark> GetBookmarks() const override;
   virtual void RemoveBookmark(const Bookmark&) override;
-  virtual void RemoveBookmark() override;
   virtual void GoToBookmark(const Bookmark&) override;
-  virtual void ToggleBookmark() override;
+
+  virtual std::optional<Bookmark> AddBookmarkForCurrentPage() override;
+  virtual void RemoveBookmarkForCurrentPage() override;
+  virtual void ToggleBookmarkForCurrentPage() override;
+
+  virtual void GoToPreviousBookmark() override;
+  virtual void GoToNextBookmark() override;
 
  private:
   void UpdateUILayers();
