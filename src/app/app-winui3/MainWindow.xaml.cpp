@@ -172,6 +172,8 @@ MainWindow::MainWindow() {
     &MainWindow::UpdateProfileSwitcherVisibility,
     this);
   AddEventListener(
+    gKneeboard->evSettingsChangedEvent, &MainWindow::OnTabsChanged, this);
+  AddEventListener(
     gKneeboard->evCurrentProfileChangedEvent,
     [this]() -> winrt::fire_and_forget {
       co_await mUIThread;
@@ -423,7 +425,7 @@ winrt::fire_and_forget MainWindow::OnTabsChanged() {
   navItems.Clear();
 
   decltype(mKneeboardView->GetBookmarks()) bookmarks;
-  if (mKneeboardView) {
+  if (mKneeboardView && gKneeboard->GetAppSettings().mBookmarks.mEnabled) {
     bookmarks = mKneeboardView->GetBookmarks();
   }
   auto bookmark = bookmarks.begin();
