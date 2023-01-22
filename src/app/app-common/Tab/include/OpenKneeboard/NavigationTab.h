@@ -36,7 +36,7 @@ namespace OpenKneeboard {
 
 class NavigationTab final : public TabBase,
                             public IPageSourceWithCursorEvents,
-                            private EventReceiver {
+                            public virtual EventReceiver {
  public:
   using Entry = NavigationEntry;
 

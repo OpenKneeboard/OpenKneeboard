@@ -38,7 +38,7 @@ class KneeboardState;
 class EndlessNotebookTab final : public TabBase,
                                  public virtual ITabWithSettings,
                                  public virtual IPageSourceWithCursorEvents,
-                                 public EventReceiver {
+                                 public virtual EventReceiver {
  public:
   EndlessNotebookTab(
     const DXResources&,

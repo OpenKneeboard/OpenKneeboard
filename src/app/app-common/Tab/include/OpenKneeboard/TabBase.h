@@ -25,8 +25,10 @@
 
 namespace OpenKneeboard {
 
-class TabBase : public virtual ITab {
+class TabBase : public virtual ITab, public virtual EventReceiver {
  public:
+  ~TabBase();
+
   virtual RuntimeID GetRuntimeID() const override final;
   virtual winrt::guid GetPersistentID() const override final;
   virtual std::string GetTitle() const override final;
@@ -43,6 +45,8 @@ class TabBase : public virtual ITab {
   const RuntimeID mRuntimeID;
   std::string mTitle;
   std::vector<Bookmark> mBookmarks;
+
+  void OnContentChanged(ContentChangeType);
 };
 
 }// namespace OpenKneeboard

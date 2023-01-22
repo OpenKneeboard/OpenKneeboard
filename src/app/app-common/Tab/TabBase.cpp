@@ -36,6 +36,12 @@ static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
 
 TabBase::TabBase(const winrt::guid& persistentID, std::string_view title)
   : mPersistentID(EnsureNonNullGuid(persistentID)), mTitle(title) {
+  AddEventListener(
+    this->evContentChangedEvent, &TabBase::OnContentChanged, this);
+}
+
+TabBase::~TabBase() {
+  this->RemoveAllEventListeners();
 }
 
 ITab::RuntimeID TabBase::GetRuntimeID() const {
@@ -80,6 +86,12 @@ void TabBase::SetBookmarks(const std::vector<Bookmark>& bookmarks) {
 
   evAvailableFeaturesChangedEvent.Emit();
   evBookmarksChangedEvent.Emit();
+}
+
+void TabBase::OnContentChanged(ContentChangeType type) {
+  if (type == ContentChangeType::FullyReplaced) {
+    this->SetBookmarks({});
+  }
 }
 
 }// namespace OpenKneeboard
