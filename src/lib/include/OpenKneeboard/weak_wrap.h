@@ -112,7 +112,7 @@ class weak_wrap {
     : mWeakPtrs(std::make_tuple(WeakWrap::convert_to_weak(ptrs)...)) {
   }
 
-  auto bind(auto f) const noexcept {
+  auto operator()(auto f) const noexcept {
     // This is essentially an explicit deduction guide, however as of C++20
     // those are only supported for classes, not functions/methods
     return bindWithReturnType<decltype(f(

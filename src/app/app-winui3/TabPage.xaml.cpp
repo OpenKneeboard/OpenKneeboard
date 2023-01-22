@@ -84,7 +84,7 @@ TabPage::TabPage() {
 
   this->InitializePointerSource();
   AddEventListener(
-    gKneeboard->evFrameTimerEvent, weak_wrap(this).bind([](auto self) {
+    gKneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
       if (self->mNeedsFrame) {
         self->PaintNow();
       }
@@ -217,20 +217,19 @@ muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
 
   button.IsChecked(action->IsActive());
   button.Checked(discard_winrt_event_args(
-    weak_wrap(action).bind([](auto action) { action->Activate(); })));
+    weak_wrap(action)([](auto action) { action->Activate(); })));
   button.Unchecked(discard_winrt_event_args(
-    weak_wrap(action).bind([](auto action) { action->Deactivate(); })));
+    weak_wrap(action)([](auto action) { action->Deactivate(); })));
 
   AddEventListener(
     action->evStateChangedEvent,
-    weak_wrap(this, action, button)
-      .bind(
-        [](auto self, auto action, auto button) noexcept
-        -> winrt::fire_and_forget {
-          co_await self->mUIThread;
-          button.IsChecked(action->IsActive());
-          button.IsEnabled(action->IsEnabled());
-        }));
+    weak_wrap(this, action, button)(
+      [](auto self, auto action, auto button) noexcept
+      -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        button.IsChecked(action->IsActive());
+        button.IsEnabled(action->IsEnabled());
+      }));
 
   return button;
 }
@@ -250,13 +249,12 @@ muxc::AppBarButton TabPage::CreateAppBarButtonBase(
 
   AddEventListener(
     action->evStateChangedEvent,
-    weak_wrap(this, action, button)
-      .bind(
-        [](auto self, auto action, auto button) noexcept
-        -> winrt::fire_and_forget {
-          co_await self->mUIThread;
-          button.IsEnabled(action->IsEnabled());
-        }));
+    weak_wrap(this, action, button)(
+      [](auto self, auto action, auto button) noexcept
+      -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        button.IsEnabled(action->IsEnabled());
+      }));
 
   return button;
 }
@@ -289,10 +287,8 @@ winrt::fire_and_forget TabPage::OnToolbarActionClick(
 muxc::AppBarButton TabPage::CreateAppBarButton(
   const std::shared_ptr<ToolbarAction>& action) {
   auto button = CreateAppBarButtonBase(action);
-  button.Click(discard_winrt_event_args(
-    weak_wrap(this, action).bind([](auto self, auto action) {
-      self->OnToolbarActionClick(action);
-    })));
+  button.Click(discard_winrt_event_args(weak_wrap(this, action)(
+    [](auto self, auto action) { self->OnToolbarActionClick(action); })));
   return button;
 }
 
@@ -312,31 +308,26 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     tmfi.IsChecked(checkable->IsChecked());
     AddEventListener(
       checkable->evStateChangedEvent,
-      weak_wrap(this, tmfi, checkable)
-        .bind(
-          [](auto self, auto tmfi, auto checkable) -> winrt::fire_and_forget {
-            co_await self->mUIThread;
-            tmfi.IsChecked(checkable->IsChecked());
-          }));
+      weak_wrap(this, tmfi, checkable)(
+        [](auto self, auto tmfi, auto checkable) -> winrt::fire_and_forget {
+          co_await self->mUIThread;
+          tmfi.IsChecked(checkable->IsChecked());
+        }));
   } else {
     ret = {};
   }
   ret.Text(winrt::to_hstring(action->GetLabel()));
   ret.IsEnabled(action->IsEnabled());
-  ret.Click(discard_winrt_event_args(
-    weak_wrap(this, action).bind([](auto self, auto action) {
-      self->OnToolbarActionClick(action);
-    })));
+  ret.Click(discard_winrt_event_args(weak_wrap(this, action)(
+    [](auto self, auto action) { self->OnToolbarActionClick(action); })));
 
   AddEventListener(
     action->evStateChangedEvent,
-    weak_wrap(this, action, ret)
-      .bind(
-        [](
-          auto self, auto action, auto ret) noexcept -> winrt::fire_and_forget {
-          co_await self->mUIThread;
-          ret.IsEnabled(action->IsEnabled());
-        }));
+    weak_wrap(this, action, ret)(
+      [](auto self, auto action, auto ret) noexcept -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        ret.IsEnabled(action->IsEnabled());
+      }));
   return ret;
 }
 
@@ -412,7 +403,7 @@ void TabPage::AttachVisibility(
   AddEventListener(
     visibility->evStateChangedEvent,
     weak_wrap(this, visibility, control)
-      .bind(
+      (
         [](auto self, auto visibility, auto control) -> winrt::fire_and_forget {
           co_await self->mUIThread;
           control.Visibility(

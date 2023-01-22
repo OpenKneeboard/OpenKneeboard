@@ -75,7 +75,7 @@ TabSettingsPage::TabSettingsPage() {
 
   AddEventListener(
     gKneeboard->GetTabsList()->evTabsChangedEvent,
-    weak_wrap(this).bind([](auto self) {
+    weak_wrap(this)([](auto self) {
       if (self->mUIIsChangingTabs) {
         return;
       }

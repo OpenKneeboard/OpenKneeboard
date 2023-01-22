@@ -124,7 +124,7 @@ bool GameInjector::Run(std::stop_token stopToken) {
     mWintabMode = tablet->GetWintabMode();
     mTabletSettingsChangeToken = AddEventListener(
       tablet->evSettingsChangedEvent,
-      weak_wrap(this, tablet).bind([](auto self, auto tablet) {
+      weak_wrap(this, tablet)([](auto self, auto tablet) {
         self->mWintabMode = tablet->GetWintabMode();
       }));
   } else {
