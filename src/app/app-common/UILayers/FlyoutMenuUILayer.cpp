@@ -456,7 +456,7 @@ void FlyoutMenuUILayer::UpdateLayout(
   winrt::check_hresult(textFormat->SetTrimming(&trimming, ellipsis.get()));
 
   auto cursorImpl
-    = std::make_shared<CursorClickableRegions<MenuItem>>(std::move(menuItems));
+    = CursorClickableRegions<MenuItem>::Create(std::move(menuItems));
   AddEventListener(
     cursorImpl->evClickedWithoutButton, [weak = weak_from_this()]() {
       if (auto self = weak.lock()) {

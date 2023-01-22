@@ -309,19 +309,18 @@ void ConfirmationUILayer::UpdateLayout(
     cursor.y + cancelButtonSize.height,
   };
 
-  auto buttons
-    = std::make_shared<CursorClickableRegions<Button>>(std::vector<Button> {
-      Button {
-        .mAction = ButtonAction::Confirm,
-        .mRect = confirmButtonRect,
-        .mLabel = confirmButtonTextInfo.mWinString,
-      },
-      Button {
-        .mAction = ButtonAction::Cancel,
-        .mRect = cancelButtonRect,
-        .mLabel = cancelButtonTextInfo.mWinString,
-      },
-    });
+  auto buttons = CursorClickableRegions<Button>::Create(std::vector<Button> {
+    Button {
+      .mAction = ButtonAction::Confirm,
+      .mRect = confirmButtonRect,
+      .mLabel = confirmButtonTextInfo.mWinString,
+    },
+    Button {
+      .mAction = ButtonAction::Cancel,
+      .mRect = cancelButtonRect,
+      .mLabel = cancelButtonTextInfo.mWinString,
+    },
+  });
   AddEventListener(
     buttons->evClicked, [weak = weak_from_this()](auto, auto button) {
       auto self = weak.lock();

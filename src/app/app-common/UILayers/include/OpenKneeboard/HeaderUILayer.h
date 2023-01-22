@@ -100,10 +100,10 @@ class HeaderUILayer final : public UILayerBase,
     std::weak_ptr<ITabView> mTabView {};
     D2D1_RECT_F mRect {};
     D2D1_RECT_F mTextRect {};
-    std::unique_ptr<CursorClickableRegions<Button>> mButtons;
+    std::shared_ptr<CursorClickableRegions<Button>> mButtons;
   };
   std::optional<D2D1_SIZE_F> mLastRenderSize;
-  std::optional<Toolbar> mToolbar;
+  std::shared_ptr<Toolbar> mToolbar;
   std::shared_ptr<FlyoutMenuUILayer> mSecondaryMenu;
   std::vector<EventHandlerToken> mTabEvents;
 

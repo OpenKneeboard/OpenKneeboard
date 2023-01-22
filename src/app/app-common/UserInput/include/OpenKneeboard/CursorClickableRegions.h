@@ -23,6 +23,7 @@
 #include <OpenKneeboard/Events.h>
 #include <d2d1.h>
 
+#include <memory>
 #include <mutex>
 #include <optional>
 
@@ -34,33 +35,41 @@ concept ClickableRegion = requires(T a) {
                           };
 
 template <ClickableRegion Button>
-class CursorClickableRegions final {
+class CursorClickableRegions final
+  : public std::enable_shared_from_this<CursorClickableRegions<Button>> {
  public:
-  CursorClickableRegions(const std::vector<Button>& buttons)
-    : mButtons(buttons) {
+  using SharedPtr = typename std::shared_ptr<CursorClickableRegions<Button>>;
+
+  static SharedPtr Create(const std::vector<Button>& buttons) {
+    return SharedPtr(new CursorClickableRegions<Button>(buttons));
   }
 
   ~CursorClickableRegions() {
-    std::unique_lock lock(mMutex);
-    mButtons.clear();
   }
 
   std::optional<Button> GetHoverButton() const {
+    const auto keepAlive = this->shared_from_this();
+
     std::unique_lock lock(mMutex);
     return mHoverButton;
   }
 
   bool HaveHoverOrPendingClick() const {
+    const auto keepAlive = this->shared_from_this();
+
     std::unique_lock lock(mMutex);
     return static_cast<bool>(mHoverButton) || static_cast<bool>(mPressedButton);
   }
 
   std::vector<Button> GetButtons() const {
+    const auto keepAlive = this->shared_from_this();
+
     std::unique_lock lock(mMutex);
     return mButtons;
   }
 
   std::tuple<std::optional<Button>, std::vector<Button>> GetState() const {
+    const auto keepAlive = this->shared_from_this();
     std::unique_lock lock(mMutex);
     return {mHoverButton, mButtons};
   }
@@ -69,6 +78,8 @@ class CursorClickableRegions final {
   Event<EventContext> evClickedWithoutButton;
 
   void PostCursorEvent(EventContext ec, const CursorEvent& ev) {
+    const auto keepAlive = this->shared_from_this();
+
     const D2D1_POINT_2F cursor {ev.mX, ev.mY};
     const EventDelay delay;
     std::unique_lock lock(mMutex);
@@ -121,6 +132,8 @@ class CursorClickableRegions final {
     evClicked.Emit(ec, pressedButton);
   }
 
+  CursorClickableRegions() = delete;
+
  private:
   bool mCursorTouching = false;
   std::vector<Button> mButtons;
@@ -131,6 +144,10 @@ class CursorClickableRegions final {
   constexpr bool IsPointInRect(const D2D1_POINT_2F& p, const D2D1_RECT_F& r) {
     return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
   };
+
+  CursorClickableRegions(const std::vector<Button>& buttons)
+    : mButtons(buttons) {
+  }
 };
 
 }// namespace OpenKneeboard

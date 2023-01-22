@@ -127,7 +127,7 @@ NavigationTab::NavigationTab(
       column = (column + 1) % columns;
       rect = topRect;
       if (column == 0) {
-        mButtonTrackers.push_back(std::make_shared<ButtonTracker>(buttons));
+        mButtonTrackers.push_back(ButtonTracker::Create(buttons));
         buttons.clear();
       } else {
         const auto translateX = column * (mPreferredSize.width / columns);
@@ -138,7 +138,7 @@ NavigationTab::NavigationTab(
   }
 
   if (!buttons.empty()) {
-    mButtonTrackers.push_back(std::make_shared<ButtonTracker>(buttons));
+    mButtonTrackers.push_back(ButtonTracker::Create(buttons));
   }
 
   for (const auto& buttonTracker: mButtonTrackers) {

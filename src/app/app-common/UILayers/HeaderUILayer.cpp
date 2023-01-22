@@ -86,6 +86,7 @@ HeaderUILayer::~HeaderUILayer() {
 
 void HeaderUILayer::OnTabChanged() {
   mToolbar.reset();
+
   mSecondaryMenu.reset();
   for (const auto& event: mTabEvents) {
     this->RemoveEventListener(event);
@@ -123,12 +124,13 @@ void HeaderUILayer::PostCursorEvent(
   }
 
   const auto renderSize = *mLastRenderSize;
-  if (mToolbar) {
+  auto toolbar = mToolbar;
+  if (toolbar && toolbar->mButtons) {
     scope_guard repaintOnExit([this]() { evNeedsRepaintEvent.Emit(); });
     CursorEvent toolbarEvent {cursorEvent};
     toolbarEvent.mX *= renderSize.width;
     toolbarEvent.mY *= renderSize.height;
-    mToolbar->mButtons->PostCursorEvent(eventContext, toolbarEvent);
+    toolbar->mButtons->PostCursorEvent(eventContext, toolbarEvent);
   }
 
   this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
@@ -226,11 +228,13 @@ void HeaderUILayer::DrawToolbar(
 
   this->LayoutToolbar(
     context, fullRect, headerRect, headerSize, headerTextRect);
-  if (!mToolbar) {
+
+  auto toolbarInfo = mToolbar;
+  if (!toolbarInfo) {
     return;
   }
 
-  auto toolbar = mToolbar->mButtons.get();
+  auto toolbar = toolbarInfo->mButtons;
 
   const auto [hoverButton, buttons] = toolbar->GetState();
   if (buttons.empty()) {
@@ -300,14 +304,16 @@ void HeaderUILayer::LayoutToolbar(
     };
   }
 
+  auto toolbar = mToolbar;
+
   if (
-    mToolbar && tabView && tabView == mToolbar->mTabView.lock()
-    && mToolbar->mRect == fullRect) {
-    *headerTextRect = mToolbar->mTextRect;
+    toolbar && tabView && tabView == toolbar->mTabView.lock()
+    && toolbar->mRect == fullRect) {
+    *headerTextRect = toolbar->mTextRect;
     return;
   }
 
-  mToolbar = {};
+  mToolbar.reset();
   if (!tabView) {
     return;
   }
@@ -377,9 +383,10 @@ void HeaderUILayer::LayoutToolbar(
     buttons.push_back({button, selectable});
   }
 
-  auto toolbar = std::make_unique<CursorClickableRegions<Button>>(buttons);
+  auto toolbarHandler = CursorClickableRegions<Button>::Create(buttons);
   AddEventListener(
-    toolbar->evClicked, [weak = weak_from_this()](auto, const Button& button) {
+    toolbarHandler->evClicked,
+    [weak = weak_from_this()](auto, const Button& button) {
       auto self = weak.lock();
       if (auto self = weak.lock()) {
         self->OnClick(button);
@@ -393,12 +400,12 @@ void HeaderUILayer::LayoutToolbar(
     headerRect.bottom,
   };
 
-  mToolbar = {
+  mToolbar.reset(new Toolbar {
     .mTabView = tabView,
     .mRect = fullRect,
     .mTextRect = *headerTextRect,
-    .mButtons = std::move(toolbar),
-  };
+    .mButtons = std::move(toolbarHandler),
+  });
 }// namespace OpenKneeboard
 
 void HeaderUILayer::DrawHeaderText(

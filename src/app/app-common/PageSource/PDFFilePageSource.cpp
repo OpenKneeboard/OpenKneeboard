@@ -161,7 +161,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   }
 
   for (const auto& pageLinks: pdf.GetLinks()) {
-    auto handler = std::make_shared<Impl::LinkHandler>(pageLinks);
+    auto handler = Impl::LinkHandler::Create(pageLinks);
     AddEventListener(
       handler->evClicked,
       [this](EventContext ctx, const PDFNavigation::Link& link) {
