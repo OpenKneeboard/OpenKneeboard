@@ -145,7 +145,6 @@ void TabView::OnTabContentChanged(ContentChangeType changeType) {
       evPageChangedEvent.Emit();
     }
   }
-  evAvailableFeaturesChangedEvent.Emit();
   if (!mActiveSubTab) {
     evNeedsRepaintEvent.Emit();
   }
