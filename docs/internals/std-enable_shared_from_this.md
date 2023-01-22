@@ -88,8 +88,9 @@ The lambda callback case is pretty verbose, so OpenKneeboard includes `OpenKneeb
 
 ```C++
 foo.OnSomeEvent(
-  [](auto self) {
-    // `self` is an `std::shared_ptr<decltype(this)>`
+  weak_wrap(this)([](auto self) {
+    // `self` is a `WeakWrap::strong_t<decltype(this)>`, e.g. an
+    // `std::shared_ptr<decltype(this)>`
     self->SomeMethod();
   },
   this);

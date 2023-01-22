@@ -103,7 +103,12 @@ using strong_t = decltype(convert_to_strong(std::declval<weak_t<T>>()));
  *
  * Usage:
  *
- *    auto handler = weak_wrap(this)([](const auto strongThis) { ... });
+ *    auto handler = weak_wrap(this)([](auto strongThis) { ... });
+ *
+ *    auto handler = weak_wrap(this)(
+ *        [](WeakWrap::strong_t<decltype(this)> strongThis) {
+ *            ...
+ *        });
  */
 template <class... TPtrs>
 class weak_wrap {
