@@ -105,8 +105,10 @@ class HeaderUILayer final : public UILayerBase,
   std::optional<D2D1_SIZE_F> mLastRenderSize;
   std::optional<Toolbar> mToolbar;
   std::shared_ptr<FlyoutMenuUILayer> mSecondaryMenu;
+  std::vector<EventHandlerToken> mTabEvents;
 
   void OnClick(const Button&);
+  void OnTabChanged();
 
   bool mRecursiveCall = false;
 };

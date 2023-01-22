@@ -23,6 +23,7 @@
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
@@ -51,9 +52,10 @@ HeaderUILayer::HeaderUILayer(
   : mDXResources(dxr), mKneeboardState(kneeboardState) {
   auto ctx = dxr.mD2DDeviceContext;
 
-  AddEventListener(kneeboardView->evCurrentTabChangedEvent, [this]() {
-    this->mSecondaryMenu = {};
-  });
+  AddEventListener(
+    kneeboardView->evCurrentTabChangedEvent,
+    &HeaderUILayer::OnTabChanged,
+    this);
 
   ctx->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.8f},
@@ -75,14 +77,22 @@ HeaderUILayer::HeaderUILayer(
     {0.0f, 0.8f, 1.0f, 1.0f},
     D2D1::BrushProperties(),
     reinterpret_cast<ID2D1SolidColorBrush**>(mHoverButtonBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mActiveButtonBrush.put()));
+  mActiveButtonBrush = mHoverButtonBrush;
 }
 
 HeaderUILayer::~HeaderUILayer() {
   this->RemoveAllEventListeners();
+}
+
+void HeaderUILayer::OnTabChanged() {
+  mToolbar.reset();
+  mSecondaryMenu.reset();
+  for (const auto& event: mTabEvents) {
+    this->RemoveEventListener(event);
+  }
+  mTabEvents.clear();
+
+  evNeedsRepaintEvent.Emit();
 }
 
 void HeaderUILayer::PostCursorEvent(
@@ -213,6 +223,7 @@ void HeaderUILayer::DrawToolbar(
   if (!context.mIsActiveForInput) {
     return;
   }
+
   this->LayoutToolbar(
     context, fullRect, headerRect, headerSize, headerTextRect);
   if (!mToolbar) {
@@ -281,6 +292,14 @@ void HeaderUILayer::LayoutToolbar(
   D2D1_RECT_F* headerTextRect) {
   const auto& tabView = context.mTabView;
 
+  if (mTabEvents.empty()) {
+    mTabEvents = {
+      this->AddEventListener(
+        tabView->evAvailableFeaturesChangedEvent,
+        weak_wrap([](auto self) { self->OnTabChanged(); }, this)),
+    };
+  }
+
   if (
     mToolbar && tabView && tabView == mToolbar->mTabView.lock()
     && mToolbar->mRect == fullRect) {
@@ -303,6 +322,8 @@ void HeaderUILayer::LayoutToolbar(
 
   auto primaryLeft = headerRect.left + (2 * margin);
 
+  auto resetToolbar = weak_wrap([](auto self) { self->OnTabChanged(); }, this);
+
   for (const auto& item: actions.mLeft) {
     const auto selectable
       = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
@@ -310,8 +331,13 @@ void HeaderUILayer::LayoutToolbar(
       OPENKNEEBOARD_BREAK;
       continue;
     }
-    AddEventListener(
-      selectable->evStateChangedEvent, this->evNeedsRepaintEvent);
+    AddEventListener(selectable->evStateChangedEvent, resetToolbar);
+
+    const auto visibility
+      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    if (visibility && !visibility->IsVisible()) {
+      continue;
+    }
 
     D2D1_RECT_F button {
       .top = margin,
@@ -332,8 +358,13 @@ void HeaderUILayer::LayoutToolbar(
       OPENKNEEBOARD_BREAK;
       continue;
     }
-    AddEventListener(
-      selectable->evStateChangedEvent, this->evNeedsRepaintEvent);
+    AddEventListener(selectable->evStateChangedEvent, resetToolbar);
+
+    const auto visibility
+      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    if (visibility && !visibility->IsVisible()) {
+      continue;
+    }
 
     D2D1_RECT_F button {
       .top = margin,
@@ -368,7 +399,7 @@ void HeaderUILayer::LayoutToolbar(
     .mTextRect = *headerTextRect,
     .mButtons = std::move(toolbar),
   };
-}
+}// namespace OpenKneeboard
 
 void HeaderUILayer::DrawHeaderText(
   const std::shared_ptr<ITabView>& tabView,
