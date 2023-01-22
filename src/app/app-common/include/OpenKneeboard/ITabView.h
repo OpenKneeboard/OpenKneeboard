@@ -66,6 +66,7 @@ class ITabView {
   Event<PageIndex> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
   Event<> evTabModeChangedEvent;
+  Event<> evBookmarksChangedEvent;
 };
 
 }// namespace OpenKneeboard

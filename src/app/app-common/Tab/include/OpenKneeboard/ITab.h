@@ -48,6 +48,7 @@ class ITab : public virtual IPageSource {
   virtual void SetBookmarks(const std::vector<Bookmark>&) = 0;
 
   Event<> evSettingsChangedEvent;
+  Event<> evBookmarksChangedEvent;
 };
 
 }// namespace OpenKneeboard

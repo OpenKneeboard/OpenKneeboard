@@ -48,6 +48,7 @@ TabView::TabView(
   AddEventListener(
     tab->evAvailableFeaturesChangedEvent,
     this->evAvailableFeaturesChangedEvent);
+  AddEventListener(tab->evBookmarksChangedEvent, this->evBookmarksChangedEvent);
 }
 
 TabView::~TabView() {

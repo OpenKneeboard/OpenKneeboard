@@ -82,6 +82,7 @@ class IKneeboardView {
   Event<> evNeedsRepaintEvent;
   Event<CursorEvent> evCursorEvent;
   Event<> evLayoutChangedEvent;
+  Event<> evBookmarksChangedEvent;
 
   virtual void RenderWithChrome(
     ID2D1DeviceContext* d2d,

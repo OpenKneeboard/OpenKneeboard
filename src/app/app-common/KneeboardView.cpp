@@ -130,6 +130,8 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
               self->evNeedsRepaintEvent.Emit();
             }
           })),
+        AddEventListener(
+          tabView->evBookmarksChangedEvent, this->evBookmarksChangedEvent),
       });
   }
 
