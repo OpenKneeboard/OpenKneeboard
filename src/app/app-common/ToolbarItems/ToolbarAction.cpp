@@ -36,7 +36,7 @@ std::string_view ToolbarAction::GetLabel() const {
   return mLabel;
 }
 
-void TabToggleAction::Execute() {
+void ToolbarToggleAction::Execute() {
   if (this->IsActive()) {
     this->Deactivate();
     return;

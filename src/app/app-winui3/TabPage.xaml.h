@@ -37,7 +37,7 @@ class ISelectableToolbarItem;
 class IToolbarFlyout;
 class IToolbarItem;
 class ToolbarAction;
-class TabToggleAction;
+class ToolbarToggleAction;
 class IKneeboardView;
 }// namespace OpenKneeboard
 
@@ -112,7 +112,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   muxc::AppBarButton CreateAppBarButton(const std::shared_ptr<ToolbarAction>&);
   muxc::AppBarButton CreateAppBarFlyout(const std::shared_ptr<IToolbarFlyout>&);
   muxc::AppBarToggleButton CreateAppBarToggleButton(
-    const std::shared_ptr<TabToggleAction>&);
+    const std::shared_ptr<ToolbarToggleAction>&);
 
   muxc::MenuFlyoutItemBase CreateMenuFlyoutItem(
     const std::shared_ptr<IToolbarItem>&);

@@ -252,7 +252,7 @@ void HeaderUILayer::DrawToolbar(
     } else if (hoverButton == button) {
       brush = mHoverButtonBrush.get();
     } else {
-      auto toggle = std::dynamic_pointer_cast<TabToggleAction>(action);
+      auto toggle = std::dynamic_pointer_cast<ToolbarToggleAction>(action);
       if (toggle && toggle->IsActive()) {
         brush = mActiveButtonBrush.get();
       }

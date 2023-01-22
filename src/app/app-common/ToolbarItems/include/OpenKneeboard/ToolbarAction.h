@@ -42,7 +42,7 @@ class ToolbarAction : public virtual ISelectableToolbarItem {
   std::string mLabel;
 };
 
-class TabToggleAction : public ToolbarAction {
+class ToolbarToggleAction : public ToolbarAction {
  public:
   virtual void Execute() override final;
 

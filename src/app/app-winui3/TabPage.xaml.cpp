@@ -186,7 +186,7 @@ muxc::ICommandBarElement TabPage::CreateCommandBarElement(
     return muxc::AppBarSeparator {};
   }
 
-  auto toggle = std::dynamic_pointer_cast<TabToggleAction>(item);
+  auto toggle = std::dynamic_pointer_cast<ToolbarToggleAction>(item);
   if (toggle) {
     return CreateAppBarToggleButton(toggle);
   }
@@ -206,7 +206,7 @@ muxc::ICommandBarElement TabPage::CreateCommandBarElement(
 }
 
 muxc::AppBarToggleButton TabPage::CreateAppBarToggleButton(
-  const std::shared_ptr<TabToggleAction>& action) {
+  const std::shared_ptr<ToolbarToggleAction>& action) {
   muxc::AppBarToggleButton button;
 
   muxc::FontIcon icon;

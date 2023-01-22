@@ -25,7 +25,7 @@ namespace OpenKneeboard {
 
 class ITabView;
 
-class TabNavigationAction final : public TabToggleAction,
+class TabNavigationAction final : public ToolbarToggleAction,
                                   private EventReceiver {
  public:
   TabNavigationAction() = delete;
