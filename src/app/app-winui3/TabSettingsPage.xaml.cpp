@@ -75,16 +75,14 @@ TabSettingsPage::TabSettingsPage() {
 
   AddEventListener(
     gKneeboard->GetTabsList()->evTabsChangedEvent,
-    weak_wrap(
-      [](auto self) {
-        if (self->mUIIsChangingTabs) {
-          return;
-        }
-        if (self->mPropertyChangedEvent) {
-          self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Tabs"));
-        }
-      },
-      this));
+    weak_wrap(this).bind([](auto self) {
+      if (self->mUIIsChangingTabs) {
+        return;
+      }
+      if (self->mPropertyChangedEvent) {
+        self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Tabs"));
+      }
+    }));
 
   CreateAddTabMenu(AddTabTopButton(), FlyoutPlacementMode::Bottom);
   CreateAddTabMenu(AddTabBottomButton(), FlyoutPlacementMode::Top);

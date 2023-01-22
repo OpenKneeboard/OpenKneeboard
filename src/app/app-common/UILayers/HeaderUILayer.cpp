@@ -300,7 +300,7 @@ void HeaderUILayer::LayoutToolbar(
     mTabEvents = {
       this->AddEventListener(
         tabView->evAvailableFeaturesChangedEvent,
-        weak_wrap([](auto self) { self->OnTabChanged(); }, this)),
+        weak_wrap(this).bind([](auto self) { self->OnTabChanged(); })),
     };
   }
 
@@ -328,7 +328,8 @@ void HeaderUILayer::LayoutToolbar(
 
   auto primaryLeft = headerRect.left + (2 * margin);
 
-  auto resetToolbar = weak_wrap([](auto self) { self->OnTabChanged(); }, this);
+  auto resetToolbar
+    = weak_wrap(this).bind([](auto self) { self->OnTabChanged(); });
 
   for (const auto& item: actions.mLeft) {
     const auto selectable
@@ -487,12 +488,10 @@ void HeaderUILayer::OnClick(const Button& button) {
     secondaryMenu->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     secondaryMenu->evCloseMenuRequestedEvent,
-    weak_wrap(
-      [](auto self) {
-        self->mSecondaryMenu = {};
-        self->evNeedsRepaintEvent.Emit();
-      },
-      this));
+    weak_wrap(this).bind([](auto self) {
+      self->mSecondaryMenu = {};
+      self->evNeedsRepaintEvent.Emit();
+    }));
   mSecondaryMenu = secondaryMenu;
   evNeedsRepaintEvent.Emit();
 }

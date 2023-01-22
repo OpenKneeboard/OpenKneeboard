@@ -21,6 +21,7 @@
 
 #include <shims/winrt/base.h>
 
+#include <concepts>
 #include <memory>
 
 namespace OpenKneeboard {
@@ -87,6 +88,11 @@ struct __convert_to_strong {
 inline constexpr detail::__convert_to_weak convert_to_weak {};
 inline constexpr detail::__convert_to_strong convert_to_strong {};
 
+template <class T>
+using weak_t = decltype(convert_to_weak(std::declval<T>()));
+template <class T>
+using strong_t = decltype(convert_to_strong(std::declval<weak_t<T>>()));
+
 }// namespace WeakWrap
 
 /** Wrap a function with one that captures weak pointers, but passes strong
@@ -97,26 +103,43 @@ inline constexpr detail::__convert_to_strong convert_to_strong {};
  *
  * Usage:
  *
- *    auto handler = weak_wrap([](const auto& strongThis) { ... } , this);
+ *    auto handler = weak_wrap(this)([](const auto strongThis) { ... });
  */
 template <class... TPtrs>
-auto weak_wrap(auto func, TPtrs... ptrs) {
-  auto weak_ptrs = std::make_tuple(WeakWrap::convert_to_weak(ptrs)...);
+class weak_wrap {
+ public:
+  weak_wrap(TPtrs... ptrs)
+    : mWeakPtrs(std::make_tuple(WeakWrap::convert_to_weak(ptrs)...)) {
+  }
 
-  return [func, weak_ptrs]() {
-    const auto strong_ptrs = std::apply(
-      [](auto&&... weak_ptrs) {
-        return std::make_tuple(WeakWrap::convert_to_strong(weak_ptrs)...);
-      },
-      weak_ptrs);
+  auto bind(auto f) const noexcept {
+    // This is essentially an explicit deduction guide, however as of C++20
+    // those are only supported for classes, not functions/methods
+    return bindWithReturnType<decltype(f(
+      std::declval<WeakWrap::strong_t<TPtrs>>()...))>(f);
+  }
 
-    if (!std::apply(
-          []<class... TArgs>(const TArgs&... args) { return (... && args); },
-          strong_ptrs)) {
-      return;
-    }
-    std::apply(func, strong_ptrs);
-  };
-}
+  template <class TRet>
+  auto bindWithReturnType(
+    typename TRet (*func)(WeakWrap::strong_t<TPtrs>...)) const noexcept {
+    return [func, weak_ptrs = mWeakPtrs]() {
+      const auto strong_ptrs = std::apply(
+        [](auto&&... weak_ptrs) {
+          return std::make_tuple(WeakWrap::convert_to_strong(weak_ptrs)...);
+        },
+        weak_ptrs);
+
+      if (!std::apply(
+            []<class... TArgs>(const TArgs&... args) { return (... && args); },
+            strong_ptrs)) {
+        return;
+      }
+      std::apply(func, strong_ptrs);
+    };
+  }
+
+ private:
+  typename std::tuple<WeakWrap::weak_t<TPtrs>...> mWeakPtrs;
+};
 
 }// namespace OpenKneeboard

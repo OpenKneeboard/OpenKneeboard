@@ -110,13 +110,12 @@ MainWindow::MainWindow() {
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     gKneeboard->evFrameTimerEvent.Emit();
   });
-  RootGrid().Loaded(discard_winrt_event_args(weak_wrap(
-    [](auto self) {
+  RootGrid().Loaded(
+    discard_winrt_event_args(weak_wrap(this).bind([](auto self) {
       // WinUI3 gives us the spinning circle for a long time...
       SetCursor(LoadCursorW(NULL, IDC_ARROW));
       self->mFrameTimer.Start();
-    },
-    this)));
+    })));
 
   auto settings = gKneeboard->GetAppSettings();
   if (settings.mWindowRect) {

@@ -259,13 +259,12 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
     co_return;
   }
 
-  const scope_guard propertyChanged(weak_wrap(
-    [](auto self) -> winrt::fire_and_forget {
+  const scope_guard propertyChanged(
+    weak_wrap(this).bind([](auto self) -> winrt::fire_and_forget {
       co_await self->mUIThread;
       self->mPropertyChangedEvent(
         *self, PropertyChangedEventArgs(L"DesiredElevation"));
-    },
-    this));
+    }));
 
   // Always use the helper; while it's not needed, it never hurts, and gives us
   // a single path to act
