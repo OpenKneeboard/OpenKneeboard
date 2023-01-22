@@ -420,6 +420,21 @@ void KneeboardView::ToggleBookmarkForCurrentPage() {
   tab->SetBookmarks(bookmarks);
 }
 
+bool KneeboardView::CurrentPageHasBookmark() const {
+  auto view = this->GetCurrentTabView();
+  auto tab = view->GetRootTab();
+  auto page = view->GetPageIndex();
+
+  auto bookmarks = tab->GetBookmarks();
+  for (const auto& bookmark: tab->GetBookmarks()) {
+    if (bookmark.mTabID == tab->GetRuntimeID() && bookmark.mPageIndex == page) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void KneeboardView::RemoveBookmarkForCurrentPage() {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();

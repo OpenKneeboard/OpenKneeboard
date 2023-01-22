@@ -85,6 +85,7 @@ class KneeboardView final : public IKneeboardView,
   virtual std::optional<Bookmark> AddBookmarkForCurrentPage() override;
   virtual void RemoveBookmarkForCurrentPage() override;
   virtual void ToggleBookmarkForCurrentPage() override;
+  virtual bool CurrentPageHasBookmark() const override;
 
   virtual void GoToPreviousBookmark() override;
   virtual void GoToNextBookmark() override;

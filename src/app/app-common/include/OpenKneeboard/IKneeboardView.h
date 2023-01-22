@@ -62,6 +62,7 @@ class IKneeboardView {
   virtual std::optional<Bookmark> AddBookmarkForCurrentPage() = 0;
   virtual void RemoveBookmarkForCurrentPage() = 0;
   virtual void ToggleBookmarkForCurrentPage() = 0;
+  virtual bool CurrentPageHasBookmark() const = 0;
 
   virtual void GoToPreviousBookmark() = 0;
   virtual void GoToNextBookmark() = 0;
