@@ -77,6 +77,8 @@ void TabBase::SetBookmarks(const std::vector<Bookmark>& bookmarks) {
     mBookmarks.begin(), mBookmarks.end(), [](const auto& a, const auto& b) {
       return a.mPageIndex < b.mPageIndex;
     });
+
+  evAvailableFeaturesChangedEvent.Emit();
 }
 
 }// namespace OpenKneeboard

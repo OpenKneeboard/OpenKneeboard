@@ -455,6 +455,11 @@ void KneeboardView::RemoveBookmarkForCurrentPage() {
 
 std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
   auto view = this->GetCurrentTabView();
+  if (view->GetTabMode() != TabMode::NORMAL) {
+    OPENKNEEBOARD_BREAK;
+    return {};
+  }
+
   auto tab = view->GetRootTab();
   auto page = view->GetPageIndex();
   if (page >= tab->GetPageCount()) {

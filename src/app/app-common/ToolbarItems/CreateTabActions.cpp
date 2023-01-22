@@ -30,6 +30,7 @@
 #include <OpenKneeboard/TabNextPageAction.h>
 #include <OpenKneeboard/TabPreviousPageAction.h>
 #include <OpenKneeboard/TabView.h>
+#include <OpenKneeboard/ToggleBookmarkAction.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
@@ -92,6 +93,7 @@ InGameActions InGameActions::Create(
         CreateClearNotesItem(kneeboardState, kneeboardView, tabView),
         CreateReloadItem(kneeboardState, kneeboardView, tabView),
       }),
+    std::make_shared<ToggleBookmarkAction>(kneeboardState, kneeboardView, tabView),
     std::make_shared<PreviousTabAction>(kneeboardState, kneeboardView),
     std::make_shared<NextTabAction>(kneeboardState, kneeboardView),
       },
@@ -108,6 +110,7 @@ InAppActions InAppActions::Create(
     std::make_shared<TabFirstPageAction>(tabView),
     std::make_shared<TabPreviousPageAction>(kneeboardState, tabView),
     std::make_shared<TabNextPageAction>(kneeboardState, tabView),
+    std::make_shared<ToggleBookmarkAction>(kneeboardState, kneeboardView, tabView),
     },
     .mSecondary = {
       CreateClearNotesItem(kneeboardState, kneeboardView, tabView),
