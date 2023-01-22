@@ -97,6 +97,11 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
 
   decltype(mTabViews) viewStates;
 
+  for (const auto& event: mTabEvents) {
+    this->RemoveEventListener(event);
+  }
+  mTabEvents.clear();
+
   for (const auto& tab: tabs) {
     auto it = std::ranges::find(mTabViews, tab, &ITabView::GetTab);
     if (it != mTabViews.end()) {
@@ -108,24 +113,32 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     viewStates.push_back(viewState);
     auto weakState = std::weak_ptr(viewState);
 
-    AddEventListener(viewState->evNeedsRepaintEvent, [weakState, this]() {
-      auto strongState = weakState.lock();
-      if (!strongState) {
-        return;
-      }
-      if (strongState == this->GetCurrentTabView()) {
-        this->evNeedsRepaintEvent.Emit();
-      }
-    });
-    AddEventListener(tab->evAvailableFeaturesChangedEvent, [weakState, this]() {
-      auto strongState = weakState.lock();
-      if (!strongState) {
-        return;
-      }
-      if (strongState == this->GetCurrentTabView()) {
-        this->evNeedsRepaintEvent.Emit();
-      }
-    });
+    mTabEvents.insert(
+      mTabEvents.end(),
+      {
+        AddEventListener(
+          viewState->evNeedsRepaintEvent,
+          [weakState, this]() {
+            auto strongState = weakState.lock();
+            if (!strongState) {
+              return;
+            }
+            if (strongState == this->GetCurrentTabView()) {
+              this->evNeedsRepaintEvent.Emit();
+            }
+          }),
+        AddEventListener(
+          tab->evAvailableFeaturesChangedEvent,
+          [weakState, this]() {
+            auto strongState = weakState.lock();
+            if (!strongState) {
+              return;
+            }
+            if (strongState == this->GetCurrentTabView()) {
+              this->evNeedsRepaintEvent.Emit();
+            }
+          }),
+      });
   }
 
   mTabViews = viewStates;
