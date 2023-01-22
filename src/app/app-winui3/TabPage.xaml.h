@@ -117,6 +117,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   muxc::MenuFlyoutItemBase CreateMenuFlyoutItem(
     const std::shared_ptr<IToolbarItem>&);
+
+  void AttachVisibility(const std::shared_ptr<IToolbarItem>&, IInspectable);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

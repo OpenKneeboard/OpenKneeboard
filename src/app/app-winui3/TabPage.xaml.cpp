@@ -188,11 +188,6 @@ muxc::ICommandBarElement TabPage::CreateCommandBarElement(
     return muxc::AppBarSeparator {};
   }
 
-  auto visibility = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
-  if (visibility && !visibility->IsVisible()) {
-    return {nullptr};
-  }
-
   auto toggle = std::dynamic_pointer_cast<ToolbarToggleAction>(item);
   if (toggle) {
     return CreateAppBarToggleButton(toggle);
@@ -316,12 +311,6 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     return nullptr;
   }
 
-  const auto visibility
-    = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
-  if (visibility && !visibility->IsVisible()) {
-    return nullptr;
-  }
-
   muxc::MenuFlyoutItem ret {nullptr};
   auto checkable = std::dynamic_pointer_cast<ICheckableToolbarItem>(item);
   if (checkable) {
@@ -371,6 +360,7 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
   for (auto& item: item->GetSubItems()) {
     const auto flyoutItem = CreateMenuFlyoutItem(item);
     if (flyoutItem) {
+      AttachVisibility(item, flyoutItem);
       flyout.Items().Append(flyoutItem);
     }
   }
@@ -383,8 +373,6 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
 void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mTabView = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
-  AddEventListener(
-    state->evAvailableFeaturesChangedEvent, &TabPage::UpdateToolbar, this);
 
   this->UpdateToolbar();
 }
@@ -405,6 +393,7 @@ winrt::fire_and_forget TabPage::UpdateToolbar() {
   for (const auto& item: actions.mPrimary) {
     auto element = CreateCommandBarElement(item);
     if (element) {
+      AttachVisibility(item, element);
       primary.Append(element);
     }
   }
@@ -414,9 +403,34 @@ winrt::fire_and_forget TabPage::UpdateToolbar() {
   for (const auto& item: actions.mSecondary) {
     auto element = CreateCommandBarElement(item);
     if (element) {
+      AttachVisibility(item, element);
       secondary.Append(element);
     }
   }
+}
+
+void TabPage::AttachVisibility(
+  const std::shared_ptr<IToolbarItem>& item,
+  IInspectable inspectable) {
+  auto visibility = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+  if (!visibility) {
+    return;
+  }
+  auto control = inspectable.as<UIElement>();
+  control.Visibility(
+    visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
+  AddEventListener(
+    visibility->evStateChangedEvent,
+    weak_wrap(
+      [](auto self, auto visibility, auto control) -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        control.Visibility(
+          visibility->IsVisible() ? Visibility::Visible
+                                  : Visibility::Collapsed);
+      },
+      this,
+      visibility,
+      control));
 }
 
 void TabPage::OnCanvasSizeChanged(
