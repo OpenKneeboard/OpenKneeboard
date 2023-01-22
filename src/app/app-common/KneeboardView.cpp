@@ -469,7 +469,6 @@ std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
   Bookmark ret {
     .mTabID = tab->GetRuntimeID(),
     .mPageIndex = page,
-    .mTitle = std::format(_("{} Page {}"), tab->GetTitle(), page),
   };
 
   auto bookmarks = tab->GetBookmarks();
