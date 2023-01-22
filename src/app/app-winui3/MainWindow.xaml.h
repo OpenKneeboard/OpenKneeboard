@@ -50,6 +50,16 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
     const IInspectable& args) noexcept;
 
  private:
+  struct NavigationTag {
+    ITab::RuntimeID mTabID;
+    std::optional<PageIndex> mPageIndex;
+
+    IInspectable box() const;
+    static NavigationTag unbox(IInspectable);
+
+    constexpr auto operator<=>(const NavigationTag&) const = default;
+  };
+
   winrt::apartment_context mUIThread;
   HWND mHwnd;
   winrt::handle mHwndFile;
@@ -57,7 +67,7 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
 
   FrameworkElement mProfileSwitcher {nullptr};
 
-  EventHandlerToken mTabChangedEvent;
+  std::vector<EventHandlerToken> mKneeboardViewEvents;
   DispatcherQueueController mDQC {nullptr};
   DispatcherQueueTimer mFrameTimer {nullptr};
   bool mSwitchingTabsFromNavSelection = false;

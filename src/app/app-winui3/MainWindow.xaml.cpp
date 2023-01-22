@@ -36,6 +36,7 @@
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/json.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/version.h>
 #include <OpenKneeboard/weak_wrap.h>
@@ -44,8 +45,6 @@
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
-
-#include <nlohmann/json.hpp>
 
 #include "Globals.h"
 
@@ -110,12 +109,11 @@ MainWindow::MainWindow() {
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     gKneeboard->evFrameTimerEvent.Emit();
   });
-  RootGrid().Loaded(
-    discard_winrt_event_args(weak_wrap(this)([](auto self) {
-      // WinUI3 gives us the spinning circle for a long time...
-      SetCursor(LoadCursorW(NULL, IDC_ARROW));
-      self->mFrameTimer.Start();
-    })));
+  RootGrid().Loaded(discard_winrt_event_args(weak_wrap(this)([](auto self) {
+    // WinUI3 gives us the spinning circle for a long time...
+    SetCursor(LoadCursorW(NULL, IDC_ARROW));
+    self->mFrameTimer.Start();
+  })));
 
   auto settings = gKneeboard->GetAppSettings();
   if (settings.mWindowRect) {
@@ -264,11 +262,24 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 
 winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
   co_await mUIThread;
-  RemoveEventListener(mTabChangedEvent);
+
+  for (const auto& event: mKneeboardViewEvents) {
+    this->RemoveEventListener(event);
+  }
   mKneeboardView = gKneeboard->GetActiveViewForGlobalInput();
 
-  mTabChangedEvent = AddEventListener(
-    mKneeboardView->evCurrentTabChangedEvent, &MainWindow::OnTabChanged, this);
+  mKneeboardViewEvents = {
+    AddEventListener(
+      mKneeboardView->evBookmarksChangedEvent,
+      &MainWindow::OnTabsChanged,
+      this),
+    AddEventListener(
+      mKneeboardView->evCurrentTabChangedEvent,
+      &MainWindow::OnTabChanged,
+      this),
+  };
+
+  this->OnTabsChanged();
   this->OnTabChanged();
 }
 
@@ -395,7 +406,7 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
     if (!tag) {
       continue;
     }
-    if (winrt::unbox_value<uint64_t>(tag) == id) {
+    if (NavigationTag::unbox(tag).mTabID == id) {
       Navigation().SelectedItem(item);
       break;
     }
@@ -410,10 +421,18 @@ winrt::fire_and_forget MainWindow::OnTabsChanged() {
   co_await mUIThread;
   auto navItems = this->Navigation().MenuItems();
   navItems.Clear();
+
+  decltype(mKneeboardView->GetBookmarks()) bookmarks;
+  if (mKneeboardView) {
+    bookmarks = mKneeboardView->GetBookmarks();
+  }
+  auto bookmark = bookmarks.begin();
+  size_t bookmarkCount = 0;
+
   for (auto tab: gKneeboard->GetTabsList()->GetTabs()) {
     muxc::NavigationViewItem item;
     item.Content(box_value(to_hstring(tab->GetTitle())));
-    item.Tag(box_value(tab->GetRuntimeID().GetTemporaryValue()));
+    item.Tag(NavigationTag {tab->GetRuntimeID()}.box());
 
     auto glyph = tab->GetGlyph();
     if (!glyph.empty()) {
@@ -424,19 +443,20 @@ winrt::fire_and_forget MainWindow::OnTabsChanged() {
 
     navItems.Append(item);
 
-    auto weakTab = std::weak_ptr(tab);
     AddEventListener(
-      tab->evSettingsChangedEvent, [weakTab, weakItem = make_weak(item)]() {
-        auto tab = weakTab.lock();
-        if (!tab) {
-          return;
-        }
-        auto item = weakItem.get();
-        if (!item) {
-          return;
-        }
-        item.Content(box_value(to_hstring(tab->GetTitle())));
-      });
+      tab->evSettingsChangedEvent,
+      weak_wrap(tab, item)([](auto tab, auto item) {}));
+
+    for (auto tabID = tab->GetRuntimeID();
+         bookmark != bookmarks.end() && bookmark->mTabID == tabID;
+         bookmark++) {
+      muxc::NavigationViewItem bookmarkItem;
+      bookmarkItem.Content(box_value(std::format(L"#{}", ++bookmarkCount)));
+      bookmarkItem.Tag(NavigationTag {tabID, bookmark->mPageIndex}.box());
+      item.MenuItems().Append(bookmarkItem);
+    }
+
+    item.IsExpanded(true);
   }
 }
 
@@ -458,21 +478,28 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
-  auto tag = item.Tag();
-  if (!tag) {
+  auto boxedTag = item.Tag();
+  if (!boxedTag) {
     return;
   }
 
-  const auto tabID = winrt::unbox_value<uint64_t>(tag);
+  auto tag = NavigationTag::unbox(boxedTag);
+
+  const auto tabID = tag.mTabID;
+  auto tabView = mKneeboardView->GetCurrentTabView();
+  tabView->SetTabMode(TabMode::NORMAL);
 
   if (tabID == mKneeboardView->GetCurrentTab()->GetRuntimeID()) {
-    Frame().Navigate(xaml_typename<TabPage>(), tag);
-    return;
+    Frame().Navigate(
+      xaml_typename<TabPage>(), winrt::box_value(tabID.GetTemporaryValue()));
+  } else {
+    mSwitchingTabsFromNavSelection = true;
+    mKneeboardView->SetCurrentTabByRuntimeID(tabID);
   }
 
-  mSwitchingTabsFromNavSelection = true;
-  mKneeboardView->SetCurrentTabByRuntimeID(
-    ITab::RuntimeID::FromTemporaryValue(tabID));
+  if (tag.mPageIndex) {
+    tabView->SetPageIndex(*tag.mPageIndex);
+  }
 }
 
 void MainWindow::OnBackRequested(
@@ -510,6 +537,29 @@ winrt::fire_and_forget MainWindow::LaunchOpenKneeboardURI(
     ProfileSwitcherTeachingTip().IsOpen(true);
     co_return;
   }
+}
+
+winrt::Windows::Foundation::IInspectable MainWindow::NavigationTag::box()
+  const {
+  auto json = nlohmann::json::object();
+  json["tab"] = mTabID.GetTemporaryValue();
+  if (mPageIndex) {
+    json["page"] = *mPageIndex;
+  }
+  return box_value(to_hstring(json.dump()));
+}
+
+MainWindow::NavigationTag MainWindow::NavigationTag::unbox(IInspectable value) {
+  auto str = winrt::unbox_value<winrt::hstring>(value);
+  auto json = nlohmann::json::parse(to_string(str));
+  NavigationTag ret {
+    .mTabID
+    = ITab::RuntimeID::FromTemporaryValue(json.at("tab").get<uint64_t>()),
+  };
+  if (json.contains("page")) {
+    ret.mPageIndex = json.at("page").get<PageIndex>();
+  }
+  return ret;
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
