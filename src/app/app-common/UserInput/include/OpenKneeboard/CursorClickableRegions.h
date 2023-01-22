@@ -70,6 +70,7 @@ class CursorClickableRegions final {
 
   void PostCursorEvent(EventContext ec, const CursorEvent& ev) {
     const D2D1_POINT_2F cursor {ev.mX, ev.mY};
+    const EventDelay delay;
     std::unique_lock lock(mMutex);
     std::optional<Button> buttonUnderCursor;
 
@@ -117,9 +118,6 @@ class CursorClickableRegions final {
       return;
     }
 
-    // Action might mutate the action list, so release
-    // the mutex before we trigger it
-    lock.unlock();
     evClicked.Emit(ec, pressedButton);
   }
 
