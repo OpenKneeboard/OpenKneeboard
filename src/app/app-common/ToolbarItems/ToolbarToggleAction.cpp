@@ -17,29 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/ISelectableToolbarItem.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/ToolbarToggleAction.h>
 
 namespace OpenKneeboard {
 
-class ToolbarAction : public virtual ISelectableToolbarItem {
- public:
-  virtual ~ToolbarAction();
-  std::string_view GetGlyph() const override final;
-  std::string_view GetLabel() const override final;
-
-  virtual void Execute() = 0;
-
- protected:
-  ToolbarAction() = delete;
-  ToolbarAction(std::string glyph, std::string label);
-
- private:
-  std::string mGlyph;
-  std::string mLabel;
-};
+void ToolbarToggleAction::Execute() {
+  if (this->IsActive()) {
+    this->Deactivate();
+    return;
+  }
+  this->Activate();
+}
 
 }// namespace OpenKneeboard

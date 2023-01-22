@@ -26,6 +26,7 @@
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
+#include <OpenKneeboard/ToolbarToggleAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>

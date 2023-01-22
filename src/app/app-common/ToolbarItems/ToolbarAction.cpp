@@ -36,12 +36,4 @@ std::string_view ToolbarAction::GetLabel() const {
   return mLabel;
 }
 
-void ToolbarToggleAction::Execute() {
-  if (this->IsActive()) {
-    this->Deactivate();
-    return;
-  }
-  this->Activate();
-}
-
 }// namespace OpenKneeboard

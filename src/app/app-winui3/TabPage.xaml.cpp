@@ -35,6 +35,7 @@
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/ToolbarToggleAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>

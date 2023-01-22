@@ -19,27 +19,20 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/ISelectableToolbarItem.h>
-#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/ToolbarAction.h>
 
 namespace OpenKneeboard {
 
-class ToolbarAction : public virtual ISelectableToolbarItem {
+class ToolbarToggleAction : public ToolbarAction {
  public:
-  virtual ~ToolbarAction();
-  std::string_view GetGlyph() const override final;
-  std::string_view GetLabel() const override final;
+  virtual void Execute() override final;
 
-  virtual void Execute() = 0;
+  virtual bool IsActive() = 0;
+  virtual void Activate() = 0;
+  virtual void Deactivate() = 0;
 
  protected:
-  ToolbarAction() = delete;
-  ToolbarAction(std::string glyph, std::string label);
-
- private:
-  std::string mGlyph;
-  std::string mLabel;
+  using ToolbarAction::ToolbarAction;
 };
 
 }// namespace OpenKneeboard

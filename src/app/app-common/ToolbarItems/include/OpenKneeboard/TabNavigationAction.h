@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/ToolbarToggleAction.h>
 
 namespace OpenKneeboard {
 
