@@ -420,6 +420,24 @@ void KneeboardView::ToggleBookmark() {
   tab->SetBookmarks(bookmarks);
 }
 
+void KneeboardView::RemoveBookmark() {
+  auto view = this->GetCurrentTabView();
+  auto tab = view->GetRootTab();
+  auto page = view->GetPageIndex();
+
+  auto bookmarks = tab->GetBookmarks();
+  auto it = std::ranges::find_if(bookmarks, [=](const auto& bm) {
+    return bm.mTabID == tab->GetRuntimeID() && bm.mPageIndex == page;
+  });
+
+  if (it == bookmarks.end()) {
+    return;
+  }
+
+  bookmarks.erase(it);
+  tab->SetBookmarks(bookmarks);
+}
+
 std::optional<Bookmark> KneeboardView::AddBookmark() {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();

@@ -58,6 +58,7 @@ class IKneeboardView {
   virtual std::optional<Bookmark> AddBookmark() = 0;
   virtual std::vector<Bookmark> GetBookmarks() const = 0;
   virtual void RemoveBookmark(const Bookmark&) = 0;
+  virtual void RemoveBookmark() = 0;
   virtual void GoToBookmark(const Bookmark&) = 0;
   virtual void ToggleBookmark() = 0;
   virtual void PreviousBookmark() = 0;

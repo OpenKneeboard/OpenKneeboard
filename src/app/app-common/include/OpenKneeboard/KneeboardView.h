@@ -84,6 +84,7 @@ class KneeboardView final : public IKneeboardView,
   virtual std::optional<Bookmark> AddBookmark() override;
   virtual std::vector<Bookmark> GetBookmarks() const override;
   virtual void RemoveBookmark(const Bookmark&) override;
+  virtual void RemoveBookmark() override;
   virtual void GoToBookmark(const Bookmark&) override;
   virtual void ToggleBookmark() override;
 
