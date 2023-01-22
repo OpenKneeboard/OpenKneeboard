@@ -85,6 +85,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   void QueuePointerPoint(const PointerPoint&);
 
   void SetTab(const std::shared_ptr<ITabView>&);
+  winrt::fire_and_forget UpdateToolbar();
   void InitializeSwapChain();
   void ResizeSwapChain();
 

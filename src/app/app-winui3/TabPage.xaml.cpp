@@ -33,10 +33,11 @@
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
+#include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ToolbarAction.h>
-#include <OpenKneeboard/ToolbarToggleAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
+#include <OpenKneeboard/ToolbarToggleAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
@@ -187,6 +188,11 @@ muxc::ICommandBarElement TabPage::CreateCommandBarElement(
     return muxc::AppBarSeparator {};
   }
 
+  auto visibility = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+  if (visibility && !visibility->IsVisible()) {
+    return {nullptr};
+  }
+
   auto toggle = std::dynamic_pointer_cast<ToolbarToggleAction>(item);
   if (toggle) {
     return CreateAppBarToggleButton(toggle);
@@ -310,6 +316,12 @@ muxc::MenuFlyoutItemBase TabPage::CreateMenuFlyoutItem(
     return nullptr;
   }
 
+  const auto visibility
+    = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+  if (visibility && !visibility->IsVisible()) {
+    return nullptr;
+  }
+
   muxc::MenuFlyoutItem ret {nullptr};
   auto checkable = std::dynamic_pointer_cast<ICheckableToolbarItem>(item);
   if (checkable) {
@@ -371,8 +383,16 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
 void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mTabView = state;
   AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
+  AddEventListener(
+    state->evAvailableFeaturesChangedEvent, &TabPage::UpdateToolbar, this);
 
-  auto actions = InAppActions::Create(gKneeboard.get(), mKneeboardView, state);
+  this->UpdateToolbar();
+}
+
+winrt::fire_and_forget TabPage::UpdateToolbar() {
+  co_await mUIThread;
+  auto actions
+    = InAppActions::Create(gKneeboard.get(), mKneeboardView, mTabView);
   {
     std::vector keepAlive = actions.mPrimary;
     keepAlive.reserve(keepAlive.size() + actions.mSecondary.size());
@@ -381,6 +401,7 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   }
 
   auto primary = CommandBar().PrimaryCommands();
+  primary.Clear();
   for (const auto& item: actions.mPrimary) {
     auto element = CreateCommandBarElement(item);
     if (element) {
@@ -389,6 +410,7 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   }
 
   auto secondary = CommandBar().SecondaryCommands();
+  secondary.Clear();
   for (const auto& item: actions.mSecondary) {
     auto element = CreateCommandBarElement(item);
     if (element) {
