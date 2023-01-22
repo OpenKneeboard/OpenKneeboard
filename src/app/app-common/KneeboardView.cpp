@@ -29,6 +29,7 @@
 #include <OpenKneeboard/UserAction.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/weak_wrap.h>
 
 #include <algorithm>
 #include <ranges>
@@ -95,7 +96,7 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     return;
   }
 
-  decltype(mTabViews) viewStates;
+  decltype(mTabViews) tabViews;
 
   for (const auto& event: mTabEvents) {
     this->RemoveEventListener(event);
@@ -105,46 +106,37 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
   for (const auto& tab: tabs) {
     auto it = std::ranges::find(mTabViews, tab, &ITabView::GetTab);
     if (it != mTabViews.end()) {
-      viewStates.push_back(*it);
+      tabViews.push_back(*it);
       continue;
     }
 
-    auto viewState = std::make_shared<TabView>(mDXR, mKneeboard, tab);
-    viewStates.push_back(viewState);
-    auto weakState = std::weak_ptr(viewState);
+    auto tabView = std::make_shared<TabView>(mDXR, mKneeboard, tab);
+    tabViews.push_back(tabView);
 
     mTabEvents.insert(
       mTabEvents.end(),
       {
         AddEventListener(
-          viewState->evNeedsRepaintEvent,
-          [weakState, this]() {
-            auto strongState = weakState.lock();
-            if (!strongState) {
-              return;
+          tabView->evNeedsRepaintEvent,
+          weak_wrap(tabView, this)([](auto tabView, auto self) {
+            if (tabView == self->GetCurrentTabView()) {
+              self->evNeedsRepaintEvent.Emit();
             }
-            if (strongState == this->GetCurrentTabView()) {
-              this->evNeedsRepaintEvent.Emit();
-            }
-          }),
+          })),
         AddEventListener(
           tab->evAvailableFeaturesChangedEvent,
-          [weakState, this]() {
-            auto strongState = weakState.lock();
-            if (!strongState) {
-              return;
+          weak_wrap(tabView, this)([](auto tabView, auto self) {
+            if (tabView == self->GetCurrentTabView()) {
+              self->evNeedsRepaintEvent.Emit();
             }
-            if (strongState == this->GetCurrentTabView()) {
-              this->evNeedsRepaintEvent.Emit();
-            }
-          }),
+          })),
       });
   }
 
-  mTabViews = viewStates;
-  auto it = std::ranges::find(viewStates, mCurrentTabView);
-  if (it == viewStates.end()) {
-    mCurrentTabView = tabs.empty() ? nullptr : viewStates.front();
+  mTabViews = tabViews;
+  auto it = std::ranges::find(tabViews, mCurrentTabView);
+  if (it == tabViews.end()) {
+    mCurrentTabView = tabs.empty() ? nullptr : tabViews.front();
     this->evCurrentTabChangedEvent.Emit(this->GetTabIndex());
   }
 }
