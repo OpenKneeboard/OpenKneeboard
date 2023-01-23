@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Bookmark.h>
+#include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/UILayerBase.h>
 #include <shims/winrt/base.h>
@@ -50,8 +52,24 @@ class BookmarksUILayer final : public UILayerBase, private EventReceiver {
   BookmarksUILayer() = delete;
 
  private:
+  DXResources mDXResources;
   KneeboardState* mKneeboardState {nullptr};
   IKneeboardView* mKneeboardView;
+
+  winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
+
+  struct Button {
+    D2D1_RECT_F mRect {};
+    Bookmark mBookmark {};
+
+    bool operator==(const Button&) const noexcept;
+  };
+
+  using Buttons = std::shared_ptr<CursorClickableRegions<Button>>;
+
+  Buttons mButtons;
+  Buttons LayoutButtons();
 
   bool IsEnabled() const;
 };

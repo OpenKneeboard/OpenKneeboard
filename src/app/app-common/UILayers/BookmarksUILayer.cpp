@@ -28,7 +28,19 @@ BookmarksUILayer::BookmarksUILayer(
   const DXResources& dxr,
   KneeboardState* kneeboardState,
   IKneeboardView* kneeboardView)
-  : mKneeboardState(kneeboardState), mKneeboardView(kneeboardView) {
+  : mDXResources(dxr),
+    mKneeboardState(kneeboardState),
+    mKneeboardView(kneeboardView) {
+  auto d2d = dxr.mD2DDeviceContext;
+  d2d->CreateSolidColorBrush(
+    {0.7f, 0.7f, 0.7f, 0.8f}, D2D1::BrushProperties(), mBackgroundBrush.put());
+  d2d->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mTextBrush.put());
+
+  AddEventListener(mKneeboardView->evBookmarksChangedEvent, [this]() {
+    mButtons = {};
+    this->evNeedsRepaintEvent.Emit();
+  });
 }
 
 BookmarksUILayer::~BookmarksUILayer() {
@@ -109,6 +121,61 @@ void BookmarksUILayer::Render(
   const auto metrics = this->GetMetrics(next, context);
   const auto scale = (rect.right - rect.left) / metrics.mCanvasSize.width;
 
+  d2d->FillRectangle(
+    {
+      0,
+      0,
+      metrics.mNextArea.left * scale,
+      metrics.mCanvasSize.height * scale,
+    },
+    mBackgroundBrush.get());
+
+  auto [hoverButton, buttons] = this->LayoutButtons()->GetState();
+
+  const auto height = metrics.mCanvasSize.height;
+  const auto width = metrics.mNextArea.left;
+
+  FLOAT dpix, dpiy;
+  d2d->GetDpi(&dpix, &dpiy);
+  const auto textHeight = width * scale * 0.75;
+  winrt::com_ptr<IDWriteTextFormat> textFormat;
+  winrt::check_hresult(mDXResources.mDWriteFactory->CreateTextFormat(
+    FixedWidthUIFont,
+    nullptr,
+    DWRITE_FONT_WEIGHT_REGULAR,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    (textHeight * 96) / (2 * dpiy),
+    L"",
+    textFormat.put()));
+  textFormat->SetReadingDirection(DWRITE_READING_DIRECTION_TOP_TO_BOTTOM);
+  textFormat->SetFlowDirection(DWRITE_FLOW_DIRECTION_LEFT_TO_RIGHT);
+  textFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+  textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+
+  size_t buttonNumber = 0;
+  for (const auto& button: buttons) {
+    const D2D1_RECT_F buttonRect {
+      rect.left,
+      rect.top + (button.mRect.top * height * scale),
+      rect.left + (width * scale),
+      rect.top + (button.mRect.bottom * height * scale),
+    };
+    buttonNumber++;
+    const auto text = winrt::to_hstring(
+      button.mBookmark.mTitle.empty() ? std::format(_("#{}"), buttonNumber)
+                                      : button.mBookmark.mTitle);
+
+    d2d->DrawTextW(
+      text.data(), text.size(), textFormat.get(), buttonRect, mTextBrush.get());
+    if (buttonNumber != 1) {
+      d2d->DrawLine(
+        {0, buttonRect.top},
+        {buttonRect.right, buttonRect.top},
+        mTextBrush.get(),
+        2.0f);
+    }
+  }
   first->Render(
     rest,
     context,
@@ -119,6 +186,12 @@ void BookmarksUILayer::Render(
       metrics.mNextArea.right * scale,
       metrics.mNextArea.bottom * scale,
     });
+
+  d2d->DrawLine(
+    {width * scale, rect.top},
+    {width * scale, rect.bottom},
+    mTextBrush.get(),
+    2.0f);
 }
 
 bool BookmarksUILayer::IsEnabled() const {
@@ -128,6 +201,31 @@ bool BookmarksUILayer::IsEnabled() const {
 
 static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
   return memcmp(&a, &b, sizeof(D2D1_RECT_F)) == 0;
+}
+
+bool BookmarksUILayer::Button::operator==(const Button& other) const noexcept
+  = default;
+
+BookmarksUILayer::Buttons BookmarksUILayer::LayoutButtons() {
+  if (auto buttons = mButtons) {
+    return buttons;
+  }
+
+  auto bookmarks = mKneeboardView->GetBookmarks();
+
+  std::vector<Button> buttons;
+  const auto interval = 1.0f / bookmarks.size();
+
+  for (const auto& bookmark: bookmarks) {
+    buttons.push_back({
+      {0.0f, interval * buttons.size(), 1.0f, interval * (buttons.size() + 1)},
+      bookmark,
+    });
+  }
+
+  auto clickableButtons = CursorClickableRegions<Button>::Create(buttons);
+  mButtons = clickableButtons;
+  return clickableButtons;
 }
 
 }// namespace OpenKneeboard
