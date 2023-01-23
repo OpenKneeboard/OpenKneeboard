@@ -36,6 +36,8 @@ BookmarksUILayer::BookmarksUILayer(
     {0.7f, 0.7f, 0.7f, 0.8f}, D2D1::BrushProperties(), mBackgroundBrush.put());
   d2d->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mTextBrush.put());
+  d2d->CreateSolidColorBrush(
+    {0.0f, 0.8f, 1.0f, 1.0f}, D2D1::BrushProperties(), mHoverBrush.put());
 
   AddEventListener(mKneeboardView->evBookmarksChangedEvent, [this]() {
     mButtons = {};
@@ -58,8 +60,24 @@ void BookmarksUILayer::PostCursorEvent(
     return;
   }
 
-  // TODO
+  const auto metrics = this->GetMetrics(next, context);
+
+  auto canvasEvent = cursorEvent;
+  canvasEvent.mX *= metrics.mCanvasSize.width;
+  canvasEvent.mY *= metrics.mCanvasSize.height;
+
   this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
+
+  auto buttons = mButtons;
+  if (!buttons) {
+    return;
+  }
+
+  auto buttonsEvent = canvasEvent;
+  buttonsEvent.mX /= metrics.mNextArea.left;
+  buttonsEvent.mY /= metrics.mCanvasSize.height;
+
+  buttons->PostCursorEvent(eventContext, buttonsEvent);
 }
 
 IUILayer::Metrics BookmarksUILayer::GetMetrics(
@@ -166,8 +184,10 @@ void BookmarksUILayer::Render(
       button.mBookmark.mTitle.empty() ? std::format(_("#{}"), buttonNumber)
                                       : button.mBookmark.mTitle);
 
+    auto textBrush = (button == hoverButton) ? mHoverBrush : mTextBrush;
+
     d2d->DrawTextW(
-      text.data(), text.size(), textFormat.get(), buttonRect, mTextBrush.get());
+      text.data(), text.size(), textFormat.get(), buttonRect, textBrush.get());
     if (buttonNumber != 1) {
       d2d->DrawLine(
         {0, buttonRect.top},

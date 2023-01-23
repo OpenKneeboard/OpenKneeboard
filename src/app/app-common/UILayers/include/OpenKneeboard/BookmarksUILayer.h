@@ -58,6 +58,7 @@ class BookmarksUILayer final : public UILayerBase, private EventReceiver {
 
   winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mHoverBrush;
 
   struct Button {
     D2D1_RECT_F mRect {};
