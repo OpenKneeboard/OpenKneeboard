@@ -114,6 +114,7 @@ class KneeboardView final : public IKneeboardView,
   std::vector<IUILayer*> mUILayers {};
   std::shared_ptr<IUILayer> mHeaderUILayer;
   std::unique_ptr<IUILayer> mFooterUILayer;
+  std::unique_ptr<IUILayer> mBookmarksUILayer;
   std::unique_ptr<TabViewUILayer> mTabViewUILayer;
 
   std::vector<EventHandlerToken> mTabEvents;

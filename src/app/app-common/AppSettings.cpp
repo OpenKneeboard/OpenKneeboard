@@ -39,7 +39,8 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(AppSettings::BookmarkSettings, mEnabled, mLoop)
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AppSettings::InGameUISettings,
   mHeaderEnabled,
-  mFooterEnabled)
+  mFooterEnabled,
+  mBookmarksBarEnabled)
 
 template <>
 void from_json_postprocess<AppSettings>(

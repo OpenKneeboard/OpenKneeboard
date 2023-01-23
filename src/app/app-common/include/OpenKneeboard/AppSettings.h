@@ -67,6 +67,8 @@ struct AppSettings final {
   struct InGameUISettings final {
     bool mHeaderEnabled = true;
     bool mFooterEnabled = true;
+    bool mBookmarksBarEnabled = true;
+
     constexpr auto operator<=>(const InGameUISettings&) const noexcept
       = default;
   };

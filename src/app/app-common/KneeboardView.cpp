@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/BookmarksUILayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/FooterUILayer.h>
@@ -41,6 +42,7 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
   mHeaderUILayer = HeaderUILayer::Create(dxr, kneeboard, this);
   mFooterUILayer = std::make_unique<FooterUILayer>(dxr, kneeboard);
+  mBookmarksUILayer = std::make_unique<BookmarksUILayer>(dxr, kneeboard, this);
   mTabViewUILayer = std::make_unique<TabViewUILayer>(dxr);
 
   this->UpdateUILayers();
@@ -72,6 +74,9 @@ void KneeboardView::UpdateUILayers() {
   decltype(mUILayers) layers;
 
   const auto settings = mKneeboard->GetAppSettings().mInGameUI;
+  if (settings.mBookmarksBarEnabled) {
+    layers.push_back(mBookmarksUILayer.get());
+  }
   if (settings.mHeaderEnabled) {
     layers.push_back(mHeaderUILayer.get());
   }
