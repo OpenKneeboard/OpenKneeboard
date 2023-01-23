@@ -387,7 +387,6 @@ void HeaderUILayer::LayoutToolbar(
   AddEventListener(
     toolbarHandler->evClicked,
     [weak = weak_from_this()](auto, const Button& button) {
-      auto self = weak.lock();
       if (auto self = weak.lock()) {
         self->OnClick(button);
       }

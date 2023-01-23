@@ -32,9 +32,13 @@ namespace OpenKneeboard {
 class KneeboardState;
 class IKneeboardView;
 
-class BookmarksUILayer final : public UILayerBase, private EventReceiver {
+class BookmarksUILayer final
+  : public UILayerBase,
+    private EventReceiver,
+    public std::enable_shared_from_this<BookmarksUILayer> {
  public:
-  BookmarksUILayer(const DXResources& dxr, KneeboardState*, IKneeboardView*);
+  static std::shared_ptr<BookmarksUILayer>
+  Create(const DXResources& dxr, KneeboardState*, IKneeboardView*);
   virtual ~BookmarksUILayer();
 
   virtual void PostCursorEvent(
@@ -52,6 +56,8 @@ class BookmarksUILayer final : public UILayerBase, private EventReceiver {
   BookmarksUILayer() = delete;
 
  private:
+  BookmarksUILayer(const DXResources& dxr, KneeboardState*, IKneeboardView*);
+
   DXResources mDXResources;
   KneeboardState* mKneeboardState {nullptr};
   IKneeboardView* mKneeboardView;
@@ -73,6 +79,7 @@ class BookmarksUILayer final : public UILayerBase, private EventReceiver {
   Buttons LayoutButtons();
 
   bool IsEnabled() const;
+  void OnClick(const Button&);
 };
 
 }// namespace OpenKneeboard

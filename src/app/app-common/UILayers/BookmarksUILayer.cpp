@@ -24,6 +24,14 @@
 
 namespace OpenKneeboard {
 
+std::shared_ptr<BookmarksUILayer> BookmarksUILayer::Create(
+  const DXResources& dxr,
+  KneeboardState* state,
+  IKneeboardView* view) {
+  return std::shared_ptr<BookmarksUILayer>(
+    new BookmarksUILayer(dxr, state, view));
+}
+
 BookmarksUILayer::BookmarksUILayer(
   const DXResources& dxr,
   KneeboardState* kneeboardState,
@@ -245,7 +253,25 @@ BookmarksUILayer::Buttons BookmarksUILayer::LayoutButtons() {
 
   auto clickableButtons = CursorClickableRegions<Button>::Create(buttons);
   mButtons = clickableButtons;
+  AddEventListener(
+    clickableButtons->evClicked,
+    [weak = this->weak_from_this()](auto, auto button) {
+      if (auto strong = weak.lock()) {
+        strong->OnClick(button);
+      }
+    });
   return clickableButtons;
+}
+
+void BookmarksUILayer::OnClick(const Button& button) {
+  if (
+    mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()
+    != button.mBookmark.mTabID) {
+    mKneeboardView->SetCurrentTabByRuntimeID(button.mBookmark.mTabID);
+  }
+  auto tabView = mKneeboardView->GetCurrentTabView();
+  tabView->SetTabMode(TabMode::NORMAL);
+  tabView->SetPageIndex(button.mBookmark.mPageIndex);
 }
 
 }// namespace OpenKneeboard
