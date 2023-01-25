@@ -57,7 +57,7 @@ struct AppSettings final {
   };
 
   struct BookmarkSettings final {
-    bool mEnabled = false;
+    bool mEnabled = true;
     bool mLoop = false;
 
     constexpr auto operator<=>(const BookmarkSettings&) const noexcept
