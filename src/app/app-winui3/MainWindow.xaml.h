@@ -26,6 +26,8 @@
 #include <thread>
 
 #include "MainWindow.g.h"
+#include "WithPropertyChangedEvent.h"
+
 using namespace winrt::Microsoft::UI::Dispatching;
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -33,7 +35,9 @@ using namespace winrt::Microsoft::UI::Xaml::Navigation;
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
+struct MainWindow : MainWindowT<MainWindow>,
+                    EventReceiver,
+                    OpenKneeboard::WithPropertyChangedEvent {
   MainWindow();
   ~MainWindow();
 
@@ -48,6 +52,9 @@ struct MainWindow : MainWindowT<MainWindow>, EventReceiver {
   void UpdateTitleBarMargins(
     const IInspectable& sender,
     const IInspectable& args) noexcept;
+
+  Windows::Foundation::Collections::IVector<IInspectable>
+  NavigationItems() noexcept;
 
  private:
   struct NavigationTag {

@@ -41,7 +41,8 @@
       DisplayModeChanged="UpdateTitleBarMargins"
       PaneOpening="UpdateTitleBarMargins"
       PaneClosing="UpdateTitleBarMargins"
-      BackRequested="OnBackRequested">
+      BackRequested="OnBackRequested"
+      MenuItemsSource="{x:Bind NavigationItems,Mode=OneWay}">
       <NavigationView.PaneCustomContent>
         <Button
           x:Name="ProfileSwitcher"
@@ -65,20 +66,20 @@
               Placement="BottomEdgeAlignedLeft"
             />
           </Button.Flyout>
-					<Button.Resources>
-						<TeachingTip
-							x:Name="ProfileSwitcherTeachingTip"
-							Title="Profiles"
-							PreferredPlacement="Bottom"
-							Subtitle="You can configure and switch between your profiles here">
-							<TeachingTip.IconSource>
-								<FontIconSource
-									Glyph="&#xE82F;"
-									FontFamily="{StaticResource SymbolThemeFontFamily}"
-								/>
-							</TeachingTip.IconSource>
-						</TeachingTip>
-					</Button.Resources>
+          <Button.Resources>
+            <TeachingTip
+              x:Name="ProfileSwitcherTeachingTip"
+              Title="Profiles"
+              PreferredPlacement="Bottom"
+              Subtitle="You can configure and switch between your profiles here">
+              <TeachingTip.IconSource>
+                <FontIconSource
+                  Glyph="&#xE82F;"
+                  FontFamily="{StaticResource SymbolThemeFontFamily}"
+                />
+              </TeachingTip.IconSource>
+            </TeachingTip>
+          </Button.Resources>
         </Button>
       </NavigationView.PaneCustomContent>
       <NavigationView.FooterMenuItems>

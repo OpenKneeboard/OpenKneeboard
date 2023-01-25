@@ -421,7 +421,22 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
 
 winrt::fire_and_forget MainWindow::OnTabsChanged() {
   co_await mUIThread;
-  auto navItems = this->Navigation().MenuItems();
+
+  // In theory, we could directly mutate Navigation().MenuItems();
+  // unfortunately, NavigationView contains a race condition, so
+  // `MenuItems().Clear()` is unsafe.
+  //
+  // Work around this by using a property instead.
+
+  this->mPropertyChangedEvent(
+    *this,
+    Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"NavigationItems"));
+}
+
+winrt::Windows::Foundation::Collections::IVector<
+  winrt::Windows::Foundation::IInspectable>
+MainWindow::NavigationItems() noexcept {
+  auto navItems = winrt::single_threaded_vector<IInspectable>();
   navItems.Clear();
 
   decltype(mKneeboardView->GetBookmarks()) bookmarks;
@@ -460,6 +475,7 @@ winrt::fire_and_forget MainWindow::OnTabsChanged() {
 
     item.IsExpanded(true);
   }
+  return navItems;
 }
 
 void MainWindow::OnNavigationItemInvoked(
