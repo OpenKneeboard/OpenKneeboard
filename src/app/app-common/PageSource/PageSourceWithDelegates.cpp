@@ -29,8 +29,8 @@ namespace OpenKneeboard {
 
 PageSourceWithDelegates::PageSourceWithDelegates(
   const DXResources& dxr,
-  KneeboardState* kbs) {
-  mContentLayerCache = std::make_unique<CachedLayer>(dxr);
+  KneeboardState* kbs)
+  : mDXResources(dxr) {
   mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
   mFixedEvents = {
     AddEventListener(mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent),
@@ -39,7 +39,7 @@ PageSourceWithDelegates::PageSourceWithDelegates(
     AddEventListener(
       this->evContentChangedEvent,
       [this](ContentChangeType type) {
-        this->mContentLayerCache->Reset();
+        this->mContentLayerCache.clear();
         if (type == ContentChangeType::FullyReplaced) {
           this->mDoodles->Clear();
         }
@@ -132,8 +132,13 @@ void PageSourceWithDelegates::RenderPage(
   }
 
   // ... otherwise, we'll assume it should be doodleable
+
+  if (!mContentLayerCache.contains(rti)) {
+    mContentLayerCache[rti] = std::make_unique<CachedLayer>(mDXResources);
+  }
+
   const auto nativeSize = delegate->GetNativeContentSize(decodedIndex);
-  mContentLayerCache->Render(
+  mContentLayerCache[rti]->Render(
     rect,
     nativeSize,
     pageIndex,

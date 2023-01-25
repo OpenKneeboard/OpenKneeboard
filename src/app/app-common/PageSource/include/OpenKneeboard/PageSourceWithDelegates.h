@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
@@ -26,6 +27,7 @@
 
 #include <memory>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 namespace OpenKneeboard {
@@ -68,6 +70,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
   void SetDelegates(const std::vector<std::shared_ptr<IPageSource>>&);
 
  private:
+  DXResources mDXResources;
   std::vector<std::shared_ptr<IPageSource>> mDelegates;
   std::vector<EventHandlerToken> mDelegateEvents;
   std::vector<EventHandlerToken> mFixedEvents;
@@ -75,7 +78,8 @@ class PageSourceWithDelegates : public virtual IPageSource,
   std::tuple<std::shared_ptr<IPageSource>, PageIndex> DecodePageIndex(
     PageIndex) const;
 
-  std::unique_ptr<CachedLayer> mContentLayerCache;
+  std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>>
+    mContentLayerCache;
   std::unique_ptr<DoodleRenderer> mDoodles;
 };
 
