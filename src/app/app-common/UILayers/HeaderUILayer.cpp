@@ -145,17 +145,17 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
     = nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top;
   const auto headerHeight = contentHeight * (HeaderPercent / 100.0f);
   return {
-    {
+    .mCanvasSize = {
       nextMetrics.mCanvasSize.width,
       nextMetrics.mCanvasSize.height + headerHeight,
     },
-    {
+    .mNextArea = {
       0.0f,
       headerHeight,
       nextMetrics.mCanvasSize.width,
       nextMetrics.mCanvasSize.height + headerHeight,
     },
-    {
+    .mContentArea = {
       nextMetrics.mContentArea.left,
       nextMetrics.mContentArea.top + headerHeight,
       nextMetrics.mContentArea.right,
@@ -276,13 +276,19 @@ void HeaderUILayer::DrawToolbar(
       }
     }
 
+    auto buttonRect = button.mRect;
+    buttonRect.left += headerRect.left;
+    buttonRect.top += headerRect.top;
+    buttonRect.right += headerRect.left;
+    buttonRect.bottom += headerRect.top;
+
     d2d->DrawRoundedRectangle(
-      D2D1::RoundedRect(button.mRect, buttonHeight / 4, buttonHeight / 4),
+      D2D1::RoundedRect(buttonRect, buttonHeight / 4, buttonHeight / 4),
       brush,
       strokeWidth);
     auto glyph = winrt::to_hstring(action->GetGlyph());
     d2d->DrawTextW(
-      glyph.c_str(), glyph.size(), glyphFormat.get(), button.mRect, brush);
+      glyph.c_str(), glyph.size(), glyphFormat.get(), buttonRect, brush);
   }
 }
 
@@ -328,7 +334,7 @@ void HeaderUILayer::LayoutToolbar(
   const auto buttonHeight = headerSize.height * 0.75f;
   const auto margin = (headerSize.height - buttonHeight) / 2.0f;
 
-  auto primaryLeft = headerRect.left + (2 * margin);
+  auto primaryLeft = 2 * margin;
 
   auto resetToolbar = weak_wrap(this)([](auto self) { self->OnTabChanged(); });
 
@@ -358,7 +364,7 @@ void HeaderUILayer::LayoutToolbar(
     buttons.push_back({button, selectable});
   }
 
-  auto secondaryRight = headerRect.right - (2 * margin);
+  auto secondaryRight = (headerRect.right - headerRect.left) - (2 * margin);
   for (const auto& item: actions.mRight) {
     const auto selectable
       = std::dynamic_pointer_cast<ISelectableToolbarItem>(item);
