@@ -29,6 +29,13 @@ void UILayerBase::PostNextCursorEvent(
   const IUILayer::Context& context,
   const EventContext& eventContext,
   const CursorEvent& cursorEvent) {
+  const auto [first, rest] = Split(next);
+
+  if (cursorEvent.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+    first->PostCursorEvent(rest, context, eventContext, {});
+    return;
+  }
+
   const auto metrics = this->GetMetrics(next, context);
 
   CursorEvent nextEvent {cursorEvent};
@@ -42,7 +49,6 @@ void UILayerBase::PostNextCursorEvent(
   nextEvent.mX /= metrics.mNextArea.right - metrics.mNextArea.left;
   nextEvent.mY /= metrics.mNextArea.bottom - metrics.mNextArea.top;
 
-  const auto [first, rest] = Split(next);
   if (
     nextEvent.mX < 0 || nextEvent.mX > 1 || nextEvent.mY < 0
     || nextEvent.mY > 1) {

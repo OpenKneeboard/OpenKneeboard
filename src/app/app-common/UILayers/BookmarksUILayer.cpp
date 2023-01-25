@@ -68,12 +68,6 @@ void BookmarksUILayer::PostCursorEvent(
     return;
   }
 
-  const auto metrics = this->GetMetrics(next, context);
-
-  auto canvasEvent = cursorEvent;
-  canvasEvent.mX *= metrics.mCanvasSize.width;
-  canvasEvent.mY *= metrics.mCanvasSize.height;
-
   this->PostNextCursorEvent(next, context, eventContext, cursorEvent);
 
   auto buttons = mButtons;
@@ -81,7 +75,12 @@ void BookmarksUILayer::PostCursorEvent(
     return;
   }
 
-  auto buttonsEvent = canvasEvent;
+  const auto metrics = this->GetMetrics(next, context);
+
+  auto buttonsEvent = cursorEvent;
+  buttonsEvent.mX *= metrics.mCanvasSize.width;
+  buttonsEvent.mY *= metrics.mCanvasSize.height;
+
   buttonsEvent.mX /= metrics.mNextArea.left;
   buttonsEvent.mY /= metrics.mCanvasSize.height;
 
