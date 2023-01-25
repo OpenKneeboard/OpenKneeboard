@@ -47,6 +47,7 @@ class ImageFilePageSource final : public virtual IPageSource,
   static bool CanOpenFile(const DXResources& dxr, const std::filesystem::path&);
 
   virtual void RenderPage(
+    RenderTargetID,
     ID2D1DeviceContext*,
     PageIndex pageIndex,
     const D2D1_RECT_F& rect) final override;

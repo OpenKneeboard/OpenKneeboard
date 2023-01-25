@@ -106,6 +106,7 @@ D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(PageIndex index) {
 }
 
 void ImageFilePageSource::RenderPage(
+  RenderTargetID,
   ID2D1DeviceContext* ctx,
   PageIndex index,
   const D2D1_RECT_F& rect) {

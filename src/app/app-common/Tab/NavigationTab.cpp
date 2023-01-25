@@ -190,6 +190,7 @@ void NavigationTab::ClearUserInput() {
 }
 
 void NavigationTab::RenderPage(
+  RenderTargetID rtid,
   ID2D1DeviceContext* ctx,
   PageIndex pageIndex,
   const D2D1_RECT_F& canvasRect) {
@@ -229,7 +230,7 @@ void NavigationTab::RenderPage(
     mPreferredSize,
     pageIndex,
     ctx,
-    std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageIndex));
+    std::bind_front(&NavigationTab::RenderPreviewLayer, this, rtid, pageIndex));
 
   ctx->SetTransform(pageTransform);
   scope_guard resetTransform(
@@ -280,6 +281,7 @@ void NavigationTab::RenderPage(
 }
 
 void NavigationTab::RenderPreviewLayer(
+  RenderTargetID rtid,
   PageIndex pageIndex,
   ID2D1DeviceContext* ctx,
   const D2D1_SIZE_U& size) {
@@ -312,7 +314,7 @@ void NavigationTab::RenderPreviewLayer(
     rect.right = rect.left + width;
     rect.bottom = button.mRect.bottom + m.mBleed;
 
-    mRootTab->RenderPage(ctx, button.mPageIndex, rect);
+    mRootTab->RenderPage(rtid, ctx, button.mPageIndex, rect);
   }
 }
 

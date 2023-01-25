@@ -122,6 +122,7 @@ D2D1_SIZE_U EndlessNotebookTab::GetNativeContentSize(PageIndex pageIndex) {
 }
 
 void EndlessNotebookTab::RenderPage(
+  RenderTargetID rtid,
   ID2D1DeviceContext* d2d,
   PageIndex pageIndex,
   const D2D1_RECT_F& rect) {
@@ -129,7 +130,7 @@ void EndlessNotebookTab::RenderPage(
     return;
   }
 
-  mSource->RenderPage(d2d, 0, rect);
+  mSource->RenderPage(rtid, d2d, 0, rect);
   mDoodles->Render(d2d, pageIndex, rect);
 }
 

@@ -117,6 +117,7 @@ D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(PageIndex pageIndex) {
 }
 
 void PageSourceWithDelegates::RenderPage(
+  RenderTargetID rti,
   ID2D1DeviceContext* ctx,
   PageIndex pageIndex,
   const D2D1_RECT_F& rect) {
@@ -126,7 +127,7 @@ void PageSourceWithDelegates::RenderPage(
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (withCursorEvents) {
-    delegate->RenderPage(ctx, decodedIndex, rect);
+    delegate->RenderPage(rti, ctx, decodedIndex, rect);
     return;
   }
 
@@ -139,6 +140,7 @@ void PageSourceWithDelegates::RenderPage(
     ctx,
     [&](ID2D1DeviceContext* ctx, const D2D1_SIZE_U& size) {
       delegate->RenderPage(
+        rti,
         ctx,
         decodedIndex,
         {

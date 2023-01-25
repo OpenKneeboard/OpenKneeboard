@@ -218,6 +218,7 @@ D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageIndex) {
 }
 
 void HWNDPageSource::RenderPage(
+  RenderTargetID,
   ID2D1DeviceContext* ctx,
   PageIndex index,
   const D2D1_RECT_F& rect) {

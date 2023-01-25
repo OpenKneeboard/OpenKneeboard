@@ -69,6 +69,7 @@ class KneeboardView final : public IKneeboardView,
   virtual D2D1_SIZE_U GetContentNativeSize() const override;
 
   virtual void RenderWithChrome(
+    RenderTargetID,
     ID2D1DeviceContext* d2d,
     const D2D1_RECT_F& rect,
     bool isActiveForInput) noexcept override;

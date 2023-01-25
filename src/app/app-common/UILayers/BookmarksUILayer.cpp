@@ -133,6 +133,7 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
 }
 
 void BookmarksUILayer::Render(
+  RenderTargetID rtid,
   const IUILayer::NextList& next,
   const Context& context,
   ID2D1DeviceContext* d2d,
@@ -140,7 +141,7 @@ void BookmarksUILayer::Render(
   auto [first, rest] = Split(next);
 
   if (!this->IsEnabled()) {
-    first->Render(rest, context, d2d, rect);
+    first->Render(rtid, rest, context, d2d, rect);
     return;
   }
 
@@ -205,6 +206,7 @@ void BookmarksUILayer::Render(
     }
   }
   first->Render(
+    rtid,
     rest,
     context,
     d2d,

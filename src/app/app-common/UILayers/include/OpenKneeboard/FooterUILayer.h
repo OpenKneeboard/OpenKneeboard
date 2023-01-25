@@ -44,6 +44,7 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
     const CursorEvent&) override;
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(
+    RenderTargetID,
     const NextList&,
     const Context&,
     ID2D1DeviceContext*,

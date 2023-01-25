@@ -49,6 +49,7 @@ class InterprocessRenderer final : private EventReceiver {
   ~InterprocessRenderer();
 
  private:
+  RenderTargetID mRenderTargetID;
   EventContext mEventContext;
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;

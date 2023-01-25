@@ -215,6 +215,7 @@ void InterprocessRenderer::Render(Layer& layer) {
   layer.mConfig.mVR.mHeight = usedSize.height * scale;
 
   view->RenderWithChrome(
+    mRenderTargetID,
     ctx.get(),
     {
       0,

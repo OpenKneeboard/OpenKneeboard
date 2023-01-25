@@ -101,6 +101,7 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
 }
 
 void FooterUILayer::Render(
+  RenderTargetID rtid,
   const IUILayer::NextList& next,
   const Context& context,
   ID2D1DeviceContext* d2d,
@@ -130,6 +131,7 @@ void FooterUILayer::Render(
   };
 
   next.front()->Render(
+    rtid,
     next.subspan(1),
     context,
     d2d,

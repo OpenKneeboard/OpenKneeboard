@@ -314,11 +314,13 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
 }
 
 void KneeboardView::RenderWithChrome(
+  RenderTargetID rtid,
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect,
   bool isActiveForInput) noexcept {
   auto [first, rest] = this->GetUILayers();
   first->Render(
+    rtid,
     rest,
     {
       .mTabView = mCurrentTabView,

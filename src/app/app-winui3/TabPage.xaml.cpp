@@ -402,14 +402,13 @@ void TabPage::AttachVisibility(
     visibility->IsVisible() ? Visibility::Visible : Visibility::Collapsed);
   AddEventListener(
     visibility->evStateChangedEvent,
-    weak_wrap(this, visibility, control)
-      (
-        [](auto self, auto visibility, auto control) -> winrt::fire_and_forget {
-          co_await self->mUIThread;
-          control.Visibility(
-            visibility->IsVisible() ? Visibility::Visible
-                                    : Visibility::Collapsed);
-        }));
+    weak_wrap(this, visibility, control)(
+      [](auto self, auto visibility, auto control) -> winrt::fire_and_forget {
+        co_await self->mUIThread;
+        control.Visibility(
+          visibility->IsVisible() ? Visibility::Visible
+                                  : Visibility::Collapsed);
+      }));
 }
 
 void TabPage::OnCanvasSizeChanged(
@@ -510,7 +509,8 @@ void TabPage::PaintNow() noexcept {
   auto metrics = GetPageMetrics();
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
-    tab->RenderPage(ctx, mTabView->GetPageIndex(), metrics.mRenderRect);
+    tab->RenderPage(
+      gGUIRenderTargetID, ctx, mTabView->GetPageIndex(), metrics.mRenderRect);
   } else {
     mErrorRenderer->Render(
       ctx, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());

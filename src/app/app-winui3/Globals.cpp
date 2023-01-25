@@ -34,5 +34,6 @@ std::shared_ptr<TroubleshootingStore> gTroubleshootingStore;
 DXResources gDXResources;
 winrt::handle gMutex {};
 std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
+RenderTargetID gGUIRenderTargetID;
 
 }// namespace OpenKneeboard

@@ -19,23 +19,10 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/RenderTargetID.h>
-#include <winrt/OpenKneeboardApp.h>
-
-#include <memory>
-#include <vector>
+#include <OpenKneeboard/UniqueID.h>
 
 namespace OpenKneeboard {
-class KneeboardState;
-class TroubleshootingStore;
 
-extern HWND gMainWindow;
-extern std::shared_ptr<KneeboardState> gKneeboard;
-extern DXResources gDXResources;
-extern winrt::handle gMutex;
-extern std::shared_ptr<TroubleshootingStore> gTroubleshootingStore;
-extern std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
-extern RenderTargetID gGUIRenderTargetID;
+class RenderTargetID final : public UniqueIDBase<RenderTargetID> {};
 
 }// namespace OpenKneeboard

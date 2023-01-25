@@ -69,6 +69,7 @@ class PDFFilePageSource final
   virtual void ClearUserInput() override;
 
   virtual void RenderPage(
+    RenderTargetID,
     ID2D1DeviceContext*,
     PageIndex pageIndex,
     const D2D1_RECT_F& rect) override;

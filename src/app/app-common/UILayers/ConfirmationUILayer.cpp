@@ -85,11 +85,12 @@ void ConfirmationUILayer::PostCursorEvent(
 }
 
 void ConfirmationUILayer::Render(
+  RenderTargetID rtid,
   const NextList& next,
   const Context& context,
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
-  next.front()->Render(next.subspan(1), context, d2d, rect);
+  next.front()->Render(rtid, next.subspan(1), context, d2d, rect);
 
   if (rect != mCanvasRect) {
     UpdateLayout(d2d, rect);

@@ -83,6 +83,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
 }
 
 void TabViewUILayer::Render(
+  RenderTargetID rtid,
   const IUILayer::NextList&,
   const Context& context,
   ID2D1DeviceContext* d2d,
@@ -110,7 +111,7 @@ void TabViewUILayer::Render(
     return;
   }
 
-  tab->RenderPage(d2d, pageIndex, rect);
+  tab->RenderPage(rtid, d2d, pageIndex, rect);
 }
 
 void TabViewUILayer::RenderError(

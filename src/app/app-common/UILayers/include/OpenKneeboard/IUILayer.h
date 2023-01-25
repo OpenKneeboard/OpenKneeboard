@@ -22,6 +22,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/RenderTargetID.h>
 #include <d2d1_1.h>
 
 #include <memory>
@@ -52,6 +53,7 @@ class IUILayer {
     = 0;
 
   virtual void Render(
+    RenderTargetID,
     const NextList&,
     const Context&,
     ID2D1DeviceContext*,

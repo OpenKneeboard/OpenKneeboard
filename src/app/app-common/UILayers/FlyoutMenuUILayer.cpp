@@ -117,6 +117,7 @@ IUILayer::Metrics FlyoutMenuUILayer::GetMetrics(
 }
 
 void FlyoutMenuUILayer::Render(
+  RenderTargetID rtid,
   const NextList& next,
   const Context& context,
   ID2D1DeviceContext* d2d,
@@ -130,7 +131,7 @@ void FlyoutMenuUILayer::Render(
     submenuNext.reserve(next.size() + 1);
     std::ranges::copy(next, std::back_inserter(submenuNext));
 
-    previous->Render(submenuNext, context, d2d, rect);
+    previous->Render(rtid, submenuNext, context, d2d, rect);
     return;
   }
 
@@ -143,7 +144,7 @@ void FlyoutMenuUILayer::Render(
   }
 
   if (!next.empty()) {
-    next.front()->Render(next.subspan(1), context, d2d, rect);
+    next.front()->Render(rtid, next.subspan(1), context, d2d, rect);
   }
 
   Menu menu {};

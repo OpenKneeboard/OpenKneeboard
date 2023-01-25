@@ -351,6 +351,7 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
 }
 
 void PDFFilePageSource::RenderPage(
+  RenderTargetID,
   ID2D1DeviceContext* ctx,
   PageIndex pageIndex,
   const D2D1_RECT_F& rect) {

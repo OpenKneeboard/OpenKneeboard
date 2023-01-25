@@ -165,6 +165,7 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
 }
 
 void HeaderUILayer::Render(
+  RenderTargetID rtid,
   const IUILayer::NextList& next,
   const Context& context,
   ID2D1DeviceContext* d2d,
@@ -204,6 +205,7 @@ void HeaderUILayer::Render(
   this->DrawHeaderText(tabView, d2d, headerTextRect);
 
   next.front()->Render(
+    rtid,
     next.subspan(1),
     context,
     d2d,
@@ -211,7 +213,7 @@ void HeaderUILayer::Render(
 
   auto secondaryMenu = mSecondaryMenu;
   if (secondaryMenu) {
-    secondaryMenu->Render({}, context, d2d, rect);
+    secondaryMenu->Render(rtid, {}, context, d2d, rect);
   }
 }
 

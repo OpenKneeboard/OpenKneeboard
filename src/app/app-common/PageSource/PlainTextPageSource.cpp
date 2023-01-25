@@ -75,6 +75,7 @@ D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(PageIndex pageIndex) {
 }
 
 void PlainTextPageSource::RenderPage(
+  RenderTargetID,
   ID2D1DeviceContext* ctx,
   PageIndex pageIndex,
   const D2D1_RECT_F& rect) {

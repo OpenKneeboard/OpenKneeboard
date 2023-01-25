@@ -65,6 +65,7 @@ class EndlessNotebookTab final : public TabBase,
   virtual PageIndex GetPageCount() const override;
   virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
   virtual void RenderPage(
+    RenderTargetID,
     ID2D1DeviceContext*,
     PageIndex pageIndex,
     const D2D1_RECT_F& rect) override;
