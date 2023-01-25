@@ -45,6 +45,7 @@
 #include <nlohmann/json.hpp>
 #include <random>
 #include <thread>
+#include <unordered_map>
 
 using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
@@ -69,7 +70,7 @@ struct PDFFilePageSource::Impl final {
 
   bool mNavigationLoaded = false;
 
-  std::unique_ptr<CachedLayer> mContentLayer;
+  std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>> mCache;
   std::unique_ptr<DoodleRenderer> mDoodles;
 };
 
@@ -85,7 +86,6 @@ PDFFilePageSource::PDFFilePageSource(
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), p->mHighlightBrush.put()));
 
-  p->mContentLayer = std::make_unique<CachedLayer>(dxr);
   p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
   AddEventListener(
     p->mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
@@ -189,6 +189,7 @@ void PDFFilePageSource::Reload() {
   p->mBookmarks.clear();
   p->mLinks.clear();
   p->mNavigationLoaded = false;
+  p->mCache.clear();
 
   if (!std::filesystem::is_regular_file(p->mPath)) {
     return;
@@ -351,12 +352,15 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
 }
 
 void PDFFilePageSource::RenderPage(
-  RenderTargetID,
+  RenderTargetID rtid,
   ID2D1DeviceContext* ctx,
   PageIndex pageIndex,
   const D2D1_RECT_F& rect) {
   const auto size = this->GetNativeContentSize(pageIndex);
-  p->mContentLayer->Render(
+  if (!p->mCache.contains(rtid)) {
+    p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
+  }
+  p->mCache[rtid]->Render(
     rect, size, pageIndex, ctx, [=](auto ctx, const auto& size) {
       this->RenderPageContent(
         ctx,

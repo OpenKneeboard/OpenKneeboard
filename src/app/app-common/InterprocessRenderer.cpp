@@ -191,7 +191,7 @@ InterprocessRenderer::~InterprocessRenderer() {
   ctx->Flush();
 }
 
-void InterprocessRenderer::Render(Layer& layer) {
+void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTarget(layer.mCanvasBitmap.get());
   ctx->BeginDraw();
@@ -215,7 +215,7 @@ void InterprocessRenderer::Render(Layer& layer) {
   layer.mConfig.mVR.mHeight = usedSize.height * scale;
 
   view->RenderWithChrome(
-    mRenderTargetID,
+    rtid,
     ctx.get(),
     {
       0,
@@ -229,13 +229,17 @@ void InterprocessRenderer::Render(Layer& layer) {
 void InterprocessRenderer::RenderNow() {
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
 
+  if (mRenderTargetIDs.size() < renderInfos.size()) {
+    mRenderTargetIDs.resize(renderInfos.size());
+  }
+
   for (uint8_t i = 0; i < renderInfos.size(); ++i) {
     auto& layer = mLayers.at(i);
     const auto& info = renderInfos.at(i);
     layer.mKneeboardView = info.mView;
     layer.mConfig.mVR = info.mVR;
     layer.mIsActiveForInput = info.mIsActiveForInput;
-    this->Render(layer);
+    this->Render(mRenderTargetIDs.at(i), layer);
   }
 
   this->Commit(renderInfos.size());

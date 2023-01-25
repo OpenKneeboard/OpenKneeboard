@@ -49,7 +49,7 @@ class InterprocessRenderer final : private EventReceiver {
   ~InterprocessRenderer();
 
  private:
-  RenderTargetID mRenderTargetID;
+  std::vector<RenderTargetID> mRenderTargetIDs;
   EventContext mEventContext;
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
@@ -84,7 +84,7 @@ class InterprocessRenderer final : private EventReceiver {
   std::shared_ptr<GameInstance> mCurrentGame;
 
   void RenderNow();
-  void Render(Layer&);
+  void Render(RenderTargetID, Layer&);
 
   void Commit(uint8_t layerCount);
 
