@@ -1,19 +1,20 @@
 include(ExternalProject)
 ExternalProject_Add(
   directxtkBuild
-  URL "https://github.com/microsoft/DirectXTK/archive/refs/tags/jul2022.zip"
-  URL_HASH "SHA256=2fb922a3477a8c817346002181bb74e15ecf4adc07e10cf8ba7f4ca4faeaa175"
+  URL "https://github.com/microsoft/DirectXTK/archive/refs/tags/dec2022.zip"
+  URL_HASH "SHA256=920052026cab4fb13782ea4fe928b1837219c8f346a2a9759afdc7860a9a082e"
   BUILD_BYPRODUCTS "<INSTALL_DIR>/$<CONFIG>/lib/DirectXTK.lib"
   CMAKE_ARGS
-    "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
-    -DBUILD_TOOLS=OFF
-    -DBUILD_XAUDIO_WIN10=OFF
-    -DBUILD_XAUDIO_WIN8=OFF
-    -DBUILD_XAUDIO_WIN7=OFF
+  "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
+  -DBUILD_TOOLS=OFF
+  -DBUILD_XAUDIO_WIN10=OFF
+  -DBUILD_XAUDIO_WIN8=OFF
+  -DBUILD_XAUDIO_WIN7=OFF
+
   # Split the install dir by configuration so we don't have mismatches for ITERATOR_DEBUG_LEVEL
   # or MSVCRT
   INSTALL_COMMAND
-    ${CMAKE_COMMAND} --install . "--prefix=<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
+  ${CMAKE_COMMAND} --install . "--prefix=<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
   EXCLUDE_FROM_ALL
 )
 

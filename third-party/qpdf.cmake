@@ -5,33 +5,33 @@ set(
 
 ExternalProject_Add(
   qpdfBuild
-  URL "https://github.com/qpdf/qpdf/releases/download/v11.1.1/qpdf-11.1.1.tar.gz"
-  URL_HASH "SHA256=25e8ec60e290cd134405a51920015b6d351d4e0b93b7b736d257f10725f74b5a"
+  URL "https://github.com/qpdf/qpdf/archive/refs/tags/v11.2.0.zip"
+  URL_HASH "SHA256=b140ec001fd02978c4631ce0774ef9d202f44fd2f41b1c9a987bb3b9530e0f78"
   CMAKE_ARGS
-    "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
-    "-DREQUIRE_CRYPTO_NATIVE=ON"
-    "-DUSE_IMPLICIT_CRYPTO=OFF"
-    "-DBUILD_SHARED_LIBS=OFF"
-    "-DLIBJPEG_H_PATH=$<TARGET_PROPERTY:ThirdParty::LibJpeg,INTERFACE_INCLUDE_DIRECTORIES>"
-    "-DLIBJPEG_LIB_PATH=$<TARGET_PROPERTY:ThirdParty::LibJpeg,INTERFACE_LINK_LIBRARIES>"
-    "-DZLIB_H_PATH=$<TARGET_PROPERTY:ThirdParty::ZLib,INTERFACE_INCLUDE_DIRECTORIES>"
-    "-DZLIB_LIB_PATH=$<TARGET_PROPERTY:ThirdParty::ZLib,INTERFACE_LINK_LIBRARIES>"
+  "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
+  "-DREQUIRE_CRYPTO_NATIVE=ON"
+  "-DUSE_IMPLICIT_CRYPTO=OFF"
+  "-DBUILD_SHARED_LIBS=OFF"
+  "-DLIBJPEG_H_PATH=$<TARGET_PROPERTY:ThirdParty::LibJpeg,INTERFACE_INCLUDE_DIRECTORIES>"
+  "-DLIBJPEG_LIB_PATH=$<TARGET_PROPERTY:ThirdParty::LibJpeg,INTERFACE_LINK_LIBRARIES>"
+  "-DZLIB_H_PATH=$<TARGET_PROPERTY:ThirdParty::ZLib,INTERFACE_INCLUDE_DIRECTORIES>"
+  "-DZLIB_LIB_PATH=$<TARGET_PROPERTY:ThirdParty::ZLib,INTERFACE_LINK_LIBRARIES>"
   BUILD_COMMAND
-    "${CMAKE_COMMAND}"
-    --build .
-    --config "$<CONFIG>"
-    --target "libqpdf"
-    --parallel
-    --
-    /p:CL_MPCount=
-    /p:UseMultiToolTask=true
-    /p:EnforceProcessCountAcrossBuilds=true
+  "${CMAKE_COMMAND}"
+  --build .
+  --config "$<CONFIG>"
+  --target "libqpdf"
+  --parallel
+  --
+  /p:CL_MPCount=
+  /p:UseMultiToolTask=true
+  /p:EnforceProcessCountAcrossBuilds=true
   INSTALL_COMMAND
-    "${CMAKE_COMMAND}"
-    --install .
-    --prefix "<INSTALL_DIR>/$<CONFIG>"
-    --config "$<CONFIG>"
-    --component "dev"
+  "${CMAKE_COMMAND}"
+  --install .
+  --prefix "<INSTALL_DIR>/$<CONFIG>"
+  --config "$<CONFIG>"
+  --component "dev"
   DEPENDS ${QPDF_DEPENDENCIES}
   EXCLUDE_FROM_ALL
 )
@@ -60,7 +60,7 @@ target_compile_definitions(
 add_library(ThirdParty::QPDF ALIAS libqpdf)
 
 install(
-	FILES "${SOURCE_DIR}/NOTICE.md"
-	TYPE DOC
-	RENAME "LICENSE-ThirdParty-QPDF.txt"
+  FILES "${SOURCE_DIR}/NOTICE.md"
+  TYPE DOC
+  RENAME "LICENSE-ThirdParty-QPDF.txt"
 )
