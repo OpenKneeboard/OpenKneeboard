@@ -401,9 +401,9 @@ void HeaderUILayer::LayoutToolbar(
     });
 
   *headerTextRect = {
-    primaryLeft,
+    primaryLeft + headerRect.left,
     headerRect.top,
-    secondaryRight,
+    secondaryRight + headerRect.left,
     headerRect.bottom,
   };
 
