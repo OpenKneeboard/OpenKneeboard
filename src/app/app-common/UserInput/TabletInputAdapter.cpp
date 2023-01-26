@@ -137,6 +137,10 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
 
   mSettings.mWintab = mode;
   StartWintab();
+  if (!mWintabTablet) {
+    dprint("Failed to initialize wintab");
+    co_return;
+  }
   auto priority = (mSettings.mWintab == WintabMode::Enabled)
     ? WintabTablet::Priority::AlwaysActive
     : WintabTablet::Priority::ForegroundOnly;
