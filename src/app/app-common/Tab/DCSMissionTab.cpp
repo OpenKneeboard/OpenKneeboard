@@ -86,6 +86,10 @@ void DCSMissionTab::OnGameEvent(
   const std::filesystem::path& _installPath,
   const std::filesystem::path& _savedGamePath) {
   if (event.name == DCS::EVT_MISSION) {
+    if (!std::filesystem::exists(event.value)) {
+      dprintf("Briefing tab: mission '{}' does not exist", event.value);
+      return;
+    }
     auto mission = std::filesystem::canonical(event.value);
     if (mission == mMission) {
       return;
