@@ -62,8 +62,8 @@ function Update-Winget {
 }
 
 if ($Preview) {
-  $apiData = Get-Content preview-msi.json | ConvertFrom-Json
-  Update-Winget -ApiData $apiData -PackageID FredEmmott.OpenKneeboard.Preview
+  Write-Host "FredEmmott.OpenKneeboard.Preview has been removed from winget."
+  exit 1
 }
 
 if ($Stable) {
