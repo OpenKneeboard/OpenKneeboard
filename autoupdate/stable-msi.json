@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/89000426",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/89000426/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/89000426/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3.1",
-    "id": 89000426,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/90306395",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/90306395/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/90306395/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3.2",
+    "id": 90306395,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FTgnq",
-    "tag_name": "v1.3.1",
-    "target_commitish": "77262e94ebbaf7190a0bbd5013cddd0d8ea30a5d",
-    "name": "v1.3.1: small bugfixes",
+    "node_id": "RE_kwDOGk0DR84FYfdb",
+    "tag_name": "v1.3.2",
+    "target_commitish": "114c87dbfeb73c4d9f27c2b9de5ee730205be527",
+    "name": "v1.3.2: small bugfixes",
     "draft": false,
     "prerelease": false,
-    "created_at": "2023-01-15T02:40:49Z",
-    "published_at": "2023-01-15T03:32:34Z",
+    "created_at": "2023-01-26T14:03:51Z",
+    "published_at": "2023-01-26T15:29:11Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/91729071",
-        "id": 91729071,
-        "node_id": "RA_kwDOGk0DR84Fd6yv",
-        "name": "OpenKneeboard-v1.3.1-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/93126812",
+        "id": 93126812,
+        "node_id": "RA_kwDOGk0DR84FjQCc",
+        "name": "OpenKneeboard-v1.3.2-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 107994673,
-        "download_count": 8,
-        "created_at": "2023-01-15T03:10:29Z",
-        "updated_at": "2023-01-15T03:10:33Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.1/OpenKneeboard-v1.3.1-DebugSymbols.zip"
+        "size": 107990733,
+        "download_count": 5,
+        "created_at": "2023-01-26T14:35:26Z",
+        "updated_at": "2023-01-26T14:35:30Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.2/OpenKneeboard-v1.3.2-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/91729067",
-        "id": 91729067,
-        "node_id": "RA_kwDOGk0DR84Fd6yr",
-        "name": "OpenKneeboard-v1.3.1.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/93126807",
+        "id": 93126807,
+        "node_id": "RA_kwDOGk0DR84FjQCX",
+        "name": "OpenKneeboard-v1.3.2.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -97,14 +97,14 @@
         "content_type": "application/msi",
         "state": "uploaded",
         "size": 32710656,
-        "download_count": 57,
-        "created_at": "2023-01-15T03:10:26Z",
-        "updated_at": "2023-01-15T03:10:28Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.1/OpenKneeboard-v1.3.1.msi"
+        "download_count": 109,
+        "created_at": "2023-01-26T14:35:23Z",
+        "updated_at": "2023-01-26T14:35:25Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.2/OpenKneeboard-v1.3.2.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3.1",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3.1",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.3.1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.1/OpenKneeboard-v1.3.1.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n- fix drawing lag in endless notebooks when drawing with mouse in the OpenKneeboard app\r\n- when selecting files for the single file tab or endless notebook templates, it is no longer possible to choose a filename that doesn't exist\r\n- fixed invalid settings being saved if all games are removed\r\n- fix memory leak and potential hang if input devices are plugged/unplugged many times"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3.2",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3.2",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.3.2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.2/OpenKneeboard-v1.3.2.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n- fix crash enabling wintab if there is no wintab driver installed; this may still crash if a buggy wintab driver is installed\r\n- fix in-game visual lag when switching tabs: OpenKneeboard was not updating when switching tabs - this was relatively subtle because OpenKneeboard would update within a second, whenever the real-world or in-game clock moved to the next second."
   }
 ]
