@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/GamesList.h>
@@ -203,6 +204,12 @@ void KneeboardState::SetFirstViewIndex(uint8_t index) {
     this->mInputViewIndex = std::min<uint8_t>(
       index, mSettings.mApp.mDualKneeboards.mEnabled ? 1 : 0);
   }
+
+  for (const auto& view: this->mViews) {
+    if (view) {
+      view->PostCursorEvent({});
+    }
+  }
   this->evNeedsRepaintEvent.Emit();
   this->evViewOrderChangedEvent.Emit();
 }
@@ -232,6 +239,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
       if (mInputViewIndex == i) {
         return;
       }
+      mViews.at(mInputViewIndex)->PostCursorEvent({});
       dprintf("Giving input focus to view {:#016x} at index {}", viewID, i);
       mInputViewIndex = i;
       evNeedsRepaintEvent.Emit();
@@ -404,6 +412,7 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
   }
 
   if (value.mEnableGazeInputFocus != mSettings.mVR.mEnableGazeInputFocus) {
+    mViews.at(mInputViewIndex)->PostCursorEvent({});
     mInputViewIndex = mFirstViewIndex;
     this->evViewOrderChangedEvent.Emit();
   }

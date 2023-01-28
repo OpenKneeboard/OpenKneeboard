@@ -94,6 +94,8 @@ class CursorClickableRegions final
 
     if (ev.mTouchState == CursorTouchState::NEAR_SURFACE) {
       mHoverButton = buttonUnderCursor;
+    } else if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+      mHoverButton.reset();
     }
 
     if (
