@@ -18,12 +18,16 @@
  * USA.
  */
 
-#include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/dprint.h>
-#include <d3d11.h>
-#include <d3d12.h>
+// clang-format off
 #include <shims/winrt/base.h>
 #include <windows.h>
+#include <psapi.h>
+#include <d3d11.h>
+#include <d3d12.h>
+// clang-format on
+
+#include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/dprint.h>
 
 #include <thread>
 
@@ -52,6 +56,7 @@ class InjectionBootstrapper final {
   const uint64_t FLAG_D3D12 = 1 << 1;
   const uint64_t FLAG_OCULUS = 1ui64 << 32;
   const uint64_t FLAG_STEAMVR = 1ui64 << 33;
+  const uint64_t FLAG_OPENXR = 1ui64 << 34;
 
   HMODULE mThisModule = nullptr;
   uint64_t mFlags = 0;
@@ -174,6 +179,7 @@ class InjectionBootstrapper final {
  private:
   void Next() {
     dprint("Going Next()");
+    CheckForOpenXRAPILayer();
     mPassthroughAll = true;
 
     // Whatever APIs are in use, if SteamVR is one of them, the main app will
@@ -181,6 +187,13 @@ class InjectionBootstrapper final {
     // to do anything here.
     if ((mFlags & FLAG_STEAMVR)) {
       dprint("Doing nothing as SteamVR is in-process");
+      return;
+    }
+
+    // Similarly, if the OpenKneeboard OpenXR API layer is loaded, that will
+    // deal with the rendering.
+    if ((mFlags & FLAG_OPENXR)) {
+      dprint("Doing nothing as the OpenXR API layer is in-process.");
       return;
     }
 
@@ -203,6 +216,38 @@ class InjectionBootstrapper final {
     dprintf(
       "Don't know how to create a kneeboard from detection flags {:#b}",
       mFlags);
+  }
+
+  void CheckForOpenXRAPILayer() {
+    std::vector<HMODULE> modules;
+    DWORD bytesNeeded {};
+    const auto process = GetCurrentProcess();
+    EnumProcessModules(process, modules.data(), 0, &bytesNeeded);
+    if (!bytesNeeded) {
+      return;
+    }
+    modules.resize(bytesNeeded / sizeof(HMODULE));
+    if (!EnumProcessModules(
+          process, modules.data(), bytesNeeded, &bytesNeeded)) {
+      dprintf(
+        "Failed to get process module list: {}",
+        static_cast<int64_t>(GetLastError()));
+      return;
+    }
+    for (const auto module: modules) {
+      wchar_t buffer[1024];
+      const auto bufferLen
+        = GetModuleFileNameW(module, buffer, std::size(buffer));
+      if (!bufferLen) {
+        continue;
+      }
+      const std::filesystem::path path {std::wstring_view {buffer, bufferLen}};
+      if (path.filename() == RuntimeFiles::OPENXR_DLL) {
+        dprint("Found OpenKneeboard OpenXR API layer in-process");
+        mFlags |= FLAG_OPENXR;
+        return;
+      }
+    }
   }
 
   void LoadNext(const std::filesystem::path& _next) {
