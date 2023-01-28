@@ -23,17 +23,26 @@
 #include "RenameTabDialog.g.h"
 // clang-format on
 
+#include "WithPropertyChangedEvent.h"
+
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct RenameTabDialog : RenameTabDialogT<RenameTabDialog> {
+struct RenameTabDialog : RenameTabDialogT<RenameTabDialog>,
+                         OpenKneeboard::WithPropertyChangedEvent {
   RenameTabDialog();
   ~RenameTabDialog();
 
   winrt::hstring TabTitle() noexcept;
   void TabTitle(const winrt::hstring&) noexcept;
+
+  winrt::hstring Prompt() const noexcept;
+  void Prompt(const winrt::hstring&) noexcept;
+
+ private:
+  winrt::hstring mPrompt;
 };
 
 }// namespace winrt::OpenKneeboardApp::implementation

@@ -1,9 +1,11 @@
 namespace OpenKneeboardApp
 {
     [default_interface]
-    runtimeclass RenameTabDialog: Microsoft.UI.Xaml.Controls.ContentDialog
+    runtimeclass RenameTabDialog: Microsoft.UI.Xaml.Controls.ContentDialog,
+                                  Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         RenameTabDialog();
         String TabTitle;
+        String Prompt;
     }
 }

@@ -467,9 +467,29 @@ MainWindow::NavigationItems() noexcept {
     for (auto tabID = tab->GetRuntimeID();
          bookmark != bookmarks.end() && bookmark->mTabID == tabID;
          bookmark++) {
+      bookmarkCount++;
+      const auto title = bookmark->mTitle.empty()
+        ? winrt::hstring(std::format(L"#{}", bookmarkCount))
+        : to_hstring(bookmark->mTitle);
+
       muxc::NavigationViewItem bookmarkItem;
-      bookmarkItem.Content(box_value(std::format(L"#{}", ++bookmarkCount)));
+      bookmarkItem.Content(box_value(title));
       bookmarkItem.Tag(NavigationTag {tabID, bookmark->mPageIndex}.box());
+
+      muxc::MenuFlyoutItem renameItem;
+      renameItem.Text(_(L"Rename bookmark"));
+      muxc::FontIcon renameIcon;
+      renameIcon.Glyph(L"\uE8AC");
+      renameItem.Icon(renameIcon);
+      renameItem.Click(discard_winrt_event_args(weak_wrap(
+        this, tab)([bookmark = *bookmark, title](auto self, auto tab) {
+        self->RenameBookmark(tab, bookmark, title);
+      })));
+
+      muxc::MenuFlyout contextFlyout;
+      contextFlyout.Items().Append(renameItem);
+      bookmarkItem.ContextFlyout(contextFlyout);
+
       item.MenuItems().Append(bookmarkItem);
     }
 
@@ -508,6 +528,37 @@ winrt::fire_and_forget MainWindow::RenameTab(std::shared_ptr<ITab> tab) {
     co_return;
   }
   tab->SetTitle(newName);
+}
+
+winrt::fire_and_forget MainWindow::RenameBookmark(
+  std::shared_ptr<ITab> tab,
+  Bookmark bookmark,
+  winrt::hstring title) {
+  OpenKneeboardApp::RenameTabDialog dialog;
+  dialog.XamlRoot(Navigation().XamlRoot());
+  dialog.TabTitle(to_hstring(title));
+  dialog.Prompt(_(L"What would you like to rename this bookmark to?"));
+
+  const auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  const auto newName = to_string(dialog.TabTitle());
+  if (newName.empty()) {
+    co_return;
+  }
+
+  auto bookmarks = tab->GetBookmarks();
+  for (auto it = bookmarks.begin(); it != bookmarks.end(); ++it) {
+    if (*it != bookmark) {
+      continue;
+    }
+
+    it->mTitle = newName;
+    break;
+  }
+  tab->SetBookmarks(bookmarks);
 }
 
 void MainWindow::OnNavigationItemInvoked(

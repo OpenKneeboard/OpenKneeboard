@@ -33,6 +33,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 RenameTabDialog::RenameTabDialog() {
   InitializeComponent();
+  mPrompt = _(L"What would you like to rename this tab to?");
 }
 
 RenameTabDialog::~RenameTabDialog() = default;
@@ -49,6 +50,15 @@ void RenameTabDialog::TabTitle(const winrt::hstring& title) noexcept {
   textBox.SelectAll();
   this->Title(
     box_value(std::format(_(L"Rename '{}'"), std::wstring_view {title})));
+}
+
+winrt::hstring RenameTabDialog::Prompt() const noexcept {
+  return mPrompt;
+}
+
+void RenameTabDialog::Prompt(const winrt::hstring& prompt) noexcept {
+  mPrompt = prompt;
+  this->mPropertyChangedEvent(*this, winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"Prompt"));
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

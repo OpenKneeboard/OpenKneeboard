@@ -12,7 +12,7 @@
     Margin="8,8,8,8"
     Spacing="4"
     Orientation="Vertical">
-    <TextBlock>What would you like to rename this tab to?</TextBlock>
+    <TextBlock Text="{x:Bind Prompt,Mode=OneWay}" />
     <TextBox
       x:Name="TitleTextBox"
     />

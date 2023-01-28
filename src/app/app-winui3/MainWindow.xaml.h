@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
 
@@ -85,6 +86,8 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget OnTabsChanged();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
+  winrt::fire_and_forget
+  RenameBookmark(std::shared_ptr<ITab>, Bookmark, winrt::hstring title);
 
   void SaveWindowPosition();
 

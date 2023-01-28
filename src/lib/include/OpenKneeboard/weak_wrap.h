@@ -126,7 +126,8 @@ class weak_wrap {
 
   template <class TRet>
   auto bindWithReturnType(
-    typename TRet (*func)(WeakWrap::strong_t<TPtrs>...)) const noexcept {
+    typename std::function<TRet(WeakWrap::strong_t<TPtrs>...)> func)
+    const noexcept {
     return [func, weak_ptrs = mWeakPtrs]() {
       const auto strong_ptrs = std::apply(
         [](auto&&... weak_ptrs) {
