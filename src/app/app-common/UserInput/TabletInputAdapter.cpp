@@ -103,6 +103,12 @@ void TabletInputAdapter::StartOTDIPC() {
   AddEventListener(
     mOTDIPC->evTabletInputEvent,
     std::bind_front(&TabletInputAdapter::OnOTDInput, this));
+  AddEventListener(
+    mOTDIPC->evDeviceInfoReceivedEvent,
+    std::bind_front(&TabletInputAdapter::OnOTDDevice, this));
+  for (const auto& device: mOTDIPC->GetTablets()) {
+    this->GetOTDDevice(device.mDeviceID);
+  }
 }
 
 void TabletInputAdapter::StopOTDIPC() {
@@ -421,6 +427,10 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::GetOTDDevice(
   mOTDDevices[info->mDeviceID] = device;
   evDeviceConnectedEvent.Emit(device);
   return device;
+}
+
+void TabletInputAdapter::OnOTDDevice(const TabletInfo& tablet) {
+  this->GetOTDDevice(tablet.mDeviceID);
 }
 
 void TabletInputAdapter::OnOTDInput(

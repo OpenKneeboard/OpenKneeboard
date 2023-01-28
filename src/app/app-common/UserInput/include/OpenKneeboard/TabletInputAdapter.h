@@ -93,6 +93,7 @@ class TabletInputAdapter final
   ///// OpenTabletDriver /////
 
   void OnOTDInput(const std::string& id, const TabletState&);
+  void OnOTDDevice(const TabletInfo&);
   std::shared_ptr<TabletInputDevice> GetOTDDevice(const std::string& id);
 
   std::shared_ptr<OTDIPCClient> mOTDIPC;

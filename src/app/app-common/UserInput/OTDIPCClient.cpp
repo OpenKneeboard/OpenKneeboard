@@ -265,6 +265,7 @@ void OTDIPCClient::ProcessMessage(
     "Received OTD-IPC device: '{}' - {}", info.mDeviceName, info.mDeviceID);
 
   mTablets[info.mDeviceID].mDevice = info;
+  evDeviceInfoReceivedEvent.Emit(info);
 }
 
 void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State* const msg) {
