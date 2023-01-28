@@ -474,8 +474,40 @@ MainWindow::NavigationItems() noexcept {
     }
 
     item.IsExpanded(true);
+
+    muxc::MenuFlyout contextFlyout;
+    {
+      muxc::MenuFlyoutItem renameItem;
+      renameItem.Text(_(L"Rename tab"));
+
+      muxc::FontIcon icon;
+      icon.Glyph(L"\uE8AC");
+      renameItem.Icon(icon);
+
+      renameItem.Click(discard_winrt_event_args(weak_wrap(
+        this, tab)([](auto self, auto tab) { self->RenameTab(tab); })));
+      contextFlyout.Items().Append(renameItem);
+    }
+    item.ContextFlyout(contextFlyout);
   }
   return navItems;
+}
+
+winrt::fire_and_forget MainWindow::RenameTab(std::shared_ptr<ITab> tab) {
+  OpenKneeboardApp::RenameTabDialog dialog;
+  dialog.XamlRoot(Navigation().XamlRoot());
+  dialog.TabTitle(to_hstring(tab->GetTitle()));
+
+  const auto result = co_await dialog.ShowAsync();
+  if (result != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  const auto newName = to_string(dialog.TabTitle());
+  if (newName.empty()) {
+    co_return;
+  }
+  tab->SetTitle(newName);
 }
 
 void MainWindow::OnNavigationItemInvoked(

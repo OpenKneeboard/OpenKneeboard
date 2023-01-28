@@ -84,6 +84,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget OnTabChanged() noexcept;
   winrt::fire_and_forget OnTabsChanged();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
+  winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
 
   void SaveWindowPosition();
 
