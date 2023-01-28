@@ -13,6 +13,7 @@ endif()
 ExternalProject_Add(
   detoursBuild
   GIT_REPOSITORY https://github.com/microsoft/Detours.git
+  GIT_TAG main
   BUILD_IN_SOURCE ON
   WORKING_DIRECTORY "<SOURCE_DIR>/src"
   UPDATE_DISCONNECTED ON
