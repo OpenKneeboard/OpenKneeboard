@@ -20,6 +20,7 @@
 #include "NonVRD3D11Kneeboard.h"
 
 #include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <dxgi.h>
 #include <shims/winrt/base.h>
@@ -56,30 +57,58 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
 
-  auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::NonVRD3D11);
-  if (!snapshot.IsValid()) {
-    return passthrough();
+  this->CreateTexture(device);
+
+  if (mSHM.GetRenderCacheKey() != mCacheKey) {
+    auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::NonVRD3D11);
+    if (!snapshot.IsValid()) {
+      mHaveLayer = false;
+      mCacheKey = snapshot.GetRenderCacheKey();
+      return passthrough();
+    }
+
+    if (snapshot.GetLayerCount() == 0) {
+      mHaveLayer = false;
+      mCacheKey = snapshot.GetRenderCacheKey();
+      return passthrough();
+    }
+
+    auto config = snapshot.GetConfig();
+    const uint8_t layerIndex = 0;
+    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    device->GetImmediateContext(ctx.put());
+    ctx->CopyResource(
+      mTexture.get(),
+      snapshot.GetLayerTexture(device.get(), layerIndex).GetTexture());
+
+    mHaveLayer = true;
+    mCacheKey = snapshot.GetRenderCacheKey();
+    mFlatConfig = config.mFlat;
+    mLayerConfig = layer;
   }
 
-  const auto config = snapshot.GetConfig();
-  const uint8_t layerIndex = 0;
-  const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+  if (!mHaveLayer) {
+    return passthrough();
+  }
 
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
 
-  const auto aspectRatio = float(layer.mImageWidth) / layer.mImageHeight;
+  const auto aspectRatio
+    = float(mLayerConfig.mImageWidth) / mLayerConfig.mImageHeight;
   const LONG canvasWidth = scDesc.BufferDesc.Width;
   const LONG canvasHeight = scDesc.BufferDesc.Height;
 
   const LONG renderHeight
-    = (static_cast<long>(canvasHeight) * config.mFlat.mHeightPercent) / 100;
+    = (static_cast<long>(canvasHeight) * mFlatConfig.mHeightPercent) / 100;
   const LONG renderWidth = std::lround(renderHeight * aspectRatio);
 
-  const auto padding = config.mFlat.mPaddingPixels;
+  const auto padding = mFlatConfig.mPaddingPixels;
 
   LONG left = padding;
-  switch (config.mFlat.mHorizontalAlignment) {
+  switch (mFlatConfig.mHorizontalAlignment) {
     case FlatConfig::HorizontalAlignment::Left:
       break;
     case FlatConfig::HorizontalAlignment::Center:
@@ -91,7 +120,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   LONG top = padding;
-  switch (config.mFlat.mVerticalAlignment) {
+  switch (mFlatConfig.mVerticalAlignment) {
     case FlatConfig::VerticalAlignment::Top:
       break;
     case FlatConfig::VerticalAlignment::Middle:
@@ -106,8 +135,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   RECT sourceRect {
     0,
     0,
-    layer.mImageWidth,
-    layer.mImageHeight,
+    mLayerConfig.mImageWidth,
+    mLayerConfig.mImageHeight,
   };
 
   {
@@ -130,21 +159,39 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       return passthrough();
     }
 
-    auto sharedTexture = snapshot.GetLayerTexture(device.get(), layerIndex);
-    if (!sharedTexture.IsValid()) {
-      return passthrough();
-    }
-
     D3D11::DrawTextureWithOpacity(
       device.get(),
-      sharedTexture.GetShaderResourceView(),
+      mShaderResourceView.get(),
       rtv.get(),
       sourceRect,
       destRect,
-      config.mFlat.mOpacity);
+      mFlatConfig.mOpacity);
   }
 
   return passthrough();
+}
+
+void NonVRD3D11Kneeboard::CreateTexture(
+  const winrt::com_ptr<ID3D11Device>& device) {
+  if (mTexture) [[likely]] {
+    return;
+  }
+
+  D3D11_TEXTURE2D_DESC textureDesc {
+    .Width = TextureWidth,
+    .Height = TextureHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags = 0,
+  };
+
+  winrt::check_hresult(
+    device->CreateTexture2D(&textureDesc, nullptr, mTexture.put()));
+  winrt::check_hresult(device->CreateShaderResourceView(
+    mTexture.get(), nullptr, mShaderResourceView.put()));
 }
 
 }// namespace OpenKneeboard

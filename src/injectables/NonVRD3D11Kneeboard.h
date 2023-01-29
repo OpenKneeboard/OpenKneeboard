@@ -39,11 +39,19 @@ class NonVRD3D11Kneeboard final {
   SHM::Reader mSHM;
   IDXGISwapChainPresentHook mDXGIHook;
 
+  size_t mCacheKey {};
+  bool mHaveLayer = false;
+  FlatConfig mFlatConfig {};
+  SHM::LayerConfig mLayerConfig {};
+  winrt::com_ptr<ID3D11Texture2D> mTexture;
+  winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
+
   HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,
     UINT syncInterval,
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next);
+  void CreateTexture(const winrt::com_ptr<ID3D11Device>&);
 };
 
 }// namespace OpenKneeboard

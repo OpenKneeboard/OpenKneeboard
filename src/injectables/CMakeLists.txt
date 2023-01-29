@@ -66,6 +66,7 @@ target_link_libraries(
   PRIVATE
   dxgi-hooks
   detours-ext
+  OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-version
   OpenKneeboard-D3D11
