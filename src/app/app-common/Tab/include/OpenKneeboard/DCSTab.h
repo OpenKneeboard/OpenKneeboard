@@ -45,6 +45,8 @@ class DCSTab : public virtual ITab, public virtual EventReceiver {
     const std::filesystem::path& savedGamesPath)
     = 0;
 
+  std::filesystem::path ToAbsolutePath(const std::filesystem::path&);
+
  private:
   std::filesystem::path mInstallPath;
   std::filesystem::path mSavedGamesPath;

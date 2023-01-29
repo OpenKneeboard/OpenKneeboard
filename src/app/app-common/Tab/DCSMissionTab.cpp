@@ -88,25 +88,29 @@ void DCSMissionTab::OnGameEvent(
   const std::filesystem::path& _installPath,
   const std::filesystem::path& _savedGamePath) {
   if (event.name == DCS::EVT_MISSION) {
-    if (!std::filesystem::exists(event.value)) {
-      dprintf("Briefing tab: mission '{}' does not exist", event.value);
+    const auto missionZip = this->ToAbsolutePath(event.value);
+    if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
+      dprintf("MissionTab: mission '{}' does not exist", event.value);
       return;
     }
-    auto mission = std::filesystem::canonical(event.value);
-    if (mission == mMission) {
+
+    if (missionZip == mMission) {
       return;
     }
-    mMission = mission;
-  } else if (event.name == DCS::EVT_AIRCRAFT) {
+
+    mMission = missionZip;
+    this->Reload();
+    return;
+  }
+
+  if (event.name == DCS::EVT_AIRCRAFT) {
     if (event.value == mAircraft) {
       return;
     }
     mAircraft = event.value;
-  } else {
+    this->Reload();
     return;
   }
-
-  this->Reload();
 }
 
 }// namespace OpenKneeboard

@@ -114,11 +114,11 @@ void DCSBriefingTab::OnGameEvent(
   const std::filesystem::path&) {
   mInstallationPath = installPath;
   if (event.name == DCS::EVT_MISSION) {
-    if (!std::filesystem::exists(event.value)) {
+    const auto missionZip = this->ToAbsolutePath(event.value);
+    if (missionZip.empty() || !std::filesystem::exists(missionZip)) {
       dprintf("Briefing tab: mission '{}' does not exist", event.value);
       return;
     }
-    const auto missionZip = std::filesystem::canonical(event.value);
 
     if (mMission && mMission->GetZipPath() == missionZip) {
       return;

@@ -50,4 +50,28 @@ void DCSTab::OnGameEvent(const GameEvent& event) {
   }
 }
 
+std::filesystem::path DCSTab::ToAbsolutePath(
+  const std::filesystem::path& maybeRelative) {
+  if (maybeRelative.empty()) {
+    return {};
+  }
+
+  if (std::filesystem::exists(maybeRelative)) {
+    return std::filesystem::canonical(maybeRelative);
+  }
+
+  for (const auto& prefix: {mInstallPath, mSavedGamesPath}) {
+    if (prefix.empty()) {
+      continue;
+    }
+
+    const auto path = prefix / maybeRelative;
+    if (std::filesystem::exists(path)) {
+      return std::filesystem::canonical(path);
+    }
+  }
+
+  return maybeRelative;
+}
+
 }// namespace OpenKneeboard
