@@ -197,7 +197,8 @@ class InjectionBootstrapper final {
  private:
   void Next() {
     dprint("Going Next()");
-    CheckForOpenXRAPILayer();
+    this->LogDLLs();
+    this->CheckForOpenXRAPILayer();
     mPassthroughAll = true;
 
     // Whatever APIs are in use, if SteamVR is one of them, the main app will
@@ -236,13 +237,13 @@ class InjectionBootstrapper final {
       mFlags);
   }
 
-  void CheckForOpenXRAPILayer() {
+  std::vector<std::tuple<HMODULE, std::filesystem::path>> GetInProcessDLLs() {
     std::vector<HMODULE> modules;
     DWORD bytesNeeded {};
     const auto process = GetCurrentProcess();
     EnumProcessModules(process, modules.data(), 0, &bytesNeeded);
     if (!bytesNeeded) {
-      return;
+      return {};
     }
     modules.resize(bytesNeeded / sizeof(HMODULE));
     if (!EnumProcessModules(
@@ -250,8 +251,10 @@ class InjectionBootstrapper final {
       dprintf(
         "Failed to get process module list: {}",
         static_cast<int64_t>(GetLastError()));
-      return;
+      return {};
     }
+
+    std::vector<std::tuple<HMODULE, std::filesystem::path>> ret;
     for (const auto module: modules) {
       wchar_t buffer[1024];
       const auto bufferLen
@@ -260,6 +263,21 @@ class InjectionBootstrapper final {
         continue;
       }
       const std::filesystem::path path {std::wstring_view {buffer, bufferLen}};
+      if (std::filesystem::exists(path)) {
+        ret.push_back({module, std::filesystem::canonical(path)});
+      }
+    }
+    return ret;
+  }
+
+  void LogDLLs() {
+    for (auto [module, path]: GetInProcessDLLs()) {
+      dprintf("DLL: {}", path);
+    }
+  }
+
+  void CheckForOpenXRAPILayer() {
+    for (auto [module, path]: GetInProcessDLLs()) {
       if (path.filename() == RuntimeFiles::OPENXR_DLL) {
         dprint("Found OpenKneeboard OpenXR API layer in-process");
         mFlags |= FLAG_OPENXR;
