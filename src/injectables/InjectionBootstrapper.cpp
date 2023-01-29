@@ -75,6 +75,24 @@ class InjectionBootstrapper final {
   InjectionBootstrapper() = delete;
 
   explicit InjectionBootstrapper(HMODULE self) : mThisModule(self) {
+    wchar_t pathBuf[1024];
+    const auto pathLen = GetModuleFileNameW(NULL, pathBuf, 1024);
+    const auto executableDir = std::filesystem::canonical(
+      std::filesystem::path({pathBuf, pathLen}).parent_path());
+    for (const auto [module, path]: this->GetInProcessDLLs()) {
+      if (path.parent_path() != executableDir) {
+        continue;
+      }
+
+      const auto filename = path.filename().wstring();
+      for (const auto hookDll: {L"d3d11.dll", L"dxgi.dll"}) {
+        if (_wcsicmp(filename.c_str(), hookDll) == 0) {
+          dprintf("Refusing to hook because found third-party dll: {}", path);
+          return;
+        }
+      }
+    }
+
     mOculusHook.InstallHook({
       .onEndFrame
       = std::bind_front(&InjectionBootstrapper::OnOVREndFrame, this),
