@@ -5,8 +5,9 @@ install(
   RENAME "LICENSE-ThirdParty-WiX.txt"
   COMPONENT Installer
 )
-install(
-  FILES
+
+add_signed_script(
+  RemoveMSIXOnInstall
   RemoveMSIX.ps1
   DESTINATION "installer"
   COMPONENT Installer
