@@ -24,6 +24,8 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
+#include <mutex>
+
 namespace OpenKneeboard {
 
 DoodleRenderer::DoodleRenderer(const DXResources& dxr, KneeboardState* kbs)
@@ -183,7 +185,7 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageIndex index) {
     .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
   };
 
-  auto lock = mDXR.AcquireLock();
+  const std::unique_lock lock(mDXR);
   winrt::com_ptr<ID3D11Texture2D> texture;
   winrt::check_hresult(
     mDXR.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, texture.put()));

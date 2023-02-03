@@ -26,8 +26,6 @@
 #include <shims/winrt/base.h>
 #include <wincodec.h>
 
-#include <source_location>
-
 namespace OpenKneeboard {
 
 /** Direct2D/Direct3D/DXGI resources we want to share between multiple objects.
@@ -55,30 +53,9 @@ struct DXResources {
 
   static DXResources Create();
 
-  class Lock {
-   public:
-    Lock() = delete;
-    Lock(const Lock&) = delete;
-    Lock(Lock&&) = delete;
-
-    Lock(
-      const winrt::com_ptr<ID2D1Multithread>&,
-      const winrt::com_ptr<ID3D10Multithread>&,
-      const std::source_location location);
-    ~Lock();
-
-    auto operator=(const Lock&) = delete;
-    auto operator=(Lock&&) = delete;
-
-   private:
-    winrt::com_ptr<ID2D1Multithread> mD2D;
-    winrt::com_ptr<ID3D10Multithread> mD3D;
-
-    // Handy for debugging
-    static std::source_location gOwner;
-  };
-
-  Lock AcquireLock(const std::source_location location = std::source_location::current()) const;
+  // Use `std::unique_lock`
+  void lock();
+  void unlock();
 };
 
 }// namespace OpenKneeboard

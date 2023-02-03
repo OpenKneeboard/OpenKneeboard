@@ -45,6 +45,7 @@
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Foundation.Collections.h>
 
+#include <mutex>
 #include <ranges>
 
 #include "Globals.h"
@@ -118,7 +119,7 @@ winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
 
   co_await mUIThread;
   {
-    auto lock = gDXResources.AcquireLock();
+    const std::unique_lock lock(gDXResources);
     Canvas().as<ISwapChainPanelNative>()->SetSwapChain(nullptr);
     mKneeboardView = {};
     mTabView = {};
@@ -423,7 +424,7 @@ void TabPage::OnCanvasSizeChanged(
     static_cast<FLOAT>(size.Width),
     static_cast<FLOAT>(size.Height),
   };
-  const auto lock = gDXResources.AcquireLock();
+  const std::unique_lock lock(gDXResources);
   if (mSwapChain) {
     ResizeSwapChain();
   } else {
@@ -473,7 +474,7 @@ void TabPage::PaintNow() noexcept {
   if (!mSwapChain) {
     return;
   }
-  const auto lock = gDXResources.AcquireLock();
+  const std::unique_lock lock(gDXResources);
   auto ctx = gDXResources.mD2DDeviceContext.get();
 
   winrt::com_ptr<IDXGISurface> surface;

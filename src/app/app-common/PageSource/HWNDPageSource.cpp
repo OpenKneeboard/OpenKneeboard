@@ -42,6 +42,8 @@
 #include <winrt/Windows.UI.Core.h>
 #include <wow64apiset.h>
 
+#include <mutex>
+
 namespace WGC = winrt::Windows::Graphics::Capture;
 namespace WGDX = winrt::Windows::Graphics::DirectX;
 
@@ -85,7 +87,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
   {
-    const auto d2dLock = mDXR.AcquireLock();
+    const std::unique_lock d2dLock(mDXR);
 
     auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
     auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
@@ -199,7 +201,7 @@ winrt::fire_and_forget HWNDPageSource::final_release(
   co_await p->mUIThread;
   co_await p->mDQC.ShutdownQueueAsync();
   p->mDQC = {nullptr};
-  const auto lock = p->mDXR.AcquireLock();
+  const std::unique_lock d2dLock(p->mDXR);
   p->mTexture = nullptr;
   p->mBitmap = nullptr;
 }
@@ -260,7 +262,7 @@ void HWNDPageSource::OnFrame() noexcept {
   d3dSurface->GetDesc(&surfaceDesc);
   const auto contentSize = frame.ContentSize();
 
-  auto lock = mDXR.AcquireLock();
+  const std::unique_lock d2dLock(mDXR);
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 

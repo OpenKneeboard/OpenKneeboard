@@ -42,6 +42,7 @@
 #include <cstring>
 #include <fstream>
 #include <iterator>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <random>
 #include <thread>
@@ -78,7 +79,7 @@ PDFFilePageSource::PDFFilePageSource(
   const DXResources& dxr,
   KneeboardState* kbs)
   : p(new Impl {.mDXR = dxr}) {
-  const auto d2dLock = dxr.AcquireLock();
+  const std::unique_lock d2dLock(p->mDXR);
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
@@ -245,7 +246,7 @@ void PDFFilePageSource::RenderPageContent(
     [ctx]() { ctx->SetTransform(D2D1::Matrix3x2F::Identity()); });
 
   {
-    const auto d2dLock = p->mDXR.AcquireLock();
+    const std::unique_lock d2dLock(p->mDXR);
     winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
       winrt::get_unknown(page), ctx, &params));
   }

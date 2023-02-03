@@ -35,6 +35,7 @@
 #include <dxgi1_2.h>
 #include <wincodec.h>
 
+#include <mutex>
 #include <ranges>
 
 namespace OpenKneeboard {
@@ -74,7 +75,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     return;
   }
 
-  auto d2dLock = mDXR.AcquireLock();
+  const std::unique_lock lock(mDXR);
   mD3DContext->Flush();
 
   std::vector<SHM::LayerConfig> shmLayers;
@@ -115,7 +116,7 @@ InterprocessRenderer::InterprocessRenderer(
   mDXR = dxr;
   mKneeboard = kneeboard;
 
-  auto d2dLock = mDXR.AcquireLock();
+  const std::unique_lock d2dLock(mDXR);
   dxr.mD3DDevice->GetImmediateContext(mD3DContext.put());
 
   D3D11_TEXTURE2D_DESC textureDesc {
@@ -186,7 +187,7 @@ InterprocessRenderer::InterprocessRenderer(
 
 InterprocessRenderer::~InterprocessRenderer() {
   this->RemoveAllEventListeners();
-  auto d2dLock = mDXR.AcquireLock();
+  const std::unique_lock d2dLock(mDXR);
   auto ctx = mD3DContext;
   ctx->Flush();
 }

@@ -46,6 +46,8 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
 
+#include <mutex>
+
 #include "Globals.h"
 
 using namespace winrt;
@@ -105,7 +107,7 @@ MainWindow::MainWindow() {
   mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
   mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
   mFrameTimer.Tick([](auto&, auto&) {
-    const auto lock = gDXResources.AcquireLock();
+    const std::unique_lock lock(gDXResources);
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     gKneeboard->evFrameTimerEvent.Emit();
   });
@@ -363,7 +365,7 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   //
   // FIXME: This isn't a real fix, because XAML holds the pages
   // open, and renders could be waiting on the lock
-  auto lock = gDXResources.AcquireLock();
+  const std::unique_lock lock(gDXResources);
   gDXResources = {};
 }
 

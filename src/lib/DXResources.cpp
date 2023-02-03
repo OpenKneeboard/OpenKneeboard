@@ -113,28 +113,9 @@ DXResources DXResources::Create() {
   return ret;
 }
 
-std::source_location DXResources::Lock::gOwner;
 static std::recursive_mutex gMutex;
 
-DXResources::Lock::Lock(
-  const winrt::com_ptr<ID2D1Multithread>& d2d,
-  const winrt::com_ptr<ID3D10Multithread>& d3d,
-  const std::source_location location)
-  : mD2D(d2d), mD3D(d3d) {
-#ifdef DEBUG
-  static bool sChecked = false;
-  if (!sChecked) [[unlikely]] {
-    sChecked = true;
-    if (!d2d->GetMultithreadProtected()) {
-      __debugbreak();
-      throw std::logic_error("Single-threaded D2D");
-    }
-    if (!d3d->GetMultithreadProtected()) {
-      __debugbreak();
-      throw std::logic_error("Single-threaded D3D");
-    }
-  }
-#endif
+void DXResources::lock() {
   // If we've locked D2D, we don't need to separately lock D3D; keeping it here
   // anyway as:
   // - might as well check it's in multithreaded mode in debug builds
@@ -148,21 +129,10 @@ DXResources::Lock::Lock(
   // - it's sufficient
   // - it avoids interferring with XAML, or the WinRT PDF renderer
   gMutex.lock();
-  gOwner = location;
 }
 
-DXResources::Lock::~Lock() {
-  gOwner = {};
+void DXResources::unlock() {
   gMutex.unlock();
-}
-
-DXResources::Lock DXResources::AcquireLock(
-  const std::source_location location) const {
-  return {
-    mD2DFactory.as<ID2D1Multithread>(),
-    mD3DDevice.as<ID3D10Multithread>(),
-    location,
-  };
 }
 
 };// namespace OpenKneeboard
