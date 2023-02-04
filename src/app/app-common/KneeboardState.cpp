@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GameEventServer.h>
 #include <OpenKneeboard/GamesList.h>
@@ -194,7 +195,11 @@ void KneeboardState::PostUserAction(UserAction action) {
   // Use `return` instead of `break` above
   OPENKNEEBOARD_BREAK;
 }
+
 void KneeboardState::SetFirstViewIndex(uint8_t index) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+
   const auto inputIsFirst = this->mFirstViewIndex == this->mInputViewIndex;
   this->mFirstViewIndex
     = std::min<uint8_t>(index, mSettings.mApp.mDualKneeboards.mEnabled ? 1 : 0);
@@ -352,6 +357,9 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
 void KneeboardState::SetCurrentTab(
   const std::shared_ptr<ITab>& tab,
   const BaseSetTabEvent& extra) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+
   auto view = this->GetActiveViewForGlobalInput();
   switch (extra.mKneeboard) {
     case 0:
@@ -397,12 +405,18 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
 }
 
 void KneeboardState::SetNonVRSettings(const FlatConfig& value) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+
   mSettings.mNonVR = value;
   this->SaveSettings();
   this->evNeedsRepaintEvent.Emit();
 }
 
 void KneeboardState::SetVRSettings(const VRConfig& value) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+
   if (value.mEnableSteamVR != mSettings.mVR.mEnableSteamVR) {
     if (!value.mEnableSteamVR) {
       mOpenVRThread.request_stop();
@@ -423,6 +437,9 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
 }
 
 void KneeboardState::SetAppSettings(const AppSettings& value) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+
   mSettings.mApp = value;
   this->SaveSettings();
   if (!value.mDualKneeboards.mEnabled) {
@@ -452,6 +469,9 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
 }
 
 void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
+  const EventDelay delay;// lock must be released first
+  std::unique_lock lock(*this);
+
   const scope_guard emitProfileSettingsChanged(
     [&]() { this->evProfileSettingsChangedEvent.Emit(); });
 
@@ -468,6 +488,9 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   }
 
   const auto newSettings = Settings::Load(newID);
+  mSettings = newSettings;
+  lock.unlock();
+
   this->SetAppSettings(newSettings.mApp);
   // DirectInput
   this->SetDoodlesSettings(newSettings.mDoodles);
@@ -476,7 +499,6 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   mTabletInput->LoadSettings(newSettings.mTabletInput);
   mTabsList->LoadSettings(newSettings.mTabs);
   this->SetVRSettings(newSettings.mVR);
-  mSettings = newSettings;
 
   this->evSettingsChangedEvent.Emit();
   this->evCurrentProfileChangedEvent.Emit();
@@ -502,6 +524,8 @@ void KneeboardState::SaveSettings() {
 }
 
 void KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
   mSettings.mDoodles = value;
   this->SaveSettings();
 }
@@ -526,18 +550,27 @@ void KneeboardState::StartTabletInput() {
 
 void KneeboardState::SetDirectInputSettings(
   const DirectInputSettings& settings) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+
   mDirectInput->LoadSettings(settings);
 }
 
 void KneeboardState::SetTabletInputSettings(const TabletSettings& settings) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
   mTabletInput->LoadSettings(settings);
 }
 
 void KneeboardState::SetGamesSettings(const nlohmann::json& j) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
   mGamesList->LoadSettings(j);
 }
 
 void KneeboardState::SetTabsSettings(const nlohmann::json& j) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
   mTabsList->LoadSettings(j);
 }
 
@@ -595,6 +628,30 @@ void KneeboardState::SwitchProfile(Direction direction) {
   auto settings = mProfiles;
   settings.mActiveProfile = profiles.at((nextIdx + count) % count).mID;
   this->SetProfileSettings(settings);
+}
+
+void KneeboardState::lock() {
+  mMutex.lock();
+}
+
+bool KneeboardState::try_lock() {
+  return mMutex.try_lock();
+}
+
+void KneeboardState::unlock() {
+  mMutex.unlock();
+}
+
+void KneeboardState::lock_shared() {
+  mMutex.lock_shared();
+}
+
+bool KneeboardState::try_lock_shared() {
+  return mMutex.try_lock_shared();
+}
+
+void KneeboardState::unlock_shared() {
+  mMutex.unlock_shared();
 }
 
 #define IT(cpptype, name) \

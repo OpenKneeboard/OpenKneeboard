@@ -55,6 +55,7 @@ struct DXResources {
 
   // Use `std::unique_lock`
   void lock();
+  bool try_lock();
   void unlock();
 };
 

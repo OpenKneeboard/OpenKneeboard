@@ -89,6 +89,8 @@ TabSettingsPage::TabSettingsPage() {
 }
 
 IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
+  const std::shared_lock kbLock(*gKneeboard);
+
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
   for (const auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
     tabs.Append(CreateTabUIData(tab));
@@ -149,6 +151,8 @@ fire_and_forget TabSettingsPage::RestoreDefaults(
 fire_and_forget TabSettingsPage::RenameTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
+  const std::shared_lock lock(*gKneeboard);
+
   const auto tabID = ITab::RuntimeID::FromTemporaryValue(
     unbox_value<uint64_t>(sender.as<Button>().Tag()));
   auto tabsList = gKneeboard->GetTabsList();
@@ -178,6 +182,8 @@ fire_and_forget TabSettingsPage::RenameTab(
 fire_and_forget TabSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
+  const std::shared_lock lock(*gKneeboard);
+
   const auto tabID = ITab::RuntimeID::FromTemporaryValue(
     unbox_value<uint64_t>(sender.as<Button>().Tag()));
   auto tabsList = gKneeboard->GetTabsList();
@@ -335,6 +341,8 @@ void TabSettingsPage::CreateFolderTab() {
 }
 
 void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
+  const std::shared_lock lock(*gKneeboard);
+
   mUIIsChangingTabs = true;
   const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
 
@@ -364,6 +372,7 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
 void TabSettingsPage::OnTabsChanged(
   const IInspectable&,
   const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept {
+  const std::shared_lock lock(*gKneeboard);
   // For add/remove, the kneeboard state is updated first, but for reorder,
   // the ListView is the source of truth.
   //
@@ -415,6 +424,8 @@ uint64_t TabUIData::InstanceID() const {
 }
 
 void TabUIData::InstanceID(uint64_t value) {
+  const std::shared_lock lock(*gKneeboard);
+
   this->RemoveAllEventListeners();
   mTab = {};
 

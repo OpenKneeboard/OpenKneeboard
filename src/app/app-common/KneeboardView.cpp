@@ -416,6 +416,9 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
 }
 
 void KneeboardView::ToggleBookmarkForCurrentPage() {
+  EventDelay delay;
+  std::unique_lock lock(*mKneeboard);
+
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();
   auto page = view->GetPageIndex();
@@ -426,6 +429,7 @@ void KneeboardView::ToggleBookmarkForCurrentPage() {
   });
 
   if (it == bookmarks.end()) {
+    lock.unlock();
     this->AddBookmarkForCurrentPage();
     return;
   }
@@ -468,6 +472,9 @@ void KneeboardView::RemoveBookmarkForCurrentPage() {
 }
 
 std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
+  EventDelay delay;
+  std::unique_lock lock(*mKneeboard);
+
   auto view = this->GetCurrentTabView();
   if (view->GetTabMode() != TabMode::NORMAL) {
     OPENKNEEBOARD_BREAK;
@@ -502,6 +509,9 @@ std::vector<Bookmark> KneeboardView::GetBookmarks() const {
 }
 
 void KneeboardView::RemoveBookmark(const Bookmark& bookmark) {
+  EventDelay delay;
+  std::unique_lock lock(*mKneeboard);
+
   auto tabIt = std::ranges::find_if(mTabViews, [&](const auto& tv) {
     return tv->GetRootTab()->GetRuntimeID() == bookmark.mTabID;
   });

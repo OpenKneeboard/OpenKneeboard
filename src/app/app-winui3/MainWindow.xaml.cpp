@@ -107,7 +107,8 @@ MainWindow::MainWindow() {
   mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
   mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
   mFrameTimer.Tick([](auto&, auto&) {
-    const std::unique_lock lock(gDXResources);
+    const std::shared_lock kbLock(*gKneeboard);
+    const std::unique_lock dxLock(gDXResources);
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     gKneeboard->evFrameTimerEvent.Emit();
   });
@@ -438,6 +439,7 @@ winrt::fire_and_forget MainWindow::OnTabsChanged() {
 winrt::Windows::Foundation::Collections::IVector<
   winrt::Windows::Foundation::IInspectable>
 MainWindow::NavigationItems() noexcept {
+  const std::shared_lock lock(*gKneeboard);
   auto navItems = winrt::single_threaded_vector<IInspectable>();
   navItems.Clear();
 

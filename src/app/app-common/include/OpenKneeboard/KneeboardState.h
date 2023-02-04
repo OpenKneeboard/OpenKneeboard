@@ -29,6 +29,7 @@
 #include <winrt/Windows.Foundation.h>
 
 #include <memory>
+#include <shared_mutex>
 #include <thread>
 #include <vector>
 
@@ -111,9 +112,28 @@ class KneeboardState final
 
   void PostUserAction(UserAction action);
 
+  /** Implement `Lockable`; use `std::unique_lock`.
+   *
+   * This:
+   * - is a recursive lock
+   * - currently has no ordering issues with DXResources::lock()
+   * - should not be used *instead of* DXResources::lock()
+   *
+   * Use DXResources::lock() for DirectX ownership, but use this
+   * for application-level locks.
+   **/
+  void lock();
+  bool try_lock();
+  void unlock();
+  void lock_shared();
+  bool try_lock_shared();
+  void unlock_shared();
+
  private:
   KneeboardState(HWND mainWindow, const DXResources&);
 
+  std::shared_mutex mMutex;
+  bool mHaveUniqueLock = false;
   HWND mHwnd;
   DXResources mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};

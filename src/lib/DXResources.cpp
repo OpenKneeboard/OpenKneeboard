@@ -135,4 +135,8 @@ void DXResources::unlock() {
   gMutex.unlock();
 }
 
+bool DXResources::try_lock() {
+  return gMutex.try_lock();
+}
+
 };// namespace OpenKneeboard
