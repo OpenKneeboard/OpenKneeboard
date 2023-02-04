@@ -74,12 +74,15 @@ class InterprocessRenderer final : private EventReceiver {
 
     winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
     winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
+    winrt::com_ptr<ID3D11RenderTargetView> mCanvasRTV;
 
     std::array<SharedTextureResources, TextureCount> mSharedResources;
 
     bool mIsActiveForInput = false;
   };
   std::array<Layer, MaxLayers> mLayers;
+  winrt::com_ptr<ID3D11ShaderResourceView> mBufferSRV;
+  winrt::com_ptr<ID2D1Bitmap1> mBufferBitmap;
 
   std::shared_ptr<GameInstance> mCurrentGame;
 

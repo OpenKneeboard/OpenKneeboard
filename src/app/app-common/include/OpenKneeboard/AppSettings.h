@@ -73,6 +73,20 @@ struct AppSettings final {
       = default;
   };
 
+  struct TintSettings final {
+    bool mEnabled = false;
+    float mBrightness = 1.0f;
+    float mBrightnessStep = 0.1f;
+    float mRed = 1.0f;
+    float mGreen = 1.0f;
+    float mBlue = 1.0f;
+
+    // No alpha given there are separate VR- and Non-VR-
+    // settings for alpha.
+
+    constexpr auto operator<=>(const TintSettings&) const noexcept = default;
+  };
+
   std::optional<RECT> mWindowRect;
   bool mLoopPages {false};
   bool mLoopTabs {false};
@@ -80,6 +94,7 @@ struct AppSettings final {
   AutoUpdateSettings mAutoUpdate {};
   BookmarkSettings mBookmarks {};
   InGameUISettings mInGameUI {};
+  TintSettings mTint {};
 
   constexpr auto operator<=>(const AppSettings&) const noexcept = default;
 };

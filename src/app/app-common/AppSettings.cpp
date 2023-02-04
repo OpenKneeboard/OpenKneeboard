@@ -41,6 +41,14 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mHeaderEnabled,
   mFooterEnabled,
   mBookmarksBarEnabled)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  AppSettings::TintSettings,
+  mEnabled,
+  mBrightness,
+  mBrightnessStep,
+  mRed,
+  mGreen,
+  mBlue)
 
 template <>
 void from_json_postprocess<AppSettings>(
@@ -92,6 +100,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mDualKneeboards,
   mAutoUpdate,
   mBookmarks,
-  mInGameUI)
+  mInGameUI,
+  mTint)
 
 }// namespace OpenKneeboard

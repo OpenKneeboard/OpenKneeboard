@@ -54,6 +54,10 @@ void InputBindingsControl::PopulateUI() {
   AppendUIRow(UserAction::TOGGLE_VISIBILITY, _(L"Show/hide"));
   AppendUIRow(UserAction::TOGGLE_FORCE_ZOOM, _(L"Toggle forced VR zoom"));
 
+  AppendUIRow(UserAction::TOGGLE_TINT, _(L"Toggle custom tint and brightness"));
+  AppendUIRow(UserAction::INCREASE_BRIGHTNESS, _(L"Increase brightness"));
+  AppendUIRow(UserAction::DECREASE_BRIGHTNESS, _(L"Decrease brightness"));
+
   if (gKneeboard->GetAppSettings().mBookmarks.mEnabled) {
     AppendUIRow(UserAction::PREVIOUS_BOOKMARK, _(L"Previous bookmark"));
     AppendUIRow(UserAction::NEXT_BOOKMARK, _(L"Next bookmark"));

@@ -38,7 +38,12 @@ namespace OpenKneeboard {
   IT(SWITCH_KNEEBOARDS) \
   IT(RECENTER_VR) \
   IT(HIDE) \
-  IT(SHOW)
+  IT(SHOW) \
+  IT(ENABLE_TINT) \
+  IT(DISABLE_TINT) \
+  IT(TOGGLE_TINT) \
+  IT(INCREASE_BRIGHTNESS) \
+  IT(DECREASE_BRIGHTNESS)
 
 enum class UserAction {
 #define IT(x) x,

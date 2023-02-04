@@ -7,11 +7,47 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
+  <Page.Resources>
+    <local:PercentValueConverter x:Key="PercentConverter" />
+  </Page.Resources>
   <ScrollViewer VerticalScrollMode="Auto" Padding="24">
     <StackPanel
       Orientation="Vertical"
       Spacing="16"
       x:DefaultBindMode="TwoWay">
+      <TextBlock
+        Text="Tint and brightness"
+        Style="{ThemeResource SubtitleTextBlockStyle}"
+      />
+      <StackPanel Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <ToggleSwitch
+					Header="Enabled"
+          OffContent="Full brightness, no tint"
+          OnContent="Custom tint and brightness"
+          IsOn="{x:Bind TintEnabled}"
+        />
+        <Slider
+          Header="Brightness"
+          Value="{x:Bind TintBrightness}"
+          TickPlacement="Outside"
+          TickFrequency="5"
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+        />
+        <TextBlock
+          Text="Tint color - use white for no tint"
+          Style="{ThemeResource BodyTextBlockStyle}"
+        />
+        <ColorPicker
+          Color="{x:Bind Tint}"
+          ColorSpectrumShape="Ring"
+        />
+      </StackPanel>
       <TextBlock
         Text="Dual kneeboards"
         Style="{ThemeResource SubtitleTextBlockStyle}"

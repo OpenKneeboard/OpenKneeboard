@@ -87,6 +87,8 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     mDirectInput->evAttachedControllersChangedEvent,
     this->evInputDevicesChangedEvent);
 
+  AddEventListener(this->evSettingsChangedEvent, this->evNeedsRepaintEvent);
+
   AcquireExclusiveResources();
 }
 
@@ -191,6 +193,35 @@ void KneeboardState::PostUserAction(UserAction action) {
     case UserAction::NEXT_PROFILE:
       this->SwitchProfile(Direction::Next);
       return;
+    case UserAction::ENABLE_TINT:
+      this->mSettings.mApp.mTint.mEnabled = true;
+      this->SaveSettings();
+      return;
+    case UserAction::DISABLE_TINT:
+      this->mSettings.mApp.mTint.mEnabled = false;
+      this->SaveSettings();
+      return;
+    case UserAction::TOGGLE_TINT:
+      this->mSettings.mApp.mTint.mEnabled
+        = !this->mSettings.mApp.mTint.mEnabled;
+      this->SaveSettings();
+      return;
+    case UserAction::INCREASE_BRIGHTNESS: {
+      auto& tint = this->mSettings.mApp.mTint;
+      tint.mEnabled = true;
+      tint.mBrightness
+        = std::clamp(tint.mBrightness + tint.mBrightnessStep, 0.0f, 1.0f);
+      this->SaveSettings();
+      return;
+    }
+    case UserAction::DECREASE_BRIGHTNESS: {
+      auto& tint = this->mSettings.mApp.mTint;
+      tint.mEnabled = true;
+      tint.mBrightness
+        = std::clamp(tint.mBrightness - tint.mBrightnessStep, 0.0f, 1.0f);
+      this->SaveSettings();
+      return;
+    }
   }
   // Use `return` instead of `break` above
   OPENKNEEBOARD_BREAK;

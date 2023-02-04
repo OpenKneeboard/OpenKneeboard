@@ -48,6 +48,17 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 AdvancedSettingsPage::AdvancedSettingsPage() {
   InitializeComponent();
+
+  AddEventListener(
+    gKneeboard->evSettingsChangedEvent, weak_wrap(this)([](auto self) -> winrt::fire_and_forget {
+      co_await self->mUIThread;
+      self->mPropertyChangedEvent(
+        *self, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
+    }));
+}
+
+AdvancedSettingsPage::~AdvancedSettingsPage() {
+  this->RemoveAllEventListeners();
 }
 
 bool AdvancedSettingsPage::DualKneeboards() const noexcept {
@@ -326,6 +337,55 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
   dprint("Relaunch failed, coming back up!");
   gMutex = {CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
   gKneeboard->AcquireExclusiveResources();
+}
+
+bool AdvancedSettingsPage::TintEnabled() {
+  return gKneeboard->GetAppSettings().mTint.mEnabled;
+}
+
+void AdvancedSettingsPage::TintEnabled(bool value) {
+  auto settings = gKneeboard->GetAppSettings();
+  if (settings.mTint.mEnabled == value) {
+    return;
+  }
+  settings.mTint.mEnabled = value;
+  gKneeboard->SetAppSettings(settings);
+}
+
+winrt::Windows::UI::Color AdvancedSettingsPage::Tint() {
+  auto tint = gKneeboard->GetAppSettings().mTint;
+  return {
+    .A = 0xff,
+    .R = static_cast<uint8_t>(std::lround(tint.mRed * 0xff)),
+    .G = static_cast<uint8_t>(std::lround(tint.mGreen * 0xff)),
+    .B = static_cast<uint8_t>(std::lround(tint.mBlue * 0xff)),
+  };
+}
+
+void AdvancedSettingsPage::Tint(Windows::UI::Color value) {
+  auto settings = gKneeboard->GetAppSettings();
+  const auto originalTint = settings.mTint;
+  auto& tint = settings.mTint;
+  tint.mRed = (1.0f * value.R) / 0xff;
+  tint.mGreen = (1.0f * value.G) / 0xff;
+  tint.mBlue = (1.0f * value.B) / 0xff;
+  if (tint == originalTint) {
+    return;
+  }
+  gKneeboard->SetAppSettings(settings);
+}
+
+float AdvancedSettingsPage::TintBrightness() {
+  return gKneeboard->GetAppSettings().mTint.mBrightness * 100.0f;
+}
+
+void AdvancedSettingsPage::TintBrightness(float value) {
+  auto settings = gKneeboard->GetAppSettings();
+  if (settings.mTint.mBrightness == value / 100.0f) {
+    return;
+  }
+  settings.mTint.mBrightness = value / 100.0f;
+  gKneeboard->SetAppSettings(settings);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

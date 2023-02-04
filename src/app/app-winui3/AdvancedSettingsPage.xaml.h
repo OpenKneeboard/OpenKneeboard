@@ -36,6 +36,7 @@ struct AdvancedSettingsPage
     OpenKneeboard::WithPropertyChangedEventOnProfileChange<
       AdvancedSettingsPage> {
   AdvancedSettingsPage();
+  ~AdvancedSettingsPage();
 
   bool DualKneeboards() const noexcept;
   void DualKneeboards(bool value) noexcept;
@@ -79,6 +80,13 @@ struct AdvancedSettingsPage
   void MinimumEraseRadius(uint32_t value);
   uint32_t EraseSensitivity();
   void EraseSensitivity(uint32_t value);
+
+  bool TintEnabled();
+  void TintEnabled(bool value);
+  float TintBrightness();
+  void TintBrightness(float value);
+  winrt::Windows::UI::Color Tint();
+  void Tint(winrt::Windows::UI::Color value);
 
   bool Quirk_OculusSDK_DiscardDepthInformation() const noexcept;
   void Quirk_OculusSDK_DiscardDepthInformation(bool value) noexcept;

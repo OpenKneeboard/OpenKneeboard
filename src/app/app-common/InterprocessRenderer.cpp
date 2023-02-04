@@ -21,6 +21,7 @@
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/ITab.h>
@@ -130,6 +131,16 @@ InterprocessRenderer::InterprocessRenderer(
     .MiscFlags = 0,
   };
 
+  {
+    winrt::com_ptr<ID3D11Texture2D> bufferTexture;
+    winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
+      &textureDesc, nullptr, bufferTexture.put()));
+    winrt::check_hresult(dxr.mD3DDevice->CreateShaderResourceView(
+      bufferTexture.get(), nullptr, mBufferSRV.put()));
+    winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+      bufferTexture.as<IDXGISurface>().get(), nullptr, mBufferBitmap.put()));
+  }
+
   for (auto& layer: mLayers) {
     winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
       &textureDesc, nullptr, layer.mCanvasTexture.put()));
@@ -138,6 +149,9 @@ InterprocessRenderer::InterprocessRenderer(
       layer.mCanvasTexture.as<IDXGISurface>().get(),
       nullptr,
       layer.mCanvasBitmap.put()));
+
+    winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
+      layer.mCanvasTexture.get(), nullptr, layer.mCanvasRTV.put()));
   }
 
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
@@ -193,11 +207,34 @@ InterprocessRenderer::~InterprocessRenderer() {
 }
 
 void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
+  const auto tint = mKneeboard->GetAppSettings().mTint;
+
   auto ctx = mDXR.mD2DDeviceContext;
-  ctx->SetTarget(layer.mCanvasBitmap.get());
+  if (tint.mEnabled) {
+    ctx->SetTarget(mBufferBitmap.get());
+  } else {
+    ctx->SetTarget(layer.mCanvasBitmap.get());
+  }
   ctx->BeginDraw();
-  const scope_guard endDraw {
-    [&, this]() { winrt::check_hresult(ctx->EndDraw()); }};
+  const scope_guard endDraw {[&, this]() {
+    winrt::check_hresult(ctx->EndDraw());
+
+    if (!tint.mEnabled) {
+      return;
+    }
+
+    D3D11::CopyTextureWithTint(
+      mDXR.mD3DDevice.get(),
+      mBufferSRV.get(),
+      layer.mCanvasRTV.get(),
+      {
+        tint.mRed * tint.mBrightness,
+        tint.mGreen * tint.mBrightness,
+        tint.mBlue * tint.mBrightness,
+        /* alpha = */ 1.0f,
+      });
+  }};
+
   ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
