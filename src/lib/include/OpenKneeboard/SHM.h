@@ -139,7 +139,7 @@ class SharedTexture11 final {
 class Snapshot final {
  private:
   std::unique_ptr<Header> mHeader;
-  TextureReadResources* mResources;
+  TextureReadResources* mResources {nullptr};
 
  public:
   Snapshot();
@@ -154,6 +154,11 @@ class Snapshot final {
   SharedTexture11 GetLayerTexture(ID3D11Device*, uint8_t layerIndex) const;
 
   bool IsValid() const;
+
+  Snapshot(const Snapshot&);
+  Snapshot(Snapshot&&);
+  Snapshot& operator=(Snapshot&&);
+  Snapshot& operator=(const Snapshot&);
 };
 
 class Reader final {

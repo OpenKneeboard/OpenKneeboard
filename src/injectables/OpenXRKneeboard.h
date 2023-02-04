@@ -52,7 +52,8 @@ class OpenXRKneeboard : public VRKneeboard {
  protected:
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
-    const VRRenderConfig& current) const = 0;
+    const VRRenderConfig& current) const
+    = 0;
   virtual XrSwapchain
   CreateSwapChain(XrSession, const VRRenderConfig& vrc, uint8_t layerIndex)
     = 0;
@@ -73,7 +74,6 @@ class OpenXRKneeboard : public VRKneeboard {
 
   std::array<XrSwapchain, MaxLayers> mSwapchains;
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;
-  SHM::Reader mSHM;
 
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;

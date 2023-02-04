@@ -204,7 +204,7 @@ void OpenVRKneeboard::Tick() {
 
   mFrameCounter++;
 
-  auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::SteamVR);
+  auto snapshot = this->MaybeGetSnapshot(SHM::ConsumerKind::SteamVR);
   if (!snapshot.IsValid()) {
     for (auto& layerState: mLayers) {
       if (layerState.mVisible) {

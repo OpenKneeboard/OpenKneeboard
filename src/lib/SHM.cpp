@@ -305,6 +305,33 @@ Snapshot::Snapshot(const Header& header, TextureReadResources* r)
 Snapshot::~Snapshot() {
 }
 
+Snapshot::Snapshot(const Snapshot& other) {
+  *this = other;
+}
+
+Snapshot::Snapshot(Snapshot&& other) {
+  *this = std::move(other);
+}
+
+Snapshot& Snapshot::operator=(const Snapshot& other) {
+  if (other.mHeader) {
+    mHeader = std::make_unique<Header>(*other.mHeader);
+  } else {
+    mHeader.reset();
+  }
+  mResources = other.mResources;
+
+  return *this;
+}
+
+Snapshot& Snapshot::operator=(Snapshot&& other) {
+  mHeader = std::move(other.mHeader);
+  mResources = other.mResources;
+  other.mResources = nullptr;
+
+  return *this;
+}
+
 size_t Snapshot::GetRenderCacheKey() const {
   // This is lazy, and only works because:
   // - session ID already contains random data

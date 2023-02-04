@@ -39,10 +39,7 @@ class NonVRD3D11Kneeboard final {
   SHM::Reader mSHM;
   IDXGISwapChainPresentHook mDXGIHook;
 
-  size_t mCacheKey {};
-  bool mHaveLayer = false;
-  FlatConfig mFlatConfig {};
-  SHM::LayerConfig mLayerConfig {};
+  SHM::Snapshot mSnapshot;
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
 

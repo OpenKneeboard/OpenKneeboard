@@ -59,56 +59,49 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
 
   this->CreateTexture(device);
 
-  if (mSHM.GetRenderCacheKey() != mCacheKey) {
-    auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::NonVRD3D11);
-    if (!snapshot.IsValid()) {
-      mHaveLayer = false;
-      mCacheKey = snapshot.GetRenderCacheKey();
+  if (mSHM.GetRenderCacheKey() != mSnapshot.GetRenderCacheKey()) {
+    mSnapshot = mSHM.MaybeGet(SHM::ConsumerKind::NonVRD3D11);
+    if (!mSnapshot.IsValid()) {
       return passthrough();
     }
 
-    if (snapshot.GetLayerCount() == 0) {
-      mHaveLayer = false;
-      mCacheKey = snapshot.GetRenderCacheKey();
+    if (mSnapshot.GetLayerCount() == 0) {
       return passthrough();
     }
 
-    auto config = snapshot.GetConfig();
+    auto config = mSnapshot.GetConfig();
     const uint8_t layerIndex = 0;
-    const auto& layer = *snapshot.GetLayerConfig(layerIndex);
 
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     device->GetImmediateContext(ctx.put());
     ctx->CopyResource(
       mTexture.get(),
-      snapshot.GetLayerTexture(device.get(), layerIndex).GetTexture());
-
-    mHaveLayer = true;
-    mCacheKey = snapshot.GetRenderCacheKey();
-    mFlatConfig = config.mFlat;
-    mLayerConfig = layer;
+      mSnapshot.GetLayerTexture(device.get(), layerIndex).GetTexture());
   }
 
-  if (!mHaveLayer) {
+  if (!mSnapshot.GetLayerCount()) {
     return passthrough();
   }
 
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
 
+  const auto& layerConfig = *mSnapshot.GetLayerConfig(0);
+  const auto flatConfig = mSnapshot.GetConfig().mFlat;
+
   const auto aspectRatio
-    = float(mLayerConfig.mImageWidth) / mLayerConfig.mImageHeight;
+    = float(layerConfig.mImageWidth) / layerConfig.mImageHeight;
   const LONG canvasWidth = scDesc.BufferDesc.Width;
   const LONG canvasHeight = scDesc.BufferDesc.Height;
 
   const LONG renderHeight
-    = (static_cast<long>(canvasHeight) * mFlatConfig.mHeightPercent) / 100;
+    = (static_cast<long>(canvasHeight) * flatConfig.mHeightPercent) / 100;
   const LONG renderWidth = std::lround(renderHeight * aspectRatio);
 
-  const auto padding = mFlatConfig.mPaddingPixels;
+  const auto padding = flatConfig.mPaddingPixels;
 
   LONG left = padding;
-  switch (mFlatConfig.mHorizontalAlignment) {
+  switch (flatConfig.mHorizontalAlignment) {
     case FlatConfig::HorizontalAlignment::Left:
       break;
     case FlatConfig::HorizontalAlignment::Center:
@@ -120,7 +113,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   LONG top = padding;
-  switch (mFlatConfig.mVerticalAlignment) {
+  switch (flatConfig.mVerticalAlignment) {
     case FlatConfig::VerticalAlignment::Top:
       break;
     case FlatConfig::VerticalAlignment::Middle:
@@ -135,8 +128,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   RECT sourceRect {
     0,
     0,
-    mLayerConfig.mImageWidth,
-    mLayerConfig.mImageHeight,
+    layerConfig.mImageWidth,
+    layerConfig.mImageHeight,
   };
 
   {
@@ -165,7 +158,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       rtv.get(),
       sourceRect,
       destRect,
-      mFlatConfig.mOpacity);
+      flatConfig.mOpacity);
   }
 
   return passthrough();

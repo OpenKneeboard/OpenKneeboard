@@ -122,7 +122,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::OpenXR);
+  auto snapshot = this->MaybeGetSnapshot(SHM::ConsumerKind::OpenXR);
   if (!snapshot.IsValid()) {
     // Don't spam: expected, if OpenKneeboard isn't running
     return mOpenXR->xrEndFrame(session, frameEndInfo);

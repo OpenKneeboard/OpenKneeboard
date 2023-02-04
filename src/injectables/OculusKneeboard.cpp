@@ -85,10 +85,10 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   auto passthrough = std::bind_front(
     next, session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
 
-  if (!(mSHM && mRenderer)) [[unlikely]] {
+  if (!(this->HaveSHM() && mRenderer)) [[unlikely]] {
     return passthrough();
   }
-  auto snapshot = mSHM.MaybeGet(mRenderer->GetConsumerKind());
+  auto snapshot = this->MaybeGetSnapshot(mRenderer->GetConsumerKind());
   if (!snapshot.IsValid()) {
     return passthrough();
   }
