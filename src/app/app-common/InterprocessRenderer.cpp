@@ -104,7 +104,6 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
       mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
     }
     mD3DContext->Flush();
-    it.mMutexKey = mSHM.GetNextTextureKey();
     it.mMutex->ReleaseSync(it.mMutexKey);
 
     shmLayers.push_back(layer.mConfig);
@@ -179,7 +178,7 @@ InterprocessRenderer::InterprocessRenderer(
           nullptr,
           DXGI_SHARED_RESOURCE_READ,
           textureName.c_str(),
-          resources.mHandle.put()));
+          resources.mSharedHandle.put()));
       resources.mMutex = resources.mTexture.as<IDXGIKeyedMutex>();
     }
   }
