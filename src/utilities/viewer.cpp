@@ -48,7 +48,6 @@ class TestViewerWindow final {
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
-  SHM::Snapshot mSnapshot;
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
@@ -344,12 +343,8 @@ class TestViewerWindow final {
 
     ctx->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
-    auto snapshot = mSnapshot;
-    if (!(snapshot.IsValid()
-          && snapshot.GetRenderCacheKey() == mSHM.GetRenderCacheKey())) {
-      const std::unique_lock shmLock(mSHM);
-      snapshot = mSHM.MaybeGet(SHM::ConsumerKind::Test);
-    }
+    const auto snapshot
+      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Test);
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
@@ -384,14 +379,14 @@ class TestViewerWindow final {
 
     auto sharedTexture
       = snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex);
-    if (!sharedTexture.IsValid()) {
+    if (!sharedTexture) {
       mErrorRenderer->Render(
         ctx,
         std::format("No Texture For Layer {}", mLayerIndex + 1),
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       return;
     }
-    auto sharedSurface = sharedTexture.GetSurface();
+    auto sharedSurface = sharedTexture.as<IDXGISurface>();
 
     ctx->Clear(
       mStreamerMode ? mStreamerModeWindowFrameColor : mWindowFrameColor);
@@ -424,7 +419,10 @@ class TestViewerWindow final {
       .dpiY = static_cast<FLOAT>(dpi),
     };
     ctx->CreateSharedBitmap(
-      _uuidof(IDXGISurface), sharedSurface, &bitmapProperties, d2dBitmap.put());
+      _uuidof(IDXGISurface),
+      sharedSurface.get(),
+      &bitmapProperties,
+      d2dBitmap.put());
 
     auto bg = mStreamerMode ? mStreamerModeBackgroundBrush.get()
                             : mBackgroundBrush.get();

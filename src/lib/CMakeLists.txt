@@ -161,12 +161,16 @@ ok_add_library(OpenKneeboard-SHM STATIC SHM.cpp)
 target_link_libraries(
   OpenKneeboard-SHM
   PRIVATE
-  OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-shims
   OpenKneeboard-version
 )
-target_link_libraries(OpenKneeboard-SHM PUBLIC _libheaders)
+target_link_libraries(
+  OpenKneeboard-SHM
+  PUBLIC
+  _libheaders
+  OpenKneeboard-config
+)
 
 ok_add_library(OpenKneeboard-dprint STATIC dprint.cpp)
 target_link_libraries(OpenKneeboard-dprint PUBLIC _libheaders)

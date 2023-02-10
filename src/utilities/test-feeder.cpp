@@ -38,9 +38,7 @@ using namespace OpenKneeboard;
 
 struct SharedTextureResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
-  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
   winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
-  UINT mMutexKey = 0;
 };
 
 int main() {
@@ -147,10 +145,9 @@ int main() {
       bufferIt.mTexture = SHM::CreateCompatibleTexture(
         device.get(),
         SHM::DEFAULT_D3D11_BIND_FLAGS,
-        D3D11_RESOURCE_MISC_SHARED_NTHANDLE
-          | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX);
-      device->CreateRenderTargetView(
-        bufferIt.mTexture.get(), nullptr, bufferIt.mTextureRTV.put());
+        D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED);
+      winrt::check_hresult(device->CreateRenderTargetView(
+        bufferIt.mTexture.get(), nullptr, bufferIt.mTextureRTV.put()));
 
       HANDLE sharedHandle = INVALID_HANDLE_VALUE;
       auto textureName
@@ -162,8 +159,6 @@ int main() {
           DXGI_SHARED_RESOURCE_READ,
           textureName.c_str(),
           &sharedHandle));
-
-      bufferIt.mMutex = bufferIt.mTexture.as<IDXGIKeyedMutex>();
     }
   }
 
@@ -179,6 +174,7 @@ int main() {
   ctx->PSSetShaderResources(0, 1, &nullSRV);
 
   do {
+    const std::unique_lock shmLock(shm);
     const auto bufferIndex = shm.GetNextTextureIndex();
     for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
       renderTarget->BeginDraw();
@@ -203,15 +199,10 @@ int main() {
       copier.SetSourceTexture(srv.get());
 
       auto& it = resources.at(layerIndex).at(bufferIndex);
-      winrt::check_hresult(it.mMutex->AcquireSync(it.mMutexKey, INFINITE));
-
       auto rtv = it.mTextureRTV.get();
       ctx->OMSetRenderTargets(1, &rtv, nullptr);
       copier.Process(ctx.get());
       ctx->Flush();
-
-      it.mMutexKey = shm.GetNextTextureKey();
-      it.mMutex->ReleaseSync(it.mMutexKey);
     }
     frames++;
 

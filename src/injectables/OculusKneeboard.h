@@ -19,6 +19,12 @@
  */
 #pragma once
 
+// clang-format off
+#include <Windows.h>
+#include <d3d11.h>
+#include <shims/winrt/base.h>
+// clang-format on
+
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRKneeboard.h>
 #include <OpenKneeboard/config.h>
@@ -42,6 +48,7 @@ class OculusKneeboard final : private VRKneeboard {
  private:
   std::array<ovrTextureSwapChain, MaxLayers> mSwapChains;
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;
+  SHM::Reader mSHM;
   ovrSession mSession = nullptr;
   Renderer* mRenderer = nullptr;
   OculusEndFrameHook mEndFrameHook;
@@ -72,6 +79,7 @@ class OculusKneeboard::Renderer {
     = 0;
 
   virtual SHM::ConsumerKind GetConsumerKind() const = 0;
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() const = 0;
 };
 
 }// namespace OpenKneeboard

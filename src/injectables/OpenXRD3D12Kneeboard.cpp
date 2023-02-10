@@ -192,4 +192,8 @@ bool OpenXRD3D12Kneeboard::Render(
   return true;
 }
 
+winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() const {
+  return mDeviceResources.mDevice11;
+}
+
 }// namespace OpenKneeboard

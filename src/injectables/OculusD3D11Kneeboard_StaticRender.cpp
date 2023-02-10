@@ -47,8 +47,8 @@ bool OculusD3D11Kneeboard::Render(
   auto ovr = OVRProxy::Get();
   const auto config = snapshot.GetConfig();
 
-  auto sharedTexture = snapshot.GetLayerTexture(device, layerIndex);
-  if (!sharedTexture.IsValid()) {
+  auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
+  if (!srv) {
     dprint(" - invalid shared texture");
     return false;
   }
@@ -62,10 +62,7 @@ bool OculusD3D11Kneeboard::Render(
 
   auto rtv = renderTargetViews.at(index)->Get();
   D3D11::CopyTextureWithOpacity(
-    device,
-    sharedTexture.GetShaderResourceView(),
-    rtv->Get(),
-    params.mKneeboardOpacity);
+    device, srv.get(), rtv->Get(), params.mKneeboardOpacity);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (error) {

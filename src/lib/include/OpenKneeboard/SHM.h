@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
 #include <Windows.h>
 #include <d3d11.h>
 #include <shims/winrt/base.h>
@@ -106,8 +107,6 @@ class Writer final {
   operator bool() const;
   void Update(const Config& config, const std::vector<LayerConfig>& layers);
 
-  UINT GetPreviousTextureKey() const;
-  UINT GetNextTextureKey() const;
   UINT GetNextTextureIndex() const;
 
   uint64_t GetSessionID() const;
@@ -126,38 +125,17 @@ class Writer final {
 struct TextureReadResources;
 struct LayerTextureReadResources;
 
-class SharedTexture11 final {
- public:
-  SharedTexture11();
-  SharedTexture11(SharedTexture11&&);
-  SharedTexture11(
-    const Header& header,
-    ID3D11Device* d3d,
-    uint8_t layerIndex,
-    TextureReadResources* r);
-  ~SharedTexture11();
-
-  bool IsValid() const;
-
-  ID3D11Texture2D* GetTexture() const;
-  IDXGISurface* GetSurface() const;
-  ID3D11ShaderResourceView* GetShaderResourceView() const;
-
-  SharedTexture11(const SharedTexture11&) = delete;
-
- private:
-  UINT mKey = 0;
-  LayerTextureReadResources* mResources = nullptr;
-};
-
 class Snapshot final {
  private:
-  std::unique_ptr<Header> mHeader;
-  TextureReadResources* mResources {nullptr};
+  std::shared_ptr<Header> mHeader;
+  std::array<winrt::com_ptr<ID3D11Texture2D>, MaxLayers> mLayerTextures;
+  std::shared_ptr<
+    std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>>
+    mLayerSRVs;
 
  public:
   Snapshot();
-  Snapshot(const Header& header, TextureReadResources*);
+  Snapshot(const Header& header, ID3D11Device*, TextureReadResources*);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -165,14 +143,14 @@ class Snapshot final {
   Config GetConfig() const;
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
-  SharedTexture11 GetLayerTexture(ID3D11Device*, uint8_t layerIndex) const;
+  winrt::com_ptr<ID3D11Texture2D> GetLayerTexture(
+    ID3D11Device*,
+    uint8_t layerIndex) const;
+  winrt::com_ptr<ID3D11ShaderResourceView> GetLayerShaderResourceView(
+    ID3D11Device*,
+    uint8_t layerIndex) const;
 
   bool IsValid() const;
-
-  Snapshot(const Snapshot&);
-  Snapshot(Snapshot&&);
-  Snapshot& operator=(Snapshot&&);
-  Snapshot& operator=(const Snapshot&);
 };
 
 class Reader final {
@@ -181,20 +159,22 @@ class Reader final {
   ~Reader();
 
   operator bool() const;
-  Snapshot MaybeGet(ConsumerKind) const;
-  /// Changes even if the feeder restarts with frame ID 0
-  size_t GetRenderCacheKey() const;
+  // Fetch a (possibly-cached) snapshot
+  Snapshot MaybeGet(ID3D11Device*, ConsumerKind);
   /// Do not use for caching - use GetRenderCacheKey instead
   uint32_t GetFrameCountForMetricsOnly() const;
 
-  // "Lockable" C++ named concept: supports std::unique_lock
-  void lock();
-  bool try_lock();
-  void unlock();
+  /// Changes even if the feeder restarts with frame ID 0
+  size_t GetRenderCacheKey() const;
 
  private:
+  Snapshot MaybeGetUncached(ID3D11Device*, ConsumerKind) const;
+
   class Impl;
   std::shared_ptr<Impl> p;
+
+  Snapshot mCache;
+  ConsumerKind mCachedConsumerKind;
 };
 
 }// namespace OpenKneeboard::SHM

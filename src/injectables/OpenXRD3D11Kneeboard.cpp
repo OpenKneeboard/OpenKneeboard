@@ -41,8 +41,9 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D11KHR& binding)
-  : OpenXRKneeboard(session, runtimeID, next), mDevice(binding.device) {
+  : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
+  mDevice.copy_from(binding.device);
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
@@ -125,10 +126,14 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
 #endif
     mRenderTargetViews.at(layerIndex).at(i)
       = std::make_shared<D3D11::RenderTargetViewFactory>(
-        mDevice, images.at(i).texture);
+        mDevice.get(), images.at(i).texture);
   }
 
   return swapchain;
+}
+
+winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() const {
+  return mDevice;
 }
 
 bool OpenXRD3D11Kneeboard::Render(
@@ -138,7 +143,7 @@ bool OpenXRD3D11Kneeboard::Render(
   const VRKneeboard::RenderParameters& renderParameters) {
   return OpenXRD3D11Kneeboard::Render(
     this->GetOpenXR(),
-    mDevice,
+    mDevice.get(),
     mRenderTargetViews.at(layerIndex),
     swapchain,
     snapshot,
@@ -182,17 +187,14 @@ bool OpenXRD3D11Kneeboard::Render(
   }
 
   {
-    auto sharedTexture = snapshot.GetLayerTexture(device, layerIndex);
-    if (!sharedTexture.IsValid()) {
-      dprint("Failed to get shared texture");
+    auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
+    if (!srv) {
+      dprint("Failed to get shader resource view");
       return false;
     }
     auto rtv = renderTargetViews.at(textureIndex)->Get();
     D3D11::CopyTextureWithOpacity(
-      device,
-      sharedTexture.GetShaderResourceView(),
-      rtv->Get(),
-      renderParameters.mKneeboardOpacity);
+      device, srv.get(), rtv->Get(), renderParameters.mKneeboardOpacity);
   }
 
   return true;

@@ -57,38 +57,18 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
 
-  this->CreateTexture(device);
+  const auto snapshot
+    = mSHM.MaybeGet(device.get(), SHM::ConsumerKind::NonVRD3D11);
 
-  if (mSHM.GetRenderCacheKey() != mSnapshot.GetRenderCacheKey()) {
-    const std::unique_lock lock(mSHM);
-    mSnapshot = mSHM.MaybeGet(SHM::ConsumerKind::NonVRD3D11);
-    if (!mSnapshot.IsValid()) {
-      return passthrough();
-    }
-
-    if (mSnapshot.GetLayerCount() == 0) {
-      return passthrough();
-    }
-
-    auto config = mSnapshot.GetConfig();
-    const uint8_t layerIndex = 0;
-
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    device->GetImmediateContext(ctx.put());
-    ctx->CopyResource(
-      mTexture.get(),
-      mSnapshot.GetLayerTexture(device.get(), layerIndex).GetTexture());
-  }
-
-  if (!mSnapshot.GetLayerCount()) {
+  if (!snapshot.GetLayerCount()) {
     return passthrough();
   }
 
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
 
-  const auto& layerConfig = *mSnapshot.GetLayerConfig(0);
-  const auto flatConfig = mSnapshot.GetConfig().mFlat;
+  const auto& layerConfig = *snapshot.GetLayerConfig(0);
+  const auto flatConfig = snapshot.GetConfig().mFlat;
 
   const auto aspectRatio
     = float(layerConfig.mImageWidth) / layerConfig.mImageHeight;
@@ -155,7 +135,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
 
     D3D11::DrawTextureWithOpacity(
       device.get(),
-      mShaderResourceView.get(),
+      snapshot.GetLayerShaderResourceView(device.get(), 0).get(),
       rtv.get(),
       sourceRect,
       destRect,
@@ -163,17 +143,6 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   return passthrough();
-}
-
-void NonVRD3D11Kneeboard::CreateTexture(
-  const winrt::com_ptr<ID3D11Device>& device) {
-  if (mTexture) [[likely]] {
-    return;
-  }
-
-  mTexture = SHM::CreateCompatibleTexture(device.get());
-  winrt::check_hresult(device->CreateShaderResourceView(
-    mTexture.get(), nullptr, mShaderResourceView.put()));
 }
 
 }// namespace OpenKneeboard

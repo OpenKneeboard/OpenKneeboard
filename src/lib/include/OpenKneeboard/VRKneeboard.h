@@ -51,18 +51,11 @@ class VRKneeboard {
     const SHM::LayerConfig&,
     const Pose& hmdPose);
 
-  SHM::Snapshot MaybeGetSnapshot(SHM::ConsumerKind);
-  bool HaveSHM() const;
-
  private:
   struct Sizes {
     Vector2 mNormalSize;
     Vector2 mZoomedSize;
   };
-
-  SHM::Reader mSHM;
-  SHM::ConsumerKind mConsumerKind;
-  SHM::Snapshot mSnapshot;
 
   uint64_t mRecenterCount = 0;
   Matrix mRecenter = Matrix::Identity;

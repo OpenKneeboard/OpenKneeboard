@@ -88,7 +88,6 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     auto& layer = mLayers.at(layerIndex);
     auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
 
-    it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
     if (tint.mEnabled) {
       D3D11::CopyTextureWithTint(
         mDXR.mD3DDevice.get(),
@@ -104,7 +103,6 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
       mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
     }
     mD3DContext->Flush();
-    it.mMutex->ReleaseSync(it.mMutexKey);
 
     shmLayers.push_back(layer.mConfig);
   }
@@ -147,16 +145,15 @@ InterprocessRenderer::InterprocessRenderer(
       layer.mCanvasTexture.get(), nullptr, layer.mCanvasSRV.put()));
   }
 
-  const UINT sharedMiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
-    | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
-
   const auto sessionID = mSHM.GetSessionID();
   for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
     auto& layer = mLayers.at(layerIndex);
     for (uint8_t bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
       auto& resources = layer.mSharedResources.at(bufferIndex);
       resources.mTexture = SHM::CreateCompatibleTexture(
-        dxr.mD3DDevice.get(), SHM::DEFAULT_D3D11_BIND_FLAGS, sharedMiscFlags);
+        dxr.mD3DDevice.get(),
+        SHM::DEFAULT_D3D11_BIND_FLAGS,
+        D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED);
       winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
         resources.mTexture.get(), nullptr, resources.mTextureRTV.put()));
       auto textureName
@@ -167,7 +164,6 @@ InterprocessRenderer::InterprocessRenderer(
           DXGI_SHARED_RESOURCE_READ,
           textureName.c_str(),
           resources.mSharedHandle.put()));
-      resources.mMutex = resources.mTexture.as<IDXGIKeyedMutex>();
     }
   }
 

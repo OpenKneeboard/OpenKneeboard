@@ -64,9 +64,7 @@ class InterprocessRenderer final : private EventReceiver {
   struct SharedTextureResources {
     winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
     winrt::com_ptr<ID3D11Texture2D> mTexture;
-    winrt::com_ptr<IDXGIKeyedMutex> mMutex;
     winrt::handle mSharedHandle;
-    UINT mMutexKey = 0;
   };
 
   struct Layer {

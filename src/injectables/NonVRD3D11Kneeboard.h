@@ -39,16 +39,11 @@ class NonVRD3D11Kneeboard final {
   SHM::Reader mSHM;
   IDXGISwapChainPresentHook mDXGIHook;
 
-  SHM::Snapshot mSnapshot;
-  winrt::com_ptr<ID3D11Texture2D> mTexture;
-  winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
-
   HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,
     UINT syncInterval,
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next);
-  void CreateTexture(const winrt::com_ptr<ID3D11Device>&);
 };
 
 }// namespace OpenKneeboard

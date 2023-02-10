@@ -188,7 +188,7 @@ void OpenVRKneeboard::Tick() {
 
   mFrameCounter++;
 
-  auto snapshot = this->MaybeGetSnapshot(SHM::ConsumerKind::SteamVR);
+  const auto snapshot = mSHM.MaybeGet(mD3D.get(), SHM::ConsumerKind::SteamVR);
   if (!snapshot.IsValid()) {
     for (auto& layerState: mLayers) {
       if (layerState.mVisible) {
@@ -254,13 +254,12 @@ void OpenVRKneeboard::Tick() {
     // OpenVR call
 
     {
-      auto openKneeboardTexture
-        = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
+      auto srv = snapshot.GetLayerShaderResourceView(mD3D.get(), layerIndex);
 
       // non-atomic paint to buffer...
       D3D11::CopyTextureWithOpacity(
         mD3D.get(),
-        openKneeboardTexture.GetShaderResourceView(),
+        srv.get(),
         mRenderTargetView.get(),
         renderParams.mKneeboardOpacity);
 

@@ -93,15 +93,9 @@ static auto MutexPath() {
   return sCache;
 }
 
-static UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
-  return (sequenceNumber % (std::numeric_limits<UINT>::max() - 1)) + 1;
-}
-
 struct LayerTextureReadResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<IDXGISurface> mSurface;
-  winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
-  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
 
   void Populate(
     ID3D11Device* d3d,
@@ -113,7 +107,7 @@ struct LayerTextureReadResources {
 struct TextureReadResources {
   uint64_t mSessionID = 0;
 
-  LayerTextureReadResources mLayers[MaxLayers];
+  std::array<LayerTextureReadResources, MaxLayers> mLayers;
 
   void Populate(ID3D11Device* d3d, uint64_t sessionID, uint32_t sequenceNumber);
 };
@@ -167,10 +161,6 @@ void LayerTextureReadResources::Populate(
   dprintf(L"Opened shared texture {}", textureName);
 
   mSurface = mTexture.as<IDXGISurface>();
-  mMutex = mTexture.as<IDXGIKeyedMutex>();
-
-  d1->CreateShaderResourceView(
-    mTexture.get(), nullptr, mShaderResourceView.put());
 }
 
 std::wstring SharedTextureName(
@@ -207,96 +197,29 @@ CreateCompatibleTexture(ID3D11Device* d3d, UINT bindFlags, UINT miscFlags) {
   return std::move(texture);
 }
 
-SharedTexture11::SharedTexture11() {
-}
-
-SharedTexture11::SharedTexture11(SharedTexture11&& other)
-  : mKey(other.mKey), mResources(other.mResources) {
-  other.mKey = 0;
-  other.mResources = nullptr;
-}
-
-SharedTexture11::SharedTexture11(
-  const Header& header,
-  ID3D11Device* d3d,
-  uint8_t layerIndex,
-  TextureReadResources* r) {
-  r->Populate(d3d, header.mSessionID, header.mSequenceNumber);
-  auto l = &r->mLayers[layerIndex];
-  if (!l->mMutex) {
-    return;
-  }
-
-  auto key = GetTextureKeyFromSequenceNumber(header.mSequenceNumber);
-  if (l->mMutex->AcquireSync(key, 10) != S_OK) {
-    return;
-  }
-  mResources = l;
-  mKey = key;
-}
-
-SharedTexture11::~SharedTexture11() {
-  if (mKey == 0) {
-    return;
-  }
-  if (!mResources) {
-    return;
-  }
-  mResources->mMutex->ReleaseSync(mKey);
-}
-
-bool SharedTexture11::IsValid() const {
-  return mResources && mKey != 0;
-}
-
-ID3D11Texture2D* SharedTexture11::GetTexture() const {
-  return mResources->mTexture.get();
-}
-
-IDXGISurface* SharedTexture11::GetSurface() const {
-  return mResources->mSurface.get();
-}
-
-ID3D11ShaderResourceView* SharedTexture11::GetShaderResourceView() const {
-  return mResources->mShaderResourceView.get();
-}
-
 Snapshot::Snapshot() {
 }
 
-Snapshot::Snapshot(const Header& header, TextureReadResources* r)
-  : mResources(r) {
-  mHeader = std::make_unique<Header>(header);
+Snapshot::Snapshot(
+  const Header& header,
+  ID3D11Device* d3d,
+  TextureReadResources* r) {
+  mHeader = std::make_shared<Header>(header);
+
+  winrt::com_ptr<ID3D11DeviceContext> ctx;
+  d3d->GetImmediateContext(ctx.put());
+
+  const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
+  for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
+    auto& t = mLayerTextures.at(i);
+    t = SHM::CreateCompatibleTexture(d3d);
+
+    ctx->CopySubresourceRegion(
+      t.get(), 0, 0, 0, 0, r->mLayers[i].mTexture.get(), 0, &box);
+  }
 }
 
 Snapshot::~Snapshot() {
-}
-
-Snapshot::Snapshot(const Snapshot& other) {
-  *this = other;
-}
-
-Snapshot::Snapshot(Snapshot&& other) {
-  *this = std::move(other);
-}
-
-Snapshot& Snapshot::operator=(const Snapshot& other) {
-  if (other.mHeader) {
-    mHeader = std::make_unique<Header>(*other.mHeader);
-  } else {
-    mHeader.reset();
-  }
-  mResources = other.mResources;
-
-  return *this;
-}
-
-Snapshot& Snapshot::operator=(Snapshot&& other) {
-  mHeader = std::move(other.mHeader);
-  mResources = other.mResources;
-  other.mResources = nullptr;
-
-  return *this;
 }
 
 size_t Snapshot::GetRenderCacheKey() const {
@@ -346,8 +269,9 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   return config;
 }
 
-SharedTexture11 Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
-  const {
+winrt::com_ptr<ID3D11Texture2D> Snapshot::GetLayerTexture(
+  ID3D11Device* d3d,
+  uint8_t layerIndex) const {
   if (layerIndex >= this->GetLayerCount()) {
     dprintf(
       "Asked for layer {}, but there are {} layers",
@@ -357,12 +281,28 @@ SharedTexture11 Snapshot::GetLayerTexture(ID3D11Device* d3d, uint8_t layerIndex)
     return {};
   }
 
-  SharedTexture11 texture(*mHeader, d3d, layerIndex, mResources);
-  if (!texture.IsValid()) {
+  return mLayerTextures.at(layerIndex);
+}
+
+winrt::com_ptr<ID3D11ShaderResourceView> Snapshot::GetLayerShaderResourceView(
+  ID3D11Device* d3d,
+  uint8_t layerIndex) const {
+  if (layerIndex >= this->GetLayerCount()) {
+    dprintf(
+      "Asked for layer {}, but there are {} layers",
+      layerIndex,
+      this->GetLayerCount());
+    OPENKNEEBOARD_BREAK;
     return {};
   }
 
-  return texture;
+  auto& srv = (*mLayerSRVs).at(layerIndex);
+  if (!srv) {
+    winrt::check_hresult(d3d->CreateShaderResourceView(
+      mLayerTextures.at(layerIndex).get(), nullptr, srv.put()));
+  }
+
+  return srv;
 }
 
 bool Snapshot::IsValid() const {
@@ -502,14 +442,6 @@ bool Writer::try_lock() {
   return p->try_lock();
 }
 
-UINT Writer::GetPreviousTextureKey() const {
-  return GetTextureKeyFromSequenceNumber(p->mHeader->mSequenceNumber);
-}
-
-UINT Writer::GetNextTextureKey() const {
-  return GetTextureKeyFromSequenceNumber(p->mHeader->mSequenceNumber + 1);
-}
-
 UINT Writer::GetNextTextureIndex() const {
   return (p->mHeader->mSequenceNumber + 1) % TextureCount;
 }
@@ -524,7 +456,7 @@ uint32_t Writer::GetNextSequenceNumber() const {
 
 class Reader::Impl : public SHM::Impl {
  public:
-  std::vector<TextureReadResources> mResources;
+  std::array<TextureReadResources, TextureCount> mResources;
 };
 
 Reader::Reader() {
@@ -536,7 +468,6 @@ Reader::Reader() {
     p.reset();
     return;
   }
-  p->mResources = {TextureCount};
   dprint("Reader initialized.");
 }
 
@@ -552,19 +483,24 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-void Reader::lock() {
-  p->lock();
+Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
+  if (!*this) {
+    return {};
+  }
+
+  if (
+    mCache.IsValid() && this->GetRenderCacheKey() == mCache.GetRenderCacheKey()
+    && kind == mCachedConsumerKind) {
+    return mCache;
+  }
+
+  const std::unique_lock shmLock(*p);
+  mCache = this->MaybeGetUncached(d3d, kind);
+  mCachedConsumerKind = kind;
+  return mCache;
 }
 
-void Reader::unlock() {
-  p->unlock();
-}
-
-bool Reader::try_lock() {
-  return p->try_lock();
-}
-
-Snapshot Reader::MaybeGet(ConsumerKind kind) const {
+Snapshot Reader::MaybeGetUncached(ID3D11Device* d3d, ConsumerKind kind) const {
   if (!p->HaveLock()) {
     throw std::logic_error("Reader::MaybeGet() without lock");
   }
@@ -573,8 +509,10 @@ Snapshot Reader::MaybeGet(ConsumerKind kind) const {
     return {};
   }
 
-  return Snapshot(
-    *p->mHeader, &p->mResources.at(p->mHeader->mSequenceNumber % TextureCount));
+  auto& r = p->mResources.at(p->mHeader->mSequenceNumber % TextureCount);
+  r.Populate(d3d, p->mHeader->mSessionID, p->mHeader->mSequenceNumber);
+
+  return Snapshot(*p->mHeader, d3d, &r);
 }
 
 size_t Reader::GetRenderCacheKey() const {

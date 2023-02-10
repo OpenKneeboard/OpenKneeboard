@@ -20,6 +20,11 @@
 
 #pragma once
 
+// clang-format off
+#include <Windows.h>
+#include <d3d11.h>
+// clang-format on
+
 #include <OpenKneeboard/VRKneeboard.h>
 #include <OpenKneeboard/config.h>
 #include <openxr/openxr.h>
@@ -63,6 +68,7 @@ class OpenXRKneeboard : public VRKneeboard {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&)
     = 0;
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() const = 0;
 
   // For quirks
   bool IsVarjoRuntime() const;
@@ -71,6 +77,7 @@ class OpenXRKneeboard : public VRKneeboard {
 
  private:
   std::shared_ptr<OpenXRNext> mOpenXR;
+  SHM::Reader mSHM;
 
   std::array<XrSwapchain, MaxLayers> mSwapchains;
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;

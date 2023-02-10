@@ -55,6 +55,7 @@ class OpenVRKneeboard final : private VRKneeboard {
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
+  SHM::Reader mSHM;
 
   // Paint to buffer texture with variable opacity,
   // then atomically copy to OpenVR texture

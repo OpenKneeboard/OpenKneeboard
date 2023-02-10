@@ -102,30 +102,6 @@ void VRKneeboard::Recenter(const VRRenderConfig& vr, const Pose& hmdPose) {
   mRecenterCount = vr.mRecenterCount;
 }
 
-SHM::Snapshot VRKneeboard::MaybeGetSnapshot(SHM::ConsumerKind consumerKind) {
-  // Cache, so we don't need to fight for the spinlock if there's
-  // no new frames
-  if (!mSHM) {
-    return {};
-  }
-
-  if (
-    mSnapshot.IsValid()
-    && mSHM.GetRenderCacheKey() == mSnapshot.GetRenderCacheKey()
-    && consumerKind == mConsumerKind) {
-    return mSnapshot;
-  }
-
-  const std::unique_lock lock(mSHM);
-  mSnapshot = mSHM.MaybeGet(consumerKind);
-  mConsumerKind = consumerKind;
-  return mSnapshot;
-}
-
-bool VRKneeboard::HaveSHM() const {
-  return static_cast<bool>(mSHM);
-}
-
 VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
   const SHM::Snapshot& snapshot,
   const SHM::LayerConfig& layer,
