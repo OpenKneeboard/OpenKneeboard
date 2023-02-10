@@ -135,20 +135,8 @@ InterprocessRenderer::InterprocessRenderer(
   const std::unique_lock d2dLock(mDXR);
   dxr.mD3DDevice->GetImmediateContext(mD3DContext.put());
 
-  D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = TextureWidth,
-    .Height = TextureHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
-    .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags = 0,
-  };
-
   for (auto& layer: mLayers) {
-    winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
-      &textureDesc, nullptr, layer.mCanvasTexture.put()));
+    layer.mCanvasTexture = SHM::CreateCompatibleTexture(dxr.mD3DDevice.get());
 
     winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
       layer.mCanvasTexture.as<IDXGISurface>().get(),
@@ -159,7 +147,7 @@ InterprocessRenderer::InterprocessRenderer(
       layer.mCanvasTexture.get(), nullptr, layer.mCanvasSRV.put()));
   }
 
-  textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+  const UINT sharedMiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
     | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
   const auto sessionID = mSHM.GetSessionID();
@@ -167,8 +155,8 @@ InterprocessRenderer::InterprocessRenderer(
     auto& layer = mLayers.at(layerIndex);
     for (uint8_t bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
       auto& resources = layer.mSharedResources.at(bufferIndex);
-      winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
-        &textureDesc, nullptr, resources.mTexture.put()));
+      resources.mTexture = SHM::CreateCompatibleTexture(
+        dxr.mD3DDevice.get(), SHM::DEFAULT_D3D11_BIND_FLAGS, sharedMiscFlags);
       winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
         resources.mTexture.get(), nullptr, resources.mTextureRTV.put()));
       auto textureName

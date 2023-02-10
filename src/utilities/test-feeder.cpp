@@ -122,23 +122,15 @@ int main() {
   static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
   std::array<std::array<SharedTextureResources, TextureCount>, layerCount>
     resources;
-  D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = layer.mImageWidth,
-    .Height = layer.mImageHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,// needed for Direct2D
-    .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-  };
-  winrt::com_ptr<ID3D11Texture2D> canvas;
-  device->CreateTexture2D(&textureDesc, nullptr, canvas.put());
+  winrt::com_ptr<ID3D11Texture2D> canvas
+    = SHM::CreateCompatibleTexture(device.get());
   winrt::com_ptr<ID2D1RenderTarget> renderTarget;
   d2d->CreateDxgiSurfaceRenderTarget(
     canvas.as<IDXGISurface>().get(),
     D2D1::RenderTargetProperties(
       D2D1_RENDER_TARGET_TYPE_HARDWARE,
-      D2D1::PixelFormat(textureDesc.Format, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+      D2D1::PixelFormat(
+        SHM::SHARED_TEXTURE_PIXEL_FORMAT, D2D1_ALPHA_MODE_PREMULTIPLIED)),
     renderTarget.put());
   renderTarget->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
   renderTarget->CreateSolidColorBrush(
@@ -148,14 +140,15 @@ int main() {
   DirectX::BasicPostProcess copier(device.get());
   copier.SetEffect(DirectX::BasicPostProcess::Copy);
 
-  textureDesc.Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT;
-  textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
-    | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
   for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
     auto& layerIt = resources.at(layerIndex);
     for (auto bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
       auto& bufferIt = layerIt.at(bufferIndex);
-      device->CreateTexture2D(&textureDesc, nullptr, bufferIt.mTexture.put());
+      bufferIt.mTexture = SHM::CreateCompatibleTexture(
+        device.get(),
+        SHM::DEFAULT_D3D11_BIND_FLAGS,
+        D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+          | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX);
       device->CreateRenderTargetView(
         bufferIt.mTexture.get(), nullptr, bufferIt.mTextureRTV.put());
 

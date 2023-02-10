@@ -171,19 +171,7 @@ void NonVRD3D11Kneeboard::CreateTexture(
     return;
   }
 
-  D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = TextureWidth,
-    .Height = TextureHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
-    .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags = 0,
-  };
-
-  winrt::check_hresult(
-    device->CreateTexture2D(&textureDesc, nullptr, mTexture.put()));
+  mTexture = SHM::CreateCompatibleTexture(device.get());
   winrt::check_hresult(device->CreateShaderResourceView(
     mTexture.get(), nullptr, mShaderResourceView.put()));
 }

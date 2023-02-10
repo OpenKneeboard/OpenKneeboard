@@ -58,32 +58,16 @@ OpenVRKneeboard::OpenVRKneeboard() {
     nullptr));
   mD3D = device.as<ID3D11Device1>();
 
-  D3D11_TEXTURE2D_DESC desc {
-    .Width = TextureWidth,
-    .Height = TextureHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
-    .SampleDesc = {1, 0},
-    .Usage = D3D11_USAGE_DEFAULT,
-    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-    .CPUAccessFlags = {},
-    .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
-  };
-
   for (uint8_t i = 0; i < MaxLayers; ++i) {
     auto& layer = mLayers.at(i);
-    winrt::check_hresult(
-      device->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
+    layer.mOpenVRTexture = SHM::CreateCompatibleTexture(
+      device.get(), D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_SHARED);
     winrt::check_hresult(
       layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
         &layer.mSharedHandle));
   }
 
-  desc.MiscFlags = {};
-  desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
-  winrt::check_hresult(
-    device->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
+  mBufferTexture = SHM::CreateCompatibleTexture(device.get());
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,

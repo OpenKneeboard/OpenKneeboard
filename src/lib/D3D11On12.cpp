@@ -119,18 +119,8 @@ RenderTargetViewFactory::RenderTargetViewFactory(
     IID_PPV_ARGS(mTexture11.put())));
 
   if (static_cast<bool>(flags & Flags::DoubleBuffer)) {
-    D3D11_TEXTURE2D_DESC textureDesc {
-      .Width = TextureWidth,
-      .Height = TextureHeight,
-      .MipLevels = 1,
-      .ArraySize = 1,
-      .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
-      .SampleDesc = {1, 0},
-      .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-      .MiscFlags = 0,
-    };
-    winrt::check_hresult(deviceResources.mDevice11->CreateTexture2D(
-      &textureDesc, nullptr, mBufferTexture11.put()));
+    mBufferTexture11
+      = SHM::CreateCompatibleTexture(deviceResources.mDevice11.get());
   }
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {

@@ -48,6 +48,15 @@ std::wstring SharedTextureName(
   uint8_t layerIndex,
   uint32_t sequenceNumber);
 
+constexpr UINT DEFAULT_D3D11_BIND_FLAGS
+  = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+constexpr UINT DEFAULT_D3D11_MISC_FLAGS = 0;
+
+winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
+  ID3D11Device*,
+  UINT bindFlags = DEFAULT_D3D11_BIND_FLAGS,
+  UINT miscFlags = DEFAULT_D3D11_MISC_FLAGS);
+
 enum class ConsumerKind : uint32_t {
   SteamVR = 1 << 0,
   OpenXR = 1 << 1,

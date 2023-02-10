@@ -189,6 +189,24 @@ std::wstring SharedTextureName(
     sequenceNumber % TextureCount);
 }
 
+winrt::com_ptr<ID3D11Texture2D>
+CreateCompatibleTexture(ID3D11Device* d3d, UINT bindFlags, UINT miscFlags) {
+  D3D11_TEXTURE2D_DESC desc {
+    .Width = TextureWidth,
+    .Height = TextureHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .SampleDesc = {1, 0},
+    .BindFlags = bindFlags,
+    .MiscFlags = miscFlags,
+  };
+
+  winrt::com_ptr<ID3D11Texture2D> texture;
+  winrt::check_hresult(d3d->CreateTexture2D(&desc, nullptr, texture.put()));
+  return std::move(texture);
+}
+
 SharedTexture11::SharedTexture11() {
 }
 
