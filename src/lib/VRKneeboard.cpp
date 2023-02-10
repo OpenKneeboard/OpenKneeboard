@@ -116,6 +116,7 @@ SHM::Snapshot VRKneeboard::MaybeGetSnapshot(SHM::ConsumerKind consumerKind) {
     return mSnapshot;
   }
 
+  const std::unique_lock lock(mSHM);
   mSnapshot = mSHM.MaybeGet(consumerKind);
   mConsumerKind = consumerKind;
   return mSnapshot;

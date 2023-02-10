@@ -104,6 +104,11 @@ class Writer final {
   uint64_t GetSessionID() const;
   uint32_t GetNextSequenceNumber() const;
 
+  // "Lockable" C++ named concept: supports std::unique_lock
+  void lock();
+  bool try_lock();
+  void unlock();
+
  private:
   class Impl;
   std::shared_ptr<Impl> p;
@@ -172,6 +177,11 @@ class Reader final {
   size_t GetRenderCacheKey() const;
   /// Do not use for caching - use GetRenderCacheKey instead
   uint32_t GetFrameCountForMetricsOnly() const;
+
+  // "Lockable" C++ named concept: supports std::unique_lock
+  void lock();
+  bool try_lock();
+  void unlock();
 
  private:
   class Impl;

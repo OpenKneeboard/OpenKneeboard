@@ -60,6 +60,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   this->CreateTexture(device);
 
   if (mSHM.GetRenderCacheKey() != mSnapshot.GetRenderCacheKey()) {
+    const std::unique_lock lock(mSHM);
     mSnapshot = mSHM.MaybeGet(SHM::ConsumerKind::NonVRD3D11);
     if (!mSnapshot.IsValid()) {
       return passthrough();

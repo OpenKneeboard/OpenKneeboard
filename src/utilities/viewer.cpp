@@ -48,6 +48,7 @@ class TestViewerWindow final {
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
   SHM::Reader mSHM;
+  SHM::Snapshot mSnapshot;
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
@@ -343,7 +344,12 @@ class TestViewerWindow final {
 
     ctx->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
-    auto snapshot = mSHM.MaybeGet(SHM::ConsumerKind::Test);
+    auto snapshot = mSnapshot;
+    if (!(snapshot.IsValid()
+          && snapshot.GetRenderCacheKey() == mSHM.GetRenderCacheKey())) {
+      const std::unique_lock shmLock(mSHM);
+      snapshot = mSHM.MaybeGet(SHM::ConsumerKind::Test);
+    }
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(

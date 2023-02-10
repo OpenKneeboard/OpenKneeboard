@@ -78,7 +78,8 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
 
   const auto tint = mKneeboard->GetAppSettings().mTint;
 
-  const std::unique_lock lock(mDXR);
+  const std::unique_lock dxLock(mDXR);
+  const std::unique_lock shmLock(mSHM);
   mD3DContext->Flush();
 
   std::vector<SHM::LayerConfig> shmLayers;

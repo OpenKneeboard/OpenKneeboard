@@ -41,8 +41,7 @@ static uint64_t CreateSessionID() {
 }
 
 enum class HeaderFlags : ULONG {
-  LOCKED = 1 << 0,
-  FEEDER_ATTACHED = 1 << 1,
+  FEEDER_ATTACHED = 1 << 0,
 };
 
 struct Header final {
@@ -67,68 +66,12 @@ constexpr bool is_bitflags_v<SHM::HeaderFlags> = true;
 
 namespace OpenKneeboard::SHM {
 
-namespace {
+static constexpr DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
+static constexpr DWORD SHM_SIZE = sizeof(Header);
 
-class Spinlock final {
- private:
-  Header* mHeader = nullptr;
-
- public:
-  enum FAILURE_BEHAVIOR {
-    ON_FAILURE_FORCE_UNLOCK,
-    ON_FAILURE_CREATE_FALSEY,
-    ON_FAILURE_THROW_EXCEPTION
-  };
-
-  Spinlock(Header* header, FAILURE_BEHAVIOR behavior) : mHeader(header) {
-    const auto bit = std::countr_zero(static_cast<ULONG>(HeaderFlags::LOCKED));
-    static_assert(static_cast<ULONG>(HeaderFlags::LOCKED) == 1 << bit);
-
-    for (int count = 1; count <= 1000; ++count) {
-      auto alreadyLocked
-        = _interlockedbittestandset(std::bit_cast<LONG*>(&header->mFlags), bit);
-      if (!alreadyLocked) {
-        return;
-      }
-      if (count % 10 == 0) {
-        YieldProcessor();
-      }
-      if (count % 100 == 0) {
-        Sleep(10 /* ms */);
-      }
-    }
-
-    if (behavior == ON_FAILURE_FORCE_UNLOCK) {
-      return;
-    }
-
-    if (behavior == ON_FAILURE_CREATE_FALSEY) {
-      mHeader = nullptr;
-      return;
-    }
-
-    throw new std::runtime_error("Failed to acquire spinlock");
-  }
-
-  operator bool() {
-    return (bool)mHeader;
-  }
-
-  ~Spinlock() {
-    if (!mHeader) {
-      return;
-    }
-
-    mHeader->mFlags &= ~HeaderFlags::LOCKED;
-  }
-};
-
-constexpr DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
-constexpr DWORD SHM_SIZE = sizeof(Header);
-
-auto SHMPath() {
+static auto SHMPath() {
   static std::wstring sCache;
-  if (!sCache.empty()) {
+  if (!sCache.empty()) [[likely]] {
     return sCache;
   }
   sCache = std::format(
@@ -142,11 +85,17 @@ auto SHMPath() {
   return sCache;
 }
 
-UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
-  return (sequenceNumber % (std::numeric_limits<UINT>::max() - 1)) + 1;
+static auto MutexPath() {
+  static std::wstring sCache;
+  if (sCache.empty()) [[unlikely]] {
+    sCache = SHMPath() + L".mutex";
+  }
+  return sCache;
 }
 
-}// namespace
+static UINT GetTextureKeyFromSequenceNumber(uint32_t sequenceNumber) {
+  return (sequenceNumber % (std::numeric_limits<UINT>::max() - 1)) + 1;
+}
 
 struct LayerTextureReadResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
@@ -406,13 +355,93 @@ bool Snapshot::IsValid() const {
 
 class Impl {
  public:
-  winrt::handle mHandle;
+  winrt::handle mFileHandle;
+  winrt::handle mMutexHandle;
   std::byte* mMapping = nullptr;
   Header* mHeader = nullptr;
 
+  Impl() {
+    winrt::handle fileHandle {CreateFileMappingW(
+      INVALID_HANDLE_VALUE,
+      NULL,
+      PAGE_READWRITE,
+      0,
+      SHM_SIZE,
+      SHMPath().c_str())};
+    if (!fileHandle) {
+      dprintf(
+        "CreateFileMappingW failed: {}", static_cast<int>(GetLastError()));
+      return;
+    }
+
+    winrt::handle mutexHandle {
+      CreateMutexW(nullptr, FALSE, MutexPath().c_str())};
+    if (!mutexHandle) {
+      dprintf("CreateMutexW failed: {}", static_cast<int>(GetLastError()));
+      return;
+    }
+
+    mMapping = reinterpret_cast<std::byte*>(
+      MapViewOfFile(fileHandle.get(), FILE_MAP_WRITE, 0, 0, SHM_SIZE));
+    if (!mMapping) {
+      dprintf(
+        "MapViewOfFile failed: {:#x}", std::bit_cast<uint32_t>(GetLastError()));
+      return;
+    }
+
+    mFileHandle = std::move(fileHandle);
+    mMutexHandle = std::move(mutexHandle);
+    mHeader = reinterpret_cast<Header*>(mMapping);
+  }
+
   ~Impl() {
     UnmapViewOfFile(mMapping);
+    if (mHaveLock) {
+      dprint("Closing SHM while holding lock!");
+      OPENKNEEBOARD_BREAK;
+      std::terminate();
+    }
   }
+
+  bool IsValid() const {
+    return mMapping;
+  }
+
+  bool HaveLock() const {
+    return mHaveLock;
+  }
+
+  // "Lockable" C++ named concept: supports std::unique_lock
+
+  void lock() {
+    if (mHaveLock) {
+      throw std::logic_error("Acquiring a lock twice");
+    }
+    WaitForSingleObject(mMutexHandle.get(), INFINITE);
+    mHaveLock = true;
+  }
+
+  bool try_lock() {
+    if (mHaveLock) {
+      throw std::logic_error("Acquiring a lock twice");
+    }
+    if (WaitForSingleObject(mMutexHandle.get(), 0) != WAIT_OBJECT_0) {
+      return false;
+    }
+    mHaveLock = true;
+    return true;
+  }
+
+  void unlock() {
+    if (!mHaveLock) {
+      throw std::logic_error("Can't release a lock we don't hold");
+    }
+    ReleaseMutex(mMutexHandle.get());
+    mHaveLock = false;
+  }
+
+ private:
+  bool mHaveLock = false;
 };
 
 class Writer::Impl : public SHM::Impl {
@@ -430,31 +459,29 @@ Writer::Writer() {
   const auto path = SHMPath();
   dprintf(L"Initializing SHM writer with path {}", path);
 
-  winrt::handle handle {CreateFileMappingW(
-    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str())};
-  if (!handle) {
-    dprintf(
-      "CreateFileMappingW failed: {:#x}",
-      std::bit_cast<uint32_t>(GetLastError()));
-    return;
-  }
-  auto mapping = reinterpret_cast<std::byte*>(
-    MapViewOfFile(handle.get(), FILE_MAP_WRITE, 0, 0, SHM_SIZE));
-  if (!mapping) {
-    dprintf(
-      "MapViewOfFile failed: {:#x}", std::bit_cast<uint32_t>(GetLastError()));
+  p = std::make_shared<Impl>();
+  if (!p->IsValid()) {
+    p.reset();
     return;
   }
 
-  p = std::make_shared<Impl>();
-  p->mHandle = std::move(handle);
-  p->mMapping = mapping;
-  p->mHeader = reinterpret_cast<Header*>(mapping);
-  *p->mHeader = {};
+  *p->mHeader = Header {};
   dprint("Writer initialized.");
 }
 
 Writer::~Writer() {
+}
+
+void Writer::lock() {
+  p->lock();
+}
+
+void Writer::unlock() {
+  p->unlock();
+}
+
+bool Writer::try_lock() {
+  return p->try_lock();
 }
 
 UINT Writer::GetPreviousTextureKey() const {
@@ -485,26 +512,12 @@ class Reader::Impl : public SHM::Impl {
 Reader::Reader() {
   const auto path = SHMPath();
   dprintf(L"Initializing SHM reader with path {}", path);
-  winrt::handle handle {CreateFileMappingW(
-    INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, SHM_SIZE, path.c_str())};
-  if (!handle) {
-    dprintf(
-      "CreateFileMappingW failed: {:#x}",
-      std::bit_cast<uint32_t>(GetLastError()));
-    return;
-  }
-  auto mapping = reinterpret_cast<std::byte*>(
-    MapViewOfFile(handle.get(), FILE_MAP_WRITE, 0, 0, SHM_SIZE));
-  if (!mapping) {
-    dprintf(
-      "MapViewOfFile failed: {:#x}", std::bit_cast<uint32_t>(GetLastError()));
-    return;
-  }
 
   this->p = std::make_shared<Impl>();
-  p->mHandle = std::move(handle);
-  p->mMapping = mapping;
-  p->mHeader = reinterpret_cast<Header*>(mapping);
+  if (!p->IsValid()) {
+    p.reset();
+    return;
+  }
   p->mResources = {TextureCount};
   dprint("Reader initialized.");
 }
@@ -521,10 +534,21 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
+void Reader::lock() {
+  p->lock();
+}
+
+void Reader::unlock() {
+  p->unlock();
+}
+
+bool Reader::try_lock() {
+  return p->try_lock();
+}
+
 Snapshot Reader::MaybeGet(ConsumerKind kind) const {
-  Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_CREATE_FALSEY);
-  if (!lock) {
-    return {};
+  if (!p->HaveLock()) {
+    throw std::logic_error("Reader::MaybeGet() without lock");
   }
 
   if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
@@ -548,6 +572,9 @@ void Writer::Update(
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
+  if (!p->HaveLock()) {
+    throw std::logic_error("Attempted to update SHM without a lock");
+  }
 
   if (layers.size() > MaxLayers) {
     throw std::logic_error(std::format(
@@ -560,7 +587,6 @@ void Writer::Update(
     }
   }
 
-  Spinlock lock(p->mHeader, Spinlock::ON_FAILURE_FORCE_UNLOCK);
   p->mHeader->mConfig = config;
   p->mHeader->mSequenceNumber++;
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
