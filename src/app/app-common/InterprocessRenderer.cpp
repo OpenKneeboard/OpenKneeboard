@@ -76,6 +76,8 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     return;
   }
 
+  const auto tint = mKneeboard->GetAppSettings().mTint;
+
   const std::unique_lock lock(mDXR);
   mD3DContext->Flush();
 
@@ -86,7 +88,20 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
 
     it.mMutex->AcquireSync(it.mMutexKey, INFINITE);
-    mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
+    if (tint.mEnabled) {
+      D3D11::CopyTextureWithTint(
+        mDXR.mD3DDevice.get(),
+        layer.mCanvasSRV.get(),
+        it.mTextureRTV.get(),
+        {
+          tint.mRed * tint.mBrightness,
+          tint.mGreen * tint.mBrightness,
+          tint.mBlue * tint.mBrightness,
+          /* alpha = */ 1.0f,
+        });
+    } else {
+      mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
+    }
     mD3DContext->Flush();
     it.mMutexKey = mSHM.GetNextTextureKey();
     it.mMutex->ReleaseSync(it.mMutexKey);
@@ -131,16 +146,6 @@ InterprocessRenderer::InterprocessRenderer(
     .MiscFlags = 0,
   };
 
-  {
-    winrt::com_ptr<ID3D11Texture2D> bufferTexture;
-    winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
-      &textureDesc, nullptr, bufferTexture.put()));
-    winrt::check_hresult(dxr.mD3DDevice->CreateShaderResourceView(
-      bufferTexture.get(), nullptr, mBufferSRV.put()));
-    winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-      bufferTexture.as<IDXGISurface>().get(), nullptr, mBufferBitmap.put()));
-  }
-
   for (auto& layer: mLayers) {
     winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
       &textureDesc, nullptr, layer.mCanvasTexture.put()));
@@ -150,8 +155,8 @@ InterprocessRenderer::InterprocessRenderer(
       nullptr,
       layer.mCanvasBitmap.put()));
 
-    winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
-      layer.mCanvasTexture.get(), nullptr, layer.mCanvasRTV.put()));
+    winrt::check_hresult(dxr.mD3DDevice->CreateShaderResourceView(
+      layer.mCanvasTexture.get(), nullptr, layer.mCanvasSRV.put()));
   }
 
   textureDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_NTHANDLE
@@ -164,6 +169,8 @@ InterprocessRenderer::InterprocessRenderer(
       auto& resources = layer.mSharedResources.at(bufferIndex);
       winrt::check_hresult(dxr.mD3DDevice->CreateTexture2D(
         &textureDesc, nullptr, resources.mTexture.put()));
+      winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
+        resources.mTexture.get(), nullptr, resources.mTextureRTV.put()));
       auto textureName
         = SHM::SharedTextureName(sessionID, layerIndex, bufferIndex);
       winrt::check_hresult(
@@ -207,33 +214,11 @@ InterprocessRenderer::~InterprocessRenderer() {
 }
 
 void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
-  const auto tint = mKneeboard->GetAppSettings().mTint;
-
   auto ctx = mDXR.mD2DDeviceContext;
-  if (tint.mEnabled) {
-    ctx->SetTarget(mBufferBitmap.get());
-  } else {
-    ctx->SetTarget(layer.mCanvasBitmap.get());
-  }
+  ctx->SetTarget(layer.mCanvasBitmap.get());
   ctx->BeginDraw();
-  const scope_guard endDraw {[&, this]() {
-    winrt::check_hresult(ctx->EndDraw());
-
-    if (!tint.mEnabled) {
-      return;
-    }
-
-    D3D11::CopyTextureWithTint(
-      mDXR.mD3DDevice.get(),
-      mBufferSRV.get(),
-      layer.mCanvasRTV.get(),
-      {
-        tint.mRed * tint.mBrightness,
-        tint.mGreen * tint.mBrightness,
-        tint.mBlue * tint.mBrightness,
-        /* alpha = */ 1.0f,
-      });
-  }};
+  const scope_guard endDraw {
+    [&, this]() { winrt::check_hresult(ctx->EndDraw()); }};
 
   ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());

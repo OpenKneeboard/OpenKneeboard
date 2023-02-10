@@ -62,6 +62,7 @@ class InterprocessRenderer final : private EventReceiver {
   winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
 
   struct SharedTextureResources {
+    winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
     winrt::com_ptr<ID3D11Texture2D> mTexture;
     winrt::com_ptr<IDXGIKeyedMutex> mMutex;
     winrt::handle mHandle;
@@ -74,15 +75,13 @@ class InterprocessRenderer final : private EventReceiver {
 
     winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
     winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
-    winrt::com_ptr<ID3D11RenderTargetView> mCanvasRTV;
+    winrt::com_ptr<ID3D11ShaderResourceView> mCanvasSRV;
 
     std::array<SharedTextureResources, TextureCount> mSharedResources;
 
     bool mIsActiveForInput = false;
   };
   std::array<Layer, MaxLayers> mLayers;
-  winrt::com_ptr<ID3D11ShaderResourceView> mBufferSRV;
-  winrt::com_ptr<ID2D1Bitmap1> mBufferBitmap;
 
   std::shared_ptr<GameInstance> mCurrentGame;
 
