@@ -1,3 +1,7 @@
+# Output filenames use underscores rather than hyphens for
+# increased compatibility; in particular, LUA requires the DLL
+# name matches a C function name.
+
 add_module_library(
 	OpenKneeboard-lua-api
 	OpenKneeboard_LuaAPI.cpp)

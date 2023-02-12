@@ -32,6 +32,7 @@ set(
   OpenKneeboard-oculus-d3d11
   OpenKneeboard-oculus-d3d12
   OpenKneeboard-OpenXR
+  OpenKneeboard-c-api
   OpenKneeboard-lua-api
 )
 install(TARGETS ${DLL_TARGETS} LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}")

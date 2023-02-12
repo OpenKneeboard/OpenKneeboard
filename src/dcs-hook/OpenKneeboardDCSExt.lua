@@ -25,7 +25,7 @@ l("Init")
 
 package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath
 l("Loading DLL - search path: "..package.cpath)
-local status, OpenKneeboard = pcall(require, "OpenKneeboardDCSExt")
+local status, OpenKneeboard = pcall(require, "OpenKneeboard_LuaAPI64")
 if status then
   l("DLL Loaded")
 else

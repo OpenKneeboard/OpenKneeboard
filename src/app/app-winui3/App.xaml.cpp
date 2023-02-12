@@ -218,7 +218,7 @@ static void LogInstallationInformation() {
     if (ext != L".dll" && ext != L".exe") {
       continue;
     }
-    if (!path.filename().wstring().starts_with(L"OpenKneeboard-")) {
+    if (!path.filename().wstring().starts_with(L"OpenKneeboard")) {
       continue;
     }
 

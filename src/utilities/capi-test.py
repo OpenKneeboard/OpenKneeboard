@@ -12,7 +12,7 @@ def openkneeboard_dll_path():
     if not program_files:
         sys.exit("Could not locate program files")
     path = pathlib.Path(program_files) / "OpenKneeboard" / \
-        "bin" / "OpenKneeboard_CAPI.dll"
+        "bin" / "OpenKneeboard_CAPI64.dll"
     if not os.path.exists(path):
         sys.exit(
             f"'{path}' does not exist; install OpenKneeboard, or set the OPENKNEEBOARD_CAPI_DLL environment variable")

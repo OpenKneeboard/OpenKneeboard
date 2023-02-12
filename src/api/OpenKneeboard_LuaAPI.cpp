@@ -22,6 +22,7 @@
 #include <Windows.h>
 #include <shims/winrt/base.h>
 
+#include <cinttypes>
 #include <format>
 #include <string>
 
@@ -61,7 +62,11 @@ static int SendToOpenKneeboard(lua_State* state) {
 }
 
 extern "C" int __declspec(dllexport)
-  luaopen_OpenKneeboard_LuaAPI(lua_State* state) {
+#if UINTPTR_MAX == UINT64_MAX
+  luaopen_OpenKneeboard_LuaAPI64(lua_State* state) {
+#elif UINTPTR_MAX == UINT32_MAX
+  luaopen_OpenKneeboard_LuaAPI32(lua_State* state) {
+#endif
   OpenKneeboard::DPrintSettings::Set({
     .prefix = "OpenKneeboard-LuaAPI",
   });

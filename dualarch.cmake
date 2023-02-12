@@ -2,6 +2,8 @@ set(
   DUAL_ARCH_COMPONENTS
   OpenKneeboard-WindowCaptureHook
   OpenKneeboard-WindowCaptureHook-Helper
+  OpenKneeboard-c-api
+  OpenKneeboard-lua-api
   CACHE INTERNAL ""
 )
 
@@ -32,6 +34,8 @@ if(BUILD_BITNESS EQUAL 32)
       set(OUTPUT_NAME "${TARGET}")
     endif()
 
+    message(STATUS "TARGET: ${TARGET} ${OUTPUT_NAME}")
+
     set_target_properties("${TARGET}" PROPERTIES OUTPUT_NAME "${OUTPUT_NAME}32")
 
     get_target_property(TARGET_TYPE "${TARGET}" TYPE)
@@ -47,7 +51,14 @@ if(BUILD_BITNESS EQUAL 32)
   return()
 endif()
 
-# 64-bit config here
+# ############################
+# #### 64-bit config here ####
+# ############################
+define_property(
+  TARGET PROPERTY OUTPUT_NAME_32
+  BRIEF_DOCS ""
+  FULL_DOCS "")
+
 foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
   get_target_property(OUTPUT_NAME "${TARGET}" OUTPUT_NAME)
 
@@ -56,6 +67,7 @@ foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
   endif()
 
   set_target_properties("${TARGET}" PROPERTIES OUTPUT_NAME "${OUTPUT_NAME}64")
+  set_target_properties("${TARGET}" PROPERTIES OUTPUT_NAME_32 "${OUTPUT_NAME}32")
 endforeach()
 
 include(ExternalProject)
@@ -106,11 +118,12 @@ foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
   add_dependencies(OpenKneeboard-32bit-runtime-components "${TARGET}32")
 
   get_target_property(TARGET_TYPE "${TARGET}" TYPE)
+  get_target_property(OUTPUT_NAME_32 "${TARGET}" OUTPUT_NAME_32)
 
   if(TARGET_TYPE STREQUAL "EXECUTABLE")
-    set(IMPORTED_FILENAME "${TARGET}32.exe")
+    set(IMPORTED_FILENAME "${OUTPUT_NAME_32}${CMAKE_EXECUTABLE_SUFFIX}")
   else()
-    set(IMPORTED_FILENAME "${TARGET}32.dll")
+    set(IMPORTED_FILENAME "${OUTPUT_NAME_32}${CMAKE_SHARED_MODULE_SUFFIX}")
   endif()
 
   set(IMPORTED_LOCATION "${INSTALL_DIR}/$<CONFIG>/bin/${IMPORTED_FILENAME}")
@@ -133,7 +146,7 @@ foreach(TARGET IN LISTS DUAL_ARCH_COMPONENTS)
   )
   install(
     FILES
-    "${INSTALL_DIR}/$<CONFIG>/${TARGET}32.pdb"
+    "${INSTALL_DIR}/$<CONFIG>/${OUTPUT_NAME_32}.pdb"
     DESTINATION "."
     COMPONENT DebugSymbols
   )

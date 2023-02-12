@@ -2,25 +2,26 @@
 
 ## Overview
 
-The Lua API is able to send information, events, or requests to OpenKneeboard; it is not able to receive data from OpenKneeboard. It requires a Lua extension - `OpenKneeboard_LuaAPI.dll` - which changes with every version of OpenKneeboard.
+The Lua API is able to send information, events, or requests to OpenKneeboard; it is not able to receive data from OpenKneeboard. It requires a Lua extension - `OpenKneeboard_LuaAPI64.dll` - which changes with every version of OpenKneeboard.
 
 This DLL is installed and kept up to date in:
 
-- `C:\Program Files\OpenKneeboard\bin\OpenKneeboard_LuaAPI.dll`
-- `Scripts\Hooks\OpenKneeboard_LuaAPI.dll` within your DCS saved games path
+- `C:\Program Files\OpenKneeboard\bin\OpenKneeboard_LuaAPI64.dll`
+- `Scripts\Hooks\OpenKneeboard_LuaAPI64.dll` within your DCS saved games path
 
 If you're using it outside of DCS, or outside of `Scripts\Hooks`, you most likely want to load it directly from program files.
 
-**In OpenKneeboard v1.3 and below** the DLL is `OpenKneeboardDCSExt.dll` instead of `OpenKneeboard_LuaAPI.dll`
+**In OpenKneeboard v1.3 and below** the DLL is `OpenKneeboardDCSExt.dll` instead of `OpenKneeboard_LuaAPI64.dll`; there is no 32-bit version.
 
 ## Game Compatibility
 
 OpenKneeboard's Lua API is only tested with DCS world; the DLL provided with OpenKneeboard requires that the game:
-- is 64-bit
 - uses Lua 5.1.5
 - uses `lua.dll`, not `lua51.dll`
 
 Supporting other games will require manually rebuilding OpenKneeboard, and changing the version or names of the DLLs in OpenKneeboard's build system. This is not currently supported. I'm open to pull requests adding other Lua build configurations.
+
+32-bit games have the same requirement, but should load `OpenKneeboard_LuaAPI32` instead.
 
 ## Usage
 
@@ -31,7 +32,7 @@ Supporting other games will require manually rebuilding OpenKneeboard, and chang
 	********************************
 
 	Tell Lua where to look for the DLLs; replace `SOME_FOLDER` with
-	the path to a folder containing an up-to-date `OpenKneeboard_LuaAPI.dll`
+	the path to a folder containing an up-to-date `OpenKneeboard_LuaAPI64.dll`
 --]]
 package.cpath = "SOME_DIRECTORY\\?.dll;"..package.cpath
 -- For example, in DCS:
@@ -42,7 +43,7 @@ package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath
 	**** 2. Load the DLL *****
 	**************************
 ]]--
-local status, OpenKneeboard = pcall(require, "OpenKneeboard_LuaAPI")
+local status, OpenKneeboard = pcall(require, "OpenKneeboard_LuaAPI64")
 if status then
   l("DLL Loaded")
 else
