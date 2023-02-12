@@ -217,6 +217,7 @@ Snapshot::Snapshot(
     ctx->CopySubresourceRegion(
       t.get(), 0, 0, 0, 0, r->mLayers[i].mTexture.get(), 0, &box);
   }
+  mLayerSRVs = std::make_shared<LayerSRVArray>();
 }
 
 Snapshot::~Snapshot() {

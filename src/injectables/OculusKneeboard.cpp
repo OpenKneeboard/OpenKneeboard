@@ -88,8 +88,14 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   if (!(mSHM && mRenderer)) {
     return passthrough();
   }
-  const auto snapshot = mSHM.MaybeGet(
-    mRenderer->GetD3D11Device().get(), mRenderer->GetConsumerKind());
+
+  const auto d3d11 = mRenderer->GetD3D11Device();
+  if (!d3d11) {
+    return passthrough();
+  }
+
+  const auto snapshot
+    = mSHM.MaybeGet(d3d11.get(), mRenderer->GetConsumerKind());
   if (!snapshot.IsValid()) {
     return passthrough();
   }

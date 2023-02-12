@@ -129,9 +129,10 @@ class Snapshot final {
  private:
   std::shared_ptr<Header> mHeader;
   std::array<winrt::com_ptr<ID3D11Texture2D>, MaxLayers> mLayerTextures;
-  std::shared_ptr<
-    std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>>
-    mLayerSRVs;
+
+  using LayerSRVArray
+    = std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>;
+  std::shared_ptr<LayerSRVArray> mLayerSRVs;
 
  public:
   Snapshot();
