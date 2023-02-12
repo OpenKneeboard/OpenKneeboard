@@ -33,7 +33,7 @@ else
   return
 end
 
-OpenKneeboard.EventPrefix = "com.fredemmott.openkneeboard.dcsext/"
+OpenKneeboard.EventPrefix = "dcs/"
 function OpenKneeboard.send(name, value)
   OpenKneeboard.sendRaw(OpenKneeboard.EventPrefix..name, value)
 end
@@ -44,7 +44,7 @@ function OpenKneeboard.sendMulti(events)
     table.insert(prefixed, { OpenKneeboard.EventPrefix..name, value })
   end
   OpenKneeboard.sendRaw(
-    "com.fredemmott.openkneeboard/MultiEvent",
+    "MultiEvent",
     net.lua2json(prefixed)
   )
 end

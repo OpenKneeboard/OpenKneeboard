@@ -68,36 +68,27 @@ struct GameEvent final {
   static const char* GetMailslotPath();
 
   /// String name of OpenKneeboard::UserAction enum member
-  static constexpr char EVT_REMOTE_USER_ACTION[]
-    = "com.fredemmott.openkneeboard/RemoteUserAction";
+  static constexpr char EVT_REMOTE_USER_ACTION[] = "RemoteUserAction";
 
   /// String KneeboardViewID
-  static constexpr char EVT_SET_INPUT_FOCUS[]
-    = "com.fredemmott.openkneeboard/SetInputFocus";
+  static constexpr char EVT_SET_INPUT_FOCUS[] = "SetInputFocus";
 
   /// struct SetTabByIDEvent
-  static constexpr char EVT_SET_TAB_BY_ID[]
-    = "com.fredemmott.openkneeboard/SetTabByID";
+  static constexpr char EVT_SET_TAB_BY_ID[] = "SetTabByID";
   /// struct SetTabByNameEvent
-  static constexpr char EVT_SET_TAB_BY_NAME[]
-    = "com.fredemmott.openkneeboard/SetTabByName";
+  static constexpr char EVT_SET_TAB_BY_NAME[] = "SetTabByName";
   /// struct SetTabByIndexEvent
-  static constexpr char EVT_SET_TAB_BY_INDEX[]
-    = "com.fredemmott.openkneeboard/SetTabByIndex";
+  static constexpr char EVT_SET_TAB_BY_INDEX[] = "SetTabByIndex";
 
   /// struct SetProfileByIDEvent
-  static constexpr char EVT_SET_PROFILE_BY_ID[]
-    = "com.fredemmott.openkneeboard/SetProfileByID";
+  static constexpr char EVT_SET_PROFILE_BY_ID[] = "SetProfileByID";
   /// struct SetProfileByNameEvent
-  static constexpr char EVT_SET_PROFILE_BY_NAME[]
-    = "com.fredemmott.openkneeboard/SetProfileByName";
+  static constexpr char EVT_SET_PROFILE_BY_NAME[] = "SetProfileByName";
   // struct SetBrightnessEvent
-  static constexpr char EVT_SET_BRIGHTNESS[]
-    = "com.fredemmott.openkneeboard/SetBrightness";
+  static constexpr char EVT_SET_BRIGHTNESS[] = "SetBrightness";
 
   /// JSON: "[ [name, value], [name, value], ... ]"
-  static constexpr char EVT_MULTI_EVENT[]
-    = "com.fredemmott.openkneeboard/MultiEvent";
+  static constexpr char EVT_MULTI_EVENT[] = "MultiEvent";
 };
 
 struct BaseSetTabEvent {

@@ -33,7 +33,7 @@ def openkneeboard_send(name, value):
 if __name__ == "__main__":
     argc = len(sys.argv)
     if argc < 2:
-        name = "com.fredemmott.openkneeboard/RemoteUserAction"
+        name = "RemoteUserAction"
         value = "NEXT_TAB"
         print(
             "Usage: python capi-test.py NAME [VALUE]\n\nSwitching to NEXT_TAB as an example.")

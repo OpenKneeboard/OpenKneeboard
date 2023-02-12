@@ -57,15 +57,8 @@ end
 ]]--
 
 OpenKneeboard.sendRaw(
-	"com.fredemmott.openkneeboard/RemoteUserAction",
+	"RemoteUserAction",
 	"NEXT_TAB")
-
--- You might want to add a convenience wrapper, e.g:
-function OpenKneeboard.send(name, value)
-  OpenKneeboard.sendRaw("com.fredemmott.openkneeboard/"..name, value)
-end
-
-OpenKneeboard.send("RemoteUserAction", "NEXT_TAB")
 ```
 
 ## Messages
@@ -80,7 +73,7 @@ OpenKneeboard needs JSON data for some messages; in DCS, use `net.lua2json()`, e
 -- For JSON in DCS LUA:
 function OpenKneeboard.sendJSON(name, value)
   OpenKneeboard.sendRaw(
-	"com.fredemmott.openkneeboard/"..name,
+	""..name,
 	net.lua2json(value))
 end
 

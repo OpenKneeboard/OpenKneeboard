@@ -56,25 +56,25 @@ class DCSWorld final : public OpenKneeboard::Game {
   };
 
   static constexpr char EVT_AIRCRAFT[]
-    = "com.fredemmott.openkneeboard.dcsext/Aircraft";
+    = "dcs/Aircraft";
   static constexpr char EVT_INSTALL_PATH[]
-    = "com.fredemmott.openkneeboard.dcsext/InstallPath";
+    = "dcs/InstallPath";
   static constexpr char EVT_MISSION[]
-    = "com.fredemmott.openkneeboard.dcsext/Mission";
+    = "dcs/Mission";
   static constexpr char EVT_MISSION_TIME[]
-    = "com.fredemmott.openkneeboard.dcsext/MissionTime";
+    = "dcs/MissionTime";
   static constexpr char EVT_ORIGIN[]
-    = "com.fredemmott.openkneeboard.dcsext/Origin";
+    = "dcs/Origin";
   static constexpr char EVT_SELF_DATA[]
-    = "com.fredemmott.openkneeboard.dcsext/SelfData";
+    = "dcs/SelfData";
   static constexpr char EVT_MESSAGE[]
-    = "com.fredemmott.openkneeboard.dcsext/Message";
+    = "dcs/Message";
   static constexpr char EVT_SAVED_GAMES_PATH[]
-    = "com.fredemmott.openkneeboard.dcsext/SavedGamesPath";
+    = "dcs/SavedGamesPath";
   static constexpr char EVT_SIMULATION_START[]
-    = "com.fredemmott.openkneeboard.dcsext/SimulationStart";
+    = "dcs/SimulationStart";
   static constexpr char EVT_TERRAIN[]
-    = "com.fredemmott.openkneeboard.dcsext/Terrain";
+    = "dcs/Terrain";
 
   struct SimulationStartEvent {
     static constexpr auto ID {EVT_SIMULATION_START};
