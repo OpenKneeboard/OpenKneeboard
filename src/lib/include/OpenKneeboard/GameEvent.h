@@ -91,6 +91,9 @@ struct GameEvent final {
   /// struct SetProfileByNameEvent
   static constexpr char EVT_SET_PROFILE_BY_NAME[]
     = "com.fredemmott.openkneeboard/SetProfileByName";
+  // struct SetBrightnessEvent
+  static constexpr char EVT_SET_BRIGHTNESS[]
+    = "com.fredemmott.openkneeboard/SetBrightness";
 
   /// JSON: "[ [name, value], [name, value], ... ]"
   static constexpr char EVT_MULTI_EVENT[]
@@ -133,5 +136,16 @@ struct SetProfileByNameEvent {
   std::string mName;
 };
 OPENKNEEBOARD_DECLARE_JSON(SetProfileByNameEvent);
+
+struct SetBrightnessEvent {
+  enum class Mode {
+    Absolute,
+    Relative,
+  };
+  static constexpr auto ID {GameEvent::EVT_SET_BRIGHTNESS};
+  float mBrightness {};
+  Mode mMode = Mode::Absolute;
+};
+OPENKNEEBOARD_DECLARE_JSON(SetBrightnessEvent);
 
 }// namespace OpenKneeboard

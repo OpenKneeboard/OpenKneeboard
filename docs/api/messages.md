@@ -53,7 +53,7 @@ The value is one of:
 - `INCREASE_BRIGHTNESS`
 - `DECREASE_BRIGHTNESS`
 
-`TINT` and `BRIGHTNESS` actions are new in v1.4 and above.
+`TINT`, `BRIGHTNESS`, and `BOOKMARK` actions are new in v1.4 and above.
 
 # SetTabByID
 
@@ -124,3 +124,21 @@ Value: JSON-encoded object:
 ```
 
 - `Name`: *string* - the name of the profile to switch to
+
+# SetBrightness
+
+**This message will be added in v1.4.**
+
+Value: JSON-encoded Object:
+
+```json
+{
+	"Mode": "Absolute",
+	"Brightness": 1.0
+}
+```
+
+- `Brightness`: the desired brightness
+- `Mode`: *optional string* - must be `Absolute` or `Relative`. Defaults to `Absolute` if not provided.
+   - `Absolute`: Tint and brightness is enabled, and brightness is set to `Brightness`, which must be between 0 (minimum brightness) and 1 (maximum brightness)
+   - `Relative`: Tint and brightness is enabled, and `Brightness` is added to the current kneeboard brightness. `Brightness` must be between `-1` and `1`

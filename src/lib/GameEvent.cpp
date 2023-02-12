@@ -146,4 +146,12 @@ OPENKNEEBOARD_DEFINE_JSON(SetTabByIndexEvent, mIndex, mPageNumber, mKneeboard);
 OPENKNEEBOARD_DEFINE_JSON(SetProfileByIDEvent, mID);
 OPENKNEEBOARD_DEFINE_JSON(SetProfileByNameEvent, mName);
 
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  SetBrightnessEvent::Mode,
+  {
+    {SetBrightnessEvent::Mode::Absolute, "Absolute"},
+    {SetBrightnessEvent::Mode::Relative, "Relative"},
+  });
+OPENKNEEBOARD_DEFINE_JSON(SetBrightnessEvent, mBrightness, mMode);
+
 }// namespace OpenKneeboard

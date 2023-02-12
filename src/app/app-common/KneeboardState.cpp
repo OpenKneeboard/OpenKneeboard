@@ -382,6 +382,35 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
     return;
   }
 
+  if (ev.name == GameEvent::EVT_SET_BRIGHTNESS) {
+    const auto parsed = ev.ParsedValue<SetBrightnessEvent>();
+    auto& tint = this->mSettings.mApp.mTint;
+    tint.mEnabled = true;
+    switch (parsed.mMode) {
+      case SetBrightnessEvent::Mode::Absolute:
+        if (parsed.mBrightness < 0 || parsed.mBrightness > 1) {
+          dprintf(
+            "Requested absolute brightness '{}' is outside of range 0 to 1",
+            parsed.mBrightness);
+          return;
+        }
+        tint.mBrightness = parsed.mBrightness;
+        break;
+      case SetBrightnessEvent::Mode::Relative:
+        if (parsed.mBrightness < -1 || parsed.mBrightness > 1) {
+          dprintf(
+            "Requested relative brightness '{}' is outside of range -1 to 1",
+            parsed.mBrightness);
+          return;
+        }
+        tint.mBrightness
+          = std::clamp(tint.mBrightness + parsed.mBrightness, 0.0f, 1.0f);
+        break;
+    }
+    this->SaveSettings();
+    return;
+  }
+
   this->evGameEvent.Emit(ev);
 }
 
