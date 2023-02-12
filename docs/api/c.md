@@ -31,7 +31,14 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_wchar_ptr(
   size_t messageNameCharCount,
   const wchar_t* messageValue,
   size_t messageValueCharCount);
+
+#define OPENKNEEBOARD_CAPI_DLL_NAME_A /* varies */
+#define OPENKNEEBOARD_CAPI_DLL_NAME_W /* varies */
 ```
+
+- `OPENKNEEBOARD_CAPI_DLL_NAME_A` will be the filename as a C string literal, e.g. `"OpenKneeboard_CAPI64.dll"` or `"OpenKneeboard_CAPI32.dll"`
+- `OPENKNEEBOARD_CAPI_DLL_NAME_W` will be the filename as a C wide-string literal, e.g. `L"OpenKneeboard_CAPI64.dll"` or `L"OpenKneeboard_CAPI32.dll"`
+
 
 ## Messages
 

@@ -50,4 +50,12 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_wchar_ptr(
   const wchar_t* messageValue,
   size_t messageValueCharCount);
 
+#if UINTPTR_MAX == UINT64_MAX
+#define OPENKNEEBOARD_CAPI_DLL_NAME_A "OpenKneeboard_CAPI64.dll"
+#define OPENKNEEBOARD_CAPI_DLL_NAME_W L"OpenKneeboard_CAPI64.dll"
+#elif UINTPTR_MAX == UINT32_MAX
+#define OPENKNEEBOARD_CAPI_DLL_NAME_A "OpenKneeboard_CAPI32.dll"
+#define OPENKNEEBOARD_CAPI_DLL_NAME_W L"OpenKneeboard_CAPI32.dll"
+#endif
+
 #endif

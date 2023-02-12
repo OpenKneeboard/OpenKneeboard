@@ -46,7 +46,7 @@ static std::filesystem::path GetOpenKneeboardDLLPath() {
     SHGetKnownFolderPath(FOLDERID_ProgramFiles, 0, nullptr, &programFiles));
 
   return std::filesystem::path(programFiles) / L"OpenKneeboard" / L"bin"
-    / L"OpenKneeboard_CAPI.dll";
+    / OPENKNEEBOARD_CAPI_DLL_NAME_W;
 }
 
 int main(int argc, char** argv) {
