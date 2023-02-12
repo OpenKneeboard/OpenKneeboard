@@ -11,7 +11,9 @@ This DLL is installed and kept up to date in:
 
 If you're using it outside of DCS, or outside of `Scripts\Hooks`, you most likely want to load it directly from program files.
 
-**In OpenKneeboard v1.3 and below** the DLL is `OpenKneeboardDCSExt.dll` instead of `OpenKneeboard_LuaAPI64.dll`; there is no 32-bit version.
+## Notes for OpenKneeboard v1.3 and below
+
+In OpenKneeboard v1.3 and below, the DLL is `OpenKneeboardDCSExt.dll` instead of `OpenKneeboard_LuaAPI64.dll`; there is no 32-bit version.
 
 ## Game Compatibility
 
@@ -21,7 +23,7 @@ OpenKneeboard's Lua API is only tested with DCS world; the DLL provided with Ope
 
 Supporting other games will require manually rebuilding OpenKneeboard, and changing the version or names of the DLLs in OpenKneeboard's build system. This is not currently supported. I'm open to pull requests adding other Lua build configurations.
 
-32-bit games have the same requirement, but should load `OpenKneeboard_LuaAPI32` instead.
+32-bit games have the same requirement, but should load `OpenKneeboard_LuaAPI32.dll` instead.
 
 ## Usage
 
