@@ -6,7 +6,7 @@ const std::filesystem::path OPENXR_JSON("OpenKneeboard-OpenXR.json");
 const std::filesystem::path QUICK_START_PDF("Quick Start.pdf");
 
 const std::filesystem::path DCSWORLD_HOOK_DLL(
-  "$<TARGET_FILE_NAME:OpenKneeboard-dcs-ext-dll>");
+  "$<TARGET_FILE_NAME:OpenKneeboard-lua-api>");
 
 const std::filesystem::path DCSWORLD_HOOK_LUA(
   "$<TARGET_PROPERTY:OpenKneeboard-dcs-ext-lua,OUTPUT_NAME>");

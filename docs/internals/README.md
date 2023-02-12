@@ -109,7 +109,7 @@ See [injectables.md](injectables.md) for details.
 
 ## DCS Hook: `src/dcs-hook`
 
-A C++ DLL Lua extension (`OpenKneeboardDCSExt.cpp`/`.dll`) is used to give
+A C++ DLL Lua extension (`OpenKneeboard_LuaAPI.cpp`/`.dll`) is used to give
 DCS Lua scripts the ability to send `OpenKneeboard::GameEvent`s via the
 mailslot. `OpenKneeboardDCSExt.lua` loads the DLL, and uses the usual DCS
 Lua APIs to observe events, and passes them to the DLL which in turn passes

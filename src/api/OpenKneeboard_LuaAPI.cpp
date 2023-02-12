@@ -51,17 +51,19 @@ static int SendToOpenKneeboard(lua_State* state) {
     return 1;
   }
 
-  auto ge
-    = OpenKneeboard::GameEvent {lua_tostring(state, 1), lua_tostring(state, 2)};
+  const OpenKneeboard::GameEvent ge {
+    lua_tostring(state, 1),
+    lua_tostring(state, 2),
+  };
   ge.Send();
 
   return 0;
 }
 
 extern "C" int __declspec(dllexport)
-  luaopen_OpenKneeboardDCSExt(lua_State* state) {
+  luaopen_OpenKneeboard_LuaAPI(lua_State* state) {
   OpenKneeboard::DPrintSettings::Set({
-    .prefix = "OpenKneeboard-DCSExt",
+    .prefix = "OpenKneeboard-LuaAPI",
   });
   lua_createtable(state, 0, 1);
   lua_pushcfunction(state, &SendToOpenKneeboard);

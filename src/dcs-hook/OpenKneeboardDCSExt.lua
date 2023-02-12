@@ -25,7 +25,7 @@ l("Init")
 
 package.cpath = lfs.writedir().."\\Scripts\\Hooks\\?.dll;"..package.cpath
 l("Loading DLL - search path: "..package.cpath)
-local status, ext = pcall(require, "OpenKneeboardDCSExt")
+local status, OpenKneeboard = pcall(require, "OpenKneeboardDCSExt")
 if status then
   l("DLL Loaded")
 else
@@ -33,7 +33,6 @@ else
   return
 end
 
-local OpenKneeboard = ext;
 OpenKneeboard.EventPrefix = "com.fredemmott.openkneeboard.dcsext/"
 function OpenKneeboard.send(name, value)
   OpenKneeboard.sendRaw(OpenKneeboard.EventPrefix..name, value)

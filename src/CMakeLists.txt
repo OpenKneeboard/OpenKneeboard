@@ -106,6 +106,7 @@ function(add_module_library TARGET)
 endfunction()
 
 add_subdirectory(lib)
+add_subdirectory(api)
 
 add_subdirectory(dcs-hook)
 add_subdirectory(injectables)

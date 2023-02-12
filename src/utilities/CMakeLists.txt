@@ -164,3 +164,9 @@ target_link_libraries(
   OpenKneeboard-shims
   System::Shell32
 )
+
+add_executable(capi-test capi-test.cpp)
+target_include_directories(
+  capi-test
+  PRIVATE
+  "$<TARGET_PROPERTY:OpenKneeboard-c-api,INTERFACE_INCLUDE_DIRECTORIES>")
