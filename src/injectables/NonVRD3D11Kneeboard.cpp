@@ -133,9 +133,16 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       return passthrough();
     }
 
+    const auto srv = snapshot.GetLayerShaderResourceView(device.get(), 0);
+    if (!srv) {
+      dprint("Failed to get layer SRV");
+      OPENKNEEBOARD_BREAK;
+      return passthrough();
+    }
+
     D3D11::DrawTextureWithOpacity(
       device.get(),
-      snapshot.GetLayerShaderResourceView(device.get(), 0).get(),
+      srv.get(),
       rtv.get(),
       sourceRect,
       destRect,

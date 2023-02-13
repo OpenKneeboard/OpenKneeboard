@@ -187,7 +187,7 @@ bool OpenXRD3D11Kneeboard::Render(
   }
 
   {
-    auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
+    const auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
     if (!srv) {
       dprint("Failed to get shader resource view");
       return false;

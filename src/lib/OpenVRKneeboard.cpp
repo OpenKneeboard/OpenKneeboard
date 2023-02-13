@@ -255,6 +255,10 @@ void OpenVRKneeboard::Tick() {
 
     {
       auto srv = snapshot.GetLayerShaderResourceView(mD3D.get(), layerIndex);
+      if (!srv) {
+        dprint("Failed to get layer shared texture");
+        continue;
+      }
 
       // non-atomic paint to buffer...
       D3D11::CopyTextureWithOpacity(
