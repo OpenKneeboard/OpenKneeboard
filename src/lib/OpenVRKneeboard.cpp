@@ -272,6 +272,9 @@ void OpenVRKneeboard::Tick() {
     {
       auto openKneeboardTexture
         = snapshot.GetLayerTexture(mD3D.get(), layerIndex);
+      if (!openKneeboardTexture.IsValid()) {
+        continue;
+      }
 
       // non-atomic paint to buffer...
       D3D11::CopyTextureWithOpacity(
