@@ -496,7 +496,16 @@ Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
   }
 
   const std::unique_lock shmLock(*p);
-  mCache = this->MaybeGetUncached(d3d, kind);
+  const auto newSnapshot = this->MaybeGetUncached(d3d, kind);
+
+  if (!newSnapshot.IsValid()) {
+    if (kind == mCachedConsumerKind) {
+      return mCache;
+    }
+    return {};
+  }
+
+  mCache = newSnapshot;
   mCachedConsumerKind = kind;
   return mCache;
 }
