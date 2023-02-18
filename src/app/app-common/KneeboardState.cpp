@@ -510,10 +510,11 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
 
 void KneeboardState::SetAppSettings(const AppSettings& value) {
   const EventDelay delay;// lock must be released first
-  const std::unique_lock lock(*this);
-
-  mSettings.mApp = value;
-  this->SaveSettings();
+  {
+    const std::unique_lock lock(*this);
+    mSettings.mApp = value;
+    this->SaveSettings();
+  }
   if (!value.mDualKneeboards.mEnabled) {
     this->SetFirstViewIndex(0);
   }
