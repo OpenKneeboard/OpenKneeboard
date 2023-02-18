@@ -76,6 +76,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
     AddEventListener(viewState->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
     viewState->SetTabs(tabs);
   }
+#ifdef DEBUG
   AddEventListener(mViews[1]->evNeedsRepaintEvent, [this]() {
     if (!this->mSettings.mApp.mDualKneeboards.mEnabled) {
       dprint(
@@ -83,6 +84,7 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
         "is disabled");
     }
   });
+#endif
 
   mDirectInput = DirectInputAdapter::Create(hwnd, mSettings.mDirectInput);
   AddEventListener(
