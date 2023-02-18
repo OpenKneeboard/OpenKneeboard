@@ -180,9 +180,6 @@ InterprocessRenderer::InterprocessRenderer(
     mLayers.at(i).mKneeboardView = view;
 
     AddEventListener(
-      view->evNeedsRepaintEvent,
-      std::bind_front(&InterprocessRenderer::MarkDirty, this));
-    AddEventListener(
       view->evCursorEvent,
       std::bind_front(&InterprocessRenderer::MarkDirty, this));
   }
@@ -257,7 +254,6 @@ void InterprocessRenderer::RenderNow() {
     this->Render(mRenderTargetIDs.at(i), layer);
   }
 
-  dprint("Pushing frame");
   this->Commit(renderInfos.size());
   this->mNeedsRepaint = false;
 }
