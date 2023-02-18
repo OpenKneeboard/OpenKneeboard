@@ -25,6 +25,7 @@
 #include <OpenKneeboard/version.h>
 #include <loader_interfaces.h>
 #include <openxr/openxr.h>
+#include <vulkan/vulkan.h>
 
 #include <memory>
 #include <string>
@@ -35,6 +36,7 @@
 
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
+#define XR_USE_GRAPHICS_API_VULKAN
 #include <openxr/openxr_platform.h>
 
 namespace OpenKneeboard {

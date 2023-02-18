@@ -122,6 +122,7 @@ target_link_libraries(
   PRIVATE
   ThirdParty::OpenXR
   ThirdParty::DirectXTK
+  ThirdParty::VulkanHeaders
   OpenKneeboard-D3D11
   OpenKneeboard-D3D11On12
   OpenKneeboard-RayIntersectsRect
