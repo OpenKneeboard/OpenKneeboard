@@ -131,7 +131,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
   }
 
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
+  auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
   UINT dxgiFlags = 0;
 
 #ifdef DEBUG
@@ -145,23 +145,24 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
 
   winrt::com_ptr<IDXGIAdapter> adapterIt;
   winrt::com_ptr<IDXGIAdapter> adapter;
-  for (unsigned int i = 0; dxgiFactory->EnumAdapters(i, adapterIt.put()); ++i) {
-    if (!adapterIt) {
-      break;
-    }
+  for (unsigned int i = 0;
+       dxgiFactory->EnumAdapters(i, adapterIt.put()) == S_OK;
+       ++i) {
     const scope_guard releaseAdapter([&]() { adapterIt = {nullptr}; });
 
     DXGI_ADAPTER_DESC desc;
     winrt::check_hresult(adapterIt->GetDesc(&desc));
 
+    dprintf(L"Checking D3D11 device '{}'", desc.Description);
+
     if (
       memcmp(&desc.AdapterLuid, deviceIDProps.deviceLUID, sizeof(LUID)) != 0) {
+      dprint("VK and D3D11 LUIDs don't match.");
+      OPENKNEEBOARD_BREAK;
       continue;
     }
 
-    dprintf(
-      L"Found DXGI adapter with matching LUID for VkPhysicalDevice: {}",
-      desc.Description);
+    dprintf(L"VK and D3D11 LUIDs match.", desc.Description);
     adapter = adapterIt;
     break;
   }
@@ -340,10 +341,13 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   XrSession session,
   const VRRenderConfig& vrc,
   uint8_t layerIndex) {
+  static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
+  const auto vkFormat = VK_FORMAT_B8G8R8A8_UNORM;
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
-    .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-    .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
+      | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT,
+    .format = vkFormat,
     .sampleCount = 1,
     .width = TextureWidth,
     .height = TextureHeight,
@@ -355,8 +359,13 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   auto oxr = this->GetOpenXR();
 
   XrSwapchain swapchain {nullptr};
-  if (XR_FAILED(oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain))) {
-    return nullptr;
+  {
+    const auto ret
+      = oxr->xrCreateSwapchain(session, &swapchainInfo, &swapchain);
+    if (XR_FAILED(ret)) {
+      dprintf("next->xrCreateSwapchain failed: {}", ret);
+      return nullptr;
+    }
   }
 
   uint32_t imageCount = 0;
@@ -476,13 +485,29 @@ bool OpenXRVulkanKneeboard::Render(
     }
   }
 
-  VkImageMemoryBarrier readBarrier {
+  VkImageMemoryBarrier inBarriers[2];
+
+  inBarriers[0] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
     .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
     .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
     .image = mInteropVKImage,
+    .subresourceRange = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .levelCount = VK_REMAINING_MIP_LEVELS,
+      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+    },
+  };
+  const auto dstImage = mImages.at(layerIndex).at(textureIndex);
+  inBarriers[1] = {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .image = dstImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .levelCount = VK_REMAINING_MIP_LEVELS,
@@ -499,20 +524,20 @@ bool OpenXRVulkanKneeboard::Render(
     /* memory barriers = */ nullptr,
     /* buffer barrier count = */ 0,
     /* buffer barriers = */ nullptr,
-    /* image barrier count = */ 1,
-    &readBarrier);
+    /* image barrier count = */ std::size(inBarriers),
+    inBarriers);
 
   VkImageCopy imageCopy {
     .srcSubresource = VkImageSubresourceLayers {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .mipLevel = 1,
+      .mipLevel = 0,
       .baseArrayLayer = 0,
       .layerCount = 1,
     },
     .srcOffset = {0, 0, 0},
     .dstSubresource = VkImageSubresourceLayers {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .mipLevel = 1,
+      .mipLevel = 0,
       .baseArrayLayer = 0,
       .layerCount = 1,
     },
@@ -522,11 +547,25 @@ bool OpenXRVulkanKneeboard::Render(
   mPFN_vkCmdCopyImage(
     mVKCommandBuffer,
     mInteropVKImage,
-    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     mImages.at(layerIndex).at(textureIndex),
-    VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     1,
     &imageCopy);
+
+  VkImageMemoryBarrier outBarrier {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+    .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .image = dstImage,
+    .subresourceRange = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .levelCount = VK_REMAINING_MIP_LEVELS,
+      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+    },
+  };
 
   // Wait for copy to be complete, then...
   mPFN_vkCmdPipelineBarrier(
@@ -538,8 +577,8 @@ bool OpenXRVulkanKneeboard::Render(
     /* memory barriers = */ nullptr,
     /* buffer barrier count = */ 0,
     /* buffer barriers = */ nullptr,
-    /* image barrier count = */ 0,
-    nullptr);
+    /* image barrier count = */ 1,
+    &outBarrier);
   mPFN_vkEndCommandBuffer(mVKCommandBuffer);
 
   {

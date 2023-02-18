@@ -135,8 +135,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto snapshot
-    = mSHM.MaybeGet(this->GetD3D11Device().get(), SHM::ConsumerKind::OpenXR);
+  auto d3d11 = this->GetD3D11Device();
+  if (!d3d11) {
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+
+  auto snapshot = mSHM.MaybeGet(d3d11.get(), SHM::ConsumerKind::OpenXR);
   if (!snapshot.IsValid()) {
     // Don't spam: expected, if OpenKneeboard isn't running
     return mOpenXR->xrEndFrame(session, frameEndInfo);
@@ -332,12 +336,12 @@ XrResult xrCreateSession(
       dprint("Found Vulkan, but did not find vkGetInstanceProcAddr");
       return ret;
     }
-    if (!gVKAllocator) {
-      dprint("Found Vulkan, but did not find an allocator");
-    }
     if (!vk->device) {
       dprint("Found Vulkan, but did not find a device");
       return ret;
+    }
+    if (!gVKAllocator) {
+      dprint("Launching Vulkan without a specified allocator");
     }
 
     gKneeboard = new OpenXRVulkanKneeboard(
@@ -355,6 +359,7 @@ XrResult xrCreateVulkanDeviceKHR(
   const XrVulkanDeviceCreateInfoKHR* createInfo,
   VkDevice* vulkanDevice,
   VkResult* vulkanResult) {
+  dprintf("{}", __FUNCTION__);
   const auto ret = gNext->xrCreateVulkanDeviceKHR(
     instance, createInfo, vulkanDevice, vulkanResult);
   if (XR_SUCCEEDED(ret)) {
