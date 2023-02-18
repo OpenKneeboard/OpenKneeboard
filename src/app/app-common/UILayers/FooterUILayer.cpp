@@ -57,9 +57,15 @@ FooterUILayer::~FooterUILayer() {
 }
 
 void FooterUILayer::Tick() {
+  if (mRenderState == RenderState::Stale) {
+    // Already marked dirty, lets' not bother doing it again
+    return;
+  }
+
   const auto now = std::chrono::time_point_cast<Duration>(Clock::now());
   if (now > mLastRenderAt) {
     evNeedsRepaintEvent.Emit();
+    mRenderState = RenderState::Stale;
   }
 }
 
@@ -159,6 +165,7 @@ void FooterUILayer::Render(
   const auto now
     = std::chrono::time_point_cast<Duration>(std::chrono::system_clock::now());
   mLastRenderAt = std::chrono::time_point_cast<Duration>(Clock::now());
+  mRenderState = RenderState::UpToDate;
 
   const auto drawClock
     = [&](const std::wstring& clock, DWRITE_TEXT_ALIGNMENT alignment) {
