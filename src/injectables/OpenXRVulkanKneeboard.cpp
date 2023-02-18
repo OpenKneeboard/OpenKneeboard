@@ -210,7 +210,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
       .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       .pNext = &externalCreateInfo,
       .imageType = VK_IMAGE_TYPE_2D,
-      .format = VK_FORMAT_B8G8R8A8_UNORM,
+      .format = VK_FORMAT_B8G8R8A8_SRGB,
       .extent = {TextureWidth, TextureHeight, 1},
       .mipLevels = 1,
       .arrayLayers = 1,
@@ -342,7 +342,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   const VRRenderConfig& vrc,
   uint8_t layerIndex) {
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
-  const auto vkFormat = VK_FORMAT_B8G8R8A8_UNORM;
+  const auto vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
@@ -459,7 +459,6 @@ bool OpenXRVulkanKneeboard::Render(
       return false;
     }
   }
-
   const auto srv
     = snapshot.GetLayerShaderResourceView(mD3D11Device.get(), layerIndex);
   if (!srv) {
@@ -474,6 +473,7 @@ bool OpenXRVulkanKneeboard::Render(
     params.mKneeboardOpacity);
 
   {
+    mPFN_vkResetCommandBuffer(mVKCommandBuffer, 0);
     VkCommandBufferBeginInfo beginInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
       .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -597,12 +597,18 @@ bool OpenXRVulkanKneeboard::Render(
     }
   }
 
-  mPFN_vkWaitForFences(
-    mVKDevice,
-    1,
-    &mInteropVKFence,
-    VK_TRUE,
-    std::numeric_limits<uint64_t>::max());
+  {
+    const auto res = mPFN_vkWaitForFences(
+      mVKDevice,
+      1,
+      &mInteropVKFence,
+      VK_TRUE,
+      std::numeric_limits<uint64_t>::max());
+    if (VK_FAILED(res)) {
+      dprintf("Waiting for fence failed: {}", res);
+      return false;
+    }
+  }
 
   return true;
 }
