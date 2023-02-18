@@ -172,8 +172,6 @@ InterprocessRenderer::InterprocessRenderer(
     auto view = views.at(i);
     mLayers.at(i).mKneeboardView = view;
 
-    AddEventListener(
-      view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
     AddEventListener(view->evCursorEvent, [this]() { mNeedsRepaint = true; });
   }
 
