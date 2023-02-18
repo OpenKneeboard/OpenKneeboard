@@ -115,6 +115,7 @@ add_module_library(
   OpenXRKneeboard.cpp
   OpenXRD3D11Kneeboard.cpp
   OpenXRD3D12Kneeboard.cpp
+  OpenXRVulkanKneeboard.cpp
   OpenXRNext.cpp
 )
 target_link_libraries(
