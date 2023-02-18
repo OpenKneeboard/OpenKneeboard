@@ -473,7 +473,6 @@ bool OpenXRVulkanKneeboard::Render(
     params.mKneeboardOpacity);
 
   {
-    mPFN_vkResetCommandBuffer(mVKCommandBuffer, 0);
     VkCommandBufferBeginInfo beginInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
       .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -489,6 +488,7 @@ bool OpenXRVulkanKneeboard::Render(
 
   inBarriers[0] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
     .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -496,13 +496,14 @@ bool OpenXRVulkanKneeboard::Render(
     .image = mInteropVKImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = VK_REMAINING_MIP_LEVELS,
-      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+      .levelCount = 1,
+      .layerCount = 1,
     },
   };
   const auto dstImage = mImages.at(layerIndex).at(textureIndex);
   inBarriers[1] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
     .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -510,15 +511,15 @@ bool OpenXRVulkanKneeboard::Render(
     .image = dstImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = VK_REMAINING_MIP_LEVELS,
-      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+      .levelCount = 1,
+      .layerCount = 1,
     },
   };
 
   mPFN_vkCmdPipelineBarrier(
     mVKCommandBuffer,
     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
     /* dependency flags = */ {},
     /* memory barrier count = */ 0,
     /* memory barriers = */ nullptr,
@@ -553,8 +554,24 @@ bool OpenXRVulkanKneeboard::Render(
     1,
     &imageCopy);
 
-  VkImageMemoryBarrier outBarrier {
+  VkImageMemoryBarrier outBarriers[2];
+  outBarriers[0] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
+    .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+    .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+    .image = mInteropVKImage,
+    .subresourceRange = {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .levelCount = 1,
+      .layerCount = 1,
+    },
+  };
+  outBarriers[1] = {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
     .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -562,8 +579,8 @@ bool OpenXRVulkanKneeboard::Render(
     .image = dstImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = VK_REMAINING_MIP_LEVELS,
-      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+      .levelCount = 1,
+      .layerCount = 1,
     },
   };
 
@@ -571,14 +588,14 @@ bool OpenXRVulkanKneeboard::Render(
   mPFN_vkCmdPipelineBarrier(
     mVKCommandBuffer,
     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_TRANSFER_BIT,
     /* dependency flags = */ {},
     /* memory barrier count = */ 0,
     /* memory barriers = */ nullptr,
     /* buffer barrier count = */ 0,
     /* buffer barriers = */ nullptr,
-    /* image barrier count = */ 1,
-    &outBarrier);
+    /* image barrier count = */ std::size(outBarriers),
+    outBarriers);
   mPFN_vkEndCommandBuffer(mVKCommandBuffer);
 
   {

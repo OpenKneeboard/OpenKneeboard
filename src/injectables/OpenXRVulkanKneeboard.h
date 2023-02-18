@@ -79,7 +79,6 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   IT(vkAllocateCommandBuffers) \
   IT(vkBeginCommandBuffer) \
   IT(vkEndCommandBuffer) \
-  IT(vkResetCommandBuffer) \
   IT(vkCmdCopyImage) \
   IT(vkCmdPipelineBarrier) \
   IT(vkCreateImage) \
