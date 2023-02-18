@@ -52,6 +52,13 @@ class DirectInputDevice final
   void PostButtonStateChange(uint8_t index, bool pressed);
   void PostHatStateChange(uint8_t hatIndex, DWORD oldValue, DWORD newValue);
 
+  enum class VScrollDirection {
+    Up,
+    Down,
+  };
+
+  void PostVScroll(VScrollDirection);
+
  private:
   DirectInputDevice(const DIDEVICEINSTANCEW&);
 

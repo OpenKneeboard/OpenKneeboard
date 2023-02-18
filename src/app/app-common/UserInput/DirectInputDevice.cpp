@@ -34,10 +34,18 @@ enum class DirectInputButtonType : uint64_t {
   Button = 0,
   Key = 0,
   HatDirection = 1,
+  VScroll = 2,
 };
+
+static constexpr auto DirectInputButtonTypeMask = (~(0ui64)) << 48;
+static constexpr auto DirectInputButtonValueMask = ~DirectInputButtonTypeMask;
 
 DirectInputButtonType GetButtonType(uint64_t button) {
   return static_cast<DirectInputButtonType>(button >> 48);
+}
+
+uint64_t EncodeButtonType(DirectInputButtonType buttonType) {
+  return static_cast<uint64_t>(buttonType) << 48;
 }
 
 struct DirectInputHat {
@@ -55,8 +63,19 @@ DirectInputHat DecodeHat(uint64_t button) {
 }
 
 uint64_t EncodeHat(uint8_t hat, uint16_t value) {
-  return (static_cast<uint64_t>(DirectInputButtonType::HatDirection) << 48)
+  return EncodeButtonType(DirectInputButtonType::HatDirection)
     | (static_cast<uint64_t>(hat) << 32) | value;
+}
+
+uint64_t EncodeVScroll(DirectInputDevice::VScrollDirection direction) {
+  return EncodeButtonType(DirectInputButtonType::VScroll)
+    | static_cast<uint64_t>(direction);
+}
+
+DirectInputDevice::VScrollDirection DecodeVScroll(uint64_t button) {
+  winrt::check_bool(GetButtonType(button) == DirectInputButtonType::VScroll);
+  return static_cast<DirectInputDevice::VScrollDirection>(
+    button & DirectInputButtonValueMask);
 }
 
 };// namespace
@@ -88,6 +107,15 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
   switch (buttonType) {
     case DirectInputButtonType::Button:
       return std::format("Button {}", button + 1);
+    case DirectInputButtonType::VScroll: {
+      const auto direction = DecodeVScroll(button);
+      switch (direction) {
+        case VScrollDirection::Up:
+          return _("Wheel Up");
+        case VScrollDirection::Down:
+          return _("Wheel Down");
+      }
+    }
     case DirectInputButtonType::HatDirection: {
       const auto hat = DecodeHat(button);
       std::string value;
@@ -124,7 +152,9 @@ std::string DirectInputDevice::GetButtonLabel(uint64_t button) const {
     };
   }
 
-  throw std::logic_error("Should be unreachable");
+  dprintf("Unable to resolve label for DI button {:#016x}", button);
+  OPENKNEEBOARD_BREAK;
+  return std::format("INVALID {:#016x}", button);
 }
 
 std::string DirectInputDevice::GetKeyLabel(uint64_t key) const {
@@ -390,6 +420,21 @@ void DirectInputDevice::PostButtonStateChange(uint8_t id, bool pressed) {
     this->shared_from_this(),
     id,
     pressed,
+  });
+}
+
+void DirectInputDevice::PostVScroll(
+  DirectInputDevice::VScrollDirection direction) {
+  const auto button = EncodeVScroll(direction);
+  evButtonEvent.Emit(UserInputButtonEvent {
+    this->shared_from_this(),
+    button,
+    /* pressed = */ true,
+  });
+  evButtonEvent.Emit(UserInputButtonEvent {
+    this->shared_from_this(),
+    button,
+    /* pressed = */ false,
   });
 }
 

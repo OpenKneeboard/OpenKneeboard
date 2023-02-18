@@ -44,6 +44,20 @@ void DirectInputMouseListener::Poll() {
         i, static_cast<bool>(newState.rgbButtons[i] & (1 << 7)));
     }
   }
+
+  if (mState.lZ > 0) {
+    for (LONG i = 0; i < mState.lZ; i += WHEEL_DELTA) {
+      device->PostVScroll(DirectInputDevice::VScrollDirection::Up);
+    }
+    return;
+  }
+
+  if (mState.lZ < 0) {
+    for (LONG i = 0; i > mState.lZ; i -= WHEEL_DELTA) {
+      device->PostVScroll(DirectInputDevice::VScrollDirection::Down);
+    }
+    return;
+  }
 }
 
 void DirectInputMouseListener::SetDataFormat() noexcept {
