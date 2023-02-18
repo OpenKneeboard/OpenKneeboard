@@ -95,12 +95,12 @@ MainWindow::MainWindow() {
   OnViewOrderChanged();
 
   AddEventListener(
-    gKneeboard->evViewOrderChangedEvent, &MainWindow::OnViewOrderChanged, this);
+    gKneeboard->evViewOrderChangedEvent,
+    std::bind_front(&MainWindow::OnViewOrderChanged, this));
 
   AddEventListener(
     gKneeboard->GetTabsList()->evTabsChangedEvent,
-    &MainWindow::OnTabsChanged,
-    this);
+    std::bind_front(&MainWindow::OnTabsChanged, this));
 
   // TODO: add to globals as 'game loop' thread
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
@@ -172,10 +172,10 @@ MainWindow::MainWindow() {
   this->UpdateProfileSwitcherVisibility();
   AddEventListener(
     gKneeboard->evProfileSettingsChangedEvent,
-    &MainWindow::UpdateProfileSwitcherVisibility,
-    this);
+    std::bind_front(&MainWindow::UpdateProfileSwitcherVisibility, this));
   AddEventListener(
-    gKneeboard->evSettingsChangedEvent, &MainWindow::OnTabsChanged, this);
+    gKneeboard->evSettingsChangedEvent,
+    std::bind_front(&MainWindow::OnTabsChanged, this));
   AddEventListener(
     gKneeboard->evCurrentProfileChangedEvent,
     [this]() -> winrt::fire_and_forget {
@@ -276,12 +276,10 @@ winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
   mKneeboardViewEvents = {
     AddEventListener(
       mKneeboardView->evBookmarksChangedEvent,
-      &MainWindow::OnTabsChanged,
-      this),
+      std::bind_front(&MainWindow::OnTabsChanged, this)),
     AddEventListener(
       mKneeboardView->evCurrentTabChangedEvent,
-      &MainWindow::OnTabChanged,
-      this),
+      std::bind_front(&MainWindow::OnTabChanged, this)),
   };
 
   this->OnTabsChanged();

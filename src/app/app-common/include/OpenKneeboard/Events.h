@@ -25,6 +25,7 @@
 #include <functional>
 #include <list>
 #include <mutex>
+#include <source_location>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
@@ -71,7 +72,7 @@ class EventBase {
    * To similarly buffer events in a non-handler context, use the `EventDelay`
    * class.
    */
-  static void InvokeOrEnqueue(std::function<void()>);
+  static void InvokeOrEnqueue(std::function<void()>, std::source_location);
 
   virtual void RemoveHandler(EventHandlerToken) = 0;
   std::recursive_mutex mMutex;
@@ -106,16 +107,18 @@ class EventConnection final
   : public EventConnectionBase,
     public std::enable_shared_from_this<EventConnection<Args...>> {
  private:
-  EventConnection(EventHandler<Args...> handler) : mHandler(handler) {
+  EventConnection(EventHandler<Args...> handler, std::source_location location)
+    : mHandler(handler), mSourceLocation(location) {
   }
 
  public:
   EventConnection() = delete;
 
   static std::shared_ptr<EventConnection<Args...>> Create(
-    EventHandler<Args...> handler) {
+    EventHandler<Args...> handler,
+    std::source_location location) {
     return std::shared_ptr<EventConnection<Args...>>(
-      new EventConnection(handler));
+      new EventConnection(handler, location));
   }
 
   constexpr operator bool() const noexcept {
@@ -161,6 +164,7 @@ class EventConnection final
 
  private:
   EventHandler<Args...> mHandler;
+  std::source_location mSourceLocation;
   std::recursive_mutex mMutex;
 };
 
@@ -177,13 +181,17 @@ class Event final : public EventBase {
   Event& operator=(const Event<Args...>&) = delete;
   ~Event();
 
-  void Emit(Args... args);
+  void Emit(
+    Args... args,
+    std::source_location location = std::source_location::current());
 
   EventHookToken AddHook(Hook, EventHookToken token = {}) noexcept;
   void RemoveHook(EventHookToken) noexcept;
 
  protected:
-  std::shared_ptr<EventConnectionBase> AddHandler(const EventHandler<Args...>&);
+  std::shared_ptr<EventConnectionBase> AddHandler(
+    const EventHandler<Args...>&,
+    std::source_location current);
   virtual void RemoveHandler(EventHandlerToken token) override;
 
  private:
@@ -217,34 +225,28 @@ class EventReceiver {
   template <class... Args>
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
-    const std::type_identity_t<EventHandler<Args...>>& handler);
+    const std::type_identity_t<EventHandler<Args...>>& handler,
+    std::source_location location = std::source_location::current());
 
   template <class... Args>
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
-    std::type_identity_t<Event<Args...>>& forwardAs);
-
-  template <class... Args>
-    requires(sizeof...(Args) > 0)
-  EventHandlerToken AddEventListener(Event<Args...>& event, Event<>& forwardAs);
+    std::type_identity_t<Event<Args...>>& forwardAs,
+    std::source_location location = std::source_location::current());
 
   template <class... Args>
     requires(sizeof...(Args) > 0)
   EventHandlerToken AddEventListener(
     Event<Args...>& event,
-    const std::function<void()>& handler);
+    Event<>& forwardAs,
+    std::source_location location = std::source_location::current());
 
-  template <class... EventArgs, class Func, class First, class... Rest>
+  template <class... Args>
+    requires(sizeof...(Args) > 0)
   EventHandlerToken AddEventListener(
-    Event<EventArgs...>& event,
-    Func f,
-    First&& first,
-    Rest&&... rest) {
-    return AddEventListener(
-      event,
-      std::bind_front(
-        f, std::forward<First>(first), std::forward<Rest>(rest)...));
-  }
+    Event<Args...>& event,
+    const std::function<void()>& handler,
+    std::source_location location = std::source_location::current());
 
   void RemoveEventListener(EventHandlerToken);
   void RemoveAllEventListeners();
@@ -255,9 +257,10 @@ class EventReceiver {
 
 template <class... Args>
 std::shared_ptr<EventConnectionBase> Event<Args...>::AddHandler(
-  const EventHandler<Args...>& handler) {
+  const EventHandler<Args...>& handler,
+  std::source_location location) {
   std::unique_lock lock(mMutex);
-  auto connection = EventConnection<Args...>::Create(handler);
+  auto connection = EventConnection<Args...>::Create(handler, location);
   auto token = connection->mToken;
   mReceivers.emplace(token, connection);
   return std::move(connection);
@@ -278,7 +281,7 @@ void Event<Args...>::RemoveHandler(EventHandlerToken token) {
 }
 
 template <class... Args>
-void Event<Args...>::Emit(Args... args) {
+void Event<Args...>::Emit(Args... args, std::source_location location) {
   //  Copy in case one is erased while we're running
   decltype(mHooks) hooks;
   std::vector<std::shared_ptr<EventConnection<Args...>>> receivers;
@@ -303,11 +306,13 @@ void Event<Args...>::Emit(Args... args) {
     }
   }
 
-  InvokeOrEnqueue([=]() {
-    for (const auto& receiver: receivers) {
-      receiver->Call(args...);
-    }
-  });
+  InvokeOrEnqueue(
+    [=]() {
+      for (const auto& receiver: receivers) {
+        receiver->Call(args...);
+      }
+    },
+    location);
 }
 
 template <class... Args>
@@ -343,9 +348,10 @@ void Event<Args...>::RemoveHook(EventHookToken token) noexcept {
 template <class... Args>
 EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
-  const std::type_identity_t<EventHandler<Args...>>& handler) {
+  const std::type_identity_t<EventHandler<Args...>>& handler,
+  std::source_location location) {
   std::unique_lock lock(mMutex);
-  mSenders.push_back(event.AddHandler(handler));
+  mSenders.push_back(event.AddHandler(handler, location));
   return mSenders.back()->mToken;
 }
 
@@ -353,23 +359,33 @@ template <class... Args>
   requires(sizeof...(Args) > 0)
 EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
-  const std::function<void()>& handler) {
-  return AddEventListener(event, [handler](Args...) { handler(); });
+  const std::function<void()>& handler,
+  std::source_location location) {
+  return AddEventListener(
+    event, [handler](Args...) { handler(); }, location);
 }
 
 template <class... Args>
 EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
-  std::type_identity_t<Event<Args...>>& forwardTo) {
+  std::type_identity_t<Event<Args...>>& forwardTo,
+  std::source_location location) {
   return AddEventListener(
-    event, [&forwardTo](Args... args) { forwardTo.Emit(args...); });
+    event,
+    [location, &forwardTo](Args... args) { forwardTo.Emit(args..., location); },
+    location);
 }
 
 template <class... Args>
   requires(sizeof...(Args) > 0)
-EventHandlerToken
-  EventReceiver::AddEventListener(Event<Args...>& event, Event<>& forwardTo) {
-  return AddEventListener(event, [&forwardTo](Args...) { forwardTo.Emit(); });
+EventHandlerToken EventReceiver::AddEventListener(
+  Event<Args...>& event,
+  Event<>& forwardTo,
+  std::source_location location) {
+  return AddEventListener(
+    event,
+    [location, &forwardTo](Args...) { forwardTo.Emit(location); },
+    location);
 }
 
 }// namespace OpenKneeboard

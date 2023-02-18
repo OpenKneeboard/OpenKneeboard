@@ -61,8 +61,9 @@ HelpPage::HelpPage() {
 
   AddEventListener(
     TroubleshootingStore::Get()->evGameEventReceived,
+    std::bind_front(
     &HelpPage::PopulateEvents,
-    this);
+    this));
 
   auto weakThis = this->get_weak();
   AddEventListener(

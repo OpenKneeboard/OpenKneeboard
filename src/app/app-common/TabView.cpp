@@ -36,8 +36,11 @@ TabView::TabView(
   : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mRootTabPage(0) {
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
-    tab->evContentChangedEvent, &TabView::OnTabContentChanged, this);
-  AddEventListener(tab->evPageAppendedEvent, &TabView::OnTabPageAppended, this);
+    tab->evContentChangedEvent,
+    std::bind_front(&TabView::OnTabContentChanged, this));
+  AddEventListener(
+    tab->evPageAppendedEvent,
+    std::bind_front(&TabView::OnTabPageAppended, this));
   AddEventListener(
     this->evPageChangedEvent, this->evAvailableFeaturesChangedEvent);
   AddEventListener(

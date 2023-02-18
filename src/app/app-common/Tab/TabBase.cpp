@@ -37,7 +37,8 @@ static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
 TabBase::TabBase(const winrt::guid& persistentID, std::string_view title)
   : mPersistentID(EnsureNonNullGuid(persistentID)), mTitle(title) {
   AddEventListener(
-    this->evContentChangedEvent, &TabBase::OnContentChanged, this);
+    this->evContentChangedEvent,
+    std::bind_front(&TabBase::OnContentChanged, this));
 }
 
 TabBase::~TabBase() {

@@ -354,7 +354,8 @@ muxc::AppBarButton TabPage::CreateAppBarFlyout(
 
 void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
   mTabView = state;
-  AddEventListener(state->evNeedsRepaintEvent, &TabPage::PaintLater, this);
+  AddEventListener(
+    state->evNeedsRepaintEvent, std::bind_front(&TabPage::PaintLater, this));
 
   this->UpdateToolbar();
 }

@@ -168,7 +168,8 @@ InterprocessRenderer::InterprocessRenderer(
   }
 
   AddEventListener(
-    kneeboard->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
+    kneeboard->evNeedsRepaintEvent,
+    std::bind_front(&InterprocessRenderer::MarkDirty, this));
   AddEventListener(
     kneeboard->evGameChangedEvent,
     std::bind_front(&InterprocessRenderer::OnGameChanged, this));
@@ -179,8 +180,11 @@ InterprocessRenderer::InterprocessRenderer(
     mLayers.at(i).mKneeboardView = view;
 
     AddEventListener(
-      view->evNeedsRepaintEvent, [this]() { mNeedsRepaint = true; });
-    AddEventListener(view->evCursorEvent, [this]() { mNeedsRepaint = true; });
+      view->evNeedsRepaintEvent,
+      std::bind_front(&InterprocessRenderer::MarkDirty, this));
+    AddEventListener(
+      view->evCursorEvent,
+      std::bind_front(&InterprocessRenderer::MarkDirty, this));
   }
 
   AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
@@ -188,6 +192,10 @@ InterprocessRenderer::InterprocessRenderer(
       RenderNow();
     }
   });
+}
+
+void InterprocessRenderer::MarkDirty() {
+  mNeedsRepaint = true;
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
@@ -249,15 +257,16 @@ void InterprocessRenderer::RenderNow() {
     this->Render(mRenderTargetIDs.at(i), layer);
   }
 
+  dprint("Pushing frame");
   this->Commit(renderInfos.size());
-  mNeedsRepaint = false;
+  this->mNeedsRepaint = false;
 }
 
 void InterprocessRenderer::OnGameChanged(
   DWORD processID,
   const std::shared_ptr<GameInstance>& game) {
   mCurrentGame = game;
-  this->mNeedsRepaint = true;
+  this->MarkDirty();
 }
 
 }// namespace OpenKneeboard

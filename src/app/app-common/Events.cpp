@@ -76,19 +76,29 @@ void EventReceiver::RemoveEventListener(EventHandlerToken token) {
   }
 }
 
+namespace {
+struct EmitterQueueItem {
+  std::function<void()> mEmitter;
+  std::source_location mEnqueuedFrom;
+};
+}// namespace
+
 static thread_local bool gHandlerRunning = false;
-static thread_local std::queue<std::function<void()>> gEmitterQueue;
+static thread_local std::queue<EmitterQueueItem> gEmitterQueue;
 
 static void FlushEmitterQueue() {
   while (!gEmitterQueue.empty()) {
-    gEmitterQueue.front()();
+    auto item = gEmitterQueue.front();
     gEmitterQueue.pop();
+    item.mEmitter();
   }
 }
 
-void EventBase::InvokeOrEnqueue(std::function<void()> func) {
+void EventBase::InvokeOrEnqueue(
+  std::function<void()> func,
+  std::source_location location) {
   if (gHandlerRunning) {
-    gEmitterQueue.push(func);
+    gEmitterQueue.push({func, location});
     return;
   }
   gHandlerRunning = true;

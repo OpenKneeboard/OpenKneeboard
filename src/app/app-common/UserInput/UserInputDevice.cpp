@@ -24,7 +24,8 @@
 namespace OpenKneeboard {
 
 UserInputDevice::UserInputDevice() {
-  AddEventListener(evButtonEvent, &UserInputDevice::OnButtonEvent, this);
+  AddEventListener(
+    evButtonEvent, std::bind_front(&UserInputDevice::OnButtonEvent, this));
 }
 
 UserInputDevice::~UserInputDevice() {

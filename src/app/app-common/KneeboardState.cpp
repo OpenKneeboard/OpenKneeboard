@@ -54,13 +54,16 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
   mGamesList = std::make_unique<GamesList>(this, mSettings.mGames);
   AddEventListener(
-    mGamesList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+    mGamesList->evSettingsChangedEvent,
+    std::bind_front(&KneeboardState::SaveSettings, this));
   AddEventListener(
-    mGamesList->evGameChangedEvent, &KneeboardState::OnGameChangedEvent, this);
+    mGamesList->evGameChangedEvent,
+    std::bind_front(&KneeboardState::OnGameChangedEvent, this));
 
   mTabsList = std::make_unique<TabsList>(dxr, this, mSettings.mTabs);
   AddEventListener(
-    mTabsList->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+    mTabsList->evSettingsChangedEvent,
+    std::bind_front(&KneeboardState::SaveSettings, this));
   AddEventListener(mTabsList->evTabsChangedEvent, [this](const auto& tabs) {
     for (auto& view: mViews) {
       view->SetTabs(tabs);
@@ -80,9 +83,11 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 
   mDirectInput = DirectInputAdapter::Create(hwnd, mSettings.mDirectInput);
   AddEventListener(
-    mDirectInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
+    mDirectInput->evUserActionEvent,
+    std::bind_front(&KneeboardState::PostUserAction, this));
   AddEventListener(
-    mDirectInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+    mDirectInput->evSettingsChangedEvent,
+    std::bind_front(&KneeboardState::SaveSettings, this));
   AddEventListener(
     mDirectInput->evAttachedControllersChangedEvent,
     this->evInputDevicesChangedEvent);
@@ -603,9 +608,11 @@ void KneeboardState::StartTabletInput() {
   AddEventListener(
     mTabletInput->evDeviceConnectedEvent, this->evInputDevicesChangedEvent);
   AddEventListener(
-    mTabletInput->evUserActionEvent, &KneeboardState::PostUserAction, this);
+    mTabletInput->evUserActionEvent,
+    std::bind_front(&KneeboardState::PostUserAction, this));
   AddEventListener(
-    mTabletInput->evSettingsChangedEvent, &KneeboardState::SaveSettings, this);
+    mTabletInput->evSettingsChangedEvent,
+    std::bind_front(&KneeboardState::SaveSettings, this));
 }
 
 void KneeboardState::SetDirectInputSettings(
@@ -654,7 +661,8 @@ void KneeboardState::AcquireExclusiveResources() {
 
   mGameEventServer = GameEventServer::Create();
   AddEventListener(
-    mGameEventServer->evGameEvent, &KneeboardState::OnGameEvent, this);
+    mGameEventServer->evGameEvent,
+    std::bind_front(&KneeboardState::OnGameEvent, this));
 }
 
 void KneeboardState::SwitchProfile(Direction direction) {

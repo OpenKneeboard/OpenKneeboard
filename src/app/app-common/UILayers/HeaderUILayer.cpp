@@ -54,8 +54,7 @@ HeaderUILayer::HeaderUILayer(
 
   AddEventListener(
     kneeboardView->evCurrentTabChangedEvent,
-    &HeaderUILayer::OnTabChanged,
-    this);
+    std::bind_front(&HeaderUILayer::OnTabChanged, this));
 
   ctx->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.8f},

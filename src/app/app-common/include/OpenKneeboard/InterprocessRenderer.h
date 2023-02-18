@@ -83,6 +83,7 @@ class InterprocessRenderer final : private EventReceiver {
 
   std::shared_ptr<GameInstance> mCurrentGame;
 
+  void MarkDirty();
   void RenderNow();
   void Render(RenderTargetID, Layer&);
 
