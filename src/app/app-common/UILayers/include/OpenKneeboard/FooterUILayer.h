@@ -68,7 +68,13 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
   using Clock = std::chrono::steady_clock;
   using Duration = std::chrono::seconds;
   using TimePoint = std::chrono::time_point<Clock, Duration>;
+
+  enum class RenderState {
+    UpToDate,
+    Stale,
+  };
   TimePoint mLastRenderAt {};
+  RenderState mRenderState {RenderState::Stale};
 };
 
 }// namespace OpenKneeboard
