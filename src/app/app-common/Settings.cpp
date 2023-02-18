@@ -60,7 +60,11 @@ static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
     std::ifstream f(fullPath.c_str());
     nlohmann::json json;
     f >> json;
-    out = json;
+    if constexpr (std::same_as<T, nlohmann::json>) {
+      out = json;
+    } else {
+      OpenKneeboard::from_json(json, out);
+    }
   } catch (const nlohmann::json::exception& e) {
   }
 }
@@ -207,8 +211,6 @@ Settings Settings::Load(std::string_view profile) {
   if (profile != "default") {
     settings = Settings::Load("default");
   }
-  const auto parentSettings = settings;
-
   const auto profileDir = std::filesystem::path {"profiles"} / profile;
 
 #define IT(cpptype, x) \
