@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/config.h>
+#include <vulkan/vulkan.h>
 
 #include "OpenXRKneeboard.h"
 
@@ -34,7 +35,8 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     XrSession,
     OpenXRRuntimeID,
     const std::shared_ptr<OpenXRNext>&,
-    const XrGraphicsBindingVulkanKHR&);
+    const XrGraphicsBindingVulkanKHR&,
+    PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr);
   ~OpenXRVulkanKneeboard();
 
  protected:
@@ -55,6 +57,12 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
  private:
   winrt::com_ptr<ID3D11Device> mD3D11Device;
+#define OPENKNEEBOARD_VK_FUNCS IT(vkGetPhysicalDeviceProperties2)
+#define IT(func) PFN_##func mPFN_##func {nullptr};
+  OPENKNEEBOARD_VK_FUNCS
+#undef IT
+
+  void InitializeD3D11(VkPhysicalDevice);
 };
 
 }// namespace OpenKneeboard

@@ -33,6 +33,7 @@
 #include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRD3D12Kneeboard.h"
 #include "OpenXRNext.h"
+#include "OpenXRVulkanKneeboard.h"
 
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
@@ -50,9 +51,16 @@ constexpr std::string_view OpenXRLayerName {
   "XR_APILAYER_FREDEMMOTT_OpenKneeboard"};
 static_assert(OpenXRLayerName.size() <= XR_MAX_API_LAYER_NAME_SIZE);
 
-static std::shared_ptr<OpenXRNext> gNext;
+// Don't use a unique_ptr as on process exit, windows doesn't clean these up
+// in a useful order, and Microsoft recommend just leaking resources on
+// thread/process exit
+//
+// In this case, it leads to an infinite hang on ^C
+static OpenXRKneeboard* gKneeboard {nullptr};
 
-static OpenXRRuntimeID gRuntime;
+static std::shared_ptr<OpenXRNext> gNext;
+static OpenXRRuntimeID gRuntime {};
+static PFN_vkGetInstanceProcAddr gPFN_vkGetInstanceProcAddr {nullptr};
 
 OpenXRKneeboard::OpenXRKneeboard(
   XrSession session,
@@ -268,13 +276,6 @@ XrPosef OpenXRKneeboard::GetXrPosef(const Pose& pose) {
   };
 }
 
-// Don't use a unique_ptr as on process exit, windows doesn't clean these up
-// in a useful order, and Microsoft recommend just leaking resources on
-// thread/process exit
-//
-// In this case, it leads to an infinite hang on ^C
-static OpenXRKneeboard* gKneeboard = nullptr;
-
 template <class T>
 static const T* findInXrNextChain(XrStructureType type, const void* next) {
   while (next) {
@@ -297,10 +298,10 @@ XrResult xrCreateSession(
   strncpy(gRuntime.mName, instanceProps.runtimeName, XR_MAX_RUNTIME_NAME_SIZE);
   dprintf("OpenXR runtime: '{}' v{:#x}", gRuntime.mName, gRuntime.mVersion);
 
-  auto nextResult = gNext->xrCreateSession(instance, createInfo, session);
-  if (nextResult != XR_SUCCESS) {
-    dprint("next xrCreateSession failed");
-    return nextResult;
+  const auto ret = gNext->xrCreateSession(instance, createInfo, session);
+  if (XR_FAILED(ret)) {
+    dprintf("next xrCreateSession failed: {}", static_cast<int>(ret));
+    return ret;
   }
 
   if (gKneeboard) {
@@ -312,18 +313,44 @@ XrResult xrCreateSession(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
     gKneeboard = new OpenXRD3D11Kneeboard(*session, gRuntime, gNext, *d3d11);
-    return XR_SUCCESS;
+    return ret;
   }
   auto d3d12 = findInXrNextChain<XrGraphicsBindingD3D12KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D12_KHR, createInfo->next);
   if (d3d12 && d3d12->device) {
     gKneeboard = new OpenXRD3D12Kneeboard(*session, gRuntime, gNext, *d3d12);
-    return XR_SUCCESS;
+    return ret;
+  }
+
+  auto vk = findInXrNextChain<XrGraphicsBindingVulkanKHR>(
+    XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, createInfo->next);
+  if (vk && !gPFN_vkGetInstanceProcAddr) {
+    dprint("Found Vulkan, but did not find vkGetInstanceProcAddr");
+    return ret;
+  }
+  if (vk && vk->device) {
+    gKneeboard = new OpenXRVulkanKneeboard(
+      *session, gRuntime, gNext, *vk, gPFN_vkGetInstanceProcAddr);
+    return ret;
   }
 
   dprint("Unsupported graphics API");
 
-  return XR_SUCCESS;
+  return ret;
+}
+
+XrResult xrCreateVulkanDeviceKHR(
+  XrInstance instance,
+  const XrVulkanDeviceCreateInfoKHR* createInfo,
+  VkDevice* vulkanDevice,
+  VkResult* vulkanResult) {
+  const auto ret = gNext->xrCreateVulkanDeviceKHR(
+    instance, createInfo, vulkanDevice, vulkanResult);
+  if (XR_SUCCEEDED(ret)) {
+    gPFN_vkGetInstanceProcAddr = createInfo->pfnGetInstanceProcAddr;
+  }
+
+  return ret;
 }
 
 XrResult xrDestroySession(XrSession session) {
@@ -365,6 +392,10 @@ XrResult xrGetInstanceProcAddr(
   }
   if (name == "xrEndFrame") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
+    return XR_SUCCESS;
+  }
+  if (name == "xrCreateVulkanDeviceKHR") {
+    *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateVulkanDeviceKHR);
     return XR_SUCCESS;
   }
 

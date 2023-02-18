@@ -19,7 +19,20 @@
  */
 #pragma once
 
+// This file is mostly independent of graphics APIs, however we need to
+// pull in vulkan here to get the definition of `xrCreateVulkanDeviceKHR()`
+//
+// ... but, as that means we need to pull in openxr_platform.h now and that
+// can only be included once, we need to pull in all the supported APIs
+#include <d3d11.h>
+#include <d3d12.h>
+#include <vulkan/vulkan.h>
+
+#define XR_USE_GRAPHICS_API_D3D11
+#define XR_USE_GRAPHICS_API_D3D12
+#define XR_USE_GRAPHICS_API_VULKAN
 #include <openxr/openxr.h>
+#include <openxr/openxr_platform.h>
 
 #include <utility>
 
@@ -37,7 +50,8 @@
   IT(xrDestroySwapchain) \
   IT(xrCreateReferenceSpace) \
   IT(xrDestroySpace) \
-  IT(xrLocateSpace)
+  IT(xrLocateSpace) \
+  IT(xrCreateVulkanDeviceKHR)
 
 namespace OpenKneeboard {
 
