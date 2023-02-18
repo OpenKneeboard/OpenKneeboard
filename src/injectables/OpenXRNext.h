@@ -26,6 +26,7 @@
 // can only be included once, we need to pull in all the supported APIs
 #include <d3d11.h>
 #include <d3d12.h>
+#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
 #define XR_USE_GRAPHICS_API_D3D11

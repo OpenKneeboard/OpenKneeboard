@@ -20,6 +20,8 @@
 #pragma once
 
 #include <OpenKneeboard/config.h>
+
+#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
 #include "OpenXRKneeboard.h"
@@ -36,6 +38,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     OpenXRRuntimeID,
     const std::shared_ptr<OpenXRNext>&,
     const XrGraphicsBindingVulkanKHR&,
+    const VkAllocationCallbacks*,
     PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr);
   ~OpenXRVulkanKneeboard();
 
@@ -57,12 +60,46 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
  private:
   winrt::com_ptr<ID3D11Device> mD3D11Device;
-#define OPENKNEEBOARD_VK_FUNCS IT(vkGetPhysicalDeviceProperties2)
+  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
+  winrt::com_ptr<ID3D11RenderTargetView> mD3D11RenderTargetView;
+
+  VkImage mInteropVKImage {};
+  VkFence mInteropVKFence {};
+
+  VkDevice mVKDevice {nullptr};
+  const VkAllocationCallbacks* mVKAllocator {nullptr};
+  VkCommandPool mVKCommandPool {nullptr};
+  VkCommandBuffer mVKCommandBuffer {nullptr};
+  VkQueue mVKQueue {nullptr};
+  std::array<std::vector<VkImage>, MaxLayers> mImages;
+
+#define OPENKNEEBOARD_VK_FUNCS \
+  IT(vkGetPhysicalDeviceProperties2) \
+  IT(vkCreateCommandPool) \
+  IT(vkAllocateCommandBuffers) \
+  IT(vkBeginCommandBuffer) \
+  IT(vkEndCommandBuffer) \
+  IT(vkCmdCopyImage) \
+  IT(vkCmdPipelineBarrier) \
+  IT(vkCreateImage) \
+  IT(vkGetImageMemoryRequirements2) \
+  IT(vkGetPhysicalDeviceMemoryProperties) \
+  IT(vkGetMemoryWin32HandlePropertiesKHR) \
+  IT(vkBindImageMemory2) \
+  IT(vkAllocateMemory) \
+  IT(vkCreateFence) \
+  IT(vkResetFences) \
+  IT(vkWaitForFences) \
+  IT(vkQueueSubmit) \
+  IT(vkGetDeviceQueue)
 #define IT(func) PFN_##func mPFN_##func {nullptr};
   OPENKNEEBOARD_VK_FUNCS
 #undef IT
 
-  void InitializeD3D11(VkPhysicalDevice);
+  void InitializeD3D11(const XrGraphicsBindingVulkanKHR&);
+  void InitializeVulkan(
+    const XrGraphicsBindingVulkanKHR&,
+    PFN_vkGetInstanceProcAddr);
 };
 
 }// namespace OpenKneeboard

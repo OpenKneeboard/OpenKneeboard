@@ -24,8 +24,6 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/version.h>
 #include <loader_interfaces.h>
-#include <openxr/openxr.h>
-#include <vulkan/vulkan.h>
 
 #include <memory>
 #include <string>
@@ -35,9 +33,13 @@
 #include "OpenXRNext.h"
 #include "OpenXRVulkanKneeboard.h"
 
+#define VK_USE_PLATFORM_WIN32_KHR
+#include <vulkan/vulkan.h>
+
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
 #define XR_USE_GRAPHICS_API_VULKAN
+#include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 
 namespace OpenKneeboard {
@@ -61,6 +63,7 @@ static OpenXRKneeboard* gKneeboard {nullptr};
 static std::shared_ptr<OpenXRNext> gNext;
 static OpenXRRuntimeID gRuntime {};
 static PFN_vkGetInstanceProcAddr gPFN_vkGetInstanceProcAddr {nullptr};
+static const VkAllocationCallbacks* gVKAllocator {nullptr};
 
 OpenXRKneeboard::OpenXRKneeboard(
   XrSession session,
@@ -324,13 +327,21 @@ XrResult xrCreateSession(
 
   auto vk = findInXrNextChain<XrGraphicsBindingVulkanKHR>(
     XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, createInfo->next);
-  if (vk && !gPFN_vkGetInstanceProcAddr) {
-    dprint("Found Vulkan, but did not find vkGetInstanceProcAddr");
-    return ret;
-  }
-  if (vk && vk->device) {
+  if (vk) {
+    if (!gPFN_vkGetInstanceProcAddr) {
+      dprint("Found Vulkan, but did not find vkGetInstanceProcAddr");
+      return ret;
+    }
+    if (!gVKAllocator) {
+      dprint("Found Vulkan, but did not find an allocator");
+    }
+    if (!vk->device) {
+      dprint("Found Vulkan, but did not find a device");
+      return ret;
+    }
+
     gKneeboard = new OpenXRVulkanKneeboard(
-      *session, gRuntime, gNext, *vk, gPFN_vkGetInstanceProcAddr);
+      *session, gRuntime, gNext, *vk, gVKAllocator, gPFN_vkGetInstanceProcAddr);
     return ret;
   }
 
@@ -348,6 +359,7 @@ XrResult xrCreateVulkanDeviceKHR(
     instance, createInfo, vulkanDevice, vulkanResult);
   if (XR_SUCCEEDED(ret)) {
     gPFN_vkGetInstanceProcAddr = createInfo->pfnGetInstanceProcAddr;
+    gVKAllocator = createInfo->vulkanAllocator;
   }
 
   return ret;

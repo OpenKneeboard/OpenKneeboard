@@ -4,6 +4,10 @@ ExternalProject_Add(
   URL "https://github.com/ValveSoftware/openvr/archive/refs/tags/v1.23.7.zip"
   URL_HASH "SHA256=7ffc01fcda5914cdba555074aa334c2c30c4b07c576d651460420f26d9fb7c6a"
   BUILD_BYPRODUCTS "<SOURCE_DIR>/${LIB}"
+  PATCH_COMMAND
+
+  # Stop IDEs (VSCode) from picking up the outdated Vulkan headers here
+  "${CMAKE_COMMAND}" -E rm -rf "<SOURCE_DIR>/samples"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
