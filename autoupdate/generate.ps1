@@ -1,11 +1,20 @@
 # This script requires PowerShell 6 or above
 param(
   [switch] $Preview = $false,
-  [switch] $Stable = $false
+  [switch] $Stable = $false,
+  [Parameter()]
+  [string] $GithubToken
 )
 
+$Headers = @{
+  Accept = "application/vnd.github+json";
+}
+if ("${GithubToken}" -ne "") {
+  $Headers['Authorization'] = $GithubToken
+}
+
 # All releases, in version order
-$AllReleases = (Invoke-WebRequest -URI https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases).Content
+$AllReleases = (Invoke-WebRequest -URI https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases -Headers $Headers).Content
 | ConvertFrom-Json
 | Sort-Object -Descending -Property { [System.Management.Automation.SemanticVersion] ($_.tag_name -replace '^v') }
 

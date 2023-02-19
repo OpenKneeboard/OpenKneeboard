@@ -21,7 +21,7 @@ jobs:
         shell: pwsh
         working-directory: source/autoupdate
         run: |
-          .\Generate.ps1 -${{matrix.channel}}
+          .\Generate.ps1 -${{matrix.channel}} -GithubToken "${{secrets.GITHUB_TOKEN}}"
           git diff --exit-code | Out-Null
           Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${LastExitCode}"
           Exit 0
