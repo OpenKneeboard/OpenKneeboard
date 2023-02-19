@@ -16,39 +16,6 @@
       Spacing="16"
       x:DefaultBindMode="TwoWay">
       <TextBlock
-        Text="Tint and brightness"
-        Style="{ThemeResource SubtitleTextBlockStyle}"
-      />
-      <StackPanel Orientation="Vertical"
-        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        CornerRadius="4"
-        BorderThickness="1"
-        Padding="8"
-        Spacing="12">
-        <ToggleSwitch
-					Header="Enabled"
-          OffContent="Full brightness, no tint"
-          OnContent="Custom tint and brightness"
-          IsOn="{x:Bind TintEnabled}"
-        />
-        <Slider
-          Header="Brightness"
-          Value="{x:Bind TintBrightness}"
-          TickPlacement="Outside"
-          TickFrequency="5"
-          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
-        />
-        <TextBlock
-          Text="Tint color - use white for no tint"
-          Style="{ThemeResource BodyTextBlockStyle}"
-        />
-        <ColorPicker
-          Color="{x:Bind Tint}"
-          ColorSpectrumShape="Ring"
-        />
-      </StackPanel>
-      <TextBlock
         Text="Dual kneeboards"
         Style="{ThemeResource SubtitleTextBlockStyle}"
       />
@@ -161,6 +128,39 @@
 					will take you to the first page. Looping is similarly supported for
           tabs, profiles, and bookmarks;
 				</TextBlock>
+      </StackPanel>
+      <TextBlock
+        Text="Tint and brightness"
+        Style="{ThemeResource SubtitleTextBlockStyle}"
+      />
+      <StackPanel Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <ToggleSwitch
+					Header="Enabled"
+          OffContent="Full brightness, no tint"
+          OnContent="Custom tint and brightness"
+          IsOn="{x:Bind TintEnabled}"
+        />
+        <Slider
+          Header="Brightness"
+          Value="{x:Bind TintBrightness}"
+          TickPlacement="Outside"
+          TickFrequency="5"
+          ThumbToolTipValueConverter="{StaticResource PercentConverter}"
+        />
+        <TextBlock
+          Text="Tint color - use white for no tint"
+          Style="{ThemeResource BodyTextBlockStyle}"
+        />
+        <ColorPicker
+          Color="{x:Bind Tint}"
+          ColorSpectrumShape="Ring"
+        />
       </StackPanel>
 			<Grid ColumnDefinitions="*, Auto">
 				<TextBlock 
