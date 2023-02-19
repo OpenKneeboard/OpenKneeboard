@@ -4,7 +4,9 @@ on:
     types: [publish]
 jobs:
   update-autoupdate:
-    name: Update Autoupdater
+    matrix:
+      channel: [preview, stable]
+    name: Update ${{matrix.channel}} channel
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v3
@@ -17,7 +19,7 @@ jobs:
         shell: pwsh
         working-directory: source/autoupdate
         run: |
-          .\Generate.ps1 -stable -preview
+          .\Generate.ps1 -${{matrix.channel}}
           git diff --exit-code | Out-Null
           Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${LastExitCode}"
       - name: Create pull request
@@ -25,8 +27,8 @@ jobs:
         uses: peter-evans/create-pull-request@331d02c7e2104af23ad5974d4d5cbc58a3e6dc77
         with:
           author: "OpenKneeboard Bot <openkneeboard-bot@users.noreply.github.com>"
-          branch: "autoupdater-autoupdate"
+          branch: "${{matrix.channel}}-autoupdate"
           delete-branch: true
           push-to-fork: openkneeboard-bot/OpenKneeboard
           token: ${{ secrets.OPENKNEEBOARD_BOT_PAT }}
-          title: Update auto-updater
+          title: ${{matrix.channel}} autoupdater
