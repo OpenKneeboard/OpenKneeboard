@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92930192",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92930192/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92930192/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3.4",
-    "id": 92930192,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92950733",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92950733/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92950733/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-automationTest3",
+    "id": 92950733,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FigCQ",
-    "tag_name": "v1.3.4",
-    "target_commitish": "caf5b27b863a8189003cb8fc013dc9e4b216e1db",
-    "name": "v1.3.4: small bugfixes",
+    "node_id": "RE_kwDOGk0DR84FilDN",
+    "tag_name": "v1.4-automationTest3",
+    "target_commitish": "641b86053455a902ac9ba01e1d0a0f0106de27b5",
+    "name": "v1.4-automationTest3 - DO NOT INSTALL",
     "draft": false,
-    "prerelease": false,
-    "created_at": "2023-02-19T00:36:17Z",
-    "published_at": "2023-02-19T01:12:16Z",
+    "prerelease": true,
+    "created_at": "2023-02-19T15:37:11Z",
+    "published_at": "2023-02-19T16:20:28Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96230348",
-        "id": 96230348,
-        "node_id": "RA_kwDOGk0DR84FvFvM",
-        "name": "OpenKneeboard-v1.3.4-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96289805",
+        "id": 96289805,
+        "node_id": "RA_kwDOGk0DR84FvUQN",
+        "name": "OpenKneeboard-v1.4-automationTest3-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 107988997,
+        "size": 135931955,
         "download_count": 0,
-        "created_at": "2023-02-19T01:09:06Z",
-        "updated_at": "2023-02-19T01:09:09Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.4/OpenKneeboard-v1.3.4-DebugSymbols.zip"
+        "created_at": "2023-02-19T16:12:58Z",
+        "updated_at": "2023-02-19T16:13:01Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-automationTest3/OpenKneeboard-v1.4-automationTest3-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96230344",
-        "id": 96230344,
-        "node_id": "RA_kwDOGk0DR84FvFvI",
-        "name": "OpenKneeboard-v1.3.4.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96289803",
+        "id": 96289803,
+        "node_id": "RA_kwDOGk0DR84FvUQL",
+        "name": "OpenKneeboard-v1.4-automationTest3.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/msi",
         "state": "uploaded",
-        "size": 32710656,
+        "size": 36843520,
         "download_count": 0,
-        "created_at": "2023-02-19T01:09:04Z",
-        "updated_at": "2023-02-19T01:09:05Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.4/OpenKneeboard-v1.3.4.msi"
+        "created_at": "2023-02-19T16:12:56Z",
+        "updated_at": "2023-02-19T16:12:57Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-automationTest3/OpenKneeboard-v1.4-automationTest3.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3.4",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3.4",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.3.4.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.4/OpenKneeboard-v1.3.4.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n- fix an extremely rare crash in steamVR support\r\n- fix some profile settings not being loaded correctly\r\n- fix performance bug when dual kneeboards are not enabled\r\n\r\n"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-automationTest3",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-automationTest3",
+    "body": "DO NOT INSTALL"
   }
 ]
