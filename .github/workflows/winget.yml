@@ -31,8 +31,8 @@ jobs:
           $lastTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest").tag_name
 
           # Compare the last tag to the current tag, and only publish if it is semver minor/patch update
-          $lastVersion = [System.Version]::Parse($lastTag.Substring(1))
-          $currentVersion = [System.Version]::Parse($tag)
+          $lastVersion = [System.Version]::Parse($lastTag.Substring(1)) # Remove starting 'v'
+          $currentVersion = [System.Version]::Parse($tag.Substring(1))
           if ($currentVersion.Major -ne $lastVersion.Major) {
             Write-Output "::set-output name=publish::true"
             Write-Output "::set-output name=version::$tag"
