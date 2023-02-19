@@ -1,4 +1,4 @@
-name: Autoupdater
+name: Update Autoupdater
 on:
   release:
     types: [published]
