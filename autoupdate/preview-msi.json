@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92930192",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92930192/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92930192/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.3.4",
-    "id": 92930192,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92955119",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92955119/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/92955119/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-beta1",
+    "id": 92955119,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FigCQ",
-    "tag_name": "v1.3.4",
-    "target_commitish": "caf5b27b863a8189003cb8fc013dc9e4b216e1db",
-    "name": "v1.3.4: small bugfixes",
+    "node_id": "RE_kwDOGk0DR84FimHv",
+    "tag_name": "v1.4-beta1",
+    "target_commitish": "91c36ed112636c13ddd6b9e26d23c6ce769b7f37",
+    "name": "v1.4-beta1: bookmarks, openxr+vulkan, brightness/tint, APIs",
     "draft": false,
-    "prerelease": false,
-    "created_at": "2023-02-19T00:36:17Z",
-    "published_at": "2023-02-19T01:12:16Z",
+    "prerelease": true,
+    "created_at": "2023-02-19T17:10:00Z",
+    "published_at": "2023-02-19T17:49:30Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96230348",
-        "id": 96230348,
-        "node_id": "RA_kwDOGk0DR84FvFvM",
-        "name": "OpenKneeboard-v1.3.4-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96297004",
+        "id": 96297004,
+        "node_id": "RA_kwDOGk0DR84FvWAs",
+        "name": "OpenKneeboard-v1.4-beta1-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 107988997,
+        "size": 135933914,
         "download_count": 0,
-        "created_at": "2023-02-19T01:09:06Z",
-        "updated_at": "2023-02-19T01:09:09Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.4/OpenKneeboard-v1.3.4-DebugSymbols.zip"
+        "created_at": "2023-02-19T17:47:55Z",
+        "updated_at": "2023-02-19T17:47:58Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta1/OpenKneeboard-v1.4-beta1-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96230344",
-        "id": 96230344,
-        "node_id": "RA_kwDOGk0DR84FvFvI",
-        "name": "OpenKneeboard-v1.3.4.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/96297000",
+        "id": 96297000,
+        "node_id": "RA_kwDOGk0DR84FvWAo",
+        "name": "OpenKneeboard-v1.4-beta1.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/msi",
         "state": "uploaded",
-        "size": 32710656,
-        "download_count": 0,
-        "created_at": "2023-02-19T01:09:04Z",
-        "updated_at": "2023-02-19T01:09:05Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.4/OpenKneeboard-v1.3.4.msi"
+        "size": 36843520,
+        "download_count": 4,
+        "created_at": "2023-02-19T17:47:53Z",
+        "updated_at": "2023-02-19T17:47:54Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta1/OpenKneeboard-v1.4-beta1.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.3.4",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.3.4",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.3.4.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.3.4/OpenKneeboard-v1.3.4.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n- fix an extremely rare crash in steamVR support\r\n- fix some profile settings not being loaded correctly\r\n- fix performance bug when dual kneeboards are not enabled\r\n\r\n"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-beta1",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-beta1",
+    "body": "Start by downloading [OpenKneeboard-v1.4-beta1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta1/OpenKneeboard-v1.4-beta1.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n# New features\r\n\r\n- Added bookmarks/favorites/pins feature; to use, use a 'toggle bookmark' binding, then select the bookmark from the left hand side. Bookmarks are visible in all tabs, and take you back to the specific page. For v1.4, bookmarks last until OpenKneeboard is restarted.\r\n  - added remote controls and bindings for next/previous/toggle bookmarks\r\n- Added brightness control/tint\r\n  - tint and brightness can be controlled in advanced settings\r\n  - added toggle on/off and increase/decrease brightness bindings and remote controls\r\n  - added disable and enable tint remote controls\r\n- OpenKneeboard-Viewer now supports borderless mode by pressing 'b'\r\n- Added support for binding mice scroll wheels (vertical only)\r\n- Basic remote controls now optionally take a parameter for number of repetitions - for example, `...NEXT_PAGE.exe 5` will move forward 5 pages\r\n- Experimental: added support for Vulkan OpenXR games\r\n- Experimental: added a [Lua API](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/docs/api/lua.md); this allows you to, for example:\r\n  - switch profiles depending on aircraft, terrain, or time of day\r\n  - control brightness with in-cockpit controls\r\n- Experimental: added an equivalent [C API](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/docs/api/c.md), which is also [usable from Python](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/docs/api/python.md)\r\n\r\n# Bug fixes\r\n\r\n- \"Autodetect\" will no longer render a non-VR kneeboard in the game window when OpenKneeboard's OpenXR support is active in the game\r\n- Navigation will now be auto-generated for PDFs that do not include an index, with one navigation entry per page\r\n\r\n# UI improvements\r\n\r\n- \"Add Game\", \"Add Tab\", and \"Add  Profile\" buttons now appear at both the top and bottom of the relevant pages\r\n- It is now possible to rename tabs (or bookmarks) by right clicking on them\r\n\r\n# Other changes\r\n\r\n- Added a registry setting to write logs to `Saved Games\\OpenKneeboard\\logs`\r\n- Improved overall performance\r\n- Added an option in advanced setting to show OpenKneeboard's frame count in game; this is how many times OpenKneeboard's updated, not the number of game frames"
   }
 ]
