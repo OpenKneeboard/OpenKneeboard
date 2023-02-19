@@ -2,6 +2,7 @@ name: Update Autoupdater
 on:
   release:
     types: [published]
+  workflow_dispatch:
 jobs:
   update-autoupdate:
     strategy:
