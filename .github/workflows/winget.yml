@@ -1,0 +1,34 @@
+name: Publish to WinGet
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - autoupdate/stable-msi.json
+
+jobs:
+  publish:
+    # Action can only be run on windows
+    runs-on: windows-latest
+    steps:
+      - name: Should publish to WinGet?
+        run: |-
+          # Get the tag from the autoupdate/stable-msi.json
+          $githubRawUrl = "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/autoupdate/stable-msi.json"
+          $tag = (Invoke-RestMethod -Uri $githubRawUrl).tag_name
+          if (!$tag) {
+            Write-Error "Cannot determine tag to publish"
+            exit 1
+          }
+          Write-Output "::set-output name=publish::true"
+          Write-Output "::set-output name=version::$tag"
+        shell: pwsh
+        id: should-publish
+
+      - if: ${{ steps.should-publish.outputs.publish == 'true' }}
+        uses: vedantmgoyal2009/winget-releaser@v2
+        with:
+          identifier: FredEmmott.OpenKneeboard
+          version: ${{ steps.should-publish.outputs.version }}
+          fork-user: openkneeboard-bot
+          token: ${{ secrets.OPENKNEEBOARD_BOT_PAT }}
