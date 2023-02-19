@@ -4,8 +4,9 @@ on:
     types: [published]
 jobs:
   update-autoupdate:
-    matrix:
-      channel: [preview, stable]
+    strategy:
+      matrix:
+        channel: [preview, stable]
     name: Update ${{matrix.channel}} channel
     runs-on: windows-2022
     steps:
