@@ -23,7 +23,12 @@ jobs:
         run: |
           .\Generate.ps1 -${{matrix.channel}} -GithubToken "${{secrets.GITHUB_TOKEN}}"
           git diff --exit-code | Out-Null
-          Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${LastExitCode}"
+          if ($LastExitCode -eq 0) {
+            $HaveChanges="false"
+          } else {
+            $HaveChanges="true"
+          }
+          Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${HaveChanges}"
           Exit 0
       - name: Create pull request
         if: ${{ steps.UpdateScript.outputs.HAVE_CHANGES }}
