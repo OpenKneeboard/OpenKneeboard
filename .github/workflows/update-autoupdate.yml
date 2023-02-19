@@ -24,6 +24,7 @@ jobs:
           .\Generate.ps1 -${{matrix.channel}}
           git diff --exit-code | Out-Null
           Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${LastExitCode}"
+          Exit 0
       - name: Create pull request
         if: ${{ steps.UpdateScript.outputs.HAVE_CHANGES }}
         uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
