@@ -50,7 +50,8 @@ AdvancedSettingsPage::AdvancedSettingsPage() {
   InitializeComponent();
 
   AddEventListener(
-    gKneeboard->evSettingsChangedEvent, weak_wrap(this)([](auto self) -> winrt::fire_and_forget {
+    gKneeboard->evSettingsChangedEvent,
+    weak_wrap(this)([](auto self) -> winrt::fire_and_forget {
       co_await self->mUIThread;
       self->mPropertyChangedEvent(
         *self, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L""));
@@ -172,6 +173,19 @@ bool AdvancedSettingsPage::InGameFooter() const noexcept {
 void AdvancedSettingsPage::InGameFooter(bool value) noexcept {
   auto s = gKneeboard->GetAppSettings();
   s.mInGameUI.mFooterEnabled = value;
+  gKneeboard->SetAppSettings(s);
+}
+
+bool AdvancedSettingsPage::InGameFooterFrameCount() const noexcept {
+  return gKneeboard->GetAppSettings().mInGameUI.mFooterFrameCountEnabled;
+}
+
+void AdvancedSettingsPage::InGameFooterFrameCount(bool value) noexcept {
+  auto s = gKneeboard->GetAppSettings();
+  if (value == s.mInGameUI.mFooterFrameCountEnabled) {
+    return;
+  }
+  s.mInGameUI.mFooterFrameCountEnabled = value;
   gKneeboard->SetAppSettings(s);
 }
 

@@ -68,6 +68,9 @@ struct AdvancedSettingsPage
   bool InGameFooter() const noexcept;
   void InGameFooter(bool) noexcept;
 
+  bool InGameFooterFrameCount() const noexcept;
+  void InGameFooterFrameCount(bool) noexcept;
+
   void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
   void RestoreQuirkDefaults(const IInspectable&, const IInspectable&) noexcept;
 

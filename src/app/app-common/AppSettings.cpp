@@ -40,7 +40,8 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AppSettings::InGameUISettings,
   mHeaderEnabled,
   mFooterEnabled,
-  mBookmarksBarEnabled)
+  mFooterFrameCountEnabled,
+  mBookmarksBarEnabled);
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AppSettings::TintSettings,
   mEnabled,

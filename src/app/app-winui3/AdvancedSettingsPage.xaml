@@ -241,6 +241,13 @@
           OnContent="In-game footer and clock are shown"
           IsOn="{x:Bind InGameFooter}"
         />
+        <ToggleSwitch
+          Header="Frame counter in footer"
+          OffContent="Frame counter is not shown"
+          OnContent="The number of OpenKneeboard frames is shown"
+          IsOn="{x:Bind InGameFooterFrameCount}"
+          IsEnabled="{x:Bind InGameFooter,Mode=OneWay}"
+        />
       </StackPanel>
 			<Grid ColumnDefinitions="*, Auto">
 				<TextBlock 

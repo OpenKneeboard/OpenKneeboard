@@ -64,6 +64,10 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
   std::optional<std::chrono::seconds> mMissionTime;
   std::optional<std::chrono::seconds> mUTCOffset;
 
+  KneeboardState* mKneeboard {nullptr};
+
+  size_t mFrameCount = 0;
+
   // Using steady_clock because it's much more efficient; only use
   // system_clock for display.
   using Clock = std::chrono::steady_clock;

@@ -30,7 +30,7 @@
 namespace OpenKneeboard {
 
 FooterUILayer::FooterUILayer(const DXResources& dxr, KneeboardState* kneeboard)
-  : mDXResources(dxr) {
+  : mDXResources(dxr), mKneeboard(kneeboard) {
   AddEventListener(
     kneeboard->evFrameTimerPrepareEvent,
     std::bind_front(&FooterUILayer::Tick, this));
@@ -199,6 +199,13 @@ void FooterUILayer::Render(
       drawClock(
         std::format(L"{:%T}", missionTime), DWRITE_TEXT_ALIGNMENT_LEADING);
     }
+  }
+
+  // Frame count
+  mFrameCount++;
+  if (mKneeboard->GetAppSettings().mInGameUI.mFooterFrameCountEnabled) {
+    drawClock(
+      std::format(L"OKB Frame {}", mFrameCount), DWRITE_TEXT_ALIGNMENT_CENTER);
   }
 
   // Real time
