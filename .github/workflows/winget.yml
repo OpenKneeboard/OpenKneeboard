@@ -17,8 +17,6 @@ jobs:
           $githubRawUrl = "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/autoupdate/stable-msi.json"
           $tag = (Invoke-RestMethod -Uri $githubRawUrl).tag_name
           if (!$tag) {
-            Write-Output "::set-output name=publish::false"
-            Write-Output "::set-output name=version::"
             Write-Error "Cannot determine tag to publish"
             exit 1
           }
@@ -33,4 +31,4 @@ jobs:
           identifier: FredEmmott.OpenKneeboard
           version: ${{ steps.should-publish.outputs.version }}
           fork-user: openkneeboard-bot
-          token: ${{ secrets.WINGET_TOKEN }}
+          token: ${{ secrets.OPENKNEEBOARD_BOT_PAT }}
