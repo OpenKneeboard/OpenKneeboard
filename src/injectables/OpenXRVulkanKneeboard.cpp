@@ -549,7 +549,7 @@ bool OpenXRVulkanKneeboard::Render(
     mVKCommandBuffer,
     mInteropVKImage,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    mImages.at(layerIndex).at(textureIndex),
+    dstImage,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     1,
     &imageCopy);
@@ -596,7 +596,13 @@ bool OpenXRVulkanKneeboard::Render(
     /* buffer barriers = */ nullptr,
     /* image barrier count = */ std::size(outBarriers),
     outBarriers);
-  mPFN_vkEndCommandBuffer(mVKCommandBuffer);
+  {
+    const auto res = mPFN_vkEndCommandBuffer(mVKCommandBuffer);
+    if (XR_FAILED(res)) {
+      dprintf("vkEndCommandBuffer failed: {}", res);
+      return false;
+    }
+  }
 
   {
     VkSubmitInfo submitInfo {

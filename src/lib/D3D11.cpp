@@ -50,12 +50,17 @@ void CopyTextureWithTint(
     1.0f,
   };
   ctx->RSSetViewports(1, &viewport);
+  ctx->OMSetDepthStencilState(nullptr, 0);
   ctx->OMSetRenderTargets(1, &dest, nullptr);
+  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
+  ctx->IASetInputLayout(nullptr);
+  ctx->VSSetShader(nullptr, nullptr, 0);
 
   DirectX::SpriteBatch sprites(ctx.get());
   sprites.Begin();
   sprites.Draw(source, DirectX::XMFLOAT2 {0.0f, 0.0f}, tint);
   sprites.End();
+  ctx->Flush();
 }
 
 void DrawTextureWithTint(
