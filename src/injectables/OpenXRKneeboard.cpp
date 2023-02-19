@@ -22,6 +22,7 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/version.h>
 #include <loader_interfaces.h>
 
@@ -64,6 +65,7 @@ static std::shared_ptr<OpenXRNext> gNext;
 static OpenXRRuntimeID gRuntime {};
 static PFN_vkGetInstanceProcAddr gPFN_vkGetInstanceProcAddr {nullptr};
 static const VkAllocationCallbacks* gVKAllocator {nullptr};
+static unique_hmodule gLibVulkan {LoadLibraryW(L"vulkan-1.dll")};
 
 OpenXRKneeboard::OpenXRKneeboard(
   XrSession session,
@@ -333,8 +335,20 @@ XrResult xrCreateSession(
     XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, createInfo->next);
   if (vk) {
     if (!gPFN_vkGetInstanceProcAddr) {
-      dprint("Found Vulkan, but did not find vkGetInstanceProcAddr");
-      return ret;
+      dprint(
+        "Found Vulkan, don't have an explicit vkGetInstanceProcAddr; looking "
+        "for system library.");
+      if (gLibVulkan) {
+        gPFN_vkGetInstanceProcAddr
+          = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
+            GetProcAddress(gLibVulkan.get(), "vkGetInstanceProcAddr"));
+      }
+      if (gPFN_vkGetInstanceProcAddr) {
+        dprint("Found usable system vkGetInstanceProcAddr");
+      } else {
+        dprint("Didn't find usable system vkGetInstanceProcAddr");
+        return ret;
+      }
     }
     if (!vk->device) {
       dprint("Found Vulkan, but did not find a device");
