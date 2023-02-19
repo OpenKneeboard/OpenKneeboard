@@ -17,7 +17,7 @@ Most of these are relatively self-explanatory:
 - `OpenKneeboard-RemoteControl-TOGGLE_FORCE_ZOOM.exe`: in VR mode, toggle 'always zoom' on or off; if off, by default, OpenKneeboard will enlarge the kneeboard when you're looking directly at it.
 - `OpenKneeboard-RemoteControl-TOGGLE_VISIBILITY.exe`: show/hide the kneeboard in-game
 
-These simple ones can optionally take an argument to repeat the event - for example, to go forward 5 pages, run `...NEXT_PAGE.exe 5`.
+**In v1.4 and above**, these simple ones can optionally take an argument to repeat the event - for example, to go forward 5 pages, run `...NEXT_PAGE.exe 5`.
 
 ## `OpenKneeboard-RemoteControl-SET_PROFILE.exe`
 
