@@ -349,7 +349,18 @@ bool PDFFilePageSource::IsNavigationAvailable() const {
 }
 
 std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
-  return p->mBookmarks;
+  if (!p->mBookmarks.empty()) {
+    return p->mBookmarks;
+  }
+
+  std::vector<NavigationEntry> entries;
+  for (PageIndex i = 0; i < this->GetPageCount(); ++i) {
+    entries.push_back({
+      std::format(_("Page {} ({})"), i + 1, to_utf8(p->mPath.stem())),
+      i,
+    });
+  }
+  return entries;
 }
 
 void PDFFilePageSource::RenderPage(
