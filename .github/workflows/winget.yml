@@ -2,12 +2,50 @@ name: Publish to WinGet
 on:
   release:
     types: [released]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        required: true
+        description: Tag of release which will be published to WinGet
+        type: string
 jobs:
   publish:
     # Action can only be run on windows
     runs-on: windows-latest
     steps:
-      - uses: vedantmgoyal2009/winget-releaser@v2
+      - name: Should publish to WinGet?
+        run: |-
+          # Get the tag from the release event, or from the workflow_dispatch input
+          $tag = '${{ github.event.inputs.release_tag }}'
+          if (!$tag) {
+            $tag = '${{ github.event.release.tag_name }}'
+          }
+          if (!$tag) {
+            Write-Output "::set-output name=publish::false"
+            Write-Output "::set-output name=version::"
+            Write-Error "Cannot determine tag to publish"
+            exit 1
+          }
+          
+          # Get the last tag ignoring pre-releases using the GitHub API
+          $lastTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/latest").tag_name
+
+          # Compare the last tag to the current tag, and only publish if it is semver minor/patch update
+          $lastVersion = [System.Version]::Parse($lastTag.Substring(1))
+          $currentVersion = [System.Version]::Parse($tag)
+          if ($currentVersion.Major -ne $lastVersion.Major) {
+            Write-Output "::set-output name=publish::true"
+            Write-Output "::set-output name=version::$tag"
+          } else {
+            Write-Output "::set-output name=publish::false"
+            Write-Output "::set-output name=version::"
+          }
+        shell: pwsh
+        id: should-publish
+
+      - if: ${{ steps.should-publish.outputs.publish == 'true' }}
+        uses: vedantmgoyal2009/winget-releaser@v2
         with:
           identifier: FredEmmott.OpenKneeboard
+          version: ${{ steps.should-publish.outputs.version }}
           token: ${{ secrets.WINGET_TOKEN }}
