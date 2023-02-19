@@ -26,7 +26,11 @@ using OpenKneeboard::GameEvent;
 #define STRINGIFY_INNER(x) #x
 #define STRINGIFY(x) STRINGIFY_INNER(x)
 
+#include <OpenKneeboard/dprint.h>
 #include <Windows.h>
+#include <shellapi.h>
+
+#include <filesystem>
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
@@ -35,6 +39,38 @@ int WINAPI wWinMain(
   HINSTANCE hPrevInstance,
   PWSTR pCmdLine,
   int nCmdShow) {
-  GameEvent(GameEvent::EVT_REMOTE_USER_ACTION, STRINGIFY(REMOTE_ACTION)).Send();
+  int argc = 0;
+  auto argv = CommandLineToArgvW(pCmdLine, &argc);
+
+  int repeat = 1;
+  // argv[0] is sometimes the first arg, sometimes the program name
+  if (
+    std::filesystem::weakly_canonical(argv[0])
+    != std::filesystem::weakly_canonical(_wpgmptr)) {
+    try {
+      repeat = std::stoi(argv[0]);
+    } catch (...) {
+    }
+  }
+
+  if (repeat == 1) {
+    const GameEvent ge {
+      GameEvent::EVT_REMOTE_USER_ACTION,
+      STRINGIFY(REMOTE_ACTION),
+    };
+    ge.Send();
+    return 0;
+  }
+
+  auto payload = nlohmann::json::array();
+  for (int i = 0; i < repeat; ++i) {
+    payload.push_back(nlohmann::json::array(
+      {GameEvent::EVT_REMOTE_USER_ACTION, STRINGIFY(REMOTE_ACTION)}));
+  }
+  const GameEvent me {
+    GameEvent::EVT_MULTI_EVENT,
+    payload.dump(),
+  };
+  me.Send();
   return 0;
 }
