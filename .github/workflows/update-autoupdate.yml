@@ -1,0 +1,34 @@
+name: Autoupdater
+on:
+  release:
+    types: [publish]
+jobs:
+  update-autoupdate:
+    matrix:
+      channel: [preview, stable]
+    name: Update ${{matrix.channel}} channel
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: source
+          fetch-depth: 0
+          ref: master
+      - name: Run autoupdater script
+        id: UpdateScript
+        shell: pwsh
+        working-directory: source/autoupdate
+        run: |
+          .\Generate.ps1 -${{matrix.channel}}
+          git diff --exit-code | Out-Null
+          Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${LastExitCode}"
+      - name: Create pull request
+        if: ${{ steps.UpdateScript.outputs.HAVE_CHANGES }}
+        uses: peter-evans/create-pull-request@2b011faafdcbc9ceb11414d64d0573f37c774b04
+        with:
+          author: "OpenKneeboard Bot <openkneeboard-bot@users.noreply.github.com>"
+          branch: "${{matrix.channel}}-autoupdate"
+          delete-branch: true
+          push-to-fork: openkneeboard-bot/OpenKneeboard
+          token: ${{ secrets.OPENKNEEBOARD_BOT_PAT }}
+          title: ${{matrix.channel}} autoupdater

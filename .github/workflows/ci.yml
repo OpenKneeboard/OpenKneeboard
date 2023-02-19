@@ -8,7 +8,7 @@ jobs:
       matrix:
         config: [RelWithDebInfo, Debug]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           path: source
           fetch-depth: 0
@@ -83,7 +83,7 @@ jobs:
             "${{steps.create-msi.outputs.MSI_PATH}}"
       - name: Attach MSI
         if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}.msi
           path: ${{steps.create-msi.outputs.MSI_PATH}}
@@ -114,7 +114,7 @@ jobs:
           echo "::endgroup::"
       - name: Attach debug symbols
         if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}-Symbols
           path: ${{steps.debug-symbols.outputs.PREFIX}}

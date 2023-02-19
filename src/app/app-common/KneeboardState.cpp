@@ -77,14 +77,12 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 
   auto tabs = mTabsList->GetTabs();
   for (const auto& viewState: mViews) {
-    AddEventListener(viewState->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
     viewState->SetTabs(tabs);
   }
+  AddEventListener(mViews[0]->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(mViews[1]->evNeedsRepaintEvent, [this]() {
-    if (!this->mSettings.mApp.mDualKneeboards.mEnabled) {
-      dprint(
-        "Received evNeedsRepaint for second kneeboard, but second kneeboard "
-        "is disabled");
+    if (this->mSettings.mApp.mDualKneeboards.mEnabled) {
+      this->evNeedsRepaintEvent.Emit();
     }
   });
 
