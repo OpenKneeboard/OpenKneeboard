@@ -21,12 +21,15 @@ jobs:
         shell: pwsh
         working-directory: source/autoupdate
         run: |
+          $OldVersion=(Get-Content -Raw "autoupdate/${{matrix.channel}}-msi.json" | ConvertFrom-JSON).tag_name
           .\Generate.ps1 -${{matrix.channel}} -GithubToken "${{secrets.GITHUB_TOKEN}}"
           git diff --exit-code | Out-Null
           if ($LastExitCode -eq 0) {
             $HaveChanges="false"
           } else {
             $HaveChanges="true"
+            $NewVersion=(Get-Content -Raw "autoupdate/${{matrix.channel}}-msi.json" | ConvertFrom-JSON).tag_name
+            Add-Content $Env:GITHUB_OUTPUT "MESSAGE=${{matrix.channel}} autoupdate: ${OldVersion} -> ${NewVersion} [bot]"
           }
           Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${HaveChanges}"
           Exit 0
@@ -40,4 +43,5 @@ jobs:
           delete-branch: true
           push-to-fork: openkneeboard-bot/OpenKneeboard
           token: ${{ secrets.OPENKNEEBOARD_BOT_PAT }}
-          title: ${{matrix.channel}} autoupdater
+          title: ${{steps.UpdateScript.outputs.MESSAGE}}
+          commit-message: ${{steps.UpdateScript.outputs.MESSAGE}}
