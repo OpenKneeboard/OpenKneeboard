@@ -16,7 +16,7 @@ jobs:
         env:
           CODE_SIGNING_PFX_BASE64: ${{ secrets.CODE_SIGNING_KEY_PFX_BASE64 }}
         id: fetch-key
-        if: ${{ (github.repository == 'OpenKneeboard/OpenKneeboard') && (github.event_name == 'push')}}
+        if: ${{ (github.repository == 'OpenKneeboard/OpenKneeboard') && (github.event_name == 'push') && (github.actor == 'fredemmott') }}
         shell: pwsh
         run: |
           $pfxPath="${{runner.temp}}/MyCert.pfx"
