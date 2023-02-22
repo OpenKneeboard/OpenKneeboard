@@ -21,14 +21,14 @@ jobs:
         shell: pwsh
         working-directory: source/autoupdate
         run: |
-          $OldVersion=(Get-Content -Raw "autoupdate/${{matrix.channel}}-msi.json" | ConvertFrom-JSON).tag_name
+          $OldVersion=(Get-Content -Raw "${{matrix.channel}}-msi.json" | ConvertFrom-JSON).tag_name
           .\Generate.ps1 -${{matrix.channel}} -GithubToken "${{secrets.GITHUB_TOKEN}}"
           git diff --exit-code | Out-Null
           if ($LastExitCode -eq 0) {
             $HaveChanges="false"
           } else {
             $HaveChanges="true"
-            $NewVersion=(Get-Content -Raw "autoupdate/${{matrix.channel}}-msi.json" | ConvertFrom-JSON).tag_name
+            $NewVersion=(Get-Content -Raw "${{matrix.channel}}-msi.json" | ConvertFrom-JSON).tag_name
             Add-Content $Env:GITHUB_OUTPUT "MESSAGE=${{matrix.channel}} autoupdate: ${OldVersion} -> ${NewVersion} [bot]"
           }
           Add-Content $Env:GITHUB_OUTPUT "HAVE_CHANGES=${HaveChanges}"
