@@ -21,7 +21,9 @@
 
 namespace OpenKneeboard {
 
-constexpr unsigned int TextureCount = 2;
+// As we lock the entire SHM segment before touching the texture, buffering
+// isn't needed.
+constexpr unsigned int TextureCount = 1;
 constexpr unsigned int TextureWidth = 2048;
 constexpr unsigned int TextureHeight = 2048;
 constexpr unsigned int ErrorRenderWidth = 768;
