@@ -202,10 +202,10 @@ void FooterUILayer::Render(
   }
 
   // Frame count
-  mFrameCount++;
   if (mKneeboard->GetAppSettings().mInGameUI.mFooterFrameCountEnabled) {
     drawClock(
-      std::format(L"OKB Frame {}", mFrameCount), DWRITE_TEXT_ALIGNMENT_CENTER);
+      std::format(L"OKB Frame {}", mSHM.GetFrameCountForMetricsOnly()),
+      DWRITE_TEXT_ALIGNMENT_CENTER);
   }
 
   // Real time

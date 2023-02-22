@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/UILayerBase.h>
 #include <shims/winrt/base.h>
 
@@ -66,7 +67,8 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
 
   KneeboardState* mKneeboard {nullptr};
 
-  size_t mFrameCount = 0;
+  // Used for frame counter only
+  SHM::Reader mSHM;
 
   // Using steady_clock because it's much more efficient; only use
   // system_clock for display.
