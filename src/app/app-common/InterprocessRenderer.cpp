@@ -87,6 +87,9 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     auto& layer = mLayers.at(layerIndex);
     auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
+    winrt::check_hresult(it.mMutex->AcquireSync(0, INFINITE));
+    const scope_guard release(
+      [&]() { winrt::check_hresult(it.mMutex->ReleaseSync(0)); });
 
     if (tint.mEnabled) {
       D3D11::CopyTextureWithTint(
@@ -153,7 +156,9 @@ InterprocessRenderer::InterprocessRenderer(
       resources.mTexture = SHM::CreateCompatibleTexture(
         dxr.mD3DDevice.get(),
         SHM::DEFAULT_D3D11_BIND_FLAGS,
-        D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED);
+        D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+          | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX);
+      resources.mMutex = resources.mTexture.as<IDXGIKeyedMutex>();
       winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
         resources.mTexture.get(), nullptr, resources.mTextureRTV.put()));
       auto textureName

@@ -152,6 +152,9 @@ class Snapshot final {
     uint8_t layerIndex) const;
 
   bool IsValid() const;
+
+  // Use GetRenderCacheKey() instead for almost all purposes
+  uint64_t GetSequenceNumberForDebuggingOnly() const;
 };
 
 class Reader final {
@@ -176,6 +179,7 @@ class Reader final {
 
   Snapshot mCache;
   ConsumerKind mCachedConsumerKind;
+  uint64_t mCachedSequenceNumber {};
 };
 
 }// namespace OpenKneeboard::SHM

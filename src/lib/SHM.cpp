@@ -95,7 +95,7 @@ static auto MutexPath() {
 
 struct LayerTextureReadResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
-  winrt::com_ptr<IDXGISurface> mSurface;
+  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
 
   void Populate(
     ID3D11Device* d3d,
@@ -158,9 +158,8 @@ void LayerTextureReadResources::Populate(
       std::bit_cast<uint32_t>(result));
     return;
   }
+  mMutex = mTexture.as<IDXGIKeyedMutex>();
   dprintf(L"Opened shared texture {}", textureName);
-
-  mSurface = mTexture.as<IDXGISurface>();
 }
 
 std::wstring SharedTextureName(
@@ -211,12 +210,14 @@ Snapshot::Snapshot(
 
   const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
   for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
+    auto& layer = r->mLayers[i];
     auto& t = mLayerTextures.at(i);
     t = SHM::CreateCompatibleTexture(d3d);
-
-    ctx->CopySubresourceRegion(
-      t.get(), 0, 0, 0, 0, r->mLayers[i].mTexture.get(), 0, &box);
+    winrt::check_hresult(layer.mMutex->AcquireSync(0, INFINITE));
+    ctx->CopyResource(t.get(), layer.mTexture.get());
+    winrt::check_hresult(layer.mMutex->ReleaseSync(0));
   }
+  ctx->Flush();
   mLayerSRVs = std::make_shared<LayerSRVArray>();
 }
 
@@ -234,6 +235,13 @@ size_t Snapshot::GetRenderCacheKey() const {
 
 bool LayerConfig::IsValid() const {
   return mImageWidth > 0 && mImageHeight > 0;
+}
+
+uint64_t Snapshot::GetSequenceNumberForDebuggingOnly() const {
+  if (!this->IsValid()) {
+    return 0;
+  }
+  return mHeader->mSequenceNumber;
 }
 
 Config Snapshot::GetConfig() const {
@@ -376,7 +384,14 @@ class Impl {
     if (mHaveLock) {
       throw std::logic_error("Acquiring a lock twice");
     }
-    WaitForSingleObject(mMutexHandle.get(), INFINITE);
+    const auto result = WaitForSingleObject(mMutexHandle.get(), INFINITE);
+    if (result != WAIT_OBJECT_0) {
+      dprintf(
+        "Unexpected result from SHM WaitForSingleObject in lock(): {:#016x}",
+        static_cast<uint64_t>(result));
+      OPENKNEEBOARD_BREAK;
+      return;
+    }
     mHaveLock = true;
   }
 
@@ -384,7 +399,12 @@ class Impl {
     if (mHaveLock) {
       throw std::logic_error("Acquiring a lock twice");
     }
-    if (WaitForSingleObject(mMutexHandle.get(), 0) != WAIT_OBJECT_0) {
+    const auto result = WaitForSingleObject(mMutexHandle.get(), INFINITE);
+    if (result != WAIT_OBJECT_0) {
+      dprintf(
+        "Unexpected result from SHM WaitForSingleObject in try_lock(): "
+        "{:#016x}",
+        static_cast<uint64_t>(result));
       return false;
     }
     mHaveLock = true;
@@ -505,17 +525,29 @@ Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
     return {};
   }
 
+  const auto newSequenceNumber
+    = newSnapshot.GetSequenceNumberForDebuggingOnly();
+  if (newSequenceNumber < mCachedSequenceNumber) {
+    dprintf(
+      "Sequence number went backwards! {} -> {}",
+      mCachedSequenceNumber,
+      newSequenceNumber);
+  }
+
   mCache = newSnapshot;
   mCachedConsumerKind = kind;
+  mCachedSequenceNumber = newSequenceNumber;
   return mCache;
 }
 
 Snapshot Reader::MaybeGetUncached(ID3D11Device* d3d, ConsumerKind kind) const {
   if (!p->HaveLock()) {
+    dprint("Can't get without lock");
     throw std::logic_error("Reader::MaybeGet() without lock");
   }
 
   if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
+    dprint("Kind mismatch, not returning new snapshot");
     return {};
   }
 
