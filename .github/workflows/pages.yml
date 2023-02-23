@@ -10,8 +10,8 @@ on:
   push:
     branches: ["master"]
     paths:
-      - docs/**
-      - .github/workflows/pages.yml
+      - 'docs/**'
+      - '.github/workflows/pages.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:

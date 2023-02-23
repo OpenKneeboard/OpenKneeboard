@@ -3,14 +3,14 @@ on:
   pull_request:
   push:
     paths:
-      - assets/**
-      - installer/**
-      - src/**
-      - third-party/**
-      - "*.props"
-      - "*.cmake"
-      - CMakeLists.txt
-      - .github/workflows/ci.yml
+      - 'assets/**'
+      - 'installer/**'
+      - 'src/**'
+      - 'third-party/**'
+      - '*.props'
+      - '*.cmake'
+      - 'CMakeLists.txt'
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 jobs:
