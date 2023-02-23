@@ -12,3 +12,8 @@ aux_links:
     - "https://go.openkneeboard.com/discord"
   "GitHub":
     - "https://go.openkneeboard.com/github"
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: https://github.com/OpenKneeboard/OpenKneeboard
+gh_edit_branch: master
+gh_edit_source: docs
