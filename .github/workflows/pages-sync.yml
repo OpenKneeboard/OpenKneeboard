@@ -13,4 +13,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: "Push to gh-pages branch"
-        run: git subtree push --prefix docs/ origin gh-pages
+        run: git subtree push --prefix docs/ --force origin gh-pages
