@@ -7,7 +7,7 @@ has_children: true
 
 ## Overview
 
-OpenKneeboard has 3 main components:
+OpenKneeboard is a C++20 app built using CMake; it has 3 main components:
 
 * the main Win32 GUI app: primarily intended for configuration, and can be used
   as a non-VR view.
