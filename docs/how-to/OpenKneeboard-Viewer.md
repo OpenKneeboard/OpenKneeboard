@@ -9,6 +9,7 @@ of the kneeboard for streaming.
 
 ## Keyboard Shortcuts
 
+* `B`: borderless mode - no window border or title bar
 * `I`: show information, such as frame counter and layer (kneeboard)
 * `1`-`9`: show the nth layer (kneeboard). Only layers 1 and 2 are used by OpenKneeboard, for the primary and secondary kneeboard respectively
 * `S`: Streamer Mode
