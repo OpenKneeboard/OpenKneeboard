@@ -1,10 +1,16 @@
-![OpenKneeboard](assets/OpenKneeboard_Logos_Color.svg)
+---
+layout: page
+title: OpenKneebaord
+tagline: Interactive information in your simulators
+---
 
 OpenKneeboard is a way to show reference information and take notes in games - especially flight simulators - including in VR. 
 
 OpenKneeboard can be controlled via joystick/HOTAS bindings, or a graphics tablet ('artists tablet') such as those made by Wacom or Huion; phones and tablet computers like iPads or Microsoft Surface tablets are **not** compatible.
 
 ## Getting Started
+
+Note that OpenKneeboard has **NO WARRANTY**.
 
 1. Download [the latest release](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)
 2. Install it; the installer will offer to launch OpenKneeboard when finished.
@@ -14,20 +20,20 @@ OpenKneeboard can be controlled via joystick/HOTAS bindings, or a graphics table
 
 You might also be interested in the documentation for:
 
-* [Huion tablet users](docs/huion.md)
-* [StreamDeck users](docs/streamdeck.md)
-* [Wacom tablet users](docs/wacom.md)
+* [Huion tablet users](huion.md)
+* [StreamDeck users](streamdeck.md)
+* [Wacom tablet users(wacom.md)
 
 ## Getting Help
 
-First, [check the troubleshooting guides](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs/troubleshooting).
+First, [check the troubleshooting guides](troubleshooting/).
 
 I make this for my own use, and I share this in the hope others find it useful; I'm not able to commit to support, bug fixes, or feature development.
 
 Support may be available from the community via:
 
-- [GitHub Discussions](https://github.com/OpenKneeboard/OpenKneeboard/discussions)
 - [Discord](https://go.openkneeboard.com/discord)
+- [GitHub Discussions](https://github.com/OpenKneeboard/OpenKneeboard/discussions)
 
 I am not able to respond to 1:1 requests for help via any means, including GitHub, Discord, Twitter, Reddit, or email.
 
@@ -50,6 +56,7 @@ The following are **not compatible** with OpenKneeboard:
 - Any XP-Pen tablets with the XP-Pen drivers; *might* work [with OpenTabletDriver]
 - Any Gaomon tablets with the Gaomon drivers; *might* work [with OpenTabletDriver]
 - Any tablet computers, regardless of manufacturer; this includes Apple iPads, Microsoft Surface, etc.
+- Phones
 
 ### Games
 
@@ -82,17 +89,6 @@ Note that OpenKneeboard has **NO WARRANTY**; see [the LICENSE file](LICENSE) and
 - Nefarius and the other members of the ViGEm Discord for lots of advice/feedback/information on DirectX, Detours, and other aspects of Windows development.
 - [AMD GPUOpen's OCAT project](https://gpuopen.com/ocat/) for demonstrating overlay rendering in applications using the Oculus SDK.
 
-## Developer Information
-
-[![Continuous Integration](https://github.com/OpenKneeboard/OpenKneeboard/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenKneeboard/OpenKneeboard/actions/workflows/ci.yml)
-
-- This project is written in C++20
-- It is built with CMake
-- It is primarily developed with Visual Studio Code, using the compilers from Visual Studio 2022. Only the 'Build Tools for Visual Studio 2022' package is required, but 'Community Edition' or better also work fine.
-- The UI is built with WinUI3, which currently requires msbuild instead of pure CMake.
-
-For details on some internals, see [docs/internals/](docs/internals/).
-
 ## License
 
 OpenKneeboard is licensed under the GNU General Public License, version 2.
@@ -101,8 +97,8 @@ This project uses several third-party libraries, which are used and distributed 
 
 ## Screenshots
 
-![Screenshot of the main app](docs/screenshots/config-app.png)
-![Non-VR Screenshot](docs/screenshots/non-vr.png)
-![VR Screenshot](docs/screenshots/theater.png)
+![Screenshot of the main app](screenshots/config-app.png)
+![Non-VR Screenshot](screenshots/non-vr.png)
+![VR Screenshot](screenshots/theater.png)
 
 [with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc)
