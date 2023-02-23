@@ -1,4 +1,5 @@
 ---
+title: DCS Tabs
 parent: Troubleshooting
 ---
 

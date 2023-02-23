@@ -1,3 +1,8 @@
+---
+title: Huion Tablets
+parent: How-To
+---
+
 # Using Huion Tablets with OpenKneeboard
 
 Huion tablets can either be used with Huion's drivers, or [with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc).
@@ -16,19 +21,19 @@ It's easiest to set all of these settings for 'All Programs'; otherwise (for exa
 
 To use the pen for drawing or UIs (e.g. PDF table of contents), you need to set the tip to 'Valid', and any other pen buttons to 'Mouse Right Button':
 
-![tip 'valid'](screenshots/huion-tip.png)
-![first button as 'Mouse Right Button'](screenshots/huion-button-1.png)
-![second button as 'Mouse Right Button'](screenshots/huion-button-2.png)
+![tip 'valid'](../screenshots/huion-tip.png)
+![first button as 'Mouse Right Button'](../screenshots/huion-button-1.png)
+![second button as 'Mouse Right Button'](../screenshots/huion-button-2.png)
 
 If an on-pen button is being held while drawing, the pen will act as an eraser.
 
 If you also want to use the on-tablet 'Press Keys' to change page/tabs, there are several remote control executables in `C:\Program Files\OpenKneeboard\utilities`:.
 
-![OpenKneeboard-Remote-PREVIOUS_PAGE.exe, -NEXT_PAGE.exe, -NEXT_TAB.exe, etc](screenshots/remote-controls.png)
+![OpenKneeboard-Remote-PREVIOUS_PAGE.exe, -NEXT_PAGE.exe, -NEXT_TAB.exe, etc](../screenshots/remote-controls.png)
 
 To use these, open the Huion settings app, and set the press keys to 'run program', and browse to the executable you want. For example, if you want a press key to move to the next kneeboard page, select 'Run Program', then browse to and select `OpenKneeboard-RemoteControl-NEXT_PAGE.exe`:
 
-![screenshot of run program -> NEXT_PAGE.exe](screenshots/huion-presskeys.png)
+![screenshot of run program -> NEXT_PAGE.exe](../screenshots/huion-presskeys.png)
 
 While Huion tablets appear in OpenKneeboard's settings, the buttons can not be bound there unless a future version of Huion's driver supports the ExpressKeys API.
 

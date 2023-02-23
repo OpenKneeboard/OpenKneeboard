@@ -2,3 +2,5 @@ repository: OpenKneeboard/OpenKneeboard
 title: OpenKneeboard
 description: Interactive information in your simulators
 theme: just-the-docs
+color_scheme: dark
+favicon_ico: assets/favicon.ico

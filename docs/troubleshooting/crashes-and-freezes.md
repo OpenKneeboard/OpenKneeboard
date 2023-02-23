@@ -2,12 +2,12 @@
 parent: Troubleshooting
 ---
 
-# Crashes vs freezes
+# Crashes or Freezes
 
 **Crash**: OpenKneeboard's window closes by itself, *sometimes* with an error message
 **Freeze**: OpenKneeboard still has a window, but it ignores keyboard, mouse, and other input. Windows *might* say "The application has stopped responding."
 
-# Reporting crashes or freezes
+## Reporting crashes or freezes
 
 Please do not report crashes or freezes if:
 
@@ -24,7 +24,7 @@ If you have an unsupported tablet driver, you might want to [try OpenTabletDrive
 - If you would prefer to share it privately, still file an issue, but send a link to the dump file to `openkneeboard-dumps@fred.fredemmott.com`
 - If you are able to reliably reproduce the issue, please include steps with as much detail as you can, and any relevant files
 
-## Getting a dump file for a crash
+### Getting a dump file for a crash
 
 If you are able to reproduce the issue or it repeats itself over time:
 
@@ -39,7 +39,7 @@ If the crash happened once and you're unable to repeat it:
 - check for a recent .dmp file in `Saved Games\OpenKneeboard`; make sure the time lines up with the crash, then use that
 - if there isn't one there, check `%LOCALAPPDATA%\CrashDumps`; depending on your Windows settings and other software, there may be a dmp there even without running either of the previous `.reg` files
 
-## Getting a dump file for a freeze
+### Getting a dump file for a freeze
 
 1. Open Task Manager from Ctrl+Alt+Delete
 2. Find "OpenKneeboardApp"
@@ -47,7 +47,7 @@ If the crash happened once and you're unable to repeat it:
 4. Select "Create dump file" from the right-click menu
 5. Task Manager will then show a window telling you where it saved the dump
 
-# Crashes on startup, or no window visible
+## Crashes on startup, or no window visible
 
 When you start OpenKneeboard, you should see a window like this:
 
@@ -55,7 +55,7 @@ When you start OpenKneeboard, you should see a window like this:
 
 If you do not, OpenKneeboard is crashing on startup.
 
-## Corrupt settings
+### Corrupt settings
 
 Try renaming `Saved Games\OpenKneeboard` to anything else; this will remove your OpenKneeboard settings.
 

@@ -1,4 +1,8 @@
-# OpenKneeboard-Viewer.exe
+---
+parent: How-To
+---
+
+# OpenKneeboard-Viewer
 
 `OpenKneeboard-Viewer.exe` is a program included in the 'remote control' zip shows the images that OpenKneeboard sends to other programs, such as games. It is primarily intended for debugging, but can also be useful for capturing a 2D version
 of the kneeboard for streaming.

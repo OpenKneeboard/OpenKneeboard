@@ -1,3 +1,8 @@
+---
+title: Remote Controls
+parent: How-To
+---
+
 # 'RemoteControl' exe files
 
 These are installed to `C:\Program Files\OpenKneeboard\utilities`, and can be used to control OpenKneeboard from other programs, e.g.:
