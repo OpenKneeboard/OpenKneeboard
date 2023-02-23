@@ -5,6 +5,16 @@ parent: Compatibility
 
 # Game Compatibility
 
+## Common Games
+
+| Game | Non-VR | Native OpenXR | OpenComposite | Oculus SDK | SteamVR |
+|------|--------|---------------|---------------|------------|---------|
+| DCS World | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Falcon BMS | ✅ | n/a | n/a | n/a | ✅ |
+| MSFS 2020  | ✅ | ✅ | n/a | n/a | ✅ |
+
+## Other Games
+
 | Graphics API | Non-VR | OpenXR | Oculus | SteamVR |
 | -------------|--------|--------|--------|---------|
 | OpenGL       | ❌ | ❌ | ❌ | ✅ |
