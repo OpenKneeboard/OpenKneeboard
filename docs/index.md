@@ -1,5 +1,4 @@
 ---
-layout: page
 title: OpenKneebaord
 tagline: Interactive information in your simulators
 ---
