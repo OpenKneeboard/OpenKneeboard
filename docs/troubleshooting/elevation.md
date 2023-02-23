@@ -5,7 +5,7 @@ title: Elevation
 
 # Running Elevated/As Administrator
 
-OpenKneeboard will not fully work as administrator; this includes [known bugs that can only be fixed by Microsoft](https://github.com/microsoft/microsoft-ui-xaml/issues/3290).
+OpenKneeboard will not fully work as administrator; this includes [known crash-causing bugs that can only be fixed by Microsoft](https://github.com/microsoft/microsoft-ui-xaml/issues/7690).
 
 **This is not specific to OpenKneeboard** - on modern Windows, running any application as administrator without a specific need is more likely to cause problems than fix them.
 
