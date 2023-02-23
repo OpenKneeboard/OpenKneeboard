@@ -1,0 +1,14 @@
+name: Publish to WinGet
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - docs/
+  workflow_dispatch:
+jobs:
+  sync:
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Push to gh-pages branch"
+        run: git subtree push --prefix docs/ origin gh-pages
