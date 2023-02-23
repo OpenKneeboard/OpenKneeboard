@@ -49,8 +49,8 @@ Set the slider on the left to **anything except the bottom option** ('never noti
 
 ![UAC with 'never notify' setting circled and crossed out](../screenshots/elevation-uac-no.png)
 
+The "never notify" option is misleadingly labelled and has a much larger effect than it sounds: Windows will not just stop prompting you, it will automatically run more things as Administrator.
+
 If you have no preference or are unsure, set it to the default option with the bold tick marks:
 
 ![UAC with default option selected](../screenshots/elevation-uac.png)
-
-The "never notify" option is misleadingly labelled and has a much larger effect than it sounds: it doesn't just remove notifications and prompts - it makes Windows automatically run many applications as Administrator even if they - or you - don't ask Windows to.
