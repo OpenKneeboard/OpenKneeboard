@@ -20,7 +20,7 @@ You might also be interested in the documentation for:
 
 * [Huion tablet users](huion.md)
 * [StreamDeck users](streamdeck.md)
-* [Wacom tablet users(wacom.md)
+* [Wacom tablet users](wacom.md)
 
 ## Getting Help
 
