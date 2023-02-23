@@ -5,6 +5,12 @@ theme: just-the-docs
 color_scheme: dark
 logo: /assets/logo.svg
 favicon_ico: /assets/favicon.ico
+gh_edit_link: true
+gh_edit_link_text: "Edit this page on GitHub"
+gh_edit_repository: https://github.com/OpenKneeboard/OpenKneeboard
+gh_edit_branch: master
+gh_edit_source: docs
+gh_edit_view_mode: edit
 aux_links:
   "DOWNLOAD":
     - "https://go.openkneeboard.com/download"
@@ -12,8 +18,3 @@ aux_links:
     - "https://go.openkneeboard.com/discord"
   "GitHub":
     - "https://go.openkneeboard.com/github"
-gh_edit_link: true
-gh_edit_link_text: "Edit this page on GitHub"
-gh_edit_repository: https://github.com/OpenKneeboard/OpenKneeboard
-gh_edit_branch: master
-gh_edit_source: docs
