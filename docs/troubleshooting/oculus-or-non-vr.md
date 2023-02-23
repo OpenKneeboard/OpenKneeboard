@@ -1,4 +1,9 @@
-# Oculus and Non-VR Troubleshooting
+---
+title: Oculus or Non-VR
+parent: Troubleshooting
+---
+
+# Troubleshooting Oculus or Non-VR Issues
 
 ## Kneeboard Is Not Visible
 

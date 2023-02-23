@@ -1,3 +1,8 @@
+---
+title: Throwing from `noexcept`
+parent: Internals
+---
+
 # Why are some functions that throw marked `noexcept`?
 
 WinRT ABI boundaries must not throw; if they do, C++/WinRT will catch, and

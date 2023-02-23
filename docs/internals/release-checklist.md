@@ -1,4 +1,8 @@
-# Release checklist
+---
+parent: Internals
+---
+
+# Release Checklist
 
 ## Before Release
 

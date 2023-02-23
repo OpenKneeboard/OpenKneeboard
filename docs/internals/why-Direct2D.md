@@ -1,3 +1,8 @@
+---
+title: Why Direct2D
+parent: Internals
+---
+
 # Why does the app use Direct2D?
 
 Initially, the app used wxDC, wxImage, and wxBitmap for all 2D drawing

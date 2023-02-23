@@ -1,3 +1,8 @@
+---
+title: Wacom Tablets
+parent: Troubleshooting
+---
+
 # Troubleshooting Wacom Tablets
 
 If you're having problems, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc); the rest of this document only applies to Wacom's driver.

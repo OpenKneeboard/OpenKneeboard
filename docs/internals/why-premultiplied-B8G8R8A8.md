@@ -1,3 +1,8 @@
+---
+title: Why B8G8R8A
+parent: Internals
+---
+
 # Why B8G8R8A8 with pre-multiplied alpha?
 
 This isn't an intuitive format for humans, however practically every graphics

@@ -1,3 +1,7 @@
+---
+parent: APIs
+---
+
 # Supported Messages
 
 The same messages are supported for Lua and C, and are used by the remote-control utility executables.

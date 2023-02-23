@@ -1,3 +1,7 @@
+---
+parent: Internals
+---
+
 # Injectables
 
 OpenVR (SteamVR) has built-in support for 3rd-party overlays - like

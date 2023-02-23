@@ -1,3 +1,7 @@
+---
+parent: APIs
+---
+
 # Lua API
 
 ## Overview

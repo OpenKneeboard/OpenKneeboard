@@ -1,4 +1,9 @@
-# Troubleshooting SteamVR and OpenXR
+---
+title: SteamVR or OpenXR
+parent: Troubleshooting
+---
+
+# Troubleshooting SteamVR or OpenXR Issues
 
 ## Game Crashes
 

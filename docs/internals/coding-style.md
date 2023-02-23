@@ -1,3 +1,7 @@
+---
+parent: Internals
+---
+
 # Coding Style
 
 * use standard C++ features where possible

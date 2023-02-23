@@ -1,3 +1,8 @@
+---
+title: Kneeboard Position
+parent: Troubleshooting
+---
+
 # Kneeboard Position with WMR Headsets
 
 ## Problems

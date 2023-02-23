@@ -1,3 +1,7 @@
+---
+parent: Troubleshooting
+---
+
 # Crashes vs freezes
 
 **Crash**: OpenKneeboard's window closes by itself, *sometimes* with an error message

@@ -1,3 +1,8 @@
+---
+title: std::enable_shared_from_this
+parent: Internals
+---
+
 # About `std::enable_shared_from_this`
 
 This class adds `this->shared_from_this()` and `this->weak_from_this()`.

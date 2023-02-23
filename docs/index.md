@@ -1,6 +1,5 @@
 ---
-title: OpenKneebaord
-tagline: Interactive information in your simulators
+title: Getting Started
 ---
 
 OpenKneeboard is a way to show reference information and take notes in games - especially flight simulators - including in VR. 

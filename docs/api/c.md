@@ -1,3 +1,7 @@
+---
+parent: APIs
+---
+
 # C API
 
 ## Overview

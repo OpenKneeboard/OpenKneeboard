@@ -1,3 +1,7 @@
+---
+parent: Troubleshooting
+---
+
 # The DCS Tabs
 
 ## None of the tabs ever show anything

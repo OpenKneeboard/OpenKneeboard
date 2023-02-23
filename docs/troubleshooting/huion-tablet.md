@@ -1,3 +1,7 @@
+---
+parent: Troubleshooting
+---
+
 # Huion Tablets
 
 If you're having problems, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc); the rest of this document only applies to Huion's driver.

@@ -1,3 +1,7 @@
+---
+parent: Internals
+---
+
 # Magic URIs
 
 OpenKneeboard recognizes several magic URIs in PDF documents; these were added to support the 'Quick Start' PDF, but can be

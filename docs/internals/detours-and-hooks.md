@@ -1,3 +1,7 @@
+---
+parent: Internals
+---
+
 # Detours and Hooks
 
 Most `Hook` classes have the following structure:

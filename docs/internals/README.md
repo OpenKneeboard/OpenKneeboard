@@ -1,3 +1,8 @@
+---
+title: Internals
+has_children: true
+---
+
 # OpenKneeboard Internals
 
 ## Overview

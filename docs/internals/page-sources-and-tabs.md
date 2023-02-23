@@ -1,3 +1,7 @@
+---
+parent: Internals
+---
+
 # Page Sources and Tabs
 
 An `IPageSource` represents 0-n pages that are handled the same way; this includes rendering, cursor events, navigation etc. An `ITab` is a user-configurable `IPageSource`, and may be composed/delegate to multiple other `IPageSource`.
