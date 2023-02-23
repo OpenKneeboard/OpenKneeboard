@@ -1,3 +1,7 @@
+---
+parent: Troubleshooting
+---
+
 # Window Capture
 
 Capture will work with most apps, but has limitations.
