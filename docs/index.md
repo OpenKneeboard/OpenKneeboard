@@ -101,4 +101,4 @@ This project uses several third-party libraries, which are used and distributed 
 ![Non-VR Screenshot](screenshots/non-vr.png)
 ![VR Screenshot](screenshots/theater.png)
 
-[with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc)
+[with OpenTabletDriver]: https://go.openkneeboard.com/otd-ipc
