@@ -5,9 +5,11 @@ on:
       - master
     paths:
       - docs/
+      - .github/workflows/pages-sync.yml
   workflow_dispatch:
 jobs:
   sync:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: "Push to gh-pages branch"
