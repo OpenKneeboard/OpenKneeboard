@@ -17,20 +17,6 @@ Note that OpenKneeboard has **NO WARRANTY**, and [anti-cheat software could theo
 4. Add games to the 'Games' tab if they were not automatically added; this is needed for tablet, Oculus, and non-VR support
 5. Configure your bindings; if you're playing in VR, **you almost certainly want to bind 'recenter' ** to the same buttons you use for the game.
 
-### Notes and in-game toolbar
-
-Taking notes and using the in-game toolbar requires a WinTab-compatible graphics tablet; common choices that are reported to work well include:
-
-- Wacom Intuos S: fewest software issues, large recessed buttons are easy to find with the headset on
-- Huion H640P: cheaper, more buttons
-
-The following are **not compatible** with OpenKneeboard:
-
-- Any XP-Pen tablets with the XP-Pen drivers; *might* work [with OpenTabletDriver]
-- Any Gaomon tablets with the Gaomon drivers; *might* work [with OpenTabletDriver]
-- Any tablet computers, regardless of manufacturer; this includes Apple iPads, Microsoft Surface, etc.
-- Phones
-
 ## WARNING: Anti-Cheat ##
 
 While OpenKneeboard is not a cheat, it does hook into the games rendering and input pipelines, which over-eager anti-cheat systems may consider ban-worthy. While this is similar to how other overlays work (e.g. Steam and Discord), it is possible that using OpenKneeboard may lead to an anti-cheat ban.
