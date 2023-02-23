@@ -5,3 +5,10 @@ theme: just-the-docs
 color_scheme: dark
 logo: /assets/logo.svg
 favicon_ico: /assets/favicon.ico
+aux_links:
+  "DOWNLOAD":
+    - "https://go.openkneeboard.com/download"
+  "Discord":
+    - "https://go.openkneeboard.com/discord"
+  "GitHub":
+    - "https://go.openkneeboard.com/github"
