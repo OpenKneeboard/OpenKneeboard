@@ -15,7 +15,7 @@ Note that OpenKneeboard has **NO WARRANTY**, and [anti-cheat software could theo
 2. Install it; the installer will offer to launch OpenKneeboard when finished.
 3. Open settings
 4. Add games to the 'Games' tab if they were not automatically added; this is needed for tablet, Oculus, and non-VR support
-5. Configure your bindings; if you're playing in VR, **you almost certainly want to bind 'recenter' ** to the same buttons you use for the game.
+5. Configure your bindings; if you're playing in VR, **you almost certainly want to bind 'recenter'** to the same buttons you use for the game.
 
 ## WARNING: Anti-Cheat ##
 
