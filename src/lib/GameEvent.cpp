@@ -21,6 +21,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
+#include <OpenKneeboard/tracing.h>
 #include <Windows.h>
 #include <shims/winrt/base.h>
 
@@ -104,7 +105,18 @@ std::vector<std::byte> GameEvent::Serialize() const {
 }
 
 void GameEvent::Send() const {
+  TraceLoggingActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity,
+    "GameEvent::Send()",
+    TraceLoggingValue(this->name.c_str(), "Name"),
+    TraceLoggingBinary(this->value.c_str(), this->value.size(), "Value"));
+
   if (!OpenMailslotHandle()) {
+    TraceLoggingWriteStop(
+      activity,
+      "GameEvent::Send()",
+      TraceLoggingValue("Couldn't open mailslot", "Result"));
     return;
   }
   const auto packet = this->Serialize();
@@ -115,20 +127,38 @@ void GameEvent::Send() const {
         static_cast<DWORD>(packet.size()),
         nullptr,
         nullptr)) {
+    TraceLoggingWriteStop(
+      activity, "GameEvent::Send()", TraceLoggingValue("Success", "Result"));
     return;
   }
+
   gMailslotHandle.close();
   gMailslotHandle = {};
+  TraceLoggingWriteTagged(activity, "Closed handle");
 
   if (!OpenMailslotHandle()) {
+    TraceLoggingWriteStop(
+      activity,
+      "GameEvent::Send()",
+      TraceLoggingValue("Couldn't reopen handle", "Result"));
     return;
   }
-  WriteFile(
-    gMailslotHandle.get(),
-    packet.data(),
-    static_cast<DWORD>(packet.size()),
-    nullptr,
-    nullptr);
+  TraceLoggingWriteTagged(activity, "Reopened handle");
+  if (WriteFile(
+        gMailslotHandle.get(),
+        packet.data(),
+        static_cast<DWORD>(packet.size()),
+        nullptr,
+        nullptr)) {
+    TraceLoggingWriteStop(
+      activity, "GameEvent::Send()", TraceLoggingValue("Success", "Result"));
+  } else {
+    TraceLoggingWriteStop(
+      activity,
+      "GameEvent::Send()",
+      TraceLoggingValue("Error", "Result"),
+      TraceLoggingValue(GetLastError(), "Error"));
+  }
 }
 
 const char* GameEvent::GetMailslotPath() {

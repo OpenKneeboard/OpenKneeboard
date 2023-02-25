@@ -19,6 +19,10 @@
  */
 #pragma once
 
+// clang-format off
+#include <Windows.h>
+// clang-format on
+
 #include <TraceLoggingActivity.h>
 #include <TraceLoggingProvider.h>
 

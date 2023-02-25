@@ -19,10 +19,12 @@
  */
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 #include <Windows.h>
 #include <shims/winrt/base.h>
 
 #include <cinttypes>
+#include <cstdlib>
 #include <format>
 #include <string>
 
@@ -74,4 +76,34 @@ extern "C" int __declspec(dllexport)
   lua_pushcfunction(state, &SendToOpenKneeboard);
   lua_setfield(state, -2, "sendRaw");
   return 1;
+}
+
+namespace OpenKneeboard {
+
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.API.Lua")
+ * 039d7b52-2065-5863-802b-873c638bdf88
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.API.Lua",
+  (0x039d7b52, 0x2065, 0x5863, 0x80, 0x2b, 0x87, 0x3c, 0x63, 0x8b, 0xdf, 0x88));
+}// namespace OpenKneeboard
+
+static TraceLoggingActivity<OpenKneeboard::gTraceProvider> gActivity;
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  switch (dwReason) {
+    case DLL_PROCESS_ATTACH:
+      TraceLoggingRegister(OpenKneeboard::gTraceProvider);
+      TraceLoggingWriteStart(
+        gActivity, "Attached", TraceLoggingValue(_wpgmptr, "Executable"));
+      break;
+    case DLL_PROCESS_DETACH:
+      TraceLoggingWriteStop(
+        gActivity, "Attached", TraceLoggingValue(_wpgmptr, "Executable"));
+      TraceLoggingUnregister(OpenKneeboard::gTraceProvider);
+      break;
+  }
+  return TRUE;
 }

@@ -10,7 +10,11 @@ function(add_utility_executable TARGET)
   install(TARGETS "${TARGET}" DESTINATION "utilities")
 endfunction()
 
-ok_add_executable(test-gameevent-feeder test-gameevent-feeder.cpp)
+ok_add_executable(
+  test-gameevent-feeder
+  test-gameevent-feeder.cpp
+  remote-traceprovider.cpp
+)
 target_link_libraries(
   test-gameevent-feeder
   OpenKneeboard-GameEvent
@@ -43,7 +47,9 @@ add_custom_command(
 
 add_utility_executable(
   OpenKneeboard-RemoteControl-SET_TAB
-  WIN32 set-tab-remote.cpp
+  WIN32
+  set-tab-remote.cpp
+  remote-traceprovider.cpp
 )
 target_link_libraries(
   OpenKneeboard-RemoteControl-SET_TAB
@@ -54,7 +60,9 @@ target_link_libraries(
 
 add_utility_executable(
   OpenKneeboard-RemoteControl-SET_PROFILE
-  WIN32 set-profile-remote.cpp
+  WIN32
+  set-profile-remote.cpp
+  remote-traceprovider.cpp
 )
 target_link_libraries(
   OpenKneeboard-RemoteControl-SET_PROFILE
@@ -84,7 +92,11 @@ target_link_libraries(
   System::Dxgi
 )
 
-ok_add_executable(fake-dcs fake-dcs.cpp)
+ok_add_executable(
+  fake-dcs
+  fake-dcs.cpp
+  remote-traceprovider.cpp
+)
 target_link_libraries(fake-dcs OpenKneeboard-games OpenKneeboard-GameEvent)
 
 # Mostly to workaround Huion driver limitations, but maybe also useful for
@@ -115,7 +127,12 @@ set(
 
 foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   set(TARGET "OpenKneeboard-RemoteControl-${REMOTE_ACTION}")
-  add_utility_executable("${TARGET}" WIN32 simple-remote.cpp)
+  add_utility_executable(
+    "${TARGET}"
+    WIN32
+    simple-remote.cpp
+    remote-traceprovider.cpp
+  )
   target_compile_definitions(
     "${TARGET}"
     PUBLIC

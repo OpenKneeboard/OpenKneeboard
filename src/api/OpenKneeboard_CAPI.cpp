@@ -23,6 +23,7 @@
 
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 
 static void init() {
   static bool sInitialized = false;
@@ -62,4 +63,34 @@ OPENKNEEBOARD_CAPI void OpenKneeboard_send_wchar_ptr(
     winrt::to_string(std::wstring_view {eventValue, eventValueCharCount}),
   };
   ge.Send();
+}
+
+namespace OpenKneeboard {
+
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.API.C")
+ * cfaa744f-ba6f-5e56-5c91-88de46269c4b
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.API.C",
+  (0xcfaa744f, 0xba6f, 0x5e56, 0x5c, 0x91, 0x88, 0xde, 0x46, 0x26, 0x9c, 0x4b));
+}// namespace OpenKneeboard
+
+static TraceLoggingActivity<OpenKneeboard::gTraceProvider> gActivity;
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  switch (dwReason) {
+    case DLL_PROCESS_ATTACH:
+      TraceLoggingRegister(OpenKneeboard::gTraceProvider);
+      TraceLoggingWriteStart(
+        gActivity, "Attached", TraceLoggingValue(_wpgmptr, "Executable"));
+      break;
+    case DLL_PROCESS_DETACH:
+      TraceLoggingWriteStop(
+        gActivity, "Attached", TraceLoggingValue(_wpgmptr, "Executable"));
+      TraceLoggingUnregister(OpenKneeboard::gTraceProvider);
+      break;
+  }
+  return TRUE;
 }
