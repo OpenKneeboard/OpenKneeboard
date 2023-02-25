@@ -26,6 +26,8 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <Windows.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
@@ -36,12 +38,28 @@
 
 using namespace OpenKneeboard;
 
+namespace OpenKneeboard {
+
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.TestFeeder")
+ * 1a75505f-4493-5004-8df0-3830610c5e85
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.TestFeeder",
+  (0x1a75505f, 0x4493, 0x5004, 0x8d, 0xf0, 0x38, 0x30, 0x61, 0x0c, 0x5e, 0x85));
+}// namespace OpenKneeboard
+
 struct SharedTextureResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
 };
 
 int main() {
+  TraceLoggingRegister(gTraceProvider);
+  const scope_guard unregisterTraceProvider(
+    []() { TraceLoggingUnregister(gTraceProvider); });
+
   DPrintSettings::Set({
     .prefix = "test-feeder",
     .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,

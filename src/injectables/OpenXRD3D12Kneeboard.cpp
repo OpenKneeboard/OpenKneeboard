@@ -23,6 +23,7 @@
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 #include <d3d11.h>
 #include <d3d11on12.h>
 #include <d3d12.h>
@@ -48,6 +49,7 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   mDeviceResources.mCommandQueue12.copy_from(binding.queue);
 
   dprintf("{}", __FUNCTION__);
+  TraceLoggingWrite(gTraceProvider, "OpenXRD3D12Kneeboard()");
 
   UINT flags = 0;
 #ifdef DEBUG
@@ -67,7 +69,9 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   mDeviceResources.m11on12 = mDeviceResources.mDevice11.as<ID3D11On12Device2>();
 }
 
-OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() = default;
+OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
+  TraceLoggingWrite(gTraceProvider, "~OpenXRD3D12Kneeboard()");
+}
 
 bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
   const VRRenderConfig& initial,

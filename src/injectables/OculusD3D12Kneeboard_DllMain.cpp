@@ -22,6 +22,18 @@
 
 using namespace OpenKneeboard;
 
+namespace OpenKneeboard {
+
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.Oculus.D3D12")
+ * b24892c5-ac28-5d62-844b-0c4798cd6357
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.Oculus.D3D12",
+  (0xb24892c5, 0xac28, 0x5d62, 0x84, 0x4b, 0x0c, 0x47, 0x98, 0xcd, 0x63, 0x57));
+}// namespace OpenKneeboard
+
 namespace {
 std::unique_ptr<OculusD3D12Kneeboard> gInstance;
 

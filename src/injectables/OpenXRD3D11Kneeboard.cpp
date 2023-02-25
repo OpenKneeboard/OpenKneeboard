@@ -24,6 +24,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <d3d11.h>
 #include <shims/winrt/base.h>
 
@@ -43,10 +44,12 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   const XrGraphicsBindingD3D11KHR& binding)
   : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
+  TraceLoggingWrite(gTraceProvider, "OpenXRD3D11Kneeboard()");
   mDevice.copy_from(binding.device);
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
+  TraceLoggingWrite(gTraceProvider, "~OpenXRD3D11Kneeboard()");
 }
 
 bool OpenXRD3D11Kneeboard::ConfigurationsAreCompatible(

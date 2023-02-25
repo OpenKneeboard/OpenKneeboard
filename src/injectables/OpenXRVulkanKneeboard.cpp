@@ -23,6 +23,7 @@
 #include <OpenKneeboard/d3d11.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <dxgi1_6.h>
 #include <vulkan/vulkan.h>
 
@@ -55,6 +56,7 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
     mVKDevice(binding.device),
     mVKAllocator(vulkanAllocator) {
   dprintf("{}", __FUNCTION__);
+  TraceLoggingWrite(gTraceProvider, "OpenXRVulkanKneeboard()");
 
   this->InitializeVulkan(binding, pfnVkGetInstanceProcAddr);
 
@@ -325,7 +327,9 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
   }
 }
 
-OpenXRVulkanKneeboard::~OpenXRVulkanKneeboard() = default;
+OpenXRVulkanKneeboard::~OpenXRVulkanKneeboard() {
+  TraceLoggingWrite(gTraceProvider, "~OpenXRVulkanKneeboard()");
+}
 
 bool OpenXRVulkanKneeboard::ConfigurationsAreCompatible(
   const VRRenderConfig& /*initial*/,

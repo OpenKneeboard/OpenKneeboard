@@ -25,6 +25,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
@@ -35,6 +36,18 @@
 #include <type_traits>
 
 using namespace OpenKneeboard;
+
+namespace OpenKneeboard {
+
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.Viewer")
+ * d4df4528-1fae-5d7c-f8ac-0da5654ba6ea
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.Viewer",
+  (0xd4df4528, 0x1fae, 0x5d7c, 0xf8, 0xac, 0x0d, 0xa5, 0x65, 0x4b, 0xa6, 0xea));
+}// namespace OpenKneeboard
 
 #pragma pack(push)
 struct Pixel {
@@ -489,6 +502,9 @@ int WINAPI wWinMain(
   HINSTANCE hPrevInstance,
   PWSTR pCmdLine,
   int nCmdShow) {
+  TraceLoggingRegister(gTraceProvider);
+  const scope_guard unregisterTraceProvider(
+    []() { TraceLoggingUnregister(gTraceProvider); });
   winrt::init_apartment(winrt::apartment_type::single_threaded);
   TestViewerWindow window(hInstance);
   ShowWindow(window.GetHWND(), nCmdShow);

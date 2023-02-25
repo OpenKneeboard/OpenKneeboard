@@ -33,6 +33,15 @@
 
 namespace OpenKneeboard {
 
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.TabletProxy")
+ * 3bc3e07d-9c0e-51d5-2ef7-e7e706548c79
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.TabletProxy",
+  (0x3bc3e07d, 0x9c0e, 0x51d5, 0x2e, 0xf7, 0xe7, 0xe7, 0x06, 0x54, 0x8c, 0x79));
+
 /** Work around for the lack of background access in the wintab API.
  *
  * When injected, this DLL will forward wintab events back to the OpenKneeboard

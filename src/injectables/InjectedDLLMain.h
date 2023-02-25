@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 #include <Windows.h>
 
@@ -40,6 +41,7 @@ BOOL InjectedDLLMain(
   }
 
   if (dwReason == DLL_PROCESS_ATTACH) {
+    TraceLoggingRegister(gTraceProvider);
     DPrintSettings::Set({.prefix = logPrefix});
     std::wstring fullDllPath;
     fullDllPath.resize(MAX_PATH);
@@ -63,6 +65,7 @@ BOOL InjectedDLLMain(
     dprint("Spawning init thread...");
     CreateThread(nullptr, 0, entrypoint, nullptr, 0, nullptr);
   } else if (dwReason == DLL_PROCESS_DETACH) {
+    TraceLoggingUnregister(gTraceProvider);
     if (reserved) {
       // Per https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain :
       //

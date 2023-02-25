@@ -303,12 +303,21 @@ class InjectionBootstrapper final {
   }
 };
 
-static std::unique_ptr<InjectionBootstrapper> gInstance;
-static HMODULE gModule = nullptr;
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.AutoDetect")
+ * cb1c6ba7-9801-5736-cc7c-c37fcca3feb7
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.AutoDetect",
+  (0xcb1c6ba7, 0x9801, 0x5736, 0xcc, 0x7c, 0xc3, 0x7f, 0xcc, 0xa3, 0xfe, 0xb7));
 
 }// namespace OpenKneeboard
 
 namespace {
+
+std::unique_ptr<InjectionBootstrapper> gInstance;
+HMODULE gModule = nullptr;
 
 DWORD WINAPI ThreadEntry(LPVOID ignored) {
   gInstance = std::make_unique<InjectionBootstrapper>(gModule);

@@ -6,14 +6,32 @@
       <Buffers Value="4" />
     </EventCollector>
 
-    <EventProvider Id="EventProvider_OpenKneeboard.App"        Name="cc76597c-1041-5d57-c8ab-92cf9437104a" />
-    <EventProvider Id="EventProvider_FredEmmott.OpenXRTracing" Name="0f924f5f-21f0-513d-a2ab-2ede802e0b8f" />
+    <EventProvider Id="EventProvider_OpenKneeboard.App"          Name="cc76597c-1041-5d57-c8ab-92cf9437104a" />
+    <EventProvider Id="EventProvider_OpenKneeboard.AutoDetect"   Name="cb1c6ba7-9801-5736-cc7c-c37fcca3feb7" />
+    <EventProvider Id="EventProvider_OpenKneeboard.NonVR.D3D11"  Name="d301dc28-a6f4-5054-6786-5cdb46c0f270" />
+    <EventProvider Id="EventProvider_OpenKneeboard.Oculus.D3D11" Name="bce0dd2f-2946-509d-0079-54a2eb7e4cf9" />
+    <EventProvider Id="EventProvider_OpenKneeboard.Oculus.D3D12" Name="b24892c5-ac28-5d62-844b-0c4798cd6357" />
+    <EventProvider Id="EventProvider_OpenKneeboard.OpenXR"       Name="a4308f76-39c8-5a50-4ede-32d104a8a78d" />
+    <EventProvider Id="EventProvider_OpenKneeboard.TabletProxy"  Name="3bc3e07d-9c0e-51d5-2ef7-e7e706548c79" />
+    <EventProvider Id="EventProvider_OpenKneeboard.TestFeeder"   Name="1a75505f-4493-5004-8df0-3830610c5e85" />
+    <EventProvider Id="EventProvider_OpenKneeboard.Viewer"       Name="d4df4528-1fae-5d7c-f8ac-0da5654ba6ea" />
+
+    <EventProvider Id="EventProvider_FredEmmott.OpenXRTracing"   Name="0f924f5f-21f0-513d-a2ab-2ede802e0b8f" />
 
     <Profile Id="OpenKneeboard.Verbose.File" Name="OpenKneeboard" Description="OpenKneeboard" LoggingMode="File" DetailLevel="Verbose" Default="true">
       <Collectors>
         <EventCollectorId Value="EventCollector">
           <EventProviders>
             <EventProviderId Value="EventProvider_OpenKneeboard.App" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.AutoDetect" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.NonVR.D3D11" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.Oculus.D3D11" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.Oculus.D3D12" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.OpenXR" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.TabletProxy" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.TestFeeder" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.Viewer" />
+
             <EventProviderId Value="EventProvider_FredEmmott.OpenXRTracing" />
           </EventProviders>
         </EventCollectorId>

@@ -21,6 +21,8 @@
 #include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 #include <Windows.h>
 #include <d3d11_2.h>
@@ -208,16 +210,31 @@ Snapshot::Snapshot(
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   d3d->GetImmediateContext(ctx.put());
 
+  TraceLoggingActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "SHM::Snapshot::Snapshot()");
+  const scope_guard endActivitity([&activity]() {
+    TraceLoggingWriteStop(activity, "SHM::Snapshot::Snapshot()");
+  });
+
   const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
   for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
+    TraceLoggingWriteStart(
+      activity, "Copy texture", TraceLoggingValue(i, "Layer"));
     auto& layer = r->mLayers[i];
     auto& t = mLayerTextures.at(i);
     t = SHM::CreateCompatibleTexture(d3d);
+    TraceLoggingWriteTagged(activity, "Created texture");
     winrt::check_hresult(layer.mMutex->AcquireSync(0, INFINITE));
+    TraceLoggingWriteTagged(activity, "Acquired IDXGIKeyedMutex");
     ctx->CopyResource(t.get(), layer.mTexture.get());
+    TraceLoggingWriteTagged(activity, "Copied resource");
     winrt::check_hresult(layer.mMutex->ReleaseSync(0));
+    TraceLoggingWriteTagged(activity, "Released IDXGIKeyedMutex");
+    TraceLoggingWriteStop(
+      activity, "Copy texture", TraceLoggingValue(i, "Layer"));
   }
   ctx->Flush();
+  TraceLoggingWriteTagged(activity, "Flushed");
   mLayerSRVs = std::make_shared<LayerSRVArray>();
 }
 
@@ -505,13 +522,23 @@ Writer::operator bool() const {
 }
 
 Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
+  TraceLoggingActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "SHM::MaybeGet");
   if (!*this) {
+    TraceLoggingWriteStop(
+      activity, "SHM::MaybeGet", TraceLoggingValue("No feeder"));
     return {};
   }
 
   if (
     mCache.IsValid() && this->GetRenderCacheKey() == mCache.GetRenderCacheKey()
     && kind == mCachedConsumerKind) {
+    TraceLoggingWriteStop(
+      activity,
+      "SHM::MaybeGet",
+      TraceLoggingValue("Cache hit", "Result"),
+      TraceLoggingValue(
+        mCache.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
     return mCache;
   }
 
@@ -520,14 +547,27 @@ Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
 
   if (!newSnapshot.IsValid()) {
     if (kind == mCachedConsumerKind) {
+      TraceLoggingWriteStop(
+        activity,
+        "SHM::MaybeGet",
+        TraceLoggingValue("Using stale cache", "Result"),
+        TraceLoggingValue(
+          mCache.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
       return mCache;
     }
+    TraceLoggingWriteStop(
+      activity, "SHM::MaybeGet", TraceLoggingValue("Unusable cache"));
     return {};
   }
 
   const auto newSequenceNumber
     = newSnapshot.GetSequenceNumberForDebuggingOnly();
   if (newSequenceNumber < mCachedSequenceNumber) {
+    TraceLoggingWriteTagged(
+      activity,
+      "BackwardsSequenceNumber",
+      TraceLoggingValue(mCachedSequenceNumber, "previous"),
+      TraceLoggingValue(newSequenceNumber, "new"));
     dprintf(
       "Sequence number went backwards! {} -> {}",
       mCachedSequenceNumber,
@@ -537,6 +577,11 @@ Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
   mCache = newSnapshot;
   mCachedConsumerKind = kind;
   mCachedSequenceNumber = newSequenceNumber;
+  TraceLoggingWriteStop(
+    activity,
+    "SHM::MaybeGet",
+    TraceLoggingValue("Updated cache", "Result"),
+    TraceLoggingValue(newSequenceNumber, "Sequence number"));
   return mCache;
 }
 

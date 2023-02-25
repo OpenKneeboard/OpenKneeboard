@@ -23,6 +23,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 #include <loader_interfaces.h>
 
@@ -469,9 +470,29 @@ XrResult xrCreateApiLayerInstance(
   return XR_SUCCESS;
 }
 
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.OpenXR")
+ * a4308f76-39c8-5a50-4ede-32d104a8a78d
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.OpenXR",
+  (0xa4308f76, 0x39c8, 0x5a50, 0x4e, 0xde, 0x32, 0xd1, 0x04, 0xa8, 0xa7, 0x8d));
 }// namespace OpenKneeboard
 
 using namespace OpenKneeboard;
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
+  switch (dwReason) {
+    case DLL_PROCESS_ATTACH:
+      TraceLoggingRegister(gTraceProvider);
+      break;
+    case DLL_PROCESS_DETACH:
+      TraceLoggingUnregister(gTraceProvider);
+      break;
+  }
+  return TRUE;
+}
 
 extern "C" {
 XrResult __declspec(dllexport) XRAPI_CALL

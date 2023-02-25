@@ -22,6 +22,7 @@
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 #include <dxgi.h>
 #include <shims/winrt/base.h>
 
@@ -167,6 +168,17 @@ DWORD WINAPI ThreadEntry(LPVOID ignored) {
 }
 
 }// namespace
+
+namespace OpenKneeboard {
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.NonVR.D3D11")
+ * d301dc28-a6f4-5054-6786-5cdb46c0f270
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.NonVR.D3D11",
+  (0xd301dc28, 0xa6f4, 0x5054, 0x67, 0x86, 0x5c, 0xdb, 0x46, 0xc0, 0xf2, 0x70));
+}// namespace OpenKneeboard
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   return InjectedDLLMain(
