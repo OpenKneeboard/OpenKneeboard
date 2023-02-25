@@ -61,7 +61,7 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
   winrt::file_handle handle {CreateMailslotA(
     GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr)};
   if (!handle) {
-    dprint("Failed to create GameEvent mailslot");
+    dprintf("Failed to create GameEvent mailslot: {}", GetLastError());
     co_return;
   }
 
