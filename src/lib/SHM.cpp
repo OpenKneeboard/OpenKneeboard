@@ -218,8 +218,8 @@ Snapshot::Snapshot(
 
   const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
   for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
-    TraceLoggingWriteStart(
-      activity, "Copy texture", TraceLoggingValue(i, "Layer"));
+    TraceLoggingWriteTagged(
+      activity, "Start copy texture", TraceLoggingValue(i, "Layer"));
     auto& layer = r->mLayers[i];
     auto& t = mLayerTextures.at(i);
     t = SHM::CreateCompatibleTexture(d3d);
@@ -230,8 +230,8 @@ Snapshot::Snapshot(
     TraceLoggingWriteTagged(activity, "Copied resource");
     winrt::check_hresult(layer.mMutex->ReleaseSync(0));
     TraceLoggingWriteTagged(activity, "Released IDXGIKeyedMutex");
-    TraceLoggingWriteStop(
-      activity, "Copy texture", TraceLoggingValue(i, "Layer"));
+    TraceLoggingWriteTagged(
+      activity, "Copied texture", TraceLoggingValue(i, "Layer"));
   }
   ctx->Flush();
   TraceLoggingWriteTagged(activity, "Flushed");
