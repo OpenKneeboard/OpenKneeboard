@@ -52,6 +52,10 @@ std::shared_ptr<KneeboardState> KneeboardState::Create(
 KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
+
+  AddEventListener(
+    this->evNeedsRepaintEvent, [this]() { this->mNeedsRepaint = true; });
+
   mGamesList = std::make_unique<GamesList>(this, mSettings.mGames);
   AddEventListener(
     mGamesList->evSettingsChangedEvent,
@@ -702,6 +706,14 @@ void KneeboardState::SwitchProfile(Direction direction) {
   auto settings = mProfiles;
   settings.mActiveProfile = profiles.at((nextIdx + count) % count).mID;
   this->SetProfileSettings(settings);
+}
+
+bool KneeboardState::IsRepaintNeeded() const {
+  return mNeedsRepaint;
+}
+
+void KneeboardState::Repainted() {
+  mNeedsRepaint = false;
 }
 
 void KneeboardState::lock() {

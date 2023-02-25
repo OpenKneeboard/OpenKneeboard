@@ -112,6 +112,9 @@ class KneeboardState final
 
   void PostUserAction(UserAction action);
 
+  bool IsRepaintNeeded() const;
+  void Repainted();
+
   /** Implement `Lockable`; use `std::unique_lock`.
    *
    * This:
@@ -134,6 +137,7 @@ class KneeboardState final
 
   std::shared_mutex mMutex;
   bool mHaveUniqueLock = false;
+  bool mNeedsRepaint = false;
   HWND mHwnd;
   DXResources mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};

@@ -112,11 +112,16 @@ MainWindow::MainWindow() {
     TraceLoggingWriteStart(activity, "FrameTick");
     const std::shared_lock kbLock(*gKneeboard);
     TraceLoggingWriteTagged(activity, "Kneeboard locked");
-    const std::unique_lock dxLock(gDXResources);
-    TraceLoggingWriteTagged(activity, "DX locked");
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     TraceLoggingWriteTagged(activity, "Prepared to render");
-    gKneeboard->evFrameTimerEvent.Emit();
+    if (gKneeboard->IsRepaintNeeded()) {
+      const std::unique_lock dxLock(gDXResources);
+      TraceLoggingWriteTagged(activity, "DX locked");
+      gKneeboard->evFrameTimerEvent.Emit();
+      gKneeboard->Repainted();
+    } else {
+      TraceLoggingWriteTagged(activity, "No repaint");
+    }
     TraceLoggingWriteStop(activity, "FrameTick");
   });
   RootGrid().Loaded(discard_winrt_event_args(weak_wrap(this)([](auto self) {
