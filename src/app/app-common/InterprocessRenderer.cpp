@@ -210,10 +210,8 @@ void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTarget(layer.mCanvasBitmap.get());
   ctx->BeginDraw();
-  const scope_guard endDraw {[&, this]() {
-    winrt::check_hresult(ctx->EndDraw());
-    ctx->Flush();
-  }};
+  const scope_guard endDraw {
+    [&, this]() { winrt::check_hresult(ctx->EndDraw()); }};
 
   ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
