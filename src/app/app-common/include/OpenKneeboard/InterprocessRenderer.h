@@ -27,6 +27,7 @@
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <d3d11.h>
+#include <d3d11_3.h>
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -59,12 +60,12 @@ class InterprocessRenderer final : private EventReceiver {
   bool mNeedsRepaint = true;
 
   // TODO: move to DXResources
-  winrt::com_ptr<ID3D11DeviceContext> mD3DContext;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3DContext;
+  winrt::com_ptr<ID3D11Fence> mFence;
 
   struct SharedTextureResources {
     winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
     winrt::com_ptr<ID3D11Texture2D> mTexture;
-    winrt::com_ptr<IDXGIKeyedMutex> mMutex;
     winrt::handle mSharedHandle;
   };
 
@@ -88,7 +89,7 @@ class InterprocessRenderer final : private EventReceiver {
   void RenderNow();
   void Render(RenderTargetID, Layer&);
 
-  void Commit(uint8_t layerCount);
+  void Commit(uint8_t layerCount) noexcept;
 
   void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 };

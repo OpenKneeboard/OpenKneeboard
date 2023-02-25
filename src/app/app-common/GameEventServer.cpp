@@ -23,6 +23,7 @@
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <Windows.h>
 
 #include <thread>
@@ -136,6 +137,11 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   }
 
   auto event = GameEvent::Unserialize({buffer.data(), bytesRead});
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity, "GameEvent", TraceLoggingValue(event.name.c_str(), "Name"));
+  const scope_guard stopActivity(
+    [&activity]() { TraceLoggingWriteStop(activity, "GameEvent"); });
   if (event.name != GameEvent::EVT_MULTI_EVENT) {
     self->evGameEvent.Emit(event);
     co_return true;
@@ -144,7 +150,12 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   std::vector<std::tuple<std::string, std::string>> events;
   events = nlohmann::json::parse(event.value);
   for (const auto& [name, value]: events) {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(
+      subActivity, "GameEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
     self->evGameEvent.Emit({name, value});
+    TraceLoggingWriteStop(
+      subActivity, "GameEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
   }
 
   co_return true;

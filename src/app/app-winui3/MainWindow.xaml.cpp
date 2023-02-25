@@ -107,22 +107,27 @@ MainWindow::MainWindow() {
   mDQC = DispatcherQueueController::CreateOnDedicatedThread();
   mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
   mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
-  mFrameTimer.Tick([](auto&, auto&) {
-    TraceLoggingActivity<gTraceProvider> activity;
+  mFrameTimer.Tick([](auto&, auto&) noexcept {
+    TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "FrameTick");
     const std::shared_lock kbLock(*gKneeboard);
     TraceLoggingWriteTagged(activity, "Kneeboard locked");
     gKneeboard->evFrameTimerPrepareEvent.Emit();
     TraceLoggingWriteTagged(activity, "Prepared to render");
-    if (gKneeboard->IsRepaintNeeded()) {
-      const std::unique_lock dxLock(gDXResources);
-      TraceLoggingWriteTagged(activity, "DX locked");
-      gKneeboard->evFrameTimerEvent.Emit();
-      gKneeboard->Repainted();
-    } else {
-      TraceLoggingWriteTagged(activity, "No repaint");
+    if (!gKneeboard->IsRepaintNeeded()) {
+      TraceLoggingWriteStop(
+        activity,
+        "FrameTick",
+        TraceLoggingValue("No repaint needed", "Result"));
+      return;
     }
-    TraceLoggingWriteStop(activity, "FrameTick");
+
+    const std::unique_lock dxLock(gDXResources);
+    TraceLoggingWriteTagged(activity, "DX locked");
+    gKneeboard->evFrameTimerEvent.Emit();
+    gKneeboard->Repainted();
+    TraceLoggingWriteStop(
+      activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
   });
   RootGrid().Loaded(discard_winrt_event_args(weak_wrap(this)([](auto self) {
     // WinUI3 gives us the spinning circle for a long time...

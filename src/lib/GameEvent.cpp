@@ -105,7 +105,7 @@ std::vector<std::byte> GameEvent::Serialize() const {
 }
 
 void GameEvent::Send() const {
-  TraceLoggingActivity<gTraceProvider> activity;
+  TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity,
     "GameEvent::Send()",

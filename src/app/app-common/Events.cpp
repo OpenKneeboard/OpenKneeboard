@@ -83,7 +83,7 @@ struct EmitterQueueItem {
 };
 }// namespace
 
-static thread_local bool gHandlerRunning = false;
+static thread_local uint64_t gDelayDepth = 0;
 static thread_local std::queue<EmitterQueueItem> gEmitterQueue;
 
 static void FlushEmitterQueue() {
@@ -97,30 +97,33 @@ static void FlushEmitterQueue() {
 void EventBase::InvokeOrEnqueue(
   std::function<void()> func,
   std::source_location location) {
-  if (gHandlerRunning) {
+  if (gDelayDepth) {
     gEmitterQueue.push({func, location});
     return;
   }
-  gHandlerRunning = true;
-  scope_guard notRunning([&]() { gHandlerRunning = false; });
   func();
-  FlushEmitterQueue();
 }
 
-EventDelay::EventDelay() {
-  if (gHandlerRunning) {
-    return;
-  }
-  gHandlerRunning = true;
-  mOwner = true;
+EventDelay::EventDelay(std::source_location source) : mSourceLocation(source) {
+  const auto count = ++gDelayDepth;
+  TraceLoggingWriteStart(
+    mActivity,
+    "EventDelay",
+    TraceLoggingValue(gDelayDepth, "Depth"),
+    OPENKNEEBOARD_TraceLoggingSourceLocation(mSourceLocation));
 }
 
 EventDelay::~EventDelay() {
-  if (!mOwner) {
-    return;
+  const auto count = --gDelayDepth;
+  if (!count) {
+    FlushEmitterQueue();
   }
-  FlushEmitterQueue();
-  gHandlerRunning = false;
+  TraceLoggingWriteStop(
+    mActivity,
+    "EventDelay",
+    TraceLoggingValue(gDelayDepth, "Depth"),
+    OPENKNEEBOARD_TraceLoggingSourceLocation(mSourceLocation));
+  return;
 }
 
 }// namespace OpenKneeboard

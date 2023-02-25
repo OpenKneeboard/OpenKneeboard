@@ -30,4 +30,9 @@ namespace OpenKneeboard {
 
 TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
 
-}
+#define OPENKNEEBOARD_TraceLoggingSourceLocation(loc) \
+  TraceLoggingValue(loc.file_name(), "File"), \
+    TraceLoggingValue(loc.line(), "Line"), \
+    TraceLoggingValue(loc.function_name(), "Function")
+
+}// namespace OpenKneeboard

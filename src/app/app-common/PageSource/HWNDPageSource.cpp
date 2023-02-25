@@ -157,12 +157,6 @@ HWNDPageSource::HWNDPageSource(
     return;
   }
 
-  AddEventListener(kneeboard->evFrameTimerPrepareEvent, [this]() {
-    if (mNeedsRepaint) {
-      evContentChangedEvent.Emit(ContentChangeType::Modified);
-    }
-  });
-
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
 }
@@ -286,7 +280,7 @@ void HWNDPageSource::OnFrame() noexcept {
     static_cast<UINT>(contentSize.Width),
     static_cast<UINT>(contentSize.Height)};
   ctx->CopyResource(mTexture.get(), d3dSurface.get());
-  mNeedsRepaint = true;
+  this->evNeedsRepaintEvent.Emit();
 }
 
 static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(

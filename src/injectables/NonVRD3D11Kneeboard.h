@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/SHM.h>
+#include <d3d11_4.h>
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -36,7 +37,7 @@ class NonVRD3D11Kneeboard final {
   void UninstallHook();
 
  private:
-  SHM::Reader mSHM;
+  SHM::SingleBufferedReader mSHM;
   IDXGISwapChainPresentHook mDXGIHook;
 
   HRESULT OnIDXGISwapChain_Present(
@@ -44,6 +45,8 @@ class NonVRD3D11Kneeboard final {
     UINT syncInterval,
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next);
+
+  void InitDXResources(ID3D11Device5* device);
 };
 
 }// namespace OpenKneeboard

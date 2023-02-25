@@ -37,7 +37,7 @@ TRACELOGGING_DEFINE_PROVIDER(
 
 namespace {
 
-TraceLoggingActivity<OpenKneeboard::gTraceProvider> gActivity;
+TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
 
 class TraceLoggingRegistration {
  public:

@@ -32,6 +32,7 @@
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <d3d11_4.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
 #include <wincodec.h>
@@ -71,7 +72,7 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
   }
 }
 
-void InterprocessRenderer::Commit(uint8_t layerCount) {
+void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
   if (!mSHM) {
     return;
   }
@@ -80,16 +81,12 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
 
   const std::unique_lock dxLock(mDXR);
   const std::unique_lock shmLock(mSHM);
-  mD3DContext->Flush();
 
   std::vector<SHM::LayerConfig> shmLayers;
 
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     auto& layer = mLayers.at(layerIndex);
     auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
-    winrt::check_hresult(it.mMutex->AcquireSync(0, INFINITE));
-    const scope_guard release(
-      [&]() { winrt::check_hresult(it.mMutex->ReleaseSync(0)); });
 
     if (tint.mEnabled) {
       D3D11::CopyTextureWithTint(
@@ -105,9 +102,12 @@ void InterprocessRenderer::Commit(uint8_t layerCount) {
     } else {
       mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
     }
-    mD3DContext->Flush();
     shmLayers.push_back(layer.mConfig);
   }
+
+  const auto seq = mSHM.GetNextSequenceNumber();
+  winrt::check_hresult(mD3DContext->Signal(mFence.get(), seq));
+  winrt::check_hresult(mD3DContext->Wait(mFence.get(), seq));
 
   SHM::Config config {
     .mGlobalInputLayerID = mKneeboard->GetActiveViewForGlobalInput()
@@ -133,7 +133,14 @@ InterprocessRenderer::InterprocessRenderer(
   mKneeboard = kneeboard;
 
   const std::unique_lock d2dLock(mDXR);
-  dxr.mD3DDevice->GetImmediateContext(mD3DContext.put());
+  {
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    dxr.mD3DDevice->GetImmediateContext(ctx.put());
+    mD3DContext = ctx.as<ID3D11DeviceContext4>();
+
+    winrt::check_hresult(dxr.mD3DDevice.as<ID3D11Device5>()->CreateFence(
+      0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
+  }
 
   for (auto& layer: mLayers) {
     layer.mCanvasTexture = SHM::CreateCompatibleTexture(dxr.mD3DDevice.get());
@@ -155,9 +162,7 @@ InterprocessRenderer::InterprocessRenderer(
       resources.mTexture = SHM::CreateCompatibleTexture(
         dxr.mD3DDevice.get(),
         SHM::DEFAULT_D3D11_BIND_FLAGS,
-        D3D11_RESOURCE_MISC_SHARED_NTHANDLE
-          | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX);
-      resources.mMutex = resources.mTexture.as<IDXGIKeyedMutex>();
+        D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED);
       winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
         resources.mTexture.get(), nullptr, resources.mTextureRTV.put()));
       auto textureName

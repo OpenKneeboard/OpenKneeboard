@@ -22,6 +22,7 @@
 #include <OpenKneeboard/config.h>
 #include <Windows.h>
 #include <d3d11.h>
+#include <d3d11_3.h>
 #include <shims/winrt/base.h>
 
 #include <cstddef>
@@ -43,6 +44,8 @@ static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
+
+using LayerTextures = std::array<winrt::com_ptr<ID3D11Texture2D>, MaxLayers>;
 
 std::wstring SharedTextureName(
   uint64_t sessionID,
@@ -128,7 +131,7 @@ struct LayerTextureReadResources;
 class Snapshot final {
  private:
   std::shared_ptr<Header> mHeader;
-  std::array<winrt::com_ptr<ID3D11Texture2D>, MaxLayers> mLayerTextures;
+  LayerTextures mLayerTextures;
 
   using LayerSRVArray
     = std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>;
@@ -136,7 +139,12 @@ class Snapshot final {
 
  public:
   Snapshot();
-  Snapshot(const Header& header, ID3D11Device*, TextureReadResources*);
+  Snapshot(
+    const Header& header,
+    ID3D11DeviceContext4*,
+    ID3D11Fence*,
+    const LayerTextures&,
+    TextureReadResources*);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -157,14 +165,18 @@ class Snapshot final {
   uint64_t GetSequenceNumberForDebuggingOnly() const;
 };
 
-class Reader final {
+class Reader {
  public:
   Reader();
   ~Reader();
 
   operator bool() const;
   // Fetch a (possibly-cached) snapshot
-  Snapshot MaybeGet(ID3D11Device*, ConsumerKind);
+  Snapshot MaybeGet(
+    ID3D11DeviceContext4*,
+    ID3D11Fence*,
+    const LayerTextures&,
+    ConsumerKind) noexcept;
   /// Do not use for caching - use GetRenderCacheKey instead
   uint32_t GetFrameCountForMetricsOnly() const;
 
@@ -172,7 +184,11 @@ class Reader final {
   size_t GetRenderCacheKey() const;
 
  private:
-  Snapshot MaybeGetUncached(ID3D11Device*, ConsumerKind) const;
+  Snapshot MaybeGetUncached(
+    ID3D11DeviceContext4*,
+    ID3D11Fence*,
+    const LayerTextures&,
+    ConsumerKind) const;
 
   class Impl;
   std::shared_ptr<Impl> p;
@@ -180,6 +196,20 @@ class Reader final {
   Snapshot mCache;
   ConsumerKind mCachedConsumerKind;
   uint64_t mCachedSequenceNumber {};
+};
+
+// TODO: move the snapshot cache out of Reader
+class SingleBufferedReader : public Reader {
+ public:
+  Snapshot MaybeGet(ID3D11Device* device, ConsumerKind kind);
+
+ private:
+  void InitDXResources(ID3D11Device*);
+
+  ID3D11Device* mDevice {nullptr};
+  winrt::com_ptr<ID3D11DeviceContext4> mContext;
+  winrt::com_ptr<ID3D11Fence> mFence;
+  SHM::LayerTextures mTextures;
 };
 
 }// namespace OpenKneeboard::SHM

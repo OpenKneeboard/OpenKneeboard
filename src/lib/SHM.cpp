@@ -26,6 +26,8 @@
 #include <OpenKneeboard/version.h>
 #include <Windows.h>
 #include <d3d11_2.h>
+#include <d3d11_3.h>
+#include <d3d11_4.h>
 #include <dxgi1_2.h>
 
 #include <bit>
@@ -97,10 +99,9 @@ static auto MutexPath() {
 
 struct LayerTextureReadResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
-  winrt::com_ptr<IDXGIKeyedMutex> mMutex;
 
   void Populate(
-    ID3D11Device* d3d,
+    ID3D11DeviceContext* ctx,
     uint64_t sessionID,
     uint8_t layerIndex,
     uint32_t sequenceNumber);
@@ -111,11 +112,14 @@ struct TextureReadResources {
 
   std::array<LayerTextureReadResources, MaxLayers> mLayers;
 
-  void Populate(ID3D11Device* d3d, uint64_t sessionID, uint32_t sequenceNumber);
+  void Populate(
+    ID3D11DeviceContext* ctx,
+    uint64_t sessionID,
+    uint32_t sequenceNumber);
 };
 
 void TextureReadResources::Populate(
-  ID3D11Device* d3d,
+  ID3D11DeviceContext* ctx,
   uint64_t sessionID,
   uint32_t sequenceNumber) {
   if (sessionID != mSessionID) {
@@ -127,12 +131,12 @@ void TextureReadResources::Populate(
   }
 
   for (uint8_t i = 0; i < MaxLayers; ++i) {
-    mLayers[i].Populate(d3d, sessionID, i, sequenceNumber);
+    mLayers[i].Populate(ctx, sessionID, i, sequenceNumber);
   }
 }
 
 void LayerTextureReadResources::Populate(
-  ID3D11Device* d3d,
+  ID3D11DeviceContext* ctx,
   uint64_t sessionID,
   uint8_t layerIndex,
   uint32_t sequenceNumber) {
@@ -140,11 +144,14 @@ void LayerTextureReadResources::Populate(
     return;
   }
 
+  winrt::com_ptr<ID3D11Device> device;
+  ctx->GetDevice(device.put());
+
   auto textureName
     = SHM::SharedTextureName(sessionID, layerIndex, sequenceNumber);
 
   ID3D11Device1* d1 = nullptr;
-  d3d->QueryInterface(&d1);
+  device->QueryInterface(&d1);
   if (!d1) {
     return;
   }
@@ -160,7 +167,6 @@ void LayerTextureReadResources::Populate(
       std::bit_cast<uint32_t>(result));
     return;
   }
-  mMutex = mTexture.as<IDXGIKeyedMutex>();
   dprintf(L"Opened shared texture {}", textureName);
 }
 
@@ -203,14 +209,14 @@ Snapshot::Snapshot() {
 
 Snapshot::Snapshot(
   const Header& header,
-  ID3D11Device* d3d,
-  TextureReadResources* r) {
+  ID3D11DeviceContext4* ctx,
+  ID3D11Fence* fence,
+  const LayerTextures& textures,
+  TextureReadResources* r)
+  : mLayerTextures(textures) {
   mHeader = std::make_shared<Header>(header);
 
-  winrt::com_ptr<ID3D11DeviceContext> ctx;
-  d3d->GetImmediateContext(ctx.put());
-
-  TraceLoggingActivity<gTraceProvider> activity;
+  TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "SHM::Snapshot::Snapshot()");
   const scope_guard endActivitity([&activity]() {
     TraceLoggingWriteStop(activity, "SHM::Snapshot::Snapshot()");
@@ -220,20 +226,15 @@ Snapshot::Snapshot(
   for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
     TraceLoggingWriteTagged(
       activity, "Start copy texture", TraceLoggingValue(i, "Layer"));
-    auto& layer = r->mLayers[i];
-    auto& t = mLayerTextures.at(i);
-    t = SHM::CreateCompatibleTexture(d3d);
-    TraceLoggingWriteTagged(activity, "Created texture");
-    winrt::check_hresult(layer.mMutex->AcquireSync(0, INFINITE));
-    TraceLoggingWriteTagged(activity, "Acquired IDXGIKeyedMutex");
-    ctx->CopyResource(t.get(), layer.mTexture.get());
+    ctx->CopyResource(
+      mLayerTextures.at(i).get(), r->mLayers.at(i).mTexture.get());
     TraceLoggingWriteTagged(activity, "Copied resource");
-    winrt::check_hresult(layer.mMutex->ReleaseSync(0));
-    TraceLoggingWriteTagged(activity, "Released IDXGIKeyedMutex");
     TraceLoggingWriteTagged(
       activity, "Copied texture", TraceLoggingValue(i, "Layer"));
   }
-  ctx->Flush();
+  TraceLoggingWriteTagged(activity, "Wait for fence");
+  winrt::check_hresult(ctx->Signal(fence, header.mSequenceNumber));
+  winrt::check_hresult(ctx->Wait(fence, header.mSequenceNumber));
   TraceLoggingWriteTagged(activity, "Flushed");
   mLayerSRVs = std::make_shared<LayerSRVArray>();
 }
@@ -401,14 +402,21 @@ class Impl {
     if (mHaveLock) {
       throw std::logic_error("Acquiring a lock twice");
     }
+    TraceLoggingThreadActivity<gTraceProvider> activity;
+    TraceLoggingWriteStart(activity, "SHM::Impl::lock()");
+
     const auto result = WaitForSingleObject(mMutexHandle.get(), INFINITE);
     if (result != WAIT_OBJECT_0) {
+      TraceLoggingWriteStop(
+        activity, "SHM::Impl::lock()", TraceLoggingValue(result, "Error"));
       dprintf(
         "Unexpected result from SHM WaitForSingleObject in lock(): {:#016x}",
         static_cast<uint64_t>(result));
       OPENKNEEBOARD_BREAK;
       return;
     }
+    TraceLoggingWriteStop(
+      activity, "SHM::Impl::lock()", TraceLoggingValue("Success", "Result"));
     mHaveLock = true;
   }
 
@@ -416,8 +424,13 @@ class Impl {
     if (mHaveLock) {
       throw std::logic_error("Acquiring a lock twice");
     }
-    const auto result = WaitForSingleObject(mMutexHandle.get(), INFINITE);
+    TraceLoggingThreadActivity<gTraceProvider> activity;
+    TraceLoggingWriteStart(activity, "SHM::Impl::try_lock()");
+
+    const auto result = WaitForSingleObject(mMutexHandle.get(), 0);
     if (result != WAIT_OBJECT_0) {
+      TraceLoggingWriteStop(
+        activity, "SHM::Impl::try_lock()", TraceLoggingValue(result, "Error"));
       dprintf(
         "Unexpected result from SHM WaitForSingleObject in try_lock(): "
         "{:#016x}",
@@ -425,6 +438,10 @@ class Impl {
       return false;
     }
     mHaveLock = true;
+    TraceLoggingWriteStop(
+      activity,
+      "SHM::Impl::try_lock()",
+      TraceLoggingValue("Success", "Result"));
     return true;
   }
 
@@ -432,7 +449,11 @@ class Impl {
     if (!mHaveLock) {
       throw std::logic_error("Can't release a lock we don't hold");
     }
-    ReleaseMutex(mMutexHandle.get());
+    TraceLoggingThreadActivity<gTraceProvider> activity;
+    TraceLoggingWriteStart(activity, "SHM::Impl::unlock()");
+    const auto ret = ReleaseMutex(mMutexHandle.get());
+    TraceLoggingWriteStop(
+      activity, "SHM::Impl::unlock()", TraceLoggingValue(ret, "Result"));
     mHaveLock = false;
   }
 
@@ -521,12 +542,16 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
-  TraceLoggingActivity<gTraceProvider> activity;
+Snapshot Reader::MaybeGet(
+  ID3D11DeviceContext4* ctx,
+  ID3D11Fence* fence,
+  const LayerTextures& textures,
+  ConsumerKind kind) noexcept {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "SHM::MaybeGet");
   if (!*this) {
     TraceLoggingWriteStop(
-      activity, "SHM::MaybeGet", TraceLoggingValue("No feeder"));
+      activity, "SHM::MaybeGet", TraceLoggingValue("No feeder", "Result"));
     return {};
   }
 
@@ -542,8 +567,17 @@ Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
     return mCache;
   }
 
-  const std::unique_lock shmLock(*p);
-  const auto newSnapshot = this->MaybeGetUncached(d3d, kind);
+  TraceLoggingWriteTagged(activity, "Waiting for SHM lock");
+  const std::unique_lock shmLock(*p, std::try_to_lock);
+  if (!shmLock.owns_lock()) {
+    TraceLoggingWriteStop(
+      activity,
+      "SHM::MaybeGet",
+      TraceLoggingValue("try_to_lock failed", "Result"));
+    return mCache;
+  }
+  TraceLoggingWriteTagged(activity, "Acquired SHM lock");
+  const auto newSnapshot = this->MaybeGetUncached(ctx, fence, textures, kind);
 
   if (!newSnapshot.IsValid()) {
     if (kind == mCachedConsumerKind) {
@@ -556,7 +590,7 @@ Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
       return mCache;
     }
     TraceLoggingWriteStop(
-      activity, "SHM::MaybeGet", TraceLoggingValue("Unusable cache"));
+      activity, "SHM::MaybeGet", TraceLoggingValue("Unusable cache", "Result"));
     return {};
   }
 
@@ -585,7 +619,11 @@ Snapshot Reader::MaybeGet(ID3D11Device* d3d, ConsumerKind kind) {
   return mCache;
 }
 
-Snapshot Reader::MaybeGetUncached(ID3D11Device* d3d, ConsumerKind kind) const {
+Snapshot Reader::MaybeGetUncached(
+  ID3D11DeviceContext4* ctx,
+  ID3D11Fence* fence,
+  const LayerTextures& textures,
+  ConsumerKind kind) const {
   if (!p->HaveLock()) {
     dprint("Can't get without lock");
     throw std::logic_error("Reader::MaybeGet() without lock");
@@ -597,9 +635,9 @@ Snapshot Reader::MaybeGetUncached(ID3D11Device* d3d, ConsumerKind kind) const {
   }
 
   auto& r = p->mResources.at(p->mHeader->mSequenceNumber % TextureCount);
-  r.Populate(d3d, p->mHeader->mSessionID, p->mHeader->mSequenceNumber);
+  r.Populate(ctx, p->mHeader->mSessionID, p->mHeader->mSequenceNumber);
 
-  return Snapshot(*p->mHeader, d3d, &r);
+  return Snapshot(*p->mHeader, ctx, fence, textures, &r);
 }
 
 size_t Reader::GetRenderCacheKey() const {
@@ -663,6 +701,39 @@ ConsumerPattern::ConsumerPattern(
 
 bool ConsumerPattern::Matches(ConsumerKind kind) const {
   return (mKindMask & std23::to_underlying(kind)) == mKindMask;
+}
+
+void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
+  if (mDevice == device) [[likely]] {
+    return;
+  }
+  winrt::com_ptr<ID3D11Device5> device5;
+  winrt::check_hresult(device->QueryInterface<ID3D11Device5>(device5.put()));
+  mDevice = device;
+
+  for (auto& t: mTextures) {
+    t = SHM::CreateCompatibleTexture(device);
+  }
+
+  winrt::com_ptr<ID3D11DeviceContext> ctx;
+  device->GetImmediateContext(ctx.put());
+  mContext = ctx.as<ID3D11DeviceContext4>();
+
+  mFence = {nullptr};
+  winrt::check_hresult(
+    device5->CreateFence(0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
+}
+
+Snapshot SingleBufferedReader::MaybeGet(
+  ID3D11Device* device,
+  ConsumerKind kind) {
+  this->InitDXResources(device);
+
+  if (!mContext && mFence) {
+    return {};
+  }
+
+  return Reader::MaybeGet(mContext.get(), mFence.get(), mTextures, kind);
 }
 
 }// namespace OpenKneeboard::SHM

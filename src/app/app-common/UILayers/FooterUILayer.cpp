@@ -23,6 +23,7 @@
 #include <OpenKneeboard/FooterUILayer.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/Tracing.h>
 #include <OpenKneeboard/config.h>
 
 #include <algorithm>
@@ -57,16 +58,30 @@ FooterUILayer::~FooterUILayer() {
 }
 
 void FooterUILayer::Tick() {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "FooterUILayer::Tick");
   if (mRenderState == RenderState::Stale) {
     // Already marked dirty, lets' not bother doing it again
+    TraceLoggingWriteStop(
+      activity,
+      "FooterUILayer::Tick",
+      TraceLoggingValue("Already dirty", "Result"));
     return;
   }
 
   const auto now = std::chrono::time_point_cast<Duration>(Clock::now());
-  if (now > mLastRenderAt) {
-    evNeedsRepaintEvent.Emit();
-    mRenderState = RenderState::Stale;
+  if (now == mLastRenderAt) {
+    TraceLoggingWriteStop(
+      activity, "FooterUILayer::Tick", TraceLoggingValue("Clean", "Result"));
+    return;
   }
+
+  mRenderState = RenderState::Stale;
+  evNeedsRepaintEvent.Emit();
+  TraceLoggingWriteStop(
+    activity,
+    "FooterUILayer::Tick",
+    TraceLoggingValue("Newly dirty", "Result"));
 }
 
 void FooterUILayer::PostCursorEvent(

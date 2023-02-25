@@ -48,7 +48,7 @@ class OculusKneeboard final : private VRKneeboard {
  private:
   std::array<ovrTextureSwapChain, MaxLayers> mSwapChains;
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;
-  SHM::Reader mSHM;
+  SHM::SingleBufferedReader mSHM;
   ovrSession mSession = nullptr;
   Renderer* mRenderer = nullptr;
   OculusEndFrameHook mEndFrameHook;

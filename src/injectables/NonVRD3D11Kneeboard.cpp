@@ -23,6 +23,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
+#include <d3d11.h>
 #include <dxgi.h>
 #include <shims/winrt/base.h>
 
@@ -57,7 +58,6 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
 
   winrt::com_ptr<ID3D11Device> device;
   swapChain->GetDevice(IID_PPV_ARGS(device.put()));
-
   const auto snapshot
     = mSHM.MaybeGet(device.get(), SHM::ConsumerKind::NonVRD3D11);
 

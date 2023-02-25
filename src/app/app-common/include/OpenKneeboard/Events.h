@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 
 #include <cstdint>
 #include <functional>
@@ -84,7 +85,7 @@ class EventBase {
  * For example, you may want to use this after */
 class EventDelay final {
  public:
-  EventDelay();
+  EventDelay(std::source_location location = std::source_location::current());
   ~EventDelay();
 
   EventDelay(const EventDelay&) = delete;
@@ -93,7 +94,8 @@ class EventDelay final {
   auto operator=(EventDelay&&) = delete;
 
  private:
-  bool mOwner = false;
+  std::source_location mSourceLocation;
+  TraceLoggingThreadActivity<gTraceProvider> mActivity;
 };
 
 class EventConnectionBase {
@@ -282,11 +284,18 @@ void Event<Args...>::RemoveHandler(EventHandlerToken token) {
 
 template <class... Args>
 void Event<Args...>::Emit(Args... args, std::source_location location) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity,
+    "Event::Emit()",
+    OPENKNEEBOARD_TraceLoggingSourceLocation(location));
   //  Copy in case one is erased while we're running
   decltype(mHooks) hooks;
   std::vector<std::shared_ptr<EventConnection<Args...>>> receivers;
   {
+    TraceLoggingWriteTagged(activity, "Waiting for event mutex");
     std::unique_lock lock(mMutex);
+    TraceLoggingWriteTagged(activity, "Acquired event mutex");
     hooks = mHooks;
     auto it = mReceivers.begin();
     while (it != mReceivers.end()) {
@@ -299,13 +308,20 @@ void Event<Args...>::Emit(Args... args, std::source_location location) {
       ++it;
     }
   }
+  TraceLoggingWriteTagged(activity, "Built event receiver list");
 
   for (const auto& [_, hook]: hooks) {
     if (hook(args...) == HookResult::STOP_PROPAGATION) {
+      TraceLoggingWriteStop(
+        activity,
+        "Event::Emit()",
+        TraceLoggingValue("Stopped by hook", "Result"),
+        OPENKNEEBOARD_TraceLoggingSourceLocation(location));
       return;
     }
   }
 
+  TraceLoggingWriteTagged(activity, "Invoking or enqueuing");
   InvokeOrEnqueue(
     [=]() {
       for (const auto& receiver: receivers) {
@@ -313,6 +329,11 @@ void Event<Args...>::Emit(Args... args, std::source_location location) {
       }
     },
     location);
+  TraceLoggingWriteStop(
+    activity,
+    "Event::Emit()",
+    TraceLoggingValue("Done", "Result"),
+    OPENKNEEBOARD_TraceLoggingSourceLocation(location));
 }
 
 template <class... Args>

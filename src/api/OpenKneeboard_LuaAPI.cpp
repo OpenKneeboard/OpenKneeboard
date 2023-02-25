@@ -90,7 +90,7 @@ TRACELOGGING_DEFINE_PROVIDER(
   (0x039d7b52, 0x2065, 0x5863, 0x80, 0x2b, 0x87, 0x3c, 0x63, 0x8b, 0xdf, 0x88));
 }// namespace OpenKneeboard
 
-static TraceLoggingActivity<OpenKneeboard::gTraceProvider> gActivity;
+static TraceLoggingThreadActivity<OpenKneeboard::gTraceProvider> gActivity;
 
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   switch (dwReason) {
