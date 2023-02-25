@@ -75,7 +75,7 @@
           FontSize="48"
         />
         <TextBlock Grid.Column="1" Style="{ThemeResource BodyTextBlockStyle}">
-          I'm extremely grateful to @WookDCS and @AMVIBoomer for their support of OpenKneeboard.
+          I'm extremely grateful to @bobd0814 for their support of OpenKneeboard.
         </TextBlock>
         <local:SponsorButton Grid.Column="2" VerticalAlignment="Top" />
 			</Grid>
