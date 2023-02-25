@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WindowsPerformanceRecorder Version="1.0" Author="Microsoft Corporation" Copyright="Microsoft Corporation" Company="Microsoft Corporation">
+  <Profiles>
+    <EventCollector Id="EventCollector" Name="Event Collector">
+      <BufferSize Value="64" />
+      <Buffers Value="4" />
+    </EventCollector>
+
+    <EventProvider Id="EventProvider_OpenKneeboard.App"        Name="cc76597c-1041-5d57-c8ab-92cf9437104a" />
+    <EventProvider Id="EventProvider_FredEmmott.OpenXRTracing" Name="0f924f5f-21f0-513d-a2ab-2ede802e0b8f" />
+
+    <Profile Id="OpenKneeboard.Verbose.File" Name="OpenKneeboard" Description="OpenKneeboard" LoggingMode="File" DetailLevel="Verbose" Default="true">
+      <Collectors>
+        <EventCollectorId Value="EventCollector">
+          <EventProviders>
+            <EventProviderId Value="EventProvider_OpenKneeboard.App" />
+            <EventProviderId Value="EventProvider_FredEmmott.OpenXRTracing" />
+          </EventProviders>
+        </EventCollectorId>
+      </Collectors>
+    </Profile>
+  </Profiles>
+</WindowsPerformanceRecorder>

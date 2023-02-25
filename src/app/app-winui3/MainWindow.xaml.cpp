@@ -38,6 +38,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 #include <OpenKneeboard/weak_wrap.h>
 #include <microsoft.ui.xaml.window.h>
@@ -107,10 +108,16 @@ MainWindow::MainWindow() {
   mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
   mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
   mFrameTimer.Tick([](auto&, auto&) {
+    TraceLoggingActivity<gTraceProvider> activity;
+    TraceLoggingWriteStart(activity, "FrameTick");
     const std::shared_lock kbLock(*gKneeboard);
+    TraceLoggingWriteTagged(activity, "Kneeboard locked");
     const std::unique_lock dxLock(gDXResources);
+    TraceLoggingWriteTagged(activity, "DX locked");
     gKneeboard->evFrameTimerPrepareEvent.Emit();
+    TraceLoggingWriteTagged(activity, "Prepared to render");
     gKneeboard->evFrameTimerEvent.Emit();
+    TraceLoggingWriteStop(activity, "FrameTick");
   });
   RootGrid().Loaded(discard_winrt_event_args(weak_wrap(this)([](auto self) {
     // WinUI3 gives us the spinning circle for a long time...

@@ -35,6 +35,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 #include <Psapi.h>
 #include <ShlObj.h>
@@ -66,6 +67,16 @@ using namespace OpenKneeboard;
 
 static std::filesystem::path gDumpDirectory;
 static bool gDumped = false;
+
+namespace OpenKneeboard {
+/* PS > [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.App")
+ * cc76597c-1041-5d57-c8ab-92cf9437104a
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.App",
+  (0xcc76597c, 0x1041, 0x5d57, 0xc8, 0xab, 0x92, 0xcf, 0x94, 0x37, 0x10, 0x4a));
+}// namespace OpenKneeboard
 
 static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
   if (gDumped) {
@@ -272,6 +283,10 @@ static void LogInstallationInformation() {
 }
 
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
+  TraceLoggingRegister(gTraceProvider);
+  const scope_guard unregisterTraceProvider(
+    []() { TraceLoggingUnregister(gTraceProvider); });
+
   wchar_t* savedGamesBuffer = nullptr;
   winrt::check_hresult(
     SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &savedGamesBuffer));
