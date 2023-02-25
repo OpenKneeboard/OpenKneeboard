@@ -100,30 +100,21 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
     .hEvent = notifyEvent.get(),
   };
 
-  DWORD nextMessageSize;
-  if (!GetMailslotInfo(
-        handle.get(), nullptr, &nextMessageSize, nullptr, nullptr)) {
-    dprintf("GameEvent GetMailslotInfo failed: {}", GetLastError());
-    co_return true;
-  }
-
-  std::vector<char> buffer(nextMessageSize);
+  char buffer[4096];
   DWORD bytesRead {};
   const auto readFileResult = ReadFile(
     handle.get(),
-    buffer.data(),
-    static_cast<DWORD>(buffer.size()),
+    buffer,
+    static_cast<DWORD>(std::size(buffer)),
     &bytesRead,
     &overlapped);
   const auto readFileError = GetLastError();
-  if (!readFileResult) {
-    if (readFileError != ERROR_IO_PENDING) {
-      dprintf("GameEvent ReadFile failed: {}", GetLastError());
-      co_return true;
-    }
-    co_await winrt::resume_on_signal(notifyEvent.get());
+  if ((!readFileResult) && readFileError != ERROR_IO_PENDING) {
+    dprintf("GameEvent ReadFile failed: {}", GetLastError());
+    co_return true;
   }
 
+  co_await winrt::resume_on_signal(notifyEvent.get());
   GetOverlappedResult(handle.get(), &overlapped, &bytesRead, TRUE);
 
   if (bytesRead == 0) {
@@ -136,7 +127,7 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
     co_return false;
   }
 
-  auto event = GameEvent::Unserialize({buffer.data(), bytesRead});
+  auto event = GameEvent::Unserialize({buffer, bytesRead});
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity, "GameEvent", TraceLoggingValue(event.name.c_str(), "Name"));
