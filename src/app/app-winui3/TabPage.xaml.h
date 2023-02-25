@@ -57,13 +57,13 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   TabPage();
   ~TabPage();
 
-  static winrt::fire_and_forget final_release(std::unique_ptr<TabPage>);
-
   void OnNavigatedTo(const NavigationEventArgs&) noexcept;
   void OnCanvasSizeChanged(
     const IInspectable&,
     const SizeChangedEventArgs&) noexcept;
-  void OnPointerEvent(const IInspectable&, const PointerEventArgs&) noexcept;
+  void OnPointerEvent(
+    const IInspectable&,
+    const PointerRoutedEventArgs&) noexcept;
 
   winrt::Windows::Foundation::IAsyncAction ReleaseDXResources();
 
@@ -78,8 +78,6 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   D2D1_COLOR_F mBackgroundColor;
   winrt::com_ptr<ID2D1SolidColorBrush> mForegroundBrush;
 
-  DispatcherQueueController mDQC {nullptr};
-  InputPointerSource mInputPointerSource {nullptr};
   bool mDrawCursor = false;
   void InitializePointerSource();
   void QueuePointerPoint(const PointerPoint&);

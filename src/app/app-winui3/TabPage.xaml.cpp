@@ -94,23 +94,8 @@ TabPage::TabPage() {
   gTabs.push_back(winrt::make_weak(projected));
 }
 
-TabPage::~TabPage() = default;
-
-winrt::fire_and_forget TabPage::final_release(
-  std::unique_ptr<TabPage> instance) {
-  instance->RemoveAllEventListeners();
-
-  // Work around https://github.com/microsoft/microsoft-ui-xaml/issues/7254
-  auto uiThread = instance->mUIThread;
-  auto swapChain = instance->mSwapChain;
-  co_await instance->ReleaseDXResources();
-  co_await uiThread;
-  instance.reset();
-  // 0 doesn't work - I think we just need to re-enter the message pump/event
-  // loop
-  co_await winrt::resume_after(std::chrono::milliseconds(1));
-  co_await uiThread;
-  swapChain = {nullptr};
+TabPage::~TabPage() {
+  this->RemoveAllEventListeners();
 }
 
 winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
@@ -135,32 +120,31 @@ winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
 }
 
 void TabPage::InitializePointerSource() {
-  mDQC = DispatcherQueueController::CreateOnDedicatedThread();
-  mDQC.DispatcherQueue().TryEnqueue([weak = get_weak()]() {
-    auto self = weak.get();
-    if (!self) {
-      return;
+  // Two ways to do this:
+  // - standard WinUI/XAML mouse event handling
+  // - SwapChainPanel::CreateCoreIndependentInputSource (lower latency)
+  //
+  // We're taking the first option as:
+  //
+  // - the second option intermittently crashes:
+  // https://github.com/microsoft/microsoft-ui-xaml/issues/7254
+  // - at least for this use case, it no longer seems to be noticably lower
+  // latency
+  auto weak = get_weak();
+  auto onPointerEvent = [weak](const auto& a, const auto& b) {
+    if (auto self = weak.get()) {
+      self->OnPointerEvent(a, b);
     }
-
-    auto& ips = self->mInputPointerSource;
-    ips = self->Canvas().CreateCoreIndependentInputSource(
-      InputPointerSourceDeviceKinds::Mouse | InputPointerSourceDeviceKinds::Pen
-      | InputPointerSourceDeviceKinds::Touch);
-
-    auto onPointerEvent = [weak](const auto& a, const auto& b) {
-      if (auto self = weak.get()) {
-        self->OnPointerEvent(a, b);
-      }
-    };
-    ips.PointerMoved(onPointerEvent);
-    ips.PointerPressed(onPointerEvent);
-    ips.PointerReleased(onPointerEvent);
-    ips.PointerExited([weak](const auto&, const auto&) {
+  };
+  auto panel = this->Canvas();
+  panel.PointerMoved(onPointerEvent);
+  panel.PointerPressed(onPointerEvent);
+  panel.PointerReleased(onPointerEvent);
+    panel.PointerExited([weak](const auto&, const auto&) {
       if (auto self = weak.get()) {
         self->mKneeboardView->PostCursorEvent({});
       }
     });
-  });
 }
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
@@ -566,12 +550,13 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
 }
 
 void TabPage::OnPointerEvent(
-  const IInspectable&,
-  const PointerEventArgs& args) noexcept {
-  for (auto pp: args.GetIntermediatePoints()) {
+  const IInspectable& sender,
+  const PointerRoutedEventArgs& args) noexcept {
+  auto senderElement = sender.as<UIElement>();
+  for (auto pp: args.GetIntermediatePoints(senderElement)) {
     this->QueuePointerPoint(pp);
   }
-  auto pp = args.CurrentPoint();
+  auto pp = args.GetCurrentPoint(senderElement);
   this->QueuePointerPoint(pp);
 }
 
