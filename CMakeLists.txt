@@ -118,6 +118,7 @@ else()
   set(BUILD_BITNESS 64 CACHE INTERNAL "")
 endif()
 
+add_subdirectory("scripts")
 add_subdirectory("third-party")
 add_subdirectory("src")
 

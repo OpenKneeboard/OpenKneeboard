@@ -32,7 +32,7 @@ If you are able to reproduce the issue or it repeats itself over time:
 2. Make OpenKneeboard crash or wait for it to crash
 3. There should be a .dmp file for OpenKneeboard in `%LOCALAPPDATA%\CrashDumps`; if there are multiple, sort by date, and use the most recent one
 
-If the files are too large, you can try [enable-mini-dumps.reg](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/docs/enable-mini-dumps.reg): this will create much smaller files, but they are much less likely to be useful for diagnosing the problem. They are however much better than no dump if sharing 200mb+ files is not practical for you.
+If the files are too large, you can try [enable-mini-dumps.reg](https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/scripts/enable-mini-dumps.reg): this will create much smaller files, but they are much less likely to be useful for diagnosing the problem. They are however much better than no dump if sharing 200mb+ files is not practical for you.
 
 If the crash happened once and you're unable to repeat it:
 
