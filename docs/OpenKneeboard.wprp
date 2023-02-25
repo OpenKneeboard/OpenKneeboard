@@ -27,6 +27,7 @@
           <EventProviders>
             <EventProviderId Value="EventProvider_OpenKneeboard.API.C" />
             <EventProviderId Value="EventProvider_OpenKneeboard.API.Lua" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.App" />
             <EventProviderId Value="EventProvider_OpenKneeboard.AutoDetect" />
             <EventProviderId Value="EventProvider_OpenKneeboard.NonVR.D3D11" />
             <EventProviderId Value="EventProvider_OpenKneeboard.Oculus.D3D11" />
