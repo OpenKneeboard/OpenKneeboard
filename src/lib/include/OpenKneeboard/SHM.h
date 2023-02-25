@@ -108,7 +108,10 @@ class Writer final {
   ~Writer();
 
   operator bool() const;
-  void Update(const Config& config, const std::vector<LayerConfig>& layers);
+  void Update(
+    const Config& config,
+    const std::vector<LayerConfig>& layers,
+    HANDLE fence);
 
   UINT GetNextTextureIndex() const;
 
@@ -183,7 +186,9 @@ class Reader {
   /// Changes even if the feeder restarts with frame ID 0
   size_t GetRenderCacheKey() const;
 
- private:
+ protected:
+  uint64_t GetSessionID() const;
+
   Snapshot MaybeGetUncached(
     ID3D11DeviceContext4*,
     ID3D11Fence*,
@@ -207,8 +212,10 @@ class SingleBufferedReader : public Reader {
   void InitDXResources(ID3D11Device*);
 
   ID3D11Device* mDevice {nullptr};
+  uint64_t mSessionID = 0;
   winrt::com_ptr<ID3D11DeviceContext4> mContext;
   winrt::com_ptr<ID3D11Fence> mFence;
+  winrt::handle mFenceHandle;
   SHM::LayerTextures mTextures;
 };
 

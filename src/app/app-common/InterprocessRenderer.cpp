@@ -107,7 +107,6 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
 
   const auto seq = mSHM.GetNextSequenceNumber();
   winrt::check_hresult(mD3DContext->Signal(mFence.get(), seq));
-  winrt::check_hresult(mD3DContext->Wait(mFence.get(), seq));
 
   SHM::Config config {
     .mGlobalInputLayerID = mKneeboard->GetActiveViewForGlobalInput()
@@ -118,7 +117,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
   };
 
-  mSHM.Update(config, shmLayers);
+  mSHM.Update(config, shmLayers, mFenceHandle.get());
 }
 
 InterprocessRenderer::InterprocessRenderer(
@@ -139,7 +138,9 @@ InterprocessRenderer::InterprocessRenderer(
     mD3DContext = ctx.as<ID3D11DeviceContext4>();
 
     winrt::check_hresult(dxr.mD3DDevice.as<ID3D11Device5>()->CreateFence(
-      0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
+      0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
+    winrt::check_hresult(mFence->CreateSharedHandle(
+      nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, mFenceHandle.put()));
   }
 
   for (auto& layer: mLayers) {

@@ -29,6 +29,7 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <Windows.h>
+#include <d3d11_4.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
 #include <shims/winrt/base.h>
@@ -111,6 +112,7 @@ int main() {
     device.put(),
     nullptr,
     ctx.put());
+  auto ctx4 = ctx.as<ID3D11DeviceContext4>();
 
   winrt::com_ptr<IDWriteFactory> dwrite;
   DWriteCreateFactory(
@@ -179,6 +181,13 @@ int main() {
           &sharedHandle));
     }
   }
+  auto device5 = device.as<ID3D11Device5>();
+  winrt::com_ptr<ID3D11Fence> fence;
+  winrt::check_hresult(device5->CreateFence(
+    0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(fence.put())));
+  winrt::handle fenceHandle;
+  winrt::check_hresult(fence->CreateSharedHandle(
+    nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, fenceHandle.put()));
 
   D3D11_VIEWPORT viewport {
     0,
@@ -223,8 +232,10 @@ int main() {
       ctx->Flush();
     }
     frames++;
+    winrt::check_hresult(
+      ctx4->Signal(fence.get(), shm.GetNextSequenceNumber()));
 
-    shm.Update(config, {layer, secondLayer});
+    shm.Update(config, {layer, secondLayer}, fenceHandle.get());
   } while (cliLoop.Sleep(std::chrono::seconds(1)));
   printf("Exit requested, cleaning up.\n");
   return 0;

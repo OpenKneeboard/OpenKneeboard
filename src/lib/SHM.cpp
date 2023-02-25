@@ -29,6 +29,7 @@
 #include <d3d11_3.h>
 #include <d3d11_4.h>
 #include <dxgi1_2.h>
+#include <processthreadsapi.h>
 
 #include <bit>
 #include <format>
@@ -53,6 +54,9 @@ struct Header final {
   uint64_t mSessionID = CreateSessionID();
   HeaderFlags mFlags;
   Config mConfig;
+
+  DWORD mFeederProcessID {};
+  HANDLE mFence {};
 
   uint8_t mLayerCount = 0;
   LayerConfig mLayers[MaxLayers];
@@ -222,6 +226,9 @@ Snapshot::Snapshot(
     TraceLoggingWriteStop(activity, "SHM::Snapshot::Snapshot()");
   });
 
+  TraceLoggingWriteTagged(activity, "Wait for fence");
+  winrt::check_hresult(ctx->Wait(fence, header.mSequenceNumber));
+
   const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
   for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
     TraceLoggingWriteTagged(
@@ -232,9 +239,7 @@ Snapshot::Snapshot(
     TraceLoggingWriteTagged(
       activity, "Copied texture", TraceLoggingValue(i, "Layer"));
   }
-  TraceLoggingWriteTagged(activity, "Wait for fence");
-  winrt::check_hresult(ctx->Signal(fence, header.mSequenceNumber));
-  winrt::check_hresult(ctx->Wait(fence, header.mSequenceNumber));
+  ctx->Flush();
   TraceLoggingWriteTagged(activity, "Flushed");
   mLayerSRVs = std::make_shared<LayerSRVArray>();
 }
@@ -465,6 +470,7 @@ class Writer::Impl : public SHM::Impl {
  public:
   using SHM::Impl::Impl;
   bool mHaveFed = false;
+  DWORD mProcessID = GetCurrentProcessId();
 
   ~Impl() {
     mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
@@ -517,6 +523,16 @@ class Reader::Impl : public SHM::Impl {
  public:
   std::array<TextureReadResources, TextureCount> mResources;
 };
+
+uint64_t Reader::GetSessionID() const {
+  if (!p) {
+    return {};
+  }
+  if (!p->mHeader) {
+    return {};
+  }
+  return p->mHeader->mSessionID;
+}
 
 Reader::Reader() {
   const auto path = SHMPath();
@@ -649,7 +665,8 @@ size_t Reader::GetRenderCacheKey() const {
 
 void Writer::Update(
   const Config& config,
-  const std::vector<LayerConfig>& layers) {
+  const std::vector<LayerConfig>& layers,
+  HANDLE fence) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
@@ -672,6 +689,8 @@ void Writer::Update(
   p->mHeader->mSequenceNumber++;
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
   p->mHeader->mLayerCount = static_cast<uint8_t>(layers.size());
+  p->mHeader->mFeederProcessID = p->mProcessID;
+  p->mHeader->mFence = fence;
   memcpy(
     p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
 }
@@ -704,12 +723,19 @@ bool ConsumerPattern::Matches(ConsumerKind kind) const {
 }
 
 void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
-  if (mDevice == device) [[likely]] {
+  const auto sessionID = this->GetSessionID();
+  if (mDevice == device && mSessionID == sessionID) [[likely]] {
     return;
   }
   winrt::com_ptr<ID3D11Device5> device5;
   winrt::check_hresult(device->QueryInterface<ID3D11Device5>(device5.put()));
+
   mDevice = device;
+  mSessionID = sessionID;
+
+  if (!sessionID) {
+    return;
+  }
 
   for (auto& t: mTextures) {
     t = SHM::CreateCompatibleTexture(device);
@@ -719,9 +745,21 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
   device->GetImmediateContext(ctx.put());
   mContext = ctx.as<ID3D11DeviceContext4>();
 
+  winrt::handle feeder {
+    OpenProcess(PROCESS_DUP_HANDLE, FALSE, p->mHeader->mFeederProcessID)};
+  mFenceHandle = {};
+  winrt::check_hresult(DuplicateHandle(
+    feeder.get(),
+    p->mHeader->mFence,
+    GetCurrentProcess(),
+    mFenceHandle.put(),
+    0,
+    FALSE,
+    DUPLICATE_SAME_ACCESS));
+
   mFence = {nullptr};
   winrt::check_hresult(
-    device5->CreateFence(0, D3D11_FENCE_FLAG_NONE, IID_PPV_ARGS(mFence.put())));
+    device5->OpenSharedFence(mFenceHandle.get(), IID_PPV_ARGS(mFence.put())));
 }
 
 Snapshot SingleBufferedReader::MaybeGet(
@@ -729,7 +767,7 @@ Snapshot SingleBufferedReader::MaybeGet(
   ConsumerKind kind) {
   this->InitDXResources(device);
 
-  if (!mContext && mFence) {
+  if (!(mSessionID && mContext && mFence)) {
     return {};
   }
 

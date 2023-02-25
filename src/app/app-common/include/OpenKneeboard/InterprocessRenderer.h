@@ -62,6 +62,7 @@ class InterprocessRenderer final : private EventReceiver {
   // TODO: move to DXResources
   winrt::com_ptr<ID3D11DeviceContext4> mD3DContext;
   winrt::com_ptr<ID3D11Fence> mFence;
+  winrt::handle mFenceHandle;
 
   struct SharedTextureResources {
     winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
