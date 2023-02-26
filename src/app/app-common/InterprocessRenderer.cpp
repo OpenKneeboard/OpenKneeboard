@@ -209,6 +209,8 @@ InterprocessRenderer::InterprocessRenderer(
       RenderNow();
     }
   });
+
+  this->RenderNow();
 }
 
 void InterprocessRenderer::MarkDirty() {

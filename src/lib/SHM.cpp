@@ -563,8 +563,7 @@ Reader::~Reader() {
 }
 
 Reader::operator bool() const {
-  return p
-    && static_cast<bool>(p->mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED);
+  return p && p->IsValid() & p->mHeader->HaveFeeder();
 }
 
 Writer::operator bool() const {
