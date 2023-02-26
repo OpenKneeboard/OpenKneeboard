@@ -8,12 +8,10 @@ parent: APIs
 
 **The C API will be available in OpenKneeboard v1.4**. There is no C API in OpenKneeboard v1.3 or below.
 
-The C API is able to send information, events, or requests to OpenKneeboard; it is not able to receive data from OpenKneeboard. It requires a dynamic library - `OpenKneeboard_CAPI.dll`. The implementation of this DLL changes in every version of OpenKneeboard, however the API is expected to remain stable.
+The C API is able to send information, events, or requests to OpenKneeboard; it is not able to receive data from OpenKneeboard. It requires a dynamic library - `OpenKneeboard_CAPI32.dll` or `OpenKneeboard_CAPI64.dll`. The implementation of this DLL changes in every version of OpenKneeboard, however the API is expected to remain stable.
 
- - The DLL is installed and kept up to date in `C:\Program Files\OpenKneeboard\bin\OpenKneeboard_CAPI.dll`
+ - The DLL is installed and kept up to date in `C:\Program Files\OpenKneeboard\bin\`
  - The header is available in `C:\Program Files\OpenKneeboard\include\`
-
- Only a 64-bit applications are supported.
 
  As the implementation changes with every release, you should dynamically load the DLL using `LoadLibraryW()`, and find the function of interest with `GetProcAddress()`.
 
