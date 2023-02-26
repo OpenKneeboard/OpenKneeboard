@@ -100,7 +100,16 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
           /* alpha = */ 1.0f,
         });
     } else {
-      mD3DContext->CopyResource(it.mTexture.get(), layer.mCanvasTexture.get());
+      D3D11_BOX box {
+        0,
+        0,
+        0,
+        layer.mConfig.mImageWidth,
+        layer.mConfig.mImageHeight,
+        1,
+      };
+      mD3DContext->CopySubresourceRegion(
+        it.mTexture.get(), 0, 0, 0, 0, layer.mCanvasTexture.get(), 0, &box);
     }
     shmLayers.push_back(layer.mConfig);
   }

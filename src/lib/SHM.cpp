@@ -233,8 +233,15 @@ Snapshot::Snapshot(
   for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
     TraceLoggingWriteTagged(
       activity, "Start copy texture", TraceLoggingValue(i, "Layer"));
-    ctx->CopyResource(
-      mLayerTextures.at(i).get(), r->mLayers.at(i).mTexture.get());
+    ctx->CopySubresourceRegion(
+      mLayerTextures.at(i).get(),
+      /* subresource = */ 0,
+      /* x = */ 0,
+      /* y = */ 0,
+      /* z = */ 0,
+      r->mLayers.at(i).mTexture.get(),
+      /* subresource = */ 0,
+      &box);
     TraceLoggingWriteTagged(activity, "Copied resource");
     TraceLoggingWriteTagged(
       activity, "Copied texture", TraceLoggingValue(i, "Layer"));

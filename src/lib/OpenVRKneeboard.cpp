@@ -270,7 +270,16 @@ void OpenVRKneeboard::Tick() {
       // ... then atomic copy to OpenVR texture
       winrt::com_ptr<ID3D11DeviceContext> ctx;
       mD3D->GetImmediateContext(ctx.put());
-      ctx->CopyResource(layerState.mOpenVRTexture.get(), mBufferTexture.get());
+      const D3D11_BOX box {0, 0, 0, layer.mImageWidth, layer.mImageHeight, 1};
+      ctx->CopySubresourceRegion(
+        layerState.mOpenVRTexture.get(),
+        0,
+        0,
+        0,
+        0,
+        mBufferTexture.get(),
+        0,
+        &box);
     }
 
     vr::VRTextureBounds_t textureBounds {

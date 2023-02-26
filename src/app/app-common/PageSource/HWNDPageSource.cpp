@@ -279,7 +279,10 @@ void HWNDPageSource::OnFrame() noexcept {
   mContentSize = {
     static_cast<UINT>(contentSize.Width),
     static_cast<UINT>(contentSize.Height)};
-  ctx->CopyResource(mTexture.get(), d3dSurface.get());
+
+  const D3D11_BOX box {0, 0, 0, mContentSize.width, mContentSize.height, 1};
+  ctx->CopySubresourceRegion(
+    mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
   this->evNeedsRepaintEvent.Emit();
 }
 
