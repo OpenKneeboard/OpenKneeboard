@@ -28,7 +28,7 @@ If you have an unsupported tablet driver, you might want to [try OpenTabletDrive
 
 If you are able to reproduce the issue or it repeats itself over time:
 
-1. Download and run [enable-full-dumps.reg](https://github.com/OpenKneeboard/OpenKneeboard/raw/master/docs/enable-full-dumps.reg): this may create files > 200mb in size
+1. Download and run [enable-full-dumps.reg](https://github.com/OpenKneeboard/OpenKneeboard/raw/master/scripts/enable-full-dumps.reg): this may create files > 200mb in size
 2. Make OpenKneeboard crash or wait for it to crash
 3. There should be a .dmp file for OpenKneeboard in `%LOCALAPPDATA%\CrashDumps`; if there are multiple, sort by date, and use the most recent one
 
