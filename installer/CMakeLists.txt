@@ -8,7 +8,7 @@ install(
 
 add_signed_script(
   RemoveMSIXOnInstall
-  RemoveMSIX.ps1
+  "${CMAKE_CURRENT_SOURCE_DIR}/RemoveMSIX.ps1"
   DESTINATION "installer"
   COMPONENT Installer
 )
