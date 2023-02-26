@@ -24,6 +24,7 @@
 #include <windowsx.h>
 
 #include <atomic>
+#include <cstdlib>
 #include <optional>
 
 #include "detours-ext.h"
@@ -210,17 +211,47 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK
   return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
+namespace OpenKneeboard {
+
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.WindowCaptureHook")
+ * 2f381a1b-6486-55d8-ee5a-3cc04e8df79d
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.WindowCaptureHook",
+  (0x2f381a1b, 0x6486, 0x55d8, 0xee, 0x5a, 0x3c, 0xc0, 0x4e, 0x8d, 0xf7, 0x9d));
+
+}// namespace OpenKneeboard
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
-  // Per https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain :
-  //
-  // - lpreserved is NULL if DLL is being unloaded, non-null if the process
-  //   is terminating.
-  // - if the process is terminating, it is unsafe to attempt to cleanup
-  //   heap resources, and they *should* leave resource reclamation to the
-  //   kernel; our destructors etc may depend on dlls that have already
-  //   been unloaded.
-  if (dwReason == DLL_PROCESS_DETACH && !reserved) {
-    UninstallDetours();
+  switch (dwReason) {
+    case DLL_PROCESS_ATTACH:
+      TraceLoggingRegister(gTraceProvider);
+      DPrintSettings::Set({.prefix = "WindowCaptureHook"});
+
+      dprintf(
+        L"Attached to {}-bit process {} ({})",
+        sizeof(void*) * 8,
+        _wpgmptr,
+        GetCurrentProcessId());
+      break;
+    case DLL_PROCESS_DETACH:
+      dprintf(
+        L"Detaching from process {} ({})", _wpgmptr, GetCurrentProcessId());
+      TraceLoggingUnregister(gTraceProvider);
+      // Per https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain :
+      //
+      // - lpreserved is NULL if DLL is being unloaded, non-null if the process
+      //   is terminating.
+      // - if the process is terminating, it is unsafe to attempt to cleanup
+      //   heap resources, and they *should* leave resource reclamation to the
+      //   kernel; our destructors etc may depend on dlls that have already
+      //   been unloaded.
+      if (!reserved) {
+        UninstallDetours();
+      }
+      break;
   }
   return TRUE;
 }

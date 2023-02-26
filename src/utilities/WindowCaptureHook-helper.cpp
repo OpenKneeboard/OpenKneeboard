@@ -23,12 +23,24 @@
 #include <OpenKneeboard/WindowCaptureControl.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <shellapi.h>
 #include <shims/Windows.h>
 
 #include <cstdlib>
 
 using namespace OpenKneeboard;
+
+namespace OpenKneeboard {
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.WindowCaptureHook.Helper")
+ * e8aa8bc1-a583-5d15-5ef0-8592c150f2be
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.WindowCaptureHook.Helper",
+  (0xe8aa8bc1, 0xa583, 0x5d15, 0x5e, 0xf0, 0x85, 0x92, 0xc1, 0x50, 0xf2, 0xbe));
+}// namespace OpenKneeboard
 
 // We only need a standard `main()` function, but using wWinMain prevents
 // a window/task bar entry from temporarily appearing
@@ -37,8 +49,11 @@ int WINAPI wWinMain(
   HINSTANCE hPrevInstance,
   PWSTR pCmdLine,
   int nCmdShow) {
+  TraceLoggingRegister(gTraceProvider);
+  const scope_guard unregisterTraceProvider(
+    []() { TraceLoggingUnregister(gTraceProvider); });
   DPrintSettings::Set({
-    .prefix = "WindowCaptureHook-helper",
+    .prefix = std::format("WindowCaptureHook-helper-{}", sizeof(void*) * 8),
     .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,
   });
   int argc = 0;

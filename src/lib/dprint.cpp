@@ -151,6 +151,10 @@ void dprint(std::string_view message) {
 }
 
 void dprint(std::wstring_view message) {
+  TraceLoggingWrite(
+    gTraceProvider,
+    "dprint",
+    TraceLoggingCountedWideString(message.data(), message.size(), "Message"));
   if (IsDebugStreamEnabled()) {
     auto output = std::format(L"[{}] {}\n", gPrefixW, message);
     OutputDebugStringW(output.c_str());

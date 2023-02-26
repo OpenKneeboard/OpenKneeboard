@@ -26,6 +26,7 @@
 
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <Windows.h>
 #include <shellapi.h>
 
@@ -137,7 +138,24 @@ static void EnableOpenXRLayer(
   RegCloseKey(openXRKey);
 }
 
+namespace OpenKneeboard {
+
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.OpenXR.Helper")
+ * 2489967e-a7f2-5db8-ba74-27c35b944d56
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.OpenXR.Helper",
+  (
+    0x2489967e, 0xa7f2, 0x5db8, 0xba, 0x74, 0x27, 0xc3, 0x5b, 0x94, 0x4d, 0x56
+  ));
+}// namespace OpenKneeboard
+
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
+  TraceLoggingRegister(gTraceProvider);
+  const scope_guard unregisterTraceProvider(
+    []() { TraceLoggingUnregister(gTraceProvider); });
   DPrintSettings::Set({
     .prefix = "OpenXR-Helper",
     .consoleOutput = DPrintSettings::ConsoleOutputMode::ALWAYS,

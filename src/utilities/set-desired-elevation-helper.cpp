@@ -31,6 +31,19 @@
 
 using namespace OpenKneeboard;
 
+namespace OpenKneeboard {
+/* PS >
+ * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.Elevation.Helper")
+ * 4cd19abb-3b31-5e4e-ca98-75e403061214
+ */
+TRACELOGGING_DEFINE_PROVIDER(
+  gTraceProvider,
+  "OpenKneeboard.Elevation.Helper",
+  (
+    0x4cd19abb, 0x3b31, 0x5e4e, 0xca, 0x98, 0x75, 0xe4, 0x03, 0x06, 0x12, 0x14
+  ));
+}// namespace OpenKneeboard
+
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR commandLine, int) {
   DPrintSettings::Set({
     .prefix = "set-desired-elevation-helper",

@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/tracing.h>
 #include <shims/winrt/base.h>
 
 #include <format>
@@ -40,6 +41,24 @@ template <typename... Args>
 void dprintf(std::_Fmt_wstring<Args...> fmt, Args&&... args) {
   static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
   dprint(std::format(fmt, std::forward<Args>(args)...));
+}
+
+template <typename... Args>
+void traceprint(std::_Fmt_string<Args...> fmt, Args&&... args) {
+  TraceLoggingWrite(
+    gTraceProvider,
+    "traceprint",
+    TraceLoggingValue(
+      std::format(fmt, std::forward<Args>(args)...).c_str(), "Message"));
+}
+
+template <typename... Args>
+void traceprint(std::_Fmt_wstring<Args...> fmt, Args&&... args) {
+  TraceLoggingWrite(
+    gTraceProvider,
+    "traceprint",
+    TraceLoggingValue(
+      std::format(fmt, std::forward<Args>(args)...).c_str(), "Message"));
 }
 
 struct DPrintSettings {
