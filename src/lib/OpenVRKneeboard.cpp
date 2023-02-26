@@ -187,15 +187,14 @@ void OpenVRKneeboard::Tick() {
   }
 
   mFrameCounter++;
+  if (!mSHM) {
+    this->HideAllOverlays();
+    return;
+  }
 
   const auto snapshot = mSHM.MaybeGet(mD3D.get(), SHM::ConsumerKind::SteamVR);
   if (!snapshot.IsValid()) {
-    for (auto& layerState: mLayers) {
-      if (layerState.mVisible) {
-        layerState.mVisible = false;
-        CHECK(HideOverlay, layerState.mOverlay);
-      }
-    }
+    this->HideAllOverlays();
     return;
   }
 
@@ -306,6 +305,15 @@ void OpenVRKneeboard::Tick() {
   }
 
 #undef CHECK
+}
+
+void OpenVRKneeboard::HideAllOverlays() {
+  for (auto& layerState: mLayers) {
+    if (layerState.mVisible) {
+      layerState.mVisible = false;
+      mIVROverlay->HideOverlay(layerState.mOverlay);
+    }
+  }
 }
 
 std::optional<OpenVRKneeboard::Pose> OpenVRKneeboard::GetHMDPose(

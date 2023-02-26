@@ -50,6 +50,7 @@ class OpenVRKneeboard final : private VRKneeboard {
   bool InitializeOpenVR();
   void Tick();
   void Reset();
+  void HideAllOverlays();
 
   winrt::com_ptr<ID3D11Device1> mD3D;
   uint64_t mFrameCounter = 0;

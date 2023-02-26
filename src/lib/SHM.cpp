@@ -734,6 +734,9 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
   if (mDevice == device && mSessionID == sessionID) [[likely]] {
     return;
   }
+  if (!(*this)) {
+    return;
+  }
   winrt::com_ptr<ID3D11Device5> device5;
   winrt::check_hresult(device->QueryInterface<ID3D11Device5>(device5.put()));
 
@@ -772,6 +775,10 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
 Snapshot SingleBufferedReader::MaybeGet(
   ID3D11Device* device,
   ConsumerKind kind) {
+  if (!(*this)) {
+    return {};
+  }
+
   this->InitDXResources(device);
 
   if (!(mSessionID && mContext && mFence)) {
