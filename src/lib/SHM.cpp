@@ -50,6 +50,13 @@ enum class HeaderFlags : ULONG {
 };
 
 struct Header final {
+  // Use the magic string to make sure we don't have
+  // uninitialized memory that happens to have the
+  // feeder-attached bit set
+  static constexpr std::string_view Magic {"OKBMagic"};
+  static_assert(Magic.size() == sizeof(uint64_t));
+  uint64_t mMagic = *reinterpret_cast<const uint64_t*>(Magic.data());
+
   uint32_t mSequenceNumber = 0;
   uint64_t mSessionID = CreateSessionID();
   HeaderFlags mFlags;
@@ -62,6 +69,7 @@ struct Header final {
   LayerConfig mLayers[MaxLayers];
 
   size_t GetRenderCacheKey() const;
+  bool HaveFeeder() const;
 };
 static_assert(std::is_standard_layout_v<Header>);
 
@@ -345,9 +353,7 @@ winrt::com_ptr<ID3D11ShaderResourceView> Snapshot::GetLayerShaderResourceView(
 }
 
 bool Snapshot::IsValid() const {
-  return mHeader
-    && static_cast<bool>(mHeader->mFlags & HeaderFlags::FEEDER_ATTACHED)
-    && mHeader->mLayerCount > 0;
+  return mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0);
 }
 
 class Impl {
@@ -700,6 +706,12 @@ void Writer::Update(
   p->mHeader->mFence = fence;
   memcpy(
     p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
+}
+
+bool Header::HaveFeeder() const {
+  return (mMagic == *reinterpret_cast<const uint64_t*>(Magic.data()))
+    && ((mFlags & HeaderFlags::FEEDER_ATTACHED)
+        == HeaderFlags::FEEDER_ATTACHED);
 }
 
 size_t Header::GetRenderCacheKey() const {
