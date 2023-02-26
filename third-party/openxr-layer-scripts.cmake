@@ -13,18 +13,18 @@ ExternalProject_Add(
 
 ExternalProject_Get_property(openxrLayerScriptsEP SOURCE_DIR)
 
-message(STATUS "scripts ${SOURCE_DIR}")
-
 add_signed_script(
   edit-openxr-layers
   "${SOURCE_DIR}/edit-openxr-layers.ps1"
   DESTINATION scripts/
 )
+add_dependencies(edit-openxr-layers openxrLayerScriptsEP)
 add_signed_script(
   list-openxr-layers
   "${SOURCE_DIR}/list-openxr-layers.ps1"
   DESTINATION scripts/
 )
+add_dependencies(list-openxr-layers openxrLayerScriptsEP)
 
 install(
   FILES
