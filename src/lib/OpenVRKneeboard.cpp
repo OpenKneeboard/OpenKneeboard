@@ -281,6 +281,7 @@ void OpenVRKneeboard::Tick() {
       mBufferTexture.get(),
       0,
       &box);
+    ctx->Flush();
     layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
 
     vr::VRTextureBounds_t textureBounds {
