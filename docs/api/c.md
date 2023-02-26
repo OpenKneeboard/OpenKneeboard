@@ -50,5 +50,5 @@ See [the messages documentation](messages.md) for information on supported messa
 
 ## Examples
 
-- [C++](../../src/utilities/capi-test.cpp)
-- [Python](../../src/utilities/capi-test.py)
+- [C++](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/src/utilities/capi-test.cpp)
+- [Python](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/src/utilities/capi-test.py)

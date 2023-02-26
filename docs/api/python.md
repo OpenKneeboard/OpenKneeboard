@@ -8,4 +8,4 @@ Python programs can use the C API, which will be available in OpenKneeboard **v1
 
 ## Examples
 
-- [Using `ctypes`](../../src/utilities/capi-test.py)
+- [Using `ctypes`](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/src/utilities/capi-test.py)

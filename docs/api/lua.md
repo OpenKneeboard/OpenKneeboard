@@ -95,4 +95,4 @@ OpenKneeboard.sendJSON(
 ```
 ## Examples
 
-- [OpenKneeboard's DCS extension](../../src/dcs-hook/OpenKneeboardDCSExt.lua)
+- [OpenKneeboard's DCS extension](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/src/dcs-hook/OpenKneeboardDCSExt.lua)
