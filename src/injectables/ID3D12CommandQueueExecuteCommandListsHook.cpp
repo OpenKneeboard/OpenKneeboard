@@ -80,7 +80,7 @@ void ID3D12CommandQueueExecuteCommandListsHook::Impl::InstallHook(
 
   winrt::com_ptr<ID3D12Device> device;
   D3D12CreateDevice(
-    nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(device.put()));
+    nullptr, D3D_FEATURE_LEVEL_11_1, IID_PPV_ARGS(device.put()));
   if (!device) {
     return;
   }

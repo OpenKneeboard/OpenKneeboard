@@ -28,7 +28,7 @@ DXResources DXResources::Create() {
   DXResources ret;
 
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
+  auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
   UINT dxgiFlags = 0;
 #ifdef DEBUG
   d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;

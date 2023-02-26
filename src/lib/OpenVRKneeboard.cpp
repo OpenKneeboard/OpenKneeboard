@@ -39,7 +39,7 @@ using namespace DirectX::SimpleMath;
 namespace OpenKneeboard {
 
 OpenVRKneeboard::OpenVRKneeboard() {
-  D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
+  D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_1;
   winrt::com_ptr<ID3D11Device> device;
   winrt::check_hresult(D3D11CreateDevice(
     nullptr,
@@ -255,34 +255,33 @@ void OpenVRKneeboard::Tick() {
     // Also lets us apply opacity here, rather than needing another
     // OpenVR call
 
-    {
-      auto srv = snapshot.GetLayerShaderResourceView(mD3D.get(), layerIndex);
-      if (!srv) {
-        dprint("Failed to get layer shared texture");
-        continue;
-      }
-
-      // non-atomic paint to buffer...
-      D3D11::CopyTextureWithOpacity(
-        mD3D.get(),
-        srv.get(),
-        mRenderTargetView.get(),
-        renderParams.mKneeboardOpacity);
-
-      // ... then atomic copy to OpenVR texture
-      winrt::com_ptr<ID3D11DeviceContext> ctx;
-      mD3D->GetImmediateContext(ctx.put());
-      const D3D11_BOX box {0, 0, 0, layer.mImageWidth, layer.mImageHeight, 1};
-      ctx->CopySubresourceRegion(
-        layerState.mOpenVRTexture.get(),
-        0,
-        0,
-        0,
-        0,
-        mBufferTexture.get(),
-        0,
-        &box);
+    auto srv = snapshot.GetLayerShaderResourceView(mD3D.get(), layerIndex);
+    if (!srv) {
+      dprint("Failed to get layer shared texture");
+      continue;
     }
+
+    // non-atomic paint to buffer...
+    D3D11::CopyTextureWithOpacity(
+      mD3D.get(),
+      srv.get(),
+      mRenderTargetView.get(),
+      renderParams.mKneeboardOpacity);
+
+    // ... then atomic copy to OpenVR texture
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    mD3D->GetImmediateContext(ctx.put());
+    const D3D11_BOX box {0, 0, 0, layer.mImageWidth, layer.mImageHeight, 1};
+    ctx->CopySubresourceRegion(
+      layerState.mOpenVRTexture.get(),
+      0,
+      0,
+      0,
+      0,
+      mBufferTexture.get(),
+      0,
+      &box);
+    layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
 
     vr::VRTextureBounds_t textureBounds {
       0.0f,

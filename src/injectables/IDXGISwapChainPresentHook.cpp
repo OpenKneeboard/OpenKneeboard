@@ -171,7 +171,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
     }
   }
 
-  D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_0;
+  D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_1;
 
   winrt::com_ptr<ID3D11Device> device;
   winrt::com_ptr<IDXGISwapChain> swapchain;

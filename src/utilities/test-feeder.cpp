@@ -99,7 +99,7 @@ int main() {
 #ifdef DEBUG
   d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
-  auto d3dLevel = D3D_FEATURE_LEVEL_11_0;
+  auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   D3D11CreateDevice(
     nullptr,
