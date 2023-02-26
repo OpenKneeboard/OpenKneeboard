@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/93701288",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/93701288/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/93701288/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-beta4",
-    "id": 93701288,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/93717971",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/93717971/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/93717971/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-beta5",
+    "id": 93717971,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FlcSo",
-    "tag_name": "v1.4-beta4",
-    "target_commitish": "f8b7db56287739002368b1ffbd6489aeeae15996",
-    "name": "v1.4-beta4: performance and tracing",
+    "node_id": "RE_kwDOGk0DR84FlgXT",
+    "tag_name": "v1.4-beta5",
+    "target_commitish": "1c130bdf363702915c004b0bd0c6eb61d5c3153b",
+    "name": "v1.4-beta5",
     "draft": false,
     "prerelease": true,
-    "created_at": "2023-02-26T04:39:21Z",
-    "published_at": "2023-02-26T05:20:58Z",
+    "created_at": "2023-02-26T16:16:44Z",
+    "published_at": "2023-02-26T17:05:52Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/97153173",
-        "id": 97153173,
-        "node_id": "RA_kwDOGk0DR84FynCV",
-        "name": "OpenKneeboard-v1.4-beta4-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/97203793",
+        "id": 97203793,
+        "node_id": "RA_kwDOGk0DR84FyzZR",
+        "name": "OpenKneeboard-v1.4-beta5-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 137212363,
+        "size": 137220920,
         "download_count": 0,
-        "created_at": "2023-02-26T05:15:53Z",
-        "updated_at": "2023-02-26T05:15:57Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta4/OpenKneeboard-v1.4-beta4-DebugSymbols.zip"
+        "created_at": "2023-02-26T16:50:00Z",
+        "updated_at": "2023-02-26T16:50:06Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta5/OpenKneeboard-v1.4-beta5-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/97153172",
-        "id": 97153172,
-        "node_id": "RA_kwDOGk0DR84FynCU",
-        "name": "OpenKneeboard-v1.4-beta4.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/97203790",
+        "id": 97203790,
+        "node_id": "RA_kwDOGk0DR84FyzZO",
+        "name": "OpenKneeboard-v1.4-beta5.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/msi",
         "state": "uploaded",
-        "size": 36986880,
-        "download_count": 0,
-        "created_at": "2023-02-26T05:15:51Z",
-        "updated_at": "2023-02-26T05:15:52Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta4/OpenKneeboard-v1.4-beta4.msi"
+        "size": 36990976,
+        "download_count": 1,
+        "created_at": "2023-02-26T16:49:56Z",
+        "updated_at": "2023-02-26T16:49:59Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta5/OpenKneeboard-v1.4-beta5.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-beta4",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-beta4",
-    "body": "Start by downloading [OpenKneeboard-v1.4-beta4.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta4/OpenKneeboard-v1.4-beta4.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n- Fixed major performance issues and hangs introduced with beta3\r\n- Unrelatedly, significantly improved performance over v1.3 :)\r\n- Added tracing (opt-in via Windows Performance Recorder) leading to the previous two improvements :)\r\n- Debugging and tracing scripts and tools are now installed to `C:\\Program Files\\OpenKneeboard\\scripts`, instead of needing a separate download"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-beta5",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-beta5",
+    "body": "Start by downloading [OpenKneeboard-v1.4-beta5.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta5/OpenKneeboard-v1.4-beta5.msi), then read [the README](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/README.md); there is [additional documentation](https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs) available.\r\n\r\n- fix OpenKneeboard crashing if SteamVR is running when it starts, or when showing/hiding the kneeboard\r\n- fix more varied issues with show/hide with non-VR, Oculus, and OpenXR"
   }
 ]
