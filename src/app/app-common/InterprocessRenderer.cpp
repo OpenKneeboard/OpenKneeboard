@@ -132,6 +132,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
 InterprocessRenderer::InterprocessRenderer(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
+  dprint(__FUNCTION__);
   auto currentGame = kneeboard->GetCurrentGame();
   if (currentGame) {
     mCurrentGame = currentGame->mGameInstance.lock();
@@ -215,6 +216,7 @@ void InterprocessRenderer::MarkDirty() {
 }
 
 InterprocessRenderer::~InterprocessRenderer() {
+  dprint(__FUNCTION__);
   this->RemoveAllEventListeners();
   const std::unique_lock d2dLock(mDXR);
   auto ctx = mD3DContext;

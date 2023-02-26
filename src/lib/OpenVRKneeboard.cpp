@@ -87,6 +87,8 @@ void OpenVRKneeboard::Reset() {
     return;
   }
 
+  dprint(__FUNCTION__);
+
   vr::VR_Shutdown();
   mIVRSystem = {};
   mIVROverlay = {};
@@ -111,6 +113,7 @@ bool OpenVRKneeboard::InitializeOpenVR() {
   if (mIVRSystem && mIVROverlay) {
     return true;
   }
+  dprint(__FUNCTION__);
 
 #define CHECK(method, ...) \
   if (!overlay_check(mIVROverlay->method(__VA_ARGS__), #method)) { \

@@ -186,6 +186,7 @@ void KneeboardState::PostUserAction(UserAction action) {
       return;
     }
     case UserAction::RECENTER_VR:
+      dprint("Recentering");
       this->mSettings.mVR.mRecenterCount++;
       this->evNeedsRepaintEvent.Emit();
       return;
