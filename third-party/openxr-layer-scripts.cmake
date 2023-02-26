@@ -9,7 +9,6 @@ ExternalProject_Add(
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
   BUILD_IN_SOURCE ON
-  EXCLUDE_FROM_ALL
 )
 
 ExternalProject_Get_property(openxrLayerScriptsEP SOURCE_DIR)

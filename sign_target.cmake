@@ -36,7 +36,6 @@ endfunction()
 
 macro(add_signed_script TARGET SOURCE)
   get_filename_component(FILE_NAME "${SOURCE}" NAME)
-  message(STATUS "COPY ${SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}")
   add_custom_target(
     ${TARGET}
     ALL
