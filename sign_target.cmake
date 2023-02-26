@@ -35,6 +35,8 @@ function(sign_target TARGET)
 endfunction()
 
 macro(add_signed_script TARGET SOURCE)
+  get_filename_component(FILE_NAME "${SOURCE}" NAME)
+  message(STATUS "COPY ${SOURCE} ${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}")
   add_custom_target(
     ${TARGET}
     ALL
@@ -42,20 +44,20 @@ macro(add_signed_script TARGET SOURCE)
     "${CMAKE_COMMAND}"
     -E
     copy_if_different
-    "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE}"
-    "${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}"
+    "${SOURCE}"
+    "${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}"
     SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE}"
+    "${SOURCE}"
   )
 
   sign_target_file(
     ${TARGET}
-    "${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}"
+    "${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}"
   )
 
   install(
     FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/${SOURCE}"
+    "${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}"
     ${ARGN}
   )
 endmacro()

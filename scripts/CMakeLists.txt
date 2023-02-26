@@ -5,5 +5,5 @@ install(
 	enable-mini-dumps.reg
 	enable-log-files.reg
 	OpenKneeboard.wprp
-	DESTINATION scripts
+	DESTINATION scripts/
 )
