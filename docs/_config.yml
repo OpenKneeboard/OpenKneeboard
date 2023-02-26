@@ -12,7 +12,7 @@ gh_edit_branch: master
 gh_edit_source: docs
 gh_edit_view_mode: edit
 aux_links:
-  "DOWNLOAD":
+  "Download":
     - "https://go.openkneeboard.com/download"
   "Discord":
     - "https://go.openkneeboard.com/discord"
