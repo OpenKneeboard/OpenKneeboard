@@ -51,6 +51,7 @@ KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
     AddEventListener(layer->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
   AddEventListener(this->evCurrentTabChangedEvent, this->evNeedsRepaintEvent);
+  AddEventListener(this->evCursorEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     kneeboard->evSettingsChangedEvent,
     std::bind_front(&KneeboardView::UpdateUILayers, this));
