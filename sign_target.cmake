@@ -45,6 +45,8 @@ macro(add_signed_script TARGET SOURCE)
     copy_if_different
     "${SOURCE}"
     "${CMAKE_CURRENT_BINARY_DIR}/${FILE_NAME}"
+    WORKING_DIRECTORY
+    "${CMAKE_CURRENT_SOURCE_DIR}"
     SOURCES
     "${SOURCE}"
   )
