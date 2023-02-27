@@ -739,6 +739,10 @@ bool ConsumerPattern::Matches(ConsumerKind kind) const {
 }
 
 void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
+  if (!p) {
+    return;
+  }
+
   const auto sessionID = this->GetSessionID();
   if (mDevice == device && mSessionID == sessionID) [[likely]] {
     return;
@@ -748,6 +752,13 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
   }
   winrt::com_ptr<ID3D11Device5> device5;
   winrt::check_hresult(device->QueryInterface<ID3D11Device5>(device5.put()));
+
+  // Make sure we get a consistent view
+  std::unique_lock lock(*p, std::try_to_lock);
+  if (!lock.owns_lock()) {
+    dprint("Failed to acquire SHM lock in InitDXResources");
+    return;
+  }
 
   mDevice = device;
   mSessionID = sessionID;
@@ -766,19 +777,25 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
 
   winrt::handle feeder {
     OpenProcess(PROCESS_DUP_HANDLE, FALSE, p->mHeader->mFeederProcessID)};
+  if (!feeder) {
+    return;
+  }
+
   mFenceHandle = {};
-  winrt::check_hresult(DuplicateHandle(
+  DuplicateHandle(
     feeder.get(),
     p->mHeader->mFence,
     GetCurrentProcess(),
     mFenceHandle.put(),
     0,
     FALSE,
-    DUPLICATE_SAME_ACCESS));
+    DUPLICATE_SAME_ACCESS);
+  if (!mFenceHandle) {
+    return;
+  }
 
   mFence = {nullptr};
-  winrt::check_hresult(
-    device5->OpenSharedFence(mFenceHandle.get(), IID_PPV_ARGS(mFence.put())));
+  device5->OpenSharedFence(mFenceHandle.get(), IID_PPV_ARGS(mFence.put()));
 }
 
 Snapshot SingleBufferedReader::MaybeGet(
