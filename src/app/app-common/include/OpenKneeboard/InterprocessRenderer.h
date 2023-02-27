@@ -47,7 +47,6 @@ class InterprocessRenderer final
   : private EventReceiver,
     public std::enable_shared_from_this<InterprocessRenderer> {
  public:
-  InterprocessRenderer() = delete;
   ~InterprocessRenderer();
 
   static std::shared_ptr<InterprocessRenderer> Create(
@@ -55,7 +54,8 @@ class InterprocessRenderer final
     KneeboardState*);
 
  private:
-  InterprocessRenderer(const DXResources&, KneeboardState*);
+  InterprocessRenderer() = default;
+  void Init(const DXResources&, KneeboardState*);
 
   std::vector<RenderTargetID> mRenderTargetIDs;
   EventContext mEventContext;

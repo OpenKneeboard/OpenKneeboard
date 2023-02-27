@@ -133,11 +133,12 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
-  return std::shared_ptr<InterprocessRenderer>(
-    new InterprocessRenderer(dxr, kneeboard));
+  auto ret = std::shared_ptr<InterprocessRenderer>(new InterprocessRenderer());
+  ret->Init(dxr, kneeboard);
+  return ret;
 }
 
-InterprocessRenderer::InterprocessRenderer(
+void InterprocessRenderer::Init(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
   dprint(__FUNCTION__);
