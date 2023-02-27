@@ -53,12 +53,20 @@ namespace OpenKneeboard {
 
 static std::unordered_map<HWND, HWNDPageSource*> gInstances;
 static unique_hhook gHook;
+static UINT gControlMessage;
 
 std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   const DXResources& dxr,
   KneeboardState* kneeboard,
   HWND window) noexcept {
   static_assert(with_final_release<HWNDPageSource>);
+  if (!gControlMessage) {
+    gControlMessage
+      = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
+    if (!gControlMessage) {
+      dprintf("Failed to Register a window message: {}", GetLastError());
+    }
+  }
   auto ret
     = shared_with_final_release(new HWNDPageSource(dxr, kneeboard, window));
   if (!ret->HaveWindow()) {
@@ -136,11 +144,10 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
   }
 
   co_await winrt::resume_after(std::chrono::milliseconds(100));
-  static auto sControlMessage
-    = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
+
   PostMessageW(
     mWindow,
-    sControlMessage,
+    gControlMessage,
     static_cast<WPARAM>(WindowCaptureControl::WParam::Initialize),
     reinterpret_cast<LPARAM>(mWindow));
 }
@@ -355,18 +362,15 @@ void HWNDPageSource::PostCursorEvent(
     return;
   }
 
-  static auto sControlMessage
-    = RegisterWindowMessageW(WindowCaptureControl::WindowMessageName);
-
   SendMessageW(
     target,
-    sControlMessage,
+    gControlMessage,
     static_cast<WPARAM>(WindowCaptureControl::WParam::StartInjection),
     reinterpret_cast<LPARAM>(mWindow));
   const scope_guard unhook([=]() {
     SendMessageW(
       target,
-      sControlMessage,
+      gControlMessage,
       static_cast<WPARAM>(WindowCaptureControl::WParam::EndInjection),
       0);
   });
