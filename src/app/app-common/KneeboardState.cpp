@@ -165,7 +165,7 @@ void KneeboardState::PostUserAction(UserAction action) {
         mInterprocessRenderer.reset();
       } else {
         mInterprocessRenderer
-          = std::make_unique<InterprocessRenderer>(mDXResources, this);
+          = InterprocessRenderer::Create(mDXResources, this);
       }
       return;
     case UserAction::HIDE:
@@ -175,8 +175,7 @@ void KneeboardState::PostUserAction(UserAction action) {
       if (mInterprocessRenderer) {
         return;
       }
-      mInterprocessRenderer
-        = std::make_unique<InterprocessRenderer>(mDXResources, this);
+      mInterprocessRenderer = InterprocessRenderer::Create(mDXResources, this);
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
       auto& forceZoom = this->mSettings.mVR.mForceZoom;
@@ -662,8 +661,7 @@ KneeboardState::ReleaseExclusiveResources() {
 }
 
 void KneeboardState::AcquireExclusiveResources() {
-  mInterprocessRenderer
-    = std::make_unique<InterprocessRenderer>(mDXResources, this);
+  mInterprocessRenderer = InterprocessRenderer::Create(mDXResources, this);
   if (mSettings.mVR.mEnableSteamVR) {
     StartOpenVRThread();
   }

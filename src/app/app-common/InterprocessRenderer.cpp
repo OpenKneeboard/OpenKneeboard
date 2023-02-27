@@ -32,6 +32,7 @@
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/weak_wrap.h>
 #include <d3d11_4.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
@@ -129,6 +130,13 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
   mSHM.Update(config, shmLayers, mFenceHandle.get());
 }
 
+std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
+  const DXResources& dxr,
+  KneeboardState* kneeboard) {
+  return std::shared_ptr<InterprocessRenderer>(
+    new InterprocessRenderer(dxr, kneeboard));
+}
+
 InterprocessRenderer::InterprocessRenderer(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
@@ -187,28 +195,30 @@ InterprocessRenderer::InterprocessRenderer(
     }
   }
 
-  AddEventListener(
-    kneeboard->evNeedsRepaintEvent,
-    std::bind_front(&InterprocessRenderer::MarkDirty, this));
+  const auto markDirty = weak_wrap(this)([](auto self) { self->MarkDirty(); });
+
+  AddEventListener(kneeboard->evNeedsRepaintEvent, markDirty);
   AddEventListener(
     kneeboard->evGameChangedEvent,
-    std::bind_front(&InterprocessRenderer::OnGameChanged, this));
+    [weak = weak_from_this()](DWORD pid, std::shared_ptr<GameInstance> game) {
+      if (auto self = weak.lock()) {
+        self->OnGameChanged(pid, game);
+      }
+    });
 
   const auto views = kneeboard->GetAllViewsInFixedOrder();
   for (int i = 0; i < views.size(); ++i) {
     auto view = views.at(i);
     mLayers.at(i).mKneeboardView = view;
 
-    AddEventListener(
-      view->evCursorEvent,
-      std::bind_front(&InterprocessRenderer::MarkDirty, this));
+    AddEventListener(view->evCursorEvent, markDirty);
   }
 
-  AddEventListener(kneeboard->evFrameTimerEvent, [this]() {
-    if (mNeedsRepaint) {
-      RenderNow();
-    }
-  });
+  AddEventListener(kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
+                     if (self->mNeedsRepaint) {
+                       self->RenderNow();
+                     }
+                   }));
 
   this->RenderNow();
 }

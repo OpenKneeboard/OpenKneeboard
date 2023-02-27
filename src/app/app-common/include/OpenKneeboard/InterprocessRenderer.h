@@ -43,13 +43,20 @@ class ToolbarAction;
 struct GameInstance;
 struct DXResources;
 
-class InterprocessRenderer final : private EventReceiver {
+class InterprocessRenderer final
+  : private EventReceiver,
+    public std::enable_shared_from_this<InterprocessRenderer> {
  public:
   InterprocessRenderer() = delete;
-  InterprocessRenderer(const DXResources&, KneeboardState*);
   ~InterprocessRenderer();
 
+  static std::shared_ptr<InterprocessRenderer> Create(
+    const DXResources&,
+    KneeboardState*);
+
  private:
+  InterprocessRenderer(const DXResources&, KneeboardState*);
+
   std::vector<RenderTargetID> mRenderTargetIDs;
   EventContext mEventContext;
   OpenKneeboard::SHM::Writer mSHM;

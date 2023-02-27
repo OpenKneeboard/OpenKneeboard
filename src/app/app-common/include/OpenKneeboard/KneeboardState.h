@@ -149,7 +149,7 @@ class KneeboardState final
 
   std::unique_ptr<GamesList> mGamesList;
   std::unique_ptr<TabsList> mTabsList;
-  std::unique_ptr<InterprocessRenderer> mInterprocessRenderer;
+  std::shared_ptr<InterprocessRenderer> mInterprocessRenderer;
   // Initalization and destruction order must match as they both use
   // SetWindowLongPtr
   std::shared_ptr<DirectInputAdapter> mDirectInput;

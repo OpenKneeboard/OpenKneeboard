@@ -484,11 +484,6 @@ class Writer::Impl : public SHM::Impl {
   using SHM::Impl::Impl;
   bool mHaveFed = false;
   DWORD mProcessID = GetCurrentProcessId();
-
-  ~Impl() {
-    mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
-    FlushViewOfFile(mMapping, NULL);
-  }
 };
 
 Writer::Writer() {
@@ -506,6 +501,9 @@ Writer::Writer() {
 }
 
 Writer::~Writer() {
+  std::unique_lock lock(*this);
+  p->mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
+  FlushViewOfFile(p->mMapping, NULL);
 }
 
 void Writer::lock() {
