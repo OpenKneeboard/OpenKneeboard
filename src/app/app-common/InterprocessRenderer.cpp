@@ -240,9 +240,22 @@ InterprocessRenderer::~InterprocessRenderer() {
   dprint(__FUNCTION__);
   sCount--;
   this->RemoveAllEventListeners();
-  const std::unique_lock d2dLock(mDXR);
-  auto ctx = mD3DContext;
-  ctx->Flush();
+  {
+    // SHM::Writer's destructor will do this, but let's make sure to
+    // tear it down before the vtable and other members go - especially
+    // the D3D resources
+    const std::unique_lock shmLock(mSHM);
+    mSHM.Detach();
+  }
+  {
+    const std::unique_lock d2dLock(mDXR);
+    auto ctx = mD3DContext;
+    ctx->Flush();
+    // De-allocate D3D resources while we have the lock
+    mD3DContext = {};
+    mLayers = {};
+    mFence = {};
+  }
 }
 
 void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {

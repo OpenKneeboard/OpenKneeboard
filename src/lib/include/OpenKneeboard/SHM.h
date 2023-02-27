@@ -107,6 +107,8 @@ class Writer final {
   Writer();
   ~Writer();
 
+  void Detach();
+
   operator bool() const;
   void Update(
     const Config& config,

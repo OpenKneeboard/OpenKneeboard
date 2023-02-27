@@ -522,10 +522,19 @@ Writer::Writer() {
   dprint("Writer initialized.");
 }
 
-Writer::~Writer() {
-  std::unique_lock lock(*this);
+void Writer::Detach() {
+  if (!p->HaveLock()) {
+    OPENKNEEBOARD_BREAK;
+    throw std::logic_error("Need lock to detach");
+  }
+
   p->mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
   FlushViewOfFile(p->mMapping, NULL);
+}
+
+Writer::~Writer() {
+  std::unique_lock lock(*this);
+  this->Detach();
 }
 
 void Writer::lock() {
