@@ -140,11 +140,11 @@ void TabPage::InitializePointerSource() {
   panel.PointerMoved(onPointerEvent);
   panel.PointerPressed(onPointerEvent);
   panel.PointerReleased(onPointerEvent);
-    panel.PointerExited([weak](const auto&, const auto&) {
-      if (auto self = weak.get()) {
-        self->mKneeboardView->PostCursorEvent({});
-      }
-    });
+  panel.PointerExited([weak](const auto&, const auto&) {
+    if (auto self = weak.get()) {
+      self->mKneeboardView->PostCursorEvent({});
+    }
+  });
 }
 
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
@@ -415,7 +415,7 @@ void TabPage::OnCanvasSizeChanged(
   } else {
     InitializeSwapChain();
   }
-  PaintLater();
+  PaintNow();
 }
 
 void TabPage::ResizeSwapChain() {
