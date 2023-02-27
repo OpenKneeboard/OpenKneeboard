@@ -112,7 +112,7 @@ static auto MutexPath() {
 struct LayerTextureReadResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
 
-  void Populate(
+  bool Populate(
     ID3D11DeviceContext* ctx,
     uint64_t sessionID,
     uint8_t layerIndex,
@@ -124,13 +124,13 @@ struct TextureReadResources {
 
   std::array<LayerTextureReadResources, MaxLayers> mLayers;
 
-  void Populate(
+  bool Populate(
     ID3D11DeviceContext* ctx,
     uint64_t sessionID,
     uint32_t sequenceNumber);
 };
 
-void TextureReadResources::Populate(
+bool TextureReadResources::Populate(
   ID3D11DeviceContext* ctx,
   uint64_t sessionID,
   uint32_t sequenceNumber) {
@@ -143,17 +143,22 @@ void TextureReadResources::Populate(
   }
 
   for (uint8_t i = 0; i < MaxLayers; ++i) {
-    mLayers[i].Populate(ctx, sessionID, i, sequenceNumber);
+    if (!mLayers[i].Populate(ctx, sessionID, i, sequenceNumber)) {
+      *this = {};
+      return false;
+    }
   }
+
+  return true;
 }
 
-void LayerTextureReadResources::Populate(
+bool LayerTextureReadResources::Populate(
   ID3D11DeviceContext* ctx,
   uint64_t sessionID,
   uint8_t layerIndex,
   uint32_t sequenceNumber) {
   if (mTexture) {
-    return;
+    return true;
   }
 
   winrt::com_ptr<ID3D11Device> device;
@@ -165,7 +170,7 @@ void LayerTextureReadResources::Populate(
   ID3D11Device1* d1 = nullptr;
   device->QueryInterface(&d1);
   if (!d1) {
-    return;
+    return false;
   }
 
   auto result = d1->OpenSharedResourceByName(
@@ -177,9 +182,10 @@ void LayerTextureReadResources::Populate(
       L"Failed to open shared texture {}: {:#x}",
       textureName,
       std::bit_cast<uint32_t>(result));
-    return;
+    return false;
   }
   dprintf(L"Opened shared texture {}", textureName);
+  return true;
 }
 
 std::wstring SharedTextureName(
@@ -424,14 +430,21 @@ class Impl {
     TraceLoggingWriteStart(activity, "SHM::Impl::lock()");
 
     const auto result = WaitForSingleObject(mMutexHandle.get(), INFINITE);
-    if (result != WAIT_OBJECT_0) {
-      TraceLoggingWriteStop(
-        activity, "SHM::Impl::lock()", TraceLoggingValue(result, "Error"));
-      dprintf(
-        "Unexpected result from SHM WaitForSingleObject in lock(): {:#016x}",
-        static_cast<uint64_t>(result));
-      OPENKNEEBOARD_BREAK;
-      return;
+    switch (result) {
+      case WAIT_OBJECT_0:
+        // success
+        break;
+      case WAIT_ABANDONED:
+        *mHeader = {};
+        break;
+      default:
+        TraceLoggingWriteStop(
+          activity, "SHM::Impl::lock()", TraceLoggingValue(result, "Error"));
+        dprintf(
+          "Unexpected result from SHM WaitForSingleObject in lock(): {:#016x}",
+          static_cast<uint64_t>(result));
+        OPENKNEEBOARD_BREAK;
+        return;
     }
     TraceLoggingWriteStop(
       activity, "SHM::Impl::lock()", TraceLoggingValue("Success", "Result"));
@@ -446,14 +459,23 @@ class Impl {
     TraceLoggingWriteStart(activity, "SHM::Impl::try_lock()");
 
     const auto result = WaitForSingleObject(mMutexHandle.get(), 0);
-    if (result != WAIT_OBJECT_0) {
-      TraceLoggingWriteStop(
-        activity, "SHM::Impl::try_lock()", TraceLoggingValue(result, "Error"));
-      dprintf(
-        "Unexpected result from SHM WaitForSingleObject in try_lock(): "
-        "{:#016x}",
-        static_cast<uint64_t>(result));
-      return false;
+    switch (result) {
+      case WAIT_OBJECT_0:
+        // success
+        break;
+      case WAIT_TIMEOUT:
+        // expected in try_lock()
+        return false;
+      default:
+        TraceLoggingWriteStop(
+          activity,
+          "SHM::Impl::try_lock()",
+          TraceLoggingValue(result, "Error"));
+        dprintf(
+          "Unexpected result from SHM WaitForSingleObject in try_lock(): {}",
+          result);
+        OPENKNEEBOARD_BREAK;
+        return false;
     }
     mHaveLock = true;
     TraceLoggingWriteStop(
@@ -661,7 +683,9 @@ Snapshot Reader::MaybeGetUncached(
   }
 
   auto& r = p->mResources.at(p->mHeader->mSequenceNumber % TextureCount);
-  r.Populate(ctx, p->mHeader->mSessionID, p->mHeader->mSequenceNumber);
+  if (!r.Populate(ctx, p->mHeader->mSessionID, p->mHeader->mSequenceNumber)) {
+    return {};
+  }
 
   return Snapshot(*p->mHeader, ctx, fence, textures, &r);
 }
