@@ -138,10 +138,18 @@ std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
   return ret;
 }
 
+static size_t sCount = 0;
+
+InterprocessRenderer::InterprocessRenderer() {
+  dprint(__FUNCTION__);
+  if (++sCount > 1) {
+    OPENKNEEBOARD_BREAK;
+  }
+}
+
 void InterprocessRenderer::Init(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
-  dprint(__FUNCTION__);
   auto currentGame = kneeboard->GetCurrentGame();
   if (currentGame) {
     mCurrentGame = currentGame->mGameInstance.lock();
@@ -230,6 +238,7 @@ void InterprocessRenderer::MarkDirty() {
 
 InterprocessRenderer::~InterprocessRenderer() {
   dprint(__FUNCTION__);
+  sCount--;
   this->RemoveAllEventListeners();
   const std::unique_lock d2dLock(mDXR);
   auto ctx = mD3DContext;

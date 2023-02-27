@@ -54,7 +54,7 @@ class InterprocessRenderer final
     KneeboardState*);
 
  private:
-  InterprocessRenderer() = default;
+  InterprocessRenderer();
   void Init(const DXResources&, KneeboardState*);
 
   std::vector<RenderTargetID> mRenderTargetIDs;
