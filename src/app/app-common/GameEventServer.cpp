@@ -100,12 +100,30 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
     .hEvent = notifyEvent.get(),
   };
 
-  char buffer[4096];
+  /* If there's no message yet, use this buffer size.
+   *
+   * If the buffer is too small, we'll have '0 bytes read',
+   * and loop into this function again.
+   *
+   * We'll then get a good result from GetMailslotInfo(),
+   * and allocate a correctly-sized buffer.
+   */
+  const constexpr DWORD DefaultBufferSize = 4096;
+  DWORD bufferSize {DefaultBufferSize};
+  if (
+    (!GetMailslotInfo(handle.get(), nullptr, &bufferSize, nullptr, nullptr))
+    || bufferSize == MAILSLOT_NO_MESSAGE) {
+    bufferSize = DefaultBufferSize;
+  } else {
+    dprintf("Over-sized GameEvent in queue: {} bytes", bufferSize);
+  }
+
+  std::vector<char> buffer(bufferSize);
   DWORD bytesRead {};
   const auto readFileResult = ReadFile(
     handle.get(),
-    buffer,
-    static_cast<DWORD>(std::size(buffer)),
+    buffer.data(),
+    static_cast<DWORD>(buffer.size()),
     &bytesRead,
     &overlapped);
   const auto readFileError = GetLastError();
@@ -114,6 +132,7 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
     co_return true;
   }
 
+  traceprint("Waiting for GameEvent");
   co_await winrt::resume_on_signal(notifyEvent.get());
   GetOverlappedResult(handle.get(), &overlapped, &bytesRead, TRUE);
 
@@ -127,7 +146,8 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
     co_return false;
   }
 
-  auto event = GameEvent::Unserialize({buffer, bytesRead});
+  traceprint("Handling event");
+  auto event = GameEvent::Unserialize({buffer.data(), bytesRead});
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity, "GameEvent", TraceLoggingValue(event.name.c_str(), "Name"));
