@@ -87,6 +87,7 @@ ExternalProject_Add(
   -S "<SOURCE_DIR>"
   -B "<BINARY_DIR>"
   -A Win32
+  -DWITH_ASAN=${WITH_ASAN}
   BUILD_COMMAND
   echo "${CMAKE_COMMAND}"
   &&

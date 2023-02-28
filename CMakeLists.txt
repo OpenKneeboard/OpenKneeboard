@@ -33,28 +33,61 @@ cmake_policy(SET CMP0028 NEW)
 # Extract with current timestamps
 cmake_policy(SET CMP0135 NEW)
 
-# We're going to use the 'Hybrid CRT' approach, which is the combination of the
-# UCRT and the static C++ Runtime
-#
-# https://github.com/microsoft/WindowsAppSDK/blob/main/docs/Coding-Guidelines/HybridCRT.md
-
 # Enable CMAKE_MSVC_RUNTIME_LIBRARY variable
 cmake_policy(SET CMP0091 NEW)
-set(
-  CMAKE_MSVC_RUNTIME_LIBRARY
-  "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-)
 
-# For backwards-compat with third-party projects that don't have CMP0091 set
-set(
-  MSVC_RUNTIME_LIBRARY_COMPILE_OPTION
-  "/MT$<$<CONFIG:Debug>:d>"
-)
-set(
-  COMMON_LINK_OPTIONS
-  "/DEFAULTLIB:ucrt$<$<CONFIG:Debug>:d>.lib" # include the dynamic UCRT
-  "/NODEFAULTLIB:libucrt$<$<CONFIG:Debug>:d>.lib" # remove the static UCRT
-)
+option(WITH_ASAN "Build with ASAN" OFF)
+
+set(COMMON_COMPILE_OPTIONS)
+set(COMMON_LINK_OPTIONS)
+
+if(WITH_ASAN)
+  list(
+    APPEND COMMON_COMPILE_OPTIONS
+    "/fsanitize=address"
+  )
+  list(
+    APPEND COMMON_LINK_OPTIONS
+
+    # Some targets specify incremental linking, which is incompatible
+    # with ASAN; this raises a linker warning. Some projects also
+    # convert linker warnings to errors.
+    "/WX:NO"
+  )
+
+  # Link everything in a normal way so the ASAN stubs get detected
+  # correctly so the ASAN stubs get detected
+  set(
+    CMAKE_MSVC_RUNTIME_LIBRARY
+    "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+  )
+  set(
+    MSVC_RUNTIME_LIBRARY_COMPILE_OPTION
+    "/MT$<$<CONFIG:Debug>:d>"
+  )
+
+else() # (not) WITH_ASAN
+  # We're going to use the 'Hybrid CRT' approach, which is the combination of the
+  # UCRT and the static C++ Runtime
+  #
+  # https://github.com/microsoft/WindowsAppSDK/blob/main/docs/Coding-Guidelines/HybridCRT.md
+  set(
+    CMAKE_MSVC_RUNTIME_LIBRARY
+    "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+  )
+
+  # For backwards-compat with third-party projects that don't have CMP0091 set
+  set(
+    MSVC_RUNTIME_LIBRARY_COMPILE_OPTION
+    "/MT$<$<CONFIG:Debug>:d>"
+  )
+  list(
+    APPEND COMMON_LINK_OPTIONS
+    "/DEFAULTLIB:ucrt$<$<CONFIG:Debug>:d>.lib" # include the dynamic UCRT
+    "/NODEFAULTLIB:libucrt$<$<CONFIG:Debug>:d>.lib" # remove the static UCRT
+  )
+endif()
+
 add_link_options("${COMMON_LINK_OPTIONS}")
 
 if(DEFINED ENV{GITHUB_RUN_NUMBER})
@@ -82,8 +115,6 @@ message(STATUS "Compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Simulated compiler: ${CMAKE_CXX_SIMULATE_ID}")
 message(STATUS "MSVC: ${MSVC}")
 message(STATUS "CLANG_CL: ${CLANG_CL}")
-
-set(COMMON_COMPILE_OPTIONS)
 
 if(MSVC AND NOT CLANG_CL)
   list(
