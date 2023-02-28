@@ -92,7 +92,15 @@ DCSExtractedMission::DCSExtractedMission(const std::filesystem::path& zipPath)
 }
 
 DCSExtractedMission::~DCSExtractedMission() noexcept {
-  std::filesystem::remove_all(mTempDir);
+  std::error_code ec;
+  std::filesystem::remove_all(mTempDir, ec);
+  if (ec) {
+    // Expected if e.g. antivirus is looking at the folder
+    dprintf(
+      "Error removing extracted mission directory: {} ({})",
+      ec.message(),
+      ec.value());
+  }
 }
 
 std::filesystem::path DCSExtractedMission::GetZipPath() const {
