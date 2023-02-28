@@ -40,6 +40,7 @@ class GameEventServer final
  private:
   GameEventServer();
   winrt::Windows::Foundation::IAsyncAction mRunner;
+  winrt::apartment_context mUIThread;
   winrt::handle mCompletionHandle {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
 
   void Start();
@@ -49,6 +50,7 @@ class GameEventServer final
     const std::weak_ptr<GameEventServer>&,
     const winrt::handle& event,
     const winrt::file_handle&);
+  winrt::fire_and_forget DispatchEvent(std::string_view);
 };
 
 }// namespace OpenKneeboard

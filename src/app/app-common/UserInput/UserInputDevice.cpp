@@ -62,7 +62,7 @@ void UserInputDevice::OnButtonEvent(UserInputButtonEvent ev) {
     if (!foundReleasedButton) {
       continue;
     }
-    evUserActionEvent.Emit(binding.GetAction());
+    evUserActionEvent.EnqueueForContext(mUIThread, binding.GetAction());
     return;
   NEXT_BINDING:
     continue;// need a statement after label

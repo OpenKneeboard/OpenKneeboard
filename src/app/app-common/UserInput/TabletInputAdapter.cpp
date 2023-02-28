@@ -429,25 +429,36 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::GetOTDDevice(
   return device;
 }
 
-void TabletInputAdapter::OnOTDDevice(const TabletInfo& tablet) {
-  this->GetOTDDevice(tablet.mDeviceID);
+winrt::fire_and_forget TabletInputAdapter::OnOTDDevice(
+  const TabletInfo& tablet) {
+  auto weak = weak_from_this();
+  co_await mUIThread;
+  if (auto self = weak.lock()) {
+    self->GetOTDDevice(tablet.mDeviceID);
+  }
 }
 
-void TabletInputAdapter::OnOTDInput(
+winrt::fire_and_forget TabletInputAdapter::OnOTDInput(
   const std::string& id,
   const TabletState& state) {
+  auto weak = weak_from_this();
+  co_await mUIThread;
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
   auto tablet = mOTDIPC->GetTablet(id);
   if (!tablet) {
     dprint("Received OTD input without device info");
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
 
   auto device = GetOTDDevice(id);
   if (!device) {
     dprint("Received OTD input but couldn't create a TabletInputDevice");
     OPENKNEEBOARD_BREAK;
-    return;
+    co_return;
   }
 
   this->OnTabletInput(*tablet, state, device);

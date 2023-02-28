@@ -39,7 +39,8 @@ class UserInputDevice : protected EventReceiver {
   virtual std::string GetID() const = 0;
 
   virtual std::string GetButtonComboDescription(
-    const std::unordered_set<uint64_t>& ids) const = 0;
+    const std::unordered_set<uint64_t>& ids) const
+    = 0;
 
   virtual std::vector<UserInputButtonBinding> GetButtonBindings() const = 0;
   virtual void SetButtonBindings(const std::vector<UserInputButtonBinding>&)
@@ -54,6 +55,7 @@ class UserInputDevice : protected EventReceiver {
   Event<UserAction> evUserActionEvent;
 
  private:
+  winrt::apartment_context mUIThread;
   void OnButtonEvent(UserInputButtonEvent);
 
   std::unordered_set<uint64_t> mActiveButtons;

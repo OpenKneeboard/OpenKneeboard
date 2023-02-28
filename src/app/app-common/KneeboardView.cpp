@@ -294,6 +294,10 @@ D2D1_SIZE_U KneeboardView::GetContentNativeSize() const {
 }
 
 void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
+  if (winrt::apartment_context() != mUIThread) {
+    dprint("Cursor event in wrong thread!");
+    OPENKNEEBOARD_BREAK;
+  }
   if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
     mCursorCanvasPoint.reset();
   } else {

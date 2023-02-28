@@ -101,6 +101,7 @@ class KneeboardView final : public IKneeboardView,
   void SetBookmark(RelativePosition);
 
   KneeboardView(const DXResources&, KneeboardState*);
+  winrt::apartment_context mUIThread;
   KneeboardViewID mID;
   DXResources mDXR;
   KneeboardState* mKneeboard;

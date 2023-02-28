@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
+#include <shims/winrt/base.h>
+#include <winrt/Windows.Foundation.h>
 
 #include <cstdint>
 #include <functional>
@@ -186,6 +188,26 @@ class Event final : public EventBase {
   void Emit(
     Args... args,
     std::source_location location = std::source_location::current());
+
+  template <class Awaitable>
+  winrt::fire_and_forget EnqueueForContext(
+    Awaitable context,
+    Args... args,
+    std::source_location location = std::source_location::current()) {
+    co_await context;
+    this->Emit(std::forward<Args...>(args...), location);
+  }
+
+  template <class Awaitable>
+  winrt::Windows::Foundation::IAsyncAction EmitFromContextAsync(
+    Awaitable eventContext,
+    Args... args,
+    std::source_location location = std::source_location::current()) {
+    winrt::apartment_context originalContext;
+    co_await eventContext;
+    this->Emit(std::forward<Args...>(args...), location);
+    co_await originalContext;
+  }
 
   EventHookToken AddHook(Hook, EventHookToken token = {}) noexcept;
   void RemoveHook(EventHookToken) noexcept;

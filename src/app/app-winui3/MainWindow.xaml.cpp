@@ -104,15 +104,16 @@ MainWindow::MainWindow() {
     std::bind_front(&MainWindow::OnTabsChanged, this));
 
   // TODO: add to globals as 'game loop' thread
-  mDQC = DispatcherQueueController::CreateOnDedicatedThread();
-  mFrameTimer = mDQC.DispatcherQueue().CreateTimer();
+  mFrameTimer = this->DispatcherQueue().CreateTimer();
   mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
   mFrameTimer.Tick([](auto&, auto&) noexcept {
-    TraceLoggingThreadActivity<gTraceProvider> activity;
+    TraceLoggingActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "FrameTick");
-    const std::shared_lock kbLock(*gKneeboard);
-    TraceLoggingWriteTagged(activity, "Kneeboard locked");
-    gKneeboard->evFrameTimerPrepareEvent.Emit();
+    {
+      std::shared_lock kbLock(*gKneeboard);
+      TraceLoggingWriteTagged(activity, "Kneeboard locked");
+      gKneeboard->evFrameTimerPrepareEvent.Emit();
+    }
     TraceLoggingWriteTagged(activity, "Prepared to render");
     if (!gKneeboard->IsRepaintNeeded()) {
       TraceLoggingWriteStop(
@@ -122,6 +123,8 @@ MainWindow::MainWindow() {
       return;
     }
 
+    std::shared_lock kbLock(*gKneeboard);
+    TraceLoggingWriteTagged(activity, "Kneeboard locked");
     const std::unique_lock dxLock(gDXResources);
     TraceLoggingWriteTagged(activity, "DX locked");
     gKneeboard->evFrameTimerEvent.Emit();
@@ -361,10 +364,6 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   dprint("Stopping frame timer...");
   mFrameTimer.Stop();
   mFrameTimer = {nullptr};
-  dprint("Stopping dispatch queue...");
-  co_await mDQC.ShutdownQueueAsync();
-  mDQC = {nullptr};
-  dprint("Frame thread shutdown.");
   mKneeboardView = {};
 
   for (const auto& weakTab: gTabs) {

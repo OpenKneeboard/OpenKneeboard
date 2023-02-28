@@ -114,8 +114,6 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
     (!GetMailslotInfo(handle.get(), nullptr, &bufferSize, nullptr, nullptr))
     || bufferSize == MAILSLOT_NO_MESSAGE) {
     bufferSize = DefaultBufferSize;
-  } else {
-    dprintf("Over-sized GameEvent in queue: {} bytes", bufferSize);
   }
 
   std::vector<char> buffer(bufferSize);
@@ -143,33 +141,44 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
 
   auto self = instance.lock();
   if (!self) {
+    dprint("Failed to acquire self");
     co_return false;
   }
 
+  self->DispatchEvent({buffer.data(), bytesRead});
+  co_return true;
+}
+
+winrt::fire_and_forget GameEventServer::DispatchEvent(std::string_view ref) {
+  const std::string buffer(ref);
+
+  const auto stayingAlive = shared_from_this();
+  co_await winrt::resume_background();
+
   traceprint("Handling event");
-  auto event = GameEvent::Unserialize({buffer.data(), bytesRead});
+  auto event = GameEvent::Unserialize(buffer);
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity, "GameEvent", TraceLoggingValue(event.name.c_str(), "Name"));
   const scope_guard stopActivity(
     [&activity]() { TraceLoggingWriteStop(activity, "GameEvent"); });
   if (event.name != GameEvent::EVT_MULTI_EVENT) {
-    self->evGameEvent.Emit(event);
-    co_return true;
+    this->evGameEvent.EnqueueForContext(mUIThread, event);
+    co_return;
   }
 
   std::vector<std::tuple<std::string, std::string>> events;
   events = nlohmann::json::parse(event.value);
   for (const auto& [name, value]: events) {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingActivity<gTraceProvider> subActivity;
     TraceLoggingWriteStart(
       subActivity, "GameEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
-    self->evGameEvent.Emit({name, value});
+    co_await this->evGameEvent.EmitFromContextAsync(mUIThread, {name, value});
     TraceLoggingWriteStop(
       subActivity, "GameEvent/Multi", TraceLoggingValue(name.c_str(), "Name"));
   }
 
-  co_return true;
+  co_return;
 }
 
 }// namespace OpenKneeboard

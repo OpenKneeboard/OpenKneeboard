@@ -11,6 +11,7 @@ target_link_libraries(
   PUBLIC
   ThirdParty::JSON
 )
+target_link_windows_app_sdk(OpenKneeboard-App-Common)
 target_link_libraries(
   OpenKneeboard-App-Common
   PRIVATE

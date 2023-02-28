@@ -74,6 +74,8 @@ class TabletInputAdapter final
   void StartOTDIPC();
   void StopOTDIPC();
 
+  winrt::apartment_context mUIThread;
+
   KneeboardState* mKneeboard;
   TabletSettings mSettings;
   std::unordered_map<std::string, uint32_t> mAuxButtons;
@@ -92,8 +94,8 @@ class TabletInputAdapter final
 
   ///// OpenTabletDriver /////
 
-  void OnOTDInput(const std::string& id, const TabletState&);
-  void OnOTDDevice(const TabletInfo&);
+  winrt::fire_and_forget OnOTDInput(const std::string& id, const TabletState&);
+  winrt::fire_and_forget OnOTDDevice(const TabletInfo&);
   std::shared_ptr<TabletInputDevice> GetOTDDevice(const std::string& id);
 
   std::shared_ptr<OTDIPCClient> mOTDIPC;

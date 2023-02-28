@@ -138,6 +138,7 @@ class KneeboardState final
   std::shared_mutex mMutex;
   bool mHaveUniqueLock = false;
   bool mNeedsRepaint = false;
+  winrt::apartment_context mUIThread;
   HWND mHwnd;
   DXResources mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};

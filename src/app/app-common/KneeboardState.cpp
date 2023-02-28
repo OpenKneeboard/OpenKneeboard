@@ -159,6 +159,11 @@ std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
 }
 
 void KneeboardState::PostUserAction(UserAction action) {
+  if (winrt::apartment_context() != mUIThread) {
+    dprint("User action in wrong thread!");
+    OPENKNEEBOARD_BREAK;
+  }
+
   switch (action) {
     case UserAction::TOGGLE_VISIBILITY:
       if (mInterprocessRenderer) {
@@ -276,6 +281,10 @@ void KneeboardState::OnGameChangedEvent(
 }
 
 void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
+  if (winrt::apartment_context() != mUIThread) {
+    dprint("Game event in wrong thread!");
+    OPENKNEEBOARD_BREAK;
+  }
   TroubleshootingStore::Get()->OnGameEvent(ev);
 
   const auto tabs = mTabsList->GetTabs();
