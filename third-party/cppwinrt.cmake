@@ -1,11 +1,11 @@
 include(ExternalProject)
 
 # Used for nuget
-set(CPPWINRT_VERSION "2.0.221121.5" CACHE INTERNAL "")
+set(CPPWINRT_VERSION "2.0.230225.1" CACHE INTERNAL "")
 ExternalProject_Add(
   CppWinRTNuget
-  URL "https://www.nuget.org/api/v2/package/Microsoft.Windows.CppWinRT/2.0.221121.5"
-  URL_HASH "SHA256=14fdc0826b85c0cbb1a9301a4dc0bf18627d6d0e001184a61364bd19fe51f877"
+  URL "https://www.nuget.org/api/v2/package/Microsoft.Windows.CppWinRT/2.0.230225.1"
+  URL_HASH "SHA256=83d2584bb63ea7180de73147a7e63e24371fa832fa79c00e500695a709d51749"
 
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
