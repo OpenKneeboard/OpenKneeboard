@@ -24,6 +24,7 @@
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/final_release_deleter.h>
 #include <d2d1.h>
 #include <d2d1_1.h>
 #include <d3d11.h>
@@ -48,6 +49,8 @@ class InterprocessRenderer final
     public std::enable_shared_from_this<InterprocessRenderer> {
  public:
   ~InterprocessRenderer();
+  static winrt::fire_and_forget final_release(
+    std::unique_ptr<InterprocessRenderer>);
 
   static std::shared_ptr<InterprocessRenderer> Create(
     const DXResources&,
@@ -56,6 +59,12 @@ class InterprocessRenderer final
  private:
   InterprocessRenderer();
   void Init(const DXResources&, KneeboardState*);
+
+  // If we replace the shared_ptr while a draw is in progress,
+  // we need to delay things a little
+  static std::mutex sSingleInstance;
+  std::unique_lock<std::mutex> mInstanceLock;
+  winrt::apartment_context mOwnerThread;
 
   std::vector<RenderTargetID> mRenderTargetIDs;
   EventContext mEventContext;
@@ -70,6 +79,7 @@ class InterprocessRenderer final
   winrt::com_ptr<ID3D11DeviceContext4> mD3DContext;
   winrt::com_ptr<ID3D11Fence> mFence;
   winrt::handle mFenceHandle;
+  std::atomic_flag mRendering;
 
   struct SharedTextureResources {
     winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;

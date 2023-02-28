@@ -26,6 +26,8 @@
 #include <shims/winrt/base.h>
 #include <wincodec.h>
 
+#include <source_location>
+
 namespace OpenKneeboard {
 
 /** Direct2D/Direct3D/DXGI resources we want to share between multiple objects.
@@ -50,6 +52,11 @@ struct DXResources {
   winrt::com_ptr<IDWriteFactory> mDWriteFactory;
 
   winrt::com_ptr<IWICImagingFactory> mWIC;
+
+  // Use like push/pop, but only one is allowed at a time; this exists
+  // to get better debugging information/breakpoints when that's not the case
+  void PushD2DDraw(std::source_location = std::source_location::current());
+  HRESULT PopD2DDraw();
 
   static DXResources Create();
 

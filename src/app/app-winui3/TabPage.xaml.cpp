@@ -468,9 +468,9 @@ void TabPage::PaintNow() noexcept {
   winrt::check_hresult(
     ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
   ctx->SetTarget(bitmap.get());
-  ctx->BeginDraw();
+  gDXResources.PushD2DDraw();
   const auto cleanup = scope_guard([ctx, this]() {
-    ctx->EndDraw();
+    gDXResources.PopD2DDraw();
     ctx->SetTarget(nullptr);
     mSwapChain->Present(0, 0);
     mNeedsFrame = false;

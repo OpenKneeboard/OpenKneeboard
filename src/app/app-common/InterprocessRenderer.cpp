@@ -133,18 +133,21 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
-  auto ret = std::shared_ptr<InterprocessRenderer>(new InterprocessRenderer());
+  auto ret = shared_with_final_release(new InterprocessRenderer());
   ret->Init(dxr, kneeboard);
   return ret;
 }
 
-static size_t sCount = 0;
+winrt::fire_and_forget InterprocessRenderer::final_release(
+  std::unique_ptr<InterprocessRenderer> it) {
+  // Delete in the correct thread
+  co_await it->mOwnerThread;
+}
 
-InterprocessRenderer::InterprocessRenderer() {
+std::mutex InterprocessRenderer::sSingleInstance;
+
+InterprocessRenderer::InterprocessRenderer() : mInstanceLock(sSingleInstance) {
   dprint(__FUNCTION__);
-  if (++sCount > 1) {
-    OPENKNEEBOARD_BREAK;
-  }
 }
 
 void InterprocessRenderer::Init(
@@ -223,13 +226,13 @@ void InterprocessRenderer::Init(
     AddEventListener(view->evCursorEvent, markDirty);
   }
 
+  this->RenderNow();
+
   AddEventListener(kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
                      if (self->mNeedsRepaint) {
                        self->RenderNow();
                      }
                    }));
-
-  this->RenderNow();
 }
 
 void InterprocessRenderer::MarkDirty() {
@@ -238,7 +241,6 @@ void InterprocessRenderer::MarkDirty() {
 
 InterprocessRenderer::~InterprocessRenderer() {
   dprint(__FUNCTION__);
-  sCount--;
   this->RemoveAllEventListeners();
   {
     // SHM::Writer's destructor will do this, but let's make sure to
@@ -261,9 +263,9 @@ InterprocessRenderer::~InterprocessRenderer() {
 void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
   auto ctx = mDXR.mD2DDeviceContext;
   ctx->SetTarget(layer.mCanvasBitmap.get());
-  ctx->BeginDraw();
+  mDXR.PushD2DDraw();
   const scope_guard endDraw {
-    [&, this]() { winrt::check_hresult(ctx->EndDraw()); }};
+    [this]() { winrt::check_hresult(this->mDXR.PopD2DDraw()); }};
 
   ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
@@ -295,6 +297,13 @@ void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
 }
 
 void InterprocessRenderer::RenderNow() {
+  if (mRendering.test_and_set()) {
+    dprint("Two renders in the same instance");
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  const scope_guard markDone([this]() { mRendering.clear(); });
+
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
 
   if (mRenderTargetIDs.size() < renderInfos.size()) {

@@ -113,6 +113,42 @@ DXResources DXResources::Create() {
   return ret;
 }
 
+namespace {
+std::mutex gCurrentDrawMutex;
+struct DrawInfo {
+  std::source_location mLocation;
+  DWORD mThreadID;
+};
+std::optional<DrawInfo> gCurrentDraw;
+}// namespace
+
+void DXResources::PushD2DDraw(std::source_location loc) {
+  {
+    std::unique_lock lock(gCurrentDrawMutex);
+    if (gCurrentDraw) {
+      const auto& prev = *gCurrentDraw;
+      dprintf(
+        "Draw already in progress from {}:{} ({}) thread {}",
+        prev.mLocation.file_name(),
+        prev.mLocation.line(),
+        prev.mLocation.function_name(),
+        prev.mThreadID);
+      OPENKNEEBOARD_BREAK;
+    } else {
+      gCurrentDraw = {loc, GetCurrentThreadId()};
+    }
+  }
+  mD2DDeviceContext->BeginDraw();
+}
+
+HRESULT DXResources::PopD2DDraw() {
+  {
+    std::unique_lock lock(gCurrentDrawMutex);
+    gCurrentDraw = {};
+  }
+  return mD2DDeviceContext->EndDraw();
+}
+
 static std::recursive_mutex gMutex;
 
 void DXResources::lock() {
