@@ -157,7 +157,7 @@ winrt::fire_and_forget GameEventServer::DispatchEvent(std::string_view ref) {
 
   traceprint("Handling event");
   auto event = GameEvent::Unserialize(buffer);
-  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity, "GameEvent", TraceLoggingValue(event.name.c_str(), "Name"));
   const scope_guard stopActivity(
