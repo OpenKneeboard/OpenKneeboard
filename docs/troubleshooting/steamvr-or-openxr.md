@@ -20,4 +20,8 @@ If this does not solve the problem, try unplugging any graphics tablets (e.g. Wa
 
 ## Kneeboard Is Visible In SteamVR, But Not OpenXR
 
-Select "Enable for all users" for OpenXR, in OpenKneeboard's VR settings page.
+Make sure OpenXR support is enabled in OpenKneeboard's VR settings page.
+
+## Kneeboard Is Visible In OpenXR, But Not SteamVR
+
+Make sure SteamVR support is enabled in OpenKneeboard's VR settings page.
