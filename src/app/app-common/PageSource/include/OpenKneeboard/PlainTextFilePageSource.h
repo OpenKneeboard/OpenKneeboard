@@ -52,6 +52,7 @@ class PlainTextFilePageSource final
   void Reload();
 
  private:
+  winrt::apartment_context mUIThread;
   std::filesystem::path mPath;
   std::filesystem::file_time_type mLastWriteTime;
   std::shared_ptr<PlainTextPageSource> mPageSource;

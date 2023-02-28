@@ -21,6 +21,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/weak_wrap.h>
 
 namespace OpenKneeboard {
 
@@ -47,10 +48,11 @@ BookmarksUILayer::BookmarksUILayer(
   d2d->CreateSolidColorBrush(
     {0.0f, 0.8f, 1.0f, 1.0f}, D2D1::BrushProperties(), mHoverBrush.put());
 
-  AddEventListener(mKneeboardView->evBookmarksChangedEvent, [this]() {
-    mButtons = {};
-    this->evNeedsRepaintEvent.Emit();
-  });
+  AddEventListener(
+    mKneeboardView->evBookmarksChangedEvent, weak_wrap(this)([](auto self) {
+      self->mButtons = {};
+      self->evNeedsRepaintEvent.Emit();
+    }));
 }
 
 BookmarksUILayer::~BookmarksUILayer() {

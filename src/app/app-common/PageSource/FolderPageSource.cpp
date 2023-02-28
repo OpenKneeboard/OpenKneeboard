@@ -46,7 +46,9 @@ std::shared_ptr<FolderPageSource> FolderPageSource::Create(
   return ret;
 }
 
-FolderPageSource::~FolderPageSource() = default;
+FolderPageSource::~FolderPageSource() {
+  this->RemoveAllEventListeners();
+}
 
 winrt::fire_and_forget FolderPageSource::Reload() noexcept {
   const auto weakThis = this->weak_from_this();

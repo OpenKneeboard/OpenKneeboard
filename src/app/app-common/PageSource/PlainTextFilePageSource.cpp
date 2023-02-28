@@ -92,13 +92,16 @@ winrt::fire_and_forget PlainTextFilePageSource::SubscribeToChanges() noexcept {
   auto folder = co_await StorageFolder::GetFolderFromPathAsync(
     mPath.parent_path().wstring());
   mQueryResult = folder.CreateFileQuery();
-  mQueryResult.ContentsChanged([weakThis](const auto&, const auto&) {
-    auto strongThis = weakThis.lock();
-    if (!strongThis) {
-      return;
-    }
-    strongThis->OnFileModified();
-  });
+  mQueryResult.ContentsChanged(
+    [weakThis, uiThread = mUIThread](
+      const auto&, const auto&) -> winrt::fire_and_forget {
+      co_await uiThread;
+      auto strongThis = weakThis.lock();
+      if (!strongThis) {
+        co_return;
+      }
+      strongThis->OnFileModified();
+    });
   // Must fetch results once to make the query active
   co_await mQueryResult.GetFilesAsync();
 }
