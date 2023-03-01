@@ -50,7 +50,10 @@ class TroubleshootingStore final : private EventReceiver {
 
   struct DPrintEntry {
     std::chrono::system_clock::time_point mWhen;
-    DPrintMessage mMessage;
+    DWORD mProcessID {};
+    std::wstring mExecutable;
+    std::wstring mPrefix;
+    std::wstring mMessage;
   };
 
   void OnGameEvent(const GameEvent&);

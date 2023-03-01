@@ -147,10 +147,10 @@ void TroubleshootingStore::WriteDPrintMessageToLogFile(
     std::chrono::zoned_time(
       std::chrono::current_zone(),
       std::chrono::time_point_cast<std::chrono::seconds>(entry.mWhen)),
-    std::filesystem::path(entry.mMessage.mExecutable).filename().string(),
-    entry.mMessage.mProcessID,
-    winrt::to_string(entry.mMessage.mPrefix),
-    winrt::to_string(entry.mMessage.mMessage))
+    std::filesystem::path(entry.mExecutable).filename().string(),
+    entry.mProcessID,
+    winrt::to_string(entry.mPrefix),
+    winrt::to_string(entry.mMessage))
             << std::endl;
 }
 
@@ -199,7 +199,13 @@ TroubleshootingStore::GetDPrintMessages() const {
 
 void TroubleshootingStore::DPrintReceiver::OnMessage(
   const DPrintMessage& message) {
-  DPrintEntry entry {std::chrono::system_clock::now(), message};
+  const DPrintEntry entry {
+    .mWhen = std::chrono::system_clock::now(),
+    .mProcessID = message.mProcessID,
+    .mExecutable = message.mExecutable,
+    .mPrefix = message.mPrefix,
+    .mMessage = message.mMessage,
+  };
   {
     std::unique_lock lock(mMutex);
     mMessages.push_back(entry);

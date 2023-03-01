@@ -61,9 +61,7 @@ HelpPage::HelpPage() {
 
   AddEventListener(
     TroubleshootingStore::Get()->evGameEventReceived,
-    std::bind_front(
-    &HelpPage::PopulateEvents,
-    this));
+    std::bind_front(&HelpPage::PopulateEvents, this));
 
   auto weakThis = this->get_weak();
   AddEventListener(
@@ -263,7 +261,7 @@ winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
       text += L'\n';
     }
 
-    auto exe = std::wstring_view(entry.mMessage.mExecutable);
+    auto exe = std::wstring_view(entry.mExecutable);
     {
       auto dirSep = exe.find_last_of(L'\\');
       if (dirSep != exe.npos && dirSep + 1 < exe.size()) {
@@ -275,9 +273,9 @@ winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
       L"[{:%F %T} {} ({})] {}: {}",
       ReadableTime(entry.mWhen),
       exe,
-      entry.mMessage.mProcessID,
-      entry.mMessage.mPrefix,
-      entry.mMessage.mMessage);
+      entry.mProcessID,
+      entry.mPrefix,
+      entry.mMessage);
   }
 
   mDPrintClipboardData = text;
