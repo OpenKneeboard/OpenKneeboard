@@ -38,6 +38,7 @@ This section only applies when using Huion's driver.
 1. There is a small switch on one edge of the tablet; try switching it to the other position. This should be labelled as "Press Key Lock" in the manual for your specific tablet.
 2. Remove any existing drivers
 3. Install the latest driver from Huion
+4. Make sure your bindings are using the remote control exes in `C:\Program Files\OpenKneeboard\utilities` - not `ProgramData` or any other location. **This is particularly likely to be an issue if you upgraded from v1.2 or below**.
 
 ## Only a small area of the tablet works
 
