@@ -69,7 +69,8 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
     auto folder
       = co_await StorageFolder::GetFolderFromPathAsync(mPath.wstring());
     mQueryResult = folder.CreateFileQuery(CommonFileQuery::OrderByName);
-    mQueryResult.ContentsChanged([weakThis](const auto&, const auto&) {
+    co_await winrt::resume_background();
+    mQueryResult.ContentsChanged([weakThis](auto result, const auto&) {
       const auto strongThis = weakThis.lock();
       if (!strongThis) {
         return;
@@ -82,16 +83,36 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
 
   co_await mUIThread;
 
-  std::vector<std::shared_ptr<IPageSource>> delegates;
+  decltype(mContents) newContents;
+  bool modifiedOrNew = false;
   for (const auto& file: files) {
-    std::filesystem::path path(std::wstring_view {file.Path()});
+    const std::filesystem::path path(std::wstring_view {file.Path()});
+    const auto mtime = std::filesystem::last_write_time(path);
+    auto it = mContents.find(path);
+    if (it != mContents.end() && it->second.mModified == mtime) {
+      newContents[path] = it->second;
+      continue;
+    }
     auto delegate = FilePageSource::Create(mDXR, mKneeboard, path);
     if (delegate) {
-      delegates.push_back(std::move(delegate));
+      modifiedOrNew = true;
+      newContents[path] = {mtime, delegate};
     }
   }
 
+  if (newContents.size() == mContents.size() && !modifiedOrNew) {
+    dprintf(L"No actual change to {}", mPath.wstring());
+    co_return;
+  }
+  dprintf(L"Real change to {}", mPath.wstring());
+
+  std::vector<std::shared_ptr<IPageSource>> delegates;
+  for (const auto& [path, info]: newContents) {
+    delegates.push_back(info.mDelegate);
+  }
+
   EventDelay eventDelay;
+  mContents = newContents;
   this->SetDelegates(delegates);
 }
 

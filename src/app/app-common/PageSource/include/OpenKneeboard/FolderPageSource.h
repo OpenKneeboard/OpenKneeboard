@@ -57,6 +57,11 @@ class FolderPageSource final
   KneeboardState* mKneeboard = nullptr;
 
   std::filesystem::path mPath;
+  struct DelegateInfo {
+    std::filesystem::file_time_type mModified;
+    std::shared_ptr<IPageSource> mDelegate;
+  };
+  std::map<std::filesystem::path, DelegateInfo> mContents;
 
   winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
     nullptr};
