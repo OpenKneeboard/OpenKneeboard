@@ -52,8 +52,11 @@ DXResources DXResources::Create() {
     DXGI_ADAPTER_DESC1 desc {};
     adapterIt->GetDesc1(&desc);
     dprintf(
-      L"  GPU {}: {:04x}:{:04x}: '{}' ({}mb){}",
+      L"  GPU {} (LUID {:#x}): {:04x}:{:04x}: '{}' ({}mb){}",
       i,
+      std::bit_cast<uint64_t>(desc.AdapterLuid),
+      sizeof(uint64_t),
+      sizeof(LUID),
       desc.VendorId,
       desc.DeviceId,
       desc.Description,
