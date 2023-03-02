@@ -19,6 +19,7 @@
  */
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/SHM.h>
@@ -39,42 +40,37 @@ using namespace DirectX::SimpleMath;
 namespace OpenKneeboard {
 
 OpenVRKneeboard::OpenVRKneeboard() {
-  D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_1;
-  winrt::com_ptr<ID3D11Device> device;
-  winrt::check_hresult(D3D11CreateDevice(
-    nullptr,
-    D3D_DRIVER_TYPE_HARDWARE,
-    nullptr,
-#ifdef DEBUG
-    D3D11_CREATE_DEVICE_DEBUG,
-#else
-    0,
-#endif
-    &level,
-    1,
-    D3D11_SDK_VERSION,
-    device.put(),
-    nullptr,
-    nullptr));
-  mD3D = device.as<ID3D11Device1>();
+  {
+    // Use DXResources to share the GPU selection logic
+    auto dxr = DXResources::Create();
+    mD3D = dxr.mD3DDevice;
+    winrt::com_ptr<IDXGIAdapter> adapter;
+    dxr.mDXGIDevice->GetAdapter(adapter.put());
+    DXGI_ADAPTER_DESC desc;
+    adapter->GetDesc(&desc);
+    dprintf(
+      L"SteamVR running on adapter '{}' (LUID {:#x})",
+      desc.Description,
+      std::bit_cast<uint64_t>(desc.AdapterLuid));
+  }
 
   for (uint8_t i = 0; i < MaxLayers; ++i) {
     auto& layer = mLayers.at(i);
     layer.mOpenVRTexture = SHM::CreateCompatibleTexture(
-      device.get(), D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_SHARED);
+      mD3D.get(), D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_SHARED);
     winrt::check_hresult(
       layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
         &layer.mSharedHandle));
   }
 
-  mBufferTexture = SHM::CreateCompatibleTexture(device.get());
+  mBufferTexture = SHM::CreateCompatibleTexture(mD3D.get());
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };
-  winrt::check_hresult(device->CreateRenderTargetView(
+  winrt::check_hresult(mD3D->CreateRenderTargetView(
     mBufferTexture.get(), &rtvd, mRenderTargetView.put()));
 }
 

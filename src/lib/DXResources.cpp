@@ -24,6 +24,17 @@
 
 namespace OpenKneeboard {
 
+struct DXResources::Locks {
+  std::recursive_mutex mMutex;
+
+  std::mutex mCurrentDrawMutex;
+  struct DrawInfo {
+    std::source_location mLocation;
+    DWORD mThreadID;
+  };
+  std::optional<DrawInfo> mCurrentDraw;
+};
+
 DXResources DXResources::Create() {
   DXResources ret;
 
@@ -52,7 +63,7 @@ DXResources DXResources::Create() {
     DXGI_ADAPTER_DESC1 desc {};
     adapterIt->GetDesc1(&desc);
     dprintf(
-      L"  GPU {} (LUID {:#x}): {:04x}:{:04x}: '{}' ({}mb){}",
+      L"  GPU {} (LUID {:#x}): {:04x}:{:04x}: '{}' ({}mb) {}",
       i,
       std::bit_cast<uint64_t>(desc.AdapterLuid),
       sizeof(uint64_t),
@@ -113,23 +124,16 @@ DXResources DXResources::Create() {
   ret.mWIC
     = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
 
+  ret.mLocks = std::make_shared<Locks>();
+
   return ret;
 }
 
-namespace {
-std::mutex gCurrentDrawMutex;
-struct DrawInfo {
-  std::source_location mLocation;
-  DWORD mThreadID;
-};
-std::optional<DrawInfo> gCurrentDraw;
-}// namespace
-
 void DXResources::PushD2DDraw(std::source_location loc) {
   {
-    std::unique_lock lock(gCurrentDrawMutex);
-    if (gCurrentDraw) {
-      const auto& prev = *gCurrentDraw;
+    std::unique_lock lock(mLocks->mCurrentDrawMutex);
+    if (mLocks->mCurrentDraw) {
+      const auto& prev = *mLocks->mCurrentDraw;
       dprintf(
         "Draw already in progress from {}:{} ({}) thread {}",
         prev.mLocation.file_name(),
@@ -138,7 +142,7 @@ void DXResources::PushD2DDraw(std::source_location loc) {
         prev.mThreadID);
       OPENKNEEBOARD_BREAK;
     } else {
-      gCurrentDraw = {loc, GetCurrentThreadId()};
+      mLocks->mCurrentDraw = {loc, GetCurrentThreadId()};
     }
   }
   mD2DDeviceContext->BeginDraw();
@@ -146,13 +150,11 @@ void DXResources::PushD2DDraw(std::source_location loc) {
 
 HRESULT DXResources::PopD2DDraw() {
   {
-    std::unique_lock lock(gCurrentDrawMutex);
-    gCurrentDraw = {};
+    std::unique_lock lock(mLocks->mCurrentDrawMutex);
+    mLocks->mCurrentDraw = {};
   }
   return mD2DDeviceContext->EndDraw();
 }
-
-static std::recursive_mutex gMutex;
 
 void DXResources::lock() {
   // If we've locked D2D, we don't need to separately lock D3D; keeping it here
@@ -167,15 +169,15 @@ void DXResources::lock() {
   // In the end, we use an std::recursive_mutex anyway:
   // - it's sufficient
   // - it avoids interferring with XAML, or the WinRT PDF renderer
-  gMutex.lock();
+  mLocks->mMutex.lock();
 }
 
 void DXResources::unlock() {
-  gMutex.unlock();
+  mLocks->mMutex.unlock();
 }
 
 bool DXResources::try_lock() {
-  return gMutex.try_lock();
+  return mLocks->mMutex.try_lock();
 }
 
 };// namespace OpenKneeboard

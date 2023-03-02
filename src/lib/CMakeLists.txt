@@ -300,6 +300,7 @@ ok_add_library(OpenKneeboard-OpenVRKneeboard STATIC OpenVRKneeboard.cpp)
 target_link_libraries(
   OpenKneeboard-OpenVRKneeboard
   PUBLIC
+  OpenKneeboard-DXResources
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
   ThirdParty::DirectXTK

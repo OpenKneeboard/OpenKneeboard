@@ -64,6 +64,10 @@ struct DXResources {
   void lock();
   bool try_lock();
   void unlock();
+
+ private:
+  struct Locks;
+  std::shared_ptr<Locks> mLocks;
 };
 
 }// namespace OpenKneeboard
