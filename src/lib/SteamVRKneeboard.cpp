@@ -20,9 +20,9 @@
 #include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/SteamVRKneeboard.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <TlHelp32.h>
@@ -39,7 +39,7 @@ using namespace DirectX::SimpleMath;
 
 namespace OpenKneeboard {
 
-OpenVRKneeboard::OpenVRKneeboard() {
+SteamVRKneeboard::SteamVRKneeboard() {
   {
     // Use DXResources to share the GPU selection logic
     auto dxr = DXResources::Create();
@@ -74,11 +74,11 @@ OpenVRKneeboard::OpenVRKneeboard() {
     mBufferTexture.get(), &rtvd, mRenderTargetView.put()));
 }
 
-OpenVRKneeboard::~OpenVRKneeboard() {
+SteamVRKneeboard::~SteamVRKneeboard() {
   this->Reset();
 }
 
-void OpenVRKneeboard::Reset() {
+void SteamVRKneeboard::Reset() {
   if (!mIVRSystem) {
     return;
   }
@@ -105,7 +105,7 @@ static bool overlay_check(vr::EVROverlayError err, const char* method) {
   return false;
 }
 
-bool OpenVRKneeboard::InitializeOpenVR() {
+bool SteamVRKneeboard::InitializeOpenVR() {
   if (mIVRSystem && mIVROverlay) {
     return true;
   }
@@ -162,11 +162,11 @@ bool OpenVRKneeboard::InitializeOpenVR() {
   return true;
 }
 
-float OpenVRKneeboard::GetDisplayTime() {
+float SteamVRKneeboard::GetDisplayTime() {
   return 0.0f;// FIXME
 }
 
-void OpenVRKneeboard::Tick() {
+void SteamVRKneeboard::Tick() {
 #define CHECK(method, ...) \
   if (!overlay_check(mIVROverlay->method(__VA_ARGS__), #method)) { \
     this->Reset(); \
@@ -306,7 +306,7 @@ void OpenVRKneeboard::Tick() {
 #undef CHECK
 }
 
-void OpenVRKneeboard::HideAllOverlays() {
+void SteamVRKneeboard::HideAllOverlays() {
   for (auto& layerState: mLayers) {
     if (layerState.mVisible) {
       layerState.mVisible = false;
@@ -315,7 +315,7 @@ void OpenVRKneeboard::HideAllOverlays() {
   }
 }
 
-std::optional<OpenVRKneeboard::Pose> OpenVRKneeboard::GetHMDPose(
+std::optional<SteamVRKneeboard::Pose> SteamVRKneeboard::GetHMDPose(
   float displayTime) {
   static uint64_t sCacheKey = ~(0ui64);
   static Pose sCache {};
@@ -377,7 +377,7 @@ static bool IsSteamVRRunning() {
   return false;
 }
 
-bool OpenVRKneeboard::Run(std::stop_token stopToken) {
+bool SteamVRKneeboard::Run(std::stop_token stopToken) {
   if (!vr::VR_IsRuntimeInstalled()) {
     dprint("Stopping OpenVR support, no runtime installed.");
     return true;

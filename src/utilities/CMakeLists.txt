@@ -28,7 +28,7 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-consolelib
   OpenKneeboard-dprint
-  OpenKneeboard-OpenVRKneeboard
+  OpenKneeboard-SteamVRKneeboard
   OpenKneeboard-SHM
   ThirdParty::DirectXTK
   System::D2d1

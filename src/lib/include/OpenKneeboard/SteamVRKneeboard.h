@@ -34,10 +34,10 @@
 
 namespace OpenKneeboard {
 
-class OpenVRKneeboard final : private VRKneeboard {
+class SteamVRKneeboard final : private VRKneeboard {
  public:
-  OpenVRKneeboard();
-  ~OpenVRKneeboard();
+  SteamVRKneeboard();
+  ~SteamVRKneeboard();
 
   bool Run(std::stop_token);
 

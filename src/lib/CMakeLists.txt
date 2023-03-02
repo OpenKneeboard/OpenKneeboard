@@ -296,9 +296,9 @@ target_link_libraries(
   _libheaders
 )
 
-ok_add_library(OpenKneeboard-OpenVRKneeboard STATIC OpenVRKneeboard.cpp)
+ok_add_library(OpenKneeboard-SteamVRKneeboard STATIC SteamVRKneeboard.cpp)
 target_link_libraries(
-  OpenKneeboard-OpenVRKneeboard
+  OpenKneeboard-SteamVRKneeboard
   PUBLIC
   OpenKneeboard-DXResources
   OpenKneeboard-VRKneeboard
@@ -308,7 +308,7 @@ target_link_libraries(
   _libheaders
 )
 target_link_libraries(
-  OpenKneeboard-OpenVRKneeboard
+  OpenKneeboard-SteamVRKneeboard
   PRIVATE
   OpenKneeboard-D3D11
   OpenKneeboard-dprint

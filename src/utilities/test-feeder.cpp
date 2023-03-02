@@ -22,8 +22,8 @@
 #include <D3d11.h>
 #include <DirectXTK/PostProcess.h>
 #include <OpenKneeboard/ConsoleLoopCondition.h>
-#include <OpenKneeboard/OpenVRKneeboard.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/SteamVRKneeboard.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -67,7 +67,7 @@ int main() {
   });
   std::jthread OpenVRThread {[](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");
-    OpenVRKneeboard().Run(stopToken);
+    SteamVRKneeboard().Run(stopToken);
   }};
 
   D2D1_COLOR_F colors[] = {

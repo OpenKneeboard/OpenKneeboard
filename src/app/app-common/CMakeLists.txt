@@ -23,7 +23,7 @@ target_link_libraries(
   OpenKneeboard-PDFNavigation
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-RuntimeFiles
-  OpenKneeboard-OpenVRKneeboard
+  OpenKneeboard-SteamVRKneeboard
   OpenKneeboard-OpenXRMode
   OpenKneeboard-SHM
   OpenKneeboard-UTF8
