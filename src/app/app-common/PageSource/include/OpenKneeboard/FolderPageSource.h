@@ -20,9 +20,9 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <shims/winrt/base.h>
-#include <winrt/Windows.Storage.Search.h>
 
 #include <memory>
 #include <shims/filesystem>
@@ -51,7 +51,11 @@ class FolderPageSource final
   winrt::fire_and_forget Reload() noexcept;
 
  private:
+  void SubscribeToChanges();
+  void OnFileModified(const std::filesystem::path&);
+
   winrt::apartment_context mUIThread;
+  std::shared_ptr<FilesystemWatcher> mWatcher;
 
   DXResources mDXR;
   KneeboardState* mKneeboard = nullptr;
@@ -62,9 +66,6 @@ class FolderPageSource final
     std::shared_ptr<IPageSource> mDelegate;
   };
   std::map<std::filesystem::path, DelegateInfo> mContents;
-
-  winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
-    nullptr};
 };
 
 }// namespace OpenKneeboard

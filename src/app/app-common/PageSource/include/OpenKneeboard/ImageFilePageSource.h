@@ -20,19 +20,23 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
-#include <shims/winrt/base.h>
 
 #include <shims/filesystem>
+#include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
 
-class ImageFilePageSource final : public virtual IPageSource,
-                                  public virtual IPageSourceWithNavigation {
+class ImageFilePageSource final
+  : public virtual IPageSource,
+    public virtual IPageSourceWithNavigation,
+    public virtual EventReceiver,
+    public std::enable_shared_from_this<ImageFilePageSource> {
  public:
-  ImageFilePageSource() = delete;
-  ImageFilePageSource(
+  static std::shared_ptr<ImageFilePageSource> Create(
     const DXResources&,
     const std::vector<std::filesystem::path>& paths = {});
   virtual ~ImageFilePageSource();
@@ -55,11 +59,18 @@ class ImageFilePageSource final : public virtual IPageSource,
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 
+  ImageFilePageSource() = delete;
+
  private:
+  ImageFilePageSource(const DXResources&);
+
   struct Page {
     std::filesystem::path mPath;
     winrt::com_ptr<ID2D1Bitmap> mBitmap;
+    std::shared_ptr<FilesystemWatcher> mWatcher;
   };
+
+  void OnFileModified(const std::filesystem::path&);
 
   DXResources mDXR;
 

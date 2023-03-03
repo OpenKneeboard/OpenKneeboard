@@ -23,30 +23,37 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/Filesystem.h>
+#include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PDFFilePageSource.h>
 #include <OpenKneeboard/PDFNavigation.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
-#include <inttypes.h>
+
 #include <shims/winrt/base.h>
-#include <windows.data.pdf.interop.h>
+
 #include <winrt/Windows.Data.Pdf.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
+
+#include <windows.data.pdf.interop.h>
+
+#include <nlohmann/json.hpp>
 
 #include <cstring>
 #include <fstream>
 #include <iterator>
 #include <mutex>
-#include <nlohmann/json.hpp>
 #include <random>
 #include <thread>
 #include <unordered_map>
+
+#include <inttypes.h>
 
 using namespace winrt::Windows::Data::Pdf;
 using namespace winrt::Windows::Foundation;
@@ -73,6 +80,7 @@ struct PDFFilePageSource::Impl final {
 
   std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>> mCache;
   std::unique_ptr<DoodleRenderer> mDoodles;
+  std::shared_ptr<FilesystemWatcher> mWatcher;
 };
 
 PDFFilePageSource::PDFFilePageSource(
@@ -341,6 +349,14 @@ void PDFFilePageSource::SetPath(const std::filesystem::path& path) {
     return;
   }
   p->mPath = path;
+  p->mWatcher = FilesystemWatcher::Create(path);
+  AddEventListener(
+    p->mWatcher->evFilesystemModifiedEvent,
+    [weak = weak_from_this()](auto path) {
+      if (auto self = weak.lock()) {
+        self->OnFileModified(path);
+      }
+    });
   Reload();
 }
 
@@ -386,6 +402,12 @@ void PDFFilePageSource::RenderPage(
     });
   p->mDoodles->Render(ctx, pageIndex, rect);
   this->RenderOverDoodles(ctx, pageIndex, rect);
+}
+
+void PDFFilePageSource::OnFileModified(const std::filesystem::path& path) {
+  if (p && path == p->mPath) {
+    this->Reload();
+  }
 }
 
 }// namespace OpenKneeboard

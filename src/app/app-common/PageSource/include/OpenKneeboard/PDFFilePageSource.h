@@ -22,10 +22,11 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
+
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <memory>
-#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
@@ -81,6 +82,8 @@ class PDFFilePageSource final
 
   winrt::fire_and_forget ReloadRenderer();
   winrt::fire_and_forget ReloadNavigation();
+
+  void OnFileModified(const std::filesystem::path& path);
 
   void RenderPageContent(
     ID2D1DeviceContext*,

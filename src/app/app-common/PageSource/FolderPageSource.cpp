@@ -64,30 +64,35 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
     evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     co_return;
   }
-  if ((!mQueryResult) || mPath != mQueryResult.Folder().Path()) {
-    mQueryResult = nullptr;
-    auto folder
-      = co_await StorageFolder::GetFolderFromPathAsync(mPath.wstring());
-    mQueryResult = folder.CreateFileQuery(CommonFileQuery::OrderByName);
-    co_await winrt::resume_background();
-    mQueryResult.ContentsChanged([weakThis](auto result, const auto&) {
-      const auto strongThis = weakThis.lock();
-      if (!strongThis) {
-        return;
+
+  this->SubscribeToChanges();
+  this->OnFileModified(mPath);
+}
+
+void FolderPageSource::SubscribeToChanges() {
+  mWatcher = FilesystemWatcher::Create(mPath);
+  AddEventListener(
+    mWatcher->evFilesystemModifiedEvent, [weak = weak_from_this()](auto path) {
+      if (auto self = weak.lock()) {
+        self->OnFileModified(path);
       }
-      dprintf(L"Folder {} was modified", strongThis->mPath.wstring());
-      strongThis->Reload();
     });
+}
+
+void FolderPageSource::OnFileModified(const std::filesystem::path& directory) {
+  if (directory != mPath) {
+    return;
   }
-  const auto files = co_await mQueryResult.GetFilesAsync();
-
-  co_await mUIThread;
-
+  if (!std::filesystem::is_directory(directory)) {
+    return;
+  }
   decltype(mContents) newContents;
   bool modifiedOrNew = false;
-  for (const auto& file: files) {
-    const std::filesystem::path path(std::wstring_view {file.Path()});
-    const auto mtime = std::filesystem::last_write_time(path);
+  for (const auto entry:
+       std::filesystem::recursive_directory_iterator(directory)) {
+    const auto path = entry.path();
+    const auto mtime = entry.last_write_time();
+
     auto it = mContents.find(path);
     if (it != mContents.end() && it->second.mModified == mtime) {
       newContents[path] = it->second;
@@ -102,7 +107,7 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
 
   if (newContents.size() == mContents.size() && !modifiedOrNew) {
     dprintf(L"No actual change to {}", mPath.wstring());
-    co_return;
+    return;
   }
   dprintf(L"Real change to {}", mPath.wstring());
 
@@ -125,7 +130,7 @@ void FolderPageSource::SetPath(const std::filesystem::path& path) {
     return;
   }
   mPath = path;
-  mQueryResult = nullptr;
+  mWatcher = {};
   this->Reload();
 }
 

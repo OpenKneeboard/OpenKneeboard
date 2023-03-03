@@ -18,24 +18,30 @@
  * USA.
  */
 #include <OpenKneeboard/ImageFilePageSource.h>
+
 #include <OpenKneeboard/dprint.h>
-#include <wincodec.h>
+
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
 
+#include <wincodec.h>
+
 #include <ranges>
 
 using namespace winrt::Windows::Storage;
-using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
-ImageFilePageSource::ImageFilePageSource(
+std::shared_ptr<ImageFilePageSource> ImageFilePageSource::Create(
   const DXResources& dxr,
-  const std::vector<std::filesystem::path>& paths)
-  : mDXR(dxr) {
-  this->SetPaths(paths);
+  const std::vector<std::filesystem::path>& paths) {
+  auto ret = std::shared_ptr<ImageFilePageSource>(new ImageFilePageSource(dxr));
+  ret->SetPaths(paths);
+  return ret;
+}
+
+ImageFilePageSource::ImageFilePageSource(const DXResources& dxr) : mDXR(dxr) {
 }
 
 void ImageFilePageSource::SetPaths(
@@ -43,8 +49,32 @@ void ImageFilePageSource::SetPaths(
   mPages.clear();
   mPages.reserve(paths.size());
   for (const auto& path: paths) {
-    mPages.push_back({.mPath = path});
+    auto watcher = FilesystemWatcher::Create(path);
+
+    AddEventListener(
+      watcher->evFilesystemModifiedEvent,
+      [weak = weak_from_this()](const auto& path) {
+        if (auto self = weak.lock()) {
+          self->OnFileModified(path);
+        }
+      });
+
+    mPages.push_back({
+      .mPath = path,
+      .mWatcher = watcher,
+    });
   }
+}
+
+void ImageFilePageSource::OnFileModified(const std::filesystem::path& path) {
+  auto it = std::ranges::find_if(
+    mPages, [&path](auto& page) { return page.mPath == path; });
+  if (it == mPages.end()) {
+    return;
+  }
+
+  it->mBitmap = {};
+  this->evContentChangedEvent.Emit(ContentChangeType::Modified);
 }
 
 std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {
@@ -53,7 +83,9 @@ std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {
   return {view.begin(), view.end()};
 }
 
-ImageFilePageSource::~ImageFilePageSource() = default;
+ImageFilePageSource::~ImageFilePageSource() {
+  this->RemoveAllEventListeners();
+}
 
 bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
   return ImageFilePageSource::CanOpenFile(mDXR, path);

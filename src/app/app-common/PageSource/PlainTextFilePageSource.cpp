@@ -20,14 +20,11 @@
 #include <OpenKneeboard/PlainTextFilePageSource.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/weak_wrap.h>
 #include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Storage.h>
 
 #include <fstream>
 #include <nlohmann/json.hpp>
-
-using namespace winrt::Windows::Storage;
-using namespace winrt::Windows::Storage::Search;
 
 namespace OpenKneeboard {
 
@@ -73,7 +70,7 @@ void PlainTextFilePageSource::Reload() {
     this->evNeedsRepaintEvent.Emit();
   });
 
-  this->mQueryResult = {nullptr};
+  this->mWatcher = {nullptr};
 
   if (!std::filesystem::is_regular_file(mPath)) {
     mPageSource->ClearText();
@@ -85,34 +82,29 @@ void PlainTextFilePageSource::Reload() {
   this->SubscribeToChanges();
 }
 
-winrt::fire_and_forget PlainTextFilePageSource::SubscribeToChanges() noexcept {
-  auto weakThis = this->weak_from_this();
-  auto stayingAlive = this->shared_from_this();
-
-  auto folder = co_await StorageFolder::GetFolderFromPathAsync(
-    mPath.parent_path().wstring());
-  mQueryResult = folder.CreateFileQuery();
-  mQueryResult.ContentsChanged(
-    [weakThis, uiThread = mUIThread](
-      const auto&, const auto&) -> winrt::fire_and_forget {
-      co_await uiThread;
-      auto strongThis = weakThis.lock();
-      if (!strongThis) {
-        co_return;
+void PlainTextFilePageSource::SubscribeToChanges() noexcept {
+  mWatcher = FilesystemWatcher::Create(mPath);
+  AddEventListener(
+    mWatcher->evFilesystemModifiedEvent, [weak = weak_from_this()](auto path) {
+      if (auto self = weak.lock()) {
+        self->OnFileModified(path);
       }
-      strongThis->OnFileModified();
     });
-  // Must fetch results once to make the query active
-  co_await mQueryResult.GetFilesAsync();
 }
 
-void PlainTextFilePageSource::OnFileModified() noexcept {
+void PlainTextFilePageSource::OnFileModified(
+  const std::filesystem::path& path) noexcept {
+  if (path != mPath) {
+    return;
+  }
+
   if (!std::filesystem::is_regular_file(mPath)) {
     mPageSource->SetText({});
     mPageSource->SetPlaceholderText(_("[file deleted]"));
     this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     return;
   }
+
   const auto newWriteTime = std::filesystem::last_write_time(mPath);
   if (newWriteTime == mLastWriteTime) {
     return;

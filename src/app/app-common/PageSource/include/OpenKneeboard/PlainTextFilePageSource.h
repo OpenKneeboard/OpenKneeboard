@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <shims/winrt/base.h>
 #include <winrt/Windows.Storage.Search.h>
@@ -56,13 +57,13 @@ class PlainTextFilePageSource final
   std::filesystem::path mPath;
   std::filesystem::file_time_type mLastWriteTime;
   std::shared_ptr<PlainTextPageSource> mPageSource;
-  winrt::Windows::Storage::Search::StorageFileQueryResult mQueryResult {
-    nullptr};
 
   std::string GetFileContent() const;
 
-  winrt::fire_and_forget SubscribeToChanges() noexcept;
-  void OnFileModified() noexcept;
+  std::shared_ptr<FilesystemWatcher> mWatcher;
+
+  void SubscribeToChanges() noexcept;
+  void OnFileModified(const std::filesystem::path&) noexcept;
 };
 
 }// namespace OpenKneeboard

@@ -26,6 +26,7 @@
 #include <OpenKneeboard/Lua.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
@@ -45,7 +46,7 @@ DCSBriefingTab::DCSBriefingTab(
   : TabBase(persistentID, title),
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
-    mImagePages(std::make_unique<ImageFilePageSource>(dxr)),
+    mImagePages(ImageFilePageSource::Create(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
   this->SetDelegates({
     std::static_pointer_cast<IPageSource>(mTextPages),

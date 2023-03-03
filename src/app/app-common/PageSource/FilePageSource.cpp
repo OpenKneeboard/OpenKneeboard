@@ -25,6 +25,7 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
+
 #include <icucommon.h>
 
 #include <ranges>
@@ -85,7 +86,7 @@ std::shared_ptr<IPageSource> FilePageSource::Create(
   }
 
   if (ImageFilePageSource::CanOpenFile(dxr, path)) {
-    return std::make_shared<ImageFilePageSource>(
+    return ImageFilePageSource::Create(
       dxr, std::vector<std::filesystem::path> {path});
   }
 
