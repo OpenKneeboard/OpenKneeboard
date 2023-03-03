@@ -18,6 +18,41 @@ ConstructorInitializerIndentWidth: '2'
 ContinuationIndentWidth: '2'
 DeriveLineEnding: false
 DerivePointerAlignment: false
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^".+'
+    Priority: 1
+  - Regex: '^<OpenKneeboard/[A-Z].+.+'
+    CaseSensitive: true
+    Priority: 10
+  - Regex: '^<OpenKneeboard/[a-z0-9_]+\.h>$'
+    CaseSensitive: true
+    Priority: 11
+  - Regex: '^<shims/.+'
+    Priority: 20
+  - Regex: '^<Windows\.h>$'
+    Priority: 30
+  - Regex: '^<Unknwn\.h>'
+    Priority: 31
+  - Regex: '^<ppl[a-z]+\.h>'
+    Priority: 33
+  - Regex: '^<shims/winrt/.+'
+    Priority: 1
+    SortPriority: 34
+  - Regex: '^<winrt/.+'
+    Priority: 35
+  - Regex: '^<wil/.+'
+    Priority: 36
+  - Regex: '^<(windows|microsoft)\..+\.h>$' # Usually interop headers, e.g. windows.data.pdf.interop
+    Priority: 37
+  - Regex: '^<[a-z_]+/.+\.h(pp)?>$'
+    Priority: 999
+    SortPriority: 41
+  - Regex: '^<[a-z_/]+>$'
+    Priority: 42
+    CaseSensitive: true
+  - Regex: '^<[a-z0-9_]+\.h>$'
+    Priority: 43
 IndentRequires: true
 IndentWidth: '2'
 MaxEmptyLinesToKeep: '1'
