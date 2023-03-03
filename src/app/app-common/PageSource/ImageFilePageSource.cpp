@@ -25,9 +25,9 @@
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
 
-#include <wincodec.h>
-
 #include <ranges>
+
+#include <wincodec.h>
 
 using namespace winrt::Windows::Storage;
 
@@ -74,7 +74,7 @@ void ImageFilePageSource::OnFileModified(const std::filesystem::path& path) {
   }
 
   it->mBitmap = {};
-  this->evContentChangedEvent.Emit(ContentChangeType::Modified);
+  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
 std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {
