@@ -5,7 +5,7 @@ nav_order: 1
 
 OpenKneeboard is a way to show reference information and take notes in games - especially flight simulators - including in VR. 
 
-OpenKneeboard can be controlled via joystick/HOTAS bindings, or a graphics tablet ('artists tablet') such as those made by Wacom or Huion; phones and tablet computers like iPads or Microsoft Surface tablets are **not** compatible.
+OpenKneeboard can be controlled via joystick/HOTAS bindings, or a graphics tablet ('artists tablet') such as those made by Wacom or Huion; phones and tablet computers like iPads or Microsoft Surface tablets are **not** compatible. Mice are not supported in-game.
 
 ## Getting Started
 
