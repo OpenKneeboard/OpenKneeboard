@@ -75,6 +75,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
   std::vector<EventHandlerToken> mFixedEvents;
 
   std::shared_ptr<IPageSource> FindDelegate(PageID) const;
+  mutable std::unordered_map<PageID, std::weak_ptr<IPageSource>> mPageDelegates;
 
   std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>>
     mContentLayerCache;

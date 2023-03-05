@@ -60,6 +60,8 @@ PageSourceWithDelegates::~PageSourceWithDelegates() {
 
 void PageSourceWithDelegates::SetDelegates(
   const std::vector<std::shared_ptr<IPageSource>>& delegates) {
+  mPageDelegates.clear();
+
   for (auto& event: mDelegateEvents) {
     this->RemoveEventListener(event);
   }
@@ -108,6 +110,10 @@ std::vector<PageID> PageSourceWithDelegates::GetPageIDs() const {
 
 std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
   PageID pageID) const {
+  if (mPageDelegates.contains(pageID)) {
+    return mPageDelegates.at(pageID).lock();
+  }
+
   auto delegate
     = std::ranges::find_if(mDelegates, [pageID](const auto& delegate) {
         auto pageIDs = delegate->GetPageIDs();
@@ -117,6 +123,7 @@ std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
   if (delegate == mDelegates.end()) {
     return {nullptr};
   }
+  mPageDelegates[pageID] = *delegate;
   return *delegate;
 }
 
