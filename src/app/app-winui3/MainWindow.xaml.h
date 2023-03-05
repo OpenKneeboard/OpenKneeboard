@@ -19,15 +19,15 @@
  */
 #pragma once
 
+#include "MainWindow.g.h"
+#include "WithPropertyChangedEvent.h"
+
 #include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
 
 #include <memory>
 #include <thread>
-
-#include "MainWindow.g.h"
-#include "WithPropertyChangedEvent.h"
 
 using namespace winrt::Microsoft::UI::Dispatching;
 using namespace winrt::Microsoft::UI::Xaml;
@@ -68,7 +68,8 @@ struct MainWindow : MainWindowT<MainWindow>,
     constexpr auto operator<=>(const NavigationTag&) const = default;
   };
   winrt::Windows::Foundation::Collections::IVector<
-  winrt::Windows::Foundation::IInspectable> mNavigationItems { nullptr };
+    winrt::Windows::Foundation::IInspectable>
+    mNavigationItems {nullptr};
 
   winrt::apartment_context mUIThread;
   HWND mHwnd;
@@ -82,12 +83,15 @@ struct MainWindow : MainWindowT<MainWindow>,
   DispatcherQueueTimer mFrameTimer {nullptr};
   bool mSwitchingTabsFromNavSelection = false;
 
+  void Show();
+
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   winrt::fire_and_forget OnViewOrderChanged();
   winrt::fire_and_forget OnTabChanged() noexcept;
   winrt::fire_and_forget OnTabsChanged();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
+
   winrt::fire_and_forget
   RenameBookmark(std::shared_ptr<ITab>, Bookmark, winrt::hstring title);
 

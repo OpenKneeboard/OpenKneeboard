@@ -22,7 +22,11 @@
 #include "App.xaml.h"
 // clang-format on
 
-#include <Dbghelp.h>
+#include "CheckDCSHooks.h"
+#include "CheckForUpdates.h"
+#include "Globals.h"
+#include "MainWindow.xaml.h"
+
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GamesList.h>
@@ -32,26 +36,25 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
+
+#include <shims/filesystem>
+
+#include <chrono>
+#include <exception>
+#include <set>
+
+#include <Dbghelp.h>
 #include <Psapi.h>
 #include <ShlObj.h>
 #include <appmodel.h>
 #include <shellapi.h>
 #include <signal.h>
-
-#include <chrono>
-#include <exception>
-#include <set>
-#include <shims/filesystem>
-
-#include "CheckDCSHooks.h"
-#include "CheckForUpdates.h"
-#include "Globals.h"
-#include "MainWindow.xaml.h"
 
 using namespace winrt;
 using namespace Windows::Foundation;
@@ -62,8 +65,9 @@ using namespace OpenKneeboardApp::implementation;
 using namespace OpenKneeboardApp;
 using namespace OpenKneeboard;
 
-#include <WindowsAppSDK-VersionInfo.h>
 #include <mddbootstrap.h>
+
+#include <WindowsAppSDK-VersionInfo.h>
 
 static std::filesystem::path gDumpDirectory;
 static bool gDumped = false;
@@ -178,7 +182,6 @@ void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
       }
       co_await CheckAllDCSHooks(xamlRoot);
     });
-  window.Activate();
 }
 
 static void LogSystemInformation() {

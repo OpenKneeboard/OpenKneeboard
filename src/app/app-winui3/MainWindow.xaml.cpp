@@ -54,6 +54,8 @@
 
 #include <mutex>
 
+#include <Shellapi.h>
+
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
 using namespace ::OpenKneeboard;
@@ -139,14 +141,15 @@ MainWindow::MainWindow() {
     // WinUI3 gives us the spinning circle for a long time...
     SetCursor(LoadCursorW(NULL, IDC_ARROW));
     self->mFrameTimer.Start();
+    self->Show();
   })));
 
   auto settings = gKneeboard->GetAppSettings();
   if (settings.mWindowRect) {
     auto rect = *settings.mWindowRect;
     if (rect.top != -32000 && rect.left != -32000) {
-      // GetWindowRect() returns (-32000, -32000) for some corner cases, at
-      // least when minimized
+      // GetWindowRect() returns (-32000, -32000) for iconic (minimized)
+      // windowss
       SetWindowPos(
         mHwnd,
         NULL,
@@ -694,6 +697,29 @@ MainWindow::NavigationTag MainWindow::NavigationTag::unbox(IInspectable value) {
     ret.mPageID = PageID::FromTemporaryValue(json.at("page").get<uint64_t>());
   }
   return ret;
+}
+
+void MainWindow::Show() {
+  int argc;
+  auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+  bool minimized = false;
+
+  const constexpr std::wstring_view minimizedFlag(L"--minimized");
+
+  for (int i = 0; i < argc; ++i) {
+    n if (argv[i] == minimizedFlag) {
+      minimized = true;
+    }
+  }
+
+  // WinUI3: 'should' call `this->Activate()`;
+  // ... but that doesn't let us do anything other than restore
+  // normally
+  //
+  // Always use `ShowWindow()` instead of `->Activate()` so that it's obvious if
+  // `->Activate()` starts to be required.
+  ShowWindow(mHwnd, minimized ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
