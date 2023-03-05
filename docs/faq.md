@@ -1,14 +1,19 @@
 ---
 nav_order: 4
+title: FAQ
 ---
 
-# FAQ
+# Frequently Asked Questions
+{: .no_toc }
+
+1. TOC
+{:toc}
 
 ## How do I use the mouse in-game?
 
 Mice are not supported in-game; the toolbar is shown as it can be used with graphics tablets, like those made by Wacom or Huion.
 
-## How do I use my iPad, Microsoft Surface, or other tablet computer or phone with OpenKneeboard?
+## How do I use my iPad, Microsoft Surface, other tablet computer, or phone with OpenKneeboard?
 
 OpenKneeboard only supports graphics tablets (sometimes called 'artists tablets') such as those made by Wacom or Huion, not tablet computers or phones.
 
