@@ -16,16 +16,20 @@ parent: Internals
 Test all of these with the `RelWithDebInfo` msi package, as it's the most restricted form of installation.
 
 * Gaze detection, zoomed and unzoomed (`hello_xr` is useful for testing), before and after centering
+  * SteamVR
+  * Oculus: D3D11 and D3D12
+  * OpenXR: D3D11, D3D12, and Vulkan
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys
 * Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
 * OpenTabletDriver: drawing, erasing, PDF navigation, keys
 * Variable aspect ratios
 * Performance
   * Drawing perf/feel in-game:
-    * SteamVR
-    * Oculus: DX11 and DX12
-    * OpenXR: DX11, DX12, and Vulkan
-    * Non-VR: DX11
+    * VR
+      * SteamVR
+      * Oculus: D3D11 and D3D12
+      * OpenXR: D3D11, D3D12, and Vulkan
+    * Non-VR: D3D11
   * Check for issues in Visual Studio performance profiler
   * Check a trace via ETL while in VR: maintains even 90hz, no stalls
 * Bindings
