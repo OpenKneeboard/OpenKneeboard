@@ -20,14 +20,16 @@
 
 #include "OpenXRVulkanKneeboard.h"
 
+#include "OpenXRNext.h"
+
 #include <OpenKneeboard/d3d11.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
-#include <dxgi1_6.h>
+
 #include <vulkan/vulkan.h>
 
-#include "OpenXRNext.h"
+#include <dxgi1_6.h>
 
 #define XR_USE_GRAPHICS_API_VULKAN
 #include <openxr/openxr_platform.h>
@@ -109,12 +111,6 @@ void OpenXRVulkanKneeboard::InitializeVulkan(
       return;
     }
   }
-
-  {
-    VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    mPFN_vkCreateFence(
-      binding.device, &createInfo, mVKAllocator, &mInteropVKFence);
-  }
 }
 
 void OpenXRVulkanKneeboard::InitializeD3D11(
@@ -187,16 +183,27 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
     nullptr));
   dprint("Initialized D3D11 device matching VkPhysicalDevice");
 
-  mD3D11Texture = SHM::CreateCompatibleTexture(
-    mD3D11Device.get(),
+  for (int i = 0; i < MaxLayers; ++i) {
+    InitInterop(binding, &mLayerInterop.at(i));
+  }
+}
+
+void OpenXRVulkanKneeboard::InitInterop(
+  const XrGraphicsBindingVulkanKHR& binding,
+  Interop* interop) {
+  auto device = mD3D11Device.get();
+  interop->mD3D11Texture = SHM::CreateCompatibleTexture(
+    device,
     D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
     D3D11_RESOURCE_MISC_SHARED);
-  winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
-    mD3D11Texture.get(), nullptr, mD3D11RenderTargetView.put()));
+  winrt::check_hresult(device->CreateRenderTargetView(
+    interop->mD3D11Texture.get(),
+    nullptr,
+    interop->mD3D11RenderTargetView.put()));
 
   HANDLE sharedHandle {};
   winrt::check_hresult(
-    mD3D11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
+    interop->mD3D11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
 
   {
     // Specifying VK_FORMAT_B8G8R8A8_UNORM below
@@ -227,7 +234,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
     };
 
     const auto ret = mPFN_vkCreateImage(
-      binding.device, &createInfo, mVKAllocator, &mInteropVKImage);
+      binding.device, &createInfo, mVKAllocator, &interop->mVKImage);
     if (VK_FAILED(ret)) {
       dprintf("Failed to create interop image: {}", ret);
       return;
@@ -240,7 +247,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
 
     VkImageMemoryRequirementsInfo2 info {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2,
-      .image = mInteropVKImage,
+      .image = interop->mVKImage,
     };
 
     VkMemoryRequirements2 memoryRequirements {
@@ -296,7 +303,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
     VkMemoryDedicatedAllocateInfo dedicatedAllocInfo {
       .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
       .pNext = &handleInfo,
-      .image = mInteropVKImage,
+      .image = interop->mVKImage,
     };
 
     VkMemoryAllocateInfo allocInfo {
@@ -316,7 +323,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
   {
     VkBindImageMemoryInfo bindImageInfo {
       .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
-      .image = mInteropVKImage,
+      .image = interop->mVKImage,
       .memory = memory,
     };
 
@@ -324,6 +331,12 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
     if (XR_FAILED(res)) {
       dprintf("Failed to bind image memory: {}", res);
     }
+  }
+
+  {
+    VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+    mPFN_vkCreateFence(
+      binding.device, &createInfo, mVKAllocator, &interop->mVKFence);
   }
 }
 
@@ -470,10 +483,12 @@ bool OpenXRVulkanKneeboard::Render(
     return false;
   }
 
+  const auto& interop = mLayerInterop.at(layerIndex);
+
   D3D11::CopyTextureWithOpacity(
     mD3D11Device.get(),
     srv.get(),
-    mD3D11RenderTargetView.get(),
+    interop.mD3D11RenderTargetView.get(),
     params.mKneeboardOpacity);
 
   {
@@ -497,7 +512,7 @@ bool OpenXRVulkanKneeboard::Render(
     .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
     .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .image = mInteropVKImage,
+    .image = interop.mVKImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .levelCount = 1,
@@ -551,7 +566,7 @@ bool OpenXRVulkanKneeboard::Render(
   };
   mPFN_vkCmdCopyImage(
     mVKCommandBuffer,
-    mInteropVKImage,
+    interop.mVKImage,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     dstImage,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -566,7 +581,7 @@ bool OpenXRVulkanKneeboard::Render(
     .newLayout = VK_IMAGE_LAYOUT_GENERAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
     .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .image = mInteropVKImage,
+    .image = interop.mVKImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .levelCount = 1,
@@ -615,9 +630,9 @@ bool OpenXRVulkanKneeboard::Render(
       .pCommandBuffers = &mVKCommandBuffer,
     };
 
-    mPFN_vkResetFences(mVKDevice, 1, &mInteropVKFence);
+    mPFN_vkResetFences(mVKDevice, 1, &interop.mVKFence);
     const auto res
-      = mPFN_vkQueueSubmit(mVKQueue, 1, &submitInfo, mInteropVKFence);
+      = mPFN_vkQueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKFence);
     if (VK_FAILED(res)) {
       dprintf("Queue submit failed: {}", res);
       return false;
@@ -628,9 +643,9 @@ bool OpenXRVulkanKneeboard::Render(
     const auto res = mPFN_vkWaitForFences(
       mVKDevice,
       1,
-      &mInteropVKFence,
+      &interop.mVKFence,
       VK_TRUE,
-      std::numeric_limits<uint64_t>::max());
+      std::numeric_limits<uint32_t>::max());
     if (VK_FAILED(res)) {
       dprintf("Waiting for fence failed: {}", res);
       return false;

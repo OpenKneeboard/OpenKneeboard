@@ -22,9 +22,9 @@
 #include <OpenKneeboard/config.h>
 
 #define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
-
 #include "OpenXRKneeboard.h"
+
+#include <vulkan/vulkan.h>
 
 struct XrGraphicsBindingVulkanKHR;
 
@@ -60,14 +60,20 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
  private:
   winrt::com_ptr<ID3D11Device> mD3D11Device;
-  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
-  winrt::com_ptr<ID3D11RenderTargetView> mD3D11RenderTargetView;
 
-  VkImage mInteropVKImage {};
-  VkFence mInteropVKFence {};
+  struct Interop {
+    winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
+    winrt::com_ptr<ID3D11RenderTargetView> mD3D11RenderTargetView;
 
-  VkDevice mVKDevice {nullptr};
+    VkImage mVKImage {};
+    VkFence mVKFence {};
+  };
+  std::array<Interop, MaxLayers> mLayerInterop;
+
+  void InitInterop(const XrGraphicsBindingVulkanKHR&, Interop*);
+
   const VkAllocationCallbacks* mVKAllocator {nullptr};
+  VkDevice mVKDevice {nullptr};
   VkCommandPool mVKCommandPool {nullptr};
   VkCommandBuffer mVKCommandBuffer {nullptr};
   VkQueue mVKQueue {nullptr};
