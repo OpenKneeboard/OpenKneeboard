@@ -19,7 +19,9 @@
  */
 #include <OpenKneeboard/FilePageSource.h>
 #include <OpenKneeboard/FolderPageSource.h>
+
 #include <OpenKneeboard/dprint.h>
+
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
@@ -94,8 +96,10 @@ void FolderPageSource::OnFileModified(const std::filesystem::path& directory) {
     const auto mtime = entry.last_write_time();
 
     auto it = mContents.find(path);
-    if (it != mContents.end() && it->second.mModified == mtime) {
+    if (it != mContents.end()) {
+      // All file-sourced tabs watch their own content
       newContents[path] = it->second;
+      newContents[path].mModified = mtime;
       continue;
     }
     auto delegate = FilePageSource::Create(mDXR, mKneeboard, path);
