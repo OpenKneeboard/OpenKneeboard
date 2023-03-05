@@ -257,17 +257,13 @@ void PageSourceWithDelegates::ClearUserInput() {
 }
 
 bool PageSourceWithDelegates::IsNavigationAvailable() const {
-  return this->GetPageCount() > 2 && !this->GetNavigationEntries().empty();
+  return this->GetPageCount() > 2;
 }
 
 std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
   const {
   std::vector<NavigationEntry> entries;
-  PageIndex pageOffset = 0;
   for (const auto& delegate: mDelegates) {
-    const scope_guard updateScopeOffset(
-      [&]() { pageOffset += delegate->GetPageCount(); });
-
     const auto withNavigation
       = std::dynamic_pointer_cast<IPageSourceWithNavigation>(delegate);
     if (!withNavigation) {
