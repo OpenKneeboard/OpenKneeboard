@@ -67,6 +67,8 @@ struct MainWindow : MainWindowT<MainWindow>,
 
     constexpr auto operator<=>(const NavigationTag&) const = default;
   };
+  winrt::Windows::Foundation::Collections::IVector<
+  winrt::Windows::Foundation::IInspectable> mNavigationItems { nullptr };
 
   winrt::apartment_context mUIThread;
   HWND mHwnd;

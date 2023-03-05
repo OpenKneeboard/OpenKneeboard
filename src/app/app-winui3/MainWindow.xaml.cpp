@@ -413,18 +413,20 @@ winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
 
   const auto id = tab->GetRuntimeID();
 
-  for (auto it: this->Navigation().MenuItems()) {
-    auto item = it.try_as<Control>();
-    if (!item) {
-      continue;
-    }
-    auto tag = item.Tag();
-    if (!tag) {
-      continue;
-    }
-    if (NavigationTag::unbox(tag).mTabID == id) {
-      Navigation().SelectedItem(item);
-      break;
+  if (mNavigationItems) {
+    for (auto it: mNavigationItems) {
+      auto item = it.try_as<Control>();
+      if (!item) {
+        continue;
+      }
+      auto tag = item.Tag();
+      if (!tag) {
+        continue;
+      }
+      if (NavigationTag::unbox(tag).mTabID == id) {
+        Navigation().SelectedItem(item);
+        break;
+      }
     }
   }
 
@@ -525,6 +527,7 @@ MainWindow::NavigationItems() noexcept {
     }
     item.ContextFlyout(contextFlyout);
   }
+  mNavigationItems = navItems;
   return navItems;
 }
 
