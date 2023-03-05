@@ -19,9 +19,9 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Bookmark.h>
-
 #include "ITab.h"
+
+#include <OpenKneeboard/Bookmark.h>
 
 namespace OpenKneeboard {
 
@@ -46,7 +46,7 @@ class TabBase : public virtual ITab, public virtual EventReceiver {
   std::string mTitle;
   std::vector<Bookmark> mBookmarks;
 
-  void OnContentChanged(ContentChangeType);
+  void OnContentChanged();
 };
 
 }// namespace OpenKneeboard

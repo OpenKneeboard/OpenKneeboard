@@ -31,14 +31,6 @@
 
 namespace OpenKneeboard {
 
-enum class ContentChangeType {
-  /// Treat like a new tab
-  FullyReplaced,
-  /// Content changed, but likely similar; preserve view state like
-  /// 'current page' if possible.
-  Modified,
-};
-
 enum class SuggestedPageAppendAction {
   SwitchToNewPage,
   KeepOnCurrentPage,
@@ -61,7 +53,7 @@ class IPageSource {
 
   Event<> evNeedsRepaintEvent;
   Event<SuggestedPageAppendAction> evPageAppendedEvent;
-  Event<ContentChangeType> evContentChangedEvent;
+  Event<> evContentChangedEvent;
   Event<EventContext, PageID> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
 };

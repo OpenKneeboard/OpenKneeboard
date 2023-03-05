@@ -75,6 +75,7 @@ constexpr bool operator==(const UniqueIDBase<T>& id, uint64_t value) {
 
 class UniqueID final : public UniqueIDBase<UniqueID> {};
 static_assert(std::equality_comparable<UniqueID>);
+static_assert(sizeof(UniqueID) == sizeof(uint64_t));
 
 class PageID final : public UniqueIDBase<PageID> {};
 

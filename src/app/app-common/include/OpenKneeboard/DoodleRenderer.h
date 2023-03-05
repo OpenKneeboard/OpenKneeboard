@@ -25,6 +25,8 @@
 
 #include <OpenKneeboard/inttypes.h>
 
+#include <unordered_set>
+
 namespace OpenKneeboard {
 
 class KneeboardState;
@@ -45,6 +47,7 @@ class DoodleRenderer final {
   bool HaveDoodles(PageID) const;
   void Clear();
   void ClearPage(PageID);
+  void ClearExcept(const std::unordered_set<PageID>&);
 
   Event<> evNeedsRepaintEvent;
   Event<> evAddedPageEvent;

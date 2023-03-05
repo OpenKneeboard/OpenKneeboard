@@ -19,12 +19,15 @@
  */
 #include <OpenKneeboard/PlainTextFilePageSource.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
+
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
+
 #include <winrt/Windows.Foundation.h>
 
-#include <fstream>
 #include <nlohmann/json.hpp>
+
+#include <fstream>
 
 namespace OpenKneeboard {
 
@@ -66,7 +69,7 @@ void PlainTextFilePageSource::SetPath(const std::filesystem::path& path) {
 
 void PlainTextFilePageSource::Reload() {
   scope_guard emitEvents([this]() {
-    this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+    this->evContentChangedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
   });
 
@@ -101,7 +104,7 @@ void PlainTextFilePageSource::OnFileModified(
   if (!std::filesystem::is_regular_file(mPath)) {
     mPageSource->SetText({});
     mPageSource->SetPlaceholderText(_("[file deleted]"));
-    this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+    this->evContentChangedEvent.Emit();
     return;
   }
 
@@ -113,7 +116,7 @@ void PlainTextFilePageSource::OnFileModified(
   mLastWriteTime = newWriteTime;
   mPageSource->SetText(this->GetFileContent());
   mPageSource->SetPlaceholderText(_("[empty file]"));
-  this->evContentChangedEvent.Emit(ContentChangeType::Modified);
+  this->evContentChangedEvent.Emit();
 }
 
 std::string PlainTextFilePageSource::GetFileContent() const {

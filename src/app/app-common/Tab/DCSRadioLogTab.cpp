@@ -178,7 +178,7 @@ winrt::fire_and_forget DCSRadioLogTab::OnGameEventImpl(
 
 void DCSRadioLogTab::Reload() {
   mPageSource->ClearText();
-  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  this->evContentChangedEvent.Emit();
 }
 
 }// namespace OpenKneeboard

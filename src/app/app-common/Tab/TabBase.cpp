@@ -84,9 +84,16 @@ void TabBase::SetBookmarks(const std::vector<Bookmark>& bookmarks) {
   evBookmarksChangedEvent.Emit();
 }
 
-void TabBase::OnContentChanged(ContentChangeType type) {
-  if (type == ContentChangeType::FullyReplaced) {
-    this->SetBookmarks({});
+void TabBase::OnContentChanged() {
+  decltype(mBookmarks) bookmarks;
+  const auto pageIDs = this->GetPageIDs();
+  for (const auto& bookmark: mBookmarks) {
+    if (std::ranges::find(pageIDs, bookmark.mPageID) != pageIDs.end()) {
+      bookmarks.push_back(bookmark);
+    }
+  }
+  if (bookmarks.size() != mBookmarks.size()) {
+    this->SetBookmarks(bookmarks);
   }
 }
 

@@ -29,7 +29,6 @@
 
 namespace OpenKneeboard {
 
-enum class ContentChangeType;
 struct CursorEvent;
 class ITab;
 
@@ -61,7 +60,7 @@ class ITabView {
   Event<CursorEvent> evCursorEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evPageChangedEvent;
-  Event<ContentChangeType> evContentChangedEvent;
+  Event<> evContentChangedEvent;
   Event<PageIndex> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
   Event<> evTabModeChangedEvent;

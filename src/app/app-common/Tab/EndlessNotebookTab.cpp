@@ -100,14 +100,14 @@ void EndlessNotebookTab::Reload() {
   if ((!delegate) || delegate->GetPageCount() == 0) {
     mSource = {};
     mPageIDs.clear();
-    evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+    evContentChangedEvent.Emit();
     return;
   }
 
   mPageIDs = {PageID {}};
   mSource = delegate;
   mSourcePageID = mSource->GetPageIDs().front();
-  evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  evContentChangedEvent.Emit();
 }
 
 PageIndex EndlessNotebookTab::GetPageCount() const {

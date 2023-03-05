@@ -63,7 +63,7 @@ winrt::fire_and_forget FolderPageSource::Reload() noexcept {
   if (mPath.empty() || !std::filesystem::is_directory(mPath)) {
     EventDelay eventDelay;
     this->SetDelegates({});
-    evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+    evContentChangedEvent.Emit();
     co_return;
   }
 

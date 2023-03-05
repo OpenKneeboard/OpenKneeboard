@@ -40,11 +40,13 @@ PageSourceWithDelegates::PageSourceWithDelegates(
       mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent),
     AddEventListener(
       this->evContentChangedEvent,
-      [this](ContentChangeType type) {
+      [this]() {
         this->mContentLayerCache.clear();
-        if (type == ContentChangeType::FullyReplaced) {
-          this->mDoodles->Clear();
+        std::unordered_set<PageID> keep;
+        for (const auto pageID: this->GetPageIDs()) {
+          keep.insert(pageID);
         }
+        this->mDoodles->ClearExcept(keep);
       }),
   };
 }
@@ -89,7 +91,7 @@ void PageSourceWithDelegates::SetDelegates(
       std::back_inserter(mDelegateEvents));
   }
 
-  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  this->evContentChangedEvent.Emit();
 }
 
 PageIndex PageSourceWithDelegates::GetPageCount() const {

@@ -74,7 +74,7 @@ void ImageFilePageSource::OnFileModified(const std::filesystem::path& path) {
   }
 
   it->mBitmap = {};
-  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  this->evContentChangedEvent.Emit();
 }
 
 std::vector<std::filesystem::path> ImageFilePageSource::GetPaths() const {

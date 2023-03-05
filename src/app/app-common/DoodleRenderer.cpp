@@ -50,6 +50,16 @@ void DoodleRenderer::ClearPage(PageID pageID) {
   mDrawings.erase(pageID);
 }
 
+void DoodleRenderer::ClearExcept(const std::unordered_set<PageID>& keep) {
+  for (auto it = mDrawings.begin(); it != mDrawings.end();) {
+    if (keep.contains(it->first)) {
+      it++;
+    } else {
+      it = mDrawings.erase(it);
+    }
+  }
+}
+
 bool DoodleRenderer::HaveDoodles() const {
   for (const auto& [id, drawing]: mDrawings) {
     if (drawing.mBitmap) {

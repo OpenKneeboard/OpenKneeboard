@@ -144,7 +144,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
   strongThis->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
   this->p->mPageIDs.resize(p->mPDFDocument.PageCount());
 
-  strongThis->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  strongThis->evContentChangedEvent.Emit();
 }
 
 winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {

@@ -129,9 +129,9 @@ void TabView::SetPageID(PageID page) {
   evPageChangedEvent.Emit();
 }
 
-void TabView::OnTabContentChanged(ContentChangeType changeType) {
-  const scope_guard updateOnExit([changeType, this] {
-    this->evContentChangedEvent.Emit(changeType);
+void TabView::OnTabContentChanged() {
+  const scope_guard updateOnExit([this] {
+    this->evContentChangedEvent.Emit();
     if (!mActiveSubTab) {
       evNeedsRepaintEvent.Emit();
     }
@@ -144,10 +144,12 @@ void TabView::OnTabContentChanged(ContentChangeType changeType) {
     return;
   }
 
-  if (changeType == ContentChangeType::FullyReplaced) {
-    mRootTabPageID = pages.front();
-    evPageChangedEvent.Emit();
-    return;
+  if (mRootTabPageID) {
+    const auto it = std::ranges::find(pages, *mRootTabPageID);
+    if (it == pages.end()) {
+      // Fixed below
+      mRootTabPageID = {};
+    }
   }
 
   if (!mRootTabPageID) {
@@ -259,7 +261,7 @@ bool TabView::SetTabMode(TabMode mode) {
   evPageChangedEvent.Emit();
   evNeedsRepaintEvent.Emit();
   evTabModeChangedEvent.Emit();
-  evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  evContentChangedEvent.Emit();
 
   return true;
 }

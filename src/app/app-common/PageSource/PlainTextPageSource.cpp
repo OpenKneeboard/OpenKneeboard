@@ -218,8 +218,9 @@ void PlainTextPageSource::ClearText() {
     mMessages.clear();
     mCurrentPageLines.clear();
     mCompletePages.clear();
+    mPageIDs.clear();
   }
-  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  this->evContentChangedEvent.Emit();
 }
 
 void PlainTextPageSource::SetText(std::string_view text) {
@@ -234,7 +235,7 @@ void PlainTextPageSource::SetPlaceholderText(std::string_view text) {
   }
   mPlaceholderText = std::string {text};
   if (IsEmpty()) {
-    this->evContentChangedEvent.Emit(ContentChangeType::Modified);
+    this->evContentChangedEvent.Emit();
   }
 }
 
@@ -266,9 +267,8 @@ void PlainTextPageSource::LayoutMessages() {
     return;
   }
 
-  const scope_guard repaintAtEnd([this]() {
-    this->evContentChangedEvent.Emit(ContentChangeType::Modified);
-  });
+  const scope_guard repaintAtEnd(
+    [this]() { this->evContentChangedEvent.Emit(); });
 
   for (auto message: mMessages) {
     // tabs are variable width, and everything else here

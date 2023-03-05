@@ -68,7 +68,7 @@ std::string DCSBriefingTab::GetStaticGlyph() {
 
 void DCSBriefingTab::Reload() noexcept {
   const scope_guard emitEvents([this]() {
-    this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+    this->evContentChangedEvent.Emit();
     this->evAvailableFeaturesChangedEvent.Emit();
     this->evNeedsRepaintEvent.Emit();
   });
@@ -106,7 +106,7 @@ void DCSBriefingTab::Reload() noexcept {
   this->PushMissionWeather(mission);
   this->PushBullseyeData(mission);
 
-  this->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
+  this->evContentChangedEvent.Emit();
 }
 
 void DCSBriefingTab::OnGameEvent(
