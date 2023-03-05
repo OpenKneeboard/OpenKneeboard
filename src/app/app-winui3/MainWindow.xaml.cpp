@@ -603,13 +603,13 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
-  mSwitchingTabsFromNavSelection = true;
-
   auto tag = NavigationTag::unbox(boxedTag);
 
   const auto tabID = tag.mTabID;
 
   if (tag.mPageID) {
+    mSwitchingTabsFromNavSelection = true;
+
     mKneeboardView->GoToBookmark({
       tabID,
       *tag.mPageID,
@@ -620,8 +620,20 @@ void MainWindow::OnNavigationItemInvoked(
   if (
     tabID
     != mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()) {
+    mSwitchingTabsFromNavSelection = true;
     mKneeboardView->SetCurrentTabByRuntimeID(tabID);
+    return;
   }
+
+  // Current tab == desired tab - but is that what we're actually showing?
+  if (Frame().CurrentSourcePageType().Name == xaml_typename<TabPage>().Name) {
+    return;
+  }
+
+  // Nope, perhaps we're in 'Settings' instead
+  mSwitchingTabsFromNavSelection = true;
+  Frame().Navigate(
+    xaml_typename<TabPage>(), winrt::box_value(tabID.GetTemporaryValue()));
 }
 
 void MainWindow::OnBackRequested(
