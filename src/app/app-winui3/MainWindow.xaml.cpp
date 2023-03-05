@@ -528,6 +528,7 @@ MainWindow::NavigationItems() noexcept {
     item.ContextFlyout(contextFlyout);
   }
   mNavigationItems = navItems;
+  this->OnTabChanged();
   return navItems;
 }
 
@@ -602,6 +603,8 @@ void MainWindow::OnNavigationItemInvoked(
     return;
   }
 
+  mSwitchingTabsFromNavSelection = true;
+
   auto tag = NavigationTag::unbox(boxedTag);
 
   const auto tabID = tag.mTabID;
@@ -617,7 +620,6 @@ void MainWindow::OnNavigationItemInvoked(
   if (
     tabID
     != mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()) {
-    mSwitchingTabsFromNavSelection = true;
     mKneeboardView->SetCurrentTabByRuntimeID(tabID);
   }
 }
