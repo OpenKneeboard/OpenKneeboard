@@ -66,14 +66,14 @@ HelpPage::HelpPage() {
   auto weakThis = this->get_weak();
   AddEventListener(
     TroubleshootingStore::Get()->evDPrintMessageReceived, [weakThis]() {
-      [weakThis]() noexcept -> winrt::fire_and_forget {
+      [](auto weak) noexcept -> winrt::fire_and_forget {
         // always force a reschedule
         co_await winrt::resume_background();
-        auto strongThis = weakThis.get();
-        if (strongThis) {
-          strongThis->PopulateDPrint();
+        auto self = weak.get();
+        if (self) {
+          self->PopulateDPrint();
         }
-      }();
+      }(weakThis);
     });
 
   QuickStartLink().Click([](auto&, auto&) -> winrt::fire_and_forget {
