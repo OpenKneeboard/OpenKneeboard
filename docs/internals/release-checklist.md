@@ -15,15 +15,19 @@ parent: Internals
 
 Test all of these with the `RelWithDebInfo` msi package, as it's the most restricted form of installation.
 
-* SteamVR
-* Oculus: DX11 and DX12
-* OpenXR: DX11 and DX12
-* Non-VR: DX11
 * Gaze detection, zoomed and unzoomed (`hello_xr` is useful for testing), before and after centering
 * Wacom tablet: drawing, erasing, PDF navigation, expresskeys
 * Huion tablet: drawing, erasing, PDF navigation, presskeys + remote control executables
+* OpenTabletDriver: drawing, erasing, PDF navigation, keys
 * Variable aspect ratios
-* Drawing perf/feel while in VR
+* Performance
+  * Drawing perf/feel in-game:
+    * SteamVR
+    * Oculus: DX11 and DX12
+    * OpenXR: DX11, DX12, and Vulkan
+    * Non-VR: DX11
+  * Check for issues in Visual Studio performance profiler
+  * Check a trace via ETL while in VR: maintains even 90hz, no stalls
 * Bindings
   * Physical joystick/throttle
   * XBox controller
@@ -31,6 +35,7 @@ Test all of these with the `RelWithDebInfo` msi package, as it's the most restri
   * Mouse buttons
   * Keyboard
   * Multiple buttons (combos)
+  * Plugging and unplugging devices
 * adding, removing, reordering tabs, including DCS tabs
 * expected default tabs with quick start guide on fresh install
 * adding, removing games
@@ -47,6 +52,16 @@ Test all of these with the `RelWithDebInfo` msi package, as it's the most restri
 * DCS: restart mission
 * DCS: switch to a different campaign
 * DCS: restart DCS. Start multiplayer mission. Check DCS tabs.
+* Modifying files:
+  * single file tabs:
+    * editing a text file leads to an update
+    * replacing an image file leads to an update, and all notes being purged
+    * replacing pdf file leads to an update, and all notes being purged
+  * folder tabs:
+    * removing the current page moves to the new first page
+    * removing the current page leads to 'no pages' if there are no pages
+    * adding a new image in the middle leads to it being inserted in the correct place
+      * existing notes are preserved on the corresponding pages
 
 ## Releasing
 
