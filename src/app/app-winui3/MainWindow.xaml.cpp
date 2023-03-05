@@ -708,7 +708,7 @@ void MainWindow::Show() {
   const constexpr std::wstring_view minimizedFlag(L"--minimized");
 
   for (int i = 0; i < argc; ++i) {
-    n if (argv[i] == minimizedFlag) {
+    if (argv[i] == minimizedFlag) {
       minimized = true;
     }
   }
