@@ -470,6 +470,8 @@ std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
   const auto pageIDs = view->GetPageIDs();
   const auto pageIt = std::ranges::find(pageIDs, ret.mPageID);
   if (pageIt == pageIDs.end()) {
+    // Should be impossible - current page ID must be in page IDs set
+    OPENKNEEBOARD_BREAK;
     return ret;
   }
   const auto pageIndex = pageIt - pageIDs.begin();
@@ -529,15 +531,17 @@ void KneeboardView::RemoveBookmark(const Bookmark& bookmark) {
 }
 
 void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
-  const auto it
-    = std::ranges::find(mTabViews, bookmark.mTabID, [](const auto& view) {
-        return view->GetRootTab()->GetRuntimeID();
-      });
+  const auto it = std::ranges::find(
+    mTabViews, bookmark.mTabID, [](const auto& view) noexcept {
+      return view->GetRootTab()->GetRuntimeID();
+    });
 
   if (it == mTabViews.end()) {
     return;
   }
-  SetCurrentTabByIndex(it - mTabViews.begin());
+  if (GetCurrentTabView() != *it) {
+    SetCurrentTabByIndex(it - mTabViews.begin());
+  }
   (*it)->SetTabMode(TabMode::NORMAL);
   (*it)->SetPageID(bookmark.mPageID);
 }

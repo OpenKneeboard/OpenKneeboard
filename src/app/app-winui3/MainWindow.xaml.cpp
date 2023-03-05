@@ -602,19 +602,20 @@ void MainWindow::OnNavigationItemInvoked(
   auto tag = NavigationTag::unbox(boxedTag);
 
   const auto tabID = tag.mTabID;
-  auto tabView = mKneeboardView->GetCurrentTabView();
-  tabView->SetTabMode(TabMode::NORMAL);
-
-  if (tabID == mKneeboardView->GetCurrentTab()->GetRuntimeID()) {
-    Frame().Navigate(
-      xaml_typename<TabPage>(), winrt::box_value(tabID.GetTemporaryValue()));
-  } else {
-    mSwitchingTabsFromNavSelection = true;
-    mKneeboardView->SetCurrentTabByRuntimeID(tabID);
-  }
 
   if (tag.mPageID) {
-    tabView->SetPageID(*tag.mPageID);
+    mKneeboardView->GoToBookmark({
+      tabID,
+      *tag.mPageID,
+    });
+    return;
+  }
+
+  if (
+    tabID
+    != mKneeboardView->GetCurrentTabView()->GetRootTab()->GetRuntimeID()) {
+    mSwitchingTabsFromNavSelection = true;
+    mKneeboardView->SetCurrentTabByRuntimeID(tabID);
   }
 }
 
@@ -673,8 +674,7 @@ MainWindow::NavigationTag MainWindow::NavigationTag::unbox(IInspectable value) {
     = ITab::RuntimeID::FromTemporaryValue(json.at("tab").get<uint64_t>()),
   };
   if (json.contains("page")) {
-    ret.mPageID
-      = PageID::FromTemporaryValue(json.at("page").get<uint64_t>());
+    ret.mPageID = PageID::FromTemporaryValue(json.at("page").get<uint64_t>());
   }
   return ret;
 }
