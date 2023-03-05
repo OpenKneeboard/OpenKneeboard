@@ -5,11 +5,16 @@ title: Elevation
 
 # Running Elevated/As Administrator
 
+{: .no_toc }
+
 OpenKneeboard will not fully work as administrator; this includes [known crash-causing bugs that can only be fixed by Microsoft](https://github.com/microsoft/microsoft-ui-xaml/issues/7690).
 
 **This is not specific to OpenKneeboard** - on modern Windows, running any application as administrator without a specific need is more likely to cause problems than fix them.
 
 The only way to resolve these issues is *not* to run OpenKneeboard as administrator. **If OpenKneeboard says `[Administrator]` but you are not intentionally running *anything* as administrator**, check out the [User Account Control](#user-account-control) section.
+
+1. TOC
+{:toc}
 
 ## Disable OpenKneeboard's Automatic Elevation
 

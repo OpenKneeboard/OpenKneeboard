@@ -3,8 +3,12 @@ parent: Troubleshooting
 ---
 
 # Huion Tablets
+{: .no_toc }
 
 If you're having problems, you might want to [try OpenTabletDriver](https://go.openkneeboard.com/otd-ipc); the rest of this document only applies to Huion's driver.
+
+1. TOC
+{:toc}
 
 ## Tablet only works properly when OpenKneeboard is the active window
 
