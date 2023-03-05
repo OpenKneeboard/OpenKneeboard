@@ -27,7 +27,10 @@
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabViewUILayer.h>
+#include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/UserAction.h>
+#include <OpenKneeboard/UserActionHandler.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/weak_wrap.h>
@@ -247,18 +250,6 @@ std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
   return mCurrentTabView;
 }
 
-void KneeboardView::NextPage() {
-  if (mCurrentTabView) {
-    mCurrentTabView->NextPage();
-  }
-}
-
-void KneeboardView::PreviousPage() {
-  if (mCurrentTabView) {
-    mCurrentTabView->PreviousPage();
-  }
-}
-
 D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
   if (!mCurrentTabView) {
     return {ErrorRenderWidth, ErrorRenderHeight};
@@ -357,11 +348,6 @@ void KneeboardView::PostUserAction(UserAction action) {
     case UserAction::NEXT_TAB:
       this->NextTab();
       return;
-    case UserAction::PREVIOUS_PAGE:
-      this->PreviousPage();
-      return;
-    case UserAction::NEXT_PAGE:
-      this->NextPage();
       return;
     case UserAction::PREVIOUS_BOOKMARK:
       this->GoToPreviousBookmark();
@@ -369,8 +355,19 @@ void KneeboardView::PostUserAction(UserAction action) {
     case UserAction::NEXT_BOOKMARK:
       this->GoToNextBookmark();
       return;
+    case UserAction::NEXT_PAGE:
     case UserAction::TOGGLE_BOOKMARK:
-      this->ToggleBookmarkForCurrentPage();
+    case UserAction::PREVIOUS_PAGE:
+      if (
+        auto handler = UserActionHandler::Create(
+          mKneeboard, shared_from_this(), this->GetCurrentTabView(), action)) {
+        handler->Execute();
+        return;
+      }
+      dprintf(
+        "No KneeboardView action handler for action {}",
+        static_cast<int>(action));
+      OPENKNEEBOARD_BREAK;
       return;
     case UserAction::TOGGLE_VISIBILITY:
     case UserAction::TOGGLE_FORCE_ZOOM:
@@ -420,37 +417,14 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   };
 }
 
-void KneeboardView::ToggleBookmarkForCurrentPage() {
-  EventDelay delay;
-  std::unique_lock lock(*mKneeboard);
-
-  auto view = this->GetCurrentTabView();
-  auto tab = view->GetRootTab();
-  auto page = view->GetPageIndex();
-
-  auto bookmarks = tab->GetBookmarks();
-  auto it = std::ranges::find_if(bookmarks, [=](const auto& bm) {
-    return bm.mTabID == tab->GetRuntimeID() && bm.mPageIndex == page;
-  });
-
-  if (it == bookmarks.end()) {
-    lock.unlock();
-    this->AddBookmarkForCurrentPage();
-    return;
-  }
-
-  bookmarks.erase(it);
-  tab->SetBookmarks(bookmarks);
-}
-
 bool KneeboardView::CurrentPageHasBookmark() const {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();
-  auto page = view->GetPageIndex();
+  auto page = view->GetPageID();
 
   auto bookmarks = tab->GetBookmarks();
   for (const auto& bookmark: tab->GetBookmarks()) {
-    if (bookmark.mTabID == tab->GetRuntimeID() && bookmark.mPageIndex == page) {
+    if (bookmark.mTabID == tab->GetRuntimeID() && bookmark.mPageID == page) {
       return true;
     }
   }
@@ -461,11 +435,11 @@ bool KneeboardView::CurrentPageHasBookmark() const {
 void KneeboardView::RemoveBookmarkForCurrentPage() {
   auto view = this->GetCurrentTabView();
   auto tab = view->GetRootTab();
-  auto page = view->GetPageIndex();
+  auto page = view->GetPageID();
 
   auto bookmarks = tab->GetBookmarks();
   auto it = std::ranges::find_if(bookmarks, [=](const auto& bm) {
-    return bm.mTabID == tab->GetRuntimeID() && bm.mPageIndex == page;
+    return bm.mTabID == tab->GetRuntimeID() && bm.mPageID == page;
   });
 
   if (it == bookmarks.end()) {
@@ -487,18 +461,38 @@ std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
   }
 
   auto tab = view->GetRootTab();
-  auto page = view->GetPageIndex();
-  if (page >= tab->GetPageCount()) {
-    return {};
-  }
 
   Bookmark ret {
     .mTabID = tab->GetRuntimeID(),
-    .mPageIndex = page,
+    .mPageID = view->GetPageID(),
   };
 
+  const auto pageIDs = view->GetPageIDs();
+  const auto pageIt = std::ranges::find(pageIDs, ret.mPageID);
+  if (pageIt == pageIDs.end()) {
+    return ret;
+  }
+  const auto pageIndex = pageIt - pageIDs.begin();
+
+  bool inserted = false;
   auto bookmarks = tab->GetBookmarks();
-  bookmarks.push_back(ret);
+  for (auto it = bookmarks.begin(); it != bookmarks.end();) {
+    const auto bookmarkIt = std::ranges::find(pageIDs, it->mPageID);
+    if (bookmarkIt == pageIDs.end()) {
+      it = bookmarks.erase(it);
+      continue;
+    }
+    const auto bookmarkIndex = bookmarkIt - pageIDs.begin();
+    if (bookmarkIndex > pageIndex) {
+      bookmarks.insert(it, ret);
+      inserted = true;
+      break;
+    }
+  }
+  if (!inserted) {
+    bookmarks.push_back(ret);
+  }
+
   tab->SetBookmarks(bookmarks);
 
   return ret;
@@ -545,7 +539,7 @@ void KneeboardView::GoToBookmark(const Bookmark& bookmark) {
   }
   SetCurrentTabByIndex(it - mTabViews.begin());
   (*it)->SetTabMode(TabMode::NORMAL);
-  (*it)->SetPageIndex(bookmark.mPageIndex);
+  (*it)->SetPageID(bookmark.mPageID);
 }
 
 void KneeboardView::GoToPreviousBookmark() {
@@ -581,7 +575,12 @@ void KneeboardView::SetBookmark(RelativePosition pos) {
 
 std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
   const auto currentTabID = mCurrentTabView->GetRootTab()->GetRuntimeID();
-  const auto currentPageIndex = mCurrentTabView->GetPageIndex();
+  const auto pages = mCurrentTabView->GetPageIDs();
+  const auto currentPageIt
+    = std::ranges::find(pages, mCurrentTabView->GetPageID());
+  if (currentPageIt == pages.end()) {
+    return {};
+  }
 
   std::optional<Bookmark> prev;
   bool reachedCurrentTab = false;
@@ -607,11 +606,16 @@ std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
     }
     reachedCurrentTab = true;
 
-    if (bookmark.mPageIndex < currentPageIndex) {
+    const auto bookmarkPageIt = std::ranges::find(pages, bookmark.mPageID);
+    if (bookmarkPageIt == pages.end()) {
+      continue;
+    }
+
+    if (bookmarkPageIt < currentPageIt) {
       prev = bookmark;
       continue;
     }
-    if (bookmark.mPageIndex == currentPageIndex) {
+    if (bookmarkPageIt == currentPageIt) {
       continue;
     }
 

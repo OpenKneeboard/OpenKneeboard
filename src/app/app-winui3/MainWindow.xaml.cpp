@@ -25,6 +25,8 @@
 #endif
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/GetMainHWND.h>
@@ -34,6 +36,7 @@
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
@@ -41,15 +44,15 @@
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 #include <OpenKneeboard/weak_wrap.h>
-#include <microsoft.ui.xaml.window.h>
+
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
 
-#include <mutex>
+#include <microsoft.ui.xaml.window.h>
 
-#include "Globals.h"
+#include <mutex>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -375,12 +378,6 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   }
 
   gKneeboard = {};
-  // the mutex gets sad if it gets destroyed while held;
-  // reduce the chances of that a bit.
-  //
-  // FIXME: This isn't a real fix, because XAML holds the pages
-  // open, and renders could be waiting on the lock
-  const std::unique_lock lock(gDXResources);
   gDXResources = {};
 }
 
@@ -492,7 +489,7 @@ MainWindow::NavigationItems() noexcept {
 
       muxc::NavigationViewItem bookmarkItem;
       bookmarkItem.Content(box_value(title));
-      bookmarkItem.Tag(NavigationTag {tabID, bookmark->mPageIndex}.box());
+      bookmarkItem.Tag(NavigationTag {tabID, bookmark->mPageID}.box());
 
       muxc::MenuFlyoutItem renameItem;
       renameItem.Text(_(L"Rename bookmark"));
@@ -616,8 +613,8 @@ void MainWindow::OnNavigationItemInvoked(
     mKneeboardView->SetCurrentTabByRuntimeID(tabID);
   }
 
-  if (tag.mPageIndex) {
-    tabView->SetPageIndex(*tag.mPageIndex);
+  if (tag.mPageID) {
+    tabView->SetPageID(*tag.mPageID);
   }
 }
 
@@ -662,8 +659,8 @@ winrt::Windows::Foundation::IInspectable MainWindow::NavigationTag::box()
   const {
   auto json = nlohmann::json::object();
   json["tab"] = mTabID.GetTemporaryValue();
-  if (mPageIndex) {
-    json["page"] = *mPageIndex;
+  if (mPageID) {
+    json["page"] = mPageID->GetTemporaryValue();
   }
   return box_value(to_hstring(json.dump()));
 }
@@ -676,7 +673,8 @@ MainWindow::NavigationTag MainWindow::NavigationTag::unbox(IInspectable value) {
     = ITab::RuntimeID::FromTemporaryValue(json.at("tab").get<uint64_t>()),
   };
   if (json.contains("page")) {
-    ret.mPageIndex = json.at("page").get<PageIndex>();
+    ret.mPageID
+      = PageID::FromTemporaryValue(json.at("page").get<uint64_t>());
   }
   return ret;
 }

@@ -22,10 +22,12 @@
 #include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ITab.h>
+
 #include <OpenKneeboard/inttypes.h>
-#include <d2d1.h>
 
 #include <memory>
+
+#include <d2d1.h>
 
 namespace OpenKneeboard {
 
@@ -61,7 +63,6 @@ class IKneeboardView {
 
   virtual std::optional<Bookmark> AddBookmarkForCurrentPage() = 0;
   virtual void RemoveBookmarkForCurrentPage() = 0;
-  virtual void ToggleBookmarkForCurrentPage() = 0;
   virtual bool CurrentPageHasBookmark() const = 0;
 
   virtual void GoToPreviousBookmark() = 0;
@@ -69,9 +70,6 @@ class IKneeboardView {
 
   virtual void PreviousTab() = 0;
   virtual void NextTab() = 0;
-
-  virtual void NextPage() = 0;
-  virtual void PreviousPage() = 0;
 
   virtual D2D1_SIZE_U GetCanvasSize() const = 0;
   /// ContentRenderRect may be scaled; this is the 'real' size.

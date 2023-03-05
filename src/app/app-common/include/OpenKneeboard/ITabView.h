@@ -20,10 +20,12 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+
 #include <OpenKneeboard/inttypes.h>
-#include <d2d1.h>
 
 #include <memory>
+
+#include <d2d1.h>
 
 namespace OpenKneeboard {
 
@@ -43,13 +45,10 @@ class ITabView {
 
   virtual std::shared_ptr<ITab> GetRootTab() const = 0;
 
-  virtual void SetPageIndex(PageIndex) = 0;
-  virtual void NextPage() = 0;
-  virtual void PreviousPage() = 0;
-
+  virtual void SetPageID(PageID) = 0;
+  virtual PageID GetPageID() const = 0;
+  virtual std::vector<PageID> GetPageIDs() const = 0;
   virtual std::shared_ptr<ITab> GetTab() const = 0;
-  virtual PageIndex GetPageCount() const = 0;
-  virtual PageIndex GetPageIndex() const = 0;
 
   virtual D2D1_SIZE_U GetNativeContentSize() const = 0;
 

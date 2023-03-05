@@ -112,24 +112,16 @@ PageIndex ImageFilePageSource::GetPageCount() const {
   return static_cast<PageIndex>(mPages.size());
 }
 
-static bool IsValidPageIndex(PageIndex index, PageIndex count) {
-  if (index < count) {
-    return true;
+std::vector<PageID> ImageFilePageSource::GetPageIDs() const {
+  std::vector<PageID> ret;
+  for (const auto& page: mPages) {
+    ret.push_back(page.mID);
   }
-
-  if (index > 0) {
-    dprintf("Asked for page {} >= pagecount {} in {}", index, count, __FILE__);
-  }
-
-  return false;
+  return ret;
 }
 
-D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(PageIndex index) {
-  if (!IsValidPageIndex(index, GetPageCount())) {
-    return {};
-  }
-
-  auto bitmap = GetPageBitmap(index);
+D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(PageID pageID) {
+  auto bitmap = GetPageBitmap(pageID);
   if (!bitmap) {
     return {};
   }
@@ -140,13 +132,9 @@ D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(PageIndex index) {
 void ImageFilePageSource::RenderPage(
   RenderTargetID,
   ID2D1DeviceContext* ctx,
-  PageIndex index,
+  PageID pageID,
   const D2D1_RECT_F& rect) {
-  if (!IsValidPageIndex(index, GetPageCount())) {
-    return;
-  }
-
-  auto bitmap = GetPageBitmap(index);
+  auto bitmap = GetPageBitmap(pageID);
   if (!bitmap) {
     return;
   }
@@ -171,14 +159,15 @@ void ImageFilePageSource::RenderPage(
     D2D1_INTERPOLATION_MODE_ANISOTROPIC);
 }
 
-winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(
-  PageIndex index) {
+winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
   std::unique_lock lock(mMutex);
-  if (index >= mPages.size()) [[unlikely]] {
+  auto it = std::ranges::find_if(
+    mPages, [pageID](const auto& page) { return page.mID == pageID; });
+  if (it == mPages.end()) [[unlikely]] {
     return {};
   }
 
-  auto& page = mPages.at(index);
+  auto& page = *it;
   if (page.mBitmap) [[likely]] {
     return page.mBitmap;
   }
@@ -273,7 +262,7 @@ std::vector<NavigationEntry> ImageFilePageSource::GetNavigationEntries() const {
     const auto& page = mPages.at(i);
     entries.push_back({
       to_utf8(page.mPath.stem()),
-      i,
+      page.mID,
     });
   }
   return entries;

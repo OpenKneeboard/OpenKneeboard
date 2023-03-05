@@ -21,10 +21,13 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/RenderTargetID.h>
+#include <OpenKneeboard/UniqueID.h>
+
 #include <OpenKneeboard/inttypes.h>
-#include <d2d1_1.h>
 
 #include <cstdint>
+
+#include <d2d1_1.h>
 
 namespace OpenKneeboard {
 
@@ -46,18 +49,20 @@ class IPageSource {
   virtual ~IPageSource();
 
   virtual PageIndex GetPageCount() const = 0;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) = 0;
+  virtual std::vector<PageID> GetPageIDs() const = 0;
+
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) = 0;
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect)
     = 0;
 
   Event<> evNeedsRepaintEvent;
   Event<SuggestedPageAppendAction> evPageAppendedEvent;
   Event<ContentChangeType> evContentChangedEvent;
-  Event<EventContext, PageIndex> evPageChangeRequestedEvent;
+  Event<EventContext, PageID> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
 };
 

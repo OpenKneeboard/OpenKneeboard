@@ -20,6 +20,7 @@
 #include <OpenKneeboard/BookmarksUILayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/weak_wrap.h>
 
@@ -274,7 +275,7 @@ void BookmarksUILayer::OnClick(const Button& button) {
   }
   auto tabView = mKneeboardView->GetCurrentTabView();
   tabView->SetTabMode(TabMode::NORMAL);
-  tabView->SetPageIndex(button.mBookmark.mPageIndex);
+  tabView->SetPageID(button.mBookmark.mPageID);
 }
 
 }// namespace OpenKneeboard

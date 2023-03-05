@@ -20,6 +20,8 @@
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
+
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 
 #include <algorithm>
@@ -80,20 +82,7 @@ void PageSourceWithDelegates::SetDelegates(
           this->evAvailableFeaturesChangedEvent),
         AddEventListener(
           delegate->evPageChangeRequestedEvent,
-          [this, weakDelegate](auto ctx, PageIndex requestedPage) {
-            PageIndex offset = 0;
-            auto strongDelegate = weakDelegate.lock();
-            for (const auto& it: mDelegates) {
-              if (it != strongDelegate) {
-                offset += strongDelegate->GetPageCount();
-                continue;
-              }
-              this->evPageChangeRequestedEvent.Emit(
-                ctx, offset + requestedPage);
-              break;
-            }
-          }),
-
+          this->evPageChangeRequestedEvent),
       },
       std::back_inserter(mDelegateEvents));
   }
@@ -102,32 +91,58 @@ void PageSourceWithDelegates::SetDelegates(
 }
 
 PageIndex PageSourceWithDelegates::GetPageCount() const {
-  return std::accumulate(
-    mDelegates.begin(),
-    mDelegates.end(),
-    0,
-    [](const auto& acc, const auto& delegate) {
-      return acc + delegate->GetPageCount();
-    });
-};
+  PageIndex count = 0;
+  for (const auto& delegate: mDelegates) {
+    count += delegate->GetPageCount();
+  }
+  return count;
+}
 
-D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(PageIndex pageIndex) {
-  auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
-  return delegate->GetNativeContentSize(decodedIndex);
+std::vector<PageID> PageSourceWithDelegates::GetPageIDs() const {
+  std::vector<PageID> ret;
+  for (const auto& delegate: mDelegates) {
+    std::ranges::copy(delegate->GetPageIDs(), std::back_inserter(ret));
+  }
+  return ret;
+}
+
+std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
+  PageID pageID) const {
+  auto delegate
+    = std::ranges::find_if(mDelegates, [pageID](const auto& delegate) {
+        auto pageIDs = delegate->GetPageIDs();
+        auto it = std::ranges::find(pageIDs, pageID);
+        return it != pageIDs.end();
+      });
+  if (delegate == mDelegates.end()) {
+    return {nullptr};
+  }
+  return *delegate;
+}
+
+D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(PageID pageID) {
+  auto delegate = this->FindDelegate(pageID);
+  if (!delegate) {
+    return {ErrorRenderWidth, ErrorRenderHeight};
+  }
+  return delegate->GetNativeContentSize(pageID);
 }
 
 void PageSourceWithDelegates::RenderPage(
   RenderTargetID rti,
   ID2D1DeviceContext* ctx,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_RECT_F& rect) {
-  auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
-
+  auto delegate = this->FindDelegate(pageID);
+  if (!delegate) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
   // If it has cursor events, let it do everything itself...
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (withCursorEvents) {
-    delegate->RenderPage(rti, ctx, decodedIndex, rect);
+    delegate->RenderPage(rti, ctx, pageID, rect);
     return;
   }
 
@@ -137,17 +152,17 @@ void PageSourceWithDelegates::RenderPage(
     mContentLayerCache[rti] = std::make_unique<CachedLayer>(mDXResources);
   }
 
-  const auto nativeSize = delegate->GetNativeContentSize(decodedIndex);
+  const auto nativeSize = delegate->GetNativeContentSize(pageID);
   mContentLayerCache[rti]->Render(
     rect,
     nativeSize,
-    pageIndex,
+    pageID.GetTemporaryValue(),
     ctx,
     [&](ID2D1DeviceContext* ctx, const D2D1_SIZE_U& size) {
       delegate->RenderPage(
         rti,
         ctx,
-        decodedIndex,
+        pageID,
         {
           0.0f,
           0.0f,
@@ -155,7 +170,7 @@ void PageSourceWithDelegates::RenderPage(
           static_cast<FLOAT>(size.height),
         });
     });
-  mDoodles->Render(ctx, pageIndex, rect);
+  mDoodles->Render(ctx, pageID, rect);
 }
 
 bool PageSourceWithDelegates::CanClearUserInput() const {
@@ -171,41 +186,52 @@ bool PageSourceWithDelegates::CanClearUserInput() const {
   return false;
 }
 
-bool PageSourceWithDelegates::CanClearUserInput(PageIndex pageIndex) const {
-  const auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
-  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
-  if (!wce) {
-    return mDoodles->HaveDoodles(pageIndex);
+bool PageSourceWithDelegates::CanClearUserInput(PageID pageID) const {
+  auto delegate = this->FindDelegate(pageID);
+  if (!delegate) {
+    return false;
   }
-  return wce->CanClearUserInput(decodedIndex);
+
+  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+  if (wce) {
+    return wce->CanClearUserInput(pageID);
+  }
+  return mDoodles->HaveDoodles(pageID);
 }
 
 void PageSourceWithDelegates::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& event,
-  PageIndex pageIndex) {
-  auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
-  auto withCursorEvents
-    = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
-  if (withCursorEvents) {
-    withCursorEvents->PostCursorEvent(ctx, event, decodedIndex);
-  } else {
-    mDoodles->PostCursorEvent(
-      ctx, event, pageIndex, delegate->GetNativeContentSize(decodedIndex));
+  PageID pageID) {
+  auto delegate = this->FindDelegate(pageID);
+  if (!delegate) {
+    return;
   }
+
+  auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
+  if (wce) {
+    wce->PostCursorEvent(ctx, event, pageID);
+  }
+
+  mDoodles->PostCursorEvent(
+    ctx, event, pageID, delegate->GetNativeContentSize(pageID));
 }
 
-void PageSourceWithDelegates::ClearUserInput(PageIndex pageIndex) {
+void PageSourceWithDelegates::ClearUserInput(PageID pageID) {
+  auto delegate = this->FindDelegate(pageID);
+  if (!delegate) {
+    return;
+  }
+
   const scope_guard updateState(
     [this]() { this->evAvailableFeaturesChangedEvent.Emit(); });
 
-  auto [delegate, decodedIndex] = DecodePageIndex(pageIndex);
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (withCursorEvents) {
-    withCursorEvents->ClearUserInput(pageIndex);
+    withCursorEvents->ClearUserInput(pageID);
   } else {
-    mDoodles->ClearPage(pageIndex);
+    mDoodles->ClearPage(pageID);
   }
 }
 
@@ -241,28 +267,9 @@ std::vector<NavigationEntry> PageSourceWithDelegates::GetNavigationEntries()
       continue;
     }
     const auto delegateEntries = withNavigation->GetNavigationEntries();
-    for (const auto& entry: delegateEntries) {
-      entries.push_back(
-        {entry.mName, static_cast<PageIndex>(entry.mPageIndex + pageOffset)});
-    }
+    std::ranges::copy(delegateEntries, std::back_inserter(entries));
   }
   return entries;
-}
-
-std::tuple<std::shared_ptr<IPageSource>, PageIndex>
-PageSourceWithDelegates::DecodePageIndex(PageIndex pageIndex) const {
-  PageIndex offset = 0;
-  for (auto& delegate: mDelegates) {
-    if (pageIndex - offset < delegate->GetPageCount()) {
-      return {delegate, pageIndex - offset};
-    }
-    offset += delegate->GetPageCount();
-  }
-
-  if (!mDelegates.empty()) {
-    return {mDelegates.front(), pageIndex};
-  }
-  return {nullptr, pageIndex};
 }
 
 }// namespace OpenKneeboard

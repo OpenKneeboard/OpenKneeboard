@@ -48,8 +48,8 @@ bool TabNextPageAction::IsEnabled() const {
     return false;
   }
 
-  const auto count = tv->GetPageCount();
-  if (count < 2) {
+  const auto pages = tv->GetPageIDs();
+  if (pages.size() < 2) {
     return false;
   }
 
@@ -57,13 +57,36 @@ bool TabNextPageAction::IsEnabled() const {
     return true;
   }
 
-  return tv->GetPageIndex() + 1 < count;
+  return tv->GetPageID() != pages.back();
 }
 
 void TabNextPageAction::Execute() {
-  if (auto tv = mTabView.lock()) {
-    tv->NextPage();
+  auto tv = mTabView.lock();
+  if (!tv) {
+    return;
   }
+
+  const auto pages = tv->GetPageIDs();
+
+  if (pages.size() < 2) {
+    return;
+  }
+
+  auto it = std::ranges::find(pages, tv->GetPageID());
+  if (it == pages.end()) {
+    return;
+  }
+
+  it++;
+  if (it == pages.end()) {
+    if (mKneeboard->GetAppSettings().mLoopPages) {
+      it = pages.begin();
+    } else {
+      return;
+    }
+  }
+
+  tv->SetPageID(*it);
 }
 
 }// namespace OpenKneeboard

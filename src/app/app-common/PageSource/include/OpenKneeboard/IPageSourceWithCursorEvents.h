@@ -19,9 +19,9 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Events.h>
-
 #include "IPageSource.h"
+
+#include <OpenKneeboard/Events.h>
 
 namespace OpenKneeboard {
 
@@ -29,13 +29,11 @@ struct CursorEvent;
 
 class IPageSourceWithCursorEvents : public virtual IPageSource {
  public:
-  virtual void
-  PostCursorEvent(EventContext, const CursorEvent&, PageIndex pageIndex)
-    = 0;
+  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID) = 0;
 
-  virtual bool CanClearUserInput(PageIndex) const = 0;
+  virtual bool CanClearUserInput(PageID) const = 0;
   virtual bool CanClearUserInput() const = 0;
-  virtual void ClearUserInput(PageIndex) = 0;
+  virtual void ClearUserInput(PageID) = 0;
   virtual void ClearUserInput() = 0;
 };
 

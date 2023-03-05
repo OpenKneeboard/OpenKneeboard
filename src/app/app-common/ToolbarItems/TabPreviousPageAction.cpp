@@ -49,17 +49,44 @@ bool TabPreviousPageAction::IsEnabled() const {
     return false;
   }
 
-  if (mKneeboard->GetAppSettings().mLoopPages) {
-    return tv->GetPageCount() > 1;
+  const auto pages = tv->GetPageIDs();
+  if (pages.size() < 2) {
+    return false;
   }
 
-  return tv->GetPageIndex() > 0;
+  if (mKneeboard->GetAppSettings().mLoopPages) {
+    return true;
+  }
+
+  return tv->GetPageID() != pages.front();
 }
 
 void TabPreviousPageAction::Execute() {
-  if (auto tv = mTabView.lock()) {
-    tv->PreviousPage();
+  auto tv = mTabView.lock();
+  if (!tv) {
+    return;
   }
+
+  const auto pages = tv->GetPageIDs();
+
+  if (pages.size() < 2) {
+    return;
+  }
+
+  auto it = std::ranges::find(pages, tv->GetPageID());
+  if (it == pages.end()) {
+    return;
+  }
+
+  if (it != pages.begin()) {
+    it--;
+  } else if (mKneeboard->GetAppSettings().mLoopPages) {
+    it = pages.end() - 1;
+  } else {
+    return;
+  }
+
+  tv->SetPageID(*it);
 }
 
 }// namespace OpenKneeboard

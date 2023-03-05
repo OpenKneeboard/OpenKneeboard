@@ -34,12 +34,22 @@ TabFirstPageAction::~TabFirstPageAction() {
 
 bool TabFirstPageAction::IsEnabled() const {
   auto tv = mTabView.lock();
-  return tv && tv->GetPageCount() > 1 && tv->GetPageIndex() > 0;
+  if (!tv) {
+    return false;
+  }
+  const auto pageIDs = tv->GetPageIDs();
+  return !(pageIDs.empty() || tv->GetPageID() == pageIDs.front());
 }
 
 void TabFirstPageAction::Execute() {
-  if (auto tv = mTabView.lock()) {
-    tv->SetPageIndex(0);
+  auto tv = mTabView.lock();
+  if (!tv) {
+    return;
+  }
+
+  const auto pageIDs = tv->GetPageIDs();
+  if (!pageIDs.empty()) {
+    tv->SetPageID(pageIDs.front());
   }
 }
 

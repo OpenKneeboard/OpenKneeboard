@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/ITab.h>
+
 #include <OpenKneeboard/inttypes.h>
 
 #include <memory>
@@ -31,7 +32,7 @@ class ITab;
 
 struct Bookmark {
   ITab::RuntimeID mTabID;
-  PageIndex mPageIndex;
+  PageID mPageID;
   std::string mTitle;
 
   constexpr auto operator<=>(const Bookmark&) const = default;

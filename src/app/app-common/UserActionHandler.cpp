@@ -17,32 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/TabNextPageAction.h>
+#include <OpenKneeboard/TabPreviousPageAction.h>
+#include <OpenKneeboard/ToggleBookmarkAction.h>
 #include <OpenKneeboard/UserActionHandler.h>
 
 namespace OpenKneeboard {
 
-class ITabView;
+UserActionHandler::~UserActionHandler() = default;
 
-class TabPreviousPageAction final : public ToolbarAction,
-                                    private EventReceiver,
-                                    public UserActionHandler {
- public:
-  TabPreviousPageAction() = delete;
-
-  TabPreviousPageAction(
-    KneeboardState*,
-    const std::shared_ptr<ITabView>& state);
-  ~TabPreviousPageAction();
-
-  virtual bool IsEnabled() const override;
-  virtual void Execute() override;
-
- private:
-  KneeboardState* mKneeboard;
-  std::weak_ptr<ITabView> mTabView;
-};
+std::unique_ptr<UserActionHandler> UserActionHandler::Create(
+  KneeboardState* kneeboard,
+  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<ITabView>& tab,
+  UserAction action) {
+  switch (action) {
+    case UserAction::PREVIOUS_PAGE:
+      return std::make_unique<TabPreviousPageAction>(kneeboard, tab);
+    case UserAction::NEXT_PAGE:
+      return std::make_unique<TabNextPageAction>(kneeboard, tab);
+    case UserAction::TOGGLE_BOOKMARK:
+      return std::make_unique<ToggleBookmarkAction>(
+        kneeboard, kneeboardView, tab);
+    default:
+      return {nullptr};
+  }
+}
 
 }// namespace OpenKneeboard

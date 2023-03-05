@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/DoodleRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -45,16 +46,12 @@ void DoodleRenderer::Clear() {
   mDrawings.clear();
 }
 
-void DoodleRenderer::ClearPage(PageIndex pageIndex) {
-  if (pageIndex >= mDrawings.size()) {
-    return;
-  }
-
-  mDrawings.at(pageIndex) = {};
+void DoodleRenderer::ClearPage(PageID pageID) {
+  mDrawings.erase(pageID);
 }
 
 bool DoodleRenderer::HaveDoodles() const {
-  for (const auto& drawing: mDrawings) {
+  for (const auto& [id, drawing]: mDrawings) {
     if (drawing.mBitmap) {
       return true;
     }
@@ -62,17 +59,18 @@ bool DoodleRenderer::HaveDoodles() const {
   return false;
 }
 
-bool DoodleRenderer::HaveDoodles(PageIndex pageIndex) const {
-  if (pageIndex >= mDrawings.size()) {
+bool DoodleRenderer::HaveDoodles(PageID pageID) const {
+  auto it = mDrawings.find(pageID);
+  if (it == mDrawings.end()) {
     return false;
   }
-  return static_cast<bool>(mDrawings.at(pageIndex).mBitmap);
+  return static_cast<bool>(it->second.mBitmap);
 }
 
 void DoodleRenderer::PostCursorEvent(
   EventContext,
   const CursorEvent& event,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_SIZE_U& nativePageSize) {
   if (nativePageSize.width == 0 || nativePageSize.height == 0) {
     OPENKNEEBOARD_BREAK;
@@ -81,10 +79,7 @@ void DoodleRenderer::PostCursorEvent(
 
   {
     std::scoped_lock lock(mBufferedEventsMutex);
-    if (pageIndex >= mDrawings.size()) {
-      mDrawings.resize(pageIndex + 1);
-    }
-    auto& drawing = mDrawings.at(pageIndex);
+    auto& drawing = mDrawings[pageID];
     drawing.mNativeSize = nativePageSize;
     drawing.mBufferedEvents.push_back(event);
   }
@@ -97,8 +92,7 @@ void DoodleRenderer::FlushCursorEvents() {
   auto ctx = mDrawingContext;
   std::scoped_lock lock(mBufferedEventsMutex);
 
-  for (auto pageIndex = 0; pageIndex < mDrawings.size(); ++pageIndex) {
-    auto& page = mDrawings.at(pageIndex);
+  for (auto& [pageID, page]: mDrawings) {
     if (page.mBufferedEvents.empty()) {
       continue;
     }
@@ -113,13 +107,13 @@ void DoodleRenderer::FlushCursorEvents() {
       if (!drawing) {
         drawing = true;
         ctx->BeginDraw();
-        ctx->SetTarget(GetDrawingSurface(pageIndex));
+        ctx->SetTarget(GetDrawingSurface(pageID));
       }
 
       // ignore tip button - any other pen button == erase
       const bool erasing = event.mButtons & ~1;
 
-      const auto scale = mDrawings.at(pageIndex).mScale;
+      const auto scale = page.mScale;
 
       const auto pressure = std::clamp(event.mPressure - 0.40f, 0.0f, 0.60f);
 
@@ -148,14 +142,15 @@ void DoodleRenderer::FlushCursorEvents() {
   }
 }
 
-ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageIndex index) {
-  if (index >= mDrawings.size()) {
+ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
+  auto it = mDrawings.find(pageID);
+  if (it == mDrawings.end()) {
     // Should have been initialized by cursor events
     OPENKNEEBOARD_BREAK;
     return nullptr;
   }
 
-  auto& page = mDrawings.at(index);
+  auto& page = it->second;
   if (page.mBitmap) {
     return page.mBitmap.get();
   }
@@ -201,14 +196,16 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageIndex index) {
 
 void DoodleRenderer::Render(
   ID2D1DeviceContext* ctx,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_RECT_F& rect) {
   FlushCursorEvents();
 
-  if (pageIndex >= mDrawings.size()) {
+  auto it = mDrawings.find(pageID);
+  if (it == mDrawings.end()) {
     return;
   }
-  auto& page = mDrawings.at(pageIndex);
+  auto& page = it->second;
+
   auto bitmap = page.mBitmap;
   if (!bitmap) {
     return;

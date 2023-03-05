@@ -161,19 +161,21 @@ std::vector<NavigationEntry> DCSBriefingTab::GetNavigationEntries() const {
   std::vector<NavigationEntry> entries;
 
   const auto textCount = mTextPages->GetPageCount();
+  const auto textIDs = mTextPages->GetPageIDs();
   for (PageIndex i = 0; i < textCount; ++i) {
     entries.push_back({
       std::format(_("Transcription {}/{}"), i + 1, textCount),
-      i,
+      textIDs.at(i),
     });
   }
 
   const auto paths = mImagePages->GetPaths();
+  const auto imageIDs = mImagePages->GetPageIDs();
 
   for (PageIndex i = 0; i < paths.size(); ++i) {
     entries.push_back({
       to_utf8(paths.at(i).stem()),
-      static_cast<PageIndex>(i + textCount),
+      imageIDs.at(i),
     });
   }
 

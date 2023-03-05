@@ -47,20 +47,19 @@ class PageSourceWithDelegates : public virtual IPageSource,
   virtual ~PageSourceWithDelegates();
 
   virtual PageIndex GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
+  virtual std::vector<PageID> GetPageIDs() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) override;
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect) override;
 
-  virtual void PostCursorEvent(
-    EventContext,
-    const CursorEvent&,
-    PageIndex pageIndex) override;
-  virtual bool CanClearUserInput(PageIndex) const override;
+  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+    override;
+  virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
-  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
   virtual bool IsNavigationAvailable() const override;
@@ -75,8 +74,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
   std::vector<EventHandlerToken> mDelegateEvents;
   std::vector<EventHandlerToken> mFixedEvents;
 
-  std::tuple<std::shared_ptr<IPageSource>, PageIndex> DecodePageIndex(
-    PageIndex) const;
+  std::shared_ptr<IPageSource> FindDelegate(PageID) const;
 
   std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>>
     mContentLayerCache;

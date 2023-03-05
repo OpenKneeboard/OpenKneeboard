@@ -37,6 +37,9 @@ class UniqueIDBase : private _UniqueIDImpl {
   UniqueIDBase() {
     mValue = _UniqueIDImpl::GetAndIncrementNextValue();
   }
+  UniqueIDBase(nullptr_t) {
+    mValue = 0;
+  }
 
   UniqueIDBase(const UniqueIDBase<T>&) = default;
   UniqueIDBase(UniqueIDBase<T>&&) = default;
@@ -45,6 +48,9 @@ class UniqueIDBase : private _UniqueIDImpl {
 
   // Values *must not* be persisted and restored
   constexpr uint64_t GetTemporaryValue() const {
+    if (mValue == 0) {
+      OPENKNEEBOARD_BREAK;
+    }
     return mValue;
   }
 
@@ -72,6 +78,8 @@ constexpr bool operator==(const UniqueIDBase<T>& id, uint64_t value) {
 
 class UniqueID final : public UniqueIDBase<UniqueID> {};
 static_assert(std::equality_comparable<UniqueID>);
+
+class PageID final : public UniqueIDBase<PageID> {};
 
 };// namespace OpenKneeboard
 

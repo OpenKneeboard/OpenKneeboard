@@ -19,14 +19,15 @@
  */
 #pragma once
 
+#include <shims/winrt/base.h>
+
+#include <source_location>
+
 #include <d2d1_2.h>
 #include <d3d11_2.h>
 #include <dwrite.h>
 #include <dxgi1_6.h>
-#include <shims/winrt/base.h>
 #include <wincodec.h>
-
-#include <source_location>
 
 namespace OpenKneeboard {
 

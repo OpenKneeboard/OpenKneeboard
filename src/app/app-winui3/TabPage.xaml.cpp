@@ -23,6 +23,8 @@
 #include "TabPage.g.cpp"
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
@@ -38,17 +40,18 @@
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/ToolbarToggleAction.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
-#include <microsoft.ui.xaml.media.dxinterop.h>
+
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Foundation.Collections.h>
 
+#include <microsoft.ui.xaml.media.dxinterop.h>
+
 #include <mutex>
 #include <ranges>
-
-#include "Globals.h"
 
 using namespace ::OpenKneeboard;
 
@@ -496,7 +499,7 @@ void TabPage::PaintNow() noexcept {
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
     tab->RenderPage(
-      gGUIRenderTargetID, ctx, mTabView->GetPageIndex(), metrics.mRenderRect);
+      gGUIRenderTargetID, ctx, mTabView->GetPageID(), metrics.mRenderRect);
   } else {
     mErrorRenderer->Render(
       ctx, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
@@ -523,7 +526,7 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
   if (!mTabView) {
     throw std::logic_error("Attempt to fetch Page Metrics without a tab");
   }
-  const auto contentNativeSize = mTabView->GetPageCount() == 0 ?
+  const auto contentNativeSize = mTabView->GetPageIDs().size() == 0 ?
     D2D1_SIZE_U {
       static_cast<UINT>(mCanvasSize.width),
       static_cast<UINT>(mCanvasSize.height),

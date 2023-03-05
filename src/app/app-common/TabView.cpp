@@ -24,8 +24,10 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/NavigationTab.h>
 #include <OpenKneeboard/TabView.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
 
 namespace OpenKneeboard {
 
@@ -33,7 +35,12 @@ TabView::TabView(
   const DXResources& dxr,
   KneeboardState* kneeboard,
   const std::shared_ptr<ITab>& tab)
-  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab), mRootTabPage(0) {
+  : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab) {
+  const auto rootPageIDs = mRootTab->GetPageIDs();
+  if (!rootPageIDs.empty()) {
+    mRootTabPageID = rootPageIDs.front();
+  }
+
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(
     tab->evContentChangedEvent,
@@ -44,11 +51,11 @@ TabView::TabView(
   AddEventListener(
     this->evPageChangedEvent, this->evAvailableFeaturesChangedEvent);
   AddEventListener(
-    tab->evPageChangeRequestedEvent, [this](EventContext ctx, PageIndex index) {
+    tab->evPageChangeRequestedEvent, [this](EventContext ctx, PageID id) {
       if (ctx != mEventContext) {
         return;
       }
-      this->SetPageIndex(index);
+      this->SetPageID(id);
     });
   AddEventListener(
     tab->evAvailableFeaturesChangedEvent,
@@ -68,35 +75,52 @@ std::shared_ptr<ITab> TabView::GetTab() const {
   return mActiveSubTab ? mActiveSubTab : mRootTab;
 }
 
-PageIndex TabView::GetPageIndex() const {
-  return mActiveSubTab ? mActiveSubTabPage : mRootTabPage;
+PageID TabView::GetPageID() const {
+  const auto mode = this->GetTabMode();
+  if (mode != TabMode::NORMAL && mActiveSubTabPageID) {
+    return *mActiveSubTabPageID;
+  }
+  if (mode == TabMode::NORMAL && mRootTabPageID) {
+    return *mRootTabPageID;
+  }
+
+  const auto ids = this->GetTab()->GetPageIDs();
+  if (ids.size() == 0) {
+    return PageID(nullptr);
+  }
+
+  return ids.front();
+}
+
+std::vector<PageID> TabView::GetPageIDs() const {
+  return mActiveSubTab ? mActiveSubTab->GetPageIDs() : mRootTab->GetPageIDs();
 }
 
 void TabView::PostCursorEvent(const CursorEvent& ev) {
   auto receiver
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
-  if (receiver && (this->GetPageIndex() < this->GetPageCount())) {
-    const auto size = this->GetNativeContentSize();
-    CursorEvent tabEvent {ev};
-    tabEvent.mX *= size.width;
-    tabEvent.mY *= size.height;
-    receiver->PostCursorEvent(mEventContext, tabEvent, this->GetPageIndex());
+  if (!receiver) {
+    return;
   }
+  const auto size = this->GetNativeContentSize();
+  CursorEvent tabEvent {ev};
+  tabEvent.mX *= size.width;
+  tabEvent.mY *= size.height;
+  receiver->PostCursorEvent(mEventContext, tabEvent, this->GetPageID());
 }
 
-PageIndex TabView::GetPageCount() const {
-  return this->GetTab()->GetPageCount();
-}
-
-void TabView::SetPageIndex(PageIndex page) {
-  if (page >= this->GetPageCount()) {
+void TabView::SetPageID(PageID page) {
+  const auto tab = this->GetTab();
+  const auto pages = tab->GetPageIDs();
+  const auto it = std::ranges::find(pages, page);
+  if (it == pages.end()) {
     return;
   }
 
   if (mActiveSubTab) {
-    mActiveSubTabPage = page;
+    mActiveSubTabPageID = page;
   } else {
-    mRootTabPage = page;
+    mRootTabPageID = page;
   }
 
   this->PostCursorEvent({});
@@ -105,77 +129,68 @@ void TabView::SetPageIndex(PageIndex page) {
   evPageChangedEvent.Emit();
 }
 
-void TabView::NextPage() {
-  const auto count = this->GetPageCount();
-  if (count < 2) {
-    return;
-  }
-
-  const auto current = this->GetPageIndex();
-  if (current + 1 < count) {
-    this->SetPageIndex(current + 1);
-    return;
-  }
-
-  if (mKneeboard->GetAppSettings().mLoopPages) {
-    this->SetPageIndex(0);
-  }
-}
-
-void TabView::PreviousPage() {
-  const auto page = GetPageIndex();
-  if (page > 0) {
-    this->SetPageIndex(page - 1);
-    return;
-  }
-
-  if (!mKneeboard->GetAppSettings().mLoopPages) {
-    return;
-  }
-
-  const auto count = this->GetPageCount();
-  if (count > 2) {
-    this->SetPageIndex(count - 1);
-  }
-}
-
 void TabView::OnTabContentChanged(ContentChangeType changeType) {
-  this->evContentChangedEvent.Emit(changeType);
-  if (changeType == ContentChangeType::FullyReplaced) {
-    mRootTabPage = 0;
-    evPageChangedEvent.Emit();
-  } else {
-    const auto pageCount = mRootTab->GetPageCount();
-    if (mRootTabPage >= pageCount) {
-      mRootTabPage = std::max<PageIndex>(pageCount - 1, 0);
-      evPageChangedEvent.Emit();
+  const scope_guard updateOnExit([changeType, this] {
+    this->evContentChangedEvent.Emit(changeType);
+    if (!mActiveSubTab) {
+      evNeedsRepaintEvent.Emit();
     }
+  });
+
+  const auto pages = mRootTab->GetPageIDs();
+  if (pages.empty()) {
+    mRootTabPageID = {};
+    evPageChangedEvent.Emit();
+    return;
   }
-  if (!mActiveSubTab) {
-    evNeedsRepaintEvent.Emit();
+
+  if (changeType == ContentChangeType::FullyReplaced) {
+    mRootTabPageID = pages.front();
+    evPageChangedEvent.Emit();
+    return;
+  }
+
+  if (!mRootTabPageID) {
+    mRootTabPageID = pages.front();
+    evPageChangedEvent.Emit();
+    return;
+  }
+
+  auto it = std::ranges::find(pages, *mRootTabPageID);
+  if (it == pages.end()) {
+    mRootTabPageID = pages.back();
+    evPageChangedEvent.Emit();
   }
 }
 
 void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
+  auto pages = mRootTab->GetPageIDs();
+  if (pages.size() < 2) {
+    mRootTabPageID = pages.front();
+    evPageChangedEvent.Emit();
+    evNeedsRepaintEvent.Emit();
+    return;
+  }
+
   if (suggestedAction == SuggestedPageAppendAction::KeepOnCurrentPage) {
     return;
   }
 
-  const auto count = mRootTab->GetPageCount();
-  if (mRootTabPage == count - 2) {
-    if (mActiveSubTab) {
-      mRootTabPage++;
-    } else {
-      NextPage();
-    }
+  if (mRootTabPageID != pages.at(pages.size() - 2)) {
+    return;
   }
+
+  mRootTabPageID = pages.back();
+  if (mActiveSubTab) {
+    return;
+  }
+
+  evPageChangedEvent.Emit();
+  evNeedsRepaintEvent.Emit();
 }
 
 D2D1_SIZE_U TabView::GetNativeContentSize() const {
-  if (GetPageIndex() >= GetPageCount()) {
-    return {ErrorRenderWidth, ErrorRenderHeight};
-  }
-  return GetTab()->GetNativeContentSize(GetPageIndex());
+  return GetTab()->GetNativeContentSize(GetPageID());
 }
 
 TabMode TabView::GetTabMode() const {
@@ -204,12 +219,12 @@ bool TabView::SetTabMode(TabMode mode) {
   auto receiver
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(this->GetTab());
   if (receiver) {
-    receiver->PostCursorEvent(mEventContext, {}, this->GetPageIndex());
+    receiver->PostCursorEvent(mEventContext, {}, this->GetPageID());
   }
 
   mTabMode = mode;
   mActiveSubTab = nullptr;
-  mActiveSubTabPage = 0;
+  mActiveSubTabPageID = {};
 
   switch (mode) {
     case TabMode::NORMAL:
@@ -220,14 +235,15 @@ bool TabView::SetTabMode(TabMode mode) {
         mRootTab,
         std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab)
           ->GetNavigationEntries(),
-        mRootTab->GetNativeContentSize(mRootTabPage));
+        mRootTab->GetNativeContentSize(
+          mRootTabPageID ? (*mRootTabPageID) : (PageID {})));
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
-        [this](EventContext ctx, PageIndex newPage) {
+        [this](EventContext ctx, PageID newPage) {
           if (ctx != mEventContext) {
             return;
           }
-          mRootTabPage = newPage;
+          mRootTabPageID = newPage;
           SetTabMode(TabMode::NORMAL);
         });
       AddEventListener(

@@ -19,6 +19,7 @@
  */
 
 #include <OpenKneeboard/NavigationTab.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -104,7 +105,7 @@ NavigationTab::NavigationTab(
   const auto rowHeight = PaddingRatio * metrics.height;
   const auto padding = rowHeight / 2;
 
-  const auto size = this->GetNativeContentSize(0);
+  const auto size = this->GetNativeContentSize({});
   const D2D1_RECT_F topRect {
     .left = padding,
     .top = 2 * padding,
@@ -118,7 +119,7 @@ NavigationTab::NavigationTab(
 
   for (const auto& entry: entries) {
     buttons.push_back(
-      {winrt::to_hstring(entry.mName), entry.mPageIndex, rect, column});
+      {winrt::to_hstring(entry.mName), entry.mPageID, rect, column});
 
     rect.top = rect.bottom + padding;
     rect.bottom = rect.top + rowHeight;
@@ -127,7 +128,9 @@ NavigationTab::NavigationTab(
       column = (column + 1) % columns;
       rect = topRect;
       if (column == 0) {
-        mButtonTrackers.push_back(ButtonTracker::Create(buttons));
+        PageID id;
+        mPageIDs.push_back(id);
+        mButtonTrackers[id] = ButtonTracker::Create(buttons);
         buttons.clear();
       } else {
         const auto translateX = column * (mPreferredSize.width / columns);
@@ -138,13 +141,15 @@ NavigationTab::NavigationTab(
   }
 
   if (!buttons.empty()) {
-    mButtonTrackers.push_back(ButtonTracker::Create(buttons));
+    PageID id;
+    mPageIDs.push_back(id);
+    mButtonTrackers[id] = ButtonTracker::Create(buttons);
   }
 
-  for (const auto& buttonTracker: mButtonTrackers) {
+  for (const auto& [pageID, buttonTracker]: mButtonTrackers) {
     AddEventListener(
       buttonTracker->evClicked, [this](auto ctx, const Button& button) {
-        this->evPageChangeRequestedEvent.Emit(ctx, button.mPageIndex);
+        this->evPageChangeRequestedEvent.Emit(ctx, button.mPageID);
       });
   }
 }
@@ -161,19 +166,26 @@ PageIndex NavigationTab::GetPageCount() const {
   return static_cast<PageIndex>(mButtonTrackers.size());
 }
 
-D2D1_SIZE_U NavigationTab::GetNativeContentSize(PageIndex) {
+D2D1_SIZE_U NavigationTab::GetNativeContentSize(PageID) {
   return mPreferredSize;
+}
+
+std::vector<PageID> NavigationTab::GetPageIDs() const {
+  return mPageIDs;
 }
 
 void NavigationTab::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
-  PageIndex pageIndex) {
+  PageID pageID) {
+  if (!mButtonTrackers.contains(pageID)) {
+    return;
+  }
   scope_guard repaintOnExit([&]() { evNeedsRepaintEvent.Emit(); });
-  mButtonTrackers.at(pageIndex)->PostCursorEvent(ctx, ev);
+  mButtonTrackers.at(pageID)->PostCursorEvent(ctx, ev);
 }
 
-bool NavigationTab::CanClearUserInput(PageIndex) const {
+bool NavigationTab::CanClearUserInput(PageID) const {
   return false;
 }
 
@@ -181,7 +193,7 @@ bool NavigationTab::CanClearUserInput() const {
   return false;
 }
 
-void NavigationTab::ClearUserInput(PageIndex) {
+void NavigationTab::ClearUserInput(PageID) {
   // nothing to do here
 }
 
@@ -192,7 +204,7 @@ void NavigationTab::ClearUserInput() {
 void NavigationTab::RenderPage(
   RenderTargetID rtid,
   ID2D1DeviceContext* ctx,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_RECT_F& canvasRect) {
   const auto scale
     = (canvasRect.bottom - canvasRect.top) / mPreferredSize.height;
@@ -205,7 +217,7 @@ void NavigationTab::RenderPage(
     * D2D1::Matrix3x2F::Scale({scale, scale}, origin);
   ctx->SetTransform(pageTransform);
 
-  const auto [hoverButton, buttons] = mButtonTrackers.at(pageIndex)->GetState();
+  const auto [hoverButton, buttons] = mButtonTrackers.at(pageID)->GetState();
 
   for (int i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
@@ -228,9 +240,9 @@ void NavigationTab::RenderPage(
       origin.y + (scale * mPreferredSize.height),
     },
     mPreferredSize,
-    pageIndex,
+    pageID.GetTemporaryValue(),
     ctx,
-    std::bind_front(&NavigationTab::RenderPreviewLayer, this, rtid, pageIndex));
+    std::bind_front(&NavigationTab::RenderPreviewLayer, this, rtid, pageID));
 
   ctx->SetTransform(pageTransform);
   scope_guard resetTransform(
@@ -266,6 +278,12 @@ void NavigationTab::RenderPage(
       D2D1_DRAW_TEXT_OPTIONS_NO_SNAP | D2D1_DRAW_TEXT_OPTIONS_CLIP);
   }
 
+  auto pageIt = std::ranges::find(mPageIDs, pageID);
+  if (pageIt == mPageIDs.end()) {
+    return;
+  }
+  const auto pageIndex = static_cast<PageIndex>(pageIt - mPageIDs.begin());
+
   auto message = winrt::to_hstring(
     std::format(_("Page {} of {}"), pageIndex + 1, this->GetPageCount()));
   ctx->DrawTextW(
@@ -282,14 +300,13 @@ void NavigationTab::RenderPage(
 
 void NavigationTab::RenderPreviewLayer(
   RenderTargetID rtid,
-  PageIndex pageIndex,
+  PageID pageID,
   ID2D1DeviceContext* ctx,
   const D2D1_SIZE_U& size) {
-  mPreviewMetricsPage = pageIndex;
   auto& m = mPreviewMetrics;
   m = {};
 
-  const auto& buttons = mButtonTrackers.at(pageIndex)->GetButtons();
+  const auto& buttons = mButtonTrackers.at(pageID)->GetButtons();
   m.mRects.clear();
   m.mRects.resize(buttons.size());
 
@@ -304,7 +321,7 @@ void NavigationTab::RenderPreviewLayer(
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
 
-    const auto nativeSize = mRootTab->GetNativeContentSize(button.mPageIndex);
+    const auto nativeSize = mRootTab->GetNativeContentSize(button.mPageID);
     const auto scale = m.mHeight / nativeSize.height;
     const auto width = nativeSize.width * scale;
 
@@ -314,7 +331,7 @@ void NavigationTab::RenderPreviewLayer(
     rect.right = rect.left + width;
     rect.bottom = button.mRect.bottom + m.mBleed;
 
-    mRootTab->RenderPage(rtid, ctx, button.mPageIndex, rect);
+    mRootTab->RenderPage(rtid, ctx, button.mPageID, rect);
   }
 }
 

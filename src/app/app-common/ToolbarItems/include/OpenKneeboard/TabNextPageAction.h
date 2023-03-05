@@ -20,12 +20,15 @@
 #pragma once
 
 #include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/UserActionHandler.h>
 
 namespace OpenKneeboard {
 
 class ITabView;
 
-class TabNextPageAction final : public ToolbarAction, private EventReceiver {
+class TabNextPageAction final : public ToolbarAction,
+                                private EventReceiver,
+                                public UserActionHandler {
  public:
   TabNextPageAction(KneeboardState*, const std::shared_ptr<ITabView>& state);
   TabNextPageAction() = delete;

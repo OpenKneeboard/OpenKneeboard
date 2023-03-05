@@ -52,7 +52,8 @@ class PDFFilePageSource final
   virtual void Reload();
 
   virtual PageIndex GetPageCount() const final override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) final override;
+  virtual std::vector<PageID> GetPageIDs() const final override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) final override;
 
   std::filesystem::path GetPath() const;
   virtual void SetPath(const std::filesystem::path& path);
@@ -60,19 +61,17 @@ class PDFFilePageSource final
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;
 
-  virtual void PostCursorEvent(
-    EventContext ctx,
-    const CursorEvent&,
-    PageIndex pageIndex) override;
-  virtual bool CanClearUserInput(PageIndex) const override;
+  virtual void PostCursorEvent(EventContext ctx, const CursorEvent&, PageID)
+    override;
+  virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
-  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect) override;
 
  private:
@@ -87,12 +86,12 @@ class PDFFilePageSource final
 
   void RenderPageContent(
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID pageIndex,
     const D2D1_RECT_F& rect);
-  void RenderOverDoodles(
-    ID2D1DeviceContext*,
-    PageIndex pageIndex,
-    const D2D1_RECT_F&);
+  void
+  RenderOverDoodles(ID2D1DeviceContext*, PageID pageIndex, const D2D1_RECT_F&);
+
+  PageID GetPageIDForIndex(PageIndex index) const;
 };
 
 }// namespace OpenKneeboard

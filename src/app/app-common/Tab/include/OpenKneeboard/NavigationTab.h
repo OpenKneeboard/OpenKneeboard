@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include "TabBase.h"
+
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/CursorEvent.h>
@@ -29,8 +31,6 @@
 
 #include <limits>
 #include <memory>
-
-#include "TabBase.h"
 
 namespace OpenKneeboard {
 
@@ -51,20 +51,19 @@ class NavigationTab final : public TabBase,
   virtual void Reload() override;
 
   virtual PageIndex GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
+  virtual std::vector<PageID> GetPageIDs() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) override;
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect) override;
 
-  virtual void PostCursorEvent(
-    EventContext,
-    const CursorEvent&,
-    PageIndex pageIndex) override;
-  virtual bool CanClearUserInput(PageIndex) const override;
+  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+    override;
+  virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
-  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
  private:
@@ -77,14 +76,15 @@ class NavigationTab final : public TabBase,
 
   struct Button final {
     winrt::hstring mName;
-    PageIndex mPageIndex;
+    PageID mPageID;
     D2D1_RECT_F mRect;
     uint16_t mRenderColumn;
 
     bool operator==(const Button&) const noexcept;
   };
   using ButtonTracker = CursorClickableRegions<Button>;
-  std::vector<std::shared_ptr<ButtonTracker>> mButtonTrackers;
+  std::vector<PageID> mPageIDs;
+  std::unordered_map<PageID, std::shared_ptr<ButtonTracker>> mButtonTrackers;
 
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   winrt::com_ptr<IDWriteTextFormat> mPageNumberTextFormat;
@@ -94,7 +94,6 @@ class NavigationTab final : public TabBase,
   winrt::com_ptr<ID2D1SolidColorBrush> mPreviewOutlineBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 
-  PageIndex mPreviewMetricsPage = ~PageIndex {0};
   struct {
     float mBleed;
     float mStroke;
@@ -104,7 +103,7 @@ class NavigationTab final : public TabBase,
 
   void RenderPreviewLayer(
     RenderTargetID,
-    PageIndex pageIndex,
+    PageID pageID,
     ID2D1DeviceContext* ctx,
     const D2D1_SIZE_U& size);
 

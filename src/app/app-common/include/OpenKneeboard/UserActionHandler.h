@@ -19,22 +19,27 @@
  */
 #pragma once
 
-#include <OpenKneeboard/IPageSource.h>
-#include <OpenKneeboard/UniqueID.h>
+#include <OpenKneeboard/UserAction.h>
 
-#include <OpenKneeboard/utf8.h>
+#include <memory>
 
 namespace OpenKneeboard {
 
-struct NavigationEntry {
-  std::string mName;
-  PageID mPageID;
-};
+class KneeboardState;
+class IKneeboardView;
+class ITabView;
 
-class IPageSourceWithNavigation : public virtual IPageSource {
+class UserActionHandler {
  public:
-  virtual bool IsNavigationAvailable() const = 0;
-  virtual std::vector<NavigationEntry> GetNavigationEntries() const = 0;
+  virtual ~UserActionHandler();
+  virtual bool IsEnabled() const = 0;
+  virtual void Execute() = 0;
+
+  static std::unique_ptr<UserActionHandler> Create(
+    KneeboardState* kneeboard,
+    const std::shared_ptr<IKneeboardView>& kneeboardView,
+    const std::shared_ptr<ITabView>& tab,
+    UserAction);
 };
 
 }// namespace OpenKneeboard

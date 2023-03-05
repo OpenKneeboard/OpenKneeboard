@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/ToolbarToggleAction.h>
+#include <OpenKneeboard/UserActionHandler.h>
 
 namespace OpenKneeboard {
 
@@ -29,6 +30,7 @@ class IKneeboardView;
 
 class ToggleBookmarkAction final : public ToolbarToggleAction,
                                    public IToolbarItemWithVisibility,
+                                   public UserActionHandler,
                                    private EventReceiver {
  public:
   ToggleBookmarkAction() = delete;
@@ -45,6 +47,8 @@ class ToggleBookmarkAction final : public ToolbarToggleAction,
 
   virtual void Activate() override;
   virtual void Deactivate() override;
+
+  virtual void Execute() override;
 
  private:
   KneeboardState* mKneeboardState = nullptr;

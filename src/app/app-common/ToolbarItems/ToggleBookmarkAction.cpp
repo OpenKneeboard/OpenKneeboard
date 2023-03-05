@@ -86,4 +86,9 @@ void ToggleBookmarkAction::Deactivate() {
   view->RemoveBookmarkForCurrentPage();
 }
 
+void ToggleBookmarkAction::Execute() {
+  // Re-implemented to put in UserActionHandler vtable
+  ToolbarToggleAction::Execute();
+}
+
 }// namespace OpenKneeboard

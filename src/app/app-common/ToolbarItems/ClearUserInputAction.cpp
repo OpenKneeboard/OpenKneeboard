@@ -85,7 +85,7 @@ bool ClearUserInputAction::IsEnabled() const {
     : nullptr;
   switch (mMode) {
     case Mode::CurrentPage:
-      return wce && tabView && wce->CanClearUserInput(tabView->GetPageIndex());
+      return wce && tabView && wce->CanClearUserInput(tabView->GetPageID());
     case Mode::ThisTab:
       return wce && wce->CanClearUserInput();
     case Mode::AllTabs:
@@ -128,7 +128,7 @@ void ClearUserInputAction::Execute() {
       wce->ClearUserInput();
       return;
     case Mode::CurrentPage:
-      wce->ClearUserInput(tabView->GetPageIndex());
+      wce->ClearUserInput(tabView->GetPageID());
       return;
     case Mode::AllTabs:
       OPENKNEEBOARD_UNREACHABLE;

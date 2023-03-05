@@ -19,16 +19,16 @@
  */
 #pragma once
 
+#include "ITab.h"
+#include "ITabWithSettings.h"
+#include "TabBase.h"
+
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/TabBase.h>
 
 #include <shims/filesystem>
-
-#include "ITab.h"
-#include "ITabWithSettings.h"
-#include "TabBase.h"
 
 namespace OpenKneeboard {
 
@@ -63,20 +63,19 @@ class EndlessNotebookTab final : public TabBase,
   virtual void SetPath(const std::filesystem::path& path);
 
   virtual PageIndex GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
+  virtual std::vector<PageID> GetPageIDs() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) override;
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect) override;
 
-  virtual void PostCursorEvent(
-    EventContext,
-    const CursorEvent&,
-    PageIndex pageIndex) override;
-  virtual bool CanClearUserInput(PageIndex) const override;
+  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+    override;
+  virtual bool CanClearUserInput(PageID) const override;
   virtual bool CanClearUserInput() const override;
-  virtual void ClearUserInput(PageIndex) override;
+  virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
  private:
@@ -92,8 +91,9 @@ class EndlessNotebookTab final : public TabBase,
   std::filesystem::path mPath;
 
   std::shared_ptr<IPageSource> mSource;
+  PageID mSourcePageID;
   std::unique_ptr<DoodleRenderer> mDoodles;
-  PageIndex mPageCount {0};
+  std::vector<PageID> mPageIDs;
 };
 
 }// namespace OpenKneeboard

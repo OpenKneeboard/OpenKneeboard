@@ -19,8 +19,10 @@
  */
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/WindowCaptureTab.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
+
 #include <Psapi.h>
 #include <Shlwapi.h>
 #include <dwmapi.h>
@@ -70,9 +72,9 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
 void WindowCaptureTab::PostCursorEvent(
   EventContext ec,
   const CursorEvent& ev,
-  PageIndex pageIndex) {
+  PageID pageID) {
   if (mSendInput) {
-    PageSourceWithDelegates::PostCursorEvent(ec, ev, pageIndex);
+    PageSourceWithDelegates::PostCursorEvent(ec, ev, pageID);
   }
 }
 

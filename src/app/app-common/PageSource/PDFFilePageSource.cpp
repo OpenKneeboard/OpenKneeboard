@@ -74,13 +74,15 @@ struct PDFFilePageSource::Impl final {
   winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
 
   std::vector<NavigationEntry> mBookmarks;
-  std::vector<std::shared_ptr<LinkHandler>> mLinks;
+  std::unordered_map<PageID, std::shared_ptr<LinkHandler>> mLinks;
 
   bool mNavigationLoaded = false;
 
   std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>> mCache;
   std::unique_ptr<DoodleRenderer> mDoodles;
   std::shared_ptr<FilesystemWatcher> mWatcher;
+
+  std::vector<PageID> mPageIDs;
 };
 
 PDFFilePageSource::PDFFilePageSource(
@@ -140,8 +142,8 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
 
   auto file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
   strongThis->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
+  this->p->mPageIDs.resize(p->mPDFDocument.PageCount());
 
-  const EventDelay eventDelay;
   strongThis->evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
@@ -160,16 +162,18 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   }
 
   PDFNavigation::PDF pdf(path);
-  for (const auto& it: pdf.GetBookmarks()) {
-    p->mBookmarks.push_back({it.mName, it.mPageIndex});
-  }
-  p->mNavigationLoaded = true;
-  {
-    const EventDelay delay;
-    this->evAvailableFeaturesChangedEvent.Emit();
+  const auto bookmarks = pdf.GetBookmarks();
+  for (int i = 0; i < bookmarks.size(); i++) {
+    const auto& it = bookmarks[i];
+    p->mBookmarks.push_back({it.mName, this->GetPageIDForIndex(it.mPageIndex)});
   }
 
-  for (const auto& pageLinks: pdf.GetLinks()) {
+  p->mNavigationLoaded = true;
+  this->evAvailableFeaturesChangedEvent.Emit();
+
+  const auto links = pdf.GetLinks();
+  for (int i = 0; i < links.size(); ++i) {
+    const auto& pageLinks = links.at(i);
     auto handler = Impl::LinkHandler::Create(pageLinks);
     AddEventListener(
       handler->evClicked,
@@ -177,7 +181,8 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
         const auto& dest = link.mDestination;
         switch (dest.mType) {
           case PDFNavigation::DestinationType::Page:
-            this->evPageChangeRequestedEvent.Emit(ctx, dest.mPageIndex);
+            this->evPageChangeRequestedEvent.Emit(
+              ctx, this->GetPageIDForIndex(dest.mPageIndex));
             break;
           case PDFNavigation::DestinationType::URI: {
             [=]() -> winrt::fire_and_forget {
@@ -187,8 +192,19 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
           }
         }
       });
-    p->mLinks.push_back(handler);
+    p->mLinks[this->GetPageIDForIndex(i)] = handler;
   }
+}
+
+PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
+  if (!p) {
+    return {};
+  }
+  if (index < p->mPageIDs.size()) {
+    return p->mPageIDs.at(index);
+  }
+  p->mPageIDs.resize(index + 1);
+  return p->mPageIDs.back();
 }
 
 void PDFFilePageSource::Reload() {
@@ -199,6 +215,7 @@ void PDFFilePageSource::Reload() {
   p->mLinks.clear();
   p->mNavigationLoaded = false;
   p->mCache.clear();
+  p->mPageIDs.clear();
 
   if (!std::filesystem::is_regular_file(p->mPath)) {
     return;
@@ -222,10 +239,29 @@ PageIndex PDFFilePageSource::GetPageCount() const {
   return 0;
 }
 
-D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageIndex index) {
-  if (index >= GetPageCount()) {
+std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
+  const auto pageCount = this->GetPageCount();
+  if (pageCount == 0) {
     return {};
   }
+  if (pageCount == p->mPageIDs.size()) {
+    return p->mPageIDs;
+  }
+
+  p->mPageIDs.resize(pageCount);
+  return p->mPageIDs;
+}
+
+D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageID id) {
+  if (!p) {
+    return {ErrorRenderWidth, ErrorRenderHeight};
+  }
+
+  auto it = std::ranges::find(p->mPageIDs, id);
+  if (it == p->mPageIDs.end()) {
+    return {ErrorRenderWidth, ErrorRenderHeight};
+  }
+  const auto index = it - p->mPageIDs.begin();
   auto size = p->mPDFDocument.GetPage(index).Size();
 
   return {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)};
@@ -233,11 +269,16 @@ D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageIndex index) {
 
 void PDFFilePageSource::RenderPageContent(
   ID2D1DeviceContext* ctx,
-  PageIndex index,
+  PageID id,
   const D2D1_RECT_F& rect) {
-  if (index >= GetPageCount()) {
+  if (!p) {
     return;
   }
+  const auto pageIt = std::ranges::find(p->mPageIDs, id);
+  if (pageIt == p->mPageIDs.end()) {
+    return;
+  }
+  const auto index = pageIt - p->mPageIDs.begin();
 
   auto page = p->mPDFDocument.GetPage(index);
   auto size = page.Size();
@@ -268,15 +309,15 @@ void PDFFilePageSource::RenderPageContent(
 void PDFFilePageSource::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
-  PageIndex pageIndex) {
-  const auto contentRect = this->GetNativeContentSize(pageIndex);
+  PageID pageID) {
+  const auto contentRect = this->GetNativeContentSize(pageID);
 
-  if (pageIndex >= p->mLinks.size()) {
-    p->mDoodles->PostCursorEvent(ctx, ev, pageIndex, contentRect);
+  if (!p->mLinks.contains(pageID)) {
+    p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentRect);
     return;
   }
 
-  auto links = p->mLinks.at(pageIndex);
+  auto links = p->mLinks.at(pageID);
   if (!links) {
     return;
   }
@@ -293,19 +334,19 @@ void PDFFilePageSource::PostCursorEvent(
     return;
   }
 
-  p->mDoodles->PostCursorEvent(ctx, ev, pageIndex, contentRect);
+  p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentRect);
 }
 
-bool PDFFilePageSource::CanClearUserInput(PageIndex index) const {
-  return p->mDoodles->HaveDoodles(index);
+bool PDFFilePageSource::CanClearUserInput(PageID id) const {
+  return p->mDoodles->HaveDoodles(id);
 }
 
 bool PDFFilePageSource::CanClearUserInput() const {
   return p->mDoodles->HaveDoodles();
 }
 
-void PDFFilePageSource::ClearUserInput(PageIndex pageIndex) {
-  p->mDoodles->ClearPage(pageIndex);
+void PDFFilePageSource::ClearUserInput(PageID id) {
+  p->mDoodles->ClearPage(id);
 }
 
 void PDFFilePageSource::ClearUserInput() {
@@ -314,12 +355,12 @@ void PDFFilePageSource::ClearUserInput() {
 
 void PDFFilePageSource::RenderOverDoodles(
   ID2D1DeviceContext* ctx,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_RECT_F& contentRect) {
-  if (pageIndex >= p->mLinks.size()) {
+  if (!p->mLinks.contains(pageID)) {
     return;
   }
-  const auto hoverButton = p->mLinks.at(pageIndex)->GetHoverButton();
+  const auto hoverButton = p->mLinks.at(pageID)->GetHoverButton();
   if (!hoverButton) {
     return;
   }
@@ -373,7 +414,7 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
   for (PageIndex i = 0; i < this->GetPageCount(); ++i) {
     entries.push_back({
       std::format(_("Page {} ({})"), i + 1, to_utf8(p->mPath.stem())),
-      i,
+      this->GetPageIDForIndex(i),
     });
   }
   return entries;
@@ -382,17 +423,21 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
 void PDFFilePageSource::RenderPage(
   RenderTargetID rtid,
   ID2D1DeviceContext* ctx,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_RECT_F& rect) {
-  const auto size = this->GetNativeContentSize(pageIndex);
+  const auto size = this->GetNativeContentSize(pageID);
   if (!p->mCache.contains(rtid)) {
     p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
   }
   p->mCache[rtid]->Render(
-    rect, size, pageIndex, ctx, [=](auto ctx, const auto& size) {
+    rect,
+    size,
+    pageID.GetTemporaryValue(),
+    ctx,
+    [=](auto ctx, const auto& size) {
       this->RenderPageContent(
         ctx,
-        pageIndex,
+        pageID,
         {
           0.0f,
           0.0f,
@@ -400,8 +445,8 @@ void PDFFilePageSource::RenderPage(
           static_cast<FLOAT>(size.height),
         });
     });
-  p->mDoodles->Render(ctx, pageIndex, rect);
-  this->RenderOverDoodles(ctx, pageIndex, rect);
+  p->mDoodles->Render(ctx, pageID, rect);
+  this->RenderOverDoodles(ctx, pageID, rect);
 }
 
 void PDFFilePageSource::OnFileModified(const std::filesystem::path& path) {

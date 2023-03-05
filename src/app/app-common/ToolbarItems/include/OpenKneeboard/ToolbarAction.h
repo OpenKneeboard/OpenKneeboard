@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ISelectableToolbarItem.h>
+
 #include <OpenKneeboard/utf8.h>
 
 namespace OpenKneeboard {

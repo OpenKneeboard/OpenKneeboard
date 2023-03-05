@@ -22,6 +22,10 @@
 namespace OpenKneeboard {
 
 void ToolbarToggleAction::Execute() {
+  if (!this->IsEnabled()) {
+    return;
+  }
+
   if (this->IsActive()) {
     this->Deactivate();
     return;

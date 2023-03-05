@@ -19,14 +19,16 @@
  */
 #pragma once
 
+#include "IPageSource.h"
+
 #include <OpenKneeboard/DXResources.h>
+
 #include <OpenKneeboard/utf8.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
 #include <mutex>
-
-#include "IPageSource.h"
 
 namespace OpenKneeboard {
 
@@ -47,20 +49,24 @@ class PlainTextPageSource final : public IPageSource {
   void EnsureNewPage();
 
   virtual PageIndex GetPageCount() const override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) override;
+  virtual std::vector<PageID> GetPageIDs() const override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) override;
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect) override;
 
  private:
   static constexpr int RENDER_SCALE = 1;
 
   mutable std::recursive_mutex mMutex;
+  mutable std::vector<PageID> mPageIDs;
   std::vector<std::vector<winrt::hstring>> mCompletePages;
   std::vector<winrt::hstring> mCurrentPageLines;
   std::vector<std::string> mMessages;
+
+  std::optional<PageIndex> FindPageIndex(PageID) const;
 
   float mPadding = -1.0f;
   float mRowHeight = -1.0f;

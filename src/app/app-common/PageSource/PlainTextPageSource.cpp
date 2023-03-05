@@ -20,14 +20,17 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+
 #include <Unknwn.h>
-#include <dwrite.h>
 
 #include <algorithm>
 #include <format>
+
+#include <dwrite.h>
 
 namespace OpenKneeboard {
 
@@ -46,7 +49,7 @@ PlainTextPageSource::PlainTextPageSource(
     L"",
     mTextFormat.put());
 
-  const auto size = this->GetNativeContentSize(0);
+  const auto size = this->GetNativeContentSize({});
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   dwf->CreateTextLayout(
     L"m", 1, mTextFormat.get(), size.width, size.height, textLayout.put());
@@ -63,25 +66,41 @@ PlainTextPageSource::~PlainTextPageSource() {
 
 PageIndex PlainTextPageSource::GetPageCount() const {
   if (mCompletePages.empty() && mCurrentPageLines.empty()) {
-    return 0;
+    return mPlaceholderText.empty() ? 0 : 1;
   }
 
   // We only push a complete page when there's content (or about to be)
   return mCompletePages.size() + 1;
 }
 
-D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(PageIndex pageIndex) {
+std::vector<PageID> PlainTextPageSource::GetPageIDs() const {
+  if (mPageIDs.size() < GetPageCount()) {
+    mPageIDs.resize(GetPageCount());
+  }
+  return mPageIDs;
+}
+
+D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(PageID) {
   return {768 * RENDER_SCALE, 1024 * RENDER_SCALE};
+}
+
+std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
+  PageID pageID) const {
+  auto it = std::ranges::find(mPageIDs, pageID);
+  if (it == mPageIDs.end()) {
+    return {};
+  }
+  return {static_cast<PageIndex>(it - mPageIDs.begin())};
 }
 
 void PlainTextPageSource::RenderPage(
   RenderTargetID,
   ID2D1DeviceContext* ctx,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_RECT_F& rect) {
   std::unique_lock lock(mMutex);
 
-  const auto virtualSize = this->GetNativeContentSize(0);
+  const auto virtualSize = this->GetNativeContentSize(pageID);
   const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
 
   const auto scaleX = canvasSize.width / virtualSize.width;
@@ -123,20 +142,16 @@ void PlainTextPageSource::RenderPage(
     return;
   }
 
-  if (pageIndex > mCompletePages.size()) [[unlikely]] {
-    D2DErrorRenderer(ctx).Render(
-      ctx,
-      std::format(
-        _("Invalid Page Number: {} of {}"),
-        pageIndex + 1,
-        mCompletePages.size() + 1),
-      rect);
+  const auto pageIndex = FindPageIndex(pageID);
+
+  if (!pageIndex) [[unlikely]] {
+    D2DErrorRenderer(ctx).Render(ctx, _("Invalid Page ID"), rect);
     return;
   }
 
-  const auto& lines = (pageIndex == mCompletePages.size())
+  const auto& lines = (*pageIndex == mCompletePages.size())
     ? mCurrentPageLines
-    : mCompletePages.at(pageIndex);
+    : mCompletePages.at(*pageIndex);
 
   D2D_POINT_2F point {mPadding, mPadding};
   for (const auto& line: lines) {
@@ -151,7 +166,7 @@ void PlainTextPageSource::RenderPage(
 
   point.y = virtualSize.height - (mRowHeight + mPadding);
 
-  if (pageIndex > 0) {
+  if (*pageIndex > 0) {
     std::wstring_view text(L"<<<<<");
     ctx->DrawTextW(
       text.data(),
@@ -164,8 +179,8 @@ void PlainTextPageSource::RenderPage(
   {
     auto text = winrt::to_hstring(std::format(
       _("Page {} of {}"),
-      pageIndex + 1,
-      std::max<PageIndex>(pageIndex + 1, GetPageCount())));
+      *pageIndex + 1,
+      std::max<PageIndex>(*pageIndex + 1, GetPageCount())));
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
     ctx->DrawTextW(
@@ -176,7 +191,7 @@ void PlainTextPageSource::RenderPage(
       footerBrush.get());
   }
 
-  if (pageIndex + 1 < GetPageCount()) {
+  if (*pageIndex + 1 < GetPageCount()) {
     std::wstring_view text(L">>>>>");
 
     textFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);

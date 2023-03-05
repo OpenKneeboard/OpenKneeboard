@@ -23,6 +23,7 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/TabViewUILayer.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/utf8.h>
 
@@ -105,13 +106,7 @@ void TabViewUILayer::Render(
     return;
   }
 
-  const auto pageIndex = tabView->GetPageIndex();
-  if (pageIndex >= pageCount) {
-    this->RenderError(d2d, _("Invalid Page Number"), rect);
-    return;
-  }
-
-  tab->RenderPage(rtid, d2d, pageIndex, rect);
+  tab->RenderPage(rtid, d2d, tabView->GetPageID(), rect);
 }
 
 void TabViewUILayer::RenderError(

@@ -25,7 +25,7 @@ namespace OpenKneeboard {
 
 class ToolbarToggleAction : public ToolbarAction {
  public:
-  virtual void Execute() override final;
+  virtual void Execute() override;
 
   virtual bool IsActive() = 0;
   virtual void Activate() = 0;

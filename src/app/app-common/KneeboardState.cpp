@@ -33,6 +33,7 @@
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/UserAction.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
@@ -462,12 +463,13 @@ void KneeboardState::SetCurrentTab(
       break;
   }
   view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
-  const auto pageCount = tab->GetPageCount();
+  const auto pageIDs = tab->GetPageIDs();
+  const auto pageCount = pageIDs.size();
   if (extra.mPageNumber != 0 && pageCount > 1) {
     const auto pageIndex = extra.mPageNumber - 1;
     if (pageIndex < pageCount) {
-      this->GetActiveViewForGlobalInput()->GetCurrentTabView()->SetPageIndex(
-        pageIndex);
+      this->GetActiveViewForGlobalInput()->GetCurrentTabView()->SetPageID(
+        pageIDs.at(pageIndex));
     } else {
       dprintf("Requested page index {} >= count {}", pageIndex, pageCount);
     }

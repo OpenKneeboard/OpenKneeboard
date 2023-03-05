@@ -45,7 +45,8 @@ class ImageFilePageSource final
   std::vector<std::filesystem::path> GetPaths() const;
 
   virtual PageIndex GetPageCount() const final override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) final override;
+  virtual std::vector<PageID> GetPageIDs() const final override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) final override;
 
   bool CanOpenFile(const std::filesystem::path&) const;
   static bool CanOpenFile(const DXResources& dxr, const std::filesystem::path&);
@@ -53,7 +54,7 @@ class ImageFilePageSource final
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect) final override;
 
   virtual bool IsNavigationAvailable() const override;
@@ -65,6 +66,7 @@ class ImageFilePageSource final
   ImageFilePageSource(const DXResources&);
 
   struct Page {
+    PageID mID;
     std::filesystem::path mPath;
     winrt::com_ptr<ID2D1Bitmap> mBitmap;
     std::shared_ptr<FilesystemWatcher> mWatcher;
@@ -77,7 +79,7 @@ class ImageFilePageSource final
   std::mutex mMutex;
   std::vector<Page> mPages = {};
 
-  winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(PageIndex index);
+  winrt::com_ptr<ID2D1Bitmap> GetPageBitmap(PageID);
 };
 
 }// namespace OpenKneeboard

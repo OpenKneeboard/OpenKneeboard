@@ -97,25 +97,30 @@ void EndlessNotebookTab::SetPath(const std::filesystem::path& rawPath) {
 
 void EndlessNotebookTab::Reload() {
   auto delegate = FilePageSource::Create(mDXR, mKneeboard, mPath);
-  if (!delegate) {
+  if ((!delegate) || delegate->GetPageCount() == 0) {
     mSource = {};
-    mPageCount = 0;
+    mPageIDs.clear();
     evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
     return;
   }
 
-  mPageCount = 1;
+  mPageIDs = {PageID {}};
   mSource = delegate;
+  mSourcePageID = mSource->GetPageIDs().front();
   evContentChangedEvent.Emit(ContentChangeType::FullyReplaced);
 }
 
 PageIndex EndlessNotebookTab::GetPageCount() const {
-  return mPageCount;
+  return mPageIDs.size();
 }
 
-D2D1_SIZE_U EndlessNotebookTab::GetNativeContentSize(PageIndex pageIndex) {
-  if (pageIndex < mPageCount) {
-    return mSource->GetNativeContentSize(0);
+std::vector<PageID> EndlessNotebookTab::GetPageIDs() const {
+  return mPageIDs;
+}
+
+D2D1_SIZE_U EndlessNotebookTab::GetNativeContentSize(PageID) {
+  if (mSource) {
+    return mSource->GetNativeContentSize(mSourcePageID);
   }
 
   return {ErrorRenderWidth, ErrorRenderHeight};
@@ -124,42 +129,41 @@ D2D1_SIZE_U EndlessNotebookTab::GetNativeContentSize(PageIndex pageIndex) {
 void EndlessNotebookTab::RenderPage(
   RenderTargetID rtid,
   ID2D1DeviceContext* d2d,
-  PageIndex pageIndex,
+  PageID pageID,
   const D2D1_RECT_F& rect) {
   if (!mSource) {
     return;
   }
-
-  mSource->RenderPage(rtid, d2d, 0, rect);
-  mDoodles->Render(d2d, pageIndex, rect);
+  mSource->RenderPage(rtid, d2d, mSourcePageID, rect);
+  mDoodles->Render(d2d, pageID, rect);
 }
 
 void EndlessNotebookTab::PostCursorEvent(
   EventContext ec,
   const CursorEvent& ce,
-  PageIndex pageIndex) {
+  PageID pageID) {
   if (!mSource) {
     return;
   }
 
   mDoodles->PostCursorEvent(
-    ec, ce, pageIndex, mSource->GetNativeContentSize(0));
-  if (mDoodles->HaveDoodles(pageIndex) && pageIndex == mPageCount - 1) {
-    mPageCount++;
+    ec, ce, pageID, mSource->GetNativeContentSize(mSourcePageID));
+  if (mDoodles->HaveDoodles(pageID) && pageID == mPageIDs.back()) {
+    mPageIDs.push_back({});
     evPageAppendedEvent.Emit(SuggestedPageAppendAction::KeepOnCurrentPage);
   }
 }
 
-bool EndlessNotebookTab::CanClearUserInput(PageIndex index) const {
-  return mDoodles->HaveDoodles(index);
+bool EndlessNotebookTab::CanClearUserInput(PageID id) const {
+  return mDoodles->HaveDoodles(id);
 }
 
 bool EndlessNotebookTab::CanClearUserInput() const {
   return mDoodles->HaveDoodles();
 }
 
-void EndlessNotebookTab::ClearUserInput(PageIndex index) {
-  mDoodles->ClearPage(index);
+void EndlessNotebookTab::ClearUserInput(PageID id) {
+  mDoodles->ClearPage(id);
   evAvailableFeaturesChangedEvent.Emit();
 }
 

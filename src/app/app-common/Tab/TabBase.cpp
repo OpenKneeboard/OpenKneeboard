@@ -67,24 +67,19 @@ std::vector<Bookmark> TabBase::GetBookmarks() const {
 }
 
 void TabBase::SetBookmarks(const std::vector<Bookmark>& bookmarks) {
-  std::unordered_set<PageIndex> seenPages;
+  std::unordered_set<PageID> seenPages;
   for (const auto& bookmark: bookmarks) {
     if (bookmark.mTabID != mRuntimeID) {
       throw std::logic_error("Trying to set bookmark for a different tab");
     }
 
-    if (seenPages.contains(bookmark.mPageIndex)) {
+    if (seenPages.contains(bookmark.mPageID)) {
       throw std::logic_error("Trying to add two bookmarks for the same page");
     }
-    seenPages.insert(bookmark.mPageIndex);
+    seenPages.insert(bookmark.mPageID);
   }
 
   mBookmarks = bookmarks;
-  std::sort(
-    mBookmarks.begin(), mBookmarks.end(), [](const auto& a, const auto& b) {
-      return a.mPageIndex < b.mPageIndex;
-    });
-
   evAvailableFeaturesChangedEvent.Emit();
   evBookmarksChangedEvent.Emit();
 }

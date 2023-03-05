@@ -23,26 +23,31 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
-#include <Windows.Graphics.Capture.Interop.h>
-#include <Windows.Graphics.DirectX.Direct3D11.interop.h>
-#include <libloaderapi.h>
-#include <shellapi.h>
-#include <wil/cppwinrt.h>
-#include <wil/cppwinrt_helpers.h>
+
 #include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
 #include <winrt/Windows.Graphics.DirectX.h>
 #include <winrt/Windows.System.h>
 #include <winrt/Windows.UI.Core.h>
-#include <wow64apiset.h>
+
+#include <wil/cppwinrt.h>
+#include <wil/cppwinrt_helpers.h>
+
+#include <Windows.Graphics.Capture.Interop.h>
+#include <Windows.Graphics.DirectX.Direct3D11.interop.h>
 
 #include <mutex>
+
+#include <libloaderapi.h>
+#include <shellapi.h>
+#include <wow64apiset.h>
 
 namespace WGC = winrt::Windows::Graphics::Capture;
 namespace WGDX = winrt::Windows::Graphics::DirectX;
@@ -214,7 +219,14 @@ PageIndex HWNDPageSource::GetPageCount() const {
   return 0;
 }
 
-D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageIndex) {
+std::vector<PageID> HWNDPageSource::GetPageIDs() const {
+  if (this->HaveWindow()) {
+    return {mPageID};
+  }
+  return {};
+}
+
+D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageID) {
   if (!mBitmap) {
     return {};
   }
@@ -224,7 +236,7 @@ D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageIndex) {
 void HWNDPageSource::RenderPage(
   RenderTargetID,
   ID2D1DeviceContext* ctx,
-  PageIndex index,
+  PageID,
   const D2D1_RECT_F& rect) {
   if (!mBitmap) {
     return;
@@ -324,7 +336,7 @@ static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
 void HWNDPageSource::PostCursorEvent(
   EventContext,
   const CursorEvent& ev,
-  PageIndex) {
+  PageID) {
   if (!mTexture) {
     return;
   }
@@ -404,11 +416,11 @@ bool HWNDPageSource::CanClearUserInput() const {
   return false;
 }
 
-bool HWNDPageSource::CanClearUserInput(PageIndex) const {
+bool HWNDPageSource::CanClearUserInput(PageID) const {
   return false;
 }
 
-void HWNDPageSource::ClearUserInput(PageIndex) {
+void HWNDPageSource::ClearUserInput(PageID) {
   // nothing to do here
 }
 

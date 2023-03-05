@@ -22,6 +22,7 @@
 #include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <OpenKneeboard/TabBase.h>
+
 #include <OpenKneeboard/handles.h>
 
 namespace OpenKneeboard {
@@ -77,10 +78,8 @@ class WindowCaptureTab final
   static std::unordered_map<HWND, WindowSpecification> GetTopLevelWindows();
   static std::optional<WindowSpecification> GetWindowSpecification(HWND);
 
-  virtual void PostCursorEvent(
-    EventContext,
-    const CursorEvent&,
-    PageIndex pageIndex) override final;
+  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+    override final;
 
  private:
   WindowCaptureTab(

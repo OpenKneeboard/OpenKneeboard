@@ -60,7 +60,7 @@ struct MainWindow : MainWindowT<MainWindow>,
  private:
   struct NavigationTag {
     ITab::RuntimeID mTabID;
-    std::optional<PageIndex> mPageIndex;
+    std::optional<PageID> mPageID;
 
     IInspectable box() const;
     static NavigationTag unbox(IInspectable);

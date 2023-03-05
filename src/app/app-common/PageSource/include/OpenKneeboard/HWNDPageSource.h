@@ -24,8 +24,11 @@
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
+
 #include <OpenKneeboard/handles.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Graphics.Capture.h>
 #include <winrt/Windows.System.h>
 
@@ -51,21 +54,20 @@ class HWNDPageSource final
   void InstallWindowHooks(HWND);
 
   virtual PageIndex GetPageCount() const final override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageIndex pageIndex) final override;
+  virtual std::vector<PageID> GetPageIDs() const final override;
+  virtual D2D1_SIZE_U GetNativeContentSize(PageID) final override;
 
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,
-    PageIndex pageIndex,
+    PageID,
     const D2D1_RECT_F& rect) final override;
 
-  virtual void PostCursorEvent(
-    EventContext,
-    const CursorEvent&,
-    PageIndex pageIndex) override final;
+  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+    override final;
   virtual bool CanClearUserInput() const override;
-  virtual bool CanClearUserInput(PageIndex) const override;
-  virtual void ClearUserInput(PageIndex) override;
+  virtual bool CanClearUserInput(PageID) const override;
+  virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
   Event<> evWindowClosedEvent;
@@ -79,6 +81,7 @@ class HWNDPageSource final
   winrt::apartment_context mUIThread;
   DXResources mDXR;
   HWND mWindow {};
+  PageID mPageID {};
   struct HookHandles {
     WindowCaptureControl::Handles mHooks64 {};
     winrt::handle mHook32Subprocess;
