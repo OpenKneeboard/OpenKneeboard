@@ -48,9 +48,6 @@ class UniqueIDBase : private _UniqueIDImpl {
 
   // Values *must not* be persisted and restored
   constexpr uint64_t GetTemporaryValue() const {
-    if (mValue == 0) {
-      OPENKNEEBOARD_BREAK;
-    }
     return mValue;
   }
 
