@@ -15,6 +15,7 @@ parent: Internals
 
 Test all of these with the `RelWithDebInfo` msi package, as it's the most restricted form of installation.
 
+* Install in clean virtual machine
 * Gaze detection, zoomed and unzoomed (`hello_xr` is useful for testing), before and after centering
   * SteamVR
   * Oculus: D3D11 and D3D12
