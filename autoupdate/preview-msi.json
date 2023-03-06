@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94026718",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94026718/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94026718/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-beta7",
-    "id": 94026718,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94577290",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94577290/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94577290/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-beta8",
+    "id": 94577290,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84Fmrve",
-    "tag_name": "v1.4-beta7",
-    "target_commitish": "311316b7c9cc6c10358172d433711af1280f40eb",
-    "name": "v1.4-beta7: directinput freezes, general reliability",
+    "node_id": "RE_kwDOGk0DR84FoyKK",
+    "tag_name": "v1.4-beta8",
+    "target_commitish": "ebc141edb58a86cc80805d7822c86a25e5bcf27c",
+    "name": "Release v1.4-beta8",
     "draft": false,
     "prerelease": true,
-    "created_at": "2023-03-01T03:08:58Z",
-    "published_at": "2023-03-01T03:51:49Z",
+    "created_at": "2023-03-06T01:28:12Z",
+    "published_at": "2023-03-06T02:24:05Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/97544600",
-        "id": 97544600,
-        "node_id": "RA_kwDOGk0DR84F0GmY",
-        "name": "OpenKneeboard-v1.4-beta7-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/98182158",
+        "id": 98182158,
+        "node_id": "RA_kwDOGk0DR84F2iQO",
+        "name": "OpenKneeboard-v1.4-beta8-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 137752581,
+        "size": 138124621,
         "download_count": 0,
-        "created_at": "2023-03-01T03:44:01Z",
-        "updated_at": "2023-03-01T03:44:05Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta7/OpenKneeboard-v1.4-beta7-DebugSymbols.zip"
+        "created_at": "2023-03-06T02:04:20Z",
+        "updated_at": "2023-03-06T02:04:26Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta8/OpenKneeboard-v1.4-beta8-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/97544597",
-        "id": 97544597,
-        "node_id": "RA_kwDOGk0DR84F0GmV",
-        "name": "OpenKneeboard-v1.4-beta7.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/98182146",
+        "id": 98182146,
+        "node_id": "RA_kwDOGk0DR84F2iQC",
+        "name": "OpenKneeboard-v1.4-beta8.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/msi",
         "state": "uploaded",
-        "size": 37027840,
+        "size": 37040128,
         "download_count": 1,
-        "created_at": "2023-03-01T03:43:58Z",
-        "updated_at": "2023-03-01T03:44:00Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta7/OpenKneeboard-v1.4-beta7.msi"
+        "created_at": "2023-03-06T02:04:16Z",
+        "updated_at": "2023-03-06T02:04:19Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta8/OpenKneeboard-v1.4-beta8.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-beta7",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-beta7",
-    "body": "Start by downloading [OpenKneeboard-v1.4-beta7.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta7/OpenKneeboard-v1.4-beta7.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n\r\n- fix DirectInput support after Windows reports a device was plugged/unplugged; this can happen when nothing's actually been connected or disconnected, and could lead to bindings not working until OpenKneeboard was restarted - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/864ffb0a3381d83cfe465e05c28de298ecb39753)\r\n- don't reload folder tabs (or tabs that include folders, like DCS Terrain tabs) when windows says the folder has changed, unless files that OpenKneeboard supports have actually been changed - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/49d79956b80bb6b6d58a540f778b97a9dc48b252)\r\n- internal threading model changes to systematically avoid some causes of crashes - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/f29d127e18966f5ff524228e0f6ca8261b5cacdd)\r\n- support ridiculously large repetitions for remote controls, e.g. 'toggle visibility/change tabs/change page 10,000 times' - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/19f7e986ff5ab8a57213b1552ba4e2b95a7db892)\r\n- use those to find and fix some extremely rare issues which generally require two things to happen within a few nanoseconds of each other, and are extremely unlikely to happen in normal usage:\r\n  - fix crash or show/hide not working if showing/hiding the kneeboard at the same moment that a page is being updated - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/3ac00dc7b2b6447f6fd8a4cc71c847747ee6c630)\r\n  - fix crash if a file-backed page within any kind of tab is removed while the file is being written to - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/83c6e1dc81a15fc5eade562d817cff6568f8f927)\r\n  - fix crash if a tab is removed at the same moment that a page in it is pinned/bookmarked - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/83c6e1dc81a15fc5eade562d817cff6568f8f927)\r\n  - fix crash if the DCS mission is changed while anti-virus is still scanning the previous mission - [commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/09738467362000b49fa7734d62da337ac9811d99)\r\n  - fix excessive memory usage when a ridiculously large quantity of log messages are generated, for example, when toggling kneeboard visibility 1000 times per second -[commit](https://github.com/OpenKneeboard/OpenKneeboard/commit/311316b7c9cc6c10358172d433711af1280f40eb)\r\n"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-beta8",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-beta8",
+    "body": "Start by downloading [OpenKneeboard-v1.4-beta8.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta8/OpenKneeboard-v1.4-beta8.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- Added support for starting minimized; see [FAQ](https://openkneeboard.com/faq.html#how-do-i-make-openkneeboard-start-minimized) for details\r\n- On multi-GPU systems, OpenKneeboard will now use the 'high performance' GPU to communicate with SteamVR\r\n- Image and PDF files are now monitored for changes, even if they are not inside a folder tab\r\n- Tablet drawings/notes are now correctly handled when files are deleted, created, or modified\r\n- Fix flickering when dual kneeboards are enabled in games that use both Vulkan and OpenXR\r\n- Wording: consistently use 'Theater' instead of 'Terrain'"
   }
 ]
