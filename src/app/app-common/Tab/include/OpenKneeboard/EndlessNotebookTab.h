@@ -35,16 +35,18 @@ namespace OpenKneeboard {
 class DoodleRenderer;
 class KneeboardState;
 
-class EndlessNotebookTab final : public TabBase,
-                                 public virtual ITabWithSettings,
-                                 public virtual IPageSourceWithCursorEvents,
-                                 public virtual EventReceiver {
+class EndlessNotebookTab final
+  : public TabBase,
+    public virtual ITabWithSettings,
+    public virtual IPageSourceWithCursorEvents,
+    public virtual EventReceiver,
+    public std::enable_shared_from_this<EndlessNotebookTab> {
  public:
-  EndlessNotebookTab(
+  static std::shared_ptr<EndlessNotebookTab> Create(
     const DXResources&,
     KneeboardState*,
     const std::filesystem::path& path);
-  EndlessNotebookTab(
+  static std::shared_ptr<EndlessNotebookTab> Create(
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
@@ -78,13 +80,14 @@ class EndlessNotebookTab final : public TabBase,
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
+  EndlessNotebookTab() = delete;
+
  private:
   EndlessNotebookTab(
     const DXResources&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    std::string_view title,
-    const std::filesystem::path& path);
+    std::string_view title);
   DXResources mDXR;
   KneeboardState* mKneeboard;
 
@@ -94,6 +97,8 @@ class EndlessNotebookTab final : public TabBase,
   PageID mSourcePageID;
   std::unique_ptr<DoodleRenderer> mDoodles;
   std::vector<PageID> mPageIDs;
+
+  void OnSourceContentChanged();
 };
 
 }// namespace OpenKneeboard

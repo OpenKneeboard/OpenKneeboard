@@ -22,6 +22,8 @@
 #include <OpenKneeboard/EndlessNotebookTab.h>
 #include <OpenKneeboard/FilePageSource.h>
 
+#include <OpenKneeboard/scope_guard.h>
+
 #include <nlohmann/json.hpp>
 
 namespace OpenKneeboard {
@@ -30,36 +32,35 @@ EndlessNotebookTab::EndlessNotebookTab(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  std::string_view title,
-  const std::filesystem::path& path)
+  std::string_view title)
   : TabBase(persistentID, title), mDXR(dxr), mKneeboard(kbs) {
   mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
-  this->SetPath(path);
 
   AddEventListener(
     mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
   AddEventListener(mDoodles->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
 }
 
-EndlessNotebookTab::EndlessNotebookTab(
+std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
-  const std::filesystem::path& path)
-  : EndlessNotebookTab(dxr, kbs, winrt::guid {}, to_utf8(path.stem()), path) {
+  const std::filesystem::path& path) {
+  std::shared_ptr<EndlessNotebookTab> ret(
+    new EndlessNotebookTab(dxr, kbs, winrt::guid {}, to_utf8(path.stem())));
+  ret->SetPath(path);
+  return ret;
 }
 
-EndlessNotebookTab::EndlessNotebookTab(
+std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
-  const nlohmann::json& settings)
-  : EndlessNotebookTab(
-    dxr,
-    kbs,
-    persistentID,
-    title,
-    settings.at("Path").get<std::filesystem::path>()) {
+  const nlohmann::json& settings) {
+  std::shared_ptr<EndlessNotebookTab> ret(
+    new EndlessNotebookTab(dxr, kbs, winrt::guid {}, title));
+  ret->SetPath(settings.at("Path").get<std::filesystem::path>());
+  return ret;
 }
 
 EndlessNotebookTab::~EndlessNotebookTab() {
@@ -96,17 +97,50 @@ void EndlessNotebookTab::SetPath(const std::filesystem::path& rawPath) {
 }
 
 void EndlessNotebookTab::Reload() {
+  const scope_guard contentChanged([this]() { evContentChangedEvent.Emit(); });
+
+  mPageIDs.clear();
+  mSourcePageID = {nullptr};
+  mSource = {};
+  mDoodles->Clear();
+
   auto delegate = FilePageSource::Create(mDXR, mKneeboard, mPath);
-  if ((!delegate) || delegate->GetPageCount() == 0) {
-    mSource = {};
+  if (!delegate) {
+    return;
+  }
+
+  mSource = delegate;
+
+  AddEventListener(mSource->evContentChangedEvent, [weak = weak_from_this()]() {
+    if (auto self = weak.lock()) {
+      self->OnSourceContentChanged();
+    }
+  });
+
+  if (delegate->GetPageCount() == 0) {
+    return;
+  }
+  mPageIDs = {PageID {}};
+  mSourcePageID = mSource->GetPageIDs().front();
+}
+
+void EndlessNotebookTab::OnSourceContentChanged() {
+  const auto ids = mSource->GetPageIDs();
+  if (ids.empty()) {
+    mDoodles->Clear();
     mPageIDs.clear();
+    mSourcePageID = {nullptr};
     evContentChangedEvent.Emit();
     return;
   }
 
+  if (mSourcePageID == ids.front()) {
+    return;
+  }
+
+  mDoodles->Clear();
+  mSourcePageID = ids.front();
   mPageIDs = {PageID {}};
-  mSource = delegate;
-  mSourcePageID = mSource->GetPageIDs().front();
   evContentChangedEvent.Emit();
 }
 

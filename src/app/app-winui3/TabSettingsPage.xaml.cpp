@@ -29,6 +29,9 @@
 #include "TabUIDataTemplateSelector.g.cpp"
 // clang-format on
 
+#include "FilePicker.h"
+#include "Globals.h"
+
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/FilePageSource.h>
 #include <OpenKneeboard/ITab.h>
@@ -36,18 +39,19 @@
 #include <OpenKneeboard/TabTypes.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/inttypes.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
-#include <microsoft.ui.xaml.window.h>
-#include <shobjidl.h>
 
-#include <ranges>
 #include <shims/utility>
 
-#include "FilePicker.h"
-#include "Globals.h"
+#include <microsoft.ui.xaml.window.h>
+
+#include <ranges>
+
+#include <shobjidl.h>
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -314,8 +318,11 @@ void TabSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
 
   std::vector<std::shared_ptr<OpenKneeboard::ITab>> newTabs;
   for (const auto& path: files) {
+    // TODO (after v1.4): figure out MSVC compile errors if I move
+    // `detail::make_shared()` in TabTypes.h out of the `detail`
+    // sub-namespace
     newTabs.push_back(
-      std::make_shared<T>(gDXResources, gKneeboard.get(), path));
+      detail::make_shared<T>(gDXResources, gKneeboard.get(), path));
   }
 
   this->AddTabs(newTabs);
