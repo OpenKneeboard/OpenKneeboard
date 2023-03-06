@@ -72,8 +72,12 @@ void ImageFilePageSource::OnFileModified(const std::filesystem::path& path) {
   if (it == mPages.end()) {
     return;
   }
-
-  it->mBitmap = {};
+  if (std::filesystem::exists(path)) {
+    it->mBitmap = {};
+    it->mID = {};
+  } else {
+    mPages.erase(it);
+  }
   this->evContentChangedEvent.Emit();
 }
 
