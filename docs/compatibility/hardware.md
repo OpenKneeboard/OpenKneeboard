@@ -29,7 +29,7 @@ Any other DirectInput game controller should be supported; this includes the vas
 
 Graphics tablets are supported, *but not required*; OpenKneeboard supports most graphics tablets; these are generally marketed to artists. **Phones and tablet computers such as an iPad, Microsoft Surface, or similar are a different kind of device and not supported.**
 
-- Wacom tablets seem to have the most trouble-free drivers; the small Intuous S is the most popular
+- Wacom tablets seem to have the most trouble-free drivers; the small Intuos S is the most popular
 - Huion tablets are also popular and well-tested, especially the H640P; the drivers do have noteable issues leading to more complicated setup instructions
 
 Other manufacturers have varying qualities of drivers; try:

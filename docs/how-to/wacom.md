@@ -5,7 +5,7 @@ parent: How-To
 
 # Using Wacom Tablets with OpenKneeboard
 
-Wacom tablets can either be used with Huion's drivers, or [with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc).
+Wacom tablets can either be used with Wacom's drivers, or [with OpenTabletDriver](https://go.openkneeboard.com/otd-ipc).
 
 ## Using Wacom's drivers
 
