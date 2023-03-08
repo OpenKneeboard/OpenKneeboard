@@ -363,6 +363,7 @@ void MainWindow::SaveWindowPosition() {
 winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) noexcept {
+  gShuttingDown = true;
   this->RemoveAllEventListeners();
 
   this->SaveWindowPosition();

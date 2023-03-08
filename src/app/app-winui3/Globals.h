@@ -37,5 +37,6 @@ extern winrt::handle gMutex;
 extern std::shared_ptr<TroubleshootingStore> gTroubleshootingStore;
 extern std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
 extern RenderTargetID gGUIRenderTargetID;
+extern bool gShuttingDown;
 
 }// namespace OpenKneeboard

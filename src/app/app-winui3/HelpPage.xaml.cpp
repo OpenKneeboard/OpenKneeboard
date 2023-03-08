@@ -23,26 +23,31 @@
 #include "HelpPage.g.cpp"
 // clang-format on
 
+#include "CheckForUpdates.h"
+#include "FilePicker.h"
+
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
+
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
-#include <appmodel.h>
-#include <microsoft.ui.xaml.window.h>
-#include <shellapi.h>
+
 #include <shims/winrt/base.h>
-#include <shobjidl.h>
-#include <time.h>
+
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
+
+#include <microsoft.ui.xaml.window.h>
 
 #include <format>
 #include <fstream>
 #include <string>
 
-#include "CheckForUpdates.h"
-#include "FilePicker.h"
+#include <appmodel.h>
+#include <shellapi.h>
+#include <shobjidl.h>
+#include <time.h>
 
 using namespace OpenKneeboard;
 
@@ -246,6 +251,12 @@ winrt::fire_and_forget HelpPage::PopulateEvents() noexcept {
 }
 
 winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
+  // Even if our object is still alive, we need to be careful
+  // not to attempt to use the UI thread apartment context
+  // once the main window has gone.
+  if (gShuttingDown) {
+    co_return;
+  }
   auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
 
   std::wstring text;
@@ -279,7 +290,16 @@ winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
   }
 
   mDPrintClipboardData = text;
+  auto weak = this->get_weak();
   co_await mUIThread;
+  // Check again, just in case
+  if (gShuttingDown) {
+    co_return;
+  }
+  auto self = weak.get();
+  if (!self) {
+    co_return;
+  }
   DPrintText().Text(text);
   this->ScrollDPrintToEnd();
 }

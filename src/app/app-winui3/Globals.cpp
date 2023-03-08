@@ -35,5 +35,6 @@ DXResources gDXResources;
 winrt::handle gMutex {};
 std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
 RenderTargetID gGUIRenderTargetID;
+bool gShuttingDown = false;
 
 }// namespace OpenKneeboard
