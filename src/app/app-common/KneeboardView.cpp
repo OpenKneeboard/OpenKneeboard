@@ -490,6 +490,7 @@ std::optional<Bookmark> KneeboardView::AddBookmarkForCurrentPage() {
       inserted = true;
       break;
     }
+    ++it;
   }
   if (!inserted) {
     bookmarks.push_back(ret);
