@@ -23,6 +23,7 @@
 #include <OpenKneeboard/CursorClickableRegions.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/UILayerBase.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -58,6 +59,7 @@ class BookmarksUILayer final
 
  private:
   BookmarksUILayer(const DXResources& dxr, KneeboardState*, IKneeboardView*);
+  void Init();
 
   DXResources mDXResources;
   KneeboardState* mKneeboardState {nullptr};

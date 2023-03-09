@@ -30,8 +30,10 @@ std::shared_ptr<BookmarksUILayer> BookmarksUILayer::Create(
   const DXResources& dxr,
   KneeboardState* state,
   IKneeboardView* view) {
-  return std::shared_ptr<BookmarksUILayer>(
-    new BookmarksUILayer(dxr, state, view));
+  auto ret
+    = std::shared_ptr<BookmarksUILayer>(new BookmarksUILayer(dxr, state, view));
+  ret->Init();
+  return ret;
 }
 
 BookmarksUILayer::BookmarksUILayer(
@@ -48,7 +50,10 @@ BookmarksUILayer::BookmarksUILayer(
     {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), mTextBrush.put());
   d2d->CreateSolidColorBrush(
     {0.0f, 0.8f, 1.0f, 1.0f}, D2D1::BrushProperties(), mHoverBrush.put());
+}
 
+void BookmarksUILayer::Init() {
+  // Need the shared_ptr to exist first
   AddEventListener(
     mKneeboardView->evBookmarksChangedEvent, weak_wrap(this)([](auto self) {
       self->mButtons = {};
