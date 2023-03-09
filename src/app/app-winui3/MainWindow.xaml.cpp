@@ -29,6 +29,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Elevation.h>
+#include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -52,6 +53,7 @@
 
 #include <microsoft.ui.xaml.window.h>
 
+#include <fstream>
 #include <mutex>
 
 #include <Shellapi.h>
@@ -142,6 +144,7 @@ MainWindow::MainWindow() {
     SetCursor(LoadCursorW(NULL, IDC_ARROW));
     self->mFrameTimer.Start();
     self->Show();
+    self->WriteInstanceData();
   })));
 
   auto settings = gKneeboard->GetAppSettings();
@@ -217,6 +220,23 @@ MainWindow::MainWindow() {
       }
       backStack.ReplaceAll(newBackStack);
     });
+}
+
+void MainWindow::WriteInstanceData() {
+  const auto path = MainWindow::GetInstanceDataPath();
+  const bool uncleanShutdown = std::filesystem::exists(path);
+
+  auto f = std::ofstream(path, std::ios::binary | std::ios::trunc);
+  f << std::format(
+    "PID\t{}\n"
+    "HWND\t{}\n"
+    "Mailslot\t{}\n"
+    "StartTime\t{}\n",
+    GetCurrentProcessId(),
+    reinterpret_cast<uint64_t>(mHwnd),
+    GameEvent::GetMailslotPath(),
+    std::chrono::system_clock::now())
+    << std::endl;
 }
 
 MainWindow::~MainWindow() {
@@ -363,6 +383,7 @@ void MainWindow::SaveWindowPosition() {
 winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
   const IInspectable&,
   const WindowEventArgs&) noexcept {
+  std::filesystem::remove(MainWindow::GetInstanceDataPath());
   gShuttingDown = true;
   this->RemoveAllEventListeners();
 
@@ -721,6 +742,10 @@ void MainWindow::Show() {
   // Always use `ShowWindow()` instead of `->Activate()` so that it's obvious if
   // `->Activate()` starts to be required.
   ShowWindow(mHwnd, minimized ? SW_SHOWMINNOACTIVE : SW_SHOWNORMAL);
+}
+
+std::filesystem::path MainWindow::GetInstanceDataPath() {
+  return Settings::GetDirectory() / ".instance";
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

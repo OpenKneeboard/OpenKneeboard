@@ -100,6 +100,9 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::Windows::Foundation::IAsyncAction OnClosed(
     const IInspectable&,
     const WindowEventArgs&) noexcept;
+
+  static std::filesystem::path GetInstanceDataPath();
+  void WriteInstanceData();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 
