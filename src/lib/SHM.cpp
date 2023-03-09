@@ -18,23 +18,27 @@
  * USA.
  */
 #include <OpenKneeboard/SHM.h>
+
 #include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
+
+#include <shims/utility>
+
 #include <Windows.h>
+
+#include <bit>
+#include <format>
+#include <random>
+
 #include <d3d11_2.h>
 #include <d3d11_3.h>
 #include <d3d11_4.h>
 #include <dxgi1_2.h>
 #include <processthreadsapi.h>
-
-#include <bit>
-#include <format>
-#include <random>
-#include <shims/utility>
 
 namespace OpenKneeboard::SHM {
 
@@ -687,7 +691,11 @@ Snapshot Reader::MaybeGetUncached(
   }
 
   if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
-    dprint("Kind mismatch, not returning new snapshot");
+    traceprint(
+      "Kind mismatch, not returning new snapshot; reader kind is {:#08x}, "
+      "target kind is {:#08x}",
+      static_cast<std::underlying_type_t<ConsumerKind>>(kind),
+      p->mHeader->mConfig.mTarget.GetRawMaskForDebugging());
     return {};
   }
 
@@ -765,6 +773,11 @@ ConsumerPattern::ConsumerPattern() = default;
 ConsumerPattern::ConsumerPattern(
   std::underlying_type_t<ConsumerKind> consumerKindMask)
   : mKindMask(consumerKindMask) {
+}
+
+std::underlying_type_t<ConsumerKind> ConsumerPattern::GetRawMaskForDebugging()
+  const {
+  return mKindMask;
 }
 
 bool ConsumerPattern::Matches(ConsumerKind kind) const {

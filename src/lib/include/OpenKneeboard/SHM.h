@@ -19,11 +19,14 @@
  */
 #pragma once
 
+#include "FlatConfig.h"
+#include "VRConfig.h"
+
 #include <OpenKneeboard/config.h>
-#include <Windows.h>
-#include <d3d11.h>
-#include <d3d11_3.h>
+
 #include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -33,8 +36,8 @@
 #include <string>
 #include <vector>
 
-#include "FlatConfig.h"
-#include "VRConfig.h"
+#include <d3d11.h>
+#include <d3d11_3.h>
 
 namespace OpenKneeboard::SHM {
 
@@ -79,6 +82,8 @@ class ConsumerPattern final {
   }
 
   bool Matches(ConsumerKind) const;
+
+  std::underlying_type_t<ConsumerKind> GetRawMaskForDebugging() const;
 
  private:
   std::underlying_type_t<ConsumerKind> mKindMask {0};

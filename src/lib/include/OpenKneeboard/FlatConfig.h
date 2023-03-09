@@ -24,6 +24,7 @@
 #include <OpenKneeboard/json_fwd.h>
 #endif
 
+#include <compare>
 #include <cstdint>
 #include <numbers>
 
