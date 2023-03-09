@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94577290",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94577290/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/94577290/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-beta8",
-    "id": 94577290,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/95013123",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/95013123/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/95013123/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4-beta9",
+    "id": 95013123,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FoyKK",
-    "tag_name": "v1.4-beta8",
-    "target_commitish": "ebc141edb58a86cc80805d7822c86a25e5bcf27c",
-    "name": "Release v1.4-beta8",
+    "node_id": "RE_kwDOGk0DR84FqckD",
+    "tag_name": "v1.4-beta9",
+    "target_commitish": "ce91586b5216bb3ddcf11d0aea44ed7201429373",
+    "name": "v1.4-beta9: bugfixes",
     "draft": false,
     "prerelease": true,
-    "created_at": "2023-03-06T01:28:12Z",
-    "published_at": "2023-03-06T02:24:05Z",
+    "created_at": "2023-03-09T03:06:03Z",
+    "published_at": "2023-03-09T03:55:37Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/98182158",
-        "id": 98182158,
-        "node_id": "RA_kwDOGk0DR84F2iQO",
-        "name": "OpenKneeboard-v1.4-beta8-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/98628831",
+        "id": 98628831,
+        "node_id": "RA_kwDOGk0DR84F4PTf",
+        "name": "OpenKneeboard-v1.4-beta9-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 138124621,
+        "size": 138165019,
         "download_count": 0,
-        "created_at": "2023-03-06T02:04:20Z",
-        "updated_at": "2023-03-06T02:04:26Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta8/OpenKneeboard-v1.4-beta8-DebugSymbols.zip"
+        "created_at": "2023-03-09T03:44:08Z",
+        "updated_at": "2023-03-09T03:44:11Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta9/OpenKneeboard-v1.4-beta9-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/98182146",
-        "id": 98182146,
-        "node_id": "RA_kwDOGk0DR84F2iQC",
-        "name": "OpenKneeboard-v1.4-beta8.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/98628819",
+        "id": 98628819,
+        "node_id": "RA_kwDOGk0DR84F4PTT",
+        "name": "OpenKneeboard-v1.4-beta9.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/msi",
         "state": "uploaded",
-        "size": 37040128,
+        "size": 37052416,
         "download_count": 1,
-        "created_at": "2023-03-06T02:04:16Z",
-        "updated_at": "2023-03-06T02:04:19Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta8/OpenKneeboard-v1.4-beta8.msi"
+        "created_at": "2023-03-09T03:44:06Z",
+        "updated_at": "2023-03-09T03:44:07Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta9/OpenKneeboard-v1.4-beta9.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-beta8",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-beta8",
-    "body": "Start by downloading [OpenKneeboard-v1.4-beta8.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta8/OpenKneeboard-v1.4-beta8.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- Added support for starting minimized; see [FAQ](https://openkneeboard.com/faq.html#how-do-i-make-openkneeboard-start-minimized) for details\r\n- On multi-GPU systems, OpenKneeboard will now use the 'high performance' GPU to communicate with SteamVR\r\n- Image and PDF files are now monitored for changes, even if they are not inside a folder tab\r\n- Tablet drawings/notes are now correctly handled when files are deleted, created, or modified\r\n- Fix flickering when dual kneeboards are enabled in games that use both Vulkan and OpenXR\r\n- Wording: consistently use 'Theater' instead of 'Terrain'"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4-beta9",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4-beta9",
+    "body": "Start by downloading [OpenKneeboard-v1.4-beta9.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4-beta9/OpenKneeboard-v1.4-beta9.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- Fix PDF-backed endless notebook tabs\r\n- Fix crash on exit if help page is active\r\n- Fix adding multiple bookmarks within 1 tab\r\n- Disable 'toggle bookmark' toolbar item if there is no current page\r\n- Fix only the first bookmark being selectable in-game\r\n- If OpenKneeboard does not exit cleanly, suggest reporting the crash\r\n- Updated quick start guide"
   }
 ]
