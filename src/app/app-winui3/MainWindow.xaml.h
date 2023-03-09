@@ -102,7 +102,7 @@ struct MainWindow : MainWindowT<MainWindow>,
     const WindowEventArgs&) noexcept;
 
   static std::filesystem::path GetInstanceDataPath();
-  void WriteInstanceData();
+  winrt::fire_and_forget WriteInstanceData();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 

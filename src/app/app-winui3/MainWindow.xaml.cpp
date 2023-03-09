@@ -222,7 +222,7 @@ MainWindow::MainWindow() {
     });
 }
 
-void MainWindow::WriteInstanceData() {
+winrt::fire_and_forget MainWindow::WriteInstanceData() {
   const auto path = MainWindow::GetInstanceDataPath();
   const bool uncleanShutdown = std::filesystem::exists(path);
 
@@ -237,6 +237,55 @@ void MainWindow::WriteInstanceData() {
     GameEvent::GetMailslotPath(),
     std::chrono::system_clock::now())
     << std::endl;
+
+  if (!uncleanShutdown) {
+    co_return;
+  }
+
+  DWORD ignoreUncleanShutdowns = 0;
+  DWORD dataSize = sizeof(ignoreUncleanShutdowns);
+  RegGetValueW(
+    HKEY_CURRENT_USER,
+    RegistrySubKey,
+    L"IgnoreUncleanShutdowns",
+    RRF_RT_DWORD,
+    nullptr,
+    &ignoreUncleanShutdowns,
+    &dataSize);
+
+  if (ignoreUncleanShutdowns) {
+    co_return;
+  }
+
+  ContentDialog dialog;
+  dialog.XamlRoot(Navigation().XamlRoot());
+  dialog.Title(box_value(to_hstring(_(L"OpenKneeboard did not exit cleanly"))));
+  dialog.Content(
+    box_value(to_hstring(_(L"Would you like to report a crash or freeze?"))));
+  dialog.PrimaryButtonText(_(L"Yes"));
+  dialog.SecondaryButtonText(_(L"Never ask me again"));
+  dialog.CloseButtonText(_(L"No"));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  const auto result = co_await dialog.ShowAsync();
+
+  if (result == ContentDialogResult::Primary) {
+    co_await LaunchURI("https://go.openkneeboard.com/unclean-exit");
+    co_return;
+  }
+
+  if (result != ContentDialogResult::Secondary) {
+    co_return;
+  }
+
+  ignoreUncleanShutdowns = 1;
+  RegSetKeyValueW(
+    HKEY_CURRENT_USER,
+    RegistrySubKey,
+    L"IgnoreUncleanShutdowns",
+    REG_DWORD,
+    &ignoreUncleanShutdowns,
+    sizeof(ignoreUncleanShutdowns));
 }
 
 MainWindow::~MainWindow() {
