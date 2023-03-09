@@ -51,7 +51,16 @@ bool ToggleBookmarkAction::IsEnabled() const {
   if (!tabView) {
     return false;
   }
-  return tabView->GetTabMode() == TabMode::NORMAL;
+
+  if (tabView->GetTabMode() != TabMode::NORMAL) {
+    return false;
+  }
+
+  if (tabView->GetPageIDs().size() == 0) {
+    return false;
+  }
+
+  return true;
 }
 
 bool ToggleBookmarkAction::IsActive() {
