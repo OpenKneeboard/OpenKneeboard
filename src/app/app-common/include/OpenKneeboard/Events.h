@@ -400,7 +400,11 @@ EventHandlerToken EventReceiver::AddEventListener(
   std::source_location location) {
   return AddEventListener(
     event,
-    [location, &forwardTo](Args... args) { forwardTo.Emit(args..., location); },
+    [location, weak = std::weak_ptr(forwardTo.mImpl)](Args... args) {
+      if (auto forwardTo = weak.lock()) {
+        forwardTo->Emit(args..., location);
+      }
+    },
     location);
 }
 
@@ -412,7 +416,11 @@ EventHandlerToken EventReceiver::AddEventListener(
   std::source_location location) {
   return AddEventListener(
     event,
-    [location, &forwardTo](Args...) { forwardTo.Emit(location); },
+    [location, weak = std::weak_ptr(forwardTo.mImpl)](Args...) {
+      if (auto forwardTo = weak.lock()) {
+        forwardTo->Emit(location);
+      }
+    },
     location);
 }
 
