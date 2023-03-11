@@ -92,6 +92,10 @@ void FolderPageSource::OnFileModified(const std::filesystem::path& directory) {
   bool modifiedOrNew = false;
   for (const auto entry:
        std::filesystem::recursive_directory_iterator(directory)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+
     const auto path = entry.path();
     const auto mtime = entry.last_write_time();
 
