@@ -80,14 +80,14 @@ class PDFFilePageSource final
   std::shared_ptr<Impl> p;
 
   winrt::fire_and_forget ReloadRenderer();
-  winrt::fire_and_forget ReloadNavigation();
+  void ReloadNavigation();
 
   void OnFileModified(const std::filesystem::path& path);
 
   void RenderPageContent(
     ID2D1DeviceContext*,
     PageID pageIndex,
-    const D2D1_RECT_F& rect);
+    const D2D1_RECT_F& rect) noexcept;
   void
   RenderOverDoodles(ID2D1DeviceContext*, PageID pageIndex, const D2D1_RECT_F&);
 

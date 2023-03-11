@@ -26,45 +26,52 @@ using namespace winrt::Windows::Storage::Search;
 namespace OpenKneeboard {
 std::shared_ptr<FilesystemWatcher> FilesystemWatcher::Create(
   const std::filesystem::path& path) {
-  auto ret = std::shared_ptr<FilesystemWatcher>(new FilesystemWatcher(path));
+  auto ret = shared_with_final_release(new FilesystemWatcher(path));
   ret->Initialize();
   return ret;
 }
 
 FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
   : mPath(path) {
-}
-
-FilesystemWatcher::~FilesystemWatcher() {
-  mQueryResult = {nullptr};
-}
-
-winrt::fire_and_forget FilesystemWatcher::Initialize() {
-  auto weak = weak_from_this();
-  co_await winrt::resume_background();
-  auto stayingAlive = weak.lock();
-  if (!stayingAlive) {
-    co_return;
-  }
-
-  if (!std::filesystem::exists(mPath)) {
-    co_return;
-  }
-
   const auto watchedPath
     = std::filesystem::is_directory(mPath) ? mPath : mPath.parent_path();
+  const auto handle = FindFirstChangeNotificationW(
+    watchedPath.wstring().c_str(),
+    /* watch subtree = */ true,
+    FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME
+      | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
+  if (handle == INVALID_HANDLE_VALUE) {
+    dprintf("Invalid handle: {}", GetLastError());
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  mHandle.reset(handle);
+  mShutdownHandle = {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+}
+
+winrt::fire_and_forget FilesystemWatcher::final_release(
+  std::unique_ptr<FilesystemWatcher> self) {
+  self->mCanceled = true;
+  co_await winrt::resume_on_signal(self->mShutdownHandle.get());
+}
+
+FilesystemWatcher::~FilesystemWatcher() = default;
+
+winrt::fire_and_forget FilesystemWatcher::Initialize() {
   mLastWriteTime = std::filesystem::last_write_time(mPath);
 
-  auto folder
-    = co_await StorageFolder::GetFolderFromPathAsync(watchedPath.wstring());
-  mQueryResult = folder.CreateFileQuery();
-  mQueryResult.ContentsChanged([weak](const auto&, const auto&) {
-    if (auto self = weak.lock()) {
-      self->OnContentsChanged();
+  auto handle = mHandle.get();
+  while (!mCanceled) {
+    winrt::check_bool(FindNextChangeNotification(handle));
+    const auto haveChange = co_await winrt::resume_on_signal(
+      handle, std::chrono::milliseconds(100));
+    if (haveChange) {
+      this->OnContentsChanged();
+    } else {
+      break;
     }
-  });
-  // Must fetch results once to make the query active
-  co_await mQueryResult.GetFilesAsync();
+  }
+  SetEvent(mShutdownHandle.get());
 }
 
 void FilesystemWatcher::OnContentsChanged() {

@@ -28,9 +28,6 @@
 
 #include <nlohmann/json.hpp>
 
-using namespace winrt::Windows::Storage;
-using namespace winrt::Windows::Storage::Search;
-
 namespace OpenKneeboard {
 
 FolderPageSource::FolderPageSource(const DXResources& dxr, KneeboardState* kbs)

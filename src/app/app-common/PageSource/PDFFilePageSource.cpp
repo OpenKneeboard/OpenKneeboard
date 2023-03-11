@@ -127,38 +127,27 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
 }
 
 winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
-  auto weakThis = this->weak_from_this();
-  co_await winrt::resume_background();
-  auto strongThis = weakThis.lock();
-  if (!strongThis) {
-    co_return;
-  }
-
-  auto path = strongThis->p->mCopy->GetPath();
+  auto weak = weak_from_this();
+  auto path = p->mCopy->GetPath();
 
   if (!std::filesystem::is_regular_file(path)) {
     co_return;
   }
 
   auto file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
-  strongThis->p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
-  this->p->mPageIDs.resize(p->mPDFDocument.PageCount());
+  p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
+  p->mPageIDs.resize(p->mPDFDocument.PageCount());
 
-  strongThis->evContentChangedEvent.Emit();
+  co_await mUIThread;
+  if (auto self = weak.lock()) {
+    evContentChangedEvent.Emit();
+  }
 }
 
-winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
-  auto weakThis = this->weak_from_this();
-
-  co_await winrt::resume_background();
-  auto stayingAlive = weakThis.lock();
-  if (!stayingAlive) {
-    co_return;
-  }
-
+void PDFFilePageSource::ReloadNavigation() {
   auto path = p->mCopy->GetPath();
   if (!std::filesystem::is_regular_file(path)) {
-    co_return;
+    return;
   }
 
   PDFNavigation::PDF pdf(path);
@@ -241,6 +230,7 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
   p->mCopy = std::move(copy);
 
   this->ReloadRenderer();
+  co_await winrt::resume_background();
   this->ReloadNavigation();
 }
 
@@ -282,7 +272,7 @@ D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageID id) {
 void PDFFilePageSource::RenderPageContent(
   ID2D1DeviceContext* ctx,
   PageID id,
-  const D2D1_RECT_F& rect) {
+  const D2D1_RECT_F& rect) noexcept {
   // Keep alive
   auto p = this->p;
   if (!p) {

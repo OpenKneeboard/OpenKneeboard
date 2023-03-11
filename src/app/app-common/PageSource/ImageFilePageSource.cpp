@@ -23,13 +23,10 @@
 
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Storage.h>
 
 #include <ranges>
 
 #include <wincodec.h>
-
-using namespace winrt::Windows::Storage;
 
 namespace OpenKneeboard {
 
