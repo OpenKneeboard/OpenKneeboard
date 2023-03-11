@@ -283,6 +283,8 @@ void PDFFilePageSource::RenderPageContent(
   ID2D1DeviceContext* ctx,
   PageID id,
   const D2D1_RECT_F& rect) {
+  // Keep alive
+  auto p = this->p;
   if (!p) {
     return;
   }
@@ -293,7 +295,6 @@ void PDFFilePageSource::RenderPageContent(
   const auto index = pageIt - p->mPageIDs.begin();
 
   auto page = p->mPDFDocument.GetPage(index);
-  auto size = page.Size();
 
   ctx->FillRectangle(rect, p->mBackgroundBrush.get());
 
