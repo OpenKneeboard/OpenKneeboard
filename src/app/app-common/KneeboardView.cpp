@@ -296,6 +296,10 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
     dprint("Cursor event in wrong thread!");
     OPENKNEEBOARD_BREAK;
   }
+  if (!mCurrentTabView) {
+    return;
+  }
+
   if (ev.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
     mCursorCanvasPoint.reset();
   } else {
@@ -432,6 +436,9 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
 
 bool KneeboardView::CurrentPageHasBookmark() const {
   auto view = this->GetCurrentTabView();
+  if (!view) {
+    return false;
+  }
   auto tab = view->GetRootTab();
   auto page = view->GetPageID();
 
