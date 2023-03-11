@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/tracing.h>
+
 #include <shims/winrt/base.h>
 
 #include <format>
@@ -31,20 +32,35 @@ namespace OpenKneeboard {
 void dprint(std::string_view s);
 void dprint(std::wstring_view s);
 
+// TODO: cleanup, once GitHub Actions updates their worker
+namespace detail {
+#if __cpp_lib_format >= 202207L
+template <class... T>
+using format_string = std::format_string<T...>;
+template <class... T>
+using wformat_string = std::wformat_string<T...>;
+#else
+template <class... T>
+using format_string = std::_Fmt_string<T...>;
+template <class... T>
+using wformat_string = std::_Fmt_wstring<T...>;
+#endif
+}// namespace detail
+
 template <typename... Args>
-void dprintf(std::_Fmt_string<Args...> fmt, Args&&... args) {
+void dprintf(detail::format_string<Args...> fmt, Args&&... args) {
   static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
 template <typename... Args>
-void dprintf(std::_Fmt_wstring<Args...> fmt, Args&&... args) {
+void dprintf(detail::wformat_string<Args...> fmt, Args&&... args) {
   static_assert(sizeof...(args) > 0, "Use dprint() when no variables");
   dprint(std::format(fmt, std::forward<Args>(args)...));
 }
 
 template <typename... Args>
-void traceprint(std::_Fmt_string<Args...> fmt, Args&&... args) {
+void traceprint(detail::format_string<Args...> fmt, Args&&... args) {
   TraceLoggingWrite(
     gTraceProvider,
     "traceprint",
@@ -53,7 +69,7 @@ void traceprint(std::_Fmt_string<Args...> fmt, Args&&... args) {
 }
 
 template <typename... Args>
-void traceprint(std::_Fmt_wstring<Args...> fmt, Args&&... args) {
+void traceprint(detail::wformat_string<Args...> fmt, Args&&... args) {
   TraceLoggingWrite(
     gTraceProvider,
     "traceprint",
