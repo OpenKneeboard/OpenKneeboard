@@ -20,6 +20,7 @@
 #include <OpenKneeboard/BookmarksUILayer.h>
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/CursorRenderer.h>
+#include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/FooterUILayer.h>
 #include <OpenKneeboard/HeaderUILayer.h>
 #include <OpenKneeboard/ITab.h>
@@ -43,6 +44,12 @@ namespace OpenKneeboard {
 KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
+  mErrorRenderer
+    = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
+
+  dxr.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(D2D1::ColorF::White), mErrorBackgroundBrush.put());
+
   mHeaderUILayer = HeaderUILayer::Create(dxr, kneeboard, this);
   mFooterUILayer = std::make_unique<FooterUILayer>(dxr, kneeboard);
   mBookmarksUILayer = BookmarksUILayer::Create(dxr, kneeboard, this);
@@ -314,6 +321,12 @@ void KneeboardView::RenderWithChrome(
   ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect,
   bool isActiveForInput) noexcept {
+  if (!mCurrentTabView) {
+    d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
+    mErrorRenderer->Render(d2d, _("No Tabs"), rect);
+    return;
+  }
+
   auto [first, rest] = this->GetUILayers();
   first->Render(
     rtid,

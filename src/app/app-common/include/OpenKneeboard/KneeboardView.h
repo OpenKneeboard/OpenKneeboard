@@ -27,6 +27,7 @@
 namespace OpenKneeboard {
 
 class CursorRenderer;
+class D2DErrorRenderer;
 class ITabView;
 class IUILayer;
 class KneeboardState;
@@ -108,6 +109,9 @@ class KneeboardView final : public IKneeboardView,
   std::optional<D2D1_POINT_2F> mCursorCanvasPoint;
 
   std::unique_ptr<CursorRenderer> mCursorRenderer;
+  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+
+  winrt::com_ptr<ID2D1SolidColorBrush> mErrorBackgroundBrush;
 
   std::vector<IUILayer*> mUILayers {};
   std::shared_ptr<IUILayer> mHeaderUILayer;
