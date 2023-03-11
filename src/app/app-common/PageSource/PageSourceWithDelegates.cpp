@@ -105,7 +105,8 @@ PageIndex PageSourceWithDelegates::GetPageCount() const {
 std::vector<PageID> PageSourceWithDelegates::GetPageIDs() const {
   std::vector<PageID> ret;
   for (const auto& delegate: mDelegates) {
-    std::ranges::copy(delegate->GetPageIDs(), std::back_inserter(ret));
+    auto ids = delegate->GetPageIDs();
+    ret.insert(ret.end(), ids.begin(), ids.end());
   }
   return ret;
 }
