@@ -116,5 +116,6 @@
     "/DNOMINMAX=1",
     "/DOPENKNEEBOARD_BREAK"
   ],
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
