@@ -49,7 +49,7 @@ class PDFFilePageSource final
     KneeboardState*,
     const std::filesystem::path& path = {});
 
-  virtual void Reload();
+  virtual winrt::fire_and_forget Reload();
 
   virtual PageIndex GetPageCount() const final override;
   virtual std::vector<PageID> GetPageIDs() const final override;

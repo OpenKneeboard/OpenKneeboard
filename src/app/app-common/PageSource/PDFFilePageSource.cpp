@@ -207,8 +207,10 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
   return p->mPageIDs.back();
 }
 
-void PDFFilePageSource::Reload() {
+winrt::fire_and_forget PDFFilePageSource::Reload() {
   static uint64_t sCount = 0;
+
+  auto weak = weak_from_this();
 
   p->mCopy = {};
   p->mBookmarks.clear();
@@ -218,15 +220,25 @@ void PDFFilePageSource::Reload() {
   p->mPageIDs.clear();
 
   if (!std::filesystem::is_regular_file(p->mPath)) {
-    return;
+    co_return;
   }
 
+  // Do copy in a background thread so we're not hung up on antivirus
+  co_await winrt::resume_background();
   auto tempPath = Filesystem::GetTemporaryDirectory()
     / std::format(L"{:08x}-{}{}",
                   ++sCount,
                   p->mPath.stem().wstring().substr(0, 16),
                   p->mPath.extension());
-  p->mCopy = std::make_unique<Filesystem::TemporaryCopy>(p->mPath, tempPath);
+  auto copy = std::make_unique<Filesystem::TemporaryCopy>(p->mPath, tempPath);
+
+  auto uiThread = mUIThread;
+  co_await uiThread;
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
+  p->mCopy = std::move(copy);
 
   this->ReloadRenderer();
   this->ReloadNavigation();
