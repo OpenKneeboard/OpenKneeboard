@@ -25,11 +25,14 @@
 #endif
 // clang-format on
 
+#include "CheckDCSHooks.h"
+#include "CheckForUpdates.h"
 #include "Globals.h"
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -139,13 +142,7 @@ MainWindow::MainWindow() {
     TraceLoggingWriteStop(
       activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
   });
-  RootGrid().Loaded(discard_winrt_event_args(weak_wrap(this)([](auto self) {
-    // WinUI3 gives us the spinning circle for a long time...
-    SetCursor(LoadCursorW(NULL, IDC_ARROW));
-    self->mFrameTimer.Start();
-    self->Show();
-    self->WriteInstanceData();
-  })));
+  RootGrid().Loaded([this](const auto&, const auto&) { this->OnLoaded(); });
 
   auto settings = gKneeboard->GetAppSettings();
   if (settings.mWindowRect) {
@@ -222,7 +219,28 @@ MainWindow::MainWindow() {
     });
 }
 
-winrt::fire_and_forget MainWindow::WriteInstanceData() {
+winrt::fire_and_forget MainWindow::OnLoaded() {
+  // WinUI3 gives us the spinning circle for a long time...
+  SetCursor(LoadCursorW(NULL, IDC_ARROW));
+  mFrameTimer.Start();
+  this->Show();
+  co_await this->WriteInstanceData();
+
+  auto xamlRoot = this->Content().XamlRoot();
+  const auto updateResult
+    = co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
+  co_await mUIThread;
+  if (updateResult == UpdateResult::InstallingUpdate) {
+    co_return;
+  }
+  if (gKneeboard) {
+    gKneeboard->GetGamesList()->StartInjector();
+  }
+  co_await mUIThread;
+  co_await CheckAllDCSHooks(xamlRoot);
+}
+
+winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
   const auto path = MainWindow::GetInstanceDataPath();
   const bool uncleanShutdown = std::filesystem::exists(path);
 

@@ -89,6 +89,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget OnViewOrderChanged();
   winrt::fire_and_forget OnTabChanged() noexcept;
   winrt::fire_and_forget OnTabsChanged();
+  winrt::fire_and_forget OnLoaded();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
 
@@ -102,7 +103,7 @@ struct MainWindow : MainWindowT<MainWindow>,
     const WindowEventArgs&) noexcept;
 
   static std::filesystem::path GetInstanceDataPath();
-  winrt::fire_and_forget WriteInstanceData();
+  winrt::Windows::Foundation::IAsyncAction WriteInstanceData();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 

@@ -22,14 +22,11 @@
 #include "App.xaml.h"
 // clang-format on
 
-#include "CheckDCSHooks.h"
-#include "CheckForUpdates.h"
 #include "Globals.h"
 #include "MainWindow.xaml.h"
 
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Filesystem.h>
-#include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenXRMode.h>
@@ -166,22 +163,6 @@ App::App() {
 
 void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window = make<MainWindow>();
-
-  window.Content().as<winrt::Microsoft::UI::Xaml::FrameworkElement>().Loaded(
-    [=](auto&, auto&) noexcept -> winrt::fire_and_forget {
-      auto uiThread = winrt::apartment_context {};
-      auto xamlRoot = window.Content().XamlRoot();
-      const auto updateResult
-        = co_await CheckForUpdates(UpdateCheckType::Automatic, xamlRoot);
-      co_await uiThread;
-      if (updateResult == UpdateResult::InstallingUpdate) {
-        co_return;
-      }
-      if (gKneeboard) {
-        gKneeboard->GetGamesList()->StartInjector();
-      }
-      co_await CheckAllDCSHooks(xamlRoot);
-    });
 }
 
 static void LogSystemInformation() {
