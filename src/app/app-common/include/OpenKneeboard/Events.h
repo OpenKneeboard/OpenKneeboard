@@ -19,9 +19,13 @@
  */
 #pragma once
 
+#include "UniqueID.h"
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <cstdint>
@@ -32,8 +36,6 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
-
-#include "UniqueID.h"
 
 namespace OpenKneeboard {
 
@@ -78,7 +80,6 @@ class EventBase {
   static void InvokeOrEnqueue(std::function<void()>, std::source_location);
 
   virtual void RemoveHandler(EventHandlerToken) = 0;
-  std::recursive_mutex mMutex;
 };
 
 /** Delay any event handling in the current thread for the lifetime of this
@@ -133,12 +134,7 @@ class EventConnection final
 
   void Call(Args... args) {
     auto stayingAlive = this->shared_from_this();
-
-    decltype(mHandler) handler;
-    {
-      std::unique_lock lock(mMutex);
-      handler = mHandler;
-    }
+    auto handler = mHandler;
     if (handler) {
       // In release builds, ignore but drop unhandled exceptions from handlers.
       // In debug builds, break (or crash)
@@ -161,15 +157,12 @@ class EventConnection final
   }
 
   virtual void Invalidate() override {
-    auto stayingAlive = this->shared_from_this();
-    std::unique_lock lock(mMutex);
     mHandler = {};
   }
 
  private:
   EventHandler<Args...> mHandler;
   std::source_location mSourceLocation;
-  std::recursive_mutex mMutex;
 };
 
 /** a 1:n event. */
@@ -180,22 +173,27 @@ class Event final : public EventBase {
  public:
   using Hook = std::function<HookResult(Args...)>;
 
-  Event() = default;
-  Event(const Event<Args...>&) = delete;
-  Event& operator=(const Event<Args...>&) = delete;
+  Event() {
+    mImpl = std::shared_ptr<Impl>(new Impl());
+  }
   ~Event();
 
   void Emit(
     Args... args,
-    std::source_location location = std::source_location::current());
+    std::source_location location = std::source_location::current()) {
+    mImpl->Emit(args..., location);
+  }
 
   template <class Awaitable>
   winrt::fire_and_forget EnqueueForContext(
     Awaitable context,
     Args... args,
     std::source_location location = std::source_location::current()) {
+    auto weakImpl = std::weak_ptr(mImpl);
     co_await context;
-    this->Emit(std::forward<Args...>(args...), location);
+    if (auto impl = weakImpl.lock()) {
+      impl->Emit(std::forward<Args...>(args...), location);
+    }
   }
 
   template <class Awaitable>
@@ -203,9 +201,12 @@ class Event final : public EventBase {
     Awaitable eventContext,
     Args... args,
     std::source_location location = std::source_location::current()) {
+    auto weakImpl = std::weak_ptr(mImpl);
     winrt::apartment_context originalContext;
     co_await eventContext;
-    this->Emit(std::forward<Args...>(args...), location);
+    if (auto impl = weakImpl.lock()) {
+      impl->Emit(std::forward<Args...>(args...), location);
+    }
     co_await originalContext;
   }
 
@@ -219,10 +220,20 @@ class Event final : public EventBase {
   virtual void RemoveHandler(EventHandlerToken token) override;
 
  private:
-  std::
-    unordered_map<EventHandlerToken, std::shared_ptr<EventConnection<Args...>>>
+  struct Impl {
+    ~Impl();
+
+    std::unordered_map<
+      EventHandlerToken,
+      std::shared_ptr<EventConnection<Args...>>>
       mReceivers;
-  std::unordered_map<EventHookToken, Hook> mHooks;
+    std::unordered_map<EventHookToken, Hook> mHooks;
+
+    void Emit(
+      Args... args,
+      std::source_location location = std::source_location::current());
+  };
+  std::shared_ptr<Impl> mImpl;
 };
 
 class EventReceiver {
@@ -274,63 +285,39 @@ class EventReceiver {
 
   void RemoveEventListener(EventHandlerToken);
   void RemoveAllEventListeners();
-
- private:
-  std::recursive_mutex mMutex;
 };
 
 template <class... Args>
 std::shared_ptr<EventConnectionBase> Event<Args...>::AddHandler(
   const EventHandler<Args...>& handler,
   std::source_location location) {
-  std::unique_lock lock(mMutex);
   auto connection = EventConnection<Args...>::Create(handler, location);
   auto token = connection->mToken;
-  mReceivers.emplace(token, connection);
+  mImpl->mReceivers.emplace(token, connection);
   return std::move(connection);
 }
 
 template <class... Args>
 void Event<Args...>::RemoveHandler(EventHandlerToken token) {
   std::shared_ptr<EventConnectionBase> receiver;
-  {
-    std::unique_lock lock(mMutex);
-    if (!mReceivers.contains(token)) {
-      return;
-    }
-    receiver = mReceivers.at(token);
-    mReceivers.erase(token);
+  if (!mImpl->mReceivers.contains(token)) {
+    return;
   }
+  receiver = mImpl->mReceivers.at(token);
+  mImpl->mReceivers.erase(token);
   receiver->Invalidate();
 }
 
 template <class... Args>
-void Event<Args...>::Emit(Args... args, std::source_location location) {
+void Event<Args...>::Impl::Emit(Args... args, std::source_location location) {
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(
     activity,
     "Event::Emit()",
     OPENKNEEBOARD_TraceLoggingSourceLocation(location));
   //  Copy in case one is erased while we're running
-  decltype(mHooks) hooks;
-  std::vector<std::shared_ptr<EventConnection<Args...>>> receivers;
-  {
-    TraceLoggingWriteTagged(activity, "Waiting for event mutex");
-    std::unique_lock lock(mMutex);
-    TraceLoggingWriteTagged(activity, "Acquired event mutex");
-    hooks = mHooks;
-    auto it = mReceivers.begin();
-    while (it != mReceivers.end()) {
-      auto receiver = it->second;
-      if (!receiver) {
-        it = mReceivers.erase(it);
-        continue;
-      }
-      receivers.push_back(receiver);
-      ++it;
-    }
-  }
-  TraceLoggingWriteTagged(activity, "Built event receiver list");
+  auto receivers = mReceivers;
+  auto hooks = mHooks;
 
   for (const auto& [_, hook]: hooks) {
     if (hook(args...) == HookResult::STOP_PROPAGATION) {
@@ -346,8 +333,10 @@ void Event<Args...>::Emit(Args... args, std::source_location location) {
   TraceLoggingWriteTagged(activity, "Invoking or enqueuing");
   InvokeOrEnqueue(
     [=]() {
-      for (const auto& receiver: receivers) {
-        receiver->Call(args...);
+      for (const auto& [token, receiver]: receivers) {
+        if (receiver) {
+          receiver->Call(args...);
+        }
       }
     },
     location);
@@ -360,12 +349,11 @@ void Event<Args...>::Emit(Args... args, std::source_location location) {
 
 template <class... Args>
 Event<Args...>::~Event() {
-  decltype(mReceivers) receivers;
-  {
-    std::unique_lock lock(mMutex);
-    auto receivers = mReceivers;
-  }
-  for (const auto& [token, receiver]: receivers) {
+}
+
+template <class... Args>
+Event<Args...>::Impl::~Impl() {
+  for (const auto& [token, receiver]: mReceivers) {
     receiver->Invalidate();
   }
 }
@@ -374,17 +362,15 @@ template <class... Args>
 EventHookToken Event<Args...>::AddHook(
   Hook hook,
   EventHookToken token) noexcept {
-  std::unique_lock lock(mMutex);
-  mHooks.insert_or_assign(token, hook);
+  mImpl->mHooks.insert_or_assign(token, hook);
   return token;
 }
 
 template <class... Args>
 void Event<Args...>::RemoveHook(EventHookToken token) noexcept {
-  std::unique_lock lock(mMutex);
-  auto it = mHooks.find(token);
-  if (it != mHooks.end()) {
-    mHooks.erase(it);
+  auto it = mImpl->mHooks.find(token);
+  if (it != mImpl->mHooks.end()) {
+    mImpl->mHooks.erase(it);
   }
 }
 
@@ -393,7 +379,6 @@ EventHandlerToken EventReceiver::AddEventListener(
   Event<Args...>& event,
   const std::type_identity_t<EventHandler<Args...>>& handler,
   std::source_location location) {
-  std::unique_lock lock(mMutex);
   mSenders.push_back(event.AddHandler(handler, location));
   return mSenders.back()->mToken;
 }

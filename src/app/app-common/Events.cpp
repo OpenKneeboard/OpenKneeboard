@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Events.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
@@ -47,7 +48,6 @@ EventReceiver::~EventReceiver() {
 void EventReceiver::RemoveAllEventListeners() {
   decltype(mSenders) senders;
   {
-    std::unique_lock lock(mMutex);
     senders = mSenders;
     mSenders.clear();
   }
@@ -60,7 +60,6 @@ void EventReceiver::RemoveAllEventListeners() {
 void EventReceiver::RemoveEventListener(EventHandlerToken token) {
   std::shared_ptr<EventConnectionBase> toInvalidate;
   {
-    std::unique_lock lock(mMutex);
     for (auto it = mSenders.begin(); it != mSenders.end(); ++it) {
       auto& sender = *it;
       if (sender->mToken != token) {
