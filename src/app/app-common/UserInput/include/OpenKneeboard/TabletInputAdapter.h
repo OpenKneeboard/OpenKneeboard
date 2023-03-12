@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/TabletSettings.h>
+
 #include <Windows.h>
 
 #include <memory>
@@ -105,16 +106,19 @@ class TabletInputAdapter final
   ///// Wintab /////
 
   void OnWintabMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-  static LRESULT CALLBACK WindowProc_Wintab(
-    _In_ HWND hwnd,
-    _In_ UINT uMsg,
-    _In_ WPARAM wParam,
-    _In_ LPARAM lParam);
+  static LRESULT SubclassProc(
+    HWND hWnd,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam,
+    UINT_PTR uIdSubclass,
+    DWORD_PTR dwRefData);
 
   HWND mWindow {};
   std::unique_ptr<WintabTablet> mWintabTablet;
   std::shared_ptr<TabletInputDevice> mWintabDevice;
-  WNDPROC mPreviousWndProc {};
+  UINT_PTR mSubclassID {};
+  static UINT_PTR gNextSubclassID;
 };
 
 }// namespace OpenKneeboard

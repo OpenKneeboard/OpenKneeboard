@@ -1,5 +1,6 @@
 set(
   SYSTEM_LIBRARIES
+  Comctl32
   D2d1
   D3d11
   D3d12

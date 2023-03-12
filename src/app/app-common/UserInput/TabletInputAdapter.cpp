@@ -28,21 +28,26 @@
 #include <OpenKneeboard/UserInputButtonBinding.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/WintabTablet.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 
+#include <nlohmann/json.hpp>
+
 #include <atomic>
 #include <bit>
-#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
 
+#include <CommCtrl.h>
+
 namespace OpenKneeboard {
 
 static std::atomic_flag gHaveInstance;
-static std::weak_ptr<TabletInputAdapter> gInstance;
+
+UINT_PTR TabletInputAdapter::gNextSubclassID = 1;
 
 std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
   HWND hwnd,
@@ -53,8 +58,6 @@ std::shared_ptr<TabletInputAdapter> TabletInputAdapter::Create(
   }
   auto ret = std::shared_ptr<TabletInputAdapter>(
     new TabletInputAdapter(hwnd, kbs, tablet));
-
-  gInstance = ret;
   ret->Init();
 
   return ret;
@@ -175,17 +178,15 @@ void TabletInputAdapter::StartWintab() {
     }
   }
 
-  if (mPreviousWndProc) {
+  if (mSubclassID) {
     return;
   }
-
-  mPreviousWndProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
+  mSubclassID = gNextSubclassID++;
+  winrt::check_bool(SetWindowSubclass(
     mWindow,
-    GWLP_WNDPROC,
-    reinterpret_cast<LONG_PTR>(&TabletInputAdapter::WindowProc_Wintab)));
-  if (!mPreviousWndProc) {
-    return;
-  }
+    &TabletInputAdapter::SubclassProc,
+    mSubclassID,
+    reinterpret_cast<DWORD_PTR>(this)));
 
   auto info = mWintabTablet->GetDeviceInfo();
   mWintabDevice = this->CreateDevice(info.mDeviceName, info.mDeviceID);
@@ -251,28 +252,26 @@ void TabletInputAdapter::StopWintab() {
   if (!mWintabTablet) {
     return;
   }
-  if (!mPreviousWndProc) {
+
+  if (!mSubclassID) {
     return;
   }
-  SetWindowLongPtrW(
-    mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWndProc));
+
+  RemoveWindowSubclass(mWindow, &TabletInputAdapter::SubclassProc, mSubclassID);
   mWintabTablet = {};
-  mPreviousWndProc = {};
 }
 
-LRESULT CALLBACK TabletInputAdapter::WindowProc_Wintab(
+LRESULT TabletInputAdapter::SubclassProc(
   HWND hwnd,
   UINT uMsg,
   WPARAM wParam,
-  LPARAM lParam) {
-  auto instance = gInstance.lock();
-  if (!instance) {
-    OPENKNEEBOARD_BREAK;
-    return 0;
-  }
+  LPARAM lParam,
+  UINT_PTR uIdSubclass,
+  DWORD_PTR dwRefData) {
+  auto instance = reinterpret_cast<TabletInputAdapter*>(dwRefData);
 
   instance->OnWintabMessage(uMsg, wParam, lParam);
-  return CallWindowProc(instance->mPreviousWndProc, hwnd, uMsg, wParam, lParam);
+  return DefSubclassProc(hwnd, uMsg, wParam, lParam);
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> TabletInputAdapter::GetDevices()

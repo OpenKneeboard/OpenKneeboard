@@ -106,6 +106,7 @@ winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
   mShuttingDown = true;
 
   co_await mUIThread;
+  this->RemoveAllEventListeners();
   {
     const std::unique_lock lock(gDXResources);
     Canvas().as<ISwapChainPanelNative>()->SetSwapChain(nullptr);

@@ -22,12 +22,16 @@
 #include <OpenKneeboard/DirectInputListener.h>
 #include <OpenKneeboard/GetDirectInputDevices.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
+
 #include <OpenKneeboard/dprint.h>
+
 #include <shims/winrt/base.h>
 
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+
+#include <CommCtrl.h>
 
 // clang-format off
 #include <Windows.h>
@@ -40,19 +44,14 @@ using namespace OpenKneeboard;
 
 namespace OpenKneeboard {
 
-std::weak_ptr<DirectInputAdapter> DirectInputAdapter::gInstance;
+UINT_PTR DirectInputAdapter::gNextID = 0;
 
 std::shared_ptr<DirectInputAdapter> DirectInputAdapter::Create(
   HWND hwnd,
   const DirectInputSettings& settings) {
-  if (gInstance.lock()) {
-    throw std::logic_error("Only one DirectInputAdapter at a time");
-  }
-
   auto ret = shared_with_final_release<DirectInputAdapter>(
     new DirectInputAdapter(hwnd, settings));
   ret->Reload();
-  gInstance = ret->weak_from_this();
   return ret;
 }
 
@@ -60,11 +59,13 @@ DirectInputAdapter::DirectInputAdapter(
   HWND hwnd,
   const DirectInputSettings& settings)
   : mWindow(hwnd), mSettings(settings) {
-  mPreviousWindowProc = reinterpret_cast<WNDPROC>(SetWindowLongPtrW(
+  mID = gNextID++;
+  SetWindowSubclass(
     hwnd,
-    GWLP_WNDPROC,
-    reinterpret_cast<LONG_PTR>(&DirectInputAdapter::WindowProc)));
-  winrt::check_pointer(mPreviousWindowProc);
+    &DirectInputAdapter::SubclassProc,
+    mID,
+    reinterpret_cast<DWORD_PTR>(this));
+
   winrt::check_hresult(DirectInput8Create(
     GetModuleHandle(nullptr),
     DIRECTINPUT_VERSION,
@@ -138,11 +139,7 @@ winrt::fire_and_forget DirectInputAdapter::final_release(
 
 DirectInputAdapter::~DirectInputAdapter() {
   this->RemoveAllEventListeners();
-  if (mPreviousWindowProc) {
-    SetWindowLongPtrW(
-      mWindow, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(mPreviousWindowProc));
-    mPreviousWindowProc = nullptr;
-  }
+  RemoveWindowSubclass(mWindow, &DirectInputAdapter::SubclassProc, mID);
 }
 
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
@@ -186,24 +183,20 @@ DirectInputSettings DirectInputAdapter::GetSettings() const {
   return mSettings;
 }
 
-LRESULT CALLBACK DirectInputAdapter::WindowProc(
-  _In_ HWND hwnd,
-  _In_ UINT uMsg,
-  _In_ WPARAM wParam,
-  _In_ LPARAM lParam) {
-  auto instance = gInstance.lock();
-  if (!instance) {
-    OPENKNEEBOARD_BREAK;
-    return 0;
-  }
-
+LRESULT DirectInputAdapter::SubclassProc(
+  HWND hWnd,
+  UINT uMsg,
+  WPARAM wParam,
+  LPARAM lParam,
+  UINT_PTR uIdSubclass,
+  DWORD_PTR dwRefData) {
+  auto instance = reinterpret_cast<DirectInputAdapter*>(dwRefData);
   if (uMsg == WM_DEVICECHANGE && wParam == DBT_DEVNODES_CHANGED) {
     dprint("Devices changed, reloading DirectInput device list");
     instance->Reload();
   }
 
-  return CallWindowProc(
-    instance->mPreviousWindowProc, hwnd, uMsg, wParam, lParam);
+  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 }// namespace OpenKneeboard

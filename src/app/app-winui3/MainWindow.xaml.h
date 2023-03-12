@@ -79,11 +79,19 @@ struct MainWindow : MainWindowT<MainWindow>,
   FrameworkElement mProfileSwitcher {nullptr};
 
   std::vector<EventHandlerToken> mKneeboardViewEvents;
-  DispatcherQueueController mDQC {nullptr};
   DispatcherQueueTimer mFrameTimer {nullptr};
+  winrt::Windows::Foundation::IAsyncAction mFrameLoop {nullptr};
   bool mSwitchingTabsFromNavSelection = false;
 
   void Show();
+
+  // Used instead of a timer so there is always a positive amount
+  // of time between iterations; this keeps the UI responsive, and
+  // avoids building up a massive backlog of overdue scheduled
+  // events.
+  winrt::Windows::Foundation::IAsyncAction FrameLoop();
+  void FrameTick();
+  winrt::handle mFrameLoopCompletionEvent;
 
   winrt::fire_and_forget LaunchOpenKneeboardURI(std::string_view);
   winrt::fire_and_forget OnViewOrderChanged();
@@ -98,12 +106,33 @@ struct MainWindow : MainWindowT<MainWindow>,
 
   void SaveWindowPosition();
 
-  winrt::Windows::Foundation::IAsyncAction OnClosed(
-    const IInspectable&,
-    const WindowEventArgs&) noexcept;
+  /** Clean up all state then exit the application.
+   *
+   * WinUI3 and the Windows App SDK assume we can just exit and the
+   * OS will take care of things; it will also exit immediately after
+   * `Window::Close()` is called.
+   *
+   * This leads to leak errors when using the DirectX debug layers, and
+   * crashes on exit if a mutex is held.
+   *
+   * So, use `SetWindowSubclass()` via `MainWindow::SubclassProc()` to
+   * hide the original `WM_CLOSE` from WinUI3, then:
+   * 1. hide the window via `ShowWindow()`
+   * 2. clean up all our non-XAML resources
+   * 3. call `Window::Close()`
+   */
+  winrt::fire_and_forget CleanupAndClose();
 
   static std::filesystem::path GetInstanceDataPath();
   winrt::Windows::Foundation::IAsyncAction WriteInstanceData();
+
+  static LRESULT SubclassProc(
+    HWND hWnd,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam,
+    UINT_PTR uIdSubclass,
+    DWORD_PTR dwRefData);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 

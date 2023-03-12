@@ -69,6 +69,7 @@ target_link_libraries(
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-version
+  System::Comctl32
   System::Dbghelp
   System::Dxgi
   System::Shell32

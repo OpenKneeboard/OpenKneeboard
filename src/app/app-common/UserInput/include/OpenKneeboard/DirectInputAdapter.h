@@ -22,9 +22,12 @@
 #include <OpenKneeboard/DirectInputSettings.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/UserAction.h>
+
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json_fwd.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <memory>
@@ -64,7 +67,8 @@ class DirectInputAdapter final
   winrt::fire_and_forget Reload();
 
   HWND mWindow;
-  WNDPROC mPreviousWindowProc;
+  UINT_PTR mID;
+  static UINT_PTR gNextID;
 
   winrt::com_ptr<IDirectInput8W> mDI8;
 
@@ -77,13 +81,13 @@ class DirectInputAdapter final
 
   mutable DirectInputSettings mSettings;
 
-  static LRESULT CALLBACK WindowProc(
-    _In_ HWND hwnd,
-    _In_ UINT uMsg,
-    _In_ WPARAM wParam,
-    _In_ LPARAM lParam);
-
-  static std::weak_ptr<DirectInputAdapter> gInstance;
+  static LRESULT SubclassProc(
+    HWND hWnd,
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam,
+    UINT_PTR uIdSubclass,
+    DWORD_PTR dwRefData);
 };
 
 }// namespace OpenKneeboard

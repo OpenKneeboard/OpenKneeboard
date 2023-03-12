@@ -51,8 +51,10 @@
 
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
+#include <winrt/Windows.ApplicationModel.Core.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.UI.Xaml.Interop.h>
+#include <winrt/Windows.UI.Xaml.h>
 
 #include <microsoft.ui.xaml.window.h>
 
@@ -76,6 +78,9 @@ MainWindow::MainWindow() {
     winrt::check_hresult(ref.as<IWindowNative>()->get_WindowHandle(&mHwnd));
     gMainWindow = mHwnd;
   }
+
+  SetWindowSubclass(
+    mHwnd, &MainWindow::SubclassProc, 0, reinterpret_cast<DWORD_PTR>(this));
 
   Title(L"OpenKneeboard");
   ExtendsContentIntoTitleBar(true);
@@ -113,35 +118,6 @@ MainWindow::MainWindow() {
     gKneeboard->GetTabsList()->evTabsChangedEvent,
     std::bind_front(&MainWindow::OnTabsChanged, this));
 
-  // TODO: add to globals as 'game loop' thread
-  mFrameTimer = this->DispatcherQueue().CreateTimer();
-  mFrameTimer.Interval(std::chrono::milliseconds(1000 / 90));
-  mFrameTimer.Tick([](auto&, auto&) noexcept {
-    TraceLoggingActivity<gTraceProvider> activity;
-    TraceLoggingWriteStart(activity, "FrameTick");
-    {
-      std::shared_lock kbLock(*gKneeboard);
-      TraceLoggingWriteTagged(activity, "Kneeboard locked");
-      gKneeboard->evFrameTimerPrepareEvent.Emit();
-    }
-    TraceLoggingWriteTagged(activity, "Prepared to render");
-    if (!gKneeboard->IsRepaintNeeded()) {
-      TraceLoggingWriteStop(
-        activity,
-        "FrameTick",
-        TraceLoggingValue("No repaint needed", "Result"));
-      return;
-    }
-
-    std::shared_lock kbLock(*gKneeboard);
-    TraceLoggingWriteTagged(activity, "Kneeboard locked");
-    const std::unique_lock dxLock(gDXResources);
-    TraceLoggingWriteTagged(activity, "DX locked");
-    gKneeboard->evFrameTimerEvent.Emit();
-    gKneeboard->Repainted();
-    TraceLoggingWriteStop(
-      activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
-  });
   RootGrid().Loaded([this](const auto&, const auto&) { this->OnLoaded(); });
 
   auto settings = gKneeboard->GetAppSettings();
@@ -160,8 +136,6 @@ MainWindow::MainWindow() {
         0);
     }
   }
-
-  this->Closed({this, &MainWindow::OnClosed});
 
   auto hwndMappingName = std::format(L"Local\\{}.hwnd", ProjectNameW);
   // Initially leak for the duration of the app
@@ -219,10 +193,58 @@ MainWindow::MainWindow() {
     });
 }
 
+winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
+  const auto fps = 90;
+  const auto interval = std::chrono::milliseconds(1000 / fps);
+
+  const auto cancellationToken = co_await winrt::get_cancellation_token();
+  cancellationToken.enable_propagation();
+  while (!cancellationToken()) {
+    try {
+      co_await winrt::resume_after(interval);
+      co_await mUIThread;
+      if (!cancellationToken()) {
+        this->FrameTick();
+      }
+    } catch (const winrt::hresult_canceled&) {
+      break;
+    }
+  }
+  SetEvent(mFrameLoopCompletionEvent.get());
+  co_return;
+}
+
+void MainWindow::FrameTick() {
+  TraceLoggingActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "FrameTick");
+  {
+    std::shared_lock kbLock(*gKneeboard);
+    TraceLoggingWriteTagged(activity, "Kneeboard locked");
+    gKneeboard->evFrameTimerPrepareEvent.Emit();
+  }
+  TraceLoggingWriteTagged(activity, "Prepared to render");
+  if (!gKneeboard->IsRepaintNeeded()) {
+    TraceLoggingWriteStop(
+      activity, "FrameTick", TraceLoggingValue("No repaint needed", "Result"));
+    return;
+  }
+
+  std::shared_lock kbLock(*gKneeboard);
+  TraceLoggingWriteTagged(activity, "Kneeboard locked");
+  const std::unique_lock dxLock(gDXResources);
+  TraceLoggingWriteTagged(activity, "DX locked");
+  gKneeboard->evFrameTimerEvent.Emit();
+  gKneeboard->Repainted();
+  TraceLoggingWriteStop(
+    activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
+}
+
 winrt::fire_and_forget MainWindow::OnLoaded() {
   // WinUI3 gives us the spinning circle for a long time...
   SetCursor(LoadCursorW(NULL, IDC_ARROW));
-  mFrameTimer.Start();
+  mFrameLoopCompletionEvent = {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+  mFrameLoop = this->FrameLoop();
+
   this->Show();
   co_await this->WriteInstanceData();
 
@@ -307,6 +329,8 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
 }
 
 MainWindow::~MainWindow() {
+  dprintf("{}", __FUNCTION__);
+  RemoveWindowSubclass(mHwnd, &MainWindow::SubclassProc, 0);
   gMainWindow = {};
 }
 
@@ -447,19 +471,18 @@ void MainWindow::SaveWindowPosition() {
   gKneeboard->SetAppSettings(settings);
 }
 
-winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
-  const IInspectable&,
-  const WindowEventArgs&) noexcept {
+winrt::fire_and_forget MainWindow::CleanupAndClose() {
   std::filesystem::remove(MainWindow::GetInstanceDataPath());
   gShuttingDown = true;
   this->RemoveAllEventListeners();
-
   this->SaveWindowPosition();
 
-  dprint("Stopping frame timer...");
-  mFrameTimer.Stop();
-  mFrameTimer = {nullptr};
-  mKneeboardView = {};
+  ShowWindow(mHwnd, SW_HIDE);
+
+  dprint("Stopping frame loop...");
+  mFrameLoop.Cancel();
+  co_await winrt::resume_on_signal(mFrameLoopCompletionEvent.get());
+  co_await mUIThread;
 
   for (const auto& weakTab: gTabs) {
     auto tab = weakTab.get();
@@ -469,8 +492,17 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::OnClosed(
     co_await tab.ReleaseDXResources();
   }
 
+  co_await mUIThread;
+
+  mKneeboardView = {};
+  gKneeboard->ReleaseExclusiveResources();
   gKneeboard = {};
   gDXResources = {};
+
+  co_await mUIThread;
+
+  dprint("Closing Main Window");
+  this->Close();
 }
 
 winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
@@ -813,6 +845,20 @@ void MainWindow::Show() {
 
 std::filesystem::path MainWindow::GetInstanceDataPath() {
   return Settings::GetDirectory() / ".instance";
+}
+
+LRESULT MainWindow::SubclassProc(
+  HWND hWnd,
+  UINT uMsg,
+  WPARAM wParam,
+  LPARAM lParam,
+  UINT_PTR uIdSubclass,
+  DWORD_PTR dwRefData) {
+  if (uMsg == WM_CLOSE) {
+    reinterpret_cast<MainWindow*>(dwRefData)->CleanupAndClose();
+    return TRUE;
+  }
+  return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
