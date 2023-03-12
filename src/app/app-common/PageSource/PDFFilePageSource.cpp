@@ -32,6 +32,7 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 
@@ -110,8 +111,7 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
-  auto ret
-    = std::shared_ptr<PDFFilePageSource>(new PDFFilePageSource(dxr, kbs));
+  auto ret = shared_with_final_release(new PDFFilePageSource(dxr, kbs));
 
   // Not a constructor argument as we need:
   // 1) async loading functions
@@ -223,15 +223,25 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
 
   auto uiThread = mUIThread;
   co_await uiThread;
-  auto self = weak.lock();
-  if (!self) {
-    co_return;
-  }
-  p->mCopy = std::move(copy);
+  {
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
+    p->mCopy = std::move(copy);
 
-  this->ReloadRenderer();
+    this->ReloadRenderer();
+  }
   co_await winrt::resume_background();
-  this->ReloadNavigation();
+  if (auto self = weak.lock()) {
+    this->ReloadNavigation();
+  }
+}
+
+winrt::fire_and_forget PDFFilePageSource::final_release(
+  std::unique_ptr<PDFFilePageSource> self) {
+  // Make sure the destructor is called from the UI thread
+  co_await self->mUIThread;
 }
 
 PageIndex PDFFilePageSource::GetPageCount() const {

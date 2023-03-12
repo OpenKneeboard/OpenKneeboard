@@ -44,6 +44,8 @@ class PDFFilePageSource final
  public:
   PDFFilePageSource() = delete;
   virtual ~PDFFilePageSource();
+  static winrt::fire_and_forget final_release(std::unique_ptr<PDFFilePageSource>);
+
   static std::shared_ptr<PDFFilePageSource> Create(
     const DXResources&,
     KneeboardState*,
