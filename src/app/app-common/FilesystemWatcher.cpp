@@ -51,25 +51,34 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
 
 winrt::fire_and_forget FilesystemWatcher::final_release(
   std::unique_ptr<FilesystemWatcher> self) {
-  self->mCanceled = true;
+  self->mImpl.Cancel();
   co_await winrt::resume_on_signal(self->mShutdownHandle.get());
 }
 
 FilesystemWatcher::~FilesystemWatcher() = default;
 
-winrt::fire_and_forget FilesystemWatcher::Initialize() {
+void FilesystemWatcher::Initialize() {
   mLastWriteTime = std::filesystem::last_write_time(mPath);
+  mImpl = this->Run();
+}
+
+winrt::Windows::Foundation::IAsyncAction FilesystemWatcher::Run() {
+  auto cancellation_token = co_await winrt::get_cancellation_token();
+  cancellation_token.enable_propagation();
 
   auto handle = mHandle.get();
-  while (!mCanceled) {
+  while (!cancellation_token()) {
     winrt::check_bool(FindNextChangeNotification(handle));
-    const auto haveChange = co_await winrt::resume_on_signal(
-      handle, std::chrono::milliseconds(100));
-    if (haveChange) {
-      this->OnContentsChanged();
+    try {
+      const auto haveChange = co_await winrt::resume_on_signal(handle);
+      if (haveChange) {
+        this->OnContentsChanged();
+      }
+    } catch (const winrt::hresult_canceled&) {
+      SetEvent(mShutdownHandle.get());
+      co_return;
     }
   }
-  SetEvent(mShutdownHandle.get());
 }
 
 void FilesystemWatcher::OnContentsChanged() {

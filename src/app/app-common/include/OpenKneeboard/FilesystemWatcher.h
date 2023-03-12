@@ -53,10 +53,11 @@ class FilesystemWatcher final
 
  private:
   FilesystemWatcher(const std::filesystem::path&);
-  winrt::fire_and_forget Initialize();
+  void Initialize();
+  winrt::Windows::Foundation::IAsyncAction Run();
   void OnContentsChanged();
 
-  bool mCanceled = false;
+  winrt::Windows::Foundation::IAsyncAction mImpl {nullptr};
 
   winrt::apartment_context mOwnerThread;
   std::filesystem::path mPath;
