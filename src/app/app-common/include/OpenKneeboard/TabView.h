@@ -57,7 +57,18 @@ class TabView final : public ITabView, private EventReceiver {
   KneeboardState* mKneeboard;
 
   std::shared_ptr<ITab> mRootTab;
-  std::optional<PageID> mRootTabPageID;
+  struct PagePosition {
+    PageID mID;
+    // The ID is the source of truth (so e.g. bookmarks and doodles stay on the
+    // correct page after pages are added/removed), but use the index to detect
+    // page prepends.
+    //
+    // For now, this is used to stay on the 'first page' if pages are prepended
+    // (especially while loading a folder tab), though I'm not certain what will
+    // feel best.
+    PageIndex mIndex;
+  };
+  std::optional<PagePosition> mRootTabPage;
 
   // For now, just navigation views, maybe more later
   std::shared_ptr<ITab> mActiveSubTab;

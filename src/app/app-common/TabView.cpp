@@ -38,7 +38,7 @@ TabView::TabView(
   : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab) {
   const auto rootPageIDs = mRootTab->GetPageIDs();
   if (!rootPageIDs.empty()) {
-    mRootTabPageID = rootPageIDs.front();
+    mRootTabPage = {rootPageIDs.front(), 0};
   }
 
   AddEventListener(tab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
@@ -80,8 +80,8 @@ PageID TabView::GetPageID() const {
   if (mode != TabMode::NORMAL && mActiveSubTabPageID) {
     return *mActiveSubTabPageID;
   }
-  if (mode == TabMode::NORMAL && mRootTabPageID) {
-    return *mRootTabPageID;
+  if (mode == TabMode::NORMAL && mRootTabPage) {
+    return mRootTabPage->mID;
   }
 
   const auto ids = this->GetTab()->GetPageIDs();
@@ -120,7 +120,7 @@ void TabView::SetPageID(PageID page) {
   if (mActiveSubTab) {
     mActiveSubTabPageID = page;
   } else {
-    mRootTabPageID = page;
+    mRootTabPage = {page, static_cast<PageIndex>(it - pages.begin())};
   }
 
   this->PostCursorEvent({});
@@ -139,36 +139,43 @@ void TabView::OnTabContentChanged() {
 
   const auto pages = mRootTab->GetPageIDs();
   if (pages.empty()) {
-    mRootTabPageID = {};
+    mRootTabPage = {};
     evPageChangedEvent.Emit();
     return;
   }
 
-  if (mRootTabPageID) {
-    const auto it = std::ranges::find(pages, *mRootTabPageID);
+  if (mRootTabPage) {
+    const auto it = std::ranges::find(pages, mRootTabPage->mID);
     if (it == pages.end()) {
       // Fixed below
-      mRootTabPageID = {};
+      mRootTabPage = {};
     }
   }
 
-  if (!mRootTabPageID) {
-    mRootTabPageID = pages.front();
+  if (!mRootTabPage) {
+    mRootTabPage = {pages.front(), 0};
     evPageChangedEvent.Emit();
     return;
   }
 
-  auto it = std::ranges::find(pages, *mRootTabPageID);
+  const auto it = std::ranges::find(pages, mRootTabPage->mID);
   if (it == pages.end()) {
-    mRootTabPageID = pages.back();
+    mRootTabPage = {pages.back(), static_cast<PageIndex>(pages.size() - 1)};
     evPageChangedEvent.Emit();
+    return;
+  }
+
+  if (mRootTabPage->mIndex == 0 && it != pages.begin()) {
+    mRootTabPage->mID = pages.front();
+    evPageChangedEvent.Emit();
+    return;
   }
 }
 
 void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
   auto pages = mRootTab->GetPageIDs();
-  if (pages.size() < 2) {
-    mRootTabPageID = pages.front();
+  if (pages.size() < 2 || !mRootTabPage) {
+    mRootTabPage = {pages.front(), 0};
     evPageChangedEvent.Emit();
     evNeedsRepaintEvent.Emit();
     return;
@@ -178,11 +185,11 @@ void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
     return;
   }
 
-  if (mRootTabPageID != pages.at(pages.size() - 2)) {
+  if (mRootTabPage->mIndex != pages.size() - 2) {
     return;
   }
 
-  mRootTabPageID = pages.back();
+  mRootTabPage = {pages.back(), static_cast<PageIndex>(pages.size() - 1)};
   if (mActiveSubTab) {
     return;
   }
@@ -238,14 +245,19 @@ bool TabView::SetTabMode(TabMode mode) {
         std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab)
           ->GetNavigationEntries(),
         mRootTab->GetNativeContentSize(
-          mRootTabPageID ? (*mRootTabPageID) : (PageID {})));
+          mRootTabPage ? (mRootTabPage->mID) : (PageID {nullptr})));
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
         [this](EventContext ctx, PageID newPage) {
           if (ctx != mEventContext) {
             return;
           }
-          mRootTabPageID = newPage;
+          const auto ids = mRootTab->GetPageIDs();
+          const auto it = std::ranges::find(ids, newPage);
+          if (it == ids.end()) {
+            return;
+          }
+          mRootTabPage = {newPage, static_cast<PageIndex>(it - ids.begin())};
           SetTabMode(TabMode::NORMAL);
         });
       AddEventListener(
