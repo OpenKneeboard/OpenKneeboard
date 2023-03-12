@@ -68,7 +68,7 @@ winrt::fire_and_forget FilesystemWatcher::Initialize() {
     if (haveChange) {
       this->OnContentsChanged();
     } else {
-      break;
+      continue;
     }
   }
   SetEvent(mShutdownHandle.get());
