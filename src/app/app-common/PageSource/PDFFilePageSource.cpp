@@ -214,6 +214,10 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
 
   // Do copy in a background thread so we're not hung up on antivirus
   co_await winrt::resume_background();
+  auto self = weak.lock();
+  if (!self) {
+    co_return;
+  }
   auto tempPath = Filesystem::GetTemporaryDirectory()
     / std::format(L"{:08x}-{}{}",
                   ++sCount,
@@ -221,19 +225,20 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
                   p->mPath.extension());
   auto copy = std::make_unique<Filesystem::TemporaryCopy>(p->mPath, tempPath);
 
+  self.reset();
   auto uiThread = mUIThread;
   co_await uiThread;
-  {
-    auto self = weak.lock();
-    if (!self) {
-      co_return;
-    }
-    p->mCopy = std::move(copy);
-
-    this->ReloadRenderer();
+  self = weak.lock();
+  if (!self) {
+    co_return;
   }
+  p->mCopy = std::move(copy);
+
+  this->ReloadRenderer();
+  self.reset();
   co_await winrt::resume_background();
-  if (auto self = weak.lock()) {
+  self = weak.lock();
+  if (self) {
     this->ReloadNavigation();
   }
 }
