@@ -31,13 +31,9 @@ namespace OpenKneeboard {
 
 DoodleRenderer::DoodleRenderer(const DXResources& dxr, KneeboardState* kbs)
   : mDXR(dxr), mKneeboard(kbs) {
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBrush.put()));
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), mEraser.put()));
-
-  mDXR.mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mDrawingContext.put());
+  mBrush = dxr.mBlackBrush;
+  mEraser = dxr.mEraserBrush;
+  mDrawingContext = mDXR.mD2DDeviceContext;
 }
 
 DoodleRenderer::~DoodleRenderer() = default;

@@ -20,12 +20,16 @@
 #pragma once
 
 #include <OpenKneeboard/utf8.h>
-#include <d2d1_1.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
 
+#include <d2d1_1.h>
+
 namespace OpenKneeboard {
+
+struct DXResources;
 
 class D2DErrorRenderer final {
  private:
@@ -33,7 +37,7 @@ class D2DErrorRenderer final {
   std::unique_ptr<Impl> p;
 
  public:
-  D2DErrorRenderer(ID2D1DeviceContext* ctx);
+  D2DErrorRenderer(const DXResources&);
   D2DErrorRenderer() = delete;
   ~D2DErrorRenderer();
 

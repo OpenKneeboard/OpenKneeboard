@@ -93,11 +93,8 @@ PDFFilePageSource::PDFFilePageSource(
   const std::unique_lock d2dLock(p->mDXR);
   winrt::check_hresult(
     PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), p->mBackgroundBrush.put()));
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), p->mHighlightBrush.put()));
-
+  p->mBackgroundBrush = dxr.mWhiteBrush;
+  p->mHighlightBrush = dxr.mHighlightBrush;
   p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
   AddEventListener(
     p->mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);

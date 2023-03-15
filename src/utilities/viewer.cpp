@@ -17,23 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <D2d1.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
-#include <d3d11.h>
-#include <d3d11_2.h>
-#include <dxgi1_2.h>
+
 #include <shims/winrt/base.h>
 
 #include <format>
 #include <memory>
 #include <type_traits>
+
+#include <D2d1.h>
+#include <d3d11.h>
+#include <d3d11_2.h>
+#include <dxgi1_2.h>
 
 using namespace OpenKneeboard;
 
@@ -115,8 +118,7 @@ class TestViewerWindow final {
     mDXR = DXResources::Create();
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
-    mErrorRenderer
-      = std::make_unique<D2DErrorRenderer>(mDXR.mD2DDeviceContext.get());
+    mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
     mWindowColor = GetSystemColor(COLOR_WINDOW);
     mWindowFrameColor = GetSystemColor(COLOR_WINDOWFRAME);
     mStreamerModeWindowColor = D2D1::ColorF(1.0f, 0.0f, 1.0f, 1.0f);

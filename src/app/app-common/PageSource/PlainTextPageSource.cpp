@@ -145,7 +145,7 @@ void PlainTextPageSource::RenderPage(
   const auto pageIndex = FindPageIndex(pageID);
 
   if (!pageIndex) [[unlikely]] {
-    D2DErrorRenderer(ctx).Render(ctx, _("Invalid Page ID"), rect);
+    D2DErrorRenderer(mDXR).Render(ctx, _("Invalid Page ID"), rect);
     return;
   }
 

@@ -66,6 +66,22 @@ struct DXResources {
   bool try_lock();
   void unlock();
 
+  // Brushes :)
+
+  // Would like something more semantic for this one; used for:
+  // - PDF background
+  winrt::com_ptr<ID2D1SolidColorBrush> mWhiteBrush;
+  // - PDF links
+  // - Button mouseovers
+  winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
+  //-  Doodle pen
+  winrt::com_ptr<ID2D1SolidColorBrush> mBlackBrush;
+  //-  Doodle eraser
+  winrt::com_ptr<ID2D1SolidColorBrush> mEraserBrush;
+
+  winrt::com_ptr<ID2D1SolidColorBrush> mCursorInnerBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mCursorOuterBrush;
+
  private:
   struct Locks;
   std::shared_ptr<Locks> mLocks;

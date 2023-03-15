@@ -19,20 +19,14 @@
  */
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
+
 #include <OpenKneeboard/config.h>
 
 namespace OpenKneeboard {
 
 CursorRenderer::CursorRenderer(const DXResources& dxr) {
-  auto& ctx = dxr.mD2DDeviceContext;
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 0.8f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mInnerBrush.put()));
-  ctx->CreateSolidColorBrush(
-    {1.0f, 1.0f, 1.0f, 0.8f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(mOuterBrush.put()));
+  mInnerBrush = dxr.mCursorInnerBrush;
+  mOuterBrush = dxr.mCursorOuterBrush;
 }
 
 CursorRenderer::~CursorRenderer() = default;

@@ -83,8 +83,7 @@ TabPage::TabPage() {
     mForegroundBrush.put()));
 
   mCursorRenderer = std::make_unique<CursorRenderer>(gDXResources);
-  mErrorRenderer
-    = std::make_unique<D2DErrorRenderer>(gDXResources.mD2DDeviceContext.get());
+  mErrorRenderer = std::make_unique<D2DErrorRenderer>(gDXResources);
 
   this->InitializePointerSource();
   AddEventListener(

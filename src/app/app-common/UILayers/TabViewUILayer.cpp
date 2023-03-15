@@ -30,8 +30,7 @@
 namespace OpenKneeboard {
 
 TabViewUILayer::TabViewUILayer(const DXResources& dxr) {
-  mErrorRenderer
-    = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
+  mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr);
   dxr.mD2DDeviceContext->CreateSolidColorBrush(
     {1.0f, 1.0f, 1.0f, 1.0f},
     D2D1::BrushProperties(),

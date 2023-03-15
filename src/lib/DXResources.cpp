@@ -128,6 +128,24 @@ DXResources DXResources::Create() {
 
   ret.mLocks = std::make_shared<Locks>();
 
+  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), ret.mWhiteBrush.put()));
+  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), ret.mHighlightBrush.put()));
+  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), ret.mBlackBrush.put()));
+  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), ret.mEraserBrush.put()));
+
+  ret.mD2DDeviceContext->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 0.8f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(ret.mCursorInnerBrush.put()));
+  ret.mD2DDeviceContext->CreateSolidColorBrush(
+    {1.0f, 1.0f, 1.0f, 0.8f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(ret.mCursorOuterBrush.put()));
+
   return ret;
 }
 

@@ -44,8 +44,7 @@ namespace OpenKneeboard {
 KneeboardView::KneeboardView(const DXResources& dxr, KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
-  mErrorRenderer
-    = std::make_unique<D2DErrorRenderer>(dxr.mD2DDeviceContext.get());
+  mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr);
 
   dxr.mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(D2D1::ColorF::White), mErrorBackgroundBrush.put());

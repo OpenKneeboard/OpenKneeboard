@@ -18,8 +18,12 @@
  * USA.
  */
 #include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/DXResources.h>
+
 #include <OpenKneeboard/config.h>
+
 #include <Unknwn.h>
+
 #include <dwrite.h>
 
 namespace OpenKneeboard {
@@ -29,15 +33,10 @@ struct D2DErrorRenderer::Impl final {
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 };
 
-D2DErrorRenderer::D2DErrorRenderer(ID2D1DeviceContext* ctx)
+D2DErrorRenderer::D2DErrorRenderer(const DXResources& dxr)
   : p(std::make_unique<Impl>()) {
-  DWriteCreateFactory(
-    DWRITE_FACTORY_TYPE_SHARED,
-    __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(p->mDWrite.put()));
-
-  ctx->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 1.0f}, D2D1::BrushProperties(), p->mTextBrush.put());
+  p->mDWrite = dxr.mDWriteFactory;
+  p->mTextBrush = dxr.mBlackBrush;
 }
 
 D2DErrorRenderer::~D2DErrorRenderer() {

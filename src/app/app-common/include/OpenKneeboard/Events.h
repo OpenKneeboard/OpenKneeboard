@@ -192,7 +192,7 @@ class Event final : public EventBase {
     auto weakImpl = std::weak_ptr(mImpl);
     co_await context;
     if (auto impl = weakImpl.lock()) {
-      impl->Emit(std::forward<Args...>(args...), location);
+      impl->Emit(args..., location);
     }
   }
 
@@ -205,7 +205,7 @@ class Event final : public EventBase {
     winrt::apartment_context originalContext;
     co_await eventContext;
     if (auto impl = weakImpl.lock()) {
-      impl->Emit(std::forward<Args...>(args...), location);
+      impl->Emit(args..., location);
     }
     co_await originalContext;
   }
