@@ -31,6 +31,7 @@
 #include <winrt/Windows.Foundation.h>
 
 #include <memory>
+#include <shared_mutex>
 #include <vector>
 
 struct IDirectInput8W;
@@ -77,6 +78,7 @@ class DirectInputAdapter final
     winrt::Windows::Foundation::IAsyncAction mListener;
     winrt::handle mListenerCompletionHandle;
   };
+  mutable std::shared_mutex mDevicesMutex;
   std::unordered_map<std::string, DeviceState> mDevices;
 
   mutable DirectInputSettings mSettings;

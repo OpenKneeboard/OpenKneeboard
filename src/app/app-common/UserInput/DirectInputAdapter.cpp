@@ -83,13 +83,16 @@ void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
 winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
   this->RemoveAllEventListeners();
 
-  for (auto& [id, device]: mDevices) {
+  std::unique_lock lock(mDevicesMutex);
+  auto devices = std::move(mDevices);
+  lock.unlock();
+
+  for (auto& [id, device]: devices) {
     device.mListener.Cancel();
   }
-  for (auto& [id, device]: mDevices) {
+  for (auto& [id, device]: devices) {
     co_await winrt::resume_on_signal(device.mListenerCompletionHandle.get());
   }
-  mDevices.clear();
 }
 
 winrt::fire_and_forget DirectInputAdapter::Reload() {
@@ -97,6 +100,7 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
 
   co_await this->ReleaseDevices();
 
+  std::unique_lock lock(mDevicesMutex);
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
     auto device = DirectInputDevice::Create(diDeviceInstance);
     if (mSettings.mDevices.contains(device->GetID())) {
@@ -145,6 +149,7 @@ DirectInputAdapter::~DirectInputAdapter() {
 std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
   const {
   std::vector<std::shared_ptr<UserInputDevice>> devices;
+  std::shared_lock lock(mDevicesMutex);
   for (const auto& [id, device]: mDevices) {
     devices.push_back(
       std::static_pointer_cast<UserInputDevice>(device.mDevice));
@@ -153,6 +158,7 @@ std::vector<std::shared_ptr<UserInputDevice>> DirectInputAdapter::GetDevices()
 }
 
 DirectInputSettings DirectInputAdapter::GetSettings() const {
+  std::shared_lock lock(mDevicesMutex);
   for (const auto& [deviceID, state]: mDevices) {
     const auto& device = state.mDevice;
     const auto kind
