@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Filesystem.h>
+
 #include <Windows.h>
 
 #include <format>
@@ -33,7 +34,14 @@ static std::filesystem::path GetTemporaryDirectoryRoot() {
 
 std::filesystem::path GetTemporaryDirectory() {
   static std::filesystem::path sCache;
+  static std::mutex sMutex;
+  thread_local std::filesystem::path sThreadCache;
+  if (!sThreadCache.empty()) {
+    return sThreadCache;
+  }
+  std::unique_lock lock(sMutex);
   if (!sCache.empty()) {
+    sThreadCache = sCache;
     return sCache;
   }
 
@@ -51,6 +59,7 @@ std::filesystem::path GetTemporaryDirectory() {
   }
 
   sCache = std::filesystem::canonical(tempDir);
+  sThreadCache = sCache;
 
   return sCache;
 }
