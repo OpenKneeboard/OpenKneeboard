@@ -17,6 +17,5 @@ jobs:
       - name: Push
         working-directory: source
         run: |
-          git config --global credential.helper store
-          git config --global credential.github.com.useHttpPath true
-          git subtree push --prefix=autoupdate "https://${{secrets.OPENKNEEBOARD_BOT_PAT}}:x-oauth-basic@github.com/OpenKneeboard/autoupdates.git" main
+          git config --unset-all http.https://github.com/.extraheader
+          git subtree push --prefix=autoupdate "https://${{secrets.OPENKNEEBOARD_BOT_PAT}}@github.com/OpenKneeboard/autoupdates.git" main
