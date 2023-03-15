@@ -33,7 +33,7 @@ DoodleRenderer::DoodleRenderer(const DXResources& dxr, KneeboardState* kbs)
   : mDXR(dxr), mKneeboard(kbs) {
   mBrush = dxr.mBlackBrush;
   mEraser = dxr.mEraserBrush;
-  mDrawingContext = mDXR.mD2DDeviceContext;
+  mDrawingContext = mDXR.mD2DBackBufferDeviceContext;
 }
 
 DoodleRenderer::~DoodleRenderer() = default;

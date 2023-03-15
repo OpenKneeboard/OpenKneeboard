@@ -113,6 +113,9 @@ DXResources DXResources::Create() {
   winrt::check_hresult(ret.mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ret.mD2DDeviceContext.put()));
   ret.mD2DDeviceContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+  winrt::check_hresult(ret.mD2DDevice->CreateDeviceContext(
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ret.mD2DBackBufferDeviceContext.put()));
+  ret.mD2DBackBufferDeviceContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
   // Subpixel antialiasing assumes text is aligned on pixel boundaries;
   // this isn't the case for OpenKneeboard
   ret.mD2DDeviceContext->SetTextAntialiasMode(

@@ -49,6 +49,8 @@ struct DXResources {
   winrt::com_ptr<IDXGIDevice2> mDXGIDevice;
   winrt::com_ptr<ID2D1Device> mD2DDevice;
   winrt::com_ptr<ID2D1DeviceContext> mD2DDeviceContext;
+  // e.g. doodles draw to a separate texture
+  winrt::com_ptr<ID2D1DeviceContext> mD2DBackBufferDeviceContext;
 
   winrt::com_ptr<ID2D1Factory> mD2DFactory;
   winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
