@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/ITabView.h>
+#include <OpenKneeboard/ThreadGuard.h>
 
 #include <vector>
 
@@ -78,6 +79,8 @@ class TabView final : public ITabView, private EventReceiver {
 
   void OnTabContentChanged();
   void OnTabPageAppended(SuggestedPageAppendAction);
+
+  ThreadGuard mThreadGuard;
 };
 
 }// namespace OpenKneeboard

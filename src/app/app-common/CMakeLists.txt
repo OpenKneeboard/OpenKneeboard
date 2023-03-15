@@ -26,6 +26,7 @@ target_link_libraries(
   OpenKneeboard-SteamVRKneeboard
   OpenKneeboard-OpenXRMode
   OpenKneeboard-SHM
+  OpenKneeboard-ThreadGuard
   OpenKneeboard-UTF8
   OpenKneeboard-WindowCaptureControl
   OpenKneeboard-config

@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/RenderTargetID.h>
+#include <OpenKneeboard/ThreadGuard.h>
 #include <OpenKneeboard/UniqueID.h>
 
 #include <OpenKneeboard/inttypes.h>
@@ -56,6 +57,7 @@ class IPageSource {
   Event<> evContentChangedEvent;
   Event<EventContext, PageID> evPageChangeRequestedEvent;
   Event<> evAvailableFeaturesChangedEvent;
+  ThreadGuard mThreadGuard;
 };
 
 }// namespace OpenKneeboard

@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/ThreadGuard.h>
 
 #include <vector>
 
@@ -122,6 +123,8 @@ class KneeboardView final : public IKneeboardView,
   std::vector<EventHandlerToken> mTabEvents;
 
   std::tuple<IUILayer*, std::span<IUILayer*>> GetUILayers() const;
+
+  ThreadGuard mThreadGuard;
 };
 
 }// namespace OpenKneeboard

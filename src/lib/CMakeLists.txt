@@ -13,6 +13,10 @@ target_include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
+ok_add_library(OpenKneeboard-ThreadGuard STATIC ThreadGuard.cpp)
+target_link_libraries(OpenKneeboard-ThreadGuard PUBLIC _libheaders)
+target_link_libraries(OpenKneeboard-ThreadGuard PRIVATE OpenKneeboard-dprint)
+
 ok_add_library(OpenKneeboard-GetMainHWND STATIC GetMainHWND.cpp)
 target_link_libraries(
   OpenKneeboard-GetMainHWND

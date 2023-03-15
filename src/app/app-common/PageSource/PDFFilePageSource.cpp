@@ -38,9 +38,13 @@
 
 #include <shims/winrt/base.h>
 
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Windows.Data.Pdf.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
+
+#include <wil/cppwinrt.h>
+#include <wil/cppwinrt_helpers.h>
 
 #include <windows.data.pdf.interop.h>
 
@@ -70,7 +74,7 @@ struct PDFFilePageSource::Impl final {
   std::filesystem::path mPath;
   std::shared_ptr<Filesystem::TemporaryCopy> mCopy;
 
-  IPdfDocument mPDFDocument;
+  PdfDocument mPDFDocument {nullptr};
   winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
   winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mHighlightBrush;
@@ -104,6 +108,26 @@ PDFFilePageSource::PDFFilePageSource(
 
 PDFFilePageSource::~PDFFilePageSource() {
   this->RemoveAllEventListeners();
+  if (p->mPDFDocument) {
+    // Windows.Data.Pdf.PdfDocument's destructor re-enters the message loop -
+    // which means we can do:
+    // 1. Enter message loop
+    // 2. Enter ~PDFFilePageSource()
+    // 3. Enter ~PdfDocument()
+    // 4. Re-enter the message loop while `this` is partially destructed, and
+    //    has an invalid vtable
+    // 5. Double-free if the condition that led to the deletion is still
+    //    present, or make pure virtual calls, or...
+
+    // Work around this by rescheduling the deletion until 'later'
+    [](auto threadGuard, auto deleteLater) -> winrt::fire_and_forget {
+      threadGuard.CheckThread();
+      // WIL::resume_foreground guarantees that we will be rescheduled, even
+      // though we're not changing threads.
+      co_await wil::resume_foreground(winrt::Microsoft::UI::Dispatching::
+                                        DispatcherQueue::GetForCurrentThread());
+    }(mThreadGuard, std::move(p->mPDFDocument));
+  }
 }
 
 std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
@@ -216,7 +240,7 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   stayingAlive.reset();
   co_await uiThread;
   if (stayingAlive = weak.lock()) {
-    this->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
+    this->evAvailableFeaturesChangedEvent.Emit();
   }
 }
 

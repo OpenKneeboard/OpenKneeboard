@@ -22,6 +22,7 @@
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/inttypes.h>
 
@@ -75,6 +76,8 @@ class DoodleRenderer final {
   ID2D1Bitmap* GetDrawingSurface(PageID);
 
   void FlushCursorEvents();
+
+  ThreadGuard mThreadGuard;
 };
 
 }// namespace OpenKneeboard

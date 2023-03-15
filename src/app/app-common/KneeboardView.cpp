@@ -150,10 +150,10 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
       });
   }
 
-  mTabViews = tabViews;
-  auto it = std::ranges::find(tabViews, mCurrentTabView);
-  if (it == tabViews.end()) {
-    mCurrentTabView = tabs.empty() ? nullptr : tabViews.front();
+  mTabViews = std::move(tabViews);
+  auto it = std::ranges::find(mTabViews, mCurrentTabView);
+  if (it == mTabViews.end()) {
+    mCurrentTabView = tabs.empty() ? nullptr : mTabViews.front();
     this->evCurrentTabChangedEvent.Emit(this->GetTabIndex());
   }
 }
