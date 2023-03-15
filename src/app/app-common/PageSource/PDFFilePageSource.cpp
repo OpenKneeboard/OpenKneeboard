@@ -51,6 +51,7 @@
 #include <iterator>
 #include <mutex>
 #include <random>
+#include <shared_mutex>
 #include <thread>
 #include <unordered_map>
 
@@ -84,6 +85,8 @@ struct PDFFilePageSource::Impl final {
   std::shared_ptr<FilesystemWatcher> mWatcher;
 
   std::vector<PageID> mPageIDs;
+
+  std::shared_mutex mMutex;
 };
 
 PDFFilePageSource::PDFFilePageSource(
@@ -124,49 +127,75 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
 
 winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
   auto weak = weak_from_this();
+  auto p = this->p;
   auto copy = p->mCopy;
   auto path = copy->GetPath();
+  auto uiThread = mUIThread;
 
   if (!std::filesystem::is_regular_file(path)) {
     co_return;
   }
 
   auto file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
-  p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
-  p->mPageIDs.resize(p->mPDFDocument.PageCount());
+  auto document = co_await PdfDocument::LoadFromFileAsync(file);
+  {
+    std::unique_lock lock(p->mMutex);
+    p->mPDFDocument = std::move(document);
+    p->mPageIDs.resize(p->mPDFDocument.PageCount());
+  }
 
-  evContentChangedEvent.EnqueueForContext(mUIThread);
+  co_await uiThread;
+  if (auto self = weak.lock()) {
+    evContentChangedEvent.Emit();
+  }
 }
 
-void PDFFilePageSource::ReloadNavigation() {
+winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
+  auto uiThread = mUIThread;
+  auto weak = weak_from_this();
   auto copy = p->mCopy;
   auto path = copy->GetPath();
   if (!std::filesystem::is_regular_file(path)) {
-    return;
+    co_return;
+  }
+
+  co_await winrt::resume_background();
+  auto stayingAlive = weak.lock();
+  if (!stayingAlive) {
+    co_return;
   }
 
   PDFNavigation::PDF pdf(path);
   const auto bookmarks = pdf.GetBookmarks();
+  decltype(p->mBookmarks) navigation;
   for (int i = 0; i < bookmarks.size(); i++) {
     const auto& it = bookmarks[i];
-    p->mBookmarks.push_back({it.mName, this->GetPageIDForIndex(it.mPageIndex)});
+    navigation.push_back({it.mName, this->GetPageIDForIndex(it.mPageIndex)});
   }
 
-  p->mNavigationLoaded = true;
-  this->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
+  {
+    std::unique_lock lock(p->mMutex);
+    p->mBookmarks = std::move(navigation);
+    p->mNavigationLoaded = true;
+  }
 
   const auto links = pdf.GetLinks();
+  decltype(p->mLinks) linkHandlers;
   for (int i = 0; i < links.size(); ++i) {
     const auto& pageLinks = links.at(i);
     auto handler = Impl::LinkHandler::Create(pageLinks);
     AddEventListener(
       handler->evClicked,
-      [this](EventContext ctx, const PDFNavigation::Link& link) {
+      [weak](EventContext ctx, const PDFNavigation::Link& link) {
+        auto self = weak.lock();
+        if (!self) {
+          return;
+        }
         const auto& dest = link.mDestination;
         switch (dest.mType) {
           case PDFNavigation::DestinationType::Page:
-            this->evPageChangeRequestedEvent.Emit(
-              ctx, this->GetPageIDForIndex(dest.mPageIndex));
+            self->evPageChangeRequestedEvent.Emit(
+              ctx, self->GetPageIDForIndex(dest.mPageIndex));
             break;
           case PDFNavigation::DestinationType::URI: {
             [=]() -> winrt::fire_and_forget {
@@ -176,7 +205,18 @@ void PDFFilePageSource::ReloadNavigation() {
           }
         }
       });
-    p->mLinks[this->GetPageIDForIndex(i)] = handler;
+    linkHandlers[this->GetPageIDForIndex(i)] = handler;
+  }
+
+  {
+    std::unique_lock lock(p->mMutex);
+    p->mLinks = std::move(linkHandlers);
+  }
+
+  stayingAlive.reset();
+  co_await uiThread;
+  if (stayingAlive = weak.lock()) {
+    this->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
   }
 }
 
@@ -184,25 +224,33 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
   if (!p) {
     return {};
   }
-  if (index < p->mPageIDs.size()) {
-    return p->mPageIDs.at(index);
+  {
+    std::shared_lock lock(p->mMutex);
+    if (index < p->mPageIDs.size()) {
+      return p->mPageIDs.at(index);
+    }
   }
+  std::unique_lock lock(p->mMutex);
   p->mPageIDs.resize(index + 1);
   return p->mPageIDs.back();
 }
 
 winrt::fire_and_forget PDFFilePageSource::Reload() {
   static uint64_t sCount = 0;
+  auto uiThread = mUIThread;
 
   auto weak = weak_from_this();
   auto p = this->p;
 
-  p->mCopy = {};
-  p->mBookmarks.clear();
-  p->mLinks.clear();
-  p->mNavigationLoaded = false;
-  p->mCache.clear();
-  p->mPageIDs.clear();
+  {
+    std::unique_lock lock(p->mMutex);
+    p->mCopy = {};
+    p->mBookmarks.clear();
+    p->mLinks.clear();
+    p->mNavigationLoaded = false;
+    p->mCache.clear();
+    p->mPageIDs.clear();
+  }
 
   if (!std::filesystem::is_regular_file(p->mPath)) {
     co_return;
@@ -210,6 +258,7 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
 
   // Do copy in a background thread so we're not hung up on antivirus
   co_await winrt::resume_background();
+
   auto self = weak.lock();
   if (!self) {
     co_return;
@@ -219,24 +268,10 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
                   ++sCount,
                   p->mPath.stem().wstring().substr(0, 16),
                   p->mPath.extension());
-  auto copy = std::make_shared<Filesystem::TemporaryCopy>(p->mPath, tempPath);
-
-  self.reset();
-  auto uiThread = mUIThread;
-  co_await uiThread;
-  self = weak.lock();
-  if (!self) {
-    co_return;
-  }
-  p->mCopy = std::move(copy);
+  p->mCopy = std::make_shared<Filesystem::TemporaryCopy>(p->mPath, tempPath);
 
   this->ReloadRenderer();
-  self.reset();
-  co_await winrt::resume_background();
-  self = weak.lock();
-  if (self) {
-    this->ReloadNavigation();
-  }
+  this->ReloadNavigation();
 }
 
 winrt::fire_and_forget PDFFilePageSource::final_release(
@@ -246,6 +281,7 @@ winrt::fire_and_forget PDFFilePageSource::final_release(
 }
 
 PageIndex PDFFilePageSource::GetPageCount() const {
+  std::shared_lock lock(p->mMutex);
   if (p->mPDFDocument) {
     return p->mPDFDocument.PageCount();
   }
@@ -257,10 +293,14 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
   if (pageCount == 0) {
     return {};
   }
-  if (pageCount == p->mPageIDs.size()) {
-    return p->mPageIDs;
+  {
+    std::shared_lock lock(p->mMutex);
+    if (pageCount == p->mPageIDs.size()) {
+      return p->mPageIDs;
+    }
   }
 
+  std::unique_lock lock(p->mMutex);
   p->mPageIDs.resize(pageCount);
   return p->mPageIDs;
 }
@@ -289,6 +329,9 @@ void PDFFilePageSource::RenderPageContent(
   if (!p) {
     return;
   }
+
+  std::shared_lock lock(p->mMutex);
+
   const auto pageIt = std::ranges::find(p->mPageIDs, id);
   if (pageIt == p->mPageIDs.end()) {
     return;
@@ -420,6 +463,7 @@ bool PDFFilePageSource::IsNavigationAvailable() const {
 }
 
 std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
+  std::shared_lock lock(p->mMutex);
   if (!p->mBookmarks.empty()) {
     return p->mBookmarks;
   }

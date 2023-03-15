@@ -44,7 +44,8 @@ class PDFFilePageSource final
  public:
   PDFFilePageSource() = delete;
   virtual ~PDFFilePageSource();
-  static winrt::fire_and_forget final_release(std::unique_ptr<PDFFilePageSource>);
+  static winrt::fire_and_forget final_release(
+    std::unique_ptr<PDFFilePageSource>);
 
   static std::shared_ptr<PDFFilePageSource> Create(
     const DXResources&,
@@ -82,7 +83,7 @@ class PDFFilePageSource final
   std::shared_ptr<Impl> p;
 
   winrt::fire_and_forget ReloadRenderer();
-  void ReloadNavigation();
+  winrt::fire_and_forget ReloadNavigation();
 
   void OnFileModified(const std::filesystem::path& path);
 
