@@ -1,0 +1,19 @@
+name: Publish to OpenKneeboard/autoupdates repository
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - autoupdate/**
+  workflow_dispatch:
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: source
+          fetch-depth: 0
+      - name: Push
+        working-directory: source
+        command: git subtree push --prefix=autoupdate --rejoin https://openkneeboard-bot:${{secrets.OPENKNEEBOARD_BOT_PAT}@github.com/OpenKneeboard/autoupdates.git main
