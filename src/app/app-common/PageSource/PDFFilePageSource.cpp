@@ -67,7 +67,7 @@ struct PDFFilePageSource::Impl final {
 
   DXResources mDXR;
   std::filesystem::path mPath;
-  std::unique_ptr<Filesystem::TemporaryCopy> mCopy;
+  std::shared_ptr<Filesystem::TemporaryCopy> mCopy;
 
   IPdfDocument mPDFDocument;
   winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
@@ -124,7 +124,8 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
 
 winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
   auto weak = weak_from_this();
-  auto path = p->mCopy->GetPath();
+  auto copy = p->mCopy;
+  auto path = copy->GetPath();
 
   if (!std::filesystem::is_regular_file(path)) {
     co_return;
@@ -134,14 +135,12 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
   p->mPDFDocument = co_await PdfDocument::LoadFromFileAsync(file);
   p->mPageIDs.resize(p->mPDFDocument.PageCount());
 
-  co_await mUIThread;
-  if (auto self = weak.lock()) {
-    evContentChangedEvent.Emit();
-  }
+  evContentChangedEvent.EnqueueForContext(mUIThread);
 }
 
 void PDFFilePageSource::ReloadNavigation() {
-  auto path = p->mCopy->GetPath();
+  auto copy = p->mCopy;
+  auto path = copy->GetPath();
   if (!std::filesystem::is_regular_file(path)) {
     return;
   }
@@ -196,6 +195,7 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
   static uint64_t sCount = 0;
 
   auto weak = weak_from_this();
+  auto p = this->p;
 
   p->mCopy = {};
   p->mBookmarks.clear();
@@ -219,7 +219,7 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
                   ++sCount,
                   p->mPath.stem().wstring().substr(0, 16),
                   p->mPath.extension());
-  auto copy = std::make_unique<Filesystem::TemporaryCopy>(p->mPath, tempPath);
+  auto copy = std::make_shared<Filesystem::TemporaryCopy>(p->mPath, tempPath);
 
   self.reset();
   auto uiThread = mUIThread;
