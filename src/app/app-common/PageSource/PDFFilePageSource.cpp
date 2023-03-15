@@ -154,7 +154,7 @@ void PDFFilePageSource::ReloadNavigation() {
   }
 
   p->mNavigationLoaded = true;
-  this->evAvailableFeaturesChangedEvent.Emit();
+  this->evAvailableFeaturesChangedEvent.EnqueueForContext(mUIThread);
 
   const auto links = pdf.GetLinks();
   for (int i = 0; i < links.size(); ++i) {
