@@ -10,6 +10,7 @@ ExternalProject_Add(
   -DBUILD_XAUDIO_WIN10=OFF
   -DBUILD_XAUDIO_WIN8=OFF
   -DBUILD_XAUDIO_WIN7=OFF
+  -DDIRECTX_ARCH="$<IF:$<EQUAL:${BUILD_BITNESS},64>,x64,x86>"
 
   # Split the install dir by configuration so we don't have mismatches for ITERATOR_DEBUG_LEVEL
   # or MSVCRT
