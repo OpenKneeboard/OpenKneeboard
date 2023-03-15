@@ -16,4 +16,4 @@ jobs:
           fetch-depth: 0
       - name: Push
         working-directory: source
-        run: git subtree push --prefix=autoupdate https://openkneeboard-bot:${{secrets.OPENKNEEBOARD_BOT_PAT}@github.com/OpenKneeboard/autoupdates.git main
+        run: git subtree push --prefix=autoupdate https://openkneeboard-bot:${{secrets.OPENKNEEBOARD_BOT_PAT}}@github.com/OpenKneeboard/autoupdates.git main
