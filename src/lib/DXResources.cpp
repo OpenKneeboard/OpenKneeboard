@@ -126,6 +126,9 @@ DXResources DXResources::Create() {
   ret.mWIC
     = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
 
+  winrt::check_hresult(
+    PdfCreateRenderer(ret.mDXGIDevice.get(), ret.mPDFRenderer.put()));
+
   ret.mLocks = std::make_shared<Locks>();
 
   winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(

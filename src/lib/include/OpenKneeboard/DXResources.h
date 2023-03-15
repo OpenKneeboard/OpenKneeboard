@@ -21,6 +21,8 @@
 
 #include <shims/winrt/base.h>
 
+#include <windows.data.pdf.interop.h>
+
 #include <source_location>
 
 #include <d2d1_2.h>
@@ -53,6 +55,8 @@ struct DXResources {
   winrt::com_ptr<IDWriteFactory> mDWriteFactory;
 
   winrt::com_ptr<IWICImagingFactory> mWIC;
+
+  winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
 
   // Use like push/pop, but only one is allowed at a time; this exists
   // to get better debugging information/breakpoints when that's not the case

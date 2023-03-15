@@ -91,8 +91,7 @@ PDFFilePageSource::PDFFilePageSource(
   KneeboardState* kbs)
   : p(new Impl {.mDXR = dxr}) {
   const std::unique_lock d2dLock(p->mDXR);
-  winrt::check_hresult(
-    PdfCreateRenderer(dxr.mDXGIDevice.get(), p->mPDFRenderer.put()));
+  p->mPDFRenderer = dxr.mPDFRenderer;
   p->mBackgroundBrush = dxr.mWhiteBrush;
   p->mHighlightBrush = dxr.mHighlightBrush;
   p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
