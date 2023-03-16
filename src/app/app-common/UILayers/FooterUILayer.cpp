@@ -24,6 +24,7 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/Tracing.h>
+
 #include <OpenKneeboard/config.h>
 
 #include <algorithm>
@@ -195,7 +196,7 @@ void FooterUILayer::Render(
         clockLayout->SetTextAlignment(alignment);
         clockLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
         d2d->DrawTextLayout(
-          {margin, rect.bottom - footerHeight},
+          {margin + rect.left, rect.bottom - footerHeight},
           clockLayout.get(),
           mForegroundBrush.get());
       };
