@@ -100,6 +100,8 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
 
   co_await this->ReleaseDevices();
 
+  // Make sure the lock is released first
+  EventDelay delay;
   std::unique_lock lock(mDevicesMutex);
   for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
     auto device = DirectInputDevice::Create(diDeviceInstance);
