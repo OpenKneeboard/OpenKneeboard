@@ -226,7 +226,10 @@ CreateCompatibleTexture(ID3D11Device* d3d, UINT bindFlags, UINT miscFlags) {
   return std::move(texture);
 }
 
-Snapshot::Snapshot() {
+Snapshot::Snapshot(nullptr_t) : mState(State::Empty) {
+}
+
+Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
 }
 
 Snapshot::Snapshot(
@@ -235,7 +238,7 @@ Snapshot::Snapshot(
   ID3D11Fence* fence,
   const LayerTextures& textures,
   TextureReadResources* r)
-  : mLayerTextures(textures) {
+  : mLayerTextures(textures), mState(State::Empty) {
   mHeader = std::make_shared<Header>(header);
 
   TraceLoggingThreadActivity<gTraceProvider> activity;
@@ -244,13 +247,13 @@ Snapshot::Snapshot(
     TraceLoggingWriteStop(activity, "SHM::Snapshot::Snapshot()");
   });
 
-  TraceLoggingWriteTagged(activity, "Wait for fence");
+  TraceLoggingWriteTagged(activity, "WaitForFence");
   winrt::check_hresult(ctx->Wait(fence, header.mSequenceNumber));
 
   const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
-  for (uint8_t i = 0; i < this->GetLayerCount(); ++i) {
+  for (uint8_t i = 0; i < header.mLayerCount; ++i) {
     TraceLoggingWriteTagged(
-      activity, "Start copy texture", TraceLoggingValue(i, "Layer"));
+      activity, "StartCopyTexture", TraceLoggingValue(i, "Layer"));
     ctx->CopySubresourceRegion(
       mLayerTextures.at(i).get(),
       /* subresource = */ 0,
@@ -260,13 +263,22 @@ Snapshot::Snapshot(
       r->mLayers.at(i).mTexture.get(),
       /* subresource = */ 0,
       &box);
-    TraceLoggingWriteTagged(activity, "Copied resource");
+    TraceLoggingWriteTagged(activity, "CopiedResource");
     TraceLoggingWriteTagged(
-      activity, "Copied texture", TraceLoggingValue(i, "Layer"));
+      activity, "CopiedTexture", TraceLoggingValue(i, "Layer"));
   }
   ctx->Flush();
   TraceLoggingWriteTagged(activity, "Flushed");
   mLayerSRVs = std::make_shared<LayerSRVArray>();
+
+  if (mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0)) {
+    TraceLoggingWriteTagged(activity, "MarkingValid");
+    mState = State::Valid;
+  }
+}
+
+Snapshot::State Snapshot::GetState() const {
+  return mState;
 }
 
 Snapshot::~Snapshot() {
@@ -363,7 +375,7 @@ winrt::com_ptr<ID3D11ShaderResourceView> Snapshot::GetLayerShaderResourceView(
 }
 
 bool Snapshot::IsValid() const {
-  return mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0);
+  return mState == State::Valid;
 }
 
 class Impl {
@@ -613,7 +625,7 @@ Snapshot Reader::MaybeGet(
   if (!*this) {
     TraceLoggingWriteStop(
       activity, "SHM::MaybeGet", TraceLoggingValue("No feeder", "Result"));
-    return {};
+    return {nullptr};
   }
 
   if (
@@ -640,19 +652,21 @@ Snapshot Reader::MaybeGet(
   TraceLoggingWriteTagged(activity, "Acquired SHM lock");
   const auto newSnapshot = this->MaybeGetUncached(ctx, fence, textures, kind);
 
-  if (!newSnapshot.IsValid()) {
-    if (kind == mCachedConsumerKind) {
-      TraceLoggingWriteStop(
-        activity,
-        "SHM::MaybeGet",
-        TraceLoggingValue("Using stale cache", "Result"),
-        TraceLoggingValue(
-          mCache.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
-      return mCache;
-    }
+  using State = Snapshot::State;
+  const auto state = newSnapshot.GetState();
+  if (state == State::Empty && kind == mCachedConsumerKind) {
+    TraceLoggingWriteStop(
+      activity,
+      "SHM::MaybeGet",
+      TraceLoggingValue("Using stale cache", "Result"),
+      TraceLoggingValue(
+        mCache.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
+    return mCache;
+  }
+  if (state != State::Valid) {
     TraceLoggingWriteStop(
       activity, "SHM::MaybeGet", TraceLoggingValue("Unusable cache", "Result"));
-    return {};
+    return newSnapshot;
   }
 
   const auto newSequenceNumber
@@ -676,7 +690,8 @@ Snapshot Reader::MaybeGet(
     activity,
     "SHM::MaybeGet",
     TraceLoggingValue("Updated cache", "Result"),
-    TraceLoggingValue(newSequenceNumber, "Sequence number"));
+    TraceLoggingValue(newSequenceNumber, "SequenceNumber"),
+    TraceLoggingValue(static_cast<uint8_t>(mCache.GetState()), "State"));
   return mCache;
 }
 
@@ -696,12 +711,12 @@ Snapshot Reader::MaybeGetUncached(
       "target kind is {:#08x}",
       static_cast<std::underlying_type_t<ConsumerKind>>(kind),
       p->mHeader->mConfig.mTarget.GetRawMaskForDebugging());
-    return {};
+    return {Snapshot::incorrect_kind};
   }
 
   auto& r = p->mResources.at(p->mHeader->mSequenceNumber % TextureCount);
   if (!r.Populate(ctx, p->mHeader->mSessionID, p->mHeader->mSequenceNumber)) {
-    return {};
+    return {nullptr};
   }
 
   return Snapshot(*p->mHeader, ctx, fence, textures, &r);
@@ -848,13 +863,13 @@ Snapshot SingleBufferedReader::MaybeGet(
   ID3D11Device* device,
   ConsumerKind kind) {
   if (!(*this)) {
-    return {};
+    return {nullptr};
   }
 
   this->InitDXResources(device);
 
   if (!(mSessionID && mContext && mFence)) {
-    return {};
+    return {nullptr};
   }
 
   return Reader::MaybeGet(mContext.get(), mFence.get(), mTextures, kind);

@@ -139,16 +139,19 @@ struct TextureReadResources;
 struct LayerTextureReadResources;
 
 class Snapshot final {
- private:
-  std::shared_ptr<Header> mHeader;
-  LayerTextures mLayerTextures;
-
-  using LayerSRVArray
-    = std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>;
-  std::shared_ptr<LayerSRVArray> mLayerSRVs;
-
  public:
-  Snapshot();
+  enum class State {
+    Empty,
+    IncorrectKind,
+    Valid,
+  };
+  // marker for constructor
+  struct incorrect_kind_t {};
+  static constexpr const incorrect_kind_t incorrect_kind {};
+
+  Snapshot(nullptr_t);
+  Snapshot(incorrect_kind_t);
+
   Snapshot(
     const Header& header,
     ID3D11DeviceContext4*,
@@ -170,9 +173,20 @@ class Snapshot final {
     uint8_t layerIndex) const;
 
   bool IsValid() const;
+  State GetState() const;
 
   // Use GetRenderCacheKey() instead for almost all purposes
   uint64_t GetSequenceNumberForDebuggingOnly() const;
+  Snapshot() = delete;
+
+ private:
+  std::shared_ptr<Header> mHeader;
+  LayerTextures mLayerTextures;
+
+  using LayerSRVArray
+    = std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>;
+  std::shared_ptr<LayerSRVArray> mLayerSRVs;
+  State mState;
 };
 
 class Reader {
@@ -205,7 +219,7 @@ class Reader {
   class Impl;
   std::shared_ptr<Impl> p;
 
-  Snapshot mCache;
+  Snapshot mCache {nullptr};
   ConsumerKind mCachedConsumerKind;
   uint64_t mCachedSequenceNumber {};
 };
