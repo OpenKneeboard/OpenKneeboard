@@ -19,13 +19,17 @@
  */
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/DCSWorldInstance.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
-#include <ShlObj.h>
-#include <Windows.h>
+
 #include <shims/winrt/base.h>
 
+#include <Windows.h>
+
 #include <format>
+
+#include <ShlObj.h>
 
 namespace OpenKneeboard {
 
@@ -103,24 +107,32 @@ std::string DCSWorld::GetUserFriendlyName(
   if (path == GetInstalledPath(Version::OPEN_BETA) / "bin" / "DCS.exe") {
     return _("DCS World - Open Beta");
   }
+  if (path == GetInstalledPath(Version::OPEN_BETA) / "bin-mt" / "DCS.exe") {
+    return _("DCS World - Open Beta - Multi-Threaded");
+  }
   if (path == GetInstalledPath(Version::STABLE) / "bin" / "DCS.exe") {
     return _("DCS World - Stable");
+  }
+  if (path == GetInstalledPath(Version::STABLE) / "bin-mt" / "DCS.exe") {
+    return _("DCS World - Stable - Multi-Threaded");
   }
   return _("DCS World");
 }
 
 std::vector<std::filesystem::path> DCSWorld::GetInstalledPaths() const {
   std::vector<std::filesystem::path> ret;
-  for (const auto& path: {
-         GetInstalledPath(Version::OPEN_BETA),
-         GetInstalledPath(Version::STABLE),
-       }) {
-    if (!std::filesystem::is_directory(path)) {
+  for (const auto version: {Version::OPEN_BETA, Version::STABLE}) {
+    const auto root = GetInstalledPath(version);
+    if (!std::filesystem::is_directory(root)) {
       continue;
     }
-    auto exe = path / "bin" / "DCS.exe";
+    auto exe = root / "bin" / "DCS.exe";
     if (std::filesystem::is_regular_file(exe)) {
       ret.push_back(exe);
+    }
+    auto mtexe = root / "bin-mt" / "DCS.exe";
+    if (std::filesystem::is_regular_file(mtexe)) {
+      ret.push_back(mtexe);
     }
   }
   return ret;
