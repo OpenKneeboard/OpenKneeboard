@@ -23,16 +23,20 @@
 #include "CheckForUpdates.h"
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/LaunchURI.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
-#include <semver200.h>
-#include <shobjidl.h>
+
+#include <shims/filesystem>
+
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.Web.Http.Headers.h>
@@ -41,9 +45,9 @@
 #include <format>
 #include <fstream>
 #include <regex>
-#include <shims/filesystem>
 
-#include "Globals.h"
+#include <semver200.h>
+#include <shobjidl.h>
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -122,8 +126,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
       hstring {L"application/vnd.github.v3+json"}));
 
   const auto baseUri = testing.mBaseURI.empty()
-    ? "https://raw.githubusercontent.com/OpenKneeboard/OpenKneeboard/master/"
-      "autoupdate"
+    ? "https://autoupdate.openkneeboard.com"
     : testing.mBaseURI;
 
   const auto uri = std::format("{}/{}-msi.json", baseUri, settings.mChannel);
