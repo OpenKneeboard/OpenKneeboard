@@ -16,7 +16,7 @@ if ("${GithubToken}" -ne "") {
 # All releases, in version order
 $AllReleases = (Invoke-WebRequest -URI https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases -Headers $Headers).Content
 | ConvertFrom-Json
-| Sort-Object -Descending -Property { [System.Management.Automation.SemanticVersion] ($_.tag_name -replace '^v') }
+| Sort-Object -Descending -Property { [System.Management.Automation.SemanticVersion] ($_.tag_name -replace '^v' -replace 'beta','beta.') }
 
 function Get-Update-Version($object) {
   return $object.tag_name
