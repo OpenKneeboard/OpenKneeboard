@@ -296,6 +296,8 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
 
   this->ReloadRenderer();
   this->ReloadNavigation();
+  // in case ref count == 0
+  co_await uiThread;
 }
 
 winrt::fire_and_forget PDFFilePageSource::final_release(
