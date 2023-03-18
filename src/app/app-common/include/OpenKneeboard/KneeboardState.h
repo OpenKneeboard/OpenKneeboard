@@ -25,7 +25,9 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <memory>
@@ -159,6 +161,8 @@ class KneeboardState final
   std::shared_ptr<GameEventServer> mGameEventServer;
   std::jthread mOpenVRThread;
   std::optional<RunningGame> mCurrentGame;
+
+  bool mSaveSettingsEnabled = true;
 
   void OnGameChangedEvent(DWORD processID, std::shared_ptr<GameInstance> game);
   void OnGameEvent(const GameEvent& ev) noexcept;

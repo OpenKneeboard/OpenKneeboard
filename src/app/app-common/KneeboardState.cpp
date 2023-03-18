@@ -555,6 +555,12 @@ ProfileSettings KneeboardState::GetProfileSettings() const {
 }
 
 void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
+  // We want the evSettingsChanged event in particular to be emitted
+  // first, so that we don't save
+  mSaveSettingsEnabled = false;
+  const scope_guard storeFutureChanges(
+    [this]() { mSaveSettingsEnabled = true; });
+
   const EventDelay delay;// lock must be released first
   std::unique_lock lock(*this);
 
@@ -577,6 +583,9 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   mSettings = newSettings;
   lock.unlock();
 
+  // Avoid partially overwriting the new profile with
+  // the old profile
+
   this->SetAppSettings(newSettings.mApp);
   // DirectInput
   this->SetDoodlesSettings(newSettings.mDoodles);
@@ -592,6 +601,10 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
 }
 
 void KneeboardState::SaveSettings() {
+  if (!mSaveSettingsEnabled) {
+    return;
+  }
+
   if (mGamesList) {
     mSettings.mGames = mGamesList->GetSettings();
   }
