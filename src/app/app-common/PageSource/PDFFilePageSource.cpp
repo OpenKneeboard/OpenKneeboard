@@ -151,21 +151,32 @@ std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
 
 winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
   auto weak = weak_from_this();
-  auto p = this->p;
-  auto copy = p->mCopy;
-  auto path = copy->GetPath();
   auto uiThread = mUIThread;
 
-  if (!std::filesystem::is_regular_file(path)) {
-    co_return;
-  }
-
-  auto file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
-  auto document = co_await PdfDocument::LoadFromFileAsync(file);
   {
-    std::unique_lock lock(p->mMutex);
-    p->mPDFDocument = std::move(document);
-    p->mPageIDs.resize(p->mPDFDocument.PageCount());
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
+
+    std::filesystem::path path;
+    {
+      std::shared_lock readLock(p->mMutex);
+      path = p->mCopy->GetPath();
+
+      if (!std::filesystem::is_regular_file(path)) {
+        co_return;
+      }
+    }
+
+    auto file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
+    auto document = co_await PdfDocument::LoadFromFileAsync(file);
+
+    {
+      std::unique_lock lock(p->mMutex);
+      p->mPDFDocument = std::move(document);
+      p->mPageIDs.resize(p->mPDFDocument.PageCount());
+    }
   }
 
   co_await uiThread;
@@ -177,9 +188,8 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
 winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
   auto uiThread = mUIThread;
   auto weak = weak_from_this();
-  auto copy = p->mCopy;
-  auto path = copy->GetPath();
-  if (!std::filesystem::is_regular_file(path)) {
+
+  if (!std::filesystem::is_regular_file(p->mCopy->GetPath())) {
     co_return;
   }
 
@@ -189,6 +199,11 @@ winrt::fire_and_forget PDFFilePageSource::ReloadNavigation() {
     co_return;
   }
 
+  std::filesystem::path path;
+  {
+    std::shared_lock lock(p->mMutex);
+    path = p->mCopy->GetPath();
+  }
   PDFNavigation::PDF pdf(path);
   const auto bookmarks = pdf.GetBookmarks();
   decltype(p->mBookmarks) navigation;
@@ -262,11 +277,14 @@ PageID PDFFilePageSource::GetPageIDForIndex(PageIndex index) const {
 winrt::fire_and_forget PDFFilePageSource::Reload() {
   static uint64_t sCount = 0;
   auto uiThread = mUIThread;
-
   auto weak = weak_from_this();
-  auto p = this->p;
 
   {
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
+
     std::unique_lock lock(p->mMutex);
     p->mCopy = {};
     p->mBookmarks.clear();
@@ -274,10 +292,10 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
     p->mNavigationLoaded = false;
     p->mCache.clear();
     p->mPageIDs.clear();
-  }
 
-  if (!std::filesystem::is_regular_file(p->mPath)) {
-    co_return;
+    if (!std::filesystem::is_regular_file(p->mPath)) {
+      co_return;
+    }
   }
 
   // Do copy in a background thread so we're not hung up on antivirus
@@ -296,14 +314,13 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
 
   this->ReloadRenderer();
   this->ReloadNavigation();
-  // in case ref count == 0
-  co_await uiThread;
+  co_await winrt::resume_after(std::chrono::seconds(10));
 }
 
 winrt::fire_and_forget PDFFilePageSource::final_release(
   std::unique_ptr<PDFFilePageSource> self) {
-  // Make sure the destructor is called from the UI thread
   co_await self->mUIThread;
+  self->mThreadGuard.CheckThread();
 }
 
 PageIndex PDFFilePageSource::GetPageCount() const {
