@@ -23,6 +23,10 @@ Mice are not supported in-game; the toolbar is shown as it can be used with grap
 
 OpenKneeboard only supports graphics tablets (sometimes called 'artists tablets') such as those made by Wacom or Huion, not tablet computers or phones.
 
+## How do I use my Xbox, Xbox clone, or other XInput controller with OpenKneeboard?
+
+Unfortunately, Microsoft restricted Windows so that these kinds of controllers are only usable by the active Window, so they can't be used by OpenKneeboard when the game is active.
+
 ## How do I change the focal distance in VR?
 
 As of February 2023, every consumer headset has a single focal distance for everything, which is usually between 1.3m and 2m. On some headsets this is fixed, and on other headsets, it can be adjusted by physical knobs on the headset. **No currently available headset is physically capable of adjusting focal distance for only part of what is shown**.
