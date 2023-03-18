@@ -54,3 +54,9 @@ v1.4: the header and footer can be disabled in Advanced Settings.
 If you want things in the same place every time but they're inconsistent, recenter; **it works best to bind the same button combination for recentering OpenKneeboard and in-game**.
 
 If you want to quickly switch between intentionally different positions (for example, if you use OpenKneeboard with multiple games or multiple aircraft), enable profiles in advanced settings, and create a different profile for each position that you want.
+
+## How do I make landscape documents larger, like Chuck's Guides?
+
+Open Settings -> VR -> Size, then increase "kneeboard width limit"; you may want to set it to a very high value (e.g. 10 meters), in which case the size will still be limited by the vertical height and aspect ratio.
+
+The downside of increasing this limit is that the kneeboard is likely to interfere with the cockpit and controls.
