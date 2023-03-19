@@ -76,7 +76,7 @@
             Adjust how OpenKneeboard appears in games and applications when using a virtual reality headset.
           </local:SettingsSubpageData>
           <!-- E7F4 ThisPC -->
-          <local:SettingsSubpageData ID="NonVRConfig" Glyph="&#xEC4E;" Title="Retro Gaming">
+          <local:SettingsSubpageData ID="NonVRConfig" Glyph="&#xEC4E;" Title="Non VR">
             Adjust how OpenKneeboard appears in windowed or full-screen games and applications.
           </local:SettingsSubpageData>
           <!-- E7FC Game -->

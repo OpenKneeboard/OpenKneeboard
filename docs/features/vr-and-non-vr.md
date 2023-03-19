@@ -20,7 +20,7 @@ If you fly with different aircraft or games, or switch between positions for ano
 
 ## Non-VR
 
-OpenKneeboard will appear in a fixed position in the game window; you can adjust the position in OpenKneeboard Settings -> Retro Gaming. OpenKneeboard does not support an 'in-world' kneeboard position outside of VR, and this is unlikely to be added in the future.
+OpenKneeboard will appear in a fixed position in the game window; you can adjust the position in OpenKneeboard Settings -> Non VR ('Retro Gaming' in v1.3 and below). OpenKneeboard does not support an 'in-world' kneeboard position outside of VR, and this is unlikely to be added in the future.
 
 You can hide/show OpenKneeboard with a 'toggle visibility' binding in OpenKneeboard -> Settings -> Input, or toggle, hide, or show with the [remote controls](./remote-controls.md), e.g. via a [StreamDeck](./streamdeck.md) or [VoiceAttack](./voice-attack.md).
 
