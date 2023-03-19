@@ -13,3 +13,5 @@ This is commonly used with:
 Add an Endless Notebook tab with OpenKneeboard Settings -> Tabs -> Add a Tab.
 
 Endless Notebook tabs are only useful when using OpenKneeboard [with a graphics tablet](./graphics-tablets.md).
+
+![a 9-line form in an Endless Notebook tab](../screenshots/endless-notebook.png)
