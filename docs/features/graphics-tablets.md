@@ -13,3 +13,8 @@ Graphics tablets can be used to:
 - click on links in PDF documents
 - navigate the table of contents in PDF documents
 - interact with [captured windows](./window-capture.md)
+
+Huion and Wacom are the most commonly used tablet manufacturers for OpenKneeboard users; for more information on these, see:
+
+- **Huion**: [how-to](../how-to/huion.md) - [troubleshooting](../troubleshooting/huion-tablet.md)
+- **Wacom**: [how-to](../how-to/wacom.md) - [troubleshooting](../troubleshooting/wacom-tablet.md)
