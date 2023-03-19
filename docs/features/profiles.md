@@ -36,6 +36,13 @@ You can switch profiles with:
 - [remote controls](../features/remote-controls.md), e.g. from Voice Attack or a StreamDeck
 - the in-game menu if you are using OpenKneeboard [with a graphics tablet](./graphics-tablets.md)
 
+### Automatically switching profiles
+
+OpenKneeboard does not currently have built-in support for this, however:
+
+- OpenKneeboard v1.3: if you're comfortable with Lua, [it is possible in DCS](https://github.com/OpenKneeboard/OpenKneeboard/issues/256#issuecomment-1407701513)
+- OpenKneeboard v1.4+: coding/scripting is still required, however [multiple programming languages are supported](../api/index.md) 
+
 ## The 'Default' profile
 
 The Default profile is used as the base settings for all other profiles - if you do not change a setting in another profile, the current setting from the Default profile will be used.
