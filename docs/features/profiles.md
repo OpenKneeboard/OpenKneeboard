@@ -33,7 +33,7 @@ Click on the profile switcher in the top left of the OpenKneeboard window, then 
 You can switch profiles with:
 
 - the profile switcher in the top left of the OpenKneeboard window
-- [remote controls](../how-to/remote-controls.md), e.g. from Voice Attack or a StreamDeck
+- [remote controls](../features/remote-controls.md), e.g. from Voice Attack or a StreamDeck
 - the in-game menu if you are using OpenKneeboard [with a graphics tablet](./graphics-tablets.md)
 
 ## The 'Default' profile

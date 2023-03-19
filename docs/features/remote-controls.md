@@ -1,17 +1,17 @@
 ---
 title: Remote Controls
-parent: How-To
+parent: Features
 ---
 
-# 'RemoteControl' exe files
+# 'RemoteControl' exe Files
 
-These are installed to `C:\Program Files\OpenKneeboard\utilities`, and can be used to control OpenKneeboard from other programs, e.g.:
+These are installed to `C:\Program Files\OpenKneeboard\utilities`, and can be used to control OpenKneeboard from anything that is able to launch other programs - for example:
 
-- the Elgato StreamDeck software via 'System' -> 'Open'
-- Huion tablets by binding to an executable
-- VoiceAttack via "When this command executes, do the following sequence:" -> 'Other' -> 'Windows' -> 'Run an Application'
+- [Huion tablets](../how-to/huion.md)
+- [an Elgato StreamDeck](./streamdeck.md)
+- [VoiceAttack](./voice-attack.md)
 
-Most of these are relatively self-explanatory:
+Most remote controls are straightforward:
 
 - `OpenKneeboard-RemoteControl-PREVIOUS_TAB.exe`: tell OpenKneeboard to go to the previous tab
 - `OpenKneeboard-RemoteControl-NEXT_TAB.exe`: tell OpenKneeboard to go to the next tab
@@ -110,27 +110,3 @@ For example:
     OpenKneeboard-RemoteControl-SET_TAB.exe name "Radio Log" 0 1
 
 In this example, `0` is the page number (0 is "don't change"), and 1 specifies the primary kneeboard.
-
-### StreamDeck
-
-Add an 'Open' action, select the SET_TAB exe, then add a space then the arguments at the end of the 'App / File' box, after the closing quotation marks. For example:
-
-> "C:\Foo\OpenKneeboard-RemoteControl-SET_TAB.exe" name "Radio Log"
-
-... or ...
-
-> "C:\Foo\OpenKneeboard-RemoteControl-SET_TAB.exe" id "{8e882d1e-de80-4b35-9388-f41a01d94a3d}"
-
-This example ID will not be valid on your installation.
-
-### Voice attack
-
-In the 'Run an Application' dialog, enter the parameters - separated by spaces - in the 'With these parameters' box - for example:
-
-> name "Radio Log"
-
-... or ...
-
-> id "{8e882d1e-de80-4b35-9388-f41a01d94a3d}"
-
-This example ID will not be valid on your installation.

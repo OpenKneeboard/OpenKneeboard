@@ -8,7 +8,7 @@ The same messages are supported for Lua and C, and are used by the remote-contro
 
 Messages have a name and a value; the value is always a string. It is the responsibility of the caller to convert objects or arrays to JSON strings if needed.
 
-To find IDs for the events that require them and for information on the tradeoffs of IDs vs names or indices, see the [remote controls documentation](../remote-controls.md).
+To find IDs for the events that require them and for information on the tradeoffs of IDs vs names or indices, see the [remote controls documentation](../features/remote-controls.md).
 
 ## Notes for OpenKneeboard v1.3 and below
 
