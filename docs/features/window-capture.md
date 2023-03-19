@@ -4,7 +4,9 @@ parent: Features
 
 # Window Capture
 
-Window Capture tabs embed a window within OpenKneeboard; this can be used to bring a window into VR.
+Window Capture tabs embed a window within OpenKneeboard; this can be used to bring a window into VR:
+
+![Google Chrome with Youtube](../screenshots/window-capture.png)
 
 If you have [a graphics tablet](./graphics-tablets.md), you can use that to interact with the captured window while in game.
 
