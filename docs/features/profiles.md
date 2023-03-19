@@ -19,6 +19,7 @@ Profiles are frequently used to:
 - show different tabs for single player vs multiplayer, or when flying with different virtual squadrons
 - use entirely different configurations for different games
 - use entirely different configurations for VR vs non-VR
+- use different settings for day and night missions
 
 ## Enabling profiles
 
