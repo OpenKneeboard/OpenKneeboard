@@ -12,3 +12,4 @@ Graphics tablets can be used to:
 - sketch or take notes
 - click on links in PDF documents
 - navigate the table of contents in PDF documents
+- interact with [captured windows](./window-capture.md)

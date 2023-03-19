@@ -10,4 +10,6 @@ This is commonly used with:
 - a blank image or an image of lined/dot/graph paper, as a general purpose notebook or sketch pad
 - a form, like a CAS 9-line template
 
+Add an Endless Notebook tab with OpenKneeboard Settings -> Tabs -> Add a Tab.
+
 Endless Notebook tabs are only useful when using OpenKneeboard [with a graphics tablet](./graphics-tablets.md).
