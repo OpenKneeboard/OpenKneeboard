@@ -22,7 +22,7 @@ Things generally don't work well if you use the position settings to adjust betw
 
 ## Switching between kneeboards
 
-You can optionally bind a button or combination to switch between the two kneeboards in OpenKneeboard Settings -> Input; **this is currently the only way to use Dual Kneeboards without VR**, but is also supported in VR.
+You can optionally bind a button or combination to switch between the two kneeboards in OpenKneeboard Settings -> Input; **this is currently the main way to use Dual Kneeboards without VR**, but is also supported in VR; you can also switch kneeboards with the [remote controls](../how-to/remote-controls.md), e.g. from Voice Attack or a StreamDeck.
 
 In VR, looking at a kneeboard will make it the active kneeboard, and graphics tablet or bindings will affect that kneeboard; you can see if this is working because the in-game toolbar will move to the active kneeboard.
 
