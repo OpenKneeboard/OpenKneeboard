@@ -19,13 +19,15 @@
  */
 #pragma once
 
+#include "IDXGISwapChainPresentHook.h"
+
 #include <OpenKneeboard/SHM.h>
-#include <d3d11_4.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
 
-#include "IDXGISwapChainPresentHook.h"
+#include <d3d11_4.h>
 
 namespace OpenKneeboard {
 
@@ -45,8 +47,6 @@ class NonVRD3D11Kneeboard final {
     UINT syncInterval,
     UINT flags,
     const decltype(&IDXGISwapChain::Present)& next);
-
-  void InitDXResources(ID3D11Device5* device);
 };
 
 }// namespace OpenKneeboard
