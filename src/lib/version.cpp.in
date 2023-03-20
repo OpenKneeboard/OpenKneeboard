@@ -27,6 +27,9 @@ const uint16_t Patch = @VERSION_PATCH@;
 const uint16_t Build = @VERSION_BUILD@;
 
 const std::string_view ReleaseName { "@RELEASE_NAME@" };
+const std::string_view TagName { "@MATCHING_TAG@" };
 const bool IsGithubActionsBuild = @IS_GITHUB_ACTIONS_BUILD@;
+const bool IsTaggedVersion = @IS_TAGGED_VERSION@;
+const bool IsStableRelease = @IS_STABLE_RELEASE@;
 
 }// namespace OpenKneeboard::Version

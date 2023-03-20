@@ -109,6 +109,7 @@ void HelpPage::PopulateVersion() {
     "With thanks to Paul 'Goldwolf' Whittingham for the logo and banner "
     "artwork.\n\n"
     "Build: {}-{}-{}\n"
+    "Tag: {}\n"
     "Package: {}\n",
     Version::ReleaseName,
     Version::IsGithubActionsBuild ? std::format("GHA-{}", Version::Build)
@@ -121,6 +122,7 @@ void HelpPage::PopulateVersion() {
     "Win32",
 #endif
 #endif
+    Version::IsTaggedVersion ? Version::TagName : "NONE - UNRELEASED VERSION",
     packageNameLen ? to_utf8(std::wstring_view(packageName, packageNameLen))
                    : "unpackaged");
   VersionText().Text(winrt::to_hstring(details));
