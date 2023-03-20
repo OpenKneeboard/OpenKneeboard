@@ -813,6 +813,18 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
   }
   winrt::com_ptr<ID3D11Device5> device5;
   winrt::check_hresult(device->QueryInterface<ID3D11Device5>(device5.put()));
+  {
+    winrt::com_ptr<IDXGIDevice> dxgiDevice;
+    winrt::check_hresult(device->QueryInterface<IDXGIDevice>(dxgiDevice.put()));
+    winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
+    winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
+    DXGI_ADAPTER_DESC desc {};
+    winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
+    dprintf(
+      L"SHM reader using adapter '{}' (LUID {:#x})",
+      desc.Description,
+      std::bit_cast<uint64_t>(desc.AdapterLuid));
+  }
 
   // Make sure we get a consistent view
   std::unique_lock lock(*p, std::try_to_lock);
