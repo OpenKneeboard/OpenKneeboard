@@ -103,9 +103,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
     co_return UpdateResult::NotInstallingUpdate;
   }
 
-  const auto isPreRelease
-    = Version::ReleaseName.find('-') != Version::ReleaseName.npos;
-  if (settings.mChannel == AutoUpdateSettings::StableChannel && isPreRelease) {
+  if (settings.mChannel == AutoUpdateSettings::StableChannel && !Version::IsStableRelease) {
     settings.mChannel = AutoUpdateSettings::PreviewChannel;
   }
 

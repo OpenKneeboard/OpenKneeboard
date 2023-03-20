@@ -345,10 +345,22 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
   auto first = footerItems.First().Current();
 
   std::wstring title(L"OpenKneeboard");
+
   const scope_guard setTitle([&title, this]() {
     if (IsElevated()) {
       title += L" [Administrator]";
     }
+
+    if (!Version::IsStableRelease) {
+      if (Version::IsTaggedVersion) {
+        title += std::format(L" - {}", to_hstring(Version::TagName));
+      } else if (Version::IsGithubActionsBuild) {
+        title += std::format(L" - UNRELEASED VERSION #{}", Version::Build);
+      } else {
+        title += L" - LOCAL DEVELOPMENT BUILD";
+      }
+    }
+
     Title(title);
     AppTitle().Text(title);
   });

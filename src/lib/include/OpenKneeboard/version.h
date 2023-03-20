@@ -31,6 +31,9 @@ extern const uint16_t Patch;
 extern const uint16_t Build;
 
 extern const std::string_view ReleaseName;
+extern const std::string_view TagName;
 extern const bool IsGithubActionsBuild;
+extern const bool IsTaggedVersion;
+extern const bool IsStableRelease;
 
 }// namespace OpenKneeboard::Version
