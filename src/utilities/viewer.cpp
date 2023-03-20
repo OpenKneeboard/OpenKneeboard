@@ -24,6 +24,7 @@
 #include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 
@@ -507,6 +508,9 @@ int WINAPI wWinMain(
   TraceLoggingRegister(gTraceProvider);
   const scope_guard unregisterTraceProvider(
     []() { TraceLoggingUnregister(gTraceProvider); });
+
+  DPrintSettings::Set({.prefix = "OpenKneeboard-Viewer"});
+
   winrt::init_apartment(winrt::apartment_type::single_threaded);
   TestViewerWindow window(hInstance);
   ShowWindow(window.GetHWND(), nCmdShow);
