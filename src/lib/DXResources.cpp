@@ -68,8 +68,6 @@ DXResources DXResources::Create() {
       L"  GPU {} (LUID {:#x}): {:04x}:{:04x}: '{}' ({}mb) {}",
       i,
       std::bit_cast<uint64_t>(desc.AdapterLuid),
-      sizeof(uint64_t),
-      sizeof(LUID),
       desc.VendorId,
       desc.DeviceId,
       desc.Description,
