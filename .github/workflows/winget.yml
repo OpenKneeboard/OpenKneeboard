@@ -20,8 +20,9 @@ jobs:
             Write-Error "Cannot determine tag to publish"
             exit 1
           }
-          Write-Output "::set-output name=publish::true"
-          Write-Output "::set-output name=version::$tag"
+          Write-Host "Setting version to '$tag'"
+          Add-Content $Env:GITHUB_OUTPUT "publish=true"
+          Add-Content $Env:GITHUB_OUTPUT "version=$tag"
         shell: pwsh
         id: should-publish
 
