@@ -5,7 +5,8 @@ on:
       - master
     paths:
       - autoupdate/stable-msi.json
-
+  workflow_dispatch:
+    # No arguments, always use stable-msi.json
 jobs:
   publish:
     # Action can only be run on windows
