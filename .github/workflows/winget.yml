@@ -30,6 +30,6 @@ jobs:
         uses: vedantmgoyal2009/winget-releaser@3b55acc8e47059aba464e3ce9a230e60335a651a
         with:
           identifier: FredEmmott.OpenKneeboard
-          version: ${{ steps.should-publish.outputs.version }}
+          release-tag: ${{ steps.should-publish.outputs.version }}
           fork-user: openkneeboard-bot
           token: ${{ secrets.OPENKNEEBOARD_BOT_PAT }}
