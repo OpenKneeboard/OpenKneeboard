@@ -2,26 +2,27 @@ name: Build and Package
 on:
   pull_request:
     paths:
-      - 'assets/**'
-      - 'installer/**'
-      - 'src/**'
-      - 'third-party/**'
-      - '*.props'
-      - '*.cmake'
-      - 'CMakeLists.txt'
-      - '.github/workflows/ci.yml'
+      - "assets/**"
+      - "installer/**"
+      - "src/**"
+      - "third-party/**"
+      - "*.props"
+      - "*.cmake"
+      - "CMakeLists.txt"
+      - ".github/workflows/ci.yml"
   push:
     paths:
-      - 'assets/**'
-      - 'installer/**'
-      - 'src/**'
-      - 'third-party/**'
-      - '*.props'
-      - '*.cmake'
-      - 'CMakeLists.txt'
-      - '.github/workflows/ci.yml'
+      - "assets/**"
+      - "installer/**"
+      - "src/**"
+      - "third-party/**"
+      - "*.props"
+      - "*.cmake"
+      - "CMakeLists.txt"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
-
+env:
+  SCCACHE_GHA_ENABLED: "true"
 jobs:
   build:
     name: Build (${{matrix.config}})
@@ -30,6 +31,10 @@ jobs:
       matrix:
         config: [RelWithDebInfo, Debug]
     steps:
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.2
+        with:
+          version: "v0.4.0"
       - uses: actions/checkout@v3
         with:
           path: source
@@ -54,6 +59,8 @@ jobs:
           $args = @(
             "-DGITHUB_REF_TYPE=${{github.ref_type}}",
             "-DGITHUB_REF_NAME=${{github.ref_name}}",
+            "-DCMAKE_C_COMPILER_LAUNCHER=sccache",
+            "-DCMAKE_CXX_COMPILER_LAUNCHER=sccache",
             "-A", "x64"
           )
           if ( "${{steps.fetch-key.outputs.HAVE_KEY}}" -eq "true" ) {
