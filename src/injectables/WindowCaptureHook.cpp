@@ -17,17 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include "detours-ext.h"
+
 #include <OpenKneeboard/WindowCaptureControl.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+
 #include <shims/Windows.h>
-#include <windowsx.h>
 
 #include <atomic>
 #include <cstdlib>
 #include <optional>
 
-#include "detours-ext.h"
+#include <windowsx.h>
 
 using namespace OpenKneeboard;
 
@@ -194,20 +197,46 @@ extern "C" __declspec(dllexport) LRESULT CALLBACK
   GetMsgProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PMSG>(lParam);
 
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity,
+    "GetMsgProc",
+    TraceLoggingValue(msg.message, "message"),
+    TraceLoggingValue(msg.wParam, "wParam"),
+    TraceLoggingValue(msg.lParam, "lParam"));
+
   if (ProcessMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam)) {
     msg.message = WM_NULL;
+    TraceLoggingWriteStop(
+      activity, "GetMsgProc", TraceLoggingValue("Hooked", "Result"));
     return 0;
   }
 
+  TraceLoggingWriteStop(
+    activity, "GetMsgProc", TraceLoggingValue("CallNextHookEx", "Result"));
   return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
 extern "C" __declspec(dllexport) LRESULT CALLBACK
   CallWndProc_WindowCaptureHook(int code, WPARAM wParam, LPARAM lParam) {
   auto& msg = *reinterpret_cast<PCWPSTRUCT>(lParam);
+
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity,
+    "CallWndProc",
+    TraceLoggingValue(msg.message, "message"),
+    TraceLoggingValue(msg.wParam, "wParam"),
+    TraceLoggingValue(msg.lParam, "lParam"));
+
   if (ProcessMessage(msg.hwnd, msg.message, msg.wParam, msg.lParam)) {
+    TraceLoggingWriteStop(
+      activity, "CallWndProc", TraceLoggingValue("Hooked", "Result"));
     return 0;
   }
+
+  TraceLoggingWriteStop(
+    activity, "CallWndProc", TraceLoggingValue("CallNextHook", "Result"));
   return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
