@@ -224,6 +224,12 @@ TRACELOGGING_DEFINE_PROVIDER(
 
 }// namespace OpenKneeboard
 
+static std::wstring GetProgramPath() {
+  wchar_t buffer[1024];
+  const auto pathLen = GetModuleFileNameW(NULL, buffer, std::size(buffer));
+  return {buffer, pathLen};
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:
@@ -233,12 +239,14 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
       dprintf(
         L"Attached to {}-bit process {} ({})",
         sizeof(void*) * 8,
-        _wpgmptr,
+        GetProgramPath(),
         GetCurrentProcessId());
       break;
     case DLL_PROCESS_DETACH:
       dprintf(
-        L"Detaching from process {} ({})", _wpgmptr, GetCurrentProcessId());
+        L"Detaching from process {} ({})",
+        GetProgramPath(),
+        GetCurrentProcessId());
       TraceLoggingUnregister(gTraceProvider);
       // Per https://docs.microsoft.com/en-us/windows/win32/dlls/dllmain :
       //
