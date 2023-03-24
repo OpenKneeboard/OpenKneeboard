@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96117075",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96117075/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96117075/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4.0",
-    "id": 96117075,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96803521",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96803521/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96803521/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4.1",
+    "id": 96803521,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FuqFT",
-    "tag_name": "v1.4.0",
-    "target_commitish": "faa3cdc33bad86099b7b84d3b35fd255c9a1fa6a",
-    "name": "v1.4.0: bookmarks, brightness control, performance and reliability",
+    "node_id": "RE_kwDOGk0DR84FxRrB",
+    "tag_name": "v1.4.1",
+    "target_commitish": "e0ded48569abc34993b5052051802c15e2becae4",
+    "name": "v1.4.1: window capture bugfix",
     "draft": false,
     "prerelease": false,
-    "created_at": "2023-03-19T17:29:53Z",
-    "published_at": "2023-03-19T18:31:52Z",
+    "created_at": "2023-03-24T12:46:53Z",
+    "published_at": "2023-03-24T13:45:50Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/100047207",
-        "id": 100047207,
-        "node_id": "RA_kwDOGk0DR84F9pln",
-        "name": "OpenKneeboard-v1.4.0-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/100772887",
+        "id": 100772887,
+        "node_id": "RA_kwDOGk0DR84GAawX",
+        "name": "OpenKneeboard-v1.4.1-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 138132009,
+        "size": 138131456,
         "download_count": 0,
-        "created_at": "2023-03-19T18:04:02Z",
-        "updated_at": "2023-03-19T18:04:06Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.0/OpenKneeboard-v1.4.0-DebugSymbols.zip"
+        "created_at": "2023-03-24T13:22:53Z",
+        "updated_at": "2023-03-24T13:22:57Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.1/OpenKneeboard-v1.4.1-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/100047190",
-        "id": 100047190,
-        "node_id": "RA_kwDOGk0DR84F9plW",
-        "name": "OpenKneeboard-v1.4.0.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/100772883",
+        "id": 100772883,
+        "node_id": "RA_kwDOGk0DR84GAawT",
+        "name": "OpenKneeboard-v1.4.1.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -97,14 +97,14 @@
         "content_type": "application/msi",
         "state": "uploaded",
         "size": 37052416,
-        "download_count": 0,
-        "created_at": "2023-03-19T18:03:59Z",
-        "updated_at": "2023-03-19T18:04:01Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.0/OpenKneeboard-v1.4.0.msi"
+        "download_count": 2,
+        "created_at": "2023-03-24T13:22:51Z",
+        "updated_at": "2023-03-24T13:22:52Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.1/OpenKneeboard-v1.4.1.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4.0",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4.0",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.4.0.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.0/OpenKneeboard-v1.4.0.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n# New website\r\n\r\nInformation and documentation for OpenKneeboard is now on https://openkneeboard.com; documentation has been reorganized and expanded, including:\r\n- A new [FAQ](https://openkneeboard.com/faq.html)\r\n- Improved documentation on using OpenKneeboard with a [StreamDeck](https://openkneeboard.com/features/streamdeck.html) or [VoiceAttack](https://openkneeboard.com/features/voice-attack.html)\r\n- A separate [feature list](https://openkneeboard.com/features/) - \"I didn't know OpenKneeboard could do that!\"\r\n\r\n# New features\r\n\r\n- Added bookmarks/favorites/pins feature; to use, use a 'toggle bookmark' binding, then select the bookmark from the left hand side. Bookmarks are visible in all tabs, and take you back to the specific page. For v1.4, bookmarks last until OpenKneeboard is restarted.\r\n  - added remote controls and bindings for next/previous/toggle bookmarks\r\n- Added brightness control/tint\r\n  - tint and brightness can be controlled in advanced settings\r\n  - added toggle on/off and increase/decrease brightness bindings and remote controls\r\n  - added disable and enable tint remote controls\r\n- Multithreaded versions of DCS are now detected on fresh installs, or when restoring default games\r\n- Added support for starting minimized; see [FAQ](https://openkneeboard.com/faq.html#how-do-i-make-openkneeboard-start-minimized) for details\r\n- OpenKneeboard-Viewer now supports borderless mode by pressing 'b'\r\n- Added support for binding mice scroll wheels (vertical only)\r\n- Basic remote controls now optionally take a parameter for number of repetitions - for example, `...NEXT_PAGE.exe 5` will move forward 5 pages\r\n- Added options to remove the header (toolbar) and footer (clock) under advanced settings\r\n- Experimental: added support for Vulkan OpenXR games\r\n- Experimental: added a [Lua API](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/docs/api/lua.md); this allows you to, for example:\r\n  - switch profiles depending on aircraft, terrain, or time of day\r\n  - control brightness with in-cockpit controls\r\n- Experimental: added an equivalent [C API](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/docs/api/c.md), which is also [usable from Python](https://github.com/OpenKneeboard/OpenKneeboard/blob/master/docs/api/python.md)\r\n\r\n# Bug fixes\r\n\r\n- \"Autodetect\" will no longer render a non-VR kneeboard in the game window when OpenKneeboard's OpenXR support is active in the game\r\n- Navigation will now be auto-generated for PDFs that do not include an index, with one navigation entry per page\r\n- Fix a long-standing crash when rapidly changing tabs by switching to a higher-latency approach to mouse input; the crash in the low-latency path can only be fixed by Microsoft\r\n- Fix DirectInput support after Windows reports a device was plugged/unplugged; this can happen when nothing's actually been connected or disconnected, and could lead to bindings not working until OpenKneeboard was restarted - commit\r\n- Internal threading model changes to systematically avoid some causes of crashes\r\n- Fix several rare crashes when switching profiles\r\n- On multi-GPU systems, OpenKneeboard will now use the 'high performance' GPU to communicate with SteamVR\r\n- Image and PDF files are now monitored for changes, even if they are not inside a folder tab\r\n- Tablet drawings/notes are now correctly handled when files are deleted, created, or modified\r\n\r\n# UI improvements\r\n\r\n- \"Add Game\", \"Add Tab\", and \"Add  Profile\" buttons now appear at both the top and bottom of the relevant pages\r\n- It is now possible to rename tabs (or bookmarks) by right clicking on them\r\n\r\n# Other changes\r\n\r\n- Don't reload folder tabs (or tabs that include folders, like DCS Terrain tabs) when windows says the folder has changed, unless files that OpenKneeboard supports have actually been changed\r\n- Improved RAM and GPU memory usage when many files are open\r\n- Added a registry setting to write logs to `Saved Games\\OpenKneeboard\\logs`\r\n- Improved overall performance and reliability\r\n- Added an option in advanced setting to show OpenKneeboard's frame count in game; this is how many times OpenKneeboard's updated, not the number of game frames\r\n- Added tracing (opt-in via Windows Performance Recorder) leading to the previous two improvements :)\r\n- Debugging and tracing scripts and tools are now installed to C:\\Program Files\\OpenKneeboard\\scripts, instead of needing a separate download\r\n\r\n# Changes since v1.4-beta11\r\n\r\n- Line up clocks correctly when bookmarks bar is visible\r\n- Fix hang if Windows reports a device is plugged/unplugged while the input settings page is open\r\n- Fix old versions of kneeboards being displayed if the API is changed while the game is running; for example, changing from non-VR D3D11 to Oculus D3D11 would leave an old copy of the kneeboard visible in non-VR\r\n- Multithreaded versions of DCS are now detected on fresh installs, or when restoring default games"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4.1",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4.1",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.4.1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.1/OpenKneeboard-v1.4.1.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis release:\r\n- fixes a bug where OpenKneeboard and captured windows can freeze\r\n- fixes incorrect GPU model and manufacturer IDs in debug logs"
   }
 ]
