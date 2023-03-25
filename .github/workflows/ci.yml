@@ -96,7 +96,7 @@ jobs:
             }
           }
           Add-Content $Env:GITHUB_OUTPUT "MSI_NAME=$installer"
-          $installer=(Get-ChildItem $installer).FullName
+          $installer=(Get-ChildItem $installer).FullName -replace '\\','/'
           Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
       - name: Sign MSI
         working-directory: build
@@ -139,6 +139,7 @@ jobs:
           } else {
             $zip = "${{runner.temp}}/OpenKneeboard-GHA-${{github.run_number}}-DebugSymbols.zip"
           }
+          $zip = $zip -replace '\\','/'
           cd $prefix
           Compress-Archive `
             -Path *.pdb `
@@ -168,6 +169,8 @@ jobs:
           draft: true
           body_path: ${{steps.release-notes.outputs.PATH}}
           prerelease: ${{contains(github.ref_name, '-')}}
+          # 'files' uses a JS glob library that only supports forward slashes;
+          # backslashes are treated as escapes
           files: |
             ${{ steps.create-msi.outputs.MSI_PATH }}
             ${{ steps.debug-symbols.outputs.ZIP_PATH}}
