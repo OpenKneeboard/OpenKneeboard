@@ -422,7 +422,7 @@ std::string HelpPage::GetUpdateLog() noexcept {
         std::chrono::time_point_cast<std::chrono::seconds>(
           std::chrono::system_clock::time_point(
             std::chrono::seconds(timestamp)))),
-      std::string_view {data, dataLength});
+      std::string_view {data, dataLength - 1});
   }
   return ret;
 }
