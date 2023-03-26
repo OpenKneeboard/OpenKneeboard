@@ -2,24 +2,24 @@ name: Build and Package
 on:
   pull_request:
     paths:
-      - 'assets/**'
-      - 'installer/**'
-      - 'src/**'
-      - 'third-party/**'
-      - '*.props'
-      - '*.cmake'
-      - 'CMakeLists.txt'
-      - '.github/workflows/ci.yml'
+      - "assets/**"
+      - "installer/**"
+      - "src/**"
+      - "third-party/**"
+      - "*.props"
+      - "*.cmake"
+      - "CMakeLists.txt"
+      - ".github/workflows/ci.yml"
   push:
     paths:
-      - 'assets/**'
-      - 'installer/**'
-      - 'src/**'
-      - 'third-party/**'
-      - '*.props'
-      - '*.cmake'
-      - 'CMakeLists.txt'
-      - '.github/workflows/ci.yml'
+      - "assets/**"
+      - "installer/**"
+      - "src/**"
+      - "third-party/**"
+      - "*.props"
+      - "*.cmake"
+      - "CMakeLists.txt"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 jobs:
@@ -88,8 +88,15 @@ jobs:
             --config ${{matrix.config}} `
             --target package
           $installer="$(Get-Content installer-name.txt)"
+          if ("${{github.ref_type}}" -eq "tag") {
+            $normalized = "OpenKneeboard-${{github.ref_name}}.msi"
+            if ($normalized -ne $installer) {
+              Copy-Item $installer $normalized
+              $installer = $normalized
+            }
+          }
           Add-Content $Env:GITHUB_OUTPUT "MSI_NAME=$installer"
-          $installer=(Get-ChildItem $installer).FullName
+          $installer=(Get-ChildItem $installer).FullName -replace '\\','/'
           Add-Content $Env:GITHUB_OUTPUT "MSI_PATH=$installer"
       - name: Sign MSI
         working-directory: build
@@ -127,7 +134,12 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::Creating zip"
-          $zip = "${{runner.temp}}/DebugSymbols.zip"
+          if ("${{github.ref_type}}" -eq "tag") {
+            $zip = "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-DebugSymbols.zip"
+          } else {
+            $zip = "${{runner.temp}}/OpenKneeboard-GHA-${{github.run_number}}-DebugSymbols.zip"
+          }
+          $zip = $zip -replace '\\','/'
           cd $prefix
           Compress-Archive `
             -Path *.pdb `
@@ -152,31 +164,13 @@ jobs:
       - name: Create draft release
         id: create-release
         if: github.ref_type == 'tag' && matrix.config != 'Debug'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
-          release_name: Release ${{github.ref_name}}
-          tag_name: ${{github.ref_name}}
           draft: true
           body_path: ${{steps.release-notes.outputs.PATH}}
-      - name: Attach MSI to release
-        if: github.ref_type == 'tag' && matrix.config != 'Debug'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{ steps.create-msi.outputs.MSI_PATH }}
-          asset_name: OpenKneeboard-${{github.ref_name}}.msi
-          asset_content_type: application/msi
-      - name: Attach debug symbols to release
-        if: github.ref_type == 'tag' && matrix.config != 'Debug'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ${{ steps.debug-symbols.outputs.ZIP_PATH}}
-          asset_name: OpenKneeboard-${{github.ref_name}}-DebugSymbols.zip
-          asset_content_type: application/zip
+          prerelease: ${{contains(github.ref_name, '-')}}
+          # 'files' uses a JS glob library that only supports forward slashes;
+          # backslashes are treated as escapes
+          files: |
+            ${{ steps.create-msi.outputs.MSI_PATH }}
+            ${{ steps.debug-symbols.outputs.ZIP_PATH}}
