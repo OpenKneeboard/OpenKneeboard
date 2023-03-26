@@ -50,6 +50,7 @@
 #include <shellapi.h>
 #include <shobjidl.h>
 #include <time.h>
+#include <zip.h>
 
 using namespace OpenKneeboard;
 
@@ -168,9 +169,9 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   FilePicker picker(gMainWindow);
   picker.SettingsIdentifier(thisCall);
   picker.SuggestedStartLocation(FOLDERID_Desktop);
-  picker.AppendFileType(_(L"Plain Text"), {L".txt"});
+  picker.AppendFileType(_(L"Zip archive"), {L".zip"});
   picker.SuggestedFileName(std::format(
-    L"OpenKneeboard-v{}.{}.{}.{}-{:%F-%H-%M}.txt",
+    L"OpenKneeboard-v{}.{}.{}.{}-{:%F-%H-%M}.zip",
     Version::Major,
     Version::Minor,
     Version::Patch,
@@ -183,20 +184,41 @@ winrt::fire_and_forget HelpPage::OnExportClick(
     co_return;
   }
   const auto path = *maybePath;
+  const auto pathUtf8 = to_utf8(path);
 
-  auto sep = "\n\n--------------------------------\n\n";
+  using unique_zip = std::unique_ptr<zip_t, CHandleDeleter<zip_t*, &zip_close>>;
 
-  auto now = std::chrono::time_point_cast<std::chrono::seconds>(
-    std::chrono::system_clock::now());
-  std::ofstream(path) << std::format(
-    "Local time: {:%F %T%z}\n"
-    "UTC time:   {:%F %T}",
-    std::chrono::zoned_time(std::chrono::current_zone(), now),
-    std::chrono::zoned_time("UTC", now))
-                      << sep << mVersionClipboardData << sep << GetUpdateLog()
-                      << sep << GetOpenXRLayers() << sep
-                      << mGameEventsClipboardData << sep
-                      << winrt::to_string(mDPrintClipboardData) << std::endl;
+  int ze;
+  std::vector<std::string> retainedBuffers;
+  unique_zip zip {zip_open(pathUtf8.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &ze)};
+
+  auto AddFile = [zip = zip.get(), &retainedBuffers](
+                   const char* name, std::string_view buffer) {
+    retainedBuffers.push_back(std::string(buffer));
+    const auto& copy = retainedBuffers.back();
+    zip_file_add(
+      zip,
+      name,
+      zip_source_buffer(zip, copy.data(), copy.size(), 0),
+      ZIP_FL_ENC_UTF_8);
+  };
+
+  {
+    const auto now = std::chrono::time_point_cast<std::chrono::seconds>(
+      std::chrono::system_clock::now());
+    const auto buffer = std::format(
+      "Local time: {:%F %T%z}\n"
+      "UTC time:   {:%F %T}",
+      std::chrono::zoned_time(std::chrono::current_zone(), now),
+      std::chrono::zoned_time("UTC", now));
+    AddFile("timestamp.txt", buffer);
+  }
+
+  AddFile("debug-log.txt", winrt::to_string(mDPrintClipboardData));
+  AddFile("game-events.txt", mGameEventsClipboardData);
+  AddFile("openxr-layers.txt", GetOpenXRLayers());
+  AddFile("update-history.txt", GetUpdateLog());
+  AddFile("version.txt", mVersionClipboardData);
 }
 
 void HelpPage::OnCopyDPrintClick(

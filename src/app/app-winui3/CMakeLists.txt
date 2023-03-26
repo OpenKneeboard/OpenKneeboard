@@ -74,6 +74,7 @@ target_link_libraries(
   System::Dxgi
   System::Shell32
   System::User32
+  ThirdParty::LibZip
   ThirdParty::SemVer
 )
 
