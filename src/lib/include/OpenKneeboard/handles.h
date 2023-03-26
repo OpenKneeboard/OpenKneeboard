@@ -74,5 +74,6 @@ using unique_hhook
   = std::unique_ptr<HHOOK, CHandleDeleter<HHOOK, &UnhookWindowsHookEx>>;
 using unique_hmodule
   = std::unique_ptr<HMODULE, CHandleDeleter<HMODULE, &FreeLibrary>>;
+using unique_hkey = std::unique_ptr<HKEY, CHandleDeleter<HKEY, &RegCloseKey>>;
 
 }// namespace OpenKneeboard

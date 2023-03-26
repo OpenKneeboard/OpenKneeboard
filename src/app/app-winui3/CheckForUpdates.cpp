@@ -88,7 +88,30 @@ concurrency::task<UpdateResult> CheckForUpdates(
   const auto now = std::chrono::duration_cast<std::chrono::seconds>(
                      std::chrono::system_clock::now().time_since_epoch())
                      .count();
-  AutoUpdateSettings settings = gKneeboard->GetAppSettings().mAutoUpdate;
+
+  auto appSettings = gKneeboard->GetAppSettings();
+  {
+    const auto updateLogVersion = std::format(
+      "v{}.{}.{}.{} ('{}')",
+      Version::Major,
+      Version::Minor,
+      Version::Patch,
+      Version::Build,
+      Version::ReleaseName);
+    if (updateLogVersion != appSettings.mLastRunVersion) {
+      RegSetKeyValueA(
+        HKEY_CURRENT_USER,
+        winrt::to_string(std::format(L"{}\\Updates", RegistrySubKey)).c_str(),
+        std::to_string(now).c_str(),
+        REG_SZ,
+        updateLogVersion.data(),
+        static_cast<DWORD>(updateLogVersion.size()));
+      appSettings.mLastRunVersion = updateLogVersion;
+      gKneeboard->SetAppSettings(appSettings);
+    }
+  }
+
+  AutoUpdateSettings settings = appSettings.mAutoUpdate;
   if (checkType == UpdateCheckType::Manual) {
     settings.mDisabledUntil = 0;
     settings.mSkipVersion = {};
@@ -103,7 +126,9 @@ concurrency::task<UpdateResult> CheckForUpdates(
     co_return UpdateResult::NotInstallingUpdate;
   }
 
-  if (settings.mChannel == AutoUpdateSettings::StableChannel && !Version::IsStableRelease) {
+  if (
+    settings.mChannel == AutoUpdateSettings::StableChannel
+    && !Version::IsStableRelease) {
     settings.mChannel = AutoUpdateSettings::PreviewChannel;
   }
 
@@ -180,9 +205,8 @@ concurrency::task<UpdateResult> CheckForUpdates(
 
   scope_guard oncePerDay([&]() {
     settings.mDisabledUntil = now + (60 * 60 * 24);
-    auto app = gKneeboard->GetAppSettings();
-    app.mAutoUpdate = settings;
-    gKneeboard->SetAppSettings(app);
+    appSettings.mAutoUpdate = settings;
+    gKneeboard->SetAppSettings(appSettings);
   });
 
   const auto currentVersionString = ToSemVerString(
