@@ -29,6 +29,7 @@
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 
 #include <OpenKneeboard/config.h>
@@ -157,6 +158,13 @@ void HelpPage::OnCopyGameEventsClick(
   SetClipboardText(mGameEventsClipboardData);
 }
 
+template <class C, class T>
+auto ReadableTime(const std::chrono::time_point<C, T>& time) {
+  return std::chrono::zoned_time(
+    std::chrono::current_zone(),
+    std::chrono::time_point_cast<std::chrono::seconds>(time));
+}
+
 winrt::fire_and_forget HelpPage::OnExportClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
@@ -183,14 +191,15 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   if (!maybePath) {
     co_return;
   }
-  const auto path = *maybePath;
-  const auto pathUtf8 = to_utf8(path);
+  const auto zipPath = *maybePath;
+  const auto zipPathUtf8 = to_utf8(zipPath);
 
   using unique_zip = std::unique_ptr<zip_t, CHandleDeleter<zip_t*, &zip_close>>;
 
   int ze;
   std::vector<std::string> retainedBuffers;
-  unique_zip zip {zip_open(pathUtf8.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &ze)};
+  unique_zip zip {
+    zip_open(zipPathUtf8.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &ze)};
 
   auto AddFile = [zip = zip.get(), &retainedBuffers](
                    const char* name, std::string_view buffer) {
@@ -219,19 +228,80 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("version.txt", mVersionClipboardData);
+
+  struct Dump {
+    std::filesystem::path mPath;
+    std::filesystem::file_time_type mTime;
+  };
+  std::vector<Dump> dumps;
+
+  const auto settingsDir = Settings::GetDirectory();
+  for (const auto entry:
+       std::filesystem::recursive_directory_iterator(settingsDir)) {
+    if (!entry.is_regular_file()) {
+      continue;
+    }
+    const auto path = entry.path();
+    if (path.extension() == ".dmp") {
+      dumps.push_back({path, entry.last_write_time()});
+      continue;
+    }
+
+    const auto relative
+      = to_utf8(std::filesystem::proximate(path, settingsDir));
+    if (relative == ".instance") {
+      continue;
+    }
+
+    zip_file_add(
+      zip.get(),
+      ("settings/" + relative).c_str(),
+      zip_source_file(zip.get(), to_utf8(path).c_str(), 0, -1),
+      ZIP_FL_ENC_UTF_8);
+  }
+
+  {
+    wchar_t* localAppData {nullptr};
+    if (
+      SHGetKnownFolderPath(FOLDERID_LocalAppData, NULL, NULL, &localAppData)
+        == S_OK
+      && localAppData) {
+      const auto crashDumps
+        = std::filesystem::path(localAppData) / L"CrashDumps";
+      if (std::filesystem::is_directory(crashDumps)) {
+        for (const auto entry:
+             std::filesystem::recursive_directory_iterator(crashDumps)) {
+          if (entry.path().filename().wstring().starts_with(
+                L"OpenKneeboardApp.exe")) {
+            dumps.push_back({entry.path(), entry.last_write_time()});
+          }
+        }
+      }
+    }
+  }
+
+  if (!dumps.empty()) {
+    std::sort(dumps.begin(), dumps.end(), [](const auto& a, const auto& b) {
+      return a.mTime < b.mTime;
+    });
+    std::string buffer;
+    for (const auto& dump: dumps) {
+      const auto time = ReadableTime(
+        std::chrono::clock_cast<std::chrono::system_clock>(dump.mTime));
+      buffer += std::format(
+        "- [{:%F %T}] {} ({} bytes)\n",
+        time,
+        to_utf8(dump.mPath),
+        std::filesystem::file_size(dump.mPath));
+    }
+    AddFile("crash-dumps.txt", buffer);
+  }
 }
 
 void HelpPage::OnCopyDPrintClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
   SetClipboardText(mDPrintClipboardData);
-}
-
-template <class C, class T>
-auto ReadableTime(const std::chrono::time_point<C, T>& time) {
-  return std::chrono::zoned_time(
-    std::chrono::current_zone(),
-    std::chrono::time_point_cast<std::chrono::seconds>(time));
 }
 
 winrt::fire_and_forget HelpPage::PopulateEvents() noexcept {
@@ -380,8 +450,9 @@ void HelpPage::PopulateLicenses() noexcept {
 
   Controls::TextBlock ackBlock;
   ackBlock.TextWrapping(TextWrapping::WrapWholeWords);
-  ackBlock.Text(_(
-    L"OpenKneeboard uses and includes software from the following projects:"));
+  ackBlock.Text(
+    _(L"OpenKneeboard uses and includes software from the following "
+      L"projects:"));
   children.Append(ackBlock);
 
   for (const auto& entry: std::filesystem::directory_iterator(docDir)) {
