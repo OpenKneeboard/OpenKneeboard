@@ -21,11 +21,13 @@
 
 #include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
+
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Storage.Search.h>
 
 #include <memory>
-#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
@@ -55,7 +57,6 @@ class PlainTextFilePageSource final
  private:
   winrt::apartment_context mUIThread;
   std::filesystem::path mPath;
-  std::filesystem::file_time_type mLastWriteTime;
   std::shared_ptr<PlainTextPageSource> mPageSource;
 
   std::string GetFileContent() const;

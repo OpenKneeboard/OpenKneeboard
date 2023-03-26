@@ -81,7 +81,6 @@ void PlainTextFilePageSource::Reload() {
   }
 
   mPageSource->SetText(this->GetFileContent());
-  mLastWriteTime = std::filesystem::last_write_time(mPath);
   this->SubscribeToChanges();
 }
 
@@ -109,11 +108,7 @@ void PlainTextFilePageSource::OnFileModified(
   }
 
   const auto newWriteTime = std::filesystem::last_write_time(mPath);
-  if (newWriteTime == mLastWriteTime) {
-    return;
-  }
 
-  mLastWriteTime = newWriteTime;
   mPageSource->SetText(this->GetFileContent());
   mPageSource->SetPlaceholderText(_("[empty file]"));
   this->evContentChangedEvent.Emit();
@@ -121,12 +116,16 @@ void PlainTextFilePageSource::OnFileModified(
 
 std::string PlainTextFilePageSource::GetFileContent() const {
   auto bytes = std::filesystem::file_size(mPath);
+  if (bytes == 0) {
+    return {};
+  }
   std::string buffer;
   buffer.resize(bytes);
   size_t offset = 0;
 
   std::ifstream f(mPath, std::ios::in | std::ios::binary);
   if (!f.is_open()) {
+    dprintf(L"Failed to open {}", mPath.wstring());
     mPageSource->ClearText();
     return {};
   }
