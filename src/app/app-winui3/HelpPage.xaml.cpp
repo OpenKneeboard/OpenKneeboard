@@ -193,8 +193,9 @@ winrt::fire_and_forget HelpPage::OnExportClick(
     "UTC time:   {:%F %T}",
     std::chrono::zoned_time(std::chrono::current_zone(), now),
     std::chrono::zoned_time("UTC", now))
-                      << sep << GetUpdateLog() << sep << mVersionClipboardData
-                      << sep << mGameEventsClipboardData << sep
+                      << sep << mVersionClipboardData << sep << GetUpdateLog()
+                      << sep << GetOpenXRLayers() << sep
+                      << mGameEventsClipboardData << sep
                       << winrt::to_string(mDPrintClipboardData) << std::endl;
 }
 
@@ -422,6 +423,99 @@ std::string HelpPage::GetUpdateLog() noexcept {
           std::chrono::system_clock::time_point(
             std::chrono::seconds(timestamp)))),
       std::string_view {data, dataLength});
+  }
+  return ret;
+}
+
+std::string HelpPage::GetOpenXRLayers() noexcept {
+  return std::format(
+    "OpenXR API Layers:\n\n64-bit HKLM:\n{}64-bit HKCU:\n{}",
+    GetOpenXRLayers(HKEY_LOCAL_MACHINE),
+    GetOpenXRLayers(HKEY_CURRENT_USER));
+}
+
+std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
+  unique_hkey key;
+  {
+    HKEY buffer {};
+    RegOpenKeyExW(
+      root,
+      L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit",
+      0,
+      KEY_READ,
+      &buffer);
+    key.reset(buffer);
+  }
+
+  if (!key) {
+    return "- No layers.\n";
+  }
+
+  std::string ret;
+
+  wchar_t path[1024];
+  auto pathLength = static_cast<DWORD>(std::size(path));
+  DWORD data;
+  auto dataLength = static_cast<DWORD>(sizeof(data));
+  DWORD dataType;
+
+  size_t enabledCount = 0;
+
+  for (DWORD i = 0; RegEnumValueW(
+                      key.get(),
+                      i,
+                      &path[0],
+                      &pathLength,
+                      nullptr,
+                      &dataType,
+                      reinterpret_cast<LPBYTE>(&data),
+                      &dataLength)
+       == ERROR_SUCCESS;
+       i++,
+             pathLength = static_cast<DWORD>(std::size(path)),
+             dataLength = static_cast<DWORD>(sizeof(data))) {
+    const auto pathUtf8
+      = winrt::to_string(std::wstring_view {path, pathLength});
+    if (dataType != REG_DWORD) {
+      ret += std::format(
+        "- '{}': INVALID REGISTRY VALUE (not DWORD)\n", pathUtf8);
+      continue;
+    }
+    const auto disabled = static_cast<bool>(data);
+    if (disabled) {
+      ret += std::format("- DISABLED: {}\n", pathUtf8);
+      continue;
+    }
+
+    const auto fspath
+      = std::filesystem::path(std::wstring_view {path, pathLength});
+    if (!std::filesystem::exists(fspath)) {
+      ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
+      continue;
+    }
+
+    nlohmann::json json;
+    {
+      std::ifstream f(fspath.c_str());
+      f >> json;
+    }
+    const auto layer = json.at("api_layer");
+
+    const auto dllPathStr = layer.at("library_path").get<std::string>();
+    std::filesystem::path dllPath(dllPathStr);
+    if (dllPath.is_relative()) {
+      dllPath = (fspath.parent_path() / dllPath).lexically_normal();
+    }
+
+    ret += std::format(
+      "- #{}: {}\n    {}\n    - DLL: {}\n    - JSON: {}\n    "
+      "- Version: {}\n",
+      ++enabledCount,
+      layer.at("name").get<std::string>(),
+      layer.at("description").get<std::string>(),
+      to_utf8(dllPath),
+      pathUtf8,
+      layer.at("implementation_version").get<std::string>());
   }
   return ret;
 }
