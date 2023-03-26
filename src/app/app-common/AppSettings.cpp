@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/AppSettings.h>
+
 #include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
@@ -102,6 +103,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mAutoUpdate,
   mBookmarks,
   mInGameUI,
-  mTint)
+  mTint,
+  mLastRunVersion)
 
 }// namespace OpenKneeboard

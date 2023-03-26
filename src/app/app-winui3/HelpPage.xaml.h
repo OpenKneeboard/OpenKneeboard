@@ -23,12 +23,13 @@
 #include "pch.h"
 // clang-format on
 
+#include "HelpPage.g.h"
+
 #include <OpenKneeboard/Events.h>
 
 #include <shims/filesystem>
-#include <string>
 
-#include "HelpPage.g.h"
+#include <string>
 
 using namespace winrt::Microsoft::UI::Xaml;
 
@@ -66,6 +67,8 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   winrt::fire_and_forget PopulateEvents() noexcept;
   winrt::fire_and_forget PopulateDPrint() noexcept;
   void PopulateLicenses() noexcept;
+
+  static std::string GetUpdateLog() noexcept;
 
   void ScrollDPrintToEnd();
   void DisplayLicense(const std::string& header, const std::filesystem::path&);

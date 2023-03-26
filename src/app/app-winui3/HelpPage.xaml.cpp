@@ -31,6 +31,8 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 
+#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/version.h>
 
@@ -191,8 +193,8 @@ winrt::fire_and_forget HelpPage::OnExportClick(
     "UTC time:   {:%F %T}",
     std::chrono::zoned_time(std::chrono::current_zone(), now),
     std::chrono::zoned_time("UTC", now))
-                      << sep << mVersionClipboardData << sep
-                      << mGameEventsClipboardData << sep
+                      << sep << GetUpdateLog() << sep << mVersionClipboardData
+                      << sep << mGameEventsClipboardData << sep
                       << winrt::to_string(mDPrintClipboardData) << std::endl;
 }
 
@@ -371,6 +373,57 @@ void HelpPage::PopulateLicenses() noexcept {
 
     addEntry(label, entry.path());
   }
+}
+
+std::string HelpPage::GetUpdateLog() noexcept {
+  unique_hkey key;
+  {
+    HKEY buffer {};
+    RegOpenKeyExW(
+      HKEY_CURRENT_USER,
+      std::format(L"{}\\Updates", RegistrySubKey).c_str(),
+      0,
+      KEY_READ,
+      &buffer);
+    key.reset(buffer);
+  }
+
+  if (!key) {
+    return {"No update log in registry."};
+  }
+
+  std::string ret {"Update log:\n\n"};
+
+  char valueName[1024];
+  auto valueNameLength = static_cast<DWORD>(std::size(valueName));
+  char data[1024];
+  auto dataLength = static_cast<DWORD>(std::size(data));
+
+  for (DWORD i = 0; RegEnumValueA(
+                      key.get(),
+                      i,
+                      &valueName[0],
+                      &valueNameLength,
+                      nullptr,
+                      nullptr,
+                      reinterpret_cast<LPBYTE>(&data[0]),
+                      &dataLength)
+       == ERROR_SUCCESS;
+       i++,
+             valueNameLength = static_cast<DWORD>(std::size(valueName)),
+             dataLength = static_cast<DWORD>(std::size(data))) {
+    const auto timestamp
+      = std::stoull(std::string {valueName, valueNameLength});
+    ret += std::format(
+      "- {:%F %T%z}: {}\n",
+      std::chrono::zoned_time(
+        std::chrono::current_zone(),
+        std::chrono::time_point_cast<std::chrono::seconds>(
+          std::chrono::system_clock::time_point(
+            std::chrono::seconds(timestamp)))),
+      std::string_view {data, dataLength});
+  }
+  return ret;
 }
 
 void HelpPage::DisplayLicense(

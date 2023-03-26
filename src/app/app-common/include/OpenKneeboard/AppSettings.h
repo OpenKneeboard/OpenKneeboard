@@ -20,8 +20,8 @@
 #pragma once
 
 #include <OpenKneeboard/json_fwd.h>
-#include <shims/Windows.h>
 
+#include <shims/Windows.h>
 #include <shims/optional>
 
 namespace OpenKneeboard {
@@ -96,6 +96,7 @@ struct AppSettings final {
   BookmarkSettings mBookmarks {};
   InGameUISettings mInGameUI {};
   TintSettings mTint {};
+  std::string mLastRunVersion;
 
   constexpr auto operator<=>(const AppSettings&) const noexcept = default;
 };
