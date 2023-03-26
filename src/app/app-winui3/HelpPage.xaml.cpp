@@ -417,11 +417,8 @@ std::string HelpPage::GetUpdateLog() noexcept {
       = std::stoull(std::string {valueName, valueNameLength});
     ret += std::format(
       "- {:%F %T%z}: {}\n",
-      std::chrono::zoned_time(
-        std::chrono::current_zone(),
-        std::chrono::time_point_cast<std::chrono::seconds>(
-          std::chrono::system_clock::time_point(
-            std::chrono::seconds(timestamp)))),
+      ReadableTime(
+        std::chrono::system_clock::time_point(std::chrono::seconds(timestamp))),
       std::string_view {data, dataLength - 1});
   }
   return ret;
@@ -429,7 +426,7 @@ std::string HelpPage::GetUpdateLog() noexcept {
 
 std::string HelpPage::GetOpenXRLayers() noexcept {
   return std::format(
-    "OpenXR API Layers:\n\n64-bit HKLM:\n{}64-bit HKCU:\n{}",
+    "OpenXR API Layers:\n\n64-bit HKLM:\n{}\n64-bit HKCU:\n{}",
     GetOpenXRLayers(HKEY_LOCAL_MACHINE),
     GetOpenXRLayers(HKEY_CURRENT_USER));
 }
