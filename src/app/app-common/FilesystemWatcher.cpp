@@ -20,6 +20,8 @@
 
 #include <OpenKneeboard/FilesystemWatcher.h>
 
+#include <OpenKneeboard/scope_guard.h>
+
 using namespace winrt::Windows::Storage;
 using namespace winrt::Windows::Storage::Search;
 
@@ -71,7 +73,7 @@ winrt::Windows::Foundation::IAsyncAction FilesystemWatcher::Run() {
     winrt::check_bool(FindNextChangeNotification(handle));
     try {
       const auto haveChange = co_await winrt::resume_on_signal(handle);
-      if (haveChange) {
+      if (haveChange && !mSettling) {
         this->OnContentsChanged();
       }
     } catch (const winrt::hresult_canceled&) {
@@ -81,22 +83,71 @@ winrt::Windows::Foundation::IAsyncAction FilesystemWatcher::Run() {
   }
 }
 
-void FilesystemWatcher::OnContentsChanged() {
-  const auto stayingAlive = shared_from_this();
+winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
+  const auto weak = weak_from_this();
 
   if (
     (!std::filesystem::exists(mPath)) || std::filesystem::is_directory(mPath)) {
     this->evFilesystemModifiedEvent.EnqueueForContext(mOwnerThread, mPath);
-    return;
+    co_return;
   }
 
   // Regular file
-  const auto lastWriteTime = std::filesystem::last_write_time(mPath);
-  if (lastWriteTime <= mLastWriteTime) {
-    return;
+
+  constexpr const auto tickDelta = std::chrono::file_clock::duration(1);
+  // This specific value isn't required by OpenKneeboard; this check is just
+  // paranoia making sure that `std::chrono::file_clock` matches the
+  // documented tick length for the Windows FILETIME structure as of
+  // 2023-03-26.
+  static_assert(tickDelta == std::chrono::nanoseconds(100));
+
+  mSettling = true;
+  const scope_guard settled([this]() { mSettling = false; });
+
+  while (true) {
+    auto self = weak.lock();
+    if (!self) {
+      co_return;
+    }
+
+    const auto lastWriteTime = std::filesystem::last_write_time(mPath);
+    if (lastWriteTime <= mLastWriteTime) {
+      co_return;
+    }
+
+    {
+      winrt::file_handle handle {CreateFileW(
+        mPath.c_str(),
+        GENERIC_READ,
+        FILE_SHARE_READ,
+        nullptr,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL)};
+      if (!handle) {
+        const auto error = GetLastError();
+        if (error == ERROR_SHARING_VIOLATION) {
+          traceprint("File opened exclusively by another process, waiting");
+          co_await winrt::resume_after(std::chrono::milliseconds(100));
+          continue;
+        } else {
+          dprintf(
+            L"Failed to open modified file '{}': {}", mPath.wstring(), error);
+          co_return;
+        }
+      }
+    }
+
+    const auto now = std::chrono::file_clock::now();
+    if (now - lastWriteTime < tickDelta) {
+      co_await winrt::resume_after(tickDelta);
+      continue;
+    }
+
+    mLastWriteTime = lastWriteTime;
+    this->evFilesystemModifiedEvent.EnqueueForContext(mOwnerThread, mPath);
+    co_return;
   }
-  mLastWriteTime = lastWriteTime;
-  this->evFilesystemModifiedEvent.EnqueueForContext(mOwnerThread, mPath);
 }
 
 }// namespace OpenKneeboard

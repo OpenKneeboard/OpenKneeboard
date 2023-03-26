@@ -55,13 +55,14 @@ class FilesystemWatcher final
   FilesystemWatcher(const std::filesystem::path&);
   void Initialize();
   winrt::Windows::Foundation::IAsyncAction Run();
-  void OnContentsChanged();
+  winrt::fire_and_forget OnContentsChanged();
 
   winrt::Windows::Foundation::IAsyncAction mImpl {nullptr};
 
   winrt::apartment_context mOwnerThread;
   std::filesystem::path mPath;
   std::filesystem::file_time_type mLastWriteTime;
+  bool mSettling = false;
 
   unique_changenotification mHandle;
   winrt::handle mShutdownHandle;
