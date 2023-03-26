@@ -69,8 +69,9 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   void PopulateLicenses() noexcept;
 
   static std::string GetUpdateLog() noexcept;
-  static std::string GetOpenXRLayers() noexcept;
+  static std::string GetOpenXRInfo() noexcept;
   static std::string GetOpenXRLayers(HKEY root) noexcept;
+  static std::string GetOpenXRRuntime() noexcept;
 
   void ScrollDPrintToEnd();
   void DisplayLicense(const std::string& header, const std::filesystem::path&);

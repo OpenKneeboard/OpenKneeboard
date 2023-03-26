@@ -216,7 +216,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
 
   AddFile("debug-log.txt", winrt::to_string(mDPrintClipboardData));
   AddFile("game-events.txt", mGameEventsClipboardData);
-  AddFile("openxr-layers.txt", GetOpenXRLayers());
+  AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("version.txt", mVersionClipboardData);
 }
@@ -446,9 +446,11 @@ std::string HelpPage::GetUpdateLog() noexcept {
   return ret;
 }
 
-std::string HelpPage::GetOpenXRLayers() noexcept {
+std::string HelpPage::GetOpenXRInfo() noexcept {
   return std::format(
-    "OpenXR API Layers:\n\n64-bit HKLM:\n{}\n64-bit HKCU:\n{}",
+    "Runtime\n-------\n\n{}\nAPI Layers\n----------\n\n64-bit "
+    "HKLM:\n{}\n64-bit HKCU:\n{}",
+    GetOpenXRRuntime(),
     GetOpenXRLayers(HKEY_LOCAL_MACHINE),
     GetOpenXRLayers(HKEY_CURRENT_USER));
 }
@@ -536,6 +538,89 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
       pathUtf8,
       layer.at("implementation_version").get<std::string>());
   }
+  return ret;
+}
+
+std::string HelpPage::GetOpenXRRuntime() noexcept {
+  unique_hkey key;
+  {
+    HKEY buffer {};
+    RegOpenKeyExW(
+      HKEY_LOCAL_MACHINE,
+      L"SOFTWARE\\Khronos\\OpenXR\\1\\AvailableRuntimes",
+      0,
+      KEY_READ,
+      &buffer);
+    key.reset(buffer);
+  }
+
+  if (!key) {
+    return "No available runtimes?";
+  }
+
+  wchar_t path[1024];
+  auto pathLength = static_cast<DWORD>(std::size(path));
+  DWORD data;
+  auto dataLength = static_cast<DWORD>(sizeof(data));
+  DWORD dataType;
+
+  std::string ret;
+  DWORD enabledCount = 0;
+
+  for (DWORD i = 0; RegEnumValueW(
+                      key.get(),
+                      i,
+                      &path[0],
+                      &pathLength,
+                      nullptr,
+                      &dataType,
+                      reinterpret_cast<LPBYTE>(&data),
+                      &dataLength)
+       == ERROR_SUCCESS;
+       i++,
+             pathLength = static_cast<DWORD>(std::size(path)),
+             dataLength = static_cast<DWORD>(sizeof(data))) {
+    const auto pathUtf8
+      = winrt::to_string(std::wstring_view {path, pathLength});
+    if (dataType != REG_DWORD) {
+      ret += std::format(
+        "- '{}': INVALID REGISTRY VALUE (not DWORD)\n", pathUtf8);
+      continue;
+    }
+    const auto disabled = static_cast<bool>(data);
+    if (disabled) {
+      ret += std::format("- DISABLED: {}\n", pathUtf8);
+      continue;
+    }
+
+    const auto fspath
+      = std::filesystem::path(std::wstring_view {path, pathLength});
+    if (!std::filesystem::exists(fspath)) {
+      ret += std::format("- FILE DOES NOT EXIST: {}\n", pathUtf8);
+      continue;
+    }
+
+    nlohmann::json json;
+    {
+      std::ifstream f(fspath.c_str());
+      f >> json;
+    }
+    const auto runtime = json.at("runtime");
+
+    const auto dllPathStr = runtime.at("library_path").get<std::string>();
+    std::filesystem::path dllPath(dllPathStr);
+    if (dllPath.is_relative()) {
+      dllPath = (fspath.parent_path() / dllPath).lexically_normal();
+    }
+
+    ret += std::format(
+      "- #{}: {}\n    - DLL: {}\n    - JSON: {}\n",
+      ++enabledCount,
+      runtime.at("name").get<std::string>(),
+      to_utf8(dllPath),
+      pathUtf8);
+  }
+
   return ret;
 }
 
