@@ -30,16 +30,6 @@ add_compile_definitions(
 
 # Always link this so we never accidentally use the SDK version
 link_libraries(ThirdParty::CppWinRT)
-set(GITHUB_REF_TYPE "" CACHE STRING "For GitHub Actions: 'tag' or 'branch'")
-set(GITHUB_REF_NAME "" CACHE STRING "For GitHub Actions: the name of the branch or tag being built")
-
-if(GITHUB_REF_TYPE STREQUAL "tag")
-  set(DEFAULT_RELEASE_NAME "${GITHUB_REF_NAME}")
-else()
-  set(DEFAULT_RELEASE_NAME "")
-endif()
-
-set(RELEASE_NAME "${DEFAULT_RELEASE_NAME}" CACHE STRING "Human-readable version to show to users")
 
 function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC_FILE)
   add_custom_target(
@@ -55,8 +45,9 @@ function(create_version_rc RC_TARGET ORIGINAL_TARGET ORIGINAL_FILENAME OUTPUT_RC
     "-DOUTPUT_RC_FILE=${OUTPUT_RC_FILE}"
     "-DFILE_DESCRIPTION=${ORIGINAL_TARGET}"
     "-DORIGINAL_FILENAME=${ORIGINAL_FILENAME}"
-    "-DRELEASE_NAME=${RELEASE_NAME}"
     "-P${CMAKE_SOURCE_DIR}/src/version.cmake"
+    DEPENDS
+    "${CMAKE_SOURCE_DIR}/src/version.cmake"
     BYPRODUCTS "${OUTPUT_RC_FILE}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
   )

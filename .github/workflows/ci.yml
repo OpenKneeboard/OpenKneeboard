@@ -52,8 +52,6 @@ jobs:
         shell: pwsh
         run: |
           $args = @(
-            "-DGITHUB_REF_TYPE=${{github.ref_type}}",
-            "-DGITHUB_REF_NAME=${{github.ref_name}}",
             "-A", "x64"
           )
           if ( "${{steps.fetch-key.outputs.HAVE_KEY}}" -eq "true" ) {
