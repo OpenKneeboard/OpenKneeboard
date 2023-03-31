@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   update-autoupdate:
+    if: github.repository == 'OpenKneeboard/OpenKneeboard'
     strategy:
       matrix:
         channel: [preview, stable]

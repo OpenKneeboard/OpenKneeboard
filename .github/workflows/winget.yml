@@ -9,6 +9,7 @@ on:
     # No arguments, always use stable-msi.json
 jobs:
   publish:
+    if: github.repository == 'OpenKneeboard/OpenKneeboard'
     # Action can only be run on windows
     runs-on: windows-latest
     steps:

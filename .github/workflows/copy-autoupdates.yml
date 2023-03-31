@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 jobs:
   publish:
+    if: github.repository == 'OpenKneeboard/OpenKneeboard'
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
