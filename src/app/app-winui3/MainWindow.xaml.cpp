@@ -866,7 +866,7 @@ LRESULT MainWindow::SubclassProc(
   LPARAM lParam,
   UINT_PTR uIdSubclass,
   DWORD_PTR dwRefData) {
-  if (uMsg == WM_CLOSE) {
+  if (uMsg == WM_CLOSE || uMsg == WM_ENDSESSION) {
     reinterpret_cast<MainWindow*>(dwRefData)->CleanupAndClose();
     return TRUE;
   }
