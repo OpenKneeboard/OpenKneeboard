@@ -6,6 +6,12 @@ on:
     paths:
       - autoupdate/**
   workflow_dispatch:
+# If this job is already running when a new push triggers it again, cancel
+# the first instance
+concurrency:
+  group: "autoupdate-sync"
+  cancel-in-progress: true
+
 jobs:
   publish:
     if: github.repository == 'OpenKneeboard/OpenKneeboard'
