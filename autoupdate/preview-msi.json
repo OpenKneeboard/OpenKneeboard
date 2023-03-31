@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96803521",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96803521/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/96803521/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4.1",
-    "id": 96803521,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/97647788",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/97647788/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/97647788/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4.2",
+    "id": 97647788,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84FxRrB",
-    "tag_name": "v1.4.1",
-    "target_commitish": "e0ded48569abc34993b5052051802c15e2becae4",
-    "name": "v1.4.1: window capture bugfix",
+    "node_id": "RE_kwDOGk0DR84F0fys",
+    "tag_name": "v1.4.2",
+    "target_commitish": "master",
+    "name": "v1.4.2 - improved file monitoring and logout/shutdown handling",
     "draft": false,
     "prerelease": false,
-    "created_at": "2023-03-24T12:46:53Z",
-    "published_at": "2023-03-24T13:45:50Z",
+    "created_at": "2023-03-31T14:08:17Z",
+    "published_at": "2023-03-31T14:54:33Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/100772887",
-        "id": 100772887,
-        "node_id": "RA_kwDOGk0DR84GAawX",
-        "name": "OpenKneeboard-v1.4.1-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/101772043",
+        "id": 101772043,
+        "node_id": "RA_kwDOGk0DR84GEOsL",
+        "name": "OpenKneeboard-v1.4.2-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 138131456,
+        "size": 138159622,
         "download_count": 0,
-        "created_at": "2023-03-24T13:22:53Z",
-        "updated_at": "2023-03-24T13:22:57Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.1/OpenKneeboard-v1.4.1-DebugSymbols.zip"
+        "created_at": "2023-03-31T14:47:18Z",
+        "updated_at": "2023-03-31T14:47:21Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.2/OpenKneeboard-v1.4.2-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/100772883",
-        "id": 100772883,
-        "node_id": "RA_kwDOGk0DR84GAawT",
-        "name": "OpenKneeboard-v1.4.1.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/101772044",
+        "id": 101772044,
+        "node_id": "RA_kwDOGk0DR84GEOsM",
+        "name": "OpenKneeboard-v1.4.2.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -94,17 +94,18 @@
           "type": "Bot",
           "site_admin": false
         },
-        "content_type": "application/msi",
+        "content_type": "application/octet-stream",
         "state": "uploaded",
         "size": 37052416,
         "download_count": 2,
-        "created_at": "2023-03-24T13:22:51Z",
-        "updated_at": "2023-03-24T13:22:52Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.1/OpenKneeboard-v1.4.1.msi"
+        "created_at": "2023-03-31T14:47:18Z",
+        "updated_at": "2023-03-31T14:47:19Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.2/OpenKneeboard-v1.4.2.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4.1",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4.1",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.4.1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.1/OpenKneeboard-v1.4.1.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis release:\r\n- fixes a bug where OpenKneeboard and captured windows can freeze\r\n- fixes incorrect GPU model and manufacturer IDs in debug logs"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4.2",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4.2",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.4.2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.2/OpenKneeboard-v1.4.2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- fixed OpenKneeboard reloading modified files *too* quickly and showing `[empty file]`\r\n- OpenKneeboard now closes itself properly if it's open when logging out/shutting down/restarting Windows; no longer shows \"Would you like to report a crash?\" afterwards.\r\n- OpenKneeboard now records which OpenKneeboard updates are installed and when, and includes this information in the debug information created with Help -> 'Save As...'; this is to help troubleshoot \"since I updated...\" issues in the future.\r\n",
+    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/318"
   }
 ]
