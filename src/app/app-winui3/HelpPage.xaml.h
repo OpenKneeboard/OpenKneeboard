@@ -75,6 +75,7 @@ struct HelpPage : HelpPageT<HelpPage>,
   static std::string GetOpenXRRuntime() noexcept;
 
   void DisplayLicense(const std::string& header, const std::filesystem::path&);
+  static void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
 
   bool mAgreedToPrivacyWarning = false;
 };
