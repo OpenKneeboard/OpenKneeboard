@@ -259,11 +259,25 @@ void HWNDPageSource::RenderPage(
   mNeedsRepaint = false;
 }
 
-void HWNDPageSource::OnFrame() noexcept {
+void HWNDPageSource::OnFrame() {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "HWNDPageSource::OnFrame");
+  scope_guard traceOnException([&activity]() {
+    if (std::uncaught_exceptions() > 0) {
+      TraceLoggingWriteStop(
+        activity,
+        "HWNDPageSource::OnFrame",
+        TraceLoggingValue("UncaughtExceptions", "Result"));
+    }
+  });
   auto frame = mFramePool.TryGetNextFrame();
   if (!frame) {
+    TraceLoggingWriteStop(
+      activity, __FUNCTION__, TraceLoggingValue("NoFrame", "Result"));
     return;
   }
+  TraceLoggingWriteTagged(activity, "HaveFrame");
+
   auto wgdxSurface = frame.Surface();
   auto interopSurface = wgdxSurface.as<
     ::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>();
@@ -275,7 +289,9 @@ void HWNDPageSource::OnFrame() noexcept {
   d3dSurface->GetDesc(&surfaceDesc);
   const auto contentSize = frame.ContentSize();
 
+  TraceLoggingWriteTagged(activity, "WaitingForLock");
   const std::unique_lock d2dLock(mDXR);
+  TraceLoggingWriteTagged(activity, "Locked");
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 
@@ -283,6 +299,7 @@ void HWNDPageSource::OnFrame() noexcept {
     D3D11_TEXTURE2D_DESC desc {};
     mTexture->GetDesc(&desc);
     if (surfaceDesc.Width != desc.Width || surfaceDesc.Height != desc.Height) {
+      TraceLoggingWriteTagged(activity, "ResettingTexture");
       mTexture = nullptr;
       mBitmap = nullptr;
     }
@@ -293,6 +310,7 @@ void HWNDPageSource::OnFrame() noexcept {
       mDXR.mD3DDevice->CreateTexture2D(&surfaceDesc, nullptr, mTexture.put()));
     winrt::check_hresult(mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
       mTexture.as<IDXGISurface>().get(), nullptr, mBitmap.put()));
+    TraceLoggingWriteTagged(activity, "CreatedTexture");
   }
 
   mContentSize = {
@@ -300,9 +318,14 @@ void HWNDPageSource::OnFrame() noexcept {
     static_cast<UINT>(contentSize.Height)};
 
   const D3D11_BOX box {0, 0, 0, mContentSize.width, mContentSize.height, 1};
+  TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
   ctx->CopySubresourceRegion(
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
   this->evNeedsRepaintEvent.Emit();
+  TraceLoggingWriteStop(
+    activity,
+    "HWNDPageSource::OnFrame",
+    TraceLoggingValue("Success", "Result"));
 }
 
 static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(

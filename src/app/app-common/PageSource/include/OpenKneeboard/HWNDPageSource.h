@@ -76,7 +76,7 @@ class HWNDPageSource final
   HWNDPageSource() = delete;
   HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
   winrt::fire_and_forget Init() noexcept;
-  void OnFrame() noexcept;
+  void OnFrame();
 
   winrt::apartment_context mUIThread;
   DXResources mDXR;
