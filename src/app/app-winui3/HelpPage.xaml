@@ -171,6 +171,14 @@
           </Grid>
         </Expander.Header>
         <StackPanel Orientation="Vertical" Spacing="8">
+          <TextBlock
+            Foreground="{ThemeResource TextFillColorPrimary}"
+            Style="{ThemeResource BodyTextBlockStyle}">
+            Debugging information can include personal information, such as your
+            computer username, language settings, installation paths, graphics
+            card make/model, VR headset make/model, and your OpenKneeboard
+            configuration.
+          </TextBlock>
           <Button Click="OnExportClick">
             <Grid ColumnDefinitions="Auto,*">
               <FontIcon
