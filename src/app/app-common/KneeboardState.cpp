@@ -242,6 +242,9 @@ void KneeboardState::PostUserAction(UserAction action) {
       this->SaveSettings();
       return;
     }
+    case UserAction::REPAINT_NOW:
+      this->evNeedsRepaintEvent.Emit();
+      return;
   }
   // Use `return` instead of `break` above
   OPENKNEEBOARD_BREAK;

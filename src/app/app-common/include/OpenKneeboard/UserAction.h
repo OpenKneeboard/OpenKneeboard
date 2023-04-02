@@ -43,7 +43,8 @@ namespace OpenKneeboard {
   IT(DISABLE_TINT) \
   IT(TOGGLE_TINT) \
   IT(INCREASE_BRIGHTNESS) \
-  IT(DECREASE_BRIGHTNESS)
+  IT(DECREASE_BRIGHTNESS) \
+  IT(REPAINT_NOW)
 
 enum class UserAction {
 #define IT(x) x,
