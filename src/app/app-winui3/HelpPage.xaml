@@ -174,12 +174,22 @@
           <TextBlock
             Foreground="{ThemeResource TextFillColorPrimary}"
             Style="{ThemeResource BodyTextBlockStyle}">
-            Debugging information can include personal information, such as your
-            Windows username, language settings, installation paths, graphics
-            card make/model, VR headset make/model, OpenXR drivers or tools, and
-            your OpenKneeboard configuration.
+            Debugging information and traces can include personal information,
+            such as your Windows username, language settings, installation paths,
+            graphics card make/model, VR headset make/model, OpenXR drivers or
+            tools, and your OpenKneeboard configuration. Sharing debugging information
+            or traces may share this information with others.
           </TextBlock>
-          <Button Click="OnExportClick">
+          <Button
+            x:Name="AgreeButton"
+            Click="OnAgreeClick"
+            Content="I understand and agree"
+            Style="{StaticResource AccentButtonStyle}"
+            IsEnabled="{x:Bind AgreeButtonIsEnabled, Mode=OneWay}"
+          />
+          <Button
+            Click="OnExportClick"
+            IsEnabled="{x:Bind AgreedToPrivacyWarning,Mode=OneWay}">
             <Grid ColumnDefinitions="Auto,*">
               <FontIcon
                 Grid.Column="0"
@@ -197,10 +207,12 @@
           <HyperlinkButton
             Content="Copy API events"
             Click="OnCopyGameEventsClick"
+            IsEnabled="{x:Bind AgreedToPrivacyWarning,Mode=OneWay}"
           />
           <HyperlinkButton
             Content="Copy debug messages"
             Click="OnCopyDPrintClick"
+            IsEnabled="{x:Bind AgreedToPrivacyWarning,Mode=OneWay}"
           />
         </StackPanel>
       </Expander>

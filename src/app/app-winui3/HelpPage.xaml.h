@@ -24,6 +24,7 @@
 // clang-format on
 
 #include "HelpPage.g.h"
+#include "WithPropertyChangedEvent.h"
 
 #include <OpenKneeboard/Events.h>
 
@@ -34,7 +35,9 @@
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
+struct HelpPage : HelpPageT<HelpPage>,
+                  private OpenKneeboard::EventReceiver,
+                  public OpenKneeboard::WithPropertyChangedEvent {
   HelpPage();
   ~HelpPage();
 
@@ -45,7 +48,7 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
   void OnCopyDPrintClick(const IInspectable&, const RoutedEventArgs&) noexcept;
-
+  void OnAgreeClick(const IInspectable&, const RoutedEventArgs&) noexcept;
   winrt::fire_and_forget OnExportClick(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
@@ -53,6 +56,9 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   winrt::fire_and_forget OnCheckForUpdatesClick(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
+
+  bool AgreedToPrivacyWarning() noexcept;
+  bool AgreeButtonIsEnabled() noexcept;
 
  private:
   winrt::apartment_context mUIThread;
@@ -69,6 +75,8 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   static std::string GetOpenXRRuntime() noexcept;
 
   void DisplayLicense(const std::string& header, const std::filesystem::path&);
+
+  bool mAgreedToPrivacyWarning = false;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

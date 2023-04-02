@@ -1,8 +1,11 @@
 namespace OpenKneeboardApp
 {
     [default_interface]
-    runtimeclass HelpPage: Microsoft.UI.Xaml.Controls.Page
+    runtimeclass HelpPage: Microsoft.UI.Xaml.Controls.Page, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         HelpPage();
+
+        Boolean AgreedToPrivacyWarning { get; };
+        Boolean AgreeButtonIsEnabled { get; };
     }
 }

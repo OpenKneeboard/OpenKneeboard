@@ -634,6 +634,24 @@ std::string HelpPage::GetOpenXRRuntime() noexcept {
   return ret;
 }
 
+bool HelpPage::AgreeButtonIsEnabled() noexcept {
+  return !mAgreedToPrivacyWarning;
+}
+
+bool HelpPage::AgreedToPrivacyWarning() noexcept {
+  return mAgreedToPrivacyWarning;
+}
+
+void HelpPage::OnAgreeClick(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
+  if (mAgreedToPrivacyWarning) {
+    return;
+  }
+  mAgreedToPrivacyWarning = true;
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
+}
+
 void HelpPage::DisplayLicense(
   const std::string& /* title */,
   const std::filesystem::path& path) {
