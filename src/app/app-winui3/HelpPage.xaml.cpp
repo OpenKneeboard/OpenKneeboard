@@ -58,6 +58,8 @@ using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
 
+bool HelpPage::mAgreedToPrivacyWarning = false;
+
 HelpPage::HelpPage() {
   InitializeComponent();
 

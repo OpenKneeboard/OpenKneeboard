@@ -77,7 +77,7 @@ struct HelpPage : HelpPageT<HelpPage>,
   void DisplayLicense(const std::string& header, const std::filesystem::path&);
   static void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
 
-  bool mAgreedToPrivacyWarning = false;
+  static bool mAgreedToPrivacyWarning;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {
