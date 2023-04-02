@@ -46,8 +46,6 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
     const RoutedEventArgs&) noexcept;
   void OnCopyDPrintClick(const IInspectable&, const RoutedEventArgs&) noexcept;
 
-  void OnDPrintLayoutChanged(const IInspectable&, const IInspectable&) noexcept;
-
   winrt::fire_and_forget OnExportClick(
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
@@ -73,7 +71,6 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
   static std::string GetOpenXRLayers(HKEY root) noexcept;
   static std::string GetOpenXRRuntime() noexcept;
 
-  void ScrollDPrintToEnd();
   void DisplayLicense(const std::string& header, const std::filesystem::path&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation

@@ -60,9 +60,6 @@ namespace winrt::OpenKneeboardApp::implementation {
 HelpPage::HelpPage() {
   InitializeComponent();
 
-  // The one true terminal size is 80x24, fight me.
-  DPrintScroll().MaxHeight(DPrintText().FontSize() * 24);
-
   this->PopulateVersion();
   this->PopulateEvents();
   this->PopulateDPrint();
@@ -342,9 +339,7 @@ winrt::fire_and_forget HelpPage::PopulateEvents() noexcept {
   }
 
   mGameEventsClipboardData = message;
-
-  co_await mUIThread;
-  EventsText().Text(winrt::to_hstring(message));
+  co_return;
 }
 
 winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
@@ -387,36 +382,6 @@ winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
   }
 
   mDPrintClipboardData = text;
-  auto weak = this->get_weak();
-  co_await mUIThread;
-  // Check again, just in case
-  if (gShuttingDown) {
-    co_return;
-  }
-  auto self = weak.get();
-  if (!self) {
-    co_return;
-  }
-  DPrintText().Text(text);
-  this->ScrollDPrintToEnd();
-}
-
-void HelpPage::OnDPrintLayoutChanged(
-  const IInspectable&,
-  const IInspectable&) noexcept {
-  if (DPrintExpander().IsExpanded()) {
-    if (!mWasDPrintExpanded) {
-      this->ScrollDPrintToEnd();
-    }
-    mWasDPrintExpanded = true;
-  } else {
-    mWasDPrintExpanded = false;
-  }
-}
-
-void HelpPage::ScrollDPrintToEnd() {
-  DPrintScroll().UpdateLayout();
-  DPrintScroll().ChangeView({}, {DPrintScroll().ScrollableHeight()}, {});
 }
 
 winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(

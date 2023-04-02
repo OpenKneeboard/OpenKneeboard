@@ -58,14 +58,14 @@
         Style="{ThemeResource TitleTextBlockStyle}">
         Supporters
       </TextBlock>
-			<Grid
+      <Grid
         ColumnDefinitions="Auto,*,Auto"
-				ColumnSpacing="8"
-				Padding="8"
-				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-				CornerRadius="4"
-				BorderThickness="1">
+        ColumnSpacing="8"
+        Padding="8"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1">
         <FontIcon
           Grid.Column="0"
           Glyph="&#xEB51;"
@@ -80,17 +80,11 @@
           diagnosing issues with the v1.4 betas.
         </TextBlock>
         <local:SponsorButton Grid.Column="2" VerticalAlignment="Top" />
-			</Grid>
-      <Grid ColumnDefinitions="*,Auto">
-        <TextBlock
-          Grid.Column="0"
-          Style="{ThemeResource TitleTextBlockStyle}">
-          About
-        </TextBlock>
-        <HyperlinkButton Grid.Column="1" Click="OnExportClick">
-          Save As...
-        </HyperlinkButton>
       </Grid>
+      <TextBlock
+        Style="{ThemeResource TitleTextBlockStyle}">
+        About
+      </TextBlock>
       <Expander
         HorizontalAlignment="Stretch"
         HorizontalContentAlignment="Stretch">
@@ -163,41 +157,6 @@
           <Grid ColumnDefinitions="Auto,*,Auto">
             <FontIcon
               Grid.Column="0"
-              Glyph="&#xE8F2;"
-              FontFamily="{StaticResource SymbolThemeFontFamily}"
-              Margin="0,0,12,0"
-              VerticalAlignment="Center"
-            />
-            <TextBlock
-              Grid.Column="1"
-              Text="Events"
-              Style="{StaticResource SubtitleTextBlockStyle}"
-              VerticalAlignment="Center"
-            />
-            <Button
-              Grid.Column="2"
-              Content="Copy"
-              Click="OnCopyGameEventsClick"
-              VerticalAlignment="Center"
-            />
-          </Grid>
-        </Expander.Header>
-        <TextBlock
-          x:Name="EventsText"
-          Style="{ThemeResource BodyTextBlockStyle}" 
-          IsTextSelectionEnabled="True"
-          FontFamily="Consolas"
-        />
-      </Expander>
-      <Expander
-        x:Name="DPrintExpander"
-        HorizontalAlignment="Stretch"
-        HorizontalContentAlignment="Stretch"
-        LayoutUpdated="OnDPrintLayoutChanged">
-        <Expander.Header>
-          <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-            <FontIcon
-              Grid.Column="0"
               Glyph="&#xE81C;"
               FontFamily="{StaticResource SymbolThemeFontFamily}"
               Margin="0,0,12,0"
@@ -205,29 +164,37 @@
             />
             <TextBlock
               Grid.Column="1"
-              Text="Debug Log"
+              Text="Debugging Information"
               Style="{StaticResource SubtitleTextBlockStyle}"
-              VerticalAlignment="Center"
-            />
-            <Button
-              Grid.Column="3"
-              Content="Copy"
-              Click="OnCopyDPrintClick"
               VerticalAlignment="Center"
             />
           </Grid>
         </Expander.Header>
-        <ScrollViewer
-          x:Name="DPrintScroll"
-          HorizontalScrollBarVisibility="Auto">
-          <TextBlock
-            x:Name="DPrintText"
-            Style="{ThemeResource BodyTextBlockStyle}" 
-            IsTextSelectionEnabled="True"
-            FontFamily="Consolas"
-            TextWrapping="NoWrap"
+        <StackPanel Orientation="Vertical" Spacing="8">
+          <Button Click="OnExportClick">
+            <Grid ColumnDefinitions="Auto,*">
+              <FontIcon
+                Grid.Column="0"
+                Glyph="&#xE792;"
+                FontFamily="{StaticResource SymbolThemeFontFamily}"
+              />
+              <TextBlock
+                Margin="4,0,0,0"
+                Grid.Column="1"
+              >
+                Save all as...
+              </TextBlock>
+            </Grid>
+          </Button>
+          <HyperlinkButton
+            Content="Copy API events"
+            Click="OnCopyGameEventsClick"
           />
-        </ScrollViewer>
+          <HyperlinkButton
+            Content="Copy debug messages"
+            Click="OnCopyDPrintClick"
+          />
+        </StackPanel>
       </Expander>
     </StackPanel>
   </ScrollViewer>
