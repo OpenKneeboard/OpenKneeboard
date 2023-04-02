@@ -57,14 +57,11 @@ struct HelpPage : HelpPageT<HelpPage>, private OpenKneeboard::EventReceiver {
  private:
   winrt::apartment_context mUIThread;
   std::string mVersionClipboardData;
-  std::string mGameEventsClipboardData;
-  std::wstring mDPrintClipboardData;
-  bool mWasDPrintExpanded = false;
 
   void PopulateVersion();
-  winrt::fire_and_forget PopulateEvents() noexcept;
-  winrt::fire_and_forget PopulateDPrint() noexcept;
   void PopulateLicenses() noexcept;
+  std::string GetGameEventsAsString() noexcept;
+  std::wstring GetDPrintMessagesAsWString() noexcept;
 
   static std::string GetUpdateLog() noexcept;
   static std::string GetOpenXRInfo() noexcept;

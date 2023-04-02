@@ -61,26 +61,7 @@ HelpPage::HelpPage() {
   InitializeComponent();
 
   this->PopulateVersion();
-  this->PopulateEvents();
-  this->PopulateDPrint();
   this->PopulateLicenses();
-
-  AddEventListener(
-    TroubleshootingStore::Get()->evGameEventReceived,
-    std::bind_front(&HelpPage::PopulateEvents, this));
-
-  auto weakThis = this->get_weak();
-  AddEventListener(
-    TroubleshootingStore::Get()->evDPrintMessageReceived, [weakThis]() {
-      [](auto weak) noexcept -> winrt::fire_and_forget {
-        // always force a reschedule
-        co_await winrt::resume_background();
-        auto self = weak.get();
-        if (self) {
-          self->PopulateDPrint();
-        }
-      }(weakThis);
-    });
 
   QuickStartLink().Click([](auto&, auto&) -> winrt::fire_and_forget {
     const auto quickStartPath = RuntimeFiles::GetInstallationDirectory()
@@ -152,7 +133,7 @@ void HelpPage::OnCopyVersionDataClick(
 void HelpPage::OnCopyGameEventsClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
-  SetClipboardText(mGameEventsClipboardData);
+  SetClipboardText(GetGameEventsAsString());
 }
 
 template <class C, class T>
@@ -220,8 +201,8 @@ winrt::fire_and_forget HelpPage::OnExportClick(
     AddFile("timestamp.txt", buffer);
   }
 
-  AddFile("debug-log.txt", winrt::to_string(mDPrintClipboardData));
-  AddFile("game-events.txt", mGameEventsClipboardData);
+  AddFile("debug-log.txt", winrt::to_string(GetDPrintMessagesAsWString()));
+  AddFile("api-events.txt", GetGameEventsAsString());
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
   AddFile("version.txt", mVersionClipboardData);
@@ -298,21 +279,21 @@ winrt::fire_and_forget HelpPage::OnExportClick(
 void HelpPage::OnCopyDPrintClick(
   const IInspectable&,
   const RoutedEventArgs&) noexcept {
-  SetClipboardText(mDPrintClipboardData);
+  SetClipboardText(GetDPrintMessagesAsWString());
 }
 
-winrt::fire_and_forget HelpPage::PopulateEvents() noexcept {
+std::string HelpPage::GetGameEventsAsString() noexcept {
   auto events = TroubleshootingStore::Get()->GetGameEvents();
 
-  std::string message;
+  std::string ret;
 
   if (events.empty()) {
-    message = std::format(
+    ret = std::format(
       "No events as of {}", ReadableTime(std::chrono::system_clock::now()));
   }
 
   for (const auto& event: events) {
-    message += "\n\n";
+    ret += "\n\n";
 
     std::string_view name(event.mName);
     const char prefix[] = "com.fredemmott.openkneeboard";
@@ -323,7 +304,7 @@ winrt::fire_and_forget HelpPage::PopulateEvents() noexcept {
       name.remove_prefix('.');
     }
 
-    message += std::format(
+    ret += std::format(
       "{}:\n"
       "  Latest value:  '{}'\n"
       "  First seen:    {}\n"
@@ -338,22 +319,15 @@ winrt::fire_and_forget HelpPage::PopulateEvents() noexcept {
       event.mUpdateCount);
   }
 
-  mGameEventsClipboardData = message;
-  co_return;
+  return ret;
 }
 
-winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
-  // Even if our object is still alive, we need to be careful
-  // not to attempt to use the UI thread apartment context
-  // once the main window has gone.
-  if (gShuttingDown) {
-    co_return;
-  }
+std::wstring HelpPage::GetDPrintMessagesAsWString() noexcept {
   auto messages = TroubleshootingStore::Get()->GetDPrintMessages();
 
-  std::wstring text;
+  std::wstring ret;
   if (messages.empty()) {
-    text = L"No log messages (?!)";
+    ret = L"No log messages (?!)";
   }
 
   bool first = true;
@@ -361,7 +335,7 @@ winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
     if (first) [[unlikely]] {
       first = false;
     } else {
-      text += L'\n';
+      ret += L'\n';
     }
 
     auto exe = std::wstring_view(entry.mExecutable);
@@ -372,7 +346,7 @@ winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
       }
     }
 
-    text += std::format(
+    ret += std::format(
       L"[{:%F %T} {} ({})] {}: {}",
       ReadableTime(entry.mWhen),
       exe,
@@ -381,7 +355,7 @@ winrt::fire_and_forget HelpPage::PopulateDPrint() noexcept {
       entry.mMessage);
   }
 
-  mDPrintClipboardData = text;
+  return ret;
 }
 
 winrt::fire_and_forget HelpPage::OnCheckForUpdatesClick(
