@@ -6,7 +6,12 @@ Go to https://openkneeboard.com for more information.
 
 ## License
 
-OpenKneeboard is licensed under the GNU General Public License, version 2.
+OpenKneeboard is licensed under the [GNU General Public License, version 2](gpl-2.0.txt), with an exception to permit certain additional dependencies. For details, see [LICENSE](LICENSE).
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
 This project uses several third-party libraries, which are used and distributed under their own license terms.
 
