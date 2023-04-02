@@ -51,7 +51,15 @@
           useful; I’m not able to commit to support, bug fixes, or feature development. While 
           I try to be active, please do not @mention, email, or DM me for individual help - if
           the troubleshooting guides don't solve a problem, use GitHub Discussions or the Help
-          channel in Discord instead.
+          channel in Discord instead. 
+        </TextBlock>
+        <TextBlock
+          Foreground="{ThemeResource TextFillColorSecondary}"
+          Style="{ThemeResource CaptionTextBlockStyle}">
+          This program is distributed in the hope that it will be useful,
+          but WITHOUT ANY WARRANTY; without even the implied warranty of
+          MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+          license information below for details.
         </TextBlock>
       </StackPanel>
       <TextBlock
