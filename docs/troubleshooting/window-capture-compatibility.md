@@ -21,3 +21,4 @@ This not necessarily a bug in the apps; Windows only supports mouse interaction 
 
 - Windows 10 Calculator (UWP)
 - Map drag-and-drop in LittleNavMap
+- DCSTheWay
