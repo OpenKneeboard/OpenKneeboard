@@ -21,6 +21,7 @@
 #include <OpenKneeboard/TabPreviousPageAction.h>
 #include <OpenKneeboard/ToggleBookmarkAction.h>
 #include <OpenKneeboard/UserActionHandler.h>
+#include <OpenKneeboard/ReloadTabAction.h>
 
 namespace OpenKneeboard {
 
@@ -39,6 +40,8 @@ std::unique_ptr<UserActionHandler> UserActionHandler::Create(
     case UserAction::TOGGLE_BOOKMARK:
       return std::make_unique<ToggleBookmarkAction>(
         kneeboard, kneeboardView, tab);
+    case UserAction::RELOAD_CURRENT_TAB:
+      return std::make_unique<ReloadTabAction>(kneeboard, tab);
     default:
       return {nullptr};
   }

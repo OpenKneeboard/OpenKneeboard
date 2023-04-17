@@ -44,7 +44,8 @@ namespace OpenKneeboard {
   IT(TOGGLE_TINT) \
   IT(INCREASE_BRIGHTNESS) \
   IT(DECREASE_BRIGHTNESS) \
-  IT(REPAINT_NOW)
+  IT(REPAINT_NOW) \
+  IT(RELOAD_CURRENT_TAB)
 
 enum class UserAction {
 #define IT(x) x,
