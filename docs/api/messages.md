@@ -58,8 +58,12 @@ The value is one of:
 - `TOGGLE_TINT`
 - `INCREASE_BRIGHTNESS`
 - `DECREASE_BRIGHTNESS`
+- `RELOAD_CURRENT_TAB`
 
 `TINT`, `BRIGHTNESS`, and `BOOKMARK` actions are new in v1.4 and above.
+
+`RELOAD_CURRENT_TAB` is new in v1.5 and above. Use with caution since there
+is no undo for this function!
 
 # SetTabByID
 
