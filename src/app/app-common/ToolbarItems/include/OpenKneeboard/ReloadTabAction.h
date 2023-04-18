@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/ToolbarAction.h>
+#include <OpenKneeboard/UserActionHandler.h>
 
 namespace OpenKneeboard {
 
@@ -30,6 +31,7 @@ class IKneeboardView;
 
 class ReloadTabAction final : public ToolbarAction,
                               public EventReceiver,
+                              public UserActionHandler,
                               public virtual IToolbarItemWithConfirmation {
  public:
   ReloadTabAction(KneeboardState*, const std::shared_ptr<ITabView>&);
