@@ -25,24 +25,24 @@
           Quick-start guide
         </HyperlinkButton>
         <HyperlinkButton
-          NavigateUri="https://github.com/OpenKneeboard/OpenKneeboard/tree/master/README.md">
-          README
-        </HyperlinkButton>
-        <HyperlinkButton
-          NavigateUri="https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs">
+          NavigateUri="https://go.openkneeboard.com/docs">
           Documentation
         </HyperlinkButton>
         <HyperlinkButton
-          NavigateUri="https://github.com/OpenKneeboard/OpenKneeboard/tree/master/docs/troubleshooting">
+          NavigateUri="https://go.openkneeboard.com/troubleshooting">
           Troubleshooting guides
         </HyperlinkButton>
         <HyperlinkButton
-          NavigateUri="https://discord.gg/CWrvKfuff3">
+          NavigateUri="https://go.openkneeboard.com/discord">
           Discord
         </HyperlinkButton>
         <HyperlinkButton
           NavigateUri="https://github.com/OpenKneeboard/OpenKneeboard/discussions">
           GitHub Discussions
+        </HyperlinkButton>
+        <HyperlinkButton
+          NavigateUri="https://go.openkneeboard.com/issues">
+          Bug Reports and Feature Requests
         </HyperlinkButton>
         <TextBlock
           Foreground="{ThemeResource TextFillColorSecondary}"
