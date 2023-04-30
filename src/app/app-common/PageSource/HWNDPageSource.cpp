@@ -316,6 +316,11 @@ void HWNDPageSource::OnFrame() {
   mContentSize = {
     static_cast<UINT>(contentSize.Width),
     static_cast<UINT>(contentSize.Height)};
+  TraceLoggingWriteTagged(
+    activity,
+    "ContentSize",
+    TraceLoggingValue(contentSize.Width),
+    TraceLoggingValue(contentSize.Height));
 
   const D3D11_BOX box {0, 0, 0, mContentSize.width, mContentSize.height, 1};
   TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
