@@ -88,6 +88,8 @@ class HWNDPageSource final
   };
   std::unordered_map<HWND, HookHandles> mHooks;
 
+  winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice
+    mWinRTD3DDevice {nullptr};
   winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
     nullptr};
   winrt::Windows::Graphics::Capture::GraphicsCaptureSession mCaptureSession {

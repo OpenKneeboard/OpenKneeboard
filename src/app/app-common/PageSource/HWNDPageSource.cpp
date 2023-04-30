@@ -120,14 +120,13 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
     }
 
     winrt::com_ptr<IInspectable> inspectable {nullptr};
-    WGDX::Direct3D11::IDirect3DDevice winrtD3D {nullptr};
     winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
 
       mDXR.mDXGIDevice.get(),
-      reinterpret_cast<IInspectable**>(winrt::put_abi(winrtD3D))));
+      reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
 
     mFramePool = WGC::Direct3D11CaptureFramePool::Create(
-      winrtD3D,
+      mWinRTD3DDevice,
       WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
       2,
       item.Size());
@@ -278,6 +277,17 @@ void HWNDPageSource::OnFrame() noexcept {
   const std::unique_lock d2dLock(mDXR);
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   mDXR.mD3DDevice->GetImmediateContext(ctx.put());
+
+  if (
+    contentSize.Width > surfaceDesc.Width
+    || contentSize.Height > surfaceDesc.Height) {
+    mFramePool.Recreate(
+      mWinRTD3DDevice,
+      WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
+      2,
+      contentSize);
+    return;
+  }
 
   if (mTexture) {
     D3D11_TEXTURE2D_DESC desc {};
