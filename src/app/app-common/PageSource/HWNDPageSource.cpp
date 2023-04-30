@@ -297,11 +297,38 @@ void HWNDPageSource::OnFrame() {
   if (
     contentSize.Width > surfaceDesc.Width
     || contentSize.Height > surfaceDesc.Height) {
+    auto size = contentSize;
+    // Don't create massive buffers if it just moves between a few fixed
+    // sizes, but create full-screen buffers for smoothness if it's being
+    // resized a bunch
+    if (++mRecreations > 10) {
+      const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+      if (monitor) {
+        MONITORINFO info {sizeof(MONITORINFO)};
+        if (GetMonitorInfoW(monitor, &info)) {
+          const auto monitorWidth = info.rcMonitor.right - info.rcMonitor.left;
+          const auto monitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
+          dprintf(
+            L"Window capture monitor is {}x{}", monitorWidth, monitorHeight);
+          if (monitorWidth > size.Width) {
+            size.Width = monitorWidth;
+          }
+          if (monitorHeight > size.Height) {
+            size.Height = monitorHeight;
+          }
+        }
+      }
+    }
+    TraceLoggingWriteTagged(
+      activity,
+      "RecreatingPool",
+      TraceLoggingValue(size.Width, "Width"),
+      TraceLoggingValue(size.Height, "Height"));
     mFramePool.Recreate(
       mWinRTD3DDevice,
       WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
       2,
-      contentSize);
+      size);
     TraceLoggingWriteStop(
       activity,
       "HWNDPageSource::OnFrame",
