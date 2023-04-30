@@ -6,7 +6,7 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
-    addressable (2.8.1)
+    addressable (2.8.4)
       public_suffix (>= 2.0.2, < 6.0)
     coffee-script (2.4.1)
       coffee-script-source
@@ -197,7 +197,7 @@ GEM
       html-pipeline (~> 2.2)
       jekyll (>= 3.0, < 5.0)
     json (2.6.3)
-    just-the-docs (0.4.2)
+    just-the-docs (0.5.0)
       jekyll (>= 3.8.5)
       jekyll-seo-tag (>= 2.0)
       rake (>= 12.3.1)
