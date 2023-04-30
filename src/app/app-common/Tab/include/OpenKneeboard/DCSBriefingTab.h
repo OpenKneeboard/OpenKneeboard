@@ -19,11 +19,11 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/PageSourceWithDelegates.h>
-
 #include "DCSTab.h"
 #include "TabBase.h"
+
+#include <OpenKneeboard/DCSWorld.h>
+#include <OpenKneeboard/PageSourceWithDelegates.h>
 
 namespace OpenKneeboard {
 
@@ -64,10 +64,6 @@ class DCSBriefingTab final : public TabBase,
   std::shared_ptr<ImageFilePageSource> mImagePages;
   std::shared_ptr<PlainTextPageSource> mTextPages;
   std::filesystem::path mInstallationPath;
-  std::string MissionTextLookup(
-    const LuaRef& mission,
-    const LuaRef& dictionary,
-    const char* key);
 
   struct LatLong {
     DCSWorld::GeoReal mLat;
@@ -100,6 +96,23 @@ class DCSBriefingTab final : public TabBase,
     }
     throw std::logic_error("Invalid coalition");
   }
+
+  /** DCS supports localised text being stored in a dictionary.
+   *
+   * In this case the string in mission Lua will start with DictKey_ and should
+   * be used as a key to reference in the dictionary. If it doesn't start with
+   * DictKey_ it can be used directly. This has only been observed in older
+   * files - DCS mission editor by default seems to put everything in the
+   * dictionary now.
+   *
+   * @param mission mission lua object
+   * @param dictionary dictionary lua object
+   * @param key key to lookup
+   */
+  std::string GetMissionText(
+    const LuaRef& mission,
+    const LuaRef& dictionary,
+    const char* key);
 
   void SetMissionImages(
     const LuaRef& mission,

@@ -28,6 +28,7 @@
 #include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/Lua.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
+
 #include <OpenKneeboard/dprint.h>
 
 #include <chrono>
@@ -100,7 +101,7 @@ void DCSBriefingTab::SetMissionImages(
 void DCSBriefingTab::PushMissionOverview(
   const LuaRef& mission,
   const LuaRef& dictionary) try {
-  const std::string title = MissionTextLookup(mission, dictionary, "sortie");
+  const std::string title = GetMissionText(mission, dictionary, "sortie");
 
   const auto startDate = mission["date"];
   const auto startSecondsSinceMidnight = mission["start_time"];
@@ -286,16 +287,7 @@ void DCSBriefingTab::PushBullseyeData(const LuaRef& mission) try {
   dprintf("LuaIndexError when loading mission bullseye data: {}", e.what());
 }
 
-/// DCS supports localised text being stored in a dictionary. In this case
-/// the string in mission lua will start with DictKey_ and should be used
-/// as a key to reference in the dictionary. If it doesn't start with DictKey_
-/// it can be used directly. This has only been observed in older files - DCS
-/// mission editor by default seems to put everything in the dictionary now.
-/// @param mission mission lua object
-/// @param dictionary dictionary lua object
-/// @param key key to lookup
-/// @return
-std::string DCSBriefingTab::MissionTextLookup(
+std::string DCSBriefingTab::GetMissionText(
   const LuaRef& mission,
   const LuaRef& dictionary,
   const char* key) {
@@ -314,7 +306,7 @@ void DCSBriefingTab::PushMissionSituation(
     _("SITUATION\n"
       "\n"
       "{}"),
-    MissionTextLookup(mission, dictionary, "descriptionText")));
+    GetMissionText(mission, dictionary, "descriptionText")));
 } catch (const LuaIndexError& e) {
   dprintf("LuaIndexError when loading mission situation: {}", e.what());
 }
@@ -326,12 +318,12 @@ void DCSBriefingTab::PushMissionObjective(
     _("OBJECTIVE\n"
       "\n"
       "{}"),
-    MissionTextLookup(
+    GetMissionText(
       mission,
       dictionary,
       CoalitionKey(
-                 "descriptionNeutralTask",
-                 "descriptionRedTask",
+        "descriptionNeutralTask",
+        "descriptionRedTask",
         "descriptionBlueTask"))));
 } catch (const LuaIndexError& e) {
   dprintf("LuaIndexError when loading mission objective: {}", e.what());
