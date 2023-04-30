@@ -64,6 +64,10 @@ class DCSBriefingTab final : public TabBase,
   std::shared_ptr<ImageFilePageSource> mImagePages;
   std::shared_ptr<PlainTextPageSource> mTextPages;
   std::filesystem::path mInstallationPath;
+  std::string MissionTextLookup(
+    const LuaRef& mission,
+    const LuaRef& dictionary,
+    const char* key);
 
   struct LatLong {
     DCSWorld::GeoReal mLat;
