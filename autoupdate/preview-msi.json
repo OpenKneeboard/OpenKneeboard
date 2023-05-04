@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/97647788",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/97647788/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/97647788/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4.2",
-    "id": 97647788,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/101888085",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/101888085/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/101888085/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.4.3",
+    "id": 101888085,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84F0fys",
-    "tag_name": "v1.4.2",
+    "node_id": "RE_kwDOGk0DR84GErBV",
+    "tag_name": "v1.4.3",
     "target_commitish": "master",
-    "name": "v1.4.2 - improved file monitoring and logout/shutdown handling",
+    "name": "v1.4.3 - bugfixes: DCS DCE .miz compatibility, captured window cropping",
     "draft": false,
     "prerelease": false,
-    "created_at": "2023-03-31T14:08:17Z",
-    "published_at": "2023-03-31T14:54:33Z",
+    "created_at": "2023-05-04T14:00:51Z",
+    "published_at": "2023-05-04T14:45:02Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/101772043",
-        "id": 101772043,
-        "node_id": "RA_kwDOGk0DR84GEOsL",
-        "name": "OpenKneeboard-v1.4.2-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/106703327",
+        "id": 106703327,
+        "node_id": "RA_kwDOGk0DR84GXCnf",
+        "name": "OpenKneeboard-v1.4.3-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 138159622,
+        "size": 138161100,
         "download_count": 0,
-        "created_at": "2023-03-31T14:47:18Z",
-        "updated_at": "2023-03-31T14:47:21Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.2/OpenKneeboard-v1.4.2-DebugSymbols.zip"
+        "created_at": "2023-05-04T14:39:15Z",
+        "updated_at": "2023-05-04T14:39:18Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.3/OpenKneeboard-v1.4.3-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/101772044",
-        "id": 101772044,
-        "node_id": "RA_kwDOGk0DR84GEOsM",
-        "name": "OpenKneeboard-v1.4.2.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/106703326",
+        "id": 106703326,
+        "node_id": "RA_kwDOGk0DR84GXCne",
+        "name": "OpenKneeboard-v1.4.3.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -97,15 +97,16 @@
         "content_type": "application/octet-stream",
         "state": "uploaded",
         "size": 37052416,
-        "download_count": 2,
-        "created_at": "2023-03-31T14:47:18Z",
-        "updated_at": "2023-03-31T14:47:19Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.2/OpenKneeboard-v1.4.2.msi"
+        "download_count": 1,
+        "created_at": "2023-05-04T14:39:15Z",
+        "updated_at": "2023-05-04T14:39:17Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.3/OpenKneeboard-v1.4.3.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4.2",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4.2",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.4.2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.2/OpenKneeboard-v1.4.2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n- fixed OpenKneeboard reloading modified files *too* quickly and showing `[empty file]`\r\n- OpenKneeboard now closes itself properly if it's open when logging out/shutting down/restarting Windows; no longer shows \"Would you like to report a crash?\" afterwards.\r\n- OpenKneeboard now records which OpenKneeboard updates are installed and when, and includes this information in the debug information created with Help -> 'Save As...'; this is to help troubleshoot \"since I updated...\" issues in the future.\r\n",
-    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/318"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.4.3",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.4.3",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.4.3.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.4.3/OpenKneeboard-v1.4.3.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nYou can now ❤️ [sponsor OpenKneeboard](https://github.com/sponsors/fredemmott) ❤️ - thanks to @Andrew-0405, @PickRelated, @bobd0814, and @nittch!\r\n\r\n- fix crash with some DCS missions, especially those generated by DCE; thanks to @bbirchnz!\r\n- fix captured windows sometimes being cropped when enlarged\r\n- updated in-app help links",
+    "discussion_url": "https://github.com/OpenKneeboard/OpenKneeboard/discussions/346",
+    "mentions_count": 5
   }
 ]
