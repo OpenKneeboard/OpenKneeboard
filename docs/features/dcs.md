@@ -30,6 +30,8 @@ This will show any *image files* for the current aircraft, from:
 - The `F-16C` module in the DCS installation corresponds to the `FA-16C_60` aircraft in *Saved Games*
 - The `FA-18C` module in the DCS installation corresponds to the `FA-18C_hornet` aircraft in *Saved Games*
 
+For example, I put my A-10C kneeboard images in `C:\Users\fred\Saved Games\DCS.openbeta\KNEEBOARD\A-10C_2`.
+
 OpenKneeboard aims to look for these files in the same location as DCS's built-in kneeboard, however *it is only able to display image files*; it is not able to display any kneeboard pages written in Lua; for example, these **are not supported**, and are unlikely to be supported in any future version:
 
 - generated charts
