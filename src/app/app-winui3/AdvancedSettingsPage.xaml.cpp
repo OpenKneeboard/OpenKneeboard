@@ -254,7 +254,11 @@ bool AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation()
 void AdvancedSettingsPage::Quirk_OculusSDK_DiscardDepthInformation(
   bool value) noexcept {
   auto vrc = gKneeboard->GetVRSettings();
-  vrc.mQuirks.mOculusSDK_DiscardDepthInformation = value;
+  auto& vrcValue = vrc.mQuirks.mOculusSDK_DiscardDepthInformation;
+  if (value == vrcValue) {
+    return;
+  }
+  vrcValue = value;
   gKneeboard->SetVRSettings(vrc);
 }
 
@@ -266,7 +270,11 @@ bool AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer()
 void AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(
   bool value) noexcept {
   auto vrc = gKneeboard->GetVRSettings();
-  vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
+  auto& vrcValue = vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
+  if (value == vrcValue) {
+    return;
+  }
+  vrcValue = value;
   gKneeboard->SetVRSettings(vrc);
 }
 
