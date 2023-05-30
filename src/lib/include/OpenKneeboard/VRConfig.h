@@ -19,10 +19,10 @@
  */
 #pragma once
 
+#include "bitflags.h"
+
 #include <cstdint>
 #include <numbers>
-
-#include "bitflags.h"
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 #include <OpenKneeboard/json_fwd.h>
@@ -45,9 +45,10 @@ struct VRRenderConfig {
   struct Quirks final {
     bool mOculusSDK_DiscardDepthInformation {true};
     bool mVarjo_OpenXR_D3D12_DoubleBuffer {true};
+    bool mOpenXR_AlwaysUpdateSwapchain {false};
     constexpr auto operator<=>(const Quirks&) const noexcept = default;
   };
-  Quirks mQuirks;
+  Quirks mQuirks {};
   bool mEnableGazeInputFocus {true};
   bool mEnableGazeZoom {true};
 

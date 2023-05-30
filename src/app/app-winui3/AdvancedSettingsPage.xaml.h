@@ -23,10 +23,10 @@
 #include "pch.h"
 // clang-format on
 
-#include <OpenKneeboard/Events.h>
-
 #include "AdvancedSettingsPage.g.h"
 #include "WithPropertyChangedEvent.h"
+
+#include <OpenKneeboard/Events.h>
 
 using namespace winrt::Microsoft::UI::Xaml;
 
@@ -96,6 +96,9 @@ struct AdvancedSettingsPage
 
   bool Quirk_Varjo_OpenXR_D3D12_DoubleBuffer() const noexcept;
   void Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(bool value) noexcept;
+
+  bool Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept;
+  void Quirk_OpenXR_AlwaysUpdateSwapchain(bool value) noexcept;
 
   bool CanChangeElevation() const noexcept;
 

@@ -20,20 +20,21 @@
 
 #include "OpenXRKneeboard.h"
 
+#include "OpenXRD3D11Kneeboard.h"
+#include "OpenXRD3D12Kneeboard.h"
+#include "OpenXRNext.h"
+#include "OpenXRVulkanKneeboard.h"
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
-#include <loader_interfaces.h>
 
 #include <memory>
 #include <string>
 
-#include "OpenXRD3D11Kneeboard.h"
-#include "OpenXRD3D12Kneeboard.h"
-#include "OpenXRNext.h"
-#include "OpenXRVulkanKneeboard.h"
+#include <loader_interfaces.h>
 
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
@@ -197,7 +198,10 @@ XrResult OpenXRKneeboard::xrEndFrame(
     if (renderParams.mIsLookingAtKneeboard) {
       topMost = layerIndex;
     }
-    if (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey) {
+    const auto needsRender
+      = (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey)
+      || config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+    if (needsRender) {
       if (!this->Render(swapchain, snapshot, layerIndex, renderParams)) {
         dprint("Render failed.");
         OPENKNEEBOARD_BREAK;

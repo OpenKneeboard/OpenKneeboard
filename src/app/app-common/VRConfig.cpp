@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/VRConfig.h>
+
 #include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
@@ -36,7 +37,8 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderConfig::Quirks,
   mOculusSDK_DiscardDepthInformation,
-  mVarjo_OpenXR_D3D12_DoubleBuffer)
+  mVarjo_OpenXR_D3D12_DoubleBuffer,
+  mOpenXR_AlwaysUpdateSwapchain)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderConfig::GazeTargetScale,
