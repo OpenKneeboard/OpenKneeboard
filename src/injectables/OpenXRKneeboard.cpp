@@ -135,17 +135,25 @@ OpenXRNext* OpenXRKneeboard::GetOpenXR() {
 XrResult OpenXRKneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "xrEndFrame");
   if (frameEndInfo->layerCount == 0) {
+    TraceLoggingWriteStop(
+      activity, "xrEndFrame", TraceLoggingValue("No layers", "Result"));
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
   auto d3d11 = this->GetD3D11Device();
   if (!d3d11) {
+    TraceLoggingWriteStop(
+      activity, "xrEndFrame", TraceLoggingValue("No D3D11", "Result"));
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
   auto snapshot = mSHM.MaybeGet(d3d11.get(), SHM::ConsumerKind::OpenXR);
   if (!snapshot.IsValid()) {
+    TraceLoggingWriteStop(
+      activity, "xrEndFrame", TraceLoggingValue("No snapshot", "Result"));
     // Don't spam: expected, if OpenKneeboard isn't running
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
@@ -170,6 +178,11 @@ XrResult OpenXRKneeboard::xrEndFrame(
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     auto layer = *snapshot.GetLayerConfig(layerIndex);
     if (!layer.IsValid()) {
+      TraceLoggingWriteStop(
+        activity,
+        "xrEndFrame",
+        TraceLoggingValue(layerIndex, "LayerNumber"),
+        TraceLoggingValue("Invalid layer config", "Result"));
       return mOpenXR->xrEndFrame(session, frameEndInfo);
     }
 
@@ -188,6 +201,11 @@ XrResult OpenXRKneeboard::xrEndFrame(
       if (!swapchain) {
         dprintf("Failed to create swapchain for layer {}", layerIndex);
         OPENKNEEBOARD_BREAK;
+        TraceLoggingWriteStop(
+          activity,
+          "xrEndFrame",
+          TraceLoggingValue(layerIndex, "LayerNumber"),
+          TraceLoggingValue("Failed to create swapchain", "Result"));
         return mOpenXR->xrEndFrame(session, frameEndInfo);
       }
       dprintf("Created swapchain for layer {}", layerIndex);
@@ -198,13 +216,27 @@ XrResult OpenXRKneeboard::xrEndFrame(
     if (renderParams.mIsLookingAtKneeboard) {
       topMost = layerIndex;
     }
-    const auto needsRender
-      = (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey)
-      || config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+    const auto staleCacheKey
+      = (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey);
+    const auto alwaysRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+    const auto needsRender = staleCacheKey || alwaysRender;
+
     if (needsRender) {
+      TraceLoggingWriteTagged(
+        activity,
+        "xrEndFrame_Render",
+        TraceLoggingValue(layerIndex, "LayerNumber"),
+        TraceLoggingValue(alwaysRender, "AlwaysRender"),
+        TraceLoggingValue(mRenderCacheKeys.at(layerIndex), "PreviousCacheKey"),
+        TraceLoggingValue(renderParams.mCacheKey, "CurrentCacheKey"));
       if (!this->Render(swapchain, snapshot, layerIndex, renderParams)) {
         dprint("Render failed.");
         OPENKNEEBOARD_BREAK;
+        TraceLoggingWriteStop(
+          activity,
+          "xrEndFrame",
+          TraceLoggingValue(layerIndex, "LayerNumber"),
+          TraceLoggingValue("Render failed", "Result"));
         return mOpenXR->xrEndFrame(session, frameEndInfo);
       }
       mRenderCacheKeys.at(layerIndex) = renderParams.mCacheKey;
@@ -244,10 +276,14 @@ XrResult OpenXRKneeboard::xrEndFrame(
   nextFrameEndInfo.layers = nextLayers.data();
   nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
 
-  auto nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
+  const auto nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
   if (nextResult != XR_SUCCESS) {
     OPENKNEEBOARD_BREAK;
   }
+  TraceLoggingWriteStop(
+    activity,
+    "xrEndFrame",
+    TraceLoggingValue(static_cast<const int64_t>(nextResult), "XrResult"));
   return nextResult;
 }
 
