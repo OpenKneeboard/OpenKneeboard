@@ -48,7 +48,7 @@ struct VRRenderConfig {
     bool mOpenXR_AlwaysUpdateSwapchain {false};
     constexpr auto operator<=>(const Quirks&) const noexcept = default;
   };
-  Quirks mQuirks;
+  Quirks mQuirks {};
   bool mEnableGazeInputFocus {true};
   bool mEnableGazeZoom {true};
 
@@ -80,7 +80,7 @@ static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
-  VRLayerConfig mPrimaryLayer;
+  VRLayerConfig mPrimaryLayer {};
   float mMaxWidth = 0.15f;
   float mMaxHeight = 0.25f;
 
