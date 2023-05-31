@@ -23,8 +23,6 @@
 #include "AdvancedSettingsPage.g.cpp"
 // clang-format on
 
-#include "Globals.h"
-
 #include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Filesystem.h>
@@ -34,13 +32,13 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/VRConfig.h>
-
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/weak_wrap.h>
-
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
+
+#include "Globals.h"
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml;
@@ -273,21 +271,6 @@ void AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(
   bool value) noexcept {
   auto vrc = gKneeboard->GetVRSettings();
   auto& vrcValue = vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
-  if (value == vrcValue) {
-    return;
-  }
-  vrcValue = value;
-  gKneeboard->SetVRSettings(vrc);
-}
-
-bool AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept {
-  return gKneeboard->GetVRSettings().mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-}
-
-void AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain(
-  bool value) noexcept {
-  auto vrc = gKneeboard->GetVRSettings();
-  auto& vrcValue = vrc.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
   if (value == vrcValue) {
     return;
   }
