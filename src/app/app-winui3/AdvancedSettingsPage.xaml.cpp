@@ -23,6 +23,8 @@
 #include "AdvancedSettingsPage.g.cpp"
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/AppSettings.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Filesystem.h>
@@ -32,13 +34,13 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/VRConfig.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/weak_wrap.h>
-#include <winrt/Microsoft.UI.Xaml.Controls.h>
 
-#include "Globals.h"
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml;

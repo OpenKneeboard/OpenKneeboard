@@ -23,10 +23,10 @@
 #include "pch.h"
 // clang-format on
 
-#include <OpenKneeboard/Events.h>
-
 #include "AdvancedSettingsPage.g.h"
 #include "WithPropertyChangedEvent.h"
+
+#include <OpenKneeboard/Events.h>
 
 using namespace winrt::Microsoft::UI::Xaml;
 
