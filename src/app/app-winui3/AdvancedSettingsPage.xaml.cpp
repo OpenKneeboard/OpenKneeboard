@@ -280,6 +280,21 @@ void AdvancedSettingsPage::Quirk_Varjo_OpenXR_D3D12_DoubleBuffer(
   gKneeboard->SetVRSettings(vrc);
 }
 
+bool AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain() const noexcept {
+  return gKneeboard->GetVRSettings().mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+}
+
+void AdvancedSettingsPage::Quirk_OpenXR_AlwaysUpdateSwapchain(
+  bool value) noexcept {
+  auto vrc = gKneeboard->GetVRSettings();
+  auto& vrcValue = vrc.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+  if (value == vrcValue) {
+    return;
+  }
+  vrcValue = value;
+  gKneeboard->SetVRSettings(vrc);
+}
+
 bool AdvancedSettingsPage::CanChangeElevation() const noexcept {
   return !IsShellElevated();
 }
