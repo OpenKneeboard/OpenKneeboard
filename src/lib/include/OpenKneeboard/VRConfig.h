@@ -48,7 +48,7 @@ struct VRRenderConfig {
     bool mOpenXR_AlwaysUpdateSwapchain {false};
     constexpr auto operator<=>(const Quirks&) const noexcept = default;
   };
-  Quirks mQuirks {};
+  Quirks mQuirks;
   bool mEnableGazeInputFocus {true};
   bool mEnableGazeZoom {true};
 
