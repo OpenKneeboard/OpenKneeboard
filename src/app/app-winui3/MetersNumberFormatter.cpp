@@ -69,7 +69,7 @@ MetersNumberFormatter::ParseDouble(hstring const& text) {
     }
 
     return {};
-  } catch (std::invalid_argument) {
+  } catch (const std::invalid_argument&) {
     return {};
   }
 }
