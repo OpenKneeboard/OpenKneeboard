@@ -24,7 +24,6 @@
 // clang-format on
 
 #include <format>
-#include <regex>
 #include <string>
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -49,12 +48,30 @@ MetersNumberFormatter::ParseUInt(hstring const& text) {
 
 winrt::Windows::Foundation::IReference<double>
 MetersNumberFormatter::ParseDouble(hstring const& text) {
-  auto str = to_string(text);
-  std::smatch match;
-  if (!std::regex_match(str, match, std::regex("^([0-9.]+)m?$"))) {
+  const auto str = to_string(text);
+
+  // Allow a floating-point number, optionally suffixed by 'm'
+
+  try {
+    size_t parsed = 0;
+    const auto value = std::stod(str, &parsed);
+
+    if (parsed == 0) {
+      return {};
+    }
+
+    if (parsed == str.size()) {
+      return {value};
+    }
+
+    if (parsed == (str.size() - 1) && str.back() == 'm') {
+      return {value};
+    }
+
+    return {};
+  } catch (std::invalid_argument) {
     return {};
   }
-  return {std::stod(match[1].str())};
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
