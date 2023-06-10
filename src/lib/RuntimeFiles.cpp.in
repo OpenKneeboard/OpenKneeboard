@@ -13,7 +13,7 @@ const std::filesystem::path DCSWORLD_HOOK_LUA(
 
 const std::filesystem::path AUTODETECTION_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-AutoDetect>");
-  
+
 const std::filesystem::path TABLET_PROXY_DLL(
   "$<TARGET_FILE_NAME:OpenKneeboard-TabletProxy>");
 
@@ -35,14 +35,17 @@ const std::filesystem::path OPENXR_DLL(
 const std::filesystem::path OPENXR_REGISTER_LAYER_HELPER(
   "$<TARGET_FILE_NAME:OpenKneeboard-OpenXR-Helper>");
 
+const std::filesystem::path REPAIR_INSTALLATION_HELPER(
+  "$<TARGET_FILE_NAME:OpenKneeboard-Installation-Helper>");
+
 const std::filesystem::path SET_DESIRED_ELEVATION_HELPER(
   "$<TARGET_FILE_NAME:OpenKneeboard-Set-Desired-Elevation-Helper>");
 
-// TODO (CMake 3.24+): use PATH:GET_FILENAME generator expression instead
-// of a custom target property
 #ifdef _WIN64
+// clang-format off
 const std::filesystem::path WINDOW_CAPTURE_HOOK_32BIT_HELPER(
-  "$<GENEX_EVAL:$<TARGET_PROPERTY:OpenKneeboard-WindowCaptureHook-Helper32,IMPORTED_FILENAME>>");
+  "$<PATH:GET_FILENAME,$<TARGET_PROPERTY:OpenKneeboard-WindowCaptureHook-Helper32,IMPORTED_LOCATION>>");
+// clang-format on
 #endif
 
-}
+}// namespace OpenKneeboard::RuntimeFiles
