@@ -120,12 +120,9 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
 
   for (const auto& tab: tabs) {
     auto it = std::ranges::find(mTabViews, tab, &ITabView::GetTab);
-    if (it != mTabViews.end()) {
-      tabViews.push_back(*it);
-      continue;
-    }
-
-    auto tabView = std::make_shared<TabView>(mDXR, mKneeboard, tab);
+    const auto tabView = (it != mTabViews.end())
+      ? (*it)
+      : std::make_shared<TabView>(mDXR, mKneeboard, tab);
     tabViews.push_back(tabView);
 
     mTabEvents.insert(
