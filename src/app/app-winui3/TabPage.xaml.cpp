@@ -88,6 +88,10 @@ TabPage::TabPage() {
   this->InitializePointerSource();
   AddEventListener(
     gKneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
+      TraceLoggingWrite(
+        gTraceProvider,
+        "TabPageTickHandler",
+        TraceLoggingValue(self->mNeedsFrame, "NeedsFrame"));
       if (self->mNeedsFrame) {
         self->PaintNow();
       }
@@ -455,11 +459,18 @@ void TabPage::InitializeSwapChain() {
 }
 
 void TabPage::PaintLater() {
+  TraceLoggingWrite(gTraceProvider, "TabPage::PaintLater()");
   mNeedsFrame = true;
 }
 
 void TabPage::PaintNow() noexcept {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "TabPage::PaintNow()");
   if (!mSwapChain) {
+    TraceLoggingWriteStop(
+      activity,
+      "TabPage::PaintNow()",
+      TraceLoggingValue("No swapchain", "Result"));
     return;
   }
   const std::unique_lock lock(gDXResources);
@@ -492,6 +503,10 @@ void TabPage::PaintNow() noexcept {
         static_cast<FLOAT>(desc.Width),
         static_cast<FLOAT>(desc.Height),
       });
+    TraceLoggingWriteStop(
+      activity,
+      "TabPage::PaintNow()",
+      TraceLoggingValue("No tabview", "Result"));
     return;
   }
 
@@ -506,11 +521,21 @@ void TabPage::PaintNow() noexcept {
   }
 
   if (!mDrawCursor) {
+    TraceLoggingWriteStop(
+      activity,
+      "TabPage::PaintNow()",
+      TraceLoggingValue("RenderedNoCursor", "Result"),
+      TraceLoggingValue(tab->GetPageCount(), "PageCount"));
     return;
   }
 
   auto maybePoint = mKneeboardView->GetCursorContentPoint();
   if (!maybePoint) {
+    TraceLoggingWriteStop(
+      activity,
+      "TabPage::PaintNow()",
+      TraceLoggingValue("RenderedNoCursorPoint", "Result"),
+      TraceLoggingValue(tab->GetPageCount(), "PageCount"));
     return;
   }
   auto point = *maybePoint;
@@ -520,6 +545,11 @@ void TabPage::PaintNow() noexcept {
   point.x += metrics.mRenderRect.left;
   point.y += metrics.mRenderRect.top;
   mCursorRenderer->Render(ctx, point, metrics.mRenderSize);
+  TraceLoggingWriteStop(
+    activity,
+    "TabPage::PaintNow()",
+    TraceLoggingValue("RenderedWithCursor", "Result"),
+    TraceLoggingValue(tab->GetPageCount(), "PageCount"));
 }
 
 TabPage::PageMetrics TabPage::GetPageMetrics() {

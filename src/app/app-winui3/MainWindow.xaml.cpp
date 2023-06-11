@@ -230,7 +230,7 @@ void MainWindow::FrameTick() {
   }
 
   std::shared_lock kbLock(*gKneeboard);
-  TraceLoggingWriteTagged(activity, "Kneeboard locked");
+  TraceLoggingWriteTagged(activity, "Kneeboard relocked");
   const std::unique_lock dxLock(gDXResources);
   TraceLoggingWriteTagged(activity, "DX locked");
   gKneeboard->evFrameTimerEvent.Emit();
