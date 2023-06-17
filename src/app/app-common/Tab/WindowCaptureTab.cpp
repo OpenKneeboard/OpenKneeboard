@@ -174,7 +174,7 @@ winrt::fire_and_forget WindowCaptureTab::TryToStartCapture() {
   const std::unique_lock lock(gHookMutex);
   mEventHook.reset(SetWinEventHook(
     EVENT_OBJECT_CREATE,
-    EVENT_OBJECT_CREATE,
+    EVENT_OBJECT_SHOW,
     NULL,
     &WindowCaptureTab::WinEventProc_NewWindowHook,
     0,
@@ -348,6 +348,18 @@ void WindowCaptureTab::SetIsInputEnabled(bool value) {
 }
 
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
+  if (mHwnd) {
+    co_return;
+  }
+
+  {
+    const auto desktop = GetDesktopWindow();
+    HWND parent;
+    while ((parent = GetParent(hwnd)) && parent != desktop) {
+      hwnd = parent;
+    }
+  }
+
   if (!this->WindowMatches(hwnd)) {
     // Give new windows (especially UWP) a chance to settle before checking
     // if they match
@@ -355,12 +367,6 @@ concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
     if (!this->WindowMatches(hwnd)) {
       co_return;
     }
-  }
-
-  // Sometimes we want to attach to a child (e.g. for UWP apps); make
-  // sure we're actually connecting where we want in the tree
-  if (!GetTopLevelWindows().contains(hwnd)) {
-    co_return;
   }
 
   if (!co_await this->TryToStartCapture(hwnd)) {
@@ -380,7 +386,7 @@ void WindowCaptureTab::WinEventProc_NewWindowHook(
   LONG idChild,
   DWORD idEventThread,
   DWORD dwmsEventTime) {
-  if (event != EVENT_OBJECT_CREATE) {
+  if (event != EVENT_OBJECT_CREATE && event != EVENT_OBJECT_SHOW) {
     return;
   }
   if (idObject != OBJID_WINDOW) {
