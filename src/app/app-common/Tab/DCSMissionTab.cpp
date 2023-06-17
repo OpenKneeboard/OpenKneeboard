@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/GameEvent.h>
+
 #include <OpenKneeboard/dprint.h>
 
 using DCS = OpenKneeboard::DCSWorld;
@@ -39,9 +40,9 @@ DCSMissionTab::DCSMissionTab(
   std::string_view title)
   : TabBase(persistentID, title),
     DCSTab(kbs),
-    PageSourceWithDelegates(dxr, kbs) {
-  mPageSource = FolderPageSource::Create(dxr, kbs);
-  this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
+    PageSourceWithDelegates(dxr, kbs),
+    mDXR(dxr),
+    mKneeboard(kbs) {
 }
 
 DCSMissionTab::~DCSMissionTab() {
@@ -65,22 +66,26 @@ void DCSMissionTab::Reload() {
 
   const auto root = mExtracted->GetExtractedPath();
 
+  std::vector<std::shared_ptr<IPageSource>> sources;
+
+  const std::filesystem::path genericPath {root / "KNEEBOARD" / "IMAGES"};
+  sources.push_back(FolderPageSource::Create(mDXR, mKneeboard, genericPath));
+
   if (!mAircraft.empty()) {
     const std::filesystem::path aircraftPath {
       root / "KNEEBOARD" / mAircraft / "IMAGES"};
     dprintf("Checking {}", aircraftPath);
     if (std::filesystem::exists(aircraftPath)) {
       dprint("Using aircraft-specific path");
-      mPageSource->SetPath(aircraftPath);
-      return;
+      sources.push_back(
+        FolderPageSource::Create(mDXR, mKneeboard, aircraftPath));
     }
   } else {
     dprint("Aircraft not detected.");
   }
 
-  const std::filesystem::path genericPath {root / "KNEEBOARD" / "IMAGES"};
   dprintf("Using {}", genericPath);
-  mPageSource->SetPath(genericPath);
+  this->SetDelegates(std::move(sources));
 }
 
 void DCSMissionTab::OnGameEvent(
