@@ -282,6 +282,14 @@ winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
   }
 
   WindowCaptureTab::MatchSpecification matchSpec {*windowSpec};
+
+  // WPF apps do not use window classes correctly
+  if (windowSpec->mWindowClass.starts_with("HwndWrapper[")) {
+    matchSpec.mMatchWindowClass = false;
+    matchSpec.mMatchTitle
+      = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
+  }
+
   this->AddTabs(
     {WindowCaptureTab::Create(gDXResources, gKneeboard.get(), matchSpec)});
 }
