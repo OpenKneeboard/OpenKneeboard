@@ -1,7 +1,7 @@
 # ###################################################################
 # ##### REMEMBER TO UPDATE CPPWINRT_VERSION IN `cppwinrt.cmake` #####
 # ###################################################################
-set(WINDOWS_APP_SDK_VERSION "1.3.230320000" CACHE INTERNAL "")
+set(WINDOWS_APP_SDK_VERSION "1.3.230602002" CACHE INTERNAL "")
 set(WINDOWS_SDK_BUILDTOOLS_VERSION "10.0.22621.756" CACHE INTERNAL "")
 set(WINDOWS_IMPLEMENTATION_LIBRARY_VERSION "1.0.230411.1" CACHE INTERNAL "")
 
