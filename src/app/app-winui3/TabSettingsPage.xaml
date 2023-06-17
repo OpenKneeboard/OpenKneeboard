@@ -103,6 +103,12 @@
           Text="{x:Bind WindowTitle}"
           PlaceholderText="Window title"
         />
+				<ToggleSwitch
+					Header="Match window class"
+					IsOn="{x:Bind MatchWindowClass}"
+					OnContent="Enabled"
+					OffContent="Disabled"
+				/>
       </StackPanel>
     </DataTemplate>
   </Page.Resources>
