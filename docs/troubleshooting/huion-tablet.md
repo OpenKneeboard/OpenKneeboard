@@ -26,7 +26,6 @@ If you're having problems, you might want to [try OpenTabletDriver](https://go.o
 4. Either make sure both the pen and button settings are set for 'all applications', or set them both for OpenKneeboard and the game
 5. Uninstall **all** drivers from Huion and others, e.g. VRKneeboard's driver, OpenTabletDriver, or the various specialized drivers for the game 'osu!'; this includes the drivers you're currently using
 6. Install the latest Huion drivers
-7. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
 It is very important that you uninstall then reinstall the drivers; reinstalling/updating/repairing is not enough.
 

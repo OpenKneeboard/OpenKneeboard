@@ -11,9 +11,8 @@ Restart DCS after each step to see if it's fixed.
 
 1. Do not run the game or any launchers (e.g. SkateZilla) as administrator/elevated.
 2. Make sure that the game is in OpenKneeboard's games list, and the path is correct.
-3. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
-4. If using RivaTuner Statistics Server or the MSI Afterburner overlay, turn on 'Use Microsoft Detours API hooking' at the bottom of the overlay profile's setup page in RTSS/Afterburner
-5. Also check everything in the 'Game Crashes' section below
+3. If using RivaTuner Statistics Server or the MSI Afterburner overlay, turn on 'Use Microsoft Detours API hooking' at the bottom of the overlay profile's setup page in RTSS/Afterburner
+4. **Also check everything in the 'Game Crashes' section below**
 
 ## Game Crashes
 

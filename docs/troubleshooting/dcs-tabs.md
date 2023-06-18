@@ -9,7 +9,6 @@ parent: Troubleshooting
 
 1. Check if the Theater tab loads for Caucasus or NTTR; if so, check a different section.
 2. Check that DCS is in OpenKneeboard's Games list inside settings, and that the Saved Games path is correct
-3. Install the latest [Microsoft Visual C++ Redistributables](https://aka.ms/vs/17/release/vc_redist.x64.exe)
 
 ## The theater tabs only loads for NTTR and Caucasus
 
