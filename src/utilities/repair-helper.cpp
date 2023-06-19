@@ -18,10 +18,12 @@
  * USA.
  */
 
-/** A separate process to register the OpenXR layer, outside of the
- * MSIX sandbox.
+/** A separate process to repair the installation.
  *
- * If done from the main process, the registry write will be app-specific.
+ * This is sometimes needed after upgrade due to
+ * https://github.com/microsoft/microsoft-ui-xaml/issues/8518
+ *
+ * The installer sets a registry key that makes the main app launch this.
  */
 
 #include <OpenKneeboard/config.h>
