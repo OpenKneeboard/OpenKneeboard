@@ -17,6 +17,7 @@
     <EventProvider Id="EventProvider_OpenKneeboard.OpenXR" Name="a4308f76-39c8-5a50-4ede-32d104a8a78d" />
     <EventProvider Id="EventProvider_OpenKneeboard.OpenXR.Helper" Name="2489967e-a7f2-5db8-ba74-27c35b944d56" />
     <EventProvider Id="EventProvider_OpenKneeboard.RemoteControl" Name="6dafad04-3f57-55d2-e92e-7e49710d7e46" />
+    <EventProvider Id="EventProvider_OpenKneeboard.Repair.Helper" Name="6d8fd0b9-e465-5397-f126-ad45a697d226" />
     <EventProvider Id="EventProvider_OpenKneeboard.TabletProxy" Name="3bc3e07d-9c0e-51d5-2ef7-e7e706548c79" />
     <EventProvider Id="EventProvider_OpenKneeboard.TestFeeder" Name="1a75505f-4493-5004-8df0-3830610c5e85" />
     <EventProvider Id="EventProvider_OpenKneeboard.Viewer" Name="d4df4528-1fae-5d7c-f8ac-0da5654ba6ea" />
@@ -40,6 +41,7 @@
             <EventProviderId Value="EventProvider_OpenKneeboard.OpenXR" />
             <EventProviderId Value="EventProvider_OpenKneeboard.OpenXR.Helper" />
             <EventProviderId Value="EventProvider_OpenKneeboard.RemoteControl" />
+            <EventProviderId Value="EventProvider_OpenKneeboard.Repair.Helper" />
             <EventProviderId Value="EventProvider_OpenKneeboard.TabletProxy" />
             <EventProviderId Value="EventProvider_OpenKneeboard.TestFeeder" />
             <EventProviderId Value="EventProvider_OpenKneeboard.Viewer" />
