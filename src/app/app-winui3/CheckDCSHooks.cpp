@@ -23,21 +23,25 @@
 #include "CheckDCSHooks.h"
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/DCSWorldInstance.h>
 #include <OpenKneeboard/FilesDiffer.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+
 #include <OpenKneeboard/utf8.h>
-#include <microsoft.ui.xaml.window.h>
-#include <shobjidl.h>
+
 #include <winrt/microsoft.ui.xaml.controls.h>
+
+#include <microsoft.ui.xaml.window.h>
 
 #include <format>
 #include <set>
 
-#include "Globals.h"
+#include <shobjidl.h>
 
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -191,6 +195,8 @@ ChooseDCSSavedGamesFolder(
 
 winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
   const XamlRoot& root) {
+  winrt::apartment_context uiThread;
+
   std::set<std::filesystem::path> dcsSavedGamesPaths;
   for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
     auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
@@ -199,6 +205,7 @@ winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
     }
     auto& path = dcs->mSavedGamesPath;
     if (path.empty()) {
+      co_await uiThread;
       auto chosenPath = co_await ChooseDCSSavedGamesFolder(
         root, DCSSavedGamesSelectionTrigger::IMPLICIT);
       if (!chosenPath) {
