@@ -30,14 +30,16 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
+
+#include <shims/utility>
 #include <shims/winrt/base.h>
 
 #include <chrono>
 #include <mutex>
-#include <shims/utility>
 #include <thread>
 #include <unordered_set>
 
@@ -237,10 +239,15 @@ void GameInjector::CheckProcess(
 
     if (!mProcessCache.contains(processID)) {
       mProcessCache.insert_or_assign(processID, InjectedDlls::None);
+      // Lazy to-string approach
+      nlohmann::json overlayAPI;
+      to_json(overlayAPI, game->mOverlayAPI);
+
       dprintf(
-        "Current game changed to {}, PID {}",
-        game->mPath.filename().string(),
-        processID);
+        "Current game changed to {}, PID {}, configured rendering API {}",
+        game->mPath.string(),
+        processID,
+        overlayAPI.dump());
       this->evGameChangedEvent.Emit(processID, game);
     }
 
