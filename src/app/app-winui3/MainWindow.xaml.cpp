@@ -507,7 +507,7 @@ winrt::fire_and_forget MainWindow::CleanupAndClose() {
   co_await mUIThread;
 
   mKneeboardView = {};
-  gKneeboard->ReleaseExclusiveResources();
+  co_await gKneeboard->ReleaseExclusiveResources();
   gKneeboard = {};
   gDXResources = {};
 
