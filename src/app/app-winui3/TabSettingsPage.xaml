@@ -8,6 +8,7 @@
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
   <Page.Resources>
+    <local:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
     <DataTemplate x:Key="TabHeader" x:DataType="local:TabUIData">
       <Grid ColumnDefinitions="Auto,*,Auto">
         <Button
@@ -31,15 +32,27 @@
     </DataTemplate>
     <!-- Any Tab -->
     <DataTemplate x:Key="GenericTabTemplate" x:DataType="local:TabUIData">
-      <ContentPresenter 
-        Content="{x:Bind}"
-        ContentTemplate="{StaticResource TabHeader}"
+      <StackPanel
+        Orientation="Vertical"
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="8"
-        Padding="8"
         Margin="4"
-      />
+        Spacing="8"
+        Padding="8">
+        <ContentPresenter 
+          Content="{x:Bind}"
+          ContentTemplate="{StaticResource TabHeader}"
+        />
+        <Expander
+          HorizontalAlignment="Stretch"
+          HorizontalContentAlignment="Stretch"
+          Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility}}">
+          <Expander.Header>
+            Troubleshooting Information
+          </Expander.Header>
+          <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind DebugInformation, Mode=OneWay}" />
+        </Expander>
+      </StackPanel>
     </DataTemplate>
     <!-- DCS Radio Tab -->
     <DataTemplate x:Key="DCSRadioLogTabTemplate" x:DataType="local:DCSRadioLogTabUIData">

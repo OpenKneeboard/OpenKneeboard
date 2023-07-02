@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/GameEvent.h>
+
 #include <OpenKneeboard/dprint.h>
 
 using DCS = OpenKneeboard::DCSWorld;
@@ -40,7 +41,8 @@ DCSAircraftTab::DCSAircraftTab(
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
-    mKneeboard(kbs) {
+    mKneeboard(kbs),
+    mDebugInformation(_("No data from DCS.")) {
 }
 
 DCSAircraftTab::~DCSAircraftTab() {
@@ -61,6 +63,10 @@ void DCSAircraftTab::Reload() {
   this->SetDelegates({});
 }
 
+std::string DCSAircraftTab::GetDebugInformation() const {
+  return mDebugInformation;
+}
+
 void DCSAircraftTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& installPath,
@@ -71,6 +77,8 @@ void DCSAircraftTab::OnGameEvent(
   if (event.value == mAircraft) {
     return;
   }
+  mDebugInformation = "Will use all folders that exist. Looking for:";
+
   mAircraft = event.value;
   auto moduleName = mAircraft;
   if (mAircraft == "FA-18C_hornet") {
@@ -88,11 +96,14 @@ void DCSAircraftTab::OnGameEvent(
          installPath / "Mods" / "aircraft" / moduleName / "Cockpit" / "Scripts"
            / "KNEEBOARD" / "pages",
        }) {
-    dprintf("Aircraft tab: looking for {}", path);
     if (std::filesystem::exists(path)) {
       paths.push_back(std::filesystem::canonical(path));
+      mDebugInformation += std::format("\n\u2714 {}", to_utf8(path));
+    } else {
+      mDebugInformation += std::format("\n\u274c {}", to_utf8(path));
     }
   }
+  dprint("Aircraft tab:" + mDebugInformation);
 
   if (mPaths == paths) {
     return;

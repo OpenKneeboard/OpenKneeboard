@@ -30,11 +30,11 @@
 #include "TabUIDataTemplateSelector.g.h"
 // clang-format on
 
+#include "WithPropertyChangedEvent.h"
+
 #include <OpenKneeboard/Events.h>
 
 #include <string>
-
-#include "WithPropertyChangedEvent.h"
 
 namespace OpenKneeboard {
 class ITab;
@@ -94,6 +94,9 @@ struct TabUIData : TabUIDataT<TabUIData>,
 
   uint64_t InstanceID() const;
   void InstanceID(uint64_t);
+
+  bool HasDebugInformation() const;
+  hstring DebugInformation() const;
 
  protected:
   std::weak_ptr<OpenKneeboard::ITab> mTab;

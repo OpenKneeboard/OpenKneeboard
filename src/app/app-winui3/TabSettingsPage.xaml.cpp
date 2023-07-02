@@ -34,6 +34,7 @@
 
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/FilePageSource.h>
+#include <OpenKneeboard/IHasDebugInformation.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabTypes.h>
@@ -428,6 +429,23 @@ hstring TabUIData::Title() const {
     return {};
   }
   return to_hstring(tab->GetTitle());
+}
+
+bool TabUIData::HasDebugInformation() const {
+  const auto tab = mTab.lock();
+  return tab && std::dynamic_pointer_cast<IHasDebugInformation>(tab);
+}
+
+hstring TabUIData::DebugInformation() const {
+  const auto tab = mTab.lock();
+  if (!tab) {
+    return {};
+  }
+  const auto hdi = std::dynamic_pointer_cast<IHasDebugInformation>(tab);
+  if (!hdi) {
+    return {};
+  }
+  return winrt::to_hstring(hdi->GetDebugInformation());
 }
 
 uint64_t TabUIData::InstanceID() const {

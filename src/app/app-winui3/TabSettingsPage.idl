@@ -11,6 +11,8 @@ namespace OpenKneeboardApp {
   TabUIData();
   UInt64 InstanceID;
   String Title { get; };
+  Boolean HasDebugInformation { get; };
+  String DebugInformation { get; };
 }
 
 [default_interface] runtimeclass DCSRadioLogTabUIData : TabUIData {
