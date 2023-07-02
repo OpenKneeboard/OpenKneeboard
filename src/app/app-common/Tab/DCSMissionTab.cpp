@@ -67,8 +67,7 @@ void DCSMissionTab::Reload() {
     mExtracted = DCSExtractedMission::Get(mMission);
   }
 
-  dprintf("Mission tab: loading {}", mMission);
-  mDebugInformation = std::format("Mission: {}", to_utf8(mMission));
+  mDebugInformation = to_utf8(mMission) + "\n";
 
   const auto root = mExtracted->GetExtractedPath();
 
@@ -82,19 +81,21 @@ void DCSMissionTab::Reload() {
 
   std::vector<std::shared_ptr<IPageSource>> sources;
 
-  mDebugInformation += "\nLooking for files in:";
-
   for (const auto& path: paths) {
     if (std::filesystem::exists(root / path)) {
       sources.push_back(
         FolderPageSource::Create(mDXR, mKneeboard, root / path));
-      mDebugInformation += std::format("\n\u2714 {}", to_utf8(path));
+      mDebugInformation += std::format("\u2714 miz:\\{}\n", to_utf8(path));
     } else {
-      mDebugInformation += std::format("\n\u274c {}", to_utf8(path));
+      mDebugInformation += std::format("\u274c miz:\\{}\n", to_utf8(path));
     }
   }
 
-  dprint(mDebugInformation);
+  if (mDebugInformation.ends_with('\n')) {
+    mDebugInformation.pop_back();
+  }
+
+  dprint("Mission tab: " + mDebugInformation);
   evDebugInformationHasChanged.Emit(mDebugInformation);
   this->SetDelegates(sources);
 }
