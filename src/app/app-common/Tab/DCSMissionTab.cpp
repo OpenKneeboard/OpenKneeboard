@@ -42,7 +42,8 @@ DCSMissionTab::DCSMissionTab(
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
-    mKneeboard(kbs) {
+    mKneeboard(kbs),
+    mDebugInformation(_("No data from DCS.")) {
 }
 
 DCSMissionTab::~DCSMissionTab() {
@@ -58,34 +59,48 @@ std::string DCSMissionTab::GetStaticGlyph() {
 }
 
 void DCSMissionTab::Reload() {
+  if (mMission.empty()) {
+    return;
+  }
+
   if ((!mExtracted) || mExtracted->GetZipPath() != mMission) {
     mExtracted = DCSExtractedMission::Get(mMission);
   }
 
   dprintf("Mission tab: loading {}", mMission);
+  mDebugInformation = std::format("Mission: {}", to_utf8(mMission));
 
   const auto root = mExtracted->GetExtractedPath();
 
-  std::vector<std::shared_ptr<IPageSource>> sources;
-
-  const std::filesystem::path genericPath {root / "KNEEBOARD" / "IMAGES"};
-  sources.push_back(FolderPageSource::Create(mDXR, mKneeboard, genericPath));
+  std::vector<std::filesystem::path> paths {
+    std::filesystem::path("KNEEBOARD") / "IMAGES",
+  };
 
   if (!mAircraft.empty()) {
-    const std::filesystem::path aircraftPath {
-      root / "KNEEBOARD" / mAircraft / "IMAGES"};
-    dprintf("Checking {}", aircraftPath);
-    if (std::filesystem::exists(aircraftPath)) {
-      dprint("Using aircraft-specific path");
-      sources.push_back(
-        FolderPageSource::Create(mDXR, mKneeboard, aircraftPath));
-    }
-  } else {
-    dprint("Aircraft not detected.");
+    paths.push_back(std::filesystem::path("KNEEBOARD") / mAircraft / "IMAGES");
   }
 
-  dprintf("Using {}", genericPath);
-  this->SetDelegates(std::move(sources));
+  std::vector<std::shared_ptr<IPageSource>> sources;
+
+  mDebugInformation += "\nLooking for files in:";
+
+  for (const auto& path: paths) {
+    if (std::filesystem::exists(root / path)) {
+      sources.push_back(
+        FolderPageSource::Create(mDXR, mKneeboard, root / path));
+      mDebugInformation += std::format("\n\u2714 {}", to_utf8(path));
+    } else {
+      mDebugInformation += std::format("\n\u274c {}", to_utf8(path));
+    }
+  }
+
+  dprint(mDebugInformation);
+  evDebugInformationHasChanged.Emit(mDebugInformation);
+  this->SetDelegates(sources);
+}
+
+std::string DCSMissionTab::GetDebugInformation() const {
+  return mDebugInformation;
 }
 
 void DCSMissionTab::OnGameEvent(

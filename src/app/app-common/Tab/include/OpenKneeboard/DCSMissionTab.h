@@ -22,6 +22,7 @@
 #include "DCSTab.h"
 #include "TabBase.h"
 
+#include <OpenKneeboard/IHasDebugInformation.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
 namespace OpenKneeboard {
@@ -31,7 +32,8 @@ class DCSExtractedMission;
 
 class DCSMissionTab final : public TabBase,
                             public DCSTab,
-                            public PageSourceWithDelegates {
+                            public PageSourceWithDelegates,
+                            public IHasDebugInformation {
  public:
   DCSMissionTab(const DXResources&, KneeboardState*);
   DCSMissionTab(
@@ -45,6 +47,8 @@ class DCSMissionTab final : public TabBase,
 
   virtual void Reload() override;
 
+  virtual std::string GetDebugInformation() const override;
+
  protected:
   virtual void OnGameEvent(
     const GameEvent&,
@@ -57,6 +61,7 @@ class DCSMissionTab final : public TabBase,
   std::filesystem::path mMission;
   std::string mAircraft;
   std::shared_ptr<DCSExtractedMission> mExtracted;
+  std::string mDebugInformation;
 };
 
 }// namespace OpenKneeboard
