@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/FolderPageSource.h>
 #include <OpenKneeboard/GameEvent.h>
+
 #include <OpenKneeboard/dprint.h>
 
 using DCS = OpenKneeboard::DCSWorld;
@@ -40,7 +41,8 @@ DCSTerrainTab::DCSTerrainTab(
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
-    mKneeboard(kbs) {
+    mKneeboard(kbs),
+    mDebugInformation(_("No data from DCS.")) {
 }
 
 DCSTerrainTab::~DCSTerrainTab() {
@@ -53,6 +55,10 @@ std::string DCSTerrainTab::GetGlyph() const {
 
 std::string DCSTerrainTab::GetStaticGlyph() {
   return "\uE909";
+}
+
+std::string DCSTerrainTab::GetDebugInformation() const {
+  return mDebugInformation;
 }
 
 void DCSTerrainTab::Reload() {
@@ -73,6 +79,8 @@ void DCSTerrainTab::OnGameEvent(
   }
   mTerrain = event.value;
 
+  mDebugInformation = _("Looking for files in:");
+
   std::vector<std::filesystem::path> paths;
 
   for (auto path: {
@@ -82,8 +90,12 @@ void DCSTerrainTab::OnGameEvent(
     dprintf("Terrain tab: checking {}", path);
     if (std::filesystem::exists(path)) {
       paths.push_back(std::filesystem::canonical(path));
+      mDebugInformation += std::format("\n\u2714 {}", to_utf8(path));
+    } else {
+      mDebugInformation += std::format("\n\u274c {}", to_utf8(path));
     }
   }
+  evDebugInformationHasChanged.Emit(mDebugInformation);
 
   if (paths == mPaths) {
     return;

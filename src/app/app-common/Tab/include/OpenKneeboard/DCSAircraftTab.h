@@ -59,6 +59,7 @@ class DCSAircraftTab final : public TabBase,
   KneeboardState* mKneeboard = nullptr;
 
   std::string mDebugInformation;
+
   std::string mAircraft;
   std::vector<std::filesystem::path> mPaths;
 

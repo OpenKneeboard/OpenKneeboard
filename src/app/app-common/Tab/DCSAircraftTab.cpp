@@ -77,7 +77,6 @@ void DCSAircraftTab::OnGameEvent(
   if (event.value == mAircraft) {
     return;
   }
-  mDebugInformation = _("Looking for files in:");
 
   mAircraft = event.value;
   auto moduleName = mAircraft;
@@ -86,6 +85,8 @@ void DCSAircraftTab::OnGameEvent(
   } else if (mAircraft == "F-16C_50") {
     moduleName = "F-16C";
   }
+
+  mDebugInformation = _("Looking for files in:");
 
   std::vector<std::filesystem::path> paths;
 

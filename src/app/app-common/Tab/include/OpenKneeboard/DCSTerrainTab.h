@@ -19,11 +19,12 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/PageSourceWithDelegates.h>
-
 #include "DCSTab.h"
 #include "TabBase.h"
+
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/IHasDebugInformation.h>
+#include <OpenKneeboard/PageSourceWithDelegates.h>
 
 namespace OpenKneeboard {
 
@@ -31,7 +32,8 @@ class FolderTab;
 
 class DCSTerrainTab final : public TabBase,
                             public DCSTab,
-                            public PageSourceWithDelegates {
+                            public PageSourceWithDelegates,
+                            public IHasDebugInformation {
  public:
   DCSTerrainTab(const DXResources&, KneeboardState*);
   DCSTerrainTab(
@@ -46,9 +48,13 @@ class DCSTerrainTab final : public TabBase,
   virtual std::string GetGlyph() const override;
   static std::string GetStaticGlyph();
 
+  virtual std::string GetDebugInformation() const override;
+
  protected:
   DXResources mDXR;
   KneeboardState* mKneeboard = nullptr;
+
+  std::string mDebugInformation;
 
   std::string mTerrain;
   std::vector<std::filesystem::path> mPaths;
