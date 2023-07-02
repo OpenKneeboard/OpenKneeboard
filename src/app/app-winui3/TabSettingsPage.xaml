@@ -48,7 +48,7 @@
           HorizontalContentAlignment="Stretch"
           Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility}}">
           <Expander.Header>
-            Troubleshooting Information
+            Details
           </Expander.Header>
           <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind DebugInformation, Mode=OneWay}" />
         </Expander>

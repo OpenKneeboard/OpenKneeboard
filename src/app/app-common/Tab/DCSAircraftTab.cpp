@@ -77,7 +77,7 @@ void DCSAircraftTab::OnGameEvent(
   if (event.value == mAircraft) {
     return;
   }
-  mDebugInformation = "Will use all folders that exist. Looking for:";
+  mDebugInformation = _("Looking for files in:");
 
   mAircraft = event.value;
   auto moduleName = mAircraft;
