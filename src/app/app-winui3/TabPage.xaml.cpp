@@ -121,6 +121,9 @@ winrt::fire_and_forget TabPage::final_release(
 
 winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
   auto keepAlive = this->get_strong();
+  if (mShuttingDown) {
+    co_return;
+  }
   mShuttingDown = true;
 
   co_await mUIThread;
