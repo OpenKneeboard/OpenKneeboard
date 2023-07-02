@@ -43,15 +43,12 @@
           Content="{x:Bind}"
           ContentTemplate="{StaticResource TabHeader}"
         />
-        <Expander
-          HorizontalAlignment="Stretch"
-          HorizontalContentAlignment="Stretch"
-          Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility}}">
-          <Expander.Header>
-            Details
-          </Expander.Header>
-          <TextBlock Style="{ThemeResource BodyTextBlockStyle}" Text="{x:Bind DebugInformation, Mode=OneWay}" />
-        </Expander>
+        <TextBlock
+          IsTextSelectionEnabled="true"
+          Visibility="{x:Bind HasDebugInformation, Converter={StaticResource BooleanToVisibility}}"
+          Style="{ThemeResource BodyTextBlockStyle}"
+          Text="{x:Bind DebugInformation, Mode=OneWay}"
+        />
       </StackPanel>
     </DataTemplate>
     <!-- DCS Radio Tab -->
