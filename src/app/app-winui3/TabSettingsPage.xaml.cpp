@@ -480,6 +480,21 @@ void TabUIData::InstanceID(uint64_t value) {
     strongThis->mPropertyChangedEvent(
       *strongThis, PropertyChangedEventArgs(L"Title"));
   });
+
+  const auto hdi = std::dynamic_pointer_cast<IHasDebugInformation>(tab);
+  if (!hdi) {
+    return;
+  }
+
+  AddEventListener(
+    hdi->evDebugInformationHasChanged, [weakThis = get_weak()]() {
+      auto self = weakThis.get();
+      if (!self) {
+        return;
+      }
+      self->mPropertyChangedEvent(
+        *self, PropertyChangedEventArgs(L"DebugInformation"));
+    });
 }
 
 std::shared_ptr<DCSRadioLogTab> DCSRadioLogTabUIData::GetTab() const {

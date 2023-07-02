@@ -104,6 +104,7 @@ void DCSAircraftTab::OnGameEvent(
     }
   }
   dprint("Aircraft tab:" + mDebugInformation);
+  evDebugInformationHasChanged.Emit(mDebugInformation);
 
   if (mPaths == paths) {
     return;

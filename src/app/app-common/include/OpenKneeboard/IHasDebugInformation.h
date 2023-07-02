@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Events.h>
+
 #include <string>
 
 namespace OpenKneeboard {
@@ -28,6 +30,8 @@ class IHasDebugInformation {
   virtual ~IHasDebugInformation();
 
   virtual std::string GetDebugInformation() const = 0;
+
+  Event<std::string> evDebugInformationHasChanged;
 };
 
 }// namespace OpenKneeboard
