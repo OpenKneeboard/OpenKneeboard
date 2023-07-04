@@ -26,8 +26,10 @@
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
+
 #include <dwrite.h>
 
 static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) {
@@ -397,6 +399,11 @@ void FlyoutMenuUILayer::UpdateLayout(
   std::vector<MenuItem> menuItems;
   std::vector<D2D1_RECT_F> separators;
   for (const auto& item: mItems) {
+    auto visibility
+      = std::dynamic_pointer_cast<IToolbarItemWithVisibility>(item);
+    if (visibility && !visibility->IsVisible()) {
+      continue;
+    }
     if (std::dynamic_pointer_cast<ToolbarSeparator>(item)) {
       separators.push_back({
         origin.x,
