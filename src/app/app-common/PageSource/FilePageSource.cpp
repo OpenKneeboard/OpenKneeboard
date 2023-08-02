@@ -22,13 +22,14 @@
 #include <OpenKneeboard/ImageFilePageSource.h>
 #include <OpenKneeboard/PDFFilePageSource.h>
 #include <OpenKneeboard/PlainTextFilePageSource.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
 
-#include <icucommon.h>
-
 #include <ranges>
+
+#include <icucommon.h>
 
 namespace OpenKneeboard {
 
@@ -66,12 +67,17 @@ std::shared_ptr<IPageSource> FilePageSource::Create(
   const DXResources& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) noexcept {
-  if (!std::filesystem::exists(path)) {
-    dprintf("FilePageSource file '{}' does not exist", path);
-    return {nullptr};
-  }
-  if (!std::filesystem::is_regular_file(path)) {
-    dprintf("FilePageSource file '{}' is not a regular file", path);
+  try {
+    if (!std::filesystem::is_regular_file(path)) {
+      dprintf("FilePageSource file '{}' is not a regular file", path);
+      return {nullptr};
+    }
+  } catch (const std::filesystem::filesystem_error& e) {
+    dprintf(
+      "FilePageSource failed to get status of file '{}': {} ({})",
+      path,
+      e.what(),
+      e.code().value());
     return {nullptr};
   }
 

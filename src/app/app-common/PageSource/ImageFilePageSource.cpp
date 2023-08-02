@@ -95,7 +95,16 @@ bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
 bool ImageFilePageSource::CanOpenFile(
   const DXResources& dxr,
   const std::filesystem::path& path) {
-  if (!std::filesystem::is_regular_file(path)) {
+  try {
+    if (!std::filesystem::is_regular_file(path)) {
+      return false;
+    }
+  } catch (const std::filesystem::filesystem_error& e) {
+    dprintf(
+      "ImageFilePageSource failed to get status of file '{}': {} ({})",
+      path,
+      e.what(),
+      e.code().value());
     return false;
   }
   auto wsPath = path.wstring();
