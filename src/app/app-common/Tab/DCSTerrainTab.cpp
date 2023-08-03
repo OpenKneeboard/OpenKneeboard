@@ -67,6 +67,18 @@ void DCSTerrainTab::Reload() {
   this->SetDelegates({});
 }
 
+static std::string_view NormalizeTerrain(std::string_view terrain) {
+  for (const auto suffix:
+       {std::string_view {"Map"},
+        std::string_view {"Terrain"},
+        std::string_view {"Theater"}}) {
+    if (terrain.ends_with(suffix)) {
+      return terrain.substr(0, terrain.length() - suffix.length());
+    }
+  }
+  return terrain;
+}
+
 void DCSTerrainTab::OnGameEvent(
   const GameEvent& event,
   const std::filesystem::path& installPath,
@@ -78,15 +90,24 @@ void DCSTerrainTab::OnGameEvent(
     return;
   }
   mTerrain = event.value;
+  const auto normalized = NormalizeTerrain(event.value);
 
   mDebugInformation.clear();
 
+  std::vector<std::filesystem::path> potentialPaths {
+    savedGamesPath / "KNEEBOARD" / mTerrain,
+    savedGamesPath / "KNEEBOARD" / normalized,
+    installPath / "Mods" / "terrains" / mTerrain / "Kneeboard",
+    installPath / "Mods" / "terrains" / normalized / "Kneeboard",
+  };
+  {
+    const auto last = std::unique(potentialPaths.begin(), potentialPaths.end());
+    potentialPaths.erase(last, potentialPaths.end());
+  }
+
   std::vector<std::filesystem::path> paths;
 
-  for (auto path: {
-         savedGamesPath / "KNEEBOARD" / mTerrain,
-         installPath / "Mods" / "terrains" / event.value / "Kneeboard",
-       }) {
+  for (auto path: potentialPaths) {
     dprintf("Terrain tab: checking {}", path);
     if (std::filesystem::exists(path)) {
       paths.push_back(std::filesystem::canonical(path));
