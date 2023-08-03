@@ -1,7 +1,7 @@
 ExternalProject_Add(
   libjpegTurboBuild
-  URL "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.4.zip"
-  URL_HASH "SHA256=658647569c8e7a5728c6692fd93df65d17e491f5808522f93fa908e339337cab"
+  URL "https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/2.1.5.1.zip"
+  URL_HASH "SHA256=a9e670ea30064f36d5a20481c1f33eedf80b7e76c6e3f75c7e7189b200a7a216"
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     -DENABLE_SHARED=off

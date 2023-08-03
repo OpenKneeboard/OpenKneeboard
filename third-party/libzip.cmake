@@ -4,8 +4,8 @@ target_link_libraries(libzipDeps INTERFACE ${libzipDeps})
 
 ExternalProject_Add(
   libzipBuild
-  URL "https://github.com/nih-at/libzip/releases/download/v1.9.2/libzip-1.9.2.tar.gz"
-  URL_HASH "SHA256=fd6a7f745de3d69cf5603edc9cb33d2890f0198e415255d0987a0cf10d824c6f"
+  URL "https://github.com/nih-at/libzip/releases/download/v1.10.0/libzip-1.10.0.tar.gz"
+  URL_HASH "SHA256=52a60b46182587e083b71e2b82fcaaba64dd5eb01c5b1f1bc71069a3858e40fe"
   CMAKE_ARGS
     "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
     "-DENABLE_BZIP2=OFF"
