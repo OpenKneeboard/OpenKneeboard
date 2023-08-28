@@ -58,7 +58,7 @@ std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
   std::string_view title,
   const nlohmann::json& settings) {
   std::shared_ptr<EndlessNotebookTab> ret(
-    new EndlessNotebookTab(dxr, kbs, winrt::guid {}, title));
+    new EndlessNotebookTab(dxr, kbs, persistentID, title));
   ret->SetPath(settings.at("Path").get<std::filesystem::path>());
   return ret;
 }
