@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/117869167",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/117869167/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/117869167/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.5-beta1",
-    "id": 117869167,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/120450333",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/120450333/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/120450333/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.5.0",
+    "id": 120450333,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84HBopv",
-    "tag_name": "v1.5-beta1",
+    "node_id": "RE_kwDOGk0DR84HLe0d",
+    "tag_name": "v1.5.0",
     "target_commitish": "master",
-    "name": "v1.5-beta1",
+    "name": "v1.5.0",
     "draft": false,
-    "prerelease": true,
-    "created_at": "2023-08-19T13:52:35Z",
-    "published_at": "2023-08-19T14:29:24Z",
+    "prerelease": false,
+    "created_at": "2023-09-08T14:39:50Z",
+    "published_at": "2023-09-08T23:21:31Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/122215396",
-        "id": 122215396,
-        "node_id": "RA_kwDOGk0DR84HSNvk",
-        "name": "OpenKneeboard-v1.5-beta1-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/125158069",
+        "id": 125158069,
+        "node_id": "RA_kwDOGk0DR84HdcK1",
+        "name": "OpenKneeboard-v1.5.0-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 144185757,
+        "size": 144178811,
         "download_count": 0,
-        "created_at": "2023-08-19T14:28:11Z",
-        "updated_at": "2023-08-19T14:28:15Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5-beta1/OpenKneeboard-v1.5-beta1-DebugSymbols.zip"
+        "created_at": "2023-09-08T15:20:27Z",
+        "updated_at": "2023-09-08T15:20:32Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5.0/OpenKneeboard-v1.5.0-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/122215397",
-        "id": 122215397,
-        "node_id": "RA_kwDOGk0DR84HSNvl",
-        "name": "OpenKneeboard-v1.5-beta1.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/125158068",
+        "id": 125158068,
+        "node_id": "RA_kwDOGk0DR84HdcK0",
+        "name": "OpenKneeboard-v1.5.0.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -98,13 +98,13 @@
         "state": "uploaded",
         "size": 38891520,
         "download_count": 0,
-        "created_at": "2023-08-19T14:28:11Z",
-        "updated_at": "2023-08-19T14:28:13Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5-beta1/OpenKneeboard-v1.5-beta1.msi"
+        "created_at": "2023-09-08T15:20:27Z",
+        "updated_at": "2023-09-08T15:20:29Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5.0/OpenKneeboard-v1.5.0.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.5-beta1",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.5-beta1",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.5-beta1.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5-beta1/OpenKneeboard-v1.5-beta1.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis release:\r\n\r\n- fixes paths for the Sinai DCS map\r\n- shows the paths for DCS tabs in the tab settings page\r\n- adds more detailed debugging information\r\n- updates dependencies, improving performance and fixing several crashes"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.5.0",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.5.0",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.5.0.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5.0/OpenKneeboard-v1.5.0.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis release contains no changes since v1.5-beta1; since v1.4.4:\r\n\r\n- fixes paths for the Sinai DCS map\r\n- shows the paths for DCS tabs in the tab settings page to help debugging\r\n- adds more detailed debugging information\r\n- updates dependencies, improving performance and fixing several crashes\r\n"
   }
 ]
