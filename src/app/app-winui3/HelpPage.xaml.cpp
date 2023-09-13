@@ -42,6 +42,8 @@
 
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 
+#include <wil/registry.h>
+
 #include <microsoft.ui.xaml.window.h>
 
 #include <format>
@@ -463,8 +465,8 @@ std::string HelpPage::GetUpdateLog() noexcept {
 
 std::string HelpPage::GetOpenXRInfo() noexcept {
   return std::format(
-    "Runtime\n-------\n\n{}\nAPI Layers\n----------\n\n64-bit "
-    "HKLM:\n{}\n64-bit HKCU:\n{}",
+    "Runtime\n=======\n\n{}\nAPI Layers\n==========\n\n64-bit "
+    "HKLM\n-----------\n\n{}\n64-bit HKCU\n-----------\n\n{}",
     GetOpenXRRuntime(),
     GetOpenXRLayers(HKEY_LOCAL_MACHINE),
     GetOpenXRLayers(HKEY_CURRENT_USER));
@@ -484,7 +486,7 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
   }
 
   if (!key) {
-    return "- No layers.\n";
+    return "No layers.\n";
   }
 
   std::string ret;
@@ -557,6 +559,18 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
 }
 
 std::string HelpPage::GetOpenXRRuntime() noexcept {
+  std::string ret {"Active Runtime\n--------------\n\n"};
+
+  try {
+    const auto activeRuntime = wil::reg::get_value<std::wstring>(
+      HKEY_LOCAL_MACHINE, L"SOFTWARE\\Khronos\\OpenXR\\1", L"ActiveRuntime");
+    ret += to_utf8(activeRuntime) + "\n\n";
+  } catch (const std::exception& e) {
+    ret += std::format("FAILED TO READ FROM REGISTRY: {}\n\n", e.what());
+  }
+
+  ret += "Installed Runtimes\n------------------\n\n";
+
   unique_hkey key;
   {
     HKEY buffer {};
@@ -579,7 +593,6 @@ std::string HelpPage::GetOpenXRRuntime() noexcept {
   auto dataLength = static_cast<DWORD>(sizeof(data));
   DWORD dataType;
 
-  std::string ret;
   DWORD runtimeCount = 0;
 
   for (DWORD i = 0; RegEnumValueW(
