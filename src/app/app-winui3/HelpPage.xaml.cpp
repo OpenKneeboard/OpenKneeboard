@@ -495,7 +495,7 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
   auto dataLength = static_cast<DWORD>(sizeof(data));
   DWORD dataType;
 
-  size_t enabledCount = 0;
+  size_t extensionCount = 0;
 
   for (DWORD i = 0; RegEnumValueW(
                       key.get(),
@@ -546,7 +546,7 @@ std::string HelpPage::GetOpenXRLayers(HKEY root) noexcept {
     ret += std::format(
       "- #{}: {}\n    {}\n    - DLL: {}\n    - JSON: {}\n    "
       "- Version: {}\n",
-      ++enabledCount,
+      ++extensionCount,
       layer.at("name").get<std::string>(),
       layer.at("description").get<std::string>(),
       to_utf8(dllPath),
@@ -580,7 +580,7 @@ std::string HelpPage::GetOpenXRRuntime() noexcept {
   DWORD dataType;
 
   std::string ret;
-  DWORD enabledCount = 0;
+  DWORD runtimeCount = 0;
 
   for (DWORD i = 0; RegEnumValueW(
                       key.get(),
@@ -628,10 +628,14 @@ std::string HelpPage::GetOpenXRRuntime() noexcept {
       dllPath = (fspath.parent_path() / dllPath).lexically_normal();
     }
 
+    const auto runtimeName
+      = (runtime.contains("name") && runtime.at("name").is_string())
+      ? runtime.at("name").get<std::string>()
+      : "Unnamed Runtime";
     ret += std::format(
       "- #{}: {}\n    - DLL: {}\n    - JSON: {}\n",
-      ++enabledCount,
-      runtime.at("name").get<std::string>(),
+      ++runtimeCount,
+      runtimeName,
       to_utf8(dllPath),
       pathUtf8);
   }
@@ -656,7 +660,6 @@ void HelpPage::OnAgreeClick(
   mAgreedToPrivacyWarning = true;
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
-
 
 void HelpPage::OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
   PIDLIST_ABSOLUTE pidl {nullptr};
