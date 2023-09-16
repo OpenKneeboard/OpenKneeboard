@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/config.h>
@@ -386,21 +387,21 @@ class Impl {
   Header* mHeader = nullptr;
 
   Impl() {
-    winrt::handle fileHandle {CreateFileMappingW(
+    auto fileHandle = Win32::CreateFileMappingW(
       INVALID_HANDLE_VALUE,
       NULL,
       PAGE_READWRITE,
       0,
-      SHM_SIZE,
-      SHMPath().c_str())};
+      DWORD {SHM_SIZE},// Perfect forwarding fails with static constexpr integer
+                       // values
+      SHMPath().c_str());
     if (!fileHandle) {
       dprintf(
         "CreateFileMappingW failed: {}", static_cast<int>(GetLastError()));
       return;
     }
 
-    winrt::handle mutexHandle {
-      CreateMutexW(nullptr, FALSE, MutexPath().c_str())};
+    auto mutexHandle = Win32::CreateMutexW(nullptr, FALSE, MutexPath().c_str());
     if (!mutexHandle) {
       dprintf("CreateMutexW failed: {}", static_cast<int>(GetLastError()));
       return;

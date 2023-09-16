@@ -65,7 +65,7 @@ struct GameEvent final {
   std::vector<std::byte> Serialize() const;
   void Send() const;
 
-  static const char* GetMailslotPath();
+  static const wchar_t* GetMailslotPath();
 
   /// String name of OpenKneeboard::UserAction enum member
   static constexpr char EVT_REMOTE_USER_ACTION[] = "RemoteUserAction";

@@ -40,6 +40,7 @@
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -139,13 +140,13 @@ MainWindow::MainWindow() {
 
   auto hwndMappingName = std::format(L"Local\\{}.hwnd", ProjectNameW);
   // Initially leak for the duration of the app
-  mHwndFile.attach(CreateFileMappingW(
+  mHwndFile = Win32::CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
     /* high bits of size = */ 0,
     sizeof(MainWindowInfo),
-    hwndMappingName.c_str()));
+    hwndMappingName.c_str());
   if (!mHwndFile) {
     const auto err = GetLastError();
     dprintf(
@@ -243,7 +244,7 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
   // WinUI3 gives us the spinning circle for a long time...
   SetCursor(LoadCursorW(NULL, IDC_ARROW));
   mFrameLoopCompletionEvent
-    = winrt::handle {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+    = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
   mFrameLoop = this->FrameLoop();
 
   this->Show();
@@ -275,7 +276,7 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
     "StartTime\t{}\n",
     GetCurrentProcessId(),
     reinterpret_cast<uint64_t>(mHwnd),
-    GameEvent::GetMailslotPath(),
+    to_utf8(GameEvent::GetMailslotPath()),
     std::chrono::system_clock::now())
     << std::endl;
 

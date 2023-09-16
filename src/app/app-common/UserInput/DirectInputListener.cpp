@@ -23,6 +23,8 @@
 #include <OpenKneeboard/DirectInputListener.h>
 #include <OpenKneeboard/DirectInputMouseListener.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
+#include <OpenKneeboard/Win32.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
@@ -47,7 +49,7 @@ void DirectInputListener::Initialize() {
   }
   mInitialized = true;
 
-  mEventHandle.attach(CreateEventW(nullptr, false, false, nullptr));
+  mEventHandle = Win32::CreateEventW(nullptr, false, false, nullptr);
   if (!mEventHandle) {
     return;
   }

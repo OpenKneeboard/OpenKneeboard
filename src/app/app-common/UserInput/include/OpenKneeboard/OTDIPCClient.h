@@ -22,7 +22,10 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/TabletInfo.h>
 #include <OpenKneeboard/TabletState.h>
+#include <OpenKneeboard/Win32.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <chrono>
@@ -67,7 +70,8 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   void TimeoutTablet(const std::string& id);
 
   winrt::Windows::Foundation::IAsyncAction mRunner;
-  winrt::handle mCompletionHandle { CreateEventW(nullptr, TRUE, FALSE, nullptr) };
+  winrt::handle mCompletionHandle {
+    Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr)};
 
   struct Tablet {
     TabletInfo mDevice;

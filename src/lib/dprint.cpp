@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/Win32.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -83,13 +85,13 @@ static void WriteIPCMessage(std::wstring_view message) {
     return;
   }
 
-  winrt::handle mapping {CreateFileMappingW(
+  const auto mapping = Win32::CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
     0,
     sizeof(DPrintMessage),
-    GetDPrintMappingName().data())};
+    GetDPrintMappingName().data());
   if (!mapping) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -210,8 +212,7 @@ DPrintReceiver::DPrintReceiver() {
     mBufferReadyEvent = {};
   });
 
-  mMutex
-    = winrt::handle {CreateMutexW(nullptr, true, GetDPrintMutexName().data())};
+  mMutex = Win32::CreateMutexW(nullptr, true, GetDPrintMutexName().data());
   if (mMutex && GetLastError() == ERROR_ALREADY_EXISTS) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -221,27 +222,27 @@ DPrintReceiver::DPrintReceiver() {
     return;
   }
 
-  mMapping = winrt::handle {CreateFileMappingW(
+  mMapping = Win32::CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
     0,
     sizeof(DPrintMessage),
-    GetDPrintMappingName().data())};
+    GetDPrintMappingName().data());
   if (!mMapping) {
     OPENKNEEBOARD_BREAK;
     return;
   }
 
-  mBufferReadyEvent = winrt::handle {CreateEventW(
-    nullptr, false, false, GetDPrintBufferReadyEventName().data())};
+  mBufferReadyEvent = Win32::CreateEventW(
+    nullptr, false, false, GetDPrintBufferReadyEventName().data());
   if (!mBufferReadyEvent) {
     OPENKNEEBOARD_BREAK;
     return;
   }
 
-  mDataReadyEvent = winrt::handle {
-    CreateEventW(nullptr, false, false, GetDPrintDataReadyEventName().data())};
+  mDataReadyEvent = Win32::CreateEventW(
+    nullptr, false, false, GetDPrintDataReadyEventName().data());
   if (!mDataReadyEvent) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -276,7 +277,7 @@ void DPrintReceiver::Run(std::stop_token stopToken) {
     return;
   }
 
-  winrt::handle stopEvent {CreateEventW(nullptr, false, false, nullptr)};
+  const auto stopEvent = Win32::CreateEventW(nullptr, false, false, nullptr);
   std::stop_callback stopCallback(
     stopToken, [&]() { SetEvent(stopEvent.get()); });
 

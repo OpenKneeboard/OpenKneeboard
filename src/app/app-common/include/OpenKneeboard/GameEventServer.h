@@ -21,7 +21,10 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/Win32.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <memory>
@@ -41,7 +44,8 @@ class GameEventServer final
   GameEventServer();
   winrt::Windows::Foundation::IAsyncAction mRunner;
   winrt::apartment_context mUIThread;
-  winrt::handle mCompletionHandle {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+  winrt::handle mCompletionHandle {
+    Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr)};
 
   void Start();
 

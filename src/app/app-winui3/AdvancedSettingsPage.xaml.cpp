@@ -34,6 +34,7 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 #include <OpenKneeboard/VRConfig.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -374,8 +375,7 @@ winrt::fire_and_forget AdvancedSettingsPage::DesiredElevation(
   // Failed to spawn, e.g. UAC deny
   gTroubleshootingStore = TroubleshootingStore::Get();
   dprint("Relaunch failed, coming back up!");
-  gMutex
-    = winrt::handle {CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
+  gMutex = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW);
   gKneeboard->AcquireExclusiveResources();
 }
 

@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DirectInputListener.h>
 #include <OpenKneeboard/GetDirectInputDevices.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/dprint.h>
 
@@ -118,8 +119,7 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
       device->SetButtonBindings(bindings);
     }
 
-    winrt::handle completionHandle {
-      CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+    auto completionHandle = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
 
     mDevices.insert_or_assign(
       device->GetID(),

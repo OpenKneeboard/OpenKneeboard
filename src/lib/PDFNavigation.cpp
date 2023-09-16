@@ -20,6 +20,7 @@
 
 #include <OpenKneeboard/DebugTimer.h>
 #include <OpenKneeboard/PDFNavigation.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
@@ -265,25 +266,25 @@ PDF::Impl::Impl(const std::filesystem::path& path) {
 
   const auto fileSize = std::filesystem::file_size(path);
   const auto wpath = path.wstring();
-  mFile = winrt::file_handle {CreateFileW(
+  mFile = Win32::CreateFileW(
     wpath.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ,
     nullptr,
     OPEN_EXISTING,
     FILE_ATTRIBUTE_NORMAL,
-    NULL)};
+    NULL);
   if (!mFile) {
     dprint("Failed to open PDF with CreateFileW");
     return;
   }
-  mMapping = winrt::handle {CreateFileMappingW(
+  mMapping = Win32::CreateFileMappingW(
     mFile.get(),
     nullptr,
     PAGE_READONLY,
     fileSize >> 32,
     static_cast<DWORD>(fileSize),
-    nullptr)};
+    nullptr);
   if (!mMapping) {
     dprint("Failed to create file mapping of PDF");
     return;

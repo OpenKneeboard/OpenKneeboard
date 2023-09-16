@@ -19,6 +19,7 @@
  */
 
 #include <OpenKneeboard/FilesystemWatcher.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/scope_guard.h>
 
@@ -48,7 +49,7 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
     return;
   }
   mHandle.reset(handle);
-  mShutdownHandle.attach(CreateEventW(nullptr, FALSE, FALSE, nullptr));
+  mShutdownHandle = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 }
 
 winrt::fire_and_forget FilesystemWatcher::final_release(
@@ -116,14 +117,14 @@ winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
     }
 
     {
-      winrt::file_handle handle {CreateFileW(
+      const auto handle = Win32::CreateFileW(
         mPath.c_str(),
         GENERIC_READ,
         FILE_SHARE_READ,
         nullptr,
         OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL,
-        NULL)};
+        NULL);
       if (!handle) {
         const auto error = GetLastError();
         if (error == ERROR_SHARING_VIOLATION) {

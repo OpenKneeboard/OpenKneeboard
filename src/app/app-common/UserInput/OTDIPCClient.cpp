@@ -18,16 +18,18 @@
  * USA.
  */
 
-#include <OTD-IPC/DeviceInfo.h>
-#include <OTD-IPC/MessageType.h>
-#include <OTD-IPC/NamedPipePath.h>
-#include <OTD-IPC/State.h>
 #include <OpenKneeboard/OTDIPCClient.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/scope_guard.h>
 
 #include <ranges>
+
+#include <OTD-IPC/DeviceInfo.h>
+#include <OTD-IPC/MessageType.h>
+#include <OTD-IPC/NamedPipePath.h>
+#include <OTD-IPC/State.h>
 
 using namespace OTDIPC::Messages;
 
@@ -97,14 +99,14 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
   auto cancelled = co_await winrt::get_cancellation_token();
   cancelled.enable_propagation();
 
-  winrt::file_handle connection {CreateFileW(
+  const auto connection = Win32::CreateFileW(
     OTDIPC::NamedPipePathW,
     GENERIC_READ,
     0,
     nullptr,
     OPEN_EXISTING,
     FILE_FLAG_OVERLAPPED,
-    NULL)};
+    NULL);
   if (!connection) {
     co_return;
   }
@@ -116,7 +118,7 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
       std::uncaught_exceptions());
   });
 
-  winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+  const auto event = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
   OVERLAPPED overlapped {.hEvent = event.get()};
 
   char buffer[1024];

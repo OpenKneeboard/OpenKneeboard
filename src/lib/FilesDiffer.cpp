@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/FilesDiffer.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
@@ -44,27 +45,27 @@ bool FilesDiffer(
     return true;
   }
 
-  winrt::file_handle ah {CreateFileW(
+  const auto af = Win32::CreateFileW(
     a.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ | FILE_SHARE_WRITE,
     nullptr,
     OPEN_EXISTING,
     FILE_ATTRIBUTE_NORMAL,
-    NULL)};
-  winrt::file_handle bh {CreateFileW(
+    NULL);
+  const auto bf = Win32::CreateFileW(
     b.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ | FILE_SHARE_WRITE,
     nullptr,
     OPEN_EXISTING,
     FILE_ATTRIBUTE_NORMAL,
-    NULL)};
+    NULL);
 
-  winrt::handle afm {
-    CreateFileMappingW(ah.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
-  winrt::handle bfm {
-    CreateFileMappingW(bh.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
+  const auto afm = Win32::CreateFileMappingW(
+    af.get(), nullptr, PAGE_READONLY, 0, 0, nullptr);
+  const auto bfm = Win32::CreateFileMappingW(
+    bf.get(), nullptr, PAGE_READONLY, 0, 0, nullptr);
 
   auto av = reinterpret_cast<std::byte*>(
     MapViewOfFile(afm.get(), FILE_MAP_READ, 0, 0, 0));

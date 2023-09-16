@@ -18,12 +18,15 @@
  * USA.
  */
 #include <OpenKneeboard/GameEventServer.h>
+#include <OpenKneeboard/Win32.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/json.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
+
 #include <Windows.h>
 
 #include <thread>
@@ -59,8 +62,8 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
     [handle = mCompletionHandle.get()]() { SetEvent(handle); });
 
   auto weak = weak_from_this();
-  winrt::file_handle handle {CreateMailslotA(
-    GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr)};
+  const auto handle = Win32::CreateMailslotW(
+    GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr);
   if (!handle) {
     dprintf("Failed to create GameEvent mailslot: {}", GetLastError());
     co_return;
@@ -76,7 +79,7 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
   auto cancelled = co_await winrt::get_cancellation_token();
   cancelled.enable_propagation();
 
-  winrt::handle event {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+  const auto event = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 
   try {
     while ((!cancelled()) && co_await RunSingle(weak, event, handle)) {

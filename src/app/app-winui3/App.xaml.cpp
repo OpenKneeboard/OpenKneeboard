@@ -33,6 +33,7 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -100,14 +101,14 @@ static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
     Version::Build,
     processId);
   auto filePath = (gDumpDirectory / fileName).wstring();
-  winrt::file_handle dumpFile {CreateFileW(
+  const auto dumpFile = Win32::CreateFileW(
     filePath.c_str(),
     GENERIC_READ | GENERIC_WRITE,
     0,
     nullptr,
     CREATE_ALWAYS,
     FILE_ATTRIBUTE_NORMAL,
-    NULL)};
+    NULL);
   MINIDUMP_EXCEPTION_INFORMATION exceptionInfo {
     .ThreadId = GetCurrentThreadId(),
     .ExceptionPointers = exceptionPointers,
@@ -358,8 +359,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     return 0;
   }
 
-  gMutex
-    = winrt::handle {CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
+  gMutex = Win32::CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW);
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
     const auto hwnd = GetMainHWND();
     if (!hwnd) {

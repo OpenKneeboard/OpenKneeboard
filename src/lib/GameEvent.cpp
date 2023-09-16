@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/GameEvent.h>
+#include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -56,14 +57,14 @@ static bool OpenMailslotHandle() {
   }
   sLastAttempt = now;
 
-  gMailslotHandle = winrt::file_handle {CreateFileA(
+  gMailslotHandle = OpenKneeboard::Win32::CreateFileW(
     OpenKneeboard::GameEvent::GetMailslotPath(),
     GENERIC_WRITE,
     FILE_SHARE_READ,
     nullptr,
     OPEN_EXISTING,
     0,
-    NULL)};
+    NULL);
 
   return static_cast<bool>(gMailslotHandle);
 }
@@ -164,11 +165,11 @@ void GameEvent::Send() const {
   }
 }
 
-const char* GameEvent::GetMailslotPath() {
-  static std::string sPath;
+const wchar_t* GameEvent::GetMailslotPath() {
+  static std::wstring sPath;
   if (sPath.empty()) {
     sPath = std::format(
-      "\\\\.\\mailslot\\{}.events.v1.3", OpenKneeboard::ProjectNameA);
+      L"\\\\.\\mailslot\\{}.events.v1.3", OpenKneeboard::ProjectNameW);
   }
   return sPath.c_str();
 }
