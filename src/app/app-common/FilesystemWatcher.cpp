@@ -48,7 +48,7 @@ FilesystemWatcher::FilesystemWatcher(const std::filesystem::path& path)
     return;
   }
   mHandle.reset(handle);
-  mShutdownHandle = {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+  mShutdownHandle.attach(CreateEventW(nullptr, FALSE, FALSE, nullptr));
 }
 
 winrt::fire_and_forget FilesystemWatcher::final_release(

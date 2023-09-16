@@ -21,9 +21,10 @@
 
 // Needed before detours.h for 'portability' defines
 #include <Windows.h>
-#include <detours.h>
 
 #include <memory>
+
+#include <detours.h>
 
 /** READ SAFETY WARNING - Suspend all other threads, and patch RIP.
  *
@@ -58,10 +59,14 @@ LONG DetourSingleAttach(T* ppPointer, T pDetour) {
     reinterpret_cast<void**>(ppPointer), reinterpret_cast<void*>(pDetour));
 }
 
+// Required for VS 2022 17.6 (1936) and below, compile error for 17.7 (1937) and
+// above
+#if _MSC_VER < 1937
 template <detours_function_pointer T>
 LONG DetourAttach(T* ppPointer, T pDetour) {
   return DetourAttach(reinterpret_cast<void**>(ppPointer), pDetour);
 }
+#endif
 
 /// Create a transaction, detach a single detour, and submit the transaction
 LONG DetourSingleDetach(void** ppPointer, void* pDetour);

@@ -18,10 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/FilesDiffer.h>
+
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <algorithm>
-#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
@@ -43,7 +44,7 @@ bool FilesDiffer(
     return true;
   }
 
-  winrt::handle ah {CreateFileW(
+  winrt::file_handle ah {CreateFileW(
     a.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -51,7 +52,7 @@ bool FilesDiffer(
     OPEN_EXISTING,
     FILE_ATTRIBUTE_NORMAL,
     NULL)};
-  winrt::handle bh {CreateFileW(
+  winrt::file_handle bh {CreateFileW(
     b.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -60,9 +61,9 @@ bool FilesDiffer(
     FILE_ATTRIBUTE_NORMAL,
     NULL)};
 
-  winrt::file_handle afm {
+  winrt::handle afm {
     CreateFileMappingW(ah.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
-  winrt::file_handle bfm {
+  winrt::handle bfm {
     CreateFileMappingW(bh.get(), nullptr, PAGE_READONLY, 0, 0, nullptr)};
 
   auto av = reinterpret_cast<std::byte*>(

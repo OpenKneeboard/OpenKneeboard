@@ -100,7 +100,7 @@ static void CreateDump(LPEXCEPTION_POINTERS exceptionPointers) {
     Version::Build,
     processId);
   auto filePath = (gDumpDirectory / fileName).wstring();
-  winrt::handle dumpFile {CreateFileW(
+  winrt::file_handle dumpFile {CreateFileW(
     filePath.c_str(),
     GENERIC_READ | GENERIC_WRITE,
     0,
@@ -340,7 +340,8 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     return 0;
   }
 
-  gMutex = {CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
+  gMutex
+    = winrt::handle {CreateMutexW(nullptr, TRUE, OpenKneeboard::ProjectNameW)};
   if (GetLastError() == ERROR_ALREADY_EXISTS) {
     const auto hwnd = GetMainHWND();
     if (!hwnd) {

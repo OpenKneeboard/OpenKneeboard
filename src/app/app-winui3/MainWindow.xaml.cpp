@@ -242,7 +242,8 @@ void MainWindow::FrameTick() {
 winrt::fire_and_forget MainWindow::OnLoaded() {
   // WinUI3 gives us the spinning circle for a long time...
   SetCursor(LoadCursorW(NULL, IDC_ARROW));
-  mFrameLoopCompletionEvent = {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
+  mFrameLoopCompletionEvent
+    = winrt::handle {CreateEventW(nullptr, FALSE, FALSE, nullptr)};
   mFrameLoop = this->FrameLoop();
 
   this->Show();

@@ -20,12 +20,14 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <Windows.h>
+
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <iostream>
 #include <optional>
-#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
@@ -208,7 +210,8 @@ DPrintReceiver::DPrintReceiver() {
     mBufferReadyEvent = {};
   });
 
-  mMutex = {CreateMutexW(nullptr, true, GetDPrintMutexName().data())};
+  mMutex
+    = winrt::handle {CreateMutexW(nullptr, true, GetDPrintMutexName().data())};
   if (mMutex && GetLastError() == ERROR_ALREADY_EXISTS) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -218,7 +221,7 @@ DPrintReceiver::DPrintReceiver() {
     return;
   }
 
-  mMapping = {CreateFileMappingW(
+  mMapping = winrt::handle {CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
@@ -230,14 +233,14 @@ DPrintReceiver::DPrintReceiver() {
     return;
   }
 
-  mBufferReadyEvent = {CreateEventW(
+  mBufferReadyEvent = winrt::handle {CreateEventW(
     nullptr, false, false, GetDPrintBufferReadyEventName().data())};
   if (!mBufferReadyEvent) {
     OPENKNEEBOARD_BREAK;
     return;
   }
 
-  mDataReadyEvent = {
+  mDataReadyEvent = winrt::handle {
     CreateEventW(nullptr, false, false, GetDPrintDataReadyEventName().data())};
   if (!mDataReadyEvent) {
     OPENKNEEBOARD_BREAK;

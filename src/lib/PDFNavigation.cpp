@@ -20,19 +20,24 @@
 
 #include <OpenKneeboard/DebugTimer.h>
 #include <OpenKneeboard/PDFNavigation.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
-#include <Windows.h>
-#include <shellapi.h>
+
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <fstream>
 #include <map>
 #include <optional>
+
+#include <shellapi.h>
+
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFOutlineDocumentHelper.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
-#include <shims/filesystem>
 
 namespace OpenKneeboard::PDFNavigation {
 
@@ -47,7 +52,7 @@ struct PDF::Impl {
   std::optional<QPDFOutlineDocumentHelper> mOutlineDocumentHelper;
   std::vector<QPDFPageObjectHelper> mPages;
   PageIndexMap mPageIndices;
-  winrt::handle mFile;
+  winrt::file_handle mFile;
   winrt::handle mMapping;
   void* mView = nullptr;
 };
@@ -260,7 +265,7 @@ PDF::Impl::Impl(const std::filesystem::path& path) {
 
   const auto fileSize = std::filesystem::file_size(path);
   const auto wpath = path.wstring();
-  mFile = {CreateFileW(
+  mFile = winrt::file_handle {CreateFileW(
     wpath.c_str(),
     GENERIC_READ,
     FILE_SHARE_READ,
@@ -272,7 +277,7 @@ PDF::Impl::Impl(const std::filesystem::path& path) {
     dprint("Failed to open PDF with CreateFileW");
     return;
   }
-  mMapping = {CreateFileMappingW(
+  mMapping = winrt::handle {CreateFileMappingW(
     mFile.get(),
     nullptr,
     PAGE_READONLY,

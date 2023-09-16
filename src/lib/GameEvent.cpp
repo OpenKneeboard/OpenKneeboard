@@ -18,12 +18,15 @@
  * USA.
  */
 #include <OpenKneeboard/GameEvent.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
 #include <OpenKneeboard/tracing.h>
-#include <Windows.h>
+
 #include <shims/winrt/base.h>
+
+#include <Windows.h>
 
 #include <charconv>
 #include <chrono>
@@ -53,7 +56,7 @@ static bool OpenMailslotHandle() {
   }
   sLastAttempt = now;
 
-  gMailslotHandle = {CreateFileA(
+  gMailslotHandle = winrt::file_handle {CreateFileA(
     OpenKneeboard::GameEvent::GetMailslotPath(),
     GENERIC_WRITE,
     FILE_SHARE_READ,

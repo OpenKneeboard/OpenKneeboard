@@ -539,7 +539,7 @@ void HWNDPageSource::InstallWindowHooks(HWND target) {
   };
   winrt::check_bool(ShellExecuteExW(&shellExecuteInfo));
 
-  mHooks[target].mHook32Subprocess = {shellExecuteInfo.hProcess};
+  mHooks[target].mHook32Subprocess.attach(shellExecuteInfo.hProcess);
 }
 
 }// namespace OpenKneeboard

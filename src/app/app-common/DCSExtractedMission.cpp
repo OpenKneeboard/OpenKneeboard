@@ -20,14 +20,17 @@
 
 #include <OpenKneeboard/DCSExtractedMission.h>
 #include <OpenKneeboard/Filesystem.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
+
 #include <Windows.h>
-#include <zip.h>
 
 #include <array>
 #include <fstream>
 #include <random>
+
+#include <zip.h>
 
 namespace OpenKneeboard {
 
@@ -120,7 +123,7 @@ std::shared_ptr<DCSExtractedMission> DCSExtractedMission::Get(
   if (sCache && sCache->GetZipPath() == zipPath) {
     return sCache;
   }
-  sCache = {new DCSExtractedMission(zipPath)};
+  sCache.reset(new DCSExtractedMission(zipPath));
   return sCache;
 }
 

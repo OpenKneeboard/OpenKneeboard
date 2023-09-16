@@ -58,7 +58,7 @@ class TroubleshootingStore::DPrintReceiver final
 
 TroubleshootingStore::TroubleshootingStore() {
   mDPrint = std::make_unique<DPrintReceiver>();
-  mDPrintThread = {[this](std::stop_token stopToken) {
+  mDPrintThread = std::jthread {[this](std::stop_token stopToken) {
     SetThreadDescription(
       GetCurrentThread(), L"TroubleshootingStore DPrintReceiver");
     mDPrint->Run(stopToken);

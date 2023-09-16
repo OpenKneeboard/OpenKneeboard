@@ -17,19 +17,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include "FindMainWindow.h"
+#include "InjectedDLLMain.h"
+
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/WintabTablet.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/version.h>
+
 #include <Windows.h>
 
 #include <functional>
 #include <stop_token>
 #include <thread>
-
-#include "FindMainWindow.h"
-#include "InjectedDLLMain.h"
 
 namespace OpenKneeboard {
 
@@ -85,8 +87,8 @@ static const MainWindowInfo::VersionInfo gThisVersion {
 TabletProxy::TabletProxy() {
   Initialize();
 
-  mWatchThread
-    = {std::bind_front(&TabletProxy::WatchForEnvironmentChanges, this)};
+  mWatchThread = std::jthread {
+    std::bind_front(&TabletProxy::WatchForEnvironmentChanges, this)};
 }
 
 TabletProxy::~TabletProxy() {
