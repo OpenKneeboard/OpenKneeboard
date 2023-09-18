@@ -29,7 +29,7 @@ jobs:
         id: should-publish
 
       - if: ${{ steps.should-publish.outputs.publish == 'true' }}
-        uses: vedantmgoyal2009/winget-releaser@8ad40507bbe44b44ae62037d8bac9f2d0fc0dc8e
+        uses: vedantmgoyal2009/winget-releaser@a2d8867e9a46d9742ceff3141fe30811c9e1c970
         with:
           identifier: FredEmmott.OpenKneeboard
           release-tag: ${{ steps.should-publish.outputs.version }}
