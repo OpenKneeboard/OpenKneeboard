@@ -23,3 +23,4 @@ parent: Compatibility
 | Vulkan       | ❌ | 🧪 | ❌ | ✅ |
 
 🧪: OpenKneeboard's support for Vulkan+OpenXR is currently experimental.
+Oculus API: only Link or Air Link are supported; Virtual Desktop or other similar tools are only supported via SteamVR.
