@@ -111,7 +111,19 @@ winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
       co_return;
     }
 
-    const auto lastWriteTime = std::filesystem::last_write_time(mPath);
+    std::filesystem::file_time_type lastWriteTime {};
+    try {
+      lastWriteTime = std::filesystem::last_write_time(mPath);
+    } catch (const std::filesystem::filesystem_error& e) {
+      // Probably deleted
+      dprintf(
+        "Getting last write time for path '{}' failed: {:#08x} - {}",
+        mPath,
+        static_cast<uint32_t>(e.code().value()),
+        e.what());
+      this->evFilesystemModifiedEvent.EnqueueForContext(mOwnerThread, mPath);
+      co_return;
+    }
     if (lastWriteTime <= mLastWriteTime) {
       co_return;
     }
