@@ -98,7 +98,7 @@ else()
   set(VERSION_BUILD 0)
 endif()
 
-project(com.fredemmott.openkneeboard VERSION 1.5.2.${VERSION_BUILD} LANGUAGES CXX C)
+project(com.fredemmott.openkneeboard VERSION 1.5.3.${VERSION_BUILD} LANGUAGES CXX C)
 
 message(STATUS "Building OpenKneeboard v${CMAKE_PROJECT_VERSION}")
 
