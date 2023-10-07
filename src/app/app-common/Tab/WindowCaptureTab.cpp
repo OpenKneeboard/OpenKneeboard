@@ -349,6 +349,26 @@ void WindowCaptureTab::SetIsInputEnabled(bool value) {
   evSettingsChangedEvent.Emit();
 }
 
+HWNDPageSource::CaptureArea WindowCaptureTab::GetCaptureArea() const {
+  return mCaptureOptions.mCaptureArea;
+}
+
+void WindowCaptureTab::SetCaptureArea(CaptureArea value) {
+  mCaptureOptions.mCaptureArea = value;
+  evSettingsChangedEvent.Emit();
+  this->Reload();
+}
+
+bool WindowCaptureTab::IsCursorCaptureEnabled() const {
+  return mCaptureOptions.mCaptureCursor;
+}
+
+void WindowCaptureTab::SetCursorCaptureEnabled(bool value) {
+  mCaptureOptions.mCaptureCursor = value;
+  evSettingsChangedEvent.Emit();
+  this->Reload();
+}
+
 concurrency::task<void> WindowCaptureTab::OnNewWindow(HWND hwnd) {
   if (mHwnd) {
     co_return;

@@ -82,6 +82,13 @@ class WindowCaptureTab final
   bool IsInputEnabled() const;
   void SetIsInputEnabled(bool);
 
+  using CaptureArea = HWNDPageSource::CaptureArea;
+  CaptureArea GetCaptureArea() const;
+  void SetCaptureArea(CaptureArea);
+
+  bool IsCursorCaptureEnabled() const;
+  void SetCursorCaptureEnabled(bool);
+
   static std::unordered_map<HWND, WindowSpecification> GetTopLevelWindows();
   static std::optional<WindowSpecification> GetWindowSpecification(HWND);
 
