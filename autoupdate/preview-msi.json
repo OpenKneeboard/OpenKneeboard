@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/122327095",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/122327095/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/122327095/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.5.2",
-    "id": 122327095,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/124145691",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/124145691/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/124145691/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.6.0",
+    "id": 124145691,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84HSpA3",
-    "tag_name": "v1.5.2",
+    "node_id": "RE_kwDOGk0DR84HZlAb",
+    "tag_name": "v1.6.0",
     "target_commitish": "master",
-    "name": "v1.5.2: minor bugfixes",
+    "name": "v1.6.0: window capture improvements",
     "draft": false,
-    "prerelease": false,
-    "created_at": "2023-09-23T20:52:09Z",
-    "published_at": "2023-09-23T21:32:24Z",
+    "prerelease": true,
+    "created_at": "2023-10-07T14:39:40Z",
+    "published_at": "2023-10-07T15:40:30Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/127425764",
-        "id": 127425764,
-        "node_id": "RA_kwDOGk0DR84HmFzk",
-        "name": "OpenKneeboard-v1.5.2-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/129500852",
+        "id": 129500852,
+        "node_id": "RA_kwDOGk0DR84HuAa0",
+        "name": "OpenKneeboard-v1.6.0-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 147756503,
+        "size": 148125805,
         "download_count": 0,
-        "created_at": "2023-09-23T21:28:53Z",
-        "updated_at": "2023-09-23T21:28:56Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5.2/OpenKneeboard-v1.5.2-DebugSymbols.zip"
+        "created_at": "2023-10-07T15:13:21Z",
+        "updated_at": "2023-10-07T15:13:26Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.6.0/OpenKneeboard-v1.6.0-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/127425762",
-        "id": 127425762,
-        "node_id": "RA_kwDOGk0DR84HmFzi",
-        "name": "OpenKneeboard-v1.5.2.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/129500850",
+        "id": 129500850,
+        "node_id": "RA_kwDOGk0DR84HuAay",
+        "name": "OpenKneeboard-v1.6.0.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 38744064,
+        "size": 39792640,
         "download_count": 0,
-        "created_at": "2023-09-23T21:28:53Z",
-        "updated_at": "2023-09-23T21:28:54Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5.2/OpenKneeboard-v1.5.2.msi"
+        "created_at": "2023-10-07T15:13:21Z",
+        "updated_at": "2023-10-07T15:13:23Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.6.0/OpenKneeboard-v1.6.0.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.5.2",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.5.2",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.5.2.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.5.2/OpenKneeboard-v1.5.2.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis release:\r\n\r\n- fixes a crash if a file is deleted immediately after being modified\r\n- shows an error instead of crashing if Windows's \"Saved Games\" folder is misconfigured (#402)\r\n- contains internal changes to support newer versions of Microsoft Visual Studio"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.6.0",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.6.0",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.6.0.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.6.0/OpenKneeboard-v1.6.0.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis release:\r\n- fixes a bug leading to poor performance of the OpenKneeboard app when it is the active window and a window capture is in progress\r\n- adds support for cropping captured windows to the 'client area'; this is the area excluding the classic Windows title bar, menu bar, and window frame. This feature will not work with apps with a non-standard title bar.\r\n- added an option to capture the Windows mouse cursor; as OpenKneeboard's tablet input does not move the Windows mouse cursor, tablet input will not result in a visible or captured Windows mouse cursor.\r\n- updates to the latest version of the Windows App SDK"
   }
 ]
