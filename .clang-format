@@ -55,6 +55,7 @@ IncludeCategories:
     Priority: 43
 IndentRequires: true
 IndentWidth: '2'
+LineEnding: 'LF'
 MaxEmptyLinesToKeep: '1'
 PointerAlignment: Left
 ReflowComments: true
@@ -64,5 +65,4 @@ SpaceBeforeRangeBasedForLoopColon: 'false'
 SpacesBeforeTrailingComments: '0'
 Standard: c++20
 TabWidth: '2'
-UseCRLF: false
 UseTab: Never
