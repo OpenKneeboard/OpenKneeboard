@@ -432,8 +432,8 @@ void TabPage::OnCanvasSizeChanged(
     return;
   }
   mCanvasSize = {
-    static_cast<FLOAT>(size.Width),
-    static_cast<FLOAT>(size.Height),
+    static_cast<FLOAT>(size.Width) * Canvas().CompositionScaleX(),
+    static_cast<FLOAT>(size.Height) * Canvas().CompositionScaleY(),
   };
   const std::unique_lock lock(gDXResources);
   if (mSwapChain) {
