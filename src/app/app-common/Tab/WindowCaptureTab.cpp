@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/WindowCaptureTab.h>
 
 #include <OpenKneeboard/dprint.h>
@@ -42,9 +41,11 @@ OPENKNEEBOARD_DECLARE_JSON(MatchSpecification);
 struct WindowCaptureTab::Settings {
   MatchSpecification mSpec {};
   bool mSendInput = false;
+  HWNDPageSource::Options mCaptureOptions {};
 
   constexpr auto operator<=>(const Settings&) const noexcept = default;
 };
+OPENKNEEBOARD_DECLARE_JSON(HWNDPageSource::Options);
 OPENKNEEBOARD_DECLARE_JSON(WindowCaptureTab::Settings);
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
@@ -89,7 +90,8 @@ WindowCaptureTab::WindowCaptureTab(
     mDXR(dxr),
     mKneeboard(kbs),
     mSpec(settings.mSpec),
-    mSendInput(settings.mSendInput) {
+    mSendInput(settings.mSendInput),
+    mCaptureOptions(settings.mCaptureOptions) {
 }
 
 bool WindowCaptureTab::WindowMatches(HWND hwnd) const {
@@ -136,7 +138,7 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
     co_return false;
   }
   co_await mUIThread;
-  auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd);
+  auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd, mCaptureOptions);
   if (!(source && source->GetPageCount() > 0)) {
     co_return false;
   }
@@ -415,13 +417,24 @@ void WindowCaptureTab::WinEventProc_NewWindowHook(
 }
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
+  HWNDPageSource::CaptureArea,
+  {
+    {HWNDPageSource::CaptureArea::FullWindow, "FullWindow"},
+    {HWNDPageSource::CaptureArea::ClientArea, "ClientArea"},
+  })
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  HWNDPageSource::Options,
+  mCaptureArea,
+  mCaptureCursor)
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
   TitleMatchKind,
   {
     {TitleMatchKind::Ignore, "Ignore"},
     {TitleMatchKind::Exact, "Exact"},
     {TitleMatchKind::Glob, "Glob"},
   })
-OPENKNEEBOARD_DEFINE_JSON(
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   MatchSpecification,
   mExecutable,
   mWindowClass,
@@ -430,6 +443,10 @@ OPENKNEEBOARD_DEFINE_JSON(
   mMatchWindowClass,
   mMatchExecutable)
 
-OPENKNEEBOARD_DEFINE_JSON(WindowCaptureTab::Settings, mSpec, mSendInput);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  WindowCaptureTab::Settings,
+  mSpec,
+  mSendInput,
+  mCaptureOptions);
 
 }// namespace OpenKneeboard

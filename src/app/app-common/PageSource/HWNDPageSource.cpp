@@ -63,7 +63,8 @@ static UINT gControlMessage;
 std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   const DXResources& dxr,
   KneeboardState* kneeboard,
-  HWND window) noexcept {
+  HWND window,
+  const Options& options) noexcept {
   static_assert(with_final_release<HWNDPageSource>);
   if (!gControlMessage) {
     gControlMessage
@@ -72,8 +73,8 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
       dprintf("Failed to Register a window message: {}", GetLastError());
     }
   }
-  auto ret
-    = shared_with_final_release(new HWNDPageSource(dxr, kneeboard, window));
+  auto ret = shared_with_final_release(
+    new HWNDPageSource(dxr, kneeboard, window, options));
   if (!ret->HaveWindow()) {
     return nullptr;
   }
@@ -159,8 +160,9 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 HWNDPageSource::HWNDPageSource(
   const DXResources& dxr,
   KneeboardState* kneeboard,
-  HWND window)
-  : mDXR(dxr), mWindow(window) {
+  HWND window,
+  const Options& options)
+  : mDXR(dxr), mWindow(window), mOptions(options) {
   if (!window) {
     return;
   }

@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <OpenKneeboard/TabBase.h>
@@ -40,6 +41,9 @@ class WindowCaptureTab final
     std::filesystem::path mExecutable;
     std::string mWindowClass;
     std::string mTitle;
+
+    constexpr auto operator<=>(const WindowSpecification&) const noexcept
+      = default;
   };
   struct MatchSpecification : public WindowSpecification {
     enum class TitleMatchKind : uint8_t {
@@ -51,6 +55,9 @@ class WindowCaptureTab final
     TitleMatchKind mMatchTitle {TitleMatchKind::Ignore};
     bool mMatchWindowClass {true};
     bool mMatchExecutable {true};
+
+    constexpr auto operator<=>(const MatchSpecification&) const noexcept
+      = default;
   };
 
   WindowCaptureTab() = delete;
@@ -110,6 +117,7 @@ class WindowCaptureTab final
   MatchSpecification mSpec;
   bool mSendInput = false;
   HWND mHwnd {};
+  HWNDPageSource::Options mCaptureOptions {};
   std::shared_ptr<HWNDPageSource> mDelegate;
 
   unique_hwineventhook mEventHook;

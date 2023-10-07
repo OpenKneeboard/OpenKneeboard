@@ -44,8 +44,22 @@ class HWNDPageSource final
     public EventReceiver,
     public std::enable_shared_from_this<HWNDPageSource> {
  public:
-  static std::shared_ptr<HWNDPageSource>
-  Create(const DXResources&, KneeboardState*, HWND window) noexcept;
+  enum class CaptureArea {
+    FullWindow,
+    ClientArea,
+  };
+  struct Options {
+    CaptureArea mCaptureArea {CaptureArea::FullWindow};
+    bool mCaptureCursor {false};
+
+    constexpr auto operator<=>(const Options&) const noexcept = default;
+  };
+
+  static std::shared_ptr<HWNDPageSource> Create(
+    const DXResources&,
+    KneeboardState*,
+    HWND window,
+    const Options& options) noexcept;
 
   virtual ~HWNDPageSource();
   static winrt::fire_and_forget final_release(std::unique_ptr<HWNDPageSource>);
@@ -74,13 +88,18 @@ class HWNDPageSource final
 
  private:
   HWNDPageSource() = delete;
-  HWNDPageSource(const DXResources&, KneeboardState*, HWND window);
+  HWNDPageSource(
+    const DXResources&,
+    KneeboardState*,
+    HWND window,
+    const Options&);
   winrt::fire_and_forget Init() noexcept;
   void OnFrame();
 
   winrt::apartment_context mUIThread;
   DXResources mDXR;
   HWND mWindow {};
+  Options mOptions {};
   PageID mPageID {};
   struct HookHandles {
     WindowCaptureControl::Handles mHooks64 {};
