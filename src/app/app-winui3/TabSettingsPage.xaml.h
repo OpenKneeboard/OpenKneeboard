@@ -128,6 +128,10 @@ struct WindowCaptureTabUIData : WindowCaptureTabUIDataT<
   void MatchWindowTitle(uint8_t value);
   bool IsInputEnabled() const;
   void IsInputEnabled(bool value);
+  bool IsCursorCaptureEnabled() const;
+  void IsCursorCaptureEnabled(bool value);
+  bool CaptureClientArea() const;
+  void CaptureClientArea(bool value);
 
  private:
   std::shared_ptr<OpenKneeboard::WindowCaptureTab> GetTab() const;

@@ -571,6 +571,24 @@ void WindowCaptureTabUIData::IsInputEnabled(bool value) {
   GetTab()->SetIsInputEnabled(value);
 }
 
+bool WindowCaptureTabUIData::IsCursorCaptureEnabled() const {
+  return GetTab()->IsCursorCaptureEnabled();
+}
+
+void WindowCaptureTabUIData::IsCursorCaptureEnabled(bool value) {
+  GetTab()->SetCursorCaptureEnabled(value);
+}
+
+bool WindowCaptureTabUIData::CaptureClientArea() const {
+  return GetTab()->GetCaptureArea() == HWNDPageSource::CaptureArea::ClientArea;
+}
+
+void WindowCaptureTabUIData::CaptureClientArea(bool enabled) {
+  GetTab()->SetCaptureArea(
+    enabled ? HWNDPageSource::CaptureArea::ClientArea
+            : HWNDPageSource::CaptureArea::FullWindow);
+}
+
 std::shared_ptr<WindowCaptureTab> WindowCaptureTabUIData::GetTab() const {
   auto tab = mTab.lock();
   if (!tab) {

@@ -27,6 +27,8 @@ namespace OpenKneeboardApp {
   Boolean MatchWindowClass;
   Boolean IsInputEnabled;
   UInt8 MatchWindowTitle;
+  Boolean IsCursorCaptureEnabled;
+  Boolean CaptureClientArea;
 }
 
 [default_interface] runtimeclass TabUIDataTemplateSelector

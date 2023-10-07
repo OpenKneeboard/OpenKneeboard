@@ -96,6 +96,19 @@
           Margin="0,0,0,8"
         />
         <ToggleSwitch
+          Header="Capture client area"
+          IsOn="{x:Bind CaptureClientArea}"
+          OnContent="Crop classic window borders, title bars, and menu bars"
+          OffContent="The entire window is captured"
+        />
+        <ToggleSwitch
+          Header="Capture mouse cursor"
+          IsOn="{x:Bind IsCursorCaptureEnabled}"
+          OnContent="The Windows mouse cursor is captured"
+          OffContent="The Windows mouse cursor is not captured"
+          ToolTipService.ToolTip="OpenKneeboard's tablet support does not move the Windows cursor."
+        />
+        <ToggleSwitch
           Header="Use tablet as mouse"
           IsOn="{x:Bind IsInputEnabled}"
           OnContent="Enabled"
