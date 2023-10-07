@@ -45,6 +45,7 @@
 
 #include <mutex>
 
+#include <dwmapi.h>
 #include <libloaderapi.h>
 #include <shellapi.h>
 #include <wow64apiset.h>
@@ -231,7 +232,34 @@ D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageID) {
   if (!mBitmap) {
     return {};
   }
-  return {mContentSize.width, mContentSize.height};
+
+  const auto box = this->GetContentBox();
+  return {box.right - box.left, box.bottom - box.top};
+}
+
+D3D11_BOX HWNDPageSource::GetContentBox() const {
+  if (mOptions.mCaptureArea != CaptureArea::ClientArea) {
+    if (mOptions.mCaptureArea != CaptureArea::FullWindow) {
+      dprint("Invalid capture area specified, defaulting to full window");
+      OPENKNEEBOARD_BREAK;
+    }
+    return {0, 0, 0, mContentSize.width, mContentSize.height, 1};
+  }
+
+  // Client area requested
+  const auto clientArea = this->GetClientArea();
+  if (!clientArea) {
+    return {0, 0, 0, mContentSize.width, mContentSize.height, 1};
+  }
+
+  return {
+    static_cast<UINT>(clientArea->left),
+    static_cast<UINT>(clientArea->top),
+    0,
+    static_cast<UINT>(clientArea->right),
+    static_cast<UINT>(clientArea->bottom),
+    1,
+  };
 }
 
 void HWNDPageSource::RenderPage(
@@ -365,7 +393,7 @@ void HWNDPageSource::OnFrame() {
     TraceLoggingValue(contentSize.Width, "Width"),
     TraceLoggingValue(contentSize.Height, "Height"));
 
-  const D3D11_BOX box {0, 0, 0, mContentSize.width, mContentSize.height, 1};
+  const D3D11_BOX box {this->GetContentBox()};
   TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
   ctx->CopySubresourceRegion(
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
@@ -497,6 +525,49 @@ void HWNDPageSource::ClearUserInput(PageID) {
 
 void HWNDPageSource::ClearUserInput() {
   // nothing to do here
+}
+
+std::optional<RECT> HWNDPageSource::GetClientArea() const {
+  if (mOptions.mCaptureArea != CaptureArea::ClientArea) {
+    dprintf("{} called, but capture area is not client area", __FUNCTION__);
+    OPENKNEEBOARD_BREAK;
+    return {};
+  }
+
+  if (IsIconic(mWindow)) {
+    return {};
+  }
+
+  RECT clientRect;
+  if (!GetClientRect(mWindow, &clientRect)) {
+    return {};
+  }
+
+  // The capture includes the extended frame bounds, not just the standard
+  // ones, so we need to fetch those instead of using `GetWindowRect()`
+  RECT windowRect {};
+  if (
+    DwmGetWindowAttribute(
+      mWindow, DWMWA_EXTENDED_FRAME_BOUNDS, &windowRect, sizeof(windowRect))
+    != S_OK) {
+    return {};
+  }
+
+  // Convert client coordinates to screen coordinates; needed as
+  // `GetClientRect()` returns client coordinates, so the top left of the
+  // client rect is always (0, 0), which isn't useful
+  MapWindowPoints(
+    mWindow, HWND_DESKTOP, reinterpret_cast<POINT*>(&clientRect), 2);
+
+  const auto windowWidth = windowRect.right - windowRect.left;
+  const auto scale = static_cast<float>(mContentSize.width) / windowWidth;
+
+  return {RECT {
+    std::lround((clientRect.left - windowRect.left) * scale),
+    std::lround((clientRect.top - windowRect.top) * scale),
+    std::lround((clientRect.right - clientRect.left) * scale),
+    std::lround((clientRect.bottom - clientRect.top) * scale),
+  }};
 }
 
 void HWNDPageSource::InstallWindowHooks(HWND target) {

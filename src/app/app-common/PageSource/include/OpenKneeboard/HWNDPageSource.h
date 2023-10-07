@@ -101,6 +101,11 @@ class HWNDPageSource final
   HWND mWindow {};
   Options mOptions {};
   PageID mPageID {};
+
+  // In capture-space coordinates
+  std::optional<RECT> GetClientArea() const;
+  D3D11_BOX GetContentBox() const;
+
   struct HookHandles {
     WindowCaptureControl::Handles mHooks64 {};
     winrt::handle mHook32Subprocess;
