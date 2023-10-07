@@ -85,6 +85,8 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
 
 winrt::fire_and_forget HWNDPageSource::Init() noexcept {
   const auto keepAlive = shared_from_this();
+
+  // Requires Windows 11
   bool supportsBorderRemoval = false;
   try {
     supportsBorderRemoval
@@ -136,7 +138,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
       [this](const auto&, const auto&) { this->OnFrame(); });
 
     mCaptureSession = mFramePool.CreateCaptureSession(item);
-    mCaptureSession.IsCursorCaptureEnabled(false);
+    mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
     if (supportsBorderRemoval) {
       mCaptureSession.IsBorderRequired(false);
     }
