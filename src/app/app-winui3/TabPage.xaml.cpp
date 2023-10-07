@@ -449,8 +449,8 @@ void TabPage::ResizeSwapChain() {
   winrt::check_hresult(mSwapChain->GetDesc(&desc));
   winrt::check_hresult(mSwapChain->ResizeBuffers(
     desc.BufferCount,
-    static_cast<UINT>(mCanvasSize.width * Canvas().CompositionScaleX()),
-    static_cast<UINT>(mCanvasSize.height * Canvas().CompositionScaleY()),
+    static_cast<UINT>(mCanvasSize.width),
+    static_cast<UINT>(mCanvasSize.height),
     desc.BufferDesc.Format,
     desc.Flags));
 }
@@ -461,10 +461,8 @@ void TabPage::InitializeSwapChain() {
   }
   const DXResources& dxr = gDXResources;
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
-    .Width
-    = static_cast<UINT>(mCanvasSize.width * Canvas().CompositionScaleX()),
-    .Height
-    = static_cast<UINT>(mCanvasSize.height * Canvas().CompositionScaleY()),
+    .Width = static_cast<UINT>(mCanvasSize.width),
+    .Height = static_cast<UINT>(mCanvasSize.height),
     .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
     .SampleDesc = {1, 0},
     .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
