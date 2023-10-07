@@ -259,6 +259,7 @@ void HWNDPageSource::RenderPage(
 }
 
 void HWNDPageSource::OnFrame() {
+  EventDelay delay;
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "HWNDPageSource::OnFrame");
   scope_guard traceOnException([&activity]() {
@@ -367,6 +368,7 @@ void HWNDPageSource::OnFrame() {
   TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
   ctx->CopySubresourceRegion(
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
+  TraceLoggingWriteTagged(activity, "evNeedsRepaint");
   this->evNeedsRepaintEvent.Emit();
   TraceLoggingWriteStop(
     activity,
