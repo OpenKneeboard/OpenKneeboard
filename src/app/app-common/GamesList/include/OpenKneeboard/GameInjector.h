@@ -60,7 +60,7 @@ class GameInjector final : public EventReceiver,
   Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
-  static bool AlreadyInjected(HANDLE process, const std::filesystem::path& dll);
+  static bool IsInjected(HANDLE process, const std::filesystem::path& dll);
   static bool InjectDll(HANDLE process, const std::filesystem::path& dll);
 
   GameInjector() = delete;

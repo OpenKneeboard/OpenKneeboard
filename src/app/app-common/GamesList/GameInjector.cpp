@@ -263,7 +263,7 @@ void GameInjector::CheckProcess(
       if (!static_cast<bool>(missingDlls & dllID)) {
         return;
       }
-      if (AlreadyInjected(processHandle.get(), dllPath)) {
+      if (IsInjected(processHandle.get(), dllPath)) {
         currentDlls |= dllID;
         return;
       }
@@ -279,7 +279,7 @@ void GameInjector::CheckProcess(
   }
 }
 
-bool GameInjector::AlreadyInjected(
+bool GameInjector::IsInjected(
   HANDLE process,
   const std::filesystem::path& dll) {
   DWORD neededBytes = 0;
@@ -309,7 +309,7 @@ bool GameInjector::AlreadyInjected(
 }
 
 bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
-  if (AlreadyInjected(process, dll)) {
+  if (IsInjected(process, dll)) {
     return false;
   }
 
@@ -352,13 +352,10 @@ bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
   }
 
   WaitForSingleObject(thread.get(), INFINITE);
-  DWORD loadLibraryReturn;
-  GetExitCodeThread(thread.get(), &loadLibraryReturn);
-  if (loadLibraryReturn == 0) {
-    dprintf(
-      "Injecting {} failed :'( - {:#x}",
-      dll.string(),
-      std::bit_cast<uint32_t>(loadLibraryReturn));
+  // We EnumProcessModules again as thread exit code is a DWORD, and
+  // sizeof(DWORD) < sizeof(HMODULE)
+  if (!IsInjected(process, dll)) {
+    dprintf("Injecting {} failed :'(", dll.string());
     return false;
   }
 
