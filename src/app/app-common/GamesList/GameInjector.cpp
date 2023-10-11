@@ -279,6 +279,8 @@ void GameInjector::CheckProcess(
   }
 }
 
+// This function assumes that the dll was injected with the path
+// in the same form as is being checked
 bool GameInjector::IsInjected(
   HANDLE process,
   const std::filesystem::path& dll) {
@@ -295,12 +297,10 @@ bool GameInjector::IsInjected(
     modules.resize(neededBytes / sizeof(HMODULE));
   }
 
-  auto dllBaseName = dll.filename().wstring();
-
   wchar_t buf[MAX_PATH];
   for (auto module: modules) {
-    auto length = GetModuleBaseNameW(process, module, buf, MAX_PATH);
-    if (std::wstring_view(buf, length) == dllBaseName) {
+    auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
+    if (std::wstring_view(buf, length) == dll) {
       return true;
     }
   }
