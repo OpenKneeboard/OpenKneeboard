@@ -299,8 +299,9 @@ bool GameInjector::IsInjected(
 
   wchar_t buf[MAX_PATH];
   for (auto module: modules) {
-    auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
-    if (std::wstring_view(buf, length) == dll) {
+    const auto length = GetModuleFileNameExW(process, module, buf, MAX_PATH);
+    const std::wstring_view bufView {buf, length};
+    if (bufView == dll) {
       return true;
     }
   }
