@@ -9,7 +9,7 @@ Wacom tablets can either be used with Wacom's drivers, or [with OpenTabletDriver
 
 ## Using Wacom's drivers
 
-If you're running v1.3, you need to enable the tablet by:
+You need to enable the tablet by:
 
 1. Open OpenKneeboard's settings page (bottom left)
 2. Go to the input settings page

@@ -60,7 +60,7 @@ This is particularly useful for AI or scripted campaign JTAC 9-lines.
 
 ## The 'DCS Theater' Tab
 
-v1.3 and below: this was also called the 'DCS Terrain' tab. This will show any *image files* from:
+This will show any *image files* from:
 
 - ***`DCS saved games path`***`\KNEEBOARD\`***`theater`***
 - ***`DCS installation path`***`\Mods\terrains\`***`theater`***`\Kneeboard`

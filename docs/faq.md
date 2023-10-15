@@ -37,17 +37,13 @@ Over time, most people will get used to this and it will naturally become more c
 
 ## How do I make OpenKneeboard start minimized?
 
-v1.3 and below: this is not supported
-
-v1.4 and above: launch OpenKneeboard with a `--minimized` parameter; for example, by editing the shortcut:
+Launch OpenKneeboard with a `--minimized` parameter; for example, by editing the shortcut:
 
 ![add `--minimized` at the end, separated by a space, after quote marks (if any)](screenshots/minimized-shortcut.png)
 
 ## How do I remove the header or footer ('borders')?
 
-v1.3 and below: this is not supported
-
-v1.4: the header and footer can be disabled in Advanced Settings.
+The header and footer can be disabled in Advanced Settings.
 
 ## How do I quickly adjust the VR position?
 

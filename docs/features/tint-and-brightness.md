@@ -4,8 +4,6 @@ parent: Features
 
 # Tint and Brightness
 
-**This feature will be available in v1.4**
-
 By default, OpenKneeboard uses a 'full white' tint; this is equivalent to full brightness. Other settings might be preferable for nighttime.
 
 Tint is just a more general brightness control - a 50% gray tint is equivalent to 50% brightness - however brightness can be adjusted for any color.

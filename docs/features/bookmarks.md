@@ -4,8 +4,6 @@ parent: Features
 
 # Bookmarks
 
-**This feature will be available in v1.4**
-
 Bookmarks are a shortcut to a specific page within a tab; this can be useful for jumping to a specific part of the mission briefing, or a reference guide.
 
 Add a bookmark by clicking on the 'pin' icon in the top right of the toolbar:

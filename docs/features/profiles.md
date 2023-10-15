@@ -39,10 +39,7 @@ You can switch profiles with:
 
 ### Automatically switching profiles
 
-OpenKneeboard does not currently have built-in support for this, however:
-
-- OpenKneeboard v1.3: if you're comfortable with Lua, [it is possible in DCS](https://github.com/OpenKneeboard/OpenKneeboard/issues/256#issuecomment-1407701513)
-- OpenKneeboard v1.4+: coding/scripting is still required, however [multiple programming languages are supported](../api/index.md) 
+OpenKneeboard does not currently have built-in support for this, however it is possible to script this via [OpenKneeboard's API](../api/index.md).
 
 ## The 'Default' profile
 

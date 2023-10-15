@@ -10,10 +10,6 @@ Messages have a name and a value; the value is always a string. It is the respon
 
 To find IDs for the events that require them and for information on the tradeoffs of IDs vs names or indices, see the [remote controls documentation](../features/remote-controls.md).
 
-## Notes for OpenKneeboard v1.3 and below
-
-In OpenKneeboard v1.3 and below, all messages start with `com.fredemmott.openkneeboard/` - for example, `RemoteUserAction` is `com.fredemmott.openkneeboard/RemoteUserAction`. This extra prefix has been removed for v1.4.
-
 # MultiEvent
 
 Used to send multiple events in one go for performance; this can sometimes increase performance compared to sending separate messages.
@@ -135,8 +131,6 @@ Value: JSON-encoded object:
 - `Name`: *string* - the name of the profile to switch to
 
 # SetBrightness
-
-**This message will be added in v1.4.**
 
 Value: JSON-encoded Object:
 
