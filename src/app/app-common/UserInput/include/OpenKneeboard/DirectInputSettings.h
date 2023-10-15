@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/UserAction.h>
+
 #include <OpenKneeboard/json_fwd.h>
 
 #include <memory>
@@ -45,9 +46,11 @@ struct DirectInputSettings {
     constexpr auto operator<=>(const Device&) const noexcept = default;
   };
 
+  bool mEnableMouseButtonBindings {false};
   std::unordered_map<std::string, Device> mDevices;
-  constexpr auto operator<=>(
-    const DirectInputSettings&) const noexcept = default;
+
+  constexpr auto operator<=>(const DirectInputSettings&) const noexcept
+    = default;
 };
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(DirectInputSettings);
 }// namespace OpenKneeboard

@@ -89,6 +89,19 @@ void AdvancedSettingsPage::Bookmarks(bool value) noexcept {
     winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs(L"Bookmarks"));
 }
 
+bool AdvancedSettingsPage::EnableMouseButtonBindings() const noexcept {
+  return gKneeboard->GetDirectInputSettings().mEnableMouseButtonBindings;
+}
+
+void AdvancedSettingsPage::EnableMouseButtonBindings(bool value) noexcept {
+  auto s = gKneeboard->GetDirectInputSettings();
+  if (s.mEnableMouseButtonBindings == value) {
+    return;
+  }
+  s.mEnableMouseButtonBindings = value;
+  gKneeboard->SetDirectInputSettings(s);
+}
+
 bool AdvancedSettingsPage::MultipleProfiles() const noexcept {
   return gKneeboard->GetProfileSettings().mEnabled;
 }

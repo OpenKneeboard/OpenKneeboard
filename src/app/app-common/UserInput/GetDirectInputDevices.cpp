@@ -18,8 +18,10 @@
  * USA.
  */
 #include <OpenKneeboard/GetDirectInputDevices.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
+
 #include <hidusage.h>
 
 using DeviceInstances = std::vector<DIDEVICEINSTANCE>;
@@ -54,14 +56,20 @@ static bool IsGameController(LPCDIDEVICEINSTANCE inst) {
   return false;
 }
 
-static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
+namespace {
+struct EnumDeviceContext {
+  DeviceInstances mDeviceInstances {};
+  bool mIncludeMice {false};
+};
+
+BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID untypedCtx) {
+  auto ctx = reinterpret_cast<EnumDeviceContext*>(untypedCtx);
   auto devType = inst->dwDevType & 0xff;
   // vjoystick devices self-report as 6DOF 1st-person controllers
   if (
-    devType == DI8DEVTYPE_KEYBOARD || devType == DI8DEVTYPE_MOUSE
-    || IsGameController(inst)) {
-    auto& devices = *reinterpret_cast<DeviceInstances*>(ctx);
-    devices.push_back(*inst);
+    devType == DI8DEVTYPE_KEYBOARD || IsGameController(inst)
+    || (devType == DI8DEVTYPE_MOUSE && ctx->mIncludeMice)) {
+    ctx->mDeviceInstances.push_back(*inst);
   } else {
     dprintf(
       "Skipping DirectInput device '{}' with filtered device type {:#010x} "
@@ -73,12 +81,15 @@ static BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID ctx) {
   }
   return DIENUM_CONTINUE;
 }
+}// namespace
 
-DeviceInstances GetDirectInputDevices(IDirectInput8W* di) {
-  DeviceInstances ret;
+DeviceInstances GetDirectInputDevices(IDirectInput8W* di, bool includeMice) {
+  EnumDeviceContext ctx {
+    .mIncludeMice = includeMice,
+  };
   di->EnumDevices(
-    DI8DEVCLASS_ALL, &EnumDeviceCallback, &ret, DIEDFL_ATTACHEDONLY);
-  return ret;
+    DI8DEVCLASS_ALL, &EnumDeviceCallback, &ctx, DIEDFL_ATTACHEDONLY);
+  return ctx.mDeviceInstances;
 }
 
 }// namespace OpenKneeboard

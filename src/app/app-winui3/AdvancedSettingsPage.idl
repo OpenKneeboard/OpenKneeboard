@@ -13,6 +13,8 @@ namespace OpenKneeboardApp
 
         Boolean Bookmarks;
 
+        Boolean EnableMouseButtonBindings;
+
         Boolean LoopPages;
         Boolean LoopTabs;
         Boolean LoopProfiles;

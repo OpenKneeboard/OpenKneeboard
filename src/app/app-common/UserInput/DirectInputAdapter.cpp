@@ -76,6 +76,10 @@ DirectInputAdapter::DirectInputAdapter(
 }
 
 void DirectInputAdapter::LoadSettings(const DirectInputSettings& settings) {
+  if (mSettings == settings) {
+    return;
+  }
+
   mSettings = settings;
   this->Reload();
   this->evSettingsChangedEvent.Emit();
@@ -104,7 +108,8 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
   // Make sure the lock is released first
   EventDelay delay;
   std::unique_lock lock(mDevicesMutex);
-  for (auto diDeviceInstance: GetDirectInputDevices(mDI8.get())) {
+  for (auto diDeviceInstance: GetDirectInputDevices(
+         mDI8.get(), mSettings.mEnableMouseButtonBindings)) {
     auto device = DirectInputDevice::Create(diDeviceInstance);
     if (mSettings.mDevices.contains(device->GetID())) {
       std::vector<UserInputButtonBinding> bindings;

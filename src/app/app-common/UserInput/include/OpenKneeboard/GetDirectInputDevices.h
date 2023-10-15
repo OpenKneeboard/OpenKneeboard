@@ -19,12 +19,14 @@
  */
 #pragma once
 
-#include <dinput.h>
-
 #include <vector>
+
+#include <dinput.h>
 
 namespace OpenKneeboard {
 
-std::vector<DIDEVICEINSTANCE> GetDirectInputDevices(IDirectInput8W* di);
+std::vector<DIDEVICEINSTANCE> GetDirectInputDevices(
+  IDirectInput8W* di,
+  bool includeMice);
 
 }

@@ -47,6 +47,9 @@ struct AdvancedSettingsPage
   bool Bookmarks() const noexcept;
   void Bookmarks(bool value) noexcept;
 
+  bool EnableMouseButtonBindings() const noexcept;
+  void EnableMouseButtonBindings(bool value) noexcept;
+
   bool GazeInputFocus() const noexcept;
   void GazeInputFocus(bool value) noexcept;
 

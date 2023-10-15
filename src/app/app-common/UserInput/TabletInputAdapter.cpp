@@ -210,6 +210,9 @@ std::shared_ptr<TabletInputDevice> TabletInputAdapter::CreateDevice(
 }
 
 void TabletInputAdapter::LoadSettings(const TabletSettings& settings) {
+  if (settings == mSettings) {
+    return;
+  }
   mSettings = settings;
 
   for (auto& device: this->GetDevices()) {

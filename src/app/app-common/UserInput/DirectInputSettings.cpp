@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/DirectInputSettings.h>
+
 #include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
@@ -35,6 +36,6 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mName,
   mKind,
   mButtonBindings);
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(DirectInputSettings, mDevices);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(DirectInputSettings, mEnableMouseButtonBindings, mDevices);
 
 }// namespace OpenKneeboard

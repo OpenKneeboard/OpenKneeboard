@@ -48,6 +48,30 @@
         </TextBlock>
       </StackPanel>
       <TextBlock
+        Text="Mouse button bindings"
+        Style="{ThemeResource SubtitleTextBlockStyle}"
+      />
+      <StackPanel Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8"
+        Spacing="12">
+        <ToggleSwitch
+          OffContent="Disabled"
+          OnContent="Enabled"
+          IsOn="{x:Bind EnableMouseButtonBindings}"
+        />
+				<TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          Allows binding mouse buttons in the "Input Settings" page; this is
+          disabled by default as it is rarely used, but a common source of
+          problems.
+        </TextBlock>
+			</StackPanel>
+      <TextBlock
         Text="Profiles"
         Style="{ThemeResource SubtitleTextBlockStyle}"
       />
