@@ -19,18 +19,20 @@
  */
 #include "IDXGISwapChainPresentHook.h"
 
+#include "FindMainWindow.h"
+#include "detours-ext.h"
+#include "dxgi-offsets.h"
+#include "function-patterns.h"
+
 #include <OpenKneeboard/dprint.h>
-#include <d3d11.h>
-#include <psapi.h>
+
 #include <shims/winrt/base.h>
 
 #include <bit>
 #include <utility>
 
-#include "FindMainWindow.h"
-#include "detours-ext.h"
-#include "dxgi-offsets.h"
-#include "function-patterns.h"
+#include <d3d11.h>
+#include <psapi.h>
 
 namespace OpenKneeboard {
 
@@ -82,6 +84,7 @@ struct IDXGISwapChainPresentHook::Impl {
 
   void InstallSteamOverlayHook(void* steamHookAddress);
   void InstallVTableHook();
+  bool InstallVTableHookOnce();
 
   Callbacks mCallbacks;
 
@@ -152,6 +155,20 @@ IDXGISwapChainPresentHook::Impl::~Impl() {
 }
 
 void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
+  if (InstallVTableHookOnce()) {
+    return;
+  }
+  for (int i = 0; i < 30; i++) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    dprint("Trying again...");
+    if (InstallVTableHookOnce()) {
+      return;
+    }
+  }
+  dprint("... giving up on VTable hook.");
+}
+
+bool IDXGISwapChainPresentHook::Impl::InstallVTableHookOnce() {
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
   sd.BufferCount = 1;
@@ -165,10 +182,7 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 
   if (!sd.OutputWindow) {
-    for (int i = 0; i < 30 && !sd.OutputWindow; i++) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      sd.OutputWindow = FindMainWindow();
-    }
+    return false;
   }
 
   D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_11_1;
@@ -199,9 +213,9 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
     nullptr);
   if (!(device && swapchain)) {
     dprintf(" - failed to get D3D11 device and swapchain: {}", error);
-    OPENKNEEBOARD_BREAK;
-    return;
+    return false;
   }
+
   dprintf(" - got a temporary device at {:#018x}", (intptr_t)device.get());
   dprintf(
     " - got a temporary SwapChain at {:#018x}", (intptr_t)swapchain.get());
@@ -216,6 +230,8 @@ void IDXGISwapChainPresentHook::Impl::InstallVTableHook() {
   } else {
     dprintf(" - failed to hook IDXGISwapChain::Present(): {}", err);
   }
+
+  return true;
 }
 
 void IDXGISwapChainPresentHook::Impl::InstallSteamOverlayHook(
