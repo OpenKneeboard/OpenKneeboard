@@ -36,11 +36,26 @@ static BOOL CALLBACK FindMainWindowCallback(HWND handle, LPARAM param) {
     return TRUE;
   }
 
+  if (IsIconic(handle)) {
+    return TRUE;
+  }
+
   // In general, console windows can be main windows, but:
   // - never relevant for a graphics tablet
   // - debug builds of OpenKneeboard often create console windows for debug
   // messages
   if (handle == GetConsoleWindow()) {
+    return TRUE;
+  }
+
+  RECT clientRect {};
+  if (!GetClientRect(handle, &clientRect)) {
+    return TRUE;
+  }
+
+  // Origin of client rect is always (0,0), bottom right is 1px outside the
+  // window
+  if (clientRect.right <= 1 || clientRect.bottom <= 1) {
     return TRUE;
   }
 
