@@ -218,6 +218,7 @@ nlohmann::json WindowCaptureTab::GetSettings() const {
   return Settings {
     .mSpec = mSpec,
     .mSendInput = mSendInput,
+    .mCaptureOptions = mCaptureOptions,
   };
 }
 
