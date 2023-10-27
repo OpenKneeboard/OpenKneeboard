@@ -121,6 +121,10 @@ install(
   TYPE BIN
   PATTERN "*.pdb" EXCLUDE
   PATTERN "*.lib" EXCLUDE
+  # WinUI3 includes these localizations, but they are not supported by WiX v3.11.2, so including them breaks the installer :'(
+  PATTERN "gd-gb/*" EXCLUDE
+  PATTERN "mi-NZ/*" EXCLUDE
+  PATTERN "ug-CN/*" EXCLUDE
 )
 
 set_property(
