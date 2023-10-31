@@ -5,16 +5,6 @@ parent: Compatibility
 
 # Game Compatibility
 
-## Common Games
-
-| Game | Non-VR | Native OpenXR | OpenComposite | Oculus SDK | SteamVR |
-|------|--------|---------------|---------------|------------|---------|
-| DCS World | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Falcon BMS | ✅ | n/a | n/a | n/a | ✅ |
-| MSFS 2020  | ✅ | ✅ | n/a | n/a | ✅ |
-
-## Other Games
-
 | Graphics API | Non-VR | OpenXR | Oculus | SteamVR |
 | -------------|--------|--------|--------|---------|
 | OpenGL       | ❌ | ❌ | ❌ | ✅ |
@@ -24,4 +14,12 @@ parent: Compatibility
 
 🧪: OpenKneeboard's support for Vulkan+OpenXR is currently experimental.
 
-Oculus API: only Link or Air Link are supported; Virtual Desktop or other similar tools are only supported via SteamVR.
+Oculus API: only Link or Air Link are supported; Virtual Desktop or other similar tools are only supported via SteamVR or OpenXR.
+
+## Common Games
+
+| Game | Non-VR | Native OpenXR | OpenComposite | Oculus SDK | SteamVR |
+|------|--------|---------------|---------------|------------|---------|
+| DCS World | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Falcon BMS | ✅ | n/a | n/a | n/a | ✅ |
+| MSFS 2020  | ✅ (D3D11 only) | ✅ | n/a | n/a | ✅ |
