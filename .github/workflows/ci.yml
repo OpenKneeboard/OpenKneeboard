@@ -47,11 +47,6 @@ jobs:
           Add-Content $Env:GITHUB_OUTPUT "PATH=$pfxPath"
       - name: Make build directory
         run: cmake -E make_directory build
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: build/third-party
-          key: "third-party-${{matrix.config}}-${{hashFiles('third-party/*.cmake', 'third-party/CMakeLists.txt', 'CMakeLists.txt')}}"
       - name: Configure
         working-directory: build
         shell: pwsh
@@ -66,6 +61,11 @@ jobs:
             echo "::warning::Not signing targets"
           }
           cmake ${{github.workspace}}/source @args
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: build/third-party
+          key: "third-party-${{matrix.config}}-${{hashFiles('third-party/**', 'CMakeLists.txt')}}"
       - name: Build
         id: build
         working-directory: build
