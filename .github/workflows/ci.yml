@@ -61,6 +61,11 @@ jobs:
             echo "::warning::Not signing targets"
           }
           cmake ${{github.workspace}}/source @args
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: build/third-party
+          key: "third-party-${{matrix.config}}-${{hashfiles('third-party/*.cmake', 'third-party/CMakeLists.txt', 'CMakeLists.txt')}}"
       - name: Build
         id: build
         working-directory: build
