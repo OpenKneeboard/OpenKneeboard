@@ -105,12 +105,52 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
 
   co_await this->ReleaseDevices();
 
+  this->UpdateDevices();
+}
+
+winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
   // Make sure the lock is released first
   EventDelay delay;
   std::unique_lock lock(mDevicesMutex);
-  for (auto diDeviceInstance: GetDirectInputDevices(
-         mDI8.get(), mSettings.mEnableMouseButtonBindings)) {
-    auto device = DirectInputDevice::Create(diDeviceInstance);
+
+  auto instances
+    = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
+
+  for (auto dit = mDevices.begin(); dit != mDevices.end();) {
+    auto& device = dit->second.mDevice;
+    const winrt::guid guid {device->GetID()};
+    auto iit = std::ranges::find_if(instances, [guid](const auto& instance) {
+      return guid == winrt::guid {instance.guidInstance};
+    });
+    if (iit != instances.end()) {
+      iit++;
+      continue;
+    }
+
+    dprintf(
+      L"DirectInput device removed: {} ('{}')",
+      winrt::to_hstring(guid),
+      winrt::to_hstring(device->GetName()));
+    dit->second.mListener.Cancel();
+    co_await winrt::resume_on_signal(
+      dit->second.mListenerCompletionHandle.get());
+    dit = mDevices.erase(dit);
+  }
+
+  for (const auto& instance: instances) {
+    const auto id = winrt::to_string(winrt::to_hstring(instance.guidInstance));
+    if (mDevices.contains(id)) {
+      continue;
+    }
+
+    dprintf(
+      "DirectInput device added: {} ('{}')",
+      winrt::to_string(instance.tszInstanceName),
+      id);
+
+    auto device = DirectInputDevice::Create(instance);
+    assert(device->GetID() == id);
+
     if (mSettings.mDevices.contains(device->GetID())) {
       std::vector<UserInputButtonBinding> bindings;
       for (const auto& binding:
@@ -126,8 +166,8 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
 
     auto completionHandle = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
 
-    mDevices.insert_or_assign(
-      device->GetID(),
+    mDevices.try_emplace(
+      id,
       DeviceState {
         .mDevice = device,
         .mListener
@@ -139,7 +179,6 @@ winrt::fire_and_forget DirectInputAdapter::Reload() {
     AddEventListener(
       device->evBindingsChangedEvent, this->evSettingsChangedEvent);
   }
-
   this->evAttachedControllersChangedEvent.Emit();
 }
 
@@ -205,8 +244,8 @@ LRESULT DirectInputAdapter::SubclassProc(
   DWORD_PTR dwRefData) {
   auto instance = reinterpret_cast<DirectInputAdapter*>(dwRefData);
   if (uMsg == WM_DEVICECHANGE && wParam == DBT_DEVNODES_CHANGED) {
-    dprint("Devices changed, reloading DirectInput device list");
-    instance->Reload();
+    dprint("Devices changed, updating DirectInput device list");
+    instance->UpdateDevices();
   }
 
   return DefSubclassProc(hWnd, uMsg, wParam, lParam);

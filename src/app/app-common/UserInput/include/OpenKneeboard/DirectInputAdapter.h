@@ -66,6 +66,7 @@ class DirectInputAdapter final
   DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
   winrt::Windows::Foundation::IAsyncAction ReleaseDevices();
   winrt::fire_and_forget Reload();
+  winrt::fire_and_forget UpdateDevices();
 
   HWND mWindow;
   UINT_PTR mID;
