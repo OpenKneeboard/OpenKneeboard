@@ -119,11 +119,13 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
   for (auto dit = mDevices.begin(); dit != mDevices.end();) {
     auto& device = dit->second.mDevice;
     const winrt::guid guid {device->GetID()};
-    auto iit = std::ranges::find_if(instances, [guid](const auto& instance) {
-      return guid == winrt::guid {instance.guidInstance};
-    });
+
+    const auto iit
+      = std::ranges::find_if(instances, [guid](const auto& instance) {
+          return guid == winrt::guid {instance.guidInstance};
+        });
     if (iit != instances.end()) {
-      iit++;
+      dit++;
       continue;
     }
 
