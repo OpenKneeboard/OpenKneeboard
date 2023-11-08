@@ -89,7 +89,7 @@ static void MaybeSaveJSON(
     std::ifstream f(fullPath);
     try {
       f >> j;
-    } catch (const nlohmann::json& e) {
+    } catch (const nlohmann::json::exception& e) {
       dprintf(
         "Error reading JSON from file '{}': {}", fullPath.string(), e.what());
     }
