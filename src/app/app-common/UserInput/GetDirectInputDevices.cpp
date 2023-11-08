@@ -71,7 +71,7 @@ BOOL CALLBACK EnumDeviceCallback(LPCDIDEVICEINSTANCE inst, LPVOID untypedCtx) {
     || (devType == DI8DEVTYPE_MOUSE && ctx->mIncludeMice)) {
     ctx->mDeviceInstances.push_back(*inst);
   } else {
-    dprintf(
+    traceprint(
       "Skipping DirectInput device '{}' with filtered device type {:#010x} "
       "{:#010x} {:#010x}",
       to_utf8(inst->tszInstanceName),
