@@ -18,15 +18,18 @@
  * USA.
  */
 #include <OpenKneeboard/Settings.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
-#include <ShlObj.h>
+
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <chrono>
 #include <format>
 #include <fstream>
-#include <shims/filesystem>
+
+#include <ShlObj.h>
 
 namespace OpenKneeboard {
 
@@ -66,6 +69,8 @@ static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
       OpenKneeboard::from_json(json, out);
     }
   } catch (const nlohmann::json::exception& e) {
+    dprintf(
+      "Error reading JSON from file '{}': {}", fullPath.string(), e.what());
   }
 }
 
@@ -82,7 +87,12 @@ static void MaybeSaveJSON(
   // matches the parent now
   if (std::filesystem::exists(fullPath)) {
     std::ifstream f(fullPath);
-    f >> j;
+    try {
+      f >> j;
+    } catch (const nlohmann::json& e) {
+      dprintf(
+        "Error reading JSON from file '{}': {}", fullPath.string(), e.what());
+    }
   }
 
   const auto parentPath = fullPath.parent_path();
