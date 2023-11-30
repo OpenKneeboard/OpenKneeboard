@@ -166,6 +166,10 @@ PageIndex NavigationTab::GetPageCount() const {
   return static_cast<PageIndex>(mButtonTrackers.size());
 }
 
+ScalingKind NavigationTab::GetScalingKind(PageID) {
+  return ScalingKind::Vector;
+}
+
 D2D1_SIZE_U NavigationTab::GetNativeContentSize(PageID) {
   return mPreferredSize;
 }

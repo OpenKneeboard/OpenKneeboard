@@ -119,6 +119,7 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
       nextMetrics.mContentArea.right,
       nextMetrics.mContentArea.bottom,
     },
+    nextMetrics.mScalingKind,
   };
 }
 

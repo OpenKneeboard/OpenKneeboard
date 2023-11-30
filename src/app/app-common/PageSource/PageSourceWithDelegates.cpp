@@ -130,6 +130,14 @@ std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
   return *delegate;
 }
 
+ScalingKind PageSourceWithDelegates::GetScalingKind(PageID pageID) {
+  auto delegate = this->FindDelegate(pageID);
+  if (!delegate) {
+    return ScalingKind::Vector;
+  }
+  return delegate->GetScalingKind(pageID);
+}
+
 D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(PageID pageID) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {

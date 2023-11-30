@@ -59,6 +59,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
     {ErrorRenderWidth, ErrorRenderHeight},
     {0, 0, ErrorRenderWidth, ErrorRenderHeight},
     {0, 0, ErrorRenderWidth, ErrorRenderHeight},
+    {ScalingKind::Vector},
   };
   auto tabView = context.mTabView;
   if (!tabView) {
@@ -79,6 +80,7 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
     size,
     {0, 0, size.width, size.height},
     {0, 0, size.width, size.height},
+    tabView->GetScalingKind(),
   };
 }
 

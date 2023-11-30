@@ -80,6 +80,10 @@ std::vector<PageID> PlainTextPageSource::GetPageIDs() const {
   return mPageIDs;
 }
 
+ScalingKind PlainTextPageSource::GetScalingKind(PageID) {
+  return ScalingKind::Vector;
+}
+
 D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(PageID) {
   return {768 * RENDER_SCALE, 1024 * RENDER_SCALE};
 }

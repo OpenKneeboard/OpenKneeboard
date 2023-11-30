@@ -49,6 +49,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
   virtual PageIndex GetPageCount() const override;
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual D2D1_SIZE_U GetNativeContentSize(PageID) override;
+  virtual ScalingKind GetScalingKind(PageID) override;
   virtual void RenderPage(
     RenderTargetID,
     ID2D1DeviceContext*,

@@ -152,6 +152,13 @@ std::vector<PageID> EndlessNotebookTab::GetPageIDs() const {
   return mPageIDs;
 }
 
+ScalingKind EndlessNotebookTab::GetScalingKind(PageID pageID) {
+  if (mSource) {
+    return mSource->GetScalingKind(pageID);
+  }
+  return ScalingKind::Vector;
+}
+
 D2D1_SIZE_U EndlessNotebookTab::GetNativeContentSize(PageID) {
   if (mSource) {
     return mSource->GetNativeContentSize(mSourcePageID);

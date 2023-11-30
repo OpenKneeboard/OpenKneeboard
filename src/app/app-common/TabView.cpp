@@ -198,6 +198,10 @@ void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
   evNeedsRepaintEvent.Emit();
 }
 
+ScalingKind TabView::GetScalingKind() const {
+  return GetTab()->GetScalingKind(GetPageID());
+}
+
 D2D1_SIZE_U TabView::GetNativeContentSize() const {
   return GetTab()->GetNativeContentSize(GetPageID());
 }

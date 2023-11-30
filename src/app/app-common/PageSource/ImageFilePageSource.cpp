@@ -139,6 +139,10 @@ D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(PageID pageID) {
   return bitmap->GetPixelSize();
 }
 
+ScalingKind ImageFilePageSource::GetScalingKind(PageID) {
+  return ScalingKind::Bitmap;
+}
+
 void ImageFilePageSource::RenderPage(
   RenderTargetID,
   ID2D1DeviceContext* ctx,

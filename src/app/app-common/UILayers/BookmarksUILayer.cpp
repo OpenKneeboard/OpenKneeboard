@@ -136,6 +136,7 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
       width + nextMetrics.mContentArea.right,
       nextMetrics.mContentArea.bottom,
     },
+    .mScalingKind = nextMetrics.mScalingKind,
   };
 }
 

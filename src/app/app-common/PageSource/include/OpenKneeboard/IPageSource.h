@@ -37,6 +37,19 @@ enum class SuggestedPageAppendAction {
   KeepOnCurrentPage,
 };
 
+enum class ScalingKind {
+  /* The source is equivalent to a 2D-array of pixels; scaling is slow and low
+   * quality.
+   *
+   * The native content size should be **strongly** preferred.
+   */
+  Bitmap,
+  /* The source can be rendered at any resolution with high quality, without
+   * significiant performance issues.
+   */
+  Vector,
+};
+
 class IPageSource {
  public:
   virtual ~IPageSource();
@@ -44,6 +57,7 @@ class IPageSource {
   virtual PageIndex GetPageCount() const = 0;
   virtual std::vector<PageID> GetPageIDs() const = 0;
 
+  virtual ScalingKind GetScalingKind(PageID) = 0;
   virtual D2D1_SIZE_U GetNativeContentSize(PageID) = 0;
   virtual void RenderPage(
     RenderTargetID,

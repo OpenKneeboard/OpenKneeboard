@@ -259,23 +259,28 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
   }
 
   auto [first, rest] = this->GetUILayers();
-  const auto idealSize
-    = first
-        ->GetMetrics(
-          rest,
-          {
-            .mTabView = mCurrentTabView,
-            .mKneeboardView
-            = std::const_pointer_cast<KneeboardView>(this->shared_from_this()),
-            .mIsActiveForInput = false,
-          })
-        .mCanvasSize;
+  const auto metrics = first->GetMetrics(
+    rest,
+    {
+      .mTabView = mCurrentTabView,
+      .mKneeboardView
+      = std::const_pointer_cast<KneeboardView>(this->shared_from_this()),
+      .mIsActiveForInput = false,
+    });
+  const auto idealSize = metrics.mCanvasSize;
+  if (metrics.mScalingKind == ScalingKind::Bitmap) {
+    return {
+      static_cast<UINT>(std::lround(idealSize.width)),
+      static_cast<UINT>(std::lround(idealSize.height)),
+    };
+  }
+
   const auto xScale = TextureWidth / idealSize.width;
   const auto yScale = TextureHeight / idealSize.height;
   const auto scale = std::min(xScale, yScale);
   const D2D1_SIZE_U canvas {
-    static_cast<UINT>(std::roundl(idealSize.width * scale)),
-    static_cast<UINT>(std::roundl(idealSize.height * scale)),
+    static_cast<UINT>(std::lround(idealSize.width * scale)),
+    static_cast<UINT>(std::lround(idealSize.height * scale)),
   };
   return canvas;
 }

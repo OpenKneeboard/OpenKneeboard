@@ -28,6 +28,7 @@
 #include <OpenKneeboard/ToolbarFlyout.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/ToolbarToggleAction.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
@@ -160,6 +161,7 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
       nextMetrics.mContentArea.right,
       nextMetrics.mContentArea.bottom + headerHeight,
     },
+    .mScalingKind = nextMetrics.mScalingKind,
   };
 }
 

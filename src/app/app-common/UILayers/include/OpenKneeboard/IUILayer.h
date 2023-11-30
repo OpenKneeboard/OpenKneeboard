@@ -23,10 +23,11 @@
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/RenderTargetID.h>
-#include <d2d1_1.h>
 
 #include <memory>
 #include <span>
+
+#include <d2d1_1.h>
 
 namespace OpenKneeboard {
 
@@ -64,6 +65,7 @@ class IUILayer {
     D2D1_SIZE_F mCanvasSize {};
     D2D1_RECT_F mNextArea {};
     D2D1_RECT_F mContentArea {};
+    ScalingKind mScalingKind {};
   };
 
   virtual Metrics GetMetrics(const NextList&, const Context&) const = 0;

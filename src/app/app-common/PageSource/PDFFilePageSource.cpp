@@ -348,6 +348,10 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
   return p->mPageIDs;
 }
 
+ScalingKind PDFFilePageSource::GetScalingKind(PageID) {
+  return ScalingKind::Vector;
+}
+
 D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageID id) {
   if (!p) {
     return {ErrorRenderWidth, ErrorRenderHeight};

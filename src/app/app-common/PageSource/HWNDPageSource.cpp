@@ -264,6 +264,10 @@ std::vector<PageID> HWNDPageSource::GetPageIDs() const {
   return {};
 }
 
+ScalingKind HWNDPageSource::GetScalingKind(PageID) {
+  return ScalingKind::Bitmap;
+}
+
 D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageID) {
   if (!mBitmap) {
     return {};
