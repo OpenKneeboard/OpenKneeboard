@@ -231,9 +231,12 @@ winrt::fire_and_forget HelpPage::OnExportClick(
       dumps.push_back({path, entry.last_write_time()});
       continue;
     }
+    if (path.extension() != ".txt" && path.extension() != ".json") {
+      continue;
+    }
 
-    const auto relative
-      = to_utf8(std::filesystem::proximate(path, settingsDir));
+    const auto relative = to_utf8(
+      std::filesystem::proximate(path, settingsDir).generic_wstring());
     if (relative == ".instance") {
       continue;
     }
