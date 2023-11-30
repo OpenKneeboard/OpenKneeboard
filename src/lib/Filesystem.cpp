@@ -22,6 +22,7 @@
 #include <Windows.h>
 
 #include <format>
+#include <mutex>
 
 namespace OpenKneeboard::Filesystem {
 
