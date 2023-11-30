@@ -116,11 +116,43 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
         winrt::put_abi(item)));
     } catch (const winrt::hresult_error& e) {
       dprintf(
-        "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem: "
+        "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
+        "for window: "
         "{} ({})",
         winrt::to_string(e.message()),
         static_cast<int64_t>(e.code().value));
-      co_return;
+
+      // We can't capture full-screen windows; if that's the problem, capture
+      // the full screen instead :)
+      RECT windowRect;
+      if (!GetWindowRect(mWindow, &windowRect)) {
+        dprint("Failed to get window rect");
+        co_return;
+      }
+      const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+      MONITORINFOEXW monitorInfo {sizeof(MONITORINFOEXW)};
+      if (!GetMonitorInfoW(monitor, &monitorInfo)) {
+        dprint("Failed to get monitor info");
+        co_return;
+      }
+      if (windowRect != monitorInfo.rcMonitor) {
+        co_return;
+      }
+
+      try {
+        winrt::check_hresult(interopFactory->CreateForMonitor(
+          monitor,
+          winrt::guid_of<WGC::GraphicsCaptureItem>(),
+          winrt::put_abi(item)));
+      } catch (const winrt::hresult_error& e) {
+        dprintf(
+          "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
+          "for monitor: "
+          "{} ({})",
+          winrt::to_string(e.message()),
+          static_cast<int64_t>(e.code().value));
+        co_return;
+      }
     }
 
     winrt::com_ptr<IInspectable> inspectable {nullptr};
