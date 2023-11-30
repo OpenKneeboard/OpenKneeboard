@@ -30,16 +30,18 @@
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/ToolbarAction.h>
+
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
+
+#include <mutex>
+#include <ranges>
+
 #include <d3d11_4.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
 #include <wincodec.h>
-
-#include <mutex>
-#include <ranges>
 
 namespace OpenKneeboard {
 
@@ -228,15 +230,29 @@ void InterprocessRenderer::Init(
 
   this->RenderNow();
 
-  AddEventListener(kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
-                     if (self->mNeedsRepaint) {
-                       self->RenderNow();
-                     }
-                   }));
+  AddEventListener(
+    kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
+      const auto now = std::chrono::steady_clock::now();
+      if ((now - self->mConsumersClearedAt) > std::chrono::milliseconds(500)) {
+        const std::unique_lock shmLock(self->mSHM);
+        self->mConsumers = self->mSHM.GetConsumers();
+        self->mSHM.ClearConsumers();
+        self->mConsumersClearedAt = now;
+      }
+
+      if (self->mNeedsRepaint) {
+        self->RenderNow();
+      }
+    }));
 }
 
 void InterprocessRenderer::MarkDirty() {
   mNeedsRepaint = true;
+}
+
+std::underlying_type_t<SHM::ConsumerKind> InterprocessRenderer::GetConsumers()
+  const {
+  return mConsumers;
 }
 
 InterprocessRenderer::~InterprocessRenderer() {

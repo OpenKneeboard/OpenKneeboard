@@ -23,17 +23,20 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/SHM.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/final_release_deleter.h>
-#include <d2d1.h>
-#include <d2d1_1.h>
-#include <d3d11.h>
-#include <d3d11_3.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
 #include <mutex>
 #include <optional>
+
+#include <d2d1.h>
+#include <d2d1_1.h>
+#include <d3d11.h>
+#include <d3d11_3.h>
 
 namespace OpenKneeboard {
 class CursorEvent;
@@ -55,6 +58,8 @@ class InterprocessRenderer final
   static std::shared_ptr<InterprocessRenderer> Create(
     const DXResources&,
     KneeboardState*);
+
+  std::underlying_type_t<SHM::ConsumerKind> GetConsumers() const;
 
  private:
   InterprocessRenderer();
@@ -102,6 +107,9 @@ class InterprocessRenderer final
   std::array<Layer, MaxLayers> mLayers;
 
   std::shared_ptr<GameInstance> mCurrentGame;
+
+  std::chrono::steady_clock::time_point mConsumersClearedAt;
+  std::underlying_type_t<SHM::ConsumerKind> mConsumers {};
 
   void MarkDirty();
   void RenderNow();

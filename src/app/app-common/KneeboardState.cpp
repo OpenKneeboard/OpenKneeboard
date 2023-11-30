@@ -688,9 +688,27 @@ KneeboardState::ReleaseExclusiveResources() {
   co_return;
 }
 
+bool KneeboardState::IsSteamVRActive() const {
+  if (!mSettings.mVR.mEnableSteamVR) {
+    return false;
+  }
+
+  const auto consumers = mInterprocessRenderer->GetConsumers();
+
+  using CK = SHM::ConsumerKind;
+  using T = std::underlying_type_t<CK>;
+  constexpr auto vrConsumers = static_cast<T>(CK::OpenXR)
+    | static_cast<T>(CK::OculusD3D11) | static_cast<T>(CK::OculusD3D12);
+  if (consumers & vrConsumers) {
+    return false;
+  }
+
+  return true;
+}
+
 void KneeboardState::AcquireExclusiveResources() {
   mInterprocessRenderer = InterprocessRenderer::Create(mDXResources, this);
-  if (mSettings.mVR.mEnableSteamVR) {
+  if (IsSteamVRActive()) {
     StartOpenVRThread();
   }
 

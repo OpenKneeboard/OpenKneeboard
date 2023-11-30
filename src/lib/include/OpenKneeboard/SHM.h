@@ -115,6 +115,7 @@ class Writer final {
   void Detach();
 
   operator bool() const;
+
   void Update(
     const Config& config,
     const std::vector<LayerConfig>& layers,
@@ -122,6 +123,8 @@ class Writer final {
 
   UINT GetNextTextureIndex() const;
 
+  std::underlying_type_t<ConsumerKind> GetConsumers() const;
+  void ClearConsumers();
   uint64_t GetSessionID() const;
   uint32_t GetNextSequenceNumber() const;
 
