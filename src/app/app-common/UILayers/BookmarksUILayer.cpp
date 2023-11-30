@@ -103,16 +103,14 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
   const auto nextMetrics = first->GetMetrics(rest, context);
 
   if (!this->IsEnabled()) {
-    return {
-      .mCanvasSize = nextMetrics.mCanvasSize,
-      .mNextArea = {
-        0,
-        0,
-        nextMetrics.mCanvasSize.width,
-        nextMetrics.mCanvasSize.height,
-      }, 
-      .mContentArea = nextMetrics.mContentArea,
+    auto ret = nextMetrics;
+    ret.mNextArea = {
+      0,
+      0,
+      nextMetrics.mCanvasSize.width,
+      nextMetrics.mCanvasSize.height,
     };
+    return ret;
   }
 
   const auto width

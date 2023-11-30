@@ -265,7 +265,11 @@ std::vector<PageID> HWNDPageSource::GetPageIDs() const {
 }
 
 ScalingKind HWNDPageSource::GetScalingKind(PageID) {
-  return ScalingKind::Bitmap;
+  if (mBitmap) {
+    return ScalingKind::Bitmap;
+  }
+  // We can render errors at any resolution
+  return ScalingKind::Vector;
 }
 
 D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageID) {
