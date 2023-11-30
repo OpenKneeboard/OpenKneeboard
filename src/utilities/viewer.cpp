@@ -295,10 +295,17 @@ class TestViewerWindow final {
 
   void PaintInformationOverlay(ID2D1DeviceContext* ctx) {
     const auto clientSize = GetClientSize();
-    const auto text = std::format(
+    auto text = std::format(
       L"Frame #{}, View {}",
       mSHM.GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
+    const auto snapshot
+      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Test);
+    if (snapshot.IsValid()) {
+      const auto layer = snapshot.GetLayerConfig(mLayerIndex);
+      text += std::format(L"\n{}x{}", layer->mImageWidth, layer->mImageHeight);
+    }
+
     winrt::com_ptr<IDWriteTextLayout> layout;
     mDXR.mDWriteFactory->CreateTextLayout(
       text.data(),
