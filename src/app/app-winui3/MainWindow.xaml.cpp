@@ -284,6 +284,11 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
     co_return;
   }
 
+  if (IsDebuggerPresent()) {
+    dprint("Ignoring unclean shutdown because a debugger is attached");
+    co_return;
+  }
+
   DWORD ignoreUncleanShutdowns = 0;
   DWORD dataSize = sizeof(ignoreUncleanShutdowns);
   RegGetValueW(
