@@ -589,15 +589,21 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
   const auto scale = unscaled ? 1.0f : std::min(scaleX, scaleY);
 
   const D2D1_SIZE_F contentRenderSize {
-    contentNativeSize.width * scale, contentNativeSize.height * scale};
-  const auto padX = (mCanvasSize.width - contentRenderSize.width) / 2;
-  const auto padY = (mCanvasSize.height - contentRenderSize.height) / 2;
+    contentNativeSize.width * scale,
+    contentNativeSize.height * scale,
+  };
+
+  // Use floor() to pixel-align raster sources
+  const auto padX
+    = std::floor((mCanvasSize.width - contentRenderSize.width) / 2);
+  const auto padY
+    = std::floor((mCanvasSize.height - contentRenderSize.height) / 2);
 
   const D2D1_RECT_F contentRenderRect {
     .left = padX,
     .top = padY,
-    .right = mCanvasSize.width - padX,
-    .bottom = mCanvasSize.height - padY,
+    .right = padX + contentRenderSize.width,
+    .bottom = padY + contentRenderSize.height,
   };
 
   return {contentNativeSize, contentRenderRect, contentRenderSize};
