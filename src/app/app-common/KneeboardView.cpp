@@ -268,7 +268,9 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
       .mIsActiveForInput = false,
     });
   const auto idealSize = metrics.mCanvasSize;
-  if (metrics.mScalingKind == ScalingKind::Bitmap) {
+  if (
+    metrics.mScalingKind == ScalingKind::Bitmap
+    && idealSize.width <= TextureWidth && idealSize.height <= TextureHeight) {
     return {
       static_cast<UINT>(std::lround(idealSize.width)),
       static_cast<UINT>(std::lround(idealSize.height)),
