@@ -408,6 +408,10 @@ void HeaderUILayer::LayoutToolbar(
     headerRect.bottom,
   };
 
+  if (headerTextRect->left > headerTextRect->right) {
+    *headerTextRect = {};
+  }
+
   mToolbar.reset(new Toolbar {
     .mTabView = tabView,
     .mRect = fullRect,
@@ -420,14 +424,18 @@ void HeaderUILayer::DrawHeaderText(
   const std::shared_ptr<ITabView>& tabView,
   ID2D1DeviceContext* ctx,
   const D2D1_RECT_F& textRect) const {
-  const auto tab = tabView ? tabView->GetRootTab().get() : nullptr;
-  const auto title = tab ? winrt::to_hstring(tab->GetTitle()) : _(L"No Tab");
-  auto& dwf = mDXResources.mDWriteFactory;
-
   const D2D1_SIZE_F textSize {
     textRect.right - textRect.left,
     textRect.bottom - textRect.top,
   };
+
+  if (textSize.width <= 0.01 || textSize.height <= 0.01) {
+    return;
+  }
+
+  const auto tab = tabView ? tabView->GetRootTab().get() : nullptr;
+  const auto title = tab ? winrt::to_hstring(tab->GetTitle()) : _(L"No Tab");
+  auto& dwf = mDXResources.mDWriteFactory;
 
   FLOAT dpix, dpiy;
   ctx->GetDpi(&dpix, &dpiy);

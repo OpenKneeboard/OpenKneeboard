@@ -580,9 +580,13 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
     }
   : mTabView->GetNativeContentSize();
 
+  const bool unscaled = mTabView->GetScalingKind() == ScalingKind::Bitmap
+    && contentNativeSize.width <= mCanvasSize.width
+    && contentNativeSize.height <= mCanvasSize.height;
+
   const auto scaleX = mCanvasSize.width / contentNativeSize.width;
   const auto scaleY = mCanvasSize.height / contentNativeSize.height;
-  const auto scale = std::min(scaleX, scaleY);
+  const auto scale = unscaled ? 1.0f : std::min(scaleX, scaleY);
 
   const D2D1_SIZE_F contentRenderSize {
     contentNativeSize.width * scale, contentNativeSize.height * scale};
