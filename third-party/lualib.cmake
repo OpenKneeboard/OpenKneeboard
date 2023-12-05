@@ -6,6 +6,7 @@ FetchContent_Declare(
   URL "https://www.lua.org/ftp/lua-5.1.5.tar.gz"
   # Using SHA1 as it's listed on the download page
   URL_HASH "SHA1=b3882111ad02ecc6b972f8c1241647905cb2e3fc"
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 FetchContent_GetProperties(lua)
