@@ -7,7 +7,9 @@ ExternalProject_Add(
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
   BUILD_IN_SOURCE ON
+
   EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 ExternalProject_Get_property(vulkanHeadersEP SOURCE_DIR)

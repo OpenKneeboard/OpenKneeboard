@@ -19,7 +19,9 @@ ExternalProject_Add(
   --install .
   --prefix "<INSTALL_DIR>/$<CONFIG>"
   --config "$<CONFIG>"
+
   EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 ExternalProject_Get_property(geographiclibBuild SOURCE_DIR)

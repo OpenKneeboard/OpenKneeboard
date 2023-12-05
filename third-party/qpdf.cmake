@@ -33,7 +33,9 @@ ExternalProject_Add(
   --config "$<CONFIG>"
   --component "dev"
   DEPENDS ${QPDF_DEPENDENCIES}
+
   EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 ExternalProject_Get_property(qpdfBuild SOURCE_DIR)

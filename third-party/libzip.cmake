@@ -23,8 +23,10 @@ ExternalProject_Add(
     ${CMAKE_COMMAND} --build . --config "$<CONFIG>" --parallel
   INSTALL_COMMAND
     ${CMAKE_COMMAND} --install . --config "$<CONFIG>" --prefix "<INSTALL_DIR>/$<CONFIG>"
-  EXCLUDE_FROM_ALL
   DEPENDS ${libzipDeps}
+
+  EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 add_dependencies(libzipBuild zlibBuild)
 

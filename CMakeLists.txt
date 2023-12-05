@@ -30,9 +30,6 @@ cmake_policy(SET CMP0079 NEW)
 set(CMAKE_LINK_LIBRARIES_ONLY_TARGETS ON)
 cmake_policy(SET CMP0028 NEW)
 
-# Extract with current timestamps
-cmake_policy(SET CMP0135 NEW)
-
 # Enable CMAKE_MSVC_RUNTIME_LIBRARY variable
 cmake_policy(SET CMP0091 NEW)
 

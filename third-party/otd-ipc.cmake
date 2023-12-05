@@ -5,7 +5,9 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
+
   EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 ExternalProject_Get_property(OTDIPCFetch SOURCE_DIR)

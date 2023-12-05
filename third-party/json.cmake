@@ -10,6 +10,7 @@ ExternalProject_Add(
   "<SOURCE_DIR>/include" "<INSTALL_DIR>/include"
 
   EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 add_library(json INTERFACE)

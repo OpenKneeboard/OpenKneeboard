@@ -16,7 +16,9 @@ ExternalProject_Add(
   # or MSVCRT
   INSTALL_COMMAND
   ${CMAKE_COMMAND} --install . "--prefix=<INSTALL_DIR>/$<CONFIG>" --config "$<CONFIG>"
+  
   EXCLUDE_FROM_ALL
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 add_library(directxtk INTERFACE)
