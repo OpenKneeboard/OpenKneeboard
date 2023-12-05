@@ -38,7 +38,8 @@
 
 #include <shims/winrt/base.h>
 
-#include <winrt/Microsoft.UI.Dispatching.h>
+#include <winrt/Windows.UI.Core.h>
+#include <winrt/Windows.System.h>
 #include <winrt/Windows.Data.Pdf.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Storage.h>
@@ -124,8 +125,8 @@ PDFFilePageSource::~PDFFilePageSource() {
       threadGuard.CheckThread();
       // WIL::resume_foreground guarantees that we will be rescheduled, even
       // though we're not changing threads.
-      co_await wil::resume_foreground(winrt::Microsoft::UI::Dispatching::
-                                        DispatcherQueue::GetForCurrentThread());
+      co_await wil::resume_foreground(
+        winrt::Windows::System::DispatcherQueue::GetForCurrentThread());
     }(mThreadGuard, std::move(p->mPDFDocument));
   }
 }
