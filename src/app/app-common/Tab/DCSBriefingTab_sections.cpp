@@ -158,7 +158,7 @@ void DCSBriefingTab::PushMissionOverview(
 void DCSBriefingTab::PushMissionWeather(const LuaRef& mission) try {
   const auto weather = mission["weather"];
   const auto temperature = weather["season"]["temperature"].Cast<int>();
-  const auto qnhMmHg = weather["qnh"].Cast<int>();
+  const auto qnhMmHg = weather["qnh"].Cast<float>();
   const auto qnhInHg = qnhMmHg / 25.4;
   const auto cloudBase = weather["clouds"]["base"].Cast<int>();
   const auto wind = weather["wind"];
@@ -176,7 +176,8 @@ void DCSBriefingTab::PushMissionWeather(const LuaRef& mission) try {
       "             At 2000m {:.0f} m/s, {}° Meteo {}°\n"
       "             At 8000m {:.0f} m/s, {}° Meteo {}°"),
     temperature,
-    qnhMmHg,
+    // Match DCS: round down, not to nearest
+    static_cast<int>(qnhMmHg),
     qnhInHg,
     cloudBase,
     windAtGround.mSpeed,
