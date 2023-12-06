@@ -63,6 +63,10 @@ void DCSMissionTab::Reload() {
     return;
   }
 
+  // Free the filesystem watchers etc before potentially
+  // deleting the extracted mission
+  this->SetDelegates({});
+
   if ((!mExtracted) || mExtracted->GetZipPath() != mMission) {
     mExtracted = DCSExtractedMission::Get(mMission);
   }
