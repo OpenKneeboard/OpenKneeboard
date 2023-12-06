@@ -431,9 +431,13 @@ void TabPage::OnCanvasSizeChanged(
     mSwapChain = nullptr;
     return;
   }
+
+  const auto canvas = Canvas();
+  mCompositionScaleX = canvas.CompositionScaleX();
+  mCompositionScaleY = canvas.CompositionScaleY();
   mCanvasSize = {
-    static_cast<FLOAT>(size.Width) * Canvas().CompositionScaleX(),
-    static_cast<FLOAT>(size.Height) * Canvas().CompositionScaleY(),
+    static_cast<FLOAT>(size.Width) * mCompositionScaleX,
+    static_cast<FLOAT>(size.Height) * mCompositionScaleY,
   };
   const std::unique_lock lock(gDXResources);
   if (mSwapChain) {
@@ -619,6 +623,9 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   const auto metrics = GetPageMetrics();
   auto x = static_cast<FLOAT>(pp.Position().X);
   auto y = static_cast<FLOAT>(pp.Position().Y);
+
+  x *= mCompositionScaleX;
+  y *= mCompositionScaleY;
 
   x -= metrics.mRenderRect.left;
   y -= metrics.mRenderRect.top;

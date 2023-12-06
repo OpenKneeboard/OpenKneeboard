@@ -18,16 +18,17 @@
  * USA.
  */
 #pragma once
+#include "TabPage.g.h"
+
 #include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/Events.h>
-#include <d2d1.h>
-#include <dxgi1_2.h>
 
 #include <memory>
 #include <mutex>
 #include <vector>
 
-#include "TabPage.g.h"
+#include <d2d1.h>
+#include <dxgi1_2.h>
 
 namespace OpenKneeboard {
 class CursorRenderer;
@@ -95,7 +96,9 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   winrt::fire_and_forget OnToolbarActionClick(std::shared_ptr<ToolbarAction>);
 
-  D2D1_SIZE_F mCanvasSize;
+  float mCompositionScaleX {1.0f};
+  float mCompositionScaleY {1.0f};
+  D2D1_SIZE_F mCanvasSize {};
 
   struct PageMetrics {
     D2D1_SIZE_U mNativeSize;
