@@ -87,9 +87,17 @@ winrt::Windows::Foundation::IAsyncAction FilesystemWatcher::Run() {
 winrt::fire_and_forget FilesystemWatcher::OnContentsChanged() {
   const auto weak = weak_from_this();
 
-  if (
-    (!std::filesystem::exists(mPath)) || std::filesystem::is_directory(mPath)) {
-    this->evFilesystemModifiedEvent.EnqueueForContext(mOwnerThread, mPath);
+  try {
+    if (
+      (!std::filesystem::exists(mPath))
+      || std::filesystem::is_directory(mPath)) {
+      this->evFilesystemModifiedEvent.EnqueueForContext(mOwnerThread, mPath);
+      co_return;
+    }
+  } catch (const std::filesystem::filesystem_error& e) {
+    // Do nothing: assume an operation is in progress, so we'll get a further
+    // notification when it's done - or just torn down and a new watcher created
+    dprintf("Error checking if path exists or is directory: {}", e.what());
     co_return;
   }
 
