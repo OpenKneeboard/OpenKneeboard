@@ -125,6 +125,9 @@ void DCSBriefingTab::OnGameEvent(
       return;
     }
 
+    // Stop watching folders before potentially cleaning
+    // up the old extraction folder
+    mImagePages->SetPaths({});
     mMission = DCSExtractedMission::Get(missionZip);
     dprintf("Briefing tab: loading {}", missionZip);
     this->Reload();
