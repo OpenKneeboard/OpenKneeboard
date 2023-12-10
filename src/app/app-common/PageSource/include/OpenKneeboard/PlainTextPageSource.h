@@ -42,7 +42,7 @@ class PlainTextPageSource final : public IPageSource {
     uint32_t fontSize,
     std::string_view placeholderText);
   virtual ~PlainTextPageSource();
-
+  void ChangeFontSize(uint32_t newFontSize);
   bool IsEmpty() const;
   void ClearText();
   void SetText(std::string_view text);
@@ -69,6 +69,7 @@ class PlainTextPageSource final : public IPageSource {
   std::vector<std::vector<winrt::hstring>> mCompletePages;
   std::vector<winrt::hstring> mCurrentPageLines;
   std::vector<std::string> mMessages;
+  std::vector<std::string> mAllMessages;
 
   std::optional<PageIndex> FindPageIndex(PageID) const;
 
@@ -76,11 +77,13 @@ class PlainTextPageSource final : public IPageSource {
   float mRowHeight = -1.0f;
   int mColumns = -1;
   int mRows = -1;
+  uint32_t mFontSize;
 
   DXResources mDXR;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   std::string mPlaceholderText;
 
+  void UpdateLayoutLimits();
   void LayoutMessages();
   void PushPage();
 };

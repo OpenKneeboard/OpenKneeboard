@@ -75,6 +75,7 @@ struct AdvancedSettingsPage
   void InGameFooterFrameCount(bool) noexcept;
 
   void RestoreDoodleDefaults(const IInspectable&, const IInspectable&) noexcept;
+  void RestoreTextDefaults(const IInspectable&, const IInspectable&) noexcept;
   void RestoreQuirkDefaults(const IInspectable&, const IInspectable&) noexcept;
 
   uint32_t MinimumPenRadius();
@@ -86,6 +87,9 @@ struct AdvancedSettingsPage
   void MinimumEraseRadius(uint32_t value);
   uint32_t EraseSensitivity();
   void EraseSensitivity(uint32_t value);
+
+  uint32_t TextPageFontSize();
+  void TextPageFontSize(uint32_t value);
 
   bool TintEnabled();
   void TintEnabled(bool value);

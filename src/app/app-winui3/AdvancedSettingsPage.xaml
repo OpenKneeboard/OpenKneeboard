@@ -242,6 +242,35 @@
 					Minimum="1.0"
 				/>
 			</StackPanel>
+			<Grid ColumnDefinitions="*, Auto">
+				<TextBlock 
+					Grid.Column="0"
+					Text="Text" 
+					Style="{StaticResource SubtitleTextBlockStyle}" 
+				/>
+				<Button
+					Grid.Column="1"
+					Content="Restore defaults"
+					Click="RestoreTextDefaults"
+				/>
+			</Grid>
+			<StackPanel 
+				Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" 
+				BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
+				CornerRadius="4"
+				BorderThickness="1"
+				Padding="8"
+        Spacing="12">
+				<Slider 
+					Header="Font size" 
+					Value="{x:Bind TextPageFontSize}"
+					TickPlacement="Outside" 
+					TickFrequency="5" 
+					StepFrequency="1" 
+					Maximum="30" 
+					Minimum="6"
+				/>
+			</StackPanel>
       <TextBlock
         Text="In-Game Interface"
         Style="{ThemeResource SubtitleTextBlockStyle}"

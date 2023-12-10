@@ -39,6 +39,7 @@ PlainTextPageSource::PlainTextPageSource(
   uint32_t fontSize,
   std::string_view placeholderText)
   : mDXR(dxr), mPlaceholderText(placeholderText) {
+  mFontSize = fontSize;
   auto dwf = mDXR.mDWriteFactory;
   dwf->CreateTextFormat(
     FixedWidthContentFont,
@@ -46,9 +47,15 @@ PlainTextPageSource::PlainTextPageSource(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    fontSize * RENDER_SCALE,
+    mFontSize * RENDER_SCALE,
     L"",
     mTextFormat.put());
+
+  UpdateLayoutLimits();
+}
+
+void PlainTextPageSource::UpdateLayoutLimits() {
+  auto dwf = mDXR.mDWriteFactory;
 
   const auto size = this->GetNativeContentSize({});
   winrt::com_ptr<IDWriteTextLayout> textLayout;
@@ -63,6 +70,35 @@ PlainTextPageSource::PlainTextPageSource(
 }
 
 PlainTextPageSource::~PlainTextPageSource() {
+}
+
+void PlainTextPageSource::ChangeFontSize(uint32_t newFontSize) {
+  if (newFontSize == mFontSize) {
+    return;
+  }
+
+  mFontSize = newFontSize;
+
+  auto dwf = mDXR.mDWriteFactory;
+  dwf->CreateTextFormat(
+    FixedWidthContentFont,
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    newFontSize * RENDER_SCALE,
+    L"",
+    mTextFormat.put());
+
+  UpdateLayoutLimits();
+
+  // now clear and redraw all pages:
+  mCompletePages.clear();
+  mCurrentPageLines.clear();
+  mPageIDs.clear();
+
+  mMessages = mAllMessages;
+  LayoutMessages();
 }
 
 PageIndex PlainTextPageSource::GetPageCount() const {
@@ -221,6 +257,7 @@ void PlainTextPageSource::ClearText() {
       return;
     }
     mMessages.clear();
+    mAllMessages.clear();
     mCurrentPageLines.clear();
     mCompletePages.clear();
     mPageIDs.clear();
@@ -247,6 +284,7 @@ void PlainTextPageSource::SetPlaceholderText(std::string_view text) {
 void PlainTextPageSource::PushMessage(std::string_view message) {
   std::unique_lock lock(mMutex);
   mMessages.push_back(std::string(message));
+  mAllMessages.push_back(std::string(message));
   LayoutMessages();
 }
 

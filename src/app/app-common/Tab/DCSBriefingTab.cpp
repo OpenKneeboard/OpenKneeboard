@@ -46,6 +46,7 @@ DCSBriefingTab::DCSBriefingTab(
   : TabBase(persistentID, title),
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
+    mKneeboard(kbs),
     mImagePages(ImageFilePageSource::Create(dxr)),
     mTextPages(std::make_unique<PlainTextPageSource>(
       dxr,
@@ -55,10 +56,17 @@ DCSBriefingTab::DCSBriefingTab(
     std::static_pointer_cast<IPageSource>(mTextPages),
     std::static_pointer_cast<IPageSource>(mImagePages),
   });
+  AddEventListener(
+    kbs->evSettingsChangedEvent,
+    std::bind_front(&DCSBriefingTab::OnSettingsChanged, this));
 }
 
 DCSBriefingTab::~DCSBriefingTab() {
   this->RemoveAllEventListeners();
+}
+
+void DCSBriefingTab::OnSettingsChanged() {
+  mTextPages->ChangeFontSize(mKneeboard->GetTextSettings().mFontSize);
 }
 
 std::string DCSBriefingTab::GetGlyph() const {

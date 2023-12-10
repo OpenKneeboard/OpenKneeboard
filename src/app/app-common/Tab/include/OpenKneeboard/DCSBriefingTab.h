@@ -81,6 +81,7 @@ class DCSBriefingTab final : public TabBase,
     auto operator<=>(const DCSState&) const = default;
   };
   DCSState mDCSState;
+  KneeboardState* mKneeboard;
 
   constexpr const char* CoalitionKey(
     const char* neutralKey,
@@ -124,6 +125,8 @@ class DCSBriefingTab final : public TabBase,
   void PushMissionObjective(const LuaRef& mission, const LuaRef& dictionary);
   void PushMissionWeather(const LuaRef& mission);
   void PushBullseyeData(const LuaRef& mission);
+
+  void OnSettingsChanged();
 };
 
 }// namespace OpenKneeboard
