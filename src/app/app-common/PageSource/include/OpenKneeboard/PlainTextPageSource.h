@@ -37,7 +37,10 @@ struct DXResources;
 class PlainTextPageSource final : public IPageSource {
  public:
   PlainTextPageSource() = delete;
-  PlainTextPageSource(const DXResources&, std::string_view placeholderText);
+  PlainTextPageSource(
+    const DXResources&,
+    uint32_t fontSize,
+    std::string_view placeholderText);
   virtual ~PlainTextPageSource();
 
   bool IsEmpty() const;

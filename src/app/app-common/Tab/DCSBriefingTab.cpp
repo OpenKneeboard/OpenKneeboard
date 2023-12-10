@@ -47,7 +47,10 @@ DCSBriefingTab::DCSBriefingTab(
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
     mImagePages(ImageFilePageSource::Create(dxr)),
-    mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
+    mTextPages(std::make_unique<PlainTextPageSource>(
+      dxr,
+      kbs->GetTextSettings().mFontSize,
+      _("[no briefing]"))) {
   this->SetDelegates({
     std::static_pointer_cast<IPageSource>(mTextPages),
     std::static_pointer_cast<IPageSource>(mImagePages),

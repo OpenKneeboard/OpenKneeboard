@@ -35,7 +35,10 @@ PlainTextFilePageSource::PlainTextFilePageSource(
   const DXResources& dxr,
   KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs),
-    mPageSource(std::make_shared<PlainTextPageSource>(dxr, _("[empty file]"))) {
+    mPageSource(std::make_shared<PlainTextPageSource>(
+      dxr,
+      kbs->GetTextSettings().mFontSize,
+      _("[empty file]"))) {
   this->SetDelegates({std::static_pointer_cast<IPageSource>(mPageSource)});
 }
 

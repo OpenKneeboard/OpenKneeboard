@@ -183,6 +183,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mApp,
   mDirectInput,
   mDoodles,
+  mText,
   mNonVR,
   mTabletInput,
   mVR)

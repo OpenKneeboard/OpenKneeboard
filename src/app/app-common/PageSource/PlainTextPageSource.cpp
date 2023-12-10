@@ -36,6 +36,7 @@ namespace OpenKneeboard {
 
 PlainTextPageSource::PlainTextPageSource(
   const DXResources& dxr,
+  uint32_t fontSize,
   std::string_view placeholderText)
   : mDXR(dxr), mPlaceholderText(placeholderText) {
   auto dwf = mDXR.mDWriteFactory;
@@ -45,7 +46,7 @@ PlainTextPageSource::PlainTextPageSource(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    20.0f * RENDER_SCALE,
+    fontSize * RENDER_SCALE,
     L"",
     mTextFormat.put());
 
