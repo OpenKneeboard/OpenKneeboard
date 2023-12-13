@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
@@ -36,10 +37,11 @@ namespace OpenKneeboard {
 
 PlainTextPageSource::PlainTextPageSource(
   const DXResources& dxr,
-  uint32_t fontSize,
+  KneeboardState* kbs,
   std::string_view placeholderText)
-  : mDXR(dxr), mPlaceholderText(placeholderText) {
-  mFontSize = fontSize;
+  : mDXR(dxr), mPlaceholderText(placeholderText), mKneeboard(kbs) {
+  mFontSize = kbs->GetTextSettings().mFontSize;
+
   auto dwf = mDXR.mDWriteFactory;
   dwf->CreateTextFormat(
     FixedWidthContentFont,
@@ -52,6 +54,11 @@ PlainTextPageSource::PlainTextPageSource(
     mTextFormat.put());
 
   UpdateLayoutLimits();
+
+  // subscribe to settings changed events
+  AddEventListener(
+    kbs->evSettingsChangedEvent,
+    std::bind_front(&PlainTextPageSource::OnSettingsChanged, this));
 }
 
 void PlainTextPageSource::UpdateLayoutLimits() {
@@ -70,9 +77,12 @@ void PlainTextPageSource::UpdateLayoutLimits() {
 }
 
 PlainTextPageSource::~PlainTextPageSource() {
+  this->RemoveAllEventListeners();
 }
 
-void PlainTextPageSource::ChangeFontSize(uint32_t newFontSize) {
+void PlainTextPageSource::OnSettingsChanged() {
+  auto newFontSize = mKneeboard->GetTextSettings().mFontSize;
+
   if (newFontSize == mFontSize) {
     return;
   }
@@ -80,6 +90,9 @@ void PlainTextPageSource::ChangeFontSize(uint32_t newFontSize) {
   mFontSize = newFontSize;
 
   auto dwf = mDXR.mDWriteFactory;
+
+  mTextFormat = nullptr;
+
   dwf->CreateTextFormat(
     FixedWidthContentFont,
     nullptr,
@@ -97,7 +110,7 @@ void PlainTextPageSource::ChangeFontSize(uint32_t newFontSize) {
   mCurrentPageLines.clear();
   mPageIDs.clear();
 
-  mMessages = mAllMessages;
+  mMessagesToLayout = mAllMessages;
   LayoutMessages();
 }
 
@@ -247,7 +260,7 @@ void PlainTextPageSource::RenderPage(
 
 bool PlainTextPageSource::IsEmpty() const {
   std::unique_lock lock(mMutex);
-  return mMessages.empty() && mCurrentPageLines.empty();
+  return mMessagesToLayout.empty() && mCurrentPageLines.empty();
 }
 
 void PlainTextPageSource::ClearText() {
@@ -256,7 +269,7 @@ void PlainTextPageSource::ClearText() {
     if (IsEmpty()) {
       return;
     }
-    mMessages.clear();
+    mMessagesToLayout.clear();
     mAllMessages.clear();
     mCurrentPageLines.clear();
     mCompletePages.clear();
@@ -283,8 +296,8 @@ void PlainTextPageSource::SetPlaceholderText(std::string_view text) {
 
 void PlainTextPageSource::PushMessage(std::string_view message) {
   std::unique_lock lock(mMutex);
-  mMessages.push_back(std::string(message));
   mAllMessages.push_back(std::string(message));
+  mMessagesToLayout.push_back(mAllMessages.back());
   LayoutMessages();
 }
 
@@ -306,14 +319,14 @@ void PlainTextPageSource::LayoutMessages() {
     return;
   }
 
-  if (mMessages.empty()) {
+  if (mMessagesToLayout.empty()) {
     return;
   }
 
   const scope_guard repaintAtEnd(
     [this]() { this->evContentChangedEvent.Emit(); });
 
-  for (auto message: mMessages) {
+  for (auto message: mMessagesToLayout) {
     // tabs are variable width, and everything else here
     // assumes that all characters are the same width.
     //
@@ -398,12 +411,13 @@ void PlainTextPageSource::LayoutMessages() {
       mCurrentPageLines.push_back(winrt::to_hstring(line));
     }
   }
-  mMessages.clear();
+  mMessagesToLayout.clear();
 }
 
 void PlainTextPageSource::PushFullWidthSeparator() {
   std::unique_lock lock(mMutex);
-  if (mColumns <= 0 || (mMessages.empty() && mCurrentPageLines.empty())) {
+  if (
+    mColumns <= 0 || (mMessagesToLayout.empty() && mCurrentPageLines.empty())) {
     return;
   }
   this->PushMessage(std::string(mColumns, '-'));

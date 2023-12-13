@@ -48,25 +48,16 @@ DCSBriefingTab::DCSBriefingTab(
     PageSourceWithDelegates(dxr, kbs),
     mKneeboard(kbs),
     mImagePages(ImageFilePageSource::Create(dxr)),
-    mTextPages(std::make_unique<PlainTextPageSource>(
-      dxr,
-      kbs->GetTextSettings().mFontSize,
-      _("[no briefing]"))) {
+    mTextPages(
+      std::make_unique<PlainTextPageSource>(dxr, kbs, _("[no briefing]"))) {
   this->SetDelegates({
     std::static_pointer_cast<IPageSource>(mTextPages),
     std::static_pointer_cast<IPageSource>(mImagePages),
   });
-  AddEventListener(
-    kbs->evSettingsChangedEvent,
-    std::bind_front(&DCSBriefingTab::OnSettingsChanged, this));
 }
 
 DCSBriefingTab::~DCSBriefingTab() {
   this->RemoveAllEventListeners();
-}
-
-void DCSBriefingTab::OnSettingsChanged() {
-  mTextPages->ChangeFontSize(mKneeboard->GetTextSettings().mFontSize);
 }
 
 std::string DCSBriefingTab::GetGlyph() const {

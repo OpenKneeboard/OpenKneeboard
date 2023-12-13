@@ -51,7 +51,7 @@ DCSRadioLogTab::DCSRadioLogTab(
     PageSourceWithDelegates(dxr, kbs),
     mPageSource(std::make_shared<PlainTextPageSource>(
       dxr,
-      kbs->GetTextSettings().mFontSize,
+      kbs,
       _("[waiting for radio messages]"))) {
   this->SetDelegates({mPageSource});
   AddEventListener(mPageSource->evPageAppendedEvent, this->evPageAppendedEvent);

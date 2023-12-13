@@ -88,8 +88,8 @@ struct AdvancedSettingsPage
   uint32_t EraseSensitivity();
   void EraseSensitivity(uint32_t value);
 
-  uint32_t TextPageFontSize();
-  void TextPageFontSize(uint32_t value);
+  float TextPageFontSize();
+  void TextPageFontSize(float value);
 
   bool TintEnabled();
   void TintEnabled(bool value);

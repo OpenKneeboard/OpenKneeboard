@@ -33,7 +33,7 @@ namespace OpenKneeboardApp
 		UInt32 PenSensitivity;
 		UInt32 EraseSensitivity;
 
-        UInt32 TextPageFontSize;
+        Single TextPageFontSize;
 
         Boolean Quirk_OculusSDK_DiscardDepthInformation;
         Boolean Quirk_Varjo_OpenXR_D3D12_DoubleBuffer;

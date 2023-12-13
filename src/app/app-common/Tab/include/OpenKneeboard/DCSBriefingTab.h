@@ -125,8 +125,6 @@ class DCSBriefingTab final : public TabBase,
   void PushMissionObjective(const LuaRef& mission, const LuaRef& dictionary);
   void PushMissionWeather(const LuaRef& mission);
   void PushBullseyeData(const LuaRef& mission);
-
-  void OnSettingsChanged();
 };
 
 }// namespace OpenKneeboard

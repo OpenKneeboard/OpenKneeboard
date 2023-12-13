@@ -23,7 +23,7 @@
 
 namespace OpenKneeboard {
 struct TextSettings final {
-  uint32_t mFontSize = 12;
+  float mFontSize = 12.f;
 
   constexpr auto operator<=>(const TextSettings&) const = default;
 };

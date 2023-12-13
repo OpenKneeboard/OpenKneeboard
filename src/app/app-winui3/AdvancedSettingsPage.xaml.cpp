@@ -245,11 +245,11 @@ void AdvancedSettingsPage::EraseSensitivity(uint32_t value) {
   gKneeboard->SetDoodlesSettings(ds);
 }
 
-uint32_t AdvancedSettingsPage::TextPageFontSize() {
+float AdvancedSettingsPage::TextPageFontSize() {
   return gKneeboard->GetTextSettings().mFontSize;
 }
 
-void AdvancedSettingsPage::TextPageFontSize(uint32_t value) {
+void AdvancedSettingsPage::TextPageFontSize(float value) {
   auto s = gKneeboard->GetTextSettings();
   s.mFontSize = value;
   gKneeboard->SetTextSettings(s);
