@@ -110,7 +110,10 @@ void PlainTextPageSource::OnSettingsChanged() {
   mCurrentPageLines.clear();
   mPageIDs.clear();
 
-  mMessagesToLayout = mAllMessages;
+  mMessagesToLayout.clear();
+  for (const std::string& m: mAllMessages) {
+    mMessagesToLayout.push_back(m);
+  }
   LayoutMessages();
 }
 
@@ -296,7 +299,22 @@ void PlainTextPageSource::SetPlaceholderText(std::string_view text) {
 
 void PlainTextPageSource::PushMessage(std::string_view message) {
   std::unique_lock lock(mMutex);
-  mAllMessages.push_back(std::string(message));
+
+  auto sMessage = std::string(message);
+
+  // tabs are variable width, and everything else here
+  // assumes that all characters are the same width.
+  //
+  // Expand them
+  while (true) {
+    auto pos = sMessage.find_first_of("\t");
+    if (pos == sMessage.npos) {
+      break;
+    }
+    sMessage.replace(pos, 1, "    ");
+  }
+
+  mAllMessages.push_back(sMessage);
   mMessagesToLayout.push_back(mAllMessages.back());
   LayoutMessages();
 }
@@ -327,18 +345,6 @@ void PlainTextPageSource::LayoutMessages() {
     [this]() { this->evContentChangedEvent.Emit(); });
 
   for (auto message: mMessagesToLayout) {
-    // tabs are variable width, and everything else here
-    // assumes that all characters are the same width.
-    //
-    // Expand them
-    while (true) {
-      auto pos = message.find_first_of("\t");
-      if (pos == message.npos) {
-        break;
-      }
-      message.replace(pos, 1, "    ");
-    }
-
     std::vector<std::string_view> rawLines;
     std::string_view remaining(message);
     while (!remaining.empty()) {

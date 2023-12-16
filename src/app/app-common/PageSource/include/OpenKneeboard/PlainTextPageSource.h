@@ -71,7 +71,7 @@ class PlainTextPageSource final : public IPageSource,
   mutable std::vector<PageID> mPageIDs;
   std::vector<std::vector<winrt::hstring>> mCompletePages;
   std::vector<winrt::hstring> mCurrentPageLines;
-  std::vector<std::string> mMessagesToLayout;
+  std::vector<std::string_view> mMessagesToLayout;
   std::vector<std::string> mAllMessages;
 
   std::optional<PageIndex> FindPageIndex(PageID) const;
