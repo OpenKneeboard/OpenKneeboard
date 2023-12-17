@@ -10,6 +10,7 @@ target_link_libraries(
   OpenKneeboard-App-Common
   PUBLIC
   ThirdParty::JSON
+  ThirdParty::IMGUI
 )
 target_link_windows_app_sdk(OpenKneeboard-App-Common)
 target_link_libraries(
