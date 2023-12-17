@@ -11,6 +11,7 @@ target_link_libraries(
   PUBLIC
   ThirdParty::JSON
   ThirdParty::IMGUI
+  ThirdParty::vrperfkit
 )
 target_link_windows_app_sdk(OpenKneeboard-App-Common)
 target_link_libraries(

@@ -11,10 +11,13 @@ FetchContent_GetProperties(imguiFetch)
 
 # build IMGUI core
 file(GLOB IMGUI_SOURCES ${imguifetch_SOURCE_DIR}/*.cpp)
+list(APPEND IMGUI_SOURCES "${imguifetch_SOURCE_DIR}/backends/imgui_impl_dx11.cpp")
+
 include(CMakePrintHelpers)
 cmake_print_variables(imguifetch_SOURCE_DIR)
 add_library(ImGui STATIC ${IMGUI_SOURCES})
-target_include_directories(ImGui INTERFACE "${imguifetch_SOURCE_DIR}")
+target_include_directories(ImGui PUBLIC "${imguifetch_SOURCE_DIR}")
+target_include_directories(ImGui INTERFACE "${imguifetch_SOURCE_DIR}/backends")
 
 install(
     FILES
