@@ -110,7 +110,7 @@ jobs:
             "${{steps.create-msi.outputs.MSI_PATH}}"
       - name: Attach MSI
         if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}.msi
           path: ${{steps.create-msi.outputs.MSI_PATH}}
@@ -146,7 +146,7 @@ jobs:
           echo "::endgroup::"
       - name: Attach debug symbols
         if: ${{matrix.config != 'Debug' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: OpenKneeboard-GHA-${{github.run_number}}-Symbols
           path: ${{steps.debug-symbols.outputs.PREFIX}}
