@@ -206,8 +206,13 @@ class Reader {
   /// Do not use for caching - use GetRenderCacheKey instead
   uint32_t GetFrameCountForMetricsOnly() const;
 
-  /// Changes even if the feeder restarts with frame ID 0
-  size_t GetRenderCacheKey() const;
+  /** Fetch the render cache key, and mark the consumer kind as active if
+   * enabled.
+   *
+   *
+   * Changes even if the feeder restarts from frame ID 0.
+   */
+  size_t GetRenderCacheKey(ConsumerKind kind);
 
  protected:
   uint64_t GetSessionID() const;

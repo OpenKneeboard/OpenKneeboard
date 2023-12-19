@@ -630,10 +630,9 @@ Snapshot Reader::MaybeGet(
     return {nullptr};
   }
 
-  ActiveConsumers::Set(kind);
-
   if (
-    mCache.IsValid() && this->GetRenderCacheKey() == mCache.GetRenderCacheKey()
+    mCache.IsValid()
+    && this->GetRenderCacheKey(kind) == mCache.GetRenderCacheKey()
     && kind == mCachedConsumerKind) {
     TraceLoggingWriteStop(
       activity,
@@ -690,6 +689,7 @@ Snapshot Reader::MaybeGet(
   mCache = newSnapshot;
   mCachedConsumerKind = kind;
   mCachedSequenceNumber = newSequenceNumber;
+  ActiveConsumers::Set(kind);
   TraceLoggingWriteStop(
     activity,
     "SHM::MaybeGet",
@@ -726,10 +726,15 @@ Snapshot Reader::MaybeGetUncached(
   return Snapshot(*p->mHeader, ctx, fence, textures, &r);
 }
 
-size_t Reader::GetRenderCacheKey() const {
+size_t Reader::GetRenderCacheKey(ConsumerKind kind) {
   if (!(p && p->mHeader)) {
     return {};
   }
+
+  if (p->mHeader->mConfig.mTarget.Matches(kind)) {
+    ActiveConsumers::Set(kind);
+  }
+
   return p->mHeader->GetRenderCacheKey();
 }
 

@@ -152,7 +152,7 @@ class TestViewerWindow final {
       return;
     }
 
-    if (mSHM.GetRenderCacheKey() != mRenderCacheKey) {
+    if (mSHM.GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
       PaintNow();
     }
   }
