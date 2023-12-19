@@ -23,10 +23,11 @@
 #include "NonVRSettingsPage.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/utf8.h>
-
 #include "Globals.h"
+
+#include <OpenKneeboard/KneeboardState.h>
+
+#include <OpenKneeboard/utf8.h>
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -104,8 +105,7 @@ uint8_t NonVRSettingsPage::KneeboardHorizontalPlacement() {
 
 void NonVRSettingsPage::KneeboardHorizontalPlacement(uint8_t value) {
   auto config = gKneeboard->GetNonVRSettings();
-  config.mHorizontalAlignment
-    = static_cast<FlatConfig::HorizontalAlignment>(value);
+  config.mHorizontalAlignment = static_cast<Alignment::Horizontal>(value);
   gKneeboard->SetNonVRSettings(config);
 }
 
@@ -116,7 +116,7 @@ uint8_t NonVRSettingsPage::KneeboardVerticalPlacement() {
 
 void NonVRSettingsPage::KneeboardVerticalPlacement(uint8_t value) {
   auto config = gKneeboard->GetNonVRSettings();
-  config.mVerticalAlignment = static_cast<FlatConfig::VerticalAlignment>(value);
+  config.mVerticalAlignment = static_cast<Alignment::Vertical>(value);
   gKneeboard->SetNonVRSettings(config);
 }
 

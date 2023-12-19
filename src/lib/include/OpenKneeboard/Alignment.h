@@ -19,29 +19,39 @@
  */
 #pragma once
 
-#include <compare>
 #include <cstdint>
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+#include <OpenKneeboard/json.h>
+#endif
 
-namespace OpenKneeboard {
-struct PixelSize {
-  uint32_t mWidth {};
-  uint32_t mHeight {};
+namespace OpenKneeboard::Alignment {
 
-  constexpr auto operator<=>(const PixelSize&) const noexcept = default;
+enum class Horizontal : uint8_t {
+  Left,
+  Center,
+  Right,
+};
+enum class Vertical : uint8_t {
+  Top,
+  Middle,
+  Bottom,
 };
 
-struct PixelPoint {
-  uint32_t mX {};
-  uint32_t mY {};
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  Horizontal,
+  {
+    {Horizontal::Left, "Left"},
+    {Horizontal::Center, "Center"},
+    {Horizontal::Right, "Right"},
+  });
 
-  constexpr auto operator<=>(const PixelPoint&) const noexcept = default;
-};
-
-struct PixelRect {
-  PixelPoint mOrigin {};
-  PixelSize mSize {};
-
-  constexpr auto operator<=>(const PixelRect&) const noexcept = default;
-};
-
-}// namespace OpenKneeboard
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  Vertical,
+  {
+    {Vertical::Top, "Top"},
+    {Vertical::Middle, "Middle"},
+    {Vertical::Bottom, "Bottom"},
+  });
+#endif
+}// namespace OpenKneeboard::Alignment

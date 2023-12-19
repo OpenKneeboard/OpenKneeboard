@@ -23,28 +23,42 @@
 
 namespace OpenKneeboard {
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  FlatConfig::HorizontalAlignment,
-  {
-    {FlatConfig::HorizontalAlignment::Left, "Left"},
-    {FlatConfig::HorizontalAlignment::Center, "Center"},
-    {FlatConfig::HorizontalAlignment::Right, "Right"},
-  });
-
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  FlatConfig::VerticalAlignment,
-  {
-    {FlatConfig::VerticalAlignment::Top, "Top"},
-    {FlatConfig::VerticalAlignment::Middle, "Middle"},
-    {FlatConfig::VerticalAlignment::Bottom, "Bottom"},
-  });
-
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  FlatConfig,
+  NonVRConstrainedPosition,
   mHeightPercent,
   mPaddingPixels,
   mOpacity,
   mHorizontalAlignment,
   mVerticalAlignment)
+
+void to_json(nlohmann::json& j, const NonVRAbsolutePosition& p) {
+  const auto& r = p.mRect;
+  j["Origin"] = {
+    {"Left", r.mOrigin.mX},
+    {"Top", r.mOrigin.mY},
+  };
+  j["Size"] = {
+    {"Width", r.mSize.mWidth},
+    {"Height", r.mSize.mHeight},
+  };
+  j["Alignment"] = {
+    {"Horizontal", p.mHorizontalAlignment},
+    {"Vertical", p.mVerticalAlignment},
+  };
+}// namespace OpenKneeboard
+
+void from_json(const nlohmann::json& j, NonVRAbsolutePosition& p) {
+  const auto origin = j.at("Origin");
+  const auto size = j.at("Size");
+  const auto alignment = j.at("Alignment");
+
+  auto& r = p.mRect;
+  r.mOrigin.mX = origin.at("Left");
+  r.mOrigin.mY = origin.at("Top");
+  r.mSize.mWidth = size.at("Width");
+  r.mSize.mHeight = size.at("Height");
+  p.mHorizontalAlignment = alignment.at("Horizontal");
+  p.mVerticalAlignment = alignment.at("Vertical");
+}
 
 }// namespace OpenKneeboard

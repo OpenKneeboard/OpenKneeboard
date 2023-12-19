@@ -283,15 +283,15 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
     const auto& size = consumers.mNonVRPixelSize;
     if (
       (now - consumers.NotVR()) < std::chrono::milliseconds(500)
-      && (now - consumers.AnyVR()) > std::chrono::seconds(1) && size.width
-      && size.height) {
+      && (now - consumers.AnyVR()) > std::chrono::seconds(1) && size.mWidth
+      && size.mHeight) {
       const auto ret = mKneeboard->GetNonVRSettings()
                          .Layout(
                            size,
                            {static_cast<uint32_t>(idealSize.width),
                             static_cast<uint32_t>(idealSize.height)})
                          .mSize;
-      return {ret.width, ret.height};
+      return {ret.mWidth, ret.mHeight};
     }
   }
 

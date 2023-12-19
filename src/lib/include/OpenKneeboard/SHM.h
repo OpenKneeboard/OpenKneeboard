@@ -93,14 +93,14 @@ class ConsumerPattern final {
 struct Config final {
   uint64_t mGlobalInputLayerID {};
   VRRenderConfig mVR {};
-  FlatConfig mFlat {};
+  NonVRConstrainedPosition mFlat {};
   ConsumerPattern mTarget {};
 };
 static_assert(std::is_standard_layout_v<Config>);
 struct LayerConfig final {
   uint64_t mLayerID;
   uint16_t mImageWidth, mImageHeight;// Pixels
-  VRLayerConfig mVR;
+  VRAbsolutePosition mVR;
 
   bool IsValid() const;
 };

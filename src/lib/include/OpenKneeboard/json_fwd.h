@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <shims/winrt/base.h>
+
 #include <nlohmann/json_fwd.hpp>
 
 namespace OpenKneeboard {
@@ -38,3 +40,12 @@ void to_json_with_default(nlohmann::json& j, const T& parent_v, const T& v);
 #define OPENKNEEBOARD_DECLARE_JSON(T) \
   void from_json(const nlohmann::json& nlohmann_json_j, T& nlohmann_json_v); \
   void to_json(nlohmann::json& nlohmann_json_j, const T& nlohmann_json_v);
+
+namespace nlohmann {
+template <>
+struct adl_serializer<winrt::guid> {
+  static void to_json(json&, const winrt::guid&);
+  static void from_json(const json&, winrt::guid&);
+};
+
+}// namespace nlohmann

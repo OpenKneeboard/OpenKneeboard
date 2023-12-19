@@ -503,7 +503,7 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
-void KneeboardState::SetNonVRSettings(const FlatConfig& value) {
+void KneeboardState::SetNonVRSettings(const NonVRConstrainedPosition& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 

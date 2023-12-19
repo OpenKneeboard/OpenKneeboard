@@ -30,7 +30,7 @@
 
 namespace OpenKneeboard {
 
-struct VRLayerConfig {
+struct VRAbsolutePosition {
   // Distances in meters, rotations in radians
   float mX = 0.15f, mEyeY = -0.7f, mZ = -0.4f;
   float mRX = -2 * std::numbers::pi_v<float> / 5,
@@ -38,7 +38,8 @@ struct VRLayerConfig {
   float mWidth = 0.25f;
   float mHeight = 0.25f;
 
-  constexpr auto operator<=>(const VRLayerConfig&) const noexcept = default;
+  constexpr auto operator<=>(const VRAbsolutePosition&) const noexcept
+    = default;
 };
 
 struct VRRenderConfig {
@@ -80,7 +81,7 @@ static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
-  VRLayerConfig mPrimaryLayer {};
+  VRAbsolutePosition mPrimaryLayer {};
   float mMaxWidth = 0.15f;
   float mMaxHeight = 0.25f;
 

@@ -33,4 +33,13 @@ static void StaticTests() {
     == std::string_view {"fooBar"});
 }
 
-};// namespace OpenKneeboard
+}// namespace OpenKneeboard
+
+namespace nlohmann {
+void adl_serializer<winrt::guid>::to_json(json& j, const winrt::guid& v) {
+  j = winrt::to_string(winrt::to_hstring(v));
+}
+void adl_serializer<winrt::guid>::from_json(const json& j, winrt::guid& v) {
+  v = winrt::guid {j.get<std::string>()};
+}
+}// namespace nlohmann

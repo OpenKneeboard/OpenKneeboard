@@ -82,10 +82,10 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     {scDesc.BufferDesc.Width, scDesc.BufferDesc.Height},
     {layerConfig.mImageWidth, layerConfig.mImageHeight});
   RECT destRect {
-    static_cast<LONG>(dest.mOrigin.x),
-    static_cast<LONG>(dest.mOrigin.y),
-    static_cast<LONG>(dest.mOrigin.x + dest.mSize.width),
-    static_cast<LONG>(dest.mOrigin.y + dest.mSize.height),
+    static_cast<LONG>(dest.mOrigin.mX),
+    static_cast<LONG>(dest.mOrigin.mY),
+    static_cast<LONG>(dest.mOrigin.mX + dest.mSize.mWidth),
+    static_cast<LONG>(dest.mOrigin.mY + dest.mSize.mHeight),
   };
 
   RECT sourceRect {

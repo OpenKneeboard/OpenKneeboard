@@ -21,33 +21,38 @@
 
 namespace OpenKneeboard {
 
-PixelRect FlatConfig::Layout(PixelSize canvasSize, PixelSize imageSize) const {
+PixelRect NonVRConstrainedPosition::Layout(
+  PixelSize canvasSize,
+  PixelSize imageSize) const {
   const auto aspectRatio
-    = static_cast<float>(imageSize.width) / imageSize.height;
-  const auto renderHeight = (canvasSize.height * mHeightPercent) / 100;
+    = static_cast<float>(imageSize.mWidth) / imageSize.mHeight;
+  const auto renderHeight = (canvasSize.mHeight * mHeightPercent) / 100;
   const auto renderWidth = static_cast<uint32_t>(renderHeight * aspectRatio);
+
+  using Alignment::Horizontal;
+  using Alignment::Vertical;
 
   uint32_t left = mPaddingPixels;
   switch (mHorizontalAlignment) {
-    case HorizontalAlignment::Left:
+    case Horizontal::Left:
       break;
-    case HorizontalAlignment::Center:
-      left = (canvasSize.width - renderWidth) / 2;
+    case Horizontal::Center:
+      left = (canvasSize.mWidth - renderWidth) / 2;
       break;
-    case HorizontalAlignment::Right:
-      left = canvasSize.width - (renderWidth + mPaddingPixels);
+    case Horizontal::Right:
+      left = canvasSize.mWidth - (renderWidth + mPaddingPixels);
       break;
   }
 
   uint32_t top = mPaddingPixels;
   switch (mVerticalAlignment) {
-    case VerticalAlignment::Top:
+    case Vertical::Top:
       break;
-    case VerticalAlignment::Middle:
-      top = (canvasSize.height - renderHeight) / 2;
+    case Vertical::Middle:
+      top = (canvasSize.mHeight - renderHeight) / 2;
       break;
-    case VerticalAlignment::Bottom:
-      top = canvasSize.height - (renderHeight + mPaddingPixels);
+    case Vertical::Bottom:
+      top = canvasSize.mHeight - (renderHeight + mPaddingPixels);
       break;
   }
 
@@ -57,4 +62,4 @@ PixelRect FlatConfig::Layout(PixelSize canvasSize, PixelSize imageSize) const {
   };
 }
 
-}
+}// namespace OpenKneeboard

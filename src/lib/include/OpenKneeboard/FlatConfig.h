@@ -24,6 +24,7 @@
 #include <OpenKneeboard/json_fwd.h>
 #endif
 
+#include <OpenKneeboard/Alignment.h>
 #include <OpenKneeboard/Pixels.h>
 
 #include <compare>
@@ -32,34 +33,32 @@
 
 namespace OpenKneeboard {
 
-struct FlatConfig {
-  enum class HorizontalAlignment : uint8_t {
-    Left,
-    Center,
-    Right,
-  };
-  enum class VerticalAlignment : uint8_t {
-    Top,
-    Middle,
-    Bottom,
-  };
+struct NonVRAbsolutePosition {
+  PixelRect mRect {};
+  Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Right};
+  Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
+};
+static_assert(std::is_standard_layout_v<NonVRAbsolutePosition>);
 
+struct NonVRConstrainedPosition {
   uint8_t mHeightPercent = 60;
   uint32_t mPaddingPixels = 10;
   // In case it covers up menus etc
   float mOpacity = 0.8f;
 
-  HorizontalAlignment mHorizontalAlignment = HorizontalAlignment::Right;
-  VerticalAlignment mVerticalAlignment = VerticalAlignment::Middle;
+  Alignment::Horizontal mHorizontalAlignment = Alignment::Horizontal::Right;
+  Alignment::Vertical mVerticalAlignment = Alignment::Vertical::Middle;
 
   PixelRect Layout(PixelSize canvasSize, PixelSize imageSize) const;
 
-  constexpr auto operator<=>(const FlatConfig&) const = default;
+  constexpr auto operator<=>(const NonVRConstrainedPosition&) const = default;
 };
-static_assert(std::is_standard_layout_v<FlatConfig>);
+static_assert(std::is_standard_layout_v<NonVRConstrainedPosition>);
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(FlatConfig);
+void to_json(nlohmann::json& j, const NonVRAbsolutePosition&);
+void from_json(const nlohmann::json& j, NonVRAbsolutePosition&);
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(NonVRConstrainedPosition);
 #endif
 
 }// namespace OpenKneeboard

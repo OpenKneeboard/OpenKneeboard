@@ -494,8 +494,8 @@ std::string HelpPage::GetActiveConsumers() noexcept {
 
   ret += std::format(
     "\nNon-VR canvas: {}x{}\n",
-    consumers.mNonVRPixelSize.width,
-    consumers.mNonVRPixelSize.height);
+    consumers.mNonVRPixelSize.mWidth,
+    consumers.mNonVRPixelSize.mHeight);
 
   return ret;
 }

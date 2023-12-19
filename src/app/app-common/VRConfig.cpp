@@ -24,7 +24,7 @@
 namespace OpenKneeboard {
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRLayerConfig,
+  VRAbsolutePosition,
   mX,
   mEyeY,
   mZ,
