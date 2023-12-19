@@ -17,23 +17,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/RayIntersectsRect.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/SteamVRKneeboard.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+
+#include <shims/filesystem>
+#include <shims/winrt/base.h>
+
+#include <DirectXTK/SimpleMath.h>
+
+#include <thread>
+
 #include <TlHelp32.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
 #include <dxgi1_2.h>
 #include <openvr.h>
-#include <shims/winrt/base.h>
-
-#include <shims/filesystem>
-#include <thread>
 
 using namespace DirectX::SimpleMath;
 
@@ -166,6 +171,23 @@ float SteamVRKneeboard::GetDisplayTime() {
   return 0.0f;// FIXME
 }
 
+static bool IsOtherVRActive() {
+  const auto now = SHM::ActiveConsumers::Clock::now();
+  const auto interval = std::chrono::milliseconds(500);
+  const auto consumers = SHM::ActiveConsumers::Get();
+
+  if ((now - consumers.mOpenXR) <= interval) {
+    return true;
+  }
+  if ((now - consumers.mOculusD3D11) <= interval) {
+    return true;
+  }
+  if ((now - consumers.mOculusD3D12) <= interval) {
+    return true;
+  }
+  return false;
+}
+
 void SteamVRKneeboard::Tick() {
 #define CHECK(method, ...) \
   if (!overlay_check(mIVROverlay->method(__VA_ARGS__), #method)) { \
@@ -187,6 +209,11 @@ void SteamVRKneeboard::Tick() {
 
   mFrameCounter++;
   if (!mSHM) {
+    this->HideAllOverlays();
+    return;
+  }
+
+  if (IsOtherVRActive()) {
     this->HideAllOverlays();
     return;
   }

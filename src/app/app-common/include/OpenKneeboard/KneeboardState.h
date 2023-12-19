@@ -175,8 +175,6 @@ class KneeboardState final
     const std::shared_ptr<ITab>& tab,
     const BaseSetTabEvent& metadata);
 
-  bool IsSteamVRActive() const;
-
   enum class Direction {
     Previous,
     Next,

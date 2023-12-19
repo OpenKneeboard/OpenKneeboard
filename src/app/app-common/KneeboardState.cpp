@@ -690,32 +690,9 @@ KneeboardState::ReleaseExclusiveResources() {
   co_return;
 }
 
-bool KneeboardState::IsSteamVRActive() const {
-  if (!mSettings.mVR.mEnableSteamVR) {
-    return false;
-  }
-
-  const auto now = SHM::ActiveConsumers::Clock::now();
-  const auto interval = std::chrono::milliseconds(500);
-  const auto consumers = SHM::ActiveConsumers::Get();
-
-  if ((now - consumers.mOpenXR) <= interval) {
-    return false;
-  }
-  if ((now - consumers.mOculusD3D11) <= interval) {
-    return false;
-  }
-  if ((now - consumers.mOculusD3D12) <= interval) {
-    return false;
-  }
-  // Currently allowing non-VR and SteamVR simultaneously
-
-  return true;
-}
-
 void KneeboardState::AcquireExclusiveResources() {
   mInterprocessRenderer = InterprocessRenderer::Create(mDXResources, this);
-  if (IsSteamVRActive()) {
+  if (mSettings.mVR.mEnableSteamVR) {
     StartOpenVRThread();
   }
 
