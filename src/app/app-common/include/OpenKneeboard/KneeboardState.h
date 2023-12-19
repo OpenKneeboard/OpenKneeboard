@@ -150,6 +150,8 @@ class KneeboardState final
   uint8_t mInputViewIndex = 0;
   std::array<std::shared_ptr<KneeboardView>, 2> mViews;
 
+  PixelSize mLastNonVRPixelSize {};
+
   std::unique_ptr<GamesList> mGamesList;
   std::unique_ptr<TabsList> mTabsList;
   std::shared_ptr<InterprocessRenderer> mInterprocessRenderer;

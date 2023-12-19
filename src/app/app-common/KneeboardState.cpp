@@ -57,6 +57,14 @@ KneeboardState::KneeboardState(HWND hwnd, const DXResources& dxr)
 
   AddEventListener(
     this->evNeedsRepaintEvent, [this]() { this->mNeedsRepaint = true; });
+  AddEventListener(this->evFrameTimerPrepareEvent, [this]() {
+    const auto px = SHM::ActiveConsumers::Get().mNonVRPixelSize;
+    if (px == mLastNonVRPixelSize) {
+      return;
+    }
+    mLastNonVRPixelSize = px;
+    this->evNeedsRepaintEvent.Emit();
+  });
 
   mGamesList = std::make_unique<GamesList>(this, mSettings.mGames);
   AddEventListener(

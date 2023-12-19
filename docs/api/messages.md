@@ -55,6 +55,7 @@ The value is one of:
 - `INCREASE_BRIGHTNESS`
 - `DECREASE_BRIGHTNESS`
 - `RELOAD_CURRENT_TAB`
+- `REPAINT_NOW`
 
 `TINT`, `BRIGHTNESS`, and `BOOKMARK` actions are new in v1.4 and above.
 

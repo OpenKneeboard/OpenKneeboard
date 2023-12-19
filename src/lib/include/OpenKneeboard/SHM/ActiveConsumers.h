@@ -19,10 +19,10 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/SHM.h>
 
 #include <chrono>
-#include <cstdint>
 
 namespace OpenKneeboard::SHM {
 // This should be kept in sync with `SHM::ConsumerKind`.
@@ -36,9 +36,17 @@ struct ActiveConsumers final {
   T mNonVRD3D11 {};
   T mViewer {};
 
+  T AnyVR() const;
+  T VRExceptSteam() const;
+  T NotVR() const;
+  T Any() const;
+
+  PixelSize mNonVRPixelSize {};
+
   static void Clear();
   static ActiveConsumers Get();
   static void Set(ConsumerKind);
+  static void SetNonVRPixelSize(PixelSize px);
 
  private:
   class Impl;

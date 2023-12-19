@@ -24,6 +24,8 @@
 #include <OpenKneeboard/json_fwd.h>
 #endif
 
+#include <OpenKneeboard/Pixels.h>
+
 #include <compare>
 #include <cstdint>
 #include <numbers>
@@ -49,6 +51,8 @@ struct FlatConfig {
 
   HorizontalAlignment mHorizontalAlignment = HorizontalAlignment::Right;
   VerticalAlignment mVerticalAlignment = VerticalAlignment::Middle;
+
+  PixelRect Layout(PixelSize canvasSize, PixelSize imageSize) const;
 
   constexpr auto operator<=>(const FlatConfig&) const = default;
 };

@@ -19,15 +19,19 @@
  */
 #include "NonVRD3D11Kneeboard.h"
 
+#include "InjectedDLLMain.h"
+
 #include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
-#include <d3d11.h>
-#include <dxgi.h>
+
 #include <shims/winrt/base.h>
 
-#include "InjectedDLLMain.h"
+#include <d3d11.h>
+#include <dxgi.h>
 
 namespace OpenKneeboard {
 
@@ -68,45 +72,22 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   DXGI_SWAP_CHAIN_DESC scDesc;
   swapChain->GetDesc(&scDesc);
 
+  SHM::ActiveConsumers::SetNonVRPixelSize(
+    {scDesc.BufferDesc.Width, scDesc.BufferDesc.Height});
+
   const auto& layerConfig = *snapshot.GetLayerConfig(0);
   const auto flatConfig = snapshot.GetConfig().mFlat;
 
-  const auto aspectRatio
-    = float(layerConfig.mImageWidth) / layerConfig.mImageHeight;
-  const LONG canvasWidth = scDesc.BufferDesc.Width;
-  const LONG canvasHeight = scDesc.BufferDesc.Height;
+  const auto dest = flatConfig.Layout(
+    {scDesc.BufferDesc.Width, scDesc.BufferDesc.Height},
+    {layerConfig.mImageWidth, layerConfig.mImageHeight});
+  RECT destRect {
+    static_cast<LONG>(dest.mOrigin.x),
+    static_cast<LONG>(dest.mOrigin.y),
+    static_cast<LONG>(dest.mOrigin.x + dest.mSize.width),
+    static_cast<LONG>(dest.mOrigin.y + dest.mSize.height),
+  };
 
-  const LONG renderHeight
-    = (static_cast<long>(canvasHeight) * flatConfig.mHeightPercent) / 100;
-  const LONG renderWidth = std::lround(renderHeight * aspectRatio);
-
-  const auto padding = flatConfig.mPaddingPixels;
-
-  LONG left = padding;
-  switch (flatConfig.mHorizontalAlignment) {
-    case FlatConfig::HorizontalAlignment::Left:
-      break;
-    case FlatConfig::HorizontalAlignment::Center:
-      left = (canvasWidth - renderWidth) / 2;
-      break;
-    case FlatConfig::HorizontalAlignment::Right:
-      left = canvasWidth - (renderWidth + padding);
-      break;
-  }
-
-  LONG top = padding;
-  switch (flatConfig.mVerticalAlignment) {
-    case FlatConfig::VerticalAlignment::Top:
-      break;
-    case FlatConfig::VerticalAlignment::Middle:
-      top = (canvasHeight - renderHeight) / 2;
-      break;
-    case FlatConfig::VerticalAlignment::Bottom:
-      top = canvasHeight - (renderHeight + padding);
-      break;
-  }
-
-  RECT destRect {left, top, left + renderWidth, top + renderHeight};
   RECT sourceRect {
     0,
     0,

@@ -175,17 +175,7 @@ static bool IsOtherVRActive() {
   const auto now = SHM::ActiveConsumers::Clock::now();
   const auto interval = std::chrono::milliseconds(500);
   const auto consumers = SHM::ActiveConsumers::Get();
-
-  if ((now - consumers.mOpenXR) <= interval) {
-    return true;
-  }
-  if ((now - consumers.mOculusD3D11) <= interval) {
-    return true;
-  }
-  if ((now - consumers.mOculusD3D12) <= interval) {
-    return true;
-  }
-  return false;
+  return (now - consumers.VRExceptSteam()) <= interval;
 }
 
 void SteamVRKneeboard::Tick() {

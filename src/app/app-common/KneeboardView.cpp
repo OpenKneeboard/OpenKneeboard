@@ -26,6 +26,7 @@
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabViewUILayer.h>
 #include <OpenKneeboard/ToolbarAction.h>
@@ -267,6 +268,7 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
       = std::const_pointer_cast<KneeboardView>(this->shared_from_this()),
       .mIsActiveForInput = false,
     });
+
   const auto idealSize = metrics.mCanvasSize;
   if (
     metrics.mScalingKind == ScalingKind::Bitmap
@@ -275,6 +277,22 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
       static_cast<UINT>(std::lround(idealSize.width)),
       static_cast<UINT>(std::lround(idealSize.height)),
     };
+  } else {
+    const auto now = SHM::ActiveConsumers::Clock::now();
+    const auto consumers = SHM::ActiveConsumers::Get();
+    const auto& size = consumers.mNonVRPixelSize;
+    if (
+      (now - consumers.NotVR()) < std::chrono::milliseconds(500)
+      && (now - consumers.AnyVR()) > std::chrono::seconds(1) && size.width
+      && size.height) {
+      const auto ret = mKneeboard->GetNonVRSettings()
+                         .Layout(
+                           size,
+                           {static_cast<uint32_t>(idealSize.width),
+                            static_cast<uint32_t>(idealSize.height)})
+                         .mSize;
+      return {ret.width, ret.height};
+    }
   }
 
   const auto xScale = TextureWidth / idealSize.width;

@@ -22,6 +22,7 @@
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -87,9 +88,26 @@ class TestViewerWindow final {
 
   HWND mHwnd {};
 
+  UINT mDPI {USER_DEFAULT_SCREEN_DPI};
+
   static TestViewerWindow* gInstance;
   static LRESULT CALLBACK
   WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+  void SetDPI(UINT dpi) {
+    mDPI = dpi;
+    mOverlayTextFormat = {};
+
+    mDXR.mDWriteFactory->CreateTextFormat(
+      L"Courier New",
+      nullptr,
+      DWRITE_FONT_WEIGHT_NORMAL,
+      DWRITE_FONT_STYLE_NORMAL,
+      DWRITE_FONT_STRETCH_NORMAL,
+      (16.0f * mDPI) / USER_DEFAULT_SCREEN_DPI,
+      L"",
+      mOverlayTextFormat.put());
+  }
 
  public:
   TestViewerWindow(HINSTANCE instance) {
@@ -129,15 +147,19 @@ class TestViewerWindow final {
       D2D1::ColorF(0.0f, 0.0f, 0.f, 0.8f), mOverlayBackground.put());
     mDXR.mD2DDeviceContext->CreateSolidColorBrush(
       D2D1::ColorF(1.0f, 1.0f, 1.f, 1.0f), mOverlayForeground.put());
-    mDXR.mDWriteFactory->CreateTextFormat(
-      L"Courier New",
-      nullptr,
-      DWRITE_FONT_WEIGHT_NORMAL,
-      DWRITE_FONT_STYLE_NORMAL,
-      DWRITE_FONT_STRETCH_NORMAL,
-      16.0f,
-      L"",
-      mOverlayTextFormat.put());
+
+    const auto dpi = GetDpiForWindow(mHwnd);
+    this->SetDPI(dpi);
+    if (dpi != USER_DEFAULT_SCREEN_DPI) {
+      SetWindowPos(
+        mHwnd,
+        0,
+        0,
+        0,
+        (768 / 2) * dpi / USER_DEFAULT_SCREEN_DPI,
+        (1024 / 2) * dpi / USER_DEFAULT_SCREEN_DPI,
+        SWP_NOZORDER | SWP_NOMOVE);
+    }
   }
 
   HWND GetHWND() const {
@@ -223,7 +245,15 @@ class TestViewerWindow final {
     EndPaint(mHwnd, &ps);
   }
 
-  void OnResize(const D2D1_SIZE_U&) {
+  void OnResize(const D2D1_SIZE_U& size) {
+    using OpenKneeboard::SHM::ActiveConsumers;
+    const auto now = ActiveConsumers::Clock::now();
+    if ((now - ActiveConsumers::Get().mNonVRD3D11) > std::chrono::seconds(1)) {
+      ActiveConsumers::SetNonVRPixelSize({size.width, size.height});
+    }
+
+    dprintf("Resized to {}x{}", size.width, size.height);
+
     this->PaintNow();
   }
 
@@ -422,12 +452,12 @@ class TestViewerWindow final {
 
     const auto renderLeft = (clientSize.width - renderWidth) / 2;
     const auto renderTop = (clientSize.height - renderHeight) / 2;
-    auto dpi = GetDpiForWindow(this->GetHWND());
     D2D1_RECT_F pageRect {
-      renderLeft * (dpi / 96.0f),
-      renderTop * (dpi / 96.0f),
-      (renderLeft + renderWidth) * (dpi / 96.0f),
-      (renderTop + renderHeight) * (dpi / 96.0f)};
+      static_cast<FLOAT>(renderLeft),
+      static_cast<FLOAT>(renderTop),
+      static_cast<FLOAT>(renderLeft + renderWidth),
+      static_cast<FLOAT>(renderTop + renderHeight),
+    };
     D2D1_RECT_F sourceRect {
       0,
       0,
@@ -438,8 +468,8 @@ class TestViewerWindow final {
     D2D1_BITMAP_PROPERTIES bitmapProperties {
       .pixelFormat
       = {SHM::SHARED_TEXTURE_PIXEL_FORMAT, D2D1_ALPHA_MODE_PREMULTIPLIED,},
-      .dpiX = static_cast<FLOAT>(dpi),
-      .dpiY = static_cast<FLOAT>(dpi),
+      .dpiX = static_cast<FLOAT>(mDPI),
+      .dpiY = static_cast<FLOAT>(mDPI),
     };
     ctx->CreateSharedBitmap(
       _uuidof(IDXGISurface),
@@ -497,6 +527,19 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
         .height = HIWORD(lParam),
       });
       return 0;
+    case WM_DPICHANGED: {
+      gInstance->SetDPI(static_cast<UINT>(LOWORD(wParam)));
+      auto rect = reinterpret_cast<RECT*>(lParam);
+      SetWindowPos(
+        hWnd,
+        0,
+        rect->left,
+        rect->top,
+        rect->right - rect->left,
+        rect->bottom - rect->top,
+        SWP_NOZORDER);
+      break;
+    }
     case WM_KEYUP:
       gInstance->OnKeyUp(wParam);
       return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -518,7 +561,9 @@ int WINAPI wWinMain(
 
   DPrintSettings::Set({.prefix = "OpenKneeboard-Viewer"});
 
+  SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
   winrt::init_apartment(winrt::apartment_type::single_threaded);
+
   TestViewerWindow window(hInstance);
   ShowWindow(window.GetHWND(), nCmdShow);
 

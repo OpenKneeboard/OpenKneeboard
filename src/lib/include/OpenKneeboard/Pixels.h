@@ -17,34 +17,31 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/FlatConfig.h>
+#pragma once
 
-#include <OpenKneeboard/json.h>
+#include <compare>
+#include <cstdint>
 
 namespace OpenKneeboard {
+struct PixelSize {
+  uint32_t width {};
+  uint32_t height {};
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  FlatConfig::HorizontalAlignment,
-  {
-    {FlatConfig::HorizontalAlignment::Left, "Left"},
-    {FlatConfig::HorizontalAlignment::Center, "Center"},
-    {FlatConfig::HorizontalAlignment::Right, "Right"},
-  });
+  constexpr auto operator<=>(const PixelSize&) const noexcept = default;
+};
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  FlatConfig::VerticalAlignment,
-  {
-    {FlatConfig::VerticalAlignment::Top, "Top"},
-    {FlatConfig::VerticalAlignment::Middle, "Middle"},
-    {FlatConfig::VerticalAlignment::Bottom, "Bottom"},
-  });
+struct PixelPoint {
+  uint32_t x {};
+  uint32_t y {};
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  FlatConfig,
-  mHeightPercent,
-  mPaddingPixels,
-  mOpacity,
-  mHorizontalAlignment,
-  mVerticalAlignment)
+  constexpr auto operator<=>(const PixelPoint&) const noexcept = default;
+};
+
+struct PixelRect {
+  PixelPoint mOrigin {};
+  PixelSize mSize {};
+
+  constexpr auto operator<=>(const PixelRect&) const noexcept = default;
+};
 
 }// namespace OpenKneeboard

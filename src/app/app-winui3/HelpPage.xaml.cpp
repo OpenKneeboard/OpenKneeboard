@@ -492,9 +492,10 @@ std::string HelpPage::GetActiveConsumers() noexcept {
   log("NonVR-D3D11", consumers.mNonVRD3D11);
   log("Viewer", consumers.mViewer);
 
-  if (ret.empty()) {
-    return "None.";
-  }
+  ret += std::format(
+    "\nNon-VR canvas: {}x{}\n",
+    consumers.mNonVRPixelSize.width,
+    consumers.mNonVRPixelSize.height);
 
   return ret;
 }

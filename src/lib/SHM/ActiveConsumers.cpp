@@ -26,6 +26,7 @@
 
 #include <Windows.h>
 
+#include <algorithm>
 #include <format>
 #include <string>
 
@@ -127,6 +128,39 @@ void ActiveConsumers::Set(ConsumerKind consumer) {
       p->mViewer = now;
       break;
   }
+}
+
+void ActiveConsumers::SetNonVRPixelSize(PixelSize px) {
+  auto p = Impl::Get();
+  if (!p) {
+    return;
+  }
+
+  p->mNonVRPixelSize = px;
+}
+
+ActiveConsumers::T ActiveConsumers::Any() const {
+  const auto ret = std::ranges::max(
+    {mSteamVR, mOpenXR, mOculusD3D11, mOculusD3D12, mNonVRD3D11});
+  if (ret != T {}) {
+    return ret;
+  }
+  return mViewer;
+}
+
+ActiveConsumers::T ActiveConsumers::AnyVR() const {
+  return std::ranges::max({mSteamVR, mOpenXR, mOculusD3D11, mOculusD3D12});
+}
+
+ActiveConsumers::T ActiveConsumers::VRExceptSteam() const {
+  return std::ranges::max({mOpenXR, mOculusD3D11, mOculusD3D12});
+}
+
+ActiveConsumers::T ActiveConsumers::NotVR() const {
+  if (mNonVRD3D11 != T {}) {
+    return mNonVRD3D11;
+  }
+  return mViewer;
 }
 
 }// namespace OpenKneeboard::SHM

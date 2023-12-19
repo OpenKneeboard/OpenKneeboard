@@ -166,6 +166,7 @@ ok_add_library(
   STATIC
   SHM.cpp
   SHM/ActiveConsumers.cpp
+  FlatConfig.cpp
 )
 target_link_libraries(
   OpenKneeboard-SHM
