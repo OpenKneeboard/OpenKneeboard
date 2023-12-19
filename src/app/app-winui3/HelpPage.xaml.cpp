@@ -29,6 +29,7 @@
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
 
@@ -212,6 +213,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   AddFile("api-events.txt", GetGameEventsAsString());
   AddFile("openxr.txt", GetOpenXRInfo());
   AddFile("update-history.txt", GetUpdateLog());
+  AddFile("renderers.txt", GetActiveConsumers());
   AddFile("version.txt", mVersionClipboardData);
 
   struct Dump {
@@ -463,6 +465,37 @@ std::string HelpPage::GetUpdateLog() noexcept {
         std::chrono::system_clock::time_point(std::chrono::seconds(timestamp))),
       std::string_view {data, dataLength - 1});
   }
+  return ret;
+}
+
+std::string HelpPage::GetActiveConsumers() noexcept {
+  std::string ret;
+  const auto consumers = SHM::ActiveConsumers::Get();
+  const auto now = SHM::ActiveConsumers::Clock::now();
+  const SHM::ActiveConsumers::T null {};
+
+  auto log = [&](const auto name, const auto& value) {
+    if (value == null) {
+      ret += std::format("{}: inactive\n", name);
+      return;
+    }
+    ret += std::format(
+      "{}: {}\n",
+      name,
+      std::chrono::duration_cast<std::chrono::milliseconds>(now - value));
+  };
+
+  log("SteamVR", consumers.mSteamVR);
+  log("OpenXR", consumers.mOpenXR);
+  log("Oculus-D3D11", consumers.mOculusD3D11);
+  log("Oculus-D3D12", consumers.mOculusD3D12);
+  log("NonVR-D3D11", consumers.mNonVRD3D11);
+  log("Viewer", consumers.mViewer);
+
+  if (ret.empty()) {
+    return "None.";
+  }
+
   return ret;
 }
 
