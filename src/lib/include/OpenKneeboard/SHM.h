@@ -41,6 +41,8 @@
 
 namespace OpenKneeboard::SHM {
 
+using VRPosition = VRAbsolutePosition;
+
 struct FrameMetadata;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT

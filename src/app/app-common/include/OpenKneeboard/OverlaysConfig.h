@@ -17,21 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-
 #pragma once
 
 #include <OpenKneeboard/FlatConfig.h>
+#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRConfig.h>
+
+#include <OpenKneeboard/json_fwd.h>
 
 #include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
 
+struct OverlayConfig;
+
 struct OverlayVRPosition {
   enum class Type {
     Absolute,
+    // Mirrored in the x = 0 plane, i.e. x => -x
     HorizontalMirror,
-    VerticalMirror,
   };
 
   Type mType;
@@ -39,6 +43,9 @@ struct OverlayVRPosition {
     winrt::guid mMirrorOf;
     VRAbsolutePosition mAbsolutePosition;
   };
+
+  std::optional<SHM::VRPosition> Resolve(
+    const std::vector<OverlayConfig>& others) const;
 };
 
 struct OverlayNonVRPosition {
@@ -66,9 +73,20 @@ struct OverlayConfig {
 
   bool mNonVR {true};
   OverlayNonVRPosition mNonVRPosition;
+
+  static OverlayConfig CreateDefaultFirstOverlay();
+  static OverlayConfig CreateDefaultSecondOverlay(const OverlayConfig& first);
+
+  static OverlayConfig CreateRightKnee();
+  static OverlayConfig CreateMirroredOverlay(
+    std::string_view name,
+    const OverlayConfig& other);
 };
 
 struct OverlaysConfig {
+  OverlaysConfig();
+  OverlaysConfig(const nlohmann::json&);
+
   std::vector<OverlayConfig> mOverlays;
 };
 
