@@ -41,7 +41,7 @@
 
 namespace OpenKneeboard::SHM {
 
-struct Header;
+struct FrameMetadata;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -156,7 +156,7 @@ class Snapshot final {
   Snapshot(incorrect_kind_t);
 
   Snapshot(
-    const Header& header,
+    const FrameMetadata& header,
     ID3D11DeviceContext4*,
     ID3D11Fence*,
     const LayerTextures&,
@@ -183,7 +183,7 @@ class Snapshot final {
   Snapshot() = delete;
 
  private:
-  std::shared_ptr<Header> mHeader;
+  std::shared_ptr<FrameMetadata> mHeader;
   LayerTextures mLayerTextures;
 
   using LayerSRVArray

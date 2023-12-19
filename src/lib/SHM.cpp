@@ -54,7 +54,7 @@ enum class HeaderFlags : ULONG {
   FEEDER_ATTACHED = 1 << 0,
 };
 
-struct Header final {
+struct FrameMetadata final {
   // Use the magic string to make sure we don't have
   // uninitialized memory that happens to have the
   // feeder-attached bit set
@@ -78,7 +78,7 @@ struct Header final {
 
   std::underlying_type_t<ConsumerKind> mActiveConsumers {};
 };
-static_assert(std::is_standard_layout_v<Header>);
+static_assert(std::is_standard_layout_v<FrameMetadata>);
 
 }// namespace OpenKneeboard::SHM
 
@@ -90,7 +90,7 @@ constexpr bool is_bitflags_v<SHM::HeaderFlags> = true;
 namespace OpenKneeboard::SHM {
 
 static constexpr DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
-static constexpr DWORD SHM_SIZE = sizeof(Header);
+static constexpr DWORD SHM_SIZE = sizeof(FrameMetadata);
 
 static auto SHMPath() {
   static std::wstring sCache;
@@ -236,13 +236,13 @@ Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
 }
 
 Snapshot::Snapshot(
-  const Header& header,
+  const FrameMetadata& header,
   ID3D11DeviceContext4* ctx,
   ID3D11Fence* fence,
   const LayerTextures& textures,
   TextureReadResources* r)
   : mLayerTextures(textures), mState(State::Empty) {
-  mHeader = std::make_shared<Header>(header);
+  mHeader = std::make_shared<FrameMetadata>(header);
 
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "SHM::Snapshot::Snapshot()");
@@ -386,7 +386,7 @@ class Impl {
   winrt::handle mFileHandle;
   winrt::handle mMutexHandle;
   std::byte* mMapping = nullptr;
-  Header* mHeader = nullptr;
+  FrameMetadata* mHeader = nullptr;
 
   Impl() {
     auto fileHandle = Win32::CreateFileMappingW(
@@ -419,7 +419,7 @@ class Impl {
 
     mFileHandle = std::move(fileHandle);
     mMutexHandle = std::move(mutexHandle);
-    mHeader = reinterpret_cast<Header*>(mMapping);
+    mHeader = reinterpret_cast<FrameMetadata*>(mMapping);
   }
 
   ~Impl() {
@@ -537,7 +537,7 @@ Writer::Writer() {
     return;
   }
 
-  *p->mHeader = Header {};
+  *p->mHeader = FrameMetadata {};
   dprint("Writer initialized.");
 }
 
@@ -786,13 +786,13 @@ void Writer::Update(
     p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
 }
 
-bool Header::HaveFeeder() const {
+bool FrameMetadata::HaveFeeder() const {
   return (mMagic == *reinterpret_cast<const uint64_t*>(Magic.data()))
     && ((mFlags & HeaderFlags::FEEDER_ATTACHED)
         == HeaderFlags::FEEDER_ATTACHED);
 }
 
-size_t Header::GetRenderCacheKey() const {
+size_t FrameMetadata::GetRenderCacheKey() const {
   // This is lazy, and only works because:
   // - session ID already contains random data
   // - we're only combining *one* other value which isn't
