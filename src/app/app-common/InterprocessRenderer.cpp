@@ -53,7 +53,7 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
 
   switch (game->mOverlayAPI) {
     case OverlayAPI::None:
-      return {SHM::ConsumerKind::Test};
+      return {SHM::ConsumerKind::Viewer};
     case OverlayAPI::AutoDetect:
       return {};
     case OverlayAPI::SteamVR:
@@ -230,29 +230,15 @@ void InterprocessRenderer::Init(
 
   this->RenderNow();
 
-  AddEventListener(
-    kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
-      const auto now = std::chrono::steady_clock::now();
-      if ((now - self->mConsumersClearedAt) > std::chrono::milliseconds(500)) {
-        const std::unique_lock shmLock(self->mSHM);
-        self->mConsumers = self->mSHM.GetConsumers();
-        self->mSHM.ClearConsumers();
-        self->mConsumersClearedAt = now;
-      }
-
-      if (self->mNeedsRepaint) {
-        self->RenderNow();
-      }
-    }));
+  AddEventListener(kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
+                     if (self->mNeedsRepaint) {
+                       self->RenderNow();
+                     }
+                   }));
 }
 
 void InterprocessRenderer::MarkDirty() {
   mNeedsRepaint = true;
-}
-
-std::underlying_type_t<SHM::ConsumerKind> InterprocessRenderer::GetConsumers()
-  const {
-  return mConsumers;
 }
 
 InterprocessRenderer::~InterprocessRenderer() {

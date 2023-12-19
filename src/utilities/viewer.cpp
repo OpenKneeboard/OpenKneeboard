@@ -300,7 +300,7 @@ class TestViewerWindow final {
       mSHM.GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
     const auto snapshot
-      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Test);
+      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
     if (snapshot.IsValid()) {
       const auto layer = snapshot.GetLayerConfig(mLayerIndex);
       text += std::format(L"\n{}x{}", layer->mImageWidth, layer->mImageHeight);
@@ -367,7 +367,7 @@ class TestViewerWindow final {
     ctx->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
     const auto snapshot
-      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Test);
+      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(

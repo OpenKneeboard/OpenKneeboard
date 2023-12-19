@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/bitflags.h>
@@ -75,8 +76,6 @@ struct FrameMetadata final {
 
   size_t GetRenderCacheKey() const;
   bool HaveFeeder() const;
-
-  std::underlying_type_t<ConsumerKind> mActiveConsumers {};
 };
 static_assert(std::is_standard_layout_v<FrameMetadata>);
 
@@ -631,10 +630,7 @@ Snapshot Reader::MaybeGet(
     return {nullptr};
   }
 
-  if (kind != ConsumerKind::Test) {
-    p->mHeader->mActiveConsumers
-      |= static_cast<std::underlying_type_t<ConsumerKind>>(kind);
-  }
+  ActiveConsumers::Set(kind);
 
   if (
     mCache.IsValid() && this->GetRenderCacheKey() == mCache.GetRenderCacheKey()
@@ -735,23 +731,6 @@ size_t Reader::GetRenderCacheKey() const {
     return {};
   }
   return p->mHeader->GetRenderCacheKey();
-}
-
-void Writer::ClearConsumers() {
-  if (!p) {
-    throw std::logic_error("Attempted to update invalid SHM");
-  }
-  if (!p->HaveLock()) {
-    throw std::logic_error("Attempted to update SHM without a lock");
-  }
-  p->mHeader->mActiveConsumers = {};
-}
-
-std::underlying_type_t<ConsumerKind> Writer::GetConsumers() const {
-  if (!p) {
-    throw std::logic_error("Attempted to update invalid SHM");
-  }
-  return p->mHeader->mActiveConsumers;
 }
 
 void Writer::Update(

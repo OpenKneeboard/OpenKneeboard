@@ -161,7 +161,12 @@ target_link_libraries(
   OpenKneeboard-Filesystem
 )
 
-ok_add_library(OpenKneeboard-SHM STATIC SHM.cpp)
+ok_add_library(
+  OpenKneeboard-SHM
+  STATIC
+  SHM.cpp
+  SHM/ActiveConsumers.cpp
+)
 target_link_libraries(
   OpenKneeboard-SHM
   PRIVATE

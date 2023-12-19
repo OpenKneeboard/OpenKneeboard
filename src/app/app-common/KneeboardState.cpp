@@ -27,6 +27,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/OpenXRMode.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/SteamVRKneeboard.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
@@ -277,6 +278,7 @@ void KneeboardState::SetFirstViewIndex(uint8_t index) {
 void KneeboardState::OnGameChangedEvent(
   DWORD processID,
   std::shared_ptr<GameInstance> game) {
+  SHM::ActiveConsumers::Clear();
   if (processID && game) {
     mCurrentGame = {processID, {game}};
   } else {
@@ -693,15 +695,20 @@ bool KneeboardState::IsSteamVRActive() const {
     return false;
   }
 
-  const auto consumers = mInterprocessRenderer->GetConsumers();
+  const auto now = SHM::ActiveConsumers::Clock::now();
+  const auto interval = std::chrono::milliseconds(500);
+  const auto consumers = SHM::ActiveConsumers::Get();
 
-  using CK = SHM::ConsumerKind;
-  using T = std::underlying_type_t<CK>;
-  constexpr auto vrConsumers = static_cast<T>(CK::OpenXR)
-    | static_cast<T>(CK::OculusD3D11) | static_cast<T>(CK::OculusD3D12);
-  if (consumers & vrConsumers) {
+  if ((now - consumers.mOpenXR) <= interval) {
     return false;
   }
+  if ((now - consumers.mOculusD3D11) <= interval) {
+    return false;
+  }
+  if ((now - consumers.mOculusD3D12) <= interval) {
+    return false;
+  }
+  // Currently allowing non-VR and SteamVR simultaneously
 
   return true;
 }

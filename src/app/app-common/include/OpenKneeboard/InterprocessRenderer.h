@@ -59,8 +59,6 @@ class InterprocessRenderer final
     const DXResources&,
     KneeboardState*);
 
-  std::underlying_type_t<SHM::ConsumerKind> GetConsumers() const;
-
  private:
   InterprocessRenderer();
   void Init(const DXResources&, KneeboardState*);
@@ -107,9 +105,6 @@ class InterprocessRenderer final
   std::array<Layer, MaxLayers> mLayers;
 
   std::shared_ptr<GameInstance> mCurrentGame;
-
-  std::chrono::steady_clock::time_point mConsumersClearedAt;
-  std::underlying_type_t<SHM::ConsumerKind> mConsumers {};
 
   void MarkDirty();
   void RenderNow();
