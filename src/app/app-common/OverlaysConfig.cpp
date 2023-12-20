@@ -103,4 +103,8 @@ OverlayConfig OverlayConfig::CreateMirroredOverlay(
     };
 }
 
+OverlaysConfig::OverlaysConfig() {
+  mOverlays = {OverlayConfig::CreateDefaultFirstOverlay()};
+}
+
 };// namespace OpenKneeboard
