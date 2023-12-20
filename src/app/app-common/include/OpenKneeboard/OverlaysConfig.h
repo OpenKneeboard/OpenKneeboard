@@ -44,6 +44,9 @@ struct OverlayVRPosition {
     VRAbsolutePosition mAbsolutePosition;
   };
 
+  Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Center};
+  Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
+
   std::optional<SHM::VRPosition> Resolve(
     const std::vector<OverlayConfig>& others) const;
 };
@@ -85,7 +88,7 @@ struct OverlayConfig {
 
 struct OverlaysConfig {
   OverlaysConfig();
-  OverlaysConfig(const nlohmann::json&);
+  explicit OverlaysConfig(const nlohmann::json&);
 
   std::vector<OverlayConfig> mOverlays;
 };
