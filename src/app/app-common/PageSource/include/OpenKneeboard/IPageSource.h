@@ -20,7 +20,9 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/RenderTargetID.h>
+#include <OpenKneeboard/ScalingKind.h>
 #include <OpenKneeboard/ThreadGuard.h>
 #include <OpenKneeboard/UniqueID.h>
 
@@ -35,19 +37,6 @@ namespace OpenKneeboard {
 enum class SuggestedPageAppendAction {
   SwitchToNewPage,
   KeepOnCurrentPage,
-};
-
-enum class ScalingKind {
-  /* The source is equivalent to a 2D-array of pixels; scaling is slow and low
-   * quality.
-   *
-   * The native content size should be **strongly** preferred.
-   */
-  Bitmap,
-  /* The source can be rendered at any resolution with high quality, without
-   * significiant performance issues.
-   */
-  Vector,
 };
 
 class IPageSource {
