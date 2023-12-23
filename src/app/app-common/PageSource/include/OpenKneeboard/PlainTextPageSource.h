@@ -80,7 +80,7 @@ class PlainTextPageSource final : public IPageSource,
   float mRowHeight = -1.0f;
   int mColumns = -1;
   int mRows = -1;
-  uint32_t mFontSize;
+  float mFontSize;
 
   DXResources mDXR;
   KneeboardState* mKneeboard;
