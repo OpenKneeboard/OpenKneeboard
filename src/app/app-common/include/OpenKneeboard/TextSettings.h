@@ -19,39 +19,15 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DCSWorld.h>
-#include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/ITab.h>
-#include <OpenKneeboard/KneeboardState.h>
-
-#include <shims/filesystem>
+#include <OpenKneeboard/json_fwd.h>
 
 namespace OpenKneeboard {
+struct TextSettings final {
+  float mFontSize = 20.f;
 
-struct GameEvent;
-
-class DCSTab : public virtual ITab, public virtual EventReceiver {
- public:
-  DCSTab(KneeboardState*);
-  virtual ~DCSTab();
-
-  DCSTab() = delete;
-
- protected:
-  virtual void OnGameEvent(
-    const GameEvent&,
-    const std::filesystem::path& installPath,
-    const std::filesystem::path& savedGamesPath)
-    = 0;
-
-  std::filesystem::path ToAbsolutePath(const std::filesystem::path&);
-
- private:
-  std::filesystem::path mInstallPath;
-  std::filesystem::path mSavedGamesPath;
-  EventHandlerToken mGameEventToken;
-
-  void OnGameEvent(const GameEvent&);
+  constexpr auto operator<=>(const TextSettings&) const = default;
 };
+
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(TextSettings)
 
 }// namespace OpenKneeboard

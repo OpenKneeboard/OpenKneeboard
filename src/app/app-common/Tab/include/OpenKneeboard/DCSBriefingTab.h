@@ -81,6 +81,7 @@ class DCSBriefingTab final : public TabBase,
     auto operator<=>(const DCSState&) const = default;
   };
   DCSState mDCSState;
+  KneeboardState* mKneeboard;
 
   constexpr const char* CoalitionKey(
     const char* neutralKey,

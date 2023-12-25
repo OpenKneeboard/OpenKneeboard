@@ -24,6 +24,7 @@
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
+#include <OpenKneeboard/KneeboardState.h>
 
 #include <memory>
 #include <tuple>
@@ -35,7 +36,6 @@ namespace OpenKneeboard {
 struct DXResources;
 class CachedLayer;
 class DoodleRenderer;
-class KneeboardState;
 
 class PageSourceWithDelegates : public virtual IPageSource,
                                 public virtual IPageSourceWithCursorEvents,

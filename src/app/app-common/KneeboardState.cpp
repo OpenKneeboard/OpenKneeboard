@@ -643,6 +643,13 @@ void KneeboardState::SetDoodlesSettings(const DoodleSettings& value) {
   this->SaveSettings();
 }
 
+void KneeboardState::SetTextSettings(const TextSettings& value) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+  mSettings.mText = value;
+  this->SaveSettings();
+}
+
 void KneeboardState::StartOpenVRThread() {
   mOpenVRThread = std::jthread([](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"OpenVR Thread");

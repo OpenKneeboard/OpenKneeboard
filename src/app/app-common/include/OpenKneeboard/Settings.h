@@ -24,6 +24,7 @@
 #include <OpenKneeboard/DoodleSettings.h>
 #include <OpenKneeboard/FlatConfig.h>
 #include <OpenKneeboard/TabletSettings.h>
+#include <OpenKneeboard/TextSettings.h>
 #include <OpenKneeboard/VRConfig.h>
 
 #include <shims/filesystem>
@@ -34,6 +35,7 @@ namespace OpenKneeboard {
   IT(AppSettings, App) \
   IT(DirectInputSettings, DirectInput) \
   IT(DoodleSettings, Doodles) \
+  IT(TextSettings, Text) \
   IT(nlohmann::json, Games) \
   IT(NonVRConstrainedPosition, NonVR) \
   IT(TabletSettings, TabletInput) \

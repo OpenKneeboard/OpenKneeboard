@@ -245,6 +245,23 @@ void AdvancedSettingsPage::EraseSensitivity(uint32_t value) {
   gKneeboard->SetDoodlesSettings(ds);
 }
 
+float AdvancedSettingsPage::TextPageFontSize() {
+  return gKneeboard->GetTextSettings().mFontSize;
+}
+
+void AdvancedSettingsPage::TextPageFontSize(float value) {
+  auto s = gKneeboard->GetTextSettings();
+  s.mFontSize = value;
+  gKneeboard->SetTextSettings(s);
+}
+
+void AdvancedSettingsPage::RestoreTextDefaults(
+  const IInspectable&,
+  const IInspectable&) noexcept {
+  gKneeboard->ResetTextSettings();
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
+}
+
 void AdvancedSettingsPage::RestoreDoodleDefaults(
   const IInspectable&,
   const IInspectable&) noexcept {

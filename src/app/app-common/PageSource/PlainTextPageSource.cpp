@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/PlainTextPageSource.h>
@@ -36,8 +37,11 @@ namespace OpenKneeboard {
 
 PlainTextPageSource::PlainTextPageSource(
   const DXResources& dxr,
+  KneeboardState* kbs,
   std::string_view placeholderText)
-  : mDXR(dxr), mPlaceholderText(placeholderText) {
+  : mDXR(dxr), mPlaceholderText(placeholderText), mKneeboard(kbs) {
+  mFontSize = kbs->GetTextSettings().mFontSize;
+
   auto dwf = mDXR.mDWriteFactory;
   dwf->CreateTextFormat(
     FixedWidthContentFont,
@@ -45,9 +49,20 @@ PlainTextPageSource::PlainTextPageSource(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    20.0f * RENDER_SCALE,
+    mFontSize * RENDER_SCALE,
     L"",
     mTextFormat.put());
+
+  UpdateLayoutLimits();
+
+  // subscribe to settings changed events
+  AddEventListener(
+    kbs->evSettingsChangedEvent,
+    std::bind_front(&PlainTextPageSource::OnSettingsChanged, this));
+}
+
+void PlainTextPageSource::UpdateLayoutLimits() {
+  auto dwf = mDXR.mDWriteFactory;
 
   const auto size = this->GetNativeContentSize({});
   winrt::com_ptr<IDWriteTextLayout> textLayout;
@@ -62,6 +77,44 @@ PlainTextPageSource::PlainTextPageSource(
 }
 
 PlainTextPageSource::~PlainTextPageSource() {
+  this->RemoveAllEventListeners();
+}
+
+void PlainTextPageSource::OnSettingsChanged() {
+  auto newFontSize = mKneeboard->GetTextSettings().mFontSize;
+
+  if (newFontSize == mFontSize) {
+    return;
+  }
+
+  mFontSize = newFontSize;
+
+  auto dwf = mDXR.mDWriteFactory;
+
+  mTextFormat = nullptr;
+
+  dwf->CreateTextFormat(
+    FixedWidthContentFont,
+    nullptr,
+    DWRITE_FONT_WEIGHT_NORMAL,
+    DWRITE_FONT_STYLE_NORMAL,
+    DWRITE_FONT_STRETCH_NORMAL,
+    newFontSize * RENDER_SCALE,
+    L"",
+    mTextFormat.put());
+
+  UpdateLayoutLimits();
+
+  // now clear and redraw all pages:
+  mCompletePages.clear();
+  mCurrentPageLines.clear();
+  mPageIDs.clear();
+
+  mMessagesToLayout.clear();
+  for (const std::string& m: mAllMessages) {
+    mMessagesToLayout.push_back(m);
+  }
+  LayoutMessages();
 }
 
 PageIndex PlainTextPageSource::GetPageCount() const {
@@ -210,7 +263,7 @@ void PlainTextPageSource::RenderPage(
 
 bool PlainTextPageSource::IsEmpty() const {
   std::unique_lock lock(mMutex);
-  return mMessages.empty() && mCurrentPageLines.empty();
+  return mMessagesToLayout.empty() && mCurrentPageLines.empty();
 }
 
 void PlainTextPageSource::ClearText() {
@@ -219,7 +272,8 @@ void PlainTextPageSource::ClearText() {
     if (IsEmpty()) {
       return;
     }
-    mMessages.clear();
+    mMessagesToLayout.clear();
+    mAllMessages.clear();
     mCurrentPageLines.clear();
     mCompletePages.clear();
     mPageIDs.clear();
@@ -245,7 +299,23 @@ void PlainTextPageSource::SetPlaceholderText(std::string_view text) {
 
 void PlainTextPageSource::PushMessage(std::string_view message) {
   std::unique_lock lock(mMutex);
-  mMessages.push_back(std::string(message));
+
+  auto sMessage = std::string(message);
+
+  // tabs are variable width, and everything else here
+  // assumes that all characters are the same width.
+  //
+  // Expand them
+  while (true) {
+    auto pos = sMessage.find_first_of("\t");
+    if (pos == sMessage.npos) {
+      break;
+    }
+    sMessage.replace(pos, 1, "    ");
+  }
+
+  mAllMessages.push_back(sMessage);
+  mMessagesToLayout.push_back(mAllMessages.back());
   LayoutMessages();
 }
 
@@ -267,26 +337,14 @@ void PlainTextPageSource::LayoutMessages() {
     return;
   }
 
-  if (mMessages.empty()) {
+  if (mMessagesToLayout.empty()) {
     return;
   }
 
   const scope_guard repaintAtEnd(
     [this]() { this->evContentChangedEvent.Emit(); });
 
-  for (auto message: mMessages) {
-    // tabs are variable width, and everything else here
-    // assumes that all characters are the same width.
-    //
-    // Expand them
-    while (true) {
-      auto pos = message.find_first_of("\t");
-      if (pos == message.npos) {
-        break;
-      }
-      message.replace(pos, 1, "    ");
-    }
-
+  for (auto message: mMessagesToLayout) {
     std::vector<std::string_view> rawLines;
     std::string_view remaining(message);
     while (!remaining.empty()) {
@@ -359,12 +417,13 @@ void PlainTextPageSource::LayoutMessages() {
       mCurrentPageLines.push_back(winrt::to_hstring(line));
     }
   }
-  mMessages.clear();
+  mMessagesToLayout.clear();
 }
 
 void PlainTextPageSource::PushFullWidthSeparator() {
   std::unique_lock lock(mMutex);
-  if (mColumns <= 0 || (mMessages.empty() && mCurrentPageLines.empty())) {
+  if (
+    mColumns <= 0 || (mMessagesToLayout.empty() && mCurrentPageLines.empty())) {
     return;
   }
   this->PushMessage(std::string(mColumns, '-'));

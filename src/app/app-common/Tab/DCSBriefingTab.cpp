@@ -46,8 +46,10 @@ DCSBriefingTab::DCSBriefingTab(
   : TabBase(persistentID, title),
     DCSTab(kbs),
     PageSourceWithDelegates(dxr, kbs),
+    mKneeboard(kbs),
     mImagePages(ImageFilePageSource::Create(dxr)),
-    mTextPages(std::make_unique<PlainTextPageSource>(dxr, _("[no briefing]"))) {
+    mTextPages(
+      std::make_unique<PlainTextPageSource>(dxr, kbs, _("[no briefing]"))) {
   this->SetDelegates({
     std::static_pointer_cast<IPageSource>(mTextPages),
     std::static_pointer_cast<IPageSource>(mImagePages),
