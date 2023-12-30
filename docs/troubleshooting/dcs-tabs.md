@@ -30,4 +30,4 @@ includes most of the kneeboard pages for the F14, F16, and F18.
    1. Open `%PROGRAMFILES%\OpenKneeboard\share` in Windows explorer
    2. Open the `Saved Games\OpenKneeboard` folder too
    3. Copy `DCS-Aircraft-Mapping.json` from the `share` folder to OpenKneeboard's Saved Games folder
-   4. Edit the `.json` file to include the correction
+   4. Edit `Saved Games\OpenKneeboard\DCS-Aircraft-Mapping.json` to include the correction
