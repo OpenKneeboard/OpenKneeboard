@@ -52,6 +52,7 @@ add_custom_target(
   &&
   ${CMAKE_COMMAND} -E copy_if_different
   "${RUNTIME_FILES}"
+  "${DATA_SOURCES}"
   "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
   COMMAND_EXPAND_LISTS
 )

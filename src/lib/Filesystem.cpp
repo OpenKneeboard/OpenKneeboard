@@ -24,6 +24,8 @@
 #include <format>
 #include <mutex>
 
+#include <ShlObj.h>
+
 namespace OpenKneeboard::Filesystem {
 
 static std::filesystem::path GetTemporaryDirectoryRoot() {
@@ -91,6 +93,24 @@ std::filesystem::path GetRuntimeDirectory() {
 
   sCache = exePath.parent_path();
   return sCache;
+}
+
+std::filesystem::path GetSettingsDirectory() {
+  static std::filesystem::path sPath;
+  if (!sPath.empty()) {
+    return sPath;
+  }
+
+  wchar_t* buffer = nullptr;
+  if (
+    !SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &buffer) == S_OK
+    && buffer) {
+    return {};
+  }
+
+  sPath = std::filesystem::path(std::wstring_view(buffer)) / "OpenKneeboard";
+  std::filesystem::create_directories(sPath);
+  return sPath;
 }
 
 ScopedDeleter::ScopedDeleter(const std::filesystem::path& path) : mPath(path) {

@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/Settings.h>
 
 #include <OpenKneeboard/dprint.h>
@@ -29,32 +30,12 @@
 #include <format>
 #include <fstream>
 
-#include <ShlObj.h>
-
 namespace OpenKneeboard {
-
-std::filesystem::path Settings::GetDirectory() {
-  static std::filesystem::path sPath;
-  if (!sPath.empty()) {
-    return sPath;
-  }
-
-  wchar_t* buffer = nullptr;
-  if (
-    !SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &buffer) == S_OK
-    && buffer) {
-    return {};
-  }
-
-  sPath = std::filesystem::path(std::wstring_view(buffer)) / "OpenKneeboard";
-  std::filesystem::create_directories(sPath);
-  return sPath;
-}
 
 template <class T>
 static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
   const auto fullPath
-    = path.is_absolute() ? path : Settings::GetDirectory() / path;
+    = path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
   if (!std::filesystem::exists(fullPath)) {
     return;
   }
@@ -80,7 +61,7 @@ static void MaybeSaveJSON(
   const T& value,
   const std::filesystem::path& path) {
   const auto fullPath
-    = path.is_absolute() ? path : Settings::GetDirectory() / path;
+    = path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
 
   nlohmann::json j;
   // If a profile already modified a setting, keep that setting even if it
@@ -120,7 +101,7 @@ static void MaybeSaveJSON<nlohmann::json>(
   const nlohmann::json& value,
   const std::filesystem::path& path) {
   const auto fullPath
-    = path.is_absolute() ? path : Settings::GetDirectory() / path;
+    = path.is_absolute() ? path : Filesystem::GetSettingsDirectory() / path;
 
   if (value == parentValue && std::filesystem::exists(fullPath)) {
     std::filesystem::remove(fullPath);
@@ -195,8 +176,8 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
     } else { \
       m##name = Settings::Load("default").m##name; \
     } \
-    const auto path \
-      = Settings::GetDirectory() / "profiles" / profileID / #name ".json"; \
+    const auto path = Filesystem::GetSettingsDirectory() / "profiles" \
+      / profileID / #name ".json"; \
     if (std::filesystem::exists(path)) { \
       std::filesystem::remove(path); \
     } \
@@ -206,14 +187,16 @@ OPENKNEEBOARD_SETTINGS_SECTIONS
 
 Settings Settings::Load(std::string_view profile) {
   Settings settings;
-  if (!std::filesystem::exists(Settings::GetDirectory() / "profiles")) {
-    auto legacySettingsFile = Settings::GetDirectory() / "Settings.json";
+  if (!std::filesystem::exists(
+        Filesystem::GetSettingsDirectory() / "profiles")) {
+    auto legacySettingsFile
+      = Filesystem::GetSettingsDirectory() / "Settings.json";
     if (std::filesystem::exists(legacySettingsFile)) {
       dprint("Migrating from legacy Settings.json");
       MaybeSetFromJSON(settings, legacySettingsFile);
       std::filesystem::rename(
         legacySettingsFile,
-        Settings::GetDirectory() / "LegacySettings.json.bak");
+        Filesystem::GetSettingsDirectory() / "LegacySettings.json.bak");
       settings.Save("default");
     }
     return std::move(settings);

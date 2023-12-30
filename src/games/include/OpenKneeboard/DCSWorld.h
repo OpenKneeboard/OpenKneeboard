@@ -20,10 +20,13 @@
 #pragma once
 
 #include <OpenKneeboard/Game.h>
+
 #include <OpenKneeboard/json.h>
 
 #include <shims/filesystem>
+
 #include <string>
+#include <unordered_map>
 
 namespace OpenKneeboard {
 
@@ -44,6 +47,10 @@ class DCSWorld final : public OpenKneeboard::Game {
   static std::filesystem::path GetSavedGamesPath(Version);
   virtual bool MatchesPath(const std::filesystem::path&) const override;
 
+  // For example, the Lua aircraft 'FA-18C_hornet' is in the
+  // 'FA-18C' module, and wants that in the kneeboard paths
+  static std::string GetModuleNameForLuaAircraft(const std::string&);
+
   virtual std::shared_ptr<GameInstance> CreateGameInstance(
     const std::filesystem::path&) override;
   virtual std::shared_ptr<GameInstance> CreateGameInstance(
@@ -55,26 +62,16 @@ class DCSWorld final : public OpenKneeboard::Game {
     Blue = 2,
   };
 
-  static constexpr char EVT_AIRCRAFT[]
-    = "dcs/Aircraft";
-  static constexpr char EVT_INSTALL_PATH[]
-    = "dcs/InstallPath";
-  static constexpr char EVT_MISSION[]
-    = "dcs/Mission";
-  static constexpr char EVT_MISSION_TIME[]
-    = "dcs/MissionTime";
-  static constexpr char EVT_ORIGIN[]
-    = "dcs/Origin";
-  static constexpr char EVT_SELF_DATA[]
-    = "dcs/SelfData";
-  static constexpr char EVT_MESSAGE[]
-    = "dcs/Message";
-  static constexpr char EVT_SAVED_GAMES_PATH[]
-    = "dcs/SavedGamesPath";
-  static constexpr char EVT_SIMULATION_START[]
-    = "dcs/SimulationStart";
-  static constexpr char EVT_TERRAIN[]
-    = "dcs/Terrain";
+  static constexpr char EVT_AIRCRAFT[] = "dcs/Aircraft";
+  static constexpr char EVT_INSTALL_PATH[] = "dcs/InstallPath";
+  static constexpr char EVT_MISSION[] = "dcs/Mission";
+  static constexpr char EVT_MISSION_TIME[] = "dcs/MissionTime";
+  static constexpr char EVT_ORIGIN[] = "dcs/Origin";
+  static constexpr char EVT_SELF_DATA[] = "dcs/SelfData";
+  static constexpr char EVT_MESSAGE[] = "dcs/Message";
+  static constexpr char EVT_SAVED_GAMES_PATH[] = "dcs/SavedGamesPath";
+  static constexpr char EVT_SIMULATION_START[] = "dcs/SimulationStart";
+  static constexpr char EVT_TERRAIN[] = "dcs/Terrain";
 
   struct SimulationStartEvent {
     static constexpr auto ID {EVT_SIMULATION_START};

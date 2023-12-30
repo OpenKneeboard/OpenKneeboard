@@ -17,8 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/settings.h>
@@ -93,7 +95,7 @@ void TroubleshootingStore::InitializeLogFile() {
     return;
   }
 
-  const auto directory = Settings::GetDirectory() / "logs";
+  const auto directory = Filesystem::GetSettingsDirectory() / "logs";
   std::filesystem::create_directories(directory);
 
   std::vector<std::filesystem::path> existingFiles;

@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/DCSWorldInstance.h>
+#include <OpenKneeboard/Filesystem.h>
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/utf8.h>
@@ -28,10 +29,75 @@
 #include <Windows.h>
 
 #include <format>
+#include <fstream>
+#include <unordered_map>
 
 #include <ShlObj.h>
 
 namespace OpenKneeboard {
+
+std::string DCSWorld::GetModuleNameForLuaAircraft(const std::string& luaName) {
+  using mapping_t = std::unordered_map<std::string, std::string>;
+  static std::optional<mapping_t> sMapping;
+  if (sMapping) {
+    if (sMapping->contains(luaName)) {
+      return sMapping->at(luaName);
+    }
+    return luaName;
+  }
+
+  const std::filesystem::path fileName = "DCS-Aircraft-Mapping.json";
+  const std::vector<std::filesystem::path> dirs = {
+    // User-override
+    Filesystem::GetSettingsDirectory(),
+    // As-installed
+    Filesystem::GetRuntimeDirectory().parent_path() / "share",
+    // When running from a build tree
+    Filesystem::GetRuntimeDirectory(),
+  };
+
+  dprint("Loading DCS aircraft mapping...");
+  for (const auto& dir: dirs) {
+    const auto path = dir / fileName;
+    dprintf("Trying {}...", path);
+    if (!std::filesystem::exists(path)) {
+      dprint("... not found.");
+      continue;
+    }
+
+    dprint("... reading JSON.");
+
+    try {
+      std::ifstream f(path.c_str());
+      nlohmann::json json;
+      f >> json;
+      mapping_t data = json;
+      sMapping = std::move(data);
+      dprint("... done.");
+      break;
+    } catch (const nlohmann::json::exception& e) {
+      dprintf("... JSON exception: {}", e.what());
+    } catch (const std::exception& e) {
+      dprintf("... standard exception: {}", e.what());
+    }
+  }
+
+  if (!sMapping) {
+    dprint("Failed to load any mapping file.");
+    sMapping = mapping_t {};
+  }
+
+  if (sMapping && sMapping->contains(luaName)) {
+    return sMapping->at(luaName);
+  }
+
+  dprint("Aircraft mapping:");
+  for (const auto& [key, value]: *sMapping) {
+    dprintf("- {} -> {}", key, value);
+  }
+
+  return luaName;
+}// namespace OpenKneeboard
 
 static std::filesystem::path GetDCSPath(const char* lastSubKey) {
   const auto subkey = std::format("SOFTWARE\\Eagle Dynamics\\{}", lastSubKey);

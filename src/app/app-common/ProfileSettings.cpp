@@ -17,8 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/ProfileSettings.h>
 #include <OpenKneeboard/Settings.h>
+
 #include <OpenKneeboard/json.h>
 #include <OpenKneeboard/utf8.h>
 
@@ -74,7 +76,7 @@ std::string ProfileSettings::MakeID(const std::string& name) const {
 ProfileSettings ProfileSettings::Load() {
   ProfileSettings ret;
 
-  const auto path = Settings::GetDirectory() / "Profiles.json";
+  const auto path = Filesystem::GetSettingsDirectory() / "Profiles.json";
   if (std::filesystem::exists(path)) {
     std::ifstream f(path.c_str());
     nlohmann::json json;
@@ -96,7 +98,7 @@ ProfileSettings ProfileSettings::Load() {
 }
 
 void ProfileSettings::Save() {
-  const auto dir = Settings::GetDirectory();
+  const auto dir = Filesystem::GetSettingsDirectory();
   if (!std::filesystem::exists(dir)) {
     std::filesystem::create_directories(dir);
   }

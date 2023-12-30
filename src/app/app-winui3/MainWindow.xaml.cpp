@@ -31,6 +31,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Elevation.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GetMainHWND.h>
@@ -863,7 +864,7 @@ void MainWindow::Show() {
 }
 
 std::filesystem::path MainWindow::GetInstanceDataPath() {
-  return Settings::GetDirectory() / ".instance";
+  return Filesystem::GetSettingsDirectory() / ".instance";
 }
 
 LRESULT MainWindow::SubclassProc(

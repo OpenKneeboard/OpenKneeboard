@@ -222,7 +222,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   };
   std::vector<Dump> dumps;
 
-  const auto settingsDir = Settings::GetDirectory();
+  const auto settingsDir = Filesystem::GetSettingsDirectory();
   for (const auto entry:
        std::filesystem::recursive_directory_iterator(settingsDir)) {
     if (!entry.is_regular_file()) {

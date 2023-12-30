@@ -332,6 +332,11 @@ target_link_libraries(
   OpenKneeboard-config
   _libheaders
 )
+target_link_libraries(
+  OpenKneeboard-Filesystem
+  PRIVATE
+  System::Shlwapi
+)
 
 ok_add_library(OpenKneeboard-WindowCaptureControl STATIC WindowCaptureControl.cpp)
 target_link_libraries(

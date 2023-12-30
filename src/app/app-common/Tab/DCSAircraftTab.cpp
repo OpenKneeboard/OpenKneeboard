@@ -79,12 +79,7 @@ void DCSAircraftTab::OnGameEvent(
   }
 
   mAircraft = event.value;
-  auto moduleName = mAircraft;
-  if (mAircraft == "FA-18C_hornet") {
-    moduleName = "FA-18C";
-  } else if (mAircraft == "F-16C_50") {
-    moduleName = "F-16C";
-  }
+  const auto moduleName = DCSWorld::GetModuleNameForLuaAircraft(mAircraft);
 
   mDebugInformation.clear();
 

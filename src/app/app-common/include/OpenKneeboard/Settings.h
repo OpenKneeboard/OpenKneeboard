@@ -53,8 +53,6 @@ struct Settings final {
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
-  static std::filesystem::path GetDirectory();
-
   constexpr auto operator<=>(const Settings&) const noexcept = default;
 };
 

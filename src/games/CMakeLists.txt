@@ -9,4 +9,4 @@ ok_add_library(
 )
 target_include_directories(OpenKneeboard-games PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(OpenKneeboard-games PUBLIC OpenKneeboard-UTF8 ThirdParty::JSON)
-target_link_libraries(OpenKneeboard-games PRIVATE OpenKneeboard-dprint)
+target_link_libraries(OpenKneeboard-games PRIVATE OpenKneeboard-dprint OpenKneeboard-Filesystem)
