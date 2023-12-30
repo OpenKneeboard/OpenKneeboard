@@ -10,6 +10,8 @@ else()
 endif()
 
 # TODO: switch to stable release once 4.x is out (https://github.com/microsoft/Detours/projects/1)
+set(DETOURS_GIT_REV 4b8c659f549b0ab21cf649377c7a84eb708f5e68)
+find_package(Git)
 ExternalProject_Add(
   detoursBuild
   GIT_REPOSITORY https://github.com/microsoft/Detours.git
@@ -17,6 +19,8 @@ ExternalProject_Add(
   BUILD_IN_SOURCE ON
   UPDATE_DISCONNECTED ON
   BUILD_BYPRODUCTS "<SOURCE_DIR>/${LIB}"
+  UPDATE_COMMAND
+  "${GIT_EXECUTABLE}" reset --hard "${DETOURS_GIT_REV}"
   CONFIGURE_COMMAND ""
   BUILD_COMMAND
   "${CMAKE_COMMAND}" -E chdir
