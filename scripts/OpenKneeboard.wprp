@@ -25,6 +25,7 @@
     <EventProvider Id="EventProvider_OpenKneeboard.WindowCaptureHook.Helper" Name="e8aa8bc1-a583-5d15-5ef0-8592c150f2be" />
 
     <EventProvider Id="EventProvider_FredEmmott.OpenXRTracing"   Name="0f924f5f-21f0-513d-a2ab-2ede802e0b8f" />
+    <EventProvider Id="EventProvider_FredEmmott.OpenXRTracing.Alternate" Name="002f5359-fd69-56b8-a91f-26443c30187d" />
 
     <Profile Id="OpenKneeboard.Verbose.File" Name="OpenKneeboard" Description="OpenKneeboard" LoggingMode="File" DetailLevel="Verbose" Default="true">
       <Collectors>
@@ -49,6 +50,7 @@
             <EventProviderId Value="EventProvider_OpenKneeboard.WindowCaptureHook.Helper" />
 
             <EventProviderId Value="EventProvider_FredEmmott.OpenXRTracing" />
+            <EventProviderId Value="EventProvider_FredEmmott.OpenXRTracing.Alternate" />
           </EventProviders>
         </EventCollectorId>
       </Collectors>
