@@ -44,6 +44,7 @@
   IT(xrEndFrame) \
   IT(xrGetInstanceProperties) \
   IT(xrCreateSwapchain) \
+  IT(xrEnumerateSwapchainFormats) \
   IT(xrEnumerateSwapchainImages) \
   IT(xrAcquireSwapchainImage) \
   IT(xrReleaseSwapchainImage) \

@@ -19,12 +19,14 @@
  */
 #pragma once
 
-#include <DirectXMath.h>
 #include <OpenKneeboard/bitflags.h>
-#include <d3d11.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
+
+#include <DirectXMath.h>
+#include <d3d11.h>
 
 namespace OpenKneeboard::D3D11 {
 
@@ -88,7 +90,7 @@ class RenderTargetView final : public IRenderTargetView {
 
 class RenderTargetViewFactory final : public IRenderTargetViewFactory {
  public:
-  RenderTargetViewFactory(ID3D11Device*, ID3D11Texture2D*);
+  RenderTargetViewFactory(ID3D11Device*, ID3D11Texture2D*, DXGI_FORMAT format);
   virtual ~RenderTargetViewFactory();
 
   virtual std::unique_ptr<IRenderTargetView> Get() const override;

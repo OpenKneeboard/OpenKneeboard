@@ -20,15 +20,18 @@
 
 #include "OpenXRD3D11Kneeboard.h"
 
+#include "OpenXRNext.h"
+
 #include <OpenKneeboard/D3D11.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
-#include <d3d11.h>
+
 #include <shims/winrt/base.h>
 
-#include "OpenXRNext.h"
+#include <d3d11.h>
 
 #define XR_USE_GRAPHICS_API_D3D11
 #include <openxr/openxr_platform.h>
@@ -64,10 +67,30 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   uint8_t layerIndex) {
   dprintf("{}", __FUNCTION__);
 
+  auto oxr = this->GetOpenXR();
+
+  uint32_t formatCount {0};
+  if (XR_FAILED(
+        oxr->xrEnumerateSwapchainFormats(session, 0, &formatCount, nullptr))) {
+    traceprint("Failed to get swapchain format count");
+    return nullptr;
+  }
+  std::vector<int64_t> formats;
+  formats.resize(formatCount);
+  if (
+    XR_FAILED(oxr->xrEnumerateSwapchainFormats(
+      session, formatCount, &formatCount, formats.data()))
+    || formatCount == 0) {
+    traceprint("Failed to enumerate swapchain formats");
+    return nullptr;
+  }
+  const auto format = formats.front();
+  traceprint("Creating swapchain with format {}", format);
+
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-    .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .format = format,
     .sampleCount = 1,
     .width = TextureWidth,
     .height = TextureHeight,
@@ -75,8 +98,6 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     .arraySize = 1,
     .mipCount = 1,
   };
-
-  auto oxr = this->GetOpenXR();
 
   XrSwapchain swapchain {nullptr};
 
@@ -129,7 +150,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
 #endif
     mRenderTargetViews.at(layerIndex).at(i)
       = std::make_shared<D3D11::RenderTargetViewFactory>(
-        mDevice.get(), images.at(i).texture);
+        mDevice.get(), images.at(i).texture, static_cast<DXGI_FORMAT>(format));
   }
 
   return swapchain;

@@ -19,10 +19,14 @@
  */
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM.h>
+
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
-#include <directxtk/SpriteBatch.h>
+
 #include <shims/winrt/base.h>
+
+#include <directxtk/SpriteBatch.h>
 #include <vrperfkit/d3d11_helper.h>
 
 namespace OpenKneeboard::D3D11 {
@@ -146,15 +150,22 @@ ID3D11RenderTargetView* RenderTargetView::Get() const {
 
 RenderTargetViewFactory::RenderTargetViewFactory(
   ID3D11Device* device,
-  ID3D11Texture2D* texture) {
+  ID3D11Texture2D* texture,
+  DXGI_FORMAT format) {
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .Format = format,
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };
 
-  winrt::check_hresult(
-    device->CreateRenderTargetView(texture, &rtvd, mImpl.put()));
+  const auto result
+    = device->CreateRenderTargetView(texture, &rtvd, mImpl.put());
+  if (result != S_OK) {
+    traceprint(
+      "Failed to create render target view with format {} - {:#010x}",
+      static_cast<UINT>(format),
+      static_cast<uint32_t>(result));
+  }
 }
 
 RenderTargetViewFactory::~RenderTargetViewFactory() = default;
