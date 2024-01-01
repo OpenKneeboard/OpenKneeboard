@@ -180,7 +180,7 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
     .Height = surfaceSize.height,
     .MipLevels = 1,
     .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
     .SampleDesc = {1, 0},
     .Usage = D3D11_USAGE_DEFAULT,
     .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,

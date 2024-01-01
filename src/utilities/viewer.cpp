@@ -378,7 +378,7 @@ class TestViewerWindow final {
         reinterpret_cast<BYTE*>(pixels),
         20 * sizeof(Pixel),
         D2D1::BitmapProperties(D2D1::PixelFormat(
-          DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
+          DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, D2D1_ALPHA_MODE_PREMULTIPLIED)),
         backgroundBitmap.put());
 
       mBackgroundBrush = nullptr;

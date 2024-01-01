@@ -252,7 +252,7 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
     sharedBitmap->GetPixelSize(),
     D2D1_BITMAP_PROPERTIES {
       .pixelFormat = {
-        .format = DXGI_FORMAT_B8G8R8A8_UNORM,
+        .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
         .alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED,
       },
     },

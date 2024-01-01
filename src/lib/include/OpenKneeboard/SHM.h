@@ -46,7 +46,7 @@ using VRPosition = VRAbsolutePosition;
 struct FrameMetadata;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
-  = DXGI_FORMAT_B8G8R8A8_UNORM;
+  = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8 = true;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
