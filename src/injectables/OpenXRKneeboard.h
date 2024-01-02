@@ -26,7 +26,9 @@
 // clang-format on
 
 #include <OpenKneeboard/VRKneeboard.h>
+
 #include <OpenKneeboard/config.h>
+
 #include <openxr/openxr.h>
 
 #include <format>
@@ -68,7 +70,7 @@ class OpenXRKneeboard : public VRKneeboard {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&)
     = 0;
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() const = 0;
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() = 0;
 
   // For quirks
   bool IsVarjoRuntime() const;

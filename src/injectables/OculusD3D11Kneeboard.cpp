@@ -131,7 +131,7 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
   return std::invoke(next, swapChain, syncInterval, flags);
 }
 
-winrt::com_ptr<ID3D11Device> OculusD3D11Kneeboard::GetD3D11Device() const {
+winrt::com_ptr<ID3D11Device> OculusD3D11Kneeboard::GetD3D11Device() {
   return mD3D;
 }
 

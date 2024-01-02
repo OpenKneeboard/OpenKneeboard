@@ -79,7 +79,7 @@ class OculusKneeboard::Renderer {
     = 0;
 
   virtual SHM::ConsumerKind GetConsumerKind() const = 0;
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() const = 0;
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() = 0;
 };
 
 }// namespace OpenKneeboard

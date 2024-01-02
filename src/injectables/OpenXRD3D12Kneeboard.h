@@ -53,7 +53,7 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&) override;
 
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() const override;
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
   D3D11On12::DeviceResources mDeviceResources;

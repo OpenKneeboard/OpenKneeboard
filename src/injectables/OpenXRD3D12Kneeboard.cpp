@@ -20,19 +20,22 @@
 
 #include "OpenXRD3D12Kneeboard.h"
 
+#include "OpenXRD3D11Kneeboard.h"
+#include "OpenXRNext.h"
+
 #include <OpenKneeboard/D3D11.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
-#include <d3d11.h>
-#include <d3d11on12.h>
-#include <d3d12.h>
+
 #include <shims/winrt/base.h>
 
 #include <string>
 
-#include "OpenXRD3D11Kneeboard.h"
-#include "OpenXRNext.h"
+#include <d3d11.h>
+#include <d3d11on12.h>
+#include <d3d12.h>
 
 #define XR_USE_GRAPHICS_API_D3D12
 #include <openxr/openxr_platform.h>
@@ -184,7 +187,7 @@ bool OpenXRD3D12Kneeboard::Render(
   const VRKneeboard::RenderParameters& renderParameters) {
   if (!OpenXRD3D11Kneeboard::Render(
         this->GetOpenXR(),
-        mDeviceResources.mDevice11.get(),
+        this->GetD3D11Device().get(),
         mRenderTargetViews.at(layerIndex),
         swapchain,
         snapshot,
@@ -196,8 +199,28 @@ bool OpenXRD3D12Kneeboard::Render(
   return true;
 }
 
-winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() const {
-  return mDeviceResources.mDevice11;
+winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {
+  auto& d11 = mDeviceResources.mDevice11;
+  if (!d11) {
+    return d11;
+  }
+  auto removedReason = d11->GetDeviceRemovedReason();
+  if (removedReason != S_OK) {
+    dprintf(
+      "D3D11 device removed: {:#010x}", static_cast<uint32_t>(removedReason));
+    d11 = nullptr;
+    auto& d12 = mDeviceResources.mDevice12;
+    removedReason = d12->GetDeviceRemovedReason();
+    if (removedReason == S_OK) {
+      dprint("D3D12 device still OK, recreating D3D11 device");
+    } else {
+      dprintf(
+        "D3D12 device also removed: {:#010x}",
+        static_cast<uint32_t>(removedReason));
+      d12 = nullptr;
+    }
+  }
+  return d11;
 }
 
 }// namespace OpenKneeboard

@@ -350,7 +350,7 @@ bool OpenXRVulkanKneeboard::ConfigurationsAreCompatible(
   return true;
 }
 
-winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() const {
+winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() {
   return mD3D11Device;
 }
 

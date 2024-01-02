@@ -54,7 +54,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     return SHM::ConsumerKind::OculusD3D12;
   }
 
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() const {
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() {
     return mDeviceResources.mDevice11;
   }
 

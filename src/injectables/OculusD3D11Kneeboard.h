@@ -64,7 +64,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&) override final;
 
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() const override;
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
   std::array<

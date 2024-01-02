@@ -156,7 +156,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   return swapchain;
 }
 
-winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() const {
+winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {
   return mDevice;
 }
 
