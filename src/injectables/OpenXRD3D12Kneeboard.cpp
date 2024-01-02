@@ -93,10 +93,30 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   uint8_t layerIndex) {
   dprintf("{}", __FUNCTION__);
 
+  auto oxr = this->GetOpenXR();
+
+  uint32_t formatCount {0};
+  if (XR_FAILED(
+        oxr->xrEnumerateSwapchainFormats(session, 0, &formatCount, nullptr))) {
+    traceprint("Failed to get swapchain format count");
+    return nullptr;
+  }
+  std::vector<int64_t> formats;
+  formats.resize(formatCount);
+  if (
+    XR_FAILED(oxr->xrEnumerateSwapchainFormats(
+      session, formatCount, &formatCount, formats.data()))
+    || formatCount == 0) {
+    traceprint("Failed to enumerate swapchain formats");
+    return nullptr;
+  }
+  const auto format = formats.front();
+  traceprint("Creating swapchain with format {}", format);
+
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-    .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .format = format,
     .sampleCount = 1,
     .width = TextureWidth,
     .height = TextureHeight,
@@ -104,8 +124,6 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
     .arraySize = 1,
     .mipCount = 1,
   };
-
-  auto oxr = this->GetOpenXR();
 
   XrSwapchain swapchain {nullptr};
 
@@ -171,6 +189,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
         std::make_shared<D3D11On12::RenderTargetViewFactory>(
           mDeviceResources,
           texture12,
+          static_cast<DXGI_FORMAT>(format),
           doubleBuffer ? D3D11On12::Flags::DoubleBuffer
                        : D3D11On12::Flags::None));
   }

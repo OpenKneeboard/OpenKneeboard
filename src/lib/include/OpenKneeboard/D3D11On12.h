@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/D3D11.h>
+
 #include <d3d11on12.h>
 
 namespace OpenKneeboard::D3D11On12 {
@@ -65,6 +66,7 @@ class RenderTargetViewFactory final : public D3D11::IRenderTargetViewFactory {
   RenderTargetViewFactory(
     const DeviceResources&,
     const winrt::com_ptr<ID3D12Resource>& texture12,
+    DXGI_FORMAT format,
     Flags flags = Flags::None);
   virtual ~RenderTargetViewFactory();
 

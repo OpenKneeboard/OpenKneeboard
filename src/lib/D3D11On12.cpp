@@ -19,8 +19,10 @@
  */
 #include <OpenKneeboard/D3D11On12.h>
 #include <OpenKneeboard/SHM.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/scope_guard.h>
+
 #include <shims/winrt/base.h>
 
 namespace OpenKneeboard::D3D11On12 {
@@ -105,6 +107,7 @@ ID3D11RenderTargetView* RenderTargetView::Get() const {
 RenderTargetViewFactory::RenderTargetViewFactory(
   const DeviceResources& deviceResources,
   const winrt::com_ptr<ID3D12Resource>& texture12,
+  DXGI_FORMAT format,
   Flags flags)
   : mDeviceResources(deviceResources), mTexture12(texture12) {
   D3D11_RESOURCE_FLAGS resourceFlags11 {};
@@ -124,7 +127,7 @@ RenderTargetViewFactory::RenderTargetViewFactory(
   }
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .Format = format,
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };

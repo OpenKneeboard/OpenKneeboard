@@ -19,14 +19,16 @@
  */
 #include "OculusD3D12Kneeboard.h"
 
-#include <OpenKneeboard/config.h>
-#include <OpenKneeboard/dprint.h>
-#include <d3d11_1.h>
-#include <dxgi.h>
-#include <shims/winrt/base.h>
-
 #include "OVRProxy.h"
 #include "OculusD3D11Kneeboard.h"
+
+#include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
+
+#include <shims/winrt/base.h>
+
+#include <d3d11_1.h>
+#include <dxgi.h>
 
 namespace OpenKneeboard {
 
@@ -98,7 +100,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
     layerRenderTargets.at(i)
       = std::static_pointer_cast<D3D11::IRenderTargetViewFactory>(
         std::make_shared<D3D11On12::RenderTargetViewFactory>(
-          mDeviceResources, texture12));
+          mDeviceResources, texture12, DXGI_FORMAT_B8G8R8A8_UNORM_SRGB));
   }
 
   return swapChain;
