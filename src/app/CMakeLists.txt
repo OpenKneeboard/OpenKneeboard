@@ -38,8 +38,10 @@ set(
 )
 install(TARGETS ${DLL_TARGETS} LIBRARY DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
+set(DLL_PDB_FILES)
 foreach(TARGET ${DLL_TARGETS})
   list(APPEND RUNTIME_FILES "$<TARGET_FILE:${TARGET}>")
+  list(APPEND DLL_PDB_FILES "$<TARGET_PDB_FILE:${TARGET}>")
   install(FILES "$<TARGET_PDB_FILE:${TARGET}>" DESTINATION "." COMPONENT DebugSymbols)
 endforeach()
 
@@ -52,6 +54,7 @@ add_custom_target(
   &&
   ${CMAKE_COMMAND} -E copy_if_different
   "${RUNTIME_FILES}"
+  "${DLL_PDB_FILES}"
   "${DATA_SOURCES}"
   "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
   COMMAND_EXPAND_LISTS
