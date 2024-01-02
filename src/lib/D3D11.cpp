@@ -44,6 +44,7 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
 
 SavedState::~SavedState() {
   vrperfkit::RestoreD3D11State(mImpl->mContext.get(), mImpl->mState);
+  delete mImpl;
 }
 
 void CopyTextureWithTint(
