@@ -26,24 +26,20 @@
 #include <shims/winrt/base.h>
 
 #include <directxtk/SpriteBatch.h>
-#include <vrperfkit/d3d11_helper.h>
+
+#include <OpenXR-Toolkit/d3d11.h>
 
 namespace OpenKneeboard::D3D11 {
 
 struct SavedState::Impl {
-  winrt::com_ptr<ID3D11DeviceContext> mContext {};
-  vrperfkit::D3D11State mState {};
+  OpenXRToolkit::D3D11::SavedState mState;
 };
 
 SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
-  mImpl = new Impl {
-    .mContext = ctx,
-  };
-  vrperfkit::StoreD3D11State(ctx.get(), mImpl->mState);
+  mImpl = new Impl {.mState = {ctx.get()}};
 }
 
 SavedState::~SavedState() {
-  vrperfkit::RestoreD3D11State(mImpl->mContext.get(), mImpl->mState);
   delete mImpl;
 }
 

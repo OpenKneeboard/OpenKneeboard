@@ -1,0 +1,6 @@
+This contains a modified version of XR_APILAYER_MBUCCHIA_toolkit/d3d11.cpp and its' dependencies from OpenXR Toolkit v1.3.2
+
+These files have been modified to:
+- remove the dependency on precompiled headers
+- add a public wrapper around the D3D11ContextState class
+- remove all other features
