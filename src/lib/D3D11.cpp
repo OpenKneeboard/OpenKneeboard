@@ -27,7 +27,7 @@
 
 #include <directxtk/SpriteBatch.h>
 
-#include <d3d11_1.h>
+#include <d3d11_3.h>
 
 namespace OpenKneeboard::D3D11 {
 
@@ -58,8 +58,19 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
 }
 
 SavedState::~SavedState() {
+  BlockingFlush(mImpl->mContext);
   mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
   delete mImpl;
+}
+
+void BlockingFlush(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
+  BlockingFlush(ctx.as<ID3D11DeviceContext3>().get());
+}
+
+void BlockingFlush(ID3D11DeviceContext3* ctx) {
+  winrt::handle event {CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS)};
+  ctx->Flush1(D3D11_CONTEXT_TYPE_ALL, event.get());
+  WaitForSingleObject(event.get(), INFINITE);
 }
 
 void CopyTextureWithTint(
@@ -92,7 +103,6 @@ void CopyTextureWithTint(
   sprites.Begin();
   sprites.Draw(source, DirectX::XMFLOAT2 {0.0f, 0.0f}, tint);
   sprites.End();
-  ctx->Flush();
 }
 
 void DrawTextureWithTint(
@@ -127,7 +137,6 @@ void DrawTextureWithTint(
   sprites.Begin();
   sprites.Draw(source, destRect, &sourceRect, tint);
   sprites.End();
-  ctx->Flush();
 }
 
 void CopyTextureWithOpacity(

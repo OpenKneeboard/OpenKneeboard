@@ -294,7 +294,7 @@ void SteamVRKneeboard::Tick() {
       mBufferTexture.get(),
       0,
       &box);
-    ctx->Flush();
+    D3D11::BlockingFlush(ctx);
     layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
 
     vr::VRTextureBounds_t textureBounds {

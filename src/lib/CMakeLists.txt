@@ -173,6 +173,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-shims
   OpenKneeboard-version
+  OpenKneeboard-D3D11
 )
 target_link_libraries(
   OpenKneeboard-SHM

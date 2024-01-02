@@ -26,7 +26,7 @@
 #include <memory>
 
 #include <DirectXMath.h>
-#include <d3d11.h>
+#include <d3d11_3.h>
 
 namespace OpenKneeboard::D3D11 {
 
@@ -45,6 +45,9 @@ class SavedState final {
   struct Impl;
   Impl* mImpl {nullptr};
 };
+
+void BlockingFlush(const winrt::com_ptr<ID3D11DeviceContext>&);
+void BlockingFlush(ID3D11DeviceContext3*);
 
 void CopyTextureWithTint(
   ID3D11Device* device,

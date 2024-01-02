@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/Win32.h>
@@ -272,7 +273,7 @@ Snapshot::Snapshot(
     TraceLoggingWriteTagged(
       activity, "CopiedTexture", TraceLoggingValue(i, "Layer"));
   }
-  ctx->Flush();
+  D3D11::BlockingFlush(ctx);
   TraceLoggingWriteTagged(activity, "Flushed");
   mLayerSRVs = std::make_shared<LayerSRVArray>();
 

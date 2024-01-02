@@ -67,7 +67,10 @@ RenderTargetView::~RenderTargetView() noexcept {
     mBufferTexture11.get(),
     mDeviceResources.mCommandQueue12.get(),
     IID_PPV_ARGS(bufferTexture12.put())));
+  // We just need to queue this up, not wait for it, as we wait for
+  // sync on the command queue once we're done
   mDeviceResources.mContext11->Flush();
+
   D3D12_RESOURCE_BARRIER inBarrier {
       .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
       .Transition = {
