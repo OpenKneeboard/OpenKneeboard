@@ -70,6 +70,14 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
     mDeviceResources.mContext11.put(),
     nullptr);
   mDeviceResources.m11on12 = mDeviceResources.mDevice11.as<ID3D11On12Device2>();
+
+  winrt::check_hresult(mDeviceResources.mDevice12->CreateCommandAllocator(
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    IID_PPV_ARGS(mDeviceResources.mAllocator12.put())));
+  mDeviceResources.mAllocator12->SetName(
+    std::format(L"{}:{}", __FILEW__, __LINE__).c_str());
+  winrt::check_hresult(mDeviceResources.mDevice12->CreateFence(
+    0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(mDeviceResources.mFence12.put())));
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
@@ -204,18 +212,14 @@ bool OpenXRD3D12Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  if (!OpenXRD3D11Kneeboard::Render(
-        this->GetOpenXR(),
-        this->GetD3D11Device().get(),
-        mRenderTargetViews.at(layerIndex),
-        swapchain,
-        snapshot,
-        layerIndex,
-        renderParameters)) {
-    return false;
-  }
-  mDeviceResources.mContext11->Flush();
-  return true;
+  return OpenXRD3D11Kneeboard::Render(
+    this->GetOpenXR(),
+    this->GetD3D11Device().get(),
+    mRenderTargetViews.at(layerIndex),
+    swapchain,
+    snapshot,
+    layerIndex,
+    renderParameters);
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {

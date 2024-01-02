@@ -33,6 +33,11 @@ struct DeviceResources {
 
   winrt::com_ptr<ID3D12Device> mDevice12;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue12;
+
+  winrt::com_ptr<ID3D12CommandAllocator> mAllocator12;
+
+  winrt::com_ptr<ID3D12Fence> mFence12;
+  static thread_local uint64_t mFenceValue;
 };
 
 enum class Flags : uint16_t {

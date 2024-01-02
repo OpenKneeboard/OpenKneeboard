@@ -21,11 +21,14 @@
 #include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
 #include <shims/winrt/base.h>
 
 namespace OpenKneeboard::D3D11On12 {
+
+thread_local uint64_t DeviceResources::mFenceValue {0};
 
 RenderTargetView::RenderTargetView(
   const DeviceResources& deviceResources,
@@ -44,21 +47,19 @@ RenderTargetView::RenderTargetView(
   }
 }
 
-RenderTargetView::~RenderTargetView() {
+RenderTargetView::~RenderTargetView() noexcept {
   if (!mBufferTexture11) {
     auto resources = static_cast<ID3D11Resource*>(mTexture11.get());
     mDeviceResources.m11on12->ReleaseWrappedResources(&resources, 1);
     return;
   }
 
-  winrt::com_ptr<ID3D12CommandAllocator> allocator;
-  winrt::check_hresult(mDeviceResources.mDevice12->CreateCommandAllocator(
-    D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(allocator.put())));
+  // If we get here, the varjo double-buffer quirk is enabled
   winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
   winrt::check_hresult(mDeviceResources.mDevice12->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
-    allocator.get(),
+    mDeviceResources.mAllocator12.get(),
     nullptr,
     IID_PPV_ARGS(commandList.put())));
   winrt::com_ptr<ID3D12Resource> bufferTexture12;
@@ -66,11 +67,7 @@ RenderTargetView::~RenderTargetView() {
     mBufferTexture11.get(),
     mDeviceResources.mCommandQueue12.get(),
     IID_PPV_ARGS(bufferTexture12.put())));
-  const scope_guard returnResource([&]() noexcept {
-    winrt::check_hresult(mDeviceResources.m11on12->ReturnUnderlyingResource(
-      mBufferTexture11.get(), 0, nullptr, nullptr));
-  });
-
+  mDeviceResources.mContext11->Flush();
   D3D12_RESOURCE_BARRIER inBarrier {
       .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
       .Transition = {
@@ -96,8 +93,25 @@ RenderTargetView::~RenderTargetView() {
   commandList->ResourceBarrier(1, &outBarrier);
   winrt::check_hresult(commandList->Close());
 
+  auto queue = mDeviceResources.mCommandQueue12.get();
+
+  const auto FENCE_VALUE_BEFORE_COMMAND_LIST = ++mDeviceResources.mFenceValue;
+  const auto FENCE_VALUE_AFTER_COMMAND_LIST = ++mDeviceResources.mFenceValue;
+
   const auto commandLists = static_cast<ID3D12CommandList*>(commandList.get());
-  mDeviceResources.mCommandQueue12->ExecuteCommandLists(1, &commandLists);
+  queue->ExecuteCommandLists(1, &commandLists);
+
+  auto fence = mDeviceResources.mFence12.get();
+  auto fenceValue = ++mDeviceResources.mFenceValue;
+  winrt::handle fenceEvent {
+    CreateEventExW(nullptr, nullptr, 0, EVENT_ALL_ACCESS)};
+  fence->SetEventOnCompletion(fenceValue, fenceEvent.get());
+  winrt::check_hresult(queue->Signal(fence, fenceValue));
+  winrt::check_hresult(mDeviceResources.m11on12->ReturnUnderlyingResource(
+    mBufferTexture11.get(), 1, &fenceValue, &fence));
+  traceprint("Waiting for D3D11on12 fence...");
+  WaitForSingleObject(fenceEvent.get(), INFINITE);
+  traceprint("Done.");
 }
 
 ID3D11RenderTargetView* RenderTargetView::Get() const {
