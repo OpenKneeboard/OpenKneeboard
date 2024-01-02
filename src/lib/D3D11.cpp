@@ -27,19 +27,38 @@
 
 #include <directxtk/SpriteBatch.h>
 
-#include <OpenXR-Toolkit/d3d11.h>
+#include <d3d11_1.h>
 
 namespace OpenKneeboard::D3D11 {
 
 struct SavedState::Impl {
-  OpenXRToolkit::D3D11::SavedState mState;
+  winrt::com_ptr<ID3D11DeviceContext1> mContext;
+  winrt::com_ptr<ID3DDeviceContextState> mState;
 };
 
 SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
-  mImpl = new Impl {.mState = {ctx.get()}};
+  mImpl = new Impl {.mContext = ctx.as<ID3D11DeviceContext1>()};
+
+  winrt::com_ptr<ID3D11Device> device;
+  ctx->GetDevice(device.put());
+  auto featureLevel = device->GetFeatureLevel();
+
+  winrt::com_ptr<ID3DDeviceContextState> newState;
+  winrt::check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
+    (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
+      ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
+      : 0,
+    &featureLevel,
+    1,
+    D3D11_SDK_VERSION,
+    __uuidof(ID3D11Device),
+    nullptr,
+    newState.put()));
+  mImpl->mContext->SwapDeviceContextState(newState.get(), mImpl->mState.put());
 }
 
 SavedState::~SavedState() {
+  mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
   delete mImpl;
 }
 
