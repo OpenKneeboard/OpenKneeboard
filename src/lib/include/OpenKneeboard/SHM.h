@@ -64,7 +64,8 @@ constexpr UINT DEFAULT_D3D11_MISC_FLAGS = 0;
 winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
   ID3D11Device*,
   UINT bindFlags = DEFAULT_D3D11_BIND_FLAGS,
-  UINT miscFlags = DEFAULT_D3D11_MISC_FLAGS);
+  UINT miscFlags = DEFAULT_D3D11_MISC_FLAGS,
+  DXGI_FORMAT format = SHARED_TEXTURE_PIXEL_FORMAT);
 
 // This needs to be kept in sync with `SHM::ActiveConsumers`
 enum class ConsumerKind : uint32_t {

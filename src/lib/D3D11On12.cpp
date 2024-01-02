@@ -122,8 +122,11 @@ RenderTargetViewFactory::RenderTargetViewFactory(
     IID_PPV_ARGS(mTexture11.put())));
 
   if (static_cast<bool>(flags & Flags::DoubleBuffer)) {
-    mBufferTexture11
-      = SHM::CreateCompatibleTexture(deviceResources.mDevice11.get());
+    mBufferTexture11 = SHM::CreateCompatibleTexture(
+      deviceResources.mDevice11.get(),
+      SHM::DEFAULT_D3D11_BIND_FLAGS,
+      SHM::DEFAULT_D3D11_MISC_FLAGS,
+      format);
   }
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
