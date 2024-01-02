@@ -30,6 +30,22 @@
 
 namespace OpenKneeboard::D3D11 {
 
+class SavedState {
+ public:
+  SavedState(const winrt::com_ptr<ID3D11DeviceContext>&);
+  ~SavedState();
+
+  SavedState() = delete;
+  SavedState(const SavedState&) = delete;
+  SavedState(SavedState&&) = delete;
+  SavedState& operator=(const SavedState&) = delete;
+  SavedState& operator=(SavedState&&) = delete;
+
+ private:
+  struct Impl;
+  Impl* mImpl {nullptr};
+};
+
 void CopyTextureWithTint(
   ID3D11Device* device,
   ID3D11ShaderResourceView* source,

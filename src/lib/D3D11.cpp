@@ -22,7 +22,6 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
-#include <OpenKneeboard/scope_guard.h>
 
 #include <shims/winrt/base.h>
 
@@ -30,6 +29,22 @@
 #include <vrperfkit/d3d11_helper.h>
 
 namespace OpenKneeboard::D3D11 {
+
+struct SavedState::Impl {
+  winrt::com_ptr<ID3D11DeviceContext> mContext {};
+  vrperfkit::D3D11State mState {};
+};
+
+SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
+  mImpl = new Impl {
+    .mContext = ctx,
+  };
+  vrperfkit::StoreD3D11State(ctx.get(), mImpl->mState);
+}
+
+SavedState::~SavedState() {
+  vrperfkit::RestoreD3D11State(mImpl->mContext.get(), mImpl->mState);
+}
 
 void CopyTextureWithTint(
   ID3D11Device* device,
@@ -39,10 +54,7 @@ void CopyTextureWithTint(
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
 
-  vrperfkit::D3D11State state {};
-  vrperfkit::StoreD3D11State(ctx.get(), state);
-  scope_guard restoreState(
-    [&]() { vrperfkit::RestoreD3D11State(ctx.get(), state); });
+  SavedState savedState(ctx);
 
   ctx->ClearRenderTargetView(dest, DirectX::Colors::Transparent);
   D3D11_VIEWPORT viewport {
@@ -77,10 +89,7 @@ void DrawTextureWithTint(
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
 
-  vrperfkit::D3D11State state {};
-  vrperfkit::StoreD3D11State(ctx.get(), state);
-  scope_guard restoreState(
-    [&]() { vrperfkit::RestoreD3D11State(ctx.get(), state); });
+  SavedState state(ctx);
 
   D3D11_VIEWPORT viewport {
     0.0f,
