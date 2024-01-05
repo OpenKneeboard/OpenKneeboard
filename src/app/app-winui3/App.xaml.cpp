@@ -43,6 +43,8 @@
 
 #include <shims/filesystem>
 
+#include <wil/registry.h>
+
 #include <chrono>
 #include <exception>
 #include <set>
@@ -55,10 +57,10 @@
 #include <signal.h>
 
 using namespace winrt;
-using namespace Windows::Foundation;
-using namespace Microsoft::UI::Xaml;
-using namespace Microsoft::UI::Xaml::Controls;
-using namespace Microsoft::UI::Xaml::Navigation;
+using namespace winrt::Windows::Foundation;
+using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Microsoft::UI::Xaml::Navigation;
 using namespace OpenKneeboardApp::implementation;
 using namespace OpenKneeboardApp;
 using namespace OpenKneeboard;
@@ -171,6 +173,44 @@ static void LogSystemInformation() {
   dprint("----------");
   dprintf("  Elevated: {}", IsElevated());
   dprintf("  Shell Elevated: {}", IsShellElevated());
+  // Log UAC settings because lower values aren't just "do not prompt" - they
+  // will automatically run some things as administrator that otherwise would
+  // be ran as a normal user. This causes problems.
+  {
+    wil::unique_hkey hkey;
+    if (
+      RegOpenKeyW(
+        HKEY_LOCAL_MACHINE,
+        L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System",
+        hkey.put())
+      == ERROR_SUCCESS) {
+      for (const auto& name:
+           {L"EnableLUA",
+            L"PromptOnSecureDesktop",
+            L"ConsentPromptBehaviorAdmin"}) {
+        DWORD data;
+        DWORD dataSize {sizeof(data)};
+        if (
+          RegGetValueW(
+            hkey.get(),
+            nullptr,
+            name,
+            RRF_RT_DWORD | RRF_ZEROONFAILURE,
+            nullptr,
+            &data,
+            &dataSize)
+          == ERROR_SUCCESS) {
+          dprintf(
+            L"  UAC {}: {:#010x} ({})",
+            name,
+            static_cast<uint32_t>(data),
+            data);
+        }
+      }
+    } else {
+      dprint("  Failed to read UAC settings.");
+    }
+  }
 
   CPINFOEXW codePageInfo;
   GetCPInfoExW(CP_ACP, 0, &codePageInfo);
