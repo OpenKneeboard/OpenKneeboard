@@ -248,11 +248,13 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
     return {};
   }
 
+  // For WIC, this MUST be B8G8R8A8_UNORM, not _UNORM_SRGB, or the copy silently
+  // fails.
   winrt::check_hresult(ctx->CreateBitmap(
     sharedBitmap->GetPixelSize(),
     D2D1_BITMAP_PROPERTIES {
       .pixelFormat = {
-        .format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+        .format = DXGI_FORMAT_B8G8R8A8_UNORM,
         .alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED,
       },
     },
