@@ -37,10 +37,6 @@
           Discord
         </HyperlinkButton>
         <HyperlinkButton
-          NavigateUri="https://github.com/OpenKneeboard/OpenKneeboard/discussions">
-          GitHub Discussions
-        </HyperlinkButton>
-        <HyperlinkButton
           NavigateUri="https://go.openkneeboard.com/issues">
           Bug Reports and Feature Requests
         </HyperlinkButton>
