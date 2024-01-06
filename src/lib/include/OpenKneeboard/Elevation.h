@@ -19,10 +19,12 @@
  */
 #pragma once
 
+#include <Windows.h>
+
 namespace OpenKneeboard {
 
+bool IsElevated(HANDLE process) noexcept;
 bool IsElevated() noexcept;
-
 /// If the shell is elevated, we can't de-elevate, and UAC is probably disabled.
 bool IsShellElevated() noexcept;
 

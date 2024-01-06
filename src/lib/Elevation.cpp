@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/Elevation.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
@@ -29,7 +30,7 @@
 
 namespace OpenKneeboard {
 
-static bool IsElevated(HANDLE process) noexcept {
+bool IsElevated(HANDLE process) noexcept {
   winrt::handle token;
   if (!OpenProcessToken(process, TOKEN_QUERY, token.put())) {
     return false;

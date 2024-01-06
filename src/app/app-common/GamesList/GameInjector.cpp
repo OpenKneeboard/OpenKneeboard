@@ -25,6 +25,7 @@
 #include <appmodel.h>
 // clang-format on
 
+#include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/GameInjector.h>
 #include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -244,10 +245,12 @@ void GameInjector::CheckProcess(
       to_json(overlayAPI, game->mOverlayAPI);
 
       dprintf(
-        "Current game changed to {}, PID {}, configured rendering API {}",
+        "Current game changed to {}, PID {}, configured rendering API {}, "
+        "elevated: {}",
         game->mPath.string(),
         processID,
-        overlayAPI.dump());
+        overlayAPI.dump(),
+        IsElevated(processHandle.get()) ? "yes" : "no");
       this->evGameChangedEvent.Emit(processID, game);
     }
 
