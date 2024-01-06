@@ -2,7 +2,7 @@
 # Using height as we want a square, and our input is taller than it is wide
 $nativeIconHeight = 164
 $nativeDpi = 96
-$iconSizes = 16,32,48,64,128,256
+$iconSizes = 16, 20, 24, 30, 32, 36, 40, 48, 60, 64, 72, 80, 96, 128, 256
 $intermediates = @()
 foreach ($size in $iconSizes) {
   $out = "icon-${size}.png"
