@@ -125,9 +125,9 @@ MainWindow::MainWindow() {
   auto settings = gKneeboard->GetAppSettings();
   if (settings.mWindowRect) {
     auto rect = *settings.mWindowRect;
-    if (rect.top != -32000 && rect.left != -32000) {
-      // GetWindowRect() returns (-32000, -32000) for iconic (minimized)
-      // windowss
+    if (
+      MonitorFromPoint({rect.left, rect.top}, MONITOR_DEFAULTTONULL)
+      && MonitorFromPoint({rect.right, rect.bottom}, MONITOR_DEFAULTTONULL)) {
       SetWindowPos(
         mHwnd,
         NULL,
