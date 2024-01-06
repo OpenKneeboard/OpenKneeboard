@@ -25,6 +25,8 @@
 #include "OpenXRNext.h"
 #include "OpenXRVulkanKneeboard.h"
 
+#include <OpenKneeboard/Elevation.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
@@ -526,6 +528,14 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved) {
   switch (dwReason) {
     case DLL_PROCESS_ATTACH:
       TraceLoggingRegister(gTraceProvider);
+      DPrintSettings::Set({
+        .prefix = "OpenKneeboard-OpenXR",
+      });
+      dprintf(
+        "{} {}, {}",
+        __FUNCTION__,
+        Version::ReleaseName,
+        IsElevated(GetCurrentProcess()) ? "elevated" : "not elevated");
       break;
     case DLL_PROCESS_DETACH:
       TraceLoggingUnregister(gTraceProvider);
@@ -540,10 +550,7 @@ XrResult __declspec(dllexport) XRAPI_CALL
     const XrNegotiateLoaderInfo* loaderInfo,
     const char* layerName,
     XrNegotiateApiLayerRequest* apiLayerRequest) {
-  DPrintSettings::Set({
-    .prefix = "OpenKneeboard-OpenXR",
-  });
-  dprintf("{} {}", __FUNCTION__, Version::ReleaseName);
+  dprintf("{}", __FUNCTION__);
 
   if (layerName != OpenKneeboard::OpenXRLayerName) {
     dprintf("Layer name mismatch:\n -{}\n +{}", OpenXRLayerName, layerName);
