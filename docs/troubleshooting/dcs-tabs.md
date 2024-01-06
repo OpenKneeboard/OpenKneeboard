@@ -24,7 +24,7 @@ includes most of the kneeboard pages for the F14, F16, and F18.
 
 ## The path is incorrect for some aircraft
 
-1. [Check if this has already been reported](https://github.com/OpenKneeboard/OpenKneeboard/issues?q=is%3Aissue]
+1. [Check if this has already been reported](https://github.com/OpenKneeboard/OpenKneeboard/issues?q=is%3Aissue)
 2. If not, please [report the issue](https://github.com/OpenKneeboard/OpenKneeboard/issues/new) so it can be fixed in a future version of OpenKneeboard; include the incorrect path, corrected path, and the module name
 3. If you are running `v1.7.0+gha.1555` or later and are comfortable editing JSON:
    1. Open `%PROGRAMFILES%\OpenKneeboard\share` in Windows explorer
