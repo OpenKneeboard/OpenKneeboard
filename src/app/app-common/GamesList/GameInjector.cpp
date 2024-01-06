@@ -245,12 +245,11 @@ void GameInjector::CheckProcess(
       to_json(overlayAPI, game->mOverlayAPI);
 
       dprintf(
-        "Current game changed to {}, PID {}, configured rendering API {}, "
-        "elevated: {}",
+        "Current game changed to {}, PID {}, configured rendering API {}, {}",
         game->mPath.string(),
         processID,
         overlayAPI.dump(),
-        IsElevated(processHandle.get()) ? "yes" : "no");
+        IsElevated(processHandle.get()) ? "elevated" : "not elevated");
       this->evGameChangedEvent.Emit(processID, game);
     }
 
