@@ -125,6 +125,8 @@ install(
   PATTERN "gd-gb/*" EXCLUDE
   PATTERN "mi-NZ/*" EXCLUDE
   PATTERN "ug-CN/*" EXCLUDE
+  # These are just put here for use during development, but are put in `share\` for the real installation
+  PATTERN "DCS-Aircraft-Mapping.json" EXCLUDE
 )
 
 set_property(
