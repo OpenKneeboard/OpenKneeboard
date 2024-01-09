@@ -76,7 +76,6 @@ struct HelpPage : HelpPageT<HelpPage>,
   static std::string GetActiveConsumers() noexcept;
 
   void DisplayLicense(const std::string& header, const std::filesystem::path&);
-  static void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
 
   static bool mAgreedToPrivacyWarning;
 };

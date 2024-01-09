@@ -19,6 +19,11 @@
  */
 #include <OpenKneeboard/Filesystem.h>
 
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/scope_guard.h>
+
+#include <shims/winrt/base.h>
+
 #include <Windows.h>
 
 #include <format>
@@ -111,6 +116,24 @@ std::filesystem::path GetSettingsDirectory() {
   sPath = std::filesystem::path(std::wstring_view(buffer)) / "OpenKneeboard";
   std::filesystem::create_directories(sPath);
   return sPath;
+}
+
+void OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
+  if (!std::filesystem::exists(path)) {
+    dprintf("{} - path '{}' does not exist (yet?)", __FUNCTION__, path);
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  if (!std::filesystem::is_regular_file(path)) {
+    dprintf("{} - path '{}' is not a file", __FUNCTION__, path);
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  PIDLIST_ABSOLUTE pidl {nullptr};
+  winrt::check_hresult(
+    SHParseDisplayName(path.wstring().c_str(), nullptr, &pidl, 0, nullptr));
+  const scope_guard freePidl([pidl] { CoTaskMemFree(pidl); });
+  winrt::check_hresult(SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0));
 }
 
 ScopedDeleter::ScopedDeleter(const std::filesystem::path& path) : mPath(path) {

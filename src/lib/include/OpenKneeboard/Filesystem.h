@@ -29,6 +29,8 @@ std::filesystem::path GetTemporaryDirectory();
 std::filesystem::path GetRuntimeDirectory();
 std::filesystem::path GetSettingsDirectory();
 
+void OpenExplorerWithSelectedFile(const std::filesystem::path& path);
+
 void CleanupTemporaryDirectories();
 
 class ScopedDeleter {

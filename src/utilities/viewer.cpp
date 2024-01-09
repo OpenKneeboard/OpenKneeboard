@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
@@ -28,14 +29,18 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
+#include <OpenKneeboard/version.h>
 
 #include <shims/winrt/base.h>
+
+#include <directxtk/ScreenGrab.h>
 
 #include <format>
 #include <memory>
 #include <type_traits>
 
 #include <D2d1.h>
+#include <ShlObj_core.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
@@ -257,8 +262,48 @@ class TestViewerWindow final {
     this->PaintNow();
   }
 
+  void CaptureScreenshot() {
+    const auto snapshot
+      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
+    if (!snapshot.IsValid()) {
+      return;
+    }
+    if (mLayerIndex >= snapshot.GetLayerCount()) {
+      return;
+    }
+
+    wchar_t* pathBuf {nullptr};
+    SHGetKnownFolderPath(FOLDERID_Pictures, NULL, NULL, &pathBuf);
+    if (!pathBuf) {
+      return;
+    }
+    const std::filesystem::path baseDir {pathBuf};
+    const auto path = baseDir / "OpenKneeboard"
+      / std::format("capture-v{}.{}.{}.{}-{:%F-%H-%M}.dds",
+                    Version::Major,
+                    Version::Minor,
+                    Version::Patch,
+                    Version::Build,
+                    std::chrono::zoned_time(
+                      std::chrono::current_zone(),
+                      std::chrono::system_clock::now()));
+    std::filesystem::create_directories(path.parent_path());
+
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    mDXR.mD3DDevice->GetImmediateContext(ctx.put());
+
+    winrt::check_hresult(DirectX::SaveDDSTextureToFile(
+      ctx.get(),
+      snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex).get(),
+      path.wstring().c_str()));
+    Filesystem::OpenExplorerWithSelectedFile(path);
+  }
+
   void OnKeyUp(uint64_t vkk) {
     switch (vkk) {
+      case 'C':
+        this->CaptureScreenshot();
+        return;
       case 'S':
         mStreamerMode = !mStreamerMode;
         this->PaintNow();

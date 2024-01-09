@@ -335,7 +335,10 @@ target_link_libraries(
 target_link_libraries(
   OpenKneeboard-Filesystem
   PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-UTF8
   System::Shlwapi
+  ThirdParty::CppWinRT
 )
 
 ok_add_library(OpenKneeboard-WindowCaptureControl STATIC WindowCaptureControl.cpp)

@@ -178,7 +178,7 @@ winrt::fire_and_forget HelpPage::OnExportClick(
   const auto zipPath = *maybePath;
   const auto zipPathUtf8 = to_utf8(zipPath);
   const scope_guard openWhenDone(
-    [zipPath]() { OpenExplorerWithSelectedFile(zipPath); });
+    [zipPath]() { Filesystem::OpenExplorerWithSelectedFile(zipPath); });
 
   using unique_zip = std::unique_ptr<zip_t, CHandleDeleter<zip_t*, &zip_close>>;
 
@@ -709,15 +709,6 @@ void HelpPage::OnAgreeClick(
   }
   mAgreedToPrivacyWarning = true;
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
-}
-
-void HelpPage::OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
-  PIDLIST_ABSOLUTE pidl {nullptr};
-  winrt::check_hresult(
-    SHParseDisplayName(path.wstring().c_str(), nullptr, &pidl, 0, nullptr));
-  const scope_guard freePidl([pidl] { CoTaskMemFree(pidl); });
-
-  winrt::check_hresult(SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0));
 }
 
 void HelpPage::DisplayLicense(

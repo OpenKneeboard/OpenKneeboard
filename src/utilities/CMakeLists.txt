@@ -83,6 +83,7 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-DXResources
+  OpenKneeboard-Filesystem
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
   OpenKneeboard-SHM
@@ -90,6 +91,7 @@ target_link_libraries(
   System::D2d1
   System::D3d11
   System::Dxgi
+  ThirdParty::DirectXTK
 )
 
 ok_add_executable(
