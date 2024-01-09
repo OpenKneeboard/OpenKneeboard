@@ -400,10 +400,7 @@ void HWNDPageSource::OnFrame() {
       TraceLoggingValue(size.Width, "Width"),
       TraceLoggingValue(size.Height, "Height"));
     mFramePool.Recreate(
-      mWinRTD3DDevice,
-      WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
-      2,
-      size);
+      mWinRTD3DDevice, WGDX::DirectXPixelFormat::R16G16B16A16Float, 2, size);
     TraceLoggingWriteStop(
       activity,
       "HWNDPageSource::OnFrame",
