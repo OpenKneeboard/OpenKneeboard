@@ -163,7 +163,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
     mFramePool = WGC::Direct3D11CaptureFramePool::Create(
       mWinRTD3DDevice,
-      WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
+      WGDX::DirectXPixelFormat::R16G16B16A16Float,
       2,
       item.Size());
     mFramePool.FrameArrived(
