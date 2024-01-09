@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/Pixels.h>
-#include <OpenKneeboard/RenderTargetID.h>
+#include <OpenKneeboard/RenderTarget.h>
 #include <OpenKneeboard/ScalingKind.h>
 #include <OpenKneeboard/ThreadGuard.h>
 #include <OpenKneeboard/UniqueID.h>
@@ -48,12 +48,7 @@ class IPageSource {
 
   virtual ScalingKind GetScalingKind(PageID) = 0;
   virtual D2D1_SIZE_U GetNativeContentSize(PageID) = 0;
-  virtual void RenderPage(
-    RenderTargetID,
-    ID2D1DeviceContext*,
-    PageID,
-    const D2D1_RECT_F& rect)
-    = 0;
+  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect) = 0;
 
   Event<> evNeedsRepaintEvent;
   Event<SuggestedPageAppendAction> evPageAppendedEvent;

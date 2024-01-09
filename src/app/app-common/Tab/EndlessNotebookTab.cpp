@@ -168,15 +168,18 @@ D2D1_SIZE_U EndlessNotebookTab::GetNativeContentSize(PageID) {
 }
 
 void EndlessNotebookTab::RenderPage(
-  RenderTargetID rtid,
-  ID2D1DeviceContext* d2d,
+  RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& rect) {
   if (!mSource) {
     return;
   }
-  mSource->RenderPage(rtid, d2d, mSourcePageID, rect);
-  mDoodles->Render(d2d, pageID, rect);
+
+  mSource->RenderPage(rt, mSourcePageID, rect);
+  {
+    auto d2d = rt->d2d();
+    mDoodles->Render(d2d, pageID, rect);
+  }
 }
 
 void EndlessNotebookTab::PostCursorEvent(

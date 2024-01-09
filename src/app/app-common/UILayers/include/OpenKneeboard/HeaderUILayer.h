@@ -26,6 +26,7 @@
 #include <OpenKneeboard/ISelectableToolbarItem.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/UILayerBase.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -51,10 +52,9 @@ class HeaderUILayer final : public UILayerBase,
     const CursorEvent&) override;
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(
-    RenderTargetID,
+    RenderTarget*,
     const NextList&,
     const Context&,
-    ID2D1DeviceContext*,
     const D2D1_RECT_F&) override;
 
   HeaderUILayer() = delete;

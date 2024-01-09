@@ -342,11 +342,11 @@ void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
 }
 
 void KneeboardView::RenderWithChrome(
-  RenderTargetID rtid,
-  ID2D1DeviceContext* d2d,
+  RenderTarget* rt,
   const D2D1_RECT_F& rect,
   bool isActiveForInput) noexcept {
   if (!mCurrentTabView) {
+    auto d2d = rt->d2d();
     d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
     mErrorRenderer->Render(d2d, _("No Tabs"), rect);
     return;
@@ -354,20 +354,20 @@ void KneeboardView::RenderWithChrome(
 
   auto [first, rest] = this->GetUILayers();
   first->Render(
-    rtid,
+    rt,
     rest,
     {
       .mTabView = mCurrentTabView,
       .mKneeboardView = this->shared_from_this(),
       .mIsActiveForInput = isActiveForInput,
     },
-    d2d,
     rect);
   if (mCursorCanvasPoint) {
     const D2D1_SIZE_F size {
       rect.right - rect.left,
       rect.bottom - rect.top,
     };
+    auto d2d = rt->d2d();
     mCursorRenderer->Render(
       d2d,
       {

@@ -124,10 +124,9 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
 }
 
 void FooterUILayer::Render(
-  RenderTargetID rtid,
+  RenderTarget* rt,
   const IUILayer::NextList& next,
   const Context& context,
-  ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
   mLastRenderSize = {
     rect.right - rect.left,
@@ -154,13 +153,12 @@ void FooterUILayer::Render(
   };
 
   next.front()->Render(
-    rtid,
+    rt,
     next.subspan(1),
     context,
-    d2d,
     {rect.left, rect.top, rect.right, rect.bottom - footerHeight});
 
-  d2d->SetTransform(D2D1::Matrix3x2F::Identity());
+  auto d2d = rt->d2d();
   d2d->FillRectangle(footerRect, mBackgroundBrush.get());
 
   FLOAT dpix, dpiy;

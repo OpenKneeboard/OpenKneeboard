@@ -52,11 +52,8 @@ class ImageFilePageSource final
   bool CanOpenFile(const std::filesystem::path&) const;
   static bool CanOpenFile(const DXResources& dxr, const std::filesystem::path&);
 
-  virtual void RenderPage(
-    RenderTargetID,
-    ID2D1DeviceContext*,
-    PageID,
-    const D2D1_RECT_F& rect) final override;
+  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
+    final override;
 
   virtual bool IsNavigationAvailable() const override;
   virtual std::vector<NavigationEntry> GetNavigationEntries() const override;

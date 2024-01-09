@@ -50,11 +50,8 @@ class PageSourceWithDelegates : public virtual IPageSource,
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual D2D1_SIZE_U GetNativeContentSize(PageID) override;
   virtual ScalingKind GetScalingKind(PageID) override;
-  virtual void RenderPage(
-    RenderTargetID,
-    ID2D1DeviceContext*,
-    PageID,
-    const D2D1_RECT_F& rect) override;
+  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
+    override;
 
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
     override;

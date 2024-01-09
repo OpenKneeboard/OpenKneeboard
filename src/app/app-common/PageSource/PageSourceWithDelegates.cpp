@@ -147,8 +147,7 @@ D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(PageID pageID) {
 }
 
 void PageSourceWithDelegates::RenderPage(
-  RenderTargetID rti,
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& rect) {
   auto delegate = this->FindDelegate(pageID);
@@ -160,26 +159,26 @@ void PageSourceWithDelegates::RenderPage(
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (withCursorEvents) {
-    delegate->RenderPage(rti, ctx, pageID, rect);
+    delegate->RenderPage(rt, pageID, rect);
     return;
   }
 
   // ... otherwise, we'll assume it should be doodleable
 
-  if (!mContentLayerCache.contains(rti)) {
-    mContentLayerCache[rti] = std::make_unique<CachedLayer>(mDXResources);
+  const auto rtid = rt->GetID();
+  if (!mContentLayerCache.contains(rtid)) {
+    mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
   }
 
   const auto nativeSize = delegate->GetNativeContentSize(pageID);
-  mContentLayerCache[rti]->Render(
+  mContentLayerCache[rtid]->Render(
     rect,
     nativeSize,
     pageID.GetTemporaryValue(),
-    ctx,
-    [&](ID2D1DeviceContext* ctx, const D2D1_SIZE_U& size) {
+    rt,
+    [&](RenderTarget* rt, const D2D1_SIZE_U& size) {
       delegate->RenderPage(
-        rti,
-        ctx,
+        rt,
         pageID,
         {
           0.0f,
@@ -188,7 +187,7 @@ void PageSourceWithDelegates::RenderPage(
           static_cast<FLOAT>(size.height),
         });
     });
-  mDoodles->Render(ctx, pageID, rect);
+  mDoodles->Render(rt->d2d(), pageID, rect);
 }
 
 bool PageSourceWithDelegates::CanClearUserInput() const {

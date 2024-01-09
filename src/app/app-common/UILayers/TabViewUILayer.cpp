@@ -85,29 +85,31 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
 }
 
 void TabViewUILayer::Render(
-  RenderTargetID rtid,
+  RenderTarget* rt,
   const IUILayer::NextList&,
   const Context& context,
-  ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
   const auto tabView = context.mTabView;
 
   if (!tabView) {
+    auto d2d = rt->d2d();
     this->RenderError(d2d, _("No Tab View"), rect);
     return;
   }
   auto tab = tabView->GetTab();
   if (!tab) {
+    auto d2d = rt->d2d();
     this->RenderError(d2d, _("No Tab"), rect);
     return;
   }
   const auto pageCount = tab->GetPageCount();
   if (pageCount == 0) {
+    auto d2d = rt->d2d();
     this->RenderError(d2d, _("No Pages"), rect);
     return;
   }
 
-  tab->RenderPage(rtid, d2d, tabView->GetPageID(), rect);
+  tab->RenderPage(rt, tabView->GetPageID(), rect);
 }
 
 void TabViewUILayer::RenderError(

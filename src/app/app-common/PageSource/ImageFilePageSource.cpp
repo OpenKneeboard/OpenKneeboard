@@ -144,8 +144,7 @@ ScalingKind ImageFilePageSource::GetScalingKind(PageID) {
 }
 
 void ImageFilePageSource::RenderPage(
-  RenderTargetID,
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& rect) {
   auto bitmap = GetPageBitmap(pageID);
@@ -166,6 +165,7 @@ void ImageFilePageSource::RenderPage(
   const auto renderLeft = rect.left + ((targetWidth - renderWidth) / 2);
   const auto renderTop = rect.top + ((targetHeight - renderHeight) / 2);
 
+  auto ctx = rt->d2d();
   ctx->DrawBitmap(
     bitmap.get(),
     {renderLeft, renderTop, renderLeft + renderWidth, renderTop + renderHeight},

@@ -68,8 +68,7 @@ class KneeboardView final : public IKneeboardView,
   virtual D2D1_SIZE_U GetContentNativeSize() const override;
 
   virtual void RenderWithChrome(
-    RenderTargetID,
-    ID2D1DeviceContext* d2d,
+    RenderTarget*,
     const D2D1_RECT_F& rect,
     bool isActiveForInput) noexcept override;
   virtual std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const override;

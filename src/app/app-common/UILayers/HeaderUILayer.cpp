@@ -166,10 +166,9 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
 }
 
 void HeaderUILayer::Render(
-  RenderTargetID rtid,
+  RenderTarget* rt,
   const IUILayer::NextList& next,
   const Context& context,
-  ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
   const auto tabView = context.mTabView;
 
@@ -198,23 +197,26 @@ void HeaderUILayer::Render(
     rect.right - rect.left,
     rect.bottom - rect.top,
   };
-  d2d->SetTransform(D2D1::Matrix3x2F::Identity());
-  d2d->FillRectangle(headerRect, mHeaderBGBrush.get());
-  auto headerTextRect = headerRect;
-  this->DrawToolbar(
-    context, d2d, rect, headerRect, headerSize, &headerTextRect);
-  this->DrawHeaderText(tabView, d2d, headerTextRect);
+
+  {
+    auto d2d = rt->d2d();
+    d2d->SetTransform(D2D1::Matrix3x2F::Identity());
+    d2d->FillRectangle(headerRect, mHeaderBGBrush.get());
+    auto headerTextRect = headerRect;
+    this->DrawToolbar(
+      context, d2d, rect, headerRect, headerSize, &headerTextRect);
+    this->DrawHeaderText(tabView, d2d, headerTextRect);
+  }
 
   next.front()->Render(
-    rtid,
+    rt,
     next.subspan(1),
     context,
-    d2d,
     {rect.left, rect.top + headerSize.height, rect.right, rect.bottom});
 
   auto secondaryMenu = mSecondaryMenu;
   if (secondaryMenu) {
-    secondaryMenu->Render(rtid, {}, context, d2d, rect);
+    secondaryMenu->Render(rt, {}, context, rect);
   }
 }
 

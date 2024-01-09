@@ -38,6 +38,7 @@
 #include <mutex>
 #include <ranges>
 
+#include <DirectXColors.h>
 #include <d3d11_4.h>
 #include <dwrite.h>
 #include <dxgi1_2.h>
@@ -103,6 +104,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
           /* alpha = */ 1.0f,
         });
     } else {
+      auto layerD3D = layer.mCanvas->d3d();
       D3D11_BOX box {
         0,
         0,
@@ -112,7 +114,7 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
         1,
       };
       mD3DContext->CopySubresourceRegion(
-        it.mTexture.get(), 0, 0, 0, 0, layer.mCanvasTexture.get(), 0, &box);
+        it.mTexture.get(), 0, 0, 0, 0, layerD3D.texture(), 0, &box);
     }
     shmLayers.push_back(layer.mConfig);
   }
@@ -176,15 +178,13 @@ void InterprocessRenderer::Init(
   }
 
   for (auto& layer: mLayers) {
-    layer.mCanvasTexture = SHM::CreateCompatibleTexture(dxr.mD3DDevice.get());
-
-    winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-      layer.mCanvasTexture.as<IDXGISurface>().get(),
-      nullptr,
-      layer.mCanvasBitmap.put()));
+    winrt::com_ptr<ID3D11Texture2D> canvasTexture {
+      SHM::CreateCompatibleTexture(dxr.mD3DDevice.get())};
 
     winrt::check_hresult(dxr.mD3DDevice->CreateShaderResourceView(
-      layer.mCanvasTexture.get(), nullptr, layer.mCanvasSRV.put()));
+      canvasTexture.get(), nullptr, layer.mCanvasSRV.put()));
+
+    layer.mCanvas = RenderTarget::Create(mDXR, canvasTexture);
   }
 
   const auto sessionID = mSHM.GetSessionID();
@@ -262,15 +262,12 @@ InterprocessRenderer::~InterprocessRenderer() {
   }
 }
 
-void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
-  auto ctx = mDXR.mD2DDeviceContext;
-  ctx->SetTarget(layer.mCanvasBitmap.get());
-  mDXR.PushD2DDraw();
-  const scope_guard endDraw {
-    [this]() { winrt::check_hresult(this->mDXR.PopD2DDraw()); }};
-
-  ctx->Clear({0.0f, 0.0f, 0.0f, 0.0f});
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+void InterprocessRenderer::Render(Layer& layer) {
+  {
+    auto d3d = layer.mCanvas->d3d();
+    mDXR.mD3DImmediateContext->ClearRenderTargetView(
+      d3d.rtv(), DirectX::Colors::Transparent);
+  }
 
   const auto view = layer.mKneeboardView;
   layer.mConfig.mLayerID = view->GetRuntimeID().GetTemporaryValue();
@@ -287,8 +284,7 @@ void InterprocessRenderer::Render(RenderTargetID rtid, Layer& layer) {
   layer.mConfig.mVR.mHeight = usedSize.height * scale;
 
   view->RenderWithChrome(
-    rtid,
-    ctx.get(),
+    layer.mCanvas.get(),
     {
       0,
       0,
@@ -308,17 +304,13 @@ void InterprocessRenderer::RenderNow() {
 
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
 
-  if (mRenderTargetIDs.size() < renderInfos.size()) {
-    mRenderTargetIDs.resize(renderInfos.size());
-  }
-
   for (uint8_t i = 0; i < renderInfos.size(); ++i) {
     auto& layer = mLayers.at(i);
     const auto& info = renderInfos.at(i);
     layer.mKneeboardView = info.mView;
     layer.mConfig.mVR = info.mVR;
     layer.mIsActiveForInput = info.mIsActiveForInput;
-    this->Render(mRenderTargetIDs.at(i), layer);
+    this->Render(layer);
   }
 
   this->Commit(renderInfos.size());

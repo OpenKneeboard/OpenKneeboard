@@ -139,21 +139,21 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
 }
 
 void BookmarksUILayer::Render(
-  RenderTargetID rtid,
+  RenderTarget* rt,
   const IUILayer::NextList& next,
   const Context& context,
-  ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
   auto [first, rest] = Split(next);
 
   if (!this->IsEnabled()) {
-    first->Render(rtid, rest, context, d2d, rect);
+    first->Render(rt, rest, context, rect);
     return;
   }
 
   const auto metrics = this->GetMetrics(next, context);
   const auto scale = (rect.right - rect.left) / metrics.mCanvasSize.width;
 
+  auto d2d = rt->d2d();
   d2d->FillRectangle(
     {
       0,
@@ -211,17 +211,19 @@ void BookmarksUILayer::Render(
         2.0f);
     }
   }
+
+  d2d.Release();
   first->Render(
-    rtid,
+    rt,
     rest,
     context,
-    d2d,
     {
       metrics.mNextArea.left * scale,
       metrics.mNextArea.top * scale,
       metrics.mNextArea.right * scale,
       metrics.mNextArea.bottom * scale,
     });
+  d2d.Reacquire();
 
   d2d->DrawLine(
     {width * scale, rect.top},

@@ -54,11 +54,8 @@ class NavigationTab final : public TabBase,
   virtual std::vector<PageID> GetPageIDs() const override;
   virtual D2D1_SIZE_U GetNativeContentSize(PageID) override;
   virtual ScalingKind GetScalingKind(PageID) override;
-  virtual void RenderPage(
-    RenderTargetID,
-    ID2D1DeviceContext*,
-    PageID,
-    const D2D1_RECT_F& rect) override;
+  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
+    override;
 
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
     override;
@@ -102,11 +99,8 @@ class NavigationTab final : public TabBase,
     std::vector<D2D1_RECT_F> mRects;
   } mPreviewMetrics;
 
-  void RenderPreviewLayer(
-    RenderTargetID,
-    PageID pageID,
-    ID2D1DeviceContext* ctx,
-    const D2D1_SIZE_U& size);
+  // PageID is first for `std::bind_front()`
+  void RenderPreviewLayer(PageID, RenderTarget*, const D2D1_SIZE_U& size);
 
   static constexpr auto PaddingRatio = 1.5f;
 };

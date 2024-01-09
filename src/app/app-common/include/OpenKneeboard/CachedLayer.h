@@ -19,11 +19,14 @@
  */
 #pragma once
 
-#include <d2d1_2.h>
+#include <OpenKneeboard/RenderTarget.h>
+
 #include <shims/winrt/base.h>
 
 #include <functional>
 #include <mutex>
+
+#include <d2d1_2.h>
 
 namespace OpenKneeboard {
 
@@ -32,6 +35,7 @@ struct DXResources;
 class CachedLayer final {
  public:
   using Key = size_t;
+  CachedLayer() = delete;
   CachedLayer(const DXResources&);
   ~CachedLayer();
 
@@ -39,16 +43,19 @@ class CachedLayer final {
     const D2D1_RECT_F& where,
     const D2D1_SIZE_U& nativeSize,
     Key cacheKey,
-    ID2D1DeviceContext* ctx,
-    std::function<void(ID2D1DeviceContext*, const D2D1_SIZE_U&)> impl);
+    RenderTarget*,
+    std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl);
   void Reset();
 
  private:
   Key mKey = ~Key {0};
+  DXResources mDXR;
 
   D2D1_SIZE_U mCacheSize;
-  winrt::com_ptr<ID2D1Bitmap1> mCache;
   std::mutex mCacheMutex;
+  std::shared_ptr<RenderTarget> mCacheRenderTarget;
+  winrt::com_ptr<ID3D11Texture2D> mCache;
+  winrt::com_ptr<ID3D11ShaderResourceView> mCacheSRV;
 };
 
 }// namespace OpenKneeboard

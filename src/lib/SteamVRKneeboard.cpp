@@ -71,7 +71,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
   mBufferTexture = SHM::CreateCompatibleTexture(mD3D.get());
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };

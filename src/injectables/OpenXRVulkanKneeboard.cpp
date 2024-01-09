@@ -206,9 +206,9 @@ void OpenXRVulkanKneeboard::InitInterop(
     interop->mD3D11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
 
   {
-    // Specifying VK_FORMAT_B8G8R8A8_UNORM_SRGB below
+    // Specifying VK_FORMAT_ below
     static_assert(
-      SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+      SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_R16G16B16A16_FLOAT);
 
     VkExternalMemoryImageCreateInfo externalCreateInfo {
       .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
@@ -219,7 +219,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
       .pNext = &externalCreateInfo,
       .imageType = VK_IMAGE_TYPE_2D,
-      .format = VK_FORMAT_B8G8R8A8_SRGB,
+      .format = VK_FORMAT_R16G16B16A16_SFLOAT,
       .extent = {TextureWidth, TextureHeight, 1},
       .mipLevels = 1,
       .arrayLayers = 1,
@@ -358,8 +358,9 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   XrSession session,
   const VRRenderConfig& vrc,
   uint8_t layerIndex) {
-  static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
-  const auto vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
+  static_assert(
+    SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_R16G16B16A16_FLOAT);
+  const auto vkFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT

@@ -151,8 +151,7 @@ std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
 }
 
 void PlainTextPageSource::RenderPage(
-  RenderTargetID,
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& rect) {
   std::unique_lock lock(mMutex);
@@ -166,6 +165,7 @@ void PlainTextPageSource::RenderPage(
   const D2D1_SIZE_F renderSize {
     scale * virtualSize.width, scale * virtualSize.height};
 
+  auto ctx = rt->d2d();
   ctx->SetTransform(
     D2D1::Matrix3x2F::Scale(scale, scale)
     * D2D1::Matrix3x2F::Translation(

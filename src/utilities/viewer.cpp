@@ -216,7 +216,7 @@ class TestViewerWindow final {
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
       .Width = clientSize.width,
       .Height = clientSize.height,
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+      .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
       .SampleDesc = {1, 0},
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
       .BufferCount = 2,
@@ -418,13 +418,13 @@ class TestViewerWindow final {
           pixels[x + (20 * y)] = {value, value, value, 0xff};
         }
       }
-      ctx->CreateBitmap(
+      winrt::check_hresult(ctx->CreateBitmap(
         {20, 20},
         reinterpret_cast<BYTE*>(pixels),
         20 * sizeof(Pixel),
         D2D1::BitmapProperties(D2D1::PixelFormat(
           DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-        backgroundBitmap.put());
+        backgroundBitmap.put()));
 
       mBackgroundBrush = nullptr;
       ctx->CreateBitmapBrush(
@@ -512,7 +512,7 @@ class TestViewerWindow final {
     static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
     D2D1_BITMAP_PROPERTIES bitmapProperties {
       .pixelFormat
-      = {SHM::SHARED_TEXTURE_PIXEL_FORMAT, D2D1_ALPHA_MODE_PREMULTIPLIED,},
+      = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, D2D1_ALPHA_MODE_PREMULTIPLIED,},
       .dpiX = static_cast<FLOAT>(mDPI),
       .dpiY = static_cast<FLOAT>(mDPI),
     };

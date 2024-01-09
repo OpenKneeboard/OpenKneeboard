@@ -119,10 +119,9 @@ IUILayer::Metrics FlyoutMenuUILayer::GetMetrics(
 }
 
 void FlyoutMenuUILayer::Render(
-  RenderTargetID rtid,
+  RenderTarget* rt,
   const NextList& next,
   const Context& context,
-  ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
   auto previous = mPrevious;
   if (previous && !mRecursiveCall) {
@@ -133,11 +132,12 @@ void FlyoutMenuUILayer::Render(
     submenuNext.reserve(next.size() + 1);
     std::ranges::copy(next, std::back_inserter(submenuNext));
 
-    previous->Render(rtid, submenuNext, context, d2d, rect);
+    previous->Render(rt, submenuNext, context, rect);
     return;
   }
 
   if ((!mLastRenderRect) || rect != mLastRenderRect) {
+    auto d2d = rt->d2d();
     this->UpdateLayout(d2d, rect);
     if (!mMenu) {
       OPENKNEEBOARD_BREAK;
@@ -146,7 +146,7 @@ void FlyoutMenuUILayer::Render(
   }
 
   if (!next.empty()) {
-    next.front()->Render(rtid, next.subspan(1), context, d2d, rect);
+    next.front()->Render(rt, next.subspan(1), context, rect);
   }
 
   Menu menu {};
@@ -156,8 +156,9 @@ void FlyoutMenuUILayer::Render(
     return;
   }
 
+  auto d2d = rt->d2d();
   d2d->PushAxisAlignedClip(rect, D2D1_ANTIALIAS_MODE_ALIASED);
-  const scope_guard popClip([d2d]() { d2d->PopAxisAlignedClip(); });
+  const scope_guard popClip([&d2d]() { d2d->PopAxisAlignedClip(); });
 
   if (!mPrevious) {
     d2d->FillRectangle(rect, mBGOverpaintBrush.get());

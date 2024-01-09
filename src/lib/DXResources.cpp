@@ -91,6 +91,7 @@ DXResources DXResources::Create() {
     nullptr));
   ret.mD3DDevice = d3d.as<ID3D11Device2>();
   ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
+  d3d->GetImmediateContext(ret.mD3DImmediateContext.put());
   d3d.as<ID3D10Multithread>()->SetMultithreadProtected(TRUE);
 
   winrt::check_hresult(

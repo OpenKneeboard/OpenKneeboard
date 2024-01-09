@@ -18,13 +18,17 @@
  * USA.
  */
 #include <OpenKneeboard/CachedLayer.h>
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/scope_guard.h>
 
+#include <DirectXColors.h>
+
 namespace OpenKneeboard {
 
-CachedLayer::CachedLayer(const DXResources& dxr) {
+CachedLayer::CachedLayer(const DXResources& dxr) : mDXR(dxr) {
 }
 
 CachedLayer::~CachedLayer() {
@@ -34,47 +38,58 @@ void CachedLayer::Render(
   const D2D1_RECT_F& where,
   const D2D1_SIZE_U& nativeSize,
   Key cacheKey,
-  ID2D1DeviceContext* ctx,
-  std::function<void(ID2D1DeviceContext*, const D2D1_SIZE_U&)> impl) {
+  RenderTarget* rt,
+  std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl) {
   std::scoped_lock lock(mCacheMutex);
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
 
   if (mCacheSize != nativeSize || !mCache) {
     mCache = nullptr;
     mCacheSize = nativeSize;
-    D2D1_BITMAP_PROPERTIES1 props {
-      .pixelFormat
-      = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, D2D1_ALPHA_MODE_PREMULTIPLIED},
-      .bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET,
+    D3D11_TEXTURE2D_DESC textureDesc {
+      .Width = nativeSize.width,
+      .Height = nativeSize.height,
+      .MipLevels = 1,
+      .ArraySize = 1,
+      .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+      .SampleDesc = {1, 0},
+      .Usage = D3D11_USAGE_DEFAULT,
+      .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
     };
     winrt::check_hresult(
-      ctx->CreateBitmap(nativeSize, nullptr, 0, &props, mCache.put()));
+      mDXR.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, mCache.put()));
+    winrt::check_hresult(mDXR.mD3DDevice->CreateShaderResourceView(
+      mCache.get(), nullptr, mCacheSRV.put()));
+    mCacheRenderTarget = RenderTarget::Create(mDXR, mCache);
   }
 
-  if (mKey == cacheKey) {
-    ctx->DrawBitmap(mCache.get(), where);
-    return;
+  if (mKey != cacheKey) {
+    {
+      auto d3d = mCacheRenderTarget->d3d();
+      mDXR.mD3DImmediateContext->ClearRenderTargetView(
+        d3d.rtv(), DirectX::Colors::Transparent);
+    }
+    impl(mCacheRenderTarget.get(), nativeSize);
+    mKey = cacheKey;
   }
 
-  winrt::com_ptr<ID2D1Device> device;
-  ctx->GetDevice(device.put());
-  winrt::check_pointer(device.get());
-
-  winrt::com_ptr<ID2D1DeviceContext> cacheContext;
-  winrt::check_hresult(device->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, cacheContext.put()));
-
-  cacheContext->SetTarget(mCache.get());
-  {
-    cacheContext->BeginDraw();
-    scope_guard endDraw([cacheContext]() noexcept {
-      winrt::check_hresult(cacheContext->EndDraw());
-    });
-    cacheContext->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
-    impl(cacheContext.get(), nativeSize);
-  }
-  ctx->DrawBitmap(mCache.get(), where);
-  mKey = cacheKey;
+  auto d3d = rt->d3d();
+  D3D11::DrawTextureWithOpacity(
+    mDXR.mD3DDevice.get(),
+    mCacheSRV.get(),
+    d3d.rtv(),
+    {
+      0,
+      0,
+      static_cast<LONG>(mCacheSize.width),
+      static_cast<LONG>(mCacheSize.height),
+    },
+    {
+      static_cast<LONG>(where.left),
+      static_cast<LONG>(where.top),
+      static_cast<LONG>(where.right),
+      static_cast<LONG>(where.bottom),
+    },
+    1.0f);
 }
 
 void CachedLayer::Reset() {

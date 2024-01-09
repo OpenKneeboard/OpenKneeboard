@@ -206,10 +206,10 @@ void NavigationTab::ClearUserInput() {
 }
 
 void NavigationTab::RenderPage(
-  RenderTargetID rtid,
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& canvasRect) {
+  auto ctx = rt->d2d();
   const auto scale
     = (canvasRect.bottom - canvasRect.top) / mPreferredSize.height;
 
@@ -245,12 +245,10 @@ void NavigationTab::RenderPage(
     },
     mPreferredSize,
     pageID.GetTemporaryValue(),
-    ctx,
-    std::bind_front(&NavigationTab::RenderPreviewLayer, this, rtid, pageID));
+    rt,
+    std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));
 
   ctx->SetTransform(pageTransform);
-  scope_guard resetTransform(
-    [ctx]() { ctx->SetTransform(D2D1::Matrix3x2F::Identity()); });
 
   std::vector<float> columnPreviewRightEdge(mRenderColumns);
   for (auto i = 0; i < buttons.size(); ++i) {
@@ -303,9 +301,8 @@ void NavigationTab::RenderPage(
 }
 
 void NavigationTab::RenderPreviewLayer(
-  RenderTargetID rtid,
   PageID pageID,
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   const D2D1_SIZE_U& size) {
   auto& m = mPreviewMetrics;
   m = {};
@@ -335,7 +332,7 @@ void NavigationTab::RenderPreviewLayer(
     rect.right = rect.left + width;
     rect.bottom = button.mRect.bottom + m.mBleed;
 
-    mRootTab->RenderPage(rtid, ctx, button.mPageID, rect);
+    mRootTab->RenderPage(rt, button.mPageID, rect);
   }
 }
 

@@ -69,7 +69,6 @@ class InterprocessRenderer final
   std::unique_lock<std::mutex> mInstanceLock;
   winrt::apartment_context mOwnerThread;
 
-  std::vector<RenderTargetID> mRenderTargetIDs;
   EventContext mEventContext;
   OpenKneeboard::SHM::Writer mSHM;
   DXResources mDXR;
@@ -94,8 +93,7 @@ class InterprocessRenderer final
     SHM::LayerConfig mConfig;
     std::shared_ptr<IKneeboardView> mKneeboardView;
 
-    winrt::com_ptr<ID3D11Texture2D> mCanvasTexture;
-    winrt::com_ptr<ID2D1Bitmap1> mCanvasBitmap;
+    std::shared_ptr<RenderTarget> mCanvas;
     winrt::com_ptr<ID3D11ShaderResourceView> mCanvasSRV;
 
     std::array<SharedTextureResources, TextureCount> mSharedResources;
@@ -108,7 +106,7 @@ class InterprocessRenderer final
 
   void MarkDirty();
   void RenderNow();
-  void Render(RenderTargetID, Layer&);
+  void Render(Layer&);
 
   void Commit(uint8_t layerCount) noexcept;
 

@@ -59,10 +59,11 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   auto ovr = OVRProxy::Get();
   ovrTextureSwapChain swapChain = nullptr;
 
-  static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED_B8G8R8A8);
+  static_assert(
+    SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_R16G16B16A16_FLOAT);
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
-    .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .Format = OVR_FORMAT_R16G16B16A16_FLOAT,
     .ArraySize = 1,
     .Width = TextureWidth,
     .Height = TextureHeight,
@@ -93,7 +94,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
 
     layerRenderTargets.at(i) = std::make_shared<D3D11::RenderTargetViewFactory>(
-      mD3D.get(), texture.get(), DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+      mD3D.get(), texture.get(), SHM::SHARED_TEXTURE_PIXEL_FORMAT);
   }
 
   return swapChain;

@@ -46,10 +46,9 @@ class ConfirmationUILayer final
     const CursorEvent&) override;
 
   virtual void Render(
-    RenderTargetID,
+    RenderTarget*,
     const NextList&,
     const Context&,
-    ID2D1DeviceContext*,
     const D2D1_RECT_F&) override;
 
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
@@ -57,6 +56,7 @@ class ConfirmationUILayer final
   Event<> evClosedEvent;
 
   ConfirmationUILayer() = delete;
+
  private:
   ConfirmationUILayer(
     const DXResources& dxr,
@@ -72,7 +72,7 @@ class ConfirmationUILayer final
   winrt::com_ptr<ID2D1SolidColorBrush> mButtonBorderBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mHoverButtonFillBrush;
 
-  void UpdateLayout(ID2D1DeviceContext*, const D2D1_RECT_F&);
+  void UpdateLayout(const D2D1_RECT_F&);
 
   struct TextRenderInfo {
     winrt::hstring mWinString;

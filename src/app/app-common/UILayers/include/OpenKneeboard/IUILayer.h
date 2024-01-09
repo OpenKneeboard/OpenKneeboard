@@ -22,7 +22,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ITabView.h>
-#include <OpenKneeboard/RenderTargetID.h>
+#include <OpenKneeboard/RenderTarget.h>
 
 #include <memory>
 #include <span>
@@ -53,12 +53,8 @@ class IUILayer {
     const CursorEvent&)
     = 0;
 
-  virtual void Render(
-    RenderTargetID,
-    const NextList&,
-    const Context&,
-    ID2D1DeviceContext*,
-    const D2D1_RECT_F&)
+  virtual void
+  Render(RenderTarget*, const NextList&, const Context&, const D2D1_RECT_F&)
     = 0;
 
   struct Metrics {

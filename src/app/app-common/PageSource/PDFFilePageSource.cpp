@@ -368,7 +368,7 @@ D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageID id) {
 }
 
 void PDFFilePageSource::RenderPageContent(
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   PageID id,
   const D2D1_RECT_F& rect) noexcept {
   // Keep alive
@@ -387,6 +387,7 @@ void PDFFilePageSource::RenderPageContent(
 
   auto page = p->mPDFDocument.GetPage(index);
 
+  auto ctx = rt->d2d();
   ctx->FillRectangle(rect, p->mBackgroundBrush.get());
 
   PDF_RENDER_PARAMS params {
@@ -395,8 +396,6 @@ void PDFFilePageSource::RenderPageContent(
   };
 
   ctx->SetTransform(D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
-  scope_guard resetTransform(
-    [ctx]() { ctx->SetTransform(D2D1::Matrix3x2F::Identity()); });
 
   {
     const std::unique_lock d2dLock(p->mDXR);
@@ -526,22 +525,19 @@ std::vector<NavigationEntry> PDFFilePageSource::GetNavigationEntries() const {
 }
 
 void PDFFilePageSource::RenderPage(
-  RenderTargetID rtid,
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& rect) {
   const auto size = this->GetNativeContentSize(pageID);
+
+  const auto rtid = rt->GetID();
   if (!p->mCache.contains(rtid)) {
     p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
   }
   p->mCache[rtid]->Render(
-    rect,
-    size,
-    pageID.GetTemporaryValue(),
-    ctx,
-    [=](auto ctx, const auto& size) {
+    rect, size, pageID.GetTemporaryValue(), rt, [=](auto rt, const auto& size) {
       this->RenderPageContent(
-        ctx,
+        rt,
         pageID,
         {
           0.0f,
@@ -550,8 +546,10 @@ void PDFFilePageSource::RenderPage(
           static_cast<FLOAT>(size.height),
         });
     });
-  p->mDoodles->Render(ctx, pageID, rect);
-  this->RenderOverDoodles(ctx, pageID, rect);
+
+  const auto d2d = rt->d2d();
+  p->mDoodles->Render(d2d, pageID, rect);
+  this->RenderOverDoodles(d2d, pageID, rect);
 }
 
 void PDFFilePageSource::OnFileModified(const std::filesystem::path& path) {

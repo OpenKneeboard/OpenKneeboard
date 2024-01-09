@@ -49,10 +49,9 @@ class BookmarksUILayer final
     const CursorEvent&) override;
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(
-    RenderTargetID,
+    RenderTarget*,
     const NextList&,
     const Context&,
-    ID2D1DeviceContext*,
     const D2D1_RECT_F&) override;
 
   BookmarksUILayer() = delete;

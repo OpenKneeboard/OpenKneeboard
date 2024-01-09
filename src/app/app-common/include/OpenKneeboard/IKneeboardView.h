@@ -83,8 +83,7 @@ class IKneeboardView {
   Event<> evBookmarksChangedEvent;
 
   virtual void RenderWithChrome(
-    RenderTargetID,
-    ID2D1DeviceContext* d2d,
+    RenderTarget*,
     const D2D1_RECT_F& rect,
     bool isActiveForInput) noexcept
     = 0;

@@ -72,11 +72,8 @@ class PDFFilePageSource final
   virtual void ClearUserInput(PageID) override;
   virtual void ClearUserInput() override;
 
-  virtual void RenderPage(
-    RenderTargetID,
-    ID2D1DeviceContext*,
-    PageID,
-    const D2D1_RECT_F& rect) override;
+  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
+    override;
 
  private:
   winrt::apartment_context mUIThread;
@@ -89,7 +86,7 @@ class PDFFilePageSource final
   void OnFileModified(const std::filesystem::path& path);
 
   void RenderPageContent(
-    ID2D1DeviceContext*,
+    RenderTarget* rt,
     PageID pageIndex,
     const D2D1_RECT_F& rect) noexcept;
   void

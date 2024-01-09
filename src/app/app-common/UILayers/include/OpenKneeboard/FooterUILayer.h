@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/UILayerBase.h>
+
 #include <shims/winrt/base.h>
 
 #include <chrono>
@@ -45,10 +46,9 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
     const CursorEvent&) override;
   virtual Metrics GetMetrics(const NextList&, const Context&) const override;
   virtual void Render(
-    RenderTargetID,
+    RenderTarget*,
     const NextList&,
     const Context&,
-    ID2D1DeviceContext*,
     const D2D1_RECT_F&) override;
 
  private:

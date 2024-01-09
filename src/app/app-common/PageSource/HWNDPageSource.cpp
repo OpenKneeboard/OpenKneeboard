@@ -307,10 +307,10 @@ D3D11_BOX HWNDPageSource::GetContentBox() const {
 }
 
 void HWNDPageSource::RenderPage(
-  RenderTargetID,
-  ID2D1DeviceContext* ctx,
+  RenderTarget* rt,
   PageID,
   const D2D1_RECT_F& rect) {
+  auto ctx = rt->d2d();
   if (!mBitmap) {
     return;
   }
@@ -318,17 +318,14 @@ void HWNDPageSource::RenderPage(
     return;
   }
 
+  const D2D1_RECT_F srcRect {
+    0.0f,
+    0.0f,
+    static_cast<FLOAT>(mContentSize.width),
+    static_cast<FLOAT>(mContentSize.height),
+  };
   ctx->DrawBitmap(
-    mBitmap.get(),
-    rect,
-    1.0f,
-    D2D1_INTERPOLATION_MODE_ANISOTROPIC,
-    D2D1_RECT_F {
-      0.0f,
-      0.0f,
-      static_cast<FLOAT>(mContentSize.width),
-      static_cast<FLOAT>(mContentSize.height),
-    });
+    mBitmap.get(), &rect, 1.0f, D2D1_INTERPOLATION_MODE_ANISOTROPIC, &srcRect);
   mNeedsRepaint = false;
 }
 

@@ -20,6 +20,7 @@
 #include <OpenKneeboard/ConfirmationUILayer.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/ToolbarAction.h>
+
 #include <OpenKneeboard/config.h>
 
 static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
@@ -85,15 +86,14 @@ void ConfirmationUILayer::PostCursorEvent(
 }
 
 void ConfirmationUILayer::Render(
-  RenderTargetID rtid,
+  RenderTarget* rt,
   const NextList& next,
   const Context& context,
-  ID2D1DeviceContext* d2d,
   const D2D1_RECT_F& rect) {
-  next.front()->Render(rtid, next.subspan(1), context, d2d, rect);
+  next.front()->Render(rt, next.subspan(1), context, rect);
 
   if (rect != mCanvasRect) {
-    UpdateLayout(d2d, rect);
+    UpdateLayout(rect);
   }
 
   if (!mCanvasRect) {
@@ -107,6 +107,7 @@ void ConfirmationUILayer::Render(
     return;
   }
 
+  auto d2d = rt->d2d();
   d2d->FillRectangle(rect, mOverpaintBrush.get());
   d2d->FillRoundedRectangle(
     D2D1::RoundedRect(dialog.mBoundingBox, dialog.mMargin, dialog.mMargin),
@@ -144,9 +145,7 @@ void ConfirmationUILayer::Render(
   }
 }
 
-void ConfirmationUILayer::UpdateLayout(
-  ID2D1DeviceContext* d2d,
-  const D2D1_RECT_F& canvasRect) {
+void ConfirmationUILayer::UpdateLayout(const D2D1_RECT_F& canvasRect) {
   const D2D1_SIZE_F canvasSize {
     canvasRect.right - canvasRect.left,
     canvasRect.bottom - canvasRect.top,
