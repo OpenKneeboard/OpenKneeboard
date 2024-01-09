@@ -438,7 +438,14 @@ void HWNDPageSource::OnFrame() {
     TraceLoggingValue(contentSize.Width, "Width"),
     TraceLoggingValue(contentSize.Height, "Height"));
 
-  const D3D11_BOX box {this->GetContentBox()};
+  D3D11_BOX box {this->GetContentBox()};
+  D3D11_TEXTURE2D_DESC desc {};
+  mTexture->GetDesc(&desc);
+  box.left = std::min(box.left, desc.Width);
+  box.right = std::min(box.right, desc.Width);
+  box.top = std::min(box.top, desc.Height);
+  box.bottom = std::min(box.bottom, desc.Height);
+
   TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
   ctx->CopySubresourceRegion(
     mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
