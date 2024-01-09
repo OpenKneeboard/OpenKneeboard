@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/D2DErrorRenderer.h>
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
@@ -346,29 +347,27 @@ class TestViewerWindow final {
     }
     this->InitSwapChain();
 
+    this->PaintContent();
+
+    if (mShowInformationOverlay) {
+      this->PaintInformationOverlay();
+    }
+
+    mSwapChain->Present(0, 0);
+  }
+
+  void PaintInformationOverlay() {
+    winrt::com_ptr<ID2D1Bitmap1> bitmap;
     winrt::com_ptr<IDXGISurface> surface;
 
     mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
     auto ctx = mDXR.mD2DDeviceContext.get();
-    winrt::com_ptr<ID2D1Bitmap1> bitmap;
     winrt::check_hresult(
       ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
     ctx->SetTarget(bitmap.get());
-
     ctx->BeginDraw();
-    auto cleanup = scope_guard([&] {
-      ctx->EndDraw();
-      mSwapChain->Present(0, 0);
-    });
+    scope_guard endDraw([&ctx]() { ctx->EndDraw(); });
 
-    this->PaintContent(ctx);
-
-    if (mShowInformationOverlay) {
-      this->PaintInformationOverlay(ctx);
-    }
-  }
-
-  void PaintInformationOverlay(ID2D1DeviceContext* ctx) {
     const auto clientSize = GetClientSize();
     auto text = std::format(
       L"Frame #{}, View {}",
@@ -405,8 +404,9 @@ class TestViewerWindow final {
     ctx->DrawTextLayout({0.0f, 0.0f}, layout.get(), mOverlayForeground.get());
   }
 
-  void PaintContent(ID2D1DeviceContext* ctx) {
+  void PaintContent() {
     const auto clientSize = GetClientSize();
+    auto d2d = mDXR.mD2DDeviceContext.get();
 
     if (!mBackgroundBrush) {
       winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
@@ -418,7 +418,7 @@ class TestViewerWindow final {
           pixels[x + (20 * y)] = {value, value, value, 0xff};
         }
       }
-      winrt::check_hresult(ctx->CreateBitmap(
+      winrt::check_hresult(d2d->CreateBitmap(
         {20, 20},
         reinterpret_cast<BYTE*>(pixels),
         20 * sizeof(Pixel),
@@ -427,26 +427,35 @@ class TestViewerWindow final {
         backgroundBitmap.put()));
 
       mBackgroundBrush = nullptr;
-      ctx->CreateBitmapBrush(
+      d2d->CreateBitmapBrush(
         backgroundBitmap.get(),
         D2D1::BitmapBrushProperties(
           D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
         reinterpret_cast<ID2D1BitmapBrush**>(mBackgroundBrush.put()));
 
-      ctx->CreateSolidColorBrush(
+      d2d->CreateSolidColorBrush(
         D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f),
         reinterpret_cast<ID2D1SolidColorBrush**>(
           mStreamerModeBackgroundBrush.put()));
     }
 
-    ctx->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
+    winrt::com_ptr<ID2D1Bitmap1> bitmap;
+    winrt::com_ptr<IDXGISurface> surface;
+    mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
+    winrt::check_hresult(
+      d2d->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
+    d2d->SetTarget(bitmap.get());
+    d2d->BeginDraw();
+    scope_guard endDraw([d2d]() { winrt::check_hresult(d2d->EndDraw()); });
+
+    d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
     const auto snapshot
       = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
-          ctx,
+          d2d,
           "No Feeder",
           {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       }
@@ -460,7 +469,7 @@ class TestViewerWindow final {
 
     if (mLayerIndex >= snapshot.GetLayerCount()) {
       mErrorRenderer->Render(
-        ctx,
+        d2d,
         std::format("No Layer {}", mLayerIndex + 1),
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       return;
@@ -468,26 +477,26 @@ class TestViewerWindow final {
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
     if (!layer.IsValid()) {
       mErrorRenderer->Render(
-        ctx,
+        d2d,
         std::format("No Config For Layer {}", mLayerIndex + 1),
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       return;
     }
     mLayerID = layer.mLayerID;
 
-    auto sharedTexture
-      = snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex);
-    if (!sharedTexture) {
+    auto d3d = mDXR.mD3DDevice.get();
+    auto sharedSRV = snapshot.GetLayerShaderResourceView(d3d, mLayerIndex);
+    if (!sharedSRV) {
       mErrorRenderer->Render(
-        ctx,
+        d2d,
         std::format("No Texture For Layer {}", mLayerIndex + 1),
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       return;
     }
-    auto sharedSurface = sharedTexture.as<IDXGISurface>();
 
-    ctx->Clear(
-      mStreamerMode ? mStreamerModeWindowFrameColor : mWindowFrameColor);
+    d2d->Flush();
+    winrt::check_hresult(d2d->EndDraw());
+    endDraw.abandon();
 
     const auto scalex = float(clientSize.width) / layer.mImageWidth;
     const auto scaley = float(clientSize.height) / layer.mImageHeight;
@@ -497,47 +506,24 @@ class TestViewerWindow final {
 
     const auto renderLeft = (clientSize.width - renderWidth) / 2;
     const auto renderTop = (clientSize.height - renderHeight) / 2;
-    D2D1_RECT_F pageRect {
-      static_cast<FLOAT>(renderLeft),
-      static_cast<FLOAT>(renderTop),
-      static_cast<FLOAT>(renderLeft + renderWidth),
-      static_cast<FLOAT>(renderTop + renderHeight),
+    RECT pageRect {
+      static_cast<LONG>(renderLeft),
+      static_cast<LONG>(renderTop),
+      static_cast<LONG>(renderLeft + renderWidth),
+      static_cast<LONG>(renderTop + renderHeight),
     };
-    D2D1_RECT_F sourceRect {
+    RECT sourceRect {
       0,
       0,
-      static_cast<FLOAT>(layer.mImageWidth),
-      static_cast<FLOAT>(layer.mImageHeight)};
-    winrt::com_ptr<ID2D1Bitmap> d2dBitmap;
-    static_assert(SHM::SHARED_TEXTURE_IS_PREMULTIPLIED);
-    D2D1_BITMAP_PROPERTIES bitmapProperties {
-      .pixelFormat
-      = {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, D2D1_ALPHA_MODE_PREMULTIPLIED,},
-      .dpiX = static_cast<FLOAT>(mDPI),
-      .dpiY = static_cast<FLOAT>(mDPI),
+      static_cast<LONG>(layer.mImageWidth),
+      static_cast<LONG>(layer.mImageHeight),
     };
-    ctx->CreateSharedBitmap(
-      _uuidof(IDXGISurface),
-      sharedSurface.get(),
-      &bitmapProperties,
-      d2dBitmap.put());
 
-    auto bg = mStreamerMode ? mStreamerModeBackgroundBrush.get()
-                            : mBackgroundBrush.get();
-    // Align the top-left pixel of the brush
-    bg->SetTransform(
-      D2D1::Matrix3x2F::Translation({pageRect.left, pageRect.top}));
-
-    ctx->FillRectangle(pageRect, bg);
-    ctx->SetTransform(D2D1::IdentityMatrix());
-
-    ctx->DrawBitmap(
-      d2dBitmap.get(),
-      &pageRect,
-      1.0f,
-      D2D1_INTERPOLATION_MODE_ANISOTROPIC,
-      &sourceRect);
-    ctx->Flush();
+    winrt::com_ptr<ID3D11RenderTargetView> rtv;
+    winrt::check_hresult(d3d->CreateRenderTargetView(
+      surface.as<ID3D11Texture2D>().get(), nullptr, rtv.put()));
+    D3D11::DrawTextureWithOpacity(
+      d3d, sharedSRV.get(), rtv.get(), sourceRect, pageRect, 1.0f);
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
   }

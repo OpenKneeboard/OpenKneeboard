@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
@@ -247,7 +248,6 @@ winrt::fire_and_forget HWNDPageSource::final_release(
   p->mDQC = {nullptr};
   const std::unique_lock d2dLock(p->mDXR);
   p->mTexture = nullptr;
-  p->mBitmap = nullptr;
 }
 
 PageIndex HWNDPageSource::GetPageCount() const {
@@ -265,7 +265,7 @@ std::vector<PageID> HWNDPageSource::GetPageIDs() const {
 }
 
 ScalingKind HWNDPageSource::GetScalingKind(PageID) {
-  if (mBitmap) {
+  if (mTexture) {
     return ScalingKind::Bitmap;
   }
   // We can render errors at any resolution
@@ -273,7 +273,7 @@ ScalingKind HWNDPageSource::GetScalingKind(PageID) {
 }
 
 D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageID) {
-  if (!mBitmap) {
+  if (!mTexture) {
     return {};
   }
 
@@ -310,8 +310,7 @@ void HWNDPageSource::RenderPage(
   RenderTarget* rt,
   PageID,
   const D2D1_RECT_F& rect) {
-  auto ctx = rt->d2d();
-  if (!mBitmap) {
+  if (!mTexture) {
     return;
   }
   if (!this->HaveWindow()) {
@@ -324,8 +323,25 @@ void HWNDPageSource::RenderPage(
     static_cast<FLOAT>(mContentSize.width),
     static_cast<FLOAT>(mContentSize.height),
   };
-  ctx->DrawBitmap(
-    mBitmap.get(), &rect, 1.0f, D2D1_INTERPOLATION_MODE_ANISOTROPIC, &srcRect);
+
+  auto d3d = rt->d3d();
+  D3D11::DrawTextureWithOpacity(
+    mDXR.mD3DDevice.get(),
+    mShaderResourceView.get(),
+    d3d.rtv(),
+    {
+      0,
+      0,
+      static_cast<LONG>(mContentSize.width),
+      static_cast<LONG>(mContentSize.height),
+    },
+    {
+      static_cast<LONG>(rect.left),
+      static_cast<LONG>(rect.top),
+      static_cast<LONG>(rect.right),
+      static_cast<LONG>(rect.bottom),
+    },
+    1.0f);
   mNeedsRepaint = false;
 }
 
@@ -411,15 +427,15 @@ void HWNDPageSource::OnFrame() {
     if (surfaceDesc.Width != desc.Width || surfaceDesc.Height != desc.Height) {
       TraceLoggingWriteTagged(activity, "ResettingTexture");
       mTexture = nullptr;
-      mBitmap = nullptr;
     }
   }
 
   if (!mTexture) {
     winrt::check_hresult(
       mDXR.mD3DDevice->CreateTexture2D(&surfaceDesc, nullptr, mTexture.put()));
-    winrt::check_hresult(mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-      mTexture.as<IDXGISurface>().get(), nullptr, mBitmap.put()));
+    mShaderResourceView = nullptr;
+    winrt::check_hresult(mDXR.mD3DDevice->CreateShaderResourceView(
+      mTexture.get(), nullptr, mShaderResourceView.put()));
     TraceLoggingWriteTagged(activity, "CreatedTexture");
   }
 

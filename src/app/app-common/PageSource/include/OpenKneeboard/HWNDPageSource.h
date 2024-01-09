@@ -122,7 +122,7 @@ class HWNDPageSource final
 
   D2D1_SIZE_U mContentSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
-  winrt::com_ptr<ID2D1Bitmap1> mBitmap;
+  winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
   bool mNeedsRepaint {true};
   uint32_t mMouseButtons {};
   size_t mRecreations = 0;

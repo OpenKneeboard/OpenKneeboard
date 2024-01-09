@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <optional>
 #include <functional>
 
 namespace OpenKneeboard {
@@ -26,11 +27,13 @@ namespace OpenKneeboard {
 /// Alternative to wxScopeGuard that doesn't swallow exceptions
 class scope_guard final {
  private:
-  std::function<void()> mCallback;
+  std::optional<std::function<void()>> mCallback;
 
  public:
   scope_guard(std::function<void()> f);
   ~scope_guard() noexcept;
+
+  void abandon();
 
   scope_guard(const scope_guard& other) = delete;
   scope_guard& operator=(const scope_guard&) = delete;
