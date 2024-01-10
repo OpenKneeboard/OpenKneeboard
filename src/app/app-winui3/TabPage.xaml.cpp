@@ -582,24 +582,27 @@ TabPage::PageMetrics TabPage::GetPageMetrics() {
   if (!mTabView) {
     throw std::logic_error("Attempt to fetch Page Metrics without a tab");
   }
-  const auto contentNativeSize = mTabView->GetPageIDs().size() == 0 ?
-    D2D1_SIZE_U {
-      static_cast<UINT>(mCanvasSize.width),
-      static_cast<UINT>(mCanvasSize.height),
+  const auto preferredSize = mTabView->GetPageIDs().size() == 0 ?
+    PreferredSize {PixelSize {
+      static_cast<uint32_t>(mCanvasSize.width),
+      static_cast<uint32_t>(mCanvasSize.height),
+    },
     }
-  : mTabView->GetNativeContentSize();
+  : mTabView->GetPreferredSize();
 
-  const bool unscaled = mTabView->GetScalingKind() == ScalingKind::Bitmap
-    && contentNativeSize.width <= mCanvasSize.width
-    && contentNativeSize.height <= mCanvasSize.height;
+  const auto& contentNativeSize = preferredSize.mPixelSize;
 
-  const auto scaleX = mCanvasSize.width / contentNativeSize.width;
-  const auto scaleY = mCanvasSize.height / contentNativeSize.height;
+  const bool unscaled = preferredSize.mScalingKind == ScalingKind::Bitmap
+    && contentNativeSize.mWidth <= mCanvasSize.width
+    && contentNativeSize.mHeight <= mCanvasSize.height;
+
+  const auto scaleX = mCanvasSize.width / contentNativeSize.mWidth;
+  const auto scaleY = mCanvasSize.height / contentNativeSize.mHeight;
   const auto scale = unscaled ? 1.0f : std::min(scaleX, scaleY);
 
   const D2D1_SIZE_F contentRenderSize {
-    contentNativeSize.width * scale,
-    contentNativeSize.height * scale,
+    contentNativeSize.mWidth * scale,
+    contentNativeSize.mHeight * scale,
   };
 
   // Use floor() to pixel-align raster sources

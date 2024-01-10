@@ -102,10 +102,10 @@ void TabView::PostCursorEvent(const CursorEvent& ev) {
   if (!receiver) {
     return;
   }
-  const auto size = this->GetNativeContentSize();
+  const auto size = this->GetPreferredSize().mPixelSize;
   CursorEvent tabEvent {ev};
-  tabEvent.mX *= size.width;
-  tabEvent.mY *= size.height;
+  tabEvent.mX *= size.mWidth;
+  tabEvent.mY *= size.mHeight;
   receiver->PostCursorEvent(mEventContext, tabEvent, this->GetPageID());
 }
 
@@ -198,12 +198,8 @@ void TabView::OnTabPageAppended(SuggestedPageAppendAction suggestedAction) {
   evNeedsRepaintEvent.Emit();
 }
 
-ScalingKind TabView::GetScalingKind() const {
-  return GetTab()->GetScalingKind(GetPageID());
-}
-
-D2D1_SIZE_U TabView::GetNativeContentSize() const {
-  return GetTab()->GetNativeContentSize(GetPageID());
+PreferredSize TabView::GetPreferredSize() const {
+  return GetTab()->GetPreferredSize(GetPageID());
 }
 
 TabMode TabView::GetTabMode() const {
@@ -248,8 +244,10 @@ bool TabView::SetTabMode(TabMode mode) {
         mRootTab,
         std::dynamic_pointer_cast<IPageSourceWithNavigation>(mRootTab)
           ->GetNavigationEntries(),
-        mRootTab->GetNativeContentSize(
-          mRootTabPage ? (mRootTabPage->mID) : (PageID {nullptr})));
+        mRootTab
+          ->GetPreferredSize(
+            mRootTabPage ? (mRootTabPage->mID) : (PageID {nullptr}))
+          .mPixelSize);
       AddEventListener(
         mActiveSubTab->evPageChangeRequestedEvent,
         [this](EventContext ctx, PageID newPage) {

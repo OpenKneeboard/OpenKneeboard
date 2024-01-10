@@ -65,22 +65,22 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
   if (!tabView) {
     return errorMapping;
   }
-  const auto nextSize = tabView->GetNativeContentSize();
+  const auto nextSize = tabView->GetPreferredSize();
 
-  if (nextSize.width == 0 || nextSize.height == 0) {
+  if (nextSize.mPixelSize.mWidth == 0 || nextSize.mPixelSize.mHeight == 0) {
     return errorMapping;
   }
 
   const D2D1_SIZE_F size {
-    static_cast<FLOAT>(nextSize.width),
-    static_cast<FLOAT>(nextSize.height),
+    static_cast<FLOAT>(nextSize.mPixelSize.mWidth),
+    static_cast<FLOAT>(nextSize.mPixelSize.mHeight),
   };
 
   return {
     size,
     {0, 0, size.width, size.height},
     {0, 0, size.width, size.height},
-    tabView->GetScalingKind(),
+    nextSize.mScalingKind,
   };
 }
 

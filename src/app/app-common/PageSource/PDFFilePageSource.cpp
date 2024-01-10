@@ -348,23 +348,22 @@ std::vector<PageID> PDFFilePageSource::GetPageIDs() const {
   return p->mPageIDs;
 }
 
-ScalingKind PDFFilePageSource::GetScalingKind(PageID) {
-  return ScalingKind::Vector;
-}
-
-D2D1_SIZE_U PDFFilePageSource::GetNativeContentSize(PageID id) {
+PreferredSize PDFFilePageSource::GetPreferredSize(PageID id) {
   if (!p) {
-    return {ErrorRenderWidth, ErrorRenderHeight};
+    return {};
   }
 
   auto it = std::ranges::find(p->mPageIDs, id);
   if (it == p->mPageIDs.end()) {
-    return {ErrorRenderWidth, ErrorRenderHeight};
+    return {};
   }
   const auto index = it - p->mPageIDs.begin();
   auto size = p->mPDFDocument.GetPage(index).Size();
 
-  return {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)};
+  return {
+    {static_cast<UINT32>(size.Width), static_cast<UINT32>(size.Height)},
+    ScalingKind::Vector,
+  };
 }
 
 void PDFFilePageSource::RenderPageContent(
@@ -413,10 +412,10 @@ void PDFFilePageSource::PostCursorEvent(
   EventContext ctx,
   const CursorEvent& ev,
   PageID pageID) {
-  const auto contentRect = this->GetNativeContentSize(pageID);
+  const auto contentSize = this->GetPreferredSize(pageID).mPixelSize;
 
   if (!p->mLinks.contains(pageID)) {
-    p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentRect);
+    p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
     return;
   }
 
@@ -428,8 +427,8 @@ void PDFFilePageSource::PostCursorEvent(
   scope_guard repaint([&]() { evNeedsRepaintEvent.Emit(); });
 
   CursorEvent pageEvent {ev};
-  pageEvent.mX /= contentRect.width;
-  pageEvent.mY /= contentRect.height;
+  pageEvent.mX /= contentSize.mWidth;
+  pageEvent.mY /= contentSize.mHeight;
 
   links->PostCursorEvent(ctx, pageEvent);
 
@@ -437,7 +436,7 @@ void PDFFilePageSource::PostCursorEvent(
     return;
   }
 
-  p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentRect);
+  p->mDoodles->PostCursorEvent(ctx, ev, pageID, contentSize);
 }
 
 bool PDFFilePageSource::CanClearUserInput(PageID id) const {
@@ -528,7 +527,7 @@ void PDFFilePageSource::RenderPage(
   RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& rect) {
-  const auto size = this->GetNativeContentSize(pageID);
+  const auto size = this->GetPreferredSize(pageID).mPixelSize;
 
   const auto rtid = rt->GetID();
   if (!p->mCache.contains(rtid)) {

@@ -130,20 +130,12 @@ std::shared_ptr<IPageSource> PageSourceWithDelegates::FindDelegate(
   return *delegate;
 }
 
-ScalingKind PageSourceWithDelegates::GetScalingKind(PageID pageID) {
+PreferredSize PageSourceWithDelegates::GetPreferredSize(PageID pageID) {
   auto delegate = this->FindDelegate(pageID);
   if (!delegate) {
-    return ScalingKind::Vector;
+    return {{ErrorRenderWidth, ErrorRenderHeight}, ScalingKind::Vector};
   }
-  return delegate->GetScalingKind(pageID);
-}
-
-D2D1_SIZE_U PageSourceWithDelegates::GetNativeContentSize(PageID pageID) {
-  auto delegate = this->FindDelegate(pageID);
-  if (!delegate) {
-    return {ErrorRenderWidth, ErrorRenderHeight};
-  }
-  return delegate->GetNativeContentSize(pageID);
+  return delegate->GetPreferredSize(pageID);
 }
 
 void PageSourceWithDelegates::RenderPage(
@@ -170,7 +162,7 @@ void PageSourceWithDelegates::RenderPage(
     mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
   }
 
-  const auto nativeSize = delegate->GetNativeContentSize(pageID);
+  const auto nativeSize = delegate->GetPreferredSize(pageID).mPixelSize;
   mContentLayerCache[rtid]->Render(
     rect,
     nativeSize,
@@ -231,7 +223,7 @@ void PageSourceWithDelegates::PostCursorEvent(
   }
 
   mDoodles->PostCursorEvent(
-    ctx, event, pageID, delegate->GetNativeContentSize(pageID));
+    ctx, event, pageID, delegate->GetPreferredSize(pageID).mPixelSize);
 }
 
 void PageSourceWithDelegates::ClearUserInput(PageID pageID) {

@@ -313,21 +313,13 @@ std::vector<PageID> HWNDPageSource::GetPageIDs() const {
   return {};
 }
 
-ScalingKind HWNDPageSource::GetScalingKind(PageID) {
-  if (mTexture) {
-    return ScalingKind::Bitmap;
-  }
-  // We can render errors at any resolution
-  return ScalingKind::Vector;
-}
-
-D2D1_SIZE_U HWNDPageSource::GetNativeContentSize(PageID) {
+PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
   if (!mTexture) {
     return {};
   }
 
   const auto box = this->GetContentBox();
-  return {box.right - box.left, box.bottom - box.top};
+  return {{box.right - box.left, box.bottom - box.top}, ScalingKind::Bitmap};
 }
 
 D3D11_BOX HWNDPageSource::GetContentBox() const {

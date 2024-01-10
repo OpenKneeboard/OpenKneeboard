@@ -130,17 +130,13 @@ std::vector<PageID> ImageFilePageSource::GetPageIDs() const {
   return ret;
 }
 
-D2D1_SIZE_U ImageFilePageSource::GetNativeContentSize(PageID pageID) {
+PreferredSize ImageFilePageSource::GetPreferredSize(PageID pageID) {
   auto bitmap = GetPageBitmap(pageID);
   if (!bitmap) {
     return {};
   }
 
-  return bitmap->GetPixelSize();
-}
-
-ScalingKind ImageFilePageSource::GetScalingKind(PageID) {
-  return ScalingKind::Bitmap;
+  return {bitmap->GetPixelSize(), ScalingKind::Bitmap};
 }
 
 void ImageFilePageSource::RenderPage(

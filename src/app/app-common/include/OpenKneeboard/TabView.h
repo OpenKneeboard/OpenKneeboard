@@ -43,8 +43,7 @@ class TabView final : public ITabView, private EventReceiver {
 
   virtual std::shared_ptr<ITab> GetTab() const override;
 
-  virtual D2D1_SIZE_U GetNativeContentSize() const override;
-  virtual ScalingKind GetScalingKind() const override;
+  virtual PreferredSize GetPreferredSize() const override;
 
   virtual void PostCursorEvent(const CursorEvent&) override;
 

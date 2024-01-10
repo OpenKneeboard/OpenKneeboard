@@ -152,19 +152,15 @@ std::vector<PageID> EndlessNotebookTab::GetPageIDs() const {
   return mPageIDs;
 }
 
-ScalingKind EndlessNotebookTab::GetScalingKind(PageID pageID) {
+PreferredSize EndlessNotebookTab::GetPreferredSize(PageID) {
   if (mSource) {
-    return mSource->GetScalingKind(pageID);
-  }
-  return ScalingKind::Vector;
-}
-
-D2D1_SIZE_U EndlessNotebookTab::GetNativeContentSize(PageID) {
-  if (mSource) {
-    return mSource->GetNativeContentSize(mSourcePageID);
+    return mSource->GetPreferredSize(mSourcePageID);
   }
 
-  return {ErrorRenderWidth, ErrorRenderHeight};
+  return {
+    {ErrorRenderWidth, ErrorRenderHeight},
+    ScalingKind::Vector,
+  };
 }
 
 void EndlessNotebookTab::RenderPage(
@@ -191,7 +187,7 @@ void EndlessNotebookTab::PostCursorEvent(
   }
 
   mDoodles->PostCursorEvent(
-    ec, ce, pageID, mSource->GetNativeContentSize(mSourcePageID));
+    ec, ce, pageID, mSource->GetPreferredSize(mSourcePageID).mPixelSize);
   if (mDoodles->HaveDoodles(pageID) && pageID == mPageIDs.back()) {
     mPageIDs.push_back({});
     evPageAppendedEvent.Emit(SuggestedPageAppendAction::KeepOnCurrentPage);

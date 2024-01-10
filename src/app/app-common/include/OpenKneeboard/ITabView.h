@@ -50,8 +50,7 @@ class ITabView {
   virtual std::vector<PageID> GetPageIDs() const = 0;
   virtual std::shared_ptr<ITab> GetTab() const = 0;
 
-  virtual D2D1_SIZE_U GetNativeContentSize() const = 0;
-  virtual ScalingKind GetScalingKind() const = 0;
+  virtual PreferredSize GetPreferredSize() const = 0;
 
   virtual void PostCursorEvent(const CursorEvent&) = 0;
 

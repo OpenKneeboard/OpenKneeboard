@@ -21,8 +21,8 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/Pixels.h>
+#include <OpenKneeboard/PreferredSize.h>
 #include <OpenKneeboard/RenderTarget.h>
-#include <OpenKneeboard/ScalingKind.h>
 #include <OpenKneeboard/ThreadGuard.h>
 #include <OpenKneeboard/UniqueID.h>
 
@@ -46,8 +46,7 @@ class IPageSource {
   virtual PageIndex GetPageCount() const = 0;
   virtual std::vector<PageID> GetPageIDs() const = 0;
 
-  virtual ScalingKind GetScalingKind(PageID) = 0;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageID) = 0;
+  virtual PreferredSize GetPreferredSize(PageID) = 0;
   virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect) = 0;
 
   Event<> evNeedsRepaintEvent;

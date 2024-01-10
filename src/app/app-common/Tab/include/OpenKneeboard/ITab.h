@@ -21,11 +21,14 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
+
 #include <OpenKneeboard/utf8.h>
-#include <d2d1_1.h>
+
 #include <shims/winrt/base.h>
 
 #include <string>
+
+#include <d2d1_1.h>
 
 namespace OpenKneeboard {
 

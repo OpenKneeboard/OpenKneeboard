@@ -305,11 +305,11 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
   return canvas;
 }
 
-D2D1_SIZE_U KneeboardView::GetContentNativeSize() const {
+PreferredSize KneeboardView::GetPreferredSize() const {
   if (!mCurrentTabView) {
-    return {ErrorRenderWidth, ErrorRenderHeight};
+    return {{ErrorRenderWidth, ErrorRenderHeight}, ScalingKind::Vector};
   }
-  return mCurrentTabView->GetNativeContentSize();
+  return mCurrentTabView->GetPreferredSize();
 }
 
 void KneeboardView::PostCursorEvent(const CursorEvent& ev) {

@@ -69,8 +69,7 @@ class HWNDPageSource final
 
   virtual PageIndex GetPageCount() const final override;
   virtual std::vector<PageID> GetPageIDs() const final override;
-  virtual D2D1_SIZE_U GetNativeContentSize(PageID) final override;
-  virtual ScalingKind GetScalingKind(PageID) final override;
+  virtual PreferredSize GetPreferredSize(PageID) final override;
 
   virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
     final override;

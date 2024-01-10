@@ -22,12 +22,29 @@
 #include <compare>
 #include <cstdint>
 
+#include <d2d1.h>
+
 namespace OpenKneeboard {
 struct PixelSize {
   uint32_t mWidth {};
   uint32_t mHeight {};
 
   constexpr auto operator<=>(const PixelSize&) const noexcept = default;
+
+  constexpr PixelSize() {
+  }
+
+  constexpr PixelSize(uint32_t width, uint32_t height)
+    : mWidth(width), mHeight(height) {
+  }
+
+  constexpr PixelSize(const D2D1_SIZE_U& d2d)
+    : PixelSize(d2d.width, d2d.height) {
+  }
+
+  constexpr operator D2D1_SIZE_U() const {
+    return {mWidth, mHeight};
+  }
 };
 
 struct PixelPoint {

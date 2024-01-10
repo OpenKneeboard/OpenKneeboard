@@ -64,16 +64,17 @@ PlainTextPageSource::PlainTextPageSource(
 void PlainTextPageSource::UpdateLayoutLimits() {
   auto dwf = mDXR.mDWriteFactory;
 
-  const auto size = this->GetNativeContentSize({});
+  const auto size = this->GetPreferredSize({}).mPixelSize;
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   dwf->CreateTextLayout(
-    L"m", 1, mTextFormat.get(), size.width, size.height, textLayout.put());
+    L"m", 1, mTextFormat.get(), size.mWidth, size.mHeight, textLayout.put());
   DWRITE_TEXT_METRICS metrics;
   textLayout->GetMetrics(&metrics);
 
   mPadding = mRowHeight = metrics.height;
-  mRows = static_cast<int>((size.height - (2 * mPadding)) / metrics.height) - 2;
-  mColumns = static_cast<int>((size.width - (2 * mPadding)) / metrics.width);
+  mRows
+    = static_cast<int>((size.mHeight - (2 * mPadding)) / metrics.height) - 2;
+  mColumns = static_cast<int>((size.mWidth - (2 * mPadding)) / metrics.width);
 }
 
 PlainTextPageSource::~PlainTextPageSource() {
@@ -133,12 +134,8 @@ std::vector<PageID> PlainTextPageSource::GetPageIDs() const {
   return mPageIDs;
 }
 
-ScalingKind PlainTextPageSource::GetScalingKind(PageID) {
-  return ScalingKind::Vector;
-}
-
-D2D1_SIZE_U PlainTextPageSource::GetNativeContentSize(PageID) {
-  return {768 * RENDER_SCALE, 1024 * RENDER_SCALE};
+PreferredSize PlainTextPageSource::GetPreferredSize(PageID) {
+  return {{768 * RENDER_SCALE, 1024 * RENDER_SCALE}, ScalingKind::Vector};
 }
 
 std::optional<PageIndex> PlainTextPageSource::FindPageIndex(
@@ -156,14 +153,14 @@ void PlainTextPageSource::RenderPage(
   const D2D1_RECT_F& rect) {
   std::unique_lock lock(mMutex);
 
-  const auto virtualSize = this->GetNativeContentSize(pageID);
+  const auto virtualSize = this->GetPreferredSize(pageID).mPixelSize;
   const D2D1_SIZE_F canvasSize {rect.right - rect.left, rect.bottom - rect.top};
 
-  const auto scaleX = canvasSize.width / virtualSize.width;
-  const auto scaleY = canvasSize.height / virtualSize.height;
+  const auto scaleX = canvasSize.width / virtualSize.mWidth;
+  const auto scaleY = canvasSize.height / virtualSize.mHeight;
   const auto scale = std::min(scaleX, scaleY);
   const D2D1_SIZE_F renderSize {
-    scale * virtualSize.width, scale * virtualSize.height};
+    scale * virtualSize.mWidth, scale * virtualSize.mHeight};
 
   auto ctx = rt->d2d();
   ctx->SetTransform(
@@ -182,8 +179,8 @@ void PlainTextPageSource::RenderPage(
   ctx->FillRectangle(
     {0.0f,
      0.0f,
-     static_cast<float>(virtualSize.width),
-     static_cast<float>(virtualSize.height)},
+     static_cast<float>(virtualSize.mWidth),
+     static_cast<float>(virtualSize.mHeight)},
     background.get());
 
   auto textFormat = mTextFormat.get();
@@ -194,7 +191,10 @@ void PlainTextPageSource::RenderPage(
       message.data(),
       static_cast<UINT32>(message.size()),
       textFormat,
-      {mPadding, mPadding, virtualSize.width - mPadding, mPadding + mRowHeight},
+      {mPadding,
+       mPadding,
+       virtualSize.mWidth - mPadding,
+       mPadding + mRowHeight},
       footerBrush.get());
     return;
   }
@@ -216,12 +216,12 @@ void PlainTextPageSource::RenderPage(
       line.data(),
       static_cast<UINT32>(line.size()),
       textFormat,
-      {point.x, point.y, virtualSize.width - point.x, point.y + mRowHeight},
+      {point.x, point.y, virtualSize.mWidth - point.x, point.y + mRowHeight},
       textBrush.get());
     point.y += mRowHeight;
   }
 
-  point.y = virtualSize.height - (mRowHeight + mPadding);
+  point.y = virtualSize.mHeight - (mRowHeight + mPadding);
 
   if (*pageIndex > 0) {
     std::wstring_view text(L"<<<<<");
@@ -229,7 +229,10 @@ void PlainTextPageSource::RenderPage(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      {mPadding, point.y, FLOAT(virtualSize.width), FLOAT(virtualSize.height)},
+      {mPadding,
+       point.y,
+       FLOAT(virtualSize.mWidth),
+       FLOAT(virtualSize.mHeight)},
       footerBrush.get());
   }
 
@@ -244,7 +247,7 @@ void PlainTextPageSource::RenderPage(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      {mPadding, point.y, virtualSize.width - mPadding, point.y + mRowHeight},
+      {mPadding, point.y, virtualSize.mWidth - mPadding, point.y + mRowHeight},
       footerBrush.get());
   }
 
@@ -256,7 +259,7 @@ void PlainTextPageSource::RenderPage(
       text.data(),
       static_cast<UINT32>(text.size()),
       textFormat,
-      {mPadding, point.y, virtualSize.width - mPadding, point.y + mRowHeight},
+      {mPadding, point.y, virtualSize.mWidth - mPadding, point.y + mRowHeight},
       footerBrush.get());
   }
 }
