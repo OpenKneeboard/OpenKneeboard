@@ -9,6 +9,14 @@ OpenKneeboard supports integration with DCS, including:
 - a clock in OpenKneeboard's footer showing the current mission time, both in local time and zulu time
 - various tabs showing files or data related to the current mission
 
+## Supported Files (Pages)
+
+OpenKneeboard aims to look for kneeboard files in the same location as DCS's built-in kneeboard, however *it is only able to display image files*; it is not able to display any kneeboard pages written in Lua; for example, these **are not supported**, and are unlikely to be supported in any future version:
+
+- generated charts
+- carrier landing grading
+- built-in kneeboard page that control the aircraft or its' payload
+
 ## Configuration
 
 DCS must be listed in OpenKneeboard Settings -> Games, and the 'Saved Games' path must be correct. If you have any trouble, check [the troubleshooting guide](../troubleshooting/dcs-tabs.md); if the steps there don't resolve your problems, check out [Getting Help](../getting-help.md).
@@ -31,12 +39,6 @@ This will show any *image files* for the current aircraft, from:
 - The `FA-18C` module in the DCS installation corresponds to the `FA-18C_hornet` aircraft in *Saved Games*
 
 For example, I put my A-10C kneeboard images in `C:\Users\fred\Saved Games\DCS.openbeta\KNEEBOARD\A-10C_2`.
-
-OpenKneeboard aims to look for these files in the same location as DCS's built-in kneeboard, however *it is only able to display image files*; it is not able to display any kneeboard pages written in Lua; for example, these **are not supported**, and are unlikely to be supported in any future version:
-
-- generated charts
-- carrier landing grading
-- built-in kneeboard page that control the aircraft or its' payload
 
 ## The 'DCS Briefing' Tab
 
