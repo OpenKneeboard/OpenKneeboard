@@ -82,12 +82,8 @@ RenderTarget::RenderTarget(
     D2D1_COLORMANAGEMENT_PROP_DESTINATION_COLOR_CONTEXT, scrgb.get());
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateEffect(
-    CLSID_D2D1HdrToneMap, mD2DToneMapping.put()));
-  mD2DToneMapping->SetInputEffect(0, mD2DColorManagement.get());
-
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateEffect(
     CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
-  mD2DWhiteLevel->SetInputEffect(0, mD2DToneMapping.get(), true);
+  mD2DWhiteLevel->SetInputEffect(0, mD2DColorManagement.get(), true);
 
   mD2DLastEffect = mD2DWhiteLevel.get();
 }
@@ -130,13 +126,6 @@ void RenderTarget::D2D::Acquire() {
   auto& hdr = *mUnsafeParent->mDXR.mHDRData;
   mHDR = hdr.mIsValid;
   if (mHDR) {
-    // Something's being smart and double-adjusting the white level :(
-    winrt::check_hresult(mUnsafeParent->mD2DToneMapping->SetValue(
-      D2D1_HDRTONEMAP_PROP_INPUT_MAX_LUMINANCE,
-      D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL));
-    winrt::check_hresult(mUnsafeParent->mD2DToneMapping->SetValue(
-      D2D1_HDRTONEMAP_PROP_OUTPUT_MAX_LUMINANCE, hdr.mMaxLuminanceInNits));
-
     winrt::check_hresult(mUnsafeParent->mD2DWhiteLevel->SetValue(
       D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
       hdr.mSDRWhiteLevelInNits));

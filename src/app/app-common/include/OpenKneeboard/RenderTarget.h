@@ -76,7 +76,6 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
 
   winrt::com_ptr<ID2D1Effect> mD2DWhiteLevel;
   winrt::com_ptr<ID2D1Effect> mD2DColorManagement;
-  winrt::com_ptr<ID2D1Effect> mD2DToneMapping;
   ID2D1Effect* mD2DLastEffect {nullptr};
 
   winrt::com_ptr<ID3D11Texture2D> mD3DTexture;
