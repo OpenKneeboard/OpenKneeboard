@@ -889,8 +889,16 @@ void MainWindow::InitializeHDR() {
     CreateForWindowId(this->AppWindow().Id());
   auto aci = di.GetAdvancedColorInfo();
 
+  // WideColorGamut and HighDynamicRange are distinct options here, but
+  // I think they can both be treated the same; for non-HDR displays,
+  // ACI reports standard white level, and for everything except SDR
+  // we *should* have the color luminance points
+  const auto isSDR = aci.CurrentAdvancedColorKind()
+    == winrt::Microsoft::Graphics::Display::DisplayAdvancedColorKind::
+      StandardDynamicRange;
+
   *gDXResources.mHDRData = DXResources::HDRData {
-    .mIsValid = true,
+    .mIsValid = (!isSDR),
     .mSDRWhiteLevelInNits = static_cast<FLOAT>(aci.SdrWhiteLevelInNits()),
     .mMaxLuminanceInNits = static_cast<FLOAT>(aci.MaxLuminanceInNits()),
     .mMinLuminanceInNits = static_cast<FLOAT>(aci.MinLuminanceInNits()),
