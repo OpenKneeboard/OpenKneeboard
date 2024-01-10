@@ -51,6 +51,7 @@
 #include <OpenKneeboard/version.h>
 #include <OpenKneeboard/weak_wrap.h>
 
+#include <winrt/Microsoft.Graphics.Display.h>
 #include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Windows.ApplicationModel.Core.h>
@@ -74,8 +75,10 @@ namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 namespace winrt::OpenKneeboardApp::implementation {
 MainWindow::MainWindow() {
   InitializeComponent();
+  gDXResources = DXResources::Create();
 
   {
+    this->InitializeHDR();
     auto ref = get_strong();
     winrt::check_hresult(ref.as<IWindowNative>()->get_WindowHandle(&mHwnd));
     gMainWindow = mHwnd;
@@ -106,7 +109,6 @@ MainWindow::MainWindow() {
   SendMessage(
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
 
-  gDXResources = DXResources::Create();
   gKneeboard = KneeboardState::Create(mHwnd, gDXResources);
 
   OnTabsChanged();
@@ -136,6 +138,7 @@ MainWindow::MainWindow() {
         rect.right - rect.left,
         rect.bottom - rect.top,
         0);
+      this->InitializeHDR();
     }
   }
 
@@ -879,6 +882,24 @@ LRESULT MainWindow::SubclassProc(
     return TRUE;
   }
   return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+void MainWindow::InitializeHDR() {
+  auto di = winrt::Microsoft::Graphics::Display::DisplayInformation::
+    CreateForWindowId(this->AppWindow().Id());
+  auto aci = di.GetAdvancedColorInfo();
+
+  *gDXResources.mHDRData = DXResources::HDRData {
+    .mIsValid = true,
+    .mSDRWhiteLevelInNits = static_cast<FLOAT>(aci.SdrWhiteLevelInNits()),
+    .mMaxLuminanceInNits = static_cast<FLOAT>(aci.MaxLuminanceInNits()),
+    .mMinLuminanceInNits = static_cast<FLOAT>(aci.MinLuminanceInNits()),
+  };
+
+  dprintf(
+    "White nits: {} SDR -> {} HDR",
+    D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL,
+    gDXResources.mHDRData->mSDRWhiteLevelInNits);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

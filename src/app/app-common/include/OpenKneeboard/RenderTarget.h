@@ -42,6 +42,7 @@ struct DXesources;
 class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
  public:
   RenderTarget() = delete;
+  ~RenderTarget();
 
   static std::shared_ptr<RenderTarget> Create(
     const DXResources& dxr,
@@ -69,6 +70,14 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
   RenderTargetID mID;
 
   winrt::com_ptr<ID2D1Bitmap1> mD2DBitmap;
+  winrt::com_ptr<ID2D1Bitmap1> mD2DIntermediate;
+  winrt::com_ptr<ID3D11Texture2D> mD2DIntermediateD3DTexture;
+  winrt::com_ptr<ID3D11RenderTargetView> mD2DIntermediateD3DRenderTargetView;
+
+  winrt::com_ptr<ID2D1Effect> mD2DWhiteLevel;
+  winrt::com_ptr<ID2D1Effect> mD2DColorManagement;
+  winrt::com_ptr<ID2D1Effect> mD2DToneMapping;
+  ID2D1Effect* mD2DLastEffect {nullptr};
 
   winrt::com_ptr<ID3D11Texture2D> mD3DTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mD3DRenderTargetView;
@@ -95,6 +104,7 @@ class RenderTarget::D2D final {
   std::shared_ptr<RenderTarget> mParent;
   RenderTarget* mUnsafeParent {nullptr};
   bool mReleased {false};
+  bool mHDR {false};
 
   void Acquire();
 };

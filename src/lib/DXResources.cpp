@@ -40,6 +40,8 @@ struct DXResources::Locks {
 DXResources DXResources::Create() {
   DXResources ret;
 
+  ret.mHDRData = std::make_shared<HDRData>();
+
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
   auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
   UINT dxgiFlags = 0;
