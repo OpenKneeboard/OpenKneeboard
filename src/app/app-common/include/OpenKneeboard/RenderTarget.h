@@ -70,13 +70,6 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
   RenderTargetID mID;
 
   winrt::com_ptr<ID2D1Bitmap1> mD2DBitmap;
-  winrt::com_ptr<ID2D1Bitmap1> mD2DIntermediate;
-  winrt::com_ptr<ID3D11Texture2D> mD2DIntermediateD3DTexture;
-  winrt::com_ptr<ID3D11RenderTargetView> mD2DIntermediateD3DRenderTargetView;
-
-  winrt::com_ptr<ID2D1Effect> mD2DWhiteLevel;
-  winrt::com_ptr<ID2D1Effect> mD2DColorManagement;
-  ID2D1Effect* mD2DLastEffect {nullptr};
 
   winrt::com_ptr<ID3D11Texture2D> mD3DTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mD3DRenderTargetView;

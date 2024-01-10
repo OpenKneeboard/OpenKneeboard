@@ -170,6 +170,29 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
     mFramePool.FrameArrived(
       [this](const auto&, const auto&) { this->OnFrame(); });
 
+    winrt::com_ptr<ID2D1ColorContext1> srgb, scrgb;
+    auto d2d5 = mDXR.mD2DDeviceContext.as<ID2D1DeviceContext5>();
+    d2d5->CreateColorContextFromDxgiColorSpace(
+      DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709, srgb.put());
+    d2d5->CreateColorContextFromDxgiColorSpace(
+      DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, scrgb.put());
+    winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
+      CLSID_D2D1ColorManagement, mD2DColorManagement.put()));
+    mD2DColorManagement->SetValue(
+      D2D1_COLORMANAGEMENT_PROP_SOURCE_COLOR_CONTEXT, scrgb.get());
+    mD2DColorManagement->SetValue(
+      D2D1_COLORMANAGEMENT_PROP_DESTINATION_COLOR_CONTEXT, srgb.get());
+
+    winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
+      CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
+    mD2DWhiteLevel->SetValue(
+      D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
+      D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
+
+    mD2DFirstEffect = mD2DWhiteLevel.get();
+    mD2DColorManagement->SetInputEffect(0, mD2DWhiteLevel.get(), true);
+    mD2DLastEffect = mD2DColorManagement.get();
+
     mCaptureSession = mFramePool.CreateCaptureSession(item);
     mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
     if (supportsBorderRemoval) {
@@ -324,24 +347,19 @@ void HWNDPageSource::RenderPage(
     static_cast<FLOAT>(mContentSize.height),
   };
 
-  auto d3d = rt->d3d();
-  D3D11::DrawTextureWithOpacity(
-    mDXR.mD3DDevice.get(),
-    mShaderResourceView.get(),
-    d3d.rtv(),
-    {
-      0,
-      0,
-      static_cast<LONG>(mContentSize.width),
-      static_cast<LONG>(mContentSize.height),
-    },
-    {
-      static_cast<LONG>(rect.left),
-      static_cast<LONG>(rect.top),
-      static_cast<LONG>(rect.right),
-      static_cast<LONG>(rect.bottom),
-    },
-    1.0f);
+  auto d2d = rt->d2d();
+  mD2DFirstEffect->SetInput(0, mBitmap.get(), true);
+  const auto& hdr = *mDXR.mHDRData;
+  mD2DWhiteLevel->SetValue(
+    D2D1_WHITELEVELADJUSTMENT_PROP_OUTPUT_WHITE_LEVEL,
+    hdr.mIsValid ? hdr.mSDRWhiteLevelInNits
+                 : D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
+  const auto scale = (rect.right - rect.left) / mContentSize.width;
+  d2d->SetTransform(
+    D2D1::Matrix3x2F::Scale({scale, scale})
+    * D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
+  d2d->DrawImage(mD2DLastEffect);
+
   mNeedsRepaint = false;
 }
 
@@ -433,9 +451,9 @@ void HWNDPageSource::OnFrame() {
   if (!mTexture) {
     winrt::check_hresult(
       mDXR.mD3DDevice->CreateTexture2D(&surfaceDesc, nullptr, mTexture.put()));
-    mShaderResourceView = nullptr;
-    winrt::check_hresult(mDXR.mD3DDevice->CreateShaderResourceView(
-      mTexture.get(), nullptr, mShaderResourceView.put()));
+    mBitmap = nullptr;
+    winrt::check_hresult(mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+      mTexture.as<IDXGISurface>().get(), nullptr, mBitmap.put()));
     TraceLoggingWriteTagged(activity, "CreatedTexture");
   }
 

@@ -217,7 +217,7 @@ class TestViewerWindow final {
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
       .Width = clientSize.width,
       .Height = clientSize.height,
-      .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
       .SampleDesc = {1, 0},
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
       .BufferCount = 2,

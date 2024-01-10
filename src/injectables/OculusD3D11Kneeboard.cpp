@@ -60,10 +60,10 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   ovrTextureSwapChain swapChain = nullptr;
 
   static_assert(
-    SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_R16G16B16A16_FLOAT);
+    SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB);
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
-    .Format = OVR_FORMAT_R16G16B16A16_FLOAT,
+    .Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB,
     .ArraySize = 1,
     .Width = TextureWidth,
     .Height = TextureHeight,
