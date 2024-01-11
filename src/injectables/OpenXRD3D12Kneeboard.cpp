@@ -139,9 +139,15 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   dprintf("{} images in swapchain", imageCount);
 
   bool doubleBuffer = false;
-  if (IsVarjoRuntime() && vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer) {
-    dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
-    doubleBuffer = true;
+  if (IsVarjoRuntime()) {
+    if (vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer) {
+      dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
+      doubleBuffer = true;
+    } else {
+      dprint(
+        "WARNING: D3D12 on Varjo runtime, but double-buffering quirk is "
+        "disabled");
+    }
   }
 
   std::vector<XrSwapchainImageD3D12KHR> images;
