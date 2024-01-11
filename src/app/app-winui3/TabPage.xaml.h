@@ -33,13 +33,14 @@
 namespace OpenKneeboard {
 class CursorRenderer;
 class D2DErrorRenderer;
+class IKneeboardView;
 class ITabView;
 class ISelectableToolbarItem;
 class IToolbarFlyout;
 class IToolbarItem;
+class RenderTarget;
 class ToolbarAction;
 class ToolbarToggleAction;
-class IKneeboardView;
 }// namespace OpenKneeboard
 
 using namespace winrt::Microsoft::UI::Dispatching;
@@ -122,6 +123,9 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
     const std::shared_ptr<IToolbarItem>&);
 
   void AttachVisibility(const std::shared_ptr<IToolbarItem>&, IInspectable);
+
+  winrt::com_ptr<ID3D11Texture2D> mCanvas;
+  std::shared_ptr<RenderTarget> mRenderTarget;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

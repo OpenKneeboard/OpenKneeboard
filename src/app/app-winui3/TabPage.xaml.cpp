@@ -449,6 +449,9 @@ void TabPage::OnCanvasSizeChanged(
 }
 
 void TabPage::ResizeSwapChain() {
+  mCanvas = nullptr;
+  mRenderTarget = {};
+
   DXGI_SWAP_CHAIN_DESC desc;
   winrt::check_hresult(mSwapChain->GetDesc(&desc));
   winrt::check_hresult(mSwapChain->ResizeBuffers(
@@ -457,6 +460,9 @@ void TabPage::ResizeSwapChain() {
     static_cast<UINT>(mCanvasSize.height),
     desc.BufferDesc.Format,
     desc.Flags));
+
+  winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
+  mRenderTarget = RenderTarget::Create(gDXResources, mCanvas);
 }
 
 void TabPage::InitializeSwapChain() {
@@ -476,6 +482,9 @@ void TabPage::InitializeSwapChain() {
   };
   winrt::check_hresult(dxr.mDXGIFactory->CreateSwapChainForComposition(
     dxr.mDXGIDevice.get(), &swapChainDesc, nullptr, mSwapChain.put()));
+
+  winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
+  mRenderTarget = RenderTarget::Create(gDXResources, mCanvas);
   Canvas().as<ISwapChainPanelNative>()->SetSwapChain(mSwapChain.get());
 }
 
@@ -495,21 +504,18 @@ void TabPage::PaintNow() noexcept {
     return;
   }
   const std::unique_lock lock(gDXResources);
-  winrt::com_ptr<ID3D11Texture2D> surface;
-  winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put())));
-  auto rt = RenderTarget::Create(gDXResources, surface);
   const auto cleanup = scope_guard([this]() {
     mSwapChain->Present(0, 0);
     mNeedsFrame = false;
   });
 
   {
-    auto ctx = rt->d2d();
+    auto ctx = mRenderTarget->d2d();
     ctx->Clear(mBackgroundColor);
 
     if (!mTabView) {
       D3D11_TEXTURE2D_DESC desc;
-      surface->GetDesc(&desc);
+      mCanvas->GetDesc(&desc);
       mErrorRenderer->Render(
         ctx,
         _("Missing or Deleted Tab"),
@@ -530,9 +536,10 @@ void TabPage::PaintNow() noexcept {
   auto metrics = GetPageMetrics();
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
-    tab->RenderPage(rt.get(), mTabView->GetPageID(), metrics.mRenderRect);
+    tab->RenderPage(
+      mRenderTarget.get(), mTabView->GetPageID(), metrics.mRenderRect);
   } else {
-    auto d2d = rt->d2d();
+    auto d2d = mRenderTarget->d2d();
     mErrorRenderer->Render(
       d2d, _("No Pages"), metrics.mRenderRect, mForegroundBrush.get());
   }
@@ -561,7 +568,7 @@ void TabPage::PaintNow() noexcept {
   point.x += metrics.mRenderRect.left;
   point.y += metrics.mRenderRect.top;
   {
-    auto d2d = rt->d2d();
+    auto d2d = mRenderTarget->d2d();
     mCursorRenderer->Render(d2d, point, metrics.mRenderSize);
   }
   TraceLoggingWriteStop(
