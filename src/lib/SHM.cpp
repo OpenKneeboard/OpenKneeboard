@@ -273,7 +273,6 @@ Snapshot::Snapshot(
     TraceLoggingWriteTagged(
       activity, "CopiedTexture", TraceLoggingValue(i, "Layer"));
   }
-  D3D11::BlockingFlush(ctx);
   TraceLoggingWriteTagged(activity, "Flushed");
   mLayerSRVs = std::make_shared<LayerSRVArray>();
 
