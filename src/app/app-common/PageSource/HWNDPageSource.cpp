@@ -160,38 +160,10 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
     winrt::com_ptr<IInspectable> inspectable {nullptr};
     winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
-
       mDXR.mDXGIDevice.get(),
+
       reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
-
-    mFramePool = WGC::Direct3D11CaptureFramePool::Create(
-      mWinRTD3DDevice,
-      WGDX::DirectXPixelFormat::R16G16B16A16Float,
-      2,
-      item.Size());
-    mFramePool.FrameArrived(
-      [this](const auto&, const auto&) { this->OnFrame(); });
-
-    winrt::com_ptr<ID2D1ColorContext1> srgb, scrgb;
-    auto d2d5 = mDXR.mD2DDeviceContext.as<ID2D1DeviceContext5>();
-    d2d5->CreateColorContextFromDxgiColorSpace(
-      DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709, srgb.put());
-    d2d5->CreateColorContextFromDxgiColorSpace(
-      DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, scrgb.put());
-    winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
-      CLSID_D2D1ColorManagement, mD2DColorManagement.put()));
-    mD2DColorManagement->SetValue(
-      D2D1_COLORMANAGEMENT_PROP_SOURCE_COLOR_CONTEXT, scrgb.get());
-    mD2DColorManagement->SetValue(
-      D2D1_COLORMANAGEMENT_PROP_DESTINATION_COLOR_CONTEXT, srgb.get());
-
     {
-      winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
-        CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
-      mD2DWhiteLevel->SetValue(
-        D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
-        D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
-
       // DisplayInformation::CreateForWindowId only works for windows owned by
       // this thread (and process)... so we'll jump through some hoops.
       const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
@@ -203,19 +175,50 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
       // I think they can both be treated the same; for non-HDR displays,
       // ACI reports standard white level, and for everything except SDR
       // we *should* have the color luminance points
-      const auto isSDR = aci.CurrentAdvancedColorKind()
-        == winrt::Microsoft::Graphics::Display::DisplayAdvancedColorKind::
+      mIsHDR = aci.CurrentAdvancedColorKind()
+        != winrt::Microsoft::Graphics::Display::DisplayAdvancedColorKind::
           StandardDynamicRange;
 
-      mD2DWhiteLevel->SetValue(
-        D2D1_WHITELEVELADJUSTMENT_PROP_OUTPUT_WHITE_LEVEL,
-        isSDR ? D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL
-              : static_cast<FLOAT>(aci.SdrWhiteLevelInNits()));
+      if (mIsHDR) {
+        winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
+          CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
+        mD2DWhiteLevel->SetValue(
+          D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
+          D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
+        mD2DWhiteLevel->SetValue(
+          D2D1_WHITELEVELADJUSTMENT_PROP_OUTPUT_WHITE_LEVEL,
+          static_cast<FLOAT>(aci.SdrWhiteLevelInNits()));
+      }
     }
 
-    mD2DFirstEffect = mD2DWhiteLevel.get();
-    mD2DColorManagement->SetInputEffect(0, mD2DWhiteLevel.get(), true);
-    mD2DLastEffect = mD2DColorManagement.get();
+    // WGC does not support direct capture of sRGB
+    mFramePool = WGC::Direct3D11CaptureFramePool::Create(
+      mWinRTD3DDevice,
+      mIsHDR ? WGDX::DirectXPixelFormat::R16G16B16A16Float
+             : WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
+      2,
+      item.Size());
+    mFramePool.FrameArrived(
+      [this](const auto&, const auto&) { this->OnFrame(); });
+
+    if (mIsHDR) {
+      winrt::com_ptr<ID2D1ColorContext1> srgb, scrgb;
+      auto d2d5 = mDXR.mD2DDeviceContext.as<ID2D1DeviceContext5>();
+      d2d5->CreateColorContextFromDxgiColorSpace(
+        DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709, srgb.put());
+      d2d5->CreateColorContextFromDxgiColorSpace(
+        DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, scrgb.put());
+      winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
+        CLSID_D2D1ColorManagement, mD2DColorManagement.put()));
+      mD2DColorManagement->SetValue(
+        D2D1_COLORMANAGEMENT_PROP_SOURCE_COLOR_CONTEXT, scrgb.get());
+      mD2DColorManagement->SetValue(
+        D2D1_COLORMANAGEMENT_PROP_DESTINATION_COLOR_CONTEXT, srgb.get());
+
+      mD2DFirstEffect = mD2DWhiteLevel.get();
+      mD2DColorManagement->SetInputEffect(0, mD2DWhiteLevel.get(), true);
+      mD2DLastEffect = mD2DColorManagement.get();
+    }
 
     mCaptureSession = mFramePool.CreateCaptureSession(item);
     mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
@@ -373,12 +376,20 @@ void HWNDPageSource::RenderPage(
   };
 
   auto d2d = rt->d2d();
-  mD2DFirstEffect->SetInput(0, mBitmap.get(), true);
+  // D2D effects are used for HDR -> SDR conversion; don't use them
+  // if we don't have HDR data
+  if (mD2DFirstEffect) {
+    mD2DFirstEffect->SetInput(0, mBitmap.get(), true);
+  }
   const auto scale = (rect.right - rect.left) / mContentSize.width;
   d2d->SetTransform(
     D2D1::Matrix3x2F::Scale({scale, scale})
     * D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
-  d2d->DrawImage(mD2DLastEffect, nullptr, &srcRect);
+  if (mD2DLastEffect) {
+    d2d->DrawImage(mD2DLastEffect, nullptr, &srcRect);
+  } else {
+    d2d->DrawImage(mBitmap.get(), nullptr, &srcRect);
+  }
 
   mNeedsRepaint = false;
 }
