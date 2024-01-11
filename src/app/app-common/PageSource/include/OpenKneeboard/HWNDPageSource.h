@@ -123,7 +123,6 @@ class HWNDPageSource final
   D2D1_SIZE_U mContentSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID2D1Bitmap1> mBitmap;
-  bool mIsHDR {false};
   bool mNeedsRepaint {true};
   uint32_t mMouseButtons {};
   size_t mRecreations = 0;
@@ -134,6 +133,9 @@ class HWNDPageSource final
   winrt::com_ptr<ID2D1Effect> mD2DColorManagement;
   ID2D1Effect* mD2DFirstEffect {nullptr};
   ID2D1Effect* mD2DLastEffect {nullptr};
+
+  bool mIsHDR {false};
+  winrt::Windows::Graphics::DirectX::DirectXPixelFormat mPixelFormat;
 };
 
 }// namespace OpenKneeboard

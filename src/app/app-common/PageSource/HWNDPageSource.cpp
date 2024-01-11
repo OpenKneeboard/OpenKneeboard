@@ -180,6 +180,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
           StandardDynamicRange;
 
       if (mIsHDR) {
+        mPixelFormat = WGDX::DirectXPixelFormat::R16G16B16A16Float;
         winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
           CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
         mD2DWhiteLevel->SetValue(
@@ -188,16 +189,14 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
         mD2DWhiteLevel->SetValue(
           D2D1_WHITELEVELADJUSTMENT_PROP_OUTPUT_WHITE_LEVEL,
           static_cast<FLOAT>(aci.SdrWhiteLevelInNits()));
+      } else {
+        mPixelFormat = WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized;
       }
     }
 
     // WGC does not support direct capture of sRGB
     mFramePool = WGC::Direct3D11CaptureFramePool::Create(
-      mWinRTD3DDevice,
-      mIsHDR ? WGDX::DirectXPixelFormat::R16G16B16A16Float
-             : WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized,
-      2,
-      item.Size());
+      mWinRTD3DDevice, mPixelFormat, 2, item.Size());
     mFramePool.FrameArrived(
       [this](const auto&, const auto&) { this->OnFrame(); });
 
@@ -461,8 +460,7 @@ void HWNDPageSource::OnFrame() {
       "RecreatingPool",
       TraceLoggingValue(size.Width, "Width"),
       TraceLoggingValue(size.Height, "Height"));
-    mFramePool.Recreate(
-      mWinRTD3DDevice, WGDX::DirectXPixelFormat::R16G16B16A16Float, 2, size);
+    mFramePool.Recreate(mWinRTD3DDevice, mPixelFormat, 2, size);
     TraceLoggingWriteStop(
       activity,
       "HWNDPageSource::OnFrame",
