@@ -46,14 +46,6 @@ namespace OpenKneeboard {
  * share the factories too.
  */
 struct DXResources {
-  struct HDRData {
-    bool mIsValid {false};
-    FLOAT mSDRWhiteLevelInNits {};
-    FLOAT mMaxLuminanceInNits {};
-    FLOAT mMinLuminanceInNits {};
-  };
-  std::shared_ptr<HDRData> mHDRData;
-
   winrt::com_ptr<ID3D11Device2> mD3DDevice;
   winrt::com_ptr<ID3D11DeviceContext> mD3DImmediateContext;
   winrt::com_ptr<IDXGIDevice2> mDXGIDevice;

@@ -134,7 +134,6 @@ struct MainWindow : MainWindowT<MainWindow>,
     UINT_PTR uIdSubclass,
     DWORD_PTR dwRefData);
 
-  void InitializeHDR();
   winrt::com_ptr<ID2D1Effect> mHDRWhiteLevelEffect;
 };
 }// namespace winrt::OpenKneeboardApp::implementation

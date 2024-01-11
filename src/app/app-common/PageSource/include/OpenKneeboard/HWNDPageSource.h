@@ -127,6 +127,8 @@ class HWNDPageSource final
   uint32_t mMouseButtons {};
   size_t mRecreations = 0;
 
+  std::optional<FLOAT> mSDRWhiteLevelInNits;
+
   winrt::com_ptr<ID2D1Effect> mD2DWhiteLevel;
   winrt::com_ptr<ID2D1Effect> mD2DColorManagement;
   ID2D1Effect* mD2DFirstEffect {nullptr};

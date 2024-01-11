@@ -31,6 +31,8 @@
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/weak_wrap.h>
 
+#include <winrt/Microsoft.Graphics.Display.h>
+#include <winrt/Microsoft.UI.Interop.h>
 #include <winrt/Windows.Foundation.Metadata.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Graphics.DirectX.Direct3D11.h>
@@ -183,11 +185,33 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
     mD2DColorManagement->SetValue(
       D2D1_COLORMANAGEMENT_PROP_DESTINATION_COLOR_CONTEXT, srgb.get());
 
-    winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
-      CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
-    mD2DWhiteLevel->SetValue(
-      D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
-      D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
+    {
+      winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
+        CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
+      mD2DWhiteLevel->SetValue(
+        D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
+        D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
+
+      // DisplayInformation::CreateForWindowId only works for windows owned by
+      // this thread (and process)... so we'll jump through some hoops.
+      const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+      auto displayID = winrt::Microsoft::UI::GetDisplayIdFromMonitor(monitor);
+      auto di = winrt::Microsoft::Graphics::Display::DisplayInformation::
+        CreateForDisplayId(displayID);
+      auto aci = di.GetAdvancedColorInfo();
+      // WideColorGamut and HighDynamicRange are distinct options here, but
+      // I think they can both be treated the same; for non-HDR displays,
+      // ACI reports standard white level, and for everything except SDR
+      // we *should* have the color luminance points
+      const auto isSDR = aci.CurrentAdvancedColorKind()
+        == winrt::Microsoft::Graphics::Display::DisplayAdvancedColorKind::
+          StandardDynamicRange;
+
+      mD2DWhiteLevel->SetValue(
+        D2D1_WHITELEVELADJUSTMENT_PROP_OUTPUT_WHITE_LEVEL,
+        isSDR ? D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL
+              : static_cast<FLOAT>(aci.SdrWhiteLevelInNits()));
+    }
 
     mD2DFirstEffect = mD2DWhiteLevel.get();
     mD2DColorManagement->SetInputEffect(0, mD2DWhiteLevel.get(), true);
@@ -350,11 +374,6 @@ void HWNDPageSource::RenderPage(
 
   auto d2d = rt->d2d();
   mD2DFirstEffect->SetInput(0, mBitmap.get(), true);
-  const auto& hdr = *mDXR.mHDRData;
-  mD2DWhiteLevel->SetValue(
-    D2D1_WHITELEVELADJUSTMENT_PROP_OUTPUT_WHITE_LEVEL,
-    hdr.mIsValid ? hdr.mSDRWhiteLevelInNits
-                 : D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
   const auto scale = (rect.right - rect.left) / mContentSize.width;
   d2d->SetTransform(
     D2D1::Matrix3x2F::Scale({scale, scale})
