@@ -19,10 +19,11 @@
  */
 #pragma once
 
-#include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/config.h>
-
 #include "OpenXRKneeboard.h"
+
+#include <OpenKneeboard/D3D11.h>
+
+#include <OpenKneeboard/config.h>
 
 struct XrGraphicsBindingD3D11KHR;
 
@@ -45,6 +46,12 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const SHM::Snapshot&,
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&);
+
+  struct DXGIFormats {
+    DXGI_FORMAT mTextureFormat;
+    DXGI_FORMAT mRenderTargetViewFormat;
+  };
+  static DXGIFormats GetDXGIFormats(OpenXRNext*, XrSession);
 
  protected:
   virtual bool ConfigurationsAreCompatible(

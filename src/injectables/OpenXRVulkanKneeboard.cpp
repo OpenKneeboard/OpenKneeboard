@@ -208,7 +208,7 @@ void OpenXRVulkanKneeboard::InitInterop(
   {
     // Specifying VK_FORMAT_ below
     static_assert(
-      SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+      SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
 
     VkExternalMemoryImageCreateInfo externalCreateInfo {
       .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
@@ -358,9 +358,8 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   XrSession session,
   const VRRenderConfig& vrc,
   uint8_t layerIndex) {
-  static_assert(
-    SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
-  const auto vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
+  static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
+  const auto vkFormat = VK_FORMAT_B8G8R8A8_UNORM;
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT

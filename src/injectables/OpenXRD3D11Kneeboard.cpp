@@ -61,19 +61,14 @@ bool OpenXRD3D11Kneeboard::ConfigurationsAreCompatible(
   return true;
 }
 
-XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
-  XrSession session,
-  const VRRenderConfig&,
-  uint8_t layerIndex) {
-  dprintf("{}", __FUNCTION__);
-
-  auto oxr = this->GetOpenXR();
-
+OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
+  OpenXRNext* oxr,
+  XrSession session) {
   uint32_t formatCount {0};
   if (XR_FAILED(
         oxr->xrEnumerateSwapchainFormats(session, 0, &formatCount, nullptr))) {
     dprint("Failed to get swapchain format count");
-    return nullptr;
+    return {};
   }
   std::vector<int64_t> formats;
   formats.resize(formatCount);
@@ -82,27 +77,45 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
       session, formatCount, &formatCount, formats.data()))
     || formatCount == 0) {
     dprint("Failed to enumerate swapchain formats");
-    return nullptr;
+    return {};
   }
-  auto format = formats.front();
-  dprintf("Runtime prefers format {}", format);
+  for (const auto it: formats) {
+    dprintf("Runtime supports swapchain format: {}", it);
+  }
   // If this changes, we probably want to change the preference list below
-  static_assert(
-    SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
-  for (const auto preferred:
-       {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}) {
-    auto it = std::ranges::find(formats, preferred);
+  static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
+  std::vector<DXGIFormats> preferredFormats {
+    {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, DXGI_FORMAT_B8G8R8A8_UNORM},
+    {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM},
+  };
+  for (const auto preferred: preferredFormats) {
+    auto it = std::ranges::find(formats, preferred.mTextureFormat);
     if (it != formats.end()) {
-      format = preferred;
-      break;
+      return preferred;
     }
   }
-  dprintf("Creating swapchain with format {}", format);
+
+  auto format = static_cast<DXGI_FORMAT>(formats.front());
+  return {format, format};
+}
+
+XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
+  XrSession session,
+  const VRRenderConfig&,
+  uint8_t layerIndex) {
+  dprintf("{}", __FUNCTION__);
+
+  auto oxr = this->GetOpenXR();
+
+  auto formats = GetDXGIFormats(oxr, session);
+  dprintf(
+    "Creating swapchain with format {}",
+    static_cast<int>(formats.mTextureFormat));
 
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
-    .format = format,
+    .format = formats.mTextureFormat,
     .sampleCount = 1,
     .width = TextureWidth,
     .height = TextureHeight,
@@ -162,7 +175,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
 #endif
     mRenderTargetViews.at(layerIndex).at(i)
       = std::make_shared<D3D11::RenderTargetViewFactory>(
-        mDevice.get(), images.at(i).texture, static_cast<DXGI_FORMAT>(format));
+        mDevice.get(), images.at(i).texture, formats.mRenderTargetViewFormat);
   }
 
   return swapchain;

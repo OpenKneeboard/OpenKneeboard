@@ -46,7 +46,7 @@ using VRPosition = VRAbsolutePosition;
 struct FrameMetadata;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
-  = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+  = DXGI_FORMAT_B8G8R8A8_UNORM;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
 using LayerTextures = std::array<winrt::com_ptr<ID3D11Texture2D>, MaxLayers>;
