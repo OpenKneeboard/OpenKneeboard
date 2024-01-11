@@ -72,7 +72,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   uint32_t formatCount {0};
   if (XR_FAILED(
         oxr->xrEnumerateSwapchainFormats(session, 0, &formatCount, nullptr))) {
-    traceprint("Failed to get swapchain format count");
+    dprint("Failed to get swapchain format count");
     return nullptr;
   }
   std::vector<int64_t> formats;
@@ -81,11 +81,23 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     XR_FAILED(oxr->xrEnumerateSwapchainFormats(
       session, formatCount, &formatCount, formats.data()))
     || formatCount == 0) {
-    traceprint("Failed to enumerate swapchain formats");
+    dprint("Failed to enumerate swapchain formats");
     return nullptr;
   }
-  const auto format = formats.front();
-  traceprint("Creating swapchain with format {}", format);
+  auto format = formats.front();
+  dprintf("Runtime prefers format {}", format);
+  // If this changes, we probably want to change the preference list below
+  static_assert(
+    SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB);
+  for (const auto preferred:
+       {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB}) {
+    auto it = std::ranges::find(formats, preferred);
+    if (it != formats.end()) {
+      format = preferred;
+      break;
+    }
+  }
+  dprintf("Creating swapchain with format {}", format);
 
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
