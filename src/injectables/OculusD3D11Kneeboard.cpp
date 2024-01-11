@@ -105,6 +105,8 @@ bool OculusD3D11Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& params) {
+  D3D11::SavedState state(mD3DImmediateContext);
+
   return OculusD3D11Kneeboard::Render(
     mD3D.get(),
     mRenderTargetViews.at(layerIndex),
@@ -122,7 +124,9 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
   const decltype(&IDXGISwapChain::Present)& next) {
   if (!mD3D) {
     swapChain->GetDevice(IID_PPV_ARGS(mD3D.put()));
-    if (!mD3D) {
+    if (mD3D) {
+      mD3D->GetImmediateContext(mD3DImmediateContext.put());
+    } else {
       dprint("Got a swapchain without a D3D11 device");
     }
   }

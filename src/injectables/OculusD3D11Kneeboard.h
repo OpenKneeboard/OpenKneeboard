@@ -19,16 +19,19 @@
  */
 #pragma once
 
+#include "IDXGISwapChainPresentHook.h"
+#include "OculusKneeboard.h"
+
 #include <OpenKneeboard/D3D11.h>
+
 #include <OpenKneeboard/config.h>
-#include <d3d11.h>
-#include <d3d11_2.h>
+
 #include <shims/winrt/base.h>
 
 #include <array>
 
-#include "IDXGISwapChainPresentHook.h"
-#include "OculusKneeboard.h"
+#include <d3d11.h>
+#include <d3d11_2.h>
 
 namespace OpenKneeboard {
 
@@ -72,6 +75,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     MaxLayers>
     mRenderTargetViews;
   winrt::com_ptr<ID3D11Device> mD3D = nullptr;
+  winrt::com_ptr<ID3D11DeviceContext> mD3DImmediateContext = nullptr;
 
   OculusKneeboard mOculusKneeboard;
   IDXGISwapChainPresentHook mDXGIHook;

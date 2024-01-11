@@ -122,6 +122,10 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       return passthrough();
     }
 
+    winrt::com_ptr<ID3D11DeviceContext> ctx;
+    device->GetImmediateContext(ctx.put());
+    D3D11::SavedState state(ctx);
+
     D3D11::DrawTextureWithOpacity(
       device.get(),
       srv.get(),

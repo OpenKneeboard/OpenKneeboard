@@ -177,78 +177,85 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   uint8_t topMost = layerCount - 1;
 
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-    auto layer = *snapshot.GetLayerConfig(layerIndex);
-    if (!layer.IsValid()) {
-      TraceLoggingWriteStop(
-        activity,
-        "xrEndFrame",
-        TraceLoggingValue(layerIndex, "LayerNumber"),
-        TraceLoggingValue("Invalid layer config", "Result"));
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
-    }
+  {
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    d3d11->GetImmediateContext(context.put());
+    D3D11::SavedState state(context);
 
-    auto& swapchain = mSwapchains.at(layerIndex);
-    if (swapchain) {
-      if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {
-        dprint("Incompatible swapchain due to options change, recreating");
-        mOpenXR->xrDestroySwapchain(swapchain);
-        swapchain = nullptr;
+    for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+      auto layer = *snapshot.GetLayerConfig(layerIndex);
+      if (!layer.IsValid()) {
+        TraceLoggingWriteStop(
+          activity,
+          "xrEndFrame",
+          TraceLoggingValue(layerIndex, "LayerNumber"),
+          TraceLoggingValue("Invalid layer config", "Result"));
+        return mOpenXR->xrEndFrame(session, frameEndInfo);
       }
-    }
 
-    if (!swapchain) {
-      mInitialConfig = config.mVR;
-      swapchain = this->CreateSwapChain(session, mInitialConfig, layerIndex);
+      auto& swapchain = mSwapchains.at(layerIndex);
+      if (swapchain) {
+        if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {
+          dprint("Incompatible swapchain due to options change, recreating");
+          mOpenXR->xrDestroySwapchain(swapchain);
+          swapchain = nullptr;
+        }
+      }
+
       if (!swapchain) {
-        dprintf("Failed to create swapchain for layer {}", layerIndex);
-        OPENKNEEBOARD_BREAK;
-        TraceLoggingWriteStop(
-          activity,
-          "xrEndFrame",
-          TraceLoggingValue(layerIndex, "LayerNumber"),
-          TraceLoggingValue("Failed to create swapchain", "Result"));
-        return mOpenXR->xrEndFrame(session, frameEndInfo);
+        mInitialConfig = config.mVR;
+        swapchain = this->CreateSwapChain(session, mInitialConfig, layerIndex);
+        if (!swapchain) {
+          dprintf("Failed to create swapchain for layer {}", layerIndex);
+          OPENKNEEBOARD_BREAK;
+          TraceLoggingWriteStop(
+            activity,
+            "xrEndFrame",
+            TraceLoggingValue(layerIndex, "LayerNumber"),
+            TraceLoggingValue("Failed to create swapchain", "Result"));
+          return mOpenXR->xrEndFrame(session, frameEndInfo);
+        }
+        dprintf("Created swapchain for layer {}", layerIndex);
       }
-      dprintf("Created swapchain for layer {}", layerIndex);
-    }
 
-    const auto renderParams
-      = this->GetRenderParameters(snapshot, layer, hmdPose);
-    if (renderParams.mIsLookingAtKneeboard) {
-      topMost = layerIndex;
-    }
-    const auto staleCacheKey
-      = (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey);
-    const auto alwaysRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-    const auto needsRender = staleCacheKey || alwaysRender;
-
-    if (needsRender) {
-      TraceLoggingWriteTagged(
-        activity,
-        "xrEndFrame_Render",
-        TraceLoggingValue(layerIndex, "LayerNumber"),
-        TraceLoggingValue(alwaysRender, "AlwaysRender"),
-        TraceLoggingValue(mRenderCacheKeys.at(layerIndex), "PreviousCacheKey"),
-        TraceLoggingValue(renderParams.mCacheKey, "CurrentCacheKey"));
-      if (!this->Render(swapchain, snapshot, layerIndex, renderParams)) {
-        dprint("Render failed.");
-        OPENKNEEBOARD_BREAK;
-        TraceLoggingWriteStop(
-          activity,
-          "xrEndFrame",
-          TraceLoggingValue(layerIndex, "LayerNumber"),
-          TraceLoggingValue("Render failed", "Result"));
-        return mOpenXR->xrEndFrame(session, frameEndInfo);
+      const auto renderParams
+        = this->GetRenderParameters(snapshot, layer, hmdPose);
+      if (renderParams.mIsLookingAtKneeboard) {
+        topMost = layerIndex;
       }
-      mRenderCacheKeys.at(layerIndex) = renderParams.mCacheKey;
-    }
+      const auto staleCacheKey
+        = (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey);
+      const auto alwaysRender
+        = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+      const auto needsRender = staleCacheKey || alwaysRender;
 
-    static_assert(
-      SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
-      "Use premultiplied alpha in shared texture, or pass "
-      "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
-    kneeboardLayers.push_back({
+      if (needsRender) {
+        TraceLoggingWriteTagged(
+          activity,
+          "xrEndFrame_Render",
+          TraceLoggingValue(layerIndex, "LayerNumber"),
+          TraceLoggingValue(alwaysRender, "AlwaysRender"),
+          TraceLoggingValue(
+            mRenderCacheKeys.at(layerIndex), "PreviousCacheKey"),
+          TraceLoggingValue(renderParams.mCacheKey, "CurrentCacheKey"));
+        if (!this->Render(swapchain, snapshot, layerIndex, renderParams)) {
+          dprint("Render failed.");
+          OPENKNEEBOARD_BREAK;
+          TraceLoggingWriteStop(
+            activity,
+            "xrEndFrame",
+            TraceLoggingValue(layerIndex, "LayerNumber"),
+            TraceLoggingValue("Render failed", "Result"));
+          return mOpenXR->xrEndFrame(session, frameEndInfo);
+        }
+        mRenderCacheKeys.at(layerIndex) = renderParams.mCacheKey;
+      }
+
+      static_assert(
+        SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
+        "Use premultiplied alpha in shared texture, or pass "
+        "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
+      kneeboardLayers.push_back({
       .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
       .next = nullptr,
       .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
@@ -266,8 +273,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .pose = this->GetXrPosef(renderParams.mKneeboardPose),
       .size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
     });
-    nextLayers.push_back(
-      reinterpret_cast<XrCompositionLayerBaseHeader*>(&kneeboardLayers.back()));
+      nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(
+        &kneeboardLayers.back()));
+    }
   }
 
   if (topMost != layerCount - 1) {
