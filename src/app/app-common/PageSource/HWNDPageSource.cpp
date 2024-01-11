@@ -340,11 +340,12 @@ void HWNDPageSource::RenderPage(
     return;
   }
 
+  const auto contentBox = this->GetContentBox();
   const D2D1_RECT_F srcRect {
-    0.0f,
-    0.0f,
-    static_cast<FLOAT>(mContentSize.width),
-    static_cast<FLOAT>(mContentSize.height),
+    static_cast<FLOAT>(contentBox.left),
+    static_cast<FLOAT>(contentBox.top),
+    static_cast<FLOAT>(contentBox.right),
+    static_cast<FLOAT>(contentBox.bottom),
   };
 
   auto d2d = rt->d2d();
@@ -358,7 +359,7 @@ void HWNDPageSource::RenderPage(
   d2d->SetTransform(
     D2D1::Matrix3x2F::Scale({scale, scale})
     * D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
-  d2d->DrawImage(mD2DLastEffect);
+  d2d->DrawImage(mD2DLastEffect, nullptr, &srcRect);
 
   mNeedsRepaint = false;
 }
