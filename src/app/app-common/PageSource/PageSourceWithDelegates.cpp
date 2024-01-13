@@ -162,10 +162,8 @@ void PageSourceWithDelegates::RenderPage(
     mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
   }
 
-  const auto nativeSize = delegate->GetPreferredSize(pageID).mPixelSize;
   mContentLayerCache[rtid]->Render(
     rect,
-    nativeSize,
     pageID.GetTemporaryValue(),
     rt,
     [&](RenderTarget* rt, const D2D1_SIZE_U& size) {

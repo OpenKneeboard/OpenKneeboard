@@ -527,14 +527,12 @@ void PDFFilePageSource::RenderPage(
   RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& rect) {
-  const auto size = this->GetPreferredSize(pageID).mPixelSize;
-
   const auto rtid = rt->GetID();
   if (!p->mCache.contains(rtid)) {
     p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
   }
   p->mCache[rtid]->Render(
-    rect, size, pageID.GetTemporaryValue(), rt, [=](auto rt, const auto& size) {
+    rect, pageID.GetTemporaryValue(), rt, [=](auto rt, const auto& size) {
       this->RenderPageContent(
         rt,
         pageID,

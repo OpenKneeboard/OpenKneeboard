@@ -239,7 +239,6 @@ void NavigationTab::RenderPage(
       origin.x + (scale * mPreferredSize.width),
       origin.y + (scale * mPreferredSize.height),
     },
-    mPreferredSize,
     pageID.GetTemporaryValue(),
     rt,
     std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));

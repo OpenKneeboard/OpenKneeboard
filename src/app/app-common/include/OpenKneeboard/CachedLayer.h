@@ -41,7 +41,6 @@ class CachedLayer final {
 
   void Render(
     const D2D1_RECT_F& where,
-    const D2D1_SIZE_U& nativeSize,
     Key cacheKey,
     RenderTarget*,
     std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl);

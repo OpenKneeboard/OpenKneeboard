@@ -36,18 +36,22 @@ CachedLayer::~CachedLayer() {
 
 void CachedLayer::Render(
   const D2D1_RECT_F& where,
-  const D2D1_SIZE_U& nativeSize,
   Key cacheKey,
   RenderTarget* rt,
   std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl) {
   std::scoped_lock lock(mCacheMutex);
 
-  if (mCacheSize != nativeSize || !mCache) {
+  const D2D1_SIZE_U cacheSize {
+    static_cast<UINT>(std::lround(where.right - where.left)),
+    static_cast<UINT>(std::lround(where.bottom - where.top)),
+  };
+
+  if (mCacheSize != cacheSize || !mCache) {
     mCache = nullptr;
-    mCacheSize = nativeSize;
+    mCacheSize = cacheSize;
     D3D11_TEXTURE2D_DESC textureDesc {
-      .Width = nativeSize.width,
-      .Height = nativeSize.height,
+      .Width = cacheSize.width,
+      .Height = cacheSize.height,
       .MipLevels = 1,
       .ArraySize = 1,
       .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
@@ -68,7 +72,7 @@ void CachedLayer::Render(
       mDXR.mD3DImmediateContext->ClearRenderTargetView(
         d3d.rtv(), DirectX::Colors::Transparent);
     }
-    impl(mCacheRenderTarget.get(), nativeSize);
+    impl(mCacheRenderTarget.get(), cacheSize);
     mKey = cacheKey;
   }
 
