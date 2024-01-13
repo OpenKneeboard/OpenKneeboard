@@ -421,15 +421,36 @@ XrResult xrCreateSession(
 
 XrResult xrCreateVulkanDeviceKHR(
   XrInstance instance,
-  const XrVulkanDeviceCreateInfoKHR* createInfo,
+  const XrVulkanDeviceCreateInfoKHR* origCreateInfo,
   VkDevice* vulkanDevice,
   VkResult* vulkanResult) {
   dprintf("{}", __FUNCTION__);
+
+  auto createInfo = *origCreateInfo;
+  auto vci = *createInfo.vulkanCreateInfo;
+  createInfo.vulkanCreateInfo = &vci;
+
+  std::vector<const char*> extensions;
+  for (size_t i = 0; i < vci.enabledExtensionCount; ++i) {
+    extensions.push_back(vci.ppEnabledExtensionNames[i]);
+  }
+  std::vector<std::string> neededExtensions {
+    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+  };
+  for (const auto& ext: neededExtensions) {
+    auto it = std::ranges::find(extensions, ext);
+    if (it == extensions.end()) {
+      extensions.push_back(ext.c_str());
+    }
+  }
+  vci.enabledExtensionCount = extensions.size();
+  vci.ppEnabledExtensionNames = extensions.data();
+
   const auto ret = gNext->xrCreateVulkanDeviceKHR(
-    instance, createInfo, vulkanDevice, vulkanResult);
+    instance, &createInfo, vulkanDevice, vulkanResult);
   if (XR_SUCCEEDED(ret)) {
-    gPFN_vkGetInstanceProcAddr = createInfo->pfnGetInstanceProcAddr;
-    gVKAllocator = createInfo->vulkanAllocator;
+    gPFN_vkGetInstanceProcAddr = createInfo.pfnGetInstanceProcAddr;
+    gVKAllocator = createInfo.vulkanAllocator;
   }
 
   return ret;
