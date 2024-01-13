@@ -356,10 +356,10 @@ void TabletInputAdapter::OnTabletInput(
     // to adapt for the aspect ratio
 
     // 1. scale to canvas size
-    auto canvasSize = view->GetCanvasSize();
+    auto canvasSize = view->GetPreferredSize().mPixelSize;
 
-    const auto scaleX = canvasSize.width / maxX;
-    const auto scaleY = canvasSize.height / maxY;
+    const auto scaleX = canvasSize.mWidth / maxX;
+    const auto scaleY = canvasSize.mHeight / maxY;
     // in most cases, we use `std::min` - that would be for fitting the tablet
     // in the canvas bounds, but we want to fit the canvas in the tablet, so
     // doing the opposite
@@ -369,8 +369,8 @@ void TabletInputAdapter::OnTabletInput(
     y *= scale;
 
     // 2. get back to 0..1
-    x /= canvasSize.width;
-    y /= canvasSize.height;
+    x /= canvasSize.mWidth;
+    y /= canvasSize.mHeight;
 
     CursorEvent event {
       .mTouchState = (state.mPenButtons & 1)

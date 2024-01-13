@@ -40,8 +40,8 @@ void UILayerBase::PostNextCursorEvent(
 
   CursorEvent nextEvent {cursorEvent};
 
-  nextEvent.mX *= metrics.mCanvasSize.width;
-  nextEvent.mY *= metrics.mCanvasSize.height;
+  nextEvent.mX *= metrics.mPreferredSize.mPixelSize.mWidth;
+  nextEvent.mY *= metrics.mPreferredSize.mPixelSize.mHeight;
 
   nextEvent.mX -= metrics.mNextArea.left;
   nextEvent.mY -= metrics.mNextArea.top;

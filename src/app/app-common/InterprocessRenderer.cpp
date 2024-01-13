@@ -271,7 +271,7 @@ void InterprocessRenderer::Render(Layer& layer) {
 
   const auto view = layer.mKneeboardView;
   layer.mConfig.mLayerID = view->GetRuntimeID().GetTemporaryValue();
-  const auto usedSize = view->GetCanvasSize();
+  const auto usedSize = view->GetIPCRenderSize();
   layer.mConfig.mImageWidth = usedSize.width;
   layer.mConfig.mImageHeight = usedSize.height;
 

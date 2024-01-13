@@ -144,24 +144,21 @@ IUILayer::Metrics HeaderUILayer::GetMetrics(
   const auto contentHeight
     = nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top;
   const auto headerHeight = contentHeight * (HeaderPercent / 100.0f);
-  return {
-    .mCanvasSize = {
-      nextMetrics.mCanvasSize.width,
-      nextMetrics.mCanvasSize.height + headerHeight,
-    },
-    .mNextArea = {
+  return Metrics {
+    nextMetrics.mPreferredSize.Extended(
+      {0, static_cast<uint32_t>(headerHeight)}),
+    {
       0.0f,
       headerHeight,
-      nextMetrics.mCanvasSize.width,
-      nextMetrics.mCanvasSize.height + headerHeight,
+      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mWidth),
+      nextMetrics.mPreferredSize.mPixelSize.mHeight + headerHeight,
     },
-    .mContentArea = {
+    {
       nextMetrics.mContentArea.left,
       nextMetrics.mContentArea.top + headerHeight,
       nextMetrics.mContentArea.right,
       nextMetrics.mContentArea.bottom + headerHeight,
     },
-    .mScalingKind = nextMetrics.mScalingKind,
   };
 }
 
@@ -173,10 +170,10 @@ void HeaderUILayer::Render(
   const auto tabView = context.mTabView;
 
   const auto metrics = this->GetMetrics(next, context);
-  const auto preferredSize = metrics.mCanvasSize;
+  const auto preferredSize = metrics.mPreferredSize;
 
   const auto totalHeight = rect.bottom - rect.top;
-  const auto scale = totalHeight / preferredSize.height;
+  const auto scale = totalHeight / preferredSize.mPixelSize.mHeight;
 
   const auto contentHeight
     = scale * (metrics.mContentArea.bottom - metrics.mContentArea.top);

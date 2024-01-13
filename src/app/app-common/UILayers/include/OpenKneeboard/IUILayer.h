@@ -58,10 +58,19 @@ class IUILayer {
     = 0;
 
   struct Metrics {
-    D2D1_SIZE_F mCanvasSize {};
+    PreferredSize mPreferredSize {};
     D2D1_RECT_F mNextArea {};
     D2D1_RECT_F mContentArea {};
-    ScalingKind mScalingKind {};
+
+    Metrics() = delete;
+    constexpr Metrics(
+      PreferredSize preferredSize,
+      D2D1_RECT_F nextArea,
+      D2D1_RECT_F contentArea)
+      : mPreferredSize(preferredSize),
+        mNextArea(nextArea),
+        mContentArea(contentArea) {
+    }
   };
 
   virtual Metrics GetMetrics(const NextList&, const Context&) const = 0;

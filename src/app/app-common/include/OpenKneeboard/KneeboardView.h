@@ -1,5 +1,4 @@
-/*
- * OpenKneeboard
+/* OpenKneeboard
  *
  * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
  *
@@ -63,7 +62,7 @@ class KneeboardView final : public IKneeboardView,
   virtual void PreviousTab() override;
   virtual void NextTab() override;
 
-  virtual D2D1_SIZE_U GetCanvasSize() const override;
+  virtual D2D1_SIZE_U GetIPCRenderSize() const override;
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual PreferredSize GetPreferredSize() const override;
 

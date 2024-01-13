@@ -56,31 +56,25 @@ IUILayer::Metrics TabViewUILayer::GetMetrics(
   const IUILayer::NextList&,
   const Context& context) const {
   const constexpr Metrics errorMapping {
-    {ErrorRenderWidth, ErrorRenderHeight},
+    {{ErrorRenderWidth, ErrorRenderHeight}, ScalingKind::Vector},
     {0, 0, ErrorRenderWidth, ErrorRenderHeight},
     {0, 0, ErrorRenderWidth, ErrorRenderHeight},
-    {ScalingKind::Vector},
   };
   auto tabView = context.mTabView;
   if (!tabView) {
     return errorMapping;
   }
   const auto nextSize = tabView->GetPreferredSize();
+  const auto& ps = nextSize.mPixelSize;
 
-  if (nextSize.mPixelSize.mWidth == 0 || nextSize.mPixelSize.mHeight == 0) {
+  if (ps.mWidth == 0 || ps.mHeight == 0) {
     return errorMapping;
   }
 
-  const D2D1_SIZE_F size {
-    static_cast<FLOAT>(nextSize.mPixelSize.mWidth),
-    static_cast<FLOAT>(nextSize.mPixelSize.mHeight),
-  };
-
   return {
-    size,
-    {0, 0, size.width, size.height},
-    {0, 0, size.width, size.height},
-    nextSize.mScalingKind,
+    nextSize,
+    {0, 0, static_cast<FLOAT>(ps.mWidth), static_cast<FLOAT>(ps.mHeight)},
+    {0, 0, static_cast<FLOAT>(ps.mWidth), static_cast<FLOAT>(ps.mHeight)},
   };
 }
 

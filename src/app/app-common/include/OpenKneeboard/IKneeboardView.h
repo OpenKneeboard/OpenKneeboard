@@ -71,7 +71,7 @@ class IKneeboardView {
   virtual void PreviousTab() = 0;
   virtual void NextTab() = 0;
 
-  virtual D2D1_SIZE_U GetCanvasSize() const = 0;
+  virtual D2D1_SIZE_U GetIPCRenderSize() const = 0;
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual PreferredSize GetPreferredSize() const = 0;
 

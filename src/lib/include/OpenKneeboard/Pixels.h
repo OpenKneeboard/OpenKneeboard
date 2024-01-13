@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <cmath>
 #include <compare>
 #include <cstdint>
 
@@ -44,6 +45,16 @@ struct PixelSize {
 
   constexpr operator D2D1_SIZE_U() const {
     return {mWidth, mHeight};
+  }
+
+  constexpr PixelSize ScaledToFit(const PixelSize& container) const {
+    const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
+    const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
+    const auto scale = std::min(scaleX, scaleY);
+    return {
+      static_cast<uint32_t>(std::lround(mWidth * scale)),
+      static_cast<uint32_t>(std::lround(mHeight * scale)),
+    };
   }
 };
 

@@ -254,7 +254,7 @@ std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
   return mCurrentTabView;
 }
 
-D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
+D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
   if (!mCurrentTabView) {
     return {ErrorRenderWidth, ErrorRenderHeight};
   }
@@ -269,40 +269,51 @@ D2D1_SIZE_U KneeboardView::GetCanvasSize() const {
       .mIsActiveForInput = false,
     });
 
-  const auto idealSize = metrics.mCanvasSize;
-  if (
-    metrics.mScalingKind == ScalingKind::Bitmap
-    && idealSize.width <= TextureWidth && idealSize.height <= TextureHeight) {
+  const auto idealSize = metrics.mPreferredSize.mPixelSize;
+  if (metrics.mPreferredSize.mScalingKind == ScalingKind::Bitmap) {
+    dprint("Bitmap!");
+    // Integer scaling to fit
+    const auto scaleX
+      = std::ceilf(idealSize.mWidth / static_cast<float>(TextureWidth));
+    const auto scaleY
+      = std::ceilf(idealSize.mHeight / static_cast<float>(TextureHeight));
+    const auto scale = static_cast<uint32_t>(std::min(scaleX, scaleY));
+
     return {
-      static_cast<UINT>(std::lround(idealSize.width)),
-      static_cast<UINT>(std::lround(idealSize.height)),
+      idealSize.mWidth * scale,
+      idealSize.mHeight * scale,
     };
-  } else {
-    const auto now = SHM::ActiveConsumers::Clock::now();
-    const auto consumers = SHM::ActiveConsumers::Get();
-    const auto& size = consumers.mNonVRPixelSize;
-    if (
-      (now - consumers.NotVR()) < std::chrono::milliseconds(500)
-      && (now - consumers.AnyVR()) > std::chrono::seconds(1) && size.mWidth
-      && size.mHeight) {
-      const auto ret = mKneeboard->GetNonVRSettings()
-                         .Layout(
-                           size,
-                           {static_cast<uint32_t>(idealSize.width),
-                            static_cast<uint32_t>(idealSize.height)})
-                         .mSize;
-      return {ret.mWidth, ret.mHeight};
-    }
+  }
+  dprint("Fitting!");
+
+  const auto consumers = SHM::ActiveConsumers::Get();
+  if (consumers.Any() == SHM::ActiveConsumers::T {}) {
+    return idealSize.ScaledToFit({TextureWidth, TextureHeight});
+  }
+  const auto now = SHM::ActiveConsumers::Clock::now();
+
+  const bool haveNonVR
+    = (now - consumers.NotVROrViewer()) < std::chrono::milliseconds(500);
+  const bool haveVR = (now - consumers.AnyVR()) < std::chrono::seconds(1);
+  const bool haveViewer
+    = (now - consumers.mViewer) < std::chrono::milliseconds(500);
+
+  if (haveVR) {
+    return idealSize.ScaledToFit({TextureWidth, TextureHeight});
   }
 
-  const auto xScale = TextureWidth / idealSize.width;
-  const auto yScale = TextureHeight / idealSize.height;
-  const auto scale = std::min(xScale, yScale);
-  const D2D1_SIZE_U canvas {
-    static_cast<UINT>(std::lround(idealSize.width * scale)),
-    static_cast<UINT>(std::lround(idealSize.height * scale)),
-  };
-  return canvas;
+  const auto& consumerSize = consumers.mNonVRPixelSize;
+  if (haveNonVR) {
+    const auto rect
+      = mKneeboard->GetNonVRSettings().Layout(consumerSize, idealSize);
+    return {rect.mSize.mWidth, rect.mSize.mHeight};
+  }
+
+  if (haveViewer) {
+    return idealSize.ScaledToFit(consumerSize);
+  }
+
+  return idealSize.ScaledToFit({TextureWidth, TextureHeight});
 }
 
 PreferredSize KneeboardView::GetPreferredSize() const {
@@ -442,7 +453,7 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
     contentArea.right - contentArea.left,
     contentArea.bottom - contentArea.top,
   };
-  const auto& canvasSize = mapping.mCanvasSize;
+  const auto& canvasSize = mapping.mPreferredSize.mPixelSize;
 
   D2D1_POINT_2F point {contentPoint};
   point.x *= contentSize.width;
@@ -451,8 +462,8 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
   point.y += contentArea.top;
 
   return {
-    point.x / canvasSize.width,
-    point.y / canvasSize.height,
+    point.x / canvasSize.mWidth,
+    point.y / canvasSize.mHeight,
   };
 }
 

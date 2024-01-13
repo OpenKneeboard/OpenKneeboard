@@ -43,7 +43,7 @@ struct PreferredSize {
   ScalingKind mScalingKind {ScalingKind::Bitmap};
   std::optional<PhysicalSize> mPhysicalSize;
 
-  constexpr PreferredSize Extended(const PixelSize& extension) {
+  constexpr PreferredSize Extended(const PixelSize& extension) const {
     auto ret = *this;
     ret.mPixelSize.mWidth += extension.mWidth;
     ret.mPixelSize.mHeight += extension.mHeight;
@@ -52,7 +52,7 @@ struct PreferredSize {
       return ret;
     }
 
-    auto& p = *mPhysicalSize;
+    auto& p = *ret.mPhysicalSize;
     using Direction = PhysicalSize::Direction;
     switch (p.mDirection) {
       case Direction::Vertical:

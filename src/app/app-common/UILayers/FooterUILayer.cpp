@@ -101,25 +101,16 @@ IUILayer::Metrics FooterUILayer::GetMetrics(
   const auto contentHeight
     = nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top;
   const auto footerHeight = contentHeight * (FooterPercent / 100.0f);
-  return {
-    {
-      nextMetrics.mCanvasSize.width,
-      nextMetrics.mCanvasSize.height + footerHeight,
-    },
+  return Metrics {
+    nextMetrics.mPreferredSize.Extended(
+      {0, static_cast<uint32_t>(footerHeight)}),
     {
       0.0f,
       0.0f,
-      nextMetrics.mCanvasSize.width,
-      nextMetrics.mCanvasSize.height,
+      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mWidth),
+      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mHeight),
     },
-
-    {
-      nextMetrics.mContentArea.left,
-      nextMetrics.mContentArea.top,
-      nextMetrics.mContentArea.right,
-      nextMetrics.mContentArea.bottom,
-    },
-    nextMetrics.mScalingKind,
+    nextMetrics.mContentArea,
   };
 }
 
@@ -136,10 +127,10 @@ void FooterUILayer::Render(
   const auto tabView = context.mTabView;
 
   const auto metrics = this->GetMetrics(next, context);
-  const auto preferredSize = metrics.mCanvasSize;
+  const auto preferredSize = metrics.mPreferredSize.mPixelSize;
 
   const auto totalHeight = rect.bottom - rect.top;
-  const auto scale = totalHeight / preferredSize.height;
+  const auto scale = totalHeight / preferredSize.mHeight;
 
   const auto contentHeight
     = scale * (metrics.mContentArea.bottom - metrics.mContentArea.top);

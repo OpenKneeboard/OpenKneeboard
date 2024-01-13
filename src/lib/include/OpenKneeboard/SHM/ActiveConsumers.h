@@ -39,6 +39,7 @@ struct ActiveConsumers final {
   T AnyVR() const;
   T VRExceptSteam() const;
   T NotVR() const;
+  T NotVROrViewer() const;
   T Any() const;
 
   PixelSize mNonVRPixelSize {};

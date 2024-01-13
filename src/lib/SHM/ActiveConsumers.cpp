@@ -156,9 +156,14 @@ ActiveConsumers::T ActiveConsumers::VRExceptSteam() const {
   return std::ranges::max({mOpenXR, mOculusD3D11, mOculusD3D12});
 }
 
+ActiveConsumers::T ActiveConsumers::NotVROrViewer() const {
+  return mNonVRD3D11;
+}
+
 ActiveConsumers::T ActiveConsumers::NotVR() const {
-  if (mNonVRD3D11 != T {}) {
-    return mNonVRD3D11;
+  const auto real = NotVROrViewer();
+  if (real != T {}) {
+    return real;
   }
   return mViewer;
 }

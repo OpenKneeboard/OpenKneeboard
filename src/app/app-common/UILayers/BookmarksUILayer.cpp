@@ -86,11 +86,8 @@ void BookmarksUILayer::PostCursorEvent(
   const auto metrics = this->GetMetrics(next, context);
 
   auto buttonsEvent = cursorEvent;
-  buttonsEvent.mX *= metrics.mCanvasSize.width;
-  buttonsEvent.mY *= metrics.mCanvasSize.height;
-
+  buttonsEvent.mX *= metrics.mPreferredSize.mPixelSize.mWidth;
   buttonsEvent.mX /= metrics.mNextArea.left;
-  buttonsEvent.mY /= metrics.mCanvasSize.height;
 
   buttons->PostCursorEvent(eventContext, buttonsEvent);
 }
@@ -107,8 +104,8 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
     ret.mNextArea = {
       0,
       0,
-      nextMetrics.mCanvasSize.width,
-      nextMetrics.mCanvasSize.height,
+      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mWidth),
+      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mHeight),
     };
     return ret;
   }
@@ -117,24 +114,20 @@ IUILayer::Metrics BookmarksUILayer::GetMetrics(
     = (nextMetrics.mContentArea.bottom - nextMetrics.mContentArea.top)
     * (BookmarksBarPercent / 100.0f);
 
-  return {
-    .mCanvasSize = {
-      nextMetrics.mCanvasSize.width + width,
-      nextMetrics.mCanvasSize.height,
-    },
-    .mNextArea = {
+  return Metrics {
+    nextMetrics.mPreferredSize.Extended({static_cast<uint32_t>(width), 0}),
+    {
       width,
       0,
-      nextMetrics.mCanvasSize.width + width,
-      nextMetrics.mCanvasSize.height,
+      nextMetrics.mPreferredSize.mPixelSize.mWidth + width,
+      static_cast<FLOAT>(nextMetrics.mPreferredSize.mPixelSize.mHeight),
     },
-    .mContentArea = {
+    {
       width + nextMetrics.mContentArea.left,
       nextMetrics.mContentArea.top,
       width + nextMetrics.mContentArea.right,
       nextMetrics.mContentArea.bottom,
     },
-    .mScalingKind = nextMetrics.mScalingKind,
   };
 }
 
@@ -151,7 +144,8 @@ void BookmarksUILayer::Render(
   }
 
   const auto metrics = this->GetMetrics(next, context);
-  const auto scale = (rect.right - rect.left) / metrics.mCanvasSize.width;
+  const auto scale
+    = (rect.right - rect.left) / metrics.mPreferredSize.mPixelSize.mWidth;
 
   auto d2d = rt->d2d();
   d2d->FillRectangle(
@@ -159,13 +153,13 @@ void BookmarksUILayer::Render(
       0,
       0,
       metrics.mNextArea.left * scale,
-      metrics.mCanvasSize.height * scale,
+      metrics.mPreferredSize.mPixelSize.mHeight * scale,
     },
     mBackgroundBrush.get());
 
   auto [hoverButton, buttons] = this->LayoutButtons()->GetState();
 
-  const auto height = metrics.mCanvasSize.height;
+  const auto height = metrics.mPreferredSize.mPixelSize.mHeight;
   const auto width = metrics.mNextArea.left;
 
   FLOAT dpix, dpiy;
