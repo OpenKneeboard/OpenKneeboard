@@ -271,7 +271,6 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
 
   const auto idealSize = metrics.mPreferredSize.mPixelSize;
   if (metrics.mPreferredSize.mScalingKind == ScalingKind::Bitmap) {
-    dprint("Bitmap!");
     // Integer scaling to fit
     const auto scaleX
       = std::ceilf(idealSize.mWidth / static_cast<float>(TextureWidth));
@@ -284,7 +283,6 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
       idealSize.mHeight * scale,
     };
   }
-  dprint("Fitting!");
 
   const auto consumers = SHM::ActiveConsumers::Get();
   if (consumers.Any() == SHM::ActiveConsumers::T {}) {
