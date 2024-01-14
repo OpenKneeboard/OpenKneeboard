@@ -426,6 +426,7 @@ XrResult xrGetVulkanInstanceExtensionsKHR(
   uint32_t bufferCapacityInput,
   uint32_t* bufferCountOutput,
   char* buffer) {
+  dprintf("{}()", __FUNCTION__);
   uint32_t& count = *bufferCountOutput;
   auto ret = gNext->xrGetVulkanInstanceExtensionsKHR(
     instance, systemId, 0, &count, nullptr);
@@ -444,6 +445,7 @@ XrResult xrGetVulkanInstanceExtensionsKHR(
   }
 
   extensions.resize(count - 1);
+  dprintf("Runtime requested extensions: {}", extensions);
 
   for (const auto& ext: OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS) {
     const std::string_view view {ext};
@@ -481,6 +483,7 @@ XrResult xrGetVulkanInstanceExtensionsKHR(
       extensions += std::format(" {}", view);
     }
   }
+  dprintf("Requesting extensions: {}", extensions);
 
   *bufferCountOutput = extensions.size() + 1;
   if (bufferCapacityInput == 0 || (!buffer)) {
