@@ -47,6 +47,7 @@ void CachedLayer::Render(
   };
 
   if (mCacheSize != cacheSize || !mCache) {
+    mKey = ~Key {0};
     mCache = nullptr;
     mCacheSize = cacheSize;
     D3D11_TEXTURE2D_DESC textureDesc {
@@ -101,6 +102,8 @@ void CachedLayer::Reset() {
 
   mKey = ~Key {0};
   mCache = nullptr;
+  mCacheRenderTarget = nullptr;
+  mCacheSRV = nullptr;
 }
 
 }// namespace OpenKneeboard
