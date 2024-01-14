@@ -86,12 +86,6 @@ SavedState::~SavedState() {
   TraceLoggingWriteStart(activity, "D3D11::~SavedState()");
   {
     TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "BlockingFlush");
-    BlockingFlush(mImpl->mContext);
-    TraceLoggingWriteStop(subActivity, "BlockingFlush");
-  }
-  {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
     TraceLoggingWriteStart(subActivity, "SwapDeviceContextState");
     mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
     TraceLoggingWriteStop(subActivity, "SwapDeviceContextState");
@@ -99,16 +93,6 @@ SavedState::~SavedState() {
   Impl::tHaveSavedState = false;
   delete mImpl;
   TraceLoggingWriteStop(activity, "D3D11::~SavedState()");
-}
-
-void BlockingFlush(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
-  BlockingFlush(ctx.as<ID3D11DeviceContext3>().get());
-}
-
-void BlockingFlush(ID3D11DeviceContext3* ctx) {
-  winrt::handle event {CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS)};
-  ctx->Flush1(D3D11_CONTEXT_TYPE_ALL, event.get());
-  WaitForSingleObject(event.get(), INFINITE);
 }
 
 void CopyTextureWithTint(

@@ -46,9 +46,6 @@ class SavedState final {
   Impl* mImpl {nullptr};
 };
 
-void BlockingFlush(const winrt::com_ptr<ID3D11DeviceContext>&);
-void BlockingFlush(ID3D11DeviceContext3*);
-
 void CopyTextureWithTint(
   ID3D11Device* device,
   ID3D11ShaderResourceView* source,
