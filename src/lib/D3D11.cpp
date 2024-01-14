@@ -34,9 +34,17 @@ namespace OpenKneeboard::D3D11 {
 struct SavedState::Impl {
   winrt::com_ptr<ID3D11DeviceContext1> mContext;
   winrt::com_ptr<ID3DDeviceContextState> mState;
+  static thread_local bool tHaveSavedState;
 };
 
+thread_local bool SavedState::Impl::tHaveSavedState {false};
+
 SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
+  if (Impl::tHaveSavedState) {
+    dprint("ERROR: nesting D3D11 SavedStates");
+    OPENKNEEBOARD_BREAK;
+  }
+  Impl::tHaveSavedState = true;
   mImpl = new Impl {.mContext = ctx.as<ID3D11DeviceContext1>()};
 
   winrt::com_ptr<ID3D11Device> device;
@@ -60,6 +68,7 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
 SavedState::~SavedState() {
   BlockingFlush(mImpl->mContext);
   mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
+  Impl::tHaveSavedState = false;
   delete mImpl;
 }
 
