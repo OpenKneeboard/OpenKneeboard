@@ -200,7 +200,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   return swapchain;
 }
 
-bool OpenXRD3D12Kneeboard::Render(
+bool OpenXRD3D12Kneeboard::RenderLayer(
   XrSwapchain swapchain,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,

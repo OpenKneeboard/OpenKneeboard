@@ -430,7 +430,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   return swapchain;
 }
 
-bool OpenXRVulkanKneeboard::Render(
+bool OpenXRVulkanKneeboard::RenderLayer(
   XrSwapchain swapchain,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,

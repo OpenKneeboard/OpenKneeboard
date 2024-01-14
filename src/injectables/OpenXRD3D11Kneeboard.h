@@ -62,7 +62,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const VRRenderConfig&,
     uint8_t layerIndex) override;
 
-  virtual bool Render(
+  virtual bool RenderLayer(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
     uint8_t layerIndex,

@@ -240,7 +240,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
             mRenderCacheKeys.at(layerIndex), "PreviousCacheKey"),
           TraceLoggingValue(renderParams.mCacheKey, "CurrentCacheKey"));
         const auto rendered
-          = this->Render(swapchain, snapshot, layerIndex, renderParams);
+          = this->RenderLayer(swapchain, snapshot, layerIndex, renderParams);
         TraceLoggingWriteStop(
           subActivity,
           "xrEndFrame_RenderLayer",

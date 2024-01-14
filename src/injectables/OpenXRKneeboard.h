@@ -64,7 +64,7 @@ class OpenXRKneeboard : public VRKneeboard {
   virtual XrSwapchain
   CreateSwapChain(XrSession, const VRRenderConfig& vrc, uint8_t layerIndex)
     = 0;
-  virtual bool Render(
+  virtual bool RenderLayer(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
     uint8_t layerIndex,

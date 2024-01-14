@@ -185,7 +185,7 @@ winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {
   return mDevice;
 }
 
-bool OpenXRD3D11Kneeboard::Render(
+bool OpenXRD3D11Kneeboard::RenderLayer(
   XrSwapchain swapchain,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
