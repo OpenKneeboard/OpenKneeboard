@@ -419,6 +419,57 @@ XrResult xrCreateSession(
   return ret;
 }
 
+// Provided by XR_KHR_vulkan_enable
+XrResult xrGetVulkanGraphicsRequirementsKHR(
+  XrInstance instance,
+  XrSystemId systemId,
+  XrGraphicsRequirementsVulkanKHR* graphicsRequirements) {
+  dprintf("{}()", __FUNCTION__);
+  // As of 2024-01-14, the Vulkan API validation layer calls a nullptr
+  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1;
+  // as there's no warnings from the layer before the crash, I wasn't
+  // able to figure out if this is a bug in OpenKneeboard or the API
+  // validation layer.
+  //
+  // As `hello_xr` is the primary testbed, uses VK 1.0, and enables the
+  // debug layer in debug builds, silently upgrade to VK 1.1.
+  //
+  // We only *need* to this for hello_xr + debug builds, but do it always
+  // so the behavior is consistent.
+  //
+  // hello_xr actually ignores this at the moment, so only the `Vulkan2`
+  // backend works.
+  auto ret = gNext->xrGetVulkanGraphicsRequirementsKHR(
+    instance, systemId, graphicsRequirements);
+  if (XR_FAILED(ret)) {
+    dprintf("WARNING: next failed {}", ret);
+    return ret;
+  }
+
+  // This uses XR versions, not the VK version constants
+  constexpr auto v1_1 = XR_MAKE_VERSION(1, 1, 0);
+  if (graphicsRequirements->minApiVersionSupported >= v1_1) {
+    dprintf(
+      "OK: Runtime is requesting VK >= 1.1: {}",
+      graphicsRequirements->minApiVersionSupported);
+    return ret;
+  }
+
+  if (graphicsRequirements->maxApiVersionSupported < v1_1) {
+    dprintf(
+      "WARNING: OpenXR runtime does not support VK 1.1; max is {}",
+      graphicsRequirements->maxApiVersionSupported);
+    return ret;
+  }
+
+  dprintf(
+    "WARNING: Upgrading from VK {} to {}",
+    graphicsRequirements->minApiVersionSupported,
+    v1_1);
+  graphicsRequirements->minApiVersionSupported = v1_1;
+  return ret;
+}
+
 XrResult GetVulkanExtensions(
   uint32_t bufferCapacityInput,
   uint32_t* bufferCountOutput,
@@ -576,13 +627,40 @@ XrResult CreateWithVKExtensions(
 // Provided by XR_KHR_vulkan_enable2
 XrResult xrCreateVulkanInstanceKHR(
   XrInstance instance,
-  const XrVulkanInstanceCreateInfoKHR* createInfo,
+  const XrVulkanInstanceCreateInfoKHR* origCreateInfo,
   VkInstance* vulkanInstance,
   VkResult* vulkanResult) {
   dprintf("{}()", __FUNCTION__);
 
+  // As of 2024-01-14, the Vulkan API validation layer calls a nullptr
+  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1;
+  // as there's no warnings from the layer before the crash, I wasn't
+  // able to figure out if this is a bug in OpenKneeboard or the API
+  // validation layer.
+  //
+  // As `hello_xr` is the primary testbed, uses VK 1.0, and enables the
+  // debug layer in debug builds, silently upgrade to VK 1.1.
+  //
+  // We only *need* to this for hello_xr + debug builds, but do it always
+  // so the behavior is consistent.
+  auto createInfo = *origCreateInfo;
+
+  auto vci = *createInfo.vulkanCreateInfo;
+  createInfo.vulkanCreateInfo = &vci;
+  auto vaci = *vci.pApplicationInfo;
+  vci.pApplicationInfo = &vaci;
+  if (vaci.apiVersion >= VK_API_VERSION_1_1) {
+    dprintf("App is requesting VK version {}", vaci.apiVersion);
+  } else {
+    vaci.apiVersion = VK_API_VERSION_1_1;
+    dprintf(
+      "WARNING: upgrading app from VK {} to {}",
+      origCreateInfo->vulkanCreateInfo->pApplicationInfo->apiVersion,
+      vaci.apiVersion);
+  }
+
   const auto ret = CreateWithVKExtensions<XrVulkanInstanceCreateInfoKHR>(
-    createInfo,
+    &createInfo,
     OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS,
     [&](const auto* createInfo) {
       return gNext->xrCreateVulkanInstanceKHR(
@@ -592,11 +670,11 @@ XrResult xrCreateVulkanInstanceKHR(
     return ret;
   }
 
-  if (createInfo->pfnGetInstanceProcAddr) {
-    gPFN_vkGetInstanceProcAddr = createInfo->pfnGetInstanceProcAddr;
+  if (createInfo.pfnGetInstanceProcAddr) {
+    gPFN_vkGetInstanceProcAddr = createInfo.pfnGetInstanceProcAddr;
   }
-  if (createInfo->vulkanAllocator) {
-    gVKAllocator = createInfo->vulkanAllocator;
+  if (createInfo.vulkanAllocator) {
+    gVKAllocator = createInfo.vulkanAllocator;
   }
 
   return ret;
@@ -682,6 +760,11 @@ XrResult xrGetInstanceProcAddr(
   if (name == "xrGetVulkanInstanceExtensionsKHR") {
     *function
       = reinterpret_cast<PFN_xrVoidFunction>(&xrGetVulkanInstanceExtensionsKHR);
+    return XR_SUCCESS;
+  }
+  if (name == "xrGetVulkanGraphicsRequirementsKHR") {
+    *function = reinterpret_cast<PFN_xrVoidFunction>(
+      &xrGetVulkanGraphicsRequirementsKHR);
     return XR_SUCCESS;
   }
   ///// END XR_KHR_vulkan_enable /////
