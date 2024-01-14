@@ -419,13 +419,11 @@ XrResult xrCreateSession(
   return ret;
 }
 
-XrResult xrCreateVulkanDeviceKHR(
-  XrInstance instance,
-  const XrVulkanDeviceCreateInfoKHR* origCreateInfo,
-  VkDevice* vulkanDevice,
-  VkResult* vulkanResult) {
-  dprintf("{}", __FUNCTION__);
-
+template <class T>
+XrResult CreateWithVKExtensions(
+  const T* origCreateInfo,
+  const auto& requiredExtensions,
+  const std::function<XrResult(const T*)>& createFunc) {
   auto createInfo = *origCreateInfo;
   auto vci = *createInfo.vulkanCreateInfo;
   createInfo.vulkanCreateInfo = &vci;
@@ -434,23 +432,78 @@ XrResult xrCreateVulkanDeviceKHR(
   for (size_t i = 0; i < vci.enabledExtensionCount; ++i) {
     extensions.push_back(vci.ppEnabledExtensionNames[i]);
   }
-  std::vector<std::string> neededExtensions {
-    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
-  };
-  for (const auto& ext: neededExtensions) {
-    auto it = std::ranges::find(extensions, ext);
+
+  for (const auto& ext: requiredExtensions) {
+    const auto view = std::string_view {ext};
+    auto it = std::ranges::find(extensions, view);
     if (it == extensions.end()) {
-      extensions.push_back(ext.c_str());
+      extensions.push_back(ext);
     }
   }
   vci.enabledExtensionCount = extensions.size();
   vci.ppEnabledExtensionNames = extensions.data();
 
-  const auto ret = gNext->xrCreateVulkanDeviceKHR(
-    instance, &createInfo, vulkanDevice, vulkanResult);
-  if (XR_SUCCEEDED(ret)) {
-    gPFN_vkGetInstanceProcAddr = createInfo.pfnGetInstanceProcAddr;
-    gVKAllocator = createInfo.vulkanAllocator;
+  dprint("Enabled VK extensions:");
+  for (size_t i = 0; i < vci.enabledExtensionCount; ++i) {
+    dprintf("- {}", vci.ppEnabledExtensionNames[i]);
+  }
+
+  return createFunc(&createInfo);
+}
+
+// Provided by XR_KHR_vulkan_enable2
+XrResult xrCreateVulkanInstanceKHR(
+  XrInstance instance,
+  const XrVulkanInstanceCreateInfoKHR* createInfo,
+  VkInstance* vulkanInstance,
+  VkResult* vulkanResult) {
+  dprintf("{}()", __FUNCTION__);
+
+  const auto ret = CreateWithVKExtensions<XrVulkanInstanceCreateInfoKHR>(
+    createInfo,
+    OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS,
+    [&](const auto* createInfo) {
+      return gNext->xrCreateVulkanInstanceKHR(
+        instance, createInfo, vulkanInstance, vulkanResult);
+    });
+  if (XR_FAILED(ret)) {
+    return ret;
+  }
+
+  if (createInfo->pfnGetInstanceProcAddr) {
+    gPFN_vkGetInstanceProcAddr = createInfo->pfnGetInstanceProcAddr;
+  }
+  if (createInfo->vulkanAllocator) {
+    gVKAllocator = createInfo->vulkanAllocator;
+  }
+
+  return ret;
+}
+
+// Provided by XR_KHR_vulkan_enable2
+XrResult xrCreateVulkanDeviceKHR(
+  XrInstance instance,
+  const XrVulkanDeviceCreateInfoKHR* createInfo,
+  VkDevice* vulkanDevice,
+  VkResult* vulkanResult) {
+  dprintf("{}()", __FUNCTION__);
+
+  const auto ret = CreateWithVKExtensions<XrVulkanDeviceCreateInfoKHR>(
+    createInfo,
+    OpenXRVulkanKneeboard::VK_DEVICE_EXTENSIONS,
+    [&](const auto* createInfo) {
+      return gNext->xrCreateVulkanDeviceKHR(
+        instance, createInfo, vulkanDevice, vulkanResult);
+    });
+  if (XR_FAILED(ret)) {
+    return ret;
+  }
+
+  if (createInfo->pfnGetInstanceProcAddr) {
+    gPFN_vkGetInstanceProcAddr = createInfo->pfnGetInstanceProcAddr;
+  }
+  if (createInfo->vulkanAllocator) {
+    gVKAllocator = createInfo->vulkanAllocator;
   }
 
   return ret;
@@ -499,6 +552,11 @@ XrResult xrGetInstanceProcAddr(
   }
   if (name == "xrCreateVulkanDeviceKHR") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateVulkanDeviceKHR);
+    return XR_SUCCESS;
+  }
+  if (name == "xrCreateVulkanInstanceKHR") {
+    *function
+      = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateVulkanInstanceKHR);
     return XR_SUCCESS;
   }
 

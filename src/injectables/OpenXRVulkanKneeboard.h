@@ -42,6 +42,15 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr);
   ~OpenXRVulkanKneeboard();
 
+  static constexpr const char* VK_INSTANCE_EXTENSIONS[] {
+    VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+  };
+
+  static constexpr const char* VK_DEVICE_EXTENSIONS[] {
+    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+  };
+
  protected:
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
