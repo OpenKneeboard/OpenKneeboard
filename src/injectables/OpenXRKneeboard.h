@@ -61,11 +61,14 @@ class OpenXRKneeboard : public VRKneeboard {
     const VRRenderConfig& initial,
     const VRRenderConfig& current) const
     = 0;
-  virtual XrSwapchain CreateSwapChain(
+  virtual XrSwapchain CreateSwapchain(
     XrSession,
     const PixelSize&,
     const VRRenderConfig::Quirks& quirks)
     = 0;
+  // Release any buffers, views, caches etc, but do not destroy the swap chain
+  virtual void ReleaseSwapchainResources(XrSwapchain) = 0;
+
   virtual bool RenderLayer(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,

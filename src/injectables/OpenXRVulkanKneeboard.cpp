@@ -403,7 +403,7 @@ winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() {
   return mD3D11Device;
 }
 
-XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
+XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   XrSession session,
   const PixelSize& size,
   const VRRenderConfig::Quirks&) {
@@ -477,6 +477,18 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   }
 
   return swapchain;
+}
+
+void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
+  if (!mImages.contains(swapchain)) {
+    return;
+  }
+
+  for (const auto image: mImages.at(swapchain)) {
+    mPFN_vkDestroyImage(mVKDevice, image, mVKAllocator);
+  }
+
+  mImages.erase(swapchain);
 }
 
 bool OpenXRVulkanKneeboard::RenderLayer(

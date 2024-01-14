@@ -64,10 +64,11 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
     const VRRenderConfig& current) const override;
-  virtual XrSwapchain CreateSwapChain(
+  virtual XrSwapchain CreateSwapchain(
     XrSession,
     const PixelSize&,
     const VRRenderConfig::Quirks&) override;
+  virtual void ReleaseSwapchainResources(XrSwapchain) override;
   virtual bool RenderLayer(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
@@ -114,6 +115,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   IT(vkCmdCopyImage) \
   IT(vkCmdPipelineBarrier) \
   IT(vkCreateImage) \
+  IT(vkDestroyImage) \
   IT(vkGetImageMemoryRequirements2) \
   IT(vkGetPhysicalDeviceMemoryProperties) \
   IT(vkGetMemoryWin32HandlePropertiesKHR) \

@@ -95,7 +95,7 @@ bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
     == current.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
 }
 
-XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
+XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   XrSession session,
   const PixelSize& size,
   const VRRenderConfig::Quirks& quirks) {
@@ -197,6 +197,12 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   dprintf("Created {} 11on12 RenderTargetViews", imageCount);
 
   return swapchain;
+}
+
+void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
+  if (mRenderTargetViews.contains(swapchain)) {
+    mRenderTargetViews.erase(swapchain);
+  }
 }
 
 bool OpenXRD3D12Kneeboard::RenderLayer(

@@ -99,7 +99,7 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
   return {format, format};
 }
 
-XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
+XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   XrSession session,
   const PixelSize& size,
   const VRRenderConfig::Quirks&) {
@@ -180,6 +180,12 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   }
 
   return swapchain;
+}
+
+void OpenXRD3D11Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
+  if (mRenderTargetViews.contains(swapchain)) {
+    mRenderTargetViews.erase(swapchain);
+  }
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {

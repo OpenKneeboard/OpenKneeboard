@@ -197,6 +197,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       if (swapchain) {
         if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {
           dprint("Incompatible swapchain due to options change, recreating");
+          this->ReleaseSwapchainResources(swapchain);
           mOpenXR->xrDestroySwapchain(swapchain);
           swapchain = nullptr;
         }
@@ -204,7 +205,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
       if (!swapchain) {
         mInitialConfig = config.mVR;
-        swapchain = this->CreateSwapChain(
+        swapchain = this->CreateSwapchain(
           session, {TextureWidth, TextureHeight}, mInitialConfig.mQuirks);
         if (!swapchain) {
           dprintf("Failed to create swapchain for layer {}", layerIndex);
