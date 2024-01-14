@@ -59,8 +59,10 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
     const VRRenderConfig& current) const override;
-  virtual XrSwapchain CreateSwapChain(XrSession, const VRRenderConfig::Quirks&)
-    override;
+  virtual XrSwapchain CreateSwapChain(
+    XrSession,
+    const PixelSize&,
+    const VRRenderConfig::Quirks&) override;
 
   virtual bool RenderLayer(
     XrSwapchain swapchain,

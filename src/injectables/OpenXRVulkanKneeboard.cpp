@@ -405,6 +405,7 @@ winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() {
 
 XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   XrSession session,
+  const PixelSize& size,
   const VRRenderConfig::Quirks&) {
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
   const auto vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
@@ -414,8 +415,8 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
       | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT,
     .format = vkFormat,
     .sampleCount = 1,
-    .width = TextureWidth,
-    .height = TextureHeight,
+    .width = size.mWidth,
+    .height = size.mHeight,
     .faceCount = 1,
     .arraySize = 1,
     .mipCount = 1,

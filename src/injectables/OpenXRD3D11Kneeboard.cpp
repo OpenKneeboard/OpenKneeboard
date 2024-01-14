@@ -101,6 +101,7 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
 
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   XrSession session,
+  const PixelSize& size,
   const VRRenderConfig::Quirks&) {
   dprintf("{}", __FUNCTION__);
 
@@ -116,8 +117,8 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT,
     .format = formats.mTextureFormat,
     .sampleCount = 1,
-    .width = TextureWidth,
-    .height = TextureHeight,
+    .width = size.mWidth,
+    .height = size.mHeight,
     .faceCount = 1,
     .arraySize = 1,
     .mipCount = 1,

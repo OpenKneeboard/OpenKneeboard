@@ -63,6 +63,7 @@ class OpenXRKneeboard : public VRKneeboard {
     = 0;
   virtual XrSwapchain CreateSwapChain(
     XrSession,
+    const PixelSize&,
     const VRRenderConfig::Quirks& quirks)
     = 0;
   virtual bool RenderLayer(
