@@ -55,10 +55,8 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
     const VRRenderConfig& current) const override;
-  virtual XrSwapchain CreateSwapChain(
-    XrSession,
-    const VRRenderConfig&,
-    uint8_t layerIndex) override;
+  virtual XrSwapchain CreateSwapChain(XrSession, const VRRenderConfig&)
+    override;
   virtual bool RenderLayer(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
@@ -86,7 +84,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   VkCommandPool mVKCommandPool {nullptr};
   VkCommandBuffer mVKCommandBuffer {nullptr};
   VkQueue mVKQueue {nullptr};
-  std::array<std::vector<VkImage>, MaxLayers> mImages;
+  std::unordered_map<XrSwapchain, std::vector<VkImage>> mImages;
 
 #define OPENKNEEBOARD_VK_FUNCS \
   IT(vkGetPhysicalDeviceProperties2) \

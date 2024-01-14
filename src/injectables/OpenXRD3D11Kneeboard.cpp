@@ -101,8 +101,7 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
 
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   XrSession session,
-  const VRRenderConfig&,
-  uint8_t layerIndex) {
+  const VRRenderConfig&) {
   dprintf("{}", __FUNCTION__);
 
   auto oxr = this->GetOpenXR();
@@ -166,16 +165,17 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
     return nullptr;
   }
 
-  mRenderTargetViews.at(layerIndex).resize(imageCount);
+  auto& rtvs = mRenderTargetViews[swapchain];
+
+  rtvs.resize(imageCount);
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
     if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR) {
       OPENKNEEBOARD_BREAK;
     }
 #endif
-    mRenderTargetViews.at(layerIndex).at(i)
-      = std::make_shared<D3D11::RenderTargetViewFactory>(
-        mDevice.get(), images.at(i).texture, formats.mRenderTargetViewFormat);
+    rtvs.at(i) = std::make_shared<D3D11::RenderTargetViewFactory>(
+      mDevice.get(), images.at(i).texture, formats.mRenderTargetViewFormat);
   }
 
   return swapchain;
@@ -193,7 +193,7 @@ bool OpenXRD3D11Kneeboard::RenderLayer(
   return OpenXRD3D11Kneeboard::Render(
     this->GetOpenXR(),
     mDevice.get(),
-    mRenderTargetViews.at(layerIndex),
+    mRenderTargetViews.at(swapchain),
     swapchain,
     snapshot,
     layerIndex,

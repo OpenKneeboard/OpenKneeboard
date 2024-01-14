@@ -19,11 +19,13 @@
  */
 #pragma once
 
-#include <OpenKneeboard/D3D11On12.h>
-#include <OpenKneeboard/config.h>
-#include <d3d12.h>
-
 #include "OpenXRKneeboard.h"
+
+#include <OpenKneeboard/D3D11On12.h>
+
+#include <OpenKneeboard/config.h>
+
+#include <d3d12.h>
 
 struct XrGraphicsBindingD3D12KHR;
 
@@ -43,10 +45,8 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
     const VRRenderConfig& current) const override;
-  virtual XrSwapchain CreateSwapChain(
-    XrSession,
-    const VRRenderConfig&,
-    uint8_t layerIndex) override;
+  virtual XrSwapchain CreateSwapChain(XrSession, const VRRenderConfig&)
+    override;
   virtual bool RenderLayer(
     XrSwapchain swapchain,
     const SHM::Snapshot& snapshot,
@@ -58,9 +58,9 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
  private:
   D3D11On12::DeviceResources mDeviceResources;
 
-  std::array<
-    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
-    MaxLayers>
+  std::unordered_map<
+    XrSwapchain,
+    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>>
     mRenderTargetViews;
 };
 

@@ -25,6 +25,8 @@
 
 #include <OpenKneeboard/config.h>
 
+#include <unordered_map>
+
 struct XrGraphicsBindingD3D11KHR;
 
 namespace OpenKneeboard {
@@ -57,10 +59,8 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
     const VRRenderConfig& current) const override;
-  virtual XrSwapchain CreateSwapChain(
-    XrSession,
-    const VRRenderConfig&,
-    uint8_t layerIndex) override;
+  virtual XrSwapchain CreateSwapChain(XrSession, const VRRenderConfig&)
+    override;
 
   virtual bool RenderLayer(
     XrSwapchain swapchain,
@@ -73,9 +73,9 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
  private:
   winrt::com_ptr<ID3D11Device> mDevice = nullptr;
 
-  std::array<
-    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
-    MaxLayers>
+  std::unordered_map<
+    XrSwapchain,
+    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>>
     mRenderTargetViews;
 };
 

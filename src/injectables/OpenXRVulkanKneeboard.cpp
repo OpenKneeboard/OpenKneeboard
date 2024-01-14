@@ -356,8 +356,7 @@ winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() {
 
 XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   XrSession session,
-  const VRRenderConfig& vrc,
-  uint8_t layerIndex) {
+  const VRRenderConfig& vrc) {
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
   const auto vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
   XrSwapchainCreateInfo swapchainInfo {
@@ -424,7 +423,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapChain(
   }
 
   for (const auto& swapchainImage: images) {
-    mImages[layerIndex].push_back(swapchainImage.image);
+    mImages[swapchain].push_back(swapchainImage.image);
   }
 
   return swapchain;
@@ -519,7 +518,7 @@ bool OpenXRVulkanKneeboard::RenderLayer(
       .layerCount = 1,
     },
   };
-  const auto dstImage = mImages.at(layerIndex).at(textureIndex);
+  const auto dstImage = mImages.at(swapchain).at(textureIndex);
   inBarriers[1] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
     .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,

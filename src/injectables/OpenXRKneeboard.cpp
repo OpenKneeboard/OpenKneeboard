@@ -204,7 +204,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
       if (!swapchain) {
         mInitialConfig = config.mVR;
-        swapchain = this->CreateSwapChain(session, mInitialConfig, layerIndex);
+        swapchain = this->CreateSwapChain(session, mInitialConfig);
         if (!swapchain) {
           dprintf("Failed to create swapchain for layer {}", layerIndex);
           OPENKNEEBOARD_BREAK;

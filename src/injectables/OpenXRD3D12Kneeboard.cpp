@@ -97,8 +97,7 @@ bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
 
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   XrSession session,
-  const VRRenderConfig& vrc,
-  uint8_t layerIndex) {
+  const VRRenderConfig& vrc) {
   dprintf("{}", __FUNCTION__);
 
   auto oxr = this->GetOpenXR();
@@ -175,7 +174,8 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
     return nullptr;
   }
 
-  mRenderTargetViews.at(layerIndex).resize(imageCount);
+  auto& rtvs = mRenderTargetViews[swapchain];
+  rtvs.resize(imageCount);
 
   for (size_t i = 0; i < imageCount; ++i) {
 #ifdef DEBUG
@@ -185,17 +185,15 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
 #endif
     winrt::com_ptr<ID3D12Resource> texture12;
     texture12.copy_from(images.at(i).texture);
-    mRenderTargetViews.at(layerIndex).at(i)
-      = std::static_pointer_cast<D3D11::IRenderTargetViewFactory>(
-        std::make_shared<D3D11On12::RenderTargetViewFactory>(
-          mDeviceResources,
-          texture12,
-          formats.mRenderTargetViewFormat,
-          doubleBuffer ? D3D11On12::Flags::DoubleBuffer
-                       : D3D11On12::Flags::None));
+    rtvs.at(i) = std::static_pointer_cast<D3D11::IRenderTargetViewFactory>(
+      std::make_shared<D3D11On12::RenderTargetViewFactory>(
+        mDeviceResources,
+        texture12,
+        formats.mRenderTargetViewFormat,
+        doubleBuffer ? D3D11On12::Flags::DoubleBuffer
+                     : D3D11On12::Flags::None));
   }
-  dprintf(
-    "Created {} 11on12 RenderTargetViews for layer {}", imageCount, layerIndex);
+  dprintf("Created {} 11on12 RenderTargetViews", imageCount);
 
   return swapchain;
 }
@@ -208,7 +206,7 @@ bool OpenXRD3D12Kneeboard::RenderLayer(
   return OpenXRD3D11Kneeboard::Render(
     this->GetOpenXR(),
     this->GetD3D11Device().get(),
-    mRenderTargetViews.at(layerIndex),
+    mRenderTargetViews.at(swapchain),
     swapchain,
     snapshot,
     layerIndex,
