@@ -230,15 +230,22 @@ XrResult OpenXRKneeboard::xrEndFrame(
       const auto needsRender = staleCacheKey || alwaysRender;
 
       if (needsRender) {
-        TraceLoggingWriteTagged(
-          activity,
-          "xrEndFrame_Render",
+        TraceLoggingThreadActivity<gTraceProvider> subActivity;
+        TraceLoggingWriteStart(
+          subActivity,
+          "xrEndFrame_RenderLayer",
           TraceLoggingValue(layerIndex, "LayerNumber"),
           TraceLoggingValue(alwaysRender, "AlwaysRender"),
           TraceLoggingValue(
             mRenderCacheKeys.at(layerIndex), "PreviousCacheKey"),
           TraceLoggingValue(renderParams.mCacheKey, "CurrentCacheKey"));
-        if (!this->Render(swapchain, snapshot, layerIndex, renderParams)) {
+        const auto rendered
+          = this->Render(swapchain, snapshot, layerIndex, renderParams);
+        TraceLoggingWriteStop(
+          subActivity,
+          "xrEndFrame_RenderLayer",
+          TraceLoggingValue(rendered, "Success"));
+        if (!rendered) {
           dprint("Render failed.");
           OPENKNEEBOARD_BREAK;
           TraceLoggingWriteStop(
@@ -286,7 +293,13 @@ XrResult OpenXRKneeboard::xrEndFrame(
   nextFrameEndInfo.layers = nextLayers.data();
   nextFrameEndInfo.layerCount = static_cast<uint32_t>(nextLayers.size());
 
-  const auto nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
+  XrResult nextResult;
+  {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(subActivity, "next_xrEndFrame()");
+    nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
+    TraceLoggingWriteStop(subActivity, "next_xrEndFrame()");
+  }
   if (nextResult != XR_SUCCESS) {
     OPENKNEEBOARD_BREAK;
   }

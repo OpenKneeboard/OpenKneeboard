@@ -22,6 +22,7 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 
 #include <shims/winrt/base.h>
 
@@ -40,10 +41,13 @@ struct SavedState::Impl {
 thread_local bool SavedState::Impl::tHaveSavedState {false};
 
 SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "D3D11::SavedState");
   if (Impl::tHaveSavedState) {
     dprint("ERROR: nesting D3D11 SavedStates");
     OPENKNEEBOARD_BREAK;
   }
+
   Impl::tHaveSavedState = true;
   mImpl = new Impl {.mContext = ctx.as<ID3D11DeviceContext1>()};
 
@@ -52,24 +56,49 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
   auto featureLevel = device->GetFeatureLevel();
 
   winrt::com_ptr<ID3DDeviceContextState> newState;
-  winrt::check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
-    (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
-      ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
-      : 0,
-    &featureLevel,
-    1,
-    D3D11_SDK_VERSION,
-    __uuidof(ID3D11Device),
-    nullptr,
-    newState.put()));
-  mImpl->mContext->SwapDeviceContextState(newState.get(), mImpl->mState.put());
+  {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(subActivity, "CreateDeviceContextState");
+    winrt::check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
+      (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
+        ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
+        : 0,
+      &featureLevel,
+      1,
+      D3D11_SDK_VERSION,
+      __uuidof(ID3D11Device),
+      nullptr,
+      newState.put()));
+    TraceLoggingWriteStop(subActivity, "CreateDeviceContextState");
+  }
+  {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(subActivity, "SwapDeviceContextState");
+    mImpl->mContext->SwapDeviceContextState(
+      newState.get(), mImpl->mState.put());
+    TraceLoggingWriteStop(subActivity, "SwapDeviceContextState");
+  }
+  TraceLoggingWriteStop(activity, "D3D11::SavedState");
 }
 
 SavedState::~SavedState() {
-  BlockingFlush(mImpl->mContext);
-  mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "D3D11::~SavedState()");
+  {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(subActivity, "BlockingFlush");
+    BlockingFlush(mImpl->mContext);
+    TraceLoggingWriteStop(subActivity, "BlockingFlush");
+  }
+  {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(subActivity, "SwapDeviceContextState");
+    mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
+    TraceLoggingWriteStop(subActivity, "SwapDeviceContextState");
+  }
   Impl::tHaveSavedState = false;
   delete mImpl;
+  TraceLoggingWriteStop(activity, "D3D11::~SavedState()");
 }
 
 void BlockingFlush(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
@@ -87,6 +116,8 @@ void CopyTextureWithTint(
   ID3D11ShaderResourceView* source,
   ID3D11RenderTargetView* dest,
   DirectX::FXMVECTOR tint) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "D3D11::CopyTextureWithTint");
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
 
@@ -106,10 +137,17 @@ void CopyTextureWithTint(
   ctx->IASetInputLayout(nullptr);
   ctx->VSSetShader(nullptr, nullptr, 0);
 
-  DirectX::SpriteBatch sprites(ctx.get());
-  sprites.Begin();
-  sprites.Draw(source, DirectX::XMFLOAT2 {0.0f, 0.0f}, tint);
-  sprites.End();
+  {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(subActivity, "SpriteBatch");
+    DirectX::SpriteBatch sprites(ctx.get());
+    sprites.Begin();
+    sprites.Draw(source, DirectX::XMFLOAT2 {0.0f, 0.0f}, tint);
+    sprites.End();
+    TraceLoggingWriteStop(subActivity, "SpriteBatch");
+  }
+
+  TraceLoggingWriteStop(activity, "D3D11::CopyTextureWithTint");
 }
 
 void DrawTextureWithTint(
@@ -119,6 +157,8 @@ void DrawTextureWithTint(
   const RECT& sourceRect,
   const RECT& destRect,
   DirectX::FXMVECTOR tint) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "D3D11::DrawTextureWithTint");
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
 
@@ -138,10 +178,17 @@ void DrawTextureWithTint(
   ctx->IASetInputLayout(nullptr);
   ctx->VSSetShader(nullptr, nullptr, 0);
 
-  DirectX::SpriteBatch sprites(ctx.get());
-  sprites.Begin();
-  sprites.Draw(source, destRect, &sourceRect, tint);
-  sprites.End();
+  {
+    TraceLoggingThreadActivity<gTraceProvider> subActivity;
+    TraceLoggingWriteStart(subActivity, "SpriteBatch");
+    DirectX::SpriteBatch sprites(ctx.get());
+    sprites.Begin();
+    sprites.Draw(source, destRect, &sourceRect, tint);
+    sprites.End();
+    TraceLoggingWriteStop(subActivity, "SpriteBatch");
+  }
+
+  TraceLoggingWriteStop(activity, "D3D11::DrawTextureWithTint");
 }
 
 void CopyTextureWithOpacity(
