@@ -419,6 +419,83 @@ XrResult xrCreateSession(
   return ret;
 }
 
+// Provided by XR_KHR_vulkan_enable
+XrResult xrGetVulkanInstanceExtensionsKHR(
+  XrInstance instance,
+  XrSystemId systemId,
+  uint32_t bufferCapacityInput,
+  uint32_t* bufferCountOutput,
+  char* buffer) {
+  uint32_t& count = *bufferCountOutput;
+  auto ret = gNext->xrGetVulkanInstanceExtensionsKHR(
+    instance, systemId, 0, &count, nullptr);
+  if (XR_FAILED(ret)) {
+    return ret;
+  }
+
+  // Space-separated list of extensions
+  std::string extensions;
+  extensions.resize(count);
+
+  ret = gNext->xrGetVulkanInstanceExtensionsKHR(
+    instance, systemId, count, &count, extensions.data());
+  if (XR_FAILED(ret)) {
+    return ret;
+  }
+
+  extensions.resize(count - 1);
+
+  for (const auto& ext: OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS) {
+    const std::string_view view {ext};
+    size_t offset = 0;
+    bool found = false;
+    while ((offset + view.size()) < extensions.size()) {
+      auto it = extensions.find(ext, offset);
+      if (it == std::string::npos) {
+        break;
+      }
+
+      if (it + view.size() == extensions.size()) {
+        // Last one in the list
+        found = true;
+        break;
+      }
+
+      if (extensions.at(it + view.size()) == ' ') {
+        // In the list
+        found = true;
+        break;
+      }
+
+      // If we got here, another extension starts with this extension name
+      offset += view.size();
+    }
+
+    if (found) {
+      // Next extension
+      continue;
+    }
+    if (extensions.empty()) {
+      extensions = std::string_view {ext};
+    } else {
+      extensions += std::format(" {}", view);
+    }
+  }
+
+  *bufferCountOutput = extensions.size() + 1;
+  if (bufferCapacityInput == 0 || (!buffer)) {
+    return ret;
+  }
+
+  if (buffer && (bufferCapacityInput >= *bufferCountOutput)) {
+    memcpy_s(
+      buffer, bufferCapacityInput, extensions.c_str(), extensions.size() + 1);
+    return ret;
+  }
+
+  return XR_ERROR_SIZE_INSUFFICIENT;
+}
+
 template <class T>
 XrResult CreateWithVKExtensions(
   const T* origCreateInfo,
@@ -550,6 +627,17 @@ XrResult xrGetInstanceProcAddr(
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
     return XR_SUCCESS;
   }
+
+  ///// START XR_KHR_vulkan_enable /////
+  /**/
+  if (name == "xrGetVulkanInstanceExtensionsKHR") {
+    *function
+      = reinterpret_cast<PFN_xrVoidFunction>(&xrGetVulkanInstanceExtensionsKHR);
+    return XR_SUCCESS;
+  }
+  ///// END XR_KHR_vulkan_enable /////
+
+  ///// START XR_KHR_vulkan_enable2 /////
   if (name == "xrCreateVulkanDeviceKHR") {
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateVulkanDeviceKHR);
     return XR_SUCCESS;
@@ -559,6 +647,7 @@ XrResult xrGetInstanceProcAddr(
       = reinterpret_cast<PFN_xrVoidFunction>(&xrCreateVulkanInstanceKHR);
     return XR_SUCCESS;
   }
+  ///// END XR_KHR_vulkan_enable2 /////
 
   if (gNext) {
     return gNext->xrGetInstanceProcAddr(instance, name_cstr, function);
