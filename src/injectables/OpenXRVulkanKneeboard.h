@@ -19,11 +19,13 @@
  */
 #pragma once
 
-#include <OpenKneeboard/config.h>
-
-#define VK_USE_PLATFORM_WIN32_KHR
 #include "OpenXRKneeboard.h"
 
+#include <OpenKneeboard/config.h>
+
+#include <d3d11_4.h>
+
+#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
 struct XrGraphicsBindingVulkanKHR;
@@ -45,10 +47,17 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   static constexpr const char* VK_INSTANCE_EXTENSIONS[] {
     VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME,
     VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME,
   };
 
   static constexpr const char* VK_DEVICE_EXTENSIONS[] {
+    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
     VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+    VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME,
   };
 
  protected:
@@ -66,18 +75,26 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
-  winrt::com_ptr<ID3D11Device> mD3D11Device;
+  winrt::com_ptr<ID3D11Device5> mD3D11Device;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
 
   struct Interop {
     winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
     winrt::com_ptr<ID3D11RenderTargetView> mD3D11RenderTargetView;
 
     VkImage mVKImage {};
-    VkFence mVKFence {};
+    VkFence mVKCompletionFence {};
+
+    // These point to the same GPU fence/semaphore
+    VkSemaphore mVKInteropSemaphore {};
+    winrt::com_ptr<ID3D11Fence> mD3D11InteropFence {};
+    winrt::handle mD3D11InteropFenceHandle {};
+    // Next value for the fence/semaphore
+    uint64_t mInteropValue {};
   };
   std::array<Interop, MaxLayers> mLayerInterop;
 
-  void InitInterop(const XrGraphicsBindingVulkanKHR&, Interop*);
+  void InitInterop(const XrGraphicsBindingVulkanKHR&, Interop*) noexcept;
 
   const VkAllocationCallbacks* mVKAllocator {nullptr};
   VkDevice mVKDevice {nullptr};
@@ -103,6 +120,9 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   IT(vkCreateFence) \
   IT(vkResetFences) \
   IT(vkWaitForFences) \
+  IT(vkCreateSemaphore) \
+  IT(vkImportSemaphoreWin32HandleKHR) \
+  IT(vkGetSemaphoreWin32HandleKHR) \
   IT(vkQueueSubmit) \
   IT(vkGetDeviceQueue)
 #define IT(func) PFN_##func mPFN_##func {nullptr};

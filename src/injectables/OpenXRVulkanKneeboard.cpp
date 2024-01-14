@@ -29,6 +29,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <d3d11_4.h>
 #include <dxgi1_6.h>
 
 #define XR_USE_GRAPHICS_API_VULKAN
@@ -43,6 +44,13 @@ static inline constexpr bool VK_SUCCEEDED(VkResult code) {
 
 static inline constexpr bool VK_FAILED(VkResult code) {
   return !VK_SUCCEEDED(code);
+}
+
+static inline void check_vkresult(VkResult code) {
+  if (VK_FAILED(code)) {
+    throw std::runtime_error(
+      std::format("Vulkan call failed: {}", static_cast<int>(code)));
+  }
 }
 
 namespace OpenKneeboard {
@@ -169,6 +177,8 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
     return;
   }
 
+  winrt::com_ptr<ID3D11Device> d3d11Device;
+  winrt::com_ptr<ID3D11DeviceContext> d3d11ImmediateContext;
   winrt::check_hresult(D3D11CreateDevice(
     adapter.get(),
     // UNKNOWN is reuqired when specifying an adapter
@@ -178,10 +188,12 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
     &d3dLevel,
     1,
     D3D11_SDK_VERSION,
-    mD3D11Device.put(),
+    d3d11Device.put(),
     nullptr,
-    nullptr));
+    d3d11ImmediateContext.put()));
   dprint("Initialized D3D11 device matching VkPhysicalDevice");
+  mD3D11Device = d3d11Device.as<ID3D11Device5>();
+  mD3D11ImmediateContext = d3d11ImmediateContext.as<ID3D11DeviceContext4>();
 
   for (int i = 0; i < MaxLayers; ++i) {
     InitInterop(binding, &mLayerInterop.at(i));
@@ -190,7 +202,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
 
 void OpenXRVulkanKneeboard::InitInterop(
   const XrGraphicsBindingVulkanKHR& binding,
-  Interop* interop) {
+  Interop* interop) noexcept {
   auto device = mD3D11Device.get();
   interop->mD3D11Texture = SHM::CreateCompatibleTexture(
     device,
@@ -335,8 +347,45 @@ void OpenXRVulkanKneeboard::InitInterop(
 
   {
     VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    mPFN_vkCreateFence(
-      binding.device, &createInfo, mVKAllocator, &interop->mVKFence);
+    check_vkresult(mPFN_vkCreateFence(
+      binding.device, &createInfo, mVKAllocator, &interop->mVKCompletionFence));
+  }
+
+  // 1/3: Create a D3D11 fence...
+  winrt::check_hresult(mD3D11Device->CreateFence(
+    0,
+    D3D11_FENCE_FLAG_SHARED,
+    IID_PPV_ARGS(interop->mD3D11InteropFence.put())));
+
+  // 2/3: Create a Vulkan semaphore...
+  {
+    VkSemaphoreTypeCreateInfoKHR timelineCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR,
+      .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR,
+    };
+    VkSemaphoreCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+      .pNext = &timelineCreateInfo,
+    };
+    check_vkresult(mPFN_vkCreateSemaphore(
+      binding.device,
+      &createInfo,
+      mVKAllocator,
+      &interop->mVKInteropSemaphore));
+  }
+
+  // 3/3: tie them together
+  winrt::check_hresult(interop->mD3D11InteropFence->CreateSharedHandle(
+    nullptr, GENERIC_ALL, nullptr, interop->mD3D11InteropFenceHandle.put()));
+  {
+    VkImportSemaphoreWin32HandleInfoKHR handleInfo {
+      .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
+      .semaphore = interop->mVKInteropSemaphore,
+      .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
+      .handle = interop->mD3D11InteropFenceHandle.get(),
+    };
+    check_vkresult(
+      mPFN_vkImportSemaphoreWin32HandleKHR(binding.device, &handleInfo));
   }
 }
 
@@ -482,13 +531,18 @@ bool OpenXRVulkanKneeboard::RenderLayer(
     return false;
   }
 
-  const auto& interop = mLayerInterop.at(layerIndex);
+  auto& interop = mLayerInterop.at(layerIndex);
 
   D3D11::CopyTextureWithOpacity(
     mD3D11Device.get(),
     srv.get(),
     interop.mD3D11RenderTargetView.get(),
     params.mKneeboardOpacity);
+
+  // Signal this once D3D11 work is done, then make VK wait for it
+  const auto semaphoreValue = ++interop.mInteropValue;
+  mD3D11ImmediateContext->Signal(
+    interop.mD3D11InteropFence.get(), semaphoreValue);
 
   {
     VkCommandBufferBeginInfo beginInfo {
@@ -623,15 +677,22 @@ bool OpenXRVulkanKneeboard::RenderLayer(
   }
 
   {
+    VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
+      .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
+      .waitSemaphoreValueCount = 1,
+      .pWaitSemaphoreValues = &semaphoreValue,
+    };
     VkSubmitInfo submitInfo {
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .waitSemaphoreCount = 1,
+      .pWaitSemaphores = &interop.mVKInteropSemaphore,
       .commandBufferCount = 1,
       .pCommandBuffers = &mVKCommandBuffer,
     };
 
-    mPFN_vkResetFences(mVKDevice, 1, &interop.mVKFence);
-    const auto res
-      = mPFN_vkQueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKFence);
+    mPFN_vkResetFences(mVKDevice, 1, &interop.mVKCompletionFence);
+    const auto res = mPFN_vkQueueSubmit(
+      mVKQueue, 1, &submitInfo, interop.mVKCompletionFence);
     if (VK_FAILED(res)) {
       dprintf("Queue submit failed: {}", res);
       return false;
@@ -642,7 +703,7 @@ bool OpenXRVulkanKneeboard::RenderLayer(
     const auto res = mPFN_vkWaitForFences(
       mVKDevice,
       1,
-      &interop.mVKFence,
+      &interop.mVKCompletionFence,
       VK_TRUE,
       std::numeric_limits<uint32_t>::max());
     if (VK_FAILED(res)) {

@@ -463,7 +463,7 @@ XrResult xrGetVulkanGraphicsRequirementsKHR(
   constexpr auto v1_1 = XR_MAKE_VERSION(1, 1, 0);
   if (graphicsRequirements->minApiVersionSupported >= v1_1) {
     dprintf(
-      "OK: Runtime is requesting VK >= 1.1: {}",
+      "OK: Runtime is requesting a new enough VK 1.1: {}",
       graphicsRequirements->minApiVersionSupported);
     return ret;
   }
@@ -646,13 +646,15 @@ XrResult xrCreateVulkanInstanceKHR(
   dprintf("{}()", __FUNCTION__);
 
   // As of 2024-01-14, the Vulkan API validation layer calls a nullptr
-  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1;
-  // as there's no warnings from the layer before the crash, I wasn't
+  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1,
+  // and from `vkImportSemaphoreWin32HandleKHR()` if the VK API is < 1.3.
+  //
+  // As there's no warnings from the layer before the crash, I wasn't
   // able to figure out if this is a bug in OpenKneeboard or the API
   // validation layer.
   //
   // As `hello_xr` is the primary testbed, uses VK 1.0, and enables the
-  // debug layer in debug builds, silently upgrade to VK 1.1.
+  // debug layer in debug builds, silently upgrade to VK 1.3
   //
   // We only *need* to this for hello_xr + debug builds, but do it always
   // so the behavior is consistent.
@@ -662,10 +664,12 @@ XrResult xrCreateVulkanInstanceKHR(
   createInfo.vulkanCreateInfo = &vci;
   auto vaci = *vci.pApplicationInfo;
   vci.pApplicationInfo = &vaci;
-  if (vaci.apiVersion >= VK_API_VERSION_1_1) {
+  const auto requiredVKApiVersion = VK_API_VERSION_1_3;
+
+  if (vaci.apiVersion >= requiredVKApiVersion) {
     dprintf("App is requesting VK version {}", vaci.apiVersion);
   } else {
-    vaci.apiVersion = VK_API_VERSION_1_1;
+    vaci.apiVersion = requiredVKApiVersion;
     dprintf(
       "WARNING: upgrading app from VK {} to {}",
       origCreateInfo->vulkanCreateInfo->pApplicationInfo->apiVersion,
@@ -696,13 +700,25 @@ XrResult xrCreateVulkanInstanceKHR(
 // Provided by XR_KHR_vulkan_enable2
 XrResult xrCreateVulkanDeviceKHR(
   XrInstance instance,
-  const XrVulkanDeviceCreateInfoKHR* createInfo,
+  const XrVulkanDeviceCreateInfoKHR* origCreateInfo,
   VkDevice* vulkanDevice,
   VkResult* vulkanResult) {
   dprintf("{}()", __FUNCTION__);
 
+  auto createInfo = *origCreateInfo;
+
+  auto vci = *createInfo.vulkanCreateInfo;
+  createInfo.vulkanCreateInfo = &vci;
+
+  VkPhysicalDeviceTimelineSemaphoreFeatures timelineFeatures {
+    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
+    .pNext = const_cast<void*>(vci.pNext),
+    .timelineSemaphore = VK_TRUE,
+  };
+  vci.pNext = &timelineFeatures;
+
   const auto ret = CreateWithVKExtensions<XrVulkanDeviceCreateInfoKHR>(
-    createInfo,
+    &createInfo,
     OpenXRVulkanKneeboard::VK_DEVICE_EXTENSIONS,
     [&](const auto* createInfo) {
       return gNext->xrCreateVulkanDeviceKHR(
@@ -712,11 +728,11 @@ XrResult xrCreateVulkanDeviceKHR(
     return ret;
   }
 
-  if (createInfo->pfnGetInstanceProcAddr) {
-    gPFN_vkGetInstanceProcAddr = createInfo->pfnGetInstanceProcAddr;
+  if (createInfo.pfnGetInstanceProcAddr) {
+    gPFN_vkGetInstanceProcAddr = createInfo.pfnGetInstanceProcAddr;
   }
-  if (createInfo->vulkanAllocator) {
-    gVKAllocator = createInfo->vulkanAllocator;
+  if (createInfo.vulkanAllocator) {
+    gVKAllocator = createInfo.vulkanAllocator;
   }
 
   return ret;
