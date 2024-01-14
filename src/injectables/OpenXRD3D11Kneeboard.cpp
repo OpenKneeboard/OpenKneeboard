@@ -101,7 +101,7 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
 
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapChain(
   XrSession session,
-  const VRRenderConfig&) {
+  const VRRenderConfig::Quirks&) {
   dprintf("{}", __FUNCTION__);
 
   auto oxr = this->GetOpenXR();

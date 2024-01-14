@@ -97,7 +97,7 @@ bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
 
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
   XrSession session,
-  const VRRenderConfig& vrc) {
+  const VRRenderConfig::Quirks& quirks) {
   dprintf("{}", __FUNCTION__);
 
   auto oxr = this->GetOpenXR();
@@ -139,7 +139,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapChain(
 
   bool doubleBuffer = false;
   if (IsVarjoRuntime()) {
-    if (vrc.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer) {
+    if (quirks.mVarjo_OpenXR_D3D12_DoubleBuffer) {
       dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
       doubleBuffer = true;
     } else {
