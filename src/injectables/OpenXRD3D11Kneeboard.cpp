@@ -191,7 +191,7 @@ bool OpenXRD3D11Kneeboard::RenderLayer(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  return OpenXRD3D11Kneeboard::Render(
+  return OpenXRD3D11Kneeboard::RenderLayer(
     this->GetOpenXR(),
     mDevice.get(),
     mRenderTargetViews.at(swapchain),
@@ -201,7 +201,7 @@ bool OpenXRD3D11Kneeboard::RenderLayer(
     renderParameters);
 }
 
-bool OpenXRD3D11Kneeboard::Render(
+bool OpenXRD3D11Kneeboard::RenderLayer(
   OpenXRNext* oxr,
   ID3D11Device* device,
   const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&

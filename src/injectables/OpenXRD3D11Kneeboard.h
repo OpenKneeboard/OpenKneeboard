@@ -40,7 +40,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const XrGraphicsBindingD3D11KHR&);
   ~OpenXRD3D11Kneeboard();
 
-  static bool Render(
+  static bool RenderLayer(
     OpenXRNext*,
     ID3D11Device*,
     const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,

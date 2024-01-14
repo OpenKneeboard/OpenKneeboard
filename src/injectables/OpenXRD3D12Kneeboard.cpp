@@ -204,7 +204,7 @@ bool OpenXRD3D12Kneeboard::RenderLayer(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  return OpenXRD3D11Kneeboard::Render(
+  return OpenXRD3D11Kneeboard::RenderLayer(
     this->GetOpenXR(),
     this->GetD3D11Device().get(),
     mRenderTargetViews.at(swapchain),
