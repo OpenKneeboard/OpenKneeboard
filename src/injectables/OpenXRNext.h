@@ -55,6 +55,7 @@
   IT(xrLocateSpace) \
   IT(xrCreateVulkanDeviceKHR) \
   IT(xrCreateVulkanInstanceKHR) \
+  IT(xrGetVulkanDeviceExtensionsKHR) \
   IT(xrGetVulkanInstanceExtensionsKHR)
 
 namespace OpenKneeboard {
