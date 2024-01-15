@@ -17,12 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OVR_CAPI_D3D.h>
-#include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/dprint.h>
-
 #include "OVRProxy.h"
 #include "OculusD3D11Kneeboard.h"
+
+#include <OpenKneeboard/D3D11.h>
+
+#include <OpenKneeboard/dprint.h>
+
+#include <OVR_CAPI_D3D.h>
 
 namespace OpenKneeboard {
 bool OculusD3D11Kneeboard::Render(
@@ -47,7 +49,10 @@ bool OculusD3D11Kneeboard::Render(
   auto ovr = OVRProxy::Get();
   const auto config = snapshot.GetConfig();
 
-  auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
+  auto resources
+    = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(layerIndex);
+
+  auto srv = resources->GetD3D11ShaderResourceView();
   if (!srv) {
     dprint(" - invalid shared texture");
     return false;
@@ -62,7 +67,7 @@ bool OculusD3D11Kneeboard::Render(
 
   auto rtv = renderTargetViews.at(index)->Get();
   D3D11::CopyTextureWithOpacity(
-    device, srv.get(), rtv->Get(), params.mKneeboardOpacity);
+    device, srv, rtv->Get(), params.mKneeboardOpacity);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (error) {

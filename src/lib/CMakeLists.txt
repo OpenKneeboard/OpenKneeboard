@@ -166,6 +166,7 @@ ok_add_library(
   STATIC
   SHM.cpp
   SHM/ActiveConsumers.cpp
+  SHM/D3D11.cpp
   FlatConfig.cpp
 )
 target_link_libraries(

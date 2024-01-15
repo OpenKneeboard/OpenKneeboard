@@ -23,6 +23,7 @@
 #include "OculusKneeboard.h"
 
 #include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/config.h>
 
@@ -55,6 +56,8 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     return SHM::ConsumerKind::OculusD3D11;
   }
 
+  virtual SHM::CachedReader* GetSHM() override;
+
  protected:
   virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
@@ -70,6 +73,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
+  SHM::D3D11::CachedReader mSHM;
   std::array<
     std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
     MaxLayers>

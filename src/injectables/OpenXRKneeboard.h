@@ -84,6 +84,7 @@ class OpenXRKneeboard : public VRKneeboard {
     LayerRenderInfo* layers)
     = 0;
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() = 0;
+  virtual SHM::CachedReader* GetSHM() = 0;
 
   // For quirks
   bool IsVarjoRuntime() const;
@@ -92,7 +93,6 @@ class OpenXRKneeboard : public VRKneeboard {
 
  private:
   std::shared_ptr<OpenXRNext> mOpenXR;
-  SHM::CachedReader mSHM;
 
   XrSwapchain mSwapchain {};
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;

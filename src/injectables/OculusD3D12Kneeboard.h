@@ -19,16 +19,20 @@
  */
 #pragma once
 
+#include "ID3D12CommandQueueExecuteCommandListsHook.h"
+#include "OculusKneeboard.h"
+
 #include <OpenKneeboard/D3D11On12.h>
+#include <OpenKneeboard/SHM/D3D11.h>
+
 #include <OpenKneeboard/config.h>
-#include <d3d11.h>
-#include <d3d11on12.h>
+
 #include <shims/winrt/base.h>
 
 #include <vector>
 
-#include "ID3D12CommandQueueExecuteCommandListsHook.h"
-#include "OculusKneeboard.h"
+#include <d3d11.h>
+#include <d3d11on12.h>
 
 namespace OpenKneeboard {
 
@@ -38,6 +42,8 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   virtual ~OculusD3D12Kneeboard();
 
   void UninstallHook();
+
+  virtual SHM::CachedReader* GetSHM() override;
 
   virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
@@ -59,6 +65,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   }
 
  private:
+  SHM::D3D11::CachedReader mSHM;
   ID3D12CommandQueueExecuteCommandListsHook mExecuteCommandListsHook;
   OculusKneeboard mOculusKneeboard;
   std::array<

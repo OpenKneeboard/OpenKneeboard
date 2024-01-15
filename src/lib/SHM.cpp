@@ -278,7 +278,6 @@ Snapshot::Snapshot(
       activity, "CopiedTexture", TraceLoggingValue(i, "Layer"));
   }
   TraceLoggingWriteTagged(activity, "Flushed");
-  mLayerSRVs = std::make_shared<LayerSRVArray>();
 
   if (mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0)) {
     TraceLoggingWriteTagged(activity, "MarkingValid");
@@ -345,34 +344,6 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   }
 
   return config;
-}
-
-ID3D11Texture2D* Snapshot::GetLayerTexture(
-  ID3D11Device* d3d,
-  uint8_t layerIndex) const {
-  if (layerIndex >= this->GetLayerCount()) {
-    dprintf(
-      "Asked for layer {}, but there are {} layers",
-      layerIndex,
-      this->GetLayerCount());
-    OPENKNEEBOARD_BREAK;
-    return {};
-  }
-
-  return mLayerTextures.at(layerIndex)->GetD3D11Texture();
-}
-
-winrt::com_ptr<ID3D11ShaderResourceView> Snapshot::GetLayerShaderResourceView(
-  ID3D11Device* d3d,
-  uint8_t layerIndex) const {
-  auto& srv = (*mLayerSRVs).at(layerIndex);
-
-  if (!srv) {
-    winrt::check_hresult(d3d->CreateShaderResourceView(
-      this->GetLayerTexture(d3d, layerIndex), nullptr, srv.put()));
-  }
-
-  return srv;
 }
 
 bool Snapshot::IsValid() const {
@@ -908,6 +879,8 @@ LayerTextureCache::LayerTextureCache(
   const winrt::com_ptr<ID3D11Texture2D>& d3d11Texture)
   : mD3D11Texture(d3d11Texture) {
 }
+
+LayerTextureCache::~LayerTextureCache() = default;
 
 ID3D11Texture2D* LayerTextureCache::GetD3D11Texture() {
   return mD3D11Texture.get();

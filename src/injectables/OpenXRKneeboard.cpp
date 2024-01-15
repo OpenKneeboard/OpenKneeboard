@@ -150,7 +150,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto snapshot = mSHM.MaybeGet(d3d11.get(), SHM::ConsumerKind::OpenXR);
+  auto snapshot
+    = this->GetSHM()->MaybeGet(d3d11.get(), SHM::ConsumerKind::OpenXR);
   if (!snapshot.IsValid()) {
     TraceLoggingWriteStop(
       activity, "xrEndFrame", TraceLoggingValue("No snapshot", "Result"));

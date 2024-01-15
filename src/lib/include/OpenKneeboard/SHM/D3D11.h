@@ -19,35 +19,28 @@
  */
 #pragma once
 
-#include "IDXGISwapChainPresentHook.h"
-
 #include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/SHM/D3D11.h>
 
-#include <shims/winrt/base.h>
+namespace OpenKneeboard::SHM::D3D11 {
 
-#include <memory>
-
-#include <d3d11_4.h>
-
-namespace OpenKneeboard {
-
-class NonVRD3D11Kneeboard final {
+class LayerTextureCache : public SHM::LayerTextureCache {
  public:
-  NonVRD3D11Kneeboard();
-  virtual ~NonVRD3D11Kneeboard();
+  using SHM::LayerTextureCache::LayerTextureCache;
 
-  void UninstallHook();
+  virtual ~LayerTextureCache();
+  ID3D11ShaderResourceView* GetD3D11ShaderResourceView();
 
  private:
-  SHM::D3D11::CachedReader mSHM;
-  IDXGISwapChainPresentHook mDXGIHook;
-
-  HRESULT OnIDXGISwapChain_Present(
-    IDXGISwapChain* this_,
-    UINT syncInterval,
-    UINT flags,
-    const decltype(&IDXGISwapChain::Present)& next);
+  winrt::com_ptr<ID3D11ShaderResourceView> mD3D11ShaderResourceView;
 };
 
-}// namespace OpenKneeboard
+class CachedReader : public SHM::CachedReader {
+ public:
+  using SHM::CachedReader::CachedReader;
+
+ protected:
+  virtual std::shared_ptr<SHM::LayerTextureCache> CreateLayerTextureCache(
+    const winrt::com_ptr<ID3D11Texture2D>&) override;
+};
+
+};// namespace OpenKneeboard::SHM::D3D11

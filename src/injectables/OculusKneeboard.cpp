@@ -85,7 +85,13 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   auto passthrough = std::bind_front(
     next, session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
 
-  if (!(mSHM && mRenderer)) {
+  if (!mRenderer) {
+    return passthrough();
+  }
+
+  auto shm = mRenderer->GetSHM();
+
+  if (!(shm && *shm)) {
     return passthrough();
   }
 
@@ -95,7 +101,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   }
 
   const auto snapshot
-    = mSHM.MaybeGet(d3d11.get(), mRenderer->GetConsumerKind());
+    = shm->MaybeGet(d3d11.get(), mRenderer->GetConsumerKind());
   if (!snapshot.IsValid()) {
     return passthrough();
   }

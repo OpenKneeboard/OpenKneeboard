@@ -19,18 +19,23 @@
  */
 #pragma once
 
-#include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/SHM/D3D11.h>
 #include <OpenKneeboard/VRKneeboard.h>
+
 #include <OpenKneeboard/config.h>
-#include <d3d11_1.h>
-#include <openvr.h>
+
 #include <shims/winrt/base.h>
+
+#include <DirectXTK/SimpleMath.h>
 
 #include <memory>
 #include <optional>
 #include <stop_token>
 #include <vector>
+
+#include <d3d11_1.h>
+#include <openvr.h>
 
 namespace OpenKneeboard {
 
@@ -56,7 +61,7 @@ class SteamVRKneeboard final : private VRKneeboard {
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
-  SHM::CachedReader mSHM;
+  SHM::D3D11::CachedReader mSHM;
 
   // Paint to buffer texture with variable opacity,
   // then atomically copy to OpenVR texture

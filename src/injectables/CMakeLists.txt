@@ -71,6 +71,7 @@ target_link_libraries(
   OpenKneeboard-version
   OpenKneeboard-D3D11
   OpenKneeboard-SHM
+  OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-DllLoadWatcher)
 
 add_module_library(

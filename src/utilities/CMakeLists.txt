@@ -87,6 +87,7 @@ target_link_libraries(
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
   OpenKneeboard-SHM
+  OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-scope_guard
   System::D2d1
   System::D3d11

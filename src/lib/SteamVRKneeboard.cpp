@@ -268,7 +268,10 @@ void SteamVRKneeboard::Tick() {
     // Also lets us apply opacity here, rather than needing another
     // OpenVR call
 
-    auto srv = snapshot.GetLayerShaderResourceView(mD3D.get(), layerIndex);
+    auto resources
+      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
+        layerIndex);
+    auto srv = resources->GetD3D11ShaderResourceView();
     if (!srv) {
       dprint("Failed to get layer shared texture");
       continue;
@@ -276,10 +279,7 @@ void SteamVRKneeboard::Tick() {
 
     // non-atomic paint to buffer...
     D3D11::CopyTextureWithOpacity(
-      mD3D.get(),
-      srv.get(),
-      mRenderTargetView.get(),
-      renderParams.mKneeboardOpacity);
+      mD3D.get(), srv, mRenderTargetView.get(), renderParams.mKneeboardOpacity);
 
     // ... then atomic copy to OpenVR texture
     winrt::com_ptr<ID3D11DeviceContext> ctx;

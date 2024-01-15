@@ -25,6 +25,7 @@
 #include <OpenKneeboard/GetSystemColor.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
+#include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -71,7 +72,7 @@ class TestViewerWindow final {
   bool mStreamerMode = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
-  SHM::CachedReader mSHM;
+  SHM::D3D11::CachedReader mSHM;
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
@@ -293,10 +294,12 @@ class TestViewerWindow final {
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 
+    const auto resources
+      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
+        mLayerIndex);
+
     winrt::check_hresult(DirectX::SaveDDSTextureToFile(
-      ctx.get(),
-      snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex),
-      path.wstring().c_str()));
+      ctx.get(), resources->GetD3D11Texture(), path.wstring().c_str()));
     Filesystem::OpenExplorerWithSelectedFile(path);
   }
 
@@ -485,7 +488,10 @@ class TestViewerWindow final {
     mLayerID = layer.mLayerID;
 
     auto d3d = mDXR.mD3DDevice.get();
-    auto sharedSRV = snapshot.GetLayerShaderResourceView(d3d, mLayerIndex);
+    auto resources
+      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
+        mLayerIndex);
+    auto sharedSRV = resources->GetD3D11ShaderResourceView();
     if (!sharedSRV) {
       mErrorRenderer->Render(
         d2d,
@@ -523,7 +529,7 @@ class TestViewerWindow final {
     winrt::check_hresult(d3d->CreateRenderTargetView(
       surface.as<ID3D11Texture2D>().get(), nullptr, rtv.put()));
     D3D11::DrawTextureWithOpacity(
-      d3d, sharedSRV.get(), rtv.get(), sourceRect, pageRect, 1.0f);
+      d3d, sharedSRV, rtv.get(), sourceRect, pageRect, 1.0f);
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
   }

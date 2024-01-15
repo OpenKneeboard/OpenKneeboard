@@ -180,4 +180,8 @@ winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {
   return mD3D11Device;
 }
 
+SHM::CachedReader* OpenXRD3D12Kneeboard::GetSHM() {
+  return &mSHM;
+}
+
 }// namespace OpenKneeboard

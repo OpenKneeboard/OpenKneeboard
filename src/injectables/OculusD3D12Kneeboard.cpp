@@ -44,6 +44,10 @@ OculusD3D12Kneeboard::~OculusD3D12Kneeboard() {
   UninstallHook();
 }
 
+SHM::CachedReader* OculusD3D12Kneeboard::GetSHM() {
+  return &mSHM;
+}
+
 void OculusD3D12Kneeboard::UninstallHook() {
   mExecuteCommandListsHook.UninstallHook();
   mOculusKneeboard.UninstallHook();

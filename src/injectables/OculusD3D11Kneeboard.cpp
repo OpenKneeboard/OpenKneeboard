@@ -49,6 +49,10 @@ void OculusD3D11Kneeboard::UninstallHook() {
   mDXGIHook.UninstallHook();
 }
 
+SHM::CachedReader* OculusD3D11Kneeboard::GetSHM() {
+  return &mSHM;
+}
+
 ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   ovrSession session,
   uint8_t layerIndex) {

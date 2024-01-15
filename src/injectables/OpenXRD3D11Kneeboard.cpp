@@ -246,8 +246,9 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
 
     for (uint8_t i = 0; i < layerCount; ++i) {
       auto info = layerRenderInfo[i];
-      const auto srv
-        = snapshot.GetLayerShaderResourceView(device, info.mLayerIndex);
+      auto resources
+        = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(i);
+      const auto srv = resources->GetD3D11ShaderResourceView();
       if (!srv) {
         dprint("Failed to get shader resource view");
         TraceLoggingWriteStop(
@@ -262,7 +263,7 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
 
       RECT sourceRect = info.mSourceRect;
 
-      sprites.Draw(srv.get(), info.mDestRect, &sourceRect, tint);
+      sprites.Draw(srv, info.mDestRect, &sourceRect, tint);
     }
   }
   TraceLoggingWriteStop(
@@ -270,6 +271,10 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
     "OpenXRD3D11Kneeboard::RenderLayers()",
     TraceLoggingValue(true, "Success"));
   return true;
+}
+
+SHM::CachedReader* OpenXRD3D11Kneeboard::GetSHM() {
+  return &mSHM;
 }
 
 }// namespace OpenKneeboard

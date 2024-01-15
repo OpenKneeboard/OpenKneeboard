@@ -23,6 +23,8 @@
 
 #include "OpenXRKneeboard.h"
 
+#include <OpenKneeboard/SHM/D3D11.h>
+
 #include <OpenKneeboard/config.h>
 
 #include <d3d11_4.h>
@@ -63,6 +65,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   };
 
  protected:
+  virtual SHM::CachedReader* GetSHM() override;
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
     const VRRenderConfig& current) const override;
@@ -81,6 +84,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
+  SHM::D3D11::CachedReader mSHM;
   XrGraphicsBindingVulkanKHR mBinding {};
   winrt::com_ptr<ID3D11Device5> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;

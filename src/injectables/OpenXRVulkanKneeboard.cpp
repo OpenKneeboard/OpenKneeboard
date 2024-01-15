@@ -721,4 +721,8 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   return true;
 }
 
+SHM::CachedReader* OpenXRVulkanKneeboard::GetSHM() {
+  return &mSHM;
+}
+
 }// namespace OpenKneeboard

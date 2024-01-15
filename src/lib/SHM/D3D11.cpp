@@ -17,37 +17,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
-
-#include "IDXGISwapChainPresentHook.h"
-
-#include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
-#include <shims/winrt/base.h>
+namespace OpenKneeboard::SHM::D3D11 {
 
-#include <memory>
+LayerTextureCache::~LayerTextureCache() = default;
 
-#include <d3d11_4.h>
+ID3D11ShaderResourceView* LayerTextureCache::GetD3D11ShaderResourceView() {
+  if (!mD3D11ShaderResourceView) {
+    auto texture = this->GetD3D11Texture();
+    winrt::com_ptr<ID3D11Device> device;
+    texture->GetDevice(device.put());
+    winrt::check_hresult(device->CreateShaderResourceView(
+      texture, nullptr, mD3D11ShaderResourceView.put()));
+  }
+  return mD3D11ShaderResourceView.get();
+}
 
-namespace OpenKneeboard {
+std::shared_ptr<SHM::LayerTextureCache> CachedReader::CreateLayerTextureCache(
+  const winrt::com_ptr<ID3D11Texture2D>& texture) {
+  return std::make_shared<SHM::D3D11::LayerTextureCache>(texture);
+}
 
-class NonVRD3D11Kneeboard final {
- public:
-  NonVRD3D11Kneeboard();
-  virtual ~NonVRD3D11Kneeboard();
-
-  void UninstallHook();
-
- private:
-  SHM::D3D11::CachedReader mSHM;
-  IDXGISwapChainPresentHook mDXGIHook;
-
-  HRESULT OnIDXGISwapChain_Present(
-    IDXGISwapChain* this_,
-    UINT syncInterval,
-    UINT flags,
-    const decltype(&IDXGISwapChain::Present)& next);
-};
-
-}// namespace OpenKneeboard
+}// namespace OpenKneeboard::SHM::D3D11

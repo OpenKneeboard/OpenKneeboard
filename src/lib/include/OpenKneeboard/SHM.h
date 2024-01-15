@@ -23,11 +23,13 @@
 #include "VRConfig.h"
 
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/dprint.h>
 
 #include <shims/winrt/base.h>
 
 #include <Windows.h>
 
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -51,8 +53,9 @@ static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
 class LayerTextureCache {
  public:
-  LayerTextureCache() = default;
+  LayerTextureCache() = delete;
   LayerTextureCache(const winrt::com_ptr<ID3D11Texture2D>&);
+  virtual ~LayerTextureCache();
 
   ID3D11Texture2D* GetD3D11Texture();
 
@@ -181,10 +184,26 @@ class Snapshot final {
   Config GetConfig() const;
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
-  ID3D11Texture2D* GetLayerTexture(ID3D11Device*, uint8_t layerIndex) const;
-  winrt::com_ptr<ID3D11ShaderResourceView> GetLayerShaderResourceView(
-    ID3D11Device*,
-    uint8_t layerIndex) const;
+
+  template <std::derived_from<LayerTextureCache> T>
+  T* GetLayerGPUResources(uint8_t layerIndex) const {
+    if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
+      dprintf(
+        "Asked for layer {}, but there are {} layers",
+        layerIndex,
+        this->GetLayerCount());
+      OPENKNEEBOARD_BREAK;
+      return nullptr;
+    }
+    const auto ret
+      = std::dynamic_pointer_cast<T>(mLayerTextures.at(layerIndex));
+    if (!ret) [[unlikely]] {
+      dprint("Layer texture cache type mismatch");
+      OPENKNEEBOARD_BREAK;
+      return nullptr;
+    }
+    return ret.get();
+  }
 
   bool IsValid() const;
   State GetState() const;
@@ -197,9 +216,6 @@ class Snapshot final {
   std::shared_ptr<FrameMetadata> mHeader;
   LayersTextureCache mLayerTextures;
 
-  using LayerSRVArray
-    = std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>;
-  std::shared_ptr<LayerSRVArray> mLayerSRVs;
   State mState;
 };
 

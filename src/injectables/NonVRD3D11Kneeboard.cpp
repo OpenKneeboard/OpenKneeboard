@@ -115,7 +115,10 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
       return passthrough();
     }
 
-    const auto srv = snapshot.GetLayerShaderResourceView(device.get(), 0);
+    const auto resources
+      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(0);
+    const auto srv = resources->GetD3D11ShaderResourceView();
+
     if (!srv) {
       dprint("Failed to get layer SRV");
       OPENKNEEBOARD_BREAK;
@@ -127,12 +130,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     D3D11::SavedState state(ctx);
 
     D3D11::DrawTextureWithOpacity(
-      device.get(),
-      srv.get(),
-      rtv.get(),
-      sourceRect,
-      destRect,
-      flatConfig.mOpacity);
+      device.get(), srv, rtv.get(), sourceRect, destRect, flatConfig.mOpacity);
   }
 
   return passthrough();
