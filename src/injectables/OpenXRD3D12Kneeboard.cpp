@@ -37,6 +37,8 @@
 #include <d3d11on12.h>
 #include <d3d12.h>
 
+#include <directxtk12/SpriteBatch.h>
+
 #define XR_USE_GRAPHICS_API_D3D12
 #include <openxr/openxr_platform.h>
 
@@ -50,59 +52,34 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
 
-  mDeviceResources.mDevice12.copy_from(binding.device);
-  mDeviceResources.mCommandQueue12.copy_from(binding.queue);
+  this->InitializeDeviceResources(binding);
+}
 
-#ifdef DEBUG
-  {
-    auto debug5 = mDeviceResources.mDevice12.try_as<ID3D12Debug5>();
-    if (debug5) {
-      // debug5->SetEnableGPUBasedValidation(true);
-      // debug5->SetEnableSynchronizedCommandQueueValidation(true);
-      debug5->SetEnableAutoName(true);
-    }
-  }
-#endif
-
-  TraceLoggingWrite(gTraceProvider, "OpenXRD3D12Kneeboard()");
+void OpenXRD3D12Kneeboard::InitializeDeviceResources(
+  const XrGraphicsBindingD3D12KHR& binding) {
+  mD3D12Device.copy_from(binding.device);
+  mD3D12CommandQueue.copy_from(binding.queue);
 
   UINT flags = 0;
 #ifdef DEBUG
   flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
+  winrt::com_ptr<ID3D11Device> device11;
   winrt::com_ptr<ID3D11DeviceContext> context11;
   D3D11On12CreateDevice(
-    mDeviceResources.mDevice12.get(),
+    mD3D12Device.get(),
     flags,
     nullptr,
     0,
     nullptr,
     0,
     1,
-    mDeviceResources.mDevice11.put(),
+    device11.put(),
     context11.put(),
     nullptr);
-  mDeviceResources.m11on12 = mDeviceResources.mDevice11.as<ID3D11On12Device2>();
-  mDeviceResources.mContext11 = context11.as<ID3D11DeviceContext4>();
-
-  winrt::check_hresult(mDeviceResources.mDevice12->CreateCommandAllocator(
-    D3D12_COMMAND_LIST_TYPE_DIRECT,
-    IID_PPV_ARGS(mDeviceResources.mAllocator12.put())));
-  mDeviceResources.mAllocator12->SetName(
-    std::format(L"{}:{}", __FILEW__, __LINE__).c_str());
-
-  winrt::check_hresult(mDeviceResources.mDevice12->CreateFence(
-    0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(mDeviceResources.mFence12.put())));
-  winrt::check_hresult(mDeviceResources.mDevice12->CreateSharedHandle(
-    mDeviceResources.mFence12.get(),
-    nullptr,
-    GENERIC_ALL,
-    nullptr,
-    &mDeviceResources.mFenceHandle));
-  winrt::check_hresult(
-    mDeviceResources.mDevice11.as<ID3D11Device5>()->OpenSharedFence(
-      mDeviceResources.mFenceHandle,
-      IID_PPV_ARGS(mDeviceResources.mFence11.put())));
+  mD3D11Device = device11.as<ID3D11Device5>();
+  mD3D11ImmediateContext = context11.as<ID3D11DeviceContext4>();
+  mD3D11On12Device = device11.as<ID3D11On12Device>();
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
@@ -112,12 +89,8 @@ OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
 bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
   const VRRenderConfig& initial,
   const VRRenderConfig& current) const {
-  if (!IsVarjoRuntime()) {
-    return true;
-  }
-
-  return initial.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer
-    == current.mQuirks.mVarjo_OpenXR_D3D12_DoubleBuffer;
+  // TODO:remove varjo runtime quirk flag
+  return true;
 }
 
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
@@ -163,18 +136,6 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
 
   dprintf("{} images in swapchain", imageCount);
 
-  bool doubleBuffer = false;
-  if (IsVarjoRuntime()) {
-    if (quirks.mVarjo_OpenXR_D3D12_DoubleBuffer) {
-      dprint("Enabling double-buffering for Varjo D3D11on12 quirk");
-      doubleBuffer = true;
-    } else {
-      dprint(
-        "WARNING: D3D12 on Varjo runtime, but double-buffering quirk is "
-        "disabled");
-    }
-  }
-
   std::vector<XrSwapchainImageD3D12KHR> images;
   images.resize(
     imageCount,
@@ -200,36 +161,10 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
     return nullptr;
   }
 
-  auto& rtvs = mRenderTargetViews[swapchain];
-  rtvs.resize(imageCount);
-
-  for (size_t i = 0; i < imageCount; ++i) {
-#ifdef DEBUG
-    if (images.at(i).type != XR_TYPE_SWAPCHAIN_IMAGE_D3D12_KHR) {
-      OPENKNEEBOARD_BREAK;
-    }
-#endif
-    winrt::com_ptr<ID3D12Resource> texture12;
-    texture12.copy_from(images.at(i).texture);
-    texture12->SetName(std::format(L"OKBD3D12-SwapChain-{}", i).c_str());
-
-    rtvs.at(i) = std::static_pointer_cast<D3D11::IRenderTargetViewFactory>(
-      std::make_shared<D3D11On12::RenderTargetViewFactory>(
-        mDeviceResources,
-        texture12,
-        formats.mRenderTargetViewFormat,
-        doubleBuffer ? D3D11On12::Flags::DoubleBuffer
-                     : D3D11On12::Flags::None));
-  }
-  dprintf("Created {} 11on12 RenderTargetViews", imageCount);
-
   return swapchain;
 }
 
-void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
-  if (mRenderTargetViews.contains(swapchain)) {
-    mRenderTargetViews.erase(swapchain);
-  }
+void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain) {
 }
 
 bool OpenXRD3D12Kneeboard::RenderLayers(
@@ -238,20 +173,11 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
   LayerRenderInfo* layers) {
-  auto rtv = mRenderTargetViews.at(swapchain).at(swapchainTextureIndex)->Get();
-  const auto ret = OpenXRD3D11Kneeboard::RenderLayers(
-    this->GetOpenXR(),
-    this->GetD3D11Device().get(),
-    rtv->Get(),
-    snapshot,
-    layerCount,
-    layers);
-
-  return ret;
+  return true;
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {
-  return mDeviceResources.mDevice11;
+  return mD3D11Device;
 }
 
 }// namespace OpenKneeboard

@@ -123,6 +123,7 @@ target_link_libraries(
   PRIVATE
   ThirdParty::OpenXR
   ThirdParty::DirectXTK
+  ThirdParty::DirectXTK12
   ThirdParty::VulkanHeaders
   OpenKneeboard-D3D11
   OpenKneeboard-D3D11On12

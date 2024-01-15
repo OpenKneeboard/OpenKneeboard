@@ -21,10 +21,10 @@
 
 #include "OpenXRKneeboard.h"
 
-#include <OpenKneeboard/D3D11On12.h>
-
 #include <OpenKneeboard/config.h>
 
+#include <d3d11_4.h>
+#include <d3d11on12.h>
 #include <d3d12.h>
 
 struct XrGraphicsBindingD3D12KHR;
@@ -60,12 +60,17 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
-  D3D11On12::DeviceResources mDeviceResources;
+  ///// START Device Resources /////
+  winrt::com_ptr<ID3D12Device> mD3D12Device;
+  winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
 
-  std::unordered_map<
-    XrSwapchain,
-    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>>
-    mRenderTargetViews;
+  winrt::com_ptr<ID3D11Device5> mD3D11Device;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
+
+  winrt::com_ptr<ID3D11On12Device> mD3D11On12Device;
+
+  void InitializeDeviceResources(const XrGraphicsBindingD3D12KHR&);
+  ///// END Device Resources /////
 };
 
 }// namespace OpenKneeboard
