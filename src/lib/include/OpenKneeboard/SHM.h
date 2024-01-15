@@ -49,7 +49,18 @@ static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
-using LayerTextures = std::array<winrt::com_ptr<ID3D11Texture2D>, MaxLayers>;
+class LayerTextureCache {
+ public:
+  LayerTextureCache() = default;
+  LayerTextureCache(const winrt::com_ptr<ID3D11Texture2D>&);
+
+  ID3D11Texture2D* GetD3D11Texture();
+
+ private:
+  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
+};
+
+using LayersTextureCache = std::array<LayerTextureCache, MaxLayers>;
 
 std::wstring SharedTextureName(
   uint64_t sessionID,
@@ -139,8 +150,8 @@ class Writer final {
   std::shared_ptr<Impl> p;
 };
 
-struct TextureReadResources;
-struct LayerTextureReadResources;
+struct IPCTextureReadResources;
+struct IPCLayerTextureReadResources;
 
 class Snapshot final {
  public:
@@ -160,8 +171,8 @@ class Snapshot final {
     const FrameMetadata& header,
     ID3D11DeviceContext4*,
     ID3D11Fence*,
-    const LayerTextures&,
-    TextureReadResources*);
+    const LayersTextureCache&,
+    IPCTextureReadResources*);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -169,9 +180,7 @@ class Snapshot final {
   Config GetConfig() const;
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
-  winrt::com_ptr<ID3D11Texture2D> GetLayerTexture(
-    ID3D11Device*,
-    uint8_t layerIndex) const;
+  ID3D11Texture2D* GetLayerTexture(ID3D11Device*, uint8_t layerIndex) const;
   winrt::com_ptr<ID3D11ShaderResourceView> GetLayerShaderResourceView(
     ID3D11Device*,
     uint8_t layerIndex) const;
@@ -185,7 +194,7 @@ class Snapshot final {
 
  private:
   std::shared_ptr<FrameMetadata> mHeader;
-  LayerTextures mLayerTextures;
+  LayersTextureCache mLayerTextures;
 
   using LayerSRVArray
     = std::array<winrt::com_ptr<ID3D11ShaderResourceView>, MaxLayers>;
@@ -215,7 +224,7 @@ class Reader {
   Snapshot MaybeGetUncached(
     ID3D11DeviceContext4*,
     ID3D11Fence*,
-    const LayerTextures&,
+    const LayersTextureCache&,
     ConsumerKind) const;
 
  protected:
@@ -235,7 +244,7 @@ class SingleBufferedReader : public Reader {
   winrt::com_ptr<ID3D11DeviceContext4> mContext;
   winrt::com_ptr<ID3D11Fence> mFence;
   winrt::handle mFenceHandle;
-  SHM::LayerTextures mTextures;
+  SHM::LayersTextureCache mTextures;
 
   Snapshot mCache {nullptr};
   ConsumerKind mCachedConsumerKind;
@@ -245,7 +254,7 @@ class SingleBufferedReader : public Reader {
   Snapshot MaybeGet(
     ID3D11DeviceContext4*,
     ID3D11Fence*,
-    const LayerTextures&,
+    const LayersTextureCache&,
     ConsumerKind) noexcept;
 };
 

@@ -116,7 +116,7 @@ static auto MutexPath() {
   return sCache;
 }
 
-struct LayerTextureReadResources {
+struct IPCLayerTextureReadResources {
   winrt::com_ptr<ID3D11Texture2D> mTexture;
 
   bool Populate(
@@ -126,10 +126,10 @@ struct LayerTextureReadResources {
     uint32_t sequenceNumber);
 };
 
-struct TextureReadResources {
+struct IPCTextureReadResources {
   uint64_t mSessionID = 0;
 
-  std::array<LayerTextureReadResources, MaxLayers> mLayers;
+  std::array<IPCLayerTextureReadResources, MaxLayers> mLayers;
 
   bool Populate(
     ID3D11DeviceContext* ctx,
@@ -137,7 +137,7 @@ struct TextureReadResources {
     uint32_t sequenceNumber);
 };
 
-bool TextureReadResources::Populate(
+bool IPCTextureReadResources::Populate(
   ID3D11DeviceContext* ctx,
   uint64_t sessionID,
   uint32_t sequenceNumber) {
@@ -159,7 +159,7 @@ bool TextureReadResources::Populate(
   return true;
 }
 
-bool LayerTextureReadResources::Populate(
+bool IPCLayerTextureReadResources::Populate(
   ID3D11DeviceContext* ctx,
   uint64_t sessionID,
   uint8_t layerIndex,
@@ -246,8 +246,8 @@ Snapshot::Snapshot(
   const FrameMetadata& header,
   ID3D11DeviceContext4* ctx,
   ID3D11Fence* fence,
-  const LayerTextures& textures,
-  TextureReadResources* r)
+  const LayersTextureCache& textures,
+  IPCTextureReadResources* r)
   : mLayerTextures(textures), mState(State::Empty) {
   mHeader = std::make_shared<FrameMetadata>(header);
 
@@ -265,7 +265,7 @@ Snapshot::Snapshot(
     TraceLoggingWriteTagged(
       activity, "StartCopyTexture", TraceLoggingValue(i, "Layer"));
     ctx->CopySubresourceRegion(
-      mLayerTextures.at(i).get(),
+      mLayerTextures.at(i).GetD3D11Texture(),
       /* subresource = */ 0,
       /* x = */ 0,
       /* y = */ 0,
@@ -347,7 +347,7 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   return config;
 }
 
-winrt::com_ptr<ID3D11Texture2D> Snapshot::GetLayerTexture(
+ID3D11Texture2D* Snapshot::GetLayerTexture(
   ID3D11Device* d3d,
   uint8_t layerIndex) const {
   if (layerIndex >= this->GetLayerCount()) {
@@ -359,25 +359,18 @@ winrt::com_ptr<ID3D11Texture2D> Snapshot::GetLayerTexture(
     return {};
   }
 
-  return mLayerTextures.at(layerIndex);
+  return const_cast<LayerTextureCache&>(mLayerTextures.at(layerIndex))
+    .GetD3D11Texture();
 }
 
 winrt::com_ptr<ID3D11ShaderResourceView> Snapshot::GetLayerShaderResourceView(
   ID3D11Device* d3d,
   uint8_t layerIndex) const {
-  if (layerIndex >= this->GetLayerCount()) {
-    dprintf(
-      "Asked for layer {}, but there are {} layers",
-      layerIndex,
-      this->GetLayerCount());
-    OPENKNEEBOARD_BREAK;
-    return {};
-  }
-
   auto& srv = (*mLayerSRVs).at(layerIndex);
+
   if (!srv) {
     winrt::check_hresult(d3d->CreateShaderResourceView(
-      mLayerTextures.at(layerIndex).get(), nullptr, srv.put()));
+      this->GetLayerTexture(d3d, layerIndex), nullptr, srv.put()));
   }
 
   return srv;
@@ -588,7 +581,7 @@ uint32_t Writer::GetNextSequenceNumber() const {
 
 class Reader::Impl : public SHM::Impl {
  public:
-  std::array<TextureReadResources, TextureCount> mResources;
+  std::array<IPCTextureReadResources, TextureCount> mResources;
 };
 
 uint64_t Reader::GetSessionID() const {
@@ -627,7 +620,7 @@ Writer::operator bool() const {
 Snapshot SingleBufferedReader::MaybeGet(
   ID3D11DeviceContext4* ctx,
   ID3D11Fence* fence,
-  const LayerTextures& textures,
+  const LayersTextureCache& textures,
   ConsumerKind kind) noexcept {
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "SHM::MaybeGet");
@@ -709,7 +702,7 @@ Snapshot SingleBufferedReader::MaybeGet(
 Snapshot Reader::MaybeGetUncached(
   ID3D11DeviceContext4* ctx,
   ID3D11Fence* fence,
-  const LayerTextures& textures,
+  const LayersTextureCache& textures,
   ConsumerKind kind) const {
   if (!p->HaveLock()) {
     dprint("Can't get without lock");
@@ -859,7 +852,7 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
   for (size_t i = 0; i < mTextures.size(); ++i) {
     mTextures[i] = SHM::CreateCompatibleTexture(device);
     const auto name = std::format("OKB-SHM-Texture-{}", i);
-    mTextures[i]->SetPrivateData(
+    mTextures[i].GetD3D11Texture()->SetPrivateData(
       WKPDID_D3DDebugObjectName, name.size(), name.data());
   }
 
@@ -904,6 +897,15 @@ Snapshot SingleBufferedReader::MaybeGet(
   }
 
   return this->MaybeGet(mContext.get(), mFence.get(), mTextures, kind);
+}
+
+LayerTextureCache::LayerTextureCache(
+  const winrt::com_ptr<ID3D11Texture2D>& d3d11Texture)
+  : mD3D11Texture(d3d11Texture) {
+}
+
+ID3D11Texture2D* LayerTextureCache::GetD3D11Texture() {
+  return mD3D11Texture.get();
 }
 
 }// namespace OpenKneeboard::SHM

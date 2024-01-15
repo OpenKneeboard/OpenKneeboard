@@ -295,7 +295,7 @@ class TestViewerWindow final {
 
     winrt::check_hresult(DirectX::SaveDDSTextureToFile(
       ctx.get(),
-      snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex).get(),
+      snapshot.GetLayerTexture(mDXR.mD3DDevice.get(), mLayerIndex),
       path.wstring().c_str()));
     Filesystem::OpenExplorerWithSelectedFile(path);
   }
