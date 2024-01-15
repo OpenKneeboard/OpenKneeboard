@@ -48,16 +48,29 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
   : OpenXRKneeboard(session, runtimeID, next) {
+  dprintf("{}", __FUNCTION__);
+
   mDeviceResources.mDevice12.copy_from(binding.device);
   mDeviceResources.mCommandQueue12.copy_from(binding.queue);
 
-  dprintf("{}", __FUNCTION__);
+#ifdef DEBUG
+  {
+    auto debug5 = mDeviceResources.mDevice12.try_as<ID3D12Debug5>();
+    if (debug5) {
+      // debug5->SetEnableGPUBasedValidation(true);
+      // debug5->SetEnableSynchronizedCommandQueueValidation(true);
+      debug5->SetEnableAutoName(true);
+    }
+  }
+#endif
+
   TraceLoggingWrite(gTraceProvider, "OpenXRD3D12Kneeboard()");
 
   UINT flags = 0;
 #ifdef DEBUG
   flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
+  winrt::com_ptr<ID3D11DeviceContext> context11;
   D3D11On12CreateDevice(
     mDeviceResources.mDevice12.get(),
     flags,
@@ -67,17 +80,29 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
     0,
     1,
     mDeviceResources.mDevice11.put(),
-    mDeviceResources.mContext11.put(),
+    context11.put(),
     nullptr);
   mDeviceResources.m11on12 = mDeviceResources.mDevice11.as<ID3D11On12Device2>();
+  mDeviceResources.mContext11 = context11.as<ID3D11DeviceContext4>();
 
   winrt::check_hresult(mDeviceResources.mDevice12->CreateCommandAllocator(
     D3D12_COMMAND_LIST_TYPE_DIRECT,
     IID_PPV_ARGS(mDeviceResources.mAllocator12.put())));
   mDeviceResources.mAllocator12->SetName(
     std::format(L"{}:{}", __FILEW__, __LINE__).c_str());
+
   winrt::check_hresult(mDeviceResources.mDevice12->CreateFence(
     0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(mDeviceResources.mFence12.put())));
+  winrt::check_hresult(mDeviceResources.mDevice12->CreateSharedHandle(
+    mDeviceResources.mFence12.get(),
+    nullptr,
+    GENERIC_ALL,
+    nullptr,
+    &mDeviceResources.mFenceHandle));
+  winrt::check_hresult(
+    mDeviceResources.mDevice11.as<ID3D11Device5>()->OpenSharedFence(
+      mDeviceResources.mFenceHandle,
+      IID_PPV_ARGS(mDeviceResources.mFence11.put())));
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
@@ -214,13 +239,15 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   uint8_t layerCount,
   LayerRenderInfo* layers) {
   auto rtv = mRenderTargetViews.at(swapchain).at(swapchainTextureIndex)->Get();
-  return OpenXRD3D11Kneeboard::RenderLayers(
+  const auto ret = OpenXRD3D11Kneeboard::RenderLayers(
     this->GetOpenXR(),
     this->GetD3D11Device().get(),
     rtv->Get(),
     snapshot,
     layerCount,
     layers);
+
+  return ret;
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {

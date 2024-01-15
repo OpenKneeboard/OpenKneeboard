@@ -159,6 +159,7 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
 #ifdef DEBUG
     flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
+    winrt::com_ptr<ID3D11DeviceContext> ctx11;
     winrt::check_hresult(D3D11On12CreateDevice(
       mDeviceResources.mDevice12.get(),
       flags,
@@ -168,10 +169,11 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
       0,
       1,
       mDeviceResources.mDevice11.put(),
-      mDeviceResources.mContext11.put(),
+      ctx11.put(),
       nullptr));
     mDeviceResources.m11on12
       = mDeviceResources.mDevice11.as<ID3D11On12Device2>();
+    mDeviceResources.mContext11 = ctx11.as<ID3D11DeviceContext4>();
   }
 
   mExecuteCommandListsHook.UninstallHook();

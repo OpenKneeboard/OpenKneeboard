@@ -21,13 +21,14 @@
 
 #include <OpenKneeboard/D3D11.h>
 
+#include <d3d11_4.h>
 #include <d3d11on12.h>
 
 namespace OpenKneeboard::D3D11On12 {
 
 struct DeviceResources {
   winrt::com_ptr<ID3D11Device> mDevice11;
-  winrt::com_ptr<ID3D11DeviceContext> mContext11;
+  winrt::com_ptr<ID3D11DeviceContext4> mContext11;
 
   winrt::com_ptr<ID3D11On12Device2> m11on12;
 
@@ -37,6 +38,8 @@ struct DeviceResources {
   winrt::com_ptr<ID3D12CommandAllocator> mAllocator12;
 
   winrt::com_ptr<ID3D12Fence> mFence12;
+  HANDLE mFenceHandle {};
+  winrt::com_ptr<ID3D11Fence> mFence11;
   static thread_local uint64_t mFenceValue;
 };
 

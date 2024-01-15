@@ -48,9 +48,29 @@ RenderTargetView::RenderTargetView(
 }
 
 RenderTargetView::~RenderTargetView() noexcept {
+  winrt::handle fenceEvent {CreateEventExW(nullptr, nullptr, 0, GENERIC_ALL)};
+  const auto fenceValue11Finished = ++mDeviceResources.mFenceValue;
+  auto fence11 = mDeviceResources.mFence11.get();
+  auto fence12 = mDeviceResources.mFence12.get();
+  auto queue = mDeviceResources.mCommandQueue12.get();
+
+  {
+    auto ctx11 = mDeviceResources.mContext11.get();
+    fence11->SetEventOnCompletion(fenceValue11Finished, fenceEvent.get());
+    winrt::check_hresult(ctx11->Signal(fence11, fenceValue11Finished));
+    ctx11->Flush();
+    winrt::check_hresult(queue->Wait(fence12, fenceValue11Finished));
+  }
+
+  auto fenceValue12Finished = ++mDeviceResources.mFenceValue;
+  fence12->SetEventOnCompletion(fenceValue12Finished, fenceEvent.get());
+
   if (!mBufferTexture11) {
     auto resources = static_cast<ID3D11Resource*>(mTexture11.get());
     mDeviceResources.m11on12->ReleaseWrappedResources(&resources, 1);
+    mDeviceResources.mContext11->Flush();
+    winrt::check_hresult(queue->Signal(fence12, fenceValue12Finished));
+    WaitForSingleObject(fenceEvent.get(), INFINITE);
     return;
   }
 
@@ -96,22 +116,12 @@ RenderTargetView::~RenderTargetView() noexcept {
   commandList->ResourceBarrier(1, &outBarrier);
   winrt::check_hresult(commandList->Close());
 
-  auto queue = mDeviceResources.mCommandQueue12.get();
-
-  const auto FENCE_VALUE_BEFORE_COMMAND_LIST = ++mDeviceResources.mFenceValue;
-  const auto FENCE_VALUE_AFTER_COMMAND_LIST = ++mDeviceResources.mFenceValue;
-
   const auto commandLists = static_cast<ID3D12CommandList*>(commandList.get());
   queue->ExecuteCommandLists(1, &commandLists);
 
-  auto fence = mDeviceResources.mFence12.get();
-  auto fenceValue = ++mDeviceResources.mFenceValue;
-  winrt::handle fenceEvent {
-    CreateEventExW(nullptr, nullptr, 0, EVENT_ALL_ACCESS)};
-  fence->SetEventOnCompletion(fenceValue, fenceEvent.get());
-  winrt::check_hresult(queue->Signal(fence, fenceValue));
+  winrt::check_hresult(queue->Signal(fence12, fenceValue12Finished));
   winrt::check_hresult(mDeviceResources.m11on12->ReturnUnderlyingResource(
-    mBufferTexture11.get(), 1, &fenceValue, &fence));
+    mBufferTexture11.get(), 1, &fenceValue12Finished, &fence12));
   traceprint("Waiting for D3D11on12 fence...");
   WaitForSingleObject(fenceEvent.get(), INFINITE);
   traceprint("Done.");
