@@ -222,27 +222,7 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {
-  auto& d11 = mDeviceResources.mDevice11;
-  if (!d11) {
-    return d11;
-  }
-  auto removedReason = d11->GetDeviceRemovedReason();
-  if (removedReason != S_OK) {
-    dprintf(
-      "D3D11 device removed: {:#010x}", static_cast<uint32_t>(removedReason));
-    d11 = nullptr;
-    auto& d12 = mDeviceResources.mDevice12;
-    removedReason = d12->GetDeviceRemovedReason();
-    if (removedReason == S_OK) {
-      dprint("D3D12 device still OK, recreating D3D11 device");
-    } else {
-      dprintf(
-        "D3D12 device also removed: {:#010x}",
-        static_cast<uint32_t>(removedReason));
-      d12 = nullptr;
-    }
-  }
-  return d11;
+  return mDeviceResources.mDevice11;
 }
 
 }// namespace OpenKneeboard
