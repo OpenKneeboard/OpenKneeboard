@@ -616,15 +616,14 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-SingleBufferedReader::~SingleBufferedReader() = default;
+CachedReader::~CachedReader() = default;
 
-std::shared_ptr<LayerTextureCache>
-SingleBufferedReader::CreateLayerTextureCache(
+std::shared_ptr<LayerTextureCache> CachedReader::CreateLayerTextureCache(
   const winrt::com_ptr<ID3D11Texture2D>& texture) {
   return std::make_shared<LayerTextureCache>(texture);
 }
 
-Snapshot SingleBufferedReader::MaybeGet(
+Snapshot CachedReader::MaybeGet(
   ID3D11DeviceContext4* ctx,
   ID3D11Fence* fence,
   const LayersTextureCache& textures,
@@ -815,7 +814,7 @@ bool ConsumerPattern::Matches(ConsumerKind kind) const {
   return (mKindMask & std23::to_underlying(kind)) == mKindMask;
 }
 
-void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
+void CachedReader::InitDXResources(ID3D11Device* device) {
   if (!p) {
     return;
   }
@@ -891,9 +890,7 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
   device5->OpenSharedFence(mFenceHandle.get(), IID_PPV_ARGS(mFence.put()));
 }
 
-Snapshot SingleBufferedReader::MaybeGet(
-  ID3D11Device* device,
-  ConsumerKind kind) {
+Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
   if (!(*this)) {
     return {nullptr};
   }

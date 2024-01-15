@@ -233,9 +233,9 @@ class Reader {
   std::shared_ptr<Impl> p;
 };
 
-class SingleBufferedReader : public Reader {
+class CachedReader : public Reader {
  public:
-  virtual ~SingleBufferedReader();
+  virtual ~CachedReader();
   Snapshot MaybeGet(ID3D11Device* device, ConsumerKind kind);
 
  protected:

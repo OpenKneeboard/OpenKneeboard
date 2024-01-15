@@ -92,7 +92,7 @@ class OpenXRKneeboard : public VRKneeboard {
 
  private:
   std::shared_ptr<OpenXRNext> mOpenXR;
-  SHM::SingleBufferedReader mSHM;
+  SHM::CachedReader mSHM;
 
   XrSwapchain mSwapchain {};
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;

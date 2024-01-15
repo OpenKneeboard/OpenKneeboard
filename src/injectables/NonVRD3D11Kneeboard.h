@@ -39,7 +39,7 @@ class NonVRD3D11Kneeboard final {
   void UninstallHook();
 
  private:
-  SHM::SingleBufferedReader mSHM;
+  SHM::CachedReader mSHM;
   IDXGISwapChainPresentHook mDXGIHook;
 
   HRESULT OnIDXGISwapChain_Present(

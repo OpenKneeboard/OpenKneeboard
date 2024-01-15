@@ -71,7 +71,7 @@ class TestViewerWindow final {
   bool mStreamerMode = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
-  SHM::SingleBufferedReader mSHM;
+  SHM::CachedReader mSHM;
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
