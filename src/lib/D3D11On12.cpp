@@ -139,11 +139,20 @@ RenderTargetViewFactory::RenderTargetViewFactory(
     IID_PPV_ARGS(mTexture11.put())));
 
   if (static_cast<bool>(flags & Flags::DoubleBuffer)) {
-    mBufferTexture11 = SHM::CreateCompatibleTexture(
-      deviceResources.mDevice11.get(),
-      SHM::DEFAULT_D3D11_BIND_FLAGS,
-      SHM::DEFAULT_D3D11_MISC_FLAGS,
-      format);
+    const auto t12Desc = texture12->GetDesc();
+    // Not using SHM::CreateCompatibleTexture as we need to match the size
+    D3D11_TEXTURE2D_DESC bufferDesc {
+      .Width = static_cast<UINT>(t12Desc.Width),
+      .Height = static_cast<UINT>(t12Desc.Height),
+      .MipLevels = 1,
+      .ArraySize = 1,
+      .Format = format,
+      .SampleDesc = {1, 0},
+      .BindFlags = SHM::DEFAULT_D3D11_BIND_FLAGS,
+      .MiscFlags = SHM::DEFAULT_D3D11_MISC_FLAGS,
+    };
+    winrt::check_hresult(deviceResources.mDevice11->CreateTexture2D(
+      &bufferDesc, nullptr, mBufferTexture11.put()));
   }
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
