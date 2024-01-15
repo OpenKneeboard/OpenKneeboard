@@ -478,11 +478,6 @@ void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
     return;
   }
 
-  auto& resources = mSwapchainResources.at(swapchain);
-  for (const auto image: resources.mImages) {
-    mPFN_vkDestroyImage(mVKDevice, image, mVKAllocator);
-  }
-
   mSwapchainResources.erase(swapchain);
 }
 
