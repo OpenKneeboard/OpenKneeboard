@@ -212,6 +212,8 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
   LayerRenderInfo* layerRenderInfo) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "OpenXRD3D11Kneeboard::RenderLayers()");
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
 
@@ -232,26 +234,41 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
   ctx->IASetInputLayout(nullptr);
   ctx->VSSetShader(nullptr, nullptr, 0);
 
-  DirectX::SpriteBatch sprites(ctx.get());
-  sprites.Begin();
-  const scope_guard endSprites([&sprites]() { sprites.End(); });
+  {
+    TraceLoggingThreadActivity<gTraceProvider> spritesActivity;
+    TraceLoggingWriteStart(spritesActivity, "SpriteBatch");
+    DirectX::SpriteBatch sprites(ctx.get());
+    sprites.Begin();
+    const scope_guard endSprites([&sprites, &spritesActivity]() {
+      sprites.End();
+      TraceLoggingWriteStop(spritesActivity, "SpriteBatch");
+    });
 
-  for (uint8_t i = 0; i < layerCount; ++i) {
-    auto info = layerRenderInfo[i];
-    const auto srv
-      = snapshot.GetLayerShaderResourceView(device, info.mLayerIndex);
-    if (!srv) {
-      dprint("Failed to get shader resource view");
-      return false;
+    for (uint8_t i = 0; i < layerCount; ++i) {
+      auto info = layerRenderInfo[i];
+      const auto srv
+        = snapshot.GetLayerShaderResourceView(device, info.mLayerIndex);
+      if (!srv) {
+        dprint("Failed to get shader resource view");
+        TraceLoggingWriteStop(
+          activity,
+          "OpenXRD3D11Kneeboard::RenderLayers()",
+          TraceLoggingValue(false, "Success"));
+        return false;
+      }
+
+      const auto opacity = info.mVR.mKneeboardOpacity;
+      DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
+
+      RECT sourceRect = info.mSourceRect;
+
+      sprites.Draw(srv.get(), info.mDestRect, &sourceRect, tint);
     }
-
-    const auto opacity = info.mVR.mKneeboardOpacity;
-    DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
-
-    RECT sourceRect = info.mSourceRect;
-
-    sprites.Draw(srv.get(), info.mDestRect, &sourceRect, tint);
   }
+  TraceLoggingWriteStop(
+    activity,
+    "OpenXRD3D11Kneeboard::RenderLayers()",
+    TraceLoggingValue(true, "Success"));
   return true;
 }
 
