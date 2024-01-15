@@ -112,7 +112,7 @@ void OpenXRVulkanKneeboard::InitializeVulkan(
 
     const auto ret = mPFN_vkAllocateCommandBuffers(
       mVKDevice, &allocateInfo, &mVKCommandBuffer);
-    if (XR_FAILED(ret)) {
+    if (VK_FAILED(ret)) {
       dprintf("Failed to create command buffer: {}", ret);
       return;
     }
@@ -332,7 +332,7 @@ void OpenXRVulkanKneeboard::InitInterop(
     };
 
     const auto res = mPFN_vkBindImageMemory2(mVKDevice, 1, &bindImageInfo);
-    if (XR_FAILED(res)) {
+    if (VK_FAILED(res)) {
       dprintf("Failed to bind image memory: {}", res);
     }
   }
@@ -641,7 +641,7 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     outBarriers);
   {
     const auto res = mPFN_vkEndCommandBuffer(mVKCommandBuffer);
-    if (XR_FAILED(res)) {
+    if (VK_FAILED(res)) {
       dprintf("vkEndCommandBuffer failed: {}", res);
       return false;
     }
