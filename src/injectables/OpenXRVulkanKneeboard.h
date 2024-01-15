@@ -120,6 +120,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   IT(vkBeginCommandBuffer) \
   IT(vkEndCommandBuffer) \
   IT(vkCmdCopyImage) \
+  IT(vkCmdBlitImage) \
   IT(vkCmdPipelineBarrier) \
   IT(vkCreateImage) \
   IT(vkDestroyImage) \
@@ -131,6 +132,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   IT(vkCreateFence) \
   IT(vkResetFences) \
   IT(vkWaitForFences) \
+  IT(vkQueueWaitIdle) \
   IT(vkCreateSemaphore) \
   IT(vkImportSemaphoreWin32HandleKHR) \
   IT(vkGetSemaphoreWin32HandleKHR) \
