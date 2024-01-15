@@ -205,7 +205,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
   std::vector<LayerRenderInfo> layers;
-  for (uint8_t i = 0; i < snapshot.GetLayerCount(); ++i) {
+  for (uint8_t i = 0; i < layerCount; ++i) {
     auto layerConfig = snapshot.GetLayerConfig(i);
     if (!layerConfig->IsValid()) {
       TraceLoggingWriteStop(
