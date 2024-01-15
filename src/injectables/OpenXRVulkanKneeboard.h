@@ -109,7 +109,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     std::vector<VkImage> mImages;
   };
   std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
-  void InitInterop(Interop*) noexcept;
+  void InitInterop(const PixelSize& textureSize, Interop*) noexcept;
 
 #define OPENKNEEBOARD_VK_FUNCS \
   IT(vkGetPhysicalDeviceProperties2) \

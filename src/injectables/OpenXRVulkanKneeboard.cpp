@@ -192,7 +192,9 @@ void OpenXRVulkanKneeboard::InitializeD3D11() {
   mD3D11ImmediateContext = d3d11ImmediateContext.as<ID3D11DeviceContext4>();
 }
 
-void OpenXRVulkanKneeboard::InitInterop(Interop* interop) noexcept {
+void OpenXRVulkanKneeboard::InitInterop(
+  const PixelSize& textureSize,
+  Interop* interop) noexcept {
   auto device = mD3D11Device.get();
   interop->mD3D11Texture = SHM::CreateCompatibleTexture(
     device,
@@ -222,7 +224,7 @@ void OpenXRVulkanKneeboard::InitInterop(Interop* interop) noexcept {
       .pNext = &externalCreateInfo,
       .imageType = VK_IMAGE_TYPE_2D,
       .format = VK_FORMAT_B8G8R8A8_SRGB,
-      .extent = {TextureWidth, TextureHeight, 1},
+      .extent = {textureSize.mWidth, textureSize.mHeight, 1},
       .mipLevels = 1,
       .arrayLayers = 1,
       .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -464,7 +466,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     resources.mImages.push_back(swapchainImage.image);
   }
 
-  InitInterop(&resources.mInterop);
+  InitInterop(size, &resources.mInterop);
 
   return swapchain;
 }
