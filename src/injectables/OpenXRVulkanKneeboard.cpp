@@ -571,31 +571,45 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     /* image barrier count = */ std::size(inBarriers),
     inBarriers);
 
-  VkImageCopy imageCopy {
+  std::vector<VkImageBlit> regions;
+  regions.resize(layerCount);
+  for (off_t i = 0; i < layerCount; ++i) {
+    auto& layer = layers[i];
+    const RECT src = layer.mSourceRect;
+    const RECT dst = layer.mDestRect;
+
+    regions[i] = VkImageBlit{
     .srcSubresource = VkImageSubresourceLayers {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .mipLevel = 0,
       .baseArrayLayer = 0,
       .layerCount = 1,
     },
-    .srcOffset = {0, 0, 0},
+      .srcOffsets = {
+        {src.left, src.top, 0},
+        {src.right, src.bottom, 1},
+      },
     .dstSubresource = VkImageSubresourceLayers {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .mipLevel = 0,
       .baseArrayLayer = 0,
       .layerCount = 1,
     },
-    .dstOffset = {0, 0, 0},
-    .extent = { swapchainResources.mSize.mWidth, swapchainResources.mSize.mHeight, 1 },
-  };
-  mPFN_vkCmdCopyImage(
+      .dstOffsets = {
+        {dst.left, dst.top, 0},
+        {dst.right, dst.bottom, 1},
+      }
+    };
+  }
+  mPFN_vkCmdBlitImage(
     mVKCommandBuffer,
     interop.mVKImage,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     dstImage,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    1,
-    &imageCopy);
+    regions.size(),
+    regions.data(),
+    VK_FILTER_NEAREST);
 
   VkImageMemoryBarrier outBarriers[2];
   outBarriers[0] = {
