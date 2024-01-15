@@ -517,11 +517,6 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   auto& swapchainResources = mSwapchainResources.at(swapchain);
   auto& interop = swapchainResources.mInterop;
 
-  // FIXME: remove, just for debugging
-  dprint("Calling vkQueueWaitIdle at start");
-  check_vkresult(mPFN_vkQueueWaitIdle(mVKQueue));
-  dprint("Called vkQueueWaitIdle");
-
   OpenXRD3D11Kneeboard::RenderLayers(
     oxr,
     mD3D11Device.get(),
@@ -698,19 +693,17 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     .pCommandBuffers = &mVKCommandBuffer,
   };
 
-  dprint("Submitting");
   check_vkresult(mPFN_vkResetFences(mVKDevice, 1, &interop.mVKCompletionFence));
   {
     const auto res = mPFN_vkQueueSubmit(
       mVKQueue, 1, &submitInfo, interop.mVKCompletionFence);
     if (VK_FAILED(res)) {
       dprintf("Queue submit failed: {}", res);
+      OPENKNEEBOARD_BREAK;
       return false;
     }
-    dprintf("submit succeeded with {}", res);
   }
 
-  dprint("Waiting for fences");
   {
     const auto res = mPFN_vkWaitForFences(
       mVKDevice,
@@ -720,22 +713,12 @@ bool OpenXRVulkanKneeboard::RenderLayers(
       std::numeric_limits<uint32_t>::max());
     if (VK_FAILED(res)) {
       dprintf("Waiting for fence failed: {}", res);
+      OPENKNEEBOARD_BREAK;
       return false;
     }
-    dprintf("wait for fence succeeded with {}", res);
   }
 
-  // FIXME: remove, just for debugging
-  dprint("Calling vkQueueWaitIdle at end");
-  const auto res = mPFN_vkQueueWaitIdle(mVKQueue);
-  if (XR_SUCCEEDED(res)) {
-    dprint("vkQueueWaitIdle completed");
-    return true;
-  }
-
-  dprintf("vkQueueWaitIdle failed: {}", res);
-  OPENKNEEBOARD_BREAK;
-  return false;
+  return true;
 }
 
 }// namespace OpenKneeboard
