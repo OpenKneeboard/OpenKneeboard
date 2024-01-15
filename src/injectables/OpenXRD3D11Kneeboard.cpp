@@ -31,6 +31,8 @@
 
 #include <shims/winrt/base.h>
 
+#include <directxtk/SpriteBatch.h>
+
 #include <d3d11.h>
 
 #define XR_USE_GRAPHICS_API_D3D11
@@ -219,16 +221,75 @@ bool OpenXRD3D11Kneeboard::RenderLayer(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
-  auto config = snapshot.GetConfig();
-  const auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
-  if (!srv) {
-    dprint("Failed to get shader resource view");
-    return false;
-  }
-  auto rtv = renderTargetViews.at(swapchainTextureIndex)->Get();
-  D3D11::CopyTextureWithOpacity(
-    device, srv.get(), rtv->Get(), renderParameters.mKneeboardOpacity);
+  LayerRenderInfo info {
+    .mLayerIndex = layerIndex,
+    .mSourceRect = {{0, 0}, {TextureWidth, TextureHeight}},
+    .mDestRect = {{0, 0}, {TextureWidth, TextureHeight}},
+    .mVR = renderParameters,
+  };
+  return RenderLayers(
+    oxr,
+    device,
+    renderTargetViews,
+    swapchain,
+    swapchainTextureIndex,
+    snapshot,
+    1,
+    &info);
+}
 
+bool OpenXRD3D11Kneeboard::RenderLayers(
+  OpenXRNext* oxr,
+  ID3D11Device* device,
+  const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&
+    renderTargetViews,
+  XrSwapchain swapchain,
+  uint32_t swapchainTextureIndex,
+  const SHM::Snapshot& snapshot,
+  uint8_t layerCount,
+  LayerRenderInfo* layerRenderInfo) {
+  winrt::com_ptr<ID3D11DeviceContext> ctx;
+  device->GetImmediateContext(ctx.put());
+  auto rtvf = renderTargetViews.at(swapchainTextureIndex)->Get();
+  auto rtv = rtvf->Get();
+
+  D3D11_RENDER_TARGET_VIEW_DESC rtvd;
+  rtv->GetDesc(&rtvd);
+  D3D11_VIEWPORT viewport {
+    0.0f,
+    0.0f,
+    static_cast<FLOAT>(TextureWidth * MaxLayers),
+    static_cast<FLOAT>(TextureHeight),
+    0.0f,
+    1.0f,
+  };
+  ctx->RSSetViewports(1, &viewport);
+  ctx->OMSetDepthStencilState(nullptr, 0);
+  ctx->OMSetRenderTargets(1, &rtv, nullptr);
+  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
+  ctx->IASetInputLayout(nullptr);
+  ctx->VSSetShader(nullptr, nullptr, 0);
+
+  DirectX::SpriteBatch sprites(ctx.get());
+  sprites.Begin();
+  const scope_guard endSprites([&sprites]() { sprites.End(); });
+
+  for (uint8_t i = 0; i < layerCount; ++i) {
+    auto info = layerRenderInfo[i];
+    const auto srv
+      = snapshot.GetLayerShaderResourceView(device, info.mLayerIndex);
+    if (!srv) {
+      dprint("Failed to get shader resource view");
+      return false;
+    }
+
+    const auto opacity = info.mVR.mKneeboardOpacity;
+    DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
+
+    RECT sourceRect = info.mSourceRect;
+
+    sprites.Draw(srv.get(), info.mDestRect, &sourceRect, tint);
+  }
   return true;
 }
 

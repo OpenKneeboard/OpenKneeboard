@@ -50,6 +50,16 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&);
 
+  static bool RenderLayers(
+    OpenXRNext*,
+    ID3D11Device*,
+    const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,
+    XrSwapchain,
+    uint32_t swapchainTextureIndex,
+    const SHM::Snapshot&,
+    uint8_t layerCount,
+    LayerRenderInfo* layerRenderInfo);
+
   struct DXGIFormats {
     DXGI_FORMAT mTextureFormat;
     DXGI_FORMAT mRenderTargetViewFormat;

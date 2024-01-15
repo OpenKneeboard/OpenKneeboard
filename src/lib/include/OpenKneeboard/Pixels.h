@@ -70,6 +70,15 @@ struct PixelRect {
   PixelSize mSize {};
 
   constexpr auto operator<=>(const PixelRect&) const noexcept = default;
+
+  constexpr operator RECT() const noexcept {
+    return {
+      static_cast<LONG>(mOrigin.mX),
+      static_cast<LONG>(mOrigin.mY),
+      static_cast<LONG>(mOrigin.mX + mSize.mWidth),
+      static_cast<LONG>(mOrigin.mY + mSize.mHeight),
+    };
+  }
 };
 
 }// namespace OpenKneeboard

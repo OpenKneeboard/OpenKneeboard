@@ -56,6 +56,13 @@ class OpenXRKneeboard : public VRKneeboard {
 
   XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo);
 
+  struct LayerRenderInfo {
+    uint8_t mLayerIndex;
+    PixelRect mSourceRect;
+    PixelRect mDestRect;
+    VRKneeboard::RenderParameters mVR;
+  };
+
  protected:
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
