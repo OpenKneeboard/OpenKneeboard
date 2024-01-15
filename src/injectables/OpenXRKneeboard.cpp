@@ -343,8 +343,14 @@ bool OpenXRKneeboard::RenderLayer(
     return false;
   }
 
-  return this->RenderLayer(
-    swapchain, swapchainTextureIndex, snapshot, layerIndex, params);
+  LayerRenderInfo layer {
+    .mLayerIndex = layerIndex,
+    .mSourceRect = {{0, 0}, {TextureWidth, TextureHeight}},
+    .mDestRect = {{0, 0}, {TextureWidth, TextureHeight}},
+    .mVR = params,
+  };
+  return this->RenderLayers(
+    swapchain, swapchainTextureIndex, snapshot, 1, &layer);
 }
 
 OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {

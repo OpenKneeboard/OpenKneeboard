@@ -20,6 +20,7 @@
 
 #include "OpenXRVulkanKneeboard.h"
 
+#include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRNext.h"
 
 #include <OpenKneeboard/d3d11.h>
@@ -467,6 +468,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   }
 
   InitInterop(size, &resources.mInterop);
+  resources.mSize = size;
 
   return swapchain;
 }
@@ -484,12 +486,12 @@ void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
   mSwapchainResources.erase(swapchain);
 }
 
-bool OpenXRVulkanKneeboard::RenderLayer(
+bool OpenXRVulkanKneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerIndex,
-  const VRKneeboard::RenderParameters& params) {
+  uint8_t layerCount,
+  LayerRenderInfo* layers) {
   if (!swapchain) {
     dprint("asked to render without swapchain");
     return false;
@@ -501,24 +503,17 @@ bool OpenXRVulkanKneeboard::RenderLayer(
   }
 
   const auto oxr = this->GetOpenXR();
-  const auto config = snapshot.GetConfig();
-  const auto layerConfig = snapshot.GetLayerConfig(layerIndex);
-
-  const auto srv
-    = snapshot.GetLayerShaderResourceView(mD3D11Device.get(), layerIndex);
-  if (!srv) {
-    dprint("Failed to get layer SRV");
-    return false;
-  }
 
   auto& swapchainResources = mSwapchainResources.at(swapchain);
   auto& interop = swapchainResources.mInterop;
 
-  D3D11::CopyTextureWithOpacity(
+  OpenXRD3D11Kneeboard::RenderLayers(
+    oxr,
     mD3D11Device.get(),
-    srv.get(),
     interop.mD3D11RenderTargetView.get(),
-    params.mKneeboardOpacity);
+    snapshot,
+    layerCount,
+    layers);
 
   // Signal this once D3D11 work is done, then make VK wait for it
   const auto semaphoreValue = ++interop.mInteropValue;
@@ -596,7 +591,7 @@ bool OpenXRVulkanKneeboard::RenderLayer(
       .layerCount = 1,
     },
     .dstOffset = {0, 0, 0},
-    .extent = { layerConfig->mImageWidth, layerConfig->mImageHeight, 1 },
+    .extent = { swapchainResources.mSize.mWidth, swapchainResources.mSize.mHeight, 1 },
   };
   mPFN_vkCmdCopyImage(
     mVKCommandBuffer,

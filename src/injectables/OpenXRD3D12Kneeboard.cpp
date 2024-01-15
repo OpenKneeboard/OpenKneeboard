@@ -205,21 +205,20 @@ void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
   }
 }
 
-bool OpenXRD3D12Kneeboard::RenderLayer(
+bool OpenXRD3D12Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerIndex,
-  const VRKneeboard::RenderParameters& renderParameters) {
-  return OpenXRD3D11Kneeboard::RenderLayer(
+  uint8_t layerCount,
+  LayerRenderInfo* layers) {
+  auto rtv = mRenderTargetViews.at(swapchain).at(swapchainTextureIndex)->Get();
+  return OpenXRD3D11Kneeboard::RenderLayers(
     this->GetOpenXR(),
     this->GetD3D11Device().get(),
-    mRenderTargetViews.at(swapchain),
-    swapchain,
-    swapchainTextureIndex,
+    rtv->Get(),
     snapshot,
-    layerIndex,
-    renderParameters);
+    layerCount,
+    layers);
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {

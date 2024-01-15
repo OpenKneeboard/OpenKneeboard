@@ -194,64 +194,26 @@ winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {
   return mDevice;
 }
 
-bool OpenXRD3D11Kneeboard::RenderLayer(
+bool OpenXRD3D11Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerIndex,
-  const VRKneeboard::RenderParameters& renderParameters) {
-  return OpenXRD3D11Kneeboard::RenderLayer(
-    this->GetOpenXR(),
-    mDevice.get(),
-    mRenderTargetViews.at(swapchain),
-    swapchain,
-    swapchainTextureIndex,
-    snapshot,
-    layerIndex,
-    renderParameters);
-}
-
-bool OpenXRD3D11Kneeboard::RenderLayer(
-  OpenXRNext* oxr,
-  ID3D11Device* device,
-  const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&
-    renderTargetViews,
-  XrSwapchain swapchain,
-  uint32_t swapchainTextureIndex,
-  const SHM::Snapshot& snapshot,
-  uint8_t layerIndex,
-  const VRKneeboard::RenderParameters& renderParameters) {
-  LayerRenderInfo info {
-    .mLayerIndex = layerIndex,
-    .mSourceRect = {{0, 0}, {TextureWidth, TextureHeight}},
-    .mDestRect = {{0, 0}, {TextureWidth, TextureHeight}},
-    .mVR = renderParameters,
-  };
-  return RenderLayers(
-    oxr,
-    device,
-    renderTargetViews,
-    swapchain,
-    swapchainTextureIndex,
-    snapshot,
-    1,
-    &info);
+  uint8_t layerCount,
+  LayerRenderInfo* layers) {
+  auto rtv = mRenderTargetViews.at(swapchain).at(swapchainTextureIndex)->Get();
+  return OpenXRD3D11Kneeboard::RenderLayers(
+    this->GetOpenXR(), mDevice.get(), rtv->Get(), snapshot, layerCount, layers);
 }
 
 bool OpenXRD3D11Kneeboard::RenderLayers(
   OpenXRNext* oxr,
   ID3D11Device* device,
-  const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&
-    renderTargetViews,
-  XrSwapchain swapchain,
-  uint32_t swapchainTextureIndex,
+  ID3D11RenderTargetView* rtv,
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
   LayerRenderInfo* layerRenderInfo) {
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
-  auto rtvf = renderTargetViews.at(swapchainTextureIndex)->Get();
-  auto rtv = rtvf->Get();
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd;
   rtv->GetDesc(&rtvd);

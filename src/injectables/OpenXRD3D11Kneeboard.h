@@ -40,25 +40,13 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const XrGraphicsBindingD3D11KHR&);
   ~OpenXRD3D11Kneeboard();
 
-  static bool RenderLayer(
-    OpenXRNext*,
-    ID3D11Device*,
-    const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,
-    XrSwapchain,
-    uint32_t swapchainTextureIndex,
-    const SHM::Snapshot&,
-    uint8_t layerIndex,
-    const VRKneeboard::RenderParameters&);
-
   static bool RenderLayers(
     OpenXRNext*,
     ID3D11Device*,
-    const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,
-    XrSwapchain,
-    uint32_t swapchainTextureIndex,
+    ID3D11RenderTargetView*,
     const SHM::Snapshot&,
     uint8_t layerCount,
-    LayerRenderInfo* layerRenderInfo);
+    LayerRenderInfo* layers);
 
   struct DXGIFormats {
     DXGI_FORMAT mTextureFormat;
@@ -76,12 +64,12 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     const VRRenderConfig::Quirks&) override;
   virtual void ReleaseSwapchainResources(XrSwapchain) override;
 
-  virtual bool RenderLayer(
+  virtual bool RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerIndex,
-    const VRKneeboard::RenderParameters&) override;
+    uint8_t layerCount,
+    LayerRenderInfo* layers);
 
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 

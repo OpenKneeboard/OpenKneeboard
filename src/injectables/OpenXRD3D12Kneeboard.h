@@ -50,12 +50,12 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
     const PixelSize&,
     const VRRenderConfig::Quirks&) override;
   virtual void ReleaseSwapchainResources(XrSwapchain) override;
-  virtual bool RenderLayer(
+  virtual bool RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerIndex,
-    const VRKneeboard::RenderParameters&) override;
+    uint8_t layerCount,
+    LayerRenderInfo* layers) override;
 
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
