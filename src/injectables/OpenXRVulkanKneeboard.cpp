@@ -196,11 +196,24 @@ void OpenXRVulkanKneeboard::InitializeD3D11() {
 void OpenXRVulkanKneeboard::InitInterop(
   const PixelSize& textureSize,
   Interop* interop) noexcept {
+  dprint("initializing interop");
   auto device = mD3D11Device.get();
-  interop->mD3D11Texture = SHM::CreateCompatibleTexture(
-    device,
-    D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    D3D11_RESOURCE_MISC_SHARED);
+  // Not using SHM::CreateCompatibleTexture() as we need to use
+  // the specific requested size, not the default SHM size
+  {
+    D3D11_TEXTURE2D_DESC desc {
+      .Width = textureSize.mWidth,
+      .Height = textureSize.mHeight,
+      .MipLevels = 1,
+      .ArraySize = 1,
+      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+      .SampleDesc = {1, 0},
+      .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+      .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
+    };
+    winrt::check_hresult(
+      device->CreateTexture2D(&desc, nullptr, interop->mD3D11Texture.put()));
+  }
   winrt::check_hresult(device->CreateRenderTargetView(
     interop->mD3D11Texture.get(),
     nullptr,
@@ -264,11 +277,11 @@ void OpenXRVulkanKneeboard::InitInterop(
     VkMemoryWin32HandlePropertiesKHR handleProperties {
       .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
     };
-    mPFN_vkGetMemoryWin32HandlePropertiesKHR(
+    winrt::check_hresult(mPFN_vkGetMemoryWin32HandlePropertiesKHR(
       mVKDevice,
       VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
       sharedHandle,
-      &handleProperties);
+      &handleProperties));
 
     ///// Which memory areas meet those requirements? /////
 
@@ -376,6 +389,8 @@ void OpenXRVulkanKneeboard::InitInterop(
     check_vkresult(
       mPFN_vkImportSemaphoreWin32HandleKHR(mVKDevice, &handleInfo));
   }
+
+  dprint("Finished initializing interop");
 }
 
 OpenXRVulkanKneeboard::~OpenXRVulkanKneeboard() {
@@ -552,7 +567,6 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
   inBarriers[1] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-    .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
     .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -620,7 +634,6 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   VkImageMemoryBarrier outBarriers[2];
   outBarriers[0] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-    .dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT,
     .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     .newLayout = VK_IMAGE_LAYOUT_GENERAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -634,7 +647,6 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   };
   outBarriers[1] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-    .dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
     .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
     .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
