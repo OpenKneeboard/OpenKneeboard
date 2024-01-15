@@ -667,7 +667,7 @@ bool OpenXRVulkanKneeboard::RenderLayers(
       .waitSemaphoreValueCount = 1,
       .pWaitSemaphoreValues = &semaphoreValue,
     };
-    VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
+  VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
     VkSubmitInfo submitInfo {
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
       .pNext = &timelineSubmitInfo,
