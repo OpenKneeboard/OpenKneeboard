@@ -112,7 +112,7 @@ jobs:
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v4
         with:
-          name: OpenKneeboard-GHA-${{github.run_number}}.msi
+          name: OpenKneeboard-GHA${{github.run_number}}.msi
           path: ${{steps.create-msi.outputs.MSI_PATH}}
       - name: Install debug symbols
         id: debug-symbols
@@ -135,7 +135,7 @@ jobs:
           if ("${{github.ref_type}}" -eq "tag") {
             $zip = "${{runner.temp}}/OpenKneeboard-${{github.ref_name}}-DebugSymbols.zip"
           } else {
-            $zip = "${{runner.temp}}/OpenKneeboard-GHA-${{github.run_number}}-DebugSymbols.zip"
+            $zip = "${{runner.temp}}/OpenKneeboard-GHA${{github.run_number}}-DebugSymbols.zip"
           }
           $zip = $zip -replace '\\','/'
           cd $prefix
@@ -148,7 +148,7 @@ jobs:
         if: ${{matrix.config != 'Debug' }}
         uses: actions/upload-artifact@v4
         with:
-          name: OpenKneeboard-GHA-${{github.run_number}}-Symbols
+          name: OpenKneeboard-GHA${{github.run_number}}-Symbols
           path: ${{steps.debug-symbols.outputs.PREFIX}}
       - name: Generate release notes
         if: github.ref_type == 'tag' && matrix.config != 'Debug'

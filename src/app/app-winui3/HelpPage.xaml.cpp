@@ -100,7 +100,7 @@ void HelpPage::PopulateVersion() {
     "Tag: {}\n"
     "Package: {}\n",
     Version::ReleaseName,
-    Version::IsGithubActionsBuild ? std::format("GHA-{}", Version::Build)
+    Version::IsGithubActionsBuild ? std::format("GHA{}", Version::Build)
                                   : "local",
     BUILD_CONFIG,
 #ifdef _WIN32
