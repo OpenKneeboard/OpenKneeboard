@@ -539,8 +539,8 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     .image = interop.mVKImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = 1,
-      .layerCount = 1,
+      .levelCount = VK_REMAINING_MIP_LEVELS,
+      .layerCount = VK_REMAINING_ARRAY_LAYERS,
     },
   };
   const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
@@ -554,8 +554,8 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     .image = dstImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = 1,
-      .layerCount = 1,
+      .levelCount = VK_REMAINING_MIP_LEVELS,
+      .layerCount = VK_REMAINING_ARRAY_LAYERS,
     },
   };
 
@@ -622,8 +622,8 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     .image = interop.mVKImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = 1,
-      .layerCount = 1,
+      .levelCount = VK_REMAINING_MIP_LEVELS,
+      .layerCount = VK_REMAINING_ARRAY_LAYERS,
     },
   };
   outBarriers[1] = {
@@ -636,8 +636,8 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     .image = dstImage,
     .subresourceRange = {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = 1,
-      .layerCount = 1,
+      .levelCount = VK_REMAINING_MIP_LEVELS,
+      .layerCount = VK_REMAINING_ARRAY_LAYERS,
     },
   };
 
