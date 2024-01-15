@@ -45,6 +45,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     ID3D11Device*,
     const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,
     XrSwapchain,
+    uint32_t swapchainTextureIndex,
     const SHM::Snapshot&,
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&);
@@ -67,6 +68,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
 
   virtual bool RenderLayer(
     XrSwapchain swapchain,
+    uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&) override;

@@ -73,6 +73,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   virtual void ReleaseSwapchainResources(XrSwapchain) override;
   virtual bool RenderLayer(
     XrSwapchain swapchain,
+    uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&) override;

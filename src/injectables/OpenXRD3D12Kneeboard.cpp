@@ -207,6 +207,7 @@ void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
 
 bool OpenXRD3D12Kneeboard::RenderLayer(
   XrSwapchain swapchain,
+  uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
@@ -215,6 +216,7 @@ bool OpenXRD3D12Kneeboard::RenderLayer(
     this->GetD3D11Device().get(),
     mRenderTargetViews.at(swapchain),
     swapchain,
+    swapchainTextureIndex,
     snapshot,
     layerIndex,
     renderParameters);

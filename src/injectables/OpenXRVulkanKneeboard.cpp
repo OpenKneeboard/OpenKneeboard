@@ -486,6 +486,7 @@ void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
 
 bool OpenXRVulkanKneeboard::RenderLayer(
   XrSwapchain swapchain,
+  uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& params) {
@@ -503,33 +504,6 @@ bool OpenXRVulkanKneeboard::RenderLayer(
   const auto config = snapshot.GetConfig();
   const auto layerConfig = snapshot.GetLayerConfig(layerIndex);
 
-  uint32_t textureIndex;
-  {
-    const auto res
-      = oxr->xrAcquireSwapchainImage(swapchain, nullptr, &textureIndex);
-    if (XR_FAILED(res)) {
-      dprintf("Failed to acquire swapchain image: {}", res);
-      return false;
-    }
-  }
-  const scope_guard releaseSwapchainImage([swapchain, oxr]() {
-    const auto res = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
-    if (XR_FAILED(res)) {
-      dprintf("Failed to release swapchain image: {}", res);
-    }
-  });
-
-  XrSwapchainImageWaitInfo waitInfo {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = XR_INFINITE_DURATION,
-  };
-  {
-    const auto res = oxr->xrWaitSwapchainImage(swapchain, &waitInfo);
-    if (XR_FAILED(res)) {
-      dprintf("Failed to wait for swapchain image: {}", res);
-      return false;
-    }
-  }
   const auto srv
     = snapshot.GetLayerShaderResourceView(mD3D11Device.get(), layerIndex);
   if (!srv) {
@@ -579,7 +553,7 @@ bool OpenXRVulkanKneeboard::RenderLayer(
       .layerCount = 1,
     },
   };
-  const auto dstImage = swapchainResources.mImages.at(textureIndex);
+  const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
   inBarriers[1] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
     .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,

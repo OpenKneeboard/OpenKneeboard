@@ -71,6 +71,7 @@ class OpenXRKneeboard : public VRKneeboard {
 
   virtual bool RenderLayer(
     XrSwapchain swapchain,
+    uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     uint8_t layerIndex,
     const VRKneeboard::RenderParameters&)
@@ -98,6 +99,12 @@ class OpenXRKneeboard : public VRKneeboard {
 
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
+
+  bool RenderLayer(
+    XrSwapchain swapchain,
+    const SHM::Snapshot& snapshot,
+    uint8_t layerIndex,
+    const VRKneeboard::RenderParameters&);
 };
 
 }// namespace OpenKneeboard

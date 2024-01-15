@@ -30,6 +30,7 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
@@ -310,6 +311,40 @@ XrResult OpenXRKneeboard::xrEndFrame(
     "xrEndFrame",
     TraceLoggingValue(static_cast<const int64_t>(nextResult), "XrResult"));
   return nextResult;
+}
+
+bool OpenXRKneeboard::RenderLayer(
+  XrSwapchain swapchain,
+  const SHM::Snapshot& snapshot,
+  uint8_t layerIndex,
+  const VRKneeboard::RenderParameters& params) {
+  uint32_t swapchainTextureIndex;
+  auto nextResult = mOpenXR->xrAcquireSwapchainImage(
+    swapchain, nullptr, &swapchainTextureIndex);
+  if (XR_FAILED(nextResult)) {
+    dprintf("Failed to acquire swapchain image: {}", nextResult);
+    return false;
+  }
+
+  const scope_guard releaseSwapchainImage([swapchain, this]() {
+    auto nextResult = mOpenXR->xrReleaseSwapchainImage(swapchain, nullptr);
+    if (XR_FAILED(nextResult)) {
+      dprintf("Failed to release swapchain image: {}", nextResult);
+    }
+  });
+
+  XrSwapchainImageWaitInfo waitInfo {
+    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+    .timeout = XR_INFINITE_DURATION,
+  };
+  nextResult = mOpenXR->xrWaitSwapchainImage(swapchain, &waitInfo);
+  if (XR_FAILED(nextResult)) {
+    dprintf("Failed to wait for swapchain image: {}", nextResult);
+    return false;
+  }
+
+  return this->RenderLayer(
+    swapchain, swapchainTextureIndex, snapshot, layerIndex, params);
 }
 
 OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {

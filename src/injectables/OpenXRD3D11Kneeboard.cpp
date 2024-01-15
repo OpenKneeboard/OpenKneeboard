@@ -194,6 +194,7 @@ winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {
 
 bool OpenXRD3D11Kneeboard::RenderLayer(
   XrSwapchain swapchain,
+  uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
@@ -202,6 +203,7 @@ bool OpenXRD3D11Kneeboard::RenderLayer(
     mDevice.get(),
     mRenderTargetViews.at(swapchain),
     swapchain,
+    swapchainTextureIndex,
     snapshot,
     layerIndex,
     renderParameters);
@@ -213,45 +215,19 @@ bool OpenXRD3D11Kneeboard::RenderLayer(
   const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&
     renderTargetViews,
   XrSwapchain swapchain,
+  uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& renderParameters) {
   auto config = snapshot.GetConfig();
-  uint32_t textureIndex;
-  auto nextResult
-    = oxr->xrAcquireSwapchainImage(swapchain, nullptr, &textureIndex);
-  if (XR_FAILED(nextResult)) {
-    dprintf("Failed to acquire swapchain image: {}", nextResult);
+  const auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
+  if (!srv) {
+    dprint("Failed to get shader resource view");
     return false;
   }
-
-  const scope_guard releaseSwapchainImage([swapchain, oxr]() {
-    auto nextResult = oxr->xrReleaseSwapchainImage(swapchain, nullptr);
-    if (XR_FAILED(nextResult)) {
-      dprintf("Failed to release swapchain image: {}", nextResult);
-    }
-  });
-
-  XrSwapchainImageWaitInfo waitInfo {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = XR_INFINITE_DURATION,
-  };
-  nextResult = oxr->xrWaitSwapchainImage(swapchain, &waitInfo);
-  if (XR_FAILED(nextResult)) {
-    dprintf("Failed to wait for swapchain image: {}", nextResult);
-    return false;
-  }
-
-  {
-    const auto srv = snapshot.GetLayerShaderResourceView(device, layerIndex);
-    if (!srv) {
-      dprint("Failed to get shader resource view");
-      return false;
-    }
-    auto rtv = renderTargetViews.at(textureIndex)->Get();
-    D3D11::CopyTextureWithOpacity(
-      device, srv.get(), rtv->Get(), renderParameters.mKneeboardOpacity);
-  }
+  auto rtv = renderTargetViews.at(swapchainTextureIndex)->Get();
+  D3D11::CopyTextureWithOpacity(
+    device, srv.get(), rtv->Get(), renderParameters.mKneeboardOpacity);
 
   return true;
 }
