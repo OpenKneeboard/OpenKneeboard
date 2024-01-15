@@ -502,6 +502,11 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   auto& swapchainResources = mSwapchainResources.at(swapchain);
   auto& interop = swapchainResources.mInterop;
 
+  // FIXME: remove, just for debugging
+  dprint("Calling vkQueueWaitIdle at start");
+  check_vkresult(mPFN_vkQueueWaitIdle(mVKQueue));
+  dprint("Called vkQueueWaitIdle");
+
   OpenXRD3D11Kneeboard::RenderLayers(
     oxr,
     mD3D11Device.get(),
@@ -510,16 +515,17 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     layerCount,
     layers);
 
-  // Signal this once D3D11 work is done, then make VK wait for it
+  // Signal this once D3D11 work is done, then we pass it as a wait semaphore
+  // to vkQueueSubmit
   const auto semaphoreValue = ++interop.mInteropValue;
   mD3D11ImmediateContext->Signal(
     interop.mD3D11InteropFence.get(), semaphoreValue);
 
+  VkCommandBufferBeginInfo beginInfo {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+  };
   {
-    VkCommandBufferBeginInfo beginInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-      .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-    };
     const auto ret = mPFN_vkBeginCommandBuffer(mVKCommandBuffer, &beginInfo);
     if (VK_FAILED(ret)) {
       dprintf("Failed to begin command buffer: {}", ret);
@@ -661,32 +667,35 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     }
   }
 
-  {
-    VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
-      .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
-      .waitSemaphoreValueCount = 1,
-      .pWaitSemaphoreValues = &semaphoreValue,
-    };
+  VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
+    .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
+    .waitSemaphoreValueCount = 1,
+    .pWaitSemaphoreValues = &semaphoreValue,
+  };
   VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
-    VkSubmitInfo submitInfo {
-      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      .pNext = &timelineSubmitInfo,
-      .waitSemaphoreCount = 1,
-      .pWaitSemaphores = &interop.mVKInteropSemaphore,
-      .pWaitDstStageMask = &semaphoreStages,
-      .commandBufferCount = 1,
-      .pCommandBuffers = &mVKCommandBuffer,
-    };
+  VkSubmitInfo submitInfo {
+    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+    .pNext = &timelineSubmitInfo,
+    .waitSemaphoreCount = 1,
+    .pWaitSemaphores = &interop.mVKInteropSemaphore,
+    .pWaitDstStageMask = &semaphoreStages,
+    .commandBufferCount = 1,
+    .pCommandBuffers = &mVKCommandBuffer,
+  };
 
-    mPFN_vkResetFences(mVKDevice, 1, &interop.mVKCompletionFence);
+  dprint("Submitting");
+  check_vkresult(mPFN_vkResetFences(mVKDevice, 1, &interop.mVKCompletionFence));
+  {
     const auto res = mPFN_vkQueueSubmit(
       mVKQueue, 1, &submitInfo, interop.mVKCompletionFence);
     if (VK_FAILED(res)) {
       dprintf("Queue submit failed: {}", res);
       return false;
     }
+    dprintf("submit succeeded with {}", res);
   }
 
+  dprint("Waiting for fences");
   {
     const auto res = mPFN_vkWaitForFences(
       mVKDevice,
@@ -698,9 +707,20 @@ bool OpenXRVulkanKneeboard::RenderLayers(
       dprintf("Waiting for fence failed: {}", res);
       return false;
     }
+    dprintf("wait for fence succeeded with {}", res);
   }
 
-  return true;
+  // FIXME: remove, just for debugging
+  dprint("Calling vkQueueWaitIdle at end");
+  const auto res = mPFN_vkQueueWaitIdle(mVKQueue);
+  if (XR_SUCCEEDED(res)) {
+    dprint("vkQueueWaitIdle completed");
+    return true;
+  }
+
+  dprintf("vkQueueWaitIdle failed: {}", res);
+  OPENKNEEBOARD_BREAK;
+  return false;
 }
 
 }// namespace OpenKneeboard
