@@ -409,7 +409,7 @@ static const T* findInXrNextChain(XrStructureType type, const void* next) {
 XrResult xrCreateSession(
   XrInstance instance,
   const XrSessionCreateInfo* createInfo,
-  XrSession* session) {
+  XrSession* session) noexcept {
   XrInstanceProperties instanceProps {XR_TYPE_INSTANCE_PROPERTIES};
   gNext->xrGetInstanceProperties(instance, &instanceProps);
   gRuntime.mVersion = instanceProps.runtimeVersion;
@@ -796,7 +796,9 @@ XrResult xrDestroyInstance(XrInstance instance) {
   return gNext->xrDestroyInstance(instance);
 }
 
-XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo) {
+XrResult xrEndFrame(
+  XrSession session,
+  const XrFrameEndInfo* frameEndInfo) noexcept {
   if (gKneeboard) {
     return gKneeboard->xrEndFrame(session, frameEndInfo);
   }
