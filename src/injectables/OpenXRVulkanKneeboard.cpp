@@ -595,30 +595,33 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   regions.resize(layerCount);
   for (off_t i = 0; i < layerCount; ++i) {
     auto& layer = layers[i];
-    const RECT src = layer.mSourceRect;
-    const RECT dst = layer.mDestRect;
 
-    regions[i] = VkImageBlit{
-    .srcSubresource = VkImageSubresourceLayers {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .mipLevel = 0,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    },
-      .srcOffsets = {
-        {src.left, src.top, 0},
-        {src.right, src.bottom, 1},
+    // The interop layer is the 'destination', and the swapchain
+    // image should be identical, so, we use mDestRect for both
+    // source and dest
+    const RECT r = layer.mDestRect;
+
+    regions[i] = VkImageBlit {
+      .srcSubresource = VkImageSubresourceLayers {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .mipLevel = 0,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
       },
-    .dstSubresource = VkImageSubresourceLayers {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .mipLevel = 0,
-      .baseArrayLayer = 0,
-      .layerCount = 1,
-    },
+      .srcOffsets = {
+        {r.left, r.top, 0},
+        {r.right, r.bottom, 1},
+      },
+      .dstSubresource = VkImageSubresourceLayers {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .mipLevel = 0,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+      },
       .dstOffsets = {
-        {dst.left, dst.top, 0},
-        {dst.right, dst.bottom, 1},
-      }
+        {r.left, r.top, 0},
+        {r.right, r.bottom, 1},
+      },
     };
   }
   mPFN_vkCmdBlitImage(
