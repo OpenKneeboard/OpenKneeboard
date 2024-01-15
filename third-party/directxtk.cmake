@@ -1,8 +1,8 @@
 include(ExternalProject)
 ExternalProject_Add(
   directxtkBuild
-  URL "https://github.com/microsoft/DirectXTK/archive/refs/tags/jun2023.zip"
-  URL_HASH "SHA256=e5f837edb3d0f8a06471e063b89410b582836ce6b41d5522b03a3448d75d39d9"
+  URL "https://github.com/microsoft/DirectXTK/archive/refs/tags/dec2023.zip"
+  URL_HASH "SHA256=592e88df64fd49977699b6afafc0129e23ec1f8871450e202eb59605d557dd34"
   BUILD_BYPRODUCTS "<INSTALL_DIR>/$<CONFIG>/lib/DirectXTK.lib"
   CMAKE_ARGS
   "-DCMAKE_TOOLCHAIN_FILE=${THIRDPARTY_TOOLCHAIN_FILE}"
