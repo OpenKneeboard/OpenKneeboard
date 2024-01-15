@@ -94,7 +94,7 @@ class OpenXRKneeboard : public VRKneeboard {
   std::shared_ptr<OpenXRNext> mOpenXR;
   SHM::SingleBufferedReader mSHM;
 
-  std::array<XrSwapchain, MaxLayers> mSwapchains;
+  XrSwapchain mSwapchain {};
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;
 
   XrSpace mLocalSpace = nullptr;
@@ -106,12 +106,6 @@ class OpenXRKneeboard : public VRKneeboard {
 
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
-
-  bool RenderLayer(
-    XrSwapchain swapchain,
-    const SHM::Snapshot& snapshot,
-    uint8_t layerIndex,
-    const VRKneeboard::RenderParameters&);
 };
 
 }// namespace OpenKneeboard

@@ -84,7 +84,6 @@ OpenXRKneeboard::OpenXRKneeboard(
     mIsVarjoRuntime = true;
   }
 
-  mSwapchains.fill(nullptr);
   mRenderCacheKeys.fill(~(0ui64));
 
   XrReferenceSpaceCreateInfo referenceSpace {
@@ -120,10 +119,8 @@ OpenXRKneeboard::~OpenXRKneeboard() {
     mOpenXR->xrDestroySpace(mViewSpace);
   }
 
-  for (auto swapchain: mSwapchains) {
-    if (swapchain) {
-      mOpenXR->xrDestroySwapchain(swapchain);
-    }
+  if (mSwapchain) {
+    mOpenXR->xrDestroySwapchain(mSwapchain);
   }
 }
 
@@ -178,88 +175,106 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   uint8_t topMost = layerCount - 1;
 
-  {
-    winrt::com_ptr<ID3D11DeviceContext> context;
-    d3d11->GetImmediateContext(context.put());
-    D3D11::SavedState state(context);
+  if (mSwapchain) {
+    if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {
+      dprint("Incompatible swapchain due to options change, recreating");
+      this->ReleaseSwapchainResources(mSwapchain);
+      mOpenXR->xrDestroySwapchain(mSwapchain);
+      mSwapchain = nullptr;
+    }
+  }
+
+  if (!mSwapchain) {
+    mInitialConfig = config.mVR;
+    PixelSize size {
+      TextureWidth * MaxLayers,
+      TextureHeight,
+    };
+    mSwapchain = this->CreateSwapchain(session, size, mInitialConfig.mQuirks);
+    if (!mSwapchain) {
+      dprint("Failed to create swapchain");
+      OPENKNEEBOARD_BREAK;
+      TraceLoggingWriteStop(
+        activity,
+        "xrEndFrame",
+        TraceLoggingValue("Failed to create swapchain", "Result"));
+      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
+    dprintf("Created {}x{} swapchain", size.mWidth, size.mHeight);
+  }
+
+  bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+  std::vector<LayerRenderInfo> layers;
+  for (uint8_t i = 0; i < snapshot.GetLayerCount(); ++i) {
+    auto layerConfig = snapshot.GetLayerConfig(i);
+    if (!layerConfig->IsValid()) {
+      TraceLoggingWriteStop(
+        activity,
+        "xrEndFrame",
+        TraceLoggingValue(i, "LayerNumber"),
+        TraceLoggingValue("Invalid layer config", "Result"));
+      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
+    layers.push_back(LayerRenderInfo {
+      .mLayerIndex = i,
+      .mVR = this->GetRenderParameters(snapshot, *layerConfig, hmdPose),
+    });
+    needRender
+      = needRender || (mRenderCacheKeys[i] != layers.back().mVR.mCacheKey);
+  }
+
+  if (needRender) {
+    uint32_t swapchainTextureIndex;
+    auto nextResult = mOpenXR->xrAcquireSwapchainImage(
+      mSwapchain, nullptr, &swapchainTextureIndex);
+    if (XR_FAILED(nextResult)) {
+      dprintf("Failed to acquire swapchain image: {}", nextResult);
+      OPENKNEEBOARD_BREAK;
+      TraceLoggingWriteStop(
+        activity,
+        "xrEndFrame",
+        TraceLoggingValue("Failed to acquire swapchain image", "Result"));
+      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
+
+    const scope_guard releaseSwapchainImage([this]() {
+      auto nextResult = mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr);
+      if (XR_FAILED(nextResult)) {
+        dprintf("Failed to release swapchain image: {}", nextResult);
+        OPENKNEEBOARD_BREAK;
+      }
+    });
+
+    XrSwapchainImageWaitInfo waitInfo {
+      .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+      .timeout = XR_INFINITE_DURATION,
+    };
+    nextResult = mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo);
+    if (XR_FAILED(nextResult)) {
+      dprintf("Failed to wait for swapchain image: {}", nextResult);
+      OPENKNEEBOARD_BREAK;
+      TraceLoggingWriteStop(
+        activity,
+        "xrEndFrame",
+        TraceLoggingValue("Failed to wait for swapchain image", "Result"));
+      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    }
 
     for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-      auto layer = *snapshot.GetLayerConfig(layerIndex);
-      if (!layer.IsValid()) {
-        TraceLoggingWriteStop(
-          activity,
-          "xrEndFrame",
-          TraceLoggingValue(layerIndex, "LayerNumber"),
-          TraceLoggingValue("Invalid layer config", "Result"));
-        return mOpenXR->xrEndFrame(session, frameEndInfo);
-      }
+      auto layer = snapshot.GetLayerConfig(layerIndex);
+      auto& layerRenderInfo = layers.at(layerIndex);
+      auto& renderParams = layerRenderInfo.mVR;
 
-      auto& swapchain = mSwapchains.at(layerIndex);
-      if (swapchain) {
-        if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {
-          dprint("Incompatible swapchain due to options change, recreating");
-          this->ReleaseSwapchainResources(swapchain);
-          mOpenXR->xrDestroySwapchain(swapchain);
-          swapchain = nullptr;
-        }
-      }
-
-      if (!swapchain) {
-        mInitialConfig = config.mVR;
-        swapchain = this->CreateSwapchain(
-          session, {TextureWidth, TextureHeight}, mInitialConfig.mQuirks);
-        if (!swapchain) {
-          dprintf("Failed to create swapchain for layer {}", layerIndex);
-          OPENKNEEBOARD_BREAK;
-          TraceLoggingWriteStop(
-            activity,
-            "xrEndFrame",
-            TraceLoggingValue(layerIndex, "LayerNumber"),
-            TraceLoggingValue("Failed to create swapchain", "Result"));
-          return mOpenXR->xrEndFrame(session, frameEndInfo);
-        }
-        dprintf("Created swapchain for layer {}", layerIndex);
-      }
-
-      const auto renderParams
-        = this->GetRenderParameters(snapshot, layer, hmdPose);
       if (renderParams.mIsLookingAtKneeboard) {
         topMost = layerIndex;
       }
-      const auto staleCacheKey
-        = (mRenderCacheKeys.at(layerIndex) != renderParams.mCacheKey);
-      const auto alwaysRender
-        = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-      const auto needsRender = staleCacheKey || alwaysRender;
 
-      if (needsRender) {
-        TraceLoggingThreadActivity<gTraceProvider> subActivity;
-        TraceLoggingWriteStart(
-          subActivity,
-          "xrEndFrame_RenderLayer",
-          TraceLoggingValue(layerIndex, "LayerNumber"),
-          TraceLoggingValue(alwaysRender, "AlwaysRender"),
-          TraceLoggingValue(
-            mRenderCacheKeys.at(layerIndex), "PreviousCacheKey"),
-          TraceLoggingValue(renderParams.mCacheKey, "CurrentCacheKey"));
-        const auto rendered
-          = this->RenderLayer(swapchain, snapshot, layerIndex, renderParams);
-        TraceLoggingWriteStop(
-          subActivity,
-          "xrEndFrame_RenderLayer",
-          TraceLoggingValue(rendered, "Success"));
-        if (!rendered) {
-          dprint("Render failed.");
-          OPENKNEEBOARD_BREAK;
-          TraceLoggingWriteStop(
-            activity,
-            "xrEndFrame",
-            TraceLoggingValue(layerIndex, "LayerNumber"),
-            TraceLoggingValue("Render failed", "Result"));
-          return mOpenXR->xrEndFrame(session, frameEndInfo);
-        }
-        mRenderCacheKeys.at(layerIndex) = renderParams.mCacheKey;
-      }
+      layerRenderInfo.mSourceRect
+        = {{0, 0}, {layer->mImageWidth, layer->mImageHeight}};
+      layerRenderInfo.mDestRect = {
+        {layerIndex * TextureWidth, 0},
+        {layer->mImageWidth, layer->mImageHeight},
+      };
 
       static_assert(
         SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
@@ -272,11 +287,11 @@ XrResult OpenXRKneeboard::xrEndFrame(
         | XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT,
       .space = mLocalSpace,
       .eyeVisibility = XR_EYE_VISIBILITY_BOTH,
-      .subImage = {
-        .swapchain = swapchain,
+      .subImage = XrSwapchainSubImage {
+        .swapchain = mSwapchain,
         .imageRect = {
-          {0, 0},
-          {static_cast<int32_t>(layer.mImageWidth), static_cast<int32_t>(layer.mImageHeight)},
+          {layerIndex * TextureWidth, 0},
+          {static_cast<int32_t>(layer->mImageWidth), static_cast<int32_t>(layer->mImageHeight)},
         },
         .imageArrayIndex = 0,
       },
@@ -285,6 +300,33 @@ XrResult OpenXRKneeboard::xrEndFrame(
     });
       nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(
         &kneeboardLayers.back()));
+    }
+
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    d3d11->GetImmediateContext(context.put());
+    D3D11::SavedState state(context);
+
+    {
+      TraceLoggingThreadActivity<gTraceProvider> subActivity;
+      TraceLoggingWriteStart(subActivity, "OpenXRKneeboard::RenderLayers()");
+      const auto success = this->RenderLayers(
+        mSwapchain,
+        swapchainTextureIndex,
+        snapshot,
+        layers.size(),
+        layers.data());
+      TraceLoggingWriteStop(
+        subActivity,
+        "OpenXRKneeboard::RenderLayers()",
+        TraceLoggingValue(success, "Result"));
+      if (!success) {
+        TraceLoggingWriteStop(
+          activity,
+          "xrEndFrame",
+          TraceLoggingValue("RenderLayers failed", "Result"));
+        OPENKNEEBOARD_BREAK;
+        return mOpenXR->xrEndFrame(session, frameEndInfo);
+      }
     }
   }
 
@@ -311,46 +353,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
     "xrEndFrame",
     TraceLoggingValue(static_cast<const int64_t>(nextResult), "XrResult"));
   return nextResult;
-}
-
-bool OpenXRKneeboard::RenderLayer(
-  XrSwapchain swapchain,
-  const SHM::Snapshot& snapshot,
-  uint8_t layerIndex,
-  const VRKneeboard::RenderParameters& params) {
-  uint32_t swapchainTextureIndex;
-  auto nextResult = mOpenXR->xrAcquireSwapchainImage(
-    swapchain, nullptr, &swapchainTextureIndex);
-  if (XR_FAILED(nextResult)) {
-    dprintf("Failed to acquire swapchain image: {}", nextResult);
-    return false;
-  }
-
-  const scope_guard releaseSwapchainImage([swapchain, this]() {
-    auto nextResult = mOpenXR->xrReleaseSwapchainImage(swapchain, nullptr);
-    if (XR_FAILED(nextResult)) {
-      dprintf("Failed to release swapchain image: {}", nextResult);
-    }
-  });
-
-  XrSwapchainImageWaitInfo waitInfo {
-    .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-    .timeout = XR_INFINITE_DURATION,
-  };
-  nextResult = mOpenXR->xrWaitSwapchainImage(swapchain, &waitInfo);
-  if (XR_FAILED(nextResult)) {
-    dprintf("Failed to wait for swapchain image: {}", nextResult);
-    return false;
-  }
-
-  LayerRenderInfo layer {
-    .mLayerIndex = layerIndex,
-    .mSourceRect = {{0, 0}, {TextureWidth, TextureHeight}},
-    .mDestRect = {{0, 0}, {TextureWidth, TextureHeight}},
-    .mVR = params,
-  };
-  return this->RenderLayers(
-    swapchain, swapchainTextureIndex, snapshot, 1, &layer);
 }
 
 OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
@@ -443,7 +445,8 @@ XrResult xrCreateSession(
   if (vk) {
     if (!gPFN_vkGetInstanceProcAddr) {
       dprint(
-        "Found Vulkan, don't have an explicit vkGetInstanceProcAddr; looking "
+        "Found Vulkan, don't have an explicit vkGetInstanceProcAddr; "
+        "looking "
         "for system library.");
       if (gLibVulkan) {
         gPFN_vkGetInstanceProcAddr
