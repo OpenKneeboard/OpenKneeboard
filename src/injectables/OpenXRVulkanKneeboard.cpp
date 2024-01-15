@@ -32,9 +32,6 @@
 #include <d3d11_4.h>
 #include <dxgi1_6.h>
 
-#define XR_USE_GRAPHICS_API_VULKAN
-#include <openxr/openxr_platform.h>
-
 template <class CharT>
 struct std::formatter<VkResult, CharT> : std::formatter<int, CharT> {};
 
@@ -63,41 +60,41 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
   const VkAllocationCallbacks* vulkanAllocator,
   PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr)
   : OpenXRKneeboard(session, runtimeID, next),
+    mBinding(binding),
     mVKDevice(binding.device),
     mVKAllocator(vulkanAllocator) {
   dprintf("{}", __FUNCTION__);
   TraceLoggingWrite(gTraceProvider, "OpenXRVulkanKneeboard()");
 
-  this->InitializeVulkan(binding, pfnVkGetInstanceProcAddr);
+  this->InitializeVulkan(pfnVkGetInstanceProcAddr);
 
   if (!mVKCommandPool) {
     return;
   }
 
-  this->InitializeD3D11(binding);
+  this->InitializeD3D11();
 }
 
 void OpenXRVulkanKneeboard::InitializeVulkan(
-  const XrGraphicsBindingVulkanKHR& binding,
   PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr) {
 #define IT(vkfun) \
   mPFN_##vkfun = reinterpret_cast<PFN_##vkfun>( \
-    pfnVkGetInstanceProcAddr(binding.instance, #vkfun));
+    pfnVkGetInstanceProcAddr(mBinding.instance, #vkfun));
   OPENKNEEBOARD_VK_FUNCS
 #undef IT
 
   mPFN_vkGetDeviceQueue(
-    binding.device, binding.queueFamilyIndex, binding.queueIndex, &mVKQueue);
+    mVKDevice, mBinding.queueFamilyIndex, mBinding.queueIndex, &mVKQueue);
 
   {
     VkCommandPoolCreateInfo createInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
       .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-      .queueFamilyIndex = binding.queueFamilyIndex,
+      .queueFamilyIndex = mBinding.queueFamilyIndex,
     };
 
     const auto ret = mPFN_vkCreateCommandPool(
-      binding.device, &createInfo, mVKAllocator, &mVKCommandPool);
+      mVKDevice, &createInfo, mVKAllocator, &mVKCommandPool);
     if (VK_FAILED(ret)) {
       dprintf("Failed to create command pool: {}", ret);
       return;
@@ -113,7 +110,7 @@ void OpenXRVulkanKneeboard::InitializeVulkan(
     };
 
     const auto ret = mPFN_vkAllocateCommandBuffers(
-      binding.device, &allocateInfo, &mVKCommandBuffer);
+      mVKDevice, &allocateInfo, &mVKCommandBuffer);
     if (XR_FAILED(ret)) {
       dprintf("Failed to create command buffer: {}", ret);
       return;
@@ -121,15 +118,14 @@ void OpenXRVulkanKneeboard::InitializeVulkan(
   }
 }
 
-void OpenXRVulkanKneeboard::InitializeD3D11(
-  const XrGraphicsBindingVulkanKHR& binding) {
+void OpenXRVulkanKneeboard::InitializeD3D11() {
   VkPhysicalDeviceIDProperties deviceIDProps {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
 
   VkPhysicalDeviceProperties2 deviceProps2 {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
   deviceProps2.pNext = &deviceIDProps;
-  mPFN_vkGetPhysicalDeviceProperties2(binding.physicalDevice, &deviceProps2);
+  mPFN_vkGetPhysicalDeviceProperties2(mBinding.physicalDevice, &deviceProps2);
 
   if (deviceIDProps.deviceLUIDValid == VK_FALSE) {
     dprint("Failed to get Vulkan device LUID");
@@ -194,15 +190,9 @@ void OpenXRVulkanKneeboard::InitializeD3D11(
   dprint("Initialized D3D11 device matching VkPhysicalDevice");
   mD3D11Device = d3d11Device.as<ID3D11Device5>();
   mD3D11ImmediateContext = d3d11ImmediateContext.as<ID3D11DeviceContext4>();
-
-  for (int i = 0; i < MaxLayers; ++i) {
-    InitInterop(binding, &mLayerInterop.at(i));
-  }
 }
 
-void OpenXRVulkanKneeboard::InitInterop(
-  const XrGraphicsBindingVulkanKHR& binding,
-  Interop* interop) noexcept {
+void OpenXRVulkanKneeboard::InitInterop(Interop* interop) noexcept {
   auto device = mD3D11Device.get();
   interop->mD3D11Texture = SHM::CreateCompatibleTexture(
     device,
@@ -241,12 +231,12 @@ void OpenXRVulkanKneeboard::InitInterop(
       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .queueFamilyIndexCount = 1,
-      .pQueueFamilyIndices = &binding.queueFamilyIndex,
+      .pQueueFamilyIndices = &mBinding.queueFamilyIndex,
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
     const auto ret = mPFN_vkCreateImage(
-      binding.device, &createInfo, mVKAllocator, &interop->mVKImage);
+      mVKDevice, &createInfo, mVKAllocator, &interop->mVKImage);
     if (VK_FAILED(ret)) {
       dprintf("Failed to create interop image: {}", ret);
       return;
@@ -266,14 +256,13 @@ void OpenXRVulkanKneeboard::InitInterop(
       VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
     };
 
-    mPFN_vkGetImageMemoryRequirements2(
-      binding.device, &info, &memoryRequirements);
+    mPFN_vkGetImageMemoryRequirements2(mVKDevice, &info, &memoryRequirements);
 
     VkMemoryWin32HandlePropertiesKHR handleProperties {
       .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
     };
     mPFN_vkGetMemoryWin32HandlePropertiesKHR(
-      binding.device,
+      mVKDevice,
       VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
       sharedHandle,
       &handleProperties);
@@ -282,7 +271,7 @@ void OpenXRVulkanKneeboard::InitInterop(
 
     VkPhysicalDeviceMemoryProperties memoryProperties {};
     mPFN_vkGetPhysicalDeviceMemoryProperties(
-      binding.physicalDevice, &memoryProperties);
+      mBinding.physicalDevice, &memoryProperties);
 
     std::optional<uint32_t> memoryTypeIndex;
     for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
@@ -324,8 +313,8 @@ void OpenXRVulkanKneeboard::InitInterop(
       .allocationSize = memoryRequirements.memoryRequirements.size,
       .memoryTypeIndex = *memoryTypeIndex,
     };
-    const auto ret = mPFN_vkAllocateMemory(
-      binding.device, &allocInfo, mVKAllocator, &memory);
+    const auto ret
+      = mPFN_vkAllocateMemory(mVKDevice, &allocInfo, mVKAllocator, &memory);
     if (VK_FAILED(ret)) {
       dprintf("Failed to allocate memory for interop: {}", ret);
       return;
@@ -339,7 +328,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .memory = memory,
     };
 
-    const auto res = mPFN_vkBindImageMemory2(binding.device, 1, &bindImageInfo);
+    const auto res = mPFN_vkBindImageMemory2(mVKDevice, 1, &bindImageInfo);
     if (XR_FAILED(res)) {
       dprintf("Failed to bind image memory: {}", res);
     }
@@ -348,7 +337,7 @@ void OpenXRVulkanKneeboard::InitInterop(
   {
     VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
     check_vkresult(mPFN_vkCreateFence(
-      binding.device, &createInfo, mVKAllocator, &interop->mVKCompletionFence));
+      mVKDevice, &createInfo, mVKAllocator, &interop->mVKCompletionFence));
   }
 
   // 1/3: Create a D3D11 fence...
@@ -368,10 +357,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .pNext = &timelineCreateInfo,
     };
     check_vkresult(mPFN_vkCreateSemaphore(
-      binding.device,
-      &createInfo,
-      mVKAllocator,
-      &interop->mVKInteropSemaphore));
+      mVKDevice, &createInfo, mVKAllocator, &interop->mVKInteropSemaphore));
   }
 
   // 3/3: tie them together
@@ -385,7 +371,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .handle = interop->mD3D11InteropFenceHandle.get(),
     };
     check_vkresult(
-      mPFN_vkImportSemaphoreWin32HandleKHR(binding.device, &handleInfo));
+      mPFN_vkImportSemaphoreWin32HandleKHR(mVKDevice, &handleInfo));
   }
 }
 
@@ -472,23 +458,28 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     return nullptr;
   }
 
+  auto& resources = mSwapchainResources[swapchain];
+
   for (const auto& swapchainImage: images) {
-    mImages[swapchain].push_back(swapchainImage.image);
+    resources.mImages.push_back(swapchainImage.image);
   }
+
+  InitInterop(&resources.mInterop);
 
   return swapchain;
 }
 
 void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
-  if (!mImages.contains(swapchain)) {
+  if (!mSwapchainResources.contains(swapchain)) {
     return;
   }
 
-  for (const auto image: mImages.at(swapchain)) {
+  auto& resources = mSwapchainResources.at(swapchain);
+  for (const auto image: resources.mImages) {
     mPFN_vkDestroyImage(mVKDevice, image, mVKAllocator);
   }
 
-  mImages.erase(swapchain);
+  mSwapchainResources.erase(swapchain);
 }
 
 bool OpenXRVulkanKneeboard::RenderLayer(
@@ -544,7 +535,8 @@ bool OpenXRVulkanKneeboard::RenderLayer(
     return false;
   }
 
-  auto& interop = mLayerInterop.at(layerIndex);
+  auto& swapchainResources = mSwapchainResources.at(swapchain);
+  auto& interop = swapchainResources.mInterop;
 
   D3D11::CopyTextureWithOpacity(
     mD3D11Device.get(),
@@ -585,7 +577,7 @@ bool OpenXRVulkanKneeboard::RenderLayer(
       .layerCount = 1,
     },
   };
-  const auto dstImage = mImages.at(swapchain).at(textureIndex);
+  const auto dstImage = swapchainResources.mImages.at(textureIndex);
   inBarriers[1] = {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
     .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,

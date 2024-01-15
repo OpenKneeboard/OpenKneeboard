@@ -18,6 +18,8 @@
  * USA.
  */
 #pragma once
+#define VK_USE_PLATFORM_WIN32_KHR
+#define XR_USE_GRAPHICS_API_VULKAN
 
 #include "OpenXRKneeboard.h"
 
@@ -25,10 +27,10 @@
 
 #include <d3d11_4.h>
 
-#define VK_USE_PLATFORM_WIN32_KHR
+// clang-format off
 #include <vulkan/vulkan.h>
-
-struct XrGraphicsBindingVulkanKHR;
+#include <openxr/openxr_platform.h>
+// clang-format on
 
 namespace OpenKneeboard {
 
@@ -78,8 +80,15 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
+  XrGraphicsBindingVulkanKHR mBinding {};
   winrt::com_ptr<ID3D11Device5> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
+
+  const VkAllocationCallbacks* mVKAllocator {nullptr};
+  VkDevice mVKDevice {nullptr};
+  VkCommandPool mVKCommandPool {nullptr};
+  VkCommandBuffer mVKCommandBuffer {nullptr};
+  VkQueue mVKQueue {nullptr};
 
   struct Interop {
     winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
@@ -95,16 +104,12 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     // Next value for the fence/semaphore
     uint64_t mInteropValue {};
   };
-  std::array<Interop, MaxLayers> mLayerInterop;
-
-  void InitInterop(const XrGraphicsBindingVulkanKHR&, Interop*) noexcept;
-
-  const VkAllocationCallbacks* mVKAllocator {nullptr};
-  VkDevice mVKDevice {nullptr};
-  VkCommandPool mVKCommandPool {nullptr};
-  VkCommandBuffer mVKCommandBuffer {nullptr};
-  VkQueue mVKQueue {nullptr};
-  std::unordered_map<XrSwapchain, std::vector<VkImage>> mImages;
+  struct SwapchainResources {
+    Interop mInterop {};
+    std::vector<VkImage> mImages;
+  };
+  std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
+  void InitInterop(Interop*) noexcept;
 
 #define OPENKNEEBOARD_VK_FUNCS \
   IT(vkGetPhysicalDeviceProperties2) \
@@ -133,10 +138,8 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   OPENKNEEBOARD_VK_FUNCS
 #undef IT
 
-  void InitializeD3D11(const XrGraphicsBindingVulkanKHR&);
-  void InitializeVulkan(
-    const XrGraphicsBindingVulkanKHR&,
-    PFN_vkGetInstanceProcAddr);
+  void InitializeD3D11();
+  void InitializeVulkan(PFN_vkGetInstanceProcAddr);
 };
 
 }// namespace OpenKneeboard
