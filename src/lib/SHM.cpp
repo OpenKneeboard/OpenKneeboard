@@ -624,7 +624,7 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-Snapshot Reader::MaybeGet(
+Snapshot SingleBufferedReader::MaybeGet(
   ID3D11DeviceContext4* ctx,
   ID3D11Fence* fence,
   const LayerTextures& textures,
@@ -903,7 +903,7 @@ Snapshot SingleBufferedReader::MaybeGet(
     return {nullptr};
   }
 
-  return Reader::MaybeGet(mContext.get(), mFence.get(), mTextures, kind);
+  return this->MaybeGet(mContext.get(), mFence.get(), mTextures, kind);
 }
 
 }// namespace OpenKneeboard::SHM
