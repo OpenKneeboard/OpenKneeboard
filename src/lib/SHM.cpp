@@ -827,7 +827,11 @@ void CachedReader::InitDXResources(ID3D11Device* device) {
   }
 
   for (size_t i = 0; i < mTextures.size(); ++i) {
-    auto texture = SHM::CreateCompatibleTexture(device);
+    auto texture = SHM::CreateCompatibleTexture(
+      device,
+      SHM::DEFAULT_D3D11_BIND_FLAGS,
+      SHM::DEFAULT_D3D11_MISC_FLAGS | D3D11_RESOURCE_MISC_SHARED
+        | D3D11_RESOURCE_MISC_SHARED_NTHANDLE);
     const auto name = std::format("OKB-SHM-Texture-{}", i);
     texture->SetPrivateData(
       WKPDID_D3DDebugObjectName, name.size(), name.data());
