@@ -17,27 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/SHM/D3D11.h>
+#include <OpenKneeboard/SHM/GFXInterop.h>
 
-namespace OpenKneeboard::SHM::D3D11 {
+namespace OpenKneeboard::SHM::GFXInterop {
 
 LayerTextureCache::~LayerTextureCache() = default;
 
-ID3D11ShaderResourceView* LayerTextureCache::GetD3D11ShaderResourceView() {
-  if (!mD3D11ShaderResourceView) [[unlikely]] {
+HANDLE LayerTextureCache::GetNTHandle() {
+  if (!mNTHandle) [[unlikely]] {
     auto texture = this->GetD3D11Texture();
-    winrt::com_ptr<ID3D11Device> device;
-    texture->GetDevice(device.put());
-    winrt::check_hresult(device->CreateShaderResourceView(
-      texture, nullptr, mD3D11ShaderResourceView.put()));
+
+    winrt::com_ptr<IDXGIResource1> resource;
+    winrt::check_hresult(texture->QueryInterface(resource.put()));
+    winrt::check_hresult(resource->CreateSharedHandle(
+      nullptr,
+      DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE,
+      nullptr,
+      mNTHandle.put()));
   }
-  return mD3D11ShaderResourceView.get();
+  return mNTHandle.get();
 }
 
-std::shared_ptr<SHM::LayerTextureCache> CachedReader::CreateLayerTextureCache(
-  [[maybe_unused]] uint8_t layerIndex,
-  const winrt::com_ptr<ID3D11Texture2D>& texture) {
-  return std::make_shared<SHM::D3D11::LayerTextureCache>(texture);
-}
-
-}// namespace OpenKneeboard::SHM::D3D11
+}// namespace OpenKneeboard::SHM::GFXInterop

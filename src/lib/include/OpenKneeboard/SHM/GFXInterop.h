@@ -21,27 +21,17 @@
 
 #include <OpenKneeboard/SHM.h>
 
-namespace OpenKneeboard::SHM::D3D11 {
+namespace OpenKneeboard::SHM::GFXInterop {
 
 class LayerTextureCache : public SHM::LayerTextureCache {
  public:
   using SHM::LayerTextureCache::LayerTextureCache;
 
   virtual ~LayerTextureCache();
-  ID3D11ShaderResourceView* GetD3D11ShaderResourceView();
+  HANDLE GetNTHandle();
 
  private:
-  winrt::com_ptr<ID3D11ShaderResourceView> mD3D11ShaderResourceView;
+  winrt::handle mNTHandle;
 };
 
-class CachedReader : public SHM::CachedReader {
- public:
-  using SHM::CachedReader::CachedReader;
-
- protected:
-  virtual std::shared_ptr<SHM::LayerTextureCache> CreateLayerTextureCache(
-    uint8_t layerIndex,
-    const winrt::com_ptr<ID3D11Texture2D>&) override;
-};
-
-};// namespace OpenKneeboard::SHM::D3D11
+};// namespace OpenKneeboard::SHM::GFXInterop

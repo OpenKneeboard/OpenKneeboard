@@ -166,7 +166,6 @@ ok_add_library(
   STATIC
   SHM.cpp
   SHM/ActiveConsumers.cpp
-  SHM/D3D11.cpp
   FlatConfig.cpp
 )
 target_link_libraries(
@@ -182,6 +181,46 @@ target_link_libraries(
   PUBLIC
   _libheaders
   OpenKneeboard-config
+)
+
+ok_add_library(
+  OpenKneeboard-SHM-Client-D3D11
+  STATIC
+  SHM/D3D11.cpp
+)
+target_link_libraries(
+  OpenKneeboard-SHM-Client-D3D11
+  PUBLIC
+  OpenKneeboard-SHM
+)
+
+ok_add_library(
+  OpenKneeboard-SHM-Client-GFXInterop
+  STATIC
+  SHM/GFXInterop.cpp
+)
+target_link_libraries(
+  OpenKneeboard-SHM-Client-GFXInterop
+  PUBLIC
+  OpenKneeboard-SHM
+)
+
+ok_add_library(
+  OpenKneeboard-SHM-Client-D3D12
+  STATIC
+  SHM/D3D12.cpp
+)
+target_link_libraries(
+  OpenKneeboard-SHM-Client-D3D12
+  PUBLIC
+  OpenKneeboard-SHM-Client-GFXInterop
+  OpenKneeboard-shims
+  ThirdParty::CppWinRT
+)
+target_link_libraries(
+  OpenKneeboard-SHM-Client-D3D12
+  PRIVATE
+  ThirdParty::DirectXTK12
 )
 
 ok_add_library(OpenKneeboard-dprint STATIC dprint.cpp)
@@ -315,6 +354,7 @@ target_link_libraries(
   OpenKneeboard-DXResources
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
+  OpenKneeboard-SHM-Client-D3D11
   ThirdParty::DirectXTK
   ThirdParty::OpenVR
   _libheaders

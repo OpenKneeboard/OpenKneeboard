@@ -590,6 +590,7 @@ Writer::operator bool() const {
 CachedReader::~CachedReader() = default;
 
 std::shared_ptr<LayerTextureCache> CachedReader::CreateLayerTextureCache(
+  [[maybe_unused]] uint8_t layerIndex,
   const winrt::com_ptr<ID3D11Texture2D>& texture) {
   return std::make_shared<LayerTextureCache>(texture);
 }
@@ -835,7 +836,7 @@ void CachedReader::InitDXResources(ID3D11Device* device) {
     const auto name = std::format("OKB-SHM-Texture-{}", i);
     texture->SetPrivateData(
       WKPDID_D3DDebugObjectName, name.size(), name.data());
-    mTextures[i] = this->CreateLayerTextureCache(std::move(texture));
+    mTextures[i] = this->CreateLayerTextureCache(i, std::move(texture));
   }
 
   winrt::com_ptr<ID3D11DeviceContext> ctx;

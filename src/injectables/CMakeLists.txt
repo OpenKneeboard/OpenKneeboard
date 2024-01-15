@@ -89,6 +89,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   OpenKneeboard-version
   OpenKneeboard-D3D11
+  OpenKneeboard-SHM-Client-D3D11
   oculus-hooks
   oculus-sdk-headers)
 
@@ -106,6 +107,7 @@ target_link_libraries(
   OpenKneeboard-version
   OpenKneeboard-D3D11On12
   OpenKneeboard-ScopedRWX
+  OpenKneeboard-SHM-Client-D3D11
   d3d12-hooks
   detours-ext
   oculus-hooks
@@ -131,6 +133,8 @@ target_link_libraries(
   OpenKneeboard-Elevation
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-SHM
+  OpenKneeboard-SHM-Client-D3D11
+  OpenKneeboard-SHM-Client-D3D12
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
   OpenKneeboard-dprint

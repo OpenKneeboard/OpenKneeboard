@@ -37,7 +37,8 @@
 #include <d3d11on12.h>
 #include <d3d12.h>
 
-#include <directxtk12/SpriteBatch.h>
+#include <directxtk12/RenderTargetState.h>
+#include <directxtk12/ResourceUploadBatch.h>
 
 #define XR_USE_GRAPHICS_API_D3D12
 #include <openxr/openxr_platform.h>
@@ -49,7 +50,7 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
-  : OpenXRKneeboard(session, runtimeID, next) {
+  : OpenXRKneeboard(session, runtimeID, next), mSHM(binding.device) {
   dprintf("{}", __FUNCTION__);
 
   this->InitializeDeviceResources(binding);
@@ -59,6 +60,9 @@ void OpenXRD3D12Kneeboard::InitializeDeviceResources(
   const XrGraphicsBindingD3D12KHR& binding) {
   mD3D12Device.copy_from(binding.device);
   mD3D12CommandQueue.copy_from(binding.queue);
+  winrt::check_hresult(mD3D12Device->CreateCommandAllocator(
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    IID_PPV_ARGS(mD3D12CommandAllocator.put())));
 
   UINT flags = 0;
 #ifdef DEBUG
@@ -80,6 +84,27 @@ void OpenXRD3D12Kneeboard::InitializeDeviceResources(
   mD3D11Device = device11.as<ID3D11Device5>();
   mD3D11ImmediateContext = context11.as<ID3D11DeviceContext4>();
   mD3D11On12Device = device11.as<ID3D11On12Device>();
+
+  mD3D12DepthHeap = std::make_unique<DirectX::DescriptorHeap>(
+    mD3D12Device.get(),
+    D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+    1);
+
+  mDXTK12GraphicsMemory
+    = std::make_unique<DirectX::GraphicsMemory>(mD3D12Device.get());
+
+  mD3D12Device->CreateFence(
+    0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(mD3D12Fence.put()));
+  mFenceEvent.attach(CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL));
+  winrt::check_hresult(mD3D12Device->CreateSharedHandle(
+    mD3D12Fence.get(),
+    nullptr,
+    GENERIC_ALL,
+    nullptr,
+    mD3DInteropFenceHandle.put()));
+  winrt::check_hresult(mD3D11Device->OpenSharedFence(
+    mD3DInteropFenceHandle.get(), IID_PPV_ARGS(mD3D11Fence.put())));
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
@@ -102,7 +127,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   auto oxr = this->GetOpenXR();
 
   auto formats = OpenXRD3D11Kneeboard::GetDXGIFormats(oxr, session);
-  traceprint(
+  dprintf(
     "Creating swapchain with format {}",
     static_cast<INT>(formats.mTextureFormat));
 
@@ -161,10 +186,126 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
     return nullptr;
   }
 
+  auto& resources = mSwapchainResources[swapchain];
+  resources = SwapchainResources {
+    .mViewport = {
+      0.0f,
+      0.0f,
+      static_cast<FLOAT>(size.mWidth),
+      static_cast<FLOAT>(size.mHeight),
+      0.0f,
+      1.0f,
+    },
+    .mScissorRect = {
+      0,
+      0,
+      static_cast<LONG>(size.mWidth),
+      static_cast<LONG>(size.mHeight),
+    },
+    .mRenderTargetViewFormat = formats.mRenderTargetViewFormat,
+  };
+
+  resources.mD3D12RenderTargetViewsHeap
+    = std::make_unique<DirectX::DescriptorHeap>(
+      mD3D12Device.get(),
+      D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+      D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+      imageCount);
+
+  for (uint32_t i = 0; i < imageCount; ++i) {
+    winrt::com_ptr<ID3D12Resource> texture;
+    texture.copy_from(images.at(i).texture);
+
+    D3D12_RENDER_TARGET_VIEW_DESC desc {
+      .Format = resources.mRenderTargetViewFormat,
+      .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
+      .Texture2D = {
+        .MipSlice = 0,
+        .PlaneSlice = 0,
+      },
+    };
+    mD3D12Device->CreateRenderTargetView(
+      texture.get(),
+      &desc,
+      resources.mD3D12RenderTargetViewsHeap->GetCpuHandle(i));
+
+    resources.mD3D12Textures.push_back(std::move(texture));
+  }
+
+  {
+    DirectX::ResourceUploadBatch resourceUpload(mD3D12Device.get());
+    resourceUpload.Begin();
+    DirectX::RenderTargetState rtState(
+      formats.mRenderTargetViewFormat, DXGI_FORMAT_D32_FLOAT);
+    DirectX::SpriteBatchPipelineStateDescription pd(rtState);
+    resources.mDXTK12SpriteBatch = std::make_unique<DirectX::SpriteBatch>(
+      mD3D12Device.get(), resourceUpload, pd);
+    auto uploadResourcesFinished = resourceUpload.End(mD3D12CommandQueue.get());
+    uploadResourcesFinished.wait();
+  }
+
+  {
+    D3D12_HEAP_PROPERTIES heap {
+      .Type = D3D12_HEAP_TYPE_DEFAULT,
+      .CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+      .MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+    };
+
+    const auto colorDesc = images.at(0).texture->GetDesc();
+
+    D3D12_RESOURCE_DESC desc {
+      .Dimension = colorDesc.Dimension,
+      .Alignment = colorDesc.Alignment,
+      .Width = colorDesc.Width,
+      .Height = colorDesc.Height,
+      .DepthOrArraySize = colorDesc.DepthOrArraySize,
+      .MipLevels = 1,
+      .Format = DXGI_FORMAT_R32_TYPELESS,
+      .SampleDesc = {
+        .Count = 1,
+      },
+      .Layout = colorDesc.Layout,
+      .Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL,
+    };
+
+    D3D12_CLEAR_VALUE clearValue {
+      .Format = DXGI_FORMAT_D32_FLOAT,
+      .DepthStencil = {
+        .Depth = 1.0f,
+      },
+    };
+
+    winrt::check_hresult(mD3D12Device->CreateCommittedResource(
+      &heap,
+      D3D12_HEAP_FLAG_NONE,
+      &desc,
+      D3D12_RESOURCE_STATE_DEPTH_WRITE,
+      &clearValue,
+      IID_PPV_ARGS(resources.mD3D12DepthStencilTexture.put())));
+  }
+  {
+    D3D12_DEPTH_STENCIL_VIEW_DESC desc {
+      .Format = DXGI_FORMAT_D32_FLOAT,
+      .ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
+      .Flags = D3D12_DSV_FLAG_NONE,
+      .Texture2D = D3D12_TEX2D_DSV {
+        .MipSlice = 0, 
+      },
+    };
+    mD3D12Device->CreateDepthStencilView(
+      resources.mD3D12DepthStencilTexture.get(),
+      &desc,
+      mD3D12DepthHeap->GetFirstCpuHandle());
+  }
+
   return swapchain;
 }
 
-void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain) {
+void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
+  if (!mSwapchainResources.contains(swapchain)) {
+    return;
+  }
+  mSwapchainResources.erase(swapchain);
 }
 
 bool OpenXRD3D12Kneeboard::RenderLayers(
@@ -173,6 +314,77 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
   LayerRenderInfo* layers) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
+
+  TraceLoggingWriteTagged(activity, "SignalD3D11Fence");
+  const auto fenceValueD3D11Finished = ++mFenceValue;
+  winrt::check_hresult(
+    mD3D11ImmediateContext->Signal(mD3D11Fence.get(), fenceValueD3D11Finished));
+
+  TraceLoggingWriteTagged(activity, "InitD3D12Frame");
+  auto& resources = mSwapchainResources[swapchain];
+  auto sprites = resources.mDXTK12SpriteBatch.get();
+  sprites->SetViewport(resources.mViewport);
+
+  winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
+  mD3D12CommandAllocator->Reset();
+  winrt::check_hresult(mD3D12Device->CreateCommandList(
+    0,
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    mD3D12CommandAllocator.get(),
+    nullptr,
+    IID_PPV_ARGS(commandList.put())));
+  commandList->RSSetViewports(1, &resources.mViewport);
+  commandList->RSSetScissorRects(1, &resources.mScissorRect);
+
+  auto rt = resources.mD3D12RenderTargetViewsHeap->GetCpuHandle(
+    swapchainTextureIndex);
+  auto depthStencil = mD3D12DepthHeap->GetFirstCpuHandle();
+  commandList->ClearDepthStencilView(
+    depthStencil, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+  commandList->OMSetRenderTargets(1, &rt, true, &depthStencil);
+
+  auto heap = mSHM.GetShaderResourceViewHeap();
+  commandList->SetDescriptorHeaps(1, &heap);
+
+  {
+    TraceLoggingThreadActivity<gTraceProvider> spritesActivity;
+    TraceLoggingWriteStart(spritesActivity, "SpriteBatch");
+    sprites->Begin(commandList.get());
+    for (uint8_t i = 0; i < layerCount; ++i) {
+      const auto& info = layers[i];
+      auto resources
+        = snapshot.GetLayerGPUResources<SHM::D3D12::LayerTextureCache>(i);
+      auto srv = resources->GetD3D12ShaderResourceViewGPUHandle();
+
+      const auto opacity = info.mVR.mKneeboardOpacity;
+      DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
+
+      RECT sourceRect = info.mSourceRect;
+      RECT destRect = info.mDestRect;
+      sprites->Draw(
+        srv, {TextureWidth, TextureHeight}, destRect, &sourceRect, tint);
+    }
+    TraceLoggingWriteTagged(spritesActivity, "SpriteBatch::End");
+    sprites->End();
+    TraceLoggingWriteStop(spritesActivity, "SpriteBatch");
+  }
+  TraceLoggingWriteTagged(activity, "CloseCommandList");
+  winrt::check_hresult(commandList->Close());
+
+  TraceLoggingWriteTagged(activity, "WaitD3D12Fence");
+  winrt::check_hresult(
+    mD3D12CommandQueue->Wait(mD3D12Fence.get(), fenceValueD3D11Finished));
+  mD3D11ImmediateContext->Flush();
+
+  TraceLoggingWriteTagged(activity, "ExecuteCommandLists");
+  {
+    ID3D12CommandList* commandLists[] = {commandList.get()};
+    mD3D12CommandQueue->ExecuteCommandLists(1, commandLists);
+  }
+
+  TraceLoggingWriteStop(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
   return true;
 }
 

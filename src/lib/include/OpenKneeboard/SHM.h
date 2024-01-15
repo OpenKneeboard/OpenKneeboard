@@ -256,6 +256,7 @@ class CachedReader : public Reader {
 
  protected:
   virtual std::shared_ptr<LayerTextureCache> CreateLayerTextureCache(
+    uint8_t layerIndex,
     const winrt::com_ptr<ID3D11Texture2D>&);
 
  private:

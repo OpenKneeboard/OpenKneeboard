@@ -20,28 +20,54 @@
 #pragma once
 
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/SHM/GFXInterop.h>
 
-namespace OpenKneeboard::SHM::D3D11 {
+#include <shims/winrt/base.h>
 
-class LayerTextureCache : public SHM::LayerTextureCache {
+#include <d3d12.h>
+
+namespace OpenKneeboard::SHM::D3D12 {
+
+struct DeviceResources;
+
+class LayerTextureCache : public SHM::GFXInterop::LayerTextureCache {
  public:
-  using SHM::LayerTextureCache::LayerTextureCache;
+  LayerTextureCache() = delete;
+  LayerTextureCache(
+    uint8_t layerIndex,
+    const winrt::com_ptr<ID3D11Texture2D>& d3d11Texture,
+    const std::shared_ptr<DeviceResources>&);
+
+  ID3D12Resource* GetD3D12Texture();
+  D3D12_GPU_DESCRIPTOR_HANDLE GetD3D12ShaderResourceViewGPUHandle();
 
   virtual ~LayerTextureCache();
-  ID3D11ShaderResourceView* GetD3D11ShaderResourceView();
 
  private:
-  winrt::com_ptr<ID3D11ShaderResourceView> mD3D11ShaderResourceView;
+  std::shared_ptr<DeviceResources> mDeviceResources;
+  uint8_t mLayerIndex;
+
+  winrt::com_ptr<ID3D12Resource> mD3D12Texture;
+  bool mHaveShaderResourceView {false};
 };
 
 class CachedReader : public SHM::CachedReader {
  public:
   using SHM::CachedReader::CachedReader;
 
+  CachedReader() = delete;
+  CachedReader(ID3D12Device*);
+  virtual ~CachedReader();
+
+  ID3D12DescriptorHeap* GetShaderResourceViewHeap();
+
  protected:
   virtual std::shared_ptr<SHM::LayerTextureCache> CreateLayerTextureCache(
     uint8_t layerIndex,
     const winrt::com_ptr<ID3D11Texture2D>&) override;
+
+ private:
+  std::shared_ptr<DeviceResources> mDeviceResources;
 };
 
-};// namespace OpenKneeboard::SHM::D3D11
+};// namespace OpenKneeboard::SHM::D3D12

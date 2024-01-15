@@ -245,7 +245,7 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
     });
 
     for (uint8_t i = 0; i < layerCount; ++i) {
-      auto info = layerRenderInfo[i];
+      const auto& info = layerRenderInfo[i];
       auto resources
         = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(i);
       const auto srv = resources->GetD3D11ShaderResourceView();
