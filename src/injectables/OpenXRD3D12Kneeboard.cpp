@@ -186,6 +186,8 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
 #endif
     winrt::com_ptr<ID3D12Resource> texture12;
     texture12.copy_from(images.at(i).texture);
+    texture12->SetName(std::format(L"OKBD3D12-SwapChain-{}", i).c_str());
+
     rtvs.at(i) = std::static_pointer_cast<D3D11::IRenderTargetViewFactory>(
       std::make_shared<D3D11On12::RenderTargetViewFactory>(
         mDeviceResources,

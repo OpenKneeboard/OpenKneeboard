@@ -191,6 +191,10 @@ bool LayerTextureReadResources::Populate(
       std::bit_cast<uint32_t>(result));
     return false;
   }
+  const auto debugName = std::format(
+    "OKB-SHM-Client-{}-{}-{}", sessionID, layerIndex, sequenceNumber);
+  mTexture->SetPrivateData(
+    WKPDID_D3DDebugObjectName, debugName.size(), debugName.data());
   dprintf(L"Opened shared texture {}", textureName);
   return true;
 }
@@ -852,8 +856,11 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
     return;
   }
 
-  for (auto& t: mTextures) {
-    t = SHM::CreateCompatibleTexture(device);
+  for (size_t i = 0; i < mTextures.size(); ++i) {
+    mTextures[i] = SHM::CreateCompatibleTexture(device);
+    const auto name = std::format("OKB-SHM-Texture-{}", i);
+    mTextures[i]->SetPrivateData(
+      WKPDID_D3DDebugObjectName, name.size(), name.data());
   }
 
   winrt::com_ptr<ID3D11DeviceContext> ctx;

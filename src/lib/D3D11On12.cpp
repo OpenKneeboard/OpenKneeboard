@@ -153,6 +153,9 @@ RenderTargetViewFactory::RenderTargetViewFactory(
     };
     winrt::check_hresult(deviceResources.mDevice11->CreateTexture2D(
       &bufferDesc, nullptr, mBufferTexture11.put()));
+    const std::string_view name {"OKB_D3D1211on12-DoubleBuffer"};
+    mBufferTexture11->SetPrivateData(
+      WKPDID_D3DDebugObjectName, name.size(), name.data());
   }
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
