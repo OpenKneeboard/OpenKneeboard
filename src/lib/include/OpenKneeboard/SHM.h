@@ -60,7 +60,8 @@ class LayerTextureCache {
   winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
 };
 
-using LayersTextureCache = std::array<LayerTextureCache, MaxLayers>;
+using LayersTextureCache
+  = std::array<std::shared_ptr<LayerTextureCache>, MaxLayers>;
 
 std::wstring SharedTextureName(
   uint64_t sessionID,
@@ -234,7 +235,12 @@ class Reader {
 
 class SingleBufferedReader : public Reader {
  public:
+  virtual ~SingleBufferedReader();
   Snapshot MaybeGet(ID3D11Device* device, ConsumerKind kind);
+
+ protected:
+  virtual std::shared_ptr<LayerTextureCache> CreateLayerTextureCache(
+    const winrt::com_ptr<ID3D11Texture2D>&);
 
  private:
   void InitDXResources(ID3D11Device*);

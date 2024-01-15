@@ -265,7 +265,7 @@ Snapshot::Snapshot(
     TraceLoggingWriteTagged(
       activity, "StartCopyTexture", TraceLoggingValue(i, "Layer"));
     ctx->CopySubresourceRegion(
-      mLayerTextures.at(i).GetD3D11Texture(),
+      mLayerTextures.at(i)->GetD3D11Texture(),
       /* subresource = */ 0,
       /* x = */ 0,
       /* y = */ 0,
@@ -359,8 +359,7 @@ ID3D11Texture2D* Snapshot::GetLayerTexture(
     return {};
   }
 
-  return const_cast<LayerTextureCache&>(mLayerTextures.at(layerIndex))
-    .GetD3D11Texture();
+  return mLayerTextures.at(layerIndex)->GetD3D11Texture();
 }
 
 winrt::com_ptr<ID3D11ShaderResourceView> Snapshot::GetLayerShaderResourceView(
@@ -617,6 +616,14 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
+SingleBufferedReader::~SingleBufferedReader() = default;
+
+std::shared_ptr<LayerTextureCache>
+SingleBufferedReader::CreateLayerTextureCache(
+  const winrt::com_ptr<ID3D11Texture2D>& texture) {
+  return std::make_shared<LayerTextureCache>(texture);
+}
+
 Snapshot SingleBufferedReader::MaybeGet(
   ID3D11DeviceContext4* ctx,
   ID3D11Fence* fence,
@@ -850,10 +857,11 @@ void SingleBufferedReader::InitDXResources(ID3D11Device* device) {
   }
 
   for (size_t i = 0; i < mTextures.size(); ++i) {
-    mTextures[i] = SHM::CreateCompatibleTexture(device);
+    auto texture = SHM::CreateCompatibleTexture(device);
     const auto name = std::format("OKB-SHM-Texture-{}", i);
-    mTextures[i].GetD3D11Texture()->SetPrivateData(
+    texture->SetPrivateData(
       WKPDID_D3DDebugObjectName, name.size(), name.data());
+    mTextures[i] = this->CreateLayerTextureCache(std::move(texture));
   }
 
   winrt::com_ptr<ID3D11DeviceContext> ctx;
