@@ -20,10 +20,8 @@
 
 #include "OpenXRVulkanKneeboard.h"
 
-#include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRNext.h"
 
-#include <OpenKneeboard/d3d11.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
