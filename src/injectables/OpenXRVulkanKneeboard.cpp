@@ -191,6 +191,8 @@ void OpenXRVulkanKneeboard::InitializeD3D11() {
   dprint("Initialized D3D11 device matching VkPhysicalDevice");
   mD3D11Device = d3d11Device.as<ID3D11Device5>();
   mD3D11ImmediateContext = d3d11ImmediateContext.as<ID3D11DeviceContext4>();
+  mRendererDeviceResources
+    = std::make_unique<RendererDeviceResources>(d3d11Device.get());
 }
 
 void OpenXRVulkanKneeboard::InitInterop(
@@ -198,9 +200,11 @@ void OpenXRVulkanKneeboard::InitInterop(
   Interop* interop) noexcept {
   dprint("initializing interop");
   auto device = mD3D11Device.get();
-  // Not using SHM::CreateCompatibleTexture() as we need to use
-  // the specific requested size, not the default SHM size
+
+  winrt::com_ptr<ID3D11Texture2D> d3d11Texture;
   {
+    // Not using SHM::CreateCompatibleTexture() as we need to use
+    // the specific requested size, not the default SHM size
     D3D11_TEXTURE2D_DESC desc {
       .Width = textureSize.mWidth,
       .Height = textureSize.mHeight,
@@ -212,16 +216,16 @@ void OpenXRVulkanKneeboard::InitInterop(
       .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
     };
     winrt::check_hresult(
-      device->CreateTexture2D(&desc, nullptr, interop->mD3D11Texture.put()));
+      device->CreateTexture2D(&desc, nullptr, d3d11Texture.put()));
+
+    ID3D11Texture2D* textures[] = {d3d11Texture.get()};
+    interop->mRendererResources = std::make_unique<RendererSwapchainResources>(
+      mRendererDeviceResources.get(), DXGI_FORMAT_B8G8R8A8_UNORM, 1, textures);
   }
-  winrt::check_hresult(device->CreateRenderTargetView(
-    interop->mD3D11Texture.get(),
-    nullptr,
-    interop->mD3D11RenderTargetView.put()));
 
   HANDLE sharedHandle {};
   winrt::check_hresult(
-    interop->mD3D11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
+    d3d11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
 
   {
     // Specifying VK_FORMAT_ below
@@ -512,18 +516,32 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     return false;
   }
 
-  const auto oxr = this->GetOpenXR();
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 
   auto& swapchainResources = mSwapchainResources.at(swapchain);
   auto& interop = swapchainResources.mInterop;
 
-  OpenXRD3D11Kneeboard::RenderLayers(
-    oxr,
-    mD3D11Device.get(),
-    interop.mD3D11RenderTargetView.get(),
-    snapshot,
-    layerCount,
-    layers);
+  namespace R = SHM::D3D11::Renderer;
+  std::vector<R::LayerSprite> sprites;
+  sprites.reserve(layerCount);
+  for (uint8_t i = 0; i < layerCount; ++i) {
+    const auto& layer = layers[i];
+    sprites.push_back(R::LayerSprite {
+      .mLayerIndex = layer.mLayerIndex,
+      .mDestRect = layer.mDestRect,
+      .mOpacity = layer.mVR.mKneeboardOpacity,
+    });
+  }
+
+  auto rdr = mRendererDeviceResources.get();
+  auto rsr = interop.mRendererResources.get();
+  // We're passing 0 as the swapchain index as we have a separate D3D11 interop
+  // texture in the interop struct, rather than a true D3D11 swapchain
+  R::BeginFrame(rdr, rsr, 0);
+  R::ClearRenderTargetView(rdr, rsr, 0);
+  R::Render(rdr, rsr, 0, mSHM, snapshot, sprites.size(), sprites.data());
+  R::EndFrame(rdr, rsr, 0);
 
   // Signal this once D3D11 work is done, then we pass it as a wait semaphore
   // to vkQueueSubmit
@@ -535,13 +553,7 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
   };
-  {
-    const auto ret = mPFN_vkBeginCommandBuffer(mVKCommandBuffer, &beginInfo);
-    if (VK_FAILED(ret)) {
-      dprintf("Failed to begin command buffer: {}", ret);
-      return false;
-    }
-  }
+  check_vkresult(mPFN_vkBeginCommandBuffer(mVKCommandBuffer, &beginInfo));
 
   VkImageMemoryBarrier inBarriers[2];
 
@@ -669,13 +681,7 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     /* buffer barriers = */ nullptr,
     /* image barrier count = */ std::size(outBarriers),
     outBarriers);
-  {
-    const auto res = mPFN_vkEndCommandBuffer(mVKCommandBuffer);
-    if (VK_FAILED(res)) {
-      dprintf("vkEndCommandBuffer failed: {}", res);
-      return false;
-    }
-  }
+  check_vkresult(mPFN_vkEndCommandBuffer(mVKCommandBuffer));
 
   VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
     .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
@@ -694,29 +700,17 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   };
 
   check_vkresult(mPFN_vkResetFences(mVKDevice, 1, &interop.mVKCompletionFence));
-  {
-    const auto res = mPFN_vkQueueSubmit(
-      mVKQueue, 1, &submitInfo, interop.mVKCompletionFence);
-    if (VK_FAILED(res)) {
-      dprintf("Queue submit failed: {}", res);
-      OPENKNEEBOARD_BREAK;
-      return false;
-    }
-  }
+  check_vkresult(
+    mPFN_vkQueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKCompletionFence));
 
-  {
-    const auto res = mPFN_vkWaitForFences(
-      mVKDevice,
-      1,
-      &interop.mVKCompletionFence,
-      VK_TRUE,
-      std::numeric_limits<uint32_t>::max());
-    if (VK_FAILED(res)) {
-      dprintf("Waiting for fence failed: {}", res);
-      OPENKNEEBOARD_BREAK;
-      return false;
-    }
-  }
+  check_vkresult(mPFN_vkWaitForFences(
+    mVKDevice,
+    1,
+    &interop.mVKCompletionFence,
+    VK_TRUE,
+    std::numeric_limits<uint32_t>::max()));
+
+  TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 
   return true;
 }

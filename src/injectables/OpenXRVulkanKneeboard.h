@@ -86,6 +86,11 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
  private:
   SHM::D3D11::CachedReader mSHM;
   XrGraphicsBindingVulkanKHR mBinding {};
+
+  // We need this for the renderer..
+  using RendererDeviceResources = SHM::D3D11::Renderer::DeviceResources;
+  std::unique_ptr<RendererDeviceResources> mRendererDeviceResources;
+  // ... but keep specialized versions that have interop capabilities
   winrt::com_ptr<ID3D11Device5> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
 
@@ -95,9 +100,9 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   VkCommandBuffer mVKCommandBuffer {nullptr};
   VkQueue mVKQueue {nullptr};
 
+  using RendererSwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
   struct Interop {
-    winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
-    winrt::com_ptr<ID3D11RenderTargetView> mD3D11RenderTargetView;
+    std::unique_ptr<RendererSwapchainResources> mRendererResources;
 
     VkImage mVKImage {};
     VkFence mVKCompletionFence {};
