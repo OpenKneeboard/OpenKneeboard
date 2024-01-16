@@ -78,7 +78,6 @@ add_module_library(
   OpenKneeboard-oculus-d3d11
   OculusD3D11Kneeboard.cpp
   OculusD3D11Kneeboard_DllMain.cpp
-  OculusD3D11Kneeboard_StaticRender.cpp
 )
 target_link_libraries(
   OpenKneeboard-oculus-d3d11

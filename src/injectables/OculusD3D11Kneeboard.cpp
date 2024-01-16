@@ -56,7 +56,7 @@ SHM::CachedReader* OculusD3D11Kneeboard::GetSHM() {
 ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   ovrSession session,
   uint8_t layerIndex) {
-  if (!mD3D) {
+  if (!mDeviceResources) {
     return nullptr;
   }
 
@@ -78,7 +78,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   };
 
   ovr->ovr_CreateTextureSwapChainDX(
-    session, mD3D.get(), &kneeboardSCD, &swapChain);
+    session, mDeviceResources->mD3D11Device.get(), &kneeboardSCD, &swapChain);
   if (!swapChain) {
     dprint("ovr_CreateTextureSwapChainDX failed");
     OPENKNEEBOARD_BREAK;
@@ -88,17 +88,21 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   int length = -1;
   ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
 
-  auto& layerRenderTargets = mRenderTargetViews.at(layerIndex);
-  layerRenderTargets.clear();
-  layerRenderTargets.resize(length);
+  std::vector<winrt::com_ptr<ID3D11Texture2D>> textures;
+  std::vector<ID3D11Texture2D*> texturePointers;
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D11Texture2D> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
-
-    layerRenderTargets.at(i) = std::make_shared<D3D11::RenderTargetViewFactory>(
-      mD3D.get(), texture.get(), DXGI_FORMAT_B8G8R8A8_UNORM);
+    textures.push_back(texture);
+    texturePointers.push_back(texture.get());
   }
+
+  mSwapchainResources[swapChain] = std::make_unique<SwapchainResources>(
+    mDeviceResources.get(),
+    DXGI_FORMAT_B8G8R8A8_UNORM,
+    texturePointers.size(),
+    texturePointers.data());
 
   return swapChain;
 }
@@ -109,16 +113,47 @@ bool OculusD3D11Kneeboard::Render(
   const SHM::Snapshot& snapshot,
   uint8_t layerIndex,
   const VRKneeboard::RenderParameters& params) {
-  D3D11::SavedState state(mD3DImmediateContext);
+  auto dr = mDeviceResources.get();
+  auto sr = mSwapchainResources.at(swapChain).get();
 
-  return OculusD3D11Kneeboard::Render(
-    mD3D.get(),
-    mRenderTargetViews.at(layerIndex),
-    session,
-    swapChain,
-    snapshot,
-    layerIndex,
-    params);
+  auto ctx = dr->mD3D11ImmediateContext;
+  D3D11::SavedState state(ctx);
+
+  auto ovr = OVRProxy::Get();
+
+  int swapchainTextureIndex = -1;
+  ovr->ovr_GetTextureSwapChainCurrentIndex(
+    session, swapChain, &swapchainTextureIndex);
+  if (swapchainTextureIndex < 0) {
+    dprintf(" - invalid swap chain index ({})", swapchainTextureIndex);
+    return false;
+  }
+
+  auto config = snapshot.GetLayerConfig(layerIndex);
+
+  namespace R = SHM::D3D11::Renderer;
+  R::LayerSprite sprite {
+    .mLayerIndex = layerIndex,
+    .mDestRect = {
+      0, 0,
+      static_cast<LONG>(config->mImageWidth),
+      static_cast<LONG>(config->mImageHeight),
+    },
+    .mOpacity = params.mKneeboardOpacity,
+  };
+
+  R::BeginFrame(dr, sr, swapchainTextureIndex);
+  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
+  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, 1, &sprite);
+  R::EndFrame(dr, sr, swapchainTextureIndex);
+
+  auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
+  if (error) {
+    dprintf("Commit failed with {}", error);
+    return false;
+  }
+
+  return true;
 }
 
 HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
@@ -126,12 +161,14 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
   UINT syncInterval,
   UINT flags,
   const decltype(&IDXGISwapChain::Present)& next) {
-  if (!mD3D) {
-    swapChain->GetDevice(IID_PPV_ARGS(mD3D.put()));
-    if (mD3D) {
-      mD3D->GetImmediateContext(mD3DImmediateContext.put());
+  if (!mDeviceResources) {
+    winrt::com_ptr<ID3D11Device> device;
+    swapChain->GetDevice(IID_PPV_ARGS(device.put()));
+    if (device) {
+      mDeviceResources = std::make_unique<DeviceResources>(device.get());
     } else {
       dprint("Got a swapchain without a D3D11 device");
+      OPENKNEEBOARD_BREAK;
     }
   }
 
@@ -140,7 +177,10 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
 }
 
 winrt::com_ptr<ID3D11Device> OculusD3D11Kneeboard::GetD3D11Device() {
-  return mD3D;
+  if (!mDeviceResources) {
+    return nullptr;
+  }
+  return mDeviceResources->mD3D11Device;
 }
 
 }// namespace OpenKneeboard

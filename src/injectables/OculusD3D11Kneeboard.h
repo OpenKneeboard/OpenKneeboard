@@ -22,7 +22,6 @@
 #include "IDXGISwapChainPresentHook.h"
 #include "OculusKneeboard.h"
 
-#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/config.h>
@@ -42,15 +41,6 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
   virtual ~OculusD3D11Kneeboard();
 
   void UninstallHook();
-
-  static bool Render(
-    ID3D11Device*,
-    const std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>&,
-    ovrSession,
-    ovrTextureSwapChain,
-    const SHM::Snapshot&,
-    uint8_t layerIndex,
-    const VRKneeboard::RenderParameters&);
 
   virtual SHM::ConsumerKind GetConsumerKind() const override {
     return SHM::ConsumerKind::OculusD3D11;
@@ -74,12 +64,12 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
  private:
   SHM::D3D11::CachedReader mSHM;
-  std::array<
-    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
-    MaxLayers>
-    mRenderTargetViews;
-  winrt::com_ptr<ID3D11Device> mD3D = nullptr;
-  winrt::com_ptr<ID3D11DeviceContext> mD3DImmediateContext = nullptr;
+
+  using DeviceResources = SHM::D3D11::Renderer::DeviceResources;
+  std::unique_ptr<DeviceResources> mDeviceResources;
+  using SwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
+  std::unordered_map<ovrTextureSwapChain, std::unique_ptr<SwapchainResources>>
+    mSwapchainResources;
 
   OculusKneeboard mOculusKneeboard;
   IDXGISwapChainPresentHook mDXGIHook;

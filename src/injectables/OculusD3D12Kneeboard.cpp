@@ -126,7 +126,8 @@ bool OculusD3D12Kneeboard::Render(
   auto config = snapshot.GetLayerConfig(layerIndex);
 
   SHM::D3D12::Renderer::LayerSprite sprite {
-    .mLayerIndex = layerIndex, .mDestRect = {
+    .mLayerIndex = layerIndex,
+    .mDestRect = {
       0, 0,
       static_cast<LONG>(config->mImageWidth),
       static_cast<LONG>(config->mImageHeight),
