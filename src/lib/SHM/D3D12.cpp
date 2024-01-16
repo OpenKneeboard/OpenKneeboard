@@ -83,4 +83,60 @@ std::shared_ptr<SHM::LayerTextureCache> CachedReader::CreateLayerTextureCache(
     layerIndex, texture, mDeviceResources);
 }
 
+namespace Renderer {
+
+DeviceResources::DeviceResources(
+  ID3D12Device* device,
+  ID3D12CommandQueue* queue) {
+  mD3D12Device.copy_from(device);
+  mD3D12CommandQueue.copy_from(queue);
+  winrt::check_hresult(mD3D12Device->CreateCommandAllocator(
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    IID_PPV_ARGS(mD3D12CommandAllocator.put())));
+
+  UINT flags = 0;
+#ifdef DEBUG
+  flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+  winrt::com_ptr<ID3D11Device> device11;
+  winrt::com_ptr<ID3D11DeviceContext> context11;
+  D3D11On12CreateDevice(
+    mD3D12Device.get(),
+    flags,
+    nullptr,
+    0,
+    nullptr,
+    0,
+    1,
+    device11.put(),
+    context11.put(),
+    nullptr);
+  mD3D11Device = device11.as<ID3D11Device5>();
+  mD3D11ImmediateContext = context11.as<ID3D11DeviceContext4>();
+  mD3D11On12Device = device11.as<ID3D11On12Device>();
+
+  mD3D12DepthHeap = std::make_unique<DirectX::DescriptorHeap>(
+    mD3D12Device.get(),
+    D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+    1);
+
+  mDXTK12GraphicsMemory
+    = std::make_unique<DirectX::GraphicsMemory>(mD3D12Device.get());
+
+  mD3D12Device->CreateFence(
+    0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(mD3D12Fence.put()));
+  mFenceEvent.attach(CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL));
+  winrt::check_hresult(mD3D12Device->CreateSharedHandle(
+    mD3D12Fence.get(),
+    nullptr,
+    GENERIC_ALL,
+    nullptr,
+    mD3DInteropFenceHandle.put()));
+  winrt::check_hresult(mD3D11Device->OpenSharedFence(
+    mD3DInteropFenceHandle.get(), IID_PPV_ARGS(mD3D11Fence.put())));
+}
+
+}// namespace Renderer
+
 }// namespace OpenKneeboard::SHM::D3D12

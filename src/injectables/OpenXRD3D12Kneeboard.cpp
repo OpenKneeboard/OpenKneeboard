@@ -53,59 +53,8 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   : OpenXRKneeboard(session, runtimeID, next), mSHM(binding.device) {
   dprintf("{}", __FUNCTION__);
 
-  this->InitializeDeviceResources(binding.device, binding.queue);
-}
-
-void OpenXRD3D12Kneeboard::InitializeDeviceResources(
-  ID3D12Device* device,
-  ID3D12CommandQueue* queue) {
-  mD3D12Device.copy_from(device);
-  mD3D12CommandQueue.copy_from(queue);
-  winrt::check_hresult(mD3D12Device->CreateCommandAllocator(
-    D3D12_COMMAND_LIST_TYPE_DIRECT,
-    IID_PPV_ARGS(mD3D12CommandAllocator.put())));
-
-  UINT flags = 0;
-#ifdef DEBUG
-  flags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-  winrt::com_ptr<ID3D11Device> device11;
-  winrt::com_ptr<ID3D11DeviceContext> context11;
-  D3D11On12CreateDevice(
-    mD3D12Device.get(),
-    flags,
-    nullptr,
-    0,
-    nullptr,
-    0,
-    1,
-    device11.put(),
-    context11.put(),
-    nullptr);
-  mD3D11Device = device11.as<ID3D11Device5>();
-  mD3D11ImmediateContext = context11.as<ID3D11DeviceContext4>();
-  mD3D11On12Device = device11.as<ID3D11On12Device>();
-
-  mD3D12DepthHeap = std::make_unique<DirectX::DescriptorHeap>(
-    mD3D12Device.get(),
-    D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-    1);
-
-  mDXTK12GraphicsMemory
-    = std::make_unique<DirectX::GraphicsMemory>(mD3D12Device.get());
-
-  mD3D12Device->CreateFence(
-    0, D3D12_FENCE_FLAG_SHARED, IID_PPV_ARGS(mD3D12Fence.put()));
-  mFenceEvent.attach(CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL));
-  winrt::check_hresult(mD3D12Device->CreateSharedHandle(
-    mD3D12Fence.get(),
-    nullptr,
-    GENERIC_ALL,
-    nullptr,
-    mD3DInteropFenceHandle.put()));
-  winrt::check_hresult(mD3D11Device->OpenSharedFence(
-    mD3DInteropFenceHandle.get(), IID_PPV_ARGS(mD3D11Fence.put())));
+  mDeviceResources
+    = std::make_unique<DeviceResources>(binding.device, binding.queue);
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
@@ -205,9 +154,10 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
     .mRenderTargetViewFormat = formats.mRenderTargetViewFormat,
   };
 
+  auto dr = mDeviceResources.get();
   resources.mD3D12RenderTargetViewsHeap
     = std::make_unique<DirectX::DescriptorHeap>(
-      mD3D12Device.get(),
+      dr->mD3D12Device.get(),
       D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
       D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
       imageCount);
@@ -224,7 +174,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
         .PlaneSlice = 0,
       },
     };
-    mD3D12Device->CreateRenderTargetView(
+    dr->mD3D12Device->CreateRenderTargetView(
       texture.get(),
       &desc,
       resources.mD3D12RenderTargetViewsHeap->GetCpuHandle(i));
@@ -233,14 +183,15 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   }
 
   {
-    DirectX::ResourceUploadBatch resourceUpload(mD3D12Device.get());
+    DirectX::ResourceUploadBatch resourceUpload(dr->mD3D12Device.get());
     resourceUpload.Begin();
     DirectX::RenderTargetState rtState(
       formats.mRenderTargetViewFormat, DXGI_FORMAT_D32_FLOAT);
     DirectX::SpriteBatchPipelineStateDescription pd(rtState);
     resources.mDXTK12SpriteBatch = std::make_unique<DirectX::SpriteBatch>(
-      mD3D12Device.get(), resourceUpload, pd);
-    auto uploadResourcesFinished = resourceUpload.End(mD3D12CommandQueue.get());
+      dr->mD3D12Device.get(), resourceUpload, pd);
+    auto uploadResourcesFinished
+      = resourceUpload.End(dr->mD3D12CommandQueue.get());
     uploadResourcesFinished.wait();
   }
 
@@ -275,7 +226,7 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
       },
     };
 
-    winrt::check_hresult(mD3D12Device->CreateCommittedResource(
+    winrt::check_hresult(dr->mD3D12Device->CreateCommittedResource(
       &heap,
       D3D12_HEAP_FLAG_NONE,
       &desc,
@@ -292,10 +243,10 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
         .MipSlice = 0, 
       },
     };
-    mD3D12Device->CreateDepthStencilView(
+    dr->mD3D12Device->CreateDepthStencilView(
       resources.mD3D12DepthStencilTexture.get(),
       &desc,
-      mD3D12DepthHeap->GetFirstCpuHandle());
+      dr->mD3D12DepthHeap->GetFirstCpuHandle());
   }
 
   return swapchain;
@@ -317,30 +268,31 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
 
+  auto dr = mDeviceResources.get();
+  auto& sr = mSwapchainResources[swapchain];
+
   TraceLoggingWriteTagged(activity, "SignalD3D11Fence");
-  const auto fenceValueD3D11Finished = ++mFenceValue;
-  winrt::check_hresult(
-    mD3D11ImmediateContext->Signal(mD3D11Fence.get(), fenceValueD3D11Finished));
+  const auto fenceValueD3D11Finished = ++dr->mFenceValue;
+  winrt::check_hresult(dr->mD3D11ImmediateContext->Signal(
+    dr->mD3D11Fence.get(), fenceValueD3D11Finished));
 
   TraceLoggingWriteTagged(activity, "InitD3D12Frame");
-  auto& resources = mSwapchainResources[swapchain];
-  auto sprites = resources.mDXTK12SpriteBatch.get();
-  sprites->SetViewport(resources.mViewport);
+  auto sprites = sr.mDXTK12SpriteBatch.get();
+  sprites->SetViewport(sr.mViewport);
 
   winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
-  mD3D12CommandAllocator->Reset();
-  winrt::check_hresult(mD3D12Device->CreateCommandList(
+  dr->mD3D12CommandAllocator->Reset();
+  winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
-    mD3D12CommandAllocator.get(),
+    dr->mD3D12CommandAllocator.get(),
     nullptr,
     IID_PPV_ARGS(commandList.put())));
-  commandList->RSSetViewports(1, &resources.mViewport);
-  commandList->RSSetScissorRects(1, &resources.mScissorRect);
+  commandList->RSSetViewports(1, &sr.mViewport);
+  commandList->RSSetScissorRects(1, &sr.mScissorRect);
 
-  auto rt = resources.mD3D12RenderTargetViewsHeap->GetCpuHandle(
-    swapchainTextureIndex);
-  auto depthStencil = mD3D12DepthHeap->GetFirstCpuHandle();
+  auto rt = sr.mD3D12RenderTargetViewsHeap->GetCpuHandle(swapchainTextureIndex);
+  auto depthStencil = dr->mD3D12DepthHeap->GetFirstCpuHandle();
   commandList->ClearDepthStencilView(
     depthStencil, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
   commandList->OMSetRenderTargets(1, &rt, true, &depthStencil);
@@ -374,14 +326,14 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   winrt::check_hresult(commandList->Close());
 
   TraceLoggingWriteTagged(activity, "WaitD3D12Fence");
-  winrt::check_hresult(
-    mD3D12CommandQueue->Wait(mD3D12Fence.get(), fenceValueD3D11Finished));
-  mD3D11ImmediateContext->Flush();
+  winrt::check_hresult(dr->mD3D12CommandQueue->Wait(
+    dr->mD3D12Fence.get(), fenceValueD3D11Finished));
+  dr->mD3D11ImmediateContext->Flush();
 
   TraceLoggingWriteTagged(activity, "ExecuteCommandLists");
   {
     ID3D12CommandList* commandLists[] = {commandList.get()};
-    mD3D12CommandQueue->ExecuteCommandLists(1, commandLists);
+    dr->mD3D12CommandQueue->ExecuteCommandLists(1, commandLists);
   }
 
   TraceLoggingWriteStop(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
@@ -389,7 +341,7 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {
-  return mD3D11Device;
+  return mDeviceResources->mD3D11Device;
 }
 
 SHM::CachedReader* OpenXRD3D12Kneeboard::GetSHM() {

@@ -68,31 +68,9 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
 
  private:
   SHM::D3D12::CachedReader mSHM;
-  ///// START Device Resources /////
-  winrt::com_ptr<ID3D12Device> mD3D12Device;
-  winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
-  winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
 
-  winrt::com_ptr<ID3D11Device5> mD3D11Device;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
-
-  winrt::com_ptr<ID3D11On12Device> mD3D11On12Device;
-
-  std::unique_ptr<DirectX::DescriptorHeap> mD3D12DepthHeap;
-  std::unique_ptr<DirectX::GraphicsMemory> mDXTK12GraphicsMemory;
-
-  winrt::com_ptr<ID3D12RootSignature> mD3D12GraphicsRootSignature;
-
-  winrt::com_ptr<ID3D12Fence> mD3D12Fence;
-  winrt::handle mD3DInteropFenceHandle;
-  winrt::com_ptr<ID3D11Fence> mD3D11Fence;
-  uint64_t mFenceValue {};
-  winrt::handle mFenceEvent;
-
-  void InitializeDeviceResources(
-    ID3D12Device* device,
-    ID3D12CommandQueue* queue);
-  ///// END Device Resources /////
+  using DeviceResources = SHM::D3D12::Renderer::DeviceResources;
+  std::unique_ptr<DeviceResources> mDeviceResources;
 
   ///// START swapchain resources /////
   struct SwapchainResources {
