@@ -78,8 +78,16 @@ class CachedReader : public SHM::CachedReader {
   std::shared_ptr<DeviceResources> mDeviceResources;
 };
 
+// Usage:
+// - create DeviceResources and SwapchainResources
+// - Call BeginFrame(), Render(), EndFrame()
+// - Optionally call ClearRenderTargetView() after BeginFrame(), depending on
+// your needs.
 namespace Renderer {
 struct DeviceResources {
+  DeviceResources() = delete;
+  DeviceResources(ID3D12Device*, ID3D12CommandQueue*);
+
   winrt::com_ptr<ID3D12Device> mD3D12Device;
   winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
 
@@ -96,12 +104,16 @@ struct DeviceResources {
   winrt::com_ptr<ID3D11Fence> mD3D11Fence;
   uint64_t mFenceValue {};
   winrt::handle mFenceEvent;
-
-  DeviceResources() = delete;
-  DeviceResources(ID3D12Device*, ID3D12CommandQueue*);
 };
 
 struct SwapchainResources {
+  SwapchainResources() = delete;
+  SwapchainResources(
+    DeviceResources*,
+    DXGI_FORMAT renderTargetViewFormat,
+    size_t textureCount,
+    ID3D12Resource** textures);
+
   D3D12_VIEWPORT mViewport;
   D3D12_RECT mScissorRect;
 
@@ -112,13 +124,6 @@ struct SwapchainResources {
   winrt::com_ptr<ID3D12Resource> mD3D12DepthStencilTexture;
 
   std::unique_ptr<DirectX::DX12::SpriteBatch> mDXTK12SpriteBatch;
-
-  SwapchainResources() = delete;
-  SwapchainResources(
-    DeviceResources*,
-    DXGI_FORMAT renderTargetViewFormat,
-    size_t textureCount,
-    ID3D12Resource** textures);
 };
 
 struct LayerSprite {
@@ -126,6 +131,11 @@ struct LayerSprite {
   D3D12_RECT mDestRect {};
   FLOAT mOpacity {1.0f};
 };
+
+void BeginFrame(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex);
 
 void ClearRenderTargetView(
   DeviceResources*,
@@ -141,10 +151,6 @@ void Render(
   size_t layerSpriteCount,
   LayerSprite* layerSprites);
 
-void BeginFrame(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex);
 void EndFrame(
   DeviceResources*,
   SwapchainResources*,
