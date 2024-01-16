@@ -239,7 +239,13 @@ XrResult OpenXRKneeboard::xrEndFrame(
     }
 
     const scope_guard releaseSwapchainImage([this]() {
+      TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
+      TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
       auto nextResult = mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr);
+      TraceLoggingWriteStop(
+        releaseActivity,
+        "xrReleaseSwapchainImage",
+        TraceLoggingInt32(nextResult, "Result"));
       if (XR_FAILED(nextResult)) {
         dprintf("Failed to release swapchain image: {}", nextResult);
         OPENKNEEBOARD_BREAK;
