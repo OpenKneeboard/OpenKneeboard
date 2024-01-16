@@ -126,6 +126,11 @@ struct LayerSprite {
   FLOAT mOpacity {1.0f};
 };
 
+void ClearRenderTargetView(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex);
+
 void Render(
   const SHM::D3D12::CachedReader&,
   const SHM::Snapshot&,
@@ -134,6 +139,9 @@ void Render(
   uint8_t swapchainTextureIndex,
   size_t layerSpriteCount,
   LayerSprite* layerSprites);
+
+void BeginFrame(DeviceResources*);
+void EndFrame(DeviceResources*);
 
 }// namespace Renderer
 

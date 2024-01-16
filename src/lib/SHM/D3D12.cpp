@@ -256,6 +256,38 @@ SwapchainResources::SwapchainResources(
   }
 }
 
+void ClearRenderTargetView(
+  DeviceResources* dr,
+  SwapchainResources* sr,
+  uint8_t swapchainTextureIndex) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity, "OpenKneeboard::SHM::D3D12::ClearRenderTargetView");
+
+  winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
+  winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
+    0,
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    dr->mD3D12CommandAllocator.get(),
+    nullptr,
+    IID_PPV_ARGS(commandList.put())));
+  commandList->RSSetViewports(1, &sr->mViewport);
+  commandList->RSSetScissorRects(1, &sr->mScissorRect);
+  auto rtv
+    = sr->mD3D12RenderTargetViewsHeap->GetCpuHandle(swapchainTextureIndex);
+  commandList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
+
+  FLOAT clearColor[4] {0, 0, 0, 0};
+  commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+  winrt::check_hresult(commandList->Close());
+
+  ID3D12CommandList* commandLists[] {commandList.get()};
+  dr->mD3D12CommandQueue->ExecuteCommandLists(1, commandLists);
+
+  TraceLoggingWriteStop(
+    activity, "OpenKneeboard::SHM::D3D12::ClearRenderTargetView");
+}
+
 void Render(
   const SHM::D3D12::CachedReader& shm,
   const SHM::Snapshot& snapshot,
@@ -278,7 +310,6 @@ void Render(
   sprites->SetViewport(sr->mViewport);
 
   winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
-  dr->mD3D12CommandAllocator->Reset();
   winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -346,6 +377,13 @@ void Render(
 
   TraceLoggingWriteStop(
     activity, "OpenKneeboard::SHM::D3D12::Renderer::Render");
+}
+
+void BeginFrame(DeviceResources* dr) {
+  dr->mD3D12CommandAllocator->Reset();
+}
+
+void EndFrame(DeviceResources*) {
 }
 
 }// namespace Renderer

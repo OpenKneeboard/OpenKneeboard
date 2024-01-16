@@ -134,6 +134,10 @@ bool OculusD3D12Kneeboard::Render(
     .mOpacity = renderParameters.mKneeboardOpacity,
   };
 
+  auto dr = mDeviceResources.get();
+  auto sr = mSwapchainResources.at(swapChain).get();
+  SHM::D3D12::Renderer::BeginFrame(dr);
+  SHM::D3D12::Renderer::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
   SHM::D3D12::Renderer::Render(
     *mSHM,
     snapshot,
@@ -142,6 +146,7 @@ bool OculusD3D12Kneeboard::Render(
     swapchainTextureIndex,
     1,
     &sprite);
+  SHM::D3D12::Renderer::EndFrame(dr);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
   if (error) {
