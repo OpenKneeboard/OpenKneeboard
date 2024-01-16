@@ -178,9 +178,11 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   auto dr = mDeviceResources.get();
   auto sr = mSwapchainResources.at(swapchain).get();
 
-  SHM::D3D12::Renderer::BeginFrame(dr, sr, swapchainTextureIndex);
-  SHM::D3D12::Renderer::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  SHM::D3D12::Renderer::Render(
+  namespace R = SHM::D3D12::Renderer;
+
+  R::BeginFrame(dr, sr, swapchainTextureIndex);
+  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
+  R::Render(
     dr,
     sr,
     swapchainTextureIndex,
@@ -188,7 +190,7 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
     snapshot,
     sprites.size(),
     sprites.data());
-  SHM::D3D12::Renderer::EndFrame(dr, sr, swapchainTextureIndex);
+  R::EndFrame(dr, sr, swapchainTextureIndex);
 
   TraceLoggingWriteStop(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
   return true;
