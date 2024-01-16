@@ -279,8 +279,8 @@ void ClearRenderTargetView(
     = sr->mD3D12RenderTargetViewsHeap->GetCpuHandle(swapchainTextureIndex);
   commandList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
 
-  FLOAT clearColor[4] {0, 0, 0, 0};
-  commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+  commandList->ClearRenderTargetView(
+    rtv, DirectX::Colors::Transparent, 0, nullptr);
   winrt::check_hresult(commandList->Close());
 
   ID3D12CommandList* commandLists[] {commandList.get()};

@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/SHM.h>
 
+#include <directxtk/SpriteBatch.h>
+
 namespace OpenKneeboard::SHM::D3D11 {
 
 class LayerTextureCache : public SHM::LayerTextureCache {
@@ -43,5 +45,67 @@ class CachedReader : public SHM::CachedReader {
     uint8_t layerIndex,
     const winrt::com_ptr<ID3D11Texture2D>&) override;
 };
+
+// Usage:
+// - create DeviceResources and SwapchainResources
+// - Call BeginFrame(), Render() [, Render(), ...], EndFrame()
+// - Optionally call ClearRenderTargetView() after BeginFrame(), depending on
+// your needs.
+namespace Renderer {
+struct DeviceResources {
+  DeviceResources() = delete;
+  DeviceResources(ID3D11Device*);
+
+  winrt::com_ptr<ID3D11Device> mD3D11Device;
+  winrt::com_ptr<ID3D11DeviceContext> mD3D11ImmediateContext;
+
+  std::unique_ptr<DirectX::DX11::SpriteBatch> mDXTKSpriteBatch;
+};
+
+struct SwapchainResources {
+  SwapchainResources() = delete;
+  SwapchainResources(
+    DeviceResources*,
+    DXGI_FORMAT renderTargetViewFormat,
+    size_t textureCount,
+    ID3D11Texture2D** textures);
+
+  D3D11_VIEWPORT mViewport;
+
+  std::vector<winrt::com_ptr<ID3D11Texture2D>> mD3D11Textures;
+  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mD3D11RenderTargetViews;
+};
+
+struct LayerSprite {
+  uint8_t mLayerIndex {0xff};
+  D3D11_RECT mDestRect {};
+  FLOAT mOpacity {1.0f};
+};
+
+void BeginFrame(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex);
+
+void ClearRenderTargetView(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex);
+
+void Render(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex,
+  const SHM::D3D11::CachedReader&,
+  const SHM::Snapshot&,
+  size_t layerSpriteCount,
+  LayerSprite* layerSprites);
+
+void EndFrame(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex);
+
+}// namespace Renderer
 
 };// namespace OpenKneeboard::SHM::D3D11

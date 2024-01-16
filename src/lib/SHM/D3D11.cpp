@@ -19,6 +19,8 @@
  */
 #include <OpenKneeboard/SHM/D3D11.h>
 
+#include <OpenKneeboard/scope_guard.h>
+
 namespace OpenKneeboard::SHM::D3D11 {
 
 LayerTextureCache::~LayerTextureCache() = default;
@@ -39,5 +41,148 @@ std::shared_ptr<SHM::LayerTextureCache> CachedReader::CreateLayerTextureCache(
   const winrt::com_ptr<ID3D11Texture2D>& texture) {
   return std::make_shared<SHM::D3D11::LayerTextureCache>(texture);
 }
+
+namespace Renderer {
+DeviceResources::DeviceResources(ID3D11Device* device) {
+  mD3D11Device.copy_from(device);
+  device->GetImmediateContext(mD3D11ImmediateContext.put());
+  mDXTKSpriteBatch
+    = std::make_unique<DirectX::SpriteBatch>(mD3D11ImmediateContext.get());
+}
+
+SwapchainResources::SwapchainResources(
+  DeviceResources* dr,
+  DXGI_FORMAT renderTargetViewFormat,
+  size_t textureCount,
+  ID3D11Texture2D** textures) {
+  D3D11_RENDER_TARGET_VIEW_DESC rtvDesc {
+    .Format = renderTargetViewFormat,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {.MipSlice = 0},
+  };
+
+  mD3D11Textures.resize(textureCount);
+  mD3D11RenderTargetViews.resize(textureCount);
+
+  for (size_t i = 0; i < textureCount; ++i) {
+    auto texture = textures[i];
+    mD3D11Textures[i].copy_from(texture);
+    winrt::check_hresult(dr->mD3D11Device->CreateRenderTargetView(
+      texture, &rtvDesc, mD3D11RenderTargetViews[i].put()));
+  }
+
+  D3D11_TEXTURE2D_DESC colorDesc {};
+  textures[0]->GetDesc(&colorDesc);
+
+  mViewport = {
+    0,
+    0,
+    static_cast<FLOAT>(colorDesc.Width),
+    static_cast<FLOAT>(colorDesc.Height),
+    0.0f,
+    1.0f,
+  };
+}
+
+void BeginFrame(
+  DeviceResources* dr,
+  SwapchainResources* sr,
+  uint8_t swapchainTextureIndex) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity, "OpenKneeboard::SHM::D3D11::Renderer::BeginFrame()");
+
+  auto ctx = dr->mD3D11ImmediateContext.get();
+  auto rtv = sr->mD3D11RenderTargetViews.at(swapchainTextureIndex).get();
+
+  ctx->RSSetViewports(1, &sr->mViewport);
+  ctx->OMSetDepthStencilState(nullptr, 0);
+  ctx->OMSetRenderTargets(1, &rtv, nullptr);
+  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
+  ctx->IASetInputLayout(nullptr);
+  ctx->VSSetShader(nullptr, nullptr, 0);
+
+  TraceLoggingWriteStop(
+    activity, "OpenKneeboard::SHM::D3D11::Renderer::BeginFrame()");
+}
+
+void ClearRenderTargetView(
+  DeviceResources* dr,
+  SwapchainResources* sr,
+  uint8_t swapchainTextureIndex) {
+  auto rtv = sr->mD3D11RenderTargetViews.at(swapchainTextureIndex).get();
+  dr->mD3D11ImmediateContext->ClearRenderTargetView(
+    rtv, DirectX::Colors::Transparent);
+}
+
+void Render(
+  DeviceResources* dr,
+  SwapchainResources* sr,
+  uint8_t swapchainTextureIndex,
+  const SHM::D3D11::CachedReader& shm,
+  const SHM::Snapshot& snapshot,
+  size_t layerSpriteCount,
+  LayerSprite* layerSprites) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity, "OpenKneeboard::SHM::D3D11::Renderer::Render()");
+
+  auto ctx = dr->mD3D11ImmediateContext.get();
+  auto sprites = dr->mDXTKSpriteBatch.get();
+
+  {
+    TraceLoggingThreadActivity<gTraceProvider> spritesActivity;
+    TraceLoggingWriteStart(spritesActivity, "SpriteBatch");
+    sprites->Begin();
+    const scope_guard endSprites([&sprites, &spritesActivity]() {
+      sprites->End();
+      TraceLoggingWriteStop(spritesActivity, "SpriteBatch");
+    });
+
+    for (size_t i = 0; i < layerSpriteCount; ++i) {
+      const auto& sprite = layerSprites[i];
+      auto resources
+        = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
+          sprite.mLayerIndex);
+
+      const auto srv = resources->GetD3D11ShaderResourceView();
+
+      if (!srv) {
+        dprint("Failed to get shader resource view");
+        TraceLoggingWriteStop(
+          activity,
+          "OpenKneeboard::SHM::D3D11::Renderer::Render()",
+          TraceLoggingValue(false, "Success"));
+        return;
+      }
+
+      auto config = snapshot.GetLayerConfig(sprite.mLayerIndex);
+      D3D11_RECT sourceRect {
+        0,
+        0,
+        config->mImageWidth,
+        config->mImageHeight,
+      };
+
+      const auto opacity = sprite.mOpacity;
+      DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
+
+      sprites->Draw(srv, sprite.mDestRect, &sourceRect, tint);
+    }
+  }
+
+  TraceLoggingWriteStop(
+    activity,
+    "OpenKneeboard::SHM::D3D11::Renderer::Render()",
+    TraceLoggingValue(true, "Success"));
+}
+
+void EndFrame(
+  DeviceResources*,
+  SwapchainResources*,
+  [[maybe_unused]] uint8_t swapchainTextureIndex) {
+}
+
+}// namespace Renderer
 
 }// namespace OpenKneeboard::SHM::D3D11

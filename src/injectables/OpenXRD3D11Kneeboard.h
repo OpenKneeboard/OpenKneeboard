@@ -77,12 +77,12 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
 
  private:
   SHM::D3D11::CachedReader mSHM;
-  winrt::com_ptr<ID3D11Device> mDevice = nullptr;
 
-  std::unordered_map<
-    XrSwapchain,
-    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>>
-    mRenderTargetViews;
+  using DeviceResources = SHM::D3D11::Renderer::DeviceResources;
+  std::unique_ptr<DeviceResources> mDeviceResources;
+  using SwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
+  std::unordered_map<XrSwapchain, std::unique_ptr<SwapchainResources>>
+    mSwapchainResources;
 };
 
 }// namespace OpenKneeboard

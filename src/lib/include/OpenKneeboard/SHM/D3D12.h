@@ -80,7 +80,7 @@ class CachedReader : public SHM::CachedReader {
 
 // Usage:
 // - create DeviceResources and SwapchainResources
-// - Call BeginFrame(), Render(), EndFrame()
+// - Call BeginFrame(), Render() [, Render(), ...], EndFrame()
 // - Optionally call ClearRenderTargetView() after BeginFrame(), depending on
 // your needs.
 namespace Renderer {
