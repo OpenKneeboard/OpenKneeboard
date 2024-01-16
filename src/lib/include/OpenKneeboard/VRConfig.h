@@ -45,7 +45,6 @@ struct VRAbsolutePosition {
 struct VRRenderConfig {
   struct Quirks final {
     bool mOculusSDK_DiscardDepthInformation {true};
-    bool mVarjo_OpenXR_D3D12_DoubleBuffer {true};
     bool mOpenXR_AlwaysUpdateSwapchain {false};
     constexpr auto operator<=>(const Quirks&) const noexcept = default;
   };

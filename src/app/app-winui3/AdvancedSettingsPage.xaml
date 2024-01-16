@@ -341,12 +341,6 @@
           OnContent="Enabled - compatible with DCS"
           IsOn="{x:Bind Quirk_OculusSDK_DiscardDepthInformation}"
         />
-        <ToggleSwitch
-					Header="Varjo OpenXR: Double buffer Direct3D 11-on-12"
-          OffContent="Disabled"
-          OnContent="Enabled"
-          IsOn="{x:Bind Quirk_Varjo_OpenXR_D3D12_DoubleBuffer}"
-        />
 			</StackPanel>
     </StackPanel>
   </ScrollViewer>

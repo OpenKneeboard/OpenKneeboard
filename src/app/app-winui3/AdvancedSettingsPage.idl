@@ -36,7 +36,6 @@ namespace OpenKneeboardApp
         Single TextPageFontSize;
 
         Boolean Quirk_OculusSDK_DiscardDepthInformation;
-        Boolean Quirk_Varjo_OpenXR_D3D12_DoubleBuffer;
         Boolean Quirk_OpenXR_AlwaysUpdateSwapchain;
 
         Boolean CanChangeElevation { get; };

@@ -86,9 +86,6 @@ class OpenXRKneeboard : public VRKneeboard {
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() = 0;
   virtual SHM::CachedReader* GetSHM() = 0;
 
-  // For quirks
-  bool IsVarjoRuntime() const;
-
   OpenXRNext* GetOpenXR();
 
  private:
@@ -101,7 +98,6 @@ class OpenXRKneeboard : public VRKneeboard {
   XrSpace mViewSpace = nullptr;
 
   // For quirks
-  bool mIsVarjoRuntime = false;
   VRRenderConfig mInitialConfig;
 
   Pose GetHMDPose(XrTime displayTime);

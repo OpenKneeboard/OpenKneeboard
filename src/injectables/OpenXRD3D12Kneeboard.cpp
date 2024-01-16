@@ -114,7 +114,6 @@ OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
 bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
   const VRRenderConfig& initial,
   const VRRenderConfig& current) const {
-  // TODO:remove varjo runtime quirk flag
   return true;
 }
 

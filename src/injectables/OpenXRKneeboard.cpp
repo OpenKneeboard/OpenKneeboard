@@ -79,11 +79,6 @@ OpenXRKneeboard::OpenXRKneeboard(
   : mOpenXR(next) {
   dprintf("{}", __FUNCTION__);
 
-  if (std::string_view(runtimeID.mName).starts_with("Varjo")) {
-    dprint("Varjo runtime detected");
-    mIsVarjoRuntime = true;
-  }
-
   mRenderCacheKeys.fill(~(0ui64));
 
   XrReferenceSpaceCreateInfo referenceSpace {
@@ -122,10 +117,6 @@ OpenXRKneeboard::~OpenXRKneeboard() {
   if (mSwapchain) {
     mOpenXR->xrDestroySwapchain(mSwapchain);
   }
-}
-
-bool OpenXRKneeboard::IsVarjoRuntime() const {
-  return mIsVarjoRuntime;
 }
 
 OpenXRNext* OpenXRKneeboard::GetOpenXR() {
