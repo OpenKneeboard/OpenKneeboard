@@ -19,7 +19,6 @@
  */
 #include <OpenKneeboard/CachedLayer.h>
 #include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/scope_guard.h>

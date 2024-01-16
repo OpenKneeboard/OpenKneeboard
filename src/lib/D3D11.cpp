@@ -203,45 +203,4 @@ void DrawTextureWithOpacity(
     DirectX::FXMVECTOR {opacity, opacity, opacity, opacity});
 }
 
-IRenderTargetView::IRenderTargetView() = default;
-IRenderTargetView::~IRenderTargetView() = default;
-IRenderTargetViewFactory::~IRenderTargetViewFactory() = default;
-
-RenderTargetView::RenderTargetView(
-  const winrt::com_ptr<ID3D11RenderTargetView>& impl)
-  : mImpl(impl) {
-}
-
-RenderTargetView::~RenderTargetView() = default;
-
-ID3D11RenderTargetView* RenderTargetView::Get() const {
-  return mImpl.get();
-}
-
-RenderTargetViewFactory::RenderTargetViewFactory(
-  ID3D11Device* device,
-  ID3D11Texture2D* texture,
-  DXGI_FORMAT format) {
-  D3D11_RENDER_TARGET_VIEW_DESC rtvd {
-    .Format = format,
-    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {.MipSlice = 0},
-  };
-
-  const auto result
-    = device->CreateRenderTargetView(texture, &rtvd, mImpl.put());
-  if (result != S_OK) {
-    traceprint(
-      "Failed to create render target view with format {} - {:#010x}",
-      static_cast<UINT>(format),
-      static_cast<uint32_t>(result));
-  }
-}
-
-RenderTargetViewFactory::~RenderTargetViewFactory() = default;
-
-std::unique_ptr<IRenderTargetView> RenderTargetViewFactory::Get() const {
-  return std::make_unique<RenderTargetView>(mImpl);
-}
-
 }// namespace OpenKneeboard::D3D11

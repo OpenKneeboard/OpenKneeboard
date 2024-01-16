@@ -74,45 +74,4 @@ void DrawTextureWithOpacity(
   const RECT& destRect,
   float opacity);
 
-class IRenderTargetView {
- public:
-  IRenderTargetView();
-  virtual ~IRenderTargetView();
-  virtual ID3D11RenderTargetView* Get() const = 0;
-
-  IRenderTargetView(const IRenderTargetView&) = delete;
-  IRenderTargetView(const IRenderTargetView&&) = delete;
-  IRenderTargetView& operator=(const IRenderTargetView&) = delete;
-  IRenderTargetView& operator=(IRenderTargetView&&) = delete;
-};
-
-class IRenderTargetViewFactory {
- public:
-  virtual ~IRenderTargetViewFactory();
-  virtual std::unique_ptr<IRenderTargetView> Get() const = 0;
-};
-
-class RenderTargetView final : public IRenderTargetView {
- public:
-  RenderTargetView() = delete;
-  RenderTargetView(const winrt::com_ptr<ID3D11RenderTargetView>&);
-  ~RenderTargetView();
-
-  virtual ID3D11RenderTargetView* Get() const override;
-
- private:
-  winrt::com_ptr<ID3D11RenderTargetView> mImpl;
-};
-
-class RenderTargetViewFactory final : public IRenderTargetViewFactory {
- public:
-  RenderTargetViewFactory(ID3D11Device*, ID3D11Texture2D*, DXGI_FORMAT format);
-  virtual ~RenderTargetViewFactory();
-
-  virtual std::unique_ptr<IRenderTargetView> Get() const override;
-
- private:
-  winrt::com_ptr<ID3D11RenderTargetView> mImpl;
-};
-
 }// namespace OpenKneeboard::D3D11

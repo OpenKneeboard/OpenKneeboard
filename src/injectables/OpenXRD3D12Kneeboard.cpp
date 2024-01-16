@@ -23,8 +23,6 @@
 #include "OpenXRD3D11Kneeboard.h"
 #include "OpenXRNext.h"
 
-#include <OpenKneeboard/D3D11.h>
-
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>

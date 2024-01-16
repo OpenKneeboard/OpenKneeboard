@@ -21,7 +21,6 @@
 
 #include "OpenXRKneeboard.h"
 
-#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/config.h>
