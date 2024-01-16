@@ -53,13 +53,14 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   : OpenXRKneeboard(session, runtimeID, next), mSHM(binding.device) {
   dprintf("{}", __FUNCTION__);
 
-  this->InitializeDeviceResources(binding);
+  this->InitializeDeviceResources(binding.device, binding.queue);
 }
 
 void OpenXRD3D12Kneeboard::InitializeDeviceResources(
-  const XrGraphicsBindingD3D12KHR& binding) {
-  mD3D12Device.copy_from(binding.device);
-  mD3D12CommandQueue.copy_from(binding.queue);
+  ID3D12Device* device,
+  ID3D12CommandQueue* queue) {
+  mD3D12Device.copy_from(device);
+  mD3D12CommandQueue.copy_from(queue);
   winrt::check_hresult(mD3D12Device->CreateCommandAllocator(
     D3D12_COMMAND_LIST_TYPE_DIRECT,
     IID_PPV_ARGS(mD3D12CommandAllocator.put())));

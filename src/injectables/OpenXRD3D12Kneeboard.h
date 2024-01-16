@@ -89,7 +89,9 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   uint64_t mFenceValue {};
   winrt::handle mFenceEvent;
 
-  void InitializeDeviceResources(const XrGraphicsBindingD3D12KHR&);
+  void InitializeDeviceResources(
+    ID3D12Device* device,
+    ID3D12CommandQueue* queue);
   ///// END Device Resources /////
 
   ///// START swapchain resources /////
