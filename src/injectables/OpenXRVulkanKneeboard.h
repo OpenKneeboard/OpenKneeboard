@@ -97,14 +97,13 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   const VkAllocationCallbacks* mVKAllocator {nullptr};
   VkDevice mVKDevice {nullptr};
   VkCommandPool mVKCommandPool {nullptr};
-  VkCommandBuffer mVKCommandBuffer {nullptr};
   VkQueue mVKQueue {nullptr};
 
   using RendererSwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
   struct Interop {
     std::unique_ptr<RendererSwapchainResources> mRendererResources;
 
-    VkImage mVKImage {};
+    std::vector<VkImage> mVKImages {};
     VkFence mVKCompletionFence {};
 
     // These point to the same GPU fence/semaphore
@@ -117,15 +116,20 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   struct SwapchainResources {
     Interop mInterop {};
     std::vector<VkImage> mImages;
+    std::vector<VkCommandBuffer> mVKCommandBuffers;
     PixelSize mSize;
   };
   std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
-  void InitInterop(const PixelSize& textureSize, Interop*) noexcept;
+  void InitInterop(
+    uint32_t textureCount,
+    const PixelSize& textureSize,
+    Interop*) noexcept;
 
 #define OPENKNEEBOARD_VK_FUNCS \
   IT(vkGetPhysicalDeviceProperties2) \
   IT(vkCreateCommandPool) \
   IT(vkAllocateCommandBuffers) \
+  IT(vkResetCommandBuffer) \
   IT(vkBeginCommandBuffer) \
   IT(vkEndCommandBuffer) \
   IT(vkCmdCopyImage) \

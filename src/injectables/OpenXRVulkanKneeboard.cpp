@@ -99,22 +99,6 @@ void OpenXRVulkanKneeboard::InitializeVulkan(
       return;
     }
   }
-
-  {
-    VkCommandBufferAllocateInfo allocateInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = mVKCommandPool,
-      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-      .commandBufferCount = 1,
-    };
-
-    const auto ret = mPFN_vkAllocateCommandBuffers(
-      mVKDevice, &allocateInfo, &mVKCommandBuffer);
-    if (VK_FAILED(ret)) {
-      dprintf("Failed to create command buffer: {}", ret);
-      return;
-    }
-  }
 }
 
 void OpenXRVulkanKneeboard::InitializeD3D11() {
@@ -194,13 +178,18 @@ void OpenXRVulkanKneeboard::InitializeD3D11() {
 }
 
 void OpenXRVulkanKneeboard::InitInterop(
+  uint32_t textureCount,
   const PixelSize& textureSize,
   Interop* interop) noexcept {
   dprint("initializing interop");
   auto device = mD3D11Device.get();
 
-  winrt::com_ptr<ID3D11Texture2D> d3d11Texture;
-  {
+  std::vector<winrt::com_ptr<ID3D11Texture2D>> d3d11Textures;
+  d3d11Textures.reserve(textureCount);
+  interop->mVKImages.reserve(textureCount);
+
+  for (uint32_t i = 0; i < textureCount; ++i) {
+    winrt::com_ptr<ID3D11Texture2D> d3d11Texture;
     // Not using SHM::CreateCompatibleTexture() as we need to use
     // the specific requested size, not the default SHM size
     D3D11_TEXTURE2D_DESC desc {
@@ -215,17 +204,11 @@ void OpenXRVulkanKneeboard::InitInterop(
     };
     winrt::check_hresult(
       device->CreateTexture2D(&desc, nullptr, d3d11Texture.put()));
+    d3d11Textures.push_back(d3d11Texture);
 
-    ID3D11Texture2D* textures[] = {d3d11Texture.get()};
-    interop->mRendererResources = std::make_unique<RendererSwapchainResources>(
-      mRendererDeviceResources.get(), DXGI_FORMAT_B8G8R8A8_UNORM, 1, textures);
-  }
-
-  HANDLE sharedHandle {};
-  winrt::check_hresult(
-    d3d11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
-
-  {
+    HANDLE sharedHandle {};
+    winrt::check_hresult(
+      d3d11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
     // Specifying VK_FORMAT_ below
     static_assert(
       SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
@@ -253,21 +236,17 @@ void OpenXRVulkanKneeboard::InitInterop(
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
-    const auto ret = mPFN_vkCreateImage(
-      mVKDevice, &createInfo, mVKAllocator, &interop->mVKImage);
-    if (VK_FAILED(ret)) {
-      dprintf("Failed to create interop image: {}", ret);
-      return;
-    }
-  }
+    VkImage vkImage {};
+    check_vkresult(
+      mPFN_vkCreateImage(mVKDevice, &createInfo, mVKAllocator, &vkImage));
+    interop->mVKImages.push_back(vkImage);
 
-  VkDeviceMemory memory {};
-  {
+    VkDeviceMemory memory {};
     ///// What kind of memory do we need? /////
 
     VkImageMemoryRequirementsInfo2 info {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2,
-      .image = interop->mVKImage,
+      .image = vkImage,
     };
 
     VkMemoryRequirements2 memoryRequirements {
@@ -322,7 +301,7 @@ void OpenXRVulkanKneeboard::InitInterop(
     VkMemoryDedicatedAllocateInfo dedicatedAllocInfo {
       .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
       .pNext = &handleInfo,
-      .image = interop->mVKImage,
+      .image = vkImage,
     };
 
     VkMemoryAllocateInfo allocInfo {
@@ -331,25 +310,30 @@ void OpenXRVulkanKneeboard::InitInterop(
       .allocationSize = memoryRequirements.memoryRequirements.size,
       .memoryTypeIndex = *memoryTypeIndex,
     };
-    const auto ret
-      = mPFN_vkAllocateMemory(mVKDevice, &allocInfo, mVKAllocator, &memory);
-    if (VK_FAILED(ret)) {
-      dprintf("Failed to allocate memory for interop: {}", ret);
-      return;
-    }
-  }
 
-  {
+    check_vkresult(
+      mPFN_vkAllocateMemory(mVKDevice, &allocInfo, mVKAllocator, &memory));
+
     VkBindImageMemoryInfo bindImageInfo {
       .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
-      .image = interop->mVKImage,
+      .image = vkImage,
       .memory = memory,
     };
 
-    const auto res = mPFN_vkBindImageMemory2(mVKDevice, 1, &bindImageInfo);
-    if (VK_FAILED(res)) {
-      dprintf("Failed to bind image memory: {}", res);
+    check_vkresult(mPFN_vkBindImageMemory2(mVKDevice, 1, &bindImageInfo));
+  }
+
+  {
+    std::vector<ID3D11Texture2D*> rawPointers;
+    rawPointers.reserve(textureCount);
+    for (const auto& texture: d3d11Textures) {
+      rawPointers.push_back(texture.get());
     }
+    interop->mRendererResources = std::make_unique<RendererSwapchainResources>(
+      mRendererDeviceResources.get(),
+      DXGI_FORMAT_B8G8R8A8_UNORM,
+      rawPointers.size(),
+      rawPointers.data());
   }
 
   {
@@ -480,11 +464,25 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
 
   auto& resources = mSwapchainResources[swapchain];
 
+  resources.mImages.reserve(imageCount);
   for (const auto& swapchainImage: images) {
     resources.mImages.push_back(swapchainImage.image);
   }
+  resources.mVKCommandBuffers.resize(imageCount);
 
-  InitInterop(size, &resources.mInterop);
+  {
+    VkCommandBufferAllocateInfo allocateInfo {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .commandPool = mVKCommandPool,
+      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+      .commandBufferCount = imageCount,
+    };
+
+    check_vkresult(mPFN_vkAllocateCommandBuffers(
+      mVKDevice, &allocateInfo, resources.mVKCommandBuffers.data()));
+  }
+
+  InitInterop(imageCount, size, &resources.mInterop);
   resources.mSize = size;
 
   return swapchain;
@@ -534,12 +532,17 @@ bool OpenXRVulkanKneeboard::RenderLayers(
 
   auto rdr = mRendererDeviceResources.get();
   auto rsr = interop.mRendererResources.get();
-  // We're passing 0 as the swapchain index as we have a separate D3D11 interop
-  // texture in the interop struct, rather than a true D3D11 swapchain
-  R::BeginFrame(rdr, rsr, 0);
-  R::ClearRenderTargetView(rdr, rsr, 0);
-  R::Render(rdr, rsr, 0, mSHM, snapshot, sprites.size(), sprites.data());
-  R::EndFrame(rdr, rsr, 0);
+  R::BeginFrame(rdr, rsr, swapchainTextureIndex);
+  R::ClearRenderTargetView(rdr, rsr, swapchainTextureIndex);
+  R::Render(
+    rdr,
+    rsr,
+    swapchainTextureIndex,
+    mSHM,
+    snapshot,
+    sprites.size(),
+    sprites.data());
+  R::EndFrame(rdr, rsr, swapchainTextureIndex);
 
   // Signal this once D3D11 work is done, then we pass it as a wait semaphore
   // to vkQueueSubmit
@@ -547,47 +550,54 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   mD3D11ImmediateContext->Signal(
     interop.mD3D11InteropFence.get(), semaphoreValue);
 
+  auto interopImage = interop.mVKImages.at(swapchainTextureIndex);
+  const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
+
+  auto vkCommandBuffer
+    = swapchainResources.mVKCommandBuffers.at(swapchainTextureIndex);
+
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
   };
-  check_vkresult(mPFN_vkBeginCommandBuffer(mVKCommandBuffer, &beginInfo));
+  check_vkresult(mPFN_vkResetCommandBuffer(vkCommandBuffer, 0));
+  check_vkresult(mPFN_vkBeginCommandBuffer(vkCommandBuffer, &beginInfo));
 
-  VkImageMemoryBarrier inBarriers[2];
-
-  inBarriers[0] = {
-    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-    .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-    .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .image = interop.mVKImage,
-    .subresourceRange = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = VK_REMAINING_MIP_LEVELS,
-      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+  VkImageMemoryBarrier inBarriers[] = {
+    VkImageMemoryBarrier {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = interopImage,
+      .subresourceRange = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = VK_REMAINING_MIP_LEVELS,
+        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+      },
     },
-  };
-  const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
-  inBarriers[1] = {
-    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-    .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .image = dstImage,
-    .subresourceRange = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = VK_REMAINING_MIP_LEVELS,
-      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+    VkImageMemoryBarrier {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+      .image = dstImage,
+      .subresourceRange = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = VK_REMAINING_MIP_LEVELS,
+        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+      },
     },
   };
 
   mPFN_vkCmdPipelineBarrier(
-    mVKCommandBuffer,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    vkCommandBuffer,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     /* dependency flags = */ {},
     /* memory barrier count = */ 0,
     /* memory barriers = */ nullptr,
@@ -596,8 +606,8 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     /* image barrier count = */ std::size(inBarriers),
     inBarriers);
 
-  std::vector<VkImageBlit> regions;
-  regions.resize(layerCount);
+  std::vector<VkImageCopy> regions;
+  regions.reserve(layerCount);
   for (off_t i = 0; i < layerCount; ++i) {
     auto& layer = layers[i];
 
@@ -606,72 +616,56 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     // source and dest
     const RECT r = layer.mDestRect;
 
-    regions[i] = VkImageBlit {
-      .srcSubresource = VkImageSubresourceLayers {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .mipLevel = 0,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-      },
-      .srcOffsets = {
-        {r.left, r.top, 0},
-        {r.right, r.bottom, 1},
-      },
-      .dstSubresource = VkImageSubresourceLayers {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .mipLevel = 0,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-      },
-      .dstOffsets = {
-        {r.left, r.top, 0},
-        {r.right, r.bottom, 1},
-      },
-    };
+    regions.push_back(
+      VkImageCopy {
+        .srcSubresource = VkImageSubresourceLayers {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .mipLevel = 0,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+        },
+        .srcOffset = {r.left, r.top, 0},
+        .dstSubresource = VkImageSubresourceLayers {
+          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+          .mipLevel = 0,
+          .baseArrayLayer = 0,
+          .layerCount = 1,
+        },
+        .dstOffset = {r.left, r.top, 0},
+        .extent = {layer.mDestRect.mSize.mWidth, layer.mDestRect.mSize.mHeight, 1},
+      }
+    );
   }
-  mPFN_vkCmdBlitImage(
-    mVKCommandBuffer,
-    interop.mVKImage,
+  mPFN_vkCmdCopyImage(
+    vkCommandBuffer,
+    interopImage,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     dstImage,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     regions.size(),
-    regions.data(),
-    VK_FILTER_NEAREST);
+    regions.data());
 
-  VkImageMemoryBarrier outBarriers[2];
-  outBarriers[0] = {
-    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-    .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .image = interop.mVKImage,
-    .subresourceRange = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = VK_REMAINING_MIP_LEVELS,
-      .layerCount = VK_REMAINING_ARRAY_LAYERS,
-    },
-  };
-  outBarriers[1] = {
-    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-    .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-    .image = dstImage,
-    .subresourceRange = {
-      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-      .levelCount = VK_REMAINING_MIP_LEVELS,
-      .layerCount = VK_REMAINING_ARRAY_LAYERS,
+  VkImageMemoryBarrier outBarriers[] = {
+    {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .srcAccessMask = 0,
+      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .image = dstImage,
+      .subresourceRange = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = VK_REMAINING_MIP_LEVELS,
+        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+      },
     },
   };
 
   // Wait for copy to be complete, then...
   mPFN_vkCmdPipelineBarrier(
-    mVKCommandBuffer,
-    VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-    VK_PIPELINE_STAGE_TRANSFER_BIT,
+    vkCommandBuffer,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     /* dependency flags = */ {},
     /* memory barrier count = */ 0,
     /* memory barriers = */ nullptr,
@@ -679,7 +673,7 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     /* buffer barriers = */ nullptr,
     /* image barrier count = */ std::size(outBarriers),
     outBarriers);
-  check_vkresult(mPFN_vkEndCommandBuffer(mVKCommandBuffer));
+  check_vkresult(mPFN_vkEndCommandBuffer(vkCommandBuffer));
 
   VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
     .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
@@ -694,24 +688,17 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     .pWaitSemaphores = &interop.mVKInteropSemaphore,
     .pWaitDstStageMask = &semaphoreStages,
     .commandBufferCount = 1,
-    .pCommandBuffers = &mVKCommandBuffer,
+    .pCommandBuffers = &vkCommandBuffer,
   };
 
   check_vkresult(mPFN_vkResetFences(mVKDevice, 1, &interop.mVKCompletionFence));
   check_vkresult(
     mPFN_vkQueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKCompletionFence));
 
-  check_vkresult(mPFN_vkWaitForFences(
-    mVKDevice,
-    1,
-    &interop.mVKCompletionFence,
-    VK_TRUE,
-    std::numeric_limits<uint32_t>::max()));
-
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 
   return true;
-}
+}// namespace OpenKneeboard
 
 SHM::CachedReader* OpenXRVulkanKneeboard::GetSHM() {
   return &mSHM;
