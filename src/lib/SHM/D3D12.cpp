@@ -291,11 +291,11 @@ void ClearRenderTargetView(
 }
 
 void Render(
-  const SHM::D3D12::CachedReader& shm,
-  const SHM::Snapshot& snapshot,
   DeviceResources* dr,
   SwapchainResources* sr,
   uint8_t swapchainTextureIndex,
+  const SHM::D3D12::CachedReader& shm,
+  const SHM::Snapshot& snapshot,
   size_t layerSpriteCount,
   LayerSprite* layerSprites) {
   TraceLoggingThreadActivity<gTraceProvider> activity;

@@ -139,13 +139,7 @@ bool OculusD3D12Kneeboard::Render(
   SHM::D3D12::Renderer::BeginFrame(dr, sr, swapchainTextureIndex);
   SHM::D3D12::Renderer::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
   SHM::D3D12::Renderer::Render(
-    *mSHM,
-    snapshot,
-    mDeviceResources.get(),
-    mSwapchainResources.at(swapChain).get(),
-    swapchainTextureIndex,
-    1,
-    &sprite);
+    dr, sr, swapchainTextureIndex, *mSHM, snapshot, 1, &sprite);
   SHM::D3D12::Renderer::EndFrame(dr, sr, swapchainTextureIndex);
 
   auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);

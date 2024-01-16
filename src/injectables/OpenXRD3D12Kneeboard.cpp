@@ -183,11 +183,11 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   SHM::D3D12::Renderer::BeginFrame(dr, sr, swapchainTextureIndex);
   SHM::D3D12::Renderer::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
   SHM::D3D12::Renderer::Render(
-    mSHM,
-    snapshot,
     dr,
     sr,
     swapchainTextureIndex,
+    mSHM,
+    snapshot,
     sprites.size(),
     sprites.data());
   SHM::D3D12::Renderer::EndFrame(dr, sr, swapchainTextureIndex);

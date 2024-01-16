@@ -143,11 +143,11 @@ void ClearRenderTargetView(
   uint8_t swapchainTextureIndex);
 
 void Render(
-  const SHM::D3D12::CachedReader&,
-  const SHM::Snapshot&,
   DeviceResources*,
   SwapchainResources*,
   uint8_t swapchainTextureIndex,
+  const SHM::D3D12::CachedReader&,
+  const SHM::Snapshot&,
   size_t layerSpriteCount,
   LayerSprite* layerSprites);
 
