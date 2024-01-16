@@ -95,7 +95,6 @@ target_link_libraries(
 
 add_module_library(
   OpenKneeboard-oculus-d3d12
-  OculusD3D11Kneeboard_StaticRender.cpp
   OculusD3D12Kneeboard.cpp
   OculusD3D12Kneeboard_DllMain.cpp
 )
@@ -105,9 +104,8 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-version
-  OpenKneeboard-D3D11On12
   OpenKneeboard-ScopedRWX
-  OpenKneeboard-SHM-Client-D3D11
+  OpenKneeboard-SHM-Client-D3D12
   d3d12-hooks
   detours-ext
   oculus-hooks

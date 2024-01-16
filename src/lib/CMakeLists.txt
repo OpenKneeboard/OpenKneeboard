@@ -216,10 +216,6 @@ target_link_libraries(
   OpenKneeboard-SHM-Client-GFXInterop
   OpenKneeboard-shims
   ThirdParty::CppWinRT
-)
-target_link_libraries(
-  OpenKneeboard-SHM-Client-D3D12
-  PRIVATE
   ThirdParty::DirectXTK12
 )
 

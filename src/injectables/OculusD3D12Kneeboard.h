@@ -22,8 +22,7 @@
 #include "ID3D12CommandQueueExecuteCommandListsHook.h"
 #include "OculusKneeboard.h"
 
-#include <OpenKneeboard/D3D11On12.h>
-#include <OpenKneeboard/SHM/D3D11.h>
+#include <OpenKneeboard/SHM/D3D12.h>
 
 #include <OpenKneeboard/config.h>
 
@@ -60,20 +59,18 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     return SHM::ConsumerKind::OculusD3D12;
   }
 
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() {
-    return mDeviceResources.mDevice11;
-  }
+  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
-  SHM::D3D11::CachedReader mSHM;
+  std::unique_ptr<SHM::D3D12::CachedReader> mSHM;
   ID3D12CommandQueueExecuteCommandListsHook mExecuteCommandListsHook;
   OculusKneeboard mOculusKneeboard;
-  std::array<
-    std::vector<std::shared_ptr<D3D11::IRenderTargetViewFactory>>,
-    MaxLayers>
-    mRenderTargetViews;
 
-  D3D11On12::DeviceResources mDeviceResources;
+  using DeviceResources = SHM::D3D12::Renderer::DeviceResources;
+  std::unique_ptr<DeviceResources> mDeviceResources;
+  using SwapchainResources = SHM::D3D12::Renderer::SwapchainResources;
+  std::unordered_map<ovrTextureSwapChain, std::unique_ptr<SwapchainResources>>
+    mSwapchainResources;
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,
