@@ -82,7 +82,6 @@ namespace Renderer {
 struct DeviceResources {
   winrt::com_ptr<ID3D12Device> mD3D12Device;
   winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
-  winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
 
   winrt::com_ptr<ID3D11Device5> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
@@ -105,6 +104,8 @@ struct DeviceResources {
 struct SwapchainResources {
   D3D12_VIEWPORT mViewport;
   D3D12_RECT mScissorRect;
+
+  std::vector<winrt::com_ptr<ID3D12CommandAllocator>> mD3D12CommandAllocators;
 
   std::vector<winrt::com_ptr<ID3D12Resource>> mD3D12Textures;
   std::unique_ptr<DirectX::DescriptorHeap> mD3D12RenderTargetViewsHeap;
@@ -140,8 +141,14 @@ void Render(
   size_t layerSpriteCount,
   LayerSprite* layerSprites);
 
-void BeginFrame(DeviceResources*);
-void EndFrame(DeviceResources*);
+void BeginFrame(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex);
+void EndFrame(
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex);
 
 }// namespace Renderer
 

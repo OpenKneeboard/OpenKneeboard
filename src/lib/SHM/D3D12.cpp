@@ -91,9 +91,6 @@ DeviceResources::DeviceResources(
   ID3D12CommandQueue* queue) {
   mD3D12Device.copy_from(device);
   mD3D12CommandQueue.copy_from(queue);
-  winrt::check_hresult(mD3D12Device->CreateCommandAllocator(
-    D3D12_COMMAND_LIST_TYPE_DIRECT,
-    IID_PPV_ARGS(mD3D12CommandAllocator.put())));
 
   UINT flags = 0;
 #ifdef DEBUG
@@ -188,6 +185,11 @@ SwapchainResources::SwapchainResources(
       texture.get(), &desc, mD3D12RenderTargetViewsHeap->GetCpuHandle(i));
 
     mD3D12Textures.push_back(std::move(texture));
+
+    winrt::com_ptr<ID3D12CommandAllocator> commandAllocator;
+    winrt::check_hresult(dr->mD3D12Device->CreateCommandAllocator(
+      D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocator.put())));
+    mD3D12CommandAllocators.push_back(std::move(commandAllocator));
   }
 
   {
@@ -268,7 +270,7 @@ void ClearRenderTargetView(
   winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
-    dr->mD3D12CommandAllocator.get(),
+    sr->mD3D12CommandAllocators.at(swapchainTextureIndex).get(),
     nullptr,
     IID_PPV_ARGS(commandList.put())));
   commandList->RSSetViewports(1, &sr->mViewport);
@@ -313,7 +315,7 @@ void Render(
   winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
-    dr->mD3D12CommandAllocator.get(),
+    sr->mD3D12CommandAllocators.at(swapchainTextureIndex).get(),
     nullptr,
     IID_PPV_ARGS(commandList.put())));
   commandList->RSSetViewports(1, &sr->mViewport);
@@ -379,11 +381,17 @@ void Render(
     activity, "OpenKneeboard::SHM::D3D12::Renderer::Render");
 }
 
-void BeginFrame(DeviceResources* dr) {
-  dr->mD3D12CommandAllocator->Reset();
+void BeginFrame(
+  DeviceResources*,
+  SwapchainResources* sr,
+  uint8_t swapchainTextureIndex) {
+  sr->mD3D12CommandAllocators.at(swapchainTextureIndex)->Reset();
 }
 
-void EndFrame(DeviceResources*) {
+void EndFrame(
+  DeviceResources*,
+  SwapchainResources*,
+  [[maybe_unused]] uint8_t swapchainTextureIndex) {
 }
 
 }// namespace Renderer

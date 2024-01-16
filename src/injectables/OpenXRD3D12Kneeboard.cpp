@@ -177,14 +177,20 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
     });
   }
 
+  auto dr = mDeviceResources.get();
+  auto sr = mSwapchainResources.at(swapchain).get();
+
+  SHM::D3D12::Renderer::BeginFrame(dr, sr, swapchainTextureIndex);
+  SHM::D3D12::Renderer::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
   SHM::D3D12::Renderer::Render(
     mSHM,
     snapshot,
-    mDeviceResources.get(),
-    mSwapchainResources.at(swapchain).get(),
+    dr,
+    sr,
     swapchainTextureIndex,
     sprites.size(),
     sprites.data());
+  SHM::D3D12::Renderer::EndFrame(dr, sr, swapchainTextureIndex);
   return true;
 }
 
