@@ -19,7 +19,8 @@
  */
 #include <OpenKneeboard/SHM/D3D12.h>
 
-#include <directxtk12/DescriptorHeap.h>
+#include <directxtk12/RenderTargetState.h>
+#include <directxtk12/ResourceUploadBatch.h>
 
 namespace OpenKneeboard::SHM::D3D12 {
 
@@ -135,6 +136,124 @@ DeviceResources::DeviceResources(
     mD3DInteropFenceHandle.put()));
   winrt::check_hresult(mD3D11Device->OpenSharedFence(
     mD3DInteropFenceHandle.get(), IID_PPV_ARGS(mD3D11Fence.put())));
+}
+
+SwapchainResources::SwapchainResources(
+  DeviceResources* dr,
+  DXGI_FORMAT renderTargetViewFormat,
+  size_t textureCount,
+  ID3D12Resource** textures) {
+  if (textureCount == 0) [[unlikely]] {
+    dprint("ERROR: Asked to create swapchain resources with 0 textures!");
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  const auto colorDesc = textures[0]->GetDesc();
+
+  mViewport = {
+    0.0f,
+    0.0f,
+    static_cast<FLOAT>(colorDesc.Width),
+    static_cast<FLOAT>(colorDesc.Height),
+    0.0f,
+    1.0f,
+  };
+  mScissorRect = {
+    0,
+    0,
+    static_cast<LONG>(colorDesc.Width),
+    static_cast<LONG>(colorDesc.Height),
+  };
+
+  mD3D12RenderTargetViewsHeap = std::make_unique<DirectX::DescriptorHeap>(
+    dr->mD3D12Device.get(),
+    D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+    textureCount);
+
+  for (size_t i = 0; i < textureCount; ++i) {
+    winrt::com_ptr<ID3D12Resource> texture;
+    texture.copy_from(textures[i]);
+
+    D3D12_RENDER_TARGET_VIEW_DESC desc {
+      .Format = renderTargetViewFormat,
+      .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
+      .Texture2D = {
+        .MipSlice = 0,
+        .PlaneSlice = 0,
+      },
+    };
+    dr->mD3D12Device->CreateRenderTargetView(
+      texture.get(), &desc, mD3D12RenderTargetViewsHeap->GetCpuHandle(i));
+
+    mD3D12Textures.push_back(std::move(texture));
+  }
+
+  {
+    DirectX::ResourceUploadBatch resourceUpload(dr->mD3D12Device.get());
+    resourceUpload.Begin();
+    DirectX::RenderTargetState rtState(
+      renderTargetViewFormat, DXGI_FORMAT_D32_FLOAT);
+    DirectX::SpriteBatchPipelineStateDescription pd(rtState);
+    mDXTK12SpriteBatch = std::make_unique<DirectX::SpriteBatch>(
+      dr->mD3D12Device.get(), resourceUpload, pd);
+    auto uploadResourcesFinished
+      = resourceUpload.End(dr->mD3D12CommandQueue.get());
+    uploadResourcesFinished.wait();
+  }
+
+  {
+    D3D12_HEAP_PROPERTIES heap {
+      .Type = D3D12_HEAP_TYPE_DEFAULT,
+      .CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+      .MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+    };
+
+    D3D12_RESOURCE_DESC desc {
+      .Dimension = colorDesc.Dimension,
+      .Alignment = colorDesc.Alignment,
+      .Width = colorDesc.Width,
+      .Height = colorDesc.Height,
+      .DepthOrArraySize = colorDesc.DepthOrArraySize,
+      .MipLevels = 1,
+      .Format = DXGI_FORMAT_R32_TYPELESS,
+      .SampleDesc = {
+        .Count = 1,
+      },
+      .Layout = colorDesc.Layout,
+      .Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL,
+    };
+
+    D3D12_CLEAR_VALUE clearValue {
+      .Format = DXGI_FORMAT_D32_FLOAT,
+      .DepthStencil = {
+        .Depth = 1.0f,
+      },
+    };
+
+    winrt::check_hresult(dr->mD3D12Device->CreateCommittedResource(
+      &heap,
+      D3D12_HEAP_FLAG_NONE,
+      &desc,
+      D3D12_RESOURCE_STATE_DEPTH_WRITE,
+      &clearValue,
+      IID_PPV_ARGS(mD3D12DepthStencilTexture.put())));
+  }
+  {
+    D3D12_DEPTH_STENCIL_VIEW_DESC desc {
+      .Format = DXGI_FORMAT_D32_FLOAT,
+      .ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
+      .Flags = D3D12_DSV_FLAG_NONE,
+      .Texture2D = D3D12_TEX2D_DSV {
+        .MipSlice = 0, 
+      },
+    };
+    dr->mD3D12Device->CreateDepthStencilView(
+      mD3D12DepthStencilTexture.get(),
+      &desc,
+      dr->mD3D12DepthHeap->GetFirstCpuHandle());
+  }
 }
 
 }// namespace Renderer

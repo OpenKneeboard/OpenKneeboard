@@ -72,21 +72,9 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   using DeviceResources = SHM::D3D12::Renderer::DeviceResources;
   std::unique_ptr<DeviceResources> mDeviceResources;
 
-  ///// START swapchain resources /////
-  struct SwapchainResources {
-    D3D12_VIEWPORT mViewport;
-    D3D12_RECT mScissorRect;
-
-    DXGI_FORMAT mRenderTargetViewFormat;
-
-    std::vector<winrt::com_ptr<ID3D12Resource>> mD3D12Textures;
-    std::unique_ptr<DirectX::DescriptorHeap> mD3D12RenderTargetViewsHeap;
-    winrt::com_ptr<ID3D12Resource> mD3D12DepthStencilTexture;
-
-    std::unique_ptr<DirectX::DX12::SpriteBatch> mDXTK12SpriteBatch;
-  };
-  std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
-  ///// END swapchain resources /////
+  using SwapchainResources = SHM::D3D12::Renderer::SwapchainResources;
+  std::unordered_map<XrSwapchain, std::unique_ptr<SwapchainResources>>
+    mSwapchainResources;
 };
 
 }// namespace OpenKneeboard
