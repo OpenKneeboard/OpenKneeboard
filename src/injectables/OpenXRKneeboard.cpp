@@ -304,10 +304,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
     }
 
     {
-      winrt::com_ptr<ID3D11DeviceContext> context;
-      d3d11->GetImmediateContext(context.put());
-      D3D11::SavedState state(context);
-
       TraceLoggingThreadActivity<gTraceProvider> subActivity;
       TraceLoggingWriteStart(subActivity, "OpenXRKneeboard::RenderLayers()");
       const auto success = this->RenderLayers(

@@ -217,6 +217,8 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
   winrt::com_ptr<ID3D11DeviceContext> ctx;
   device->GetImmediateContext(ctx.put());
 
+  D3D11::SavedState state(ctx);
+
   D3D11_RENDER_TARGET_VIEW_DESC rtvd;
   rtv->GetDesc(&rtvd);
   D3D11_VIEWPORT viewport {
