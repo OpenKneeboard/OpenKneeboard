@@ -226,6 +226,9 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
 
   auto dr = mDeviceResources.get();
   auto sr = mSwapchainResources.at(swapchain).get();
+
+  D3D11::SavedState savedState(dr->mD3D11ImmediateContext);
+
   R::BeginFrame(dr, sr, swapchainTextureIndex);
   R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
   R::Render(
