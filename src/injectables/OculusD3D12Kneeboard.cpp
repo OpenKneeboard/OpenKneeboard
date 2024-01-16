@@ -108,7 +108,6 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
 }
 
 bool OculusD3D12Kneeboard::RenderLayers(
-  ovrSession session,
   ovrTextureSwapChain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,

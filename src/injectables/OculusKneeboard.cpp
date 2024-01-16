@@ -213,7 +213,6 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     }
 
     mRenderer->RenderLayers(
-      session,
       mSwapchain,
       static_cast<uint32_t>(swapchainTextureIndex),
       snapshot,

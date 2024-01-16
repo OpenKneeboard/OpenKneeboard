@@ -49,7 +49,6 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     const PixelSize&) override;
 
   virtual bool RenderLayers(
-    ovrSession session,
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
