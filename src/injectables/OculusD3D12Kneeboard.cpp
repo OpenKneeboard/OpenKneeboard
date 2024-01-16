@@ -54,7 +54,7 @@ void OculusD3D12Kneeboard::UninstallHook() {
 
 ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   ovrSession session,
-  uint8_t layerIndex) {
+  const PixelSize& size) {
   auto dr = mDeviceResources.get();
   if (!dr) {
     OPENKNEEBOARD_BREAK;
@@ -67,8 +67,8 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
     .Type = ovrTexture_2D,
     .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
     .ArraySize = 1,
-    .Width = TextureWidth,
-    .Height = TextureHeight,
+    .Width = static_cast<int>(size.mWidth),
+    .Height = static_cast<int>(size.mHeight),
     .MipLevels = 1,
     .SampleCount = 1,
     .StaticImage = false,
@@ -107,47 +107,39 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   return swapChain;
 }
 
-bool OculusD3D12Kneeboard::Render(
+bool OculusD3D12Kneeboard::RenderLayers(
   ovrSession session,
-  ovrTextureSwapChain swapChain,
+  ovrTextureSwapChain swapchain,
+  uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerIndex,
-  const VRKneeboard::RenderParameters& renderParameters) {
-  auto ovr = OVRProxy::Get();
-
-  int swapchainTextureIndex = -1;
-  ovr->ovr_GetTextureSwapChainCurrentIndex(
-    session, swapChain, &swapchainTextureIndex);
-  if (swapchainTextureIndex < 0) {
-    dprintf(" - invalid swap chain index ({})", swapchainTextureIndex);
-    return false;
-  }
-
-  auto config = snapshot.GetLayerConfig(layerIndex);
-
-  SHM::D3D12::Renderer::LayerSprite sprite {
-    .mLayerIndex = layerIndex,
-    .mDestRect = {
-      0, 0,
-      static_cast<LONG>(config->mImageWidth),
-      static_cast<LONG>(config->mImageHeight),
-    },
-    .mOpacity = renderParameters.mKneeboardOpacity,
-  };
-
+  uint8_t layerCount,
+  LayerRenderInfo* layers) {
   auto dr = mDeviceResources.get();
-  auto sr = mSwapchainResources.at(swapChain).get();
-  SHM::D3D12::Renderer::BeginFrame(dr, sr, swapchainTextureIndex);
-  SHM::D3D12::Renderer::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  SHM::D3D12::Renderer::Render(
-    dr, sr, swapchainTextureIndex, *mSHM, snapshot, 1, &sprite);
-  SHM::D3D12::Renderer::EndFrame(dr, sr, swapchainTextureIndex);
+  auto sr = mSwapchainResources.at(swapchain).get();
 
-  auto error = ovr->ovr_CommitTextureSwapChain(session, swapChain);
-  if (error) {
-    dprintf("Commit failed with {}", error);
-    return false;
+  namespace R = SHM::D3D12::Renderer;
+  std::vector<R::LayerSprite> sprites;
+  sprites.reserve(layerCount);
+  for (uint8_t i = 0; i < layerCount; ++i) {
+    const auto& layer = layers[i];
+    sprites.push_back(R::LayerSprite {
+      .mLayerIndex = layer.mLayerIndex,
+      .mDestRect = layer.mDestRect,
+      .mOpacity = layer.mVR.mKneeboardOpacity,
+    });
   }
+
+  R::BeginFrame(dr, sr, swapchainTextureIndex);
+  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
+  R::Render(
+    dr,
+    sr,
+    swapchainTextureIndex,
+    *mSHM.get(),
+    snapshot,
+    sprites.size(),
+    sprites.data());
+  R::EndFrame(dr, sr, swapchainTextureIndex);
 
   return true;
 }

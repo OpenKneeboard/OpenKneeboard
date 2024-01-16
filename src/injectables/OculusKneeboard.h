@@ -25,11 +25,13 @@
 #include <shims/winrt/base.h>
 // clang-format on
 
+#include "OculusEndFrameHook.h"
+
+#include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRKneeboard.h>
-#include <OpenKneeboard/config.h>
 
-#include "OculusEndFrameHook.h"
+#include <OpenKneeboard/config.h>
 
 namespace OpenKneeboard {
 
@@ -46,7 +48,7 @@ class OculusKneeboard final : private VRKneeboard {
   Pose GetHMDPose(double predictedTime);
 
  private:
-  std::array<ovrTextureSwapChain, MaxLayers> mSwapChains;
+  ovrTextureSwapChain mSwapchain {nullptr};
   std::array<uint64_t, MaxLayers> mRenderCacheKeys;
   ovrSession mSession = nullptr;
   Renderer* mRenderer = nullptr;
@@ -68,14 +70,22 @@ class OculusKneeboard::Renderer {
   virtual SHM::CachedReader* GetSHM() = 0;
   virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
-    uint8_t layerIndex)
+    const PixelSize&)
     = 0;
-  virtual bool Render(
+
+  struct LayerRenderInfo {
+    uint8_t mLayerIndex {0xff};
+    PixelRect mDestRect {};
+    float mOpacity {1.0f};
+    const VRKneeboard::RenderParameters& mVR;
+  };
+  virtual bool RenderLayers(
     ovrSession session,
-    ovrTextureSwapChain swapChain,
+    ovrTextureSwapChain swapchain,
+    uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerIndex,
-    const VRKneeboard::RenderParameters&)
+    uint8_t layerCount,
+    LayerRenderInfo* layers)
     = 0;
 
   virtual SHM::ConsumerKind GetConsumerKind() const = 0;

@@ -51,14 +51,15 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
  protected:
   virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
-    uint8_t layerIndex) override final;
+    const PixelSize&) override;
 
-  virtual bool Render(
+  virtual bool RenderLayers(
     ovrSession session,
-    ovrTextureSwapChain swapChain,
+    ovrTextureSwapChain swapchain,
+    uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerIndex,
-    const VRKneeboard::RenderParameters&) override final;
+    uint8_t layerCount,
+    LayerRenderInfo* layers) override;
 
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 

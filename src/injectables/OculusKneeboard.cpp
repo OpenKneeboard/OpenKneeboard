@@ -33,7 +33,6 @@ using namespace DirectX::SimpleMath;
 namespace OpenKneeboard {
 
 OculusKneeboard::OculusKneeboard() {
-  mSwapChains.fill(nullptr);
   mRenderCacheKeys.fill(~(0ui64));
 }
 
@@ -140,40 +139,44 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
 
+  if (!mSwapchain) [[unlikely]] {
+    mSwapchain = mRenderer->CreateSwapChain(
+      session, {TextureWidth * MaxLayers, TextureHeight});
+    if (!mSwapchain) {
+      dprint("Failed to make an OVR swapchain");
+      OPENKNEEBOARD_BREAK;
+      return passthrough();
+    }
+  }
+
   const auto kneeboardLayerCount = snapshot.GetLayerCount();
   std::vector<ovrLayerQuad> kneeboardLayers;
   kneeboardLayers.reserve(kneeboardLayerCount);
+  std::vector<Renderer::LayerRenderInfo> layerRenderInfo;
+  layerRenderInfo.reserve(kneeboardLayerCount);
+
   uint16_t topMost = kneeboardLayerCount - 1;
+  bool needRender = false;
   for (uint8_t layerIndex = 0; layerIndex < kneeboardLayerCount; ++layerIndex) {
-    auto& swapChain = mSwapChains.at(layerIndex);
-    if (!swapChain) [[unlikely]] {
-      if (!mRenderer) [[unlikely]] {
-        OPENKNEEBOARD_BREAK;
-        return passthrough();
-      }
-      swapChain = mRenderer->CreateSwapChain(session, layerIndex);
-
-      if (!swapChain) [[unlikely]] {
-        return passthrough();
-      }
-    }
-
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
 
-    const auto renderParams = this->GetRenderParameters(
-      snapshot, layer, this->GetHMDPose(predictedTime));
-    if (renderParams.mIsLookingAtKneeboard) {
+    Renderer::LayerRenderInfo renderInfo {
+      .mLayerIndex = layerIndex,
+      .mDestRect = {
+        {layerIndex * TextureWidth, 0},
+        {layer.mImageWidth, layer.mImageHeight},
+      },
+      .mVR = this->GetRenderParameters(
+        snapshot, layer, this->GetHMDPose(predictedTime)),
+    };
+
+    if (renderInfo.mVR.mIsLookingAtKneeboard) {
       topMost = layerIndex;
     }
 
-    auto& cacheKey = mRenderCacheKeys.at(layerIndex);
-    if (cacheKey != renderParams.mCacheKey) {
-      if (!mRenderer->Render(
-            session, swapChain, snapshot, layerIndex, renderParams))
-        [[unlikely]] {
-        return passthrough();
-      }
-      cacheKey = renderParams.mCacheKey;
+    auto cacheKey = mRenderCacheKeys.at(layerIndex);
+    if (mRenderCacheKeys.at(layerIndex) != renderInfo.mVR.mCacheKey) {
+      needRender = true;
     }
 
     kneeboardLayers.push_back({
@@ -181,15 +184,52 @@ ovrResult OculusKneeboard::OnOVREndFrame(
         .Type = ovrLayerType_Quad,
         .Flags = {ovrLayerFlag_HighQuality},
       },
-      .ColorTexture = swapChain,
+      .ColorTexture = mSwapchain,
       .Viewport = {
-        .Pos = {0, 0},
-        .Size = {layer.mImageWidth, layer.mImageHeight},
+        .Pos = {
+          static_cast<int>(renderInfo.mDestRect.mOrigin.mX),
+          static_cast<int>(renderInfo.mDestRect.mOrigin.mY),
+        },
+        .Size = {
+          static_cast<int>(renderInfo.mDestRect.mSize.mWidth),
+          static_cast<int>(renderInfo.mDestRect.mSize.mHeight),
+        },
       },
-      .QuadPoseCenter = GetOvrPosef(renderParams.mKneeboardPose),
-      .QuadSize = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
+      .QuadPoseCenter = GetOvrPosef(renderInfo.mVR.mKneeboardPose),
+      .QuadSize = {renderInfo.mVR.mKneeboardSize.x, renderInfo.mVR.mKneeboardSize.y},
     });
     newLayers.push_back(&kneeboardLayers.back().Header);
+    layerRenderInfo.push_back(std::move(renderInfo));
+  }
+
+  if (needRender) {
+    int swapchainTextureIndex = -1;
+    ovr->ovr_GetTextureSwapChainCurrentIndex(
+      session, mSwapchain, &swapchainTextureIndex);
+    if (swapchainTextureIndex < 0) {
+      dprintf(" - invalid swap chain index ({})", swapchainTextureIndex);
+      OPENKNEEBOARD_BREAK;
+      return passthrough();
+    }
+
+    mRenderer->RenderLayers(
+      session,
+      mSwapchain,
+      static_cast<uint32_t>(swapchainTextureIndex),
+      snapshot,
+      layerRenderInfo.size(),
+      layerRenderInfo.data());
+
+    auto error = ovr->ovr_CommitTextureSwapChain(session, mSwapchain);
+    if (error) {
+      dprintf("Commit failed with {}", error);
+      OPENKNEEBOARD_BREAK;
+      return false;
+    }
+
+    for (const auto& it: layerRenderInfo) {
+      mRenderCacheKeys[it.mLayerIndex] = it.mVR.mCacheKey;
+    }
   }
 
   if (topMost != kneeboardLayerCount - 1) {
