@@ -191,6 +191,8 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
     sprites.size(),
     sprites.data());
   SHM::D3D12::Renderer::EndFrame(dr, sr, swapchainTextureIndex);
+
+  TraceLoggingWriteStop(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
   return true;
 }
 
