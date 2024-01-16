@@ -67,7 +67,7 @@ class CachedReader : public SHM::CachedReader {
   CachedReader(ID3D12Device*);
   virtual ~CachedReader();
 
-  ID3D12DescriptorHeap* GetShaderResourceViewHeap();
+  ID3D12DescriptorHeap* GetShaderResourceViewHeap() const;
 
  protected:
   virtual std::shared_ptr<SHM::LayerTextureCache> CreateLayerTextureCache(
@@ -119,6 +119,22 @@ struct SwapchainResources {
     size_t textureCount,
     ID3D12Resource** textures);
 };
+
+struct LayerSprite {
+  uint8_t mLayerIndex {0xff};
+  D3D12_RECT mDestRect {};
+  FLOAT mOpacity {1.0f};
+};
+
+void Render(
+  const SHM::D3D12::CachedReader&,
+  const SHM::Snapshot&,
+  DeviceResources*,
+  SwapchainResources*,
+  uint8_t swapchainTextureIndex,
+  size_t layerSpriteCount,
+  LayerSprite* layerSprites);
+
 }// namespace Renderer
 
 }// namespace OpenKneeboard::SHM::D3D12

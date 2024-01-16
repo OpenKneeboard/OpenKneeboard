@@ -73,7 +73,7 @@ CachedReader::CachedReader(ID3D12Device* devicePtr) {
 
 CachedReader::~CachedReader() = default;
 
-ID3D12DescriptorHeap* CachedReader::GetShaderResourceViewHeap() {
+ID3D12DescriptorHeap* CachedReader::GetShaderResourceViewHeap() const {
   return mDeviceResources->mSRVHeap.Heap();
 }
 
@@ -254,6 +254,98 @@ SwapchainResources::SwapchainResources(
       &desc,
       dr->mD3D12DepthHeap->GetFirstCpuHandle());
   }
+}
+
+void Render(
+  const SHM::D3D12::CachedReader& shm,
+  const SHM::Snapshot& snapshot,
+  DeviceResources* dr,
+  SwapchainResources* sr,
+  uint8_t swapchainTextureIndex,
+  size_t layerSpriteCount,
+  LayerSprite* layerSprites) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(
+    activity, "OpenKneeboard::SHM::D3D12::Renderer::Render");
+
+  TraceLoggingWriteTagged(activity, "SignalD3D11Fence");
+  const auto fenceValueD3D11Finished = ++dr->mFenceValue;
+  winrt::check_hresult(dr->mD3D11ImmediateContext->Signal(
+    dr->mD3D11Fence.get(), fenceValueD3D11Finished));
+
+  TraceLoggingWriteTagged(activity, "InitD3D12Frame");
+  auto sprites = sr->mDXTK12SpriteBatch.get();
+  sprites->SetViewport(sr->mViewport);
+
+  winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
+  dr->mD3D12CommandAllocator->Reset();
+  winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
+    0,
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    dr->mD3D12CommandAllocator.get(),
+    nullptr,
+    IID_PPV_ARGS(commandList.put())));
+  commandList->RSSetViewports(1, &sr->mViewport);
+  commandList->RSSetScissorRects(1, &sr->mScissorRect);
+
+  auto rt
+    = sr->mD3D12RenderTargetViewsHeap->GetCpuHandle(swapchainTextureIndex);
+  auto depthStencil = dr->mD3D12DepthHeap->GetFirstCpuHandle();
+  commandList->ClearDepthStencilView(
+    depthStencil, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+  commandList->OMSetRenderTargets(1, &rt, true, &depthStencil);
+  auto srvHeap = shm.GetShaderResourceViewHeap();
+  commandList->SetDescriptorHeaps(1, &srvHeap);
+
+  {
+    TraceLoggingThreadActivity<gTraceProvider> spritesActivity;
+    TraceLoggingWriteStart(spritesActivity, "SpriteBatch");
+    sprites->Begin(commandList.get());
+    for (uint8_t i = 0; i < layerSpriteCount; ++i) {
+      const auto& sprite = layerSprites[i];
+      auto resources
+        = snapshot.GetLayerGPUResources<SHM::D3D12::LayerTextureCache>(
+          sprite.mLayerIndex);
+      auto config = snapshot.GetLayerConfig(sprite.mLayerIndex);
+      auto srv = resources->GetD3D12ShaderResourceViewGPUHandle();
+
+      const auto opacity = sprite.mOpacity;
+      DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
+
+      D3D12_RECT sourceRect {
+        0,
+        0,
+        config->mImageWidth,
+        config->mImageHeight,
+      };
+
+      sprites->Draw(
+        srv,
+        {TextureWidth, TextureHeight},
+        sprite.mDestRect,
+        &sourceRect,
+        tint);
+    }
+    TraceLoggingWriteTagged(spritesActivity, "SpriteBatch::End");
+    sprites->End();
+    TraceLoggingWriteStop(spritesActivity, "SpriteBatch");
+  }
+  TraceLoggingWriteTagged(activity, "CloseCommandList");
+  winrt::check_hresult(commandList->Close());
+
+  TraceLoggingWriteTagged(activity, "WaitD3D12Fence");
+  winrt::check_hresult(dr->mD3D12CommandQueue->Wait(
+    dr->mD3D12Fence.get(), fenceValueD3D11Finished));
+  dr->mD3D11ImmediateContext->Flush();
+
+  TraceLoggingWriteTagged(activity, "ExecuteCommandLists");
+  {
+    ID3D12CommandList* commandLists[] = {commandList.get()};
+    dr->mD3D12CommandQueue->ExecuteCommandLists(1, commandLists);
+  }
+
+  TraceLoggingWriteStop(
+    activity, "OpenKneeboard::SHM::D3D12::Renderer::Render");
 }
 
 }// namespace Renderer
