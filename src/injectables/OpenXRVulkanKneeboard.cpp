@@ -34,20 +34,8 @@
 template <class CharT>
 struct std::formatter<VkResult, CharT> : std::formatter<int, CharT> {};
 
-static inline constexpr bool VK_SUCCEEDED(VkResult code) {
-  return code >= 0;
-}
-
-static inline constexpr bool VK_FAILED(VkResult code) {
-  return !VK_SUCCEEDED(code);
-}
-
-static inline void check_vkresult(VkResult code) {
-  if (VK_FAILED(code)) {
-    throw std::runtime_error(
-      std::format("Vulkan call failed: {}", static_cast<int>(code)));
-  }
-}
+using OpenKneeboard::Vulkan::check_vkresult;
+using OpenKneeboard::Vulkan::VK_FAILED;
 
 namespace OpenKneeboard {
 
@@ -76,13 +64,10 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
 
 void OpenXRVulkanKneeboard::InitializeVulkan(
   PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr) {
-#define IT(vkfun) \
-  mPFN_##vkfun = reinterpret_cast<PFN_##vkfun>( \
-    pfnVkGetInstanceProcAddr(mBinding.instance, #vkfun));
-  OPENKNEEBOARD_VK_FUNCS
-#undef IT
+  mVK = std::make_unique<Vulkan::Dispatch>(
+    mBinding.instance, pfnVkGetInstanceProcAddr);
 
-  mPFN_vkGetDeviceQueue(
+  mVK->GetDeviceQueue(
     mVKDevice, mBinding.queueFamilyIndex, mBinding.queueIndex, &mVKQueue);
 
   {
@@ -92,7 +77,7 @@ void OpenXRVulkanKneeboard::InitializeVulkan(
       .queueFamilyIndex = mBinding.queueFamilyIndex,
     };
 
-    const auto ret = mPFN_vkCreateCommandPool(
+    const auto ret = mVK->CreateCommandPool(
       mVKDevice, &createInfo, mVKAllocator, &mVKCommandPool);
     if (VK_FAILED(ret)) {
       dprintf("Failed to create command pool: {}", ret);
@@ -108,7 +93,7 @@ void OpenXRVulkanKneeboard::InitializeD3D11() {
   VkPhysicalDeviceProperties2 deviceProps2 {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
   deviceProps2.pNext = &deviceIDProps;
-  mPFN_vkGetPhysicalDeviceProperties2(mBinding.physicalDevice, &deviceProps2);
+  mVK->GetPhysicalDeviceProperties2(mBinding.physicalDevice, &deviceProps2);
 
   if (deviceIDProps.deviceLUIDValid == VK_FALSE) {
     dprint("Failed to get Vulkan device LUID");
@@ -238,7 +223,7 @@ void OpenXRVulkanKneeboard::InitInterop(
 
     VkImage vkImage {};
     check_vkresult(
-      mPFN_vkCreateImage(mVKDevice, &createInfo, mVKAllocator, &vkImage));
+      mVK->CreateImage(mVKDevice, &createInfo, mVKAllocator, &vkImage));
     interop->mVKImages.push_back(vkImage);
 
     VkDeviceMemory memory {};
@@ -253,12 +238,12 @@ void OpenXRVulkanKneeboard::InitInterop(
       VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
     };
 
-    mPFN_vkGetImageMemoryRequirements2(mVKDevice, &info, &memoryRequirements);
+    mVK->GetImageMemoryRequirements2(mVKDevice, &info, &memoryRequirements);
 
     VkMemoryWin32HandlePropertiesKHR handleProperties {
       .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
     };
-    winrt::check_hresult(mPFN_vkGetMemoryWin32HandlePropertiesKHR(
+    winrt::check_hresult(mVK->GetMemoryWin32HandlePropertiesKHR(
       mVKDevice,
       VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
       sharedHandle,
@@ -267,7 +252,7 @@ void OpenXRVulkanKneeboard::InitInterop(
     ///// Which memory areas meet those requirements? /////
 
     VkPhysicalDeviceMemoryProperties memoryProperties {};
-    mPFN_vkGetPhysicalDeviceMemoryProperties(
+    mVK->GetPhysicalDeviceMemoryProperties(
       mBinding.physicalDevice, &memoryProperties);
 
     std::optional<uint32_t> memoryTypeIndex;
@@ -312,7 +297,7 @@ void OpenXRVulkanKneeboard::InitInterop(
     };
 
     check_vkresult(
-      mPFN_vkAllocateMemory(mVKDevice, &allocInfo, mVKAllocator, &memory));
+      mVK->AllocateMemory(mVKDevice, &allocInfo, mVKAllocator, &memory));
 
     VkBindImageMemoryInfo bindImageInfo {
       .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
@@ -320,7 +305,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .memory = memory,
     };
 
-    check_vkresult(mPFN_vkBindImageMemory2(mVKDevice, 1, &bindImageInfo));
+    check_vkresult(mVK->BindImageMemory2(mVKDevice, 1, &bindImageInfo));
   }
 
   {
@@ -338,7 +323,7 @@ void OpenXRVulkanKneeboard::InitInterop(
 
   {
     VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    check_vkresult(mPFN_vkCreateFence(
+    check_vkresult(mVK->CreateFence(
       mVKDevice, &createInfo, mVKAllocator, &interop->mVKCompletionFence));
   }
 
@@ -358,7 +343,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
       .pNext = &timelineCreateInfo,
     };
-    check_vkresult(mPFN_vkCreateSemaphore(
+    check_vkresult(mVK->CreateSemaphore(
       mVKDevice, &createInfo, mVKAllocator, &interop->mVKInteropSemaphore));
   }
 
@@ -372,8 +357,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
       .handle = interop->mD3D11InteropFenceHandle.get(),
     };
-    check_vkresult(
-      mPFN_vkImportSemaphoreWin32HandleKHR(mVKDevice, &handleInfo));
+    check_vkresult(mVK->ImportSemaphoreWin32HandleKHR(mVKDevice, &handleInfo));
   }
 
   dprint("Finished initializing interop");
@@ -472,7 +456,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
       .commandBufferCount = imageCount,
     };
 
-    check_vkresult(mPFN_vkAllocateCommandBuffers(
+    check_vkresult(mVK->AllocateCommandBuffers(
       mVKDevice, &allocateInfo, resources.mVKCommandBuffers.data()));
   }
 
@@ -538,8 +522,8 @@ void OpenXRVulkanKneeboard::RenderLayers(
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
   };
-  check_vkresult(mPFN_vkResetCommandBuffer(vkCommandBuffer, 0));
-  check_vkresult(mPFN_vkBeginCommandBuffer(vkCommandBuffer, &beginInfo));
+  check_vkresult(mVK->ResetCommandBuffer(vkCommandBuffer, 0));
+  check_vkresult(mVK->BeginCommandBuffer(vkCommandBuffer, &beginInfo));
 
   VkImageMemoryBarrier inBarriers[] = {
     VkImageMemoryBarrier {
@@ -572,7 +556,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
     },
   };
 
-  mPFN_vkCmdPipelineBarrier(
+  mVK->CmdPipelineBarrier(
     vkCommandBuffer,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -614,7 +598,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
       }
     );
   }
-  mPFN_vkCmdCopyImage(
+  mVK->CmdCopyImage(
     vkCommandBuffer,
     interopImage,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -640,7 +624,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
   };
 
   // Wait for copy to be complete, then...
-  mPFN_vkCmdPipelineBarrier(
+  mVK->CmdPipelineBarrier(
     vkCommandBuffer,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -651,7 +635,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
     /* buffer barriers = */ nullptr,
     /* image barrier count = */ std::size(outBarriers),
     outBarriers);
-  check_vkresult(mPFN_vkEndCommandBuffer(vkCommandBuffer));
+  check_vkresult(mVK->EndCommandBuffer(vkCommandBuffer));
 
   VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
     .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
@@ -669,9 +653,9 @@ void OpenXRVulkanKneeboard::RenderLayers(
     .pCommandBuffers = &vkCommandBuffer,
   };
 
-  check_vkresult(mPFN_vkResetFences(mVKDevice, 1, &interop.mVKCompletionFence));
+  check_vkresult(mVK->ResetFences(mVKDevice, 1, &interop.mVKCompletionFence));
   check_vkresult(
-    mPFN_vkQueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKCompletionFence));
+    mVK->QueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKCompletionFence));
 
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 }// namespace OpenKneeboard

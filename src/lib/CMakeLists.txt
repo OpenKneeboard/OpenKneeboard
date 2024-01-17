@@ -130,6 +130,15 @@ target_link_libraries(
   System::Dxguid
 )
 
+ok_add_library(OpenKneeboard-Vulkan STATIC Vulkan.cpp)
+target_link_libraries(
+  OpenKneeboard-Vulkan
+  PUBLIC
+  OpenKneeboard-dprint
+  ThirdParty::VulkanHeaders
+  _libheaders
+)
+
 ok_add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
 target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
 

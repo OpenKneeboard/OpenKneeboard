@@ -24,6 +24,7 @@
 #include "OpenXRKneeboard.h"
 
 #include <OpenKneeboard/SHM/D3D11.h>
+#include <OpenKneeboard/Vulkan.h>
 
 #include <OpenKneeboard/config.h>
 
@@ -122,35 +123,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     const PixelSize& textureSize,
     Interop*) noexcept;
 
-#define OPENKNEEBOARD_VK_FUNCS \
-  IT(vkGetPhysicalDeviceProperties2) \
-  IT(vkCreateCommandPool) \
-  IT(vkAllocateCommandBuffers) \
-  IT(vkResetCommandBuffer) \
-  IT(vkBeginCommandBuffer) \
-  IT(vkEndCommandBuffer) \
-  IT(vkCmdCopyImage) \
-  IT(vkCmdBlitImage) \
-  IT(vkCmdPipelineBarrier) \
-  IT(vkCreateImage) \
-  IT(vkDestroyImage) \
-  IT(vkGetImageMemoryRequirements2) \
-  IT(vkGetPhysicalDeviceMemoryProperties) \
-  IT(vkGetMemoryWin32HandlePropertiesKHR) \
-  IT(vkBindImageMemory2) \
-  IT(vkAllocateMemory) \
-  IT(vkCreateFence) \
-  IT(vkResetFences) \
-  IT(vkWaitForFences) \
-  IT(vkQueueWaitIdle) \
-  IT(vkCreateSemaphore) \
-  IT(vkImportSemaphoreWin32HandleKHR) \
-  IT(vkGetSemaphoreWin32HandleKHR) \
-  IT(vkQueueSubmit) \
-  IT(vkGetDeviceQueue)
-#define IT(func) PFN_##func mPFN_##func {nullptr};
-  OPENKNEEBOARD_VK_FUNCS
-#undef IT
+  std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 
   void InitializeD3D11();
   void InitializeVulkan(PFN_vkGetInstanceProcAddr);
