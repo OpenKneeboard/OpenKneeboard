@@ -62,7 +62,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     uint8_t layerCount,
-    LayerRenderInfo* layers);
+    SHM::LayerSprite* layers);
 
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 

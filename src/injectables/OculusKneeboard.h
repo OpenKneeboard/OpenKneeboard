@@ -73,18 +73,12 @@ class OculusKneeboard::Renderer {
     const PixelSize&)
     = 0;
 
-  struct LayerRenderInfo {
-    uint8_t mLayerIndex {0xff};
-    PixelRect mDestRect {};
-    float mOpacity {1.0f};
-    const VRKneeboard::RenderParameters& mVR;
-  };
   virtual bool RenderLayers(
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     uint8_t layerCount,
-    LayerRenderInfo* layers)
+    SHM::LayerSprite* layers)
     = 0;
 
   virtual SHM::ConsumerKind GetConsumerKind() const = 0;

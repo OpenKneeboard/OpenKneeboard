@@ -56,13 +56,6 @@ class OpenXRKneeboard : public VRKneeboard {
 
   XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo);
 
-  struct LayerRenderInfo {
-    uint8_t mLayerIndex;
-    PixelRect mSourceRect;
-    PixelRect mDestRect;
-    VRKneeboard::RenderParameters mVR;
-  };
-
  protected:
   virtual bool ConfigurationsAreCompatible(
     const VRRenderConfig& initial,
@@ -81,7 +74,7 @@ class OpenXRKneeboard : public VRKneeboard {
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     uint8_t layerCount,
-    LayerRenderInfo* layers)
+    SHM::LayerSprite* layers)
     = 0;
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() = 0;
   virtual SHM::CachedReader* GetSHM() = 0;

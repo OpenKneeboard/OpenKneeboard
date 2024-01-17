@@ -196,10 +196,14 @@ XrResult OpenXRKneeboard::xrEndFrame(
   }
 
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-  std::vector<LayerRenderInfo> layers;
+  std::vector<SHM::LayerSprite> sprites;
+  std::vector<VRKneeboard::RenderParameters> renderParameters;
+  sprites.reserve(layerCount);
+  renderParameters.reserve(layerCount);
+
   for (uint8_t i = 0; i < layerCount; ++i) {
-    auto layerConfig = snapshot.GetLayerConfig(i);
-    if (!layerConfig->IsValid()) {
+    auto layer = snapshot.GetLayerConfig(i);
+    if (!layer->IsValid()) {
       TraceLoggingWriteStop(
         activity,
         "xrEndFrame",
@@ -207,12 +211,20 @@ XrResult OpenXRKneeboard::xrEndFrame(
         TraceLoggingValue("Invalid layer config", "Result"));
       return mOpenXR->xrEndFrame(session, frameEndInfo);
     }
-    layers.push_back(LayerRenderInfo {
+    auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
+    renderParameters.push_back(params);
+    sprites.push_back(SHM::LayerSprite {
       .mLayerIndex = i,
-      .mVR = this->GetRenderParameters(snapshot, *layerConfig, hmdPose),
+      .mDestRect = {
+        {i* TextureWidth, 0},
+        {layer->mImageWidth, layer->mImageHeight},
+      },
+      .mOpacity = params.mKneeboardOpacity,
     });
-    needRender
-      = needRender || (mRenderCacheKeys[i] != layers.back().mVR.mCacheKey);
+
+    if (params.mCacheKey != mRenderCacheKeys.at(i)) {
+      needRender = true;
+    }
   }
 
   if (needRender) {
@@ -229,23 +241,24 @@ XrResult OpenXRKneeboard::xrEndFrame(
       return mOpenXR->xrEndFrame(session, frameEndInfo);
     }
 
-    const scope_guard releaseSwapchainImage([this, &layers]() {
-      TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
-      TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
-      auto nextResult = mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr);
-      TraceLoggingWriteStop(
-        releaseActivity,
-        "xrReleaseSwapchainImage",
-        TraceLoggingInt32(nextResult, "Result"));
-      if (XR_FAILED(nextResult)) {
-        dprintf("Failed to release swapchain image: {}", nextResult);
-        OPENKNEEBOARD_BREAK;
-        return;
-      }
-      for (const auto& it: layers) {
-        mRenderCacheKeys[it.mLayerIndex] = it.mVR.mCacheKey;
-      }
-    });
+    const scope_guard releaseSwapchainImage(
+      [this, &sprites, &renderParameters]() {
+        TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
+        TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
+        auto nextResult = mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr);
+        TraceLoggingWriteStop(
+          releaseActivity,
+          "xrReleaseSwapchainImage",
+          TraceLoggingInt32(nextResult, "Result"));
+        if (XR_FAILED(nextResult)) {
+          dprintf("Failed to release swapchain image: {}", nextResult);
+          OPENKNEEBOARD_BREAK;
+          return;
+        }
+        for (size_t i = 0; i < renderParameters.size(); ++i) {
+          mRenderCacheKeys[i] = renderParameters.at(i).mCacheKey;
+        }
+      });
 
     XrSwapchainImageWaitInfo waitInfo {
       .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
@@ -264,19 +277,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
     for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
       auto layer = snapshot.GetLayerConfig(layerIndex);
-      auto& layerRenderInfo = layers.at(layerIndex);
-      auto& renderParams = layerRenderInfo.mVR;
+      const auto& sprite = sprites.at(layerIndex);
+      const auto& renderParams = renderParameters.at(layerIndex);
 
       if (renderParams.mIsLookingAtKneeboard) {
         topMost = layerIndex;
       }
-
-      layerRenderInfo.mSourceRect
-        = {{0, 0}, {layer->mImageWidth, layer->mImageHeight}};
-      layerRenderInfo.mDestRect = {
-        {layerIndex * TextureWidth, 0},
-        {layer->mImageWidth, layer->mImageHeight},
-      };
 
       static_assert(
         SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
@@ -311,8 +317,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
         mSwapchain,
         swapchainTextureIndex,
         snapshot,
-        layers.size(),
-        layers.data());
+        sprites.size(),
+        sprites.data());
       TraceLoggingWriteStop(
         subActivity,
         "OpenXRKneeboard::RenderLayers()",

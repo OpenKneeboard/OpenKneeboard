@@ -207,38 +207,19 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
-  LayerRenderInfo* layers) {
+  SHM::LayerSprite* layers) {
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "OpenXRD3D11Kneeboard::RenderLayers()");
-
-  namespace R = SHM::D3D11::Renderer;
-
-  std::vector<R::LayerSprite> sprites;
-  sprites.reserve(layerCount);
-  for (uint8_t i = 0; i < layerCount; ++i) {
-    const auto& layer = layers[i];
-    sprites.push_back(R::LayerSprite {
-      .mLayerIndex = layer.mLayerIndex,
-      .mDestRect = layer.mDestRect,
-      .mOpacity = layer.mVR.mKneeboardOpacity,
-    });
-  }
 
   auto dr = mDeviceResources.get();
   auto sr = mSwapchainResources.at(swapchain).get();
 
   D3D11::SavedState savedState(dr->mD3D11ImmediateContext);
 
+  namespace R = SHM::D3D11::Renderer;
   R::BeginFrame(dr, sr, swapchainTextureIndex);
   R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(
-    dr,
-    sr,
-    swapchainTextureIndex,
-    mSHM,
-    snapshot,
-    sprites.size(),
-    sprites.data());
+  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
   R::EndFrame(dr, sr, swapchainTextureIndex);
 
   TraceLoggingWriteStop(activity, "OpenXRD3D11Kneeboard::RenderLayers()");

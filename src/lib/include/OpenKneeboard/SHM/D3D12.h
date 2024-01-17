@@ -126,12 +126,6 @@ struct SwapchainResources {
   std::unique_ptr<DirectX::DX12::SpriteBatch> mDXTK12SpriteBatch;
 };
 
-struct LayerSprite {
-  uint8_t mLayerIndex {0xff};
-  D3D12_RECT mDestRect {};
-  FLOAT mOpacity {1.0f};
-};
-
 void BeginFrame(
   DeviceResources*,
   SwapchainResources*,

@@ -76,12 +76,6 @@ struct SwapchainResources {
   std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mD3D11RenderTargetViews;
 };
 
-struct LayerSprite {
-  uint8_t mLayerIndex {0xff};
-  D3D11_RECT mDestRect {};
-  FLOAT mOpacity {1.0f};
-};
-
 void BeginFrame(
   DeviceResources*,
   SwapchainResources*,

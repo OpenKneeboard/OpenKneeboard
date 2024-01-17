@@ -501,7 +501,7 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
-  LayerRenderInfo* layers) {
+  SHM::LayerSprite* layers) {
   if (!swapchain) {
     dprint("asked to render without swapchain");
     return false;
@@ -518,30 +518,14 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   auto& swapchainResources = mSwapchainResources.at(swapchain);
   auto& interop = swapchainResources.mInterop;
 
-  namespace R = SHM::D3D11::Renderer;
-  std::vector<R::LayerSprite> sprites;
-  sprites.reserve(layerCount);
-  for (uint8_t i = 0; i < layerCount; ++i) {
-    const auto& layer = layers[i];
-    sprites.push_back(R::LayerSprite {
-      .mLayerIndex = layer.mLayerIndex,
-      .mDestRect = layer.mDestRect,
-      .mOpacity = layer.mVR.mKneeboardOpacity,
-    });
-  }
-
   auto rdr = mRendererDeviceResources.get();
   auto rsr = interop.mRendererResources.get();
+
+  namespace R = SHM::D3D11::Renderer;
   R::BeginFrame(rdr, rsr, swapchainTextureIndex);
   R::ClearRenderTargetView(rdr, rsr, swapchainTextureIndex);
   R::Render(
-    rdr,
-    rsr,
-    swapchainTextureIndex,
-    mSHM,
-    snapshot,
-    sprites.size(),
-    sprites.data());
+    rdr, rsr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
   R::EndFrame(rdr, rsr, swapchainTextureIndex);
 
   // Signal this once D3D11 work is done, then we pass it as a wait semaphore

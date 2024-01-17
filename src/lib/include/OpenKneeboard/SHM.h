@@ -22,6 +22,8 @@
 #include "FlatConfig.h"
 #include "VRConfig.h"
 
+#include <OpenKneeboard/Pixels.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
@@ -50,6 +52,13 @@ struct FrameMetadata;
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
+
+// Used by D3D11::Renderer, D3D12::Renderer, and Oculus + OpenXR bases
+struct LayerSprite {
+  uint8_t mLayerIndex {0xff};
+  PixelRect mDestRect {};
+  float mOpacity {1.0f};
+};
 
 class LayerTextureCache {
  public:

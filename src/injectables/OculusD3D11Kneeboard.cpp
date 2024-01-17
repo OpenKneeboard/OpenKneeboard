@@ -112,7 +112,7 @@ bool OculusD3D11Kneeboard::RenderLayers(
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
-  LayerRenderInfo* layers) {
+  SHM::LayerSprite* layers) {
   auto dr = mDeviceResources.get();
   auto sr = mSwapchainResources.at(swapchain).get();
 
@@ -120,27 +120,10 @@ bool OculusD3D11Kneeboard::RenderLayers(
   D3D11::SavedState state(ctx);
 
   namespace R = SHM::D3D11::Renderer;
-  std::vector<R::LayerSprite> sprites;
-  sprites.reserve(layerCount);
-  for (uint8_t i = 0; i < layerCount; ++i) {
-    const auto& layer = layers[i];
-    sprites.push_back(R::LayerSprite {
-      .mLayerIndex = layer.mLayerIndex,
-      .mDestRect = layer.mDestRect,
-      .mOpacity = layer.mVR.mKneeboardOpacity,
-    });
-  }
 
   R::BeginFrame(dr, sr, swapchainTextureIndex);
   R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(
-    dr,
-    sr,
-    swapchainTextureIndex,
-    mSHM,
-    snapshot,
-    sprites.size(),
-    sprites.data());
+  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
   R::EndFrame(dr, sr, swapchainTextureIndex);
 
   return true;

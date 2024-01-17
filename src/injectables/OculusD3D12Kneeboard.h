@@ -53,7 +53,7 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
     uint8_t layerCount,
-    LayerRenderInfo* layers) override;
+    SHM::LayerSprite* layers) override;
 
   virtual SHM::ConsumerKind GetConsumerKind() const override {
     return SHM::ConsumerKind::OculusD3D12;

@@ -345,19 +345,17 @@ void Render(
       const auto opacity = sprite.mOpacity;
       DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
 
-      D3D12_RECT sourceRect {
+      const D3D12_RECT sourceRect {
         0,
         0,
         config->mImageWidth,
         config->mImageHeight,
       };
 
+      const D3D11_RECT destRect = sprite.mDestRect;
+
       sprites->Draw(
-        srv,
-        {TextureWidth, TextureHeight},
-        sprite.mDestRect,
-        &sourceRect,
-        tint);
+        srv, {TextureWidth, TextureHeight}, destRect, &sourceRect, tint);
     }
     TraceLoggingWriteTagged(spritesActivity, "SpriteBatch::End");
     sprites->End();

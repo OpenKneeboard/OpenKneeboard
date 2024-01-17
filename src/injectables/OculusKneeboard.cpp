@@ -151,31 +151,35 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
   const auto kneeboardLayerCount = snapshot.GetLayerCount();
   std::vector<ovrLayerQuad> kneeboardLayers;
+  std::vector<SHM::LayerSprite> sprites;
+  std::vector<uint64_t> cacheKeys;
+
   kneeboardLayers.reserve(kneeboardLayerCount);
-  std::vector<Renderer::LayerRenderInfo> layerRenderInfo;
-  layerRenderInfo.reserve(kneeboardLayerCount);
+  sprites.reserve(kneeboardLayerCount);
 
   uint16_t topMost = kneeboardLayerCount - 1;
   bool needRender = false;
   for (uint8_t layerIndex = 0; layerIndex < kneeboardLayerCount; ++layerIndex) {
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
+    auto params = this->GetRenderParameters(
+      snapshot, layer, this->GetHMDPose(predictedTime));
+    cacheKeys.push_back(params.mCacheKey);
 
-    Renderer::LayerRenderInfo renderInfo {
+    SHM::LayerSprite sprite {
       .mLayerIndex = layerIndex,
       .mDestRect = {
         {layerIndex * TextureWidth, 0},
         {layer.mImageWidth, layer.mImageHeight},
       },
-      .mVR = this->GetRenderParameters(
-        snapshot, layer, this->GetHMDPose(predictedTime)),
+      .mOpacity = params.mKneeboardOpacity,
     };
 
-    if (renderInfo.mVR.mIsLookingAtKneeboard) {
+    if (params.mIsLookingAtKneeboard) {
       topMost = layerIndex;
     }
 
     auto cacheKey = mRenderCacheKeys.at(layerIndex);
-    if (mRenderCacheKeys.at(layerIndex) != renderInfo.mVR.mCacheKey) {
+    if (mRenderCacheKeys.at(layerIndex) != params.mCacheKey) {
       needRender = true;
     }
 
@@ -187,19 +191,19 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       .ColorTexture = mSwapchain,
       .Viewport = {
         .Pos = {
-          static_cast<int>(renderInfo.mDestRect.mOrigin.mX),
-          static_cast<int>(renderInfo.mDestRect.mOrigin.mY),
+          static_cast<int>(sprite.mDestRect.mOrigin.mX),
+          static_cast<int>(sprite.mDestRect.mOrigin.mY),
         },
         .Size = {
-          static_cast<int>(renderInfo.mDestRect.mSize.mWidth),
-          static_cast<int>(renderInfo.mDestRect.mSize.mHeight),
+          static_cast<int>(sprite.mDestRect.mSize.mWidth),
+          static_cast<int>(sprite.mDestRect.mSize.mHeight),
         },
       },
-      .QuadPoseCenter = GetOvrPosef(renderInfo.mVR.mKneeboardPose),
-      .QuadSize = {renderInfo.mVR.mKneeboardSize.x, renderInfo.mVR.mKneeboardSize.y},
+      .QuadPoseCenter = GetOvrPosef(params.mKneeboardPose),
+      .QuadSize = {params.mKneeboardSize.x, params.mKneeboardSize.y},
     });
     newLayers.push_back(&kneeboardLayers.back().Header);
-    layerRenderInfo.push_back(std::move(renderInfo));
+    sprites.push_back(std::move(sprite));
   }
 
   if (needRender) {
@@ -216,8 +220,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       mSwapchain,
       static_cast<uint32_t>(swapchainTextureIndex),
       snapshot,
-      layerRenderInfo.size(),
-      layerRenderInfo.data());
+      sprites.size(),
+      sprites.data());
 
     auto error = ovr->ovr_CommitTextureSwapChain(session, mSwapchain);
     if (error) {
@@ -226,8 +230,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       return false;
     }
 
-    for (const auto& it: layerRenderInfo) {
-      mRenderCacheKeys[it.mLayerIndex] = it.mVR.mCacheKey;
+    for (size_t i = 0; i < cacheKeys.size(); ++i) {
+      mRenderCacheKeys[i] = cacheKeys.at(i);
     }
   }
 
