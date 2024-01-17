@@ -102,10 +102,10 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     std::unique_ptr<RendererSwapchainResources> mRendererResources;
 
     std::vector<VkImage> mVKImages {};
-    VkFence mVKCompletionFence {};
+    Vulkan::unique_VkFence mVKCompletionFence {};
 
     // These point to the same GPU fence/semaphore
-    VkSemaphore mVKInteropSemaphore {};
+    Vulkan::unique_VkSemaphore mVKInteropSemaphore {};
     winrt::com_ptr<ID3D11Fence> mD3D11InteropFence {};
     winrt::handle mD3D11InteropFenceHandle {};
     // Next value for the fence/semaphore

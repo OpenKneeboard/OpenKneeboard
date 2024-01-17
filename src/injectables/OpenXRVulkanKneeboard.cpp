@@ -323,8 +323,8 @@ void OpenXRVulkanKneeboard::InitInterop(
 
   {
     VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    check_vkresult(mVK->CreateFence(
-      mVKDevice, &createInfo, mVKAllocator, &interop->mVKCompletionFence));
+    interop->mVKCompletionFence
+      = mVK->make_unique<VkFence>(mVKDevice, &createInfo, mVKAllocator);
   }
 
   // 1/3: Create a D3D11 fence...
@@ -343,8 +343,8 @@ void OpenXRVulkanKneeboard::InitInterop(
       .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
       .pNext = &timelineCreateInfo,
     };
-    check_vkresult(mVK->CreateSemaphore(
-      mVKDevice, &createInfo, mVKAllocator, &interop->mVKInteropSemaphore));
+    interop->mVKInteropSemaphore
+      = mVK->make_unique<VkSemaphore>(mVKDevice, &createInfo, mVKAllocator);
   }
 
   // 3/3: tie them together
@@ -353,7 +353,7 @@ void OpenXRVulkanKneeboard::InitInterop(
   {
     VkImportSemaphoreWin32HandleInfoKHR handleInfo {
       .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
-      .semaphore = interop->mVKInteropSemaphore,
+      .semaphore = interop->mVKInteropSemaphore.get(),
       .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
       .handle = interop->mD3D11InteropFenceHandle.get(),
     };
@@ -643,19 +643,21 @@ void OpenXRVulkanKneeboard::RenderLayers(
     .pWaitSemaphoreValues = &semaphoreValue,
   };
   VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
+  VkSemaphore waitSemaphores[] = {interop.mVKInteropSemaphore.get()};
   VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .pNext = &timelineSubmitInfo,
-    .waitSemaphoreCount = 1,
-    .pWaitSemaphores = &interop.mVKInteropSemaphore,
+    .waitSemaphoreCount = std::size(waitSemaphores),
+    .pWaitSemaphores = waitSemaphores,
     .pWaitDstStageMask = &semaphoreStages,
     .commandBufferCount = 1,
     .pCommandBuffers = &vkCommandBuffer,
   };
 
-  check_vkresult(mVK->ResetFences(mVKDevice, 1, &interop.mVKCompletionFence));
-  check_vkresult(
-    mVK->QueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKCompletionFence));
+  VkFence fences[] = {interop.mVKCompletionFence.get()};
+  check_vkresult(mVK->ResetFences(mVKDevice, std::size(fences), fences));
+  check_vkresult(mVK->QueueSubmit(
+    mVKQueue, 1, &submitInfo, interop.mVKCompletionFence.get()));
 
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 }// namespace OpenKneeboard
