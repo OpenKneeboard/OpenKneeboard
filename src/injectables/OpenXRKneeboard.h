@@ -69,7 +69,7 @@ class OpenXRKneeboard : public VRKneeboard {
   // Release any buffers, views, caches etc, but do not destroy the swap chain
   virtual void ReleaseSwapchainResources(XrSwapchain) = 0;
 
-  virtual bool RenderLayers(
+  virtual void RenderLayers(
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,

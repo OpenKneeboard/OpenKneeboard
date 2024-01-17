@@ -202,7 +202,7 @@ winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {
   return mDeviceResources->mD3D11Device;
 }
 
-bool OpenXRD3D11Kneeboard::RenderLayers(
+void OpenXRD3D11Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
@@ -223,7 +223,6 @@ bool OpenXRD3D11Kneeboard::RenderLayers(
   R::EndFrame(dr, sr, swapchainTextureIndex);
 
   TraceLoggingWriteStop(activity, "OpenXRD3D11Kneeboard::RenderLayers()");
-  return true;
 }
 
 SHM::CachedReader* OpenXRD3D11Kneeboard::GetSHM() {

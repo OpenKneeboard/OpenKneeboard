@@ -107,7 +107,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   return swapChain;
 }
 
-bool OculusD3D11Kneeboard::RenderLayers(
+void OculusD3D11Kneeboard::RenderLayers(
   ovrTextureSwapChain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
@@ -125,8 +125,6 @@ bool OculusD3D11Kneeboard::RenderLayers(
   R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
   R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
   R::EndFrame(dr, sr, swapchainTextureIndex);
-
-  return true;
 }
 
 HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(

@@ -154,7 +154,7 @@ void OpenXRD3D12Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
   mSwapchainResources.erase(swapchain);
 }
 
-bool OpenXRD3D12Kneeboard::RenderLayers(
+void OpenXRD3D12Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
@@ -174,7 +174,6 @@ bool OpenXRD3D12Kneeboard::RenderLayers(
   R::EndFrame(dr, sr, swapchainTextureIndex);
 
   TraceLoggingWriteStop(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
-  return true;
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {

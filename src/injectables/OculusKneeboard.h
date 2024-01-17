@@ -73,7 +73,7 @@ class OculusKneeboard::Renderer {
     const PixelSize&)
     = 0;
 
-  virtual bool RenderLayers(
+  virtual void RenderLayers(
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,

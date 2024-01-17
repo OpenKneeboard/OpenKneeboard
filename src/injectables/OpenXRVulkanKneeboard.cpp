@@ -496,7 +496,7 @@ void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
   mSwapchainResources.erase(swapchain);
 }
 
-bool OpenXRVulkanKneeboard::RenderLayers(
+void OpenXRVulkanKneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
@@ -504,12 +504,12 @@ bool OpenXRVulkanKneeboard::RenderLayers(
   SHM::LayerSprite* layers) {
   if (!swapchain) {
     dprint("asked to render without swapchain");
-    return false;
+    return;
   }
 
   if (!mD3D11Device) {
     dprint("asked to render without D3D11 device");
-    return false;
+    return;
   }
 
   TraceLoggingThreadActivity<gTraceProvider> activity;
@@ -680,8 +680,6 @@ bool OpenXRVulkanKneeboard::RenderLayers(
     mPFN_vkQueueSubmit(mVKQueue, 1, &submitInfo, interop.mVKCompletionFence));
 
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
-
-  return true;
 }// namespace OpenKneeboard
 
 SHM::CachedReader* OpenXRVulkanKneeboard::GetSHM() {

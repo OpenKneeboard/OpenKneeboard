@@ -53,7 +53,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     ovrSession session,
     const PixelSize&) override;
 
-  virtual bool RenderLayers(
+  virtual void RenderLayers(
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,

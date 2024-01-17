@@ -292,19 +292,13 @@ XrResult OpenXRKneeboard::xrEndFrame(
     {
       TraceLoggingThreadActivity<gTraceProvider> subActivity;
       TraceLoggingWriteStart(subActivity, "OpenXRKneeboard::RenderLayers()");
-      const auto success = this->RenderLayers(
+      this->RenderLayers(
         mSwapchain,
         swapchainTextureIndex,
         snapshot,
         sprites.size(),
         sprites.data());
-      TraceLoggingWriteStop(
-        subActivity,
-        "OpenXRKneeboard::RenderLayers()",
-        TraceLoggingValue(success, "Result"));
-      if (!success) {
-        return mOpenXR->xrEndFrame(session, frameEndInfo);
-      }
+      TraceLoggingWriteStop(subActivity, "OpenXRKneeboard::RenderLayers()");
     }
   }
 
