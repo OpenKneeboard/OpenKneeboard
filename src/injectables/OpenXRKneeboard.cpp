@@ -30,7 +30,6 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/handles.h>
-#include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
@@ -268,21 +267,14 @@ XrResult OpenXRKneeboard::xrEndFrame(
       reinterpret_cast<XrCompositionLayerBaseHeader*>(&kneeboardLayers.back()));
   }
 
+  if (topMost != layerCount - 1) {
+    std::swap(kneeboardLayers.back(), kneeboardLayers.at(topMost));
+  }
+
   if (needRender) {
     uint32_t swapchainTextureIndex;
     check_xrresult(mOpenXR->xrAcquireSwapchainImage(
       mSwapchain, nullptr, &swapchainTextureIndex));
-
-    const scope_guard releaseSwapchainImage([this, &sprites, &cacheKeys]() {
-      TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
-      TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
-      check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
-      TraceLoggingWriteStop(releaseActivity, "xrReleaseSwapchainImage");
-
-      for (size_t i = 0; i < cacheKeys.size(); ++i) {
-        mRenderCacheKeys[i] = cacheKeys.at(i);
-      }
-    });
 
     XrSwapchainImageWaitInfo waitInfo {
       .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
@@ -301,10 +293,17 @@ XrResult OpenXRKneeboard::xrEndFrame(
         sprites.data());
       TraceLoggingWriteStop(subActivity, "OpenXRKneeboard::RenderLayers()");
     }
-  }
 
-  if (topMost != layerCount - 1) {
-    std::swap(kneeboardLayers.back(), kneeboardLayers.at(topMost));
+    {
+      TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
+      TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
+      check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
+      TraceLoggingWriteStop(releaseActivity, "xrReleaseSwapchainImage");
+    }
+
+    for (size_t i = 0; i < cacheKeys.size(); ++i) {
+      mRenderCacheKeys[i] = cacheKeys.at(i);
+    }
   }
 
   XrFrameEndInfo nextFrameEndInfo {*frameEndInfo};
