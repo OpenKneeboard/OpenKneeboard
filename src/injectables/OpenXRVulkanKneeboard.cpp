@@ -54,11 +54,6 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
   TraceLoggingWrite(gTraceProvider, "OpenXRVulkanKneeboard()");
 
   this->InitializeVulkan(pfnVkGetInstanceProcAddr);
-
-  if (!mVKCommandPool) {
-    return;
-  }
-
   this->InitializeD3D11();
 }
 
@@ -77,12 +72,8 @@ void OpenXRVulkanKneeboard::InitializeVulkan(
       .queueFamilyIndex = mBinding.queueFamilyIndex,
     };
 
-    const auto ret = mVK->CreateCommandPool(
-      mVKDevice, &createInfo, mVKAllocator, &mVKCommandPool);
-    if (VK_FAILED(ret)) {
-      dprintf("Failed to create command pool: {}", ret);
-      return;
-    }
+    mVKCommandPool
+      = mVK->make_unique<VkCommandPool>(mVKDevice, &createInfo, mVKAllocator);
   }
 }
 
@@ -221,10 +212,9 @@ void OpenXRVulkanKneeboard::InitInterop(
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
-    VkImage vkImage {};
-    check_vkresult(
-      mVK->CreateImage(mVKDevice, &createInfo, mVKAllocator, &vkImage));
-    interop->mVKImages.push_back(vkImage);
+    interop->mVKImages.push_back(
+      mVK->make_unique<VkImage>(mVKDevice, &createInfo, mVKAllocator));
+    auto vkImage = interop->mVKImages.back().get();
 
     VkDeviceMemory memory {};
     ///// What kind of memory do we need? /////
@@ -451,7 +441,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   {
     VkCommandBufferAllocateInfo allocateInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = mVKCommandPool,
+      .commandPool = mVKCommandPool.get(),
       .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
       .commandBufferCount = imageCount,
     };
@@ -512,7 +502,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
   mD3D11ImmediateContext->Signal(
     interop.mD3D11InteropFence.get(), semaphoreValue);
 
-  auto interopImage = interop.mVKImages.at(swapchainTextureIndex);
+  auto interopImage = interop.mVKImages.at(swapchainTextureIndex).get();
   const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
 
   auto vkCommandBuffer

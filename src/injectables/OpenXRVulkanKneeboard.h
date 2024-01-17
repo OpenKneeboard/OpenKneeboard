@@ -94,14 +94,14 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
   const VkAllocationCallbacks* mVKAllocator {nullptr};
   VkDevice mVKDevice {nullptr};
-  VkCommandPool mVKCommandPool {nullptr};
+  Vulkan::unique_VkCommandPool mVKCommandPool {nullptr};
   VkQueue mVKQueue {nullptr};
 
   using RendererSwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
   struct Interop {
     std::unique_ptr<RendererSwapchainResources> mRendererResources;
 
-    std::vector<VkImage> mVKImages {};
+    std::vector<Vulkan::unique_VkImage> mVKImages {};
     Vulkan::unique_VkFence mVKCompletionFence {};
 
     // These point to the same GPU fence/semaphore
