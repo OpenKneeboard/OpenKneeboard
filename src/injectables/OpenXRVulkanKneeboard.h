@@ -66,9 +66,6 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
  protected:
   virtual SHM::CachedReader* GetSHM() override;
-  virtual bool ConfigurationsAreCompatible(
-    const VRRenderConfig& initial,
-    const VRRenderConfig& current) const override;
   virtual XrSwapchain CreateSwapchain(
     XrSession,
     const PixelSize&,

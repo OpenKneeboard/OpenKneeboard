@@ -383,12 +383,6 @@ OpenXRVulkanKneeboard::~OpenXRVulkanKneeboard() {
   TraceLoggingWrite(gTraceProvider, "~OpenXRVulkanKneeboard()");
 }
 
-bool OpenXRVulkanKneeboard::ConfigurationsAreCompatible(
-  const VRRenderConfig& /*initial*/,
-  const VRRenderConfig& /*current*/) const {
-  return true;
-}
-
 winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() {
   return mD3D11Device;
 }

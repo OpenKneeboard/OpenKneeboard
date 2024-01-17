@@ -177,22 +177,12 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   uint8_t topMost = layerCount - 1;
 
-  if (mSwapchain) {
-    if (!this->ConfigurationsAreCompatible(mInitialConfig, config.mVR)) {
-      dprint("Incompatible swapchain due to options change, recreating");
-      this->ReleaseSwapchainResources(mSwapchain);
-      mOpenXR->xrDestroySwapchain(mSwapchain);
-      mSwapchain = nullptr;
-    }
-  }
-
   if (!mSwapchain) {
-    mInitialConfig = config.mVR;
     PixelSize size {
       TextureWidth * MaxLayers,
       TextureHeight,
     };
-    mSwapchain = this->CreateSwapchain(session, size, mInitialConfig.mQuirks);
+    mSwapchain = this->CreateSwapchain(session, size, config.mVR.mQuirks);
     if (!mSwapchain) {
       dprint("Failed to create swapchain");
       OPENKNEEBOARD_BREAK;

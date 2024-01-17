@@ -59,12 +59,6 @@ OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
   TraceLoggingWrite(gTraceProvider, "~OpenXRD3D12Kneeboard()");
 }
 
-bool OpenXRD3D12Kneeboard::ConfigurationsAreCompatible(
-  const VRRenderConfig& initial,
-  const VRRenderConfig& current) const {
-  return true;
-}
-
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   XrSession session,
   const PixelSize& size,

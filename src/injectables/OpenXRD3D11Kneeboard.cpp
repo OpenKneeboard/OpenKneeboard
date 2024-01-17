@@ -58,12 +58,6 @@ OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
   TraceLoggingWrite(gTraceProvider, "~OpenXRD3D11Kneeboard()");
 }
 
-bool OpenXRD3D11Kneeboard::ConfigurationsAreCompatible(
-  const VRRenderConfig&,
-  const VRRenderConfig&) const {
-  return true;
-}
-
 OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
   OpenXRNext* oxr,
   XrSession session) {

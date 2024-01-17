@@ -57,10 +57,6 @@ class OpenXRKneeboard : public VRKneeboard {
   XrResult xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo);
 
  protected:
-  virtual bool ConfigurationsAreCompatible(
-    const VRRenderConfig& initial,
-    const VRRenderConfig& current) const
-    = 0;
   virtual XrSwapchain CreateSwapchain(
     XrSession,
     const PixelSize&,
@@ -89,9 +85,6 @@ class OpenXRKneeboard : public VRKneeboard {
 
   XrSpace mLocalSpace = nullptr;
   XrSpace mViewSpace = nullptr;
-
-  // For quirks
-  VRRenderConfig mInitialConfig;
 
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
