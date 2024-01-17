@@ -22,6 +22,8 @@ OpenKneeboard is written in C++20, except for the Lua components.
 
 ## Building
 
+Visual Studio 2022 must be installed; the free 'community' edition is fine.
+
 If you use VSCode, just open the folder and VSCode should prompt to install CMake support if necessary. Then, just click 'build'
 
 Alternatively, from a developer command prompt:
@@ -34,6 +36,8 @@ cmake --build . --config Debug --parallel
 ```
 
 The 'developer command prompt' is included with Visual Studio, and makes cmake and the compilers available.
+
+After building, the executable will be in `build/src/app/app-winui3/Debug`; the various utilities (including the test viewer) will be in `build/src/utilities/Debug`.
 
 ## IPC
 
