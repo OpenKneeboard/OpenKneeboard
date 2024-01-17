@@ -4,6 +4,10 @@ OpenKneeboard can be controlled via joystick/HOTAS bindings, or a graphics table
 
 Go to https://openkneeboard.com for more information.
 
+## Building and contributing
+
+See [the internals documentation](https://openkneeboard.com/internals/).
+
 ## License
 
 OpenKneeboard is licensed under the [GNU General Public License, version 2](gpl-2.0.txt), with an exception to permit certain additional dependencies. For details, see [LICENSE](LICENSE).
