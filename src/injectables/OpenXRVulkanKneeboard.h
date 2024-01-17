@@ -83,19 +83,43 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
  private:
   SHM::D3D11::CachedReader mSHM;
-  XrGraphicsBindingVulkanKHR mBinding {};
 
-  // We need this for the renderer..
-  using RendererDeviceResources = SHM::D3D11::Renderer::DeviceResources;
-  std::unique_ptr<RendererDeviceResources> mRendererDeviceResources;
-  // ... but keep specialized versions that have interop capabilities
-  winrt::com_ptr<ID3D11Device5> mD3D11Device;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
+  std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 
-  const VkAllocationCallbacks* mVKAllocator {nullptr};
-  VkDevice mVKDevice {nullptr};
-  Vulkan::unique_VkCommandPool mVKCommandPool {nullptr};
-  VkQueue mVKQueue {nullptr};
+  struct DeviceResources {
+    DeviceResources() = delete;
+    DeviceResources(
+      Vulkan::Dispatch*,
+      VkDevice,
+      VkPhysicalDevice,
+      const VkAllocationCallbacks*,
+      uint32_t queueFamilyIndex,
+      uint32_t queueIndex);
+
+    VkDevice mVKDevice {};
+    VkPhysicalDevice mVKPhysicalDevice {};
+    const VkAllocationCallbacks* mVKAllocator {nullptr};
+
+    uint32_t mVKQueueFamilyIndex {};
+    uint32_t mVKQueueIndex {};
+
+    VkQueue mVKQueue {};
+
+    Vulkan::unique_VkCommandPool mVKCommandPool {nullptr};
+
+    // We render with D3D11, so we have some D3D11 and interop stuff too:
+
+    using RendererDeviceResources = SHM::D3D11::Renderer::DeviceResources;
+    std::unique_ptr<RendererDeviceResources> mRendererDeviceResources;
+    // Keep specialized versions that have interop capabilities to avoid
+    // QueryInterface() every frame
+    winrt::com_ptr<ID3D11Device5> mD3D11Device;
+    winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
+
+   private:
+    void InitializeD3D11(Vulkan::Dispatch* vk);
+  };
+  std::unique_ptr<DeviceResources> mDeviceResources;
 
   struct SwapchainResources {
     struct InteropResources {
@@ -137,10 +161,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   };
   std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
 
-  std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
-
   void InitializeD3D11();
-  void InitializeVulkan(PFN_vkGetInstanceProcAddr);
 };
 
 }// namespace OpenKneeboard

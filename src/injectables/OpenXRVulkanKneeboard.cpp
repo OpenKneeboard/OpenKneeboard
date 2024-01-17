@@ -46,45 +46,56 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
   const XrGraphicsBindingVulkanKHR& binding,
   const VkAllocationCallbacks* vulkanAllocator,
   PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr)
-  : OpenXRKneeboard(session, runtimeID, next),
-    mBinding(binding),
-    mVKDevice(binding.device),
-    mVKAllocator(vulkanAllocator) {
+  : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
   TraceLoggingWrite(gTraceProvider, "OpenXRVulkanKneeboard()");
 
-  this->InitializeVulkan(pfnVkGetInstanceProcAddr);
-  this->InitializeD3D11();
-}
-
-void OpenXRVulkanKneeboard::InitializeVulkan(
-  PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr) {
   mVK = std::make_unique<Vulkan::Dispatch>(
-    mBinding.instance, pfnVkGetInstanceProcAddr);
-
-  mVK->GetDeviceQueue(
-    mVKDevice, mBinding.queueFamilyIndex, mBinding.queueIndex, &mVKQueue);
-
-  {
-    VkCommandPoolCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-      .queueFamilyIndex = mBinding.queueFamilyIndex,
-    };
-
-    mVKCommandPool
-      = mVK->make_unique<VkCommandPool>(mVKDevice, &createInfo, mVKAllocator);
-  }
+    binding.instance, pfnVkGetInstanceProcAddr);
+  mDeviceResources = std::make_unique<DeviceResources>(
+    mVK.get(),
+    binding.device,
+    binding.physicalDevice,
+    vulkanAllocator,
+    binding.queueFamilyIndex,
+    binding.queueIndex);
 }
 
-void OpenXRVulkanKneeboard::InitializeD3D11() {
+OpenXRVulkanKneeboard::DeviceResources::DeviceResources(
+  Vulkan::Dispatch* vk,
+  VkDevice vkDevice,
+  VkPhysicalDevice vkPhysicalDevice,
+  const VkAllocationCallbacks* vkAllocator,
+  uint32_t queueFamilyIndex,
+  uint32_t queueIndex)
+  : mVKDevice(vkDevice),
+    mVKPhysicalDevice(vkPhysicalDevice),
+    mVKAllocator(vkAllocator),
+    mVKQueueFamilyIndex(queueFamilyIndex),
+    mVKQueueIndex(queueIndex) {
+  vk->GetDeviceQueue(vkDevice, queueFamilyIndex, queueIndex, &mVKQueue);
+
+  VkCommandPoolCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+    .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+    .queueFamilyIndex = queueFamilyIndex,
+  };
+
+  mVKCommandPool
+    = vk->make_unique<VkCommandPool>(mVKDevice, &createInfo, mVKAllocator);
+
+  this->InitializeD3D11(vk);
+}
+
+void OpenXRVulkanKneeboard::DeviceResources::InitializeD3D11(
+  Vulkan::Dispatch* vk) {
   VkPhysicalDeviceIDProperties deviceIDProps {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
 
   VkPhysicalDeviceProperties2 deviceProps2 {
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
   deviceProps2.pNext = &deviceIDProps;
-  mVK->GetPhysicalDeviceProperties2(mBinding.physicalDevice, &deviceProps2);
+  vk->GetPhysicalDeviceProperties2(mVKPhysicalDevice, &deviceProps2);
 
   if (deviceIDProps.deviceLUIDValid == VK_FALSE) {
     dprint("Failed to get Vulkan device LUID");
@@ -359,7 +370,7 @@ OpenXRVulkanKneeboard::~OpenXRVulkanKneeboard() {
 }
 
 winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() {
-  return mD3D11Device;
+  return mDeviceResources->mD3D11Device;
 }
 
 XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
@@ -431,36 +442,37 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     return nullptr;
   }
 
-  auto& resources = mSwapchainResources[swapchain];
+  auto dr = mDeviceResources.get();
+  auto& sr = mSwapchainResources[swapchain];
 
-  resources.mImages.reserve(imageCount);
+  sr.mImages.reserve(imageCount);
   for (const auto& swapchainImage: images) {
-    resources.mImages.push_back(swapchainImage.image);
+    sr.mImages.push_back(swapchainImage.image);
   }
-  resources.mVKCommandBuffers.resize(imageCount);
+  sr.mVKCommandBuffers.resize(imageCount);
 
   {
     VkCommandBufferAllocateInfo allocateInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = mVKCommandPool.get(),
+      .commandPool = dr->mVKCommandPool.get(),
       .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
       .commandBufferCount = imageCount,
     };
 
     check_vkresult(mVK->AllocateCommandBuffers(
-      mVKDevice, &allocateInfo, resources.mVKCommandBuffers.data()));
+      dr->mVKDevice, &allocateInfo, sr.mVKCommandBuffers.data()));
   }
 
-  resources.mInterop = std::make_unique<SwapchainResources::InteropResources>(
+  sr.mInterop = std::make_unique<SwapchainResources::InteropResources>(
     mVK.get(),
-    mBinding.device,
-    mBinding.physicalDevice,
-    mVKAllocator,
-    mBinding.queueFamilyIndex,
-    mRendererDeviceResources.get(),
+    dr->mVKDevice,
+    dr->mVKPhysicalDevice,
+    dr->mVKAllocator,
+    dr->mVKQueueFamilyIndex,
+    dr->mRendererDeviceResources.get(),
     imageCount,
     size);
-  resources.mSize = size;
+  sr.mSize = size;
 
   return swapchain;
 }
@@ -479,23 +491,15 @@ void OpenXRVulkanKneeboard::RenderLayers(
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
   SHM::LayerSprite* layers) {
-  if (!swapchain) {
-    dprint("asked to render without swapchain");
-    return;
-  }
-
-  if (!mD3D11Device) {
-    dprint("asked to render without D3D11 device");
-    return;
-  }
-
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 
-  auto& swapchainResources = mSwapchainResources.at(swapchain);
-  auto interop = swapchainResources.mInterop.get();
+  auto dr = mDeviceResources.get();
+  auto sr = &mSwapchainResources.at(swapchain);
 
-  auto rdr = mRendererDeviceResources.get();
+  auto interop = sr->mInterop.get();
+
+  auto rdr = dr->mRendererDeviceResources.get();
   auto rsr = interop->mRendererResources.get();
 
   namespace R = SHM::D3D11::Renderer;
@@ -508,14 +512,13 @@ void OpenXRVulkanKneeboard::RenderLayers(
   // Signal this once D3D11 work is done, then we pass it as a wait semaphore
   // to vkQueueSubmit
   const auto semaphoreValue = ++interop->mInteropValue;
-  mD3D11ImmediateContext->Signal(
+  dr->mD3D11ImmediateContext->Signal(
     interop->mD3D11InteropFence.get(), semaphoreValue);
 
   auto interopImage = interop->mVKImages.at(swapchainTextureIndex).get();
-  const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
+  const auto dstImage = sr->mImages.at(swapchainTextureIndex);
 
-  auto vkCommandBuffer
-    = swapchainResources.mVKCommandBuffers.at(swapchainTextureIndex);
+  auto vkCommandBuffer = sr->mVKCommandBuffers.at(swapchainTextureIndex);
 
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -654,9 +657,9 @@ void OpenXRVulkanKneeboard::RenderLayers(
   };
 
   VkFence fences[] = {interop->mVKCompletionFence.get()};
-  check_vkresult(mVK->ResetFences(mVKDevice, std::size(fences), fences));
+  check_vkresult(mVK->ResetFences(dr->mVKDevice, std::size(fences), fences));
   check_vkresult(mVK->QueueSubmit(
-    mVKQueue, 1, &submitInfo, interop->mVKCompletionFence.get()));
+    dr->mVKQueue, 1, &submitInfo, interop->mVKCompletionFence.get()));
 
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 }// namespace OpenKneeboard
