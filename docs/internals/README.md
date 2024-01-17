@@ -20,6 +20,21 @@ OpenKneeboard is a C++20 app built using CMake; it has 3 main components:
 
 OpenKneeboard is written in C++20, except for the Lua components.
 
+## Building
+
+If you use VSCode, just open the folder and VSCode should prompt to install CMake support if necessary. Then, just click 'build'
+
+Alternatively, from a developer command prompt:
+
+```
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Debug --parallel
+```
+
+The 'developer command prompt' is included with Visual Studio, and makes cmake and the compilers available.
+
 ## IPC
 
 ### OpenKneeboard app -> renderers
