@@ -440,32 +440,44 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     return nullptr;
   }
 
-  auto dr = mDeviceResources.get();
-  auto& sr = mSwapchainResources[swapchain];
-
-  sr.mImages.reserve(imageCount);
-  for (const auto& swapchainImage: images) {
-    sr.mImages.push_back(swapchainImage.image);
+  std::vector<VkImage> vkImages;
+  for (auto& xrImage: images) {
+    vkImages.push_back(xrImage.image);
   }
-  sr.mVKCommandBuffers.resize(imageCount);
+  mSwapchainResources[swapchain] = std::make_unique<SwapchainResources>(
+    mVK.get(), mDeviceResources.get(), size, imageCount, vkImages.data());
+
+  return swapchain;
+}
+
+OpenXRVulkanKneeboard::SwapchainResources::SwapchainResources(
+  Vulkan::Dispatch* vk,
+  DeviceResources* dr,
+  const PixelSize& size,
+  uint32_t textureCount,
+  VkImage* vkImages) noexcept {
+  mSize = size;
+
+  mImages.reserve(textureCount);
+  for (uint32_t i = 0; i < textureCount; ++i) {
+    mImages.push_back(vkImages[i]);
+  }
+  mVKCommandBuffers.resize(textureCount);
 
   {
     VkCommandBufferAllocateInfo allocateInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       .commandPool = dr->mVKCommandPool.get(),
       .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-      .commandBufferCount = imageCount,
+      .commandBufferCount = textureCount,
     };
 
-    check_vkresult(mVK->AllocateCommandBuffers(
-      dr->mVKDevice, &allocateInfo, sr.mVKCommandBuffers.data()));
+    check_vkresult(vk->AllocateCommandBuffers(
+      dr->mVKDevice, &allocateInfo, mVKCommandBuffers.data()));
   }
 
-  sr.mInterop = std::make_unique<SwapchainResources::InteropResources>(
-    mVK.get(), dr, imageCount, size);
-  sr.mSize = size;
-
-  return swapchain;
+  mInterop = std::make_unique<SwapchainResources::InteropResources>(
+    vk, dr, textureCount, size);
 }
 
 void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
@@ -486,7 +498,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
   TraceLoggingWriteStart(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 
   auto dr = mDeviceResources.get();
-  auto sr = &mSwapchainResources.at(swapchain);
+  auto sr = mSwapchainResources.at(swapchain).get();
 
   auto interop = sr->mInterop.get();
 

@@ -122,6 +122,14 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   std::unique_ptr<DeviceResources> mDeviceResources;
 
   struct SwapchainResources {
+    SwapchainResources() = delete;
+    SwapchainResources(
+      Vulkan::Dispatch*,
+      DeviceResources*,
+      const PixelSize&,
+      uint32_t textureCount,
+      VkImage* textures) noexcept;
+
     struct InteropResources {
       using RendererSwapchainResources
         = SHM::D3D11::Renderer::SwapchainResources;
@@ -155,7 +163,9 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     std::vector<VkCommandBuffer> mVKCommandBuffers;
     PixelSize mSize;
   };
-  std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
+
+  std::unordered_map<XrSwapchain, std::unique_ptr<SwapchainResources>>
+    mSwapchainResources;
 
   void InitializeD3D11();
 };
