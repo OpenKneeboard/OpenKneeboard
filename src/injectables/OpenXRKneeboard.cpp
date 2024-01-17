@@ -55,6 +55,17 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
   .position = {0.0f, 0.0f, 0.0f},
 };
 
+static inline XrResult check_xrresult(XrResult code) {
+  if (XR_FAILED(code)) {
+    const auto message
+      = std::format("OpenXR call failed: {}", static_cast<int>(code));
+    dprint(message);
+    OPENKNEEBOARD_BREAK;
+    throw std::runtime_error(message);
+  }
+  return code;
+}
+
 constexpr std::string_view OpenXRLayerName {
   "XR_APILAYER_FREDEMMOTT_OpenKneeboard"};
 static_assert(OpenXRLayerName.size() <= XR_MAX_API_LAYER_NAME_SIZE);
@@ -197,98 +208,44 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
   std::vector<SHM::LayerSprite> sprites;
-  std::vector<VRKneeboard::RenderParameters> renderParameters;
+  std::vector<uint64_t> cacheKeys;
   sprites.reserve(layerCount);
-  renderParameters.reserve(layerCount);
 
-  for (uint8_t i = 0; i < layerCount; ++i) {
-    auto layer = snapshot.GetLayerConfig(i);
+  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+    auto layer = snapshot.GetLayerConfig(layerIndex);
     if (!layer->IsValid()) {
       TraceLoggingWriteStop(
         activity,
         "xrEndFrame",
-        TraceLoggingValue(i, "LayerNumber"),
+        TraceLoggingValue(layerIndex, "LayerNumber"),
         TraceLoggingValue("Invalid layer config", "Result"));
       return mOpenXR->xrEndFrame(session, frameEndInfo);
     }
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
-    renderParameters.push_back(params);
+    cacheKeys.push_back(params.mCacheKey);
+
     sprites.push_back(SHM::LayerSprite {
-      .mLayerIndex = i,
+      .mLayerIndex = layerIndex,
       .mDestRect = {
-        {i* TextureWidth, 0},
+        {layerIndex* TextureWidth, 0},
         {layer->mImageWidth, layer->mImageHeight},
       },
       .mOpacity = params.mKneeboardOpacity,
     });
 
-    if (params.mCacheKey != mRenderCacheKeys.at(i)) {
+    if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
       needRender = true;
     }
-  }
 
-  if (needRender) {
-    uint32_t swapchainTextureIndex;
-    auto nextResult = mOpenXR->xrAcquireSwapchainImage(
-      mSwapchain, nullptr, &swapchainTextureIndex);
-    if (XR_FAILED(nextResult)) {
-      dprintf("Failed to acquire swapchain image: {}", nextResult);
-      OPENKNEEBOARD_BREAK;
-      TraceLoggingWriteStop(
-        activity,
-        "xrEndFrame",
-        TraceLoggingValue("Failed to acquire swapchain image", "Result"));
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    if (params.mIsLookingAtKneeboard) {
+      topMost = layerIndex;
     }
 
-    const scope_guard releaseSwapchainImage(
-      [this, &sprites, &renderParameters]() {
-        TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
-        TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
-        auto nextResult = mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr);
-        TraceLoggingWriteStop(
-          releaseActivity,
-          "xrReleaseSwapchainImage",
-          TraceLoggingInt32(nextResult, "Result"));
-        if (XR_FAILED(nextResult)) {
-          dprintf("Failed to release swapchain image: {}", nextResult);
-          OPENKNEEBOARD_BREAK;
-          return;
-        }
-        for (size_t i = 0; i < renderParameters.size(); ++i) {
-          mRenderCacheKeys[i] = renderParameters.at(i).mCacheKey;
-        }
-      });
-
-    XrSwapchainImageWaitInfo waitInfo {
-      .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-      .timeout = XR_INFINITE_DURATION,
-    };
-    nextResult = mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo);
-    if (XR_FAILED(nextResult)) {
-      dprintf("Failed to wait for swapchain image: {}", nextResult);
-      OPENKNEEBOARD_BREAK;
-      TraceLoggingWriteStop(
-        activity,
-        "xrEndFrame",
-        TraceLoggingValue("Failed to wait for swapchain image", "Result"));
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
-    }
-
-    for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-      auto layer = snapshot.GetLayerConfig(layerIndex);
-      const auto& sprite = sprites.at(layerIndex);
-      const auto& renderParams = renderParameters.at(layerIndex);
-
-      if (renderParams.mIsLookingAtKneeboard) {
-        topMost = layerIndex;
-      }
-
-      static_assert(
-        SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
-        "Use premultiplied alpha in shared texture, or pass "
-        "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
-      kneeboardLayers.push_back({
+    static_assert(
+      SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
+      "Use premultiplied alpha in shared texture, or pass "
+      "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
+    kneeboardLayers.push_back({
       .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
       .next = nullptr,
       .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
@@ -303,12 +260,34 @@ XrResult OpenXRKneeboard::xrEndFrame(
         },
         .imageArrayIndex = 0,
       },
-      .pose = this->GetXrPosef(renderParams.mKneeboardPose),
-      .size = { renderParams.mKneeboardSize.x, renderParams.mKneeboardSize.y },
+      .pose = this->GetXrPosef(params.mKneeboardPose),
+      .size = { params.mKneeboardSize.x, params.mKneeboardSize.y },
     });
-      nextLayers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(
-        &kneeboardLayers.back()));
-    }
+
+    nextLayers.push_back(
+      reinterpret_cast<XrCompositionLayerBaseHeader*>(&kneeboardLayers.back()));
+  }
+
+  if (needRender) {
+    uint32_t swapchainTextureIndex;
+    check_xrresult(mOpenXR->xrAcquireSwapchainImage(
+      mSwapchain, nullptr, &swapchainTextureIndex));
+
+    const scope_guard releaseSwapchainImage([this, &sprites, &cacheKeys]() {
+      TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
+      TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
+      check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
+
+      for (size_t i = 0; i < cacheKeys.size(); ++i) {
+        mRenderCacheKeys[i] = cacheKeys.at(i);
+      }
+    });
+
+    XrSwapchainImageWaitInfo waitInfo {
+      .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+      .timeout = XR_INFINITE_DURATION,
+    };
+    check_xrresult(mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo));
 
     {
       TraceLoggingThreadActivity<gTraceProvider> subActivity;
@@ -324,11 +303,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
         "OpenXRKneeboard::RenderLayers()",
         TraceLoggingValue(success, "Result"));
       if (!success) {
-        TraceLoggingWriteStop(
-          activity,
-          "xrEndFrame",
-          TraceLoggingValue("RenderLayers failed", "Result"));
-        OPENKNEEBOARD_BREAK;
         return mOpenXR->xrEndFrame(session, frameEndInfo);
       }
     }
@@ -346,11 +320,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
   {
     TraceLoggingThreadActivity<gTraceProvider> subActivity;
     TraceLoggingWriteStart(subActivity, "next_xrEndFrame()");
-    nextResult = mOpenXR->xrEndFrame(session, &nextFrameEndInfo);
+    nextResult
+      = check_xrresult(mOpenXR->xrEndFrame(session, &nextFrameEndInfo));
     TraceLoggingWriteStop(subActivity, "next_xrEndFrame()");
-  }
-  if (nextResult != XR_SUCCESS) {
-    OPENKNEEBOARD_BREAK;
   }
   TraceLoggingWriteStop(
     activity,
