@@ -97,31 +97,45 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   Vulkan::unique_VkCommandPool mVKCommandPool {nullptr};
   VkQueue mVKQueue {nullptr};
 
-  using RendererSwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
-  struct Interop {
-    std::unique_ptr<RendererSwapchainResources> mRendererResources;
-
-    std::vector<Vulkan::unique_VkImage> mVKImages {};
-    Vulkan::unique_VkFence mVKCompletionFence {};
-
-    // These point to the same GPU fence/semaphore
-    Vulkan::unique_VkSemaphore mVKInteropSemaphore {};
-    winrt::com_ptr<ID3D11Fence> mD3D11InteropFence {};
-    winrt::handle mD3D11InteropFenceHandle {};
-    // Next value for the fence/semaphore
-    uint64_t mInteropValue {};
-  };
   struct SwapchainResources {
-    Interop mInterop {};
+    struct InteropResources {
+      using RendererSwapchainResources
+        = SHM::D3D11::Renderer::SwapchainResources;
+
+      InteropResources() = delete;
+      InteropResources(
+        Vulkan::Dispatch*,
+        VkDevice,
+        VkPhysicalDevice,
+        const VkAllocationCallbacks*,
+        uint32_t vkQueueFamilyIndex,
+        SHM::D3D11::Renderer::DeviceResources* d3d11DeviceResources,
+        uint32_t textureCount,
+        const PixelSize&) noexcept;
+
+      std::unique_ptr<RendererSwapchainResources> mRendererResources;
+
+      // Intermediate images that are accessible both to D3D11 and VK.
+      // The ID3D11Texture2D's are stored in mRendererResources
+      std::vector<Vulkan::unique_VkImage> mVKImages {};
+      Vulkan::unique_VkFence mVKCompletionFence {};
+
+      // These point to the same GPU fence/semaphore
+      Vulkan::unique_VkSemaphore mVKInteropSemaphore {};
+      winrt::com_ptr<ID3D11Fence> mD3D11InteropFence {};
+      winrt::handle mD3D11InteropFenceHandle {};
+      // Next value for the fence/semaphore
+      uint64_t mInteropValue {};
+    };
+    std::unique_ptr<InteropResources> mInterop {};
+
+    // The actual swapchain images
     std::vector<VkImage> mImages;
+
     std::vector<VkCommandBuffer> mVKCommandBuffers;
     PixelSize mSize;
   };
   std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
-  void InitInterop(
-    uint32_t textureCount,
-    const PixelSize& textureSize,
-    Interop*) noexcept;
 
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 

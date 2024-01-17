@@ -153,16 +153,20 @@ void OpenXRVulkanKneeboard::InitializeD3D11() {
     = std::make_unique<RendererDeviceResources>(d3d11Device.get());
 }
 
-void OpenXRVulkanKneeboard::InitInterop(
+OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
+  Vulkan::Dispatch* vk,
+  VkDevice vkDevice,
+  VkPhysicalDevice vkPhysicalDevice,
+  const VkAllocationCallbacks* vkAllocator,
+  uint32_t vkQueueFamilyIndex,
+  SHM::D3D11::Renderer::DeviceResources* d3d11DeviceResources,
   uint32_t textureCount,
-  const PixelSize& textureSize,
-  Interop* interop) noexcept {
-  dprint("initializing interop");
-  auto device = mD3D11Device.get();
+  const PixelSize& textureSize) noexcept {
+  auto d3d11Device = d3d11DeviceResources->mD3D11Device.as<ID3D11Device5>();
 
   std::vector<winrt::com_ptr<ID3D11Texture2D>> d3d11Textures;
   d3d11Textures.reserve(textureCount);
-  interop->mVKImages.reserve(textureCount);
+  mVKImages.reserve(textureCount);
 
   for (uint32_t i = 0; i < textureCount; ++i) {
     winrt::com_ptr<ID3D11Texture2D> d3d11Texture;
@@ -179,7 +183,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
     };
     winrt::check_hresult(
-      device->CreateTexture2D(&desc, nullptr, d3d11Texture.put()));
+      d3d11Device->CreateTexture2D(&desc, nullptr, d3d11Texture.put()));
     d3d11Textures.push_back(d3d11Texture);
 
     HANDLE sharedHandle {};
@@ -208,13 +212,13 @@ void OpenXRVulkanKneeboard::InitInterop(
       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .queueFamilyIndexCount = 1,
-      .pQueueFamilyIndices = &mBinding.queueFamilyIndex,
+      .pQueueFamilyIndices = &vkQueueFamilyIndex,
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
-    interop->mVKImages.push_back(
-      mVK->make_unique<VkImage>(mVKDevice, &createInfo, mVKAllocator));
-    auto vkImage = interop->mVKImages.back().get();
+    mVKImages.push_back(
+      vk->make_unique<VkImage>(vkDevice, &createInfo, vkAllocator));
+    auto vkImage = mVKImages.back().get();
 
     VkDeviceMemory memory {};
     ///// What kind of memory do we need? /////
@@ -228,13 +232,13 @@ void OpenXRVulkanKneeboard::InitInterop(
       VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
     };
 
-    mVK->GetImageMemoryRequirements2(mVKDevice, &info, &memoryRequirements);
+    vk->GetImageMemoryRequirements2(vkDevice, &info, &memoryRequirements);
 
     VkMemoryWin32HandlePropertiesKHR handleProperties {
       .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
     };
-    winrt::check_hresult(mVK->GetMemoryWin32HandlePropertiesKHR(
-      mVKDevice,
+    winrt::check_hresult(vk->GetMemoryWin32HandlePropertiesKHR(
+      vkDevice,
       VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
       sharedHandle,
       &handleProperties));
@@ -242,8 +246,7 @@ void OpenXRVulkanKneeboard::InitInterop(
     ///// Which memory areas meet those requirements? /////
 
     VkPhysicalDeviceMemoryProperties memoryProperties {};
-    mVK->GetPhysicalDeviceMemoryProperties(
-      mBinding.physicalDevice, &memoryProperties);
+    vk->GetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &memoryProperties);
 
     std::optional<uint32_t> memoryTypeIndex;
     for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
@@ -287,7 +290,7 @@ void OpenXRVulkanKneeboard::InitInterop(
     };
 
     check_vkresult(
-      mVK->AllocateMemory(mVKDevice, &allocInfo, mVKAllocator, &memory));
+      vk->AllocateMemory(vkDevice, &allocInfo, vkAllocator, &memory));
 
     VkBindImageMemoryInfo bindImageInfo {
       .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
@@ -295,7 +298,7 @@ void OpenXRVulkanKneeboard::InitInterop(
       .memory = memory,
     };
 
-    check_vkresult(mVK->BindImageMemory2(mVKDevice, 1, &bindImageInfo));
+    check_vkresult(vk->BindImageMemory2(vkDevice, 1, &bindImageInfo));
   }
 
   {
@@ -304,8 +307,8 @@ void OpenXRVulkanKneeboard::InitInterop(
     for (const auto& texture: d3d11Textures) {
       rawPointers.push_back(texture.get());
     }
-    interop->mRendererResources = std::make_unique<RendererSwapchainResources>(
-      mRendererDeviceResources.get(),
+    mRendererResources = std::make_unique<RendererSwapchainResources>(
+      d3d11DeviceResources,
       DXGI_FORMAT_B8G8R8A8_UNORM,
       rawPointers.size(),
       rawPointers.data());
@@ -313,15 +316,13 @@ void OpenXRVulkanKneeboard::InitInterop(
 
   {
     VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    interop->mVKCompletionFence
-      = mVK->make_unique<VkFence>(mVKDevice, &createInfo, mVKAllocator);
+    mVKCompletionFence
+      = vk->make_unique<VkFence>(vkDevice, &createInfo, vkAllocator);
   }
 
   // 1/3: Create a D3D11 fence...
-  winrt::check_hresult(mD3D11Device->CreateFence(
-    0,
-    D3D11_FENCE_FLAG_SHARED,
-    IID_PPV_ARGS(interop->mD3D11InteropFence.put())));
+  winrt::check_hresult(d3d11Device->CreateFence(
+    0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mD3D11InteropFence.put())));
 
   // 2/3: Create a Vulkan semaphore...
   {
@@ -333,21 +334,21 @@ void OpenXRVulkanKneeboard::InitInterop(
       .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
       .pNext = &timelineCreateInfo,
     };
-    interop->mVKInteropSemaphore
-      = mVK->make_unique<VkSemaphore>(mVKDevice, &createInfo, mVKAllocator);
+    mVKInteropSemaphore
+      = vk->make_unique<VkSemaphore>(vkDevice, &createInfo, vkAllocator);
   }
 
   // 3/3: tie them together
-  winrt::check_hresult(interop->mD3D11InteropFence->CreateSharedHandle(
-    nullptr, GENERIC_ALL, nullptr, interop->mD3D11InteropFenceHandle.put()));
+  winrt::check_hresult(mD3D11InteropFence->CreateSharedHandle(
+    nullptr, GENERIC_ALL, nullptr, mD3D11InteropFenceHandle.put()));
   {
     VkImportSemaphoreWin32HandleInfoKHR handleInfo {
       .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
-      .semaphore = interop->mVKInteropSemaphore.get(),
+      .semaphore = mVKInteropSemaphore.get(),
       .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
-      .handle = interop->mD3D11InteropFenceHandle.get(),
+      .handle = mD3D11InteropFenceHandle.get(),
     };
-    check_vkresult(mVK->ImportSemaphoreWin32HandleKHR(mVKDevice, &handleInfo));
+    check_vkresult(vk->ImportSemaphoreWin32HandleKHR(vkDevice, &handleInfo));
   }
 
   dprint("Finished initializing interop");
@@ -450,7 +451,15 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
       mVKDevice, &allocateInfo, resources.mVKCommandBuffers.data()));
   }
 
-  InitInterop(imageCount, size, &resources.mInterop);
+  resources.mInterop = std::make_unique<SwapchainResources::InteropResources>(
+    mVK.get(),
+    mBinding.device,
+    mBinding.physicalDevice,
+    mVKAllocator,
+    mBinding.queueFamilyIndex,
+    mRendererDeviceResources.get(),
+    imageCount,
+    size);
   resources.mSize = size;
 
   return swapchain;
@@ -484,10 +493,10 @@ void OpenXRVulkanKneeboard::RenderLayers(
   TraceLoggingWriteStart(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 
   auto& swapchainResources = mSwapchainResources.at(swapchain);
-  auto& interop = swapchainResources.mInterop;
+  auto interop = swapchainResources.mInterop.get();
 
   auto rdr = mRendererDeviceResources.get();
-  auto rsr = interop.mRendererResources.get();
+  auto rsr = interop->mRendererResources.get();
 
   namespace R = SHM::D3D11::Renderer;
   R::BeginFrame(rdr, rsr, swapchainTextureIndex);
@@ -498,11 +507,11 @@ void OpenXRVulkanKneeboard::RenderLayers(
 
   // Signal this once D3D11 work is done, then we pass it as a wait semaphore
   // to vkQueueSubmit
-  const auto semaphoreValue = ++interop.mInteropValue;
+  const auto semaphoreValue = ++interop->mInteropValue;
   mD3D11ImmediateContext->Signal(
-    interop.mD3D11InteropFence.get(), semaphoreValue);
+    interop->mD3D11InteropFence.get(), semaphoreValue);
 
-  auto interopImage = interop.mVKImages.at(swapchainTextureIndex).get();
+  auto interopImage = interop->mVKImages.at(swapchainTextureIndex).get();
   const auto dstImage = swapchainResources.mImages.at(swapchainTextureIndex);
 
   auto vkCommandBuffer
@@ -633,7 +642,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
     .pWaitSemaphoreValues = &semaphoreValue,
   };
   VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
-  VkSemaphore waitSemaphores[] = {interop.mVKInteropSemaphore.get()};
+  VkSemaphore waitSemaphores[] = {interop->mVKInteropSemaphore.get()};
   VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .pNext = &timelineSubmitInfo,
@@ -644,10 +653,10 @@ void OpenXRVulkanKneeboard::RenderLayers(
     .pCommandBuffers = &vkCommandBuffer,
   };
 
-  VkFence fences[] = {interop.mVKCompletionFence.get()};
+  VkFence fences[] = {interop->mVKCompletionFence.get()};
   check_vkresult(mVK->ResetFences(mVKDevice, std::size(fences), fences));
   check_vkresult(mVK->QueueSubmit(
-    mVKQueue, 1, &submitInfo, interop.mVKCompletionFence.get()));
+    mVKQueue, 1, &submitInfo, interop->mVKCompletionFence.get()));
 
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 }// namespace OpenKneeboard
