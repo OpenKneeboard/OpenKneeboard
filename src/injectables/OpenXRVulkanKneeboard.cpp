@@ -143,7 +143,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     vkImages.push_back(xrImage.image);
   }
   mSwapchainResources[swapchain] = std::make_unique<SwapchainResources>(
-    mVK.get(), mDeviceResources.get(), size, imageCount, vkImages.data());
+    mDeviceResources.get(), size, imageCount, vkImages.data());
 
   return swapchain;
 }
@@ -168,167 +168,11 @@ void OpenXRVulkanKneeboard::RenderLayers(
   auto dr = mDeviceResources.get();
   auto sr = mSwapchainResources.at(swapchain).get();
 
-  auto rdr = dr->mRendererResources.get();
-  auto rsr = sr->mRendererResources.get();
-
-  namespace R = SHM::D3D11::Renderer;
-  R::BeginFrame(rdr, rsr, swapchainTextureIndex);
-  R::ClearRenderTargetView(rdr, rsr, swapchainTextureIndex);
-  R::Render(
-    rdr, rsr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
-  R::EndFrame(rdr, rsr, swapchainTextureIndex);
-
-  // Signal this once D3D11 work is done, then we pass it as a wait semaphore
-  // to vkQueueSubmit
-  const auto semaphoreValue = ++sr->mInteropFenceValue;
-  dr->mD3D11ImmediateContext->Signal(
-    sr->mD3D11InteropFence.get(), semaphoreValue);
-  auto br = &sr->mBufferResources.at(swapchainTextureIndex);
-
-  const auto interopImage = br->mVKInteropImage.get();
-  const auto swapchainImage = br->mVKSwapchainImage;
-  const auto vkCommandBuffer = br->mVKCommandBuffer;
-
-  VkCommandBufferBeginInfo beginInfo {
-    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-    .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-  };
-  check_vkresult(mVK->ResetCommandBuffer(vkCommandBuffer, 0));
-  check_vkresult(mVK->BeginCommandBuffer(vkCommandBuffer, &beginInfo));
-
-  VkImageMemoryBarrier inBarriers[] = {
-    VkImageMemoryBarrier {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = interopImage,
-      .subresourceRange = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
-      },
-    },
-    VkImageMemoryBarrier {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = swapchainImage,
-      .subresourceRange = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
-      },
-    },
-  };
-
-  mVK->CmdPipelineBarrier(
-    vkCommandBuffer,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    /* dependency flags = */ {},
-    /* memory barrier count = */ 0,
-    /* memory barriers = */ nullptr,
-    /* buffer barrier count = */ 0,
-    /* buffer barriers = */ nullptr,
-    /* image barrier count = */ std::size(inBarriers),
-    inBarriers);
-
-  std::vector<VkImageCopy> regions;
-  regions.reserve(layerCount);
-  for (off_t i = 0; i < layerCount; ++i) {
-    auto& layer = layers[i];
-
-    // The interop layer is the 'destination', and the swapchain
-    // image should be identical, so, we use mDestRect for both
-    // source and dest
-    const RECT r = layer.mDestRect;
-
-    regions.push_back(
-      VkImageCopy {
-        .srcSubresource = VkImageSubresourceLayers {
-          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-          .mipLevel = 0,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
-        },
-        .srcOffset = {r.left, r.top, 0},
-        .dstSubresource = VkImageSubresourceLayers {
-          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-          .mipLevel = 0,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
-        },
-        .dstOffset = {r.left, r.top, 0},
-        .extent = {layer.mDestRect.mSize.mWidth, layer.mDestRect.mSize.mHeight, 1},
-      }
-    );
-  }
-  mVK->CmdCopyImage(
-    vkCommandBuffer,
-    interopImage,
-    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    swapchainImage,
-    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    regions.size(),
-    regions.data());
-
-  VkImageMemoryBarrier outBarriers[] = {
-    {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .srcAccessMask = 0,
-      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .image = swapchainImage,
-      .subresourceRange = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
-      },
-    },
-  };
-
-  // Wait for copy to be complete, then...
-  mVK->CmdPipelineBarrier(
-    vkCommandBuffer,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    /* dependency flags = */ {},
-    /* memory barrier count = */ 0,
-    /* memory barriers = */ nullptr,
-    /* buffer barrier count = */ 0,
-    /* buffer barriers = */ nullptr,
-    /* image barrier count = */ std::size(outBarriers),
-    outBarriers);
-  check_vkresult(mVK->EndCommandBuffer(vkCommandBuffer));
-
-  VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
-    .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
-    .waitSemaphoreValueCount = 1,
-    .pWaitSemaphoreValues = &semaphoreValue,
-  };
-  VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
-  VkSemaphore waitSemaphores[] = {sr->mVKInteropSemaphore.get()};
-  VkSubmitInfo submitInfo {
-    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-    .pNext = &timelineSubmitInfo,
-    .waitSemaphoreCount = std::size(waitSemaphores),
-    .pWaitSemaphores = waitSemaphores,
-    .pWaitDstStageMask = &semaphoreStages,
-    .commandBufferCount = 1,
-    .pCommandBuffers = &vkCommandBuffer,
-  };
-
-  VkFence fences[] = {sr->mVKCompletionFence.get()};
-  check_vkresult(mVK->ResetFences(dr->mVKDevice, std::size(fences), fences));
-  check_vkresult(mVK->QueueSubmit(
-    dr->mVKQueue, 1, &submitInfo, sr->mVKCompletionFence.get()));
+  namespace R = SHM::Vulkan::Renderer;
+  R::BeginFrame(dr, sr, swapchainTextureIndex);
+  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
+  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
+  R::EndFrame(dr, sr, swapchainTextureIndex);
 
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 }// namespace OpenKneeboard

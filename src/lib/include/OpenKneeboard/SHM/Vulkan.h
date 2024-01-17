@@ -51,6 +51,8 @@ struct DeviceResources {
     uint32_t queueFamilyIndex,
     uint32_t queueIndex);
 
+  OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
+
   VkDevice mVKDevice {};
   VkPhysicalDevice mVKPhysicalDevice {};
   const VkAllocationCallbacks* mVKAllocator {nullptr};
@@ -72,13 +74,12 @@ struct DeviceResources {
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
 
  private:
-  void InitializeD3D11(OpenKneeboard::Vulkan::Dispatch* vk);
+  void InitializeD3D11();
 };
 
 struct SwapchainResources {
   SwapchainResources() = delete;
   SwapchainResources(
-    OpenKneeboard::Vulkan::Dispatch*,
     DeviceResources*,
     const PixelSize&,
     uint32_t textureCount,
@@ -92,6 +93,10 @@ struct SwapchainResources {
     // Intermediate images that are accessible both to D3D11 and VK.
     // The ID3D11Texture2D's are stored in mRendererResources
     OpenKneeboard::Vulkan::unique_VkImage mVKInteropImage;
+
+    // Regions that need to be copied from the interop image to the
+    // swapchain image
+    std::vector<PixelRect> mDirtyRects;
   };
   std::vector<BufferResources> mBufferResources;
 
@@ -114,7 +119,6 @@ struct SwapchainResources {
 
  private:
   void InitializeInterop(
-    OpenKneeboard::Vulkan::Dispatch*,
     DeviceResources*,
     uint32_t textureCount,
     const PixelSize& textureSize) noexcept;
@@ -134,7 +138,7 @@ void Render(
   DeviceResources*,
   SwapchainResources*,
   uint8_t swapchainTextureIndex,
-  const SHM::D3D11::CachedReader&,
+  const SHM::Vulkan::CachedReader&,
   const SHM::Snapshot&,
   size_t layerSpriteCount,
   LayerSprite* layerSprites);

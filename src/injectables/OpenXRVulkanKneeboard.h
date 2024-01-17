@@ -83,7 +83,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
 
  private:
-  SHM::D3D11::CachedReader mSHM;
+  SHM::Vulkan::CachedReader mSHM;
 
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 
