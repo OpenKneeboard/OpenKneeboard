@@ -129,24 +129,26 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
       const PixelSize&,
       uint32_t textureCount,
       VkImage* textures) noexcept;
+    PixelSize mSize;
 
-    // The actual swapchain images
-    std::vector<VkImage> mVKSwapchainImages;
+    struct BufferResources {
+      VkImage mVKSwapchainImage {};
+      VkCommandBuffer mVKCommandBuffer {};
+
+      // Intermediate images that are accessible both to D3D11 and VK.
+      // The ID3D11Texture2D's are stored in mRendererResources
+      Vulkan::unique_VkImage mVKInteropImage;
+    };
+    std::vector<BufferResources> mBufferResources;
+
     // Set when VK rendering is finished
     Vulkan::unique_VkFence mVKCompletionFence {};
-
-    std::vector<VkCommandBuffer> mVKCommandBuffers;
-    PixelSize mSize;
 
     // Use D3D11 for rendering as:
     // - there's nothing handy like DirectXTK::SpriteBatch for VK
     // - ... I need to learn more before rewriting this to directly use VK
     using RendererSwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
     std::unique_ptr<RendererSwapchainResources> mRendererResources;
-
-    // Intermediate images that are accessible both to D3D11 and VK.
-    // The ID3D11Texture2D's are stored in mRendererResources
-    std::vector<Vulkan::unique_VkImage> mVKInteropImages {};
 
     // These point to the same GPU fence/semaphore; it marks the transition
     // from D3D11 to VK

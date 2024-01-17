@@ -173,9 +173,10 @@ void OpenXRVulkanKneeboard::SwapchainResources::InitializeInterop(
 
   std::vector<winrt::com_ptr<ID3D11Texture2D>> d3d11Textures;
   d3d11Textures.reserve(textureCount);
-  mVKInteropImages.reserve(textureCount);
 
   for (uint32_t i = 0; i < textureCount; ++i) {
+    auto br = &mBufferResources.at(i);
+
     winrt::com_ptr<ID3D11Texture2D> d3d11Texture;
     // Not using SHM::CreateCompatibleTexture() as we need to use
     // the specific requested size, not the default SHM size
@@ -223,9 +224,9 @@ void OpenXRVulkanKneeboard::SwapchainResources::InitializeInterop(
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
-    mVKInteropImages.push_back(
-      vk->make_unique<VkImage>(dr->mVKDevice, &createInfo, dr->mVKAllocator));
-    auto vkImage = mVKInteropImages.back().get();
+    br->mVKInteropImage
+      = vk->make_unique<VkImage>(dr->mVKDevice, &createInfo, dr->mVKAllocator);
+    auto vkImage = br->mVKInteropImage.get();
 
     VkDeviceMemory memory {};
     ///// What kind of memory do we need? /////
@@ -458,11 +459,8 @@ OpenXRVulkanKneeboard::SwapchainResources::SwapchainResources(
   VkImage* vkImages) noexcept {
   mSize = textureSize;
 
-  mVKSwapchainImages.reserve(textureCount);
-  for (uint32_t i = 0; i < textureCount; ++i) {
-    mVKSwapchainImages.push_back(vkImages[i]);
-  }
-  mVKCommandBuffers.resize(textureCount);
+  std::vector<VkCommandBuffer> commandBuffers;
+  commandBuffers.resize(textureCount);
 
   {
     VkCommandBufferAllocateInfo allocateInfo {
@@ -473,7 +471,13 @@ OpenXRVulkanKneeboard::SwapchainResources::SwapchainResources(
     };
 
     check_vkresult(vk->AllocateCommandBuffers(
-      dr->mVKDevice, &allocateInfo, mVKCommandBuffers.data()));
+      dr->mVKDevice, &allocateInfo, commandBuffers.data()));
+  }
+  for (uint32_t i = 0; i < textureCount; ++i) {
+    mBufferResources.push_back({
+      .mVKSwapchainImage = vkImages[i],
+      .mVKCommandBuffer = commandBuffers.at(i),
+    });
   }
 
   this->InitializeInterop(vk, dr, textureCount, textureSize);
@@ -514,11 +518,11 @@ void OpenXRVulkanKneeboard::RenderLayers(
   const auto semaphoreValue = ++sr->mInteropFenceValue;
   dr->mD3D11ImmediateContext->Signal(
     sr->mD3D11InteropFence.get(), semaphoreValue);
+  auto br = &sr->mBufferResources.at(swapchainTextureIndex);
 
-  auto interopImage = sr->mVKInteropImages.at(swapchainTextureIndex).get();
-  const auto dstImage = sr->mVKSwapchainImages.at(swapchainTextureIndex);
-
-  auto vkCommandBuffer = sr->mVKCommandBuffers.at(swapchainTextureIndex);
+  const auto interopImage = br->mVKInteropImage.get();
+  const auto swapchainImage = br->mVKSwapchainImage;
+  const auto vkCommandBuffer = br->mVKCommandBuffer;
 
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -549,7 +553,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
       .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
       .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = dstImage,
+      .image = swapchainImage,
       .subresourceRange = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .levelCount = VK_REMAINING_MIP_LEVELS,
@@ -604,7 +608,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
     vkCommandBuffer,
     interopImage,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    dstImage,
+    swapchainImage,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     regions.size(),
     regions.data());
@@ -616,7 +620,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
       .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
       .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .image = dstImage,
+      .image = swapchainImage,
       .subresourceRange = {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .levelCount = VK_REMAINING_MIP_LEVELS,
