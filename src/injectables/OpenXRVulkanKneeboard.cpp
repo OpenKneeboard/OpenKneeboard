@@ -160,11 +160,11 @@ void OpenXRVulkanKneeboard::DeviceResources::InitializeD3D11(
   dprint("Initialized D3D11 device matching VkPhysicalDevice");
   mD3D11Device = d3d11Device.as<ID3D11Device5>();
   mD3D11ImmediateContext = d3d11ImmediateContext.as<ID3D11DeviceContext4>();
-  mRendererDeviceResources
+  mRendererResources
     = std::make_unique<RendererDeviceResources>(d3d11Device.get());
 }
 
-OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
+void OpenXRVulkanKneeboard::SwapchainResources::InitializeInterop(
   Vulkan::Dispatch* vk,
   DeviceResources* dr,
   uint32_t textureCount,
@@ -173,7 +173,7 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
 
   std::vector<winrt::com_ptr<ID3D11Texture2D>> d3d11Textures;
   d3d11Textures.reserve(textureCount);
-  mVKImages.reserve(textureCount);
+  mVKInteropImages.reserve(textureCount);
 
   for (uint32_t i = 0; i < textureCount; ++i) {
     winrt::com_ptr<ID3D11Texture2D> d3d11Texture;
@@ -223,9 +223,9 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
-    mVKImages.push_back(
+    mVKInteropImages.push_back(
       vk->make_unique<VkImage>(dr->mVKDevice, &createInfo, dr->mVKAllocator));
-    auto vkImage = mVKImages.back().get();
+    auto vkImage = mVKInteropImages.back().get();
 
     VkDeviceMemory memory {};
     ///// What kind of memory do we need? /////
@@ -316,7 +316,7 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       rawPointers.push_back(texture.get());
     }
     mRendererResources = std::make_unique<RendererSwapchainResources>(
-      dr->mRendererDeviceResources.get(),
+      dr->mRendererResources.get(),
       DXGI_FORMAT_B8G8R8A8_UNORM,
       rawPointers.size(),
       rawPointers.data());
@@ -453,14 +453,14 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
 OpenXRVulkanKneeboard::SwapchainResources::SwapchainResources(
   Vulkan::Dispatch* vk,
   DeviceResources* dr,
-  const PixelSize& size,
+  const PixelSize& textureSize,
   uint32_t textureCount,
   VkImage* vkImages) noexcept {
-  mSize = size;
+  mSize = textureSize;
 
-  mImages.reserve(textureCount);
+  mVKSwapchainImages.reserve(textureCount);
   for (uint32_t i = 0; i < textureCount; ++i) {
-    mImages.push_back(vkImages[i]);
+    mVKSwapchainImages.push_back(vkImages[i]);
   }
   mVKCommandBuffers.resize(textureCount);
 
@@ -476,8 +476,7 @@ OpenXRVulkanKneeboard::SwapchainResources::SwapchainResources(
       dr->mVKDevice, &allocateInfo, mVKCommandBuffers.data()));
   }
 
-  mInterop = std::make_unique<SwapchainResources::InteropResources>(
-    vk, dr, textureCount, size);
+  this->InitializeInterop(vk, dr, textureCount, textureSize);
 }
 
 void OpenXRVulkanKneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
@@ -500,10 +499,8 @@ void OpenXRVulkanKneeboard::RenderLayers(
   auto dr = mDeviceResources.get();
   auto sr = mSwapchainResources.at(swapchain).get();
 
-  auto interop = sr->mInterop.get();
-
-  auto rdr = dr->mRendererDeviceResources.get();
-  auto rsr = interop->mRendererResources.get();
+  auto rdr = dr->mRendererResources.get();
+  auto rsr = sr->mRendererResources.get();
 
   namespace R = SHM::D3D11::Renderer;
   R::BeginFrame(rdr, rsr, swapchainTextureIndex);
@@ -514,12 +511,12 @@ void OpenXRVulkanKneeboard::RenderLayers(
 
   // Signal this once D3D11 work is done, then we pass it as a wait semaphore
   // to vkQueueSubmit
-  const auto semaphoreValue = ++interop->mInteropValue;
+  const auto semaphoreValue = ++sr->mInteropFenceValue;
   dr->mD3D11ImmediateContext->Signal(
-    interop->mD3D11InteropFence.get(), semaphoreValue);
+    sr->mD3D11InteropFence.get(), semaphoreValue);
 
-  auto interopImage = interop->mVKImages.at(swapchainTextureIndex).get();
-  const auto dstImage = sr->mImages.at(swapchainTextureIndex);
+  auto interopImage = sr->mVKInteropImages.at(swapchainTextureIndex).get();
+  const auto dstImage = sr->mVKSwapchainImages.at(swapchainTextureIndex);
 
   auto vkCommandBuffer = sr->mVKCommandBuffers.at(swapchainTextureIndex);
 
@@ -648,7 +645,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
     .pWaitSemaphoreValues = &semaphoreValue,
   };
   VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
-  VkSemaphore waitSemaphores[] = {interop->mVKInteropSemaphore.get()};
+  VkSemaphore waitSemaphores[] = {sr->mVKInteropSemaphore.get()};
   VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .pNext = &timelineSubmitInfo,
@@ -659,10 +656,10 @@ void OpenXRVulkanKneeboard::RenderLayers(
     .pCommandBuffers = &vkCommandBuffer,
   };
 
-  VkFence fences[] = {interop->mVKCompletionFence.get()};
+  VkFence fences[] = {sr->mVKCompletionFence.get()};
   check_vkresult(mVK->ResetFences(dr->mVKDevice, std::size(fences), fences));
   check_vkresult(mVK->QueueSubmit(
-    dr->mVKQueue, 1, &submitInfo, interop->mVKCompletionFence.get()));
+    dr->mVKQueue, 1, &submitInfo, sr->mVKCompletionFence.get()));
 
   TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
 }// namespace OpenKneeboard

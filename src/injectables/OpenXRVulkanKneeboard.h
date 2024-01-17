@@ -110,7 +110,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     // We render with D3D11, so we have some D3D11 and interop stuff too:
 
     using RendererDeviceResources = SHM::D3D11::Renderer::DeviceResources;
-    std::unique_ptr<RendererDeviceResources> mRendererDeviceResources;
+    std::unique_ptr<RendererDeviceResources> mRendererResources;
     // Keep specialized versions that have interop capabilities to avoid
     // QueryInterface() every frame
     winrt::com_ptr<ID3D11Device5> mD3D11Device;
@@ -130,44 +130,42 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
       uint32_t textureCount,
       VkImage* textures) noexcept;
 
-    struct InteropResources {
-      using RendererSwapchainResources
-        = SHM::D3D11::Renderer::SwapchainResources;
-
-      InteropResources() = delete;
-      InteropResources(
-        Vulkan::Dispatch*,
-        DeviceResources*,
-        uint32_t textureCount,
-        const PixelSize&) noexcept;
-
-      std::unique_ptr<RendererSwapchainResources> mRendererResources;
-
-      // Intermediate images that are accessible both to D3D11 and VK.
-      // The ID3D11Texture2D's are stored in mRendererResources
-      std::vector<Vulkan::unique_VkImage> mVKImages {};
-      Vulkan::unique_VkFence mVKCompletionFence {};
-
-      // These point to the same GPU fence/semaphore
-      Vulkan::unique_VkSemaphore mVKInteropSemaphore {};
-      winrt::com_ptr<ID3D11Fence> mD3D11InteropFence {};
-      winrt::handle mD3D11InteropFenceHandle {};
-      // Next value for the fence/semaphore
-      uint64_t mInteropValue {};
-    };
-    std::unique_ptr<InteropResources> mInterop {};
-
     // The actual swapchain images
-    std::vector<VkImage> mImages;
+    std::vector<VkImage> mVKSwapchainImages;
+    // Set when VK rendering is finished
+    Vulkan::unique_VkFence mVKCompletionFence {};
 
     std::vector<VkCommandBuffer> mVKCommandBuffers;
     PixelSize mSize;
+
+    // Use D3D11 for rendering as:
+    // - there's nothing handy like DirectXTK::SpriteBatch for VK
+    // - ... I need to learn more before rewriting this to directly use VK
+    using RendererSwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
+    std::unique_ptr<RendererSwapchainResources> mRendererResources;
+
+    // Intermediate images that are accessible both to D3D11 and VK.
+    // The ID3D11Texture2D's are stored in mRendererResources
+    std::vector<Vulkan::unique_VkImage> mVKInteropImages {};
+
+    // These point to the same GPU fence/semaphore; it marks the transition
+    // from D3D11 to VK
+
+    Vulkan::unique_VkSemaphore mVKInteropSemaphore {};
+    winrt::com_ptr<ID3D11Fence> mD3D11InteropFence {};
+    winrt::handle mD3D11InteropFenceHandle {};
+    uint64_t mInteropFenceValue {};
+
+   private:
+    void InitializeInterop(
+      Vulkan::Dispatch*,
+      DeviceResources*,
+      uint32_t textureCount,
+      const PixelSize& textureSize) noexcept;
   };
 
   std::unordered_map<XrSwapchain, std::unique_ptr<SwapchainResources>>
     mSwapchainResources;
-
-  void InitializeD3D11();
 };
 
 }// namespace OpenKneeboard
