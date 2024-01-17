@@ -77,6 +77,7 @@ DXResources DXResources::Create() {
   dprint("----------");
 
   winrt::com_ptr<ID3D11Device> d3d;
+  winrt::com_ptr<ID3D11DeviceContext> d3dImmediateContext;
   winrt::check_hresult(D3D11CreateDevice(
     bestAdapter.get(),
     // UNKNOWN is required when specifying an adapter
@@ -88,10 +89,10 @@ DXResources DXResources::Create() {
     D3D11_SDK_VERSION,
     d3d.put(),
     nullptr,
-    nullptr));
-  ret.mD3DDevice = d3d.as<ID3D11Device2>();
+    d3dImmediateContext.put()));
+  ret.mD3DDevice = d3d.as<ID3D11Device5>();
+  ret.mD3DImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
   ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
-  d3d->GetImmediateContext(ret.mD3DImmediateContext.put());
   d3d.as<ID3D10Multithread>()->SetMultithreadProtected(TRUE);
 
   winrt::check_hresult(
@@ -109,15 +110,21 @@ DXResources DXResources::Create() {
       D2D1_DEVICE_CONTEXT_OPTIONS_NONE),
     ret.mD2DDevice.put()));
 
+  winrt::com_ptr<ID2D1DeviceContext> d2dContext;
+  winrt::com_ptr<ID2D1DeviceContext> d2dBackBufferContext;
   winrt::check_hresult(ret.mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ret.mD2DDeviceContext.put()));
-  ret.mD2DDeviceContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dContext.put()));
   winrt::check_hresult(ret.mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ret.mD2DBackBufferDeviceContext.put()));
-  ret.mD2DBackBufferDeviceContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dBackBufferContext.put()));
+  ret.mD2DDeviceContext = d2dContext.as<ID2D1DeviceContext5>();
+  ret.mD2DBackBufferDeviceContext
+    = d2dBackBufferContext.as<ID2D1DeviceContext5>();
+  d2dContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+  d2dBackBufferContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
   // Subpixel antialiasing assumes text is aligned on pixel boundaries;
   // this isn't the case for OpenKneeboard
-  ret.mD2DDeviceContext->SetTextAntialiasMode(
+  d2dContext->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+  d2dBackBufferContext->SetTextAntialiasMode(
     D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
   winrt::check_hresult(DWriteCreateFactory(

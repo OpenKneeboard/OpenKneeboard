@@ -77,8 +77,6 @@ class InterprocessRenderer final
 
   bool mNeedsRepaint = true;
 
-  // TODO: move to DXResources
-  winrt::com_ptr<ID3D11DeviceContext4> mD3DContext;
   winrt::com_ptr<ID3D11Fence> mFence;
   winrt::handle mFenceHandle;
   std::atomic_flag mRendering;

@@ -88,6 +88,8 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
 
   std::vector<SHM::LayerConfig> shmLayers;
 
+  auto ctx = mDXR.mD3DImmediateContext.get();
+
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     auto& layer = mLayers.at(layerIndex);
     auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
@@ -113,14 +115,14 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
         layer.mConfig.mImageHeight,
         1,
       };
-      mD3DContext->CopySubresourceRegion(
+      ctx->CopySubresourceRegion(
         it.mTexture.get(), 0, 0, 0, 0, layerD3D.texture(), 0, &box);
     }
     shmLayers.push_back(layer.mConfig);
   }
 
   const auto seq = mSHM.GetNextSequenceNumber();
-  winrt::check_hresult(mD3DContext->Signal(mFence.get(), seq));
+  winrt::check_hresult(ctx->Signal(mFence.get(), seq));
 
   SHM::Config config {
     .mGlobalInputLayerID = mKneeboard->GetActiveViewForGlobalInput()
@@ -169,9 +171,8 @@ void InterprocessRenderer::Init(
   {
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     dxr.mD3DDevice->GetImmediateContext(ctx.put());
-    mD3DContext = ctx.as<ID3D11DeviceContext4>();
 
-    winrt::check_hresult(dxr.mD3DDevice.as<ID3D11Device5>()->CreateFence(
+    winrt::check_hresult(dxr.mD3DDevice->CreateFence(
       0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
     winrt::check_hresult(mFence->CreateSharedHandle(
       nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, mFenceHandle.put()));
@@ -253,10 +254,9 @@ InterprocessRenderer::~InterprocessRenderer() {
   }
   {
     const std::unique_lock d2dLock(mDXR);
-    auto ctx = mD3DContext;
+    auto ctx = mDXR.mD2DDeviceContext.get();
     ctx->Flush();
     // De-allocate D3D resources while we have the lock
-    mD3DContext = {};
     mLayers = {};
     mFence = {};
   }

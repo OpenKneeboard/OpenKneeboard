@@ -202,10 +202,10 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
     if (mIsHDR) {
       winrt::com_ptr<ID2D1ColorContext1> srgb, scrgb;
-      auto d2d5 = mDXR.mD2DDeviceContext.as<ID2D1DeviceContext5>();
-      d2d5->CreateColorContextFromDxgiColorSpace(
+      auto d2d = mDXR.mD2DDeviceContext.get();
+      d2d->CreateColorContextFromDxgiColorSpace(
         DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709, srgb.put());
-      d2d5->CreateColorContextFromDxgiColorSpace(
+      d2d->CreateColorContextFromDxgiColorSpace(
         DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, scrgb.put());
       winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
         CLSID_D2D1ColorManagement, mD2DColorManagement.put()));
