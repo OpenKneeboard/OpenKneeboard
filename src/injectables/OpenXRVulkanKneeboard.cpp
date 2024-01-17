@@ -166,14 +166,10 @@ void OpenXRVulkanKneeboard::DeviceResources::InitializeD3D11(
 
 OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
   Vulkan::Dispatch* vk,
-  VkDevice vkDevice,
-  VkPhysicalDevice vkPhysicalDevice,
-  const VkAllocationCallbacks* vkAllocator,
-  uint32_t vkQueueFamilyIndex,
-  SHM::D3D11::Renderer::DeviceResources* d3d11DeviceResources,
+  DeviceResources* dr,
   uint32_t textureCount,
   const PixelSize& textureSize) noexcept {
-  auto d3d11Device = d3d11DeviceResources->mD3D11Device.as<ID3D11Device5>();
+  auto d3d11Device = dr->mD3D11Device.get();
 
   std::vector<winrt::com_ptr<ID3D11Texture2D>> d3d11Textures;
   d3d11Textures.reserve(textureCount);
@@ -223,12 +219,12 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
       .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
       .queueFamilyIndexCount = 1,
-      .pQueueFamilyIndices = &vkQueueFamilyIndex,
+      .pQueueFamilyIndices = &dr->mVKQueueFamilyIndex,
       .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
 
     mVKImages.push_back(
-      vk->make_unique<VkImage>(vkDevice, &createInfo, vkAllocator));
+      vk->make_unique<VkImage>(dr->mVKDevice, &createInfo, dr->mVKAllocator));
     auto vkImage = mVKImages.back().get();
 
     VkDeviceMemory memory {};
@@ -243,13 +239,13 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
     };
 
-    vk->GetImageMemoryRequirements2(vkDevice, &info, &memoryRequirements);
+    vk->GetImageMemoryRequirements2(dr->mVKDevice, &info, &memoryRequirements);
 
     VkMemoryWin32HandlePropertiesKHR handleProperties {
       .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
     };
     winrt::check_hresult(vk->GetMemoryWin32HandlePropertiesKHR(
-      vkDevice,
+      dr->mVKDevice,
       VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
       sharedHandle,
       &handleProperties));
@@ -257,7 +253,8 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
     ///// Which memory areas meet those requirements? /////
 
     VkPhysicalDeviceMemoryProperties memoryProperties {};
-    vk->GetPhysicalDeviceMemoryProperties(vkPhysicalDevice, &memoryProperties);
+    vk->GetPhysicalDeviceMemoryProperties(
+      dr->mVKPhysicalDevice, &memoryProperties);
 
     std::optional<uint32_t> memoryTypeIndex;
     for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
@@ -301,7 +298,7 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
     };
 
     check_vkresult(
-      vk->AllocateMemory(vkDevice, &allocInfo, vkAllocator, &memory));
+      vk->AllocateMemory(dr->mVKDevice, &allocInfo, dr->mVKAllocator, &memory));
 
     VkBindImageMemoryInfo bindImageInfo {
       .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
@@ -309,7 +306,7 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       .memory = memory,
     };
 
-    check_vkresult(vk->BindImageMemory2(vkDevice, 1, &bindImageInfo));
+    check_vkresult(vk->BindImageMemory2(dr->mVKDevice, 1, &bindImageInfo));
   }
 
   {
@@ -319,7 +316,7 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       rawPointers.push_back(texture.get());
     }
     mRendererResources = std::make_unique<RendererSwapchainResources>(
-      d3d11DeviceResources,
+      dr->mRendererDeviceResources.get(),
       DXGI_FORMAT_B8G8R8A8_UNORM,
       rawPointers.size(),
       rawPointers.data());
@@ -328,7 +325,7 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
   {
     VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
     mVKCompletionFence
-      = vk->make_unique<VkFence>(vkDevice, &createInfo, vkAllocator);
+      = vk->make_unique<VkFence>(dr->mVKDevice, &createInfo, dr->mVKAllocator);
   }
 
   // 1/3: Create a D3D11 fence...
@@ -345,8 +342,8 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
       .pNext = &timelineCreateInfo,
     };
-    mVKInteropSemaphore
-      = vk->make_unique<VkSemaphore>(vkDevice, &createInfo, vkAllocator);
+    mVKInteropSemaphore = vk->make_unique<VkSemaphore>(
+      dr->mVKDevice, &createInfo, dr->mVKAllocator);
   }
 
   // 3/3: tie them together
@@ -359,7 +356,8 @@ OpenXRVulkanKneeboard::SwapchainResources::InteropResources::InteropResources(
       .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
       .handle = mD3D11InteropFenceHandle.get(),
     };
-    check_vkresult(vk->ImportSemaphoreWin32HandleKHR(vkDevice, &handleInfo));
+    check_vkresult(
+      vk->ImportSemaphoreWin32HandleKHR(dr->mVKDevice, &handleInfo));
   }
 
   dprint("Finished initializing interop");
@@ -464,14 +462,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   }
 
   sr.mInterop = std::make_unique<SwapchainResources::InteropResources>(
-    mVK.get(),
-    dr->mVKDevice,
-    dr->mVKPhysicalDevice,
-    dr->mVKAllocator,
-    dr->mVKQueueFamilyIndex,
-    dr->mRendererDeviceResources.get(),
-    imageCount,
-    size);
+    mVK.get(), dr, imageCount, size);
   sr.mSize = size;
 
   return swapchain;

@@ -129,11 +129,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
       InteropResources() = delete;
       InteropResources(
         Vulkan::Dispatch*,
-        VkDevice,
-        VkPhysicalDevice,
-        const VkAllocationCallbacks*,
-        uint32_t vkQueueFamilyIndex,
-        SHM::D3D11::Renderer::DeviceResources* d3d11DeviceResources,
+        DeviceResources*,
         uint32_t textureCount,
         const PixelSize&) noexcept;
 
