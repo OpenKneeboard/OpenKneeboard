@@ -277,6 +277,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
       TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
       check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
+      TraceLoggingWriteStop(releaseActivity, "xrReleaseSwapchainImage");
 
       for (size_t i = 0; i < cacheKeys.size(); ++i) {
         mRenderCacheKeys[i] = cacheKeys.at(i);
