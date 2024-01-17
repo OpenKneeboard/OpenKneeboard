@@ -61,14 +61,17 @@ SwapchainResources::SwapchainResources(
     .Texture2D = {.MipSlice = 0},
   };
 
-  mD3D11Textures.resize(textureCount);
-  mD3D11RenderTargetViews.resize(textureCount);
+  mBufferResources.reserve(textureCount);
 
   for (size_t i = 0; i < textureCount; ++i) {
+    auto br = std::make_unique<BufferResources>();
+
     auto texture = textures[i];
-    mD3D11Textures[i].copy_from(texture);
+    br->m3D11Texture.copy_from(texture);
     winrt::check_hresult(dr->mD3D11Device->CreateRenderTargetView(
-      texture, &rtvDesc, mD3D11RenderTargetViews[i].put()));
+      texture, &rtvDesc, br->mD3D11RenderTargetView.put()));
+
+    mBufferResources.push_back(std::move(br));
   }
 
   D3D11_TEXTURE2D_DESC colorDesc {};
@@ -92,8 +95,10 @@ void BeginFrame(
   TraceLoggingWriteStart(
     activity, "OpenKneeboard::SHM::D3D11::Renderer::BeginFrame()");
 
+  auto& br = sr->mBufferResources.at(swapchainTextureIndex);
+
   auto ctx = dr->mD3D11ImmediateContext.get();
-  auto rtv = sr->mD3D11RenderTargetViews.at(swapchainTextureIndex).get();
+  auto rtv = br->mD3D11RenderTargetView.get();
 
   ctx->RSSetViewports(1, &sr->mViewport);
   ctx->OMSetDepthStencilState(nullptr, 0);
@@ -110,7 +115,8 @@ void ClearRenderTargetView(
   DeviceResources* dr,
   SwapchainResources* sr,
   uint8_t swapchainTextureIndex) {
-  auto rtv = sr->mD3D11RenderTargetViews.at(swapchainTextureIndex).get();
+  auto rtv = sr->mBufferResources.at(swapchainTextureIndex)
+               ->mD3D11RenderTargetView.get();
   dr->mD3D11ImmediateContext->ClearRenderTargetView(
     rtv, DirectX::Colors::Transparent);
 }

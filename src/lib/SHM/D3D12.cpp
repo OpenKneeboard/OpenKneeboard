@@ -169,9 +169,12 @@ SwapchainResources::SwapchainResources(
     D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
     textureCount);
 
+  mBufferResources.reserve(textureCount);
   for (size_t i = 0; i < textureCount; ++i) {
-    winrt::com_ptr<ID3D12Resource> texture;
-    texture.copy_from(textures[i]);
+    auto br = std::make_unique<BufferResources>();
+
+    br->mD3D12Texture.copy_from(textures[i]);
+    br->mD3D12RenderTargetView = mD3D12RenderTargetViewsHeap->GetCpuHandle(i);
 
     D3D12_RENDER_TARGET_VIEW_DESC desc {
       .Format = renderTargetViewFormat,
@@ -182,14 +185,13 @@ SwapchainResources::SwapchainResources(
       },
     };
     dr->mD3D12Device->CreateRenderTargetView(
-      texture.get(), &desc, mD3D12RenderTargetViewsHeap->GetCpuHandle(i));
+      textures[i], &desc, br->mD3D12RenderTargetView);
 
-    mD3D12Textures.push_back(std::move(texture));
-
-    winrt::com_ptr<ID3D12CommandAllocator> commandAllocator;
     winrt::check_hresult(dr->mD3D12Device->CreateCommandAllocator(
-      D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(commandAllocator.put())));
-    mD3D12CommandAllocators.push_back(std::move(commandAllocator));
+      D3D12_COMMAND_LIST_TYPE_DIRECT,
+      IID_PPV_ARGS(br->mD3D12CommandAllocator.put())));
+
+    mBufferResources.push_back(std::move(br));
   }
 
   {
@@ -266,17 +268,18 @@ void ClearRenderTargetView(
   TraceLoggingWriteStart(
     activity, "OpenKneeboard::SHM::D3D12::ClearRenderTargetView");
 
+  auto br = sr->mBufferResources.at(swapchainTextureIndex).get();
+  const auto& rtv = br->mD3D12RenderTargetView;
+
   winrt::com_ptr<ID3D12GraphicsCommandList> commandList;
   winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
-    sr->mD3D12CommandAllocators.at(swapchainTextureIndex).get(),
+    br->mD3D12CommandAllocator.get(),
     nullptr,
     IID_PPV_ARGS(commandList.put())));
   commandList->RSSetViewports(1, &sr->mViewport);
   commandList->RSSetScissorRects(1, &sr->mScissorRect);
-  auto rtv
-    = sr->mD3D12RenderTargetViewsHeap->GetCpuHandle(swapchainTextureIndex);
   commandList->OMSetRenderTargets(1, &rtv, FALSE, nullptr);
 
   commandList->ClearRenderTargetView(
@@ -302,6 +305,8 @@ void Render(
   TraceLoggingWriteStart(
     activity, "OpenKneeboard::SHM::D3D12::Renderer::Render");
 
+  auto br = sr->mBufferResources.at(swapchainTextureIndex).get();
+
   TraceLoggingWriteTagged(activity, "SignalD3D11Fence");
   const auto fenceValueD3D11Finished = ++dr->mFenceValue;
   winrt::check_hresult(dr->mD3D11ImmediateContext->Signal(
@@ -315,18 +320,17 @@ void Render(
   winrt::check_hresult(dr->mD3D12Device->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
-    sr->mD3D12CommandAllocators.at(swapchainTextureIndex).get(),
+    br->mD3D12CommandAllocator.get(),
     nullptr,
     IID_PPV_ARGS(commandList.put())));
   commandList->RSSetViewports(1, &sr->mViewport);
   commandList->RSSetScissorRects(1, &sr->mScissorRect);
 
-  auto rt
-    = sr->mD3D12RenderTargetViewsHeap->GetCpuHandle(swapchainTextureIndex);
+  const auto& rtv = br->mD3D12RenderTargetView;
   auto depthStencil = dr->mD3D12DepthHeap->GetFirstCpuHandle();
   commandList->ClearDepthStencilView(
     depthStencil, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-  commandList->OMSetRenderTargets(1, &rt, true, &depthStencil);
+  commandList->OMSetRenderTargets(1, &rtv, true, &depthStencil);
   auto srvHeap = shm.GetShaderResourceViewHeap();
   commandList->SetDescriptorHeaps(1, &srvHeap);
 
@@ -383,7 +387,8 @@ void BeginFrame(
   DeviceResources*,
   SwapchainResources* sr,
   uint8_t swapchainTextureIndex) {
-  sr->mD3D12CommandAllocators.at(swapchainTextureIndex)->Reset();
+  sr->mBufferResources.at(swapchainTextureIndex)
+    ->mD3D12CommandAllocator->Reset();
 }
 
 void EndFrame(

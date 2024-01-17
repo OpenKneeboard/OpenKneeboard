@@ -72,8 +72,12 @@ struct SwapchainResources {
 
   D3D11_VIEWPORT mViewport;
 
-  std::vector<winrt::com_ptr<ID3D11Texture2D>> mD3D11Textures;
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mD3D11RenderTargetViews;
+  struct BufferResources {
+    winrt::com_ptr<ID3D11Texture2D> m3D11Texture;
+    winrt::com_ptr<ID3D11RenderTargetView> mD3D11RenderTargetView;
+  };
+
+  std::vector<std::unique_ptr<BufferResources>> mBufferResources;
 };
 
 void BeginFrame(

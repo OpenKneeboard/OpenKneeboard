@@ -117,13 +117,21 @@ struct SwapchainResources {
   D3D12_VIEWPORT mViewport;
   D3D12_RECT mScissorRect;
 
-  std::vector<winrt::com_ptr<ID3D12CommandAllocator>> mD3D12CommandAllocators;
-
-  std::vector<winrt::com_ptr<ID3D12Resource>> mD3D12Textures;
-  std::unique_ptr<DirectX::DescriptorHeap> mD3D12RenderTargetViewsHeap;
   winrt::com_ptr<ID3D12Resource> mD3D12DepthStencilTexture;
 
   std::unique_ptr<DirectX::DX12::SpriteBatch> mDXTK12SpriteBatch;
+
+  struct BufferResources {
+    winrt::com_ptr<ID3D12Resource> mD3D12Texture;
+    D3D12_CPU_DESCRIPTOR_HANDLE mD3D12RenderTargetView;
+
+    winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
+  };
+
+  std::vector<std::unique_ptr<BufferResources>> mBufferResources;
+
+ private:
+  std::unique_ptr<DirectX::DescriptorHeap> mD3D12RenderTargetViewsHeap;
 };
 
 void BeginFrame(
