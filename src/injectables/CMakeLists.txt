@@ -132,6 +132,7 @@ target_link_libraries(
   OpenKneeboard-SHM
   OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-SHM-Client-D3D12
+  OpenKneeboard-SHM-Client-Vulkan
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
   OpenKneeboard-dprint

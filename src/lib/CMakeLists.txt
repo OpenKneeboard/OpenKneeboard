@@ -217,6 +217,21 @@ target_link_libraries(
   ThirdParty::DirectXTK12
 )
 
+ok_add_library(
+  OpenKneeboard-SHM-Client-Vulkan
+  STATIC
+  SHM/Vulkan.cpp
+)
+target_link_libraries(
+  OpenKneeboard-SHM-Client-Vulkan
+  PUBLIC
+  OpenKneeboard-SHM-Client-D3D11
+  OpenKneeboard-Vulkan
+  OpenKneeboard-shims
+  ThirdParty::CppWinRT
+  ThirdParty::VulkanHeaders
+)
+
 ok_add_library(OpenKneeboard-dprint STATIC dprint.cpp)
 target_link_libraries(OpenKneeboard-dprint PUBLIC _libheaders)
 target_link_libraries(OpenKneeboard-dprint
