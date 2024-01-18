@@ -275,8 +275,8 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
       idealSize.mWidth <= TextureWidth && idealSize.mHeight <= TextureHeight) {
       return idealSize;
     }
-    const auto scaleX = idealSize.mWidth / static_cast<float>(TextureWidth);
-    const auto scaleY = idealSize.mHeight / static_cast<float>(TextureHeight);
+    const auto scaleX = static_cast<float>(TextureWidth) / idealSize.mWidth;
+    const auto scaleY = static_cast<float>(TextureHeight) / idealSize.mHeight;
     const auto scale = std::min(scaleX, scaleY);
 
     // Integer scaling gets us the most readable results
