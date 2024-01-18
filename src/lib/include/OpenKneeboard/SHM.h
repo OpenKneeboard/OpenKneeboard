@@ -127,10 +127,18 @@ struct LayerConfig final {
 };
 static_assert(std::is_standard_layout_v<LayerConfig>);
 
-class Impl;
+enum class WriterState;
 
 class Writer final {
  public:
+  struct NextFrameInfo {
+    LONG64 mFenceIn {};
+    LONG64 mFenceOut {};
+    uint8_t mTextureIndex {};
+    PixelSize mTextureSize;
+    std::vector<PixelRect> mLayerLocations;
+  };
+
   Writer();
   ~Writer();
 
@@ -138,19 +146,12 @@ class Writer final {
 
   operator bool() const;
 
-  void Update(
+  NextFrameInfo BeginFrame(uint8_t layerCount) noexcept;
+  void SubmitFrame(
     const Config& config,
     const std::vector<LayerConfig>& layers,
-    HANDLE fence);
-
-  UINT GetNextTextureIndex() const;
-
-  std::wstring GetSharedTextureName(
-    uint8_t layerIndex,
-    uint32_t sequenceNumber);
-
-  uint64_t GetSessionID() const;
-  uint32_t GetNextSequenceNumber() const;
+    HANDLE fence,
+    HANDLE texture);
 
   // "Lockable" C++ named concept: supports std::unique_lock
   void lock();
@@ -158,6 +159,7 @@ class Writer final {
   void unlock();
 
  private:
+  using State = WriterState;
   class Impl;
   std::shared_ptr<Impl> p;
 };
@@ -227,14 +229,17 @@ class Snapshot final {
   State mState;
 };
 
+enum class ReaderState;
+
 class Reader {
  public:
+  using State = ReaderState;
   Reader();
   ~Reader();
 
   operator bool() const;
   /// Do not use for caching - use GetRenderCacheKey instead
-  uint32_t GetFrameCountForMetricsOnly() const;
+  uint64_t GetFrameCountForMetricsOnly() const;
 
   /** Fetch the render cache key, and mark the consumer kind as active if
    * enabled.

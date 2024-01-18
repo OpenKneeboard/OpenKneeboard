@@ -19,30 +19,28 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Pixels.h>
+#include <OpenKneeboard/StateMachine.h>
 
-#include <OpenKneeboard/config.h>
-
-namespace OpenKneeboard::Spriting {
-
-constexpr PixelPoint GetOffset(
-  uint8_t sprite,
-  [[maybe_unused]] uint8_t maxSprites) {
-  return {TextureWidth * sprite, 0};
+namespace OpenKneeboard::SHM {
+enum class ReaderState {
+  Unlocked,
+  TryLock,
+  Locked,
+  CreatingSnapshot,
+};
 }
 
-constexpr PixelSize GetBufferSize(uint8_t maxSprites) noexcept {
-  return {
-    TextureWidth * maxSprites,
-    TextureHeight,
-  };
-}
+namespace OpenKneeboard {
 
-constexpr PixelRect GetRect(uint8_t sprite, uint8_t maxSprites) noexcept {
-  return {
-    GetOffset(sprite, maxSprites),
-    {TextureWidth, TextureHeight},
-  };
-}
+OPENKNEEBOARD_DECLARE_LOCKABLE_STATE_TRANSITIONS(SHM::ReaderState)
 
-}// namespace OpenKneeboard::Spriting
+#define IT(IN, OUT) \
+  OPENKNEEBOARD_DECLARE_STATE_TRANSITION( \
+    SHM::ReaderState::IN, SHM::ReaderState::OUT)
+IT(Locked, CreatingSnapshot)
+IT(CreatingSnapshot, Locked)
+#undef IT
+
+static_assert(lockable_state<SHM::ReaderState>);
+
+}// namespace OpenKneeboard

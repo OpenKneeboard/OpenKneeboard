@@ -17,8 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include "SHM/ReaderState.h"
+#include "SHM/WriterState.h"
+
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
+#include <OpenKneeboard/Spriting.h>
+#include <OpenKneeboard/StateMachine.h>
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/bitflags.h>
@@ -33,6 +38,7 @@
 #include <Windows.h>
 
 #include <bit>
+#include <concepts>
 #include <format>
 #include <random>
 
@@ -51,22 +57,6 @@ static uint64_t CreateSessionID() {
     | randDist(randDevice);
 }
 
-static std::wstring SharedTextureName(
-  uint64_t sessionID,
-  uint8_t layerIndex,
-  uint32_t sequenceNumber) {
-  return std::format(
-    L"Local\\{}-{}.{}.{}.{}--texture-s{:x}-l{}-b{}",
-    ProjectNameW,
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build,
-    sessionID,
-    layerIndex,
-    sequenceNumber % TextureCount);
-}
-
 enum class HeaderFlags : ULONG {
   FEEDER_ATTACHED = 1 << 0,
 };
@@ -79,13 +69,16 @@ struct FrameMetadata final {
   static_assert(Magic.size() == sizeof(uint64_t));
   uint64_t mMagic = *reinterpret_cast<const uint64_t*>(Magic.data());
 
-  uint32_t mSequenceNumber = 0;
+  uint64_t mFrameNumber = 0;
   uint64_t mSessionID = CreateSessionID();
   HeaderFlags mFlags;
   Config mConfig;
 
   DWORD mFeederProcessID {};
   HANDLE mFence {};
+  LONG64 mFenceValue {};
+
+  HANDLE mTexture {};
 
   uint8_t mLayerCount = 0;
   LayerConfig mLayers[MaxLayers];
@@ -179,38 +172,41 @@ bool IPCLayerTextureReadResources::Populate(
   uint64_t sessionID,
   uint8_t layerIndex,
   uint32_t sequenceNumber) {
-  if (mTexture) {
-    return true;
-  }
+  return false;
+  /* FIXME
+ if (mTexture) {
+   return true;
+ }
 
-  winrt::com_ptr<ID3D11Device> device;
-  ctx->GetDevice(device.put());
+ winrt::com_ptr<ID3D11Device> device;
+ ctx->GetDevice(device.put());
 
-  auto textureName = SharedTextureName(sessionID, layerIndex, sequenceNumber);
+ auto textureName = SharedTextureName(sessionID, layerIndex, sequenceNumber);
 
-  ID3D11Device1* d1 = nullptr;
-  device->QueryInterface(&d1);
-  if (!d1) {
-    return false;
-  }
+ ID3D11Device1* d1 = nullptr;
+ device->QueryInterface(&d1);
+ if (!d1) {
+   return false;
+ }
 
-  auto result = d1->OpenSharedResourceByName(
-    textureName.c_str(),
-    DXGI_SHARED_RESOURCE_READ,
-    IID_PPV_ARGS(mTexture.put()));
-  if (!mTexture) {
-    dprintf(
-      L"Failed to open shared texture {}: {:#x}",
-      textureName,
-      std::bit_cast<uint32_t>(result));
-    return false;
-  }
-  const auto debugName = std::format(
-    "OKB-SHM-Client-{}-{}-{}", sessionID, layerIndex, sequenceNumber);
-  mTexture->SetPrivateData(
-    WKPDID_D3DDebugObjectName, debugName.size(), debugName.data());
-  dprintf(L"Opened shared texture {}", textureName);
-  return true;
+ auto result = d1->OpenSharedResourceByName(
+   textureName.c_str(),
+   DXGI_SHARED_RESOURCE_READ,
+   IID_PPV_ARGS(mTexture.put()));
+ if (!mTexture) {
+   dprintf(
+     L"Failed to open shared texture {}: {:#x}",
+     textureName,
+     std::bit_cast<uint32_t>(result));
+   return false;
+ }
+ const auto debugName = std::format(
+   "OKB-SHM-Client-{}-{}-{}", sessionID, layerIndex, sequenceNumber);
+ mTexture->SetPrivateData(
+   WKPDID_D3DDebugObjectName, debugName.size(), debugName.data());
+ dprintf(L"Opened shared texture {}", textureName);
+ return true;
+ */
 }
 
 winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
@@ -256,7 +252,7 @@ Snapshot::Snapshot(
   });
 
   TraceLoggingWriteTagged(activity, "WaitForFence");
-  winrt::check_hresult(ctx->Wait(fence, header.mSequenceNumber));
+  winrt::check_hresult(ctx->Wait(fence, header.mFrameNumber));
 
   const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
   for (uint8_t i = 0; i < header.mLayerCount; ++i) {
@@ -307,7 +303,7 @@ uint64_t Snapshot::GetSequenceNumberForDebuggingOnly() const {
   if (!this->IsValid()) {
     return 0;
   }
-  return mHeader->mSequenceNumber;
+  return mHeader->mFrameNumber;
 }
 
 Config Snapshot::GetConfig() const {
@@ -348,6 +344,12 @@ bool Snapshot::IsValid() const {
   return mState == State::Valid;
 }
 
+template <lockable_state State>
+constexpr bool is_valid_impl_exit_state(State state) noexcept {
+  return state == State::Unlocked;
+}
+
+template <lockable_state State, State InitialState = State::Unlocked>
 class Impl {
  public:
   winrt::handle mFileHandle;
@@ -391,8 +393,8 @@ class Impl {
 
   ~Impl() {
     UnmapViewOfFile(mMapping);
-    if (mHaveLock) {
-      dprint("Closing SHM while holding lock!");
+    if (!is_valid_impl_exit_state(mState.Get())) {
+      dprint("Closing SHM with invalid state");
       OPENKNEEBOARD_BREAK;
       std::terminate();
     }
@@ -402,16 +404,15 @@ class Impl {
     return mMapping;
   }
 
-  bool HaveLock() const {
-    return mHaveLock;
+  template <State in, State out>
+  void Transition() {
+    mState.Transition<in, out>();
   }
 
   // "Lockable" C++ named concept: supports std::unique_lock
 
   void lock() {
-    if (mHaveLock) {
-      throw std::logic_error("Acquiring a lock twice");
-    }
+    mState.Transition<State::Unlocked, State::TryLock>();
     TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "SHM::Impl::lock()");
 
@@ -424,6 +425,7 @@ class Impl {
         *mHeader = {};
         break;
       default:
+        mState.Transition<State::TryLock, State::Unlocked>();
         TraceLoggingWriteStop(
           activity, "SHM::Impl::lock()", TraceLoggingValue(result, "Error"));
         dprintf(
@@ -432,15 +434,14 @@ class Impl {
         OPENKNEEBOARD_BREAK;
         return;
     }
+
+    mState.Transition<State::TryLock, State::Locked>();
     TraceLoggingWriteStop(
       activity, "SHM::Impl::lock()", TraceLoggingValue("Success", "Result"));
-    mHaveLock = true;
   }
 
   bool try_lock() {
-    if (mHaveLock) {
-      throw std::logic_error("Acquiring a lock twice");
-    }
+    mState.Transition<State::Unlocked, State::TryLock>();
     TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "SHM::Impl::try_lock()");
 
@@ -449,10 +450,15 @@ class Impl {
       case WAIT_OBJECT_0:
         // success
         break;
+      case WAIT_ABANDONED:
+        *mHeader = {};
+        break;
       case WAIT_TIMEOUT:
         // expected in try_lock()
+        mState.Transition<State::TryLock, State::Unlocked>();
         return false;
       default:
+        mState.Transition<State::TryLock, State::Unlocked>();
         TraceLoggingWriteStop(
           activity,
           "SHM::Impl::try_lock()",
@@ -463,7 +469,8 @@ class Impl {
         OPENKNEEBOARD_BREAK;
         return false;
     }
-    mHaveLock = true;
+
+    mState.Transition<State::TryLock, State::Locked>();
     TraceLoggingWriteStop(
       activity,
       "SHM::Impl::try_lock()",
@@ -472,25 +479,27 @@ class Impl {
   }
 
   void unlock() {
-    if (!mHaveLock) {
-      throw std::logic_error("Can't release a lock we don't hold");
-    }
+    mState.Transition<State::Locked, State::Unlocked>();
     TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "SHM::Impl::unlock()");
     const auto ret = ReleaseMutex(mMutexHandle.get());
     TraceLoggingWriteStop(
       activity, "SHM::Impl::unlock()", TraceLoggingValue(ret, "Result"));
-    mHaveLock = false;
   }
 
- private:
-  bool mHaveLock = false;
+ protected:
+  StateMachine<State> mState = InitialState;
 };
 
-class Writer::Impl : public SHM::Impl {
+template <>
+constexpr bool is_valid_impl_exit_state(WriterState state) noexcept {
+  return state == WriterState::Detached;
+}
+
+class Writer::Impl : public SHM::Impl<WriterState> {
  public:
-  using SHM::Impl::Impl;
-  bool mHaveFed = false;
+  using SHM::Impl<WriterState, WriterState::Unlocked>::Impl;
+
   DWORD mProcessID = GetCurrentProcessId();
 };
 
@@ -509,13 +518,12 @@ Writer::Writer() {
 }
 
 void Writer::Detach() {
-  if (!p->HaveLock()) {
-    OPENKNEEBOARD_BREAK;
-    throw std::logic_error("Need lock to detach");
-  }
+  p->Transition<State::Unlocked, State::Detaching>();
 
   p->mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
   FlushViewOfFile(p->mMapping, NULL);
+
+  p->Transition<State::Detaching, State::Detached>();
 }
 
 Writer::~Writer() {
@@ -523,10 +531,27 @@ Writer::~Writer() {
   this->Detach();
 }
 
-std::wstring Writer::GetSharedTextureName(
-  uint8_t layerIndex,
-  uint32_t sequenceNumber) {
-  return SharedTextureName(this->GetSessionID(), layerIndex, sequenceNumber);
+Writer::NextFrameInfo Writer::BeginFrame(
+  [[maybe__unused]] uint8_t requestedLayerCount) noexcept {
+  p->Transition<State::Locked, State::FrameInProgress>();
+
+  const uint8_t layerCount = MaxLayers;
+  const auto fenceOut = InterlockedIncrement64(&p->mHeader->mFenceValue);
+  const auto fenceIn = fenceOut - 1;
+
+  std::vector<PixelRect> layers;
+  layers.reserve(layerCount);
+  for (uint8_t i = 0; i < MaxLayers; ++i) {
+    layers.push_back(Spriting::GetRect(i, layerCount));
+  }
+
+  return NextFrameInfo {
+    .mFenceIn = fenceIn,
+    .mFenceOut = fenceOut,
+    .mTextureIndex
+    = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % TextureCount),
+    .mLayerLocations = layers,
+  };
 }
 
 void Writer::lock() {
@@ -541,19 +566,7 @@ bool Writer::try_lock() {
   return p->try_lock();
 }
 
-UINT Writer::GetNextTextureIndex() const {
-  return (p->mHeader->mSequenceNumber + 1) % TextureCount;
-}
-
-uint64_t Writer::GetSessionID() const {
-  return p->mHeader->mSessionID;
-}
-
-uint32_t Writer::GetNextSequenceNumber() const {
-  return p->mHeader->mSequenceNumber + 1;
-}
-
-class Reader::Impl : public SHM::Impl {
+class Reader::Impl : public SHM::Impl<ReaderState> {
  public:
   std::array<IPCTextureReadResources, TextureCount> mResources;
 };
@@ -686,10 +699,10 @@ Snapshot Reader::MaybeGetUncached(
   ID3D11Fence* fence,
   const LayersTextureCache& textures,
   ConsumerKind kind) const {
-  if (!p->HaveLock()) {
-    dprint("Can't get without lock");
-    throw std::logic_error("Reader::MaybeGet() without lock");
-  }
+  const auto transitions = make_scoped_state_transitions<
+    State::Locked,
+    State::CreatingSnapshot,
+    State::Locked>(p);
 
   if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
     traceprint(
@@ -700,8 +713,8 @@ Snapshot Reader::MaybeGetUncached(
     return {Snapshot::incorrect_kind};
   }
 
-  auto& r = p->mResources.at(p->mHeader->mSequenceNumber % TextureCount);
-  if (!r.Populate(ctx, p->mHeader->mSessionID, p->mHeader->mSequenceNumber)) {
+  auto& r = p->mResources.at(p->mHeader->mFrameNumber % TextureCount);
+  if (!r.Populate(ctx, p->mHeader->mSessionID, p->mHeader->mFrameNumber)) {
     return {nullptr};
   }
 
@@ -720,16 +733,19 @@ size_t Reader::GetRenderCacheKey(ConsumerKind kind) {
   return p->mHeader->GetRenderCacheKey();
 }
 
-void Writer::Update(
+void Writer::SubmitFrame(
   const Config& config,
   const std::vector<LayerConfig>& layers,
-  HANDLE fence) {
+  HANDLE fence,
+  HANDLE texture) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
-  if (!p->HaveLock()) {
-    throw std::logic_error("Attempted to update SHM without a lock");
-  }
+
+  const auto transitions = make_scoped_state_transitions<
+    State::FrameInProgress,
+    State::SubmittingFrame,
+    State::Locked>(p);
 
   if (layers.size() > MaxLayers) {
     throw std::logic_error(std::format(
@@ -743,7 +759,7 @@ void Writer::Update(
   }
 
   p->mHeader->mConfig = config;
-  p->mHeader->mSequenceNumber++;
+  p->mHeader->mFrameNumber++;
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
   p->mHeader->mLayerCount = static_cast<uint8_t>(layers.size());
   p->mHeader->mFeederProcessID = p->mProcessID;
@@ -765,14 +781,14 @@ size_t FrameMetadata::GetRenderCacheKey() const {
   // If adding more data, it either needs to be random,
   // or need something like boost::hash_combine()
   std::hash<uint64_t> HashUI64;
-  return HashUI64(mSessionID) ^ HashUI64(mSequenceNumber);
+  return HashUI64(mSessionID) ^ HashUI64(mFrameNumber);
 }
 
-uint32_t Reader::GetFrameCountForMetricsOnly() const {
+uint64_t Reader::GetFrameCountForMetricsOnly() const {
   if (!(p && p->mHeader)) {
     return {};
   }
-  return p->mHeader->mSequenceNumber;
+  return p->mHeader->mFrameNumber;
 }
 
 ConsumerPattern::ConsumerPattern() = default;

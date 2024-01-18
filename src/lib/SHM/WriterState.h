@@ -19,30 +19,33 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Pixels.h>
+#include <OpenKneeboard/StateMachine.h>
 
-#include <OpenKneeboard/config.h>
-
-namespace OpenKneeboard::Spriting {
-
-constexpr PixelPoint GetOffset(
-  uint8_t sprite,
-  [[maybe_unused]] uint8_t maxSprites) {
-  return {TextureWidth * sprite, 0};
+namespace OpenKneeboard::SHM {
+enum class WriterState {
+  Unlocked,
+  TryLock,
+  Locked,
+  FrameInProgress,
+  SubmittingFrame,
+  Detaching,
+  Detached,
+};
 }
 
-constexpr PixelSize GetBufferSize(uint8_t maxSprites) noexcept {
-  return {
-    TextureWidth * maxSprites,
-    TextureHeight,
-  };
-}
+namespace OpenKneeboard {
 
-constexpr PixelRect GetRect(uint8_t sprite, uint8_t maxSprites) noexcept {
-  return {
-    GetOffset(sprite, maxSprites),
-    {TextureWidth, TextureHeight},
-  };
-}
+OPENKNEEBOARD_DECLARE_LOCKABLE_STATE_TRANSITIONS(SHM::WriterState)
+#define IT(IN, OUT) \
+  OPENKNEEBOARD_DECLARE_STATE_TRANSITION( \
+    SHM::WriterState::IN, SHM::WriterState::OUT)
+IT(Locked, FrameInProgress)
+IT(FrameInProgress, SubmittingFrame)
+IT(SubmittingFrame, Locked)
+IT(Unlocked, Detaching)
+IT(Detaching, Detached)
+#undef IT
 
-}// namespace OpenKneeboard::Spriting
+static_assert(lockable_state<SHM::WriterState>);
+
+}// namespace OpenKneeboard
