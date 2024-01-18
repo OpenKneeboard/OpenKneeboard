@@ -199,8 +199,8 @@ void InterprocessRenderer::Init(
         D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED);
       winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
         resources.mTexture.get(), nullptr, resources.mTextureRTV.put()));
-      auto textureName
-        = SHM::SharedTextureName(sessionID, layerIndex, bufferIndex);
+      const auto textureName
+        = mSHM.GetSharedTextureName(layerIndex, bufferIndex);
       winrt::check_hresult(
         resources.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
           nullptr,

@@ -18,24 +18,29 @@
  * USA.
  */
 #define _USE_MATH_DEFINES
-#include <D2D1.h>
-#include <D3d11.h>
-#include <DirectXTK/PostProcess.h>
 #include <OpenKneeboard/ConsoleLoopCondition.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SteamVRKneeboard.h>
+
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
-#include <Windows.h>
-#include <d3d11_4.h>
-#include <dwrite.h>
-#include <dxgi1_2.h>
+
 #include <shims/winrt/base.h>
+
+#include <Windows.h>
+
+#include <DirectXTK/PostProcess.h>
 
 #include <cmath>
 #include <thread>
+
+#include <D2D1.h>
+#include <D3d11.h>
+#include <d3d11_4.h>
+#include <dwrite.h>
+#include <dxgi1_2.h>
 
 using namespace OpenKneeboard;
 
@@ -170,8 +175,7 @@ int main() {
         bufferIt.mTexture.get(), nullptr, bufferIt.mTextureRTV.put()));
 
       HANDLE sharedHandle = INVALID_HANDLE_VALUE;
-      auto textureName
-        = SHM::SharedTextureName(shm.GetSessionID(), layerIndex, bufferIndex);
+      auto textureName = shm.GetSharedTextureName(layerIndex, bufferIndex);
       dprintf(L"Creating shared handle {}", textureName);
       winrt::check_hresult(
         bufferIt.mTexture.as<IDXGIResource1>()->CreateSharedHandle(

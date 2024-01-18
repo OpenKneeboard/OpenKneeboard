@@ -75,11 +75,6 @@ class LayerTextureCache {
 using LayersTextureCache
   = std::array<std::shared_ptr<LayerTextureCache>, MaxLayers>;
 
-std::wstring SharedTextureName(
-  uint64_t sessionID,
-  uint8_t layerIndex,
-  uint32_t sequenceNumber);
-
 constexpr UINT DEFAULT_D3D11_BIND_FLAGS
   = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 constexpr UINT DEFAULT_D3D11_MISC_FLAGS = 0;
@@ -149,6 +144,10 @@ class Writer final {
     HANDLE fence);
 
   UINT GetNextTextureIndex() const;
+
+  std::wstring GetSharedTextureName(
+    uint8_t layerIndex,
+    uint32_t sequenceNumber);
 
   uint64_t GetSessionID() const;
   uint32_t GetNextSequenceNumber() const;

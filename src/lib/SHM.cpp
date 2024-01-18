@@ -51,6 +51,22 @@ static uint64_t CreateSessionID() {
     | randDist(randDevice);
 }
 
+static std::wstring SharedTextureName(
+  uint64_t sessionID,
+  uint8_t layerIndex,
+  uint32_t sequenceNumber) {
+  return std::format(
+    L"Local\\{}-{}.{}.{}.{}--texture-s{:x}-l{}-b{}",
+    ProjectNameW,
+    Version::Major,
+    Version::Minor,
+    Version::Patch,
+    Version::Build,
+    sessionID,
+    layerIndex,
+    sequenceNumber % TextureCount);
+}
+
 enum class HeaderFlags : ULONG {
   FEEDER_ATTACHED = 1 << 0,
 };
@@ -170,8 +186,7 @@ bool IPCLayerTextureReadResources::Populate(
   winrt::com_ptr<ID3D11Device> device;
   ctx->GetDevice(device.put());
 
-  auto textureName
-    = SHM::SharedTextureName(sessionID, layerIndex, sequenceNumber);
+  auto textureName = SharedTextureName(sessionID, layerIndex, sequenceNumber);
 
   ID3D11Device1* d1 = nullptr;
   device->QueryInterface(&d1);
@@ -196,22 +211,6 @@ bool IPCLayerTextureReadResources::Populate(
     WKPDID_D3DDebugObjectName, debugName.size(), debugName.data());
   dprintf(L"Opened shared texture {}", textureName);
   return true;
-}
-
-std::wstring SharedTextureName(
-  uint64_t sessionID,
-  uint8_t layerIndex,
-  uint32_t sequenceNumber) {
-  return std::format(
-    L"Local\\{}-{}.{}.{}.{}--texture-s{:x}-l{}-b{}",
-    ProjectNameW,
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build,
-    sessionID,
-    layerIndex,
-    sequenceNumber % TextureCount);
 }
 
 winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
@@ -522,6 +521,12 @@ void Writer::Detach() {
 Writer::~Writer() {
   std::unique_lock lock(*this);
   this->Detach();
+}
+
+std::wstring Writer::GetSharedTextureName(
+  uint8_t layerIndex,
+  uint32_t sequenceNumber) {
+  return SharedTextureName(this->GetSessionID(), layerIndex, sequenceNumber);
 }
 
 void Writer::lock() {
