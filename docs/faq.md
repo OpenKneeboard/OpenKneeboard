@@ -56,3 +56,31 @@ If you want to quickly switch between intentionally different positions (for exa
 Open Settings -> VR -> Size, then increase "kneeboard width limit"; you may want to set it to a very high value (e.g. 10 meters), in which case the size will still be limited by the vertical height and aspect ratio.
 
 The downside of increasing this limit is that the kneeboard is likely to interfere with the cockpit and controls.
+
+## How do I get the best visual quality or the most readable text?
+
+If you have a non-image source (for example, a Word document, spreadsheet, or so on), export it directly as PDF, or use 'Print to PDF'; this will get the best quality. If you only have an image, do not convert it to PDF - this will lower the quality.
+
+For images, if the kneeboard - including OpenKneeboard's header and footer - is larger than 2048x2048 pixels or (when non-VR is active) the configured maximum on-screen size, it will be resized to fit, which will lower the quality.
+
+To give space for header, footer, bookmarks bar etc, aim for any images to have heights and widths that are less than 1600px for VR, or 100px less than the configured maximum size for non-VR.
+
+These guidelines are for new images; in general, resizing existing images will lower the quality compared to letting OpenKneeboard resize the image as needed. If you do choose to resize images, you will usually get the most readable text and clearest lines if you divide the number of pixels by a whole number. For example, if you have a 3000x3000px image, a half-sized version (1500x1500px) will usually be more readable than resizing to 1900x1900px, despite 1900x1900 being higher resolution.
+
+This is because when you divide the size by a whole number, each original pixel is entirely within (part of) one pixel in the resized image. On the other hand, if you for example resize a 4x4 image to 3x3, the original second pixel will now be part of both the first and second pixels in the resized image, which will make text and lines blurry:
+
+Original image:
+
+![A 4x4 image with a vertical black line in the second column](resize-4x4.png)
+
+Resized to 2x2 (half size):
+
+![A 2x2 image - there is a grey vertical line in the first column](resize-2x2.png)
+
+While the contrast is reduced because of merging with the pixel on the left, the line still has a solid border and is 1px wide.
+
+Resized to 3x3 (75%):
+
+![A 3x3 image - there is a light grey vertical line in the first column, and a dark grey in the second column](resize-3x3.png)
+
+The vertical line now straddles two pixels, with a gradient between them; this results in blurry text and lines.
