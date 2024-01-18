@@ -271,16 +271,19 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
 
   const auto idealSize = metrics.mPreferredSize.mPixelSize;
   if (metrics.mPreferredSize.mScalingKind == ScalingKind::Bitmap) {
-    // Integer scaling to fit
-    const auto scaleX
-      = std::ceilf(idealSize.mWidth / static_cast<float>(TextureWidth));
-    const auto scaleY
-      = std::ceilf(idealSize.mHeight / static_cast<float>(TextureHeight));
-    const auto scale = static_cast<uint32_t>(std::min(scaleX, scaleY));
+    if (
+      idealSize.mWidth <= TextureWidth && idealSize.mHeight <= TextureHeight) {
+      return idealSize;
+    }
+    const auto scaleX = idealSize.mWidth / static_cast<float>(TextureWidth);
+    const auto scaleY = idealSize.mHeight / static_cast<float>(TextureHeight);
+    const auto scale = std::min(scaleX, scaleY);
 
+    // Integer scaling gets us the most readable results
+    const auto divisor = static_cast<uint32_t>(std::ceil(1 / scale));
     return {
-      idealSize.mWidth * scale,
-      idealSize.mHeight * scale,
+      idealSize.mWidth / divisor,
+      idealSize.mHeight / divisor,
     };
   }
 
