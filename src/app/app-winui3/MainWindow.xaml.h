@@ -101,6 +101,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget OnTabChanged() noexcept;
   winrt::fire_and_forget OnTabsChanged();
   winrt::fire_and_forget OnLoaded();
+  winrt::Windows::Foundation::IAsyncAction ShowSelfElevationWarning();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
 

@@ -261,7 +261,7 @@ winrt::fire_and_forget MainWindow::CheckForElevatedConsumer() {
   ContentDialog dialog;
   dialog.XamlRoot(Navigation().XamlRoot());
 
-  dialog.Title(box_value(to_hstring(_(L"Game running as administrator"))));
+  dialog.Title(box_value(to_hstring(_(L"Game is running as administrator"))));
   dialog.Content(box_value(message));
   dialog.PrimaryButtonText(_(L"OK"));
   dialog.DefaultButton(ContentDialogButton::Primary);
@@ -316,7 +316,29 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
     gKneeboard->GetGamesList()->StartInjector();
   }
   co_await mUIThread;
+  co_await ShowSelfElevationWarning();
   co_await CheckAllDCSHooks(xamlRoot);
+}
+
+winrt::Windows::Foundation::IAsyncAction
+MainWindow::ShowSelfElevationWarning() {
+  if (!IsElevated()) {
+    co_return;
+  }
+
+  ContentDialog dialog;
+  dialog.XamlRoot(Navigation().XamlRoot());
+  dialog.Title(
+    box_value(to_hstring(_(L"OpenKneeboard is running as administrator"))));
+  dialog.Content(box_value(to_hstring(
+    _(L"OpenKneeboard is running elevated; this is very likely to cause "
+      L"problems.\n\nIt is STRONGLY recommended to run both OpenKneeboard and "
+      L"the games with normal permissions.\n\nRunning OpenKneeboard as "
+      L"administrator is unsupported;\nDO NOT REPORT ANY BUGS."))));
+  dialog.PrimaryButtonText(to_hstring(_(L"OK")));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  co_await dialog.ShowAsync();
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
@@ -328,14 +350,21 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
     "PID\t{}\n"
     "HWND\t{}\n"
     "Mailslot\t{}\n"
-    "StartTime\t{}\n",
+    "StartTime\t{}\n"
+    "Elevated\t{}\n",
     GetCurrentProcessId(),
     reinterpret_cast<uint64_t>(mHwnd),
     to_utf8(GameEvent::GetMailslotPath()),
-    std::chrono::system_clock::now())
+    std::chrono::system_clock::now(),
+    IsElevated())
     << std::endl;
 
   if (!uncleanShutdown) {
+    co_return;
+  }
+
+  if (IsElevated()) {
+    dprint("Ignoring unclean shutdown because running as administrator");
     co_return;
   }
 
