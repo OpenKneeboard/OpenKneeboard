@@ -42,6 +42,8 @@ struct ActiveConsumers final {
   T NotVROrViewer() const;
   T Any() const;
 
+  DWORD mElevatedConsumerProcessID {};
+
   PixelSize mNonVRPixelSize {};
 
   static void Clear();

@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
 
 #include <OpenKneeboard/config.h>
@@ -107,6 +108,15 @@ void ActiveConsumers::Set(ConsumerKind consumer) {
   if (!p) {
     return;
   }
+
+  static bool sHaveCheckedElevation {false};
+  if (!sHaveCheckedElevation) {
+    if (IsElevated()) {
+      p->mElevatedConsumerProcessID = GetCurrentProcessId();
+    }
+    sHaveCheckedElevation = true;
+  }
+
   const auto now = Clock::now();
   switch (consumer) {
     case ConsumerKind::SteamVR:

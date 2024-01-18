@@ -83,6 +83,9 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::Windows::Foundation::IAsyncAction mFrameLoop {nullptr};
   bool mSwitchingTabsFromNavSelection = false;
 
+  // Used to track whether or not we've shown an elevation warning
+  DWORD mElevatedConsumerProcessID {};
+
   void Show();
 
   // Used instead of a timer so there is always a positive amount
@@ -100,6 +103,8 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget OnLoaded();
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
+
+  winrt::fire_and_forget CheckForElevatedConsumer();
 
   winrt::fire_and_forget
   RenameBookmark(std::shared_ptr<ITab>, Bookmark, winrt::hstring title);

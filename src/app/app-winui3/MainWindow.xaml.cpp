@@ -39,6 +39,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/LaunchURI.h>
+#include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/Win32.h>
@@ -216,9 +217,62 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
   co_return;
 }
 
+winrt::fire_and_forget MainWindow::CheckForElevatedConsumer() {
+  if (IsElevated()) {
+    co_return;
+  }
+
+  const auto pid = SHM::ActiveConsumers::Get().mElevatedConsumerProcessID;
+  if (!pid) {
+    co_return;
+  }
+  if (pid == mElevatedConsumerProcessID) {
+    co_return;
+  }
+
+  mElevatedConsumerProcessID = pid;
+
+  co_await winrt::resume_background();
+
+  std::filesystem::path path;
+  {
+    winrt::handle handle {
+      OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid)};
+    if (!handle) {
+      co_return;
+    }
+
+    wchar_t buf[MAX_PATH];
+    auto size = static_cast<DWORD>(std::size(buf));
+    if (!QueryFullProcessImageNameW(handle.get(), 0, buf, &size)) {
+      co_return;
+    }
+    path = std::wstring_view {buf, size};
+  }
+
+  co_await mUIThread;
+
+  const auto message = std::format(
+    _(L"'{}' (process {}) is running elevated; this WILL cause problems.\n\nIt "
+      L"is STRONGLY recommended that you do not run games elevated."),
+    path.filename().wstring(),
+    pid);
+
+  ContentDialog dialog;
+  dialog.XamlRoot(Navigation().XamlRoot());
+
+  dialog.Title(box_value(to_hstring(_(L"Game running as administrator"))));
+  dialog.Content(box_value(message));
+  dialog.PrimaryButtonText(_(L"OK"));
+  dialog.DefaultButton(ContentDialogButton::Primary);
+
+  co_await dialog.ShowAsync();
+}
+
 void MainWindow::FrameTick() {
   TraceLoggingActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "FrameTick");
+  this->CheckForElevatedConsumer();
   {
     std::shared_lock kbLock(*gKneeboard);
     TraceLoggingWriteTagged(activity, "Kneeboard locked");

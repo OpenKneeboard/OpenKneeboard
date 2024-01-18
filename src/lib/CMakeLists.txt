@@ -178,6 +178,7 @@ target_link_libraries(
   PUBLIC
   _libheaders
   OpenKneeboard-config
+  OpenKneeboard-Elevation
 )
 
 ok_add_library(
