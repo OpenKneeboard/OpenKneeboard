@@ -23,6 +23,8 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
 
+#include <thread>
+
 // clang-format off
 #include <shims/winrt/base.h>
 #include <shellapi.h>
@@ -49,10 +51,15 @@ bool IsElevated(HANDLE process) noexcept {
 }
 
 bool IsElevated() noexcept {
-  return IsElevated(GetCurrentProcess());
+  static bool sRet;
+  static std::once_flag sOnceFlag;
+  std::call_once(sOnceFlag, [pValue = &sRet]() {
+    *pValue = IsElevated(GetCurrentProcess());
+  });
+  return sRet;
 }
 
-bool IsShellElevated() noexcept {
+static bool IsShellElevatedImpl() noexcept {
   HWND shellWindow {GetShellWindow()};
   DWORD processID {};
 
@@ -68,6 +75,14 @@ bool IsShellElevated() noexcept {
   }
   return IsElevated(process.get());
 };
+
+bool IsShellElevated() noexcept {
+  static bool sRet;
+  static std::once_flag sOnceFlag;
+  std::call_once(
+    sOnceFlag, [pRet = &sRet]() { *pRet = IsShellElevatedImpl(); });
+  return sRet;
+}
 
 DesiredElevation GetDesiredElevation() noexcept {
   constexpr DesiredElevation defaultValue {
