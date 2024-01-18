@@ -19,6 +19,8 @@
  */
 #include "OculusKneeboard.h"
 
+#include <OpenKneeboard/Spriting.h>
+
 #include <OpenKneeboard/dprint.h>
 
 // clang-format off
@@ -140,8 +142,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
 
   if (!mSwapchain) [[unlikely]] {
-    mSwapchain = mRenderer->CreateSwapChain(
-      session, {TextureWidth * MaxLayers, TextureHeight});
+    mSwapchain
+      = mRenderer->CreateSwapChain(session, Spriting::GetBufferSize(MaxLayers));
     if (!mSwapchain) {
       dprint("Failed to make an OVR swapchain");
       OPENKNEEBOARD_BREAK;
@@ -168,7 +170,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     SHM::LayerSprite sprite {
       .mLayerIndex = layerIndex,
       .mDestRect = {
-        {layerIndex * TextureWidth, 0},
+        Spriting::GetOffset(layerIndex, MaxLayers),
         {layer.mImageWidth, layer.mImageHeight},
       },
       .mOpacity = params.mKneeboardOpacity,

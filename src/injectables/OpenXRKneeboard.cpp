@@ -26,6 +26,7 @@
 #include "OpenXRVulkanKneeboard.h"
 
 #include <OpenKneeboard/Elevation.h>
+#include <OpenKneeboard/Spriting.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -178,10 +179,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
   uint8_t topMost = layerCount - 1;
 
   if (!mSwapchain) {
-    PixelSize size {
-      TextureWidth * MaxLayers,
-      TextureHeight,
-    };
+    const auto size = Spriting::GetBufferSize(MaxLayers);
+
     mSwapchain = this->CreateSwapchain(session, size, config.mVR.mQuirks);
     if (!mSwapchain) {
       dprint("Failed to create swapchain");
@@ -216,7 +215,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     sprites.push_back(SHM::LayerSprite {
       .mLayerIndex = layerIndex,
       .mDestRect = {
-        {layerIndex* TextureWidth, 0},
+        Spriting::GetOffset(layerIndex, MaxLayers),
         {layer->mImageWidth, layer->mImageHeight},
       },
       .mOpacity = params.mKneeboardOpacity,
