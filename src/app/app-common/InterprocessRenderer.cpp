@@ -122,7 +122,11 @@ void InterprocessRenderer::SubmitFrame(
 
   auto fence = destResources->mFence.get();
   {
-    OPENKNEEBOARD_TraceLoggingScope("CopyFromCanvas");
+    OPENKNEEBOARD_TraceLoggingScope(
+      "CopyFromCanvas",
+      TraceLoggingValue(ipcTextureInfo.mTextureIndex, "TextureIndex"),
+      TraceLoggingValue(ipcTextureInfo.mFenceIn, "FenceIn"),
+      TraceLoggingValue(ipcTextureInfo.mFenceOut, "FenceOut"));
     winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
     ctx->CopySubresourceRegion(
       destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
@@ -235,6 +239,7 @@ InterprocessRenderer::GetIPCTextureResources(
     0.0f,
     1.0f,
   };
+  ret.mTextureSize = size;
 
   return &ret;
 }
@@ -353,6 +358,7 @@ void InterprocessRenderer::RenderNow() noexcept {
     OPENKNEEBOARD_BREAK;
     return;
   }
+
   const scope_guard markDone([this]() { mRendering.clear(); });
 
   OPENKNEEBOARD_TraceLoggingScopedActivity(
