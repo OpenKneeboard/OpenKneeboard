@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/dprint.h>
+
 #include <concepts>
 #include <format>
 #include <memory>
@@ -31,6 +33,13 @@ namespace OpenKneeboard {
 template <auto InState, auto OutState>
 constexpr bool is_valid_state_transition_v = false;
 
+namespace ADL {
+template <class State>
+constexpr auto formattable_state(State state) noexcept {
+  return static_cast<std::underlying_type_t<State>>(state);
+}
+}// namespace ADL
+
 template <class State>
 class StateMachine final {
  public:
@@ -42,11 +51,14 @@ class StateMachine final {
     requires is_valid_state_transition_v<in, out>
   constexpr void Transition() {
     if (mState != in) [[unlikely]] {
+      using namespace ADL;
       const auto message = std::format(
-        "Unexpected state: {}; expected {} -> {}",
-        static_cast<std::underlying_type_t<State>>(mState),
-        static_cast<std::underlying_type_t<State>>(in),
-        static_cast<std::underlying_type_t<State>>(out));
+        "Unexpected state {}; expected {} -> {}",
+        formattable_state(mState),
+        formattable_state(in),
+        formattable_state(out));
+      dprint(message);
+      OPENKNEEBOARD_BREAK;
       throw std::logic_error(message);
     }
     mState = out;

@@ -22,13 +22,34 @@
 #include <OpenKneeboard/StateMachine.h>
 
 namespace OpenKneeboard::SHM {
+
+#define OPENKNEEBOARD_SHM_READER_STATES \
+  IT(Unlocked) \
+  IT(TryLock) \
+  IT(Locked) \
+  IT(CreatingSnapshot)
+
 enum class ReaderState {
-  Unlocked,
-  TryLock,
-  Locked,
-  CreatingSnapshot,
+#define IT(x) x,
+  OPENKNEEBOARD_SHM_READER_STATES
+#undef IT
 };
+
+constexpr auto formattable_state(ReaderState state) noexcept {
+  switch (state) {
+#define IT(x) \
+  case ReaderState::x: \
+    return "ReaderState::" #x;
+    OPENKNEEBOARD_SHM_READER_STATES
+#undef IT
+  }
+  dprintf(
+    "Invalid SHM ReaderState: {}",
+    static_cast<std::underlying_type_t<ReaderState>>(state));
+  OPENKNEEBOARD_BREAK;
+  abort();
 }
+}// namespace OpenKneeboard::SHM
 
 namespace OpenKneeboard {
 
