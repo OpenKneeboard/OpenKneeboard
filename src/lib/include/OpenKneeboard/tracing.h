@@ -63,7 +63,7 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
     OPENKNEEBOARD_STRINGIFY2(__FUNCTION__)##"()", \
     ##__VA_ARGS__)
 
-#define OPENKNEEBOARD_TraceLoggingScopedActivity_IMPL( \
+#define OPENKNEEBOARD_TraceLoggingScopedActivity( \
   OKBTL_ACTIVITY, OKBTL_NAME, ...) \
   TraceLoggingThreadActivity<gTraceProvider> OKBTL_ACTIVITY; \
   constexpr auto OPENKNEEBOARD_CONCAT2(OKBTL_ACTIVITY, _location) \
@@ -79,13 +79,18 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
     TraceLoggingWriteStop(OKBTL_ACTIVITY, OKBTL_NAME); \
   });
 
-#define OPENKNEEBOARD_TraceLoggingScopedActivity(OKBTL_NAME, ...) \
-  OPENKNEEBOARD_TraceLoggingScopedActivity_IMPL( \
+#define OPENKNEEBOARD_TraceLoggingScope(OKBTL_NAME, ...) \
+  OPENKNEEBOARD_TraceLoggingScopedActivity( \
     OPENKNEEBOARD_CONCAT2(okbtlsa, __COUNTER__), OKBTL_NAME, ##__VA_ARGS__)
 
-#define OPENKNEEBOARD_TraceLoggingScopedFunction(...) \
+#define OPENKNEEBOARD_TraceLoggingFunctionActivity(OKBTL_ACTIVITY, ...) \
   OPENKNEEBOARD_TraceLoggingScopedActivity( \
+    OKBTL_ACTIVITY, \
     OPENKNEEBOARD_STRINGIFY2(OPENKNEEBOARD_CONCAT2(__FUNCTION__, ())), \
     ##__VA_ARGS__)
+
+#define OPENKNEEBOARD_TraceLoggingFunction(...) \
+  OPENKNEEBOARD_TraceLoggingFunctionActivity( \
+    OPENKNEEBOARD_CONCAT2(okbtl_fun, __COUNTER__), ##__VA_ARGS__)
 
 }// namespace OpenKneeboard

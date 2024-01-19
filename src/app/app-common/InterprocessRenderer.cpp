@@ -85,8 +85,7 @@ void InterprocessRenderer::SubmitFrame(
     return;
   }
 
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  OPENKNEEBOARD_TraceLoggingWriteStartFunction(activity);
+  OPENKNEEBOARD_TraceLoggingFunctionActivity(activity);
 
   const auto layerCount = shmLayers.size();
   const auto tint = mKneeboard->GetAppSettings().mTint;
@@ -122,7 +121,7 @@ void InterprocessRenderer::SubmitFrame(
 
   auto fence = destResources->mFence.get();
   {
-    OPENKNEEBOARD_TraceLoggingScopedActivity("CopyFromCanvas");
+    OPENKNEEBOARD_TraceLoggingScope("CopyFromCanvas");
     winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
     ctx->CopySubresourceRegion(
       destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
@@ -140,15 +139,13 @@ void InterprocessRenderer::SubmitFrame(
   };
 
   {
-    OPENKNEEBOARD_TraceLoggingScopedActivity("SHMSubmitFrame");
+    OPENKNEEBOARD_TraceLoggingScope("SHMSubmitFrame");
     mSHM.SubmitFrame(
       config,
       shmLayers,
       destResources->mTextureHandle.get(),
       destResources->mFenceHandle.get());
   }
-
-  OPENKNEEBOARD_TraceLoggingWriteStopFunction(activity);
 }
 
 void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
@@ -321,8 +318,7 @@ InterprocessRenderer::~InterprocessRenderer() {
 SHM::LayerConfig InterprocessRenderer::RenderLayer(
   const ViewRenderInfo& layer,
   const PixelRect& bounds) noexcept {
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    "InterprocessRenderer::RenderLayer()");
+  OPENKNEEBOARD_TraceLoggingScopedFunction();
   const auto view = layer.mView.get();
 
   SHM::LayerConfig ret {};
