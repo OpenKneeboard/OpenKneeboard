@@ -22,7 +22,6 @@
 
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
-#include <OpenKneeboard/Spriting.h>
 #include <OpenKneeboard/StateMachine.h>
 #include <OpenKneeboard/Win32.h>
 
@@ -74,14 +73,15 @@ struct FrameMetadata final {
   HeaderFlags mFlags;
   Config mConfig;
 
+  uint8_t mLayerCount = 0;
+  LayerConfig mLayers[MaxLayers];
+
   DWORD mFeederProcessID {};
+  HANDLE mTexture {};
   HANDLE mFence {};
   LONG64 mFenceValue {};
 
-  HANDLE mTexture {};
-
-  uint8_t mLayerCount = 0;
-  LayerConfig mLayers[MaxLayers];
+  PixelSize mTextureSize {};
 
   size_t GetRenderCacheKey() const;
   bool HaveFeeder() const;
@@ -295,10 +295,6 @@ size_t Snapshot::GetRenderCacheKey() const {
   return mHeader->GetRenderCacheKey();
 }
 
-bool LayerConfig::IsValid() const {
-  return mImageWidth > 0 && mImageHeight > 0;
-}
-
 uint64_t Snapshot::GetSequenceNumberForDebuggingOnly() const {
   if (!this->IsValid()) {
     return 0;
@@ -330,14 +326,7 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
     return {};
   }
 
-  auto config = &mHeader->mLayers[layerIndex];
-  if (!config->IsValid()) {
-    dprintf("Invalid config for layer {}", layerIndex);
-    OPENKNEEBOARD_BREAK;
-    return {};
-  }
-
-  return config;
+  return &mHeader->mLayers[layerIndex];
 }
 
 bool Snapshot::IsValid() const {
@@ -531,26 +520,18 @@ Writer::~Writer() {
   this->Detach();
 }
 
-Writer::NextFrameInfo Writer::BeginFrame(
-  [[maybe__unused]] uint8_t requestedLayerCount) noexcept {
+Writer::NextFrameInfo Writer::BeginFrame() noexcept {
   p->Transition<State::Locked, State::FrameInProgress>();
 
   const uint8_t layerCount = MaxLayers;
   const auto fenceOut = InterlockedIncrement64(&p->mHeader->mFenceValue);
   const auto fenceIn = fenceOut - 1;
 
-  std::vector<PixelRect> layers;
-  layers.reserve(layerCount);
-  for (uint8_t i = 0; i < MaxLayers; ++i) {
-    layers.push_back(Spriting::GetRect(i, layerCount));
-  }
-
   return NextFrameInfo {
-    .mFenceIn = fenceIn,
-    .mFenceOut = fenceOut,
     .mTextureIndex
     = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % TextureCount),
-    .mLayerLocations = layers,
+    .mFenceIn = fenceIn,
+    .mFenceOut = fenceOut,
   };
 }
 
@@ -736,8 +717,8 @@ size_t Reader::GetRenderCacheKey(ConsumerKind kind) {
 void Writer::SubmitFrame(
   const Config& config,
   const std::vector<LayerConfig>& layers,
-  HANDLE fence,
-  HANDLE texture) {
+  HANDLE texture,
+  HANDLE fence) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
@@ -753,8 +734,16 @@ void Writer::SubmitFrame(
   }
 
   for (auto layer: layers) {
-    if (layer.mImageWidth == 0 || layer.mImageHeight == 0) {
+    const auto size = layer.mLocationOnTexture.mSize;
+
+    if (size.mWidth == 0 || size.mHeight == 0) {
       throw std::logic_error("Not feeding a 0-size image");
+    }
+    if (size.mWidth > TextureWidth || size.mHeight > TextureHeight) {
+      // logic_error as the feeder should scale/crop/whatever as needed to fit
+      // in the limits
+      throw std::logic_error(
+        std::format("Oversized layer: {}x{}", size.mWidth, size.mHeight));
     }
   }
 
@@ -763,6 +752,7 @@ void Writer::SubmitFrame(
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
   p->mHeader->mLayerCount = static_cast<uint8_t>(layers.size());
   p->mHeader->mFeederProcessID = p->mProcessID;
+  p->mHeader->mTexture = texture;
   p->mHeader->mFence = fence;
   memcpy(
     p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());

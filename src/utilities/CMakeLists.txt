@@ -22,29 +22,6 @@ target_link_libraries(
   OpenKneeboard-games
 )
 
-ok_add_executable(test-feeder test-feeder.cpp)
-target_link_libraries(
-  test-feeder
-  OpenKneeboard-config
-  OpenKneeboard-consolelib
-  OpenKneeboard-dprint
-  OpenKneeboard-SteamVRKneeboard
-  OpenKneeboard-SHM
-  ThirdParty::DirectXTK
-  System::D2d1
-  System::D3d11
-  System::Dwrite
-)
-
-add_custom_command(
-  TARGET test-feeder
-  POST_BUILD
-  COMMAND
-  "${CMAKE_COMMAND}" -E copy_if_different
-  "$<TARGET_PROPERTY:ThirdParty::OpenVR,IMPORTED_LOCATION>"
-  "$<TARGET_FILE_DIR:test-feeder>/openvr_api.dll"
-)
-
 add_utility_executable(
   OpenKneeboard-RemoteControl-SET_TAB
   WIN32

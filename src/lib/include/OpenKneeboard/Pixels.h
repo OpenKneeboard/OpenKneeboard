@@ -22,6 +22,7 @@
 #include <cmath>
 #include <compare>
 #include <cstdint>
+#include <initializer_list>
 
 #include <d2d1.h>
 
@@ -43,17 +44,25 @@ struct PixelSize {
     : PixelSize(d2d.width, d2d.height) {
   }
 
-  constexpr operator D2D1_SIZE_U() const {
+  constexpr operator D2D1_SIZE_U() const noexcept {
     return {mWidth, mHeight};
   }
 
-  constexpr PixelSize ScaledToFit(const PixelSize& container) const {
+  constexpr PixelSize ScaledToFit(const PixelSize& container) const noexcept {
     const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
     const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
     const auto scale = std::min(scaleX, scaleY);
     return {
       static_cast<uint32_t>(std::lround(mWidth * scale)),
       static_cast<uint32_t>(std::lround(mHeight * scale)),
+    };
+  }
+
+  template <class TSize, class TValue>
+  constexpr TSize StaticCast() const noexcept {
+    return TSize {
+      static_cast<TValue>(mWidth),
+      static_cast<TValue>(mHeight),
     };
   }
 };
@@ -63,6 +72,14 @@ struct PixelPoint {
   uint32_t mY {};
 
   constexpr auto operator<=>(const PixelPoint&) const noexcept = default;
+
+  template <class TPoint, class TValue>
+  constexpr TPoint StaticCast() const noexcept {
+    return TPoint {
+      static_cast<TValue>(mX),
+      static_cast<TValue>(mY),
+    };
+  }
 };
 
 struct PixelRect {
@@ -72,11 +89,25 @@ struct PixelRect {
   constexpr auto operator<=>(const PixelRect&) const noexcept = default;
 
   constexpr operator RECT() const noexcept {
+    return StaticCastWithBottomRight<RECT, LONG>();
+  }
+
+  constexpr operator D2D_RECT_F() const noexcept {
+    return StaticCastWithBottomRight<D2D_RECT_F, FLOAT>();
+  };
+
+  constexpr operator D2D_RECT_U() const noexcept {
+    return StaticCastWithBottomRight<D2D_RECT_U, UINT32>();
+  };
+
+ private:
+  template <class TRect, class TValue>
+  constexpr TRect StaticCastWithBottomRight() const noexcept {
     return {
-      static_cast<LONG>(mOrigin.mX),
-      static_cast<LONG>(mOrigin.mY),
-      static_cast<LONG>(mOrigin.mX + mSize.mWidth),
-      static_cast<LONG>(mOrigin.mY + mSize.mHeight),
+      static_cast<TValue>(mOrigin.mX),
+      static_cast<TValue>(mOrigin.mY),
+      static_cast<TValue>(mOrigin.mX + mSize.mWidth),
+      static_cast<TValue>(mOrigin.mY + mSize.mHeight),
     };
   }
 };

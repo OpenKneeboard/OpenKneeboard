@@ -78,22 +78,12 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   const auto& layerConfig = *snapshot.GetLayerConfig(0);
   const auto flatConfig = snapshot.GetConfig().mFlat;
 
-  const auto dest = flatConfig.Layout(
-    {scDesc.BufferDesc.Width, scDesc.BufferDesc.Height},
-    {layerConfig.mImageWidth, layerConfig.mImageHeight});
-  RECT destRect {
-    static_cast<LONG>(dest.mOrigin.mX),
-    static_cast<LONG>(dest.mOrigin.mY),
-    static_cast<LONG>(dest.mOrigin.mX + dest.mSize.mWidth),
-    static_cast<LONG>(dest.mOrigin.mY + dest.mSize.mHeight),
-  };
+  const auto& imageSize = layerConfig.mLocationOnTexture.mSize;
 
-  RECT sourceRect {
-    0,
-    0,
-    layerConfig.mImageWidth,
-    layerConfig.mImageHeight,
-  };
+  const RECT destRect = flatConfig.Layout(
+    {scDesc.BufferDesc.Width, scDesc.BufferDesc.Height},
+    layerConfig.mLocationOnTexture.mSize);
+  const RECT sourceRect = layerConfig.mLocationOnTexture;
 
   {
     winrt::com_ptr<ID3D11Texture2D> destinationTexture;

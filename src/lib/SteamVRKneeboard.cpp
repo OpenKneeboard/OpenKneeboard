@@ -227,13 +227,6 @@ void SteamVRKneeboard::Tick() {
        ++layerIndex) {
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
     auto& layerState = mLayers.at(layerIndex);
-    if (!layer.IsValid()) {
-      if (layerState.mVisible) {
-        CHECK(HideOverlay, layerState.mOverlay);
-        layerState.mVisible = false;
-      }
-      continue;
-    }
 
     const auto renderParams
       = this->GetRenderParameters(snapshot, layer, hmdPose);
@@ -284,7 +277,15 @@ void SteamVRKneeboard::Tick() {
     // ... then atomic copy to OpenVR texture
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     mD3D->GetImmediateContext(ctx.put());
-    const D3D11_BOX box {0, 0, 0, layer.mImageWidth, layer.mImageHeight, 1};
+    const D2D_RECT_U sourceRect = layer.mLocationOnTexture;
+    const D3D11_BOX sourceBox {
+      sourceRect.left,
+      sourceRect.top,
+      0,
+      sourceRect.right,
+      sourceRect.bottom,
+      1,
+    };
     ctx->CopySubresourceRegion(
       layerState.mOpenVRTexture.get(),
       0,
@@ -293,14 +294,15 @@ void SteamVRKneeboard::Tick() {
       0,
       mBufferTexture.get(),
       0,
-      &box);
+      &sourceBox);
     layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
 
+    const auto& imageSize = layer.mLocationOnTexture.mSize;
     vr::VRTextureBounds_t textureBounds {
       0.0f,
       0.0f,
-      static_cast<float>(layer.mImageWidth) / TextureWidth,
-      static_cast<float>(layer.mImageHeight) / TextureHeight,
+      static_cast<float>(imageSize.mWidth) / TextureWidth,
+      static_cast<float>(imageSize.mHeight) / TextureHeight,
     };
 
     CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);

@@ -116,14 +116,14 @@ struct Config final {
   VRRenderConfig mVR {};
   NonVRConstrainedPosition mFlat {};
   ConsumerPattern mTarget {};
+  PixelSize mTextureSize {};
 };
 static_assert(std::is_standard_layout_v<Config>);
 struct LayerConfig final {
-  uint64_t mLayerID;
-  uint16_t mImageWidth, mImageHeight;// Pixels
-  VRAbsolutePosition mVR;
+  uint64_t mLayerID {};
+  PixelRect mLocationOnTexture {};
 
-  bool IsValid() const;
+  VRAbsolutePosition mVR {};
 };
 static_assert(std::is_standard_layout_v<LayerConfig>);
 
@@ -132,11 +132,9 @@ enum class WriterState;
 class Writer final {
  public:
   struct NextFrameInfo {
+    uint8_t mTextureIndex {};
     LONG64 mFenceIn {};
     LONG64 mFenceOut {};
-    uint8_t mTextureIndex {};
-    PixelSize mTextureSize;
-    std::vector<PixelRect> mLayerLocations;
   };
 
   Writer();
@@ -146,12 +144,12 @@ class Writer final {
 
   operator bool() const;
 
-  NextFrameInfo BeginFrame(uint8_t layerCount) noexcept;
+  NextFrameInfo BeginFrame() noexcept;
   void SubmitFrame(
     const Config& config,
     const std::vector<LayerConfig>& layers,
-    HANDLE fence,
-    HANDLE texture);
+    HANDLE texture,
+    HANDLE fence);
 
   // "Lockable" C++ named concept: supports std::unique_lock
   void lock();

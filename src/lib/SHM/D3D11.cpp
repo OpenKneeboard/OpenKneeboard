@@ -163,13 +163,8 @@ void Render(
       }
 
       auto config = snapshot.GetLayerConfig(sprite.mLayerIndex);
-      const D3D11_RECT sourceRect {
-        0,
-        0,
-        config->mImageWidth,
-        config->mImageHeight,
-      };
 
+      const D3D11_RECT sourceRect = config->mLocationOnTexture;
       const D3D11_RECT destRect = sprite.mDestRect;
 
       const auto opacity = sprite.mOpacity;

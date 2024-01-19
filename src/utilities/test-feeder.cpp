@@ -44,6 +44,8 @@
 
 using namespace OpenKneeboard;
 
+// FIXME: add test patterns tab
+
 namespace OpenKneeboard {
 
 /* PS >

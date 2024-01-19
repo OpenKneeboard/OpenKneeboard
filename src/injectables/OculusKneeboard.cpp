@@ -171,7 +171,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       .mLayerIndex = layerIndex,
       .mDestRect = {
         Spriting::GetOffset(layerIndex, MaxLayers),
-        {layer.mImageWidth, layer.mImageHeight},
+        layer.mLocationOnTexture.mSize,
       },
       .mOpacity = params.mKneeboardOpacity,
     };

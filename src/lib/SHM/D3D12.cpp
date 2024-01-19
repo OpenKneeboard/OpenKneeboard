@@ -349,13 +349,7 @@ void Render(
       const auto opacity = sprite.mOpacity;
       DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
 
-      const D3D12_RECT sourceRect {
-        0,
-        0,
-        config->mImageWidth,
-        config->mImageHeight,
-      };
-
+      const D3D12_RECT sourceRect = config->mLocationOnTexture;
       const D3D11_RECT destRect = sprite.mDestRect;
 
       sprites->Draw(

@@ -380,7 +380,8 @@ class TestViewerWindow final {
       = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
     if (snapshot.IsValid()) {
       const auto layer = snapshot.GetLayerConfig(mLayerIndex);
-      text += std::format(L"\n{}x{}", layer->mImageWidth, layer->mImageHeight);
+      const auto size = layer->mLocationOnTexture.mSize;
+      text += std::format(L"\n{}x{}", size.mWidth, size.mHeight);
     }
 
     winrt::com_ptr<IDWriteTextLayout> layout;
@@ -478,13 +479,6 @@ class TestViewerWindow final {
       return;
     }
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
-    if (!layer.IsValid()) {
-      mErrorRenderer->Render(
-        d2d,
-        std::format("No Config For Layer {}", mLayerIndex + 1),
-        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
-      return;
-    }
     mLayerID = layer.mLayerID;
 
     auto d3d = mDXR.mD3DDevice.get();
@@ -500,15 +494,15 @@ class TestViewerWindow final {
       return;
     }
 
-    d2d->Flush();
     winrt::check_hresult(d2d->EndDraw());
     endDraw.abandon();
 
-    const auto scalex = float(clientSize.width) / layer.mImageWidth;
-    const auto scaley = float(clientSize.height) / layer.mImageHeight;
+    const auto& imageSize = layer.mLocationOnTexture.mSize;
+    const auto scalex = float(clientSize.width) / imageSize.mWidth;
+    const auto scaley = float(clientSize.height) / imageSize.mHeight;
     const auto scale = std::min(scalex, scaley);
-    const auto renderWidth = static_cast<uint32_t>(layer.mImageWidth * scale);
-    const auto renderHeight = static_cast<uint32_t>(layer.mImageHeight * scale);
+    const auto renderWidth = static_cast<uint32_t>(imageSize.mWidth * scale);
+    const auto renderHeight = static_cast<uint32_t>(imageSize.mHeight * scale);
 
     const auto renderLeft = (clientSize.width - renderWidth) / 2;
     const auto renderTop = (clientSize.height - renderHeight) / 2;
@@ -518,12 +512,7 @@ class TestViewerWindow final {
       static_cast<LONG>(renderLeft + renderWidth),
       static_cast<LONG>(renderTop + renderHeight),
     };
-    RECT sourceRect {
-      0,
-      0,
-      static_cast<LONG>(layer.mImageWidth),
-      static_cast<LONG>(layer.mImageHeight),
-    };
+    const RECT sourceRect = layer.mLocationOnTexture;
 
     winrt::com_ptr<ID3D11RenderTargetView> rtv;
     winrt::check_hresult(d3d->CreateRenderTargetView(

@@ -201,14 +201,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     auto layer = snapshot.GetLayerConfig(layerIndex);
-    if (!layer->IsValid()) {
-      TraceLoggingWriteStop(
-        activity,
-        "xrEndFrame",
-        TraceLoggingValue(layerIndex, "LayerNumber"),
-        TraceLoggingValue("Invalid layer config", "Result"));
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
-    }
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
 
@@ -216,7 +208,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .mLayerIndex = layerIndex,
       .mDestRect = {
         Spriting::GetOffset(layerIndex, MaxLayers),
-        {layer->mImageWidth, layer->mImageHeight},
+        layer->mLocationOnTexture.mSize,
       },
       .mOpacity = params.mKneeboardOpacity,
     });
@@ -244,7 +236,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
         .swapchain = mSwapchain,
         .imageRect = {
           {layerIndex * TextureWidth, 0},
-          {static_cast<int32_t>(layer->mImageWidth), static_cast<int32_t>(layer->mImageHeight)},
+          layer->mLocationOnTexture.mSize.StaticCast<XrExtent2Di, int32_t>(),
         },
         .imageArrayIndex = 0,
       },
