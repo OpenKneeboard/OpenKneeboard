@@ -85,7 +85,8 @@ void InterprocessRenderer::SubmitFrame(
     return;
   }
 
-  OPENKNEEBOARD_TraceLoggingFunctionActivity(activity);
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "InterprocessRenderer::SubmitFrame()");
 
   const auto layerCount = shmLayers.size();
   const auto tint = mKneeboard->GetAppSettings().mTint;
@@ -153,7 +154,7 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
     return;
   }
 
-  OPENKNEEBOARD_TraceLoggingFunction();
+  OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer::InitializeCanvas()");
 
   D3D11_TEXTURE2D_DESC desc {
     .Width = static_cast<UINT>(size.mWidth),
@@ -182,7 +183,9 @@ InterprocessRenderer::GetIPCTextureResources(
     return &ret;
   }
 
-  OPENKNEEBOARD_TraceLoggingFunction(
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity,
+    "InterprocessRenderer::GetIPCTextureResources:",
     TraceLoggingValue(textureIndex, "textureIndex"),
     TraceLoggingValue(size.mWidth, "width"),
     TraceLoggingValue(size.mHeight, "height"));
@@ -213,9 +216,11 @@ InterprocessRenderer::GetIPCTextureResources(
     nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, ret.mTextureHandle.put()));
 
   if (previousResources.mFence) {
+    TraceLoggingWriteTagged(activity, "Re-using existing fence");
     ret.mFence = std::move(previousResources.mFence);
     ret.mFenceHandle = std::move(previousResources.mFenceHandle);
   } else {
+    TraceLoggingWriteTagged(activity, "Creating new fence");
     winrt::check_hresult(device->CreateFence(
       0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(ret.mFence.put())));
     winrt::check_hresult(ret.mFence->CreateSharedHandle(
@@ -318,7 +323,7 @@ InterprocessRenderer::~InterprocessRenderer() {
 SHM::LayerConfig InterprocessRenderer::RenderLayer(
   const ViewRenderInfo& layer,
   const PixelRect& bounds) noexcept {
-  OPENKNEEBOARD_TraceLoggingFunction();
+  OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer::RenderLayer");
   const auto view = layer.mView.get();
 
   SHM::LayerConfig ret {};
@@ -350,7 +355,8 @@ void InterprocessRenderer::RenderNow() noexcept {
   }
   const scope_guard markDone([this]() { mRendering.clear(); });
 
-  OPENKNEEBOARD_TraceLoggingFunctionActivity(activity);
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "InterprocessRenderer::RenderNow()");
 
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
   const auto layerCount = renderInfos.size();
