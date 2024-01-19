@@ -127,7 +127,11 @@ void InterprocessRenderer::SubmitFrame(
       TraceLoggingValue(ipcTextureInfo.mTextureIndex, "TextureIndex"),
       TraceLoggingValue(ipcTextureInfo.mFenceIn, "FenceIn"),
       TraceLoggingValue(ipcTextureInfo.mFenceOut, "FenceOut"));
-    winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
+    if (destResources->mNewFence) {
+      destResources->mNewFence = false;
+    } else {
+      winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
+    }
     ctx->CopySubresourceRegion(
       destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
     winrt::check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
@@ -223,6 +227,7 @@ InterprocessRenderer::GetIPCTextureResources(
     TraceLoggingWriteTagged(activity, "Re-using existing fence");
     ret.mFence = std::move(previousResources.mFence);
     ret.mFenceHandle = std::move(previousResources.mFenceHandle);
+    ret.mNewFence = false;
   } else {
     TraceLoggingWriteTagged(activity, "Creating new fence");
     winrt::check_hresult(device->CreateFence(

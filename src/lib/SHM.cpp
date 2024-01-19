@@ -87,7 +87,7 @@ struct Detail::FrameMetadata final {
   DWORD mFeederProcessID {};
   HANDLE mTexture {};
   HANDLE mFence {};
-  LONG64 mFenceValue {};
+  std::array<LONG64, TextureCount> mFenceValues {0};
 
   PixelSize mTextureSize {};
 
@@ -233,7 +233,9 @@ Snapshot::Snapshot(
   FrameMetadata* metadata,
   const LayersTextureCache& dest)
   : mLayerTextures(dest), mState(State::Empty) {
-  const auto fenceOut = InterlockedIncrement64(&metadata->mFenceValue);
+  const auto textureIndex = metadata->mFrameNumber % TextureCount;
+  auto fenceValue = &metadata->mFenceValues.at(textureIndex);
+  const auto fenceOut = InterlockedIncrement64(fenceValue);
   const auto fenceIn = fenceOut - 1;
 
   mHeader = std::make_shared<FrameMetadata>(*metadata);
@@ -525,13 +527,14 @@ Writer::~Writer() {
 Writer::NextFrameInfo Writer::BeginFrame() noexcept {
   p->Transition<State::Locked, State::FrameInProgress>();
 
-  const uint8_t layerCount = MaxLayers;
-  const auto fenceOut = InterlockedIncrement64(&p->mHeader->mFenceValue);
+  const auto textureIndex
+    = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % TextureCount);
+  auto fenceValue = &p->mHeader->mFenceValues[textureIndex];
+  const auto fenceOut = InterlockedIncrement64(fenceValue);
   const auto fenceIn = fenceOut - 1;
 
   return NextFrameInfo {
-    .mTextureIndex
-    = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % TextureCount),
+    .mTextureIndex = textureIndex,
     .mFenceIn = fenceIn,
     .mFenceOut = fenceOut,
   };
