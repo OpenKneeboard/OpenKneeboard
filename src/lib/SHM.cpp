@@ -233,6 +233,9 @@ Snapshot::Snapshot(
   FrameMetadata* metadata,
   const LayersTextureCache& dest)
   : mLayerTextures(dest), mState(State::Empty) {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "SHM::Snapshot::Snapshot()");
+
   const auto textureIndex = metadata->mFrameNumber % TextureCount;
   auto fenceValue = &metadata->mFenceValues.at(textureIndex);
   const auto fenceOut = InterlockedIncrement64(fenceValue);
@@ -240,15 +243,14 @@ Snapshot::Snapshot(
 
   mHeader = std::make_shared<FrameMetadata>(*metadata);
 
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "SHM::Snapshot::Snapshot()");
-
   auto ctx = dr->mD3D11ImmediateContext.get();
   auto fence = br->mD3D11Fence.get();
 
-  TraceLoggingWriteStart(activity, "WaitForFence");
-  winrt::check_hresult(ctx->Wait(fence, fenceIn));
-  TraceLoggingWriteStop(activity, "WaitForFence");
+  {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "WaitForFence", TraceLoggingValue(fenceIn, "fenceIn"));
+    winrt::check_hresult(ctx->Wait(fence, fenceIn));
+  }
 
   // TODO: sprite the LayerTextureCaches too
   for (uint8_t i = 0; i < metadata->mLayerCount; ++i) {
@@ -256,8 +258,8 @@ Snapshot::Snapshot(
     const D3D11_BOX srcBox {
       srcRect.left, srcRect.top, 0, srcRect.right, srcRect.bottom, 1};
 
-    TraceLoggingWriteStart(
-      activity, "CopyLayerTexture", TraceLoggingValue(i, "Layer"));
+    OPENKNEEBOARD_TraceLoggingScope(
+      "CopyLayerTexture", TraceLoggingValue(i, "Layer"));
     ctx->CopySubresourceRegion(
       dest.at(i)->GetD3D11Texture(),
       /* subresource = */ 0,
@@ -267,19 +269,18 @@ Snapshot::Snapshot(
       br->mD3D11Texture.get(),
       /* subresource = */ 0,
       &srcBox);
-    TraceLoggingWriteStop(activity, "CopyLayerTexture");
   }
 
-  TraceLoggingWriteStart(activity, "SignalFence");
-  winrt::check_hresult(ctx->Signal(fence, fenceOut));
-  TraceLoggingWriteStop(activity, "SignalFence");
+  {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "SignalFence", TraceLoggingValue(fenceOut, "fenceOut"));
+    winrt::check_hresult(ctx->Signal(fence, fenceOut));
+  }
 
   if (mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0)) {
     TraceLoggingWriteTagged(activity, "MarkingValid");
     mState = State::Valid;
   }
-
-  TraceLoggingWriteStop(activity, "SHM::Snapshot::Snapshot()");
 }
 
 Snapshot::State Snapshot::GetState() const {
@@ -473,11 +474,8 @@ class Impl {
 
   void unlock() {
     mState.Transition<State::Locked, State::Unlocked>();
-    TraceLoggingThreadActivity<gTraceProvider> activity;
-    TraceLoggingWriteStart(activity, "SHM::Impl::unlock()");
+    OPENKNEEBOARD_TraceLoggingScope("SHM::Impl::unlock()");
     const auto ret = ReleaseMutex(mMutexHandle.get());
-    TraceLoggingWriteStop(
-      activity, "SHM::Impl::unlock()", TraceLoggingValue(ret, "Result"));
   }
 
  protected:
@@ -776,11 +774,12 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
     return mCache;
   }
 
-  TraceLoggingWriteStart(activity, "MaybeGetUncached");
+  TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
+  TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
   auto snapshot = this->MaybeGetUncached(device, mTextures, kind);
   const auto state = snapshot.GetState();
   TraceLoggingWriteStop(
-    activity,
+    maybeGetActivity,
     "MaybeGetUncached",
     TraceLoggingValue(static_cast<unsigned int>(state), "State"));
 
@@ -796,9 +795,7 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
   mCache = snapshot;
   mCacheKey = cacheKey;
 
-  TraceLoggingWriteStart(activity, "ActiveConsumers::Set");
   ActiveConsumers::Set(kind);
-  TraceLoggingWriteStop(activity, "ActiveConsumers::Set");
 
   TraceLoggingWriteStop(
     activity,
