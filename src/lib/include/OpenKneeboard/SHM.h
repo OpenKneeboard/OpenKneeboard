@@ -45,9 +45,15 @@
 
 namespace OpenKneeboard::SHM {
 
-using VRPosition = VRAbsolutePosition;
-
+namespace Detail {
 struct FrameMetadata;
+
+struct DeviceResources;
+struct IPCSwapchainBufferResources;
+
+}// namespace Detail
+
+using VRPosition = VRAbsolutePosition;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -162,9 +168,6 @@ class Writer final {
   std::shared_ptr<Impl> p;
 };
 
-struct IPCTextureReadResources;
-struct IPCLayerTextureReadResources;
-
 class Snapshot final {
  public:
   enum class State {
@@ -180,11 +183,10 @@ class Snapshot final {
   Snapshot(incorrect_kind_t);
 
   Snapshot(
-    const FrameMetadata& header,
-    ID3D11DeviceContext4*,
-    ID3D11Fence*,
-    const LayersTextureCache&,
-    IPCTextureReadResources*);
+    Detail::DeviceResources*,
+    Detail::IPCSwapchainBufferResources*,
+    Detail::FrameMetadata*,
+    const LayersTextureCache& dest);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -221,7 +223,7 @@ class Snapshot final {
   Snapshot() = delete;
 
  private:
-  std::shared_ptr<FrameMetadata> mHeader;
+  std::shared_ptr<Detail::FrameMetadata> mHeader;
   LayersTextureCache mLayerTextures;
 
   State mState;
@@ -250,8 +252,7 @@ class Reader {
   uint64_t GetSessionID() const;
 
   Snapshot MaybeGetUncached(
-    ID3D11DeviceContext4*,
-    ID3D11Fence*,
+    ID3D11Device*,
     const LayersTextureCache&,
     ConsumerKind) const;
 
@@ -271,25 +272,19 @@ class CachedReader : public Reader {
     const winrt::com_ptr<ID3D11Texture2D>&);
 
  private:
-  void InitDXResources(ID3D11Device*);
+  ID3D11Device* mD3D11Device {nullptr};
+  uint64_t mSessionID {~(0ui64)};
 
-  ID3D11Device* mDevice {nullptr};
-  uint64_t mSessionID = 0;
-  winrt::com_ptr<ID3D11DeviceContext4> mContext;
-  winrt::com_ptr<ID3D11Fence> mFence;
-  winrt::handle mFenceHandle;
-  SHM::LayersTextureCache mTextures;
+  struct CacheKey {
+    ConsumerKind mConsumerKind;
+    uint64_t mRenderCacheKey {};
+
+    constexpr bool operator==(const CacheKey&) const noexcept = default;
+  };
+  CacheKey mCacheKey;
 
   Snapshot mCache {nullptr};
-  ConsumerKind mCachedConsumerKind;
-  uint64_t mCachedSequenceNumber {};
-
-  // Fetch a (possibly-cached) snapshot
-  Snapshot MaybeGet(
-    ID3D11DeviceContext4*,
-    ID3D11Fence*,
-    const LayersTextureCache&,
-    ConsumerKind) noexcept;
+  SHM::LayersTextureCache mTextures;
 };
 
 }// namespace OpenKneeboard::SHM
