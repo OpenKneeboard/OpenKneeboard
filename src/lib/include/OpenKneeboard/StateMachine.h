@@ -20,6 +20,7 @@
 #pragma once
 
 #include <concepts>
+#include <format>
 #include <memory>
 #include <stdexcept>
 #include <type_traits>
@@ -41,7 +42,12 @@ class StateMachine final {
     requires is_valid_state_transition_v<in, out>
   constexpr void Transition() {
     if (mState != in) [[unlikely]] {
-      throw std::logic_error("Invalid state transition");
+      const auto message = std::format(
+        "Unexpected state: {}; expected {} -> {}",
+        static_cast<std::underlying_type_t<State>>(mState),
+        static_cast<std::underlying_type_t<State>>(in),
+        static_cast<std::underlying_type_t<State>>(out));
+      throw std::logic_error(message);
     }
     mState = out;
   }
