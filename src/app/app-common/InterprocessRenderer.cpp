@@ -86,7 +86,7 @@ void InterprocessRenderer::SubmitFrame(
   }
 
   TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "InterprocessRenderer::SubmitFrame()");
+  OPENKNEEBOARD_TraceLoggingWriteStartFunction(activity);
 
   const auto layerCount = shmLayers.size();
   const auto tint = mKneeboard->GetAppSettings().mTint;
@@ -147,7 +147,8 @@ void InterprocessRenderer::SubmitFrame(
       destResources->mTextureHandle.get(),
       destResources->mFenceHandle.get());
   }
-  TraceLoggingWriteStop(activity, "InterprocessRenderer::SubmitFrame()");
+
+  OPENKNEEBOARD_TraceLoggingWriteStopFunction(activity);
 }
 
 void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
@@ -155,8 +156,7 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
     return;
   }
 
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    "InterprocessRenderer::InitializeCanvas()");
+  OPENKNEEBOARD_TraceLoggingScopedFunction;
 
   D3D11_TEXTURE2D_DESC desc {
     .Width = static_cast<UINT>(size.mWidth),
@@ -185,57 +185,56 @@ InterprocessRenderer::GetIPCTextureResources(
     return &ret;
   }
 
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    "InterprocessRenderer::GetIPCTextureResources()",
+  OPENKNEEBOARD_TraceLoggingScopedFunction(
     TraceLoggingValue(textureIndex, "textureIndex"),
     TraceLoggingValue(size.mWidth, "width"),
-    TraceLoggingValue(size.mHeigh, "height"));
+    TraceLoggingValue(size.mHeigh, "height");
 
-  auto previousResources = std::move(ret);
+    auto previousResources = std::move(ret);
 
-  ret = {};
+    ret = {};
 
-  auto device = mDXR.mD3DDevice.get();
+    auto device = mDXR.mD3DDevice.get();
 
-  D3D11_TEXTURE2D_DESC textureDesc {
-    .Width = static_cast<UINT>(size.mWidth),
-    .Height = static_cast<UINT>(size.mHeight),
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
-    .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags
-    = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
-  };
+    D3D11_TEXTURE2D_DESC textureDesc {
+      .Width = static_cast<UINT>(size.mWidth),
+      .Height = static_cast<UINT>(size.mHeight),
+      .MipLevels = 1,
+      .ArraySize = 1,
+      .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+      .SampleDesc = {1, 0},
+      .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+      .MiscFlags
+      = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
+    };
 
-  winrt::check_hresult(
-    device->CreateTexture2D(&textureDesc, nullptr, ret.mTexture.put()));
-  winrt::check_hresult(device->CreateRenderTargetView(
-    ret.mTexture.get(), nullptr, ret.mRenderTargetView.put()));
-  winrt::check_hresult(ret.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
-    nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, ret.mTextureHandle.put()));
+    winrt::check_hresult(
+      device->CreateTexture2D(&textureDesc, nullptr, ret.mTexture.put()));
+    winrt::check_hresult(device->CreateRenderTargetView(
+      ret.mTexture.get(), nullptr, ret.mRenderTargetView.put()));
+    winrt::check_hresult(ret.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+      nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, ret.mTextureHandle.put()));
 
-  if (previousResources.mFence) {
+    if (previousResources.mFence) {
     ret.mFence = std::move(previousResources.mFence);
     ret.mFenceHandle = std::move(previousResources.mFenceHandle);
-  } else {
+    } else {
     winrt::check_hresult(device->CreateFence(
       0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(ret.mFence.put())));
     winrt::check_hresult(ret.mFence->CreateSharedHandle(
       nullptr, GENERIC_ALL, nullptr, ret.mFenceHandle.put()));
-  }
+    }
 
-  ret.mViewport = {
-    0,
-    0,
-    static_cast<FLOAT>(size.mWidth),
-    static_cast<FLOAT>(size.mHeight),
-    0.0f,
-    1.0f,
-  };
+    ret.mViewport = {
+      0,
+      0,
+      static_cast<FLOAT>(size.mWidth),
+      static_cast<FLOAT>(size.mHeight),
+      0.0f,
+      1.0f,
+    };
 
-  return &ret;
+    return &ret;
 }
 
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
@@ -356,7 +355,7 @@ void InterprocessRenderer::RenderNow() noexcept {
   const scope_guard markDone([this]() { mRendering.clear(); });
 
   TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "InterprocessRenderer::RenderNow()");
+  OPENKNEEBOARD_TraceLoggingWriteStartFunction(activity);
 
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
   const auto layerCount = renderInfos.size();
@@ -385,7 +384,7 @@ void InterprocessRenderer::RenderNow() noexcept {
   this->SubmitFrame(shmLayers, inputLayerID);
   this->mNeedsRepaint = false;
 
-  TraceLoggingWriteStop(activity, "InterprocessRenderer::RenderNow()");
+  OPENKNEEBOARD_TraceLoggingWriteStopFunction(activity);
 }
 
 void InterprocessRenderer::OnGameChanged(
