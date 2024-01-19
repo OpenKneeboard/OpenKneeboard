@@ -185,7 +185,7 @@ InterprocessRenderer::GetIPCTextureResources(
   OPENKNEEBOARD_TraceLoggingFunction(
     TraceLoggingValue(textureIndex, "textureIndex"),
     TraceLoggingValue(size.mWidth, "width"),
-    TraceLoggingValue(size.mHeigh, "height"));
+    TraceLoggingValue(size.mHeight, "height"));
 
   auto previousResources = std::move(ret);
 
