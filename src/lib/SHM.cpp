@@ -398,7 +398,8 @@ class Impl {
   }
 
   template <State in, State out>
-  void Transition(const std::source_location& loc = std::source_location::current()) {
+  void Transition(
+    const std::source_location& loc = std::source_location::current()) {
     mState.Transition<in, out>(loc);
   }
 
@@ -774,6 +775,9 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
     return mCache;
   }
 
+  TraceLoggingWriteTagged(activity, "LockingSHM");
+  std::unique_lock lock(*p);
+  TraceLoggingWriteTagged(activity, "LockedSHM");
   TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
   TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
   auto snapshot = this->MaybeGetUncached(device, mTextures, kind);
