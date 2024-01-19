@@ -26,8 +26,6 @@
 #include <OpenKneeboard/macros.h>
 #include <OpenKneeboard/scope_guard.h>
 
-#include <source_location>
-
 #include <TraceLoggingActivity.h>
 #include <TraceLoggingProvider.h>
 
@@ -65,8 +63,9 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
   TraceLoggingWriteStart( \
     OKBTL_ACTIVITY, \
     OKBTL_NAME, \
-    OPENKNEEBOARD_TraceLoggingSourceLocation( \
-      OPENKNEEBOARD_CONCAT2(OKBTL_ACTIVITY, _location)), \
+    TraceLoggingValue(__FILE__, "File"), \
+    TraceLoggingValue(__LINE__, "Line"), \
+    TraceLoggingValue(__FUNCTION__, "Function"), \
     ##__VA_ARGS__); \
   const OpenKneeboard::scope_guard OPENKNEEBOARD_CONCAT2( \
     OKBTL_ACTIVITY, _scopeExit)([&OKBTL_ACTIVITY]() { \
@@ -83,35 +82,5 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
 #define OPENKNEEBOARD_TraceLoggingScope(OKBTL_NAME, ...) \
   OPENKNEEBOARD_TraceLoggingScopedActivity( \
     OPENKNEEBOARD_CONCAT2(okbtlsa, __COUNTER__), OKBTL_NAME, ##__VA_ARGS__)
-
-/** Create and automatically start and stop an activity for the current fucntion
- *
- * @param OKBTL_ACTIVITY the local variable to store the activity in
- *
- * @see OPENKNEEBOARD_TraceLoggingScopedActivity if you want to change the
- * activity name
- * @see OPENKNEEBOARD_TraceLoggingFunction if you don't care about the local
- * variable name
- */
-#define OPENKNEEBOARD_TraceLoggingFunctionActivity(OKBTL_ACTIVITY, ...) \
-  OPENKNEEBOARD_TraceLoggingScopedActivity( \
-    OKBTL_ACTIVITY, \
-    OPENKNEEBOARD_STRINGIFY2(OPENKNEEBOARD_CONCAT2(__FUNCTION__, ())), \
-    ##__VA_ARGS__)
-
-/** Create and automatically start and stop an activity for the current fucntion
- *
- * Convenience wrapper around OPENKNEEBOARD_TraceLoggingFunctionActivity that
- * automatically generates the variable name
- *
- * This is an improvement over the upstream TraceLoggingFunction macro as it
- * automatically includes source information.
- *
- * @see OPENKNEEBOARD_TraceLoggingFunctionActivity if you need to specify the
- * local variable name for the activity
- */
-#define OPENKNEEBOARD_TraceLoggingFunction(...) \
-  OPENKNEEBOARD_TraceLoggingFunctionActivity( \
-    OPENKNEEBOARD_CONCAT2(okbtl_fun, __COUNTER__), ##__VA_ARGS__)
 
 }// namespace OpenKneeboard

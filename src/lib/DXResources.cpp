@@ -190,7 +190,7 @@ HRESULT DXResources::PopD2DDraw() {
 }
 
 void DXResources::lock() {
-  OPENKNEEBOARD_TraceLoggingFunction();
+  OPENKNEEBOARD_TraceLoggingScope("DXResources::lock()");
 
   // If we've locked D2D, we don't need to separately lock D3D; keeping it
   // here anyway as:
@@ -208,12 +208,12 @@ void DXResources::lock() {
 }
 
 void DXResources::unlock() {
-  OPENKNEEBOARD_TraceLoggingFunction();
+  OPENKNEEBOARD_TraceLoggingScope("DXResources::unlock()");
   mLocks->mMutex.unlock();
 }
 
 bool DXResources::try_lock() {
-  OPENKNEEBOARD_TraceLoggingFunction();
+  OPENKNEEBOARD_TraceLoggingScope("DXResources::try_lock()");
   return mLocks->mMutex.try_lock();
 }
 
