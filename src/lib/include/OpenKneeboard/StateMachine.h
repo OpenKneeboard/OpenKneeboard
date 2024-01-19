@@ -24,6 +24,7 @@
 #include <concepts>
 #include <format>
 #include <memory>
+#include <source_location>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
@@ -49,14 +50,19 @@ class StateMachine final {
 
   template <State in, State out>
     requires is_valid_state_transition_v<in, out>
-  constexpr void Transition() {
+  constexpr void Transition(
+    const std::source_location& loc = std::source_location::current()) {
     if (mState != in) [[unlikely]] {
       using namespace ADL;
       const auto message = std::format(
-        "Unexpected state {}; expected {} -> {}",
+        "{}:{}:{}: Unexpected state `{}`; expected (`{}` -> `{}`) in `{}`",
+        loc.file_name(),
+        loc.line(),
+        loc.column(),
         formattable_state(mState),
         formattable_state(in),
-        formattable_state(out));
+        formattable_state(out),
+        loc.function_name());
       dprint(message);
       OPENKNEEBOARD_BREAK;
       throw std::logic_error(message);
@@ -81,12 +87,15 @@ template <class TStateMachine, auto pre, auto state, auto post>
 class ScopedStateTransitions final {
  public:
   ScopedStateTransitions() = delete;
-  ScopedStateTransitions(TStateMachine* impl) : mImpl(impl) {
-    mImpl->Transition<pre, state>();
+  constexpr ScopedStateTransitions(
+    TStateMachine* impl,
+    const std::source_location& loc = std::source_location::current())
+    : mImpl(impl), mSourceLocation(loc) {
+    mImpl->Transition<pre, state>(loc);
   }
 
   ~ScopedStateTransitions() {
-    mImpl->Transition<state, post>();
+    mImpl->Transition<state, post>(mSourceLocation);
   }
 
   ScopedStateTransitions(ScopedStateTransitions&&) = delete;
@@ -96,6 +105,7 @@ class ScopedStateTransitions final {
 
  private:
   TStateMachine* mImpl {nullptr};
+  std::source_location mSourceLocation;
 };
 
 namespace Detail {
@@ -134,13 +144,15 @@ static_assert(
 }// namespace Detail
 
 template <auto pre, auto state, auto post>
-auto make_scoped_state_transitions(Detail::any_pointer auto&& stateMachine) {
+auto make_scoped_state_transitions(
+  Detail::any_pointer auto&& stateMachine,
+  const std::source_location& loc = std::source_location::current()) {
   auto smPtr
     = Detail::get_pointer(std::forward<decltype(stateMachine)>(stateMachine));
   static_assert(Detail::raw_pointer<decltype(smPtr)>);
   static_assert(!Detail::any_pointer<decltype(*smPtr)>);
   using TStateMachine = std::remove_cvref_t<decltype(*smPtr)>;
-  return ScopedStateTransitions<TStateMachine, pre, state, post>(smPtr);
+  return ScopedStateTransitions<TStateMachine, pre, state, post>(smPtr, loc);
 }
 
 template <class State>

@@ -398,8 +398,8 @@ class Impl {
   }
 
   template <State in, State out>
-  void Transition() {
-    mState.Transition<in, out>();
+  void Transition(const std::source_location& loc = std::source_location::current()) {
+    mState.Transition<in, out>(loc);
   }
 
   // "Lockable" C++ named concept: supports std::unique_lock
