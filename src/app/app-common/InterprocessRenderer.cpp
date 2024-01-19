@@ -34,6 +34,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/weak_wrap.h>
 
 #include <mutex>
@@ -80,10 +81,12 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
 void InterprocessRenderer::SubmitFrame(
   const std::vector<SHM::LayerConfig>& shmLayers,
   uint64_t inputLayerID) noexcept {
-  // FIXME: add tracing
   if (!mSHM) {
     return;
   }
+
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "InterprocessRenderer::SubmitFrame()");
 
   const auto layerCount = shmLayers.size();
   const auto tint = mKneeboard->GetAppSettings().mTint;
@@ -109,16 +112,22 @@ void InterprocessRenderer::SubmitFrame(
 
   auto srcTexture = mCanvas->d3d().texture();
 
+  TraceLoggingWriteTagged(activity, "AcquireSHMLock/start");
   const std::unique_lock shmLock(mSHM);
+  TraceLoggingWriteTagged(activity, "AcquireSHMLock/stop");
+
   auto ipcTextureInfo = mSHM.BeginFrame();
   auto destResources
     = this->GetIPCTextureResources(ipcTextureInfo.mTextureIndex, mCanvasSize);
 
   auto fence = destResources->mFence.get();
-  winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
-  ctx->CopySubresourceRegion(
-    destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
-  winrt::check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
+  {
+    OPENKNEEBOARD_TraceLoggingScopedActivity("CopyFromCanvas");
+    winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
+    ctx->CopySubresourceRegion(
+      destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
+    winrt::check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
+  }
 
   SHM::Config config {
     .mGlobalInputLayerID = mKneeboard->GetActiveViewForGlobalInput()
@@ -130,17 +139,24 @@ void InterprocessRenderer::SubmitFrame(
     .mTextureSize = destResources->mTextureSize,
   };
 
-  mSHM.SubmitFrame(
-    config,
-    shmLayers,
-    destResources->mTextureHandle.get(),
-    destResources->mFenceHandle.get());
+  {
+    OPENKNEEBOARD_TraceLoggingScopedActivity("SHMSubmitFrame");
+    mSHM.SubmitFrame(
+      config,
+      shmLayers,
+      destResources->mTextureHandle.get(),
+      destResources->mFenceHandle.get());
+  }
+  TraceLoggingWriteStop(activity, "InterprocessRenderer::SubmitFrame()");
 }
 
 void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
   if (mCanvasSize == size) {
     return;
   }
+
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    "InterprocessRenderer::InitializeCanvas()");
 
   D3D11_TEXTURE2D_DESC desc {
     .Width = static_cast<UINT>(size.mWidth),
@@ -168,6 +184,12 @@ InterprocessRenderer::GetIPCTextureResources(
   if (ret.mTextureSize == size) [[likely]] {
     return &ret;
   }
+
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    "InterprocessRenderer::GetIPCTextureResources()",
+    TraceLoggingValue(textureIndex, "textureIndex"),
+    TraceLoggingValue(size.mWidth, "width"),
+    TraceLoggingValue(size.mHeigh, "height"));
 
   auto previousResources = std::move(ret);
 
@@ -300,6 +322,8 @@ InterprocessRenderer::~InterprocessRenderer() {
 SHM::LayerConfig InterprocessRenderer::RenderLayer(
   const ViewRenderInfo& layer,
   const PixelRect& bounds) noexcept {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    "InterprocessRenderer::RenderLayer()");
   const auto view = layer.mView.get();
 
   SHM::LayerConfig ret {};
@@ -331,19 +355,18 @@ void InterprocessRenderer::RenderNow() noexcept {
   }
   const scope_guard markDone([this]() { mRendering.clear(); });
 
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "InterprocessRenderer::RenderNow()");
+
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
   const auto layerCount = renderInfos.size();
 
   const auto canvasSize = Spriting::GetBufferSize(layerCount);
 
+  TraceLoggingWriteTagged(activity, "AcquireDXLock/start");
   const std::unique_lock dxLock(mDXR);
+  TraceLoggingWriteTagged(activity, "AcquireDXLock/stop");
   this->InitializeCanvas(canvasSize);
-
-  {
-    auto d3d = mCanvas->d3d();
-    mDXR.mD3DImmediateContext->ClearRenderTargetView(
-      d3d.rtv(), DirectX::Colors::Transparent);
-  }
 
   std::vector<SHM::LayerConfig> shmLayers;
   shmLayers.reserve(layerCount);
@@ -361,6 +384,8 @@ void InterprocessRenderer::RenderNow() noexcept {
 
   this->SubmitFrame(shmLayers, inputLayerID);
   this->mNeedsRepaint = false;
+
+  TraceLoggingWriteStop(activity, "InterprocessRenderer::RenderNow()");
 }
 
 void InterprocessRenderer::OnGameChanged(

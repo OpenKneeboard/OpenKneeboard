@@ -23,6 +23,8 @@
 #include <Windows.h>
 // clang-format on
 
+#include <OpenKneeboard/scope_guard.h>
+
 #include <TraceLoggingActivity.h>
 #include <TraceLoggingProvider.h>
 
@@ -34,5 +36,13 @@ TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
   TraceLoggingValue(loc.file_name(), "File"), \
     TraceLoggingValue(loc.line(), "Line"), \
     TraceLoggingValue(loc.function_name(), "Function")
+
+#define OPENKNEEBOARD_TraceLoggingScopedActivity(x, ...) \
+  TraceLoggingThreadActivity<gTraceProvider> okbtlta_##__COUNTER__; \
+  TraceLoggingWriteStart(okbtla_##__COUNTER__, x, __VA__ARGS__); \
+  const : OpenKneeboard::scope_guard okbtlasg_##__COUNTER__ { \
+            [&activity = okbtlta_##__COUNTER]() { \
+              TraceLoggingWriteStop(activity, x); \
+            }};
 
 }// namespace OpenKneeboard
