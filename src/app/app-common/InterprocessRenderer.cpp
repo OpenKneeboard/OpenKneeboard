@@ -80,6 +80,7 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
 void InterprocessRenderer::SubmitFrame(
   const std::vector<SHM::LayerConfig>& shmLayers,
   uint64_t inputLayerID) noexcept {
+  // FIXME: add tracing
   if (!mSHM) {
     return;
   }
@@ -97,32 +98,26 @@ void InterprocessRenderer::SubmitFrame(
   }
 
   auto ctx = mDXR.mD3DImmediateContext.get();
+  const D3D11_BOX srcBox {
+    0,
+    0,
+    0,
+    static_cast<UINT>(mCanvasSize.mWidth),
+    static_cast<UINT>(mCanvasSize.mHeight),
+    1,
+  };
 
-  ctx->OMSetDepthStencilState(nullptr, 0);
-  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
-  ctx->IASetInputLayout(nullptr);
-  ctx->VSSetShader(nullptr, nullptr, 0);
-
-  auto canvasSRV = mCanvasShaderResourceView.get();
+  auto srcTexture = mCanvas->d3d().texture();
 
   const std::unique_lock shmLock(mSHM);
   auto ipcTextureInfo = mSHM.BeginFrame();
-  auto& destResources = mIPCSwapchain.at(ipcTextureInfo.mTextureIndex);
+  auto destResources
+    = this->GetIPCTextureResources(ipcTextureInfo.mTextureIndex, mCanvasSize);
 
-  auto fence = destResources.mFence.get();
-
-  ctx->RSSetViewports(1, &destResources.mViewport);
-  ID3D11RenderTargetView* rtvs[] {destResources.mRenderTargetView.get()};
-  ctx->OMSetRenderTargets(std::size(rtvs), rtvs, nullptr);
-
+  auto fence = destResources->mFence.get();
   winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
-
-  mSpriteBatch->Begin();
-  for (const auto& layer: shmLayers) {
-    mSpriteBatch->Draw(canvasSRV, layer.mLocationOnTexture, tintColor);
-  }
-  mSpriteBatch->End();
-
+  ctx->CopySubresourceRegion(
+    destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
   winrt::check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
 
   SHM::Config config {
@@ -132,14 +127,14 @@ void InterprocessRenderer::SubmitFrame(
     .mVR = mKneeboard->GetVRSettings(),
     .mFlat = mKneeboard->GetNonVRSettings(),
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
-    .mTextureSize = destResources.mTextureSize,
+    .mTextureSize = destResources->mTextureSize,
   };
 
   mSHM.SubmitFrame(
     config,
     shmLayers,
-    destResources.mTextureHandle.get(),
-    destResources.mFenceHandle.get());
+    destResources->mTextureHandle.get(),
+    destResources->mFenceHandle.get());
 }
 
 void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
@@ -162,20 +157,16 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
   winrt::com_ptr<ID3D11Texture2D> texture;
   winrt::check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
   mCanvas = RenderTarget::Create(mDXR, texture);
-
-  mCanvasShaderResourceView = nullptr;
-  winrt::check_hresult(device->CreateShaderResourceView(
-    texture.get(), nullptr, mCanvasShaderResourceView.put()));
-
   mCanvasSize = size;
 }
 
-void InterprocessRenderer::InitializeIPCTextureResources(
+InterprocessRenderer::IPCTextureResources*
+InterprocessRenderer::GetIPCTextureResources(
   uint8_t textureIndex,
   const PixelSize& size) {
   auto& ret = mIPCSwapchain.at(textureIndex);
   if (ret.mTextureSize == size) [[likely]] {
-    return;
+    return &ret;
   }
 
   auto previousResources = std::move(ret);
@@ -209,7 +200,7 @@ void InterprocessRenderer::InitializeIPCTextureResources(
   } else {
     winrt::check_hresult(device->CreateFence(
       0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(ret.mFence.put())));
-    winrt::check_hresult(ret.mFence.as<IDXGIResource1>()->CreateSharedHandle(
+    winrt::check_hresult(ret.mFence->CreateSharedHandle(
       nullptr, GENERIC_ALL, nullptr, ret.mFenceHandle.put()));
   }
 
@@ -221,6 +212,8 @@ void InterprocessRenderer::InitializeIPCTextureResources(
     0.0f,
     1.0f,
   };
+
+  return &ret;
 }
 
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
@@ -250,9 +243,6 @@ void InterprocessRenderer::Initialize(
   if (currentGame) {
     mCurrentGame = currentGame->mGameInstance.lock();
   }
-
-  mSpriteBatch
-    = std::make_unique<DirectX::SpriteBatch>(dxr.mD3DImmediateContext.get());
 
   mDXR = dxr;
   mKneeboard = kneeboard;
@@ -304,8 +294,6 @@ InterprocessRenderer::~InterprocessRenderer() {
     // De-allocate D3D resources while we have the lock
     mIPCSwapchain = {};
     mCanvas = {};
-    mCanvasShaderResourceView = {};
-    mSpriteBatch = {};
   }
 }
 

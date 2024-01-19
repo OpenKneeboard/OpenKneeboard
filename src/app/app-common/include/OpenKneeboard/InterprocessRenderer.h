@@ -30,8 +30,6 @@
 
 #include <shims/winrt/base.h>
 
-#include <directxtk/SpriteBatch.h>
-
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -98,15 +96,14 @@ class InterprocessRenderer final
 
   std::array<IPCTextureResources, TextureCount> mIPCSwapchain;
 
-  void InitializeIPCTextureResources(uint8_t textureIndex, const PixelSize&);
+  IPCTextureResources* GetIPCTextureResources(
+    uint8_t textureIndex,
+    const PixelSize&);
 
   std::shared_ptr<RenderTarget> mCanvas;
-  winrt::com_ptr<ID3D11ShaderResourceView> mCanvasShaderResourceView;
   PixelSize mCanvasSize;
 
   void InitializeCanvas(const PixelSize&);
-
-  std::unique_ptr<DirectX::SpriteBatch> mSpriteBatch;
 
   std::shared_ptr<GameInstance> mCurrentGame;
 
