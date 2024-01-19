@@ -23,7 +23,10 @@
 #include <Windows.h>
 // clang-format on
 
+#include <OpenKneeboard/macros.h>
 #include <OpenKneeboard/scope_guard.h>
+
+#include <source_location>
 
 #include <TraceLoggingActivity.h>
 #include <TraceLoggingProvider.h>
@@ -37,12 +40,52 @@ TRACELOGGING_DECLARE_PROVIDER(gTraceProvider);
     TraceLoggingValue(loc.line(), "Line"), \
     TraceLoggingValue(loc.function_name(), "Function")
 
-#define OPENKNEEBOARD_TraceLoggingScopedActivity(x, ...) \
-  TraceLoggingThreadActivity<gTraceProvider> okbtlta_##__COUNTER__; \
-  TraceLoggingWriteStart(okbtla_##__COUNTER__, x, __VA__ARGS__); \
-  const : OpenKneeboard::scope_guard okbtlasg_##__COUNTER__ { \
-            [&activity = okbtlta_##__COUNTER]() { \
-              TraceLoggingWriteStop(activity, x); \
-            }};
+// TraceLoggingWriteStart() requires the legacy preprocessor :(
+static_assert(_MSVC_TRADITIONAL);
+// Rewrite these macros if this fails, as presumably the above was fixed :)
+//
+// - ##__VA_ARGS__             (common vendor extension)
+// + __VA_OPT__(,) __VA_ARGS__ (standard C++20)
+static_assert(!OPENKNEEBOARD_VA_OPT_SUPPORTED);
+// ... but we currently depend on ##__VA_ARGS__
+static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
+
+#define OPENKNEEBOARD_TraceLoggingWriteStartFunction(OKBTL_ACTIVITY, ...) \
+  TraceLoggingWriteStart( \
+    OKBTL_ACTIVITY, \
+    OPENKNEEBOARD_STRINGIFY2(__FUNCTION__)##"()", \
+    OPENKNEEBOARD_TraceLoggingSourceLocation(std::source_location::current()), \
+    ##__VA_ARGS__)
+
+#define OPENKNEEBOARD_TraceLoggingWriteStopFunction(OKBTL_ACTIVITY, ...) \
+  TraceLoggingWriteStart( \
+    OKBTL_ACTIVITY, \
+    OPENKNEEBOARD_STRINGIFY2(__FUNCTION__)##"()", \
+    ##__VA_ARGS__)
+
+#define OPENKNEEBOARD_TraceLoggingScopedActivity_IMPL( \
+  OKBTL_ACTIVITY, OKBTL_NAME, ...) \
+  TraceLoggingThreadActivity<gTraceProvider> OKBTL_ACTIVITY; \
+  constexpr auto OPENKNEEBOARD_CONCAT2(OKBTL_ACTIVITY, _location) \
+    = std::source_location::current(); \
+  TraceLoggingWriteStart( \
+    OKBTL_ACTIVITY, \
+    OKBTL_NAME, \
+    OPENKNEEBOARD_TraceLoggingSourceLocation( \
+      OPENKNEEBOARD_CONCAT2(OKBTL_ACTIVITY, _location)), \
+    ##__VA_ARGS__); \
+  const OpenKneeboard::scope_guard OPENKNEEBOARD_CONCAT2( \
+    OKBTL_ACTIVITY, _scopeExit)([&OKBTL_ACTIVITY]() { \
+    TraceLoggingWriteStop(OKBTL_ACTIVITY, OKBTL_NAME); \
+  });
+
+#define OPENKNEEBOARD_TraceLoggingScopedActivity(OKBTL_NAME, ...) \
+  OPENKNEEBOARD_TraceLoggingScopedActivity_IMPL( \
+    OPENKNEEBOARD_CONCAT2(okbtlsa, __COUNTER__), OKBTL_NAME, ##__VA_ARGS__)
+
+#define OPENKNEEBOARD_TraceLoggingScopedFunction(...) \
+  OPENKNEEBOARD_TraceLoggingScopedActivity( \
+    OPENKNEEBOARD_STRINGIFY2(OPENKNEEBOARD_CONCAT2(__FUNCTION__, ())), \
+    ##__VA_ARGS__)
 
 }// namespace OpenKneeboard
