@@ -22,16 +22,37 @@
 #include <OpenKneeboard/StateMachine.h>
 
 namespace OpenKneeboard::SHM {
+
+#define OPENKNEEBOARD_SHM_WRITER_STATES \
+  IT(Unlocked) \
+  IT(TryLock) \
+  IT(Locked) \
+  IT(FrameInProgress) \
+  IT(SubmittingFrame) \
+  IT(Detaching) \
+  IT(Detached)
+
 enum class WriterState {
-  Unlocked,
-  TryLock,
-  Locked,
-  FrameInProgress,
-  SubmittingFrame,
-  Detaching,
-  Detached,
+#define IT(x) x,
+  OPENKNEEBOARD_SHM_WRITER_STATES
+#undef IT
 };
+
+constexpr auto formattable_state(WriterState state) noexcept {
+  switch (state) {
+#define IT(x) \
+  case WriterState::x: \
+    return "WriterState::" #x;
+    OPENKNEEBOARD_SHM_WRITER_STATES
+#undef IT
+  }
+  dprintf(
+    "Invalid SHM WriterState: {}",
+    static_cast<std::underlying_type_t<WriterState>>(state));
+  OPENKNEEBOARD_BREAK;
+  abort();
 }
+}// namespace OpenKneeboard::SHM
 
 namespace OpenKneeboard {
 
