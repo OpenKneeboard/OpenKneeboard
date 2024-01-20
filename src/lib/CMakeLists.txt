@@ -358,6 +358,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-RunSubprocessAsync
   OpenKneeboard-RuntimeFiles
+  OpenKneeboard-dprint
   ThirdParty::CppWinRT
 )
 
