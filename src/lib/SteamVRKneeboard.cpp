@@ -49,8 +49,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
     // Use DXResources to share the GPU selection logic
     auto dxr = DXResources::Create();
     mD3D = dxr.mD3DDevice;
-    mSHM = std::make_unique<SHM::D3D11::CachedReader>(
-      mD3D.get(), SHM::ConsumerKind::SteamVR, 2);
+    mSHM.InitializeCache(mD3D.get(), /* swapchainLength = */ 2);
     winrt::com_ptr<IDXGIAdapter> adapter;
     dxr.mDXGIDevice->GetAdapter(adapter.put());
     DXGI_ADAPTER_DESC desc;
@@ -222,7 +221,7 @@ void SteamVRKneeboard::Tick() {
     return;
   }
 
-  const auto snapshot = mSHM->MaybeGet();
+  const auto snapshot = mSHM.MaybeGet();
   if (!snapshot.IsValid()) {
     this->HideAllOverlays();
     return;
@@ -236,6 +235,13 @@ void SteamVRKneeboard::Tick() {
   const auto hmdPose = *maybeHMDPose;
 
   const auto config = snapshot.GetConfig();
+
+  auto srv
+    = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();
+  if (!srv) {
+    dprint("Failed to get shared texture");
+    return;
+  }
 
   for (uint8_t layerIndex = 0; layerIndex < snapshot.GetLayerCount();
        ++layerIndex) {
@@ -274,14 +280,6 @@ void SteamVRKneeboard::Tick() {
     //
     // Also lets us apply opacity here, rather than needing another
     // OpenVR call
-
-    auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::Texture>(layerIndex);
-    auto srv = resources->GetD3D11ShaderResourceView();
-    if (!srv) {
-      dprint("Failed to get layer shared texture");
-      continue;
-    }
 
     // non-atomic paint to buffer...
     D3D11::CopyTextureWithOpacity(
