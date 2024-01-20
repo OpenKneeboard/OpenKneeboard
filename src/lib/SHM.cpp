@@ -85,11 +85,10 @@ struct Detail::FrameMetadata final {
   LayerConfig mLayers[MaxLayers];
 
   DWORD mFeederProcessID {};
+  // If you're looking for texture size, it's in Config
   HANDLE mTexture {};
   HANDLE mFence {};
   std::array<LONG64, TextureCount> mFenceValues {0};
-
-  PixelSize mTextureSize {};
 
   size_t GetRenderCacheKey() const;
   bool HaveFeeder() const;
@@ -252,25 +251,18 @@ Snapshot::Snapshot(
     winrt::check_hresult(ctx->Wait(fence, fenceIn));
   }
 
-  { OPENKNEEBOARD_TraceLoggingScope("CopyTexture"); }
+  {
+    OPENKNEEBOARD_TraceLoggingScope("CopyTexture");
 
-  // TODO: sprite the LayerTextureCaches too
-  for (uint8_t i = 0; i < metadata->mLayerCount; ++i) {
-    const D2D_RECT_U srcRect = metadata->mLayers->mLocationOnTexture;
-    const D3D11_BOX srcBox {
-      srcRect.left, srcRect.top, 0, srcRect.right, srcRect.bottom, 1};
-
-    OPENKNEEBOARD_TraceLoggingScope(
-      "CopyLayerTexture", TraceLoggingValue(i, "Layer"));
     ctx->CopySubresourceRegion(
-      dest->GetD3D11Texture(metadata->mTextureSize).get(),
+      dest->GetD3D11Texture(metadata->mConfig.mTextureSize).get(),
       /* subresource = */ 0,
       /* x = */ 0,
       /* y = */ 0,
       /* z = */ 0,
       br->mD3D11Texture.get(),
       /* subresource = */ 0,
-      &srcBox);
+      nullptr);
   }
 
   {
