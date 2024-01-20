@@ -221,6 +221,7 @@ target_link_libraries(
   OpenKneeboard-shims
   System::D3d12
   ThirdParty::CppWinRT
+  ThirdParty::DirectXTK12
   PRIVATE
   OpenKneeboard-dprint
 )

@@ -46,6 +46,8 @@ ID3D11ShaderResourceView* Texture::GetD3D11ShaderResourceView() noexcept {
 void Texture::InitializeSource(
   HANDLE textureHandle,
   HANDLE fenceHandle) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::Texture::InitializeSource()");
+
   if (
     textureHandle == mSourceTextureHandle
     && fenceHandle == mSourceFenceHandle) {

@@ -83,4 +83,4 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11DeviceContext;
 };
 
-};// namespace OpenKneeboard::SHM::D3D11
+}// namespace OpenKneeboard::SHM::D3D11
