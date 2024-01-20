@@ -58,7 +58,7 @@ void D2DErrorRenderer::Render(
 
   winrt::com_ptr<IDWriteTextFormat> textFormat;
 
-  p->mDWrite->CreateTextFormat(
+  winrt::check_hresult(p->mDWrite->CreateTextFormat(
     VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
@@ -66,7 +66,7 @@ void D2DErrorRenderer::Render(
     DWRITE_FONT_STRETCH_NORMAL,
     canvasHeight * 0.05f,
     L"",
-    textFormat.put());
+    textFormat.put()));
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   winrt::check_hresult(p->mDWrite->CreateTextLayout(
