@@ -18,7 +18,10 @@
  * USA.
  */
 
+#include <shims/winrt/base.h>
+
 #include <DirectXMath.h>
+#include <dxgi.h>
 
 // Helpers that work with both D3D11 and D3D12
 namespace OpenKneeboard::D3D {
@@ -41,4 +44,15 @@ class Opacity final {
  private:
   DirectX::XMVECTORF32 mColor;
 };
+
+auto GetAdapterDesc(auto device) {
+  winrt::com_ptr<IDXGIDevice> dxgiDevice;
+  winrt::check_hresult(device->QueryInterface(IID_PPV_ARGS(dxgiDevice.put())));
+  winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
+  winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
+  DXGI_ADAPTER_DESC desc {};
+  winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
+  return desc;
 }
+
+}// namespace OpenKneeboard::D3D

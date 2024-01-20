@@ -239,9 +239,9 @@ class CachedReader : public Reader {
   CachedReader(IPCTextureCopier*, ConsumerKind);
   virtual ~CachedReader();
 
+ protected:
   Snapshot MaybeGet();
 
- protected:
   void InitializeCache(uint8_t swapchainLength);
 
   virtual std::shared_ptr<IPCClientTexture> CreateIPCClientTexture(

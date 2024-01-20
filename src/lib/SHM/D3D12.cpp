@@ -17,7 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/D3D.h>
 #include <OpenKneeboard/SHM/D3D12.h>
+
+#include <OpenKneeboard/scope_guard.h>
 
 #include <Windows.h>
 
@@ -31,12 +34,23 @@ namespace OpenKneeboard::SHM::D3D12 {
 
 Texture::Texture(
   const winrt::com_ptr<ID3D12Device>& device,
+  const winrt::com_ptr<ID3D12CommandQueue>& queue,
+  const winrt::com_ptr<ID3D12CommandAllocator>& allocator,
   const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
   const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle)
   : mDevice(device),
+    mCommandQueue(queue),
+    mCommandAllocator(allocator),
     mShaderResourceViewCPUHandle(shaderResourceViewCPUHandle),
     mShaderResourceViewGPUHandle(shaderResourceViewGPUHandle) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::Texture()");
+
+  winrt::check_hresult(device->CreateCommandList(
+    0,
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    allocator.get(),
+    nullptr,
+    IID_PPV_ARGS(mCommandList.put())));
 }
 
 Texture::~Texture() {
@@ -118,6 +132,109 @@ void Texture::InitializeSource(
       mDevice->OpenSharedHandle(fenceHandle, IID_PPV_ARGS(mSourceFence.put())));
     mSourceFenceHandle = fenceHandle;
   }
+}
+
+void Texture::CopyFrom(
+  HANDLE texture,
+  HANDLE fence,
+  uint64_t fenceValueIn,
+  uint64_t fenceValueOut) noexcept {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "SHM::D3D12::Texture::CopyFrom");
+  this->InitializeSource(texture, fence);
+
+  auto queue = mCommandQueue.get();
+  auto list = mCommandList.get();
+  list->Reset(mCommandAllocator.get(), nullptr);
+
+  TraceLoggingWriteTagged(
+    activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
+  winrt::check_hresult(queue->Wait(mSourceFence.get(), fenceValueIn));
+
+  {
+    OPENKNEEBOARD_TraceLoggingScope("Copy");
+    list->CopyResource(mSourceTexture.get(), mTexture.get());
+    winrt::check_hresult(list->Close());
+    ID3D12CommandList* lists[] {list};
+    queue->ExecuteCommandLists(std::size(lists), lists);
+  }
+
+  TraceLoggingWriteTagged(
+    activity, "FenceOut", TraceLoggingValue(fenceValueOut, "Value"));
+  winrt::check_hresult(queue->Signal(mSourceFence.get(), fenceValueOut));
+}
+
+CachedReader::CachedReader(ConsumerKind consumerKind)
+  : SHM::CachedReader(this, consumerKind) {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::CachedReader()");
+}
+
+CachedReader::~CachedReader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::~CachedReader()");
+}
+
+void CachedReader::InitializeCache(
+  ID3D12Device* device,
+  ID3D12CommandQueue* queue,
+  uint8_t swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D12::CachedReader::InitializeCache()",
+    TraceLoggingValue(swapchainLength, "swapchainLength"));
+
+  if (device != mD3D12Device.get() || queue != mD3D12CommandQueue.get()) {
+    mD3D12Device.copy_from(device);
+    mD3D12CommandQueue.copy_from(queue);
+    mSwapchainLength = 0;
+    mD3D12CommandAllocator = {};
+
+    // debug logging
+    auto desc = OpenKneeboard::D3D::GetAdapterDesc(device);
+    dprintf(
+      L"SHM reader using adapter '{}' (LUID {:#x})",
+      desc.Description,
+      std::bit_cast<uint64_t>(desc.AdapterLuid));
+  };
+
+  if (swapchainLength != mSwapchainLength) {
+    mShaderResourceViewHeap = std::make_unique<DirectX::DescriptorHeap>(
+      mD3D12Device.get(),
+      D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+      D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+      swapchainLength);
+    mSwapchainLength = swapchainLength;
+  }
+
+  if (!mD3D12CommandAllocator) {
+    winrt::check_hresult(device->CreateCommandAllocator(
+      D3D12_COMMAND_LIST_TYPE_DIRECT,
+      IID_PPV_ARGS(mD3D12CommandAllocator.put())));
+  }
+
+  SHM::CachedReader::InitializeCache(swapchainLength);
+}
+
+std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
+  [[maybe_unused]] uint8_t swapchainIndex) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D12::CachedReader::CreateIPCClientTexture()");
+  return std::make_shared<SHM::D3D12::Texture>(
+    mD3D12Device,
+    mD3D12CommandQueue,
+    mD3D12CommandAllocator,
+    mShaderResourceViewHeap->GetCpuHandle(swapchainIndex),
+    mShaderResourceViewHeap->GetGpuHandle(swapchainIndex));
+}
+
+void CachedReader::Copy(
+  HANDLE sourceTexture,
+  IPCClientTexture* destinationTexture,
+  HANDLE fence,
+  uint64_t fenceValueIn,
+  uint64_t fenceValueOut) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::Copy()");
+
+  reinterpret_cast<SHM::D3D12::Texture*>(destinationTexture)
+    ->CopyFrom(sourceTexture, fence, fenceValueIn, fenceValueOut);
 }
 
 }// namespace OpenKneeboard::SHM::D3D12

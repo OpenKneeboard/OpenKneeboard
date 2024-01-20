@@ -25,6 +25,8 @@
 
 #include <d3d12.h>
 
+#include <directxtk12/DescriptorHeap.h>
+
 namespace OpenKneeboard::SHM::D3D12 {
 
 class Texture final : public SHM::IPCClientTexture {
@@ -32,6 +34,8 @@ class Texture final : public SHM::IPCClientTexture {
   Texture() = delete;
   Texture(
     const winrt::com_ptr<ID3D12Device>&,
+    const winrt::com_ptr<ID3D12CommandQueue>&,
+    const winrt::com_ptr<ID3D12CommandAllocator>&,
     const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
     const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle);
   virtual ~Texture();
@@ -40,7 +44,6 @@ class Texture final : public SHM::IPCClientTexture {
   D3D12_GPU_DESCRIPTOR_HANDLE GetD3D12ShaderResourceViewGPUHandle();
 
   void CopyFrom(
-    ID3D12CommandList*,
     HANDLE texture,
     HANDLE fence,
     uint64_t fenceValueIn,
@@ -48,6 +51,10 @@ class Texture final : public SHM::IPCClientTexture {
 
  private:
   winrt::com_ptr<ID3D12Device> mDevice;
+  winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
+  winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
+  winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
+
   D3D12_CPU_DESCRIPTOR_HANDLE mShaderResourceViewCPUHandle;
   D3D12_GPU_DESCRIPTOR_HANDLE mShaderResourceViewGPUHandle;
 
@@ -62,6 +69,38 @@ class Texture final : public SHM::IPCClientTexture {
   winrt::com_ptr<ID3D12Fence> mSourceFence;
 
   void InitializeSource(HANDLE texture, HANDLE fence) noexcept;
+};
+
+class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
+ public:
+  CachedReader() = delete;
+  CachedReader(ConsumerKind);
+  virtual ~CachedReader();
+
+  void InitializeCache(
+    ID3D12Device*,
+    ID3D12CommandQueue* queue,
+    uint8_t swapchainLength);
+
+  using SHM::CachedReader::MaybeGet;
+
+ protected:
+  virtual void Copy(
+    HANDLE sourceTexture,
+    IPCClientTexture* destinationTexture,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept override;
+
+  virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
+    uint8_t swapchainIndex) noexcept override;
+
+  winrt::com_ptr<ID3D12Device> mD3D12Device;
+  winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
+  winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
+
+  uint8_t mSwapchainLength {};
+  std::unique_ptr<DirectX::DescriptorHeap> mShaderResourceViewHeap;
 };
 
 }// namespace OpenKneeboard::SHM::D3D12

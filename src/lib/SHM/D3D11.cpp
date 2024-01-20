@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/D3D.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/scope_guard.h>
@@ -107,6 +108,10 @@ CachedReader::CachedReader(ConsumerKind consumerKind)
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::CachedReader()");
 }
 
+CachedReader::~CachedReader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::~CachedReader()");
+}
+
 void CachedReader::InitializeCache(
   ID3D11Device* device,
   uint8_t swapchainLength) {
@@ -123,13 +128,8 @@ void CachedReader::InitializeCache(
     device->GetImmediateContext(context.put());
     mD3D11DeviceContext = context.as<ID3D11DeviceContext4>();
 
-    // Everything below here is unnecessary, but adds useful debug
-    // logging.
-    auto dxgiDevice = mD3D11Device.as<IDXGIDevice>();
-    winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
-    winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
-    DXGI_ADAPTER_DESC desc {};
-    winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
+    // Debug logging
+    auto desc = OpenKneeboard::D3D::GetAdapterDesc(mD3D11Device);
     dprintf(
       L"SHM reader using adapter '{}' (LUID {:#x})",
       desc.Description,
@@ -137,10 +137,6 @@ void CachedReader::InitializeCache(
   }
 
   SHM::CachedReader::InitializeCache(swapchainLength);
-}
-
-CachedReader::~CachedReader() {
-  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::~CachedReader()");
 }
 
 void CachedReader::Copy(
