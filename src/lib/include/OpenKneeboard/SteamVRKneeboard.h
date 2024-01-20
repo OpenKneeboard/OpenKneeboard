@@ -61,7 +61,7 @@ class SteamVRKneeboard final : private VRKneeboard {
   uint64_t mFrameCounter = 0;
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
-  SHM::D3D11::CachedReader mSHM;
+  std::unique_ptr<SHM::D3D11::CachedReader> mSHM;
 
   // Paint to buffer texture with variable opacity,
   // then atomically copy to OpenVR texture

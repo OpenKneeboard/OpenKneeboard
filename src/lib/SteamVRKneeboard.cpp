@@ -49,6 +49,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
     // Use DXResources to share the GPU selection logic
     auto dxr = DXResources::Create();
     mD3D = dxr.mD3DDevice;
+    mSHM = std::make_unique<SHM::D3D11::CachedReader>(mD3D.get(), 2);
     winrt::com_ptr<IDXGIAdapter> adapter;
     dxr.mDXGIDevice->GetAdapter(adapter.put());
     DXGI_ADAPTER_DESC desc;
@@ -208,7 +209,7 @@ void SteamVRKneeboard::Tick() {
     return;
   }
 
-  const auto snapshot = mSHM.MaybeGet(mD3D.get(), SHM::ConsumerKind::SteamVR);
+  const auto snapshot = mSHM->MaybeGet(mD3D.get(), SHM::ConsumerKind::SteamVR);
   if (!snapshot.IsValid()) {
     this->HideAllOverlays();
     return;
@@ -262,8 +263,7 @@ void SteamVRKneeboard::Tick() {
     // OpenVR call
 
     auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
-        layerIndex);
+      = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(layerIndex);
     auto srv = resources->GetD3D11ShaderResourceView();
     if (!srv) {
       dprint("Failed to get layer shared texture");
