@@ -43,8 +43,7 @@ thread_local bool SavedState::Impl::tHaveSavedState {false};
 SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::SavedState()");
   if (Impl::tHaveSavedState) {
-    dprintf("`{}`: nesting D3D11 SavedStates", __FUNCSIG__);
-    abort();
+    OPENKNEEBOARD_LOG_AND_FATAL("Nested D3D11 SavedStates detected");
   }
 
   Impl::tHaveSavedState = true;
@@ -202,17 +201,16 @@ SpriteBatch::SpriteBatch(ID3D11Device* device) {
 SpriteBatch::~SpriteBatch() {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::~SpriteBatch()");
   if (mTarget) [[unlikely]] {
-    dprintf(
-      "`{}`: destroying SpriteBatch while frame in progress", __FUNCSIG__);
-    abort();
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "destroying SpriteBatch while frame in progress");
   }
 }
 
 void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Begin()");
   if (mTarget) [[unlikely]] {
-    dprintf("`{}`: frame already in progress", __FUNCSIG__);
-    abort();
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "frame already in progress; did you call End()?");
   }
   const D3D11_VIEWPORT viewport {
     0,
@@ -247,8 +245,7 @@ void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
 void SpriteBatch::Clear(DirectX::XMVECTORF32 color) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Clear()");
   if (!mTarget) [[unlikely]] {
-    dprintf("`{}`: target not set, call BeginFrame()", __FUNCSIG__);
-    abort();
+    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call EndFrame()");
   }
   mDeviceContext->ClearRenderTargetView(mTarget, color);
 };
@@ -260,8 +257,7 @@ void SpriteBatch::Draw(
   const DirectX::XMVECTORF32 tint) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Draw()");
   if (!mTarget) [[unlikely]] {
-    dprintf("`{}`: target not set, call BeginFrame()", __FUNCSIG__);
-    abort();
+    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
   }
 
   const D3D11_RECT sourceD3DRect = sourceRect;
@@ -273,11 +269,11 @@ void SpriteBatch::Draw(
 void SpriteBatch::End() {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::End()");
   if (!mTarget) [[unlikely]] {
-    dprintf(
-      "`{}`: target not set; double-End() or Begin() not called?", __FUNCSIG__);
-    abort();
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "target not set; double-End() or Begin() not called?");
   }
   mDXTKSpriteBatch->End();
+  mTarget = nullptr;
 }
 
 }// namespace OpenKneeboard::D3D11
