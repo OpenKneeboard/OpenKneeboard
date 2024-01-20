@@ -23,23 +23,59 @@
 
 namespace OpenKneeboard::SHM::D3D11 {
 
-LayerTextureCache::~LayerTextureCache() = default;
+TextureProvider::TextureProvider(const winrt::com_ptr<ID3D11Device>& device)
+  : mD3D11Device(device) {
+}
 
-ID3D11ShaderResourceView* LayerTextureCache::GetD3D11ShaderResourceView() {
+TextureProvider::~TextureProvider() = default;
+
+ID3D11ShaderResourceView* TextureProvider::GetD3D11ShaderResourceView() {
   if (!mD3D11ShaderResourceView) [[unlikely]] {
-    auto texture = this->GetD3D11Texture();
-    winrt::com_ptr<ID3D11Device> device;
-    texture->GetDevice(device.put());
-    winrt::check_hresult(device->CreateShaderResourceView(
-      texture, nullptr, mD3D11ShaderResourceView.put()));
+    winrt::check_hresult(mD3D11Device->CreateShaderResourceView(
+      mD3D11Texture.get(), nullptr, mD3D11ShaderResourceView.put()));
   }
   return mD3D11ShaderResourceView.get();
 }
 
-std::shared_ptr<SHM::LayerTextureCache> CachedReader::CreateLayerTextureCache(
-  [[maybe_unused]] uint8_t layerIndex,
-  const winrt::com_ptr<ID3D11Texture2D>& texture) {
-  return std::make_shared<SHM::D3D11::LayerTextureCache>(texture);
+winrt::com_ptr<ID3D11Texture2D> TextureProvider::GetD3D11Texture(
+  const PixelSize& size) noexcept {
+  if (size == mPixelSize) [[likely]] {
+    return mD3D11Texture;
+  }
+  mD3D11Texture = nullptr;
+  mD3D11ShaderResourceView = nullptr;
+
+  D3D11_TEXTURE2D_DESC desc {
+    .Width = size.mWidth,
+    .Height = size.mHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags
+    = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+  };
+  winrt::check_hresult(
+    mD3D11Device->CreateTexture2D(&desc, nullptr, mD3D11Texture.put()));
+  return mD3D11Texture;
+}
+
+ID3D11Texture2D* TextureProvider::GetD3D11Texture() const noexcept {
+  return mD3D11Texture.get();
+}
+
+CachedReader::CachedReader(ID3D11Device* device, uint8_t swapchainLength)
+  : SHM::CachedReader(swapchainLength) {
+  mD3D11Device.copy_from(device);
+}
+
+CachedReader::~CachedReader() = default;
+
+std::shared_ptr<SHM::TextureProvider> CachedReader::CreateTextureProvider(
+  [[maybe_unused]] uint8_t swapchainLength,
+  [[maybe_unused]] uint8_t swapchainIndex) noexcept {
+  return std::make_shared<SHM::D3D11::TextureProvider>(mD3D11Device);
 }
 
 namespace Renderer {
@@ -148,7 +184,7 @@ void Render(
     for (size_t i = 0; i < layerSpriteCount; ++i) {
       const auto& sprite = layerSprites[i];
       auto resources
-        = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
+        = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(
           sprite.mLayerIndex);
 
       const auto srv = resources->GetD3D11ShaderResourceView();

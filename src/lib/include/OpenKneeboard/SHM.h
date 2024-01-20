@@ -66,20 +66,21 @@ struct LayerSprite {
   float mOpacity {1.0f};
 };
 
-class LayerTextureCache {
+class TextureProvider {
  public:
-  LayerTextureCache() = delete;
-  LayerTextureCache(const winrt::com_ptr<ID3D11Texture2D>&);
-  virtual ~LayerTextureCache();
+  virtual ~TextureProvider();
 
-  ID3D11Texture2D* GetD3D11Texture();
+  // Obtain a texture of the specified size; this may (should) be the same
+  // texture in subsequent calls
+  //
+  // TODO: change to CopyFrom(HANDLEs, fence values, etc)
+  virtual winrt::com_ptr<ID3D11Texture2D> GetD3D11Texture(
+    const PixelSize&) noexcept
+    = 0;
 
- private:
-  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
+ protected:
+  TextureProvider() = default;
 };
-
-using LayersTextureCache
-  = std::array<std::shared_ptr<LayerTextureCache>, MaxLayers>;
 
 constexpr UINT DEFAULT_D3D11_BIND_FLAGS
   = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
@@ -186,7 +187,7 @@ class Snapshot final {
     Detail::DeviceResources*,
     Detail::IPCSwapchainBufferResources*,
     Detail::FrameMetadata*,
-    const LayersTextureCache& dest);
+    const std::shared_ptr<TextureProvider>& dest);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -195,7 +196,7 @@ class Snapshot final {
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
 
-  template <std::derived_from<LayerTextureCache> T>
+  template <std::derived_from<TextureProvider> T>
   T* GetLayerGPUResources(uint8_t layerIndex) const {
     if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
       dprintf(
@@ -205,12 +206,11 @@ class Snapshot final {
       OPENKNEEBOARD_BREAK;
       return nullptr;
     }
-    const auto ret
-      = std::dynamic_pointer_cast<T>(mLayerTextures.at(layerIndex));
+    const auto ret = std::dynamic_pointer_cast<T>(mTextureProvider);
     if (!ret) [[unlikely]] {
       dprint("Layer texture cache type mismatch");
       OPENKNEEBOARD_BREAK;
-      return nullptr;
+      abort();
     }
     return ret.get();
   }
@@ -224,7 +224,7 @@ class Snapshot final {
 
  private:
   std::shared_ptr<Detail::FrameMetadata> mHeader;
-  LayersTextureCache mLayerTextures;
+  std::shared_ptr<TextureProvider> mTextureProvider;
 
   State mState;
 };
@@ -253,7 +253,7 @@ class Reader {
 
   Snapshot MaybeGetUncached(
     ID3D11Device*,
-    const LayersTextureCache&,
+    const std::shared_ptr<TextureProvider>&,
     ConsumerKind) const;
 
  protected:
@@ -263,13 +263,17 @@ class Reader {
 
 class CachedReader : public Reader {
  public:
+  CachedReader() = delete;
   virtual ~CachedReader();
   Snapshot MaybeGet(ID3D11Device* device, ConsumerKind kind);
 
  protected:
-  virtual std::shared_ptr<LayerTextureCache> CreateLayerTextureCache(
-    uint8_t layerIndex,
-    const winrt::com_ptr<ID3D11Texture2D>&);
+  CachedReader(uint8_t swapchainLength);
+
+  virtual std::shared_ptr<TextureProvider> CreateTextureProvider(
+    uint8_t swapchainIndex,
+    uint8_t swapchainLength) noexcept
+    = 0;
 
  private:
   ID3D11Device* mD3D11Device {nullptr};
@@ -282,9 +286,13 @@ class CachedReader : public Reader {
     constexpr bool operator==(const CacheKey&) const noexcept = default;
   };
   CacheKey mCacheKey;
-
   Snapshot mCache {nullptr};
-  SHM::LayersTextureCache mTextures;
+  uint8_t mSwapchainIndex {};
+
+  std::vector<std::shared_ptr<TextureProvider>> mTextureProviders;
+
+  std::shared_ptr<TextureProvider> GetTextureProvider(
+    uint8_t swapchainIndex) noexcept;
 };
 
 }// namespace OpenKneeboard::SHM

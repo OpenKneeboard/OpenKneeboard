@@ -72,7 +72,7 @@ class TestViewerWindow final {
   bool mStreamerMode = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
-  SHM::D3D11::CachedReader mSHM;
+  std::unique_ptr<SHM::D3D11::CachedReader> mSHM;
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
@@ -144,6 +144,9 @@ class TestViewerWindow final {
     mDXR = DXResources::Create();
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
+    mSHM = std::make_unique<SHM::D3D11::CachedReader>(
+      mDXR.mD3DDevice.get(), /* swapchain size = */ 2);
+
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
     mWindowColor = GetSystemColor(COLOR_WINDOW);
     mWindowFrameColor = GetSystemColor(COLOR_WINDOWFRAME);
@@ -181,7 +184,7 @@ class TestViewerWindow final {
       return;
     }
 
-    if (mSHM.GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
+    if (mSHM->GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
       PaintNow();
     }
   }
@@ -266,7 +269,7 @@ class TestViewerWindow final {
 
   void CaptureScreenshot() {
     const auto snapshot
-      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
+      = mSHM->MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
     if (!snapshot.IsValid()) {
       return;
     }
@@ -295,8 +298,7 @@ class TestViewerWindow final {
     mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 
     const auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
-        mLayerIndex);
+      = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(mLayerIndex);
 
     winrt::check_hresult(DirectX::SaveDDSTextureToFile(
       ctx.get(), resources->GetD3D11Texture(), path.wstring().c_str()));
@@ -374,10 +376,10 @@ class TestViewerWindow final {
     const auto clientSize = GetClientSize();
     auto text = std::format(
       L"Frame #{}, View {}",
-      mSHM.GetFrameCountForMetricsOnly(),
+      mSHM->GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
     const auto snapshot
-      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
+      = mSHM->MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
     if (snapshot.IsValid()) {
       const auto layer = snapshot.GetLayerConfig(mLayerIndex);
       const auto size = layer->mLocationOnTexture.mSize;
@@ -455,7 +457,7 @@ class TestViewerWindow final {
     d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
     const auto snapshot
-      = mSHM.MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
+      = mSHM->MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
@@ -483,8 +485,7 @@ class TestViewerWindow final {
 
     auto d3d = mDXR.mD3DDevice.get();
     auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
-        mLayerIndex);
+      = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(mLayerIndex);
     auto sharedSRV = resources->GetD3D11ShaderResourceView();
     if (!sharedSRV) {
       mErrorRenderer->Render(

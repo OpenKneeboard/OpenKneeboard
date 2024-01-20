@@ -25,25 +25,35 @@
 
 namespace OpenKneeboard::SHM::D3D11 {
 
-class LayerTextureCache : public SHM::LayerTextureCache {
+class TextureProvider : public SHM::TextureProvider {
  public:
-  using SHM::LayerTextureCache::LayerTextureCache;
-
-  virtual ~LayerTextureCache();
+  TextureProvider() = delete;
+  TextureProvider(const winrt::com_ptr<ID3D11Device>&);
+  virtual ~TextureProvider();
+  winrt::com_ptr<ID3D11Texture2D> GetD3D11Texture(
+    const PixelSize&) noexcept override;
+  ID3D11Texture2D* GetD3D11Texture() const noexcept;
   ID3D11ShaderResourceView* GetD3D11ShaderResourceView();
 
  private:
+  PixelSize mPixelSize;
+  winrt::com_ptr<ID3D11Device> mD3D11Device;
+  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
   winrt::com_ptr<ID3D11ShaderResourceView> mD3D11ShaderResourceView;
 };
 
 class CachedReader : public SHM::CachedReader {
  public:
-  using SHM::CachedReader::CachedReader;
+  CachedReader() = delete;
+  CachedReader(ID3D11Device*, uint8_t swapchainLength);
+  virtual ~CachedReader();
 
  protected:
-  virtual std::shared_ptr<SHM::LayerTextureCache> CreateLayerTextureCache(
-    uint8_t layerIndex,
-    const winrt::com_ptr<ID3D11Texture2D>&) override;
+  virtual std::shared_ptr<SHM::TextureProvider> CreateTextureProvider(
+    uint8_t swapchainLength,
+    uint8_t swapchainIndex) noexcept override;
+
+  winrt::com_ptr<ID3D11Device> mD3D11Device;
 };
 
 // Usage:

@@ -131,8 +131,6 @@ struct Detail::DeviceResources {
 using Detail::DeviceResources;
 
 struct Detail::IPCSwapchainBufferResources {
-  PixelSize mTextureSize;
-
   winrt::handle mTextureHandle;
   winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
 
@@ -169,10 +167,12 @@ struct Detail::IPCSwapchainBufferResources {
   }
 
   IPCSwapchainBufferResources() = delete;
-  IPCSwapchainBufferResources(const DeviceResources&) = delete;
-  IPCSwapchainBufferResources(DeviceResources&&) = delete;
-  IPCSwapchainBufferResources& operator=(const DeviceResources&) = delete;
-  IPCSwapchainBufferResources& operator=(DeviceResources&&) = delete;
+  IPCSwapchainBufferResources(const IPCSwapchainBufferResources&) = delete;
+  IPCSwapchainBufferResources(IPCSwapchainBufferResources&&) = delete;
+  IPCSwapchainBufferResources& operator=(const IPCSwapchainBufferResources&)
+    = delete;
+  IPCSwapchainBufferResources& operator=(IPCSwapchainBufferResources&&)
+    = delete;
 };
 using Detail::IPCSwapchainBufferResources;
 
@@ -231,8 +231,8 @@ Snapshot::Snapshot(
   DeviceResources* dr,
   IPCSwapchainBufferResources* br,
   FrameMetadata* metadata,
-  const LayersTextureCache& dest)
-  : mLayerTextures(dest), mState(State::Empty) {
+  const std::shared_ptr<TextureProvider>& dest)
+  : mTextureProvider(dest), mState(State::Empty) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "SHM::Snapshot::Snapshot()");
 
@@ -252,6 +252,8 @@ Snapshot::Snapshot(
     winrt::check_hresult(ctx->Wait(fence, fenceIn));
   }
 
+  { OPENKNEEBOARD_TraceLoggingScope("CopyTexture"); }
+
   // TODO: sprite the LayerTextureCaches too
   for (uint8_t i = 0; i < metadata->mLayerCount; ++i) {
     const D2D_RECT_U srcRect = metadata->mLayers->mLocationOnTexture;
@@ -261,7 +263,7 @@ Snapshot::Snapshot(
     OPENKNEEBOARD_TraceLoggingScope(
       "CopyLayerTexture", TraceLoggingValue(i, "Layer"));
     ctx->CopySubresourceRegion(
-      dest.at(i)->GetD3D11Texture(),
+      dest->GetD3D11Texture(metadata->mTextureSize).get(),
       /* subresource = */ 0,
       /* x = */ 0,
       /* y = */ 0,
@@ -563,14 +565,30 @@ class Reader::Impl : public SHM::Impl<ReaderState> {
   void UpdateSession() {
     const auto& metadata = *this->mHeader;
 
+    if (
+      mForeignTextureHandle != metadata.mTexture
+      || mForeignFenceHandle != metadata.mFence) {
+      mBufferResources = {};
+      mForeignTextureHandle = metadata.mTexture;
+      mForeignFenceHandle = metadata.mFence;
+    }
+
     if (metadata.mSessionID == mSessionID) [[likely]] {
       return;
     }
+
     mFeederProcessHandle = winrt::handle {
       OpenProcess(PROCESS_DUP_HANDLE, FALSE, metadata.mFeederProcessID)};
-    mBufferResources = {};
     mSessionID = metadata.mSessionID;
+    // Probably just did this, but doesn't hurt to be sure :)
+    mBufferResources = {};
   }
+
+ private:
+  // Only valid in the feeder process, but keep track of them to see if they
+  // change
+  HANDLE mForeignTextureHandle {};
+  HANDLE mForeignFenceHandle {};
 };
 
 uint64_t Reader::GetSessionID() const {
@@ -606,17 +624,15 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-CachedReader::~CachedReader() = default;
-
-std::shared_ptr<LayerTextureCache> CachedReader::CreateLayerTextureCache(
-  [[maybe_unused]] uint8_t layerIndex,
-  const winrt::com_ptr<ID3D11Texture2D>& texture) {
-  return std::make_shared<LayerTextureCache>(texture);
+CachedReader::CachedReader(uint8_t swapchainLength) {
+  mTextureProviders.resize(swapchainLength);
 }
+
+CachedReader::~CachedReader() = default;
 
 Snapshot Reader::MaybeGetUncached(
   ID3D11Device* device,
-  const LayersTextureCache& dest,
+  const std::shared_ptr<TextureProvider>& dest,
   ConsumerKind kind) const {
   const auto transitions = make_scoped_state_transitions<
     State::Locked,
@@ -758,11 +774,14 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
     TraceLoggingWriteTagged(activity, "Resetting cached resources");
     mCache = {nullptr};
     mCacheKey = {};
-    mTextures = {};
+    std::ranges::fill(mTextureProviders, nullptr);
 
     mD3D11Device = device;
     mSessionID = this->GetSessionID();
   }
+
+  const auto swapchainIndex = mSwapchainIndex;
+  mSwapchainIndex = (mSwapchainIndex + 1) % mTextureProviders.size();
 
   const CacheKey cacheKey {kind, this->GetRenderCacheKey(kind)};
 
@@ -775,12 +794,14 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
     return mCache;
   }
 
+  auto dest = GetTextureProvider(swapchainIndex);
+
   TraceLoggingWriteTagged(activity, "LockingSHM");
   std::unique_lock lock(*p);
   TraceLoggingWriteTagged(activity, "LockedSHM");
   TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
   TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
-  auto snapshot = this->MaybeGetUncached(device, mTextures, kind);
+  auto snapshot = this->MaybeGetUncached(device, dest, kind);
   const auto state = snapshot.GetState();
   TraceLoggingWriteStop(
     maybeGetActivity,
@@ -809,15 +830,19 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
   return snapshot;
 }
 
-LayerTextureCache::LayerTextureCache(
-  const winrt::com_ptr<ID3D11Texture2D>& d3d11Texture)
-  : mD3D11Texture(d3d11Texture) {
+std::shared_ptr<TextureProvider> CachedReader::GetTextureProvider(
+  uint8_t swapchainIndex) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "CachedReader::GetTextureProvider",
+    TraceLoggingValue(swapchainIndex, "swapchainIndex"));
+  auto& ret = mTextureProviders.at(swapchainIndex);
+  if (!ret) {
+    OPENKNEEBOARD_TraceLoggingScope("CachedReader::CreateTextureProvider");
+    ret = this->CreateTextureProvider(mTextureProviders.size(), swapchainIndex);
+  }
+  return ret;
 }
 
-LayerTextureCache::~LayerTextureCache() = default;
-
-ID3D11Texture2D* LayerTextureCache::GetD3D11Texture() {
-  return mD3D11Texture.get();
-}
+TextureProvider::~TextureProvider() = default;
 
 }// namespace OpenKneeboard::SHM
