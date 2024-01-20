@@ -21,8 +21,6 @@
 
 #include <OpenKneeboard/SHM.h>
 
-#include <directxtk/SpriteBatch.h>
-
 #include <d3d11_4.h>
 
 namespace OpenKneeboard::SHM::D3D11 {

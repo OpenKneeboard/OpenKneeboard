@@ -196,7 +196,6 @@ target_link_libraries(
   OpenKneeboard-SHM-Client-D3D11
   PUBLIC
   OpenKneeboard-SHM
-  ThirdParty::DirectXTK
   PRIVATE
   OpenKneeboard-dprint
 )
