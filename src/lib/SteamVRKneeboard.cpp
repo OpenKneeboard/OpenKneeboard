@@ -68,11 +68,13 @@ SteamVRKneeboard::SteamVRKneeboard() {
     .ArraySize = 1,
     .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
     .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
   };
   winrt::check_hresult(
     mD3D->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
+
+  desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+  desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
   for (uint8_t i = 0; i < MaxLayers; ++i) {
     auto& layer = mLayers.at(i);
     winrt::check_hresult(
