@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/SHM.h>
 
+#include <shims/winrt/base.h>
+
 #include <d3d11_4.h>
 
 namespace OpenKneeboard::SHM::D3D11 {

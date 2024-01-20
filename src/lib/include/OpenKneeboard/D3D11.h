@@ -19,9 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D.h>
 #include <OpenKneeboard/Pixels.h>
-
-#include <OpenKneeboard/bitflags.h>
 
 #include <shims/winrt/base.h>
 
@@ -81,24 +80,7 @@ void DrawTextureWithOpacity(
 
 // TODO: merge everthing above here with everything below here :)
 
-/** Helper for converting a 0.0f->1.0f opacity value to a color
- * with premultiplied alpha.
- */
-class Opacity final {
- public:
-  Opacity() = delete;
-  explicit constexpr Opacity(float opacity) noexcept {
-    // Assuming premultiplied alpha
-    mColor = {opacity, opacity, opacity, opacity};
-  }
-
-  constexpr operator DirectX::XMVECTORF32() const noexcept {
-    return mColor;
-  }
-
- private:
-  DirectX::XMVECTORF32 mColor;
-};
+using Opacity = ::OpenKneeboard::D3D::Opacity;
 
 /** Wrapper around DirectXTK SpriteBatch which sets the required state on the
  * device first.

@@ -119,14 +119,25 @@ target_link_libraries(
   PUBLIC
   System::D3d11
   OpenKneeboard-shims
+  ThirdParty::DirectXTK
   ThirdParty::CppWinRT
   _libheaders
-)
-target_link_libraries(
-  OpenKneeboard-D3D11
   PRIVATE
-  OpenKneeboard-config
-  ThirdParty::DirectXTK
+  OpenKneeboard-dprint
+  System::Dxguid
+)
+
+ok_add_library(OpenKneeboard-D3D12 STATIC D3D12.cpp)
+target_link_libraries(
+  OpenKneeboard-D3D12
+  PUBLIC
+  System::D3d12
+  OpenKneeboard-shims
+  ThirdParty::DirectXTK12
+  ThirdParty::CppWinRT
+  _libheaders
+  PRIVATE
+  OpenKneeboard-dprint
   System::Dxguid
 )
 
@@ -173,18 +184,14 @@ ok_add_library(
 )
 target_link_libraries(
   OpenKneeboard-SHM
-  PRIVATE
+  PUBLIC
   OpenKneeboard-dprint
+  _libheaders
+  PRIVATE
+  OpenKneeboard-Elevation
+  OpenKneeboard-config
   OpenKneeboard-shims
   OpenKneeboard-version
-  OpenKneeboard-D3D11
-)
-target_link_libraries(
-  OpenKneeboard-SHM
-  PUBLIC
-  _libheaders
-  OpenKneeboard-config
-  OpenKneeboard-Elevation
 )
 
 ok_add_library(
@@ -195,20 +202,12 @@ ok_add_library(
 target_link_libraries(
   OpenKneeboard-SHM-Client-D3D11
   PUBLIC
+  OpenKneeboard-shims
   OpenKneeboard-SHM
+  System::D3d11
+  ThirdParty::CppWinRT
   PRIVATE
   OpenKneeboard-dprint
-)
-
-ok_add_library(
-  OpenKneeboard-SHM-Client-GFXInterop
-  STATIC
-  SHM/GFXInterop.cpp
-)
-target_link_libraries(
-  OpenKneeboard-SHM-Client-GFXInterop
-  PUBLIC
-  OpenKneeboard-SHM
 )
 
 ok_add_library(
@@ -219,10 +218,11 @@ ok_add_library(
 target_link_libraries(
   OpenKneeboard-SHM-Client-D3D12
   PUBLIC
-  OpenKneeboard-SHM-Client-GFXInterop
   OpenKneeboard-shims
+  System::D3d12
   ThirdParty::CppWinRT
-  ThirdParty::DirectXTK12
+  PRIVATE
+  OpenKneeboard-dprint
 )
 
 ok_add_library(

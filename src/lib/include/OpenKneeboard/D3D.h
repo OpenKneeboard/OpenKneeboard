@@ -17,21 +17,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
 
-#include <OpenKneeboard/SHM.h>
+#include <DirectXMath.h>
 
-namespace OpenKneeboard::SHM::GFXInterop {
+// Helpers that work with both D3D11 and D3D12
+namespace OpenKneeboard::D3D {
 
-class LayerTextureCache : public SHM::LayerTextureCache {
+/** Helper for converting a 0.0f->1.0f opacity value to a color
+ * with premultiplied alpha.
+ */
+class Opacity final {
  public:
-  using SHM::LayerTextureCache::LayerTextureCache;
+  Opacity() = delete;
+  explicit constexpr Opacity(float opacity) noexcept {
+    // Assuming premultiplied alpha
+    mColor = {opacity, opacity, opacity, opacity};
+  }
 
-  virtual ~LayerTextureCache();
-  HANDLE GetNTHandle();
+  constexpr operator DirectX::XMVECTORF32() const noexcept {
+    return mColor;
+  }
 
  private:
-  winrt::handle mNTHandle;
+  DirectX::XMVECTORF32 mColor;
 };
-
-};// namespace OpenKneeboard::SHM::GFXInterop
+}

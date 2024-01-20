@@ -18,15 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/SHM.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/winrt/base.h>
-
-#include <directxtk/SpriteBatch.h>
 
 #include <d3d11_3.h>
 
@@ -42,7 +38,7 @@ thread_local bool SavedState::Impl::tHaveSavedState {false};
 
 SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::SavedState()");
-  if (Impl::tHaveSavedState) {
+  if (Impl::tHaveSavedState) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL("Nested D3D11 SavedStates detected");
   }
 
@@ -202,7 +198,7 @@ SpriteBatch::~SpriteBatch() {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::~SpriteBatch()");
   if (mTarget) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL(
-      "destroying SpriteBatch while frame in progress");
+      "Destroying SpriteBatch while frame in progress; did you call End()?");
   }
 }
 
@@ -245,7 +241,7 @@ void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
 void SpriteBatch::Clear(DirectX::XMVECTORF32 color) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Clear()");
   if (!mTarget) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call EndFrame()");
+    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
   }
   mDeviceContext->ClearRenderTargetView(mTarget, color);
 };

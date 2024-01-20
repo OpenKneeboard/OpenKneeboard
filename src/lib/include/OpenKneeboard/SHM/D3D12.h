@@ -20,7 +20,6 @@
 #pragma once
 
 #include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/SHM/GFXInterop.h>
 
 #include <shims/winrt/base.h>
 

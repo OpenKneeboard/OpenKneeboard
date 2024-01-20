@@ -24,7 +24,6 @@
 
 #include <OpenKneeboard/Pixels.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <shims/winrt/base.h>
