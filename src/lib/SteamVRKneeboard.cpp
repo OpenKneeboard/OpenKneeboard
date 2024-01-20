@@ -49,7 +49,8 @@ SteamVRKneeboard::SteamVRKneeboard() {
     // Use DXResources to share the GPU selection logic
     auto dxr = DXResources::Create();
     mD3D = dxr.mD3DDevice;
-    mSHM = std::make_unique<SHM::D3D11::CachedReader>(mD3D.get(), 2);
+    mSHM = std::make_unique<SHM::D3D11::CachedReader>(
+      mD3D.get(), SHM::ConsumerKind::SteamVR, 2);
     winrt::com_ptr<IDXGIAdapter> adapter;
     dxr.mDXGIDevice->GetAdapter(adapter.put());
     DXGI_ADAPTER_DESC desc;
@@ -60,16 +61,26 @@ SteamVRKneeboard::SteamVRKneeboard() {
       std::bit_cast<uint64_t>(desc.AdapterLuid));
   }
 
+  D3D11_TEXTURE2D_DESC desc {
+    .Width = TextureWidth,
+    .Height = TextureHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
+  };
+  winrt::check_hresult(
+    mD3D->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
   for (uint8_t i = 0; i < MaxLayers; ++i) {
     auto& layer = mLayers.at(i);
-    layer.mOpenVRTexture = SHM::CreateCompatibleTexture(
-      mD3D.get(), D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_SHARED);
+    winrt::check_hresult(
+      mD3D->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
     winrt::check_hresult(
       layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
         &layer.mSharedHandle));
   }
-
-  mBufferTexture = SHM::CreateCompatibleTexture(mD3D.get());
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
     .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
@@ -209,7 +220,7 @@ void SteamVRKneeboard::Tick() {
     return;
   }
 
-  const auto snapshot = mSHM->MaybeGet(mD3D.get(), SHM::ConsumerKind::SteamVR);
+  const auto snapshot = mSHM->MaybeGet();
   if (!snapshot.IsValid()) {
     this->HideAllOverlays();
     return;
@@ -263,7 +274,7 @@ void SteamVRKneeboard::Tick() {
     // OpenVR call
 
     auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(layerIndex);
+      = snapshot.GetLayerGPUResources<SHM::D3D11::Texture>(layerIndex);
     auto srv = resources->GetD3D11ShaderResourceView();
     if (!srv) {
       dprint("Failed to get layer shared texture");
