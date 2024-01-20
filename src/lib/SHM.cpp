@@ -41,10 +41,6 @@
 #include <format>
 #include <random>
 
-#include <d3d11_2.h>
-#include <d3d11_3.h>
-#include <d3d11_4.h>
-#include <dxgi1_2.h>
 #include <processthreadsapi.h>
 
 namespace OpenKneeboard::SHM {
@@ -97,48 +93,12 @@ using Detail::FrameMetadata;
 static_assert(std::is_standard_layout_v<FrameMetadata>);
 static constexpr DWORD SHM_SIZE = sizeof(FrameMetadata);
 
-struct Detail::DeviceResources {
-  winrt::com_ptr<ID3D11Device5> mD3D11Device;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
-
-  DeviceResources(ID3D11Device* device) {
-    winrt::check_hresult(
-      device->QueryInterface(IID_PPV_ARGS(mD3D11Device.put())));
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    device->GetImmediateContext(ctx.put());
-    mD3D11ImmediateContext = ctx.as<ID3D11DeviceContext4>();
-
-    // Everything below here is unnecessary, but adds useful debug
-    // logging.
-    auto dxgiDevice = mD3D11Device.as<IDXGIDevice>();
-    winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
-    winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
-    DXGI_ADAPTER_DESC desc {};
-    winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
-    dprintf(
-      L"SHM reader using adapter '{}' (LUID {:#x})",
-      desc.Description,
-      std::bit_cast<uint64_t>(desc.AdapterLuid));
-  }
-
-  DeviceResources() = delete;
-  DeviceResources(const DeviceResources&) = delete;
-  DeviceResources(DeviceResources&&) = delete;
-  DeviceResources& operator=(const DeviceResources&) = delete;
-  DeviceResources& operator=(DeviceResources&&) = delete;
-};
-using Detail::DeviceResources;
-
 struct Detail::IPCSwapchainBufferResources {
   winrt::handle mTextureHandle;
-  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
-
   winrt::handle mFenceHandle;
-  winrt::com_ptr<ID3D11Fence> mD3D11Fence;
 
   IPCSwapchainBufferResources(
     HANDLE feederProcess,
-    DeviceResources* dr,
     const FrameMetadata& frame) {
     const auto thisProcess = GetCurrentProcess();
     winrt::check_bool(DuplicateHandle(
@@ -157,12 +117,6 @@ struct Detail::IPCSwapchainBufferResources {
       NULL,
       FALSE,
       DUPLICATE_SAME_ACCESS));
-
-    auto device = dr->mD3D11Device.get();
-    winrt::check_hresult(device->OpenSharedFence(
-      mFenceHandle.get(), IID_PPV_ARGS(mD3D11Fence.put())));
-    winrt::check_hresult(device->OpenSharedResource1(
-      mTextureHandle.get(), IID_PPV_ARGS(mD3D11Texture.put())));
   }
 
   IPCSwapchainBufferResources() = delete;
@@ -199,27 +153,6 @@ static auto MutexPath() {
   return sCache;
 }
 
-winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
-  ID3D11Device* d3d,
-  UINT bindFlags,
-  UINT miscFlags,
-  DXGI_FORMAT format) {
-  D3D11_TEXTURE2D_DESC desc {
-    .Width = TextureWidth,
-    .Height = TextureHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = format,
-    .SampleDesc = {1, 0},
-    .BindFlags = bindFlags,
-    .MiscFlags = miscFlags,
-  };
-
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  winrt::check_hresult(d3d->CreateTexture2D(&desc, nullptr, texture.put()));
-  return std::move(texture);
-}
-
 Snapshot::Snapshot(nullptr_t) : mState(State::Empty) {
 }
 
@@ -227,11 +160,11 @@ Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
 }
 
 Snapshot::Snapshot(
-  DeviceResources* dr,
-  IPCSwapchainBufferResources* br,
   FrameMetadata* metadata,
-  const std::shared_ptr<TextureProvider>& dest)
-  : mTextureProvider(dest), mState(State::Empty) {
+  IPCTextureCopier* copier,
+  IPCSwapchainBufferResources* source,
+  const std::shared_ptr<IPCClientTexture>& dest)
+  : mIPCTexture(dest), mState(State::Empty) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "SHM::Snapshot::Snapshot()");
 
@@ -242,33 +175,14 @@ Snapshot::Snapshot(
 
   mHeader = std::make_shared<FrameMetadata>(*metadata);
 
-  auto ctx = dr->mD3D11ImmediateContext.get();
-  auto fence = br->mD3D11Fence.get();
-
-  {
-    OPENKNEEBOARD_TraceLoggingScope(
-      "WaitForFence", TraceLoggingValue(fenceIn, "fenceIn"));
-    winrt::check_hresult(ctx->Wait(fence, fenceIn));
-  }
-
   {
     OPENKNEEBOARD_TraceLoggingScope("CopyTexture");
-
-    ctx->CopySubresourceRegion(
-      dest->GetD3D11Texture(metadata->mConfig.mTextureSize).get(),
-      /* subresource = */ 0,
-      /* x = */ 0,
-      /* y = */ 0,
-      /* z = */ 0,
-      br->mD3D11Texture.get(),
-      /* subresource = */ 0,
-      nullptr);
-  }
-
-  {
-    OPENKNEEBOARD_TraceLoggingScope(
-      "SignalFence", TraceLoggingValue(fenceOut, "fenceOut"));
-    winrt::check_hresult(ctx->Signal(fence, fenceOut));
+    copier->Copy(
+      source->mTextureHandle.get(),
+      dest.get(),
+      source->mFenceHandle.get(),
+      fenceIn,
+      fenceOut);
   }
 
   if (mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0)) {
@@ -542,7 +456,6 @@ class Reader::Impl : public SHM::Impl<ReaderState> {
   winrt::handle mFeederProcessHandle;
   uint64_t mSessionID {~(0ui64)};
 
-  std::unique_ptr<DeviceResources> mDeviceResources;
   std::array<std::unique_ptr<IPCSwapchainBufferResources>, TextureCount>
     mBufferResources;
 
@@ -608,15 +521,19 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-CachedReader::CachedReader(uint8_t swapchainLength) {
-  mTextureProviders.resize(swapchainLength);
+CachedReader::CachedReader(
+  IPCTextureCopier* copier,
+  ConsumerKind kind,
+  uint8_t swapchainLength)
+  : mTextureCopier(copier), mConsumerKind(kind) {
+  mClientTextures.resize(swapchainLength);
 }
 
 CachedReader::~CachedReader() = default;
 
 Snapshot Reader::MaybeGetUncached(
-  ID3D11Device* device,
-  const std::shared_ptr<TextureProvider>& dest,
+  IPCTextureCopier* copier,
+  const std::shared_ptr<IPCClientTexture>& dest,
   ConsumerKind kind) const {
   const auto transitions = make_scoped_state_transitions<
     State::Locked,
@@ -634,18 +551,13 @@ Snapshot Reader::MaybeGetUncached(
 
   p->UpdateSession();
 
-  auto& dr = p->mDeviceResources;
-  if (!(dr && dr->mD3D11Device.get() == device)) {
-    dr = std::make_unique<DeviceResources>(device);
-  }
-
   auto& br = p->mBufferResources.at(p->mHeader->mFrameNumber % TextureCount);
   if (!br) {
     br = std::make_unique<IPCSwapchainBufferResources>(
-      p->mFeederProcessHandle.get(), dr.get(), *p->mHeader);
+      p->mFeederProcessHandle.get(), *p->mHeader);
   }
 
-  return Snapshot(dr.get(), br.get(), p->mHeader, dest);
+  return Snapshot(p->mHeader, copier, br.get(), dest);
 }
 
 size_t Reader::GetRenderCacheKey(ConsumerKind kind) {
@@ -742,7 +654,7 @@ bool ConsumerPattern::Matches(ConsumerKind kind) const {
   return (mKindMask & std23::to_underlying(kind)) == mKindMask;
 }
 
-Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
+Snapshot CachedReader::MaybeGet() {
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "CachedReader::MaybeGet()");
   if (!(*this)) {
@@ -753,21 +665,22 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
     return {nullptr};
   }
 
-  if ((mD3D11Device != device) || (mSessionID != this->GetSessionID())) {
+  ActiveConsumers::Set(mConsumerKind);
+
+  if (mSessionID != this->GetSessionID()) {
     // Cache is unusable, not just stale
     TraceLoggingWriteTagged(activity, "Resetting cached resources");
     mCache = {nullptr};
     mCacheKey = {};
-    std::ranges::fill(mTextureProviders, nullptr);
+    std::ranges::fill(mClientTextures, nullptr);
 
-    mD3D11Device = device;
     mSessionID = this->GetSessionID();
   }
 
   const auto swapchainIndex = mSwapchainIndex;
-  mSwapchainIndex = (mSwapchainIndex + 1) % mTextureProviders.size();
+  mSwapchainIndex = (mSwapchainIndex + 1) % mClientTextures.size();
 
-  const CacheKey cacheKey {kind, this->GetRenderCacheKey(kind)};
+  const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
 
   if (cacheKey == mCacheKey) {
     TraceLoggingWriteStop(
@@ -778,21 +691,21 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
     return mCache;
   }
 
-  auto dest = GetTextureProvider(swapchainIndex);
+  auto dest = GetIPCClientTexture(swapchainIndex);
 
   TraceLoggingWriteTagged(activity, "LockingSHM");
   std::unique_lock lock(*p);
   TraceLoggingWriteTagged(activity, "LockedSHM");
   TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
   TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
-  auto snapshot = this->MaybeGetUncached(device, dest, kind);
+  auto snapshot = this->MaybeGetUncached(mTextureCopier, dest, mConsumerKind);
   const auto state = snapshot.GetState();
   TraceLoggingWriteStop(
     maybeGetActivity,
     "MaybeGetUncached",
     TraceLoggingValue(static_cast<unsigned int>(state), "State"));
 
-  if (state == Snapshot::State::Empty && kind == mCacheKey.mConsumerKind) {
+  if (state == Snapshot::State::Empty) {
     TraceLoggingWriteStop(
       activity,
       "CachedReader::MaybeGet()",
@@ -804,8 +717,6 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
   mCache = snapshot;
   mCacheKey = cacheKey;
 
-  ActiveConsumers::Set(kind);
-
   TraceLoggingWriteStop(
     activity,
     "CachedReader",
@@ -814,19 +725,20 @@ Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
   return snapshot;
 }
 
-std::shared_ptr<TextureProvider> CachedReader::GetTextureProvider(
+std::shared_ptr<IPCClientTexture> CachedReader::GetIPCClientTexture(
   uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
-    "CachedReader::GetTextureProvider",
+    "CachedReader::GetIPCClientTexture",
     TraceLoggingValue(swapchainIndex, "swapchainIndex"));
-  auto& ret = mTextureProviders.at(swapchainIndex);
+  auto& ret = mClientTextures.at(swapchainIndex);
   if (!ret) {
-    OPENKNEEBOARD_TraceLoggingScope("CachedReader::CreateTextureProvider");
-    ret = this->CreateTextureProvider(mTextureProviders.size(), swapchainIndex);
+    OPENKNEEBOARD_TraceLoggingScope("CachedReader::CreateIPCClientTexture");
+    ret = this->CreateIPCClientTexture(swapchainIndex);
   }
   return ret;
 }
 
-TextureProvider::~TextureProvider() = default;
+IPCClientTexture::~IPCClientTexture() = default;
+IPCTextureCopier::~IPCTextureCopier() = default;
 
 }// namespace OpenKneeboard::SHM

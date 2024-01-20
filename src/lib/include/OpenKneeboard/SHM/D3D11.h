@@ -23,37 +23,62 @@
 
 #include <directxtk/SpriteBatch.h>
 
+#include <d3d11_4.h>
+
 namespace OpenKneeboard::SHM::D3D11 {
 
-class TextureProvider : public SHM::TextureProvider {
+class Texture final : public SHM::IPCClientTexture {
  public:
-  TextureProvider() = delete;
-  TextureProvider(const winrt::com_ptr<ID3D11Device>&);
-  virtual ~TextureProvider();
-  winrt::com_ptr<ID3D11Texture2D> GetD3D11Texture(
-    const PixelSize&) noexcept override;
+  Texture() = delete;
+  Texture(
+    const winrt::com_ptr<ID3D11Device5>&,
+    const winrt::com_ptr<ID3D11DeviceContext4>&);
+  virtual ~Texture();
+
   ID3D11Texture2D* GetD3D11Texture() const noexcept;
-  ID3D11ShaderResourceView* GetD3D11ShaderResourceView();
+  ID3D11ShaderResourceView* GetD3D11ShaderResourceView() noexcept;
+
+  void CopyFrom(
+    HANDLE texture,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept;
 
  private:
-  PixelSize mPixelSize;
-  winrt::com_ptr<ID3D11Device> mD3D11Device;
-  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
-  winrt::com_ptr<ID3D11ShaderResourceView> mD3D11ShaderResourceView;
+  winrt::com_ptr<ID3D11Device5> mDevice;
+  winrt::com_ptr<ID3D11DeviceContext4> mContext;
+
+  HANDLE mSourceTextureHandle {};
+  HANDLE mSourceFenceHandle {};
+
+  winrt::com_ptr<ID3D11Texture2D> mSourceTexture;
+  winrt::com_ptr<ID3D11Fence> mSourceFence;
+
+  winrt::com_ptr<ID3D11Texture2D> mCacheTexture;
+  winrt::com_ptr<ID3D11ShaderResourceView> mCacheShaderResourceView;
+
+  void InitializeSource(HANDLE texture, HANDLE fence) noexcept;
 };
 
-class CachedReader : public SHM::CachedReader {
+class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
  public:
   CachedReader() = delete;
-  CachedReader(ID3D11Device*, uint8_t swapchainLength);
+  CachedReader(ID3D11Device*, ConsumerKind, uint8_t swapchainLength);
   virtual ~CachedReader();
 
  protected:
-  virtual std::shared_ptr<SHM::TextureProvider> CreateTextureProvider(
-    uint8_t swapchainLength,
+  virtual void Copy(
+    HANDLE sourceTexture,
+    IPCClientTexture* destinationTexture,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept override;
+
+  virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
     uint8_t swapchainIndex) noexcept override;
 
-  winrt::com_ptr<ID3D11Device> mD3D11Device;
+  winrt::com_ptr<ID3D11Device5> mD3D11Device;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3D11DeviceContext;
 };
 
 // Usage:

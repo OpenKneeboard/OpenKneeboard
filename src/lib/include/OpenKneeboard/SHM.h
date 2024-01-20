@@ -40,9 +40,6 @@
 #include <string>
 #include <vector>
 
-#include <d3d11.h>
-#include <d3d11_3.h>
-
 namespace OpenKneeboard::SHM {
 
 namespace Detail {
@@ -66,31 +63,24 @@ struct LayerSprite {
   float mOpacity {1.0f};
 };
 
-class TextureProvider {
+// See SHM::D3D11::IPCClientTexture etc
+class IPCClientTexture {
  public:
-  virtual ~TextureProvider();
-
-  // Obtain a texture of the specified size; this may (should) be the same
-  // texture in subsequent calls
-  //
-  // TODO: change to CopyFrom(HANDLEs, fence values, etc)
-  virtual winrt::com_ptr<ID3D11Texture2D> GetD3D11Texture(
-    const PixelSize&) noexcept
-    = 0;
-
- protected:
-  TextureProvider() = default;
+  virtual ~IPCClientTexture();
 };
 
-constexpr UINT DEFAULT_D3D11_BIND_FLAGS
-  = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-constexpr UINT DEFAULT_D3D11_MISC_FLAGS = 0;
-
-winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
-  ID3D11Device*,
-  UINT bindFlags = DEFAULT_D3D11_BIND_FLAGS,
-  UINT miscFlags = DEFAULT_D3D11_MISC_FLAGS,
-  DXGI_FORMAT format = SHARED_TEXTURE_PIXEL_FORMAT);
+// See SHM::D3D11::CachedReader etc
+class IPCTextureCopier {
+ public:
+  virtual ~IPCTextureCopier();
+  virtual void Copy(
+    HANDLE sourceTexture,
+    IPCClientTexture* destinationTexture,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept
+    = 0;
+};
 
 // This needs to be kept in sync with `SHM::ActiveConsumers`
 enum class ConsumerKind : uint32_t {
@@ -184,10 +174,10 @@ class Snapshot final {
   Snapshot(incorrect_kind_t);
 
   Snapshot(
-    Detail::DeviceResources*,
-    Detail::IPCSwapchainBufferResources*,
     Detail::FrameMetadata*,
-    const std::shared_ptr<TextureProvider>& dest);
+    IPCTextureCopier* copier,
+    Detail::IPCSwapchainBufferResources* source,
+    const std::shared_ptr<IPCClientTexture>& dest);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -196,7 +186,7 @@ class Snapshot final {
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
 
-  template <std::derived_from<TextureProvider> T>
+  template <std::derived_from<IPCClientTexture> T>
   T* GetLayerGPUResources(uint8_t layerIndex) const {
     if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
       dprintf(
@@ -206,7 +196,7 @@ class Snapshot final {
       OPENKNEEBOARD_BREAK;
       return nullptr;
     }
-    const auto ret = std::dynamic_pointer_cast<T>(mTextureProvider);
+    const auto ret = std::dynamic_pointer_cast<T>(mIPCTexture);
     if (!ret) [[unlikely]] {
       dprint("Layer texture cache type mismatch");
       OPENKNEEBOARD_BREAK;
@@ -224,7 +214,7 @@ class Snapshot final {
 
  private:
   std::shared_ptr<Detail::FrameMetadata> mHeader;
-  std::shared_ptr<TextureProvider> mTextureProvider;
+  std::shared_ptr<IPCClientTexture> mIPCTexture;
 
   State mState;
 };
@@ -251,12 +241,12 @@ class Reader {
 
   uint64_t GetSessionID() const;
 
+ protected:
   Snapshot MaybeGetUncached(
-    ID3D11Device*,
-    const std::shared_ptr<TextureProvider>&,
+    IPCTextureCopier* copier,
+    const std::shared_ptr<IPCClientTexture>& dest,
     ConsumerKind) const;
 
- protected:
   class Impl;
   std::shared_ptr<Impl> p;
 };
@@ -264,34 +254,28 @@ class Reader {
 class CachedReader : public Reader {
  public:
   CachedReader() = delete;
+  CachedReader(IPCTextureCopier*, ConsumerKind, uint8_t swapchainLength);
   virtual ~CachedReader();
-  Snapshot MaybeGet(ID3D11Device* device, ConsumerKind kind);
+
+  Snapshot MaybeGet();
 
  protected:
-  CachedReader(uint8_t swapchainLength);
-
-  virtual std::shared_ptr<TextureProvider> CreateTextureProvider(
-    uint8_t swapchainIndex,
-    uint8_t swapchainLength) noexcept
+  virtual std::shared_ptr<IPCClientTexture> CreateIPCClientTexture(
+    uint8_t swapchainIndex) noexcept
     = 0;
 
  private:
-  ID3D11Device* mD3D11Device {nullptr};
+  IPCTextureCopier* mTextureCopier {nullptr};
+  ConsumerKind mConsumerKind {};
+
   uint64_t mSessionID {~(0ui64)};
-
-  struct CacheKey {
-    ConsumerKind mConsumerKind;
-    uint64_t mRenderCacheKey {};
-
-    constexpr bool operator==(const CacheKey&) const noexcept = default;
-  };
-  CacheKey mCacheKey;
+  uint64_t mCacheKey {~(0ui64)};
   Snapshot mCache {nullptr};
   uint8_t mSwapchainIndex {};
 
-  std::vector<std::shared_ptr<TextureProvider>> mTextureProviders;
+  std::vector<std::shared_ptr<IPCClientTexture>> mClientTextures;
 
-  std::shared_ptr<TextureProvider> GetTextureProvider(
+  std::shared_ptr<IPCClientTexture> GetIPCClientTexture(
     uint8_t swapchainIndex) noexcept;
 };
 

@@ -145,7 +145,9 @@ class TestViewerWindow final {
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
     mSHM = std::make_unique<SHM::D3D11::CachedReader>(
-      mDXR.mD3DDevice.get(), /* swapchain size = */ 2);
+      mDXR.mD3DDevice.get(),
+      SHM::ConsumerKind::Viewer,
+      /* swapchain size = */ 2);
 
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
     mWindowColor = GetSystemColor(COLOR_WINDOW);
@@ -268,8 +270,7 @@ class TestViewerWindow final {
   }
 
   void CaptureScreenshot() {
-    const auto snapshot
-      = mSHM->MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
+    const auto snapshot = mSHM->MaybeGet();
     if (!snapshot.IsValid()) {
       return;
     }
@@ -298,7 +299,7 @@ class TestViewerWindow final {
     mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 
     const auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(mLayerIndex);
+      = snapshot.GetLayerGPUResources<SHM::D3D11::Texture>(mLayerIndex);
 
     winrt::check_hresult(DirectX::SaveDDSTextureToFile(
       ctx.get(), resources->GetD3D11Texture(), path.wstring().c_str()));
@@ -378,8 +379,7 @@ class TestViewerWindow final {
       L"Frame #{}, View {}",
       mSHM->GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
-    const auto snapshot
-      = mSHM->MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
+    const auto snapshot = mSHM->MaybeGet();
     if (snapshot.IsValid()) {
       const auto layer = snapshot.GetLayerConfig(mLayerIndex);
       const auto size = layer->mLocationOnTexture.mSize;
@@ -456,8 +456,7 @@ class TestViewerWindow final {
 
     d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
-    const auto snapshot
-      = mSHM->MaybeGet(mDXR.mD3DDevice.get(), SHM::ConsumerKind::Viewer);
+    const auto snapshot = mSHM->MaybeGet();
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
@@ -485,7 +484,7 @@ class TestViewerWindow final {
 
     auto d3d = mDXR.mD3DDevice.get();
     auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(mLayerIndex);
+      = snapshot.GetLayerGPUResources<SHM::D3D11::Texture>(mLayerIndex);
     auto sharedSRV = resources->GetD3D11ShaderResourceView();
     if (!sharedSRV) {
       mErrorRenderer->Render(

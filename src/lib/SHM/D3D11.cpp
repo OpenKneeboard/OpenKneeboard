@@ -23,59 +23,128 @@
 
 namespace OpenKneeboard::SHM::D3D11 {
 
-TextureProvider::TextureProvider(const winrt::com_ptr<ID3D11Device>& device)
-  : mD3D11Device(device) {
+Texture::Texture(
+  const winrt::com_ptr<ID3D11Device5>& device,
+  const winrt::com_ptr<ID3D11DeviceContext4>& context)
+  : mDevice(device), mContext(context) {
 }
 
-TextureProvider::~TextureProvider() = default;
+Texture::~Texture() = default;
 
-ID3D11ShaderResourceView* TextureProvider::GetD3D11ShaderResourceView() {
-  if (!mD3D11ShaderResourceView) [[unlikely]] {
-    winrt::check_hresult(mD3D11Device->CreateShaderResourceView(
-      mD3D11Texture.get(), nullptr, mD3D11ShaderResourceView.put()));
+ID3D11Texture2D* Texture::GetD3D11Texture() const noexcept {
+  return mCacheTexture.get();
+}
+
+ID3D11ShaderResourceView* Texture::GetD3D11ShaderResourceView() noexcept {
+  if (!mCacheShaderResourceView) {
+    winrt::check_hresult(mDevice->CreateShaderResourceView(
+      mCacheTexture.get(), nullptr, mCacheShaderResourceView.put()));
   }
-  return mD3D11ShaderResourceView.get();
+  return mCacheShaderResourceView.get();
 }
 
-winrt::com_ptr<ID3D11Texture2D> TextureProvider::GetD3D11Texture(
-  const PixelSize& size) noexcept {
-  if (size == mPixelSize) [[likely]] {
-    return mD3D11Texture;
+void Texture::InitializeSource(
+  HANDLE textureHandle,
+  HANDLE fenceHandle) noexcept {
+  if (
+    textureHandle == mSourceTextureHandle
+    && fenceHandle == mSourceFenceHandle) {
+    return;
   }
-  mD3D11Texture = nullptr;
-  mD3D11ShaderResourceView = nullptr;
 
-  D3D11_TEXTURE2D_DESC desc {
-    .Width = size.mWidth,
-    .Height = size.mHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .SampleDesc = {1, 0},
-    .BindFlags = D3D11_BIND_SHADER_RESOURCE,
-    .MiscFlags
-    = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
-  };
-  winrt::check_hresult(
-    mD3D11Device->CreateTexture2D(&desc, nullptr, mD3D11Texture.put()));
-  return mD3D11Texture;
+  if (textureHandle != mSourceTextureHandle) {
+    mSourceTextureHandle = {};
+    mSourceTexture = {};
+    mCacheTexture = {};
+    mCacheShaderResourceView = {};
+  }
+
+  if (fenceHandle != mSourceFenceHandle) {
+    mSourceFenceHandle = {};
+    mSourceFence = {};
+  }
+
+  if (!mSourceTexture) {
+    winrt::check_hresult(mDevice->OpenSharedResource1(
+      textureHandle, IID_PPV_ARGS(mSourceTexture.put())));
+
+    D3D11_TEXTURE2D_DESC desc;
+    mSourceTexture->GetDesc(&desc);
+    winrt::check_hresult(
+      mDevice->CreateTexture2D(&desc, nullptr, mCacheTexture.put()));
+
+    mSourceTextureHandle = textureHandle;
+  }
+
+  if (!mSourceFence) {
+    winrt::check_hresult(
+      mDevice->OpenSharedFence(fenceHandle, IID_PPV_ARGS(mSourceFence.put())));
+  }
 }
 
-ID3D11Texture2D* TextureProvider::GetD3D11Texture() const noexcept {
-  return mD3D11Texture.get();
+void Texture::CopyFrom(
+  HANDLE sourceTexture,
+  HANDLE sourceFence,
+  uint64_t fenceValueIn,
+  uint64_t fenceValueOut) noexcept {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "SHM::D3D11::Texture::CopyFrom");
+  this->InitializeSource(sourceTexture, sourceFence);
+  TraceLoggingWriteTagged(
+    activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
+  winrt::check_hresult(mContext->Wait(mSourceFence.get(), fenceValueIn));
+  mContext->CopySubresourceRegion(
+    mCacheTexture.get(), 0, 0, 0, 0, mSourceTexture.get(), 0, nullptr);
+  TraceLoggingWriteTagged(
+    activity, "FenceOut", TraceLoggingValue(fenceValueOut, "Value"));
+  winrt::check_hresult(mContext->Signal(mSourceFence.get(), fenceValueOut));
 }
 
-CachedReader::CachedReader(ID3D11Device* device, uint8_t swapchainLength)
-  : SHM::CachedReader(swapchainLength) {
-  mD3D11Device.copy_from(device);
+CachedReader::CachedReader(
+  ID3D11Device* device,
+  ConsumerKind consumerKind,
+  uint8_t swapchainLength)
+  : SHM::CachedReader(this, consumerKind, swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::CachedReader()");
+  winrt::check_hresult(device->QueryInterface(mD3D11Device.put()));
+  winrt::com_ptr<ID3D11DeviceContext> context;
+  device->GetImmediateContext(context.put());
+  mD3D11DeviceContext = context.as<ID3D11DeviceContext4>();
+
+  // Everything below here is unnecessary, but adds useful debug
+  // logging.
+  auto dxgiDevice = mD3D11Device.as<IDXGIDevice>();
+  winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
+  winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
+  DXGI_ADAPTER_DESC desc {};
+  winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
+  dprintf(
+    L"SHM reader using adapter '{}' (LUID {:#x})",
+    desc.Description,
+    std::bit_cast<uint64_t>(desc.AdapterLuid));
 }
 
-CachedReader::~CachedReader() = default;
+CachedReader::~CachedReader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::~CachedReader()");
+}
 
-std::shared_ptr<SHM::TextureProvider> CachedReader::CreateTextureProvider(
-  [[maybe_unused]] uint8_t swapchainLength,
+void CachedReader::Copy(
+  HANDLE sourceTexture,
+  IPCClientTexture* destinationTexture,
+  HANDLE fence,
+  uint64_t fenceValueIn,
+  uint64_t fenceValueOut) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::Copy()");
+  reinterpret_cast<SHM::D3D11::Texture*>(destinationTexture)
+    ->CopyFrom(sourceTexture, fence, fenceValueIn, fenceValueOut);
+}
+
+std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   [[maybe_unused]] uint8_t swapchainIndex) noexcept {
-  return std::make_shared<SHM::D3D11::TextureProvider>(mD3D11Device);
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D11::CachedReader::CreateIPCClientTexture()");
+  return std::make_shared<SHM::D3D11::Texture>(
+    mD3D11Device, mD3D11DeviceContext);
 }
 
 namespace Renderer {
@@ -183,9 +252,8 @@ void Render(
 
     for (size_t i = 0; i < layerSpriteCount; ++i) {
       const auto& sprite = layerSprites[i];
-      auto resources
-        = snapshot.GetLayerGPUResources<SHM::D3D11::TextureProvider>(
-          sprite.mLayerIndex);
+      auto resources = snapshot.GetLayerGPUResources<SHM::D3D11::Texture>(
+        sprite.mLayerIndex);
 
       const auto srv = resources->GetD3D11ShaderResourceView();
 
