@@ -378,6 +378,8 @@ void InterprocessRenderer::RenderNow() noexcept {
   const std::unique_lock dxLock(mDXR);
   TraceLoggingWriteTagged(activity, "AcquireDXLock/stop");
   this->InitializeCanvas(canvasSize);
+  mDXR.mD3DImmediateContext->ClearRenderTargetView(
+    mCanvas->d3d().rtv(), DirectX::Colors::Transparent);
 
   std::vector<SHM::LayerConfig> shmLayers;
   shmLayers.reserve(layerCount);
