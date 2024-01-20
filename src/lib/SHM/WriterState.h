@@ -29,8 +29,7 @@ namespace OpenKneeboard::SHM {
   IT(Locked) \
   IT(FrameInProgress) \
   IT(SubmittingFrame) \
-  IT(Detaching) \
-  IT(Detached)
+  IT(Detaching)
 
 enum class WriterState {
 #define IT(x) x,
@@ -63,8 +62,8 @@ OPENKNEEBOARD_DECLARE_LOCKABLE_STATE_TRANSITIONS(SHM::WriterState)
 IT(Locked, FrameInProgress)
 IT(FrameInProgress, SubmittingFrame)
 IT(SubmittingFrame, Locked)
-IT(Unlocked, Detaching)
-IT(Detaching, Detached)
+IT(Locked, Detaching)
+IT(Detaching, Locked)
 #undef IT
 
 static_assert(lockable_state<SHM::WriterState>);

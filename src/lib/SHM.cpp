@@ -331,11 +331,6 @@ bool Snapshot::IsValid() const {
   return mState == State::Valid;
 }
 
-template <lockable_state State>
-constexpr bool is_valid_impl_exit_state(State state) noexcept {
-  return state == State::Unlocked;
-}
-
 template <lockable_state State, State InitialState = State::Unlocked>
 class Impl {
  public:
@@ -380,8 +375,10 @@ class Impl {
 
   ~Impl() {
     UnmapViewOfFile(mMapping);
-    if (!is_valid_impl_exit_state(mState.Get())) {
-      dprint("Closing SHM with invalid state");
+    if (mState.Get() != State::Unlocked) {
+      using namespace OpenKneeboard::ADL;
+      dprintf(
+        "Closing SHM with invalid state: {}", formattable_state(mState.Get()));
       OPENKNEEBOARD_BREAK;
       std::terminate();
     }
@@ -477,11 +474,6 @@ class Impl {
   StateMachine<State> mState = InitialState;
 };
 
-template <>
-constexpr bool is_valid_impl_exit_state(WriterState state) noexcept {
-  return state == WriterState::Detached;
-}
-
 class Writer::Impl : public SHM::Impl<WriterState> {
  public:
   using SHM::Impl<WriterState, WriterState::Unlocked>::Impl;
@@ -504,12 +496,12 @@ Writer::Writer() {
 }
 
 void Writer::Detach() {
-  p->Transition<State::Unlocked, State::Detaching>();
+  p->Transition<State::Locked, State::Detaching>();
 
   p->mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
   FlushViewOfFile(p->mMapping, NULL);
 
-  p->Transition<State::Detaching, State::Detached>();
+  p->Transition<State::Detaching, State::Locked>();
 }
 
 Writer::~Writer() {
