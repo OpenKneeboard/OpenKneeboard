@@ -339,7 +339,10 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
   SHM::LayerConfig ret {};
   ret.mLayerID = view->GetRuntimeID().GetTemporaryValue();
 
-  const auto usedSize = view->GetIPCRenderSize();
+  auto usedSize = view->GetIPCRenderSize();
+  if (usedSize.width < 1 || usedSize.height < 1) {
+    usedSize = {ErrorRenderWidth, ErrorRenderHeight};
+  }
   ret.mLocationOnTexture = {bounds.mOrigin, usedSize};
 
   const auto vrc = mKneeboard->GetVRSettings();
