@@ -17,8 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include "viewer.h"
+
+#include "viewer-d3d11.h"
+
 #include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
@@ -51,6 +54,8 @@ using namespace OpenKneeboard;
 
 namespace OpenKneeboard {
 
+Viewer::Renderer::~Renderer() = default;
+
 /* PS >
  * [System.Diagnostics.Tracing.EventSource]::new("OpenKneeboard.Viewer")
  * d4df4528-1fae-5d7c-f8ac-0da5654ba6ea
@@ -72,7 +77,16 @@ class TestViewerWindow final {
   bool mStreamerMode = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
-  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::Viewer};
+  std::unique_ptr<Viewer::Renderer> mRenderer;
+  // The renderers can't operate directly on the swapchains
+  // as swapchains can't be shared.
+  //
+  // We *could* do D3D11 directly, but that makes it different to the otehrs, so
+  // nope
+  winrt::com_ptr<ID3D11Texture2D> mRendererTexture;
+  winrt::handle mRendererTextureHandle;
+  PixelSize mRendererTextureSize;
+
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
@@ -88,7 +102,6 @@ class TestViewerWindow final {
   winrt::com_ptr<IDWriteTextFormat> mOverlayTextFormat;
 
   DXResources mDXR;
-  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
@@ -146,8 +159,11 @@ class TestViewerWindow final {
 
     mDXR = DXResources::Create();
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-    mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mDXR.mD3DDevice.get());
-    mSHM.InitializeCache(mDXR.mD3DDevice.get(), /* swapchainLength = */ 2);
+
+    mRenderer = std::make_unique<Viewer::D3D11Renderer>(mDXR.mD3DDevice);
+    // We pass 1 as the swapchain length as we use a buffer; we need to do this
+    // as swapchain textures can't be directly shared
+    mRenderer->Initialize(1);
 
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
     mWindowColor = GetSystemColor(COLOR_WINDOW);
@@ -179,14 +195,15 @@ class TestViewerWindow final {
   }
 
   void CheckForUpdate() {
-    if (!mSHM) {
+    auto& shm = *mRenderer->GetSHM();
+    if (!shm) {
       if (mFirstDetached) {
         PaintNow();
       }
       return;
     }
 
-    if (mSHM.GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
+    if (shm.GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
       PaintNow();
     }
   }
@@ -202,6 +219,31 @@ class TestViewerWindow final {
 
   void InitSwapChain() {
     const auto clientSize = this->GetClientSize();
+
+    if (
+      clientSize.width > mRendererTextureSize.mWidth
+      || clientSize.height > mRendererTextureSize.mHeight) {
+      mRendererTexture = nullptr;
+      D3D11_TEXTURE2D_DESC desc {
+        .Width = clientSize.width,
+        .Height = clientSize.height,
+        .MipLevels = 1,
+        .ArraySize = 1,
+        .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
+        .SampleDesc = {1, 0},
+        .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+        .MiscFlags
+        = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
+      };
+      winrt::check_hresult(mDXR.mD3DDevice->CreateTexture2D(
+        &desc, nullptr, mRendererTexture.put()));
+      mRendererTextureHandle = {};
+      winrt::check_hresult(
+        mRendererTexture.as<IDXGIResource1>()->CreateSharedHandle(
+          nullptr, GENERIC_ALL, nullptr, mRendererTextureHandle.put()));
+      mRendererTextureSize = clientSize;
+    }
+
     if (mSwapChain) {
       DXGI_SWAP_CHAIN_DESC desc;
       mSwapChain->GetDesc(&desc);
@@ -219,7 +261,7 @@ class TestViewerWindow final {
         desc.Flags);
 
       mSwapChainSize = clientSize;
-      mSHM.InitializeCache(mDXR.mD3DDevice.get(), desc.BufferCount);
+      mRenderer->Initialize(desc.BufferCount);
       return;
     }
 
@@ -241,7 +283,7 @@ class TestViewerWindow final {
       nullptr,
       mSwapChain.put());
     mSwapChainSize = clientSize;
-    mSHM.InitializeCache(mDXR.mD3DDevice.get(), swapChainDesc.BufferCount);
+    mRenderer->Initialize(swapChainDesc.BufferCount);
   }
 
   void OnFocus() {
@@ -275,7 +317,7 @@ class TestViewerWindow final {
   }
 
   void CaptureScreenshot() {
-    const auto snapshot = mSHM.MaybeGet();
+    const auto snapshot = mRenderer->MaybeGetSnapshot();
     if (!snapshot.IsValid()) {
       return;
     }
@@ -381,9 +423,9 @@ class TestViewerWindow final {
     const auto clientSize = GetClientSize();
     auto text = std::format(
       L"Frame #{}, View {}",
-      mSHM.GetFrameCountForMetricsOnly(),
+      mRenderer->GetSHM()->GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
-    const auto snapshot = mSHM.MaybeGet();
+    const auto snapshot = mRenderer->MaybeGetSnapshot();
     if (snapshot.IsValid()) {
       const auto layer = snapshot.GetLayerConfig(mLayerIndex);
       const auto size = layer->mLocationOnTexture.mSize;
@@ -460,7 +502,7 @@ class TestViewerWindow final {
 
     d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
-    const auto snapshot = mSHM.MaybeGet();
+    const auto snapshot = mRenderer->MaybeGetSnapshot();
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
@@ -506,13 +548,20 @@ class TestViewerWindow final {
       {renderLeft, renderTop}, {renderWidth, renderHeight}};
     const auto sourceRect = layer.mLocationOnTexture;
 
-    winrt::com_ptr<ID3D11RenderTargetView> rtv;
-    winrt::check_hresult(d3d->CreateRenderTargetView(
-      surface.as<ID3D11Texture2D>().get(), nullptr, rtv.put()));
+    auto surfaceTex = surface.as<ID3D11Texture2D>();
+    auto ctx = mDXR.mD3DImmediateContext.get();
+    ctx->CopySubresourceRegion(
+      mRendererTexture.get(), 0, 0, 0, 0, surfaceTex.get(), 0, nullptr);
 
-    mSpriteBatch->Begin(rtv.get(), mSwapChainSize);
-    mSpriteBatch->Draw(source, sourceRect, destRect);
-    mSpriteBatch->End();
+    mRenderer->Render(
+      snapshot.GetTexture<SHM::IPCClientTexture>(),
+      sourceRect,
+      mRendererTextureHandle.get(),
+      {clientSize.width, clientSize.height},
+      destRect);
+
+    ctx->CopySubresourceRegion(
+      surfaceTex.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, nullptr);
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
   }

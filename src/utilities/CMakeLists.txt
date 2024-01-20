@@ -52,6 +52,7 @@ add_utility_executable(
   OpenKneeboard-Viewer
   WIN32
   viewer.cpp
+  viewer-d3d11.cpp
   icon.rc
 )
 target_link_libraries(
@@ -59,6 +60,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-config
   OpenKneeboard-D2DErrorRenderer
+  OpenKneeboard-D3D11
   OpenKneeboard-DXResources
   OpenKneeboard-Filesystem
   OpenKneeboard-GameEvent
