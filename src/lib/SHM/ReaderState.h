@@ -43,11 +43,9 @@ constexpr auto formattable_state(ReaderState state) noexcept {
     OPENKNEEBOARD_SHM_READER_STATES
 #undef IT
   }
-  dprintf(
+  OPENKNEEBOARD_LOG_AND_FATAL(
     "Invalid SHM ReaderState: {}",
     static_cast<std::underlying_type_t<ReaderState>>(state));
-  OPENKNEEBOARD_BREAK;
-  abort();
 }
 }// namespace OpenKneeboard::SHM
 

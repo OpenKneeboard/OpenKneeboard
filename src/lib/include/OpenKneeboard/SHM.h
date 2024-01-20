@@ -183,8 +183,7 @@ class Snapshot final {
   T* GetTexture() const {
     const auto ret = std::dynamic_pointer_cast<T>(mIPCTexture);
     if (!ret) [[unlikely]] {
-      dprint("Layer texture cache type mismatch");
-      abort();
+      OPENKNEEBOARD_LOG_AND_FATAL("Layer texture cache type mismatch");
     }
     return ret.get();
   }

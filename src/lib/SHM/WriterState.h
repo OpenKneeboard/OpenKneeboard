@@ -45,11 +45,9 @@ constexpr auto formattable_state(WriterState state) noexcept {
     OPENKNEEBOARD_SHM_WRITER_STATES
 #undef IT
   }
-  dprintf(
+  OPENKNEEBOARD_LOG_AND_FATAL(
     "Invalid SHM WriterState: {}",
     static_cast<std::underlying_type_t<WriterState>>(state));
-  OPENKNEEBOARD_BREAK;
-  abort();
 }
 }// namespace OpenKneeboard::SHM
 

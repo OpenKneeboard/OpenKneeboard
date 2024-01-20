@@ -209,13 +209,11 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     if (
       kneeboardLayerCount != destRects.size()
       || kneeboardLayerCount != opacities.size()) [[unlikely]] {
-      dprintf(
-        "`{}`: Layer count mismatch: {} layers, {} destRects, {} opacities",
-        __FUNCSIG__,
+      OPENKNEEBOARD_LOG_AND_FATAL(
+        "Layer count mismatch: {} layers, {} destRects, {} opacities",
         kneeboardLayerCount,
         destRects.size(),
         opacities.size());
-      abort();
     }
 
     mRenderer->RenderLayers(
@@ -227,9 +225,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
     auto error = ovr->ovr_CommitTextureSwapChain(session, mSwapchain);
     if (error) {
-      dprintf("Commit failed with {}", error);
-      OPENKNEEBOARD_BREAK;
-      return false;
+      OPENKNEEBOARD_LOG_AND_FATAL("Commit failed with {}", error);
     }
 
     for (size_t i = 0; i < cacheKeys.size(); ++i) {
