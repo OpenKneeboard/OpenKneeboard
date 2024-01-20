@@ -44,6 +44,16 @@ struct PixelSize {
     : PixelSize(d2d.width, d2d.height) {
   }
 
+  template <class T = decltype(mWidth)>
+  constexpr auto GetWidth() const noexcept {
+    return static_cast<T>(mWidth);
+  }
+
+  template <class T = decltype(mHeight)>
+  constexpr auto GetHeight() const noexcept {
+    return static_cast<T>(mHeight);
+  }
+
   constexpr operator D2D1_SIZE_U() const noexcept {
     return {mWidth, mHeight};
   }
@@ -60,10 +70,7 @@ struct PixelSize {
 
   template <class TSize, class TValue>
   constexpr TSize StaticCast() const noexcept {
-    return TSize {
-      static_cast<TValue>(mWidth),
-      static_cast<TValue>(mHeight),
-    };
+    return TSize {GetWidth<TValue>(), GetHeight<TValue>()};
   }
 };
 

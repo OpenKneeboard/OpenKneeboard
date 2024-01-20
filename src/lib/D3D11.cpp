@@ -203,4 +203,94 @@ void DrawTextureWithOpacity(
     DirectX::FXMVECTOR {opacity, opacity, opacity, opacity});
 }
 
+SpriteBatch::SpriteBatch(ID3D11Device* device) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::SpriteBatch()");
+  mDevice.copy_from(device);
+  device->GetImmediateContext(mDeviceContext.put());
+
+  mDXTKSpriteBatch
+    = std::make_unique<DirectX::SpriteBatch>(mDeviceContext.get());
+}
+
+SpriteBatch::~SpriteBatch() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::~SpriteBatch()");
+  if (mTarget) [[unlikely]] {
+    dprintf(
+      "`{}`: destroying SpriteBatch while frame in progress", __FUNCSIG__);
+    abort();
+  }
+}
+
+void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Begin()");
+  if (mTarget) [[unlikely]] {
+    dprintf("`{}`: frame already in progress", __FUNCSIG__);
+    abort();
+  }
+  const D3D11_VIEWPORT viewport {
+    0,
+    0,
+    rtvSize.GetWidth<FLOAT>(),
+    rtvSize.GetHeight<FLOAT>(),
+    0,
+    1,
+  };
+
+  const D3D11_RECT scissorRect {
+    0,
+    0,
+    rtvSize.GetWidth<LONG>(),
+    rtvSize.GetHeight<LONG>(),
+  };
+
+  auto ctx = mDeviceContext.get();
+  ctx->IASetInputLayout(nullptr);
+  ctx->VSSetShader(nullptr, nullptr, 0);
+  ctx->RSSetViewports(1, &viewport);
+  ctx->RSSetScissorRects(1, &scissorRect);
+  ctx->OMSetRenderTargets(1, &rtv, nullptr);
+  ctx->OMSetDepthStencilState(nullptr, 0);
+  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
+
+  mDXTKSpriteBatch->Begin();
+
+  mTarget = rtv;
+}
+
+void SpriteBatch::Clear(DirectX::XMVECTORF32 color) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Clear()");
+  if (!mTarget) [[unlikely]] {
+    dprintf("`{}`: target not set, call BeginFrame()", __FUNCSIG__);
+    abort();
+  }
+  mDeviceContext->ClearRenderTargetView(mTarget, color);
+};
+
+void SpriteBatch::Draw(
+  ID3D11ShaderResourceView* source,
+  const PixelRect& sourceRect,
+  const PixelRect& destRect,
+  const DirectX::XMVECTORF32 tint) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Draw()");
+  if (!mTarget) [[unlikely]] {
+    dprintf("`{}`: target not set, call BeginFrame()", __FUNCSIG__);
+    abort();
+  }
+
+  const D3D11_RECT sourceD3DRect = sourceRect;
+  const D3D11_RECT destD3DRect = destRect;
+
+  mDXTKSpriteBatch->Draw(source, destD3DRect, &sourceD3DRect, tint);
+}
+
+void SpriteBatch::End() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::End()");
+  if (!mTarget) [[unlikely]] {
+    dprintf(
+      "`{}`: target not set; double-End() or Begin() not called?", __FUNCSIG__);
+    abort();
+  }
+  mDXTKSpriteBatch->End();
+}
+
 }// namespace OpenKneeboard::D3D11
