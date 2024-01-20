@@ -72,7 +72,7 @@ class TestViewerWindow final {
   bool mStreamerMode = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
-  std::unique_ptr<SHM::D3D11::CachedReader> mSHM;
+  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::Viewer};
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
   bool mSetInputFocus = false;
@@ -88,6 +88,9 @@ class TestViewerWindow final {
   winrt::com_ptr<IDWriteTextFormat> mOverlayTextFormat;
 
   DXResources mDXR;
+  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
+
+  PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
@@ -143,11 +146,8 @@ class TestViewerWindow final {
 
     mDXR = DXResources::Create();
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-
-    mSHM = std::make_unique<SHM::D3D11::CachedReader>(
-      mDXR.mD3DDevice.get(),
-      SHM::ConsumerKind::Viewer,
-      /* swapchain size = */ 2);
+    mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mDXR.mD3DDevice.get());
+    mSHM.InitializeCache(mDXR.mD3DDevice.get(), /* swapchainLength = */ 2);
 
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
     mWindowColor = GetSystemColor(COLOR_WINDOW);
@@ -186,7 +186,7 @@ class TestViewerWindow final {
       return;
     }
 
-    if (mSHM->GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
+    if (mSHM.GetRenderCacheKey(SHM::ConsumerKind::Viewer) != mRenderCacheKey) {
       PaintNow();
     }
   }
@@ -217,6 +217,9 @@ class TestViewerWindow final {
         clientSize.height,
         mode.Format,
         desc.Flags);
+
+      mSwapChainSize = clientSize;
+      mSHM.InitializeCache(mDXR.mD3DDevice.get(), desc.BufferCount);
       return;
     }
 
@@ -237,6 +240,8 @@ class TestViewerWindow final {
       nullptr,
       nullptr,
       mSwapChain.put());
+    mSwapChainSize = clientSize;
+    mSHM.InitializeCache(mDXR.mD3DDevice.get(), swapChainDesc.BufferCount);
   }
 
   void OnFocus() {
@@ -270,7 +275,7 @@ class TestViewerWindow final {
   }
 
   void CaptureScreenshot() {
-    const auto snapshot = mSHM->MaybeGet();
+    const auto snapshot = mSHM.MaybeGet();
     if (!snapshot.IsValid()) {
       return;
     }
@@ -298,11 +303,10 @@ class TestViewerWindow final {
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 
-    const auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::Texture>(mLayerIndex);
+    const auto texture = snapshot.GetTexture<SHM::D3D11::Texture>();
 
     winrt::check_hresult(DirectX::SaveDDSTextureToFile(
-      ctx.get(), resources->GetD3D11Texture(), path.wstring().c_str()));
+      ctx.get(), texture->GetD3D11Texture(), path.wstring().c_str()));
     Filesystem::OpenExplorerWithSelectedFile(path);
   }
 
@@ -377,9 +381,9 @@ class TestViewerWindow final {
     const auto clientSize = GetClientSize();
     auto text = std::format(
       L"Frame #{}, View {}",
-      mSHM->GetFrameCountForMetricsOnly(),
+      mSHM.GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
-    const auto snapshot = mSHM->MaybeGet();
+    const auto snapshot = mSHM.MaybeGet();
     if (snapshot.IsValid()) {
       const auto layer = snapshot.GetLayerConfig(mLayerIndex);
       const auto size = layer->mLocationOnTexture.mSize;
@@ -456,7 +460,7 @@ class TestViewerWindow final {
 
     d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
-    const auto snapshot = mSHM->MaybeGet();
+    const auto snapshot = mSHM.MaybeGet();
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
@@ -479,23 +483,15 @@ class TestViewerWindow final {
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
       return;
     }
-    const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
-    mLayerID = layer.mLayerID;
-
-    auto d3d = mDXR.mD3DDevice.get();
-    auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::Texture>(mLayerIndex);
-    auto sharedSRV = resources->GetD3D11ShaderResourceView();
-    if (!sharedSRV) {
-      mErrorRenderer->Render(
-        d2d,
-        std::format("No Texture For Layer {}", mLayerIndex + 1),
-        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
-      return;
-    }
-
     winrt::check_hresult(d2d->EndDraw());
     endDraw.abandon();
+
+    auto d3d = mDXR.mD3DDevice.get();
+    auto source = snapshot.GetTexture<SHM::D3D11::Texture>()
+                    ->GetD3D11ShaderResourceView();
+
+    const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
+    mLayerID = layer.mLayerID;
 
     const auto& imageSize = layer.mLocationOnTexture.mSize;
     const auto scalex = float(clientSize.width) / imageSize.mWidth;
@@ -506,19 +502,17 @@ class TestViewerWindow final {
 
     const auto renderLeft = (clientSize.width - renderWidth) / 2;
     const auto renderTop = (clientSize.height - renderHeight) / 2;
-    RECT pageRect {
-      static_cast<LONG>(renderLeft),
-      static_cast<LONG>(renderTop),
-      static_cast<LONG>(renderLeft + renderWidth),
-      static_cast<LONG>(renderTop + renderHeight),
-    };
-    const RECT sourceRect = layer.mLocationOnTexture;
+    const PixelRect destRect {
+      {renderLeft, renderTop}, {renderWidth, renderHeight}};
+    const auto sourceRect = layer.mLocationOnTexture;
 
     winrt::com_ptr<ID3D11RenderTargetView> rtv;
     winrt::check_hresult(d3d->CreateRenderTargetView(
       surface.as<ID3D11Texture2D>().get(), nullptr, rtv.put()));
-    D3D11::DrawTextureWithOpacity(
-      d3d, sharedSRV, rtv.get(), sourceRect, pageRect, 1.0f);
+
+    mSpriteBatch->Begin(rtv.get(), mSwapChainSize);
+    mSpriteBatch->Draw(source, sourceRect, destRect);
+    mSpriteBatch->End();
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
   }

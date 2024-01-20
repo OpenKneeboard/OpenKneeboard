@@ -685,7 +685,8 @@ Snapshot CachedReader::MaybeGet() {
   const auto swapchainIndex = mSwapchainIndex;
   if (swapchainIndex >= mClientTextures.size()) [[unlikely]] {
     dprintf(
-      "`{}`: swapchainIndex {} >= swapchainLength {}",
+      "`{}`: swapchainIndex {} >= swapchainLength {}; did you call "
+      "InitializeCache()?",
       __FUNCSIG__,
       swapchainIndex,
       mClientTextures.size());
