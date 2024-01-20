@@ -140,7 +140,13 @@ target_link_libraries(
 )
 
 ok_add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
-target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
+target_link_libraries(
+  OpenKneeboard-DXResources
+  PUBLIC
+  _libheaders
+  PRIVATE
+  OpenKneeboard-dprint
+)
 
 set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
 file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
@@ -191,6 +197,8 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-SHM
   ThirdParty::DirectXTK
+  PRIVATE
+  OpenKneeboard-dprint
 )
 
 ok_add_library(
@@ -234,10 +242,14 @@ target_link_libraries(
 )
 
 ok_add_library(OpenKneeboard-dprint STATIC dprint.cpp)
-target_link_libraries(OpenKneeboard-dprint PUBLIC _libheaders)
+target_link_libraries(
+  OpenKneeboard-dprint
+  PUBLIC
+  _libheaders
+  OpenKneeboard-config
+)
 target_link_libraries(OpenKneeboard-dprint
   PRIVATE
-  OpenKneeboard-config
   OpenKneeboard-scope_guard
 )
 

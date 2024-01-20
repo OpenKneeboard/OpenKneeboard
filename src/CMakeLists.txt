@@ -19,7 +19,6 @@ add_compile_definitions(
   "NOMINMAX=1"
   "WIN32_LEAN_AND_MEAN=1"
   "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
-  "OPENKNEEBOARD_BREAK=$<$<CONFIG:Debug>:__debugbreak()>"
   "BUILD_CONFIG=\"$<CONFIG>\""
 )
 

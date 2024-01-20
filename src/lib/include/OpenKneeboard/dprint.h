@@ -19,11 +19,13 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/winrt/base.h>
 
 #include <format>
+#include <source_location>
 #include <stop_token>
 #include <string>
 
@@ -128,5 +130,23 @@ class DPrintReceiver {
 
   bool mUsable = false;
 };
+
+/** Use this if something is so wrong that we're almost certainly going to
+ * crash.
+ *
+ * Crashing earlier is better than crashing later, as we get more usable
+ * debugging information.
+ */
+#define OPENKNEEBOARD_LOG_AND_FATAL(message, ...) \
+  { \
+    dprintf( \
+      "FATAL: " message " @ {}:{}:{} - {}", \
+      ##__VA_ARGS__, \
+      __FILE__, \
+      __LINE__, \
+      std::source_location::current().column(), \
+      __FUNCSIG__); \
+    OPENKNEEBOARD_FATAL; \
+  }
 
 }// namespace OpenKneeboard

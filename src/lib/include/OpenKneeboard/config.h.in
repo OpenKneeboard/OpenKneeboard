@@ -50,3 +50,22 @@ constexpr const wchar_t FixedWidthUIFont[] {L"Consolas"};
 constexpr const wchar_t FixedWidthContentFont[] {L"Consolas"};
 
 }// namespace OpenKneeboard
+
+#ifdef DEBUG
+#define OPENKNEEBOARD_BREAK __debugbreak()
+#else
+#define OPENKNEEBOARD_BREAK
+#endif
+
+/** Use this if something is so wrong that we're almost certainly going to
+ * crash.
+ *
+ * Crashing earlier is better than crashing later, as we get more usable
+ * debugging information.
+ *
+ * Prefer `OPENKNEEBOARD_LOG_AND_FATAL()` from <OpenKneeboard/dprint.h>
+ *
+ * This uses `__fastfail()` because `abort()` can end up lost and confusing in
+ * some multi-threaded environments.
+ */
+#define OPENKNEEBOARD_FATAL __fastfail(FAST_FAIL_FATAL_APP_EXIT)
