@@ -41,11 +41,10 @@ struct SavedState::Impl {
 thread_local bool SavedState::Impl::tHaveSavedState {false};
 
 SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "D3D11::SavedState");
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::SavedState()");
   if (Impl::tHaveSavedState) {
-    dprint("ERROR: nesting D3D11 SavedStates");
-    OPENKNEEBOARD_BREAK;
+    dprintf("`{}`: nesting D3D11 SavedStates", __FUNCSIG__);
+    abort();
   }
 
   Impl::tHaveSavedState = true;
@@ -57,8 +56,7 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
 
   winrt::com_ptr<ID3DDeviceContextState> newState;
   {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "CreateDeviceContextState");
+    OPENKNEEBOARD_TraceLoggingScope("CreateDeviceContextState");
     winrt::check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
       (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
         ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
@@ -69,30 +67,19 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
       __uuidof(ID3D11Device),
       nullptr,
       newState.put()));
-    TraceLoggingWriteStop(subActivity, "CreateDeviceContextState");
   }
   {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "SwapDeviceContextState");
+    OPENKNEEBOARD_TraceLoggingScope("SwapDeviceContextState");
     mImpl->mContext->SwapDeviceContextState(
       newState.get(), mImpl->mState.put());
-    TraceLoggingWriteStop(subActivity, "SwapDeviceContextState");
   }
-  TraceLoggingWriteStop(activity, "D3D11::SavedState");
 }
 
 SavedState::~SavedState() {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "D3D11::~SavedState()");
-  {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "SwapDeviceContextState");
-    mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
-    TraceLoggingWriteStop(subActivity, "SwapDeviceContextState");
-  }
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::~SavedState()");
+  mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
   Impl::tHaveSavedState = false;
   delete mImpl;
-  TraceLoggingWriteStop(activity, "D3D11::~SavedState()");
 }
 
 void CopyTextureWithTint(

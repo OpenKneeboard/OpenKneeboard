@@ -229,13 +229,12 @@ uint8_t Snapshot::GetLayerCount() const {
 }
 
 const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
-  if (layerIndex >= this->GetLayerCount()) {
+  if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
     dprintf(
       "Asked for layer {}, but there are {} layers",
       layerIndex,
       this->GetLayerCount());
-    OPENKNEEBOARD_BREAK;
-    return {};
+    abort();
   }
 
   return &mHeader->mLayers[layerIndex];
@@ -499,6 +498,7 @@ uint64_t Reader::GetSessionID() const {
 }
 
 Reader::Reader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::Reader()");
   const auto path = SHMPath();
   dprintf(L"Initializing SHM reader with path {}", path);
 
@@ -511,6 +511,7 @@ Reader::Reader() {
 }
 
 Reader::~Reader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::~Reader()");
 }
 
 Reader::operator bool() const {
@@ -521,12 +522,15 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
-CachedReader::CachedReader(
-  IPCTextureCopier* copier,
-  ConsumerKind kind,
-  uint8_t swapchainLength)
+CachedReader::CachedReader(IPCTextureCopier* copier, ConsumerKind kind)
   : mTextureCopier(copier), mConsumerKind(kind) {
-  mClientTextures.resize(swapchainLength);
+}
+
+void CachedReader::InitializeCache(uint8_t swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::CachedReader::InitializeCache()",
+    TraceLoggingValue(swapchainLength, "SwapchainLength"));
+  mClientTextures = {swapchainLength, nullptr};
 }
 
 CachedReader::~CachedReader() = default;
@@ -535,6 +539,7 @@ Snapshot Reader::MaybeGetUncached(
   IPCTextureCopier* copier,
   const std::shared_ptr<IPCClientTexture>& dest,
   ConsumerKind kind) const {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::MaybeGetUncached()");
   const auto transitions = make_scoped_state_transitions<
     State::Locked,
     State::CreatingSnapshot,
@@ -678,6 +683,14 @@ Snapshot CachedReader::MaybeGet() {
   }
 
   const auto swapchainIndex = mSwapchainIndex;
+  if (swapchainIndex >= mClientTextures.size()) [[unlikely]] {
+    dprintf(
+      "`{}`: swapchainIndex {} >= swapchainLength {}",
+      __FUNCSIG__,
+      swapchainIndex,
+      mClientTextures.size());
+    abort();
+  }
   mSwapchainIndex = (mSwapchainIndex + 1) % mClientTextures.size();
 
   const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);

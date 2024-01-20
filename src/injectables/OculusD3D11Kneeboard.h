@@ -22,6 +22,7 @@
 #include "IDXGISwapChainPresentHook.h"
 #include "OculusKneeboard.h"
 
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/config.h>
@@ -42,13 +43,8 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
 
   void UninstallHook();
 
-  virtual SHM::ConsumerKind GetConsumerKind() const override {
-    return SHM::ConsumerKind::OculusD3D11;
-  }
-
   virtual SHM::CachedReader* GetSHM() override;
 
- protected:
   virtual ovrTextureSwapChain CreateSwapChain(
     ovrSession session,
     const PixelSize&) override;
@@ -57,19 +53,17 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerCount,
-    SHM::LayerSprite* layers) override;
-
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
+    const PixelRect* const destRects,
+    const float* const opacities) override;
 
  private:
-  SHM::D3D11::CachedReader mSHM;
+  winrt::com_ptr<ID3D11Device> mD3D11Device;
+  winrt::com_ptr<ID3D11DeviceContext> mD3D11DeviceContext;
+  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
 
-  using DeviceResources = SHM::D3D11::Renderer::DeviceResources;
-  std::unique_ptr<DeviceResources> mDeviceResources;
-  using SwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
-  std::unordered_map<ovrTextureSwapChain, std::unique_ptr<SwapchainResources>>
-    mSwapchainResources;
+  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mSwapchain;
+  PixelSize mSwapchainDimensions;
+  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OculusD3D11};
 
   OculusKneeboard mOculusKneeboard;
   IDXGISwapChainPresentHook mDXGIHook;
@@ -78,6 +72,6 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     IDXGISwapChain* this_,
     UINT syncInterval,
     UINT flags,
-    const decltype(&IDXGISwapChain::Present)& next);
+    const decltype(&IDXGISwapChain::Present)& next) noexcept;
 };
 }// namespace OpenKneeboard

@@ -63,8 +63,10 @@ class Texture final : public SHM::IPCClientTexture {
 class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
  public:
   CachedReader() = delete;
-  CachedReader(ID3D11Device*, ConsumerKind, uint8_t swapchainLength);
+  CachedReader(ConsumerKind);
   virtual ~CachedReader();
+
+  void InitializeCache(ID3D11Device*, uint8_t swapchainLength);
 
  protected:
   virtual void Copy(

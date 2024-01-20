@@ -56,13 +56,6 @@ static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
-// Used by D3D11::Renderer, D3D12::Renderer, and Oculus + OpenXR bases
-struct LayerSprite {
-  uint8_t mLayerIndex {0xff};
-  PixelRect mDestRect {};
-  float mOpacity {1.0f};
-};
-
 // See SHM::D3D11::IPCClientTexture etc
 class IPCClientTexture {
  public:
@@ -187,19 +180,10 @@ class Snapshot final {
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
 
   template <std::derived_from<IPCClientTexture> T>
-  T* GetLayerGPUResources(uint8_t layerIndex) const {
-    if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
-      dprintf(
-        "Asked for layer {}, but there are {} layers",
-        layerIndex,
-        this->GetLayerCount());
-      OPENKNEEBOARD_BREAK;
-      return nullptr;
-    }
+  T* GetTexture() const {
     const auto ret = std::dynamic_pointer_cast<T>(mIPCTexture);
     if (!ret) [[unlikely]] {
       dprint("Layer texture cache type mismatch");
-      OPENKNEEBOARD_BREAK;
       abort();
     }
     return ret.get();
@@ -254,12 +238,14 @@ class Reader {
 class CachedReader : public Reader {
  public:
   CachedReader() = delete;
-  CachedReader(IPCTextureCopier*, ConsumerKind, uint8_t swapchainLength);
+  CachedReader(IPCTextureCopier*, ConsumerKind);
   virtual ~CachedReader();
 
   Snapshot MaybeGet();
 
  protected:
+  void InitializeCache(uint8_t swapchainLength);
+
   virtual std::shared_ptr<IPCClientTexture> CreateIPCClientTexture(
     uint8_t swapchainIndex) noexcept
     = 0;

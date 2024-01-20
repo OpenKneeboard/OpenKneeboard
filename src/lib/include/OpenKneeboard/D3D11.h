@@ -85,6 +85,7 @@ void DrawTextureWithOpacity(
  * with premultiplied alpha.
  */
 class Opacity final {
+ public:
   Opacity() = delete;
   explicit constexpr Opacity(float opacity) noexcept {
     // Assuming premultiplied alpha

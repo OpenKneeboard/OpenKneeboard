@@ -100,28 +100,41 @@ void Texture::CopyFrom(
   winrt::check_hresult(mContext->Signal(mSourceFence.get(), fenceValueOut));
 }
 
-CachedReader::CachedReader(
-  ID3D11Device* device,
-  ConsumerKind consumerKind,
-  uint8_t swapchainLength)
-  : SHM::CachedReader(this, consumerKind, swapchainLength) {
+CachedReader::CachedReader(ConsumerKind consumerKind)
+  : SHM::CachedReader(this, consumerKind) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::CachedReader()");
-  winrt::check_hresult(device->QueryInterface(mD3D11Device.put()));
-  winrt::com_ptr<ID3D11DeviceContext> context;
-  device->GetImmediateContext(context.put());
-  mD3D11DeviceContext = context.as<ID3D11DeviceContext4>();
+}
 
-  // Everything below here is unnecessary, but adds useful debug
-  // logging.
-  auto dxgiDevice = mD3D11Device.as<IDXGIDevice>();
-  winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
-  winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
-  DXGI_ADAPTER_DESC desc {};
-  winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
-  dprintf(
-    L"SHM reader using adapter '{}' (LUID {:#x})",
-    desc.Description,
-    std::bit_cast<uint64_t>(desc.AdapterLuid));
+void CachedReader::InitializeCache(
+  ID3D11Device* device,
+  uint8_t swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D11::CachedReader::InitializeCache()",
+    TraceLoggingValue(swapchainLength, "swapchainLength"));
+
+  if (device != mD3D11Device.get()) {
+    mD3D11Device = {};
+    mD3D11DeviceContext = {};
+
+    winrt::check_hresult(device->QueryInterface(mD3D11Device.put()));
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    device->GetImmediateContext(context.put());
+    mD3D11DeviceContext = context.as<ID3D11DeviceContext4>();
+
+    // Everything below here is unnecessary, but adds useful debug
+    // logging.
+    auto dxgiDevice = mD3D11Device.as<IDXGIDevice>();
+    winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
+    winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
+    DXGI_ADAPTER_DESC desc {};
+    winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
+    dprintf(
+      L"SHM reader using adapter '{}' (LUID {:#x})",
+      desc.Description,
+      std::bit_cast<uint64_t>(desc.AdapterLuid));
+  }
+
+  SHM::CachedReader::InitializeCache(swapchainLength);
 }
 
 CachedReader::~CachedReader() {
