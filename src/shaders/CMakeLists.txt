@@ -1,4 +1,4 @@
-set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen/include")
+set(GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/gen/$<CONFIG>/include")
 set(GENERATED_HEADER_DIR "${GENERATED_INCLUDE_DIR}/OpenKneeboard/Shaders/gen")
 make_directory("${GENERATED_HEADER_DIR}")
 
@@ -9,6 +9,8 @@ macro(add_shader TARGET ENTRYPOINT SOURCE)
         DEPENDS "${SOURCE}"
         COMMAND
         ThirdParty::dxc
+        "$<$<CONFIG:Debug>:-O0>"
+        "$<$<CONFIG:Debug>:-Zi>"
         -Fh "${SHADER_OUTPUT}"
         -E ${ENTRYPOINT}
         "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE}"
