@@ -154,16 +154,16 @@ void SpriteBatch::End(const std::source_location& loc) {
       tcbr = {right, bottom};
     };
 
-    using DestPosition = std::array<float, 2>;
-    const auto dptl
-      = sprite.mDestRect.TopLeft().StaticCast<DestPosition, float>();
-    const auto dpbr
-      = sprite.mDestRect.BottomRight().StaticCast<DestPosition, float>();
-    const DestPosition dptr {dpbr[0], dptl[1]};
-    const DestPosition dpbl {dptl[0], dpbr[1]};
+    using Position = Vertex::Position;
+
+    const auto tl = sprite.mDestRect.TopLeft().StaticCast<Position, float>();
+    const auto br
+      = sprite.mDestRect.BottomRight().StaticCast<Position, float>();
+    const Position tr {br[0], tl[1]};
+    const Position bl {tl[0], br[1]};
 
     const auto sourceIndex = sourceIndices.at(sprite.mSource);
-    auto makeVertex = [=](const TexCoord& tc, const DestPosition& dp) {
+    auto makeVertex = [=](const TexCoord& tc, const Position& dp) {
       return Vertex {
         .mTextureIndex = sourceIndices.at(sprite.mSource),
         .mColor = sprite.mColor,
@@ -173,14 +173,14 @@ void SpriteBatch::End(const std::source_location& loc) {
     };
 
     // First triangle: excludes top right
-    vertices.push_back(makeVertex(tcbl, dpbl));
-    vertices.push_back(makeVertex(tctl, dptl));
-    vertices.push_back(makeVertex(tcbr, dpbr));
+    vertices.push_back(makeVertex(tcbl, bl));
+    vertices.push_back(makeVertex(tctl, tl));
+    vertices.push_back(makeVertex(tcbr, br));
 
     // First triangle: excludes bottom left
-    vertices.push_back(makeVertex(tctl, dptl));
-    vertices.push_back(makeVertex(tctr, dptr));
-    vertices.push_back(makeVertex(tcbr, dpbr));
+    vertices.push_back(makeVertex(tctl, tl));
+    vertices.push_back(makeVertex(tctr, tr));
+    vertices.push_back(makeVertex(tcbr, br));
   }
 
   mSprites.clear();

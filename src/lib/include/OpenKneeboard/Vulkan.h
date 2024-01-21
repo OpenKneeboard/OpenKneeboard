@@ -207,7 +207,14 @@ class Dispatch final {
   }
 };
 
-class Color final : public std::array<float, 4> {};
+class Color : public std::array<float, 4> {};
+
+class Opacity : public Color {
+ public:
+  Opacity() = delete;
+  Opacity(float opacity) : Color {opacity, opacity, opacity, opacity} {
+  }
+};
 
 namespace Colors {
 constexpr Color White {1, 1, 1, 1};
@@ -244,10 +251,19 @@ class SpriteBatch {
   PixelSize mDestSize;
 
   struct Vertex {
+    class Position : public std::array<float, 4> {
+     public:
+      constexpr Position(const std::array<float, 2>& pos_2d)
+        : std::array<float, 4> {pos_2d[0], pos_2d[0], 0, 1} {
+      }
+
+      constexpr Position(float x, float y) : std::array<float, 4> {x, y, 0, 1} {
+      }
+    };
     uint32_t mTextureIndex {~(0ui32)};
     Color mColor {};
     std::array<float, 2> mTexCoord;
-    std::array<float, 2> mPosition;
+    Position mPosition;
 
     static VkVertexInputBindingDescription GetBindingDescription();
     static std::array<VkVertexInputAttributeDescription, 4>
