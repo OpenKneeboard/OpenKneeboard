@@ -78,6 +78,16 @@ struct PixelPoint {
   uint32_t mX {};
   uint32_t mY {};
 
+  template <class T>
+  constexpr auto GetX() const {
+    return static_cast<T>(mX);
+  }
+
+  template <class T>
+  constexpr auto GetY() const {
+    return static_cast<T>(mY);
+  }
+
   constexpr auto operator<=>(const PixelPoint&) const noexcept = default;
 
   template <class TPoint, class TValue>
@@ -92,6 +102,14 @@ struct PixelPoint {
 struct PixelRect {
   PixelPoint mOrigin {};
   PixelSize mSize {};
+
+  constexpr PixelPoint TopLeft() const {
+    return mOrigin;
+  }
+
+  constexpr PixelPoint BottomRight() const {
+    return {mOrigin.mX + mSize.mWidth, mOrigin.mY + mSize.mHeight};
+  }
 
   constexpr auto operator<=>(const PixelRect&) const noexcept = default;
 

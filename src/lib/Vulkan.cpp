@@ -23,6 +23,8 @@
 
 #include <OpenKneeboard/tracing.h>
 
+#include <unordered_map>
+
 namespace OpenKneeboard::Vulkan {
 
 Dispatch::Dispatch(
@@ -38,31 +40,151 @@ Dispatch::Dispatch(
 SpriteBatch::SpriteBatch(
   Dispatch* dispatch,
   VkDevice device,
-  const VkAllocationCallbacks* allocator) {
+  const VkAllocationCallbacks* allocator,
+  uint32_t queueFamilyIndex) {
   OPENKNEEBOARD_TraceLoggingScope("SpriteBatch::SpriteBatch()");
 
   namespace Shaders = Shaders::SPIRV::SpriteBatch;
 
-  VkShaderModuleCreateInfo psCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-    .codeSize = Shaders::PS.size(),
-    .pCode = reinterpret_cast<const uint32_t*>(Shaders::PS.data()),
-  };
+  {
+    VkShaderModuleCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+      .codeSize = Shaders::PS.size(),
+      .pCode = reinterpret_cast<const uint32_t*>(Shaders::PS.data()),
+    };
+    mPixelShader
+      = dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
+  }
 
-  VkShaderModuleCreateInfo vsCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-    .codeSize = Shaders::VS.size(),
-    .pCode = reinterpret_cast<const uint32_t*>(Shaders::VS.data()),
-  };
+  {
+    VkShaderModuleCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+      .codeSize = Shaders::VS.size(),
+      .pCode = reinterpret_cast<const uint32_t*>(Shaders::VS.data()),
+    };
+    mVertexShader
+      = dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
+  }
 
-  mPixelShader
-    = dispatch->make_unique<VkShaderModule>(device, &psCreateInfo, allocator);
-  mVertexShader
-    = dispatch->make_unique<VkShaderModule>(device, &vsCreateInfo, allocator);
+  {
+    VkCommandPoolCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = queueFamilyIndex,
+    };
+    mCommandPool
+      = dispatch->make_unique<VkCommandPool>(device, &createInfo, allocator);
+  }
+
+  {
+    VkCommandBufferAllocateInfo allocInfo {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .commandPool = mCommandPool.get(),
+      .commandBufferCount = 1,
+    };
+    check_vkresult(
+      dispatch->AllocateCommandBuffers(device, &allocInfo, &mCommandBuffer));
+  }
 }
 
 SpriteBatch::~SpriteBatch() {
   OPENKNEEBOARD_TraceLoggingWrite("SpriteBatch::~SpriteBatch()");
+}
+
+void SpriteBatch::Draw(
+  VkImageView source,
+  const PixelSize& sourceSize,
+  const PixelRect& sourceRect,
+  const PixelRect& destRect,
+  const Color& color,
+  const std::source_location& loc) {
+  if (!mBetweenBeginAndEnd) [[unlikely]] {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "Calling Draw() without Begin()");
+  }
+
+  mSprites.push_back({source, sourceSize, sourceRect, destRect, color});
+}
+
+void SpriteBatch::End(const std::source_location& loc) {
+  if (!mBetweenBeginAndEnd) [[unlikely]] {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "Calling End() without Begin()");
+  }
+
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity,
+    "Vulkan::SpriteBatch::End",
+    TraceLoggingValue(mSprites.size(), "SpriteCount"));
+  if (mSprites.empty()) {
+    return;
+  }
+
+  std::vector<VkImageView> sources;
+  std::unordered_map<VkImageView, uint32_t> sourceIndices;
+  std::vector<Vertex> vertices;
+  vertices.reserve(mSprites.size() * 6);
+
+  for (const auto& sprite: mSprites) {
+    if (!sourceIndices.contains(sprite.mSource)) {
+      sources.push_back(sprite.mSource);
+      sourceIndices[sprite.mSource] = sources.size() - 1;
+    }
+
+    using TexCoord = std::array<float, 2>;
+    TexCoord tctl;
+    TexCoord tctr;
+    TexCoord tcbl;
+    TexCoord tcbr;
+
+    {
+      const auto& ss = sprite.mSourceSize;
+
+      const auto tl = sprite.mSourceRect.TopLeft();
+      const auto br = sprite.mSourceRect.BottomRight();
+
+      const auto left = tl.GetX<float>() / ss.mWidth;
+      const auto top = tl.GetY<float>() / ss.mHeight;
+      const auto right = br.GetX<float>() / ss.mWidth;
+      const auto bottom = br.GetY<float>() / ss.mHeight;
+
+      tctl = {left, top};
+      tctr = {right, top};
+      tcbl = {left, bottom};
+      tcbr = {right, bottom};
+    };
+
+    using DestPosition = std::array<float, 2>;
+    const auto dptl
+      = sprite.mDestRect.TopLeft().StaticCast<DestPosition, float>();
+    const auto dpbr
+      = sprite.mDestRect.BottomRight().StaticCast<DestPosition, float>();
+    const DestPosition dptr {dpbr[0], dptl[1]};
+    const DestPosition dpbl {dptl[0], dpbr[1]};
+
+    const auto sourceIndex = sourceIndices.at(sprite.mSource);
+    auto makeVertex = [=](const TexCoord& tc, const DestPosition& dp) {
+      return Vertex {
+        .mTextureIndex = sourceIndices.at(sprite.mSource),
+        .mColor = sprite.mColor,
+        .mTexCoord = tc,
+        .mPosition = dp,
+      };
+    };
+
+    // First triangle: excludes top right
+    vertices.push_back(makeVertex(tcbl, dpbl));
+    vertices.push_back(makeVertex(tctl, dptl));
+    vertices.push_back(makeVertex(tcbr, dpbr));
+
+    // First triangle: excludes bottom left
+    vertices.push_back(makeVertex(tctl, dptl));
+    vertices.push_back(makeVertex(tctr, dptr));
+    vertices.push_back(makeVertex(tcbr, dpbr));
+  }
+
+  mSprites.clear();
+  mBetweenBeginAndEnd = false;
 }
 
 }// namespace OpenKneeboard::Vulkan

@@ -20,11 +20,13 @@
 #pragma once
 #define VK_USE_PLATFORM_WIN32_KHR
 
+#include <OpenKneeboard/Pixels.h>
+
 #include <OpenKneeboard/dprint.h>
 
 #include <vulkan/vulkan.h>
 
-#include <stdexcept>
+#include <concepts>
 
 namespace OpenKneeboard::Vulkan {
 
@@ -202,18 +204,59 @@ class Dispatch final {
   }
 };
 
+class Color final : public std::array<float, 4> {};
+
+namespace Colors {
+constexpr Color White {1, 1, 1, 1};
+constexpr Color Transparent {0, 0, 0, 0};
+};// namespace Colors
+
 class SpriteBatch {
  public:
   SpriteBatch() = delete;
   SpriteBatch(
     Dispatch* dispatch,
     VkDevice device,
-    const VkAllocationCallbacks* allocator);
+    const VkAllocationCallbacks* allocator,
+    uint32_t queueFamilyIndex);
   ~SpriteBatch();
+
+  void Draw(
+    VkImageView source,
+    const PixelSize& sourceSize,
+    const PixelRect& sourceRect,
+    const PixelRect& destRect,
+    const Color& color = Colors::White,
+    const std::source_location& loc = std::source_location::current());
+
+  void End(const std::source_location& loc = std::source_location::current());
 
  private:
   unique_VkShaderModule mPixelShader;
   unique_VkShaderModule mVertexShader;
+
+  unique_VkCommandPool mCommandPool;
+  VkCommandBuffer mCommandBuffer {nullptr};
+
+  PixelSize mDestSize;
+
+  struct Vertex {
+    uint32_t mTextureIndex {~(0ui32)};
+    Color mColor {};
+    std::array<float, 2> mTexCoord;
+    std::array<float, 2> mPosition;
+  };
+
+  struct Sprite {
+    VkImageView mSource {nullptr};
+    PixelSize mSourceSize;
+    PixelRect mSourceRect;
+    PixelRect mDestRect;
+    Color mColor;
+  };
+
+  bool mBetweenBeginAndEnd {false};
+  std::vector<Sprite> mSprites;
 };
 
 }// namespace OpenKneeboard::Vulkan
