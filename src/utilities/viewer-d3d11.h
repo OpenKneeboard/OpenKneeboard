@@ -39,14 +39,20 @@ class D3D11Renderer final : public Renderer {
 
   virtual void Initialize(uint8_t swapchainLength) override;
 
+  virtual void SaveTextureToFile(
+    SHM::IPCClientTexture*,
+    const std::filesystem::path&) override;
+
   virtual SHM::Snapshot MaybeGetSnapshot() override;
 
-  virtual void Render(
+  virtual uint64_t Render(
     SHM::IPCClientTexture* sourceTexture,
     const PixelRect& sourceRect,
     HANDLE destTexture,
     const PixelSize& destTextureDimensions,
-    const PixelRect& destRect) override;
+    const PixelRect& destRect,
+    HANDLE fence,
+    uint64_t fenceValueIn) override;
 
  private:
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::Viewer};

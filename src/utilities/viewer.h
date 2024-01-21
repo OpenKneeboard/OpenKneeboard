@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/SHM.h>
 
+#include <filesystem>
+
 namespace OpenKneeboard::Viewer {
 
 class Renderer {
@@ -30,16 +32,28 @@ class Renderer {
 
   virtual void Initialize(uint8_t swapchainLength) = 0;
 
+  virtual void SaveTextureToFile(
+    SHM::IPCClientTexture*,
+    const std::filesystem::path&)
+    = 0;
+
   virtual SHM::Snapshot MaybeGetSnapshot() = 0;
 
-  // Note HANDLE is an NT handle, not a classic Windows handle; these
-  // need to be handled differently by most graphics APIs
-  virtual void Render(
+  /** Render the texture.
+   *
+   * Note HANDLE is an NT handle, not a classic Windows handle; these
+   * need to be handled differently by most graphics APIs.
+   *
+   * @return a fence value to wait on
+   */
+  virtual uint64_t Render(
     SHM::IPCClientTexture* sourceTexture,
     const PixelRect& sourceRect,
     HANDLE destTexture,
     const PixelSize& destTextureDimensions,
-    const PixelRect& destRect)
+    const PixelRect& destRect,
+    HANDLE fence,
+    uint64_t fenceValueIn)
     = 0;
 };
 

@@ -22,6 +22,8 @@
 
 #include <OpenKneeboard/D3D12.h>
 
+#include <directxtk12/ScreenGrab.h>
+
 namespace OpenKneeboard::Viewer {
 
 D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
@@ -69,17 +71,26 @@ void D3D12Renderer::Initialize(uint8_t swapchainLength) {
   mSHM.InitializeCache(mDevice.get(), mCommandQueue.get(), swapchainLength);
 }
 
-void D3D12Renderer::Render(
+uint64_t D3D12Renderer::Render(
   SHM::IPCClientTexture* sourceTexture,
   const PixelRect& sourceRect,
   HANDLE destTextureHandle,
   const PixelSize& destTextureDimensions,
-  const PixelRect& destRect) {
+  const PixelRect& destRect,
+  HANDLE fenceHandle,
+  uint64_t fenceValueIn) {
+  OPENKNEEBOARD_TraceLoggingScope("Viewer::D3D12Renderer::Render");
+
   if (destTextureHandle != mDestHandle) {
     mDestTexture = nullptr;
     mDestTexture.capture(
       mDevice, &ID3D12Device::OpenSharedHandle, destTextureHandle);
     mDestHandle = destTextureHandle;
+  }
+
+  if (fenceHandle != mFenceHandle) {
+    mFence.capture(mDevice, &ID3D12Device::OpenSharedHandle, fenceHandle);
+    mFenceHandle = fenceHandle;
   }
 
   auto source = reinterpret_cast<SHM::D3D12::Texture*>(sourceTexture);
@@ -111,8 +122,27 @@ void D3D12Renderer::Render(
 
   winrt::check_hresult(mCommandList->Close());
 
+  winrt::check_hresult(mCommandQueue->Wait(mFence.get(), fenceValueIn));
+
   ID3D12CommandList* lists[] {mCommandList.get()};
   mCommandQueue->ExecuteCommandLists(std::size(lists), lists);
+
+  const auto fenceValueOut = fenceValueIn + 1;
+  winrt::check_hresult(mCommandQueue->Signal(mFence.get(), fenceValueOut));
+  return fenceValueOut;
+}
+
+void D3D12Renderer::SaveTextureToFile(
+  SHM::IPCClientTexture* texture,
+  const std::filesystem::path& path) {
+  SaveTextureToFile(
+    reinterpret_cast<SHM::D3D12::Texture*>(texture)->GetD3D12Texture(), path);
+}
+void D3D12Renderer::SaveTextureToFile(
+  ID3D12Resource* texture,
+  const std::filesystem::path& path) {
+  winrt::check_hresult(DirectX::SaveDDSTextureToFile(
+    mCommandQueue.get(), texture, path.wstring().c_str()));
 }
 
 }// namespace OpenKneeboard::Viewer

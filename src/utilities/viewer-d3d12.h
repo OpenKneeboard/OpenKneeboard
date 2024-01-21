@@ -39,14 +39,20 @@ class D3D12Renderer final : public Renderer {
 
   virtual void Initialize(uint8_t swapchainLength) override;
 
+  virtual void SaveTextureToFile(
+    SHM::IPCClientTexture*,
+    const std::filesystem::path&) override;
+
   virtual SHM::Snapshot MaybeGetSnapshot() override;
 
-  virtual void Render(
+  virtual uint64_t Render(
     SHM::IPCClientTexture* sourceTexture,
     const PixelRect& sourceRect,
     HANDLE destTexture,
     const PixelSize& destTextureDimensions,
-    const PixelRect& destRect) override;
+    const PixelRect& destRect,
+    HANDLE fence,
+    uint64_t fenceValueIn) override;
 
  private:
   SHM::D3D12::CachedReader mSHM {SHM::ConsumerKind::Viewer};
@@ -61,6 +67,13 @@ class D3D12Renderer final : public Renderer {
   HANDLE mDestHandle {};
   winrt::com_ptr<ID3D12Resource> mDestTexture;
   std::unique_ptr<DirectX::DescriptorHeap> mDestRTVHeap;
+
+  HANDLE mFenceHandle {};
+  winrt::com_ptr<ID3D12Fence> mFence;
+
+  uint64_t mFenceValue {};
+
+  void SaveTextureToFile(ID3D12Resource*, const std::filesystem::path&);
 };
 
 }// namespace OpenKneeboard::Viewer

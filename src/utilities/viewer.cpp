@@ -39,8 +39,6 @@
 
 #include <shims/winrt/base.h>
 
-#include <directxtk/ScreenGrab.h>
-
 #include <format>
 #include <memory>
 #include <type_traits>
@@ -88,6 +86,9 @@ class TestViewerWindow final {
   winrt::com_ptr<ID3D11Texture2D> mRendererTexture;
   winrt::handle mRendererTextureHandle;
   PixelSize mRendererTextureSize;
+  winrt::com_ptr<ID3D11Fence> mFence;
+  winrt::handle mFenceHandle;
+  uint64_t mFenceValue {};
 
   uint8_t mLayerIndex = 0;
   uint64_t mLayerID = 0;
@@ -161,6 +162,11 @@ class TestViewerWindow final {
 
     mDXR = DXResources::Create();
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+
+    winrt::check_hresult(mDXR.mD3DDevice->CreateFence(
+      mFenceValue, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
+    winrt::check_hresult(mFence->CreateSharedHandle(
+      nullptr, GENERIC_ALL, nullptr, mFenceHandle.put()));
 
     this->CreateRenderer();
 
@@ -350,10 +356,9 @@ class TestViewerWindow final {
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     mDXR.mD3DDevice->GetImmediateContext(ctx.put());
 
-    const auto texture = snapshot.GetTexture<SHM::D3D11::Texture>();
+    mRenderer->SaveTextureToFile(
+      snapshot.GetTexture<SHM::IPCClientTexture>(), path);
 
-    winrt::check_hresult(DirectX::SaveDDSTextureToFile(
-      ctx.get(), texture->GetD3D11Texture(), path.wstring().c_str()));
     Filesystem::OpenExplorerWithSelectedFile(path);
   }
 
@@ -553,15 +558,22 @@ class TestViewerWindow final {
 
     auto surfaceTex = surface.as<ID3D11Texture2D>();
     auto ctx = mDXR.mD3DImmediateContext.get();
+
     ctx->CopySubresourceRegion(
       mRendererTexture.get(), 0, 0, 0, 0, surfaceTex.get(), 0, nullptr);
 
-    mRenderer->Render(
+    winrt::check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
+
+    mFenceValue = mRenderer->Render(
       snapshot.GetTexture<SHM::IPCClientTexture>(),
       sourceRect,
       mRendererTextureHandle.get(),
       {clientSize.width, clientSize.height},
-      destRect);
+      destRect,
+      mFenceHandle.get(),
+      mFenceValue);
+
+    winrt::check_hresult(ctx->Wait(mFence.get(), mFenceValue));
 
     ctx->CopySubresourceRegion(
       surfaceTex.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, nullptr);
