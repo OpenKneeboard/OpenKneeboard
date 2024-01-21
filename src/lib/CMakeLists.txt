@@ -148,6 +148,7 @@ target_link_libraries(
   OpenKneeboard-dprint
   ThirdParty::VulkanHeaders
   _libheaders
+  OpenKneeboard-SpriteBatch-SPIRV
 )
 
 ok_add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)

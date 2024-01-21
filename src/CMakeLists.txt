@@ -27,6 +27,8 @@ add_compile_definitions(
   "OPENKNEEBOARD_UNREACHABLE=__assume(false)"
 )
 
+add_subdirectory(shaders)
+
 # Always link this so we never accidentally use the SDK version
 link_libraries(ThirdParty::CppWinRT)
 

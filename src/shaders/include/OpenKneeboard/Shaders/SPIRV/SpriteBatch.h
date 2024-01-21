@@ -17,20 +17,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#pragma once
 
-#include <OpenKneeboard/Shaders/SPIRV/SpriteBatch.h>
-#include <OpenKneeboard/Vulkan.h>
+#include <string>
 
-namespace OpenKneeboard::Vulkan {
+namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch::Detail {
 
-Dispatch::Dispatch(
-  VkInstance instance,
-  PFN_vkGetInstanceProcAddr getInstanceProcAddr) {
-#define IT(vkfun) \
-  this->##vkfun = reinterpret_cast<PFN_vk##vkfun>( \
-    getInstanceProcAddr(instance, "vk" #vkfun));
-  OPENKNEEBOARD_VK_FUNCS
-#undef IT
-}
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-SpriteBatch-SPIRV-PS.h>
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-SpriteBatch-SPIRV-VS.h>
 
-}// namespace OpenKneeboard::Vulkan
+}// namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch::Detail
+
+namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch {
+
+constexpr std::basic_string_view<unsigned char> PS {
+  Detail::g_SpritePixelShader,
+  std::size(Detail::g_SpritePixelShader)};
+
+constexpr std::basic_string_view<unsigned char> VS {
+  Detail::g_SpriteVertexShader,
+  std::size(Detail::g_SpriteVertexShader)};
+
+}// namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch
