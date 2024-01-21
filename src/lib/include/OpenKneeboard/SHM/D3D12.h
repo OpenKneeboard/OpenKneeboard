@@ -34,16 +34,20 @@ class Texture final : public SHM::IPCClientTexture {
   Texture() = delete;
   Texture(
     const winrt::com_ptr<ID3D12Device>&,
-    const winrt::com_ptr<ID3D12CommandQueue>&,
-    const winrt::com_ptr<ID3D12CommandAllocator>&,
+    ID3D12DescriptorHeap* shaderResourceViewHeap,
     const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
     const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle);
   virtual ~Texture();
 
+  PixelSize GetDimensions() const;
+
   ID3D12Resource* GetD3D12Texture();
   D3D12_GPU_DESCRIPTOR_HANDLE GetD3D12ShaderResourceViewGPUHandle();
+  ID3D12DescriptorHeap* GetD3D12ShaderResourceViewHeap();
 
   void CopyFrom(
+    ID3D12CommandQueue*,
+    ID3D12GraphicsCommandList*,
     HANDLE texture,
     HANDLE fence,
     uint64_t fenceValueIn,
@@ -51,15 +55,13 @@ class Texture final : public SHM::IPCClientTexture {
 
  private:
   winrt::com_ptr<ID3D12Device> mDevice;
-  winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
-  winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
-  winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
 
+  winrt::com_ptr<ID3D12DescriptorHeap> mShaderResourceViewHeap;
   D3D12_CPU_DESCRIPTOR_HANDLE mShaderResourceViewCPUHandle;
   D3D12_GPU_DESCRIPTOR_HANDLE mShaderResourceViewGPUHandle;
 
   winrt::com_ptr<ID3D12Resource> mTexture;
-  D3D12_RESOURCE_STATES mTextureState;
+  PixelSize mTextureDimensions;
   bool mHaveShaderResourceView {false};
 
   HANDLE mSourceTextureHandle {};
@@ -86,6 +88,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
  protected:
   virtual void Copy(
+    uint8_t swapchainIndex,
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
     HANDLE fence,
@@ -95,12 +98,19 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
     uint8_t swapchainIndex) noexcept override;
 
+ private:
   winrt::com_ptr<ID3D12Device> mD3D12Device;
   winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
-  winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
 
-  uint8_t mSwapchainLength {};
+  struct BufferResources {
+    winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
+    winrt::com_ptr<ID3D12GraphicsCommandList> mD3D12CommandList;
+  };
+
+  std::vector<BufferResources> mBufferResources;
   std::unique_ptr<DirectX::DescriptorHeap> mShaderResourceViewHeap;
+
+  uint8_t GetSwapchainLength() const;
 };
 
 }// namespace OpenKneeboard::SHM::D3D12

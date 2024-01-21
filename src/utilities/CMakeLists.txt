@@ -53,6 +53,7 @@ add_utility_executable(
   WIN32
   viewer.cpp
   viewer-d3d11.cpp
+  viewer-d3d12.cpp
   icon.rc
 )
 target_link_libraries(
@@ -61,12 +62,14 @@ target_link_libraries(
   OpenKneeboard-config
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-D3D11
+  OpenKneeboard-D3D12
   OpenKneeboard-DXResources
   OpenKneeboard-Filesystem
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
   OpenKneeboard-SHM
   OpenKneeboard-SHM-Client-D3D11
+  OpenKneeboard-SHM-Client-D3D12
   OpenKneeboard-scope_guard
   System::D2d1
   System::D3d11

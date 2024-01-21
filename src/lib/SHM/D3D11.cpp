@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/D3D.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/scope_guard.h>
@@ -129,7 +128,13 @@ void CachedReader::InitializeCache(
     mD3D11DeviceContext = context.as<ID3D11DeviceContext4>();
 
     // Debug logging
-    auto desc = OpenKneeboard::D3D::GetAdapterDesc(mD3D11Device);
+    winrt::com_ptr<IDXGIDevice> dxgiDevice;
+    winrt::check_hresult(
+      device->QueryInterface(IID_PPV_ARGS(dxgiDevice.put())));
+    winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
+    winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
+    DXGI_ADAPTER_DESC desc {};
+    winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
     dprintf(
       L"SHM reader using adapter '{}' (LUID {:#x})",
       desc.Description,
@@ -140,6 +145,7 @@ void CachedReader::InitializeCache(
 }
 
 void CachedReader::Copy(
+  [[maybe_unused]] uint8_t swapchainIndex,
   HANDLE sourceTexture,
   IPCClientTexture* destinationTexture,
   HANDLE fence,

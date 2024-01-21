@@ -92,6 +92,7 @@ void SpriteBatch::Begin(
   ctx->RSSetScissorRects(1, &scissorRect);
   ctx->OMSetRenderTargets(1, &renderTargetView, false, nullptr);
 
+  mDXTKSpriteBatch->SetViewport(viewport);
   mDXTKSpriteBatch->Begin(commandList);
 }
 

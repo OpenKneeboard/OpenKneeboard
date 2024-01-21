@@ -54,7 +54,7 @@ class StateMachine final {
     const std::source_location& loc = std::source_location::current()) {
     if (mState != in) [[unlikely]] {
       using namespace ADL;
-      const auto message = std::format(
+      OPENKNEEBOARD_LOG_AND_FATAL(
         "{}:{}:{}: Unexpected state `{}`; expected (`{}` -> `{}`) in `{}`",
         loc.file_name(),
         loc.line(),
@@ -63,9 +63,6 @@ class StateMachine final {
         formattable_state(in),
         formattable_state(out),
         loc.function_name());
-      dprint(message);
-      OPENKNEEBOARD_BREAK;
-      throw std::logic_error(message);
     }
     mState = out;
   }

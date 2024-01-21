@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#pragma once
 
 #include <shims/winrt/base.h>
 
@@ -44,15 +45,5 @@ class Opacity final {
  private:
   DirectX::XMVECTORF32 mColor;
 };
-
-auto GetAdapterDesc(auto device) {
-  winrt::com_ptr<IDXGIDevice> dxgiDevice;
-  winrt::check_hresult(device->QueryInterface(IID_PPV_ARGS(dxgiDevice.put())));
-  winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
-  winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
-  DXGI_ADAPTER_DESC desc {};
-  winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
-  return desc;
-}
 
 }// namespace OpenKneeboard::D3D

@@ -25,6 +25,7 @@
 namespace OpenKneeboard::Viewer {
 
 D3D11Renderer::D3D11Renderer(const winrt::com_ptr<ID3D11Device>& device) {
+  dprint(__FUNCSIG__);
   mD3D11Device = device.as<ID3D11Device1>();
   device->GetImmediateContext(mD3D11ImmediateContext.put());
 

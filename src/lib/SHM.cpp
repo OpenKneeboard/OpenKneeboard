@@ -178,6 +178,7 @@ Snapshot::Snapshot(
   {
     OPENKNEEBOARD_TraceLoggingScope("CopyTexture");
     copier->Copy(
+      textureIndex,
       source->mTextureHandle.get(),
       dest.get(),
       source->mFenceHandle.get(),

@@ -20,6 +20,7 @@
 #include "viewer.h"
 
 #include "viewer-d3d11.h"
+#include "viewer-d3d12.h"
 
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
@@ -49,6 +50,7 @@
 #include <d3d11.h>
 #include <d3d11_2.h>
 #include <dxgi1_2.h>
+#include <shellapi.h>
 
 using namespace OpenKneeboard;
 
@@ -160,7 +162,8 @@ class TestViewerWindow final {
     mDXR = DXResources::Create();
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
-    mRenderer = std::make_unique<Viewer::D3D11Renderer>(mDXR.mD3DDevice);
+    this->CreateRenderer();
+
     // We pass 1 as the swapchain length as we use a buffer; we need to do this
     // as swapchain textures can't be directly shared
     mRenderer->Initialize(1);
@@ -312,6 +315,8 @@ class TestViewerWindow final {
     }
 
     dprintf("Resized to {}x{}", size.width, size.height);
+    mRenderer = nullptr;
+    this->CreateRenderer();
 
     this->PaintNow();
   }
@@ -393,7 +398,7 @@ class TestViewerWindow final {
     }
   }
 
-  void PaintNow() {
+  void PaintNow() noexcept {
     if (!mHwnd) {
       return;
     }
@@ -529,8 +534,6 @@ class TestViewerWindow final {
     endDraw.abandon();
 
     auto d3d = mDXR.mD3DDevice.get();
-    auto source = snapshot.GetTexture<SHM::D3D11::Texture>()
-                    ->GetD3D11ShaderResourceView();
 
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
     mLayerID = layer.mLayerID;
@@ -564,6 +567,46 @@ class TestViewerWindow final {
       surfaceTex.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, nullptr);
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
+  }
+
+  void CreateRenderer() {
+    enum class GraphicsAPI {
+      D3D11,
+      D3D12,
+    };
+    GraphicsAPI renderer {GraphicsAPI::D3D11};
+
+    int argc = 0;
+    auto argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    for (int i = 0; i < argc; ++i) {
+      std::wstring_view arg {argv[i]};
+      if (arg == L"-G") {
+        std::wstring_view next {argv[++i]};
+        if (next == L"D3D11") {
+          renderer = GraphicsAPI::D3D11;
+          continue;
+        }
+        if (next == L"D3D12") {
+          renderer = GraphicsAPI::D3D12;
+          continue;
+        }
+        dprintf(L"Unrecognized graphics API {}", next);
+        exit(0);
+      }
+    }
+
+    switch (renderer) {
+      case GraphicsAPI::D3D11:
+        mRenderer = std::make_unique<Viewer::D3D11Renderer>(mDXR.mD3DDevice);
+        break;
+      case GraphicsAPI::D3D12: {
+        winrt::com_ptr<IDXGIAdapter> adapter;
+        winrt::check_hresult(mDXR.mDXGIDevice->GetAdapter(adapter.put()));
+        mRenderer = std::make_unique<Viewer::D3D12Renderer>(adapter.get());
+        break;
+      }
+    }
   }
 };
 

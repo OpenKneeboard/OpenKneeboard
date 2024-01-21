@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/D3D.h>
+#include <OpenKneeboard/D3D12.h>
 #include <OpenKneeboard/SHM/D3D12.h>
 
 #include <OpenKneeboard/scope_guard.h>
@@ -34,23 +34,15 @@ namespace OpenKneeboard::SHM::D3D12 {
 
 Texture::Texture(
   const winrt::com_ptr<ID3D12Device>& device,
-  const winrt::com_ptr<ID3D12CommandQueue>& queue,
-  const winrt::com_ptr<ID3D12CommandAllocator>& allocator,
+  ID3D12DescriptorHeap* shaderResourceViewHeap,
   const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
   const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle)
   : mDevice(device),
-    mCommandQueue(queue),
-    mCommandAllocator(allocator),
     mShaderResourceViewCPUHandle(shaderResourceViewCPUHandle),
     mShaderResourceViewGPUHandle(shaderResourceViewGPUHandle) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::Texture()");
 
-  winrt::check_hresult(device->CreateCommandList(
-    0,
-    D3D12_COMMAND_LIST_TYPE_DIRECT,
-    allocator.get(),
-    nullptr,
-    IID_PPV_ARGS(mCommandList.put())));
+  mShaderResourceViewHeap.copy_from(shaderResourceViewHeap);
 }
 
 Texture::~Texture() {
@@ -59,6 +51,10 @@ Texture::~Texture() {
 
 ID3D12Resource* Texture::GetD3D12Texture() {
   return mTexture.get();
+}
+
+ID3D12DescriptorHeap* Texture::GetD3D12ShaderResourceViewHeap() {
+  return mShaderResourceViewHeap.get();
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetD3D12ShaderResourceViewGPUHandle() {
@@ -119,12 +115,13 @@ void Texture::InitializeSource(
       &heap,
       D3D12_HEAP_FLAG_NONE,
       &desc,
-      D3D12_RESOURCE_STATE_COPY_DEST,
+      D3D12_RESOURCE_STATE_COMMON,
       &clearValue,
       IID_PPV_ARGS(mTexture.put())));
-    mTextureState = D3D12_RESOURCE_STATE_COPY_DEST;
-
     mSourceTextureHandle = textureHandle;
+
+    mTextureDimensions
+      = {static_cast<uint32_t>(desc.Width), static_cast<uint32_t>(desc.Height)};
   }
 
   if (!mSourceFence) {
@@ -134,30 +131,51 @@ void Texture::InitializeSource(
   }
 }
 
+PixelSize Texture::GetDimensions() const {
+  return mTextureDimensions;
+}
+
 void Texture::CopyFrom(
+  ID3D12CommandQueue* queue,
+  ID3D12GraphicsCommandList* list,
   HANDLE texture,
   HANDLE fence,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "SHM::D3D12::Texture::CopyFrom");
-  this->InitializeSource(texture, fence);
 
-  auto queue = mCommandQueue.get();
-  auto list = mCommandList.get();
-  list->Reset(mCommandAllocator.get(), nullptr);
+  this->InitializeSource(texture, fence);
 
   TraceLoggingWriteTagged(
     activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
   winrt::check_hresult(queue->Wait(mSourceFence.get(), fenceValueIn));
 
   {
-    OPENKNEEBOARD_TraceLoggingScope("Copy");
-    list->CopyResource(mSourceTexture.get(), mTexture.get());
-    winrt::check_hresult(list->Close());
-    ID3D12CommandList* lists[] {list};
-    queue->ExecuteCommandLists(std::size(lists), lists);
+    TraceLoggingWriteTagged(activity, "FenceInCPU");
+    winrt::handle event {CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL)};
+    mSourceFence->SetEventOnCompletion(fenceValueIn, event.get());
+    WaitForSingleObject(event.get(), INFINITE);
   }
+
+  TraceLoggingWriteTagged(activity, "Copy");
+  const D3D12_TEXTURE_COPY_LOCATION src {
+    .pResource = this->mSourceTexture.get(),
+    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+    .SubresourceIndex = 0,
+  };
+  const D3D12_TEXTURE_COPY_LOCATION dst {
+    .pResource = this->mTexture.get(),
+    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+    .SubresourceIndex = 0,
+  };
+  list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+  TraceLoggingWriteTagged(activity, "CloseList");
+  winrt::check_hresult(list->Close());
+
+  TraceLoggingWriteTagged(activity, "ExecuteCommandLists");
+  ID3D12CommandList* lists[] {list};
+  queue->ExecuteCommandLists(std::size(lists), lists);
 
   TraceLoggingWriteTagged(
     activity, "FenceOut", TraceLoggingValue(fenceValueOut, "Value"));
@@ -184,30 +202,35 @@ void CachedReader::InitializeCache(
   if (device != mD3D12Device.get() || queue != mD3D12CommandQueue.get()) {
     mD3D12Device.copy_from(device);
     mD3D12CommandQueue.copy_from(queue);
-    mSwapchainLength = 0;
-    mD3D12CommandAllocator = {};
+    mBufferResources = {};
 
     // debug logging
-    auto desc = OpenKneeboard::D3D::GetAdapterDesc(device);
+    // It's a pain to get the adapater name with D3D12; you 'should'
+    // go via IDXGIFactory, however an app "shouldn't" use both IDXGIFactory
+    // and IDXGIFactory1 (or later) in the same process, and we don't know
+    // which the app picked
     dprintf(
-      L"SHM reader using adapter '{}' (LUID {:#x})",
-      desc.Description,
-      std::bit_cast<uint64_t>(desc.AdapterLuid));
+      L"SHM reader using adapter LUID {:#x}",
+      std::bit_cast<uint64_t>(device->GetAdapterLuid()));
   };
 
-  if (swapchainLength != mSwapchainLength) {
+  if (swapchainLength != GetSwapchainLength()) {
     mShaderResourceViewHeap = std::make_unique<DirectX::DescriptorHeap>(
       mD3D12Device.get(),
-      D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
-      D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+      D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+      D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
       swapchainLength);
-    mSwapchainLength = swapchainLength;
-  }
 
-  if (!mD3D12CommandAllocator) {
-    winrt::check_hresult(device->CreateCommandAllocator(
-      D3D12_COMMAND_LIST_TYPE_DIRECT,
-      IID_PPV_ARGS(mD3D12CommandAllocator.put())));
+    mBufferResources.resize(swapchainLength);
+    for (auto& br: mBufferResources) {
+      if (br.mD3D12CommandAllocator) {
+        continue;
+      }
+
+      winrt::check_hresult(mD3D12Device->CreateCommandAllocator(
+        D3D12_COMMAND_LIST_TYPE_DIRECT,
+        IID_PPV_ARGS(br.mD3D12CommandAllocator.put())));
+    }
   }
 
   SHM::CachedReader::InitializeCache(swapchainLength);
@@ -219,13 +242,13 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
     "SHM::D3D12::CachedReader::CreateIPCClientTexture()");
   return std::make_shared<SHM::D3D12::Texture>(
     mD3D12Device,
-    mD3D12CommandQueue,
-    mD3D12CommandAllocator,
+    mShaderResourceViewHeap->Heap(),
     mShaderResourceViewHeap->GetCpuHandle(swapchainIndex),
     mShaderResourceViewHeap->GetGpuHandle(swapchainIndex));
 }
 
 void CachedReader::Copy(
+  uint8_t swapchainIndex,
   HANDLE sourceTexture,
   IPCClientTexture* destinationTexture,
   HANDLE fence,
@@ -233,8 +256,32 @@ void CachedReader::Copy(
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::Copy()");
 
+  auto& br = mBufferResources.at(swapchainIndex);
+
+  if (br.mD3D12CommandList) {
+    winrt::check_hresult(
+      br.mD3D12CommandList->Reset(br.mD3D12CommandAllocator.get(), nullptr));
+  } else {
+    winrt::check_hresult(mD3D12Device->CreateCommandList(
+      0,
+      D3D12_COMMAND_LIST_TYPE_DIRECT,
+      br.mD3D12CommandAllocator.get(),
+      nullptr,
+      IID_PPV_ARGS(br.mD3D12CommandList.put())));
+  }
+
   reinterpret_cast<SHM::D3D12::Texture*>(destinationTexture)
-    ->CopyFrom(sourceTexture, fence, fenceValueIn, fenceValueOut);
+    ->CopyFrom(
+      mD3D12CommandQueue.get(),
+      br.mD3D12CommandList.get(),
+      sourceTexture,
+      fence,
+      fenceValueIn,
+      fenceValueOut);
+}
+
+uint8_t CachedReader::GetSwapchainLength() const {
+  return mBufferResources.size();
 }
 
 }// namespace OpenKneeboard::SHM::D3D12
