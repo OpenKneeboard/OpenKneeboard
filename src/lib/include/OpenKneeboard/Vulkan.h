@@ -260,10 +260,10 @@ class SpriteBatch {
       constexpr Position(float x, float y) : std::array<float, 4> {x, y, 0, 1} {
       }
     };
-    uint32_t mTextureIndex {~(0ui32)};
-    Color mColor {};
-    std::array<float, 2> mTexCoord;
-    Position mPosition;
+    alignas(4) uint32_t mTextureIndex {~(0ui32)};
+    alignas(16) Color mColor {};
+    alignas(8) std::array<float, 2> mTexCoord;
+    alignas(16) Position mPosition;
 
     static VkVertexInputBindingDescription GetBindingDescription();
     static std::array<VkVertexInputAttributeDescription, 4>
