@@ -163,12 +163,12 @@ void SpriteBatch::End(const std::source_location& loc) {
     const Position bl {tl[0], br[1]};
 
     const auto sourceIndex = sourceIndices.at(sprite.mSource);
-    auto makeVertex = [=](const TexCoord& tc, const Position& dp) {
+    auto makeVertex = [=](const TexCoord& tc, const Position& pos) {
       return Vertex {
         .mTextureIndex = sourceIndices.at(sprite.mSource),
         .mColor = sprite.mColor,
         .mTexCoord = tc,
-        .mPosition = dp,
+        .mPosition = pos,
       };
     };
 
