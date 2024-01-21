@@ -78,12 +78,15 @@ inline VkResult check_vkresult(
   IT(QueueSubmit) \
   IT(GetDeviceQueue) \
   IT(CreateShaderModule) \
-  IT(DestroyShaderModule)
+  IT(DestroyShaderModule) \
+  IT(CreateSampler) \
+  IT(DestroySampler)
 
 #define OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES \
   IT(CommandPool) \
   IT(Image) \
   IT(Fence) \
+  IT(Sampler) \
   IT(Semaphore) \
   IT(ShaderModule)
 
@@ -245,6 +248,10 @@ class SpriteBatch {
     Color mColor {};
     std::array<float, 2> mTexCoord;
     std::array<float, 2> mPosition;
+
+    static VkVertexInputBindingDescription GetBindingDescription();
+    static std::array<VkVertexInputAttributeDescription, 4>
+    GetAttributeDescription();
   };
 
   struct Sprite {

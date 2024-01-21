@@ -187,4 +187,36 @@ void SpriteBatch::End(const std::source_location& loc) {
   mBetweenBeginAndEnd = false;
 }
 
+VkVertexInputBindingDescription SpriteBatch::Vertex::GetBindingDescription() {
+  return VkVertexInputBindingDescription {
+    .stride = sizeof(Vertex),
+    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+  };
+}
+std::array<VkVertexInputAttributeDescription, 4>
+SpriteBatch::Vertex::GetAttributeDescription() {
+  return {
+    VkVertexInputAttributeDescription {
+      .location = 0,
+      .format = VK_FORMAT_R32_UINT,
+      .offset = offsetof(Vertex, mTextureIndex),
+    },
+    VkVertexInputAttributeDescription {
+      .location = 1,
+      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+      .offset = offsetof(Vertex, mColor),
+    },
+    VkVertexInputAttributeDescription {
+      .location = 2,
+      .format = VK_FORMAT_R32G32_SFLOAT,
+      .offset = offsetof(Vertex, mTexCoord),
+    },
+    VkVertexInputAttributeDescription {
+      .location = 3,
+      .format = VK_FORMAT_R32G32_SFLOAT,
+      .offset = offsetof(Vertex, mPosition),
+    },
+  };
+}
+
 }// namespace OpenKneeboard::Vulkan
