@@ -22,6 +22,7 @@
 #include <OpenKneeboard/SHM.h>
 
 #include <filesystem>
+#include <string>
 
 namespace OpenKneeboard::Viewer {
 
@@ -29,6 +30,8 @@ class Renderer {
  public:
   virtual ~Renderer();
   virtual SHM::CachedReader* GetSHM() = 0;
+
+  virtual std::wstring_view GetName() const noexcept = 0;
 
   virtual void Initialize(uint8_t swapchainLength) = 0;
 

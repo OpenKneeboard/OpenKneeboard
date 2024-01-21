@@ -432,7 +432,8 @@ class TestViewerWindow final {
 
     const auto clientSize = GetClientSize();
     auto text = std::format(
-      L"Frame #{}, View {}",
+      L"Using {}\nFrame #{}, View {}",
+      mRenderer->GetName(),
       mRenderer->GetSHM()->GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
     const auto snapshot = mRenderer->MaybeGetSnapshot();

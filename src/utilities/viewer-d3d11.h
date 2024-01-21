@@ -35,6 +35,8 @@ class D3D11Renderer final : public Renderer {
   D3D11Renderer() = delete;
   D3D11Renderer(const winrt::com_ptr<ID3D11Device>&);
   virtual ~D3D11Renderer();
+  virtual std::wstring_view GetName() const noexcept override;
+
   virtual SHM::CachedReader* GetSHM() override;
 
   virtual void Initialize(uint8_t swapchainLength) override;

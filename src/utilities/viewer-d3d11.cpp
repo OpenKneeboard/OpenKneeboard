@@ -36,6 +36,10 @@ D3D11Renderer::D3D11Renderer(const winrt::com_ptr<ID3D11Device>& device) {
 
 D3D11Renderer::~D3D11Renderer() = default;
 
+std::wstring_view D3D11Renderer::GetName() const noexcept {
+  return {L"D3D11"};
+}
+
 SHM::CachedReader* D3D11Renderer::GetSHM() {
   return &mSHM;
 }

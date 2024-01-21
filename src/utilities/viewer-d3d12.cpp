@@ -59,6 +59,10 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
 
 D3D12Renderer::~D3D12Renderer() = default;
 
+std::wstring_view D3D12Renderer::GetName() const noexcept {
+  return {L"D3D12"};
+}
+
 SHM::CachedReader* D3D12Renderer::GetSHM() {
   return &mSHM;
 }
