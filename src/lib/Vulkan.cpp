@@ -21,6 +21,8 @@
 #include <OpenKneeboard/Shaders/SPIRV/SpriteBatch.h>
 #include <OpenKneeboard/Vulkan.h>
 
+#include <OpenKneeboard/tracing.h>
+
 namespace OpenKneeboard::Vulkan {
 
 Dispatch::Dispatch(
@@ -31,6 +33,36 @@ Dispatch::Dispatch(
     getInstanceProcAddr(instance, "vk" #vkfun));
   OPENKNEEBOARD_VK_FUNCS
 #undef IT
+}
+
+SpriteBatch::SpriteBatch(
+  Dispatch* dispatch,
+  VkDevice device,
+  const VkAllocationCallbacks* allocator) {
+  OPENKNEEBOARD_TraceLoggingScope("SpriteBatch::SpriteBatch()");
+
+  namespace Shaders = Shaders::SPIRV::SpriteBatch;
+
+  VkShaderModuleCreateInfo psCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+    .codeSize = Shaders::PS.size(),
+    .pCode = reinterpret_cast<const uint32_t*>(Shaders::PS.data()),
+  };
+
+  VkShaderModuleCreateInfo vsCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+    .codeSize = Shaders::VS.size(),
+    .pCode = reinterpret_cast<const uint32_t*>(Shaders::VS.data()),
+  };
+
+  mPixelShader
+    = dispatch->make_unique<VkShaderModule>(device, &psCreateInfo, allocator);
+  mVertexShader
+    = dispatch->make_unique<VkShaderModule>(device, &vsCreateInfo, allocator);
+}
+
+SpriteBatch::~SpriteBatch() {
+  OPENKNEEBOARD_TraceLoggingWrite("SpriteBatch::~SpriteBatch()");
 }
 
 }// namespace OpenKneeboard::Vulkan

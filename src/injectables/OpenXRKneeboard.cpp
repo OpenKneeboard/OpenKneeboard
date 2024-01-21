@@ -55,13 +55,12 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
   .position = {0.0f, 0.0f, 0.0f},
 };
 
-static inline XrResult check_xrresult(XrResult code) {
+static inline XrResult check_xrresult(
+  XrResult code,
+  const std::source_location& loc = std::source_location::current()) {
   if (XR_FAILED(code)) {
-    const auto message
-      = std::format("OpenXR call failed: {}", static_cast<int>(code));
-    dprint(message);
-    OPENKNEEBOARD_BREAK;
-    throw std::runtime_error(message);
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "OpenXR call failed: {}", static_cast<int>(code));
   }
   return code;
 }

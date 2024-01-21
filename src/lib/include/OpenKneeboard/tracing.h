@@ -58,8 +58,6 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
 #define OPENKNEEBOARD_TraceLoggingScopedActivity( \
   OKBTL_ACTIVITY, OKBTL_NAME, ...) \
   TraceLoggingThreadActivity<gTraceProvider> OKBTL_ACTIVITY; \
-  constexpr auto OPENKNEEBOARD_CONCAT2(OKBTL_ACTIVITY, _location) \
-    = std::source_location::current(); \
   TraceLoggingWriteStart( \
     OKBTL_ACTIVITY, \
     OKBTL_NAME, \
@@ -82,5 +80,14 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
 #define OPENKNEEBOARD_TraceLoggingScope(OKBTL_NAME, ...) \
   OPENKNEEBOARD_TraceLoggingScopedActivity( \
     OPENKNEEBOARD_CONCAT2(okbtlsa, __COUNTER__), OKBTL_NAME, ##__VA_ARGS__)
+
+#define OPENKNEEBOARD_TraceLoggingWrite(OKBTL_NAME, ...) \
+  TraceLoggingWrite( \
+    gTraceProvider, \
+    OKBTL_NAME, \
+    TraceLoggingValue(__FILE__, "File"), \
+    TraceLoggingValue(__LINE__, "Line"), \
+    TraceLoggingValue(__FUNCTION__, "Function"), \
+    ##__VA_ARGS__)
 
 }// namespace OpenKneeboard

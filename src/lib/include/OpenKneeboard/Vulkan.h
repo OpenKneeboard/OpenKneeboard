@@ -36,13 +36,12 @@ constexpr bool VK_FAILED(VkResult code) {
   return !VK_SUCCEEDED(code);
 }
 
-inline VkResult check_vkresult(VkResult code) {
+inline VkResult check_vkresult(
+  VkResult code,
+  const std::source_location& loc = std::source_location::current()) {
   if (VK_FAILED(code)) {
-    const auto message = std::format(
-      "Vulkan call failed with VkResult {}", static_cast<int>(code));
-    dprint(message);
-    OPENKNEEBOARD_BREAK;
-    throw std::runtime_error(message);
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "Vulkan call failed: {}", static_cast<int>(code));
   }
   return code;
 }
@@ -75,13 +74,16 @@ inline VkResult check_vkresult(VkResult code) {
   IT(ImportSemaphoreWin32HandleKHR) \
   IT(GetSemaphoreWin32HandleKHR) \
   IT(QueueSubmit) \
-  IT(GetDeviceQueue)
+  IT(GetDeviceQueue) \
+  IT(CreateShaderModule) \
+  IT(DestroyShaderModule)
 
 #define OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES \
   IT(CommandPool) \
   IT(Image) \
   IT(Fence) \
-  IT(Semaphore)
+  IT(Semaphore) \
+  IT(ShaderModule)
 
 namespace Detail {
 template <class T>
@@ -149,9 +151,10 @@ class Dispatch final {
     Detail::DestroyFun<TResource> destroyImpl,
     VkDevice device,
     const typename Detail::CreateInfo<TResource>* createInfo,
-    const VkAllocationCallbacks* allocator) {
+    const VkAllocationCallbacks* allocator,
+    const std::source_location& loc) {
     TResource ret {nullptr};
-    check_vkresult(createImpl(device, createInfo, allocator, &ret));
+    check_vkresult(createImpl(device, createInfo, allocator, &ret), loc);
     auto deleter = Detail::Deleter<TResource>(destroyImpl, device, allocator);
     return std::unique_ptr<TResource, decltype(deleter)>(ret, deleter);
   }
@@ -166,13 +169,15 @@ class Dispatch final {
       Dispatch* dispatch, \
       VkDevice device, \
       const typename Detail::CreateInfo<Vk##T>* createInfo, \
-      const VkAllocationCallbacks* allocator) { \
+      const VkAllocationCallbacks* allocator, \
+      const std::source_location& loc = std::source_location::current()) { \
       return make_unique_base<Vk##T>( \
         dispatch->Create##T, \
         dispatch->Destroy##T, \
         device, \
         createInfo, \
-        allocator); \
+        allocator, \
+        loc); \
     } \
   };
   OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES
@@ -195,6 +200,20 @@ class Dispatch final {
     const VkAllocationCallbacks* allocator) {
     return make_unique(device, &createInfo, allocator);
   }
+};
+
+class SpriteBatch {
+ public:
+  SpriteBatch() = delete;
+  SpriteBatch(
+    Dispatch* dispatch,
+    VkDevice device,
+    const VkAllocationCallbacks* allocator);
+  ~SpriteBatch();
+
+ private:
+  unique_VkShaderModule mPixelShader;
+  unique_VkShaderModule mVertexShader;
 };
 
 }// namespace OpenKneeboard::Vulkan
