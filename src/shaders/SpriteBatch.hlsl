@@ -21,5 +21,5 @@ float4 SpritePixelShader(
     float4 color      : COLOR0,
     float2 texCoord   : TEXCOORD0) : SV_Target0
 {
-    return Textures[textureIndex].Sample(TextureSampler, texCoord) * color;
+    return Textures[NonUniformResourceIndex(textureIndex)].Sample(TextureSampler, texCoord) * color;
 }
