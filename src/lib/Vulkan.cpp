@@ -213,7 +213,7 @@ SpriteBatch::Vertex::GetAttributeDescription() {
     },
     VkVertexInputAttributeDescription {
       .location = 3,
-      .format = VK_FORMAT_R32G32_SFLOAT,
+      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
       .offset = offsetof(Vertex, mPosition),
     },
   };
