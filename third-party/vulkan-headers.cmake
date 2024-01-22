@@ -17,6 +17,7 @@ ExternalProject_Get_property(vulkanHeadersEP SOURCE_DIR)
 add_library(vulkan-headers INTERFACE)
 add_dependencies(vulkan-headers vulkanHeadersEP)
 target_include_directories(vulkan-headers INTERFACE "${SOURCE_DIR}/include")
+target_compile_definitions(vulkan-headers INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 
 install(
   FILES

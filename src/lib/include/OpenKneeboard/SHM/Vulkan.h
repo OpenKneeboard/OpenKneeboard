@@ -18,7 +18,6 @@
  * USA.
  */
 #pragma once
-#define VK_USE_PLATFORM_WIN32_KHR
 #include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/D3D11.h>

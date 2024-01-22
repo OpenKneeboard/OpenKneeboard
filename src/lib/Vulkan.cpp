@@ -39,9 +39,14 @@ Dispatch::Dispatch(
 
 SpriteBatch::SpriteBatch(
   Dispatch* dispatch,
+  VkPhysicalDevice physicalDevice,
   VkDevice device,
   const VkAllocationCallbacks* allocator,
-  uint32_t queueFamilyIndex) {
+  uint32_t queueFamilyIndex)
+  : mVK(dispatch),
+    mPhysicalDevice(physicalDevice),
+    mDevice(device),
+    mAllocator(allocator) {
   OPENKNEEBOARD_TraceLoggingScope("SpriteBatch::SpriteBatch()");
 
   namespace Shaders = Shaders::SPIRV::SpriteBatch;
@@ -85,6 +90,30 @@ SpriteBatch::SpriteBatch(
     check_vkresult(
       dispatch->AllocateCommandBuffers(device, &allocInfo, &mCommandBuffer));
   }
+
+  this->InitializeVertexBuffer();
+}
+
+void SpriteBatch::InitializeVertexBuffer() {
+  VkBufferCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+    .size = sizeof(Vertex) * MaxVerticesPerBatch,
+    .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+    .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+  };
+  mVertexBuffer = mVK->make_unique<VkBuffer>(mDevice, &createInfo, mAllocator);
+
+  VkMemoryRequirements requirements;
+  mVK->GetBufferMemoryRequirements(mDevice, mVertexBuffer.get(), &requirements);
+  const auto memoryType = FindMemoryType(
+    mVK,
+    mPhysicalDevice,
+    requirements.memoryTypeBits,
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+  if (!memoryType) {
+    OPENKNEEBOARD_LOG_AND_FATAL("Couldn't find compatible memory type");
+  }
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -123,7 +152,7 @@ void SpriteBatch::End(const std::source_location& loc) {
   std::vector<VkImageView> sources;
   std::unordered_map<VkImageView, uint32_t> sourceIndices;
   std::vector<Vertex> vertices;
-  vertices.reserve(mSprites.size() * 6);
+  vertices.reserve(mSprites.size() * VerticesPerSprite);
 
   for (const auto& sprite: mSprites) {
     if (!sourceIndices.contains(sprite.mSource)) {
@@ -131,6 +160,7 @@ void SpriteBatch::End(const std::source_location& loc) {
       sourceIndices[sprite.mSource] = sources.size() - 1;
     }
 
+    // Calculate the four source corners in texture coordinates (0..1)
     using TexCoord = std::array<float, 2>;
     TexCoord tctl;
     TexCoord tctr;
@@ -156,6 +186,7 @@ void SpriteBatch::End(const std::source_location& loc) {
 
     using Position = Vertex::Position;
 
+    // Destination coordinates in real 3d coordinates
     const auto tl = sprite.mDestRect.TopLeft().StaticCast<Position, float>();
     const auto br
       = sprite.mDestRect.BottomRight().StaticCast<Position, float>();
@@ -217,6 +248,25 @@ SpriteBatch::Vertex::GetAttributeDescription() {
       .offset = offsetof(Vertex, mPosition),
     },
   };
+}
+
+std::optional<uint32_t> FindMemoryType(
+  Dispatch* vk,
+  VkPhysicalDevice physicalDevice,
+  uint32_t filter,
+  VkMemoryPropertyFlags flags) {
+  VkPhysicalDeviceMemoryProperties properties;
+  vk->GetPhysicalDeviceMemoryProperties(physicalDevice, &properties);
+  for (uint32_t i = 0; i < properties.memoryTypeCount; ++i) {
+    if (!(filter & (1 << i))) {
+      continue;
+    }
+    if ((flags & properties.memoryTypes[i].propertyFlags) == flags) {
+      return i;
+    }
+  }
+
+  return {};
 }
 
 }// namespace OpenKneeboard::Vulkan

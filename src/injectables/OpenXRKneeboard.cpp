@@ -39,7 +39,6 @@
 
 #include <loader_interfaces.h>
 
-#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan/vulkan.h>
 
 #define XR_USE_GRAPHICS_API_D3D11
