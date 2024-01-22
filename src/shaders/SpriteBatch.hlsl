@@ -4,7 +4,7 @@
 // http://go.microsoft.com/fwlink/?LinkId=248929
 
 Texture2D<float4> Textures[] : register(t0);
-sampler TextureSamplers[] : register(s0);
+sampler TextureSampler : register(s0);
 
 void SpriteVertexShader(
     inout uint textureIndex : TEXTURE_INDEX,
@@ -32,7 +32,7 @@ float4 SpritePixelShader(
 {
     return SpritePixelShader_impl(
         Textures[NonUniformResourceIndex(textureIndex)],
-        TextureSamplers[NonUniformResourceIndex(textureIndex)],
+        TextureSampler,
         color,
         texCoord);
 }

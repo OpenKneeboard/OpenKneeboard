@@ -11,6 +11,7 @@ macro(add_shader TARGET ENTRYPOINT SOURCE)
         ThirdParty::dxc
         "$<$<CONFIG:Debug>:-O0>"
         "$<$<CONFIG:Debug>:-Zi>"
+        "$<$<CONFIG:Debug>:-Qembed_debug>"
         -Fh "${SHADER_OUTPUT}"
         -E ${ENTRYPOINT}
         "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE}"

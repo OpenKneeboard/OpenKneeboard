@@ -21,21 +21,29 @@
 
 #define OPENKNEEBOARD_VK_FUNCS \
   IT(AllocateCommandBuffers) \
+  IT(AllocateDescriptorSets) \
   IT(AllocateMemory) \
   IT(BeginCommandBuffer) \
+  IT(BindBufferMemory) \
   IT(BindImageMemory2KHR) \
   IT(CmdBlitImage) \
   IT(CmdCopyImage) \
   IT(CmdPipelineBarrier) \
   IT(CreateBuffer) \
   IT(CreateCommandPool) \
+  IT(CreateDescriptorPool) \
+  IT(CreateDescriptorSetLayout) \
+  IT(CreateDevice) \
   IT(CreateFence) \
   IT(CreateImage) \
+  IT(CreateInstance) \
   IT(CreateSampler) \
   IT(CreateSemaphore) \
   IT(CreateShaderModule) \
   IT(DestroyBuffer) \
   IT(DestroyCommandPool) \
+  IT(DestroyDescriptorPool) \
+  IT(DestroyDescriptorSetLayout) \
   IT(DestroyFence) \
   IT(DestroyImage) \
   IT(DestroySampler) \
@@ -43,7 +51,10 @@
   IT(DestroyShaderModule) \
   IT(EndCommandBuffer) \
   IT(FreeMemory) \
+  IT(FlushMappedMemoryRanges) \
   IT(GetBufferMemoryRequirements) \
+  IT(GetDescriptorSetLayoutBindingOffsetEXT) \
+  IT(GetDescriptorSetLayoutSizeEXT) \
   IT(GetDeviceQueue) \
   IT(GetImageMemoryRequirements2KHR) \
   IT(GetMemoryWin32HandlePropertiesKHR) \
@@ -51,8 +62,10 @@
   IT(GetPhysicalDeviceProperties2KHR) \
   IT(GetSemaphoreWin32HandleKHR) \
   IT(ImportSemaphoreWin32HandleKHR) \
+  IT(MapMemory) \
   IT(QueueSubmit) \
   IT(QueueWaitIdle) \
   IT(ResetCommandBuffer) \
   IT(ResetFences) \
+  IT(UnmapMemory) \
   IT(WaitForFences)

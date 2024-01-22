@@ -72,7 +72,25 @@ class Dispatch final {
     TResource ret {nullptr};
     check_vkresult(createImpl(device, createInfo, allocator, &ret), loc);
     auto deleter = Detail::Deleter<TResource>(destroyImpl, device, allocator);
-    return std::unique_ptr<TResource, decltype(deleter)>(ret, deleter);
+    return OpenKneeboard::Vulkan::unique_ptr<TResource>(ret, deleter);
+  }
+
+  template <class T>
+  auto MemoryMapping(
+    VkDevice device,
+    VkDeviceMemory deviceMemory,
+    VkDeviceSize offset,
+    VkDeviceSize size,
+    VkMemoryMapFlags flags) {
+    return Vulkan::MemoryMapping<T> {
+      this->MapMemory,
+      this->UnmapMemory,
+      device,
+      deviceMemory,
+      offset,
+      size,
+      flags,
+    };
   }
 };
-}
+}// namespace OpenKneeboard::Vulkan

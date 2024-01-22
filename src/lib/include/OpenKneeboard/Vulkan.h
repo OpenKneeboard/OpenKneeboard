@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/Vulkan/Dispatch.h>
+#include <OpenKneeboard/Vulkan/functional.h>
 #include <OpenKneeboard/Vulkan/impl/OPENKNEEBOARD_VK_FUNCS.h>
 #include <OpenKneeboard/Vulkan/smart-pointers.h>
 #include <OpenKneeboard/Vulkan/vkresult.h>
@@ -59,7 +60,8 @@ class SpriteBatch {
     VkPhysicalDevice physicalDevice,
     VkDevice device,
     const VkAllocationCallbacks* allocator,
-    uint32_t queueFamilyIndex);
+    uint32_t queueFamilyIndex,
+    uint32_t queueIndex);
   ~SpriteBatch();
 
   void Draw(
@@ -74,6 +76,9 @@ class SpriteBatch {
 
   static constexpr std::string_view REQUIRED_DEVICE_EXTENSIONS[] {
     VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+    VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
+    VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
   };
 
  private:
@@ -81,14 +86,14 @@ class SpriteBatch {
   VkPhysicalDevice mPhysicalDevice {nullptr};
   VkDevice mDevice {nullptr};
   const VkAllocationCallbacks* mAllocator {nullptr};
+  uint32_t mQueueFamilyIndex {~(0ui32)};
+  VkQueue mQueue {nullptr};
 
-  unique_VkShaderModule mPixelShader;
-  unique_VkShaderModule mVertexShader;
+  unique_ptr<VkShaderModule> mPixelShader;
+  unique_ptr<VkShaderModule> mVertexShader;
 
-  unique_VkCommandPool mCommandPool;
+  unique_ptr<VkCommandPool> mCommandPool;
   VkCommandBuffer mCommandBuffer {nullptr};
-
-  unique_VkBuffer mVertexBuffer;
 
   PixelSize mDestSize;
 
@@ -128,7 +133,42 @@ class SpriteBatch {
   bool mBetweenBeginAndEnd {false};
   std::vector<Sprite> mSprites;
 
+  template <class T>
+  struct Buffer {
+    unique_ptr<VkBuffer> mBuffer;
+    unique_ptr<VkDeviceMemory> mMemory;
+    MemoryMapping<T> mMapping;
+  };
+
+  Buffer<Vertex> mVertexBuffer;
+
   void InitializeVertexBuffer();
+
+  struct DescriptorSet : public Buffer<std::byte> {
+    unique_ptr<VkDescriptorSetLayout> mLayout;
+    VkDeviceSize mDescriptorSize {};
+    VkDeviceSize mOffset {};
+    unique_ptr<VkDescriptorPool> mDescriptorPool {};
+    VkDescriptorSet mDescriptorSet {};
+  };
+
+  void CreateDescriptorSet(
+    const VkDescriptorSetLayoutBinding*,
+    const VkDescriptorSetLayoutCreateInfo*,
+    VkDeviceSize descriptorCount,
+    VkMemoryPropertyFlags,
+    VkDescriptorPoolCreateFlags,
+    DescriptorSet*,
+    const std::source_location& loc = std::source_location::current());
+
+  unique_ptr<VkSampler> mSampler;
+  DescriptorSet mSamplerDescriptorSet;
+
+  void InitializeSampler();
+
+  DescriptorSet mSourceDescriptorSet;
+
+  void InitializeSourceDescriptorSet();
 };
 
 }// namespace OpenKneeboard::Vulkan

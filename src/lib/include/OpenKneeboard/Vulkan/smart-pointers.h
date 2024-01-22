@@ -31,6 +31,8 @@ namespace OpenKneeboard::Vulkan {
 #define OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES_CREATE_DESTROY \
   IT(Buffer) \
   IT(CommandPool) \
+  IT(DescriptorPool) \
+  IT(DescriptorSetLayout) \
   IT(Image) \
   IT(Fence) \
   IT(Sampler) \
@@ -43,11 +45,11 @@ namespace OpenKneeboard::Vulkan {
 
 namespace Detail {
 template <class T>
-struct ResourceInfo;
+struct ResourceTraits;
 
 #define IT(T) \
   template <> \
-  struct ResourceInfo<Vk##T> { \
+  struct ResourceTraits<Vk##T> { \
     using CreateFun = PFN_vkCreate##T; \
     using CreateInfo = Vk##T##CreateInfo; \
     using DestroyFun = PFN_vkDestroy##T; \
@@ -56,20 +58,41 @@ OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES_CREATE_DESTROY
 #undef IT
 
 template <>
-struct ResourceInfo<VkDeviceMemory> {
+struct ResourceTraits<VkDeviceMemory> {
   using CreateFun = PFN_vkAllocateMemory;
   using CreateInfo = VkMemoryAllocateInfo;
   using DestroyFun = PFN_vkFreeMemory;
 };
 
 template <class T>
-using CreateFun = ResourceInfo<T>::CreateFun;
+using CreateFun = ResourceTraits<T>::CreateFun;
 template <class T>
-using CreateInfo = ResourceInfo<T>::CreateInfo;
+using CreateInfo = ResourceTraits<T>::CreateInfo;
 template <class T>
-using DestroyFun = ResourceInfo<T>::DestroyFun;
+using DestroyFun = ResourceTraits<T>::DestroyFun;
 
+}// namespace Detail
+
+// clang-format off
 template <class T>
+concept manageable_handle =
+  std::invocable<
+    Detail::CreateFun<T>,
+    VkDevice,
+    Detail::CreateInfo<T>*,
+    const VkAllocationCallbacks*,
+    T*
+  > && std::invocable<
+    Detail::DestroyFun<T>,
+    VkDevice,
+    T,
+    const VkAllocationCallbacks*
+  >;
+// clang-format on
+
+namespace Detail {
+
+template <manageable_handle T>
 class Deleter {
  public:
   using pointer = T;
@@ -93,28 +116,66 @@ class Deleter {
 
 }// namespace Detail
 
-// clang-format off
-template <class T>
-concept manageable_handle =
-  std::invocable<
-    Detail::CreateFun<T>,
-    VkDevice,
-    Detail::CreateInfo<T>*,
-    const VkAllocationCallbacks*,
-    T*
-  > && std::invocable<
-    Detail::DestroyFun<T>,
-    VkDevice,
-    T,
-    const VkAllocationCallbacks*
-  >;
-// clang-format on
+template <manageable_handle T>
+using unique_ptr = std::unique_ptr<T, Detail::Deleter<T>>;
 
-#define IT(resource) \
-  static_assert(manageable_handle<Vk##resource>); \
-  using unique_Vk##resource \
-    = std::unique_ptr<Vk##resource, Detail::Deleter<Vk##resource>>;
-OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES
-#undef IT
+template <class T>
+class MemoryMapping {
+ public:
+  constexpr MemoryMapping() = default;
+  constexpr MemoryMapping(nullptr_t) {
+  }
+
+  MemoryMapping(
+    PFN_vkMapMemory mapMemory,
+    PFN_vkUnmapMemory unmapMemory,
+    VkDevice device,
+    VkDeviceMemory deviceMemory,
+    VkDeviceSize offset,
+    VkDeviceSize size,
+    VkMemoryMapFlags flags)
+    : mUnmapMemory(unmapMemory), mDevice(device), mDeviceMemory(deviceMemory) {
+    check_vkresult(
+      mapMemory(device, deviceMemory, offset, size, flags, &mData));
+  }
+
+  ~MemoryMapping() {
+    if (mData) {
+      mUnmapMemory(mDevice, mDeviceMemory);
+    }
+  }
+
+  T* get() const {
+    return reinterpret_cast<T*>(mData);
+  }
+
+  constexpr operator bool() const {
+    return !!mData;
+  }
+
+  MemoryMapping(const MemoryMapping&) = delete;
+  MemoryMapping(MemoryMapping&&) = delete;
+  MemoryMapping& operator=(const MemoryMapping&) = delete;
+  MemoryMapping& operator=(MemoryMapping&& other) {
+    if (mData) {
+      mUnmapMemory(mDevice, mDeviceMemory);
+    }
+
+    this->mUnmapMemory = other.mUnmapMemory;
+    this->mDevice = other.mDevice;
+    this->mDeviceMemory = other.mDeviceMemory;
+    this->mData = other.mData;
+
+    other.mData = nullptr;
+
+    return *this;
+  }
+
+ private:
+  PFN_vkUnmapMemory mUnmapMemory {nullptr};
+  VkDevice mDevice {nullptr};
+  VkDeviceMemory mDeviceMemory {nullptr};
+  void* mData {nullptr};
+};
 
 }// namespace OpenKneeboard::Vulkan

@@ -42,12 +42,16 @@ SpriteBatch::SpriteBatch(
   VkPhysicalDevice physicalDevice,
   VkDevice device,
   const VkAllocationCallbacks* allocator,
-  uint32_t queueFamilyIndex)
+  uint32_t queueFamilyIndex,
+  uint32_t queue)
   : mVK(dispatch),
     mPhysicalDevice(physicalDevice),
     mDevice(device),
-    mAllocator(allocator) {
+    mAllocator(allocator),
+    mQueueFamilyIndex(queueFamilyIndex) {
   OPENKNEEBOARD_TraceLoggingScope("SpriteBatch::SpriteBatch()");
+
+  mVK->GetDeviceQueue(device, queueFamilyIndex, queue, &mQueue);
 
   namespace Shaders = Shaders::SPIRV::SpriteBatch;
 
@@ -91,7 +95,9 @@ SpriteBatch::SpriteBatch(
       dispatch->AllocateCommandBuffers(device, &allocInfo, &mCommandBuffer));
   }
 
+  this->InitializeSampler();
   this->InitializeVertexBuffer();
+  this->InitializeSourceDescriptorSet();
 }
 
 void SpriteBatch::InitializeVertexBuffer() {
@@ -101,19 +107,37 @@ void SpriteBatch::InitializeVertexBuffer() {
     .usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
     .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
   };
-  mVertexBuffer = mVK->make_unique<VkBuffer>(mDevice, &createInfo, mAllocator);
+  mVertexBuffer.mBuffer
+    = mVK->make_unique<VkBuffer>(mDevice, &createInfo, mAllocator);
 
   VkMemoryRequirements requirements;
-  mVK->GetBufferMemoryRequirements(mDevice, mVertexBuffer.get(), &requirements);
+  mVK->GetBufferMemoryRequirements(
+    mDevice, mVertexBuffer.mBuffer.get(), &requirements);
   const auto memoryType = FindMemoryType(
     mVK,
     mPhysicalDevice,
     requirements.memoryTypeBits,
     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-  if (!memoryType) {
-    OPENKNEEBOARD_LOG_AND_FATAL("Couldn't find compatible memory type");
+  if (!memoryType) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "Couldn't find compatible memory type for vertex buffer");
   }
+
+  VkMemoryAllocateInfo allocInfo {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    .allocationSize = requirements.size,
+    .memoryTypeIndex = *memoryType,
+  };
+
+  mVertexBuffer.mMemory
+    = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
+
+  check_vkresult(mVK->BindBufferMemory(
+    mDevice, mVertexBuffer.mBuffer.get(), mVertexBuffer.mMemory.get(), 0));
+
+  mVertexBuffer.mMapping = mVK->MemoryMapping<Vertex>(
+    mDevice, mVertexBuffer.mMemory.get(), 0, requirements.size, 0);
 }
 
 SpriteBatch::~SpriteBatch() {
@@ -214,6 +238,21 @@ void SpriteBatch::End(const std::source_location& loc) {
     vertices.push_back(makeVertex(tcbr, br));
   }
 
+  const size_t verticesByteSize = sizeof(vertices[0]) * vertices.size();
+  memcpy(mVertexBuffer.mMapping.get(), vertices.data(), verticesByteSize);
+
+  VkMappedMemoryRange memoryRange {
+    .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+    .memory = mVertexBuffer.mMemory.get(),
+    .offset = 0,
+    .size = verticesByteSize,
+  };
+  check_vkresult(mVK->FlushMappedMemoryRanges(mDevice, 1, &memoryRange));
+
+  // TODO: bind buffers
+
+  check_vkresult(mVK->ResetCommandBuffer(mCommandBuffer, 0));
+
   mSprites.clear();
   mBetweenBeginAndEnd = false;
 }
@@ -248,6 +287,183 @@ SpriteBatch::Vertex::GetAttributeDescription() {
       .offset = offsetof(Vertex, mPosition),
     },
   };
+}
+
+static VkDeviceSize aligned_size(VkDeviceSize size, VkDeviceSize alignment) {
+  const auto maxPad = alignment - 1;
+  return (size + maxPad) & ~maxPad;
+}
+
+void SpriteBatch::InitializeSampler() {
+  {
+    VkSamplerCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+      .magFilter = VK_FILTER_LINEAR,
+      .minFilter = VK_FILTER_LINEAR,
+      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+      .maxLod = VK_LOD_CLAMP_NONE,
+    };
+    mSampler = mVK->make_unique<VkSampler>(mDevice, &createInfo, mAllocator);
+  }
+
+  VkSampler samplers[] = {mSampler.get()};
+  VkDescriptorSetLayoutBinding layoutBinding {
+    .binding = 0,
+    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+    .descriptorCount = 1,
+    .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+    .pImmutableSamplers = samplers,
+  };
+
+  VkDescriptorSetLayoutCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+    .bindingCount = 1,
+    .pBindings = &layoutBinding,
+  };
+
+  this->CreateDescriptorSet(
+    &layoutBinding,
+    &createInfo,
+    1,
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+    0,
+    &mSamplerDescriptorSet);
+}
+
+void SpriteBatch::InitializeSourceDescriptorSet() {
+  VkSampler samplers[] = {mSampler.get()};
+  VkDescriptorSetLayoutBinding layoutBinding {
+    .binding = 0,
+    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+    .descriptorCount = 1,
+    .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+    .pImmutableSamplers = samplers,
+  };
+
+  VkDescriptorBindingFlags bindingFlags {
+    VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT
+    | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT
+    | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
+    | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT};
+  VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
+    .bindingCount = 1,
+    .pBindingFlags = &bindingFlags,
+  };
+
+  VkDescriptorSetLayoutCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+    .pNext = &bindingFlagsCreateInfo,
+    .bindingCount = 1,
+    .pBindings = &layoutBinding,
+  };
+
+  this->CreateDescriptorSet(
+    &layoutBinding,
+    &createInfo,
+    MaxSpritesPerBatch,
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+    VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT,
+
+    &mSourceDescriptorSet);
+}
+
+void SpriteBatch::CreateDescriptorSet(
+  const VkDescriptorSetLayoutBinding* layoutBinding,
+  const VkDescriptorSetLayoutCreateInfo* layoutCreateInfo,
+  VkDeviceSize descriptorCount,
+  VkMemoryPropertyFlags memoryPropertyFlags,
+  VkDescriptorPoolCreateFlags poolCreateFlags,
+  DescriptorSet* ret,
+  const std::source_location& loc) {
+  ret->mLayout = mVK->make_unique<VkDescriptorSetLayout>(
+    mDevice, layoutCreateInfo, mAllocator);
+
+  VkPhysicalDeviceDescriptorBufferPropertiesEXT bufferProperties {
+    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT,
+  };
+  VkPhysicalDeviceProperties2KHR deviceProperties {
+    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
+    .pNext = &bufferProperties,
+  };
+
+  mVK->GetPhysicalDeviceProperties2KHR(mPhysicalDevice, &deviceProperties);
+
+  mVK->GetDescriptorSetLayoutSizeEXT(
+    mDevice, ret->mLayout.get(), &ret->mDescriptorSize);
+  ret->mDescriptorSize = aligned_size(
+    ret->mDescriptorSize, bufferProperties.descriptorBufferOffsetAlignment);
+  mVK->GetDescriptorSetLayoutBindingOffsetEXT(
+    mDevice, ret->mLayout.get(), 0, &ret->mOffset);
+
+  {
+    VkBufferCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+      .size = ret->mDescriptorSize * descriptorCount,
+      .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT
+        | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT
+        | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+      .queueFamilyIndexCount = 1,
+      .pQueueFamilyIndices = &mQueueFamilyIndex,
+    };
+    ret->mBuffer = mVK->make_unique<VkBuffer>(mDevice, &createInfo, mAllocator);
+  }
+
+  VkMemoryRequirements requirements;
+  mVK->GetBufferMemoryRequirements(mDevice, ret->mBuffer.get(), &requirements);
+  const auto memoryType = FindMemoryType(
+    mVK, mPhysicalDevice, requirements.memoryTypeBits, memoryPropertyFlags);
+  if (!memoryType) [[unlikely]] {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "Couldn't find compatible memory type for descriptor buffer");
+  }
+
+  {
+    VkMemoryAllocateInfo allocInfo {
+      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+      .allocationSize = requirements.size,
+      .memoryTypeIndex = *memoryType,
+    };
+
+    ret->mMemory
+      = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
+  }
+
+  check_vkresult(
+    mVK->BindBufferMemory(mDevice, ret->mBuffer.get(), ret->mMemory.get(), 0));
+
+  ret->mMapping = mVK->MemoryMapping<std::byte>(
+    mDevice, ret->mMemory.get(), ret->mOffset, requirements.size, 0);
+
+  {
+    VkDescriptorPoolSize poolSize {
+      .type = layoutBinding->descriptorType,
+      .descriptorCount = static_cast<uint32_t>(descriptorCount),
+    };
+    VkDescriptorPoolCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+      .flags = poolCreateFlags,
+      .maxSets = 1,
+      .poolSizeCount = 1,
+      .pPoolSizes = &poolSize,
+    };
+    ret->mDescriptorPool
+      = mVK->make_unique<VkDescriptorPool>(mDevice, &createInfo, mAllocator);
+  }
+
+  VkDescriptorSetLayout layouts[] {ret->mLayout.get()};
+  VkDescriptorSetAllocateInfo allocInfo {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+    .descriptorPool = ret->mDescriptorPool.get(),
+    .descriptorSetCount = std::size(layouts),
+    .pSetLayouts = layouts,
+  };
+
+  check_vkresult(
+    mVK->AllocateDescriptorSets(mDevice, &allocInfo, &ret->mDescriptorSet));
 }
 
 std::optional<uint32_t> FindMemoryType(
