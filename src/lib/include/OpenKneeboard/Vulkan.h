@@ -100,6 +100,7 @@ class SpriteBatch {
   uint32_t mQueueFamilyIndex {~(0ui32)};
   VkQueue mQueue {nullptr};
 
+  unique_ptr<VkPipelineLayout> mPipelineLayout;
   unique_ptr<VkPipeline> mPipeline;
 
   VkImageView mTarget {nullptr};
@@ -148,6 +149,8 @@ class SpriteBatch {
 
   std::vector<Sprite> mSprites;
 
+  void CreatePipeline();
+
   template <class T>
   struct Buffer {
     unique_ptr<VkBuffer> mBuffer;
@@ -157,7 +160,7 @@ class SpriteBatch {
 
   Buffer<Vertex> mVertexBuffer;
 
-  void InitializeVertexBuffer();
+  void CreateVertexBuffer();
 
   struct DescriptorSet : public Buffer<std::byte> {
     unique_ptr<VkDescriptorSetLayout> mLayout;
@@ -179,11 +182,11 @@ class SpriteBatch {
   unique_ptr<VkSampler> mSampler;
   DescriptorSet mSamplerDescriptorSet;
 
-  void InitializeSampler();
+  void CreateSampler();
 
   DescriptorSet mSourceDescriptorSet;
 
-  void InitializeSourceDescriptorSet();
+  void CreateSourceDescriptorSet();
 };
 
 }// namespace OpenKneeboard::Vulkan

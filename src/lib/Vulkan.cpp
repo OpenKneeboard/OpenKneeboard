@@ -95,12 +95,126 @@ SpriteBatch::SpriteBatch(
       dispatch->AllocateCommandBuffers(device, &allocInfo, &mCommandBuffer));
   }
 
-  this->InitializeSampler();
-  this->InitializeVertexBuffer();
-  this->InitializeSourceDescriptorSet();
+  this->CreateVertexBuffer();
+  this->CreateSampler();
+  this->CreateSourceDescriptorSet();
+
+  this->CreatePipeline();
 }
 
-void SpriteBatch::InitializeVertexBuffer() {
+void SpriteBatch::CreatePipeline() {
+  {
+    VkDescriptorSetLayout descriptorSetLayouts[] {
+      mSamplerDescriptorSet.mLayout.get(),
+      mSourceDescriptorSet.mLayout.get(),
+    };
+    VkPipelineLayoutCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+      .setLayoutCount = std::size(descriptorSetLayouts),
+      .pSetLayouts = descriptorSetLayouts,
+    };
+    mPipelineLayout
+      = mVK->make_unique<VkPipelineLayout>(mDevice, &createInfo, mAllocator);
+  }
+
+  auto vertexDescription = Vertex::GetBindingDescription();
+  auto vertexAttributes = Vertex::GetAttributeDescription();
+
+  VkPipelineVertexInputStateCreateInfo vertex {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+    .vertexBindingDescriptionCount = 1,
+    .pVertexBindingDescriptions = &vertexDescription,
+    .vertexAttributeDescriptionCount = vertexAttributes.size(),
+    .pVertexAttributeDescriptions = vertexAttributes.data(),
+  };
+  VkPipelineInputAssemblyStateCreateInfo inputAssembly {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+    .topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+  };
+  VkPipelineRasterizationStateCreateInfo rasterization {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+    .polygonMode = VK_POLYGON_MODE_FILL,
+    .cullMode = VK_CULL_MODE_NONE,
+    .frontFace = VK_FRONT_FACE_CLOCKWISE,
+  };
+  VkPipelineColorBlendAttachmentState colorBlendAttachmentState {
+    .blendEnable = VK_FALSE,
+    .colorWriteMask = 0xf,
+  };
+  VkPipelineColorBlendStateCreateInfo colorBlend {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+    .attachmentCount = 1,
+    .pAttachments = &colorBlendAttachmentState,
+  };
+  VkPipelineDepthStencilStateCreateInfo depthStencil {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+    .minDepthBounds = 0,
+    .maxDepthBounds = 1,
+  };
+  VkPipelineViewportStateCreateInfo viewport {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+    .viewportCount = 1,
+    .scissorCount = 1,
+  };
+  VkPipelineMultisampleStateCreateInfo multiplesample {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+    .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+  };
+
+  VkPipelineShaderStageCreateInfo shaderStages[] {
+    VkPipelineShaderStageCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+      .stage = VK_SHADER_STAGE_VERTEX_BIT,
+      .module = mVertexShader.get(),
+      .pName = "SpriteVertexShader",
+    },
+    VkPipelineShaderStageCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+      .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+      .module = mPixelShader.get(),
+      .pName = "SpritePixelShader",
+    },
+  };
+
+  VkFormat colorFormats[] {VK_FORMAT_B8G8R8A8_UNORM};
+
+  VkPipelineRenderingCreateInfoKHR renderingCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+    .colorAttachmentCount = 1,
+    .pColorAttachmentFormats = colorFormats,
+  };
+
+  VkDynamicState dynamicStates[] {
+    VK_DYNAMIC_STATE_VIEWPORT,
+    VK_DYNAMIC_STATE_SCISSOR,
+  };
+
+  VkPipelineDynamicStateCreateInfo dynamicState {
+    .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+    .dynamicStateCount = std::size(dynamicStates),
+    .pDynamicStates = dynamicStates,
+  };
+
+  VkGraphicsPipelineCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+    .pNext = &renderingCreateInfo,
+    .stageCount = std::size(shaderStages),
+    .pStages = shaderStages,
+    .pVertexInputState = &vertex,
+    .pInputAssemblyState = &inputAssembly,
+    .pViewportState = &viewport,
+    .pMultisampleState = &multiplesample,
+    .pDepthStencilState = &depthStencil,
+    .pColorBlendState = &colorBlend,
+    .pDynamicState = &dynamicState,
+    .layout = mPipelineLayout.get(),
+  };
+
+  mPipeline = mVK->make_unique_graphics_pipeline(
+    mDevice, VK_NULL_HANDLE, &createInfo, mAllocator);
+}
+
+void SpriteBatch::CreateVertexBuffer() {
   VkBufferCreateInfo createInfo {
     .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
     .size = sizeof(Vertex) * MaxVerticesPerBatch,
@@ -385,7 +499,7 @@ static VkDeviceSize aligned_size(VkDeviceSize size, VkDeviceSize alignment) {
   return (size + maxPad) & ~maxPad;
 }
 
-void SpriteBatch::InitializeSampler() {
+void SpriteBatch::CreateSampler() {
   {
     VkSamplerCreateInfo createInfo {
       .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -424,7 +538,7 @@ void SpriteBatch::InitializeSampler() {
     &mSamplerDescriptorSet);
 }
 
-void SpriteBatch::InitializeSourceDescriptorSet() {
+void SpriteBatch::CreateSourceDescriptorSet() {
   VkSampler samplers[] = {mSampler.get()};
   VkDescriptorSetLayoutBinding layoutBinding {
     .binding = 0,

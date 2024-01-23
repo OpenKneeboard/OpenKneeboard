@@ -45,6 +45,7 @@
   IT(CreateGraphicsPipelines) \
   IT(CreateImage) \
   IT(CreateInstance) \
+  IT(CreatePipelineLayout) \
   IT(CreateSampler) \
   IT(CreateSemaphore) \
   IT(CreateShaderModule) \
@@ -55,6 +56,7 @@
   IT(DestroyFence) \
   IT(DestroyImage) \
   IT(DestroyPipeline) \
+  IT(DestroyPipelineLayout) \
   IT(DestroySampler) \
   IT(DestroySemaphore) \
   IT(DestroyShaderModule) \

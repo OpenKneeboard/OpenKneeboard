@@ -35,6 +35,7 @@ namespace OpenKneeboard::Vulkan {
   IT(DescriptorSetLayout) \
   IT(Image) \
   IT(Fence) \
+  IT(PipelineLayout) \
   IT(Sampler) \
   IT(Semaphore) \
   IT(ShaderModule)

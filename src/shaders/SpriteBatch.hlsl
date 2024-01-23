@@ -3,8 +3,8 @@
 //
 // http://go.microsoft.com/fwlink/?LinkId=248929
 
-Texture2D<float4> Textures[] : register(t0);
-sampler TextureSampler : register(s0);
+sampler TextureSampler : register(s0, space0);
+Texture2D<float4> Textures[] : register(t0, space1);
 
 void SpriteVertexShader(
     inout uint textureIndex : TEXTURE_INDEX,
