@@ -64,6 +64,13 @@ struct ResourceTraits<VkDeviceMemory> {
   using DestroyFun = PFN_vkFreeMemory;
 };
 
+template <>
+struct ResourceTraits<VkPipeline> {
+  // No CreateFun or CreateInfo as they vary between compute and graphics
+  // pipelines, and take different parameters to normal.
+  using DestroyFun = PFN_vkDestroyPipeline;
+};
+
 template <class T>
 using CreateFun = ResourceTraits<T>::CreateFun;
 template <class T>
@@ -71,28 +78,52 @@ using CreateInfo = ResourceTraits<T>::CreateInfo;
 template <class T>
 using DestroyFun = ResourceTraits<T>::DestroyFun;
 
+// clang-format off
+template<class TFun, class TResource>
+concept create_fun = std::invocable<
+  TFun,
+  VkDevice,
+  Detail::CreateInfo<TResource>*,
+  const VkAllocationCallbacks*,
+  TResource*
+>;
+
+template <class TFun, class TResource>
+concept destroy_fun = std::invocable<
+  TFun,
+  VkDevice,
+  TResource,
+  const VkAllocationCallbacks*
+>;
+// clang-format on
+
 }// namespace Detail
 
-// clang-format off
 template <class T>
-concept manageable_handle =
-  std::invocable<
-    Detail::CreateFun<T>,
-    VkDevice,
-    Detail::CreateInfo<T>*,
-    const VkAllocationCallbacks*,
-    T*
-  > && std::invocable<
-    Detail::DestroyFun<T>,
-    VkDevice,
-    T,
-    const VkAllocationCallbacks*
-  >;
-// clang-format on
+concept creatable_handle = Detail::create_fun<Detail::CreateFun<T>, T>;
+
+template <class T>
+concept destroyable_handle = Detail::destroy_fun<Detail::DestroyFun<T>, T>;
+
+template <class T>
+concept manageable_handle = creatable_handle<T> && destroyable_handle<T>;
+
+// Just some basic tests
+
+// vkCreateFoo and vkDestroyFoo
+static_assert(manageable_handle<VkBuffer>);
+
+// vkAllocateMemory and vkFreeMemory
+static_assert(manageable_handle<VkDeviceMemory>);
+
+// vkDestroyFoo, but no matching vkCreateFoo
+static_assert(destroyable_handle<VkPipeline>);
+static_assert(!creatable_handle<VkPipeline>);
+static_assert(!manageable_handle<VkPipeline>);
 
 namespace Detail {
 
-template <manageable_handle T>
+template <destroyable_handle T>
 class Deleter {
  public:
   using pointer = T;
@@ -116,7 +147,7 @@ class Deleter {
 
 }// namespace Detail
 
-template <manageable_handle T>
+template <destroyable_handle T>
 using unique_ptr = std::unique_ptr<T, Detail::Deleter<T>>;
 
 template <class T>

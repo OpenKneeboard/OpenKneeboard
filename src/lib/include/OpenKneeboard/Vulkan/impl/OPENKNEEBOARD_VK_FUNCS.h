@@ -53,6 +53,7 @@
   IT(DestroyDescriptorSetLayout) \
   IT(DestroyFence) \
   IT(DestroyImage) \
+  IT(DestroyPipeline) \
   IT(DestroySampler) \
   IT(DestroySemaphore) \
   IT(DestroyShaderModule) \
