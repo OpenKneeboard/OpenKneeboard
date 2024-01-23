@@ -1,3 +1,4 @@
+
 /*
  * OpenKneeboard
  *
@@ -19,20 +20,22 @@
  */
 #pragma once
 
-#include <OpenKneeboard/Vulkan/Dispatch.h>
-#include <OpenKneeboard/Vulkan/SpriteBatch.h>
-#include <OpenKneeboard/Vulkan/vkresult.h>
-
-#include <OpenKneeboard/dprint.h>
-
-#include <vulkan/vulkan.h>
+#include <array>
 
 namespace OpenKneeboard::Vulkan {
+class Color : public std::array<float, 4> {};
 
-std::optional<uint32_t> FindMemoryType(
-  Dispatch*,
-  VkPhysicalDevice,
-  uint32_t filter,
-  VkMemoryPropertyFlags flags);
+class Opacity : public Color {
+ public:
+  Opacity() = delete;
+  constexpr Opacity(float opacity)
+    : Color {opacity, opacity, opacity, opacity} {
+  }
+};
+
+namespace Colors {
+constexpr Color White {1, 1, 1, 1};
+constexpr Color Transparent {0, 0, 0, 0};
+}// namespace Colors
 
 }// namespace OpenKneeboard::Vulkan

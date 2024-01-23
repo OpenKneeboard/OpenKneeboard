@@ -141,7 +141,11 @@ target_link_libraries(
   System::Dxguid
 )
 
-ok_add_library(OpenKneeboard-Vulkan STATIC Vulkan.cpp)
+ok_add_library(
+  OpenKneeboard-Vulkan
+  STATIC
+  Vulkan.cpp
+  Vulkan/SpriteBatch.cpp)
 target_link_libraries(
   OpenKneeboard-Vulkan
   PUBLIC
