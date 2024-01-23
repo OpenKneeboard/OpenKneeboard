@@ -29,6 +29,7 @@
   IT(CmdBeginRenderingKHR) \
   IT(CmdBindDescriptorSets) \
   IT(CmdBindVertexBuffers) \
+  IT(CmdBindPipeline) \
   IT(CmdBlitImage) \
   IT(CmdCopyImage) \
   IT(CmdDrawIndexed) \
@@ -79,4 +80,5 @@
   IT(ResetCommandBuffer) \
   IT(ResetFences) \
   IT(UnmapMemory) \
+  IT(UpdateDescriptorSets) \
   IT(WaitForFences)

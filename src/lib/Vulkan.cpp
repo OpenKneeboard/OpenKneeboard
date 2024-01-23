@@ -419,6 +419,9 @@ void SpriteBatch::End(
     {mTargetSize.mWidth, mTargetSize.mHeight},
   };
   mVK->CmdSetScissor(mCommandBuffer, 0, 1, &scissorRect);
+  mVK->CmdBindPipeline(
+    mCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline.get());
+
   VkBuffer vertexBuffers[] {mVertexBuffer.mBuffer.get()};
   VkDeviceSize vertexBufferOffsets[] {0};
   static_assert(std::size(vertexBuffers) == std::size(vertexBufferOffsets));
@@ -428,19 +431,52 @@ void SpriteBatch::End(
     std::size(vertexBuffers),
     vertexBuffers,
     vertexBufferOffsets);
-  VkBuffer descriptorBuffers[] {
-    mSourceDescriptorSet.mBuffer.get(),
-    mSamplerDescriptorSet.mBuffer.get(),
-  };
-  VkDeviceSize descriptorBufferOffsets[] {
-    mSourceDescriptorSet.mOffset,
-    mSamplerDescriptorSet.mOffset,
-  };
-  static_assert(
-    std::size(descriptorBuffers) == std::size(descriptorBufferOffsets));
 
-  // FIXME: need a pipeline
-  // mVK->CmdBindDescriptorSets(mCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+  {
+    // TODO: once we stop one-shotting the command buffer, we can update the
+    // source infos after bind
+    VkDescriptorImageInfo samplerInfo {
+      .sampler = mSampler.get(),
+    };
+    std::vector<VkDescriptorImageInfo> sourceInfos;
+    sourceInfos.reserve(sources.size());
+    for (const auto& source: sources) {
+      sourceInfos.push_back({.imageView = source});
+    }
+
+    VkWriteDescriptorSet writeDescriptors[] {
+      VkWriteDescriptorSet {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = mSamplerDescriptorSet.mDescriptorSet,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+        .pImageInfo = &samplerInfo,
+      },
+      VkWriteDescriptorSet {
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = mSourceDescriptorSet.mDescriptorSet,
+        .descriptorCount = static_cast<uint32_t>(sourceInfos.size()),
+        .pImageInfo = sourceInfos.data(),
+      },
+    };
+    mVK->UpdateDescriptorSets(
+      mDevice, std::size(writeDescriptors), writeDescriptors, 0, nullptr);
+  }
+
+  VkDescriptorSet descriptors[] {
+    mSourceDescriptorSet.mDescriptorSet,
+    mSamplerDescriptorSet.mDescriptorSet,
+  };
+
+  mVK->CmdBindDescriptorSets(
+    mCommandBuffer,
+    VK_PIPELINE_BIND_POINT_GRAPHICS,
+    mPipelineLayout.get(),
+    0,
+    std::size(descriptors),
+    descriptors,
+    0,
+    nullptr);
 
   mVK->CmdDrawIndexed(mCommandBuffer, vertices.size(), 1, 0, 0, 0);
 
