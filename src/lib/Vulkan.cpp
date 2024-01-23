@@ -297,7 +297,38 @@ void SpriteBatch::End(
     mVK->CmdBeginRenderingKHR(mCommandBuffer, &renderInfo);
   }
 
-  // FIXME: actual drawing commands
+  const VkViewport viewport {
+    0, 0, mTargetSize.GetWidth<float>(), mTargetSize.GetHeight<float>(), 0, 1};
+  mVK->CmdSetViewport(mCommandBuffer, 0, 1, &viewport);
+  const VkRect2D scissorRect = {
+    {0, 0},
+    {mTargetSize.mWidth, mTargetSize.mHeight},
+  };
+  mVK->CmdSetScissor(mCommandBuffer, 0, 1, &scissorRect);
+  VkBuffer vertexBuffers[] {mVertexBuffer.mBuffer.get()};
+  VkDeviceSize vertexBufferOffsets[] {0};
+  static_assert(std::size(vertexBuffers) == std::size(vertexBufferOffsets));
+  mVK->CmdBindVertexBuffers(
+    mCommandBuffer,
+    0,
+    std::size(vertexBuffers),
+    vertexBuffers,
+    vertexBufferOffsets);
+  VkBuffer descriptorBuffers[] {
+    mSourceDescriptorSet.mBuffer.get(),
+    mSamplerDescriptorSet.mBuffer.get(),
+  };
+  VkDeviceSize descriptorBufferOffsets[] {
+    mSourceDescriptorSet.mOffset,
+    mSamplerDescriptorSet.mOffset,
+  };
+  static_assert(
+    std::size(descriptorBuffers) == std::size(descriptorBufferOffsets));
+
+  // FIXME: need a pipeline
+  // mVK->CmdBindDescriptorSets(mCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+
+  mVK->CmdDrawIndexed(mCommandBuffer, vertices.size(), 1, 0, 0, 0);
 
   mVK->CmdEndRenderingKHR(mCommandBuffer);
 

@@ -27,10 +27,15 @@
   IT(BindBufferMemory) \
   IT(BindImageMemory2KHR) \
   IT(CmdBeginRenderingKHR) \
+  IT(CmdBindDescriptorSets) \
+  IT(CmdBindVertexBuffers) \
   IT(CmdBlitImage) \
   IT(CmdCopyImage) \
+  IT(CmdDrawIndexed) \
   IT(CmdEndRenderingKHR) \
   IT(CmdPipelineBarrier) \
+  IT(CmdSetScissor) \
+  IT(CmdSetViewport) \
   IT(CreateBuffer) \
   IT(CreateCommandPool) \
   IT(CreateDescriptorPool) \
