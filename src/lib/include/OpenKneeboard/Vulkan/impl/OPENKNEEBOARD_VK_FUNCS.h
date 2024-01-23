@@ -26,8 +26,10 @@
   IT(BeginCommandBuffer) \
   IT(BindBufferMemory) \
   IT(BindImageMemory2KHR) \
+  IT(CmdBeginRenderingKHR) \
   IT(CmdBlitImage) \
   IT(CmdCopyImage) \
+  IT(CmdEndRenderingKHR) \
   IT(CmdPipelineBarrier) \
   IT(CreateBuffer) \
   IT(CreateCommandPool) \

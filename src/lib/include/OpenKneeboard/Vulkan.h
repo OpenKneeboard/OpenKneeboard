@@ -64,6 +64,15 @@ class SpriteBatch {
     uint32_t queueIndex);
   ~SpriteBatch();
 
+  /** Start a spritebatch.
+   *
+   * `target` MUST have the VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL layout.
+   */
+  void Begin(
+    VkImageView target,
+    const PixelSize& size,
+    const std::source_location& loc = std::source_location::current());
+
   void Draw(
     VkImageView source,
     const PixelSize& sourceSize,
@@ -72,7 +81,9 @@ class SpriteBatch {
     const Color& color = Colors::White,
     const std::source_location& loc = std::source_location::current());
 
-  void End(const std::source_location& loc = std::source_location::current());
+  void End(
+    VkFence completionFence = VK_NULL_HANDLE,
+    const std::source_location& loc = std::source_location::current());
 
   static constexpr std::string_view REQUIRED_DEVICE_EXTENSIONS[] {
     VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
@@ -88,6 +99,9 @@ class SpriteBatch {
   const VkAllocationCallbacks* mAllocator {nullptr};
   uint32_t mQueueFamilyIndex {~(0ui32)};
   VkQueue mQueue {nullptr};
+
+  VkImageView mTarget {nullptr};
+  PixelSize mTargetSize;
 
   unique_ptr<VkShaderModule> mPixelShader;
   unique_ptr<VkShaderModule> mVertexShader;
@@ -130,7 +144,6 @@ class SpriteBatch {
   constexpr static uint8_t MaxVerticesPerBatch
     = VerticesPerSprite * MaxSpritesPerBatch;
 
-  bool mBetweenBeginAndEnd {false};
   std::vector<Sprite> mSprites;
 
   template <class T>

@@ -142,6 +142,21 @@ void SpriteBatch::InitializeVertexBuffer() {
 
 SpriteBatch::~SpriteBatch() {
   OPENKNEEBOARD_TraceLoggingWrite("SpriteBatch::~SpriteBatch()");
+  if (mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Closing spritebatch without calling End()");
+  }
+}
+
+void SpriteBatch::Begin(
+  VkImageView target,
+  const PixelSize& targetSize,
+  const std::source_location& caller) {
+  if (mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      caller, "Begin() called but already in progress; did you call End()?");
+  }
+  mTarget = target;
+  mTargetSize = targetSize;
 }
 
 void SpriteBatch::Draw(
@@ -151,7 +166,7 @@ void SpriteBatch::Draw(
   const PixelRect& destRect,
   const Color& color,
   const std::source_location& loc) {
-  if (!mBetweenBeginAndEnd) [[unlikely]] {
+  if (!mTarget) [[unlikely]] {
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       loc, "Calling Draw() without Begin()");
   }
@@ -159,8 +174,10 @@ void SpriteBatch::Draw(
   mSprites.push_back({source, sourceSize, sourceRect, destRect, color});
 }
 
-void SpriteBatch::End(const std::source_location& loc) {
-  if (!mBetweenBeginAndEnd) [[unlikely]] {
+void SpriteBatch::End(
+  VkFence completionFence,
+  const std::source_location& loc) {
+  if (!mTarget) [[unlikely]] {
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       loc, "Calling End() without Begin()");
   }
@@ -240,6 +257,7 @@ void SpriteBatch::End(const std::source_location& loc) {
 
   const size_t verticesByteSize = sizeof(vertices[0]) * vertices.size();
   memcpy(mVertexBuffer.mMapping.get(), vertices.data(), verticesByteSize);
+  // FIXME: also fill descriptor buffers
 
   VkMappedMemoryRange memoryRange {
     .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
@@ -249,12 +267,54 @@ void SpriteBatch::End(const std::source_location& loc) {
   };
   check_vkresult(mVK->FlushMappedMemoryRanges(mDevice, 1, &memoryRange));
 
-  // TODO: bind buffers
-
   check_vkresult(mVK->ResetCommandBuffer(mCommandBuffer, 0));
 
+  {
+    // TODO: remove ONE_TIME_SUBMIT_BIT and re-use this buffer.
+    VkCommandBufferBeginInfo beginInfo {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+      .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+    };
+    check_vkresult(mVK->BeginCommandBuffer(mCommandBuffer, &beginInfo));
+  }
+
+  {
+    VkRenderingAttachmentInfoKHR colorAttachmentInfo {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
+      .imageView = mTarget,
+      .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+      .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+    };
+
+    VkRenderingInfoKHR renderInfo {
+      .sType = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR,
+      .renderArea = {{0, 0}, {mTargetSize.mWidth, mTargetSize.mHeight}},
+      .layerCount = 1,
+      .colorAttachmentCount = 1,
+      .pColorAttachments = &colorAttachmentInfo,
+    };
+    mVK->CmdBeginRenderingKHR(mCommandBuffer, &renderInfo);
+  }
+
+  // FIXME: actual drawing commands
+
+  mVK->CmdEndRenderingKHR(mCommandBuffer);
+
+  check_vkresult(mVK->EndCommandBuffer(mCommandBuffer));
+
+  {
+    // TODO: do we need to wait for anything?
+    VkSubmitInfo submitInfo {
+      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+      .commandBufferCount = 1,
+      .pCommandBuffers = &mCommandBuffer,
+    };
+    check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, completionFence));
+  }
+
   mSprites.clear();
-  mBetweenBeginAndEnd = false;
+  mTarget = nullptr;
 }
 
 VkVertexInputBindingDescription SpriteBatch::Vertex::GetBindingDescription() {
