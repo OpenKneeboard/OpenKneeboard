@@ -72,7 +72,20 @@ class Dispatch final {
     TResource ret {nullptr};
     check_vkresult(createImpl(device, createInfo, allocator, &ret), loc);
     auto deleter = Detail::Deleter<TResource>(destroyImpl, device, allocator);
-    return OpenKneeboard::Vulkan::unique_ptr<TResource>(ret, deleter);
+    return unique_ptr<TResource>(ret, deleter);
+  }
+
+  auto make_unique_graphics_pipeline(
+    VkDevice device,
+    VkPipelineCache pipelineCache,
+    const VkGraphicsPipelineCreateInfo* createInfo,
+    const VkAllocationCallbacks* allocator) {
+    VkPipeline ret;
+    check_vkresult(this->CreateGraphicsPipelines(
+      device, pipelineCache, 1, createInfo, allocator, &ret));
+    auto deleter
+      = Detail::Deleter<VkPipeline>(this->DestroyPipeline, device, allocator);
+    return unique_ptr<VkPipeline>(ret, deleter);
   }
 
   template <class T>

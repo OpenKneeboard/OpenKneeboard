@@ -42,6 +42,7 @@
   IT(CreateDescriptorSetLayout) \
   IT(CreateDevice) \
   IT(CreateFence) \
+  IT(CreateGraphicsPipelines) \
   IT(CreateImage) \
   IT(CreateInstance) \
   IT(CreateSampler) \
