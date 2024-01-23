@@ -35,9 +35,9 @@ class Dispatch final {
 #undef IT
 
  private:
-  template <class T>
+  template <creatable_handle T>
   auto GetCreateFun() const;
-  template <class T>
+  template <destroyable_handle T>
   auto GetDestroyFun() const;
 
 #define IT(T) \

@@ -100,6 +100,8 @@ class SpriteBatch {
   uint32_t mQueueFamilyIndex {~(0ui32)};
   VkQueue mQueue {nullptr};
 
+  unique_ptr<VkPipeline> mPipeline;
+
   VkImageView mTarget {nullptr};
   PixelSize mTargetSize;
 
