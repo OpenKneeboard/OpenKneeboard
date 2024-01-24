@@ -67,6 +67,10 @@ class VulkanRenderer final : public Renderer {
   unique_vk<VkDebugUtilsMessengerEXT> mVKDebugMessenger;
 #endif
 
+  VkPhysicalDevice mVKPhysicalDevice {VK_NULL_HANDLE};
+
+  uint32_t mQueueFamilyIndex;
+
   unique_vk<VkDevice> mVKDevice;
 };
 

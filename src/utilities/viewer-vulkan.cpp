@@ -157,7 +157,6 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   check_vkresult(mVK->EnumeratePhysicalDevices(
     mVKInstance.get(), &physicalDeviceCount, physicalDevices.data()));
 
-  VkPhysicalDevice matchingPhysicalDevice {VK_NULL_HANDLE};
   for (const auto physicalDevice: physicalDevices) {
     VkPhysicalDeviceIDPropertiesKHR id {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES_KHR,
@@ -181,25 +180,52 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
       dprintf("- Device LUID: {:#018x}", deviceLuid);
       if (deviceLuid == luid) {
         dprint("- Matching LUID, selecting device");
-        matchingPhysicalDevice = physicalDevice;
+        mVKPhysicalDevice = physicalDevice;
       }
     }
   }
 
-  if (!matchingPhysicalDevice) {
+  if (!mVKPhysicalDevice) {
     OPENKNEEBOARD_LOG_AND_FATAL("Failed to find matching device");
   }
 
-  // TODO: queues
+  uint32_t queueFamilyCount {0};
+  mVK->GetPhysicalDeviceQueueFamilyProperties(
+    mVKPhysicalDevice, &queueFamilyCount, nullptr);
+  std::vector<VkQueueFamilyProperties> queueFamilies;
+  queueFamilies.resize(queueFamilyCount);
+  mVK->GetPhysicalDeviceQueueFamilyProperties(
+    mVKPhysicalDevice, &queueFamilyCount, queueFamilies.data());
+  {
+    auto it = std::ranges::find_if(
+      queueFamilies, [](const VkQueueFamilyProperties& it) {
+        return (it.queueFlags & VK_QUEUE_GRAPHICS_BIT);
+      });
+    if (it == queueFamilies.end()) {
+      OPENKNEEBOARD_LOG_AND_FATAL("No graphics queues found");
+    }
+    mQueueFamilyIndex = (it - queueFamilies.begin());
+  }
+
+  float queuePriorities[] {1.0f};
+  VkDeviceQueueCreateInfo queueCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+    .queueFamilyIndex = mQueueFamilyIndex,
+    .queueCount = std::size(queuePriorities),
+    .pQueuePriorities = queuePriorities,
+  };
+
   VkDeviceCreateInfo baseDeviceCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+    .queueCreateInfoCount = 1,
+    .pQueueCreateInfos = &queueCreateInfo,
   };
 
   auto deviceCreateInfo = SHM::Vulkan::DeviceCreateInfo {
     Vulkan::SpriteBatch::DeviceCreateInfo {baseDeviceCreateInfo}};
 
-  mVKDevice = mVK->make_unique_device(
-    matchingPhysicalDevice, &deviceCreateInfo, nullptr);
+  mVKDevice
+    = mVK->make_unique_device(mVKPhysicalDevice, &deviceCreateInfo, nullptr);
 }
 
 VulkanRenderer::~VulkanRenderer() = default;

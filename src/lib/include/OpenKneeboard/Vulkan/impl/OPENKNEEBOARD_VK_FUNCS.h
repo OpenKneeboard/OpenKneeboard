@@ -79,6 +79,7 @@
   IT(GetMemoryWin32HandlePropertiesKHR) \
   IT(GetPhysicalDeviceMemoryProperties) \
   IT(GetPhysicalDeviceProperties2KHR) \
+  IT(GetPhysicalDeviceQueueFamilyProperties) \
   IT(GetSemaphoreWin32HandleKHR) \
   IT(ImportSemaphoreWin32HandleKHR) \
   IT(MapMemory) \
