@@ -173,6 +173,8 @@ void OpenXRD3D12Kneeboard::RenderLayers(
 
   mSpriteBatch->Begin(
     br.mCommandList.get(), br.mRenderTargetView, sr.mDimensions);
+  mSpriteBatch->Clear();
+
   const auto layerCount = snapshot.GetLayerCount();
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     const auto sourceRect
