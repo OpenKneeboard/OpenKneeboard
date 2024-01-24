@@ -103,6 +103,8 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   }
 
   dprintf("{} images in swapchain", imageCount);
+  mSHM.InitializeCache(
+    mDevice.get(), mCommandQueue.get(), static_cast<uint8_t>(imageCount));
 
   std::vector<XrSwapchainImageD3D12KHR> images;
   images.resize(
@@ -168,8 +170,23 @@ void OpenXRD3D12Kneeboard::RenderLayers(
 
   auto source = snapshot.GetTexture<SHM::D3D12::Texture>();
 
-  const auto& sr = mSwapchainResources.at(swapchain);
-  const auto& br = sr.mBufferResources.at(swapchainTextureIndex);
+  auto& sr = mSwapchainResources.at(swapchain);
+  auto& br = sr.mBufferResources.at(swapchainTextureIndex);
+
+  if (br.mCommandList) {
+    winrt::check_hresult(
+      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
+  } else {
+    winrt::check_hresult(mDevice->CreateCommandList(
+      0,
+      D3D12_COMMAND_LIST_TYPE_DIRECT,
+      br.mCommandAllocator.get(),
+      nullptr,
+      IID_PPV_ARGS(br.mCommandList.put())));
+  }
+
+  ID3D12DescriptorHeap* heaps[] {source->GetD3D12ShaderResourceViewHeap()};
+  br.mCommandList->SetDescriptorHeaps(std::size(heaps), heaps);
 
   mSpriteBatch->Begin(
     br.mCommandList.get(), br.mRenderTargetView, sr.mDimensions);
@@ -189,6 +206,12 @@ void OpenXRD3D12Kneeboard::RenderLayers(
       D3D12::Opacity {opacities[layerIndex]});
   }
   mSpriteBatch->End();
+
+  winrt::check_hresult(br.mCommandList->Close());
+
+  ID3D12CommandList* lists[] {br.mCommandList.get()};
+
+  mCommandQueue->ExecuteCommandLists(std::size(lists), lists);
 }
 
 SHM::CachedReader* OpenXRD3D12Kneeboard::GetSHM() {
@@ -211,13 +234,6 @@ OpenXRD3D12Kneeboard::SwapchainBufferResources::SwapchainBufferResources(
 
   winrt::check_hresult(device->CreateCommandAllocator(
     D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(mCommandAllocator.put())));
-
-  winrt::check_hresult(device->CreateCommandList(
-    0,
-    D3D12_COMMAND_LIST_TYPE_DIRECT,
-    mCommandAllocator.get(),
-    nullptr,
-    IID_PPV_ARGS(mCommandList.put())));
 }
 
 }// namespace OpenKneeboard
