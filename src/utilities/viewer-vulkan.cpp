@@ -22,10 +22,6 @@
 
 #include <OpenKneeboard/dprint.h>
 
-#include <ztd/out_ptr.hpp>
-
-namespace zop = ztd::out_ptr;
-
 using OpenKneeboard::Vulkan::check_vkresult;
 
 namespace OpenKneeboard::Viewer {
@@ -33,7 +29,51 @@ namespace OpenKneeboard::Viewer {
 static constexpr const char* const RequiredInstanceExtensions[] {
   VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
   VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+#ifdef DEBUG
+  VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+#endif
 };
+
+static constexpr const char* const RequiredLayers[] {
+#ifdef DEBUG
+  "VK_LAYER_KHRONOS_validation",
+#endif
+};
+
+static VkBool32 VKDebugCallback(
+  VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+  VkDebugUtilsMessageTypeFlagsEXT messageTypes,
+  const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+  void* pUserData) {
+  std::string_view severity;
+  if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+    severity = "ERROR";
+  } else if (
+    messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+    severity = "WARNING";
+  } else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+    severity = "info";
+  } else if (
+    messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+    severity = "verbose";
+  } else {
+    severity = "MAGICNO";
+    OPENKNEEBOARD_BREAK;
+  }
+
+  dprintf(
+    "VK {} [{}]: {}",
+    (pCallbackData->pMessageIdName ? pCallbackData->pMessageIdName : "Debug"),
+    severity,
+    pCallbackData->pMessage);
+  if (
+    (messageSeverity
+     & (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))) {
+    OPENKNEEBOARD_BREAK;
+  }
+
+  return VK_FALSE;
+}
 
 VulkanRenderer::VulkanRenderer(uint64_t luid) {
   mVulkanLoader = unique_hmodule {LoadLibraryA("vulkan-1.dll")};
@@ -59,9 +99,30 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     .apiVersion = VK_API_VERSION_1_0,
   };
 
+#ifdef DEBUG
+  dprint("Enabling Vulkan validation and debug messages");
+  const VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+    .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
+      | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+      | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+      | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+    .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
+      | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+      | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+    .pfnUserCallback = &VKDebugCallback,
+  };
+  const auto next = &debugCreateInfo;
+#else
+  constexpr nullptr_t next = nullptr;
+#endif
+
   const VkInstanceCreateInfo baseInstanceCreateInfo {
     .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+    .pNext = next,
     .pApplicationInfo = &applicationInfo,
+    .enabledLayerCount = std::size(RequiredLayers),
+    .ppEnabledLayerNames = RequiredLayers,
     .enabledExtensionCount = std::size(RequiredInstanceExtensions),
     .ppEnabledExtensionNames = RequiredInstanceExtensions,
   };
@@ -69,8 +130,16 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     Vulkan::SpriteBatch::InstanceCreateInfo {baseInstanceCreateInfo},
   };
 
-  check_vkresult(
-    vkCreateInstance(&instanceCreateInfo, nullptr, zop::out_ptr(mVKInstance)));
+  VkInstance instance;
+  check_vkresult(vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
+
+  auto vkDestroyInstance = reinterpret_cast<PFN_vkDestroyInstance>(
+    vkGetInstanceProcAddr(instance, "vkDestroyInstance"));
+
+  if (!vkDestroyInstance) {
+    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find vkDestroyInstance");
+  }
+  mVKInstance = {instance, {vkDestroyInstance, nullptr}};
 
   mVK = std::make_unique<OpenKneeboard::Vulkan::Dispatch>(
     mVKInstance.get(), vkGetInstanceProcAddr);

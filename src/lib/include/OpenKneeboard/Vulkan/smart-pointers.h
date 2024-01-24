@@ -162,7 +162,7 @@ class InstanceDeleter {
   }
 
  private:
-  const PFN_vkDestroyInstance mImpl {nullptr};
+  PFN_vkDestroyInstance mImpl {nullptr};
   const VkAllocationCallbacks* mAllocator {nullptr};
 };
 
