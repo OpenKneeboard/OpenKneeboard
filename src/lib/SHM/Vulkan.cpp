@@ -52,6 +52,7 @@ void Texture::CopyFrom(
   OpenKneeboard::Vulkan::Dispatch* vk,
   VkDevice device,
   VkPhysicalDevice physicalDevice,
+  VkQueue queue,
   uint32_t queueFamilyIndex,
   const VkAllocationCallbacks* allocator,
   VkQueue commandQueue,
@@ -70,6 +71,65 @@ void Texture::CopyFrom(
     texture,
     textureDimensions);
   this->InitializeFence(vk, device, allocator, fence);
+
+  VkCommandBufferBeginInfo beginInfo {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+  };
+
+  check_vkresult(vk->BeginCommandBuffer(commandBuffer, &beginInfo));
+
+  VkImageCopy regions[] { 
+    VkImageCopy {
+      .srcSubresource = VkImageSubresourceLayers {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .layerCount = 1,
+      },
+      .dstSubresource = VkImageSubresourceLayers {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .layerCount = 1,
+      },
+      .extent = { mDimensions.mWidth, mDimensions.mHeight },
+    },
+  };
+
+  vk->CmdCopyImage(
+    commandBuffer,
+    mSourceImage.get(),
+    VK_IMAGE_LAYOUT_GENERAL,
+    mImage.get(),
+    VK_IMAGE_LAYOUT_GENERAL,
+    std::size(regions),
+    regions);
+
+  check_vkresult(vk->EndCommandBuffer(commandBuffer));
+
+  VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
+    .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
+    .waitSemaphoreValueCount = 1,
+    .pWaitSemaphoreValues = &fenceValueIn,
+    .signalSemaphoreValueCount = 1,
+    .pSignalSemaphoreValues = &fenceValueOut,
+  };
+
+  // TODO: is COPY_BIT enough?
+  VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
+
+  VkSemaphore semaphores[] = {mFence.get()};
+
+  VkSubmitInfo submitInfo {
+    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+    .pNext = &semaphoreInfo,
+    .waitSemaphoreCount = std::size(semaphores),
+    .pWaitSemaphores = semaphores,
+    .pWaitDstStageMask = &semaphoreStages,
+    .commandBufferCount = 1,
+    .pCommandBuffers = &commandBuffer,
+    .signalSemaphoreCount = std::size(semaphores),
+    .pSignalSemaphores = semaphores,
+  };
+
+  check_vkresult(vk->QueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
 }
 
 void Texture::InitializeImages(

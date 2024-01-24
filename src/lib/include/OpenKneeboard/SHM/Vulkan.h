@@ -41,6 +41,7 @@ class Texture final : public SHM::IPCClientTexture {
     OpenKneeboard::Vulkan::Dispatch*,
     VkDevice,
     VkPhysicalDevice,
+    VkQueue queue,
     uint32_t queueFamilyIndex,
     const VkAllocationCallbacks*,
     VkQueue,
