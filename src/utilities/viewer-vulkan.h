@@ -62,7 +62,7 @@ class VulkanRenderer final : public Renderer {
   using unique_vk = OpenKneeboard::Vulkan::unique_vk<T>;
   unique_vk<VkInstance> mVKInstance;
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
-  unique_vk<VkDevice> mVkDevice;
+  unique_vk<VkDevice> mVKDevice;
 };
 
 }// namespace OpenKneeboard::Viewer

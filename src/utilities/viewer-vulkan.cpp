@@ -153,7 +153,7 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   check_vkresult(mVK->EnumeratePhysicalDevices(
     mVKInstance.get(), &physicalDeviceCount, physicalDevices.data()));
 
-  VkPhysicalDevice matchingDevice {VK_NULL_HANDLE};
+  VkPhysicalDevice matchingPhysicalDevice {VK_NULL_HANDLE};
   for (const auto physicalDevice: physicalDevices) {
     VkPhysicalDeviceIDPropertiesKHR id {
       .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES_KHR,
@@ -177,14 +177,25 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
       dprintf("- Device LUID: {:#018x}", deviceLuid);
       if (deviceLuid == luid) {
         dprint("- Matching LUID, selecting device");
-        matchingDevice = physicalDevice;
+        matchingPhysicalDevice = physicalDevice;
       }
     }
   }
 
-  if (!matchingDevice) {
+  if (!matchingPhysicalDevice) {
     OPENKNEEBOARD_LOG_AND_FATAL("Failed to find matching device");
   }
+
+  // TODO: queues
+  VkDeviceCreateInfo baseDeviceCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+  };
+
+  auto deviceCreateInfo = SHM::Vulkan::DeviceCreateInfo {
+    Vulkan::SpriteBatch::DeviceCreateInfo {baseDeviceCreateInfo}};
+
+  mVKDevice = mVK->make_unique_device(
+    matchingPhysicalDevice, &deviceCreateInfo, nullptr);
 }
 
 VulkanRenderer::~VulkanRenderer() = default;
