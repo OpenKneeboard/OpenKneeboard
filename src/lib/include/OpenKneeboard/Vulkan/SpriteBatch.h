@@ -36,6 +36,10 @@ class SpriteBatch {
 
   struct DeviceCreateInfo : ExtendedCreateInfo<VkDeviceCreateInfo> {
     DeviceCreateInfo(const VkDeviceCreateInfo& base);
+
+   private:
+    VkPhysicalDeviceDescriptorBufferFeaturesEXT mDescriptorBufferFeatures {
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT};
   };
 
   SpriteBatch() = delete;

@@ -713,6 +713,23 @@ SpriteBatch::InstanceCreateInfo::InstanceCreateInfo(
 
 SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
   : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_DEVICE_EXTENSIONS) {
+  auto ptr = &mDescriptorBufferFeatures;
+  for (auto next = reinterpret_cast<const VkBaseOutStructure*>(base.pNext);
+       next;
+       next = next->pNext) {
+    if (next->sType == mDescriptorBufferFeatures.sType) {
+      ptr = reinterpret_cast<VkPhysicalDeviceDescriptorBufferFeaturesEXT*>(
+        const_cast<VkBaseOutStructure*>(next));
+      break;
+    }
+  }
+
+  if (ptr == &mDescriptorBufferFeatures) {
+    ptr->pNext = const_cast<void*>(this->pNext);
+    this->pNext = ptr;
+  }
+
+  ptr->descriptorBuffer = true;
 }
 
 }// namespace OpenKneeboard::Vulkan
