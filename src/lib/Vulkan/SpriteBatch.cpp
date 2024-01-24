@@ -660,6 +660,8 @@ static void EnableDescriptorIndexing(auto* it) {
   }
   it->descriptorBindingPartiallyBound = true;
   it->descriptorBindingVariableDescriptorCount = true;
+  it->shaderSampledImageArrayNonUniformIndexing = true;
+  it->runtimeDescriptorArray = true;
 }
 
 SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
