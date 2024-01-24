@@ -61,7 +61,7 @@ void Texture::CopyFrom(
   HANDLE fence,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
-  this->InitializeSource(
+  this->InitializeImages(
     vk,
     device,
     physicalDevice,
@@ -72,7 +72,7 @@ void Texture::CopyFrom(
   this->InitializeFence(vk, device, allocator, fence);
 }
 
-void Texture::InitializeSource(
+void Texture::InitializeImages(
   OpenKneeboard::Vulkan::Dispatch* vk,
   VkDevice device,
   VkPhysicalDevice physicalDevice,
@@ -80,7 +80,8 @@ void Texture::InitializeSource(
   const VkAllocationCallbacks* allocator,
   HANDLE imageHandle,
   const PixelSize& dimensions) {
-  if (dimensions != mSourceDimensions) {
+  const auto resized = (dimensions != mDimensions);
+  if (resized) {
     mSourceImageHandle = {};
   }
   if (imageHandle == mSourceImageHandle) {
@@ -105,6 +106,9 @@ void Texture::InitializeSource(
   };
 
   mSourceImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
+  if (resized) {
+    mImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
+  }
 
   VkImageMemoryRequirementsInfo2KHR memoryInfo {
     .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2_KHR,
@@ -158,6 +162,12 @@ void Texture::InitializeSource(
 
   mSourceImageMemory
     = vk->make_unique<VkDeviceMemory>(device, &allocInfo, allocator);
+  if (resized) {
+    dedicatedAllocInfo.pNext = nullptr;
+    dedicatedAllocInfo.image = mImage.get();
+    mImageMemory
+      = vk->make_unique<VkDeviceMemory>(device, &allocInfo, allocator);
+  }
 
   VkBindImageMemoryInfoKHR bindInfo {
     .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
@@ -166,8 +176,28 @@ void Texture::InitializeSource(
   };
 
   check_vkresult(vk->BindImageMemory2KHR(device, 1, &bindInfo));
+  if (resized) {
+    bindInfo.image = mImage.get();
+    bindInfo.memory = mImageMemory.get();
+    check_vkresult(vk->BindImageMemory2KHR(device, 1, &bindInfo));
 
-  mSourceDimensions = dimensions;
+    VkImageViewCreateInfo viewCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .image = mImage.get(),
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = VK_FORMAT_B8G8R8A8_SRGB,
+      .subresourceRange = VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
+    };
+
+    mRenderTargetView
+      = vk->make_unique<VkImageView>(device, &viewCreateInfo, allocator);
+  }
+
+  mDimensions = dimensions;
   mSourceImageHandle = imageHandle;
 }
 

@@ -58,7 +58,6 @@ class Texture final : public SHM::IPCClientTexture {
   unique_ptr<VkImage> mImage;
   unique_ptr<VkImageView> mRenderTargetView;
 
-  PixelRect mSourceDimensions;
   HANDLE mSourceImageHandle {};
   unique_ptr<VkDeviceMemory> mSourceImageMemory;
   unique_ptr<VkImage> mSourceImage;
@@ -68,7 +67,7 @@ class Texture final : public SHM::IPCClientTexture {
   HANDLE mFenceHandle {};
   unique_ptr<VkSemaphore> mFence;
 
-  void InitializeSource(
+  void InitializeImages(
     OpenKneeboard::Vulkan::Dispatch*,
     VkDevice,
     VkPhysicalDevice,
