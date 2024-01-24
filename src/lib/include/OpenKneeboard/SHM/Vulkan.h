@@ -45,23 +45,23 @@ class Texture final : public SHM::IPCClientTexture {
     const VkAllocationCallbacks*,
     VkCommandBuffer,
     HANDLE texture,
-    HANDLE fence,
-    uint64_t fenceValueIn,
-    uint64_t fenceValueOut) noexcept;
+    HANDLE semaphore,
+    uint64_t semaphoreValueIn,
+    uint64_t sempahoreValueOut,
+    VkFence completionFence) noexcept;
 
  private:
   unique_vk<VkDeviceMemory> mImageMemory;
   unique_vk<VkImage> mImage;
   unique_vk<VkImageView> mRenderTargetView;
+  VkImageLayout mImageLayout;
 
   HANDLE mSourceImageHandle {};
   unique_vk<VkDeviceMemory> mSourceImageMemory;
   unique_vk<VkImage> mSourceImage;
 
-  // Using the SHM/D3D naming here; a D3D fence is roughly a VK timeline
-  // semaphore
-  HANDLE mFenceHandle {};
-  unique_vk<VkSemaphore> mFence;
+  HANDLE mSemaphoreHandle {};
+  unique_vk<VkSemaphore> mSemaphore;
 
   void InitializeImages(
     OpenKneeboard::Vulkan::Dispatch*,
@@ -70,11 +70,11 @@ class Texture final : public SHM::IPCClientTexture {
     uint32_t queueFamilyIndex,
     const VkAllocationCallbacks*,
     HANDLE texture);
-  void InitializeFence(
+  void InitializeSemaphore(
     OpenKneeboard::Vulkan::Dispatch*,
     VkDevice,
     const VkAllocationCallbacks*,
-    HANDLE fence);
+    HANDLE semaphore);
 };
 
 struct InstanceCreateInfo
@@ -85,6 +85,10 @@ struct InstanceCreateInfo
 struct DeviceCreateInfo
   : OpenKneeboard::Vulkan::ExtendedCreateInfo<VkDeviceCreateInfo> {
   DeviceCreateInfo(const VkDeviceCreateInfo& base);
+
+ private:
+  VkPhysicalDeviceTimelineSemaphoreFeaturesKHR mTimelineSemaphores {
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR};
 };
 
 class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
@@ -143,6 +147,8 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   unique_vk<VkCommandPool> mCommandPool;
   std::vector<VkCommandBuffer> mCommandBuffers;
+
+  unique_vk<VkFence> mCompletionFence;
 };
 
 };// namespace OpenKneeboard::SHM::Vulkan

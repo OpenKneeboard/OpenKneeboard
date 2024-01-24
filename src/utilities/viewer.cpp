@@ -171,10 +171,6 @@ class TestViewerWindow final {
 
     this->CreateRenderer();
 
-    // We pass 1 as the swapchain length as we use a buffer; we need to do this
-    // as swapchain textures can't be directly shared
-    mRenderer->Initialize(1);
-
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
     mWindowColor = GetSystemColor(COLOR_WINDOW);
     mWindowFrameColor = GetSystemColor(COLOR_WINDOWFRAME);
@@ -636,6 +632,10 @@ class TestViewerWindow final {
         break;
       }
     }
+
+    // We pass 1 as the swapchain length as we use a buffer; we need to do this
+    // as swapchain textures can't be directly shared
+    mRenderer->Initialize(1);
   }
 };
 

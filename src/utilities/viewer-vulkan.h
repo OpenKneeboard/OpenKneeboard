@@ -71,11 +71,21 @@ class VulkanRenderer final : public Renderer {
 
   unique_vk<VkDevice> mVKDevice;
 
+  HANDLE mDestHandle {};
+  unique_vk<VkImage> mDestImage;
+  unique_vk<VkImageView> mDestImageView;
+
+  HANDLE mSemaphoreHandle {};
+  unique_vk<VkSemaphore> mSemaphore;
+
   // Last as it caches some Vulkan resources; as Vulkan doesn't internally use
   // refcounting, we need to make sure these are released before the `unique_vk`
   // above.
   SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::Viewer};
   std::unique_ptr<OpenKneeboard::Vulkan::SpriteBatch> mSpriteBatch;
+
+  void InitializeSemaphore(HANDLE);
+  void InitializeDest(HANDLE);
 };
 
 }// namespace OpenKneeboard::Viewer

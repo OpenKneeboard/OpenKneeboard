@@ -269,9 +269,39 @@ uint64_t VulkanRenderer::Render(
   HANDLE destTexture,
   const PixelSize& destTextureDimensions,
   const PixelRect& destRect,
-  HANDLE fence,
-  uint64_t fenceValueIn) {
-  return fenceValueIn;
+  HANDLE semaphoreHandle,
+  uint64_t semaphoreValueIn) {
+  this->InitializeSemaphore(semaphoreHandle);
+  return semaphoreValueIn;
+}
+
+void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
+  if (handle == mSemaphoreHandle) {
+    return;
+  }
+
+  VkSemaphoreTypeCreateInfoKHR typeCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR,
+    .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR,
+  };
+
+  VkSemaphoreCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    .pNext = &typeCreateInfo,
+  };
+
+  mSemaphore
+    = mVK->make_unique<VkSemaphore>(mVKDevice.get(), &createInfo, nullptr);
+
+  VkImportSemaphoreWin32HandleInfoKHR importInfo {
+    .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
+    .semaphore = mSemaphore.get(),
+    .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
+    .handle = handle,
+  };
+
+  check_vkresult(
+    mVK->ImportSemaphoreWin32HandleKHR(mVKDevice.get(), &importInfo));
 }
 
 }// namespace OpenKneeboard::Viewer

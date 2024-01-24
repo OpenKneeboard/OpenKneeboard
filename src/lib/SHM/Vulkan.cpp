@@ -53,12 +53,13 @@ void Texture::CopyFrom(
   const VkAllocationCallbacks* allocator,
   VkCommandBuffer commandBuffer,
   HANDLE texture,
-  HANDLE fence,
-  uint64_t fenceValueIn,
-  uint64_t fenceValueOut) noexcept {
+  HANDLE semaphore,
+  uint64_t semaphoreValueIn,
+  uint64_t semaphoreValueOut,
+  VkFence completionFence) noexcept {
   this->InitializeImages(
     vk, device, physicalDevice, queueFamilyIndex, allocator, texture);
-  this->InitializeFence(vk, device, allocator, fence);
+  this->InitializeSemaphore(vk, device, allocator, semaphore);
 
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -78,16 +79,58 @@ void Texture::CopyFrom(
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .layerCount = 1,
       },
-      .extent = { dimensions.mWidth, dimensions.mHeight },
+      .extent = { dimensions.mWidth, dimensions.mHeight, 1 },
     },
   };
+
+  const auto srcLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+  const auto destLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+  std::vector<VkImageMemoryBarrier> inBarriers {
+    VkImageMemoryBarrier {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .newLayout = srcLayout,
+      .image = mSourceImage.get(),
+      .subresourceRange = VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
+    },
+    VkImageMemoryBarrier {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .oldLayout = mImageLayout,
+      .newLayout = destLayout,
+      .image = mImage.get(),
+      .subresourceRange = VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
+    },
+  };
+
+  vk->CmdPipelineBarrier(
+    commandBuffer,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    0,
+    0,
+    nullptr,
+    0,
+    nullptr,
+    static_cast<uint32_t>(inBarriers.size()),
+    inBarriers.data());
 
   vk->CmdCopyImage(
     commandBuffer,
     mSourceImage.get(),
-    VK_IMAGE_LAYOUT_GENERAL,
+    srcLayout,
     mImage.get(),
-    VK_IMAGE_LAYOUT_GENERAL,
+    destLayout,
     std::size(regions),
     regions);
 
@@ -96,15 +139,15 @@ void Texture::CopyFrom(
   VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
     .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
     .waitSemaphoreValueCount = 1,
-    .pWaitSemaphoreValues = &fenceValueIn,
+    .pWaitSemaphoreValues = &semaphoreValueIn,
     .signalSemaphoreValueCount = 1,
-    .pSignalSemaphoreValues = &fenceValueOut,
+    .pSignalSemaphoreValues = &semaphoreValueOut,
   };
 
   // TODO: is COPY_BIT enough?
   VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
 
-  VkSemaphore semaphores[] = {mFence.get()};
+  VkSemaphore semaphores[] = {mSemaphore.get()};
 
   VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
@@ -118,7 +161,7 @@ void Texture::CopyFrom(
     .pSignalSemaphores = semaphores,
   };
 
-  check_vkresult(vk->QueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+  check_vkresult(vk->QueueSubmit(queue, 1, &submitInfo, completionFence));
 }
 
 void Texture::InitializeImages(
@@ -131,20 +174,31 @@ void Texture::InitializeImages(
   if (imageHandle == mSourceImageHandle) {
     return;
   }
-  OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeFence");
+  OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeImages()");
 
   const auto dimensions = this->GetDimensions();
 
+  VkExternalMemoryImageCreateInfoKHR externalCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO_KHR,
+    .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT_KHR,
+  };
+
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
+  // TODO: Using VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT here because - like all the
+  // other renderers - I'm using an SRGB view on a UNORM texture. That gets good
+  // results, but probably means I'm messing something up earlier.
   VkImageCreateInfo createInfo {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+    .pNext = &externalCreateInfo,
+    .flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT,
+    .imageType = VK_IMAGE_TYPE_2D,
     .format = VK_FORMAT_B8G8R8A8_UNORM,
-    .extent = {dimensions.mWidth, dimensions.mHeight},
+    .extent = {dimensions.mWidth, dimensions.mHeight, 1},
     .mipLevels = 1,
     .arrayLayers = 1,
+    .samples = VK_SAMPLE_COUNT_1_BIT,
     .tiling = VK_IMAGE_TILING_OPTIMAL,
-    .usage
-    = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+    .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     .queueFamilyIndexCount = 1,
     .pQueueFamilyIndices = &queueFamilyIndex,
@@ -153,7 +207,13 @@ void Texture::InitializeImages(
 
   mSourceImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
   if (!mImage) {
+    createInfo.pNext = nullptr;
+    createInfo.usage
+      = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
     mImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
+    mRenderTargetView = {};
+    mImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   }
 
   VkImageMemoryRequirementsInfo2KHR memoryInfo {
@@ -246,12 +306,12 @@ void Texture::InitializeImages(
   mSourceImageHandle = imageHandle;
 }
 
-void Texture::InitializeFence(
+void Texture::InitializeSemaphore(
   OpenKneeboard::Vulkan::Dispatch* vk,
   VkDevice device,
   const VkAllocationCallbacks* allocator,
   HANDLE fenceHandle) {
-  if (fenceHandle == mFenceHandle) {
+  if (fenceHandle == mSemaphoreHandle) {
     return;
   }
   OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeFence");
@@ -266,18 +326,18 @@ void Texture::InitializeFence(
     .pNext = &typeCreateInfo,
   };
 
-  mFence = vk->make_unique<VkSemaphore>(device, &createInfo, allocator);
+  mSemaphore = vk->make_unique<VkSemaphore>(device, &createInfo, allocator);
 
   VkImportSemaphoreWin32HandleInfoKHR importInfo {
     .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
-    .semaphore = mFence.get(),
+    .semaphore = mSemaphore.get(),
     .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
     .handle = fenceHandle,
   };
 
   check_vkresult(vk->ImportSemaphoreWin32HandleKHR(device, &importInfo));
 
-  mFenceHandle = fenceHandle;
+  mSemaphoreHandle = fenceHandle;
 }
 
 CachedReader::CachedReader(ConsumerKind consumerKind)
@@ -287,6 +347,20 @@ CachedReader::CachedReader(ConsumerKind consumerKind)
 
 CachedReader::~CachedReader() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::~CachedReader()");
+
+  if (mCompletionFence) {
+    VkFence fences[] {mCompletionFence.get()};
+    check_vkresult(
+      mVK->WaitForFences(mDevice, std::size(fences), fences, true, ~(0ui64)));
+  }
+
+  mVK->FreeCommandBuffers(
+    mDevice,
+    mCommandPool.get(),
+    static_cast<uint32_t>(mCommandBuffers.size()),
+    mCommandBuffers.data());
+
+  dprint("hitting autos");
 }
 
 void CachedReader::InitializeCache(
@@ -330,6 +404,15 @@ void CachedReader::InitializeCache(
       mVK->AllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()));
   }
 
+  {
+    VkFenceCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+      .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+    mCompletionFence
+      = mVK->make_unique<VkFence>(mDevice, &createInfo, mAllocator);
+  }
+
   SHM::CachedReader::InitializeCache(swapchainLength);
 }
 
@@ -337,10 +420,13 @@ void CachedReader::Copy(
   uint8_t swapchainIndex,
   HANDLE sourceTexture,
   IPCClientTexture* destinationTexture,
-  HANDLE fence,
-  uint64_t fenceValueIn,
-  uint64_t fenceValueOut) noexcept {
+  HANDLE semaphore,
+  uint64_t semaphoreValueIn,
+  uint64_t semaphoreValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::Copy()");
+
+  VkFence fences[] {mCompletionFence.get()};
+  check_vkresult(mVK->ResetFences(mDevice, std::size(fences), fences));
 
   reinterpret_cast<Texture*>(destinationTexture)
     ->CopyFrom(
@@ -352,9 +438,10 @@ void CachedReader::Copy(
       mAllocator,
       mCommandBuffers.at(swapchainIndex),
       sourceTexture,
-      fence,
-      fenceValueIn,
-      fenceValueOut);
+      semaphore,
+      semaphoreValueIn,
+      semaphoreValueOut,
+      mCompletionFence.get());
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
@@ -371,6 +458,35 @@ InstanceCreateInfo::InstanceCreateInfo(const VkInstanceCreateInfo& base)
 
 DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
   : ExtendedCreateInfo(base, CachedReader::REQUIRED_DEVICE_EXTENSIONS) {
+  bool enabledTimelineSemaphores = false;
+
+  for (auto next = reinterpret_cast<const VkBaseOutStructure*>(pNext); next;
+       next = next->pNext) {
+    auto mut = const_cast<VkBaseOutStructure*>(next);
+    switch (next->sType) {
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES: {
+        auto it = reinterpret_cast<VkPhysicalDeviceVulkan12Features*>(mut);
+        it->timelineSemaphore = true;
+        enabledTimelineSemaphores = true;
+        continue;
+      }
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR: {
+        auto it
+          = reinterpret_cast<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR*>(
+            mut);
+        it->timelineSemaphore = true;
+        enabledTimelineSemaphores = true;
+        continue;
+      }
+    }
+  }
+
+  if (!enabledTimelineSemaphores) {
+    auto it = &mTimelineSemaphores;
+    it->timelineSemaphore = true;
+    it->pNext = const_cast<void*>(pNext);
+    pNext = it;
+  }
 }
 
 };// namespace OpenKneeboard::SHM::Vulkan

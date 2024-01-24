@@ -69,6 +69,7 @@
   IT(DestroyShaderModule) \
   IT(EndCommandBuffer) \
   IT(EnumeratePhysicalDevices) \
+  IT(FreeCommandBuffers) \
   IT(FreeMemory) \
   IT(FlushMappedMemoryRanges) \
   IT(GetBufferMemoryRequirements) \
