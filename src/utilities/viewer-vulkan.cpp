@@ -239,7 +239,14 @@ std::wstring_view VulkanRenderer::GetName() const noexcept {
 }
 
 void VulkanRenderer::Initialize(uint8_t swapchainLength) {
-  // TODO
+  mSHM.InitializeCache(
+    mVK.get(),
+    mVKDevice.get(),
+    mVKPhysicalDevice,
+    mQueueFamilyIndex,
+    0,
+    nullptr,
+    swapchainLength);
 }
 
 void VulkanRenderer::SaveTextureToFile(

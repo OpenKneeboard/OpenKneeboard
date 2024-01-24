@@ -54,8 +54,6 @@ class VulkanRenderer final : public Renderer {
     uint64_t fenceValueIn) override;
 
  private:
-  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::Viewer};
-
   unique_hmodule mVulkanLoader;
 
   template <class T>
@@ -72,6 +70,11 @@ class VulkanRenderer final : public Renderer {
   uint32_t mQueueFamilyIndex;
 
   unique_vk<VkDevice> mVKDevice;
+
+  // Last as it caches some Vulkan resources; as Vulkan doesn't internally use
+  // refcounting, we need to make sure these are released before the `unique_vk`
+  // above.
+  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::Viewer};
 };
 
 }// namespace OpenKneeboard::Viewer
