@@ -87,6 +87,7 @@ OpenXRKneeboard::OpenXRKneeboard(
   const std::shared_ptr<OpenXRNext>& next)
   : mOpenXR(next) {
   dprintf("{}", __FUNCTION__);
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRKneeboard::OpenXRKneeboard()");
 
   mRenderCacheKeys.fill(~(0ui64));
 
@@ -99,23 +100,17 @@ OpenXRKneeboard::OpenXRKneeboard(
 
   auto oxr = next.get();
 
-  XrResult nextResult
-    = oxr->xrCreateReferenceSpace(session, &referenceSpace, &mLocalSpace);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to create LOCAL reference space: {}", nextResult);
-    return;
-  }
+  check_xrresult(
+    oxr->xrCreateReferenceSpace(session, &referenceSpace, &mLocalSpace));
 
   referenceSpace.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-  nextResult
-    = oxr->xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to create VIEW reference space: {}", nextResult);
-    return;
-  }
+  check_xrresult(
+    oxr->xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace));
 }
 
 OpenXRKneeboard::~OpenXRKneeboard() {
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRKneeboard::OpenXRKneeboard()");
+
   if (mLocalSpace) {
     mOpenXR->xrDestroySpace(mLocalSpace);
   }
@@ -167,6 +162,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
   uint8_t topMost = layerCount - 1;
 
   if (!mSwapchain) {
+    OPENKNEEBOARD_TraceLoggingScope("Create swapchain");
     const auto size = Spriting::GetBufferSize(MaxLayers);
 
     mSwapchain = this->CreateSwapchain(session, size, config.mVR.mQuirks);
@@ -269,16 +265,10 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   XrResult nextResult;
   {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "next_xrEndFrame()");
+    OPENKNEEBOARD_TraceLoggingScope("next_xrEndFrame");
     nextResult
       = check_xrresult(mOpenXR->xrEndFrame(session, &nextFrameEndInfo));
-    TraceLoggingWriteStop(subActivity, "next_xrEndFrame()");
   }
-  TraceLoggingWriteStop(
-    activity,
-    "xrEndFrame",
-    TraceLoggingValue(static_cast<const int64_t>(nextResult), "XrResult"));
   return nextResult;
 }
 

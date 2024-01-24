@@ -50,7 +50,6 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard()");
-  TraceLoggingWrite(gTraceProvider, "OpenXRD3D11Kneeboard()");
 
   mDevice.copy_from(binding.device);
   mDevice->GetImmediateContext(mImmediateContext.put());
