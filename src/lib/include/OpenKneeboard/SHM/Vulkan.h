@@ -20,6 +20,7 @@
 #pragma once
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/Vulkan/Dispatch.h>
+#include <OpenKneeboard/Vulkan/ExtendedCreateInfo.h>
 #include <OpenKneeboard/Vulkan/smart-pointers.h>
 
 namespace OpenKneeboard::SHM::Vulkan {
@@ -75,6 +76,16 @@ class Texture final : public SHM::IPCClientTexture {
     VkDevice,
     const VkAllocationCallbacks*,
     HANDLE fence);
+};
+
+struct InstanceCreateInfo
+  : OpenKneeboard::Vulkan::ExtendedCreateInfo<VkInstanceCreateInfo> {
+  InstanceCreateInfo(const VkInstanceCreateInfo& base);
+};
+
+struct DeviceCreateInfo
+  : OpenKneeboard::Vulkan::ExtendedCreateInfo<VkDeviceCreateInfo> {
+  DeviceCreateInfo(const VkDeviceCreateInfo& base);
 };
 
 class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {

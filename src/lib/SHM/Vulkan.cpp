@@ -364,4 +364,13 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
     "SHM::Vulkan::CachedReader::CreateIPCClientTexture()");
   return std::make_shared<Texture>(dimensions);
 }
+
+InstanceCreateInfo::InstanceCreateInfo(const VkInstanceCreateInfo& base)
+  : ExtendedCreateInfo(base, CachedReader::REQUIRED_INSTANCE_EXTENSIONS) {
+}
+
+DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
+  : ExtendedCreateInfo(base, CachedReader::REQUIRED_DEVICE_EXTENSIONS) {
+}
+
 };// namespace OpenKneeboard::SHM::Vulkan

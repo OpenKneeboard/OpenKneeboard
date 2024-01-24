@@ -24,11 +24,20 @@
 #include "smart-pointers.h"
 
 #include <OpenKneeboard/Pixels.h>
+#include <OpenKneeboard/Vulkan/ExtendedCreateInfo.h>
 
 namespace OpenKneeboard::Vulkan {
 
 class SpriteBatch {
  public:
+  struct InstanceCreateInfo : ExtendedCreateInfo<VkInstanceCreateInfo> {
+    InstanceCreateInfo(const VkInstanceCreateInfo& base);
+  };
+
+  struct DeviceCreateInfo : ExtendedCreateInfo<VkDeviceCreateInfo> {
+    DeviceCreateInfo(const VkDeviceCreateInfo& base);
+  };
+
   SpriteBatch() = delete;
   SpriteBatch(
     Dispatch* dispatch,

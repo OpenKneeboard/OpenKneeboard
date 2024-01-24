@@ -34,5 +34,4 @@ std::optional<uint32_t> FindMemoryType(
   VkPhysicalDevice,
   uint32_t filter,
   VkMemoryPropertyFlags flags);
-
 }// namespace OpenKneeboard::Vulkan

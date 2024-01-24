@@ -706,4 +706,13 @@ void SpriteBatch::CreateDescriptorSet(
     mVK->AllocateDescriptorSets(mDevice, &allocInfo, &ret->mDescriptorSet));
 }
 
+SpriteBatch::InstanceCreateInfo::InstanceCreateInfo(
+  const VkInstanceCreateInfo& base)
+  : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_INSTANCE_EXTENSIONS) {
+}
+
+SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
+  : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_DEVICE_EXTENSIONS) {
+}
+
 }// namespace OpenKneeboard::Vulkan
