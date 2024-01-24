@@ -660,7 +660,7 @@ bool ConsumerPattern::Matches(ConsumerKind kind) const {
   return (mKindMask & std23::to_underlying(kind)) == mKindMask;
 }
 
-Snapshot CachedReader::MaybeGet() {
+Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   TraceLoggingThreadActivity<gTraceProvider> activity;
   TraceLoggingWriteStart(activity, "CachedReader::MaybeGet()");
   if (!(*this)) {
@@ -678,20 +678,19 @@ Snapshot CachedReader::MaybeGet() {
     TraceLoggingWriteTagged(activity, "Resetting cached resources");
     mCache = {nullptr};
     mCacheKey = {};
-    std::ranges::fill(mClientTextures, nullptr);
+    mClientTextures = {mClientTextures.size(), nullptr};
 
     mSessionID = this->GetSessionID();
   }
 
   const auto swapchainIndex = mSwapchainIndex;
   if (swapchainIndex >= mClientTextures.size()) [[unlikely]] {
-    dprintf(
-      "`{}`: swapchainIndex {} >= swapchainLength {}; did you call "
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc,
+      "swapchainIndex {} >= swapchainLength {}; did you call "
       "InitializeCache()?",
-      __FUNCSIG__,
       swapchainIndex,
       mClientTextures.size());
-    abort();
   }
   mSwapchainIndex = (mSwapchainIndex + 1) % mClientTextures.size();
 

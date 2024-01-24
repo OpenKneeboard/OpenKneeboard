@@ -251,7 +251,8 @@ class CachedReader : public Reader {
   CachedReader(IPCTextureCopier*, ConsumerKind);
   virtual ~CachedReader();
 
-  Snapshot MaybeGet();
+  Snapshot MaybeGet(
+    const std::source_location& loc = std::source_location::current());
 
  protected:
   void InitializeCache(uint8_t swapchainLength);
