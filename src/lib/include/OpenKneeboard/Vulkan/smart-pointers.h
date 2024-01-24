@@ -49,30 +49,6 @@ namespace Detail {
 template <class T>
 struct ResourceTraits;
 
-#define IT(T) \
-  template <> \
-  struct ResourceTraits<Vk##T> { \
-    using CreateFun = PFN_vkCreate##T; \
-    using CreateInfo = Vk##T##CreateInfo; \
-    using DestroyFun = PFN_vkDestroy##T; \
-  };
-OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES_CREATE_DESTROY
-#undef IT
-
-template <>
-struct ResourceTraits<VkDeviceMemory> {
-  using CreateFun = PFN_vkAllocateMemory;
-  using CreateInfo = VkMemoryAllocateInfo;
-  using DestroyFun = PFN_vkFreeMemory;
-};
-
-template <>
-struct ResourceTraits<VkPipeline> {
-  // No CreateFun or CreateInfo as they vary between compute and graphics
-  // pipelines, and take different parameters to normal.
-  using DestroyFun = PFN_vkDestroyPipeline;
-};
-
 template <class T>
 using CreateFun = ResourceTraits<T>::CreateFun;
 template <class T>
@@ -109,19 +85,6 @@ concept destroyable_handle = Detail::destroy_fun<Detail::DestroyFun<T>, T>;
 
 template <class T>
 concept manageable_handle = creatable_handle<T> && destroyable_handle<T>;
-
-// Just some basic tests
-
-// vkCreateFoo and vkDestroyFoo
-static_assert(manageable_handle<VkBuffer>);
-
-// vkAllocateMemory and vkFreeMemory
-static_assert(manageable_handle<VkDeviceMemory>);
-
-// vkDestroyFoo, but no matching vkCreateFoo
-static_assert(destroyable_handle<VkPipeline>);
-static_assert(!creatable_handle<VkPipeline>);
-static_assert(!manageable_handle<VkPipeline>);
 
 namespace Detail {
 
@@ -166,15 +129,56 @@ class InstanceDeleter {
   const VkAllocationCallbacks* mAllocator {nullptr};
 };
 
-template <class T>
-class unsupported;
+#define IT(T) \
+  template <> \
+  struct ResourceTraits<Vk##T> { \
+    using CreateFun = PFN_vkCreate##T; \
+    using CreateInfo = Vk##T##CreateInfo; \
+    using DestroyFun = PFN_vkDestroy##T; \
+    using Deleter = Deleter<Vk##T>; \
+  };
+OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES_CREATE_DESTROY
+#undef IT
+
+template <>
+struct ResourceTraits<VkDeviceMemory> {
+  using CreateFun = PFN_vkAllocateMemory;
+  using CreateInfo = VkMemoryAllocateInfo;
+  using DestroyFun = PFN_vkFreeMemory;
+  using Deleter = Deleter<VkDeviceMemory>;
+};
+
+template <>
+struct ResourceTraits<VkPipeline> {
+  // No CreateFun or CreateInfo as they vary between compute and graphics
+  // pipelines, and take different parameters to normal.
+  using DestroyFun = PFN_vkDestroyPipeline;
+  using Deleter = Deleter<VkPipeline>;
+};
+
+template <>
+struct ResourceTraits<VkInstance> {
+  using Deleter = InstanceDeleter;
+};
 
 }// namespace Detail
 
-template <destroyable_handle T>
-using unique_ptr = std::unique_ptr<T, Detail::Deleter<T>>;
+// Just some basic tests
 
-using unique_vkinstance = std::unique_ptr<VkInstance, Detail::InstanceDeleter>;
+// vkCreateFoo and vkDestroyFoo
+static_assert(manageable_handle<VkBuffer>);
+
+// vkAllocateMemory and vkFreeMemory
+static_assert(manageable_handle<VkDeviceMemory>);
+
+// vkDestroyFoo, but no matching vkCreateFoo
+static_assert(destroyable_handle<VkPipeline>);
+static_assert(!creatable_handle<VkPipeline>);
+static_assert(!manageable_handle<VkPipeline>);
+
+template <class T>
+using unique_ptr
+  = std::unique_ptr<T, typename Detail::ResourceTraits<T>::Deleter>;
 
 template <class T>
 class MemoryMapping {
