@@ -75,6 +75,7 @@ class VulkanRenderer final : public Renderer {
   // refcounting, we need to make sure these are released before the `unique_vk`
   // above.
   SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::Viewer};
+  std::unique_ptr<OpenKneeboard::Vulkan::SpriteBatch> mSpriteBatch;
 };
 
 }// namespace OpenKneeboard::Viewer

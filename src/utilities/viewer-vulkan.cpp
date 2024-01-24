@@ -226,6 +226,14 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
 
   mVKDevice
     = mVK->make_unique_device(mVKPhysicalDevice, &deviceCreateInfo, nullptr);
+
+  mSpriteBatch = std::make_unique<Vulkan::SpriteBatch>(
+    mVK.get(),
+    mVKPhysicalDevice,
+    mVKDevice.get(),
+    nullptr,
+    mQueueFamilyIndex,
+    0);
 }
 
 VulkanRenderer::~VulkanRenderer() = default;

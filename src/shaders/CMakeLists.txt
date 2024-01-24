@@ -11,7 +11,6 @@ macro(add_shader TARGET ENTRYPOINT SOURCE)
         ThirdParty::dxc
         "$<$<CONFIG:Debug>:-O0>"
         "$<$<CONFIG:Debug>:-Zi>"
-        "$<$<CONFIG:Debug>:-Qembed_debug>"
         -Fh "${SHADER_OUTPUT}"
         -E ${ENTRYPOINT}
         "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE}"
@@ -25,14 +24,14 @@ add_shader(
     OpenKneeboard-SpriteBatch-SPIRV-PS
     SpritePixelShader
     SpriteBatch.hlsl
-    -T ps_6_0
+    -spirv -T ps_6_0
 )
 
 add_shader(
     OpenKneeboard-SpriteBatch-SPIRV-VS
     SpriteVertexShader
     SpriteBatch.hlsl
-    -T vs_6_0
+    -spirv -T vs_6_0
 )
 
 add_library(OpenKneeboard-SpriteBatch-SPIRV INTERFACE)
