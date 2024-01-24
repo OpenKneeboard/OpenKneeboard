@@ -72,7 +72,7 @@ class Dispatch final {
     TResource ret {nullptr};
     check_vkresult(createImpl(device, createInfo, allocator, &ret), loc);
     auto deleter = Detail::Deleter<TResource>(destroyImpl, device, allocator);
-    return unique_ptr<TResource>(ret, deleter);
+    return unique_vk<TResource>(ret, deleter);
   }
 
   auto make_unique_graphics_pipeline(
@@ -85,7 +85,7 @@ class Dispatch final {
       device, pipelineCache, 1, createInfo, allocator, &ret));
     auto deleter
       = Detail::Deleter<VkPipeline>(this->DestroyPipeline, device, allocator);
-    return unique_ptr<VkPipeline>(ret, deleter);
+    return unique_vk<VkPipeline>(ret, deleter);
   }
 
   template <class T>

@@ -25,8 +25,7 @@
 
 namespace OpenKneeboard::SHM::Vulkan {
 
-template <::OpenKneeboard::Vulkan::destroyable_device_handle T>
-using unique_ptr = ::OpenKneeboard::Vulkan::unique_ptr<T>;
+using OpenKneeboard::Vulkan::unique_vk;
 
 class Texture final : public SHM::IPCClientTexture {
  public:
@@ -51,18 +50,18 @@ class Texture final : public SHM::IPCClientTexture {
     uint64_t fenceValueOut) noexcept;
 
  private:
-  unique_ptr<VkDeviceMemory> mImageMemory;
-  unique_ptr<VkImage> mImage;
-  unique_ptr<VkImageView> mRenderTargetView;
+  unique_vk<VkDeviceMemory> mImageMemory;
+  unique_vk<VkImage> mImage;
+  unique_vk<VkImageView> mRenderTargetView;
 
   HANDLE mSourceImageHandle {};
-  unique_ptr<VkDeviceMemory> mSourceImageMemory;
-  unique_ptr<VkImage> mSourceImage;
+  unique_vk<VkDeviceMemory> mSourceImageMemory;
+  unique_vk<VkImage> mSourceImage;
 
   // Using the SHM/D3D naming here; a D3D fence is roughly a VK timeline
   // semaphore
   HANDLE mFenceHandle {};
-  unique_ptr<VkSemaphore> mFence;
+  unique_vk<VkSemaphore> mFence;
 
   void InitializeImages(
     OpenKneeboard::Vulkan::Dispatch*,
@@ -142,7 +141,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   const VkAllocationCallbacks* mAllocator {nullptr};
 
-  unique_ptr<VkCommandPool> mCommandPool;
+  unique_vk<VkCommandPool> mCommandPool;
   std::vector<VkCommandBuffer> mCommandBuffers;
 };
 

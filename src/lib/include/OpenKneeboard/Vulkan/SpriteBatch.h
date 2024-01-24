@@ -92,16 +92,16 @@ class SpriteBatch {
   uint32_t mQueueFamilyIndex {~(0ui32)};
   VkQueue mQueue {nullptr};
 
-  unique_ptr<VkPipelineLayout> mPipelineLayout;
-  unique_ptr<VkPipeline> mPipeline;
+  unique_vk<VkPipelineLayout> mPipelineLayout;
+  unique_vk<VkPipeline> mPipeline;
 
   VkCommandBuffer mCommandBuffer {nullptr};
   VkImageView mTarget {nullptr};
   PixelSize mTargetSize;
   std::optional<Color> mClearColor;
 
-  unique_ptr<VkShaderModule> mPixelShader;
-  unique_ptr<VkShaderModule> mVertexShader;
+  unique_vk<VkShaderModule> mPixelShader;
+  unique_vk<VkShaderModule> mVertexShader;
 
   PixelSize mDestSize;
 
@@ -144,8 +144,8 @@ class SpriteBatch {
 
   template <class T>
   struct Buffer {
-    unique_ptr<VkBuffer> mBuffer;
-    unique_ptr<VkDeviceMemory> mMemory;
+    unique_vk<VkBuffer> mBuffer;
+    unique_vk<VkDeviceMemory> mMemory;
     MemoryMapping<T> mMapping;
   };
 
@@ -154,10 +154,10 @@ class SpriteBatch {
   void CreateVertexBuffer();
 
   struct DescriptorSet : public Buffer<std::byte> {
-    unique_ptr<VkDescriptorSetLayout> mLayout;
+    unique_vk<VkDescriptorSetLayout> mLayout;
     VkDeviceSize mDescriptorSize {};
     VkDeviceSize mOffset {};
-    unique_ptr<VkDescriptorPool> mDescriptorPool {};
+    unique_vk<VkDescriptorPool> mDescriptorPool {};
     VkDescriptorSet mDescriptorSet {};
   };
 
@@ -170,7 +170,7 @@ class SpriteBatch {
     DescriptorSet*,
     const std::source_location& loc = std::source_location::current());
 
-  unique_ptr<VkSampler> mSampler;
+  unique_vk<VkSampler> mSampler;
   DescriptorSet mSamplerDescriptorSet;
 
   void CreateSampler();

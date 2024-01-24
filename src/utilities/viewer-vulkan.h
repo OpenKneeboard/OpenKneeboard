@@ -59,7 +59,7 @@ class VulkanRenderer final : public Renderer {
   unique_hmodule mVulkanLoader;
 
   template <class T>
-  using unique_vk = OpenKneeboard::Vulkan::unique_ptr<T>;
+  using unique_vk = OpenKneeboard::Vulkan::unique_vk<T>;
   unique_vk<VkInstance> mVKInstance;
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 };

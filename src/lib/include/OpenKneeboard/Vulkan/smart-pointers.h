@@ -179,7 +179,7 @@ static_assert(!creatable_device_handle<VkPipeline>);
 static_assert(!manageable_device_handle<VkPipeline>);
 
 template <class T>
-using unique_ptr
+using unique_vk
   = std::unique_ptr<T, typename Detail::ResourceTraits<T>::Deleter>;
 
 template <class T>
