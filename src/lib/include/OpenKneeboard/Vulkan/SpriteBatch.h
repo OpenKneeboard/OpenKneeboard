@@ -48,6 +48,10 @@ class SpriteBatch {
     const PixelSize& size,
     const std::source_location& loc = std::source_location::current());
 
+  void Clear(
+    Color color = Colors::Transparent,
+    const std::source_location& loc = std::source_location::current());
+
   void Draw(
     VkImageView source,
     const PixelSize& sourceSize,
@@ -80,6 +84,7 @@ class SpriteBatch {
 
   VkImageView mTarget {nullptr};
   PixelSize mTargetSize;
+  std::optional<Color> mClearColor;
 
   unique_ptr<VkShaderModule> mPixelShader;
   unique_ptr<VkShaderModule> mVertexShader;

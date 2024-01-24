@@ -277,6 +277,14 @@ void SpriteBatch::Draw(
   mSprites.push_back({source, sourceSize, sourceRect, destRect, color});
 }
 
+void SpriteBatch::Clear(Color color, const std::source_location& caller) {
+  if (!mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      caller, "Calling Clear() without Begin()");
+  }
+  mClearColor = color;
+}
+
 void SpriteBatch::End(
   VkFence completionFence,
   const std::source_location& loc) {
@@ -467,6 +475,23 @@ void SpriteBatch::End(
     0,
     nullptr);
 
+  if (mClearColor) {
+    VkClearAttachment clear {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .colorAttachment = 0,
+      .clearValue = {
+        .color = {
+          .float32 = {
+            (*mClearColor)[0],
+            (*mClearColor)[1],
+            (*mClearColor)[2],
+            (*mClearColor)[3],
+          },
+        },
+      },
+    };
+  }
+
   mVK->CmdDrawIndexed(mCommandBuffer, vertices.size(), 1, 0, 0, 0);
 
   mVK->CmdEndRenderingKHR(mCommandBuffer);
@@ -485,6 +510,7 @@ void SpriteBatch::End(
 
   mSprites.clear();
   mTarget = nullptr;
+  mClearColor = {};
 }
 
 VkVertexInputBindingDescription SpriteBatch::Vertex::GetBindingDescription() {

@@ -31,6 +31,7 @@
   IT(CmdBindVertexBuffers) \
   IT(CmdBindPipeline) \
   IT(CmdBlitImage) \
+  IT(CmdClearAttachments) \
   IT(CmdCopyImage) \
   IT(CmdDrawIndexed) \
   IT(CmdEndRenderingKHR) \
