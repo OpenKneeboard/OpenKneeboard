@@ -78,17 +78,19 @@ concept destroy_fun = std::invocable<
 }// namespace Detail
 
 template <class T>
-concept creatable_handle = Detail::create_fun<Detail::CreateFun<T>, T>;
+concept creatable_device_handle = Detail::create_fun<Detail::CreateFun<T>, T>;
 
 template <class T>
-concept destroyable_handle = Detail::destroy_fun<Detail::DestroyFun<T>, T>;
+concept destroyable_device_handle
+  = Detail::destroy_fun<Detail::DestroyFun<T>, T>;
 
 template <class T>
-concept manageable_handle = creatable_handle<T> && destroyable_handle<T>;
+concept manageable_device_handle
+  = creatable_device_handle<T> && destroyable_device_handle<T>;
 
 namespace Detail {
 
-template <destroyable_handle T>
+template <destroyable_device_handle T>
 class Deleter {
  public:
   using pointer = T;
@@ -166,15 +168,15 @@ struct ResourceTraits<VkInstance> {
 // Just some basic tests
 
 // vkCreateFoo and vkDestroyFoo
-static_assert(manageable_handle<VkBuffer>);
+static_assert(manageable_device_handle<VkBuffer>);
 
 // vkAllocateMemory and vkFreeMemory
-static_assert(manageable_handle<VkDeviceMemory>);
+static_assert(manageable_device_handle<VkDeviceMemory>);
 
 // vkDestroyFoo, but no matching vkCreateFoo
-static_assert(destroyable_handle<VkPipeline>);
-static_assert(!creatable_handle<VkPipeline>);
-static_assert(!manageable_handle<VkPipeline>);
+static_assert(destroyable_device_handle<VkPipeline>);
+static_assert(!creatable_device_handle<VkPipeline>);
+static_assert(!manageable_device_handle<VkPipeline>);
 
 template <class T>
 using unique_ptr

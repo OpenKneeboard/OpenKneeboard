@@ -25,7 +25,7 @@
 
 namespace OpenKneeboard::SHM::Vulkan {
 
-template <::OpenKneeboard::Vulkan::destroyable_handle T>
+template <::OpenKneeboard::Vulkan::destroyable_device_handle T>
 using unique_ptr = ::OpenKneeboard::Vulkan::unique_ptr<T>;
 
 class Texture final : public SHM::IPCClientTexture {

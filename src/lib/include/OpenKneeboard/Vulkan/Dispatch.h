@@ -35,9 +35,9 @@ class Dispatch final {
 #undef IT
 
  private:
-  template <creatable_handle T>
+  template <creatable_device_handle T>
   auto GetCreateFun() const;
-  template <destroyable_handle T>
+  template <destroyable_device_handle T>
   auto GetDestroyFun() const;
 
 #define IT(T) \
@@ -61,7 +61,7 @@ class Dispatch final {
   }
 
  public:
-  template <manageable_handle TResource>
+  template <manageable_device_handle TResource>
   auto make_unique(
     VkDevice device,
     const typename Detail::CreateInfo<TResource>* createInfo,
