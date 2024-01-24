@@ -56,6 +56,7 @@
   IT(DestroyCommandPool) \
   IT(DestroyDescriptorPool) \
   IT(DestroyDescriptorSetLayout) \
+  IT(DestroyDevice) \
   IT(DestroyFence) \
   IT(DestroyImage) \
   IT(DestroyImageView) \

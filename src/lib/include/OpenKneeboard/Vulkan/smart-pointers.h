@@ -112,25 +112,6 @@ class Deleter {
   const VkAllocationCallbacks* mAllocator {nullptr};
 };
 
-class InstanceDeleter {
- public:
-  using pointer = VkInstance;
-  InstanceDeleter() = default;
-  constexpr InstanceDeleter(
-    PFN_vkDestroyInstance impl,
-    const VkAllocationCallbacks* allocator)
-    : mImpl(impl), mAllocator(allocator) {
-  }
-
-  inline void operator()(VkInstance instance) const {
-    mImpl(instance, mAllocator);
-  }
-
- private:
-  PFN_vkDestroyInstance mImpl {nullptr};
-  const VkAllocationCallbacks* mAllocator {nullptr};
-};
-
 #define IT(T) \
   template <> \
   struct ResourceTraits<Vk##T> { \
@@ -158,9 +139,36 @@ struct ResourceTraits<VkPipeline> {
   using Deleter = Deleter<VkPipeline>;
 };
 
+template <class T>
+class StandaloneDeleter {
+ public:
+  using pointer = T;
+  using DestroyFun = void (*)(T, const VkAllocationCallbacks*);
+
+  StandaloneDeleter() = default;
+  constexpr StandaloneDeleter(
+    DestroyFun impl,
+    const VkAllocationCallbacks* allocator)
+    : mImpl(impl), mAllocator(allocator) {
+  }
+
+  inline void operator()(T instance) const {
+    mImpl(instance, mAllocator);
+  }
+
+ private:
+  DestroyFun mImpl {nullptr};
+  const VkAllocationCallbacks* mAllocator {nullptr};
+};
+
 template <>
 struct ResourceTraits<VkInstance> {
-  using Deleter = InstanceDeleter;
+  using Deleter = StandaloneDeleter<VkInstance>;
+};
+
+template <>
+struct ResourceTraits<VkDevice> {
+  using Deleter = StandaloneDeleter<VkDevice>;
 };
 
 }// namespace Detail

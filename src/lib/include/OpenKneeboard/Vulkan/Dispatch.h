@@ -69,23 +69,31 @@ class Dispatch final {
     const std::source_location& loc = std::source_location::current()) {
     auto createImpl = this->GetCreateFun<TResource>();
     auto destroyImpl = this->GetDestroyFun<TResource>();
-    TResource ret {nullptr};
+    TResource ret {VK_NULL_HANDLE};
     check_vkresult(createImpl(device, createInfo, allocator, &ret), loc);
-    auto deleter = Detail::Deleter<TResource>(destroyImpl, device, allocator);
-    return unique_vk<TResource>(ret, deleter);
+    return unique_vk<TResource>(ret, {destroyImpl, device, allocator});
   }
 
-  auto make_unique_graphics_pipeline(
+  inline auto make_unique_device(
+    VkPhysicalDevice physicalDevice,
+    const VkDeviceCreateInfo* createInfo,
+    const VkAllocationCallbacks* allocator) {
+    VkDevice ret {VK_NULL_HANDLE};
+    check_vkresult(
+      this->CreateDevice(physicalDevice, createInfo, allocator, &ret));
+    return unique_vk<VkDevice>(ret, {this->DestroyDevice, allocator});
+  }
+
+  inline auto make_unique_graphics_pipeline(
     VkDevice device,
     VkPipelineCache pipelineCache,
     const VkGraphicsPipelineCreateInfo* createInfo,
     const VkAllocationCallbacks* allocator) {
-    VkPipeline ret;
+    VkPipeline ret {VK_NULL_HANDLE};
     check_vkresult(this->CreateGraphicsPipelines(
       device, pipelineCache, 1, createInfo, allocator, &ret));
-    auto deleter
-      = Detail::Deleter<VkPipeline>(this->DestroyPipeline, device, allocator);
-    return unique_vk<VkPipeline>(ret, deleter);
+    return unique_vk<VkPipeline>(
+      ret, {this->DestroyPipeline, device, allocator});
   }
 
   template <class T>
