@@ -142,12 +142,14 @@ target_link_libraries(
   OpenKneeboard-version
 )
 
-file(
-  GENERATE
-  OUTPUT "OpenKneeboard-OpenXR.json"
-  INPUT "OpenKneeboard-OpenXR.json.in"
-  NEWLINE_STYLE UNIX
-)
+foreach(PREFIX IN ITEMS "" "$<TARGET_FILE_DIR:OpenKneeboard-OpenXR>/")
+  file(
+    GENERATE
+    OUTPUT "${PREFIX}OpenKneeboard-OpenXR.json"
+    INPUT "OpenKneeboard-OpenXR.json.in"
+    NEWLINE_STYLE UNIX
+  )
+endforeach()
 
 add_module_library(OpenKneeboard-AutoDetect InjectionBootstrapper.cpp)
 target_link_libraries(
