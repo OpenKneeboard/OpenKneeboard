@@ -227,7 +227,10 @@ void OpenXRD3D11Kneeboard::RenderLayers(
   const auto& sr = mSwapchainResources.at(swapchain);
   const auto& br = sr.mBufferResources.at(swapchainTextureIndex);
 
-  mSpriteBatch->Begin(br.mRenderTargetView.get(), sr.mDimensions);
+  auto dest = br.mRenderTargetView.get();
+  mImmediateContext->ClearRenderTargetView(dest, DirectX::Colors::Transparent);
+
+  mSpriteBatch->Begin(dest, sr.mDimensions);
   const auto layerCount = snapshot.GetLayerCount();
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     const auto sourceRect
