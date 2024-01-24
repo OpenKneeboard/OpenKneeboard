@@ -33,11 +33,13 @@
 namespace OpenKneeboard::SHM::D3D12 {
 
 Texture::Texture(
+  const PixelSize& dimensions,
   const winrt::com_ptr<ID3D12Device>& device,
   ID3D12DescriptorHeap* shaderResourceViewHeap,
   const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
   const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle)
-  : mDevice(device),
+  : IPCClientTexture(dimensions),
+    mDevice(device),
     mShaderResourceViewCPUHandle(shaderResourceViewCPUHandle),
     mShaderResourceViewGPUHandle(shaderResourceViewGPUHandle) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::Texture()");
@@ -131,10 +133,6 @@ void Texture::InitializeSource(
       mDevice->OpenSharedHandle(fenceHandle, IID_PPV_ARGS(mSourceFence.put())));
     mSourceFenceHandle = fenceHandle;
   }
-}
-
-PixelSize Texture::GetDimensions() const {
-  return mTextureDimensions;
 }
 
 void Texture::CopyFrom(
@@ -232,10 +230,12 @@ void CachedReader::InitializeCache(
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
-  [[maybe_unused]] uint8_t swapchainIndex) noexcept {
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::D3D12::CachedReader::CreateIPCClientTexture()");
   return std::make_shared<SHM::D3D12::Texture>(
+    dimensions,
     mD3D12Device,
     mShaderResourceViewHeap->Heap(),
     mShaderResourceViewHeap->GetCpuHandle(swapchainIndex),

@@ -29,13 +29,12 @@ using unique_ptr = ::OpenKneeboard::Vulkan::unique_ptr<T>;
 
 class Texture final : public SHM::IPCClientTexture {
  public:
-  Texture();
+  Texture() = delete;
+  Texture(const PixelSize&);
   virtual ~Texture();
 
   VkImage GetVKImage();
   VkImageView GetVKRenderTargetView();
-
-  PixelSize GetDimensions() const;
 
   void CopyFrom(
     OpenKneeboard::Vulkan::Dispatch*,
@@ -44,17 +43,13 @@ class Texture final : public SHM::IPCClientTexture {
     VkQueue queue,
     uint32_t queueFamilyIndex,
     const VkAllocationCallbacks*,
-    VkQueue,
     VkCommandBuffer,
     HANDLE texture,
-    const PixelSize& textureDimensions,
     HANDLE fence,
     uint64_t fenceValueIn,
     uint64_t fenceValueOut) noexcept;
 
  private:
-  PixelSize mDimensions;
-
   unique_ptr<VkDeviceMemory> mImageMemory;
   unique_ptr<VkImage> mImage;
   unique_ptr<VkImageView> mRenderTargetView;
@@ -74,8 +69,7 @@ class Texture final : public SHM::IPCClientTexture {
     VkPhysicalDevice,
     uint32_t queueFamilyIndex,
     const VkAllocationCallbacks*,
-    HANDLE texture,
-    const PixelSize&);
+    HANDLE texture);
   void InitializeFence(
     OpenKneeboard::Vulkan::Dispatch*,
     VkDevice,
@@ -91,7 +85,8 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   void InitializeCache(
     OpenKneeboard::Vulkan::Dispatch*,
-    VkDevice device,
+    VkDevice,
+    VkPhysicalDevice,
     uint32_t queueFamilyIndex,
     uint32_t queueIndex,
     const VkAllocationCallbacks*,
@@ -124,11 +119,16 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     uint64_t fenceValueOut) noexcept override;
 
   virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
+    const PixelSize&,
     uint8_t swapchainIndex) noexcept override;
 
  private:
   OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
-  VkDevice mDevice {nullptr};
+  VkDevice mDevice {};
+  VkPhysicalDevice mPhysicalDevice {};
+  VkQueue mQueue {};
+  uint32_t mQueueFamilyIndex {};
+
   const VkAllocationCallbacks* mAllocator {nullptr};
 
   unique_ptr<VkCommandPool> mCommandPool;

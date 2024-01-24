@@ -28,7 +28,7 @@ namespace OpenKneeboard::SHM::Vulkan {
 
 using OpenKneeboard::Vulkan::check_vkresult;
 
-Texture::Texture() {
+Texture::Texture(const PixelSize& dimensions) : IPCClientTexture(dimensions) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::Texture::Texture()");
 }
 
@@ -44,10 +44,6 @@ VkImageView Texture::GetVKRenderTargetView() {
   return mRenderTargetView.get();
 }
 
-PixelSize Texture::GetDimensions() const {
-  return mDimensions;
-}
-
 void Texture::CopyFrom(
   OpenKneeboard::Vulkan::Dispatch* vk,
   VkDevice device,
@@ -55,21 +51,13 @@ void Texture::CopyFrom(
   VkQueue queue,
   uint32_t queueFamilyIndex,
   const VkAllocationCallbacks* allocator,
-  VkQueue commandQueue,
   VkCommandBuffer commandBuffer,
   HANDLE texture,
-  const PixelSize& textureDimensions,
   HANDLE fence,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   this->InitializeImages(
-    vk,
-    device,
-    physicalDevice,
-    queueFamilyIndex,
-    allocator,
-    texture,
-    textureDimensions);
+    vk, device, physicalDevice, queueFamilyIndex, allocator, texture);
   this->InitializeFence(vk, device, allocator, fence);
 
   VkCommandBufferBeginInfo beginInfo {
@@ -79,6 +67,7 @@ void Texture::CopyFrom(
 
   check_vkresult(vk->BeginCommandBuffer(commandBuffer, &beginInfo));
 
+  const auto dimensions = this->GetDimensions();
   VkImageCopy regions[] { 
     VkImageCopy {
       .srcSubresource = VkImageSubresourceLayers {
@@ -89,7 +78,7 @@ void Texture::CopyFrom(
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .layerCount = 1,
       },
-      .extent = { mDimensions.mWidth, mDimensions.mHeight },
+      .extent = { dimensions.mWidth, dimensions.mHeight },
     },
   };
 
@@ -138,16 +127,13 @@ void Texture::InitializeImages(
   VkPhysicalDevice physicalDevice,
   uint32_t queueFamilyIndex,
   const VkAllocationCallbacks* allocator,
-  HANDLE imageHandle,
-  const PixelSize& dimensions) {
-  const auto resized = (dimensions != mDimensions);
-  if (resized) {
-    mSourceImageHandle = {};
-  }
+  HANDLE imageHandle) {
   if (imageHandle == mSourceImageHandle) {
     return;
   }
   OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeFence");
+
+  const auto dimensions = this->GetDimensions();
 
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
   VkImageCreateInfo createInfo {
@@ -166,7 +152,7 @@ void Texture::InitializeImages(
   };
 
   mSourceImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
-  if (resized) {
+  if (!mImage) {
     mImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
   }
 
@@ -222,7 +208,7 @@ void Texture::InitializeImages(
 
   mSourceImageMemory
     = vk->make_unique<VkDeviceMemory>(device, &allocInfo, allocator);
-  if (resized) {
+  if (!mImageMemory) {
     dedicatedAllocInfo.pNext = nullptr;
     dedicatedAllocInfo.image = mImage.get();
     mImageMemory
@@ -236,7 +222,7 @@ void Texture::InitializeImages(
   };
 
   check_vkresult(vk->BindImageMemory2KHR(device, 1, &bindInfo));
-  if (resized) {
+  if (!mRenderTargetView) {
     bindInfo.image = mImage.get();
     bindInfo.memory = mImageMemory.get();
     check_vkresult(vk->BindImageMemory2KHR(device, 1, &bindInfo));
@@ -257,7 +243,6 @@ void Texture::InitializeImages(
       = vk->make_unique<VkImageView>(device, &viewCreateInfo, allocator);
   }
 
-  mDimensions = dimensions;
   mSourceImageHandle = imageHandle;
 }
 
@@ -307,8 +292,9 @@ CachedReader::~CachedReader() {
 void CachedReader::InitializeCache(
   OpenKneeboard::Vulkan::Dispatch* dispatch,
   VkDevice device,
+  VkPhysicalDevice physicalDevice,
   uint32_t queueFamilyIndex,
-  [[maybe_unused]] uint32_t queueFamily,
+  uint32_t queueIndex,
   const VkAllocationCallbacks* allocator,
   uint8_t swapchainLength) {
   OPENKNEEBOARD_TraceLoggingScope(
@@ -316,7 +302,11 @@ void CachedReader::InitializeCache(
     TraceLoggingValue(swapchainLength, "swapchainLength"));
   mVK = dispatch;
   mDevice = device;
+  mPhysicalDevice = physicalDevice;
   mAllocator = allocator;
+
+  mQueueFamilyIndex = queueFamilyIndex;
+  dispatch->GetDeviceQueue(device, queueFamilyIndex, queueIndex, &mQueue);
 
   {
     VkCommandPoolCreateInfo createInfo {
@@ -351,13 +341,27 @@ void CachedReader::Copy(
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::Copy()");
-  // TODO
+
+  reinterpret_cast<Texture*>(destinationTexture)
+    ->CopyFrom(
+      mVK,
+      mDevice,
+      mPhysicalDevice,
+      mQueue,
+      mQueueFamilyIndex,
+      mAllocator,
+      mCommandBuffers.at(swapchainIndex),
+      sourceTexture,
+      fence,
+      fenceValueIn,
+      fenceValueOut);
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
-  uint8_t swapchainIndex) noexcept {
+  const PixelSize& dimensions,
+  [[maybe_unused]] uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::Vulkan::CachedReader::CreateIPCClientTexture()");
-  return std::make_shared<Texture>();
+  return std::make_shared<Texture>(dimensions);
 }
 };// namespace OpenKneeboard::SHM::Vulkan

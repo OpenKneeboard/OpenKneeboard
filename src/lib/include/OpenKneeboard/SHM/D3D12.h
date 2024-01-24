@@ -33,13 +33,12 @@ class Texture final : public SHM::IPCClientTexture {
  public:
   Texture() = delete;
   Texture(
+    const PixelSize&,
     const winrt::com_ptr<ID3D12Device>&,
     ID3D12DescriptorHeap* shaderResourceViewHeap,
     const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
     const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle);
   virtual ~Texture();
-
-  PixelSize GetDimensions() const;
 
   ID3D12Resource* GetD3D12Texture();
   D3D12_GPU_DESCRIPTOR_HANDLE GetD3D12ShaderResourceViewGPUHandle();
@@ -94,6 +93,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     uint64_t fenceValueOut) noexcept override;
 
   virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
+    const PixelSize&,
     uint8_t swapchainIndex) noexcept override;
 
  private:

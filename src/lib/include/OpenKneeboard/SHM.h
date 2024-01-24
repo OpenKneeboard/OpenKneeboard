@@ -58,7 +58,18 @@ static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 // See SHM::D3D11::IPCClientTexture etc
 class IPCClientTexture {
  public:
+  IPCClientTexture() = delete;
   virtual ~IPCClientTexture();
+
+  inline const PixelSize GetDimensions() const {
+    return mDimensions;
+  }
+
+ protected:
+  IPCClientTexture(const PixelSize&);
+
+ private:
+  const PixelSize mDimensions;
 };
 
 // See SHM::D3D11::CachedReader etc
@@ -245,9 +256,8 @@ class CachedReader : public Reader {
  protected:
   void InitializeCache(uint8_t swapchainLength);
 
-  virtual std::shared_ptr<IPCClientTexture> CreateIPCClientTexture(
-    uint8_t swapchainIndex) noexcept
-    = 0;
+  virtual std::shared_ptr<IPCClientTexture>
+  CreateIPCClientTexture(const PixelSize&, uint8_t swapchainIndex) noexcept = 0;
 
  private:
   IPCTextureCopier* mTextureCopier {nullptr};
@@ -261,6 +271,7 @@ class CachedReader : public Reader {
   std::vector<std::shared_ptr<IPCClientTexture>> mClientTextures;
 
   std::shared_ptr<IPCClientTexture> GetIPCClientTexture(
+    const PixelSize&,
     uint8_t swapchainIndex) noexcept;
 };
 

@@ -706,13 +706,15 @@ Snapshot CachedReader::MaybeGet() {
     return mCache;
   }
 
-  auto dest = GetIPCClientTexture(swapchainIndex);
-
   TraceLoggingWriteTagged(activity, "LockingSHM");
   std::unique_lock lock(*p);
   TraceLoggingWriteTagged(activity, "LockedSHM");
   TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
   TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
+
+  const auto dimensions = p->mHeader->mConfig.mTextureSize;
+  auto dest = GetIPCClientTexture(dimensions, swapchainIndex);
+
   auto snapshot = this->MaybeGetUncached(mTextureCopier, dest, mConsumerKind);
   const auto state = snapshot.GetState();
   TraceLoggingWriteStop(
@@ -741,16 +743,25 @@ Snapshot CachedReader::MaybeGet() {
 }
 
 std::shared_ptr<IPCClientTexture> CachedReader::GetIPCClientTexture(
+  const PixelSize& dimensions,
   uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
     "CachedReader::GetIPCClientTexture",
     TraceLoggingValue(swapchainIndex, "swapchainIndex"));
   auto& ret = mClientTextures.at(swapchainIndex);
+  if (ret && ret->GetDimensions() != dimensions) {
+    ret = {};
+  }
+
   if (!ret) {
     OPENKNEEBOARD_TraceLoggingScope("CachedReader::CreateIPCClientTexture");
-    ret = this->CreateIPCClientTexture(swapchainIndex);
+    ret = this->CreateIPCClientTexture(dimensions, swapchainIndex);
   }
   return ret;
+}
+
+IPCClientTexture::IPCClientTexture(const PixelSize& dimensions)
+  : mDimensions(dimensions) {
 }
 
 IPCClientTexture::~IPCClientTexture() = default;

@@ -31,6 +31,7 @@ class Texture final : public SHM::IPCClientTexture {
  public:
   Texture() = delete;
   Texture(
+    const PixelSize&,
     const winrt::com_ptr<ID3D11Device5>&,
     const winrt::com_ptr<ID3D11DeviceContext4>&);
   virtual ~Texture();
@@ -78,6 +79,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     uint64_t fenceValueOut) noexcept override;
 
   virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
+    const PixelSize&,
     uint8_t swapchainIndex) noexcept override;
 
   winrt::com_ptr<ID3D11Device5> mD3D11Device;
