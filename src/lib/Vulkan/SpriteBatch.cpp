@@ -648,8 +648,62 @@ SpriteBatch::InstanceCreateInfo::InstanceCreateInfo(
   : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_INSTANCE_EXTENSIONS) {
 }
 
+template <class T>
+concept has_descriptor_indexing_flag
+  = requires(T t) { t.descriptorIndexing = true; };
+
+static void EnableDescriptorIndexing(auto* it) {
+  if constexpr (has_descriptor_indexing_flag<decltype(*it)>) {
+    it->descriptorIndexing = true;
+  }
+  it->descriptorBindingPartiallyBound = true;
+  it->descriptorBindingVariableDescriptorCount = true;
+}
+
 SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
   : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_DEVICE_EXTENSIONS) {
+  bool enabledDescriptorIndexing = false;
+  bool enabledDynamicRendering = false;
+
+  for (auto next = reinterpret_cast<const VkBaseOutStructure*>(pNext); next;
+       next = next->pNext) {
+    auto mut = const_cast<VkBaseOutStructure*>(next);
+    switch (next->sType) {
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES: {
+        auto it = reinterpret_cast<VkPhysicalDeviceVulkan12Features*>(mut);
+        EnableDescriptorIndexing(it);
+        enabledDescriptorIndexing = true;
+        continue;
+      }
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES: {
+        auto it = reinterpret_cast<VkPhysicalDeviceVulkan13Features*>(mut);
+        it->dynamicRendering = true;
+        enabledDynamicRendering = true;
+        continue;
+      }
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR: {
+        auto it
+          = reinterpret_cast<VkPhysicalDeviceDynamicRenderingFeaturesKHR*>(mut);
+        it->dynamicRendering = true;
+        enabledDynamicRendering = true;
+        continue;
+      }
+    }
+  }
+
+  if (!enabledDescriptorIndexing) {
+    auto it = &mDescriptorIndexingFeatures;
+    EnableDescriptorIndexing(it);
+    it->pNext = const_cast<void*>(pNext);
+    pNext = it;
+  }
+
+  if (!enabledDynamicRendering) {
+    auto it = &mDynamicRenderingFeatures;
+    it->dynamicRendering = true;
+    it->pNext = const_cast<void*>(pNext);
+    pNext = it;
+  }
 }
 
 }// namespace OpenKneeboard::Vulkan

@@ -36,6 +36,12 @@ class SpriteBatch {
 
   struct DeviceCreateInfo : ExtendedCreateInfo<VkDeviceCreateInfo> {
     DeviceCreateInfo(const VkDeviceCreateInfo& base);
+
+   private:
+    VkPhysicalDeviceDescriptorIndexingFeaturesEXT mDescriptorIndexingFeatures {
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT};
+    VkPhysicalDeviceDynamicRenderingFeaturesKHR mDynamicRenderingFeatures {
+      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR};
   };
 
   SpriteBatch() = delete;
