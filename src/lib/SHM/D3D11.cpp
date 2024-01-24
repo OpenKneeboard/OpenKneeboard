@@ -67,6 +67,7 @@ void Texture::InitializeSource(
   }
 
   if (!mSourceTexture) {
+    OPENKNEEBOARD_TraceLoggingScope("OpenTexture");
     winrt::check_hresult(mDevice->OpenSharedResource1(
       textureHandle, IID_PPV_ARGS(mSourceTexture.put())));
 
@@ -79,6 +80,7 @@ void Texture::InitializeSource(
   }
 
   if (!mSourceFence) {
+    OPENKNEEBOARD_TraceLoggingScope("OpenFence");
     winrt::check_hresult(
       mDevice->OpenSharedFence(fenceHandle, IID_PPV_ARGS(mSourceFence.put())));
   }
