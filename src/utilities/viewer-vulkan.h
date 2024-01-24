@@ -60,8 +60,13 @@ class VulkanRenderer final : public Renderer {
 
   template <class T>
   using unique_vk = OpenKneeboard::Vulkan::unique_vk<T>;
+
   unique_vk<VkInstance> mVKInstance;
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
+#ifdef DEBUG
+  unique_vk<VkDebugUtilsMessengerEXT> mVKDebugMessenger;
+#endif
+
   unique_vk<VkDevice> mVKDevice;
 };
 

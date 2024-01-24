@@ -143,6 +143,10 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
 
   mVK = std::make_unique<OpenKneeboard::Vulkan::Dispatch>(
     mVKInstance.get(), vkGetInstanceProcAddr);
+#ifdef DEBUG
+  mVKDebugMessenger = mVK->make_unique<VkDebugUtilsMessengerEXT>(
+    mVKInstance.get(), &debugCreateInfo, nullptr);
+#endif
 
   dprintf("Looking for GPU with LUID {:#018x}", luid);
   uint32_t physicalDeviceCount = 0;

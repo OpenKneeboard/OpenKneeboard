@@ -35,21 +35,22 @@ class Dispatch final {
 #undef IT
 
  private:
-  template <creatable_device_handle T>
+  template <class T>
   auto GetCreateFun() const;
-  template <destroyable_device_handle T>
+  template <class T>
   auto GetDestroyFun() const;
 
-#define IT(T) \
+#define IT(BASE, SUFFIX) \
   template <> \
-  auto GetCreateFun<Vk##T>() const { \
-    return this->Create##T; \
+  auto GetCreateFun<Vk##BASE##SUFFIX>() const { \
+    return this->Create##BASE##SUFFIX; \
   } \
   template <> \
-  auto GetDestroyFun<Vk##T>() const { \
-    return this->Destroy##T; \
+  auto GetDestroyFun<Vk##BASE##SUFFIX>() const { \
+    return this->Destroy##BASE##SUFFIX; \
   }
-  OPENKNEEBOARD_VK_SMART_POINTER_RESOURCES_CREATE_DESTROY
+  OPENKNEEBOARD_VK_SMART_POINTER_DEVICE_RESOURCES_CREATE_DESTROY
+  OPENKNEEBOARD_VK_SMART_POINTER_INSTANCE_RESOURCES
 #undef IT
   template <>
   auto GetCreateFun<VkDeviceMemory>() const {
@@ -61,17 +62,36 @@ class Dispatch final {
   }
 
  public:
-  template <manageable_device_handle TResource>
+  template <
+    manageable_device_resource TResource,
+    class Traits = typename Detail::ResourceTraits<TResource>>
   auto make_unique(
     VkDevice device,
-    const typename Detail::CreateInfo<TResource>* createInfo,
+    const typename Traits::CreateInfo* createInfo,
     const VkAllocationCallbacks* allocator,
     const std::source_location& loc = std::source_location::current()) {
     auto createImpl = this->GetCreateFun<TResource>();
     auto destroyImpl = this->GetDestroyFun<TResource>();
+
     TResource ret {VK_NULL_HANDLE};
     check_vkresult(createImpl(device, createInfo, allocator, &ret), loc);
     return unique_vk<TResource>(ret, {destroyImpl, device, allocator});
+  }
+
+  template <
+    manageable_instance_resource TResource,
+    class Traits = typename Detail::ResourceTraits<TResource>>
+  auto make_unique(
+    VkInstance instance,
+    const typename Traits::CreateInfo* createInfo,
+    const VkAllocationCallbacks* allocator,
+    const std::source_location& loc = std::source_location::current()) {
+    auto createImpl = this->GetCreateFun<TResource>();
+    auto destroyImpl = this->GetDestroyFun<TResource>();
+
+    TResource ret {VK_NULL_HANDLE};
+    check_vkresult(createImpl(instance, createInfo, allocator, &ret), loc);
+    return unique_vk<TResource>(ret, {destroyImpl, instance, allocator});
   }
 
   inline auto make_unique_device(

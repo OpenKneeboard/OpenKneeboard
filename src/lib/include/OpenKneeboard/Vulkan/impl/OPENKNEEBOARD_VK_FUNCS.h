@@ -40,6 +40,7 @@
   IT(CmdSetViewport) \
   IT(CreateBuffer) \
   IT(CreateCommandPool) \
+  IT(CreateDebugUtilsMessengerEXT) \
   IT(CreateDescriptorPool) \
   IT(CreateDescriptorSetLayout) \
   IT(CreateDevice) \
@@ -54,6 +55,7 @@
   IT(CreateShaderModule) \
   IT(DestroyBuffer) \
   IT(DestroyCommandPool) \
+  IT(DestroyDebugUtilsMessengerEXT) \
   IT(DestroyDescriptorPool) \
   IT(DestroyDescriptorSetLayout) \
   IT(DestroyDevice) \
