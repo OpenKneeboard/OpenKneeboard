@@ -105,6 +105,7 @@ void SpriteBatch::CreatePipeline() {
     .polygonMode = VK_POLYGON_MODE_FILL,
     .cullMode = VK_CULL_MODE_NONE,
     .frontFace = VK_FRONT_FACE_CLOCKWISE,
+    .lineWidth = 1.0f,
   };
   VkPipelineColorBlendAttachmentState colorBlendAttachmentState {
     .blendEnable = VK_FALSE,
@@ -172,6 +173,7 @@ void SpriteBatch::CreatePipeline() {
     .pVertexInputState = &vertex,
     .pInputAssemblyState = &inputAssembly,
     .pViewportState = &viewport,
+    .pRasterizationState = &rasterization,
     .pMultisampleState = &multiplesample,
     .pDepthStencilState = &depthStencil,
     .pColorBlendState = &colorBlend,
