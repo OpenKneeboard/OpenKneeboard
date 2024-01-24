@@ -45,8 +45,6 @@ class D3D11Renderer final : public Renderer {
     SHM::IPCClientTexture*,
     const std::filesystem::path&) override;
 
-  virtual SHM::Snapshot MaybeGetSnapshot() override;
-
   virtual uint64_t Render(
     SHM::IPCClientTexture* sourceTexture,
     const PixelRect& sourceRect,

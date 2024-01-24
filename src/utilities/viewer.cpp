@@ -21,6 +21,7 @@
 
 #include "viewer-d3d11.h"
 #include "viewer-d3d12.h"
+#include "viewer-vulkan.h"
 
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
@@ -328,7 +329,7 @@ class TestViewerWindow final {
   }
 
   void CaptureScreenshot() {
-    const auto snapshot = mRenderer->MaybeGetSnapshot();
+    const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (!snapshot.IsValid()) {
       return;
     }
@@ -436,7 +437,7 @@ class TestViewerWindow final {
       mRenderer->GetName(),
       mRenderer->GetSHM()->GetFrameCountForMetricsOnly(),
       mLayerIndex + 1);
-    const auto snapshot = mRenderer->MaybeGetSnapshot();
+    const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (snapshot.IsValid()) {
       const auto layer = snapshot.GetLayerConfig(mLayerIndex);
       const auto size = layer->mLocationOnTexture.mSize;
@@ -513,7 +514,7 @@ class TestViewerWindow final {
 
     d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
 
-    const auto snapshot = mRenderer->MaybeGetSnapshot();
+    const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
         mErrorRenderer->Render(
@@ -586,6 +587,7 @@ class TestViewerWindow final {
     enum class GraphicsAPI {
       D3D11,
       D3D12,
+      Vulkan,
     };
     GraphicsAPI renderer {GraphicsAPI::D3D11};
 
@@ -604,6 +606,10 @@ class TestViewerWindow final {
           renderer = GraphicsAPI::D3D12;
           continue;
         }
+        if (next == L"Vulkan") {
+          renderer = GraphicsAPI::Vulkan;
+          continue;
+        }
         dprintf(L"Unrecognized graphics API {}", next);
         exit(0);
       }
@@ -617,6 +623,15 @@ class TestViewerWindow final {
         winrt::com_ptr<IDXGIAdapter> adapter;
         winrt::check_hresult(mDXR.mDXGIDevice->GetAdapter(adapter.put()));
         mRenderer = std::make_unique<Viewer::D3D12Renderer>(adapter.get());
+        break;
+      }
+      case GraphicsAPI::Vulkan: {
+        winrt::com_ptr<IDXGIAdapter> adapter;
+        winrt::check_hresult(mDXR.mDXGIDevice->GetAdapter(adapter.put()));
+        DXGI_ADAPTER_DESC desc;
+        winrt::check_hresult(adapter->GetDesc(&desc));
+        mRenderer = std::make_unique<Viewer::VulkanRenderer>(
+          std::bit_cast<uint64_t>(desc.AdapterLuid));
         break;
       }
     }

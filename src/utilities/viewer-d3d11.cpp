@@ -44,10 +44,6 @@ SHM::CachedReader* D3D11Renderer::GetSHM() {
   return &mSHM;
 }
 
-SHM::Snapshot D3D11Renderer::MaybeGetSnapshot() {
-  return mSHM.MaybeGet();
-}
-
 void D3D11Renderer::Initialize(uint8_t swapchainLength) {
   mSHM.InitializeCache(mD3D11Device.get(), swapchainLength);
 }

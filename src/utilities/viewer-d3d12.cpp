@@ -67,10 +67,6 @@ SHM::CachedReader* D3D12Renderer::GetSHM() {
   return &mSHM;
 }
 
-SHM::Snapshot D3D12Renderer::MaybeGetSnapshot() {
-  return mSHM.MaybeGet();
-}
-
 void D3D12Renderer::Initialize(uint8_t swapchainLength) {
   mSHM.InitializeCache(mDevice.get(), mCommandQueue.get(), swapchainLength);
 }

@@ -54,6 +54,7 @@ add_utility_executable(
   viewer.cpp
   viewer-d3d11.cpp
   viewer-d3d12.cpp
+  viewer-vulkan.cpp
   icon.rc
 )
 target_link_libraries(
@@ -63,6 +64,7 @@ target_link_libraries(
   OpenKneeboard-D2DErrorRenderer
   OpenKneeboard-D3D11
   OpenKneeboard-D3D12
+  OpenKneeboard-Vulkan
   OpenKneeboard-DXResources
   OpenKneeboard-Filesystem
   OpenKneeboard-GameEvent
@@ -70,6 +72,7 @@ target_link_libraries(
   OpenKneeboard-SHM
   OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-SHM-Client-D3D12
+  OpenKneeboard-SHM-Client-Vulkan
   OpenKneeboard-scope_guard
   System::D2d1
   System::D3d11

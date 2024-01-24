@@ -19,34 +19,28 @@
  */
 #pragma once
 
-#include <OpenKneeboard/SHM.h>
+#include "viewer.h"
 
-#include <filesystem>
-#include <string>
+#include <OpenKneeboard/SHM/Vulkan.h>
+
+#include <cinttypes>
 
 namespace OpenKneeboard::Viewer {
-
-class Renderer {
+class VulkanRenderer final : public Renderer {
  public:
-  virtual ~Renderer();
-  virtual SHM::CachedReader* GetSHM() = 0;
+  VulkanRenderer() = delete;
+  VulkanRenderer(uint64_t luid);
+  virtual ~VulkanRenderer();
 
-  virtual std::wstring_view GetName() const noexcept = 0;
+  virtual SHM::CachedReader* GetSHM() override;
+  virtual std::wstring_view GetName() const noexcept override;
 
-  virtual void Initialize(uint8_t swapchainLength) = 0;
+  virtual void Initialize(uint8_t swapchainLength) override;
 
   virtual void SaveTextureToFile(
     SHM::IPCClientTexture*,
-    const std::filesystem::path&)
-    = 0;
+    const std::filesystem::path&) override;
 
-  /** Render the texture.
-   *
-   * Note HANDLE is an NT handle, not a classic Windows handle; these
-   * need to be handled differently by most graphics APIs.
-   *
-   * @return a fence value to wait on
-   */
   virtual uint64_t Render(
     SHM::IPCClientTexture* sourceTexture,
     const PixelRect& sourceRect,
@@ -54,8 +48,10 @@ class Renderer {
     const PixelSize& destTextureDimensions,
     const PixelRect& destRect,
     HANDLE fence,
-    uint64_t fenceValueIn)
-    = 0;
+    uint64_t fenceValueIn) override;
+
+ private:
+  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::Viewer};
 };
 
 }// namespace OpenKneeboard::Viewer

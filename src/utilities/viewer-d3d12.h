@@ -32,7 +32,7 @@ namespace OpenKneeboard::Viewer {
 
 class D3D12Renderer final : public Renderer {
  public:
-  D3D12Renderer();
+  D3D12Renderer() = delete;
   D3D12Renderer(IDXGIAdapter*);
   virtual ~D3D12Renderer();
   virtual SHM::CachedReader* GetSHM() override;
@@ -44,8 +44,6 @@ class D3D12Renderer final : public Renderer {
   virtual void SaveTextureToFile(
     SHM::IPCClientTexture*,
     const std::filesystem::path&) override;
-
-  virtual SHM::Snapshot MaybeGetSnapshot() override;
 
   virtual uint64_t Render(
     SHM::IPCClientTexture* sourceTexture,
