@@ -151,13 +151,6 @@ void Texture::CopyFrom(
     activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
   winrt::check_hresult(queue->Wait(mSourceFence.get(), fenceValueIn));
 
-  {
-    TraceLoggingWriteTagged(activity, "FenceInCPU");
-    winrt::handle event {CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL)};
-    mSourceFence->SetEventOnCompletion(fenceValueIn, event.get());
-    WaitForSingleObject(event.get(), INFINITE);
-  }
-
   TraceLoggingWriteTagged(activity, "Copy");
   const D3D12_TEXTURE_COPY_LOCATION src {
     .pResource = this->mSourceTexture.get(),
