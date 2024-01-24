@@ -30,6 +30,11 @@ using OpenKneeboard::Vulkan::check_vkresult;
 
 namespace OpenKneeboard::Viewer {
 
+static constexpr const char* const RequiredInstanceExtensions[] {
+  VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+  VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+};
+
 VulkanRenderer::VulkanRenderer(uint64_t luid) {
   mVulkanLoader = unique_hmodule {LoadLibraryA("vulkan-1.dll")};
   if (!mVulkanLoader) {
@@ -47,18 +52,70 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     OPENKNEEBOARD_LOG_AND_FATAL("Failed to find vkCreateInstance");
   }
 
-  const VkInstanceCreateInfo baseCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+  const VkApplicationInfo applicationInfo {
+    .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+    .pApplicationName = "OpenKneeboard-Viewer",
+    .applicationVersion = 1,
+    .apiVersion = VK_API_VERSION_1_0,
   };
-  const auto createInfo = SHM::Vulkan::InstanceCreateInfo {
-    Vulkan::SpriteBatch::InstanceCreateInfo {baseCreateInfo},
+
+  const VkInstanceCreateInfo baseInstanceCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+    .pApplicationInfo = &applicationInfo,
+    .enabledExtensionCount = std::size(RequiredInstanceExtensions),
+    .ppEnabledExtensionNames = RequiredInstanceExtensions,
+  };
+  const auto instanceCreateInfo = SHM::Vulkan::InstanceCreateInfo {
+    Vulkan::SpriteBatch::InstanceCreateInfo {baseInstanceCreateInfo},
   };
 
   check_vkresult(
-    vkCreateInstance(&createInfo, nullptr, zop::out_ptr(mVKInstance)));
+    vkCreateInstance(&instanceCreateInfo, nullptr, zop::out_ptr(mVKInstance)));
 
   mVK = std::make_unique<OpenKneeboard::Vulkan::Dispatch>(
     mVKInstance.get(), vkGetInstanceProcAddr);
+
+  dprintf("Looking for GPU with LUID {:#018x}", luid);
+  uint32_t physicalDeviceCount = 0;
+  check_vkresult(mVK->EnumeratePhysicalDevices(
+    mVKInstance.get(), &physicalDeviceCount, nullptr));
+  std::vector<VkPhysicalDevice> physicalDevices {
+    physicalDeviceCount, VK_NULL_HANDLE};
+  check_vkresult(mVK->EnumeratePhysicalDevices(
+    mVKInstance.get(), &physicalDeviceCount, physicalDevices.data()));
+
+  VkPhysicalDevice matchingDevice {VK_NULL_HANDLE};
+  for (const auto physicalDevice: physicalDevices) {
+    VkPhysicalDeviceIDPropertiesKHR id {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES_KHR,
+    };
+    VkPhysicalDeviceProperties2KHR properties2 {
+      .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
+      .pNext = &id,
+    };
+    mVK->GetPhysicalDeviceProperties2KHR(physicalDevice, &properties2);
+    const auto& props = properties2.properties;
+    dprintf(
+      "Found GPU {:04x}:{:04x} with type {}: \"{}\"",
+      props.vendorID,
+      props.deviceID,
+      static_cast<std::underlying_type_t<VkPhysicalDeviceType>>(
+        props.deviceType),
+      props.deviceName);
+    if (id.deviceLUIDValid) {
+      static_assert(VK_LUID_SIZE == sizeof(uint64_t));
+      auto deviceLuid = std::bit_cast<uint64_t>(id.deviceLUID);
+      dprintf("- Device LUID: {:#018x}", deviceLuid);
+      if (deviceLuid == luid) {
+        dprint("- Matching LUID, selecting device");
+        matchingDevice = physicalDevice;
+      }
+    }
+  }
+
+  if (!matchingDevice) {
+    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find matching device");
+  }
 }
 
 VulkanRenderer::~VulkanRenderer() = default;

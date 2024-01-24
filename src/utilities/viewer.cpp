@@ -630,6 +630,7 @@ class TestViewerWindow final {
         winrt::check_hresult(mDXR.mDXGIDevice->GetAdapter(adapter.put()));
         DXGI_ADAPTER_DESC desc;
         winrt::check_hresult(adapter->GetDesc(&desc));
+        static_assert(sizeof(desc.AdapterLuid) == sizeof(uint64_t));
         mRenderer = std::make_unique<Viewer::VulkanRenderer>(
           std::bit_cast<uint64_t>(desc.AdapterLuid));
         break;
