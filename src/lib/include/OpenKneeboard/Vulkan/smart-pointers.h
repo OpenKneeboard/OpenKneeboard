@@ -147,10 +147,34 @@ class Deleter {
   const VkAllocationCallbacks* mAllocator {nullptr};
 };
 
+class InstanceDeleter {
+ public:
+  using pointer = VkInstance;
+  InstanceDeleter() = default;
+  constexpr InstanceDeleter(
+    PFN_vkDestroyInstance impl,
+    const VkAllocationCallbacks* allocator)
+    : mImpl(impl), mAllocator(allocator) {
+  }
+
+  inline void operator()(VkInstance instance) const {
+    mImpl(instance, mAllocator);
+  }
+
+ private:
+  const PFN_vkDestroyInstance mImpl {nullptr};
+  const VkAllocationCallbacks* mAllocator {nullptr};
+};
+
+template <class T>
+class unsupported;
+
 }// namespace Detail
 
 template <destroyable_handle T>
 using unique_ptr = std::unique_ptr<T, Detail::Deleter<T>>;
+
+using unique_vkinstance = std::unique_ptr<VkInstance, Detail::InstanceDeleter>;
 
 template <class T>
 class MemoryMapping {

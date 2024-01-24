@@ -22,6 +22,9 @@
 #include "viewer.h"
 
 #include <OpenKneeboard/SHM/Vulkan.h>
+#include <OpenKneeboard/Vulkan/SpriteBatch.h>
+
+#include <OpenKneeboard/handles.h>
 
 #include <cinttypes>
 
@@ -52,6 +55,11 @@ class VulkanRenderer final : public Renderer {
 
  private:
   SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::Viewer};
+
+  unique_hmodule mVulkanLoader;
+
+  std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
+  OpenKneeboard::Vulkan::unique_vkinstance mVKInstance;
 };
 
 }// namespace OpenKneeboard::Viewer

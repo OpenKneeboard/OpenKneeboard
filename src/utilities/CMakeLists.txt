@@ -78,6 +78,7 @@ target_link_libraries(
   System::D3d11
   System::Dxgi
   ThirdParty::DirectXTK
+  ThirdParty::OutPtr
 )
 
 ok_add_executable(

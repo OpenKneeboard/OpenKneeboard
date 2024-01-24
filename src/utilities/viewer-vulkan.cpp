@@ -20,10 +20,45 @@
 
 #include "viewer-vulkan.h"
 
+#include <OpenKneeboard/dprint.h>
+
+#include <ztd/out_ptr.hpp>
+
+namespace zop = ztd::out_ptr;
+
+using OpenKneeboard::Vulkan::check_vkresult;
+
 namespace OpenKneeboard::Viewer {
 
 VulkanRenderer::VulkanRenderer(uint64_t luid) {
-  // TODO
+  mVulkanLoader = unique_hmodule {LoadLibraryA("vulkan-1.dll")};
+  if (!mVulkanLoader) {
+    OPENKNEEBOARD_LOG_AND_FATAL("Failed to load vulkan-1.dll");
+  }
+  auto vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
+    GetProcAddress(mVulkanLoader.get(), "vkGetInstanceProcAddr"));
+  if (!vkGetInstanceProcAddr) {
+    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find vkGetInstanceProcAddr");
+  }
+
+  auto vkCreateInstance = reinterpret_cast<PFN_vkCreateInstance>(
+    vkGetInstanceProcAddr(NULL, "vkCreateInstance"));
+  if (!vkCreateInstance) {
+    OPENKNEEBOARD_LOG_AND_FATAL("Failed to find vkCreateInstance");
+  }
+
+  const VkInstanceCreateInfo baseCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+  };
+  const auto createInfo = SHM::Vulkan::InstanceCreateInfo {
+    Vulkan::SpriteBatch::InstanceCreateInfo {baseCreateInfo},
+  };
+
+  check_vkresult(
+    vkCreateInstance(&createInfo, nullptr, zop::out_ptr(mVKInstance)));
+
+  mVK = std::make_unique<OpenKneeboard::Vulkan::Dispatch>(
+    mVKInstance.get(), vkGetInstanceProcAddr);
 }
 
 VulkanRenderer::~VulkanRenderer() = default;

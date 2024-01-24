@@ -65,6 +65,7 @@
   IT(DestroySemaphore) \
   IT(DestroyShaderModule) \
   IT(EndCommandBuffer) \
+  IT(EnumeratePhysicalDevices) \
   IT(FreeMemory) \
   IT(FlushMappedMemoryRanges) \
   IT(GetBufferMemoryRequirements) \
