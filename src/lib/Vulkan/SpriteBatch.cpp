@@ -558,152 +558,89 @@ void SpriteBatch::CreateSampler() {
     .pImmutableSamplers = samplers,
   };
 
-  VkDescriptorSetLayoutCreateInfo createInfo {
+  VkDescriptorSetLayoutCreateInfo layoutCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
     .bindingCount = 1,
     .pBindings = &layoutBinding,
   };
+  mSamplerDescriptorSet.mLayout = mVK->make_unique<VkDescriptorSetLayout>(
+    mDevice, &layoutCreateInfo, mAllocator);
 
-  this->CreateDescriptorSet(
-    &layoutBinding,
-    &createInfo,
-    1,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-    0,
-    &mSamplerDescriptorSet);
+  VkDescriptorPoolSize poolSize {
+    .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+    .descriptorCount = 1,
+  };
+  VkDescriptorPoolCreateInfo poolCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+    .maxSets = 1,
+    .poolSizeCount = 1,
+    .pPoolSizes = &poolSize,
+  };
+  mSamplerDescriptorSet.mDescriptorPool
+    = mVK->make_unique<VkDescriptorPool>(mDevice, &poolCreateInfo, mAllocator);
+
+  VkDescriptorSetLayout layouts[] {mSamplerDescriptorSet.mLayout.get()};
+  VkDescriptorSetAllocateInfo allocInfo {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+    .descriptorPool = mSamplerDescriptorSet.mDescriptorPool.get(),
+    .descriptorSetCount = std::size(layouts),
+    .pSetLayouts = layouts,
+  };
+
+  check_vkresult(mVK->AllocateDescriptorSets(
+    mDevice, &allocInfo, &mSamplerDescriptorSet.mDescriptorSet));
 }
 
 void SpriteBatch::CreateSourceDescriptorSet() {
-  VkSampler samplers[] = {mSampler.get()};
   VkDescriptorSetLayoutBinding layoutBinding {
     .binding = 0,
-    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-    .descriptorCount = 1,
+    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+    .descriptorCount = MaxSpritesPerBatch,
     .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-    .pImmutableSamplers = samplers,
   };
 
-  VkDescriptorBindingFlags bindingFlags {
+  VkDescriptorBindingFlags bindingFlags[] {
     VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT
-    | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT
-    | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT
-    | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT};
+    | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT};
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
-    .bindingCount = 1,
-    .pBindingFlags = &bindingFlags,
+    .sType
+    = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT,
+    .bindingCount = std::size(bindingFlags),
+    .pBindingFlags = bindingFlags,
   };
 
-  VkDescriptorSetLayoutCreateInfo createInfo {
+  VkDescriptorSetLayoutCreateInfo layoutCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
     .pNext = &bindingFlagsCreateInfo,
     .bindingCount = 1,
     .pBindings = &layoutBinding,
   };
 
-  this->CreateDescriptorSet(
-    &layoutBinding,
-    &createInfo,
-    MaxSpritesPerBatch,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-    VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT,
+  mSourceDescriptorSet.mLayout = mVK->make_unique<VkDescriptorSetLayout>(
+    mDevice, &layoutCreateInfo, mAllocator);
 
-    &mSourceDescriptorSet);
-}
-
-void SpriteBatch::CreateDescriptorSet(
-  const VkDescriptorSetLayoutBinding* layoutBinding,
-  const VkDescriptorSetLayoutCreateInfo* layoutCreateInfo,
-  VkDeviceSize descriptorCount,
-  VkMemoryPropertyFlags memoryPropertyFlags,
-  VkDescriptorPoolCreateFlags poolCreateFlags,
-  DescriptorSet* ret,
-  const std::source_location& loc) {
-  ret->mLayout = mVK->make_unique<VkDescriptorSetLayout>(
-    mDevice, layoutCreateInfo, mAllocator);
-
-  VkPhysicalDeviceDescriptorBufferPropertiesEXT bufferProperties {
-    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_PROPERTIES_EXT,
+  VkDescriptorPoolSize poolSize {
+    .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+    .descriptorCount = MaxSpritesPerBatch,
   };
-  VkPhysicalDeviceProperties2KHR deviceProperties {
-    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
-    .pNext = &bufferProperties,
+  VkDescriptorPoolCreateInfo poolCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+    .maxSets = 1,
+    .poolSizeCount = 1,
+    .pPoolSizes = &poolSize,
   };
+  mSourceDescriptorSet.mDescriptorPool
+    = mVK->make_unique<VkDescriptorPool>(mDevice, &poolCreateInfo, mAllocator);
 
-  mVK->GetPhysicalDeviceProperties2KHR(mPhysicalDevice, &deviceProperties);
-
-  mVK->GetDescriptorSetLayoutSizeEXT(
-    mDevice, ret->mLayout.get(), &ret->mDescriptorSize);
-  ret->mDescriptorSize = aligned_size(
-    ret->mDescriptorSize, bufferProperties.descriptorBufferOffsetAlignment);
-  mVK->GetDescriptorSetLayoutBindingOffsetEXT(
-    mDevice, ret->mLayout.get(), 0, &ret->mOffset);
-
-  {
-    VkBufferCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-      .size = ret->mDescriptorSize * descriptorCount,
-      .usage = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT
-        | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT
-        | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-      .queueFamilyIndexCount = 1,
-      .pQueueFamilyIndices = &mQueueFamilyIndex,
-    };
-    ret->mBuffer = mVK->make_unique<VkBuffer>(mDevice, &createInfo, mAllocator);
-  }
-
-  VkMemoryRequirements requirements;
-  mVK->GetBufferMemoryRequirements(mDevice, ret->mBuffer.get(), &requirements);
-  const auto memoryType = FindMemoryType(
-    mVK, mPhysicalDevice, requirements.memoryTypeBits, memoryPropertyFlags);
-  if (!memoryType) [[unlikely]] {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "Couldn't find compatible memory type for descriptor buffer");
-  }
-
-  {
-    VkMemoryAllocateInfo allocInfo {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-      .allocationSize = requirements.size,
-      .memoryTypeIndex = *memoryType,
-    };
-
-    ret->mMemory
-      = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
-  }
-
-  check_vkresult(
-    mVK->BindBufferMemory(mDevice, ret->mBuffer.get(), ret->mMemory.get(), 0));
-
-  ret->mMapping = mVK->MemoryMapping<std::byte>(
-    mDevice, ret->mMemory.get(), ret->mOffset, requirements.size, 0);
-
-  {
-    VkDescriptorPoolSize poolSize {
-      .type = layoutBinding->descriptorType,
-      .descriptorCount = static_cast<uint32_t>(descriptorCount),
-    };
-    VkDescriptorPoolCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-      .flags = poolCreateFlags,
-      .maxSets = 1,
-      .poolSizeCount = 1,
-      .pPoolSizes = &poolSize,
-    };
-    ret->mDescriptorPool
-      = mVK->make_unique<VkDescriptorPool>(mDevice, &createInfo, mAllocator);
-  }
-
-  VkDescriptorSetLayout layouts[] {ret->mLayout.get()};
+  VkDescriptorSetLayout layouts[] {mSourceDescriptorSet.mLayout.get()};
   VkDescriptorSetAllocateInfo allocInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-    .descriptorPool = ret->mDescriptorPool.get(),
+    .descriptorPool = mSourceDescriptorSet.mDescriptorPool.get(),
     .descriptorSetCount = std::size(layouts),
     .pSetLayouts = layouts,
   };
-
-  check_vkresult(
-    mVK->AllocateDescriptorSets(mDevice, &allocInfo, &ret->mDescriptorSet));
+  check_vkresult(mVK->AllocateDescriptorSets(
+    mDevice, &allocInfo, &mSourceDescriptorSet.mDescriptorSet));
 }
 
 SpriteBatch::InstanceCreateInfo::InstanceCreateInfo(
@@ -713,23 +650,6 @@ SpriteBatch::InstanceCreateInfo::InstanceCreateInfo(
 
 SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
   : ExtendedCreateInfo(base, SpriteBatch::REQUIRED_DEVICE_EXTENSIONS) {
-  auto ptr = &mDescriptorBufferFeatures;
-  for (auto next = reinterpret_cast<const VkBaseOutStructure*>(base.pNext);
-       next;
-       next = next->pNext) {
-    if (next->sType == mDescriptorBufferFeatures.sType) {
-      ptr = reinterpret_cast<VkPhysicalDeviceDescriptorBufferFeaturesEXT*>(
-        const_cast<VkBaseOutStructure*>(next));
-      break;
-    }
-  }
-
-  if (ptr == &mDescriptorBufferFeatures) {
-    ptr->pNext = const_cast<void*>(this->pNext);
-    this->pNext = ptr;
-  }
-
-  ptr->descriptorBuffer = true;
 }
 
 }// namespace OpenKneeboard::Vulkan

@@ -36,10 +36,6 @@ class SpriteBatch {
 
   struct DeviceCreateInfo : ExtendedCreateInfo<VkDeviceCreateInfo> {
     DeviceCreateInfo(const VkDeviceCreateInfo& base);
-
-   private:
-    VkPhysicalDeviceDescriptorBufferFeaturesEXT mDescriptorBufferFeatures {
-      VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_BUFFER_FEATURES_EXT};
   };
 
   SpriteBatch() = delete;
@@ -166,24 +162,13 @@ class SpriteBatch {
 
   void CreateVertexBuffer();
 
-  struct DescriptorSet : public Buffer<std::byte> {
-    unique_vk<VkDescriptorSetLayout> mLayout;
-    VkDeviceSize mDescriptorSize {};
-    VkDeviceSize mOffset {};
-    unique_vk<VkDescriptorPool> mDescriptorPool {};
-    VkDescriptorSet mDescriptorSet {};
-  };
-
-  void CreateDescriptorSet(
-    const VkDescriptorSetLayoutBinding*,
-    const VkDescriptorSetLayoutCreateInfo*,
-    VkDeviceSize descriptorCount,
-    VkMemoryPropertyFlags,
-    VkDescriptorPoolCreateFlags,
-    DescriptorSet*,
-    const std::source_location& loc = std::source_location::current());
-
   unique_vk<VkSampler> mSampler;
+
+  struct DescriptorSet {
+    unique_vk<VkDescriptorSetLayout> mLayout;
+    unique_vk<VkDescriptorPool> mDescriptorPool;
+    VkDescriptorSet mDescriptorSet {VK_NULL_HANDLE};
+  };
   DescriptorSet mSamplerDescriptorSet;
 
   void CreateSampler();
