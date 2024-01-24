@@ -19,10 +19,69 @@
  */
 #pragma once
 #include <OpenKneeboard/SHM.h>
+#include <OpenKneeboard/Vulkan/Dispatch.h>
+#include <OpenKneeboard/Vulkan/smart-pointers.h>
 
 namespace OpenKneeboard::SHM::Vulkan {
 
-class Texture final : public SHM::IPCClientTexture {};
+template <::OpenKneeboard::Vulkan::destroyable_handle T>
+using unique_ptr = ::OpenKneeboard::Vulkan::unique_ptr<T>;
+
+class Texture final : public SHM::IPCClientTexture {
+ public:
+  Texture();
+  virtual ~Texture();
+
+  VkImage GetVKImage();
+  VkImageView GetVKRenderTargetView();
+
+  PixelSize GetDimensions() const;
+
+  void CopyFrom(
+    OpenKneeboard::Vulkan::Dispatch*,
+    VkDevice,
+    VkPhysicalDevice,
+    uint32_t queueFamilyIndex,
+    const VkAllocationCallbacks*,
+    VkQueue,
+    VkCommandBuffer,
+    HANDLE texture,
+    const PixelSize& textureDimensions,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept;
+
+ private:
+  PixelSize mDimensions;
+
+  unique_ptr<VkDeviceMemory> mImageMemory;
+  unique_ptr<VkImage> mImage;
+  unique_ptr<VkImageView> mRenderTargetView;
+
+  PixelRect mSourceDimensions;
+  HANDLE mSourceImageHandle {};
+  unique_ptr<VkDeviceMemory> mSourceImageMemory;
+  unique_ptr<VkImage> mSourceImage;
+
+  // Using the SHM/D3D naming here; a D3D fence is roughly a VK timeline
+  // semaphore
+  HANDLE mFenceHandle {};
+  unique_ptr<VkSemaphore> mFence;
+
+  void InitializeSource(
+    OpenKneeboard::Vulkan::Dispatch*,
+    VkDevice,
+    VkPhysicalDevice,
+    uint32_t queueFamilyIndex,
+    const VkAllocationCallbacks*,
+    HANDLE texture,
+    const PixelSize&);
+  void InitializeFence(
+    OpenKneeboard::Vulkan::Dispatch*,
+    VkDevice,
+    const VkAllocationCallbacks*,
+    HANDLE fence);
+};
 
 class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
  public:
@@ -30,7 +89,30 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   CachedReader(ConsumerKind);
   virtual ~CachedReader();
 
-  // void InitializeCache(uint8_t swapchainLength);
+  void InitializeCache(
+    OpenKneeboard::Vulkan::Dispatch*,
+    VkDevice device,
+    uint32_t queueFamilyIndex,
+    uint32_t queueIndex,
+    const VkAllocationCallbacks*,
+    uint8_t swapchainLength);
+
+  static constexpr std::string_view REQUIRED_DEVICE_EXTENSIONS[] {
+    VK_KHR_BIND_MEMORY_2_EXTENSION_NAME,
+    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME,
+    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
+    VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
+  };
+
+  static constexpr std::string_view REQUIRED_INSTANCE_EXTENSIONS[] {
+    VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
+    VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME,
+    VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+  };
 
  protected:
   virtual void Copy(
@@ -43,6 +125,14 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
     uint8_t swapchainIndex) noexcept override;
+
+ private:
+  OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
+  VkDevice mDevice {nullptr};
+  const VkAllocationCallbacks* mAllocator {nullptr};
+
+  unique_ptr<VkCommandPool> mCommandPool;
+  std::vector<VkCommandBuffer> mCommandBuffers;
 };
 
 };// namespace OpenKneeboard::SHM::Vulkan

@@ -46,6 +46,7 @@
   IT(CreateFence) \
   IT(CreateGraphicsPipelines) \
   IT(CreateImage) \
+  IT(CreateImageView) \
   IT(CreateInstance) \
   IT(CreatePipelineLayout) \
   IT(CreateSampler) \
@@ -57,6 +58,7 @@
   IT(DestroyDescriptorSetLayout) \
   IT(DestroyFence) \
   IT(DestroyImage) \
+  IT(DestroyImageView) \
   IT(DestroyPipeline) \
   IT(DestroyPipelineLayout) \
   IT(DestroySampler) \

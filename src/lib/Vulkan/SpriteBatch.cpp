@@ -64,26 +64,6 @@ SpriteBatch::SpriteBatch(
       = dispatch->make_unique<VkShaderModule>(device, &createInfo, allocator);
   }
 
-  {
-    VkCommandPoolCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-      .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-      .queueFamilyIndex = queueFamilyIndex,
-    };
-    mCommandPool
-      = dispatch->make_unique<VkCommandPool>(device, &createInfo, allocator);
-  }
-
-  {
-    VkCommandBufferAllocateInfo allocInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = mCommandPool.get(),
-      .commandBufferCount = 1,
-    };
-    check_vkresult(
-      dispatch->AllocateCommandBuffers(device, &allocInfo, &mCommandBuffer));
-  }
-
   this->CreateVertexBuffer();
   this->CreateSampler();
   this->CreateSourceDescriptorSet();
@@ -251,6 +231,7 @@ SpriteBatch::~SpriteBatch() {
 }
 
 void SpriteBatch::Begin(
+  VkCommandBuffer commandBuffer,
   VkImageView target,
   const PixelSize& targetSize,
   const std::source_location& caller) {
@@ -258,6 +239,8 @@ void SpriteBatch::Begin(
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       caller, "Begin() called but already in progress; did you call End()?");
   }
+
+  mCommandBuffer = commandBuffer;
   mTarget = target;
   mTargetSize = targetSize;
 }

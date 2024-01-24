@@ -44,6 +44,7 @@ class SpriteBatch {
    * `target` MUST have the VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL layout.
    */
   void Begin(
+    VkCommandBuffer,
     VkImageView target,
     const PixelSize& size,
     const std::source_location& loc = std::source_location::current());
@@ -68,6 +69,9 @@ class SpriteBatch {
     VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
     VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
     VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+  };
+
+  static constexpr std::string_view REQUIRED_INSTANCE_EXTENSIONS[] {
     VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
   };
 
@@ -82,15 +86,13 @@ class SpriteBatch {
   unique_ptr<VkPipelineLayout> mPipelineLayout;
   unique_ptr<VkPipeline> mPipeline;
 
+  VkCommandBuffer mCommandBuffer {nullptr};
   VkImageView mTarget {nullptr};
   PixelSize mTargetSize;
   std::optional<Color> mClearColor;
 
   unique_ptr<VkShaderModule> mPixelShader;
   unique_ptr<VkShaderModule> mVertexShader;
-
-  unique_ptr<VkCommandPool> mCommandPool;
-  VkCommandBuffer mCommandBuffer {nullptr};
 
   PixelSize mDestSize;
 

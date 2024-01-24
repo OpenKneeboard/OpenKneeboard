@@ -34,6 +34,7 @@ namespace OpenKneeboard::Vulkan {
   IT(DescriptorPool) \
   IT(DescriptorSetLayout) \
   IT(Image) \
+  IT(ImageView) \
   IT(Fence) \
   IT(PipelineLayout) \
   IT(Sampler) \
