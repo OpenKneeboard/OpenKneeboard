@@ -63,9 +63,9 @@ OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
 
 XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   XrSession session,
-  const PixelSize& size,
-  const VRRenderConfig::Quirks& quirks) {
+  const PixelSize& size) {
   dprintf("{}", __FUNCTION__);
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::CreateSwapchain");
 
   auto oxr = this->GetOpenXR();
 

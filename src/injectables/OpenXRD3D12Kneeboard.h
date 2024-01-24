@@ -46,10 +46,7 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
 
  protected:
   virtual SHM::CachedReader* GetSHM() override;
-  virtual XrSwapchain CreateSwapchain(
-    XrSession,
-    const PixelSize&,
-    const VRRenderConfig::Quirks&) override;
+  virtual XrSwapchain CreateSwapchain(XrSession, const PixelSize&) override;
   virtual void ReleaseSwapchainResources(XrSwapchain) override;
   virtual void RenderLayers(
     XrSwapchain swapchain,

@@ -101,9 +101,9 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
 
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   XrSession session,
-  const PixelSize& size,
-  const VRRenderConfig::Quirks&) {
+  const PixelSize& size) {
   dprintf("{}", __FUNCTION__);
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard::CreateSwapchain()");
 
   auto oxr = this->GetOpenXR();
 
@@ -141,6 +141,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   }
 
   dprintf("{} images in swapchain", imageCount);
+  mSHM.InitializeCache(mDevice.get(), static_cast<uint8_t>(imageCount));
 
   std::vector<XrSwapchainImageD3D11KHR> images;
   images.resize(

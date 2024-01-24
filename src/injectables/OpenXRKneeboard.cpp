@@ -137,6 +137,22 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
+  if (!*this->GetSHM()) {
+    TraceLoggingWriteTagged(activity, "No feeder");
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+
+  if (!mSwapchain) {
+    OPENKNEEBOARD_TraceLoggingScope("Create swapchain");
+    const auto size = Spriting::GetBufferSize(MaxLayers);
+
+    mSwapchain = this->CreateSwapchain(session, size);
+    if (!mSwapchain) [[unlikely]] {
+      OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
+    }
+    dprintf("Created {}x{} swapchain", size.mWidth, size.mHeight);
+  }
+
   auto snapshot = this->GetSHM()->MaybeGet();
   if (!snapshot.IsValid()) {
     TraceLoggingWriteTagged(activity, "no snapshot");
@@ -160,17 +176,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
   kneeboardLayers.reserve(layerCount);
 
   uint8_t topMost = layerCount - 1;
-
-  if (!mSwapchain) {
-    OPENKNEEBOARD_TraceLoggingScope("Create swapchain");
-    const auto size = Spriting::GetBufferSize(MaxLayers);
-
-    mSwapchain = this->CreateSwapchain(session, size, config.mVR.mQuirks);
-    if (!mSwapchain) [[unlikely]] {
-      OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
-    }
-    dprintf("Created {}x{} swapchain", size.mWidth, size.mHeight);
-  }
 
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
   std::vector<PixelRect> destRects;
