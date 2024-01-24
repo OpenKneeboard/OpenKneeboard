@@ -34,12 +34,12 @@
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
+#include <vulkan/vulkan.h>
+
 #include <memory>
 #include <string>
 
 #include <loader_interfaces.h>
-
-#include <vulkan/vulkan.h>
 
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
@@ -135,26 +135,16 @@ OpenXRNext* OpenXRKneeboard::GetOpenXR() {
 XrResult OpenXRKneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "xrEndFrame");
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "OpenXRKneeboard::xrEndFrame()");
   if (frameEndInfo->layerCount == 0) {
-    TraceLoggingWriteStop(
-      activity, "xrEndFrame", TraceLoggingValue("No layers", "Result"));
+    TraceLoggingWriteTagged(activity, "No layers.");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto d3d11 = this->GetD3D11Device();
-  if (!d3d11) {
-    TraceLoggingWriteStop(
-      activity, "xrEndFrame", TraceLoggingValue("No D3D11", "Result"));
-    return mOpenXR->xrEndFrame(session, frameEndInfo);
-  }
-
-  auto snapshot
-    = this->GetSHM()->MaybeGet(d3d11.get(), SHM::ConsumerKind::OpenXR);
+  auto snapshot = this->GetSHM()->MaybeGet();
   if (!snapshot.IsValid()) {
-    TraceLoggingWriteStop(
-      activity, "xrEndFrame", TraceLoggingValue("No snapshot", "Result"));
+    TraceLoggingWriteTagged(activity, "no snapshot");
     // Don't spam: expected, if OpenKneeboard isn't running
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
@@ -180,36 +170,28 @@ XrResult OpenXRKneeboard::xrEndFrame(
     const auto size = Spriting::GetBufferSize(MaxLayers);
 
     mSwapchain = this->CreateSwapchain(session, size, config.mVR.mQuirks);
-    if (!mSwapchain) {
-      dprint("Failed to create swapchain");
-      OPENKNEEBOARD_BREAK;
-      TraceLoggingWriteStop(
-        activity,
-        "xrEndFrame",
-        TraceLoggingValue("Failed to create swapchain", "Result"));
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
+    if (!mSwapchain) [[unlikely]] {
+      OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
     }
     dprintf("Created {}x{} swapchain", size.mWidth, size.mHeight);
   }
 
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-  std::vector<SHM::LayerSprite> sprites;
+  std::vector<PixelRect> destRects;
+  std::vector<float> opacities;
   std::vector<uint64_t> cacheKeys;
-  sprites.reserve(layerCount);
+  destRects.reserve(layerCount);
+  opacities.reserve(layerCount);
+  cacheKeys.reserve(layerCount);
 
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     auto layer = snapshot.GetLayerConfig(layerIndex);
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
-
-    sprites.push_back(SHM::LayerSprite {
-      .mLayerIndex = layerIndex,
-      .mDestRect = {
-        Spriting::GetOffset(layerIndex, MaxLayers),
-        layer->mLocationOnTexture.mSize,
-      },
-      .mOpacity = params.mKneeboardOpacity,
-    });
+    destRects.push_back(
+      {Spriting::GetOffset(layerIndex, MaxLayers),
+       layer->mLocationOnTexture.mSize});
+    opacities.push_back(params.mKneeboardOpacity);
 
     if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
       needRender = true;
@@ -262,22 +244,18 @@ XrResult OpenXRKneeboard::xrEndFrame(
     check_xrresult(mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo));
 
     {
-      TraceLoggingThreadActivity<gTraceProvider> subActivity;
-      TraceLoggingWriteStart(subActivity, "OpenXRKneeboard::RenderLayers()");
+      OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
       this->RenderLayers(
         mSwapchain,
         swapchainTextureIndex,
         snapshot,
-        sprites.size(),
-        sprites.data());
-      TraceLoggingWriteStop(subActivity, "OpenXRKneeboard::RenderLayers()");
+        destRects.data(),
+        opacities.data());
     }
 
     {
-      TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
-      TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
+      OPENKNEEBOARD_TraceLoggingScope("xrReleaseSwapchainImage()");
       check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
-      TraceLoggingWriteStop(releaseActivity, "xrReleaseSwapchainImage");
     }
 
     for (size_t i = 0; i < cacheKeys.size(); ++i) {

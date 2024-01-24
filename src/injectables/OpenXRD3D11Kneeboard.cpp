@@ -49,13 +49,17 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   const XrGraphicsBindingD3D11KHR& binding)
   : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard()");
   TraceLoggingWrite(gTraceProvider, "OpenXRD3D11Kneeboard()");
 
-  mDeviceResources = std::make_unique<DeviceResources>(binding.device);
+  mDevice.copy_from(binding.device);
+  mDevice->GetImmediateContext(mImmediateContext.put());
+
+  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(binding.device);
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
-  TraceLoggingWrite(gTraceProvider, "~OpenXRD3D11Kneeboard()");
+  OPENKNEEBOARD_TraceLoggingScope("~OpenXRD3D11Kneeboard()");
 }
 
 OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
@@ -163,8 +167,8 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
     return nullptr;
   }
 
-  std::vector<ID3D11Texture2D*> textures;
-  textures.reserve(imageCount);
+  std::vector<SwapchainBufferResources> buffers;
+  buffers.reserve(imageCount);
   for (size_t i = 0; i < imageCount; ++i) {
     auto& image = images.at(i);
 #ifdef DEBUG
@@ -172,15 +176,34 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
       OPENKNEEBOARD_BREAK;
     }
 #endif
-    textures.push_back(image.texture);
+    buffers.push_back(
+      {mDevice.get(), image.texture, formats.mRenderTargetViewFormat});
   }
-  mSwapchainResources[swapchain] = std::make_unique<SwapchainResources>(
-    mDeviceResources.get(),
-    formats.mRenderTargetViewFormat,
-    textures.size(),
-    textures.data());
+
+  mSwapchainResources[swapchain] = {
+    .mDimensions = size,
+    .mBufferResources = std::move(buffers),
+  };
 
   return swapchain;
+}
+
+OpenXRD3D11Kneeboard::SwapchainBufferResources::SwapchainBufferResources(
+  ID3D11Device* device,
+  ID3D11Texture2D* texture,
+  DXGI_FORMAT renderTargetViewFormat) {
+  mTexture = texture;
+
+  D3D11_TEXTURE2D_DESC textureDesc;
+  texture->GetDesc(&textureDesc);
+
+  D3D11_RENDER_TARGET_VIEW_DESC rtvDesc {
+    .Format = renderTargetViewFormat,
+    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {0},
+  };
+  winrt::check_hresult(
+    device->CreateRenderTargetView(texture, &rtvDesc, mRenderTargetView.put()));
 }
 
 void OpenXRD3D11Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
@@ -189,34 +212,31 @@ void OpenXRD3D11Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
   }
 }
 
-winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {
-  if (!mDeviceResources) {
-    return {};
-  }
-  return mDeviceResources->mD3D11Device;
-}
-
 void OpenXRD3D11Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerCount,
-  SHM::LayerSprite* layers) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "OpenXRD3D11Kneeboard::RenderLayers()");
+  const PixelRect* const destRects,
+  const float* const opacities) {
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard::RenderLayers()");
+  D3D11::SavedState savedState(mImmediateContext);
 
-  auto dr = mDeviceResources.get();
-  auto sr = mSwapchainResources.at(swapchain).get();
+  auto source
+    = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();
 
-  D3D11::SavedState savedState(dr->mD3D11ImmediateContext);
+  const auto& sr = mSwapchainResources.at(swapchain);
+  const auto& br = sr.mBufferResources.at(swapchainTextureIndex);
 
-  namespace R = SHM::D3D11::Renderer;
-  R::BeginFrame(dr, sr, swapchainTextureIndex);
-  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
-  R::EndFrame(dr, sr, swapchainTextureIndex);
-
-  TraceLoggingWriteStop(activity, "OpenXRD3D11Kneeboard::RenderLayers()");
+  mSpriteBatch->Begin(br.mRenderTargetView.get(), sr.mDimensions);
+  const auto layerCount = snapshot.GetLayerCount();
+  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+    const auto sourceRect
+      = snapshot.GetLayerConfig(layerIndex)->mLocationOnTexture;
+    const auto& destRect = destRects[layerIndex];
+    const D3D11::Opacity opacity {opacities[layerIndex]};
+    mSpriteBatch->Draw(source, sourceRect, destRect, opacity);
+  }
+  mSpriteBatch->End();
 }
 
 SHM::CachedReader* OpenXRD3D11Kneeboard::GetSHM() {

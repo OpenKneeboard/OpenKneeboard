@@ -48,11 +48,13 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
-  : OpenXRKneeboard(session, runtimeID, next), mSHM(binding.device) {
+  : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
 
-  mDeviceResources
-    = std::make_unique<DeviceResources>(binding.device, binding.queue);
+  mDevice.copy_from(binding.device);
+  mCommandQueue.copy_from(binding.queue);
+  mSpriteBatch = std::make_unique<D3D12::SpriteBatch>(
+    mDevice.get(), mCommandQueue.get(), DXGI_FORMAT_B8G8R8A8_UNORM);
 }
 
 OpenXRD3D12Kneeboard::~OpenXRD3D12Kneeboard() {
@@ -127,16 +129,24 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
     return nullptr;
   }
 
-  std::vector<ID3D12Resource*> textures;
-  textures.reserve(images.size());
+  this->ReleaseSwapchainResources(swapchain);
+  mSwapchainResources.emplace(
+    swapchain,
+    SwapchainResources {
+      .mDimensions = size,
+      .mRenderTargetViewHeap
+      = {mDevice.get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, imageCount},
+    });
+
+  auto& sr = mSwapchainResources.at(swapchain);
   for (const auto& image: images) {
-    textures.push_back(image.texture);
+    const auto imageIndex = sr.mBufferResources.size();
+    sr.mBufferResources.push_back(
+      {mDevice.get(),
+       image.texture,
+       sr.mRenderTargetViewHeap.GetCpuHandle(imageIndex),
+       formats.mRenderTargetViewFormat});
   }
-  mSwapchainResources[swapchain] = std::make_unique<SwapchainResources>(
-    mDeviceResources.get(),
-    formats.mRenderTargetViewFormat,
-    textures.size(),
-    textures.data());
 
   return swapchain;
 }
@@ -152,30 +162,60 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerCount,
-  SHM::LayerSprite* layers) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
+  const PixelRect* const destRects,
+  const float* const opacities) {
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
-  auto dr = mDeviceResources.get();
-  auto sr = mSwapchainResources.at(swapchain).get();
+  auto source = snapshot.GetTexture<SHM::D3D12::Texture>();
 
-  namespace R = SHM::D3D12::Renderer;
+  const auto& sr = mSwapchainResources.at(swapchain);
+  const auto& br = sr.mBufferResources.at(swapchainTextureIndex);
 
-  R::BeginFrame(dr, sr, swapchainTextureIndex);
-  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
-  R::EndFrame(dr, sr, swapchainTextureIndex);
-
-  TraceLoggingWriteStop(activity, "OpenXRD3D12Kneeboard::RenderLayers()");
-}
-
-winrt::com_ptr<ID3D11Device> OpenXRD3D12Kneeboard::GetD3D11Device() {
-  return mDeviceResources->mD3D11Device;
+  mSpriteBatch->Begin(
+    br.mCommandList.get(), br.mRenderTargetView, sr.mDimensions);
+  const auto layerCount = snapshot.GetLayerCount();
+  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+    const auto sourceRect
+      = snapshot.GetLayerConfig(layerIndex)->mLocationOnTexture;
+    const auto& destRect = destRects[layerIndex];
+    const D3D11::Opacity opacity {opacities[layerIndex]};
+    mSpriteBatch->Draw(
+      source->GetD3D12ShaderResourceViewGPUHandle(),
+      source->GetDimensions(),
+      sourceRect,
+      destRects[layerIndex],
+      D3D12::Opacity {opacities[layerIndex]});
+  }
+  mSpriteBatch->End();
 }
 
 SHM::CachedReader* OpenXRD3D12Kneeboard::GetSHM() {
   return &mSHM;
+}
+
+OpenXRD3D12Kneeboard::SwapchainBufferResources::SwapchainBufferResources(
+  ID3D12Device* device,
+  ID3D12Resource* texture,
+  D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle,
+  DXGI_FORMAT renderTargetViewFormat)
+  : mRenderTargetView(renderTargetViewHandle) {
+  D3D12_RENDER_TARGET_VIEW_DESC desc {
+    .Format = renderTargetViewFormat,
+    .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
+    .Texture2D = {0, 0},
+  };
+
+  device->CreateRenderTargetView(texture, &desc, renderTargetViewHandle);
+
+  winrt::check_hresult(device->CreateCommandAllocator(
+    D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(mCommandAllocator.put())));
+
+  winrt::check_hresult(device->CreateCommandList(
+    0,
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    mCommandAllocator.get(),
+    nullptr,
+    IID_PPV_ARGS(mCommandList.put())));
 }
 
 }// namespace OpenKneeboard

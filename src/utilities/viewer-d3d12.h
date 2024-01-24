@@ -37,7 +37,7 @@ class D3D12Renderer final : public Renderer {
   virtual ~D3D12Renderer();
   virtual SHM::CachedReader* GetSHM() override;
 
-  std::wstring_view D3D12Renderer::GetName() const noexcept override;
+  std::wstring_view GetName() const noexcept override;
 
   virtual void Initialize(uint8_t swapchainLength) override;
 

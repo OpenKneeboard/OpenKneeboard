@@ -52,21 +52,11 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
 
   mVK = std::make_unique<Vulkan::Dispatch>(
     binding.instance, pfnVkGetInstanceProcAddr);
-  mDeviceResources = std::make_unique<DeviceResources>(
-    mVK.get(),
-    binding.device,
-    binding.physicalDevice,
-    vulkanAllocator,
-    binding.queueFamilyIndex,
-    binding.queueIndex);
+  mBinding = binding;
 }
 
 OpenXRVulkanKneeboard::~OpenXRVulkanKneeboard() {
   TraceLoggingWrite(gTraceProvider, "~OpenXRVulkanKneeboard()");
-}
-
-winrt::com_ptr<ID3D11Device> OpenXRVulkanKneeboard::GetD3D11Device() {
-  return mDeviceResources->mD3D11Device;
 }
 
 XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
@@ -138,12 +128,11 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     return nullptr;
   }
 
-  std::vector<VkImage> vkImages;
+  std::vector<SwapchainBufferResources> buffers;
   for (auto& xrImage: images) {
-    vkImages.push_back(xrImage.image);
+    buffers.push_back({xrImage.image});
   }
-  mSwapchainResources[swapchain] = std::make_unique<SwapchainResources>(
-    mDeviceResources.get(), size, imageCount, vkImages.data());
+  mSwapchainResources[swapchain] = {std::move(buffers), size};
 
   return swapchain;
 }
@@ -160,22 +149,13 @@ void OpenXRVulkanKneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerCount,
-  SHM::LayerSprite* layers) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
+  const PixelRect* const destRects,
+  const float* const opacities) {
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
-  auto dr = mDeviceResources.get();
-  auto sr = mSwapchainResources.at(swapchain).get();
-
-  namespace R = SHM::Vulkan::Renderer;
-  R::BeginFrame(dr, sr, swapchainTextureIndex);
-  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
-  R::EndFrame(dr, sr, swapchainTextureIndex);
-
-  TraceLoggingWriteStop(activity, "OpenXRD3VulkanKneeboard::RenderLayers()");
-}// namespace OpenKneeboard
+  auto source = snapshot.GetTexture<SHM::Vulkan::Texture>();
+  // TODO
+}
 
 SHM::CachedReader* OpenXRVulkanKneeboard::GetSHM() {
   return &mSHM;

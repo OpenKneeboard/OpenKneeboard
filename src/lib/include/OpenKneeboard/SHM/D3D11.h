@@ -68,8 +68,6 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   void InitializeCache(ID3D11Device*, uint8_t swapchainLength);
 
-  using SHM::CachedReader::MaybeGet;
-
  protected:
   virtual void Copy(
     uint8_t swapchainIndex,

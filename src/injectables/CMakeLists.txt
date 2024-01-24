@@ -126,6 +126,7 @@ target_link_libraries(
   ThirdParty::DirectXTK12
   ThirdParty::VulkanHeaders
   OpenKneeboard-D3D11
+  OpenKneeboard-D3D12
   OpenKneeboard-Vulkan
   OpenKneeboard-Elevation
   OpenKneeboard-RayIntersectsRect

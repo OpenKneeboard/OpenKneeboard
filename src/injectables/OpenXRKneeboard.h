@@ -69,10 +69,9 @@ class OpenXRKneeboard : public VRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerCount,
-    SHM::LayerSprite* layers)
+    const PixelRect* const destRects,
+    const float* const opacities)
     = 0;
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() = 0;
   virtual SHM::CachedReader* GetSHM() = 0;
 
   OpenXRNext* GetOpenXR();

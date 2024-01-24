@@ -76,21 +76,26 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerCount,
-    SHM::LayerSprite* layers) override;
-
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
+    const PixelRect* const destRects,
+    const float* const opacities) override;
 
  private:
-  SHM::Vulkan::CachedReader mSHM;
+  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
+
+  XrGraphicsBindingVulkanKHR mBinding {};
 
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 
-  using DeviceResources = SHM::Vulkan::Renderer::DeviceResources;
-  using SwapchainResources = SHM::Vulkan::Renderer::SwapchainResources;
-  std::unique_ptr<DeviceResources> mDeviceResources;
-  std::unordered_map<XrSwapchain, std::unique_ptr<SwapchainResources>>
-    mSwapchainResources;
+  struct SwapchainBufferResources {
+    VkImage mImage;
+  };
+
+  struct SwapchainResources {
+    std::vector<SwapchainBufferResources> mBufferResources;
+    PixelSize mDimensions;
+  };
+
+  std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
 };
 
 }// namespace OpenKneeboard

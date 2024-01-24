@@ -21,17 +21,14 @@
 
 #include "OpenXRKneeboard.h"
 
+#include <OpenKneeboard/D3D12.h>
 #include <OpenKneeboard/SHM/D3D12.h>
 
 #include <OpenKneeboard/config.h>
 
-#include <d3d11_4.h>
-#include <d3d11on12.h>
 #include <d3d12.h>
 
 #include <directxtk12/DescriptorHeap.h>
-#include <directxtk12/GraphicsMemory.h>
-#include <directxtk12/SpriteBatch.h>
 
 struct XrGraphicsBindingD3D12KHR;
 
@@ -58,20 +55,38 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerCount,
-    SHM::LayerSprite* layers) override;
-
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
+    const PixelRect* const destRects,
+    const float* const opacities) override;
 
  private:
-  SHM::D3D12::CachedReader mSHM;
+  SHM::D3D12::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
 
-  using DeviceResources = SHM::D3D12::Renderer::DeviceResources;
-  std::unique_ptr<DeviceResources> mDeviceResources;
+  winrt::com_ptr<ID3D12Device> mDevice;
+  winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
 
-  using SwapchainResources = SHM::D3D12::Renderer::SwapchainResources;
-  std::unordered_map<XrSwapchain, std::unique_ptr<SwapchainResources>>
-    mSwapchainResources;
+  std::unique_ptr<D3D12::SpriteBatch> mSpriteBatch;
+
+  struct SwapchainBufferResources {
+    SwapchainBufferResources() = delete;
+    SwapchainBufferResources(
+      ID3D12Device*,
+      ID3D12Resource* texture,
+      D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle,
+      DXGI_FORMAT renderTargetViewFormat);
+
+    winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
+    winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
+
+    D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView;
+  };
+
+  struct SwapchainResources {
+    PixelSize mDimensions;
+    DirectX::DescriptorHeap mRenderTargetViewHeap;
+    std::vector<SwapchainBufferResources> mBufferResources;
+  };
+
+  std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
 };
 
 }// namespace OpenKneeboard

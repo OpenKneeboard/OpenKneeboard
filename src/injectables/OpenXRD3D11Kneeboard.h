@@ -21,11 +21,10 @@
 
 #include "OpenXRKneeboard.h"
 
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/config.h>
-
-#include <unordered_map>
 
 struct XrGraphicsBindingD3D11KHR;
 
@@ -58,19 +57,35 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerCount,
-    SHM::LayerSprite* layers);
-
-  virtual winrt::com_ptr<ID3D11Device> GetD3D11Device() override;
+    const PixelRect* const destRects,
+    const float* const opacities) override;
 
  private:
-  SHM::D3D11::CachedReader mSHM;
+  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
 
-  using DeviceResources = SHM::D3D11::Renderer::DeviceResources;
-  std::unique_ptr<DeviceResources> mDeviceResources;
-  using SwapchainResources = SHM::D3D11::Renderer::SwapchainResources;
-  std::unordered_map<XrSwapchain, std::unique_ptr<SwapchainResources>>
-    mSwapchainResources;
+  winrt::com_ptr<ID3D11Device> mDevice;
+  winrt::com_ptr<ID3D11DeviceContext> mImmediateContext;
+  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
+
+  PixelRect mSwapchainDimensions;
+
+  struct SwapchainBufferResources {
+    SwapchainBufferResources() = delete;
+    SwapchainBufferResources(
+      ID3D11Device*,
+      ID3D11Texture2D*,
+      DXGI_FORMAT renderTargetViewFormat);
+
+    ID3D11Texture2D* mTexture {nullptr};
+    winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
+  };
+
+  struct SwapchainResources {
+    PixelSize mDimensions;
+    std::vector<SwapchainBufferResources> mBufferResources;
+  };
+
+  std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
 };
 
 }// namespace OpenKneeboard

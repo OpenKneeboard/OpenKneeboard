@@ -84,8 +84,6 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     ID3D12CommandQueue* queue,
     uint8_t swapchainLength);
 
-  using SHM::CachedReader::MaybeGet;
-
  protected:
   virtual void Copy(
     uint8_t swapchainIndex,
