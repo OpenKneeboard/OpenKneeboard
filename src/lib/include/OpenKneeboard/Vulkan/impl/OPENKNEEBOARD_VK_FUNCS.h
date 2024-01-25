@@ -76,6 +76,7 @@
   IT(GetDescriptorSetLayoutBindingOffsetEXT) \
   IT(GetDescriptorSetLayoutSizeEXT) \
   IT(GetDeviceQueue) \
+  IT(GetImageMemoryRequirements) \
   IT(GetImageMemoryRequirements2KHR) \
   IT(GetMemoryWin32HandlePropertiesKHR) \
   IT(GetPhysicalDeviceMemoryProperties) \

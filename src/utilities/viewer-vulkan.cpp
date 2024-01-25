@@ -347,10 +347,7 @@ uint64_t VulkanRenderer::Render(
     mCommandBuffer, mDestImageView.get(), destTextureDimensions);
 
   mSpriteBatch->Draw(
-    source->GetVKRenderTargetView(),
-    source->GetDimensions(),
-    sourceRect,
-    destRect);
+    source->GetVKImageView(), source->GetDimensions(), sourceRect, destRect);
 
   mSpriteBatch->End();
 

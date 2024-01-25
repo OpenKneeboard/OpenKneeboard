@@ -34,7 +34,7 @@ class Texture final : public SHM::IPCClientTexture {
   virtual ~Texture();
 
   VkImage GetVKImage();
-  VkImageView GetVKRenderTargetView();
+  VkImageView GetVKImageView();
 
   VkSemaphore GetReadySemaphore() const;
   uint64_t GetReadySemaphoreValue() const;
@@ -47,8 +47,8 @@ class Texture final : public SHM::IPCClientTexture {
     uint32_t queueFamilyIndex,
     const VkAllocationCallbacks*,
     VkCommandBuffer,
-    HANDLE texture,
-    HANDLE semaphore,
+    VkImage image,
+    VkSemaphore semaphore,
     uint64_t semaphoreValueIn,
     uint64_t sempahoreValueOut,
     VkFence completionFence) noexcept;
@@ -56,28 +56,25 @@ class Texture final : public SHM::IPCClientTexture {
  private:
   unique_vk<VkDeviceMemory> mImageMemory;
   unique_vk<VkImage> mImage;
-  unique_vk<VkImageView> mRenderTargetView;
+  unique_vk<VkImageView> mImageView;
 
-  HANDLE mSourceImageHandle {};
-  unique_vk<VkDeviceMemory> mSourceImageMemory;
-  unique_vk<VkImage> mSourceImage;
+  // This is *NOT* the IPC semaphore - it is a dedicated semaphore
+  // for clients to wait on.
+  //
+  // This is to decouple its' lifetime from the CachedReader's lifetime
+  unique_vk<VkSemaphore> mReadySemaphore;
+  uint64_t mReadySemaphoreValue {};
 
-  HANDLE mSemaphoreHandle {};
-  unique_vk<VkSemaphore> mSemaphore;
-  uint64_t mSemaphoreReadyValue {};
-
-  void InitializeImages(
+  void InitializeCacheImage(
     OpenKneeboard::Vulkan::Dispatch*,
     VkDevice,
     VkPhysicalDevice,
     uint32_t queueFamilyIndex,
-    const VkAllocationCallbacks*,
-    HANDLE texture);
-  void InitializeSemaphore(
-    OpenKneeboard::Vulkan::Dispatch*,
-    VkDevice,
-    const VkAllocationCallbacks*,
-    HANDLE semaphore);
+    const VkAllocationCallbacks*);
+  void InitializeReadySemaphore(
+    OpenKneeboard::Vulkan::Dispatch* vk,
+    VkDevice device,
+    const VkAllocationCallbacks* allocator);
 };
 
 struct InstanceCreateInfo
@@ -150,6 +147,17 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   unique_vk<VkCommandPool> mCommandPool;
   std::vector<VkCommandBuffer> mCommandBuffers;
   std::vector<unique_vk<VkFence>> mCompletionFences;
+
+  std::unordered_map<HANDLE, unique_vk<VkSemaphore>> mIPCSemaphores;
+  VkSemaphore GetIPCSemaphore(HANDLE);
+
+  struct IPCImage {
+    unique_vk<VkDeviceMemory> mMemory;
+    unique_vk<VkImage> mImage;
+    PixelSize mDimensions;
+  };
+  std::unordered_map<HANDLE, IPCImage> mIPCImages;
+  VkImage GetIPCImage(HANDLE, const PixelSize&);
 };
 
 };// namespace OpenKneeboard::SHM::Vulkan
