@@ -339,8 +339,6 @@ CachedReader::~CachedReader() {
     mCommandPool.get(),
     static_cast<uint32_t>(mCommandBuffers.size()),
     mCommandBuffers.data());
-
-  dprint("hitting autos");
 }
 
 void CachedReader::InitializeCache(
