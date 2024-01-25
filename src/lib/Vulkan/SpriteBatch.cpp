@@ -409,7 +409,10 @@ void SpriteBatch::End(const std::source_location& loc) {
     std::vector<VkDescriptorImageInfo> sourceInfos;
     sourceInfos.reserve(sources.size());
     for (const auto& source: sources) {
-      sourceInfos.push_back({.imageView = source});
+      sourceInfos.push_back(VkDescriptorImageInfo {
+        .imageView = source,
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      });
     }
 
     VkDescriptorSet descriptors[] {

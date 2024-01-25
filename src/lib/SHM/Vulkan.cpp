@@ -45,6 +45,14 @@ VkImageView Texture::GetVKRenderTargetView() {
   return mRenderTargetView.get();
 }
 
+VkSemaphore Texture::GetReadySemaphore() const {
+  return mSemaphore.get();
+}
+
+uint64_t Texture::GetReadySemaphoreValue() const {
+  return mSemaphoreReadyValue;
+}
+
 void Texture::CopyFrom(
   OpenKneeboard::Vulkan::Dispatch* vk,
   VkDevice device,
@@ -186,6 +194,8 @@ void Texture::CopyFrom(
   };
 
   check_vkresult(vk->QueueSubmit(queue, 1, &submitInfo, completionFence));
+
+  mSemaphoreReadyValue = semaphoreValueOut;
 }
 
 void Texture::InitializeImages(

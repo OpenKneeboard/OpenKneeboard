@@ -341,27 +341,43 @@ uint64_t VulkanRenderer::Render(
     1,
     &inBarrier);
 
+  auto source = reinterpret_cast<SHM::Vulkan::Texture*>(sourceTexture);
+
   mSpriteBatch->Begin(
     mCommandBuffer, mDestImageView.get(), destTextureDimensions);
 
   mSpriteBatch->Draw(
-    reinterpret_cast<SHM::Vulkan::Texture*>(sourceTexture)
-      ->GetVKRenderTargetView(),
-    sourceTexture->GetDimensions(),
+    source->GetVKRenderTargetView(),
+    source->GetDimensions(),
     sourceRect,
     destRect);
 
   mSpriteBatch->End();
 
   const auto semaphoreValueOut = semaphoreValueIn + 1;
-  VkSemaphore semaphores[] = {mSemaphore.get()};
+
+  VkSemaphore waitSemaphores[] = {
+    mSemaphore.get(),
+    source->GetReadySemaphore(),
+  };
+  uint64_t waitSemaphoreValues[] = {
+    semaphoreValueIn,
+    source->GetReadySemaphoreValue(),
+  };
+
+  VkSemaphore signalSemaphores[] = {
+    mSemaphore.get(),
+  };
+  uint64_t signalSemaphoreValues[] = {
+    semaphoreValueOut,
+  };
 
   VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
     .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
-    .waitSemaphoreValueCount = 1,
-    .pWaitSemaphoreValues = &semaphoreValueIn,
-    .signalSemaphoreValueCount = 1,
-    .pSignalSemaphoreValues = &semaphoreValueOut,
+    .waitSemaphoreValueCount = std::size(waitSemaphoreValues),
+    .pWaitSemaphoreValues = waitSemaphoreValues,
+    .signalSemaphoreValueCount = std::size(signalSemaphoreValues),
+    .pSignalSemaphoreValues = signalSemaphoreValues,
   };
 
   VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
@@ -369,13 +385,13 @@ uint64_t VulkanRenderer::Render(
   VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .pNext = &semaphoreInfo,
-    .waitSemaphoreCount = std::size(semaphores),
-    .pWaitSemaphores = semaphores,
+    .waitSemaphoreCount = std::size(waitSemaphores),
+    .pWaitSemaphores = waitSemaphores,
     .pWaitDstStageMask = &semaphoreStages,
     .commandBufferCount = 1,
     .pCommandBuffers = &mCommandBuffer,
-    .signalSemaphoreCount = std::size(semaphores),
-    .pSignalSemaphores = semaphores,
+    .signalSemaphoreCount = std::size(signalSemaphores),
+    .pSignalSemaphores = signalSemaphores,
   };
 
   VkFence fences[] {mCompletionFence.get()};

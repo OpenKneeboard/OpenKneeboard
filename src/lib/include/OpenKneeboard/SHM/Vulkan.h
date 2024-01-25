@@ -33,10 +33,11 @@ class Texture final : public SHM::IPCClientTexture {
   Texture(const PixelSize&, uint8_t swapchainIndex);
   virtual ~Texture();
 
-  uint8_t GetSwapchainIndex() const;
-
   VkImage GetVKImage();
   VkImageView GetVKRenderTargetView();
+
+  VkSemaphore GetReadySemaphore() const;
+  uint64_t GetReadySemaphoreValue() const;
 
   void CopyFrom(
     OpenKneeboard::Vulkan::Dispatch*,
@@ -63,6 +64,7 @@ class Texture final : public SHM::IPCClientTexture {
 
   HANDLE mSemaphoreHandle {};
   unique_vk<VkSemaphore> mSemaphore;
+  uint64_t mSemaphoreReadyValue {};
 
   void InitializeImages(
     OpenKneeboard::Vulkan::Dispatch*,
