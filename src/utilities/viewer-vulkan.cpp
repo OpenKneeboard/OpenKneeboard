@@ -295,11 +295,30 @@ void VulkanRenderer::SaveTextureToFile(
   SHM::IPCClientTexture* texture,
   const std::filesystem::path& path) {
   const auto source = reinterpret_cast<SHM::Vulkan::Texture*>(texture);
-  const auto dimensions = source->GetDimensions();
 
+  this->SaveTextureToFile(
+    source->GetDimensions(),
+    source->GetVKImage(),
+    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    source->GetReadySemaphore(),
+    source->GetReadySemaphoreValue(),
+    path);
+}
+
+void VulkanRenderer::SaveTextureToFile(
+  const PixelSize& dimensions,
+  VkImage source,
+  VkImageLayout sourceLayout,
+  VkSemaphore waitSemaphore,
+  uint64_t waitSemaphoreValue,
+  const std::filesystem::path& path) {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(activity, "SaveTextureToFile()");
   VkFence fences[] {mCompletionFence.get()};
-  mVK->WaitForFences(mDevice.get(), std::size(fences), fences, 1, ~(0ui64));
-  mVK->ResetFences(mDevice.get(), std::size(fences), fences);
+  {
+    OPENKNEEBOARD_TraceLoggingScope("FenceIn");
+    mVK->WaitForFences(mDevice.get(), std::size(fences), fences, 1, ~(0ui64));
+    mVK->ResetFences(mDevice.get(), std::size(fences), fences);
+  }
 
   const auto dxgiFormat = DXGI_FORMAT_B8G8R8A8_UNORM;
   const VkImageCreateInfo imageCreateInfo {
@@ -357,6 +376,8 @@ void VulkanRenderer::SaveTextureToFile(
 
   check_vkresult(mVK->BindImageMemory2KHR(mDevice.get(), 1, &bindInfo));
 
+  TraceLoggingWriteTagged(activity, "BeginCommandBuffer");
+
   auto cb = mCommandBuffer;
 
   const VkCommandBufferBeginInfo beginInfo {
@@ -369,9 +390,9 @@ void VulkanRenderer::SaveTextureToFile(
     VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
       .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      .oldLayout = sourceLayout,
       .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      .image = source->GetVKImage(),
+      .image = source,
       .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .levelCount = 1,
@@ -418,7 +439,7 @@ void VulkanRenderer::SaveTextureToFile(
 
   mVK->CmdCopyImage(
     cb,
-    source->GetVKImage(),
+    source,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     dest.get(),
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -430,8 +451,8 @@ void VulkanRenderer::SaveTextureToFile(
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
       .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
       .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-      .image = source->GetVKImage(),
+      .newLayout = sourceLayout,
+      .image = source,
       .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .levelCount = 1,
@@ -466,13 +487,12 @@ void VulkanRenderer::SaveTextureToFile(
 
   check_vkresult(mVK->EndCommandBuffer(cb));
 
-  VkSemaphore waitSemaphores[] = {source->GetReadySemaphore()};
-  uint64_t waitSemaphoreValues[] = {source->GetReadySemaphoreValue()};
+  TraceLoggingWriteTagged(activity, "EndCommandBuffer");
 
   const VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
     .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
-    .waitSemaphoreValueCount = std::size(waitSemaphores),
-    .pWaitSemaphoreValues = waitSemaphoreValues,
+    .waitSemaphoreValueCount = 1,
+    .pWaitSemaphoreValues = &waitSemaphoreValue,
   };
 
   const VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_TRANSFER_BIT};
@@ -480,17 +500,21 @@ void VulkanRenderer::SaveTextureToFile(
   const VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .pNext = &semaphoreInfo,
-    .waitSemaphoreCount = std::size(waitSemaphores),
-    .pWaitSemaphores = waitSemaphores,
+    .waitSemaphoreCount = 1,
+    .pWaitSemaphores = &waitSemaphore,
     .pWaitDstStageMask = &semaphoreStages,
     .commandBufferCount = 1,
     .pCommandBuffers = &cb,
   };
 
   check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fences[0]));
-  check_vkresult(mVK->WaitForFences(
-    mDevice.get(), std::size(fences), fences, true, ~(0ui64)));
+  {
+    OPENKNEEBOARD_TraceLoggingScope("FenceOut");
+    check_vkresult(mVK->WaitForFences(
+      mDevice.get(), std::size(fences), fences, true, ~(0ui64)));
+  }
 
+  OPENKNEEBOARD_TraceLoggingScope("Export");
   auto mapping = mVK->MemoryMapping<uint8_t>(
     mDevice.get(), destMemory.get(), 0, memoryRequirements.size, 0);
 
@@ -619,8 +643,9 @@ uint64_t VulkanRenderer::Render(
 
   VkFence fences[] {mCompletionFence.get()};
   check_vkresult(mVK->ResetFences(mDevice.get(), std::size(fences), fences));
-  check_vkresult(
-    mVK->QueueSubmit(mQueue, 1, &submitInfo, mCompletionFence.get()));
+  check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fences[0]));
+  check_vkresult(mVK->WaitForFences(
+    mDevice.get(), std::size(fences), fences, true, ~(0ui64)));
 
   return semaphoreValueOut;
 }

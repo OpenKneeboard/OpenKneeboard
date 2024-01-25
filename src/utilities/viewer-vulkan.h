@@ -92,6 +92,14 @@ class VulkanRenderer final : public Renderer {
 
   void InitializeSemaphore(HANDLE);
   void InitializeDest(HANDLE, const PixelSize&);
+
+  void SaveTextureToFile(
+    const PixelSize& dimensions,
+    VkImage source,
+    VkImageLayout layout,
+    VkSemaphore waitSemaphore,
+    uint64_t waitSemaphoreValue,
+    const std::filesystem::path&);
 };
 
 }// namespace OpenKneeboard::Viewer
