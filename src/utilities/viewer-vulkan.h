@@ -69,10 +69,16 @@ class VulkanRenderer final : public Renderer {
 
   uint32_t mQueueFamilyIndex;
 
-  unique_vk<VkDevice> mVKDevice;
+  unique_vk<VkDevice> mDevice;
+  VkQueue mQueue;
+
+  unique_vk<VkCommandPool> mCommandPool;
+  VkCommandBuffer mCommandBuffer {};
+  unique_vk<VkFence> mCompletionFence;
 
   HANDLE mDestHandle {};
   unique_vk<VkImage> mDestImage;
+  unique_vk<VkDeviceMemory> mDestImageMemory;
   unique_vk<VkImageView> mDestImageView;
 
   HANDLE mSemaphoreHandle {};
@@ -85,7 +91,7 @@ class VulkanRenderer final : public Renderer {
   std::unique_ptr<OpenKneeboard::Vulkan::SpriteBatch> mSpriteBatch;
 
   void InitializeSemaphore(HANDLE);
-  void InitializeDest(HANDLE);
+  void InitializeDest(HANDLE, const PixelSize&);
 };
 
 }// namespace OpenKneeboard::Viewer

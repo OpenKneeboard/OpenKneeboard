@@ -20,6 +20,8 @@
 
 #include "viewer-vulkan.h"
 
+#include <OpenKneeboard/Vulkan.h>
+
 #include <OpenKneeboard/dprint.h>
 
 using OpenKneeboard::Vulkan::check_vkresult;
@@ -224,19 +226,44 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   auto deviceCreateInfo = SHM::Vulkan::DeviceCreateInfo {
     Vulkan::SpriteBatch::DeviceCreateInfo {baseDeviceCreateInfo}};
 
-  mVKDevice
+  mDevice
     = mVK->make_unique_device(mVKPhysicalDevice, &deviceCreateInfo, nullptr);
 
+  mVK->GetDeviceQueue(mDevice.get(), mQueueFamilyIndex, 0, &mQueue);
+
   mSpriteBatch = std::make_unique<Vulkan::SpriteBatch>(
-    mVK.get(),
-    mVKPhysicalDevice,
-    mVKDevice.get(),
-    nullptr,
-    mQueueFamilyIndex,
-    0);
+    mVK.get(), mVKPhysicalDevice, mDevice.get(), nullptr, mQueueFamilyIndex, 0);
+
+  VkCommandPoolCreateInfo poolCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+    .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
+      | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+    .queueFamilyIndex = mQueueFamilyIndex,
+  };
+  mCommandPool
+    = mVK->make_unique<VkCommandPool>(mDevice.get(), &poolCreateInfo, nullptr);
+
+  VkCommandBufferAllocateInfo commandAllocInfo {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+    .commandPool = mCommandPool.get(),
+    .commandBufferCount = 1,
+  };
+  check_vkresult(mVK->AllocateCommandBuffers(
+    mDevice.get(), &commandAllocInfo, &mCommandBuffer));
 }
 
-VulkanRenderer::~VulkanRenderer() = default;
+VulkanRenderer::~VulkanRenderer() {
+  if (!mCompletionFence) {
+    return;
+  }
+
+  VkFence fences[] {mCompletionFence.get()};
+  check_vkresult(mVK->WaitForFences(
+    mDevice.get(), std::size(fences), fences, true, ~(0ui64)));
+
+  mVK->FreeCommandBuffers(
+    mDevice.get(), mCommandPool.get(), 1, &mCommandBuffer);
+}
 
 SHM::CachedReader* VulkanRenderer::GetSHM() {
   return &mSHM;
@@ -249,7 +276,7 @@ std::wstring_view VulkanRenderer::GetName() const noexcept {
 void VulkanRenderer::Initialize(uint8_t swapchainLength) {
   mSHM.InitializeCache(
     mVK.get(),
-    mVKDevice.get(),
+    mDevice.get(),
     mVKPhysicalDevice,
     mQueueFamilyIndex,
     0,
@@ -272,7 +299,179 @@ uint64_t VulkanRenderer::Render(
   HANDLE semaphoreHandle,
   uint64_t semaphoreValueIn) {
   this->InitializeSemaphore(semaphoreHandle);
-  return semaphoreValueIn;
+  this->InitializeDest(destTexture, destTextureDimensions);
+
+  if (!mCompletionFence) {
+    VkFenceCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    };
+    mCompletionFence
+      = mVK->make_unique<VkFence>(mDevice.get(), &createInfo, nullptr);
+  }
+
+  VkCommandBufferBeginInfo beginInfo {
+    .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+  };
+  check_vkresult(mVK->BeginCommandBuffer(mCommandBuffer, &beginInfo));
+
+  mSpriteBatch->Begin(
+    mCommandBuffer, mDestImageView.get(), destTextureDimensions);
+
+  mSpriteBatch->Draw(
+    reinterpret_cast<SHM::Vulkan::Texture*>(sourceTexture)
+      ->GetVKRenderTargetView(),
+    sourceTexture->GetDimensions(),
+    sourceRect,
+    destRect);
+
+  mSpriteBatch->End();
+
+  const auto semaphoreValueOut = semaphoreValueIn + 1;
+  VkSemaphore semaphores[] = {mSemaphore.get()};
+
+  VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
+    .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
+    .waitSemaphoreValueCount = 1,
+    .pWaitSemaphoreValues = &semaphoreValueIn,
+    .signalSemaphoreValueCount = 1,
+    .pSignalSemaphoreValues = &semaphoreValueOut,
+  };
+
+  VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
+
+  VkSubmitInfo submitInfo {
+    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+    .pNext = &semaphoreInfo,
+    .waitSemaphoreCount = std::size(semaphores),
+    .pWaitSemaphores = semaphores,
+    .pWaitDstStageMask = &semaphoreStages,
+    .commandBufferCount = 1,
+    .pCommandBuffers = &mCommandBuffer,
+    .signalSemaphoreCount = std::size(semaphores),
+    .pSignalSemaphores = semaphores,
+  };
+
+  VkFence fences[] {mCompletionFence.get()};
+  check_vkresult(mVK->ResetFences(mDevice.get(), std::size(fences), fences));
+  check_vkresult(
+    mVK->QueueSubmit(mQueue, 1, &submitInfo, mCompletionFence.get()));
+
+  return semaphoreValueOut;
+}
+
+void VulkanRenderer::InitializeDest(
+  HANDLE handle,
+  const PixelSize& dimensions) {
+  if (handle == mDestHandle) {
+    return;
+  }
+
+  VkExternalMemoryImageCreateInfoKHR externalCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO_KHR,
+    .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT_KHR,
+  };
+
+  // TODO: Using VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT here because - like all the
+  // other renderers - I'm using an SRGB view on a UNORM texture. That gets good
+  // results, but probably means I'm messing something up earlier.
+  VkImageCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+    .pNext = &externalCreateInfo,
+    .flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT,
+    .imageType = VK_IMAGE_TYPE_2D,
+    .format = VK_FORMAT_B8G8R8A8_UNORM,
+    .extent = {dimensions.mWidth, dimensions.mHeight, 1},
+    .mipLevels = 1,
+    .arrayLayers = 1,
+    .samples = VK_SAMPLE_COUNT_1_BIT,
+    .tiling = VK_IMAGE_TILING_OPTIMAL,
+    .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+    .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    .queueFamilyIndexCount = 1,
+    .pQueueFamilyIndices = &mQueueFamilyIndex,
+    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+  };
+  mDestImage = mVK->make_unique<VkImage>(mDevice.get(), &createInfo, nullptr);
+
+  VkImageMemoryRequirementsInfo2KHR memoryInfo {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2_KHR,
+    .image = mDestImage.get(),
+  };
+
+  VkMemoryRequirements2KHR memoryRequirements {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR,
+  };
+
+  mVK->GetImageMemoryRequirements2KHR(
+    mDevice.get(), &memoryInfo, &memoryRequirements);
+
+  VkMemoryWin32HandlePropertiesKHR handleProperties {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
+  };
+
+  check_vkresult(mVK->GetMemoryWin32HandlePropertiesKHR(
+    mDevice.get(),
+    VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT_KHR,
+    handle,
+    &handleProperties));
+
+  const auto memoryType = OpenKneeboard::Vulkan::FindMemoryType(
+    mVK.get(),
+    mVKPhysicalDevice,
+    handleProperties.memoryTypeBits,
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  if (!memoryType) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
+  }
+
+  VkImportMemoryWin32HandleInfoKHR importInfo {
+    .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR,
+    .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT_KHR,
+    .handle = handle,
+  };
+
+  VkMemoryDedicatedAllocateInfoKHR dedicatedAllocInfo {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
+    .pNext = &importInfo,
+    .image = mDestImage.get(),
+  };
+
+  VkMemoryAllocateInfo allocInfo {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    .pNext = &dedicatedAllocInfo,
+    .allocationSize = memoryRequirements.memoryRequirements.size,
+    .memoryTypeIndex = *memoryType,
+  };
+
+  mDestImageMemory
+    = mVK->make_unique<VkDeviceMemory>(mDevice.get(), &allocInfo, nullptr);
+
+  VkBindImageMemoryInfoKHR bindInfo {
+    .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
+    .image = mDestImage.get(),
+    .memory = mDestImageMemory.get(),
+  };
+
+  check_vkresult(mVK->BindImageMemory2KHR(mDevice.get(), 1, &bindInfo));
+
+  VkImageViewCreateInfo viewCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .image = mDestImage.get(),
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = VK_FORMAT_B8G8R8A8_UNORM,
+      .subresourceRange = VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
+    };
+
+  mDestImageView
+    = mVK->make_unique<VkImageView>(mDevice.get(), &viewCreateInfo, nullptr);
+
+  mDestHandle = handle;
 }
 
 void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
@@ -291,7 +490,7 @@ void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
   };
 
   mSemaphore
-    = mVK->make_unique<VkSemaphore>(mVKDevice.get(), &createInfo, nullptr);
+    = mVK->make_unique<VkSemaphore>(mDevice.get(), &createInfo, nullptr);
 
   VkImportSemaphoreWin32HandleInfoKHR importInfo {
     .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
@@ -301,7 +500,7 @@ void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
   };
 
   check_vkresult(
-    mVK->ImportSemaphoreWin32HandleKHR(mVKDevice.get(), &importInfo));
+    mVK->ImportSemaphoreWin32HandleKHR(mDevice.get(), &importInfo));
 }
 
 }// namespace OpenKneeboard::Viewer
