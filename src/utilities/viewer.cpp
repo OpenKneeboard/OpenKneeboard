@@ -311,6 +311,7 @@ class TestViewerWindow final {
   }
 
   void OnResize(const D2D1_SIZE_U& size) {
+    dprintf("Resizing to {}x{}", size.width, size.height);
     using OpenKneeboard::SHM::ActiveConsumers;
     const auto now = ActiveConsumers::Clock::now();
     if ((now - ActiveConsumers::Get().mNonVRD3D11) > std::chrono::seconds(1)) {
@@ -318,8 +319,6 @@ class TestViewerWindow final {
     }
 
     dprintf("Resized to {}x{}", size.width, size.height);
-    mRenderer = nullptr;
-    this->CreateRenderer();
 
     this->PaintNow();
   }
