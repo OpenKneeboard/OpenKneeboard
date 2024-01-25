@@ -33,7 +33,7 @@
   IT(CmdBlitImage) \
   IT(CmdClearAttachments) \
   IT(CmdCopyImage) \
-  IT(CmdDrawIndexed) \
+  IT(CmdDraw) \
   IT(CmdEndRenderingKHR) \
   IT(CmdPipelineBarrier) \
   IT(CmdSetScissor) \
@@ -90,4 +90,5 @@
   IT(ResetFences) \
   IT(UnmapMemory) \
   IT(UpdateDescriptorSets) \
-  IT(WaitForFences)
+  IT(WaitForFences) \
+  IT(WaitSemaphoresKHR)

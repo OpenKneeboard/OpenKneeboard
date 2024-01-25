@@ -354,6 +354,8 @@ uint64_t VulkanRenderer::Render(
 
   mSpriteBatch->End();
 
+  check_vkresult(mVK->EndCommandBuffer(mCommandBuffer));
+
   const auto semaphoreValueOut = semaphoreValueIn + 1;
 
   VkSemaphore waitSemaphores[] = {
@@ -380,14 +382,17 @@ uint64_t VulkanRenderer::Render(
     .pSignalSemaphoreValues = signalSemaphoreValues,
   };
 
-  VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
+  VkPipelineStageFlags semaphoreStages[] {
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+  };
 
   VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
     .pNext = &semaphoreInfo,
     .waitSemaphoreCount = std::size(waitSemaphores),
     .pWaitSemaphores = waitSemaphores,
-    .pWaitDstStageMask = &semaphoreStages,
+    .pWaitDstStageMask = semaphoreStages,
     .commandBufferCount = 1,
     .pCommandBuffers = &mCommandBuffer,
     .signalSemaphoreCount = std::size(signalSemaphores),
@@ -519,6 +524,12 @@ void VulkanRenderer::InitializeDest(
 void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
   if (handle == mSemaphoreHandle) {
     return;
+  }
+
+  if (mCompletionFence) {
+    VkFence fences[] {mCompletionFence.get()};
+    check_vkresult(mVK->WaitForFences(
+      mDevice.get(), std::size(fences), fences, false, ~(0ui64)));
   }
 
   VkSemaphoreTypeCreateInfoKHR typeCreateInfo {

@@ -457,7 +457,7 @@ void SpriteBatch::End(const std::source_location& loc) {
     };
   }
 
-  mVK->CmdDrawIndexed(mCommandBuffer, vertices.size(), 1, 0, 0, 0);
+  mVK->CmdDraw(mCommandBuffer, vertices.size(), 1, 0, 0);
 
   mVK->CmdEndRenderingKHR(mCommandBuffer);
 
