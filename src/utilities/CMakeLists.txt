@@ -77,6 +77,7 @@ target_link_libraries(
   System::D2d1
   System::D3d11
   System::Dxgi
+  ThirdParty::DirectXTex
   ThirdParty::DirectXTK
   ThirdParty::OutPtr
 )

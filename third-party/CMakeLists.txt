@@ -12,6 +12,7 @@ configure_file(
 
 include(detours.cmake)
 include(cppwinrt.cmake)
+include(directxtex.cmake)
 include(directxtk.cmake)
 include(directxtk12.cmake)
 include(dxc.cmake)

@@ -201,7 +201,7 @@ void SpriteBatch::CreateVertexBuffer() {
     mVK,
     mPhysicalDevice,
     requirements.memoryTypeBits,
-    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
   if (!memoryType) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL(

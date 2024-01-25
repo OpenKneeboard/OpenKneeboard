@@ -225,6 +225,9 @@ void Texture::InitializeCacheImage(
   // TODO: Using VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT here because - like all the
   // other renderers - I'm using an SRGB view on a UNORM texture. That gets good
   // results, but probably means I'm messing something up earlier.
+  //
+  // TRANSFER_SRC_BIT isn't needed for actual functionality, but is extremely
+  // useful for debugging.
   VkImageCreateInfo createInfo {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
     .flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT,
@@ -235,7 +238,8 @@ void Texture::InitializeCacheImage(
     .arrayLayers = 1,
     .samples = VK_SAMPLE_COUNT_1_BIT,
     .tiling = VK_IMAGE_TILING_OPTIMAL,
-    .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+    .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+      | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     .queueFamilyIndexCount = 1,
     .pQueueFamilyIndices = &queueFamilyIndex,
