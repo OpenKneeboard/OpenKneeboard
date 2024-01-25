@@ -28,7 +28,8 @@ namespace OpenKneeboard::SHM::Vulkan {
 
 using OpenKneeboard::Vulkan::check_vkresult;
 
-Texture::Texture(const PixelSize& dimensions) : IPCClientTexture(dimensions) {
+Texture::Texture(const PixelSize& dimensions, uint8_t swapchainIndex)
+  : IPCClientTexture(dimensions, swapchainIndex) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::Texture::Texture()");
 }
 
@@ -348,10 +349,13 @@ CachedReader::CachedReader(ConsumerKind consumerKind)
 CachedReader::~CachedReader() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::~CachedReader()");
 
-  if (mCompletionFence) {
-    VkFence fences[] {mCompletionFence.get()};
-    check_vkresult(
-      mVK->WaitForFences(mDevice, std::size(fences), fences, true, ~(0ui64)));
+  if (!mCompletionFences.empty()) {
+    std::vector<VkFence> fences;
+    for (const auto& fence: mCompletionFences) {
+      fences.push_back(fence.get());
+    }
+    check_vkresult(mVK->WaitForFences(
+      mDevice, fences.size(), fences.data(), true, ~(0ui64)));
   }
 
   mVK->FreeCommandBuffers(
@@ -374,10 +378,20 @@ void CachedReader::InitializeCache(
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::Vulkan::CachedReader::InitializeCache()",
     TraceLoggingValue(swapchainLength, "swapchainLength"));
+
   mVK = dispatch;
+
   mDevice = device;
   mPhysicalDevice = physicalDevice;
   mAllocator = allocator;
+
+  if (!mCompletionFences.empty()) {
+    std::vector<VkFence> fences;
+    for (const auto& fence: mCompletionFences) {
+      fences.push_back(fence.get());
+    }
+    mVK->WaitForFences(device, fences.size(), fences.data(), true, ~(0ui64));
+  }
 
   mQueueFamilyIndex = queueFamilyIndex;
   dispatch->GetDeviceQueue(device, queueFamilyIndex, queueIndex, &mQueue);
@@ -409,15 +423,17 @@ void CachedReader::InitializeCache(
       .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
       .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
-    mCompletionFence
-      = mVK->make_unique<VkFence>(mDevice, &createInfo, mAllocator);
+    mCompletionFences.clear();
+    for (uint8_t i = 0; i < swapchainLength; ++i) {
+      mCompletionFences.push_back(
+        mVK->make_unique<VkFence>(mDevice, &createInfo, mAllocator));
+    };
   }
 
   SHM::CachedReader::InitializeCache(swapchainLength);
 }
 
 void CachedReader::Copy(
-  uint8_t swapchainIndex,
   HANDLE sourceTexture,
   IPCClientTexture* destinationTexture,
   HANDLE semaphore,
@@ -425,8 +441,11 @@ void CachedReader::Copy(
   uint64_t semaphoreValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::Copy()");
 
-  VkFence fences[] {mCompletionFence.get()};
-  check_vkresult(mVK->ResetFences(mDevice, std::size(fences), fences));
+  const auto swapchainIndex = destinationTexture->GetSwapchainIndex();
+
+  auto fence = mCompletionFences.at(swapchainIndex).get();
+  check_vkresult(mVK->WaitForFences(mDevice, 1, &fence, true, ~(0ui64)));
+  check_vkresult(mVK->ResetFences(mDevice, 1, &fence));
 
   reinterpret_cast<Texture*>(destinationTexture)
     ->CopyFrom(
@@ -441,15 +460,15 @@ void CachedReader::Copy(
       semaphore,
       semaphoreValueIn,
       semaphoreValueOut,
-      mCompletionFence.get());
+      fence);
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   const PixelSize& dimensions,
-  [[maybe_unused]] uint8_t swapchainIndex) noexcept {
+  uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::Vulkan::CachedReader::CreateIPCClientTexture()");
-  return std::make_shared<Texture>(dimensions);
+  return std::make_shared<Texture>(dimensions, swapchainIndex);
 }
 
 InstanceCreateInfo::InstanceCreateInfo(const VkInstanceCreateInfo& base)

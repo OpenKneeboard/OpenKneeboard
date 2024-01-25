@@ -34,6 +34,7 @@ class Texture final : public SHM::IPCClientTexture {
   Texture() = delete;
   Texture(
     const PixelSize&,
+    uint8_t swapchainIndex,
     const winrt::com_ptr<ID3D12Device>&,
     ID3D12DescriptorHeap* shaderResourceViewHeap,
     const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
@@ -85,7 +86,6 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
  protected:
   virtual void Copy(
-    uint8_t swapchainIndex,
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
     HANDLE fence,

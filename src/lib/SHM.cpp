@@ -178,7 +178,6 @@ Snapshot::Snapshot(
   {
     OPENKNEEBOARD_TraceLoggingScope("CopyTexture");
     copier->Copy(
-      textureIndex,
       source->mTextureHandle.get(),
       dest.get(),
       source->mFenceHandle.get(),
@@ -759,8 +758,10 @@ std::shared_ptr<IPCClientTexture> CachedReader::GetIPCClientTexture(
   return ret;
 }
 
-IPCClientTexture::IPCClientTexture(const PixelSize& dimensions)
-  : mDimensions(dimensions) {
+IPCClientTexture::IPCClientTexture(
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex)
+  : mDimensions(dimensions), mSwapchainIndex(swapchainIndex) {
 }
 
 IPCClientTexture::~IPCClientTexture() = default;

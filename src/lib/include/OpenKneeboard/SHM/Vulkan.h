@@ -30,8 +30,10 @@ using OpenKneeboard::Vulkan::unique_vk;
 class Texture final : public SHM::IPCClientTexture {
  public:
   Texture() = delete;
-  Texture(const PixelSize&);
+  Texture(const PixelSize&, uint8_t swapchainIndex);
   virtual ~Texture();
+
+  uint8_t GetSwapchainIndex() const;
 
   VkImage GetVKImage();
   VkImageView GetVKRenderTargetView();
@@ -125,7 +127,6 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
  protected:
   virtual void Copy(
-    uint8_t swapchainIndex,
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
     HANDLE fence,
@@ -147,8 +148,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   unique_vk<VkCommandPool> mCommandPool;
   std::vector<VkCommandBuffer> mCommandBuffers;
-
-  unique_vk<VkFence> mCompletionFence;
+  std::vector<unique_vk<VkFence>> mCompletionFences;
 };
 
 };// namespace OpenKneeboard::SHM::Vulkan

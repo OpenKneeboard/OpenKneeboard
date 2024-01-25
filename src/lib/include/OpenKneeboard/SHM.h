@@ -65,11 +65,16 @@ class IPCClientTexture {
     return mDimensions;
   }
 
+  inline const uint8_t GetSwapchainIndex() const {
+    return mSwapchainIndex;
+  }
+
  protected:
-  IPCClientTexture(const PixelSize&);
+  IPCClientTexture(const PixelSize&, uint8_t swapchainIndex);
 
  private:
   const PixelSize mDimensions;
+  const uint8_t mSwapchainIndex;
 };
 
 // See SHM::D3D11::CachedReader etc
@@ -77,7 +82,6 @@ class IPCTextureCopier {
  public:
   virtual ~IPCTextureCopier();
   virtual void Copy(
-    uint8_t swapchainIndex,
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,
     HANDLE fence,

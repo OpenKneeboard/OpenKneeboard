@@ -34,11 +34,12 @@ namespace OpenKneeboard::SHM::D3D12 {
 
 Texture::Texture(
   const PixelSize& dimensions,
+  uint8_t swapchainIndex,
   const winrt::com_ptr<ID3D12Device>& device,
   ID3D12DescriptorHeap* shaderResourceViewHeap,
   const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
   const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle)
-  : IPCClientTexture(dimensions),
+  : IPCClientTexture(dimensions, swapchainIndex),
     mDevice(device),
     mShaderResourceViewCPUHandle(shaderResourceViewCPUHandle),
     mShaderResourceViewGPUHandle(shaderResourceViewGPUHandle) {
@@ -236,6 +237,7 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
     "SHM::D3D12::CachedReader::CreateIPCClientTexture()");
   return std::make_shared<SHM::D3D12::Texture>(
     dimensions,
+    swapchainIndex,
     mD3D12Device,
     mShaderResourceViewHeap->Heap(),
     mShaderResourceViewHeap->GetCpuHandle(swapchainIndex),
@@ -243,13 +245,14 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
 }
 
 void CachedReader::Copy(
-  uint8_t swapchainIndex,
   HANDLE sourceTexture,
   IPCClientTexture* destinationTexture,
   HANDLE fence,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::Copy()");
+
+  const auto swapchainIndex = destinationTexture->GetSwapchainIndex();
 
   auto& br = mBufferResources.at(swapchainIndex);
 

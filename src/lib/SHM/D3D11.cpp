@@ -25,9 +25,12 @@ namespace OpenKneeboard::SHM::D3D11 {
 
 Texture::Texture(
   const PixelSize& dimensions,
+  uint8_t swapchainIndex,
   const winrt::com_ptr<ID3D11Device5>& device,
   const winrt::com_ptr<ID3D11DeviceContext4>& context)
-  : IPCClientTexture(dimensions), mDevice(device), mContext(context) {
+  : IPCClientTexture(dimensions, swapchainIndex),
+    mDevice(device),
+    mContext(context) {
 }
 
 Texture::~Texture() = default;
@@ -148,7 +151,6 @@ void CachedReader::InitializeCache(
 }
 
 void CachedReader::Copy(
-  [[maybe_unused]] uint8_t swapchainIndex,
   HANDLE sourceTexture,
   IPCClientTexture* destinationTexture,
   HANDLE fence,
@@ -161,11 +163,11 @@ void CachedReader::Copy(
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   const PixelSize& dimensions,
-  [[maybe_unused]] uint8_t swapchainIndex) noexcept {
+  uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::D3D11::CachedReader::CreateIPCClientTexture()");
   return std::make_shared<SHM::D3D11::Texture>(
-    dimensions, mD3D11Device, mD3D11DeviceContext);
+    dimensions, swapchainIndex, mD3D11Device, mD3D11DeviceContext);
 }
 
 }// namespace OpenKneeboard::SHM::D3D11
