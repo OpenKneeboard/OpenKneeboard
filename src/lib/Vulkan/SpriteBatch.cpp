@@ -66,7 +66,7 @@ SpriteBatch::SpriteBatch(
 
   this->CreateVertexBuffer();
   this->CreateSampler();
-  this->CreateSourceDescriptorSet();
+  this->CreateDescriptorSet();
 
   this->CreatePipeline();
 }
@@ -74,8 +74,7 @@ SpriteBatch::SpriteBatch(
 void SpriteBatch::CreatePipeline() {
   {
     VkDescriptorSetLayout descriptorSetLayouts[] {
-      mSamplerDescriptorSet.mLayout.get(),
-      mSourceDescriptorSet.mLayout.get(),
+      mDescriptorSet.mLayout.get(),
     };
     VkPipelineLayoutCreateInfo createInfo {
       .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -270,9 +269,7 @@ void SpriteBatch::Clear(Color color, const std::source_location& caller) {
   mClearColor = color;
 }
 
-void SpriteBatch::End(
-  VkFence completionFence,
-  const std::source_location& loc) {
+void SpriteBatch::End(const std::source_location& loc) {
   if (!mTarget) [[unlikely]] {
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
       loc, "Calling End() without Begin()");
@@ -363,17 +360,6 @@ void SpriteBatch::End(
   };
   check_vkresult(mVK->FlushMappedMemoryRanges(mDevice, 1, &memoryRange));
 
-  check_vkresult(mVK->ResetCommandBuffer(mCommandBuffer, 0));
-
-  {
-    // TODO: remove ONE_TIME_SUBMIT_BIT and re-use this buffer.
-    VkCommandBufferBeginInfo beginInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-      .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
-    };
-    check_vkresult(mVK->BeginCommandBuffer(mCommandBuffer, &beginInfo));
-  }
-
   {
     VkRenderingAttachmentInfoKHR colorAttachmentInfo {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
@@ -426,39 +412,30 @@ void SpriteBatch::End(
       sourceInfos.push_back({.imageView = source});
     }
 
-    VkWriteDescriptorSet writeDescriptors[] {
-      VkWriteDescriptorSet {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = mSamplerDescriptorSet.mDescriptorSet,
-        .descriptorCount = 1,
-        .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-        .pImageInfo = &samplerInfo,
-      },
-      VkWriteDescriptorSet {
-        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-        .dstSet = mSourceDescriptorSet.mDescriptorSet,
-        .descriptorCount = static_cast<uint32_t>(sourceInfos.size()),
-        .pImageInfo = sourceInfos.data(),
-      },
+    VkDescriptorSet descriptors[] {
+      mDescriptorSet.mDescriptorSet,
     };
-    mVK->UpdateDescriptorSets(
-      mDevice, std::size(writeDescriptors), writeDescriptors, 0, nullptr);
+
+    mVK->CmdBindDescriptorSets(
+      mCommandBuffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      mPipelineLayout.get(),
+      0,
+      std::size(descriptors),
+      descriptors,
+      0,
+      nullptr);
+
+    VkWriteDescriptorSet descriptorWrite {
+      .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+      .dstSet = mDescriptorSet.mDescriptorSet,
+      .dstBinding = 1,
+      .descriptorCount = static_cast<uint32_t>(sourceInfos.size()),
+      .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+      .pImageInfo = sourceInfos.data(),
+    };
+    mVK->UpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
   }
-
-  VkDescriptorSet descriptors[] {
-    mSourceDescriptorSet.mDescriptorSet,
-    mSamplerDescriptorSet.mDescriptorSet,
-  };
-
-  mVK->CmdBindDescriptorSets(
-    mCommandBuffer,
-    VK_PIPELINE_BIND_POINT_GRAPHICS,
-    mPipelineLayout.get(),
-    0,
-    std::size(descriptors),
-    descriptors,
-    0,
-    nullptr);
 
   if (mClearColor) {
     VkClearAttachment clear {
@@ -480,18 +457,6 @@ void SpriteBatch::End(
   mVK->CmdDrawIndexed(mCommandBuffer, vertices.size(), 1, 0, 0, 0);
 
   mVK->CmdEndRenderingKHR(mCommandBuffer);
-
-  check_vkresult(mVK->EndCommandBuffer(mCommandBuffer));
-
-  {
-    // TODO: do we need to wait for anything?
-    VkSubmitInfo submitInfo {
-      .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-      .commandBufferCount = 1,
-      .pCommandBuffers = &mCommandBuffer,
-    };
-    check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, completionFence));
-  }
 
   mSprites.clear();
   mTarget = nullptr;
@@ -537,73 +502,44 @@ static VkDeviceSize aligned_size(VkDeviceSize size, VkDeviceSize alignment) {
 }
 
 void SpriteBatch::CreateSampler() {
-  {
-    VkSamplerCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-      .magFilter = VK_FILTER_LINEAR,
-      .minFilter = VK_FILTER_LINEAR,
-      .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-      .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-      .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-      .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-      .maxLod = VK_LOD_CLAMP_NONE,
-    };
-    mSampler = mVK->make_unique<VkSampler>(mDevice, &createInfo, mAllocator);
-  }
-
-  VkSampler samplers[] = {mSampler.get()};
-  VkDescriptorSetLayoutBinding layoutBinding {
-    .binding = 0,
-    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-    .descriptorCount = 1,
-    .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-    .pImmutableSamplers = samplers,
+  VkSamplerCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+    .magFilter = VK_FILTER_LINEAR,
+    .minFilter = VK_FILTER_LINEAR,
+    .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
+    .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+    .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+    .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+    .maxLod = VK_LOD_CLAMP_NONE,
   };
-
-  VkDescriptorSetLayoutCreateInfo layoutCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-    .bindingCount = 1,
-    .pBindings = &layoutBinding,
-  };
-  mSamplerDescriptorSet.mLayout = mVK->make_unique<VkDescriptorSetLayout>(
-    mDevice, &layoutCreateInfo, mAllocator);
-
-  VkDescriptorPoolSize poolSize {
-    .type = VK_DESCRIPTOR_TYPE_SAMPLER,
-    .descriptorCount = 1,
-  };
-  VkDescriptorPoolCreateInfo poolCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-    .maxSets = 1,
-    .poolSizeCount = 1,
-    .pPoolSizes = &poolSize,
-  };
-  mSamplerDescriptorSet.mDescriptorPool
-    = mVK->make_unique<VkDescriptorPool>(mDevice, &poolCreateInfo, mAllocator);
-
-  VkDescriptorSetLayout layouts[] {mSamplerDescriptorSet.mLayout.get()};
-  VkDescriptorSetAllocateInfo allocInfo {
-    .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-    .descriptorPool = mSamplerDescriptorSet.mDescriptorPool.get(),
-    .descriptorSetCount = std::size(layouts),
-    .pSetLayouts = layouts,
-  };
-
-  check_vkresult(mVK->AllocateDescriptorSets(
-    mDevice, &allocInfo, &mSamplerDescriptorSet.mDescriptorSet));
+  mSampler = mVK->make_unique<VkSampler>(mDevice, &createInfo, mAllocator);
 }
 
-void SpriteBatch::CreateSourceDescriptorSet() {
-  VkDescriptorSetLayoutBinding layoutBinding {
-    .binding = 0,
-    .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-    .descriptorCount = MaxSpritesPerBatch,
-    .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+void SpriteBatch::CreateDescriptorSet() {
+  auto sampler = mSampler.get();
+  VkDescriptorSetLayoutBinding layoutBindings[] {
+    VkDescriptorSetLayoutBinding {
+      .binding = 0,
+      .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+      .descriptorCount = 1,
+      .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+      .pImmutableSamplers = &sampler,
+    },
+    VkDescriptorSetLayoutBinding {
+      .binding = 1,
+      .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+      .descriptorCount = MaxSpritesPerBatch,
+      .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+    },
   };
 
   VkDescriptorBindingFlags bindingFlags[] {
-    VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT
-    | VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT};
+    0,
+    VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT
+      | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT
+      | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+  };
+
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo {
     .sType
     = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT,
@@ -614,35 +550,44 @@ void SpriteBatch::CreateSourceDescriptorSet() {
   VkDescriptorSetLayoutCreateInfo layoutCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
     .pNext = &bindingFlagsCreateInfo,
-    .bindingCount = 1,
-    .pBindings = &layoutBinding,
+    .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT,
+    .bindingCount = std::size(layoutBindings),
+    .pBindings = layoutBindings,
   };
 
-  mSourceDescriptorSet.mLayout = mVK->make_unique<VkDescriptorSetLayout>(
+  mDescriptorSet.mLayout = mVK->make_unique<VkDescriptorSetLayout>(
     mDevice, &layoutCreateInfo, mAllocator);
 
-  VkDescriptorPoolSize poolSize {
-    .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-    .descriptorCount = MaxSpritesPerBatch,
+  VkDescriptorPoolSize poolSizes[] {
+    {
+      .type = VK_DESCRIPTOR_TYPE_SAMPLER,
+      .descriptorCount = 1,
+    },
+    {
+      .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+      .descriptorCount = MaxSpritesPerBatch,
+    },
   };
   VkDescriptorPoolCreateInfo poolCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+    .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
     .maxSets = 1,
-    .poolSizeCount = 1,
-    .pPoolSizes = &poolSize,
+    .poolSizeCount = std::size(poolSizes),
+    .pPoolSizes = poolSizes,
   };
-  mSourceDescriptorSet.mDescriptorPool
+
+  mDescriptorSet.mDescriptorPool
     = mVK->make_unique<VkDescriptorPool>(mDevice, &poolCreateInfo, mAllocator);
 
-  VkDescriptorSetLayout layouts[] {mSourceDescriptorSet.mLayout.get()};
+  VkDescriptorSetLayout layouts[] {mDescriptorSet.mLayout.get()};
   VkDescriptorSetAllocateInfo allocInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-    .descriptorPool = mSourceDescriptorSet.mDescriptorPool.get(),
+    .descriptorPool = mDescriptorSet.mDescriptorPool.get(),
     .descriptorSetCount = std::size(layouts),
     .pSetLayouts = layouts,
   };
   check_vkresult(mVK->AllocateDescriptorSets(
-    mDevice, &allocInfo, &mSourceDescriptorSet.mDescriptorSet));
+    mDevice, &allocInfo, &mDescriptorSet.mDescriptorSet));
 }
 
 SpriteBatch::InstanceCreateInfo::InstanceCreateInfo(
@@ -660,6 +605,8 @@ static void EnableDescriptorIndexing(auto* it) {
   }
   it->descriptorBindingPartiallyBound = true;
   it->descriptorBindingVariableDescriptorCount = true;
+  it->descriptorBindingSampledImageUpdateAfterBind = true;
+  it->descriptorBindingUpdateUnusedWhilePending = true;
   it->shaderSampledImageArrayNonUniformIndexing = true;
   it->runtimeDescriptorArray = true;
 }

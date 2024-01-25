@@ -56,7 +56,6 @@ class Texture final : public SHM::IPCClientTexture {
   unique_vk<VkDeviceMemory> mImageMemory;
   unique_vk<VkImage> mImage;
   unique_vk<VkImageView> mRenderTargetView;
-  VkImageLayout mImageLayout;
 
   HANDLE mSourceImageHandle {};
   unique_vk<VkDeviceMemory> mSourceImageMemory;

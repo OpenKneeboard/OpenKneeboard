@@ -76,9 +76,7 @@ class SpriteBatch {
     const Color& color = Colors::White,
     const std::source_location& loc = std::source_location::current());
 
-  void End(
-    VkFence completionFence = VK_NULL_HANDLE,
-    const std::source_location& loc = std::source_location::current());
+  void End(const std::source_location& loc = std::source_location::current());
 
   static constexpr std::string_view REQUIRED_DEVICE_EXTENSIONS[] {
     VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
@@ -175,13 +173,10 @@ class SpriteBatch {
     unique_vk<VkDescriptorPool> mDescriptorPool;
     VkDescriptorSet mDescriptorSet {VK_NULL_HANDLE};
   };
-  DescriptorSet mSamplerDescriptorSet;
+  DescriptorSet mDescriptorSet;
 
   void CreateSampler();
-
-  DescriptorSet mSourceDescriptorSet;
-
-  void CreateSourceDescriptorSet();
+  void CreateDescriptorSet();
 };
 
 }// namespace OpenKneeboard::Vulkan

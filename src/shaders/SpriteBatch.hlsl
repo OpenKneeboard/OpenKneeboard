@@ -3,8 +3,9 @@
 //
 // http://go.microsoft.com/fwlink/?LinkId=248929
 
-sampler TextureSampler : register(s0, space0);
-Texture2D<float4> Textures[] : register(t0, space1);
+// Limit of 16 textures should match C++
+[[vk::binding(0)]] sampler TextureSampler : register(s0);
+[[vk::binding(1)]] Texture2D<float4> Textures[16] : register(t0);
 
 void SpriteVertexShader(
     inout uint textureIndex : TEXTURE_INDEX,

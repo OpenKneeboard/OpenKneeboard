@@ -316,6 +316,31 @@ uint64_t VulkanRenderer::Render(
   };
   check_vkresult(mVK->BeginCommandBuffer(mCommandBuffer, &beginInfo));
 
+  VkImageMemoryBarrier inBarrier {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+    .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+    .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    .image = mDestImage.get(),
+    .subresourceRange = VkImageSubresourceRange {
+      .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+      .levelCount = 1,
+      .layerCount = 1,
+    },
+  };
+
+  mVK->CmdPipelineBarrier(
+    mCommandBuffer,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    0,
+    0,
+    nullptr,
+    0,
+    nullptr,
+    1,
+    &inBarrier);
+
   mSpriteBatch->Begin(
     mCommandBuffer, mDestImageView.get(), destTextureDimensions);
 

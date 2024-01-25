@@ -84,15 +84,12 @@ void Texture::CopyFrom(
     },
   };
 
-  const auto srcLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-  const auto destLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-  std::vector<VkImageMemoryBarrier> inBarriers {
+  VkImageMemoryBarrier inBarriers[] {
     VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
       .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
       .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-      .newLayout = srcLayout,
+      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
       .image = mSourceImage.get(),
       .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -103,8 +100,8 @@ void Texture::CopyFrom(
     VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
       .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-      .oldLayout = mImageLayout,
-      .newLayout = destLayout,
+      .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+      .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
       .image = mImage.get(),
       .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
@@ -123,17 +120,43 @@ void Texture::CopyFrom(
     nullptr,
     0,
     nullptr,
-    static_cast<uint32_t>(inBarriers.size()),
-    inBarriers.data());
+    std::size(inBarriers),
+    inBarriers);
 
   vk->CmdCopyImage(
     commandBuffer,
     mSourceImage.get(),
-    srcLayout,
+    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
     mImage.get(),
-    destLayout,
+    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
     std::size(regions),
     regions);
+
+  VkImageMemoryBarrier outBarriers[] {
+    VkImageMemoryBarrier {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      .image = mImage.get(),
+      .subresourceRange = VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
+    },
+  };
+  vk->CmdPipelineBarrier(
+    commandBuffer,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    0,
+    0,
+    nullptr,
+    0,
+    nullptr,
+    std::size(outBarriers),
+    outBarriers);
 
   check_vkresult(vk->EndCommandBuffer(commandBuffer));
 
@@ -214,7 +237,6 @@ void Texture::InitializeImages(
 
     mImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
     mRenderTargetView = {};
-    mImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   }
 
   VkImageMemoryRequirementsInfo2KHR memoryInfo {
