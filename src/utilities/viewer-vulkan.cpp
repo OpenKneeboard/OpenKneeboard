@@ -653,8 +653,6 @@ uint64_t VulkanRenderer::Render(
   VkFence fences[] {mCompletionFence.get()};
   check_vkresult(mVK->ResetFences(mDevice.get(), std::size(fences), fences));
   check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fences[0]));
-  check_vkresult(mVK->WaitForFences(
-    mDevice.get(), std::size(fences), fences, true, ~(0ui64)));
 
   return semaphoreValueOut;
 }
