@@ -347,8 +347,7 @@ void VulkanRenderer::SaveTextureToFile(
     mVK.get(),
     mVKPhysicalDevice,
     memoryRequirements.memoryTypeBits,
-    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-      | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
   if (!memoryType) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
@@ -516,7 +515,17 @@ void VulkanRenderer::SaveTextureToFile(
 
   OPENKNEEBOARD_TraceLoggingScope("Export");
   auto mapping = mVK->MemoryMapping<uint8_t>(
-    mDevice.get(), destMemory.get(), 0, memoryRequirements.size, 0);
+    mDevice.get(), destMemory.get(), 0, VK_WHOLE_SIZE, 0);
+
+  {
+    OPENKNEEBOARD_TraceLoggingScope("InvalidateMapping");
+    VkMappedMemoryRange range {
+      .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
+      .memory = destMemory.get(),
+      .size = VK_WHOLE_SIZE,
+    };
+    check_vkresult(mVK->InvalidateMappedMemoryRanges(mDevice.get(), 1, &range));
+  }
 
   // We're not actually using the GPU or D3D for this at all; this all
   // CPU and system RAM operations/resources.

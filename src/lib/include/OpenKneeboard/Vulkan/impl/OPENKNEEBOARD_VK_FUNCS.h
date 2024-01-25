@@ -84,6 +84,7 @@
   IT(GetPhysicalDeviceQueueFamilyProperties) \
   IT(GetSemaphoreWin32HandleKHR) \
   IT(ImportSemaphoreWin32HandleKHR) \
+  IT(InvalidateMappedMemoryRanges) \
   IT(MapMemory) \
   IT(QueueSubmit) \
   IT(QueueWaitIdle) \
