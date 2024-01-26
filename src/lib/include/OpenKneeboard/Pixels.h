@@ -138,7 +138,7 @@ struct PixelRect {
   }
 
   constexpr PixelPoint BottomRight() const {
-    return {Bottom(), Right()};
+    return {Right(), Bottom()};
   }
 
   constexpr PixelRect WithOrigin(Origin origin, const PixelSize& container)
