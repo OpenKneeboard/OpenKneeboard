@@ -627,6 +627,9 @@ class TestViewerWindow final {
       1,
     };
 
+    // Forcing the renderer to render on top of the background to make sure it
+    // preserves the existing content; clearing is fine for VR, but for non-VR
+    // we need to preserve the original background.
     ctx->CopySubresourceRegion(
       mRendererTexture.get(), 0, 0, 0, 0, surfaceTex.get(), 0, &box);
 
