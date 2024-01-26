@@ -80,12 +80,15 @@ uint64_t D3D12Renderer::Render(
   HANDLE fenceHandle,
   uint64_t fenceValueIn) {
   OPENKNEEBOARD_TraceLoggingScope("Viewer::D3D12Renderer::Render");
-
+  if (mDestDimensions != destTextureDimensions) {
+    mDestHandle = {};
+  }
   if (destTextureHandle != mDestHandle) {
     mDestTexture = nullptr;
     mDestTexture.capture(
       mDevice, &ID3D12Device::OpenSharedHandle, destTextureHandle);
     mDestHandle = destTextureHandle;
+    mDestDimensions = destTextureDimensions;
   }
 
   if (fenceHandle != mFenceHandle) {

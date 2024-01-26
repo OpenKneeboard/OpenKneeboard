@@ -65,6 +65,7 @@ class D3D12Renderer final : public Renderer {
   std::unique_ptr<D3D12::SpriteBatch> mSpriteBatch;
 
   HANDLE mDestHandle {};
+  PixelSize mDestDimensions;
   winrt::com_ptr<ID3D12Resource> mDestTexture;
   std::unique_ptr<DirectX::DescriptorHeap> mDestRTVHeap;
 
