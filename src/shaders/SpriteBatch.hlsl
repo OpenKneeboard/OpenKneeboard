@@ -10,6 +10,7 @@
 
 struct BatchData {
     float2 destDimensions;
+    float2 sourceDimensions[MaxSpritesPerBatch];
 };
 
 [[vk::push_constant]]
@@ -24,7 +25,7 @@ void SpriteVertexShader(
     position.xy = (2 * (position.xy / batchData.destDimensions)) - 1;
     position.zw = position.zw;
     color = color;
-    texCoord = texCoord;
+    texCoord = texCoord / batchData.sourceDimensions[textureIndex];
     textureIndex = textureIndex;
 }
 

@@ -116,8 +116,10 @@ class SpriteBatch {
   unique_vk<VkShaderModule> mVertexShader;
 
   // MUST MATCH SHADER
+  constexpr static uint8_t MaxSpritesPerBatch = 16;
   struct BatchData {
     std::array<float, 2> mTargetDimensions;
+    std::array<std::array<float, 2>, MaxSpritesPerBatch> mSourceDimensions;
   };
 
   // MUST MATCH SHADER
@@ -150,7 +152,6 @@ class SpriteBatch {
   };
 
   constexpr static uint8_t VerticesPerSprite = 6;
-  constexpr static uint8_t MaxSpritesPerBatch = 16;
   constexpr static uint8_t MaxVerticesPerBatch
     = VerticesPerSprite * MaxSpritesPerBatch;
 

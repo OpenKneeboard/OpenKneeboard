@@ -306,6 +306,11 @@ void SpriteBatch::End(const std::source_location& loc) {
     return;
   }
 
+  BatchData batchData {
+    .mTargetDimensions
+    = {mTargetDimensions.GetWidth<float>(), mTargetDimensions.GetHeight<float>()},
+  };
+
   std::vector<VkImageView> sources;
   std::unordered_map<VkImageView, uint32_t> sourceIndices;
   std::vector<Vertex> vertices;
@@ -314,41 +319,32 @@ void SpriteBatch::End(const std::source_location& loc) {
   for (const auto& sprite: mSprites) {
     if (!sourceIndices.contains(sprite.mSource)) {
       sources.push_back(sprite.mSource);
-      sourceIndices[sprite.mSource] = sources.size() - 1;
+      const auto i = sources.size() - 1;
+      sourceIndices[sprite.mSource] = i;
+      batchData.mSourceDimensions[i] = {
+        sprite.mSourceSize.GetWidth<float>(),
+        sprite.mSourceSize.GetHeight<float>(),
+      };
     }
 
-    // Calculate the four source corners in texture coordinates (0..1)
     using TexCoord = std::array<float, 2>;
-    TexCoord tctl;
-    TexCoord tctr;
-    TexCoord tcbl;
-    TexCoord tcbr;
 
-    {
-      const auto& ss = sprite.mSourceSize;
-
-      const auto tl = sprite.mSourceRect.TopLeft();
-      const auto br = sprite.mSourceRect.BottomRight();
-
-      const auto left = tl.GetX<float>() / ss.mWidth;
-      const auto top = tl.GetY<float>() / ss.mHeight;
-      const auto right = br.GetX<float>() / ss.mWidth;
-      const auto bottom = br.GetY<float>() / ss.mHeight;
-
-      tctl = {left, top};
-      tctr = {right, top};
-      tcbl = {left, bottom};
-      tcbr = {right, bottom};
-    };
+    const TexCoord srcTL
+      = sprite.mSourceRect.TopLeft().StaticCast<TexCoord, float>();
+    const TexCoord srcBR
+      = sprite.mSourceRect.BottomRight().StaticCast<TexCoord, float>();
+    const TexCoord srcBL {srcTL[0], srcBR[1]};
+    const TexCoord srcTR {srcBR[0], srcTL[1]};
 
     using Position = Vertex::Position;
 
     // Destination coordinates in real 3d coordinates
-    const auto tl = sprite.mDestRect.TopLeft().StaticCast<Position, float>();
-    const auto br
+    const Position dstTL
+      = sprite.mDestRect.TopLeft().StaticCast<Position, float>();
+    const Position dstBR
       = sprite.mDestRect.BottomRight().StaticCast<Position, float>();
-    const Position tr {br[0], tl[1]};
-    const Position bl {tl[0], br[1]};
+    const Position dstTR {dstBR[0], dstTL[1]};
+    const Position dstBL {dstTL[0], dstBR[1]};
 
     const auto sourceIndex = sourceIndices.at(sprite.mSource);
     auto makeVertex = [=](const TexCoord& tc, const Position& pos) {
@@ -360,15 +356,17 @@ void SpriteBatch::End(const std::source_location& loc) {
       };
     };
 
+    // A rectangle is two triangles
+
     // First triangle: excludes top right
-    vertices.push_back(makeVertex(tcbl, bl));
-    vertices.push_back(makeVertex(tctl, tl));
-    vertices.push_back(makeVertex(tcbr, br));
+    vertices.push_back(makeVertex(srcBL, dstBL));
+    vertices.push_back(makeVertex(srcTL, dstTL));
+    vertices.push_back(makeVertex(srcBR, dstBR));
 
     // First triangle: excludes bottom left
-    vertices.push_back(makeVertex(tctl, tl));
-    vertices.push_back(makeVertex(tctr, tr));
-    vertices.push_back(makeVertex(tcbr, br));
+    vertices.push_back(makeVertex(srcTL, dstTL));
+    vertices.push_back(makeVertex(srcTR, dstTR));
+    vertices.push_back(makeVertex(srcBR, dstBR));
   }
 
   if (sources.size() > MaxSpritesPerBatch) {
@@ -389,10 +387,6 @@ void SpriteBatch::End(const std::source_location& loc) {
   };
   // check_vkresult(mVK->FlushMappedMemoryRanges(mDevice, 1, &memoryRange));
 
-  BatchData batchData {
-    .mTargetDimensions
-    = {mTargetDimensions.GetWidth<float>(), mTargetDimensions.GetHeight<float>()},
-  };
   mVK->CmdPushConstants(
     mCommandBuffer,
     mPipelineLayout.get(),
