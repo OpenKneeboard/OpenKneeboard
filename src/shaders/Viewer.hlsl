@@ -25,12 +25,15 @@ cbuffer DrawInfo {
 struct Fill {
     float4 color0 : COLOR0;
     float4 color1 : COLOR1;
+    uint colorStride : COLORSTRIDE;
 };
 
 void ViewerVertexShader(
     inout float4 position: SV_Position,
-    inout Fill fill) {
+    inout Fill fill,
+    out float2 pixelPosition: PXPOS) {
 
+    pixelPosition = position.xy;
     position.xy = (2 * (position.xy / dimensions)) - 1;
     position.zw = position.zw;
     fill = fill;
@@ -38,7 +41,11 @@ void ViewerVertexShader(
 
  float4 ViewerPixelShader(
     float4 position: SV_Position,
-    Fill fill): SV_Target0 {
-    uint idx = (position.x > 0) + (position.y > 0);
-    return (idx % 2) ? fill.color0 : fill.color1;
+    Fill fill,
+    float2 pixelPosition: PXPOS): SV_Target0 {
+    uint2 colorCoord = pixelPosition / fill.colorStride;
+    if (((colorCoord.x + colorCoord.y) % 2) == 0) {
+        return fill.color0;
+    }
+    return fill.color1;
  };

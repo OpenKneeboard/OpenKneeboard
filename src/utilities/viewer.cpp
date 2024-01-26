@@ -118,14 +118,21 @@ class TestViewerWindow final {
   struct ShaderFillInfo {
     D3DCOLORVALUE mD3DCOLORVALUE0;
     D3DCOLORVALUE mD3DCOLORVALUE1;
+    uint32_t mColorStride = 30;
 
     constexpr ShaderFillInfo() = default;
 
+    // Create a solid fill
     constexpr ShaderFillInfo(const D3DCOLORVALUE& a)
       : mD3DCOLORVALUE0(a), mD3DCOLORVALUE1(a) {
     }
-    constexpr ShaderFillInfo(const D3DCOLORVALUE& a, const D3DCOLORVALUE& b)
-      : mD3DCOLORVALUE0(a), mD3DCOLORVALUE1(b) {
+
+    // Create a checkerboard fill
+    constexpr ShaderFillInfo(
+      const D3DCOLORVALUE& a,
+      const D3DCOLORVALUE& b,
+      uint32_t colorStride)
+      : mD3DCOLORVALUE0(a), mD3DCOLORVALUE1(b), mColorStride(colorStride) {
     }
   };
 
@@ -138,7 +145,8 @@ class TestViewerWindow final {
   inline static const ShaderFillInfo mColorKeyFill {{1, 0, 1, 1}};
   inline static const ShaderFillInfo mCheckerboardFill {
     {1, 1, 1, 1},
-    {0.8, 0.8, 0.8, 1},
+    {0.9, 0.9, 0.9, 1},
+    /* colorStride = */ 20,
   };
 
   enum class FillMode {
@@ -348,6 +356,13 @@ class TestViewerWindow final {
         .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
         .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
       },
+      D3D11_INPUT_ELEMENT_DESC {
+        .SemanticName = "COLORSTRIDE",
+        .SemanticIndex = 0,
+        .Format = DXGI_FORMAT_R32_UINT,
+        .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
+        .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+      },
     };
     winrt::check_hresult(mD3D11Device->CreateInputLayout(
       inputLayout,
@@ -415,6 +430,7 @@ class TestViewerWindow final {
     ctx->VSSetShader(mVertexShader.get(), nullptr, 0);
     ctx->VSSetConstantBuffers(0, 1, &cbuffer);
     ctx->PSSetShader(mPixelShader.get(), nullptr, 0);
+    ctx->PSSetConstantBuffers(0, 1, &cbuffer);
 
     const auto rtv = mWindowRenderTargetView.get();
     ctx->OMSetRenderTargets(1, &rtv, nullptr);
