@@ -230,11 +230,10 @@ uint8_t Snapshot::GetLayerCount() const {
 
 const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
-    dprintf(
+    OPENKNEEBOARD_LOG_AND_FATAL(
       "Asked for layer {}, but there are {} layers",
       layerIndex,
       this->GetLayerCount());
-    abort();
   }
 
   return &mHeader->mLayers[layerIndex];

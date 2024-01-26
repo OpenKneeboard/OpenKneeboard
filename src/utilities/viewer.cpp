@@ -23,9 +23,11 @@
 #include "viewer-d3d12.h"
 #include "viewer-vulkan.h"
 
+#include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GetSystemColor.h>
+#include <OpenKneeboard/RenderDoc.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/SHM/D3D11.h>
@@ -44,9 +46,11 @@
 #include <type_traits>
 
 #include <D2d1.h>
+#include <D2d1_3.h>
 #include <ShlObj_core.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
+#include <dwrite.h>
 #include <dxgi1_6.h>
 #include <shellapi.h>
 
@@ -83,6 +87,17 @@ class TestViewerWindow final {
   winrt::com_ptr<ID3D11InputLayout> mShaderInputLayout;
   winrt::com_ptr<ID3D11Buffer> mShaderConstantBuffer;
   winrt::com_ptr<ID3D11Buffer> mVertexBuffer;
+
+  winrt::com_ptr<ID2D1Factory> mD2DFactory;
+  winrt::com_ptr<ID2D1Device> mD2DDevice;
+  winrt::com_ptr<ID2D1DeviceContext> mD2DContext;
+  winrt::com_ptr<IDWriteFactory> mDWriteFactory;
+  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
+
+  winrt::com_ptr<ID2D1SolidColorBrush> mOverlayBackground;
+  winrt::com_ptr<ID2D1SolidColorBrush> mOverlayForeground;
+  winrt::com_ptr<IDWriteTextFormat> mOverlayTextFormat;
+  winrt::com_ptr<ID2D1SolidColorBrush> mErrorForeground;
 
   static constexpr size_t MaxRectangles = 1;
   static constexpr size_t MaxTriangles = MaxRectangles * 2;
@@ -163,20 +178,11 @@ class TestViewerWindow final {
   bool mStreamerMode {false};
   FillMode mStreamerModePreviousFillMode;
 
-  // FIXME
-#if 0
-  winrt::com_ptr<ID2D1SolidColorBrush> mOverlayBackground;
-  winrt::com_ptr<ID2D1SolidColorBrush> mOverlayForeground;
-  winrt::com_ptr<IDWriteTextFormat> mOverlayTextFormat;
-
-  winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
-  winrt::com_ptr<ID2D1SolidColorBrush> mStreamerModeBackgroundBrush;
-#endif
-
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
   winrt::com_ptr<ID3D11Texture2D> mWindowTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mWindowRenderTargetView;
+  winrt::com_ptr<ID2D1Bitmap1> mWindowBitmap;
 
   HWND mHwnd {};
 
@@ -188,20 +194,19 @@ class TestViewerWindow final {
 
   void SetDPI(UINT dpi) {
     mDPI = dpi;
-    // FIXME
-#if 0
+
     mOverlayTextFormat = {};
-    
-    mDXR.mDWriteFactory->CreateTextFormat(
-      L"Courier New",
-      nullptr,
-      DWRITE_FONT_WEIGHT_NORMAL,
-      DWRITE_FONT_STYLE_NORMAL,
-      DWRITE_FONT_STRETCH_NORMAL,
-      (16.0f * mDPI) / USER_DEFAULT_SCREEN_DPI,
-      L"",
-      mOverlayTextFormat.put());
-#endif
+    if (mDWriteFactory) {
+      mDWriteFactory->CreateTextFormat(
+        L"Courier New",
+        nullptr,
+        DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL,
+        (16.0f * mDPI) / USER_DEFAULT_SCREEN_DPI,
+        L"",
+        mOverlayTextFormat.put());
+    }
   }
 
  public:
@@ -261,11 +266,7 @@ class TestViewerWindow final {
 
     this->InitializeShaders();
 
-    // FIXME
-#if 0
-    mDXR = DXResources::Create();
-    mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
-#endif
+    this->InitializeDirect2D();
 
     winrt::check_hresult(mD3D11Device->CreateFence(
       mFenceValue, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
@@ -275,14 +276,6 @@ class TestViewerWindow final {
     this->CreateRenderer();
 
     mDefaultFill = {GetSystemColor(COLOR_WINDOW)};
-
-    // FIXME
-#if 0
-    mDXR.mD2DDeviceContext->CreateSolidColorBrush(
-      D2D1::ColorF(0.0f, 0.0f, 0.f, 0.8f), mOverlayBackground.put());
-    mDXR.mD2DDeviceContext->CreateSolidColorBrush(
-      D2D1::ColorF(1.0f, 1.0f, 1.f, 1.0f), mOverlayForeground.put());
-#endif
 
     const auto dpi = GetDpiForWindow(mHwnd);
     this->SetDPI(dpi);
@@ -296,6 +289,61 @@ class TestViewerWindow final {
         (1024 / 2) * dpi / USER_DEFAULT_SCREEN_DPI,
         SWP_NOZORDER | SWP_NOMOVE);
     }
+  }
+
+  bool HaveDirect2D() const {
+    // Incompatible due to Direct2D using undocumented
+    // DXGIAdapterInternal1 interface
+    if (RenderDoc::IsPresent()) {
+      static bool sHaveLogged {false};
+      if (!sHaveLogged) {
+        dprint("Disabling Direct2D because RenderDoc is present");
+      }
+      return false;
+    }
+    return true;
+  }
+
+  void InitializeDirect2D() {
+    if (!HaveDirect2D()) {
+      return;
+    }
+
+    winrt::check_hresult(
+      D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, mD2DFactory.put()));
+
+    D2D1_DEBUG_LEVEL d2dDebug = D2D1_DEBUG_LEVEL_NONE;
+#ifdef DEBUG
+    d2dDebug = D2D1_DEBUG_LEVEL_INFORMATION;
+#endif
+    winrt::check_hresult(D2D1CreateDevice(
+      mD3D11Device.as<IDXGIDevice>().get(),
+      D2D1::CreationProperties(
+        D2D1_THREADING_MODE_SINGLE_THREADED,
+        d2dDebug,
+        D2D1_DEVICE_CONTEXT_OPTIONS_NONE),
+      mD2DDevice.put()));
+
+    winrt::check_hresult(mD2DDevice->CreateDeviceContext(
+      D2D1_DEVICE_CONTEXT_OPTIONS_NONE, mD2DContext.put()));
+    mD2DContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+    mD2DContext->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+    mD2DContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+
+    winrt::check_hresult(mD2DContext->CreateSolidColorBrush(
+      D2D1::ColorF(0, 0, 0, 0.8), mOverlayBackground.put()));
+    winrt::check_hresult(mD2DContext->CreateSolidColorBrush(
+      D2D1::ColorF(1, 1, 1, 1), mOverlayForeground.put()));
+
+    winrt::check_hresult(DWriteCreateFactory(
+      DWRITE_FACTORY_TYPE_SHARED,
+      __uuidof(IDWriteFactory),
+      reinterpret_cast<IUnknown**>(mDWriteFactory.put())));
+
+    winrt::check_hresult(mD2DContext->CreateSolidColorBrush(
+      D2D1::ColorF(0, 0, 0, 1), mErrorForeground.put()));
+    mErrorRenderer = std::make_unique<D2DErrorRenderer>(
+      mDWriteFactory.get(), mErrorForeground.get());
   }
 
   HWND GetHWND() const {
@@ -444,6 +492,7 @@ class TestViewerWindow final {
     }
     mWindowTexture = nullptr;
     mWindowRenderTargetView = nullptr;
+    mWindowBitmap = nullptr;
 
     if (
       clientSize.mWidth > mRendererTextureSize.mWidth
@@ -640,6 +689,12 @@ class TestViewerWindow final {
       mWindowRenderTargetView = nullptr;
       winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
         mWindowTexture.get(), nullptr, mWindowRenderTargetView.put()));
+      mWindowBitmap = nullptr;
+      if (HaveDirect2D()) {
+        auto surface = mWindowTexture.as<IDXGISurface1>();
+        winrt::check_hresult(mD2DContext->CreateBitmapFromDxgiSurface(
+          surface.get(), nullptr, mWindowBitmap.put()));
+      }
     }
 
     this->StartDraw();
@@ -696,39 +751,47 @@ class TestViewerWindow final {
   }
 
   void PaintInformationOverlay() {
-    // FIXME
-#if 0
-    winrt::com_ptr<ID2D1Bitmap1> bitmap;
-    winrt::com_ptr<IDXGISurface> surface;
+    if (!HaveDirect2D()) {
+      return;
+    }
 
-    mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
-    auto ctx = mDXR.mD2DDeviceContext.get();
-    winrt::check_hresult(
-      ctx->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
-    ctx->SetTarget(bitmap.get());
+    auto ctx = mD2DContext.get();
+    ctx->SetTarget(mWindowBitmap.get());
     ctx->BeginDraw();
     scope_guard endDraw([&ctx]() { ctx->EndDraw(); });
 
     const auto clientSize = GetClientSize();
     auto text = std::format(
-      L"Using {}\nFrame #{}, View {}",
+      L"Using {}\nFrame #{}",
       mRenderer->GetName(),
-      mRenderer->GetSHM()->GetFrameCountForMetricsOnly(),
-      mLayerIndex + 1);
+      mRenderer->GetSHM()->GetFrameCountForMetricsOnly());
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (snapshot.IsValid()) {
-      const auto layer = snapshot.GetLayerConfig(mLayerIndex);
-      const auto size = layer->mLocationOnTexture.mSize;
-      text += std::format(L"\n{}x{}", size.mWidth, size.mHeight);
+      const auto layerCount = snapshot.GetLayerCount();
+      if (mLayerIndex < layerCount) {
+        const auto layer = snapshot.GetLayerConfig(mLayerIndex);
+        const auto size = layer->mLocationOnTexture.mSize;
+        text += std::format(
+          L"\nView {} of {}\n{}x{}",
+          mLayerIndex + 1,
+          layerCount,
+          size.mWidth,
+          size.mHeight);
+      } else {
+        text += std::format(
+          L"\nView {} of {}\nINVALID", mLayerIndex + 1, layerCount);
+      }
+    } else {
+      text += L"\nNo snapshot.";
     }
 
     winrt::com_ptr<IDWriteTextLayout> layout;
-    mDXR.mDWriteFactory->CreateTextLayout(
+    mDWriteFactory->CreateTextLayout(
       text.data(),
       text.size(),
       mOverlayTextFormat.get(),
-      static_cast<FLOAT>(clientSize.width),
-      static_cast<FLOAT>(clientSize.height),
+      clientSize.GetWidth<FLOAT>(),
+      clientSize.GetHeight<FLOAT>(),
       layout.put());
     layout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
     layout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
@@ -744,68 +807,15 @@ class TestViewerWindow final {
         metrics.top + metrics.height),
       mOverlayBackground.get());
     ctx->DrawTextLayout({0.0f, 0.0f}, layout.get(), mOverlayForeground.get());
-#endif
   }
 
   void PaintContent() {
     const auto clientSize = GetClientSize();
-    // FIXME
-#if 0
-    auto d2d = mDXR.mD2DDeviceContext.get();
-
-    if (!mBackgroundBrush) {
-      winrt::com_ptr<ID2D1Bitmap> backgroundBitmap;
-      Pixel pixels[20 * 20];
-      for (int x = 0; x < 20; x++) {
-        for (int y = 0; y < 20; y++) {
-          bool white = (x < 10 && y < 10) || (x >= 10 && y >= 10);
-          uint8_t value = white ? 0xff : 0xcc;
-          pixels[x + (20 * y)] = {value, value, value, 0xff};
-        }
-      }
-      winrt::check_hresult(d2d->CreateBitmap(
-        {20, 20},
-        reinterpret_cast<BYTE*>(pixels),
-        20 * sizeof(Pixel),
-        D2D1::BitmapProperties(D2D1::PixelFormat(
-          DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED)),
-        backgroundBitmap.put()));
-
-      mBackgroundBrush = nullptr;
-      d2d->CreateBitmapBrush(
-        backgroundBitmap.get(),
-        D2D1::BitmapBrushProperties(
-          D2D1_EXTEND_MODE_WRAP, D2D1_EXTEND_MODE_WRAP),
-        reinterpret_cast<ID2D1BitmapBrush**>(mBackgroundBrush.put()));
-
-      d2d->CreateSolidColorBrush(
-        D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f),
-        reinterpret_cast<ID2D1SolidColorBrush**>(
-          mStreamerModeBackgroundBrush.put()));
-    }
-
-    winrt::com_ptr<ID2D1Bitmap1> bitmap;
-#endif
-// FIXME
-#if 0
-    winrt::check_hresult(
-      d2d->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
-    d2d->SetTarget(bitmap.get());
-    d2d->BeginDraw();
-    scope_guard endDraw([d2d]() { winrt::check_hresult(d2d->EndDraw()); });
-
-    d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
-#endif
 
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
-        /* FIXME
-        mErrorRenderer->Render(
-          d2d,
-          "No Feeder",
-          {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
-          */
+        RenderError("No Feeder");
       }
       mFirstDetached = false;
       return;
@@ -816,20 +826,9 @@ class TestViewerWindow final {
     mSetInputFocus = config.mVR.mEnableGazeInputFocus;
 
     if (mLayerIndex >= snapshot.GetLayerCount()) {
-      /* FIXME
-      mErrorRenderer->Render(
-        d2d,
-        std::format("No Layer {}", mLayerIndex + 1),
-        {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
-        */
+      RenderError("No Layer");
       return;
     }
-
-// FIXME
-#if 0
-    winrt::check_hresult(d2d->EndDraw());
-    endDraw.abandon();
-#endif
 
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
     mLayerID = layer.mLayerID;
@@ -940,6 +939,31 @@ class TestViewerWindow final {
     // We pass 1 as the swapchain length as we use a buffer; we need to do
     // this as swapchain textures can't be directly shared
     mRenderer->Initialize(1);
+  }
+
+  void RenderError(std::string_view message) {
+    if (!HaveDirect2D()) {
+      return;
+    }
+
+    const auto clientSize = GetClientSize();
+
+    auto ctx = mD2DContext.get();
+
+    ctx->SetTarget(mWindowBitmap.get());
+    ctx->BeginDraw();
+
+    mErrorRenderer->Render(
+      ctx,
+      message,
+      {
+        0.0f,
+        0.0f,
+        clientSize.GetWidth<float>(),
+        clientSize.GetHeight<float>(),
+      });
+
+    winrt::check_hresult(ctx->EndDraw());
   }
 };
 

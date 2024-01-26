@@ -34,9 +34,15 @@ struct D2DErrorRenderer::Impl final {
 };
 
 D2DErrorRenderer::D2DErrorRenderer(const DXResources& dxr)
+  : D2DErrorRenderer(dxr.mDWriteFactory.get(), dxr.mBlackBrush.get()) {
+}
+
+D2DErrorRenderer::D2DErrorRenderer(
+  IDWriteFactory* dwrite,
+  ID2D1SolidColorBrush* brush)
   : p(std::make_unique<Impl>()) {
-  p->mDWrite = dxr.mDWriteFactory;
-  p->mTextBrush = dxr.mBlackBrush;
+  p->mDWrite.copy_from(dwrite);
+  p->mTextBrush.copy_from(brush);
 }
 
 D2DErrorRenderer::~D2DErrorRenderer() {
