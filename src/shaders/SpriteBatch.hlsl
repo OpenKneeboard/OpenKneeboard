@@ -21,9 +21,8 @@ void SpriteVertexShader(
     inout float2 texCoord   : TEXCOORD0,
     inout uint textureIndex : TEXTURE_INDEX)
 {
-    position = position;
-    position[0] = (2 * (position[0] / batchData.destDimensions[0])) - 1;
-    position[1] = (2 * (position[1] / batchData.destDimensions[1])) - 1;
+    position.xy = (2 * (position.xy / batchData.destDimensions)) - 1;
+    position.zw = position.zw;
     color = color;
     texCoord = texCoord;
     textureIndex = textureIndex;
