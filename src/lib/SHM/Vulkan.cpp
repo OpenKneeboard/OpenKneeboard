@@ -222,15 +222,8 @@ void Texture::InitializeCacheImage(
   const auto dimensions = this->GetDimensions();
 
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
-  // TODO: Using VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT here because - like all the
-  // other renderers - I'm using an SRGB view on a UNORM texture. That gets good
-  // results, but probably means I'm messing something up earlier.
-  //
-  // TRANSFER_SRC_BIT isn't needed for actual functionality, but is extremely
-  // useful for debugging.
   VkImageCreateInfo createInfo {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-    .flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT,
     .imageType = VK_IMAGE_TYPE_2D,
     .format = VK_FORMAT_B8G8R8A8_UNORM,
     .extent = {dimensions.mWidth, dimensions.mHeight, 1},
@@ -287,7 +280,7 @@ void Texture::InitializeCacheImage(
       .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
       .image = mImage.get(),
       .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = VK_FORMAT_B8G8R8A8_SRGB,
+      .format = VK_FORMAT_B8G8R8A8_UNORM,
       .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
         .levelCount = 1,
@@ -544,9 +537,6 @@ VkImage CachedReader::GetIPCImage(HANDLE handle, const PixelSize& dimensions) {
   };
 
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
-  // TODO: Using VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT here because - like all the
-  // other renderers - I'm using an SRGB view on a UNORM texture. That gets good
-  // results, but probably means I'm messing something up earlier.
   VkImageCreateInfo createInfo {
     .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
     .pNext = &externalCreateInfo,
