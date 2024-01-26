@@ -618,8 +618,17 @@ class TestViewerWindow final {
       ctx->ClearRenderTargetView(rtv.get(), DirectX::Colors::White);
     }
 
+    const D3D11_BOX box {
+      0,
+      0,
+      0,
+      clientSize.width,
+      clientSize.height,
+      1,
+    };
+
     ctx->CopySubresourceRegion(
-      mRendererTexture.get(), 0, 0, 0, 0, surfaceTex.get(), 0, nullptr);
+      mRendererTexture.get(), 0, 0, 0, 0, surfaceTex.get(), 0, &box);
 
     winrt::check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
 
@@ -635,7 +644,7 @@ class TestViewerWindow final {
     winrt::check_hresult(ctx->Wait(mFence.get(), mFenceValue));
 
     ctx->CopySubresourceRegion(
-      surfaceTex.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, nullptr);
+      surfaceTex.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, &box);
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
   }
