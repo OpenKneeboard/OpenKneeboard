@@ -30,7 +30,15 @@ using OpenKneeboard::Vulkan::unique_vk;
 class Texture final : public SHM::IPCClientTexture {
  public:
   Texture() = delete;
-  Texture(const PixelSize&, uint8_t swapchainIndex);
+  Texture(
+    OpenKneeboard::Vulkan::Dispatch*,
+    VkPhysicalDevice,
+    VkDevice,
+    uint32_t queueFamilyIndex,
+    const VkAllocationCallbacks*,
+    VkFence completionFence,
+    const PixelSize&,
+    uint8_t swapchainIndex);
   virtual ~Texture();
 
   VkImage GetVKImage();
@@ -40,20 +48,22 @@ class Texture final : public SHM::IPCClientTexture {
   uint64_t GetReadySemaphoreValue() const;
 
   void CopyFrom(
-    OpenKneeboard::Vulkan::Dispatch*,
-    VkDevice,
-    VkPhysicalDevice,
-    VkQueue queue,
-    uint32_t queueFamilyIndex,
-    const VkAllocationCallbacks*,
+    VkQueue,
     VkCommandBuffer,
     VkImage image,
     VkSemaphore semaphore,
     uint64_t semaphoreValueIn,
-    uint64_t sempahoreValueOut,
-    VkFence completionFence) noexcept;
+    uint64_t sempahoreValueOut) noexcept;
 
  private:
+  OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
+  VkDevice mDevice {VK_NULL_HANDLE};
+  VkPhysicalDevice mPhysicalDevice {VK_NULL_HANDLE};
+  uint32_t mQueueFamilyIndex {~(0ui32)};
+  const VkAllocationCallbacks* mAllocator {nullptr};
+
+  VkFence mCompletionFence {VK_NULL_HANDLE};
+
   unique_vk<VkDeviceMemory> mImageMemory;
   unique_vk<VkImage> mImage;
   unique_vk<VkImageView> mImageView;
@@ -65,16 +75,8 @@ class Texture final : public SHM::IPCClientTexture {
   unique_vk<VkSemaphore> mReadySemaphore;
   uint64_t mReadySemaphoreValue {};
 
-  void InitializeCacheImage(
-    OpenKneeboard::Vulkan::Dispatch*,
-    VkDevice,
-    VkPhysicalDevice,
-    uint32_t queueFamilyIndex,
-    const VkAllocationCallbacks*);
-  void InitializeReadySemaphore(
-    OpenKneeboard::Vulkan::Dispatch* vk,
-    VkDevice device,
-    const VkAllocationCallbacks* allocator);
+  void InitializeCacheImage();
+  void InitializeReadySemaphore();
 };
 
 struct InstanceCreateInfo

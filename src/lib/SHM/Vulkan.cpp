@@ -28,13 +28,45 @@ namespace OpenKneeboard::SHM::Vulkan {
 
 using OpenKneeboard::Vulkan::check_vkresult;
 
-Texture::Texture(const PixelSize& dimensions, uint8_t swapchainIndex)
-  : IPCClientTexture(dimensions, swapchainIndex) {
+Texture::Texture(
+  OpenKneeboard::Vulkan::Dispatch* vk,
+  VkPhysicalDevice physicalDevice,
+  VkDevice device,
+  uint32_t queueFamilyIndex,
+  const VkAllocationCallbacks* allocator,
+  VkFence completionFence,
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex)
+  : IPCClientTexture(dimensions, swapchainIndex),
+    mVK(vk),
+    mPhysicalDevice(physicalDevice),
+    mDevice(device),
+    mQueueFamilyIndex(queueFamilyIndex),
+    mAllocator(allocator),
+    mCompletionFence(completionFence) {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::Texture::Texture()");
+  this->InitializeCacheImage();
+  this->InitializeReadySemaphore();
 }
 
 Texture::~Texture() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::Texture::~Texture()");
+
+  // We can't tear down our semaphore while it's pending
+  VkSemaphore semaphores[] {mReadySemaphore.get()};
+  uint64_t semaphoreValues[] {mReadySemaphoreValue};
+
+  VkSemaphoreWaitInfoKHR waitInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO_KHR,
+    .semaphoreCount = std::size(semaphores),
+    .pSemaphores = semaphores,
+    .pValues = semaphoreValues,
+  };
+  check_vkresult(mVK->WaitSemaphoresKHR(mDevice, &waitInfo, ~(0ui64)));
+
+  // ... or while a batch referring to it is in progress:
+  check_vkresult(
+    mVK->WaitForFences(mDevice, 1, &mCompletionFence, 1, ~(0ui64)));
 }
 
 VkImage Texture::GetVKImage() {
@@ -54,28 +86,18 @@ uint64_t Texture::GetReadySemaphoreValue() const {
 }
 
 void Texture::CopyFrom(
-  OpenKneeboard::Vulkan::Dispatch* vk,
-  VkDevice device,
-  VkPhysicalDevice physicalDevice,
   VkQueue queue,
-  uint32_t queueFamilyIndex,
-  const VkAllocationCallbacks* allocator,
   VkCommandBuffer commandBuffer,
   VkImage source,
   VkSemaphore semaphore,
   uint64_t semaphoreValueIn,
-  uint64_t semaphoreValueOut,
-  VkFence completionFence) noexcept {
-  this->InitializeCacheImage(
-    vk, device, physicalDevice, queueFamilyIndex, allocator);
-  this->InitializeReadySemaphore(vk, device, allocator);
-
+  uint64_t semaphoreValueOut) noexcept {
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
   };
 
-  check_vkresult(vk->BeginCommandBuffer(commandBuffer, &beginInfo));
+  check_vkresult(mVK->BeginCommandBuffer(commandBuffer, &beginInfo));
 
   const auto dimensions = this->GetDimensions();
   VkImageCopy regions[] { 
@@ -121,7 +143,7 @@ void Texture::CopyFrom(
     },
   };
 
-  vk->CmdPipelineBarrier(
+  mVK->CmdPipelineBarrier(
     commandBuffer,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -133,7 +155,7 @@ void Texture::CopyFrom(
     std::size(inBarriers),
     inBarriers);
 
-  vk->CmdCopyImage(
+  mVK->CmdCopyImage(
     commandBuffer,
     source,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -156,7 +178,7 @@ void Texture::CopyFrom(
       },
     },
   };
-  vk->CmdPipelineBarrier(
+  mVK->CmdPipelineBarrier(
     commandBuffer,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
@@ -168,7 +190,7 @@ void Texture::CopyFrom(
     std::size(outBarriers),
     outBarriers);
 
-  check_vkresult(vk->EndCommandBuffer(commandBuffer));
+  check_vkresult(mVK->EndCommandBuffer(commandBuffer));
 
   VkSemaphore waitSemaphores[] = {semaphore};
   uint64_t waitSemaphoreValues[] = {semaphoreValueIn};
@@ -205,17 +227,12 @@ void Texture::CopyFrom(
     .pSignalSemaphores = signalSemaphores,
   };
 
-  check_vkresult(vk->QueueSubmit(queue, 1, &submitInfo, completionFence));
+  check_vkresult(mVK->QueueSubmit(queue, 1, &submitInfo, mCompletionFence));
 }
 
-void Texture::InitializeCacheImage(
-  OpenKneeboard::Vulkan::Dispatch* vk,
-  VkDevice device,
-  VkPhysicalDevice physicalDevice,
-  uint32_t queueFamilyIndex,
-  const VkAllocationCallbacks* allocator) {
-  if (mImage) {
-    return;
+void Texture::InitializeCacheImage() {
+  if (mImage) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Double-initializing cache image");
   }
   OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeCacheImages()");
 
@@ -235,18 +252,18 @@ void Texture::InitializeCacheImage(
       | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
     .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
     .queueFamilyIndexCount = 1,
-    .pQueueFamilyIndices = &queueFamilyIndex,
+    .pQueueFamilyIndices = &mQueueFamilyIndex,
     .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
   };
 
-  mImage = vk->make_unique<VkImage>(device, &createInfo, allocator);
+  mImage = mVK->make_unique<VkImage>(mDevice, &createInfo, mAllocator);
 
   VkMemoryRequirements memoryRequirements {};
-  vk->GetImageMemoryRequirements(device, mImage.get(), &memoryRequirements);
+  mVK->GetImageMemoryRequirements(mDevice, mImage.get(), &memoryRequirements);
 
   const auto memoryType = OpenKneeboard::Vulkan::FindMemoryType(
-    vk,
-    physicalDevice,
+    mVK,
+    mPhysicalDevice,
     memoryRequirements.memoryTypeBits,
     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
@@ -266,7 +283,8 @@ void Texture::InitializeCacheImage(
     .memoryTypeIndex = *memoryType,
   };
 
-  mImageMemory = vk->make_unique<VkDeviceMemory>(device, &allocInfo, allocator);
+  mImageMemory
+    = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
 
   VkBindImageMemoryInfoKHR bindInfo {
     .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
@@ -274,7 +292,7 @@ void Texture::InitializeCacheImage(
     .memory = mImageMemory.get(),
   };
 
-  check_vkresult(vk->BindImageMemory2KHR(device, 1, &bindInfo));
+  check_vkresult(mVK->BindImageMemory2KHR(mDevice, 1, &bindInfo));
 
   VkImageViewCreateInfo viewCreateInfo {
       .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
@@ -288,16 +306,16 @@ void Texture::InitializeCacheImage(
       },
     };
 
-  mImageView = vk->make_unique<VkImageView>(device, &viewCreateInfo, allocator);
+  mImageView
+    = mVK->make_unique<VkImageView>(mDevice, &viewCreateInfo, mAllocator);
 }
 
-void Texture::InitializeReadySemaphore(
-  OpenKneeboard::Vulkan::Dispatch* vk,
-  VkDevice device,
-  const VkAllocationCallbacks* allocator) {
-  if (mReadySemaphore) {
-    return;
+void Texture::InitializeReadySemaphore() {
+  if (mReadySemaphore) [[unlikely]] {
+    // destructor assumes this was called by destructor
+    OPENKNEEBOARD_LOG_AND_FATAL("Double-initializing semaphore");
   }
+
   OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeReadySemaphore");
 
   VkSemaphoreTypeCreateInfoKHR typeCreateInfo {
@@ -311,7 +329,7 @@ void Texture::InitializeReadySemaphore(
   };
 
   mReadySemaphore
-    = vk->make_unique<VkSemaphore>(device, &createInfo, allocator);
+    = mVK->make_unique<VkSemaphore>(mDevice, &createInfo, mAllocator);
 }
 
 CachedReader::CachedReader(ConsumerKind consumerKind)
@@ -394,8 +412,7 @@ void CachedReader::InitializeCache(
       .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
       .flags = VK_FENCE_CREATE_SIGNALED_BIT,
     };
-    mCompletionFences.clear();
-    for (uint8_t i = 0; i < swapchainLength; ++i) {
+    for (uint8_t i = mCompletionFences.size(); i < swapchainLength; ++i) {
       mCompletionFences.push_back(
         mVK->make_unique<VkFence>(mDevice, &createInfo, mAllocator));
     };
@@ -428,18 +445,12 @@ void CachedReader::Copy(
 
   reinterpret_cast<Texture*>(destinationTexture)
     ->CopyFrom(
-      mVK,
-      mDevice,
-      mPhysicalDevice,
       mQueue,
-      mQueueFamilyIndex,
-      mAllocator,
       mCommandBuffers.at(swapchainIndex),
       source,
       semaphore,
       semaphoreValueIn,
-      semaphoreValueOut,
-      fence);
+      semaphoreValueOut);
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
@@ -447,7 +458,15 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::Vulkan::CachedReader::CreateIPCClientTexture()");
-  return std::make_shared<Texture>(dimensions, swapchainIndex);
+  return std::make_shared<Texture>(
+    mVK,
+    mPhysicalDevice,
+    mDevice,
+    mQueueFamilyIndex,
+    mAllocator,
+    mCompletionFences.at(swapchainIndex).get(),
+    dimensions,
+    swapchainIndex);
 }
 
 InstanceCreateInfo::InstanceCreateInfo(const VkInstanceCreateInfo& base)

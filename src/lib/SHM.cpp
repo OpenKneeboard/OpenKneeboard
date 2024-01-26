@@ -530,6 +530,7 @@ void CachedReader::InitializeCache(uint8_t swapchainLength) {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::CachedReader::InitializeCache()",
     TraceLoggingValue(swapchainLength, "SwapchainLength"));
+  mCache.resize(swapchainLength, nullptr);
   mClientTextures = {swapchainLength, nullptr};
 }
 
@@ -672,16 +673,6 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
 
   ActiveConsumers::Set(mConsumerKind);
 
-  if (mSessionID != this->GetSessionID()) {
-    // Cache is unusable, not just stale
-    TraceLoggingWriteTagged(activity, "Resetting cached resources");
-    mCache = {nullptr};
-    mCacheKey = {};
-    mClientTextures = {mClientTextures.size(), nullptr};
-
-    mSessionID = this->GetSessionID();
-  }
-
   const auto swapchainIndex = mSwapchainIndex;
   if (swapchainIndex >= mClientTextures.size()) [[unlikely]] {
     OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
@@ -696,12 +687,13 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
 
   if (cacheKey == mCacheKey) {
+    const auto& cache = mCache.front();
     TraceLoggingWriteStop(
       activity,
       "CachedReader::MaybeGet()",
       TraceLoggingValue("Returning cached snapshot", "Result"),
-      TraceLoggingValue(static_cast<unsigned int>(mCache.GetState()), "State"));
-    return mCache;
+      TraceLoggingValue(static_cast<unsigned int>(cache.GetState()), "State"));
+    return cache;
   }
 
   TraceLoggingWriteTagged(activity, "LockingSHM");
@@ -721,15 +713,17 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
     TraceLoggingValue(static_cast<unsigned int>(state), "State"));
 
   if (state == Snapshot::State::Empty) {
+    const auto& cache = mCache.front();
     TraceLoggingWriteStop(
       activity,
       "CachedReader::MaybeGet()",
       TraceLoggingValue("Using stale cache", "Result"),
-      TraceLoggingValue(static_cast<unsigned int>(mCache.GetState()), "State"));
-    return mCache;
+      TraceLoggingValue(static_cast<unsigned int>(cache.GetState()), "State"));
+    return cache;
   }
 
-  mCache = snapshot;
+  mCache.push_front(snapshot);
+  mCache.resize(mClientTextures.size(), nullptr);
   mCacheKey = cacheKey;
 
   TraceLoggingWriteStop(

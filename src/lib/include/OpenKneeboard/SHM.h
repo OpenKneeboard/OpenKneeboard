@@ -33,6 +33,7 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <numbers>
 #include <optional>
@@ -268,9 +269,8 @@ class CachedReader : public Reader {
   IPCTextureCopier* mTextureCopier {nullptr};
   ConsumerKind mConsumerKind {};
 
-  uint64_t mSessionID {~(0ui64)};
   uint64_t mCacheKey {~(0ui64)};
-  Snapshot mCache {nullptr};
+  std::deque<Snapshot> mCache;
   uint8_t mSwapchainIndex {};
 
   std::vector<std::shared_ptr<IPCClientTexture>> mClientTextures;

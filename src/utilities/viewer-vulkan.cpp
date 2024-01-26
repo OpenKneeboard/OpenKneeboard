@@ -290,6 +290,11 @@ std::wstring_view VulkanRenderer::GetName() const noexcept {
 }
 
 void VulkanRenderer::Initialize(uint8_t swapchainLength) {
+  if (mCompletionFence) {
+    const auto fence = mCompletionFence.get();
+    check_vkresult(
+      mVK->WaitForFences(mDevice.get(), 1, &fence, true, ~(0ui64)));
+  }
   mSHM.InitializeCache(
     mVK.get(),
     mDevice.get(),
