@@ -97,17 +97,17 @@ void SpriteBatch::CreatePipeline() {
   };
   VkPipelineInputAssemblyStateCreateInfo inputAssembly {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-    .topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+    .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
   };
   VkPipelineRasterizationStateCreateInfo rasterization {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
     .polygonMode = VK_POLYGON_MODE_FILL,
-    .cullMode = VK_CULL_MODE_NONE,
+    .cullMode = VK_CULL_MODE_BACK_BIT,
     .frontFace = VK_FRONT_FACE_CLOCKWISE,
     .lineWidth = 1.0f,
   };
   VkPipelineColorBlendAttachmentState colorBlendAttachmentState {
-    .blendEnable = VK_FALSE,
+    .blendEnable = VK_TRUE,
     .colorWriteMask = 0xf,
   };
   VkPipelineColorBlendStateCreateInfo colorBlend {
@@ -128,6 +128,8 @@ void SpriteBatch::CreatePipeline() {
   VkPipelineMultisampleStateCreateInfo multiplesample {
     .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
     .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+    //.sampleShadingEnable = true,
+    //.minSampleShading = 1,
   };
 
   VkPipelineShaderStageCreateInfo shaderStages[] {
@@ -174,10 +176,11 @@ void SpriteBatch::CreatePipeline() {
     .pViewportState = &viewport,
     .pRasterizationState = &rasterization,
     .pMultisampleState = &multiplesample,
-    .pDepthStencilState = &depthStencil,
+    .pDepthStencilState = nullptr,
     .pColorBlendState = &colorBlend,
     .pDynamicState = &dynamicState,
     .layout = mPipelineLayout.get(),
+    .basePipelineIndex = -1,
   };
 
   mPipeline = mVK->make_unique_graphics_pipeline(
@@ -201,7 +204,8 @@ void SpriteBatch::CreateVertexBuffer() {
     mVK,
     mPhysicalDevice,
     requirements.memoryTypeBits,
-    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+      | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
   if (!memoryType) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL(
@@ -258,7 +262,13 @@ void SpriteBatch::Draw(
       loc, "Calling Draw() without Begin()");
   }
 
-  mSprites.push_back({source, sourceSize, sourceRect, destRect, color});
+  mSprites.push_back({
+    source,
+    sourceSize,
+    sourceRect.WithOrigin(PixelRect::Origin::BottomLeft, sourceSize),
+    destRect.WithOrigin(PixelRect::Origin::BottomLeft, mTargetSize),
+    color,
+  });
 }
 
 void SpriteBatch::Clear(Color color, const std::source_location& caller) {
@@ -330,10 +340,10 @@ void SpriteBatch::End(const std::source_location& loc) {
     const auto sourceIndex = sourceIndices.at(sprite.mSource);
     auto makeVertex = [=](const TexCoord& tc, const Position& pos) {
       return Vertex {
-        .mTextureIndex = sourceIndices.at(sprite.mSource),
+        .mPosition = pos,
         .mColor = sprite.mColor,
         .mTexCoord = tc,
-        .mPosition = pos,
+        .mTextureIndex = sourceIndices.at(sprite.mSource),
       };
     };
 
@@ -350,7 +360,6 @@ void SpriteBatch::End(const std::source_location& loc) {
 
   const size_t verticesByteSize = sizeof(vertices[0]) * vertices.size();
   memcpy(mVertexBuffer.mMapping.get(), vertices.data(), verticesByteSize);
-  // FIXME: also fill descriptor buffers
 
   VkMappedMemoryRange memoryRange {
     .sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
@@ -358,15 +367,16 @@ void SpriteBatch::End(const std::source_location& loc) {
     .offset = 0,
     .size = verticesByteSize,
   };
-  check_vkresult(mVK->FlushMappedMemoryRanges(mDevice, 1, &memoryRange));
+  // check_vkresult(mVK->FlushMappedMemoryRanges(mDevice, 1, &memoryRange));
 
   {
     VkRenderingAttachmentInfoKHR colorAttachmentInfo {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
       .imageView = mTarget,
       .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
       .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+      .clearValue = {.color = {.uint32 = 0xff0000ff}},
     };
 
     VkRenderingInfoKHR renderInfo {
@@ -419,16 +429,6 @@ void SpriteBatch::End(const std::source_location& loc) {
       mDescriptorSet.mDescriptorSet,
     };
 
-    mVK->CmdBindDescriptorSets(
-      mCommandBuffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      mPipelineLayout.get(),
-      0,
-      std::size(descriptors),
-      descriptors,
-      0,
-      nullptr);
-
     VkWriteDescriptorSet descriptorWrite {
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
       .dstSet = mDescriptorSet.mDescriptorSet,
@@ -438,6 +438,16 @@ void SpriteBatch::End(const std::source_location& loc) {
       .pImageInfo = sourceInfos.data(),
     };
     mVK->UpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
+
+    mVK->CmdBindDescriptorSets(
+      mCommandBuffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      mPipelineLayout.get(),
+      0,
+      std::size(descriptors),
+      descriptors,
+      0,
+      nullptr);
   }
 
   if (mClearColor) {
@@ -455,13 +465,33 @@ void SpriteBatch::End(const std::source_location& loc) {
         },
       },
     };
+    // FIXME: unimplemented
   }
+  // FIXME ok let's do this :D
+  VkClearAttachment clear {
+    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+    .colorAttachment = 0,
+    .clearValue = {
+      .color = {
+        .float32 = { 1, 0, 1, 1 },
+      },
+    },
+  };
+  VkClearRect clearRect {
+    .rect = {
+      { 0, 0,},
+      { mTargetSize.mWidth, mTargetSize.mHeight },
+    },
+    .layerCount = 1,
+  };
+  mVK->CmdClearAttachments(mCommandBuffer, 1, &clear, 1, &clearRect);
 
   mVK->CmdDraw(mCommandBuffer, vertices.size(), 1, 0, 0);
 
   mVK->CmdEndRenderingKHR(mCommandBuffer);
 
   mSprites.clear();
+  mCommandBuffer = {};
   mTarget = nullptr;
   mClearColor = {};
 }
@@ -478,8 +508,8 @@ SpriteBatch::Vertex::GetAttributeDescription() {
   return {
     VkVertexInputAttributeDescription {
       .location = 0,
-      .format = VK_FORMAT_R32_UINT,
-      .offset = offsetof(Vertex, mTextureIndex),
+      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
+      .offset = offsetof(Vertex, mPosition),
     },
     VkVertexInputAttributeDescription {
       .location = 1,
@@ -493,8 +523,8 @@ SpriteBatch::Vertex::GetAttributeDescription() {
     },
     VkVertexInputAttributeDescription {
       .location = 3,
-      .format = VK_FORMAT_R32G32B32A32_SFLOAT,
-      .offset = offsetof(Vertex, mPosition),
+      .format = VK_FORMAT_R32_UINT,
+      .offset = offsetof(Vertex, mTextureIndex),
     },
   };
 }
@@ -510,9 +540,9 @@ void SpriteBatch::CreateSampler() {
     .magFilter = VK_FILTER_LINEAR,
     .minFilter = VK_FILTER_LINEAR,
     .mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST,
-    .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-    .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+    .addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+    .addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
+    .addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT,
     .maxLod = VK_LOD_CLAMP_NONE,
   };
   mSampler = mVK->make_unique<VkSampler>(mDevice, &createInfo, mAllocator);
@@ -531,7 +561,7 @@ void SpriteBatch::CreateDescriptorSet() {
     VkDescriptorSetLayoutBinding {
       .binding = 1,
       .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-      .descriptorCount = MaxSpritesPerBatch,
+      .descriptorCount = 1 /* MaxSpritesPerBatch */,
       .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
     },
   };
@@ -539,8 +569,9 @@ void SpriteBatch::CreateDescriptorSet() {
   VkDescriptorBindingFlags bindingFlags[] {
     0,
     VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT
-      | VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT
-      | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT,
+    /*| VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT
+    | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT*/
+    ,
   };
 
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo {
@@ -552,8 +583,8 @@ void SpriteBatch::CreateDescriptorSet() {
 
   VkDescriptorSetLayoutCreateInfo layoutCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-    .pNext = &bindingFlagsCreateInfo,
-    .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT,
+    .pNext = nullptr,
+    .flags = 0,
     .bindingCount = std::size(layoutBindings),
     .pBindings = layoutBindings,
   };
@@ -568,12 +599,12 @@ void SpriteBatch::CreateDescriptorSet() {
     },
     {
       .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-      .descriptorCount = MaxSpritesPerBatch,
+      .descriptorCount = 1 /*MaxSpritesPerBatch*/,
     },
   };
   VkDescriptorPoolCreateInfo poolCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-    .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
+    .flags = 0,
     .maxSets = 1,
     .poolSizeCount = std::size(poolSizes),
     .pPoolSizes = poolSizes,
@@ -603,6 +634,7 @@ concept has_descriptor_indexing_flag
   = requires(T t) { t.descriptorIndexing = true; };
 
 static void EnableDescriptorIndexing(auto* it) {
+  return;
   if constexpr (has_descriptor_indexing_flag<decltype(*it)>) {
     it->descriptorIndexing = true;
   }
@@ -645,7 +677,7 @@ SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
     }
   }
 
-  if (!enabledDescriptorIndexing) {
+  if (false && !enabledDescriptorIndexing) {
     auto it = &mDescriptorIndexingFeatures;
     EnableDescriptorIndexing(it);
     it->pNext = const_cast<void*>(pNext);

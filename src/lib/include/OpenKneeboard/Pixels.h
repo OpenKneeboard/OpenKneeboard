@@ -100,15 +100,40 @@ struct PixelPoint {
 };
 
 struct PixelRect {
-  PixelPoint mOrigin {};
+  enum class Origin {
+    TopLeft,
+    BottomLeft,
+  };
+
+  PixelPoint mOffset {};
   PixelSize mSize {};
+  Origin mOrigin {Origin::TopLeft};
 
   constexpr PixelPoint TopLeft() const {
-    return mOrigin;
+    return mOffset;
   }
 
   constexpr PixelPoint BottomRight() const {
-    return {mOrigin.mX + mSize.mWidth, mOrigin.mY + mSize.mHeight};
+    switch (mOrigin) {
+      case Origin::TopLeft:
+        return {mOffset.mX + mSize.mWidth, mOffset.mY + mSize.mHeight};
+      case Origin::BottomLeft:
+        return {mOffset.mX + mSize.mWidth, mOffset.mY - mSize.mHeight};
+      default:
+        OPENKNEEBOARD_UNREACHABLE;
+    }
+  }
+
+  constexpr PixelRect WithOrigin(Origin origin, const PixelSize& container)
+    const {
+    if (origin == mOrigin) {
+      return *this;
+    }
+    return {
+      {mOffset.mX, container.mHeight - mOffset.mY},
+      mSize,
+      origin,
+    };
   }
 
   constexpr auto operator<=>(const PixelRect&) const noexcept = default;
@@ -129,10 +154,10 @@ struct PixelRect {
   template <class TRect, class TValue>
   constexpr TRect StaticCastWithBottomRight() const noexcept {
     return {
-      static_cast<TValue>(mOrigin.mX),
-      static_cast<TValue>(mOrigin.mY),
-      static_cast<TValue>(mOrigin.mX + mSize.mWidth),
-      static_cast<TValue>(mOrigin.mY + mSize.mHeight),
+      static_cast<TValue>(mOffset.mX),
+      static_cast<TValue>(mOffset.mY),
+      static_cast<TValue>(mOffset.mX + mSize.mWidth),
+      static_cast<TValue>(mOffset.mY + mSize.mHeight),
     };
   }
 };

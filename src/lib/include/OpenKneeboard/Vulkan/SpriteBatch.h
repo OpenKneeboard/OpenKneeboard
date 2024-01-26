@@ -79,8 +79,8 @@ class SpriteBatch {
   void End(const std::source_location& loc = std::source_location::current());
 
   static constexpr std::string_view REQUIRED_DEVICE_EXTENSIONS[] {
-    VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
-    VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+    // VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME,
+    // VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
     VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME,
     VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME,
     VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME,
@@ -116,8 +116,6 @@ class SpriteBatch {
   unique_vk<VkShaderModule> mPixelShader;
   unique_vk<VkShaderModule> mVertexShader;
 
-  PixelSize mDestSize;
-
   struct Vertex {
     class Position : public std::array<float, 4> {
      public:
@@ -128,10 +126,10 @@ class SpriteBatch {
       constexpr Position(float x, float y) : std::array<float, 4> {x, y, 0, 1} {
       }
     };
-    alignas(4) uint32_t mTextureIndex {~(0ui32)};
-    alignas(16) Color mColor {};
-    alignas(8) std::array<float, 2> mTexCoord;
-    alignas(16) Position mPosition;
+    Position mPosition;
+    Color mColor {};
+    std::array<float, 2> mTexCoord;
+    uint32_t mTextureIndex {~(0ui32)};
 
     static VkVertexInputBindingDescription GetBindingDescription();
     static std::array<VkVertexInputAttributeDescription, 4>

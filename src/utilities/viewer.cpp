@@ -23,8 +23,6 @@
 #include "viewer-d3d12.h"
 #include "viewer-vulkan.h"
 
-#include <OpenKneeboard/D2DErrorRenderer.h>
-#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/GameEvent.h>
 #include <OpenKneeboard/GetSystemColor.h>
@@ -48,7 +46,7 @@
 #include <ShlObj_core.h>
 #include <d3d11.h>
 #include <d3d11_2.h>
-#include <dxgi1_2.h>
+#include <dxgi1_6.h>
 #include <shellapi.h>
 
 using namespace OpenKneeboard;
@@ -75,6 +73,9 @@ struct Pixel {
 
 class TestViewerWindow final {
  private:
+  winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
+  winrt::com_ptr<ID3D11Device5> mD3D11Device;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
   bool mStreamerMode = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
@@ -82,7 +83,7 @@ class TestViewerWindow final {
   // The renderers can't operate directly on the swapchains
   // as swapchains can't be shared.
   //
-  // We *could* do D3D11 directly, but that makes it different to the otehrs, so
+  // We *could* do D3D11 directly, but that makes it different to the others, so
   // nope
   winrt::com_ptr<ID3D11Texture2D> mRendererTexture;
   winrt::handle mRendererTextureHandle;
@@ -101,17 +102,18 @@ class TestViewerWindow final {
   D2D1_COLOR_F mWindowFrameColor;
   D2D1_COLOR_F mStreamerModeWindowFrameColor;
 
+  // FIXME
+#if 0
   winrt::com_ptr<ID2D1SolidColorBrush> mOverlayBackground;
   winrt::com_ptr<ID2D1SolidColorBrush> mOverlayForeground;
   winrt::com_ptr<IDWriteTextFormat> mOverlayTextFormat;
 
-  DXResources mDXR;
+  winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
+  winrt::com_ptr<ID2D1SolidColorBrush> mStreamerModeBackgroundBrush;
+#endif
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
-  std::unique_ptr<D2DErrorRenderer> mErrorRenderer;
-  winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
-  winrt::com_ptr<ID2D1SolidColorBrush> mStreamerModeBackgroundBrush;
 
   HWND mHwnd {};
 
@@ -123,8 +125,10 @@ class TestViewerWindow final {
 
   void SetDPI(UINT dpi) {
     mDPI = dpi;
+    // FIXME
+#if 0
     mOverlayTextFormat = {};
-
+    
     mDXR.mDWriteFactory->CreateTextFormat(
       L"Courier New",
       nullptr,
@@ -134,6 +138,7 @@ class TestViewerWindow final {
       (16.0f * mDPI) / USER_DEFAULT_SCREEN_DPI,
       L"",
       mOverlayTextFormat.put());
+#endif
   }
 
  public:
@@ -161,26 +166,61 @@ class TestViewerWindow final {
       nullptr);
     SetTimer(mHwnd, /* id = */ 1, 1000 / 60, nullptr);
 
+    UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+    auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
+    UINT dxgiFlags = 0;
+#ifdef DEBUG
+    d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
+    dxgiFlags |= DXGI_CREATE_FACTORY_DEBUG;
+#endif
+    winrt::check_hresult(
+      CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(mDXGIFactory.put())));
+    winrt::com_ptr<IDXGIAdapter> adapter;
+    winrt::check_hresult(mDXGIFactory->EnumAdapterByGpuPreference(
+      0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(adapter.put())));
+    {
+      winrt::com_ptr<ID3D11Device> device;
+      winrt::com_ptr<ID3D11DeviceContext> context;
+      winrt::check_hresult(D3D11CreateDevice(
+        adapter.get(),
+        D3D_DRIVER_TYPE_UNKNOWN,
+        nullptr,
+        d3dFlags,
+        &d3dLevel,
+        1,
+        D3D11_SDK_VERSION,
+        device.put(),
+        nullptr,
+        context.put()));
+      mD3D11Device = device.as<ID3D11Device5>();
+      mD3D11ImmediateContext = context.as<ID3D11DeviceContext4>();
+    }
+
+    // FIXME
+#if 0
     mDXR = DXResources::Create();
     mDXR.mD2DDeviceContext->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
+#endif
 
-    winrt::check_hresult(mDXR.mD3DDevice->CreateFence(
+    winrt::check_hresult(mD3D11Device->CreateFence(
       mFenceValue, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
     winrt::check_hresult(mFence->CreateSharedHandle(
       nullptr, GENERIC_ALL, nullptr, mFenceHandle.put()));
 
     this->CreateRenderer();
 
-    mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
     mWindowColor = GetSystemColor(COLOR_WINDOW);
     mWindowFrameColor = GetSystemColor(COLOR_WINDOWFRAME);
     mStreamerModeWindowColor = D2D1::ColorF(1.0f, 0.0f, 1.0f, 1.0f);
     mStreamerModeWindowFrameColor = mStreamerModeWindowColor;
 
+    // FIXME
+#if 0
     mDXR.mD2DDeviceContext->CreateSolidColorBrush(
       D2D1::ColorF(0.0f, 0.0f, 0.f, 0.8f), mOverlayBackground.put());
     mDXR.mD2DDeviceContext->CreateSolidColorBrush(
       D2D1::ColorF(1.0f, 1.0f, 1.f, 1.0f), mOverlayForeground.put());
+#endif
 
     const auto dpi = GetDpiForWindow(mHwnd);
     this->SetDPI(dpi);
@@ -241,8 +281,8 @@ class TestViewerWindow final {
         .MiscFlags
         = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
       };
-      winrt::check_hresult(mDXR.mD3DDevice->CreateTexture2D(
-        &desc, nullptr, mRendererTexture.put()));
+      winrt::check_hresult(
+        mD3D11Device->CreateTexture2D(&desc, nullptr, mRendererTexture.put()));
       mRendererTextureHandle = {};
       winrt::check_hresult(
         mRendererTexture.as<IDXGIResource1>()->CreateSharedHandle(
@@ -257,8 +297,10 @@ class TestViewerWindow final {
       if (mode.Width == clientSize.width && mode.Height == clientSize.height) {
         return;
       }
+// FIXME
+#if 0
       mBackgroundBrush = nullptr;
-      mDXR.mD2DDeviceContext->SetTarget(nullptr);
+#endif
       mSwapChain->ResizeBuffers(
         desc.BufferCount,
         clientSize.width,
@@ -281,8 +323,8 @@ class TestViewerWindow final {
       .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
       .AlphaMode = DXGI_ALPHA_MODE_IGNORE,// HWND swap chain can't have alpha
     };
-    mDXR.mDXGIFactory->CreateSwapChainForHwnd(
-      mDXR.mD3DDevice.get(),
+    mDXGIFactory->CreateSwapChainForHwnd(
+      mD3D11Device.get(),
       mHwnd,
       &swapChainDesc,
       nullptr,
@@ -349,9 +391,6 @@ class TestViewerWindow final {
                       std::chrono::system_clock::now()));
     std::filesystem::create_directories(path.parent_path());
 
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    mDXR.mD3DDevice->GetImmediateContext(ctx.put());
-
     mRenderer->SaveTextureToFile(
       snapshot.GetTexture<SHM::IPCClientTexture>(), path);
 
@@ -415,6 +454,8 @@ class TestViewerWindow final {
   }
 
   void PaintInformationOverlay() {
+    // FIXME
+#if 0
     winrt::com_ptr<ID2D1Bitmap1> bitmap;
     winrt::com_ptr<IDXGISurface> surface;
 
@@ -461,10 +502,13 @@ class TestViewerWindow final {
         metrics.top + metrics.height),
       mOverlayBackground.get());
     ctx->DrawTextLayout({0.0f, 0.0f}, layout.get(), mOverlayForeground.get());
+#endif
   }
 
   void PaintContent() {
     const auto clientSize = GetClientSize();
+    // FIXME
+#if 0
     auto d2d = mDXR.mD2DDeviceContext.get();
 
     if (!mBackgroundBrush) {
@@ -499,8 +543,11 @@ class TestViewerWindow final {
     }
 
     winrt::com_ptr<ID2D1Bitmap1> bitmap;
-    winrt::com_ptr<IDXGISurface> surface;
+#endif
+    winrt::com_ptr<IDXGISurface1> surface;
     mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
+// FIXME
+#if 0
     winrt::check_hresult(
       d2d->CreateBitmapFromDxgiSurface(surface.get(), nullptr, bitmap.put()));
     d2d->SetTarget(bitmap.get());
@@ -508,14 +555,17 @@ class TestViewerWindow final {
     scope_guard endDraw([d2d]() { winrt::check_hresult(d2d->EndDraw()); });
 
     d2d->Clear(mStreamerMode ? mStreamerModeWindowColor : mWindowColor);
+#endif
 
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
     if (!snapshot.IsValid()) {
       if (!mStreamerMode) {
+        /* FIXME
         mErrorRenderer->Render(
           d2d,
           "No Feeder",
           {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
+          */
       }
       mFirstDetached = false;
       return;
@@ -526,16 +576,20 @@ class TestViewerWindow final {
     mSetInputFocus = config.mVR.mEnableGazeInputFocus;
 
     if (mLayerIndex >= snapshot.GetLayerCount()) {
+      /* FIXME
       mErrorRenderer->Render(
         d2d,
         std::format("No Layer {}", mLayerIndex + 1),
         {0.0f, 0.0f, float(clientSize.width), float(clientSize.height)});
+        */
       return;
     }
+
+// FIXME
+#if 0
     winrt::check_hresult(d2d->EndDraw());
     endDraw.abandon();
-
-    auto d3d = mDXR.mD3DDevice.get();
+#endif
 
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
     mLayerID = layer.mLayerID;
@@ -554,7 +608,15 @@ class TestViewerWindow final {
     const auto sourceRect = layer.mLocationOnTexture;
 
     auto surfaceTex = surface.as<ID3D11Texture2D>();
-    auto ctx = mDXR.mD3DImmediateContext.get();
+
+    auto ctx = mD3D11ImmediateContext.get();
+    // FIXME
+    {
+      winrt::com_ptr<ID3D11RenderTargetView> rtv;
+      mD3D11Device->CreateRenderTargetView(
+        surfaceTex.get(), nullptr, rtv.put());
+      ctx->ClearRenderTargetView(rtv.get(), DirectX::Colors::White);
+    }
 
     ctx->CopySubresourceRegion(
       mRendererTexture.get(), 0, 0, 0, 0, surfaceTex.get(), 0, nullptr);
@@ -612,17 +674,17 @@ class TestViewerWindow final {
 
     switch (renderer) {
       case GraphicsAPI::D3D11:
-        mRenderer = std::make_unique<Viewer::D3D11Renderer>(mDXR.mD3DDevice);
+        mRenderer = std::make_unique<Viewer::D3D11Renderer>(mD3D11Device);
         break;
       case GraphicsAPI::D3D12: {
         winrt::com_ptr<IDXGIAdapter> adapter;
-        winrt::check_hresult(mDXR.mDXGIDevice->GetAdapter(adapter.put()));
+        mD3D11Device.as<IDXGIDevice4>()->GetAdapter(adapter.put());
         mRenderer = std::make_unique<Viewer::D3D12Renderer>(adapter.get());
         break;
       }
       case GraphicsAPI::Vulkan: {
         winrt::com_ptr<IDXGIAdapter> adapter;
-        winrt::check_hresult(mDXR.mDXGIDevice->GetAdapter(adapter.put()));
+        mD3D11Device.as<IDXGIDevice4>()->GetAdapter(adapter.put());
         DXGI_ADAPTER_DESC desc;
         winrt::check_hresult(adapter->GetDesc(&desc));
         static_assert(sizeof(desc.AdapterLuid) == sizeof(uint64_t));

@@ -20,6 +20,8 @@
 
 #include "viewer-vulkan.h"
 
+#include "renderdoc_app.h"
+
 #include <OpenKneeboard/Vulkan.h>
 
 #include <OpenKneeboard/dprint.h>
@@ -78,7 +80,7 @@ static VkBool32 VKDebugCallback(
   if (
     (messageSeverity
      & (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))) {
-    OPENKNEEBOARD_BREAK;
+    // OPENKNEEBOARD_BREAK;
   }
 
   return VK_FALSE;
@@ -257,6 +259,13 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   };
   check_vkresult(mVK->AllocateCommandBuffers(
     mDevice.get(), &commandAllocInfo, &mCommandBuffer));
+
+  VkFenceCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+    .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+  };
+  mCompletionFence
+    = mVK->make_unique<VkFence>(mDevice.get(), &createInfo, nullptr);
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -556,12 +565,17 @@ uint64_t VulkanRenderer::Render(
   this->InitializeSemaphore(semaphoreHandle);
   this->InitializeDest(destTexture, destTextureDimensions);
 
-  if (!mCompletionFence) {
-    VkFenceCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
-    };
-    mCompletionFence
-      = mVK->make_unique<VkFence>(mDevice.get(), &createInfo, nullptr);
+  RENDERDOC_API_1_3_0* renderDoc = nullptr;
+  if (auto rdLib = GetModuleHandleA("renderdoc.dll")) {
+    pRENDERDOC_GetAPI RENDERDOC_GetAPI
+      = (pRENDERDOC_GetAPI)GetProcAddress(rdLib, "RENDERDOC_GetAPI");
+    RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_3_0, (void**)&renderDoc);
+  }
+  auto renderDocDevice
+    = RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(mVKInstance.get());
+
+  if (renderDoc && renderDoc->IsFrameCapturing()) {
+    renderDoc->StartFrameCapture(renderDocDevice, NULL);
   }
 
   VkCommandBufferBeginInfo beginInfo {
@@ -601,9 +615,37 @@ uint64_t VulkanRenderer::Render(
     mCommandBuffer, mDestImageView.get(), destTextureDimensions);
 
   mSpriteBatch->Draw(
-    source->GetVKImageView(), source->GetDimensions(), sourceRect, destRect);
+    source->GetVKImageView(),
+    source->GetDimensions(),
+    sourceRect,
+    destRect,
+    Vulkan::Color {1.0f, 0.0f, 0.0f, 1.0f});
 
   mSpriteBatch->End();
+
+  const VkImageMemoryBarrier outBarrier {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+      .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+      .image = mDestImage.get(),
+      .subresourceRange = VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
+    };
+  mVK->CmdPipelineBarrier(
+    mCommandBuffer,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+    0,
+    0,
+    nullptr,
+    0,
+    nullptr,
+    1,
+    &outBarrier);
 
   check_vkresult(mVK->EndCommandBuffer(mCommandBuffer));
 
@@ -654,12 +696,28 @@ uint64_t VulkanRenderer::Render(
   check_vkresult(mVK->ResetFences(mDevice.get(), std::size(fences), fences));
   check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fences[0]));
 
+  // FIXME
+  check_vkresult(mVK->WaitForFences(mDevice.get(), 1, fences, 1, ~(0ui64)));
+  if (renderDoc && renderDoc->IsFrameCapturing()) {
+    this->SaveTextureToFile(
+      destTextureDimensions,
+      mDestImage.get(),
+      VK_IMAGE_LAYOUT_GENERAL,
+      mSemaphore.get(),
+      semaphoreValueIn,
+      "C:\\Users\\fred\\test.dds");
+    renderDoc->EndFrameCapture(renderDocDevice, NULL);
+  }
+
   return semaphoreValueOut;
 }
 
 void VulkanRenderer::InitializeDest(
   HANDLE handle,
   const PixelSize& dimensions) {
+  if (dimensions != mDestImageDimensions) {
+    mDestHandle = {};
+  }
   if (handle == mDestHandle) {
     return;
   }
@@ -769,6 +827,7 @@ void VulkanRenderer::InitializeDest(
     = mVK->make_unique<VkImageView>(mDevice.get(), &viewCreateInfo, nullptr);
 
   mDestHandle = handle;
+  mDestImageDimensions = dimensions;
 }
 
 void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
@@ -776,11 +835,9 @@ void VulkanRenderer::InitializeSemaphore(HANDLE handle) {
     return;
   }
 
-  if (mCompletionFence) {
-    VkFence fences[] {mCompletionFence.get()};
-    check_vkresult(mVK->WaitForFences(
-      mDevice.get(), std::size(fences), fences, false, ~(0ui64)));
-  }
+  VkFence fences[] {mCompletionFence.get()};
+  check_vkresult(mVK->WaitForFences(
+    mDevice.get(), std::size(fences), fences, false, ~(0ui64)));
 
   VkSemaphoreTypeCreateInfoKHR typeCreateInfo {
     .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR,

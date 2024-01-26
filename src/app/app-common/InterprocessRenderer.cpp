@@ -343,7 +343,7 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
   if (usedSize.width < 1 || usedSize.height < 1) {
     usedSize = {ErrorRenderWidth, ErrorRenderHeight};
   }
-  ret.mLocationOnTexture = {bounds.mOrigin, usedSize};
+  ret.mLocationOnTexture = {bounds.mOffset, usedSize};
 
   const auto vrc = mKneeboard->GetVRSettings();
   const auto xFitScale = vrc.mMaxWidth / usedSize.width;

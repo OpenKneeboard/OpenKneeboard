@@ -80,6 +80,7 @@ class VulkanRenderer final : public Renderer {
   unique_vk<VkImage> mDestImage;
   unique_vk<VkDeviceMemory> mDestImageMemory;
   unique_vk<VkImageView> mDestImageView;
+  PixelSize mDestImageDimensions;
 
   HANDLE mSemaphoreHandle {};
   unique_vk<VkSemaphore> mSemaphore;
