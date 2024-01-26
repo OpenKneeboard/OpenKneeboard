@@ -581,6 +581,7 @@ uint64_t VulkanRenderer::Render(
 
   if (renderDoc && renderDoc->IsFrameCapturing()) {
     renderDoc->StartFrameCapture(renderDocDevice, NULL);
+    renderDoc->SetCaptureTitle("VulkanViewer::Render");
   }
 
   VkCommandBufferBeginInfo beginInfo {
