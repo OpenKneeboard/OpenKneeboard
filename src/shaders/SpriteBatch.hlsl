@@ -3,6 +3,11 @@
 //
 // http://go.microsoft.com/fwlink/?LinkId=248929
 
+// Modified for OpenKneeboard::Vulkan::SpriteBatch:
+// - use descriptor indexing
+// - take pixel coordinates and convert to normalized coordinates
+// - add VK annotations
+
 // Limit MUST match C++
 #define MaxSpritesPerBatch 16
 [[vk::binding(0)]] sampler TextureSampler : register(s0);
