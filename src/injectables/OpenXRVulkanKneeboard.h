@@ -79,20 +79,39 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
  private:
   SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
 
-  XrGraphicsBindingVulkanKHR mBinding {};
-
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 
+  const VkAllocationCallbacks* mAllocator {nullptr};
+  VkInstance mVKInstance {VK_NULL_HANDLE};
+  VkPhysicalDevice mPhysicalDevice {VK_NULL_HANDLE};
+  VkDevice mDevice {VK_NULL_HANDLE};
+  uint32_t mQueueFamilyIndex {~(0ui32)};
+  uint32_t mQueueIndex {~(0ui32)};
+
+  std::unique_ptr<Vulkan::SpriteBatch> mSpriteBatch;
+
+  template <class T>
+  using unique_vk = Vulkan::unique_vk<T>;
+
+  unique_vk<VkCommandPool> mCommandPool;
+  std::vector<VkCommandBuffer> mCommandBuffers;
+
   struct SwapchainBufferResources {
-    VkImage mImage;
+    VkImage mImage {VK_NULL_HANDLE};
+    unique_vk<VkImageView> mImageView;
+    unique_vk<VkFence> mCompletionFence;
+    VkCommandBuffer mCommandBuffer {VK_NULL_HANDLE};
   };
 
   struct SwapchainResources {
+    XrSwapchain mSwapchain {XR_NULL_HANDLE};
     std::vector<SwapchainBufferResources> mBufferResources;
     PixelSize mDimensions;
   };
 
-  std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
+  std::optional<SwapchainResources> mSwapchainResources;
+
+  void WaitForAllFences();
 };
 
 }// namespace OpenKneeboard
