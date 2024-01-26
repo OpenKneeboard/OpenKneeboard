@@ -69,6 +69,7 @@ target_link_libraries(
   OpenKneeboard-Filesystem
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
+  OpenKneeboard-RenderDoc
   OpenKneeboard-SHM
   OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-SHM-Client-D3D12

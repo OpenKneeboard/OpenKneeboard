@@ -425,3 +425,16 @@ target_link_libraries(
   OpenKneeboard-handles
   _libheaders
 )
+
+ok_add_library(
+  OpenKneeboard-RenderDoc
+  STATIC
+  RenderDoc.cpp
+)
+target_link_libraries(
+  OpenKneeboard-RenderDoc
+  PUBLIC
+  _libheaders
+  PRIVATE
+  ThirdParty::RenderDoc
+)

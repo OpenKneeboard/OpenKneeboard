@@ -20,8 +20,7 @@
 
 #include "viewer-vulkan.h"
 
-#include "renderdoc_app.h"
-
+#include <OpenKneeboard/RenderDoc.h>
 #include <OpenKneeboard/Vulkan.h>
 
 #include <OpenKneeboard/dprint.h>
@@ -78,7 +77,7 @@ static VkBool32 VKDebugCallback(
     severity,
     pCallbackData->pMessage);
   if (
-    (GetModuleHandleA("renderdoc.dll") == NULL)
+    (!RenderDoc::IsPresent())
     && (messageSeverity & (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))) {
     OPENKNEEBOARD_BREAK;
   }
@@ -570,19 +569,8 @@ uint64_t VulkanRenderer::Render(
   this->InitializeSemaphore(semaphoreHandle);
   this->InitializeDest(destTexture, destTextureDimensions);
 
-  RENDERDOC_API_1_3_0* renderDoc = nullptr;
-  if (auto rdLib = GetModuleHandleA("renderdoc.dll")) {
-    pRENDERDOC_GetAPI RENDERDOC_GetAPI
-      = (pRENDERDOC_GetAPI)GetProcAddress(rdLib, "RENDERDOC_GetAPI");
-    RENDERDOC_GetAPI(eRENDERDOC_API_Version_1_3_0, (void**)&renderDoc);
-  }
-  auto renderDocDevice
-    = RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(mVKInstance.get());
-
-  if (renderDoc && renderDoc->IsFrameCapturing()) {
-    renderDoc->StartFrameCapture(renderDocDevice, NULL);
-    renderDoc->SetCaptureTitle("VulkanViewer::Render");
-  }
+  RenderDoc::NestedFrameCapture renderDocFrame(
+    mVKInstance.get(), "VulkanRenderer::Render()");
 
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -697,10 +685,6 @@ uint64_t VulkanRenderer::Render(
   VkFence fences[] {mCompletionFence.get()};
   check_vkresult(mVK->ResetFences(mDevice.get(), std::size(fences), fences));
   check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fences[0]));
-
-  if (renderDoc && renderDoc->IsFrameCapturing()) {
-    renderDoc->EndFrameCapture(renderDocDevice, NULL);
-  }
 
   return semaphoreValueOut;
 }
