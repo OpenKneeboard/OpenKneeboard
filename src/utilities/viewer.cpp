@@ -636,7 +636,7 @@ class TestViewerWindow final {
       snapshot.GetTexture<SHM::IPCClientTexture>(),
       sourceRect,
       mRendererTextureHandle.get(),
-      {clientSize.width, clientSize.height},
+      mRendererTextureSize,
       destRect,
       mFenceHandle.get(),
       mFenceValue);
