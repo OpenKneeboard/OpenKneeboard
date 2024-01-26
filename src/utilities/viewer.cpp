@@ -29,6 +29,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/SHM/D3D11.h>
+#include <OpenKneeboard/Shaders/D3D/Viewer.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -76,6 +77,17 @@ class TestViewerWindow final {
   winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
   winrt::com_ptr<ID3D11Device5> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
+
+  winrt::com_ptr<ID3D11VertexShader> mVertexShader;
+  winrt::com_ptr<ID3D11PixelShader> mPixelShader;
+  winrt::com_ptr<ID3D11InputLayout> mShaderInputLayout;
+  winrt::com_ptr<ID3D11Buffer> mShaderConstantBuffer;
+  winrt::com_ptr<ID3D11Buffer> mVertexBuffer;
+
+  static constexpr size_t MaxRectangles = 1;
+  static constexpr size_t MaxTriangles = MaxRectangles * 2;
+  static constexpr size_t MaxVertices = MaxTriangles * 3;
+
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
   std::unique_ptr<Viewer::Renderer> mRenderer;
@@ -97,7 +109,10 @@ class TestViewerWindow final {
   size_t mRenderCacheKey = 0;
 
   struct ShaderDrawInfo {
-    std::array<float, 2> mDimensions;
+    union {
+      std::array<float, 2> mDimensions;
+      const std::byte PADDING[16];
+    };
   };
 
   struct ShaderFillInfo {
@@ -236,6 +251,8 @@ class TestViewerWindow final {
       mD3D11ImmediateContext = context.as<ID3D11DeviceContext4>();
     }
 
+    this->InitializeShaders();
+
     // FIXME
 #if 0
     mDXR = DXResources::Create();
@@ -298,6 +315,109 @@ class TestViewerWindow final {
       static_cast<UINT>(clientRect.right - clientRect.left),
       static_cast<UINT>(clientRect.bottom - clientRect.top),
     };
+  }
+
+  void InitializeShaders() {
+    constexpr auto vs = Shaders::D3D::Viewer::VS;
+    constexpr auto ps = Shaders::D3D::Viewer::PS;
+
+    winrt::check_hresult(mD3D11Device->CreateVertexShader(
+      vs.data(), vs.size(), nullptr, mVertexShader.put()));
+    winrt::check_hresult(mD3D11Device->CreatePixelShader(
+      ps.data(), ps.size(), nullptr, mPixelShader.put()));
+
+    D3D11_INPUT_ELEMENT_DESC inputLayout[] {
+      D3D11_INPUT_ELEMENT_DESC {
+        .SemanticName = "SV_Position",
+        .SemanticIndex = 0,
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .AlignedByteOffset = 0,
+        .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+      },
+      D3D11_INPUT_ELEMENT_DESC {
+        .SemanticName = "COLOR",
+        .SemanticIndex = 0,
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
+        .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+      },
+      D3D11_INPUT_ELEMENT_DESC {
+        .SemanticName = "COLOR",
+        .SemanticIndex = 1,
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT,
+        .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
+      },
+    };
+    winrt::check_hresult(mD3D11Device->CreateInputLayout(
+      inputLayout,
+      std::size(inputLayout),
+      vs.data(),
+      vs.size(),
+      mShaderInputLayout.put()));
+
+    D3D11_BUFFER_DESC cbufferDesc {
+      .ByteWidth = sizeof(ShaderDrawInfo),
+      .Usage = D3D11_USAGE_DYNAMIC,
+      .BindFlags = D3D11_BIND_CONSTANT_BUFFER,
+      .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
+    };
+    winrt::check_hresult(mD3D11Device->CreateBuffer(
+      &cbufferDesc, nullptr, mShaderConstantBuffer.put()));
+
+    D3D11_BUFFER_DESC vertexBufferDesc {
+      .ByteWidth = sizeof(Vertex) * MaxVertices,
+      .Usage = D3D11_USAGE_DYNAMIC,
+      .BindFlags = D3D11_BIND_VERTEX_BUFFER,
+      .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
+    };
+    winrt::check_hresult(mD3D11Device->CreateBuffer(
+      &vertexBufferDesc, nullptr, mVertexBuffer.put()));
+  }
+
+  void StartDraw() {
+    auto ctx = mD3D11ImmediateContext.get();
+    const auto clientSize = this->GetClientSize();
+
+    const D3D11_VIEWPORT viewport {
+      0,
+      0,
+      static_cast<float>(clientSize.width),
+      static_cast<float>(clientSize.height),
+      0,
+      1,
+    };
+    ctx->RSSetViewports(1, &viewport);
+
+    const auto vertexBuffer = mVertexBuffer.get();
+    const UINT vertexStride = sizeof(Vertex);
+    const UINT vertexOffset = 0;
+    ctx->IASetVertexBuffers(0, 1, &vertexBuffer, &vertexStride, &vertexOffset);
+    ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    ctx->IASetInputLayout(mShaderInputLayout.get());
+
+    const ShaderDrawInfo drawInfo {
+      .mDimensions = {
+        static_cast<float>(clientSize.width),
+        static_cast<float>(clientSize.height),
+      },
+    };
+
+    {
+      D3D11_MAPPED_SUBRESOURCE mapping {};
+      winrt::check_hresult(ctx->Map(
+        mShaderConstantBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
+      memcpy(mapping.pData, &drawInfo, sizeof(drawInfo));
+      ctx->Unmap(mShaderConstantBuffer.get(), 0);
+    }
+    const auto cbuffer = mShaderConstantBuffer.get();
+
+    ctx->VSSetShader(mVertexShader.get(), nullptr, 0);
+    ctx->VSSetConstantBuffers(0, 1, &cbuffer);
+    ctx->PSSetShader(mPixelShader.get(), nullptr, 0);
+
+    const auto rtv = mWindowRenderTargetView.get();
+    ctx->OMSetRenderTargets(1, &rtv, nullptr);
   }
 
   void InitSwapChain() {
@@ -505,6 +625,8 @@ class TestViewerWindow final {
     }
     this->InitSwapChain();
 
+    this->StartDraw();
+
     this->PaintBackground();
     this->PaintContent();
 
@@ -528,9 +650,28 @@ class TestViewerWindow final {
         fill = mColorKeyFill;
         break;
     }
-    // FIXME: draw it so we can checkboard
-    mD3D11ImmediateContext->ClearRenderTargetView(
-      mWindowRenderTargetView.get(), reinterpret_cast<const float*>(&fill));
+
+    const auto size = this->GetClientSize();
+    const auto width = static_cast<float>(size.width);
+    const auto height = static_cast<float>(size.height);
+
+    const Vertex vertices[] {
+      {{0, 0, 0, 1}, fill},
+      {{0, height, 0, 1}, fill},
+      {{width, 0, 0, 1}, fill},
+      {{width, 0, 0, 1}, fill},
+      {{0, height, 0, 1}, fill},
+      {{width, height, 0, 1}, fill},
+    };
+
+    auto ctx = mD3D11ImmediateContext.get();
+    D3D11_MAPPED_SUBRESOURCE mapping {};
+    winrt::check_hresult(
+      ctx->Map(mVertexBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
+    memcpy(mapping.pData, vertices, sizeof(vertices));
+    ctx->Unmap(mVertexBuffer.get(), 0);
+
+    ctx->Draw(std::size(vertices), 0);
   }
 
   void PaintInformationOverlay() {

@@ -25,3 +25,7 @@ foreach(LIBRARY ${SYSTEM_LIBRARIES})
     PROPERTY IMPORTED_LIBNAME "${LIBRARY}"
   )
 endforeach()
+
+find_program(FXC_EXE fxc DOC "Path to D3D11 shader compiler")
+add_executable(System::fxc IMPORTED GLOBAL)
+set_target_properties(System::fxc PROPERTIES IMPORTED_LOCATION "${FXC_EXE}")

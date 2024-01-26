@@ -7,6 +7,8 @@
 // - use descriptor indexing
 // - take pixel coordinates and convert to normalized coordinates
 // - add VK annotations
+//
+// This means the shader now requires D3D11 or D3D12.
 
 // Limit MUST match C++
 #define MaxSpritesPerBatch 16
@@ -25,8 +27,7 @@ void SpriteVertexShader(
     inout float4 position   : SV_Position,
     inout float4 color      : COLOR0,
     inout float2 texCoord   : TEXCOORD0,
-    inout uint textureIndex : TEXTURE_INDEX)
-{
+    inout uint textureIndex : TEXTURE_INDEX) {
     position.xy = (2 * (position.xy / batchData.destDimensions)) - 1;
     position.zw = position.zw;
     color = color;
@@ -38,7 +39,6 @@ float4 SpritePixelShader(
     float4 position   : SV_Position,
     float4 color      : COLOR0,
     float2 texCoord   : TEXCOORD0,
-    uint textureIndex : TEXTURE_INDEX) : SV_Target0
-{
+    uint textureIndex : TEXTURE_INDEX) : SV_Target0 {
     return Textures[NonUniformResourceIndex(textureIndex)].Sample(TextureSampler, texCoord) * color;
 }

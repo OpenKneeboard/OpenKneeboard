@@ -73,6 +73,7 @@ target_link_libraries(
   OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-SHM-Client-D3D12
   OpenKneeboard-SHM-Client-Vulkan
+  OpenKneeboard-Viewer-Shaders
   OpenKneeboard-scope_guard
   System::D2d1
   System::D3d11
