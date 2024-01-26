@@ -316,12 +316,12 @@ class TestViewerWindow final {
     }
   }
 
-  D2D1_SIZE_U GetClientSize() const {
+  PixelSize GetClientSize() const {
     RECT clientRect;
     GetClientRect(mHwnd, &clientRect);
     return {
-      static_cast<UINT>(clientRect.right - clientRect.left),
-      static_cast<UINT>(clientRect.bottom - clientRect.top),
+      static_cast<uint32_t>(clientRect.right - clientRect.left),
+      static_cast<uint32_t>(clientRect.bottom - clientRect.top),
     };
   }
 
@@ -397,8 +397,8 @@ class TestViewerWindow final {
     const D3D11_VIEWPORT viewport {
       0,
       0,
-      static_cast<float>(clientSize.width),
-      static_cast<float>(clientSize.height),
+      clientSize.GetWidth<float>(),
+      clientSize.GetHeight<float>(),
       0,
       1,
     };
@@ -413,8 +413,8 @@ class TestViewerWindow final {
 
     const ShaderDrawInfo drawInfo {
       .mDimensions = {
-        static_cast<float>(clientSize.width),
-        static_cast<float>(clientSize.height),
+        viewport.Width,
+        viewport.Height,
       },
     };
 
@@ -439,13 +439,19 @@ class TestViewerWindow final {
   void InitSwapChain() {
     const auto clientSize = this->GetClientSize();
 
+    if (clientSize == mSwapChainSize) {
+      return;
+    }
+    mWindowTexture = nullptr;
+    mWindowRenderTargetView = nullptr;
+
     if (
-      clientSize.width > mRendererTextureSize.mWidth
-      || clientSize.height > mRendererTextureSize.mHeight) {
+      clientSize.mWidth > mRendererTextureSize.mWidth
+      || clientSize.mHeight > mRendererTextureSize.mHeight) {
       mRendererTexture = nullptr;
       D3D11_TEXTURE2D_DESC desc {
-        .Width = clientSize.width,
-        .Height = clientSize.height,
+        .Width = clientSize.mWidth,
+        .Height = clientSize.mHeight,
         .MipLevels = 1,
         .ArraySize = 1,
         .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
@@ -467,17 +473,11 @@ class TestViewerWindow final {
       DXGI_SWAP_CHAIN_DESC desc;
       mSwapChain->GetDesc(&desc);
       auto& mode = desc.BufferDesc;
-      if (mode.Width == clientSize.width && mode.Height == clientSize.height) {
-        return;
-      }
-// FIXME
-#if 0
-      mBackgroundBrush = nullptr;
-#endif
+
       mSwapChain->ResizeBuffers(
         desc.BufferCount,
-        clientSize.width,
-        clientSize.height,
+        clientSize.mWidth,
+        clientSize.mHeight,
         mode.Format,
         desc.Flags);
 
@@ -487,8 +487,8 @@ class TestViewerWindow final {
     }
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
-      .Width = clientSize.width,
-      .Height = clientSize.height,
+      .Width = clientSize.mWidth,
+      .Height = clientSize.mHeight,
       .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
       .SampleDesc = {1, 0},
       .BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
@@ -505,13 +505,6 @@ class TestViewerWindow final {
       mSwapChain.put());
     mSwapChainSize = clientSize;
     mRenderer->Initialize(swapChainDesc.BufferCount);
-
-    mWindowTexture = nullptr;
-    mWindowRenderTargetView = nullptr;
-    winrt::check_hresult(
-      mSwapChain->GetBuffer(0, IID_PPV_ARGS(mWindowTexture.put())));
-    winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
-      mWindowTexture.get(), nullptr, mWindowRenderTargetView.put()));
   }
 
   void OnFocus() {
@@ -641,6 +634,14 @@ class TestViewerWindow final {
     }
     this->InitSwapChain();
 
+    if (!mWindowTexture) {
+      winrt::check_hresult(
+        mSwapChain->GetBuffer(0, IID_PPV_ARGS(mWindowTexture.put())));
+      mWindowRenderTargetView = nullptr;
+      winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
+        mWindowTexture.get(), nullptr, mWindowRenderTargetView.put()));
+    }
+
     this->StartDraw();
 
     this->PaintBackground();
@@ -668,8 +669,8 @@ class TestViewerWindow final {
     }
 
     const auto size = this->GetClientSize();
-    const auto width = static_cast<float>(size.width);
-    const auto height = static_cast<float>(size.height);
+    const auto width = size.GetWidth<float>();
+    const auto height = size.GetHeight<float>();
 
     const Vertex vertices[] {
       {{0, 0, 0, 1}, fill},
@@ -830,14 +831,14 @@ class TestViewerWindow final {
     mLayerID = layer.mLayerID;
 
     const auto& imageSize = layer.mLocationOnTexture.mSize;
-    const auto scalex = float(clientSize.width) / imageSize.mWidth;
-    const auto scaley = float(clientSize.height) / imageSize.mHeight;
+    const auto scalex = clientSize.GetWidth<float>() / imageSize.mWidth;
+    const auto scaley = clientSize.GetHeight<float>() / imageSize.mHeight;
     const auto scale = std::min(scalex, scaley);
     const auto renderWidth = static_cast<uint32_t>(imageSize.mWidth * scale);
     const auto renderHeight = static_cast<uint32_t>(imageSize.mHeight * scale);
 
-    const auto renderLeft = (clientSize.width - renderWidth) / 2;
-    const auto renderTop = (clientSize.height - renderHeight) / 2;
+    const auto renderLeft = (clientSize.mWidth - renderWidth) / 2;
+    const auto renderTop = (clientSize.mHeight - renderHeight) / 2;
     const PixelRect destRect {
       {renderLeft, renderTop}, {renderWidth, renderHeight}};
     const auto sourceRect = layer.mLocationOnTexture;
@@ -848,8 +849,8 @@ class TestViewerWindow final {
       0,
       0,
       0,
-      clientSize.width,
-      clientSize.height,
+      clientSize.mWidth,
+      clientSize.mHeight,
       1,
     };
 

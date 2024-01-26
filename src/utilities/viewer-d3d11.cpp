@@ -57,6 +57,9 @@ uint64_t D3D11Renderer::Render(
   [[maybe_unused]] HANDLE fence,
   uint64_t fenceValueIn) {
   OPENKNEEBOARD_TraceLoggingScope("Viewer::D3D11Renderer::Render");
+  if (mDestDimensions != destTextureDimensions) {
+    mDestHandle = {};
+  }
   if (mDestHandle != destTextureHandle) {
     mDestTexture = nullptr;
     mDestRenderTargetView = nullptr;
@@ -66,6 +69,7 @@ uint64_t D3D11Renderer::Render(
     winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
       mDestTexture.get(), nullptr, mDestRenderTargetView.put()));
     mDestHandle = destTextureHandle;
+    mDestDimensions = destTextureDimensions;
   }
 
   auto sourceSRV = reinterpret_cast<SHM::D3D11::Texture*>(sourceTexture)

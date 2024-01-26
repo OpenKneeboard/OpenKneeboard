@@ -62,6 +62,7 @@ class D3D11Renderer final : public Renderer {
 
   std::unique_ptr<OpenKneeboard::D3D11::SpriteBatch> mSpriteBatch;
 
+  PixelSize mDestDimensions;
   HANDLE mDestHandle {};
   winrt::com_ptr<ID3D11Texture2D> mDestTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mDestRenderTargetView;
