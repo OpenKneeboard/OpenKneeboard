@@ -126,6 +126,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   };
 
  protected:
+  void InitializeCache(uint8_t swapchainLength);
   virtual void Copy(
     HANDLE sourceTexture,
     IPCClientTexture* destinationTexture,

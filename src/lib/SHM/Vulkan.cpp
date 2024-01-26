@@ -340,14 +340,7 @@ CachedReader::CachedReader(ConsumerKind consumerKind)
 CachedReader::~CachedReader() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::~CachedReader()");
 
-  if (!mCompletionFences.empty()) {
-    std::vector<VkFence> fences;
-    for (const auto& fence: mCompletionFences) {
-      fences.push_back(fence.get());
-    }
-    check_vkresult(mVK->WaitForFences(
-      mDevice, fences.size(), fences.data(), true, ~(0ui64)));
-  }
+  this->InitializeCache(0);
 
   mVK->FreeCommandBuffers(
     mDevice,
@@ -364,47 +357,59 @@ void CachedReader::InitializeCache(
   uint32_t queueIndex,
   const VkAllocationCallbacks* allocator,
   uint8_t swapchainLength) {
-  OPENKNEEBOARD_TraceLoggingScope(
-    "SHM::Vulkan::CachedReader::InitializeCache()",
-    TraceLoggingValue(swapchainLength, "swapchainLength"));
-
   mVK = dispatch;
 
   mDevice = device;
   mPhysicalDevice = physicalDevice;
   mAllocator = allocator;
+  mQueueFamilyIndex = queueFamilyIndex;
+
+  mVK->GetDeviceQueue(mDevice, queueFamilyIndex, queueIndex, &mQueue);
+
+  this->InitializeCache(swapchainLength);
+}
+
+void CachedReader::InitializeCache(uint8_t swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::Vulkan::CachedReader::InitializeCache()",
+    TraceLoggingValue(swapchainLength, "swapchainLength"));
 
   if (!mCompletionFences.empty()) {
     std::vector<VkFence> fences;
     for (const auto& fence: mCompletionFences) {
       fences.push_back(fence.get());
     }
-    mVK->WaitForFences(device, fences.size(), fences.data(), true, ~(0ui64));
+    mVK->WaitForFences(mDevice, fences.size(), fences.data(), true, ~(0ui64));
   }
 
-  mQueueFamilyIndex = queueFamilyIndex;
-  dispatch->GetDeviceQueue(device, queueFamilyIndex, queueIndex, &mQueue);
+  if (swapchainLength == 0) {
+    mIPCSemaphores.clear();
+    mIPCImages.clear();
+    SHM::CachedReader::InitializeCache(0);
+    return;
+  }
 
-  {
+  if (!mCommandPool) {
     VkCommandPoolCreateInfo createInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
       .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
         | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-      .queueFamilyIndex = queueFamilyIndex,
+      .queueFamilyIndex = mQueueFamilyIndex,
     };
     mCommandPool
       = mVK->make_unique<VkCommandPool>(mDevice, &createInfo, mAllocator);
   }
 
-  mCommandBuffers = {swapchainLength, nullptr};
-  {
+  if (swapchainLength > mCommandBuffers.size()) {
+    const auto oldLength = mCommandBuffers.size();
     VkCommandBufferAllocateInfo allocInfo {
       .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
       .commandPool = mCommandPool.get(),
-      .commandBufferCount = swapchainLength,
+      .commandBufferCount = static_cast<uint32_t>(swapchainLength - oldLength),
     };
-    check_vkresult(
-      mVK->AllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()));
+    mCommandBuffers.resize(swapchainLength);
+    check_vkresult(mVK->AllocateCommandBuffers(
+      mDevice, &allocInfo, &mCommandBuffers.at(oldLength)));
   }
 
   {
