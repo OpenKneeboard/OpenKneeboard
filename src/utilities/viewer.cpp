@@ -667,18 +667,22 @@ class TestViewerWindow final {
         fill = mColorKeyFill;
         break;
     }
+    DrawRectangle({{0, 0}, this->GetClientSize()}, fill);
+  }
 
-    const auto size = this->GetClientSize();
-    const auto width = size.GetWidth<float>();
-    const auto height = size.GetHeight<float>();
+  void DrawRectangle(const PixelRect& rect, const ShaderFillInfo& fill) {
+    const auto left = rect.Left<float>();
+    const auto top = rect.Top<float>();
+    const auto right = rect.Right<float>();
+    const auto bottom = rect.Bottom<float>();
 
     const Vertex vertices[] {
-      {{0, 0, 0, 1}, fill},
-      {{0, height, 0, 1}, fill},
-      {{width, 0, 0, 1}, fill},
-      {{width, 0, 0, 1}, fill},
-      {{0, height, 0, 1}, fill},
-      {{width, height, 0, 1}, fill},
+      {{left, top, 0, 1}, fill},
+      {{left, bottom, 0, 1}, fill},
+      {{right, top, 0, 1}, fill},
+      {{right, top, 0, 1}, fill},
+      {{left, bottom, 0, 1}, fill},
+      {{right, bottom, 0, 1}, fill},
     };
 
     auto ctx = mD3D11ImmediateContext.get();
@@ -933,8 +937,8 @@ class TestViewerWindow final {
       }
     }
 
-    // We pass 1 as the swapchain length as we use a buffer; we need to do this
-    // as swapchain textures can't be directly shared
+    // We pass 1 as the swapchain length as we use a buffer; we need to do
+    // this as swapchain textures can't be directly shared
     mRenderer->Initialize(1);
   }
 };

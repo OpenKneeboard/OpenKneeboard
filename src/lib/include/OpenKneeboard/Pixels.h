@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <compare>
 #include <cstdint>
@@ -109,19 +110,35 @@ struct PixelRect {
   PixelSize mSize {};
   Origin mOrigin {Origin::TopLeft};
 
+  template <class T = uint32_t>
+  constexpr auto Left() const {
+    return mOffset.GetX<T>();
+  }
+
+  template <class T = uint32_t>
+  constexpr auto Top() const {
+    return mOffset.GetY<T>();
+  }
+
+  template <class T = uint32_t>
+  constexpr auto Right() const {
+    return Left<T>() + mSize.mWidth;
+  }
+
+  template <class T = uint32_t>
+  constexpr auto Bottom() const {
+    if (mOrigin == Origin::TopLeft) {
+      return Top<T>() + mSize.mHeight;
+    }
+    return Top<T>() - mSize.mHeight;
+  }
+
   constexpr PixelPoint TopLeft() const {
     return mOffset;
   }
 
   constexpr PixelPoint BottomRight() const {
-    switch (mOrigin) {
-      case Origin::TopLeft:
-        return {mOffset.mX + mSize.mWidth, mOffset.mY + mSize.mHeight};
-      case Origin::BottomLeft:
-        return {mOffset.mX + mSize.mWidth, mOffset.mY - mSize.mHeight};
-      default:
-        OPENKNEEBOARD_UNREACHABLE;
-    }
+    return {Bottom(), Right()};
   }
 
   constexpr PixelRect WithOrigin(Origin origin, const PixelSize& container)
