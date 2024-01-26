@@ -278,8 +278,8 @@ void SpriteBatch::Draw(
   mSprites.push_back({
     source,
     sourceSize,
-    sourceRect,//.WithOrigin(PixelRect::Origin::BottomLeft, sourceSize),
-    destRect,//.WithOrigin(PixelRect::Origin::BottomLeft, mTargetDimensions),
+    sourceRect,
+    destRect,
     color,
   });
 }
@@ -399,9 +399,8 @@ void SpriteBatch::End(const std::source_location& loc) {
       .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR,
       .imageView = mTarget,
       .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+      .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
       .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-      .clearValue = {.color = {.float32 = {0, 1, 0, 1}}},
     };
 
     VkRenderingInfoKHR renderInfo {
@@ -496,26 +495,15 @@ void SpriteBatch::End(const std::source_location& loc) {
         },
       },
     };
-    // FIXME: unimplemented
-  }
-  // FIXME ok let's do this :D
-  VkClearAttachment clear {
-    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-    .colorAttachment = 0,
-    .clearValue = {
-      .color = {
-        .float32 = { 1, 0, 0, 1 },
+    VkClearRect clearRect {
+      .rect = {
+        { 0, 0,},
+        { mTargetDimensions.mWidth, mTargetDimensions.mHeight },
       },
-    },
-  };
-  VkClearRect clearRect {
-    .rect = {
-      { 0, 0,},
-      { mTargetDimensions.mWidth, mTargetDimensions.mHeight },
-    },
-    .layerCount = 1,
-  };
-  // mVK->CmdClearAttachments(mCommandBuffer, 1, &clear, 1, &clearRect);
+      .layerCount = 1,
+    };
+    mVK->CmdClearAttachments(mCommandBuffer, 1, &clear, 1, &clearRect);
+  }
 
   mVK->CmdDraw(mCommandBuffer, vertices.size(), 1, 0, 0);
 
