@@ -110,12 +110,18 @@ class SpriteBatch {
 
   VkCommandBuffer mCommandBuffer {nullptr};
   VkImageView mTarget {nullptr};
-  PixelSize mTargetSize;
+  PixelSize mTargetDimensions;
   std::optional<Color> mClearColor;
 
   unique_vk<VkShaderModule> mPixelShader;
   unique_vk<VkShaderModule> mVertexShader;
 
+  // MUST MATCH SHADER
+  struct BatchData {
+    std::array<float, 2> mTargetDimensions;
+  };
+
+  // MUST MATCH SHADER
   struct Vertex {
     class Position : public std::array<float, 4> {
      public:

@@ -78,9 +78,9 @@ static VkBool32 VKDebugCallback(
     severity,
     pCallbackData->pMessage);
   if (
-    (messageSeverity
-     & (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))) {
-    // OPENKNEEBOARD_BREAK;
+    (GetModuleHandleA("renderdoc.dll") == NULL)
+    && (messageSeverity & (VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))) {
+    OPENKNEEBOARD_BREAK;
   }
 
   return VK_FALSE;

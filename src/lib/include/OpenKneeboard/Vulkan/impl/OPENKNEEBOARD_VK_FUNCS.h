@@ -36,6 +36,7 @@
   IT(CmdDraw) \
   IT(CmdEndRenderingKHR) \
   IT(CmdPipelineBarrier) \
+  IT(CmdPushConstants) \
   IT(CmdSetScissor) \
   IT(CmdSetViewport) \
   IT(CreateBuffer) \
