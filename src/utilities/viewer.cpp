@@ -76,7 +76,6 @@ class TestViewerWindow final {
   winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
   winrt::com_ptr<ID3D11Device5> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
-  bool mStreamerMode = false;
   bool mShowInformationOverlay = false;
   bool mFirstDetached = false;
   std::unique_ptr<Viewer::Renderer> mRenderer;
@@ -97,10 +96,49 @@ class TestViewerWindow final {
   bool mSetInputFocus = false;
   size_t mRenderCacheKey = 0;
 
-  D2D1_COLOR_F mWindowColor;
-  D2D1_COLOR_F mStreamerModeWindowColor;
-  D2D1_COLOR_F mWindowFrameColor;
-  D2D1_COLOR_F mStreamerModeWindowFrameColor;
+  struct ShaderDrawInfo {
+    std::array<float, 2> mDimensions;
+  };
+
+  struct ShaderFillInfo {
+    D3DCOLORVALUE mD3DCOLORVALUE0;
+    D3DCOLORVALUE mD3DCOLORVALUE1;
+
+    constexpr ShaderFillInfo() = default;
+
+    constexpr ShaderFillInfo(const D3DCOLORVALUE& a)
+      : mD3DCOLORVALUE0(a), mD3DCOLORVALUE1(a) {
+    }
+    constexpr ShaderFillInfo(const D3DCOLORVALUE& a, const D3DCOLORVALUE& b)
+      : mD3DCOLORVALUE0(a), mD3DCOLORVALUE1(b) {
+    }
+  };
+
+  struct Vertex {
+    std::array<float, 4> mPosition;
+    ShaderFillInfo mFill;
+  };
+
+  ShaderFillInfo mDefaultFill;
+  inline static const ShaderFillInfo mColorKeyFill {{1, 0, 1, 1}};
+  inline static const ShaderFillInfo mCheckerboardFill {
+    {1, 1, 1, 1},
+    {0.8, 0.8, 0.8, 1},
+  };
+
+  enum class FillMode {
+    Default,
+    Checkerboard,
+    ColorKey,
+  };
+  static constexpr auto LastFillMode = FillMode::ColorKey;
+  static constexpr auto FillModeCount
+    = static_cast<std::underlying_type_t<FillMode>>(LastFillMode) + 1;
+
+  FillMode mFillMode {FillMode::Default};
+
+  bool mStreamerMode {false};
+  FillMode mStreamerModePreviousFillMode;
 
   // FIXME
 #if 0
@@ -114,6 +152,8 @@ class TestViewerWindow final {
 
   PixelSize mSwapChainSize;
   winrt::com_ptr<IDXGISwapChain1> mSwapChain;
+  winrt::com_ptr<ID3D11Texture2D> mWindowTexture;
+  winrt::com_ptr<ID3D11RenderTargetView> mWindowRenderTargetView;
 
   HWND mHwnd {};
 
@@ -209,10 +249,7 @@ class TestViewerWindow final {
 
     this->CreateRenderer();
 
-    mWindowColor = GetSystemColor(COLOR_WINDOW);
-    mWindowFrameColor = GetSystemColor(COLOR_WINDOWFRAME);
-    mStreamerModeWindowColor = D2D1::ColorF(1.0f, 0.0f, 1.0f, 1.0f);
-    mStreamerModeWindowFrameColor = mStreamerModeWindowColor;
+    mDefaultFill = {GetSystemColor(COLOR_WINDOW)};
 
     // FIXME
 #if 0
@@ -332,6 +369,13 @@ class TestViewerWindow final {
       mSwapChain.put());
     mSwapChainSize = clientSize;
     mRenderer->Initialize(swapChainDesc.BufferCount);
+
+    mWindowTexture = nullptr;
+    mWindowRenderTargetView = nullptr;
+    winrt::check_hresult(
+      mSwapChain->GetBuffer(0, IID_PPV_ARGS(mWindowTexture.put())));
+    winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
+      mWindowTexture.get(), nullptr, mWindowRenderTargetView.put()));
   }
 
   void OnFocus() {
@@ -399,17 +443,16 @@ class TestViewerWindow final {
 
   void OnKeyUp(uint64_t vkk) {
     switch (vkk) {
+      // Capture
       case 'C':
         this->CaptureScreenshot();
         return;
-      case 'S':
-        mStreamerMode = !mStreamerMode;
-        this->PaintNow();
-        return;
+      // Information
       case 'I':
         mShowInformationOverlay = !mShowInformationOverlay;
         this->PaintNow();
         return;
+      // Borderless
       case 'B': {
         auto style = GetWindowLongPtrW(mHwnd, GWL_STYLE);
         if ((style & WS_OVERLAPPEDWINDOW) == WS_OVERLAPPEDWINDOW) {
@@ -422,6 +465,24 @@ class TestViewerWindow final {
         SetWindowLongPtrW(mHwnd, GWL_STYLE, style);
         return;
       }
+      // Fill
+      case 'F':
+        mFillMode = static_cast<FillMode>(
+          (static_cast<std::underlying_type_t<FillMode>>(mFillMode) + 1)
+          % FillModeCount);
+        this->PaintNow();
+        return;
+      // Streamer
+      case 'S':
+        mStreamerMode = !mStreamerMode;
+        if (mStreamerMode) {
+          mStreamerModePreviousFillMode = mFillMode;
+          mFillMode = FillMode::ColorKey;
+        } else if (mFillMode == FillMode::ColorKey) {
+          mFillMode = mStreamerModePreviousFillMode;
+        }
+        this->PaintNow();
+        return;
     }
 
     if (vkk >= '1' && vkk <= '9') {
@@ -444,6 +505,7 @@ class TestViewerWindow final {
     }
     this->InitSwapChain();
 
+    this->PaintBackground();
     this->PaintContent();
 
     if (mShowInformationOverlay) {
@@ -451,6 +513,24 @@ class TestViewerWindow final {
     }
 
     mSwapChain->Present(0, 0);
+  }
+
+  void PaintBackground() {
+    ShaderFillInfo fill;
+    switch (mFillMode) {
+      case FillMode::Default:
+        fill = mDefaultFill;
+        break;
+      case FillMode::Checkerboard:
+        fill = mCheckerboardFill;
+        break;
+      case FillMode::ColorKey:
+        fill = mColorKeyFill;
+        break;
+    }
+    // FIXME: draw it so we can checkboard
+    mD3D11ImmediateContext->ClearRenderTargetView(
+      mWindowRenderTargetView.get(), reinterpret_cast<const float*>(&fill));
   }
 
   void PaintInformationOverlay() {
@@ -544,8 +624,6 @@ class TestViewerWindow final {
 
     winrt::com_ptr<ID2D1Bitmap1> bitmap;
 #endif
-    winrt::com_ptr<IDXGISurface1> surface;
-    mSwapChain->GetBuffer(0, IID_PPV_ARGS(surface.put()));
 // FIXME
 #if 0
     winrt::check_hresult(
@@ -607,16 +685,7 @@ class TestViewerWindow final {
       {renderLeft, renderTop}, {renderWidth, renderHeight}};
     const auto sourceRect = layer.mLocationOnTexture;
 
-    auto surfaceTex = surface.as<ID3D11Texture2D>();
-
     auto ctx = mD3D11ImmediateContext.get();
-    // FIXME
-    {
-      winrt::com_ptr<ID3D11RenderTargetView> rtv;
-      mD3D11Device->CreateRenderTargetView(
-        surfaceTex.get(), nullptr, rtv.put());
-      ctx->ClearRenderTargetView(rtv.get(), DirectX::Colors::White);
-    }
 
     const D3D11_BOX box {
       0,
@@ -631,7 +700,7 @@ class TestViewerWindow final {
     // preserves the existing content; clearing is fine for VR, but for non-VR
     // we need to preserve the original background.
     ctx->CopySubresourceRegion(
-      mRendererTexture.get(), 0, 0, 0, 0, surfaceTex.get(), 0, &box);
+      mRendererTexture.get(), 0, 0, 0, 0, mWindowTexture.get(), 0, &box);
 
     winrt::check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
 
@@ -647,7 +716,7 @@ class TestViewerWindow final {
     winrt::check_hresult(ctx->Wait(mFence.get(), mFenceValue));
 
     ctx->CopySubresourceRegion(
-      surfaceTex.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, &box);
+      mWindowTexture.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, &box);
 
     mRenderCacheKey = snapshot.GetRenderCacheKey();
   }
