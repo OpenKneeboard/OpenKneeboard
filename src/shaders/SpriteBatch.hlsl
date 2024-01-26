@@ -3,10 +3,10 @@
 //
 // http://go.microsoft.com/fwlink/?LinkId=248929
 
-// Limit of 16 textures should match C++
+// Limit MUST match C++
+#define MaxSpritesPerBatch 16
 [[vk::binding(0)]] sampler TextureSampler : register(s0);
-//[[vk::binding(1)]] Texture2D<float4> Textures[] : register(t0);
-[[vk::binding(1)]] Texture2D<float4> Textures : register(t0);
+[[vk::binding(1)]] Texture2D<float4> Textures[MaxSpritesPerBatch] : register(t0);
 
 struct BatchData {
     float2 destDimensions;
@@ -35,5 +35,5 @@ float4 SpritePixelShader(
     float2 texCoord   : TEXCOORD0,
     uint textureIndex : TEXTURE_INDEX) : SV_Target0
 {
-    return Textures.Sample(TextureSampler, texCoord) * color;
+    return Textures[NonUniformResourceIndex(textureIndex)].Sample(TextureSampler, texCoord) * color;
 }

@@ -371,6 +371,13 @@ void SpriteBatch::End(const std::source_location& loc) {
     vertices.push_back(makeVertex(tcbr, br));
   }
 
+  if (sources.size() > MaxSpritesPerBatch) {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "OpenKneeboard's Vulkan Spritebatch only supports up to {} source "
+      "imeages",
+      MaxSpritesPerBatch);
+  }
+
   const size_t verticesByteSize = sizeof(vertices[0]) * vertices.size();
   memcpy(mVertexBuffer.mMapping.get(), vertices.data(), verticesByteSize);
 
@@ -580,17 +587,14 @@ void SpriteBatch::CreateDescriptorSet() {
     VkDescriptorSetLayoutBinding {
       .binding = 1,
       .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-      .descriptorCount = 1 /* MaxSpritesPerBatch */,
+      .descriptorCount = MaxSpritesPerBatch,
       .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
     },
   };
 
   VkDescriptorBindingFlags bindingFlags[] {
     0,
-    VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT
-    /*| VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT
-    | VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT*/
-    ,
+    VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT_EXT,
   };
 
   VkDescriptorSetLayoutBindingFlagsCreateInfoEXT bindingFlagsCreateInfo {
@@ -602,7 +606,7 @@ void SpriteBatch::CreateDescriptorSet() {
 
   VkDescriptorSetLayoutCreateInfo layoutCreateInfo {
     .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-    .pNext = nullptr,
+    .pNext = &bindingFlagsCreateInfo,
     .flags = 0,
     .bindingCount = std::size(layoutBindings),
     .pBindings = layoutBindings,
@@ -618,7 +622,7 @@ void SpriteBatch::CreateDescriptorSet() {
     },
     {
       .type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-      .descriptorCount = 1 /*MaxSpritesPerBatch*/,
+      .descriptorCount = MaxSpritesPerBatch,
     },
   };
   VkDescriptorPoolCreateInfo poolCreateInfo {
@@ -653,14 +657,10 @@ concept has_descriptor_indexing_flag
   = requires(T t) { t.descriptorIndexing = true; };
 
 static void EnableDescriptorIndexing(auto* it) {
-  return;
   if constexpr (has_descriptor_indexing_flag<decltype(*it)>) {
     it->descriptorIndexing = true;
   }
   it->descriptorBindingPartiallyBound = true;
-  it->descriptorBindingVariableDescriptorCount = true;
-  it->descriptorBindingSampledImageUpdateAfterBind = true;
-  it->descriptorBindingUpdateUnusedWhilePending = true;
   it->shaderSampledImageArrayNonUniformIndexing = true;
   it->runtimeDescriptorArray = true;
 }
@@ -696,7 +696,7 @@ SpriteBatch::DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
     }
   }
 
-  if (false && !enabledDescriptorIndexing) {
+  if (!enabledDescriptorIndexing) {
     auto it = &mDescriptorIndexingFeatures;
     EnableDescriptorIndexing(it);
     it->pNext = const_cast<void*>(pNext);

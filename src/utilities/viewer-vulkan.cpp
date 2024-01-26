@@ -692,16 +692,7 @@ uint64_t VulkanRenderer::Render(
   check_vkresult(mVK->ResetFences(mDevice.get(), std::size(fences), fences));
   check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fences[0]));
 
-  // FIXME
-  check_vkresult(mVK->WaitForFences(mDevice.get(), 1, fences, 1, ~(0ui64)));
   if (renderDoc && renderDoc->IsFrameCapturing()) {
-    this->SaveTextureToFile(
-      destTextureDimensions,
-      mDestImage.get(),
-      VK_IMAGE_LAYOUT_GENERAL,
-      mSemaphore.get(),
-      semaphoreValueIn,
-      "C:\\Users\\fred\\test.dds");
     renderDoc->EndFrameCapture(renderDocDevice, NULL);
   }
 
