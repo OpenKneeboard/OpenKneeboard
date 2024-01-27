@@ -69,8 +69,6 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     const float* const opacities) override;
 
  private:
-  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
-
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;
 
   const VkAllocationCallbacks* mAllocator {nullptr};
@@ -103,6 +101,8 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   };
 
   std::optional<SwapchainResources> mSwapchainResources;
+
+  SHM::Vulkan::CachedReader mSHM {SHM::ConsumerKind::OpenXR};
 
   void WaitForAllFences();
 };
