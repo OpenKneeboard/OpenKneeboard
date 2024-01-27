@@ -36,14 +36,20 @@ struct SavedState::Impl {
 
 thread_local bool SavedState::Impl::tHaveSavedState {false};
 
-SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
+SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx)
+  : SavedState(ctx.get()) {
+}
+
+SavedState::SavedState(ID3D11DeviceContext* ctx) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::SavedState()");
   if (Impl::tHaveSavedState) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL("Nested D3D11 SavedStates detected");
   }
 
   Impl::tHaveSavedState = true;
-  mImpl = new Impl {.mContext = ctx.as<ID3D11DeviceContext1>()};
+  mImpl = new Impl {};
+  winrt::check_hresult(
+    ctx->QueryInterface(IID_PPV_ARGS(mImpl->mContext.put())));
 
   winrt::com_ptr<ID3D11Device> device;
   ctx->GetDevice(device.put());

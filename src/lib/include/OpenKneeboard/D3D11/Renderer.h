@@ -40,6 +40,11 @@ struct SwapchainResources {
   std::vector<SwapchainBufferResources> mBufferResources;
 };
 
+enum class RenderMode {
+  ClearAndRender,
+  Overlay,
+};
+
 class Renderer {
  public:
   Renderer() = delete;
@@ -51,7 +56,8 @@ class Renderer {
     const SHM::Snapshot& snapshot,
     uint8_t layerCount,
     const PixelRect* const destRects,
-    const float* const opacities);
+    const float* const opacities,
+    RenderMode);
 
  private:
   std::unique_ptr<SpriteBatch> mSpriteBatch;

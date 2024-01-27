@@ -49,7 +49,8 @@ void Renderer::RenderLayers(
   const SHM::Snapshot& snapshot,
   uint8_t layerCount,
   const PixelRect* const destRects,
-  const float* const opacities) {
+  const float* const opacities,
+  RenderMode renderMode) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::Renderer::RenderLayers()");
 
   auto source
@@ -60,7 +61,10 @@ void Renderer::RenderLayers(
   auto dest = br.mRenderTargetView.get();
 
   mSpriteBatch->Begin(dest, sr.mDimensions);
-  mSpriteBatch->Clear();
+
+  if (renderMode == RenderMode::ClearAndRender) {
+    mSpriteBatch->Clear();
+  }
 
   if (layerCount > snapshot.GetLayerCount()) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL(

@@ -124,7 +124,8 @@ void OculusD3D11Kneeboard::RenderLayers(
     snapshot,
     snapshot.GetLayerCount(),
     destRects,
-    opacities);
+    opacities,
+    D3D11::RenderMode::ClearAndRender);
 }
 
 HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(

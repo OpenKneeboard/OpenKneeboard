@@ -211,7 +211,8 @@ void OpenXRD3D11Kneeboard::RenderLayers(
     snapshot,
     snapshot.GetLayerCount(),
     destRects,
-    opacities);
+    opacities,
+    D3D11::RenderMode::ClearAndRender);
 }
 
 SHM::CachedReader* OpenXRD3D11Kneeboard::GetSHM() {

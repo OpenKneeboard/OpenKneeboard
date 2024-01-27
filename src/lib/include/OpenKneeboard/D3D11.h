@@ -37,6 +37,7 @@ namespace OpenKneeboard::D3D11 {
 class SavedState final {
  public:
   SavedState(const winrt::com_ptr<ID3D11DeviceContext>&);
+  SavedState(ID3D11DeviceContext*);
   ~SavedState();
 
   SavedState() = delete;
