@@ -138,6 +138,7 @@ target_link_libraries(
   _libheaders
   PRIVATE
   OpenKneeboard-dprint
+  OpenKneeboard-RenderDoc
   System::Dxguid
 )
 

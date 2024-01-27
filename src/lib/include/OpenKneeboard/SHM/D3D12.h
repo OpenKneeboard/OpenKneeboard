@@ -78,6 +78,9 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     ID3D12CommandQueue* queue,
     uint8_t swapchainLength);
 
+  virtual Snapshot MaybeGet(
+    const std::source_location& loc = std::source_location::current()) override;
+
  protected:
   virtual void Copy(
     HANDLE sourceTexture,

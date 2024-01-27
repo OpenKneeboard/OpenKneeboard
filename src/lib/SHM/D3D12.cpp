@@ -18,6 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/D3D12.h>
+#include <OpenKneeboard/RenderDoc.h>
 #include <OpenKneeboard/SHM/D3D12.h>
 
 #include <OpenKneeboard/scope_guard.h>
@@ -157,6 +158,12 @@ CachedReader::CachedReader(ConsumerKind consumerKind)
 
 CachedReader::~CachedReader() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::~CachedReader()");
+}
+
+Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
+  RenderDoc::NestedFrameCapture renderDocFrame(
+    mDevice.get(), "SHM::D3D12::MaybeGet");
+  return SHM::CachedReader::MaybeGet(loc);
 }
 
 void CachedReader::InitializeCache(
