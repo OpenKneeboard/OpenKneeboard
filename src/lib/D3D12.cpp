@@ -22,8 +22,8 @@
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 
-#include <DIrectXtk12/RenderTargetState.h>
-#include <DIrectXtk12/ResourceUploadBatch.h>
+#include <directxtk12/RenderTargetState.h>
+#include <directxtk12/ResourceUploadBatch.h>
 
 namespace OpenKneeboard::D3D12 {
 
@@ -133,7 +133,10 @@ void SpriteBatch::End() {
       "target not set; double-End() or Begin() not called?");
   }
 
-  mDXTKSpriteBatch->End();
+  {
+    OPENKNEEBOARD_TraceLoggingScope("Impl()");
+    mDXTKSpriteBatch->End();
+  }
 
   mCommandList = nullptr;
   mRenderTargetView = {};

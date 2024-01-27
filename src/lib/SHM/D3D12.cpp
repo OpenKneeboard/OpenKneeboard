@@ -125,6 +125,17 @@ void Texture::CopyFrom(
 
   {
     OPENKNEEBOARD_TraceLoggingScope("PopulateCommandList");
+    D3D12_RESOURCE_BARRIER inBarriers[] {
+      D3D12_RESOURCE_BARRIER {
+        .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+        .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
+          .pResource = this->mTexture.get(),
+          .StateBefore = D3D12_RESOURCE_STATE_COMMON,
+          .StateAfter = D3D12_RESOURCE_STATE_COPY_DEST,
+        },
+      },
+    };
+    list->ResourceBarrier(std::size(inBarriers), inBarriers);
     const D3D12_TEXTURE_COPY_LOCATION src {
       .pResource = sourceTexture,
       .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
@@ -136,6 +147,16 @@ void Texture::CopyFrom(
       .SubresourceIndex = 0,
     };
     list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+    D3D12_RESOURCE_BARRIER outBarriers[] {
+      D3D12_RESOURCE_BARRIER {
+        .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+        .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
+          .pResource = this->mTexture.get(),
+          .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
+          .StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+        },
+      },
+    };
     winrt::check_hresult(list->Close());
   }
 

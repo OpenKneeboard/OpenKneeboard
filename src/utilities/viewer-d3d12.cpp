@@ -126,10 +126,24 @@ uint64_t D3D12Renderer::Render(
       nullptr);
   }
 
-  ID3D12DescriptorHeap* heaps[] {source->GetD3D12ShaderResourceViewHeap()};
-  mCommandList->SetDescriptorHeaps(std::size(heaps), heaps);
+  auto cl = mCommandList.get();
 
-  mSpriteBatch->Begin(mCommandList.get(), dest, destTextureDimensions);
+  ID3D12DescriptorHeap* heaps[] {source->GetD3D12ShaderResourceViewHeap()};
+  cl->SetDescriptorHeaps(std::size(heaps), heaps);
+
+  D3D12_RESOURCE_BARRIER inBarriers[] {
+    D3D12_RESOURCE_BARRIER {
+      .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+      .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
+        .pResource = mDestTexture.get(),
+        .StateBefore = D3D12_RESOURCE_STATE_COMMON,
+        .StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
+      },
+    },
+  };
+  cl->ResourceBarrier(std::size(inBarriers), inBarriers);
+
+  mSpriteBatch->Begin(cl, dest, destTextureDimensions);
   mSpriteBatch->Draw(
     source->GetD3D12ShaderResourceViewGPUHandle(),
     source->GetDimensions(),
@@ -137,11 +151,23 @@ uint64_t D3D12Renderer::Render(
     destRect);
   mSpriteBatch->End();
 
-  winrt::check_hresult(mCommandList->Close());
+  D3D12_RESOURCE_BARRIER outBarriers[] {
+    D3D12_RESOURCE_BARRIER {
+      .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+      .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
+        .pResource = mDestTexture.get(),
+        .StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET,
+        .StateAfter = D3D12_RESOURCE_STATE_COMMON,
+      },
+    },
+  };
+  cl->ResourceBarrier(std::size(outBarriers), outBarriers);
+
+  winrt::check_hresult(cl->Close());
 
   winrt::check_hresult(mCommandQueue->Wait(mFence.get(), fenceValueIn));
 
-  ID3D12CommandList* lists[] {mCommandList.get()};
+  ID3D12CommandList* lists[] {cl};
   mCommandQueue->ExecuteCommandLists(std::size(lists), lists);
 
   const auto fenceValueOut = fenceValueIn + 1;
@@ -149,7 +175,7 @@ uint64_t D3D12Renderer::Render(
 
   {
     OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
-    winrt::check_hresult(mCommandList->Reset(mCommandAllocator.get(), nullptr));
+    winrt::check_hresult(cl->Reset(mCommandAllocator.get(), nullptr));
   }
 
   return fenceValueOut;
