@@ -30,11 +30,19 @@ namespace OpenKneeboard::Vulkan {
 
 // clang-format off
 template <class T>
-concept has_extension_list =
+concept vk_create_info_with_extensions =
   requires (T t) {
+    t.sType;
+    t.pNext;
     t.enabledExtensionCount;
     t.ppEnabledExtensionNames;
   } && std::same_as<
+    VkStructureType,
+    decltype(std::declval<T>().sType)
+  > && std::same_as<
+    const void*,
+    decltype(std::declval<T>().pNext)
+  > && std::same_as<
     uint32_t,
     decltype(std::declval<T>().enabledExtensionCount)
   > && std::same_as<
@@ -43,12 +51,13 @@ concept has_extension_list =
   >;
 // clang-format on
 
-static_assert(has_extension_list<VkInstanceCreateInfo>);
-static_assert(has_extension_list<VkDeviceCreateInfo>);
+static_assert(vk_create_info_with_extensions<VkInstanceCreateInfo>);
+static_assert(vk_create_info_with_extensions<VkDeviceCreateInfo>);
 
-template <has_extension_list T>
+template <vk_create_info_with_extensions T>
 struct ExtendedCreateInfo : public T {
  public:
+  using VkCreateInfo = T;
   ExtendedCreateInfo() = delete;
 
   ExtendedCreateInfo(const T& base, const auto& requiredExtensions) {
@@ -56,10 +65,10 @@ struct ExtendedCreateInfo : public T {
 
     std::unordered_set<std::string_view> extensions;
 
-    mStrings.reserve(base.enabledExtensionCount);
+    mExtensionNameStrings.reserve(base.enabledExtensionCount);
     for (size_t i = 0; i < base.enabledExtensionCount; ++i) {
-      mStrings.push_back(base.ppEnabledExtensionNames[i]);
-      extensions.emplace(mStrings.back());
+      mExtensionNameStrings.push_back(base.ppEnabledExtensionNames[i]);
+      extensions.emplace(mExtensionNameStrings.back());
     }
 
     for (const auto& ext: requiredExtensions) {
@@ -67,22 +76,48 @@ struct ExtendedCreateInfo : public T {
         continue;
       }
 
-      mStrings.push_back(std::string {ext});
-      extensions.emplace(mStrings.back());
+      mExtensionNameStrings.push_back(std::string {ext});
+      extensions.emplace(mExtensionNameStrings.back());
     }
 
-    mPointers.reserve(mStrings.size());
-    for (const auto& string: mStrings) {
-      mPointers.push_back(string.c_str());
+    mExtensionNamePointers.reserve(mExtensionNameStrings.size());
+    for (const auto& string: mExtensionNameStrings) {
+      mExtensionNamePointers.push_back(string.c_str());
     }
 
-    this->enabledExtensionCount = mPointers.size();
-    this->ppEnabledExtensionNames = mPointers.data();
+    this->enabledExtensionCount = mExtensionNamePointers.size();
+    this->ppEnabledExtensionNames = mExtensionNamePointers.data();
   }
 
  private:
-  std::vector<std::string> mStrings;
-  std::vector<const char*> mPointers;
+  // We need to keep alive both:
+  // - an array of C strings to pass to VK
+  // - the strings that that array points to
+  std::vector<std::string> mExtensionNameStrings;
+  std::vector<const char*> mExtensionNamePointers;
 };
 
-}
+template <class... TArgs>
+struct CombinedCreateInfo;
+
+template <
+  vk_create_info_with_extensions TFirst,
+  std::derived_from<typename TFirst::VkCreateInfo> TSecond,
+  std::derived_from<typename TFirst::VkCreateInfo>... TRest>
+struct CombinedCreateInfo<TFirst, TSecond, TRest...>
+  : public TFirst::VkCreateInfo {
+ public:
+  using VkCreateInfo = typename TFirst::VkCreateInfo;
+  CombinedCreateInfo(const VkCreateInfo& base) : mFirst(base), mRest(mFirst) {
+    memcpy(this, &mRest, sizeof(VkCreateInfo));
+  }
+
+ private:
+  const TFirst mFirst;
+  const CombinedCreateInfo<TSecond, TRest...> mRest;
+};
+
+template <vk_create_info_with_extensions TFirst>
+struct CombinedCreateInfo<TFirst> : public TFirst {};
+
+}// namespace OpenKneeboard::Vulkan

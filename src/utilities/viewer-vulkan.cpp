@@ -127,18 +127,18 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   constexpr nullptr_t next = nullptr;
 #endif
 
-  const VkInstanceCreateInfo baseInstanceCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-    .pNext = next,
-    .pApplicationInfo = &applicationInfo,
-    .enabledLayerCount = std::size(RequiredLayers),
-    .ppEnabledLayerNames = RequiredLayers,
-    .enabledExtensionCount = std::size(RequiredInstanceExtensions),
-    .ppEnabledExtensionNames = RequiredInstanceExtensions,
-  };
-  const auto instanceCreateInfo = SHM::Vulkan::InstanceCreateInfo {
-    Vulkan::SpriteBatch::InstanceCreateInfo {baseInstanceCreateInfo},
-  };
+  const Vulkan::CombinedCreateInfo<
+    SHM::Vulkan::InstanceCreateInfo,
+    Vulkan::SpriteBatch::InstanceCreateInfo>
+    instanceCreateInfo(VkInstanceCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+      .pNext = next,
+      .pApplicationInfo = &applicationInfo,
+      .enabledLayerCount = std::size(RequiredLayers),
+      .ppEnabledLayerNames = RequiredLayers,
+      .enabledExtensionCount = std::size(RequiredInstanceExtensions),
+      .ppEnabledExtensionNames = RequiredInstanceExtensions,
+    });
 
   VkInstance instance;
   check_vkresult(vkCreateInstance(&instanceCreateInfo, nullptr, &instance));
@@ -225,14 +225,14 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
     .pQueuePriorities = queuePriorities,
   };
 
-  VkDeviceCreateInfo baseDeviceCreateInfo {
-    .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-    .queueCreateInfoCount = 1,
-    .pQueueCreateInfos = &queueCreateInfo,
-  };
-
-  auto deviceCreateInfo = SHM::Vulkan::DeviceCreateInfo {
-    Vulkan::SpriteBatch::DeviceCreateInfo {baseDeviceCreateInfo}};
+  const Vulkan::CombinedCreateInfo<
+    SHM::Vulkan::DeviceCreateInfo,
+    Vulkan::SpriteBatch::DeviceCreateInfo>
+    deviceCreateInfo(VkDeviceCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+      .queueCreateInfoCount = 1,
+      .pQueueCreateInfos = &queueCreateInfo,
+    });
 
   mDevice
     = mVK->make_unique_device(mVKPhysicalDevice, &deviceCreateInfo, nullptr);
