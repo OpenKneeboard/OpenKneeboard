@@ -113,7 +113,12 @@ target_link_libraries(
   _libheaders
 )
 
-ok_add_library(OpenKneeboard-D3D11 STATIC D3D11.cpp)
+ok_add_library(
+  OpenKneeboard-D3D11
+  STATIC
+  D3D11.cpp
+  D3D11/Renderer.cpp
+)
 target_link_libraries(
   OpenKneeboard-D3D11
   PUBLIC
