@@ -135,7 +135,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     = flatConfig.Layout(sr.mDimensions, layerConfig.mLocationOnTexture.mSize);
   const auto sourceRect = layerConfig.mLocationOnTexture;
 
-  const float opacity = 1;
+  const float opacity = flatConfig.mOpacity;
 
   {
     D3D11::SavedState savedState(mResources->mImmediateContext);
