@@ -27,6 +27,7 @@
 
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Spriting.h>
+#include <OpenKneeboard/StateMachine.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -48,6 +49,21 @@
 #include <openxr/openxr_platform.h>
 
 namespace OpenKneeboard {
+
+namespace {
+enum class VulkanXRState {
+  NoVKEnable2,
+  VKEnable2Instance,
+  VKEnable2InstanceAndDevice,
+};
+}
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
+  VulkanXRState::NoVKEnable2,
+  VulkanXRState::VKEnable2Instance);
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
+  VulkanXRState::VKEnable2Instance,
+  VulkanXRState::VKEnable2InstanceAndDevice);
+static StateMachine gVulkanXRState(VulkanXRState::NoVKEnable2);
 
 static constexpr XrPosef XR_POSEF_IDENTITY {
   .orientation = {0.0f, 0.0f, 0.0f, 1.0f},
@@ -365,6 +381,31 @@ XrResult xrCreateSession(
   auto vk = findInXrNextChain<XrGraphicsBindingVulkan2KHR>(
     XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, createInfo->next);
   if (vk) {
+    switch (gVulkanXRState.Get()) {
+      case VulkanXRState::NoVKEnable2:
+        dprint(
+          "WARNING: Got an XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, but "
+          "XR_KHR_vulkan_enable2 instance/device creation functions were not "
+          "used; unsupported");
+        return ret;
+      case VulkanXRState::VKEnable2Instance:
+        dprint(
+          "WARNING: XR_KHR_vulkan_enable2 was used for instance creation, but "
+          "not "
+          "device; unsupported");
+        return ret;
+      case VulkanXRState::VKEnable2InstanceAndDevice:
+        dprint(
+          "GOOD: XR_KHR_vulkan_enable2 used for instance and device creation");
+        break;
+      default:
+        dprintf(
+          "ERROR: Unrecognized VulkanXRState: {}",
+          static_cast<std::underlying_type_t<VulkanXRState>>(
+            gVulkanXRState.Get()));
+        OPENKNEEBOARD_BREAK;
+        return ret;
+    }
     if (!gPFN_vkGetInstanceProcAddr) {
       dprint(
         "Found Vulkan, don't have an explicit vkGetInstanceProcAddr; "
@@ -424,6 +465,9 @@ XrResult xrCreateVulkanInstanceKHR(
     gVKAllocator = createInfo.vulkanAllocator;
   }
 
+  gVulkanXRState
+    .Transition<VulkanXRState::NoVKEnable2, VulkanXRState::VKEnable2Instance>();
+
   return ret;
 }
 
@@ -452,6 +496,10 @@ XrResult xrCreateVulkanDeviceKHR(
   if (createInfo.vulkanAllocator) {
     gVKAllocator = createInfo.vulkanAllocator;
   }
+
+  gVulkanXRState.Transition<
+    VulkanXRState::VKEnable2Instance,
+    VulkanXRState::VKEnable2InstanceAndDevice>();
 
   return ret;
 }
