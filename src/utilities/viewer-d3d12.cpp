@@ -34,8 +34,6 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
   winrt::com_ptr<ID3D12Debug5> debug;
   winrt::check_hresult(D3D12GetDebugInterface(IID_PPV_ARGS(debug.put())));
   debug->EnableDebugLayer();
-  debug->SetEnableAutoName(true);
-  debug->SetEnableGPUBasedValidation(true);
 #endif
 
   mDevice.capture(D3D12CreateDevice, dxgiAdapter, D3D_FEATURE_LEVEL_12_1);
