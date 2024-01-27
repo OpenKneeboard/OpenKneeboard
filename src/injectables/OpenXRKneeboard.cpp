@@ -27,6 +27,7 @@
 
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/Spriting.h>
+#include <OpenKneeboard/StateMachine.h>
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
@@ -34,13 +35,12 @@
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
 
+#include <vulkan/vulkan.h>
+
 #include <memory>
 #include <string>
 
 #include <loader_interfaces.h>
-
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
 
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12
@@ -50,18 +50,32 @@
 
 namespace OpenKneeboard {
 
+namespace {
+enum class VulkanXRState {
+  NoVKEnable2,
+  VKEnable2Instance,
+  VKEnable2InstanceAndDevice,
+};
+}
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
+  VulkanXRState::NoVKEnable2,
+  VulkanXRState::VKEnable2Instance);
+OPENKNEEBOARD_DECLARE_STATE_TRANSITION(
+  VulkanXRState::VKEnable2Instance,
+  VulkanXRState::VKEnable2InstanceAndDevice);
+static StateMachine gVulkanXRState(VulkanXRState::NoVKEnable2);
+
 static constexpr XrPosef XR_POSEF_IDENTITY {
   .orientation = {0.0f, 0.0f, 0.0f, 1.0f},
   .position = {0.0f, 0.0f, 0.0f},
 };
 
-static inline XrResult check_xrresult(XrResult code) {
+static inline XrResult check_xrresult(
+  XrResult code,
+  const std::source_location& loc = std::source_location::current()) {
   if (XR_FAILED(code)) {
-    const auto message
-      = std::format("OpenXR call failed: {}", static_cast<int>(code));
-    dprint(message);
-    OPENKNEEBOARD_BREAK;
-    throw std::runtime_error(message);
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "OpenXR call failed: {}", static_cast<int>(code));
   }
   return code;
 }
@@ -89,6 +103,7 @@ OpenXRKneeboard::OpenXRKneeboard(
   const std::shared_ptr<OpenXRNext>& next)
   : mOpenXR(next) {
   dprintf("{}", __FUNCTION__);
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRKneeboard::OpenXRKneeboard()");
 
   mRenderCacheKeys.fill(~(0ui64));
 
@@ -101,23 +116,17 @@ OpenXRKneeboard::OpenXRKneeboard(
 
   auto oxr = next.get();
 
-  XrResult nextResult
-    = oxr->xrCreateReferenceSpace(session, &referenceSpace, &mLocalSpace);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to create LOCAL reference space: {}", nextResult);
-    return;
-  }
+  check_xrresult(
+    oxr->xrCreateReferenceSpace(session, &referenceSpace, &mLocalSpace));
 
   referenceSpace.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_VIEW;
-  nextResult
-    = oxr->xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace);
-  if (nextResult != XR_SUCCESS) {
-    dprintf("Failed to create VIEW reference space: {}", nextResult);
-    return;
-  }
+  check_xrresult(
+    oxr->xrCreateReferenceSpace(session, &referenceSpace, &mViewSpace));
 }
 
 OpenXRKneeboard::~OpenXRKneeboard() {
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRKneeboard::OpenXRKneeboard()");
+
   if (mLocalSpace) {
     mOpenXR->xrDestroySpace(mLocalSpace);
   }
@@ -137,26 +146,32 @@ OpenXRNext* OpenXRKneeboard::GetOpenXR() {
 XrResult OpenXRKneeboard::xrEndFrame(
   XrSession session,
   const XrFrameEndInfo* frameEndInfo) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "xrEndFrame");
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "OpenXRKneeboard::xrEndFrame()");
   if (frameEndInfo->layerCount == 0) {
-    TraceLoggingWriteStop(
-      activity, "xrEndFrame", TraceLoggingValue("No layers", "Result"));
+    TraceLoggingWriteTagged(activity, "No layers.");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto d3d11 = this->GetD3D11Device();
-  if (!d3d11) {
-    TraceLoggingWriteStop(
-      activity, "xrEndFrame", TraceLoggingValue("No D3D11", "Result"));
+  if (!*this->GetSHM()) {
+    TraceLoggingWriteTagged(activity, "No feeder");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  auto snapshot
-    = this->GetSHM()->MaybeGet(d3d11.get(), SHM::ConsumerKind::OpenXR);
+  if (!mSwapchain) {
+    OPENKNEEBOARD_TraceLoggingScope("Create swapchain");
+    const auto size = Spriting::GetBufferSize(MaxLayers);
+
+    mSwapchain = this->CreateSwapchain(session, size);
+    if (!mSwapchain) [[unlikely]] {
+      OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
+    }
+    dprintf("Created {}x{} swapchain", size.mWidth, size.mHeight);
+  }
+
+  auto snapshot = this->GetSHM()->MaybeGet();
   if (!snapshot.IsValid()) {
-    TraceLoggingWriteStop(
-      activity, "xrEndFrame", TraceLoggingValue("No snapshot", "Result"));
+    TraceLoggingWriteTagged(activity, "no snapshot");
     // Don't spam: expected, if OpenKneeboard isn't running
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
@@ -178,48 +193,22 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   uint8_t topMost = layerCount - 1;
 
-  if (!mSwapchain) {
-    const auto size = Spriting::GetBufferSize(MaxLayers);
-
-    mSwapchain = this->CreateSwapchain(session, size, config.mVR.mQuirks);
-    if (!mSwapchain) {
-      dprint("Failed to create swapchain");
-      OPENKNEEBOARD_BREAK;
-      TraceLoggingWriteStop(
-        activity,
-        "xrEndFrame",
-        TraceLoggingValue("Failed to create swapchain", "Result"));
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
-    }
-    dprintf("Created {}x{} swapchain", size.mWidth, size.mHeight);
-  }
-
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-  std::vector<SHM::LayerSprite> sprites;
+  std::vector<PixelRect> destRects;
+  std::vector<float> opacities;
   std::vector<uint64_t> cacheKeys;
-  sprites.reserve(layerCount);
+  destRects.reserve(layerCount);
+  opacities.reserve(layerCount);
+  cacheKeys.reserve(layerCount);
 
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
     auto layer = snapshot.GetLayerConfig(layerIndex);
-    if (!layer->IsValid()) {
-      TraceLoggingWriteStop(
-        activity,
-        "xrEndFrame",
-        TraceLoggingValue(layerIndex, "LayerNumber"),
-        TraceLoggingValue("Invalid layer config", "Result"));
-      return mOpenXR->xrEndFrame(session, frameEndInfo);
-    }
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
-
-    sprites.push_back(SHM::LayerSprite {
-      .mLayerIndex = layerIndex,
-      .mDestRect = {
-        Spriting::GetOffset(layerIndex, MaxLayers),
-        {layer->mImageWidth, layer->mImageHeight},
-      },
-      .mOpacity = params.mKneeboardOpacity,
-    });
+    destRects.push_back(
+      {Spriting::GetOffset(layerIndex, MaxLayers),
+       layer->mLocationOnTexture.mSize});
+    opacities.push_back(params.mKneeboardOpacity);
 
     if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
       needRender = true;
@@ -244,7 +233,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
         .swapchain = mSwapchain,
         .imageRect = {
           {layerIndex * TextureWidth, 0},
-          {static_cast<int32_t>(layer->mImageWidth), static_cast<int32_t>(layer->mImageHeight)},
+          layer->mLocationOnTexture.mSize.StaticCast<XrExtent2Di, int32_t>(),
         },
         .imageArrayIndex = 0,
       },
@@ -272,22 +261,18 @@ XrResult OpenXRKneeboard::xrEndFrame(
     check_xrresult(mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo));
 
     {
-      TraceLoggingThreadActivity<gTraceProvider> subActivity;
-      TraceLoggingWriteStart(subActivity, "OpenXRKneeboard::RenderLayers()");
+      OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
       this->RenderLayers(
         mSwapchain,
         swapchainTextureIndex,
         snapshot,
-        sprites.size(),
-        sprites.data());
-      TraceLoggingWriteStop(subActivity, "OpenXRKneeboard::RenderLayers()");
+        destRects.data(),
+        opacities.data());
     }
 
     {
-      TraceLoggingThreadActivity<gTraceProvider> releaseActivity;
-      TraceLoggingWriteStart(releaseActivity, "xrReleaseSwapchainImage");
+      OPENKNEEBOARD_TraceLoggingScope("xrReleaseSwapchainImage()");
       check_xrresult(mOpenXR->xrReleaseSwapchainImage(mSwapchain, nullptr));
-      TraceLoggingWriteStop(releaseActivity, "xrReleaseSwapchainImage");
     }
 
     for (size_t i = 0; i < cacheKeys.size(); ++i) {
@@ -301,16 +286,10 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   XrResult nextResult;
   {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "next_xrEndFrame()");
+    OPENKNEEBOARD_TraceLoggingScope("next_xrEndFrame");
     nextResult
       = check_xrresult(mOpenXR->xrEndFrame(session, &nextFrameEndInfo));
-    TraceLoggingWriteStop(subActivity, "next_xrEndFrame()");
   }
-  TraceLoggingWriteStop(
-    activity,
-    "xrEndFrame",
-    TraceLoggingValue(static_cast<const int64_t>(nextResult), "XrResult"));
   return nextResult;
 }
 
@@ -399,9 +378,34 @@ XrResult xrCreateSession(
     return ret;
   }
 
-  auto vk = findInXrNextChain<XrGraphicsBindingVulkanKHR>(
+  auto vk = findInXrNextChain<XrGraphicsBindingVulkan2KHR>(
     XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, createInfo->next);
   if (vk) {
+    switch (gVulkanXRState.Get()) {
+      case VulkanXRState::NoVKEnable2:
+        dprint(
+          "WARNING: Got an XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, but "
+          "XR_KHR_vulkan_enable2 instance/device creation functions were not "
+          "used; unsupported");
+        return ret;
+      case VulkanXRState::VKEnable2Instance:
+        dprint(
+          "WARNING: XR_KHR_vulkan_enable2 was used for instance creation, but "
+          "not "
+          "device; unsupported");
+        return ret;
+      case VulkanXRState::VKEnable2InstanceAndDevice:
+        dprint(
+          "GOOD: XR_KHR_vulkan_enable2 used for instance and device creation");
+        break;
+      default:
+        dprintf(
+          "ERROR: Unrecognized VulkanXRState: {}",
+          static_cast<std::underlying_type_t<VulkanXRState>>(
+            gVulkanXRState.Get()));
+        OPENKNEEBOARD_BREAK;
+        return ret;
+    }
     if (!gPFN_vkGetInstanceProcAddr) {
       dprint(
         "Found Vulkan, don't have an explicit vkGetInstanceProcAddr; "
@@ -437,211 +441,6 @@ XrResult xrCreateSession(
   return ret;
 }
 
-// Provided by XR_KHR_vulkan_enable
-XrResult xrGetVulkanGraphicsRequirementsKHR(
-  XrInstance instance,
-  XrSystemId systemId,
-  XrGraphicsRequirementsVulkanKHR* graphicsRequirements) {
-  dprintf("{}()", __FUNCTION__);
-  // As of 2024-01-14, the Vulkan API validation layer calls a nullptr
-  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1;
-  // as there's no warnings from the layer before the crash, I wasn't
-  // able to figure out if this is a bug in OpenKneeboard or the API
-  // validation layer.
-  //
-  // As `hello_xr` is the primary testbed, uses VK 1.0, and enables the
-  // debug layer in debug builds, silently upgrade to VK 1.1.
-  //
-  // We only *need* to this for hello_xr + debug builds, but do it always
-  // so the behavior is consistent.
-  //
-  // hello_xr actually ignores this at the moment, so only the `Vulkan2`
-  // backend works.
-  auto ret = gNext->xrGetVulkanGraphicsRequirementsKHR(
-    instance, systemId, graphicsRequirements);
-  if (XR_FAILED(ret)) {
-    dprintf("WARNING: next failed {}", ret);
-    return ret;
-  }
-
-  // This uses XR versions, not the VK version constants
-  constexpr auto v1_1 = XR_MAKE_VERSION(1, 1, 0);
-  if (graphicsRequirements->minApiVersionSupported >= v1_1) {
-    dprintf(
-      "OK: Runtime is requesting a new enough VK 1.1: {}",
-      graphicsRequirements->minApiVersionSupported);
-    return ret;
-  }
-
-  if (graphicsRequirements->maxApiVersionSupported < v1_1) {
-    dprintf(
-      "WARNING: OpenXR runtime does not support VK 1.1; max is {}",
-      graphicsRequirements->maxApiVersionSupported);
-    return ret;
-  }
-
-  dprintf(
-    "WARNING: Upgrading from VK {} to {}",
-    graphicsRequirements->minApiVersionSupported,
-    v1_1);
-  graphicsRequirements->minApiVersionSupported = v1_1;
-  return ret;
-}
-
-XrResult GetVulkanExtensions(
-  uint32_t bufferCapacityInput,
-  uint32_t* bufferCountOutput,
-  char* buffer,
-  const auto& requiredExtensions,
-  const std::function<XrResult(
-    uint32_t bufferCapacityInput,
-    uint32_t* bufferCountOutput,
-    char* buffer)>& next) {
-  auto ret = next(0, bufferCountOutput, nullptr);
-  if (XR_FAILED(ret)) {
-    return ret;
-  }
-
-  // Space-separated list of extensions
-  uint32_t& count = *bufferCountOutput;
-  std::string extensions;
-  extensions.resize(count);
-
-  ret = next(count, &count, extensions.data());
-  if (XR_FAILED(ret)) {
-    return ret;
-  }
-
-  // Remove trailing null
-  extensions.resize(count - 1);
-  dprintf("Runtime requested extensions: {}", extensions);
-
-  for (const auto& ext: requiredExtensions) {
-    const std::string_view view {ext};
-    size_t offset = 0;
-    bool found = false;
-    while ((offset + view.size()) < extensions.size()) {
-      auto it = extensions.find(ext, offset);
-      if (it == std::string::npos) {
-        break;
-      }
-
-      if (it + view.size() == extensions.size()) {
-        // Last one in the list
-        found = true;
-        break;
-      }
-
-      if (extensions.at(it + view.size()) == ' ') {
-        // In the list
-        found = true;
-        break;
-      }
-
-      // If we got here, another extension starts with this extension name
-      offset += view.size();
-    }
-
-    if (found) {
-      // Next extension
-      continue;
-    }
-    if (extensions.empty()) {
-      extensions = std::string_view {ext};
-    } else {
-      extensions += std::format(" {}", view);
-    }
-  }
-  dprintf("Requesting extensions: {}", extensions);
-
-  *bufferCountOutput = extensions.size() + 1;
-  if (bufferCapacityInput == 0 || (!buffer)) {
-    return ret;
-  }
-
-  if (buffer && (bufferCapacityInput >= *bufferCountOutput)) {
-    memcpy_s(
-      buffer, bufferCapacityInput, extensions.c_str(), extensions.size() + 1);
-    return ret;
-  }
-
-  return XR_ERROR_SIZE_INSUFFICIENT;
-}
-
-// Provided by XR_KHR_vulkan_enable
-XrResult xrGetVulkanInstanceExtensionsKHR(
-  XrInstance instance,
-  XrSystemId systemId,
-  uint32_t bufferCapacityInput,
-  uint32_t* bufferCountOutput,
-  char* buffer) {
-  dprintf("{}()", __FUNCTION__);
-
-  return GetVulkanExtensions(
-    bufferCapacityInput,
-    bufferCountOutput,
-    buffer,
-    OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS,
-    [&](uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer)
-      -> XrResult {
-      return gNext->xrGetVulkanInstanceExtensionsKHR(
-        instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
-    });
-}
-
-// Provided by XR_KHR_vulkan_enable
-XrResult xrGetVulkanDeviceExtensionsKHR(
-  XrInstance instance,
-  XrSystemId systemId,
-  uint32_t bufferCapacityInput,
-  uint32_t* bufferCountOutput,
-  char* buffer) {
-  dprintf("{}()", __FUNCTION__);
-
-  return GetVulkanExtensions(
-    bufferCapacityInput,
-    bufferCountOutput,
-    buffer,
-    OpenXRVulkanKneeboard::VK_DEVICE_EXTENSIONS,
-    [&](uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer)
-      -> XrResult {
-      return gNext->xrGetVulkanDeviceExtensionsKHR(
-        instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
-    });
-}
-
-template <class T>
-XrResult CreateWithVKExtensions(
-  const T* origCreateInfo,
-  const auto& requiredExtensions,
-  const std::function<XrResult(const T*)>& createFunc) {
-  auto createInfo = *origCreateInfo;
-  auto vci = *createInfo.vulkanCreateInfo;
-  createInfo.vulkanCreateInfo = &vci;
-
-  std::vector<const char*> extensions;
-  for (size_t i = 0; i < vci.enabledExtensionCount; ++i) {
-    extensions.push_back(vci.ppEnabledExtensionNames[i]);
-  }
-
-  for (const auto& ext: requiredExtensions) {
-    const auto view = std::string_view {ext};
-    auto it = std::ranges::find(extensions, view);
-    if (it == extensions.end()) {
-      extensions.push_back(ext);
-    }
-  }
-  vci.enabledExtensionCount = extensions.size();
-  vci.ppEnabledExtensionNames = extensions.data();
-
-  dprint("Enabled VK extensions:");
-  for (size_t i = 0; i < vci.enabledExtensionCount; ++i) {
-    dprintf("- {}", vci.ppEnabledExtensionNames[i]);
-  }
-
-  return createFunc(&createInfo);
-}
-
 // Provided by XR_KHR_vulkan_enable2
 XrResult xrCreateVulkanInstanceKHR(
   XrInstance instance,
@@ -650,47 +449,14 @@ XrResult xrCreateVulkanInstanceKHR(
   VkResult* vulkanResult) {
   dprintf("{}()", __FUNCTION__);
 
-  // As of 2024-01-14, the Vulkan API validation layer calls a nullptr
-  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1,
-  // and from `vkImportSemaphoreWin32HandleKHR()` if the VK API is < 1.3.
-  //
-  // As there's no warnings from the layer before the crash, I wasn't
-  // able to figure out if this is a bug in OpenKneeboard or the API
-  // validation layer.
-  //
-  // As `hello_xr` is the primary testbed, uses VK 1.0, and enables the
-  // debug layer in debug builds, silently upgrade to VK 1.3
-  //
-  // We only *need* to this for hello_xr + debug builds, but do it always
-  // so the behavior is consistent.
+  const OpenXRVulkanKneeboard::VkInstanceCreateInfo vkCreateInfo(
+    *origCreateInfo->vulkanCreateInfo);
+
   auto createInfo = *origCreateInfo;
+  createInfo.vulkanCreateInfo = &vkCreateInfo;
 
-  auto vci = *createInfo.vulkanCreateInfo;
-  createInfo.vulkanCreateInfo = &vci;
-  auto vaci = *vci.pApplicationInfo;
-  vci.pApplicationInfo = &vaci;
-  const auto requiredVKApiVersion = VK_API_VERSION_1_3;
-
-  if (vaci.apiVersion >= requiredVKApiVersion) {
-    dprintf("App is requesting VK version {}", vaci.apiVersion);
-  } else {
-    vaci.apiVersion = requiredVKApiVersion;
-    dprintf(
-      "WARNING: upgrading app from VK {} to {}",
-      origCreateInfo->vulkanCreateInfo->pApplicationInfo->apiVersion,
-      vaci.apiVersion);
-  }
-
-  const auto ret = CreateWithVKExtensions<XrVulkanInstanceCreateInfoKHR>(
-    &createInfo,
-    OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS,
-    [&](const auto* createInfo) {
-      return gNext->xrCreateVulkanInstanceKHR(
-        instance, createInfo, vulkanInstance, vulkanResult);
-    });
-  if (XR_FAILED(ret)) {
-    return ret;
-  }
+  const auto ret = gNext->xrCreateVulkanInstanceKHR(
+    instance, &createInfo, vulkanInstance, vulkanResult);
 
   if (createInfo.pfnGetInstanceProcAddr) {
     gPFN_vkGetInstanceProcAddr = createInfo.pfnGetInstanceProcAddr;
@@ -698,6 +464,9 @@ XrResult xrCreateVulkanInstanceKHR(
   if (createInfo.vulkanAllocator) {
     gVKAllocator = createInfo.vulkanAllocator;
   }
+
+  gVulkanXRState
+    .Transition<VulkanXRState::NoVKEnable2, VulkanXRState::VKEnable2Instance>();
 
   return ret;
 }
@@ -710,25 +479,13 @@ XrResult xrCreateVulkanDeviceKHR(
   VkResult* vulkanResult) {
   dprintf("{}()", __FUNCTION__);
 
+  const OpenXRVulkanKneeboard::VkDeviceCreateInfo vkCreateInfo(
+    *origCreateInfo->vulkanCreateInfo);
+
   auto createInfo = *origCreateInfo;
-
-  auto vci = *createInfo.vulkanCreateInfo;
-  createInfo.vulkanCreateInfo = &vci;
-
-  VkPhysicalDeviceTimelineSemaphoreFeatures timelineFeatures {
-    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
-    .pNext = const_cast<void*>(vci.pNext),
-    .timelineSemaphore = VK_TRUE,
-  };
-  vci.pNext = &timelineFeatures;
-
-  const auto ret = CreateWithVKExtensions<XrVulkanDeviceCreateInfoKHR>(
-    &createInfo,
-    OpenXRVulkanKneeboard::VK_DEVICE_EXTENSIONS,
-    [&](const auto* createInfo) {
-      return gNext->xrCreateVulkanDeviceKHR(
-        instance, createInfo, vulkanDevice, vulkanResult);
-    });
+  createInfo.vulkanCreateInfo = &vkCreateInfo;
+  const auto ret = gNext->xrCreateVulkanDeviceKHR(
+    instance, &createInfo, vulkanDevice, vulkanResult);
   if (XR_FAILED(ret)) {
     return ret;
   }
@@ -739,6 +496,10 @@ XrResult xrCreateVulkanDeviceKHR(
   if (createInfo.vulkanAllocator) {
     gVKAllocator = createInfo.vulkanAllocator;
   }
+
+  gVulkanXRState.Transition<
+    VulkanXRState::VKEnable2Instance,
+    VulkanXRState::VKEnable2InstanceAndDevice>();
 
   return ret;
 }
@@ -786,24 +547,6 @@ XrResult xrGetInstanceProcAddr(
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
     return XR_SUCCESS;
   }
-
-  ///// START XR_KHR_vulkan_enable /////
-  if (name == "xrGetVulkanDeviceExtensionsKHR") {
-    *function
-      = reinterpret_cast<PFN_xrVoidFunction>(&xrGetVulkanDeviceExtensionsKHR);
-    return XR_SUCCESS;
-  }
-  if (name == "xrGetVulkanInstanceExtensionsKHR") {
-    *function
-      = reinterpret_cast<PFN_xrVoidFunction>(&xrGetVulkanInstanceExtensionsKHR);
-    return XR_SUCCESS;
-  }
-  if (name == "xrGetVulkanGraphicsRequirementsKHR") {
-    *function = reinterpret_cast<PFN_xrVoidFunction>(
-      &xrGetVulkanGraphicsRequirementsKHR);
-    return XR_SUCCESS;
-  }
-  ///// END XR_KHR_vulkan_enable /////
 
   ///// START XR_KHR_vulkan_enable2 /////
   if (name == "xrCreateVulkanDeviceKHR") {

@@ -32,4 +32,23 @@ Dispatch::Dispatch(
 #undef IT
 }
 
+std::optional<uint32_t> FindMemoryType(
+  Dispatch* vk,
+  VkPhysicalDevice physicalDevice,
+  uint32_t filter,
+  VkMemoryPropertyFlags flags) {
+  VkPhysicalDeviceMemoryProperties properties;
+  vk->GetPhysicalDeviceMemoryProperties(physicalDevice, &properties);
+  for (uint32_t i = 0; i < properties.memoryTypeCount; ++i) {
+    if (!(filter & (1 << i))) {
+      continue;
+    }
+    if ((flags & properties.memoryTypes[i].propertyFlags) == flags) {
+      return i;
+    }
+  }
+
+  return {};
+}
+
 }// namespace OpenKneeboard::Vulkan

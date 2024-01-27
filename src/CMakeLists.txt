@@ -19,7 +19,6 @@ add_compile_definitions(
   "NOMINMAX=1"
   "WIN32_LEAN_AND_MEAN=1"
   "$<IF:$<CONFIG:Debug>,DEBUG,NDEBUG>"
-  "OPENKNEEBOARD_BREAK=$<$<CONFIG:Debug>:__debugbreak()>"
   "BUILD_CONFIG=\"$<CONFIG>\""
 )
 
@@ -27,6 +26,8 @@ add_compile_definitions(
 add_compile_definitions(
   "OPENKNEEBOARD_UNREACHABLE=__assume(false)"
 )
+
+add_subdirectory(shaders)
 
 # Always link this so we never accidentally use the SDK version
 link_libraries(ThirdParty::CppWinRT)

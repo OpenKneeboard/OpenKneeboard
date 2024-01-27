@@ -24,10 +24,10 @@
 //
 // ... but, as that means we need to pull in openxr_platform.h now and that
 // can only be included once, we need to pull in all the supported APIs
+#include <vulkan/vulkan.h>
+
 #include <d3d11.h>
 #include <d3d12.h>
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <vulkan/vulkan.h>
 
 #define XR_USE_GRAPHICS_API_D3D11
 #define XR_USE_GRAPHICS_API_D3D12

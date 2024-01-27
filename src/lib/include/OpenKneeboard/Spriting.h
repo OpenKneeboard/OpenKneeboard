@@ -38,4 +38,11 @@ constexpr PixelSize GetBufferSize(uint8_t maxSprites) noexcept {
   };
 }
 
+constexpr PixelRect GetRect(uint8_t sprite, uint8_t maxSprites) noexcept {
+  return {
+    GetOffset(sprite, maxSprites),
+    {TextureWidth, TextureHeight},
+  };
+}
+
 }// namespace OpenKneeboard::Spriting

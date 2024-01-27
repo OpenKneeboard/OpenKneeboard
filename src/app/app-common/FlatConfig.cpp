@@ -34,8 +34,8 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
 void to_json(nlohmann::json& j, const NonVRAbsolutePosition& p) {
   const auto& r = p.mRect;
   j["Origin"] = {
-    {"Left", r.mOrigin.mX},
-    {"Top", r.mOrigin.mY},
+    {"Left", r.mOffset.mX},
+    {"Top", r.mOffset.mY},
   };
   j["Size"] = {
     {"Width", r.mSize.mWidth},
@@ -53,8 +53,8 @@ void from_json(const nlohmann::json& j, NonVRAbsolutePosition& p) {
   const auto alignment = j.at("Alignment");
 
   auto& r = p.mRect;
-  r.mOrigin.mX = origin.at("Left");
-  r.mOrigin.mY = origin.at("Top");
+  r.mOffset.mX = origin.at("Left");
+  r.mOffset.mY = origin.at("Top");
   r.mSize.mWidth = size.at("Width");
   r.mSize.mHeight = size.at("Height");
   p.mHorizontalAlignment = alignment.at("Horizontal");

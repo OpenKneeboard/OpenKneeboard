@@ -49,6 +49,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
     // Use DXResources to share the GPU selection logic
     auto dxr = DXResources::Create();
     mD3D = dxr.mD3DDevice;
+    mSHM.InitializeCache(mD3D.get(), /* swapchainLength = */ 2);
     winrt::com_ptr<IDXGIAdapter> adapter;
     dxr.mDXGIDevice->GetAdapter(adapter.put());
     DXGI_ADAPTER_DESC desc;
@@ -59,16 +60,28 @@ SteamVRKneeboard::SteamVRKneeboard() {
       std::bit_cast<uint64_t>(desc.AdapterLuid));
   }
 
+  D3D11_TEXTURE2D_DESC desc {
+    .Width = TextureWidth,
+    .Height = TextureHeight,
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
+  };
+  winrt::check_hresult(
+    mD3D->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
+
+  desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+  desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
   for (uint8_t i = 0; i < MaxLayers; ++i) {
     auto& layer = mLayers.at(i);
-    layer.mOpenVRTexture = SHM::CreateCompatibleTexture(
-      mD3D.get(), D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_SHARED);
+    winrt::check_hresult(
+      mD3D->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
     winrt::check_hresult(
       layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
         &layer.mSharedHandle));
   }
-
-  mBufferTexture = SHM::CreateCompatibleTexture(mD3D.get());
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
     .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
@@ -208,7 +221,7 @@ void SteamVRKneeboard::Tick() {
     return;
   }
 
-  const auto snapshot = mSHM.MaybeGet(mD3D.get(), SHM::ConsumerKind::SteamVR);
+  const auto snapshot = mSHM.MaybeGet();
   if (!snapshot.IsValid()) {
     this->HideAllOverlays();
     return;
@@ -223,17 +236,17 @@ void SteamVRKneeboard::Tick() {
 
   const auto config = snapshot.GetConfig();
 
+  auto srv
+    = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();
+  if (!srv) {
+    dprint("Failed to get shared texture");
+    return;
+  }
+
   for (uint8_t layerIndex = 0; layerIndex < snapshot.GetLayerCount();
        ++layerIndex) {
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
     auto& layerState = mLayers.at(layerIndex);
-    if (!layer.IsValid()) {
-      if (layerState.mVisible) {
-        CHECK(HideOverlay, layerState.mOverlay);
-        layerState.mVisible = false;
-      }
-      continue;
-    }
 
     const auto renderParams
       = this->GetRenderParameters(snapshot, layer, hmdPose);
@@ -268,15 +281,6 @@ void SteamVRKneeboard::Tick() {
     // Also lets us apply opacity here, rather than needing another
     // OpenVR call
 
-    auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
-        layerIndex);
-    auto srv = resources->GetD3D11ShaderResourceView();
-    if (!srv) {
-      dprint("Failed to get layer shared texture");
-      continue;
-    }
-
     // non-atomic paint to buffer...
     D3D11::CopyTextureWithOpacity(
       mD3D.get(), srv, mRenderTargetView.get(), renderParams.mKneeboardOpacity);
@@ -284,7 +288,15 @@ void SteamVRKneeboard::Tick() {
     // ... then atomic copy to OpenVR texture
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     mD3D->GetImmediateContext(ctx.put());
-    const D3D11_BOX box {0, 0, 0, layer.mImageWidth, layer.mImageHeight, 1};
+    const D2D_RECT_U sourceRect = layer.mLocationOnTexture;
+    const D3D11_BOX sourceBox {
+      sourceRect.left,
+      sourceRect.top,
+      0,
+      sourceRect.right,
+      sourceRect.bottom,
+      1,
+    };
     ctx->CopySubresourceRegion(
       layerState.mOpenVRTexture.get(),
       0,
@@ -293,14 +305,15 @@ void SteamVRKneeboard::Tick() {
       0,
       mBufferTexture.get(),
       0,
-      &box);
+      &sourceBox);
     layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
 
+    const auto& imageSize = layer.mLocationOnTexture.mSize;
     vr::VRTextureBounds_t textureBounds {
       0.0f,
       0.0f,
-      static_cast<float>(layer.mImageWidth) / TextureWidth,
-      static_cast<float>(layer.mImageHeight) / TextureHeight,
+      static_cast<float>(imageSize.mWidth) / TextureWidth,
+      static_cast<float>(imageSize.mHeight) / TextureHeight,
     };
 
     CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);

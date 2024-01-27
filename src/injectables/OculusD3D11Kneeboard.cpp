@@ -56,7 +56,7 @@ SHM::CachedReader* OculusD3D11Kneeboard::GetSHM() {
 ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   ovrSession session,
   const PixelSize& size) {
-  if (!mDeviceResources) {
+  if (!mD3D11Device) {
     return nullptr;
   }
 
@@ -78,7 +78,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   };
 
   ovr->ovr_CreateTextureSwapChainDX(
-    session, mDeviceResources->mD3D11Device.get(), &kneeboardSCD, &swapChain);
+    session, mD3D11Device.get(), &kneeboardSCD, &swapChain);
   if (!swapChain) {
     dprint("ovr_CreateTextureSwapChainDX failed");
     OPENKNEEBOARD_BREAK;
@@ -87,22 +87,22 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
 
   int length = -1;
   ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
+  if (length < 1) {
+    dprintf("`{}`: got an invalid swapchain length of {}", __FUNCSIG__, 1);
+    abort();
+  }
 
-  std::vector<winrt::com_ptr<ID3D11Texture2D>> textures;
-  std::vector<ID3D11Texture2D*> texturePointers;
+  std::vector<SwapchainBufferResources> buffers;
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D11Texture2D> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
-    textures.push_back(texture);
-    texturePointers.push_back(texture.get());
+    buffers.push_back(
+      {mD3D11Device.get(), texture.get(), DXGI_FORMAT_B8G8R8X8_UNORM_SRGB});
   }
+  mSwapchain = {size, std::move(buffers)};
 
-  mSwapchainResources[swapChain] = std::make_unique<SwapchainResources>(
-    mDeviceResources.get(),
-    DXGI_FORMAT_B8G8R8A8_UNORM,
-    texturePointers.size(),
-    texturePointers.data());
+  mSHM.InitializeCache(mD3D11Device.get(), static_cast<uint8_t>(length));
 
   return swapChain;
 }
@@ -111,47 +111,40 @@ void OculusD3D11Kneeboard::RenderLayers(
   ovrTextureSwapChain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerCount,
-  SHM::LayerSprite* layers) {
-  auto dr = mDeviceResources.get();
-  auto sr = mSwapchainResources.at(swapchain).get();
+  const PixelRect* const destRects,
+  const float* const opacities) {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "OculusD3D11::RenderLayers");
 
-  auto ctx = dr->mD3D11ImmediateContext;
-  D3D11::SavedState state(ctx);
+  D3D11::SavedState state(mD3D11DeviceContext);
 
-  namespace R = SHM::D3D11::Renderer;
-
-  R::BeginFrame(dr, sr, swapchainTextureIndex);
-  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
-  R::EndFrame(dr, sr, swapchainTextureIndex);
+  mRenderer->RenderLayers(
+    *mSwapchain,
+    swapchainTextureIndex,
+    snapshot,
+    snapshot.GetLayerCount(),
+    destRects,
+    opacities,
+    RenderMode::ClearAndRender);
 }
 
 HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
   IDXGISwapChain* swapChain,
   UINT syncInterval,
   UINT flags,
-  const decltype(&IDXGISwapChain::Present)& next) {
-  if (!mDeviceResources) {
-    winrt::com_ptr<ID3D11Device> device;
-    swapChain->GetDevice(IID_PPV_ARGS(device.put()));
-    if (device) {
-      mDeviceResources = std::make_unique<DeviceResources>(device.get());
-    } else {
-      dprint("Got a swapchain without a D3D11 device");
-      OPENKNEEBOARD_BREAK;
-    }
+  const decltype(&IDXGISwapChain::Present)& next) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "OculusD3D11Kneeboard::OnIDXGISwapChain_Present()");
+  if (!mD3D11Device) {
+    OPENKNEEBOARD_TraceLoggingScope("InitResources");
+    winrt::check_hresult(
+      swapChain->GetDevice(IID_PPV_ARGS(mD3D11Device.put())));
+    mD3D11Device->GetImmediateContext(mD3D11DeviceContext.put());
+    mRenderer = std::make_unique<D3D11::Renderer>(mD3D11Device.get());
   }
 
   mDXGIHook.UninstallHook();
   return std::invoke(next, swapChain, syncInterval, flags);
-}
-
-winrt::com_ptr<ID3D11Device> OculusD3D11Kneeboard::GetD3D11Device() {
-  if (!mDeviceResources) {
-    return nullptr;
-  }
-  return mDeviceResources->mD3D11Device;
 }
 
 }// namespace OpenKneeboard

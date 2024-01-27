@@ -18,556 +18,644 @@
  * USA.
  */
 
+#include <OpenKneeboard/RenderDoc.h>
 #include <OpenKneeboard/SHM/Vulkan.h>
+#include <OpenKneeboard/Vulkan.h>
 
-#include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
 
-namespace OpenKneeboard::SHM::Vulkan::Renderer {
+namespace OpenKneeboard::SHM::Vulkan {
 
 using OpenKneeboard::Vulkan::check_vkresult;
 
-DeviceResources::DeviceResources(
+Texture::Texture(
   OpenKneeboard::Vulkan::Dispatch* vk,
-  VkDevice vkDevice,
-  VkPhysicalDevice vkPhysicalDevice,
-  const VkAllocationCallbacks* vkAllocator,
+  VkPhysicalDevice physicalDevice,
+  VkDevice device,
   uint32_t queueFamilyIndex,
-  uint32_t queueIndex)
-  : mVK(vk),
-    mVKDevice(vkDevice),
-    mVKPhysicalDevice(vkPhysicalDevice),
-    mVKAllocator(vkAllocator),
-    mVKQueueFamilyIndex(queueFamilyIndex),
-    mVKQueueIndex(queueIndex) {
-  vk->GetDeviceQueue(vkDevice, queueFamilyIndex, queueIndex, &mVKQueue);
+  const VkAllocationCallbacks* allocator,
+  VkFence completionFence,
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex)
+  : IPCClientTexture(dimensions, swapchainIndex),
+    mVK(vk),
+    mPhysicalDevice(physicalDevice),
+    mDevice(device),
+    mQueueFamilyIndex(queueFamilyIndex),
+    mAllocator(allocator),
+    mCompletionFence(completionFence) {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::Texture::Texture()");
+  this->InitializeCacheImage();
+  this->InitializeReadySemaphore();
+}
 
-  VkCommandPoolCreateInfo createInfo {
-    .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-    .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-    .queueFamilyIndex = queueFamilyIndex,
+Texture::~Texture() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::Texture::~Texture()");
+
+  // We can't tear down our semaphore while it's pending
+  VkSemaphore semaphores[] {mReadySemaphore.get()};
+  uint64_t semaphoreValues[] {mReadySemaphoreValue};
+
+  VkSemaphoreWaitInfoKHR waitInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO_KHR,
+    .semaphoreCount = std::size(semaphores),
+    .pSemaphores = semaphores,
+    .pValues = semaphoreValues,
   };
+  check_vkresult(mVK->WaitSemaphoresKHR(mDevice, &waitInfo, ~(0ui64)));
 
-  mVKCommandPool
-    = vk->make_unique<VkCommandPool>(mVKDevice, &createInfo, mVKAllocator);
-
-  this->InitializeD3D11();
+  // ... or while a batch referring to it is in progress:
+  check_vkresult(
+    mVK->WaitForFences(mDevice, 1, &mCompletionFence, 1, ~(0ui64)));
 }
 
-void DeviceResources::InitializeD3D11() {
-  VkPhysicalDeviceIDProperties deviceIDProps {
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
-
-  VkPhysicalDeviceProperties2 deviceProps2 {
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-  deviceProps2.pNext = &deviceIDProps;
-  mVK->GetPhysicalDeviceProperties2(mVKPhysicalDevice, &deviceProps2);
-
-  if (deviceIDProps.deviceLUIDValid == VK_FALSE) {
-    dprint("Failed to get Vulkan device LUID");
-    return;
-  }
-
-  UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-  auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
-  UINT dxgiFlags = 0;
-
-#ifdef DEBUG
-  d3dFlags |= D3D11_CREATE_DEVICE_DEBUG;
-  dxgiFlags |= DXGI_CREATE_FACTORY_DEBUG;
-#endif
-
-  winrt::com_ptr<IDXGIFactory> dxgiFactory;
-  winrt::check_hresult(
-    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(dxgiFactory.put())));
-
-  winrt::com_ptr<IDXGIAdapter> adapterIt;
-  winrt::com_ptr<IDXGIAdapter> adapter;
-  for (unsigned int i = 0;
-       dxgiFactory->EnumAdapters(i, adapterIt.put()) == S_OK;
-       ++i) {
-    const scope_guard releaseAdapter([&]() { adapterIt = {nullptr}; });
-
-    DXGI_ADAPTER_DESC desc;
-    winrt::check_hresult(adapterIt->GetDesc(&desc));
-
-    dprintf(L"Checking D3D11 device '{}'", desc.Description);
-
-    if (
-      memcmp(&desc.AdapterLuid, deviceIDProps.deviceLUID, sizeof(LUID)) != 0) {
-      dprint("VK and D3D11 LUIDs don't match.");
-      OPENKNEEBOARD_BREAK;
-      continue;
-    }
-
-    dprintf(L"VK and D3D11 LUIDs match.", desc.Description);
-    adapter = adapterIt;
-    break;
-  }
-  if (!adapter) {
-    dprint("Couldn't find DXGI adapter with LUID matching VkPhysicalDevice");
-    return;
-  }
-
-  winrt::com_ptr<ID3D11Device> d3d11Device;
-  winrt::com_ptr<ID3D11DeviceContext> d3d11ImmediateContext;
-  winrt::check_hresult(D3D11CreateDevice(
-    adapter.get(),
-    // UNKNOWN is reuqired when specifying an adapter
-    D3D_DRIVER_TYPE_UNKNOWN,
-    nullptr,
-    d3dFlags,
-    &d3dLevel,
-    1,
-    D3D11_SDK_VERSION,
-    d3d11Device.put(),
-    nullptr,
-    d3d11ImmediateContext.put()));
-  dprint("Initialized D3D11 device matching VkPhysicalDevice");
-  mD3D11Device = d3d11Device.as<ID3D11Device5>();
-  mD3D11ImmediateContext = d3d11ImmediateContext.as<ID3D11DeviceContext4>();
-  mRendererResources
-    = std::make_unique<RendererDeviceResources>(d3d11Device.get());
+VkImage Texture::GetVKImage() {
+  return mImage.get();
 }
 
-SwapchainResources::SwapchainResources(
-  DeviceResources* dr,
-  const PixelSize& textureSize,
-  uint32_t textureCount,
-  VkImage* vkImages) noexcept {
-  mSize = textureSize;
-  auto vk = dr->mVK;
-
-  std::vector<VkCommandBuffer> commandBuffers;
-  commandBuffers.resize(textureCount);
-
-  {
-    VkCommandBufferAllocateInfo allocateInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = dr->mVKCommandPool.get(),
-      .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-      .commandBufferCount = textureCount,
-    };
-
-    check_vkresult(vk->AllocateCommandBuffers(
-      dr->mVKDevice, &allocateInfo, commandBuffers.data()));
-  }
-  for (uint32_t i = 0; i < textureCount; ++i) {
-    mBufferResources.push_back({
-      .mVKSwapchainImage = vkImages[i],
-      .mVKCommandBuffer = commandBuffers.at(i),
-    });
-  }
-
-  this->InitializeInterop(dr, textureCount, textureSize);
+VkImageView Texture::GetVKImageView() {
+  return mImageView.get();
 }
 
-void SwapchainResources::InitializeInterop(
-  DeviceResources* dr,
-  uint32_t textureCount,
-  const PixelSize& textureSize) noexcept {
-  auto vk = dr->mVK;
-  auto d3d11Device = dr->mD3D11Device.get();
-
-  std::vector<winrt::com_ptr<ID3D11Texture2D>> d3d11Textures;
-  d3d11Textures.reserve(textureCount);
-
-  for (uint32_t i = 0; i < textureCount; ++i) {
-    auto br = &mBufferResources.at(i);
-
-    winrt::com_ptr<ID3D11Texture2D> d3d11Texture;
-    // Not using SHM::CreateCompatibleTexture() as we need to use
-    // the specific requested size, not the default SHM size
-    D3D11_TEXTURE2D_DESC desc {
-      .Width = textureSize.mWidth,
-      .Height = textureSize.mHeight,
-      .MipLevels = 1,
-      .ArraySize = 1,
-      .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-      .SampleDesc = {1, 0},
-      .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-      .MiscFlags = D3D11_RESOURCE_MISC_SHARED,
-    };
-    winrt::check_hresult(
-      d3d11Device->CreateTexture2D(&desc, nullptr, d3d11Texture.put()));
-    d3d11Textures.push_back(d3d11Texture);
-
-    HANDLE sharedHandle {};
-    winrt::check_hresult(
-      d3d11Texture.as<IDXGIResource>()->GetSharedHandle(&sharedHandle));
-    // Specifying VK_FORMAT_ below
-    static_assert(
-      SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
-
-    VkExternalMemoryImageCreateInfo externalCreateInfo {
-      .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
-      .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
-    };
-
-    VkImageCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-      .pNext = &externalCreateInfo,
-      .imageType = VK_IMAGE_TYPE_2D,
-      .format = VK_FORMAT_B8G8R8A8_SRGB,
-      .extent = {textureSize.mWidth, textureSize.mHeight, 1},
-      .mipLevels = 1,
-      .arrayLayers = 1,
-      .samples = VK_SAMPLE_COUNT_1_BIT,
-      .tiling = VK_IMAGE_TILING_OPTIMAL,
-      .usage
-      = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-      .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-      .queueFamilyIndexCount = 1,
-      .pQueueFamilyIndices = &dr->mVKQueueFamilyIndex,
-      .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-    };
-
-    br->mVKInteropImage
-      = vk->make_unique<VkImage>(dr->mVKDevice, &createInfo, dr->mVKAllocator);
-    auto vkImage = br->mVKInteropImage.get();
-
-    VkDeviceMemory memory {};
-    ///// What kind of memory do we need? /////
-
-    VkImageMemoryRequirementsInfo2 info {
-      .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2,
-      .image = vkImage,
-    };
-
-    VkMemoryRequirements2 memoryRequirements {
-      VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2,
-    };
-
-    vk->GetImageMemoryRequirements2(dr->mVKDevice, &info, &memoryRequirements);
-
-    VkMemoryWin32HandlePropertiesKHR handleProperties {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
-    };
-    winrt::check_hresult(vk->GetMemoryWin32HandlePropertiesKHR(
-      dr->mVKDevice,
-      VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
-      sharedHandle,
-      &handleProperties));
-
-    ///// Which memory areas meet those requirements? /////
-
-    VkPhysicalDeviceMemoryProperties memoryProperties {};
-    vk->GetPhysicalDeviceMemoryProperties(
-      dr->mVKPhysicalDevice, &memoryProperties);
-
-    std::optional<uint32_t> memoryTypeIndex;
-    for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; ++i) {
-      const auto typeBit = 1ui32 << i;
-      if (!(handleProperties.memoryTypeBits & typeBit)) {
-        continue;
-      }
-
-      if (!(memoryProperties.memoryTypes[i].propertyFlags
-            & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)) {
-        continue;
-      }
-      memoryTypeIndex = i;
-      break;
-    }
-
-    if (!memoryTypeIndex) {
-      dprint("Failed to find a memory region suitable for VK/DX interop");
-      return;
-    }
-
-    ///// Finally, allocate the memory :) /////
-
-    VkImportMemoryWin32HandleInfoKHR handleInfo {
-      .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR,
-      .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_KMT_BIT,
-      .handle = sharedHandle,
-    };
-
-    VkMemoryDedicatedAllocateInfo dedicatedAllocInfo {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
-      .pNext = &handleInfo,
-      .image = vkImage,
-    };
-
-    VkMemoryAllocateInfo allocInfo {
-      .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-      .pNext = &dedicatedAllocInfo,
-      .allocationSize = memoryRequirements.memoryRequirements.size,
-      .memoryTypeIndex = *memoryTypeIndex,
-    };
-
-    check_vkresult(
-      vk->AllocateMemory(dr->mVKDevice, &allocInfo, dr->mVKAllocator, &memory));
-
-    VkBindImageMemoryInfo bindImageInfo {
-      .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO,
-      .image = vkImage,
-      .memory = memory,
-    };
-
-    check_vkresult(vk->BindImageMemory2(dr->mVKDevice, 1, &bindImageInfo));
-  }
-
-  {
-    std::vector<ID3D11Texture2D*> rawPointers;
-    rawPointers.reserve(textureCount);
-    for (const auto& texture: d3d11Textures) {
-      rawPointers.push_back(texture.get());
-    }
-    mRendererResources = std::make_unique<RendererSwapchainResources>(
-      dr->mRendererResources.get(),
-      DXGI_FORMAT_B8G8R8A8_UNORM,
-      rawPointers.size(),
-      rawPointers.data());
-  }
-
-  {
-    VkFenceCreateInfo createInfo {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
-    mVKCompletionFence
-      = vk->make_unique<VkFence>(dr->mVKDevice, &createInfo, dr->mVKAllocator);
-  }
-
-  // 1/3: Create a D3D11 fence...
-  winrt::check_hresult(d3d11Device->CreateFence(
-    0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mD3D11InteropFence.put())));
-
-  // 2/3: Create a Vulkan semaphore...
-  {
-    VkSemaphoreTypeCreateInfoKHR timelineCreateInfo {
-      .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR,
-      .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR,
-    };
-    VkSemaphoreCreateInfo createInfo {
-      .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-      .pNext = &timelineCreateInfo,
-    };
-    mVKInteropSemaphore = vk->make_unique<VkSemaphore>(
-      dr->mVKDevice, &createInfo, dr->mVKAllocator);
-  }
-
-  // 3/3: tie them together
-  winrt::check_hresult(mD3D11InteropFence->CreateSharedHandle(
-    nullptr, GENERIC_ALL, nullptr, mD3D11InteropFenceHandle.put()));
-  {
-    VkImportSemaphoreWin32HandleInfoKHR handleInfo {
-      .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
-      .semaphore = mVKInteropSemaphore.get(),
-      .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
-      .handle = mD3D11InteropFenceHandle.get(),
-    };
-    check_vkresult(
-      vk->ImportSemaphoreWin32HandleKHR(dr->mVKDevice, &handleInfo));
-  }
-
-  dprint("Finished initializing interop");
+VkSemaphore Texture::GetReadySemaphore() const {
+  return mReadySemaphore.get();
 }
 
-void BeginFrame(
-  DeviceResources* dr,
-  SwapchainResources* sr,
-  uint8_t swapchainTextureIndex) {
-  sr->mBufferResources.at(swapchainTextureIndex).mDirtyRects.clear();
-
-  SHM::D3D11::Renderer::BeginFrame(
-    dr->mRendererResources.get(),
-    sr->mRendererResources.get(),
-    swapchainTextureIndex);
+uint64_t Texture::GetReadySemaphoreValue() const {
+  return mReadySemaphoreValue;
 }
 
-void ClearRenderTargetView(
-  DeviceResources* dr,
-  SwapchainResources* sr,
-  uint8_t swapchainTextureIndex) {
-  SHM::D3D11::Renderer::ClearRenderTargetView(
-    dr->mRendererResources.get(),
-    sr->mRendererResources.get(),
-    swapchainTextureIndex);
-}
-
-void Render(
-  DeviceResources* dr,
-  SwapchainResources* sr,
-  uint8_t swapchainTextureIndex,
-  const SHM::Vulkan::CachedReader& shm,
-  const SHM::Snapshot& snapshot,
-  size_t layerSpriteCount,
-  LayerSprite* layerSprites) {
-  SHM::D3D11::Renderer::Render(
-    dr->mRendererResources.get(),
-    sr->mRendererResources.get(),
-    swapchainTextureIndex,
-    shm,
-    snapshot,
-    layerSpriteCount,
-    layerSprites);
-
-  auto dirty = &sr->mBufferResources.at(swapchainTextureIndex).mDirtyRects;
-  dirty->reserve(dirty->size() + layerSpriteCount);
-  for (size_t i = 0; i < layerSpriteCount; ++i) {
-    dirty->push_back(layerSprites[i].mDestRect);
-  }
-}
-
-void EndFrame(
-  DeviceResources* dr,
-  SwapchainResources* sr,
-  uint8_t swapchainTextureIndex) {
-  SHM::D3D11::Renderer::EndFrame(
-    dr->mRendererResources.get(),
-    sr->mRendererResources.get(),
-    swapchainTextureIndex);
-
-  auto vk = dr->mVK;
-
-  // Signal this once D3D11 work is done, then we pass it as a wait semaphore
-  // to vkQueueSubmit
-  const auto semaphoreValue = ++sr->mInteropFenceValue;
-  dr->mD3D11ImmediateContext->Signal(
-    sr->mD3D11InteropFence.get(), semaphoreValue);
-  auto br = &sr->mBufferResources.at(swapchainTextureIndex);
-
-  const auto interopImage = br->mVKInteropImage.get();
-  const auto swapchainImage = br->mVKSwapchainImage;
-  const auto vkCommandBuffer = br->mVKCommandBuffer;
-
+void Texture::CopyFrom(
+  VkQueue queue,
+  VkCommandBuffer commandBuffer,
+  VkImage source,
+  VkSemaphore semaphore,
+  uint64_t semaphoreValueIn,
+  uint64_t semaphoreValueOut) noexcept {
   VkCommandBufferBeginInfo beginInfo {
     .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
     .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
   };
-  check_vkresult(vk->ResetCommandBuffer(vkCommandBuffer, 0));
-  check_vkresult(vk->BeginCommandBuffer(vkCommandBuffer, &beginInfo));
 
-  VkImageMemoryBarrier inBarriers[] = {
+  check_vkresult(mVK->BeginCommandBuffer(commandBuffer, &beginInfo));
+
+  const auto dimensions = this->GetDimensions();
+  VkImageCopy regions[] { 
+    VkImageCopy {
+      .srcSubresource = VkImageSubresourceLayers {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .layerCount = 1,
+      },
+      .dstSubresource = VkImageSubresourceLayers {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .layerCount = 1,
+      },
+      .extent = { dimensions.mWidth, dimensions.mHeight, 1 },
+    },
+  };
+
+  const auto dest = mImage.get();
+
+  VkImageMemoryBarrier inBarriers[] {
     VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
+      .srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT,
       .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
       .newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = interopImage,
-      .subresourceRange = {
+      .image = source,
+      .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+        .levelCount = 1,
+        .layerCount = 1,
       },
     },
     VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-      .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
       .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-      .image = swapchainImage,
-      .subresourceRange = {
+      .image = dest,
+      .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+        .levelCount = 1,
+        .layerCount = 1,
       },
     },
   };
 
-  vk->CmdPipelineBarrier(
-    vkCommandBuffer,
+  mVK->CmdPipelineBarrier(
+    commandBuffer,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    /* dependency flags = */ {},
-    /* memory barrier count = */ 0,
-    /* memory barriers = */ nullptr,
-    /* buffer barrier count = */ 0,
-    /* buffer barriers = */ nullptr,
-    /* image barrier count = */ std::size(inBarriers),
+    0,
+    0,
+    nullptr,
+    0,
+    nullptr,
+    std::size(inBarriers),
     inBarriers);
 
-  const auto& dirtyRects = br->mDirtyRects;
-  std::vector<VkImageCopy> regions;
-  regions.reserve(dirtyRects.size());
-  for (const auto& pixelRect: dirtyRects) {
-    // The interop layer is the 'destination', and the swapchain
-    // image should be identical, so, we use mDestRect for both
-    // source and dest
-    const RECT r = pixelRect;
-
-    regions.push_back(
-      VkImageCopy {
-        .srcSubresource = VkImageSubresourceLayers {
-          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-          .mipLevel = 0,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
-        },
-        .srcOffset = {r.left, r.top, 0},
-        .dstSubresource = VkImageSubresourceLayers {
-          .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-          .mipLevel = 0,
-          .baseArrayLayer = 0,
-          .layerCount = 1,
-        },
-        .dstOffset = {r.left, r.top, 0},
-        .extent = {static_cast<uint32_t>(r.right - r.left), static_cast<uint32_t>(r.bottom - r.top)},
-      }
-    );
-  }
-  vk->CmdCopyImage(
-    vkCommandBuffer,
-    interopImage,
+  mVK->CmdCopyImage(
+    commandBuffer,
+    source,
     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    swapchainImage,
+    dest,
     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-    regions.size(),
-    regions.data());
+    std::size(regions),
+    regions);
 
-  VkImageMemoryBarrier outBarriers[] = {
-    {
+  VkImageMemoryBarrier outBarriers[] {
+    VkImageMemoryBarrier {
       .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-      .srcAccessMask = 0,
-      .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+      .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
       .oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-      .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      .image = swapchainImage,
-      .subresourceRange = {
+      .newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+      .image = dest,
+      .subresourceRange = VkImageSubresourceRange {
         .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .levelCount = VK_REMAINING_MIP_LEVELS,
-        .layerCount = VK_REMAINING_ARRAY_LAYERS,
+        .levelCount = 1,
+        .layerCount = 1,
       },
     },
   };
-
-  // Wait for copy to be complete, then...
-  vk->CmdPipelineBarrier(
-    vkCommandBuffer,
+  mVK->CmdPipelineBarrier(
+    commandBuffer,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
     VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
-    /* dependency flags = */ {},
-    /* memory barrier count = */ 0,
-    /* memory barriers = */ nullptr,
-    /* buffer barrier count = */ 0,
-    /* buffer barriers = */ nullptr,
-    /* image barrier count = */ std::size(outBarriers),
+    0,
+    0,
+    nullptr,
+    0,
+    nullptr,
+    std::size(outBarriers),
     outBarriers);
-  check_vkresult(vk->EndCommandBuffer(vkCommandBuffer));
 
-  VkTimelineSemaphoreSubmitInfoKHR timelineSubmitInfo {
-    .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
-    .waitSemaphoreValueCount = 1,
-    .pWaitSemaphoreValues = &semaphoreValue,
+  check_vkresult(mVK->EndCommandBuffer(commandBuffer));
+
+  VkSemaphore waitSemaphores[] = {semaphore};
+  uint64_t waitSemaphoreValues[] = {semaphoreValueIn};
+
+  VkSemaphore signalSemaphores[] = {
+    semaphore,
+    mReadySemaphore.get(),
   };
+  const uint64_t signalSemaphoreValues[] = {
+    semaphoreValueOut,
+    ++mReadySemaphoreValue,
+  };
+
+  VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
+    .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
+    .waitSemaphoreValueCount = std::size(waitSemaphoreValues),
+    .pWaitSemaphoreValues = waitSemaphoreValues,
+    .signalSemaphoreValueCount = std::size(signalSemaphoreValues),
+    .pSignalSemaphoreValues = signalSemaphoreValues,
+  };
+
+  // TODO: is COPY_BIT enough?
   VkPipelineStageFlags semaphoreStages {VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
-  VkSemaphore waitSemaphores[] = {sr->mVKInteropSemaphore.get()};
+
   VkSubmitInfo submitInfo {
     .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-    .pNext = &timelineSubmitInfo,
+    .pNext = &semaphoreInfo,
     .waitSemaphoreCount = std::size(waitSemaphores),
     .pWaitSemaphores = waitSemaphores,
     .pWaitDstStageMask = &semaphoreStages,
     .commandBufferCount = 1,
-    .pCommandBuffers = &vkCommandBuffer,
+    .pCommandBuffers = &commandBuffer,
+    .signalSemaphoreCount = std::size(signalSemaphores),
+    .pSignalSemaphores = signalSemaphores,
   };
 
-  VkFence fences[] = {sr->mVKCompletionFence.get()};
-  check_vkresult(vk->ResetFences(dr->mVKDevice, std::size(fences), fences));
-  check_vkresult(vk->QueueSubmit(
-    dr->mVKQueue, 1, &submitInfo, sr->mVKCompletionFence.get()));
+  check_vkresult(mVK->QueueSubmit(queue, 1, &submitInfo, mCompletionFence));
 }
 
-}// namespace OpenKneeboard::SHM::Vulkan::Renderer
+void Texture::InitializeCacheImage() {
+  if (mImage) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Double-initializing cache image");
+  }
+  OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeCacheImages()");
+
+  const auto dimensions = this->GetDimensions();
+
+  static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
+  VkImageCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+    .imageType = VK_IMAGE_TYPE_2D,
+    .format = VK_FORMAT_B8G8R8A8_UNORM,
+    .extent = {dimensions.mWidth, dimensions.mHeight, 1},
+    .mipLevels = 1,
+    .arrayLayers = 1,
+    .samples = VK_SAMPLE_COUNT_1_BIT,
+    .tiling = VK_IMAGE_TILING_OPTIMAL,
+    .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
+      | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+    .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    .queueFamilyIndexCount = 1,
+    .pQueueFamilyIndices = &mQueueFamilyIndex,
+    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+  };
+
+  mImage = mVK->make_unique<VkImage>(mDevice, &createInfo, mAllocator);
+
+  VkMemoryRequirements memoryRequirements {};
+  mVK->GetImageMemoryRequirements(mDevice, mImage.get(), &memoryRequirements);
+
+  const auto memoryType = OpenKneeboard::Vulkan::FindMemoryType(
+    mVK,
+    mPhysicalDevice,
+    memoryRequirements.memoryTypeBits,
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  if (!memoryType) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
+  }
+
+  VkMemoryDedicatedAllocateInfoKHR dedicatedAllocInfo {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
+    .image = mImage.get(),
+  };
+
+  VkMemoryAllocateInfo allocInfo {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    .pNext = &dedicatedAllocInfo,
+    .allocationSize = memoryRequirements.size,
+    .memoryTypeIndex = *memoryType,
+  };
+
+  mImageMemory
+    = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
+
+  VkBindImageMemoryInfoKHR bindInfo {
+    .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
+    .image = mImage.get(),
+    .memory = mImageMemory.get(),
+  };
+
+  check_vkresult(mVK->BindImageMemory2KHR(mDevice, 1, &bindInfo));
+
+  VkImageViewCreateInfo viewCreateInfo {
+      .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+      .image = mImage.get(),
+      .viewType = VK_IMAGE_VIEW_TYPE_2D,
+      .format = VK_FORMAT_B8G8R8A8_UNORM,
+      .subresourceRange = VkImageSubresourceRange {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .levelCount = 1,
+        .layerCount = 1,
+      },
+    };
+
+  mImageView
+    = mVK->make_unique<VkImageView>(mDevice, &viewCreateInfo, mAllocator);
+}
+
+void Texture::InitializeReadySemaphore() {
+  if (mReadySemaphore) [[unlikely]] {
+    // destructor assumes this was called by destructor
+    OPENKNEEBOARD_LOG_AND_FATAL("Double-initializing semaphore");
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("Vulkan::Texture::InitializeReadySemaphore");
+
+  VkSemaphoreTypeCreateInfoKHR typeCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR,
+    .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR,
+  };
+
+  VkSemaphoreCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    .pNext = &typeCreateInfo,
+  };
+
+  mReadySemaphore
+    = mVK->make_unique<VkSemaphore>(mDevice, &createInfo, mAllocator);
+}
+
+CachedReader::CachedReader(ConsumerKind consumerKind)
+  : SHM::CachedReader(this, consumerKind) {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::CachedReader()");
+}
+
+CachedReader::~CachedReader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::~CachedReader()");
+
+  this->InitializeCache(0);
+
+  mVK->FreeCommandBuffers(
+    mDevice,
+    mCommandPool.get(),
+    static_cast<uint32_t>(mCommandBuffers.size()),
+    mCommandBuffers.data());
+}
+
+void CachedReader::InitializeCache(
+  OpenKneeboard::Vulkan::Dispatch* dispatch,
+  VkInstance instance,
+  VkDevice device,
+  VkPhysicalDevice physicalDevice,
+  uint32_t queueFamilyIndex,
+  uint32_t queueIndex,
+  const VkAllocationCallbacks* allocator,
+  uint8_t swapchainLength) {
+  mVK = dispatch;
+
+  mInstance = instance;
+  mDevice = device;
+  mPhysicalDevice = physicalDevice;
+  mAllocator = allocator;
+  mQueueFamilyIndex = queueFamilyIndex;
+
+  mVK->GetDeviceQueue(mDevice, queueFamilyIndex, queueIndex, &mQueue);
+
+  this->InitializeCache(swapchainLength);
+}
+
+void CachedReader::InitializeCache(uint8_t swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::Vulkan::CachedReader::InitializeCache()",
+    TraceLoggingValue(swapchainLength, "swapchainLength"));
+
+  if (!mCompletionFences.empty()) {
+    std::vector<VkFence> fences;
+    for (const auto& fence: mCompletionFences) {
+      fences.push_back(fence.get());
+    }
+    mVK->WaitForFences(mDevice, fences.size(), fences.data(), true, ~(0ui64));
+  }
+
+  if (swapchainLength == 0) {
+    mIPCSemaphores.clear();
+    mIPCImages.clear();
+    SHM::CachedReader::InitializeCache(0);
+    return;
+  }
+
+  if (!mCommandPool) {
+    VkCommandPoolCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+      .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT
+        | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+      .queueFamilyIndex = mQueueFamilyIndex,
+    };
+    mCommandPool
+      = mVK->make_unique<VkCommandPool>(mDevice, &createInfo, mAllocator);
+  }
+
+  if (swapchainLength > mCommandBuffers.size()) {
+    const auto oldLength = mCommandBuffers.size();
+    VkCommandBufferAllocateInfo allocInfo {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .commandPool = mCommandPool.get(),
+      .commandBufferCount = static_cast<uint32_t>(swapchainLength - oldLength),
+    };
+    mCommandBuffers.resize(swapchainLength);
+    check_vkresult(mVK->AllocateCommandBuffers(
+      mDevice, &allocInfo, &mCommandBuffers.at(oldLength)));
+  }
+
+  {
+    VkFenceCreateInfo createInfo {
+      .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+      .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+    };
+    for (uint8_t i = mCompletionFences.size(); i < swapchainLength; ++i) {
+      mCompletionFences.push_back(
+        mVK->make_unique<VkFence>(mDevice, &createInfo, mAllocator));
+    };
+  }
+
+  mIPCSemaphores.clear();
+  mIPCImages.clear();
+
+  SHM::CachedReader::InitializeCache(swapchainLength);
+}
+
+void CachedReader::Copy(
+  HANDLE sourceHandle,
+  IPCClientTexture* destinationTexture,
+  HANDLE semaphoreHandle,
+  uint64_t semaphoreValueIn,
+  uint64_t semaphoreValueOut) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::Copy()");
+
+  const auto swapchainIndex = destinationTexture->GetSwapchainIndex();
+
+  auto dimensions = destinationTexture->GetDimensions();
+
+  auto source = this->GetIPCImage(sourceHandle, dimensions);
+  auto semaphore = this->GetIPCSemaphore(semaphoreHandle);
+
+  auto fence = mCompletionFences.at(swapchainIndex).get();
+  check_vkresult(mVK->WaitForFences(mDevice, 1, &fence, true, ~(0ui64)));
+  check_vkresult(mVK->ResetFences(mDevice, 1, &fence));
+
+  reinterpret_cast<Texture*>(destinationTexture)
+    ->CopyFrom(
+      mQueue,
+      mCommandBuffers.at(swapchainIndex),
+      source,
+      semaphore,
+      semaphoreValueIn,
+      semaphoreValueOut);
+}
+
+std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::Vulkan::CachedReader::CreateIPCClientTexture()");
+  return std::make_shared<Texture>(
+    mVK,
+    mPhysicalDevice,
+    mDevice,
+    mQueueFamilyIndex,
+    mAllocator,
+    mCompletionFences.at(swapchainIndex).get(),
+    dimensions,
+    swapchainIndex);
+}
+
+InstanceCreateInfo::InstanceCreateInfo(const VkInstanceCreateInfo& base)
+  : ExtendedCreateInfo(base, CachedReader::REQUIRED_INSTANCE_EXTENSIONS) {
+}
+
+DeviceCreateInfo::DeviceCreateInfo(const VkDeviceCreateInfo& base)
+  : ExtendedCreateInfo(base, CachedReader::REQUIRED_DEVICE_EXTENSIONS) {
+  bool enabledTimelineSemaphores = false;
+
+  for (auto next = reinterpret_cast<const VkBaseOutStructure*>(pNext); next;
+       next = next->pNext) {
+    auto mut = const_cast<VkBaseOutStructure*>(next);
+    switch (next->sType) {
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES: {
+        auto it = reinterpret_cast<VkPhysicalDeviceVulkan12Features*>(mut);
+        it->timelineSemaphore = true;
+        enabledTimelineSemaphores = true;
+        continue;
+      }
+      case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES_KHR: {
+        auto it
+          = reinterpret_cast<VkPhysicalDeviceTimelineSemaphoreFeaturesKHR*>(
+            mut);
+        it->timelineSemaphore = true;
+        enabledTimelineSemaphores = true;
+        continue;
+      }
+    }
+  }
+
+  if (!enabledTimelineSemaphores) {
+    auto it = &mTimelineSemaphores;
+    it->timelineSemaphore = true;
+    it->pNext = const_cast<void*>(pNext);
+    pNext = it;
+  }
+}
+
+VkSemaphore CachedReader::GetIPCSemaphore(HANDLE handle) {
+  if (mIPCSemaphores.contains(handle)) {
+    return mIPCSemaphores.at(handle).get();
+  }
+  OPENKNEEBOARD_TraceLoggingScope("Vulkan::CachedReader::GetIPCSemaphore");
+
+  VkSemaphoreTypeCreateInfoKHR typeCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR,
+    .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE_KHR,
+  };
+
+  VkSemaphoreCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+    .pNext = &typeCreateInfo,
+  };
+
+  auto uniqueSemaphore
+    = mVK->make_unique<VkSemaphore>(mDevice, &createInfo, mAllocator);
+
+  VkImportSemaphoreWin32HandleInfoKHR importInfo {
+    .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR,
+    .semaphore = uniqueSemaphore.get(),
+    .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D11_FENCE_BIT,
+    .handle = handle,
+  };
+
+  check_vkresult(mVK->ImportSemaphoreWin32HandleKHR(mDevice, &importInfo));
+
+  const auto ret = uniqueSemaphore.get();
+  mIPCSemaphores.emplace(handle, std::move(uniqueSemaphore));
+  return ret;
+}
+
+VkImage CachedReader::GetIPCImage(HANDLE handle, const PixelSize& dimensions) {
+  if (mIPCImages.contains(handle)) {
+    const auto& data = mIPCImages.at(handle);
+    if (data.mDimensions != dimensions) [[unlikely]] {
+      OPENKNEEBOARD_LOG_AND_FATAL(
+        "Reported dimensions of image handle have changed");
+    }
+    return data.mImage.get();
+  }
+  OPENKNEEBOARD_TraceLoggingScope("Vulkan::CachedReader::GetIPCImage()");
+
+  VkExternalMemoryImageCreateInfoKHR externalCreateInfo {
+    .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO_KHR,
+    .handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT_KHR,
+  };
+
+  static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
+  VkImageCreateInfo createInfo {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+    .pNext = &externalCreateInfo,
+    .flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT,
+    .imageType = VK_IMAGE_TYPE_2D,
+    .format = VK_FORMAT_B8G8R8A8_UNORM,
+    .extent = {dimensions.mWidth, dimensions.mHeight, 1},
+    .mipLevels = 1,
+    .arrayLayers = 1,
+    .samples = VK_SAMPLE_COUNT_1_BIT,
+    .tiling = VK_IMAGE_TILING_OPTIMAL,
+    .usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+    .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+    .queueFamilyIndexCount = 1,
+    .pQueueFamilyIndices = &mQueueFamilyIndex,
+    .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+  };
+
+  auto image = mVK->make_unique<VkImage>(mDevice, &createInfo, mAllocator);
+
+  VkImageMemoryRequirementsInfo2KHR memoryInfo {
+    .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_REQUIREMENTS_INFO_2_KHR,
+    .image = image.get(),
+  };
+
+  VkMemoryRequirements2KHR memoryRequirements {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2_KHR,
+  };
+
+  mVK->GetImageMemoryRequirements2KHR(
+    mDevice, &memoryInfo, &memoryRequirements);
+
+  VkMemoryWin32HandlePropertiesKHR handleProperties {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_WIN32_HANDLE_PROPERTIES_KHR,
+  };
+
+  check_vkresult(mVK->GetMemoryWin32HandlePropertiesKHR(
+    mDevice,
+    VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT_KHR,
+    handle,
+    &handleProperties));
+
+  const auto memoryType = OpenKneeboard::Vulkan::FindMemoryType(
+    mVK,
+    mPhysicalDevice,
+    handleProperties.memoryTypeBits,
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+  if (!memoryType) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Unable to find suitable memoryType");
+  }
+
+  VkImportMemoryWin32HandleInfoKHR importInfo {
+    .sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_WIN32_HANDLE_INFO_KHR,
+    .handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_D3D11_TEXTURE_BIT_KHR,
+    .handle = handle,
+  };
+
+  VkMemoryDedicatedAllocateInfoKHR dedicatedAllocInfo {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO_KHR,
+    .pNext = &importInfo,
+    .image = image.get(),
+  };
+
+  VkMemoryAllocateInfo allocInfo {
+    .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+    .pNext = &dedicatedAllocInfo,
+    .allocationSize = memoryRequirements.memoryRequirements.size,
+    .memoryTypeIndex = *memoryType,
+  };
+
+  auto memory
+    = mVK->make_unique<VkDeviceMemory>(mDevice, &allocInfo, mAllocator);
+
+  VkBindImageMemoryInfoKHR bindInfo {
+    .sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_INFO_KHR,
+    .image = image.get(),
+    .memory = memory.get(),
+  };
+
+  check_vkresult(mVK->BindImageMemory2KHR(mDevice, 1, &bindInfo));
+
+  const auto ret = image.get();
+  mIPCImages.emplace(
+    handle, IPCImage {std::move(memory), std::move(image), dimensions});
+  return ret;
+}
+
+Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
+  RenderDoc::NestedFrameCapture renderDocFrame(
+    mInstance, "SHM::Vulkan::MaybeGet()");
+  return SHM::CachedReader::MaybeGet(loc);
+}
+
+};// namespace OpenKneeboard::SHM::Vulkan

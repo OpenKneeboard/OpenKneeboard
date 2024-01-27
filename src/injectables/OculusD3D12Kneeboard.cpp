@@ -44,7 +44,7 @@ OculusD3D12Kneeboard::~OculusD3D12Kneeboard() {
 }
 
 SHM::CachedReader* OculusD3D12Kneeboard::GetSHM() {
-  return mSHM.get();
+  return &mSHM;
 }
 
 void OculusD3D12Kneeboard::UninstallHook() {
@@ -55,9 +55,7 @@ void OculusD3D12Kneeboard::UninstallHook() {
 ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   ovrSession session,
   const PixelSize& size) {
-  auto dr = mDeviceResources.get();
-  if (!dr) {
-    OPENKNEEBOARD_BREAK;
+  if (!mDevice) {
     return nullptr;
   }
 
@@ -79,7 +77,7 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
   auto ovr = OVRProxy::Get();
 
   ovr->ovr_CreateTextureSwapChainDX(
-    session, dr->mD3D12CommandQueue.get(), &kneeboardSCD, &swapChain);
+    session, mCommandQueue.get(), &kneeboardSCD, &swapChain);
   if (!swapChain) {
     OPENKNEEBOARD_BREAK;
     return nullptr;
@@ -92,17 +90,31 @@ ovrTextureSwapChain OculusD3D12Kneeboard::CreateSwapChain(
     return nullptr;
   }
 
-  std::vector<ID3D12Resource*> textures;
-  textures.reserve(length);
+  DirectX::DescriptorHeap rtvHeap {
+    mDevice.get(),
+    D3D12_DESCRIPTOR_HEAP_TYPE_RTV,
+    D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+    static_cast<size_t>(length),
+  };
+
+  std::vector<SwapchainBufferResources> buffers;
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D12Resource> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
-    textures.push_back(texture.get());
+    buffers.push_back({
+      mDevice.get(),
+      texture.get(),
+      rtvHeap.GetCpuHandle(i),
+      DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
+    });
   }
 
-  mSwapchainResources[swapChain] = std::make_unique<SwapchainResources>(
-    dr, DXGI_FORMAT_B8G8R8A8_UNORM, textures.size(), textures.data());
+  mSwapchain = SwapchainResources {
+    size,
+    std::move(rtvHeap),
+    std::move(buffers),
+  };
 
   return swapChain;
 }
@@ -111,18 +123,18 @@ void OculusD3D12Kneeboard::RenderLayers(
   ovrTextureSwapChain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerCount,
-  SHM::LayerSprite* layers) {
-  auto dr = mDeviceResources.get();
-  auto sr = mSwapchainResources.at(swapchain).get();
+  const PixelRect* const destRects,
+  const float* const opacities) {
+  OPENKNEEBOARD_TraceLoggingScope("OculusD3D12Kneeboard::RenderLayers()");
 
-  namespace R = SHM::D3D12::Renderer;
-
-  R::BeginFrame(dr, sr, swapchainTextureIndex);
-  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(
-    dr, sr, swapchainTextureIndex, *mSHM.get(), snapshot, layerCount, layers);
-  R::EndFrame(dr, sr, swapchainTextureIndex);
+  mRenderer->RenderLayers(
+    *mSwapchain,
+    swapchainTextureIndex,
+    snapshot,
+    snapshot.GetLayerCount(),
+    destRects,
+    opacities,
+    RenderMode::Overlay);
 }
 
 void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
@@ -130,41 +142,32 @@ void OculusD3D12Kneeboard::OnID3D12CommandQueue_ExecuteCommandLists(
   UINT NumCommandLists,
   ID3D12CommandList* const* ppCommandLists,
   const decltype(&ID3D12CommandQueue::ExecuteCommandLists)& next) {
-  if (mDeviceResources) {
+  if (mSwapchain) {
     mExecuteCommandListsHook.UninstallHook();
     return std::invoke(next, this_, NumCommandLists, ppCommandLists);
   }
 
   auto commandQueue = this_;
+  mCommandQueue.copy_from(commandQueue);
 
   winrt::com_ptr<ID3D12Device> device;
   winrt::check_hresult(this_->GetDevice(IID_PPV_ARGS(device.put())));
   if (device && commandQueue) {
     dprint("Got a D3D12 device and command queue");
-    if (!mSHM) {
-      mSHM = std::make_unique<SHM::D3D12::CachedReader>(device.get());
-    }
   } else {
     OPENKNEEBOARD_BREAK;
   }
+
+  mRenderer = std::make_unique<D3D12::Renderer>(
+    device.get(), commandQueue, DXGI_FORMAT_B8G8R8A8_UNORM);
 
   auto cqDesc = commandQueue->GetDesc();
   if (cqDesc.Type != D3D12_COMMAND_LIST_TYPE_DIRECT) {
     return std::invoke(next, this_, NumCommandLists, ppCommandLists);
   }
-  dprint("Got a D3D12_COMMAND_LIST_TYPE_DIRECT");
-  mDeviceResources
-    = std::make_unique<DeviceResources>(device.get(), commandQueue);
 
   mExecuteCommandListsHook.UninstallHook();
   return std::invoke(next, this_, NumCommandLists, ppCommandLists);
-}
-
-winrt::com_ptr<ID3D11Device> OculusD3D12Kneeboard::GetD3D11Device() {
-  if (!mDeviceResources) {
-    return {};
-  }
-  return mDeviceResources->mD3D11Device;
 }
 
 }// namespace OpenKneeboard

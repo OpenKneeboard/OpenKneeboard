@@ -22,6 +22,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/SHM.h>
 
 #include <OpenKneeboard/config.h>
@@ -41,7 +42,6 @@
 namespace OpenKneeboard {
 class CursorEvent;
 class CursorRenderer;
-class KneeboardState;
 class ITab;
 class ToolbarAction;
 struct GameInstance;
@@ -61,7 +61,9 @@ class InterprocessRenderer final
 
  private:
   InterprocessRenderer();
-  void Init(const DXResources&, KneeboardState*);
+  // Split out from the constructor so that `shared_from_this()` is valid
+  // when invoked
+  void Initialize(const DXResources&, KneeboardState*);
 
   // If we replace the shared_ptr while a draw is in progress,
   // we need to delay things a little
@@ -77,36 +79,44 @@ class InterprocessRenderer final
 
   bool mNeedsRepaint = true;
 
-  winrt::com_ptr<ID3D11Fence> mFence;
-  winrt::handle mFenceHandle;
   std::atomic_flag mRendering;
 
-  struct SharedTextureResources {
-    winrt::com_ptr<ID3D11RenderTargetView> mTextureRTV;
+  struct IPCTextureResources {
     winrt::com_ptr<ID3D11Texture2D> mTexture;
-    winrt::handle mSharedHandle;
+    winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
+
+    winrt::handle mTextureHandle;
+    PixelSize mTextureSize;
+
+    winrt::com_ptr<ID3D11Fence> mFence;
+    winrt::handle mFenceHandle;
+    bool mNewFence {true};
+
+    D3D11_VIEWPORT mViewport {};
   };
 
-  struct Layer {
-    SHM::LayerConfig mConfig;
-    std::shared_ptr<IKneeboardView> mKneeboardView;
+  std::array<IPCTextureResources, TextureCount> mIPCSwapchain;
 
-    std::shared_ptr<RenderTarget> mCanvas;
-    winrt::com_ptr<ID3D11ShaderResourceView> mCanvasSRV;
+  IPCTextureResources* GetIPCTextureResources(
+    uint8_t textureIndex,
+    const PixelSize&);
 
-    std::array<SharedTextureResources, TextureCount> mSharedResources;
+  std::shared_ptr<RenderTarget> mCanvas;
+  PixelSize mCanvasSize;
 
-    bool mIsActiveForInput = false;
-  };
-  std::array<Layer, MaxLayers> mLayers;
+  void InitializeCanvas(const PixelSize&);
 
   std::shared_ptr<GameInstance> mCurrentGame;
 
   void MarkDirty();
-  void RenderNow();
-  void Render(Layer&);
+  void RenderNow() noexcept;
+  SHM::LayerConfig RenderLayer(
+    const ViewRenderInfo&,
+    const PixelRect& bounds) noexcept;
 
-  void Commit(uint8_t layerCount) noexcept;
+  void SubmitFrame(
+    const std::vector<SHM::LayerConfig>&,
+    uint64_t inputLayerID) noexcept;
 
   void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 };

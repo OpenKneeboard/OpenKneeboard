@@ -19,19 +19,23 @@
  */
 #pragma once
 
-#include <OpenKneeboard/SHM.h>
+#include <string>
 
-namespace OpenKneeboard::SHM::GFXInterop {
+namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch::Detail {
 
-class LayerTextureCache : public SHM::LayerTextureCache {
- public:
-  using SHM::LayerTextureCache::LayerTextureCache;
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-SpriteBatch-SPIRV-PS.h>
+#include <OpenKneeboard/Shaders/gen/OpenKneeboard-SpriteBatch-SPIRV-VS.h>
 
-  virtual ~LayerTextureCache();
-  HANDLE GetNTHandle();
+}// namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch::Detail
 
- private:
-  winrt::handle mNTHandle;
-};
+namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch {
 
-};// namespace OpenKneeboard::SHM::GFXInterop
+constexpr std::basic_string_view<unsigned char> PS {
+  Detail::g_SpritePixelShader,
+  std::size(Detail::g_SpritePixelShader)};
+
+constexpr std::basic_string_view<unsigned char> VS {
+  Detail::g_SpriteVertexShader,
+  std::size(Detail::g_SpriteVertexShader)};
+
+}// namespace OpenKneeboard::Shaders::SPIRV::SpriteBatch

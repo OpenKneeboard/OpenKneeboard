@@ -21,89 +21,67 @@
 
 #include <OpenKneeboard/SHM.h>
 
-#include <directxtk/SpriteBatch.h>
+#include <shims/winrt/base.h>
+
+#include <d3d11_4.h>
 
 namespace OpenKneeboard::SHM::D3D11 {
 
-class LayerTextureCache : public SHM::LayerTextureCache {
+class Texture final : public SHM::IPCClientTexture {
  public:
-  using SHM::LayerTextureCache::LayerTextureCache;
+  Texture() = delete;
+  Texture(
+    const PixelSize&,
+    uint8_t swapchainIndex,
+    const winrt::com_ptr<ID3D11Device5>&,
+    const winrt::com_ptr<ID3D11DeviceContext4>&);
+  virtual ~Texture();
 
-  virtual ~LayerTextureCache();
-  ID3D11ShaderResourceView* GetD3D11ShaderResourceView();
+  ID3D11Texture2D* GetD3D11Texture() const noexcept;
+  ID3D11ShaderResourceView* GetD3D11ShaderResourceView() noexcept;
+
+  void CopyFrom(
+    ID3D11Texture2D* texture,
+    ID3D11Fence* fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept;
 
  private:
-  winrt::com_ptr<ID3D11ShaderResourceView> mD3D11ShaderResourceView;
+  winrt::com_ptr<ID3D11Device5> mDevice;
+  winrt::com_ptr<ID3D11DeviceContext4> mContext;
+
+  winrt::com_ptr<ID3D11Texture2D> mCacheTexture;
+  winrt::com_ptr<ID3D11ShaderResourceView> mCacheShaderResourceView;
 };
 
-class CachedReader : public SHM::CachedReader {
+class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
  public:
-  using SHM::CachedReader::CachedReader;
+  CachedReader() = delete;
+  CachedReader(ConsumerKind);
+  virtual ~CachedReader();
+
+  void InitializeCache(ID3D11Device*, uint8_t swapchainLength);
 
  protected:
-  virtual std::shared_ptr<SHM::LayerTextureCache> CreateLayerTextureCache(
-    uint8_t layerIndex,
-    const winrt::com_ptr<ID3D11Texture2D>&) override;
+  virtual void Copy(
+    HANDLE sourceTexture,
+    IPCClientTexture* destinationTexture,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept override;
+
+  virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
+    const PixelSize&,
+    uint8_t swapchainIndex) noexcept override;
+
+  winrt::com_ptr<ID3D11Device5> mDevice;
+  winrt::com_ptr<ID3D11DeviceContext4> mDeviceContext;
+
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D11Fence>> mIPCFences;
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D11Texture2D>> mIPCTextures;
+
+  ID3D11Fence* GetIPCFence(HANDLE) noexcept;
+  ID3D11Texture2D* GetIPCTexture(HANDLE) noexcept;
 };
 
-// Usage:
-// - create DeviceResources and SwapchainResources
-// - Call BeginFrame(), Render() [, Render(), ...], EndFrame()
-// - Optionally call ClearRenderTargetView() after BeginFrame(), depending on
-// your needs.
-namespace Renderer {
-struct DeviceResources {
-  DeviceResources() = delete;
-  DeviceResources(ID3D11Device*);
-
-  winrt::com_ptr<ID3D11Device> mD3D11Device;
-  winrt::com_ptr<ID3D11DeviceContext> mD3D11ImmediateContext;
-
-  std::unique_ptr<DirectX::DX11::SpriteBatch> mDXTKSpriteBatch;
-};
-
-struct SwapchainResources {
-  SwapchainResources() = delete;
-  SwapchainResources(
-    DeviceResources*,
-    DXGI_FORMAT renderTargetViewFormat,
-    size_t textureCount,
-    ID3D11Texture2D** textures);
-
-  D3D11_VIEWPORT mViewport;
-
-  struct BufferResources {
-    winrt::com_ptr<ID3D11Texture2D> m3D11Texture;
-    winrt::com_ptr<ID3D11RenderTargetView> mD3D11RenderTargetView;
-  };
-
-  std::vector<std::unique_ptr<BufferResources>> mBufferResources;
-};
-
-void BeginFrame(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex);
-
-void ClearRenderTargetView(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex);
-
-void Render(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex,
-  const SHM::D3D11::CachedReader&,
-  const SHM::Snapshot&,
-  size_t layerSpriteCount,
-  LayerSprite* layerSprites);
-
-void EndFrame(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex);
-
-}// namespace Renderer
-
-};// namespace OpenKneeboard::SHM::D3D11
+}// namespace OpenKneeboard::SHM::D3D11

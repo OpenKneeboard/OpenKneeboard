@@ -34,9 +34,15 @@ struct D2DErrorRenderer::Impl final {
 };
 
 D2DErrorRenderer::D2DErrorRenderer(const DXResources& dxr)
+  : D2DErrorRenderer(dxr.mDWriteFactory.get(), dxr.mBlackBrush.get()) {
+}
+
+D2DErrorRenderer::D2DErrorRenderer(
+  IDWriteFactory* dwrite,
+  ID2D1SolidColorBrush* brush)
   : p(std::make_unique<Impl>()) {
-  p->mDWrite = dxr.mDWriteFactory;
-  p->mTextBrush = dxr.mBlackBrush;
+  p->mDWrite.copy_from(dwrite);
+  p->mTextBrush.copy_from(brush);
 }
 
 D2DErrorRenderer::~D2DErrorRenderer() {
@@ -58,7 +64,7 @@ void D2DErrorRenderer::Render(
 
   winrt::com_ptr<IDWriteTextFormat> textFormat;
 
-  p->mDWrite->CreateTextFormat(
+  winrt::check_hresult(p->mDWrite->CreateTextFormat(
     VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
@@ -66,7 +72,7 @@ void D2DErrorRenderer::Render(
     DWRITE_FONT_STRETCH_NORMAL,
     canvasHeight * 0.05f,
     L"",
-    textFormat.put());
+    textFormat.put()));
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
   winrt::check_hresult(p->mDWrite->CreateTextLayout(
@@ -79,7 +85,7 @@ void D2DErrorRenderer::Render(
   textLayout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   textLayout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 
-  ctx->DrawTextLayout({0.0f, 0.0f}, textLayout.get(), brush);
+  ctx->DrawTextLayout({where.left, where.top}, textLayout.get(), brush);
 }
 
 }// namespace OpenKneeboard

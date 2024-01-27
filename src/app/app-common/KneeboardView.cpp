@@ -299,7 +299,7 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
   const bool haveViewer
     = (now - consumers.mViewer) < std::chrono::milliseconds(500);
 
-  if (haveVR) {
+  if (true || haveVR) {
     return idealSize.ScaledToFit({TextureWidth, TextureHeight});
   }
 

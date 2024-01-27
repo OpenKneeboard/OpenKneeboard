@@ -28,11 +28,13 @@
 #include <OpenKneeboard/InterprocessRenderer.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/Spriting.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/ToolbarAction.h>
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/weak_wrap.h>
 
 #include <mutex>
@@ -76,53 +78,64 @@ static SHM::ConsumerPattern GetConsumerPatternForGame(
   }
 }
 
-void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
+void InterprocessRenderer::SubmitFrame(
+  const std::vector<SHM::LayerConfig>& shmLayers,
+  uint64_t inputLayerID) noexcept {
   if (!mSHM) {
     return;
   }
 
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "InterprocessRenderer::SubmitFrame()");
+
+  const auto layerCount = shmLayers.size();
   const auto tint = mKneeboard->GetAppSettings().mTint;
-
-  const std::unique_lock dxLock(mDXR);
-  const std::unique_lock shmLock(mSHM);
-
-  std::vector<SHM::LayerConfig> shmLayers;
-
-  auto ctx = mDXR.mD3DImmediateContext.get();
-
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-    auto& layer = mLayers.at(layerIndex);
-    auto& it = layer.mSharedResources.at(mSHM.GetNextTextureIndex());
-
-    if (tint.mEnabled) {
-      D3D11::CopyTextureWithTint(
-        mDXR.mD3DDevice.get(),
-        layer.mCanvasSRV.get(),
-        it.mTextureRTV.get(),
-        {
-          tint.mRed * tint.mBrightness,
-          tint.mGreen * tint.mBrightness,
-          tint.mBlue * tint.mBrightness,
-          /* alpha = */ 1.0f,
-        });
-    } else {
-      auto layerD3D = layer.mCanvas->d3d();
-      D3D11_BOX box {
-        0,
-        0,
-        0,
-        layer.mConfig.mImageWidth,
-        layer.mConfig.mImageHeight,
-        1,
-      };
-      ctx->CopySubresourceRegion(
-        it.mTexture.get(), 0, 0, 0, 0, layerD3D.texture(), 0, &box);
-    }
-    shmLayers.push_back(layer.mConfig);
+  auto tintColor = DirectX::Colors::White;
+  if (tint.mEnabled) {
+    tintColor = {
+      tint.mRed * tint.mBrightness,
+      tint.mGreen * tint.mBrightness,
+      tint.mBlue * tint.mBrightness,
+      /* alpha = */ 1.0f,
+    };
   }
 
-  const auto seq = mSHM.GetNextSequenceNumber();
-  winrt::check_hresult(ctx->Signal(mFence.get(), seq));
+  auto ctx = mDXR.mD3DImmediateContext.get();
+  const D3D11_BOX srcBox {
+    0,
+    0,
+    0,
+    static_cast<UINT>(mCanvasSize.mWidth),
+    static_cast<UINT>(mCanvasSize.mHeight),
+    1,
+  };
+
+  auto srcTexture = mCanvas->d3d().texture();
+
+  TraceLoggingWriteTagged(activity, "AcquireSHMLock/start");
+  const std::unique_lock shmLock(mSHM);
+  TraceLoggingWriteTagged(activity, "AcquireSHMLock/stop");
+
+  auto ipcTextureInfo = mSHM.BeginFrame();
+  auto destResources
+    = this->GetIPCTextureResources(ipcTextureInfo.mTextureIndex, mCanvasSize);
+
+  auto fence = destResources->mFence.get();
+  {
+    OPENKNEEBOARD_TraceLoggingScope(
+      "CopyFromCanvas",
+      TraceLoggingValue(ipcTextureInfo.mTextureIndex, "TextureIndex"),
+      TraceLoggingValue(ipcTextureInfo.mFenceIn, "FenceIn"),
+      TraceLoggingValue(ipcTextureInfo.mFenceOut, "FenceOut"));
+    if (destResources->mNewFence) {
+      destResources->mNewFence = false;
+    } else {
+      winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
+    }
+    ctx->CopySubresourceRegion(
+      destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
+    winrt::check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
+  }
 
   SHM::Config config {
     .mGlobalInputLayerID = mKneeboard->GetActiveViewForGlobalInput()
@@ -131,16 +144,116 @@ void InterprocessRenderer::Commit(uint8_t layerCount) noexcept {
     .mVR = mKneeboard->GetVRSettings(),
     .mFlat = mKneeboard->GetNonVRSettings(),
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
+    .mTextureSize = destResources->mTextureSize,
   };
 
-  mSHM.Update(config, shmLayers, mFenceHandle.get());
+  {
+    OPENKNEEBOARD_TraceLoggingScope("SHMSubmitFrame");
+    mSHM.SubmitFrame(
+      config,
+      shmLayers,
+      destResources->mTextureHandle.get(),
+      destResources->mFenceHandle.get());
+  }
+}
+
+void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
+  if (mCanvasSize == size) {
+    return;
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer::InitializeCanvas()");
+
+  D3D11_TEXTURE2D_DESC desc {
+    .Width = static_cast<UINT>(size.mWidth),
+    .Height = static_cast<UINT>(size.mHeight),
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+  };
+
+  auto device = mDXR.mD3DDevice.get();
+
+  winrt::com_ptr<ID3D11Texture2D> texture;
+  winrt::check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
+  mCanvas = RenderTarget::Create(mDXR, texture);
+  mCanvasSize = size;
+}
+
+InterprocessRenderer::IPCTextureResources*
+InterprocessRenderer::GetIPCTextureResources(
+  uint8_t textureIndex,
+  const PixelSize& size) {
+  auto& ret = mIPCSwapchain.at(textureIndex);
+  if (ret.mTextureSize == size) [[likely]] {
+    return &ret;
+  }
+
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity,
+    "InterprocessRenderer::GetIPCTextureResources:",
+    TraceLoggingValue(textureIndex, "textureIndex"),
+    TraceLoggingValue(size.mWidth, "width"),
+    TraceLoggingValue(size.mHeight, "height"));
+
+  auto previousResources = std::move(ret);
+
+  ret = {};
+
+  auto device = mDXR.mD3DDevice.get();
+
+  D3D11_TEXTURE2D_DESC textureDesc {
+    .Width = static_cast<UINT>(size.mWidth),
+    .Height = static_cast<UINT>(size.mHeight),
+    .MipLevels = 1,
+    .ArraySize = 1,
+    .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
+    .SampleDesc = {1, 0},
+    .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+    .MiscFlags
+    = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
+  };
+
+  winrt::check_hresult(
+    device->CreateTexture2D(&textureDesc, nullptr, ret.mTexture.put()));
+  winrt::check_hresult(device->CreateRenderTargetView(
+    ret.mTexture.get(), nullptr, ret.mRenderTargetView.put()));
+  winrt::check_hresult(ret.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+    nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, ret.mTextureHandle.put()));
+
+  if (previousResources.mFence) {
+    TraceLoggingWriteTagged(activity, "Re-using existing fence");
+    ret.mFence = std::move(previousResources.mFence);
+    ret.mFenceHandle = std::move(previousResources.mFenceHandle);
+    ret.mNewFence = false;
+  } else {
+    TraceLoggingWriteTagged(activity, "Creating new fence");
+    winrt::check_hresult(device->CreateFence(
+      0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(ret.mFence.put())));
+    winrt::check_hresult(ret.mFence->CreateSharedHandle(
+      nullptr, GENERIC_ALL, nullptr, ret.mFenceHandle.put()));
+  }
+
+  ret.mViewport = {
+    0,
+    0,
+    static_cast<FLOAT>(size.mWidth),
+    static_cast<FLOAT>(size.mHeight),
+    0.0f,
+    1.0f,
+  };
+  ret.mTextureSize = size;
+
+  return &ret;
 }
 
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
   auto ret = shared_with_final_release(new InterprocessRenderer());
-  ret->Init(dxr, kneeboard);
+  ret->Initialize(dxr, kneeboard);
   return ret;
 }
 
@@ -156,7 +269,7 @@ InterprocessRenderer::InterprocessRenderer() : mInstanceLock(sSingleInstance) {
   dprint(__FUNCTION__);
 }
 
-void InterprocessRenderer::Init(
+void InterprocessRenderer::Initialize(
   const DXResources& dxr,
   KneeboardState* kneeboard) {
   auto currentGame = kneeboard->GetCurrentGame();
@@ -166,49 +279,6 @@ void InterprocessRenderer::Init(
 
   mDXR = dxr;
   mKneeboard = kneeboard;
-
-  const std::unique_lock d2dLock(mDXR);
-  {
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    dxr.mD3DDevice->GetImmediateContext(ctx.put());
-
-    winrt::check_hresult(dxr.mD3DDevice->CreateFence(
-      0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
-    winrt::check_hresult(mFence->CreateSharedHandle(
-      nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, mFenceHandle.put()));
-  }
-
-  for (auto& layer: mLayers) {
-    winrt::com_ptr<ID3D11Texture2D> canvasTexture {
-      SHM::CreateCompatibleTexture(dxr.mD3DDevice.get())};
-
-    winrt::check_hresult(dxr.mD3DDevice->CreateShaderResourceView(
-      canvasTexture.get(), nullptr, layer.mCanvasSRV.put()));
-
-    layer.mCanvas = RenderTarget::Create(mDXR, canvasTexture);
-  }
-
-  const auto sessionID = mSHM.GetSessionID();
-  for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
-    auto& layer = mLayers.at(layerIndex);
-    for (uint8_t bufferIndex = 0; bufferIndex < TextureCount; ++bufferIndex) {
-      auto& resources = layer.mSharedResources.at(bufferIndex);
-      resources.mTexture = SHM::CreateCompatibleTexture(
-        dxr.mD3DDevice.get(),
-        SHM::DEFAULT_D3D11_BIND_FLAGS,
-        D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED);
-      winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
-        resources.mTexture.get(), nullptr, resources.mTextureRTV.put()));
-      const auto textureName
-        = mSHM.GetSharedTextureName(layerIndex, bufferIndex);
-      winrt::check_hresult(
-        resources.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
-          nullptr,
-          DXGI_SHARED_RESOURCE_READ,
-          textureName.c_str(),
-          resources.mSharedHandle.put()));
-    }
-  }
 
   const auto markDirty = weak_wrap(this)([](auto self) { self->MarkDirty(); });
 
@@ -224,8 +294,6 @@ void InterprocessRenderer::Init(
   const auto views = kneeboard->GetAllViewsInFixedOrder();
   for (int i = 0; i < views.size(); ++i) {
     auto view = views.at(i);
-    mLayers.at(i).mKneeboardView = view;
-
     AddEventListener(view->evCursorEvent, markDirty);
   }
 
@@ -257,63 +325,80 @@ InterprocessRenderer::~InterprocessRenderer() {
     auto ctx = mDXR.mD2DDeviceContext.get();
     ctx->Flush();
     // De-allocate D3D resources while we have the lock
-    mLayers = {};
-    mFence = {};
+    mIPCSwapchain = {};
+    mCanvas = {};
   }
 }
 
-void InterprocessRenderer::Render(Layer& layer) {
-  {
-    auto d3d = layer.mCanvas->d3d();
-    mDXR.mD3DImmediateContext->ClearRenderTargetView(
-      d3d.rtv(), DirectX::Colors::Transparent);
-  }
+SHM::LayerConfig InterprocessRenderer::RenderLayer(
+  const ViewRenderInfo& layer,
+  const PixelRect& bounds) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("InterprocessRenderer::RenderLayer");
+  const auto view = layer.mView.get();
 
-  const auto view = layer.mKneeboardView;
-  layer.mConfig.mLayerID = view->GetRuntimeID().GetTemporaryValue();
-  const auto usedSize = view->GetIPCRenderSize();
-  layer.mConfig.mImageWidth = usedSize.width;
-  layer.mConfig.mImageHeight = usedSize.height;
+  SHM::LayerConfig ret {};
+  ret.mLayerID = view->GetRuntimeID().GetTemporaryValue();
+
+  auto usedSize = view->GetIPCRenderSize();
+  if (usedSize.width < 1 || usedSize.height < 1) {
+    usedSize = {ErrorRenderWidth, ErrorRenderHeight};
+  }
+  ret.mLocationOnTexture = {bounds.mOffset, usedSize};
 
   const auto vrc = mKneeboard->GetVRSettings();
   const auto xFitScale = vrc.mMaxWidth / usedSize.width;
   const auto yFitScale = vrc.mMaxHeight / usedSize.height;
   const auto scale = std::min<float>(xFitScale, yFitScale);
 
-  layer.mConfig.mVR.mWidth = usedSize.width * scale;
-  layer.mConfig.mVR.mHeight = usedSize.height * scale;
+  ret.mVR = layer.mVR;
+  ret.mVR.mWidth = usedSize.width * scale;
+  ret.mVR.mHeight = usedSize.height * scale;
 
   view->RenderWithChrome(
-    layer.mCanvas.get(),
-    {
-      0,
-      0,
-      static_cast<FLOAT>(usedSize.width),
-      static_cast<FLOAT>(usedSize.height),
-    },
-    layer.mIsActiveForInput);
+    mCanvas.get(), ret.mLocationOnTexture, layer.mIsActiveForInput);
+
+  return ret;
 }
 
-void InterprocessRenderer::RenderNow() {
+void InterprocessRenderer::RenderNow() noexcept {
   if (mRendering.test_and_set()) {
     dprint("Two renders in the same instance");
     OPENKNEEBOARD_BREAK;
     return;
   }
+
   const scope_guard markDone([this]() { mRendering.clear(); });
 
-  const auto renderInfos = mKneeboard->GetViewRenderInfo();
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "InterprocessRenderer::RenderNow()");
 
-  for (uint8_t i = 0; i < renderInfos.size(); ++i) {
-    auto& layer = mLayers.at(i);
-    const auto& info = renderInfos.at(i);
-    layer.mKneeboardView = info.mView;
-    layer.mConfig.mVR = info.mVR;
-    layer.mIsActiveForInput = info.mIsActiveForInput;
-    this->Render(layer);
+  const auto renderInfos = mKneeboard->GetViewRenderInfo();
+  const auto layerCount = renderInfos.size();
+
+  const auto canvasSize = Spriting::GetBufferSize(layerCount);
+
+  TraceLoggingWriteTagged(activity, "AcquireDXLock/start");
+  const std::unique_lock dxLock(mDXR);
+  TraceLoggingWriteTagged(activity, "AcquireDXLock/stop");
+  this->InitializeCanvas(canvasSize);
+  mDXR.mD3DImmediateContext->ClearRenderTargetView(
+    mCanvas->d3d().rtv(), DirectX::Colors::Transparent);
+
+  std::vector<SHM::LayerConfig> shmLayers;
+  shmLayers.reserve(layerCount);
+  uint64_t inputLayerID = 0;
+
+  for (uint8_t i = 0; i < layerCount; ++i) {
+    const auto bounds = Spriting::GetRect(i, layerCount);
+    const auto& renderInfo = renderInfos.at(i);
+    if (renderInfo.mIsActiveForInput) {
+      inputLayerID = renderInfo.mView->GetRuntimeID().GetTemporaryValue();
+    }
+
+    shmLayers.push_back(this->RenderLayer(renderInfo, bounds));
   }
 
-  this->Commit(renderInfos.size());
+  this->SubmitFrame(shmLayers, inputLayerID);
   this->mNeedsRepaint = false;
 }
 

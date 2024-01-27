@@ -49,13 +49,16 @@ OpenXRD3D11Kneeboard::OpenXRD3D11Kneeboard(
   const XrGraphicsBindingD3D11KHR& binding)
   : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
-  TraceLoggingWrite(gTraceProvider, "OpenXRD3D11Kneeboard()");
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard()");
 
-  mDeviceResources = std::make_unique<DeviceResources>(binding.device);
+  mDevice.copy_from(binding.device);
+  mDevice->GetImmediateContext(mImmediateContext.put());
+
+  mRenderer = std::make_unique<D3D11::Renderer>(mDevice.get());
 }
 
 OpenXRD3D11Kneeboard::~OpenXRD3D11Kneeboard() {
-  TraceLoggingWrite(gTraceProvider, "~OpenXRD3D11Kneeboard()");
+  OPENKNEEBOARD_TraceLoggingScope("~OpenXRD3D11Kneeboard()");
 }
 
 OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
@@ -98,9 +101,9 @@ OpenXRD3D11Kneeboard::DXGIFormats OpenXRD3D11Kneeboard::GetDXGIFormats(
 
 XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   XrSession session,
-  const PixelSize& size,
-  const VRRenderConfig::Quirks&) {
+  const PixelSize& size) {
   dprintf("{}", __FUNCTION__);
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard::CreateSwapchain()");
 
   auto oxr = this->GetOpenXR();
 
@@ -138,6 +141,7 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
   }
 
   dprintf("{} images in swapchain", imageCount);
+  mSHM.InitializeCache(mDevice.get(), static_cast<uint8_t>(imageCount));
 
   std::vector<XrSwapchainImageD3D11KHR> images;
   images.resize(
@@ -163,8 +167,8 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
     return nullptr;
   }
 
-  std::vector<ID3D11Texture2D*> textures;
-  textures.reserve(imageCount);
+  std::vector<SwapchainBufferResources> buffers;
+  buffers.reserve(imageCount);
   for (size_t i = 0; i < imageCount; ++i) {
     auto& image = images.at(i);
 #ifdef DEBUG
@@ -172,13 +176,14 @@ XrSwapchain OpenXRD3D11Kneeboard::CreateSwapchain(
       OPENKNEEBOARD_BREAK;
     }
 #endif
-    textures.push_back(image.texture);
+    buffers.push_back(
+      {mDevice.get(), image.texture, formats.mRenderTargetViewFormat});
   }
-  mSwapchainResources[swapchain] = std::make_unique<SwapchainResources>(
-    mDeviceResources.get(),
-    formats.mRenderTargetViewFormat,
-    textures.size(),
-    textures.data());
+
+  mSwapchainResources[swapchain] = {
+    .mDimensions = size,
+    .mBufferResources = std::move(buffers),
+  };
 
   return swapchain;
 }
@@ -189,34 +194,25 @@ void OpenXRD3D11Kneeboard::ReleaseSwapchainResources(XrSwapchain swapchain) {
   }
 }
 
-winrt::com_ptr<ID3D11Device> OpenXRD3D11Kneeboard::GetD3D11Device() {
-  if (!mDeviceResources) {
-    return {};
-  }
-  return mDeviceResources->mD3D11Device;
-}
-
 void OpenXRD3D11Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerCount,
-  SHM::LayerSprite* layers) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "OpenXRD3D11Kneeboard::RenderLayers()");
+  const PixelRect* const destRects,
+  const float* const opacities) {
+  OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D11Kneeboard::RenderLayers()");
+  D3D11::SavedState savedState(mImmediateContext);
 
-  auto dr = mDeviceResources.get();
-  auto sr = mSwapchainResources.at(swapchain).get();
+  const auto& sr = mSwapchainResources.at(swapchain);
 
-  D3D11::SavedState savedState(dr->mD3D11ImmediateContext);
-
-  namespace R = SHM::D3D11::Renderer;
-  R::BeginFrame(dr, sr, swapchainTextureIndex);
-  R::ClearRenderTargetView(dr, sr, swapchainTextureIndex);
-  R::Render(dr, sr, swapchainTextureIndex, mSHM, snapshot, layerCount, layers);
-  R::EndFrame(dr, sr, swapchainTextureIndex);
-
-  TraceLoggingWriteStop(activity, "OpenXRD3D11Kneeboard::RenderLayers()");
+  mRenderer->RenderLayers(
+    mSwapchainResources.at(swapchain),
+    swapchainTextureIndex,
+    snapshot,
+    snapshot.GetLayerCount(),
+    destRects,
+    opacities,
+    RenderMode::ClearAndRender);
 }
 
 SHM::CachedReader* OpenXRD3D11Kneeboard::GetSHM() {

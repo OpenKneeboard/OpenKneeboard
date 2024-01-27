@@ -50,6 +50,55 @@ void NonVRD3D11Kneeboard::UninstallHook() {
   mDXGIHook.UninstallHook();
 }
 
+void NonVRD3D11Kneeboard::InitializeResources(IDXGISwapChain* swapchain) {
+  if (mResources && mResources->mSwapchain == swapchain) {
+    return;
+  }
+  OPENKNEEBOARD_TraceLoggingScope("InitializeResources");
+
+  winrt::com_ptr<ID3D11Device> device;
+  winrt::check_hresult(swapchain->GetDevice(IID_PPV_ARGS(device.put())));
+  winrt::com_ptr<ID3D11DeviceContext> context;
+  device->GetImmediateContext(context.put());
+
+  winrt::com_ptr<ID3D11Texture2D> destinationTexture;
+  swapchain->GetBuffer(0, IID_PPV_ARGS(destinationTexture.put()));
+
+  if (!destinationTexture) {
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  D3D11_TEXTURE2D_DESC textureDesc;
+  destinationTexture->GetDesc(&textureDesc);
+
+  SHM::ActiveConsumers::SetNonVRPixelSize(
+    {textureDesc.Width, textureDesc.Height});
+
+  if (mResources) {
+    mSHM.InitializeCache(device.get(), 0);
+  }
+
+  mResources = Resources {
+    device.get(),
+    context.get(),
+    swapchain,
+    SwapchainResources {
+      PixelSize {textureDesc.Width, textureDesc.Height},
+      {
+        SwapchainBufferResources {
+          device.get(),
+          destinationTexture.get(),
+          textureDesc.Format,
+        },
+      },
+    },
+    std::make_unique<D3D11::Renderer>(device.get()),
+  };
+
+  mSHM.InitializeCache(device.get(), 1);
+}
+
 HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   IDXGISwapChain* swapChain,
   UINT syncInterval,
@@ -60,77 +109,38 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     return passthrough();
   }
 
-  winrt::com_ptr<ID3D11Device> device;
-  swapChain->GetDevice(IID_PPV_ARGS(device.put()));
-  const auto snapshot
-    = mSHM.MaybeGet(device.get(), SHM::ConsumerKind::NonVRD3D11);
+  OPENKNEEBOARD_TraceLoggingScope(
+    "NonVRD3D11Kneeboard::OnIDXGISwapChain_Present");
 
-  if (!snapshot.GetLayerCount()) {
+  this->InitializeResources(swapChain);
+  if (!mResources) {
     return passthrough();
   }
 
-  DXGI_SWAP_CHAIN_DESC scDesc;
-  swapChain->GetDesc(&scDesc);
+  const auto snapshot = mSHM.MaybeGet();
+  const auto layerCount = snapshot.GetLayerCount();
 
-  SHM::ActiveConsumers::SetNonVRPixelSize(
-    {scDesc.BufferDesc.Width, scDesc.BufferDesc.Height});
+  if (!layerCount) {
+    return passthrough();
+  }
+
+  const auto& sr = mResources->mSwapchainResources;
 
   const auto& layerConfig = *snapshot.GetLayerConfig(0);
   const auto flatConfig = snapshot.GetConfig().mFlat;
 
-  const auto dest = flatConfig.Layout(
-    {scDesc.BufferDesc.Width, scDesc.BufferDesc.Height},
-    {layerConfig.mImageWidth, layerConfig.mImageHeight});
-  RECT destRect {
-    static_cast<LONG>(dest.mOrigin.mX),
-    static_cast<LONG>(dest.mOrigin.mY),
-    static_cast<LONG>(dest.mOrigin.mX + dest.mSize.mWidth),
-    static_cast<LONG>(dest.mOrigin.mY + dest.mSize.mHeight),
-  };
+  const auto& imageSize = layerConfig.mLocationOnTexture.mSize;
 
-  RECT sourceRect {
-    0,
-    0,
-    layerConfig.mImageWidth,
-    layerConfig.mImageHeight,
-  };
+  const auto destRect
+    = flatConfig.Layout(sr.mDimensions, layerConfig.mLocationOnTexture.mSize);
+  const auto sourceRect = layerConfig.mLocationOnTexture;
+
+  const float opacity = flatConfig.mOpacity;
 
   {
-    winrt::com_ptr<ID3D11Texture2D> destinationTexture;
-    swapChain->GetBuffer(0, IID_PPV_ARGS(destinationTexture.put()));
-    if (!destinationTexture) {
-      OPENKNEEBOARD_BREAK;
-      return passthrough();
-    }
-
-    winrt::com_ptr<ID3D11RenderTargetView> rtv;
-    auto result = device->CreateRenderTargetView(
-      destinationTexture.get(), nullptr, rtv.put());
-    if (!rtv) {
-      dprintf(
-        "Failed to create RenderTargetView: {} ({:#08x})",
-        result,
-        std::bit_cast<uint32_t>(result));
-      OPENKNEEBOARD_BREAK;
-      return passthrough();
-    }
-
-    const auto resources
-      = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(0);
-    const auto srv = resources->GetD3D11ShaderResourceView();
-
-    if (!srv) {
-      dprint("Failed to get layer SRV");
-      OPENKNEEBOARD_BREAK;
-      return passthrough();
-    }
-
-    winrt::com_ptr<ID3D11DeviceContext> ctx;
-    device->GetImmediateContext(ctx.put());
-    D3D11::SavedState state(ctx);
-
-    D3D11::DrawTextureWithOpacity(
-      device.get(), srv, rtv.get(), sourceRect, destRect, flatConfig.mOpacity);
+    D3D11::SavedState savedState(mResources->mImmediateContext);
+    mResources->mRenderer->RenderLayers(
+      sr, 0, snapshot, 1, &destRect, &opacity, RenderMode::Overlay);
   }
 
   return passthrough();

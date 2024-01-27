@@ -23,174 +23,146 @@
 
 namespace OpenKneeboard::SHM::D3D11 {
 
-LayerTextureCache::~LayerTextureCache() = default;
+Texture::Texture(
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex,
+  const winrt::com_ptr<ID3D11Device5>& device,
+  const winrt::com_ptr<ID3D11DeviceContext4>& context)
+  : IPCClientTexture(dimensions, swapchainIndex),
+    mDevice(device),
+    mContext(context) {
+}
 
-ID3D11ShaderResourceView* LayerTextureCache::GetD3D11ShaderResourceView() {
-  if (!mD3D11ShaderResourceView) [[unlikely]] {
-    auto texture = this->GetD3D11Texture();
-    winrt::com_ptr<ID3D11Device> device;
-    texture->GetDevice(device.put());
-    winrt::check_hresult(device->CreateShaderResourceView(
-      texture, nullptr, mD3D11ShaderResourceView.put()));
+Texture::~Texture() = default;
+
+ID3D11Texture2D* Texture::GetD3D11Texture() const noexcept {
+  return mCacheTexture.get();
+}
+
+ID3D11ShaderResourceView* Texture::GetD3D11ShaderResourceView() noexcept {
+  if (!mCacheShaderResourceView) {
+    winrt::check_hresult(mDevice->CreateShaderResourceView(
+      mCacheTexture.get(), nullptr, mCacheShaderResourceView.put()));
   }
-  return mD3D11ShaderResourceView.get();
+  return mCacheShaderResourceView.get();
 }
 
-std::shared_ptr<SHM::LayerTextureCache> CachedReader::CreateLayerTextureCache(
-  [[maybe_unused]] uint8_t layerIndex,
-  const winrt::com_ptr<ID3D11Texture2D>& texture) {
-  return std::make_shared<SHM::D3D11::LayerTextureCache>(texture);
-}
+void Texture::CopyFrom(
+  ID3D11Texture2D* sourceTexture,
+  ID3D11Fence* sourceFence,
+  uint64_t fenceValueIn,
+  uint64_t fenceValueOut) noexcept {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "SHM::D3D11::Texture::CopyFrom");
 
-namespace Renderer {
-DeviceResources::DeviceResources(ID3D11Device* device) {
-  mD3D11Device.copy_from(device);
-  device->GetImmediateContext(mD3D11ImmediateContext.put());
-  mDXTKSpriteBatch
-    = std::make_unique<DirectX::SpriteBatch>(mD3D11ImmediateContext.get());
-}
-
-SwapchainResources::SwapchainResources(
-  DeviceResources* dr,
-  DXGI_FORMAT renderTargetViewFormat,
-  size_t textureCount,
-  ID3D11Texture2D** textures) {
-  D3D11_RENDER_TARGET_VIEW_DESC rtvDesc {
-    .Format = renderTargetViewFormat,
-    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {.MipSlice = 0},
-  };
-
-  mBufferResources.reserve(textureCount);
-
-  for (size_t i = 0; i < textureCount; ++i) {
-    auto br = std::make_unique<BufferResources>();
-
-    auto texture = textures[i];
-    br->m3D11Texture.copy_from(texture);
-    winrt::check_hresult(dr->mD3D11Device->CreateRenderTargetView(
-      texture, &rtvDesc, br->mD3D11RenderTargetView.put()));
-
-    mBufferResources.push_back(std::move(br));
+  if (!mCacheTexture) {
+    OPENKNEEBOARD_TraceLoggingScope("CreateCacheTexture");
+    D3D11_TEXTURE2D_DESC desc;
+    sourceTexture->GetDesc(&desc);
+    winrt::check_hresult(
+      mDevice->CreateTexture2D(&desc, nullptr, mCacheTexture.put()));
   }
-
-  D3D11_TEXTURE2D_DESC colorDesc {};
-  textures[0]->GetDesc(&colorDesc);
-
-  mViewport = {
-    0,
-    0,
-    static_cast<FLOAT>(colorDesc.Width),
-    static_cast<FLOAT>(colorDesc.Height),
-    0.0f,
-    1.0f,
-  };
+  TraceLoggingWriteTagged(
+    activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
+  winrt::check_hresult(mContext->Wait(sourceFence, fenceValueIn));
+  mContext->CopySubresourceRegion(
+    mCacheTexture.get(), 0, 0, 0, 0, sourceTexture, 0, nullptr);
+  TraceLoggingWriteTagged(
+    activity, "FenceOut", TraceLoggingValue(fenceValueOut, "Value"));
+  winrt::check_hresult(mContext->Signal(sourceFence, fenceValueOut));
 }
 
-void BeginFrame(
-  DeviceResources* dr,
-  SwapchainResources* sr,
-  uint8_t swapchainTextureIndex) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(
-    activity, "OpenKneeboard::SHM::D3D11::Renderer::BeginFrame()");
-
-  auto& br = sr->mBufferResources.at(swapchainTextureIndex);
-
-  auto ctx = dr->mD3D11ImmediateContext.get();
-  auto rtv = br->mD3D11RenderTargetView.get();
-
-  ctx->RSSetViewports(1, &sr->mViewport);
-  ctx->OMSetDepthStencilState(nullptr, 0);
-  ctx->OMSetRenderTargets(1, &rtv, nullptr);
-  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
-  ctx->IASetInputLayout(nullptr);
-  ctx->VSSetShader(nullptr, nullptr, 0);
-
-  TraceLoggingWriteStop(
-    activity, "OpenKneeboard::SHM::D3D11::Renderer::BeginFrame()");
+CachedReader::CachedReader(ConsumerKind consumerKind)
+  : SHM::CachedReader(this, consumerKind) {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::CachedReader()");
 }
 
-void ClearRenderTargetView(
-  DeviceResources* dr,
-  SwapchainResources* sr,
-  uint8_t swapchainTextureIndex) {
-  auto rtv = sr->mBufferResources.at(swapchainTextureIndex)
-               ->mD3D11RenderTargetView.get();
-  dr->mD3D11ImmediateContext->ClearRenderTargetView(
-    rtv, DirectX::Colors::Transparent);
+CachedReader::~CachedReader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::~CachedReader()");
 }
 
-void Render(
-  DeviceResources* dr,
-  SwapchainResources* sr,
-  uint8_t swapchainTextureIndex,
-  const SHM::D3D11::CachedReader& shm,
-  const SHM::Snapshot& snapshot,
-  size_t layerSpriteCount,
-  LayerSprite* layerSprites) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(
-    activity, "OpenKneeboard::SHM::D3D11::Renderer::Render()");
+void CachedReader::InitializeCache(
+  ID3D11Device* device,
+  uint8_t swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D11::CachedReader::InitializeCache()",
+    TraceLoggingValue(swapchainLength, "swapchainLength"));
 
-  auto ctx = dr->mD3D11ImmediateContext.get();
-  auto sprites = dr->mDXTKSpriteBatch.get();
+  if (device != mDevice.get()) {
+    mDevice = {};
+    mDeviceContext = {};
 
-  {
-    TraceLoggingThreadActivity<gTraceProvider> spritesActivity;
-    TraceLoggingWriteStart(spritesActivity, "SpriteBatch");
-    sprites->Begin();
-    const scope_guard endSprites([&sprites, &spritesActivity]() {
-      sprites->End();
-      TraceLoggingWriteStop(spritesActivity, "SpriteBatch");
-    });
+    winrt::check_hresult(device->QueryInterface(mDevice.put()));
+    winrt::com_ptr<ID3D11DeviceContext> context;
+    device->GetImmediateContext(context.put());
+    mDeviceContext = context.as<ID3D11DeviceContext4>();
 
-    for (size_t i = 0; i < layerSpriteCount; ++i) {
-      const auto& sprite = layerSprites[i];
-      auto resources
-        = snapshot.GetLayerGPUResources<SHM::D3D11::LayerTextureCache>(
-          sprite.mLayerIndex);
-
-      const auto srv = resources->GetD3D11ShaderResourceView();
-
-      if (!srv) {
-        dprint("Failed to get shader resource view");
-        TraceLoggingWriteStop(
-          activity,
-          "OpenKneeboard::SHM::D3D11::Renderer::Render()",
-          TraceLoggingValue(false, "Success"));
-        return;
-      }
-
-      auto config = snapshot.GetLayerConfig(sprite.mLayerIndex);
-      const D3D11_RECT sourceRect {
-        0,
-        0,
-        config->mImageWidth,
-        config->mImageHeight,
-      };
-
-      const D3D11_RECT destRect = sprite.mDestRect;
-
-      const auto opacity = sprite.mOpacity;
-      DirectX::FXMVECTOR tint {opacity, opacity, opacity, opacity};
-
-      sprites->Draw(srv, destRect, &sourceRect, tint);
-    }
+    // Debug logging
+    winrt::com_ptr<IDXGIDevice> dxgiDevice;
+    winrt::check_hresult(
+      device->QueryInterface(IID_PPV_ARGS(dxgiDevice.put())));
+    winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
+    winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
+    DXGI_ADAPTER_DESC desc {};
+    winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
+    dprintf(
+      L"SHM reader using adapter '{}' (LUID {:#x})",
+      desc.Description,
+      std::bit_cast<uint64_t>(desc.AdapterLuid));
   }
 
-  TraceLoggingWriteStop(
-    activity,
-    "OpenKneeboard::SHM::D3D11::Renderer::Render()",
-    TraceLoggingValue(true, "Success"));
+  SHM::CachedReader::InitializeCache(swapchainLength);
 }
 
-void EndFrame(
-  DeviceResources*,
-  SwapchainResources*,
-  [[maybe_unused]] uint8_t swapchainTextureIndex) {
+void CachedReader::Copy(
+  HANDLE sourceHandle,
+  IPCClientTexture* destinationTexture,
+  HANDLE fenceHandle,
+  uint64_t fenceValueIn,
+  uint64_t fenceValueOut) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::Copy()");
+
+  const auto source = this->GetIPCTexture(sourceHandle);
+  const auto fence = this->GetIPCFence(fenceHandle);
+
+  reinterpret_cast<SHM::D3D11::Texture*>(destinationTexture)
+    ->CopyFrom(source, fence, fenceValueIn, fenceValueOut);
 }
 
-}// namespace Renderer
+std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D11::CachedReader::CreateIPCClientTexture()");
+  return std::make_shared<SHM::D3D11::Texture>(
+    dimensions, swapchainIndex, mDevice, mDeviceContext);
+}
+
+ID3D11Fence* CachedReader::GetIPCFence(HANDLE handle) noexcept {
+  if (mIPCFences.contains(handle)) {
+    return mIPCFences.at(handle).get();
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::GetIPCFence()");
+  winrt::com_ptr<ID3D11Fence> fence;
+  winrt::check_hresult(
+    mDevice->OpenSharedFence(handle, IID_PPV_ARGS(fence.put())));
+  mIPCFences.emplace(handle, fence);
+  return fence.get();
+}
+
+ID3D11Texture2D* CachedReader::GetIPCTexture(HANDLE handle) noexcept {
+  if (mIPCTextures.contains(handle)) {
+    return mIPCTextures.at(handle).get();
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::GetIPCTexture()");
+
+  winrt::com_ptr<ID3D11Texture2D> texture;
+  winrt::check_hresult(
+    mDevice->OpenSharedResource1(handle, IID_PPV_ARGS(texture.put())));
+  mIPCTextures.emplace(handle, texture);
+  return texture.get();
+}
 
 }// namespace OpenKneeboard::SHM::D3D11

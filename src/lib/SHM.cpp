@@ -17,8 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include "SHM/ReaderState.h"
+#include "SHM/WriterState.h"
+
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
+#include <OpenKneeboard/StateMachine.h>
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/bitflags.h>
@@ -33,67 +37,17 @@
 #include <Windows.h>
 
 #include <bit>
+#include <concepts>
 #include <format>
 #include <random>
 
-#include <d3d11_2.h>
-#include <d3d11_3.h>
-#include <d3d11_4.h>
-#include <dxgi1_2.h>
 #include <processthreadsapi.h>
 
 namespace OpenKneeboard::SHM {
 
-static uint64_t CreateSessionID() {
-  std::random_device randDevice;
-  std::uniform_int_distribution<uint32_t> randDist;
-  return (static_cast<uint64_t>(GetCurrentProcessId()) << 32)
-    | randDist(randDevice);
-}
-
-static std::wstring SharedTextureName(
-  uint64_t sessionID,
-  uint8_t layerIndex,
-  uint32_t sequenceNumber) {
-  return std::format(
-    L"Local\\{}-{}.{}.{}.{}--texture-s{:x}-l{}-b{}",
-    ProjectNameW,
-    Version::Major,
-    Version::Minor,
-    Version::Patch,
-    Version::Build,
-    sessionID,
-    layerIndex,
-    sequenceNumber % TextureCount);
-}
-
 enum class HeaderFlags : ULONG {
   FEEDER_ATTACHED = 1 << 0,
 };
-
-struct FrameMetadata final {
-  // Use the magic string to make sure we don't have
-  // uninitialized memory that happens to have the
-  // feeder-attached bit set
-  static constexpr std::string_view Magic {"OKBMagic"};
-  static_assert(Magic.size() == sizeof(uint64_t));
-  uint64_t mMagic = *reinterpret_cast<const uint64_t*>(Magic.data());
-
-  uint32_t mSequenceNumber = 0;
-  uint64_t mSessionID = CreateSessionID();
-  HeaderFlags mFlags;
-  Config mConfig;
-
-  DWORD mFeederProcessID {};
-  HANDLE mFence {};
-
-  uint8_t mLayerCount = 0;
-  LayerConfig mLayers[MaxLayers];
-
-  size_t GetRenderCacheKey() const;
-  bool HaveFeeder() const;
-};
-static_assert(std::is_standard_layout_v<FrameMetadata>);
 
 }// namespace OpenKneeboard::SHM
 
@@ -103,9 +57,77 @@ constexpr bool is_bitflags_v<SHM::HeaderFlags> = true;
 }// namespace OpenKneeboard
 
 namespace OpenKneeboard::SHM {
+static uint64_t CreateSessionID() {
+  std::random_device randDevice;
+  std::uniform_int_distribution<uint32_t> randDist;
+  return (static_cast<uint64_t>(GetCurrentProcessId()) << 32)
+    | randDist(randDevice);
+}
 
-static constexpr DWORD MAX_IMAGE_PX(1024 * 1024 * 8);
+struct Detail::FrameMetadata final {
+  // Use the magic string to make sure we don't have
+  // uninitialized memory that happens to have the
+  // feeder-attached bit set
+  static constexpr std::string_view Magic {"OKBMagic"};
+  static_assert(Magic.size() == sizeof(uint64_t));
+  uint64_t mMagic = *reinterpret_cast<const uint64_t*>(Magic.data());
+
+  uint64_t mFrameNumber = 0;
+  uint64_t mSessionID = CreateSessionID();
+  HeaderFlags mFlags;
+  Config mConfig;
+
+  uint8_t mLayerCount = 0;
+  LayerConfig mLayers[MaxLayers];
+
+  DWORD mFeederProcessID {};
+  // If you're looking for texture size, it's in Config
+  HANDLE mTexture {};
+  HANDLE mFence {};
+  std::array<LONG64, TextureCount> mFenceValues {0};
+
+  size_t GetRenderCacheKey() const;
+  bool HaveFeeder() const;
+};
+using Detail::FrameMetadata;
+static_assert(std::is_standard_layout_v<FrameMetadata>);
 static constexpr DWORD SHM_SIZE = sizeof(FrameMetadata);
+
+struct Detail::IPCSwapchainBufferResources {
+  winrt::handle mTextureHandle;
+  winrt::handle mFenceHandle;
+
+  IPCSwapchainBufferResources(
+    HANDLE feederProcess,
+    const FrameMetadata& frame) {
+    const auto thisProcess = GetCurrentProcess();
+    winrt::check_bool(DuplicateHandle(
+      feederProcess,
+      frame.mFence,
+      thisProcess,
+      mFenceHandle.put(),
+      NULL,
+      FALSE,
+      DUPLICATE_SAME_ACCESS));
+    winrt::check_bool(DuplicateHandle(
+      feederProcess,
+      frame.mTexture,
+      thisProcess,
+      mTextureHandle.put(),
+      NULL,
+      FALSE,
+      DUPLICATE_SAME_ACCESS));
+  }
+
+  IPCSwapchainBufferResources() = delete;
+  IPCSwapchainBufferResources(const IPCSwapchainBufferResources&) = delete;
+  IPCSwapchainBufferResources(IPCSwapchainBufferResources&&) = delete;
+  IPCSwapchainBufferResources& operator=(const IPCSwapchainBufferResources&)
+    = delete;
+  IPCSwapchainBufferResources& operator=(IPCSwapchainBufferResources&&)
+    = delete;
+};
+using Detail::IPCSwapchainBufferResources;
 
 static auto SHMPath() {
   static std::wstring sCache;
@@ -131,109 +153,6 @@ static auto MutexPath() {
   return sCache;
 }
 
-struct IPCLayerTextureReadResources {
-  winrt::com_ptr<ID3D11Texture2D> mTexture;
-
-  bool Populate(
-    ID3D11DeviceContext* ctx,
-    uint64_t sessionID,
-    uint8_t layerIndex,
-    uint32_t sequenceNumber);
-};
-
-struct IPCTextureReadResources {
-  uint64_t mSessionID = 0;
-
-  std::array<IPCLayerTextureReadResources, MaxLayers> mLayers;
-
-  bool Populate(
-    ID3D11DeviceContext* ctx,
-    uint64_t sessionID,
-    uint32_t sequenceNumber);
-};
-
-bool IPCTextureReadResources::Populate(
-  ID3D11DeviceContext* ctx,
-  uint64_t sessionID,
-  uint32_t sequenceNumber) {
-  if (sessionID != mSessionID) {
-    dprintf(
-      "Replacing OpenKneeboard TextureReadResources: {:0x}/{}",
-      sessionID,
-      sequenceNumber % TextureCount);
-    *this = {.mSessionID = sessionID};
-  }
-
-  for (uint8_t i = 0; i < MaxLayers; ++i) {
-    if (!mLayers[i].Populate(ctx, sessionID, i, sequenceNumber)) {
-      *this = {};
-      return false;
-    }
-  }
-
-  return true;
-}
-
-bool IPCLayerTextureReadResources::Populate(
-  ID3D11DeviceContext* ctx,
-  uint64_t sessionID,
-  uint8_t layerIndex,
-  uint32_t sequenceNumber) {
-  if (mTexture) {
-    return true;
-  }
-
-  winrt::com_ptr<ID3D11Device> device;
-  ctx->GetDevice(device.put());
-
-  auto textureName = SharedTextureName(sessionID, layerIndex, sequenceNumber);
-
-  ID3D11Device1* d1 = nullptr;
-  device->QueryInterface(&d1);
-  if (!d1) {
-    return false;
-  }
-
-  auto result = d1->OpenSharedResourceByName(
-    textureName.c_str(),
-    DXGI_SHARED_RESOURCE_READ,
-    IID_PPV_ARGS(mTexture.put()));
-  if (!mTexture) {
-    dprintf(
-      L"Failed to open shared texture {}: {:#x}",
-      textureName,
-      std::bit_cast<uint32_t>(result));
-    return false;
-  }
-  const auto debugName = std::format(
-    "OKB-SHM-Client-{}-{}-{}", sessionID, layerIndex, sequenceNumber);
-  mTexture->SetPrivateData(
-    WKPDID_D3DDebugObjectName, debugName.size(), debugName.data());
-  dprintf(L"Opened shared texture {}", textureName);
-  return true;
-}
-
-winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
-  ID3D11Device* d3d,
-  UINT bindFlags,
-  UINT miscFlags,
-  DXGI_FORMAT format) {
-  D3D11_TEXTURE2D_DESC desc {
-    .Width = TextureWidth,
-    .Height = TextureHeight,
-    .MipLevels = 1,
-    .ArraySize = 1,
-    .Format = format,
-    .SampleDesc = {1, 0},
-    .BindFlags = bindFlags,
-    .MiscFlags = miscFlags,
-  };
-
-  winrt::com_ptr<ID3D11Texture2D> texture;
-  winrt::check_hresult(d3d->CreateTexture2D(&desc, nullptr, texture.put()));
-  return std::move(texture);
-}
-
 Snapshot::Snapshot(nullptr_t) : mState(State::Empty) {
 }
 
@@ -241,41 +160,30 @@ Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
 }
 
 Snapshot::Snapshot(
-  const FrameMetadata& header,
-  ID3D11DeviceContext4* ctx,
-  ID3D11Fence* fence,
-  const LayersTextureCache& textures,
-  IPCTextureReadResources* r)
-  : mLayerTextures(textures), mState(State::Empty) {
-  mHeader = std::make_shared<FrameMetadata>(header);
+  FrameMetadata* metadata,
+  IPCTextureCopier* copier,
+  IPCSwapchainBufferResources* source,
+  const std::shared_ptr<IPCClientTexture>& dest)
+  : mIPCTexture(dest), mState(State::Empty) {
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    activity, "SHM::Snapshot::Snapshot()");
 
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "SHM::Snapshot::Snapshot()");
-  const scope_guard endActivitity([&activity]() {
-    TraceLoggingWriteStop(activity, "SHM::Snapshot::Snapshot()");
-  });
+  const auto textureIndex = metadata->mFrameNumber % TextureCount;
+  auto fenceValue = &metadata->mFenceValues.at(textureIndex);
+  const auto fenceOut = InterlockedIncrement64(fenceValue);
+  const auto fenceIn = fenceOut - 1;
 
-  TraceLoggingWriteTagged(activity, "WaitForFence");
-  winrt::check_hresult(ctx->Wait(fence, header.mSequenceNumber));
+  mHeader = std::make_shared<FrameMetadata>(*metadata);
 
-  const D3D11_BOX box {0, 0, 0, TextureWidth, TextureHeight, 1};
-  for (uint8_t i = 0; i < header.mLayerCount; ++i) {
-    TraceLoggingWriteTagged(
-      activity, "StartCopyTexture", TraceLoggingValue(i, "Layer"));
-    ctx->CopySubresourceRegion(
-      mLayerTextures.at(i)->GetD3D11Texture(),
-      /* subresource = */ 0,
-      /* x = */ 0,
-      /* y = */ 0,
-      /* z = */ 0,
-      r->mLayers.at(i).mTexture.get(),
-      /* subresource = */ 0,
-      &box);
-    TraceLoggingWriteTagged(activity, "CopiedResource");
-    TraceLoggingWriteTagged(
-      activity, "CopiedTexture", TraceLoggingValue(i, "Layer"));
+  {
+    OPENKNEEBOARD_TraceLoggingScope("CopyTexture");
+    copier->Copy(
+      source->mTextureHandle.get(),
+      dest.get(),
+      source->mFenceHandle.get(),
+      fenceIn,
+      fenceOut);
   }
-  TraceLoggingWriteTagged(activity, "Flushed");
 
   if (mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0)) {
     TraceLoggingWriteTagged(activity, "MarkingValid");
@@ -299,15 +207,11 @@ size_t Snapshot::GetRenderCacheKey() const {
   return mHeader->GetRenderCacheKey();
 }
 
-bool LayerConfig::IsValid() const {
-  return mImageWidth > 0 && mImageHeight > 0;
-}
-
 uint64_t Snapshot::GetSequenceNumberForDebuggingOnly() const {
   if (!this->IsValid()) {
     return 0;
   }
-  return mHeader->mSequenceNumber;
+  return mHeader->mFrameNumber;
 }
 
 Config Snapshot::GetConfig() const {
@@ -325,29 +229,21 @@ uint8_t Snapshot::GetLayerCount() const {
 }
 
 const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
-  if (layerIndex >= this->GetLayerCount()) {
-    dprintf(
+  if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
       "Asked for layer {}, but there are {} layers",
       layerIndex,
       this->GetLayerCount());
-    OPENKNEEBOARD_BREAK;
-    return {};
   }
 
-  auto config = &mHeader->mLayers[layerIndex];
-  if (!config->IsValid()) {
-    dprintf("Invalid config for layer {}", layerIndex);
-    OPENKNEEBOARD_BREAK;
-    return {};
-  }
-
-  return config;
+  return &mHeader->mLayers[layerIndex];
 }
 
 bool Snapshot::IsValid() const {
   return mState == State::Valid;
 }
 
+template <lockable_state State, State InitialState = State::Unlocked>
 class Impl {
  public:
   winrt::handle mFileHandle;
@@ -361,8 +257,8 @@ class Impl {
       NULL,
       PAGE_READWRITE,
       0,
-      DWORD {SHM_SIZE},// Perfect forwarding fails with static constexpr integer
-                       // values
+      DWORD {SHM_SIZE},// Perfect forwarding fails with static constexpr
+                       // integer values
       SHMPath().c_str());
     if (!fileHandle) {
       dprintf(
@@ -391,8 +287,10 @@ class Impl {
 
   ~Impl() {
     UnmapViewOfFile(mMapping);
-    if (mHaveLock) {
-      dprint("Closing SHM while holding lock!");
+    if (mState.Get() != State::Unlocked) {
+      using namespace OpenKneeboard::ADL;
+      dprintf(
+        "Closing SHM with invalid state: {}", formattable_state(mState.Get()));
       OPENKNEEBOARD_BREAK;
       std::terminate();
     }
@@ -402,16 +300,16 @@ class Impl {
     return mMapping;
   }
 
-  bool HaveLock() const {
-    return mHaveLock;
+  template <State in, State out>
+  void Transition(
+    const std::source_location& loc = std::source_location::current()) {
+    mState.Transition<in, out>(loc);
   }
 
   // "Lockable" C++ named concept: supports std::unique_lock
 
   void lock() {
-    if (mHaveLock) {
-      throw std::logic_error("Acquiring a lock twice");
-    }
+    mState.Transition<State::Unlocked, State::TryLock>();
     TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "SHM::Impl::lock()");
 
@@ -424,23 +322,24 @@ class Impl {
         *mHeader = {};
         break;
       default:
+        mState.Transition<State::TryLock, State::Unlocked>();
         TraceLoggingWriteStop(
           activity, "SHM::Impl::lock()", TraceLoggingValue(result, "Error"));
         dprintf(
-          "Unexpected result from SHM WaitForSingleObject in lock(): {:#016x}",
+          "Unexpected result from SHM WaitForSingleObject in lock(): "
+          "{:#016x}",
           static_cast<uint64_t>(result));
         OPENKNEEBOARD_BREAK;
         return;
     }
+
+    mState.Transition<State::TryLock, State::Locked>();
     TraceLoggingWriteStop(
       activity, "SHM::Impl::lock()", TraceLoggingValue("Success", "Result"));
-    mHaveLock = true;
   }
 
   bool try_lock() {
-    if (mHaveLock) {
-      throw std::logic_error("Acquiring a lock twice");
-    }
+    mState.Transition<State::Unlocked, State::TryLock>();
     TraceLoggingThreadActivity<gTraceProvider> activity;
     TraceLoggingWriteStart(activity, "SHM::Impl::try_lock()");
 
@@ -449,10 +348,15 @@ class Impl {
       case WAIT_OBJECT_0:
         // success
         break;
+      case WAIT_ABANDONED:
+        *mHeader = {};
+        break;
       case WAIT_TIMEOUT:
         // expected in try_lock()
+        mState.Transition<State::TryLock, State::Unlocked>();
         return false;
       default:
+        mState.Transition<State::TryLock, State::Unlocked>();
         TraceLoggingWriteStop(
           activity,
           "SHM::Impl::try_lock()",
@@ -463,7 +367,8 @@ class Impl {
         OPENKNEEBOARD_BREAK;
         return false;
     }
-    mHaveLock = true;
+
+    mState.Transition<State::TryLock, State::Locked>();
     TraceLoggingWriteStop(
       activity,
       "SHM::Impl::try_lock()",
@@ -472,25 +377,19 @@ class Impl {
   }
 
   void unlock() {
-    if (!mHaveLock) {
-      throw std::logic_error("Can't release a lock we don't hold");
-    }
-    TraceLoggingThreadActivity<gTraceProvider> activity;
-    TraceLoggingWriteStart(activity, "SHM::Impl::unlock()");
+    mState.Transition<State::Locked, State::Unlocked>();
+    OPENKNEEBOARD_TraceLoggingScope("SHM::Impl::unlock()");
     const auto ret = ReleaseMutex(mMutexHandle.get());
-    TraceLoggingWriteStop(
-      activity, "SHM::Impl::unlock()", TraceLoggingValue(ret, "Result"));
-    mHaveLock = false;
   }
 
- private:
-  bool mHaveLock = false;
+ protected:
+  StateMachine<State> mState = InitialState;
 };
 
-class Writer::Impl : public SHM::Impl {
+class Writer::Impl : public SHM::Impl<WriterState> {
  public:
-  using SHM::Impl::Impl;
-  bool mHaveFed = false;
+  using SHM::Impl<WriterState, WriterState::Unlocked>::Impl;
+
   DWORD mProcessID = GetCurrentProcessId();
 };
 
@@ -509,13 +408,12 @@ Writer::Writer() {
 }
 
 void Writer::Detach() {
-  if (!p->HaveLock()) {
-    OPENKNEEBOARD_BREAK;
-    throw std::logic_error("Need lock to detach");
-  }
+  p->Transition<State::Locked, State::Detaching>();
 
   p->mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
   FlushViewOfFile(p->mMapping, NULL);
+
+  p->Transition<State::Detaching, State::Locked>();
 }
 
 Writer::~Writer() {
@@ -523,10 +421,20 @@ Writer::~Writer() {
   this->Detach();
 }
 
-std::wstring Writer::GetSharedTextureName(
-  uint8_t layerIndex,
-  uint32_t sequenceNumber) {
-  return SharedTextureName(this->GetSessionID(), layerIndex, sequenceNumber);
+Writer::NextFrameInfo Writer::BeginFrame() noexcept {
+  p->Transition<State::Locked, State::FrameInProgress>();
+
+  const auto textureIndex
+    = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % TextureCount);
+  auto fenceValue = &p->mHeader->mFenceValues[textureIndex];
+  const auto fenceOut = InterlockedIncrement64(fenceValue);
+  const auto fenceIn = fenceOut - 1;
+
+  return NextFrameInfo {
+    .mTextureIndex = textureIndex,
+    .mFenceIn = fenceIn,
+    .mFenceOut = fenceOut,
+  };
 }
 
 void Writer::lock() {
@@ -541,21 +449,41 @@ bool Writer::try_lock() {
   return p->try_lock();
 }
 
-UINT Writer::GetNextTextureIndex() const {
-  return (p->mHeader->mSequenceNumber + 1) % TextureCount;
-}
-
-uint64_t Writer::GetSessionID() const {
-  return p->mHeader->mSessionID;
-}
-
-uint32_t Writer::GetNextSequenceNumber() const {
-  return p->mHeader->mSequenceNumber + 1;
-}
-
-class Reader::Impl : public SHM::Impl {
+class Reader::Impl : public SHM::Impl<ReaderState> {
  public:
-  std::array<IPCTextureReadResources, TextureCount> mResources;
+  winrt::handle mFeederProcessHandle;
+  uint64_t mSessionID {~(0ui64)};
+
+  std::array<std::unique_ptr<IPCSwapchainBufferResources>, TextureCount>
+    mBufferResources;
+
+  void UpdateSession() {
+    const auto& metadata = *this->mHeader;
+
+    if (
+      mForeignTextureHandle != metadata.mTexture
+      || mForeignFenceHandle != metadata.mFence) {
+      mBufferResources = {};
+      mForeignTextureHandle = metadata.mTexture;
+      mForeignFenceHandle = metadata.mFence;
+    }
+
+    if (metadata.mSessionID == mSessionID) [[likely]] {
+      return;
+    }
+
+    mFeederProcessHandle = winrt::handle {
+      OpenProcess(PROCESS_DUP_HANDLE, FALSE, metadata.mFeederProcessID)};
+    mSessionID = metadata.mSessionID;
+    // Probably just did this, but doesn't hurt to be sure :)
+    mBufferResources = {};
+  }
+
+ private:
+  // Only valid in the feeder process, but keep track of them to see if they
+  // change
+  HANDLE mForeignTextureHandle {};
+  HANDLE mForeignFenceHandle {};
 };
 
 uint64_t Reader::GetSessionID() const {
@@ -569,6 +497,7 @@ uint64_t Reader::GetSessionID() const {
 }
 
 Reader::Reader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::Reader()");
   const auto path = SHMPath();
   dprintf(L"Initializing SHM reader with path {}", path);
 
@@ -581,6 +510,7 @@ Reader::Reader() {
 }
 
 Reader::~Reader() {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::~Reader()");
 }
 
 Reader::operator bool() const {
@@ -591,105 +521,29 @@ Writer::operator bool() const {
   return (bool)p;
 }
 
+CachedReader::CachedReader(IPCTextureCopier* copier, ConsumerKind kind)
+  : mTextureCopier(copier), mConsumerKind(kind) {
+}
+
+void CachedReader::InitializeCache(uint8_t swapchainLength) {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::CachedReader::InitializeCache()",
+    TraceLoggingValue(swapchainLength, "SwapchainLength"));
+  mCache.resize(swapchainLength, nullptr);
+  mClientTextures = {swapchainLength, nullptr};
+}
+
 CachedReader::~CachedReader() = default;
 
-std::shared_ptr<LayerTextureCache> CachedReader::CreateLayerTextureCache(
-  [[maybe_unused]] uint8_t layerIndex,
-  const winrt::com_ptr<ID3D11Texture2D>& texture) {
-  return std::make_shared<LayerTextureCache>(texture);
-}
-
-Snapshot CachedReader::MaybeGet(
-  ID3D11DeviceContext4* ctx,
-  ID3D11Fence* fence,
-  const LayersTextureCache& textures,
-  ConsumerKind kind) noexcept {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "SHM::MaybeGet");
-  if (!*this) {
-    TraceLoggingWriteStop(
-      activity, "SHM::MaybeGet", TraceLoggingValue("No feeder", "Result"));
-    return {nullptr};
-  }
-
-  if (
-    mCache.IsValid()
-    && this->GetRenderCacheKey(kind) == mCache.GetRenderCacheKey()
-    && kind == mCachedConsumerKind) {
-    TraceLoggingWriteStop(
-      activity,
-      "SHM::MaybeGet",
-      TraceLoggingValue("Cache hit", "Result"),
-      TraceLoggingValue(
-        mCache.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
-    return mCache;
-  }
-
-  TraceLoggingWriteTagged(activity, "Waiting for SHM lock");
-  const std::unique_lock shmLock(*p, std::try_to_lock);
-  if (!shmLock.owns_lock()) {
-    TraceLoggingWriteStop(
-      activity,
-      "SHM::MaybeGet",
-      TraceLoggingValue("try_to_lock failed", "Result"));
-    return mCache;
-  }
-  TraceLoggingWriteTagged(activity, "Acquired SHM lock");
-  const auto newSnapshot = this->MaybeGetUncached(ctx, fence, textures, kind);
-
-  using State = Snapshot::State;
-  const auto state = newSnapshot.GetState();
-  if (state == State::Empty && kind == mCachedConsumerKind) {
-    TraceLoggingWriteStop(
-      activity,
-      "SHM::MaybeGet",
-      TraceLoggingValue("Using stale cache", "Result"),
-      TraceLoggingValue(
-        mCache.GetSequenceNumberForDebuggingOnly(), "SequenceNumber"));
-    return mCache;
-  }
-  if (state != State::Valid) {
-    TraceLoggingWriteStop(
-      activity, "SHM::MaybeGet", TraceLoggingValue("Unusable cache", "Result"));
-    return newSnapshot;
-  }
-
-  const auto newSequenceNumber
-    = newSnapshot.GetSequenceNumberForDebuggingOnly();
-  if (newSequenceNumber < mCachedSequenceNumber) {
-    TraceLoggingWriteTagged(
-      activity,
-      "BackwardsSequenceNumber",
-      TraceLoggingValue(mCachedSequenceNumber, "previous"),
-      TraceLoggingValue(newSequenceNumber, "new"));
-    dprintf(
-      "Sequence number went backwards! {} -> {}",
-      mCachedSequenceNumber,
-      newSequenceNumber);
-  }
-
-  mCache = newSnapshot;
-  mCachedConsumerKind = kind;
-  mCachedSequenceNumber = newSequenceNumber;
-  ActiveConsumers::Set(kind);
-  TraceLoggingWriteStop(
-    activity,
-    "SHM::MaybeGet",
-    TraceLoggingValue("Updated cache", "Result"),
-    TraceLoggingValue(newSequenceNumber, "SequenceNumber"),
-    TraceLoggingValue(static_cast<uint8_t>(mCache.GetState()), "State"));
-  return mCache;
-}
-
 Snapshot Reader::MaybeGetUncached(
-  ID3D11DeviceContext4* ctx,
-  ID3D11Fence* fence,
-  const LayersTextureCache& textures,
+  IPCTextureCopier* copier,
+  const std::shared_ptr<IPCClientTexture>& dest,
   ConsumerKind kind) const {
-  if (!p->HaveLock()) {
-    dprint("Can't get without lock");
-    throw std::logic_error("Reader::MaybeGet() without lock");
-  }
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::MaybeGetUncached()");
+  const auto transitions = make_scoped_state_transitions<
+    State::Locked,
+    State::CreatingSnapshot,
+    State::Locked>(p);
 
   if (!p->mHeader->mConfig.mTarget.Matches(kind)) {
     traceprint(
@@ -700,12 +554,15 @@ Snapshot Reader::MaybeGetUncached(
     return {Snapshot::incorrect_kind};
   }
 
-  auto& r = p->mResources.at(p->mHeader->mSequenceNumber % TextureCount);
-  if (!r.Populate(ctx, p->mHeader->mSessionID, p->mHeader->mSequenceNumber)) {
-    return {nullptr};
+  p->UpdateSession();
+
+  auto& br = p->mBufferResources.at(p->mHeader->mFrameNumber % TextureCount);
+  if (!br) {
+    br = std::make_unique<IPCSwapchainBufferResources>(
+      p->mFeederProcessHandle.get(), *p->mHeader);
   }
 
-  return Snapshot(*p->mHeader, ctx, fence, textures, &r);
+  return Snapshot(p->mHeader, copier, br.get(), dest);
 }
 
 size_t Reader::GetRenderCacheKey(ConsumerKind kind) {
@@ -720,16 +577,19 @@ size_t Reader::GetRenderCacheKey(ConsumerKind kind) {
   return p->mHeader->GetRenderCacheKey();
 }
 
-void Writer::Update(
+void Writer::SubmitFrame(
   const Config& config,
   const std::vector<LayerConfig>& layers,
+  HANDLE texture,
   HANDLE fence) {
   if (!p) {
     throw std::logic_error("Attempted to update invalid SHM");
   }
-  if (!p->HaveLock()) {
-    throw std::logic_error("Attempted to update SHM without a lock");
-  }
+
+  const auto transitions = make_scoped_state_transitions<
+    State::FrameInProgress,
+    State::SubmittingFrame,
+    State::Locked>(p);
 
   if (layers.size() > MaxLayers) {
     throw std::logic_error(std::format(
@@ -737,16 +597,25 @@ void Writer::Update(
   }
 
   for (auto layer: layers) {
-    if (layer.mImageWidth == 0 || layer.mImageHeight == 0) {
+    const auto size = layer.mLocationOnTexture.mSize;
+
+    if (size.mWidth == 0 || size.mHeight == 0) {
       throw std::logic_error("Not feeding a 0-size image");
+    }
+    if (size.mWidth > TextureWidth || size.mHeight > TextureHeight) {
+      // logic_error as the feeder should scale/crop/whatever as needed to fit
+      // in the limits
+      throw std::logic_error(
+        std::format("Oversized layer: {}x{}", size.mWidth, size.mHeight));
     }
   }
 
   p->mHeader->mConfig = config;
-  p->mHeader->mSequenceNumber++;
+  p->mHeader->mFrameNumber++;
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
   p->mHeader->mLayerCount = static_cast<uint8_t>(layers.size());
   p->mHeader->mFeederProcessID = p->mProcessID;
+  p->mHeader->mTexture = texture;
   p->mHeader->mFence = fence;
   memcpy(
     p->mHeader->mLayers, layers.data(), sizeof(LayerConfig) * layers.size());
@@ -765,14 +634,14 @@ size_t FrameMetadata::GetRenderCacheKey() const {
   // If adding more data, it either needs to be random,
   // or need something like boost::hash_combine()
   std::hash<uint64_t> HashUI64;
-  return HashUI64(mSessionID) ^ HashUI64(mSequenceNumber);
+  return HashUI64(mSessionID) ^ HashUI64(mFrameNumber);
 }
 
-uint32_t Reader::GetFrameCountForMetricsOnly() const {
+uint64_t Reader::GetFrameCountForMetricsOnly() const {
   if (!(p && p->mHeader)) {
     return {};
   }
-  return p->mHeader->mSequenceNumber;
+  return p->mHeader->mFrameNumber;
 }
 
 ConsumerPattern::ConsumerPattern() = default;
@@ -790,109 +659,105 @@ bool ConsumerPattern::Matches(ConsumerKind kind) const {
   return (mKindMask & std23::to_underlying(kind)) == mKindMask;
 }
 
-void CachedReader::InitDXResources(ID3D11Device* device) {
-  if (!p) {
-    return;
-  }
-
-  const auto sessionID = this->GetSessionID();
-  if (mDevice == device && mSessionID == sessionID) [[likely]] {
-    return;
-  }
+Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
+  TraceLoggingThreadActivity<gTraceProvider> activity;
+  TraceLoggingWriteStart(activity, "CachedReader::MaybeGet()");
   if (!(*this)) {
-    return;
-  }
-  winrt::com_ptr<ID3D11Device5> device5;
-  winrt::check_hresult(device->QueryInterface<ID3D11Device5>(device5.put()));
-  {
-    winrt::com_ptr<IDXGIDevice> dxgiDevice;
-    winrt::check_hresult(device->QueryInterface<IDXGIDevice>(dxgiDevice.put()));
-    winrt::com_ptr<IDXGIAdapter> dxgiAdapter;
-    winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
-    DXGI_ADAPTER_DESC desc {};
-    winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
-    dprintf(
-      L"SHM reader using adapter '{}' (LUID {:#x})",
-      desc.Description,
-      std::bit_cast<uint64_t>(desc.AdapterLuid));
-  }
-
-  // Make sure we get a consistent view
-  std::unique_lock lock(*p, std::try_to_lock);
-  if (!lock.owns_lock()) {
-    dprint("Failed to acquire SHM lock in InitDXResources");
-    return;
-  }
-
-  mDevice = device;
-  mSessionID = sessionID;
-
-  if (!sessionID) {
-    return;
-  }
-
-  for (size_t i = 0; i < mTextures.size(); ++i) {
-    auto texture = SHM::CreateCompatibleTexture(
-      device,
-      SHM::DEFAULT_D3D11_BIND_FLAGS,
-      SHM::DEFAULT_D3D11_MISC_FLAGS | D3D11_RESOURCE_MISC_SHARED
-        | D3D11_RESOURCE_MISC_SHARED_NTHANDLE);
-    const auto name = std::format("OKB-SHM-Texture-{}", i);
-    texture->SetPrivateData(
-      WKPDID_D3DDebugObjectName, name.size(), name.data());
-    mTextures[i] = this->CreateLayerTextureCache(i, std::move(texture));
-  }
-
-  winrt::com_ptr<ID3D11DeviceContext> ctx;
-  device->GetImmediateContext(ctx.put());
-  mContext = ctx.as<ID3D11DeviceContext4>();
-
-  winrt::handle feeder {
-    OpenProcess(PROCESS_DUP_HANDLE, FALSE, p->mHeader->mFeederProcessID)};
-  if (!feeder) {
-    return;
-  }
-
-  mFenceHandle = {};
-  DuplicateHandle(
-    feeder.get(),
-    p->mHeader->mFence,
-    GetCurrentProcess(),
-    mFenceHandle.put(),
-    0,
-    FALSE,
-    DUPLICATE_SAME_ACCESS);
-  if (!mFenceHandle) {
-    return;
-  }
-
-  mFence = {nullptr};
-  device5->OpenSharedFence(mFenceHandle.get(), IID_PPV_ARGS(mFence.put()));
-}
-
-Snapshot CachedReader::MaybeGet(ID3D11Device* device, ConsumerKind kind) {
-  if (!(*this)) {
+    TraceLoggingWriteStop(
+      activity,
+      "CachedReader::MaybeGet()",
+      TraceLoggingValue("Invalid SHM", "Result"));
     return {nullptr};
   }
 
-  this->InitDXResources(device);
+  ActiveConsumers::Set(mConsumerKind);
 
-  if (!(mSessionID && mContext && mFence)) {
-    return {nullptr};
+  const auto swapchainIndex = mSwapchainIndex;
+  if (swapchainIndex >= mClientTextures.size()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc,
+      "swapchainIndex {} >= swapchainLength {}; did you call "
+      "InitializeCache()?",
+      swapchainIndex,
+      mClientTextures.size());
+  }
+  mSwapchainIndex = (mSwapchainIndex + 1) % mClientTextures.size();
+
+  const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
+
+  if (cacheKey == mCacheKey) {
+    const auto& cache = mCache.front();
+    TraceLoggingWriteStop(
+      activity,
+      "CachedReader::MaybeGet()",
+      TraceLoggingValue("Returning cached snapshot", "Result"),
+      TraceLoggingValue(static_cast<unsigned int>(cache.GetState()), "State"));
+    return cache;
   }
 
-  return this->MaybeGet(mContext.get(), mFence.get(), mTextures, kind);
+  TraceLoggingWriteTagged(activity, "LockingSHM");
+  std::unique_lock lock(*p);
+  TraceLoggingWriteTagged(activity, "LockedSHM");
+  TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
+  TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
+
+  const auto dimensions = p->mHeader->mConfig.mTextureSize;
+  auto dest = GetIPCClientTexture(dimensions, swapchainIndex);
+
+  auto snapshot = this->MaybeGetUncached(mTextureCopier, dest, mConsumerKind);
+  const auto state = snapshot.GetState();
+  TraceLoggingWriteStop(
+    maybeGetActivity,
+    "MaybeGetUncached",
+    TraceLoggingValue(static_cast<unsigned int>(state), "State"));
+
+  if (state == Snapshot::State::Empty) {
+    const auto& cache = mCache.front();
+    TraceLoggingWriteStop(
+      activity,
+      "CachedReader::MaybeGet()",
+      TraceLoggingValue("Using stale cache", "Result"),
+      TraceLoggingValue(static_cast<unsigned int>(cache.GetState()), "State"));
+    return cache;
+  }
+
+  mCache.push_front(snapshot);
+  mCache.resize(mClientTextures.size(), nullptr);
+  mCacheKey = cacheKey;
+
+  TraceLoggingWriteStop(
+    activity,
+    "CachedReader::MaybeGet()",
+    TraceLoggingValue("Updated cache", "Result"),
+    TraceLoggingValue(static_cast<unsigned int>(state), "State"));
+  return snapshot;
 }
 
-LayerTextureCache::LayerTextureCache(
-  const winrt::com_ptr<ID3D11Texture2D>& d3d11Texture)
-  : mD3D11Texture(d3d11Texture) {
+std::shared_ptr<IPCClientTexture> CachedReader::GetIPCClientTexture(
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "CachedReader::GetIPCClientTexture",
+    TraceLoggingValue(swapchainIndex, "swapchainIndex"));
+  auto& ret = mClientTextures.at(swapchainIndex);
+  if (ret && ret->GetDimensions() != dimensions) {
+    ret = {};
+  }
+
+  if (!ret) {
+    OPENKNEEBOARD_TraceLoggingScope("CachedReader::CreateIPCClientTexture");
+    ret = this->CreateIPCClientTexture(dimensions, swapchainIndex);
+  }
+  return ret;
 }
 
-LayerTextureCache::~LayerTextureCache() = default;
-
-ID3D11Texture2D* LayerTextureCache::GetD3D11Texture() {
-  return mD3D11Texture.get();
+IPCClientTexture::IPCClientTexture(
+  const PixelSize& dimensions,
+  uint8_t swapchainIndex)
+  : mDimensions(dimensions), mSwapchainIndex(swapchainIndex) {
 }
+
+IPCClientTexture::~IPCClientTexture() = default;
+IPCTextureCopier::~IPCTextureCopier() = default;
 
 }// namespace OpenKneeboard::SHM

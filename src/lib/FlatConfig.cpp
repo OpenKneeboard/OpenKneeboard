@@ -57,7 +57,7 @@ PixelRect NonVRConstrainedPosition::Layout(
   }
 
   return PixelRect {
-    .mOrigin = {left, top},
+    .mOffset = {left, top},
     .mSize = {renderWidth, renderHeight},
   };
 }

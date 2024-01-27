@@ -19,11 +19,13 @@
  */
 #pragma once
 
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/winrt/base.h>
 
 #include <format>
+#include <source_location>
 #include <stop_token>
 #include <string>
 
@@ -128,5 +130,31 @@ class DPrintReceiver {
 
   bool mUsable = false;
 };
+
+#define OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL( \
+  source_location, message, ...) \
+  { \
+    dprintf( \
+      "FATAL: " message " @ {}:{}:{} - {}", \
+      ##__VA_ARGS__, \
+      source_location.file_name(), \
+      source_location.line(), \
+      source_location.column(), \
+      source_location.function_name()); \
+    OPENKNEEBOARD_FATAL; \
+  }
+
+/** Use this if something is so wrong that we're almost certainly going to
+ * crash.
+ *
+ * Crashing earlier is better than crashing later, as we get more usable
+ * debugging information.
+ *
+ * @see `OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL` if you need to provide a
+ * source location.
+ */
+#define OPENKNEEBOARD_LOG_AND_FATAL(message, ...) \
+  OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL( \
+    std::source_location::current(), message, ##__VA_ARGS__)
 
 }// namespace OpenKneeboard

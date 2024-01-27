@@ -17,25 +17,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/SHM/GFXInterop.h>
+#pragma once
 
-namespace OpenKneeboard::SHM::GFXInterop {
+namespace OpenKneeboard {
 
-LayerTextureCache::~LayerTextureCache() = default;
+enum class RenderMode {
+  // Usually wanted for VR as we have our own swapchain for
+  // our compositor layers
+  ClearAndRender,
+  // Usually wanted for non-VR as we're rendering on top of the
+  // application's swapchain texture
+  Overlay,
+};
 
-HANDLE LayerTextureCache::GetNTHandle() {
-  if (!mNTHandle) [[unlikely]] {
-    auto texture = this->GetD3D11Texture();
-
-    winrt::com_ptr<IDXGIResource1> resource;
-    winrt::check_hresult(texture->QueryInterface(resource.put()));
-    winrt::check_hresult(resource->CreateSharedHandle(
-      nullptr,
-      DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE,
-      nullptr,
-      mNTHandle.put()));
-  }
-  return mNTHandle.get();
 }
-
-}// namespace OpenKneeboard::SHM::GFXInterop

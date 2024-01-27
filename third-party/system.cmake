@@ -25,3 +25,16 @@ foreach(LIBRARY ${SYSTEM_LIBRARIES})
     PROPERTY IMPORTED_LIBNAME "${LIBRARY}"
   )
 endforeach()
+
+find_program(
+  FXC_EXE
+  fxc
+  PATHS
+  "${WINDOWS_10_KIT_DIR}/x64"
+  "${WINDOWS_10_KIT_DIR}/x86"
+  NO_DEFAULT_PATH
+  DOC
+  "Path to D3D11 shader compiler"
+  REQUIRED)
+add_executable(System::fxc IMPORTED GLOBAL)
+set_target_properties(System::fxc PROPERTIES IMPORTED_LOCATION "${FXC_EXE}")

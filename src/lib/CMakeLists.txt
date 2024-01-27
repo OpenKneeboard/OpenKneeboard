@@ -113,34 +113,67 @@ target_link_libraries(
   _libheaders
 )
 
-ok_add_library(OpenKneeboard-D3D11 STATIC D3D11.cpp)
+ok_add_library(
+  OpenKneeboard-D3D11
+  STATIC
+  D3D11.cpp
+  D3D11/Renderer.cpp
+)
 target_link_libraries(
   OpenKneeboard-D3D11
   PUBLIC
   System::D3d11
   OpenKneeboard-shims
+  ThirdParty::DirectXTK
   ThirdParty::CppWinRT
   _libheaders
-)
-target_link_libraries(
-  OpenKneeboard-D3D11
   PRIVATE
-  OpenKneeboard-config
-  ThirdParty::DirectXTK
+  OpenKneeboard-dprint
   System::Dxguid
 )
 
-ok_add_library(OpenKneeboard-Vulkan STATIC Vulkan.cpp)
+ok_add_library(
+  OpenKneeboard-D3D12
+  STATIC
+  D3D12.cpp
+  D3D12/Renderer.cpp
+)
+target_link_libraries(
+  OpenKneeboard-D3D12
+  PUBLIC
+  System::D3d12
+  OpenKneeboard-shims
+  ThirdParty::DirectXTK12
+  ThirdParty::CppWinRT
+  _libheaders
+  PRIVATE
+  OpenKneeboard-dprint
+  OpenKneeboard-RenderDoc
+  System::Dxguid
+)
+
+ok_add_library(
+  OpenKneeboard-Vulkan
+  STATIC
+  Vulkan.cpp
+  Vulkan/SpriteBatch.cpp)
 target_link_libraries(
   OpenKneeboard-Vulkan
   PUBLIC
   OpenKneeboard-dprint
   ThirdParty::VulkanHeaders
   _libheaders
+  OpenKneeboard-SpriteBatch-SPIRV
 )
 
 ok_add_library(OpenKneeboard-DXResources STATIC DXResources.cpp)
-target_link_libraries(OpenKneeboard-DXResources PUBLIC _libheaders)
+target_link_libraries(
+  OpenKneeboard-DXResources
+  PUBLIC
+  _libheaders
+  PRIVATE
+  OpenKneeboard-dprint
+)
 
 set(RUNTIME_FILES_CPP "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RuntimeFiles.cpp")
 file(GENERATE OUTPUT "${RUNTIME_FILES_CPP}" INPUT RuntimeFiles.cpp.in)
@@ -167,18 +200,14 @@ ok_add_library(
 )
 target_link_libraries(
   OpenKneeboard-SHM
-  PRIVATE
+  PUBLIC
   OpenKneeboard-dprint
+  _libheaders
+  PRIVATE
+  OpenKneeboard-Elevation
+  OpenKneeboard-config
   OpenKneeboard-shims
   OpenKneeboard-version
-  OpenKneeboard-D3D11
-)
-target_link_libraries(
-  OpenKneeboard-SHM
-  PUBLIC
-  _libheaders
-  OpenKneeboard-config
-  OpenKneeboard-Elevation
 )
 
 ok_add_library(
@@ -189,19 +218,12 @@ ok_add_library(
 target_link_libraries(
   OpenKneeboard-SHM-Client-D3D11
   PUBLIC
+  OpenKneeboard-shims
   OpenKneeboard-SHM
-  ThirdParty::DirectXTK
-)
-
-ok_add_library(
-  OpenKneeboard-SHM-Client-GFXInterop
-  STATIC
-  SHM/GFXInterop.cpp
-)
-target_link_libraries(
-  OpenKneeboard-SHM-Client-GFXInterop
-  PUBLIC
-  OpenKneeboard-SHM
+  System::D3d11
+  ThirdParty::CppWinRT
+  PRIVATE
+  OpenKneeboard-dprint
 )
 
 ok_add_library(
@@ -212,10 +234,12 @@ ok_add_library(
 target_link_libraries(
   OpenKneeboard-SHM-Client-D3D12
   PUBLIC
-  OpenKneeboard-SHM-Client-GFXInterop
   OpenKneeboard-shims
+  System::D3d12
   ThirdParty::CppWinRT
   ThirdParty::DirectXTK12
+  PRIVATE
+  OpenKneeboard-dprint
 )
 
 ok_add_library(
@@ -234,10 +258,14 @@ target_link_libraries(
 )
 
 ok_add_library(OpenKneeboard-dprint STATIC dprint.cpp)
-target_link_libraries(OpenKneeboard-dprint PUBLIC _libheaders)
+target_link_libraries(
+  OpenKneeboard-dprint
+  PUBLIC
+  _libheaders
+  OpenKneeboard-config
+)
 target_link_libraries(OpenKneeboard-dprint
   PRIVATE
-  OpenKneeboard-config
   OpenKneeboard-scope_guard
 )
 
@@ -346,6 +374,7 @@ target_link_libraries(
   PRIVATE
   OpenKneeboard-RunSubprocessAsync
   OpenKneeboard-RuntimeFiles
+  OpenKneeboard-dprint
   ThirdParty::CppWinRT
 )
 
@@ -406,4 +435,17 @@ target_link_libraries(
   PUBLIC
   OpenKneeboard-handles
   _libheaders
+)
+
+ok_add_library(
+  OpenKneeboard-RenderDoc
+  STATIC
+  RenderDoc.cpp
+)
+target_link_libraries(
+  OpenKneeboard-RenderDoc
+  PUBLIC
+  _libheaders
+  PRIVATE
+  ThirdParty::RenderDoc
 )

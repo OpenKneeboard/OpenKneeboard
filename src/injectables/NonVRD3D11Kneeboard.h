@@ -21,6 +21,7 @@
 
 #include "IDXGISwapChainPresentHook.h"
 
+#include <OpenKneeboard/D3D11/Renderer.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
@@ -40,8 +41,22 @@ class NonVRD3D11Kneeboard final {
   void UninstallHook();
 
  private:
-  SHM::D3D11::CachedReader mSHM;
+  SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::NonVRD3D11};
   IDXGISwapChainPresentHook mDXGIHook;
+
+  using SwapchainResources = D3D11::SwapchainResources;
+  using SwapchainBufferResources = D3D11::SwapchainBufferResources;
+
+  struct Resources {
+    ID3D11Device* mDevice {nullptr};
+    ID3D11DeviceContext* mImmediateContext {nullptr};
+    IDXGISwapChain* mSwapchain {nullptr};
+    SwapchainResources mSwapchainResources;
+    std::unique_ptr<D3D11::Renderer> mRenderer;
+  };
+  std::optional<Resources> mResources;
+
+  void InitializeResources(IDXGISwapChain*);
 
   HRESULT OnIDXGISwapChain_Present(
     IDXGISwapChain* this_,

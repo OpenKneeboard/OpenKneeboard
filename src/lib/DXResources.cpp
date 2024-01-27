@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/scope_guard.h>
+#include <OpenKneeboard/tracing.h>
 
 #include <dxgi1_6.h>
 
@@ -189,8 +190,10 @@ HRESULT DXResources::PopD2DDraw() {
 }
 
 void DXResources::lock() {
-  // If we've locked D2D, we don't need to separately lock D3D; keeping it here
-  // anyway as:
+  OPENKNEEBOARD_TraceLoggingScope("DXResources::lock()");
+
+  // If we've locked D2D, we don't need to separately lock D3D; keeping it
+  // here anyway as:
   // - might as well check it's in multithreaded mode in debug builds
   // - keep it in the API :)
 
@@ -205,10 +208,12 @@ void DXResources::lock() {
 }
 
 void DXResources::unlock() {
+  OPENKNEEBOARD_TraceLoggingScope("DXResources::unlock()");
   mLocks->mMutex.unlock();
 }
 
 bool DXResources::try_lock() {
+  OPENKNEEBOARD_TraceLoggingScope("DXResources::try_lock()");
   return mLocks->mMutex.try_lock();
 }
 

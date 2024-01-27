@@ -65,7 +65,8 @@ VRKneeboard::Sizes VRKneeboard::GetSizes(
   const VRRenderConfig& vrc,
   const SHM::LayerConfig& layer) const {
   const auto& vr = layer.mVR;
-  const auto aspectRatio = float(layer.mImageWidth) / layer.mImageHeight;
+  const auto& imageSize = layer.mLocationOnTexture.mSize;
+  const auto aspectRatio = float(imageSize.mWidth) / imageSize.mHeight;
   const auto virtualHeight = vr.mHeight;
   const auto virtualWidth = aspectRatio * vr.mHeight;
 

@@ -20,144 +20,98 @@
 #pragma once
 
 #include <OpenKneeboard/SHM.h>
-#include <OpenKneeboard/SHM/GFXInterop.h>
 
 #include <shims/winrt/base.h>
 
-#include <memory>
-
-#include <d3d11_4.h>
-#include <d3d11on12.h>
 #include <d3d12.h>
 
 #include <directxtk12/DescriptorHeap.h>
-#include <directxtk12/GraphicsMemory.h>
-#include <directxtk12/SpriteBatch.h>
 
 namespace OpenKneeboard::SHM::D3D12 {
 
-struct DeviceResources;
-
-class LayerTextureCache : public SHM::GFXInterop::LayerTextureCache {
+class Texture final : public SHM::IPCClientTexture {
  public:
-  LayerTextureCache() = delete;
-  LayerTextureCache(
-    uint8_t layerIndex,
-    const winrt::com_ptr<ID3D11Texture2D>& d3d11Texture,
-    const std::shared_ptr<DeviceResources>&);
+  Texture() = delete;
+  Texture(
+    const PixelSize&,
+    uint8_t swapchainIndex,
+    const winrt::com_ptr<ID3D12Device>&,
+    ID3D12DescriptorHeap* shaderResourceViewHeap,
+    const D3D12_CPU_DESCRIPTOR_HANDLE& shaderResourceViewCPUHandle,
+    const D3D12_GPU_DESCRIPTOR_HANDLE& shaderResourceViewGPUHandle);
+  virtual ~Texture();
 
   ID3D12Resource* GetD3D12Texture();
   D3D12_GPU_DESCRIPTOR_HANDLE GetD3D12ShaderResourceViewGPUHandle();
+  ID3D12DescriptorHeap* GetD3D12ShaderResourceViewHeap();
 
-  virtual ~LayerTextureCache();
+  void CopyFrom(
+    ID3D12CommandQueue*,
+    ID3D12GraphicsCommandList*,
+    ID3D12Resource* texture,
+    ID3D12Fence* fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept;
 
  private:
-  std::shared_ptr<DeviceResources> mDeviceResources;
-  uint8_t mLayerIndex;
+  winrt::com_ptr<ID3D12Device> mDevice;
 
-  winrt::com_ptr<ID3D12Resource> mD3D12Texture;
+  winrt::com_ptr<ID3D12DescriptorHeap> mShaderResourceViewHeap;
+  D3D12_CPU_DESCRIPTOR_HANDLE mShaderResourceViewCPUHandle;
+  D3D12_GPU_DESCRIPTOR_HANDLE mShaderResourceViewGPUHandle;
+
+  winrt::com_ptr<ID3D12Resource> mTexture;
+  PixelSize mTextureDimensions;
   bool mHaveShaderResourceView {false};
+
+  void InitializeCacheTexture(ID3D12Resource* sourceTexture) noexcept;
 };
 
-class CachedReader : public SHM::CachedReader {
+class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
  public:
-  using SHM::CachedReader::CachedReader;
-
   CachedReader() = delete;
-  CachedReader(ID3D12Device*);
+  CachedReader(ConsumerKind);
   virtual ~CachedReader();
 
-  ID3D12DescriptorHeap* GetShaderResourceViewHeap() const;
+  void InitializeCache(
+    ID3D12Device*,
+    ID3D12CommandQueue* queue,
+    uint8_t swapchainLength);
+
+  virtual Snapshot MaybeGet(
+    const std::source_location& loc = std::source_location::current()) override;
 
  protected:
-  virtual std::shared_ptr<SHM::LayerTextureCache> CreateLayerTextureCache(
-    uint8_t layerIndex,
-    const winrt::com_ptr<ID3D11Texture2D>&) override;
+  virtual void Copy(
+    HANDLE sourceTexture,
+    IPCClientTexture* destinationTexture,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept override;
+
+  virtual std::shared_ptr<SHM::IPCClientTexture> CreateIPCClientTexture(
+    const PixelSize&,
+    uint8_t swapchainIndex) noexcept override;
 
  private:
-  std::shared_ptr<DeviceResources> mDeviceResources;
-};
-
-// Usage:
-// - create DeviceResources and SwapchainResources
-// - Call BeginFrame(), Render() [, Render(), ...], EndFrame()
-// - Optionally call ClearRenderTargetView() after BeginFrame(), depending on
-// your needs.
-namespace Renderer {
-struct DeviceResources {
-  DeviceResources() = delete;
-  DeviceResources(ID3D12Device*, ID3D12CommandQueue*);
-
-  winrt::com_ptr<ID3D12Device> mD3D12Device;
-  winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
-
-  winrt::com_ptr<ID3D11Device5> mD3D11Device;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
-
-  winrt::com_ptr<ID3D11On12Device> mD3D11On12Device;
-
-  std::unique_ptr<DirectX::DescriptorHeap> mD3D12DepthHeap;
-  std::unique_ptr<DirectX::GraphicsMemory> mDXTK12GraphicsMemory;
-
-  winrt::com_ptr<ID3D12Fence> mD3D12Fence;
-  winrt::handle mD3DInteropFenceHandle;
-  winrt::com_ptr<ID3D11Fence> mD3D11Fence;
-  uint64_t mFenceValue {};
-  winrt::handle mFenceEvent;
-};
-
-struct SwapchainResources {
-  SwapchainResources() = delete;
-  SwapchainResources(
-    DeviceResources*,
-    DXGI_FORMAT renderTargetViewFormat,
-    size_t textureCount,
-    ID3D12Resource** textures);
-
-  D3D12_VIEWPORT mViewport;
-  D3D12_RECT mScissorRect;
-
-  winrt::com_ptr<ID3D12Resource> mD3D12DepthStencilTexture;
-
-  std::unique_ptr<DirectX::DX12::SpriteBatch> mDXTK12SpriteBatch;
+  winrt::com_ptr<ID3D12Device> mDevice;
+  winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
 
   struct BufferResources {
-    winrt::com_ptr<ID3D12Resource> mD3D12Texture;
-    D3D12_CPU_DESCRIPTOR_HANDLE mD3D12RenderTargetView;
-
-    winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
+    winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
+    winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
   };
 
-  std::vector<std::unique_ptr<BufferResources>> mBufferResources;
+  std::vector<BufferResources> mBufferResources;
+  std::unique_ptr<DirectX::DescriptorHeap> mShaderResourceViewHeap;
 
- private:
-  std::unique_ptr<DirectX::DescriptorHeap> mD3D12RenderTargetViewsHeap;
+  uint8_t GetSwapchainLength() const;
+
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D12Fence>> mIPCFences;
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D12Resource>> mIPCTextures;
+
+  ID3D12Fence* GetIPCFence(HANDLE) noexcept;
+  ID3D12Resource* GetIPCTexture(HANDLE) noexcept;
 };
-
-void BeginFrame(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex);
-
-void ClearRenderTargetView(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex);
-
-void Render(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex,
-  const SHM::D3D12::CachedReader&,
-  const SHM::Snapshot&,
-  size_t layerSpriteCount,
-  LayerSprite* layerSprites);
-
-void EndFrame(
-  DeviceResources*,
-  SwapchainResources*,
-  uint8_t swapchainTextureIndex);
-
-}// namespace Renderer
 
 }// namespace OpenKneeboard::SHM::D3D12

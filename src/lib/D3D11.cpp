@@ -18,15 +18,11 @@
  * USA.
  */
 #include <OpenKneeboard/D3D11.h>
-#include <OpenKneeboard/SHM.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/winrt/base.h>
-
-#include <directxtk/SpriteBatch.h>
 
 #include <d3d11_3.h>
 
@@ -40,16 +36,20 @@ struct SavedState::Impl {
 
 thread_local bool SavedState::Impl::tHaveSavedState {false};
 
-SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "D3D11::SavedState");
-  if (Impl::tHaveSavedState) {
-    dprint("ERROR: nesting D3D11 SavedStates");
-    OPENKNEEBOARD_BREAK;
+SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx)
+  : SavedState(ctx.get()) {
+}
+
+SavedState::SavedState(ID3D11DeviceContext* ctx) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::SavedState()");
+  if (Impl::tHaveSavedState) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Nested D3D11 SavedStates detected");
   }
 
   Impl::tHaveSavedState = true;
-  mImpl = new Impl {.mContext = ctx.as<ID3D11DeviceContext1>()};
+  mImpl = new Impl {};
+  winrt::check_hresult(
+    ctx->QueryInterface(IID_PPV_ARGS(mImpl->mContext.put())));
 
   winrt::com_ptr<ID3D11Device> device;
   ctx->GetDevice(device.put());
@@ -57,8 +57,7 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
 
   winrt::com_ptr<ID3DDeviceContextState> newState;
   {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "CreateDeviceContextState");
+    OPENKNEEBOARD_TraceLoggingScope("CreateDeviceContextState");
     winrt::check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
       (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
         ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
@@ -69,30 +68,19 @@ SavedState::SavedState(const winrt::com_ptr<ID3D11DeviceContext>& ctx) {
       __uuidof(ID3D11Device),
       nullptr,
       newState.put()));
-    TraceLoggingWriteStop(subActivity, "CreateDeviceContextState");
   }
   {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "SwapDeviceContextState");
+    OPENKNEEBOARD_TraceLoggingScope("SwapDeviceContextState");
     mImpl->mContext->SwapDeviceContextState(
       newState.get(), mImpl->mState.put());
-    TraceLoggingWriteStop(subActivity, "SwapDeviceContextState");
   }
-  TraceLoggingWriteStop(activity, "D3D11::SavedState");
 }
 
 SavedState::~SavedState() {
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "D3D11::~SavedState()");
-  {
-    TraceLoggingThreadActivity<gTraceProvider> subActivity;
-    TraceLoggingWriteStart(subActivity, "SwapDeviceContextState");
-    mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
-    TraceLoggingWriteStop(subActivity, "SwapDeviceContextState");
-  }
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SavedState::~SavedState()");
+  mImpl->mContext->SwapDeviceContextState(mImpl->mState.get(), nullptr);
   Impl::tHaveSavedState = false;
   delete mImpl;
-  TraceLoggingWriteStop(activity, "D3D11::~SavedState()");
 }
 
 void CopyTextureWithTint(
@@ -201,6 +189,93 @@ void DrawTextureWithOpacity(
     sourceRect,
     destRect,
     DirectX::FXMVECTOR {opacity, opacity, opacity, opacity});
+}
+
+SpriteBatch::SpriteBatch(ID3D11Device* device) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::SpriteBatch()");
+  mDevice.copy_from(device);
+  device->GetImmediateContext(mDeviceContext.put());
+
+  mDXTKSpriteBatch
+    = std::make_unique<DirectX::SpriteBatch>(mDeviceContext.get());
+}
+
+SpriteBatch::~SpriteBatch() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::~SpriteBatch()");
+  if (mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "Destroying SpriteBatch while frame in progress; did you call End()?");
+  }
+}
+
+void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Begin()");
+  if (mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "frame already in progress; did you call End()?");
+  }
+  const D3D11_VIEWPORT viewport {
+    0,
+    0,
+    rtvSize.GetWidth<FLOAT>(),
+    rtvSize.GetHeight<FLOAT>(),
+    0,
+    1,
+  };
+
+  const D3D11_RECT scissorRect {
+    0,
+    0,
+    rtvSize.GetWidth<LONG>(),
+    rtvSize.GetHeight<LONG>(),
+  };
+
+  auto ctx = mDeviceContext.get();
+  ctx->IASetInputLayout(nullptr);
+  ctx->VSSetShader(nullptr, nullptr, 0);
+  ctx->RSSetViewports(1, &viewport);
+  ctx->RSSetScissorRects(1, &scissorRect);
+  ctx->OMSetRenderTargets(1, &rtv, nullptr);
+  ctx->OMSetDepthStencilState(nullptr, 0);
+  ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
+
+  mDXTKSpriteBatch->Begin();
+
+  mTarget = rtv;
+}
+
+void SpriteBatch::Clear(DirectX::XMVECTORF32 color) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Clear()");
+  if (!mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
+  }
+  mDeviceContext->ClearRenderTargetView(mTarget, color);
+};
+
+void SpriteBatch::Draw(
+  ID3D11ShaderResourceView* source,
+  const PixelRect& sourceRect,
+  const PixelRect& destRect,
+  const DirectX::XMVECTORF32 tint) {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Draw()");
+  if (!mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("target not set, call BeginFrame()");
+  }
+
+  const D3D11_RECT sourceD3DRect = sourceRect;
+  const D3D11_RECT destD3DRect = destRect;
+
+  mDXTKSpriteBatch->Draw(source, destD3DRect, &sourceD3DRect, tint);
+}
+
+void SpriteBatch::End() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::End()");
+  if (!mTarget) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "target not set; double-End() or Begin() not called?");
+  }
+  mDXTKSpriteBatch->End();
+  mTarget = nullptr;
 }
 
 }// namespace OpenKneeboard::D3D11

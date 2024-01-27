@@ -100,11 +100,12 @@ add_module_library(
 target_link_libraries(
   OpenKneeboard-oculus-d3d12
   PRIVATE
+  OpenKneeboard-D3D12
+  OpenKneeboard-SHM-Client-D3D12
+  OpenKneeboard-ScopedRWX
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-version
-  OpenKneeboard-ScopedRWX
-  OpenKneeboard-SHM-Client-D3D12
   d3d12-hooks
   detours-ext
   oculus-hooks
@@ -126,6 +127,7 @@ target_link_libraries(
   ThirdParty::DirectXTK12
   ThirdParty::VulkanHeaders
   OpenKneeboard-D3D11
+  OpenKneeboard-D3D12
   OpenKneeboard-Vulkan
   OpenKneeboard-Elevation
   OpenKneeboard-RayIntersectsRect
@@ -141,12 +143,14 @@ target_link_libraries(
   OpenKneeboard-version
 )
 
-file(
-  GENERATE
-  OUTPUT "OpenKneeboard-OpenXR.json"
-  INPUT "OpenKneeboard-OpenXR.json.in"
-  NEWLINE_STYLE UNIX
-)
+foreach(PREFIX IN ITEMS "" "$<TARGET_FILE_DIR:OpenKneeboard-OpenXR>/")
+  file(
+    GENERATE
+    OUTPUT "${PREFIX}OpenKneeboard-OpenXR.json"
+    INPUT "OpenKneeboard-OpenXR.json.in"
+    NEWLINE_STYLE UNIX
+  )
+endforeach()
 
 add_module_library(OpenKneeboard-AutoDetect InjectionBootstrapper.cpp)
 target_link_libraries(

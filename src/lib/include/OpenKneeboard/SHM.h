@@ -24,7 +24,6 @@
 
 #include <OpenKneeboard/Pixels.h>
 
-#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
 
 #include <shims/winrt/base.h>
@@ -34,56 +33,63 @@
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <numbers>
 #include <optional>
 #include <string>
 #include <vector>
 
-#include <d3d11.h>
-#include <d3d11_3.h>
-
 namespace OpenKneeboard::SHM {
 
-using VRPosition = VRAbsolutePosition;
-
+namespace Detail {
 struct FrameMetadata;
+
+struct DeviceResources;
+struct IPCSwapchainBufferResources;
+
+}// namespace Detail
+
+using VRPosition = VRAbsolutePosition;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
-// Used by D3D11::Renderer, D3D12::Renderer, and Oculus + OpenXR bases
-struct LayerSprite {
-  uint8_t mLayerIndex {0xff};
-  PixelRect mDestRect {};
-  float mOpacity {1.0f};
-};
-
-class LayerTextureCache {
+// See SHM::D3D11::IPCClientTexture etc
+class IPCClientTexture {
  public:
-  LayerTextureCache() = delete;
-  LayerTextureCache(const winrt::com_ptr<ID3D11Texture2D>&);
-  virtual ~LayerTextureCache();
+  IPCClientTexture() = delete;
+  virtual ~IPCClientTexture();
 
-  ID3D11Texture2D* GetD3D11Texture();
+  inline const PixelSize GetDimensions() const {
+    return mDimensions;
+  }
+
+  inline const uint8_t GetSwapchainIndex() const {
+    return mSwapchainIndex;
+  }
+
+ protected:
+  IPCClientTexture(const PixelSize&, uint8_t swapchainIndex);
 
  private:
-  winrt::com_ptr<ID3D11Texture2D> mD3D11Texture;
+  const PixelSize mDimensions;
+  const uint8_t mSwapchainIndex;
 };
 
-using LayersTextureCache
-  = std::array<std::shared_ptr<LayerTextureCache>, MaxLayers>;
-
-constexpr UINT DEFAULT_D3D11_BIND_FLAGS
-  = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-constexpr UINT DEFAULT_D3D11_MISC_FLAGS = 0;
-
-winrt::com_ptr<ID3D11Texture2D> CreateCompatibleTexture(
-  ID3D11Device*,
-  UINT bindFlags = DEFAULT_D3D11_BIND_FLAGS,
-  UINT miscFlags = DEFAULT_D3D11_MISC_FLAGS,
-  DXGI_FORMAT format = SHARED_TEXTURE_PIXEL_FORMAT);
+// See SHM::D3D11::CachedReader etc
+class IPCTextureCopier {
+ public:
+  virtual ~IPCTextureCopier();
+  virtual void Copy(
+    HANDLE sourceTexture,
+    IPCClientTexture* destinationTexture,
+    HANDLE fence,
+    uint64_t fenceValueIn,
+    uint64_t fenceValueOut) noexcept
+    = 0;
+};
 
 // This needs to be kept in sync with `SHM::ActiveConsumers`
 enum class ConsumerKind : uint32_t {
@@ -116,21 +122,27 @@ struct Config final {
   VRRenderConfig mVR {};
   NonVRConstrainedPosition mFlat {};
   ConsumerPattern mTarget {};
+  PixelSize mTextureSize {};
 };
 static_assert(std::is_standard_layout_v<Config>);
 struct LayerConfig final {
-  uint64_t mLayerID;
-  uint16_t mImageWidth, mImageHeight;// Pixels
-  VRAbsolutePosition mVR;
+  uint64_t mLayerID {};
+  PixelRect mLocationOnTexture {};
 
-  bool IsValid() const;
+  VRAbsolutePosition mVR {};
 };
 static_assert(std::is_standard_layout_v<LayerConfig>);
 
-class Impl;
+enum class WriterState;
 
 class Writer final {
  public:
+  struct NextFrameInfo {
+    uint8_t mTextureIndex {};
+    LONG64 mFenceIn {};
+    LONG64 mFenceOut {};
+  };
+
   Writer();
   ~Writer();
 
@@ -138,19 +150,12 @@ class Writer final {
 
   operator bool() const;
 
-  void Update(
+  NextFrameInfo BeginFrame() noexcept;
+  void SubmitFrame(
     const Config& config,
     const std::vector<LayerConfig>& layers,
+    HANDLE texture,
     HANDLE fence);
-
-  UINT GetNextTextureIndex() const;
-
-  std::wstring GetSharedTextureName(
-    uint8_t layerIndex,
-    uint32_t sequenceNumber);
-
-  uint64_t GetSessionID() const;
-  uint32_t GetNextSequenceNumber() const;
 
   // "Lockable" C++ named concept: supports std::unique_lock
   void lock();
@@ -158,12 +163,10 @@ class Writer final {
   void unlock();
 
  private:
+  using State = WriterState;
   class Impl;
   std::shared_ptr<Impl> p;
 };
-
-struct IPCTextureReadResources;
-struct IPCLayerTextureReadResources;
 
 class Snapshot final {
  public:
@@ -180,11 +183,10 @@ class Snapshot final {
   Snapshot(incorrect_kind_t);
 
   Snapshot(
-    const FrameMetadata& header,
-    ID3D11DeviceContext4*,
-    ID3D11Fence*,
-    const LayersTextureCache&,
-    IPCTextureReadResources*);
+    Detail::FrameMetadata*,
+    IPCTextureCopier* copier,
+    Detail::IPCSwapchainBufferResources* source,
+    const std::shared_ptr<IPCClientTexture>& dest);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -193,22 +195,11 @@ class Snapshot final {
   uint8_t GetLayerCount() const;
   const LayerConfig* GetLayerConfig(uint8_t layerIndex) const;
 
-  template <std::derived_from<LayerTextureCache> T>
-  T* GetLayerGPUResources(uint8_t layerIndex) const {
-    if (layerIndex >= this->GetLayerCount()) [[unlikely]] {
-      dprintf(
-        "Asked for layer {}, but there are {} layers",
-        layerIndex,
-        this->GetLayerCount());
-      OPENKNEEBOARD_BREAK;
-      return nullptr;
-    }
-    const auto ret
-      = std::dynamic_pointer_cast<T>(mLayerTextures.at(layerIndex));
+  template <std::derived_from<IPCClientTexture> T>
+  T* GetTexture() const {
+    const auto ret = std::dynamic_pointer_cast<T>(mIPCTexture);
     if (!ret) [[unlikely]] {
-      dprint("Layer texture cache type mismatch");
-      OPENKNEEBOARD_BREAK;
-      return nullptr;
+      OPENKNEEBOARD_LOG_AND_FATAL("Layer texture cache type mismatch");
     }
     return ret.get();
   }
@@ -221,20 +212,23 @@ class Snapshot final {
   Snapshot() = delete;
 
  private:
-  std::shared_ptr<FrameMetadata> mHeader;
-  LayersTextureCache mLayerTextures;
+  std::shared_ptr<Detail::FrameMetadata> mHeader;
+  std::shared_ptr<IPCClientTexture> mIPCTexture;
 
   State mState;
 };
 
+enum class ReaderState;
+
 class Reader {
  public:
+  using State = ReaderState;
   Reader();
   ~Reader();
 
   operator bool() const;
   /// Do not use for caching - use GetRenderCacheKey instead
-  uint32_t GetFrameCountForMetricsOnly() const;
+  uint64_t GetFrameCountForMetricsOnly() const;
 
   /** Fetch the render cache key, and mark the consumer kind as active if
    * enabled.
@@ -246,47 +240,44 @@ class Reader {
 
   uint64_t GetSessionID() const;
 
+ protected:
   Snapshot MaybeGetUncached(
-    ID3D11DeviceContext4*,
-    ID3D11Fence*,
-    const LayersTextureCache&,
+    IPCTextureCopier* copier,
+    const std::shared_ptr<IPCClientTexture>& dest,
     ConsumerKind) const;
 
- protected:
   class Impl;
   std::shared_ptr<Impl> p;
 };
 
 class CachedReader : public Reader {
  public:
+  CachedReader() = delete;
+  CachedReader(IPCTextureCopier*, ConsumerKind);
   virtual ~CachedReader();
-  Snapshot MaybeGet(ID3D11Device* device, ConsumerKind kind);
+
+  virtual Snapshot MaybeGet(
+    const std::source_location& loc = std::source_location::current());
 
  protected:
-  virtual std::shared_ptr<LayerTextureCache> CreateLayerTextureCache(
-    uint8_t layerIndex,
-    const winrt::com_ptr<ID3D11Texture2D>&);
+  void InitializeCache(uint8_t swapchainLength);
+
+  virtual std::shared_ptr<IPCClientTexture>
+  CreateIPCClientTexture(const PixelSize&, uint8_t swapchainIndex) noexcept = 0;
 
  private:
-  void InitDXResources(ID3D11Device*);
+  IPCTextureCopier* mTextureCopier {nullptr};
+  ConsumerKind mConsumerKind {};
 
-  ID3D11Device* mDevice {nullptr};
-  uint64_t mSessionID = 0;
-  winrt::com_ptr<ID3D11DeviceContext4> mContext;
-  winrt::com_ptr<ID3D11Fence> mFence;
-  winrt::handle mFenceHandle;
-  SHM::LayersTextureCache mTextures;
+  uint64_t mCacheKey {~(0ui64)};
+  std::deque<Snapshot> mCache;
+  uint8_t mSwapchainIndex {};
 
-  Snapshot mCache {nullptr};
-  ConsumerKind mCachedConsumerKind;
-  uint64_t mCachedSequenceNumber {};
+  std::vector<std::shared_ptr<IPCClientTexture>> mClientTextures;
 
-  // Fetch a (possibly-cached) snapshot
-  Snapshot MaybeGet(
-    ID3D11DeviceContext4*,
-    ID3D11Fence*,
-    const LayersTextureCache&,
-    ConsumerKind) noexcept;
+  std::shared_ptr<IPCClientTexture> GetIPCClientTexture(
+    const PixelSize&,
+    uint8_t swapchainIndex) noexcept;
 };
 
 }// namespace OpenKneeboard::SHM
