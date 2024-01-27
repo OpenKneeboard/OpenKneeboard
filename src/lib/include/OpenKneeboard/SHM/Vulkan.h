@@ -101,12 +101,16 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   void InitializeCache(
     OpenKneeboard::Vulkan::Dispatch*,
+    VkInstance,
     VkDevice,
     VkPhysicalDevice,
     uint32_t queueFamilyIndex,
     uint32_t queueIndex,
     const VkAllocationCallbacks*,
     uint8_t swapchainLength);
+
+  virtual Snapshot MaybeGet(
+    const std::source_location& loc = std::source_location::current()) override;
 
   static constexpr std::string_view REQUIRED_DEVICE_EXTENSIONS[] {
     VK_KHR_BIND_MEMORY_2_EXTENSION_NAME,
@@ -140,6 +144,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
  private:
   OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
+  VkInstance mInstance {};
   VkDevice mDevice {};
   VkPhysicalDevice mPhysicalDevice {};
   VkQueue mQueue {};

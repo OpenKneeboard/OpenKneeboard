@@ -18,6 +18,7 @@
  * USA.
  */
 
+#include <OpenKneeboard/RenderDoc.h>
 #include <OpenKneeboard/SHM/Vulkan.h>
 #include <OpenKneeboard/Vulkan.h>
 
@@ -351,6 +352,7 @@ CachedReader::~CachedReader() {
 
 void CachedReader::InitializeCache(
   OpenKneeboard::Vulkan::Dispatch* dispatch,
+  VkInstance instance,
   VkDevice device,
   VkPhysicalDevice physicalDevice,
   uint32_t queueFamilyIndex,
@@ -359,6 +361,7 @@ void CachedReader::InitializeCache(
   uint8_t swapchainLength) {
   mVK = dispatch;
 
+  mInstance = instance;
   mDevice = device;
   mPhysicalDevice = physicalDevice;
   mAllocator = allocator;
@@ -647,6 +650,12 @@ VkImage CachedReader::GetIPCImage(HANDLE handle, const PixelSize& dimensions) {
   mIPCImages.emplace(
     handle, IPCImage {std::move(memory), std::move(image), dimensions});
   return ret;
+}
+
+Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
+  RenderDoc::NestedFrameCapture renderDocFrame(
+    mInstance, "SHM::Vulkan::MaybeGet()");
+  return SHM::CachedReader::MaybeGet(loc);
 }
 
 };// namespace OpenKneeboard::SHM::Vulkan

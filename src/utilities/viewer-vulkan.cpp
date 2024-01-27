@@ -296,6 +296,7 @@ void VulkanRenderer::Initialize(uint8_t swapchainLength) {
   }
   mSHM.InitializeCache(
     mVK.get(),
+    mVKInstance.get(),
     mDevice.get(),
     mVKPhysicalDevice,
     mQueueFamilyIndex,

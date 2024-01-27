@@ -200,6 +200,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
 
   mSHM.InitializeCache(
     mVK.get(),
+    mVKInstance,
     mDevice,
     mPhysicalDevice,
     mQueueFamilyIndex,
