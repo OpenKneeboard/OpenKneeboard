@@ -259,9 +259,11 @@ void CachedReader::Copy(
       fenceValueIn,
       fenceValueOut);
 
-  OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
-  winrt::check_hresult(
-    br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
+  {
+    OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
+    winrt::check_hresult(
+      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
+  }
 }
 
 uint8_t CachedReader::GetSwapchainLength() const {

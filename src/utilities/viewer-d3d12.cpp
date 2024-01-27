@@ -116,9 +116,7 @@ uint64_t D3D12Renderer::Render(
   auto dest = mDestRTVHeap->GetFirstCpuHandle();
   mDevice->CreateRenderTargetView(mDestTexture.get(), nullptr, dest);
 
-  if (mCommandList) {
-    winrt::check_hresult(mCommandList->Reset(mCommandAllocator.get(), nullptr));
-  } else {
+  if (!mCommandList) {
     mCommandList.capture(
       mDevice,
       &ID3D12Device::CreateCommandList,
@@ -148,6 +146,12 @@ uint64_t D3D12Renderer::Render(
 
   const auto fenceValueOut = fenceValueIn + 1;
   winrt::check_hresult(mCommandQueue->Signal(mFence.get(), fenceValueOut));
+
+  {
+    OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
+    winrt::check_hresult(mCommandList->Reset(mCommandAllocator.get(), nullptr));
+  }
+
   return fenceValueOut;
 }
 
