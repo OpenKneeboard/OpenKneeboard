@@ -77,6 +77,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
   VkInstance mVKInstance {VK_NULL_HANDLE};
   VkPhysicalDevice mPhysicalDevice {VK_NULL_HANDLE};
   VkDevice mDevice {VK_NULL_HANDLE};
+  VkQueue mQueue {VK_NULL_HANDLE};
   uint32_t mQueueFamilyIndex {~(0ui32)};
   uint32_t mQueueIndex {~(0ui32)};
 

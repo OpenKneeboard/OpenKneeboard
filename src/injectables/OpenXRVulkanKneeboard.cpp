@@ -58,6 +58,7 @@ OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
   mDevice = binding.device;
   mQueueFamilyIndex = binding.queueFamilyIndex;
   mQueueIndex = binding.queueIndex;
+  mVK->GetDeviceQueue(mDevice, mQueueFamilyIndex, mQueueIndex, &mQueue);
 
   mSpriteBatch = std::make_unique<Vulkan::SpriteBatch>(
     mVK.get(),
@@ -90,7 +91,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   }
 
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
-  const auto vkFormat = VK_FORMAT_B8G8R8A8_SRGB;
+  const auto vkFormat = VK_FORMAT_B8G8R8A8_UNORM;
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
@@ -128,18 +129,6 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
 
   dprintf("{} images in swapchain", imageCount);
 
-  if (imageCount > mCommandBuffers.size()) {
-    const auto oldLength = mCommandBuffers.size();
-    VkCommandBufferAllocateInfo allocInfo {
-      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-      .commandPool = mCommandPool.get(),
-      .commandBufferCount = static_cast<uint32_t>(imageCount - oldLength),
-    };
-    mCommandBuffers.resize(imageCount);
-    check_vkresult(mVK->AllocateCommandBuffers(
-      mDevice, &allocInfo, &mCommandBuffers.at(oldLength)));
-  }
-
   std::vector<XrSwapchainImageVulkanKHR> images;
   images.resize(
     imageCount,
@@ -166,6 +155,18 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
     return nullptr;
   }
 
+  if (imageCount > mCommandBuffers.size()) {
+    const auto oldLength = mCommandBuffers.size();
+    VkCommandBufferAllocateInfo allocInfo {
+      .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+      .commandPool = mCommandPool.get(),
+      .commandBufferCount = static_cast<uint32_t>(imageCount - oldLength),
+    };
+    mCommandBuffers.resize(imageCount);
+    check_vkresult(mVK->AllocateCommandBuffers(
+      mDevice, &allocInfo, &mCommandBuffers.at(oldLength)));
+  }
+
   VkImageViewCreateInfo viewCreateInfo {
     .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
     .viewType = VK_IMAGE_VIEW_TYPE_2D,
@@ -190,6 +191,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
       = mVK->make_unique<VkImageView>(mDevice, &viewCreateInfo, mAllocator),
       .mCompletionFence
       = mVK->make_unique<VkFence>(mDevice, &fenceCreateInfo, mAllocator),
+      .mCommandBuffer = mCommandBuffers.at(buffers.size()),
     });
   }
   mSwapchainResources = {swapchain, std::move(buffers), size};
@@ -283,8 +285,31 @@ void OpenXRVulkanKneeboard::RenderLayers(
   mSpriteBatch->End();
   check_vkresult(mVK->EndCommandBuffer(cb));
 
-  VkSemaphore waitSemaphores[] {source->GetReadySemaphore()};
-  uint64_t waitSemaphoreValues[] {source->GetReadySemaphoreValue()};
+  const auto fence = br.mCompletionFence.get();
+  check_vkresult(mVK->ResetFences(mDevice, 1, &fence));
+
+  const VkSemaphore waitSemaphores[] {source->GetReadySemaphore()};
+  const uint64_t waitSemaphoreValues[] {source->GetReadySemaphoreValue()};
+
+  const VkTimelineSemaphoreSubmitInfoKHR semaphoreInfo {
+    .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO_KHR,
+    .waitSemaphoreValueCount = std::size(waitSemaphoreValues),
+    .pWaitSemaphoreValues = waitSemaphoreValues,
+  };
+
+  const VkPipelineStageFlags semaphoreStages {
+    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT};
+
+  const VkSubmitInfo submitInfo {
+    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+    .pNext = &semaphoreInfo,
+    .waitSemaphoreCount = std::size(waitSemaphores),
+    .pWaitSemaphores = waitSemaphores,
+    .pWaitDstStageMask = &semaphoreStages,
+    .commandBufferCount = 1,
+    .pCommandBuffers = &cb,
+  };
+  check_vkresult(mVK->QueueSubmit(mQueue, 1, &submitInfo, fence));
 }
 
 SHM::CachedReader* OpenXRVulkanKneeboard::GetSHM() {
