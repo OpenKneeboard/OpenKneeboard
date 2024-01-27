@@ -727,7 +727,7 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
 
   TraceLoggingWriteStop(
     activity,
-    "CachedReader",
+    "CachedReader::MaybeGet()",
     TraceLoggingValue("Updated cache", "Result"),
     TraceLoggingValue(static_cast<unsigned int>(state), "State"));
   return snapshot;
