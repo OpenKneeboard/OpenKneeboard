@@ -362,7 +362,7 @@ XrResult xrCreateSession(
     return ret;
   }
 
-  auto vk = findInXrNextChain<XrGraphicsBindingVulkanKHR>(
+  auto vk = findInXrNextChain<XrGraphicsBindingVulkan2KHR>(
     XR_TYPE_GRAPHICS_BINDING_VULKAN_KHR, createInfo->next);
   if (vk) {
     if (!gPFN_vkGetInstanceProcAddr) {
@@ -400,211 +400,6 @@ XrResult xrCreateSession(
   return ret;
 }
 
-// Provided by XR_KHR_vulkan_enable
-XrResult xrGetVulkanGraphicsRequirementsKHR(
-  XrInstance instance,
-  XrSystemId systemId,
-  XrGraphicsRequirementsVulkanKHR* graphicsRequirements) {
-  dprintf("{}()", __FUNCTION__);
-  // As of 2024-01-14, the Vulkan API validation layer calls a nullptr
-  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1;
-  // as there's no warnings from the layer before the crash, I wasn't
-  // able to figure out if this is a bug in OpenKneeboard or the API
-  // validation layer.
-  //
-  // As `hello_xr` is the primary testbed, uses VK 1.0, and enables the
-  // debug layer in debug builds, silently upgrade to VK 1.1.
-  //
-  // We only *need* to this for hello_xr + debug builds, but do it always
-  // so the behavior is consistent.
-  //
-  // hello_xr actually ignores this at the moment, so only the `Vulkan2`
-  // backend works.
-  auto ret = gNext->xrGetVulkanGraphicsRequirementsKHR(
-    instance, systemId, graphicsRequirements);
-  if (XR_FAILED(ret)) {
-    dprintf("WARNING: next failed {}", ret);
-    return ret;
-  }
-
-  // This uses XR versions, not the VK version constants
-  constexpr auto v1_1 = XR_MAKE_VERSION(1, 1, 0);
-  if (graphicsRequirements->minApiVersionSupported >= v1_1) {
-    dprintf(
-      "OK: Runtime is requesting a new enough VK 1.1: {}",
-      graphicsRequirements->minApiVersionSupported);
-    return ret;
-  }
-
-  if (graphicsRequirements->maxApiVersionSupported < v1_1) {
-    dprintf(
-      "WARNING: OpenXR runtime does not support VK 1.1; max is {}",
-      graphicsRequirements->maxApiVersionSupported);
-    return ret;
-  }
-
-  dprintf(
-    "WARNING: Upgrading from VK {} to {}",
-    graphicsRequirements->minApiVersionSupported,
-    v1_1);
-  graphicsRequirements->minApiVersionSupported = v1_1;
-  return ret;
-}
-
-XrResult GetVulkanExtensions(
-  uint32_t bufferCapacityInput,
-  uint32_t* bufferCountOutput,
-  char* buffer,
-  const auto& requiredExtensions,
-  const std::function<XrResult(
-    uint32_t bufferCapacityInput,
-    uint32_t* bufferCountOutput,
-    char* buffer)>& next) {
-  auto ret = next(0, bufferCountOutput, nullptr);
-  if (XR_FAILED(ret)) {
-    return ret;
-  }
-
-  // Space-separated list of extensions
-  uint32_t& count = *bufferCountOutput;
-  std::string extensions;
-  extensions.resize(count);
-
-  ret = next(count, &count, extensions.data());
-  if (XR_FAILED(ret)) {
-    return ret;
-  }
-
-  // Remove trailing null
-  extensions.resize(count - 1);
-  dprintf("Runtime requested extensions: {}", extensions);
-
-  for (const auto& ext: requiredExtensions) {
-    const std::string_view view {ext};
-    size_t offset = 0;
-    bool found = false;
-    while ((offset + view.size()) < extensions.size()) {
-      auto it = extensions.find(ext, offset);
-      if (it == std::string::npos) {
-        break;
-      }
-
-      if (it + view.size() == extensions.size()) {
-        // Last one in the list
-        found = true;
-        break;
-      }
-
-      if (extensions.at(it + view.size()) == ' ') {
-        // In the list
-        found = true;
-        break;
-      }
-
-      // If we got here, another extension starts with this extension name
-      offset += view.size();
-    }
-
-    if (found) {
-      // Next extension
-      continue;
-    }
-    if (extensions.empty()) {
-      extensions = std::string_view {ext};
-    } else {
-      extensions += std::format(" {}", view);
-    }
-  }
-  dprintf("Requesting extensions: {}", extensions);
-
-  *bufferCountOutput = extensions.size() + 1;
-  if (bufferCapacityInput == 0 || (!buffer)) {
-    return ret;
-  }
-
-  if (buffer && (bufferCapacityInput >= *bufferCountOutput)) {
-    memcpy_s(
-      buffer, bufferCapacityInput, extensions.c_str(), extensions.size() + 1);
-    return ret;
-  }
-
-  return XR_ERROR_SIZE_INSUFFICIENT;
-}
-
-// Provided by XR_KHR_vulkan_enable
-XrResult xrGetVulkanInstanceExtensionsKHR(
-  XrInstance instance,
-  XrSystemId systemId,
-  uint32_t bufferCapacityInput,
-  uint32_t* bufferCountOutput,
-  char* buffer) {
-  dprintf("{}()", __FUNCTION__);
-
-  return GetVulkanExtensions(
-    bufferCapacityInput,
-    bufferCountOutput,
-    buffer,
-    OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS,
-    [&](uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer)
-      -> XrResult {
-      return gNext->xrGetVulkanInstanceExtensionsKHR(
-        instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
-    });
-}
-
-// Provided by XR_KHR_vulkan_enable
-XrResult xrGetVulkanDeviceExtensionsKHR(
-  XrInstance instance,
-  XrSystemId systemId,
-  uint32_t bufferCapacityInput,
-  uint32_t* bufferCountOutput,
-  char* buffer) {
-  dprintf("{}()", __FUNCTION__);
-
-  return GetVulkanExtensions(
-    bufferCapacityInput,
-    bufferCountOutput,
-    buffer,
-    OpenXRVulkanKneeboard::VK_DEVICE_EXTENSIONS,
-    [&](uint32_t bufferCapacityInput, uint32_t* bufferCountOutput, char* buffer)
-      -> XrResult {
-      return gNext->xrGetVulkanDeviceExtensionsKHR(
-        instance, systemId, bufferCapacityInput, bufferCountOutput, buffer);
-    });
-}
-
-template <class T>
-XrResult CreateWithVKExtensions(
-  const T* origCreateInfo,
-  const auto& requiredExtensions,
-  const std::function<XrResult(const T*)>& createFunc) {
-  auto createInfo = *origCreateInfo;
-  auto vci = *createInfo.vulkanCreateInfo;
-  createInfo.vulkanCreateInfo = &vci;
-
-  std::vector<const char*> extensions;
-  for (size_t i = 0; i < vci.enabledExtensionCount; ++i) {
-    extensions.push_back(vci.ppEnabledExtensionNames[i]);
-  }
-
-  for (const auto& ext: requiredExtensions) {
-    const auto view = std::string_view {ext};
-    auto it = std::ranges::find(extensions, view);
-    if (it == extensions.end()) {
-      extensions.push_back(ext);
-    }
-  }
-  vci.enabledExtensionCount = extensions.size();
-  vci.ppEnabledExtensionNames = extensions.data();
-
-  dprint("Enabled VK extensions:");
-  for (size_t i = 0; i < vci.enabledExtensionCount; ++i) {
-    dprintf("- {}", vci.ppEnabledExtensionNames[i]);
-  }
-
-  return createFunc(&createInfo);
-}
-
 // Provided by XR_KHR_vulkan_enable2
 XrResult xrCreateVulkanInstanceKHR(
   XrInstance instance,
@@ -613,47 +408,14 @@ XrResult xrCreateVulkanInstanceKHR(
   VkResult* vulkanResult) {
   dprintf("{}()", __FUNCTION__);
 
-  // As of 2024-01-14, the Vulkan API validation layer calls a nullptr
-  // from `vkGetImageMemoryRequirements2()` if the VK API is < 1.1,
-  // and from `vkImportSemaphoreWin32HandleKHR()` if the VK API is < 1.3.
-  //
-  // As there's no warnings from the layer before the crash, I wasn't
-  // able to figure out if this is a bug in OpenKneeboard or the API
-  // validation layer.
-  //
-  // As `hello_xr` is the primary testbed, uses VK 1.0, and enables the
-  // debug layer in debug builds, silently upgrade to VK 1.3
-  //
-  // We only *need* to this for hello_xr + debug builds, but do it always
-  // so the behavior is consistent.
+  const OpenXRVulkanKneeboard::VkInstanceCreateInfo vkCreateInfo(
+    *origCreateInfo->vulkanCreateInfo);
+
   auto createInfo = *origCreateInfo;
+  createInfo.vulkanCreateInfo = &vkCreateInfo;
 
-  auto vci = *createInfo.vulkanCreateInfo;
-  createInfo.vulkanCreateInfo = &vci;
-  auto vaci = *vci.pApplicationInfo;
-  vci.pApplicationInfo = &vaci;
-  const auto requiredVKApiVersion = VK_API_VERSION_1_3;
-
-  if (vaci.apiVersion >= requiredVKApiVersion) {
-    dprintf("App is requesting VK version {}", vaci.apiVersion);
-  } else {
-    vaci.apiVersion = requiredVKApiVersion;
-    dprintf(
-      "WARNING: upgrading app from VK {} to {}",
-      origCreateInfo->vulkanCreateInfo->pApplicationInfo->apiVersion,
-      vaci.apiVersion);
-  }
-
-  const auto ret = CreateWithVKExtensions<XrVulkanInstanceCreateInfoKHR>(
-    &createInfo,
-    OpenXRVulkanKneeboard::VK_INSTANCE_EXTENSIONS,
-    [&](const auto* createInfo) {
-      return gNext->xrCreateVulkanInstanceKHR(
-        instance, createInfo, vulkanInstance, vulkanResult);
-    });
-  if (XR_FAILED(ret)) {
-    return ret;
-  }
+  const auto ret = gNext->xrCreateVulkanInstanceKHR(
+    instance, &createInfo, vulkanInstance, vulkanResult);
 
   if (createInfo.pfnGetInstanceProcAddr) {
     gPFN_vkGetInstanceProcAddr = createInfo.pfnGetInstanceProcAddr;
@@ -673,25 +435,13 @@ XrResult xrCreateVulkanDeviceKHR(
   VkResult* vulkanResult) {
   dprintf("{}()", __FUNCTION__);
 
+  const OpenXRVulkanKneeboard::VkDeviceCreateInfo vkCreateInfo(
+    *origCreateInfo->vulkanCreateInfo);
+
   auto createInfo = *origCreateInfo;
-
-  auto vci = *createInfo.vulkanCreateInfo;
-  createInfo.vulkanCreateInfo = &vci;
-
-  VkPhysicalDeviceTimelineSemaphoreFeatures timelineFeatures {
-    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES,
-    .pNext = const_cast<void*>(vci.pNext),
-    .timelineSemaphore = VK_TRUE,
-  };
-  vci.pNext = &timelineFeatures;
-
-  const auto ret = CreateWithVKExtensions<XrVulkanDeviceCreateInfoKHR>(
-    &createInfo,
-    OpenXRVulkanKneeboard::VK_DEVICE_EXTENSIONS,
-    [&](const auto* createInfo) {
-      return gNext->xrCreateVulkanDeviceKHR(
-        instance, createInfo, vulkanDevice, vulkanResult);
-    });
+  createInfo.vulkanCreateInfo = &vkCreateInfo;
+  const auto ret = gNext->xrCreateVulkanDeviceKHR(
+    instance, &createInfo, vulkanDevice, vulkanResult);
   if (XR_FAILED(ret)) {
     return ret;
   }
@@ -749,24 +499,6 @@ XrResult xrGetInstanceProcAddr(
     *function = reinterpret_cast<PFN_xrVoidFunction>(&xrEndFrame);
     return XR_SUCCESS;
   }
-
-  ///// START XR_KHR_vulkan_enable /////
-  if (name == "xrGetVulkanDeviceExtensionsKHR") {
-    *function
-      = reinterpret_cast<PFN_xrVoidFunction>(&xrGetVulkanDeviceExtensionsKHR);
-    return XR_SUCCESS;
-  }
-  if (name == "xrGetVulkanInstanceExtensionsKHR") {
-    *function
-      = reinterpret_cast<PFN_xrVoidFunction>(&xrGetVulkanInstanceExtensionsKHR);
-    return XR_SUCCESS;
-  }
-  if (name == "xrGetVulkanGraphicsRequirementsKHR") {
-    *function = reinterpret_cast<PFN_xrVoidFunction>(
-      &xrGetVulkanGraphicsRequirementsKHR);
-    return XR_SUCCESS;
-  }
-  ///// END XR_KHR_vulkan_enable /////
 
   ///// START XR_KHR_vulkan_enable2 /////
   if (name == "xrCreateVulkanDeviceKHR") {

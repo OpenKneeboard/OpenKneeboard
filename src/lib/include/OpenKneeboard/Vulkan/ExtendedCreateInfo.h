@@ -97,7 +97,9 @@ struct ExtendedCreateInfo : public T {
   std::vector<const char*> mExtensionNamePointers;
 };
 
-template <class... TArgs>
+template <
+  vk_create_info_with_extensions TFirst,
+  std::derived_from<typename TFirst::VkCreateInfo>... TRest>
 struct CombinedCreateInfo;
 
 template <

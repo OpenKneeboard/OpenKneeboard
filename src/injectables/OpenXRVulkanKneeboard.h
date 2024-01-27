@@ -22,9 +22,10 @@
 
 #include "OpenXRKneeboard.h"
 
-#include <OpenKneeboard/SHM/D3D11.h>
 #include <OpenKneeboard/SHM/Vulkan.h>
 #include <OpenKneeboard/Vulkan.h>
+#include <OpenKneeboard/Vulkan/ExtendedCreateInfo.h>
+#include <OpenKneeboard/Vulkan/SpriteBatch.h>
 
 #include <OpenKneeboard/config.h>
 
@@ -39,6 +40,13 @@ namespace OpenKneeboard {
 
 class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
  public:
+  using VkInstanceCreateInfo = Vulkan::CombinedCreateInfo<
+    Vulkan::SpriteBatch::InstanceCreateInfo,
+    SHM::Vulkan::InstanceCreateInfo>;
+  using VkDeviceCreateInfo = Vulkan::CombinedCreateInfo<
+    Vulkan::SpriteBatch::DeviceCreateInfo,
+    SHM::Vulkan::DeviceCreateInfo>;
+
   OpenXRVulkanKneeboard() = delete;
   OpenXRVulkanKneeboard(
     XrSession,
@@ -48,22 +56,6 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     const VkAllocationCallbacks*,
     PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr);
   ~OpenXRVulkanKneeboard();
-
-  static constexpr const char* VK_INSTANCE_EXTENSIONS[] {
-    VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME,
-    VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
-    VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME,
-  };
-
-  static constexpr const char* VK_DEVICE_EXTENSIONS[] {
-    VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME,
-    VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
-    VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME,
-    VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME,
-    VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME,
-    VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME,
-    VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME,
-  };
 
  protected:
   virtual SHM::CachedReader* GetSHM() override;
