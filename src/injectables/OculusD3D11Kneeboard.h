@@ -23,6 +23,7 @@
 #include "OculusKneeboard.h"
 
 #include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/D3D11/Renderer.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 
 #include <OpenKneeboard/config.h>
@@ -59,10 +60,13 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
  private:
   winrt::com_ptr<ID3D11Device> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext> mD3D11DeviceContext;
-  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
+  std::unique_ptr<D3D11::Renderer> mRenderer;
 
-  std::vector<winrt::com_ptr<ID3D11RenderTargetView>> mSwapchain;
-  PixelSize mSwapchainDimensions;
+  using SwapchainBufferResources = D3D11::SwapchainBufferResources;
+  using SwapchainResources = D3D11::SwapchainResources;
+
+  std::optional<SwapchainResources> mSwapchain;
+
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OculusD3D11};
 
   OculusKneeboard mOculusKneeboard;

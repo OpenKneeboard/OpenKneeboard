@@ -92,22 +92,15 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
     abort();
   }
 
-  mSwapchain = {static_cast<size_t>(length), nullptr};
-  mSwapchainDimensions = size;
-
-  D3D11_RENDER_TARGET_VIEW_DESC rtvDesc {
-    .Format = DXGI_FORMAT_B8G8R8A8_UNORM,
-    .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {.MipSlice = 0},
-  };
-
+  std::vector<SwapchainBufferResources> buffers;
   for (int i = 0; i < length; ++i) {
     winrt::com_ptr<ID3D11Texture2D> texture;
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
-    winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
-      texture.get(), &rtvDesc, mSwapchain.at(i).put()));
+    buffers.push_back(
+      {mD3D11Device.get(), texture.get(), DXGI_FORMAT_B8G8R8X8_UNORM_SRGB});
   }
+  mSwapchain = {size, std::move(buffers)};
 
   mSHM.InitializeCache(mD3D11Device.get(), static_cast<uint8_t>(length));
 
@@ -125,24 +118,13 @@ void OculusD3D11Kneeboard::RenderLayers(
 
   D3D11::SavedState state(mD3D11DeviceContext);
 
-  const auto layerCount = snapshot.GetLayerCount();
-
-  auto source
-    = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();
-  auto dest = mSwapchain.at(swapchainTextureIndex);
-
-  mSpriteBatch->Begin(
-    mSwapchain.at(swapchainTextureIndex).get(), mSwapchainDimensions);
-  mSpriteBatch->Clear();
-
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-    const auto sourceRect
-      = snapshot.GetLayerConfig(layerIndex)->mLocationOnTexture;
-    const D3D11::Opacity opacity {opacities[layerIndex]};
-    mSpriteBatch->Draw(source, sourceRect, destRects[layerIndex], opacity);
-  }
-
-  mSpriteBatch->End();
+  mRenderer->RenderLayers(
+    *mSwapchain,
+    swapchainTextureIndex,
+    snapshot,
+    snapshot.GetLayerCount(),
+    destRects,
+    opacities);
 }
 
 HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
@@ -157,7 +139,7 @@ HRESULT OculusD3D11Kneeboard::OnIDXGISwapChain_Present(
     winrt::check_hresult(
       swapChain->GetDevice(IID_PPV_ARGS(mD3D11Device.put())));
     mD3D11Device->GetImmediateContext(mD3D11DeviceContext.put());
-    mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mD3D11Device.get());
+    mRenderer = std::make_unique<D3D11::Renderer>(mD3D11Device.get());
   }
 
   mDXGIHook.UninstallHook();
