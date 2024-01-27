@@ -52,8 +52,7 @@ void Texture::CopyFrom(
   ID3D11Fence* sourceFence,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    activity, "SHM::D3D11::Texture::CopyFrom");
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::Texture::CopyFrom");
 
   if (!mCacheTexture) {
     OPENKNEEBOARD_TraceLoggingScope("CreateCacheTexture");
@@ -62,14 +61,22 @@ void Texture::CopyFrom(
     winrt::check_hresult(
       mDevice->CreateTexture2D(&desc, nullptr, mCacheTexture.put()));
   }
-  TraceLoggingWriteTagged(
-    activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
-  winrt::check_hresult(mContext->Wait(sourceFence, fenceValueIn));
-  mContext->CopySubresourceRegion(
-    mCacheTexture.get(), 0, 0, 0, 0, sourceTexture, 0, nullptr);
-  TraceLoggingWriteTagged(
-    activity, "FenceOut", TraceLoggingValue(fenceValueOut, "Value"));
-  winrt::check_hresult(mContext->Signal(sourceFence, fenceValueOut));
+
+  {
+    OPENKNEEBOARD_TraceLoggingScope("FenceIn");
+    winrt::check_hresult(mContext->Wait(sourceFence, fenceValueIn));
+  }
+
+  {
+    OPENKNEEBOARD_TraceLoggingScope("CopySubresourceRegion");
+    mContext->CopySubresourceRegion(
+      mCacheTexture.get(), 0, 0, 0, 0, sourceTexture, 0, nullptr);
+  }
+
+  {
+    OPENKNEEBOARD_TraceLoggingScope("FenceOut");
+    winrt::check_hresult(mContext->Signal(sourceFence, fenceValueOut));
+  }
 }
 
 CachedReader::CachedReader(ConsumerKind consumerKind)
