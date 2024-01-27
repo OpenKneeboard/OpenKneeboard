@@ -35,18 +35,12 @@ using OpenKneeboard::Vulkan::check_vkresult;
 
 namespace OpenKneeboard::Viewer {
 
-static constexpr const char* const RequiredInstanceExtensions[] {
+static constexpr std::array RequiredInstanceExtensions {
   VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
   VK_KHR_EXTERNAL_FENCE_CAPABILITIES_EXTENSION_NAME,
   VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME,
 #ifdef DEBUG
   VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-#endif
-};
-
-static constexpr const char* const RequiredLayers[] {
-#ifdef DEBUG
-  "VK_LAYER_KHRONOS_validation",
 #endif
 };
 
@@ -127,6 +121,13 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
   constexpr nullptr_t next = nullptr;
 #endif
 
+  // Not doing a compile-time constant as it ends up as an empty
+  // array in release builds, which is invalid.
+  std::vector<const char*> requiredLayers;
+#ifdef DEBUG
+  requiredLayers.push_back("VK_LAYER_KHRONOS_validation");
+#endif
+
   const Vulkan::CombinedCreateInfo<
     SHM::Vulkan::InstanceCreateInfo,
     Vulkan::SpriteBatch::InstanceCreateInfo>
@@ -134,10 +135,10 @@ VulkanRenderer::VulkanRenderer(uint64_t luid) {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pNext = next,
       .pApplicationInfo = &applicationInfo,
-      .enabledLayerCount = std::size(RequiredLayers),
-      .ppEnabledLayerNames = RequiredLayers,
-      .enabledExtensionCount = std::size(RequiredInstanceExtensions),
-      .ppEnabledExtensionNames = RequiredInstanceExtensions,
+      .enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
+      .ppEnabledLayerNames = requiredLayers.data(),
+      .enabledExtensionCount = RequiredInstanceExtensions.size(),
+      .ppEnabledExtensionNames = RequiredInstanceExtensions.data(),
     });
 
   VkInstance instance;
