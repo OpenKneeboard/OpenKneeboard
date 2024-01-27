@@ -78,102 +78,76 @@ D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetD3D12ShaderResourceViewGPUHandle() {
   return mShaderResourceViewGPUHandle;
 }
 
-void Texture::InitializeSource(
-  HANDLE textureHandle,
-  HANDLE fenceHandle) noexcept {
-  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::InitializeSource()");
-
-  if (
-    textureHandle == mSourceTextureHandle
-    && fenceHandle == mSourceFenceHandle) {
+void Texture::InitializeCacheTexture(ID3D12Resource* sourceTexture) noexcept {
+  if (mTexture) {
     return;
   }
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D12::Texture::InitializeCacheTexture()");
 
-  if (textureHandle != mSourceTextureHandle) {
-    mSourceTextureHandle = {};
-    mSourceTexture = {};
-    mTexture = {};
-    mHaveShaderResourceView = false;
-  }
+  const D3D12_HEAP_PROPERTIES heap {D3D12_HEAP_TYPE_DEFAULT};
+  auto desc = sourceTexture->GetDesc();
+  desc.Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT;
 
-  if (fenceHandle != mSourceFenceHandle) {
-    mSourceFenceHandle = {};
-    mSourceFence = {};
-  }
+  const D3D12_CLEAR_VALUE clearValue {
+    .Format = desc.Format,
+    .Color = {0.0f, 0.0f, 0.0f, 0.0f},
+  };
 
-  if (!mSourceTexture) {
-    OPENKNEEBOARD_TraceLoggingScope("OpenTexture");
-    winrt::check_hresult(mDevice->OpenSharedHandle(
-      textureHandle, IID_PPV_ARGS(mSourceTexture.put())));
+  winrt::check_hresult(mDevice->CreateCommittedResource(
+    &heap,
+    D3D12_HEAP_FLAG_NONE,
+    &desc,
+    D3D12_RESOURCE_STATE_COMMON,
+    &clearValue,
+    IID_PPV_ARGS(mTexture.put())));
 
-    const D3D12_HEAP_PROPERTIES heap {D3D12_HEAP_TYPE_DEFAULT};
-    auto desc = mSourceTexture->GetDesc();
-    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-
-    const D3D12_CLEAR_VALUE clearValue {
-      .Format = desc.Format,
-      .Color = {0.0f, 0.0f, 0.0f, 0.0f},
-    };
-
-    winrt::check_hresult(mDevice->CreateCommittedResource(
-      &heap,
-      D3D12_HEAP_FLAG_NONE,
-      &desc,
-      D3D12_RESOURCE_STATE_COMMON,
-      &clearValue,
-      IID_PPV_ARGS(mTexture.put())));
-    mSourceTextureHandle = textureHandle;
-
-    mTextureDimensions
-      = {static_cast<uint32_t>(desc.Width), static_cast<uint32_t>(desc.Height)};
-  }
-
-  if (!mSourceFence) {
-    OPENKNEEBOARD_TraceLoggingScope("OpenFence");
-    winrt::check_hresult(
-      mDevice->OpenSharedHandle(fenceHandle, IID_PPV_ARGS(mSourceFence.put())));
-    mSourceFenceHandle = fenceHandle;
-  }
+  mTextureDimensions
+    = {static_cast<uint32_t>(desc.Width), static_cast<uint32_t>(desc.Height)};
 }
 
 void Texture::CopyFrom(
   ID3D12CommandQueue* queue,
   ID3D12GraphicsCommandList* list,
-  HANDLE texture,
-  HANDLE fence,
+  ID3D12Resource* sourceTexture,
+  ID3D12Fence* sourceFence,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
-  OPENKNEEBOARD_TraceLoggingScopedActivity(
-    activity, "SHM::D3D12::Texture::CopyFrom");
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::Texture::CopyFrom");
 
-  this->InitializeSource(texture, fence);
+  this->InitializeCacheTexture(sourceTexture);
 
-  TraceLoggingWriteTagged(
-    activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
-  winrt::check_hresult(queue->Wait(mSourceFence.get(), fenceValueIn));
+  {
+    OPENKNEEBOARD_TraceLoggingScope("FenceIn");
+    winrt::check_hresult(queue->Wait(sourceFence, fenceValueIn));
+  }
 
-  TraceLoggingWriteTagged(activity, "Copy");
-  const D3D12_TEXTURE_COPY_LOCATION src {
-    .pResource = this->mSourceTexture.get(),
-    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-    .SubresourceIndex = 0,
-  };
-  const D3D12_TEXTURE_COPY_LOCATION dst {
-    .pResource = this->mTexture.get(),
-    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-    .SubresourceIndex = 0,
-  };
-  list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
-  TraceLoggingWriteTagged(activity, "CloseList");
-  winrt::check_hresult(list->Close());
+  {
+    OPENKNEEBOARD_TraceLoggingScope("PopulateCommandList");
+    const D3D12_TEXTURE_COPY_LOCATION src {
+      .pResource = sourceTexture,
+      .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+      .SubresourceIndex = 0,
+    };
+    const D3D12_TEXTURE_COPY_LOCATION dst {
+      .pResource = this->mTexture.get(),
+      .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+      .SubresourceIndex = 0,
+    };
+    list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+    winrt::check_hresult(list->Close());
+  }
 
-  TraceLoggingWriteTagged(activity, "ExecuteCommandLists");
-  ID3D12CommandList* lists[] {list};
-  queue->ExecuteCommandLists(std::size(lists), lists);
+  {
+    OPENKNEEBOARD_TraceLoggingScope("ExecuteCommandLists");
+    ID3D12CommandList* lists[] {list};
+    queue->ExecuteCommandLists(std::size(lists), lists);
+  }
 
-  TraceLoggingWriteTagged(
-    activity, "FenceOut", TraceLoggingValue(fenceValueOut, "Value"));
-  winrt::check_hresult(queue->Signal(mSourceFence.get(), fenceValueOut));
+  {
+    OPENKNEEBOARD_TraceLoggingScope("FenceOut");
+    winrt::check_hresult(queue->Signal(sourceFence, fenceValueOut));
+  }
 }
 
 CachedReader::CachedReader(ConsumerKind consumerKind)
@@ -193,9 +167,9 @@ void CachedReader::InitializeCache(
     "SHM::D3D12::CachedReader::InitializeCache()",
     TraceLoggingValue(swapchainLength, "swapchainLength"));
 
-  if (device != mD3D12Device.get() || queue != mD3D12CommandQueue.get()) {
-    mD3D12Device.copy_from(device);
-    mD3D12CommandQueue.copy_from(queue);
+  if (device != mDevice.get() || queue != mCommandQueue.get()) {
+    mDevice.copy_from(device);
+    mCommandQueue.copy_from(queue);
     mBufferResources = {};
 
     // debug logging
@@ -210,20 +184,20 @@ void CachedReader::InitializeCache(
 
   if (swapchainLength != GetSwapchainLength()) {
     mShaderResourceViewHeap = std::make_unique<DirectX::DescriptorHeap>(
-      mD3D12Device.get(),
+      mDevice.get(),
       D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
       D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
       swapchainLength);
 
     mBufferResources.resize(swapchainLength);
     for (auto& br: mBufferResources) {
-      if (br.mD3D12CommandAllocator) {
+      if (br.mCommandAllocator) {
         continue;
       }
 
-      winrt::check_hresult(mD3D12Device->CreateCommandAllocator(
+      winrt::check_hresult(mDevice->CreateCommandAllocator(
         D3D12_COMMAND_LIST_TYPE_DIRECT,
-        IID_PPV_ARGS(br.mD3D12CommandAllocator.put())));
+        IID_PPV_ARGS(br.mCommandAllocator.put())));
     }
   }
 
@@ -238,16 +212,16 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   return std::make_shared<SHM::D3D12::Texture>(
     dimensions,
     swapchainIndex,
-    mD3D12Device,
+    mDevice,
     mShaderResourceViewHeap->Heap(),
     mShaderResourceViewHeap->GetCpuHandle(swapchainIndex),
     mShaderResourceViewHeap->GetGpuHandle(swapchainIndex));
 }
 
 void CachedReader::Copy(
-  HANDLE sourceTexture,
+  HANDLE sourceHandle,
   IPCClientTexture* destinationTexture,
-  HANDLE fence,
+  HANDLE fenceHandle,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::Copy()");
@@ -256,23 +230,26 @@ void CachedReader::Copy(
 
   auto& br = mBufferResources.at(swapchainIndex);
 
-  if (br.mD3D12CommandList) {
+  if (br.mCommandList) {
     winrt::check_hresult(
-      br.mD3D12CommandList->Reset(br.mD3D12CommandAllocator.get(), nullptr));
+      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
   } else {
-    winrt::check_hresult(mD3D12Device->CreateCommandList(
+    winrt::check_hresult(mDevice->CreateCommandList(
       0,
       D3D12_COMMAND_LIST_TYPE_DIRECT,
-      br.mD3D12CommandAllocator.get(),
+      br.mCommandAllocator.get(),
       nullptr,
-      IID_PPV_ARGS(br.mD3D12CommandList.put())));
+      IID_PPV_ARGS(br.mCommandList.put())));
   }
+
+  const auto source = this->GetIPCTexture(sourceHandle);
+  const auto fence = this->GetIPCFence(fenceHandle);
 
   reinterpret_cast<SHM::D3D12::Texture*>(destinationTexture)
     ->CopyFrom(
-      mD3D12CommandQueue.get(),
-      br.mD3D12CommandList.get(),
-      sourceTexture,
+      mCommandQueue.get(),
+      br.mCommandList.get(),
+      source,
       fence,
       fenceValueIn,
       fenceValueOut);
@@ -280,6 +257,33 @@ void CachedReader::Copy(
 
 uint8_t CachedReader::GetSwapchainLength() const {
   return mBufferResources.size();
+}
+
+ID3D12Fence* CachedReader::GetIPCFence(HANDLE handle) noexcept {
+  if (mIPCFences.contains(handle)) {
+    return mIPCFences.at(handle).get();
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::GetIPCFence()");
+  winrt::com_ptr<ID3D12Fence> fence;
+  winrt::check_hresult(
+    mDevice->OpenSharedHandle(handle, IID_PPV_ARGS(fence.put())));
+  mIPCFences.emplace(handle, fence);
+  return fence.get();
+}
+
+ID3D12Resource* CachedReader::GetIPCTexture(HANDLE handle) noexcept {
+  if (mIPCTextures.contains(handle)) {
+    return mIPCTextures.at(handle).get();
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::GetIPCTexture()");
+
+  winrt::com_ptr<ID3D12Resource> texture;
+  winrt::check_hresult(
+    mDevice->OpenSharedHandle(handle, IID_PPV_ARGS(texture.put())));
+  mIPCTextures.emplace(handle, texture);
+  return texture.get();
 }
 
 }// namespace OpenKneeboard::SHM::D3D12

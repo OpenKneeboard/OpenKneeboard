@@ -48,8 +48,8 @@ class Texture final : public SHM::IPCClientTexture {
   void CopyFrom(
     ID3D12CommandQueue*,
     ID3D12GraphicsCommandList*,
-    HANDLE texture,
-    HANDLE fence,
+    ID3D12Resource* texture,
+    ID3D12Fence* fence,
     uint64_t fenceValueIn,
     uint64_t fenceValueOut) noexcept;
 
@@ -64,13 +64,7 @@ class Texture final : public SHM::IPCClientTexture {
   PixelSize mTextureDimensions;
   bool mHaveShaderResourceView {false};
 
-  HANDLE mSourceTextureHandle {};
-  HANDLE mSourceFenceHandle {};
-
-  winrt::com_ptr<ID3D12Resource> mSourceTexture;
-  winrt::com_ptr<ID3D12Fence> mSourceFence;
-
-  void InitializeSource(HANDLE texture, HANDLE fence) noexcept;
+  void InitializeCacheTexture(ID3D12Resource* sourceTexture) noexcept;
 };
 
 class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
@@ -97,18 +91,24 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     uint8_t swapchainIndex) noexcept override;
 
  private:
-  winrt::com_ptr<ID3D12Device> mD3D12Device;
-  winrt::com_ptr<ID3D12CommandQueue> mD3D12CommandQueue;
+  winrt::com_ptr<ID3D12Device> mDevice;
+  winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
 
   struct BufferResources {
-    winrt::com_ptr<ID3D12CommandAllocator> mD3D12CommandAllocator;
-    winrt::com_ptr<ID3D12GraphicsCommandList> mD3D12CommandList;
+    winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
+    winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
   };
 
   std::vector<BufferResources> mBufferResources;
   std::unique_ptr<DirectX::DescriptorHeap> mShaderResourceViewHeap;
 
   uint8_t GetSwapchainLength() const;
+
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D12Fence>> mIPCFences;
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D12Resource>> mIPCTextures;
+
+  ID3D12Fence* GetIPCFence(HANDLE) noexcept;
+  ID3D12Resource* GetIPCTexture(HANDLE) noexcept;
 };
 
 }// namespace OpenKneeboard::SHM::D3D12
