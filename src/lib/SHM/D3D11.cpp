@@ -47,65 +47,29 @@ ID3D11ShaderResourceView* Texture::GetD3D11ShaderResourceView() noexcept {
   return mCacheShaderResourceView.get();
 }
 
-void Texture::InitializeSource(
-  HANDLE textureHandle,
-  HANDLE fenceHandle) noexcept {
-  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::Texture::InitializeSource()");
-
-  if (
-    textureHandle == mSourceTextureHandle
-    && fenceHandle == mSourceFenceHandle) {
-    return;
-  }
-
-  if (textureHandle != mSourceTextureHandle) {
-    mSourceTextureHandle = {};
-    mSourceTexture = {};
-    mCacheTexture = {};
-    mCacheShaderResourceView = {};
-  }
-
-  if (fenceHandle != mSourceFenceHandle) {
-    mSourceFenceHandle = {};
-    mSourceFence = {};
-  }
-
-  if (!mSourceTexture) {
-    OPENKNEEBOARD_TraceLoggingScope("OpenTexture");
-    winrt::check_hresult(mDevice->OpenSharedResource1(
-      textureHandle, IID_PPV_ARGS(mSourceTexture.put())));
-
-    D3D11_TEXTURE2D_DESC desc;
-    mSourceTexture->GetDesc(&desc);
-    winrt::check_hresult(
-      mDevice->CreateTexture2D(&desc, nullptr, mCacheTexture.put()));
-
-    mSourceTextureHandle = textureHandle;
-  }
-
-  if (!mSourceFence) {
-    OPENKNEEBOARD_TraceLoggingScope("OpenFence");
-    winrt::check_hresult(
-      mDevice->OpenSharedFence(fenceHandle, IID_PPV_ARGS(mSourceFence.put())));
-  }
-}
-
 void Texture::CopyFrom(
-  HANDLE sourceTexture,
-  HANDLE sourceFence,
+  ID3D11Texture2D* sourceTexture,
+  ID3D11Fence* sourceFence,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "SHM::D3D11::Texture::CopyFrom");
-  this->InitializeSource(sourceTexture, sourceFence);
+
+  if (!mCacheTexture) {
+    OPENKNEEBOARD_TraceLoggingScope("CreateCacheTexture");
+    D3D11_TEXTURE2D_DESC desc;
+    sourceTexture->GetDesc(&desc);
+    winrt::check_hresult(
+      mDevice->CreateTexture2D(&desc, nullptr, mCacheTexture.put()));
+  }
   TraceLoggingWriteTagged(
     activity, "FenceIn", TraceLoggingValue(fenceValueIn, "Value"));
-  winrt::check_hresult(mContext->Wait(mSourceFence.get(), fenceValueIn));
+  winrt::check_hresult(mContext->Wait(sourceFence, fenceValueIn));
   mContext->CopySubresourceRegion(
-    mCacheTexture.get(), 0, 0, 0, 0, mSourceTexture.get(), 0, nullptr);
+    mCacheTexture.get(), 0, 0, 0, 0, sourceTexture, 0, nullptr);
   TraceLoggingWriteTagged(
     activity, "FenceOut", TraceLoggingValue(fenceValueOut, "Value"));
-  winrt::check_hresult(mContext->Signal(mSourceFence.get(), fenceValueOut));
+  winrt::check_hresult(mContext->Signal(sourceFence, fenceValueOut));
 }
 
 CachedReader::CachedReader(ConsumerKind consumerKind)
@@ -124,14 +88,14 @@ void CachedReader::InitializeCache(
     "SHM::D3D11::CachedReader::InitializeCache()",
     TraceLoggingValue(swapchainLength, "swapchainLength"));
 
-  if (device != mD3D11Device.get()) {
-    mD3D11Device = {};
-    mD3D11DeviceContext = {};
+  if (device != mDevice.get()) {
+    mDevice = {};
+    mDeviceContext = {};
 
-    winrt::check_hresult(device->QueryInterface(mD3D11Device.put()));
+    winrt::check_hresult(device->QueryInterface(mDevice.put()));
     winrt::com_ptr<ID3D11DeviceContext> context;
     device->GetImmediateContext(context.put());
-    mD3D11DeviceContext = context.as<ID3D11DeviceContext4>();
+    mDeviceContext = context.as<ID3D11DeviceContext4>();
 
     // Debug logging
     winrt::com_ptr<IDXGIDevice> dxgiDevice;
@@ -151,14 +115,18 @@ void CachedReader::InitializeCache(
 }
 
 void CachedReader::Copy(
-  HANDLE sourceTexture,
+  HANDLE sourceHandle,
   IPCClientTexture* destinationTexture,
-  HANDLE fence,
+  HANDLE fenceHandle,
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::Copy()");
+
+  const auto source = this->GetIPCTexture(sourceHandle);
+  const auto fence = this->GetIPCFence(fenceHandle);
+
   reinterpret_cast<SHM::D3D11::Texture*>(destinationTexture)
-    ->CopyFrom(sourceTexture, fence, fenceValueIn, fenceValueOut);
+    ->CopyFrom(source, fence, fenceValueIn, fenceValueOut);
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
@@ -167,7 +135,34 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::D3D11::CachedReader::CreateIPCClientTexture()");
   return std::make_shared<SHM::D3D11::Texture>(
-    dimensions, swapchainIndex, mD3D11Device, mD3D11DeviceContext);
+    dimensions, swapchainIndex, mDevice, mDeviceContext);
+}
+
+ID3D11Fence* CachedReader::GetIPCFence(HANDLE handle) noexcept {
+  if (mIPCFences.contains(handle)) {
+    return mIPCFences.at(handle).get();
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::GetIPCFence()");
+  winrt::com_ptr<ID3D11Fence> fence;
+  winrt::check_hresult(
+    mDevice->OpenSharedFence(handle, IID_PPV_ARGS(fence.put())));
+  mIPCFences.emplace(handle, fence);
+  return fence.get();
+}
+
+ID3D11Texture2D* CachedReader::GetIPCTexture(HANDLE handle) noexcept {
+  if (mIPCTextures.contains(handle)) {
+    return mIPCTextures.at(handle).get();
+  }
+
+  OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::GetIPCTexture()");
+
+  winrt::com_ptr<ID3D11Texture2D> texture;
+  winrt::check_hresult(
+    mDevice->OpenSharedResource1(handle, IID_PPV_ARGS(texture.put())));
+  mIPCTextures.emplace(handle, texture);
+  return texture.get();
 }
 
 }// namespace OpenKneeboard::SHM::D3D11

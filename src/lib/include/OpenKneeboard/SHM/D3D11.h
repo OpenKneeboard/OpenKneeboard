@@ -41,8 +41,8 @@ class Texture final : public SHM::IPCClientTexture {
   ID3D11ShaderResourceView* GetD3D11ShaderResourceView() noexcept;
 
   void CopyFrom(
-    HANDLE texture,
-    HANDLE fence,
+    ID3D11Texture2D* texture,
+    ID3D11Fence* fence,
     uint64_t fenceValueIn,
     uint64_t fenceValueOut) noexcept;
 
@@ -50,16 +50,8 @@ class Texture final : public SHM::IPCClientTexture {
   winrt::com_ptr<ID3D11Device5> mDevice;
   winrt::com_ptr<ID3D11DeviceContext4> mContext;
 
-  HANDLE mSourceTextureHandle {};
-  HANDLE mSourceFenceHandle {};
-
-  winrt::com_ptr<ID3D11Texture2D> mSourceTexture;
-  winrt::com_ptr<ID3D11Fence> mSourceFence;
-
   winrt::com_ptr<ID3D11Texture2D> mCacheTexture;
   winrt::com_ptr<ID3D11ShaderResourceView> mCacheShaderResourceView;
-
-  void InitializeSource(HANDLE texture, HANDLE fence) noexcept;
 };
 
 class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
@@ -82,8 +74,14 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     const PixelSize&,
     uint8_t swapchainIndex) noexcept override;
 
-  winrt::com_ptr<ID3D11Device5> mD3D11Device;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3D11DeviceContext;
+  winrt::com_ptr<ID3D11Device5> mDevice;
+  winrt::com_ptr<ID3D11DeviceContext4> mDeviceContext;
+
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D11Fence>> mIPCFences;
+  std::unordered_map<HANDLE, winrt::com_ptr<ID3D11Texture2D>> mIPCTextures;
+
+  ID3D11Fence* GetIPCFence(HANDLE) noexcept;
+  ID3D11Texture2D* GetIPCTexture(HANDLE) noexcept;
 };
 
 }// namespace OpenKneeboard::SHM::D3D11
