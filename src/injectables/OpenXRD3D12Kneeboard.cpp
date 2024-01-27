@@ -143,11 +143,12 @@ XrSwapchain OpenXRD3D12Kneeboard::CreateSwapchain(
   auto& sr = mSwapchainResources.at(swapchain);
   for (const auto& image: images) {
     const auto imageIndex = sr.mBufferResources.size();
-    sr.mBufferResources.push_back(
-      {mDevice.get(),
-       image.texture,
-       sr.mRenderTargetViewHeap.GetCpuHandle(imageIndex),
-       formats.mRenderTargetViewFormat});
+    sr.mBufferResources.push_back({
+      mDevice.get(),
+      image.texture,
+      sr.mRenderTargetViewHeap.GetCpuHandle(imageIndex),
+      formats.mRenderTargetViewFormat,
+    });
   }
 
   return swapchain;
@@ -168,10 +169,8 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   const float* const opacities) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
-  auto& sr = mSwapchainResources.at(swapchain);
-
   mRenderer->RenderLayers(
-    sr,
+    mSwapchainResources.at(swapchain),
     swapchainTextureIndex,
     snapshot,
     snapshot.GetLayerCount(),

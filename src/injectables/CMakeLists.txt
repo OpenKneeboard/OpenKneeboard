@@ -100,11 +100,12 @@ add_module_library(
 target_link_libraries(
   OpenKneeboard-oculus-d3d12
   PRIVATE
+  OpenKneeboard-D3D12
+  OpenKneeboard-SHM-Client-D3D12
+  OpenKneeboard-ScopedRWX
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-version
-  OpenKneeboard-ScopedRWX
-  OpenKneeboard-SHM-Client-D3D12
   d3d12-hooks
   detours-ext
   oculus-hooks
