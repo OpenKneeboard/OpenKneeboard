@@ -22,6 +22,7 @@
 #include "OpenXRKneeboard.h"
 
 #include <OpenKneeboard/D3D12.h>
+#include <OpenKneeboard/D3D12/Renderer.h>
 #include <OpenKneeboard/SHM/D3D12.h>
 
 #include <OpenKneeboard/config.h>
@@ -61,29 +62,11 @@ class OpenXRD3D12Kneeboard final : public OpenXRKneeboard {
   winrt::com_ptr<ID3D12Device> mDevice;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
 
-  std::unique_ptr<D3D12::SpriteBatch> mSpriteBatch;
-
-  struct SwapchainBufferResources {
-    SwapchainBufferResources() = delete;
-    SwapchainBufferResources(
-      ID3D12Device*,
-      ID3D12Resource* texture,
-      D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle,
-      DXGI_FORMAT renderTargetViewFormat);
-
-    winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
-    winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
-
-    D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView;
-  };
-
-  struct SwapchainResources {
-    PixelSize mDimensions;
-    DirectX::DescriptorHeap mRenderTargetViewHeap;
-    std::vector<SwapchainBufferResources> mBufferResources;
-  };
+  using SwapchainBufferResources = D3D12::SwapchainBufferResources;
+  using SwapchainResources = D3D12::SwapchainResources;
 
   std::unordered_map<XrSwapchain, SwapchainResources> mSwapchainResources;
+  std::unique_ptr<D3D12::Renderer> mRenderer;
 };
 
 }// namespace OpenKneeboard

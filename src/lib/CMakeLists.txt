@@ -132,7 +132,12 @@ target_link_libraries(
   System::Dxguid
 )
 
-ok_add_library(OpenKneeboard-D3D12 STATIC D3D12.cpp)
+ok_add_library(
+  OpenKneeboard-D3D12
+  STATIC
+  D3D12.cpp
+  D3D12/Renderer.cpp
+)
 target_link_libraries(
   OpenKneeboard-D3D12
   PUBLIC

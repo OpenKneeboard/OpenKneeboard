@@ -53,7 +53,7 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
 
   mDevice.copy_from(binding.device);
   mCommandQueue.copy_from(binding.queue);
-  mSpriteBatch = std::make_unique<D3D12::SpriteBatch>(
+  mRenderer = std::make_unique<D3D12::Renderer>(
     mDevice.get(), mCommandQueue.get(), DXGI_FORMAT_B8G8R8A8_UNORM);
 }
 
@@ -168,15 +168,11 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   const float* const opacities) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
-  auto source = snapshot.GetTexture<SHM::D3D12::Texture>();
-
   auto& sr = mSwapchainResources.at(swapchain);
   auto& br = sr.mBufferResources.at(swapchainTextureIndex);
 
-  if (br.mCommandList) {
-    winrt::check_hresult(
-      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
-  } else {
+  // TODO: this should be part of bufferresources initialization
+  if (!br.mCommandList) {
     winrt::check_hresult(mDevice->CreateCommandList(
       0,
       D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -185,55 +181,18 @@ void OpenXRD3D12Kneeboard::RenderLayers(
       IID_PPV_ARGS(br.mCommandList.put())));
   }
 
-  ID3D12DescriptorHeap* heaps[] {source->GetD3D12ShaderResourceViewHeap()};
-  br.mCommandList->SetDescriptorHeaps(std::size(heaps), heaps);
-
-  mSpriteBatch->Begin(
-    br.mCommandList.get(), br.mRenderTargetView, sr.mDimensions);
-  mSpriteBatch->Clear();
-
-  const auto layerCount = snapshot.GetLayerCount();
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
-    const auto sourceRect
-      = snapshot.GetLayerConfig(layerIndex)->mLocationOnTexture;
-    const auto& destRect = destRects[layerIndex];
-    const D3D11::Opacity opacity {opacities[layerIndex]};
-    mSpriteBatch->Draw(
-      source->GetD3D12ShaderResourceViewGPUHandle(),
-      source->GetDimensions(),
-      sourceRect,
-      destRects[layerIndex],
-      D3D12::Opacity {opacities[layerIndex]});
-  }
-  mSpriteBatch->End();
-
-  winrt::check_hresult(br.mCommandList->Close());
-
-  ID3D12CommandList* lists[] {br.mCommandList.get()};
-
-  mCommandQueue->ExecuteCommandLists(std::size(lists), lists);
+  mRenderer->RenderLayers(
+    sr,
+    swapchainTextureIndex,
+    snapshot,
+    snapshot.GetLayerCount(),
+    destRects,
+    opacities,
+    RenderMode::ClearAndRender);
 }
 
 SHM::CachedReader* OpenXRD3D12Kneeboard::GetSHM() {
   return &mSHM;
-}
-
-OpenXRD3D12Kneeboard::SwapchainBufferResources::SwapchainBufferResources(
-  ID3D12Device* device,
-  ID3D12Resource* texture,
-  D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle,
-  DXGI_FORMAT renderTargetViewFormat)
-  : mRenderTargetView(renderTargetViewHandle) {
-  D3D12_RENDER_TARGET_VIEW_DESC desc {
-    .Format = renderTargetViewFormat,
-    .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
-    .Texture2D = {0, 0},
-  };
-
-  device->CreateRenderTargetView(texture, &desc, renderTargetViewHandle);
-
-  winrt::check_hresult(device->CreateCommandAllocator(
-    D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(mCommandAllocator.put())));
 }
 
 }// namespace OpenKneeboard

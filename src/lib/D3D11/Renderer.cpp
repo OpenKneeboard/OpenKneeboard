@@ -53,6 +53,11 @@ void Renderer::RenderLayers(
   RenderMode renderMode) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::Renderer::RenderLayers()");
 
+  if (layerCount > snapshot.GetLayerCount()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "Attempted to render more layers than exist in snapshot");
+  }
+
   auto source
     = snapshot.GetTexture<SHM::D3D11::Texture>()->GetD3D11ShaderResourceView();
 
@@ -64,11 +69,6 @@ void Renderer::RenderLayers(
 
   if (renderMode == RenderMode::ClearAndRender) {
     mSpriteBatch->Clear();
-  }
-
-  if (layerCount > snapshot.GetLayerCount()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "Attempted to render more layers than exist in snapshot");
   }
 
   for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {

@@ -140,7 +140,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   {
     D3D11::SavedState savedState(mResources->mImmediateContext);
     mResources->mRenderer->RenderLayers(
-      sr, 0, snapshot, 1, &destRect, &opacity, D3D11::RenderMode::Overlay);
+      sr, 0, snapshot, 1, &destRect, &opacity, RenderMode::Overlay);
   }
 
   return passthrough();

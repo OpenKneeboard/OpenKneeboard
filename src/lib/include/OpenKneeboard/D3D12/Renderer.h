@@ -19,32 +19,36 @@
  */
 #pragma once
 
-#include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/D3D12.h>
 #include <OpenKneeboard/RenderMode.h>
-#include <OpenKneeboard/SHM/D3D11.h>
+#include <OpenKneeboard/SHM/D3D12.h>
 
-namespace OpenKneeboard::D3D11 {
+namespace OpenKneeboard::D3D12 {
 
 struct SwapchainBufferResources {
   SwapchainBufferResources() = delete;
   SwapchainBufferResources(
-    ID3D11Device*,
-    ID3D11Texture2D*,
+    ID3D12Device*,
+    ID3D12Resource* texture,
+    D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle,
     DXGI_FORMAT renderTargetViewFormat);
 
-  ID3D11Texture2D* mTexture {nullptr};
-  winrt::com_ptr<ID3D11RenderTargetView> mRenderTargetView;
+  winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
+  winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
+
+  D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView;
 };
 
 struct SwapchainResources {
   PixelSize mDimensions;
+  DirectX::DescriptorHeap mRenderTargetViewHeap;
   std::vector<SwapchainBufferResources> mBufferResources;
 };
 
 class Renderer {
  public:
   Renderer() = delete;
-  Renderer(ID3D11Device*);
+  Renderer(ID3D12Device*, ID3D12CommandQueue*, DXGI_FORMAT destFormat);
 
   void RenderLayers(
     const SwapchainResources&,
@@ -56,7 +60,9 @@ class Renderer {
     RenderMode);
 
  private:
+  winrt::com_ptr<ID3D12Device> mDevice;
+  winrt::com_ptr<ID3D12CommandQueue> mQueue;
   std::unique_ptr<SpriteBatch> mSpriteBatch;
 };
 
-}// namespace OpenKneeboard::D3D11
+}// namespace OpenKneeboard::D3D12
