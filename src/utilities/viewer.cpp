@@ -351,6 +351,7 @@ class TestViewerWindow final {
   }
 
   void CheckForUpdate() {
+    OPENKNEEBOARD_TraceLoggingScope("Viewer::CheckForUpdate");
     auto& shm = *mRenderer->GetSHM();
     if (!shm) {
       if (mFirstDetached) {
@@ -490,6 +491,8 @@ class TestViewerWindow final {
     if (clientSize == mSwapChainSize) {
       return;
     }
+    OPENKNEEBOARD_TraceLoggingScope("Viewer::InitSwapChain()");
+
     mWindowTexture = nullptr;
     mWindowRenderTargetView = nullptr;
     mWindowBitmap = nullptr;
@@ -681,6 +684,7 @@ class TestViewerWindow final {
     if (!mHwnd) {
       return;
     }
+    OPENKNEEBOARD_TraceLoggingScope("Viewer::PaintNow()");
     this->InitSwapChain();
 
     if (!mWindowTexture) {
