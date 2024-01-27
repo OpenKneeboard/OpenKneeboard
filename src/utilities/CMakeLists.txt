@@ -129,10 +129,15 @@ foreach(REMOTE_ACTION ${SIMPLE_REMOTE_ACTIONS})
   )
   target_compile_definitions(
     "${TARGET}"
-    PUBLIC
+    PRIVATE
     "REMOTE_ACTION=${REMOTE_ACTION}"
   )
-  target_link_libraries("${TARGET}" OpenKneeboard-GameEvent)
+  target_link_libraries(
+    "${TARGET}"
+    PRIVATE
+    OpenKneeboard-GameEvent
+    OpenKneeboard-dprint
+  )
 endforeach()
 
 add_helper_executable(
