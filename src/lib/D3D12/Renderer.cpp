@@ -38,6 +38,12 @@ SwapchainBufferResources::SwapchainBufferResources(
 
   winrt::check_hresult(device->CreateCommandAllocator(
     D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(mCommandAllocator.put())));
+  winrt::check_hresult(device->CreateCommandList(
+    0,
+    D3D12_COMMAND_LIST_TYPE_DIRECT,
+    mCommandAllocator.get(),
+    nullptr,
+    IID_PPV_ARGS(mCommandList.put())));
 }
 
 Renderer::Renderer(

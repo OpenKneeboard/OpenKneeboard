@@ -169,17 +169,6 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
   auto& sr = mSwapchainResources.at(swapchain);
-  auto& br = sr.mBufferResources.at(swapchainTextureIndex);
-
-  // TODO: this should be part of bufferresources initialization
-  if (!br.mCommandList) {
-    winrt::check_hresult(mDevice->CreateCommandList(
-      0,
-      D3D12_COMMAND_LIST_TYPE_DIRECT,
-      br.mCommandAllocator.get(),
-      nullptr,
-      IID_PPV_ARGS(br.mCommandList.put())));
-  }
 
   mRenderer->RenderLayers(
     sr,
