@@ -91,12 +91,14 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   }
 
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
-  const auto vkFormat = VK_FORMAT_B8G8R8A8_UNORM;
+  const auto vkImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
+  const auto vkImageViewFormat = VK_FORMAT_B8G8R8A8_UNORM;
   XrSwapchainCreateInfo swapchainInfo {
     .type = XR_TYPE_SWAPCHAIN_CREATE_INFO,
     .usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT
-      | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT,
-    .format = vkFormat,
+      | XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT
+      | XR_SWAPCHAIN_USAGE_MUTABLE_FORMAT_BIT,
+    .format = vkImageFormat,
     .sampleCount = 1,
     .width = size.mWidth,
     .height = size.mHeight,
@@ -170,7 +172,7 @@ XrSwapchain OpenXRVulkanKneeboard::CreateSwapchain(
   VkImageViewCreateInfo viewCreateInfo {
     .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
     .viewType = VK_IMAGE_VIEW_TYPE_2D,
-    .format = vkFormat,
+    .format = vkImageViewFormat,
     .subresourceRange = VkImageSubresourceRange {
       .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
       .levelCount = 1,
