@@ -132,6 +132,7 @@ add_compile_options(${COMMON_COMPILE_OPTIONS})
 
 set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME Default)
 
+include(windows_kits_dir.cmake)
 include(sign_target.cmake)
 
 configure_file(
