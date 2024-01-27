@@ -48,11 +48,21 @@ bool IsPresent() {
 
 NestedFrameCapture::NestedFrameCapture(
   const VkInstance_T* instance,
-  const char* title) {
+  const char* title)
+  : NestedFrameCapture(
+    RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance),
+    title) {
+}
+
+NestedFrameCapture::NestedFrameCapture(ID3D12Device* device, const char* title)
+  : NestedFrameCapture(static_cast<void*>(device), title) {
+}
+
+NestedFrameCapture::NestedFrameCapture(void* rdDevice, const char* title) {
   if (!(gRenderDoc && gRenderDoc->IsFrameCapturing())) {
     return;
   }
-  mRDDevice = RENDERDOC_DEVICEPOINTER_FROM_VKINSTANCE(instance);
+  mRDDevice = rdDevice;
 
   gRenderDoc->StartFrameCapture(mRDDevice, NULL);
   gRenderDoc->SetCaptureTitle(title);
