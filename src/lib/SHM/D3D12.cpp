@@ -237,10 +237,8 @@ void CachedReader::Copy(
 
   auto& br = mBufferResources.at(swapchainIndex);
 
-  if (br.mCommandList) {
-    winrt::check_hresult(
-      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
-  } else {
+  if (!br.mCommandList) {
+    OPENKNEEBOARD_TraceLoggingScope("CreateCommandList");
     winrt::check_hresult(mDevice->CreateCommandList(
       0,
       D3D12_COMMAND_LIST_TYPE_DIRECT,
@@ -260,6 +258,10 @@ void CachedReader::Copy(
       fence,
       fenceValueIn,
       fenceValueOut);
+
+  OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
+  winrt::check_hresult(
+    br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
 }
 
 uint8_t CachedReader::GetSwapchainLength() const {
