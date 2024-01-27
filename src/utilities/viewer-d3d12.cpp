@@ -21,6 +21,7 @@
 #include "viewer-d3d12.h"
 
 #include <OpenKneeboard/D3D12.h>
+#include <OpenKneeboard/RenderDoc.h>
 
 #include <directxtk12/ScreenGrab.h>
 
@@ -37,6 +38,19 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
 #endif
 
   mDevice.capture(D3D12CreateDevice, dxgiAdapter, D3D_FEATURE_LEVEL_12_1);
+
+#ifdef DEBUG
+  if (!RenderDoc::IsPresent()) {
+    // There's also the semi-documented ID3D12InfoQueue1 interface if we end up
+    // wanting a full callback
+    const auto infoQueue = mDevice.try_as<ID3D12InfoQueue>();
+    if (infoQueue) {
+      infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
+      infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+      infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+    }
+  }
+#endif
 
   D3D12_COMMAND_QUEUE_DESC queueDesc {D3D12_COMMAND_LIST_TYPE_DIRECT};
   mCommandQueue.capture(mDevice, &ID3D12Device::CreateCommandQueue, &queueDesc);
