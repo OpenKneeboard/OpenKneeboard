@@ -94,7 +94,15 @@ DXResources DXResources::Create() {
   ret.mD3DDevice = d3d.as<ID3D11Device5>();
   ret.mD3DImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
   ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
-  d3d.as<ID3D10Multithread>()->SetMultithreadProtected(TRUE);
+  d3d.as<ID3D11Multithread>()->SetMultithreadProtected(TRUE);
+#ifdef DEBUG
+  const auto iq = d3d.try_as<ID3D11InfoQueue>();
+  if (iq) {
+    iq->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, true);
+    iq->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, true);
+    iq->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
+  }
+#endif
 
   winrt::check_hresult(
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, ret.mD2DFactory.put()));
