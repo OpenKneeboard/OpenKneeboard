@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/SHM/D3D11.h>
 #include <OpenKneeboard/VRKneeboard.h>
@@ -62,6 +63,8 @@ class SteamVRKneeboard final : private VRKneeboard {
   vr::IVRSystem* mIVRSystem = nullptr;
   vr::IVROverlay* mIVROverlay = nullptr;
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::SteamVR};
+
+  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
 
   // Paint to buffer texture with variable opacity,
   // then atomically copy to OpenVR texture

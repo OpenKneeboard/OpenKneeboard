@@ -51,36 +51,6 @@ class SavedState final {
   Impl* mImpl {nullptr};
 };
 
-void CopyTextureWithTint(
-  ID3D11Device* device,
-  ID3D11ShaderResourceView* source,
-  ID3D11RenderTargetView* dest,
-  DirectX::FXMVECTOR tint);
-
-void CopyTextureWithOpacity(
-  ID3D11Device* device,
-  ID3D11ShaderResourceView* source,
-  ID3D11RenderTargetView* dest,
-  float opacity);
-
-void DrawTextureWithTint(
-  ID3D11Device* device,
-  ID3D11ShaderResourceView* source,
-  ID3D11RenderTargetView* dest,
-  const RECT& sourceRect,
-  const RECT& destRect,
-  DirectX::FXMVECTOR tint);
-
-void DrawTextureWithOpacity(
-  ID3D11Device* device,
-  ID3D11ShaderResourceView* source,
-  ID3D11RenderTargetView* dest,
-  const RECT& sourceRect,
-  const RECT& destRect,
-  float opacity);
-
-// TODO: merge everthing above here with everything below here :)
-
 using Opacity = ::OpenKneeboard::D3D::Opacity;
 
 /** Wrapper around DirectXTK SpriteBatch which sets the required state on the

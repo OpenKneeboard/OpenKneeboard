@@ -45,6 +45,14 @@ RenderTarget::RenderTarget(
 
   winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
     texture.as<IDXGISurface>().get(), nullptr, mD2DBitmap.put()));
+
+  D3D11_TEXTURE2D_DESC desc;
+  texture->GetDesc(&desc);
+  mDimensions = {desc.Width, desc.Height};
+}
+
+PixelSize RenderTarget::GetDimensions() const {
+  return mDimensions;
 }
 
 RenderTargetID RenderTarget::GetID() const {

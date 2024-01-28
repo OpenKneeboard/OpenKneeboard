@@ -28,6 +28,7 @@
 namespace OpenKneeboard {
 
 CachedLayer::CachedLayer(const DXResources& dxr) : mDXR(dxr) {
+  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(dxr.mD3DDevice.get());
 }
 
 CachedLayer::~CachedLayer() {
@@ -40,18 +41,18 @@ void CachedLayer::Render(
   std::function<void(RenderTarget*, const D2D1_SIZE_U&)> impl) {
   std::scoped_lock lock(mCacheMutex);
 
-  const D2D1_SIZE_U cacheSize {
-    static_cast<UINT>(std::lround(where.right - where.left)),
-    static_cast<UINT>(std::lround(where.bottom - where.top)),
+  const PixelSize cacheDimensions {
+    static_cast<uint32_t>(std::lround(where.right - where.left)),
+    static_cast<uint32_t>(std::lround(where.bottom - where.top)),
   };
 
-  if (mCacheSize != cacheSize || !mCache) {
+  if (mCacheDimensions != cacheDimensions || !mCache) {
     mKey = ~Key {0};
     mCache = nullptr;
-    mCacheSize = cacheSize;
+    mCacheDimensions = cacheDimensions;
     D3D11_TEXTURE2D_DESC textureDesc {
-      .Width = cacheSize.width,
-      .Height = cacheSize.height,
+      .Width = cacheDimensions.mWidth,
+      .Height = cacheDimensions.mHeight,
       .MipLevels = 1,
       .ArraySize = 1,
       .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
@@ -72,28 +73,30 @@ void CachedLayer::Render(
       mDXR.mD3DImmediateContext->ClearRenderTargetView(
         d3d.rtv(), DirectX::Colors::Transparent);
     }
-    impl(mCacheRenderTarget.get(), cacheSize);
+    impl(mCacheRenderTarget.get(), cacheDimensions);
     mKey = cacheKey;
   }
 
   auto d3d = rt->d3d();
-  D3D11::DrawTextureWithOpacity(
-    mDXR.mD3DDevice.get(),
-    mCacheSRV.get(),
-    d3d.rtv(),
+
+  const PixelRect sourceRect {
+    {0, 0},
+    mCacheDimensions,
+  };
+  const PixelRect destRect {
     {
-      0,
-      0,
-      static_cast<LONG>(mCacheSize.width),
-      static_cast<LONG>(mCacheSize.height),
+      static_cast<uint32_t>(std::lround(where.left)),
+      static_cast<uint32_t>(std::lround(where.top)),
     },
     {
-      static_cast<LONG>(where.left),
-      static_cast<LONG>(where.top),
-      static_cast<LONG>(where.right),
-      static_cast<LONG>(where.bottom),
+      static_cast<uint32_t>(std::lround(where.right - where.left)),
+      static_cast<uint32_t>(std::lround(where.bottom - where.top)),
     },
-    1.0f);
+  };
+
+  mSpriteBatch->Begin(d3d.rtv(), rt->GetDimensions());
+  mSpriteBatch->Draw(mCacheSRV.get(), sourceRect, destRect);
+  mSpriteBatch->End();
 }
 
 void CachedLayer::Reset() {

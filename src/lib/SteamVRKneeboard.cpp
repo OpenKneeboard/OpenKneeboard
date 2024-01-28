@@ -90,6 +90,8 @@ SteamVRKneeboard::SteamVRKneeboard() {
   };
   winrt::check_hresult(mD3D->CreateRenderTargetView(
     mBufferTexture.get(), &rtvd, mRenderTargetView.put()));
+
+  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mD3D.get());
 }
 
 SteamVRKneeboard::~SteamVRKneeboard() {
@@ -282,8 +284,14 @@ void SteamVRKneeboard::Tick() {
     // OpenVR call
 
     // non-atomic paint to buffer...
-    D3D11::CopyTextureWithOpacity(
-      mD3D.get(), srv, mRenderTargetView.get(), renderParams.mKneeboardOpacity);
+    const PixelRect fullRect {
+      {0, 0},
+      {TextureWidth, TextureHeight},
+    };
+    mSpriteBatch->Begin(mRenderTargetView.get(), {TextureWidth, TextureHeight});
+    mSpriteBatch->Draw(
+      srv, fullRect, fullRect, D3D11::Opacity {renderParams.mKneeboardOpacity});
+    mSpriteBatch->End();
 
     // ... then atomic copy to OpenVR texture
     winrt::com_ptr<ID3D11DeviceContext> ctx;

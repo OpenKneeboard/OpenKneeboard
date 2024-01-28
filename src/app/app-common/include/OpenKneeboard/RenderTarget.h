@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/RenderTargetID.h>
 
 #include <Windows.h>
@@ -31,7 +32,7 @@
 
 namespace OpenKneeboard {
 
-struct DXesources;
+struct DXResources;
 
 /** Encapsulate a render target for use with either D3D11 or D2D.
  *
@@ -48,6 +49,7 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
     const DXResources& dxr,
     const winrt::com_ptr<ID3D11Texture2D>& texture);
 
+  PixelSize GetDimensions() const;
   RenderTargetID GetID() const;
 
   class D2D;
@@ -64,6 +66,8 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
     const winrt::com_ptr<ID3D11Texture2D>& texture);
   enum class Mode { Unattached, D2D, D3D };
   Mode mMode {Mode::Unattached};
+
+  PixelSize mDimensions;
 
   DXResources mDXR;
 

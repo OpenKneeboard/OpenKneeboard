@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D11.h>
+#include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/RenderTarget.h>
 
 #include <shims/winrt/base.h>
@@ -50,11 +52,13 @@ class CachedLayer final {
   Key mKey = ~Key {0};
   DXResources mDXR;
 
-  D2D1_SIZE_U mCacheSize;
+  PixelSize mCacheDimensions;
   std::mutex mCacheMutex;
   std::shared_ptr<RenderTarget> mCacheRenderTarget;
   winrt::com_ptr<ID3D11Texture2D> mCache;
   winrt::com_ptr<ID3D11ShaderResourceView> mCacheSRV;
+
+  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
 };
 
 }// namespace OpenKneeboard
