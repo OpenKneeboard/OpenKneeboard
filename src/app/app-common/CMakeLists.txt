@@ -20,22 +20,21 @@ target_link_libraries(
   OpenKneeboard-Filesystem
   OpenKneeboard-GameEvent
   OpenKneeboard-GetSystemColor
+  OpenKneeboard-OpenXRMode
   OpenKneeboard-PDFNavigation
   OpenKneeboard-RayIntersectsRect
   OpenKneeboard-RuntimeFiles
-  OpenKneeboard-SteamVRKneeboard
-  OpenKneeboard-OpenXRMode
-  OpenKneeboard-App-Shaders
   OpenKneeboard-SHM
+  OpenKneeboard-SteamVRKneeboard
   OpenKneeboard-ThreadGuard
   OpenKneeboard-UTF8
   OpenKneeboard-WindowCaptureControl
+  OpenKneeboard-Wintab
   OpenKneeboard-config
   OpenKneeboard-dprint
   OpenKneeboard-games
   OpenKneeboard-handles
   OpenKneeboard-scope_guard
-  OpenKneeboard-Wintab
   System::D2d1
   System::Dinput8
   System::Dwmapi

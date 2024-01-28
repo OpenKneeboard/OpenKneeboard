@@ -23,7 +23,6 @@
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
-#include <OpenKneeboard/Shaders/D3D/ScRGBToRGB.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 
 #include <OpenKneeboard/dprint.h>
@@ -235,10 +234,6 @@ HWNDPageSource::HWNDPageSource(
     CreateOnDedicatedThread();
 
   mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mDXR->mD3D11Device.get());
-
-  auto ps = Shaders::D3D::ScRGBToRGB::PS;
-  winrt::check_hresult(dxr->mD3D11Device->CreatePixelShader(
-    ps.data(), ps.size(), nullptr, mScRGBtoRGB.put()));
 }
 
 bool HWNDPageSource::HaveWindow() const {
@@ -348,16 +343,9 @@ void HWNDPageSource::RenderPage(
     const auto dimming
       = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL / mSDRWhiteLevelInNits;
     color = {dimming, dimming, dimming, 1};
-
-    mSpriteBatch->Begin(
-      d3d.rtv(),
-      rt->GetDimensions(),
-      [ctx = mDXR->mD3D11ImmediateContext.get(), ps = mScRGBtoRGB.get()]() {
-        ctx->PSSetShader(ps, nullptr, 0);
-      });
-  } else {
-    mSpriteBatch->Begin(d3d.rtv(), rt->GetDimensions());
   }
+
+  mSpriteBatch->Begin(d3d.rtv(), rt->GetDimensions());
 
   const auto contentBox = this->GetContentBox();
   const PixelRect sourceRect {

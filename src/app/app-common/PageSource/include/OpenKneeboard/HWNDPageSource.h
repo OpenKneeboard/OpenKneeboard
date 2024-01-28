@@ -133,7 +133,6 @@ class HWNDPageSource final
   FLOAT mSDRWhiteLevelInNits = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL;
 
   std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
-  winrt::com_ptr<ID3D11PixelShader> mScRGBtoRGB;
 
   bool mIsHDR {false};
   winrt::Windows::Graphics::DirectX::DirectXPixelFormat mPixelFormat;

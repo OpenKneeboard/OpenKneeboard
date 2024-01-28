@@ -81,21 +81,3 @@ target_include_directories(
     INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
-
-add_fxc_shader(
-    OpenKneeboard-ScRGBToRGB-D3D-PS
-    ScRGBToRGB
-    ScRGBToRGB.hlsl
-    -T ps_5_0
-)
-add_library(OpenKneeboard-App-Shaders INTERFACE)
-target_link_libraries(
-    OpenKneeboard-App-Shaders
-    INTERFACE
-    OpenKneeboard-ScRGBToRGB-D3D-PS
-)
-target_include_directories(
-    OpenKneeboard-App-Shaders
-    INTERFACE
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
-)
