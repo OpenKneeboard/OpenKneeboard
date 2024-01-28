@@ -29,7 +29,7 @@
 
 #include <ranges>
 
-#include <icucommon.h>
+#include <icu.h>
 
 namespace OpenKneeboard {
 
@@ -81,13 +81,13 @@ std::shared_ptr<IPageSource> FilePageSource::Create(
     return {nullptr};
   }
 
-  const auto extension = path.extension().wstring();
+  const auto extension = path.extension().u16string();
 
-  if (u_strcasecmp(extension.c_str(), L".pdf", U_FOLD_CASE_DEFAULT) == 0) {
+  if (u_strcasecmp(extension.c_str(), u".pdf", U_FOLD_CASE_DEFAULT) == 0) {
     return PDFFilePageSource::Create(dxr, kbs, path);
   }
 
-  if (u_strcasecmp(extension.c_str(), L".txt", U_FOLD_CASE_DEFAULT) == 0) {
+  if (u_strcasecmp(extension.c_str(), u".txt", U_FOLD_CASE_DEFAULT) == 0) {
     return PlainTextFilePageSource::Create(dxr, kbs, path);
   }
 
