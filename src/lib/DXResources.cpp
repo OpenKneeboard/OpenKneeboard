@@ -29,7 +29,9 @@ namespace OpenKneeboard {
 
 struct D3DResources::Locks {
   std::recursive_mutex mMutex;
+};
 
+struct D2DResources::Locks {
   std::mutex mCurrentDrawMutex;
   struct DrawInfo {
     std::source_location mLocation;
@@ -70,6 +72,7 @@ D3DResources::D3DResources() {
       (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) ? L" (software)" : L"");
     if (i == 0) {
       mDXGIAdapter = adapterIt;
+      static_assert(sizeof(uint64_t) == sizeof(desc.AdapterLuid));
       mAdapterLUID = std::bit_cast<uint64_t>(desc.AdapterLuid);
     }
   }
@@ -101,80 +104,81 @@ D3DResources::D3DResources() {
     iq->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
   }
 #endif
+
+  mLocks = std::make_unique<Locks>();
 }
 
 D3DResources::~D3DResources() = default;
 
-std::shared_ptr<DXResources> DXResources::Create() {
-  auto ret = std::shared_ptr<DXResources>(new DXResources());
-
-  winrt::check_hresult(D2D1CreateFactory(
-    D2D1_FACTORY_TYPE_MULTI_THREADED, ret->mD2DFactory.put()));
+D2DResources::D2DResources(D3DResources* d3d) {
+  winrt::check_hresult(
+    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, mD2DFactory.put()));
 
   D2D1_DEBUG_LEVEL d2dDebug = D2D1_DEBUG_LEVEL_NONE;
 #ifdef DEBUG
   d2dDebug = D2D1_DEBUG_LEVEL_INFORMATION;
 #endif
   winrt::check_hresult(D2D1CreateDevice(
-    ret->mDXGIDevice.get(),
+    d3d->mDXGIDevice.get(),
     D2D1::CreationProperties(
       D2D1_THREADING_MODE_MULTI_THREADED,
       d2dDebug,
       D2D1_DEVICE_CONTEXT_OPTIONS_NONE),
-    ret->mD2DDevice.put()));
+    mD2DDevice.put()));
 
-  winrt::com_ptr<ID2D1DeviceContext> d2dContext;
-  winrt::com_ptr<ID2D1DeviceContext> d2dBackBufferContext;
-  winrt::check_hresult(ret->mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dContext.put()));
-  winrt::check_hresult(ret->mD2DDevice->CreateDeviceContext(
-    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dBackBufferContext.put()));
-  ret->mD2DDeviceContext = d2dContext.as<ID2D1DeviceContext5>();
-  ret->mD2DBackBufferDeviceContext
-    = d2dBackBufferContext.as<ID2D1DeviceContext5>();
-  d2dContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
-  d2dBackBufferContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+  winrt::com_ptr<ID2D1DeviceContext> ctx;
+  winrt::check_hresult(mD2DDevice->CreateDeviceContext(
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ctx.put()));
+  mD2DDeviceContext = ctx.as<ID2D1DeviceContext5>();
+  ctx->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
   // Subpixel antialiasing assumes text is aligned on pixel boundaries;
   // this isn't the case for OpenKneeboard
-  d2dContext->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
-  d2dBackBufferContext->SetTextAntialiasMode(
-    D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+  ctx->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
   winrt::check_hresult(DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(ret->mDWriteFactory.put())));
+    reinterpret_cast<IUnknown**>(mDWriteFactory.put())));
 
-  ret->mWIC
-    = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
-
-  winrt::check_hresult(
-    PdfCreateRenderer(ret->mDXGIDevice.get(), ret->mPDFRenderer.put()));
-
-  ret->mLocks = std::make_shared<Locks>();
-
-  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), ret->mWhiteBrush.put()));
-  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), ret->mHighlightBrush.put()));
-  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), ret->mBlackBrush.put()));
-  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), ret->mEraserBrush.put()));
-
-  ret->mD2DDeviceContext->CreateSolidColorBrush(
-    {0.0f, 0.0f, 0.0f, 0.8f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(ret->mCursorInnerBrush.put()));
-  ret->mD2DDeviceContext->CreateSolidColorBrush(
-    {1.0f, 1.0f, 1.0f, 0.8f},
-    D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(ret->mCursorOuterBrush.put()));
-
-  return ret;
+  mLocks = std::make_unique<Locks>();
 }
 
-void DXResources::PushD2DDraw(std::source_location loc) {
+D2DResources::~D2DResources() = default;
+
+DXResources::DXResources() : D3DResources(), D2DResources(this) {
+  winrt::com_ptr<ID2D1DeviceContext> d2dBackBufferContext;
+  winrt::check_hresult(mD2DDevice->CreateDeviceContext(
+    D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dBackBufferContext.put()));
+  mD2DBackBufferDeviceContext = d2dBackBufferContext.as<ID2D1DeviceContext5>();
+  d2dBackBufferContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
+  d2dBackBufferContext->SetTextAntialiasMode(
+    D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
+
+  mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
+
+  winrt::check_hresult(
+    PdfCreateRenderer(mDXGIDevice.get(), mPDFRenderer.put()));
+
+  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), mWhiteBrush.put()));
+  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), mHighlightBrush.put()));
+  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBlackBrush.put()));
+  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), mEraserBrush.put()));
+
+  mD2DDeviceContext->CreateSolidColorBrush(
+    {0.0f, 0.0f, 0.0f, 0.8f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(mCursorInnerBrush.put()));
+  mD2DDeviceContext->CreateSolidColorBrush(
+    {1.0f, 1.0f, 1.0f, 0.8f},
+    D2D1::BrushProperties(),
+    reinterpret_cast<ID2D1SolidColorBrush**>(mCursorOuterBrush.put()));
+}
+
+void D2DResources::PushD2DDraw(std::source_location loc) {
   {
     std::unique_lock lock(mLocks->mCurrentDrawMutex);
     if (mLocks->mCurrentDraw) {
@@ -193,7 +197,7 @@ void DXResources::PushD2DDraw(std::source_location loc) {
   mD2DDeviceContext->BeginDraw();
 }
 
-HRESULT DXResources::PopD2DDraw() {
+HRESULT D2DResources::PopD2DDraw() {
   {
     std::unique_lock lock(mLocks->mCurrentDrawMutex);
     mLocks->mCurrentDraw = {};

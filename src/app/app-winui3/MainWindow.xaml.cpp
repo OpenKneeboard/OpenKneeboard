@@ -76,7 +76,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 MainWindow::MainWindow() {
   InitializeComponent();
   // shared_ptr
-  mDXR = DXResources::Create();
+  mDXR = std::make_shared<DXResources>();
   // weak_ptr
   gDXResources = mDXR;
 

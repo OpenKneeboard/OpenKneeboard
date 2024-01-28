@@ -34,6 +34,13 @@
 
 namespace OpenKneeboard {
 
+/** Resources needed for anything in OpenKneeboard using D3D11.
+ *
+ * This includes:
+ * - the main app
+ * - the SteamVR implementation (which uses its' own devices)
+ * - the viewer
+ */
 struct D3DResources {
   D3DResources();
   ~D3DResources();
@@ -54,30 +61,56 @@ struct D3DResources {
   bool try_lock();
   void unlock();
 
- protected:
+ private:
   struct Locks;
-  std::shared_ptr<Locks> mLocks;
+  std::unique_ptr<Locks> mLocks;
 };
 
-struct DXResources : public D3DResources {
-  winrt::com_ptr<ID2D1Device> mD2DDevice;
-  winrt::com_ptr<ID2D1DeviceContext5> mD2DDeviceContext;
-  // e.g. doodles draw to a separate texture
-  winrt::com_ptr<ID2D1DeviceContext5> mD2DBackBufferDeviceContext;
+/** Additional resources needed for Direct2D + DirectWrite.
+ *
+ * I've included DirectWrite here for now as it's the only current
+ * reason for using Direct2D.
+ *
+ * D3D should be preferred in new code for basic primitives.
+ */
+struct D2DResources {
+  D2DResources() = delete;
+  D2DResources(D3DResources*);
+  ~D2DResources();
+  D2DResources(const D2DResources&) = delete;
+  D2DResources& operator=(const D2DResources&) = delete;
 
   winrt::com_ptr<ID2D1Factory> mD2DFactory;
+
+  winrt::com_ptr<ID2D1Device> mD2DDevice;
+  winrt::com_ptr<ID2D1DeviceContext5> mD2DDeviceContext;
+
   winrt::com_ptr<IDWriteFactory> mDWriteFactory;
-
-  winrt::com_ptr<IWICImagingFactory> mWIC;
-
-  winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
 
   // Use like push/pop, but only one is allowed at a time; this exists
   // to get better debugging information/breakpoints when that's not the case
   void PushD2DDraw(std::source_location = std::source_location::current());
   HRESULT PopD2DDraw();
 
-  static std::shared_ptr<DXResources> Create();
+ private:
+  struct Locks;
+  std::unique_ptr<Locks> mLocks;
+};
+
+/// Resources for the OpenKneeboard app
+struct DXResources : public D3DResources, public D2DResources {
+  DXResources();
+  DXResources(const DXResources&) = delete;
+  DXResources(DXResources&&) = delete;
+  DXResources& operator=(const DXResources&) = delete;
+  DXResources& operator=(DXResources&&) = delete;
+
+  // e.g. doodles draw to a separate texture
+  winrt::com_ptr<ID2D1DeviceContext5> mD2DBackBufferDeviceContext;
+
+  winrt::com_ptr<IWICImagingFactory> mWIC;
+
+  winrt::com_ptr<IPdfRendererNative> mPDFRenderer;
 
   // Brushes :)
 
@@ -94,14 +127,6 @@ struct DXResources : public D3DResources {
 
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorInnerBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorOuterBrush;
-
-  DXResources(const std::shared_ptr<DXResources>&) = delete;
-  DXResources(DXResources&&) = delete;
-  DXResources& operator=(const std::shared_ptr<DXResources>&) = delete;
-  DXResources& operator==(DXResources&&) = delete;
-
- private:
-  DXResources() = default;
 };
 
 }// namespace OpenKneeboard

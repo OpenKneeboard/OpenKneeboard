@@ -47,17 +47,15 @@ namespace OpenKneeboard {
 SteamVRKneeboard::SteamVRKneeboard() {
   {
     // Use DXResources to share the GPU selection logic
-    auto dxr = DXResources::Create();
-    mD3D = dxr->mD3DDevice;
+    D3DResources d3d;
+    mD3D = d3d.mD3DDevice;
     mSHM.InitializeCache(mD3D.get(), /* swapchainLength = */ 2);
-    winrt::com_ptr<IDXGIAdapter> adapter;
-    dxr->mDXGIDevice->GetAdapter(adapter.put());
     DXGI_ADAPTER_DESC desc;
-    adapter->GetDesc(&desc);
+    d3d.mDXGIAdapter->GetDesc(&desc);
     dprintf(
       L"SteamVR running on adapter '{}' (LUID {:#x})",
       desc.Description,
-      std::bit_cast<uint64_t>(desc.AdapterLuid));
+      d3d.mAdapterLUID);
   }
 
   D3D11_TEXTURE2D_DESC desc {
