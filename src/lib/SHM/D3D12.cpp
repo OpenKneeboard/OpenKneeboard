@@ -258,7 +258,11 @@ void CachedReader::Copy(
 
   auto& br = mBufferResources.at(swapchainIndex);
 
-  if (!br.mCommandList) {
+  if (br.mCommandList) {
+    OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
+    winrt::check_hresult(
+      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
+  } else {
     OPENKNEEBOARD_TraceLoggingScope("CreateCommandList");
     winrt::check_hresult(mDevice->CreateCommandList(
       0,
@@ -279,12 +283,6 @@ void CachedReader::Copy(
       fence,
       fenceValueIn,
       fenceValueOut);
-
-  {
-    OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
-    winrt::check_hresult(
-      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
-  }
 }
 
 uint8_t CachedReader::GetSwapchainLength() const {
