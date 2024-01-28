@@ -109,7 +109,7 @@ void Texture::InitializeCacheTexture(ID3D12Resource* sourceTexture) noexcept {
 
 void Texture::CopyFrom(
   ID3D12CommandQueue* queue,
-  ID3D12GraphicsCommandList* list,
+  ID3D12CommandAllocator* commandAllocator,
   ID3D12Resource* sourceTexture,
   ID3D12Fence* sourceFence,
   uint64_t fenceValueIn,
@@ -118,46 +118,23 @@ void Texture::CopyFrom(
 
   this->InitializeCacheTexture(sourceTexture);
 
+  if (!mCommandLists.contains(sourceTexture)) {
+    winrt::com_ptr<ID3D12GraphicsCommandList> list;
+    winrt::check_hresult(mDevice->CreateCommandList(
+      0,
+      D3D12_COMMAND_LIST_TYPE_DIRECT,
+      commandAllocator,
+      nullptr,
+      IID_PPV_ARGS(list.put())));
+    mCommandLists.emplace(sourceTexture, list);
+    this->PopulateCommandList(list.get(), sourceTexture);
+  }
+
+  const auto list = mCommandLists.at(sourceTexture).get();
+
   {
     OPENKNEEBOARD_TraceLoggingScope("FenceIn");
     winrt::check_hresult(queue->Wait(sourceFence, fenceValueIn));
-  }
-
-  {
-    OPENKNEEBOARD_TraceLoggingScope("PopulateCommandList");
-    D3D12_RESOURCE_BARRIER inBarriers[] {
-      D3D12_RESOURCE_BARRIER {
-        .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-        .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
-          .pResource = this->mTexture.get(),
-          .StateBefore = D3D12_RESOURCE_STATE_COMMON,
-          .StateAfter = D3D12_RESOURCE_STATE_COPY_DEST,
-        },
-      },
-    };
-    list->ResourceBarrier(std::size(inBarriers), inBarriers);
-    const D3D12_TEXTURE_COPY_LOCATION src {
-      .pResource = sourceTexture,
-      .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-      .SubresourceIndex = 0,
-    };
-    const D3D12_TEXTURE_COPY_LOCATION dst {
-      .pResource = this->mTexture.get(),
-      .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
-      .SubresourceIndex = 0,
-    };
-    list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
-    D3D12_RESOURCE_BARRIER outBarriers[] {
-      D3D12_RESOURCE_BARRIER {
-        .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-        .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
-          .pResource = this->mTexture.get(),
-          .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
-          .StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-        },
-      },
-    };
-    winrt::check_hresult(list->Close());
   }
 
   {
@@ -170,6 +147,45 @@ void Texture::CopyFrom(
     OPENKNEEBOARD_TraceLoggingScope("FenceOut");
     winrt::check_hresult(queue->Signal(sourceFence, fenceValueOut));
   }
+}
+
+void Texture::PopulateCommandList(
+  ID3D12GraphicsCommandList* list,
+  ID3D12Resource* sourceTexture) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("PopulateCommandList");
+  D3D12_RESOURCE_BARRIER inBarriers[] {
+      D3D12_RESOURCE_BARRIER {
+        .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+        .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
+          .pResource = this->mTexture.get(),
+          .StateBefore = D3D12_RESOURCE_STATE_COMMON,
+          .StateAfter = D3D12_RESOURCE_STATE_COPY_DEST,
+        },
+      },
+    };
+  list->ResourceBarrier(std::size(inBarriers), inBarriers);
+  const D3D12_TEXTURE_COPY_LOCATION src {
+    .pResource = sourceTexture,
+    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+    .SubresourceIndex = 0,
+  };
+  const D3D12_TEXTURE_COPY_LOCATION dst {
+    .pResource = this->mTexture.get(),
+    .Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX,
+    .SubresourceIndex = 0,
+  };
+  list->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+  D3D12_RESOURCE_BARRIER outBarriers[] {
+      D3D12_RESOURCE_BARRIER {
+        .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+        .Transition = D3D12_RESOURCE_TRANSITION_BARRIER {
+          .pResource = this->mTexture.get(),
+          .StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
+          .StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+        },
+      },
+    };
+  winrt::check_hresult(list->Close());
 }
 
 CachedReader::CachedReader(ConsumerKind consumerKind)
@@ -258,27 +274,13 @@ void CachedReader::Copy(
 
   auto& br = mBufferResources.at(swapchainIndex);
 
-  if (br.mCommandList) {
-    OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
-    winrt::check_hresult(
-      br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
-  } else {
-    OPENKNEEBOARD_TraceLoggingScope("CreateCommandList");
-    winrt::check_hresult(mDevice->CreateCommandList(
-      0,
-      D3D12_COMMAND_LIST_TYPE_DIRECT,
-      br.mCommandAllocator.get(),
-      nullptr,
-      IID_PPV_ARGS(br.mCommandList.put())));
-  }
-
   const auto source = this->GetIPCTexture(sourceHandle);
   const auto fence = this->GetIPCFence(fenceHandle);
 
   reinterpret_cast<SHM::D3D12::Texture*>(destinationTexture)
     ->CopyFrom(
       mCommandQueue.get(),
-      br.mCommandList.get(),
+      br.mCommandAllocator.get(),
       source,
       fence,
       fenceValueIn,

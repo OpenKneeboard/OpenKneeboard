@@ -47,7 +47,7 @@ class Texture final : public SHM::IPCClientTexture {
 
   void CopyFrom(
     ID3D12CommandQueue*,
-    ID3D12GraphicsCommandList*,
+    ID3D12CommandAllocator*,
     ID3D12Resource* texture,
     ID3D12Fence* fence,
     uint64_t fenceValueIn,
@@ -59,6 +59,13 @@ class Texture final : public SHM::IPCClientTexture {
   winrt::com_ptr<ID3D12DescriptorHeap> mShaderResourceViewHeap;
   D3D12_CPU_DESCRIPTOR_HANDLE mShaderResourceViewCPUHandle;
   D3D12_GPU_DESCRIPTOR_HANDLE mShaderResourceViewGPUHandle;
+
+  void PopulateCommandList(
+    ID3D12GraphicsCommandList*,
+    ID3D12Resource* texture) noexcept;
+
+  std::unordered_map<ID3D12Resource*, winrt::com_ptr<ID3D12GraphicsCommandList>>
+    mCommandLists;
 
   winrt::com_ptr<ID3D12Resource> mTexture;
   PixelSize mTextureDimensions;
@@ -99,7 +106,6 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   struct BufferResources {
     winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
-    winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
   };
 
   std::vector<BufferResources> mBufferResources;
