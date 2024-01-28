@@ -36,12 +36,12 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {DCSRadioLogTab::MissionStartBehavior::ClearHistory, "ClearHistory"},
   });
 
-DCSRadioLogTab::DCSRadioLogTab(const DXResources& dxr, KneeboardState* kbs)
+DCSRadioLogTab::DCSRadioLogTab(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
   : DCSRadioLogTab(dxr, kbs, {}, _("Radio Log"), {}) {
 }
 
 DCSRadioLogTab::DCSRadioLogTab(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,

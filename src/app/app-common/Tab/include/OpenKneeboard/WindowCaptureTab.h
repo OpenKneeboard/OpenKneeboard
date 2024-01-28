@@ -62,9 +62,9 @@ class WindowCaptureTab final
 
   WindowCaptureTab() = delete;
   static std::shared_ptr<WindowCaptureTab>
-  Create(const DXResources&, KneeboardState*, const MatchSpecification&);
+  Create(const std::shared_ptr<DXResources>&, KneeboardState*, const MatchSpecification&);
   static std::shared_ptr<WindowCaptureTab> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -97,7 +97,7 @@ class WindowCaptureTab final
 
  private:
   WindowCaptureTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -119,7 +119,7 @@ class WindowCaptureTab final
   concurrency::task<void> OnNewWindow(HWND hwnd);
 
   winrt::apartment_context mUIThread;
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard {nullptr};
   MatchSpecification mSpec;
   bool mSendInput = false;

@@ -38,8 +38,8 @@ struct DXResources::Locks {
   std::optional<DrawInfo> mCurrentDraw;
 };
 
-DXResources DXResources::Create() {
-  DXResources ret;
+std::shared_ptr<DXResources> DXResources::Create() {
+  auto ret = std::shared_ptr<DXResources>(new DXResources());
 
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
   auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
@@ -50,12 +50,12 @@ DXResources DXResources::Create() {
 #endif
 
   winrt::check_hresult(
-    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret.mDXGIFactory.put())));
+    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret->mDXGIFactory.put())));
 
   winrt::com_ptr<IDXGIAdapter1> adapterIt;
   winrt::com_ptr<IDXGIAdapter1> bestAdapter;
   for (unsigned int i = 0;
-       ret.mDXGIFactory->EnumAdapterByGpuPreference(
+       ret->mDXGIFactory->EnumAdapterByGpuPreference(
          i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(adapterIt.put()))
        == S_OK;
        ++i) {
@@ -91,9 +91,9 @@ DXResources DXResources::Create() {
     d3d.put(),
     nullptr,
     d3dImmediateContext.put()));
-  ret.mD3DDevice = d3d.as<ID3D11Device5>();
-  ret.mD3DImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
-  ret.mDXGIDevice = d3d.as<IDXGIDevice2>();
+  ret->mD3DDevice = d3d.as<ID3D11Device5>();
+  ret->mD3DImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
+  ret->mDXGIDevice = d3d.as<IDXGIDevice2>();
   d3d.as<ID3D11Multithread>()->SetMultithreadProtected(TRUE);
 #ifdef DEBUG
   const auto iq = d3d.try_as<ID3D11InfoQueue>();
@@ -104,29 +104,29 @@ DXResources DXResources::Create() {
   }
 #endif
 
-  winrt::check_hresult(
-    D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, ret.mD2DFactory.put()));
+  winrt::check_hresult(D2D1CreateFactory(
+    D2D1_FACTORY_TYPE_MULTI_THREADED, ret->mD2DFactory.put()));
 
   D2D1_DEBUG_LEVEL d2dDebug = D2D1_DEBUG_LEVEL_NONE;
 #ifdef DEBUG
   d2dDebug = D2D1_DEBUG_LEVEL_INFORMATION;
 #endif
   winrt::check_hresult(D2D1CreateDevice(
-    ret.mDXGIDevice.get(),
+    ret->mDXGIDevice.get(),
     D2D1::CreationProperties(
       D2D1_THREADING_MODE_MULTI_THREADED,
       d2dDebug,
       D2D1_DEVICE_CONTEXT_OPTIONS_NONE),
-    ret.mD2DDevice.put()));
+    ret->mD2DDevice.put()));
 
   winrt::com_ptr<ID2D1DeviceContext> d2dContext;
   winrt::com_ptr<ID2D1DeviceContext> d2dBackBufferContext;
-  winrt::check_hresult(ret.mD2DDevice->CreateDeviceContext(
+  winrt::check_hresult(ret->mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dContext.put()));
-  winrt::check_hresult(ret.mD2DDevice->CreateDeviceContext(
+  winrt::check_hresult(ret->mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dBackBufferContext.put()));
-  ret.mD2DDeviceContext = d2dContext.as<ID2D1DeviceContext5>();
-  ret.mD2DBackBufferDeviceContext
+  ret->mD2DDeviceContext = d2dContext.as<ID2D1DeviceContext5>();
+  ret->mD2DBackBufferDeviceContext
     = d2dBackBufferContext.as<ID2D1DeviceContext5>();
   d2dContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
   d2dBackBufferContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
@@ -139,33 +139,33 @@ DXResources DXResources::Create() {
   winrt::check_hresult(DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
-    reinterpret_cast<IUnknown**>(ret.mDWriteFactory.put())));
+    reinterpret_cast<IUnknown**>(ret->mDWriteFactory.put())));
 
-  ret.mWIC
+  ret->mWIC
     = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
 
   winrt::check_hresult(
-    PdfCreateRenderer(ret.mDXGIDevice.get(), ret.mPDFRenderer.put()));
+    PdfCreateRenderer(ret->mDXGIDevice.get(), ret->mPDFRenderer.put()));
 
-  ret.mLocks = std::make_shared<Locks>();
+  ret->mLocks = std::make_shared<Locks>();
 
-  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), ret.mWhiteBrush.put()));
-  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), ret.mHighlightBrush.put()));
-  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), ret.mBlackBrush.put()));
-  winrt::check_hresult(ret.mD2DDeviceContext->CreateSolidColorBrush(
-    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), ret.mEraserBrush.put()));
+  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), ret->mWhiteBrush.put()));
+  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), ret->mHighlightBrush.put()));
+  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), ret->mBlackBrush.put()));
+  winrt::check_hresult(ret->mD2DDeviceContext->CreateSolidColorBrush(
+    D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), ret->mEraserBrush.put()));
 
-  ret.mD2DDeviceContext->CreateSolidColorBrush(
+  ret->mD2DDeviceContext->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 0.8f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(ret.mCursorInnerBrush.put()));
-  ret.mD2DDeviceContext->CreateSolidColorBrush(
+    reinterpret_cast<ID2D1SolidColorBrush**>(ret->mCursorInnerBrush.put()));
+  ret->mD2DDeviceContext->CreateSolidColorBrush(
     {1.0f, 1.0f, 1.0f, 0.8f},
     D2D1::BrushProperties(),
-    reinterpret_cast<ID2D1SolidColorBrush**>(ret.mCursorOuterBrush.put()));
+    reinterpret_cast<ID2D1SolidColorBrush**>(ret->mCursorOuterBrush.put()));
 
   return ret;
 }

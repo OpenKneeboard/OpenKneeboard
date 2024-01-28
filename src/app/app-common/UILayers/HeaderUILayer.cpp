@@ -39,7 +39,7 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
   IKneeboardView* kneeboardView) {
   return std::shared_ptr<HeaderUILayer>(
@@ -47,11 +47,11 @@ std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
 }
 
 HeaderUILayer::HeaderUILayer(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
   IKneeboardView* kneeboardView)
   : mDXResources(dxr), mKneeboardState(kneeboardState) {
-  auto ctx = dxr.mD2DDeviceContext;
+  auto ctx = dxr->mD2DDeviceContext;
 
   AddEventListener(
     kneeboardView->evCurrentTabChangedEvent,
@@ -250,7 +250,7 @@ void HeaderUILayer::DrawToolbar(
   FLOAT dpix, dpiy;
   d2d->GetDpi(&dpix, &dpiy);
   winrt::com_ptr<IDWriteTextFormat> glyphFormat;
-  winrt::check_hresult(mDXResources.mDWriteFactory->CreateTextFormat(
+  winrt::check_hresult(mDXResources->mDWriteFactory->CreateTextFormat(
     GlyphFont,
     nullptr,
     DWRITE_FONT_WEIGHT_EXTRA_BOLD,
@@ -434,7 +434,7 @@ void HeaderUILayer::DrawHeaderText(
 
   const auto tab = tabView ? tabView->GetRootTab().get() : nullptr;
   const auto title = tab ? winrt::to_hstring(tab->GetTitle()) : _(L"No Tab");
-  auto& dwf = mDXResources.mDWriteFactory;
+  auto& dwf = mDXResources->mDWriteFactory;
 
   FLOAT dpix, dpiy;
   ctx->GetDpi(&dpix, &dpiy);

@@ -35,9 +35,9 @@ class DCSMissionTab final : public TabBase,
                             public PageSourceWithDelegates,
                             public IHasDebugInformation {
  public:
-  DCSMissionTab(const DXResources&, KneeboardState*);
+  DCSMissionTab(const std::shared_ptr<DXResources>&, KneeboardState*);
   DCSMissionTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
@@ -56,7 +56,7 @@ class DCSMissionTab final : public TabBase,
     const std::filesystem::path&) override;
 
  private:
-  DXResources mDXR {};
+  std::shared_ptr<DXResources> mDXR {};
   KneeboardState* mKneeboard {nullptr};
   std::filesystem::path mMission;
   std::string mAircraft;

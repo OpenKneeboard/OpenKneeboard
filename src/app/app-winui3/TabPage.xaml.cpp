@@ -62,6 +62,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 TabPage::TabPage() {
   InitializeComponent();
+  mDXR = gDXResources.lock();
 
   auto brush
     = Background().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
@@ -77,13 +78,13 @@ TabPage::TabPage() {
     = Foreground().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
   color = brush.Color();
 
-  winrt::check_hresult(gDXResources.mD2DDeviceContext->CreateSolidColorBrush(
+  winrt::check_hresult(mDXR->mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(
       color.R / 255.0f, color.G / 255.0f, color.B / 255.0f, color.A / 255.0f),
     mForegroundBrush.put()));
 
-  mCursorRenderer = std::make_unique<CursorRenderer>(gDXResources);
-  mErrorRenderer = std::make_unique<D2DErrorRenderer>(gDXResources);
+  mCursorRenderer = std::make_unique<CursorRenderer>(mDXR);
+  mErrorRenderer = std::make_unique<D2DErrorRenderer>(mDXR);
 
   this->InitializePointerSource();
   AddEventListener(
@@ -129,7 +130,7 @@ winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
   co_await mUIThread;
   this->RemoveAllEventListeners();
   {
-    const std::unique_lock lock(gDXResources);
+    const std::unique_lock lock(*mDXR);
     Canvas().as<ISwapChainPanelNative>()->SetSwapChain(nullptr);
     mKneeboardView = {};
     mTabView = {};
@@ -439,7 +440,7 @@ void TabPage::OnCanvasSizeChanged(
     static_cast<FLOAT>(size.Width) * mCompositionScaleX,
     static_cast<FLOAT>(size.Height) * mCompositionScaleY,
   };
-  const std::unique_lock lock(gDXResources);
+  const std::unique_lock lock(*mDXR);
   if (mSwapChain) {
     ResizeSwapChain();
   } else {
@@ -462,14 +463,13 @@ void TabPage::ResizeSwapChain() {
     desc.Flags));
 
   winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
-  mRenderTarget = RenderTarget::Create(gDXResources, mCanvas);
+  mRenderTarget = RenderTarget::Create(mDXR, mCanvas);
 }
 
 void TabPage::InitializeSwapChain() {
   if (mShuttingDown) {
     return;
   }
-  const DXResources& dxr = gDXResources;
   DXGI_SWAP_CHAIN_DESC1 swapChainDesc {
     .Width = static_cast<UINT>(mCanvasSize.width),
     .Height = static_cast<UINT>(mCanvasSize.height),
@@ -480,11 +480,11 @@ void TabPage::InitializeSwapChain() {
     .SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
     .AlphaMode = DXGI_ALPHA_MODE_IGNORE,
   };
-  winrt::check_hresult(dxr.mDXGIFactory->CreateSwapChainForComposition(
-    dxr.mDXGIDevice.get(), &swapChainDesc, nullptr, mSwapChain.put()));
+  winrt::check_hresult(mDXR->mDXGIFactory->CreateSwapChainForComposition(
+    mDXR->mDXGIDevice.get(), &swapChainDesc, nullptr, mSwapChain.put()));
 
   winrt::check_hresult(mSwapChain->GetBuffer(0, IID_PPV_ARGS(mCanvas.put())));
-  mRenderTarget = RenderTarget::Create(gDXResources, mCanvas);
+  mRenderTarget = RenderTarget::Create(mDXR, mCanvas);
   Canvas().as<ISwapChainPanelNative>()->SetSwapChain(mSwapChain.get());
 }
 
@@ -503,7 +503,7 @@ void TabPage::PaintNow() noexcept {
       TraceLoggingValue("No swapchain", "Result"));
     return;
   }
-  const std::unique_lock lock(gDXResources);
+  const std::unique_lock lock(*mDXR);
   const auto cleanup = scope_guard([this]() {
     mSwapChain->Present(0, 0);
     mNeedsFrame = false;

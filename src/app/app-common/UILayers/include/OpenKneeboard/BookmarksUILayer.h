@@ -39,7 +39,7 @@ class BookmarksUILayer final
     public std::enable_shared_from_this<BookmarksUILayer> {
  public:
   static std::shared_ptr<BookmarksUILayer>
-  Create(const DXResources& dxr, KneeboardState*, IKneeboardView*);
+  Create(const std::shared_ptr<DXResources>& dxr, KneeboardState*, IKneeboardView*);
   virtual ~BookmarksUILayer();
 
   virtual void PostCursorEvent(
@@ -57,10 +57,10 @@ class BookmarksUILayer final
   BookmarksUILayer() = delete;
 
  private:
-  BookmarksUILayer(const DXResources& dxr, KneeboardState*, IKneeboardView*);
+  BookmarksUILayer(const std::shared_ptr<DXResources>& dxr, KneeboardState*, IKneeboardView*);
   void Init();
 
-  DXResources mDXResources;
+  std::shared_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboardState {nullptr};
   IKneeboardView* mKneeboardView;
 

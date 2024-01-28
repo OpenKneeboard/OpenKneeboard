@@ -28,6 +28,7 @@
 #include <OpenKneeboard/FolderTab.h>
 #include <OpenKneeboard/SingleFileTab.h>
 #include <OpenKneeboard/WindowCaptureTab.h>
+
 #include <shims/winrt/base.h>
 
 #include <concepts>
@@ -85,31 +86,29 @@ auto make_shared(TArgs&&... args) {
 
 template <class T, class... TArgs>
   requires requires(TArgs... args) {
-             { T::Create(args...) } -> std::same_as<std::shared_ptr<T>>;
-           }
+    { T::Create(args...) } -> std::same_as<std::shared_ptr<T>>;
+  }
 auto make_shared(TArgs&&... args) {
   return T::Create(std::forward<TArgs>(args)...);
 }
 
 template <class T, class... TArgs>
 concept shared_constructible_from = requires(TArgs... args) {
-                                      {
-                                        detail::make_shared<T>(args...)
-                                        } -> std::same_as<std::shared_ptr<T>>;
-                                    };
+  { detail::make_shared<T>(args...) } -> std::same_as<std::shared_ptr<T>>;
+};
 
 }// namespace detail
 
 // Public constructor
 static_assert(detail::shared_constructible_from<
               SingleFileTab,
-              const DXResources&,
+              const std::shared_ptr<DXResources>&,
               KneeboardState*,
               const std::filesystem::path&>);
 // Static method
 static_assert(detail::shared_constructible_from<
               WindowCaptureTab,
-              const DXResources&,
+              const std::shared_ptr<DXResources>&,
               KneeboardState*,
               const winrt::guid&,
               const std::string&,
@@ -118,14 +117,14 @@ static_assert(detail::shared_constructible_from<
 /** Create a `shared_ptr<ITab>` with existing config */
 template <std::derived_from<ITab> T>
 std::shared_ptr<T> load_tab(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   const std::string& title,
   const nlohmann::json& config) {
   if constexpr (detail::shared_constructible_from<
                   T,
-                  DXResources,
+                  std::shared_ptr<DXResources>,
                   KneeboardState*,
                   winrt::guid,
                   std::string,
@@ -135,7 +134,7 @@ std::shared_ptr<T> load_tab(
 
   if constexpr (detail::shared_constructible_from<
                   T,
-                  DXResources,
+                  std::shared_ptr<DXResources>,
                   KneeboardState*,
                   winrt::guid,
                   std::string>) {
@@ -149,7 +148,7 @@ template <class T>
 concept loadable_tab = std::is_invocable_r_v<
   std::shared_ptr<T>,
   decltype(&load_tab<T>),
-  const DXResources&,
+  const std::shared_ptr<DXResources>&,
   KneeboardState*,
   const winrt::guid&,
   const std::string&,

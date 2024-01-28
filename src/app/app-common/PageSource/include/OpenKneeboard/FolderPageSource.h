@@ -35,12 +35,12 @@ class FolderPageSource final
   : public PageSourceWithDelegates,
     public std::enable_shared_from_this<FolderPageSource> {
  private:
-  FolderPageSource(const DXResources&, KneeboardState*);
+  FolderPageSource(const std::shared_ptr<DXResources>&, KneeboardState*);
 
  public:
   FolderPageSource() = delete;
   static std::shared_ptr<FolderPageSource> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& = {});
   virtual ~FolderPageSource();
@@ -57,7 +57,7 @@ class FolderPageSource final
   winrt::apartment_context mUIThread;
   std::shared_ptr<FilesystemWatcher> mWatcher;
 
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard = nullptr;
 
   std::filesystem::path mPath;

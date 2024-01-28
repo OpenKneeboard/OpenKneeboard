@@ -32,7 +32,7 @@
 namespace OpenKneeboard {
 
 PlainTextFilePageSource::PlainTextFilePageSource(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs),
     mPageSource(
@@ -45,7 +45,7 @@ PlainTextFilePageSource::~PlainTextFilePageSource() {
 }
 
 std::shared_ptr<PlainTextFilePageSource> PlainTextFilePageSource::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
   std::shared_ptr<PlainTextFilePageSource> ret {

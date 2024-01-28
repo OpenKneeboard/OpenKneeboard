@@ -43,7 +43,7 @@ class FlyoutMenuUILayer final
     TopRight,
   };
   static std::shared_ptr<FlyoutMenuUILayer> Create(
-    const DXResources& dxr,
+    const std::shared_ptr<DXResources>& dxr,
     const std::vector<std::shared_ptr<IToolbarItem>>& items,
     D2D1_POINT_2F preferredTopLeft01,
     D2D1_POINT_2F preferredTopRight01,
@@ -68,12 +68,12 @@ class FlyoutMenuUILayer final
 
  private:
   FlyoutMenuUILayer(
-    const DXResources& dxr,
+    const std::shared_ptr<DXResources>& dxr,
     const std::vector<std::shared_ptr<IToolbarItem>>& items,
     D2D1_POINT_2F preferredTopLeft01,
     D2D1_POINT_2F preferredTopRight01,
     Corner preferredCorner);
-  DXResources mDXResources;
+  std::shared_ptr<DXResources> mDXResources;
   std::vector<std::shared_ptr<IToolbarItem>> mItems;
   D2D1_POINT_2F mPreferredTopLeft01 {};
   D2D1_POINT_2F mPreferredTopRight01 {};

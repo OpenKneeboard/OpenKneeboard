@@ -29,7 +29,7 @@
 namespace OpenKneeboard {
 
 EndlessNotebookTab::EndlessNotebookTab(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)
@@ -42,7 +42,7 @@ EndlessNotebookTab::EndlessNotebookTab(
 }
 
 std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
   std::shared_ptr<EndlessNotebookTab> ret(
@@ -52,7 +52,7 @@ std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
 }
 
 std::shared_ptr<EndlessNotebookTab> EndlessNotebookTab::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,

@@ -141,6 +141,8 @@ struct MainWindow : MainWindowT<MainWindow>,
     DWORD_PTR dwRefData);
 
   winrt::com_ptr<ID2D1Effect> mHDRWhiteLevelEffect;
+
+  std::shared_ptr<DXResources> mDXR;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 

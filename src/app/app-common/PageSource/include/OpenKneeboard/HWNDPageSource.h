@@ -56,7 +56,7 @@ class HWNDPageSource final
   };
 
   static std::shared_ptr<HWNDPageSource> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     HWND window,
     const Options& options) noexcept;
@@ -86,7 +86,7 @@ class HWNDPageSource final
  private:
   HWNDPageSource() = delete;
   HWNDPageSource(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     HWND window,
     const Options&);
@@ -94,7 +94,7 @@ class HWNDPageSource final
   void OnFrame();
 
   winrt::apartment_context mUIThread;
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   HWND mWindow {};
   Options mOptions {};
   PageID mPageID {};

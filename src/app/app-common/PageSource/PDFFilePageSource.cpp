@@ -70,7 +70,7 @@ namespace OpenKneeboard {
 struct PDFFilePageSource::Impl final {
   using LinkHandler = CursorClickableRegions<PDFNavigation::Link>;
 
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   std::filesystem::path mPath;
   std::shared_ptr<Filesystem::TemporaryCopy> mCopy;
 
@@ -94,13 +94,13 @@ struct PDFFilePageSource::Impl final {
 };
 
 PDFFilePageSource::PDFFilePageSource(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs)
   : p(new Impl {.mDXR = dxr}) {
-  const std::unique_lock d2dLock(p->mDXR);
-  p->mPDFRenderer = dxr.mPDFRenderer;
-  p->mBackgroundBrush = dxr.mWhiteBrush;
-  p->mHighlightBrush = dxr.mHighlightBrush;
+  const std::unique_lock d2dlock(*(p->mDXR));
+  p->mPDFRenderer = dxr->mPDFRenderer;
+  p->mBackgroundBrush = dxr->mWhiteBrush;
+  p->mHighlightBrush = dxr->mHighlightBrush;
   p->mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);
   AddEventListener(
     p->mDoodles->evAddedPageEvent, this->evAvailableFeaturesChangedEvent);
@@ -131,7 +131,7 @@ PDFFilePageSource::~PDFFilePageSource() {
 }
 
 std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
   auto ret = shared_with_final_release(new PDFFilePageSource(dxr, kbs));
@@ -397,7 +397,7 @@ void PDFFilePageSource::RenderPageContent(
   ctx->SetTransform(D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
 
   {
-    const std::unique_lock d2dLock(p->mDXR);
+    const std::unique_lock d2dlock(*(p->mDXR));
     winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
       winrt::get_unknown(page), ctx, &params));
   }

@@ -35,9 +35,9 @@ class FilePageSource final {
   FilePageSource() = delete;
 
   static std::vector<std::string> GetSupportedExtensions(
-    const DXResources&) noexcept;
+    const std::shared_ptr<DXResources>&) noexcept;
   static std::shared_ptr<IPageSource> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path&) noexcept;
 };

@@ -39,7 +39,7 @@ class PDFFilePageSource final
     public EventReceiver,
     public std::enable_shared_from_this<PDFFilePageSource> {
  private:
-  explicit PDFFilePageSource(const DXResources&, KneeboardState*);
+  explicit PDFFilePageSource(const std::shared_ptr<DXResources>&, KneeboardState*);
 
  public:
   PDFFilePageSource() = delete;
@@ -48,7 +48,7 @@ class PDFFilePageSource final
     std::unique_ptr<PDFFilePageSource>);
 
   static std::shared_ptr<PDFFilePageSource> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path = {});
 

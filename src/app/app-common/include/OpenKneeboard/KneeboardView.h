@@ -43,7 +43,7 @@ class KneeboardView final : public IKneeboardView,
   ~KneeboardView();
 
   [[nodiscard]] static std::shared_ptr<KneeboardView> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*);
 
   virtual KneeboardViewID GetRuntimeID() const override;
@@ -96,10 +96,10 @@ class KneeboardView final : public IKneeboardView,
   std::optional<Bookmark> GetBookmark(RelativePosition) const;
   void SetBookmark(RelativePosition);
 
-  KneeboardView(const DXResources&, KneeboardState*);
+  KneeboardView(const std::shared_ptr<DXResources>&, KneeboardState*);
   winrt::apartment_context mUIThread;
   KneeboardViewID mID;
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   EventContext mEventContext;
   std::vector<std::shared_ptr<ITabView>> mTabViews;

@@ -35,7 +35,7 @@ class ConfirmationUILayer final
     public std::enable_shared_from_this<ConfirmationUILayer> {
  public:
   static std::shared_ptr<ConfirmationUILayer> Create(
-    const DXResources& dxr,
+    const std::shared_ptr<DXResources>& dxr,
     const std::shared_ptr<IToolbarItemWithConfirmation>&);
   virtual ~ConfirmationUILayer();
 
@@ -59,10 +59,10 @@ class ConfirmationUILayer final
 
  private:
   ConfirmationUILayer(
-    const DXResources& dxr,
+    const std::shared_ptr<DXResources>& dxr,
     const std::shared_ptr<IToolbarItemWithConfirmation>&);
 
-  DXResources mDXResources;
+  std::shared_ptr<DXResources> mDXResources;
   std::shared_ptr<IToolbarItemWithConfirmation> mItem;
   std::optional<D2D1_RECT_F> mCanvasRect;
 

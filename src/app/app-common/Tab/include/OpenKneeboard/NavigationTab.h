@@ -41,7 +41,7 @@ class NavigationTab final : public TabBase,
   using Entry = NavigationEntry;
 
   NavigationTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     const std::shared_ptr<ITab>& rootTab,
     const std::vector<NavigationEntry>& entries,
     const D2D1_SIZE_U& preferredSize);
@@ -64,7 +64,7 @@ class NavigationTab final : public TabBase,
   virtual void ClearUserInput() override;
 
  private:
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   std::shared_ptr<ITab> mRootTab;
   D2D1_SIZE_U mPreferredSize;
   CachedLayer mPreviewLayer;

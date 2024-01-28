@@ -77,6 +77,7 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
 
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
+  mDXR = gDXResources.lock();
 
   AddEventListener(
     gKneeboard->GetTabsList()->evTabsChangedEvent,
@@ -249,9 +250,9 @@ void TabSettingsPage::CreateTab(
   if (tabType == TabType::type) { \
     if constexpr (std::constructible_from< \
                     type##Tab, \
-                    DXResources, \
+                    std::shared_ptr<DXResources>, \
                     KneeboardState*>) { \
-      AddTabs({std::make_shared<type##Tab>(gDXResources, gKneeboard.get())}); \
+      AddTabs({std::make_shared<type##Tab>(mDXR, gKneeboard.get())}); \
       return; \
     } else { \
       throw std::logic_error( \
@@ -291,8 +292,7 @@ winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
       = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
   }
 
-  this->AddTabs(
-    {WindowCaptureTab::Create(gDXResources, gKneeboard.get(), matchSpec)});
+  this->AddTabs({WindowCaptureTab::Create(mDXR, gKneeboard.get(), matchSpec)});
 }
 
 template <class T>
@@ -307,7 +307,7 @@ void TabSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
   picker.SettingsIdentifier(thisCall);
   picker.SuggestedStartLocation(FOLDERID_Documents);
   std::vector<std::wstring> extensions;
-  for (const auto& utf8: FilePageSource::GetSupportedExtensions(gDXResources)) {
+  for (const auto& utf8: FilePageSource::GetSupportedExtensions(mDXR)) {
     extensions.push_back(std::wstring {to_hstring(utf8)});
   }
   picker.AppendFileType(L"Supported files", extensions);
@@ -330,8 +330,7 @@ void TabSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
     // TODO (after v1.4): figure out MSVC compile errors if I move
     // `detail::make_shared()` in TabTypes.h out of the `detail`
     // sub-namespace
-    newTabs.push_back(
-      detail::make_shared<T>(gDXResources, gKneeboard.get(), path));
+    newTabs.push_back(detail::make_shared<T>(mDXR, gKneeboard.get(), path));
   }
 
   this->AddTabs(newTabs);
@@ -352,8 +351,7 @@ void TabSettingsPage::CreateFolderTab() {
     return;
   }
 
-  this->AddTabs(
-    {std::make_shared<FolderTab>(gDXResources, gKneeboard.get(), *folder)});
+  this->AddTabs({std::make_shared<FolderTab>(mDXR, gKneeboard.get(), *folder)});
 }
 
 void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {

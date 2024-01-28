@@ -100,7 +100,7 @@ void InterprocessRenderer::SubmitFrame(
     };
   }
 
-  auto ctx = mDXR.mD3DImmediateContext.get();
+  auto ctx = mDXR->mD3DImmediateContext.get();
   const D3D11_BOX srcBox {
     0,
     0,
@@ -174,7 +174,7 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
   };
 
-  auto device = mDXR.mD3DDevice.get();
+  auto device = mDXR->mD3DDevice.get();
 
   winrt::com_ptr<ID3D11Texture2D> texture;
   winrt::check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
@@ -202,7 +202,7 @@ InterprocessRenderer::GetIPCTextureResources(
 
   ret = {};
 
-  auto device = mDXR.mD3DDevice.get();
+  auto device = mDXR->mD3DDevice.get();
 
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = static_cast<UINT>(size.mWidth),
@@ -250,7 +250,7 @@ InterprocessRenderer::GetIPCTextureResources(
 }
 
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboard) {
   auto ret = shared_with_final_release(new InterprocessRenderer());
   ret->Initialize(dxr, kneeboard);
@@ -270,7 +270,7 @@ InterprocessRenderer::InterprocessRenderer() : mInstanceLock(sSingleInstance) {
 }
 
 void InterprocessRenderer::Initialize(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboard) {
   auto currentGame = kneeboard->GetCurrentGame();
   if (currentGame) {
@@ -321,8 +321,8 @@ InterprocessRenderer::~InterprocessRenderer() {
     mSHM.Detach();
   }
   {
-    const std::unique_lock d2dLock(mDXR);
-    auto ctx = mDXR.mD2DDeviceContext.get();
+    const std::unique_lock d2dlock(*mDXR);
+    auto ctx = mDXR->mD2DDeviceContext.get();
     ctx->Flush();
     // De-allocate D3D resources while we have the lock
     mIPCSwapchain = {};
@@ -378,10 +378,10 @@ void InterprocessRenderer::RenderNow() noexcept {
   const auto canvasSize = Spriting::GetBufferSize(layerCount);
 
   TraceLoggingWriteTagged(activity, "AcquireDXLock/start");
-  const std::unique_lock dxLock(mDXR);
+  const std::unique_lock dxlock(*mDXR);
   TraceLoggingWriteTagged(activity, "AcquireDXLock/stop");
   this->InitializeCanvas(canvasSize);
-  mDXR.mD3DImmediateContext->ClearRenderTargetView(
+  mDXR->mD3DImmediateContext->ClearRenderTargetView(
     mCanvas->d3d().rtv(), DirectX::Colors::Transparent);
 
   std::vector<SHM::LayerConfig> shmLayers;

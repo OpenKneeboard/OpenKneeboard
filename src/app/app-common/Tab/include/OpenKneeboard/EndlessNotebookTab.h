@@ -43,11 +43,11 @@ class EndlessNotebookTab final
     public std::enable_shared_from_this<EndlessNotebookTab> {
  public:
   static std::shared_ptr<EndlessNotebookTab> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
   static std::shared_ptr<EndlessNotebookTab> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -81,11 +81,11 @@ class EndlessNotebookTab final
 
  private:
   EndlessNotebookTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   std::filesystem::path mPath;

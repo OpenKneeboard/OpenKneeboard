@@ -31,7 +31,7 @@
 
 namespace OpenKneeboard {
 
-FooterUILayer::FooterUILayer(const DXResources& dxr, KneeboardState* kneeboard)
+FooterUILayer::FooterUILayer(const std::shared_ptr<DXResources>& dxr, KneeboardState* kneeboard)
   : mDXResources(dxr), mKneeboard(kneeboard) {
   AddEventListener(
     kneeboard->evFrameTimerPrepareEvent,
@@ -42,7 +42,7 @@ FooterUILayer::FooterUILayer(const DXResources& dxr, KneeboardState* kneeboard)
     kneeboard->evGameChangedEvent,
     std::bind_front(&FooterUILayer::OnGameChanged, this));
 
-  auto ctx = dxr.mD2DDeviceContext;
+  auto ctx = dxr->mD2DDeviceContext;
 
   ctx->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.8f},
@@ -154,7 +154,7 @@ void FooterUILayer::Render(
 
   FLOAT dpix, dpiy;
   d2d->GetDpi(&dpix, &dpiy);
-  const auto& dwf = mDXResources.mDWriteFactory;
+  const auto& dwf = mDXResources->mDWriteFactory;
   winrt::com_ptr<IDWriteTextFormat> clockFormat;
   winrt::check_hresult(dwf->CreateTextFormat(
     FixedWidthUIFont,

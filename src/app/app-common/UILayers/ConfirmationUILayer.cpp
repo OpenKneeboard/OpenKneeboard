@@ -30,17 +30,17 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
 namespace OpenKneeboard {
 
 std::shared_ptr<ConfirmationUILayer> ConfirmationUILayer::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const std::shared_ptr<IToolbarItemWithConfirmation>& item) {
   return std::shared_ptr<ConfirmationUILayer>(
     new ConfirmationUILayer(dxr, item));
 }
 
 ConfirmationUILayer::ConfirmationUILayer(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const std::shared_ptr<IToolbarItemWithConfirmation>& item)
   : mDXResources(dxr), mItem(item) {
-  auto d2d = dxr.mD2DDeviceContext.get();
+  auto d2d = dxr->mD2DDeviceContext.get();
 
   d2d->CreateSolidColorBrush(
     {0.0f, 0.0f, 0.0f, 0.6f}, D2D1::BrushProperties(), mOverpaintBrush.put());
@@ -156,7 +156,7 @@ void ConfirmationUILayer::UpdateLayout(const D2D1_RECT_F& canvasRect) {
   const auto maxTextWidth
     = std::min(titleFontSize * 40, canvasSize.width * 0.8f);
 
-  auto dwf = mDXResources.mDWriteFactory;
+  auto dwf = mDXResources->mDWriteFactory;
 
   const auto textFontSize = titleFontSize * 0.6f;
   winrt::com_ptr<IDWriteTextFormat> titleFormat;
@@ -361,7 +361,7 @@ ConfirmationUILayer::TextRenderInfo ConfirmationUILayer::GetTextRenderInfo(
     .mWinString = winrt::to_hstring(utf8),
   };
 
-  auto dwf = mDXResources.mDWriteFactory;
+  auto dwf = mDXResources->mDWriteFactory;
   winrt::com_ptr<IDWriteTextLayout> layout;
   winrt::check_hresult(dwf->CreateTextLayout(
     ret.mWinString.data(),

@@ -41,7 +41,7 @@ class PlainTextPageSource final : public IPageSource,
  public:
   PlainTextPageSource() = delete;
   PlainTextPageSource(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState* kbs,
     std::string_view placeholderText);
   virtual ~PlainTextPageSource();
@@ -78,7 +78,7 @@ class PlainTextPageSource final : public IPageSource,
   int mRows = -1;
   float mFontSize;
 
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   std::string mPlaceholderText;

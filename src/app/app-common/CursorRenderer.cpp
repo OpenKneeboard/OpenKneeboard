@@ -24,9 +24,9 @@
 
 namespace OpenKneeboard {
 
-CursorRenderer::CursorRenderer(const DXResources& dxr) {
-  mInnerBrush = dxr.mCursorInnerBrush;
-  mOuterBrush = dxr.mCursorOuterBrush;
+CursorRenderer::CursorRenderer(const std::shared_ptr<DXResources>& dxr) {
+  mInnerBrush = dxr->mCursorInnerBrush;
+  mOuterBrush = dxr->mCursorOuterBrush;
 }
 
 CursorRenderer::~CursorRenderer() = default;

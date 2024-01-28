@@ -49,7 +49,7 @@ OPENKNEEBOARD_DECLARE_JSON(HWNDPageSource::Options);
 OPENKNEEBOARD_DECLARE_JSON(WindowCaptureTab::Settings);
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const MatchSpecification& spec) {
   return std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
@@ -57,7 +57,7 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
@@ -80,7 +80,7 @@ void WindowCaptureTab::PostCursorEvent(
 }
 
 WindowCaptureTab::WindowCaptureTab(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,

@@ -36,13 +36,13 @@
 namespace OpenKneeboard {
 
 PlainTextPageSource::PlainTextPageSource(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   std::string_view placeholderText)
   : mDXR(dxr), mPlaceholderText(placeholderText), mKneeboard(kbs) {
   mFontSize = kbs->GetTextSettings().mFontSize;
 
-  auto dwf = mDXR.mDWriteFactory;
+  auto dwf = mDXR->mDWriteFactory;
   dwf->CreateTextFormat(
     FixedWidthContentFont,
     nullptr,
@@ -62,7 +62,7 @@ PlainTextPageSource::PlainTextPageSource(
 }
 
 void PlainTextPageSource::UpdateLayoutLimits() {
-  auto dwf = mDXR.mDWriteFactory;
+  auto dwf = mDXR->mDWriteFactory;
 
   const auto size = this->GetPreferredSize({}).mPixelSize;
   winrt::com_ptr<IDWriteTextLayout> textLayout;
@@ -90,7 +90,7 @@ void PlainTextPageSource::OnSettingsChanged() {
 
   mFontSize = newFontSize;
 
-  auto dwf = mDXR.mDWriteFactory;
+  auto dwf = mDXR->mDWriteFactory;
 
   mTextFormat = nullptr;
 

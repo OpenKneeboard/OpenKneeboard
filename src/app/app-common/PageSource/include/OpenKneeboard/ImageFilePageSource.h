@@ -37,7 +37,7 @@ class ImageFilePageSource final
     public std::enable_shared_from_this<ImageFilePageSource> {
  public:
   static std::shared_ptr<ImageFilePageSource> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     const std::vector<std::filesystem::path>& paths = {});
   virtual ~ImageFilePageSource();
 
@@ -49,7 +49,7 @@ class ImageFilePageSource final
   virtual PreferredSize GetPreferredSize(PageID) final override;
 
   bool CanOpenFile(const std::filesystem::path&) const;
-  static bool CanOpenFile(const DXResources& dxr, const std::filesystem::path&);
+  static bool CanOpenFile(const std::shared_ptr<DXResources>& dxr, const std::filesystem::path&);
 
   virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
     final override;
@@ -60,7 +60,7 @@ class ImageFilePageSource final
   ImageFilePageSource() = delete;
 
  private:
-  ImageFilePageSource(const DXResources&);
+  ImageFilePageSource(const std::shared_ptr<DXResources>&);
 
   struct Page {
     PageID mID;
@@ -71,7 +71,7 @@ class ImageFilePageSource final
 
   void OnFileModified(const std::filesystem::path&);
 
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
 
   std::mutex mMutex;
   std::vector<Page> mPages = {};

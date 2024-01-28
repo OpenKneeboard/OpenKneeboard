@@ -33,8 +33,8 @@ struct D2DErrorRenderer::Impl final {
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 };
 
-D2DErrorRenderer::D2DErrorRenderer(const DXResources& dxr)
-  : D2DErrorRenderer(dxr.mDWriteFactory.get(), dxr.mBlackBrush.get()) {
+D2DErrorRenderer::D2DErrorRenderer(const std::shared_ptr<DXResources>& dxr)
+  : D2DErrorRenderer(dxr->mDWriteFactory.get(), dxr->mBlackBrush.get()) {
 }
 
 D2DErrorRenderer::D2DErrorRenderer(

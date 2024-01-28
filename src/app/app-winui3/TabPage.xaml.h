@@ -20,7 +20,7 @@
 #pragma once
 #include "TabPage.g.h"
 
-#include <OpenKneeboard/CursorEvent.h>
+#include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
 
 #include <memory>
@@ -33,6 +33,7 @@
 namespace OpenKneeboard {
 class CursorRenderer;
 class D2DErrorRenderer;
+struct DXResources;
 class IKneeboardView;
 class ITabView;
 class ISelectableToolbarItem;
@@ -126,6 +127,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
 
   winrt::com_ptr<ID3D11Texture2D> mCanvas;
   std::shared_ptr<RenderTarget> mRenderTarget;
+  std::shared_ptr<OpenKneeboard::DXResources> mDXR;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

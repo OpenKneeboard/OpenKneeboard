@@ -34,7 +34,7 @@ class KneeboardState;
 
 class DoodleRenderer final {
  public:
-  DoodleRenderer(const DXResources&, KneeboardState*);
+  DoodleRenderer(const std::shared_ptr<DXResources>&, KneeboardState*);
   ~DoodleRenderer();
 
   void Render(ID2D1DeviceContext*, PageID, const D2D1_RECT_F& targetRect);
@@ -54,7 +54,7 @@ class DoodleRenderer final {
   Event<> evAddedPageEvent;
 
  private:
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   winrt::com_ptr<ID2D1SolidColorBrush> mBrush;

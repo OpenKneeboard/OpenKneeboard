@@ -38,7 +38,7 @@ class CachedLayer final {
  public:
   using Key = size_t;
   CachedLayer() = delete;
-  CachedLayer(const DXResources&);
+  CachedLayer(const std::shared_ptr<DXResources>&);
   ~CachedLayer();
 
   void Render(
@@ -50,7 +50,7 @@ class CachedLayer final {
 
  private:
   Key mKey = ~Key {0};
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
 
   PixelSize mCacheDimensions;
   std::mutex mCacheMutex;

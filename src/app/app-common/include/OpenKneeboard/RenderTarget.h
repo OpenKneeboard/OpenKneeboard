@@ -46,7 +46,7 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
   ~RenderTarget();
 
   static std::shared_ptr<RenderTarget> Create(
-    const DXResources& dxr,
+    const std::shared_ptr<DXResources>& dxr,
     const winrt::com_ptr<ID3D11Texture2D>& texture);
 
   PixelSize GetDimensions() const;
@@ -62,14 +62,14 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
 
  private:
   RenderTarget(
-    const DXResources& dxr,
+    const std::shared_ptr<DXResources>& dxr,
     const winrt::com_ptr<ID3D11Texture2D>& texture);
   enum class Mode { Unattached, D2D, D3D };
   Mode mMode {Mode::Unattached};
 
   PixelSize mDimensions;
 
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
 
   RenderTargetID mID;
 

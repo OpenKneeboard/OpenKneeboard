@@ -29,7 +29,7 @@ struct DXResources;
 class CursorRenderer final {
  public:
   CursorRenderer() = delete;
-  CursorRenderer(const DXResources&);
+  CursorRenderer(const std::shared_ptr<DXResources>&);
   ~CursorRenderer();
 
   void Render(

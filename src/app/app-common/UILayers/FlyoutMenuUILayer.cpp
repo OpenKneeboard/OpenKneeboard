@@ -39,7 +39,7 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) {
 namespace OpenKneeboard {
 
 std::shared_ptr<FlyoutMenuUILayer> FlyoutMenuUILayer::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const std::vector<std::shared_ptr<IToolbarItem>>& items,
   D2D1_POINT_2F preferredTopLeft01,
   D2D1_POINT_2F preferredTopRight01,
@@ -49,7 +49,7 @@ std::shared_ptr<FlyoutMenuUILayer> FlyoutMenuUILayer::Create(
 }
 
 FlyoutMenuUILayer::FlyoutMenuUILayer(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const std::vector<std::shared_ptr<IToolbarItem>>& items,
   D2D1_POINT_2F preferredTopLeft01,
   D2D1_POINT_2F preferredTopRight01,
@@ -59,7 +59,7 @@ FlyoutMenuUILayer::FlyoutMenuUILayer(
     mPreferredTopLeft01(preferredTopLeft01),
     mPreferredTopRight01(preferredTopRight01),
     mPreferredAnchor(preferredAnchor) {
-  auto ctx = dxr.mD2DDeviceContext;
+  auto ctx = dxr->mD2DDeviceContext;
   ctx->CreateSolidColorBrush(
     {1.0f, 1.0f, 1.0f, 0.6f}, D2D1::BrushProperties(), mBGOverpaintBrush.put());
   ctx->CreateSolidColorBrush(
@@ -168,7 +168,7 @@ void FlyoutMenuUILayer::Render(
     D2D1::RoundedRect(menu.mRect, menu.mMargin, menu.mMargin),
     mMenuBGBrush.get());
 
-  auto dwf = mDXResources.mDWriteFactory;
+  auto dwf = mDXResources->mDWriteFactory;
 
   std::wstring chevron {L"\ue76c"};// ChevronRight
   std::wstring checkmark {L"\ue73e"};// CheckMark
@@ -258,7 +258,7 @@ void FlyoutMenuUILayer::UpdateLayout(
 
   FLOAT dpix, dpiy;
   d2d->GetDpi(&dpix, &dpiy);
-  auto dwf = mDXResources.mDWriteFactory;
+  auto dwf = mDXResources->mDWriteFactory;
 
   const auto fontSize = textHeight * 96 / dpiy;
 

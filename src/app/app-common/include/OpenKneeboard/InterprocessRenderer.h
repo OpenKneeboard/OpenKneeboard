@@ -56,14 +56,14 @@ class InterprocessRenderer final
     std::unique_ptr<InterprocessRenderer>);
 
   static std::shared_ptr<InterprocessRenderer> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*);
 
  private:
   InterprocessRenderer();
   // Split out from the constructor so that `shared_from_this()` is valid
   // when invoked
-  void Initialize(const DXResources&, KneeboardState*);
+  void Initialize(const std::shared_ptr<DXResources>&, KneeboardState*);
 
   // If we replace the shared_ptr while a draw is in progress,
   // we need to delay things a little
@@ -73,7 +73,7 @@ class InterprocessRenderer final
 
   EventContext mEventContext;
   OpenKneeboard::SHM::Writer mSHM;
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
 
   KneeboardState* mKneeboard = nullptr;
 

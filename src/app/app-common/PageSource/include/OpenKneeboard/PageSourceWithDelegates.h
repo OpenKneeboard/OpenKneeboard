@@ -43,7 +43,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
                                 public virtual EventReceiver {
  public:
   PageSourceWithDelegates() = delete;
-  PageSourceWithDelegates(const DXResources&, KneeboardState*);
+  PageSourceWithDelegates(const std::shared_ptr<DXResources>&, KneeboardState*);
   virtual ~PageSourceWithDelegates();
 
   virtual PageIndex GetPageCount() const override;
@@ -66,7 +66,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
   void SetDelegates(const std::vector<std::shared_ptr<IPageSource>>&);
 
  private:
-  DXResources mDXResources;
+  std::shared_ptr<DXResources> mDXResources;
   std::vector<std::shared_ptr<IPageSource>> mDelegates;
   std::vector<EventHandlerToken> mDelegateEvents;
   std::vector<EventHandlerToken> mFixedEvents;

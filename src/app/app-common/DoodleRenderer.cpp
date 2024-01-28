@@ -29,11 +29,11 @@
 
 namespace OpenKneeboard {
 
-DoodleRenderer::DoodleRenderer(const DXResources& dxr, KneeboardState* kbs)
+DoodleRenderer::DoodleRenderer(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
   : mDXR(dxr), mKneeboard(kbs) {
-  mBrush = dxr.mBlackBrush;
-  mEraser = dxr.mEraserBrush;
-  mDrawingContext = mDXR.mD2DBackBufferDeviceContext;
+  mBrush = dxr->mBlackBrush;
+  mEraser = dxr->mEraserBrush;
+  mDrawingContext = mDXR->mD2DBackBufferDeviceContext;
 }
 
 DoodleRenderer::~DoodleRenderer() = default;
@@ -186,13 +186,13 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
     .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
   };
 
-  const std::unique_lock lock(mDXR);
+  const std::unique_lock lock(*mDXR);
   winrt::com_ptr<ID3D11Texture2D> texture;
   winrt::check_hresult(
-    mDXR.mD3DDevice->CreateTexture2D(&textureDesc, nullptr, texture.put()));
+    mDXR->mD3DDevice->CreateTexture2D(&textureDesc, nullptr, texture.put()));
   page.mSurface = texture.as<IDXGISurface>();
 
-  mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+  mDXR->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
     page.mSurface.get(), nullptr, page.mBitmap.put());
 
   evAddedPageEvent.Emit();

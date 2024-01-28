@@ -29,7 +29,7 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<RenderTarget> RenderTarget::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture) {
   return std::shared_ptr<RenderTarget>(new RenderTarget(dxr, texture));
 }
@@ -37,13 +37,13 @@ std::shared_ptr<RenderTarget> RenderTarget::Create(
 RenderTarget::~RenderTarget() = default;
 
 RenderTarget::RenderTarget(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture)
   : mDXR(dxr), mD3DTexture(texture) {
-  winrt::check_hresult(dxr.mD3DDevice->CreateRenderTargetView(
+  winrt::check_hresult(dxr->mD3DDevice->CreateRenderTargetView(
     texture.get(), nullptr, mD3DRenderTargetView.put()));
 
-  winrt::check_hresult(dxr.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+  winrt::check_hresult(dxr->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
     texture.as<IDXGISurface>().get(), nullptr, mD2DBitmap.put()));
 
   D3D11_TEXTURE2D_DESC desc;
@@ -91,7 +91,7 @@ void RenderTarget::D2D::Acquire() {
   mode = Mode::D2D;
 
   (*this)->SetTarget(mUnsafeParent->mD2DBitmap.get());
-  mUnsafeParent->mDXR.PushD2DDraw();
+  mUnsafeParent->mDXR->PushD2DDraw();
   (*this)->SetTransform(D2D1::Matrix3x2F::Identity());
 }
 
@@ -105,8 +105,8 @@ void RenderTarget::D2D::Release() {
     return;
   }
   mReleased = true;
-  mUnsafeParent->mDXR.PopD2DDraw();
-  mUnsafeParent->mDXR.mD2DDeviceContext->SetTarget(nullptr);
+  mUnsafeParent->mDXR->PopD2DDraw();
+  mUnsafeParent->mDXR->mD2DDeviceContext->SetTarget(nullptr);
 
   auto& mode = mParent->mMode;
   if (mode != Mode::D2D) {
@@ -139,11 +139,11 @@ RenderTarget::D2D::~D2D() {
 }
 
 ID2D1DeviceContext* RenderTarget::D2D::operator->() const {
-  return mUnsafeParent->mDXR.mD2DDeviceContext.get();
+  return mUnsafeParent->mDXR->mD2DDeviceContext.get();
 }
 
 RenderTarget::D2D::operator ID2D1DeviceContext*() const {
-  return mUnsafeParent->mDXR.mD2DDeviceContext.get();
+  return mUnsafeParent->mDXR->mD2DDeviceContext.get();
 }
 
 RenderTarget::D3D::D3D(const std::shared_ptr<RenderTarget>& parent)

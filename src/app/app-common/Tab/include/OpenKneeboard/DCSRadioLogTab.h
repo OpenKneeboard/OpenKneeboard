@@ -43,9 +43,9 @@ class DCSRadioLogTab final : public TabBase,
     ClearHistory = 1,
   };
 
-  explicit DCSRadioLogTab(const DXResources&, KneeboardState*);
+  explicit DCSRadioLogTab(const std::shared_ptr<DXResources>&, KneeboardState*);
   explicit DCSRadioLogTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,

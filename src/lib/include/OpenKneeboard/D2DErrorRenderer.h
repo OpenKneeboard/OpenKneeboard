@@ -37,7 +37,7 @@ class D2DErrorRenderer final {
   std::unique_ptr<Impl> p;
 
  public:
-  D2DErrorRenderer(const DXResources&);
+  D2DErrorRenderer(const std::shared_ptr<DXResources>&);
   D2DErrorRenderer(IDWriteFactory*, ID2D1SolidColorBrush*);
   D2DErrorRenderer() = delete;
   ~D2DErrorRenderer();

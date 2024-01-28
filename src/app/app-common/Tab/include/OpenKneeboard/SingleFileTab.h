@@ -43,11 +43,11 @@ class SingleFileTab final : public TabBase,
     ImageFile,
   };
   SingleFileTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
   SingleFileTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -65,12 +65,12 @@ class SingleFileTab final : public TabBase,
 
  private:
   SingleFileTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
     const std::filesystem::path& path);
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   Kind mKind = Kind::Unknown;

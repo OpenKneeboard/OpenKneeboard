@@ -75,7 +75,10 @@ namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 namespace winrt::OpenKneeboardApp::implementation {
 MainWindow::MainWindow() {
   InitializeComponent();
-  gDXResources = DXResources::Create();
+  // shared_ptr
+  mDXR = DXResources::Create();
+  // weak_ptr
+  gDXResources = mDXR;
 
   {
     auto ref = get_strong();
@@ -108,7 +111,7 @@ MainWindow::MainWindow() {
   SendMessage(
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
 
-  gKneeboard = KneeboardState::Create(mHwnd, gDXResources);
+  gKneeboard = KneeboardState::Create(mHwnd, mDXR);
 
   OnTabsChanged();
   OnViewOrderChanged();
@@ -287,7 +290,7 @@ void MainWindow::FrameTick() {
 
   std::shared_lock kbLock(*gKneeboard);
   TraceLoggingWriteTagged(activity, "Kneeboard relocked");
-  const std::unique_lock dxLock(gDXResources);
+  const std::unique_lock dxLock(*mDXR);
   TraceLoggingWriteTagged(activity, "DX locked");
   gKneeboard->evFrameTimerEvent.Emit();
   gKneeboard->Repainted();
@@ -600,7 +603,6 @@ winrt::fire_and_forget MainWindow::CleanupAndClose() {
   mKneeboardView = {};
   co_await gKneeboard->ReleaseExclusiveResources();
   gKneeboard = {};
-  gDXResources = {};
 
   co_await mUIThread;
 

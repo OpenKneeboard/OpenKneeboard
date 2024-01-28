@@ -37,13 +37,13 @@ class PlainTextFilePageSource final
   : public PageSourceWithDelegates,
     public std::enable_shared_from_this<PlainTextFilePageSource> {
  private:
-  PlainTextFilePageSource(const DXResources&, KneeboardState*);
+  PlainTextFilePageSource(const std::shared_ptr<DXResources>&, KneeboardState*);
 
  public:
   PlainTextFilePageSource() = delete;
   virtual ~PlainTextFilePageSource();
   static std::shared_ptr<PlainTextFilePageSource> Create(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path = {});
 

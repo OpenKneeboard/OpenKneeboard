@@ -31,14 +31,14 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<ImageFilePageSource> ImageFilePageSource::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const std::vector<std::filesystem::path>& paths) {
   auto ret = std::shared_ptr<ImageFilePageSource>(new ImageFilePageSource(dxr));
   ret->SetPaths(paths);
   return ret;
 }
 
-ImageFilePageSource::ImageFilePageSource(const DXResources& dxr) : mDXR(dxr) {
+ImageFilePageSource::ImageFilePageSource(const std::shared_ptr<DXResources>& dxr) : mDXR(dxr) {
 }
 
 void ImageFilePageSource::SetPaths(
@@ -93,7 +93,7 @@ bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
 }
 
 bool ImageFilePageSource::CanOpenFile(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const std::filesystem::path& path) {
   try {
     if (!std::filesystem::is_regular_file(path)) {
@@ -109,7 +109,7 @@ bool ImageFilePageSource::CanOpenFile(
   }
   auto wsPath = path.wstring();
   winrt::com_ptr<IWICBitmapDecoder> decoder;
-  dxr.mWIC->CreateDecoderFromFilename(
+  dxr->mWIC->CreateDecoderFromFilename(
     wsPath.c_str(),
     nullptr,
     GENERIC_READ,
@@ -184,7 +184,7 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
 
   winrt::com_ptr<IWICBitmapDecoder> decoder;
 
-  const auto wic = mDXR.mWIC.get();
+  const auto wic = mDXR->mWIC.get();
 
   auto path = page.mPath.wstring();
   wic->CreateDecoderFromFilename(
@@ -236,7 +236,7 @@ winrt::com_ptr<ID2D1Bitmap> ImageFilePageSource::GetPageBitmap(PageID pageID) {
    */
   winrt::com_ptr<ID2D1Bitmap> sharedBitmap;
   winrt::com_ptr<ID2D1DeviceContext> ctx;
-  winrt::check_hresult(mDXR.mD2DDevice->CreateDeviceContext(
+  winrt::check_hresult(mDXR->mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ctx.put()));
 
   ctx->CreateBitmapFromWicBitmap(converter.get(), sharedBitmap.put());

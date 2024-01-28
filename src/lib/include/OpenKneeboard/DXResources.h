@@ -56,7 +56,7 @@ struct DXResources {
   void PushD2DDraw(std::source_location = std::source_location::current());
   HRESULT PopD2DDraw();
 
-  static DXResources Create();
+  static std::shared_ptr<DXResources> Create();
 
   // Use `std::unique_lock`
   void lock();
@@ -79,7 +79,13 @@ struct DXResources {
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorInnerBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mCursorOuterBrush;
 
+  DXResources(const std::shared_ptr<DXResources>&) = delete;
+  DXResources(DXResources&&) = delete;
+  DXResources& operator=(const std::shared_ptr<DXResources>&) = delete;
+  DXResources& operator==(DXResources&&) = delete;
+
  private:
+  DXResources() = default;
   struct Locks;
   std::shared_ptr<Locks> mLocks;
 };

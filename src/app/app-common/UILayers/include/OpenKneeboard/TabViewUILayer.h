@@ -29,7 +29,7 @@ struct DXResources;
 
 class TabViewUILayer final : public IUILayer {
  public:
-  TabViewUILayer(const DXResources& dxr);
+  TabViewUILayer(const std::shared_ptr<DXResources>& dxr);
   virtual ~TabViewUILayer();
 
   std::optional<D2D1_POINT_2F> GetCursorPoint() const;

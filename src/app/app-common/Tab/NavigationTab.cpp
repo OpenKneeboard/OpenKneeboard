@@ -34,7 +34,7 @@ bool NavigationTab::Button::operator==(
 }
 
 NavigationTab::NavigationTab(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   const std::shared_ptr<ITab>& rootTab,
   const std::vector<NavigationEntry>& entries,
   const D2D1_SIZE_U& _ignoredPreferredSize)
@@ -54,7 +54,7 @@ NavigationTab::NavigationTab(
   const auto entriesPerColumn = entriesPerPage / columns;
   mRenderColumns = columns;
 
-  auto dwf = mDXR.mDWriteFactory;
+  auto dwf = mDXR->mDWriteFactory;
   winrt::check_hresult(dwf->CreateTextFormat(
     VariableWidthUIFont,
     nullptr,
@@ -87,13 +87,13 @@ NavigationTab::NavigationTab(
   mPageNumberTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
   mPageNumberTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
 
-  mDXR.mD2DDeviceContext->CreateSolidColorBrush(
+  mDXR->mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), mBackgroundBrush.put());
-  mDXR.mD2DDeviceContext->CreateSolidColorBrush(
+  mDXR->mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), mHighlightBrush.put());
-  mDXR.mD2DDeviceContext->CreateSolidColorBrush(
+  mDXR->mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.95f, 0.95f, 0.95f, 1.0f), mInactiveBrush.put());
-  mDXR.mD2DDeviceContext->CreateSolidColorBrush(
+  mDXR->mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mTextBrush.put());
   mPreviewOutlineBrush = mTextBrush;
 

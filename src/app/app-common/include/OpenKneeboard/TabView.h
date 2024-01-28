@@ -32,7 +32,7 @@ class KneeboardState;
 
 class TabView final : public ITabView, private EventReceiver {
  public:
-  TabView(const DXResources&, KneeboardState*, const std::shared_ptr<ITab>&);
+  TabView(const std::shared_ptr<DXResources>&, KneeboardState*, const std::shared_ptr<ITab>&);
   ~TabView();
 
   virtual void SetPageID(PageID) override;
@@ -54,7 +54,7 @@ class TabView final : public ITabView, private EventReceiver {
  private:
   const EventContext mEventContext;
 
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   std::shared_ptr<ITab> mRootTab;

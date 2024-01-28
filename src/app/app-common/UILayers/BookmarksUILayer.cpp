@@ -27,7 +27,7 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<BookmarksUILayer> BookmarksUILayer::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* state,
   IKneeboardView* view) {
   auto ret
@@ -37,13 +37,13 @@ std::shared_ptr<BookmarksUILayer> BookmarksUILayer::Create(
 }
 
 BookmarksUILayer::BookmarksUILayer(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
   IKneeboardView* kneeboardView)
   : mDXResources(dxr),
     mKneeboardState(kneeboardState),
     mKneeboardView(kneeboardView) {
-  auto d2d = dxr.mD2DDeviceContext;
+  auto d2d = dxr->mD2DDeviceContext;
   d2d->CreateSolidColorBrush(
     {0.7f, 0.7f, 0.7f, 0.8f}, D2D1::BrushProperties(), mBackgroundBrush.put());
   d2d->CreateSolidColorBrush(
@@ -166,7 +166,7 @@ void BookmarksUILayer::Render(
   d2d->GetDpi(&dpix, &dpiy);
   const auto textHeight = width * scale * 0.75;
   winrt::com_ptr<IDWriteTextFormat> textFormat;
-  winrt::check_hresult(mDXResources.mDWriteFactory->CreateTextFormat(
+  winrt::check_hresult(mDXResources->mDWriteFactory->CreateTextFormat(
     FixedWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_REGULAR,

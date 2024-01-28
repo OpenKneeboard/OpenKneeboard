@@ -65,7 +65,7 @@ static unique_hhook gHook;
 static UINT gControlMessage;
 
 std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   HWND window,
   const Options& options) noexcept {
@@ -107,7 +107,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
   {
-    const std::unique_lock d2dLock(mDXR);
+    const std::unique_lock d2dlock(*mDXR);
 
     auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
     auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
@@ -160,7 +160,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
     winrt::com_ptr<IInspectable> inspectable {nullptr};
     winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
-      mDXR.mDXGIDevice.get(),
+      mDXR->mDXGIDevice.get(),
 
       reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
     {
@@ -181,7 +181,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
       if (mIsHDR) {
         mPixelFormat = WGDX::DirectXPixelFormat::R16G16B16A16Float;
-        winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
+        winrt::check_hresult(mDXR->mD2DDeviceContext->CreateEffect(
           CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
         mD2DWhiteLevel->SetValue(
           D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
@@ -202,12 +202,12 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
     if (mIsHDR) {
       winrt::com_ptr<ID2D1ColorContext1> srgb, scrgb;
-      auto d2d = mDXR.mD2DDeviceContext.get();
+      auto d2d = mDXR->mD2DDeviceContext.get();
       d2d->CreateColorContextFromDxgiColorSpace(
         DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709, srgb.put());
       d2d->CreateColorContextFromDxgiColorSpace(
         DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, scrgb.put());
-      winrt::check_hresult(mDXR.mD2DDeviceContext->CreateEffect(
+      winrt::check_hresult(mDXR->mD2DDeviceContext->CreateEffect(
         CLSID_D2D1ColorManagement, mD2DColorManagement.put()));
       mD2DColorManagement->SetValue(
         D2D1_COLORMANAGEMENT_PROP_SOURCE_COLOR_CONTEXT, scrgb.get());
@@ -243,7 +243,7 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 }
 
 HWNDPageSource::HWNDPageSource(
-  const DXResources& dxr,
+  const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   HWND window,
   const Options& options)
@@ -295,7 +295,7 @@ winrt::fire_and_forget HWNDPageSource::final_release(
   co_await p->mUIThread;
   co_await p->mDQC.ShutdownQueueAsync();
   p->mDQC = {nullptr};
-  const std::unique_lock d2dLock(p->mDXR);
+  const std::unique_lock d2dlock(*(p->mDXR));
   p->mTexture = nullptr;
 }
 
@@ -417,10 +417,10 @@ void HWNDPageSource::OnFrame() {
   const auto contentSize = frame.ContentSize();
 
   TraceLoggingWriteTagged(activity, "WaitingForLock");
-  const std::unique_lock d2dLock(mDXR);
+  const std::unique_lock d2dlock(*mDXR);
   TraceLoggingWriteTagged(activity, "Locked");
   winrt::com_ptr<ID3D11DeviceContext> ctx;
-  mDXR.mD3DDevice->GetImmediateContext(ctx.put());
+  mDXR->mD3DDevice->GetImmediateContext(ctx.put());
 
   if (
     contentSize.Width > surfaceDesc.Width
@@ -471,9 +471,9 @@ void HWNDPageSource::OnFrame() {
 
   if (!mTexture) {
     winrt::check_hresult(
-      mDXR.mD3DDevice->CreateTexture2D(&surfaceDesc, nullptr, mTexture.put()));
+      mDXR->mD3DDevice->CreateTexture2D(&surfaceDesc, nullptr, mTexture.put()));
     mBitmap = nullptr;
-    winrt::check_hresult(mDXR.mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+    winrt::check_hresult(mDXR->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
       mTexture.as<IDXGISurface>().get(), nullptr, mBitmap.put()));
     TraceLoggingWriteTagged(activity, "CreatedTexture");
   }

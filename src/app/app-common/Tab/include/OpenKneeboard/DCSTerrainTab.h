@@ -35,9 +35,9 @@ class DCSTerrainTab final : public TabBase,
                             public PageSourceWithDelegates,
                             public IHasDebugInformation {
  public:
-  DCSTerrainTab(const DXResources&, KneeboardState*);
+  DCSTerrainTab(const std::shared_ptr<DXResources>&, KneeboardState*);
   DCSTerrainTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
@@ -51,7 +51,7 @@ class DCSTerrainTab final : public TabBase,
   virtual std::string GetDebugInformation() const override;
 
  protected:
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard = nullptr;
 
   std::string mDebugInformation;

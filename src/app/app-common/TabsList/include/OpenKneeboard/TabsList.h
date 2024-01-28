@@ -32,7 +32,7 @@ class TabsList final : private EventReceiver {
  public:
   TabsList() = delete;
   TabsList(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState* kneeboard,
     const nlohmann::json& config);
   ~TabsList();
@@ -49,7 +49,7 @@ class TabsList final : private EventReceiver {
   Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
 
  private:
-  DXResources mDXR;
+  std::shared_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   std::vector<std::shared_ptr<ITab>> mTabs;
   std::vector<EventHandlerToken> mTabEvents;

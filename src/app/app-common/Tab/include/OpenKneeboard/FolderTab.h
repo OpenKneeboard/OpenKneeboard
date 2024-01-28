@@ -34,11 +34,11 @@ class FolderTab final : public TabBase,
                         public ITabWithSettings {
  public:
   explicit FolderTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
   explicit FolderTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -56,7 +56,7 @@ class FolderTab final : public TabBase,
 
  private:
   FolderTab(
-    const DXResources&,
+    const std::shared_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
