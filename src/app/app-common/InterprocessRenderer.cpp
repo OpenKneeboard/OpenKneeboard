@@ -100,7 +100,7 @@ void InterprocessRenderer::SubmitFrame(
     };
   }
 
-  auto ctx = mDXR->mD3DImmediateContext.get();
+  auto ctx = mDXR->mD3D11ImmediateContext.get();
   const D3D11_BOX srcBox {
     0,
     0,
@@ -174,7 +174,7 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
     .BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
   };
 
-  auto device = mDXR->mD3DDevice.get();
+  auto device = mDXR->mD3D11Device.get();
 
   winrt::com_ptr<ID3D11Texture2D> texture;
   winrt::check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
@@ -202,7 +202,7 @@ InterprocessRenderer::GetIPCTextureResources(
 
   ret = {};
 
-  auto device = mDXR->mD3DDevice.get();
+  auto device = mDXR->mD3D11Device.get();
 
   D3D11_TEXTURE2D_DESC textureDesc {
     .Width = static_cast<UINT>(size.mWidth),
@@ -381,7 +381,7 @@ void InterprocessRenderer::RenderNow() noexcept {
   const std::unique_lock dxlock(*mDXR);
   TraceLoggingWriteTagged(activity, "AcquireDXLock/stop");
   this->InitializeCanvas(canvasSize);
-  mDXR->mD3DImmediateContext->ClearRenderTargetView(
+  mDXR->mD3D11ImmediateContext->ClearRenderTargetView(
     mCanvas->d3d().rtv(), DirectX::Colors::Transparent);
 
   std::vector<SHM::LayerConfig> shmLayers;

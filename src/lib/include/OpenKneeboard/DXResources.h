@@ -41,18 +41,18 @@ namespace OpenKneeboard {
  * - the SteamVR implementation (which uses its' own devices)
  * - the viewer
  */
-struct D3DResources {
-  D3DResources();
-  ~D3DResources();
-  D3DResources(const D3DResources&) = delete;
-  D3DResources& operator=(const D3DResources&) = delete;
+struct D3D11Resources {
+  D3D11Resources();
+  ~D3D11Resources();
+  D3D11Resources(const D3D11Resources&) = delete;
+  D3D11Resources& operator=(const D3D11Resources&) = delete;
 
   winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
   winrt::com_ptr<IDXGIAdapter4> mDXGIAdapter;
   uint64_t mAdapterLUID;
 
-  winrt::com_ptr<ID3D11Device5> mD3DDevice;
-  winrt::com_ptr<ID3D11DeviceContext4> mD3DImmediateContext;
+  winrt::com_ptr<ID3D11Device5> mD3D11Device;
+  winrt::com_ptr<ID3D11DeviceContext4> mD3D11ImmediateContext;
 
   winrt::com_ptr<IDXGIDevice2> mDXGIDevice;
 
@@ -75,7 +75,7 @@ struct D3DResources {
  */
 struct D2DResources {
   D2DResources() = delete;
-  D2DResources(D3DResources*);
+  D2DResources(D3D11Resources*);
   ~D2DResources();
   D2DResources(const D2DResources&) = delete;
   D2DResources& operator=(const D2DResources&) = delete;
@@ -98,7 +98,7 @@ struct D2DResources {
 };
 
 /// Resources for the OpenKneeboard app
-struct DXResources : public D3DResources, public D2DResources {
+struct DXResources : public D3D11Resources, public D2DResources {
   DXResources();
   DXResources(const DXResources&) = delete;
   DXResources(DXResources&&) = delete;

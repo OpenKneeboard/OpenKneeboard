@@ -40,7 +40,7 @@ RenderTarget::RenderTarget(
   const std::shared_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture)
   : mDXR(dxr), mD3DTexture(texture) {
-  winrt::check_hresult(dxr->mD3DDevice->CreateRenderTargetView(
+  winrt::check_hresult(dxr->mD3D11Device->CreateRenderTargetView(
     texture.get(), nullptr, mD3DRenderTargetView.put()));
 
   winrt::check_hresult(dxr->mD2DDeviceContext->CreateBitmapFromDxgiSurface(

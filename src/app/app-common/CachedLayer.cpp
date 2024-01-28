@@ -28,7 +28,7 @@
 namespace OpenKneeboard {
 
 CachedLayer::CachedLayer(const std::shared_ptr<DXResources>& dxr) : mDXR(dxr) {
-  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(dxr->mD3DDevice.get());
+  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(dxr->mD3D11Device.get());
 }
 
 CachedLayer::~CachedLayer() {
@@ -61,8 +61,8 @@ void CachedLayer::Render(
       .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
     };
     winrt::check_hresult(
-      mDXR->mD3DDevice->CreateTexture2D(&textureDesc, nullptr, mCache.put()));
-    winrt::check_hresult(mDXR->mD3DDevice->CreateShaderResourceView(
+      mDXR->mD3D11Device->CreateTexture2D(&textureDesc, nullptr, mCache.put()));
+    winrt::check_hresult(mDXR->mD3D11Device->CreateShaderResourceView(
       mCache.get(), nullptr, mCacheSRV.put()));
     mCacheRenderTarget = RenderTarget::Create(mDXR, mCache);
   }
@@ -70,7 +70,7 @@ void CachedLayer::Render(
   if (mKey != cacheKey) {
     {
       auto d3d = mCacheRenderTarget->d3d();
-      mDXR->mD3DImmediateContext->ClearRenderTargetView(
+      mDXR->mD3D11ImmediateContext->ClearRenderTargetView(
         d3d.rtv(), DirectX::Colors::Transparent);
     }
     impl(mCacheRenderTarget.get(), cacheDimensions);

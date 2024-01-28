@@ -189,7 +189,7 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
   const std::unique_lock lock(*mDXR);
   winrt::com_ptr<ID3D11Texture2D> texture;
   winrt::check_hresult(
-    mDXR->mD3DDevice->CreateTexture2D(&textureDesc, nullptr, texture.put()));
+    mDXR->mD3D11Device->CreateTexture2D(&textureDesc, nullptr, texture.put()));
   page.mSurface = texture.as<IDXGISurface>();
 
   mDXR->mD2DDeviceContext->CreateBitmapFromDxgiSurface(

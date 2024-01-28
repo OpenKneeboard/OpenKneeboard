@@ -47,8 +47,8 @@ namespace OpenKneeboard {
 SteamVRKneeboard::SteamVRKneeboard() {
   {
     // Use DXResources to share the GPU selection logic
-    D3DResources d3d;
-    mD3D = d3d.mD3DDevice;
+    D3D11Resources d3d;
+    mD3D = d3d.mD3D11Device;
     mSHM.InitializeCache(mD3D.get(), /* swapchainLength = */ 2);
     DXGI_ADAPTER_DESC desc;
     d3d.mDXGIAdapter->GetDesc(&desc);

@@ -77,7 +77,7 @@ struct Pixel {
 };
 #pragma pack(pop)
 
-class TestViewerWindow final : private D3DResources {
+class TestViewerWindow final : private D3D11Resources {
  private:
   std::optional<D2DResources> mD2D;
 
@@ -232,7 +232,7 @@ class TestViewerWindow final : private D3DResources {
     this->InitializeShaders();
     this->InitializeDirect2D();
 
-    winrt::check_hresult(mD3DDevice->CreateFence(
+    winrt::check_hresult(mD3D11Device->CreateFence(
       mFenceValue, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
     winrt::check_hresult(mFence->CreateSharedHandle(
       nullptr, GENERIC_ALL, nullptr, mFenceHandle.put()));
@@ -277,7 +277,7 @@ class TestViewerWindow final : private D3DResources {
       return;
     }
 
-    mD2D.emplace(static_cast<D3DResources*>(this));
+    mD2D.emplace(static_cast<D3D11Resources*>(this));
 
     auto ctx = mD2D->mD2DDeviceContext.get();
     ctx->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
@@ -325,7 +325,7 @@ class TestViewerWindow final : private D3DResources {
     constexpr auto vs = Shaders::D3D::Viewer::VS;
     constexpr auto ps = Shaders::D3D::Viewer::PS;
 
-    auto dev = mD3DDevice.get();
+    auto dev = mD3D11Device.get();
 
     winrt::check_hresult(dev->CreateVertexShader(
       vs.data(), vs.size(), nullptr, mVertexShader.put()));
@@ -389,7 +389,7 @@ class TestViewerWindow final : private D3DResources {
   }
 
   void StartDraw() {
-    auto ctx = mD3DImmediateContext.get();
+    auto ctx = mD3D11ImmediateContext.get();
     const auto clientSize = this->GetClientSize();
 
     const D3D11_VIEWPORT viewport {
@@ -462,7 +462,7 @@ class TestViewerWindow final : private D3DResources {
         = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
       };
       winrt::check_hresult(
-        mD3DDevice->CreateTexture2D(&desc, nullptr, mRendererTexture.put()));
+        mD3D11Device->CreateTexture2D(&desc, nullptr, mRendererTexture.put()));
       mRendererTextureHandle = {};
       winrt::check_hresult(
         mRendererTexture.as<IDXGIResource1>()->CreateSharedHandle(
@@ -498,7 +498,7 @@ class TestViewerWindow final : private D3DResources {
       .AlphaMode = DXGI_ALPHA_MODE_IGNORE,// HWND swap chain can't have alpha
     };
     mDXGIFactory->CreateSwapChainForHwnd(
-      mD3DDevice.get(),
+      mD3D11Device.get(),
       mHwnd,
       &swapChainDesc,
       nullptr,
@@ -640,7 +640,7 @@ class TestViewerWindow final : private D3DResources {
       winrt::check_hresult(
         mSwapChain->GetBuffer(0, IID_PPV_ARGS(mWindowTexture.put())));
       mWindowRenderTargetView = nullptr;
-      winrt::check_hresult(mD3DDevice->CreateRenderTargetView(
+      winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
         mWindowTexture.get(), nullptr, mWindowRenderTargetView.put()));
       mWindowBitmap = nullptr;
       if (HaveDirect2D()) {
@@ -694,7 +694,7 @@ class TestViewerWindow final : private D3DResources {
       {{right, bottom, 0, 1}, fill},
     };
 
-    auto ctx = mD3DImmediateContext.get();
+    auto ctx = mD3D11ImmediateContext.get();
     D3D11_MAPPED_SUBRESOURCE mapping {};
     winrt::check_hresult(
       ctx->Map(mVertexBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
@@ -800,7 +800,7 @@ class TestViewerWindow final : private D3DResources {
       {renderLeft, renderTop}, {renderWidth, renderHeight}};
     const auto sourceRect = layer.mLocationOnTexture;
 
-    auto ctx = mD3DImmediateContext.get();
+    auto ctx = mD3D11ImmediateContext.get();
 
     const D3D11_BOX box {
       0,
@@ -870,7 +870,7 @@ class TestViewerWindow final : private D3DResources {
 
     switch (renderer) {
       case GraphicsAPI::D3D11:
-        mRenderer = std::make_unique<Viewer::D3D11Renderer>(mD3DDevice);
+        mRenderer = std::make_unique<Viewer::D3D11Renderer>(mD3D11Device);
         break;
       case GraphicsAPI::D3D12: {
         mRenderer = std::make_unique<Viewer::D3D12Renderer>(mDXGIAdapter.get());

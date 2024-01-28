@@ -27,7 +27,7 @@
 
 namespace OpenKneeboard {
 
-struct D3DResources::Locks {
+struct D3D11Resources::Locks {
   std::recursive_mutex mMutex;
 };
 
@@ -40,7 +40,7 @@ struct D2DResources::Locks {
   std::optional<DrawInfo> mCurrentDraw;
 };
 
-D3DResources::D3DResources() {
+D3D11Resources::D3D11Resources() {
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
   auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
   UINT dxgiFlags = 0;
@@ -92,8 +92,8 @@ D3DResources::D3DResources() {
     d3d.put(),
     nullptr,
     d3dImmediateContext.put()));
-  mD3DDevice = d3d.as<ID3D11Device5>();
-  mD3DImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
+  mD3D11Device = d3d.as<ID3D11Device5>();
+  mD3D11ImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
   mDXGIDevice = d3d.as<IDXGIDevice2>();
   d3d.as<ID3D11Multithread>()->SetMultithreadProtected(TRUE);
 #ifdef DEBUG
@@ -108,9 +108,9 @@ D3DResources::D3DResources() {
   mLocks = std::make_unique<Locks>();
 }
 
-D3DResources::~D3DResources() = default;
+D3D11Resources::~D3D11Resources() = default;
 
-D2DResources::D2DResources(D3DResources* d3d) {
+D2DResources::D2DResources(D3D11Resources* d3d) {
   winrt::check_hresult(
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, mD2DFactory.put()));
 
@@ -145,7 +145,7 @@ D2DResources::D2DResources(D3DResources* d3d) {
 
 D2DResources::~D2DResources() = default;
 
-DXResources::DXResources() : D3DResources(), D2DResources(this) {
+DXResources::DXResources() : D3D11Resources(), D2DResources(this) {
   winrt::com_ptr<ID2D1DeviceContext> d2dBackBufferContext;
   winrt::check_hresult(mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dBackBufferContext.put()));
@@ -205,8 +205,8 @@ HRESULT D2DResources::PopD2DDraw() {
   return mD2DDeviceContext->EndDraw();
 }
 
-void D3DResources::lock() {
-  OPENKNEEBOARD_TraceLoggingScope("D3DResources::lock()");
+void D3D11Resources::lock() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11Resources::lock()");
 
   // If we've locked D2D, we don't need to separately lock D3D; keeping it
   // here anyway as:
@@ -223,13 +223,13 @@ void D3DResources::lock() {
   mLocks->mMutex.lock();
 }
 
-void D3DResources::unlock() {
-  OPENKNEEBOARD_TraceLoggingScope("D3DResources::unlock()");
+void D3D11Resources::unlock() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11Resources::unlock()");
   mLocks->mMutex.unlock();
 }
 
-bool D3DResources::try_lock() {
-  OPENKNEEBOARD_TraceLoggingScope("D3DResources::try_lock()");
+bool D3D11Resources::try_lock() {
+  OPENKNEEBOARD_TraceLoggingScope("D3D11Resources::try_lock()");
   return mLocks->mMutex.try_lock();
 }
 

@@ -419,8 +419,8 @@ void HWNDPageSource::OnFrame() {
   TraceLoggingWriteTagged(activity, "WaitingForLock");
   const std::unique_lock d2dlock(*mDXR);
   TraceLoggingWriteTagged(activity, "Locked");
-  winrt::com_ptr<ID3D11DeviceContext> ctx;
-  mDXR->mD3DDevice->GetImmediateContext(ctx.put());
+
+  auto ctx = mDXR->mD3D11ImmediateContext.get();
 
   if (
     contentSize.Width > surfaceDesc.Width
@@ -470,8 +470,8 @@ void HWNDPageSource::OnFrame() {
   }
 
   if (!mTexture) {
-    winrt::check_hresult(
-      mDXR->mD3DDevice->CreateTexture2D(&surfaceDesc, nullptr, mTexture.put()));
+    winrt::check_hresult(mDXR->mD3D11Device->CreateTexture2D(
+      &surfaceDesc, nullptr, mTexture.put()));
     mBitmap = nullptr;
     winrt::check_hresult(mDXR->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
       mTexture.as<IDXGISurface>().get(), nullptr, mBitmap.put()));
