@@ -100,7 +100,10 @@ SpriteBatch::~SpriteBatch() {
   }
 }
 
-void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
+void SpriteBatch::Begin(
+  ID3D11RenderTargetView* rtv,
+  const PixelSize& rtvSize,
+  std::function<void __cdecl()> setCustomShaders) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::SpriteBatch::Begin()");
   if (mTarget) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL(
@@ -131,7 +134,13 @@ void SpriteBatch::Begin(ID3D11RenderTargetView* rtv, const PixelSize& rtvSize) {
   ctx->OMSetDepthStencilState(nullptr, 0);
   ctx->OMSetBlendState(nullptr, nullptr, ~static_cast<UINT>(0));
 
-  mDXTKSpriteBatch->Begin();
+  mDXTKSpriteBatch->Begin(
+    DirectX::DX11::SpriteSortMode_Deferred,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    setCustomShaders);
 
   mTarget = rtv;
 }

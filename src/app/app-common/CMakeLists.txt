@@ -25,6 +25,7 @@ target_link_libraries(
   OpenKneeboard-RuntimeFiles
   OpenKneeboard-SteamVRKneeboard
   OpenKneeboard-OpenXRMode
+  OpenKneeboard-App-Shaders
   OpenKneeboard-SHM
   OpenKneeboard-ThreadGuard
   OpenKneeboard-UTF8

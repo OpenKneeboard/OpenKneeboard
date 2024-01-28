@@ -72,7 +72,10 @@ class SpriteBatch {
   SpriteBatch(ID3D11Device*);
   ~SpriteBatch();
 
-  void Begin(ID3D11RenderTargetView*, const PixelSize& rtvSize);
+  void Begin(
+    ID3D11RenderTargetView*,
+    const PixelSize& rtvSize,
+    std::function<void __cdecl()> setCustomShaders = nullptr);
   void Clear(DirectX::XMVECTORF32 color = DirectX::Colors::Transparent);
   void Draw(
     ID3D11ShaderResourceView* source,

@@ -23,6 +23,7 @@
 #include <OpenKneeboard/HWNDPageSource.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/RuntimeFiles.h>
+#include <OpenKneeboard/Shaders/D3D/ScRGBToRGB.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 
 #include <OpenKneeboard/dprint.h>
@@ -181,16 +182,10 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
 
       if (mIsHDR) {
         mPixelFormat = WGDX::DirectXPixelFormat::R16G16B16A16Float;
-        winrt::check_hresult(mDXR->mD2DDeviceContext->CreateEffect(
-          CLSID_D2D1WhiteLevelAdjustment, mD2DWhiteLevel.put()));
-        mD2DWhiteLevel->SetValue(
-          D2D1_WHITELEVELADJUSTMENT_PROP_INPUT_WHITE_LEVEL,
-          D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL);
-        mD2DWhiteLevel->SetValue(
-          D2D1_WHITELEVELADJUSTMENT_PROP_OUTPUT_WHITE_LEVEL,
-          static_cast<FLOAT>(aci.SdrWhiteLevelInNits()));
+        mSDRWhiteLevelInNits = static_cast<FLOAT>(aci.SdrWhiteLevelInNits());
       } else {
         mPixelFormat = WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized;
+        mSDRWhiteLevelInNits = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL;
       }
     }
 
@@ -199,25 +194,6 @@ winrt::fire_and_forget HWNDPageSource::Init() noexcept {
       mWinRTD3DDevice, mPixelFormat, 2, item.Size());
     mFramePool.FrameArrived(
       [this](const auto&, const auto&) { this->OnFrame(); });
-
-    if (mIsHDR) {
-      winrt::com_ptr<ID2D1ColorContext1> srgb, scrgb;
-      auto d2d = mDXR->mD2DDeviceContext.get();
-      d2d->CreateColorContextFromDxgiColorSpace(
-        DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709, srgb.put());
-      d2d->CreateColorContextFromDxgiColorSpace(
-        DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709, scrgb.put());
-      winrt::check_hresult(mDXR->mD2DDeviceContext->CreateEffect(
-        CLSID_D2D1ColorManagement, mD2DColorManagement.put()));
-      mD2DColorManagement->SetValue(
-        D2D1_COLORMANAGEMENT_PROP_SOURCE_COLOR_CONTEXT, scrgb.get());
-      mD2DColorManagement->SetValue(
-        D2D1_COLORMANAGEMENT_PROP_DESTINATION_COLOR_CONTEXT, srgb.get());
-
-      mD2DFirstEffect = mD2DWhiteLevel.get();
-      mD2DColorManagement->SetInputEffect(0, mD2DWhiteLevel.get(), true);
-      mD2DLastEffect = mD2DColorManagement.get();
-    }
 
     mCaptureSession = mFramePool.CreateCaptureSession(item);
     mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
@@ -257,6 +233,12 @@ HWNDPageSource::HWNDPageSource(
 
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
+
+  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mDXR->mD3D11Device.get());
+
+  auto ps = Shaders::D3D::ScRGBToRGB::PS;
+  winrt::check_hresult(dxr->mD3D11Device->CreatePixelShader(
+    ps.data(), ps.size(), nullptr, mScRGBtoRGB.put()));
 }
 
 bool HWNDPageSource::HaveWindow() const {
@@ -358,29 +340,42 @@ void HWNDPageSource::RenderPage(
     return;
   }
 
-  const auto contentBox = this->GetContentBox();
-  const D2D1_RECT_F srcRect {
-    static_cast<FLOAT>(contentBox.left),
-    static_cast<FLOAT>(contentBox.top),
-    static_cast<FLOAT>(contentBox.right),
-    static_cast<FLOAT>(contentBox.bottom),
-  };
+  auto d3d = rt->d3d();
 
-  auto d2d = rt->d2d();
-  // D2D effects are used for HDR -> SDR conversion; don't use them
-  // if we don't have HDR data
-  if (mD2DFirstEffect) {
-    mD2DFirstEffect->SetInput(0, mBitmap.get(), true);
-  }
-  const auto scale = (rect.right - rect.left) / mContentSize.width;
-  d2d->SetTransform(
-    D2D1::Matrix3x2F::Scale({scale, scale})
-    * D2D1::Matrix3x2F::Translation({rect.left, rect.top}));
-  if (mD2DLastEffect) {
-    d2d->DrawImage(mD2DLastEffect, nullptr, &srcRect);
+  auto color = DirectX::Colors::White;
+
+  if (mIsHDR) {
+    const auto dimming
+      = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL / mSDRWhiteLevelInNits;
+    color = {dimming, dimming, dimming, 1};
+
+    mSpriteBatch->Begin(
+      d3d.rtv(),
+      rt->GetDimensions(),
+      [ctx = mDXR->mD3D11ImmediateContext.get(), ps = mScRGBtoRGB.get()]() {
+        ctx->PSSetShader(ps, nullptr, 0);
+      });
   } else {
-    d2d->DrawImage(mBitmap.get(), nullptr, &srcRect);
+    mSpriteBatch->Begin(d3d.rtv(), rt->GetDimensions());
   }
+
+  const auto contentBox = this->GetContentBox();
+  const PixelRect sourceRect {
+    {contentBox.left, contentBox.top},
+    {contentBox.right - contentBox.left, contentBox.bottom - contentBox.top},
+  };
+  const PixelRect destRect {
+    {
+      static_cast<uint32_t>(std::lround(rect.left)),
+      static_cast<uint32_t>(std::lround(rect.top)),
+    },
+    {
+      static_cast<uint32_t>(std::lround(rect.right - rect.left)),
+      static_cast<uint32_t>(std::lround(rect.bottom - rect.top)),
+    }};
+  mSpriteBatch->Draw(mShaderResourceView.get(), sourceRect, destRect, color);
+
+  mSpriteBatch->End();
 
   mNeedsRepaint = false;
 }
@@ -470,12 +465,16 @@ void HWNDPageSource::OnFrame() {
   }
 
   if (!mTexture) {
-    winrt::check_hresult(mDXR->mD3D11Device->CreateTexture2D(
-      &surfaceDesc, nullptr, mTexture.put()));
-    mBitmap = nullptr;
-    winrt::check_hresult(mDXR->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-      mTexture.as<IDXGISurface>().get(), nullptr, mBitmap.put()));
-    TraceLoggingWriteTagged(activity, "CreatedTexture");
+    OPENKNEEBOARD_TraceLoggingScope("CreateTexture");
+    auto desc = surfaceDesc;
+    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    desc.MiscFlags = 0;
+
+    winrt::check_hresult(
+      mDXR->mD3D11Device->CreateTexture2D(&desc, nullptr, mTexture.put()));
+    mShaderResourceView = nullptr;
+    winrt::check_hresult(mDXR->mD3D11Device->CreateShaderResourceView(
+      mTexture.get(), nullptr, mShaderResourceView.put()));
   }
 
   mContentSize = {
