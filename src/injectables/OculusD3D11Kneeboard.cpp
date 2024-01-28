@@ -98,7 +98,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
     buffers.push_back(
-      {mD3D11Device.get(), texture.get(), DXGI_FORMAT_B8G8R8X8_UNORM_SRGB});
+      {mD3D11Device.get(), texture.get(), DXGI_FORMAT_B8G8R8A8_UNORM_SRGB});
   }
   mSwapchain = {size, std::move(buffers)};
 

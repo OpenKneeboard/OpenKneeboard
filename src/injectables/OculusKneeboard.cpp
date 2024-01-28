@@ -96,6 +96,16 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return passthrough();
   }
 
+  if (!mSwapchain) [[unlikely]] {
+    mSwapchain
+      = mRenderer->CreateSwapChain(session, Spriting::GetBufferSize(MaxLayers));
+    if (!mSwapchain) {
+      dprint("Failed to make an OVR swapchain");
+      OPENKNEEBOARD_BREAK;
+      return passthrough();
+    }
+  }
+
   const auto snapshot = shm->MaybeGet();
   if (!snapshot.IsValid()) {
     return passthrough();
@@ -134,16 +144,6 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   auto ovr = OVRProxy::Get();
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
-
-  if (!mSwapchain) [[unlikely]] {
-    mSwapchain
-      = mRenderer->CreateSwapChain(session, Spriting::GetBufferSize(MaxLayers));
-    if (!mSwapchain) {
-      dprint("Failed to make an OVR swapchain");
-      OPENKNEEBOARD_BREAK;
-      return passthrough();
-    }
-  }
 
   const auto kneeboardLayerCount = snapshot.GetLayerCount();
   std::vector<uint64_t> cacheKeys;
