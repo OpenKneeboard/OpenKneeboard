@@ -57,6 +57,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   ovrSession session,
   const PixelSize& size) {
   if (!mD3D11Device) {
+    traceprint("No D3D device yet");
     return nullptr;
   }
 
@@ -66,7 +67,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   static_assert(SHM::SHARED_TEXTURE_PIXEL_FORMAT == DXGI_FORMAT_B8G8R8A8_UNORM);
   ovrTextureSwapChainDesc kneeboardSCD = {
     .Type = ovrTexture_2D,
-    .Format = OVR_FORMAT_B8G8R8A8_UNORM_SRGB,
+    .Format = OVR_FORMAT_B8G8R8A8_UNORM,
     .ArraySize = 1,
     .Width = static_cast<int>(size.mWidth),
     .Height = static_cast<int>(size.mHeight),
@@ -88,8 +89,9 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
   int length = -1;
   ovr->ovr_GetTextureSwapChainLength(session, swapChain, &length);
   if (length < 1) {
-    dprintf("`{}`: got an invalid swapchain length of {}", __FUNCSIG__, 1);
-    abort();
+    dprintf("Got an invalid swapchain length of {}", length);
+    OPENKNEEBOARD_BREAK;
+    return nullptr;
   }
 
   std::vector<SwapchainBufferResources> buffers;
@@ -98,7 +100,7 @@ ovrTextureSwapChain OculusD3D11Kneeboard::CreateSwapChain(
     ovr->ovr_GetTextureSwapChainBufferDX(
       session, swapChain, i, IID_PPV_ARGS(texture.put()));
     buffers.push_back(
-      {mD3D11Device.get(), texture.get(), DXGI_FORMAT_B8G8R8A8_UNORM_SRGB});
+      {mD3D11Device.get(), texture.get(), DXGI_FORMAT_B8G8R8A8_UNORM});
   }
   mSwapchain = {size, std::move(buffers)};
 

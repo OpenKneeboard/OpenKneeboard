@@ -96,12 +96,14 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return passthrough();
   }
 
-  if (!mSwapchain) [[unlikely]] {
+  if (!mSwapchain) {
+    // It's possible for us to be injected in between a present and an
+    // OVREndFrame; this means we don't have the device yet, so creation will
+    // fail.
     mSwapchain
       = mRenderer->CreateSwapChain(session, Spriting::GetBufferSize(MaxLayers));
     if (!mSwapchain) {
-      dprint("Failed to make an OVR swapchain");
-      OPENKNEEBOARD_BREAK;
+      traceprint("Failed to make an OVR swapchain");
       return passthrough();
     }
   }
