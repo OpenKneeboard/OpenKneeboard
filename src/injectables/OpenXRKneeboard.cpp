@@ -251,14 +251,20 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   if (needRender) {
     uint32_t swapchainTextureIndex;
-    check_xrresult(mOpenXR->xrAcquireSwapchainImage(
-      mSwapchain, nullptr, &swapchainTextureIndex));
+    {
+      OPENKNEEBOARD_TraceLoggingScope("AcquireSwapchainImage");
+      check_xrresult(mOpenXR->xrAcquireSwapchainImage(
+        mSwapchain, nullptr, &swapchainTextureIndex));
+    }
 
-    XrSwapchainImageWaitInfo waitInfo {
-      .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
-      .timeout = XR_INFINITE_DURATION,
-    };
-    check_xrresult(mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo));
+    {
+      OPENKNEEBOARD_TraceLoggingScope("WaitSwapchainImage");
+      XrSwapchainImageWaitInfo waitInfo {
+        .type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO,
+        .timeout = XR_INFINITE_DURATION,
+      };
+      check_xrresult(mOpenXR->xrWaitSwapchainImage(mSwapchain, &waitInfo));
+    }
 
     {
       OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
