@@ -34,17 +34,38 @@
 
 namespace OpenKneeboard {
 
-struct DXResources {
+struct D3DResources {
+  D3DResources();
+  ~D3DResources();
+  D3DResources(const D3DResources&) = delete;
+  D3DResources& operator=(const D3DResources&) = delete;
+
+  winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
+  winrt::com_ptr<IDXGIAdapter4> mDXGIAdapter;
+  uint64_t mAdapterLUID;
+
   winrt::com_ptr<ID3D11Device5> mD3DDevice;
   winrt::com_ptr<ID3D11DeviceContext4> mD3DImmediateContext;
+
   winrt::com_ptr<IDXGIDevice2> mDXGIDevice;
+
+  // Use `std::unique_lock`
+  void lock();
+  bool try_lock();
+  void unlock();
+
+ protected:
+  struct Locks;
+  std::shared_ptr<Locks> mLocks;
+};
+
+struct DXResources : public D3DResources {
   winrt::com_ptr<ID2D1Device> mD2DDevice;
   winrt::com_ptr<ID2D1DeviceContext5> mD2DDeviceContext;
   // e.g. doodles draw to a separate texture
   winrt::com_ptr<ID2D1DeviceContext5> mD2DBackBufferDeviceContext;
 
   winrt::com_ptr<ID2D1Factory> mD2DFactory;
-  winrt::com_ptr<IDXGIFactory6> mDXGIFactory;
   winrt::com_ptr<IDWriteFactory> mDWriteFactory;
 
   winrt::com_ptr<IWICImagingFactory> mWIC;
@@ -57,11 +78,6 @@ struct DXResources {
   HRESULT PopD2DDraw();
 
   static std::shared_ptr<DXResources> Create();
-
-  // Use `std::unique_lock`
-  void lock();
-  bool try_lock();
-  void unlock();
 
   // Brushes :)
 
@@ -86,8 +102,6 @@ struct DXResources {
 
  private:
   DXResources() = default;
-  struct Locks;
-  std::shared_ptr<Locks> mLocks;
 };
 
 }// namespace OpenKneeboard

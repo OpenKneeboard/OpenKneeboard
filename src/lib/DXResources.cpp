@@ -27,7 +27,7 @@
 
 namespace OpenKneeboard {
 
-struct DXResources::Locks {
+struct D3DResources::Locks {
   std::recursive_mutex mMutex;
 
   std::mutex mCurrentDrawMutex;
@@ -38,9 +38,7 @@ struct DXResources::Locks {
   std::optional<DrawInfo> mCurrentDraw;
 };
 
-std::shared_ptr<DXResources> DXResources::Create() {
-  auto ret = std::shared_ptr<DXResources>(new DXResources());
-
+D3DResources::D3DResources() {
   UINT d3dFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
   auto d3dLevel = D3D_FEATURE_LEVEL_11_1;
   UINT dxgiFlags = 0;
@@ -50,19 +48,15 @@ std::shared_ptr<DXResources> DXResources::Create() {
 #endif
 
   winrt::check_hresult(
-    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(ret->mDXGIFactory.put())));
+    CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(mDXGIFactory.put())));
 
-  winrt::com_ptr<IDXGIAdapter1> adapterIt;
-  winrt::com_ptr<IDXGIAdapter1> bestAdapter;
+  winrt::com_ptr<IDXGIAdapter4> adapterIt;
   for (unsigned int i = 0;
-       ret->mDXGIFactory->EnumAdapterByGpuPreference(
+       mDXGIFactory->EnumAdapterByGpuPreference(
          i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(adapterIt.put()))
        == S_OK;
        ++i) {
     const scope_guard releaseIt([&]() { adapterIt = {nullptr}; });
-    if (i == 0) {
-      bestAdapter = adapterIt;
-    }
     DXGI_ADAPTER_DESC1 desc {};
     adapterIt->GetDesc1(&desc);
     dprintf(
@@ -74,13 +68,17 @@ std::shared_ptr<DXResources> DXResources::Create() {
       desc.Description,
       desc.DedicatedVideoMemory / (1024 * 1024),
       (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) ? L" (software)" : L"");
+    if (i == 0) {
+      mDXGIAdapter = adapterIt;
+      mAdapterLUID = std::bit_cast<uint64_t>(desc.AdapterLuid);
+    }
   }
   dprint("----------");
 
   winrt::com_ptr<ID3D11Device> d3d;
   winrt::com_ptr<ID3D11DeviceContext> d3dImmediateContext;
   winrt::check_hresult(D3D11CreateDevice(
-    bestAdapter.get(),
+    mDXGIAdapter.get(),
     // UNKNOWN is required when specifying an adapter
     D3D_DRIVER_TYPE_UNKNOWN,
     nullptr,
@@ -91,9 +89,9 @@ std::shared_ptr<DXResources> DXResources::Create() {
     d3d.put(),
     nullptr,
     d3dImmediateContext.put()));
-  ret->mD3DDevice = d3d.as<ID3D11Device5>();
-  ret->mD3DImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
-  ret->mDXGIDevice = d3d.as<IDXGIDevice2>();
+  mD3DDevice = d3d.as<ID3D11Device5>();
+  mD3DImmediateContext = d3dImmediateContext.as<ID3D11DeviceContext4>();
+  mDXGIDevice = d3d.as<IDXGIDevice2>();
   d3d.as<ID3D11Multithread>()->SetMultithreadProtected(TRUE);
 #ifdef DEBUG
   const auto iq = d3d.try_as<ID3D11InfoQueue>();
@@ -103,6 +101,12 @@ std::shared_ptr<DXResources> DXResources::Create() {
     iq->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_CORRUPTION, true);
   }
 #endif
+}
+
+D3DResources::~D3DResources() = default;
+
+std::shared_ptr<DXResources> DXResources::Create() {
+  auto ret = std::shared_ptr<DXResources>(new DXResources());
 
   winrt::check_hresult(D2D1CreateFactory(
     D2D1_FACTORY_TYPE_MULTI_THREADED, ret->mD2DFactory.put()));
@@ -197,8 +201,8 @@ HRESULT DXResources::PopD2DDraw() {
   return mD2DDeviceContext->EndDraw();
 }
 
-void DXResources::lock() {
-  OPENKNEEBOARD_TraceLoggingScope("DXResources::lock()");
+void D3DResources::lock() {
+  OPENKNEEBOARD_TraceLoggingScope("D3DResources::lock()");
 
   // If we've locked D2D, we don't need to separately lock D3D; keeping it
   // here anyway as:
@@ -215,13 +219,13 @@ void DXResources::lock() {
   mLocks->mMutex.lock();
 }
 
-void DXResources::unlock() {
-  OPENKNEEBOARD_TraceLoggingScope("DXResources::unlock()");
+void D3DResources::unlock() {
+  OPENKNEEBOARD_TraceLoggingScope("D3DResources::unlock()");
   mLocks->mMutex.unlock();
 }
 
-bool DXResources::try_lock() {
-  OPENKNEEBOARD_TraceLoggingScope("DXResources::try_lock()");
+bool D3DResources::try_lock() {
+  OPENKNEEBOARD_TraceLoggingScope("D3DResources::try_lock()");
   return mLocks->mMutex.try_lock();
 }
 
