@@ -51,6 +51,8 @@ OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
   : OpenXRKneeboard(session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
 
+  mGraphicsMemory = std::make_unique<DirectX::GraphicsMemory>(binding.device);
+
   mDevice.copy_from(binding.device);
   mCommandQueue.copy_from(binding.queue);
   mRenderer = std::make_unique<D3D12::Renderer>(

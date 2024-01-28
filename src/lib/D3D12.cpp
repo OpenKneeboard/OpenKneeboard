@@ -35,15 +35,18 @@ SpriteBatch::SpriteBatch(
 
   mDevice.copy_from(device);
 
-  mDXTKGraphicsMemory = std::make_unique<DirectX::GraphicsMemory>(device);
-
   {
+    OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::ResourceUpload()");
     DirectX::ResourceUploadBatch resourceUpload(device);
     resourceUpload.Begin();
     DirectX::RenderTargetState rtState(destFormat, DXGI_FORMAT_UNKNOWN);
     DirectX::SpriteBatchPipelineStateDescription pd(rtState);
-    mDXTKSpriteBatch
-      = std::make_unique<DirectX::SpriteBatch>(device, resourceUpload, pd);
+    {
+      OPENKNEEBOARD_TraceLoggingScope("D3D12::SpriteBatch::DXTKSpriteBatch()");
+
+      mDXTKSpriteBatch
+        = std::make_unique<DirectX::SpriteBatch>(device, resourceUpload, pd);
+    }
     auto uploadResourcesFinished = resourceUpload.End(queue);
     uploadResourcesFinished.wait();
   }

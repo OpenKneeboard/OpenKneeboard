@@ -34,6 +34,8 @@
 #include <d3d11.h>
 #include <d3d11on12.h>
 
+#include <directxtk12/GraphicsMemory.h>
+
 namespace OpenKneeboard {
 
 class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
@@ -69,7 +71,12 @@ class OculusD3D12Kneeboard final : public OculusKneeboard::Renderer {
   using SwapchainResources = D3D12::SwapchainResources;
 
   std::optional<SwapchainResources> mSwapchain;
+  std::unique_ptr<DirectX::GraphicsMemory> mGraphicsMemory;
   std::unique_ptr<D3D12::Renderer> mRenderer;
+
+  std::atomic_flag mInitialized;
+
+  void Initialize(ID3D12CommandQueue*);
 
   void OnID3D12CommandQueue_ExecuteCommandLists(
     ID3D12CommandQueue* this_,

@@ -26,13 +26,15 @@
 
 #include <d3d12.h>
 
-#include <directxtk12/GraphicsMemory.h>
 #include <directxtk12/SpriteBatch.h>
 
 namespace OpenKneeboard::D3D12 {
 
 using Opacity = ::OpenKneeboard::D3D::Opacity;
 
+/** This class requires an instance of DirectXTK12's GraphicsMemory per-device
+ * singleton to exist.
+ */
 class SpriteBatch {
  public:
   SpriteBatch() = delete;
@@ -63,8 +65,6 @@ class SpriteBatch {
   winrt::com_ptr<ID3D12Device> mDevice;
 
   std::unique_ptr<DirectX::DX12::SpriteBatch> mDXTKSpriteBatch;
-  // DXTK12 SpriteBatch depends on an instance of this existing
-  std::unique_ptr<DirectX::DX12::GraphicsMemory> mDXTKGraphicsMemory;
 
   ID3D12GraphicsCommandList* mCommandList {nullptr};
   D3D12_CPU_DESCRIPTOR_HANDLE mRenderTargetView {};
