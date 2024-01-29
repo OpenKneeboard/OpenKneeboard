@@ -37,6 +37,8 @@ struct NonVRAbsolutePosition {
   PixelRect mRect {};
   Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Right};
   Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
+
+  constexpr bool operator==(const NonVRAbsolutePosition&) const = default;
 };
 static_assert(std::is_standard_layout_v<NonVRAbsolutePosition>);
 
@@ -51,14 +53,14 @@ struct NonVRConstrainedPosition {
 
   PixelRect Layout(PixelSize canvasSize, PixelSize imageSize) const;
 
-  constexpr auto operator<=>(const NonVRConstrainedPosition&) const = default;
+  constexpr bool operator==(const NonVRConstrainedPosition&) const = default;
 };
 static_assert(std::is_standard_layout_v<NonVRConstrainedPosition>);
 
 // Replaced by `OverlaysConfig` in v1.7+
 struct DeprecatedFlatConfig {
   NonVRConstrainedPosition mDeprecated;
-  constexpr auto operator<=>(const DeprecatedFlatConfig&) const = default;
+  constexpr bool operator==(const DeprecatedFlatConfig&) const = default;
 };
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE

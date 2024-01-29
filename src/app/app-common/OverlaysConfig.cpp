@@ -37,13 +37,14 @@ std::optional<SHM::VRPosition> OverlayVRPosition::Resolve(
   const std::vector<OverlayConfig>& others) const {
   if (mType == Type::Absolute) {
     // FIXME: adjust for alignment and size
-    return mAbsolutePosition;
+    return GetAbsolutePosition();
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
 
-  const auto it = std::ranges::find_if(
-    others, [this](const auto& other) { return other.mGuid == mMirrorOf; });
+  const auto it = std::ranges::find_if(others, [this](const auto& other) {
+    return other.mGuid == GetMirrorOfGUID();
+  });
   if (it == others.end()) {
     return {};
   }
@@ -71,14 +72,8 @@ OverlayConfig OverlayConfig::CreateRightKnee() {
   return OverlayConfig {
     .mGuid = CreateGUID(),
     .mName = _("Right Kneeboard"),
-    .mVRPosition = OverlayVRPosition {
-        .mType = OverlayVRPosition::Type::Absolute,
-        .mAbsolutePosition = VRAbsolutePosition {},
-    },
-    .mNonVRPosition = OverlayNonVRPosition {
-        .mType = OverlayNonVRPosition::Type::Constrained,
-        .mConstrainedPosition = NonVRConstrainedPosition {},
-    },
+    .mVRPosition = OverlayVRPosition::Absolute({}),
+    .mNonVRPosition = OverlayNonVRPosition::Constrained({}),
   };
 }
 
@@ -91,21 +86,14 @@ OverlayConfig OverlayConfig::CreateMirroredOverlay(
   std::string_view name,
   const OverlayConfig& other) {
   return OverlayConfig {
-        .mGuid = CreateGUID(),
-        .mName = std::string { name },
-        .mVRPosition = OverlayVRPosition {
-            .mType = OverlayVRPosition::Type::HorizontalMirror,
-            .mMirrorOf = other.mGuid,
-        },
-        .mNonVRPosition = OverlayNonVRPosition {
-            .mType = OverlayNonVRPosition::Type::HorizontalMirror,
-            .mMirrorOf = other.mGuid,
-        },
-    };
+    .mGuid = CreateGUID(),
+    .mName = std::string {name},
+    .mVRPosition = OverlayVRPosition::HorizontalMirrorOf(other.mGuid),
+    .mNonVRPosition = OverlayNonVRPosition::HorizontalMirrorOf(other.mGuid),
+  };
 }
 
 OverlaysConfig::OverlaysConfig() {
-  mOverlays = {OverlayConfig::CreateDefaultFirstOverlay()};
 }
 
 };// namespace OpenKneeboard

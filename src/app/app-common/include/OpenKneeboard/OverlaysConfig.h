@@ -27,6 +27,8 @@
 
 #include <shims/winrt/base.h>
 
+#include <variant>
+
 namespace OpenKneeboard {
 
 struct OverlayConfig;
@@ -38,11 +40,32 @@ struct OverlayVRPosition {
     HorizontalMirror,
   };
 
-  Type mType;
-  union {
-    winrt::guid mMirrorOf;
-    VRAbsolutePosition mAbsolutePosition;
-  };
+  static constexpr OverlayVRPosition Absolute(const VRAbsolutePosition& p) {
+    OverlayVRPosition ret;
+    ret.mType = Type::Absolute;
+    ret.mData = p;
+    return ret;
+  }
+
+  static constexpr OverlayVRPosition HorizontalMirrorOf(
+    const winrt::guid& guid) {
+    OverlayVRPosition ret;
+    ret.mType = Type::HorizontalMirror;
+    ret.mData = guid;
+    return ret;
+  }
+
+  constexpr Type GetType() const noexcept {
+    return mType;
+  }
+
+  constexpr auto GetMirrorOfGUID() const noexcept {
+    return std::get<winrt::guid>(mData);
+  }
+
+  constexpr auto GetAbsolutePosition() const noexcept {
+    return std::get<VRAbsolutePosition>(mData);
+  }
 
   Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Center};
   Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
@@ -50,7 +73,12 @@ struct OverlayVRPosition {
   std::optional<SHM::VRPosition> Resolve(
     const std::vector<OverlayConfig>& others) const;
 
-  constexpr auto operator<=>(const OverlayVRPosition&) const noexcept = default;
+  constexpr bool operator==(const OverlayVRPosition&) const noexcept = default;
+
+ private:
+  OverlayVRPosition() = default;
+  Type mType;
+  std::variant<winrt::guid, VRAbsolutePosition> mData;
 };
 
 struct OverlayNonVRPosition {
@@ -61,15 +89,58 @@ struct OverlayNonVRPosition {
     VerticalMirror,
   };
 
-  Type mType;
-  union {
-    winrt::guid mMirrorOf;
-    NonVRAbsolutePosition mAbsolutePosition;
-    NonVRConstrainedPosition mConstrainedPosition;
-  };
+  static constexpr auto Absolute(const NonVRAbsolutePosition& p) {
+    OverlayNonVRPosition ret;
+    ret.mType = Type::Absolute;
+    ret.mData = p;
+    return ret;
+  }
 
-  constexpr auto operator<=>(const OverlayNonVRPosition&) const noexcept
+  static constexpr auto Constrained(const NonVRConstrainedPosition& p) {
+    OverlayNonVRPosition ret;
+    ret.mType = Type::Constrained;
+    ret.mData = p;
+    return ret;
+  }
+
+  static constexpr auto HorizontalMirrorOf(const winrt::guid& p) {
+    OverlayNonVRPosition ret;
+    ret.mType = Type::HorizontalMirror;
+    ret.mData = p;
+    return ret;
+  }
+
+  static constexpr auto VerticalMirrorOf(const winrt::guid& p) {
+    OverlayNonVRPosition ret;
+    ret.mType = Type::VerticalMirror;
+    ret.mData = p;
+    return ret;
+  }
+
+  constexpr Type GetType() const noexcept {
+    return mType;
+  }
+
+  constexpr auto GetMirrorOfGUID() const noexcept {
+    return std::get<winrt::guid>(mData);
+  }
+
+  constexpr auto GetAbsolutePosition() const noexcept {
+    return std::get<NonVRAbsolutePosition>(mData);
+  }
+
+  constexpr auto GetConstrainedPosition() const noexcept {
+    return std::get<NonVRConstrainedPosition>(mData);
+  }
+
+  constexpr bool operator==(const OverlayNonVRPosition&) const noexcept
     = default;
+
+ private:
+  OverlayNonVRPosition() = default;
+  Type mType;
+  std::variant<winrt::guid, NonVRAbsolutePosition, NonVRConstrainedPosition>
+    mData;
 };
 
 struct OverlayConfig {
@@ -90,7 +161,7 @@ struct OverlayConfig {
     std::string_view name,
     const OverlayConfig& other);
 
-  constexpr auto operator<=>(const OverlayConfig&) const noexcept = default;
+  constexpr bool operator==(const OverlayConfig&) const noexcept = default;
 };
 
 struct OverlaysConfig {
@@ -99,7 +170,9 @@ struct OverlaysConfig {
 
   std::vector<OverlayConfig> mOverlays;
 
-  constexpr auto operator<=>(const OverlaysConfig&) const noexcept = default;
+  constexpr bool operator==(const OverlaysConfig&) const noexcept = default;
 };
+
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(OverlaysConfig);
 
 };// namespace OpenKneeboard
