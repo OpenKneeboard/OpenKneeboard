@@ -153,31 +153,61 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  if (!*this->GetSHM()) {
+  const auto shm = this->GetSHM();
+
+  if (!(shm && *shm)) {
     TraceLoggingWriteTagged(activity, "No feeder");
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  if (!mSwapchain) {
-    OPENKNEEBOARD_TraceLoggingScope("Create swapchain");
-    const auto size = Spriting::GetBufferSize(MaxViewCount);
+  auto snapshot = shm->MaybeGetMetadata();
+  if (!snapshot.HasMetadata()) {
+    TraceLoggingWriteTagged(activity, "No metadata");
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
 
-    mSwapchain = this->CreateSwapchain(session, size);
+  const auto layerCount = snapshot.GetLayerCount();
+  const auto swapchainDimensions = Spriting::GetBufferSize(layerCount);
+
+  if (mSwapchain && (mSwapchainDimensions != swapchainDimensions)) {
+    OPENKNEEBOARD_TraceLoggingScope("DestroySwapchain");
+    this->ReleaseSwapchainResources(mSwapchain);
+    mOpenXR->xrDestroySwapchain(mSwapchain);
+    mSwapchain = {};
+  }
+
+  if (!mSwapchain) {
+    OPENKNEEBOARD_TraceLoggingScope("CreateSwapchain");
+
+    mSwapchain = this->CreateSwapchain(session, swapchainDimensions);
     if (!mSwapchain) [[unlikely]] {
       OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
     }
-    dprintf("Created {}x{} swapchain", size.mWidth, size.mHeight);
+    mSwapchainDimensions = swapchainDimensions;
+    dprintf(
+      "Created {}x{} swapchain",
+      swapchainDimensions.mWidth,
+      swapchainDimensions.mHeight);
   }
 
-  auto snapshot = this->GetSHM()->MaybeGet();
-  if (!snapshot.IsValid()) {
-    TraceLoggingWriteTagged(activity, "no snapshot");
-    // Don't spam: expected, if OpenKneeboard isn't running
+  if (!snapshot.HasTexture()) {
+    snapshot = this->GetSHM()->MaybeGet();
+  }
+
+  if (!snapshot.HasTexture()) {
+    TraceLoggingWriteTagged(activity, "NoTexture");
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+
+  if (snapshot.GetLayerCount() != layerCount) {
+    dprintf(
+      "Layer count mismatch, skipping frame: {} -> {}",
+      layerCount,
+      snapshot.GetLayerCount());
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
   auto config = snapshot.GetConfig();
-  const auto layerCount = snapshot.GetLayerCount();
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
   nextLayers.reserve(frameEndInfo->layerCount + layerCount);

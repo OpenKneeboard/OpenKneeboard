@@ -222,7 +222,7 @@ void SteamVRKneeboard::Tick() {
   }
 
   const auto snapshot = mSHM.MaybeGet();
-  if (!snapshot.IsValid()) {
+  if (!snapshot.HasTexture()) {
     this->HideAllOverlays();
     return;
   }

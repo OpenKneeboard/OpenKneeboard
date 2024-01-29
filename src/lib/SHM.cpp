@@ -166,6 +166,15 @@ Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
 Snapshot::Snapshot(incorrect_gpu_t) : mState(State::IncorrectGPU) {
 }
 
+Snapshot::Snapshot(FrameMetadata* metadata) : mState(State::Empty) {
+  OPENKNEEBOARD_TraceLoggingScope("SHM::Snapshot::Snapshot(FrameMetadata)");
+  mHeader = std::make_shared<FrameMetadata>(*metadata);
+
+  if (mHeader && mHeader->HaveFeeder()) {
+    mState = State::ValidWithoutTexture;
+  }
+}
+
 Snapshot::Snapshot(
   FrameMetadata* metadata,
   IPCTextureCopier* copier,
@@ -173,7 +182,7 @@ Snapshot::Snapshot(
   const std::shared_ptr<IPCClientTexture>& dest)
   : mIPCTexture(dest), mState(State::Empty) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
-    activity, "SHM::Snapshot::Snapshot()");
+    activity, "SHM::Snapshot::Snapshot(metadataAndTextures)");
 
   const auto textureIndex = metadata->mFrameNumber % SHMSwapchainLength;
   auto fenceValue = &metadata->mFenceValues.at(textureIndex);
@@ -192,9 +201,13 @@ Snapshot::Snapshot(
       fenceOut);
   }
 
-  if (mHeader && mHeader->HaveFeeder() && (mHeader->mLayerCount > 0)) {
+  if (mHeader && mHeader->HaveFeeder()) {
     TraceLoggingWriteTagged(activity, "MarkingValid");
-    mState = State::Valid;
+    if (mHeader->mLayerCount > 0) {
+      mState = State::ValidWithTexture;
+    } else {
+      mState = State::ValidWithoutTexture;
+    }
   }
 }
 
@@ -215,21 +228,21 @@ size_t Snapshot::GetRenderCacheKey() const {
 }
 
 uint64_t Snapshot::GetSequenceNumberForDebuggingOnly() const {
-  if (!this->IsValid()) {
+  if (!this->HasMetadata()) {
     return 0;
   }
   return mHeader->mFrameNumber;
 }
 
 Config Snapshot::GetConfig() const {
-  if (!this->IsValid()) {
+  if (!this->HasMetadata()) {
     return {};
   }
   return mHeader->mConfig;
 }
 
 uint8_t Snapshot::GetLayerCount() const {
-  if (!this->IsValid()) {
+  if (!this->HasMetadata()) {
     return 0;
   }
   return mHeader->mLayerCount;
@@ -244,10 +257,6 @@ const LayerConfig* Snapshot::GetLayerConfig(uint8_t layerIndex) const {
   }
 
   return &mHeader->mLayers[layerIndex];
-}
-
-bool Snapshot::IsValid() const {
-  return mState == State::Valid;
 }
 
 template <lockable_state State, State InitialState = State::Unlocked>
@@ -556,6 +565,10 @@ void CachedReader::InitializeCache(uint64_t gpuLUID, uint8_t swapchainLength) {
 
 CachedReader::~CachedReader() = default;
 
+Snapshot Reader::MaybeGetUncached(ConsumerKind kind) {
+  return MaybeGetUncached({}, nullptr, nullptr, kind);
+}
+
 Snapshot Reader::MaybeGetUncached(
   uint64_t gpuLUID,
   IPCTextureCopier* copier,
@@ -576,6 +589,12 @@ Snapshot Reader::MaybeGetUncached(
     return {Snapshot::incorrect_kind};
   }
 
+  p->UpdateSession();
+
+  if (!(gpuLUID && copier && dest)) {
+    return Snapshot(p->mHeader);
+  }
+
   if (p->mHeader->mGPULUID != gpuLUID) {
     traceprint(
       "GPU LUID mismatch: feeder has {:#018x}, reader has {:#018x}",
@@ -583,8 +602,6 @@ Snapshot Reader::MaybeGetUncached(
       gpuLUID);
     return {Snapshot::incorrect_gpu};
   }
-
-  p->UpdateSession();
 
   auto& br
     = p->mBufferResources.at(p->mHeader->mFrameNumber % SHMSwapchainLength);
@@ -596,7 +613,7 @@ Snapshot Reader::MaybeGetUncached(
   return Snapshot(p->mHeader, copier, br.get(), dest);
 }
 
-size_t Reader::GetRenderCacheKey(ConsumerKind kind) {
+size_t Reader::GetRenderCacheKey(ConsumerKind kind) const {
   if (!(p && p->mHeader)) {
     return {};
   }
@@ -721,12 +738,15 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
 
   if (cacheKey == mCacheKey) {
     const auto& cache = mCache.front();
-    TraceLoggingWriteStop(
-      activity,
-      "CachedReader::MaybeGet()",
-      TraceLoggingValue("Returning cached snapshot", "Result"),
-      TraceLoggingValue(static_cast<unsigned int>(cache.GetState()), "State"));
-    return cache;
+    if (cache.GetState() == Snapshot::State::ValidWithTexture) {
+      TraceLoggingWriteStop(
+        activity,
+        "CachedReader::MaybeGet()",
+        TraceLoggingValue("Returning cached snapshot", "Result"),
+        TraceLoggingValue(
+          static_cast<unsigned int>(cache.GetState()), "State"));
+      return cache;
+    }
   }
 
   TraceLoggingWriteTagged(activity, "LockingSHM");
@@ -784,6 +804,32 @@ std::shared_ptr<IPCClientTexture> CachedReader::GetIPCClientTexture(
     ret = this->CreateIPCClientTexture(dimensions, swapchainIndex);
   }
   return ret;
+}
+
+Snapshot CachedReader::MaybeGetMetadata() {
+  OPENKNEEBOARD_TraceLoggingScope("CachedReader::MaybeGetMetadata()");
+
+  if (!mClientTextures.empty()) {
+    return MaybeGet();
+  }
+
+  if (!*this) {
+    return {nullptr};
+  }
+
+  const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
+
+  if ((!mCache.empty()) && cacheKey == mCacheKey) {
+    return mCache.front();
+  }
+
+  std::unique_lock lock(*p);
+  auto snapshot = this->MaybeGetUncached(mConsumerKind);
+  if (snapshot.HasMetadata()) {
+    mCache.push_front(snapshot);
+    mCacheKey = cacheKey;
+  }
+  return snapshot;
 }
 
 IPCClientTexture::IPCClientTexture(

@@ -96,12 +96,19 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     return passthrough();
   }
 
-  if (!mSwapchain) {
+  const auto metadata = shm->MaybeGetMetadata();
+  if (!metadata.HasMetadata()) {
+    return passthrough();
+  }
+  const auto swapchainDimensions
+    = Spriting::GetBufferSize(metadata.GetLayerCount());
+
+  if (!(mSwapchain && mSwapchainDimensions == swapchainDimensions)) {
     // It's possible for us to be injected in between a present and an
     // OVREndFrame; this means we don't have the device yet, so creation will
     // fail.
-    mSwapchain = mRenderer->CreateSwapChain(
-      session, Spriting::GetBufferSize(MaxViewCount));
+    mSwapchain = mRenderer->CreateSwapChain(session, swapchainDimensions);
+    mSwapchainDimensions = swapchainDimensions;
     if (!mSwapchain) {
       traceprint("Failed to make an OVR swapchain");
       return passthrough();
@@ -109,7 +116,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   }
 
   const auto snapshot = shm->MaybeGet();
-  if (!snapshot.IsValid()) {
+  if (!snapshot.HasTexture()) {
     return passthrough();
   }
   const auto config = snapshot.GetConfig();

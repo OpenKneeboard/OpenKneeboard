@@ -76,6 +76,7 @@ class OpenXRKneeboard : public VRKneeboard {
   std::shared_ptr<OpenXRNext> mOpenXR;
 
   XrSwapchain mSwapchain {};
+  PixelSize mSwapchainDimensions;
   std::array<uint64_t, MaxViewCount> mRenderCacheKeys;
 
   XrSpace mLocalSpace = nullptr;

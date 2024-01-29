@@ -43,6 +43,7 @@ class OculusKneeboard final : private VRKneeboard {
 
  private:
   ovrTextureSwapChain mSwapchain {nullptr};
+  PixelSize mSwapchainDimensions;
   std::array<uint64_t, MaxViewCount> mRenderCacheKeys;
   ovrSession mSession = nullptr;
   Renderer* mRenderer = nullptr;

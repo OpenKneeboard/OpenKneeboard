@@ -541,7 +541,7 @@ class TestViewerWindow final : private D3D11Resources {
 
   void CaptureScreenshot() {
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
-    if (!snapshot.IsValid()) {
+    if (!snapshot.HasTexture()) {
       return;
     }
     if (mLayerIndex >= snapshot.GetLayerCount()) {
@@ -720,7 +720,7 @@ class TestViewerWindow final : private D3D11Resources {
       mRenderer->GetName(),
       mRenderer->GetSHM()->GetFrameCountForMetricsOnly());
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
-    if (snapshot.IsValid()) {
+    if (snapshot.HasTexture()) {
       const auto layerCount = snapshot.GetLayerCount();
       if (mLayerIndex < layerCount) {
         const auto layer = snapshot.GetLayerConfig(mLayerIndex);
@@ -767,7 +767,7 @@ class TestViewerWindow final : private D3D11Resources {
     const auto clientSize = GetClientSize();
 
     const auto snapshot = mRenderer->GetSHM()->MaybeGet();
-    if (!snapshot.IsValid()) {
+    if (!snapshot.HasTexture()) {
       if (!mStreamerMode) {
         RenderError("No Feeder");
       }

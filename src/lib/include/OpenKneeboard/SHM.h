@@ -178,7 +178,8 @@ class Snapshot final {
     Empty,
     IncorrectKind,
     IncorrectGPU,
-    Valid,
+    ValidWithoutTexture,
+    ValidWithTexture,
   };
   // marker for constructor
   struct incorrect_kind_t {};
@@ -195,6 +196,7 @@ class Snapshot final {
     IPCTextureCopier* copier,
     Detail::IPCSwapchainBufferResources* source,
     const std::shared_ptr<IPCClientTexture>& dest);
+  Snapshot(Detail::FrameMetadata*);
   ~Snapshot();
 
   /// Changes even if the feeder restarts with frame ID 0
@@ -205,6 +207,11 @@ class Snapshot final {
 
   template <std::derived_from<IPCClientTexture> T>
   T* GetTexture() const {
+    if (mState != State::ValidWithTexture) [[unlikely]] {
+      OPENKNEEBOARD_LOG_AND_FATAL(
+        "Called SHM::Snapshot::GetTexture() with invalid state {}",
+        static_cast<uint8_t>(mState));
+    }
     const auto ret = std::dynamic_pointer_cast<T>(mIPCTexture);
     if (!ret) [[unlikely]] {
       OPENKNEEBOARD_LOG_AND_FATAL("Layer texture cache type mismatch");
@@ -212,8 +219,16 @@ class Snapshot final {
     return ret.get();
   }
 
-  bool IsValid() const;
   State GetState() const;
+
+  constexpr bool HasMetadata() const {
+    return (mState == State::ValidWithoutTexture)
+      || (mState == State::ValidWithTexture);
+  }
+
+  constexpr bool HasTexture() const {
+    return mState == State::ValidWithTexture;
+  }
 
   // Use GetRenderCacheKey() instead for almost all purposes
   uint64_t GetSequenceNumberForDebuggingOnly() const;
@@ -244,11 +259,12 @@ class Reader {
    *
    * Changes even if the feeder restarts from frame ID 0.
    */
-  size_t GetRenderCacheKey(ConsumerKind kind);
+  size_t GetRenderCacheKey(ConsumerKind kind) const;
 
   uint64_t GetSessionID() const;
 
  protected:
+  Snapshot MaybeGetUncached(ConsumerKind);
   Snapshot MaybeGetUncached(
     uint64_t gpuLUID,
     IPCTextureCopier* copier,
@@ -265,6 +281,7 @@ class CachedReader : public Reader {
   CachedReader(IPCTextureCopier*, ConsumerKind);
   virtual ~CachedReader();
 
+  Snapshot MaybeGetMetadata();
   virtual Snapshot MaybeGet(
     const std::source_location& loc = std::source_location::current());
 
