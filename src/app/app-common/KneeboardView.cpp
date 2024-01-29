@@ -307,8 +307,8 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
 
   const auto& consumerSize = consumers.mNonVRPixelSize;
   if (haveNonVR) {
-    const auto rect
-      = mKneeboard->GetNonVRSettings().Layout(consumerSize, idealSize);
+    const auto rect = mKneeboard->GetNonVRSettings().mDeprecated.Layout(
+      consumerSize, idealSize);
     return {rect.mSize.mWidth, rect.mSize.mHeight};
   }
 

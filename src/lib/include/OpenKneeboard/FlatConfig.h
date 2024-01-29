@@ -55,9 +55,18 @@ struct NonVRConstrainedPosition {
 };
 static_assert(std::is_standard_layout_v<NonVRConstrainedPosition>);
 
+// Replaced by `OverlaysConfig` in v1.7+
+struct DeprecatedFlatConfig {
+  NonVRConstrainedPosition mDeprecated;
+  constexpr auto operator<=>(const DeprecatedFlatConfig&) const = default;
+};
+
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 void to_json(nlohmann::json& j, const NonVRAbsolutePosition&);
 void from_json(const nlohmann::json& j, NonVRAbsolutePosition&);
+
+void to_json(nlohmann::json& j, const DeprecatedFlatConfig&);
+void from_json(const nlohmann::json& j, DeprecatedFlatConfig&);
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(NonVRConstrainedPosition);
 #endif
 

@@ -51,7 +51,9 @@ std::shared_ptr<KneeboardState> KneeboardState::Create(
   return shared_with_final_release(new KneeboardState(hwnd, dxr));
 }
 
-KneeboardState::KneeboardState(HWND hwnd, const std::shared_ptr<DXResources>& dxr)
+KneeboardState::KneeboardState(
+  HWND hwnd,
+  const std::shared_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
 
@@ -131,7 +133,7 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 }
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
-  const auto primaryVR = mSettings.mVR.mPrimaryLayer;
+  const auto primaryVR = mSettings.mVR.mDeprecated.mPrimaryLayer;
   if (!mSettings.mApp.mDualKneeboards.mEnabled) {
     return {
       {
@@ -503,7 +505,7 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
-void KneeboardState::SetNonVRSettings(const NonVRConstrainedPosition& value) {
+void KneeboardState::SetNonVRSettings(const DeprecatedFlatConfig& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 

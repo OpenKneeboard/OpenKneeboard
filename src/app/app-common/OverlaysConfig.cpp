@@ -36,6 +36,7 @@ namespace OpenKneeboard {
 std::optional<SHM::VRPosition> OverlayVRPosition::Resolve(
   const std::vector<OverlayConfig>& others) const {
   if (mType == Type::Absolute) {
+    // FIXME: adjust for alignment and size
     return mAbsolutePosition;
   }
 

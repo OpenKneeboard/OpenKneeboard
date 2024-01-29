@@ -142,7 +142,7 @@ void InterprocessRenderer::SubmitFrame(
                              ->GetRuntimeID()
                              .GetTemporaryValue(),
     .mVR = mKneeboard->GetVRSettings(),
-    .mFlat = mKneeboard->GetNonVRSettings(),
+    .mFlat = mKneeboard->GetNonVRSettings().mDeprecated,
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
     .mTextureSize = destResources->mTextureSize,
   };

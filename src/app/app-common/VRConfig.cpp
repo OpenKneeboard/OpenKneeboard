@@ -58,7 +58,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
 template <>
 void from_json_postprocess<VRConfig>(const nlohmann::json& j, VRConfig& v) {
   from_json(j, static_cast<VRRenderConfig&>(v));
-  from_json(j, v.mPrimaryLayer);
+  from_json(j, v.mDeprecated.mPrimaryLayer);
 
   // Backwards compatibility
   if (j.contains("height")) {
@@ -78,7 +78,8 @@ void to_json_postprocess<VRConfig>(
     j,
     static_cast<const VRRenderConfig&>(parent_v),
     static_cast<const VRRenderConfig&>(v));
-  to_json_with_default(j, parent_v.mPrimaryLayer, v.mPrimaryLayer);
+  to_json_with_default(
+    j, parent_v.mDeprecated.mPrimaryLayer, v.mDeprecated.mPrimaryLayer);
 }
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(

@@ -80,9 +80,17 @@ static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
-  VRAbsolutePosition mPrimaryLayer {};
   float mMaxWidth = 0.15f;
   float mMaxHeight = 0.25f;
+
+  struct Deprecated {
+    // replaced with 'OverlaysConfig' in v1.7
+    VRAbsolutePosition mPrimaryLayer {};
+
+    constexpr auto operator<=>(const Deprecated&) const noexcept = default;
+  };
+
+  Deprecated mDeprecated;
 
   constexpr auto operator<=>(const VRConfig&) const noexcept = default;
 };

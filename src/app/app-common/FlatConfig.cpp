@@ -61,4 +61,11 @@ void from_json(const nlohmann::json& j, NonVRAbsolutePosition& p) {
   p.mVerticalAlignment = alignment.at("Vertical");
 }
 
+void to_json(nlohmann::json& j, const DeprecatedFlatConfig& v) {
+  to_json(j, v.mDeprecated);
+}
+void from_json(const nlohmann::json& j, DeprecatedFlatConfig& v) {
+  from_json(j, v.mDeprecated);
+}
+
 }// namespace OpenKneeboard

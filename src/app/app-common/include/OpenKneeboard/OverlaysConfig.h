@@ -49,6 +49,8 @@ struct OverlayVRPosition {
 
   std::optional<SHM::VRPosition> Resolve(
     const std::vector<OverlayConfig>& others) const;
+
+  constexpr auto operator<=>(const OverlayVRPosition&) const noexcept = default;
 };
 
 struct OverlayNonVRPosition {
@@ -65,6 +67,9 @@ struct OverlayNonVRPosition {
     NonVRAbsolutePosition mAbsolutePosition;
     NonVRConstrainedPosition mConstrainedPosition;
   };
+
+  constexpr auto operator<=>(const OverlayNonVRPosition&) const noexcept
+    = default;
 };
 
 struct OverlayConfig {
@@ -84,6 +89,8 @@ struct OverlayConfig {
   static OverlayConfig CreateMirroredOverlay(
     std::string_view name,
     const OverlayConfig& other);
+
+  constexpr auto operator<=>(const OverlayConfig&) const noexcept = default;
 };
 
 struct OverlaysConfig {
@@ -91,6 +98,8 @@ struct OverlaysConfig {
   explicit OverlaysConfig(const nlohmann::json&);
 
   std::vector<OverlayConfig> mOverlays;
+
+  constexpr auto operator<=>(const OverlaysConfig&) const noexcept = default;
 };
 
 };// namespace OpenKneeboard
