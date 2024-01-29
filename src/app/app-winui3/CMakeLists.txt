@@ -58,6 +58,7 @@ target_link_libraries(
   OpenKneeboard-App-WinUI3
   PRIVATE
   OpenKneeboard-App-Common
+  OpenKneeboard-DXResources
   OpenKneeboard-FilesDiffer
   OpenKneeboard-GetMainHWND
   OpenKneeboard-RuntimeFiles

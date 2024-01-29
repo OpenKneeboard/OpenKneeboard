@@ -57,8 +57,6 @@ class CachedLayer final {
   std::shared_ptr<RenderTarget> mCacheRenderTarget;
   winrt::com_ptr<ID3D11Texture2D> mCache;
   winrt::com_ptr<ID3D11ShaderResourceView> mCacheSRV;
-
-  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
 };
 
 }// namespace OpenKneeboard

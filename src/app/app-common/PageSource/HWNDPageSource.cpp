@@ -232,8 +232,6 @@ HWNDPageSource::HWNDPageSource(
 
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
-
-  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mDXR->mD3D11Device.get());
 }
 
 bool HWNDPageSource::HaveWindow() const {
@@ -345,7 +343,8 @@ void HWNDPageSource::RenderPage(
     color = {dimming, dimming, dimming, 1};
   }
 
-  mSpriteBatch->Begin(d3d.rtv(), rt->GetDimensions());
+  auto sb = mDXR->mSpriteBatch.get();
+  sb->Begin(d3d.rtv(), rt->GetDimensions());
 
   const auto contentBox = this->GetContentBox();
   const PixelRect sourceRect {
@@ -361,9 +360,9 @@ void HWNDPageSource::RenderPage(
       static_cast<uint32_t>(std::lround(rect.right - rect.left)),
       static_cast<uint32_t>(std::lround(rect.bottom - rect.top)),
     }};
-  mSpriteBatch->Draw(mShaderResourceView.get(), sourceRect, destRect, color);
+  sb->Draw(mShaderResourceView.get(), sourceRect, destRect, color);
 
-  mSpriteBatch->End();
+  sb->End();
 
   mNeedsRepaint = false;
 }

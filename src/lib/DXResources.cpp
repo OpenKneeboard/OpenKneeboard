@@ -154,6 +154,8 @@ DXResources::DXResources() : D3D11Resources(), D2DResources(this) {
   d2dBackBufferContext->SetTextAntialiasMode(
     D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
+  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mD3D11Device.get());
+
   mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
 
   winrt::check_hresult(

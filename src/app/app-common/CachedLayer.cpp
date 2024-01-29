@@ -28,7 +28,6 @@
 namespace OpenKneeboard {
 
 CachedLayer::CachedLayer(const std::shared_ptr<DXResources>& dxr) : mDXR(dxr) {
-  mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(dxr->mD3D11Device.get());
 }
 
 CachedLayer::~CachedLayer() {
@@ -94,9 +93,11 @@ void CachedLayer::Render(
     },
   };
 
-  mSpriteBatch->Begin(d3d.rtv(), rt->GetDimensions());
-  mSpriteBatch->Draw(mCacheSRV.get(), sourceRect, destRect);
-  mSpriteBatch->End();
+  auto sb = mDXR->mSpriteBatch.get();
+
+  sb->Begin(d3d.rtv(), rt->GetDimensions());
+  sb->Draw(mCacheSRV.get(), sourceRect, destRect);
+  sb->End();
 }
 
 void CachedLayer::Reset() {

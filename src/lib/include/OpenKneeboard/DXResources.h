@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/D3D11.h>
+
 #include <shims/winrt/base.h>
 
 #include <windows.data.pdf.interop.h>
@@ -104,6 +106,8 @@ struct DXResources : public D3D11Resources, public D2DResources {
   DXResources(DXResources&&) = delete;
   DXResources& operator=(const DXResources&) = delete;
   DXResources& operator=(DXResources&&) = delete;
+
+  std::unique_ptr<D3D11::SpriteBatch> mSpriteBatch;
 
   // e.g. doodles draw to a separate texture
   winrt::com_ptr<ID2D1DeviceContext5> mD2DBackBufferDeviceContext;

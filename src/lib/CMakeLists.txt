@@ -171,6 +171,7 @@ target_link_libraries(
   OpenKneeboard-DXResources
   PUBLIC
   _libheaders
+  OpenKneeboard-D3D11
   PRIVATE
   OpenKneeboard-dprint
 )
@@ -222,6 +223,7 @@ target_link_libraries(
   OpenKneeboard-SHM
   System::D3d11
   ThirdParty::CppWinRT
+  ThirdParty::DirectXTK
   PRIVATE
   OpenKneeboard-dprint
 )
@@ -280,6 +282,7 @@ ok_add_library(OpenKneeboard-D2DErrorRenderer STATIC D2DErrorRenderer.cpp)
 target_link_libraries(
   OpenKneeboard-D2DErrorRenderer
   PUBLIC
+  OpenKneeboard-DXResources
   OpenKneeboard-UTF8
   OpenKneeboard-config
   System::D2d1
@@ -386,14 +389,19 @@ target_link_libraries(
   _libheaders
 )
 
-ok_add_library(OpenKneeboard-SteamVRKneeboard STATIC SteamVRKneeboard.cpp)
+ok_add_library(
+  OpenKneeboard-SteamVRKneeboard
+  STATIC
+  SteamVRKneeboard.cpp
+)
 target_link_libraries(
   OpenKneeboard-SteamVRKneeboard
   PUBLIC
   OpenKneeboard-DXResources
+  OpenKneeboard-D3D11
+  OpenKneeboard-SHM-Client-D3D11
   OpenKneeboard-VRKneeboard
   OpenKneeboard-config
-  OpenKneeboard-SHM-Client-D3D11
   ThirdParty::DirectXTK
   ThirdParty::OpenVR
   _libheaders
@@ -401,7 +409,6 @@ target_link_libraries(
 target_link_libraries(
   OpenKneeboard-SteamVRKneeboard
   PRIVATE
-  OpenKneeboard-D3D11
   OpenKneeboard-dprint
 )
 
