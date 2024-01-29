@@ -23,6 +23,9 @@
 #include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/RenderTargetID.h>
 
+#include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/tracing.h>
+
 #include <Windows.h>
 
 #include <memory>
@@ -103,6 +106,9 @@ class RenderTarget::D2D final {
   bool mHDR {false};
 
   void Acquire();
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    mTraceLoggingActivity,
+    "RenderTarget::D2D");
 };
 
 class RenderTarget::D3D final {
@@ -122,6 +128,10 @@ class RenderTarget::D3D final {
  private:
   std::shared_ptr<RenderTarget> mParent;
   RenderTarget* mUnsafeParent {nullptr};
+
+  OPENKNEEBOARD_TraceLoggingScopedActivity(
+    mTraceLoggingActivity,
+    "RenderTarget::D3D");
 };
 
 }// namespace OpenKneeboard

@@ -24,7 +24,8 @@
 // clang-format on
 
 #include <OpenKneeboard/macros.h>
-#include <OpenKneeboard/scope_guard.h>
+
+#include <source_location>
 
 #include <TraceLoggingActivity.h>
 #include <TraceLoggingProvider.h>
@@ -54,21 +55,35 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
  * @param OKBTL_NAME the name of the activity (C string literal)
  *
  * @see OPENKNEEBOARD_TraceLoggingScope if you don't need the local variable
+ *
+ * This avoids templates and `auto` and generally jumps through hoops so that it
+ * is valid both inside an implementation, and in a class definition.
  */
 #define OPENKNEEBOARD_TraceLoggingScopedActivity( \
   OKBTL_ACTIVITY, OKBTL_NAME, ...) \
-  TraceLoggingThreadActivity<gTraceProvider> OKBTL_ACTIVITY; \
-  TraceLoggingWriteStart( \
-    OKBTL_ACTIVITY, \
-    OKBTL_NAME, \
-    TraceLoggingValue(__FILE__, "File"), \
-    TraceLoggingValue(__LINE__, "Line"), \
-    TraceLoggingValue(__FUNCTION__, "Function"), \
-    ##__VA_ARGS__); \
-  const OpenKneeboard::scope_guard OPENKNEEBOARD_CONCAT2( \
-    OKBTL_ACTIVITY, _scopeExit)([&OKBTL_ACTIVITY]() { \
-    TraceLoggingWriteStop(OKBTL_ACTIVITY, OKBTL_NAME); \
-  });
+  const std::function<void(TraceLoggingThreadActivity<gTraceProvider>&)> \
+    OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY) \
+    = [&, loc = std::source_location::current()]( \
+        TraceLoggingThreadActivity<gTraceProvider>& activity) { \
+        TraceLoggingWriteStart( \
+          activity, \
+          OKBTL_NAME, \
+          OPENKNEEBOARD_TraceLoggingSourceLocation(loc), \
+          ##__VA_ARGS__); \
+      }; \
+  class OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) final \
+    : public TraceLoggingThreadActivity<gTraceProvider> { \
+   public: \
+    OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) \
+    (decltype(OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY))& startImpl) { \
+      startImpl(*this); \
+    } \
+    OPENKNEEBOARD_CONCAT2(~_Impl, OKBTL_ACTIVITY)() { \
+      TraceLoggingWriteStop(*this, OKBTL_NAME); \
+    } \
+  }; \
+  OPENKNEEBOARD_CONCAT2(_Impl, OKBTL_ACTIVITY) \
+  OKBTL_ACTIVITY {OPENKNEEBOARD_CONCAT2(_StartImpl, OKBTL_ACTIVITY)};
 
 /** Create and automatically start and stop a named activity.
  *
@@ -79,7 +94,7 @@ static_assert(OPENKNEEBOARD_HAVE_NONSTANDARD_VA_ARGS_COMMA_ELISION);
  */
 #define OPENKNEEBOARD_TraceLoggingScope(OKBTL_NAME, ...) \
   OPENKNEEBOARD_TraceLoggingScopedActivity( \
-    OPENKNEEBOARD_CONCAT2(okbtlsa, __COUNTER__), OKBTL_NAME, ##__VA_ARGS__)
+    OPENKNEEBOARD_CONCAT2(_okbtlsa, __COUNTER__), OKBTL_NAME, ##__VA_ARGS__)
 
 #define OPENKNEEBOARD_TraceLoggingWrite(OKBTL_NAME, ...) \
   TraceLoggingWrite( \

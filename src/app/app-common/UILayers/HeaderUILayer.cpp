@@ -139,6 +139,7 @@ void HeaderUILayer::PostCursorEvent(
 IUILayer::Metrics HeaderUILayer::GetMetrics(
   const IUILayer::NextList& next,
   const Context& context) const {
+  OPENKNEEBOARD_TraceLoggingScope("HeaderUILayer::GetMetrics()");
   const auto nextMetrics = next.front()->GetMetrics(next.subspan(1), context);
 
   const auto contentHeight
