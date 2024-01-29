@@ -25,17 +25,37 @@
 
 namespace OpenKneeboard::Spriting {
 
-constexpr PixelPoint GetOffset(
-  uint8_t sprite,
-  [[maybe_unused]] uint8_t maxSprites) {
-  return {MaxViewRenderSize.mWidth * sprite, 0};
+namespace Detail {
+
+constexpr uint8_t GetColumnCount(uint8_t maxSprites) {
+  return (maxSprites < 4) ? maxSprites : 4;
 }
+
+constexpr uint8_t GetRowCount(uint8_t maxSprites) {
+  return ((maxSprites - 1) / GetColumnCount(maxSprites)) + 1;
+}
+
+static_assert(GetRowCount(1) == 1);
+static_assert(GetColumnCount(1) == 1);
+static_assert(GetRowCount(4) == 1);
+static_assert(GetColumnCount(4) == 4);
+static_assert(GetRowCount(5) == 2);
+static_assert(GetColumnCount(5) == 4);
+static_assert(GetRowCount(8) == 2);
+static_assert(GetColumnCount(8) == 4);
+}// namespace Detail
 
 constexpr PixelSize GetBufferSize(uint8_t maxSprites) noexcept {
   return {
-    MaxViewRenderSize.mWidth * maxSprites,
-    MaxViewRenderSize.mHeight,
+    MaxViewRenderSize.mWidth * Detail::GetColumnCount(maxSprites),
+    MaxViewRenderSize.mHeight * Detail::GetRowCount(maxSprites),
   };
+}
+
+constexpr PixelPoint GetOffset(uint8_t sprite, uint8_t maxSprites) {
+  const auto row = sprite / Detail::GetColumnCount(maxSprites);
+  const auto column = sprite % Detail::GetColumnCount(maxSprites);
+  return {MaxViewRenderSize.mWidth * column, MaxViewRenderSize.mHeight * row};
 }
 
 constexpr PixelRect GetRect(uint8_t sprite, uint8_t maxSprites) noexcept {
