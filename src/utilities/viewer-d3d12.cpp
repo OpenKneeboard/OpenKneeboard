@@ -59,6 +59,8 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
     &ID3D12Device::CreateCommandAllocator,
     D3D12_COMMAND_LIST_TYPE_DIRECT);
 
+  mGraphicsMemory = std::make_unique<DirectX::GraphicsMemory>(mDevice.get());
+
   mSpriteBatch = std::make_unique<D3D12::SpriteBatch>(
     mDevice.get(), mCommandQueue.get(), DXGI_FORMAT_B8G8R8A8_UNORM);
 

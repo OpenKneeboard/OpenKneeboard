@@ -27,6 +27,7 @@
 #include <shims/winrt/base.h>
 
 #include <directxtk12/DescriptorHeap.h>
+#include <directxtk12/GraphicsMemory.h>
 
 namespace OpenKneeboard::Viewer {
 
@@ -62,6 +63,7 @@ class D3D12Renderer final : public Renderer {
   winrt::com_ptr<ID3D12CommandAllocator> mCommandAllocator;
   winrt::com_ptr<ID3D12GraphicsCommandList> mCommandList;
 
+  std::unique_ptr<DirectX::GraphicsMemory> mGraphicsMemory;
   std::unique_ptr<D3D12::SpriteBatch> mSpriteBatch;
 
   HANDLE mDestHandle {};
