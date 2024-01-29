@@ -761,11 +761,26 @@ void KneeboardState::unlock_shared() {
 }
 
 void KneeboardState::InitializeViews() {
+  const auto oldViews = mViews;
   const auto count = mSettings.mViews.mViews.size();
-  mViews.resize(count);
   auto tabs = mTabsList->GetTabs();
-  for (auto& view: mViews) {
-    view = KneeboardView::Create(mDXResources, this);
+
+  mViews.clear();
+  for (size_t i = 0; i < count; ++i) {
+    const auto& config = mSettings.mViews.mViews.at(i);
+    const auto it
+      = std::ranges::find(oldViews, config.mGuid, [](const auto& it) {
+          return it->GetPersistentGUID();
+        });
+
+    if (it != oldViews.end()) {
+      mViews.push_back(*it);
+    } else {
+      mViews.push_back(KneeboardView::Create(mDXResources, this, config.mGuid));
+    }
+
+    auto& view = mViews.back();
+
     view->SetTabs(tabs);
     AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }

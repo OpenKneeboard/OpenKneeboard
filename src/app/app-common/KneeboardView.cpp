@@ -44,8 +44,9 @@ namespace OpenKneeboard {
 
 KneeboardView::KneeboardView(
   const std::shared_ptr<DXResources>& dxr,
-  KneeboardState* kneeboard)
-  : mDXR(dxr), mKneeboard(kneeboard) {
+  KneeboardState* kneeboard,
+  const winrt::guid& guid)
+  : mDXR(dxr), mKneeboard(kneeboard), mGUID(guid) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
   mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr);
 
@@ -79,8 +80,10 @@ std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
 
 std::shared_ptr<KneeboardView> KneeboardView::Create(
   const std::shared_ptr<DXResources>& dxr,
-  KneeboardState* kneeboard) {
-  return std::shared_ptr<KneeboardView>(new KneeboardView(dxr, kneeboard));
+  KneeboardState* kneeboard,
+  const winrt::guid& guid) {
+  return std::shared_ptr<KneeboardView>(
+    new KneeboardView(dxr, kneeboard, guid));
 }
 
 void KneeboardView::UpdateUILayers() {
@@ -103,6 +106,10 @@ void KneeboardView::UpdateUILayers() {
 
 KneeboardView::~KneeboardView() {
   this->RemoveAllEventListeners();
+}
+
+winrt::guid KneeboardView::GetPersistentGUID() const {
+  return mGUID;
 }
 
 KneeboardViewID KneeboardView::GetRuntimeID() const {
@@ -311,7 +318,7 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
   if (haveNonVR) {
     const auto rect = mKneeboard->GetNonVRSettings().mDeprecated.Layout(
       consumerSize, idealSize);
-    return {rect.mSize.mWidth, rect.mSize.mHeight};
+    return rect.mSize;
   }
 
   if (haveViewer) {

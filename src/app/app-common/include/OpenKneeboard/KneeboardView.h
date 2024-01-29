@@ -44,8 +44,10 @@ class KneeboardView final : public IKneeboardView,
 
   [[nodiscard]] static std::shared_ptr<KneeboardView> Create(
     const std::shared_ptr<DXResources>&,
-    KneeboardState*);
+    KneeboardState*,
+    const winrt::guid&);
 
+  virtual winrt::guid GetPersistentGUID() const override;
   virtual KneeboardViewID GetRuntimeID() const override;
 
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
@@ -96,7 +98,10 @@ class KneeboardView final : public IKneeboardView,
   std::optional<Bookmark> GetBookmark(RelativePosition) const;
   void SetBookmark(RelativePosition);
 
-  KneeboardView(const std::shared_ptr<DXResources>&, KneeboardState*);
+  KneeboardView(
+    const std::shared_ptr<DXResources>&,
+    KneeboardState*,
+    const winrt::guid&);
   winrt::apartment_context mUIThread;
   KneeboardViewID mID;
   std::shared_ptr<DXResources> mDXR;
@@ -123,6 +128,8 @@ class KneeboardView final : public IKneeboardView,
   std::tuple<IUILayer*, std::span<IUILayer*>> GetUILayers() const;
 
   ThreadGuard mThreadGuard;
+
+  winrt::guid mGUID;
 };
 
 }// namespace OpenKneeboard

@@ -48,6 +48,9 @@ class IKneeboardView {
   IKneeboardView();
   virtual ~IKneeboardView();
 
+  virtual winrt::guid GetPersistentGUID() const = 0;
+  // TODO: now that we have persistent GUIDs, we could just use them instead and
+  // get rid of these.
   virtual KneeboardViewID GetRuntimeID() const = 0;
 
   virtual std::shared_ptr<ITabView> GetCurrentTabView() const = 0;
