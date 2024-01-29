@@ -1,10 +1,10 @@
 [
   {
-    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/137393627",
-    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/137393627/assets",
-    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/137393627/assets{?name,label}",
-    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.7-alpha4",
-    "id": 137393627,
+    "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/138942296",
+    "assets_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/138942296/assets",
+    "upload_url": "https://uploads.github.com/repos/OpenKneeboard/OpenKneeboard/releases/138942296/assets{?name,label}",
+    "html_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/tag/v1.7-alpha5",
+    "id": 138942296,
     "author": {
       "login": "github-actions[bot]",
       "id": 41898282,
@@ -25,20 +25,20 @@
       "type": "Bot",
       "site_admin": false
     },
-    "node_id": "RE_kwDOGk0DR84IMHXb",
-    "tag_name": "v1.7-alpha4",
+    "node_id": "RE_kwDOGk0DR84ISBdY",
+    "tag_name": "v1.7-alpha5",
     "target_commitish": "master",
-    "name": "v1.7-alpha4",
+    "name": "v1.7-alpha5",
     "draft": false,
     "prerelease": true,
-    "created_at": "2024-01-17T13:47:00Z",
-    "published_at": "2024-01-17T14:59:59Z",
+    "created_at": "2024-01-29T15:01:51Z",
+    "published_at": "2024-01-29T16:02:13Z",
     "assets": [
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/146099551",
-        "id": 146099551,
-        "node_id": "RA_kwDOGk0DR84ItU1f",
-        "name": "OpenKneeboard-v1.7-alpha4-DebugSymbols.zip",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/148516533",
+        "id": 148516533,
+        "node_id": "RA_kwDOGk0DR84I2i61",
+        "name": "OpenKneeboard-v1.7-alpha5-DebugSymbols.zip",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -62,17 +62,17 @@
         },
         "content_type": "application/zip",
         "state": "uploaded",
-        "size": 157560689,
+        "size": 157439543,
         "download_count": 0,
-        "created_at": "2024-01-17T14:08:02Z",
-        "updated_at": "2024-01-17T14:08:06Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-alpha4/OpenKneeboard-v1.7-alpha4-DebugSymbols.zip"
+        "created_at": "2024-01-29T15:23:56Z",
+        "updated_at": "2024-01-29T15:24:00Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-alpha5/OpenKneeboard-v1.7-alpha5-DebugSymbols.zip"
       },
       {
-        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/146099550",
-        "id": 146099550,
-        "node_id": "RA_kwDOGk0DR84ItU1e",
-        "name": "OpenKneeboard-v1.7-alpha4.msi",
+        "url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/releases/assets/148516535",
+        "id": 148516535,
+        "node_id": "RA_kwDOGk0DR84I2i63",
+        "name": "OpenKneeboard-v1.7-alpha5.msi",
         "label": "",
         "uploader": {
           "login": "github-actions[bot]",
@@ -96,15 +96,15 @@
         },
         "content_type": "application/octet-stream",
         "state": "uploaded",
-        "size": 39325696,
+        "size": 39747584,
         "download_count": 0,
-        "created_at": "2024-01-17T14:08:02Z",
-        "updated_at": "2024-01-17T14:08:03Z",
-        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-alpha4/OpenKneeboard-v1.7-alpha4.msi"
+        "created_at": "2024-01-29T15:23:56Z",
+        "updated_at": "2024-01-29T15:23:57Z",
+        "browser_download_url": "https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-alpha5/OpenKneeboard-v1.7-alpha5.msi"
       }
     ],
-    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.7-alpha4",
-    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.7-alpha4",
-    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.7-alpha4.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-alpha4/OpenKneeboard-v1.7-alpha4.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\nThis fixes a bug in v1.7-alpha3 that caused flickering in OpenXR unless 'always update swapchains' was enabled.\r\n\r\nThis release also includes the following changes from v1.7-alpha3:\r\n\r\nRewrote all the Oculus and OpenXR renderers. This includes:\r\n- Improved performance of dual kneeboards\r\n- Varjo+D3D12+OpenXR is now as fast as D3d12+OpenXR on other headsets; removed the advanced option to disable double-buffering for Varjo as it is now always off.\r\n- Especially improved performance of Oculus+D3D12 and OpenXR+D3D12\r\n- Also improved performance of Oculus+D3D11, OpenXR+D3D11, and OpenXR+Vulkan\r\n- Color correction fixes for OpenXR+Vulkan"
+    "tarball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/tarball/v1.7-alpha5",
+    "zipball_url": "https://api.github.com/repos/OpenKneeboard/OpenKneeboard/zipball/v1.7-alpha5",
+    "body": "# Before installing: this might not be the latest release - [you can always get the latest release here](https://github.com/OpenKneeboard/OpenKneeboard/releases/latest)\r\n\r\nStart by downloading [OpenKneeboard-v1.7-alpha5.msi](https://github.com/OpenKneeboard/OpenKneeboard/releases/download/v1.7-alpha5/OpenKneeboard-v1.7-alpha5.msi); the documentation is [on OpenKneeboard.com](https://openkneeboard.com).\r\n\r\n## TL;DR\r\n\r\nRewritten app <-> game communication, and all the in-game renderers for improved performance.\r\n\r\n## Long version\r\n\r\n- Sprite the SHM: instead of using 2 2048x2048 textures, a single 4096x2048 texture is used. This allows more efficient operations\r\n- Refactored all the renderers to be have a consistent feel and increase code sharing between nonvr/openxr/oculus\r\n- D3D11 renderer: single draw call for both kneeboards\r\n- D3D12 renderer: single draw call for both kneeboards, no D3D11on12, much less blocking. Supports multiple concurrent frames.\r\n- Vulkan renderer: ... complete rewrite. From-scratch SpriteBatch implementation. No longer uses D3D11, pure Vulkan, much less blocking. Supports multiple concurrent frames.\r\n- Viewer: rewritten to support any of the renderers. Specify with `-G D3D11`, `-G D3D12`, `-G Vulkan`. Default is still D3D11\r\n- Viewer: use D3D11 for background; Direct2D is still used for text\r\n- Viewer: automatically disable Direct2D if RenderDoc is attached\r\n- Viewer: press 'F' to cycle background 'F'ill options. 'B' was already used for borderless.\r\n- Viewer: added checkerboard background options\r\n- added statically-and-dynamically enforced StateMachine abstraction\r\n- use StateMachine in various places, including checking the new SHM approach is being handled correctly\r\n- add missing client-side fences\r\n- add tracelogging wrappers\r\n- added `OPENKNEEBOARD_LOG_AND_FATAL()` option; use it heavily. This gets much more meaningful dumps for multithreaded programs."
   }
 ]
