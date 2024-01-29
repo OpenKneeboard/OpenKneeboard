@@ -133,36 +133,24 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 }
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
-  const auto primaryVR = mSettings.mVR.mDeprecated.mPrimaryLayer;
-  if (!mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
-    return {
-      {
-        .mView = mViews.at(mFirstViewIndex),
-        .mVR = primaryVR,
-        .mIsActiveForInput = true,
-      },
-    };
+  std::vector<ViewRenderInfo> ret;
+
+  const size_t count = mSettings.mViews.mViews.size();
+  if (count != mViews.size()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("View count mismatch");
+  }
+  for (size_t i = 0; i < count; ++i) {
+    const auto index = (i + mFirstViewIndex) % count;
+    const auto& viewConfig = mSettings.mViews.mViews.at(index);
+    ret.push_back({
+      .mView = mViews.at(index),
+      .mVR = viewConfig.mVRPosition.Resolve(mSettings.mViews.mViews),
+      .mNonVR = viewConfig.mNonVRPosition.Resolve(mSettings.mViews.mViews),
+      .mIsActiveForInput = (index == mInputViewIndex),
+    });
   }
 
-  auto secondaryVR = primaryVR;
-  secondaryVR.mX = -primaryVR.mX;
-  // Yaw
-  secondaryVR.mRY = -primaryVR.mRY;
-  // Roll
-  secondaryVR.mRZ = -primaryVR.mRZ;
-
-  return {
-    {
-      .mView = mViews.at(mFirstViewIndex),
-      .mVR = primaryVR,
-      .mIsActiveForInput = mFirstViewIndex == mInputViewIndex,
-    },
-    {
-      .mView = mViews.at((mFirstViewIndex + 1) % mViews.size()),
-      .mVR = secondaryVR,
-      .mIsActiveForInput = mFirstViewIndex != mInputViewIndex,
-    },
-  };
+  return ret;
 }
 
 std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()

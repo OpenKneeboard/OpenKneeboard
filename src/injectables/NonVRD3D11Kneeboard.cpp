@@ -124,16 +124,23 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
     return passthrough();
   }
 
+  const SHM::LayerConfig* layerConfig = nullptr;
+  for (uint8_t i = 0; i < layerCount; ++i) {
+    layerConfig = snapshot.GetLayerConfig(i);
+    if (layerConfig->mNonVREnabled) {
+      break;
+    }
+    layerConfig = nullptr;
+  }
+
   const auto& sr = mResources->mSwapchainResources;
 
-  const auto& layerConfig = *snapshot.GetLayerConfig(0);
-  const auto flatConfig = snapshot.GetConfig().mFlat;
-
-  const auto& imageSize = layerConfig.mLocationOnTexture.mSize;
+  const auto flatConfig = layerConfig->mNonVR;
+  const auto& imageSize = layerConfig->mLocationOnTexture.mSize;
 
   const auto destRect
-    = flatConfig.Layout(sr.mDimensions, layerConfig.mLocationOnTexture.mSize);
-  const auto sourceRect = layerConfig.mLocationOnTexture;
+    = flatConfig.Layout(sr.mDimensions, layerConfig->mLocationOnTexture.mSize);
+  const auto sourceRect = layerConfig->mLocationOnTexture;
 
   const float opacity = flatConfig.mOpacity;
 

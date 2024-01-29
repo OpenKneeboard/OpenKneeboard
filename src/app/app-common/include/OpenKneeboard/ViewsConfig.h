@@ -163,6 +163,9 @@ struct ViewNonVRPosition {
 
   constexpr bool operator==(const ViewNonVRPosition&) const noexcept = default;
 
+  std::optional<SHM::NonVRPosition> Resolve(
+    const std::vector<ViewConfig>& others) const;
+
  private:
   Type mType {Type::Empty};
   std::variant<winrt::guid, NonVRAbsolutePosition, NonVRConstrainedPosition>

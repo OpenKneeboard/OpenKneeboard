@@ -142,7 +142,6 @@ void InterprocessRenderer::SubmitFrame(
                              ->GetRuntimeID()
                              .GetTemporaryValue(),
     .mVR = mKneeboard->GetVRSettings(),
-    .mFlat = mKneeboard->GetNonVRSettings().mDeprecated,
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
     .mTextureSize = destResources->mTextureSize,
   };
@@ -346,14 +345,21 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
   }
   ret.mLocationOnTexture = {bounds.mOffset, usedSize};
 
-  const auto vrc = mKneeboard->GetVRSettings();
-  const auto xFitScale = vrc.mMaxWidth / usedSize.width;
-  const auto yFitScale = vrc.mMaxHeight / usedSize.height;
-  const auto scale = std::min<float>(xFitScale, yFitScale);
+  if (layer.mVR) {
+    ret.mVREnabled = true;
+    ret.mVR = *layer.mVR;
+    const auto vrc = mKneeboard->GetVRSettings();
+    const auto xFitScale = vrc.mMaxWidth / usedSize.width;
+    const auto yFitScale = vrc.mMaxHeight / usedSize.height;
+    const auto scale = std::min<float>(xFitScale, yFitScale);
+    ret.mVR.mWidth = usedSize.width * scale;
+    ret.mVR.mHeight = usedSize.height * scale;
+  }
 
-  ret.mVR = layer.mVR;
-  ret.mVR.mWidth = usedSize.width * scale;
-  ret.mVR.mHeight = usedSize.height * scale;
+  if (layer.mNonVR) {
+    ret.mNonVREnabled = true;
+    ret.mNonVR = *layer.mNonVR;
+  }
 
   view->RenderWithChrome(
     mCanvas.get(), ret.mLocationOnTexture, layer.mIsActiveForInput);

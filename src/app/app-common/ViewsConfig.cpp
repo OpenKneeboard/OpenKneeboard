@@ -36,9 +36,12 @@ namespace OpenKneeboard {
 
 std::optional<SHM::VRPosition> ViewVRPosition::Resolve(
   const std::vector<ViewConfig>& others) const {
+  if (mType == Type::Empty) {
+    return {};
+  }
   if (mType == Type::Absolute) {
-    // FIXME: adjust for alignment and size
-    return GetAbsolutePosition();
+    // TODO: adjust for alignment and size
+    return this->GetAbsolutePosition();
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
@@ -63,6 +66,18 @@ std::optional<SHM::VRPosition> ViewVRPosition::Resolve(
   ret.mRZ = -ret.mRZ;
 
   return ret;
+}
+
+std::optional<SHM::NonVRPosition> ViewNonVRPosition::Resolve(
+  const std::vector<ViewConfig>& others) const {
+  if (mType == Type::Empty) {
+    return {};
+  }
+  if (mType == Type::Constrained) {
+    return this->GetConstrainedPosition();
+  }
+  // TODO: implement other types
+  return {};
 }
 
 ViewsConfig::ViewsConfig() {

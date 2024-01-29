@@ -51,6 +51,7 @@ struct IPCSwapchainBufferResources;
 }// namespace Detail
 
 using VRPosition = VRAbsolutePosition;
+using NonVRPosition = NonVRConstrainedPosition;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -120,7 +121,6 @@ class ConsumerPattern final {
 struct Config final {
   uint64_t mGlobalInputLayerID {};
   VRRenderConfig mVR {};
-  NonVRConstrainedPosition mFlat {};
   ConsumerPattern mTarget {};
   PixelSize mTextureSize {};
 };
@@ -129,7 +129,10 @@ struct LayerConfig final {
   uint64_t mLayerID {};
   PixelRect mLocationOnTexture {};
 
-  VRAbsolutePosition mVR {};
+  bool mVREnabled {false};
+  SHM::VRPosition mVR {};
+  bool mNonVREnabled {false};
+  SHM::NonVRPosition mNonVR {};
 };
 static_assert(std::is_standard_layout_v<LayerConfig>);
 
