@@ -96,6 +96,7 @@ struct VRConfig : public VRRenderConfig {
 };
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRAbsolutePosition)
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRConfig)
 #endif
 

@@ -19,6 +19,7 @@
  */
 #include <OpenKneeboard/ViewsConfig.h>
 
+#include <OpenKneeboard/json.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <Windows.h>
@@ -64,35 +65,140 @@ std::optional<SHM::VRPosition> ViewVRPosition::Resolve(
   return ret;
 }
 
-ViewConfig ViewConfig::CreateDefaultFirstView() {
-  return ViewConfig::CreateRightKnee();
-}
-
-ViewConfig ViewConfig::CreateRightKnee() {
-  return ViewConfig {
-    .mGuid = CreateGUID(),
-    .mName = _("Right Kneeboard"),
-    .mVRPosition = ViewVRPosition::Absolute({}),
-    .mNonVRPosition = ViewNonVRPosition::Constrained({}),
-  };
-}
-
-ViewConfig ViewConfig::CreateDefaultSecondView(const ViewConfig& first) {
-  return CreateMirroredView(_("Left Kneeboard"), first);
-}
-
-ViewConfig ViewConfig::CreateMirroredView(
-  std::string_view name,
-  const ViewConfig& other) {
-  return ViewConfig {
-    .mGuid = CreateGUID(),
-    .mName = std::string {name},
-    .mVRPosition = ViewVRPosition::HorizontalMirrorOf(other.mGuid),
-    .mNonVRPosition = ViewNonVRPosition::HorizontalMirrorOf(other.mGuid),
-  };
-}
-
 ViewsConfig::ViewsConfig() {
 }
+
+static void MaybeSet(nlohmann::json& j, std::string_view key, auto value) {
+  if (value != decltype(value) {}) {
+    j[key] = value;
+  }
+};
+
+template <class T>
+static T MaybeGet(const nlohmann::json& j, std::string_view key) {
+  if (j.contains(key)) {
+    return j.at("key");
+  }
+  return {};
+}
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  ViewVRPosition::Type,
+  {
+    {ViewVRPosition::Type::Absolute, "Absolute"},
+    {ViewVRPosition::Type::Empty, "Empty"},
+    {ViewVRPosition::Type::HorizontalMirror, "HorizontalMirror"},
+  })
+
+void from_json(const nlohmann::json& j, ViewVRPosition& v) {
+  if (!j.contains("Type")) {
+    return;
+  }
+
+  using Type = ViewVRPosition::Type;
+  const Type type = j.at("Type");
+  switch (type) {
+    case Type::Empty:
+      return;
+    case Type::Absolute:
+      v.SetAbsolute(MaybeGet<VRAbsolutePosition>(j, "AbsolutePosition"));
+      return;
+    case Type::HorizontalMirror:
+      v.SetHorizontalMirrorOf(MaybeGet<winrt::guid>(j, "MirrorOf"));
+      return;
+    default:
+      OPENKNEEBOARD_BREAK;
+  }
+}
+
+void to_json(nlohmann::json& j, const ViewVRPosition& v) {
+  j["Type"] = v.GetType();
+
+  MaybeSet(j, "HorizontalAlignment", v.mHorizontalAlignment);
+  MaybeSet(j, "VerticalAlignment", v.mVerticalAlignment);
+
+  using Type = ViewVRPosition::Type;
+  switch (v.GetType()) {
+    case Type::Empty:
+      return;
+    case Type::Absolute:
+      MaybeSet(j, "AbsolutePosition", v.GetAbsolutePosition());
+      return;
+    case Type::HorizontalMirror:
+      MaybeSet(j, "MirrorOf", v.GetMirrorOfGUID());
+      return;
+    default:
+      OPENKNEEBOARD_BREAK;
+  }
+}
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  ViewNonVRPosition::Type,
+  {
+    {ViewNonVRPosition::Type::Absolute, "Absolute"},
+    {ViewNonVRPosition::Type::Constrained, "Constrained"},
+    {ViewNonVRPosition::Type::Empty, "Empty"},
+    {ViewNonVRPosition::Type::HorizontalMirror, "HorizontalMirror"},
+    {ViewNonVRPosition::Type::VerticalMirror, "VerticalMirror"},
+  });
+
+void from_json(const nlohmann::json& j, ViewNonVRPosition& v) {
+  if (!j.contains("Type")) {
+    return;
+  }
+
+  using Type = ViewNonVRPosition::Type;
+  const Type type = j.at("Type");
+  switch (type) {
+    case Type::Empty:
+      return;
+    case Type::Absolute:
+      v.SetAbsolute(MaybeGet<NonVRAbsolutePosition>(j, "AbsolutePosition"));
+      return;
+    case Type::Constrained:
+      v.SetConstrained(MaybeGet<NonVRConstrainedPosition>(j, "Constraints"));
+      return;
+    case Type::HorizontalMirror:
+      v.SetHorizontalMirrorOf(j.at("MirrorOf"));
+      return;
+    case Type::VerticalMirror:
+      v.SetVerticalMirrorOf(j.at("MirrorOf"));
+      return;
+    default:
+      OPENKNEEBOARD_BREAK;
+  }
+}
+
+void to_json(nlohmann::json& j, const ViewNonVRPosition& v) {
+  j["Type"] = v.GetType();
+
+  using Type = ViewNonVRPosition::Type;
+  switch (v.GetType()) {
+    case Type::Empty:
+      return;
+    case Type::Absolute: {
+      MaybeSet(j, "AbsolutePosition", v.GetAbsolutePosition());
+      return;
+    }
+    case Type::Constrained:
+      MaybeSet(j, "Constraints", v.GetConstrainedPosition());
+      return;
+    case Type::HorizontalMirror:
+    case Type::VerticalMirror:
+      MaybeSet(j, "MirrorOf", v.GetMirrorOfGUID());
+      return;
+    default:
+      OPENKNEEBOARD_BREAK;
+  }
+}
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  ViewConfig,
+  mGuid,
+  mName,
+  mVRPosition,
+  mNonVRPosition);
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsConfig, mViews);
 
 };// namespace OpenKneeboard

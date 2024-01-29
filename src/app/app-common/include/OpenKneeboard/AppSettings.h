@@ -91,12 +91,12 @@ struct AppSettings final {
   std::optional<RECT> mWindowRect;
   bool mLoopPages {false};
   bool mLoopTabs {false};
-  DualKneeboardSettings mDualKneeboards {};
   AutoUpdateSettings mAutoUpdate {};
   BookmarkSettings mBookmarks {};
   InGameUISettings mInGameUI {};
   TintSettings mTint {};
   std::string mLastRunVersion;
+  DualKneeboardSettings mDualKneeboards {};
 
   constexpr auto operator<=>(const AppSettings&) const noexcept = default;
 };

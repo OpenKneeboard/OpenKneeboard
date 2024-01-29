@@ -514,6 +514,13 @@ void KneeboardState::SetNonVRSettings(const DeprecatedFlatConfig& value) {
   this->evNeedsRepaintEvent.Emit();
 }
 
+void KneeboardState::SetViewsSettings(const ViewsConfig& view) {
+  const EventDelay delay;// lock must be released first
+  const std::unique_lock lock(*this);
+
+  mSettings.mViews = view;
+}
+
 void KneeboardState::SetVRSettings(const VRConfig& value) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);

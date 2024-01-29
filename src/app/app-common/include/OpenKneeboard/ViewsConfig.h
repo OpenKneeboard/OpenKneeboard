@@ -35,22 +35,33 @@ struct ViewConfig;
 
 struct ViewVRPosition {
   enum class Type {
+    Empty,
     Absolute,
     // Mirrored in the x = 0 plane, i.e. x => -x
     HorizontalMirror,
   };
 
-  static constexpr ViewVRPosition Absolute(const VRAbsolutePosition& p) {
+  ViewVRPosition() = default;
+
+  constexpr void SetAbsolute(const VRAbsolutePosition& p) {
+    mType = Type::Absolute;
+    mData = p;
+  }
+
+  constexpr void SetHorizontalMirrorOf(const winrt::guid& guid) {
+    mType = Type::HorizontalMirror;
+    mData = guid;
+  }
+
+  static constexpr auto Absolute(const VRAbsolutePosition& p) {
     ViewVRPosition ret;
-    ret.mType = Type::Absolute;
-    ret.mData = p;
+    ret.SetAbsolute(p);
     return ret;
   }
 
-  static constexpr ViewVRPosition HorizontalMirrorOf(const winrt::guid& guid) {
+  static constexpr auto HorizontalMirrorOf(const winrt::guid& g) {
     ViewVRPosition ret;
-    ret.mType = Type::HorizontalMirror;
-    ret.mData = guid;
+    ret.SetHorizontalMirrorOf(g);
     return ret;
   }
 
@@ -75,44 +86,62 @@ struct ViewVRPosition {
   constexpr bool operator==(const ViewVRPosition&) const noexcept = default;
 
  private:
-  ViewVRPosition() = default;
-  Type mType;
+  Type mType = Type::Empty;
   std::variant<winrt::guid, VRAbsolutePosition> mData;
 };
 
 struct ViewNonVRPosition {
+  ViewNonVRPosition() = default;
+
   enum class Type {
     Absolute,
     Constrained,
+    Empty,
     HorizontalMirror,
     VerticalMirror,
   };
 
+  constexpr void SetAbsolute(const NonVRAbsolutePosition& p) {
+    mType = Type::Absolute;
+    mData = p;
+  }
+
+  constexpr void SetConstrained(const NonVRConstrainedPosition& p) {
+    mType = Type::Constrained;
+    mData = p;
+  }
+
+  constexpr void SetHorizontalMirrorOf(const winrt::guid& other) {
+    mType = Type::HorizontalMirror;
+    mData = other;
+  }
+
+  constexpr void SetVerticalMirrorOf(const winrt::guid& other) {
+    mType = Type::VerticalMirror;
+    mData = other;
+  }
+
   static constexpr auto Absolute(const NonVRAbsolutePosition& p) {
     ViewNonVRPosition ret;
-    ret.mType = Type::Absolute;
-    ret.mData = p;
+    ret.SetAbsolute(p);
     return ret;
   }
 
   static constexpr auto Constrained(const NonVRConstrainedPosition& p) {
     ViewNonVRPosition ret;
-    ret.mType = Type::Constrained;
-    ret.mData = p;
+    ret.SetConstrained(p);
     return ret;
   }
 
-  static constexpr auto HorizontalMirrorOf(const winrt::guid& p) {
+  static constexpr auto HorizontalMirrorOf(const winrt::guid& other) {
     ViewNonVRPosition ret;
-    ret.mType = Type::HorizontalMirror;
-    ret.mData = p;
+    ret.SetHorizontalMirrorOf(other);
     return ret;
   }
 
   static constexpr auto VerticalMirrorOf(const winrt::guid& p) {
     ViewNonVRPosition ret;
-    ret.mType = Type::VerticalMirror;
-    ret.mData = p;
+    ret.SetVerticalMirrorOf(p);
     return ret;
   }
 
@@ -135,29 +164,17 @@ struct ViewNonVRPosition {
   constexpr bool operator==(const ViewNonVRPosition&) const noexcept = default;
 
  private:
-  ViewNonVRPosition() = default;
-  Type mType;
+  Type mType {Type::Empty};
   std::variant<winrt::guid, NonVRAbsolutePosition, NonVRConstrainedPosition>
     mData;
 };
 
 struct ViewConfig {
-  winrt::guid mGuid;
+  winrt::guid mGuid = random_guid();
   std::string mName;
 
-  bool mVR {true};
   ViewVRPosition mVRPosition;
-
-  bool mNonVR {true};
   ViewNonVRPosition mNonVRPosition;
-
-  static ViewConfig CreateDefaultFirstView();
-  static ViewConfig CreateDefaultSecondView(const ViewConfig& first);
-
-  static ViewConfig CreateRightKnee();
-  static ViewConfig CreateMirroredView(
-    std::string_view name,
-    const ViewConfig& other);
 
   constexpr bool operator==(const ViewConfig&) const noexcept = default;
 };

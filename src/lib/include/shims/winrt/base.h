@@ -22,8 +22,10 @@
 // <Unknwn.h> must be included before <winrt/base.h> for com_ptr::as<> to work
 // correctly
 #include <Unknwn.h>
+
 #include <pplawait.h>
 #include <ppltasks.h>
+
 #include <winrt/base.h>
 
 namespace OpenKneeboard {
@@ -32,6 +34,12 @@ auto discard_winrt_event_args(auto func) {
   return [func](const winrt::Windows::Foundation::IInspectable&, const auto&) {
     return func();
   };
+}
+
+inline auto random_guid() {
+  winrt::guid ret;
+  CoCreateGuid(reinterpret_cast<GUID*>(&ret));
+  return ret;
 }
 
 };// namespace OpenKneeboard

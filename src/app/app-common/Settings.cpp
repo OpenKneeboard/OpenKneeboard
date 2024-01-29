@@ -22,6 +22,7 @@
 
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/json.h>
+#include <OpenKneeboard/utf8.h>
 
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
@@ -186,22 +187,58 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
 OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
 
+// v1.2 -> v1.3
+static void MigrateToProfiles(Settings& settings) {
+  if (std::filesystem::exists(
+        Filesystem::GetSettingsDirectory() / "profiles")) {
+    return;
+  }
+
+  auto legacySettingsFile
+    = Filesystem::GetSettingsDirectory() / "Settings.json";
+  if (!std::filesystem::exists(legacySettingsFile)) {
+    return;
+  }
+
+  dprint("Migrating from legacy Settings.json");
+  MaybeSetFromJSON(settings, legacySettingsFile);
+  std::filesystem::rename(
+    legacySettingsFile,
+    Filesystem::GetSettingsDirectory() / "LegacySettings.json.bak");
+  settings.Save("default");
+}
+
+// v1.7 introduced 'ViewsConfig'
+static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
+  if (!settings.mViews.mViews.empty()) {
+    return false;
+  }
+
+  const ViewConfig primary {
+    .mName = _("First"),
+    .mVRPosition
+    = ViewVRPosition::Absolute(settings.mVR.mDeprecated.mPrimaryLayer),
+    .mNonVRPosition
+    = ViewNonVRPosition::Constrained(settings.mNonVR.mDeprecated),
+  };
+
+  if (settings.mApp.mDualKneeboards.mEnabled) {
+    const ViewConfig secondary {
+      .mName = _("Second"),
+      .mVRPosition = ViewVRPosition::HorizontalMirrorOf(primary.mGuid),
+    };
+    settings.mViews.mViews = {primary, secondary};
+  } else {
+    settings.mViews.mViews = {primary};
+  }
+
+  return true;
+}
+
 Settings Settings::Load(std::string_view profile) {
   Settings settings;
-  if (!std::filesystem::exists(
-        Filesystem::GetSettingsDirectory() / "profiles")) {
-    auto legacySettingsFile
-      = Filesystem::GetSettingsDirectory() / "Settings.json";
-    if (std::filesystem::exists(legacySettingsFile)) {
-      dprint("Migrating from legacy Settings.json");
-      MaybeSetFromJSON(settings, legacySettingsFile);
-      std::filesystem::rename(
-        legacySettingsFile,
-        Filesystem::GetSettingsDirectory() / "LegacySettings.json.bak");
-      settings.Save("default");
-    }
-    return std::move(settings);
-  }
+
+  MigrateToProfiles(settings);
 
   if (profile != "default") {
     settings = Settings::Load("default");
@@ -212,6 +249,8 @@ Settings Settings::Load(std::string_view profile) {
   MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
+
+  MigrateToViewsConfig(settings);
 
   return settings;
 }
