@@ -87,7 +87,8 @@ struct Detail::FrameMetadata final {
   HANDLE mTexture {};
   HANDLE mFence {};
 
-  alignas(2 * sizeof(LONG64)) std::array<LONG64, TextureCount> mFenceValues {0};
+  alignas(
+    2 * sizeof(LONG64)) std::array<LONG64, SHMSwapchainLength> mFenceValues {0};
 
   size_t GetRenderCacheKey() const;
   bool HaveFeeder() const;
@@ -174,7 +175,7 @@ Snapshot::Snapshot(
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "SHM::Snapshot::Snapshot()");
 
-  const auto textureIndex = metadata->mFrameNumber % TextureCount;
+  const auto textureIndex = metadata->mFrameNumber % SHMSwapchainLength;
   auto fenceValue = &metadata->mFenceValues.at(textureIndex);
   const auto fenceOut = InterlockedIncrement64(fenceValue);
   const auto fenceIn = fenceOut - 1;
@@ -433,7 +434,7 @@ Writer::NextFrameInfo Writer::BeginFrame() noexcept {
   p->Transition<State::Locked, State::FrameInProgress>();
 
   const auto textureIndex
-    = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % TextureCount);
+    = static_cast<uint8_t>((p->mHeader->mFrameNumber + 1) % SHMSwapchainLength);
   auto fenceValue = &p->mHeader->mFenceValues[textureIndex];
   const auto fenceOut = InterlockedIncrement64(fenceValue);
   const auto fenceIn = fenceOut - 1;
@@ -462,7 +463,7 @@ class Reader::Impl : public SHM::Impl<ReaderState> {
   winrt::handle mFeederProcessHandle;
   uint64_t mSessionID {~(0ui64)};
 
-  std::array<std::unique_ptr<IPCSwapchainBufferResources>, TextureCount>
+  std::array<std::unique_ptr<IPCSwapchainBufferResources>, SHMSwapchainLength>
     mBufferResources;
 
   void UpdateSession() {
@@ -580,7 +581,8 @@ Snapshot Reader::MaybeGetUncached(
 
   p->UpdateSession();
 
-  auto& br = p->mBufferResources.at(p->mHeader->mFrameNumber % TextureCount);
+  auto& br
+    = p->mBufferResources.at(p->mHeader->mFrameNumber % SHMSwapchainLength);
   if (!br) {
     br = std::make_unique<IPCSwapchainBufferResources>(
       p->mFeederProcessHandle.get(), *p->mHeader);

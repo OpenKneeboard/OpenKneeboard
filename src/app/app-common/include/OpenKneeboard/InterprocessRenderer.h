@@ -96,7 +96,7 @@ class InterprocessRenderer final
     D3D11_VIEWPORT mViewport {};
   };
 
-  std::array<IPCTextureResources, TextureCount> mIPCSwapchain;
+  std::array<IPCTextureResources, SHMSwapchainLength> mIPCSwapchain;
 
   IPCTextureResources* GetIPCTextureResources(
     uint8_t textureIndex,

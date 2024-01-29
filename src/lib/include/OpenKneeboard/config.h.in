@@ -28,7 +28,7 @@ namespace OpenKneeboard {
 // As we lock the entire SHM segment before touching the texture, buffering
 // isn't needed; that said, keep a buffer anyway, as seeing frame counters
 // go backwards is a very easy way to diagnose issues :)
-constexpr unsigned int TextureCount = 2;
+constexpr unsigned int SHMSwapchainLength = 2;
 constexpr PixelSize MaxViewRenderSize {2048, 2048};
 constexpr PixelSize ErrorRenderSize {768, 1024};
 constexpr unsigned char MaxLayers = 2;
