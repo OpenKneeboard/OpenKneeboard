@@ -205,9 +205,11 @@ XrResult OpenXRKneeboard::xrEndFrame(
     auto layer = snapshot.GetLayerConfig(layerIndex);
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
-    destRects.push_back(
-      {Spriting::GetOffset(layerIndex, MaxLayers),
-       layer->mLocationOnTexture.mSize});
+    const auto destOffset = Spriting::GetOffset(layerIndex, MaxLayers);
+    destRects.push_back({
+      destOffset,
+      layer->mLocationOnTexture.mSize,
+    });
     opacities.push_back(params.mKneeboardOpacity);
 
     if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
@@ -232,7 +234,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .subImage = XrSwapchainSubImage {
         .swapchain = mSwapchain,
         .imageRect = {
-          {layerIndex * TextureWidth, 0},
+          destOffset.StaticCast<XrOffset2Di, int>(),
           layer->mLocationOnTexture.mSize.StaticCast<XrExtent2Di, int32_t>(),
         },
         .imageArrayIndex = 0,

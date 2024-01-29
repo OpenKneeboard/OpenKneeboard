@@ -258,7 +258,7 @@ std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
 
 D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
   if (!mCurrentTabView) {
-    return {ErrorRenderWidth, ErrorRenderHeight};
+    return ErrorRenderSize;
   }
 
   auto [first, rest] = this->GetUILayers();
@@ -274,11 +274,13 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
   const auto idealSize = metrics.mPreferredSize.mPixelSize;
   if (metrics.mPreferredSize.mScalingKind == ScalingKind::Bitmap) {
     if (
-      idealSize.mWidth <= TextureWidth && idealSize.mHeight <= TextureHeight) {
+      idealSize.mWidth <= MaxViewRenderSize.mWidth
+      && idealSize.mHeight <= MaxViewRenderSize.mHeight) {
       return idealSize;
     }
-    const auto scaleX = static_cast<float>(TextureWidth) / idealSize.mWidth;
-    const auto scaleY = static_cast<float>(TextureHeight) / idealSize.mHeight;
+    const auto scaleX = MaxViewRenderSize.GetWidth<float>() / idealSize.mWidth;
+    const auto scaleY
+      = MaxViewRenderSize.GetHeight<float>() / idealSize.mHeight;
     const auto scale = std::min(scaleX, scaleY);
 
     // Integer scaling gets us the most readable results
@@ -291,7 +293,7 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
 
   const auto consumers = SHM::ActiveConsumers::Get();
   if (consumers.Any() == SHM::ActiveConsumers::T {}) {
-    return idealSize.ScaledToFit({TextureWidth, TextureHeight});
+    return idealSize.ScaledToFit(MaxViewRenderSize);
   }
   const auto now = SHM::ActiveConsumers::Clock::now();
 
@@ -302,7 +304,7 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
     = (now - consumers.mViewer) < std::chrono::milliseconds(500);
 
   if (true || haveVR) {
-    return idealSize.ScaledToFit({TextureWidth, TextureHeight});
+    return idealSize.ScaledToFit(MaxViewRenderSize);
   }
 
   const auto& consumerSize = consumers.mNonVRPixelSize;
@@ -316,12 +318,12 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
     return idealSize.ScaledToFit(consumerSize);
   }
 
-  return idealSize.ScaledToFit({TextureWidth, TextureHeight});
+  return idealSize.ScaledToFit(MaxViewRenderSize);
 }
 
 PreferredSize KneeboardView::GetPreferredSize() const {
   if (!mCurrentTabView) {
-    return {{ErrorRenderWidth, ErrorRenderHeight}, ScalingKind::Vector};
+    return {ErrorRenderSize, ScalingKind::Vector};
   }
   return mCurrentTabView->GetPreferredSize();
 }

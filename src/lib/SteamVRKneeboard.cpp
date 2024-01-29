@@ -59,8 +59,8 @@ SteamVRKneeboard::SteamVRKneeboard() {
   }
 
   D3D11_TEXTURE2D_DESC desc {
-    .Width = TextureWidth,
-    .Height = TextureHeight,
+    .Width = MaxViewRenderSize.mWidth,
+    .Height = MaxViewRenderSize.mHeight,
     .MipLevels = 1,
     .ArraySize = 1,
     .Format = SHM::SHARED_TEXTURE_PIXEL_FORMAT,
@@ -284,11 +284,14 @@ void SteamVRKneeboard::Tick() {
     // non-atomic paint to buffer...
     const PixelRect fullRect {
       {0, 0},
-      {TextureWidth, TextureHeight},
+      MaxViewRenderSize,
     };
-    mSpriteBatch->Begin(mRenderTargetView.get(), {TextureWidth, TextureHeight});
-    mSpriteBatch->Draw(
-      srv, fullRect, fullRect, D3D11::Opacity {renderParams.mKneeboardOpacity});
+    mSpriteBatch->Begin(mRenderTargetView.get(), MaxViewRenderSize),
+      mSpriteBatch->Draw(
+        srv,
+        fullRect,
+        fullRect,
+        D3D11::Opacity {renderParams.mKneeboardOpacity});
     mSpriteBatch->End();
 
     // ... then atomic copy to OpenVR texture
@@ -318,8 +321,8 @@ void SteamVRKneeboard::Tick() {
     vr::VRTextureBounds_t textureBounds {
       0.0f,
       0.0f,
-      static_cast<float>(imageSize.mWidth) / TextureWidth,
-      static_cast<float>(imageSize.mHeight) / TextureHeight,
+      static_cast<float>(imageSize.mWidth) / MaxViewRenderSize.mWidth,
+      static_cast<float>(imageSize.mHeight) / MaxViewRenderSize.mHeight,
     };
 
     CHECK(SetOverlayTextureBounds, layerState.mOverlay, &textureBounds);

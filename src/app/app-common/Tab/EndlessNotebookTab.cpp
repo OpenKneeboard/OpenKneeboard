@@ -158,7 +158,7 @@ PreferredSize EndlessNotebookTab::GetPreferredSize(PageID) {
   }
 
   return {
-    {ErrorRenderWidth, ErrorRenderHeight},
+    ErrorRenderSize,
     ScalingKind::Vector,
   };
 }

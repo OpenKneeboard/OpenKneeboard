@@ -626,11 +626,13 @@ void Writer::SubmitFrame(
     if (size.mWidth == 0 || size.mHeight == 0) {
       throw std::logic_error("Not feeding a 0-size image");
     }
-    if (size.mWidth > TextureWidth || size.mHeight > TextureHeight) {
-      // logic_error as the feeder should scale/crop/whatever as needed to fit
+    if (
+      size.mWidth > MaxViewRenderSize.mWidth
+      || size.mHeight > MaxViewRenderSize.mHeight) {
+      // the feeder should scale/crop/whatever as needed to fit
       // in the limits
-      throw std::logic_error(
-        std::format("Oversized layer: {}x{}", size.mWidth, size.mHeight));
+      OPENKNEEBOARD_LOG_AND_FATAL(
+        "Oversized layer: {}x{}", size.mWidth, size.mHeight);
     }
   }
 

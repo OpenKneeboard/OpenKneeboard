@@ -29,7 +29,9 @@
 
 namespace OpenKneeboard {
 
-DoodleRenderer::DoodleRenderer(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
+DoodleRenderer::DoodleRenderer(
+  const std::shared_ptr<DXResources>& dxr,
+  KneeboardState* kbs)
   : mDXR(dxr), mKneeboard(kbs) {
   mBrush = dxr->mBlackBrush;
   mEraser = dxr->mEraserBrush;
@@ -167,8 +169,9 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
     return nullptr;
   }
 
-  const auto scaleX = static_cast<float>(TextureWidth) / contentPixels.width;
-  const auto scaleY = static_cast<float>(TextureHeight) / contentPixels.height;
+  const auto scaleX = MaxViewRenderSize.GetWidth<float>() / contentPixels.width;
+  const auto scaleY
+    = MaxViewRenderSize.GetHeight<float>() / contentPixels.height;
   page.mScale = std::min(scaleX, scaleY);
   D2D1_SIZE_U surfaceSize {
     static_cast<UINT32>(std::lround(contentPixels.width * page.mScale)),

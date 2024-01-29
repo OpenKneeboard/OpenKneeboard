@@ -341,7 +341,7 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
 
   auto usedSize = view->GetIPCRenderSize();
   if (usedSize.width < 1 || usedSize.height < 1) {
-    usedSize = {ErrorRenderWidth, ErrorRenderHeight};
+    usedSize = ErrorRenderSize;
   }
   ret.mLocationOnTexture = {bounds.mOffset, usedSize};
 

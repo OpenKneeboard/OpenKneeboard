@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Pixels.h>
+
 #include <intrin.h>
 
 namespace OpenKneeboard {
@@ -27,10 +29,8 @@ namespace OpenKneeboard {
 // isn't needed; that said, keep a buffer anyway, as seeing frame counters
 // go backwards is a very easy way to diagnose issues :)
 constexpr unsigned int TextureCount = 2;
-constexpr unsigned int TextureWidth = 2048;
-constexpr unsigned int TextureHeight = 2048;
-constexpr unsigned int ErrorRenderWidth = 768;
-constexpr unsigned int ErrorRenderHeight = 1024;
+constexpr PixelSize MaxViewRenderSize {2048, 2048};
+constexpr PixelSize ErrorRenderSize {768, 1024};
 constexpr unsigned char MaxLayers = 2;
 
 constexpr float CursorRadiusDivisor = 400.0f;

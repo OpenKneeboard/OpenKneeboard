@@ -28,20 +28,20 @@ namespace OpenKneeboard::Spriting {
 constexpr PixelPoint GetOffset(
   uint8_t sprite,
   [[maybe_unused]] uint8_t maxSprites) {
-  return {TextureWidth * sprite, 0};
+  return {MaxViewRenderSize.mWidth * sprite, 0};
 }
 
 constexpr PixelSize GetBufferSize(uint8_t maxSprites) noexcept {
   return {
-    TextureWidth * maxSprites,
-    TextureHeight,
+    MaxViewRenderSize.mWidth * maxSprites,
+    MaxViewRenderSize.mHeight,
   };
 }
 
 constexpr PixelRect GetRect(uint8_t sprite, uint8_t maxSprites) noexcept {
   return {
     GetOffset(sprite, maxSprites),
-    {TextureWidth, TextureHeight},
+    MaxViewRenderSize,
   };
 }
 

@@ -41,7 +41,7 @@ NavigationTab::NavigationTab(
   : TabBase(winrt::guid {}, rootTab->GetTitle()),
     mDXR(dxr),
     mRootTab(rootTab),
-    mPreferredSize({ErrorRenderWidth, ErrorRenderHeight}),
+    mPreferredSize(ErrorRenderSize),
     mPreviewLayer(dxr) {
   const auto columns = entries.size() >= 10
     ? std::max(
