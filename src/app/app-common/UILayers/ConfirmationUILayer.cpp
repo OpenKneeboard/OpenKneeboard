@@ -90,6 +90,7 @@ void ConfirmationUILayer::Render(
   const NextList& next,
   const Context& context,
   const D2D1_RECT_F& rect) {
+  OPENKNEEBOARD_TraceLoggingScope("ConfirmationUILayer::Render()");
   next.front()->Render(rt, next.subspan(1), context, rect);
 
   if (rect != mCanvasRect) {

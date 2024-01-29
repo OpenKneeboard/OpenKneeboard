@@ -167,6 +167,7 @@ void HeaderUILayer::Render(
   const IUILayer::NextList& next,
   const Context& context,
   const D2D1_RECT_F& rect) {
+  OPENKNEEBOARD_TraceLoggingScope("HeaderUILayer::Render()");
   const auto tabView = context.mTabView;
 
   const auto metrics = this->GetMetrics(next, context);

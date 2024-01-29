@@ -299,6 +299,8 @@ void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
   this->RenderNow();
 
   AddEventListener(kneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
+                     OPENKNEEBOARD_TraceLoggingScope(
+                       "InterprocessRenderer::evFrameTimerEvent callback");
                      if (self->mNeedsRepaint) {
                        self->RenderNow();
                      }

@@ -136,6 +136,7 @@ void BookmarksUILayer::Render(
   const IUILayer::NextList& next,
   const Context& context,
   const D2D1_RECT_F& rect) {
+  OPENKNEEBOARD_TraceLoggingScope("BookmarksUILayer::Render()");
   auto [first, rest] = Split(next);
 
   if (!this->IsEnabled()) {

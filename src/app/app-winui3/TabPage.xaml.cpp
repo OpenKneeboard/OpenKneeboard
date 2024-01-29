@@ -505,6 +505,7 @@ void TabPage::PaintNow() noexcept {
   }
   const std::unique_lock lock(*mDXR);
   const auto cleanup = scope_guard([this]() {
+    OPENKNEEBOARD_TraceLoggingScope("TabPage/Present()");
     mSwapChain->Present(0, 0);
     mNeedsFrame = false;
   });
@@ -536,6 +537,7 @@ void TabPage::PaintNow() noexcept {
   auto metrics = GetPageMetrics();
   auto tab = mTabView->GetTab();
   if (tab->GetPageCount()) {
+    OPENKNEEBOARD_TraceLoggingScope("TabPage/RenderPage");
     tab->RenderPage(
       mRenderTarget.get(), mTabView->GetPageID(), metrics.mRenderRect);
   } else {

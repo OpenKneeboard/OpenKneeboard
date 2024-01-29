@@ -31,7 +31,9 @@
 
 namespace OpenKneeboard {
 
-FooterUILayer::FooterUILayer(const std::shared_ptr<DXResources>& dxr, KneeboardState* kneeboard)
+FooterUILayer::FooterUILayer(
+  const std::shared_ptr<DXResources>& dxr,
+  KneeboardState* kneeboard)
   : mDXResources(dxr), mKneeboard(kneeboard) {
   AddEventListener(
     kneeboard->evFrameTimerPrepareEvent,
@@ -119,6 +121,7 @@ void FooterUILayer::Render(
   const IUILayer::NextList& next,
   const Context& context,
   const D2D1_RECT_F& rect) {
+  OPENKNEEBOARD_TraceLoggingScope("FooterUILayer::Render()");
   mLastRenderSize = {
     rect.right - rect.left,
     rect.bottom - rect.top,

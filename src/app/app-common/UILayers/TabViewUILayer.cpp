@@ -83,6 +83,7 @@ void TabViewUILayer::Render(
   const IUILayer::NextList&,
   const Context& context,
   const D2D1_RECT_F& rect) {
+  OPENKNEEBOARD_TraceLoggingScope("TabViewUILayer::Render()");
   const auto tabView = context.mTabView;
 
   if (!tabView) {

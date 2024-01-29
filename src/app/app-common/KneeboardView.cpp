@@ -42,7 +42,9 @@
 
 namespace OpenKneeboard {
 
-KneeboardView::KneeboardView(const std::shared_ptr<DXResources>& dxr, KneeboardState* kneeboard)
+KneeboardView::KneeboardView(
+  const std::shared_ptr<DXResources>& dxr,
+  KneeboardState* kneeboard)
   : mDXR(dxr), mKneeboard(kneeboard) {
   mCursorRenderer = std::make_unique<CursorRenderer>(dxr);
   mErrorRenderer = std::make_unique<D2DErrorRenderer>(dxr);
@@ -357,6 +359,7 @@ void KneeboardView::RenderWithChrome(
   RenderTarget* rt,
   const D2D1_RECT_F& rect,
   bool isActiveForInput) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("KneeboardView::RenderWithChrome()");
   if (!mCurrentTabView) {
     auto d2d = rt->d2d();
     d2d->FillRectangle(rect, mErrorBackgroundBrush.get());
@@ -365,15 +368,18 @@ void KneeboardView::RenderWithChrome(
   }
 
   auto [first, rest] = this->GetUILayers();
-  first->Render(
-    rt,
-    rest,
-    {
-      .mTabView = mCurrentTabView,
-      .mKneeboardView = this->shared_from_this(),
-      .mIsActiveForInput = isActiveForInput,
-    },
-    rect);
+  {
+    OPENKNEEBOARD_TraceLoggingScope("RenderWithChrome/RenderUILayers");
+    first->Render(
+      rt,
+      rest,
+      {
+        .mTabView = mCurrentTabView,
+        .mKneeboardView = this->shared_from_this(),
+        .mIsActiveForInput = isActiveForInput,
+      },
+      rect);
+  }
   if (mCursorCanvasPoint) {
     const D2D1_SIZE_F size {
       rect.right - rect.left,

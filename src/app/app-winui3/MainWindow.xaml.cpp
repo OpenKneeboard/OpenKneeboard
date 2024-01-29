@@ -278,7 +278,7 @@ void MainWindow::FrameTick() {
   this->CheckForElevatedConsumer();
   {
     std::shared_lock kbLock(*gKneeboard);
-    TraceLoggingWriteTagged(activity, "Kneeboard locked");
+    OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPrepareEvent.emit()");
     gKneeboard->evFrameTimerPrepareEvent.Emit();
   }
   TraceLoggingWriteTagged(activity, "Prepared to render");
@@ -292,7 +292,10 @@ void MainWindow::FrameTick() {
   TraceLoggingWriteTagged(activity, "Kneeboard relocked");
   const std::unique_lock dxLock(*mDXR);
   TraceLoggingWriteTagged(activity, "DX locked");
-  gKneeboard->evFrameTimerEvent.Emit();
+  {
+    OPENKNEEBOARD_TraceLoggingScope("evFrameTimerEvent.emit()");
+    gKneeboard->evFrameTimerEvent.Emit();
+  }
   gKneeboard->Repainted();
   TraceLoggingWriteStop(
     activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
