@@ -31,7 +31,7 @@ namespace OpenKneeboard {
 constexpr unsigned int SHMSwapchainLength = 2;
 constexpr PixelSize MaxViewRenderSize {2048, 2048};
 constexpr PixelSize ErrorRenderSize {768, 1024};
-constexpr unsigned char MaxViewCount = 8;
+constexpr unsigned char MaxViewCount = 16;
 
 constexpr float CursorRadiusDivisor = 400.0f;
 constexpr float CursorStrokeDivisor = CursorRadiusDivisor;
