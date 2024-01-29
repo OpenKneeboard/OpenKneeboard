@@ -160,7 +160,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   if (!mSwapchain) {
     OPENKNEEBOARD_TraceLoggingScope("Create swapchain");
-    const auto size = Spriting::GetBufferSize(MaxLayers);
+    const auto size = Spriting::GetBufferSize(MaxViewCount);
 
     mSwapchain = this->CreateSwapchain(session, size);
     if (!mSwapchain) [[unlikely]] {
@@ -205,7 +205,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     auto layer = snapshot.GetLayerConfig(layerIndex);
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
-    const auto destOffset = Spriting::GetOffset(layerIndex, MaxLayers);
+    const auto destOffset = Spriting::GetOffset(layerIndex, MaxViewCount);
     destRects.push_back({
       destOffset,
       layer->mLocationOnTexture.mSize,

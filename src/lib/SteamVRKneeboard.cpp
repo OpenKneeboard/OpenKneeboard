@@ -72,7 +72,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
 
   desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
   desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
-  for (uint8_t i = 0; i < MaxLayers; ++i) {
+  for (uint8_t i = 0; i < MaxViewCount; ++i) {
     auto& layer = mLayers.at(i);
     winrt::check_hresult(
       mD3D->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
@@ -154,7 +154,7 @@ bool SteamVRKneeboard::InitializeOpenVR() {
     dprint("Initialized OpenVR overlay system");
   }
 
-  for (uint8_t layerIndex = 0; layerIndex < MaxLayers; ++layerIndex) {
+  for (uint8_t layerIndex = 0; layerIndex < MaxViewCount; ++layerIndex) {
     auto& layerState = mLayers.at(layerIndex);
     auto key = std::format("{}.{}", ProjectNameA, layerIndex);
     auto name = std::format("OpenKneeboard {}", layerIndex + 1);
@@ -334,7 +334,7 @@ void SteamVRKneeboard::Tick() {
 
     layerState.mCacheKey = renderParams.mCacheKey;
   }
-  for (uint8_t i = snapshot.GetLayerCount(); i < MaxLayers; ++i) {
+  for (uint8_t i = snapshot.GetLayerCount(); i < MaxViewCount; ++i) {
     if (mLayers.at(i).mVisible) {
       CHECK(HideOverlay, mLayers.at(i).mOverlay);
       mLayers.at(i).mVisible = false;

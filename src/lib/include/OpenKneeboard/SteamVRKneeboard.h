@@ -80,7 +80,7 @@ class SteamVRKneeboard final : private VRKneeboard {
     // *NOT* an NT handle. Do not use CloseHandle() or winrt::Handle
     HANDLE mSharedHandle {};
   };
-  std::array<LayerState, MaxLayers> mLayers;
+  std::array<LayerState, MaxViewCount> mLayers;
 };
 
 }// namespace OpenKneeboard

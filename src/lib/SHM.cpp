@@ -80,7 +80,7 @@ struct Detail::FrameMetadata final {
   Config mConfig;
 
   uint8_t mLayerCount = 0;
-  LayerConfig mLayers[MaxLayers];
+  LayerConfig mLayers[MaxViewCount];
 
   DWORD mFeederProcessID {};
   // If you're looking for texture size, it's in Config
@@ -617,9 +617,9 @@ void Writer::SubmitFrame(
     State::SubmittingFrame,
     State::Locked>(p);
 
-  if (layers.size() > MaxLayers) {
-    throw std::logic_error(std::format(
-      "Asked to publish {} layers, but max is {}", layers.size(), MaxLayers));
+  if (layers.size() > MaxViewCount) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "Asked to publish {} layers, but max is {}", layers.size(), MaxViewCount);
   }
 
   for (auto layer: layers) {

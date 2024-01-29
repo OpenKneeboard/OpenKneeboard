@@ -23,6 +23,8 @@
 
 #include <OpenKneeboard/config.h>
 
+#include <d3d11.h>
+
 namespace OpenKneeboard::Spriting {
 
 namespace Detail {
@@ -51,6 +53,11 @@ constexpr PixelSize GetBufferSize(uint8_t maxSprites) noexcept {
     MaxViewRenderSize.mHeight * Detail::GetRowCount(maxSprites),
   };
 }
+
+static_assert(
+  GetBufferSize(MaxViewCount).mWidth <= D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION);
+static_assert(
+  GetBufferSize(MaxViewCount).mHeight <= D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION);
 
 constexpr PixelPoint GetOffset(uint8_t sprite, uint8_t maxSprites) {
   const auto row = sprite / Detail::GetColumnCount(maxSprites);

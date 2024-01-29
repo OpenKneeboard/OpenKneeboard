@@ -100,8 +100,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     // It's possible for us to be injected in between a present and an
     // OVREndFrame; this means we don't have the device yet, so creation will
     // fail.
-    mSwapchain
-      = mRenderer->CreateSwapChain(session, Spriting::GetBufferSize(MaxLayers));
+    mSwapchain = mRenderer->CreateSwapChain(
+      session, Spriting::GetBufferSize(MaxViewCount));
     if (!mSwapchain) {
       traceprint("Failed to make an OVR swapchain");
       return passthrough();
@@ -168,7 +168,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     opacities.push_back(params.mKneeboardOpacity);
 
     const PixelRect destRect {
-      Spriting::GetOffset(layerIndex, MaxLayers),
+      Spriting::GetOffset(layerIndex, MaxViewCount),
       layer.mLocationOnTexture.mSize,
     };
 

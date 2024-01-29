@@ -149,7 +149,7 @@ class KneeboardState final
 
   uint8_t mFirstViewIndex = 0;
   uint8_t mInputViewIndex = 0;
-  std::array<std::shared_ptr<KneeboardView>, 2> mViews;
+  std::vector<std::shared_ptr<KneeboardView>> mViews;
 
   PixelSize mLastNonVRPixelSize {};
 
@@ -183,6 +183,8 @@ class KneeboardState final
     Next,
   };
   void SwitchProfile(Direction);
+
+  void InitializeViews();
 };
 
 }// namespace OpenKneeboard

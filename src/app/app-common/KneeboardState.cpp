@@ -86,22 +86,6 @@ KneeboardState::KneeboardState(
     }
   });
 
-  mViews = {
-    KneeboardView::Create(dxr, this),
-    KneeboardView::Create(dxr, this),
-  };
-
-  auto tabs = mTabsList->GetTabs();
-  for (const auto& viewState: mViews) {
-    viewState->SetTabs(tabs);
-  }
-  AddEventListener(mViews[0]->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
-  AddEventListener(mViews[1]->evNeedsRepaintEvent, [this]() {
-    if (this->mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
-      this->evNeedsRepaintEvent.Emit();
-    }
-  });
-
   mDirectInput = DirectInputAdapter::Create(hwnd, mSettings.mDirectInput);
   AddEventListener(
     mDirectInput->evUserActionEvent,
@@ -115,6 +99,7 @@ KneeboardState::KneeboardState(
 
   AddEventListener(this->evSettingsChangedEvent, this->evNeedsRepaintEvent);
 
+  InitializeViews();
   AcquireExclusiveResources();
 }
 
@@ -195,7 +180,7 @@ void KneeboardState::PostUserAction(UserAction action) {
       this->evNeedsRepaintEvent.Emit();
       return;
     case UserAction::SWITCH_KNEEBOARDS:
-      this->SetFirstViewIndex((this->mFirstViewIndex + 1) % 2);
+      this->SetFirstViewIndex((this->mFirstViewIndex + 1) % mViews.size());
       return;
     case UserAction::PREVIOUS_TAB:
     case UserAction::NEXT_TAB:
@@ -254,15 +239,8 @@ void KneeboardState::SetFirstViewIndex(uint8_t index) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 
-  const auto inputIsFirst = this->mFirstViewIndex == this->mInputViewIndex;
-  this->mFirstViewIndex = std::min<uint8_t>(
-    index, mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled ? 1 : 0);
-  if (inputIsFirst) {
-    this->mInputViewIndex = this->mFirstViewIndex;
-  } else {
-    this->mInputViewIndex = std::min<uint8_t>(
-      index, mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled ? 1 : 0);
-  }
+  this->mFirstViewIndex = index % mViews.size();
+  this->mInputViewIndex = this->mFirstViewIndex;
 
   for (const auto& view: this->mViews) {
     if (view) {
@@ -507,6 +485,10 @@ void KneeboardState::SetViewsSettings(const ViewsConfig& view) {
   const std::unique_lock lock(*this);
 
   mSettings.mViews = view;
+  this->InitializeViews();
+
+  this->SaveSettings();
+  this->evNeedsRepaintEvent.Emit();
 }
 
 void KneeboardState::SetVRSettings(const VRConfig& value) {
@@ -538,9 +520,6 @@ void KneeboardState::SetAppSettings(const AppSettings& value) {
     const std::unique_lock lock(*this);
     mSettings.mApp = value;
     this->SaveSettings();
-  }
-  if (!value.mDeprecated.mDualKneeboards.mEnabled) {
-    this->SetFirstViewIndex(0);
   }
 }
 
@@ -779,6 +758,24 @@ bool KneeboardState::try_lock_shared() {
 
 void KneeboardState::unlock_shared() {
   mMutex.unlock_shared();
+}
+
+void KneeboardState::InitializeViews() {
+  const auto count = mSettings.mViews.mViews.size();
+  mViews.resize(count);
+  auto tabs = mTabsList->GetTabs();
+  for (auto& view: mViews) {
+    view = KneeboardView::Create(mDXResources, this);
+    view->SetTabs(tabs);
+    AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
+  }
+
+  if (mFirstViewIndex >= count) {
+    this->SetFirstViewIndex(count - 1);
+  }
+  if (mInputViewIndex >= count) {
+    mInputViewIndex = mFirstViewIndex;
+  }
 }
 
 #define IT(cpptype, name) \
