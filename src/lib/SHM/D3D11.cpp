@@ -104,7 +104,6 @@ void CachedReader::InitializeCache(
     device->GetImmediateContext(context.put());
     mDeviceContext = context.as<ID3D11DeviceContext4>();
 
-    // Debug logging
     winrt::com_ptr<IDXGIDevice> dxgiDevice;
     winrt::check_hresult(
       device->QueryInterface(IID_PPV_ARGS(dxgiDevice.put())));
@@ -112,13 +111,15 @@ void CachedReader::InitializeCache(
     winrt::check_hresult(dxgiDevice->GetAdapter(dxgiAdapter.put()));
     DXGI_ADAPTER_DESC desc {};
     winrt::check_hresult(dxgiAdapter->GetDesc(&desc));
+
+    mDeviceLUID = std::bit_cast<uint64_t>(desc.AdapterLuid);
     dprintf(
-      L"SHM reader using adapter '{}' (LUID {:#x})",
+      L"D3D11 SHM reader using adapter '{}' (LUID {:#018x})",
       desc.Description,
-      std::bit_cast<uint64_t>(desc.AdapterLuid));
+      std::bit_cast<uint64_t>(mDeviceLUID));
   }
 
-  SHM::CachedReader::InitializeCache(swapchainLength);
+  SHM::CachedReader::InitializeCache(mDeviceLUID, swapchainLength);
 }
 
 void CachedReader::Copy(

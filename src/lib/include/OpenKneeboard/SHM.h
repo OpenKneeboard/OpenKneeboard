@@ -143,7 +143,8 @@ class Writer final {
     LONG64 mFenceOut {};
   };
 
-  Writer();
+  Writer() = delete;
+  Writer(uint64_t gpuLuid);
   ~Writer();
 
   void Detach();
@@ -173,14 +174,18 @@ class Snapshot final {
   enum class State {
     Empty,
     IncorrectKind,
+    IncorrectGPU,
     Valid,
   };
   // marker for constructor
   struct incorrect_kind_t {};
   static constexpr const incorrect_kind_t incorrect_kind {};
+  struct incorrect_gpu_t {};
+  static constexpr const incorrect_gpu_t incorrect_gpu {};
 
   Snapshot(nullptr_t);
   Snapshot(incorrect_kind_t);
+  Snapshot(incorrect_gpu_t);
 
   Snapshot(
     Detail::FrameMetadata*,
@@ -242,6 +247,7 @@ class Reader {
 
  protected:
   Snapshot MaybeGetUncached(
+    uint64_t gpuLUID,
     IPCTextureCopier* copier,
     const std::shared_ptr<IPCClientTexture>& dest,
     ConsumerKind) const;
@@ -260,7 +266,7 @@ class CachedReader : public Reader {
     const std::source_location& loc = std::source_location::current());
 
  protected:
-  void InitializeCache(uint8_t swapchainLength);
+  void InitializeCache(uint64_t gpuLUID, uint8_t swapchainLength);
 
   virtual std::shared_ptr<IPCClientTexture>
   CreateIPCClientTexture(const PixelSize&, uint8_t swapchainIndex) noexcept = 0;
@@ -269,6 +275,7 @@ class CachedReader : public Reader {
   IPCTextureCopier* mTextureCopier {nullptr};
   ConsumerKind mConsumerKind {};
 
+  uint64_t mGPULUID {};
   uint64_t mCacheKey {~(0ui64)};
   std::deque<Snapshot> mCache;
   uint8_t mSwapchainIndex {};

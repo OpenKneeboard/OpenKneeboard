@@ -252,8 +252,8 @@ InterprocessRenderer::GetIPCTextureResources(
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
   const std::shared_ptr<DXResources>& dxr,
   KneeboardState* kneeboard) {
-  auto ret = shared_with_final_release(new InterprocessRenderer());
-  ret->Initialize(dxr, kneeboard);
+  auto ret = shared_with_final_release(new InterprocessRenderer(dxr));
+  ret->Initialize(kneeboard);
   return ret;
 }
 
@@ -265,19 +265,18 @@ winrt::fire_and_forget InterprocessRenderer::final_release(
 
 std::mutex InterprocessRenderer::sSingleInstance;
 
-InterprocessRenderer::InterprocessRenderer() : mInstanceLock(sSingleInstance) {
+InterprocessRenderer::InterprocessRenderer(
+  const std::shared_ptr<DXResources>& dxr)
+  : mInstanceLock(sSingleInstance), mDXR(dxr), mSHM(dxr->mAdapterLUID) {
   dprint(__FUNCTION__);
 }
 
-void InterprocessRenderer::Initialize(
-  const std::shared_ptr<DXResources>& dxr,
-  KneeboardState* kneeboard) {
+void InterprocessRenderer::Initialize(KneeboardState* kneeboard) {
   auto currentGame = kneeboard->GetCurrentGame();
   if (currentGame) {
     mCurrentGame = currentGame->mGameInstance.lock();
   }
 
-  mDXR = dxr;
   mKneeboard = kneeboard;
 
   const auto markDirty = weak_wrap(this)([](auto self) { self->MarkDirty(); });

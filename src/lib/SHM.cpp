@@ -72,6 +72,8 @@ struct Detail::FrameMetadata final {
   static_assert(Magic.size() == sizeof(uint64_t));
   uint64_t mMagic = *reinterpret_cast<const uint64_t*>(Magic.data());
 
+  uint64_t mGPULUID {};
+
   uint64_t mFrameNumber = 0;
   uint64_t mSessionID = CreateSessionID();
   HeaderFlags mFlags;
@@ -84,7 +86,8 @@ struct Detail::FrameMetadata final {
   // If you're looking for texture size, it's in Config
   HANDLE mTexture {};
   HANDLE mFence {};
-  std::array<LONG64, TextureCount> mFenceValues {0};
+
+  alignas(2 * sizeof(LONG64)) std::array<LONG64, TextureCount> mFenceValues {0};
 
   size_t GetRenderCacheKey() const;
   bool HaveFeeder() const;
@@ -157,6 +160,9 @@ Snapshot::Snapshot(nullptr_t) : mState(State::Empty) {
 }
 
 Snapshot::Snapshot(incorrect_kind_t) : mState(State::IncorrectKind) {
+}
+
+Snapshot::Snapshot(incorrect_gpu_t) : mState(State::IncorrectGPU) {
 }
 
 Snapshot::Snapshot(
@@ -391,9 +397,10 @@ class Writer::Impl : public SHM::Impl<WriterState> {
   using SHM::Impl<WriterState, WriterState::Unlocked>::Impl;
 
   DWORD mProcessID = GetCurrentProcessId();
+  uint64_t mGPULUID {};
 };
 
-Writer::Writer() {
+Writer::Writer(uint64_t gpuLUID) {
   const auto path = SHMPath();
   dprintf(L"Initializing SHM writer with path {}", path);
 
@@ -402,6 +409,7 @@ Writer::Writer() {
     p.reset();
     return;
   }
+  p->mGPULUID = gpuLUID;
 
   *p->mHeader = FrameMetadata {};
   dprint("Writer initialized.");
@@ -525,10 +533,17 @@ CachedReader::CachedReader(IPCTextureCopier* copier, ConsumerKind kind)
   : mTextureCopier(copier), mConsumerKind(kind) {
 }
 
-void CachedReader::InitializeCache(uint8_t swapchainLength) {
+void CachedReader::InitializeCache(uint64_t gpuLUID, uint8_t swapchainLength) {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::CachedReader::InitializeCache()",
     TraceLoggingValue(swapchainLength, "SwapchainLength"));
+  if (mGPULUID != gpuLUID) {
+    mGPULUID = gpuLUID;
+    mCache.clear();
+    mCacheKey = {};
+    mClientTextures = {};
+  }
+
   mCache.resize(swapchainLength, nullptr);
   mClientTextures = {swapchainLength, nullptr};
 }
@@ -536,6 +551,7 @@ void CachedReader::InitializeCache(uint8_t swapchainLength) {
 CachedReader::~CachedReader() = default;
 
 Snapshot Reader::MaybeGetUncached(
+  uint64_t gpuLUID,
   IPCTextureCopier* copier,
   const std::shared_ptr<IPCClientTexture>& dest,
   ConsumerKind kind) const {
@@ -552,6 +568,14 @@ Snapshot Reader::MaybeGetUncached(
       static_cast<std::underlying_type_t<ConsumerKind>>(kind),
       p->mHeader->mConfig.mTarget.GetRawMaskForDebugging());
     return {Snapshot::incorrect_kind};
+  }
+
+  if (p->mHeader->mGPULUID != gpuLUID) {
+    traceprint(
+      "GPU LUID mismatch: feeder has {:#018x}, reader has {:#018x}",
+      p->mHeader->mGPULUID,
+      gpuLUID);
+    return {Snapshot::incorrect_gpu};
   }
 
   p->UpdateSession();
@@ -610,6 +634,7 @@ void Writer::SubmitFrame(
     }
   }
 
+  p->mHeader->mGPULUID = p->mGPULUID;
   p->mHeader->mConfig = config;
   p->mHeader->mFrameNumber++;
   p->mHeader->mFlags |= HeaderFlags::FEEDER_ATTACHED;
@@ -704,7 +729,8 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   const auto dimensions = p->mHeader->mConfig.mTextureSize;
   auto dest = GetIPCClientTexture(dimensions, swapchainIndex);
 
-  auto snapshot = this->MaybeGetUncached(mTextureCopier, dest, mConsumerKind);
+  auto snapshot
+    = this->MaybeGetUncached(mGPULUID, mTextureCopier, dest, mConsumerKind);
   const auto state = snapshot.GetState();
   TraceLoggingWriteStop(
     maybeGetActivity,

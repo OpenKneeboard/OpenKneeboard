@@ -369,6 +369,26 @@ void CachedReader::InitializeCache(
 
   mVK->GetDeviceQueue(mDevice, queueFamilyIndex, queueIndex, &mQueue);
 
+  VkPhysicalDeviceIDPropertiesKHR id {
+    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES_KHR,
+  };
+  VkPhysicalDeviceProperties2KHR properties2 {
+    .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
+    .pNext = &id,
+  };
+  mVK->GetPhysicalDeviceProperties2KHR(mPhysicalDevice, &properties2);
+
+  if (!id.deviceLUIDValid) {
+    OPENKNEEBOARD_LOG_AND_FATAL("Could not retrieve a device LUID");
+  }
+  static_assert(sizeof(uint64_t) == sizeof(id.deviceLUID));
+  mGPULUID = std::bit_cast<uint64_t>(id.deviceLUID);
+
+  dprintf(
+    "Vulkan SHM reader using adapter '{}' (LUID {:#018x})",
+    properties2.properties.deviceName,
+    mGPULUID);
+
   this->InitializeCache(swapchainLength);
 }
 
@@ -388,7 +408,7 @@ void CachedReader::InitializeCache(uint8_t swapchainLength) {
   if (swapchainLength == 0) {
     mIPCSemaphores.clear();
     mIPCImages.clear();
-    SHM::CachedReader::InitializeCache(0);
+    SHM::CachedReader::InitializeCache(mGPULUID, 0);
     return;
   }
 
@@ -429,7 +449,7 @@ void CachedReader::InitializeCache(uint8_t swapchainLength) {
   mIPCSemaphores.clear();
   mIPCImages.clear();
 
-  SHM::CachedReader::InitializeCache(swapchainLength);
+  SHM::CachedReader::InitializeCache(mGPULUID, swapchainLength);
 }
 
 void CachedReader::Copy(

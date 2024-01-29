@@ -76,6 +76,7 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   winrt::com_ptr<ID3D11Device5> mDevice;
   winrt::com_ptr<ID3D11DeviceContext4> mDeviceContext;
+  uint64_t mDeviceLUID;
 
   std::unordered_map<HANDLE, winrt::com_ptr<ID3D11Fence>> mIPCFences;
   std::unordered_map<HANDLE, winrt::com_ptr<ID3D11Texture2D>> mIPCTextures;

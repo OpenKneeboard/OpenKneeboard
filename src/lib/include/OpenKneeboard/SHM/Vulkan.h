@@ -150,6 +150,8 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   VkQueue mQueue {};
   uint32_t mQueueFamilyIndex {};
 
+  uint64_t mGPULUID {};
+
   const VkAllocationCallbacks* mAllocator {nullptr};
 
   unique_vk<VkCommandPool> mCommandPool;

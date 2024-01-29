@@ -222,7 +222,7 @@ void CachedReader::InitializeCache(
     // and IDXGIFactory1 (or later) in the same process, and we don't know
     // which the app picked
     dprintf(
-      L"SHM reader using adapter LUID {:#x}",
+      "SHM reader using adapter LUID {:#x}",
       std::bit_cast<uint64_t>(device->GetAdapterLuid()));
   };
 
@@ -245,7 +245,8 @@ void CachedReader::InitializeCache(
     }
   }
 
-  SHM::CachedReader::InitializeCache(swapchainLength);
+  SHM::CachedReader::InitializeCache(
+    std::bit_cast<uint64_t>(device->GetAdapterLuid()), swapchainLength);
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
