@@ -419,10 +419,15 @@ Writer::Writer(uint64_t gpuLUID) {
 void Writer::Detach() {
   p->Transition<State::Locked, State::Detaching>();
 
-  p->mHeader->mFlags &= ~HeaderFlags::FEEDER_ATTACHED;
+  const auto oldID = p->mHeader->mSessionID;
+  *p->mHeader = {};
   FlushViewOfFile(p->mMapping, NULL);
 
   p->Transition<State::Detaching, State::Locked>();
+  dprintf(
+    "Writer::Detach(): Session ID {:#018x} replaced with {:#018x}",
+    oldID,
+    p->mHeader->mSessionID);
 }
 
 Writer::~Writer() {

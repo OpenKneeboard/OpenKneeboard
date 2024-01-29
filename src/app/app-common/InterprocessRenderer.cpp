@@ -179,6 +179,11 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
   winrt::check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
   mCanvas = RenderTarget::Create(mDXR, texture);
   mCanvasSize = size;
+
+  // Let's force a clean start on the clients, including resetting the session
+  // ID
+  const std::unique_lock shmLock(mSHM);
+  mSHM.Detach();
 }
 
 InterprocessRenderer::IPCTextureResources*
