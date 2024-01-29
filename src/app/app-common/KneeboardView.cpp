@@ -316,9 +316,19 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
 
   const auto& consumerSize = consumers.mNonVRPixelSize;
   if (haveNonVR) {
-    const auto rect = mKneeboard->GetNonVRSettings().mDeprecated.Layout(
-      consumerSize, idealSize);
-    return rect.mSize;
+    const auto views = mKneeboard->GetViewsSettings().mViews;
+    const auto view = std::ranges::find(
+      views, mGUID, [](const auto& it) { return it.mGuid; });
+    if (view != views.end()) [[likely]] {
+      const auto pos = view->mNonVRPosition.Resolve(views);
+      if (pos) {
+        const auto rect = pos->Layout(consumerSize, idealSize);
+        return rect.mSize;
+      }
+    } else {
+      traceprint("View with invalid GUID");
+      OPENKNEEBOARD_BREAK;
+    }
   }
 
   if (haveViewer) {
