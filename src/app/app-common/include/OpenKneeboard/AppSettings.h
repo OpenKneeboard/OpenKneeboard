@@ -96,7 +96,12 @@ struct AppSettings final {
   InGameUISettings mInGameUI {};
   TintSettings mTint {};
   std::string mLastRunVersion;
-  DualKneeboardSettings mDualKneeboards {};
+
+  struct Deprecated {
+    DualKneeboardSettings mDualKneeboards {};
+    constexpr auto operator<=>(const Deprecated&) const noexcept = default;
+  };
+  Deprecated mDeprecated;
 
   constexpr auto operator<=>(const AppSettings&) const noexcept = default;
 };

@@ -222,7 +222,7 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
     = ViewNonVRPosition::Constrained(settings.mNonVR.mDeprecated),
   };
 
-  if (settings.mApp.mDualKneeboards.mEnabled) {
+  if (settings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
     const ViewConfig secondary {
       .mName = _("Second"),
       .mVRPosition = ViewVRPosition::HorizontalMirrorOf(primary.mGuid),

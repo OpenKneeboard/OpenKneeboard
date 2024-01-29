@@ -67,6 +67,10 @@ void from_json_postprocess<AppSettings>(
     };
   }
 
+  if (j.contains("DualKneeboards")) {
+    from_json(j.at("DualKneeboards"), v.mDeprecated.mDualKneeboards);
+  }
+
   ///// Backwards compatibility /////
   if (j.contains("AutoUpdate")) {
     auto au = j.at("AutoUpdate");
@@ -99,7 +103,6 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   AppSettings,
   mLoopPages,
   mLoopTabs,
-  mDualKneeboards,
   mAutoUpdate,
   mBookmarks,
   mInGameUI,

@@ -97,7 +97,7 @@ KneeboardState::KneeboardState(
   }
   AddEventListener(mViews[0]->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   AddEventListener(mViews[1]->evNeedsRepaintEvent, [this]() {
-    if (this->mSettings.mApp.mDualKneeboards.mEnabled) {
+    if (this->mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
       this->evNeedsRepaintEvent.Emit();
     }
   });
@@ -134,7 +134,7 @@ KneeboardState::GetAllViewsInFixedOrder() const {
 
 std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   const auto primaryVR = mSettings.mVR.mDeprecated.mPrimaryLayer;
-  if (!mSettings.mApp.mDualKneeboards.mEnabled) {
+  if (!mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
     return {
       {
         .mView = mViews.at(mFirstViewIndex),
@@ -267,13 +267,13 @@ void KneeboardState::SetFirstViewIndex(uint8_t index) {
   const std::unique_lock lock(*this);
 
   const auto inputIsFirst = this->mFirstViewIndex == this->mInputViewIndex;
-  this->mFirstViewIndex
-    = std::min<uint8_t>(index, mSettings.mApp.mDualKneeboards.mEnabled ? 1 : 0);
+  this->mFirstViewIndex = std::min<uint8_t>(
+    index, mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled ? 1 : 0);
   if (inputIsFirst) {
     this->mInputViewIndex = this->mFirstViewIndex;
   } else {
     this->mInputViewIndex = std::min<uint8_t>(
-      index, mSettings.mApp.mDualKneeboards.mEnabled ? 1 : 0);
+      index, mSettings.mApp.mDeprecated.mDualKneeboards.mEnabled ? 1 : 0);
   }
 
   for (const auto& view: this->mViews) {
@@ -551,7 +551,7 @@ void KneeboardState::SetAppSettings(const AppSettings& value) {
     mSettings.mApp = value;
     this->SaveSettings();
   }
-  if (!value.mDualKneeboards.mEnabled) {
+  if (!value.mDeprecated.mDualKneeboards.mEnabled) {
     this->SetFirstViewIndex(0);
   }
 }
