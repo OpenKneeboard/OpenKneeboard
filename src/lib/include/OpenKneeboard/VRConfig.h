@@ -84,7 +84,7 @@ struct VRConfig : public VRRenderConfig {
   float mMaxHeight = 0.25f;
 
   struct Deprecated {
-    // replaced with 'OverlaysConfig' in v1.7
+    // replaced with 'ViewConfig' in v1.7
     VRAbsolutePosition mPrimaryLayer {};
 
     constexpr auto operator<=>(const Deprecated&) const noexcept = default;

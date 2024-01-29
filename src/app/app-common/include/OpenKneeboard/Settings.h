@@ -23,10 +23,10 @@
 #include <OpenKneeboard/DirectInputSettings.h>
 #include <OpenKneeboard/DoodleSettings.h>
 #include <OpenKneeboard/FlatConfig.h>
-#include <OpenKneeboard/OverlaysConfig.h>
 #include <OpenKneeboard/TabletSettings.h>
 #include <OpenKneeboard/TextSettings.h>
 #include <OpenKneeboard/VRConfig.h>
+#include <OpenKneeboard/ViewsConfig.h>
 
 #include <shims/filesystem>
 
@@ -41,7 +41,7 @@ namespace OpenKneeboard {
   IT(DeprecatedFlatConfig, NonVR) \
   IT(TabletSettings, TabletInput) \
   IT(nlohmann::json, Tabs) \
-  IT(OverlaysConfig, Overlays) \
+  IT(ViewsConfig, Views) \
   IT(VRConfig, VR)
 
 struct Settings final {

@@ -167,6 +167,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mText,
   mNonVR,
   mTabletInput,
+  mViews,
   mVR)
 
 #define IT(cpptype, name) \

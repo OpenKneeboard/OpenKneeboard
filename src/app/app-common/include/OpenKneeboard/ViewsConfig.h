@@ -31,25 +31,24 @@
 
 namespace OpenKneeboard {
 
-struct OverlayConfig;
+struct ViewConfig;
 
-struct OverlayVRPosition {
+struct ViewVRPosition {
   enum class Type {
     Absolute,
     // Mirrored in the x = 0 plane, i.e. x => -x
     HorizontalMirror,
   };
 
-  static constexpr OverlayVRPosition Absolute(const VRAbsolutePosition& p) {
-    OverlayVRPosition ret;
+  static constexpr ViewVRPosition Absolute(const VRAbsolutePosition& p) {
+    ViewVRPosition ret;
     ret.mType = Type::Absolute;
     ret.mData = p;
     return ret;
   }
 
-  static constexpr OverlayVRPosition HorizontalMirrorOf(
-    const winrt::guid& guid) {
-    OverlayVRPosition ret;
+  static constexpr ViewVRPosition HorizontalMirrorOf(const winrt::guid& guid) {
+    ViewVRPosition ret;
     ret.mType = Type::HorizontalMirror;
     ret.mData = guid;
     return ret;
@@ -71,17 +70,17 @@ struct OverlayVRPosition {
   Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
 
   std::optional<SHM::VRPosition> Resolve(
-    const std::vector<OverlayConfig>& others) const;
+    const std::vector<ViewConfig>& others) const;
 
-  constexpr bool operator==(const OverlayVRPosition&) const noexcept = default;
+  constexpr bool operator==(const ViewVRPosition&) const noexcept = default;
 
  private:
-  OverlayVRPosition() = default;
+  ViewVRPosition() = default;
   Type mType;
   std::variant<winrt::guid, VRAbsolutePosition> mData;
 };
 
-struct OverlayNonVRPosition {
+struct ViewNonVRPosition {
   enum class Type {
     Absolute,
     Constrained,
@@ -90,28 +89,28 @@ struct OverlayNonVRPosition {
   };
 
   static constexpr auto Absolute(const NonVRAbsolutePosition& p) {
-    OverlayNonVRPosition ret;
+    ViewNonVRPosition ret;
     ret.mType = Type::Absolute;
     ret.mData = p;
     return ret;
   }
 
   static constexpr auto Constrained(const NonVRConstrainedPosition& p) {
-    OverlayNonVRPosition ret;
+    ViewNonVRPosition ret;
     ret.mType = Type::Constrained;
     ret.mData = p;
     return ret;
   }
 
   static constexpr auto HorizontalMirrorOf(const winrt::guid& p) {
-    OverlayNonVRPosition ret;
+    ViewNonVRPosition ret;
     ret.mType = Type::HorizontalMirror;
     ret.mData = p;
     return ret;
   }
 
   static constexpr auto VerticalMirrorOf(const winrt::guid& p) {
-    OverlayNonVRPosition ret;
+    ViewNonVRPosition ret;
     ret.mType = Type::VerticalMirror;
     ret.mData = p;
     return ret;
@@ -133,46 +132,45 @@ struct OverlayNonVRPosition {
     return std::get<NonVRConstrainedPosition>(mData);
   }
 
-  constexpr bool operator==(const OverlayNonVRPosition&) const noexcept
-    = default;
+  constexpr bool operator==(const ViewNonVRPosition&) const noexcept = default;
 
  private:
-  OverlayNonVRPosition() = default;
+  ViewNonVRPosition() = default;
   Type mType;
   std::variant<winrt::guid, NonVRAbsolutePosition, NonVRConstrainedPosition>
     mData;
 };
 
-struct OverlayConfig {
+struct ViewConfig {
   winrt::guid mGuid;
   std::string mName;
 
   bool mVR {true};
-  OverlayVRPosition mVRPosition;
+  ViewVRPosition mVRPosition;
 
   bool mNonVR {true};
-  OverlayNonVRPosition mNonVRPosition;
+  ViewNonVRPosition mNonVRPosition;
 
-  static OverlayConfig CreateDefaultFirstOverlay();
-  static OverlayConfig CreateDefaultSecondOverlay(const OverlayConfig& first);
+  static ViewConfig CreateDefaultFirstView();
+  static ViewConfig CreateDefaultSecondView(const ViewConfig& first);
 
-  static OverlayConfig CreateRightKnee();
-  static OverlayConfig CreateMirroredOverlay(
+  static ViewConfig CreateRightKnee();
+  static ViewConfig CreateMirroredView(
     std::string_view name,
-    const OverlayConfig& other);
+    const ViewConfig& other);
 
-  constexpr bool operator==(const OverlayConfig&) const noexcept = default;
+  constexpr bool operator==(const ViewConfig&) const noexcept = default;
 };
 
-struct OverlaysConfig {
-  OverlaysConfig();
-  explicit OverlaysConfig(const nlohmann::json&);
+struct ViewsConfig {
+  ViewsConfig();
+  explicit ViewsConfig(const nlohmann::json&);
 
-  std::vector<OverlayConfig> mOverlays;
+  std::vector<ViewConfig> mViews;
 
-  constexpr bool operator==(const OverlaysConfig&) const noexcept = default;
+  constexpr bool operator==(const ViewsConfig&) const noexcept = default;
 };
 
-OPENKNEEBOARD_DECLARE_SPARSE_JSON(OverlaysConfig);
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(ViewsConfig);
 
 };// namespace OpenKneeboard

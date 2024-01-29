@@ -57,7 +57,7 @@ struct NonVRConstrainedPosition {
 };
 static_assert(std::is_standard_layout_v<NonVRConstrainedPosition>);
 
-// Replaced by `OverlaysConfig` in v1.7+
+// Replaced by `ViewConfig` in v1.7+
 struct DeprecatedFlatConfig {
   NonVRConstrainedPosition mDeprecated;
   constexpr bool operator==(const DeprecatedFlatConfig&) const = default;

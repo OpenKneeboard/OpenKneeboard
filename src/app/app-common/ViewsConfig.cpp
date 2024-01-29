@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/OverlaysConfig.h>
+#include <OpenKneeboard/ViewsConfig.h>
 
 #include <OpenKneeboard/utf8.h>
 
@@ -33,8 +33,8 @@ static winrt::guid CreateGUID() {
 
 namespace OpenKneeboard {
 
-std::optional<SHM::VRPosition> OverlayVRPosition::Resolve(
-  const std::vector<OverlayConfig>& others) const {
+std::optional<SHM::VRPosition> ViewVRPosition::Resolve(
+  const std::vector<ViewConfig>& others) const {
   if (mType == Type::Absolute) {
     // FIXME: adjust for alignment and size
     return GetAbsolutePosition();
@@ -64,36 +64,35 @@ std::optional<SHM::VRPosition> OverlayVRPosition::Resolve(
   return ret;
 }
 
-OverlayConfig OverlayConfig::CreateDefaultFirstOverlay() {
-  return OverlayConfig::CreateRightKnee();
+ViewConfig ViewConfig::CreateDefaultFirstView() {
+  return ViewConfig::CreateRightKnee();
 }
 
-OverlayConfig OverlayConfig::CreateRightKnee() {
-  return OverlayConfig {
+ViewConfig ViewConfig::CreateRightKnee() {
+  return ViewConfig {
     .mGuid = CreateGUID(),
     .mName = _("Right Kneeboard"),
-    .mVRPosition = OverlayVRPosition::Absolute({}),
-    .mNonVRPosition = OverlayNonVRPosition::Constrained({}),
+    .mVRPosition = ViewVRPosition::Absolute({}),
+    .mNonVRPosition = ViewNonVRPosition::Constrained({}),
   };
 }
 
-OverlayConfig OverlayConfig::CreateDefaultSecondOverlay(
-  const OverlayConfig& first) {
-  return CreateMirroredOverlay(_("Left Kneeboard"), first);
+ViewConfig ViewConfig::CreateDefaultSecondView(const ViewConfig& first) {
+  return CreateMirroredView(_("Left Kneeboard"), first);
 }
 
-OverlayConfig OverlayConfig::CreateMirroredOverlay(
+ViewConfig ViewConfig::CreateMirroredView(
   std::string_view name,
-  const OverlayConfig& other) {
-  return OverlayConfig {
+  const ViewConfig& other) {
+  return ViewConfig {
     .mGuid = CreateGUID(),
     .mName = std::string {name},
-    .mVRPosition = OverlayVRPosition::HorizontalMirrorOf(other.mGuid),
-    .mNonVRPosition = OverlayNonVRPosition::HorizontalMirrorOf(other.mGuid),
+    .mVRPosition = ViewVRPosition::HorizontalMirrorOf(other.mGuid),
+    .mNonVRPosition = ViewNonVRPosition::HorizontalMirrorOf(other.mGuid),
   };
 }
 
-OverlaysConfig::OverlaysConfig() {
+ViewsConfig::ViewsConfig() {
 }
 
 };// namespace OpenKneeboard
