@@ -20,6 +20,7 @@
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/DXResources.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/hresult.h>
 
@@ -34,7 +35,7 @@ struct D2DErrorRenderer::Impl final {
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 };
 
-D2DErrorRenderer::D2DErrorRenderer(const std::shared_ptr<DXResources>& dxr)
+D2DErrorRenderer::D2DErrorRenderer(const audited_ptr<DXResources>& dxr)
   : D2DErrorRenderer(dxr->mDWriteFactory.get(), dxr->mBlackBrush.get()) {
 }
 

@@ -25,6 +25,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/KneeboardState.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/utf8.h>
 
 #include <shims/winrt/base.h>
@@ -41,7 +42,7 @@ class PlainTextPageSource final : public IPageSource,
  public:
   PlainTextPageSource() = delete;
   PlainTextPageSource(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState* kbs,
     std::string_view placeholderText);
   virtual ~PlainTextPageSource();
@@ -78,7 +79,7 @@ class PlainTextPageSource final : public IPageSource,
   int mRows = -1;
   float mFontSize;
 
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   std::string mPlaceholderText;

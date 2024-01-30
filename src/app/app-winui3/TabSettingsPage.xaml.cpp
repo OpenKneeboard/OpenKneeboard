@@ -77,7 +77,7 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
 
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
-  mDXR = gDXResources.lock();
+  mDXR.copy_from(gDXResources);
   mKneeboard = gKneeboard.lock();
 
   AddEventListener(
@@ -251,7 +251,7 @@ void TabSettingsPage::CreateTab(
   if (tabType == TabType::type) { \
     if constexpr (std::constructible_from< \
                     type##Tab, \
-                    std::shared_ptr<DXResources>, \
+                    audited_ptr<DXResources>, \
                     KneeboardState*>) { \
       AddTabs({std::make_shared<type##Tab>(mDXR, mKneeboard.get())}); \
       return; \

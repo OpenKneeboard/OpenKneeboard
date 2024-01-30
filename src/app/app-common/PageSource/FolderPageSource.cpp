@@ -30,12 +30,12 @@
 
 namespace OpenKneeboard {
 
-FolderPageSource::FolderPageSource(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
+FolderPageSource::FolderPageSource(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
   : PageSourceWithDelegates(dxr, kbs), mDXR(dxr), mKneeboard(kbs) {
 }
 
 std::shared_ptr<FolderPageSource> FolderPageSource::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
   std::shared_ptr<FolderPageSource> ret {new FolderPageSource(dxr, kbs)};

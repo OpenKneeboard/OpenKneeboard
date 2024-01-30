@@ -43,7 +43,7 @@
 namespace OpenKneeboard {
 
 KneeboardView::KneeboardView(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const winrt::guid& guid)
   : mDXR(dxr), mKneeboard(kneeboard), mGUID(guid) {
@@ -79,7 +79,7 @@ std::tuple<IUILayer*, std::span<IUILayer*>> KneeboardView::GetUILayers() const {
 }
 
 std::shared_ptr<KneeboardView> KneeboardView::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const winrt::guid& guid) {
   return std::shared_ptr<KneeboardView>(

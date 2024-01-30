@@ -62,7 +62,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 TabPage::TabPage() {
   InitializeComponent();
-  mDXR = gDXResources.lock();
+  mDXR.copy_from(gDXResources);
   mKneeboard = gKneeboard.lock();
 
   auto brush

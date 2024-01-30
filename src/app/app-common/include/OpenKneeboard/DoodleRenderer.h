@@ -24,6 +24,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/inttypes.h>
 
 #include <unordered_set>
@@ -34,7 +35,7 @@ class KneeboardState;
 
 class DoodleRenderer final {
  public:
-  DoodleRenderer(const std::shared_ptr<DXResources>&, KneeboardState*);
+  DoodleRenderer(const audited_ptr<DXResources>&, KneeboardState*);
   ~DoodleRenderer();
 
   void Render(ID2D1DeviceContext*, PageID, const D2D1_RECT_F& targetRect);
@@ -54,7 +55,7 @@ class DoodleRenderer final {
   Event<> evAddedPageEvent;
 
  private:
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   winrt::com_ptr<ID2D1SolidColorBrush> mBrush;

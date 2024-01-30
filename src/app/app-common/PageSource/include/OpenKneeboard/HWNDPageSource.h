@@ -25,6 +25,7 @@
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/handles.h>
 
 #include <shims/winrt/base.h>
@@ -60,7 +61,7 @@ class HWNDPageSource final
   };
 
   static std::shared_ptr<HWNDPageSource> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     HWND window,
     const Options& options) noexcept;
@@ -90,7 +91,7 @@ class HWNDPageSource final
  private:
   HWNDPageSource() = delete;
   HWNDPageSource(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     HWND window,
     const Options&);
@@ -98,7 +99,7 @@ class HWNDPageSource final
   void OnFrame();
 
   winrt::apartment_context mUIThread;
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   HWND mWindow {};
   Options mOptions {};
   PageID mPageID {};

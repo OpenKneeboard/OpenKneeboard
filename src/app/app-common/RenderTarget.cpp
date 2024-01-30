@@ -29,7 +29,7 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<RenderTarget> RenderTarget::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture) {
   return std::shared_ptr<RenderTarget>(new RenderTarget(dxr, texture));
 }
@@ -37,7 +37,7 @@ std::shared_ptr<RenderTarget> RenderTarget::Create(
 RenderTarget::~RenderTarget() = default;
 
 RenderTarget::RenderTarget(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const winrt::com_ptr<ID3D11Texture2D>& texture)
   : mDXR(dxr), mD3DTexture(texture) {
   winrt::check_hresult(dxr->mD3D11Device->CreateRenderTargetView(

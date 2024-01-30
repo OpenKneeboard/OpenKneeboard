@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/IUILayer.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <memory>
 
 namespace OpenKneeboard {
@@ -29,7 +31,7 @@ struct DXResources;
 
 class TabViewUILayer final : public IUILayer {
  public:
-  TabViewUILayer(const std::shared_ptr<DXResources>& dxr);
+  TabViewUILayer(const audited_ptr<DXResources>& dxr);
   virtual ~TabViewUILayer();
 
   std::optional<D2D1_POINT_2F> GetCursorPoint() const;

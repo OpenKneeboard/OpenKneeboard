@@ -19,8 +19,11 @@
  */
 #pragma once
 
-#include <memory>
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/filesystem>
+
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -35,9 +38,9 @@ class FilePageSource final {
   FilePageSource() = delete;
 
   static std::vector<std::string> GetSupportedExtensions(
-    const std::shared_ptr<DXResources>&) noexcept;
+    const audited_ptr<DXResources>&) noexcept;
   static std::shared_ptr<IPageSource> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path&) noexcept;
 };

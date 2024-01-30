@@ -30,7 +30,7 @@
 namespace OpenKneeboard {
 
 DoodleRenderer::DoodleRenderer(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
   : mDXR(dxr), mKneeboard(kbs) {
   mBrush = dxr->mBlackBrush;

@@ -26,6 +26,8 @@
 #include <OpenKneeboard/Settings.h>
 #include <OpenKneeboard/VRConfig.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/winrt/base.h>
 
 #include <winrt/Windows.Foundation.h>
@@ -71,7 +73,7 @@ class KneeboardState final
   KneeboardState() = delete;
   static std::shared_ptr<KneeboardState> Create(
     HWND mainWindow,
-    const std::shared_ptr<DXResources>&);
+    const audited_ptr<DXResources>&);
   ~KneeboardState() noexcept;
   static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
 
@@ -136,14 +138,14 @@ class KneeboardState final
   void unlock_shared();
 
  private:
-  KneeboardState(HWND mainWindow, const std::shared_ptr<DXResources>&);
+  KneeboardState(HWND mainWindow, const audited_ptr<DXResources>&);
 
   std::shared_mutex mMutex;
   bool mHaveUniqueLock = false;
   bool mNeedsRepaint = false;
   winrt::apartment_context mUIThread;
   HWND mHwnd;
-  std::shared_ptr<DXResources> mDXResources;
+  audited_ptr<DXResources> mDXResources;
   ProfileSettings mProfiles {ProfileSettings::Load()};
   Settings mSettings {Settings::Load(mProfiles.mActiveProfile)};
 

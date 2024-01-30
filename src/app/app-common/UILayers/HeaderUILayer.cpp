@@ -39,7 +39,7 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
   IKneeboardView* kneeboardView) {
   return std::shared_ptr<HeaderUILayer>(
@@ -47,7 +47,7 @@ std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
 }
 
 HeaderUILayer::HeaderUILayer(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
   IKneeboardView* kneeboardView)
   : mDXResources(dxr), mKneeboardState(kneeboardState) {

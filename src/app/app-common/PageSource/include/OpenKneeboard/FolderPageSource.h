@@ -22,10 +22,13 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
+
+#include <OpenKneeboard/audited_ptr.h>
+
+#include <shims/filesystem>
 #include <shims/winrt/base.h>
 
 #include <memory>
-#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
@@ -35,12 +38,12 @@ class FolderPageSource final
   : public PageSourceWithDelegates,
     public std::enable_shared_from_this<FolderPageSource> {
  private:
-  FolderPageSource(const std::shared_ptr<DXResources>&, KneeboardState*);
+  FolderPageSource(const audited_ptr<DXResources>&, KneeboardState*);
 
  public:
   FolderPageSource() = delete;
   static std::shared_ptr<FolderPageSource> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& = {});
   virtual ~FolderPageSource();
@@ -57,7 +60,7 @@ class FolderPageSource final
   winrt::apartment_context mUIThread;
   std::shared_ptr<FilesystemWatcher> mWatcher;
 
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard = nullptr;
 
   std::filesystem::path mPath;

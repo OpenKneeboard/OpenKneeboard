@@ -19,14 +19,17 @@
  */
 #pragma once
 
-#include <OpenKneeboard/PageSourceWithDelegates.h>
-#include <shims/winrt/base.h>
-
-#include <string>
-
 #include "DCSTab.h"
 #include "ITabWithSettings.h"
 #include "TabBase.h"
+
+#include <OpenKneeboard/PageSourceWithDelegates.h>
+
+#include <OpenKneeboard/audited_ptr.h>
+
+#include <shims/winrt/base.h>
+
+#include <string>
 
 namespace OpenKneeboard {
 
@@ -43,9 +46,9 @@ class DCSRadioLogTab final : public TabBase,
     ClearHistory = 1,
   };
 
-  explicit DCSRadioLogTab(const std::shared_ptr<DXResources>&, KneeboardState*);
+  explicit DCSRadioLogTab(const audited_ptr<DXResources>&, KneeboardState*);
   explicit DCSRadioLogTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,

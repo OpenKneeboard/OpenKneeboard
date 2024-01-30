@@ -26,6 +26,8 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IKneeboardView.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <memory>
 #include <thread>
 
@@ -142,7 +144,7 @@ struct MainWindow : MainWindowT<MainWindow>,
 
   winrt::com_ptr<ID2D1Effect> mHDRWhiteLevelEffect;
 
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   std::shared_ptr<KneeboardState> mKneeboard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation

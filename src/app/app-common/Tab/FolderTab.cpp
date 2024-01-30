@@ -26,7 +26,7 @@
 namespace OpenKneeboard {
 
 FolderTab::FolderTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
@@ -39,14 +39,14 @@ FolderTab::FolderTab(
 }
 
 FolderTab::FolderTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path)
   : FolderTab(dxr, kbs, winrt::guid {}, to_utf8(path.filename()), path) {
 }
 
 FolderTab::FolderTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,

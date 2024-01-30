@@ -34,7 +34,7 @@
 namespace OpenKneeboard {
 
 std::vector<std::string> FilePageSource::GetSupportedExtensions(
-  const std::shared_ptr<DXResources>& dxr) noexcept {
+  const audited_ptr<DXResources>& dxr) noexcept {
   std::vector<std::string> extensions {".txt", ".pdf"};
 
   winrt::com_ptr<IEnumUnknown> enumerator;
@@ -64,7 +64,7 @@ std::vector<std::string> FilePageSource::GetSupportedExtensions(
 }
 
 std::shared_ptr<IPageSource> FilePageSource::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) noexcept {
   try {

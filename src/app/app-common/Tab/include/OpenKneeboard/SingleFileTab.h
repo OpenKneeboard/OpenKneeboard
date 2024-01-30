@@ -19,14 +19,16 @@
  */
 #pragma once
 
-#include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/PageSourceWithDelegates.h>
-
-#include <shims/filesystem>
-
 #include "ITab.h"
 #include "ITabWithSettings.h"
 #include "TabBase.h"
+
+#include <OpenKneeboard/DXResources.h>
+#include <OpenKneeboard/PageSourceWithDelegates.h>
+
+#include <OpenKneeboard/audited_ptr.h>
+
+#include <shims/filesystem>
 
 namespace OpenKneeboard {
 
@@ -43,11 +45,11 @@ class SingleFileTab final : public TabBase,
     ImageFile,
   };
   SingleFileTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
   SingleFileTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -65,12 +67,12 @@ class SingleFileTab final : public TabBase,
 
  private:
   SingleFileTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
     const std::filesystem::path& path);
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   Kind mKind = Kind::Unknown;

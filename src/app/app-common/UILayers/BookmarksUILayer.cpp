@@ -27,7 +27,7 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<BookmarksUILayer> BookmarksUILayer::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* state,
   IKneeboardView* view) {
   auto ret
@@ -37,7 +37,7 @@ std::shared_ptr<BookmarksUILayer> BookmarksUILayer::Create(
 }
 
 BookmarksUILayer::BookmarksUILayer(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
   IKneeboardView* kneeboardView)
   : mDXResources(dxr),

@@ -31,14 +31,14 @@
 namespace OpenKneeboard {
 
 std::shared_ptr<ImageFilePageSource> ImageFilePageSource::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const std::vector<std::filesystem::path>& paths) {
   auto ret = std::shared_ptr<ImageFilePageSource>(new ImageFilePageSource(dxr));
   ret->SetPaths(paths);
   return ret;
 }
 
-ImageFilePageSource::ImageFilePageSource(const std::shared_ptr<DXResources>& dxr) : mDXR(dxr) {
+ImageFilePageSource::ImageFilePageSource(const audited_ptr<DXResources>& dxr) : mDXR(dxr) {
 }
 
 void ImageFilePageSource::SetPaths(
@@ -93,7 +93,7 @@ bool ImageFilePageSource::CanOpenFile(const std::filesystem::path& path) const {
 }
 
 bool ImageFilePageSource::CanOpenFile(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const std::filesystem::path& path) {
   try {
     if (!std::filesystem::is_regular_file(path)) {

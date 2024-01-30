@@ -47,13 +47,13 @@ namespace OpenKneeboard {
 
 std::shared_ptr<KneeboardState> KneeboardState::Create(
   HWND hwnd,
-  const std::shared_ptr<DXResources>& dxr) {
+  const audited_ptr<DXResources>& dxr) {
   return shared_with_final_release(new KneeboardState(hwnd, dxr));
 }
 
 KneeboardState::KneeboardState(
   HWND hwnd,
-  const std::shared_ptr<DXResources>& dxr)
+  const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
 

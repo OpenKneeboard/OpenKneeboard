@@ -26,6 +26,8 @@
 #include <OpenKneeboard/IHasDebugInformation.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/filesystem>
 
 #include <vector>
@@ -39,9 +41,9 @@ class DCSAircraftTab final : public TabBase,
                              public PageSourceWithDelegates,
                              public IHasDebugInformation {
  public:
-  DCSAircraftTab(const std::shared_ptr<DXResources>&, KneeboardState*);
+  DCSAircraftTab(const audited_ptr<DXResources>&, KneeboardState*);
   DCSAircraftTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
@@ -55,7 +57,7 @@ class DCSAircraftTab final : public TabBase,
   virtual std::string GetDebugInformation() const override;
 
  protected:
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard = nullptr;
 
   std::string mDebugInformation;

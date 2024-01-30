@@ -32,7 +32,7 @@
 namespace OpenKneeboard {
 
 FooterUILayer::FooterUILayer(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard)
   : mDXResources(dxr), mKneeboard(kneeboard) {
   AddEventListener(

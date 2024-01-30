@@ -32,7 +32,7 @@
 namespace OpenKneeboard {
 
 TabView::TabView(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const std::shared_ptr<ITab>& tab)
   : mDXR(dxr), mKneeboard(kneeboard), mRootTab(tab) {

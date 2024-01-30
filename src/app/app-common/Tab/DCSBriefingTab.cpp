@@ -34,12 +34,12 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSBriefingTab::DCSBriefingTab(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSBriefingTab::DCSBriefingTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
   : DCSBriefingTab(dxr, kbs, {}, _("Briefing")) {
 }
 
 DCSBriefingTab::DCSBriefingTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)

@@ -30,7 +30,7 @@
 namespace OpenKneeboard {
 
 PageSourceWithDelegates::PageSourceWithDelegates(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
   : mDXResources(dxr) {
   mDoodles = std::make_unique<DoodleRenderer>(dxr, kbs);

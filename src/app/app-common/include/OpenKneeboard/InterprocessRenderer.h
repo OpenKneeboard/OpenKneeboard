@@ -25,6 +25,7 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/SHM.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/final_release_deleter.h>
 
@@ -56,12 +57,12 @@ class InterprocessRenderer final
     std::unique_ptr<InterprocessRenderer>);
 
   static std::shared_ptr<InterprocessRenderer> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*);
 
  private:
   InterprocessRenderer() = delete;
-  InterprocessRenderer(const std::shared_ptr<DXResources>&);
+  InterprocessRenderer(const audited_ptr<DXResources>&);
   // Split out from the constructor so that `shared_from_this()` is valid
   // when invoked
   void Initialize(KneeboardState*);
@@ -73,7 +74,7 @@ class InterprocessRenderer final
   winrt::apartment_context mOwnerThread;
 
   EventContext mEventContext;
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   OpenKneeboard::SHM::Writer mSHM;
 
   KneeboardState* mKneeboard = nullptr;

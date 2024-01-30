@@ -23,6 +23,8 @@
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
 
@@ -39,7 +41,7 @@ class PDFFilePageSource final
     public EventReceiver,
     public std::enable_shared_from_this<PDFFilePageSource> {
  private:
-  explicit PDFFilePageSource(const std::shared_ptr<DXResources>&, KneeboardState*);
+  explicit PDFFilePageSource(const audited_ptr<DXResources>&, KneeboardState*);
 
  public:
   PDFFilePageSource() = delete;
@@ -48,7 +50,7 @@ class PDFFilePageSource final
     std::unique_ptr<PDFFilePageSource>);
 
   static std::shared_ptr<PDFFilePageSource> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path = {});
 

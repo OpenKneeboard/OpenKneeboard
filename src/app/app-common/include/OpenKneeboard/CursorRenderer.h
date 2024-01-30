@@ -19,9 +19,11 @@
  */
 #pragma once
 
-#include <d2d1.h>
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/winrt/base.h>
 
+#include <d2d1.h>
 namespace OpenKneeboard {
 
 struct DXResources;
@@ -29,7 +31,7 @@ struct DXResources;
 class CursorRenderer final {
  public:
   CursorRenderer() = delete;
-  CursorRenderer(const std::shared_ptr<DXResources>&);
+  CursorRenderer(const audited_ptr<DXResources>&);
   ~CursorRenderer();
 
   void Render(

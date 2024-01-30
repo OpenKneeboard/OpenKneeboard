@@ -23,6 +23,8 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/UILayerBase.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/winrt/base.h>
 
 #include <chrono>
@@ -36,7 +38,7 @@ struct GameInstance;
 
 class FooterUILayer final : public UILayerBase, private EventReceiver {
  public:
-  FooterUILayer(const std::shared_ptr<DXResources>& dxr, KneeboardState*);
+  FooterUILayer(const audited_ptr<DXResources>& dxr, KneeboardState*);
   virtual ~FooterUILayer();
 
   virtual void PostCursorEvent(
@@ -56,7 +58,7 @@ class FooterUILayer final : public UILayerBase, private EventReceiver {
   void OnGameEvent(const GameEvent&);
   void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
 
-  std::shared_ptr<DXResources> mDXResources;
+  audited_ptr<DXResources> mDXResources;
   winrt::com_ptr<ID2D1Brush> mBackgroundBrush;
   winrt::com_ptr<ID2D1Brush> mForegroundBrush;
   std::optional<D2D1_SIZE_F> mLastRenderSize;

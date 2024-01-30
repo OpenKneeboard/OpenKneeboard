@@ -29,6 +29,8 @@
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <limits>
 #include <memory>
 
@@ -41,7 +43,7 @@ class NavigationTab final : public TabBase,
   using Entry = NavigationEntry;
 
   NavigationTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     const std::shared_ptr<ITab>& rootTab,
     const std::vector<NavigationEntry>& entries,
     const D2D1_SIZE_U& preferredSize);
@@ -64,7 +66,7 @@ class NavigationTab final : public TabBase,
   virtual void ClearUserInput() override;
 
  private:
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   std::shared_ptr<ITab> mRootTab;
   D2D1_SIZE_U mPreferredSize;
   CachedLayer mPreviewLayer;

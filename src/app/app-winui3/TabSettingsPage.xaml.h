@@ -34,6 +34,8 @@
 
 #include <OpenKneeboard/Events.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <string>
 
 namespace OpenKneeboard {
@@ -85,7 +87,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
 
   bool mUIIsChangingTabs = false;
 
-  std::shared_ptr<OpenKneeboard::DXResources> mDXR;
+  OpenKneeboard::audited_ptr<OpenKneeboard::DXResources> mDXR;
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 

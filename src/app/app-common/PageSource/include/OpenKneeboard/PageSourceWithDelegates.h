@@ -26,6 +26,8 @@
 #include <OpenKneeboard/IPageSourceWithNavigation.h>
 #include <OpenKneeboard/KneeboardState.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <memory>
 #include <tuple>
 #include <unordered_map>
@@ -43,7 +45,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
                                 public virtual EventReceiver {
  public:
   PageSourceWithDelegates() = delete;
-  PageSourceWithDelegates(const std::shared_ptr<DXResources>&, KneeboardState*);
+  PageSourceWithDelegates(const audited_ptr<DXResources>&, KneeboardState*);
   virtual ~PageSourceWithDelegates();
 
   virtual PageIndex GetPageCount() const override;
@@ -66,7 +68,7 @@ class PageSourceWithDelegates : public virtual IPageSource,
   void SetDelegates(const std::vector<std::shared_ptr<IPageSource>>&);
 
  private:
-  std::shared_ptr<DXResources> mDXResources;
+  audited_ptr<DXResources> mDXResources;
   std::vector<std::shared_ptr<IPageSource>> mDelegates;
   std::vector<EventHandlerToken> mDelegateEvents;
   std::vector<EventHandlerToken> mFixedEvents;

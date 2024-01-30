@@ -26,6 +26,8 @@
 #include <OpenKneeboard/IHasDebugInformation.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 namespace OpenKneeboard {
 
 class FolderTab;
@@ -35,9 +37,9 @@ class DCSTerrainTab final : public TabBase,
                             public PageSourceWithDelegates,
                             public IHasDebugInformation {
  public:
-  DCSTerrainTab(const std::shared_ptr<DXResources>&, KneeboardState*);
+  DCSTerrainTab(const audited_ptr<DXResources>&, KneeboardState*);
   DCSTerrainTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
@@ -51,7 +53,7 @@ class DCSTerrainTab final : public TabBase,
   virtual std::string GetDebugInformation() const override;
 
  protected:
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard = nullptr;
 
   std::string mDebugInformation;

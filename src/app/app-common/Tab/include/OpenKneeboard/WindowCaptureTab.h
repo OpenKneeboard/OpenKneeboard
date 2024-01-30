@@ -24,6 +24,7 @@
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <OpenKneeboard/TabBase.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/handles.h>
 
 namespace OpenKneeboard {
@@ -61,10 +62,12 @@ class WindowCaptureTab final
   };
 
   WindowCaptureTab() = delete;
-  static std::shared_ptr<WindowCaptureTab>
-  Create(const std::shared_ptr<DXResources>&, KneeboardState*, const MatchSpecification&);
   static std::shared_ptr<WindowCaptureTab> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const MatchSpecification&);
+  static std::shared_ptr<WindowCaptureTab> Create(
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -97,7 +100,7 @@ class WindowCaptureTab final
 
  private:
   WindowCaptureTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -119,7 +122,7 @@ class WindowCaptureTab final
   concurrency::task<void> OnNewWindow(HWND hwnd);
 
   winrt::apartment_context mUIThread;
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard {nullptr};
   MatchSpecification mSpec;
   bool mSendInput = false;

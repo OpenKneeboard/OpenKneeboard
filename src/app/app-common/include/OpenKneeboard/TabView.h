@@ -24,6 +24,8 @@
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <vector>
 
 namespace OpenKneeboard {
@@ -32,7 +34,10 @@ class KneeboardState;
 
 class TabView final : public ITabView, private EventReceiver {
  public:
-  TabView(const std::shared_ptr<DXResources>&, KneeboardState*, const std::shared_ptr<ITab>&);
+  TabView(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const std::shared_ptr<ITab>&);
   ~TabView();
 
   virtual void SetPageID(PageID) override;
@@ -54,7 +59,7 @@ class TabView final : public ITabView, private EventReceiver {
  private:
   const EventContext mEventContext;
 
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   std::shared_ptr<ITab> mRootTab;

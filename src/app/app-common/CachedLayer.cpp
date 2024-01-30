@@ -21,13 +21,14 @@
 #include <OpenKneeboard/D3D11.h>
 #include <OpenKneeboard/SHM.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/scope_guard.h>
 
 #include <DirectXColors.h>
 
 namespace OpenKneeboard {
 
-CachedLayer::CachedLayer(const std::shared_ptr<DXResources>& dxr) : mDXR(dxr) {
+CachedLayer::CachedLayer(const audited_ptr<DXResources>& dxr) : mDXR(dxr) {
 }
 
 CachedLayer::~CachedLayer() {

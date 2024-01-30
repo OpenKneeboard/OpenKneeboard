@@ -29,12 +29,12 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSMissionTab::DCSMissionTab(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSMissionTab::DCSMissionTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
   : DCSMissionTab(dxr, kbs, {}, _("Mission")) {
 }
 
 DCSMissionTab::DCSMissionTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)

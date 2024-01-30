@@ -29,7 +29,7 @@
 namespace OpenKneeboard {
 
 SingleFileTab::SingleFileTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,
@@ -42,14 +42,14 @@ SingleFileTab::SingleFileTab(
 }
 
 SingleFileTab::SingleFileTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path)
   : SingleFileTab(dxr, kbs, winrt::guid {}, to_utf8(path.stem()), path) {
 }
 
 SingleFileTab::SingleFileTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title,

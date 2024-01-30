@@ -34,7 +34,7 @@ bool NavigationTab::Button::operator==(
 }
 
 NavigationTab::NavigationTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const std::shared_ptr<ITab>& rootTab,
   const std::vector<NavigationEntry>& entries,
   const D2D1_SIZE_U& _ignoredPreferredSize)

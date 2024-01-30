@@ -35,7 +35,7 @@
 namespace OpenKneeboard {
 
 TabsList::TabsList(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard,
   const nlohmann::json& config)
   : mDXR(dxr), mKneeboard(kneeboard) {

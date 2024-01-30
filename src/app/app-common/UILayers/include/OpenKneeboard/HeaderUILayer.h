@@ -27,6 +27,8 @@
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/UILayerBase.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -42,7 +44,7 @@ class HeaderUILayer final : public UILayerBase,
                             public std::enable_shared_from_this<HeaderUILayer> {
  public:
   static std::shared_ptr<HeaderUILayer>
-  Create(const std::shared_ptr<DXResources>& dxr, KneeboardState*, IKneeboardView*);
+  Create(const audited_ptr<DXResources>& dxr, KneeboardState*, IKneeboardView*);
   virtual ~HeaderUILayer();
 
   virtual void PostCursorEvent(
@@ -60,7 +62,10 @@ class HeaderUILayer final : public UILayerBase,
   HeaderUILayer() = delete;
 
  private:
-  HeaderUILayer(const std::shared_ptr<DXResources>& dxr, KneeboardState*, IKneeboardView*);
+  HeaderUILayer(
+    const audited_ptr<DXResources>& dxr,
+    KneeboardState*,
+    IKneeboardView*);
 
   void DrawHeaderText(
     const std::shared_ptr<ITabView>&,
@@ -80,7 +85,7 @@ class HeaderUILayer final : public UILayerBase,
     const D2D1_SIZE_F& headerSize,
     D2D1_RECT_F* headerTextRect);
 
-  std::shared_ptr<DXResources> mDXResources;
+  audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboardState {nullptr};
   winrt::com_ptr<ID2D1Brush> mHeaderBGBrush;
   winrt::com_ptr<ID2D1Brush> mHeaderTextBrush;

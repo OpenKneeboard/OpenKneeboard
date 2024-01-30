@@ -70,7 +70,7 @@ namespace OpenKneeboard {
 struct PDFFilePageSource::Impl final {
   using LinkHandler = CursorClickableRegions<PDFNavigation::Link>;
 
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   std::filesystem::path mPath;
   std::shared_ptr<Filesystem::TemporaryCopy> mCopy;
 
@@ -94,7 +94,7 @@ struct PDFFilePageSource::Impl final {
 };
 
 PDFFilePageSource::PDFFilePageSource(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs)
   : p(new Impl {.mDXR = dxr}) {
   const std::unique_lock d2dlock(*(p->mDXR));
@@ -131,7 +131,7 @@ PDFFilePageSource::~PDFFilePageSource() {
 }
 
 std::shared_ptr<PDFFilePageSource> PDFFilePageSource::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const std::filesystem::path& path) {
   auto ret = shared_with_final_release(new PDFFilePageSource(dxr, kbs));

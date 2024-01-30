@@ -25,6 +25,8 @@
 #include <OpenKneeboard/IToolbarItem.h>
 #include <OpenKneeboard/IUILayer.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/winrt/base.h>
 
 #include <memory>
@@ -43,7 +45,7 @@ class FlyoutMenuUILayer final
     TopRight,
   };
   static std::shared_ptr<FlyoutMenuUILayer> Create(
-    const std::shared_ptr<DXResources>& dxr,
+    const audited_ptr<DXResources>& dxr,
     const std::vector<std::shared_ptr<IToolbarItem>>& items,
     D2D1_POINT_2F preferredTopLeft01,
     D2D1_POINT_2F preferredTopRight01,
@@ -68,12 +70,12 @@ class FlyoutMenuUILayer final
 
  private:
   FlyoutMenuUILayer(
-    const std::shared_ptr<DXResources>& dxr,
+    const audited_ptr<DXResources>& dxr,
     const std::vector<std::shared_ptr<IToolbarItem>>& items,
     D2D1_POINT_2F preferredTopLeft01,
     D2D1_POINT_2F preferredTopRight01,
     Corner preferredCorner);
-  std::shared_ptr<DXResources> mDXResources;
+  audited_ptr<DXResources> mDXResources;
   std::vector<std::shared_ptr<IToolbarItem>> mItems;
   D2D1_POINT_2F mPreferredTopLeft01 {};
   D2D1_POINT_2F mPreferredTopRight01 {};

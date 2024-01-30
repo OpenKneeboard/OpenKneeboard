@@ -23,6 +23,8 @@
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <OpenKneeboard/TabBase.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
@@ -34,11 +36,11 @@ class FolderTab final : public TabBase,
                         public ITabWithSettings {
  public:
   explicit FolderTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
   explicit FolderTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -56,7 +58,7 @@ class FolderTab final : public TabBase,
 
  private:
   FolderTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,

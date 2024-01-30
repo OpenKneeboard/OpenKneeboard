@@ -31,7 +31,7 @@ namespace OpenKneeboard {
 HWND gMainWindow {};
 std::weak_ptr<TroubleshootingStore> gTroubleshootingStore;
 std::weak_ptr<KneeboardState> gKneeboard;
-std::weak_ptr<DXResources> gDXResources;
+audited_ptr<DXResources> gDXResources;
 winrt::handle gMutex {};
 std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
 RenderTargetID gGUIRenderTargetID;

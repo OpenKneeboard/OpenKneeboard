@@ -23,6 +23,7 @@
 #include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/RenderTargetID.h>
 
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/dprint.h>
 #include <OpenKneeboard/tracing.h>
 
@@ -49,7 +50,7 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
   ~RenderTarget();
 
   static std::shared_ptr<RenderTarget> Create(
-    const std::shared_ptr<DXResources>& dxr,
+    const audited_ptr<DXResources>& dxr,
     const winrt::com_ptr<ID3D11Texture2D>& texture);
 
   PixelSize GetDimensions() const;
@@ -65,14 +66,14 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
 
  private:
   RenderTarget(
-    const std::shared_ptr<DXResources>& dxr,
+    const audited_ptr<DXResources>& dxr,
     const winrt::com_ptr<ID3D11Texture2D>& texture);
   enum class Mode { Unattached, D2D, D3D };
   Mode mMode {Mode::Unattached};
 
   PixelSize mDimensions;
 
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
 
   RenderTargetID mID;
 

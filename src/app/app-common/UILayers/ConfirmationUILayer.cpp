@@ -30,14 +30,14 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) noexcept {
 namespace OpenKneeboard {
 
 std::shared_ptr<ConfirmationUILayer> ConfirmationUILayer::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const std::shared_ptr<IToolbarItemWithConfirmation>& item) {
   return std::shared_ptr<ConfirmationUILayer>(
     new ConfirmationUILayer(dxr, item));
 }
 
 ConfirmationUILayer::ConfirmationUILayer(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const std::shared_ptr<IToolbarItemWithConfirmation>& item)
   : mDXResources(dxr), mItem(item) {
   auto d2d = dxr->mD2DDeviceContext.get();

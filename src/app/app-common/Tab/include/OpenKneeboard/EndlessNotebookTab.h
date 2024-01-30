@@ -28,6 +28,8 @@
 #include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/TabBase.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/filesystem>
 
 namespace OpenKneeboard {
@@ -43,11 +45,11 @@ class EndlessNotebookTab final
     public std::enable_shared_from_this<EndlessNotebookTab> {
  public:
   static std::shared_ptr<EndlessNotebookTab> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path);
   static std::shared_ptr<EndlessNotebookTab> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title,
@@ -81,11 +83,11 @@ class EndlessNotebookTab final
 
  private:
   EndlessNotebookTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
 
   std::filesystem::path mPath;

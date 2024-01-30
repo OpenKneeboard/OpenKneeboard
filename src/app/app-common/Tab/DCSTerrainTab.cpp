@@ -28,12 +28,12 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSTerrainTab::DCSTerrainTab(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSTerrainTab::DCSTerrainTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
   : DCSTerrainTab(dxr, kbs, {}, _("Theater")) {
 }
 
 DCSTerrainTab::DCSTerrainTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)

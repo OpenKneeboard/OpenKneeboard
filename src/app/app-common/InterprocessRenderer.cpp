@@ -247,7 +247,7 @@ InterprocessRenderer::GetIPCTextureResources(
 }
 
 std::shared_ptr<InterprocessRenderer> InterprocessRenderer::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboard) {
   auto ret = shared_with_final_release(new InterprocessRenderer(dxr));
   ret->Initialize(kneeboard);
@@ -263,7 +263,7 @@ winrt::fire_and_forget InterprocessRenderer::final_release(
 std::mutex InterprocessRenderer::sSingleInstance;
 
 InterprocessRenderer::InterprocessRenderer(
-  const std::shared_ptr<DXResources>& dxr)
+  const audited_ptr<DXResources>& dxr)
   : mInstanceLock(sSingleInstance), mDXR(dxr), mSHM(dxr->mAdapterLUID) {
   dprint(__FUNCTION__);
 }

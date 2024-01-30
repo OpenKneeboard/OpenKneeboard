@@ -29,6 +29,8 @@
 #include <OpenKneeboard/SingleFileTab.h>
 #include <OpenKneeboard/WindowCaptureTab.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/winrt/base.h>
 
 #include <concepts>
@@ -102,13 +104,13 @@ concept shared_constructible_from = requires(TArgs... args) {
 // Public constructor
 static_assert(detail::shared_constructible_from<
               SingleFileTab,
-              const std::shared_ptr<DXResources>&,
+              const audited_ptr<DXResources>&,
               KneeboardState*,
               const std::filesystem::path&>);
 // Static method
 static_assert(detail::shared_constructible_from<
               WindowCaptureTab,
-              const std::shared_ptr<DXResources>&,
+              const audited_ptr<DXResources>&,
               KneeboardState*,
               const winrt::guid&,
               const std::string&,
@@ -117,14 +119,14 @@ static_assert(detail::shared_constructible_from<
 /** Create a `shared_ptr<ITab>` with existing config */
 template <std::derived_from<ITab> T>
 std::shared_ptr<T> load_tab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   const std::string& title,
   const nlohmann::json& config) {
   if constexpr (detail::shared_constructible_from<
                   T,
-                  std::shared_ptr<DXResources>,
+                  audited_ptr<DXResources>,
                   KneeboardState*,
                   winrt::guid,
                   std::string,
@@ -134,7 +136,7 @@ std::shared_ptr<T> load_tab(
 
   if constexpr (detail::shared_constructible_from<
                   T,
-                  std::shared_ptr<DXResources>,
+                  audited_ptr<DXResources>,
                   KneeboardState*,
                   winrt::guid,
                   std::string>) {
@@ -148,7 +150,7 @@ template <class T>
 concept loadable_tab = std::is_invocable_r_v<
   std::shared_ptr<T>,
   decltype(&load_tab<T>),
-  const std::shared_ptr<DXResources>&,
+  const audited_ptr<DXResources>&,
   KneeboardState*,
   const winrt::guid&,
   const std::string&,

@@ -36,7 +36,7 @@
 namespace OpenKneeboard {
 
 PlainTextPageSource::PlainTextPageSource(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   std::string_view placeholderText)
   : mDXR(dxr), mPlaceholderText(placeholderText), mKneeboard(kbs) {

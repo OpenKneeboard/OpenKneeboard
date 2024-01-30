@@ -39,7 +39,7 @@ static bool operator==(const D2D1_RECT_F& a, const D2D1_RECT_F& b) {
 namespace OpenKneeboard {
 
 std::shared_ptr<FlyoutMenuUILayer> FlyoutMenuUILayer::Create(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const std::vector<std::shared_ptr<IToolbarItem>>& items,
   D2D1_POINT_2F preferredTopLeft01,
   D2D1_POINT_2F preferredTopRight01,
@@ -49,7 +49,7 @@ std::shared_ptr<FlyoutMenuUILayer> FlyoutMenuUILayer::Create(
 }
 
 FlyoutMenuUILayer::FlyoutMenuUILayer(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   const std::vector<std::shared_ptr<IToolbarItem>>& items,
   D2D1_POINT_2F preferredTopLeft01,
   D2D1_POINT_2F preferredTopRight01,

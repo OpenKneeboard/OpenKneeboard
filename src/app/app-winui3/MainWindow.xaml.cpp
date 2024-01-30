@@ -73,12 +73,9 @@ using namespace ::OpenKneeboard;
 namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 
 namespace winrt::OpenKneeboardApp::implementation {
-MainWindow::MainWindow() {
+MainWindow::MainWindow() : mDXR(new DXResources()) {
   InitializeComponent();
-  // shared_ptr
-  mDXR = std::make_shared<DXResources>();
-  // weak_ptr
-  gDXResources = mDXR;
+  gDXResources.copy_from(mDXR);
 
   {
     auto ref = get_strong();
@@ -616,7 +613,8 @@ winrt::fire_and_forget MainWindow::CleanupAndClose() {
 
   co_await mUIThread;
 
-  mDXR = {};
+  gDXResources = nullptr;
+  mDXR = nullptr;
 
   dprint("Closing Main Window");
   this->Close();

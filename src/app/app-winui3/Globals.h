@@ -22,6 +22,8 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/RenderTargetID.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <winrt/OpenKneeboardApp.h>
 
 #include <memory>
@@ -33,7 +35,7 @@ class TroubleshootingStore;
 
 extern HWND gMainWindow;
 extern std::weak_ptr<KneeboardState> gKneeboard;
-extern std::weak_ptr<DXResources> gDXResources;
+extern audited_ptr<DXResources> gDXResources;
 extern winrt::handle gMutex;
 extern std::weak_ptr<TroubleshootingStore> gTroubleshootingStore;
 extern std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;

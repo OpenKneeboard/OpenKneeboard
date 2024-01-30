@@ -25,6 +25,8 @@
 #include <OpenKneeboard/DCSWorld.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 namespace OpenKneeboard {
 
 class LuaRef;
@@ -38,9 +40,9 @@ class DCSBriefingTab final : public TabBase,
                              public virtual DCSTab,
                              public virtual PageSourceWithDelegates {
  public:
-  DCSBriefingTab(const std::shared_ptr<DXResources>&, KneeboardState*);
+  DCSBriefingTab(const audited_ptr<DXResources>&, KneeboardState*);
   DCSBriefingTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);

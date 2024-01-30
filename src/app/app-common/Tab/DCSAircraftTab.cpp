@@ -28,12 +28,12 @@ using DCS = OpenKneeboard::DCSWorld;
 
 namespace OpenKneeboard {
 
-DCSAircraftTab::DCSAircraftTab(const std::shared_ptr<DXResources>& dxr, KneeboardState* kbs)
+DCSAircraftTab::DCSAircraftTab(const audited_ptr<DXResources>& dxr, KneeboardState* kbs)
   : DCSAircraftTab(dxr, kbs, {}, _("Aircraft")) {
 }
 
 DCSAircraftTab::DCSAircraftTab(
-  const std::shared_ptr<DXResources>& dxr,
+  const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
   std::string_view title)

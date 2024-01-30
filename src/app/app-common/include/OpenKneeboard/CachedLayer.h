@@ -23,6 +23,8 @@
 #include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/RenderTarget.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/winrt/base.h>
 
 #include <functional>
@@ -38,7 +40,7 @@ class CachedLayer final {
  public:
   using Key = size_t;
   CachedLayer() = delete;
-  CachedLayer(const std::shared_ptr<DXResources>&);
+  CachedLayer(const audited_ptr<DXResources>&);
   ~CachedLayer();
 
   void Render(
@@ -50,7 +52,7 @@ class CachedLayer final {
 
  private:
   Key mKey = ~Key {0};
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
 
   PixelSize mCacheDimensions;
   std::mutex mCacheMutex;

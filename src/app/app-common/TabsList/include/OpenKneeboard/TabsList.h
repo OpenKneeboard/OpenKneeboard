@@ -21,6 +21,8 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/ITab.h>
+
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/inttypes.h>
 
 #include <nlohmann/json_fwd.hpp>
@@ -32,7 +34,7 @@ class TabsList final : private EventReceiver {
  public:
   TabsList() = delete;
   TabsList(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState* kneeboard,
     const nlohmann::json& config);
   ~TabsList();
@@ -49,7 +51,7 @@ class TabsList final : private EventReceiver {
   Event<std::vector<std::shared_ptr<ITab>>> evTabsChangedEvent;
 
  private:
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   std::vector<std::shared_ptr<ITab>> mTabs;
   std::vector<EventHandlerToken> mTabEvents;

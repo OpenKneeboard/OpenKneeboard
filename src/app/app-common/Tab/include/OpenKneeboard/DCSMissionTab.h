@@ -23,6 +23,7 @@
 #include "TabBase.h"
 
 #include <OpenKneeboard/IHasDebugInformation.h>
+#include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
 namespace OpenKneeboard {
@@ -35,9 +36,9 @@ class DCSMissionTab final : public TabBase,
                             public PageSourceWithDelegates,
                             public IHasDebugInformation {
  public:
-  DCSMissionTab(const std::shared_ptr<DXResources>&, KneeboardState*);
+  DCSMissionTab(const audited_ptr<DXResources>&, KneeboardState*);
   DCSMissionTab(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
     std::string_view title);
@@ -56,7 +57,7 @@ class DCSMissionTab final : public TabBase,
     const std::filesystem::path&) override;
 
  private:
-  std::shared_ptr<DXResources> mDXR {};
+  audited_ptr<DXResources> mDXR {};
   KneeboardState* mKneeboard {nullptr};
   std::filesystem::path mMission;
   std::string mAircraft;

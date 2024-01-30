@@ -22,6 +22,8 @@
 #include <OpenKneeboard/FilesystemWatcher.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
 
@@ -37,13 +39,13 @@ class PlainTextFilePageSource final
   : public PageSourceWithDelegates,
     public std::enable_shared_from_this<PlainTextFilePageSource> {
  private:
-  PlainTextFilePageSource(const std::shared_ptr<DXResources>&, KneeboardState*);
+  PlainTextFilePageSource(const audited_ptr<DXResources>&, KneeboardState*);
 
  public:
   PlainTextFilePageSource() = delete;
   virtual ~PlainTextFilePageSource();
   static std::shared_ptr<PlainTextFilePageSource> Create(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const std::filesystem::path& path = {});
 

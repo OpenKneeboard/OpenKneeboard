@@ -22,6 +22,8 @@
 #include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
+#include <OpenKneeboard/audited_ptr.h>
+
 #include <vector>
 
 namespace OpenKneeboard {
@@ -42,10 +44,8 @@ class KneeboardView final : public IKneeboardView,
   KneeboardView() = delete;
   ~KneeboardView();
 
-  [[nodiscard]] static std::shared_ptr<KneeboardView> Create(
-    const std::shared_ptr<DXResources>&,
-    KneeboardState*,
-    const winrt::guid&);
+  [[nodiscard]] static std::shared_ptr<KneeboardView>
+  Create(const audited_ptr<DXResources>&, KneeboardState*, const winrt::guid&);
 
   virtual winrt::guid GetPersistentGUID() const override;
   virtual KneeboardViewID GetRuntimeID() const override;
@@ -99,12 +99,12 @@ class KneeboardView final : public IKneeboardView,
   void SetBookmark(RelativePosition);
 
   KneeboardView(
-    const std::shared_ptr<DXResources>&,
+    const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid&);
   winrt::apartment_context mUIThread;
   KneeboardViewID mID;
-  std::shared_ptr<DXResources> mDXR;
+  audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard;
   EventContext mEventContext;
   std::vector<std::shared_ptr<ITabView>> mTabViews;
