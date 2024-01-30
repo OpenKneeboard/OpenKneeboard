@@ -169,9 +169,9 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
     return nullptr;
   }
 
-  const auto scaleX = MaxViewRenderSize.GetWidth<float>() / contentPixels.width;
+  const auto scaleX = MaxViewRenderSize.Width<float>() / contentPixels.width;
   const auto scaleY
-    = MaxViewRenderSize.GetHeight<float>() / contentPixels.height;
+    = MaxViewRenderSize.Height<float>() / contentPixels.height;
   page.mScale = std::min(scaleX, scaleY);
   D2D1_SIZE_U surfaceSize {
     static_cast<UINT32>(std::lround(contentPixels.width * page.mScale)),

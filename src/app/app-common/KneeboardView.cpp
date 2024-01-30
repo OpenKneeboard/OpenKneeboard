@@ -263,7 +263,7 @@ std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
   return mCurrentTabView;
 }
 
-D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
+PixelSize KneeboardView::GetIPCRenderSize() const {
   if (!mCurrentTabView) {
     return ErrorRenderSize;
   }
@@ -285,9 +285,8 @@ D2D1_SIZE_U KneeboardView::GetIPCRenderSize() const {
       && idealSize.mHeight <= MaxViewRenderSize.mHeight) {
       return idealSize;
     }
-    const auto scaleX = MaxViewRenderSize.GetWidth<float>() / idealSize.mWidth;
-    const auto scaleY
-      = MaxViewRenderSize.GetHeight<float>() / idealSize.mHeight;
+    const auto scaleX = MaxViewRenderSize.Width<float>() / idealSize.mWidth;
+    const auto scaleY = MaxViewRenderSize.Height<float>() / idealSize.mHeight;
     const auto scale = std::min(scaleX, scaleY);
 
     // Integer scaling gets us the most readable results

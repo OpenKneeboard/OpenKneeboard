@@ -78,16 +78,16 @@ void SpriteBatch::Begin(
   const D3D12_VIEWPORT viewport {
     0,
     0,
-    rtvSize.GetWidth<FLOAT>(),
-    rtvSize.GetHeight<FLOAT>(),
+    rtvSize.Width<FLOAT>(),
+    rtvSize.Height<FLOAT>(),
     0,
     1,
   };
   const D3D12_RECT scissorRect {
     0,
     0,
-    rtvSize.GetWidth<LONG>(),
-    rtvSize.GetHeight<LONG>(),
+    rtvSize.Width<LONG>(),
+    rtvSize.Height<LONG>(),
   };
 
   const auto ctx = commandList;

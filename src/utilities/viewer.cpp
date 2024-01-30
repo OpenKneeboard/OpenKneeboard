@@ -396,8 +396,8 @@ class TestViewerWindow final : private D3D11Resources {
     const D3D11_VIEWPORT viewport {
       0,
       0,
-      clientSize.GetWidth<float>(),
-      clientSize.GetHeight<float>(),
+      clientSize.Width<float>(),
+      clientSize.Height<float>(),
       0,
       1,
     };
@@ -743,8 +743,8 @@ class TestViewerWindow final : private D3D11Resources {
       text.data(),
       text.size(),
       mOverlayTextFormat.get(),
-      clientSize.GetWidth<FLOAT>(),
-      clientSize.GetHeight<FLOAT>(),
+      clientSize.Width<FLOAT>(),
+      clientSize.Height<FLOAT>(),
       layout.put());
     layout->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_TRAILING);
     layout->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
@@ -787,8 +787,8 @@ class TestViewerWindow final : private D3D11Resources {
     mLayerID = layer.mLayerID;
 
     const auto& imageSize = layer.mLocationOnTexture.mSize;
-    const auto scalex = clientSize.GetWidth<float>() / imageSize.mWidth;
-    const auto scaley = clientSize.GetHeight<float>() / imageSize.mHeight;
+    const auto scalex = clientSize.Width<float>() / imageSize.mWidth;
+    const auto scaley = clientSize.Height<float>() / imageSize.mHeight;
     const auto scale = std::min(scalex, scaley);
     const auto renderWidth = static_cast<uint32_t>(imageSize.mWidth * scale);
     const auto renderHeight = static_cast<uint32_t>(imageSize.mHeight * scale);
@@ -904,8 +904,8 @@ class TestViewerWindow final : private D3D11Resources {
       {
         0.0f,
         0.0f,
-        clientSize.GetWidth<float>(),
-        clientSize.GetHeight<float>(),
+        clientSize.Width<float>(),
+        clientSize.Height<float>(),
       });
 
     check_hresult(ctx->EndDraw());

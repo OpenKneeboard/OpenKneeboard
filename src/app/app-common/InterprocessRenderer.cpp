@@ -262,8 +262,7 @@ winrt::fire_and_forget InterprocessRenderer::final_release(
 
 std::mutex InterprocessRenderer::sSingleInstance;
 
-InterprocessRenderer::InterprocessRenderer(
-  const audited_ptr<DXResources>& dxr)
+InterprocessRenderer::InterprocessRenderer(const audited_ptr<DXResources>& dxr)
   : mInstanceLock(sSingleInstance), mDXR(dxr), mSHM(dxr->mAdapterLUID) {
   dprint(__FUNCTION__);
 }
@@ -338,7 +337,7 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
   ret.mLayerID = view->GetRuntimeID().GetTemporaryValue();
 
   auto usedSize = view->GetIPCRenderSize();
-  if (usedSize.width < 1 || usedSize.height < 1) {
+  if (usedSize.mWidth < 1 || usedSize.mHeight < 1) {
     usedSize = ErrorRenderSize;
   }
   ret.mLocationOnTexture = {bounds.mOffset, usedSize};
@@ -347,11 +346,11 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
     ret.mVREnabled = true;
     ret.mVR = *layer.mVR;
     const auto vrc = mKneeboard->GetVRSettings();
-    const auto xFitScale = vrc.mMaxWidth / usedSize.width;
-    const auto yFitScale = vrc.mMaxHeight / usedSize.height;
+    const auto xFitScale = vrc.mMaxWidth / usedSize.mWidth;
+    const auto yFitScale = vrc.mMaxHeight / usedSize.mHeight;
     const auto scale = std::min<float>(xFitScale, yFitScale);
-    ret.mVR.mWidth = usedSize.width * scale;
-    ret.mVR.mHeight = usedSize.height * scale;
+    ret.mVR.mWidth = usedSize.mWidth * scale;
+    ret.mVR.mHeight = usedSize.mHeight * scale;
   }
 
   if (layer.mNonVR) {

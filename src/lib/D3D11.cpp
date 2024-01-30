@@ -112,8 +112,8 @@ void SpriteBatch::Begin(
   const D3D11_VIEWPORT viewport {
     0,
     0,
-    rtvSize.GetWidth<FLOAT>(),
-    rtvSize.GetHeight<FLOAT>(),
+    rtvSize.Width<FLOAT>(),
+    rtvSize.Height<FLOAT>(),
     0,
     1,
   };
@@ -121,8 +121,8 @@ void SpriteBatch::Begin(
   const D3D11_RECT scissorRect {
     0,
     0,
-    rtvSize.GetWidth<LONG>(),
-    rtvSize.GetHeight<LONG>(),
+    rtvSize.Width<LONG>(),
+    rtvSize.Height<LONG>(),
   };
 
   auto ctx = mDeviceContext.get();

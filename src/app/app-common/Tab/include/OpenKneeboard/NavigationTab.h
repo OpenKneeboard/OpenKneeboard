@@ -68,7 +68,7 @@ class NavigationTab final : public TabBase,
  private:
   audited_ptr<DXResources> mDXR;
   std::shared_ptr<ITab> mRootTab;
-  D2D1_SIZE_U mPreferredSize;
+  PixelSize mPreferredSize;
   CachedLayer mPreviewLayer;
 
   uint16_t mRenderColumns;

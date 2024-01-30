@@ -47,7 +47,7 @@ NavigationTab::NavigationTab(
     ? std::max(
       1ui32,
       static_cast<uint32_t>(
-        (mPreferredSize.width * 1.5f) / mPreferredSize.height))
+        (mPreferredSize.mWidth * 1.5f) / mPreferredSize.mHeight))
     : 1;
   const auto entriesPerPage
     = std::min<size_t>(std::max<size_t>(20, 10 * columns), entries.size());
@@ -61,7 +61,7 @@ NavigationTab::NavigationTab(
     DWRITE_FONT_WEIGHT_NORMAL,
     DWRITE_FONT_STYLE_NORMAL,
     DWRITE_FONT_STRETCH_NORMAL,
-    mPreferredSize.height / (3.0f * (entriesPerColumn + 1)),
+    mPreferredSize.mHeight / (3.0f * (entriesPerColumn + 1)),
     L"",
     mTextFormat.put()));
 
@@ -109,7 +109,7 @@ NavigationTab::NavigationTab(
   const D2D1_RECT_F topRect {
     .left = padding,
     .top = 2 * padding,
-    .right = (mPreferredSize.width / columns) - padding,
+    .right = (mPreferredSize.mWidth / columns) - padding,
     .bottom = (2 * padding) + rowHeight,
   };
   auto rect = topRect;
@@ -133,7 +133,7 @@ NavigationTab::NavigationTab(
         mButtonTrackers[id] = ButtonTracker::Create(buttons);
         buttons.clear();
       } else {
-        const auto translateX = column * (mPreferredSize.width / columns);
+        const auto translateX = column * (mPreferredSize.mWidth / columns);
         rect.left += translateX;
         rect.right += translateX;
       }
@@ -207,7 +207,7 @@ void NavigationTab::RenderPage(
   const D2D1_RECT_F& canvasRect) {
   auto ctx = rt->d2d();
   const auto scale
-    = (canvasRect.bottom - canvasRect.top) / mPreferredSize.height;
+    = (canvasRect.bottom - canvasRect.top) / mPreferredSize.mHeight;
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->FillRectangle(canvasRect, mBackgroundBrush.get());
@@ -236,8 +236,8 @@ void NavigationTab::RenderPage(
     {
       origin.x,
       origin.y,
-      origin.x + (scale * mPreferredSize.width),
-      origin.y + (scale * mPreferredSize.height),
+      origin.x + (scale * mPreferredSize.mWidth),
+      origin.y + (scale * mPreferredSize.mHeight),
     },
     pageID.GetTemporaryValue(),
     rt,
@@ -289,8 +289,8 @@ void NavigationTab::RenderPage(
     mPageNumberTextFormat.get(),
     {0.0f,
      0.0f,
-     static_cast<FLOAT>(mPreferredSize.width),
-     static_cast<FLOAT>(mPreferredSize.height) - mPreviewMetrics.mBleed},
+     static_cast<FLOAT>(mPreferredSize.mWidth),
+     static_cast<FLOAT>(mPreferredSize.mHeight) - mPreviewMetrics.mBleed},
     mTextBrush.get(),
     D2D1_DRAW_TEXT_OPTIONS_NO_SNAP);
 }

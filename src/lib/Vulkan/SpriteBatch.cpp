@@ -308,7 +308,7 @@ void SpriteBatch::End(const std::source_location& loc) {
 
   BatchData batchData {
     .mTargetDimensions
-    = {mTargetDimensions.GetWidth<float>(), mTargetDimensions.GetHeight<float>()},
+    = {mTargetDimensions.Width<float>(), mTargetDimensions.Height<float>()},
   };
 
   std::vector<VkImageView> sources;
@@ -322,8 +322,8 @@ void SpriteBatch::End(const std::source_location& loc) {
       const auto i = sources.size() - 1;
       sourceIndices[sprite.mSource] = i;
       batchData.mSourceDimensions[i] = {
-        sprite.mSourceSize.GetWidth<float>(),
-        sprite.mSourceSize.GetHeight<float>(),
+        sprite.mSourceSize.Width<float>(),
+        sprite.mSourceSize.Height<float>(),
       };
     }
 
@@ -418,8 +418,8 @@ void SpriteBatch::End(const std::source_location& loc) {
   const VkViewport viewport {
     0,
     0,
-    mTargetDimensions.GetWidth<float>(),
-    mTargetDimensions.GetHeight<float>(),
+    mTargetDimensions.Width<float>(),
+    mTargetDimensions.Height<float>(),
     0,
     1};
   mVK->CmdSetViewport(mCommandBuffer, 0, 1, &viewport);

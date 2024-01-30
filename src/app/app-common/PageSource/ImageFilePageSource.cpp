@@ -38,7 +38,8 @@ std::shared_ptr<ImageFilePageSource> ImageFilePageSource::Create(
   return ret;
 }
 
-ImageFilePageSource::ImageFilePageSource(const audited_ptr<DXResources>& dxr) : mDXR(dxr) {
+ImageFilePageSource::ImageFilePageSource(const audited_ptr<DXResources>& dxr)
+  : mDXR(dxr) {
 }
 
 void ImageFilePageSource::SetPaths(
@@ -136,7 +137,9 @@ PreferredSize ImageFilePageSource::GetPreferredSize(PageID pageID) {
     return {};
   }
 
-  return {bitmap->GetPixelSize(), ScalingKind::Bitmap};
+  const auto size = bitmap->GetPixelSize();
+
+  return {{size.width, size.height}, ScalingKind::Bitmap};
 }
 
 void ImageFilePageSource::RenderPage(
