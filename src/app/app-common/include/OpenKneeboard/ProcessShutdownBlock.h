@@ -25,6 +25,16 @@
 
 namespace OpenKneeboard {
 
+/** Block process shutdown until it has been destroyed.
+ *
+ * Some objects have async cleanup, e.g.
+ * - co_await to be destroyed on the correct thread
+ * - co_await'ing windows runtime IAsyncActions
+ *
+ * C++/WinRT's `final_release()` pattern is used for these,
+ * but we need a way to wait for those all to finish, even
+ * as they jump between threads etc.
+ */
 class ProcessShutdownBlock {
  public:
   ProcessShutdownBlock(

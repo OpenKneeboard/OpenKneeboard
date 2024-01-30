@@ -105,6 +105,8 @@ struct ShutdownData {
 
   HANDLE mShutdownEvent {};
 
+  // Keeping the `std::atomic_foo` instead of using the mutex for everything in
+  // case I decide to just do the full tracking in debug builds
   std::mutex mMutex;
   std::unordered_map<uint64_t, std::source_location> mActiveBlocks;
 };
