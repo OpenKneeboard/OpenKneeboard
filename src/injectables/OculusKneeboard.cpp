@@ -215,8 +215,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       },
       .ColorTexture = mSwapchain,
       .Viewport = {
-        .Pos = destRect.mOffset.StaticCast<ovrVector2i, int>(),
-        .Size = destRect.mSize.StaticCast<ovrSizei, int>(),
+        .Pos = destRect.mOffset.StaticCast<int, ovrVector2i>(),
+        .Size = destRect.mSize.StaticCast<int, ovrSizei>(),
       },
       .QuadPoseCenter = GetOvrPosef(params.mKneeboardPose),
       .QuadSize = {params.mKneeboardSize.x, params.mKneeboardSize.y},

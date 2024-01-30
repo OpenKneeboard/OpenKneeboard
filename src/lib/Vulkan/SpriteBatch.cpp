@@ -330,9 +330,9 @@ void SpriteBatch::End(const std::source_location& loc) {
     using TexCoord = std::array<float, 2>;
 
     const TexCoord srcTL
-      = sprite.mSourceRect.TopLeft().StaticCast<TexCoord, float>();
+      = sprite.mSourceRect.TopLeft().StaticCast<float, TexCoord>();
     const TexCoord srcBR
-      = sprite.mSourceRect.BottomRight().StaticCast<TexCoord, float>();
+      = sprite.mSourceRect.BottomRight().StaticCast<float, TexCoord>();
     const TexCoord srcBL {srcTL[0], srcBR[1]};
     const TexCoord srcTR {srcBR[0], srcTL[1]};
 
@@ -340,9 +340,9 @@ void SpriteBatch::End(const std::source_location& loc) {
 
     // Destination coordinates in real 3d coordinates
     const Position dstTL
-      = sprite.mDestRect.TopLeft().StaticCast<Position, float>();
+      = sprite.mDestRect.TopLeft().StaticCast<float, Position>();
     const Position dstBR
-      = sprite.mDestRect.BottomRight().StaticCast<Position, float>();
+      = sprite.mDestRect.BottomRight().StaticCast<float, Position>();
     const Position dstTR {dstBR[0], dstTL[1]};
     const Position dstBL {dstTL[0], dstBR[1]};
 

@@ -296,8 +296,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
       .subImage = XrSwapchainSubImage {
         .swapchain = mSwapchain,
         .imageRect = {
-          destOffset.StaticCast<XrOffset2Di, int>(),
-          layer->mLocationOnTexture.mSize.StaticCast<XrExtent2Di, int32_t>(),
+          destOffset.StaticCast<int, XrOffset2Di>(),
+          layer->mLocationOnTexture.mSize.StaticCast<int, XrExtent2Di>(),
         },
         .imageArrayIndex = 0,
       },

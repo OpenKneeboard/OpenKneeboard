@@ -71,7 +71,7 @@ struct Size {
     }
   }
 
-  template <class TSize, class TValue>
+  template <class TValue, class TSize = Size<TValue>>
     requires(std::integral<T> || std::floating_point<TValue>)
   constexpr TSize StaticCast() const noexcept {
     return TSize {
@@ -90,7 +90,7 @@ struct Size {
   }
 
   constexpr operator D2D1_SIZE_U() const {
-    return StaticCast<D2D1_SIZE_U, UINT32>();
+    return StaticCast<UINT32, D2D1_SIZE_U>();
   }
 };
 
@@ -111,7 +111,7 @@ struct Point {
 
   constexpr auto operator<=>(const Point<T>&) const noexcept = default;
 
-  template <class TPoint, class TValue>
+  template <class TValue, class TPoint = Point<TValue>>
   constexpr TPoint StaticCast() const noexcept {
     return TPoint {
       static_cast<TValue>(mX),
@@ -176,7 +176,7 @@ struct Rect {
 
   constexpr auto operator<=>(const Rect<T>&) const noexcept = default;
 
-  template <class TRect, class TValue>
+  template <class TValue, class TRect>
   constexpr TRect StaticCastWithBottomRight() const noexcept {
     return {
       static_cast<TValue>(mOffset.mX),
@@ -186,26 +186,16 @@ struct Rect {
     };
   }
 
-  template <class TRect, class TValue>
-  constexpr TRect StaticCastWithSize() const noexcept {
-    return {
-      static_cast<TValue>(mOffset.mX),
-      static_cast<TValue>(mOffset.mY),
-      static_cast<TValue>(mSize.mWidth),
-      static_cast<TValue>(mSize.mHeight),
-    };
-  }
-
   constexpr operator D3D11_RECT() const {
-    return StaticCastWithBottomRight<D3D11_RECT, LONG>();
+    return StaticCastWithBottomRight<LONG, D3D11_RECT>();
   }
 
   constexpr operator D2D_RECT_U() const {
-    return StaticCastWithBottomRight<D2D_RECT_U, UINT32>();
+    return StaticCastWithBottomRight<UINT32, D2D_RECT_U>();
   }
 
   constexpr operator D2D1_RECT_F() const {
-    return StaticCastWithBottomRight<D2D1_RECT_F, FLOAT>();
+    return StaticCastWithBottomRight<FLOAT, D2D1_RECT_F>();
   }
 };
 

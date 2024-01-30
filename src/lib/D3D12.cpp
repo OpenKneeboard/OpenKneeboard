@@ -120,7 +120,7 @@ void SpriteBatch::Draw(
   }
 
   const auto sourceD3DSize
-    = sourceSize.StaticCast<DirectX::XMUINT2, uint32_t>();
+    = sourceSize.StaticCast<uint32_t, DirectX::XMUINT2>();
 
   const D3D12_RECT sourceD3DRect = sourceRect;
   const D3D12_RECT destD3DRect = destRect;

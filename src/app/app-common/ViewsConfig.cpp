@@ -39,8 +39,7 @@ std::optional<SHM::VRQuad> ViewVRPosition::Resolve(
   if (mType == Type::Absolute) {
     auto quad = this->GetQuadConfig();
 
-    using Size = Geometry2D::Size<float>;
-    Size size = contentSize.mPixelSize.StaticCast<Size, float>().ScaledToFit(
+    auto size = contentSize.mPixelSize.StaticCast<float>().ScaledToFit(
       quad.mMaximumPhysicalSize);
 
     if (contentSize.mPhysicalSize) {
