@@ -56,8 +56,8 @@ class GameEventServer;
 
 struct ViewRenderInfo {
   std::shared_ptr<IKneeboardView> mView;
-  std::optional<VRAbsolutePosition> mVR;
-  std::optional<NonVRConstrainedPosition> mNonVR;
+  std::optional<SHM::VRQuad> mVR;
+  std::optional<SHM::NonVRPosition> mNonVR;
   bool mIsActiveForInput = false;
 };
 

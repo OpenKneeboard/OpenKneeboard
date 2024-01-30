@@ -29,9 +29,7 @@ static winrt::guid EnsureNonNullGuid(const winrt::guid& guid) {
     return guid;
   }
 
-  winrt::guid newGuid;
-  winrt::check_hresult(CoCreateGuid(reinterpret_cast<GUID*>(&newGuid)));
-  return newGuid;
+  return random_guid();
 }
 
 TabBase::TabBase(const winrt::guid& persistentID, std::string_view title)

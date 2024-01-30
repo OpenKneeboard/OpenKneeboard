@@ -26,22 +26,23 @@
 
 #include <algorithm>
 
-static winrt::guid CreateGUID() {
-  winrt::guid ret;
-  winrt::check_hresult(CoCreateGuid(reinterpret_cast<GUID*>(&ret)));
-  return ret;
-}
-
 namespace OpenKneeboard {
 
-std::optional<SHM::VRPosition> ViewVRPosition::Resolve(
+std::optional<SHM::VRQuad> ViewVRPosition::Resolve(
+  const PixelSize& contentSize,
   const std::vector<ViewConfig>& others) const {
   if (mType == Type::Empty) {
     return {};
   }
+
   if (mType == Type::Absolute) {
-    // TODO: adjust for alignment and size
-    return this->GetAbsolutePosition();
+    auto quad = this->GetQuadConfig();
+
+    using PhysicalSize = Geometry2D::Size<float>;
+    const auto physicalSize
+      = contentSize.StaticCast<PhysicalSize, float>().ScaledToFit(
+        quad.mMaximumPhysicalSize);
+    return SHM::VRQuad {quad.mPose, physicalSize};
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
@@ -53,17 +54,17 @@ std::optional<SHM::VRPosition> ViewVRPosition::Resolve(
     return {};
   }
 
-  const auto other = it->mVRPosition.Resolve(others);
+  const auto other = it->mVRPosition.Resolve(contentSize, others);
   if (!other) {
     return {};
   }
 
   auto ret = *other;
-  ret.mX = -ret.mX;
+  ret.mPose.mX = -ret.mPose.mX;
   // Yaw
-  ret.mRY = -ret.mRY;
+  ret.mPose.mRY = -ret.mPose.mRY;
   // Roll
-  ret.mRZ = -ret.mRZ;
+  ret.mPose.mRZ = -ret.mPose.mRZ;
 
   return ret;
 }
@@ -116,7 +117,7 @@ void from_json(const nlohmann::json& j, ViewVRPosition& v) {
     case Type::Empty:
       return;
     case Type::Absolute:
-      v.SetAbsolute(MaybeGet<VRAbsolutePosition>(j, "AbsolutePosition"));
+      v.SetAbsolute(MaybeGet<VRQuadConfig>(j, "Quad"));
       return;
     case Type::HorizontalMirror:
       v.SetHorizontalMirrorOf(MaybeGet<winrt::guid>(j, "MirrorOf"));
@@ -137,7 +138,7 @@ void to_json(nlohmann::json& j, const ViewVRPosition& v) {
     case Type::Empty:
       return;
     case Type::Absolute:
-      MaybeSet(j, "AbsolutePosition", v.GetAbsolutePosition());
+      MaybeSet(j, "Quad", v.GetQuadConfig());
       return;
     case Type::HorizontalMirror:
       MaybeSet(j, "MirrorOf", v.GetMirrorOfGUID());

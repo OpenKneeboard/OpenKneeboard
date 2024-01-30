@@ -43,7 +43,7 @@ struct ViewVRPosition {
 
   ViewVRPosition() = default;
 
-  constexpr void SetAbsolute(const VRAbsolutePosition& p) {
+  constexpr void SetAbsolute(const VRQuadConfig& p) {
     mType = Type::Absolute;
     mData = p;
   }
@@ -53,7 +53,7 @@ struct ViewVRPosition {
     mData = guid;
   }
 
-  static constexpr auto Absolute(const VRAbsolutePosition& p) {
+  static constexpr auto Absolute(const VRQuadConfig& p) {
     ViewVRPosition ret;
     ret.SetAbsolute(p);
     return ret;
@@ -73,21 +73,22 @@ struct ViewVRPosition {
     return std::get<winrt::guid>(mData);
   }
 
-  constexpr auto GetAbsolutePosition() const noexcept {
-    return std::get<VRAbsolutePosition>(mData);
+  constexpr auto GetQuadConfig() const noexcept {
+    return std::get<VRQuadConfig>(mData);
   }
 
   Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Center};
   Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
 
-  std::optional<SHM::VRPosition> Resolve(
+  std::optional<SHM::VRQuad> Resolve(
+    const PixelSize& contentSize,
     const std::vector<ViewConfig>& others) const;
 
   constexpr bool operator==(const ViewVRPosition&) const noexcept = default;
 
  private:
   Type mType = Type::Empty;
-  std::variant<winrt::guid, VRAbsolutePosition> mData;
+  std::variant<winrt::guid, VRQuadConfig> mData;
 };
 
 struct ViewNonVRPosition {

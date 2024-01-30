@@ -51,9 +51,7 @@ std::shared_ptr<KneeboardState> KneeboardState::Create(
   return shared_with_final_release(new KneeboardState(hwnd, dxr));
 }
 
-KneeboardState::KneeboardState(
-  HWND hwnd,
-  const audited_ptr<DXResources>& dxr)
+KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
   : mHwnd(hwnd), mDXResources(dxr) {
   const scope_guard saveMigratedSettings([this]() { this->SaveSettings(); });
 
@@ -130,9 +128,12 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   for (size_t i = 0; i < count; ++i) {
     const auto index = (i + mFirstViewIndex) % count;
     const auto& viewConfig = mSettings.mViews.mViews.at(index);
+    const auto view = mViews.at(index);
+    const auto contentSize = view->GetPreferredSize().mPixelSize;
     ret.push_back({
-      .mView = mViews.at(index),
-      .mVR = viewConfig.mVRPosition.Resolve(mSettings.mViews.mViews),
+      .mView = view,
+      .mVR
+      = viewConfig.mVRPosition.Resolve(contentSize, mSettings.mViews.mViews),
       .mNonVR = viewConfig.mNonVRPosition.Resolve(mSettings.mViews.mViews),
       .mIsActiveForInput = (index == mInputViewIndex),
     });

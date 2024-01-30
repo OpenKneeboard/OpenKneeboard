@@ -216,16 +216,21 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
   }
 
   const ViewConfig primary {
-    .mName = _("First"),
-    .mVRPosition
-    = ViewVRPosition::Absolute(settings.mVR.mDeprecated.mPrimaryLayer),
+    .mName = _("Kneeboard"),
+    .mVRPosition = ViewVRPosition::Absolute({
+      settings.mVR.mDeprecated.mPrimaryLayer,
+      {
+        settings.mVR.mDeprecated.mMaxWidth,
+        settings.mVR.mDeprecated.mMaxHeight,
+      },
+    }),
     .mNonVRPosition
     = ViewNonVRPosition::Constrained(settings.mNonVR.mDeprecated),
   };
 
   if (settings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
     const ViewConfig secondary {
-      .mName = _("Second"),
+      .mName = _("Second Kneeboard"),
       .mVRPosition = ViewVRPosition::HorizontalMirrorOf(primary.mGuid),
     };
     settings.mViews.mViews = {primary, secondary};

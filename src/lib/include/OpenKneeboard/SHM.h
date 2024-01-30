@@ -50,7 +50,11 @@ struct IPCHandles;
 
 }// namespace Detail
 
-using VRPosition = VRAbsolutePosition;
+// Distances in metres, positions in radians.
+struct VRQuad {
+  VRAbsolutePosition mPose;
+  Geometry2D::Size<float> mPhysicalSize;
+};
 using NonVRPosition = NonVRConstrainedPosition;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
@@ -136,7 +140,7 @@ struct LayerConfig final {
   PixelRect mLocationOnTexture {};
 
   bool mVREnabled {false};
-  SHM::VRPosition mVR {};
+  SHM::VRQuad mVR {};
   bool mNonVREnabled {false};
   SHM::NonVRPosition mNonVR {};
 };

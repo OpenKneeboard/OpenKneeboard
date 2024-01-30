@@ -21,6 +21,8 @@
 
 #include "bitflags.h"
 
+#include <OpenKneeboard/Geometry2D.h>
+
 #include <cstdint>
 #include <numbers>
 
@@ -35,11 +37,16 @@ struct VRAbsolutePosition {
   float mX = 0.15f, mEyeY = -0.7f, mZ = -0.4f;
   float mRX = -2 * std::numbers::pi_v<float> / 5,
         mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
-  float mWidth = 0.25f;
-  float mHeight = 0.25f;
 
   constexpr auto operator<=>(const VRAbsolutePosition&) const noexcept
     = default;
+};
+
+struct VRQuadConfig {
+  VRAbsolutePosition mPose;
+  Geometry2D::Size<float> mMaximumPhysicalSize;
+
+  constexpr auto operator<=>(const VRQuadConfig&) const noexcept = default;
 };
 
 struct VRRenderConfig {
@@ -80,12 +87,12 @@ static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
-  float mMaxWidth = 0.15f;
-  float mMaxHeight = 0.25f;
 
   struct Deprecated {
     // replaced with 'ViewConfig' in v1.7
     VRAbsolutePosition mPrimaryLayer {};
+    float mMaxWidth = 0.15f;
+    float mMaxHeight = 0.25f;
 
     constexpr auto operator<=>(const Deprecated&) const noexcept = default;
   };
@@ -97,6 +104,7 @@ struct VRConfig : public VRRenderConfig {
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRAbsolutePosition)
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRQuadConfig)
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRConfig)
 #endif
 

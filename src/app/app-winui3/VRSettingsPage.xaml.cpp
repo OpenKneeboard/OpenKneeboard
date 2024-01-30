@@ -187,7 +187,7 @@ void VRSettingsPage::KneeboardRZ(float value) {
 }
 
 float VRSettingsPage::KneeboardMaxHeight() {
-  return mKneeboard->GetVRSettings().mMaxHeight;
+  return mKneeboard->GetVRSettings().mDeprecated.mMaxHeight;
 }
 
 void VRSettingsPage::KneeboardMaxHeight(float value) {
@@ -195,12 +195,12 @@ void VRSettingsPage::KneeboardMaxHeight(float value) {
     return;
   }
   auto config = mKneeboard->GetVRSettings();
-  config.mMaxHeight = value;
+  config.mDeprecated.mMaxHeight = value;
   mKneeboard->SetVRSettings(config);
 }
 
 float VRSettingsPage::KneeboardMaxWidth() {
-  return mKneeboard->GetVRSettings().mMaxWidth;
+  return mKneeboard->GetVRSettings().mDeprecated.mMaxWidth;
 }
 
 void VRSettingsPage::KneeboardMaxWidth(float value) {
@@ -208,7 +208,7 @@ void VRSettingsPage::KneeboardMaxWidth(float value) {
     return;
   }
   auto config = mKneeboard->GetVRSettings();
-  config.mMaxWidth = value;
+  config.mDeprecated.mMaxWidth = value;
   mKneeboard->SetVRSettings(config);
 }
 

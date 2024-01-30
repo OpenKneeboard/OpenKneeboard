@@ -30,9 +30,9 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mZ,
   mRX,
   mRY,
-  mRZ,
-  mWidth,
-  mHeight)
+  mRZ)
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRQuadConfig, mPose, mMaximumPhysicalSize)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderConfig::Quirks,
@@ -62,10 +62,10 @@ void from_json_postprocess<VRConfig>(const nlohmann::json& j, VRConfig& v) {
 
   // Backwards compatibility
   if (j.contains("height")) {
-    v.mMaxHeight = j.at("height");
+    v.mDeprecated.mMaxHeight = j.at("height");
   }
   if (j.contains("width")) {
-    v.mMaxWidth = j.at("width");
+    v.mDeprecated.mMaxWidth = j.at("width");
   }
 }
 
@@ -82,10 +82,7 @@ void to_json_postprocess<VRConfig>(
     j, parent_v.mDeprecated.mPrimaryLayer, v.mDeprecated.mPrimaryLayer);
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRConfig,
-  mEnableSteamVR,
-  mMaxWidth,
-  mMaxHeight)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRConfig::Deprecated, mMaxWidth, mMaxHeight)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRConfig, mEnableSteamVR, mDeprecated)
 
 }// namespace OpenKneeboard

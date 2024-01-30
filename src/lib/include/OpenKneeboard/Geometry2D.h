@@ -26,6 +26,10 @@
 #include <d2d1.h>
 #include <d3d11.h>
 
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+#include <OpenKneeboard/json.h>
+#endif
+
 namespace OpenKneeboard::Geometry2D {
 
 template <class T>
@@ -55,15 +59,34 @@ struct Size {
     const auto scaleX = static_cast<float>(container.mWidth) / mWidth;
     const auto scaleY = static_cast<float>(container.mHeight) / mHeight;
     const auto scale = std::min(scaleX, scaleY);
-    return {
-      static_cast<T>(std::lround(mWidth * scale)),
-      static_cast<T>(std::lround(mHeight * scale)),
+
+    const Size<float> scaled {
+      mWidth * scale,
+      mHeight * scale,
     };
+    if constexpr (std::integral<T>) {
+      return scaled.Rounded<T>();
+    } else {
+      return scaled;
+    }
   }
 
   template <class TSize, class TValue>
+    requires(std::integral<T> || std::floating_point<TValue>)
   constexpr TSize StaticCast() const noexcept {
-    return TSize {Width<TValue>(), Height<TValue>()};
+    return TSize {
+      Width<TValue>(),
+      Height<TValue>(),
+    };
+  }
+
+  template <std::integral TValue, class TSize = Size<TValue>>
+    requires std::floating_point<T>
+  constexpr TSize Rounded() const noexcept {
+    return {
+      static_cast<TValue>(std::lround(mWidth)),
+      static_cast<TValue>(std::lround(mHeight)),
+    };
   }
 
   constexpr operator D2D1_SIZE_U() const {
@@ -185,5 +208,18 @@ struct Rect {
     return StaticCastWithBottomRight<D2D1_RECT_F, FLOAT>();
   }
 };
+
+#ifdef OPENKNEEBOARD_JSON_SERIALIZE
+template <class T>
+void from_json(const nlohmann::json& j, Size<T>& v) {
+  v.mWidth = j.at("Width");
+  v.mHeight = j.at("Height");
+}
+template <class T>
+void to_json(nlohmann::json& j, const Size<T>& v) {
+  j["Width"] = v.mWidth;
+  j["Height"] = v.mHeight;
+}
+#endif
 
 }// namespace OpenKneeboard::Geometry2D

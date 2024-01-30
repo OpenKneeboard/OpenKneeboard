@@ -32,14 +32,14 @@ VRKneeboard::Pose VRKneeboard::GetKneeboardPose(
   if (!mEyeHeight) {
     mEyeHeight = {hmdPose.mPosition.y};
   }
-  const auto& vrl = layer.mVR;
+  const auto& pose = layer.mVR.mPose;
   this->MaybeRecenter(vr, hmdPose);
-  auto matrix = Matrix::CreateRotationX(vrl.mRX)
-    * Matrix::CreateRotationY(vrl.mRY) * Matrix::CreateRotationZ(vrl.mRZ)
+  auto matrix = Matrix::CreateRotationX(pose.mRX)
+    * Matrix::CreateRotationY(pose.mRY) * Matrix::CreateRotationZ(pose.mRZ)
     * Matrix::CreateTranslation({
-      vrl.mX,
-      vrl.mEyeY + *mEyeHeight,
-      vrl.mZ,
+      pose.mX,
+      pose.mEyeY + *mEyeHeight,
+      pose.mZ,
     })
     * mRecenter;
 
@@ -64,11 +64,9 @@ Vector2 VRKneeboard::GetKneeboardSize(
 VRKneeboard::Sizes VRKneeboard::GetSizes(
   const VRRenderConfig& vrc,
   const SHM::LayerConfig& layer) const {
-  const auto& vr = layer.mVR;
-  const auto& imageSize = layer.mLocationOnTexture.mSize;
-  const auto aspectRatio = float(imageSize.mWidth) / imageSize.mHeight;
-  const auto virtualHeight = vr.mHeight;
-  const auto virtualWidth = aspectRatio * vr.mHeight;
+  const auto& physicalSize = layer.mVR.mPhysicalSize;
+  const auto virtualWidth = physicalSize.mWidth;
+  const auto virtualHeight = physicalSize.mHeight;
 
   return {
     .mNormalSize = {virtualWidth, virtualHeight},

@@ -345,12 +345,6 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
   if (layer.mVR) {
     ret.mVREnabled = true;
     ret.mVR = *layer.mVR;
-    const auto vrc = mKneeboard->GetVRSettings();
-    const auto xFitScale = vrc.mMaxWidth / usedSize.mWidth;
-    const auto yFitScale = vrc.mMaxHeight / usedSize.mHeight;
-    const auto scale = std::min<float>(xFitScale, yFitScale);
-    ret.mVR.mWidth = usedSize.mWidth * scale;
-    ret.mVR.mHeight = usedSize.mHeight * scale;
   }
 
   if (layer.mNonVR) {
