@@ -364,6 +364,11 @@ target_include_directories(
   INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
+target_link_libraries(
+  OpenKneeboard-shims
+  INTERFACE
+  OpenKneeboard-dprint
+)
 
 ok_add_library(OpenKneeboard-OpenXRMode STATIC OpenXRMode.cpp)
 target_link_libraries(
@@ -385,6 +390,7 @@ ok_add_library(OpenKneeboard-json STATIC json.cpp)
 target_link_libraries(
   OpenKneeboard-json
   PUBLIC
+  OpenKneeboard-dprint
   ThirdParty::JSON
   _libheaders
 )

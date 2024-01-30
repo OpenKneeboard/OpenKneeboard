@@ -20,6 +20,7 @@
 #include <OpenKneeboard/D3D11.h>
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/tracing.h>
 
 #include <shims/winrt/base.h>
@@ -48,8 +49,7 @@ SavedState::SavedState(ID3D11DeviceContext* ctx) {
 
   Impl::tHaveSavedState = true;
   mImpl = new Impl {};
-  winrt::check_hresult(
-    ctx->QueryInterface(IID_PPV_ARGS(mImpl->mContext.put())));
+  check_hresult(ctx->QueryInterface(IID_PPV_ARGS(mImpl->mContext.put())));
 
   winrt::com_ptr<ID3D11Device> device;
   ctx->GetDevice(device.put());
@@ -58,7 +58,7 @@ SavedState::SavedState(ID3D11DeviceContext* ctx) {
   winrt::com_ptr<ID3DDeviceContextState> newState;
   {
     OPENKNEEBOARD_TraceLoggingScope("CreateDeviceContextState");
-    winrt::check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
+    check_hresult(device.as<ID3D11Device1>()->CreateDeviceContextState(
       (device->GetCreationFlags() & D3D11_CREATE_DEVICE_SINGLETHREADED)
         ? D3D11_1_CREATE_DEVICE_CONTEXT_STATE_SINGLETHREADED
         : 0,

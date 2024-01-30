@@ -20,6 +20,7 @@
 #include <OpenKneeboard/Filesystem.h>
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/scope_guard.h>
 
 #include <shims/winrt/base.h>
@@ -130,10 +131,10 @@ void OpenExplorerWithSelectedFile(const std::filesystem::path& path) {
     return;
   }
   PIDLIST_ABSOLUTE pidl {nullptr};
-  winrt::check_hresult(
+  check_hresult(
     SHParseDisplayName(path.wstring().c_str(), nullptr, &pidl, 0, nullptr));
   const scope_guard freePidl([pidl] { CoTaskMemFree(pidl); });
-  winrt::check_hresult(SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0));
+  check_hresult(SHOpenFolderAndSelectItems(pidl, 0, nullptr, 0));
 }
 
 ScopedDeleter::ScopedDeleter(const std::filesystem::path& path) : mPath(path) {

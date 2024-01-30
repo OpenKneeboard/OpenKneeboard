@@ -24,6 +24,7 @@
 #include <OpenKneeboard/Vulkan.h>
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/hresult.h>
 
 #include <DirectXTex.h>
 
@@ -551,13 +552,13 @@ void VulkanRenderer::SaveTextureToFile(
     .format = dxgiFormat,
     .pixels = mapping.get(),
   };
-  winrt::check_hresult(DirectX::ComputePitch(
+  check_hresult(DirectX::ComputePitch(
     dxgiFormat,
     dimensions.mWidth,
     dimensions.mHeight,
     cpuImage.rowPitch,
     cpuImage.slicePitch));
-  winrt::check_hresult(DirectX::SaveToDDSFile(
+  check_hresult(DirectX::SaveToDDSFile(
     cpuImage, DirectX::DDS_FLAGS_NONE, path.wstring().c_str()));
 }
 

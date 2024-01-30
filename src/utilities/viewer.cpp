@@ -36,6 +36,7 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/version.h>
@@ -232,9 +233,9 @@ class TestViewerWindow final : private D3D11Resources {
     this->InitializeShaders();
     this->InitializeDirect2D();
 
-    winrt::check_hresult(mD3D11Device->CreateFence(
+    check_hresult(mD3D11Device->CreateFence(
       mFenceValue, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(mFence.put())));
-    winrt::check_hresult(mFence->CreateSharedHandle(
+    check_hresult(mFence->CreateSharedHandle(
       nullptr, GENERIC_ALL, nullptr, mFenceHandle.put()));
 
     this->CreateRenderer();
@@ -282,12 +283,12 @@ class TestViewerWindow final : private D3D11Resources {
     auto ctx = mD2D->mD2DDeviceContext.get();
     ctx->SetAntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED);
 
-    winrt::check_hresult(ctx->CreateSolidColorBrush(
+    check_hresult(ctx->CreateSolidColorBrush(
       D2D1::ColorF(0, 0, 0, 0.8), mOverlayBackground.put()));
-    winrt::check_hresult(ctx->CreateSolidColorBrush(
+    check_hresult(ctx->CreateSolidColorBrush(
       D2D1::ColorF(1, 1, 1, 1), mOverlayForeground.put()));
 
-    winrt::check_hresult(ctx->CreateSolidColorBrush(
+    check_hresult(ctx->CreateSolidColorBrush(
       D2D1::ColorF(0, 0, 0, 1), mErrorForeground.put()));
     mErrorRenderer = std::make_unique<D2DErrorRenderer>(
       mD2D->mDWriteFactory.get(), mErrorForeground.get());
@@ -327,9 +328,9 @@ class TestViewerWindow final : private D3D11Resources {
 
     auto dev = mD3D11Device.get();
 
-    winrt::check_hresult(dev->CreateVertexShader(
+    check_hresult(dev->CreateVertexShader(
       vs.data(), vs.size(), nullptr, mVertexShader.put()));
-    winrt::check_hresult(dev->CreatePixelShader(
+    check_hresult(dev->CreatePixelShader(
       ps.data(), ps.size(), nullptr, mPixelShader.put()));
 
     D3D11_INPUT_ELEMENT_DESC inputLayout[] {
@@ -362,7 +363,7 @@ class TestViewerWindow final : private D3D11Resources {
         .InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA,
       },
     };
-    winrt::check_hresult(dev->CreateInputLayout(
+    check_hresult(dev->CreateInputLayout(
       inputLayout,
       std::size(inputLayout),
       vs.data(),
@@ -375,7 +376,7 @@ class TestViewerWindow final : private D3D11Resources {
       .BindFlags = D3D11_BIND_CONSTANT_BUFFER,
       .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
     };
-    winrt::check_hresult(
+    check_hresult(
       dev->CreateBuffer(&cbufferDesc, nullptr, mShaderConstantBuffer.put()));
 
     D3D11_BUFFER_DESC vertexBufferDesc {
@@ -384,7 +385,7 @@ class TestViewerWindow final : private D3D11Resources {
       .BindFlags = D3D11_BIND_VERTEX_BUFFER,
       .CPUAccessFlags = D3D11_CPU_ACCESS_WRITE,
     };
-    winrt::check_hresult(
+    check_hresult(
       dev->CreateBuffer(&vertexBufferDesc, nullptr, mVertexBuffer.put()));
   }
 
@@ -418,7 +419,7 @@ class TestViewerWindow final : private D3D11Resources {
 
     {
       D3D11_MAPPED_SUBRESOURCE mapping {};
-      winrt::check_hresult(ctx->Map(
+      check_hresult(ctx->Map(
         mShaderConstantBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
       memcpy(mapping.pData, &drawInfo, sizeof(drawInfo));
       ctx->Unmap(mShaderConstantBuffer.get(), 0);
@@ -461,12 +462,11 @@ class TestViewerWindow final : private D3D11Resources {
         .MiscFlags
         = D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_NTHANDLE,
       };
-      winrt::check_hresult(
+      check_hresult(
         mD3D11Device->CreateTexture2D(&desc, nullptr, mRendererTexture.put()));
       mRendererTextureHandle = {};
-      winrt::check_hresult(
-        mRendererTexture.as<IDXGIResource1>()->CreateSharedHandle(
-          nullptr, GENERIC_ALL, nullptr, mRendererTextureHandle.put()));
+      check_hresult(mRendererTexture.as<IDXGIResource1>()->CreateSharedHandle(
+        nullptr, GENERIC_ALL, nullptr, mRendererTextureHandle.put()));
       mRendererTextureSize = clientSize;
     }
 
@@ -637,17 +637,16 @@ class TestViewerWindow final : private D3D11Resources {
     this->InitSwapChain();
 
     if (!mWindowTexture) {
-      winrt::check_hresult(
+      check_hresult(
         mSwapChain->GetBuffer(0, IID_PPV_ARGS(mWindowTexture.put())));
       mWindowRenderTargetView = nullptr;
-      winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
+      check_hresult(mD3D11Device->CreateRenderTargetView(
         mWindowTexture.get(), nullptr, mWindowRenderTargetView.put()));
       mWindowBitmap = nullptr;
       if (HaveDirect2D()) {
         auto surface = mWindowTexture.as<IDXGISurface1>();
-        winrt::check_hresult(
-          mD2D->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
-            surface.get(), nullptr, mWindowBitmap.put()));
+        check_hresult(mD2D->mD2DDeviceContext->CreateBitmapFromDxgiSurface(
+          surface.get(), nullptr, mWindowBitmap.put()));
       }
     }
 
@@ -696,7 +695,7 @@ class TestViewerWindow final : private D3D11Resources {
 
     auto ctx = mD3D11ImmediateContext.get();
     D3D11_MAPPED_SUBRESOURCE mapping {};
-    winrt::check_hresult(
+    check_hresult(
       ctx->Map(mVertexBuffer.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapping));
     memcpy(mapping.pData, vertices, sizeof(vertices));
     ctx->Unmap(mVertexBuffer.get(), 0);
@@ -817,7 +816,7 @@ class TestViewerWindow final : private D3D11Resources {
     ctx->CopySubresourceRegion(
       mRendererTexture.get(), 0, 0, 0, 0, mWindowTexture.get(), 0, &box);
 
-    winrt::check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
+    check_hresult(ctx->Signal(mFence.get(), ++mFenceValue));
 
     mFenceValue = mRenderer->Render(
       snapshot.GetTexture<SHM::IPCClientTexture>(),
@@ -828,7 +827,7 @@ class TestViewerWindow final : private D3D11Resources {
       mFenceHandle.get(),
       mFenceValue);
 
-    winrt::check_hresult(ctx->Wait(mFence.get(), mFenceValue));
+    check_hresult(ctx->Wait(mFence.get(), mFenceValue));
 
     ctx->CopySubresourceRegion(
       mWindowTexture.get(), 0, 0, 0, 0, mRendererTexture.get(), 0, &box);
@@ -910,7 +909,7 @@ class TestViewerWindow final : private D3D11Resources {
         clientSize.GetHeight<float>(),
       });
 
-    winrt::check_hresult(ctx->EndDraw());
+    check_hresult(ctx->EndDraw());
   }
 };
 

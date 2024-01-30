@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DXResources.h>
 
 #include <OpenKneeboard/config.h>
+#include <OpenKneeboard/hresult.h>
 
 #include <Unknwn.h>
 
@@ -64,7 +65,7 @@ void D2DErrorRenderer::Render(
 
   winrt::com_ptr<IDWriteTextFormat> textFormat;
 
-  winrt::check_hresult(p->mDWrite->CreateTextFormat(
+  check_hresult(p->mDWrite->CreateTextFormat(
     VariableWidthUIFont,
     nullptr,
     DWRITE_FONT_WEIGHT_NORMAL,
@@ -75,7 +76,7 @@ void D2DErrorRenderer::Render(
     textFormat.put()));
 
   winrt::com_ptr<IDWriteTextLayout> textLayout;
-  winrt::check_hresult(p->mDWrite->CreateTextLayout(
+  check_hresult(p->mDWrite->CreateTextLayout(
     text.data(),
     static_cast<UINT32>(text.size()),
     textFormat.get(),

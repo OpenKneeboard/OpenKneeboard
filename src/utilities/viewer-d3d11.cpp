@@ -22,6 +22,8 @@
 
 #include <OpenKneeboard/D3D11.h>
 
+#include <OpenKneeboard/hresult.h>
+
 #include <directxtk/ScreenGrab.h>
 
 namespace OpenKneeboard::Viewer {
@@ -63,10 +65,10 @@ uint64_t D3D11Renderer::Render(
   if (mDestHandle != destTextureHandle) {
     mDestTexture = nullptr;
     mDestRenderTargetView = nullptr;
-    winrt::check_hresult(mD3D11Device->OpenSharedResource1(
+    check_hresult(mD3D11Device->OpenSharedResource1(
       destTextureHandle, IID_PPV_ARGS(mDestTexture.put())));
 
-    winrt::check_hresult(mD3D11Device->CreateRenderTargetView(
+    check_hresult(mD3D11Device->CreateRenderTargetView(
       mDestTexture.get(), nullptr, mDestRenderTargetView.put()));
     mDestHandle = destTextureHandle;
     mDestDimensions = destTextureDimensions;
@@ -91,7 +93,7 @@ uint64_t D3D11Renderer::Render(
 void D3D11Renderer::SaveTextureToFile(
   SHM::IPCClientTexture* texture,
   const std::filesystem::path& path) {
-  winrt::check_hresult(DirectX::SaveDDSTextureToFile(
+  check_hresult(DirectX::SaveDDSTextureToFile(
     mD3D11ImmediateContext.get(),
     reinterpret_cast<SHM::D3D11::Texture*>(texture)->GetD3D11Texture(),
     path.wstring().c_str()));

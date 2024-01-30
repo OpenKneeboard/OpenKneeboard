@@ -23,6 +23,8 @@
 #include <OpenKneeboard/D3D12.h>
 #include <OpenKneeboard/RenderDoc.h>
 
+#include <OpenKneeboard/hresult.h>
+
 #include <directxtk12/ScreenGrab.h>
 
 namespace OpenKneeboard::Viewer {
@@ -33,7 +35,7 @@ D3D12Renderer::D3D12Renderer(IDXGIAdapter* dxgiAdapter) {
 #ifdef DEBUG
   dprint("Enabling D3D12 debug features");
   winrt::com_ptr<ID3D12Debug5> debug;
-  winrt::check_hresult(D3D12GetDebugInterface(IID_PPV_ARGS(debug.put())));
+  check_hresult(D3D12GetDebugInterface(IID_PPV_ARGS(debug.put())));
   debug->EnableDebugLayer();
 #endif
 
@@ -165,19 +167,19 @@ uint64_t D3D12Renderer::Render(
   };
   cl->ResourceBarrier(std::size(outBarriers), outBarriers);
 
-  winrt::check_hresult(cl->Close());
+  check_hresult(cl->Close());
 
-  winrt::check_hresult(mCommandQueue->Wait(mFence.get(), fenceValueIn));
+  check_hresult(mCommandQueue->Wait(mFence.get(), fenceValueIn));
 
   ID3D12CommandList* lists[] {cl};
   mCommandQueue->ExecuteCommandLists(std::size(lists), lists);
 
   const auto fenceValueOut = fenceValueIn + 1;
-  winrt::check_hresult(mCommandQueue->Signal(mFence.get(), fenceValueOut));
+  check_hresult(mCommandQueue->Signal(mFence.get(), fenceValueOut));
 
   {
     OPENKNEEBOARD_TraceLoggingScope("ResetCommandList");
-    winrt::check_hresult(cl->Reset(mCommandAllocator.get(), nullptr));
+    check_hresult(cl->Reset(mCommandAllocator.get(), nullptr));
   }
 
   return fenceValueOut;
@@ -192,7 +194,7 @@ void D3D12Renderer::SaveTextureToFile(
 void D3D12Renderer::SaveTextureToFile(
   ID3D12Resource* texture,
   const std::filesystem::path& path) {
-  winrt::check_hresult(DirectX::SaveDDSTextureToFile(
+  check_hresult(DirectX::SaveDDSTextureToFile(
     mCommandQueue.get(), texture, path.wstring().c_str()));
 }
 

@@ -20,6 +20,7 @@
 #include <OpenKneeboard/DXResources.h>
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 
@@ -49,7 +50,7 @@ D3D11Resources::D3D11Resources() {
   dxgiFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
-  winrt::check_hresult(
+  check_hresult(
     CreateDXGIFactory2(dxgiFlags, IID_PPV_ARGS(mDXGIFactory.put())));
 
   winrt::com_ptr<IDXGIAdapter4> adapterIt;
@@ -80,7 +81,7 @@ D3D11Resources::D3D11Resources() {
 
   winrt::com_ptr<ID3D11Device> d3d;
   winrt::com_ptr<ID3D11DeviceContext> d3dImmediateContext;
-  winrt::check_hresult(D3D11CreateDevice(
+  check_hresult(D3D11CreateDevice(
     mDXGIAdapter.get(),
     // UNKNOWN is required when specifying an adapter
     D3D_DRIVER_TYPE_UNKNOWN,
@@ -111,14 +112,14 @@ D3D11Resources::D3D11Resources() {
 D3D11Resources::~D3D11Resources() = default;
 
 D2DResources::D2DResources(D3D11Resources* d3d) {
-  winrt::check_hresult(
+  check_hresult(
     D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, mD2DFactory.put()));
 
   D2D1_DEBUG_LEVEL d2dDebug = D2D1_DEBUG_LEVEL_NONE;
 #ifdef DEBUG
   d2dDebug = D2D1_DEBUG_LEVEL_INFORMATION;
 #endif
-  winrt::check_hresult(D2D1CreateDevice(
+  check_hresult(D2D1CreateDevice(
     d3d->mDXGIDevice.get(),
     D2D1::CreationProperties(
       D2D1_THREADING_MODE_MULTI_THREADED,
@@ -127,7 +128,7 @@ D2DResources::D2DResources(D3D11Resources* d3d) {
     mD2DDevice.put()));
 
   winrt::com_ptr<ID2D1DeviceContext> ctx;
-  winrt::check_hresult(mD2DDevice->CreateDeviceContext(
+  check_hresult(mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, ctx.put()));
   mD2DDeviceContext = ctx.as<ID2D1DeviceContext5>();
   ctx->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
@@ -135,7 +136,7 @@ D2DResources::D2DResources(D3D11Resources* d3d) {
   // this isn't the case for OpenKneeboard
   ctx->SetTextAntialiasMode(D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE);
 
-  winrt::check_hresult(DWriteCreateFactory(
+  check_hresult(DWriteCreateFactory(
     DWRITE_FACTORY_TYPE_SHARED,
     __uuidof(IDWriteFactory),
     reinterpret_cast<IUnknown**>(mDWriteFactory.put())));
@@ -147,7 +148,7 @@ D2DResources::~D2DResources() = default;
 
 DXResources::DXResources() : D3D11Resources(), D2DResources(this) {
   winrt::com_ptr<ID2D1DeviceContext> d2dBackBufferContext;
-  winrt::check_hresult(mD2DDevice->CreateDeviceContext(
+  check_hresult(mD2DDevice->CreateDeviceContext(
     D2D1_DEVICE_CONTEXT_OPTIONS_NONE, d2dBackBufferContext.put()));
   mD2DBackBufferDeviceContext = d2dBackBufferContext.as<ID2D1DeviceContext5>();
   d2dBackBufferContext->SetUnitMode(D2D1_UNIT_MODE_PIXELS);
@@ -158,16 +159,15 @@ DXResources::DXResources() : D3D11Resources(), D2DResources(this) {
 
   mWIC = winrt::create_instance<IWICImagingFactory>(CLSID_WICImagingFactory);
 
-  winrt::check_hresult(
-    PdfCreateRenderer(mDXGIDevice.get(), mPDFRenderer.put()));
+  check_hresult(PdfCreateRenderer(mDXGIDevice.get(), mPDFRenderer.put()));
 
-  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+  check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f), mWhiteBrush.put()));
-  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+  check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.8f, 1.0f, 1.0f), mHighlightBrush.put()));
-  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+  check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(0.0f, 0.0f, 0.0f, 1.0f), mBlackBrush.put()));
-  winrt::check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
+  check_hresult(mD2DDeviceContext->CreateSolidColorBrush(
     D2D1::ColorF(1.0f, 0.0f, 1.0f, 0.0f), mEraserBrush.put()));
 
   mD2DDeviceContext->CreateSolidColorBrush(

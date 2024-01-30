@@ -19,28 +19,22 @@
  */
 #pragma once
 
-// clang-format off
-// <Unknwn.h> must be included before <winrt/base.h> for com_ptr::as<> to work
-// correctly
-#include <Unknwn.h>
-// clang-format on
+#include <format>
+#include <source_location>
 
-#include <pplawait.h>
-#include <ppltasks.h>
+template <class CharT>
+struct std::formatter<std::source_location, CharT>
+  : std::formatter<std::basic_string_view<CharT>, CharT> {
+  template <class FormatContext>
+  auto format(const std::source_location& loc, FormatContext& fc) const {
+    const auto converted = std::format(
+      "{}:{}:{} - {}",
+      loc.file_name(),
+      loc.line(),
+      loc.column(),
+      loc.function_name());
 
-#include <winrt/base.h>
-
-namespace OpenKneeboard {
-
-auto discard_winrt_event_args(auto func) {
-  return [func](const winrt::Windows::Foundation::IInspectable&, const auto&) {
-    return func();
-  };
-}
-
-inline auto random_guid() {
-  winrt::guid ret;
-  CoCreateGuid(reinterpret_cast<GUID*>(&ret));
-  return ret;
-}
-}// namespace OpenKneeboard
+    return std::formatter<std::basic_string_view<CharT>, CharT>::format(
+      std::basic_string_view<CharT> {converted}, fc);
+  }
+};

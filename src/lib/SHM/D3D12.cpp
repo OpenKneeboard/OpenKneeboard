@@ -21,6 +21,7 @@
 #include <OpenKneeboard/RenderDoc.h>
 #include <OpenKneeboard/SHM/D3D12.h>
 
+#include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/scope_guard.h>
 
 #include <Windows.h>
@@ -95,7 +96,7 @@ void Texture::InitializeCacheTexture(ID3D12Resource* sourceTexture) noexcept {
     .Color = {0.0f, 0.0f, 0.0f, 0.0f},
   };
 
-  winrt::check_hresult(mDevice->CreateCommittedResource(
+  check_hresult(mDevice->CreateCommittedResource(
     &heap,
     D3D12_HEAP_FLAG_NONE,
     &desc,
@@ -120,7 +121,7 @@ void Texture::CopyFrom(
 
   if (!mCommandLists.contains(sourceTexture)) {
     winrt::com_ptr<ID3D12GraphicsCommandList> list;
-    winrt::check_hresult(mDevice->CreateCommandList(
+    check_hresult(mDevice->CreateCommandList(
       0,
       D3D12_COMMAND_LIST_TYPE_DIRECT,
       commandAllocator,
@@ -134,7 +135,7 @@ void Texture::CopyFrom(
 
   {
     OPENKNEEBOARD_TraceLoggingScope("FenceIn");
-    winrt::check_hresult(queue->Wait(sourceFence, fenceValueIn));
+    check_hresult(queue->Wait(sourceFence, fenceValueIn));
   }
 
   {
@@ -145,7 +146,7 @@ void Texture::CopyFrom(
 
   {
     OPENKNEEBOARD_TraceLoggingScope("FenceOut");
-    winrt::check_hresult(queue->Signal(sourceFence, fenceValueOut));
+    check_hresult(queue->Signal(sourceFence, fenceValueOut));
   }
 }
 
@@ -185,7 +186,7 @@ void Texture::PopulateCommandList(
         },
       },
     };
-  winrt::check_hresult(list->Close());
+  check_hresult(list->Close());
 }
 
 CachedReader::CachedReader(ConsumerKind consumerKind)
@@ -239,7 +240,7 @@ void CachedReader::InitializeCache(
         continue;
       }
 
-      winrt::check_hresult(mDevice->CreateCommandAllocator(
+      check_hresult(mDevice->CreateCommandAllocator(
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         IID_PPV_ARGS(br.mCommandAllocator.put())));
     }
@@ -299,8 +300,7 @@ ID3D12Fence* CachedReader::GetIPCFence(HANDLE handle) noexcept {
 
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::GetIPCFence()");
   winrt::com_ptr<ID3D12Fence> fence;
-  winrt::check_hresult(
-    mDevice->OpenSharedHandle(handle, IID_PPV_ARGS(fence.put())));
+  check_hresult(mDevice->OpenSharedHandle(handle, IID_PPV_ARGS(fence.put())));
   mIPCFences.emplace(handle, fence);
   return fence.get();
 }
@@ -313,8 +313,7 @@ ID3D12Resource* CachedReader::GetIPCTexture(HANDLE handle) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D12::CachedReader::GetIPCTexture()");
 
   winrt::com_ptr<ID3D12Resource> texture;
-  winrt::check_hresult(
-    mDevice->OpenSharedHandle(handle, IID_PPV_ARGS(texture.put())));
+  check_hresult(mDevice->OpenSharedHandle(handle, IID_PPV_ARGS(texture.put())));
   mIPCTextures.emplace(handle, texture);
   return texture.get();
 }

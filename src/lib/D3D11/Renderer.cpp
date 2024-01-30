@@ -19,6 +19,8 @@
  */
 #include <OpenKneeboard/D3D11/Renderer.h>
 
+#include <OpenKneeboard/hresult.h>
+
 namespace OpenKneeboard::D3D11 {
 
 SwapchainBufferResources::SwapchainBufferResources(
@@ -35,7 +37,7 @@ SwapchainBufferResources::SwapchainBufferResources(
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {0},
   };
-  winrt::check_hresult(
+  check_hresult(
     device->CreateRenderTargetView(texture, &rtvDesc, mRenderTargetView.put()));
 }
 

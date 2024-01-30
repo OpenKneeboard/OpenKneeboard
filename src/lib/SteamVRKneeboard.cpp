@@ -26,6 +26,7 @@
 
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/hresult.h>
 
 #include <shims/filesystem>
 #include <shims/winrt/base.h>
@@ -67,18 +68,16 @@ SteamVRKneeboard::SteamVRKneeboard() {
     .SampleDesc = {1, 0},
     .BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET,
   };
-  winrt::check_hresult(
-    mD3D->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
+  check_hresult(mD3D->CreateTexture2D(&desc, nullptr, mBufferTexture.put()));
 
   desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
   desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
   for (uint8_t i = 0; i < MaxViewCount; ++i) {
     auto& layer = mLayers.at(i);
-    winrt::check_hresult(
+    check_hresult(
       mD3D->CreateTexture2D(&desc, nullptr, layer.mOpenVRTexture.put()));
-    winrt::check_hresult(
-      layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
-        &layer.mSharedHandle));
+    check_hresult(layer.mOpenVRTexture.as<IDXGIResource>()->GetSharedHandle(
+      &layer.mSharedHandle));
   }
 
   D3D11_RENDER_TARGET_VIEW_DESC rtvd {
@@ -86,7 +85,7 @@ SteamVRKneeboard::SteamVRKneeboard() {
     .ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D,
     .Texture2D = {.MipSlice = 0},
   };
-  winrt::check_hresult(mD3D->CreateRenderTargetView(
+  check_hresult(mD3D->CreateRenderTargetView(
     mBufferTexture.get(), &rtvd, mRenderTargetView.put()));
 
   mSpriteBatch = std::make_unique<D3D11::SpriteBatch>(mD3D.get());

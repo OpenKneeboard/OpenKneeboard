@@ -22,10 +22,10 @@
 #include <OpenKneeboard/config.h>
 #include <OpenKneeboard/tracing.h>
 
+#include <shims/source_location>
 #include <shims/winrt/base.h>
 
 #include <format>
-#include <source_location>
 #include <stop_token>
 #include <string>
 
@@ -134,13 +134,7 @@ class DPrintReceiver {
 #define OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL( \
   source_location, message, ...) \
   { \
-    dprintf( \
-      "FATAL: " message " @ {}:{}:{} - {}", \
-      ##__VA_ARGS__, \
-      source_location.file_name(), \
-      source_location.line(), \
-      source_location.column(), \
-      source_location.function_name()); \
+    dprintf("FATAL: " message " @ {}", ##__VA_ARGS__, source_location); \
     OPENKNEEBOARD_FATAL; \
   }
 

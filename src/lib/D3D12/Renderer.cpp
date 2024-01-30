@@ -20,6 +20,8 @@
 
 #include <OpenKneeboard/D3D12/Renderer.h>
 
+#include <OpenKneeboard/hresult.h>
+
 namespace OpenKneeboard::D3D12 {
 
 SwapchainBufferResources::SwapchainBufferResources(
@@ -36,9 +38,9 @@ SwapchainBufferResources::SwapchainBufferResources(
 
   device->CreateRenderTargetView(texture, &desc, renderTargetViewHandle);
 
-  winrt::check_hresult(device->CreateCommandAllocator(
+  check_hresult(device->CreateCommandAllocator(
     D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(mCommandAllocator.put())));
-  winrt::check_hresult(device->CreateCommandList(
+  check_hresult(device->CreateCommandList(
     0,
     D3D12_COMMAND_LIST_TYPE_DIRECT,
     mCommandAllocator.get(),
@@ -98,13 +100,12 @@ void Renderer::RenderLayers(
   }
   mSpriteBatch->End();
 
-  winrt::check_hresult(br.mCommandList->Close());
+  check_hresult(br.mCommandList->Close());
 
   ID3D12CommandList* lists[] {br.mCommandList.get()};
 
   mQueue->ExecuteCommandLists(std::size(lists), lists);
-  winrt::check_hresult(
-    br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
+  check_hresult(br.mCommandList->Reset(br.mCommandAllocator.get(), nullptr));
 }
 
 }// namespace OpenKneeboard::D3D12
