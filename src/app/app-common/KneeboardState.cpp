@@ -129,7 +129,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     const auto index = (i + mFirstViewIndex) % count;
     const auto& viewConfig = mSettings.mViews.mViews.at(index);
     const auto view = mViews.at(index);
-    const auto contentSize = view->GetPreferredSize().mPixelSize;
+    const auto contentSize = view->GetPreferredSize();
     ret.push_back({
       .mView = view,
       .mVR

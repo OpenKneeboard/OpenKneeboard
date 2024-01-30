@@ -32,6 +32,7 @@
 namespace OpenKneeboard {
 
 struct ViewConfig;
+struct PreferredSize;
 
 struct ViewVRPosition {
   enum class Type {
@@ -81,7 +82,7 @@ struct ViewVRPosition {
   Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
 
   std::optional<SHM::VRQuad> Resolve(
-    const PixelSize& contentSize,
+    const PreferredSize& contentSize,
     const std::vector<ViewConfig>& others) const;
 
   constexpr bool operator==(const ViewVRPosition&) const noexcept = default;

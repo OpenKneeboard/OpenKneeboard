@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
+#include <OpenKneeboard/PreferredSize.h>
 #include <OpenKneeboard/ViewsConfig.h>
 
 #include <OpenKneeboard/json.h>
@@ -29,7 +30,7 @@
 namespace OpenKneeboard {
 
 std::optional<SHM::VRQuad> ViewVRPosition::Resolve(
-  const PixelSize& contentSize,
+  const PreferredSize& contentSize,
   const std::vector<ViewConfig>& others) const {
   if (mType == Type::Empty) {
     return {};
@@ -38,11 +39,37 @@ std::optional<SHM::VRQuad> ViewVRPosition::Resolve(
   if (mType == Type::Absolute) {
     auto quad = this->GetQuadConfig();
 
-    using PhysicalSize = Geometry2D::Size<float>;
-    const auto physicalSize
-      = contentSize.StaticCast<PhysicalSize, float>().ScaledToFit(
-        quad.mMaximumPhysicalSize);
-    return SHM::VRQuad {quad.mPose, physicalSize};
+    using Size = Geometry2D::Size<float>;
+    Size size = contentSize.mPixelSize.StaticCast<Size, float>().ScaledToFit(
+      quad.mMaximumPhysicalSize);
+
+    if (contentSize.mPhysicalSize) {
+      const auto& ps = *contentSize.mPhysicalSize;
+      switch (contentSize.mPhysicalSize->mDirection) {
+        case PhysicalSize::Direction::Horizontal: {
+          const auto scale = ps.mLength / size.mWidth;
+          size.mWidth *= scale;
+          size.mHeight *= scale;
+          break;
+        }
+        case PhysicalSize::Direction::Vertical: {
+          const auto scale = ps.mLength / size.mHeight;
+          size.mWidth *= scale;
+          size.mHeight *= scale;
+          break;
+        }
+        case PhysicalSize::Direction::Diagonal: {
+          const auto current
+            = sqrt((size.mWidth * size.mWidth) + (size.mHeight * size.mHeight));
+          const auto scale = ps.mLength / current;
+          size.mWidth *= scale;
+          size.mHeight *= scale;
+          break;
+        }
+      }
+    }
+
+    return SHM::VRQuad {quad.mPose, size};
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
