@@ -32,6 +32,7 @@
 #include <openxr/openxr.h>
 
 #include <format>
+#include <span>
 
 template <class CharT>
 struct std::formatter<XrResult, CharT> : std::formatter<int, CharT> {};
@@ -49,6 +50,8 @@ class OpenXRKneeboard : public VRKneeboard {
  public:
   OpenXRKneeboard() = delete;
   OpenXRKneeboard(
+    XrInstance,
+    XrSystemId,
     XrSession,
     OpenXRRuntimeID,
     const std::shared_ptr<OpenXRNext>&);
@@ -65,8 +68,7 @@ class OpenXRKneeboard : public VRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const PixelRect* const destRects,
-    const float* const opacities)
+    const std::span<SHM::LayerRenderInfo>& layers)
     = 0;
   virtual SHM::CachedReader* GetSHM() = 0;
 
@@ -75,6 +77,9 @@ class OpenXRKneeboard : public VRKneeboard {
  private:
   std::shared_ptr<OpenXRNext> mOpenXR;
   uint64_t mSessionID {};
+
+  PixelSize mMaxSwapchainDimensions {};
+  uint32_t mMaxLayerCount {};
 
   XrSwapchain mSwapchain {};
   PixelSize mSwapchainDimensions;
@@ -85,6 +90,8 @@ class OpenXRKneeboard : public VRKneeboard {
 
   Pose GetHMDPose(XrTime displayTime);
   static XrPosef GetXrPosef(const Pose& pose);
+
+  std::vector<uint8_t> GetActiveLayers(const SHM::Snapshot& snapshot) const;
 };
 
 }// namespace OpenKneeboard

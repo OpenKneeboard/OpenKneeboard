@@ -125,12 +125,18 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   const SHM::LayerConfig* layerConfig = nullptr;
+  uint8_t layerIndex = 0;
   for (uint8_t i = 0; i < layerCount; ++i) {
     layerConfig = snapshot.GetLayerConfig(i);
     if (layerConfig->mNonVREnabled) {
+      layerIndex = i;
       break;
     }
     layerConfig = nullptr;
+  }
+
+  if (!layerConfig) {
+    return passthrough();
   }
 
   const auto& sr = mResources->mSwapchainResources;
@@ -140,14 +146,17 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
 
   const auto destRect
     = flatConfig.Layout(sr.mDimensions, layerConfig->mLocationOnTexture.mSize);
-  const auto sourceRect = layerConfig->mLocationOnTexture;
 
-  const float opacity = flatConfig.mOpacity;
+  SHM::LayerRenderInfo layer {
+    .mLayerIndex = layerIndex,
+    .mDestRect = destRect,
+    .mOpacity = flatConfig.mOpacity,
+  };
 
   {
     D3D11::SavedState savedState(mResources->mImmediateContext);
     mResources->mRenderer->RenderLayers(
-      sr, 0, snapshot, 1, &destRect, &opacity, RenderMode::Overlay);
+      sr, 0, snapshot, {&layer, 1}, RenderMode::Overlay);
   }
 
   return passthrough();

@@ -27,6 +27,8 @@
 
 #include <OpenKneeboard/config.h>
 
+#include <span>
+
 namespace OpenKneeboard {
 
 class OculusKneeboard final : private VRKneeboard {
@@ -73,8 +75,7 @@ class OculusKneeboard::Renderer {
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const PixelRect* const destRects,
-    const float* const opacities)
+    const std::span<SHM::LayerRenderInfo>& layers)
     = 0;
 };
 

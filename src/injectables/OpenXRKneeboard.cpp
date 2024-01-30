@@ -98,12 +98,33 @@ static const VkAllocationCallbacks* gVKAllocator {nullptr};
 static unique_hmodule gLibVulkan {LoadLibraryW(L"vulkan-1.dll")};
 
 OpenXRKneeboard::OpenXRKneeboard(
+  XrInstance instance,
+  XrSystemId system,
   XrSession session,
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next)
   : mOpenXR(next) {
   dprintf("{}", __FUNCTION__);
   OPENKNEEBOARD_TraceLoggingScope("OpenXRKneeboard::OpenXRKneeboard()");
+
+  XrSystemProperties systemProperties {
+    .type = XR_TYPE_SYSTEM_PROPERTIES,
+  };
+  check_xrresult(
+    next->xrGetSystemProperties(instance, system, &systemProperties));
+
+  dprintf("XR system: {}", std::string_view {systemProperties.systemName});
+  mMaxSwapchainDimensions = {
+    systemProperties.graphicsProperties.maxSwapchainImageWidth,
+    systemProperties.graphicsProperties.maxSwapchainImageHeight,
+  };
+  mMaxLayerCount = systemProperties.graphicsProperties.maxLayerCount;
+  dprintf(
+    "System supports up to {} {}x{} layers",
+    mMaxLayerCount,
+    mMaxSwapchainDimensions.mWidth,
+    mMaxSwapchainDimensions.mHeight);
+  dprintf("Effective limit is {} layers", mMaxLayerCount);
 
   mRenderCacheKeys.fill(~(0ui64));
 
@@ -166,7 +187,16 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  const auto layerCount = snapshot.GetLayerCount();
+  auto availableLayers = this->GetActiveLayers(snapshot);
+  const auto layerCount
+    = (availableLayers.size() + frameEndInfo->layerCount) < mMaxLayerCount
+    ? availableLayers.size()
+    : (mMaxLayerCount - frameEndInfo->layerCount);
+  if (layerCount == 0) {
+    TraceLoggingWriteTagged(activity, "No active layers");
+    return mOpenXR->xrEndFrame(session, frameEndInfo);
+  }
+  availableLayers.resize(layerCount);
   const auto swapchainDimensions = Spriting::GetBufferSize(layerCount);
 
   if (mSwapchain) {
@@ -182,7 +212,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
 
   if (!mSwapchain) {
     OPENKNEEBOARD_TraceLoggingScope("CreateSwapchain");
-
     mSwapchain = this->CreateSwapchain(session, swapchainDimensions);
     if (!mSwapchain) [[unlikely]] {
       OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
@@ -229,23 +258,21 @@ XrResult OpenXRKneeboard::xrEndFrame(
   uint8_t topMost = layerCount - 1;
 
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-  std::vector<PixelRect> destRects;
-  std::vector<float> opacities;
+  std::vector<SHM::LayerRenderInfo> layerRenderInfo;
   std::vector<uint64_t> cacheKeys;
-  destRects.reserve(layerCount);
-  opacities.reserve(layerCount);
+  layerRenderInfo.reserve(layerCount);
   cacheKeys.reserve(layerCount);
 
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+  for (const auto layerIndex: availableLayers) {
     auto layer = snapshot.GetLayerConfig(layerIndex);
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
     const auto destOffset = Spriting::GetOffset(layerIndex, MaxViewCount);
-    destRects.push_back({
-      destOffset,
-      layer->mLocationOnTexture.mSize,
+    layerRenderInfo.push_back(SHM::LayerRenderInfo {
+      .mLayerIndex = layerIndex,
+      .mDestRect = {destOffset, layer->mLocationOnTexture.mSize},
+      .mOpacity = params.mKneeboardOpacity,
     });
-    opacities.push_back(params.mKneeboardOpacity);
 
     if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
       needRender = true;
@@ -306,11 +333,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     {
       OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
       this->RenderLayers(
-        mSwapchain,
-        swapchainTextureIndex,
-        snapshot,
-        destRects.data(),
-        opacities.data());
+        mSwapchain, swapchainTextureIndex, snapshot, layerRenderInfo);
     }
 
     {
@@ -408,16 +431,20 @@ XrResult xrCreateSession(
     return XR_ERROR_INITIALIZATION_FAILED;
   }
 
+  const auto system = createInfo->systemId;
+
   auto d3d11 = findInXrNextChain<XrGraphicsBindingD3D11KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D11_KHR, createInfo->next);
   if (d3d11 && d3d11->device) {
-    gKneeboard = new OpenXRD3D11Kneeboard(*session, gRuntime, gNext, *d3d11);
+    gKneeboard = new OpenXRD3D11Kneeboard(
+      instance, system, *session, gRuntime, gNext, *d3d11);
     return ret;
   }
   auto d3d12 = findInXrNextChain<XrGraphicsBindingD3D12KHR>(
     XR_TYPE_GRAPHICS_BINDING_D3D12_KHR, createInfo->next);
   if (d3d12 && d3d12->device) {
-    gKneeboard = new OpenXRD3D12Kneeboard(*session, gRuntime, gNext, *d3d12);
+    gKneeboard = new OpenXRD3D12Kneeboard(
+      instance, system, *session, gRuntime, gNext, *d3d12);
     return ret;
   }
 
@@ -475,7 +502,14 @@ XrResult xrCreateSession(
     }
 
     gKneeboard = new OpenXRVulkanKneeboard(
-      *session, gRuntime, gNext, *vk, gVKAllocator, gPFN_vkGetInstanceProcAddr);
+      instance,
+      system,
+      *session,
+      gRuntime,
+      gNext,
+      *vk,
+      gVKAllocator,
+      gPFN_vkGetInstanceProcAddr);
     return ret;
   }
 
@@ -695,5 +729,39 @@ XrResult __declspec(dllexport) XRAPI_CALL
   apiLayerRequest->createApiLayerInstance
     = &OpenKneeboard::xrCreateApiLayerInstance;
   return XR_SUCCESS;
+}
+
+std::vector<uint8_t> OpenXRKneeboard::GetActiveLayers(
+  const SHM::Snapshot& snapshot) const {
+  const auto totalLayers = snapshot.GetLayerCount();
+
+  std::vector<uint8_t> ret;
+  ret.reserve(totalLayers);
+
+  for (uint32_t layerIndex = 0; layerIndex < totalLayers; ++layerIndex) {
+    auto config = snapshot.GetLayerConfig(layerIndex);
+    if (config->mVREnabled) {
+      ret.push_back(layerIndex);
+    }
+  }
+
+  const auto vrLayers = ret.size();
+
+  while (!ret.empty()) {
+    const auto size = Spriting::GetBufferSize(ret.size());
+    if (
+      ret.size() <= mMaxLayerCount
+      && size.mWidth <= mMaxSwapchainDimensions.mWidth
+      && size.mHeight <= mMaxSwapchainDimensions.mHeight) {
+      traceprint(
+        "{} layers, {} VR layers, {} within limits",
+        totalLayers,
+        vrLayers,
+        ret.size());
+      return ret;
+    }
+    ret.pop_back();
+  }
+  return {};
 }
 }

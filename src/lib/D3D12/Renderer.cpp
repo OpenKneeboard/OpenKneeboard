@@ -63,16 +63,9 @@ void Renderer::RenderLayers(
   const SwapchainResources& sr,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  uint8_t layerCount,
-  const PixelRect* const destRects,
-  const float* const opacities,
+  const std::span<SHM::LayerRenderInfo>& layers,
   RenderMode renderMode) {
   OPENKNEEBOARD_TraceLoggingScope("D3D12::Renderer::RenderLayers()");
-
-  if (layerCount > snapshot.GetLayerCount()) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL(
-      "Attempted to render more layers than exist in snapshot");
-  }
 
   auto source = snapshot.GetTexture<SHM::D3D12::Texture>();
   auto& br = sr.mBufferResources.at(swapchainTextureIndex);
@@ -86,17 +79,17 @@ void Renderer::RenderLayers(
     mSpriteBatch->Clear();
   }
 
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+  for (const auto& layer: layers) {
     const auto sourceRect
-      = snapshot.GetLayerConfig(layerIndex)->mLocationOnTexture;
-    const auto& destRect = destRects[layerIndex];
-    const D3D12::Opacity opacity {opacities[layerIndex]};
+      = snapshot.GetLayerConfig(layer.mLayerIndex)->mLocationOnTexture;
+    const auto& destRect = layer.mDestRect;
+    const D3D12::Opacity opacity {layer.mOpacity};
     mSpriteBatch->Draw(
       source->GetD3D12ShaderResourceViewGPUHandle(),
       source->GetDimensions(),
       sourceRect,
-      destRects[layerIndex],
-      D3D12::Opacity {opacities[layerIndex]});
+      destRect,
+      opacity);
   }
   mSpriteBatch->End();
 

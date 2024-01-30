@@ -44,11 +44,13 @@
 namespace OpenKneeboard {
 
 OpenXRD3D12Kneeboard::OpenXRD3D12Kneeboard(
+  XrInstance instance,
+  XrSystemId systemID,
   XrSession session,
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingD3D12KHR& binding)
-  : OpenXRKneeboard(session, runtimeID, next) {
+  : OpenXRKneeboard(instance, systemID, session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
 
   mGraphicsMemory = std::make_unique<DirectX::GraphicsMemory>(binding.device);
@@ -167,17 +169,14 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  const PixelRect* const destRects,
-  const float* const opacities) {
+  const std::span<SHM::LayerRenderInfo>& layers) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
   mRenderer->RenderLayers(
     mSwapchainResources.at(swapchain),
     swapchainTextureIndex,
     snapshot,
-    snapshot.GetLayerCount(),
-    destRects,
-    opacities,
+    layers,
     RenderMode::ClearAndRender);
 }
 

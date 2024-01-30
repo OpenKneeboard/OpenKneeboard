@@ -38,26 +38,27 @@
 #include <utility>
 
 #define OPENKNEEBOARD_NEXT_OPENXR_FUNCS \
-  IT(xrDestroyInstance) \
-  IT(xrCreateSession) \
-  IT(xrDestroySession) \
-  IT(xrEndFrame) \
-  IT(xrGetInstanceProperties) \
-  IT(xrCreateSwapchain) \
-  IT(xrEnumerateSwapchainFormats) \
-  IT(xrEnumerateSwapchainImages) \
   IT(xrAcquireSwapchainImage) \
-  IT(xrReleaseSwapchainImage) \
-  IT(xrWaitSwapchainImage) \
-  IT(xrDestroySwapchain) \
   IT(xrCreateReferenceSpace) \
-  IT(xrDestroySpace) \
-  IT(xrLocateSpace) \
+  IT(xrCreateSession) \
+  IT(xrCreateSwapchain) \
   IT(xrCreateVulkanDeviceKHR) \
   IT(xrCreateVulkanInstanceKHR) \
+  IT(xrDestroyInstance) \
+  IT(xrDestroySession) \
+  IT(xrDestroySpace) \
+  IT(xrDestroySwapchain) \
+  IT(xrEndFrame) \
+  IT(xrEnumerateSwapchainFormats) \
+  IT(xrEnumerateSwapchainImages) \
+  IT(xrGetInstanceProperties) \
+  IT(xrGetSystemProperties) \
   IT(xrGetVulkanDeviceExtensionsKHR) \
+  IT(xrGetVulkanGraphicsRequirementsKHR) \
   IT(xrGetVulkanInstanceExtensionsKHR) \
-  IT(xrGetVulkanGraphicsRequirementsKHR)
+  IT(xrLocateSpace) \
+  IT(xrReleaseSwapchainImage) \
+  IT(xrWaitSwapchainImage)
 
 namespace OpenKneeboard {
 

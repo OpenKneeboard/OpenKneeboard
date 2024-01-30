@@ -23,6 +23,8 @@
 #include <OpenKneeboard/RenderMode.h>
 #include <OpenKneeboard/SHM/D3D12.h>
 
+#include <span>
+
 namespace OpenKneeboard::D3D12 {
 
 struct SwapchainBufferResources {
@@ -54,9 +56,7 @@ class Renderer {
     const SwapchainResources&,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    uint8_t layerCount,
-    const PixelRect* const destRects,
-    const float* const opacities,
+    const std::span<SHM::LayerRenderInfo>& layers,
     RenderMode);
 
  private:

@@ -113,8 +113,7 @@ void OculusD3D11Kneeboard::RenderLayers(
   ovrTextureSwapChain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  const PixelRect* const destRects,
-  const float* const opacities) {
+  const std::span<SHM::LayerRenderInfo>& layers) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "OculusD3D11::RenderLayers");
 
@@ -124,9 +123,7 @@ void OculusD3D11Kneeboard::RenderLayers(
     *mSwapchain,
     swapchainTextureIndex,
     snapshot,
-    snapshot.GetLayerCount(),
-    destRects,
-    opacities,
+    layers,
     RenderMode::ClearAndRender);
 }
 

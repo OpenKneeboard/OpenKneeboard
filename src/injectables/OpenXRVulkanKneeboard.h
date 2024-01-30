@@ -49,6 +49,8 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
 
   OpenXRVulkanKneeboard() = delete;
   OpenXRVulkanKneeboard(
+    XrInstance,
+    XrSystemId,
     XrSession,
     OpenXRRuntimeID,
     const std::shared_ptr<OpenXRNext>&,
@@ -65,8 +67,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const PixelRect* const destRects,
-    const float* const opacities) override;
+    const std::span<SHM::LayerRenderInfo>& layers) override;
 
  private:
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;

@@ -34,6 +34,8 @@ namespace OpenKneeboard {
 class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
  public:
   OpenXRD3D11Kneeboard(
+    XrInstance,
+    XrSystemId,
     XrSession,
     OpenXRRuntimeID,
     const std::shared_ptr<OpenXRNext>&,
@@ -55,8 +57,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const PixelRect* const destRects,
-    const float* const opacities) override;
+    const std::span<SHM::LayerRenderInfo>& layers) override;
 
  private:
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenXR};

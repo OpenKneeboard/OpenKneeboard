@@ -74,7 +74,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   long long frameIndex,
   const ovrViewScaleDesc* viewScaleDesc,
   ovrLayerHeader const* const* layerPtrList,
-  unsigned int layerCount,
+  unsigned int origLayerCount,
   const decltype(&ovr_EndFrame)& next) {
   mSession = session;
 
@@ -84,7 +84,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     sFirst = false;
   }
   auto passthrough = std::bind_front(
-    next, session, frameIndex, viewScaleDesc, layerPtrList, layerCount);
+    next, session, frameIndex, viewScaleDesc, layerPtrList, origLayerCount);
 
   if (!mRenderer) {
     return passthrough();
@@ -126,10 +126,10 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   // - drop empty layers so we have more space
   // - discard depth information if desired
   std::vector<const ovrLayerHeader*> newLayers;
-  newLayers.reserve(layerCount + snapshot.GetLayerCount());
+  newLayers.reserve(origLayerCount + snapshot.GetLayerCount());
   std::vector<ovrLayerEyeFov> withoutDepthInformation;
 
-  for (unsigned int i = 0; i < layerCount; ++i) {
+  for (unsigned int i = 0; i < origLayerCount; ++i) {
     const auto layer = layerPtrList[i];
 
     if (!layer) {
@@ -154,30 +154,50 @@ ovrResult OculusKneeboard::OnOVREndFrame(
   const auto predictedTime
     = ovr->ovr_GetPredictedDisplayTime(session, frameIndex);
 
-  const auto kneeboardLayerCount = snapshot.GetLayerCount();
+  const auto availableLayerCount = snapshot.GetLayerCount();
+  std::vector<uint8_t> availableVRLayers;
+  for (uint8_t i = 0; i < availableLayerCount; ++i) {
+    auto config = snapshot.GetLayerConfig(i);
+    if (config->mVREnabled) {
+      availableVRLayers.push_back(i);
+    }
+  }
+  const auto addedLayerCount
+    = ((availableVRLayers.size() + origLayerCount) < ovrMaxLayerCount)
+    ? availableVRLayers.size()
+    : (ovrMaxLayerCount - origLayerCount);
+  availableVRLayers.resize(addedLayerCount);
+
+  if (addedLayerCount == 0) {
+    return passthrough();
+  }
+
   std::vector<uint64_t> cacheKeys;
-  std::vector<ovrLayerQuad> kneeboardLayers;
-  std::vector<PixelRect> destRects;
-  std::vector<float> opacities;
+  std::vector<ovrLayerQuad> addedOVRLayers;
+  std::vector<SHM::LayerRenderInfo> layerRenderInfo;
 
-  cacheKeys.reserve(kneeboardLayerCount);
-  kneeboardLayers.reserve(kneeboardLayerCount);
-  destRects.reserve(kneeboardLayerCount);
-  opacities.reserve(kneeboardLayerCount);
+  cacheKeys.reserve(addedLayerCount);
+  addedOVRLayers.reserve(addedLayerCount);
+  layerRenderInfo.reserve(addedLayerCount);
 
-  uint16_t topMost = kneeboardLayerCount - 1;
+  uint16_t topMost = 0;
   bool needRender = false;
-  for (uint8_t layerIndex = 0; layerIndex < kneeboardLayerCount; ++layerIndex) {
+  for (const auto layerIndex: availableVRLayers) {
     const auto& layer = *snapshot.GetLayerConfig(layerIndex);
     auto params = this->GetRenderParameters(
       snapshot, layer, this->GetHMDPose(predictedTime));
     cacheKeys.push_back(params.mCacheKey);
-    opacities.push_back(params.mKneeboardOpacity);
 
     const PixelRect destRect {
       Spriting::GetOffset(layerIndex, MaxViewCount),
       layer.mLocationOnTexture.mSize,
     };
+
+    layerRenderInfo.push_back(SHM::LayerRenderInfo {
+      .mLayerIndex = layerIndex,
+      .mDestRect = destRect,
+      .mOpacity = params.mKneeboardOpacity,
+    });
 
     if (params.mIsLookingAtKneeboard) {
       topMost = layerIndex;
@@ -188,7 +208,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       needRender = true;
     }
 
-    kneeboardLayers.push_back({
+    addedOVRLayers.push_back({
       .Header = { 
         .Type = ovrLayerType_Quad,
         .Flags = {ovrLayerFlag_HighQuality},
@@ -201,8 +221,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       .QuadPoseCenter = GetOvrPosef(params.mKneeboardPose),
       .QuadSize = {params.mKneeboardSize.x, params.mKneeboardSize.y},
     });
-    newLayers.push_back(&kneeboardLayers.back().Header);
-    destRects.push_back(destRect);
+    newLayers.push_back(&addedOVRLayers.back().Header);
   }
 
   if (needRender) {
@@ -215,22 +234,11 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       return passthrough();
     }
 
-    if (
-      kneeboardLayerCount != destRects.size()
-      || kneeboardLayerCount != opacities.size()) [[unlikely]] {
-      OPENKNEEBOARD_LOG_AND_FATAL(
-        "Layer count mismatch: {} layers, {} destRects, {} opacities",
-        kneeboardLayerCount,
-        destRects.size(),
-        opacities.size());
-    }
-
     mRenderer->RenderLayers(
       mSwapchain,
       static_cast<uint32_t>(swapchainTextureIndex),
       snapshot,
-      destRects.data(),
-      opacities.data());
+      layerRenderInfo);
 
     auto error = ovr->ovr_CommitTextureSwapChain(session, mSwapchain);
     if (error) {
@@ -242,8 +250,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
     }
   }
 
-  if (topMost != kneeboardLayerCount - 1) {
-    std::swap(kneeboardLayers.back(), kneeboardLayers.at(topMost));
+  if (topMost != 0) {
+    std::swap(addedOVRLayers.back(), addedOVRLayers.at(topMost));
   }
 
   return next(

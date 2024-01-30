@@ -39,13 +39,15 @@ using OpenKneeboard::Vulkan::check_vkresult;
 namespace OpenKneeboard {
 
 OpenXRVulkanKneeboard::OpenXRVulkanKneeboard(
+  XrInstance instance,
+  XrSystemId systemID,
   XrSession session,
   OpenXRRuntimeID runtimeID,
   const std::shared_ptr<OpenXRNext>& next,
   const XrGraphicsBindingVulkanKHR& binding,
   const VkAllocationCallbacks* vulkanAllocator,
   PFN_vkGetInstanceProcAddr pfnVkGetInstanceProcAddr)
-  : OpenXRKneeboard(session, runtimeID, next) {
+  : OpenXRKneeboard(instance, systemID, session, runtimeID, next) {
   dprintf("{}", __FUNCTION__);
   TraceLoggingWrite(gTraceProvider, "OpenXRVulkanKneeboard()");
 
@@ -245,8 +247,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainIndex,
   const SHM::Snapshot& snapshot,
-  const PixelRect* const destRects,
-  const float* const opacities) {
+  const std::span<SHM::LayerRenderInfo>& layers) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
   if (!(mSwapchainResources && mSwapchainResources->mSwapchain == swapchain))
@@ -271,12 +272,11 @@ void OpenXRVulkanKneeboard::RenderLayers(
   mSpriteBatch->Begin(cb, dest, sr.mDimensions);
   mSpriteBatch->Clear();
 
-  const auto layerCount = snapshot.GetLayerCount();
-  for (uint8_t layerIndex = 0; layerIndex < layerCount; ++layerIndex) {
+  for (const auto& layer: layers) {
     const auto sourceRect
-      = snapshot.GetLayerConfig(layerIndex)->mLocationOnTexture;
-    const auto& destRect = destRects[layerIndex];
-    const Vulkan::Opacity opacity {opacities[layerIndex]};
+      = snapshot.GetLayerConfig(layer.mLayerIndex)->mLocationOnTexture;
+    const auto& destRect = layer.mDestRect;
+    const Vulkan::Opacity opacity {layer.mOpacity};
     mSpriteBatch->Draw(
       source->GetVKImageView(),
       source->GetDimensions(),

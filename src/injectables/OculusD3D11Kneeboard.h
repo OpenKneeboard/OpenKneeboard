@@ -54,8 +54,7 @@ class OculusD3D11Kneeboard final : public OculusKneeboard::Renderer {
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const PixelRect* const destRects,
-    const float* const opacities) override;
+    const std::span<SHM::LayerRenderInfo>& layers) override;
 
  private:
   winrt::com_ptr<ID3D11Device> mD3D11Device;

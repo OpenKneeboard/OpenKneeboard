@@ -19,9 +19,10 @@
  */
 #pragma once
 
-#include <DirectXTK/SimpleMath.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRConfig.h>
+
+#include <DirectXTK/SimpleMath.h>
 
 namespace OpenKneeboard {
 
