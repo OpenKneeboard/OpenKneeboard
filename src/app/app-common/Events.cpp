@@ -96,7 +96,6 @@ struct GlobalData {
   }
 
   void Shutdown(HANDLE event) {
-    OPENKNEEBOARD_TraceLoggingScope("Events::GlobalData::Shutdown()");
     mShutdownEvent = event;
     if (mShuttingDown.test_and_set()) {
       OPENKNEEBOARD_LOG_AND_FATAL("Shutting down the event system twice");

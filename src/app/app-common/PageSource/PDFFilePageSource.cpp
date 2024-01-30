@@ -314,7 +314,6 @@ winrt::fire_and_forget PDFFilePageSource::Reload() {
 
   this->ReloadRenderer();
   this->ReloadNavigation();
-  co_await winrt::resume_after(std::chrono::seconds(10));
 }
 
 winrt::fire_and_forget PDFFilePageSource::final_release(

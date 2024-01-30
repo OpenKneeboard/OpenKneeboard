@@ -22,6 +22,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/Pixels.h>
 #include <OpenKneeboard/PreferredSize.h>
+#include <OpenKneeboard/ProcessShutdownBlock.h>
 #include <OpenKneeboard/RenderTarget.h>
 #include <OpenKneeboard/ThreadGuard.h>
 #include <OpenKneeboard/UniqueID.h>
@@ -40,6 +41,9 @@ enum class SuggestedPageAppendAction {
 };
 
 class IPageSource {
+ private:
+  ProcessShutdownBlock mBlockShutdownUntilDestroyed;
+
  public:
   virtual ~IPageSource();
 

@@ -94,6 +94,10 @@ class audited_ptr {
   audited_ptr& operator=(const audited_ptr&) = delete;
   audited_ptr& operator=(audited_ptr&&) = delete;
 
+  const auto use_count() const {
+    return mImpl.use_count();
+  }
+
   audited_ptr& copy_from(
     const audited_ptr& other,
     const std::source_location& loc = std::source_location::current()) {
