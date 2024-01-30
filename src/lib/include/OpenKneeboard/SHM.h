@@ -46,7 +46,7 @@ namespace Detail {
 struct FrameMetadata;
 
 struct DeviceResources;
-struct IPCSwapchainBufferResources;
+struct IPCHandles;
 
 }// namespace Detail
 
@@ -194,7 +194,7 @@ class Snapshot final {
   Snapshot(
     Detail::FrameMetadata*,
     IPCTextureCopier* copier,
-    Detail::IPCSwapchainBufferResources* source,
+    Detail::IPCHandles* source,
     const std::shared_ptr<IPCClientTexture>& dest);
   Snapshot(Detail::FrameMetadata*);
   ~Snapshot();
@@ -292,6 +292,8 @@ class CachedReader : public Reader {
   virtual std::shared_ptr<IPCClientTexture>
   CreateIPCClientTexture(const PixelSize&, uint8_t swapchainIndex) noexcept = 0;
 
+  virtual void ReleaseIPCHandles() = 0;
+
  private:
   IPCTextureCopier* mTextureCopier {nullptr};
   ConsumerKind mConsumerKind {};
@@ -307,6 +309,8 @@ class CachedReader : public Reader {
   std::shared_ptr<IPCClientTexture> GetIPCClientTexture(
     const PixelSize&,
     uint8_t swapchainIndex) noexcept;
+
+  void UpdateSession();
 };
 
 }// namespace OpenKneeboard::SHM

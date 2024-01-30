@@ -97,13 +97,16 @@ using Detail::FrameMetadata;
 static_assert(std::is_standard_layout_v<FrameMetadata>);
 static constexpr DWORD SHM_SIZE = sizeof(FrameMetadata);
 
-struct Detail::IPCSwapchainBufferResources {
+struct Detail::IPCHandles {
+ public:
   winrt::handle mTextureHandle;
   winrt::handle mFenceHandle;
 
-  IPCSwapchainBufferResources(
-    HANDLE feederProcess,
-    const FrameMetadata& frame) {
+  const HANDLE mForeignTextureHandle {};
+  const HANDLE mForeignFenceHandle {};
+
+  IPCHandles(HANDLE feederProcess, const FrameMetadata& frame)
+    : mForeignTextureHandle(frame.mTexture), mForeignFenceHandle(frame.mFence) {
     const auto thisProcess = GetCurrentProcess();
     winrt::check_bool(DuplicateHandle(
       feederProcess,
@@ -123,15 +126,13 @@ struct Detail::IPCSwapchainBufferResources {
       DUPLICATE_SAME_ACCESS));
   }
 
-  IPCSwapchainBufferResources() = delete;
-  IPCSwapchainBufferResources(const IPCSwapchainBufferResources&) = delete;
-  IPCSwapchainBufferResources(IPCSwapchainBufferResources&&) = delete;
-  IPCSwapchainBufferResources& operator=(const IPCSwapchainBufferResources&)
-    = delete;
-  IPCSwapchainBufferResources& operator=(IPCSwapchainBufferResources&&)
-    = delete;
+  IPCHandles() = delete;
+  IPCHandles(const IPCHandles&) = delete;
+  IPCHandles(IPCHandles&&) = delete;
+  IPCHandles& operator=(const IPCHandles&) = delete;
+  IPCHandles& operator=(IPCHandles&&) = delete;
 };
-using Detail::IPCSwapchainBufferResources;
+using Detail::IPCHandles;
 
 static auto SHMPath() {
   static std::wstring sCache;
@@ -186,7 +187,7 @@ uint64_t Snapshot::GetSessionID() const {
 Snapshot::Snapshot(
   FrameMetadata* metadata,
   IPCTextureCopier* copier,
-  IPCSwapchainBufferResources* source,
+  IPCHandles* source,
   const std::shared_ptr<IPCClientTexture>& dest)
   : mIPCTexture(dest), mState(State::Empty) {
   OPENKNEEBOARD_TraceLoggingScopedActivity(
@@ -485,29 +486,24 @@ class Reader::Impl : public SHM::Impl<ReaderState> {
   winrt::handle mFeederProcessHandle;
   uint64_t mSessionID {~(0ui64)};
 
-  std::array<std::unique_ptr<IPCSwapchainBufferResources>, SHMSwapchainLength>
-    mBufferResources;
+  std::array<std::unique_ptr<IPCHandles>, SHMSwapchainLength> mHandles;
 
   void UpdateSession() {
+    OPENKNEEBOARD_TraceLoggingScope("SHM::Reader::Impl::UpdateSession()");
     const auto& metadata = *this->mHeader;
 
-    if (
-      mForeignTextureHandle != metadata.mTexture
-      || mForeignFenceHandle != metadata.mFence) {
-      mBufferResources = {};
-      mForeignTextureHandle = metadata.mTexture;
-      mForeignFenceHandle = metadata.mFence;
+    if (mSessionID != metadata.mSessionID) {
+      mFeederProcessHandle = {};
+      mHandles = {};
+      mSessionID = metadata.mSessionID;
     }
 
-    if (metadata.mSessionID == mSessionID) [[likely]] {
+    if (mFeederProcessHandle) {
       return;
     }
 
     mFeederProcessHandle = winrt::handle {
       OpenProcess(PROCESS_DUP_HANDLE, FALSE, metadata.mFeederProcessID)};
-    mSessionID = metadata.mSessionID;
-    // Probably just did this, but doesn't hurt to be sure :)
-    mBufferResources = {};
   }
 
  private:
@@ -606,14 +602,22 @@ Snapshot Reader::MaybeGetUncached(
     return {Snapshot::incorrect_gpu};
   }
 
-  auto& br
-    = p->mBufferResources.at(p->mHeader->mFrameNumber % SHMSwapchainLength);
-  if (!br) {
-    br = std::make_unique<IPCSwapchainBufferResources>(
+  auto& handles = p->mHandles.at(p->mHeader->mFrameNumber % SHMSwapchainLength);
+  if (handles && (
+    (handles->mForeignFenceHandle != p->mHeader->mFence) 
+  ||
+    (handles->mForeignTextureHandle != p->mHeader->mTexture) )) {
+    // Impl::UpdateSession() should have nuked the whole lot
+    dprint("Replacing handles without new session ID");
+    OPENKNEEBOARD_BREAK;
+    handles = {};
+  }
+  if (!handles) {
+    handles = std::make_unique<IPCHandles>(
       p->mFeederProcessHandle.get(), *p->mHeader);
   }
 
-  return Snapshot(p->mHeader, copier, br.get(), dest);
+  return Snapshot(p->mHeader, copier, handles.get(), dest);
 }
 
 size_t Reader::GetRenderCacheKey(ConsumerKind kind) const {
@@ -724,6 +728,8 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
     return {nullptr};
   }
 
+  this->UpdateSession();
+
   ActiveConsumers::Set(mConsumerKind);
 
   const auto swapchainIndex = mSwapchainIndex;
@@ -816,9 +822,7 @@ Snapshot CachedReader::MaybeGetMetadata() {
     return {nullptr};
   }
 
-  if (this->GetSessionID() != mSessionID) {
-    mClientTextures.clear();
-  }
+  this->UpdateSession();
 
   if (!mClientTextures.empty()) {
     return MaybeGet();
@@ -837,8 +841,17 @@ Snapshot CachedReader::MaybeGetMetadata() {
     mCacheKey = cacheKey;
   }
 
-  mSessionID = snapshot.GetSessionID();
   return snapshot;
+}
+
+void CachedReader::UpdateSession() {
+  const auto sessionID = this->GetSessionID();
+  if (sessionID == mSessionID) {
+    return;
+  }
+  this->ReleaseIPCHandles();
+  p->UpdateSession();
+  mSessionID = sessionID;
 }
 
 IPCClientTexture::IPCClientTexture(

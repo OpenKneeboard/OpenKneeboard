@@ -122,6 +122,28 @@ void CachedReader::InitializeCache(
   SHM::CachedReader::InitializeCache(mDeviceLUID, swapchainLength);
 }
 
+void CachedReader::ReleaseIPCHandles() {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::D3D11::CachedReader::ReleaseIPCHandles");
+  if (mIPCFences.empty()) {
+    return;
+  }
+  std::vector<HANDLE> events;
+  for (const auto& [fenceHandle, fenceAndValue]: mIPCFences) {
+    auto event = CreateEventEx(nullptr, nullptr, 0, GENERIC_ALL);
+    fenceAndValue.mFence->SetEventOnCompletion(fenceAndValue.mValue, event);
+    events.push_back(event);
+  }
+
+  WaitForMultipleObjects(events.size(), events.data(), true, INFINITE);
+  for (const auto event: events) {
+    CloseHandle(event);
+  }
+
+  mIPCFences.clear();
+  mIPCTextures.clear();
+}
+
 void CachedReader::Copy(
   HANDLE sourceHandle,
   IPCClientTexture* destinationTexture,
@@ -129,18 +151,14 @@ void CachedReader::Copy(
   uint64_t fenceValueIn,
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::Copy()");
-
-  if (mSessionID != this->GetSessionID()) {
-    mIPCFences.clear();
-    mIPCTextures.clear();
-    mSessionID = this->GetSessionID();
-  }
-
   const auto source = this->GetIPCTexture(sourceHandle);
-  const auto fence = this->GetIPCFence(fenceHandle);
+
+  auto fenceAndValue = this->GetIPCFence(fenceHandle);
 
   reinterpret_cast<SHM::D3D11::Texture*>(destinationTexture)
-    ->CopyFrom(source, fence, fenceValueIn, fenceValueOut);
+    ->CopyFrom(
+      source, fenceAndValue->mFence.get(), fenceValueIn, fenceValueOut);
+  fenceAndValue->mValue = fenceValueOut;
 }
 
 std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
@@ -152,16 +170,16 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
     dimensions, swapchainIndex, mDevice, mDeviceContext);
 }
 
-ID3D11Fence* CachedReader::GetIPCFence(HANDLE handle) noexcept {
+CachedReader::FenceAndValue* CachedReader::GetIPCFence(HANDLE handle) noexcept {
   if (mIPCFences.contains(handle)) {
-    return mIPCFences.at(handle).get();
+    return &mIPCFences.at(handle);
   }
 
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::GetIPCFence()");
   winrt::com_ptr<ID3D11Fence> fence;
   check_hresult(mDevice->OpenSharedFence(handle, IID_PPV_ARGS(fence.put())));
-  mIPCFences.emplace(handle, fence);
-  return fence.get();
+  mIPCFences.emplace(handle, FenceAndValue {fence});
+  return &mIPCFences.at(handle);
 }
 
 ID3D11Texture2D* CachedReader::GetIPCTexture(HANDLE handle) noexcept {

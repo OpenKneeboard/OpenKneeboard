@@ -881,9 +881,8 @@ class TestViewerWindow final : private D3D11Resources {
         break;
       }
     }
-
-    // We pass 1 as the swapchain length as we use a buffer; we need to do
     // this as swapchain textures can't be directly shared
+
     mRenderer->Initialize(1);
   }
 

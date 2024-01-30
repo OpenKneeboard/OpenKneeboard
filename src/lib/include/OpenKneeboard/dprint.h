@@ -135,6 +135,7 @@ class DPrintReceiver {
   source_location, message, ...) \
   { \
     dprintf("FATAL: " message " @ {}", ##__VA_ARGS__, source_location); \
+    TraceLoggingWrite(gTraceProvider, "FATAL"); \
     OPENKNEEBOARD_FATAL; \
   }
 

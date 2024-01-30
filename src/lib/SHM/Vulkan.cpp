@@ -341,6 +341,8 @@ CachedReader::CachedReader(ConsumerKind consumerKind)
 CachedReader::~CachedReader() {
   OPENKNEEBOARD_TraceLoggingScope("SHM::Vulkan::CachedReader::~CachedReader()");
 
+  this->ReleaseIPCHandles();
+
   this->InitializeCache(0);
 
   mVK->FreeCommandBuffers(
@@ -397,13 +399,7 @@ void CachedReader::InitializeCache(uint8_t swapchainLength) {
     "SHM::Vulkan::CachedReader::InitializeCache()",
     TraceLoggingValue(swapchainLength, "swapchainLength"));
 
-  if (!mCompletionFences.empty()) {
-    std::vector<VkFence> fences;
-    for (const auto& fence: mCompletionFences) {
-      fences.push_back(fence.get());
-    }
-    mVK->WaitForFences(mDevice, fences.size(), fences.data(), true, ~(0ui64));
-  }
+  this->WaitForAllFences();
 
   if (swapchainLength == 0) {
     mIPCSemaphores.clear();
@@ -486,6 +482,7 @@ std::shared_ptr<SHM::IPCClientTexture> CachedReader::CreateIPCClientTexture(
   uint8_t swapchainIndex) noexcept {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::Vulkan::CachedReader::CreateIPCClientTexture()");
+
   return std::make_shared<Texture>(
     mVK,
     mPhysicalDevice,
@@ -670,6 +667,32 @@ VkImage CachedReader::GetIPCImage(HANDLE handle, const PixelSize& dimensions) {
   mIPCImages.emplace(
     handle, IPCImage {std::move(memory), std::move(image), dimensions});
   return ret;
+}
+
+void CachedReader::ReleaseIPCHandles() {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::Vulkan::CachedReader::ReleaseIPCHandles");
+
+  this->WaitForAllFences();
+
+  mIPCSemaphores.clear();
+  mIPCImages.clear();
+}
+
+void CachedReader::WaitForAllFences() {
+  OPENKNEEBOARD_TraceLoggingScope(
+    "SHM::Vulkan::CachedReader::WaitForAllFences");
+
+  if (mCompletionFences.empty()) {
+    return;
+  }
+
+  std::vector<VkFence> fences;
+  for (const auto& fence: mCompletionFences) {
+    fences.push_back(fence.get());
+  }
+  check_vkresult(
+    mVK->WaitForFences(mDevice, fences.size(), fences.data(), true, ~(0ui64)));
 }
 
 Snapshot CachedReader::MaybeGet(const std::source_location& loc) {

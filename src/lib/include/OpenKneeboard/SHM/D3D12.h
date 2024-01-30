@@ -100,6 +100,8 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     const PixelSize&,
     uint8_t swapchainIndex) noexcept override;
 
+  virtual void ReleaseIPCHandles() override;
+
  private:
   winrt::com_ptr<ID3D12Device> mDevice;
   winrt::com_ptr<ID3D12CommandQueue> mCommandQueue;
@@ -113,10 +115,14 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
 
   uint8_t GetSwapchainLength() const;
 
-  std::unordered_map<HANDLE, winrt::com_ptr<ID3D12Fence>> mIPCFences;
+  struct FenceAndValue {
+    winrt::com_ptr<ID3D12Fence> mFence;
+    uint64_t mValue {};
+  };
+  std::unordered_map<HANDLE, FenceAndValue> mIPCFences;
   std::unordered_map<HANDLE, winrt::com_ptr<ID3D12Resource>> mIPCTextures;
 
-  ID3D12Fence* GetIPCFence(HANDLE) noexcept;
+  FenceAndValue* GetIPCFence(HANDLE) noexcept;
   ID3D12Resource* GetIPCTexture(HANDLE) noexcept;
 };
 

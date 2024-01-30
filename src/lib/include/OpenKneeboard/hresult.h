@@ -46,7 +46,7 @@ struct std::formatter<winrt::hresult, CharT>
       OPENKNEEBOARD_BREAK;
     } else {
       converted = std::format(
-        "{:#010x} (\"{}\")", static_cast<uint32_t>(hresult.value), converted);
+        "{:#010x} (\"{}\")", static_cast<uint32_t>(hresult.value), message);
     }
 
     return std::formatter<std::basic_string_view<CharT>, CharT>::format(
@@ -60,7 +60,8 @@ inline void check_hresult(
   HRESULT code,
   const std::source_location& loc = std::source_location::current()) {
   if (FAILED(code)) [[unlikely]] {
-    OPENKNEEBOARD_LOG_AND_FATAL("HRESULT {}", winrt::hresult {code});
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "HRESULT {}", winrt::hresult {code});
   }
 }
 

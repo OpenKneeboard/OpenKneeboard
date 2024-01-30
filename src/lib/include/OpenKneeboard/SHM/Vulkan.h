@@ -142,6 +142,8 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
     const PixelSize&,
     uint8_t swapchainIndex) noexcept override;
 
+  virtual void ReleaseIPCHandles();
+
  private:
   OpenKneeboard::Vulkan::Dispatch* mVK {nullptr};
   VkInstance mInstance {};
@@ -168,6 +170,8 @@ class CachedReader : public SHM::CachedReader, protected SHM::IPCTextureCopier {
   };
   std::unordered_map<HANDLE, IPCImage> mIPCImages;
   VkImage GetIPCImage(HANDLE, const PixelSize&);
+
+  void WaitForAllFences();
 };
 
 };// namespace OpenKneeboard::SHM::Vulkan
