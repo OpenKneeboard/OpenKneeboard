@@ -42,7 +42,10 @@ std::shared_ptr<GameEventServer> GameEventServer::Create() {
 winrt::fire_and_forget GameEventServer::final_release(
   std::unique_ptr<GameEventServer> self) {
   self->mRunner.Cancel();
-  co_await winrt::resume_on_signal(self->mCompletionHandle.get());
+  try {
+    co_await winrt::resume_on_signal(self->mCompletionHandle.get());
+  } catch (const winrt::hresult_canceled&) {
+  }
 }
 
 GameEventServer::GameEventServer() {

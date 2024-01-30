@@ -64,6 +64,8 @@ class EventBase {
     STOP_PROPAGATION,
   };
 
+  static void Shutdown(HANDLE event);
+
  protected:
   /** Event handlers are not invoked recursively to avoid deadlocks.
    *

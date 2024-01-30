@@ -80,47 +80,124 @@ struct EmitterQueueItem {
   std::function<void()> mEmitter;
   std::source_location mEnqueuedFrom;
 };
+
+struct GlobalData {
+  bool StartEvent() {
+    mEventCount.fetch_add(1);
+    if (mShuttingDown.test()) {
+      this->Sub1();
+      return false;
+    }
+    return true;
+  }
+
+  void FinishEvent() {
+    this->Sub1();
+  }
+
+  void Shutdown(HANDLE event) {
+    OPENKNEEBOARD_TraceLoggingScope("Events::GlobalData::Shutdown()");
+    mShutdownEvent = event;
+    if (mShuttingDown.test_and_set()) {
+      OPENKNEEBOARD_LOG_AND_FATAL("Shutting down the event system twice");
+    }
+
+    this->Sub1();
+  }
+
+  static auto& Get() {
+    static GlobalData sInstance;
+    return sInstance;
+  }
+
+ private:
+  GlobalData() = default;
+
+  void Sub1() {
+    if (mEventCount.fetch_sub(1) == 1) {
+      if (!mShuttingDown.test()) [[unlikely]] {
+        OPENKNEEBOARD_LOG_AND_FATAL("Event count = 0, but not shutting down");
+      }
+      SetEvent(mShutdownEvent);
+    }
+  }
+
+  std::atomic_uint64_t mEventCount {1};
+  std::atomic_flag mShuttingDown;
+  HANDLE mShutdownEvent {};
+};
+
+struct ThreadData {
+  uint64_t mDelayDepth = 0;
+
+  static auto& Get() {
+    static thread_local ThreadData sInstance;
+    return sInstance;
+  }
+
+  void EmitOrEnqueue(EmitterQueueItem&& item) noexcept {
+    auto& globals = GlobalData::Get();
+    if (!globals.StartEvent()) {
+      return;
+    }
+    if (mDelayDepth > 0) {
+      mEmitterQueue.push(item);
+      return;
+    }
+
+    item.mEmitter();
+    globals.FinishEvent();
+  }
+
+  void Flush() noexcept {
+    auto& globals = GlobalData::Get();
+    while (!mEmitterQueue.empty()) {
+      auto item = mEmitterQueue.front();
+      mEmitterQueue.pop();
+      item.mEmitter();
+      globals.FinishEvent();
+    }
+  }
+
+ private:
+  ThreadData() = default;
+
+  std::queue<EmitterQueueItem> mEmitterQueue;
+};
+
 }// namespace
 
-static thread_local uint64_t gDelayDepth = 0;
-static thread_local std::queue<EmitterQueueItem> gEmitterQueue;
-
-static void FlushEmitterQueue() {
-  while (!gEmitterQueue.empty()) {
-    auto item = gEmitterQueue.front();
-    gEmitterQueue.pop();
-    item.mEmitter();
-  }
+void EventBase::Shutdown(HANDLE event) {
+  GlobalData::Get().Shutdown(event);
 }
 
 void EventBase::InvokeOrEnqueue(
   std::function<void()> func,
   std::source_location location) {
-  if (gDelayDepth) {
-    gEmitterQueue.push({func, location});
-    return;
-  }
-  func();
+  auto& queue = ThreadData::Get();
+  queue.EmitOrEnqueue({func, location});
 }
 
 EventDelay::EventDelay(std::source_location source) : mSourceLocation(source) {
-  const auto count = ++gDelayDepth;
+  auto& queue = ThreadData::Get();
+  const auto count = ++queue.mDelayDepth;
   TraceLoggingWriteStart(
     mActivity,
     "EventDelay",
-    TraceLoggingValue(gDelayDepth, "Depth"),
+    TraceLoggingValue(queue.mDelayDepth, "Depth"),
     OPENKNEEBOARD_TraceLoggingSourceLocation(mSourceLocation));
 }
 
 EventDelay::~EventDelay() {
-  const auto count = --gDelayDepth;
+  auto& queue = ThreadData::Get();
+  const auto count = --queue.mDelayDepth;
   if (!count) {
-    FlushEmitterQueue();
+    queue.Flush();
   }
   TraceLoggingWriteStop(
     mActivity,
     "EventDelay",
-    TraceLoggingValue(gDelayDepth, "Depth"),
+    TraceLoggingValue(queue.mDelayDepth, "Depth"),
     OPENKNEEBOARD_TraceLoggingSourceLocation(mSourceLocation));
   return;
 }

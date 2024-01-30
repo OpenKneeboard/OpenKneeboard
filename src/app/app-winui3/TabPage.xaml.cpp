@@ -141,11 +141,15 @@ winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
     mForegroundBrush = {};
     mToolbarItems = {};
 
+    mCanvas = {};
+    mRenderTarget = {};
+
     CommandBar().PrimaryCommands().Clear();
     CommandBar().SecondaryCommands().Clear();
   }
 
   mDXR = {};
+  mKneeboard = {};
 }
 
 void TabPage::InitializePointerSource() {

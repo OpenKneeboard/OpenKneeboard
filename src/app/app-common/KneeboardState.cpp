@@ -103,13 +103,16 @@ KneeboardState::KneeboardState(
   AcquireExclusiveResources();
 }
 
-KneeboardState::~KneeboardState() noexcept = default;
+KneeboardState::~KneeboardState() noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("KneeboardState::~KneeboardState()");
+  dprint("~KneeboardState()");
+}
 
 winrt::fire_and_forget KneeboardState::final_release(
   std::unique_ptr<KneeboardState> self) {
-  co_await self->ReleaseExclusiveResources();
-
+  OPENKNEEBOARD_TraceLoggingScope("KneeboardState::final_release()");
   self->RemoveAllEventListeners();
+  co_await self->ReleaseExclusiveResources();
 }
 
 std::vector<std::shared_ptr<IKneeboardView>>

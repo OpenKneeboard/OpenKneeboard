@@ -593,6 +593,11 @@ winrt::fire_and_forget MainWindow::CleanupAndClose() {
   dprint("Stopping frame loop...");
   mFrameLoop.Cancel();
   co_await winrt::resume_on_signal(mFrameLoopCompletionEvent.get());
+
+  dprint("Stopping event system...");
+  auto event = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
+  EventBase::Shutdown(event.get());
+  co_await winrt::resume_on_signal(event.get());
   co_await mUIThread;
 
   for (const auto& weakTab: gTabs) {
