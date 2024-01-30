@@ -57,6 +57,8 @@ class D3D11Renderer final : public Renderer {
  private:
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::Viewer};
 
+  uint64_t mSessionID {};
+
   winrt::com_ptr<ID3D11Device1> mD3D11Device;
   winrt::com_ptr<ID3D11DeviceContext> mD3D11ImmediateContext;
 

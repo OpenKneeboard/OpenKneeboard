@@ -169,11 +169,15 @@ XrResult OpenXRKneeboard::xrEndFrame(
   const auto layerCount = snapshot.GetLayerCount();
   const auto swapchainDimensions = Spriting::GetBufferSize(layerCount);
 
-  if (mSwapchain && (mSwapchainDimensions != swapchainDimensions)) {
-    OPENKNEEBOARD_TraceLoggingScope("DestroySwapchain");
-    this->ReleaseSwapchainResources(mSwapchain);
-    mOpenXR->xrDestroySwapchain(mSwapchain);
-    mSwapchain = {};
+  if (mSwapchain) {
+    if (
+      (mSwapchainDimensions != swapchainDimensions)
+      || (mSessionID != snapshot.GetSessionID())) {
+      OPENKNEEBOARD_TraceLoggingScope("DestroySwapchain");
+      this->ReleaseSwapchainResources(mSwapchain);
+      mOpenXR->xrDestroySwapchain(mSwapchain);
+      mSwapchain = {};
+    }
   }
 
   if (!mSwapchain) {
@@ -184,6 +188,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
       OPENKNEEBOARD_LOG_AND_FATAL("Failed to create swapchain");
     }
     mSwapchainDimensions = swapchainDimensions;
+    mSessionID = snapshot.GetSessionID();
     dprintf(
       "Created {}x{} swapchain",
       swapchainDimensions.mWidth,

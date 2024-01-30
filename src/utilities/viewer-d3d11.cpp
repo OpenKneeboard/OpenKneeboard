@@ -62,6 +62,9 @@ uint64_t D3D11Renderer::Render(
   if (mDestDimensions != destTextureDimensions) {
     mDestHandle = {};
   }
+  if (mSessionID != mSHM.GetSessionID()) {
+    mDestHandle = {};
+  }
   if (mDestHandle != destTextureHandle) {
     mDestTexture = nullptr;
     mDestRenderTargetView = nullptr;

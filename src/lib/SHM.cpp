@@ -175,6 +175,14 @@ Snapshot::Snapshot(FrameMetadata* metadata) : mState(State::Empty) {
   }
 }
 
+uint64_t Snapshot::GetSessionID() const {
+  if (!mHeader) {
+    return {};
+  }
+
+  return mHeader->mSessionID;
+}
+
 Snapshot::Snapshot(
   FrameMetadata* metadata,
   IPCTextureCopier* copier,
@@ -552,14 +560,9 @@ void CachedReader::InitializeCache(uint64_t gpuLUID, uint8_t swapchainLength) {
   OPENKNEEBOARD_TraceLoggingScope(
     "SHM::CachedReader::InitializeCache()",
     TraceLoggingValue(swapchainLength, "SwapchainLength"));
-  if (mGPULUID != gpuLUID) {
-    mGPULUID = gpuLUID;
-    mCache.clear();
-    mCacheKey = {};
-    mClientTextures = {};
-  }
-
-  mCache.resize(swapchainLength, nullptr);
+  mGPULUID = gpuLUID;
+  mCache = {};
+  mCacheKey = {};
   mClientTextures = {swapchainLength, nullptr};
 }
 
@@ -809,12 +812,16 @@ std::shared_ptr<IPCClientTexture> CachedReader::GetIPCClientTexture(
 Snapshot CachedReader::MaybeGetMetadata() {
   OPENKNEEBOARD_TraceLoggingScope("CachedReader::MaybeGetMetadata()");
 
-  if (!mClientTextures.empty()) {
-    return MaybeGet();
-  }
-
   if (!*this) {
     return {nullptr};
+  }
+
+  if (this->GetSessionID() != mSessionID) {
+    mClientTextures.clear();
+  }
+
+  if (!mClientTextures.empty()) {
+    return MaybeGet();
   }
 
   const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
@@ -829,6 +836,8 @@ Snapshot CachedReader::MaybeGetMetadata() {
     mCache.push_front(snapshot);
     mCacheKey = cacheKey;
   }
+
+  mSessionID = snapshot.GetSessionID();
   return snapshot;
 }
 

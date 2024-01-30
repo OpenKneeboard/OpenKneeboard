@@ -130,6 +130,12 @@ void CachedReader::Copy(
   uint64_t fenceValueOut) noexcept {
   OPENKNEEBOARD_TraceLoggingScope("SHM::D3D11::CachedReader::Copy()");
 
+  if (mSessionID != this->GetSessionID()) {
+    mIPCFences.clear();
+    mIPCTextures.clear();
+    mSessionID = this->GetSessionID();
+  }
+
   const auto source = this->GetIPCTexture(sourceHandle);
   const auto fence = this->GetIPCFence(fenceHandle);
 

@@ -199,6 +199,7 @@ class Snapshot final {
   Snapshot(Detail::FrameMetadata*);
   ~Snapshot();
 
+  uint64_t GetSessionID() const;
   /// Changes even if the feeder restarts with frame ID 0
   size_t GetRenderCacheKey() const;
   Config GetConfig() const;
@@ -297,6 +298,7 @@ class CachedReader : public Reader {
 
   uint64_t mGPULUID {};
   uint64_t mCacheKey {~(0ui64)};
+  uint64_t mSessionID {};
   std::deque<Snapshot> mCache;
   uint8_t mSwapchainIndex {};
 

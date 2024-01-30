@@ -33,6 +33,7 @@
 #include <OpenKneeboard/ToolbarAction.h>
 
 #include <OpenKneeboard/dprint.h>
+#include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/tracing.h>
 #include <OpenKneeboard/weak_wrap.h>
@@ -130,11 +131,11 @@ void InterprocessRenderer::SubmitFrame(
     if (destResources->mNewFence) {
       destResources->mNewFence = false;
     } else {
-      winrt::check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
+      check_hresult(ctx->Wait(fence, ipcTextureInfo.mFenceIn));
     }
     ctx->CopySubresourceRegion(
       destResources->mTexture.get(), 0, 0, 0, 0, srcTexture, 0, &srcBox);
-    winrt::check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
+    check_hresult(ctx->Signal(fence, ipcTextureInfo.mFenceOut));
   }
 
   SHM::Config config {
@@ -176,12 +177,13 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
   auto device = mDXR->mD3D11Device.get();
 
   winrt::com_ptr<ID3D11Texture2D> texture;
-  winrt::check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
+  check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
   mCanvas = RenderTarget::Create(mDXR, texture);
   mCanvasSize = size;
 
   // Let's force a clean start on the clients, including resetting the session
   // ID
+  mIPCSwapchain = {};
   const std::unique_lock shmLock(mSHM);
   mSHM.Detach();
 }
@@ -202,8 +204,6 @@ InterprocessRenderer::GetIPCTextureResources(
     TraceLoggingValue(size.mWidth, "width"),
     TraceLoggingValue(size.mHeight, "height"));
 
-  auto previousResources = std::move(ret);
-
   ret = {};
 
   auto device = mDXR->mD3D11Device.get();
@@ -220,25 +220,18 @@ InterprocessRenderer::GetIPCTextureResources(
     = D3D11_RESOURCE_MISC_SHARED_NTHANDLE | D3D11_RESOURCE_MISC_SHARED,
   };
 
-  winrt::check_hresult(
+  check_hresult(
     device->CreateTexture2D(&textureDesc, nullptr, ret.mTexture.put()));
-  winrt::check_hresult(device->CreateRenderTargetView(
+  check_hresult(device->CreateRenderTargetView(
     ret.mTexture.get(), nullptr, ret.mRenderTargetView.put()));
-  winrt::check_hresult(ret.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
+  check_hresult(ret.mTexture.as<IDXGIResource1>()->CreateSharedHandle(
     nullptr, DXGI_SHARED_RESOURCE_READ, nullptr, ret.mTextureHandle.put()));
 
-  if (previousResources.mFence) {
-    TraceLoggingWriteTagged(activity, "Re-using existing fence");
-    ret.mFence = std::move(previousResources.mFence);
-    ret.mFenceHandle = std::move(previousResources.mFenceHandle);
-    ret.mNewFence = false;
-  } else {
-    TraceLoggingWriteTagged(activity, "Creating new fence");
-    winrt::check_hresult(device->CreateFence(
-      0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(ret.mFence.put())));
-    winrt::check_hresult(ret.mFence->CreateSharedHandle(
-      nullptr, GENERIC_ALL, nullptr, ret.mFenceHandle.put()));
-  }
+  TraceLoggingWriteTagged(activity, "Creating new fence");
+  check_hresult(device->CreateFence(
+    0, D3D11_FENCE_FLAG_SHARED, IID_PPV_ARGS(ret.mFence.put())));
+  check_hresult(ret.mFence->CreateSharedHandle(
+    nullptr, GENERIC_ALL, nullptr, ret.mFenceHandle.put()));
 
   ret.mViewport = {
     0,
