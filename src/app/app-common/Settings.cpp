@@ -53,6 +53,7 @@ static void MaybeSetFromJSON(T& out, const std::filesystem::path& path) {
   } catch (const nlohmann::json::exception& e) {
     dprintf(
       "Error reading JSON from file '{}': {}", fullPath.string(), e.what());
+    OPENKNEEBOARD_BREAK;
   }
 }
 

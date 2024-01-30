@@ -92,7 +92,7 @@ static void MaybeSet(nlohmann::json& j, std::string_view key, auto value) {
 template <class T>
 static T MaybeGet(const nlohmann::json& j, std::string_view key) {
   if (j.contains(key)) {
-    return j.at("key");
+    return j.at(key);
   }
   return {};
 }
