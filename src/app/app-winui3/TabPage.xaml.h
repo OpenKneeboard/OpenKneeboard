@@ -39,6 +39,7 @@ class ITabView;
 class ISelectableToolbarItem;
 class IToolbarFlyout;
 class IToolbarItem;
+class KneeboardState;
 class RenderTarget;
 class ToolbarAction;
 class ToolbarToggleAction;
@@ -128,6 +129,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   winrt::com_ptr<ID3D11Texture2D> mCanvas;
   std::shared_ptr<RenderTarget> mRenderTarget;
   std::shared_ptr<OpenKneeboard::DXResources> mDXR;
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

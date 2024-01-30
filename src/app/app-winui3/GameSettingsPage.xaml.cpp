@@ -28,20 +28,23 @@
 #include "GameInstanceUIDataTemplateSelector.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/DCSWorldInstance.h>
-#include <OpenKneeboard/GamesList.h>
-#include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/utf8.h>
-#include <microsoft.ui.xaml.window.h>
-#include <shobjidl.h>
-
-#include <algorithm>
-#include <format>
-
 #include "CheckDCSHooks.h"
 #include "ExecutableIconFactory.h"
 #include "FilePicker.h"
 #include "Globals.h"
+
+#include <OpenKneeboard/DCSWorldInstance.h>
+#include <OpenKneeboard/GamesList.h>
+#include <OpenKneeboard/KneeboardState.h>
+
+#include <OpenKneeboard/utf8.h>
+
+#include <microsoft.ui.xaml.window.h>
+
+#include <algorithm>
+#include <format>
+
+#include <shobjidl.h>
 
 using namespace winrt::Windows::Foundation::Collections;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -51,11 +54,12 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 GameSettingsPage::GameSettingsPage() {
   InitializeComponent();
+  mKneeboard = gKneeboard.lock();
   mIconFactory = std::make_unique<ExecutableIconFactory>();
   UpdateGames();
 
   AddEventListener(
-    gKneeboard->GetGamesList()->evSettingsChangedEvent,
+    mKneeboard->GetGamesList()->evSettingsChangedEvent,
     [this]() { this->UpdateGames(); });
 }
 
@@ -76,7 +80,7 @@ fire_and_forget GameSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  gKneeboard->ResetGamesSettings();
+  mKneeboard->ResetGamesSettings();
 }
 
 void GameSettingsPage::UpdateGames() {
@@ -84,7 +88,7 @@ void GameSettingsPage::UpdateGames() {
 }
 
 IVector<IInspectable> GameSettingsPage::Games() noexcept {
-  auto games = gKneeboard->GetGamesList()->GetGameInstances();
+  auto games = mKneeboard->GetGamesList()->GetGameInstances();
   std::ranges::sort(
     games, [](auto& a, auto& b) { return a->mName < b->mName; });
   IVector<IInspectable> winrtGames {
@@ -159,11 +163,12 @@ winrt::fire_and_forget GameSettingsPage::AddExe(
 }
 
 static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
+  KneeboardState* kneeboard,
   const IInspectable& sender) noexcept {
   const auto instanceID
     = unbox_value<uint64_t>(sender.as<FrameworkElement>().Tag());
 
-  auto gamesList = gKneeboard->GetGamesList();
+  auto gamesList = kneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
   auto it = std::find_if(instances.begin(), instances.end(), [&](auto& x) {
     return x->mInstanceID == instanceID;
@@ -178,7 +183,7 @@ static std::shared_ptr<GameInstance> GetGameInstanceFromSender(
 void GameSettingsPage::OnOverlayAPIChanged(
   const IInspectable& sender,
   const SelectionChangedEventArgs&) noexcept {
-  const auto instance = GetGameInstanceFromSender(sender);
+  const auto instance = GetGameInstanceFromSender(mKneeboard.get(), sender);
 
   if (!instance) {
     return;
@@ -191,13 +196,13 @@ void GameSettingsPage::OnOverlayAPIChanged(
   }
 
   instance->mOverlayAPI = newAPI;
-  gKneeboard->SaveSettings();
+  mKneeboard->SaveSettings();
 }
 
 winrt::fire_and_forget GameSettingsPage::RemoveGame(
   const IInspectable& sender,
   const RoutedEventArgs&) noexcept {
-  auto instance = GetGameInstanceFromSender(sender);
+  auto instance = GetGameInstanceFromSender(mKneeboard.get(), sender);
   if (!instance) {
     co_return;
   }
@@ -219,7 +224,7 @@ winrt::fire_and_forget GameSettingsPage::RemoveGame(
     co_return;
   }
 
-  auto gamesList = gKneeboard->GetGamesList();
+  auto gamesList = mKneeboard->GetGamesList();
   auto instances = gamesList->GetGameInstances();
   instances.erase(std::ranges::find(instances, instance));
   gamesList->SetGameInstances(instances);
@@ -230,7 +235,7 @@ winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
   const IInspectable& sender,
   const RoutedEventArgs&) noexcept {
   auto instance = std::dynamic_pointer_cast<DCSWorldInstance>(
-    GetGameInstanceFromSender(sender));
+    GetGameInstanceFromSender(mKneeboard.get(), sender));
   if (!instance) {
     co_return;
   }
@@ -245,7 +250,7 @@ winrt::fire_and_forget GameSettingsPage::ChangeDCSSavedGamesPath(
   instance->mSavedGamesPath = *path;
   CheckDCSHooks(this->XamlRoot(), instance->mSavedGamesPath);
 
-  gKneeboard->SaveSettings();
+  mKneeboard->SaveSettings();
   UpdateGames();
 }
 
@@ -260,7 +265,7 @@ winrt::fire_and_forget GameSettingsPage::AddPath(
 
   std::filesystem::path path = std::filesystem::canonical(rawPath);
 
-  auto gamesList = gKneeboard->GetGamesList();
+  auto gamesList = mKneeboard->GetGamesList();
   for (auto game: gamesList->GetGames()) {
     if (!game->MatchesPath(path)) {
       continue;

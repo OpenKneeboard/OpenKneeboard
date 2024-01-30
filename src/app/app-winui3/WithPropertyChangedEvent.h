@@ -25,8 +25,11 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/KneeboardState.h>
+
 #include <OpenKneeboard/weak_wrap.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Microsoft.UI.Xaml.Data.h>
 
 namespace OpenKneeboard {
@@ -48,7 +51,7 @@ struct WithPropertyChangedEventOnProfileChange
     virtual EventReceiver {
   WithPropertyChangedEventOnProfileChange() {
     mProfileChangedEvent = AddEventListener(
-      gKneeboard->evCurrentProfileChangedEvent,
+      gKneeboard.lock()->evCurrentProfileChangedEvent,
       weak_wrap(static_cast<T*>(this))([](auto self) -> winrt::fire_and_forget {
         co_await static_cast<WithPropertyChangedEventOnProfileChange<T>*>(
           self.get())

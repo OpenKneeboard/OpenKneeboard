@@ -89,7 +89,8 @@ concurrency::task<UpdateResult> CheckForUpdates(
                      std::chrono::system_clock::now().time_since_epoch())
                      .count();
 
-  auto appSettings = gKneeboard->GetAppSettings();
+  auto kneeboard = gKneeboard.lock();
+  auto appSettings = kneeboard->GetAppSettings();
   {
     const auto updateLogVersion = std::format(
       "v{}.{}.{}.{} ('{}')",
@@ -107,7 +108,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
         updateLogVersion.data(),
         static_cast<DWORD>(updateLogVersion.size()));
       appSettings.mLastRunVersion = updateLogVersion;
-      gKneeboard->SetAppSettings(appSettings);
+      kneeboard->SetAppSettings(appSettings);
     }
   }
 
@@ -206,7 +207,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
   scope_guard oncePerDay([&]() {
     settings.mDisabledUntil = now + (60 * 60 * 24);
     appSettings.mAutoUpdate = settings;
-    gKneeboard->SetAppSettings(appSettings);
+    gKneeboard.lock()->SetAppSettings(appSettings);
   });
 
   const auto currentVersionString = ToSemVerString(

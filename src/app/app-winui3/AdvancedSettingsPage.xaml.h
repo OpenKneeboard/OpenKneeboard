@@ -30,6 +30,10 @@
 
 using namespace winrt::Microsoft::UI::Xaml;
 
+namespace OpenKneeboard {
+class KneeboardState;
+};
+
 namespace winrt::OpenKneeboardApp::implementation {
 struct AdvancedSettingsPage
   : AdvancedSettingsPageT<AdvancedSettingsPage>,
@@ -111,6 +115,7 @@ struct AdvancedSettingsPage
 
  private:
   winrt::apartment_context mUIThread {};
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

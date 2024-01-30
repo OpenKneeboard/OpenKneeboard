@@ -23,14 +23,15 @@
 #include "InputSettingsPage.g.cpp"
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabletInputAdapter.h>
 #include <OpenKneeboard/TabletInputDevice.h>
 #include <OpenKneeboard/UserInputDevice.h>
+
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/weak_wrap.h>
-
-#include "Globals.h"
 
 using namespace OpenKneeboard;
 
@@ -38,8 +39,10 @@ namespace winrt::OpenKneeboardApp::implementation {
 
 InputSettingsPage::InputSettingsPage() {
   InitializeComponent();
+  mKneeboard = gKneeboard.lock();
+
   AddEventListener(
-    gKneeboard->evInputDevicesChangedEvent,
+    mKneeboard->evInputDevicesChangedEvent,
     weak_wrap(this)([](auto self) -> winrt::fire_and_forget {
       co_await self->mUIThread;
       self->mPropertyChangedEvent(*self, PropertyChangedEventArgs(L"Devices"));
@@ -67,15 +70,15 @@ fire_and_forget InputSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  gKneeboard->ResetDirectInputSettings();
-  gKneeboard->ResetTabletInputSettings();
+  mKneeboard->ResetDirectInputSettings();
+  mKneeboard->ResetTabletInputSettings();
 
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"Devices"));
 }
 
 IVector<IInspectable> InputSettingsPage::Devices() noexcept {
   auto devices {winrt::single_threaded_vector<IInspectable>()};
-  for (const auto& device: gKneeboard->GetInputDevices()) {
+  for (const auto& device: mKneeboard->GetInputDevices()) {
     OpenKneeboardApp::InputDeviceUIData deviceData {nullptr};
     auto tablet = std::dynamic_pointer_cast<TabletInputDevice>(device);
     if (tablet) {
@@ -98,7 +101,7 @@ void InputSettingsPage::OnOrientationChanged(
   auto combo = sender.as<ComboBox>();
   auto deviceID = to_string(unbox_value<hstring>(combo.Tag()));
 
-  auto devices = gKneeboard->GetInputDevices();
+  auto devices = mKneeboard->GetInputDevices();
   auto it = std::ranges::find_if(
     devices, [&](auto it) { return it->GetID() == deviceID; });
   if (it == devices.end()) {
@@ -112,12 +115,12 @@ void InputSettingsPage::OnOrientationChanged(
 
 uint8_t InputSettingsPage::WintabMode() const {
   return static_cast<uint8_t>(
-    gKneeboard->GetTabletInputAdapter()->GetWintabMode());
+    mKneeboard->GetTabletInputAdapter()->GetWintabMode());
 }
 
 winrt::Windows::Foundation::IAsyncAction InputSettingsPage::WintabMode(
   uint8_t rawMode) const {
-  auto t = gKneeboard->GetTabletInputAdapter();
+  auto t = mKneeboard->GetTabletInputAdapter();
   const auto mode = static_cast<OpenKneeboard::WintabMode>(rawMode);
   if (mode == t->GetWintabMode()) {
     co_return;
@@ -126,11 +129,11 @@ winrt::Windows::Foundation::IAsyncAction InputSettingsPage::WintabMode(
 }
 
 bool InputSettingsPage::IsOpenTabletDriverEnabled() const {
-  return gKneeboard->GetTabletInputAdapter()->IsOTDIPCEnabled();
+  return mKneeboard->GetTabletInputAdapter()->IsOTDIPCEnabled();
 }
 
 void InputSettingsPage::IsOpenTabletDriverEnabled(bool value) {
-  gKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
+  mKneeboard->GetTabletInputAdapter()->SetIsOTDIPCEnabled(value);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

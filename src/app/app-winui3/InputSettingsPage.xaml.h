@@ -24,15 +24,19 @@
 #include "InputSettingsPage.g.h"
 // clang-format on
 
+#include "WithPropertyChangedEvent.h"
+
 #include <OpenKneeboard/Events.h>
 
 #include <string>
 
-#include "WithPropertyChangedEvent.h"
-
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Windows::Foundation::Collections;
+
+namespace OpenKneeboard {
+class KneeboardState;
+}
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct InputSettingsPage
@@ -58,6 +62,7 @@ struct InputSettingsPage
 
  private:
   winrt::apartment_context mUIThread;
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

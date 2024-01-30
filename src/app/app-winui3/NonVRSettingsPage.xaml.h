@@ -25,6 +25,10 @@
 
 #include "WithPropertyChangedEvent.h"
 
+namespace OpenKneeboard {
+class KneeboardState;
+}// namespace OpenKneeboard
+
 using namespace winrt::Microsoft::UI::Xaml;
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -47,6 +51,9 @@ struct NonVRSettingsPage
   void KneeboardHorizontalPlacement(uint8_t value);
   uint8_t KneeboardVerticalPlacement();
   void KneeboardVerticalPlacement(uint8_t value);
+
+ private:
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

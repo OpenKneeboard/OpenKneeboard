@@ -32,10 +32,10 @@ class KneeboardState;
 class TroubleshootingStore;
 
 extern HWND gMainWindow;
-extern std::shared_ptr<KneeboardState> gKneeboard;
+extern std::weak_ptr<KneeboardState> gKneeboard;
 extern std::weak_ptr<DXResources> gDXResources;
 extern winrt::handle gMutex;
-extern std::shared_ptr<TroubleshootingStore> gTroubleshootingStore;
+extern std::weak_ptr<TroubleshootingStore> gTroubleshootingStore;
 extern std::vector<winrt::weak_ref<winrt::OpenKneeboardApp::TabPage>> gTabs;
 extern RenderTargetID gGUIRenderTargetID;
 extern bool gShuttingDown;

@@ -78,9 +78,10 @@ OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
 TabSettingsPage::TabSettingsPage() {
   InitializeComponent();
   mDXR = gDXResources.lock();
+  mKneeboard = gKneeboard.lock();
 
   AddEventListener(
-    gKneeboard->GetTabsList()->evTabsChangedEvent,
+    mKneeboard->GetTabsList()->evTabsChangedEvent,
     weak_wrap(this)([](auto self) {
       if (self->mUIIsChangingTabs) {
         return;
@@ -95,10 +96,10 @@ TabSettingsPage::TabSettingsPage() {
 }
 
 IVector<IInspectable> TabSettingsPage::Tabs() noexcept {
-  const std::shared_lock kbLock(*gKneeboard);
+  const std::shared_lock kbLock(*mKneeboard);
 
   auto tabs = winrt::single_threaded_observable_vector<IInspectable>();
-  for (const auto& tab: gKneeboard->GetTabsList()->GetTabs()) {
+  for (const auto& tab: mKneeboard->GetTabsList()->GetTabs()) {
     tabs.Append(CreateTabUIData(tab));
   }
   tabs.VectorChanged({this, &TabSettingsPage::OnTabsChanged});
@@ -151,17 +152,17 @@ fire_and_forget TabSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  gKneeboard->ResetTabsSettings();
+  mKneeboard->ResetTabsSettings();
 }
 
 fire_and_forget TabSettingsPage::RenameTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
-  const std::shared_lock lock(*gKneeboard);
+  const std::shared_lock lock(*mKneeboard);
 
   const auto tabID = ITab::RuntimeID::FromTemporaryValue(
     unbox_value<uint64_t>(sender.as<Button>().Tag()));
-  auto tabsList = gKneeboard->GetTabsList();
+  auto tabsList = mKneeboard->GetTabsList();
   const auto tabs = tabsList->GetTabs();
   auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
   if (it == tabs.end()) {
@@ -188,11 +189,11 @@ fire_and_forget TabSettingsPage::RenameTab(
 fire_and_forget TabSettingsPage::RemoveTab(
   const IInspectable& sender,
   const RoutedEventArgs&) {
-  const std::shared_lock lock(*gKneeboard);
+  const std::shared_lock lock(*mKneeboard);
 
   const auto tabID = ITab::RuntimeID::FromTemporaryValue(
     unbox_value<uint64_t>(sender.as<Button>().Tag()));
-  auto tabsList = gKneeboard->GetTabsList();
+  auto tabsList = mKneeboard->GetTabsList();
   const auto tabs = tabsList->GetTabs();
   auto it = std::ranges::find(tabs, tabID, &ITab::GetRuntimeID);
   if (it == tabs.end()) {
@@ -252,7 +253,7 @@ void TabSettingsPage::CreateTab(
                     type##Tab, \
                     std::shared_ptr<DXResources>, \
                     KneeboardState*>) { \
-      AddTabs({std::make_shared<type##Tab>(mDXR, gKneeboard.get())}); \
+      AddTabs({std::make_shared<type##Tab>(mDXR, mKneeboard.get())}); \
       return; \
     } else { \
       throw std::logic_error( \
@@ -292,7 +293,7 @@ winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
       = WindowCaptureTab::MatchSpecification::TitleMatchKind::Exact;
   }
 
-  this->AddTabs({WindowCaptureTab::Create(mDXR, gKneeboard.get(), matchSpec)});
+  this->AddTabs({WindowCaptureTab::Create(mDXR, mKneeboard.get(), matchSpec)});
 }
 
 template <class T>
@@ -330,7 +331,7 @@ void TabSettingsPage::CreateFileTab(const std::string& pickerDialogTitle) {
     // TODO (after v1.4): figure out MSVC compile errors if I move
     // `detail::make_shared()` in TabTypes.h out of the `detail`
     // sub-namespace
-    newTabs.push_back(detail::make_shared<T>(mDXR, gKneeboard.get(), path));
+    newTabs.push_back(detail::make_shared<T>(mDXR, mKneeboard.get(), path));
   }
 
   this->AddTabs(newTabs);
@@ -351,11 +352,11 @@ void TabSettingsPage::CreateFolderTab() {
     return;
   }
 
-  this->AddTabs({std::make_shared<FolderTab>(mDXR, gKneeboard.get(), *folder)});
+  this->AddTabs({std::make_shared<FolderTab>(mDXR, mKneeboard.get(), *folder)});
 }
 
 void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
-  const std::shared_lock lock(*gKneeboard);
+  const std::shared_lock lock(*mKneeboard);
 
   mUIIsChangingTabs = true;
   const scope_guard changeComplete {[&]() { mUIIsChangingTabs = false; }};
@@ -365,7 +366,7 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
     initialIndex = 0;
   }
 
-  auto tabsList = gKneeboard->GetTabsList();
+  auto tabsList = mKneeboard->GetTabsList();
 
   auto idx = initialIndex;
   auto allTabs = tabsList->GetTabs();
@@ -386,7 +387,7 @@ void TabSettingsPage::AddTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
 void TabSettingsPage::OnTabsChanged(
   const IInspectable&,
   const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept {
-  const std::shared_lock lock(*gKneeboard);
+  const std::shared_lock lock(*mKneeboard);
   // For add/remove, the kneeboard state is updated first, but for reorder,
   // the ListView is the source of truth.
   //
@@ -394,7 +395,7 @@ void TabSettingsPage::OnTabsChanged(
   auto items = List()
                  .ItemsSource()
                  .as<Windows::Foundation::Collections::IVector<IInspectable>>();
-  auto tabsList = gKneeboard->GetTabsList();
+  auto tabsList = mKneeboard->GetTabsList();
   auto tabs = tabsList->GetTabs();
   if (items.Size() != tabs.size()) {
     // ignore the deletion ...
@@ -455,12 +456,13 @@ uint64_t TabUIData::InstanceID() const {
 }
 
 void TabUIData::InstanceID(uint64_t value) {
-  const std::shared_lock lock(*gKneeboard);
+  auto kneeboard = gKneeboard.lock();
+  const std::shared_lock lock(*kneeboard);
 
   this->RemoveAllEventListeners();
   mTab = {};
 
-  const auto tabs = gKneeboard->GetTabsList()->GetTabs();
+  const auto tabs = kneeboard->GetTabsList()->GetTabs();
   const auto it = std::ranges::find_if(
     tabs, [value](const auto& tab) { return tab->GetRuntimeID() == value; });
   if (it == tabs.end()) {

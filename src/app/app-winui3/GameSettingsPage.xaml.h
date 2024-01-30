@@ -26,16 +26,17 @@
 #include "GameInstanceUIDataTemplateSelector.g.h"
 // clang-format on
 
+#include "WithPropertyChangedEvent.h"
+
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/GameInstance.h>
 
 #include <shims/filesystem>
 
-#include "WithPropertyChangedEvent.h"
-
 namespace OpenKneeboard {
 class ExecutableIconFactory;
-}
+class KneeboardState;
+}// namespace OpenKneeboard
 
 using namespace OpenKneeboard;
 
@@ -79,6 +80,7 @@ struct GameSettingsPage
   fire_and_forget AddPath(const std::filesystem::path&);
 
   std::unique_ptr<OpenKneeboard::ExecutableIconFactory> mIconFactory;
+  std::shared_ptr<KneeboardState> mKneeboard;
 };
 
 struct GameInstanceUIData : GameInstanceUIDataT<GameInstanceUIData> {

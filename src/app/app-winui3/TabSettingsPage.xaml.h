@@ -41,6 +41,7 @@ class ITab;
 class ITabView;
 class DCSRadioLogTab;
 struct DXResources;
+class KneeboardState;
 class WindowCaptureTab;
 enum class TabType;
 }// namespace OpenKneeboard
@@ -85,6 +86,7 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
   bool mUIIsChangingTabs = false;
 
   std::shared_ptr<OpenKneeboard::DXResources> mDXR;
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 
 struct TabUIData : TabUIDataT<TabUIData>,

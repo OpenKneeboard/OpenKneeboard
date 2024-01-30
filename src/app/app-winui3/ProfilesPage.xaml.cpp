@@ -24,13 +24,14 @@
 #include "ProfilesPage.g.cpp"
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ProfileSettings.h>
+
 #include <OpenKneeboard/utf8.h>
 
 #include <algorithm>
-
-#include "Globals.h"
 
 using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
@@ -48,10 +49,11 @@ static OpenKneeboardApp::ProfileUIData CreateProfileUIData(
 
 ProfilesPage::ProfilesPage() {
   InitializeComponent();
+  mKneeboard = gKneeboard.lock();
   this->UpdateList();
 
-  AddEventListener(gKneeboard->evProfileSettingsChangedEvent, [this]() {
-    const auto settings = gKneeboard->GetProfileSettings();
+  AddEventListener(mKneeboard->evProfileSettingsChangedEvent, [this]() {
+    const auto settings = mKneeboard->GetProfileSettings();
     const auto sorted = settings.GetSortedProfiles();
     // Using int32_t and it's what SelectedIndex() requires
     const auto size = std::min(
@@ -72,7 +74,7 @@ void ProfilesPage::final_release(std::unique_ptr<ProfilesPage> page) {
 }
 
 void ProfilesPage::UpdateList() {
-  const auto profileSettings = gKneeboard->GetProfileSettings();
+  const auto profileSettings = mKneeboard->GetProfileSettings();
   const auto profiles = profileSettings.GetSortedProfiles();
 
   mUIProfiles.Clear();
@@ -99,19 +101,19 @@ void ProfilesPage::OnList_SelectionChanged(
   }
   const auto selectedID {to_string(it.Current().as<ProfileUIData>()->ID())};
 
-  auto profileSettings = gKneeboard->GetProfileSettings();
+  auto profileSettings = mKneeboard->GetProfileSettings();
   if (profileSettings.mActiveProfile == selectedID) {
     return;
   }
   profileSettings.mActiveProfile = selectedID;
-  gKneeboard->SetProfileSettings(profileSettings);
+  mKneeboard->SetProfileSettings(profileSettings);
 }
 
 fire_and_forget ProfilesPage::RemoveProfile(
   const IInspectable& sender,
   const RoutedEventArgs&) {
   const auto id {to_string(unbox_value<hstring>(sender.as<Button>().Tag()))};
-  auto profileSettings = gKneeboard->GetProfileSettings();
+  auto profileSettings = mKneeboard->GetProfileSettings();
   const auto profile = profileSettings.mProfiles.at(id);
   const auto sorted = profileSettings.GetSortedProfiles();
   const auto index = std::ranges::find(sorted, profile) - sorted.begin();
@@ -140,7 +142,7 @@ fire_and_forget ProfilesPage::RemoveProfile(
     profileSettings.mActiveProfile = "default";
   }
   profileSettings.mProfiles.erase(id);
-  gKneeboard->SetProfileSettings(profileSettings);
+  mKneeboard->SetProfileSettings(profileSettings);
   mUIProfiles.RemoveAt(static_cast<uint32_t>(index));
   List().SelectedIndex(0);
 }
@@ -175,7 +177,7 @@ fire_and_forget ProfilesPage::CreateProfile(
     co_return;
   }
 
-  auto profileSettings = gKneeboard->GetProfileSettings();
+  auto profileSettings = mKneeboard->GetProfileSettings();
   const auto name = to_string(textBox.Text());
   const ProfileSettings::Profile profile {
     .mID = profileSettings.MakeID(name),
@@ -184,7 +186,7 @@ fire_and_forget ProfilesPage::CreateProfile(
 
   profileSettings.mActiveProfile = profile.mID;
   profileSettings.mProfiles[profile.mID] = profile;
-  gKneeboard->SetProfileSettings(profileSettings);
+  mKneeboard->SetProfileSettings(profileSettings);
 
   const auto sorted = profileSettings.GetSortedProfiles();
   for (int32_t i = 0; i < sorted.size(); ++i) {

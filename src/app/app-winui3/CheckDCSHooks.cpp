@@ -198,7 +198,8 @@ winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
   winrt::apartment_context uiThread;
 
   std::set<std::filesystem::path> dcsSavedGamesPaths;
-  for (const auto& game: gKneeboard->GetGamesList()->GetGameInstances()) {
+  auto kneeboard = gKneeboard.lock();
+  for (const auto& game: kneeboard->GetGamesList()->GetGameInstances()) {
     auto dcs = std::dynamic_pointer_cast<DCSWorldInstance>(game);
     if (!dcs) {
       continue;
@@ -212,7 +213,7 @@ winrt::Windows::Foundation::IAsyncAction CheckAllDCSHooks(
         continue;
       }
       path = *chosenPath;
-      gKneeboard->SaveSettings();
+      kneeboard->SaveSettings();
     }
 
     if (!dcsSavedGamesPaths.contains(path)) {

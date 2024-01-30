@@ -434,7 +434,11 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
 
   winrt::init_apartment(winrt::apartment_type::single_threaded);
 
-  gTroubleshootingStore = TroubleshootingStore::Get();
+  // Strong
+  auto troubleshootingStore = TroubleshootingStore::Get();
+  // Weak
+  gTroubleshootingStore = troubleshootingStore;
+
   LogSystemInformation();
   LogInstallationInformation();
 
@@ -447,8 +451,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
-
-  gTroubleshootingStore = {};
 
   return 0;
 }

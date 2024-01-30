@@ -24,16 +24,19 @@
 #include "InputBindingsControl.g.cpp"
 // clang-format on
 
+#include "Globals.h"
+
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/UserInputButtonBinding.h>
 #include <OpenKneeboard/UserInputButtonEvent.h>
 #include <OpenKneeboard/UserInputDevice.h>
+
 #include <OpenKneeboard/scope_guard.h>
 #include <OpenKneeboard/utf8.h>
-#include <microsoft.ui.xaml.window.h>
-#include <shobjidl.h>
 
-#include "Globals.h"
+#include <microsoft.ui.xaml.window.h>
+
+#include <shobjidl.h>
 
 namespace winrt::OpenKneeboardApp::implementation {
 InputBindingsControl::InputBindingsControl() noexcept {
@@ -58,7 +61,7 @@ void InputBindingsControl::PopulateUI() {
   AppendUIRow(UserAction::INCREASE_BRIGHTNESS, _(L"Increase brightness"));
   AppendUIRow(UserAction::DECREASE_BRIGHTNESS, _(L"Decrease brightness"));
 
-  if (gKneeboard->GetAppSettings().mBookmarks.mEnabled) {
+  if (gKneeboard.lock()->GetAppSettings().mBookmarks.mEnabled) {
     AppendUIRow(UserAction::PREVIOUS_BOOKMARK, _(L"Previous bookmark"));
     AppendUIRow(UserAction::NEXT_BOOKMARK, _(L"Next bookmark"));
     AppendUIRow(UserAction::TOGGLE_BOOKMARK, _(L"Add/remove bookmark"));
@@ -121,7 +124,7 @@ void InputBindingsControl::DeviceID(const hstring& value) {
   auto id = to_string(value);
 
   mDevice.reset();
-  for (const auto& device: gKneeboard->GetInputDevices()) {
+  for (const auto& device: gKneeboard.lock()->GetInputDevices()) {
     if (device->GetID() == id) {
       mDevice = device;
       this->UpdateUI();

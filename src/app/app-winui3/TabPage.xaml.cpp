@@ -63,6 +63,7 @@ namespace winrt::OpenKneeboardApp::implementation {
 TabPage::TabPage() {
   InitializeComponent();
   mDXR = gDXResources.lock();
+  mKneeboard = gKneeboard.lock();
 
   auto brush
     = Background().as<::winrt::Microsoft::UI::Xaml::Media::SolidColorBrush>();
@@ -88,7 +89,7 @@ TabPage::TabPage() {
 
   this->InitializePointerSource();
   AddEventListener(
-    gKneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
+    mKneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
       TraceLoggingWrite(
         gTraceProvider,
         "TabPageTickHandler",
@@ -179,7 +180,7 @@ void TabPage::InitializePointerSource() {
 void TabPage::OnNavigatedTo(const NavigationEventArgs& args) noexcept {
   const auto id = ITab::RuntimeID::FromTemporaryValue(
     winrt::unbox_value<uint64_t>(args.Parameter()));
-  mKneeboardView = gKneeboard->GetActiveViewForGlobalInput();
+  mKneeboardView = mKneeboard->GetActiveViewForGlobalInput();
   AddEventListener(mKneeboardView->evCursorEvent, [this](const auto& ev) {
     if (ev.mSource == CursorSource::WINDOW_POINTER) {
       mDrawCursor = false;
@@ -376,7 +377,7 @@ void TabPage::SetTab(const std::shared_ptr<ITabView>& state) {
 winrt::fire_and_forget TabPage::UpdateToolbar() {
   co_await mUIThread;
   auto actions
-    = InAppActions::Create(gKneeboard.get(), mKneeboardView, mTabView);
+    = InAppActions::Create(mKneeboard.get(), mKneeboardView, mTabView);
   {
     std::vector keepAlive = actions.mPrimary;
     keepAlive.reserve(keepAlive.size() + actions.mSecondary.size());

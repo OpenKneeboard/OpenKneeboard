@@ -27,6 +27,10 @@
 
 #include <OpenKneeboard/Events.h>
 
+namespace OpenKneeboard {
+class KneeboardState;
+}
+
 using namespace winrt::Microsoft::UI::Xaml;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 
@@ -48,7 +52,9 @@ struct ProfilesPage : ProfilesPageT<ProfilesPage>,
 
  private:
   void UpdateList();
-  Windows::Foundation::Collections::IObservableVector<IInspectable> mUIProfiles {single_threaded_observable_vector<IInspectable>()};
+  Windows::Foundation::Collections::IObservableVector<IInspectable>
+    mUIProfiles {single_threaded_observable_vector<IInspectable>()};
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 
 struct ProfileUIData : ProfileUIDataT<ProfileUIData> {

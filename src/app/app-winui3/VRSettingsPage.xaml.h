@@ -23,11 +23,15 @@
 #include "VRSettingsPage.g.h"
 // clang-format on
 
-#include <OpenKneeboard/Events.h>
-
 #include "WithPropertyChangedEvent.h"
 
+#include <OpenKneeboard/Events.h>
+
 using namespace winrt::Microsoft::UI::Xaml;
+
+namespace OpenKneeboard {
+class KneeboardState;
+}
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct VRSettingsPage
@@ -76,6 +80,9 @@ struct VRSettingsPage
   void NormalOpacity(uint8_t);
   uint8_t GazeOpacity();
   void GazeOpacity(uint8_t);
+
+ private:
+  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

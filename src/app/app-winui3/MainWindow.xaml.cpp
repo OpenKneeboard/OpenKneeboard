@@ -111,22 +111,23 @@ MainWindow::MainWindow() {
   SendMessage(
     mHwnd, WM_SETICON, ICON_SMALL, reinterpret_cast<LPARAM>(smallIcon));
 
-  gKneeboard = KneeboardState::Create(mHwnd, mDXR);
+  mKneeboard = KneeboardState::Create(mHwnd, mDXR);
+  gKneeboard = mKneeboard;
 
   OnTabsChanged();
   OnViewOrderChanged();
 
   AddEventListener(
-    gKneeboard->evViewOrderChangedEvent,
+    mKneeboard->evViewOrderChangedEvent,
     std::bind_front(&MainWindow::OnViewOrderChanged, this));
 
   AddEventListener(
-    gKneeboard->GetTabsList()->evTabsChangedEvent,
+    mKneeboard->GetTabsList()->evTabsChangedEvent,
     std::bind_front(&MainWindow::OnTabsChanged, this));
 
   RootGrid().Loaded([this](const auto&, const auto&) { this->OnLoaded(); });
 
-  auto settings = gKneeboard->GetAppSettings();
+  auto settings = mKneeboard->GetAppSettings();
   if (settings.mWindowRect) {
     auto rect = *settings.mWindowRect;
     if (
@@ -177,13 +178,13 @@ MainWindow::MainWindow() {
   mProfileSwitcher = this->ProfileSwitcher();
   this->UpdateProfileSwitcherVisibility();
   AddEventListener(
-    gKneeboard->evProfileSettingsChangedEvent,
+    mKneeboard->evProfileSettingsChangedEvent,
     std::bind_front(&MainWindow::UpdateProfileSwitcherVisibility, this));
   AddEventListener(
-    gKneeboard->evSettingsChangedEvent,
+    mKneeboard->evSettingsChangedEvent,
     std::bind_front(&MainWindow::OnTabsChanged, this));
   AddEventListener(
-    gKneeboard->evCurrentProfileChangedEvent,
+    mKneeboard->evCurrentProfileChangedEvent,
     [this]() -> winrt::fire_and_forget {
       co_await mUIThread;
       auto backStack = Frame().BackStack();
@@ -277,26 +278,26 @@ void MainWindow::FrameTick() {
   TraceLoggingWriteStart(activity, "FrameTick");
   this->CheckForElevatedConsumer();
   {
-    std::shared_lock kbLock(*gKneeboard);
+    std::shared_lock kbLock(*mKneeboard);
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPrepareEvent.emit()");
-    gKneeboard->evFrameTimerPrepareEvent.Emit();
+    mKneeboard->evFrameTimerPrepareEvent.Emit();
   }
   TraceLoggingWriteTagged(activity, "Prepared to render");
-  if (!gKneeboard->IsRepaintNeeded()) {
+  if (!mKneeboard->IsRepaintNeeded()) {
     TraceLoggingWriteStop(
       activity, "FrameTick", TraceLoggingValue("No repaint needed", "Result"));
     return;
   }
 
-  std::shared_lock kbLock(*gKneeboard);
+  std::shared_lock kbLock(*mKneeboard);
   TraceLoggingWriteTagged(activity, "Kneeboard relocked");
   const std::unique_lock dxLock(*mDXR);
   TraceLoggingWriteTagged(activity, "DX locked");
   {
     OPENKNEEBOARD_TraceLoggingScope("evFrameTimerEvent.emit()");
-    gKneeboard->evFrameTimerEvent.Emit();
+    mKneeboard->evFrameTimerEvent.Emit();
   }
-  gKneeboard->Repainted();
+  mKneeboard->Repainted();
   TraceLoggingWriteStop(
     activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
 }
@@ -318,8 +319,8 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
   if (updateResult == UpdateResult::InstallingUpdate) {
     co_return;
   }
-  if (gKneeboard) {
-    gKneeboard->GetGamesList()->StartInjector();
+  if (mKneeboard) {
+    mKneeboard->GetGamesList()->StartInjector();
   }
   co_await mUIThread;
   co_await ShowSelfElevationWarning();
@@ -462,7 +463,7 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
     AppTitle().Text(title);
   });
 
-  const auto settings = gKneeboard->GetProfileSettings();
+  const auto settings = mKneeboard->GetProfileSettings();
   if (!settings.mEnabled) {
     Navigation().PaneCustomContent({nullptr});
     co_return;
@@ -480,14 +481,15 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
 
     auto weakItem = make_weak(item);
     item.Click([profile, weakItem](const auto&, const auto&) {
-      auto settings = gKneeboard->GetProfileSettings();
+      auto kneeboard = gKneeboard.lock();
+      auto settings = kneeboard->GetProfileSettings();
       if (settings.mActiveProfile == profile.mID) {
         weakItem.get().IsChecked(true);
         return;
       }
 
       settings.mActiveProfile = profile.mID;
-      gKneeboard->SetProfileSettings(settings);
+      kneeboard->SetProfileSettings(settings);
     });
 
     if (profile.mID == settings.mActiveProfile) {
@@ -517,7 +519,7 @@ winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
   for (const auto& event: mKneeboardViewEvents) {
     this->RemoveEventListener(event);
   }
-  mKneeboardView = gKneeboard->GetActiveViewForGlobalInput();
+  mKneeboardView = mKneeboard->GetActiveViewForGlobalInput();
 
   mKneeboardViewEvents = {
     AddEventListener(
@@ -575,9 +577,9 @@ void MainWindow::SaveWindowPosition() {
     return;
   }
 
-  auto settings = gKneeboard->GetAppSettings();
+  auto settings = mKneeboard->GetAppSettings();
   settings.mWindowRect = windowRect;
-  gKneeboard->SetAppSettings(settings);
+  mKneeboard->SetAppSettings(settings);
 }
 
 winrt::fire_and_forget MainWindow::CleanupAndClose() {
@@ -604,8 +606,8 @@ winrt::fire_and_forget MainWindow::CleanupAndClose() {
   co_await mUIThread;
 
   mKneeboardView = {};
-  co_await gKneeboard->ReleaseExclusiveResources();
-  gKneeboard = {};
+  co_await mKneeboard->ReleaseExclusiveResources();
+  mKneeboard = {};
 
   co_await mUIThread;
 
@@ -686,18 +688,18 @@ winrt::fire_and_forget MainWindow::OnTabsChanged() {
 winrt::Windows::Foundation::Collections::IVector<
   winrt::Windows::Foundation::IInspectable>
 MainWindow::NavigationItems() noexcept {
-  const std::shared_lock lock(*gKneeboard);
+  const std::shared_lock lock(*mKneeboard);
   auto navItems = winrt::single_threaded_vector<IInspectable>();
   navItems.Clear();
 
   decltype(mKneeboardView->GetBookmarks()) bookmarks;
-  if (mKneeboardView && gKneeboard->GetAppSettings().mBookmarks.mEnabled) {
+  if (mKneeboardView && mKneeboard->GetAppSettings().mBookmarks.mEnabled) {
     bookmarks = mKneeboardView->GetBookmarks();
   }
   auto bookmark = bookmarks.begin();
   size_t bookmarkCount = 0;
 
-  for (auto tab: gKneeboard->GetTabsList()->GetTabs()) {
+  for (auto tab: mKneeboard->GetTabsList()->GetTabs()) {
     muxc::NavigationViewItem item;
     item.Content(box_value(to_hstring(tab->GetTitle())));
     item.Tag(NavigationTag {tab->GetRuntimeID()}.box());
