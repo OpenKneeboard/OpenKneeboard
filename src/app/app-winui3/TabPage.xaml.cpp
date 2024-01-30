@@ -143,6 +143,8 @@ winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
     CommandBar().PrimaryCommands().Clear();
     CommandBar().SecondaryCommands().Clear();
   }
+
+  mDXR = {};
 }
 
 void TabPage::InitializePointerSource() {

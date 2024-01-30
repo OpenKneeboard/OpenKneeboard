@@ -448,5 +448,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
 
+  gTroubleshootingStore = {};
+
   return 0;
 }

@@ -609,6 +609,8 @@ winrt::fire_and_forget MainWindow::CleanupAndClose() {
 
   co_await mUIThread;
 
+  mDXR = {};
+
   dprint("Closing Main Window");
   this->Close();
 }
