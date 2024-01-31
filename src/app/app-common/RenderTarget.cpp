@@ -59,16 +59,18 @@ RenderTargetID RenderTarget::GetID() const {
   return mID;
 }
 
-RenderTarget::D2D RenderTarget::d2d() {
-  return {this->shared_from_this()};
+RenderTarget::D2D RenderTarget::d2d(const std::source_location& loc) {
+  return {this->shared_from_this(), loc};
 }
 
 RenderTarget::D3D RenderTarget::d3d() {
   return {this->shared_from_this()};
 }
 
-RenderTarget::D2D::D2D(const std::shared_ptr<RenderTarget>& parent)
-  : mParent(parent) {
+RenderTarget::D2D::D2D(
+  const std::shared_ptr<RenderTarget>& parent,
+  const std::source_location& loc)
+  : mParent(parent), mSourceLocation(loc) {
   if (!parent) {
     OPENKNEEBOARD_BREAK;
     return;
@@ -91,7 +93,7 @@ void RenderTarget::D2D::Acquire() {
   mode = Mode::D2D;
 
   (*this)->SetTarget(mUnsafeParent->mD2DBitmap.get());
-  mUnsafeParent->mDXR->PushD2DDraw();
+  mUnsafeParent->mDXR->PushD2DDraw(mSourceLocation);
   (*this)->SetTransform(D2D1::Matrix3x2F::Identity());
 }
 

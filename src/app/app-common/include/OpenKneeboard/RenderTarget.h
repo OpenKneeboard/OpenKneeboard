@@ -61,7 +61,7 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
   friend class D2D;
   friend class D3D;
 
-  D2D d2d();
+  D2D d2d(const std::source_location& loc = std::source_location::current());
   D3D d3d();
 
  private:
@@ -91,7 +91,7 @@ class RenderTarget::D2D final {
   D2D& operator=(const D2D&) = delete;
   D2D& operator=(D2D&&) = delete;
 
-  D2D(const std::shared_ptr<RenderTarget>&);
+  D2D(const std::shared_ptr<RenderTarget>&, const std::source_location&);
   ~D2D();
 
   ID2D1DeviceContext* operator->() const;
@@ -102,6 +102,7 @@ class RenderTarget::D2D final {
 
  private:
   std::shared_ptr<RenderTarget> mParent;
+  std::source_location mSourceLocation;
   RenderTarget* mUnsafeParent {nullptr};
   bool mReleased {false};
   bool mHDR {false};
