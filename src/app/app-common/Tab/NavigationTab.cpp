@@ -232,6 +232,8 @@ void NavigationTab::RenderPage(
   }
 
   ctx->SetTransform(D2D1::Matrix3x2F::Identity());
+  ctx.Release();
+
   mPreviewLayer.Render(
     {
       origin.x,
@@ -242,6 +244,8 @@ void NavigationTab::RenderPage(
     pageID.GetTemporaryValue(),
     rt,
     std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));
+
+  ctx.Reacquire();
 
   ctx->SetTransform(pageTransform);
 
