@@ -96,7 +96,6 @@ class NavigationTab final : public TabBase,
   struct {
     float mBleed;
     float mStroke;
-    float mHeight;
     std::vector<D2D1_RECT_F> mRects;
   } mPreviewMetrics;
 

@@ -209,7 +209,6 @@ void NavigationTab::RenderPage(
   const auto scale
     = (canvasRect.bottom - canvasRect.top) / mPreferredSize.mHeight;
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx->FillRectangle(canvasRect, mBackgroundBrush.get());
 
   const D2D1_POINT_2F origin {canvasRect.left, canvasRect.top};
@@ -231,23 +230,17 @@ void NavigationTab::RenderPage(
     }
   }
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Identity());
   ctx.Release();
 
   mPreviewLayer.Render(
-    {
-      origin.x,
-      origin.y,
-      origin.x + (scale * mPreferredSize.mWidth),
-      origin.y + (scale * mPreferredSize.mHeight),
-    },
+    canvasRect,
     pageID.GetTemporaryValue(),
     rt,
     std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));
 
   ctx.Reacquire();
 
-  ctx->SetTransform(pageTransform);
+  ctx->SetTransform(D2D1::Matrix3x2F::Translation(origin.x, origin.y));
 
   std::vector<float> columnPreviewRightEdge(mRenderColumns);
   for (auto i = 0; i < buttons.size(); ++i) {
@@ -266,10 +259,13 @@ void NavigationTab::RenderPage(
     }
   }
 
+  ctx->SetTransform(pageTransform);
+
   for (const auto& button: buttons) {
     auto rect = button.mRect;
-    rect.left = columnPreviewRightEdge.at(button.mRenderColumn)
-      + mPreviewMetrics.mBleed;
+    rect.left = (columnPreviewRightEdge.at(button.mRenderColumn)
+                 + mPreviewMetrics.mBleed)
+      / scale;
     ctx->DrawTextW(
       button.mName.data(),
       static_cast<UINT32>(button.mName.size()),
@@ -306,6 +302,8 @@ void NavigationTab::RenderPreviewLayer(
   auto& m = mPreviewMetrics;
   m = {};
 
+  const auto navigationTabScale = size.height / mPreferredSize.Height<float>();
+
   const auto& buttons = mButtonTrackers.at(pageID)->GetButtons();
   m.mRects.clear();
   m.mRects.resize(buttons.size());
@@ -313,24 +311,26 @@ void NavigationTab::RenderPreviewLayer(
   const auto& first = buttons.front();
 
   // just a little less than the padding
-  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.1f;
+  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.1f
+    * navigationTabScale;
   // arbitrary LGTM value
   m.mStroke = m.mBleed * 0.3f;
-  m.mHeight = (first.mRect.bottom - first.mRect.top) + (m.mBleed * 2);
+  const auto height
+    = (navigationTabScale * (first.mRect.bottom - first.mRect.top))
+    + (m.mBleed * 2);
 
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
 
+    auto& rect = m.mRects.at(i);
+    rect.top = (button.mRect.top * navigationTabScale) - m.mBleed;
+    rect.bottom = (button.mRect.bottom * navigationTabScale) + m.mBleed;
+    rect.left = (button.mRect.left * navigationTabScale) + m.mBleed;
+
     const auto nativeSize
       = mRootTab->GetPreferredSize(button.mPageID).mPixelSize;
-    const auto scale = m.mHeight / nativeSize.mHeight;
-    const auto width = nativeSize.mWidth * scale;
-
-    auto& rect = m.mRects.at(i);
-    rect.left = button.mRect.left + m.mBleed;
-    rect.top = button.mRect.top - m.mBleed;
-    rect.right = rect.left + width;
-    rect.bottom = button.mRect.bottom + m.mBleed;
+    const auto contentScale = (rect.bottom - rect.top) / nativeSize.mHeight;
+    rect.right = rect.left + (nativeSize.mWidth * contentScale);
 
     mRootTab->RenderPage(rt, button.mPageID, rect);
   }
