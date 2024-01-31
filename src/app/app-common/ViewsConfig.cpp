@@ -110,9 +110,6 @@ std::optional<SHM::NonVRLayerConfig> ViewNonVRConfig::Resolve(
   return mConstraints;
 }
 
-ViewsConfig::ViewsConfig() {
-}
-
 static void MaybeSet(nlohmann::json& j, std::string_view key, auto value) {
   if (value != decltype(value) {}) {
     j[key] = value;

@@ -34,6 +34,7 @@ namespace OpenKneeboard {
 struct ViewConfig;
 struct PreferredSize;
 
+/// Configuration of a VR view that is not a mirror of another.
 struct IndependentViewVRConfig {
   VRPose mPose;
   Geometry2D::Size<float> mMaximumPhysicalSize;
@@ -47,6 +48,12 @@ struct IndependentViewVRConfig {
     = default;
 };
 
+/** VR configuration of a view.
+ *
+ * This might be an 'independent' view, in which case it has its'
+ * own `IndependentViewVRConfig`, or a mirror of another, in which
+ * case it just stores the GUID of the view it's mirroring.
+ */
 struct ViewVRConfig {
   enum class Type {
     Empty,
@@ -107,6 +114,7 @@ struct ViewVRConfig {
   std::variant<IndependentViewVRConfig, winrt::guid> mData;
 };
 
+/// Non-VR configuration of a view
 struct ViewNonVRConfig {
   bool mEnabled {false};
   NonVRConstrainedPosition mConstraints;
@@ -129,9 +137,6 @@ struct ViewConfig {
 };
 
 struct ViewsConfig {
-  ViewsConfig();
-  explicit ViewsConfig(const nlohmann::json&);
-
   std::vector<ViewConfig> mViews;
 
   constexpr bool operator==(const ViewsConfig&) const noexcept = default;

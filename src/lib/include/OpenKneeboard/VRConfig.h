@@ -32,8 +32,12 @@
 
 namespace OpenKneeboard {
 
+/** Position and orientation.
+ *
+ * This is what's stored in the config file, so intended to be
+ * semi-human-editable: distances in meters, rotations in radians.
+ */
 struct VRPose {
-  // Distances in meters, rotations in radians
   float mX = 0.15f, mEyeY = -0.7f, mZ = -0.4f;
   float mRX = -2 * std::numbers::pi_v<float> / 5,
         mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
@@ -41,6 +45,8 @@ struct VRPose {
   constexpr auto operator<=>(const VRPose&) const noexcept = default;
 };
 
+/** If gaze zoom is enabled, how close you need to be looking for zoom to
+ * activate */
 struct GazeTargetScale {
   float mVertical {1.0f};
   float mHorizontal {1.0f};
@@ -53,6 +59,14 @@ struct VROpacityConfig {
   constexpr auto operator<=>(const VROpacityConfig&) const noexcept = default;
 };
 
+/** VR settings that apply to every view/layer.
+ *
+ * Per-view settings are in `ViewVRConfig`
+ *
+ * This ends up in the SHM; it is extended by `VRConfig` for
+ * values that are stored in the config file but need further processing before
+ * being put in SHM.
+ */
 struct VRRenderConfig {
   struct Quirks final {
     bool mOculusSDK_DiscardDepthInformation {true};
@@ -72,11 +86,12 @@ struct VRRenderConfig {
 };
 static_assert(std::is_standard_layout_v<VRRenderConfig>);
 
+/// VR settings, including ones that are not directly sent in SHM
 struct VRConfig : public VRRenderConfig {
   bool mEnableSteamVR = true;
 
+  // replaced with 'ViewConfig' and `IndependentViewVRConfig` in v1.7
   struct Deprecated {
-    // replaced with 'ViewConfig' in v1.7
     VRPose mPrimaryLayer {};
     float mMaxWidth = 0.15f;
     float mMaxHeight = 0.25f;
