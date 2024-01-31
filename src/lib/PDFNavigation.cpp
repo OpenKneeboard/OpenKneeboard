@@ -66,13 +66,29 @@ PDF::~PDF() = default;
 static void ExtractBookmarks(
   std::vector<QPDFOutlineObjectHelper>& outlines,
   const PageIndexMap& pageIndices,
-  std::back_insert_iterator<std::vector<Bookmark>> inserter) {
+  std::back_insert_iterator<std::vector<Bookmark>> inserter) noexcept {
   // Useful references:
   // - i7j-rups
   // -
   // https://www.adobe.com/content/dam/acom/en/devnet/pdf/pdfs/PDF32000_2008.pdf
   for (auto& outline: outlines) {
     auto page = outline.getDestPage();
+    if (page.isNull()) {
+      auto dest = outline.getDest();
+      // PDF 32000-1:2008
+      // 12.3.2.2 Explicit destinations
+      if (!dest.isDictionary()) {
+        continue;
+      }
+      if (!dest.hasKey("/D")) {
+        continue;
+      }
+      dest = dest.getKey("/D");
+      if (!(dest.isArray() && dest.getArrayNItems())) {
+        continue;
+      }
+      page = dest.getArrayItem(0);
+    }
     auto key = page.getObjGen();
     if (!pageIndices.contains(key)) {
       continue;
@@ -89,7 +105,7 @@ static void ExtractBookmarks(
 
 static std::vector<Bookmark> ExtractBookmarks(
   QPDFOutlineDocumentHelper& outlineHelper,
-  const PageIndexMap& pageIndices) {
+  const PageIndexMap& pageIndices) noexcept {
   std::vector<Bookmark> bookmarks;
   DebugTimer timer("Bookmarks");
   auto outlines = outlineHelper.getTopLevelOutlines();
