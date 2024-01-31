@@ -20,11 +20,14 @@
 #pragma once
 #include "TabPage.g.h"
 
+#include <OpenKneeboard/CursorEvent.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ThreadGuard.h>
 
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <vector>
 
 #include <d2d1.h>
@@ -86,7 +89,12 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   InputPointerSource mInputPointerSource {nullptr};
   bool mDrawCursor = false;
   void InitializePointerSource();
+
+  std::mutex mCursorEventsMutex;
+  std::queue<CursorEvent> mCursorEvents;
+  bool mHaveCursorEvents {false};
   void QueuePointerPoint(const PointerPoint&);
+  void FlushCursorEvents();
 
   void SetTab(const std::shared_ptr<ITabView>&);
   winrt::fire_and_forget UpdateToolbar();
@@ -130,6 +138,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   std::shared_ptr<RenderTarget> mRenderTarget;
   audited_ptr<OpenKneeboard::DXResources> mDXR;
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+
+  ThreadGuard mThreadGuard;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

@@ -89,6 +89,12 @@ TabPage::TabPage() {
 
   this->InitializePointerSource();
   AddEventListener(
+    mKneeboard->evFrameTimerPrepareEvent, weak_wrap(this)([](auto self) {
+      if (self->mHaveCursorEvents) {
+        self->FlushCursorEvents();
+      }
+    }));
+  AddEventListener(
     mKneeboard->evFrameTimerEvent, weak_wrap(this)([](auto self) {
       TraceLoggingWrite(
         gTraceProvider,
@@ -640,6 +646,16 @@ void TabPage::OnPointerEvent(
   this->QueuePointerPoint(pp);
 }
 
+void TabPage::FlushCursorEvents() {
+  mThreadGuard.CheckThread();
+  std::unique_lock lock(mCursorEventsMutex);
+  while (!mCursorEvents.empty()) {
+    mKneeboardView->PostCursorEvent(mCursorEvents.front());
+    mCursorEvents.pop();
+  }
+  mHaveCursorEvents = false;
+}
+
 void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   if (!mKneeboardView) {
     return;
@@ -679,7 +695,8 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     buttons |= (1 << 1);
   }
 
-  mKneeboardView->PostCursorEvent({
+  std::unique_lock lock(mCursorEventsMutex);
+  mCursorEvents.push(CursorEvent {
     .mSource = CursorSource::WINDOW_POINTER,
     .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE
@@ -689,6 +706,8 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     .mPressure = rightClick ? 0.8f : 0.0f,
     .mButtons = buttons,
   });
+
+  mHaveCursorEvents = true;
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
