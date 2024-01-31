@@ -168,12 +168,17 @@ static void PushGoToActionLink(
   }
 
   auto dest = action.getKey("/D");
-  if (!(dest.isName() || dest.isString())) {
-    return;
-  }
-  dest = outlineHelper.resolveNamedDest(dest);
   if (!dest.isArray()) {
-    return;
+    if (!(dest.isName() || dest.isString())) {
+      return;
+    }
+    dest = outlineHelper.resolveNamedDest(dest);
+    if (dest.isDictionary() && dest.hasKey("/D")) {
+      dest = dest.getKey("/D");
+    }
+    if (!dest.isArray()) {
+      return;
+    }
   }
 
   const auto pageRef = dest.getArrayItem(0).getObjGen();
