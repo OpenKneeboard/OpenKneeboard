@@ -44,7 +44,7 @@ struct DXResources;
  * must be released before passing the RenderTarget* on, or the
  * callee will not be able to use it.
  */
-class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
+class RenderTarget : public std::enable_shared_from_this<RenderTarget> {
  public:
   RenderTarget() = delete;
   ~RenderTarget();
@@ -54,7 +54,7 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
     const winrt::com_ptr<ID3D11Texture2D>& texture);
 
   PixelSize GetDimensions() const;
-  RenderTargetID GetID() const;
+  virtual RenderTargetID GetID() const;
 
   class D2D;
   class D3D;
@@ -64,10 +64,12 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
   D2D d2d(const std::source_location& loc = std::source_location::current());
   D3D d3d();
 
- private:
+ protected:
   RenderTarget(
     const audited_ptr<DXResources>& dxr,
     const winrt::com_ptr<ID3D11Texture2D>& texture);
+
+ private:
   enum class Mode { Unattached, D2D, D3D };
   Mode mMode {Mode::Unattached};
 
@@ -81,6 +83,33 @@ class RenderTarget final : public std::enable_shared_from_this<RenderTarget> {
 
   winrt::com_ptr<ID3D11Texture2D> mD3DTexture;
   winrt::com_ptr<ID3D11RenderTargetView> mD3DRenderTargetView;
+};
+
+/** RenderTarget with multiple identities for cache management purposes.
+ *
+ * For example, the interprocess render uses a single canvas, so a single render
+ * target; however, RTID is used for cache indexing, so every active view should
+ * have a distinct ID.
+ *
+ * This effectively allows multiple RTIDs to share a single set of D3D
+ * resources.
+ */
+class RenderTargetWithMultipleIdentities : public RenderTarget {
+ public:
+  static std::shared_ptr<RenderTargetWithMultipleIdentities> Create(
+    const audited_ptr<DXResources>& dxr,
+    const winrt::com_ptr<ID3D11Texture2D>& texture,
+    size_t identityCount);
+
+  virtual RenderTargetID GetID() const override;
+  void SetActiveIdentity(size_t index);
+
+ protected:
+  using RenderTarget::RenderTarget;
+
+ private:
+  std::vector<RenderTargetID> mIdentities;
+  size_t mCurrentIdentity {0};
 };
 
 class RenderTarget::D2D final {

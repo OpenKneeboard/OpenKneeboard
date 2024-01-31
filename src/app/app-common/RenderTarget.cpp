@@ -67,6 +67,32 @@ RenderTarget::D3D RenderTarget::d3d() {
   return {this->shared_from_this()};
 }
 
+std::shared_ptr<RenderTargetWithMultipleIdentities>
+RenderTargetWithMultipleIdentities::Create(
+  const audited_ptr<DXResources>& dxr,
+  const winrt::com_ptr<ID3D11Texture2D>& texture,
+  size_t identityCount) {
+  if (identityCount < 1) {
+    OPENKNEEBOARD_LOG_AND_FATAL(
+      "Can't create a RenderTarget with no identities");
+  }
+  auto ret = std::shared_ptr<RenderTargetWithMultipleIdentities>(
+    new RenderTargetWithMultipleIdentities(dxr, texture));
+  ret->mIdentities.resize(identityCount);
+  return ret;
+}
+
+RenderTargetID RenderTargetWithMultipleIdentities::GetID() const {
+  return mIdentities.at(mCurrentIdentity);
+}
+
+void RenderTargetWithMultipleIdentities::SetActiveIdentity(size_t index) {
+  if (index >= mIdentities.size()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("identity index out of bounds");
+  }
+  mCurrentIdentity = index;
+}
+
 RenderTarget::D2D::D2D(
   const std::shared_ptr<RenderTarget>& parent,
   const std::source_location& loc)

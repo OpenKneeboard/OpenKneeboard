@@ -105,7 +105,7 @@ class InterprocessRenderer final
     uint8_t textureIndex,
     const PixelSize&);
 
-  std::shared_ptr<RenderTarget> mCanvas;
+  std::shared_ptr<RenderTargetWithMultipleIdentities> mCanvas;
   PixelSize mCanvasSize;
 
   void InitializeCanvas(const PixelSize&);

@@ -178,7 +178,8 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
 
   winrt::com_ptr<ID3D11Texture2D> texture;
   check_hresult(device->CreateTexture2D(&desc, nullptr, texture.put()));
-  mCanvas = RenderTarget::Create(mDXR, texture);
+  mCanvas
+    = RenderTargetWithMultipleIdentities::Create(mDXR, texture, MaxViewCount);
   mCanvasSize = size;
 
   // Let's force a clean start on the clients, including resetting the session
@@ -425,6 +426,8 @@ void InterprocessRenderer::RenderNow() noexcept {
     if (renderInfo.mIsActiveForInput) {
       inputLayerID = renderInfo.mView->GetRuntimeID().GetTemporaryValue();
     }
+
+    mCanvas->SetActiveIdentity(i);
 
     shmLayers.push_back(this->RenderLayer(renderInfo, bounds));
   }

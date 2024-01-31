@@ -369,6 +369,7 @@ void PDFFilePageSource::RenderPageContent(
   RenderTarget* rt,
   PageID id,
   const D2D1_RECT_F& rect) noexcept {
+  OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPageContent()");
   // Keep alive
   auto p = this->p;
   if (!p) {
@@ -527,6 +528,7 @@ void PDFFilePageSource::RenderPage(
   PageID pageID,
   const D2D1_RECT_F& rect) {
   const auto rtid = rt->GetID();
+  OPENKNEEBOARD_TraceLoggingScope("PDFFilePageSource::RenderPage()");
   if (!p->mCache.contains(rtid)) {
     p->mCache[rtid] = std::make_unique<CachedLayer>(p->mDXR);
   }
