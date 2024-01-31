@@ -839,14 +839,14 @@ Snapshot CachedReader::MaybeGetMetadata() {
 
   this->UpdateSession();
 
-  if (!mClientTextures.empty()) {
-    return MaybeGet();
-  }
-
   const auto cacheKey = this->GetRenderCacheKey(mConsumerKind);
 
   if ((!mCache.empty()) && cacheKey == mCacheKey) {
     return mCache.front();
+  }
+
+  if (!mClientTextures.empty()) {
+    return MaybeGet();
   }
 
   std::unique_lock lock(*p);
