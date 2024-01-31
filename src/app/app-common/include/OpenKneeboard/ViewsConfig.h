@@ -42,88 +42,6 @@ struct IndependentViewVRConfig {
     = default;
 };
 
-struct ViewNonVRPosition {
-  ViewNonVRPosition() = default;
-
-  enum class Type {
-    Absolute,
-    Constrained,
-    Empty,
-    HorizontalMirror,
-    VerticalMirror,
-  };
-
-  constexpr void SetAbsolute(const NonVRAbsolutePosition& p) {
-    mType = Type::Absolute;
-    mData = p;
-  }
-
-  constexpr void SetConstrained(const NonVRConstrainedPosition& p) {
-    mType = Type::Constrained;
-    mData = p;
-  }
-
-  constexpr void SetHorizontalMirrorOf(const winrt::guid& other) {
-    mType = Type::HorizontalMirror;
-    mData = other;
-  }
-
-  constexpr void SetVerticalMirrorOf(const winrt::guid& other) {
-    mType = Type::VerticalMirror;
-    mData = other;
-  }
-
-  static constexpr auto Absolute(const NonVRAbsolutePosition& p) {
-    ViewNonVRPosition ret;
-    ret.SetAbsolute(p);
-    return ret;
-  }
-
-  static constexpr auto Constrained(const NonVRConstrainedPosition& p) {
-    ViewNonVRPosition ret;
-    ret.SetConstrained(p);
-    return ret;
-  }
-
-  static constexpr auto HorizontalMirrorOf(const winrt::guid& other) {
-    ViewNonVRPosition ret;
-    ret.SetHorizontalMirrorOf(other);
-    return ret;
-  }
-
-  static constexpr auto VerticalMirrorOf(const winrt::guid& p) {
-    ViewNonVRPosition ret;
-    ret.SetVerticalMirrorOf(p);
-    return ret;
-  }
-
-  constexpr Type GetType() const noexcept {
-    return mType;
-  }
-
-  constexpr auto GetMirrorOfGUID() const noexcept {
-    return std::get<winrt::guid>(mData);
-  }
-
-  constexpr auto GetAbsolutePosition() const noexcept {
-    return std::get<NonVRAbsolutePosition>(mData);
-  }
-
-  constexpr auto GetConstrainedPosition() const noexcept {
-    return std::get<NonVRConstrainedPosition>(mData);
-  }
-
-  constexpr bool operator==(const ViewNonVRPosition&) const noexcept = default;
-
-  std::optional<SHM::NonVRPosition> Resolve(
-    const std::vector<ViewConfig>& others) const;
-
- private:
-  Type mType {Type::Empty};
-  std::variant<winrt::guid, NonVRAbsolutePosition, NonVRConstrainedPosition>
-    mData;
-};
-
 struct ViewVRConfig {
   enum class Type {
     Empty,
@@ -185,8 +103,14 @@ struct ViewVRConfig {
 };
 
 struct ViewNonVRConfig {
-  ViewNonVRPosition mPosition;
+  bool mEnabled {false};
+  NonVRConstrainedPosition mConstraints;
+
   constexpr bool operator==(const ViewNonVRConfig&) const noexcept = default;
+
+  std::optional<SHM::NonVRLayerConfig> Resolve(
+    const PreferredSize& contentSize,
+    const std::vector<ViewConfig>& others) const;
 };
 
 struct ViewConfig {

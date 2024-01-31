@@ -94,16 +94,13 @@ std::optional<SHM::VRLayerConfig> ViewVRConfig::Resolve(
   return ret;
 }
 
-std::optional<SHM::NonVRPosition> ViewNonVRPosition::Resolve(
-  const std::vector<ViewConfig>& others) const {
-  if (mType == Type::Empty) {
+std::optional<SHM::NonVRLayerConfig> ViewNonVRConfig::Resolve(
+  [[maybe_unused]] const PreferredSize& contentSize,
+  [[maybe_unused]] const std::vector<ViewConfig>& others) const {
+  if (!mEnabled) {
     return {};
   }
-  if (mType == Type::Constrained) {
-    return this->GetConstrainedPosition();
-  }
-  // TODO: implement other types
-  return {};
+  return mConstraints;
 }
 
 ViewsConfig::ViewsConfig() {
@@ -116,11 +113,14 @@ static void MaybeSet(nlohmann::json& j, std::string_view key, auto value) {
 };
 
 template <class T>
-static T MaybeGet(const nlohmann::json& j, std::string_view key) {
+static T MaybeGet(
+  const nlohmann::json& j,
+  std::string_view key,
+  const T& defaultValue = {}) {
   if (j.contains(key)) {
     return j.at(key);
   }
-  return {};
+  return defaultValue;
 }
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
@@ -141,6 +141,8 @@ void from_json(const nlohmann::json& j, ViewVRConfig& v) {
     return;
   }
 
+  v.mEnabled = MaybeGet<bool>(j, "Enabled", v.mEnabled);
+
   using Type = ViewVRConfig::Type;
   const Type type = j.at("Type");
   switch (type) {
@@ -160,6 +162,8 @@ void from_json(const nlohmann::json& j, ViewVRConfig& v) {
 void to_json(nlohmann::json& j, const ViewVRConfig& v) {
   j["Type"] = v.GetType();
 
+  j["Enabled"] = v.mEnabled;
+
   using Type = ViewVRConfig::Type;
   switch (v.GetType()) {
     case Type::Empty:
@@ -175,67 +179,7 @@ void to_json(nlohmann::json& j, const ViewVRConfig& v) {
   }
 }
 
-NLOHMANN_JSON_SERIALIZE_ENUM(
-  ViewNonVRPosition::Type,
-  {
-    {ViewNonVRPosition::Type::Absolute, "Absolute"},
-    {ViewNonVRPosition::Type::Constrained, "Constrained"},
-    {ViewNonVRPosition::Type::Empty, "Empty"},
-    {ViewNonVRPosition::Type::HorizontalMirror, "HorizontalMirror"},
-    {ViewNonVRPosition::Type::VerticalMirror, "VerticalMirror"},
-  });
-
-void from_json(const nlohmann::json& j, ViewNonVRPosition& v) {
-  if (!j.contains("Type")) {
-    return;
-  }
-
-  using Type = ViewNonVRPosition::Type;
-  const Type type = j.at("Type");
-  switch (type) {
-    case Type::Empty:
-      return;
-    case Type::Absolute:
-      v.SetAbsolute(MaybeGet<NonVRAbsolutePosition>(j, "AbsolutePosition"));
-      return;
-    case Type::Constrained:
-      v.SetConstrained(MaybeGet<NonVRConstrainedPosition>(j, "Constraints"));
-      return;
-    case Type::HorizontalMirror:
-      v.SetHorizontalMirrorOf(j.at("MirrorOf"));
-      return;
-    case Type::VerticalMirror:
-      v.SetVerticalMirrorOf(j.at("MirrorOf"));
-      return;
-    default:
-      OPENKNEEBOARD_BREAK;
-  }
-}
-
-void to_json(nlohmann::json& j, const ViewNonVRPosition& v) {
-  j["Type"] = v.GetType();
-
-  using Type = ViewNonVRPosition::Type;
-  switch (v.GetType()) {
-    case Type::Empty:
-      return;
-    case Type::Absolute: {
-      MaybeSet(j, "AbsolutePosition", v.GetAbsolutePosition());
-      return;
-    }
-    case Type::Constrained:
-      MaybeSet(j, "Constraints", v.GetConstrainedPosition());
-      return;
-    case Type::HorizontalMirror:
-    case Type::VerticalMirror:
-      MaybeSet(j, "MirrorOf", v.GetMirrorOfGUID());
-      return;
-    default:
-      OPENKNEEBOARD_BREAK;
-  }
-}
-
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewNonVRConfig, mPosition)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewNonVRConfig, mEnabled, mConstraints);
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewConfig, mGuid, mName, mVR, mNonVR);
 

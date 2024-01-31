@@ -319,7 +319,7 @@ PixelSize KneeboardView::GetIPCRenderSize() const {
     const auto view = std::ranges::find(
       views, mGUID, [](const auto& it) { return it.mGuid; });
     if (view != views.end()) [[likely]] {
-      const auto pos = view->mNonVR.mPosition.Resolve(views);
+      const auto pos = view->mNonVR.Resolve(metrics.mPreferredSize, views);
       if (pos) {
         const auto rect = pos->Layout(consumerSize, idealSize);
         return rect.mSize;

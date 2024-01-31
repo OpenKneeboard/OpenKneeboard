@@ -55,7 +55,7 @@ struct VRLayerConfig {
   VRPose mPose;
   Geometry2D::Size<float> mPhysicalSize;
 };
-using NonVRPosition = NonVRConstrainedPosition;
+using NonVRLayerConfig = NonVRConstrainedPosition;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -142,7 +142,7 @@ struct LayerConfig final {
   bool mVREnabled {false};
   SHM::VRLayerConfig mVR {};
   bool mNonVREnabled {false};
-  SHM::NonVRPosition mNonVR {};
+  SHM::NonVRLayerConfig mNonVR {};
 };
 static_assert(std::is_standard_layout_v<LayerConfig>);
 

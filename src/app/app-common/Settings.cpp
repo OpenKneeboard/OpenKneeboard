@@ -225,8 +225,8 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
       },
     }),
     .mNonVR = ViewNonVRConfig {
-      .mPosition
-        = ViewNonVRPosition::Constrained(settings.mNonVR.mDeprecated),
+      .mEnabled = true,
+      .mConstraints = settings.mNonVR.mDeprecated,
     },
   };
 
