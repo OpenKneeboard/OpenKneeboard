@@ -81,7 +81,7 @@ struct ViewVRPosition {
   Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Center};
   Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
 
-  std::optional<SHM::VRQuad> Resolve(
+  std::optional<SHM::VRLayerConfig> Resolve(
     const PreferredSize& contentSize,
     const std::vector<ViewConfig>& others) const;
 
@@ -174,12 +174,22 @@ struct ViewNonVRPosition {
     mData;
 };
 
+struct ViewVRConfig {
+  ViewVRPosition mPosition;
+  constexpr bool operator==(const ViewVRConfig&) const noexcept = default;
+};
+
+struct ViewNonVRConfig {
+  ViewNonVRPosition mPosition;
+  constexpr bool operator==(const ViewNonVRConfig&) const noexcept = default;
+};
+
 struct ViewConfig {
   winrt::guid mGuid = random_guid();
   std::string mName;
 
-  ViewVRPosition mVRPosition;
-  ViewNonVRPosition mNonVRPosition;
+  ViewVRConfig mVR;
+  ViewNonVRConfig mNonVR;
 
   constexpr bool operator==(const ViewConfig&) const noexcept = default;
 };

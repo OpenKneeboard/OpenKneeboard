@@ -29,7 +29,7 @@
 
 namespace OpenKneeboard {
 
-std::optional<SHM::VRQuad> ViewVRPosition::Resolve(
+std::optional<SHM::VRLayerConfig> ViewVRPosition::Resolve(
   const PreferredSize& contentSize,
   const std::vector<ViewConfig>& others) const {
   if (mType == Type::Empty) {
@@ -68,7 +68,7 @@ std::optional<SHM::VRQuad> ViewVRPosition::Resolve(
       }
     }
 
-    return SHM::VRQuad {quad.mPose, size};
+    return SHM::VRLayerConfig {quad.mPose, size};
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
@@ -80,7 +80,7 @@ std::optional<SHM::VRQuad> ViewVRPosition::Resolve(
     return {};
   }
 
-  const auto other = it->mVRPosition.Resolve(contentSize, others);
+  const auto other = it->mVR.mPosition.Resolve(contentSize, others);
   if (!other) {
     return {};
   }
@@ -234,12 +234,11 @@ void to_json(nlohmann::json& j, const ViewNonVRPosition& v) {
   }
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  ViewConfig,
-  mGuid,
-  mName,
-  mVRPosition,
-  mNonVRPosition);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewVRConfig, mPosition)
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewNonVRConfig, mPosition)
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewConfig, mGuid, mName, mVR, mNonVR);
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsConfig, mViews);
 

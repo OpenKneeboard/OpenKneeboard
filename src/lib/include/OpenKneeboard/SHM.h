@@ -51,7 +51,7 @@ struct IPCHandles;
 }// namespace Detail
 
 // Distances in metres, positions in radians.
-struct VRQuad {
+struct VRLayerConfig {
   VRAbsolutePosition mPose;
   Geometry2D::Size<float> mPhysicalSize;
 };
@@ -140,7 +140,7 @@ struct LayerConfig final {
   PixelRect mLocationOnTexture {};
 
   bool mVREnabled {false};
-  SHM::VRQuad mVR {};
+  SHM::VRLayerConfig mVR {};
   bool mNonVREnabled {false};
   SHM::NonVRPosition mNonVR {};
 };
