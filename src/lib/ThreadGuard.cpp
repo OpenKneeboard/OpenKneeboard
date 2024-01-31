@@ -24,7 +24,7 @@
 
 namespace OpenKneeboard {
 
-ThreadGuard::ThreadGuard() {
+ThreadGuard::ThreadGuard(const std::source_location& loc) : mLocation(loc) {
 #ifdef DEBUG
   mThreadID = GetCurrentThreadId();
 #endif
@@ -42,6 +42,7 @@ void ThreadGuard::CheckThread() const {
     mThreadID,
     thisThread,
     thisThread);
+  dprintf("Created at {}", mLocation);
   OPENKNEEBOARD_BREAK;
 #endif
 }

@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <shims/source_location>
+
 #include <Windows.h>
 
 #include <processthreadsapi.h>
@@ -28,12 +30,14 @@ namespace OpenKneeboard {
 // Logs if destruction thread != creation thread
 class ThreadGuard final {
  public:
-  ThreadGuard();
+  ThreadGuard(
+    const std::source_location& loc = std::source_location::current());
   ~ThreadGuard();
   void CheckThread() const;
 
  private:
   DWORD mThreadID;
+  std::source_location mLocation;
 };
 
 }// namespace OpenKneeboard
