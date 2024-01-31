@@ -41,8 +41,7 @@ NavigationTab::NavigationTab(
   : TabBase(winrt::guid {}, rootTab->GetTitle()),
     mDXR(dxr),
     mRootTab(rootTab),
-    mPreferredSize(ErrorRenderSize),
-    mPreviewLayer(dxr) {
+    mPreferredSize(ErrorRenderSize) {
   const auto columns = entries.size() >= 10
     ? std::max(
       1ui32,
@@ -205,6 +204,7 @@ void NavigationTab::RenderPage(
   RenderTarget* rt,
   PageID pageID,
   const D2D1_RECT_F& canvasRect) {
+  OPENKNEEBOARD_TraceLoggingScope("NavigationTab::RenderPage()");
   auto ctx = rt->d2d();
   const auto scale
     = (canvasRect.bottom - canvasRect.top) / mPreferredSize.mHeight;
@@ -232,11 +232,16 @@ void NavigationTab::RenderPage(
 
   ctx.Release();
 
-  mPreviewLayer.Render(
-    canvasRect,
-    pageID.GetTemporaryValue(),
-    rt,
-    std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));
+  if (!mPreviewCache.contains(rt->GetID())) {
+    mPreviewCache.emplace(rt->GetID(), std::make_unique<CachedLayer>(mDXR));
+  }
+
+  mPreviewCache.at(rt->GetID())
+    ->Render(
+      canvasRect,
+      pageID.GetTemporaryValue(),
+      rt,
+      std::bind_front(&NavigationTab::RenderPreviewLayer, this, pageID));
 
   ctx.Reacquire();
 
@@ -299,6 +304,7 @@ void NavigationTab::RenderPreviewLayer(
   PageID pageID,
   RenderTarget* rt,
   const D2D1_SIZE_U& size) {
+  OPENKNEEBOARD_TraceLoggingScope("NavigationTab::RenderPreviewLayer()");
   auto& m = mPreviewMetrics;
   m = {};
 

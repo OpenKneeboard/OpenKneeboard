@@ -69,7 +69,7 @@ class NavigationTab final : public TabBase,
   audited_ptr<DXResources> mDXR;
   std::shared_ptr<ITab> mRootTab;
   PixelSize mPreferredSize;
-  CachedLayer mPreviewLayer;
+  std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>> mPreviewCache;
 
   uint16_t mRenderColumns;
 
