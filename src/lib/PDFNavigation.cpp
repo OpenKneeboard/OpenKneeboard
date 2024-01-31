@@ -63,7 +63,31 @@ PDF::PDF(const std::filesystem::path& path) : p(new Impl(path)) {
 
 PDF::~PDF() = default;
 
+static QPDFObjectHandle PageFromDest(
+  QPDFOutlineDocumentHelper& outlineHelper,
+  QPDFObjectHandle dest) {
+  if (dest.isString() || dest.isName()) {
+    dest = outlineHelper.resolveNamedDest(dest);
+  }
+
+  if (dest.isDictionary() && dest.hasKey("/D")) {
+    dest = dest.getKey("/D");
+  }
+
+  if (!dest.isArray()) {
+    return {};
+  }
+  if (dest.getArrayNItems() >= 1) {
+    auto first = dest.getArrayItem(0);
+    if (first.isPageObject()) {
+      return first;
+    }
+  }
+  return {};
+}
+
 static void ExtractBookmarks(
+  QPDFOutlineDocumentHelper& outlineHelper,
   std::vector<QPDFOutlineObjectHelper>& outlines,
   const PageIndexMap& pageIndices,
   std::back_insert_iterator<std::vector<Bookmark>> inserter) noexcept {
@@ -74,20 +98,7 @@ static void ExtractBookmarks(
   for (auto& outline: outlines) {
     auto page = outline.getDestPage();
     if (page.isNull()) {
-      auto dest = outline.getDest();
-      // PDF 32000-1:2008
-      // 12.3.2.2 Explicit destinations
-      if (!dest.isDictionary()) {
-        continue;
-      }
-      if (!dest.hasKey("/D")) {
-        continue;
-      }
-      dest = dest.getKey("/D");
-      if (!(dest.isArray() && dest.getArrayNItems())) {
-        continue;
-      }
-      page = dest.getArrayItem(0);
+      page = PageFromDest(outlineHelper, outline.getDest());
     }
     auto key = page.getObjGen();
     if (!pageIndices.contains(key)) {
@@ -99,7 +110,7 @@ static void ExtractBookmarks(
     };
 
     auto kids = outline.getKids();
-    ExtractBookmarks(kids, pageIndices, inserter);
+    ExtractBookmarks(outlineHelper, kids, pageIndices, inserter);
   }
 }
 
@@ -109,11 +120,13 @@ static std::vector<Bookmark> ExtractBookmarks(
   std::vector<Bookmark> bookmarks;
   DebugTimer timer("Bookmarks");
   auto outlines = outlineHelper.getTopLevelOutlines();
-  ExtractBookmarks(outlines, pageIndices, std::back_inserter(bookmarks));
+  ExtractBookmarks(
+    outlineHelper, outlines, pageIndices, std::back_inserter(bookmarks));
   return bookmarks;
 }
 
 static bool PushDestLink(
+  QPDFOutlineDocumentHelper& outlineHelper,
   QPDFObjectHandle& it,
   const PageIndexMap& pageIndices,
   const D2D1_RECT_F& rect,
@@ -122,8 +135,8 @@ static bool PushDestLink(
     return false;
   }
 
-  auto dest = it.getKey("/Dest");
-  const auto destRef = dest.getArrayItem(0).getObjGen();
+  auto page = PageFromDest(outlineHelper, it.getKey("/Dest"));
+  const auto destRef = page.getObjGen();
   if (!pageIndices.contains(destRef)) {
     return false;
   }
@@ -167,21 +180,8 @@ static void PushGoToActionLink(
     return;
   }
 
-  auto dest = action.getKey("/D");
-  if (!dest.isArray()) {
-    if (!(dest.isName() || dest.isString())) {
-      return;
-    }
-    dest = outlineHelper.resolveNamedDest(dest);
-    if (dest.isDictionary() && dest.hasKey("/D")) {
-      dest = dest.getKey("/D");
-    }
-    if (!dest.isArray()) {
-      return;
-    }
-  }
-
-  const auto pageRef = dest.getArrayItem(0).getObjGen();
+  auto dest = PageFromDest(outlineHelper, action.getKey("/D"));
+  const auto pageRef = dest.getObjGen();
   if (!pageIndices.contains(pageRef)) {
     return;
   }
@@ -252,7 +252,7 @@ static std::vector<Link> ExtractLinks(
     };
 
     auto handle = annotation.getObjectHandle();
-    if (PushDestLink(handle, pageIndices, linkRect, links)) {
+    if (PushDestLink(outlineHelper, handle, pageIndices, linkRect, links)) {
       continue;
     }
     if (PushActionLink(outlineHelper, pageIndices, handle, linkRect, links)) {
