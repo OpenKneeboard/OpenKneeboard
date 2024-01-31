@@ -118,6 +118,9 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   }
 
   const auto snapshot = mSHM.MaybeGet();
+  if (!snapshot.HasTexture()) {
+    return passthrough();
+  }
   const auto layerCount = snapshot.GetLayerCount();
 
   if (!layerCount) {

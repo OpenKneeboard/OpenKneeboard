@@ -60,6 +60,8 @@ class InterprocessRenderer final
     const audited_ptr<DXResources>&,
     KneeboardState*);
 
+  void PostUserAction(UserAction);
+
  private:
   InterprocessRenderer() = delete;
   InterprocessRenderer(const audited_ptr<DXResources>&);
@@ -121,6 +123,9 @@ class InterprocessRenderer final
     uint64_t inputLayerID) noexcept;
 
   void OnGameChanged(DWORD processID, const std::shared_ptr<GameInstance>&);
+
+  bool mVisible {true};
+  bool mFirstInvisible {false};
 };
 
 }// namespace OpenKneeboard

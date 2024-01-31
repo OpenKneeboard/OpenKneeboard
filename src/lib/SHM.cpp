@@ -453,6 +453,15 @@ Writer::~Writer() {
   this->Detach();
 }
 
+void Writer::SubmitEmptyFrame() {
+  const auto transitions = make_scoped_state_transitions<
+    State::Locked,
+    State::SubmittingEmptyFrame,
+    State::Locked>(p);
+  p->mHeader->mFrameNumber++;
+  p->mHeader->mLayerCount = 0;
+}
+
 Writer::NextFrameInfo Writer::BeginFrame() noexcept {
   p->Transition<State::Locked, State::FrameInProgress>();
 
@@ -763,6 +772,12 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   TraceLoggingWriteTagged(activity, "LockedSHM");
   TraceLoggingThreadActivity<gTraceProvider> maybeGetActivity;
   TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
+
+  if (p->mHeader->mLayerCount == 0) {
+    Snapshot snapshot {p->mHeader};
+    mCache.push_front(snapshot);
+    return snapshot;
+  }
 
   const auto dimensions = p->mHeader->mConfig.mTextureSize;
   auto dest = GetIPCClientTexture(dimensions, swapchainIndex);

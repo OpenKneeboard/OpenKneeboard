@@ -164,6 +164,8 @@ class Writer final {
 
   operator bool() const;
 
+  void SubmitEmptyFrame();
+
   NextFrameInfo BeginFrame() noexcept;
   void SubmitFrame(
     const Config& config,

@@ -154,21 +154,9 @@ void KneeboardState::PostUserAction(UserAction action) {
 
   switch (action) {
     case UserAction::TOGGLE_VISIBILITY:
-      if (mInterprocessRenderer) {
-        mInterprocessRenderer.reset();
-      } else {
-        mInterprocessRenderer
-          = InterprocessRenderer::Create(mDXResources, this);
-      }
-      return;
-    case UserAction::HIDE:
-      mInterprocessRenderer.reset();
-      return;
     case UserAction::SHOW:
-      if (mInterprocessRenderer) {
-        return;
-      }
-      mInterprocessRenderer = InterprocessRenderer::Create(mDXResources, this);
+    case UserAction::HIDE:
+      mInterprocessRenderer->PostUserAction(action);
       return;
     case UserAction::TOGGLE_FORCE_ZOOM: {
       auto& forceZoom = this->mSettings.mVR.mForceZoom;

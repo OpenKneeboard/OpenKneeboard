@@ -188,6 +188,27 @@ void InterprocessRenderer::InitializeCanvas(const PixelSize& size) {
   mSHM.Detach();
 }
 
+void InterprocessRenderer::PostUserAction(UserAction action) {
+  switch (action) {
+    case UserAction::TOGGLE_VISIBILITY:
+      mVisible = !mVisible;
+      break;
+    case UserAction::SHOW:
+      mVisible = true;
+      break;
+    case UserAction::HIDE:
+      mVisible = false;
+      break;
+    default:
+      OPENKNEEBOARD_BREAK;
+      return;
+  }
+  if (!mVisible) {
+    mFirstInvisible = true;
+  }
+  this->MarkDirty();
+}
+
 InterprocessRenderer::IPCTextureResources*
 InterprocessRenderer::GetIPCTextureResources(
   uint8_t textureIndex,
@@ -369,6 +390,18 @@ void InterprocessRenderer::RenderNow() noexcept {
 
   OPENKNEEBOARD_TraceLoggingScopedActivity(
     activity, "InterprocessRenderer::RenderNow()");
+
+  if (!mVisible) {
+    TraceLoggingWriteTagged(activity, "Invisible");
+    if (mFirstInvisible) {
+      mFirstInvisible = false;
+      if (mSHM) {
+        std::unique_lock lock(mSHM);
+        mSHM.SubmitEmptyFrame();
+      }
+    }
+    return;
+  }
 
   const auto renderInfos = mKneeboard->GetViewRenderInfo();
   const auto layerCount = renderInfos.size();
