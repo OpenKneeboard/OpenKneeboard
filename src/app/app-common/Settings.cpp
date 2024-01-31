@@ -240,7 +240,7 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
 
   if (settings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
     const ViewConfig secondary {
-      .mName = _("Second Kneeboard"),
+      .mName = _("Kneeboard 2"),
       .mVR = ViewVRConfig::HorizontalMirrorOf(primary.mGuid),
     };
     settings.mViews.mViews = {primary, secondary};
