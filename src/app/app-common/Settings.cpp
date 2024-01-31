@@ -217,15 +217,13 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
 
   const ViewConfig primary {
     .mName = _("Kneeboard"),
-    .mVR = ViewVRConfig {
-      .mPosition = ViewVRPosition::Absolute({
-        settings.mVR.mDeprecated.mPrimaryLayer,
-        {
-          settings.mVR.mDeprecated.mMaxWidth,
-          settings.mVR.mDeprecated.mMaxHeight,
-        },
-      }),
-    },
+    .mVR = ViewVRConfig::Independent({
+      settings.mVR.mDeprecated.mPrimaryLayer,
+      {
+        settings.mVR.mDeprecated.mMaxWidth,
+        settings.mVR.mDeprecated.mMaxHeight,
+      },
+    }),
     .mNonVR = ViewNonVRConfig {
       .mPosition
         = ViewNonVRPosition::Constrained(settings.mNonVR.mDeprecated),
@@ -235,9 +233,7 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
   if (settings.mApp.mDeprecated.mDualKneeboards.mEnabled) {
     const ViewConfig secondary {
       .mName = _("Second Kneeboard"),
-      .mVR = ViewVRConfig {
-        .mPosition = ViewVRPosition::HorizontalMirrorOf(primary.mGuid),
-      },
+      .mVR = ViewVRConfig::HorizontalMirrorOf(primary.mGuid),
     };
     settings.mViews.mViews = {primary, secondary};
   } else {

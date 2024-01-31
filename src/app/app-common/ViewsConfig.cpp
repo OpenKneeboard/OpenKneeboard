@@ -29,18 +29,18 @@
 
 namespace OpenKneeboard {
 
-std::optional<SHM::VRLayerConfig> ViewVRPosition::Resolve(
+std::optional<SHM::VRLayerConfig> ViewVRConfig::Resolve(
   const PreferredSize& contentSize,
   const std::vector<ViewConfig>& others) const {
   if (mType == Type::Empty) {
     return {};
   }
 
-  if (mType == Type::Absolute) {
-    auto quad = this->GetQuadConfig();
+  if (mType == Type::Independent) {
+    auto config = this->GetIndependentConfig();
 
     auto size = contentSize.mPixelSize.StaticCast<float>().ScaledToFit(
-      quad.mMaximumPhysicalSize);
+      config.mMaximumPhysicalSize);
 
     if (contentSize.mPhysicalSize) {
       const auto& ps = *contentSize.mPhysicalSize;
@@ -68,19 +68,18 @@ std::optional<SHM::VRLayerConfig> ViewVRPosition::Resolve(
       }
     }
 
-    return SHM::VRLayerConfig {quad.mPose, size};
+    return SHM::VRLayerConfig {config.mPose, size};
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
 
-  const auto it = std::ranges::find_if(others, [this](const auto& other) {
-    return other.mGuid == GetMirrorOfGUID();
-  });
+  const auto it = std::ranges::find(
+    others, GetMirrorOfGUID(), [](const auto& it) { return it.mGuid; });
   if (it == others.end()) {
     return {};
   }
 
-  const auto other = it->mVR.mPosition.Resolve(contentSize, others);
+  const auto other = it->mVR.Resolve(contentSize, others);
   if (!other) {
     return {};
   }
@@ -124,26 +123,31 @@ static T MaybeGet(const nlohmann::json& j, std::string_view key) {
   return {};
 }
 
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  IndependentViewVRConfig,
+  mPose,
+  mMaximumPhysicalSize)
+
 NLOHMANN_JSON_SERIALIZE_ENUM(
-  ViewVRPosition::Type,
+  ViewVRConfig::Type,
   {
-    {ViewVRPosition::Type::Absolute, "Absolute"},
-    {ViewVRPosition::Type::Empty, "Empty"},
-    {ViewVRPosition::Type::HorizontalMirror, "HorizontalMirror"},
+    {ViewVRConfig::Type::Independent, "Independent"},
+    {ViewVRConfig::Type::Empty, "Empty"},
+    {ViewVRConfig::Type::HorizontalMirror, "HorizontalMirror"},
   })
 
-void from_json(const nlohmann::json& j, ViewVRPosition& v) {
+void from_json(const nlohmann::json& j, ViewVRConfig& v) {
   if (!j.contains("Type")) {
     return;
   }
 
-  using Type = ViewVRPosition::Type;
+  using Type = ViewVRConfig::Type;
   const Type type = j.at("Type");
   switch (type) {
     case Type::Empty:
       return;
-    case Type::Absolute:
-      v.SetAbsolute(MaybeGet<VRQuadConfig>(j, "Quad"));
+    case Type::Independent:
+      v.SetIndependentConfig(MaybeGet<IndependentViewVRConfig>(j, "Config"));
       return;
     case Type::HorizontalMirror:
       v.SetHorizontalMirrorOf(MaybeGet<winrt::guid>(j, "MirrorOf"));
@@ -153,18 +157,15 @@ void from_json(const nlohmann::json& j, ViewVRPosition& v) {
   }
 }
 
-void to_json(nlohmann::json& j, const ViewVRPosition& v) {
+void to_json(nlohmann::json& j, const ViewVRConfig& v) {
   j["Type"] = v.GetType();
 
-  MaybeSet(j, "HorizontalAlignment", v.mHorizontalAlignment);
-  MaybeSet(j, "VerticalAlignment", v.mVerticalAlignment);
-
-  using Type = ViewVRPosition::Type;
+  using Type = ViewVRConfig::Type;
   switch (v.GetType()) {
     case Type::Empty:
       return;
-    case Type::Absolute:
-      MaybeSet(j, "Quad", v.GetQuadConfig());
+    case Type::Independent:
+      MaybeSet(j, "Config", v.GetIndependentConfig());
       return;
     case Type::HorizontalMirror:
       MaybeSet(j, "MirrorOf", v.GetMirrorOfGUID());
@@ -234,12 +235,9 @@ void to_json(nlohmann::json& j, const ViewNonVRPosition& v) {
   }
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewVRConfig, mPosition)
-
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewNonVRConfig, mPosition)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewConfig, mGuid, mName, mVR, mNonVR);
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsConfig, mViews);
-
 };// namespace OpenKneeboard

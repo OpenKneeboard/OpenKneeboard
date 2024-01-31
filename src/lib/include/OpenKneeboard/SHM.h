@@ -52,7 +52,7 @@ struct IPCHandles;
 
 // Distances in metres, positions in radians.
 struct VRLayerConfig {
-  VRAbsolutePosition mPose;
+  VRPose mPose;
   Geometry2D::Size<float> mPhysicalSize;
 };
 using NonVRPosition = NonVRConstrainedPosition;

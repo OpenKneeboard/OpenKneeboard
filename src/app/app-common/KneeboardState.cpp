@@ -132,8 +132,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     const auto contentSize = view->GetPreferredSize();
     ret.push_back({
       .mView = view,
-      .mVR
-      = viewConfig.mVR.mPosition.Resolve(contentSize, mSettings.mViews.mViews),
+      .mVR = viewConfig.mVR.Resolve(contentSize, mSettings.mViews.mViews),
       .mNonVR = viewConfig.mNonVR.mPosition.Resolve(mSettings.mViews.mViews),
       .mIsActiveForInput = (index == mInputViewIndex),
     });

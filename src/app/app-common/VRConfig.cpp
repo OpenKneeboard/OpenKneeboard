@@ -23,16 +23,7 @@
 
 namespace OpenKneeboard {
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRAbsolutePosition,
-  mX,
-  mEyeY,
-  mZ,
-  mRX,
-  mRY,
-  mRZ)
-
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRQuadConfig, mPose, mMaximumPhysicalSize)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRPose, mX, mEyeY, mZ, mRX, mRY, mRZ)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   VRRenderConfig::Quirks,

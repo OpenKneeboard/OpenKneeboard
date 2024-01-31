@@ -34,62 +34,12 @@ namespace OpenKneeboard {
 struct ViewConfig;
 struct PreferredSize;
 
-struct ViewVRPosition {
-  enum class Type {
-    Empty,
-    Absolute,
-    // Mirrored in the x = 0 plane, i.e. x => -x
-    HorizontalMirror,
-  };
+struct IndependentViewVRConfig {
+  VRPose mPose;
+  Geometry2D::Size<float> mMaximumPhysicalSize;
 
-  ViewVRPosition() = default;
-
-  constexpr void SetAbsolute(const VRQuadConfig& p) {
-    mType = Type::Absolute;
-    mData = p;
-  }
-
-  constexpr void SetHorizontalMirrorOf(const winrt::guid& guid) {
-    mType = Type::HorizontalMirror;
-    mData = guid;
-  }
-
-  static constexpr auto Absolute(const VRQuadConfig& p) {
-    ViewVRPosition ret;
-    ret.SetAbsolute(p);
-    return ret;
-  }
-
-  static constexpr auto HorizontalMirrorOf(const winrt::guid& g) {
-    ViewVRPosition ret;
-    ret.SetHorizontalMirrorOf(g);
-    return ret;
-  }
-
-  constexpr Type GetType() const noexcept {
-    return mType;
-  }
-
-  constexpr auto GetMirrorOfGUID() const noexcept {
-    return std::get<winrt::guid>(mData);
-  }
-
-  constexpr auto GetQuadConfig() const noexcept {
-    return std::get<VRQuadConfig>(mData);
-  }
-
-  Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Center};
-  Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
-
-  std::optional<SHM::VRLayerConfig> Resolve(
-    const PreferredSize& contentSize,
-    const std::vector<ViewConfig>& others) const;
-
-  constexpr bool operator==(const ViewVRPosition&) const noexcept = default;
-
- private:
-  Type mType = Type::Empty;
-  std::variant<winrt::guid, VRQuadConfig> mData;
+  constexpr bool operator==(const IndependentViewVRConfig&) const noexcept
+    = default;
 };
 
 struct ViewNonVRPosition {
@@ -175,8 +125,63 @@ struct ViewNonVRPosition {
 };
 
 struct ViewVRConfig {
-  ViewVRPosition mPosition;
+  enum class Type {
+    Empty,
+    Independent,
+    HorizontalMirror,
+  };
+
+  bool mEnabled {true};
+
+  constexpr Type GetType() const {
+    return mType;
+  }
+
+  constexpr auto GetIndependentConfig() const {
+    if (mType != Type::Independent) [[unlikely]] {
+      OPENKNEEBOARD_FATAL;
+    }
+    return std::get<IndependentViewVRConfig>(mData);
+  }
+
+  constexpr auto SetIndependentConfig(const IndependentViewVRConfig& v) {
+    mType = Type::Independent;
+    mData = v;
+  }
+
+  constexpr auto GetMirrorOfGUID() const {
+    if (mType != Type::HorizontalMirror) {
+      OPENKNEEBOARD_FATAL;
+    }
+    return std::get<winrt::guid>(mData);
+  }
+
+  constexpr auto SetHorizontalMirrorOf(const winrt::guid& v) {
+    mType = Type::HorizontalMirror;
+    mData = v;
+  }
+
+  static ViewVRConfig Independent(const IndependentViewVRConfig& v) {
+    ViewVRConfig ret;
+    ret.SetIndependentConfig(v);
+    return ret;
+  };
+
+  static ViewVRConfig HorizontalMirrorOf(const winrt::guid& v) {
+    ViewVRConfig ret;
+    ret.SetHorizontalMirrorOf(v);
+    return ret;
+  };
+
+  std::optional<SHM::VRLayerConfig> Resolve(
+    const PreferredSize& contentSize,
+    const std::vector<ViewConfig>& others) const;
+
   constexpr bool operator==(const ViewVRConfig&) const noexcept = default;
+
+ private:
+  Type mType {Type::Empty};
+  std::variant<IndependentViewVRConfig, winrt::guid> mData;
 };
 
 struct ViewNonVRConfig {
@@ -204,5 +209,4 @@ struct ViewsConfig {
 };
 
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(ViewsConfig);
-
 };// namespace OpenKneeboard
