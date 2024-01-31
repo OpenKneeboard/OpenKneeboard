@@ -29,7 +29,7 @@
 
 namespace OpenKneeboard {
 
-std::optional<SHM::VRLayerConfig> ViewVRConfig::Resolve(
+std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
   const PreferredSize& contentSize,
   const std::vector<ViewConfig>& others) const {
   if (mType == Type::Empty) {
@@ -68,7 +68,7 @@ std::optional<SHM::VRLayerConfig> ViewVRConfig::Resolve(
       }
     }
 
-    return SHM::VRLayerConfig {
+    return SHM::VRLayer {
       .mPose = config.mPose,
       .mPhysicalSize = size,
       .mEnableGazeZoom = config.mEnableGazeZoom,
@@ -101,7 +101,7 @@ std::optional<SHM::VRLayerConfig> ViewVRConfig::Resolve(
   return ret;
 }
 
-std::optional<SHM::NonVRLayerConfig> ViewNonVRConfig::Resolve(
+std::optional<SHM::NonVRLayer> ViewNonVRConfig::Resolve(
   [[maybe_unused]] const PreferredSize& contentSize,
   [[maybe_unused]] const std::vector<ViewConfig>& others) const {
   if (!mEnabled) {

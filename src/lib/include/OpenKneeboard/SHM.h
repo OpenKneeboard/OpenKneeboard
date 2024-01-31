@@ -51,7 +51,7 @@ struct IPCHandles;
 }// namespace Detail
 
 // Distances in metres, positions in radians.
-struct VRLayerConfig {
+struct VRLayer {
   VRPose mPose;
   Geometry2D::Size<float> mPhysicalSize;
 
@@ -60,7 +60,7 @@ struct VRLayerConfig {
   GazeTargetScale mGazeTargetScale {};
   VROpacityConfig mOpacity {};
 };
-using NonVRLayerConfig = NonVRConstrainedPosition;
+using NonVRLayer = NonVRConstrainedPosition;
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -145,9 +145,9 @@ struct LayerConfig final {
   PixelRect mLocationOnTexture {};
 
   bool mVREnabled {false};
-  SHM::VRLayerConfig mVR {};
+  SHM::VRLayer mVR {};
   bool mNonVREnabled {false};
-  SHM::NonVRLayerConfig mNonVR {};
+  SHM::NonVRLayer mNonVR {};
 };
 static_assert(std::is_standard_layout_v<LayerConfig>);
 

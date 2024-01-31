@@ -56,8 +56,8 @@ class GameEventServer;
 
 struct ViewRenderInfo {
   std::shared_ptr<IKneeboardView> mView;
-  std::optional<SHM::VRLayerConfig> mVR;
-  std::optional<SHM::NonVRLayerConfig> mNonVR;
+  std::optional<SHM::VRLayer> mVR;
+  std::optional<SHM::NonVRLayer> mNonVR;
   bool mIsActiveForInput = false;
 };
 

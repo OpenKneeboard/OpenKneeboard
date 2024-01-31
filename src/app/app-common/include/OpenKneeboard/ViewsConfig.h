@@ -103,7 +103,7 @@ struct ViewVRConfig {
     return ret;
   };
 
-  std::optional<SHM::VRLayerConfig> Resolve(
+  std::optional<SHM::VRLayer> Resolve(
     const PreferredSize& contentSize,
     const std::vector<ViewConfig>& others) const;
 
@@ -121,7 +121,7 @@ struct ViewNonVRConfig {
 
   constexpr bool operator==(const ViewNonVRConfig&) const noexcept = default;
 
-  std::optional<SHM::NonVRLayerConfig> Resolve(
+  std::optional<SHM::NonVRLayer> Resolve(
     const PreferredSize& contentSize,
     const std::vector<ViewConfig>& others) const;
 };
