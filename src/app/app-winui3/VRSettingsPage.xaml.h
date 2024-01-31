@@ -26,6 +26,7 @@
 #include "WithPropertyChangedEvent.h"
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ViewsConfig.h>
 
 using namespace winrt::Microsoft::UI::Xaml;
 
@@ -83,6 +84,10 @@ struct VRSettingsPage
 
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  size_t mCurrentView {};
+
+  OpenKneeboard::IndependentViewVRConfig GetViewConfig();
+  void SetViewConfig(const OpenKneeboard::IndependentViewVRConfig&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

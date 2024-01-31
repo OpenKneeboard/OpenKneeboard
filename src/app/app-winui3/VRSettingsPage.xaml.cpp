@@ -77,6 +77,30 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
 }
 
+IndependentViewVRConfig VRSettingsPage::GetViewConfig() {
+  const auto views = mKneeboard->GetViewsSettings().mViews;
+  if (mCurrentView >= views.size()) [[unlikely]] {
+    dprintf("View {} >= count {}", mCurrentView, views.size());
+    OPENKNEEBOARD_BREAK;
+    mCurrentView = 0;
+  }
+
+  return views.at(mCurrentView).mVR.GetIndependentConfig();
+}
+
+void VRSettingsPage::SetViewConfig(const IndependentViewVRConfig& config) {
+  auto viewsConfig = mKneeboard->GetViewsSettings();
+  auto& views = viewsConfig.mViews;
+  if (mCurrentView >= views.size()) [[unlikely]] {
+    dprintf("View {} >= count {}", mCurrentView, views.size());
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+
+  views[mCurrentView].mVR.SetIndependentConfig(config);
+  mKneeboard->SetViewsSettings(viewsConfig);
+}
+
 void VRSettingsPage::RecenterNow(const IInspectable&, const RoutedEventArgs&) {
   mKneeboard->PostUserAction(UserAction::RECENTER_VR);
 }
@@ -86,44 +110,44 @@ void VRSettingsPage::GoToBindings(const IInspectable&, const RoutedEventArgs&) {
 }
 
 float VRSettingsPage::KneeboardX() {
-  return mKneeboard->GetVRSettings().mDeprecated.mPrimaryLayer.mX;
+  return this->GetViewConfig().mPose.mX;
 }
 
 void VRSettingsPage::KneeboardX(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mPrimaryLayer.mX = value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mPose.mX = value;
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardEyeY() {
-  return -mKneeboard->GetVRSettings().mDeprecated.mPrimaryLayer.mEyeY;
+  return -this->GetViewConfig().mPose.mEyeY;
 }
 
 void VRSettingsPage::KneeboardEyeY(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mPrimaryLayer.mEyeY = -value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mPose.mEyeY = -value;
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardZ() {
   // 3D standard right-hand-coordinate system is that -z is forwards;
   // most users expect the opposite.
-  return -mKneeboard->GetVRSettings().mDeprecated.mPrimaryLayer.mZ;
+  return -this->GetViewConfig().mPose.mZ;
 }
 
 void VRSettingsPage::KneeboardZ(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mPrimaryLayer.mZ = -value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mPose.mZ = -value;
+  this->SetViewConfig(view);
 }
 
 static inline float RadiansToDegrees(float radians) {
@@ -135,9 +159,7 @@ static inline float DegreesToRadians(float degrees) {
 }
 
 float VRSettingsPage::KneeboardRX() {
-  auto raw = RadiansToDegrees(
-               mKneeboard->GetVRSettings().mDeprecated.mPrimaryLayer.mRX)
-    + 90;
+  auto raw = RadiansToDegrees(this->GetViewConfig().mPose.mRX) + 90;
   if (raw < 0) {
     raw += 360.0f;
   }
@@ -152,125 +174,123 @@ void VRSettingsPage::KneeboardRX(float degrees) {
   if (degrees < 0) {
     degrees += 360;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mPrimaryLayer.mRX
+  auto view = this->GetViewConfig();
+  view.mPose.mRX
     = DegreesToRadians(degrees <= 180 ? degrees : -(360 - degrees));
-  mKneeboard->SetVRSettings(config);
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardRY() {
-  return -RadiansToDegrees(
-    mKneeboard->GetVRSettings().mDeprecated.mPrimaryLayer.mRY);
+  return -RadiansToDegrees(this->GetViewConfig().mPose.mRY);
 }
 
 void VRSettingsPage::KneeboardRY(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mPrimaryLayer.mRY = -DegreesToRadians(value);
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mPose.mRY = -DegreesToRadians(value);
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardRZ() {
-  return -RadiansToDegrees(
-    mKneeboard->GetVRSettings().mDeprecated.mPrimaryLayer.mRZ);
+  return -RadiansToDegrees(this->GetViewConfig().mPose.mRZ);
 }
 
 void VRSettingsPage::KneeboardRZ(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mPrimaryLayer.mRZ = -DegreesToRadians(value);
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mPose.mRZ = -DegreesToRadians(value);
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardMaxHeight() {
-  return mKneeboard->GetVRSettings().mDeprecated.mMaxHeight;
+  return this->GetViewConfig().mMaximumPhysicalSize.mHeight;
 }
 
 void VRSettingsPage::KneeboardMaxHeight(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mMaxHeight = value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mMaximumPhysicalSize.mHeight = value;
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardMaxWidth() {
-  return mKneeboard->GetVRSettings().mDeprecated.mMaxWidth;
+  return this->GetViewConfig().mMaximumPhysicalSize.mWidth;
 }
 
 void VRSettingsPage::KneeboardMaxWidth(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mMaxWidth = value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mMaximumPhysicalSize.mWidth = value;
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardZoomScale() {
-  return mKneeboard->GetVRSettings().mDeprecated.mZoomScale;
+  return this->GetViewConfig().mZoomScale;
 }
 
 void VRSettingsPage::KneeboardZoomScale(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mZoomScale = value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mZoomScale = value;
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardGazeTargetHorizontalScale() {
-  return mKneeboard->GetVRSettings().mDeprecated.mGazeTargetScale.mHorizontal;
+  return this->GetViewConfig().mGazeTargetScale.mHorizontal;
 }
 
 void VRSettingsPage::KneeboardGazeTargetHorizontalScale(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mGazeTargetScale.mHorizontal = value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mGazeTargetScale.mHorizontal = value;
+  this->SetViewConfig(view);
 }
 
 float VRSettingsPage::KneeboardGazeTargetVerticalScale() {
-  return mKneeboard->GetVRSettings().mDeprecated.mGazeTargetScale.mVertical;
+  return this->GetViewConfig().mGazeTargetScale.mVertical;
 }
 
 void VRSettingsPage::KneeboardGazeTargetVerticalScale(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mGazeTargetScale.mVertical = value;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mGazeTargetScale.mVertical = value;
+  this->SetViewConfig(view);
 }
 
 uint8_t VRSettingsPage::NormalOpacity() {
-  return static_cast<uint8_t>(std::lround(
-    mKneeboard->GetVRSettings().mDeprecated.mOpacity.mNormal * 100));
+  return static_cast<uint8_t>(
+    std::lround(this->GetViewConfig().mOpacity.mNormal * 100));
 }
 
 void VRSettingsPage::NormalOpacity(uint8_t value) {
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mOpacity.mNormal = value / 100.0f;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mOpacity.mNormal = value / 100.0f;
+  this->SetViewConfig(view);
 }
 
 uint8_t VRSettingsPage::GazeOpacity() {
   return static_cast<uint8_t>(
-    std::lround(mKneeboard->GetVRSettings().mDeprecated.mOpacity.mGaze * 100));
+    std::lround(this->GetViewConfig().mOpacity.mGaze * 100));
 }
 
 void VRSettingsPage::GazeOpacity(uint8_t value) {
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mOpacity.mGaze = value / 100.0f;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mOpacity.mGaze = value / 100.0f;
+  this->SetViewConfig(view);
 }
 
 bool VRSettingsPage::SteamVREnabled() {
@@ -284,13 +304,13 @@ void VRSettingsPage::SteamVREnabled(bool enabled) {
 }
 
 bool VRSettingsPage::GazeZoomEnabled() {
-  return mKneeboard->GetVRSettings().mDeprecated.mEnableGazeZoom;
+  return this->GetViewConfig().mEnableGazeZoom;
 }
 
 void VRSettingsPage::GazeZoomEnabled(bool enabled) {
-  auto config = mKneeboard->GetVRSettings();
-  config.mDeprecated.mEnableGazeZoom = enabled;
-  mKneeboard->SetVRSettings(config);
+  auto view = this->GetViewConfig();
+  view.mEnableGazeZoom = enabled;
+  this->SetViewConfig(view);
 }
 
 bool VRSettingsPage::OpenXREnabled() noexcept {
