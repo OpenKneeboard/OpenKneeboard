@@ -185,12 +185,9 @@ void D2DResources::PushD2DDraw(std::source_location loc) {
     std::unique_lock lock(mLocks->mCurrentDrawMutex);
     if (mLocks->mCurrentDraw) {
       const auto& prev = *mLocks->mCurrentDraw;
-      dprintf(
-        "Draw already in progress from {}:{} ({}) thread {}",
-        prev.mLocation.file_name(),
-        prev.mLocation.line(),
-        prev.mLocation.function_name(),
-        prev.mThreadID);
+      dprint("Starting a D2D draw while one already in progress:");
+      dprintf("First: {} (thread ID {})", prev.mLocation, GetCurrentThreadId());
+      dprintf("Second: {} (thread ID {})", loc, prev.mThreadID);
       OPENKNEEBOARD_BREAK;
     } else {
       mLocks->mCurrentDraw = {loc, GetCurrentThreadId()};
