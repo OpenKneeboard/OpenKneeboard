@@ -774,9 +774,7 @@ Snapshot CachedReader::MaybeGet(const std::source_location& loc) {
   TraceLoggingWriteStart(maybeGetActivity, "MaybeGetUncached");
 
   if (p->mHeader->mLayerCount == 0) {
-    Snapshot snapshot {p->mHeader};
-    mCache.push_front(snapshot);
-    return snapshot;
+    return Snapshot {p->mHeader};
   }
 
   const auto dimensions = p->mHeader->mConfig.mTextureSize;
