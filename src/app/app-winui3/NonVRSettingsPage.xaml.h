@@ -25,6 +25,8 @@
 
 #include "WithPropertyChangedEvent.h"
 
+#include <OpenKneeboard/ViewsConfig.h>
+
 namespace OpenKneeboard {
 class KneeboardState;
 }// namespace OpenKneeboard
@@ -54,6 +56,12 @@ struct NonVRSettingsPage
 
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+
+  // Still not supporting multiple non-VR views
+  const size_t mCurrentView = 0;
+
+  OpenKneeboard::NonVRConstrainedPosition GetViewConfig();
+  void SetViewConfig(const OpenKneeboard::NonVRConstrainedPosition&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

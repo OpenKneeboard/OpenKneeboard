@@ -67,58 +67,80 @@ fire_and_forget NonVRSettingsPage::RestoreDefaults(
 }
 
 uint8_t NonVRSettingsPage::KneeboardHeightPercent() {
-  return mKneeboard->GetNonVRSettings().mDeprecated.mHeightPercent;
+  return this->GetViewConfig().mHeightPercent;
 }
 
 void NonVRSettingsPage::KneeboardHeightPercent(uint8_t value) {
-  auto config = mKneeboard->GetNonVRSettings().mDeprecated;
+  auto config = this->GetViewConfig();
   config.mHeightPercent = value;
-  mKneeboard->SetNonVRSettings({config});
+  this->SetViewConfig(config);
 }
 
 uint32_t NonVRSettingsPage::KneeboardPaddingPixels() {
-  return mKneeboard->GetNonVRSettings().mDeprecated.mPaddingPixels;
+  return this->GetViewConfig().mPaddingPixels;
 }
 
 void NonVRSettingsPage::KneeboardPaddingPixels(uint32_t value) {
-  auto config = mKneeboard->GetNonVRSettings().mDeprecated;
+  auto config = this->GetViewConfig();
   config.mPaddingPixels = value;
-  mKneeboard->SetNonVRSettings({config});
+  this->SetViewConfig(config);
 }
 
 float NonVRSettingsPage::KneeboardOpacity() {
-  return mKneeboard->GetNonVRSettings().mDeprecated.mOpacity * 100;
+  return this->GetViewConfig().mOpacity * 100;
 }
 
 void NonVRSettingsPage::KneeboardOpacity(float value) {
   if (std::isnan(value)) {
     return;
   }
-  auto config = mKneeboard->GetNonVRSettings().mDeprecated;
+  auto config = this->GetViewConfig();
   config.mOpacity = value / 100;
-  mKneeboard->SetNonVRSettings({config});
+  this->SetViewConfig(config);
 }
 
 uint8_t NonVRSettingsPage::KneeboardHorizontalPlacement() {
-  return static_cast<uint8_t>(
-    mKneeboard->GetNonVRSettings().mDeprecated.mHorizontalAlignment);
+  return static_cast<uint8_t>(this->GetViewConfig().mHorizontalAlignment);
 }
 
 void NonVRSettingsPage::KneeboardHorizontalPlacement(uint8_t value) {
-  auto config = mKneeboard->GetNonVRSettings().mDeprecated;
+  auto config = this->GetViewConfig();
   config.mHorizontalAlignment = static_cast<Alignment::Horizontal>(value);
-  mKneeboard->SetNonVRSettings({config});
+  this->SetViewConfig(config);
 }
 
 uint8_t NonVRSettingsPage::KneeboardVerticalPlacement() {
-  return static_cast<uint8_t>(
-    mKneeboard->GetNonVRSettings().mDeprecated.mVerticalAlignment);
+  return static_cast<uint8_t>(this->GetViewConfig().mVerticalAlignment);
 }
 
 void NonVRSettingsPage::KneeboardVerticalPlacement(uint8_t value) {
-  auto config = mKneeboard->GetNonVRSettings().mDeprecated;
+  auto config = this->GetViewConfig();
   config.mVerticalAlignment = static_cast<Alignment::Vertical>(value);
-  mKneeboard->SetNonVRSettings({config});
+  this->SetViewConfig(config);
+}
+
+NonVRConstrainedPosition NonVRSettingsPage::GetViewConfig() {
+  const auto views = mKneeboard->GetViewsSettings().mViews;
+  if (mCurrentView >= views.size()) [[unlikely]] {
+    dprintf("View {} >= count {}", mCurrentView, views.size());
+    OPENKNEEBOARD_BREAK;
+    // TODO: uncomment when > 1 non-VR view is supported.
+    // mCurrentView = 0;
+    return {};
+  }
+  return views.at(mCurrentView).mNonVR.mConstraints;
+}
+
+void NonVRSettingsPage::SetViewConfig(const NonVRConstrainedPosition& value) {
+  auto viewsConfig = mKneeboard->GetViewsSettings();
+  auto& views = viewsConfig.mViews;
+  if (mCurrentView >= views.size()) [[unlikely]] {
+    dprintf("View {} >= count {}", mCurrentView, views.size());
+    OPENKNEEBOARD_BREAK;
+    return;
+  }
+  views[mCurrentView].mNonVR.mConstraints = value;
+  mKneeboard->SetViewsSettings(viewsConfig);
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation
