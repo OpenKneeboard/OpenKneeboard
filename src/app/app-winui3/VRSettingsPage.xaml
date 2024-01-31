@@ -43,12 +43,6 @@
         BorderThickness="1"
         Padding="8">
         <ToggleSwitch
-          Header="Zoom when looking at kneeboard"
-          OnContent="On"
-          OffContent="Off"
-          IsOn="{x:Bind GazeZoomEnabled}"
-        />
-        <ToggleSwitch
           Header="SteamVR support"
           OnContent="Enabled"
           OffContent="Disabled"
@@ -88,16 +82,6 @@
           LargeChange="0.05"
           SpinButtonPlacementMode="Inline"
           NumberFormatter="{StaticResource MetersFormatter}"
-        />
-        <Slider
-          Header="Zoom level when looking at kneeboard"
-          Value="{x:Bind KneeboardZoomScale}"
-          TickPlacement="Outside"
-          TickFrequency="0.5"
-          StepFrequency="0.25"
-          Maximum="4"
-          Minimum="1.0"
-          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
         />
       </StackPanel>
       <TextBlock
@@ -253,6 +237,35 @@
         />
       </StackPanel>
       <TextBlock
+        Text="Gaze zoom"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,16,0,16"
+      />
+      <StackPanel
+        Spacing="12"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1"
+        Padding="8">
+        <ToggleSwitch
+          Header="Zoom when looking at kneeboard"
+          OnContent="On"
+          OffContent="Off"
+          IsOn="{x:Bind GazeZoomEnabled}"
+        />
+        <Slider
+          Header="Zoom level when looking at kneeboard"
+          Value="{x:Bind KneeboardZoomScale}"
+          TickPlacement="Outside"
+          TickFrequency="0.5"
+          StepFrequency="0.25"
+          Maximum="4"
+          Minimum="1.0"
+          ThumbToolTipValueConverter="{StaticResource MultiplierConverter}"
+        />
+      </StackPanel>
+      <TextBlock
         Text="Opacity"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,16,0,16"
@@ -282,7 +295,6 @@
           TickPlacement="Outside"
           ThumbToolTipValueConverter="{StaticResource PercentConverter}"
         />
-
       </StackPanel>
     </StackPanel>
   </ScrollViewer>
