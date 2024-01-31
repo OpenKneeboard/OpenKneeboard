@@ -30,21 +30,11 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mOculusSDK_DiscardDepthInformation,
   mOpenXR_AlwaysUpdateSwapchain)
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRRenderConfig::GazeTargetScale,
-  mVertical,
-  mHorizontal);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(GazeTargetScale, mVertical, mHorizontal);
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRRenderConfig::Opacity, mNormal, mGaze);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VROpacityConfig, mNormal, mGaze);
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(
-  VRRenderConfig,
-  mQuirks,
-  mEnableGazeInputFocus,
-  mEnableGazeZoom,
-  mZoomScale,
-  mGazeTargetScale,
-  mOpacity)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRRenderConfig, mQuirks, mEnableGazeInputFocus)
 
 template <>
 void from_json_postprocess<VRConfig>(const nlohmann::json& j, VRConfig& v) {
@@ -73,7 +63,14 @@ void to_json_postprocess<VRConfig>(
     j, parent_v.mDeprecated.mPrimaryLayer, v.mDeprecated.mPrimaryLayer);
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRConfig::Deprecated, mMaxWidth, mMaxHeight)
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRConfig, mEnableSteamVR, mDeprecated)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  VRConfig::Deprecated,
+  mMaxWidth,
+  mMaxHeight,
+  mEnableGazeZoom,
+  mZoomScale,
+  mGazeTargetScale,
+  mOpacity)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRConfig, mEnableSteamVR)
 
 }// namespace OpenKneeboard

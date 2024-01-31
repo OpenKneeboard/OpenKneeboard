@@ -54,6 +54,11 @@ struct IPCHandles;
 struct VRLayerConfig {
   VRPose mPose;
   Geometry2D::Size<float> mPhysicalSize;
+
+  bool mEnableGazeZoom {true};
+  float mZoomScale = 2.0f;
+  GazeTargetScale mGazeTargetScale {};
+  VROpacityConfig mOpacity {};
 };
 using NonVRLayerConfig = NonVRConstrainedPosition;
 

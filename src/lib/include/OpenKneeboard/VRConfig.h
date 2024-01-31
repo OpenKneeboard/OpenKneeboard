@@ -41,6 +41,18 @@ struct VRPose {
   constexpr auto operator<=>(const VRPose&) const noexcept = default;
 };
 
+struct GazeTargetScale {
+  float mVertical {1.0f};
+  float mHorizontal {1.0f};
+  constexpr auto operator<=>(const GazeTargetScale&) const noexcept = default;
+};
+
+struct VROpacityConfig {
+  float mNormal {1.0f};
+  float mGaze {1.0f};
+  constexpr auto operator<=>(const VROpacityConfig&) const noexcept = default;
+};
+
 struct VRRenderConfig {
   struct Quirks final {
     bool mOculusSDK_DiscardDepthInformation {true};
@@ -49,23 +61,6 @@ struct VRRenderConfig {
   };
   Quirks mQuirks {};
   bool mEnableGazeInputFocus {true};
-  bool mEnableGazeZoom {true};
-
-  float mZoomScale = 2.0f;
-
-  struct GazeTargetScale final {
-    float mVertical {1.0f};
-    float mHorizontal {1.0f};
-    constexpr auto operator<=>(const GazeTargetScale&) const noexcept = default;
-  };
-  GazeTargetScale mGazeTargetScale {};
-
-  struct Opacity final {
-    float mNormal {1.0f};
-    float mGaze {1.0f};
-    constexpr auto operator<=>(const Opacity&) const noexcept = default;
-  };
-  Opacity mOpacity {};
 
   ///// Runtime-only settings (no JSON) ////
 
@@ -86,6 +81,11 @@ struct VRConfig : public VRRenderConfig {
     float mMaxWidth = 0.15f;
     float mMaxHeight = 0.25f;
 
+    bool mEnableGazeZoom {true};
+    float mZoomScale = 2.0f;
+    GazeTargetScale mGazeTargetScale {};
+    VROpacityConfig mOpacity {};
+
     constexpr auto operator<=>(const Deprecated&) const noexcept = default;
   };
 
@@ -95,6 +95,8 @@ struct VRConfig : public VRRenderConfig {
 };
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(GazeTargetScale)
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(VROpacityConfig)
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRPose)
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(VRConfig)
 #endif

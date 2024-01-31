@@ -68,7 +68,14 @@ std::optional<SHM::VRLayerConfig> ViewVRConfig::Resolve(
       }
     }
 
-    return SHM::VRLayerConfig {config.mPose, size};
+    return SHM::VRLayerConfig {
+      .mPose = config.mPose,
+      .mPhysicalSize = size,
+      .mEnableGazeZoom = config.mEnableGazeZoom,
+      .mZoomScale = config.mZoomScale,
+      .mGazeTargetScale = config.mGazeTargetScale,
+      .mOpacity = config.mOpacity,
+    };
   }
 
   winrt::check_bool(mType == Type::HorizontalMirror);
@@ -126,7 +133,11 @@ static T MaybeGet(
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   IndependentViewVRConfig,
   mPose,
-  mMaximumPhysicalSize)
+  mMaximumPhysicalSize,
+  mEnableGazeZoom,
+  mZoomScale,
+  mGazeTargetScale,
+  mOpacity)
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
   ViewVRConfig::Type,

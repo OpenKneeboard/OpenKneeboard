@@ -38,6 +38,11 @@ struct IndependentViewVRConfig {
   VRPose mPose;
   Geometry2D::Size<float> mMaximumPhysicalSize;
 
+  bool mEnableGazeZoom {true};
+  float mZoomScale = 2.0f;
+  GazeTargetScale mGazeTargetScale {};
+  VROpacityConfig mOpacity {};
+
   constexpr bool operator==(const IndependentViewVRConfig&) const noexcept
     = default;
 };

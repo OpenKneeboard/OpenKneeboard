@@ -215,15 +215,23 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
     return false;
   }
 
+  const auto& old = settings.mVR.mDeprecated;
+
+  IndependentViewVRConfig vrConfig {
+    .mPose = old.mPrimaryLayer,
+    .mMaximumPhysicalSize = {
+      old.mMaxWidth,
+      old.mMaxHeight,
+    },
+    .mEnableGazeZoom = old.mEnableGazeZoom,
+    .mZoomScale = old.mZoomScale,
+    .mGazeTargetScale = old.mGazeTargetScale,
+    .mOpacity = old.mOpacity,
+  };
+
   const ViewConfig primary {
     .mName = _("Kneeboard"),
-    .mVR = ViewVRConfig::Independent({
-      settings.mVR.mDeprecated.mPrimaryLayer,
-      {
-        settings.mVR.mDeprecated.mMaxWidth,
-        settings.mVR.mDeprecated.mMaxHeight,
-      },
-    }),
+    .mVR = ViewVRConfig::Independent(vrConfig),
     .mNonVR = ViewNonVRConfig {
       .mEnabled = true,
       .mConstraints = settings.mNonVR.mDeprecated,

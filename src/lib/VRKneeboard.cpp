@@ -56,7 +56,7 @@ Vector2 VRKneeboard::GetKneeboardSize(
   const auto sizes = this->GetSizes(config.mVR, layer);
 
   return config.mVR.mForceZoom
-      || (isLookingAtKneeboard && config.mVR.mEnableGazeZoom)
+      || (isLookingAtKneeboard && layer.mVR.mEnableGazeZoom)
     ? sizes.mZoomedSize
     : sizes.mNormalSize;
 }
@@ -71,7 +71,7 @@ VRKneeboard::Sizes VRKneeboard::GetSizes(
   return {
     .mNormalSize = {virtualWidth, virtualHeight},
     .mZoomedSize
-    = {virtualWidth * vrc.mZoomScale, virtualHeight * vrc.mZoomScale},
+    = {virtualWidth * layer.mVR.mZoomScale, virtualHeight * layer.mVR.mZoomScale},
   };
 }
 
@@ -124,8 +124,8 @@ VRKneeboard::RenderParameters VRKneeboard::GetRenderParameters(
     .mKneeboardPose = kneeboardPose,
     .mKneeboardSize
     = this->GetKneeboardSize(config, layer, isLookingAtKneeboard),
-    .mKneeboardOpacity = isLookingAtKneeboard ? config.mVR.mOpacity.mGaze
-                                              : config.mVR.mOpacity.mNormal,
+    .mKneeboardOpacity = isLookingAtKneeboard ? layer.mVR.mOpacity.mGaze
+                                              : layer.mVR.mOpacity.mNormal,
     .mCacheKey = cacheKey,
     .mIsLookingAtKneeboard = isLookingAtKneeboard,
   };
@@ -139,8 +139,8 @@ bool VRKneeboard::IsLookingAtKneeboard(
   auto& isLookingAtKneeboard = mIsLookingAtKneeboard[layer.mLayerID];
 
   if (
-    config.mVR.mGazeTargetScale.mHorizontal < 0.1
-    || config.mVR.mGazeTargetScale.mVertical < 0.1) {
+    layer.mVR.mGazeTargetScale.mHorizontal < 0.1
+    || layer.mVR.mGazeTargetScale.mVertical < 0.1) {
     return false;
   }
 
@@ -148,8 +148,8 @@ bool VRKneeboard::IsLookingAtKneeboard(
   auto currentSize
     = isLookingAtKneeboard ? sizes.mZoomedSize : sizes.mNormalSize;
 
-  currentSize.x *= config.mVR.mGazeTargetScale.mHorizontal;
-  currentSize.y *= config.mVR.mGazeTargetScale.mVertical;
+  currentSize.x *= layer.mVR.mGazeTargetScale.mHorizontal;
+  currentSize.y *= layer.mVR.mGazeTargetScale.mVertical;
 
   isLookingAtKneeboard = RayIntersectsRect(
     hmdPose.mPosition,
