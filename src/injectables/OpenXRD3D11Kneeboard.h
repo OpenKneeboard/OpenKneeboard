@@ -57,7 +57,7 @@ class OpenXRD3D11Kneeboard final : public OpenXRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const std::span<SHM::LayerRenderInfo>& layers) override;
+    const std::span<SHM::LayerSprite>& layers) override;
 
  private:
   SHM::D3D11::CachedReader mSHM {SHM::ConsumerKind::OpenXR};

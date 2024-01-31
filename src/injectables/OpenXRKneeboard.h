@@ -68,7 +68,7 @@ class OpenXRKneeboard : public VRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const std::span<SHM::LayerRenderInfo>& layers)
+    const std::span<SHM::LayerSprite>& layers)
     = 0;
   virtual SHM::CachedReader* GetSHM() = 0;
 

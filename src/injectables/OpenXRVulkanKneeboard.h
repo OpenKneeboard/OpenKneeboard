@@ -67,7 +67,7 @@ class OpenXRVulkanKneeboard final : public OpenXRKneeboard {
     XrSwapchain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const std::span<SHM::LayerRenderInfo>& layers) override;
+    const std::span<SHM::LayerSprite>& layers) override;
 
  private:
   std::unique_ptr<OpenKneeboard::Vulkan::Dispatch> mVK;

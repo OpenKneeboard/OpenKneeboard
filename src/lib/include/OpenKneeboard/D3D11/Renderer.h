@@ -52,7 +52,7 @@ class Renderer {
     const SwapchainResources&,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const std::span<SHM::LayerRenderInfo>& layers,
+    const std::span<SHM::LayerSprite>& layers,
     RenderMode);
 
  private:

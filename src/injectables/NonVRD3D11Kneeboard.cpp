@@ -150,8 +150,8 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   const auto destRect
     = flatConfig.Layout(sr.mDimensions, layerConfig->mLocationOnTexture.mSize);
 
-  SHM::LayerRenderInfo layer {
-    .mLayerIndex = layerIndex,
+  SHM::LayerSprite layer {
+    .mSourceRect = layerConfig->mLocationOnTexture,
     .mDestRect = destRect,
     .mOpacity = flatConfig.mOpacity,
   };

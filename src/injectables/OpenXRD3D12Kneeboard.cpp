@@ -169,7 +169,7 @@ void OpenXRD3D12Kneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  const std::span<SHM::LayerRenderInfo>& layers) {
+  const std::span<SHM::LayerSprite>& layers) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
   mRenderer->RenderLayers(

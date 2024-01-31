@@ -258,9 +258,9 @@ XrResult OpenXRKneeboard::xrEndFrame(
   uint8_t topMost = layerCount - 1;
 
   bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-  std::vector<SHM::LayerRenderInfo> layerRenderInfo;
+  std::vector<SHM::LayerSprite> LayerSprite;
   std::vector<uint64_t> cacheKeys;
-  layerRenderInfo.reserve(layerCount);
+  LayerSprite.reserve(layerCount);
   cacheKeys.reserve(layerCount);
 
   for (const auto layerIndex: availableLayers) {
@@ -268,8 +268,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
     const auto destOffset = Spriting::GetOffset(layerIndex, MaxViewCount);
-    layerRenderInfo.push_back(SHM::LayerRenderInfo {
-      .mLayerIndex = layerIndex,
+    LayerSprite.push_back(SHM::LayerSprite {
+      .mSourceRect = layer->mLocationOnTexture,
       .mDestRect = {destOffset, layer->mLocationOnTexture.mSize},
       .mOpacity = params.mKneeboardOpacity,
     });
@@ -333,7 +333,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     {
       OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
       this->RenderLayers(
-        mSwapchain, swapchainTextureIndex, snapshot, layerRenderInfo);
+        mSwapchain, swapchainTextureIndex, snapshot, LayerSprite);
     }
 
     {

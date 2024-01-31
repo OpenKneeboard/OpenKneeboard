@@ -66,8 +66,8 @@ static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
 static constexpr bool SHARED_TEXTURE_IS_PREMULTIPLIED = true;
 
-struct LayerRenderInfo {
-  uint8_t mLayerIndex;
+struct LayerSprite {
+  PixelRect mSourceRect;
   PixelRect mDestRect;
   float mOpacity;
 };

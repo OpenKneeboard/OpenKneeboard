@@ -174,11 +174,11 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
   std::vector<uint64_t> cacheKeys;
   std::vector<ovrLayerQuad> addedOVRLayers;
-  std::vector<SHM::LayerRenderInfo> layerRenderInfo;
+  std::vector<SHM::LayerSprite> LayerSprite;
 
   cacheKeys.reserve(addedLayerCount);
   addedOVRLayers.reserve(addedLayerCount);
-  layerRenderInfo.reserve(addedLayerCount);
+  LayerSprite.reserve(addedLayerCount);
 
   uint16_t topMost = 0;
   bool needRender = false;
@@ -193,8 +193,8 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       layer.mLocationOnTexture.mSize,
     };
 
-    layerRenderInfo.push_back(SHM::LayerRenderInfo {
-      .mLayerIndex = layerIndex,
+    LayerSprite.push_back(SHM::LayerSprite {
+      .mSourceRect = layer.mLocationOnTexture,
       .mDestRect = destRect,
       .mOpacity = params.mKneeboardOpacity,
     });
@@ -238,7 +238,7 @@ ovrResult OculusKneeboard::OnOVREndFrame(
       mSwapchain,
       static_cast<uint32_t>(swapchainTextureIndex),
       snapshot,
-      layerRenderInfo);
+      LayerSprite);
 
     auto error = ovr->ovr_CommitTextureSwapChain(session, mSwapchain);
     if (error) {

@@ -49,7 +49,7 @@ void Renderer::RenderLayers(
   const SwapchainResources& sr,
   uint32_t swapchainTextureIndex,
   const SHM::Snapshot& snapshot,
-  const std::span<SHM::LayerRenderInfo>& layers,
+  const std::span<SHM::LayerSprite>& layers,
   RenderMode renderMode) {
   OPENKNEEBOARD_TraceLoggingScope("D3D11::Renderer::RenderLayers()");
 
@@ -67,11 +67,11 @@ void Renderer::RenderLayers(
   }
 
   for (const auto& layer: layers) {
-    const auto sourceRect
-      = snapshot.GetLayerConfig(layer.mLayerIndex)->mLocationOnTexture;
-    const auto& destRect = layer.mDestRect;
-    const D3D11::Opacity opacity {layer.mOpacity};
-    mSpriteBatch->Draw(source, sourceRect, destRect, opacity);
+    mSpriteBatch->Draw(
+      source,
+      layer.mSourceRect,
+      layer.mDestRect,
+      D3D11::Opacity {layer.mOpacity});
   }
   mSpriteBatch->End();
 }

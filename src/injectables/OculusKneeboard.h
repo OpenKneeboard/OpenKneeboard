@@ -75,7 +75,7 @@ class OculusKneeboard::Renderer {
     ovrTextureSwapChain swapchain,
     uint32_t swapchainTextureIndex,
     const SHM::Snapshot& snapshot,
-    const std::span<SHM::LayerRenderInfo>& layers)
+    const std::span<SHM::LayerSprite>& layers)
     = 0;
 };
 

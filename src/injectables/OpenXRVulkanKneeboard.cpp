@@ -247,7 +247,7 @@ void OpenXRVulkanKneeboard::RenderLayers(
   XrSwapchain swapchain,
   uint32_t swapchainIndex,
   const SHM::Snapshot& snapshot,
-  const std::span<SHM::LayerRenderInfo>& layers) {
+  const std::span<SHM::LayerSprite>& layers) {
   OPENKNEEBOARD_TraceLoggingScope("OpenXRD3D12Kneeboard::RenderLayers()");
 
   if (!(mSwapchainResources && mSwapchainResources->mSwapchain == swapchain))
@@ -273,16 +273,13 @@ void OpenXRVulkanKneeboard::RenderLayers(
   mSpriteBatch->Clear();
 
   for (const auto& layer: layers) {
-    const auto sourceRect
-      = snapshot.GetLayerConfig(layer.mLayerIndex)->mLocationOnTexture;
-    const auto& destRect = layer.mDestRect;
     const Vulkan::Opacity opacity {layer.mOpacity};
     mSpriteBatch->Draw(
       source->GetVKImageView(),
       source->GetDimensions(),
-      sourceRect,
-      destRect,
-      opacity);
+      layer.mSourceRect,
+      layer.mDestRect,
+      Vulkan::Opacity {layer.mOpacity});
   }
 
   mSpriteBatch->End();
