@@ -7,6 +7,8 @@ parent: Troubleshooting
 **Crash**: OpenKneeboard's window closes by itself, *sometimes* with an error message
 **Freeze**: OpenKneeboard still has a window, but it ignores keyboard, mouse, and other input. Windows *might* say "The application has stopped responding."
 
+These steps **only** apply for OpenKneeboard crashes; if the game crashes but OpenKneeboard doesn't, a dump or crash file from the game is useful instead. Either way, please include OpenKneeboard logs when reporting all issues.
+
 ## Reporting crashes or freezes
 
 Please do not report crashes or freezes if:
