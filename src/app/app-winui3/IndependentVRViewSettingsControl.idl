@@ -21,7 +21,8 @@ namespace OpenKneeboardApp
         Single KneeboardGazeTargetHorizontalScale;
         Single KneeboardGazeTargetVerticalScale;
 
-        Boolean GazeZoomEnabled;
+        Boolean IsGazeZoomEnabled;
+        Boolean IsUIVisible;
 
         UInt8 NormalOpacity;
         UInt8 GazeOpacity;

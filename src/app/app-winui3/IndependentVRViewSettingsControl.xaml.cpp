@@ -293,13 +293,27 @@ void IndependentVRViewSettingsControl::GazeOpacity(uint8_t value) {
   this->SetViewConfig(view);
 }
 
-bool IndependentVRViewSettingsControl::GazeZoomEnabled() {
+bool IndependentVRViewSettingsControl::IsGazeZoomEnabled() {
   return this->GetViewConfig().mEnableGazeZoom;
 }
 
-void IndependentVRViewSettingsControl::GazeZoomEnabled(bool enabled) {
+void IndependentVRViewSettingsControl::IsGazeZoomEnabled(bool enabled) {
   auto view = this->GetViewConfig();
   view.mEnableGazeZoom = enabled;
+  this->SetViewConfig(view);
+}
+
+bool IndependentVRViewSettingsControl::IsUIVisible() {
+  return this->GetViewConfig().mDisplayArea != ViewDisplayArea::ContentOnly;
+}
+
+void IndependentVRViewSettingsControl::IsUIVisible(bool visible) {
+  auto view = this->GetViewConfig();
+  if (visible) {
+    view.mDisplayArea = ViewDisplayArea::Full;
+  } else {
+    view.mDisplayArea = ViewDisplayArea::ContentOnly;
+  }
   this->SetViewConfig(view);
 }
 

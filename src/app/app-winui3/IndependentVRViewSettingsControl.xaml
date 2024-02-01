@@ -163,6 +163,24 @@
       </Grid>
     </StackPanel>
     <TextBlock
+      Text="In-Game UI"
+      Style="{StaticResource SubtitleTextBlockStyle}"
+      Margin="0,16,0,16"
+    />
+    <StackPanel
+      Spacing="12"
+      Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+      CornerRadius="4"
+      BorderThickness="1"
+      Padding="8">
+      <ToggleSwitch
+        OnContent="Header, footer, and bookmarks are visible"
+        OffContent="Header, footer, and bookmarks are visible"
+        IsOn="{x:Bind IsUIVisible}"
+      />
+    </StackPanel>
+    <TextBlock
       Text="Gaze target size"
       Style="{StaticResource SubtitleTextBlockStyle}"
       Margin="0,16,0,16"
@@ -211,7 +229,7 @@
         Header="Zoom when looking at kneeboard"
         OnContent="On"
         OffContent="Off"
-        IsOn="{x:Bind GazeZoomEnabled}"
+        IsOn="{x:Bind IsGazeZoomEnabled}"
       />
       <Slider
         Header="Zoom level when looking at kneeboard"

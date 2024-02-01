@@ -73,8 +73,11 @@ struct IndependentVRViewSettingsControl
   float KneeboardGazeTargetVerticalScale();
   void KneeboardGazeTargetVerticalScale(float value);
 
-  bool GazeZoomEnabled();
-  void GazeZoomEnabled(bool);
+  bool IsGazeZoomEnabled();
+  void IsGazeZoomEnabled(bool);
+
+  bool IsUIVisible();
+  void IsUIVisible(bool);
 
   uint8_t NormalOpacity();
   void NormalOpacity(uint8_t);
