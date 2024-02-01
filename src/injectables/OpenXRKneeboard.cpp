@@ -753,11 +753,6 @@ std::vector<uint8_t> OpenXRKneeboard::GetActiveLayers(
       ret.size() <= mMaxLayerCount
       && size.mWidth <= mMaxSwapchainDimensions.mWidth
       && size.mHeight <= mMaxSwapchainDimensions.mHeight) {
-      traceprint(
-        "{} layers, {} VR layers, {} within limits",
-        totalLayers,
-        vrLayers,
-        ret.size());
       return ret;
     }
     ret.pop_back();
