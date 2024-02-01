@@ -1,0 +1,29 @@
+namespace OpenKneeboardApp
+{
+    [default_interface]
+    runtimeclass IndependentVRViewSettingsControl: Microsoft.UI.Xaml.Controls.UserControl, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        IndependentVRViewSettingsControl();
+
+        Guid ViewID;
+
+        Single KneeboardZoomScale;
+        Single KneeboardMaxHeight;
+        Single KneeboardMaxWidth;
+
+        Single KneeboardX;
+        Single KneeboardEyeY;
+        Single KneeboardZ;
+        Single KneeboardRX;
+        Single KneeboardRY;
+        Single KneeboardRZ;
+
+        Single KneeboardGazeTargetHorizontalScale;
+        Single KneeboardGazeTargetVerticalScale;
+
+        Boolean GazeZoomEnabled;
+
+        UInt8 NormalOpacity;
+        UInt8 GazeOpacity;
+    }
+}

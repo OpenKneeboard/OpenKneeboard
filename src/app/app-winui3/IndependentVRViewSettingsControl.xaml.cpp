@@ -1,0 +1,320 @@
+/*
+ * OpenKneeboard
+ *
+ * Copyright (C) 2022 Fred Emmott <fred@fredemmott.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; version 2.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
+ * USA.
+ */
+// clang-format off
+#include "pch.h"
+#include "IndependentVRViewSettingsControl.xaml.h"
+#include "IndependentVRViewSettingsControl.g.cpp"
+// clang-format on
+
+#include "Globals.h"
+
+#include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/RuntimeFiles.h>
+
+#include <OpenKneeboard/utf8.h>
+#include <OpenKneeboard/weak_wrap.h>
+
+#include <shims/filesystem>
+
+#include <cmath>
+#include <numbers>
+
+using namespace OpenKneeboard;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Microsoft::UI::Xaml::Data;
+
+namespace winrt::OpenKneeboardApp::implementation {
+
+static const wchar_t gOpenXRLayerSubkey[]
+  = L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
+
+IndependentVRViewSettingsControl::IndependentVRViewSettingsControl() {
+  this->InitializeComponent();
+  mKneeboard = gKneeboard.lock();
+}
+
+fire_and_forget IndependentVRViewSettingsControl::RestoreDefaults(
+  const IInspectable&,
+  const RoutedEventArgs&) noexcept {
+  ContentDialog dialog;
+  dialog.XamlRoot(this->XamlRoot());
+  dialog.Title(box_value(to_hstring(_("Restore defaults?"))));
+  dialog.Content(
+    box_value(to_hstring(_("Do you want to restore the default VR settings, "
+                           "removing your preferences?"))));
+  dialog.PrimaryButtonText(to_hstring(_("Restore Defaults")));
+  dialog.CloseButtonText(to_hstring(_("Cancel")));
+  dialog.DefaultButton(ContentDialogButton::Close);
+
+  if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  mKneeboard->ResetVRSettings();
+
+  if (!mPropertyChangedEvent) {
+    co_return;
+  }
+
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
+}
+
+IndependentViewVRConfig IndependentVRViewSettingsControl::GetViewConfig() {
+  const auto views = mKneeboard->GetViewsSettings().mViews;
+
+  const auto it = std::ranges::find(
+    views, mViewID, [](const auto& it) { return it.mGuid; });
+  if (it == views.end()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Requested view not found");
+  }
+
+  return it->mVR.GetIndependentConfig();
+}
+
+void IndependentVRViewSettingsControl::SetViewConfig(
+  const IndependentViewVRConfig& config) {
+  auto viewsConfig = mKneeboard->GetViewsSettings();
+  auto& views = viewsConfig.mViews;
+  auto it = std::ranges::find(
+    views, mViewID, [](const auto& it) { return it.mGuid; });
+  if (it == views.end()) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Requested view not found");
+  }
+  it->mVR.SetIndependentConfig(config);
+  mKneeboard->SetViewsSettings(viewsConfig);
+}
+
+void IndependentVRViewSettingsControl::RecenterNow(
+  const IInspectable&,
+  const RoutedEventArgs&) {
+  mKneeboard->PostUserAction(UserAction::RECENTER_VR);
+}
+
+void IndependentVRViewSettingsControl::GoToBindings(
+  const IInspectable&,
+  const RoutedEventArgs&) {
+  Frame().Navigate(xaml_typename<InputSettingsPage>());
+}
+
+float IndependentVRViewSettingsControl::KneeboardX() {
+  return this->GetViewConfig().mPose.mX;
+}
+
+void IndependentVRViewSettingsControl::KneeboardX(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mPose.mX = value;
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardEyeY() {
+  return -this->GetViewConfig().mPose.mEyeY;
+}
+
+void IndependentVRViewSettingsControl::KneeboardEyeY(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mPose.mEyeY = -value;
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardZ() {
+  // 3D standard right-hand-coordinate system is that -z is forwards;
+  // most users expect the opposite.
+  return -this->GetViewConfig().mPose.mZ;
+}
+
+void IndependentVRViewSettingsControl::KneeboardZ(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mPose.mZ = -value;
+  this->SetViewConfig(view);
+}
+
+static inline float RadiansToDegrees(float radians) {
+  return radians * 180 / std::numbers::pi_v<float>;
+}
+
+static inline float DegreesToRadians(float degrees) {
+  return degrees * std::numbers::pi_v<float> / 180;
+}
+
+float IndependentVRViewSettingsControl::KneeboardRX() {
+  auto raw = RadiansToDegrees(this->GetViewConfig().mPose.mRX) + 90;
+  if (raw < 0) {
+    raw += 360.0f;
+  }
+  if (raw >= 360.0f) {
+    raw -= 360.0f;
+  }
+  return raw <= 180 ? raw : -(360 - raw);
+}
+
+void IndependentVRViewSettingsControl::KneeboardRX(float degrees) {
+  degrees -= 90;
+  if (degrees < 0) {
+    degrees += 360;
+  }
+  auto view = this->GetViewConfig();
+  view.mPose.mRX
+    = DegreesToRadians(degrees <= 180 ? degrees : -(360 - degrees));
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardRY() {
+  return -RadiansToDegrees(this->GetViewConfig().mPose.mRY);
+}
+
+void IndependentVRViewSettingsControl::KneeboardRY(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mPose.mRY = -DegreesToRadians(value);
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardRZ() {
+  return -RadiansToDegrees(this->GetViewConfig().mPose.mRZ);
+}
+
+void IndependentVRViewSettingsControl::KneeboardRZ(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mPose.mRZ = -DegreesToRadians(value);
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardMaxHeight() {
+  return this->GetViewConfig().mMaximumPhysicalSize.mHeight;
+}
+
+void IndependentVRViewSettingsControl::KneeboardMaxHeight(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mMaximumPhysicalSize.mHeight = value;
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardMaxWidth() {
+  return this->GetViewConfig().mMaximumPhysicalSize.mWidth;
+}
+
+void IndependentVRViewSettingsControl::KneeboardMaxWidth(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mMaximumPhysicalSize.mWidth = value;
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardZoomScale() {
+  return this->GetViewConfig().mZoomScale;
+}
+
+void IndependentVRViewSettingsControl::KneeboardZoomScale(float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mZoomScale = value;
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardGazeTargetHorizontalScale() {
+  return this->GetViewConfig().mGazeTargetScale.mHorizontal;
+}
+
+void IndependentVRViewSettingsControl::KneeboardGazeTargetHorizontalScale(
+  float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mGazeTargetScale.mHorizontal = value;
+  this->SetViewConfig(view);
+}
+
+float IndependentVRViewSettingsControl::KneeboardGazeTargetVerticalScale() {
+  return this->GetViewConfig().mGazeTargetScale.mVertical;
+}
+
+void IndependentVRViewSettingsControl::KneeboardGazeTargetVerticalScale(
+  float value) {
+  if (std::isnan(value)) {
+    return;
+  }
+  auto view = this->GetViewConfig();
+  view.mGazeTargetScale.mVertical = value;
+  this->SetViewConfig(view);
+}
+
+uint8_t IndependentVRViewSettingsControl::NormalOpacity() {
+  return static_cast<uint8_t>(
+    std::lround(this->GetViewConfig().mOpacity.mNormal * 100));
+}
+
+void IndependentVRViewSettingsControl::NormalOpacity(uint8_t value) {
+  auto view = this->GetViewConfig();
+  view.mOpacity.mNormal = value / 100.0f;
+  this->SetViewConfig(view);
+}
+
+uint8_t IndependentVRViewSettingsControl::GazeOpacity() {
+  return static_cast<uint8_t>(
+    std::lround(this->GetViewConfig().mOpacity.mGaze * 100));
+}
+
+void IndependentVRViewSettingsControl::GazeOpacity(uint8_t value) {
+  auto view = this->GetViewConfig();
+  view.mOpacity.mGaze = value / 100.0f;
+  this->SetViewConfig(view);
+}
+
+bool IndependentVRViewSettingsControl::GazeZoomEnabled() {
+  return this->GetViewConfig().mEnableGazeZoom;
+}
+
+void IndependentVRViewSettingsControl::GazeZoomEnabled(bool enabled) {
+  auto view = this->GetViewConfig();
+  view.mEnableGazeZoom = enabled;
+  this->SetViewConfig(view);
+}
+
+winrt::guid IndependentVRViewSettingsControl::ViewID() {
+  return mViewID;
+}
+
+void IndependentVRViewSettingsControl::ViewID(const winrt::guid& v) {
+  mViewID = v;
+}
+
+}// namespace winrt::OpenKneeboardApp::implementation

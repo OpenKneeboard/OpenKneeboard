@@ -5,25 +5,7 @@ namespace OpenKneeboardApp
     {
         VRSettingsPage();
 
-        Single KneeboardZoomScale;
-        Single KneeboardMaxHeight;
-        Single KneeboardMaxWidth;
-
-        Single KneeboardX;
-        Single KneeboardEyeY;
-        Single KneeboardZ;
-        Single KneeboardRX;
-        Single KneeboardRY;
-        Single KneeboardRZ;
-
-        Single KneeboardGazeTargetHorizontalScale;
-        Single KneeboardGazeTargetVerticalScale;
-
         Boolean SteamVREnabled;
         Boolean OpenXREnabled;
-        Boolean GazeZoomEnabled;
-
-        UInt8 NormalOpacity;
-        UInt8 GazeOpacity;
     }
 }

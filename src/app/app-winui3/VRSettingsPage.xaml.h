@@ -44,50 +44,13 @@ struct VRSettingsPage
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
-  void RecenterNow(const IInspectable&, const RoutedEventArgs&);
-  void GoToBindings(const IInspectable&, const RoutedEventArgs&);
-
-  float KneeboardX();
-  void KneeboardX(float value);
-  float KneeboardEyeY();
-  void KneeboardEyeY(float value);
-  float KneeboardZ();
-  void KneeboardZ(float value);
-  float KneeboardRX();
-  void KneeboardRX(float value);
-  float KneeboardRY();
-  void KneeboardRY(float value);
-  float KneeboardRZ();
-  void KneeboardRZ(float value);
-  float KneeboardMaxWidth();
-  void KneeboardMaxWidth(float value);
-  float KneeboardMaxHeight();
-  void KneeboardMaxHeight(float value);
-  float KneeboardZoomScale();
-  void KneeboardZoomScale(float value);
-  float KneeboardGazeTargetHorizontalScale();
-  void KneeboardGazeTargetHorizontalScale(float value);
-  float KneeboardGazeTargetVerticalScale();
-  void KneeboardGazeTargetVerticalScale(float value);
-
   bool SteamVREnabled();
   void SteamVREnabled(bool);
   bool OpenXREnabled() noexcept;
   fire_and_forget OpenXREnabled(bool) noexcept;
-  bool GazeZoomEnabled();
-  void GazeZoomEnabled(bool);
-
-  uint8_t NormalOpacity();
-  void NormalOpacity(uint8_t);
-  uint8_t GazeOpacity();
-  void GazeOpacity(uint8_t);
 
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
-  size_t mCurrentView {};
-
-  OpenKneeboard::IndependentViewVRConfig GetViewConfig();
-  void SetViewConfig(const OpenKneeboard::IndependentViewVRConfig&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

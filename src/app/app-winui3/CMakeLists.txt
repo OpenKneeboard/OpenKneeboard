@@ -20,6 +20,7 @@ ok_add_executable(
   FilePicker.cpp FilePicker.h
   GameSettingsPage.idl GameSettingsPage.xaml GameSettingsPage.xaml.cpp GameSettingsPage.xaml.h
   Globals.cpp Globals.h
+  IndependentVRViewSettingsControl.idl IndependentVRViewSettingsControl.xaml IndependentVRViewSettingsControl.xaml.cpp IndependentVRViewSettingsControl.xaml.h
   InputBindingsControl.idl InputBindingsControl.xaml InputBindingsControl.xaml.cpp InputBindingsControl.xaml.h
   InputDeviceUIData.cpp InputDeviceUIData.h
   InputSettingsPage.idl InputSettingsPage.xaml InputSettingsPage.xaml.cpp InputSettingsPage.xaml.h
