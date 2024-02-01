@@ -142,23 +142,11 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
       layoutSize,
     };
 
-    auto vr = viewConfig.mVR.Resolve(contentSize, mSettings.mViews.mViews);
-    if (vr) {
-      switch (viewConfig.mVR.mDisplayArea) {
-        case ViewDisplayArea::ContentOnly:
-          vr->mLocationOnTexture = contentLocation;
-          break;
-        case ViewDisplayArea::Full:
-        default:
-          vr->mLocationOnTexture = fullLocation;
-      }
-    }
+    const auto vr = viewConfig.mVR.Resolve(
+      contentSize, fullLocation, contentLocation, mSettings.mViews.mViews);
 
-    auto nonvr
-      = viewConfig.mNonVR.Resolve(contentSize, mSettings.mViews.mViews);
-    if (nonvr) {
-      nonvr->mLocationOnTexture = fullLocation;
-    }
+    const auto nonvr = viewConfig.mNonVR.Resolve(
+      contentSize, fullLocation, contentLocation, mSettings.mViews.mViews);
 
     ret.push_back({
       .mView = view,

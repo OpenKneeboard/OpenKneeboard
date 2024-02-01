@@ -31,6 +31,8 @@ namespace OpenKneeboard {
 
 std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
   const PreferredSize& contentSize,
+  const PixelRect& fullRect,
+  const PixelRect& contentRect,
   const std::vector<ViewConfig>& others) const {
   if (mType == Type::Empty) {
     return {};
@@ -75,6 +77,8 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
       .mZoomScale = config.mZoomScale,
       .mGazeTargetScale = config.mGazeTargetScale,
       .mOpacity = config.mOpacity,
+      .mLocationOnTexture
+      = (config.mDisplayArea == ViewDisplayArea::Full) ? fullRect : contentRect,
     };
   }
 
@@ -86,7 +90,8 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
     return {};
   }
 
-  const auto other = it->mVR.Resolve(contentSize, others);
+  const auto other
+    = it->mVR.Resolve(contentSize, fullRect, contentRect, others);
   if (!other) {
     return {};
   }
@@ -99,11 +104,16 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
 
 std::optional<SHM::NonVRLayer> ViewNonVRConfig::Resolve(
   [[maybe_unused]] const PreferredSize& contentSize,
+  const PixelRect& fullRect,
+  [[maybe_unused]] const PixelRect& contentRect,
   [[maybe_unused]] const std::vector<ViewConfig>& others) const {
   if (!mEnabled) {
     return {};
   }
-  return {SHM::NonVRLayer {mConstraints}};
+  return {SHM::NonVRLayer {
+    .mPosition = mConstraints,
+    .mLocationOnTexture = fullRect,
+  }};
 }
 
 static void MaybeSet(nlohmann::json& j, std::string_view key, auto value) {
@@ -137,6 +147,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mEnableGazeZoom,
   mZoomScale,
   mGazeTargetScale,
+  mDisplayArea,
   mOpacity)
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
@@ -153,7 +164,6 @@ void from_json(const nlohmann::json& j, ViewVRConfig& v) {
   }
 
   v.mEnabled = MaybeGet<bool>(j, "Enabled", v.mEnabled);
-  v.mDisplayArea = MaybeGet<ViewDisplayArea>(j, "DisplayArea", v.mDisplayArea);
 
   using Type = ViewVRConfig::Type;
   const Type type = j.at("Type");
@@ -175,7 +185,6 @@ void to_json(nlohmann::json& j, const ViewVRConfig& v) {
   j["Type"] = v.GetType();
 
   j["Enabled"] = v.mEnabled;
-  j["ViewDisplayArea"] = v.mDisplayArea;
 
   using Type = ViewVRConfig::Type;
   switch (v.GetType()) {

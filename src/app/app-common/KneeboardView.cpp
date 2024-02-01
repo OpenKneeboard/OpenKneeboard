@@ -340,7 +340,11 @@ IKneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
     const auto view = std::ranges::find(
       views, mGUID, [](const auto& it) { return it.mGuid; });
     if (view != views.end()) [[likely]] {
-      const auto pos = view->mNonVR.Resolve(metrics.mPreferredSize, views);
+      const auto pos = view->mNonVR.Resolve(
+        metrics.mPreferredSize,
+        PixelRect {{0, 0}, metrics.mPreferredSize.mPixelSize},
+        contentArea.Rounded<uint32_t>(),
+        views);
       if (pos) {
         const auto rect = pos->mPosition.Layout(consumerSize, idealSize);
         const auto ratio

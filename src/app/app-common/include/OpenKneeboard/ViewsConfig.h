@@ -48,6 +48,7 @@ struct IndependentViewVRConfig {
   float mZoomScale = 2.0f;
   GazeTargetScale mGazeTargetScale {};
   VROpacityConfig mOpacity {};
+  ViewDisplayArea mDisplayArea {ViewDisplayArea::Full};
 
   constexpr bool operator==(const IndependentViewVRConfig&) const noexcept
     = default;
@@ -67,7 +68,6 @@ struct ViewVRConfig {
   };
 
   bool mEnabled {true};
-  ViewDisplayArea mDisplayArea {ViewDisplayArea::Full};
 
   constexpr Type GetType() const {
     return mType;
@@ -110,7 +110,9 @@ struct ViewVRConfig {
   };
 
   std::optional<SHM::VRLayer> Resolve(
-    const PreferredSize& contentSize,
+    const PreferredSize& preferredSize,
+    const PixelRect& fullRect,
+    const PixelRect& contentRect,
     const std::vector<ViewConfig>& others) const;
 
   constexpr bool operator==(const ViewVRConfig&) const noexcept = default;
@@ -129,6 +131,8 @@ struct ViewNonVRConfig {
 
   std::optional<SHM::NonVRLayer> Resolve(
     const PreferredSize& contentSize,
+    const PixelRect& fullRect,
+    const PixelRect& contentRect,
     const std::vector<ViewConfig>& others) const;
 };
 
