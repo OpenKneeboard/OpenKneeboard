@@ -184,6 +184,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     mKneeboard->evCurrentProfileChangedEvent,
     [this]() -> winrt::fire_and_forget {
       co_await mUIThread;
+      this->ResetKneeboardView();
       auto backStack = Frame().BackStack();
       std::vector<PageStackEntry> newBackStack;
       for (auto entry: backStack) {
@@ -510,9 +511,7 @@ winrt::fire_and_forget MainWindow::UpdateProfileSwitcherVisibility() {
   uiProfiles.Append(settingsItem);
 }
 
-winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
-  co_await mUIThread;
-
+void MainWindow::ResetKneeboardView() {
   for (const auto& event: mKneeboardViewEvents) {
     this->RemoveEventListener(event);
   }
@@ -529,6 +528,12 @@ winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
 
   this->OnTabsChanged();
   this->OnTabChanged();
+}
+
+winrt::fire_and_forget MainWindow::OnViewOrderChanged() {
+  co_await mUIThread;
+
+  this->ResetKneeboardView();
 }
 
 void MainWindow::UpdateTitleBarMargins(

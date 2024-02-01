@@ -545,8 +545,8 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   const EventDelay delay;// lock must be released first
   std::unique_lock lock(*this);
 
-  const scope_guard emitProfileSettingsChanged(
-    [&]() { this->evProfileSettingsChangedEvent.Emit(); });
+  this->evCurrentProfileChangedEvent.Emit();
+  this->evProfileSettingsChangedEvent.Emit();
 
   const auto oldID = mProfiles.mActiveProfile;
   mProfiles = profiles;
@@ -567,17 +567,17 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   // Avoid partially overwriting the new profile with
   // the old profile
 
+  mTabsList->LoadSettings(newSettings.mTabs);
+  this->SetViewsSettings(newSettings.mViews);
+
   this->SetAppSettings(newSettings.mApp);
-  // DirectInput
   this->SetDoodlesSettings(newSettings.mDoodles);
   mGamesList->LoadSettings(newSettings.mGames);
   this->SetNonVRSettings(newSettings.mNonVR);
   mTabletInput->LoadSettings(newSettings.mTabletInput);
-  mTabsList->LoadSettings(newSettings.mTabs);
   this->SetVRSettings(newSettings.mVR);
 
   this->evSettingsChangedEvent.Emit();
-  this->evCurrentProfileChangedEvent.Emit();
   this->evNeedsRepaintEvent.Emit();
 }
 

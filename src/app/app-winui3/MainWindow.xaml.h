@@ -146,6 +146,8 @@ struct MainWindow : MainWindowT<MainWindow>,
 
   audited_ptr<DXResources> mDXR;
   std::shared_ptr<KneeboardState> mKneeboard;
+
+  void ResetKneeboardView();
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 
