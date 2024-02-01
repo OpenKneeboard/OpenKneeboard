@@ -110,10 +110,56 @@ bool VRSettingsPage::OpenXREnabled() noexcept {
   return !disabled;
 }
 
+fire_and_forget VRSettingsPage::RemoveKneeboard(
+  muxc::TabView tabView,
+  muxc::TabViewTabCloseRequestedEventArgs args) noexcept {
+  const auto guid = unbox_value<winrt::guid>(args.Tab().Tag());
+
+  {
+    const auto views = mKneeboard->GetViewsSettings().mViews;
+    const auto it
+      = std::ranges::find(views, guid, [](const auto& it) { return it.mGuid; });
+
+    const auto message = std::format(
+      _("Do you want to completely remove \"{}\" and delete all its' "
+        "settings?"),
+      it->mName);
+
+    ContentDialog dialog;
+    dialog.XamlRoot(XamlRoot());
+    dialog.Title(winrt::box_value(winrt::to_hstring(_("Delete view?"))));
+    dialog.DefaultButton(ContentDialogButton::Primary);
+    dialog.PrimaryButtonText(winrt::to_hstring(_("Delete")));
+    dialog.CloseButtonText(winrt::to_hstring(_("Cancel")));
+    dialog.Content(box_value(to_hstring(message)));
+
+    if (co_await dialog.ShowAsync() != ContentDialogResult::Primary) {
+      co_return;
+    }
+  }
+
+  // While it was modal and nothing else 'should' have changed things in the
+  // mean time, re-fetch just in case
+  {
+    auto settings = mKneeboard->GetViewsSettings();
+    auto it = std::ranges::find(
+      settings.mViews, guid, [](const auto& it) { return it.mGuid; });
+    settings.mViews.erase(it);
+    mKneeboard->SetViewsSettings(settings);
+  }
+
+  {
+    auto items = tabView.TabItems();
+    auto it = std::ranges::find(items, args.Tab());
+    items.RemoveAt(static_cast<uint32_t>(it - items.begin()));
+  }
+}
+
 void VRSettingsPage::PopulateViews() noexcept {
   bool first = true;
   for (const auto& view: mKneeboard->GetViewsSettings().mViews) {
     TabViewItem tab;
+    tab.Tag(winrt::box_value(view.mGuid));
     tab.Header(winrt::box_value(winrt::to_hstring(view.mName)));
     tab.IsClosable(!first);
 

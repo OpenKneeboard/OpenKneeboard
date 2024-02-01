@@ -28,7 +28,10 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ViewsConfig.h>
 
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
+
 using namespace winrt::Microsoft::UI::Xaml;
+namespace muxc = winrt::Microsoft::UI::Xaml::Controls;
 
 namespace OpenKneeboard {
 class KneeboardState;
@@ -40,19 +43,22 @@ struct VRSettingsPage
     OpenKneeboard::WithPropertyChangedEventOnProfileChange<VRSettingsPage> {
   VRSettingsPage();
 
-  fire_and_forget RestoreDefaults(
-    const IInspectable&,
-    const RoutedEventArgs&) noexcept;
-
   bool SteamVREnabled();
   void SteamVREnabled(bool);
   bool OpenXREnabled() noexcept;
   fire_and_forget OpenXREnabled(bool) noexcept;
 
-  void PopulateViews() noexcept;
+  winrt::fire_and_forget RestoreDefaults(
+    const IInspectable&,
+    const RoutedEventArgs&) noexcept;
+
+  fire_and_forget RemoveKneeboard(
+    muxc::TabView,
+    muxc::TabViewTabCloseRequestedEventArgs) noexcept;
 
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  void PopulateViews() noexcept;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

@@ -66,7 +66,10 @@
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         CornerRadius="4"
         BorderThickness="1">
-        <TabView x:Name="TabView" />
+        <TabView
+          x:Name="TabView"
+          TabCloseRequested="RemoveKneeboard"
+        />
       </StackPanel>
     </StackPanel>
   </ScrollViewer>
