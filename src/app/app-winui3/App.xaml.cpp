@@ -30,6 +30,7 @@
 #include <OpenKneeboard/GetMainHWND.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/OpenXRMode.h>
+#include <OpenKneeboard/ProcessShutdownBlock.h>
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
@@ -451,6 +452,20 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   ::winrt::Microsoft::UI::Xaml::Application::Start([](auto&&) {
     ::winrt::make<::winrt::OpenKneeboardApp::implementation::App>();
   });
+
+  if (gDXResources.use_count() != 1) {
+    OPENKNEEBOARD_BREAK;
+  }
+  gDXResources = nullptr;
+
+  {
+    winrt::handle event {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+    ProcessShutdownBlock::SetEventOnCompletion(event.get());
+    if (WaitForSingleObject(event.get(), 1000) == WAIT_TIMEOUT) {
+      dprint("Failed to cleanup after 1 second, quitting anyway.");
+      OPENKNEEBOARD_BREAK;
+    }
+  }
 
   return 0;
 }

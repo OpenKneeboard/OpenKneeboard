@@ -39,7 +39,6 @@
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/LaunchURI.h>
-#include <OpenKneeboard/ProcessShutdownBlock.h>
 #include <OpenKneeboard/SHM/ActiveConsumers.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
@@ -613,25 +612,6 @@ winrt::fire_and_forget MainWindow::CleanupAndClose() {
   mKneeboardView = {};
   co_await mKneeboard->ReleaseExclusiveResources();
   mKneeboard = {};
-
-  co_await mUIThread;
-
-  gDXResources = nullptr;
-
-  {
-    auto event = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
-    ProcessShutdownBlock::SetEventOnCompletion(event.get());
-    const auto success
-      = co_await winrt::resume_on_signal(event.get(), std::chrono::seconds(1));
-    if (!success) {
-      dprint("Failed to cleanup after 1 second, quitting anyway.");
-      OPENKNEEBOARD_BREAK;
-    }
-  }
-
-  if (mDXR.use_count() != 1) {
-    OPENKNEEBOARD_BREAK;
-  }
 
   co_await mUIThread;
   mDXR = nullptr;

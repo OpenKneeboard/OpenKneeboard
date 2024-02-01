@@ -116,6 +116,10 @@ class audited_ptr {
 
     return *this;
   }
+
+  operator bool() const {
+    return !!mImpl;
+  }
 };
 
 }// namespace OpenKneeboard
