@@ -209,23 +209,19 @@ static void MigrateToProfiles(Settings& settings) {
 }
 
 // v1.7 introduced 'ViewsConfig'
-static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
-  if (!settings.mViews.mViews.empty()) {
-    return false;
-  }
-
-  const auto& old = settings.mVR.mDeprecated;
+static void MigrateToViewsConfig(Settings& settings) {
+  const auto& oldVR = settings.mVR.mDeprecated;
 
   IndependentViewVRConfig vrConfig {
-    .mPose = old.mPrimaryLayer,
+    .mPose = oldVR.mPrimaryLayer,
     .mMaximumPhysicalSize = {
-      old.mMaxWidth,
-      old.mMaxHeight,
+      oldVR.mMaxWidth,
+      oldVR.mMaxHeight,
     },
-    .mEnableGazeZoom = old.mEnableGazeZoom,
-    .mZoomScale = old.mZoomScale,
-    .mGazeTargetScale = old.mGazeTargetScale,
-    .mOpacity = old.mOpacity,
+    .mEnableGazeZoom = oldVR.mEnableGazeZoom,
+    .mZoomScale = oldVR.mZoomScale,
+    .mGazeTargetScale = oldVR.mGazeTargetScale,
+    .mOpacity = oldVR.mOpacity,
   };
 
   const ViewConfig primary {
@@ -247,17 +243,17 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
   } else {
     settings.mViews.mViews = {primary};
   }
-
-  return true;
 }
 
 Settings Settings::Load(std::string_view profile) {
+  Settings parentSettings;
   Settings settings;
 
   MigrateToProfiles(settings);
 
   if (profile != "default") {
-    settings = Settings::Load("default");
+    parentSettings = Settings::Load("default");
+    settings = parentSettings;
   }
   const auto profileDir = std::filesystem::path {"profiles"} / profile;
 
@@ -267,7 +263,9 @@ Settings Settings::Load(std::string_view profile) {
 #undef IT
   MaybeSetFromJSON(settings.mDeprecatedNonVR, profileDir / "NonVR.json");
 
-  MigrateToViewsConfig(settings);
+  if (!std::filesystem::exists(profileDir / "Views.json")) {
+    MigrateToViewsConfig(settings);
+  }
 
   return settings;
 }
