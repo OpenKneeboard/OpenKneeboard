@@ -55,6 +55,7 @@
           OffContent="Disabled"
         />
       </StackPanel>
+      <TabView x:Name="TabView" />
     </StackPanel>
   </ScrollViewer>
 </Page>

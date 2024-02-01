@@ -49,6 +49,7 @@ static const wchar_t gOpenXRLayerSubkey[]
 VRSettingsPage::VRSettingsPage() {
   this->InitializeComponent();
   mKneeboard = gKneeboard.lock();
+  this->PopulateViews();
 }
 
 fire_and_forget VRSettingsPage::RestoreDefaults(
@@ -107,6 +108,29 @@ bool VRSettingsPage::OpenXREnabled() noexcept {
   }
   const auto disabled = static_cast<bool>(data);
   return !disabled;
+}
+
+void VRSettingsPage::PopulateViews() noexcept {
+  bool first = true;
+  for (const auto& view: mKneeboard->GetViewsSettings().mViews) {
+    TabViewItem tab;
+    tab.Header(winrt::box_value(winrt::to_hstring(view.mName)));
+    tab.IsClosable(!first);
+
+    using Type = ViewVRConfig::Type;
+    switch (view.mVR.GetType()) {
+      case Type::Independent: {
+        IndependentVRViewSettingsControl viewSettings;
+        viewSettings.ViewID(view.mGuid);
+        tab.Content(viewSettings);
+        break;
+      }
+    }
+
+    TabView().TabItems().Append(tab);
+
+    first = false;
+  }
 }
 
 fire_and_forget VRSettingsPage::OpenXREnabled(bool enabled) noexcept {

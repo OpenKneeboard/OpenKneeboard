@@ -49,6 +49,8 @@ struct VRSettingsPage
   bool OpenXREnabled() noexcept;
   fire_and_forget OpenXREnabled(bool) noexcept;
 
+  void PopulateViews() noexcept;
+
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 };
