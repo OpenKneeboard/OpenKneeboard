@@ -13,7 +13,7 @@
     <local:MultiplierValueConverter x:Key="MultiplierConverter" />
     <local:PercentValueConverter x:Key="PercentConverter" />
   </UserControl.Resources>
-  <StackPanel Margin="16" Spacing="8" x:DefaultBindMode="TwoWay">
+  <StackPanel Spacing="8" x:DefaultBindMode="TwoWay">
     <TextBlock
       Text="Size"
       Style="{StaticResource SubtitleTextBlockStyle}"

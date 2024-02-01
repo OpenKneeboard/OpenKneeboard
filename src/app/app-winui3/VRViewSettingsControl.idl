@@ -6,5 +6,27 @@ namespace OpenKneeboardApp
         VRViewSettingsControl();
 
         Guid ViewID;
+        
+        Boolean IsEnabledInVR;
+
+        IInspectable SelectedKind;
     }
+
+    [default_interface]
+    unsealed runtimeclass VRViewUIKind : Windows.Foundation.IStringable {
+        String Label;
+    }
+
+    [default_interface]
+    runtimeclass IndependentVRViewUIKind : VRViewUIKind {
+        IndependentVRViewUIKind();
+    }
+
+    [default_interface]
+    runtimeclass HorizontalMirrorVRViewUIKind : VRViewUIKind {
+        HorizontalMirrorVRViewUIKind();
+
+        Guid MirrorOf;
+    }
+
 }

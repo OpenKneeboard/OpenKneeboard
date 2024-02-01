@@ -20,6 +20,8 @@ ok_add_executable(
   FilePicker.cpp FilePicker.h
   GameSettingsPage.idl GameSettingsPage.xaml GameSettingsPage.xaml.cpp GameSettingsPage.xaml.h
   Globals.cpp Globals.h
+  HorizontalMirrorVRViewUIKind.cpp HorizontalMirrorVRViewUIKind.h
+  IndependentVRViewUIKind.cpp IndependentVRViewUIKind.h
   IndependentVRViewSettingsControl.idl IndependentVRViewSettingsControl.xaml IndependentVRViewSettingsControl.xaml.cpp IndependentVRViewSettingsControl.xaml.h
   InputBindingsControl.idl InputBindingsControl.xaml InputBindingsControl.xaml.cpp InputBindingsControl.xaml.h
   InputDeviceUIData.cpp InputDeviceUIData.h
@@ -37,6 +39,7 @@ ok_add_executable(
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
   TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
+  VRViewUIKind.cpp VRViewUIKind.h
   VRViewSettingsControl.idl VRViewSettingsControl.xaml VRViewSettingsControl.xaml.cpp VRViewSettingsControl.xaml.h
   WindowPickerDialog.idl WindowPickerDialog.xaml WindowPickerDialog.xaml.h WindowPickerDialog.xaml.cpp
   WithPropertyChangedEvent.cpp WithPropertyChangedEvent.h

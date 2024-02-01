@@ -230,7 +230,7 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
   };
 
   const ViewConfig primary {
-    .mName = _("Kneeboard"),
+    .mName = _("Kneeboard 1"),
     .mVR = ViewVRConfig::Independent(vrConfig),
     .mNonVR = ViewNonVRConfig {
       .mEnabled = true,

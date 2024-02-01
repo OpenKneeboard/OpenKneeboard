@@ -37,7 +37,7 @@ struct PreferredSize;
 /// Configuration of a VR view that is not a mirror of another.
 struct IndependentViewVRConfig {
   VRPose mPose;
-  Geometry2D::Size<float> mMaximumPhysicalSize;
+  Geometry2D::Size<float> mMaximumPhysicalSize {0.15f, 0.25f};
 
   bool mEnableGazeZoom {true};
   float mZoomScale = 2.0f;

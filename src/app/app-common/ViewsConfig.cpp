@@ -92,11 +92,7 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
   }
 
   auto ret = *other;
-  ret.mPose.mX = -ret.mPose.mX;
-  // Yaw
-  ret.mPose.mRY = -ret.mPose.mRY;
-  // Roll
-  ret.mPose.mRZ = -ret.mPose.mRZ;
+  ret.mPose = ret.mPose.GetHorizontalMirror();
 
   return ret;
 }

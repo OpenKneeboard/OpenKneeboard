@@ -23,6 +23,16 @@
 
 namespace OpenKneeboard {
 
+VRPose VRPose::GetHorizontalMirror() const {
+  auto ret = *this;
+  ret.mX = -ret.mX;
+  // Yaw
+  ret.mRY = -ret.mRY;
+  // Roll
+  ret.mRZ = -ret.mRZ;
+  return ret;
+}
+
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(VRPose, mX, mEyeY, mZ, mRX, mRY, mRZ)
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(

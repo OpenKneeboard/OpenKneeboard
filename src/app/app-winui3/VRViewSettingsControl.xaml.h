@@ -28,11 +28,13 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ViewsConfig.h>
 
-using namespace winrt::Microsoft::UI::Xaml;
-
 namespace OpenKneeboard {
 class KneeboardState;
 }
+
+using namespace winrt::Microsoft::UI::Xaml;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct VRViewSettingsControl
@@ -44,12 +46,21 @@ struct VRViewSettingsControl
   winrt::guid ViewID();
   void ViewID(const winrt::guid&);
 
+  bool IsEnabledInVR();
+  void IsEnabledInVR(bool);
+
+  IInspectable SelectedKind();
+  void SelectedKind(const IInspectable&);
+
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
   winrt::guid mViewID;
 
-  bool mHaveSubcontrol = false;
+  void PopulateKind(const ViewVRConfig&);
+  void PopulateSubcontrol(const ViewVRConfig&);
+
+  Control mSubControl {nullptr};
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

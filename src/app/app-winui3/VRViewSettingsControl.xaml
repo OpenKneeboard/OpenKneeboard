@@ -7,5 +7,31 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d"
   Background="{ThemeResource SystemChromeMediumLowColor}">
-  <StackPanel x:Name="Container" />
+  <StackPanel
+    x:Name="Container"
+    x:DefaultBindMode="TwoWay"
+    Margin="16"
+    Spacing="8">
+    <ToggleSwitch
+      OnContent="Enabled in VR"
+      OffContent="Disabled in VR"
+      IsOn="{x:Bind IsEnabledInVR}"
+    />
+    <ComboBox
+      x:Name="Kind"
+      Header="Kind"
+      IsEnabled="{x:Bind IsEnabledInVR}"
+      SelectedItem="{x:Bind SelectedKind}"
+    >
+      <!--
+        ComboBox doesn't use IStringable for C++
+        https://github.com/microsoft/microsoft-ui-xaml/issues/8981 
+      -->
+      <ComboBox.ItemTemplate>
+        <DataTemplate x:DataType="local:VRViewUIKind">
+          <TextBlock Text="{x:Bind ToString(),Mode=OneTime}" />
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+  </StackPanel>
 </UserControl>

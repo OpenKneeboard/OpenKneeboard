@@ -42,6 +42,8 @@ struct VRPose {
   float mRX = -2 * std::numbers::pi_v<float> / 5,
         mRY = -std::numbers::pi_v<float> / 32, mRZ = 0.0f;
 
+  VRPose GetHorizontalMirror() const;
+
   constexpr auto operator<=>(const VRPose&) const noexcept = default;
 };
 
