@@ -23,9 +23,6 @@
 #include "VRViewSettingsControl.g.h"
 // clang-format on
 
-#include "WithPropertyChangedEvent.h"
-
-#include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/ViewsConfig.h>
 
 namespace OpenKneeboard {
@@ -37,10 +34,7 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct VRViewSettingsControl
-  : VRViewSettingsControlT<VRViewSettingsControl>,
-    OpenKneeboard::WithPropertyChangedEventOnProfileChange<
-      VRViewSettingsControl> {
+struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl> {
   VRViewSettingsControl();
 
   winrt::guid ViewID();

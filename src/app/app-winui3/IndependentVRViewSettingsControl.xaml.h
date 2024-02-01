@@ -37,8 +37,7 @@ class KneeboardState;
 namespace winrt::OpenKneeboardApp::implementation {
 struct IndependentVRViewSettingsControl
   : IndependentVRViewSettingsControlT<IndependentVRViewSettingsControl>,
-    OpenKneeboard::WithPropertyChangedEventOnProfileChange<
-      IndependentVRViewSettingsControl> {
+    OpenKneeboard::WithPropertyChangedEvent {
   IndependentVRViewSettingsControl();
 
   fire_and_forget RestoreDefaults(

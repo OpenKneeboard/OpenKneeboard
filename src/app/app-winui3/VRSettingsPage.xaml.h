@@ -44,6 +44,7 @@ struct VRSettingsPage
   : VRSettingsPageT<VRSettingsPage>,
     WithPropertyChangedEventOnProfileChange<VRSettingsPage> {
   VRSettingsPage();
+  ~VRSettingsPage();
 
   bool SteamVREnabled();
   void SteamVREnabled(bool);

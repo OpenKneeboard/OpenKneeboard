@@ -1,7 +1,7 @@
 namespace OpenKneeboardApp
 {
     [default_interface]
-    runtimeclass VRViewSettingsControl: Microsoft.UI.Xaml.Controls.UserControl, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    runtimeclass VRViewSettingsControl: Microsoft.UI.Xaml.Controls.UserControl
     {
         VRViewSettingsControl();
 

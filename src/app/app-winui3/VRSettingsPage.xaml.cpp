@@ -49,6 +49,13 @@ VRSettingsPage::VRSettingsPage() {
   this->InitializeComponent();
   mKneeboard = gKneeboard.lock();
   this->PopulateViews();
+  AddEventListener(
+    mKneeboard->evCurrentProfileChangedEvent,
+    weak_wrap(this)([](auto self) { self->PopulateViews(); }));
+}
+
+VRSettingsPage::~VRSettingsPage() {
+  this->RemoveAllEventListeners();
 }
 
 fire_and_forget VRSettingsPage::RestoreDefaults(
@@ -271,6 +278,7 @@ void VRSettingsPage::PopulateViews() noexcept {
   for (const auto& view: mKneeboard->GetViewsSettings().mViews) {
     AppendViewTab(view);
   }
+  TabView().SelectedIndex(0);
 }
 
 fire_and_forget VRSettingsPage::OpenXREnabled(bool enabled) noexcept {
