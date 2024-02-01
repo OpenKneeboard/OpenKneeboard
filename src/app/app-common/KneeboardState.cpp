@@ -481,15 +481,6 @@ std::vector<std::shared_ptr<UserInputDevice>> KneeboardState::GetInputDevices()
   return devices;
 }
 
-void KneeboardState::SetNonVRSettings(const LegacyNonVRConfig& value) {
-  const EventDelay delay;// lock must be released first
-  const std::unique_lock lock(*this);
-
-  mSettings.mNonVR = value;
-  this->SaveSettings();
-  this->evNeedsRepaintEvent.Emit();
-}
-
 void KneeboardState::SetViewsSettings(const ViewsConfig& view) {
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
@@ -592,7 +583,6 @@ void KneeboardState::SetProfileSettings(const ProfileSettings& profiles) {
   this->SetAppSettings(newSettings.mApp);
   this->SetDoodlesSettings(newSettings.mDoodles);
   mGamesList->LoadSettings(newSettings.mGames);
-  this->SetNonVRSettings(newSettings.mNonVR);
   mTabletInput->LoadSettings(newSettings.mTabletInput);
   this->SetVRSettings(newSettings.mVR);
 

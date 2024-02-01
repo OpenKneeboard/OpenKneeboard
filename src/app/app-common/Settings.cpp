@@ -167,7 +167,6 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mDirectInput,
   mDoodles,
   mText,
-  mNonVR,
   mTabletInput,
   mViews,
   mVR)
@@ -234,8 +233,8 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
     .mVR = ViewVRConfig::Independent(vrConfig),
     .mNonVR = ViewNonVRConfig {
       .mEnabled = true,
-      .mConstraints = settings.mNonVR,
-      .mOpacity = settings.mNonVR.mOpacity,
+      .mConstraints = settings.mDeprecatedNonVR,
+      .mOpacity = settings.mDeprecatedNonVR.mOpacity,
     },
   };
 
@@ -266,6 +265,7 @@ Settings Settings::Load(std::string_view profile) {
   MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
+  MaybeSetFromJSON(settings.mDeprecatedNonVR, profileDir / "NonVR.json");
 
   MigrateToViewsConfig(settings);
 

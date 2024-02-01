@@ -38,7 +38,6 @@ namespace OpenKneeboard {
   IT(DoodleSettings, Doodles) \
   IT(TextSettings, Text) \
   IT(nlohmann::json, Games) \
-  IT(LegacyNonVRConfig, NonVR) \
   IT(TabletSettings, TabletInput) \
   IT(nlohmann::json, Tabs) \
   IT(ViewsConfig, Views) \
@@ -48,6 +47,7 @@ struct Settings final {
 #define IT(cpptype, name) cpptype m##name {};
   OPENKNEEBOARD_SETTINGS_SECTIONS
 #undef IT
+  LegacyNonVRConfig mDeprecatedNonVR {};
 
   static Settings Load(std::string_view profileID);
   void Save(std::string_view profileID) const;

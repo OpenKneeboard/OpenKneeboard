@@ -57,7 +57,9 @@ fire_and_forget NonVRSettingsPage::RestoreDefaults(
     co_return;
   }
 
-  mKneeboard->ResetNonVRSettings();
+  SetViewConfig({
+    .mEnabled = true,
+  });
 
   if (!mPropertyChangedEvent) {
     co_return;
