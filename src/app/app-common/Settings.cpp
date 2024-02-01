@@ -234,7 +234,8 @@ static bool [[nodiscard]] MigrateToViewsConfig(Settings& settings) {
     .mVR = ViewVRConfig::Independent(vrConfig),
     .mNonVR = ViewNonVRConfig {
       .mEnabled = true,
-      .mConstraints = settings.mNonVR.mDeprecated,
+      .mConstraints = settings.mNonVR,
+      .mOpacity = settings.mNonVR.mOpacity,
     },
   };
 

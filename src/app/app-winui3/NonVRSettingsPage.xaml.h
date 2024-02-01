@@ -32,6 +32,7 @@ class KneeboardState;
 }// namespace OpenKneeboard
 
 using namespace winrt::Microsoft::UI::Xaml;
+using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct NonVRSettingsPage
@@ -55,13 +56,13 @@ struct NonVRSettingsPage
   void KneeboardVerticalPlacement(uint8_t value);
 
  private:
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  std::shared_ptr<KneeboardState> mKneeboard;
 
   // Still not supporting multiple non-VR views
   const size_t mCurrentView = 0;
 
-  OpenKneeboard::NonVRConstrainedPosition GetViewConfig();
-  void SetViewConfig(const OpenKneeboard::NonVRConstrainedPosition&);
+  ViewNonVRConfig GetViewConfig();
+  void SetViewConfig(const ViewNonVRConfig&);
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

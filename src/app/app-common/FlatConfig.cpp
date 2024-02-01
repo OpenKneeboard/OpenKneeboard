@@ -27,45 +27,18 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   NonVRConstrainedPosition,
   mHeightPercent,
   mPaddingPixels,
-  mOpacity,
   mHorizontalAlignment,
   mVerticalAlignment)
 
-void to_json(nlohmann::json& j, const NonVRAbsolutePosition& p) {
-  const auto& r = p.mRect;
-  j["Origin"] = {
-    {"Left", r.mOffset.mX},
-    {"Top", r.mOffset.mY},
-  };
-  j["Size"] = {
-    {"Width", r.mSize.mWidth},
-    {"Height", r.mSize.mHeight},
-  };
-  j["Alignment"] = {
-    {"Horizontal", p.mHorizontalAlignment},
-    {"Vertical", p.mVerticalAlignment},
-  };
-}// namespace OpenKneeboard
-
-void from_json(const nlohmann::json& j, NonVRAbsolutePosition& p) {
-  const auto origin = j.at("Origin");
-  const auto size = j.at("Size");
-  const auto alignment = j.at("Alignment");
-
-  auto& r = p.mRect;
-  r.mOffset.mX = origin.at("Left");
-  r.mOffset.mY = origin.at("Top");
-  r.mSize.mWidth = size.at("Width");
-  r.mSize.mHeight = size.at("Height");
-  p.mHorizontalAlignment = alignment.at("Horizontal");
-  p.mVerticalAlignment = alignment.at("Vertical");
+void to_json(nlohmann::json& j, const LegacyNonVRConfig& v) {
+  to_json(j, static_cast<const NonVRConstrainedPosition&>(v));
+  j["Opacity"] = v.mOpacity;
 }
-
-void to_json(nlohmann::json& j, const DeprecatedFlatConfig& v) {
-  to_json(j, v.mDeprecated);
-}
-void from_json(const nlohmann::json& j, DeprecatedFlatConfig& v) {
-  from_json(j, v.mDeprecated);
+void from_json(const nlohmann::json& j, LegacyNonVRConfig& v) {
+  from_json(j, static_cast<NonVRConstrainedPosition&>(v));
+  if (j.contains("Opacity")) {
+    v.mOpacity = j.at("Opacity");
+  }
 }
 
 }// namespace OpenKneeboard

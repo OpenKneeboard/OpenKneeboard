@@ -38,7 +38,7 @@ namespace OpenKneeboard {
   IT(DoodleSettings, Doodles) \
   IT(TextSettings, Text) \
   IT(nlohmann::json, Games) \
-  IT(DeprecatedFlatConfig, NonVR) \
+  IT(LegacyNonVRConfig, NonVR) \
   IT(TabletSettings, TabletInput) \
   IT(nlohmann::json, Tabs) \
   IT(ViewsConfig, Views) \

@@ -61,9 +61,11 @@ struct VRLayer {
   VROpacityConfig mOpacity {};
   PixelRect mLocationOnTexture {};
 };
+
 struct NonVRLayer {
   NonVRConstrainedPosition mPosition;
   PixelRect mLocationOnTexture;
+  float mOpacity;
 };
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT

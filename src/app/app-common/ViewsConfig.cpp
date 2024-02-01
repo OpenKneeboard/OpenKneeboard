@@ -113,6 +113,7 @@ std::optional<SHM::NonVRLayer> ViewNonVRConfig::Resolve(
   return {SHM::NonVRLayer {
     .mPosition = mConstraints,
     .mLocationOnTexture = fullRect,
+    .mOpacity = mOpacity,
   }};
 }
 
@@ -201,7 +202,11 @@ void to_json(nlohmann::json& j, const ViewVRConfig& v) {
   }
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewNonVRConfig, mEnabled, mConstraints);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  ViewNonVRConfig,
+  mEnabled,
+  mConstraints,
+  mOpacity);
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewConfig, mGuid, mName, mVR, mNonVR);
 

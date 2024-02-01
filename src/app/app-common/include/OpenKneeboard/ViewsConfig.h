@@ -126,6 +126,7 @@ struct ViewVRConfig {
 struct ViewNonVRConfig {
   bool mEnabled {false};
   NonVRConstrainedPosition mConstraints;
+  float mOpacity = 0.8f;
 
   constexpr bool operator==(const ViewNonVRConfig&) const noexcept = default;
 

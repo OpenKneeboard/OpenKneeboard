@@ -33,20 +33,9 @@
 
 namespace OpenKneeboard {
 
-struct NonVRAbsolutePosition {
-  PixelRect mRect {};
-  Alignment::Horizontal mHorizontalAlignment {Alignment::Horizontal::Right};
-  Alignment::Vertical mVerticalAlignment {Alignment::Vertical::Middle};
-
-  constexpr bool operator==(const NonVRAbsolutePosition&) const = default;
-};
-static_assert(std::is_standard_layout_v<NonVRAbsolutePosition>);
-
 struct NonVRConstrainedPosition {
   uint8_t mHeightPercent = 60;
   uint32_t mPaddingPixels = 10;
-  // In case it covers up menus etc
-  float mOpacity = 0.8f;
 
   Alignment::Horizontal mHorizontalAlignment = Alignment::Horizontal::Right;
   Alignment::Vertical mVerticalAlignment = Alignment::Vertical::Middle;
@@ -58,17 +47,15 @@ struct NonVRConstrainedPosition {
 static_assert(std::is_standard_layout_v<NonVRConstrainedPosition>);
 
 // Replaced by `ViewConfig` in v1.7+
-struct DeprecatedFlatConfig {
-  NonVRConstrainedPosition mDeprecated;
-  constexpr bool operator==(const DeprecatedFlatConfig&) const = default;
+struct LegacyNonVRConfig : NonVRConstrainedPosition {
+  // In case it covers up menus etc
+  float mOpacity = 0.8f;
+  constexpr bool operator==(const LegacyNonVRConfig&) const = default;
 };
 
 #ifdef OPENKNEEBOARD_JSON_SERIALIZE
-void to_json(nlohmann::json& j, const NonVRAbsolutePosition&);
-void from_json(const nlohmann::json& j, NonVRAbsolutePosition&);
-
-void to_json(nlohmann::json& j, const DeprecatedFlatConfig&);
-void from_json(const nlohmann::json& j, DeprecatedFlatConfig&);
+void to_json(nlohmann::json& j, const LegacyNonVRConfig&);
+void from_json(const nlohmann::json& j, LegacyNonVRConfig&);
 OPENKNEEBOARD_DECLARE_SPARSE_JSON(NonVRConstrainedPosition);
 #endif
 

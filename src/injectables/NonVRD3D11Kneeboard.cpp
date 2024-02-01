@@ -153,7 +153,7 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   SHM::LayerSprite layer {
     .mSourceRect = layerConfig->mNonVR.mLocationOnTexture,
     .mDestRect = destRect,
-    .mOpacity = flatConfig.mPosition.mOpacity,
+    .mOpacity = layerConfig->mNonVR.mOpacity,
   };
 
   {

@@ -67,22 +67,22 @@ fire_and_forget NonVRSettingsPage::RestoreDefaults(
 }
 
 uint8_t NonVRSettingsPage::KneeboardHeightPercent() {
-  return this->GetViewConfig().mHeightPercent;
+  return this->GetViewConfig().mConstraints.mHeightPercent;
 }
 
 void NonVRSettingsPage::KneeboardHeightPercent(uint8_t value) {
   auto config = this->GetViewConfig();
-  config.mHeightPercent = value;
+  config.mConstraints.mHeightPercent = value;
   this->SetViewConfig(config);
 }
 
 uint32_t NonVRSettingsPage::KneeboardPaddingPixels() {
-  return this->GetViewConfig().mPaddingPixels;
+  return this->GetViewConfig().mConstraints.mPaddingPixels;
 }
 
 void NonVRSettingsPage::KneeboardPaddingPixels(uint32_t value) {
   auto config = this->GetViewConfig();
-  config.mPaddingPixels = value;
+  config.mConstraints.mPaddingPixels = value;
   this->SetViewConfig(config);
 }
 
@@ -100,26 +100,30 @@ void NonVRSettingsPage::KneeboardOpacity(float value) {
 }
 
 uint8_t NonVRSettingsPage::KneeboardHorizontalPlacement() {
-  return static_cast<uint8_t>(this->GetViewConfig().mHorizontalAlignment);
+  return static_cast<uint8_t>(
+    this->GetViewConfig().mConstraints.mHorizontalAlignment);
 }
 
 void NonVRSettingsPage::KneeboardHorizontalPlacement(uint8_t value) {
   auto config = this->GetViewConfig();
-  config.mHorizontalAlignment = static_cast<Alignment::Horizontal>(value);
+  config.mConstraints.mHorizontalAlignment
+    = static_cast<Alignment::Horizontal>(value);
   this->SetViewConfig(config);
 }
 
 uint8_t NonVRSettingsPage::KneeboardVerticalPlacement() {
-  return static_cast<uint8_t>(this->GetViewConfig().mVerticalAlignment);
+  return static_cast<uint8_t>(
+    this->GetViewConfig().mConstraints.mVerticalAlignment);
 }
 
 void NonVRSettingsPage::KneeboardVerticalPlacement(uint8_t value) {
   auto config = this->GetViewConfig();
-  config.mVerticalAlignment = static_cast<Alignment::Vertical>(value);
+  config.mConstraints.mVerticalAlignment
+    = static_cast<Alignment::Vertical>(value);
   this->SetViewConfig(config);
 }
 
-NonVRConstrainedPosition NonVRSettingsPage::GetViewConfig() {
+ViewNonVRConfig NonVRSettingsPage::GetViewConfig() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
   if (mCurrentView >= views.size()) [[unlikely]] {
     dprintf("View {} >= count {}", mCurrentView, views.size());
@@ -128,10 +132,10 @@ NonVRConstrainedPosition NonVRSettingsPage::GetViewConfig() {
     // mCurrentView = 0;
     return {};
   }
-  return views.at(mCurrentView).mNonVR.mConstraints;
+  return views.at(mCurrentView).mNonVR;
 }
 
-void NonVRSettingsPage::SetViewConfig(const NonVRConstrainedPosition& value) {
+void NonVRSettingsPage::SetViewConfig(const ViewNonVRConfig& value) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
   if (mCurrentView >= views.size()) [[unlikely]] {
@@ -139,7 +143,7 @@ void NonVRSettingsPage::SetViewConfig(const NonVRConstrainedPosition& value) {
     OPENKNEEBOARD_BREAK;
     return;
   }
-  views[mCurrentView].mNonVR.mConstraints = value;
+  views[mCurrentView].mNonVR = value;
   mKneeboard->SetViewsSettings(viewsConfig);
 }
 
