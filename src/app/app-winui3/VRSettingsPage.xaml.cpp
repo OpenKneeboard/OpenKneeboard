@@ -117,15 +117,9 @@ void VRSettingsPage::PopulateViews() noexcept {
     tab.Header(winrt::box_value(winrt::to_hstring(view.mName)));
     tab.IsClosable(!first);
 
-    using Type = ViewVRConfig::Type;
-    switch (view.mVR.GetType()) {
-      case Type::Independent: {
-        IndependentVRViewSettingsControl viewSettings;
-        viewSettings.ViewID(view.mGuid);
-        tab.Content(viewSettings);
-        break;
-      }
-    }
+    VRViewSettingsControl viewSettings;
+    viewSettings.ViewID(view.mGuid);
+    tab.Content(viewSettings);
 
     TabView().TabItems().Append(tab);
 

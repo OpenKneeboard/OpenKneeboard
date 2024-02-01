@@ -26,12 +26,9 @@
 #include "Globals.h"
 
 #include <OpenKneeboard/KneeboardState.h>
-#include <OpenKneeboard/RuntimeFiles.h>
 
 #include <OpenKneeboard/utf8.h>
 #include <OpenKneeboard/weak_wrap.h>
-
-#include <shims/filesystem>
 
 #include <cmath>
 #include <numbers>
@@ -41,9 +38,6 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Microsoft::UI::Xaml::Data;
 
 namespace winrt::OpenKneeboardApp::implementation {
-
-static const wchar_t gOpenXRLayerSubkey[]
-  = L"SOFTWARE\\Khronos\\OpenXR\\1\\ApiLayers\\Implicit";
 
 IndependentVRViewSettingsControl::IndependentVRViewSettingsControl() {
   this->InitializeComponent();

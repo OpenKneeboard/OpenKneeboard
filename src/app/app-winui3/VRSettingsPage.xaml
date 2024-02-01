@@ -31,7 +31,7 @@
         />
       </Grid>
       <TextBlock
-        Text="Options"
+        Text="System"
         Style="{StaticResource SubtitleTextBlockStyle}"
         Margin="0,0,0,16"
       />
@@ -55,7 +55,19 @@
           OffContent="Disabled"
         />
       </StackPanel>
-      <TabView x:Name="TabView" />
+      <TextBlock
+        Text="Views"
+        Style="{StaticResource SubtitleTextBlockStyle}"
+        Margin="0,0,0,16"
+      />
+      <StackPanel
+        Spacing="12"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        CornerRadius="4"
+        BorderThickness="1">
+        <TabView x:Name="TabView" />
+      </StackPanel>
     </StackPanel>
   </ScrollViewer>
 </Page>
