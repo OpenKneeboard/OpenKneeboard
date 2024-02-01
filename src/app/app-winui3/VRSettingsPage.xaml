@@ -68,9 +68,31 @@
         BorderThickness="1">
         <TabView
           x:Name="TabView"
-          TabCloseRequested="RemoveKneeboard"
+          AddTabButtonClick="AddView"
+          TabCloseRequested="RemoveView"
         />
       </StackPanel>
+      <ContentDialog
+        x:Name="AddViewDialog"
+        Title="Add View"
+        DefaultButton="Primary"
+        PrimaryButtonText="Add"
+        CloseButtonText="Cancel">
+        <StackPanel Orientation="Vertical">
+          <TextBlock>What kind of view would you like to add?</TextBlock>
+          <ComboBox x:Name="AddViewKind">
+            <!--
+              ComboBox doesn't use IStringable for C++
+              https://github.com/microsoft/microsoft-ui-xaml/issues/8981 
+            -->
+            <ComboBox.ItemTemplate>
+              <DataTemplate x:DataType="local:VRViewUIKind">
+                <TextBlock Text="{x:Bind ToString(),Mode=OneTime}" />
+              </DataTemplate>
+            </ComboBox.ItemTemplate>
+          </ComboBox>
+        </StackPanel>
+      </ContentDialog>
     </StackPanel>
   </ScrollViewer>
 </Page>

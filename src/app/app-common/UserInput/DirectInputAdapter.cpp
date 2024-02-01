@@ -116,7 +116,7 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
   auto instances
     = GetDirectInputDevices(mDI8.get(), mSettings.mEnableMouseButtonBindings);
 
-  for (auto dit = mDevices.begin(); dit != mDevices.end();) {
+  for (auto dit = mDevices.begin(); dit != mDevices.end(); /* no increment */) {
     auto& device = dit->second.mDevice;
     const winrt::guid guid {device->GetID()};
 

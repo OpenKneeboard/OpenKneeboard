@@ -39,7 +39,7 @@ ok_add_executable(
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
   TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
-  VRViewUIKind.cpp VRViewUIKind.h
+  VRViewUIKinds.idl VRViewUIKind.cpp VRViewUIKind.h
   VRViewSettingsControl.idl VRViewSettingsControl.xaml VRViewSettingsControl.xaml.cpp VRViewSettingsControl.xaml.h
   WindowPickerDialog.idl WindowPickerDialog.xaml WindowPickerDialog.xaml.h WindowPickerDialog.xaml.cpp
   WithPropertyChangedEvent.cpp WithPropertyChangedEvent.h

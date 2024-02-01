@@ -37,10 +37,12 @@ namespace OpenKneeboard {
 class KneeboardState;
 }
 
+using namespace OpenKneeboard;
+
 namespace winrt::OpenKneeboardApp::implementation {
 struct VRSettingsPage
   : VRSettingsPageT<VRSettingsPage>,
-    OpenKneeboard::WithPropertyChangedEventOnProfileChange<VRSettingsPage> {
+    WithPropertyChangedEventOnProfileChange<VRSettingsPage> {
   VRSettingsPage();
 
   bool SteamVREnabled();
@@ -52,13 +54,17 @@ struct VRSettingsPage
     const IInspectable&,
     const RoutedEventArgs&) noexcept;
 
-  fire_and_forget RemoveKneeboard(
+  fire_and_forget AddView(muxc::TabView, const IInspectable&) noexcept;
+
+  fire_and_forget RemoveView(
     muxc::TabView,
     muxc::TabViewTabCloseRequestedEventArgs) noexcept;
 
  private:
-  std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
+  std::shared_ptr<KneeboardState> mKneeboard;
   void PopulateViews() noexcept;
+
+  void AppendViewTab(const ViewConfig& view) noexcept;
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

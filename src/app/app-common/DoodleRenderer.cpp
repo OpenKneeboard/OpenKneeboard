@@ -49,7 +49,7 @@ void DoodleRenderer::ClearPage(PageID pageID) {
 }
 
 void DoodleRenderer::ClearExcept(const std::unordered_set<PageID>& keep) {
-  for (auto it = mDrawings.begin(); it != mDrawings.end();) {
+  for (auto it = mDrawings.begin(); it != mDrawings.end(); /* no increment */) {
     if (keep.contains(it->first)) {
       it++;
     } else {
@@ -170,8 +170,7 @@ ID2D1Bitmap* DoodleRenderer::GetDrawingSurface(PageID pageID) {
   }
 
   const auto scaleX = MaxViewRenderSize.Width<float>() / contentPixels.width;
-  const auto scaleY
-    = MaxViewRenderSize.Height<float>() / contentPixels.height;
+  const auto scaleY = MaxViewRenderSize.Height<float>() / contentPixels.height;
   page.mScale = std::min(scaleX, scaleY);
   D2D1_SIZE_U surfaceSize {
     static_cast<UINT32>(std::lround(contentPixels.width * page.mScale)),

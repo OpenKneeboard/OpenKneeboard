@@ -37,7 +37,6 @@
 #include <cmath>
 #include <numbers>
 
-using namespace OpenKneeboard;
 using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace winrt::Microsoft::UI::Xaml::Data;
 
@@ -110,7 +109,86 @@ bool VRSettingsPage::OpenXREnabled() noexcept {
   return !disabled;
 }
 
-fire_and_forget VRSettingsPage::RemoveKneeboard(
+fire_and_forget VRSettingsPage::AddView(
+  muxc::TabView tabView,
+  const IInspectable&) noexcept {
+  auto kinds = AddViewKind().Items();
+  kinds.Clear();
+
+  kinds.Append(IndependentVRViewUIKind {});
+  AddViewKind().SelectedIndex(0);
+
+  using Type = ViewVRConfig::Type;
+
+  std::unordered_set<winrt::guid> mirrored;
+  std::unordered_map<winrt::guid, uint32_t> indices;
+
+  auto settings = mKneeboard->GetViewsSettings();
+  for (const auto& view: settings.mViews) {
+    const auto& vr = view.mVR;
+    if (!vr.mEnabled) {
+      continue;
+    }
+
+    if (vr.GetType() != Type::Independent) {
+      mirrored.emplace(vr.GetMirrorOfGUID());
+      continue;
+    }
+
+    HorizontalMirrorVRViewUIKind item;
+    item.MirrorOf(view.mGuid);
+    item.Label(
+      to_hstring(std::format(_("Horizontal mirror of '{}'"), view.mName)));
+    kinds.Append(item);
+    indices.emplace(view.mGuid, kinds.Size() - 1);
+  }
+
+  for (const auto& view: settings.mViews) {
+    if (view.mVR.GetType() != Type::Independent) {
+      continue;
+    }
+    if (mirrored.contains(view.mGuid)) {
+      continue;
+    }
+    if (!indices.contains(view.mGuid)) {
+      continue;
+    }
+    AddViewKind().SelectedIndex(indices.at(view.mGuid));
+    break;
+  }
+
+  if (co_await AddViewDialog().ShowAsync() != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  ViewVRConfig vr;
+  vr.mEnabled = true;
+
+  auto item = AddViewKind().SelectedItem();
+  if (item.try_as<IndependentVRViewUIKind>()) {
+    vr = ViewVRConfig::Independent({});
+  } else {
+    auto mirror = item.as<HorizontalMirrorVRViewUIKind>();
+    vr = ViewVRConfig::HorizontalMirrorOf(mirror.MirrorOf());
+  }
+
+  std::string name;
+  for (size_t i = settings.mViews.size() + 1; true; ++i) {
+    name = std::format(_("Kneeboard {}"), i);
+    auto it = std::ranges::find(
+      settings.mViews, name, [](const auto& it) { return it.mName; });
+    if (it == settings.mViews.end()) {
+      break;
+    }
+  }
+  settings.mViews.push_back({.mName = name, .mVR = vr});
+  mKneeboard->SetViewsSettings(settings);
+  AppendViewTab(settings.mViews.back());
+
+  TabView().SelectedIndex(TabView().TabItems().Size() - 1);
+}
+
+fire_and_forget VRSettingsPage::RemoveView(
   muxc::TabView tabView,
   muxc::TabViewTabCloseRequestedEventArgs args) noexcept {
   const auto guid = unbox_value<winrt::guid>(args.Tab().Tag());
@@ -140,36 +218,58 @@ fire_and_forget VRSettingsPage::RemoveKneeboard(
 
   // While it was modal and nothing else 'should' have changed things in the
   // mean time, re-fetch just in case
-  {
-    auto settings = mKneeboard->GetViewsSettings();
-    auto it = std::ranges::find(
-      settings.mViews, guid, [](const auto& it) { return it.mGuid; });
-    settings.mViews.erase(it);
-    mKneeboard->SetViewsSettings(settings);
-  }
+  auto settings = mKneeboard->GetViewsSettings();
+  std::erase_if(settings.mViews, [guid](const ViewConfig& view) {
+    if (view.mGuid == guid) {
+      return true;
+    }
+    if (view.mVR.GetType() != ViewVRConfig::Type::HorizontalMirror) {
+      return false;
+    }
+    return view.mVR.GetMirrorOfGUID() == guid;
+  });
+  mKneeboard->SetViewsSettings(settings);
 
-  {
-    auto items = tabView.TabItems();
-    auto it = std::ranges::find(items, args.Tab());
-    items.RemoveAt(static_cast<uint32_t>(it - items.begin()));
+  auto items = tabView.TabItems();
+  uint32_t selectedIndex = tabView.SelectedIndex();
+
+  for (uint32_t i = 0; i < items.Size(); /* no increment */) {
+    const auto& item = items.GetAt(i);
+    const auto itemView
+      = unbox_value<winrt::guid>(item.as<TabViewItem>().Tag());
+    const auto it = std::ranges::find(
+      settings.mViews, itemView, [](const ViewConfig& view) {
+        return view.mGuid;
+      });
+    if (it == settings.mViews.end()) {
+      if (i == selectedIndex) {
+        tabView.SelectedIndex(--selectedIndex);
+      }
+      items.RemoveAt(i);
+    } else {
+      ++i;
+    }
   }
 }
 
+void VRSettingsPage::AppendViewTab(const ViewConfig& view) noexcept {
+  auto items = TabView().TabItems();
+  TabViewItem tab;
+  tab.Tag(winrt::box_value(view.mGuid));
+  tab.Header(winrt::box_value(winrt::to_hstring(view.mName)));
+  tab.IsClosable(items.Size() >= 1);
+
+  VRViewSettingsControl viewSettings;
+  viewSettings.ViewID(view.mGuid);
+  tab.Content(viewSettings);
+
+  TabView().TabItems().Append(tab);
+}
+
 void VRSettingsPage::PopulateViews() noexcept {
-  bool first = true;
+  TabView().TabItems().Clear();
   for (const auto& view: mKneeboard->GetViewsSettings().mViews) {
-    TabViewItem tab;
-    tab.Tag(winrt::box_value(view.mGuid));
-    tab.Header(winrt::box_value(winrt::to_hstring(view.mName)));
-    tab.IsClosable(!first);
-
-    VRViewSettingsControl viewSettings;
-    viewSettings.ViewID(view.mGuid);
-    tab.Content(viewSettings);
-
-    TabView().TabItems().Append(tab);
-
-    first = false;
+    AppendViewTab(view);
   }
 }
 
