@@ -31,6 +31,11 @@
 
 namespace OpenKneeboard {
 
+enum class ViewDisplayArea {
+  Full,
+  ContentOnly,
+};
+
 struct ViewConfig;
 struct PreferredSize;
 
@@ -62,6 +67,7 @@ struct ViewVRConfig {
   };
 
   bool mEnabled {true};
+  ViewDisplayArea mDisplayArea {ViewDisplayArea::Full};
 
   constexpr Type GetType() const {
     return mType;

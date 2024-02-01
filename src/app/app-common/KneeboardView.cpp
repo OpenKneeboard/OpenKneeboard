@@ -263,9 +263,9 @@ std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
   return mCurrentTabView;
 }
 
-PixelSize KneeboardView::GetIPCRenderSize() const {
+IKneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
   if (!mCurrentTabView) {
-    return ErrorRenderSize;
+    return {};
   }
 
   auto [first, rest] = this->GetUILayers();
@@ -279,11 +279,21 @@ PixelSize KneeboardView::GetIPCRenderSize() const {
     });
 
   const auto idealSize = metrics.mPreferredSize.mPixelSize;
+  const Geometry2D::Rect<float> contentArea {
+    {metrics.mContentArea.left, metrics.mContentArea.top},
+    {
+      metrics.mContentArea.right - metrics.mContentArea.left,
+      metrics.mContentArea.bottom - metrics.mContentArea.top,
+    },
+  };
   if (metrics.mPreferredSize.mScalingKind == ScalingKind::Bitmap) {
     if (
       idealSize.mWidth <= MaxViewRenderSize.mWidth
       && idealSize.mHeight <= MaxViewRenderSize.mHeight) {
-      return idealSize;
+      return {
+        idealSize,
+        contentArea.Rounded<uint32_t>(),
+      };
     }
     const auto scaleX = MaxViewRenderSize.Width<float>() / idealSize.mWidth;
     const auto scaleY = MaxViewRenderSize.Height<float>() / idealSize.mHeight;
@@ -292,14 +302,20 @@ PixelSize KneeboardView::GetIPCRenderSize() const {
     // Integer scaling gets us the most readable results
     const auto divisor = static_cast<uint32_t>(std::ceil(1 / scale));
     return {
-      idealSize.mWidth / divisor,
-      idealSize.mHeight / divisor,
+      idealSize / divisor,
+      (contentArea / divisor).Rounded<uint32_t>(),
     };
   }
 
   const auto consumers = SHM::ActiveConsumers::Get();
   if (consumers.Any() == SHM::ActiveConsumers::T {}) {
-    return idealSize.ScaledToFit(MaxViewRenderSize);
+    const auto size = idealSize.ScaledToFit(MaxViewRenderSize);
+    const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
+
+    return {
+      size,
+      (contentArea * ratio).Rounded<uint32_t>(),
+    };
   }
   const auto now = SHM::ActiveConsumers::Clock::now();
 
@@ -309,8 +325,13 @@ PixelSize KneeboardView::GetIPCRenderSize() const {
   const bool haveViewer
     = (now - consumers.mViewer) < std::chrono::milliseconds(500);
 
-  if (true || haveVR) {
-    return idealSize.ScaledToFit(MaxViewRenderSize);
+  if (haveVR) {
+    const auto size = idealSize.ScaledToFit(MaxViewRenderSize);
+    const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
+    return {
+      size,
+      (contentArea * ratio).Rounded<uint32_t>(),
+    };
   }
 
   const auto& consumerSize = consumers.mNonVRPixelSize;
@@ -321,8 +342,13 @@ PixelSize KneeboardView::GetIPCRenderSize() const {
     if (view != views.end()) [[likely]] {
       const auto pos = view->mNonVR.Resolve(metrics.mPreferredSize, views);
       if (pos) {
-        const auto rect = pos->Layout(consumerSize, idealSize);
-        return rect.mSize;
+        const auto rect = pos->mPosition.Layout(consumerSize, idealSize);
+        const auto ratio
+          = static_cast<float>(rect.mSize.mWidth) / idealSize.mWidth;
+        return {
+          rect.mSize,
+          (contentArea * ratio).Rounded<uint32_t>(),
+        };
       }
     } else {
       traceprint("View with invalid GUID");
@@ -330,11 +356,13 @@ PixelSize KneeboardView::GetIPCRenderSize() const {
     }
   }
 
-  if (haveViewer) {
-    return idealSize.ScaledToFit(consumerSize);
-  }
-
-  return idealSize.ScaledToFit(MaxViewRenderSize);
+  const auto size
+    = idealSize.ScaledToFit(haveViewer ? consumerSize : MaxViewRenderSize);
+  const auto ratio = static_cast<float>(size.mWidth) / idealSize.mWidth;
+  return {
+    size,
+    (contentArea * ratio).Rounded<uint32_t>(),
+  };
 }
 
 PreferredSize KneeboardView::GetPreferredSize() const {

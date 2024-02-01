@@ -64,7 +64,7 @@ class KneeboardView final : public IKneeboardView,
   virtual void PreviousTab() override;
   virtual void NextTab() override;
 
-  virtual PixelSize GetIPCRenderSize() const override;
+  virtual IPCRenderLayout GetIPCRenderLayout() const override;
   /// ContentRenderRect may be scaled; this is the 'real' size.
   virtual PreferredSize GetPreferredSize() const override;
 

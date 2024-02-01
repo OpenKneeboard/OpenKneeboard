@@ -130,10 +130,41 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     const auto& viewConfig = mSettings.mViews.mViews.at(index);
     const auto view = mViews.at(index);
     const auto contentSize = view->GetPreferredSize();
+
+    const auto layout = view->GetIPCRenderLayout();
+    const auto layoutSize
+      = (layout.mSize == PixelSize {}) ? ErrorRenderSize : layout.mSize;
+    const auto contentLocation = (layout.mSize == PixelSize {})
+      ? PixelRect {{0, 0}, ErrorRenderSize}
+      : layout.mContent;
+    const PixelRect fullLocation {
+      {0, 0},
+      layoutSize,
+    };
+
+    auto vr = viewConfig.mVR.Resolve(contentSize, mSettings.mViews.mViews);
+    if (vr) {
+      switch (viewConfig.mVR.mDisplayArea) {
+        case ViewDisplayArea::ContentOnly:
+          vr->mLocationOnTexture = contentLocation;
+          break;
+        case ViewDisplayArea::Full:
+        default:
+          vr->mLocationOnTexture = fullLocation;
+      }
+    }
+
+    auto nonvr
+      = viewConfig.mNonVR.Resolve(contentSize, mSettings.mViews.mViews);
+    if (nonvr) {
+      nonvr->mLocationOnTexture = fullLocation;
+    }
+
     ret.push_back({
       .mView = view,
-      .mVR = viewConfig.mVR.Resolve(contentSize, mSettings.mViews.mViews),
-      .mNonVR = viewConfig.mNonVR.Resolve(contentSize, mSettings.mViews.mViews),
+      .mVR = vr,
+      .mNonVR = nonvr,
+      .mFullSize = layoutSize,
       .mIsActiveForInput = (index == mInputViewIndex),
     });
   }

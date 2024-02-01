@@ -190,11 +190,11 @@ ovrResult OculusKneeboard::OnOVREndFrame(
 
     const PixelRect destRect {
       Spriting::GetOffset(layerIndex, MaxViewCount),
-      layer.mLocationOnTexture.mSize,
+      layer.mVR.mLocationOnTexture.mSize,
     };
 
     LayerSprite.push_back(SHM::LayerSprite {
-      .mSourceRect = layer.mLocationOnTexture,
+      .mSourceRect = layer.mVR.mLocationOnTexture,
       .mDestRect = destRect,
       .mOpacity = params.mKneeboardOpacity,
     });

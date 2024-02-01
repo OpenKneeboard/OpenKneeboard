@@ -296,7 +296,7 @@ void SteamVRKneeboard::Tick() {
     // ... then atomic copy to OpenVR texture
     winrt::com_ptr<ID3D11DeviceContext> ctx;
     mD3D->GetImmediateContext(ctx.put());
-    const D2D_RECT_U sourceRect = layer.mLocationOnTexture;
+    const D2D_RECT_U sourceRect = layer.mVR.mLocationOnTexture;
     const D3D11_BOX sourceBox {
       sourceRect.left,
       sourceRect.top,
@@ -316,7 +316,7 @@ void SteamVRKneeboard::Tick() {
       &sourceBox);
     layerState.mTextureCacheKey = snapshot.GetRenderCacheKey();
 
-    const auto& imageSize = layer.mLocationOnTexture.mSize;
+    const auto& imageSize = layer.mVR.mLocationOnTexture.mSize;
     vr::VRTextureBounds_t textureBounds {
       0.0f,
       0.0f,

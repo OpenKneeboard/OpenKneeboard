@@ -145,15 +145,15 @@ HRESULT NonVRD3D11Kneeboard::OnIDXGISwapChain_Present(
   const auto& sr = mResources->mSwapchainResources;
 
   const auto flatConfig = layerConfig->mNonVR;
-  const auto& imageSize = layerConfig->mLocationOnTexture.mSize;
+  const auto& imageSize = layerConfig->mNonVR.mLocationOnTexture.mSize;
 
-  const auto destRect
-    = flatConfig.Layout(sr.mDimensions, layerConfig->mLocationOnTexture.mSize);
+  const auto destRect = flatConfig.mPosition.Layout(
+    sr.mDimensions, layerConfig->mNonVR.mLocationOnTexture.mSize);
 
   SHM::LayerSprite layer {
-    .mSourceRect = layerConfig->mLocationOnTexture,
+    .mSourceRect = layerConfig->mNonVR.mLocationOnTexture,
     .mDestRect = destRect,
-    .mOpacity = flatConfig.mOpacity,
+    .mOpacity = flatConfig.mPosition.mOpacity,
   };
 
   {

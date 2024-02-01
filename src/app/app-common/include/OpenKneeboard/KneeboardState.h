@@ -58,6 +58,7 @@ struct ViewRenderInfo {
   std::shared_ptr<IKneeboardView> mView;
   std::optional<SHM::VRLayer> mVR;
   std::optional<SHM::NonVRLayer> mNonVR;
+  PixelSize mFullSize;
   bool mIsActiveForInput = false;
 };
 

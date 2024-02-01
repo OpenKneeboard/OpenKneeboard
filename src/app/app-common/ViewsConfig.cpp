@@ -103,7 +103,7 @@ std::optional<SHM::NonVRLayer> ViewNonVRConfig::Resolve(
   if (!mEnabled) {
     return {};
   }
-  return mConstraints;
+  return {SHM::NonVRLayer {mConstraints}};
 }
 
 static void MaybeSet(nlohmann::json& j, std::string_view key, auto value) {
@@ -122,6 +122,13 @@ static T MaybeGet(
   }
   return defaultValue;
 }
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+  ViewDisplayArea,
+  {
+    {ViewDisplayArea::Full, "Full"},
+    {ViewDisplayArea::ContentOnly, "ContentOnly"},
+  })
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   IndependentViewVRConfig,
@@ -146,6 +153,7 @@ void from_json(const nlohmann::json& j, ViewVRConfig& v) {
   }
 
   v.mEnabled = MaybeGet<bool>(j, "Enabled", v.mEnabled);
+  v.mDisplayArea = MaybeGet<ViewDisplayArea>(j, "DisplayArea", v.mDisplayArea);
 
   using Type = ViewVRConfig::Type;
   const Type type = j.at("Type");
@@ -167,6 +175,7 @@ void to_json(nlohmann::json& j, const ViewVRConfig& v) {
   j["Type"] = v.GetType();
 
   j["Enabled"] = v.mEnabled;
+  j["ViewDisplayArea"] = v.mDisplayArea;
 
   using Type = ViewVRConfig::Type;
   switch (v.GetType()) {

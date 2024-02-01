@@ -358,24 +358,24 @@ SHM::LayerConfig InterprocessRenderer::RenderLayer(
   SHM::LayerConfig ret {};
   ret.mLayerID = view->GetRuntimeID().GetTemporaryValue();
 
-  auto usedSize = view->GetIPCRenderSize();
-  if (usedSize.mWidth < 1 || usedSize.mHeight < 1) {
-    usedSize = ErrorRenderSize;
-  }
-  ret.mLocationOnTexture = {bounds.mOffset, usedSize};
-
   if (layer.mVR) {
     ret.mVREnabled = true;
     ret.mVR = *layer.mVR;
+    ret.mVR.mLocationOnTexture.mOffset.mX += bounds.mOffset.mX;
+    ret.mVR.mLocationOnTexture.mOffset.mY += bounds.mOffset.mY;
   }
 
   if (layer.mNonVR) {
     ret.mNonVREnabled = true;
     ret.mNonVR = *layer.mNonVR;
+    ret.mNonVR.mLocationOnTexture.mOffset.mX += bounds.mOffset.mX;
+    ret.mNonVR.mLocationOnTexture.mOffset.mY += bounds.mOffset.mY;
   }
 
   view->RenderWithChrome(
-    mCanvas.get(), ret.mLocationOnTexture, layer.mIsActiveForInput);
+    mCanvas.get(),
+    PixelRect {bounds.mOffset, layer.mFullSize},
+    layer.mIsActiveForInput);
 
   return ret;
 }

@@ -660,22 +660,6 @@ void Writer::SubmitFrame(
       "Asked to publish {} layers, but max is {}", layers.size(), MaxViewCount);
   }
 
-  for (auto layer: layers) {
-    const auto size = layer.mLocationOnTexture.mSize;
-
-    if (size.mWidth == 0 || size.mHeight == 0) {
-      throw std::logic_error("Not feeding a 0-size image");
-    }
-    if (
-      size.mWidth > MaxViewRenderSize.mWidth
-      || size.mHeight > MaxViewRenderSize.mHeight) {
-      // the feeder should scale/crop/whatever as needed to fit
-      // in the limits
-      OPENKNEEBOARD_LOG_AND_FATAL(
-        "Oversized layer: {}x{}", size.mWidth, size.mHeight);
-    }
-  }
-
   p->mHeader->mGPULUID = p->mGPULUID;
   p->mHeader->mConfig = config;
   p->mHeader->mFrameNumber++;

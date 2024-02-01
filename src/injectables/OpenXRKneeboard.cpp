@@ -269,8 +269,8 @@ XrResult OpenXRKneeboard::xrEndFrame(
     cacheKeys.push_back(params.mCacheKey);
     const auto destOffset = Spriting::GetOffset(layerIndex, MaxViewCount);
     LayerSprite.push_back(SHM::LayerSprite {
-      .mSourceRect = layer->mLocationOnTexture,
-      .mDestRect = {destOffset, layer->mLocationOnTexture.mSize},
+      .mSourceRect = layer->mVR.mLocationOnTexture,
+      .mDestRect = {destOffset, layer->mVR.mLocationOnTexture.mSize},
       .mOpacity = params.mKneeboardOpacity,
     });
 
@@ -297,7 +297,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
         .swapchain = mSwapchain,
         .imageRect = {
           destOffset.StaticCast<int, XrOffset2Di>(),
-          layer->mLocationOnTexture.mSize.StaticCast<int, XrExtent2Di>(),
+          layer->mVR.mLocationOnTexture.mSize.StaticCast<int, XrExtent2Di>(),
         },
         .imageArrayIndex = 0,
       },

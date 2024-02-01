@@ -37,6 +37,14 @@ struct Size {
   T mWidth {};
   T mHeight {};
 
+  constexpr Size<T> operator/(const T divisor) const noexcept {
+    return {mWidth / divisor, mHeight / divisor};
+  }
+
+  constexpr Size<T> operator*(const T operand) const noexcept {
+    return {mWidth * operand, mHeight * operand};
+  }
+
   constexpr auto operator<=>(const Size<T>&) const noexcept = default;
 
   constexpr Size() {
@@ -109,6 +117,14 @@ struct Point {
     return static_cast<TV>(mY);
   }
 
+  constexpr Point<T> operator/(const T divisor) const noexcept {
+    return {mX / divisor, mY / divisor};
+  }
+
+  constexpr Point<T> operator*(const T operand) const noexcept {
+    return {mX * operand, mY * operand};
+  }
+
   constexpr auto operator<=>(const Point<T>&) const noexcept = default;
 
   template <class TValue, class TPoint = Point<TValue>>
@@ -116,6 +132,15 @@ struct Point {
     return TPoint {
       static_cast<TValue>(mX),
       static_cast<TValue>(mY),
+    };
+  }
+
+  template <std::integral TValue, class TPoint = Point<TValue>>
+    requires std::floating_point<T>
+  constexpr TPoint Rounded() const noexcept {
+    return {
+      static_cast<TValue>(std::lround(mX)),
+      static_cast<TValue>(std::lround(mY)),
     };
   }
 };
@@ -131,6 +156,20 @@ struct Rect {
   Size<T> mSize {};
 
   Origin mOrigin {Origin::TopLeft};
+
+  constexpr Rect<T> operator/(const T divisor) const noexcept {
+    return {
+      mOffset / divisor,
+      mSize / divisor,
+    };
+  }
+
+  constexpr Rect<T> operator*(const T operand) const noexcept {
+    return {
+      mOffset * operand,
+      mSize * operand,
+    };
+  }
 
   template <class TV = T>
   constexpr auto Left() const {
@@ -184,6 +223,12 @@ struct Rect {
       static_cast<TValue>(mOffset.mX + mSize.mWidth),
       static_cast<TValue>(mOffset.mY + mSize.mHeight),
     };
+  }
+
+  template <std::integral TValue>
+    requires std::floating_point<T>
+  constexpr Rect<TValue> Rounded() const noexcept {
+    return {mOffset.Rounded<TValue>(), mSize.Rounded<TValue>()};
   }
 
   constexpr operator D3D11_RECT() const {

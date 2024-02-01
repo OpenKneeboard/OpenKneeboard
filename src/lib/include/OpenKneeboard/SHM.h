@@ -59,8 +59,12 @@ struct VRLayer {
   float mZoomScale = 2.0f;
   GazeTargetScale mGazeTargetScale {};
   VROpacityConfig mOpacity {};
+  PixelRect mLocationOnTexture {};
 };
-using NonVRLayer = NonVRConstrainedPosition;
+struct NonVRLayer {
+  NonVRConstrainedPosition mPosition;
+  PixelRect mLocationOnTexture;
+};
 
 static constexpr DXGI_FORMAT SHARED_TEXTURE_PIXEL_FORMAT
   = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -142,7 +146,6 @@ struct Config final {
 static_assert(std::is_standard_layout_v<Config>);
 struct LayerConfig final {
   uint64_t mLayerID {};
-  PixelRect mLocationOnTexture {};
 
   bool mVREnabled {false};
   SHM::VRLayer mVR {};
