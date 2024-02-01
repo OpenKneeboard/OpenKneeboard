@@ -204,10 +204,12 @@ void InterprocessRenderer::PostUserAction(UserAction action) {
       OPENKNEEBOARD_BREAK;
       return;
   }
+
   if (!mVisible) {
     mFirstInvisible = true;
   }
-  this->MarkDirty();
+
+  mKneeboard->evNeedsRepaintEvent.Emit();
 }
 
 InterprocessRenderer::IPCTextureResources*
