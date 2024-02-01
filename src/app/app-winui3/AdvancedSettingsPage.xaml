@@ -16,7 +16,7 @@
       Spacing="16"
       x:DefaultBindMode="TwoWay">
       <TextBlock
-        Text="Dual kneeboards"
+        Text="Multiple Views"
         Style="{ThemeResource SubtitleTextBlockStyle}"
       />
       <StackPanel Orientation="Vertical"
@@ -27,15 +27,9 @@
         Padding="8"
         Spacing="12">
         <ToggleSwitch
-					Header="Enable a second kneeboard"
-          OffContent="One kneeboard"
-          OnContent="Two kneeboards"
-          IsOn="{x:Bind DualKneeboards}"
-        />
-        <ToggleSwitch
-					Header="Change the active kneeboard by looking"
-          OffContent="Bindings and pen strokes always affect the first kneeboard"
-          OnContent="Bindings and pen strokes affect the kneeboard you're looking at"
+					Header="Change the active view by looking"
+          OffContent="Bindings and pen strokes always affect the first view"
+          OnContent="Bindings and pen strokes affect the view you're looking at"
           IsOn="{x:Bind GazeInputFocus}"
         />
 				<TextBlock

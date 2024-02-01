@@ -42,9 +42,6 @@ struct AdvancedSettingsPage
   AdvancedSettingsPage();
   ~AdvancedSettingsPage();
 
-  bool DualKneeboards() const noexcept;
-  void DualKneeboards(bool value) noexcept;
-
   bool MultipleProfiles() const noexcept;
   void MultipleProfiles(bool value) noexcept;
 

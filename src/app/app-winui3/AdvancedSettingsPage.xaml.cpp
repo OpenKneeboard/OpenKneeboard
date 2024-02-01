@@ -66,16 +66,6 @@ AdvancedSettingsPage::~AdvancedSettingsPage() {
   this->RemoveAllEventListeners();
 }
 
-bool AdvancedSettingsPage::DualKneeboards() const noexcept {
-  return mKneeboard->GetAppSettings().mDeprecated.mDualKneeboards.mEnabled;
-}
-
-void AdvancedSettingsPage::DualKneeboards(bool value) noexcept {
-  auto s = mKneeboard->GetAppSettings();
-  s.mDeprecated.mDualKneeboards.mEnabled = value;
-  mKneeboard->SetAppSettings(s);
-}
-
 bool AdvancedSettingsPage::Bookmarks() const noexcept {
   return mKneeboard->GetAppSettings().mBookmarks.mEnabled;
 }

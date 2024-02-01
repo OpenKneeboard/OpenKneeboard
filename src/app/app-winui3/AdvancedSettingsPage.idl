@@ -6,7 +6,6 @@ namespace OpenKneeboardApp
     {
         AdvancedSettingsPage();
 
-        Boolean DualKneeboards;
         Boolean GazeInputFocus;
 
         Boolean MultipleProfiles;
