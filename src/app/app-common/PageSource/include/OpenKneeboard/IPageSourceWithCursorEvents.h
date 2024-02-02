@@ -27,6 +27,14 @@ namespace OpenKneeboard {
 
 struct CursorEvent;
 
+/** A page source that handles cursor events itself.
+ *
+ * This implies:
+ * - it does its' own caching, if needed, as it is likely to need to manage
+ *   multiple layers of content depending on the cursor position, e.g. hover
+ *   markers for hyperlink over a separately cached content layer.
+ * - it handles doodles itself, if desired
+ */
 class IPageSourceWithCursorEvents : public virtual IPageSource {
  public:
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID) = 0;
