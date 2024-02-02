@@ -147,37 +147,40 @@ void PageSourceWithDelegates::RenderPage(
     OPENKNEEBOARD_BREAK;
     return;
   }
-  // If it has cursor events, let it do everything itself...
+
+  auto withInternalCaching
+    = std::dynamic_pointer_cast<IPageSourceWithInternalCaching>(delegate);
+  if (withInternalCaching) {
+    delegate->RenderPage(rt, pageID, rect);
+  } else {
+    const auto rtid = rt->GetID();
+    if (!mContentLayerCache.contains(rtid)) {
+      mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
+    }
+
+    mContentLayerCache[rtid]->Render(
+      rect,
+      pageID.GetTemporaryValue(),
+      rt,
+      [&](RenderTarget* rt, const D2D1_SIZE_U& size) {
+        delegate->RenderPage(
+          rt,
+          pageID,
+          {
+            0.0f,
+            0.0f,
+            static_cast<FLOAT>(size.width),
+            static_cast<FLOAT>(size.height),
+          });
+      });
+  }
+
   auto withCursorEvents
     = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
-  if (withCursorEvents) {
-    delegate->RenderPage(rt, pageID, rect);
-    return;
+
+  if (!withCursorEvents) {
+    mDoodles->Render(rt->d2d(), pageID, rect);
   }
-
-  // ... otherwise, we'll assume it should be doodleable
-
-  const auto rtid = rt->GetID();
-  if (!mContentLayerCache.contains(rtid)) {
-    mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
-  }
-
-  mContentLayerCache[rtid]->Render(
-    rect,
-    pageID.GetTemporaryValue(),
-    rt,
-    [&](RenderTarget* rt, const D2D1_SIZE_U& size) {
-      delegate->RenderPage(
-        rt,
-        pageID,
-        {
-          0.0f,
-          0.0f,
-          static_cast<FLOAT>(size.width),
-          static_cast<FLOAT>(size.height),
-        });
-    });
-  mDoodles->Render(rt->d2d(), pageID, rect);
 }
 
 bool PageSourceWithDelegates::CanClearUserInput() const {

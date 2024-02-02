@@ -20,6 +20,7 @@
 #pragma once
 
 #include "IPageSource.h"
+#include "IPageSourceWithInternalCaching.h"
 
 #include <OpenKneeboard/Events.h>
 
@@ -35,7 +36,7 @@ struct CursorEvent;
  *   markers for hyperlink over a separately cached content layer.
  * - it handles doodles itself, if desired
  */
-class IPageSourceWithCursorEvents : public virtual IPageSource {
+class IPageSourceWithCursorEvents : public virtual IPageSourceWithInternalCaching {
  public:
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID) = 0;
 
