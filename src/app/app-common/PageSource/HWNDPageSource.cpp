@@ -84,130 +84,109 @@ std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
   return ret;
 }
 
-winrt::fire_and_forget HWNDPageSource::Init() noexcept {
-  const auto keepAlive = shared_from_this();
+std::optional<float> HWNDPageSource::GetHDRWhiteLevelInNits() const {
+  if (mIsHDR) {
+    return mSDRWhiteLevelInNits;
+  }
+  return {};
+}
 
-  // Requires Windows 11
-  bool supportsBorderRemoval = false;
+winrt::Windows::Graphics::DirectX::DirectXPixelFormat
+HWNDPageSource::GetPixelFormat() const {
+  return mPixelFormat;
+}
+
+winrt::fire_and_forget HWNDPageSource::Init() noexcept {
+  WGCPageSource::Init();
+  co_return;
+}
+
+winrt::Windows::Graphics::Capture::GraphicsCaptureItem
+HWNDPageSource::CreateWGCaptureItem() {
+  WGC::GraphicsCaptureItem item {nullptr};
+  auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
+  auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
   try {
-    supportsBorderRemoval
-      = winrt::Windows::Foundation::Metadata::ApiInformation::IsPropertyPresent(
-        L"Windows.Graphics.Capture.GraphicsCaptureSession",
-        L"IsBorderRequired");
-    if (supportsBorderRemoval) {
-      co_await WGC::GraphicsCaptureAccess::RequestAccessAsync(
-        WGC::GraphicsCaptureAccessKind::Borderless);
+    winrt::check_hresult(interopFactory->CreateForWindow(
+      mWindow,
+      winrt::guid_of<WGC::GraphicsCaptureItem>(),
+      winrt::put_abi(item)));
+  } catch (const winrt::hresult_error& e) {
+    dprintf(
+      "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
+      "for window: "
+      "{} ({})",
+      winrt::to_string(e.message()),
+      static_cast<int64_t>(e.code().value));
+
+    // We can't capture full-screen windows; if that's the problem, capture
+    // the full screen instead :)
+    RECT windowRect;
+    if (!GetWindowRect(mWindow, &windowRect)) {
+      dprint("Failed to get window rect");
+      return nullptr;
+    }
+    const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+    MONITORINFOEXW monitorInfo {sizeof(MONITORINFOEXW)};
+    if (!GetMonitorInfoW(monitor, &monitorInfo)) {
+      dprint("Failed to get monitor info");
+      return nullptr;
+    }
+    if (windowRect != monitorInfo.rcMonitor) {
+      return nullptr;
     }
 
-  } catch (const winrt::hresult_class_not_registered&) {
-    supportsBorderRemoval = false;
-  }
-
-  co_await wil::resume_foreground(mDQC.DispatcherQueue());
-  {
-    const std::unique_lock d2dlock(*mDXR);
-
-    auto wgiFactory = winrt::get_activation_factory<WGC::GraphicsCaptureItem>();
-    auto interopFactory = wgiFactory.as<IGraphicsCaptureItemInterop>();
-    WGC::GraphicsCaptureItem item {nullptr};
     try {
-      winrt::check_hresult(interopFactory->CreateForWindow(
-        mWindow,
+      winrt::check_hresult(interopFactory->CreateForMonitor(
+        monitor,
         winrt::guid_of<WGC::GraphicsCaptureItem>(),
         winrt::put_abi(item)));
     } catch (const winrt::hresult_error& e) {
       dprintf(
         "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
-        "for window: "
+        "for monitor: "
         "{} ({})",
         winrt::to_string(e.message()),
         static_cast<int64_t>(e.code().value));
-
-      // We can't capture full-screen windows; if that's the problem, capture
-      // the full screen instead :)
-      RECT windowRect;
-      if (!GetWindowRect(mWindow, &windowRect)) {
-        dprint("Failed to get window rect");
-        co_return;
-      }
-      const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
-      MONITORINFOEXW monitorInfo {sizeof(MONITORINFOEXW)};
-      if (!GetMonitorInfoW(monitor, &monitorInfo)) {
-        dprint("Failed to get monitor info");
-        co_return;
-      }
-      if (windowRect != monitorInfo.rcMonitor) {
-        co_return;
-      }
-
-      try {
-        winrt::check_hresult(interopFactory->CreateForMonitor(
-          monitor,
-          winrt::guid_of<WGC::GraphicsCaptureItem>(),
-          winrt::put_abi(item)));
-      } catch (const winrt::hresult_error& e) {
-        dprintf(
-          "Error initializing Windows::Graphics::Capture::GraphicsCaptureItem "
-          "for monitor: "
-          "{} ({})",
-          winrt::to_string(e.message()),
-          static_cast<int64_t>(e.code().value));
-        co_return;
-      }
+      return nullptr;
     }
-
-    winrt::com_ptr<IInspectable> inspectable {nullptr};
-    winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
-      mDXR->mDXGIDevice.get(),
-
-      reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));
-    {
-      // DisplayInformation::CreateForWindowId only works for windows owned by
-      // this thread (and process)... so we'll jump through some hoops.
-      const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
-      auto displayID = winrt::Microsoft::UI::GetDisplayIdFromMonitor(monitor);
-      auto di = winrt::Microsoft::Graphics::Display::DisplayInformation::
-        CreateForDisplayId(displayID);
-      auto aci = di.GetAdvancedColorInfo();
-      // WideColorGamut and HighDynamicRange are distinct options here, but
-      // I think they can both be treated the same; for non-HDR displays,
-      // ACI reports standard white level, and for everything except SDR
-      // we *should* have the color luminance points
-      mIsHDR = aci.CurrentAdvancedColorKind()
-        != winrt::Microsoft::Graphics::Display::DisplayAdvancedColorKind::
-          StandardDynamicRange;
-
-      if (mIsHDR) {
-        mPixelFormat = WGDX::DirectXPixelFormat::R16G16B16A16Float;
-        mSDRWhiteLevelInNits = static_cast<FLOAT>(aci.SdrWhiteLevelInNits());
-      } else {
-        mPixelFormat = WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized;
-        mSDRWhiteLevelInNits = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL;
-      }
-    }
-
-    // WGC does not support direct capture of sRGB
-    mFramePool = WGC::Direct3D11CaptureFramePool::Create(
-      mWinRTD3DDevice, mPixelFormat, 2, item.Size());
-    mFramePool.FrameArrived(
-      [this](const auto&, const auto&) { this->OnFrame(); });
-
-    mCaptureSession = mFramePool.CreateCaptureSession(item);
-    mCaptureSession.IsCursorCaptureEnabled(mOptions.mCaptureCursor);
-    if (supportsBorderRemoval) {
-      mCaptureSession.IsBorderRequired(false);
-    }
-    mCaptureSession.StartCapture();
-
-    mCaptureItem = item;
-    mCaptureItem.Closed([this](auto&, auto&) {
-      this->mWindow = {};
-      this->evWindowClosedEvent.Emit();
-    });
   }
 
-  co_await winrt::resume_after(std::chrono::milliseconds(100));
+  {
+    // DisplayInformation::CreateForWindowId only works for windows owned by
+    // this thread (and process)... so we'll jump through some hoops.
+    const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+    auto displayID = winrt::Microsoft::UI::GetDisplayIdFromMonitor(monitor);
+    auto di = winrt::Microsoft::Graphics::Display::DisplayInformation::
+      CreateForDisplayId(displayID);
+    auto aci = di.GetAdvancedColorInfo();
+    // WideColorGamut and HighDynamicRange are distinct options here, but
+    // I think they can both be treated the same; for non-HDR displays,
+    // ACI reports standard white level, and for everything except SDR
+    // we *should* have the color luminance points
+    mIsHDR = aci.CurrentAdvancedColorKind()
+      != winrt::Microsoft::Graphics::Display::DisplayAdvancedColorKind::
+        StandardDynamicRange;
 
+    if (mIsHDR) {
+      mPixelFormat = WGDX::DirectXPixelFormat::R16G16B16A16Float;
+      mSDRWhiteLevelInNits = static_cast<FLOAT>(aci.SdrWhiteLevelInNits());
+    } else {
+      mPixelFormat = WGDX::DirectXPixelFormat::B8G8R8A8UIntNormalized;
+      mSDRWhiteLevelInNits = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL;
+    }
+  }
+
+  item.Closed([this](auto&, auto&) {
+    this->mWindow = {};
+    this->evWindowClosedEvent.Emit();
+  });
+  this->InitializeInputHook();
+  return item;
+}
+
+winrt::fire_and_forget HWNDPageSource::InitializeInputHook() noexcept {
+  co_await winrt::resume_after(std::chrono::milliseconds(100));
   PostMessageW(
     mWindow,
     gControlMessage,
@@ -220,16 +199,10 @@ HWNDPageSource::HWNDPageSource(
   KneeboardState* kneeboard,
   HWND window,
   const Options& options)
-  : mDXR(dxr), mWindow(window), mOptions(options) {
-  if (!window) {
-    return;
-  }
-  if (!WGC::GraphicsCaptureSession::IsSupported()) {
-    return;
-  }
-
-  mDQC = winrt::Windows::System::DispatcherQueueController::
-    CreateOnDedicatedThread();
+  : WGCPageSource(dxr, kneeboard, options),
+    mDXR(dxr),
+    mWindow(window),
+    mOptions(options) {
 }
 
 bool HWNDPageSource::HaveWindow() const {
@@ -249,245 +222,54 @@ winrt::fire_and_forget HWNDPageSource::final_release(
   }
 
   p->RemoveAllEventListeners();
-  if (!p->mDQC) {
-    co_await p->mUIThread;
-    co_return;
-  }
 
-  // Switch to DQ thread to clean up the Windows.Graphics.Capture objects that
-  // were created in that thread
-  co_await winrt::resume_foreground(p->mDQC.DispatcherQueue());
-  if (p->mFramePool) {
-    p->mCaptureSession.Close();
-    p->mFramePool.Close();
-    p->mCaptureSession = {nullptr};
-    p->mCaptureItem = {nullptr};
-    p->mFramePool = {nullptr};
-  }
-
-  co_await p->mUIThread;
-  co_await p->mDQC.ShutdownQueueAsync();
-  p->mDQC = {nullptr};
-  const std::unique_lock d2dlock(*(p->mDXR));
-  p->mTexture = nullptr;
+  WGCPageSource::final_release(std::move(p));
+  co_return;
 }
 
-PageIndex HWNDPageSource::GetPageCount() const {
-  if (this->HaveWindow()) {
-    return 1;
-  }
-  return 0;
-}
-
-std::vector<PageID> HWNDPageSource::GetPageIDs() const {
-  if (this->HaveWindow()) {
-    return {mPageID};
-  }
-  return {};
-}
-
-PreferredSize HWNDPageSource::GetPreferredSize(PageID) {
-  if (!mTexture) {
-    return {};
-  }
-
-  const auto box = this->GetContentBox();
-  return {{box.right - box.left, box.bottom - box.top}, ScalingKind::Bitmap};
-}
-
-D3D11_BOX HWNDPageSource::GetContentBox() const {
+PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) {
   if (mOptions.mCaptureArea != CaptureArea::ClientArea) {
     if (mOptions.mCaptureArea != CaptureArea::FullWindow) {
       dprint("Invalid capture area specified, defaulting to full window");
       OPENKNEEBOARD_BREAK;
     }
-    return {0, 0, 0, mContentSize.width, mContentSize.height, 1};
+    return {{0, 0}, captureSize};
   }
 
   // Client area requested
-  const auto clientArea = this->GetClientArea();
+  const auto clientArea = this->GetClientArea(captureSize);
   if (!clientArea) {
-    return {0, 0, 0, mContentSize.width, mContentSize.height, 1};
+    return {{0, 0}, captureSize};
   }
 
+  return *clientArea;
+}
+
+PixelSize HWNDPageSource::GetSwapchainDimensions(const PixelSize& contentSize) {
+  // Don't create massive buffers if it just moves between a few fixed
+  // sizes, but create full-screen buffers for smoothness if it's being
+  // resized a bunch
+  if (++mRecreations <= 10) {
+    return contentSize;
+  }
+  const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
+  if (!monitor) {
+    return contentSize;
+  }
+
+  MONITORINFO info {sizeof(MONITORINFO)};
+  if (!GetMonitorInfoW(monitor, &info)) {
+    return contentSize;
+  }
+  const auto monitorWidth
+    = static_cast<uint32_t>(info.rcMonitor.right - info.rcMonitor.left);
+  const auto monitorHeight
+    = static_cast<uint32_t>(info.rcMonitor.bottom - info.rcMonitor.top);
+  dprintf(L"Window capture monitor is {}x{}", monitorWidth, monitorHeight);
   return {
-    static_cast<UINT>(clientArea->left),
-    static_cast<UINT>(clientArea->top),
-    0,
-    static_cast<UINT>(clientArea->right),
-    static_cast<UINT>(clientArea->bottom),
-    1,
+    std::max(contentSize.mWidth, monitorWidth),
+    std::max(contentSize.mHeight, monitorHeight),
   };
-}
-
-void HWNDPageSource::RenderPage(
-  RenderTarget* rt,
-  PageID,
-  const D2D1_RECT_F& rect) {
-  if (!mTexture) {
-    return;
-  }
-  if (!this->HaveWindow()) {
-    return;
-  }
-
-  auto d3d = rt->d3d();
-
-  auto color = DirectX::Colors::White;
-
-  if (mIsHDR) {
-    const auto dimming
-      = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL / mSDRWhiteLevelInNits;
-    color = {dimming, dimming, dimming, 1};
-  }
-
-  auto sb = mDXR->mSpriteBatch.get();
-  sb->Begin(d3d.rtv(), rt->GetDimensions());
-
-  const auto contentBox = this->GetContentBox();
-  const PixelRect sourceRect {
-    {contentBox.left, contentBox.top},
-    {contentBox.right - contentBox.left, contentBox.bottom - contentBox.top},
-  };
-  const PixelRect destRect {
-    {
-      static_cast<uint32_t>(std::lround(rect.left)),
-      static_cast<uint32_t>(std::lround(rect.top)),
-    },
-    {
-      static_cast<uint32_t>(std::lround(rect.right - rect.left)),
-      static_cast<uint32_t>(std::lround(rect.bottom - rect.top)),
-    }};
-  sb->Draw(mShaderResourceView.get(), sourceRect, destRect, color);
-
-  sb->End();
-
-  mNeedsRepaint = false;
-}
-
-void HWNDPageSource::OnFrame() {
-  EventDelay delay;
-  TraceLoggingThreadActivity<gTraceProvider> activity;
-  TraceLoggingWriteStart(activity, "HWNDPageSource::OnFrame");
-  scope_guard traceOnException([&activity]() {
-    if (std::uncaught_exceptions() > 0) {
-      TraceLoggingWriteStop(
-        activity,
-        "HWNDPageSource::OnFrame",
-        TraceLoggingValue("UncaughtExceptions", "Result"));
-    }
-  });
-  auto frame = mFramePool.TryGetNextFrame();
-  if (!frame) {
-    TraceLoggingWriteStop(
-      activity, __FUNCTION__, TraceLoggingValue("NoFrame", "Result"));
-    return;
-  }
-  TraceLoggingWriteTagged(activity, "HaveFrame");
-
-  auto wgdxSurface = frame.Surface();
-  auto interopSurface = wgdxSurface.as<
-    ::Windows::Graphics::DirectX::Direct3D11::IDirect3DDxgiInterfaceAccess>();
-  winrt::com_ptr<IDXGISurface> nativeSurface;
-  winrt::check_hresult(
-    interopSurface->GetInterface(IID_PPV_ARGS(nativeSurface.put())));
-  auto d3dSurface = nativeSurface.as<ID3D11Texture2D>();
-  D3D11_TEXTURE2D_DESC surfaceDesc {};
-  d3dSurface->GetDesc(&surfaceDesc);
-  const auto contentSize = frame.ContentSize();
-
-  TraceLoggingWriteTagged(activity, "WaitingForLock");
-  const std::unique_lock d2dlock(*mDXR);
-  TraceLoggingWriteTagged(activity, "Locked");
-
-  auto ctx = mDXR->mD3D11ImmediateContext.get();
-
-  if (
-    contentSize.Width > surfaceDesc.Width
-    || contentSize.Height > surfaceDesc.Height) {
-    auto size = contentSize;
-    // Don't create massive buffers if it just moves between a few fixed
-    // sizes, but create full-screen buffers for smoothness if it's being
-    // resized a bunch
-    if (++mRecreations > 10) {
-      const auto monitor = MonitorFromWindow(mWindow, MONITOR_DEFAULTTONULL);
-      if (monitor) {
-        MONITORINFO info {sizeof(MONITORINFO)};
-        if (GetMonitorInfoW(monitor, &info)) {
-          const auto monitorWidth = info.rcMonitor.right - info.rcMonitor.left;
-          const auto monitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
-          dprintf(
-            L"Window capture monitor is {}x{}", monitorWidth, monitorHeight);
-          if (monitorWidth > size.Width) {
-            size.Width = monitorWidth;
-          }
-          if (monitorHeight > size.Height) {
-            size.Height = monitorHeight;
-          }
-        }
-      }
-    }
-    TraceLoggingWriteTagged(
-      activity,
-      "RecreatingPool",
-      TraceLoggingValue(size.Width, "Width"),
-      TraceLoggingValue(size.Height, "Height"));
-    mFramePool.Recreate(mWinRTD3DDevice, mPixelFormat, 2, size);
-    TraceLoggingWriteStop(
-      activity,
-      "HWNDPageSource::OnFrame",
-      TraceLoggingValue("RecreatedFramePool", "Result"));
-    return;
-  }
-
-  if (mTexture) {
-    D3D11_TEXTURE2D_DESC desc {};
-    mTexture->GetDesc(&desc);
-    if (surfaceDesc.Width != desc.Width || surfaceDesc.Height != desc.Height) {
-      TraceLoggingWriteTagged(activity, "ResettingTexture");
-      mTexture = nullptr;
-    }
-  }
-
-  if (!mTexture) {
-    OPENKNEEBOARD_TraceLoggingScope("CreateTexture");
-    auto desc = surfaceDesc;
-    desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    desc.MiscFlags = 0;
-
-    winrt::check_hresult(
-      mDXR->mD3D11Device->CreateTexture2D(&desc, nullptr, mTexture.put()));
-    mShaderResourceView = nullptr;
-    winrt::check_hresult(mDXR->mD3D11Device->CreateShaderResourceView(
-      mTexture.get(), nullptr, mShaderResourceView.put()));
-  }
-
-  mContentSize = {
-    static_cast<UINT>(contentSize.Width),
-    static_cast<UINT>(contentSize.Height)};
-  TraceLoggingWriteTagged(
-    activity,
-    "ContentSize",
-    TraceLoggingValue(contentSize.Width, "Width"),
-    TraceLoggingValue(contentSize.Height, "Height"));
-
-  D3D11_BOX box {this->GetContentBox()};
-  D3D11_TEXTURE2D_DESC desc {};
-  mTexture->GetDesc(&desc);
-  box.left = std::min(box.left, desc.Width);
-  box.right = std::min(box.right, desc.Width);
-  box.top = std::min(box.top, desc.Height);
-  box.bottom = std::min(box.bottom, desc.Height);
-
-  TraceLoggingWriteTagged(activity, "CopySubresourceRegion");
-  ctx->CopySubresourceRegion(
-    mTexture.get(), 0, 0, 0, 0, d3dSurface.get(), 0, &box);
-  TraceLoggingWriteTagged(activity, "evNeedsRepaint");
-  this->evNeedsRepaintEvent.Emit();
-  TraceLoggingWriteStop(
-    activity,
-    "HWNDPageSource::OnFrame",
-    TraceLoggingValue("Success", "Result"));
 }
 
 static std::tuple<HWND, POINT> RecursivelyResolveWindowAndPoint(
@@ -522,7 +304,7 @@ void HWNDPageSource::PostCursorEvent(
   EventContext,
   const CursorEvent& ev,
   PageID) {
-  if (!mTexture) {
+  if (!mWindow) {
     return;
   }
 
@@ -613,7 +395,8 @@ void HWNDPageSource::ClearUserInput() {
   // nothing to do here
 }
 
-std::optional<RECT> HWNDPageSource::GetClientArea() const {
+std::optional<PixelRect> HWNDPageSource::GetClientArea(
+  const PixelSize& captureSize) const {
   if (mOptions.mCaptureArea != CaptureArea::ClientArea) {
     dprintf("{} called, but capture area is not client area", __FUNCTION__);
     OPENKNEEBOARD_BREAK;
@@ -646,14 +429,18 @@ std::optional<RECT> HWNDPageSource::GetClientArea() const {
     mWindow, HWND_DESKTOP, reinterpret_cast<POINT*>(&clientRect), 2);
 
   const auto windowWidth = windowRect.right - windowRect.left;
-  const auto scale = static_cast<float>(mContentSize.width) / windowWidth;
+  const auto scale = captureSize.Width<float>() / windowWidth;
 
-  return {RECT {
-    std::lround((clientRect.left - windowRect.left) * scale),
-    std::lround((clientRect.top - windowRect.top) * scale),
-    std::lround((clientRect.right - clientRect.left) * scale),
-    std::lround((clientRect.bottom - clientRect.top) * scale),
-  }};
+  return Geometry2D::Rect<float> {
+    {
+      (clientRect.left - windowRect.left) * scale,
+      (clientRect.top - windowRect.top) * scale,
+    },
+    {
+      (clientRect.right - clientRect.left) * scale,
+      (clientRect.bottom - clientRect.top) * scale,
+    }}
+    .Rounded<uint32_t>();
 }
 
 void HWNDPageSource::InstallWindowHooks(HWND target) {

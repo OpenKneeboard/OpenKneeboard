@@ -139,7 +139,7 @@ concurrency::task<bool> WindowCaptureTab::TryToStartCapture(HWND hwnd) {
   }
   co_await mUIThread;
   auto source = HWNDPageSource::Create(mDXR, mKneeboard, hwnd, mCaptureOptions);
-  if (!(source && source->GetPageCount() > 0)) {
+  if (!source) {
     co_return false;
   }
 

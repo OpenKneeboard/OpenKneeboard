@@ -23,6 +23,7 @@
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/IPageSource.h>
 #include <OpenKneeboard/IPageSourceWithCursorEvents.h>
+#include <OpenKneeboard/WGCPageSource.h>
 #include <OpenKneeboard/WindowCaptureControl.h>
 
 #include <OpenKneeboard/audited_ptr.h>
@@ -43,19 +44,16 @@ namespace D3D11 {
 class SpriteBatch;
 }
 
-class HWNDPageSource final
-  : public virtual IPageSource,
-    public IPageSourceWithCursorEvents,
-    public EventReceiver,
-    public std::enable_shared_from_this<HWNDPageSource> {
+class HWNDPageSource final : public WGCPageSource,
+                             public virtual IPageSourceWithCursorEvents,
+                             public virtual EventReceiver {
  public:
   enum class CaptureArea {
     FullWindow,
     ClientArea,
   };
-  struct Options {
+  struct Options : WGCPageSource::Options {
     CaptureArea mCaptureArea {CaptureArea::FullWindow};
-    bool mCaptureCursor {false};
 
     constexpr auto operator<=>(const Options&) const noexcept = default;
   };
@@ -72,13 +70,6 @@ class HWNDPageSource final
   bool HaveWindow() const;
   void InstallWindowHooks(HWND);
 
-  virtual PageIndex GetPageCount() const final override;
-  virtual std::vector<PageID> GetPageIDs() const final override;
-  virtual PreferredSize GetPreferredSize(PageID) final override;
-
-  virtual void RenderPage(RenderTarget*, PageID, const D2D1_RECT_F& rect)
-    final override;
-
   virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
     override final;
   virtual bool CanClearUserInput() const override;
@@ -88,6 +79,16 @@ class HWNDPageSource final
 
   Event<> evWindowClosedEvent;
 
+ protected:
+  virtual std::optional<float> GetHDRWhiteLevelInNits() const override;
+  virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
+    const override;
+  virtual winrt::Windows::Graphics::Capture::GraphicsCaptureItem
+  CreateWGCaptureItem() override;
+  virtual PixelRect GetContentRect(const PixelSize& captureSize) override;
+  virtual PixelSize GetSwapchainDimensions(
+    const PixelSize& captureSize) override;
+
  private:
   HWNDPageSource() = delete;
   HWNDPageSource(
@@ -96,17 +97,16 @@ class HWNDPageSource final
     HWND window,
     const Options&);
   winrt::fire_and_forget Init() noexcept;
-  void OnFrame();
+  winrt::fire_and_forget InitializeInputHook() noexcept;
+
+  const audited_ptr<DXResources> mDXR;
 
   winrt::apartment_context mUIThread;
-  audited_ptr<DXResources> mDXR;
   HWND mWindow {};
   Options mOptions {};
-  PageID mPageID {};
 
   // In capture-space coordinates
-  std::optional<RECT> GetClientArea() const;
-  D3D11_BOX GetContentBox() const;
+  std::optional<PixelRect> GetClientArea(const PixelSize& captureSize) const;
 
   struct HookHandles {
     WindowCaptureControl::Handles mHooks64 {};
@@ -114,25 +114,10 @@ class HWNDPageSource final
   };
   std::unordered_map<HWND, HookHandles> mHooks;
 
-  winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice
-    mWinRTD3DDevice {nullptr};
-  winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool mFramePool {
-    nullptr};
-  winrt::Windows::Graphics::Capture::GraphicsCaptureSession mCaptureSession {
-    nullptr};
-  winrt::Windows::Graphics::Capture::GraphicsCaptureItem mCaptureItem {nullptr};
-
-  winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
-
-  D2D1_SIZE_U mContentSize {};
-  winrt::com_ptr<ID3D11Texture2D> mTexture;
-  winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
-  bool mNeedsRepaint {true};
   uint32_t mMouseButtons {};
   size_t mRecreations = 0;
 
   FLOAT mSDRWhiteLevelInNits = D2D1_SCENE_REFERRED_SDR_WHITE_LEVEL;
-
   bool mIsHDR {false};
   winrt::Windows::Graphics::DirectX::DirectXPixelFormat mPixelFormat;
 };
