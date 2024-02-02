@@ -17,10 +17,22 @@ Most remote controls are straightforward:
 - `OpenKneeboard-RemoteControl-NEXT_TAB.exe`: tell OpenKneeboard to go to the next tab
 - `OpenKneeboard-RemoteControl-PREVIOUS_PAGE.exe`: tell OpenKneeboard to go to the previous page in the current tab
 - `OpenKneeboard-RemoteControl-NEXT_PAGE.exe`: tell OpenKneeboard to go to the next page in the current tab
+- `OpenKneeboard-RemoteControl-DECREASE_BRIGHTNESS.exe`: reduces the brightness
+- `OpenKneeboard-RemoteControl-INCREASE_BRIGHTNESS.exe`: increases the brightness if previously reduced
+- `OpenKneeboard-RemoteControl-ENABLE_TINT.exe`: enable the tint color set in advanced settings; this is usually used for a green tint for night vision
+- `OpenKneeboard-RemoteControl-DISABLE_TINT.exe`: disable the tint
+- `OpenKneeboard-RemoteControl-TOGGLE_TINT.exe`: enable the tint if disabled, disable it if enabled
 - `OpenKneeboard-RemoteControl-RECENTER_VR.exe`: tell OpenKneeboard to recenter in virtual reality
+- `OpenKneeboard-RemoteControl-RELOAD_CURRENT_TAB.exe`: reload the current tab, discarding any dynamic content, notes, or drawings etc
 - `OpenKneeboard-RemoteControl-SWITCH_KNEEBOARDS.exe`: when two kneeboards are enabled, switch active/inactive or left/right
 - `OpenKneeboard-RemoteControl-TOGGLE_FORCE_ZOOM.exe`: in VR mode, toggle 'always zoom' on or off; if off, by default, OpenKneeboard will enlarge the kneeboard when you're looking directly at it.
-- `OpenKneeboard-RemoteControl-TOGGLE_VISIBILITY.exe`: show/hide the kneeboard in-game
+- `OpenKneeboard-RemoteControl-HIDE.exe`: hide all views
+- `OpenKneeboard-RemoteControl-SHOW.exe`: show all views
+- `OpenKneeboard-RemoteControl-TOGGLE_VISIBILITY.exe`: show if hidden, hide if not hidden
+- `OpenKneeboard-RemoteControl-PREVIOUS_PROFILE.exe`: if multiple profiles are configured, switch to the previous profile
+- `OpenKneeboard-RemoteControl-NEXT_PROFILE.exe`: if multiple profiles are configured, switch to the next profile
+- `OpenKneeboard-RemoteControl-PREVIOUS_BOOKMARK.exe`: if bookmarks are set, go the the previous bookmark
+- `OpenKneeboard-RemoteControl-NEXT_BOOKMARK.exe`: if bookmarks are set, go to the next bookmark
 
 These simple ones optionally take an argument to repeat the event - for example, to go forward 5 pages, run `...NEXT_PAGE.exe 5`.
 

@@ -92,7 +92,9 @@ ok_add_executable(
 target_link_libraries(fake-dcs OpenKneeboard-games OpenKneeboard-GameEvent)
 
 # Mostly to workaround Huion driver limitations, but maybe also useful for
-# StreamDeck
+# StreamDeck and VoiceAttack
+#
+# Remember to update the docs when you add stuff here :)
 set(
   SIMPLE_REMOTE_ACTIONS
   PREVIOUS_TAB
