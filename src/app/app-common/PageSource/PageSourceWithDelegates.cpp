@@ -218,6 +218,7 @@ void PageSourceWithDelegates::PostCursorEvent(
   auto wce = std::dynamic_pointer_cast<IPageSourceWithCursorEvents>(delegate);
   if (wce) {
     wce->PostCursorEvent(ctx, event, pageID);
+    return;
   }
 
   mDoodles->PostCursorEvent(
