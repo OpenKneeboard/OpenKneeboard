@@ -47,6 +47,7 @@
 #define XR_USE_GRAPHICS_API_VULKAN
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
+#include <openxr/openxr_reflection.h>
 
 namespace OpenKneeboard {
 
@@ -70,16 +71,6 @@ static constexpr XrPosef XR_POSEF_IDENTITY {
   .position = {0.0f, 0.0f, 0.0f},
 };
 
-static inline XrResult check_xrresult(
-  XrResult code,
-  const std::source_location& loc = std::source_location::current()) {
-  if (XR_FAILED(code)) {
-    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
-      loc, "OpenXR call failed: {}", static_cast<int>(code));
-  }
-  return code;
-}
-
 constexpr std::string_view OpenXRLayerName {
   "XR_APILAYER_FREDEMMOTT_OpenKneeboard"};
 static_assert(OpenXRLayerName.size() <= XR_MAX_API_LAYER_NAME_SIZE);
@@ -96,6 +87,34 @@ static OpenXRRuntimeID gRuntime {};
 static PFN_vkGetInstanceProcAddr gPFN_vkGetInstanceProcAddr {nullptr};
 static const VkAllocationCallbacks* gVKAllocator {nullptr};
 static unique_hmodule gLibVulkan {LoadLibraryW(L"vulkan-1.dll")};
+
+static inline XrResult check_xrresult(
+  XrResult code,
+  const std::source_location& loc = std::source_location::current()) {
+  if (XR_SUCCEEDED(code)) [[likely]] {
+    return code;
+  }
+
+  // xrResultAsString exists, but isn't reliably giving useful results, e.g.
+  // it fails on the Meta XR Simulator.
+  std::string_view codeAsString;
+  switch (code) {
+#define XR_RESULT_CASE(enum_name, value) \
+  case enum_name: \
+    codeAsString = {#enum_name}; \
+    break;
+    XR_LIST_ENUM_XrResult(XR_RESULT_CASE)
+#undef XR_RESULT_CASE
+  }
+
+  if (codeAsString.empty()) {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "OpenXR call failed: {}", static_cast<int>(code));
+  } else {
+    OPENKNEEBOARD_LOG_SOURCE_LOCATION_AND_FATAL(
+      loc, "OpenXR call failed: {} ({})", codeAsString, static_cast<int>(code));
+  }
+}
 
 OpenXRKneeboard::OpenXRKneeboard(
   XrInstance instance,

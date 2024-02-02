@@ -29,6 +29,8 @@
 
 #include <OpenKneeboard/config.h>
 
+#include <shims/source_location>
+
 #include <openxr/openxr.h>
 
 #include <format>
@@ -76,6 +78,7 @@ class OpenXRKneeboard : public VRKneeboard {
 
  private:
   std::shared_ptr<OpenXRNext> mOpenXR;
+  XrInstance mXRInstance;
   uint64_t mSessionID {};
 
   uint32_t mMaxLayerCount {};
@@ -92,5 +95,4 @@ class OpenXRKneeboard : public VRKneeboard {
 
   std::vector<uint8_t> GetActiveLayers(const SHM::Snapshot& snapshot) const;
 };
-
 }// namespace OpenKneeboard
