@@ -112,6 +112,7 @@ OpenXRKneeboard::OpenXRKneeboard(
   };
   check_xrresult(
     next->xrGetSystemProperties(instance, system, &systemProperties));
+  mMaxLayerCount = systemProperties.graphicsProperties.maxLayerCount;
 
   dprintf("XR system: {}", std::string_view {systemProperties.systemName});
   // 'Max' appears to be a recommendation for the eyebox:
