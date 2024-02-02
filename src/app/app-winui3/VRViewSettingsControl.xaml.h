@@ -23,6 +23,8 @@
 #include "VRViewSettingsControl.g.h"
 // clang-format on
 
+#include "WithPropertyChangedEvent.h"
+
 #include <OpenKneeboard/ViewsConfig.h>
 
 namespace OpenKneeboard {
@@ -34,7 +36,8 @@ using namespace winrt::Microsoft::UI::Xaml::Controls;
 using namespace OpenKneeboard;
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl> {
+struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl>,
+                               WithPropertyChangedEvent {
   VRViewSettingsControl();
 
   winrt::guid ViewID();
@@ -46,6 +49,9 @@ struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl> {
   IInspectable SelectedKind();
   void SelectedKind(const IInspectable&);
 
+  IInspectable SelectedDefaultTab();
+  void SelectedDefaultTab(const IInspectable&);
+
  private:
   std::shared_ptr<OpenKneeboard::KneeboardState> mKneeboard;
 
@@ -53,6 +59,7 @@ struct VRViewSettingsControl : VRViewSettingsControlT<VRViewSettingsControl> {
 
   void PopulateKind(const ViewVRConfig&);
   void PopulateSubcontrol(const ViewVRConfig&);
+  void PopulateDefaultTab();
 
   Control mSubControl {nullptr};
 };

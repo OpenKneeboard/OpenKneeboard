@@ -182,8 +182,7 @@ fire_and_forget VRSettingsPage::AddView(
   std::string name;
   for (size_t i = settings.mViews.size() + 1; true; ++i) {
     name = std::format(_("Kneeboard {}"), i);
-    auto it = std::ranges::find(
-      settings.mViews, name, [](const auto& it) { return it.mName; });
+    auto it = std::ranges::find(settings.mViews, name, &ViewConfig::mName);
     if (it == settings.mViews.end()) {
       break;
     }
@@ -202,8 +201,7 @@ fire_and_forget VRSettingsPage::RemoveView(
 
   {
     const auto views = mKneeboard->GetViewsSettings().mViews;
-    const auto it
-      = std::ranges::find(views, guid, [](const auto& it) { return it.mGuid; });
+    const auto it = std::ranges::find(views, guid, &ViewConfig::mGuid);
 
     const auto message = std::format(
       _("Do you want to completely remove \"{}\" and delete all its' "

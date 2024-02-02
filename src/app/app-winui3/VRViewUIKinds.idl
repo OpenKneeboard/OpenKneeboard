@@ -1,17 +1,14 @@
+import "UIDataItem.idl";
+
 namespace OpenKneeboardApp
 {
     [default_interface]
-    unsealed runtimeclass VRViewUIKind : Windows.Foundation.IStringable {
-        String Label;
-    }
-
-    [default_interface]
-    runtimeclass IndependentVRViewUIKind : VRViewUIKind {
+    runtimeclass IndependentVRViewUIKind : UIDataItem {
         IndependentVRViewUIKind();
     }
 
     [default_interface]
-    runtimeclass HorizontalMirrorVRViewUIKind : VRViewUIKind {
+    runtimeclass HorizontalMirrorVRViewUIKind : UIDataItem {
         HorizontalMirrorVRViewUIKind();
 
         Guid MirrorOf;

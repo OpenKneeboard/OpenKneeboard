@@ -84,8 +84,8 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
 
   winrt::check_bool(mType == Type::HorizontalMirror);
 
-  const auto it = std::ranges::find(
-    others, GetMirrorOfGUID(), [](const auto& it) { return it.mGuid; });
+  const auto it
+    = std::ranges::find(others, GetMirrorOfGUID(), &ViewConfig::mGuid);
   if (it == others.end()) {
     return {};
   }
@@ -208,7 +208,13 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mConstraints,
   mOpacity);
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewConfig, mGuid, mName, mVR, mNonVR);
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  ViewConfig,
+  mGuid,
+  mName,
+  mVR,
+  mNonVR,
+  mDefaultTabID);
 
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(ViewsConfig, mViews);
 };// namespace OpenKneeboard

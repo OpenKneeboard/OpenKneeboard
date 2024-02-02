@@ -28,7 +28,19 @@
         https://github.com/microsoft/microsoft-ui-xaml/issues/8981 
       -->
       <ComboBox.ItemTemplate>
-        <DataTemplate x:DataType="local:VRViewUIKind">
+        <DataTemplate x:DataType="local:UIDataItem">
+          <TextBlock Text="{x:Bind ToString(),Mode=OneTime}" />
+        </DataTemplate>
+      </ComboBox.ItemTemplate>
+    </ComboBox>
+    <ComboBox
+      x:Name="DefaultTab"
+      Header="Default Tab"
+      IsEnabled="{x:Bind IsEnabledInVR}"
+      SelectedItem="{x:Bind SelectedDefaultTab}"
+    >
+      <ComboBox.ItemTemplate>
+        <DataTemplate x:DataType="local:UIDataItem">
           <TextBlock Text="{x:Bind ToString(),Mode=OneTime}" />
         </DataTemplate>
       </ComboBox.ItemTemplate>

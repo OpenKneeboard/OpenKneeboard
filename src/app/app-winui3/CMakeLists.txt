@@ -38,8 +38,9 @@ ok_add_executable(
   SponsorButton.idl SponsorButton.xaml SponsorButton.xaml.cpp SponsorButton.xaml.h
   TabPage.idl TabPage.xaml TabPage.xaml.cpp TabPage.xaml.h
   TabSettingsPage.idl TabSettingsPage.xaml TabSettingsPage.xaml.cpp TabSettingsPage.xaml.h
+  UIDataItem.idl UIDataItem.cpp UIDataItem.h
   VRSettingsPage.idl VRSettingsPage.xaml VRSettingsPage.xaml.cpp VRSettingsPage.xaml.h
-  VRViewUIKinds.idl VRViewUIKind.cpp VRViewUIKind.h
+  VRViewUIKinds.idl
   VRViewSettingsControl.idl VRViewSettingsControl.xaml VRViewSettingsControl.xaml.cpp VRViewSettingsControl.xaml.h
   WindowPickerDialog.idl WindowPickerDialog.xaml WindowPickerDialog.xaml.h WindowPickerDialog.xaml.cpp
   WithPropertyChangedEvent.cpp WithPropertyChangedEvent.h

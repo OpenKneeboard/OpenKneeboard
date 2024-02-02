@@ -144,6 +144,8 @@ struct ViewConfig {
   ViewVRConfig mVR;
   ViewNonVRConfig mNonVR;
 
+  winrt::guid mDefaultTabID;
+
   constexpr bool operator==(const ViewConfig&) const noexcept = default;
 };
 

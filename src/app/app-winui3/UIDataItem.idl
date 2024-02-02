@@ -1,0 +1,15 @@
+namespace OpenKneeboardApp
+{
+    // Generic container if you need something subclassable to put in a UI
+    // element, e.g. as a combo box item
+    [default_interface]
+    unsealed runtimeclass UIDataItem : Windows.Foundation.IStringable {
+        UIDataItem();
+        UIDataItem(String label);
+        
+        String Label;
+        // If you just need something with some data, let's be lazy
+        // rather than adding a ton of single-use classes.
+        IInspectable Tag;
+    }
+}

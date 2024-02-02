@@ -768,10 +768,8 @@ void KneeboardState::InitializeViews() {
   mViews.clear();
   for (size_t i = 0; i < count; ++i) {
     const auto& config = mSettings.mViews.mViews.at(i);
-    const auto it
-      = std::ranges::find(oldViews, config.mGuid, [](const auto& it) {
-          return it->GetPersistentGUID();
-        });
+    const auto it = std::ranges::find(
+      oldViews, config.mGuid, &KneeboardView::GetPersistentGUID);
 
     if (it != oldViews.end()) {
       mViews.push_back(*it);
@@ -782,6 +780,13 @@ void KneeboardState::InitializeViews() {
     auto& view = mViews.back();
 
     view->SetTabs(tabs);
+
+    auto tabIt
+      = std::ranges::find(tabs, config.mDefaultTabID, &ITab::GetPersistentID);
+    if (tabIt != tabs.end()) {
+      view->SetCurrentTabByRuntimeID((*tabIt)->GetRuntimeID());
+    }
+
     AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
 

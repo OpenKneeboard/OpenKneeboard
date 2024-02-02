@@ -86,7 +86,7 @@
               https://github.com/microsoft/microsoft-ui-xaml/issues/8981 
             -->
             <ComboBox.ItemTemplate>
-              <DataTemplate x:DataType="local:VRViewUIKind">
+              <DataTemplate x:DataType="local:UIDataItem">
                 <TextBlock Text="{x:Bind ToString(),Mode=OneTime}" />
               </DataTemplate>
             </ComboBox.ItemTemplate>

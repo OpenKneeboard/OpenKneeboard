@@ -1,7 +1,7 @@
 namespace OpenKneeboardApp
 {
     [default_interface]
-    runtimeclass VRViewSettingsControl: Microsoft.UI.Xaml.Controls.UserControl
+    runtimeclass VRViewSettingsControl: Microsoft.UI.Xaml.Controls.UserControl, Microsoft.UI.Xaml.Data.INotifyPropertyChanged
     {
         VRViewSettingsControl();
 
@@ -10,5 +10,7 @@ namespace OpenKneeboardApp
         Boolean IsEnabledInVR;
 
         IInspectable SelectedKind;
+
+        IInspectable SelectedDefaultTab;
     }
 }

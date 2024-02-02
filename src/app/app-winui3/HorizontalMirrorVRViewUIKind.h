@@ -22,14 +22,14 @@
 // clang-format off
 #include "pch.h"
 #include "HorizontalMirrorVRViewUIKind.g.h"
-#include "VRViewUIKind.h"
+#include "UIDataItem.h"
 // clang-format on
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct HorizontalMirrorVRViewUIKind
   : HorizontalMirrorVRViewUIKindT<
       HorizontalMirrorVRViewUIKind,
-      OpenKneeboardApp::implementation::VRViewUIKind> {
+      OpenKneeboardApp::implementation::UIDataItem> {
   HorizontalMirrorVRViewUIKind() = default;
 
   winrt::guid MirrorOf();

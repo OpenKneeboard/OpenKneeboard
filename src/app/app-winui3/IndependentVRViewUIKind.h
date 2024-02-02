@@ -22,14 +22,14 @@
 // clang-format off
 #include "pch.h"
 #include "IndependentVRViewUIKind.g.h"
-#include "VRViewUIKind.h"
+#include "UIDataItem.h"
 // clang-format on
 
 namespace winrt::OpenKneeboardApp::implementation {
 struct IndependentVRViewUIKind
   : IndependentVRViewUIKindT<
       IndependentVRViewUIKind,
-      OpenKneeboardApp::implementation::VRViewUIKind> {
+      OpenKneeboardApp::implementation::UIDataItem> {
   IndependentVRViewUIKind();
 };
 }// namespace winrt::OpenKneeboardApp::implementation

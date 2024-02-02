@@ -25,7 +25,9 @@
 
 #include "Globals.h"
 
+#include <OpenKneeboard/IKneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/ViewsConfig.h>
 
 #include <OpenKneeboard/utf8.h>
@@ -47,8 +49,7 @@ winrt::guid VRViewSettingsControl::ViewID() {
 
 IInspectable VRViewSettingsControl::SelectedKind() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
-  const auto it = std::ranges::find(
-    views, mViewID, [](const auto& it) { return it.mGuid; });
+  const auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
   using Type = ViewVRConfig::Type;
   const auto type = it->mVR.GetType();
 
@@ -70,8 +71,7 @@ IInspectable VRViewSettingsControl::SelectedKind() {
 
 void VRViewSettingsControl::SelectedKind(const IInspectable& item) {
   auto settings = mKneeboard->GetViewsSettings();
-  auto it = std::ranges::find(
-    settings.mViews, mViewID, [](const auto& it) { return it.mGuid; });
+  auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
 
   using Type = ViewVRConfig::Type;
   const auto type = it->mVR.GetType();
@@ -83,9 +83,7 @@ void VRViewSettingsControl::SelectedKind(const IInspectable& item) {
     IndependentViewVRConfig config {};
     if (type == Type::HorizontalMirror) {
       auto other = std::ranges::find(
-        settings.mViews, it->mVR.GetMirrorOfGUID(), [](const auto& it) {
-          return it.mGuid;
-        });
+        settings.mViews, it->mVR.GetMirrorOfGUID(), &ViewConfig::mGuid);
       if (
         (other != settings.mViews.end())
         && other->mVR.GetType() == Type::Independent) {
@@ -133,17 +131,31 @@ void VRViewSettingsControl::PopulateKind(const ViewVRConfig& view) {
   }
 }
 
+void VRViewSettingsControl::PopulateDefaultTab() {
+  auto items = DefaultTab().Items();
+  items.Clear();
+
+  items.Append(UIDataItem {_(L"Automatic")});
+
+  for (const auto& tab: mKneeboard->GetTabsList()->GetTabs()) {
+    UIDataItem item;
+    item.Label(to_hstring(tab->GetTitle()));
+    item.Tag(box_value(tab->GetPersistentID()));
+    items.Append(item);
+  }
+
+  mPropertyChangedEvent(*this, PropertyChangedEventArgs(L"SelectedDefaultTab"));
+}
+
 bool VRViewSettingsControl::IsEnabledInVR() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
-  auto it = std::ranges::find(
-    views, mViewID, [](const auto& it) { return it.mGuid; });
+  auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
   return it->mVR.mEnabled;
 }
 
 void VRViewSettingsControl::IsEnabledInVR(bool value) {
   auto settings = mKneeboard->GetViewsSettings();
-  auto it = std::ranges::find(
-    settings.mViews, mViewID, [](const auto& it) { return it.mGuid; });
+  auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
   it->mVR.mEnabled = value;
   mKneeboard->SetViewsSettings(settings);
   if (mSubControl) {
@@ -155,13 +167,13 @@ void VRViewSettingsControl::ViewID(const winrt::guid& guid) {
   mViewID = guid;
 
   const auto views = mKneeboard->GetViewsSettings().mViews;
-  auto it
-    = std::ranges::find(views, guid, [](const auto& it) { return it.mGuid; });
+  auto it = std::ranges::find(views, guid, &ViewConfig::mGuid);
   if (it == views.end()) {
     OPENKNEEBOARD_BREAK;
     return;
   }
 
+  this->PopulateDefaultTab();
   this->PopulateKind(it->mVR);
   this->PopulateSubcontrol(it->mVR);
 }
@@ -184,6 +196,50 @@ void VRViewSettingsControl::PopulateSubcontrol(const ViewVRConfig& vr) {
       return;
     }
   }
+}
+
+IInspectable VRViewSettingsControl::SelectedDefaultTab() {
+  const auto views = mKneeboard->GetViewsSettings().mViews;
+  const auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
+
+  const auto items = DefaultTab().Items();
+  const auto tabID = it->mDefaultTabID;
+
+  for (uint32_t i = 0; i < items.Size(); ++i) {
+    const auto item = items.GetAt(i);
+    if (tabID == unbox_value_or<guid>(item.as<UIDataItem>().Tag(), {})) {
+      return item;
+    }
+  }
+
+  return items.GetAt(0);
+}
+
+void VRViewSettingsControl::SelectedDefaultTab(const IInspectable& item) {
+  const auto guid
+    = unbox_value_or<winrt::guid>(item.as<UIDataItem>().Tag(), {});
+
+  {
+    auto settings = mKneeboard->GetViewsSettings();
+    auto it = std::ranges::find(settings.mViews, mViewID, &ViewConfig::mGuid);
+    it->mDefaultTabID = guid;
+    mKneeboard->SetViewsSettings(settings);
+  }
+
+  const auto viewStates = mKneeboard->GetAllViewsInFixedOrder();
+  const auto stateIt = std::ranges::find(
+    viewStates, mViewID, &IKneeboardView::GetPersistentGUID);
+  if (stateIt == viewStates.end()) {
+    return;
+  }
+
+  const auto tabs = mKneeboard->GetTabsList()->GetTabs();
+  const auto tabIt = std::ranges::find(tabs, guid, &ITab::GetPersistentID);
+  if (tabIt == tabs.end()) {
+    return;
+  }
+
+  (*stateIt)->SetCurrentTabByRuntimeID((*tabIt)->GetRuntimeID());
 }
 
 }// namespace winrt::OpenKneeboardApp::implementation

@@ -17,24 +17,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#pragma once
 // clang-format off
 #include "pch.h"
-#include "VRViewUIKind.g.h"
+#include "UIDataItem.h"
+#include "UIDataItem.g.cpp"
 // clang-format on
 
 namespace winrt::OpenKneeboardApp::implementation {
-struct VRViewUIKind : VRViewUIKindT<VRViewUIKind> {
-  VRViewUIKind() = default;
+hstring UIDataItem::Label() {
+  return mLabel;
+}
 
-  hstring Label();
-  void Label(hstring const& value);
+void UIDataItem::Label(hstring const& value) {
+  mLabel = value;
+}
 
-  inline hstring ToString() {
-    return Label();
-  }
+IInspectable UIDataItem::Tag() {
+  return mTag;
+}
 
- private:
-  winrt::hstring mLabel;
-};
+void UIDataItem::Tag(const IInspectable& data) {
+  mTag = data;
+}
+
 }// namespace winrt::OpenKneeboardApp::implementation

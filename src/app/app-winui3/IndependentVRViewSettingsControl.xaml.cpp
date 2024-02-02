@@ -73,8 +73,7 @@ fire_and_forget IndependentVRViewSettingsControl::RestoreDefaults(
 IndependentViewVRConfig IndependentVRViewSettingsControl::GetViewConfig() {
   const auto views = mKneeboard->GetViewsSettings().mViews;
 
-  const auto it = std::ranges::find(
-    views, mViewID, [](const auto& it) { return it.mGuid; });
+  const auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
   if (it == views.end()) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL("Requested view not found");
   }
@@ -86,8 +85,7 @@ void IndependentVRViewSettingsControl::SetViewConfig(
   const IndependentViewVRConfig& config) {
   auto viewsConfig = mKneeboard->GetViewsSettings();
   auto& views = viewsConfig.mViews;
-  auto it = std::ranges::find(
-    views, mViewID, [](const auto& it) { return it.mGuid; });
+  auto it = std::ranges::find(views, mViewID, &ViewConfig::mGuid);
   if (it == views.end()) [[unlikely]] {
     OPENKNEEBOARD_LOG_AND_FATAL("Requested view not found");
   }
