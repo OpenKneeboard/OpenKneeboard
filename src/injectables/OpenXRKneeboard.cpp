@@ -263,43 +263,44 @@ XrResult OpenXRKneeboard::xrEndFrame(
     &frameEndInfo->layers[frameEndInfo->layerCount],
     std::back_inserter(nextLayers));
 
-  auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
-
-  std::vector<XrCompositionLayerQuad> kneeboardLayers;
-  kneeboardLayers.reserve(layerCount);
-
   uint8_t topMost = layerCount - 1;
 
-  bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
-  std::vector<SHM::LayerSprite> LayerSprite;
-  std::vector<uint64_t> cacheKeys;
-  LayerSprite.reserve(layerCount);
-  cacheKeys.reserve(layerCount);
+  auto hmdPose = this->GetHMDPose(frameEndInfo->displayTime);
 
-  for (const auto layerIndex: availableLayers) {
-    auto layer = snapshot.GetLayerConfig(layerIndex);
+  bool needRender = config.mVR.mQuirks.mOpenXR_AlwaysUpdateSwapchain;
+  std::vector<SHM::LayerSprite> layerSprites;
+  std::vector<uint64_t> cacheKeys;
+  std::vector<XrCompositionLayerQuad> addedXRLayers;
+  layerSprites.reserve(layerCount);
+  cacheKeys.reserve(layerCount);
+  addedXRLayers.reserve(layerCount);
+
+  for (const auto shmLayerIndex: availableLayers) {
+    const auto renderLayerIndex = layerSprites.size();
+
+    auto layer = snapshot.GetLayerConfig(shmLayerIndex);
     auto params = this->GetRenderParameters(snapshot, *layer, hmdPose);
     cacheKeys.push_back(params.mCacheKey);
-    const auto destOffset = Spriting::GetOffset(layerIndex, MaxViewCount);
-    LayerSprite.push_back(SHM::LayerSprite {
+    const auto destOffset = Spriting::GetOffset(renderLayerIndex, MaxViewCount);
+    layerSprites.push_back(SHM::LayerSprite {
       .mSourceRect = layer->mVR.mLocationOnTexture,
       .mDestRect = {destOffset, layer->mVR.mLocationOnTexture.mSize},
       .mOpacity = params.mKneeboardOpacity,
     });
 
-    if (params.mCacheKey != mRenderCacheKeys.at(layerIndex)) {
+    if (params.mCacheKey != mRenderCacheKeys.at(shmLayerIndex)) {
       needRender = true;
     }
 
     if (params.mIsLookingAtKneeboard) {
-      topMost = layerIndex;
+      topMost = renderLayerIndex;
     }
 
     static_assert(
       SHM::SHARED_TEXTURE_IS_PREMULTIPLIED,
       "Use premultiplied alpha in shared texture, or pass "
       "XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT");
-    kneeboardLayers.push_back({
+    addedXRLayers.push_back({
       .type = XR_TYPE_COMPOSITION_LAYER_QUAD,
       .next = nullptr,
       .layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT 
@@ -319,11 +320,11 @@ XrResult OpenXRKneeboard::xrEndFrame(
     });
 
     nextLayers.push_back(
-      reinterpret_cast<XrCompositionLayerBaseHeader*>(&kneeboardLayers.back()));
+      reinterpret_cast<XrCompositionLayerBaseHeader*>(&addedXRLayers.back()));
   }
 
   if (topMost != layerCount - 1) {
-    std::swap(kneeboardLayers.back(), kneeboardLayers.at(topMost));
+    std::swap(addedXRLayers.back(), addedXRLayers.at(topMost));
   }
 
   if (needRender) {
@@ -346,7 +347,7 @@ XrResult OpenXRKneeboard::xrEndFrame(
     {
       OPENKNEEBOARD_TraceLoggingScope("RenderLayers()");
       this->RenderLayers(
-        mSwapchain, swapchainTextureIndex, snapshot, LayerSprite);
+        mSwapchain, swapchainTextureIndex, snapshot, layerSprites);
     }
 
     {
