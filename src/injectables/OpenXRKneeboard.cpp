@@ -233,14 +233,6 @@ XrResult OpenXRKneeboard::xrEndFrame(
     return mOpenXR->xrEndFrame(session, frameEndInfo);
   }
 
-  if (snapshot.GetLayerCount() != layerCount) {
-    dprintf(
-      "Layer count mismatch, skipping frame: {} -> {}",
-      layerCount,
-      snapshot.GetLayerCount());
-    return mOpenXR->xrEndFrame(session, frameEndInfo);
-  }
-
   auto config = snapshot.GetConfig();
 
   std::vector<const XrCompositionLayerBaseHeader*> nextLayers;
