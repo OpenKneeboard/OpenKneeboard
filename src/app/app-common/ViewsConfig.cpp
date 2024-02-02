@@ -33,7 +33,15 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
   const PreferredSize& contentSize,
   const PixelRect& fullRect,
   const PixelRect& contentRect,
-  const std::vector<ViewConfig>& others) const {
+  const std::vector<ViewConfig>& others,
+  ResolveViewFlags flags) const {
+  if (
+    (!mEnabled)
+    && (flags & ResolveViewFlags::IncludeDisabled)
+      != ResolveViewFlags::IncludeDisabled) {
+    return {};
+  }
+
   if (mType == Type::Empty) {
     return {};
   }
@@ -90,8 +98,12 @@ std::optional<SHM::VRLayer> ViewVRConfig::Resolve(
     return {};
   }
 
-  const auto other
-    = it->mVR.Resolve(contentSize, fullRect, contentRect, others);
+  const auto other = it->mVR.Resolve(
+    contentSize,
+    fullRect,
+    contentRect,
+    others,
+    flags | ResolveViewFlags::IncludeDisabled);
   if (!other) {
     return {};
   }
@@ -106,10 +118,15 @@ std::optional<SHM::NonVRLayer> ViewNonVRConfig::Resolve(
   [[maybe_unused]] const PreferredSize& contentSize,
   const PixelRect& fullRect,
   [[maybe_unused]] const PixelRect& contentRect,
-  [[maybe_unused]] const std::vector<ViewConfig>& others) const {
-  if (!mEnabled) {
+  [[maybe_unused]] const std::vector<ViewConfig>& others,
+  ResolveViewFlags flags) const {
+  if (
+    (!mEnabled)
+    && (flags & ResolveViewFlags::IncludeDisabled)
+      != ResolveViewFlags::IncludeDisabled) {
     return {};
   }
+
   return {SHM::NonVRLayer {
     .mPosition = mConstraints,
     .mLocationOnTexture = fullRect,

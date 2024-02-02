@@ -23,6 +23,7 @@
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/VRConfig.h>
 
+#include <OpenKneeboard/bitflags.h>
 #include <OpenKneeboard/json_fwd.h>
 
 #include <shims/winrt/base.h>
@@ -35,6 +36,13 @@ enum class ViewDisplayArea {
   Full,
   ContentOnly,
 };
+
+enum class ResolveViewFlags : uint8_t {
+  Default = 0,
+  IncludeDisabled = 1,
+};
+template <>
+constexpr bool is_bitflags_v<ResolveViewFlags> = true;
 
 struct ViewConfig;
 struct PreferredSize;
@@ -113,7 +121,8 @@ struct ViewVRConfig {
     const PreferredSize& preferredSize,
     const PixelRect& fullRect,
     const PixelRect& contentRect,
-    const std::vector<ViewConfig>& others) const;
+    const std::vector<ViewConfig>& others,
+    ResolveViewFlags flags = ResolveViewFlags::Default) const;
 
   constexpr bool operator==(const ViewVRConfig&) const noexcept = default;
 
@@ -134,7 +143,8 @@ struct ViewNonVRConfig {
     const PreferredSize& contentSize,
     const PixelRect& fullRect,
     const PixelRect& contentRect,
-    const std::vector<ViewConfig>& others) const;
+    const std::vector<ViewConfig>& others,
+    ResolveViewFlags flags = ResolveViewFlags::Default) const;
 };
 
 struct ViewConfig {
