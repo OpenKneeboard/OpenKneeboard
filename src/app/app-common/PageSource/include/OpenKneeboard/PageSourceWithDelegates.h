@@ -79,6 +79,10 @@ class PageSourceWithDelegates : public virtual IPageSource,
   std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>>
     mContentLayerCache;
   std::unique_ptr<DoodleRenderer> mDoodles;
+
+  void RenderPageWithCache(
+    IPageSource* delegate,
+    RenderTarget*, PageID, const D2D1_RECT_F& rect);
 };
 
 }// namespace OpenKneeboard

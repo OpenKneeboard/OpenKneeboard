@@ -153,26 +153,7 @@ void PageSourceWithDelegates::RenderPage(
   if (withInternalCaching) {
     delegate->RenderPage(rt, pageID, rect);
   } else {
-    const auto rtid = rt->GetID();
-    if (!mContentLayerCache.contains(rtid)) {
-      mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
-    }
-
-    mContentLayerCache[rtid]->Render(
-      rect,
-      pageID.GetTemporaryValue(),
-      rt,
-      [&](RenderTarget* rt, const D2D1_SIZE_U& size) {
-        delegate->RenderPage(
-          rt,
-          pageID,
-          {
-            0.0f,
-            0.0f,
-            static_cast<FLOAT>(size.width),
-            static_cast<FLOAT>(size.height),
-          });
-      });
+    this->RenderPageWithCache(delegate.get(), rt, pageID, rect);
   }
 
   auto withCursorEvents
@@ -181,6 +162,33 @@ void PageSourceWithDelegates::RenderPage(
   if (!withCursorEvents) {
     mDoodles->Render(rt->d2d(), pageID, rect);
   }
+}
+
+void PageSourceWithDelegates::RenderPageWithCache(
+  IPageSource* delegate,
+  RenderTarget* rt,
+  PageID pageID,
+  const D2D1_RECT_F& rect) {
+  const auto rtid = rt->GetID();
+  if (!mContentLayerCache.contains(rtid)) {
+    mContentLayerCache[rtid] = std::make_unique<CachedLayer>(mDXResources);
+  }
+
+  mContentLayerCache[rtid]->Render(
+    rect,
+    pageID.GetTemporaryValue(),
+    rt,
+    [delegate, pageID](RenderTarget* rt, const D2D1_SIZE_U& size) {
+      delegate->RenderPage(
+        rt,
+        pageID,
+        {
+          0.0f,
+          0.0f,
+          static_cast<FLOAT>(size.width),
+          static_cast<FLOAT>(size.height),
+        });
+    });
 }
 
 bool PageSourceWithDelegates::CanClearUserInput() const {
