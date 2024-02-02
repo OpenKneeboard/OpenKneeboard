@@ -246,16 +246,15 @@ static void MigrateToViewsConfig(Settings& settings) {
 }
 
 Settings Settings::Load(std::string_view profile) {
-  Settings parentSettings;
   Settings settings;
 
   MigrateToProfiles(settings);
 
   if (profile != "default") {
-    parentSettings = Settings::Load("default");
-    settings = parentSettings;
+    settings = Settings::Load("default");
   }
-  const auto profileDir = std::filesystem::path {"profiles"} / profile;
+  const auto profileDir
+    = Filesystem::GetSettingsDirectory() / "profiles" / profile;
 
 #define IT(cpptype, x) \
   MaybeSetFromJSON(settings.m##x, profileDir / #x##".json");
