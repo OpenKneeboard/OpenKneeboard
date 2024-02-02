@@ -114,17 +114,18 @@ OpenXRKneeboard::OpenXRKneeboard(
     next->xrGetSystemProperties(instance, system, &systemProperties));
 
   dprintf("XR system: {}", std::string_view {systemProperties.systemName});
-  mMaxSwapchainDimensions = {
-    systemProperties.graphicsProperties.maxSwapchainImageWidth,
-    systemProperties.graphicsProperties.maxSwapchainImageHeight,
-  };
-  mMaxLayerCount = systemProperties.graphicsProperties.maxLayerCount;
+  // 'Max' appears to be a recommendation for the eyebox:
+  // - ignoring it for quads appears to be widely compatible, and is common
+  //   practice with other tools
+  // - the spec for `XrSwapchainCreateInfo` only says I have to respect the
+  //   graphics API's limits, not this one
+  // - some runtimes (e.g. SteamVR) have a *really* small size here that
+  //   prevents spriting.
   dprintf(
-    "System supports up to {} {}x{} layers",
+    "System supports up to {} layers, with a suggested resolution of {}x{}",
     mMaxLayerCount,
-    mMaxSwapchainDimensions.mWidth,
-    mMaxSwapchainDimensions.mHeight);
-  dprintf("Effective limit is {} layers", mMaxLayerCount);
+    systemProperties.graphicsProperties.maxSwapchainImageWidth,
+    systemProperties.graphicsProperties.maxSwapchainImageHeight);
 
   mRenderCacheKeys.fill(~(0ui64));
 
@@ -349,6 +350,23 @@ XrResult OpenXRKneeboard::xrEndFrame(
       = check_xrresult(mOpenXR->xrEndFrame(session, &nextFrameEndInfo));
   }
   return nextResult;
+}
+
+std::vector<uint8_t> OpenXRKneeboard::GetActiveLayers(
+  const SHM::Snapshot& snapshot) const {
+  const auto totalLayers = snapshot.GetLayerCount();
+
+  std::vector<uint8_t> ret;
+  ret.reserve(totalLayers);
+
+  for (uint32_t layerIndex = 0; layerIndex < totalLayers; ++layerIndex) {
+    auto config = snapshot.GetLayerConfig(layerIndex);
+    if (config->mVREnabled) {
+      ret.push_back(layerIndex);
+    }
+  }
+
+  return ret;
 }
 
 OpenXRKneeboard::Pose OpenXRKneeboard::GetHMDPose(XrTime displayTime) {
@@ -721,34 +739,5 @@ XrResult __declspec(dllexport) XRAPI_CALL
   apiLayerRequest->createApiLayerInstance
     = &OpenKneeboard::xrCreateApiLayerInstance;
   return XR_SUCCESS;
-}
-
-std::vector<uint8_t> OpenXRKneeboard::GetActiveLayers(
-  const SHM::Snapshot& snapshot) const {
-  const auto totalLayers = snapshot.GetLayerCount();
-
-  std::vector<uint8_t> ret;
-  ret.reserve(totalLayers);
-
-  for (uint32_t layerIndex = 0; layerIndex < totalLayers; ++layerIndex) {
-    auto config = snapshot.GetLayerConfig(layerIndex);
-    if (config->mVREnabled) {
-      ret.push_back(layerIndex);
-    }
-  }
-
-  const auto vrLayers = ret.size();
-
-  while (!ret.empty()) {
-    const auto size = Spriting::GetBufferSize(ret.size());
-    if (
-      ret.size() <= mMaxLayerCount
-      && size.mWidth <= mMaxSwapchainDimensions.mWidth
-      && size.mHeight <= mMaxSwapchainDimensions.mHeight) {
-      return ret;
-    }
-    ret.pop_back();
-  }
-  return {};
 }
 }
