@@ -142,19 +142,22 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
       layoutSize,
     };
 
-    const auto vr = viewConfig.mVR.Resolve(
-      contentSize, fullLocation, contentLocation, mSettings.mViews.mViews);
-
-    const auto nonvr = viewConfig.mNonVR.Resolve(
-      contentSize, fullLocation, contentLocation, mSettings.mViews.mViews);
-
-    ret.push_back({
+    ViewRenderInfo thisLayer {
       .mView = view,
-      .mVR = vr,
-      .mNonVR = nonvr,
       .mFullSize = layoutSize,
       .mIsActiveForInput = (index == mInputViewIndex),
-    });
+    };
+
+    if (viewConfig.mVR.mEnabled) {
+      thisLayer.mVR = viewConfig.mVR.Resolve(
+        contentSize, fullLocation, contentLocation, mSettings.mViews.mViews);
+    }
+    if (viewConfig.mNonVR.mEnabled) {
+      thisLayer.mNonVR = viewConfig.mNonVR.Resolve(
+        contentSize, fullLocation, contentLocation, mSettings.mViews.mViews);
+    }
+
+    ret.push_back(thisLayer);
   }
 
   return ret;
