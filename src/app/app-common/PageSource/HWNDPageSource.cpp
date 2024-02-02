@@ -60,8 +60,6 @@ namespace WGDX = winrt::Windows::Graphics::DirectX;
 
 namespace OpenKneeboard {
 
-static std::unordered_map<HWND, HWNDPageSource*> gInstances;
-static unique_hhook gHook;
 static UINT gControlMessage;
 
 std::shared_ptr<HWNDPageSource> HWNDPageSource::Create(
