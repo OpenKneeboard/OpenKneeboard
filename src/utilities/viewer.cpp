@@ -786,7 +786,11 @@ class TestViewerWindow final : private D3D11Resources {
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
     mLayerID = layer.mLayerID;
 
-    const auto& imageSize = layer.mNonVR.mLocationOnTexture.mSize;
+    const auto sourceRect = layer.mNonVREnabled
+      ? layer.mNonVR.mLocationOnTexture
+      : layer.mVR.mLocationOnTexture;
+
+    const auto& imageSize = sourceRect.mSize;
     const auto scalex = clientSize.Width<float>() / imageSize.mWidth;
     const auto scaley = clientSize.Height<float>() / imageSize.mHeight;
     const auto scale = std::min(scalex, scaley);
@@ -797,7 +801,6 @@ class TestViewerWindow final : private D3D11Resources {
     const auto renderTop = (clientSize.mHeight - renderHeight) / 2;
     const PixelRect destRect {
       {renderLeft, renderTop}, {renderWidth, renderHeight}};
-    const auto sourceRect = layer.mNonVR.mLocationOnTexture;
 
     auto ctx = mD3D11ImmediateContext.get();
 
