@@ -723,7 +723,9 @@ class TestViewerWindow final : private D3D11Resources {
       const auto layerCount = snapshot.GetLayerCount();
       if (mLayerIndex < layerCount) {
         const auto layer = snapshot.GetLayerConfig(mLayerIndex);
-        const auto size = layer->mNonVR.mLocationOnTexture.mSize;
+        const auto size = layer->mNonVREnabled
+          ? layer->mNonVR.mLocationOnTexture.mSize
+          : layer->mVR.mLocationOnTexture.mSize;
         text += std::format(
           L"\nView {} of {}\n{}x{}",
           mLayerIndex + 1,
