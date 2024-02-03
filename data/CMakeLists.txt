@@ -5,7 +5,7 @@ set(
 )
 install(
     FILES
-    "${DATA_SOURCES}" 
+    ${DATA_SOURCES}
     TYPE DATA
 )
 list(
