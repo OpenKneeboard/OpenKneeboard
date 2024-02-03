@@ -153,6 +153,7 @@ winrt::fire_and_forget WGCPageSource::final_release(
     p->mCaptureSession = {nullptr};
     p->mCaptureItem = {nullptr};
     p->mFramePool = {nullptr};
+    p->mNextFrame = {nullptr};
   }
 
   co_await p->mUIThread;
