@@ -102,7 +102,7 @@ WebView2PageSource::InitializeInCaptureThread() {
     Version::Build);
   settings.UserAgent(userAgent);
 
-  if (mSettings.mAutoResizeForSimHub) {
+  if (mSettings.mIntegrateWithSimHub) {
     settings.IsWebMessageEnabled(true);
     mWebView.WebMessageReceived(
       std::bind_front(&WebView2PageSource::OnWebMessageReceived, this));
@@ -138,12 +138,44 @@ WebView2PageSource::InitializeInCaptureThread() {
   mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
 }
 
-void WebView2PageSource::OnWebMessageReceived(
+winrt::fire_and_forget WebView2PageSource::OnWebMessageReceived(
   const winrt::Microsoft::Web::WebView2::Core::CoreWebView2&,
   const winrt::Microsoft::Web::WebView2::Core::
     CoreWebView2WebMessageReceivedEventArgs& args) {
   const auto json = to_string(args.WebMessageAsJson());
-  const auto message = nlohmann::json::parse(json);
+  const auto parsed = nlohmann::json::parse(json);
+
+  if (!parsed.contains("message")) {
+    co_return;
+  }
+
+  const std::string message = parsed.at("message");
+
+  if (message != "OpenKneeboard/SimHub/DashboardLoaded") {
+    co_return;
+  }
+
+  const PixelSize size = {
+    parsed.at("data").at("width"),
+    parsed.at("data").at("height"),
+  };
+  if (size == mSize) {
+    co_return;
+  }
+  mSize = size;
+
+  const auto wfSize
+    = mSize.StaticCast<float, winrt::Windows::Foundation::Numerics::float2>();
+  mRootVisual.Size(wfSize);
+  mWebViewVisual.Size(wfSize);
+  mController.Bounds({0, 0, mSize.Width<float>(), mSize.Height<float>()});
+  mController.RasterizationScale(1.0);
+  WGCPageSource::ForceResize(size);
+
+  co_await mUIThread;
+
+  evContentChangedEvent.Emit();
+  evNeedsRepaintEvent.Emit();
 }
 
 void WebView2PageSource::InitializeComposition() {
@@ -249,7 +281,7 @@ WebView2PageSource::CreateWGCaptureItem() {
 }
 
 PixelRect WebView2PageSource::GetContentRect(const PixelSize& captureSize) {
-  return {{0, 0}, captureSize};
+  return {{0, 0}, mSize};
 }
 
 PixelSize WebView2PageSource::GetSwapchainDimensions(

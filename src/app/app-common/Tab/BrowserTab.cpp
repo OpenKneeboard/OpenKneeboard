@@ -65,7 +65,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   BrowserTab::Settings,
   mURI,
   mInitialSize,
-  mAutoResizeForSimHub,
+  mIntegrateWithSimHub,
   mOpenDeveloperToolsWindow)
 
 }// namespace OpenKneeboard

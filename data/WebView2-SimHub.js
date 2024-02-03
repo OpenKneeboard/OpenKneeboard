@@ -55,8 +55,8 @@ class OpenKneeboard {
   simhubNotifyMainTemplateLoaded() {
     this.simhub_server_notify();
     console.log("OpenKneeboard: SimHub notifyMainTemplateLoaded hook");
-    const width = $(".maincontainer").css("width");
-    const height = $(".maincontainer").css("height");
+    const width = $(".maincontainer").width();
+    const height = $(".maincontainer").height();
 
     window.chrome.webview.postMessage({
       message: "OpenKneeboard/SimHub/DashboardLoaded",

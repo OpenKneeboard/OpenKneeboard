@@ -83,6 +83,8 @@ class WGCPageSource : public virtual IPageSource,
   virtual PixelRect GetContentRect(const PixelSize& captureSize) = 0;
   virtual PixelSize GetSwapchainDimensions(const PixelSize& captureSize) = 0;
 
+  winrt::fire_and_forget ForceResize(const PixelSize&);
+
  private:
   WGCPageSource() = delete;
   void OnFrame();

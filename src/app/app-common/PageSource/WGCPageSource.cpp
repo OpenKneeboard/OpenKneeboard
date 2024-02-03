@@ -341,4 +341,13 @@ void WGCPageSource::OnFrame() {
     activity, "WGCPageSource::OnFrame", TraceLoggingValue("Success", "Result"));
 }
 
+winrt::fire_and_forget WGCPageSource::ForceResize(const PixelSize& size) {
+  mFramePool.Recreate(
+    mWinRTD3DDevice,
+    this->GetPixelFormat(),
+    2,
+    size.StaticCast<int32_t, winrt::Windows::Graphics::SizeInt32>());
+  co_return;
+}
+
 }// namespace OpenKneeboard
