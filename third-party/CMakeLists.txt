@@ -10,6 +10,7 @@ configure_file(
   @ONLY
 )
 
+include(abiwinrt.cmake)
 include(detours.cmake)
 include(cppwinrt.cmake)
 include(directxtex.cmake)
@@ -34,5 +35,6 @@ include(wmm.cmake)
 include(zlib.cmake)
 
 include(libzip.cmake)
-include(qpdf.cmake)
+include(webview2.cmake)
 include(windowsappsdk.cmake)
+include(qpdf.cmake)

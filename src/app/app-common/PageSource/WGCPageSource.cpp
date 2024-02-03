@@ -79,6 +79,7 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
 
   co_await wil::resume_foreground(mDQC.DispatcherQueue());
   {
+    co_await this->InitializeInCaptureThread();
     const std::unique_lock d2dlock(*mDXR);
 
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem item {nullptr};
@@ -93,7 +94,6 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
       co_return;
     }
 
-    winrt::com_ptr<IInspectable> inspectable {nullptr};
     winrt::check_hresult(CreateDirect3D11DeviceFromDXGIDevice(
       mDXR->mDXGIDevice.get(),
       reinterpret_cast<IInspectable**>(winrt::put_abi(mWinRTD3DDevice))));

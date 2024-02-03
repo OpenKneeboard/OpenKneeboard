@@ -71,6 +71,8 @@ class WGCPageSource : public virtual IPageSource,
     const Options& options);
   winrt::fire_and_forget Init() noexcept;
 
+  virtual winrt::Windows::Foundation::IAsyncAction InitializeInCaptureThread()
+    = 0;
   virtual std::optional<float> GetHDRWhiteLevelInNits() const = 0;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
     const

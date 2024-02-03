@@ -245,6 +245,11 @@ PixelRect HWNDPageSource::GetContentRect(const PixelSize& captureSize) {
   return *clientArea;
 }
 
+winrt::Windows::Foundation::IAsyncAction
+HWNDPageSource::InitializeInCaptureThread() {
+  co_return;
+}
+
 PixelSize HWNDPageSource::GetSwapchainDimensions(const PixelSize& contentSize) {
   // Don't create massive buffers if it just moves between a few fixed
   // sizes, but create full-screen buffers for smoothness if it's being

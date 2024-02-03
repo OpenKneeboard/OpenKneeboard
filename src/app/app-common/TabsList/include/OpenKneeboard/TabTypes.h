@@ -19,6 +19,7 @@
  */
 #pragma once
 
+#include <OpenKneeboard/BrowserTab.h>
 #include <OpenKneeboard/DCSAircraftTab.h>
 #include <OpenKneeboard/DCSBriefingTab.h>
 #include <OpenKneeboard/DCSMissionTab.h>

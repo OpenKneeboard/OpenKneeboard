@@ -101,21 +101,43 @@ std::filesystem::path GetRuntimeDirectory() {
   return sCache;
 }
 
-std::filesystem::path GetSettingsDirectory() {
-  static std::filesystem::path sPath;
-  if (!sPath.empty()) {
-    return sPath;
-  }
-
+static std::filesystem::path GetShellFolderPath(const KNOWNFOLDERID& folderID) {
   wchar_t* buffer = nullptr;
-  if (
-    !SHGetKnownFolderPath(FOLDERID_SavedGames, NULL, NULL, &buffer) == S_OK
-    && buffer) {
+  if (!SHGetKnownFolderPath(folderID, NULL, NULL, &buffer) == S_OK && buffer) {
     return {};
   }
+  return {buffer};
+}
 
-  sPath = std::filesystem::path(std::wstring_view(buffer)) / "OpenKneeboard";
-  std::filesystem::create_directories(sPath);
+std::filesystem::path GetSettingsDirectory() {
+  static std::filesystem::path sPath;
+  static std::once_flag sFlag;
+
+  std::call_once(sFlag, [p = &sPath]() {
+    const auto base = GetShellFolderPath(FOLDERID_SavedGames);
+    if (base.empty()) {
+      return;
+    }
+    *p = base / "OpenKneeboard";
+    std::filesystem::create_directories(*p);
+  });
+
+  return sPath;
+}
+
+std::filesystem::path GetLocalAppDataDirectory() {
+  static std::filesystem::path sPath;
+  static std::once_flag sFlag;
+
+  std::call_once(sFlag, [p = &sPath]() {
+    const auto base = GetShellFolderPath(FOLDERID_LocalAppData);
+    if (base.empty()) {
+      return;
+    }
+    *p = base / "OpenKneeboard";
+    std::filesystem::create_directories(*p);
+  });
+
   return sPath;
 }
 

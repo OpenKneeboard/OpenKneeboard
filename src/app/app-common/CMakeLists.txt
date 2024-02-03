@@ -46,6 +46,7 @@ target_link_libraries(
   ThirdParty::Lua
   ThirdParty::OTDIPC
   ThirdParty::OpenVR
+  ThirdParty::WebView2Loader
   ThirdParty::WMM
 )
 target_link_windows_app_sdk(OpenKneeboard-App-Common)

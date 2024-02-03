@@ -34,6 +34,7 @@
 #include <OpenKneeboard/RuntimeFiles.h>
 #include <OpenKneeboard/SHM.h>
 #include <OpenKneeboard/TroubleshootingStore.h>
+#include <OpenKneeboard/WebView2PageSource.h>
 #include <OpenKneeboard/Win32.h>
 
 #include <OpenKneeboard/config.h>
@@ -211,6 +212,13 @@ static void LogSystemInformation() {
     } else {
       dprint("  Failed to read UAC settings.");
     }
+  }
+
+  if (WebView2PageSource::IsAvailable()) {
+    const auto webView2 = WebView2PageSource::GetVersion();
+    dprintf("  WebView2: v{}", webView2);
+  } else {
+    dprint("  WebView2: NOT FOUND");
   }
 
   CPINFOEXW codePageInfo;
