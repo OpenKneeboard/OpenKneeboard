@@ -39,8 +39,9 @@
 #define OPENKNEEBOARD_TAB_TYPES \
   IT(_("Files (one per tab)"), SingleFile) \
   IT(_("Folder"), Folder) \
-  IT(_("Window Capture"), WindowCapture) \
   IT(_("Endless Notebook (from template file)"), EndlessNotebook) \
+  IT(_("Window Capture"), WindowCapture) \
+  IT(_("Browser Dashboard"), Browser) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Briefing"), DCSBriefing) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \
@@ -51,6 +52,7 @@
 #define IT(_, type) \
   static_assert( \
     std::derived_from<OpenKneeboard::type##Tab, OpenKneeboard::ITab>);
+OPENKNEEBOARD_TAB_TYPES
 #undef IT
 
 namespace OpenKneeboard {
@@ -125,26 +127,15 @@ std::shared_ptr<T> load_tab(
   const winrt::guid& persistentID,
   const std::string& title,
   const nlohmann::json& config) {
-  if constexpr (detail::shared_constructible_from<
-                  T,
-                  audited_ptr<DXResources>,
-                  KneeboardState*,
-                  winrt::guid,
-                  std::string,
-                  nlohmann::json>) {
-    return detail::make_shared<T>(dxr, kbs, persistentID, title, config);
-  }
+  static_assert(!std::is_abstract_v<T>);
 
-  if constexpr (detail::shared_constructible_from<
-                  T,
-                  audited_ptr<DXResources>,
-                  KneeboardState*,
-                  winrt::guid,
-                  std::string>) {
+  if constexpr (std::derived_from<T, ITabWithSettings>) {
+    typename TabSettingsTraits<T>::Settings settings;
+    settings = config;
+    return detail::make_shared<T>(dxr, kbs, persistentID, title, settings);
+  } else {
     return detail::make_shared<T>(dxr, kbs, persistentID, title);
   }
-
-  static_assert(!std::is_abstract_v<T>);
 }
 
 template <class T>

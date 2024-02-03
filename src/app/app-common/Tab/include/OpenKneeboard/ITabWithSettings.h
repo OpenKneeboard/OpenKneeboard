@@ -19,15 +19,35 @@
  */
 #pragma once
 
-#include <nlohmann/json_fwd.hpp>
-
 #include "ITab.h"
+
+#include <OpenKneeboard/json.h>
+
+#include <concepts>
 
 namespace OpenKneeboard {
 
 class ITabWithSettings : public virtual ITab {
  public:
   virtual nlohmann::json GetSettings() const = 0;
+};
+
+template <std::derived_from<ITab> T>
+struct TabSettingsTraits;
+
+template <std::derived_from<ITabWithSettings> T>
+struct TabSettingsTraits<T> {
+  using Settings = nlohmann::json;
+};
+
+template <class T>
+concept tab_with_deserializable_settings
+  = std::derived_from<T, ITabWithSettings>
+  && json_deserializable<typename T::Settings>;
+
+template <tab_with_deserializable_settings T>
+struct TabSettingsTraits<T> {
+  using Settings = typename T::Settings;
 };
 
 }// namespace OpenKneeboard
