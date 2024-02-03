@@ -90,6 +90,9 @@ WebView2PageSource::InitializeInCaptureThread() {
   mController
     = co_await mEnvironment.CreateCoreWebView2CompositionControllerAsync(
       windowRef);
+
+  mController.DefaultBackgroundColor(winrt::Windows::UI::Colors::Transparent());
+
   mWebView = mController.CoreWebView2();
 
   auto settings = mWebView.Settings();
