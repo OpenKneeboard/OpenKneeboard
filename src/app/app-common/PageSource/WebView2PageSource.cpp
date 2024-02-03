@@ -21,6 +21,7 @@
 #include <OpenKneeboard/Filesystem.h>
 #include <OpenKneeboard/WebView2PageSource.h>
 
+#include <OpenKneeboard/config.h>
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/hresult.h>
 #include <OpenKneeboard/version.h>
@@ -64,7 +65,6 @@ WebView2PageSource::InitializeInCaptureThread() {
   this->InitializeComposition();
 
   using namespace winrt::Microsoft::Web::WebView2::Core;
-  CoreWebView2EnvironmentOptions options;
 
   const auto userData = Filesystem::GetLocalAppDataDirectory() / "WebView2";
   std::filesystem::create_directories(userData);
@@ -73,8 +73,13 @@ WebView2PageSource::InitializeInCaptureThread() {
     = CoreWebView2ControllerWindowReference::CreateFromWindowHandle(
       reinterpret_cast<uint64_t>(mBrowserWindow.get()));
 
+  const auto edgeArgs
+    = std::format(L"--disable-gpu-vsync --max-gum-fps={}", FramesPerSecond);
+  CoreWebView2EnvironmentOptions options;
+  options.AdditionalBrowserArguments(edgeArgs);
+
   mEnvironment = co_await CoreWebView2Environment::CreateWithOptionsAsync(
-    {}, userData.wstring(), {});
+    {}, userData.wstring(), options);
   mController
     = co_await mEnvironment.CreateCoreWebView2CompositionControllerAsync(
       windowRef);

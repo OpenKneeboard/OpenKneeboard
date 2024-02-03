@@ -199,8 +199,8 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
-  const auto fps = 90;
-  const auto interval = std::chrono::milliseconds(1000 / fps);
+  const auto interval = std::chrono::milliseconds(
+    static_cast<unsigned int>(1000 / FramesPerSecond));
 
   const auto cancellationToken = co_await winrt::get_cancellation_token();
   cancellationToken.enable_propagation();
