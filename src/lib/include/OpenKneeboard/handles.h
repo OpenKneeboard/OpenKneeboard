@@ -25,30 +25,6 @@
 
 namespace OpenKneeboard {
 
-template <class T>
-struct Handle {
-  T mHandle {};
-  Handle() = default;
-  Handle(T handle) : mHandle(handle) {
-  }
-  Handle(nullptr_t) {
-  }
-
-  operator bool() const noexcept {
-    return static_cast<bool>(mHandle);
-  }
-
-  operator T() const {
-    return mHandle;
-  }
-
-  bool operator==(const std::nullptr_t&) const noexcept {
-    return !mHandle;
-  }
-
-  auto operator<=>(const Handle<T>&) const noexcept = default;
-};
-
 template <class TPtr, auto TDeleter>
 struct CDeleter {
   using pointer = TPtr;
@@ -61,7 +37,7 @@ struct CDeleter {
 };
 
 template <class T, auto TDeleter>
-using CHandleDeleter = CDeleter<Handle<T>, TDeleter>;
+using CHandleDeleter = CDeleter<T, TDeleter>;
 template <class T, auto TDeleter>
 using CPtrDeleter = CDeleter<T*, TDeleter>;
 
@@ -75,5 +51,6 @@ using unique_hhook
 using unique_hmodule
   = std::unique_ptr<HMODULE, CHandleDeleter<HMODULE, &FreeLibrary>>;
 using unique_hkey = std::unique_ptr<HKEY, CHandleDeleter<HKEY, &RegCloseKey>>;
+using unique_hwnd = std::unique_ptr<HWND, CHandleDeleter<HWND, &DestroyWindow>>;
 
 }// namespace OpenKneeboard
