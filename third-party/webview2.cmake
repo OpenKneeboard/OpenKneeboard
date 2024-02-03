@@ -46,7 +46,7 @@ add_library(ThirdParty::WebView2Loader ALIAS WebView2Loader)
 
 install(
   FILES
-  "${SOURCE_DIR}/LICENSE"
+  "${SOURCE_DIR}/LICENSE.txt"
   TYPE DOC
   RENAME "LICENSE-ThirdParty-WebView2.txt"
 )
