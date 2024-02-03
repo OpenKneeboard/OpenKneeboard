@@ -72,6 +72,9 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
   void OnTabsChanged(
     const IInspectable&,
     const Windows::Foundation::Collections::IVectorChangedEventArgs&) noexcept;
+  void OnAddBrowserAddressTextChanged(
+    const IInspectable&,
+    const IInspectable&) noexcept;
 
  private:
   void CreateAddTabMenu(const Button& button, FlyoutPlacementMode);
@@ -80,6 +83,8 @@ struct TabSettingsPage : TabSettingsPageT<TabSettingsPage>,
   void CreateFileTab(const std::string& pickerDialogTitle = {});
   void CreateFolderTab();
   winrt::fire_and_forget CreateWindowCaptureTab();
+  fire_and_forget CreateBrowserTab();
+  winrt::fire_and_forget PromptToInstallWebView2();
 
   void AddTabs(const std::vector<std::shared_ptr<OpenKneeboard::ITab>>&);
   static OpenKneeboardApp::TabUIData CreateTabUIData(

@@ -27,11 +27,13 @@ BrowserTab::BrowserTab(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kbs,
   const winrt::guid& persistentID,
-  std::string_view title)
+  std::string_view title,
+  const Settings& settings)
   : TabBase(persistentID, title),
     PageSourceWithDelegates(dxr, kbs),
     mDXR(dxr),
-    mKneeboard(kbs) {
+    mKneeboard(kbs),
+    mSettings(settings) {
   this->Reload();
 }
 
@@ -44,16 +46,21 @@ std::string BrowserTab::GetGlyph() const {
 }
 
 std::string BrowserTab::GetStaticGlyph() {
-  // TVMonitor
-  return {"\ue7f4"};
+  // Website
+  return {"\ueb41"};
 }
 
 void BrowserTab::Reload() {
   mDelegate = {};
   this->SetDelegates({});
-
-  mDelegate = WebView2PageSource::Create(mDXR, mKneeboard);
+  mDelegate = WebView2PageSource::Create(mDXR, mKneeboard, mSettings);
   this->SetDelegates({mDelegate});
 }
+
+nlohmann::json BrowserTab::GetSettings() const {
+  return mSettings;
+}
+
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(BrowserTab::Settings, mURI, mInitialSize)
 
 }// namespace OpenKneeboard

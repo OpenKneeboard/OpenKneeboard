@@ -37,16 +37,21 @@
 namespace OpenKneeboard {
 std::shared_ptr<WebView2PageSource> WebView2PageSource::Create(
   const audited_ptr<DXResources>& dxr,
-  KneeboardState* kbs) {
-  auto ret = shared_with_final_release(new WebView2PageSource(dxr, kbs));
+  KneeboardState* kbs,
+  const Settings& settings) {
+  auto ret
+    = shared_with_final_release(new WebView2PageSource(dxr, kbs, settings));
   ret->Init();
   return ret;
 }
 
 WebView2PageSource::WebView2PageSource(
   const audited_ptr<DXResources>& dxr,
-  KneeboardState* kbs)
-  : WGCPageSource(dxr, kbs, {}) {
+  KneeboardState* kbs,
+  const Settings& settings)
+  : WGCPageSource(dxr, kbs, {}),
+    mSettings(settings),
+    mSize(mSettings.mInitialSize) {
   OPENKNEEBOARD_TraceLoggingScope("WebView2PageSource::WebView2PageSource()");
   if (!IsAvailable()) {
     return;
@@ -108,7 +113,7 @@ WebView2PageSource::InitializeInCaptureThread() {
   mController.RootVisualTarget(mWebViewVisual);
   mController.IsVisible(true);
 
-  mWebView.Navigate(L"https://www.testufo.com");
+  mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
 
   co_return;
 }

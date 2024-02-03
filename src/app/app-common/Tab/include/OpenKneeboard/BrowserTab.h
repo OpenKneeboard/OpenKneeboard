@@ -19,27 +19,31 @@
  */
 #pragma once
 
+#include <OpenKneeboard/ITabWithSettings.h>
 #include <OpenKneeboard/PageSourceWithDelegates.h>
 #include <OpenKneeboard/TabBase.h>
 #include <OpenKneeboard/WebView2PageSource.h>
 
 #include <OpenKneeboard/audited_ptr.h>
 #include <OpenKneeboard/handles.h>
+#include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
 
 class HWNDPageSource;
 
 class BrowserTab final : public TabBase,
-                         public PageSourceWithDelegates,
-                         public std::enable_shared_from_this<BrowserTab> {
+                         public ITabWithSettings,
+                         public PageSourceWithDelegates {
  public:
+  struct Settings;
   BrowserTab() = delete;
   BrowserTab(
     const audited_ptr<DXResources>&,
     KneeboardState*,
     const winrt::guid& persistentID,
-    std::string_view title);
+    std::string_view title,
+    const Settings&);
   virtual ~BrowserTab();
 
   virtual std::string GetGlyph() const override;
@@ -47,11 +51,21 @@ class BrowserTab final : public TabBase,
 
   virtual void Reload() final override;
 
+  struct Settings : WebView2PageSource::Settings {
+    constexpr bool operator==(const Settings&) const noexcept = default;
+  };
+
+  nlohmann::json GetSettings() const override;
+
  private:
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;
   KneeboardState* mKneeboard {nullptr};
+  Settings mSettings;
+
   std::shared_ptr<WebView2PageSource> mDelegate;
 };
+
+OPENKNEEBOARD_DECLARE_SPARSE_JSON(BrowserTab::Settings);
 
 }// namespace OpenKneeboard

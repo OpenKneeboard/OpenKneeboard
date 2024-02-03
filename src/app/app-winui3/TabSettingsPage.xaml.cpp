@@ -37,6 +37,7 @@
 #include <OpenKneeboard/IHasDebugInformation.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/LaunchURI.h>
 #include <OpenKneeboard/TabTypes.h>
 #include <OpenKneeboard/TabView.h>
 #include <OpenKneeboard/TabsList.h>
@@ -246,6 +247,9 @@ void TabSettingsPage::CreateTab(
     case TabType::WindowCapture:
       CreateWindowCaptureTab();
       return;
+    case TabType::Browser:
+      CreateBrowserTab();
+      return;
   }
 #define IT(_, type) \
   if (tabType == TabType::type) { \
@@ -264,6 +268,43 @@ void TabSettingsPage::CreateTab(
 #undef IT
   throw std::logic_error(
     std::format("Unhandled tab type: {}", static_cast<uint8_t>(tabType)));
+}
+
+winrt::fire_and_forget TabSettingsPage::PromptToInstallWebView2() {
+  if (
+    co_await InstallWebView2Dialog().ShowAsync()
+    != ContentDialogResult::Primary) {
+    co_return;
+  }
+  // From "Get the Link" button at
+  // https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+  co_await LaunchURI("https://go.microsoft.com/fwlink/p/?LinkId=2124703");
+}
+
+winrt::fire_and_forget TabSettingsPage::CreateBrowserTab() {
+  if (!WebView2PageSource::IsAvailable()) {
+    this->PromptToInstallWebView2();
+    co_return;
+  }
+
+  AddBrowserAddress().Text({});
+
+  if (co_await AddBrowserDialog().ShowAsync() != ContentDialogResult::Primary) {
+    co_return;
+  }
+
+  BrowserTab::Settings settings;
+  settings.mURI = to_string(AddBrowserAddress().Text());
+
+  this->AddTabs({std::make_shared<BrowserTab>(
+    mDXR, mKneeboard.get(), random_guid(), _("Web Dashboard"), settings)});
+}
+
+void TabSettingsPage::OnAddBrowserAddressTextChanged(
+  const IInspectable&,
+  const IInspectable&) noexcept {
+  AddBrowserDialog().IsPrimaryButtonEnabled(
+    !AddBrowserAddress().Text().empty());
 }
 
 winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {

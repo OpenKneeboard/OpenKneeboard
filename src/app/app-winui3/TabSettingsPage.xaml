@@ -206,6 +206,46 @@
           </TextBlock>
         </Grid>
       </Button>
+      <ContentDialog
+        x:Name="InstallWebView2Dialog"
+        Title="Browser Tabs Unavailable"
+        DefaultButton="Primary"
+        PrimaryButtonText="Download"
+        CloseButtonText="Cancel">
+        <RichTextBlock>
+          <Paragraph>
+            Browser tabs require Microsoft Edge WebView2, which is not
+            installed.
+          </Paragraph>
+          <Paragraph>
+            To add a browser tab, download and install Microsoft Edge WebView2,
+            then restart OpenKneeboard.
+          </Paragraph>
+        </RichTextBlock>
+      </ContentDialog>
+      <ContentDialog
+        x:Name="AddBrowserDialog"
+        Title="Add Web Dashboard"
+        DefaultButton="Primary"
+        PrimaryButtonText="Add Dashboard"
+        CloseButtonText="Cancel"
+        IsPrimaryButtonEnabled="False">
+        <StackPanel
+          Orientation="Vertical"
+          Spacing="20">
+          <TextBlock Style="{ThemeResource BodyTextBlockStyle}">
+            Web dashboard tabs display a single screen - they are not a
+            general-purpose web browser. For a less limited browser, use your
+            normal browser with a Window Capture Tab.
+          </TextBlock>
+          <TextBox
+            x:Name="AddBrowserAddress"
+            Header="Dashboard Address:"
+            PlaceholderText="https://example.com"
+            TextChanged="OnAddBrowserAddressTextChanged"
+          />
+        </StackPanel>
+      </ContentDialog>
     </StackPanel>
   </ScrollViewer>
 </Page>

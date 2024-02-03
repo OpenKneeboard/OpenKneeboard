@@ -41,7 +41,7 @@
   IT(_("Folder"), Folder) \
   IT(_("Endless Notebook (from template file)"), EndlessNotebook) \
   IT(_("Window Capture"), WindowCapture) \
-  IT(_("Browser Dashboard"), Browser) \
+  IT(_("Web Dashboard"), Browser) \
   IT(_("DCS Aircraft Kneeboard"), DCSAircraft) \
   IT(_("DCS Mission Briefing"), DCSBriefing) \
   IT(_("DCS Mission Kneeboard"), DCSMission) \

@@ -46,9 +46,14 @@ class WebView2PageSource final : public WGCPageSource {
   static bool IsAvailable();
   static std::string GetVersion();
 
-  static std::shared_ptr<WebView2PageSource> Create(
-    const audited_ptr<DXResources>&,
-    KneeboardState*);
+  struct Settings {
+    PixelSize mInitialSize {1024, 768};
+    std::string mURI;
+    constexpr bool operator==(const Settings&) const noexcept = default;
+  };
+
+  static std::shared_ptr<WebView2PageSource>
+  Create(const audited_ptr<DXResources>&, KneeboardState*, const Settings&);
   static winrt::fire_and_forget final_release(
     std::unique_ptr<WebView2PageSource>);
 
@@ -65,11 +70,13 @@ class WebView2PageSource final : public WGCPageSource {
   WebView2PageSource::InitializeInCaptureThread() override;
 
  private:
-  WebView2PageSource(const audited_ptr<DXResources>&, KneeboardState*);
+  WebView2PageSource(
+    const audited_ptr<DXResources>&,
+    KneeboardState*,
+    const Settings&);
 
-  static constexpr PixelSize DefaultSize {1024, 768};
-
-  PixelSize mSize {DefaultSize};
+  Settings mSettings;
+  PixelSize mSize;
 
   static void RegisterWindowClass();
   /** Not just 'CreateWindow()' because Windows.h's macros interfere */
