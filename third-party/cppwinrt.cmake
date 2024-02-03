@@ -29,6 +29,7 @@ target_include_directories(CppWinRT INTERFACE "${BINARY_DIR}/include")
 add_library(ThirdParty::CppWinRT ALIAS CppWinRT)
 
 add_executable(ThirdParty::CppWinRT::Exe IMPORTED GLOBAL)
+add_dependencies(ThirdParty::CppWinRT::Exe CppWinRTNuget)
 set_target_properties(
   ThirdParty::CppWinRT::Exe
   PROPERTIES
