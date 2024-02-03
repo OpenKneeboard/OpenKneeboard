@@ -37,6 +37,12 @@ namespace OpenKneeboard {
  * - supports reading either in that form or `lowerCamelCase` for compatibility
  * - supports the convention of `mUpperCamelCase` for the C++ structs
  *
+ * concepts
+ * ========
+ *
+ * - `json_deserializable<T>`: can be converted to JSON via `from_json()`
+ * - `json_serializable<T>`: can be converted to JSON via `to_json()`
+ * - `json_serdes<T>`: both of the above
  *
  * Macros
  * ======
@@ -82,6 +88,17 @@ namespace OpenKneeboard {
  *
  * These functions will be called at the end of the generated functions.
  */
+
+template <class T>
+concept json_serializable = requires(nlohmann::json& j, const T& v) {
+  { to_json(j, v) };
+};
+template <class T>
+concept json_deserializable = requires(const nlohmann::json& j, T& v) {
+  { from_json(j, v) };
+};
+template <class T>
+concept json_serdes = json_serializable<T> && json_deserializable<T>;
 
 namespace detail::SparseJson {
 // C++ currently bans directly returning arrays
