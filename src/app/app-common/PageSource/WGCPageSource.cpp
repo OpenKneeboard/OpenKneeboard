@@ -222,6 +222,15 @@ void WGCPageSource::RenderPage(
   sb->End();
 
   mNeedsRepaint = false;
+
+  if (!mNextFrame) {
+    return;
+  }
+
+  ([](auto keepAlive, auto disposeInCorrectThread, auto thread)
+     -> winrt::fire_and_forget { co_await wil::resume_foreground(thread); })(
+    shared_from_this(), std::move(mNextFrame), mDQC.DispatcherQueue());
+  mNextFrame = {nullptr};
 }
 
 void WGCPageSource::OnFrame() {
@@ -279,7 +288,7 @@ void WGCPageSource::OnFrame() {
     mFramePool.Recreate(
       mWinRTD3DDevice,
       this->GetPixelFormat(),
-      2,
+      1,
       swapchainDimensions
         .StaticCast<int32_t, winrt::Windows::Graphics::SizeInt32>());
     return;
@@ -339,13 +348,16 @@ void WGCPageSource::OnFrame() {
   this->evNeedsRepaintEvent.Emit();
   TraceLoggingWriteStop(
     activity, "WGCPageSource::OnFrame", TraceLoggingValue("Success", "Result"));
+
+  // Keep alive to limit DWM/WGC framerate
+  mNextFrame = frame;
 }
 
 winrt::fire_and_forget WGCPageSource::ForceResize(const PixelSize& size) {
   mFramePool.Recreate(
     mWinRTD3DDevice,
     this->GetPixelFormat(),
-    2,
+    1,
     size.StaticCast<int32_t, winrt::Windows::Graphics::SizeInt32>());
   co_return;
 }

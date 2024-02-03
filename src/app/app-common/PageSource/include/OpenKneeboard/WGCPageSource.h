@@ -107,6 +107,9 @@ class WGCPageSource : public virtual IPageSource,
 
   winrt::Windows::System::DispatcherQueueController mDQC {nullptr};
 
+  winrt::Windows::Graphics::Capture::Direct3D11CaptureFrame mNextFrame {
+    nullptr};
+
   PixelSize mCaptureSize {};
   winrt::com_ptr<ID3D11Texture2D> mTexture;
   winrt::com_ptr<ID3D11ShaderResourceView> mShaderResourceView;
