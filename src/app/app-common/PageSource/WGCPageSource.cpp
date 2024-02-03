@@ -352,6 +352,13 @@ void WGCPageSource::OnFrame() {
 
   // Keep alive to limit DWM/WGC framerate
   mNextFrame = frame;
+  {
+    OPENKNEEBOARD_TraceLoggingScope("WGCPageSource::PostFrame");
+    this->PostFrame();
+  }
+}
+
+void WGCPageSource::PostFrame() {
 }
 
 winrt::fire_and_forget WGCPageSource::ForceResize(const PixelSize& size) {

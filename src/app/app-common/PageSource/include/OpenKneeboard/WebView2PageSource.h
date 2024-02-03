@@ -19,12 +19,18 @@
  */
 #pragma once
 
-#include <OpenKneeboard/WGCPageSource.h>
+#include "IPageSourceWithCursorEvents.h"
+#include "WGCPageSource.h"
+
+#include <OpenKneeboard/CursorEvent.h>
 
 #include <OpenKneeboard/handles.h>
 
 #include <winrt/Microsoft.Web.WebView2.Core.h>
 #include <winrt/Windows.UI.Composition.h>
+
+#include <mutex>
+#include <queue>
 
 #include <WebView2.h>
 
@@ -38,7 +44,8 @@ namespace OpenKneeboard {
  *
  * It'll be fun, they said.
  */
-class WebView2PageSource final : public WGCPageSource {
+class WebView2PageSource final : public WGCPageSource,
+                                 public IPageSourceWithCursorEvents {
  public:
   WebView2PageSource() = delete;
   virtual ~WebView2PageSource();
@@ -59,6 +66,14 @@ class WebView2PageSource final : public WGCPageSource {
   static winrt::fire_and_forget final_release(
     std::unique_ptr<WebView2PageSource>);
 
+  virtual void PostCursorEvent(EventContext, const CursorEvent&, PageID)
+    override;
+
+  virtual bool CanClearUserInput(PageID) const override;
+  virtual bool CanClearUserInput() const override;
+  virtual void ClearUserInput(PageID) override;
+  virtual void ClearUserInput() override;
+
  protected:
   virtual std::optional<float> GetHDRWhiteLevelInNits() const override;
   virtual winrt::Windows::Graphics::DirectX::DirectXPixelFormat GetPixelFormat()
@@ -68,8 +83,10 @@ class WebView2PageSource final : public WGCPageSource {
   virtual PixelRect GetContentRect(const PixelSize& captureSize) override;
   virtual PixelSize GetSwapchainDimensions(
     const PixelSize& captureSize) override;
-  virtual winrt::Windows::Foundation::IAsyncAction
-  WebView2PageSource::InitializeInCaptureThread() override;
+  virtual winrt::Windows::Foundation::IAsyncAction InitializeInCaptureThread()
+    override;
+
+  virtual void PostFrame() override;
 
  private:
   WebView2PageSource(
@@ -98,6 +115,12 @@ class WebView2PageSource final : public WGCPageSource {
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2CompositionController
     mController {nullptr};
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2 mWebView {nullptr};
+
+  std::mutex mCursorEventsMutex;
+  std::queue<CursorEvent> mCursorEvents;
+  uint32_t mMouseButtons {};
+
+  void FlushCursorEvents();
 
   winrt::fire_and_forget OnWebMessageReceived(
     const winrt::Microsoft::Web::WebView2::Core::CoreWebView2&,

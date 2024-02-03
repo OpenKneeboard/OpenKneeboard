@@ -292,6 +292,103 @@ PixelSize WebView2PageSource::GetSwapchainDimensions(
   return captureSize;
 }
 
+void WebView2PageSource::PostFrame() {
+  this->FlushCursorEvents();
+}
+
+void WebView2PageSource::PostCursorEvent(
+  EventContext,
+  const CursorEvent& event,
+  PageID) {
+  if (!mController) {
+    return;
+  }
+  std::unique_lock lock(mCursorEventsMutex);
+  mCursorEvents.push(event);
+}
+
+void WebView2PageSource::FlushCursorEvents() {
+  std::queue<CursorEvent> events;
+  {
+    std::unique_lock lock(mCursorEventsMutex);
+    events = std::move(mCursorEvents);
+    mCursorEvents = {};
+  }
+
+  while (!events.empty()) {
+    const auto event = events.front();
+    events.pop();
+
+    // TODO: button tracking
+    using namespace winrt::Microsoft::Web::WebView2::Core;
+
+    using EVKind = CoreWebView2MouseEventKind;
+    using VKey = CoreWebView2MouseEventVirtualKeys;
+
+    VKey keys {};
+    if ((event.mButtons & 1)) {
+      keys |= VKey::LeftButton;
+    }
+    if ((event.mButtons & (1 << 1))) {
+      keys |= VKey::RightButton;
+    }
+
+    if (event.mTouchState == CursorTouchState::NOT_NEAR_SURFACE) {
+      if (mMouseButtons & 1) {
+        mController.SendMouseInput(EVKind::LeftButtonUp, keys, 0, {});
+      }
+      if (mMouseButtons & (1 << 1)) {
+        mController.SendMouseInput(EVKind::RightButtonUp, keys, 0, {});
+      }
+      mMouseButtons = {};
+      mController.SendMouseInput(EVKind::Leave, keys, 0, {});
+      continue;
+    }
+
+    // We only pay attention to left/right buttons
+    const auto buttons = event.mButtons & 3;
+    if (buttons == mMouseButtons) {
+      mController.SendMouseInput(EVKind::Move, keys, 0, {event.mX, event.mY});
+      continue;
+    }
+
+    const auto down = event.mButtons & ~mMouseButtons;
+    const auto up = mMouseButtons & ~event.mButtons;
+    mMouseButtons = buttons;
+
+    if (down & 1) {
+      mController.SendMouseInput(
+        EVKind::LeftButtonDown, keys, 0, {event.mX, event.mY});
+    }
+    if (up & 1) {
+      mController.SendMouseInput(
+        EVKind::LeftButtonUp, keys, 0, {event.mX, event.mY});
+    }
+    if (down & (1 << 1)) {
+      mController.SendMouseInput(
+        EVKind::RightButtonDown, keys, 0, {event.mX, event.mY});
+    }
+    if (up & (1 << 1)) {
+      mController.SendMouseInput(
+        EVKind::RightButtonUp, keys, 0, {event.mX, event.mY});
+    }
+  }
+}
+
+bool WebView2PageSource::CanClearUserInput(PageID) const {
+  return false;
+}
+
+bool WebView2PageSource::CanClearUserInput() const {
+  return false;
+}
+
+void WebView2PageSource::ClearUserInput(PageID) {
+}
+
+void WebView2PageSource::ClearUserInput() {
+}
+
 LRESULT CALLBACK WebView2PageSource::WindowProc(
   HWND const window,
   UINT const message,
