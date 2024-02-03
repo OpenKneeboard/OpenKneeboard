@@ -101,6 +101,14 @@ std::filesystem::path GetRuntimeDirectory() {
   return sCache;
 }
 
+std::filesystem::path GetImmutableDataDirectory() {
+  static std::filesystem::path sCache;
+  if (sCache.empty()) {
+    sCache = std::filesystem::canonical(GetRuntimeDirectory() / "../share");
+  }
+  return sCache;
+}
+
 static std::filesystem::path GetShellFolderPath(const KNOWNFOLDERID& folderID) {
   wchar_t* buffer = nullptr;
   if (!SHGetKnownFolderPath(folderID, NULL, NULL, &buffer) == S_OK && buffer) {

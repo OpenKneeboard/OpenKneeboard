@@ -28,7 +28,8 @@
 
 #include <Windows.h>
 
-#include <future>
+#include <fstream>
+#include <sstream>
 #include <system_error>
 
 #include <WebView2.h>
@@ -85,6 +86,7 @@ WebView2PageSource::InitializeInCaptureThread() {
 
   mEnvironment = co_await CoreWebView2Environment::CreateWithOptionsAsync(
     {}, userData.wstring(), options);
+
   mController
     = co_await mEnvironment.CreateCoreWebView2CompositionControllerAsync(
       windowRef);
@@ -100,6 +102,22 @@ WebView2PageSource::InitializeInCaptureThread() {
     Version::Build);
   settings.UserAgent(userAgent);
 
+  if (mSettings.mAutoResizeForSimHub) {
+    settings.IsWebMessageEnabled(true);
+    mWebView.WebMessageReceived(
+      std::bind_front(&WebView2PageSource::OnWebMessageReceived, this));
+
+    const auto path
+      = Filesystem::GetImmutableDataDirectory() / "WebView2-SimHub.js";
+
+    std::ifstream f(path);
+    std::stringstream ss;
+    ss << f.rdbuf();
+    const auto js = ss.str();
+
+    co_await mWebView.AddScriptToExecuteOnDocumentCreatedAsync(
+      winrt::to_hstring(js));
+  }
   mController.BoundsMode(CoreWebView2BoundsMode::UseRawPixels);
   mController.RasterizationScale(1.0);
   mController.ShouldDetectMonitorScaleChanges(false);
@@ -113,9 +131,19 @@ WebView2PageSource::InitializeInCaptureThread() {
   mController.RootVisualTarget(mWebViewVisual);
   mController.IsVisible(true);
 
-  mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
+  if (mSettings.mOpenDeveloperToolsWindow) {
+    mWebView.OpenDevToolsWindow();
+  }
 
-  co_return;
+  mWebView.Navigate(winrt::to_hstring(mSettings.mURI));
+}
+
+void WebView2PageSource::OnWebMessageReceived(
+  const winrt::Microsoft::Web::WebView2::Core::CoreWebView2&,
+  const winrt::Microsoft::Web::WebView2::Core::
+    CoreWebView2WebMessageReceivedEventArgs& args) {
+  const auto json = to_string(args.WebMessageAsJson());
+  const auto message = nlohmann::json::parse(json);
 }
 
 void WebView2PageSource::InitializeComposition() {

@@ -51,9 +51,7 @@ std::string DCSWorld::GetModuleNameForLuaAircraft(const std::string& luaName) {
     // User-override
     Filesystem::GetSettingsDirectory(),
     // As-installed
-    Filesystem::GetRuntimeDirectory().parent_path() / "share",
-    // When running from a build tree
-    Filesystem::GetRuntimeDirectory(),
+    Filesystem::GetImmutableDataDirectory(),
   };
 
   dprint("Loading DCS aircraft mapping...");

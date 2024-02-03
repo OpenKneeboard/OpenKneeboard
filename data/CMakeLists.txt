@@ -1,6 +1,7 @@
 set(
     DATA_SOURCES
     DCS-Aircraft-Mapping.json
+    WebView2-SimHub.js
 )
 install(
     FILES

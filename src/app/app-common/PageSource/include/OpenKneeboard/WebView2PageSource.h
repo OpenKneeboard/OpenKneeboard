@@ -48,7 +48,9 @@ class WebView2PageSource final : public WGCPageSource {
 
   struct Settings {
     PixelSize mInitialSize {1024, 768};
+    bool mAutoResizeForSimHub {true};
     std::string mURI;
+    bool mOpenDeveloperToolsWindow {false};
     constexpr bool operator==(const Settings&) const noexcept = default;
   };
 
@@ -94,6 +96,11 @@ class WebView2PageSource final : public WGCPageSource {
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2CompositionController
     mController {nullptr};
   winrt::Microsoft::Web::WebView2::Core::CoreWebView2 mWebView {nullptr};
+
+  void OnWebMessageReceived(
+    const winrt::Microsoft::Web::WebView2::Core::CoreWebView2&,
+    const winrt::Microsoft::Web::WebView2::Core::
+      CoreWebView2WebMessageReceivedEventArgs&);
 
   static LRESULT CALLBACK WindowProc(
     HWND const window,

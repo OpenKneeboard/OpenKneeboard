@@ -55,8 +55,20 @@ add_custom_target(
   ${CMAKE_COMMAND} -E copy_if_different
   "${RUNTIME_FILES}"
   "${DLL_PDB_FILES}"
-  "${DATA_SOURCES}"
   "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>"
+  COMMAND_EXPAND_LISTS
+)
+
+add_custom_target(
+  CopyDataFiles
+  ALL
+  COMMAND
+  "${CMAKE_COMMAND}" -E make_directory
+  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/../share"
+  &&
+  ${CMAKE_COMMAND} -E copy_if_different
+  "${DATA_SOURCES}"
+  "$<TARGET_FILE_DIR:OpenKneeboard-App-WinUI3>/../share"
   COMMAND_EXPAND_LISTS
 )
 

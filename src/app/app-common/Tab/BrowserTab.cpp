@@ -61,6 +61,11 @@ nlohmann::json BrowserTab::GetSettings() const {
   return mSettings;
 }
 
-OPENKNEEBOARD_DEFINE_SPARSE_JSON(BrowserTab::Settings, mURI, mInitialSize)
+OPENKNEEBOARD_DEFINE_SPARSE_JSON(
+  BrowserTab::Settings,
+  mURI,
+  mInitialSize,
+  mAutoResizeForSimHub,
+  mOpenDeveloperToolsWindow)
 
 }// namespace OpenKneeboard
