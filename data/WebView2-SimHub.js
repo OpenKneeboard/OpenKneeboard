@@ -3,6 +3,11 @@ console.log("OpenKneeboard integration attached");
 class OpenKneeboard {
   constructor() {
     this.hookWindowSimhub();
+    document.addEventListener('DOMContentLoaded', this.OnDOMContentLoaded.bind(this));
+  }
+
+  OnDOMContentLoaded() {
+    document.body.classList.add("OpenKneeboard", "OpenKneeboard_WebView2")
   }
 
   hookWindowSimhub() {
