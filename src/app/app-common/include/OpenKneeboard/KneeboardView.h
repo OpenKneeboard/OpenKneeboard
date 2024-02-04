@@ -44,12 +44,6 @@ struct CursorEvent;
 
 struct KneeboardViewID final : public UniqueIDBase<KneeboardViewID> {};
 
-enum class CursorPositionState {
-  IN_CONTENT_RECT,
-  IN_CANVAS_RECT,
-  NO_CURSOR_POSITION
-};
-
 class KneeboardView final : private EventReceiver,
                             public std::enable_shared_from_this<KneeboardView> {
  public:
