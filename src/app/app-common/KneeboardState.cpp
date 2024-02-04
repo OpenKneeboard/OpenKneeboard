@@ -186,7 +186,16 @@ void KneeboardState::PostUserAction(UserAction action) {
       this->evNeedsRepaintEvent.Emit();
       return;
     case UserAction::SWITCH_KNEEBOARDS:
-      this->SetFirstViewIndex((this->mFirstViewIndex + 1) % mViews.size());
+      if (mViews.size() >= 2) {
+        auto& first = mViews.at(this->mFirstViewIndex);
+        auto& second = mViews.at((this->mFirstViewIndex + 1) % mViews.size());
+        first->SwapState(*second);
+      } else {
+        dprintf(
+          "Switching the first two views requires 2 views, but there are {} "
+          "views",
+          mViews.size());
+      }
       return;
     case UserAction::PREVIOUS_TAB:
     case UserAction::NEXT_TAB:

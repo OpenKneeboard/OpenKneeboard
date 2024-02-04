@@ -123,45 +123,19 @@ void KneeboardView::SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs) {
 
   decltype(mTabViews) tabViews;
 
-  for (const auto& event: mTabEvents) {
-    this->RemoveEventListener(event);
-  }
-  mTabEvents.clear();
-
   for (const auto& tab: tabs) {
     auto it = std::ranges::find(mTabViews, tab, &ITabView::GetTab);
     const auto tabView = (it != mTabViews.end())
       ? (*it)
       : std::make_shared<TabView>(mDXR, mKneeboard, tab);
     tabViews.push_back(tabView);
-
-    mTabEvents.insert(
-      mTabEvents.end(),
-      {
-        AddEventListener(
-          tabView->evNeedsRepaintEvent,
-          weak_wrap(tabView, this)([](auto tabView, auto self) {
-            if (tabView == self->GetCurrentTabView()) {
-              self->evNeedsRepaintEvent.Emit();
-            }
-          })),
-        AddEventListener(
-          tab->evAvailableFeaturesChangedEvent,
-          weak_wrap(tabView, this)([](auto tabView, auto self) {
-            if (tabView == self->GetCurrentTabView()) {
-              self->evNeedsRepaintEvent.Emit();
-            }
-          })),
-        AddEventListener(
-          tabView->evBookmarksChangedEvent, this->evBookmarksChangedEvent),
-      });
   }
 
-  mTabViews = std::move(tabViews);
-  auto it = std::ranges::find(mTabViews, mCurrentTabView);
-  if (it == mTabViews.end()) {
-    mCurrentTabView = tabs.empty() ? nullptr : mTabViews.front();
-    this->evCurrentTabChangedEvent.Emit(this->GetTabIndex());
+  auto it = std::ranges::find(tabViews, mCurrentTabView);
+  if (it == tabViews.end()) {
+    SetTabViews(std::move(tabViews), tabs.empty() ? nullptr : tabViews.front());
+  } else {
+    SetTabViews(std::move(tabViews), mCurrentTabView);
   }
 }
 
@@ -743,6 +717,54 @@ std::optional<Bookmark> KneeboardView::GetBookmark(RelativePosition pos) const {
     return prev;
   }
   return {};
+}
+
+void KneeboardView::SwapState(KneeboardView& other) {
+  auto otherViews = other.mTabViews;
+  auto otherCurrent = other.mCurrentTabView;
+  other.SetTabViews(std::move(mTabViews), mCurrentTabView);
+  mTabViews = {};
+  mCurrentTabView = {};
+  this->SetTabViews(std::move(otherViews), otherCurrent);
+}
+
+void KneeboardView::SetTabViews(
+  std::vector<std::shared_ptr<ITabView>>&& views,
+  const std::shared_ptr<ITabView>& currentView) {
+  mTabViews = std::move(views);
+
+  for (const auto& event: mTabEvents) {
+    this->RemoveEventListener(event);
+  }
+  mTabEvents.clear();
+
+  for (const auto& tabView: mTabViews) {
+    mTabEvents.insert(
+      mTabEvents.end(),
+      {
+        AddEventListener(
+          tabView->evNeedsRepaintEvent,
+          weak_wrap(tabView, this)([](auto tabView, auto self) {
+            if (tabView == self->GetCurrentTabView()) {
+              self->evNeedsRepaintEvent.Emit();
+            }
+          })),
+        AddEventListener(
+          tabView->evBookmarksChangedEvent, this->evBookmarksChangedEvent),
+        AddEventListener(
+          tabView->GetRootTab()->evAvailableFeaturesChangedEvent,
+          weak_wrap(tabView, this)([](auto tabView, auto self) {
+            if (tabView == self->GetCurrentTabView()) {
+              self->evNeedsRepaintEvent.Emit();
+            }
+          })),
+      });
+  }
+
+  if (currentView != mCurrentTabView) {
+    mCurrentTabView = currentView;
+    evCurrentTabChangedEvent.Emit(this->GetTabIndex());
+  }
 }
 
 }// namespace OpenKneeboard

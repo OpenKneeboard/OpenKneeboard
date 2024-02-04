@@ -98,6 +98,12 @@ class KneeboardView final : private EventReceiver,
   void GoToPreviousBookmark();
   void GoToNextBookmark();
 
+  // Not just overloading std::swap because this intentionally does not swap IDs
+  void SwapState(KneeboardView& other);
+  void SetTabViews(
+    std::vector<std::shared_ptr<ITabView>>&& views,
+    const std::shared_ptr<ITabView>& currentView);
+
   Event<TabIndex> evCurrentTabChangedEvent;
   // TODO - cursor and repaint?
   Event<> evNeedsRepaintEvent;
