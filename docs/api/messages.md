@@ -45,7 +45,8 @@ The value is one of:
 - `NEXT_PROFILE`
 - `TOGGLE_VISIBILITY`
 - `TOGGLE_FORCE_ZOOM`
-- `SWITCH_KNEEBOARDS`
+- `SWITCH_KNEEBOARDS` - *until v1.7*
+- `SWAP_FIRST_TWO_VIEWS` - *v1.7 and above*
 - `RECENTER_VR`
 - `HIDE`
 - `SHOW`
@@ -56,8 +57,6 @@ The value is one of:
 - `DECREASE_BRIGHTNESS`
 - `RELOAD_CURRENT_TAB`
 - `REPAINT_NOW`
-
-`TINT`, `BRIGHTNESS`, and `BOOKMARK` actions are new in v1.4 and above.
 
 `RELOAD_CURRENT_TAB` is new in v1.5 and above. Use with caution since there is no undo for this function!
 

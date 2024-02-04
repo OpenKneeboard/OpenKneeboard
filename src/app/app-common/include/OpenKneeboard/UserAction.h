@@ -19,7 +19,7 @@
  */
 #pragma once
 
-#include <nlohmann/json.hpp>
+#include <OpenKneeboard/json.h>
 
 namespace OpenKneeboard {
 
@@ -35,7 +35,7 @@ namespace OpenKneeboard {
   IT(NEXT_PROFILE) \
   IT(TOGGLE_VISIBILITY) \
   IT(TOGGLE_FORCE_ZOOM) \
-  IT(SWITCH_KNEEBOARDS) \
+  IT(SWAP_FIRST_TWO_VIEWS) \
   IT(RECENTER_VR) \
   IT(HIDE) \
   IT(SHOW) \

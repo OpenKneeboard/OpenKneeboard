@@ -185,7 +185,7 @@ void KneeboardState::PostUserAction(UserAction action) {
       this->mSettings.mVR.mRecenterCount++;
       this->evNeedsRepaintEvent.Emit();
       return;
-    case UserAction::SWITCH_KNEEBOARDS:
+    case UserAction::SWAP_FIRST_TWO_VIEWS:
       if (mViews.size() >= 2) {
         auto& first = mViews.at(this->mFirstViewIndex);
         auto& second = mViews.at((this->mFirstViewIndex + 1) % mViews.size());

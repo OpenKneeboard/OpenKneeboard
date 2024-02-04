@@ -51,8 +51,8 @@ void InputBindingsControl::PopulateUI() {
   AppendUIRow(UserAction::PREVIOUS_PAGE, _(L"Previous page"));
   AppendUIRow(UserAction::NEXT_PAGE, _(L"Next page"));
 
-  AppendUIRow(UserAction::RECENTER_VR, _(L"Recenter kneeboard"));
-  AppendUIRow(UserAction::SWITCH_KNEEBOARDS, _(L"Switch kneeboards"));
+  AppendUIRow(UserAction::RECENTER_VR, _(L"Recenter VR"));
+  AppendUIRow(UserAction::SWAP_FIRST_TWO_VIEWS, _(L"Swap first two views"));
 
   AppendUIRow(UserAction::TOGGLE_VISIBILITY, _(L"Show/hide"));
   AppendUIRow(UserAction::TOGGLE_FORCE_ZOOM, _(L"Toggle forced VR zoom"));
