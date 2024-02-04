@@ -59,51 +59,50 @@ class KneeboardView final : private EventReceiver,
   [[nodiscard]] static std::shared_ptr<KneeboardView>
   Create(const audited_ptr<DXResources>&, KneeboardState*, const winrt::guid&);
 
-  virtual winrt::guid GetPersistentGUID() const;
-  virtual KneeboardViewID GetRuntimeID() const;
+  winrt::guid GetPersistentGUID() const;
+  KneeboardViewID GetRuntimeID() const;
 
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
   void PostUserAction(UserAction);
 
-  virtual std::shared_ptr<ITabView> GetCurrentTabView() const;
-  virtual std::shared_ptr<ITab> GetCurrentTab() const;
-  virtual TabIndex GetTabIndex() const;
-  virtual std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const;
-  virtual void SetCurrentTabByIndex(TabIndex);
-  virtual void SetCurrentTabByRuntimeID(ITab::RuntimeID);
+  std::shared_ptr<ITabView> GetCurrentTabView() const;
+  std::shared_ptr<ITab> GetCurrentTab() const;
+  TabIndex GetTabIndex() const;
+  std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const;
+  void SetCurrentTabByIndex(TabIndex);
+  void SetCurrentTabByRuntimeID(ITab::RuntimeID);
 
-  virtual void PreviousTab();
-  virtual void NextTab();
+  void PreviousTab();
+  void NextTab();
 
   struct IPCRenderLayout {
     PixelSize mSize;
     PixelRect mContent;
   };
 
-  virtual IPCRenderLayout GetIPCRenderLayout() const;
+  IPCRenderLayout GetIPCRenderLayout() const;
   /// ContentRenderRect may be scaled; this is the 'real' size.
-  virtual PreferredSize GetPreferredSize() const;
+  PreferredSize GetPreferredSize() const;
 
-  virtual void RenderWithChrome(
+  void RenderWithChrome(
     RenderTarget*,
     const D2D1_RECT_F& rect,
     bool isActiveForInput) noexcept;
-  virtual std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const;
-  virtual std::optional<D2D1_POINT_2F> GetCursorContentPoint() const;
-  virtual D2D1_POINT_2F GetCursorCanvasPoint(
-    const D2D1_POINT_2F& contentPoint) const;
-  virtual void PostCursorEvent(const CursorEvent& ev);
+  std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const;
+  std::optional<D2D1_POINT_2F> GetCursorContentPoint() const;
+  D2D1_POINT_2F GetCursorCanvasPoint(const D2D1_POINT_2F& contentPoint) const;
+  void PostCursorEvent(const CursorEvent& ev);
 
-  virtual std::vector<Bookmark> GetBookmarks() const;
-  virtual void RemoveBookmark(const Bookmark&);
-  virtual void GoToBookmark(const Bookmark&);
+  std::vector<Bookmark> GetBookmarks() const;
+  void RemoveBookmark(const Bookmark&);
+  void GoToBookmark(const Bookmark&);
 
-  virtual std::optional<Bookmark> AddBookmarkForCurrentPage();
-  virtual void RemoveBookmarkForCurrentPage();
-  virtual bool CurrentPageHasBookmark() const;
+  std::optional<Bookmark> AddBookmarkForCurrentPage();
+  void RemoveBookmarkForCurrentPage();
+  bool CurrentPageHasBookmark() const;
 
-  virtual void GoToPreviousBookmark();
-  virtual void GoToNextBookmark();
+  void GoToPreviousBookmark();
+  void GoToNextBookmark();
 
   Event<TabIndex> evCurrentTabChangedEvent;
   // TODO - cursor and repaint?
