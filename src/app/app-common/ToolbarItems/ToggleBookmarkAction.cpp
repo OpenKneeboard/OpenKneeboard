@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301,
  * USA.
  */
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/ToggleBookmarkAction.h>
@@ -26,7 +26,7 @@ namespace OpenKneeboard {
 
 ToggleBookmarkAction::ToggleBookmarkAction(
   KneeboardState* kneeboardState,
-  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<KneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tabView)
   : ToolbarToggleAction("\uE840", _("Pin")),
     mKneeboardState(kneeboardState),

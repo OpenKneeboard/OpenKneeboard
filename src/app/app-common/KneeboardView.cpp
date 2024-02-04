@@ -263,7 +263,7 @@ std::shared_ptr<ITabView> KneeboardView::GetCurrentTabView() const {
   return mCurrentTabView;
 }
 
-IKneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
+KneeboardView::IPCRenderLayout KneeboardView::GetIPCRenderLayout() const {
   if (!mCurrentTabView) {
     return {};
   }
@@ -499,7 +499,7 @@ D2D1_POINT_2F KneeboardView::GetCursorCanvasPoint(
     rest,
     {
       .mTabView = mCurrentTabView,
-      .mKneeboardView = std::static_pointer_cast<IKneeboardView>(
+      .mKneeboardView = std::static_pointer_cast<KneeboardView>(
         std::const_pointer_cast<KneeboardView>(this->shared_from_this())),
       .mIsActiveForInput = true,
     });

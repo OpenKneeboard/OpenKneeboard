@@ -37,14 +37,14 @@ namespace OpenKneeboard {
 
 class FlyoutMenuUILayer;
 class KneeboardState;
-class IKneeboardView;
+class KneeboardView;
 
 class HeaderUILayer final : public UILayerBase,
                             private EventReceiver,
                             public std::enable_shared_from_this<HeaderUILayer> {
  public:
   static std::shared_ptr<HeaderUILayer>
-  Create(const audited_ptr<DXResources>& dxr, KneeboardState*, IKneeboardView*);
+  Create(const audited_ptr<DXResources>& dxr, KneeboardState*, KneeboardView*);
   virtual ~HeaderUILayer();
 
   virtual void PostCursorEvent(
@@ -65,7 +65,7 @@ class HeaderUILayer final : public UILayerBase,
   HeaderUILayer(
     const audited_ptr<DXResources>& dxr,
     KneeboardState*,
-    IKneeboardView*);
+    KneeboardView*);
 
   void DrawHeaderText(
     const std::shared_ptr<ITabView>&,

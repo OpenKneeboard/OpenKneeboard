@@ -20,7 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/RenderTarget.h>
 
@@ -42,7 +42,7 @@ class IUILayer {
 
   struct Context {
     const std::shared_ptr<ITabView>& mTabView {nullptr};
-    const std::shared_ptr<IKneeboardView>& mKneeboardView {nullptr};
+    const std::shared_ptr<KneeboardView>& mKneeboardView {nullptr};
     bool mIsActiveForInput {false};
   };
 

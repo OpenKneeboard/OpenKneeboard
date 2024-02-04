@@ -21,7 +21,7 @@
 
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/SHM.h>
 

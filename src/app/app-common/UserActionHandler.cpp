@@ -29,7 +29,7 @@ UserActionHandler::~UserActionHandler() = default;
 
 std::unique_ptr<UserActionHandler> UserActionHandler::Create(
   KneeboardState* kneeboard,
-  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<KneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tab,
   UserAction action) {
   switch (action) {

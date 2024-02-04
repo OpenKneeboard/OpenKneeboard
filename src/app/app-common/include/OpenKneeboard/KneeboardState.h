@@ -42,7 +42,7 @@ namespace OpenKneeboard {
 enum class UserAction;
 class DirectInputAdapter;
 class GamesList;
-class IKneeboardView;
+class KneeboardView;
 class InterprocessRenderer;
 class KneeboardView;
 class ITab;
@@ -55,7 +55,7 @@ struct GameInstance;
 class GameEventServer;
 
 struct ViewRenderInfo {
-  std::shared_ptr<IKneeboardView> mView;
+  std::shared_ptr<KneeboardView> mView;
   std::optional<SHM::VRLayer> mVR;
   std::optional<SHM::NonVRLayer> mNonVR;
   PixelSize mFullSize;
@@ -78,8 +78,8 @@ class KneeboardState final
   ~KneeboardState() noexcept;
   static winrt::fire_and_forget final_release(std::unique_ptr<KneeboardState>);
 
-  std::shared_ptr<IKneeboardView> GetActiveViewForGlobalInput() const;
-  std::vector<std::shared_ptr<IKneeboardView>> GetAllViewsInFixedOrder() const;
+  std::shared_ptr<KneeboardView> GetActiveViewForGlobalInput() const;
+  std::vector<std::shared_ptr<KneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 
   Event<> evFrameTimerPrepareEvent;

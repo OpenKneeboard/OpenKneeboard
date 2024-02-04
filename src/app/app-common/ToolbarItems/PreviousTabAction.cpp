@@ -18,7 +18,7 @@
  * USA.
  */
 #include <OpenKneeboard/AppSettings.h>
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/PreviousTabAction.h>
 #include <OpenKneeboard/TabsList.h>
@@ -27,7 +27,7 @@ namespace OpenKneeboard {
 
 PreviousTabAction::PreviousTabAction(
   KneeboardState* kneeboardState,
-  const std::shared_ptr<IKneeboardView>& kneeboardView)
+  const std::shared_ptr<KneeboardView>& kneeboardView)
   : ToolbarAction("\uE74A", _("Previous Tab")),
     mKneeboardState(kneeboardState),
     mKneeboardView(kneeboardView) {

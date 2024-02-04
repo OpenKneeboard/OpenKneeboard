@@ -26,7 +26,7 @@
 namespace OpenKneeboard {
 
 class KneeboardState;
-class IKneeboardView;
+class KneeboardView;
 
 class ToggleBookmarkAction final : public ToolbarToggleAction,
                                    public IToolbarItemWithVisibility,
@@ -36,7 +36,7 @@ class ToggleBookmarkAction final : public ToolbarToggleAction,
   ToggleBookmarkAction() = delete;
   ToggleBookmarkAction(
     KneeboardState*,
-    const std::shared_ptr<IKneeboardView>&,
+    const std::shared_ptr<KneeboardView>&,
     const std::shared_ptr<ITabView>&);
   ~ToggleBookmarkAction();
 
@@ -52,7 +52,7 @@ class ToggleBookmarkAction final : public ToolbarToggleAction,
 
  private:
   KneeboardState* mKneeboardState = nullptr;
-  std::weak_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<KneeboardView> mKneeboardView;
   std::weak_ptr<ITabView> mTabView;
 };
 

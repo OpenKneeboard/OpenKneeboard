@@ -24,7 +24,7 @@
 
 #include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 
 #include <OpenKneeboard/audited_ptr.h>
 
@@ -76,7 +76,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::apartment_context mUIThread;
   HWND mHwnd;
   winrt::handle mHwndFile;
-  std::shared_ptr<IKneeboardView> mKneeboardView;
+  std::shared_ptr<KneeboardView> mKneeboardView;
 
   FrameworkElement mProfileSwitcher {nullptr};
 

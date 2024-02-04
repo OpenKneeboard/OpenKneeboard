@@ -37,7 +37,7 @@ namespace OpenKneeboard {
 class CursorRenderer;
 class D2DErrorRenderer;
 struct DXResources;
-class IKneeboardView;
+class KneeboardView;
 class ITabView;
 class ISelectableToolbarItem;
 class IToolbarFlyout;
@@ -77,7 +77,7 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
  private:
   bool mShuttingDown = false;
   winrt::apartment_context mUIThread;
-  std::shared_ptr<IKneeboardView> mKneeboardView;
+  std::shared_ptr<KneeboardView> mKneeboardView;
   std::shared_ptr<ITabView> mTabView;
   std::unique_ptr<CursorRenderer> mCursorRenderer;
   std::unique_ptr<D2DErrorRenderer> mErrorRenderer;

@@ -27,7 +27,7 @@ namespace OpenKneeboard {
 
 class ITabView;
 class KneeboardState;
-class IKneeboardView;
+class KneeboardView;
 
 class ClearUserInputAction final : public ToolbarAction,
                                    public EventReceiver,

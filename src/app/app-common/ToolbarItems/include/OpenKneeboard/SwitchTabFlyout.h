@@ -26,11 +26,11 @@
 namespace OpenKneeboard {
 
 class KneeboardState;
-class IKneeboardView;
+class KneeboardView;
 
 class SwitchTabFlyout final : public IToolbarFlyout, public EventReceiver {
  public:
-  SwitchTabFlyout(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
+  SwitchTabFlyout(KneeboardState*, const std::shared_ptr<KneeboardView>&);
   ~SwitchTabFlyout();
 
   std::string_view GetGlyph() const override;
@@ -44,7 +44,7 @@ class SwitchTabFlyout final : public IToolbarFlyout, public EventReceiver {
 
  private:
   KneeboardState* mKneeboardState {nullptr};
-  std::weak_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<KneeboardView> mKneeboardView;
 };
 
 }// namespace OpenKneeboard

@@ -18,16 +18,21 @@
  */
 #pragma once
 
+#include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/DXResources.h>
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ThreadGuard.h>
 
 #include <OpenKneeboard/audited_ptr.h>
+#include <OpenKneeboard/inttypes.h>
 
+#include <memory>
 #include <vector>
 
 namespace OpenKneeboard {
 
+struct CursorEvent;
 class CursorRenderer;
 class D2DErrorRenderer;
 class ITabView;
@@ -37,8 +42,15 @@ class TabViewUILayer;
 enum class UserAction;
 struct CursorEvent;
 
-class KneeboardView final : public IKneeboardView,
-                            private EventReceiver,
+struct KneeboardViewID final : public UniqueIDBase<KneeboardViewID> {};
+
+enum class CursorPositionState {
+  IN_CONTENT_RECT,
+  IN_CANVAS_RECT,
+  NO_CURSOR_POSITION
+};
+
+class KneeboardView final : private EventReceiver,
                             public std::enable_shared_from_this<KneeboardView> {
  public:
   KneeboardView() = delete;
@@ -47,47 +59,58 @@ class KneeboardView final : public IKneeboardView,
   [[nodiscard]] static std::shared_ptr<KneeboardView>
   Create(const audited_ptr<DXResources>&, KneeboardState*, const winrt::guid&);
 
-  virtual winrt::guid GetPersistentGUID() const override;
-  virtual KneeboardViewID GetRuntimeID() const override;
+  virtual winrt::guid GetPersistentGUID() const;
+  virtual KneeboardViewID GetRuntimeID() const;
 
   void SetTabs(const std::vector<std::shared_ptr<ITab>>& tabs);
   void PostUserAction(UserAction);
 
-  virtual std::shared_ptr<ITabView> GetCurrentTabView() const override;
-  virtual std::shared_ptr<ITab> GetCurrentTab() const override;
-  virtual TabIndex GetTabIndex() const override;
-  virtual std::shared_ptr<ITabView> GetTabViewByID(
-    ITab::RuntimeID) const override;
-  virtual void SetCurrentTabByIndex(TabIndex) override;
-  virtual void SetCurrentTabByRuntimeID(ITab::RuntimeID) override;
+  virtual std::shared_ptr<ITabView> GetCurrentTabView() const;
+  virtual std::shared_ptr<ITab> GetCurrentTab() const;
+  virtual TabIndex GetTabIndex() const;
+  virtual std::shared_ptr<ITabView> GetTabViewByID(ITab::RuntimeID) const;
+  virtual void SetCurrentTabByIndex(TabIndex);
+  virtual void SetCurrentTabByRuntimeID(ITab::RuntimeID);
 
-  virtual void PreviousTab() override;
-  virtual void NextTab() override;
+  virtual void PreviousTab();
+  virtual void NextTab();
 
-  virtual IPCRenderLayout GetIPCRenderLayout() const override;
+  struct IPCRenderLayout {
+    PixelSize mSize;
+    PixelRect mContent;
+  };
+
+  virtual IPCRenderLayout GetIPCRenderLayout() const;
   /// ContentRenderRect may be scaled; this is the 'real' size.
-  virtual PreferredSize GetPreferredSize() const override;
+  virtual PreferredSize GetPreferredSize() const;
 
   virtual void RenderWithChrome(
     RenderTarget*,
     const D2D1_RECT_F& rect,
-    bool isActiveForInput) noexcept override;
-  virtual std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const override;
-  virtual std::optional<D2D1_POINT_2F> GetCursorContentPoint() const override;
+    bool isActiveForInput) noexcept;
+  virtual std::optional<D2D1_POINT_2F> GetCursorCanvasPoint() const;
+  virtual std::optional<D2D1_POINT_2F> GetCursorContentPoint() const;
   virtual D2D1_POINT_2F GetCursorCanvasPoint(
-    const D2D1_POINT_2F& contentPoint) const override;
-  virtual void PostCursorEvent(const CursorEvent& ev) override;
+    const D2D1_POINT_2F& contentPoint) const;
+  virtual void PostCursorEvent(const CursorEvent& ev);
 
-  virtual std::vector<Bookmark> GetBookmarks() const override;
-  virtual void RemoveBookmark(const Bookmark&) override;
-  virtual void GoToBookmark(const Bookmark&) override;
+  virtual std::vector<Bookmark> GetBookmarks() const;
+  virtual void RemoveBookmark(const Bookmark&);
+  virtual void GoToBookmark(const Bookmark&);
 
-  virtual std::optional<Bookmark> AddBookmarkForCurrentPage() override;
-  virtual void RemoveBookmarkForCurrentPage() override;
-  virtual bool CurrentPageHasBookmark() const override;
+  virtual std::optional<Bookmark> AddBookmarkForCurrentPage();
+  virtual void RemoveBookmarkForCurrentPage();
+  virtual bool CurrentPageHasBookmark() const;
 
-  virtual void GoToPreviousBookmark() override;
-  virtual void GoToNextBookmark() override;
+  virtual void GoToPreviousBookmark();
+  virtual void GoToNextBookmark();
+
+  Event<TabIndex> evCurrentTabChangedEvent;
+  // TODO - cursor and repaint?
+  Event<> evNeedsRepaintEvent;
+  Event<CursorEvent> evCursorEvent;
+  Event<> evLayoutChangedEvent;
+  Event<> evBookmarksChangedEvent;
 
  private:
   void UpdateUILayers();

@@ -28,7 +28,7 @@
 namespace OpenKneeboard {
 
 class KneeboardState;
-class IKneeboardView;
+class KneeboardView;
 
 class SwitchProfileFlyout final : public EventReceiver,
                                   public virtual IToolbarFlyout,

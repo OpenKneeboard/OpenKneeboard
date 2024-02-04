@@ -24,14 +24,14 @@
 namespace OpenKneeboard {
 
 class KneeboardState;
-class IKneeboardView;
-class IKneeboardView;
+class KneeboardView;
+class KneeboardView;
 
 class PreviousTabAction final : public ToolbarAction, private EventReceiver {
  public:
   PreviousTabAction() = delete;
 
-  PreviousTabAction(KneeboardState*, const std::shared_ptr<IKneeboardView>&);
+  PreviousTabAction(KneeboardState*, const std::shared_ptr<KneeboardView>&);
   ~PreviousTabAction();
 
   virtual bool IsEnabled() const override;
@@ -39,7 +39,7 @@ class PreviousTabAction final : public ToolbarAction, private EventReceiver {
 
  private:
   KneeboardState* mKneeboardState;
-  std::weak_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<KneeboardView> mKneeboardView;
 };
 
 }// namespace OpenKneeboard

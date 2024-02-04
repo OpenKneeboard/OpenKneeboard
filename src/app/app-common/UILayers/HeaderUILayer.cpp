@@ -20,7 +20,7 @@
 #include <OpenKneeboard/CreateTabActions.h>
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/HeaderUILayer.h>
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
@@ -41,7 +41,7 @@ namespace OpenKneeboard {
 std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
-  IKneeboardView* kneeboardView) {
+  KneeboardView* kneeboardView) {
   return std::shared_ptr<HeaderUILayer>(
     new HeaderUILayer(dxr, kneeboardState, kneeboardView));
 }
@@ -49,7 +49,7 @@ std::shared_ptr<HeaderUILayer> HeaderUILayer::Create(
 HeaderUILayer::HeaderUILayer(
   const audited_ptr<DXResources>& dxr,
   KneeboardState* kneeboardState,
-  IKneeboardView* kneeboardView)
+  KneeboardView* kneeboardView)
   : mDXResources(dxr), mKneeboardState(kneeboardState) {
   auto ctx = dxr->mD2DDeviceContext;
 

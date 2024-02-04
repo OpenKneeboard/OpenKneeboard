@@ -30,7 +30,7 @@
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/ICheckableToolbarItem.h>
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarFlyout.h>

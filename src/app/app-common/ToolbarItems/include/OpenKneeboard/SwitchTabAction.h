@@ -25,14 +25,14 @@
 namespace OpenKneeboard {
 
 class ITab;
-class IKneeboardView;
+class KneeboardView;
 
 class SwitchTabAction final : public ToolbarAction,
                               public EventReceiver,
                               public ICheckableToolbarItem {
  public:
   SwitchTabAction(
-    const std::shared_ptr<IKneeboardView>&,
+    const std::shared_ptr<KneeboardView>&,
     const std::shared_ptr<ITab>&);
   ~SwitchTabAction();
 
@@ -44,7 +44,7 @@ class SwitchTabAction final : public ToolbarAction,
   SwitchTabAction() = delete;
 
  private:
-  std::weak_ptr<IKneeboardView> mKneeboardView;
+  std::weak_ptr<KneeboardView> mKneeboardView;
   ITab::RuntimeID mTabID;
 };
 

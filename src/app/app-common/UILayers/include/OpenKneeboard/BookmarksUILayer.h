@@ -33,7 +33,7 @@
 namespace OpenKneeboard {
 
 class KneeboardState;
-class IKneeboardView;
+class KneeboardView;
 
 class BookmarksUILayer final
   : public UILayerBase,
@@ -41,7 +41,7 @@ class BookmarksUILayer final
     public std::enable_shared_from_this<BookmarksUILayer> {
  public:
   static std::shared_ptr<BookmarksUILayer>
-  Create(const audited_ptr<DXResources>& dxr, KneeboardState*, IKneeboardView*);
+  Create(const audited_ptr<DXResources>& dxr, KneeboardState*, KneeboardView*);
   virtual ~BookmarksUILayer();
 
   virtual void PostCursorEvent(
@@ -62,12 +62,12 @@ class BookmarksUILayer final
   BookmarksUILayer(
     const audited_ptr<DXResources>& dxr,
     KneeboardState*,
-    IKneeboardView*);
+    KneeboardView*);
   void Init();
 
   audited_ptr<DXResources> mDXResources;
   KneeboardState* mKneeboardState {nullptr};
-  IKneeboardView* mKneeboardView;
+  KneeboardView* mKneeboardView;
 
   winrt::com_ptr<ID2D1SolidColorBrush> mBackgroundBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;

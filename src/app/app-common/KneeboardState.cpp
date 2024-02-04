@@ -113,7 +113,7 @@ winrt::fire_and_forget KneeboardState::final_release(
   co_await self->ReleaseExclusiveResources();
 }
 
-std::vector<std::shared_ptr<IKneeboardView>>
+std::vector<std::shared_ptr<KneeboardView>>
 KneeboardState::GetAllViewsInFixedOrder() const {
   return {mViews.begin(), mViews.end()};
 }
@@ -156,7 +156,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
   return ret;
 }
 
-std::shared_ptr<IKneeboardView> KneeboardState::GetActiveViewForGlobalInput()
+std::shared_ptr<KneeboardView> KneeboardState::GetActiveViewForGlobalInput()
   const {
   return mViews.at(mInputViewIndex);
 }

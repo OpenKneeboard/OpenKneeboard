@@ -46,7 +46,7 @@ using Items = std::vector<ItemPtr>;
 
 static ItemPtr CreateClearNotesItem(
   KneeboardState* kbs,
-  const std::shared_ptr<IKneeboardView>&,
+  const std::shared_ptr<KneeboardView>&,
   const std::shared_ptr<ITabView>& tabView) {
   return std::make_shared<ToolbarFlyout>(
     "\ued60",// StrokeErase
@@ -60,7 +60,7 @@ static ItemPtr CreateClearNotesItem(
 
 static ItemPtr CreateReloadItem(
   KneeboardState* kbs,
-  const std::shared_ptr<IKneeboardView>&,
+  const std::shared_ptr<KneeboardView>&,
   const std::shared_ptr<ITabView>& tabView) {
   return std::make_shared<ToolbarFlyout>(
     "\ue72c",// Refresh
@@ -73,7 +73,7 @@ static ItemPtr CreateReloadItem(
 
 InGameActions InGameActions::Create(
   KneeboardState* kneeboardState,
-  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<KneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tabView) {
   return {
       .mLeft = {
@@ -102,7 +102,7 @@ InGameActions InGameActions::Create(
 
 InAppActions InAppActions::Create(
   KneeboardState* kneeboardState,
-  const std::shared_ptr<IKneeboardView>& kneeboardView,
+  const std::shared_ptr<KneeboardView>& kneeboardView,
   const std::shared_ptr<ITabView>& tabView) {
   return {
     .mPrimary = {

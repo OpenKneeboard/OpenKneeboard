@@ -25,7 +25,7 @@
 
 #include "Globals.h"
 
-#include <OpenKneeboard/IKneeboardView.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/KneeboardState.h>
 #include <OpenKneeboard/TabsList.h>
 #include <OpenKneeboard/ViewsConfig.h>
@@ -228,7 +228,7 @@ void VRViewSettingsControl::SelectedDefaultTab(const IInspectable& item) {
 
   const auto viewStates = mKneeboard->GetAllViewsInFixedOrder();
   const auto stateIt = std::ranges::find(
-    viewStates, mViewID, &IKneeboardView::GetPersistentGUID);
+    viewStates, mViewID, &KneeboardView::GetPersistentGUID);
   if (stateIt == viewStates.end()) {
     return;
   }
