@@ -95,6 +95,8 @@ class WebView2PageSource final : public WGCPageSource,
     const Settings&);
 
   winrt::apartment_context mUIThread;
+  // WebView2 and Windows.Graphics.Capture thread
+  winrt::apartment_context mWorkerThread {nullptr};
 
   Settings mSettings;
   PixelSize mSize;

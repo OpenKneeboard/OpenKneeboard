@@ -67,6 +67,8 @@ WebView2PageSource::InitializeInCaptureThread() {
     co_return;
   }
 
+  mWorkerThread = {};
+
   this->CreateBrowserWindow();
   this->InitializeComposition();
 
@@ -263,6 +265,19 @@ WebView2PageSource::~WebView2PageSource() = default;
 
 winrt::fire_and_forget WebView2PageSource::final_release(
   std::unique_ptr<WebView2PageSource> self) {
+  if (self->mWorkerThread) {
+    co_await self->mWorkerThread;
+
+    self->mWebView = nullptr;
+    self->mController = nullptr;
+    self->mEnvironment = nullptr;
+    self->mWebViewVisual = nullptr;
+    self->mRootVisual = nullptr;
+    self->mCompositor = nullptr;
+    self->mBrowserWindow.reset();
+
+    self->mWorkerThread = {nullptr};
+  }
   WGCPageSource::final_release(std::move(self));
   co_return;
 }
