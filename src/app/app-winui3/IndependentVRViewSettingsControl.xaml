@@ -176,7 +176,7 @@
       Padding="8">
       <ToggleSwitch
         OnContent="Header, footer, and bookmarks are visible"
-        OffContent="Header, footer, and bookmarks are visible"
+        OffContent="Header, footer, and bookmarks are cropped"
         IsOn="{x:Bind IsUIVisible}"
       />
     </StackPanel>
