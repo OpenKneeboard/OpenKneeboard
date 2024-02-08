@@ -90,16 +90,6 @@ void InterprocessRenderer::SubmitFrame(
     activity, "InterprocessRenderer::SubmitFrame()");
 
   const auto layerCount = shmLayers.size();
-  const auto tint = mKneeboard->GetAppSettings().mTint;
-  auto tintColor = DirectX::Colors::White;
-  if (tint.mEnabled) {
-    tintColor = {
-      tint.mRed * tint.mBrightness,
-      tint.mGreen * tint.mBrightness,
-      tint.mBlue * tint.mBrightness,
-      /* alpha = */ 1.0f,
-    };
-  }
 
   auto ctx = mDXR->mD3D11ImmediateContext.get();
   const D3D11_BOX srcBox {
@@ -146,6 +136,15 @@ void InterprocessRenderer::SubmitFrame(
     .mTarget = GetConsumerPatternForGame(mCurrentGame),
     .mTextureSize = destResources->mTextureSize,
   };
+  const auto tint = mKneeboard->GetAppSettings().mTint;
+  if (tint.mEnabled) {
+    config.mTint = {
+      tint.mRed * tint.mBrightness,
+      tint.mGreen * tint.mBrightness,
+      tint.mBlue * tint.mBrightness,
+      /* alpha = */ 1.0f,
+    };
+  }
 
   {
     OPENKNEEBOARD_TraceLoggingScope("SHMSubmitFrame");

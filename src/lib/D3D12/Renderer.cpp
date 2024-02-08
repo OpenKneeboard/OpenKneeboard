@@ -79,13 +79,21 @@ void Renderer::RenderLayers(
     mSpriteBatch->Clear();
   }
 
+  const auto baseTint = snapshot.GetConfig().mTint;
+
   for (const auto& layer: layers) {
+    const DirectX::XMVECTORF32 layerTint {
+      baseTint[0] * layer.mOpacity,
+      baseTint[1] * layer.mOpacity,
+      baseTint[2] * layer.mOpacity,
+      baseTint[3] * layer.mOpacity,
+    };
     mSpriteBatch->Draw(
       source->GetD3D12ShaderResourceViewGPUHandle(),
       source->GetDimensions(),
       layer.mSourceRect,
       layer.mDestRect,
-      D3D12::Opacity {layer.mOpacity});
+      layerTint);
   }
   mSpriteBatch->End();
 

@@ -144,6 +144,7 @@ struct Config final {
   VRRenderConfig mVR {};
   ConsumerPattern mTarget {};
   PixelSize mTextureSize {};
+  std::array<float, 4> mTint {1, 1, 1, 1};
 };
 static_assert(std::is_standard_layout_v<Config>);
 struct LayerConfig final {

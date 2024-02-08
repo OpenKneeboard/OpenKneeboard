@@ -272,14 +272,21 @@ void OpenXRVulkanKneeboard::RenderLayers(
   mSpriteBatch->Begin(cb, dest, sr.mDimensions);
   mSpriteBatch->Clear();
 
+  const auto baseTint = snapshot.GetConfig().mTint;
+
   for (const auto& layer: layers) {
-    const Vulkan::Opacity opacity {layer.mOpacity};
+    const Vulkan::Color layerTint {
+      baseTint[0] * layer.mOpacity,
+      baseTint[1] * layer.mOpacity,
+      baseTint[2] * layer.mOpacity,
+      baseTint[3] * layer.mOpacity,
+    };
     mSpriteBatch->Draw(
       source->GetVKImageView(),
       source->GetDimensions(),
       layer.mSourceRect,
       layer.mDestRect,
-      Vulkan::Opacity {layer.mOpacity});
+      layerTint);
   }
 
   mSpriteBatch->End();

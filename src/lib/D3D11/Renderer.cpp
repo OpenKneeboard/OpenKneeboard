@@ -66,12 +66,16 @@ void Renderer::RenderLayers(
     mSpriteBatch->Clear();
   }
 
+  const auto baseTint = snapshot.GetConfig().mTint;
+
   for (const auto& layer: layers) {
-    mSpriteBatch->Draw(
-      source,
-      layer.mSourceRect,
-      layer.mDestRect,
-      D3D11::Opacity {layer.mOpacity});
+    const DirectX::XMVECTORF32 layerTint {
+      baseTint[0] * layer.mOpacity,
+      baseTint[1] * layer.mOpacity,
+      baseTint[2] * layer.mOpacity,
+      baseTint[3] * layer.mOpacity,
+    };
+    mSpriteBatch->Draw(source, layer.mSourceRect, layer.mDestRect, layerTint);
   }
   mSpriteBatch->End();
 }
