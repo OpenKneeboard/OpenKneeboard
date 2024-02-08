@@ -171,6 +171,8 @@ class TestViewerWindow final : private D3D11Resources {
 
   FillMode mFillMode {FillMode::Default};
 
+  bool mShowVR {false};
+
   bool mStreamerMode {false};
   FillMode mStreamerModePreviousFillMode;
 
@@ -613,6 +615,11 @@ class TestViewerWindow final : private D3D11Resources {
         }
         this->PaintNow();
         return;
+      // VR
+      case 'V':
+        mShowVR = !mShowVR;
+        this->PaintNow();
+        return;
     }
 
     if (vkk >= '1' && vkk <= '9') {
@@ -723,9 +730,8 @@ class TestViewerWindow final : private D3D11Resources {
       const auto layerCount = snapshot.GetLayerCount();
       if (mLayerIndex < layerCount) {
         const auto layer = snapshot.GetLayerConfig(mLayerIndex);
-        const auto size = layer->mNonVREnabled
-          ? layer->mNonVR.mLocationOnTexture.mSize
-          : layer->mVR.mLocationOnTexture.mSize;
+        const auto size = mShowVR ? layer->mVR.mLocationOnTexture.mSize
+                                  : layer->mNonVR.mLocationOnTexture.mSize;
         text += std::format(
           L"\nView {} of {}\n{}x{}",
           mLayerIndex + 1,
@@ -738,6 +744,12 @@ class TestViewerWindow final : private D3D11Resources {
       }
     } else {
       text += L"\nNo snapshot.";
+    }
+
+    if (mShowVR) {
+      text += L"\nVR";
+    } else {
+      text += L"\nNon-VR";
     }
 
     winrt::com_ptr<IDWriteTextLayout> layout;
@@ -786,11 +798,21 @@ class TestViewerWindow final : private D3D11Resources {
     }
 
     const auto& layer = *snapshot.GetLayerConfig(mLayerIndex);
+
+    if (mShowVR && !layer.mVREnabled) {
+      RenderError("No VR Layer");
+      return;
+    }
+
+    if ((!mShowVR) && !layer.mNonVREnabled) {
+      RenderError("No Non-VR Layer");
+      return;
+    }
+
     mLayerID = layer.mLayerID;
 
-    const auto sourceRect = layer.mNonVREnabled
-      ? layer.mNonVR.mLocationOnTexture
-      : layer.mVR.mLocationOnTexture;
+    const auto sourceRect = mShowVR ? layer.mVR.mLocationOnTexture
+                                    : layer.mNonVR.mLocationOnTexture;
 
     const auto& imageSize = sourceRect.mSize;
     const auto scalex = clientSize.Width<float>() / imageSize.mWidth;
