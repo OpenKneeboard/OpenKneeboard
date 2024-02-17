@@ -412,8 +412,8 @@ void KneeboardView::RenderWithChrome(
     mCursorRenderer->Render(
       d2d,
       {
-        mCursorCanvasPoint->x * size.width,
-        mCursorCanvasPoint->y * size.height,
+        (mCursorCanvasPoint->x * size.width) + rect.left,
+        (mCursorCanvasPoint->y * size.height) + rect.top,
       },
       size);
   }
