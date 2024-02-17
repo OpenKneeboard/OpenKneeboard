@@ -53,6 +53,7 @@
 
 #include <ranges>
 
+#include <icu.h>
 #include <shobjidl.h>
 
 using namespace OpenKneeboard;
@@ -294,7 +295,11 @@ winrt::fire_and_forget TabSettingsPage::CreateBrowserTab() {
   }
 
   BrowserTab::Settings settings;
-  settings.mURI = to_string(AddBrowserAddress().Text());
+  auto uri = to_string(AddBrowserAddress().Text());
+  if (uri.find("://") == std::string::npos) {
+    uri = "https://" + uri;
+  }
+  settings.mURI = uri;
 
   this->AddTabs({std::make_shared<BrowserTab>(
     mDXR, mKneeboard.get(), random_guid(), _("Web Dashboard"), settings)});
@@ -303,8 +308,47 @@ winrt::fire_and_forget TabSettingsPage::CreateBrowserTab() {
 void TabSettingsPage::OnAddBrowserAddressTextChanged(
   const IInspectable&,
   const IInspectable&) noexcept {
-  AddBrowserDialog().IsPrimaryButtonEnabled(
-    !AddBrowserAddress().Text().empty());
+  auto str = to_string(AddBrowserAddress().Text());
+  auto valid = !str.empty();
+  if (valid && str.find("://") == std::string::npos) {
+    str = "https://" + str;
+  }
+  if (valid) {
+    try {
+      winrt::Windows::Foundation::Uri uri {to_hstring(str)};
+      auto scheme = to_string(uri.SchemeName());
+      auto error = U_ZERO_ERROR;
+      auto casemap = ucasemap_open("", U_FOLD_CASE_DEFAULT, &error);
+
+      error = U_ZERO_ERROR;
+      const auto foldedLength = ucasemap_utf8FoldCase(
+        casemap,
+        nullptr,
+        0,
+        scheme.data(),
+        static_cast<int32_t>(scheme.size()),
+        &error);
+      std::string foldedScheme(static_cast<size_t>(foldedLength), '\0');
+
+      error = U_ZERO_ERROR;
+      ucasemap_utf8FoldCase(
+        casemap,
+        foldedScheme.data(),
+        static_cast<int32_t>(foldedScheme.size()),
+        scheme.data(),
+        static_cast<int32_t>(scheme.size()),
+        &error);
+
+      ucasemap_close(casemap);
+
+      valid = (foldedScheme == "https") || (foldedScheme == "http")
+        || (foldedScheme == "file");
+
+    } catch (...) {
+      valid = false;
+    }
+  }
+  AddBrowserDialog().IsPrimaryButtonEnabled(valid);
 }
 
 winrt::fire_and_forget TabSettingsPage::CreateWindowCaptureTab() {
