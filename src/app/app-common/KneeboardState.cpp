@@ -167,6 +167,8 @@ void KneeboardState::PostUserAction(UserAction action) {
     OPENKNEEBOARD_BREAK;
   }
 
+  evUserActionEvent.Emit(action);
+
   switch (action) {
     case UserAction::TOGGLE_VISIBILITY:
     case UserAction::SHOW:

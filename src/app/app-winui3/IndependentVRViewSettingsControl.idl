@@ -21,6 +21,7 @@ namespace OpenKneeboardApp
         Single KneeboardGazeTargetHorizontalScale;
         Single KneeboardGazeTargetVerticalScale;
 
+        Boolean HaveRecentered { get; };
         Boolean IsGazeZoomEnabled;
         Boolean IsUIVisible;
 

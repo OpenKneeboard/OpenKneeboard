@@ -59,7 +59,7 @@
         Style="{ThemeResource BodyTextBlockStyle}"
         Foreground="{ThemeResource TextFillColorPrimary}"
         TextWrapping="Wrap">
-        Always recenter the kneeboard and the game before changing these
+        You must recenter the kneeboard and the game before changing these
         settings; it can be helpful to bind the same combo for recentering
         in both the game and in OpenKneeboard.
       </TextBlock>
@@ -78,14 +78,6 @@
           Margin="4"
         />
       </Grid>
-    </StackPanel>
-    <StackPanel
-      Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-      CornerRadius="4"
-      BorderThickness="1"
-      Padding="8"
-      Spacing="12">
       <Grid ColumnDefinitions="Auto,Auto,*">
         <NumberBox
           Header="Vertical distance from eye level, in meters"
@@ -94,6 +86,7 @@
           LargeChange="0.05"
           SpinButtonPlacementMode="Inline"
           NumberFormatter="{StaticResource MetersFormatter}"
+          IsEnabled="{x:Bind HaveRecentered,Mode=OneWay}"
         />
       </Grid>
       <Grid ColumnDefinitions="Auto,*">
@@ -104,6 +97,7 @@
           LargeChange="0.05"
           SpinButtonPlacementMode="Inline"
           NumberFormatter="{StaticResource MetersFormatter}"
+          IsEnabled="{x:Bind HaveRecentered,Mode=OneWay}"
         />
       </Grid>
       <Grid ColumnDefinitions="Auto,*">
@@ -114,6 +108,7 @@
           LargeChange="0.05"
           SpinButtonPlacementMode="Inline"
           NumberFormatter="{StaticResource MetersFormatter}"
+          IsEnabled="{x:Bind HaveRecentered,Mode=OneWay}"
         />
       </Grid>
       <Grid
@@ -135,6 +130,7 @@
           Height="200"
           Margin="0,0,20,0"
           ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          IsEnabled="{x:Bind HaveRecentered,Mode=OneWay}"
         />
         <Slider
           Grid.Column="1"
@@ -147,6 +143,7 @@
           Minimum="-180"
           Maximum="180"
           ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          IsEnabled="{x:Bind HaveRecentered,Mode=OneWay}"
         />
         <Slider
           Grid.Column="1"
@@ -159,6 +156,7 @@
           Minimum="-180"
           Maximum="180"
           ThumbToolTipValueConverter="{StaticResource DegreesConverter}"
+          IsEnabled="{x:Bind HaveRecentered,Mode=OneWay}"
         />
       </Grid>
     </StackPanel>

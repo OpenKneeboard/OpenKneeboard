@@ -37,8 +37,10 @@ class KneeboardState;
 namespace winrt::OpenKneeboardApp::implementation {
 struct IndependentVRViewSettingsControl
   : IndependentVRViewSettingsControlT<IndependentVRViewSettingsControl>,
-    OpenKneeboard::WithPropertyChangedEvent {
+    OpenKneeboard::WithPropertyChangedEvent,
+    OpenKneeboard::EventReceiver {
   IndependentVRViewSettingsControl();
+  ~IndependentVRViewSettingsControl();
 
   fire_and_forget RestoreDefaults(
     const IInspectable&,
@@ -73,6 +75,8 @@ struct IndependentVRViewSettingsControl
   float KneeboardGazeTargetVerticalScale();
   void KneeboardGazeTargetVerticalScale(float value);
 
+  bool HaveRecentered();
+
   bool IsGazeZoomEnabled();
   void IsGazeZoomEnabled(bool);
 
@@ -91,6 +95,7 @@ struct IndependentVRViewSettingsControl
   void SetViewConfig(const OpenKneeboard::IndependentViewVRConfig&);
 
   winrt::guid mViewID;
+  bool mHaveRecentered {false};
 };
 }// namespace winrt::OpenKneeboardApp::implementation
 namespace winrt::OpenKneeboardApp::factory_implementation {

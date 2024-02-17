@@ -90,6 +90,7 @@ class KneeboardState final
   Event<> evCurrentProfileChangedEvent;
   Event<> evViewOrderChangedEvent;
   Event<> evInputDevicesChangedEvent;
+  Event<UserAction> evUserActionEvent;
   Event<GameEvent> evGameEvent;
   Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
 

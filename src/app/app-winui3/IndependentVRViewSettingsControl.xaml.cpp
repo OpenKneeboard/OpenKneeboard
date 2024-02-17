@@ -42,6 +42,28 @@ namespace winrt::OpenKneeboardApp::implementation {
 IndependentVRViewSettingsControl::IndependentVRViewSettingsControl() {
   this->InitializeComponent();
   mKneeboard = gKneeboard.lock();
+  AddEventListener(
+    mKneeboard->evUserActionEvent,
+    [weak = this->get_weak()](const UserAction action) {
+      if (action != UserAction::RECENTER_VR) {
+        return;
+      }
+      auto self = weak.get();
+      if (!self) [[unlikely]] {
+        // Should have been unregistered in destructor
+        OPENKNEEBOARD_BREAK;
+        return;
+      }
+      self->mHaveRecentered = true;
+      self->mPropertyChangedEvent(
+        *self,
+        winrt::Microsoft::UI::Xaml::Data::PropertyChangedEventArgs {
+          L"HaveRecentered"});
+    });
+}
+
+IndependentVRViewSettingsControl::~IndependentVRViewSettingsControl() {
+  this->RemoveAllEventListeners();
 }
 
 fire_and_forget IndependentVRViewSettingsControl::RestoreDefaults(
@@ -289,6 +311,10 @@ void IndependentVRViewSettingsControl::GazeOpacity(uint8_t value) {
   auto view = this->GetViewConfig();
   view.mOpacity.mGaze = value / 100.0f;
   this->SetViewConfig(view);
+}
+
+bool IndependentVRViewSettingsControl::HaveRecentered() {
+  return mHaveRecentered;
 }
 
 bool IndependentVRViewSettingsControl::IsGazeZoomEnabled() {
