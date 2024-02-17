@@ -73,7 +73,7 @@ DCSWorldInstance::DCSWorldInstance(
   if (j.contains("SavedGamesPath")) {
     mSavedGamesPath = j.at("SavedGamesPath").get<std::filesystem::path>();
   } else {
-    mSavedGamesPath = InferSavedGamesPath(mPath);
+    mSavedGamesPath = InferSavedGamesPath(mPathPattern);
   }
 }
 

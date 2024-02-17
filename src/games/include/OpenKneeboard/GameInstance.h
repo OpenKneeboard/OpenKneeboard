@@ -21,8 +21,9 @@
 
 #include <OpenKneeboard/Game.h>
 
-#include <memory>
 #include <nlohmann/json.hpp>
+
+#include <memory>
 
 namespace OpenKneeboard {
 
@@ -60,7 +61,7 @@ struct GameInstance {
   const uint64_t mInstanceID;
 
   std::string mName;
-  std::filesystem::path mPath;
+  std::string mPathPattern;
   OverlayAPI mOverlayAPI {OverlayAPI::AutoDetect};
   std::shared_ptr<Game> mGame;
 

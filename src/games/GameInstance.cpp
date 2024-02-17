@@ -19,7 +19,9 @@
  */
 #include <OpenKneeboard/Game.h>
 #include <OpenKneeboard/GameInstance.h>
+
 #include <OpenKneeboard/utf8.h>
+
 #include <shims/winrt/base.h>
 
 namespace OpenKneeboard {
@@ -27,7 +29,7 @@ namespace OpenKneeboard {
 nlohmann::json GameInstance::ToJson() const {
   return {
     {"Name", this->mName},
-    {"Path", to_utf8(this->mPath)},
+    {"Path", this->mPathPattern},
     {"Type", this->mGame->GetNameForConfigFile()},
     {"OverlayAPI", this->mOverlayAPI},
   };
@@ -40,8 +42,7 @@ GameInstance::GameInstance(
   const std::shared_ptr<Game>& game)
   : mInstanceID(gNextInstanceID++) {
   mName = j.at("Name");
-  mPath
-    = std::filesystem::path(std::wstring_view(winrt::to_hstring(j.at("Path"))));
+  mPathPattern = j.at("Path");
   mGame = game;
   if (j.contains("OverlayAPI")) {
     mOverlayAPI = j.at("OverlayAPI");
@@ -52,7 +53,10 @@ GameInstance::GameInstance(
   const std::string& name,
   const std::filesystem::path& path,
   const std::shared_ptr<Game>& game)
-  : mInstanceID(gNextInstanceID++), mName(name), mPath(path), mGame(game) {
+  : mInstanceID(gNextInstanceID++),
+    mName(name),
+    mPathPattern(path.string()),
+    mGame(game) {
 }
 
 }// namespace OpenKneeboard

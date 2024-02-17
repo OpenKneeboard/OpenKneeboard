@@ -106,9 +106,9 @@ IVector<IInspectable> GameSettingsPage::Games() noexcept {
       winrtGame = winrt::make<GameInstanceUIData>();
     }
     winrtGame.InstanceID(game->mInstanceID);
-    winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mPath));
+    winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mPathPattern));
     winrtGame.Name(to_hstring(game->mName));
-    winrtGame.Path(game->mPath.wstring());
+    winrtGame.Path(to_hstring(game->mPathPattern));
     winrtGame.Type(to_hstring(game->mGame->GetNameForConfigFile()));
     winrtGame.OverlayAPI(static_cast<uint8_t>(game->mOverlayAPI));
 

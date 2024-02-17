@@ -21,6 +21,7 @@
 #include <Windows.h>
 #include <TlHelp32.h>
 #include <ShlObj.h>
+#include <Shlwapi.h>
 #include <Psapi.h>
 #include <appmodel.h>
 // clang-format on
@@ -175,10 +176,6 @@ void GameInjector::CheckProcess(
 
   std::scoped_lock lock(mGamesMutex);
   for (const auto& game: mGames) {
-    if (game->mPath.filename() != exeBaseName) {
-      continue;
-    }
-
     if (!processHandle) {
       processHandle.attach(OpenProcess(PROCESS_ALL_ACCESS, false, processID));
       if (!processHandle) {
@@ -201,7 +198,12 @@ void GameInjector::CheckProcess(
       fullPath = std::filesystem::canonical(std::wstring_view(buf, bufSize));
     }
 
-    if (fullPath != game->mPath) {
+    if (
+      PathMatchSpecExW(
+        fullPath.wstring().c_str(),
+        winrt::to_hstring(game->mPathPattern).c_str(),
+        PMSF_NORMAL | PMSF_DONT_STRIP_SPACES)
+      != S_OK) {
       continue;
     }
 
@@ -246,7 +248,7 @@ void GameInjector::CheckProcess(
 
       dprintf(
         "Current game changed to {}, PID {}, configured rendering API {}, {}",
-        game->mPath.string(),
+        fullPath.string(),
         processID,
         overlayAPI.dump(),
         IsElevated(processHandle.get()) ? "elevated" : "not elevated");
