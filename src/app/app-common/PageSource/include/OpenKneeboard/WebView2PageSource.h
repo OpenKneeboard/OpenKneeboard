@@ -58,6 +58,7 @@ class WebView2PageSource final : public WGCPageSource,
     bool mIntegrateWithSimHub {true};
     std::string mURI;
     bool mOpenDeveloperToolsWindow {false};
+    bool mTransparentBackground {true};
     constexpr bool operator==(const Settings&) const noexcept = default;
   };
 

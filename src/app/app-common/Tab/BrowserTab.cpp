@@ -66,6 +66,7 @@ OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   mURI,
   mInitialSize,
   mIntegrateWithSimHub,
-  mOpenDeveloperToolsWindow)
+  mOpenDeveloperToolsWindow,
+  mTransparentBackground)
 
 }// namespace OpenKneeboard
