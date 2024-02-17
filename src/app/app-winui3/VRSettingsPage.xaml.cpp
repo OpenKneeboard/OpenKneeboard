@@ -76,12 +76,14 @@ fire_and_forget VRSettingsPage::RestoreDefaults(
   }
 
   mKneeboard->ResetVRSettings();
+  mKneeboard->ResetViewsSettings();
 
   if (!mPropertyChangedEvent) {
     co_return;
   }
 
   mPropertyChangedEvent(*this, PropertyChangedEventArgs(L""));
+  this->PopulateViews();
 }
 
 bool VRSettingsPage::SteamVREnabled() {
