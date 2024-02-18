@@ -443,23 +443,17 @@ void KneeboardState::SetCurrentTab(
   const EventDelay delay;// lock must be released first
   const std::unique_lock lock(*this);
 
-  auto view = this->GetActiveViewForGlobalInput();
-  switch (extra.mKneeboard) {
-    case 0:
-      // Primary, as above.
-      break;
-    case 1:
-      view = mViews.at(mFirstViewIndex);
-      break;
-    case 2:
-      view = mViews.at((mFirstViewIndex + 1) % mViews.size());
-      break;
-    default:
+  std::shared_ptr<KneeboardView> view;
+  if (extra.mKneeboard == 0) {
+    view = mViews.at(mInputViewIndex);
+  } else if (extra.mKneeboard <= mViews.size()) {
+    view = mViews.at(extra.mKneeboard - 1);
+  } else {
       dprintf(
         "Requested kneeboard index {} does not exist, using active "
         "kneeboard",
         extra.mKneeboard);
-      break;
+    view = mViews.at(mInputViewIndex);
   }
   view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
   const auto pageIDs = tab->GetPageIDs();
