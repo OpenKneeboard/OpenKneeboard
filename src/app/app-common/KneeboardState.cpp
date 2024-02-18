@@ -126,9 +126,8 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
     OPENKNEEBOARD_LOG_AND_FATAL("View count mismatch");
   }
   for (size_t i = 0; i < count; ++i) {
-    const auto index = (i + mFirstViewIndex) % count;
-    const auto& viewConfig = mSettings.mViews.mViews.at(index);
-    const auto view = mViews.at(index);
+    const auto& viewConfig = mSettings.mViews.mViews.at(i);
+    const auto view = mViews.at(i);
     const auto contentSize = view->GetPreferredSize();
 
     const auto layout = view->GetIPCRenderLayout();
@@ -149,7 +148,7 @@ std::vector<ViewRenderInfo> KneeboardState::GetViewRenderInfo() const {
       .mNonVR = viewConfig.mNonVR.Resolve(
         contentSize, fullLocation, contentLocation, mSettings.mViews.mViews),
       .mFullSize = layoutSize,
-      .mIsActiveForInput = (index == mInputViewIndex),
+      .mIsActiveForInput = (i == mInputViewIndex),
     });
   }
 
@@ -189,9 +188,7 @@ void KneeboardState::PostUserAction(UserAction action) {
       return;
     case UserAction::SWAP_FIRST_TWO_VIEWS:
       if (mViews.size() >= 2) {
-        auto& first = mViews.at(this->mFirstViewIndex);
-        auto& second = mViews.at((this->mFirstViewIndex + 1) % mViews.size());
-        first->SwapState(*second);
+        mViews.at(0)->SwapState(*mViews.at(1));
       } else {
         dprintf(
           "Switching the first two views requires 2 views, but there are {} "
@@ -228,6 +225,14 @@ void KneeboardState::PostUserAction(UserAction action) {
         = !this->mSettings.mApp.mTint.mEnabled;
       this->SaveSettings();
       return;
+    case UserAction::CYCLE_ACTIVE_VIEW:
+      if (this->mViews.size() < 2) {
+        return;
+      }
+      this->mInputViewIndex = (this->mInputViewIndex + 1) % this->mViews.size();
+      this->evActiveViewChangedEvent.Emit();
+      this->evNeedsRepaintEvent.Emit();
+      return;
     case UserAction::INCREASE_BRIGHTNESS: {
       auto& tint = this->mSettings.mApp.mTint;
       tint.mEnabled = true;
@@ -250,22 +255,6 @@ void KneeboardState::PostUserAction(UserAction action) {
   }
   // Use `return` instead of `break` above
   OPENKNEEBOARD_BREAK;
-}
-
-void KneeboardState::SetFirstViewIndex(uint8_t index) {
-  const EventDelay delay;// lock must be released first
-  const std::unique_lock lock(*this);
-
-  this->mFirstViewIndex = index % mViews.size();
-  this->mInputViewIndex = this->mFirstViewIndex;
-
-  for (const auto& view: this->mViews) {
-    if (view) {
-      view->PostCursorEvent({});
-    }
-  }
-  this->evNeedsRepaintEvent.Emit();
-  this->evViewOrderChangedEvent.Emit();
 }
 
 void KneeboardState::OnGameChangedEvent(
@@ -302,7 +291,7 @@ void KneeboardState::OnGameEvent(const GameEvent& ev) noexcept {
       dprintf("Giving input focus to view {:#016x} at index {}", viewID, i);
       mInputViewIndex = i;
       evNeedsRepaintEvent.Emit();
-      evViewOrderChangedEvent.Emit();
+      evActiveViewChangedEvent.Emit();
       return;
     }
     dprintf(
@@ -449,10 +438,10 @@ void KneeboardState::SetCurrentTab(
   } else if (extra.mKneeboard <= mViews.size()) {
     view = mViews.at(extra.mKneeboard - 1);
   } else {
-      dprintf(
-        "Requested kneeboard index {} does not exist, using active "
-        "kneeboard",
-        extra.mKneeboard);
+    dprintf(
+      "Requested kneeboard index {} does not exist, using active "
+      "kneeboard",
+      extra.mKneeboard);
     view = mViews.at(mInputViewIndex);
   }
   view->SetCurrentTabByRuntimeID(tab->GetRuntimeID());
@@ -507,8 +496,8 @@ void KneeboardState::SetVRSettings(const VRConfig& value) {
 
   if (value.mEnableGazeInputFocus != mSettings.mVR.mEnableGazeInputFocus) {
     mViews.at(mInputViewIndex)->PostCursorEvent({});
-    mInputViewIndex = mFirstViewIndex;
-    this->evViewOrderChangedEvent.Emit();
+    mInputViewIndex = 0;
+    this->evActiveViewChangedEvent.Emit();
   }
 
   mSettings.mVR = value;
@@ -791,12 +780,12 @@ void KneeboardState::InitializeViews() {
     AddEventListener(view->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
   }
 
-  if (mFirstViewIndex >= count) {
-    this->SetFirstViewIndex(count - 1);
-  }
   if (mInputViewIndex >= count) {
-    mInputViewIndex = mFirstViewIndex;
+    mInputViewIndex = (count - 1);
+    evActiveViewChangedEvent.Emit();
   }
+
+  evNeedsRepaintEvent.Emit();
 }
 
 #define IT(cpptype, name) \

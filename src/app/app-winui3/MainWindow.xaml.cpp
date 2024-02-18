@@ -115,7 +115,7 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
   OnViewOrderChanged();
 
   AddEventListener(
-    mKneeboard->evViewOrderChangedEvent,
+    mKneeboard->evActiveViewChangedEvent,
     std::bind_front(&MainWindow::OnViewOrderChanged, this));
 
   AddEventListener(

@@ -88,7 +88,7 @@ class KneeboardState final
   Event<> evSettingsChangedEvent;
   Event<> evProfileSettingsChangedEvent;
   Event<> evCurrentProfileChangedEvent;
-  Event<> evViewOrderChangedEvent;
+  Event<> evActiveViewChangedEvent;
   Event<> evInputDevicesChangedEvent;
   Event<UserAction> evUserActionEvent;
   Event<GameEvent> evGameEvent;
@@ -151,7 +151,6 @@ class KneeboardState final
   ProfileSettings mProfiles {ProfileSettings::Load()};
   Settings mSettings {Settings::Load(mProfiles.mActiveProfile)};
 
-  uint8_t mFirstViewIndex = 0;
   uint8_t mInputViewIndex = 0;
   std::vector<std::shared_ptr<KneeboardView>> mViews;
 
@@ -177,7 +176,6 @@ class KneeboardState final
   void StartOpenVRThread();
   void StartTabletInput();
 
-  void SetFirstViewIndex(uint8_t index);
   void SetCurrentTab(
     const std::shared_ptr<ITab>& tab,
     const BaseSetTabEvent& metadata);
