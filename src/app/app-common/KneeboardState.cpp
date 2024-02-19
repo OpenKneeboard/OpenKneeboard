@@ -57,7 +57,7 @@ KneeboardState::KneeboardState(HWND hwnd, const audited_ptr<DXResources>& dxr)
 
   AddEventListener(
     this->evNeedsRepaintEvent, [this]() { this->mNeedsRepaint = true; });
-  AddEventListener(this->evFrameTimerPrepareEvent, [this]() {
+  AddEventListener(this->evFrameTimerPreEvent, [this]() {
     const auto px = SHM::ActiveConsumers::Get().mNonVRPixelSize;
     if (px == mLastNonVRPixelSize) {
       return;

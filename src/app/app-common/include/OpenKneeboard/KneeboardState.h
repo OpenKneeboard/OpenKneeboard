@@ -82,8 +82,9 @@ class KneeboardState final
   std::vector<std::shared_ptr<KneeboardView>> GetAllViewsInFixedOrder() const;
   std::vector<ViewRenderInfo> GetViewRenderInfo() const;
 
-  Event<> evFrameTimerPrepareEvent;
+  Event<> evFrameTimerPreEvent;
   Event<> evFrameTimerEvent;
+  Event<> evFrameTimerPostEvent;
   Event<> evNeedsRepaintEvent;
   Event<> evSettingsChangedEvent;
   Event<> evProfileSettingsChangedEvent;

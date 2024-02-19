@@ -277,8 +277,8 @@ void MainWindow::FrameTick() {
   this->CheckForElevatedConsumer();
   {
     std::shared_lock kbLock(*mKneeboard);
-    OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPrepareEvent.emit()");
-    mKneeboard->evFrameTimerPrepareEvent.Emit();
+    OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPreEvent.emit()");
+    mKneeboard->evFrameTimerPreEvent.Emit();
   }
   TraceLoggingWriteTagged(activity, "Prepared to render");
   if (!mKneeboard->IsRepaintNeeded()) {
@@ -298,6 +298,10 @@ void MainWindow::FrameTick() {
   mKneeboard->Repainted();
   TraceLoggingWriteStop(
     activity, "FrameTick", TraceLoggingValue("Repainted", "Result"));
+  {
+    OPENKNEEBOARD_TraceLoggingScope("evFrameTimerPostEvent.emit()");
+    mKneeboard->evFrameTimerPostEvent.Emit();
+  }
 }
 
 winrt::fire_and_forget MainWindow::OnLoaded() {

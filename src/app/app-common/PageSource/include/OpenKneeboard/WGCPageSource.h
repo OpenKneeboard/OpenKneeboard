@@ -87,8 +87,11 @@ class WGCPageSource : public virtual IPageSource,
   winrt::fire_and_forget ForceResize(const PixelSize&);
 
  private:
+  static constexpr int32_t SwapchainLength = 1;
   WGCPageSource() = delete;
   void OnFrame();
+
+  winrt::fire_and_forget ReleaseNextFrame();
 
   Options mOptions;
 

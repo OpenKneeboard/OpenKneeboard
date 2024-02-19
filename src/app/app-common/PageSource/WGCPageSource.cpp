@@ -100,7 +100,10 @@ winrt::fire_and_forget WGCPageSource::Init() noexcept {
 
     // WGC does not support direct capture of sRGB
     mFramePool = WGC::Direct3D11CaptureFramePool::Create(
-      mWinRTD3DDevice, this->GetPixelFormat(), 2, item.Size());
+      mWinRTD3DDevice,
+      this->GetPixelFormat(),
+      WGCPageSource::SwapchainLength,
+      item.Size());
     mFramePool.FrameArrived(
       [this](const auto&, const auto&) { this->OnFrame(); });
 
@@ -131,6 +134,24 @@ WGCPageSource::WGCPageSource(
 
   mDQC = winrt::Windows::System::DispatcherQueueController::
     CreateOnDedicatedThread();
+
+  AddEventListener(
+    kneeboard->evFrameTimerPostEvent, [this]() { this->ReleaseNextFrame(); });
+}
+
+winrt::fire_and_forget WGCPageSource::ReleaseNextFrame() {
+  if (!(mDQC && mNextFrame)) {
+    co_return;
+  }
+
+  auto next = std::move(mNextFrame);
+  mNextFrame = {nullptr};
+
+  co_await wil::resume_foreground(mDQC.DispatcherQueue());
+
+  // Not using the scoped one as it needs to be disposed in the same thread
+  TraceLoggingWrite(gTraceProvider, "WGCPageSource::ReleaseNextFrame()");
+  next = {nullptr};
 }
 
 // Destruction is handled in final_release instead
@@ -223,15 +244,6 @@ void WGCPageSource::RenderPage(
   sb->End();
 
   mNeedsRepaint = false;
-
-  if (!mNextFrame) {
-    return;
-  }
-
-  ([](auto keepAlive, auto disposeInCorrectThread, auto thread)
-     -> winrt::fire_and_forget { co_await wil::resume_foreground(thread); })(
-    shared_from_this(), std::move(mNextFrame), mDQC.DispatcherQueue());
-  mNextFrame = {nullptr};
 }
 
 void WGCPageSource::OnFrame() {
@@ -289,7 +301,7 @@ void WGCPageSource::OnFrame() {
     mFramePool.Recreate(
       mWinRTD3DDevice,
       this->GetPixelFormat(),
-      1,
+      2,
       swapchainDimensions
         .StaticCast<int32_t, winrt::Windows::Graphics::SizeInt32>());
     return;
@@ -365,7 +377,7 @@ winrt::fire_and_forget WGCPageSource::ForceResize(const PixelSize& size) {
   mFramePool.Recreate(
     mWinRTD3DDevice,
     this->GetPixelFormat(),
-    1,
+    WGCPageSource::SwapchainLength,
     size.StaticCast<int32_t, winrt::Windows::Graphics::SizeInt32>());
   co_return;
 }

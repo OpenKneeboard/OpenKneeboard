@@ -89,7 +89,7 @@ TabPage::TabPage() {
 
   this->InitializePointerSource();
   AddEventListener(
-    mKneeboard->evFrameTimerPrepareEvent, weak_wrap(this)([](auto self) {
+    mKneeboard->evFrameTimerPreEvent, weak_wrap(this)([](auto self) {
       if (self->mHaveCursorEvents) {
         self->FlushCursorEvents();
       }

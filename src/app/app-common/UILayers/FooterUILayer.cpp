@@ -36,7 +36,7 @@ FooterUILayer::FooterUILayer(
   KneeboardState* kneeboard)
   : mDXResources(dxr), mKneeboard(kneeboard) {
   AddEventListener(
-    kneeboard->evFrameTimerPrepareEvent,
+    kneeboard->evFrameTimerPreEvent,
     std::bind_front(&FooterUILayer::Tick, this));
   AddEventListener(
     kneeboard->evGameEvent, std::bind_front(&FooterUILayer::OnGameEvent, this));
