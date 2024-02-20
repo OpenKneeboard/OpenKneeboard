@@ -95,6 +95,16 @@
           ContentTemplate="{StaticResource TabHeader}"
           Margin="0,0,0,8"
         />
+        <TextBox
+          Header="Executable path"
+          Text="{x:Bind ExecutablePathPattern}"
+          PlaceholderText="Executable path pattern"
+        />
+        <TextBlock
+					Style="{ThemeResource CaptionTextBlockStyle}"
+					Foreground="{ThemeResource TextFillColorSecondary}">
+          The full path to the executable; MS-DOS wildcards such as '*' are supported.
+        </TextBlock>
         <ToggleSwitch
           Header="Capture client area"
           IsOn="{x:Bind CaptureClientArea}"

@@ -144,6 +144,8 @@ struct WindowCaptureTabUIData : WindowCaptureTabUIDataT<
   void IsCursorCaptureEnabled(bool value);
   bool CaptureClientArea() const;
   void CaptureClientArea(bool value);
+  hstring ExecutablePathPattern() const;
+  void ExecutablePathPattern(hstring);
 
  private:
   std::shared_ptr<OpenKneeboard::WindowCaptureTab> GetTab() const;

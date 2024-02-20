@@ -24,6 +24,7 @@ namespace OpenKneeboardApp {
 [default_interface] runtimeclass WindowCaptureTabUIData : TabUIData {
   WindowCaptureTabUIData();
   String WindowTitle; 
+  String ExecutablePathPattern;
   Boolean MatchWindowClass;
   Boolean IsInputEnabled;
   UInt8 MatchWindowTitle;

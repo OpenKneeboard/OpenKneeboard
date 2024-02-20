@@ -674,6 +674,16 @@ void WindowCaptureTabUIData::CaptureClientArea(bool enabled) {
             : HWNDPageSource::CaptureArea::FullWindow);
 }
 
+hstring WindowCaptureTabUIData::ExecutablePathPattern() const {
+  return to_hstring(GetTab()->GetMatchSpecification().mExecutablePathPattern);
+}
+
+void WindowCaptureTabUIData::ExecutablePathPattern(hstring pattern) {
+  auto spec = GetTab()->GetMatchSpecification();
+  spec.mExecutablePathPattern = to_string(pattern);
+  GetTab()->SetMatchSpecification(spec);
+}
+
 std::shared_ptr<WindowCaptureTab> WindowCaptureTabUIData::GetTab() const {
   auto tab = mTab.lock();
   if (!tab) {
