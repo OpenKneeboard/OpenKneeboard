@@ -171,7 +171,9 @@ class KneeboardState final
 
   bool mSaveSettingsEnabled = true;
 
-  void OnGameChangedEvent(DWORD processID, std::shared_ptr<GameInstance> game);
+  void OnGameChangedEvent(
+    DWORD processID,
+    const std::shared_ptr<GameInstance>& game);
   void OnGameEvent(const GameEvent& ev) noexcept;
 
   void StartOpenVRThread();

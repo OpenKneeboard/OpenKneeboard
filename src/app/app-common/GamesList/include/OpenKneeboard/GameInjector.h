@@ -21,12 +21,15 @@
 
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/WintabMode.h>
+
 #include <OpenKneeboard/bitflags.h>
+
+#include <shims/filesystem>
+
 #include <Windows.h>
 
 #include <memory>
 #include <mutex>
-#include <shims/filesystem>
 #include <stop_token>
 #include <string>
 #include <unordered_map>
@@ -57,7 +60,11 @@ class GameInjector final : public EventReceiver,
   ~GameInjector();
   bool Run(std::stop_token);
 
-  Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
+  Event<
+    DWORD,
+    const std::filesystem::path&,
+    const std::shared_ptr<GameInstance>&>
+    evGameChangedEvent;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
   static bool IsInjected(HANDLE process, const std::filesystem::path& dll);
@@ -78,7 +85,13 @@ class GameInjector final : public EventReceiver,
   std::filesystem::path mOverlayOculusD3D11Dll;
   std::filesystem::path mOverlayOculusD3D12Dll;
 
-  std::unordered_map<DWORD, InjectedDlls> mProcessCache;
+  struct ProcessCacheEntry {
+    winrt::handle mHandle {};
+    std::filesystem::path mPath;
+    bool mHaveAllAccess = false;
+    InjectedDlls mInjectedDlls {InjectedDlls::None};
+  };
+  std::unordered_map<DWORD, ProcessCacheEntry> mProcessCache;
 
   WintabMode mWintabMode {WintabMode::Disabled};
 

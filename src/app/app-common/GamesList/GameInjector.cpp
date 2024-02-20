@@ -24,8 +24,10 @@
 #include <Shlwapi.h>
 #include <Psapi.h>
 #include <appmodel.h>
+#include <WtsApi32.h>
 // clang-format on
 
+#include <OpenKneeboard/DebugPrivileges.h>
 #include <OpenKneeboard/Elevation.h>
 #include <OpenKneeboard/GameInjector.h>
 #include <OpenKneeboard/GameInstance.h>
@@ -44,51 +46,6 @@
 #include <mutex>
 #include <thread>
 #include <unordered_set>
-
-namespace {
-
-using namespace OpenKneeboard;
-
-class DebugPrivileges final {
- private:
-  winrt::handle mToken;
-  LUID mLuid;
-
- public:
-  DebugPrivileges() {
-    if (!OpenProcessToken(
-          GetCurrentProcess(),
-          TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-          mToken.put())) {
-      dprint("Failed to open own process token");
-      return;
-    }
-
-    LookupPrivilegeValue(nullptr, SE_DEBUG_NAME, &mLuid);
-
-    TOKEN_PRIVILEGES privileges;
-    privileges.PrivilegeCount = 1;
-    privileges.Privileges[0].Luid = mLuid;
-    privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-    AdjustTokenPrivileges(
-      mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
-  }
-
-  ~DebugPrivileges() {
-    if (!mToken) {
-      return;
-    }
-    TOKEN_PRIVILEGES privileges;
-    privileges.PrivilegeCount = 1;
-    privileges.Privileges[0].Luid = mLuid;
-    privileges.Privileges[0].Attributes = SE_PRIVILEGE_REMOVED;
-    AdjustTokenPrivileges(
-      mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
-  }
-};
-
-}// namespace
 
 namespace OpenKneeboard {
 
@@ -117,11 +74,6 @@ void GameInjector::SetGameInstances(
 }
 
 bool GameInjector::Run(std::stop_token stopToken) {
-  PROCESSENTRY32 process;
-  process.dwSize = sizeof(process);
-  MODULEENTRY32 module;
-  module.dwSize = sizeof(module);
-
   this->RemoveEventListener(mTabletSettingsChangeToken);
   auto tablet = mKneeboardState->GetTabletInputAdapter();
   if (tablet) {
@@ -136,23 +88,36 @@ bool GameInjector::Run(std::stop_token stopToken) {
   }
 
   dprint("Watching for game processes");
-  while (!stopToken.stop_requested()) {
-    winrt::handle snapshot {CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)};
-    if (!snapshot) {
-      dprintf("CreateToolhelp32Snapshot failed in {}", __FILE__);
-      return false;
-    }
-
-    if (!Process32First(snapshot.get(), &process)) {
-      dprintf("Process32First failed: {}", GetLastError());
-      return false;
+  do {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    OPENKNEEBOARD_TraceLoggingScope("GameInjector::Run()/EnumerateProcesses");
+    WTS_PROCESS_INFO_EXW* processes {nullptr};
+    DWORD processCount {0};
+    DWORD level = 1;
+    {
+      OPENKNEEBOARD_TraceLoggingScope("WTSEnumerateProcessesExW()");
+      if (!WTSEnumerateProcessesExW(
+            WTS_CURRENT_SERVER_HANDLE,
+            &level,
+            WTS_CURRENT_SESSION,
+            reinterpret_cast<LPWSTR*>(&processes),
+            &processCount)) {
+        OPENKNEEBOARD_LOG_AND_FATAL(
+          "WTSEnumerateProcessExW() failed with {}", GetLastError());
+      }
     }
 
     std::unordered_set<DWORD> seenProcesses;
-    do {
-      seenProcesses.insert(process.th32ProcessID);
-      CheckProcess(process.th32ProcessID, process.szExeFile);
-    } while (Process32Next(snapshot.get(), &process));
+    for (int i = 0; i < processCount; ++i) {
+      const auto& process = processes[i];
+      seenProcesses.insert(process.ProcessId);
+      if (process.pUserSid == 0) {
+        continue;
+      }
+      CheckProcess(process.ProcessId, process.pProcessName);
+    }
+    WTSFreeMemory(processes);
+    processes = nullptr;
 
     auto it = mProcessCache.begin();
     while (it != mProcessCache.end()) {
@@ -162,40 +127,55 @@ bool GameInjector::Run(std::stop_token stopToken) {
       }
       it = mProcessCache.erase(it);
     }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-  }
+  } while (!stopToken.stop_requested());
   return true;
 }
 
 void GameInjector::CheckProcess(
   DWORD processID,
   std::wstring_view exeBaseName) {
-  winrt::handle processHandle;
+  HANDLE processHandle {NULL};
   std::filesystem::path fullPath;
 
   std::scoped_lock lock(mGamesMutex);
   for (const auto& game: mGames) {
+    if (game->mLastSeenPath.filename() != exeBaseName) {
+      continue;
+    }
     if (!processHandle) {
-      processHandle.attach(OpenProcess(PROCESS_ALL_ACCESS, false, processID));
-      if (!processHandle) {
-        dprintf(
-          L"Failed to OpenProcess() for PID {} ({}): {:#x}",
-          processID,
-          exeBaseName,
-          std::bit_cast<uint32_t>(GetLastError()));
-        return;
+      if (mProcessCache.contains(processID)) {
+        const auto& entry = mProcessCache.at(processID);
+        processHandle = entry.mHandle.get();
+        fullPath = entry.mPath;
+      } else {
+        processHandle
+          = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processID);
+        if (processHandle) {
+          wchar_t buf[MAX_PATH];
+          DWORD bufSize = sizeof(buf);
+          if (
+            QueryFullProcessImageNameW(processHandle, 0, buf, &bufSize)
+            && bufSize >= 0 && bufSize <= sizeof(buf)) {
+            fullPath
+              = std::filesystem::canonical(std::wstring_view {buf, bufSize});
+          }
+          mProcessCache.emplace(
+            processID,
+            ProcessCacheEntry {
+              .mHandle = winrt::handle {processHandle},
+              .mPath = fullPath,
+            });
+        }
       }
-
-      wchar_t buf[MAX_PATH];
-      DWORD bufSize = sizeof(buf);
-      if (!QueryFullProcessImageNameW(processHandle.get(), 0, buf, &bufSize)) {
-        return;
-      }
-      if (bufSize < 0 || bufSize > sizeof(buf)) {
-        return;
-      }
-      fullPath = std::filesystem::canonical(std::wstring_view(buf, bufSize));
+    }
+    if (!processHandle) {
+      dprintf(
+        L"Failed to OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION) for PID {} "
+        L"({}): {:#x}",
+        processID,
+        exeBaseName,
+        std::bit_cast<uint32_t>(GetLastError()));
+      return;
     }
 
     if (
@@ -240,8 +220,10 @@ void GameInjector::CheckProcess(
         return;
     }
 
-    if (!mProcessCache.contains(processID)) {
-      mProcessCache.insert_or_assign(processID, InjectedDlls::None);
+    const auto currentGame = mKneeboardState->GetCurrentGame();
+    const DWORD currentPID = currentGame ? currentGame->mProcessID : 0;
+
+    if (currentPID != processID) {
       // Lazy to-string approach
       nlohmann::json overlayAPI;
       to_json(overlayAPI, game->mOverlayAPI);
@@ -251,27 +233,44 @@ void GameInjector::CheckProcess(
         fullPath.string(),
         processID,
         overlayAPI.dump(),
-        IsElevated(processHandle.get()) ? "elevated" : "not elevated");
-      this->evGameChangedEvent.Emit(processID, game);
+        IsElevated(processHandle) ? "elevated" : "not elevated");
+      this->evGameChangedEvent.Emit(processID, fullPath, game);
     }
 
-    auto& currentDlls = mProcessCache.at(processID);
+    auto& process = mProcessCache.at(processID);
+
+    auto& currentDlls = process.mInjectedDlls;
     const auto missingDlls = wantedDlls & ~currentDlls;
     if (missingDlls == InjectedDlls::None) {
       continue;
     }
 
     dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
+    if (!process.mHaveAllAccess) {
+      dprintf("Reopening PID {} with PROCESS_ALL_ACCESS", processID);
+      processHandle = OpenProcess(PROCESS_ALL_ACCESS, false, processID);
+      if (!processHandle) {
+        dprintf(
+          L"Failed to OpenProcess(PROCESS_ALL_ACCESS) for PID {} ({}): {:#x}",
+          processID,
+          exeBaseName,
+          std::bit_cast<uint32_t>(GetLastError()));
+        return;
+      }
+      process.mHandle = winrt::handle {processHandle};
+      process.mHaveAllAccess = true;
+    }
+    DebugPrivileges privileges;
 
     const auto injectIfNeeded = [&](const auto dllID, const auto& dllPath) {
       if (!static_cast<bool>(missingDlls & dllID)) {
         return;
       }
-      if (IsInjected(processHandle.get(), dllPath)) {
+      if (IsInjected(processHandle, dllPath)) {
         currentDlls |= dllID;
         return;
       }
-      InjectDll(processHandle.get(), dllPath);
+      InjectDll(processHandle, dllPath);
       currentDlls |= dllID;
     };
 
@@ -294,7 +293,8 @@ bool GameInjector::IsInjected(
   DWORD requestedBytes = neededBytes;
   if (!EnumProcessModules(
         process, modules.data(), requestedBytes, &neededBytes)) {
-    // Maybe a lie, but if we can't list modules, we definitely can't inject one
+    // Maybe a lie, but if we can't list modules, we definitely can't inject
+    // one
     return true;
   }
   if (neededBytes < requestedBytes) {
@@ -317,8 +317,6 @@ bool GameInjector::InjectDll(HANDLE process, const std::filesystem::path& dll) {
   if (IsInjected(process, dll)) {
     return false;
   }
-
-  DebugPrivileges privileges;
 
   auto dllStr = dll.wstring();
 

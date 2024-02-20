@@ -40,6 +40,7 @@ target_link_libraries(
   System::Dwmapi
   System::Dxguid
   System::Rpcrt4
+  System::Wtsapi32
   ThirdParty::DirectXTK
   ThirdParty::GeographicLib
   ThirdParty::LibZip

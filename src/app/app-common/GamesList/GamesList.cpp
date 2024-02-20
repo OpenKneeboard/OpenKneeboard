@@ -24,7 +24,9 @@
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/GenericGame.h>
 #include <OpenKneeboard/KneeboardState.h>
+
 #include <OpenKneeboard/scope_guard.h>
+
 #include <windows.h>
 
 namespace OpenKneeboard {
@@ -41,11 +43,30 @@ void GamesList::StartInjector() {
 
   mInjector = GameInjector::Create(mKneeboardState);
   mInjector->SetGameInstances(mInstances);
-  AddEventListener(mInjector->evGameChangedEvent, this->evGameChangedEvent);
+  AddEventListener(
+    mInjector->evGameChangedEvent,
+    std::bind_front(&GamesList::OnGameChanged, this));
   mInjectorThread = std::jthread([this](std::stop_token stopToken) {
     SetThreadDescription(GetCurrentThread(), L"GameInjector Thread");
     mInjector->Run(stopToken);
   });
+}
+
+void GamesList::OnGameChanged(
+  DWORD processID,
+  const std::filesystem::path& path,
+  const std::shared_ptr<GameInstance>& game) {
+  if (!(processID && (!path.empty()) && game)) {
+    this->evGameChangedEvent.Emit(processID, game);
+    return;
+  }
+
+  if (path != game->mLastSeenPath) {
+    game->mLastSeenPath = path;
+    this->evSettingsChangedEvent.Emit();
+  }
+
+  this->evGameChangedEvent.Emit(processID, game);
 }
 
 void GamesList::LoadDefaultSettings() {

@@ -106,7 +106,7 @@ IVector<IInspectable> GameSettingsPage::Games() noexcept {
       winrtGame = winrt::make<GameInstanceUIData>();
     }
     winrtGame.InstanceID(game->mInstanceID);
-    winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mPathPattern));
+    winrtGame.Icon(mIconFactory->CreateXamlBitmapSource(game->mLastSeenPath));
     winrtGame.Name(to_hstring(game->mName));
     winrtGame.Path(to_hstring(game->mPathPattern));
     winrtGame.Type(to_hstring(game->mGame->GetNameForConfigFile()));

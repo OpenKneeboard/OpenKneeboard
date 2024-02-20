@@ -62,6 +62,7 @@ struct GameInstance {
 
   std::string mName;
   std::string mPathPattern;
+  std::filesystem::path mLastSeenPath;
   OverlayAPI mOverlayAPI {OverlayAPI::AutoDetect};
   std::shared_ptr<Game> mGame;
 

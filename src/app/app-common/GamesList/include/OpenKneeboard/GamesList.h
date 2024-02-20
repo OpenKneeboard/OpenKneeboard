@@ -22,6 +22,7 @@
 #include <OpenKneeboard/Events.h>
 
 #include <nlohmann/json_fwd.hpp>
+
 #include <thread>
 
 namespace OpenKneeboard {
@@ -53,8 +54,14 @@ class GamesList final : private EventReceiver {
   std::vector<std::shared_ptr<GameInstance>> GetGameInstances() const;
   void SetGameInstances(const std::vector<std::shared_ptr<GameInstance>>&);
 
-  Event<DWORD, std::shared_ptr<GameInstance>> evGameChangedEvent;
+  Event<DWORD, const std::shared_ptr<GameInstance>&> evGameChangedEvent;
   Event<> evSettingsChangedEvent;
+
+ private:
+  void OnGameChanged(
+    DWORD,
+    const std::filesystem::path&,
+    const std::shared_ptr<GameInstance>&);
 };
 
 }// namespace OpenKneeboard

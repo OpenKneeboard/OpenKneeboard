@@ -29,9 +29,10 @@ namespace OpenKneeboard {
 nlohmann::json GameInstance::ToJson() const {
   return {
     {"Name", this->mName},
-    {"Path", this->mPathPattern},
+    {"PathPattern", this->mPathPattern},
     {"Type", this->mGame->GetNameForConfigFile()},
     {"OverlayAPI", this->mOverlayAPI},
+    {"LastSeenPath", this->mLastSeenPath},
   };
 }
 
@@ -42,10 +43,21 @@ GameInstance::GameInstance(
   const std::shared_ptr<Game>& game)
   : mInstanceID(gNextInstanceID++) {
   mName = j.at("Name");
-  mPathPattern = j.at("Path");
   mGame = game;
+
   if (j.contains("OverlayAPI")) {
     mOverlayAPI = j.at("OverlayAPI");
+  }
+
+  if (j.contains("PathPattern")) {
+    mPathPattern = j.at("PathPattern");
+  } else if (j.contains("Path")) {
+    mPathPattern = j.at("Path");
+    mLastSeenPath = j.at("Path");
+  }
+
+  if (j.contains("LastSeenPath")) {
+    mLastSeenPath = j.at("LastSeenPath");
   }
 }
 
@@ -56,6 +68,7 @@ GameInstance::GameInstance(
   : mInstanceID(gNextInstanceID++),
     mName(name),
     mPathPattern(path.string()),
+    mLastSeenPath(path),
     mGame(game) {
 }
 

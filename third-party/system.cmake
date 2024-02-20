@@ -16,6 +16,7 @@ set(
   Shlwapi
   User32
   WindowsApp
+  Wtsapi32
 )
 
 foreach(LIBRARY ${SYSTEM_LIBRARIES})

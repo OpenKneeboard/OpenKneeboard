@@ -21,6 +21,7 @@
 #include <OpenKneeboard/DXResources.h>
 #include <OpenKneeboard/DirectInputAdapter.h>
 #include <OpenKneeboard/GameEventServer.h>
+#include <OpenKneeboard/GameInstance.h>
 #include <OpenKneeboard/GamesList.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/InterprocessRenderer.h>
@@ -259,7 +260,7 @@ void KneeboardState::PostUserAction(UserAction action) {
 
 void KneeboardState::OnGameChangedEvent(
   DWORD processID,
-  std::shared_ptr<GameInstance> game) {
+  const std::shared_ptr<GameInstance>& game) {
   SHM::ActiveConsumers::Clear();
   if (processID && game) {
     mCurrentGame = {processID, {game}};
