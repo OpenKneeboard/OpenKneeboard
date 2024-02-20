@@ -107,6 +107,7 @@ struct DPrintMessage : public DPrintMessageHeader {
  public:
   static constexpr auto MaxMessageLength = MaxMessageSize / sizeof(wchar_t);
   wchar_t mMessage[MaxMessageLength];
+  size_t mMessageLength {};
 };
 #pragma pack(pop)
 

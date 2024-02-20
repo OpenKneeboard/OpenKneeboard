@@ -206,7 +206,7 @@ void TroubleshootingStore::DPrintReceiver::OnMessage(
     .mProcessID = message.mProcessID,
     .mExecutable = message.mExecutable,
     .mPrefix = message.mPrefix,
-    .mMessage = message.mMessage,
+    .mMessage = std::wstring {message.mMessage, message.mMessageLength},
   };
   {
     std::unique_lock lock(mMutex);

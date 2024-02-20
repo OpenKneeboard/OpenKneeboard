@@ -110,6 +110,8 @@ static void WriteIPCMessage(std::wstring_view message) {
   memcpy(messageSHM, &gIPCMessageHeader, sizeof(gIPCMessageHeader));
   memcpy(
     messageSHM->mMessage, message.data(), message.size() * sizeof(message[0]));
+  messageSHM->mMessageLength = message.size();
+  FlushViewOfFile(shm, sizeof(DPrintMessage));
   SetEvent(dataReadyEvent.get());
 }
 
