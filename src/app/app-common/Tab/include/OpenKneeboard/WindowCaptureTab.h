@@ -39,7 +39,8 @@ class WindowCaptureTab final
  public:
   struct Settings;
   struct WindowSpecification {
-    std::filesystem::path mExecutable;
+    std::string mExecutablePathPattern;
+    std::filesystem::path mExecutableLastSeenPath;
     std::string mWindowClass;
     std::string mTitle;
 
@@ -107,7 +108,7 @@ class WindowCaptureTab final
     const Settings&);
   winrt::fire_and_forget TryToStartCapture();
   concurrency::task<bool> TryToStartCapture(HWND hwnd);
-  bool WindowMatches(HWND hwnd) const;
+  bool WindowMatches(HWND hwnd);
 
   winrt::fire_and_forget OnWindowClosed();
 

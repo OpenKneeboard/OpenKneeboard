@@ -53,7 +53,11 @@ std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
   KneeboardState* kbs,
   const MatchSpecification& spec) {
   return std::shared_ptr<WindowCaptureTab>(new WindowCaptureTab(
-    dxr, kbs, {}, to_utf8(spec.mExecutable.stem()), {.mSpec = spec}));
+    dxr,
+    kbs,
+    {},
+    to_utf8(spec.mExecutableLastSeenPath.stem()),
+    {.mSpec = spec}));
 }
 
 std::shared_ptr<WindowCaptureTab> WindowCaptureTab::Create(
@@ -94,16 +98,10 @@ WindowCaptureTab::WindowCaptureTab(
     mCaptureOptions(settings.mCaptureOptions) {
 }
 
-bool WindowCaptureTab::WindowMatches(HWND hwnd) const {
+bool WindowCaptureTab::WindowMatches(HWND hwnd) {
   const auto window = GetWindowSpecification(hwnd);
   if (!window) {
     return false;
-  }
-
-  if (mSpec.mMatchExecutable) {
-    if (mSpec.mExecutable != window->mExecutable) {
-      return false;
-    }
   }
 
   if (mSpec.mMatchWindowClass) {
@@ -128,6 +126,30 @@ bool WindowCaptureTab::WindowMatches(HWND hwnd) const {
       }
       break;
     }
+  }
+
+  if (mSpec.mMatchExecutable) {
+    if (mSpec.mExecutableLastSeenPath == mSpec.mExecutablePathPattern) {
+      // Pattern has no wildcards
+      if (window->mExecutableLastSeenPath != mSpec.mExecutableLastSeenPath) {
+        return false;
+      }
+    }
+
+    const auto spec = winrt::to_hstring(mSpec.mExecutablePathPattern);
+    if (
+      PathMatchSpecExW(
+        window->mExecutableLastSeenPath.wstring().c_str(),
+        spec.c_str(),
+        PMSF_NORMAL | PMSF_DONT_STRIP_SPACES)
+      != S_OK) {
+      return false;
+    }
+  }
+
+  if (mSpec.mExecutableLastSeenPath != window->mExecutableLastSeenPath) {
+    mSpec.mExecutableLastSeenPath = window->mExecutableLastSeenPath;
+    this->evSettingsChangedEvent.Emit();
   }
 
   return true;
@@ -314,8 +336,10 @@ std::optional<WindowSpecification> WindowCaptureTab::GetWindowSpecification(
   const auto titleLen = GetWindowTextW(hwnd, titleBuf.data(), titleBufSize);
   titleBuf.resize(std::min(titleLen, titleBufSize));
 
+  const std::filesystem::path path {std::wstring_view {pathBuf, pathLen}};
   return WindowSpecification {
-    .mExecutable = {std::wstring_view {pathBuf, pathLen}},
+    .mExecutablePathPattern = path.string(),
+    .mExecutableLastSeenPath = path,
     .mWindowClass = winrt::to_string(
       std::wstring_view {classBuf, static_cast<size_t>(classLen)}),
     .mTitle = winrt::to_string(titleBuf),
@@ -455,9 +479,27 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     {TitleMatchKind::Exact, "Exact"},
     {TitleMatchKind::Glob, "Glob"},
   })
+
+template <>
+void from_json_postprocess<MatchSpecification>(
+  const nlohmann::json& j,
+  MatchSpecification& m) {
+  if (!m.mExecutablePathPattern.empty()) {
+    return;
+  }
+
+  if (!j.contains("Executable")) {
+    return;
+  }
+
+  m.mExecutablePathPattern = j.at("Executable");
+  m.mExecutableLastSeenPath = m.mExecutablePathPattern;
+}
+
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   MatchSpecification,
-  mExecutable,
+  mExecutablePathPattern,
+  mExecutableLastSeenPath,
   mWindowClass,
   mTitle,
   mMatchTitle,

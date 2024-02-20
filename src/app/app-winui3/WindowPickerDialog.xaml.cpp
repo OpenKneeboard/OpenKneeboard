@@ -24,9 +24,9 @@
 #include "WindowPickerUIData.g.cpp"
 // clang-format on
 
-#include <OpenKneeboard/WindowCaptureTab.h>
-
 #include "ExecutableIconFactory.h"
+
+#include <OpenKneeboard/WindowCaptureTab.h>
 
 using namespace winrt::Windows::Foundation::Collections;
 using namespace OpenKneeboard;
@@ -44,8 +44,9 @@ WindowPickerDialog::WindowPickerDialog() {
     OpenKneeboardApp::WindowPickerUIData uiData;
     uiData.Hwnd(reinterpret_cast<uint64_t>(hwnd));
     uiData.Title(to_hstring(spec.mTitle));
-    uiData.Path(spec.mExecutable.wstring());
-    uiData.Icon(iconFactory.CreateXamlBitmapSource(spec.mExecutable));
+    uiData.Path(spec.mExecutableLastSeenPath.wstring());
+    uiData.Icon(iconFactory.CreateXamlBitmapSource(
+      spec.mExecutableLastSeenPath.wstring()));
     winrtWindows.Append(uiData);
   }
 
