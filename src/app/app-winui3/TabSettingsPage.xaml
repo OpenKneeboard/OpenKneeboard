@@ -82,67 +82,72 @@
     </DataTemplate>
     <!-- Window Capture Tab -->
     <DataTemplate x:Key="WindowCaptureTabTemplate" x:DataType="local:WindowCaptureTabUIData">
-      <StackPanel
-        Orientation="Vertical"
+      <Expander
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         CornerRadius="8"
         Margin="4"
         Padding="8"
-        Spacing="8"
+        HorizontalAlignment="Stretch"
+        HorizontalContentAlignment="Stretch"
         x:DefaultBindMode="TwoWay">
-        <ContentPresenter 
-          Content="{x:Bind Mode=OneWay}"
-          ContentTemplate="{StaticResource TabHeader}"
-          Margin="0,0,0,8"
-        />
-        <TextBox
-          Header="Executable path"
-          Text="{x:Bind ExecutablePathPattern}"
-          PlaceholderText="Executable path pattern"
-        />
-        <TextBlock
-					Style="{ThemeResource CaptionTextBlockStyle}"
-					Foreground="{ThemeResource TextFillColorSecondary}">
-          The full path to the executable; MS-DOS wildcards such as '*' are supported.
-        </TextBlock>
-        <ToggleSwitch
-          Header="Capture client area"
-          IsOn="{x:Bind CaptureClientArea}"
-          OnContent="Crop classic window borders, title bars, and menu bars"
-          OffContent="The entire window is captured"
-        />
-        <ToggleSwitch
-          Header="Capture mouse cursor"
-          IsOn="{x:Bind IsCursorCaptureEnabled}"
-          OnContent="The Windows mouse cursor is captured"
-          OffContent="The Windows mouse cursor is not captured"
-          ToolTipService.ToolTip="OpenKneeboard's tablet support does not move the Windows cursor."
-        />
-        <ToggleSwitch
-          Header="Use tablet as mouse"
-          IsOn="{x:Bind IsInputEnabled}"
-          OnContent="Enabled"
-          OffContent="Disabled"
-        />
-        <ComboBox
-          Header="Match window title"
-          SelectedIndex="{x:Bind MatchWindowTitle}">
-          <x:String>Do not match</x:String>
-          <x:String>Match exactly</x:String>
-          <x:String>Match with pattern (use '*' and '?')</x:String>
-        </ComboBox>
-        <TextBox
-          Header="Window title"
-          Text="{x:Bind WindowTitle}"
-          PlaceholderText="Window title"
-        />
-				<ToggleSwitch
-					Header="Match window class"
-					IsOn="{x:Bind MatchWindowClass}"
-					OnContent="Enabled"
-					OffContent="Disabled"
-				/>
-      </StackPanel>
+        <Expander.Header>
+          <ContentPresenter 
+            Content="{x:Bind Mode=OneWay}"
+            ContentTemplate="{StaticResource TabHeader}"
+          />
+        </Expander.Header>
+        <Expander.Content>
+          <StackPanel Orientation="Vertical" Spacing="8">
+            <TextBox
+              Header="Executable path"
+              Text="{x:Bind ExecutablePathPattern}"
+              PlaceholderText="Executable path pattern"
+            />
+            <TextBlock
+              Style="{ThemeResource CaptionTextBlockStyle}"
+              Foreground="{ThemeResource TextFillColorSecondary}">
+              The full path to the executable; MS-DOS wildcards such as '*' are supported.
+            </TextBlock>
+            <ToggleSwitch
+              Header="Capture client area"
+              IsOn="{x:Bind CaptureClientArea}"
+              OnContent="Crop classic window borders, title bars, and menu bars"
+              OffContent="The entire window is captured"
+            />
+            <ToggleSwitch
+              Header="Capture mouse cursor"
+              IsOn="{x:Bind IsCursorCaptureEnabled}"
+              OnContent="The Windows mouse cursor is captured"
+              OffContent="The Windows mouse cursor is not captured"
+              ToolTipService.ToolTip="OpenKneeboard's tablet support does not move the Windows cursor."
+            />
+            <ToggleSwitch
+              Header="Use tablet as mouse"
+              IsOn="{x:Bind IsInputEnabled}"
+              OnContent="Enabled"
+              OffContent="Disabled"
+            />
+            <ComboBox
+              Header="Match window title"
+              SelectedIndex="{x:Bind MatchWindowTitle}">
+              <x:String>Do not match</x:String>
+              <x:String>Match exactly</x:String>
+              <x:String>Match with pattern (use '*' and '?')</x:String>
+            </ComboBox>
+            <TextBox
+              Header="Window title"
+              Text="{x:Bind WindowTitle}"
+              PlaceholderText="Window title"
+            />
+            <ToggleSwitch
+              Header="Match window class"
+              IsOn="{x:Bind MatchWindowClass}"
+              OnContent="Enabled"
+              OffContent="Disabled"
+            />
+          </StackPanel>
+        </Expander.Content>
+      </Expander>
     </DataTemplate>
   </Page.Resources>
   <!-- PAGE CONTENT STARTS HERE -->
