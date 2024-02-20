@@ -85,7 +85,7 @@ static void WriteIPCMessage(std::wstring_view message) {
     return;
   }
 
-  const auto mapping = Win32::CreateFileMappingW(
+  auto mapping = Win32::CreateFileMappingW(
     INVALID_HANDLE_VALUE,
     nullptr,
     PAGE_READWRITE,
@@ -103,7 +103,7 @@ static void WriteIPCMessage(std::wstring_view message) {
     OPENKNEEBOARD_BREAK;
     return;
   }
-  scope_guard shmGuard([shm]() { UnmapViewOfFile(shm); });
+
   memset(shm, 0, sizeof(DPrintMessage));
 
   auto messageSHM = reinterpret_cast<DPrintMessage*>(shm);
@@ -111,7 +111,10 @@ static void WriteIPCMessage(std::wstring_view message) {
   memcpy(
     messageSHM->mMessage, message.data(), message.size() * sizeof(message[0]));
   messageSHM->mMessageLength = message.size();
+
   FlushViewOfFile(shm, sizeof(DPrintMessage));
+  UnmapViewOfFile(shm);
+  mapping = {};
   SetEvent(dataReadyEvent.get());
 }
 
@@ -291,9 +294,10 @@ void DPrintReceiver::Run(std::stop_token stopToken) {
   while (true) {
     // Unset canary
     memset(mSHM, 0xcf, sizeof(DPrintMessage));
+
     SetEvent(mBufferReadyEvent.get());
 
-    auto result = WaitForMultipleObjects(
+    const auto result = WaitForMultipleObjects(
       sizeof(handles) / sizeof(handles[0]),
       handles,
       /* all = */ false,
@@ -302,6 +306,10 @@ void DPrintReceiver::Run(std::stop_token stopToken) {
     if (stopToken.stop_requested()) {
       ResetEvent(mBufferReadyEvent.get());
       return;
+    }
+
+    if (result != WAIT_OBJECT_0) {
+      OPENKNEEBOARD_BREAK;
     }
 
     this->OnMessage(*mSHM);
