@@ -24,6 +24,9 @@
 #include <OpenKneeboard/final_release_deleter.h>
 #include <OpenKneeboard/scope_guard.h>
 
+#include <wil/cppwinrt.h>
+#include <wil/cppwinrt_helpers.h>
+
 #include <ranges>
 
 #include <OTD-IPC/DeviceInfo.h>
@@ -43,6 +46,8 @@ std::shared_ptr<OTDIPCClient> OTDIPCClient::Create() {
 
 OTDIPCClient::OTDIPCClient() {
   dprintf("{}", __FUNCTION__);
+  mDQC = winrt::Microsoft::UI::Dispatching::DispatcherQueueController::
+    CreateOnDedicatedThread();
 }
 
 OTDIPCClient::~OTDIPCClient() {
@@ -55,6 +60,8 @@ winrt::fire_and_forget OTDIPCClient::final_release(
   self->mStopper.request_stop();
   dprint("Waiting for OTDIPCClient completion handle");
   co_await winrt::resume_on_signal(self->mCompletionHandle.get());
+  dprint("Shutting down DQC");
+  co_await self->mDQC.ShutdownQueueAsync();
   dprint("Destroying OTDIPCClient");
 }
 
@@ -69,8 +76,13 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
       "Tearing down OTD-IPC client with {} uncaught exceptions",
       std::uncaught_exceptions());
   });
+  auto workThread = mDQC.DispatcherQueue();
+  co_await wil::resume_foreground(workThread);
+  SetThreadDescription(GetCurrentThread(), L"OTD-IPC Client Thread");
+
   while (!mStopper.stop_requested()) {
     co_await this->RunSingle();
+    co_await wil::resume_foreground(workThread);
     co_await resume_after(mStopper.get_token(), std::chrono::seconds(1));
   }
 }
@@ -192,8 +204,19 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
       co_return;
     }
 
-    this->ProcessMessage(header);
+    this->EnqueueMessage({buffer, header->size});
   }
+}
+
+winrt::fire_and_forget OTDIPCClient::EnqueueMessage(std::string message) {
+  auto weakThis = weak_from_this();
+  co_await mUIThread;
+  auto self = weakThis.lock();
+  if (!self) {
+    co_return;
+  }
+  this->ProcessMessage(
+    reinterpret_cast<const OTDIPC::Messages::Header*>(message.data()));
 }
 
 std::optional<TabletState> OTDIPCClient::GetState(const std::string& id) const {

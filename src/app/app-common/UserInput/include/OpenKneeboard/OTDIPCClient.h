@@ -27,6 +27,7 @@
 
 #include <shims/winrt/base.h>
 
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Windows.Foundation.h>
 
 #include <chrono>
@@ -61,11 +62,15 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
 
  private:
   ProcessShutdownBlock mShutdownBlock;
+  winrt::apartment_context mUIThread;
+
+  winrt::Microsoft::UI::Dispatching::DispatcherQueueController mDQC {nullptr};
 
   OTDIPCClient();
   winrt::Windows::Foundation::IAsyncAction Run();
   winrt::Windows::Foundation::IAsyncAction RunSingle();
 
+  winrt::fire_and_forget EnqueueMessage(std::string message);
   void ProcessMessage(const OTDIPC::Messages::Header* const);
   void ProcessMessage(const OTDIPC::Messages::DeviceInfo* const);
   void ProcessMessage(const OTDIPC::Messages::State* const);

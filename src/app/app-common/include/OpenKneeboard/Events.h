@@ -186,9 +186,8 @@ class Event final : public EventBase {
     mImpl->Emit(args..., location);
   }
 
-  template <class Awaitable>
   winrt::fire_and_forget EnqueueForContext(
-    Awaitable context,
+    auto context,
     Args... args,
     std::source_location location = std::source_location::current()) {
     auto weakImpl = std::weak_ptr(mImpl);
@@ -198,9 +197,8 @@ class Event final : public EventBase {
     }
   }
 
-  template <class Awaitable>
   winrt::Windows::Foundation::IAsyncAction EmitFromContextAsync(
-    Awaitable eventContext,
+    auto eventContext,
     Args... args,
     std::source_location location = std::source_location::current()) {
     auto weakImpl = std::weak_ptr(mImpl);
