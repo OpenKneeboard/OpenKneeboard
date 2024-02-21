@@ -91,7 +91,8 @@ struct TabPage : TabPageT<TabPage>, EventReceiver {
   std::mutex mCursorEventsMutex;
   std::queue<CursorEvent> mCursorEvents;
   bool mHaveCursorEvents {false};
-  void QueuePointerPoint(const PointerPoint&);
+  void EnqueuePointerPoint(const PointerPoint&);
+  void EnqueueCursorEvent(const CursorEvent&);
   void FlushCursorEvents();
 
   void SetTab(const std::shared_ptr<ITabView>&);

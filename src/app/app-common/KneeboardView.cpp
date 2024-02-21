@@ -350,10 +350,7 @@ PreferredSize KneeboardView::GetPreferredSize() const {
 }
 
 void KneeboardView::PostCursorEvent(const CursorEvent& ev) {
-  if (winrt::apartment_context() != mUIThread) {
-    dprint("Cursor event in wrong thread!");
-    OPENKNEEBOARD_BREAK;
-  }
+  mThreadGuard.CheckThread();
   if (!mCurrentTabView) {
     return;
   }

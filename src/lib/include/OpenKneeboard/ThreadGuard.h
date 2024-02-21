@@ -33,7 +33,8 @@ class ThreadGuard final {
   ThreadGuard(
     const std::source_location& loc = std::source_location::current());
   ~ThreadGuard();
-  void CheckThread() const;
+  void CheckThread(
+    const std::source_location& loc = std::source_location::current()) const;
 
  private:
   DWORD mThreadID;

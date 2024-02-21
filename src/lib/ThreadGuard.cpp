@@ -30,7 +30,7 @@ ThreadGuard::ThreadGuard(const std::source_location& loc) : mLocation(loc) {
 #endif
 }
 
-void ThreadGuard::CheckThread() const {
+void ThreadGuard::CheckThread(const std::source_location& loc) const {
 #ifdef DEBUG
   const auto thisThread = GetCurrentThreadId();
   if (thisThread == mThreadID) {
@@ -43,6 +43,7 @@ void ThreadGuard::CheckThread() const {
     thisThread,
     thisThread);
   dprintf("Created at {}", mLocation);
+  dprintf("Checking at {}", loc);
   OPENKNEEBOARD_BREAK;
 #endif
 }

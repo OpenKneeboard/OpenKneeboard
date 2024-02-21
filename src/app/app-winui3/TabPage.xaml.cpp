@@ -139,7 +139,7 @@ void TabPage::InitializePointerSource() {
     ips.PointerReleased(onPointerEvent);
     ips.PointerExited([weak](const auto&, const auto&) {
       if (auto self = weak.get()) {
-        self->mKneeboardView->PostCursorEvent({});
+        self->EnqueueCursorEvent({});
       }
     });
   });
@@ -598,10 +598,10 @@ void TabPage::OnPointerEvent(
   const IInspectable&,
   const PointerEventArgs& args) noexcept {
   for (auto pp: args.GetIntermediatePoints()) {
-    this->QueuePointerPoint(pp);
+    this->EnqueuePointerPoint(pp);
   }
   auto pp = args.CurrentPoint();
-  this->QueuePointerPoint(pp);
+  this->EnqueuePointerPoint(pp);
 }
 
 void TabPage::FlushCursorEvents() {
@@ -614,7 +614,7 @@ void TabPage::FlushCursorEvents() {
   mHaveCursorEvents = false;
 }
 
-void TabPage::QueuePointerPoint(const PointerPoint& pp) {
+void TabPage::EnqueuePointerPoint(const PointerPoint& pp) {
   if (!mKneeboardView) {
     return;
   }
@@ -639,7 +639,7 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
   const bool rightClick = ppp.IsRightButtonPressed();
 
   if (x < 0 || x > 1 || y < 0 || y > 1) {
-    mKneeboardView->PostCursorEvent({});
+    this->EnqueueCursorEvent({});
     return;
   }
 
@@ -653,8 +653,7 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     buttons |= (1 << 1);
   }
 
-  std::unique_lock lock(mCursorEventsMutex);
-  mCursorEvents.push(CursorEvent {
+  this->EnqueueCursorEvent(CursorEvent {
     .mSource = CursorSource::WINDOW_POINTER,
     .mTouchState = (leftClick || rightClick)
       ? CursorTouchState::TOUCHING_SURFACE
@@ -664,7 +663,11 @@ void TabPage::QueuePointerPoint(const PointerPoint& pp) {
     .mPressure = rightClick ? 0.8f : 0.0f,
     .mButtons = buttons,
   });
+}
 
+void TabPage::EnqueueCursorEvent(const CursorEvent& ev) {
+  std::unique_lock lock(mCursorEventsMutex);
+  mCursorEvents.push(ev);
   mHaveCursorEvents = true;
 }
 
