@@ -69,15 +69,10 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
       "Tearing down OTD-IPC client with {} uncaught exceptions",
       std::uncaught_exceptions());
   });
-  if (mStopper.stop_requested()) {
-    co_return;
+  while (!mStopper.stop_requested()) {
+    co_await this->RunSingle();
+    co_await resume_after(mStopper.get_token(), std::chrono::seconds(1));
   }
-  co_await this->RunSingle();
-  if (mStopper.stop_requested()) {
-    co_return;
-  }
-  dprint("OTDIPCClient: 1sec");
-  co_await resume_after(mStopper.get_token(), std::chrono::seconds(1));
 }
 
 void OTDIPCClient::TimeoutTablet(const std::string& id) {
@@ -160,7 +155,6 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
           continue;
         }
 
-        dprint("OTDIPCClient: timeout");
         if (co_await winrt::resume_on_signal(
               event.get(),
               std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -174,13 +168,10 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
 
       if (!haveEvent) {
         auto stop = mStopper.get_token();
-        dprint("OTDIPCClient: waitForEvent");
         co_await resume_on_signal(stop, event.get());
         if (stop.stop_requested()) {
-          dprint("OTDIPCClient: waitForEvent/stop");
           co_return;
         }
-        dprint("OTDIPCClient: waitForEvent/finished");
       }
       if (!GetOverlappedResult(
             connection.get(), &overlapped, &bytesRead, TRUE)) {
