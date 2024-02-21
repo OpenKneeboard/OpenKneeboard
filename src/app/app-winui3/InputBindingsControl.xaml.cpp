@@ -36,6 +36,7 @@
 
 #include <microsoft.ui.xaml.window.h>
 
+#include <dinput.h>
 #include <shobjidl.h>
 
 namespace winrt::OpenKneeboardApp::implementation {
@@ -145,27 +146,44 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
   bool cancelled = true;
   auto stayingAlive = this->get_strong();
   auto weakThis = this->get_weak();
+
+  const bool isMouse
+    = mDevice->GetID() == to_string(to_hstring({GUID_SysMouse}));
+  bool haveLeftMouseButton = false;
+
   EventHookToken hookToken;
   auto unhook = scope_guard(
     [this, hookToken] { mDevice->evButtonEvent.RemoveHook(hookToken); });
   mDevice->evButtonEvent.AddHook(
-    [hookToken, weakThis, dialog, &pressedButtons, &cancelled](
+    [hookToken, weakThis, dialog, &pressedButtons, &cancelled, isMouse](
       const UserInputButtonEvent& ev) {
       auto strongThis = weakThis.get();
       if (!strongThis) {
         return EventBase::HookResult::ALLOW_PROPAGATION;
       }
 
+      const auto isLeftMouseButton = isMouse && (ev.GetButtonID() == 0);
+
       if (ev.IsPressed()) {
-        pressedButtons.insert(ev.GetButtonID());
-        [](auto strongThis, auto dialog, const auto buttons)
+        if (!isLeftMouseButton) {
+          pressedButtons.insert(ev.GetButtonID());
+        }
+        const auto bindingDesc = isLeftMouseButton
+          ? "[left mouse button can not be bound]"
+          : strongThis->mDevice->GetButtonComboDescription(pressedButtons);
+
+        [](auto strongThis, auto dialog, const auto bindingDesc)
           -> winrt::fire_and_forget {
           co_await strongThis->mUIThread;
           dialog.Content(box_value(to_hstring(std::format(
             _("Press then release buttons to bind input.\n\n{}"),
-            strongThis->mDevice->GetButtonComboDescription(buttons)))));
-        }(strongThis, dialog, pressedButtons);
+            bindingDesc))));
+        }(strongThis, dialog, bindingDesc);
         return EventBase::HookResult::STOP_PROPAGATION;
+      }
+
+      if (isLeftMouseButton) {
+        return EventBase::HookResult::ALLOW_PROPAGATION;
       }
       cancelled = false;
       strongThis->mDevice->evButtonEvent.RemoveHook(hookToken);
