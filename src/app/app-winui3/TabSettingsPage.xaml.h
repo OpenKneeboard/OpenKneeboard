@@ -24,6 +24,7 @@
 #include "TabSettingsPage.g.h"
 
 #include "TabUIData.g.h"
+#include "BrowserTabUIData.g.h"
 #include "DCSRadioLogTabUIData.g.h"
 #include "WindowCaptureTabUIData.g.h"
 
@@ -41,6 +42,7 @@
 namespace OpenKneeboard {
 class ITab;
 class ITabView;
+class BrowserTab;
 class DCSRadioLogTab;
 struct DXResources;
 class KneeboardState;
@@ -114,6 +116,24 @@ struct TabUIData : TabUIDataT<TabUIData>,
   std::weak_ptr<OpenKneeboard::ITab> mTab;
 };
 
+struct BrowserTabUIData : BrowserTabUIDataT<
+                            BrowserTabUIData,
+                            OpenKneeboardApp::implementation::TabUIData> {
+  BrowserTabUIData() = default;
+
+  bool IsSimHubIntegrationEnabled() const;
+  void IsSimHubIntegrationEnabled(bool);
+
+  bool IsBackgroundTransparent() const;
+  void IsBackgroundTransparent(bool);
+
+  bool IsDeveloperToolsWindowEnabled() const;
+  void IsDeveloperToolsWindowEnabled(bool);
+
+ private:
+  std::shared_ptr<OpenKneeboard::BrowserTab> GetTab() const;
+};
+
 struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
                                 DCSRadioLogTabUIData,
                                 OpenKneeboardApp::implementation::TabUIData> {
@@ -157,6 +177,8 @@ struct TabUIDataTemplateSelector
 
   winrt::Microsoft::UI::Xaml::DataTemplate Generic();
   void Generic(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
+  winrt::Microsoft::UI::Xaml::DataTemplate Browser();
+  void Browser(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
   winrt::Microsoft::UI::Xaml::DataTemplate DCSRadioLog();
   void DCSRadioLog(winrt::Microsoft::UI::Xaml::DataTemplate const& value);
   winrt::Microsoft::UI::Xaml::DataTemplate WindowCapture();
@@ -167,6 +189,7 @@ struct TabUIDataTemplateSelector
 
  private:
   DataTemplate mGeneric;
+  DataTemplate mBrowser;
   DataTemplate mDCSRadioLog;
   DataTemplate mWindowCapture;
 };
@@ -177,6 +200,8 @@ struct TabSettingsPage
   : TabSettingsPageT<TabSettingsPage, implementation::TabSettingsPage> {};
 
 struct TabUIData : TabUIDataT<TabUIData, implementation::TabUIData> {};
+struct BrowserTabUIData
+  : BrowserTabUIDataT<BrowserTabUIData, implementation::BrowserTabUIData> {};
 struct DCSRadioLogTabUIData : DCSRadioLogTabUIDataT<
                                 DCSRadioLogTabUIData,
                                 implementation::DCSRadioLogTabUIData> {};

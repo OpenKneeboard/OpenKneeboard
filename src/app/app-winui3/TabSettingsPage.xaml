@@ -51,6 +51,40 @@
         />
       </StackPanel>
     </DataTemplate>
+    <!-- Browser Tab -->
+    <DataTemplate x:Key="BrowserTabTemplate" x:DataType="local:BrowserTabUIData">
+      <StackPanel
+        Orientation="Vertical"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+        CornerRadius="8"
+        Margin="4"
+        Spacing="8"
+        Padding="8">
+        <ContentPresenter 
+          Content="{x:Bind}"
+          ContentTemplate="{StaticResource TabHeader}"
+          Margin="0,0,0,8"
+        />
+        <ToggleSwitch
+          IsOn="{x:Bind IsBackgroundTransparent, Mode=TwoWay}"
+          Header="Transparent background"
+          OffContent="Background is solid"
+          OnContent="Background is transparent"
+        />
+        <ToggleSwitch
+          IsOn="{x:Bind IsSimHubIntegrationEnabled, Mode=TwoWay}"
+          Header="SimHub integration"
+          OffContent="Disabled"
+          OnContent="Automatically resizes to fit SimHub dashboards"
+        />
+        <ToggleSwitch
+          IsOn="{x:Bind IsDeveloperToolsWindowEnabled, Mode=TwoWay}"
+          Header="Developer tools window"
+          OffContent="Disabled"
+          OnContent="Enabled"
+        />
+      </StackPanel>
+    </DataTemplate>
     <!-- DCS Radio Tab -->
     <DataTemplate x:Key="DCSRadioLogTabTemplate" x:DataType="local:DCSRadioLogTabUIData">
       <StackPanel
@@ -198,6 +232,7 @@
         <ListView.ItemTemplateSelector>
           <local:TabUIDataTemplateSelector
             Generic="{StaticResource GenericTabTemplate}"
+            Browser="{StaticResource BrowserTabTemplate}"
             DCSRadioLog="{StaticResource DCSRadioLogTabTemplate}"
             WindowCapture="{StaticResource WindowCaptureTabTemplate}"
           />

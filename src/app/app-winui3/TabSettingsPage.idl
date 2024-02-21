@@ -32,10 +32,18 @@ namespace OpenKneeboardApp {
   Boolean CaptureClientArea;
 }
 
+[default_interface] runtimeclass BrowserTabUIData: TabUIData {
+  BrowserTabUIData();
+  Boolean IsSimHubIntegrationEnabled;
+  Boolean IsBackgroundTransparent;
+  Boolean IsDeveloperToolsWindowEnabled;
+}
+
 [default_interface] runtimeclass TabUIDataTemplateSelector
   : Microsoft.UI.Xaml.Controls.DataTemplateSelector {
   TabUIDataTemplateSelector();
   Microsoft.UI.Xaml.DataTemplate Generic;
+  Microsoft.UI.Xaml.DataTemplate Browser;
   Microsoft.UI.Xaml.DataTemplate DCSRadioLog;
   Microsoft.UI.Xaml.DataTemplate WindowCapture;
 }

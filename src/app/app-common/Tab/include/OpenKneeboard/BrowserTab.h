@@ -57,6 +57,15 @@ class BrowserTab final : public TabBase,
 
   nlohmann::json GetSettings() const override;
 
+  bool IsSimHubIntegrationEnabled() const;
+  void SetSimHubIntegrationEnabled(bool);
+
+  bool IsBackgroundTransparent() const;
+  void SetBackgroundTransparent(bool);
+
+  bool IsDeveloperToolsWindowEnabled() const;
+  void SetDeveloperToolsWindowEnabled(bool);
+
  private:
   winrt::apartment_context mUIThread;
   audited_ptr<DXResources> mDXR;

@@ -61,6 +61,45 @@ nlohmann::json BrowserTab::GetSettings() const {
   return mSettings;
 }
 
+bool BrowserTab::IsSimHubIntegrationEnabled() const {
+  return mSettings.mIntegrateWithSimHub;
+}
+
+void BrowserTab::SetSimHubIntegrationEnabled(bool enabled) {
+  if (enabled == this->IsSimHubIntegrationEnabled()) {
+    return;
+  }
+  mSettings.mIntegrateWithSimHub = enabled;
+  this->Reload();
+  this->evSettingsChangedEvent.Emit();
+}
+
+bool BrowserTab::IsBackgroundTransparent() const {
+  return mSettings.mTransparentBackground;
+}
+
+void BrowserTab::SetBackgroundTransparent(bool transparent) {
+  if (transparent == this->IsBackgroundTransparent()) {
+    return;
+  }
+  mSettings.mTransparentBackground = transparent;
+  this->Reload();
+  this->evSettingsChangedEvent.Emit();
+}
+
+bool BrowserTab::IsDeveloperToolsWindowEnabled() const {
+  return mSettings.mOpenDeveloperToolsWindow;
+}
+
+void BrowserTab::SetDeveloperToolsWindowEnabled(bool enabled) {
+  if (enabled == this->IsDeveloperToolsWindowEnabled()) {
+    return;
+  }
+  mSettings.mOpenDeveloperToolsWindow = enabled;
+  this->Reload();
+  this->evSettingsChangedEvent.Emit();
+}
+
 OPENKNEEBOARD_DEFINE_SPARSE_JSON(
   BrowserTab::Settings,
   mURI,

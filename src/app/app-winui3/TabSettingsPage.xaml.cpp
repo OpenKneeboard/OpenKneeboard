@@ -23,6 +23,7 @@
 #include "TabSettingsPage.g.cpp"
 
 #include "TabUIData.g.cpp"
+#include "BrowserTabUIData.g.cpp"
 #include "DCSRadioLogTabUIData.g.cpp"
 #include "WindowCaptureTabUIData.g.cpp"
 
@@ -32,6 +33,7 @@
 #include "FilePicker.h"
 #include "Globals.h"
 
+#include <OpenKneeboard/BrowserTab.h>
 #include <OpenKneeboard/DCSRadioLogTab.h>
 #include <OpenKneeboard/FilePageSource.h>
 #include <OpenKneeboard/IHasDebugInformation.h>
@@ -66,7 +68,9 @@ namespace winrt::OpenKneeboardApp::implementation {
 OpenKneeboardApp::TabUIData TabSettingsPage::CreateTabUIData(
   const std::shared_ptr<ITab>& tab) {
   OpenKneeboardApp::TabUIData tabData {nullptr};
-  if (std::dynamic_pointer_cast<DCSRadioLogTab>(tab)) {
+  if (std::dynamic_pointer_cast<BrowserTab>(tab)) {
+    tabData = winrt::make<BrowserTabUIData>();
+  } else if (std::dynamic_pointer_cast<DCSRadioLogTab>(tab)) {
     tabData = winrt::make<DCSRadioLogTabUIData>();
   } else if (std::dynamic_pointer_cast<WindowCaptureTab>(tab)) {
     tabData = winrt::make<WindowCaptureTabUIData>();
@@ -582,15 +586,51 @@ void TabUIData::InstanceID(uint64_t value) {
     });
 }
 
+bool BrowserTabUIData::IsSimHubIntegrationEnabled() const {
+  return GetTab()->IsSimHubIntegrationEnabled();
+}
+
+void BrowserTabUIData::IsSimHubIntegrationEnabled(bool value) {
+  GetTab()->SetSimHubIntegrationEnabled(value);
+}
+
+bool BrowserTabUIData::IsBackgroundTransparent() const {
+  return GetTab()->IsBackgroundTransparent();
+}
+
+void BrowserTabUIData::IsBackgroundTransparent(bool value) {
+  GetTab()->SetBackgroundTransparent(value);
+}
+
+bool BrowserTabUIData::IsDeveloperToolsWindowEnabled() const {
+  return GetTab()->IsDeveloperToolsWindowEnabled();
+}
+
+void BrowserTabUIData::IsDeveloperToolsWindowEnabled(bool value) {
+  GetTab()->SetDeveloperToolsWindowEnabled(value);
+}
+
+std::shared_ptr<BrowserTab> BrowserTabUIData::GetTab() const {
+  auto tab = mTab.lock();
+  if (!tab) {
+    return {};
+  }
+
+  auto refined = std::dynamic_pointer_cast<BrowserTab>(tab);
+  if (!refined) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Expected a BrowserTab but didn't get one");
+  }
+  return refined;
+}
+
 std::shared_ptr<DCSRadioLogTab> DCSRadioLogTabUIData::GetTab() const {
   auto tab = mTab.lock();
   if (!tab) {
     return {};
   }
   auto refined = std::dynamic_pointer_cast<DCSRadioLogTab>(tab);
-  if (!refined) {
-    dprint("Expected a DCSRadioLogTab but didn't get one");
-    OPENKNEEBOARD_BREAK;
+  if (!refined) [[unlikely]] {
+    OPENKNEEBOARD_LOG_AND_FATAL("Expected a DCSRadioLogTab but didn't get one");
   }
   return refined;
 }
@@ -706,6 +746,15 @@ void TabUIDataTemplateSelector::Generic(
   mGeneric = value;
 }
 
+winrt::Microsoft::UI::Xaml::DataTemplate TabUIDataTemplateSelector::Browser() {
+  return mBrowser;
+}
+
+void TabUIDataTemplateSelector::Browser(
+  winrt::Microsoft::UI::Xaml::DataTemplate const& value) {
+  mBrowser = value;
+}
+
 winrt::Microsoft::UI::Xaml::DataTemplate
 TabUIDataTemplateSelector::DCSRadioLog() {
   return mDCSRadioLog;
@@ -728,6 +777,9 @@ void TabUIDataTemplateSelector::WindowCapture(
 
 DataTemplate TabUIDataTemplateSelector::SelectTemplateCore(
   const IInspectable& item) {
+  if (item.try_as<winrt::OpenKneeboardApp::BrowserTabUIData>()) {
+    return mBrowser;
+  }
   if (item.try_as<winrt::OpenKneeboardApp::DCSRadioLogTabUIData>()) {
     return mDCSRadioLog;
   }
