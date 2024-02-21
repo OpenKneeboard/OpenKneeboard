@@ -69,7 +69,8 @@ class NavigationTab final : public TabBase,
   audited_ptr<DXResources> mDXR;
   std::shared_ptr<ITab> mRootTab;
   PixelSize mPreferredSize;
-  std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>> mPreviewCache;
+  std::unordered_map<RenderTargetID, std::unique_ptr<CachedLayer>>
+    mPreviewCache;
 
   uint16_t mRenderColumns;
 
@@ -84,6 +85,12 @@ class NavigationTab final : public TabBase,
   using ButtonTracker = CursorClickableRegions<Button>;
   std::vector<PageID> mPageIDs;
   std::unordered_map<PageID, std::shared_ptr<ButtonTracker>> mButtonTrackers;
+  struct PreviewMetrics {
+    float mBleed;
+    float mStroke;
+    std::vector<PixelRect> mRects;
+  };
+  std::unordered_map<PageID, PreviewMetrics> mPreviewMetrics;
 
   winrt::com_ptr<IDWriteTextFormat> mTextFormat;
   winrt::com_ptr<IDWriteTextFormat> mPageNumberTextFormat;
@@ -93,12 +100,7 @@ class NavigationTab final : public TabBase,
   winrt::com_ptr<ID2D1SolidColorBrush> mPreviewOutlineBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mTextBrush;
 
-  struct {
-    float mBleed;
-    float mStroke;
-    std::vector<D2D1_RECT_F> mRects;
-  } mPreviewMetrics;
-
+  void CalculatePreviewMetrics(PageID);
   // PageID is first for `std::bind_front()`
   void RenderPreviewLayer(PageID, RenderTarget*, const D2D1_SIZE_U& size);
 

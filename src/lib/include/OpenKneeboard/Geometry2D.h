@@ -164,7 +164,17 @@ struct Rect {
     };
   }
 
-  constexpr Rect<T> operator*(const T operand) const noexcept {
+  template <std::integral TValue>
+  constexpr Rect<T> operator*(const TValue operand) const noexcept {
+    return {
+      mOffset * operand,
+      mSize * operand,
+    };
+  }
+
+  template <std::floating_point TValue>
+    requires std::floating_point<T>
+  constexpr Rect<T> operator*(const TValue operand) const noexcept {
     return {
       mOffset * operand,
       mSize * operand,
@@ -214,6 +224,20 @@ struct Rect {
   }
 
   constexpr auto operator<=>(const Rect<T>&) const noexcept = default;
+
+  template <class TValue, class TRect = Rect<TValue>>
+  constexpr TRect StaticCast() const noexcept {
+    return {
+      {
+        static_cast<TValue>(mOffset.mX),
+        static_cast<TValue>(mOffset.mY),
+      },
+      {
+        static_cast<TValue>(mSize.mWidth),
+        static_cast<TValue>(mSize.mHeight),
+      },
+    };
+  }
 
   template <class TValue, class TRect>
   constexpr TRect StaticCastWithBottomRight() const noexcept {

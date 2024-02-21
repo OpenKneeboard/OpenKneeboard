@@ -212,6 +212,8 @@ void NavigationTab::RenderPage(
 
   ctx->FillRectangle(canvasRect, mBackgroundBrush.get());
 
+  this->CalculatePreviewMetrics(pageID);
+
   const D2D1_POINT_2F origin {canvasRect.left, canvasRect.top};
   const auto pageTransform = D2D1::Matrix3x2F::Translation(origin.x, origin.y)
     * D2D1::Matrix3x2F::Scale({scale, scale}, origin);
@@ -219,13 +221,15 @@ void NavigationTab::RenderPage(
 
   const auto [hoverButton, buttons] = mButtonTrackers.at(pageID)->GetState();
 
+  const auto& previewMetrics = mPreviewMetrics.at(pageID);
+
   for (int i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
     const auto& rect = button.mRect;
 
     if (button == hoverButton) {
       ctx->FillRectangle(rect, mHighlightBrush.get());
-      ctx->FillRectangle(mPreviewMetrics.mRects.at(i), mBackgroundBrush.get());
+      ctx->FillRectangle(previewMetrics.mRects.at(i), mBackgroundBrush.get());
     } else {
       ctx->FillRectangle(rect, mInactiveBrush.get());
     }
@@ -246,32 +250,29 @@ void NavigationTab::RenderPage(
 
   ctx.Reacquire();
 
-  ctx->SetTransform(D2D1::Matrix3x2F::Translation(origin.x, origin.y));
+  ctx->SetTransform(pageTransform);
 
   std::vector<float> columnPreviewRightEdge(mRenderColumns);
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
-    const auto& previewRect = mPreviewMetrics.mRects.at(i);
+    const auto& previewRect = previewMetrics.mRects.at(i);
     auto& rightEdge = columnPreviewRightEdge.at(button.mRenderColumn);
-    if (previewRect.right > rightEdge) {
-      rightEdge = previewRect.right;
+    if (previewRect.Right() > rightEdge) {
+      rightEdge = previewRect.Right();
     }
     if (button == hoverButton) {
       ctx->DrawRectangle(
-        previewRect, mHighlightBrush.get(), mPreviewMetrics.mStroke);
+        previewRect, mHighlightBrush.get(), previewMetrics.mStroke);
     } else {
       ctx->DrawRectangle(
-        previewRect, mPreviewOutlineBrush.get(), mPreviewMetrics.mStroke / 2);
+        previewRect, mPreviewOutlineBrush.get(), previewMetrics.mStroke / 2);
     }
   }
 
-  ctx->SetTransform(pageTransform);
-
   for (const auto& button: buttons) {
     auto rect = button.mRect;
-    rect.left = (columnPreviewRightEdge.at(button.mRenderColumn)
-                 + mPreviewMetrics.mBleed)
-      / scale;
+    rect.left
+      = columnPreviewRightEdge.at(button.mRenderColumn) + previewMetrics.mBleed;
     ctx->DrawTextW(
       button.mName.data(),
       static_cast<UINT32>(button.mName.size()),
@@ -296,9 +297,47 @@ void NavigationTab::RenderPage(
     {0.0f,
      0.0f,
      static_cast<FLOAT>(mPreferredSize.mWidth),
-     static_cast<FLOAT>(mPreferredSize.mHeight) - mPreviewMetrics.mBleed},
+     static_cast<FLOAT>(mPreferredSize.mHeight) - previewMetrics.mBleed},
     mTextBrush.get(),
     D2D1_DRAW_TEXT_OPTIONS_NO_SNAP);
+}
+
+void NavigationTab::CalculatePreviewMetrics(PageID pageID) {
+  if (mPreviewMetrics.contains(pageID)) {
+    return;
+  }
+  PreviewMetrics m {};
+  const auto buttons = mButtonTrackers.at(pageID)->GetButtons();
+
+  m.mRects.resize(buttons.size());
+  const auto& first = buttons.front();
+
+  // just a little less than the padding
+  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.1f;
+  // arbitrary LGTM value
+  m.mStroke = m.mBleed * 0.3f;
+  const auto height = (first.mRect.bottom - first.mRect.top) + (m.mBleed * 2);
+
+  for (auto i = 0; i < buttons.size(); ++i) {
+    const auto& button = buttons.at(i);
+
+    const auto height
+      = (button.mRect.bottom - button.mRect.top) + (2 * m.mBleed);
+    const auto nativeSize
+      = mRootTab->GetPreferredSize(button.mPageID).mPixelSize;
+    const auto contentScale = height / nativeSize.mHeight;
+
+    m.mRects.at(i) = PixelRect {
+      Geometry2D::Point<float>(
+        button.mRect.left + m.mBleed, button.mRect.top - m.mBleed)
+        .Rounded<uint32_t>(),
+      Geometry2D::Size<float>(
+        static_cast<uint32_t>(nativeSize.mWidth * contentScale), height)
+        .Rounded<uint32_t>(),
+    };
+  }
+
+  mPreviewMetrics.emplace(pageID, std::move(m));
 }
 
 void NavigationTab::RenderPreviewLayer(
@@ -306,40 +345,17 @@ void NavigationTab::RenderPreviewLayer(
   RenderTarget* rt,
   const D2D1_SIZE_U& size) {
   OPENKNEEBOARD_TraceLoggingScope("NavigationTab::RenderPreviewLayer()");
-  auto& m = mPreviewMetrics;
-  m = {};
+  const auto& m = mPreviewMetrics.at(pageID);
+  const auto buttons = mButtonTrackers.at(pageID)->GetButtons();
 
-  const auto navigationTabScale = size.height / mPreferredSize.Height<float>();
-
-  const auto& buttons = mButtonTrackers.at(pageID)->GetButtons();
-  m.mRects.clear();
-  m.mRects.resize(buttons.size());
-
-  const auto& first = buttons.front();
-
-  // just a little less than the padding
-  m.mBleed = (first.mRect.bottom - first.mRect.top) * PaddingRatio * 0.1f
-    * navigationTabScale;
-  // arbitrary LGTM value
-  m.mStroke = m.mBleed * 0.3f;
-  const auto height
-    = (navigationTabScale * (first.mRect.bottom - first.mRect.top))
-    + (m.mBleed * 2);
+  const auto scale = static_cast<float>(size.height)
+    / this->GetPreferredSize(pageID).mPixelSize.mHeight;
 
   for (auto i = 0; i < buttons.size(); ++i) {
     const auto& button = buttons.at(i);
-
-    auto& rect = m.mRects.at(i);
-    rect.top = (button.mRect.top * navigationTabScale) - m.mBleed;
-    rect.bottom = (button.mRect.bottom * navigationTabScale) + m.mBleed;
-    rect.left = (button.mRect.left * navigationTabScale) + m.mBleed;
-
-    const auto nativeSize
-      = mRootTab->GetPreferredSize(button.mPageID).mPixelSize;
-    const auto contentScale = (rect.bottom - rect.top) / nativeSize.mHeight;
-    rect.right = rect.left + (nativeSize.mWidth * contentScale);
-
-    mRootTab->RenderPage(rt, button.mPageID, rect);
+    const auto& rect = m.mRects.at(i);
+    const auto scaled = rect.StaticCast<float>() * scale;
+    mRootTab->RenderPage(rt, button.mPageID, scaled);
   }
 }
 
