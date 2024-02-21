@@ -479,5 +479,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
   }
   gDXResources = nullptr;
 
+  gTroubleshootingStore = {};
+
   return 0;
 }

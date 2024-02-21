@@ -65,6 +65,7 @@ class FilesystemWatcher final
   bool mSettling = false;
 
   unique_changenotification mHandle;
+  std::stop_source mStop;
   winrt::handle mShutdownHandle;
 };
 

@@ -41,11 +41,8 @@ std::shared_ptr<GameEventServer> GameEventServer::Create() {
 
 winrt::fire_and_forget GameEventServer::final_release(
   std::unique_ptr<GameEventServer> self) {
-  self->mRunner.Cancel();
-  try {
-    co_await winrt::resume_on_signal(self->mCompletionHandle.get());
-  } catch (const winrt::hresult_canceled&) {
-  }
+  self->mStop.request_stop();
+  co_await winrt::resume_on_signal(self->mCompletionHandle.get());
 }
 
 GameEventServer::GameEventServer() {
@@ -53,6 +50,7 @@ GameEventServer::GameEventServer() {
 }
 
 void GameEventServer::Start() {
+  mStop = {};
   mRunner = this->Run();
 }
 
@@ -65,6 +63,7 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
     [handle = mCompletionHandle.get()]() { SetEvent(handle); });
 
   auto weak = weak_from_this();
+  auto stop = mStop.get_token();
   const auto handle = Win32::CreateMailslotW(
     GameEvent::GetMailslotPath(), 0, MAILSLOT_WAIT_FOREVER, nullptr);
   if (!handle) {
@@ -79,13 +78,11 @@ winrt::Windows::Foundation::IAsyncAction GameEventServer::Run() {
       std::uncaught_exceptions());
   });
 
-  auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.enable_propagation();
-
   const auto event = Win32::CreateEventW(nullptr, FALSE, FALSE, nullptr);
 
   try {
-    while ((!cancelled()) && co_await RunSingle(weak, event, handle)) {
+    while ((!stop.stop_requested())
+           && co_await RunSingle(weak, event, handle)) {
       // repeat!
     }
   } catch (const winrt::hresult_canceled&) {
@@ -99,9 +96,7 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   const std::weak_ptr<GameEventServer>& instance,
   const winrt::handle& notifyEvent,
   const winrt::file_handle& handle) {
-  auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.enable_propagation();
-
+  auto stop = instance.lock()->mStop.get_token();
   OVERLAPPED overlapped {
     .hEvent = notifyEvent.get(),
   };
@@ -137,7 +132,10 @@ winrt::Windows::Foundation::IAsyncOperation<bool> GameEventServer::RunSingle(
   }
 
   traceprint("Waiting for GameEvent");
-  co_await winrt::resume_on_signal(notifyEvent.get());
+  co_await resume_on_signal(stop, notifyEvent.get());
+  if (stop.stop_requested()) {
+    co_return false;
+  }
   GetOverlappedResult(handle.get(), &overlapped, &bytesRead, TRUE);
 
   if (bytesRead == 0) {

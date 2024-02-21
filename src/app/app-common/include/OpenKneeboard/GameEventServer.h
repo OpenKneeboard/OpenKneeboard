@@ -43,6 +43,7 @@ class GameEventServer final
  private:
   GameEventServer();
   winrt::Windows::Foundation::IAsyncAction mRunner;
+  std::stop_source mStop;
   winrt::apartment_context mUIThread;
   winrt::handle mCompletionHandle {
     Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr)};

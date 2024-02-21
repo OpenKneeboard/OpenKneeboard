@@ -69,6 +69,8 @@ inline winrt::Windows::Foundation::IAsyncAction make_stoppable(
   } catch (const std::exception& e) {
     auto x = e.what();
     __debugbreak();
+  } catch (...) {
+    __debugbreak();
   }
 }
 
