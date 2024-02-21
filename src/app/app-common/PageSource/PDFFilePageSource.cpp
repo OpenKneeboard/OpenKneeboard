@@ -401,11 +401,6 @@ void PDFFilePageSource::RenderPageContent(
     winrt::check_hresult(p->mPDFRenderer->RenderPageToDeviceContext(
       winrt::get_unknown(page), ctx, &params));
   }
-
-  // `RenderPageToDeviceContext()` starts a multi-threaded job, but needs
-  // the `page` pointer to stay valid until it has finished - so, flush to
-  // get everything in the direct2d queue done.
-  winrt::check_hresult(ctx->Flush());
 }
 
 void PDFFilePageSource::PostCursorEvent(
