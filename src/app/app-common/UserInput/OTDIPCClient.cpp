@@ -309,6 +309,7 @@ void OTDIPCClient::ProcessMessage(const OTDIPC::Messages::State* const msg) {
       = TimeoutClock::now() + std::chrono::milliseconds(100);
   }
 
+  OPENKNEEBOARD_TraceLoggingScope("OTDIPCClient::evTabletInputEvent");
   evTabletInputEvent.Emit(deviceID, state);
 }
 

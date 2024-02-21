@@ -42,6 +42,7 @@ NavigationTab::NavigationTab(
     mDXR(dxr),
     mRootTab(rootTab),
     mPreferredSize(ErrorRenderSize) {
+  OPENKNEEBOARD_TraceLoggingScope("NavigationTab::NavigationTab()");
   const auto columns = entries.size() >= 10
     ? std::max(
       1ui32,

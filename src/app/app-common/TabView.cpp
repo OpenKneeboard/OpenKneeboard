@@ -238,7 +238,9 @@ bool TabView::SetTabMode(TabMode mode) {
   switch (mode) {
     case TabMode::NORMAL:
       break;
-    case TabMode::NAVIGATION:
+    case TabMode::NAVIGATION: {
+      OPENKNEEBOARD_TraceLoggingScope(
+        "TabView::SetTabMode(TabMode::NAVIGATION)");
       mActiveSubTab = std::make_shared<NavigationTab>(
         mDXR,
         mRootTab,
@@ -265,6 +267,7 @@ bool TabView::SetTabMode(TabMode mode) {
       AddEventListener(
         mActiveSubTab->evNeedsRepaintEvent, this->evNeedsRepaintEvent);
       break;
+    }
   }
 
   if (mode != TabMode::NORMAL && !mActiveSubTab) {
