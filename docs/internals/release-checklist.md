@@ -13,10 +13,15 @@ parent: Internals
 
 ## Testing
 
+Useful test apps:
+- `hello_xr` from the OpenXR SDK source
+- `OculusRoomTiny` from the legacy Oculus SDK
+- the various imgui examples for non-VR
+
 Test all of these with the `RelWithDebInfo` msi package, as it's the most restricted form of installation.
 
 * Install in clean virtual machine
-* Gaze detection, zoomed and unzoomed (`hello_xr` is useful for testing), before and after centering
+* Gaze detection, zoomed and unzoomed, before and after centering
   * SteamVR
   * Oculus: D3D11 and D3D12
   * OpenXR: D3D11, D3D12, and Vulkan
