@@ -149,27 +149,42 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
 
   const bool isMouse
     = mDevice->GetID() == to_string(to_hstring({GUID_SysMouse}));
-  bool haveLeftMouseButton = false;
+  const bool isKeyboard
+    = mDevice->GetID() == to_string(to_hstring({GUID_SysKeyboard}));
 
   EventHookToken hookToken;
   auto unhook = scope_guard(
     [this, hookToken] { mDevice->evButtonEvent.RemoveHook(hookToken); });
   mDevice->evButtonEvent.AddHook(
-    [hookToken, weakThis, dialog, &pressedButtons, &cancelled, isMouse](
-      const UserInputButtonEvent& ev) {
+    [hookToken,
+     weakThis,
+     dialog,
+     &pressedButtons,
+     &cancelled,
+     isMouse,
+     isKeyboard](const UserInputButtonEvent& ev) {
       auto strongThis = weakThis.get();
       if (!strongThis) {
         return EventBase::HookResult::ALLOW_PROPAGATION;
       }
 
+      // Ban these as:
+      // - they interfere with clicking the 'Cancel' button in the binding
+      // prompt
+      // - binding them is likely to conflict with general Windows usage and the
+      // game
+
       const auto isLeftMouseButton = isMouse && (ev.GetButtonID() == 0);
+      const auto isEscapeKey = isKeyboard && (ev.GetButtonID() == DIK_ESCAPE);
+
+      const auto isBannedButtonBinding = isLeftMouseButton || isEscapeKey;
 
       if (ev.IsPressed()) {
-        if (!isLeftMouseButton) {
+        if (!isBannedButtonBinding) {
           pressedButtons.insert(ev.GetButtonID());
         }
-        const auto bindingDesc = isLeftMouseButton
-          ? "[left mouse button can not be bound]"
+        const auto bindingDesc = isBannedButtonBinding
+          ? "[button can not be bound]"
           : strongThis->mDevice->GetButtonComboDescription(pressedButtons);
 
         [](auto strongThis, auto dialog, const auto bindingDesc)
@@ -182,7 +197,7 @@ fire_and_forget InputBindingsControl::PromptForBinding(UserAction action) {
         return EventBase::HookResult::STOP_PROPAGATION;
       }
 
-      if (isLeftMouseButton) {
+      if (isBannedButtonBinding) {
         return EventBase::HookResult::ALLOW_PROPAGATION;
       }
       cancelled = false;
