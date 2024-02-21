@@ -145,7 +145,16 @@ winrt::Windows::Foundation::IAsyncAction TabletInputAdapter::SetWintabMode(
   }
 
   mSettings.mWintab = mode;
-  StartWintab();
+  co_await mUIThread;
+  try {
+    StartWintab();
+  } catch (const winrt::hresult_error& e) {
+    dprintf("Failed to initialize wintab: {}", winrt::to_string(e.message()));
+    co_return;
+  } catch (const std::exception& e) {
+    dprintf("Failed to initialize wintab: {}", e.what());
+    co_return;
+  }
   if (!mWintabTablet) {
     dprint("Failed to initialize wintab");
     co_return;
