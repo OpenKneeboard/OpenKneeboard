@@ -4,7 +4,5 @@ namespace OpenKneeboardApp
     runtimeclass TabPage: Microsoft.UI.Xaml.Controls.Page
     {
         TabPage();
-
-        Windows.Foundation.IAsyncAction ReleaseDXResources();
     }
 }

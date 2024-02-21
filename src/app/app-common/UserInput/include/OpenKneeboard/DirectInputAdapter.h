@@ -21,6 +21,7 @@
 
 #include <OpenKneeboard/DirectInputSettings.h>
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ProcessShutdownBlock.h>
 #include <OpenKneeboard/UserAction.h>
 
 #include <OpenKneeboard/final_release_deleter.h>
@@ -63,6 +64,8 @@ class DirectInputAdapter final
   Event<> evAttachedControllersChangedEvent;
 
  private:
+  ProcessShutdownBlock mShutdownBlock;
+
   DirectInputAdapter(HWND mainWindow, const DirectInputSettings& settings);
   winrt::Windows::Foundation::IAsyncAction ReleaseDevices();
   winrt::fire_and_forget Reload();
@@ -77,6 +80,7 @@ class DirectInputAdapter final
   struct DeviceState {
     std::shared_ptr<DirectInputDevice> mDevice;
     winrt::Windows::Foundation::IAsyncAction mListener;
+    std::stop_source mStop;
     winrt::handle mListenerCompletionHandle;
   };
   mutable std::shared_mutex mDevicesMutex;

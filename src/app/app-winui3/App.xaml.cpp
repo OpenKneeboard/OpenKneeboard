@@ -166,6 +166,19 @@ App::App() {
 #endif
 }
 
+winrt::fire_and_forget App::final_release(std::unique_ptr<App> self) {
+  // co_await self->window.as<MainWindow>()->Cleanup();
+  self->window = {nullptr};
+
+  winrt::handle event {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+  ProcessShutdownBlock::SetEventOnCompletion(event.get());
+  if (!co_await winrt::resume_on_signal(event.get(), std::chrono::seconds(1))) {
+    dprint("Failed to cleanup after 1 second, quitting anyway.");
+    ProcessShutdownBlock::DumpActiveBlocks();
+    OPENKNEEBOARD_BREAK;
+  }
+}
+
 void App::OnLaunched(LaunchActivatedEventArgs const&) noexcept {
   window = make<MainWindow>();
 }
@@ -465,15 +478,6 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int showCommand) {
     OPENKNEEBOARD_BREAK;
   }
   gDXResources = nullptr;
-
-  {
-    winrt::handle event {CreateEventW(nullptr, TRUE, FALSE, nullptr)};
-    ProcessShutdownBlock::SetEventOnCompletion(event.get());
-    if (WaitForSingleObject(event.get(), 1000) == WAIT_TIMEOUT) {
-      dprint("Failed to cleanup after 1 second, quitting anyway.");
-      OPENKNEEBOARD_BREAK;
-    }
-  }
 
   return 0;
 }

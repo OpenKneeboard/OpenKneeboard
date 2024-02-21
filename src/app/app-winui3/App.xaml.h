@@ -28,6 +28,8 @@ struct App : AppT<App> {
   void OnLaunched(
     Microsoft::UI::Xaml::LaunchActivatedEventArgs const&) noexcept;
 
+  static winrt::fire_and_forget final_release(std::unique_ptr<App>);
+
  private:
   winrt::Microsoft::UI::Xaml::Window window {nullptr};
 };

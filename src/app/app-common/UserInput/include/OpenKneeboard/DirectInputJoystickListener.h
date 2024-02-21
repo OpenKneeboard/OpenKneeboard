@@ -26,6 +26,7 @@ namespace OpenKneeboard {
 class DirectInputJoystickListener final : public DirectInputListener {
  public:
   DirectInputJoystickListener(
+    const std::stop_token&,
     const winrt::com_ptr<IDirectInput8>& di,
     const std::shared_ptr<DirectInputDevice>& device);
   ~DirectInputJoystickListener();

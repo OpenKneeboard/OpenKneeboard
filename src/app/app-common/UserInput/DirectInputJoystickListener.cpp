@@ -20,14 +20,16 @@
 
 #include <OpenKneeboard/DirectInputDevice.h>
 #include <OpenKneeboard/DirectInputJoystickListener.h>
+
 #include <OpenKneeboard/scope_guard.h>
 
 namespace OpenKneeboard {
 
 DirectInputJoystickListener::DirectInputJoystickListener(
+  const std::stop_token& stop,
   const winrt::com_ptr<IDirectInput8>& di,
   const std::shared_ptr<DirectInputDevice>& device)
-  : DirectInputListener(di, device) {
+  : DirectInputListener(stop, di, device) {
 }
 
 DirectInputJoystickListener::~DirectInputJoystickListener() = default;

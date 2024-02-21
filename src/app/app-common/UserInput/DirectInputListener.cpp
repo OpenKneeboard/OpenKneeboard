@@ -33,9 +33,10 @@
 namespace OpenKneeboard {
 
 DirectInputListener::DirectInputListener(
+  const std::stop_token& stopToken,
   const winrt::com_ptr<IDirectInput8>& di,
   const std::shared_ptr<DirectInputDevice>& device)
-  : mDevice(device) {
+  : mStopToken(stopToken), mDevice(device) {
   di->CreateDevice(
     device->GetDIDeviceInstance().guidInstance, mDIDevice.put(), NULL);
   if (!mDIDevice) {
@@ -73,31 +74,27 @@ DirectInputListener::~DirectInputListener() {
 }
 
 winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run(
+  const std::stop_token& stopToken,
   winrt::com_ptr<IDirectInput8> di,
   std::shared_ptr<DirectInputDevice> device,
-  HANDLE completionHandle) try {
-  auto cancelToken = co_await winrt::get_cancellation_token();
-  cancelToken.enable_propagation();
+  HANDLE completionHandle) {
   const scope_guard markComplete(
     [completionHandle]() { SetEvent(completionHandle); });
 
   if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_KEYBOARD) {
-    DirectInputKeyboardListener listener {di, device};
+    DirectInputKeyboardListener listener {stopToken, di, device};
     co_await listener.Run();
     co_return;
   }
 
   if ((device->GetDIDeviceInstance().dwDevType & 0xff) == DI8DEVTYPE_MOUSE) {
-    DirectInputMouseListener listener {di, device};
+    DirectInputMouseListener listener {stopToken, di, device};
     co_await listener.Run();
     co_return;
   }
 
-  DirectInputJoystickListener listener {di, device};
+  DirectInputJoystickListener listener {stopToken, di, device};
   co_await listener.Run();
-  co_return;
-} catch (const winrt::hresult_canceled&) {
-  dprintf("DI device Run() cancelled: {}", device->GetName());
   co_return;
 }
 
@@ -117,11 +114,11 @@ winrt::Windows::Foundation::IAsyncAction DirectInputListener::Run() noexcept {
       std::uncaught_exceptions());
   });
 
-  auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.callback([event = mEventHandle.get()]() { SetEvent(event); });
-  while (!cancelled()) {
-    co_await winrt::resume_on_signal(mEventHandle.get());
-    if (cancelled()) {
+  std::stop_callback callback(
+    mStopToken, [event = mEventHandle.get()]() { SetEvent(event); });
+  while (!mStopToken.stop_requested()) {
+    co_await resume_on_signal(mStopToken, mEventHandle.get());
+    if (mStopToken.stop_requested()) {
       co_return;
     }
 

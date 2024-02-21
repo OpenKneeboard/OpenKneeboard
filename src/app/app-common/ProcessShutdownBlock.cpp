@@ -74,7 +74,7 @@ struct ShutdownData {
     }
   }
 
-  void SetEventOnCompletion(HANDLE completionEvent) {
+  void SetEventOnCompletion(HANDLE completionEvent) noexcept {
     mShutdownEvent = completionEvent;
 
     {
@@ -83,13 +83,18 @@ struct ShutdownData {
         OPENKNEEBOARD_LOG_AND_FATAL("Running shutdown blockers twice");
       }
 
-      dprintf("Waiting for {} shutdown blockers:", mActiveBlocks.size());
-      for (const auto& [id, location]: mActiveBlocks) {
-        dprintf("- {}", location);
-      }
+      this->DumpActiveBlocks();
     }
 
     this->Decrement(mMyID);
+  }
+
+  void DumpActiveBlocks() noexcept {
+    std::unique_lock lock(mMutex, std::try_to_lock);
+    dprintf("Waiting for {} shutdown blockers:", mActiveBlocks.size());
+    for (const auto& [id, location]: mActiveBlocks) {
+      dprintf("- {}", location);
+    }
   }
 
  private:
@@ -120,8 +125,13 @@ ProcessShutdownBlock::~ProcessShutdownBlock() {
   ShutdownData::Get().Decrement(mID);
 }
 
-void ProcessShutdownBlock::SetEventOnCompletion(HANDLE completionEvent) {
+void ProcessShutdownBlock::SetEventOnCompletion(
+  HANDLE completionEvent) noexcept {
   ShutdownData::Get().SetEventOnCompletion(completionEvent);
+}
+
+void ProcessShutdownBlock::DumpActiveBlocks() noexcept {
+  ShutdownData::Get().DumpActiveBlocks();
 }
 
 }// namespace OpenKneeboard

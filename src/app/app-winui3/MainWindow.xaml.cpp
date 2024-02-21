@@ -83,9 +83,6 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
     gMainWindow = mHwnd;
   }
 
-  SetWindowSubclass(
-    mHwnd, &MainWindow::SubclassProc, 0, reinterpret_cast<DWORD_PTR>(this));
-
   Title(L"OpenKneeboard");
   ExtendsContentIntoTitleBar(true);
   SetTitleBar(AppTitleBar());
@@ -199,21 +196,17 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
+  auto stop = mFrameLoopStopSource.get_token();
   const auto interval = std::chrono::milliseconds(
     static_cast<unsigned int>(1000 / FramesPerSecond));
 
-  const auto cancellationToken = co_await winrt::get_cancellation_token();
-  cancellationToken.enable_propagation();
-  while (!cancellationToken()) {
-    try {
-      co_await winrt::resume_after(interval);
-      co_await mUIThread;
-      if (!cancellationToken()) {
-        this->FrameTick();
-      }
-    } catch (const winrt::hresult_canceled&) {
+  while (!stop.stop_requested()) {
+    co_await OpenKneeboard::resume_after(stop, interval);
+    co_await mUIThread;
+    if (stop.stop_requested()) {
       break;
     }
+    this->FrameTick();
   }
   SetEvent(mFrameLoopCompletionEvent.get());
   co_return;
@@ -312,6 +305,9 @@ winrt::fire_and_forget MainWindow::OnLoaded() {
   mFrameLoop = this->FrameLoop();
 
   this->Show();
+  SetWindowSubclass(
+    mHwnd, &MainWindow::SubclassProc, 0, reinterpret_cast<DWORD_PTR>(this));
+
   co_await this->WriteInstanceData();
 
   auto xamlRoot = this->Content().XamlRoot();
@@ -430,7 +426,6 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {
 
 MainWindow::~MainWindow() {
   dprintf("{}", __FUNCTION__);
-  RemoveWindowSubclass(mHwnd, &MainWindow::SubclassProc, 0);
   gMainWindow = {};
 }
 
@@ -588,45 +583,60 @@ void MainWindow::SaveWindowPosition() {
   mKneeboard->SetAppSettings(settings);
 }
 
-winrt::fire_and_forget MainWindow::CleanupAndClose() {
+winrt::fire_and_forget MainWindow::final_release(
+  std::unique_ptr<MainWindow> self) {
+  self->RemoveAllEventListeners();
+  // TODO: a lot of this should be moved to the Application class.
+  dprint("Removing instance data...");
   std::filesystem::remove(MainWindow::GetInstanceDataPath());
   gShuttingDown = true;
-  this->RemoveAllEventListeners();
-  this->SaveWindowPosition();
-
-  ShowWindow(mHwnd, SW_HIDE);
 
   dprint("Stopping frame loop...");
-  mFrameLoop.Cancel();
-  co_await winrt::resume_on_signal(mFrameLoopCompletionEvent.get());
+  self->mFrameLoopStopSource.request_stop();
+  try {
+    co_await winrt::resume_on_signal(self->mFrameLoopCompletionEvent.get());
+  } catch (const winrt::hresult_error& e) {
+    auto x = e.message();
+    __debugbreak();
+  } catch (const std::exception& e) {
+    auto x = e.what();
+    __debugbreak();
+  } catch (...) {
+    __debugbreak();
+  }
 
   dprint("Stopping event system...");
-  {
+  try {
     auto event = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
     EventBase::Shutdown(event.get());
     co_await winrt::resume_on_signal(event.get());
+  } catch (const winrt::hresult_error& e) {
+    dprintf("Error: {}", winrt::to_string(e.message()));
+    OPENKNEEBOARD_BREAK;
+  } catch (const std::exception& e) {
+    dprintf("Error: {}", e.what());
+    OPENKNEEBOARD_BREAK;
+  } catch (...) {
+    OPENKNEEBOARD_BREAK;
   }
-  co_await mUIThread;
 
-  for (const auto& weakTab: gTabs) {
-    auto tab = weakTab.get();
-    if (!tab) {
-      continue;
+  co_await self->mUIThread;
+
+  dprint("Cleaning up kneeboard");
+
+  self->mKneeboardView = {};
+  try {
+    self->mKneeboard = {};
+  } catch (const winrt::hresult_error& e) {
+    auto x = e.message();
+    __debugbreak();
+  } catch (const std::exception& e) {
+    auto x = e.what();
+    __debugbreak();
+  } catch (...) {
+    __debugbreak();
     }
-    co_await tab.ReleaseDXResources();
-  }
-
-  co_await mUIThread;
-
-  mKneeboardView = {};
-  co_await mKneeboard->ReleaseExclusiveResources();
-  mKneeboard = {};
-
-  co_await mUIThread;
-  mDXR = nullptr;
-
-  dprint("Closing Main Window");
-  this->Close();
+  self->mDXR = nullptr;
 }
 
 winrt::fire_and_forget MainWindow::OnTabChanged() noexcept {
@@ -978,8 +988,8 @@ LRESULT MainWindow::SubclassProc(
   LPARAM lParam,
   UINT_PTR uIdSubclass,
   DWORD_PTR dwRefData) {
-  if (uMsg == WM_CLOSE || uMsg == WM_ENDSESSION) {
-    reinterpret_cast<MainWindow*>(dwRefData)->CleanupAndClose();
+  if (uMsg == WM_SIZE || uMsg == WM_MOVE) {
+    reinterpret_cast<MainWindow*>(dwRefData)->SaveWindowPosition();
     return TRUE;
   }
   return DefSubclassProc(hWnd, uMsg, wParam, lParam);

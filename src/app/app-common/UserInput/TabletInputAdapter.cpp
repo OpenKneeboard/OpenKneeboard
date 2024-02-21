@@ -245,6 +245,7 @@ void TabletInputAdapter::LoadSettings(
 }
 
 TabletInputAdapter::~TabletInputAdapter() {
+  dprint("TabletInputAdapter::~TabletInputAdapter()");
   StopWintab();
   StopOTDIPC();
   this->RemoveAllEventListeners();

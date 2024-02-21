@@ -25,6 +25,7 @@
 #include <OpenKneeboard/Bookmark.h>
 #include <OpenKneeboard/Events.h>
 #include <OpenKneeboard/KneeboardView.h>
+#include <OpenKneeboard/ProcessShutdownBlock.h>
 
 #include <OpenKneeboard/audited_ptr.h>
 
@@ -44,6 +45,8 @@ struct MainWindow : MainWindowT<MainWindow>,
   MainWindow();
   ~MainWindow();
 
+  static winrt::fire_and_forget final_release(std::unique_ptr<MainWindow>);
+
   void OnNavigationItemInvoked(
     const IInspectable& sender,
     const NavigationViewItemInvokedEventArgs& args) noexcept;
@@ -60,6 +63,7 @@ struct MainWindow : MainWindowT<MainWindow>,
   NavigationItems() noexcept;
 
  private:
+  ProcessShutdownBlock mShutdownBlock;
   struct NavigationTag {
     ITab::RuntimeID mTabID;
     std::optional<PageID> mPageID;
@@ -82,6 +86,7 @@ struct MainWindow : MainWindowT<MainWindow>,
 
   std::vector<EventHandlerToken> mKneeboardViewEvents;
   DispatcherQueueTimer mFrameTimer {nullptr};
+  std::stop_source mFrameLoopStopSource;
   winrt::Windows::Foundation::IAsyncAction mFrameLoop {nullptr};
   bool mSwitchingTabsFromNavSelection = false;
 
@@ -141,8 +146,6 @@ struct MainWindow : MainWindowT<MainWindow>,
     LPARAM lParam,
     UINT_PTR uIdSubclass,
     DWORD_PTR dwRefData);
-
-  winrt::com_ptr<ID2D1Effect> mHDRWhiteLevelEffect;
 
   audited_ptr<DXResources> mDXR;
   std::shared_ptr<KneeboardState> mKneeboard;

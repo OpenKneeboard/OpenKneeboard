@@ -28,7 +28,10 @@
 #include <pplawait.h>
 #include <ppltasks.h>
 
+#include <winrt/Windows.Foundation.h>
 #include <winrt/base.h>
+
+#include <stop_token>
 
 namespace OpenKneeboard {
 
@@ -43,4 +46,49 @@ inline auto random_guid() {
   CoCreateGuid(reinterpret_cast<GUID*>(&ret));
   return ret;
 }
+
+inline winrt::Windows::Foundation::IAsyncAction make_stoppable(
+  const std::stop_token& token,
+  auto action) {
+  if (token.stop_requested()) {
+    co_return;
+  }
+
+  try {
+    auto op = ([&action]() -> winrt::Windows::Foundation::IAsyncAction {
+      auto winrtToken = co_await winrt::get_cancellation_token();
+      winrtToken.enable_propagation();
+      co_await action();
+    })();
+    const std::stop_callback callback(token, [&op]() { op.Cancel(); });
+    co_await op;
+  } catch (const winrt::hresult_canceled&) {
+  } catch (const winrt::hresult_error& e) {
+    auto x = to_string(e.message());
+    __debugbreak();
+  } catch (const std::exception& e) {
+    auto x = e.what();
+    __debugbreak();
+  }
+}
+
+inline winrt::Windows::Foundation::IAsyncAction resume_on_signal(
+  const std::stop_token& token,
+  void* handle,
+  winrt::Windows::Foundation::TimeSpan timeout = {}) {
+  co_await make_stoppable(
+    token, [handle, timeout]() -> winrt::Windows::Foundation::IAsyncAction {
+      co_await winrt::resume_on_signal(handle, timeout);
+    });
+}
+
+inline winrt::Windows::Foundation::IAsyncAction resume_after(
+  const std::stop_token& token,
+  winrt::Windows::Foundation::TimeSpan timeout) {
+  co_await make_stoppable(
+    token, [timeout]() -> winrt::Windows::Foundation::IAsyncAction {
+      co_await winrt::resume_after(timeout);
+    });
+}
+
 }// namespace OpenKneeboard

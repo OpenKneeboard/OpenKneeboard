@@ -46,7 +46,8 @@ class ProcessShutdownBlock {
   ProcessShutdownBlock& operator=(const ProcessShutdownBlock&) = delete;
   ProcessShutdownBlock& operator=(ProcessShutdownBlock&&) = delete;
 
-  static void SetEventOnCompletion(HANDLE completionEvent);
+  static void SetEventOnCompletion(HANDLE completionEvent) noexcept;
+  static void DumpActiveBlocks() noexcept;
 
  private:
   uint64_t mID {~(0ui64)};

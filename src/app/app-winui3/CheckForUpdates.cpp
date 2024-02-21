@@ -407,7 +407,7 @@ concurrency::task<UpdateResult> CheckForUpdates(
         co_await dialogResultAsync;
       }(dialogResultAsync),
       []() -> IAsyncAction {
-        co_await resume_after(std::chrono::seconds(1));
+        co_await winrt::resume_after(std::chrono::seconds(1));
       }());
     if (cancelled) {
       co_return UpdateResult::NotInstallingUpdate;

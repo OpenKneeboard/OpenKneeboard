@@ -20,11 +20,14 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
-#include <dinput.h>
+
 #include <shims/winrt/base.h>
+
 #include <winrt/Windows.Foundation.h>
 
 #include <array>
+
+#include <dinput.h>
 
 namespace OpenKneeboard {
 
@@ -42,12 +45,14 @@ class DirectInputListener {
    * finished - so wait for the signal.
    */
   static winrt::Windows::Foundation::IAsyncAction Run(
+    const std::stop_token&,
     winrt::com_ptr<IDirectInput8> di,
     std::shared_ptr<DirectInputDevice> device,
     HANDLE completionHandle);
 
  protected:
   DirectInputListener(
+    const std::stop_token&,
     const winrt::com_ptr<IDirectInput8>& di,
     const std::shared_ptr<DirectInputDevice>& device);
 
@@ -64,6 +69,7 @@ class DirectInputListener {
   winrt::com_ptr<IDirectInputDevice8W> GetDIDevice() const;
 
  private:
+  std::stop_token mStopToken;
   std::shared_ptr<DirectInputDevice> mDevice;
   winrt::com_ptr<IDirectInputDevice8> mDIDevice;
   winrt::handle mEventHandle;

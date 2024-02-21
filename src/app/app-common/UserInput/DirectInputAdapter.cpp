@@ -93,7 +93,7 @@ winrt::Windows::Foundation::IAsyncAction DirectInputAdapter::ReleaseDevices() {
   lock.unlock();
 
   for (auto& [id, device]: devices) {
-    device.mListener.Cancel();
+    device.mStop.request_stop();
   }
   for (auto& [id, device]: devices) {
     co_await winrt::resume_on_signal(device.mListenerCompletionHandle.get());
@@ -133,7 +133,7 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
       L"DirectInput device removed: {} ('{}')",
       winrt::to_hstring(guid),
       winrt::to_hstring(device->GetName()));
-    dit->second.mListener.Cancel();
+    dit->second.mStop.request_stop();
     co_await winrt::resume_on_signal(
       dit->second.mListenerCompletionHandle.get());
     dit = mDevices.erase(dit);
@@ -168,12 +168,16 @@ winrt::fire_and_forget DirectInputAdapter::UpdateDevices() {
 
     auto completionHandle = Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr);
 
+    std::stop_source stopper;
+    auto stopToken = stopper.get_token();
+
     mDevices.try_emplace(
       id,
       DeviceState {
         .mDevice = device,
-        .mListener
-        = DirectInputListener::Run(mDI8, device, completionHandle.get()),
+        .mListener = DirectInputListener::Run(
+          stopToken, mDI8, device, completionHandle.get()),
+        .mStop = stopper,
         .mListenerCompletionHandle = std::move(completionHandle),
       });
 

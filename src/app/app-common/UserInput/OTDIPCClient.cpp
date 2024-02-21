@@ -51,31 +51,33 @@ OTDIPCClient::~OTDIPCClient() {
 
 winrt::fire_and_forget OTDIPCClient::final_release(
   std::unique_ptr<OTDIPCClient> self) {
-  self->mRunner.Cancel();
+  dprint("Requesting OTDIPCClient stop");
+  self->mStopper.request_stop();
+  dprint("Waiting for OTDIPCClient completion handle");
   co_await winrt::resume_on_signal(self->mCompletionHandle.get());
+  dprint("Destroying OTDIPCClient");
 }
 
 winrt::Windows::Foundation::IAsyncAction OTDIPCClient::Run() {
-  const scope_guard markCompletion(
-    [handle = mCompletionHandle.get()]() { SetEvent(handle); });
-  auto weakThis = weak_from_this();
+  const scope_guard markCompletion([handle = mCompletionHandle.get()]() {
+    dprint("Setting OTDIPC completion handle");
+    SetEvent(handle);
+  });
   dprint("Starting OTD-IPC client");
   const scope_guard exitMessage([]() {
     dprintf(
       "Tearing down OTD-IPC client with {} uncaught exceptions",
       std::uncaught_exceptions());
   });
-  auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.enable_propagation();
-  try {
-    while (true) {
-      co_await this->RunSingle(weakThis);
-      co_await winrt::resume_after(std::chrono::seconds(1));
-    }
-  } catch (const winrt::hresult_canceled&) {
-    dprint("OTD-IPC coroutine cancelled, assuming clean shutdown");
+  if (mStopper.stop_requested()) {
     co_return;
   }
+  co_await this->RunSingle();
+  if (mStopper.stop_requested()) {
+    co_return;
+  }
+  dprint("OTDIPCClient: 1sec");
+  co_await resume_after(mStopper.get_token(), std::chrono::seconds(1));
 }
 
 void OTDIPCClient::TimeoutTablet(const std::string& id) {
@@ -94,11 +96,7 @@ void OTDIPCClient::TimeoutTablet(const std::string& id) {
   evTabletInputEvent.Emit(id, *state);
 }
 
-winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
-  const std::weak_ptr<OTDIPCClient>& weakThis) {
-  auto cancelled = co_await winrt::get_cancellation_token();
-  cancelled.enable_propagation();
-
+winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle() {
   const auto connection = Win32::CreateFileW(
     OTDIPC::NamedPipePathW,
     GENERIC_READ,
@@ -128,7 +126,7 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
   static_assert(sizeof(buffer) >= sizeof(State));
 
   while (true) {
-    if (cancelled()) {
+    if (mStopper.stop_requested()) {
       dprint("OTD-IPC task cancelled.");
       co_return;
     }
@@ -143,11 +141,6 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
       co_return;
     }
     if (readFileError == ERROR_IO_PENDING) {
-      auto keepAlive = weakThis.lock();
-      if (!keepAlive) {
-        co_return;
-      }
-
       bool haveEvent = false;
       while (!mTabletsToTimeout.empty()) {
         const auto first = mTabletsToTimeout.begin();
@@ -167,6 +160,7 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
           continue;
         }
 
+        dprint("OTDIPCClient: timeout");
         if (co_await winrt::resume_on_signal(
               event.get(),
               std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -179,7 +173,14 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
       }
 
       if (!haveEvent) {
-        co_await winrt::resume_on_signal(event.get());
+        auto stop = mStopper.get_token();
+        dprint("OTDIPCClient: waitForEvent");
+        co_await resume_on_signal(stop, event.get());
+        if (stop.stop_requested()) {
+          dprint("OTDIPCClient: waitForEvent/stop");
+          co_return;
+        }
+        dprint("OTDIPCClient: waitForEvent/finished");
       }
       if (!GetOverlappedResult(
             connection.get(), &overlapped, &bytesRead, TRUE)) {
@@ -200,11 +201,7 @@ winrt::Windows::Foundation::IAsyncAction OTDIPCClient::RunSingle(
       co_return;
     }
 
-    auto self = weakThis.lock();
-    if (!self) {
-      co_return;
-    }
-    self->ProcessMessage(header);
+    this->ProcessMessage(header);
   }
 }
 

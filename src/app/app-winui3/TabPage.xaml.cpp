@@ -30,13 +30,13 @@
 #include <OpenKneeboard/CursorRenderer.h>
 #include <OpenKneeboard/D2DErrorRenderer.h>
 #include <OpenKneeboard/ICheckableToolbarItem.h>
-#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ITab.h>
 #include <OpenKneeboard/ITabView.h>
 #include <OpenKneeboard/IToolbarFlyout.h>
 #include <OpenKneeboard/IToolbarItemWithConfirmation.h>
 #include <OpenKneeboard/IToolbarItemWithVisibility.h>
 #include <OpenKneeboard/KneeboardState.h>
+#include <OpenKneeboard/KneeboardView.h>
 #include <OpenKneeboard/ToolbarAction.h>
 #include <OpenKneeboard/ToolbarSeparator.h>
 #include <OpenKneeboard/ToolbarToggleAction.h>
@@ -113,49 +113,7 @@ TabPage::~TabPage() = default;
 winrt::fire_and_forget TabPage::final_release(
   std::unique_ptr<TabPage> instance) {
   instance->RemoveAllEventListeners();
-
-  // Work around https://github.com/microsoft/microsoft-ui-xaml/issues/7254
-  auto uiThread = instance->mUIThread;
-  auto swapChain = instance->mSwapChain;
-  co_await instance->ReleaseDXResources();
-  co_await uiThread;
-  instance.reset();
-  // 0 doesn't work - I think we just need to re-enter the message pump/event
-  // loop
-  co_await winrt::resume_after(std::chrono::milliseconds(1));
-  co_await uiThread;
-  swapChain = {nullptr};
-}
-
-winrt::Windows::Foundation::IAsyncAction TabPage::ReleaseDXResources() {
-  auto keepAlive = this->get_strong();
-  if (mShuttingDown) {
-    co_return;
-  }
-  mShuttingDown = true;
-
-  co_await mUIThread;
-  this->RemoveAllEventListeners();
-  {
-    const std::unique_lock lock(*mDXR);
-    Canvas().as<ISwapChainPanelNative>()->SetSwapChain(nullptr);
-    mKneeboardView = {};
-    mTabView = {};
-    mCursorRenderer = {};
-    mErrorRenderer = {};
-    mSwapChain = {};
-    mForegroundBrush = {};
-    mToolbarItems = {};
-
-    mCanvas = {};
-    mRenderTarget = {};
-
-    CommandBar().PrimaryCommands().Clear();
-    CommandBar().SecondaryCommands().Clear();
-  }
-
-  mDXR = {};
-  mKneeboard = {};
+  co_await instance->mUIThread;
 }
 
 void TabPage::InitializePointerSource() {

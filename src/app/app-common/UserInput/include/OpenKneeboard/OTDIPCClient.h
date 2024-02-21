@@ -20,6 +20,7 @@
 #pragma once
 
 #include <OpenKneeboard/Events.h>
+#include <OpenKneeboard/ProcessShutdownBlock.h>
 #include <OpenKneeboard/TabletInfo.h>
 #include <OpenKneeboard/TabletState.h>
 #include <OpenKneeboard/Win32.h>
@@ -59,10 +60,11 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   Event<std::string, TabletState> evTabletInputEvent;
 
  private:
+  ProcessShutdownBlock mShutdownBlock;
+
   OTDIPCClient();
   winrt::Windows::Foundation::IAsyncAction Run();
-  winrt::Windows::Foundation::IAsyncAction RunSingle(
-    const std::weak_ptr<OTDIPCClient>&);
+  winrt::Windows::Foundation::IAsyncAction RunSingle();
 
   void ProcessMessage(const OTDIPC::Messages::Header* const);
   void ProcessMessage(const OTDIPC::Messages::DeviceInfo* const);
@@ -72,6 +74,7 @@ class OTDIPCClient final : public std::enable_shared_from_this<OTDIPCClient> {
   winrt::Windows::Foundation::IAsyncAction mRunner;
   winrt::handle mCompletionHandle {
     Win32::CreateEventW(nullptr, TRUE, FALSE, nullptr)};
+  std::stop_source mStopper;
 
   struct Tablet {
     TabletInfo mDevice;
