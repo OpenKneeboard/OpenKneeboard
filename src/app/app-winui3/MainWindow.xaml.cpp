@@ -114,6 +114,15 @@ MainWindow::MainWindow() : mDXR(new DXResources()) {
   AddEventListener(
     mKneeboard->evActiveViewChangedEvent,
     std::bind_front(&MainWindow::OnViewOrderChanged, this));
+  if (!IsElevated()) {
+    AddEventListener(mKneeboard->evGameChangedEvent, [this](DWORD pid, auto) {
+      if (pid) {
+        // While OpenXR will create an elevated consumer, for injection-based
+        // approaches, injection will fail, so we need to catch them here
+        this->ShowWarningIfElevated(pid);
+      }
+    });
+  }
 
   AddEventListener(
     mKneeboard->GetTabsList()->evTabsChangedEvent,
@@ -212,20 +221,23 @@ winrt::Windows::Foundation::IAsyncAction MainWindow::FrameLoop() {
   co_return;
 }
 
-winrt::fire_and_forget MainWindow::CheckForElevatedConsumer() {
+void MainWindow::CheckForElevatedConsumer() {
   if (IsElevated()) {
-    co_return;
+    return;
   }
 
   const auto pid = SHM::ActiveConsumers::Get().mElevatedConsumerProcessID;
   if (!pid) {
-    co_return;
+    return;
   }
+
+  ShowWarningIfElevated(pid);
+}
+
+winrt::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   if (pid == mElevatedConsumerProcessID) {
     co_return;
   }
-
-  mElevatedConsumerProcessID = pid;
 
   co_await winrt::resume_background();
 
@@ -236,6 +248,9 @@ winrt::fire_and_forget MainWindow::CheckForElevatedConsumer() {
     if (!handle) {
       co_return;
     }
+    if (!IsElevated(handle.get())) {
+      co_return;
+    }
 
     wchar_t buf[MAX_PATH];
     auto size = static_cast<DWORD>(std::size(buf));
@@ -244,6 +259,8 @@ winrt::fire_and_forget MainWindow::CheckForElevatedConsumer() {
     }
     path = std::wstring_view {buf, size};
   }
+
+  mElevatedConsumerProcessID = pid;
 
   co_await mUIThread;
 
@@ -261,7 +278,9 @@ winrt::fire_and_forget MainWindow::CheckForElevatedConsumer() {
   dialog.PrimaryButtonText(_(L"OK"));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
+  dprintf("Showing game elevation warning dialog for PID {}", pid);
   co_await dialog.ShowAsync();
+  dprint("Game elevation warning dialog closed.");
 }
 
 void MainWindow::FrameTick() {
@@ -343,7 +362,9 @@ MainWindow::ShowSelfElevationWarning() {
   dialog.PrimaryButtonText(to_hstring(_(L"OK")));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
+  dprint("Showing self elevation warning");
   co_await dialog.ShowAsync();
+  dprint("Self elevation warning closed");
 }
 
 winrt::Windows::Foundation::IAsyncAction MainWindow::WriteInstanceData() {

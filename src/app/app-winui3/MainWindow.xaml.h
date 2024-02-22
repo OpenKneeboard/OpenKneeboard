@@ -112,7 +112,8 @@ struct MainWindow : MainWindowT<MainWindow>,
   winrt::fire_and_forget UpdateProfileSwitcherVisibility();
   winrt::fire_and_forget RenameTab(std::shared_ptr<ITab>);
 
-  winrt::fire_and_forget CheckForElevatedConsumer();
+  void CheckForElevatedConsumer();
+  winrt::fire_and_forget ShowWarningIfElevated(DWORD pid);
 
   winrt::fire_and_forget
   RenameBookmark(std::shared_ptr<ITab>, Bookmark, winrt::hstring title);
