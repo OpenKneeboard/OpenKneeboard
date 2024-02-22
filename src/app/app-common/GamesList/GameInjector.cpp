@@ -260,6 +260,7 @@ void GameInjector::CheckProcess(
     dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
     if (process.mAllAccessState == AllAccessState::NotTried) {
       dprintf("Reopening PID {} with PROCESS_ALL_ACCESS", processID);
+      DebugPrivileges privileges;
       processHandle = OpenProcess(PROCESS_ALL_ACCESS, false, processID);
       if (!processHandle) {
         const auto code = GetLastError();

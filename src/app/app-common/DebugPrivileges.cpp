@@ -44,8 +44,21 @@ DebugPrivileges::DebugPrivileges() {
   privileges.Privileges[0].Luid = mLuid;
   privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-  AdjustTokenPrivileges(
-    mToken.get(), false, &privileges, sizeof(privileges), nullptr, nullptr);
+  if (!AdjustTokenPrivileges(
+        mToken.get(),
+        false,
+        &privileges,
+        sizeof(privileges),
+        nullptr,
+        nullptr)) {
+    const auto code = GetLastError();
+    const auto message = std::system_category().default_error_condition(code);
+    dprintf(
+      "Failed to acquire debug privileges: {:#x} ({})",
+      std::bit_cast<uint32_t>(code),
+      message);
+  }
+  dprint("Acquired debug privileges");
 }
 
 DebugPrivileges::~DebugPrivileges() {
