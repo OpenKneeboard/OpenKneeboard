@@ -246,8 +246,8 @@ void GameInjector::CheckProcess(
 
     auto& process = mProcessCache.at(processID);
 
-    using AllAccessState = ProcessCacheEntry::AllAccessState;
-    if (process.mAllAccessState == AllAccessState::Failed) {
+    using InjectionAccessState = ProcessCacheEntry::InjectionAccessState;
+    if (process.mInjectionAccessState == InjectionAccessState::Failed) {
       continue;
     }
 
@@ -258,26 +258,31 @@ void GameInjector::CheckProcess(
     }
 
     dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
-    if (process.mAllAccessState == AllAccessState::NotTried) {
-      dprintf("Reopening PID {} with PROCESS_ALL_ACCESS", processID);
+    if (process.mInjectionAccessState == InjectionAccessState::NotTried) {
+      dprintf("Reopening PID {} with VM and thread privileges", processID);
       DebugPrivileges privileges;
-      processHandle = OpenProcess(PROCESS_ALL_ACCESS, false, processID);
+      processHandle = OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ
+          | PROCESS_VM_WRITE | PROCESS_CREATE_THREAD,
+        false,
+        processID);
       if (!processHandle) {
         const auto code = GetLastError();
         const auto message
           = std::system_category().default_error_condition(code).message();
         dprintf(
-          "ERROR: Failed to OpenProcess(PROCESS_ALL_ACCESS) for PID {} ({}): "
+          "ERROR: Failed to OpenProcess() with VM and thread privileges for "
+          "PID {} ({}): "
           "{:#x} ({})",
           processID,
           winrt::to_string(exeBaseName),
           std::bit_cast<uint32_t>(code),
           message);
-        process.mAllAccessState = AllAccessState::Failed;
+        process.mInjectionAccessState = InjectionAccessState::Failed;
         continue;
       }
       process.mHandle = winrt::handle {processHandle};
-      process.mAllAccessState = AllAccessState::AllAccess;
+      process.mInjectionAccessState = InjectionAccessState::HaveInjectionAccess;
     }
     DebugPrivileges privileges;
 
