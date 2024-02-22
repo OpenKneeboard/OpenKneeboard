@@ -148,15 +148,16 @@
               OnContent="Crop classic window borders, title bars, and menu bars"
               OffContent="The entire window is captured"
             />
+            <TextBlock
+              Style="{ThemeResource CaptionTextBlockStyle}"
+              Foreground="{ThemeResource TextFillColorSecondary}">
+              The 'client area' is the content of the window, excluding borders,
+              title bars, and so on. This option will not remove title bars
+              from windows that simulate a title bar, which includes most
+              modern apps.
+            </TextBlock>
             <ToggleSwitch
-              Header="Capture mouse cursor"
-              IsOn="{x:Bind IsCursorCaptureEnabled}"
-              OnContent="The Windows mouse cursor is captured"
-              OffContent="The Windows mouse cursor is not captured"
-              ToolTipService.ToolTip="OpenKneeboard's tablet support does not move the Windows cursor."
-            />
-            <ToggleSwitch
-              Header="Use tablet as mouse"
+              Header="Use graphics tablet as mouse"
               IsOn="{x:Bind IsInputEnabled}"
               OnContent="Enabled"
               OffContent="Disabled"
@@ -179,6 +180,53 @@
               OnContent="Enabled"
               OffContent="Disabled"
             />
+            <TextBox
+              Header="Window class"
+              Text="{x:Bind WindowClass}"
+              IsEnabled="False"
+            />
+            <TextBlock
+              Style="{ThemeResource CaptionTextBlockStyle}"
+              Foreground="{ThemeResource TextFillColorSecondary}">
+              The class is meant to uniquely identify the 'kind' of window, for
+              example it might be "MyApp's Main Window" or "MyApp's About
+              Dialog". If this option is on, windows will only be captured if
+              their window class is the same as when the tab was added.
+            </TextBlock>
+            <TextBlock
+              Style="{ThemeResource CaptionTextBlockStyle}"
+              Foreground="{ThemeResource TextFillColorSecondary}">
+              Some applications - especially those built with the Universal
+              Windows Platform (UWP) - do not use window classes correctly,
+              so this option may need to be disabled if the window is not
+              matched when the app is restarted.
+            </TextBlock>
+            <TextBlock
+              Style="{ThemeResource CaptionTextBlockStyle}"
+              Foreground="{ThemeResource TextFillColorSecondary}">
+              This option is disabled by default for UWP apps, and enabled by
+              default for all other apps.
+            </TextBlock>
+            <ToggleSwitch
+              Header="Show Windows mouse cursor"
+              IsOn="{x:Bind IsCursorCaptureEnabled}"
+              OnContent="The real mouse cursor is visible in the tab"
+              OffContent="The real mouse cursor is not not visible in the tab"
+            />
+            <TextBlock
+              Style="{ThemeResource CaptionTextBlockStyle}"
+              Foreground="{ThemeResource TextFillColorSecondary}">
+              This controls whether the real Windows mouse cursor is visible
+              in the tab; it does not affect which windows the mouse controls,
+              and it does not affect OpenKneeboard's cursor.
+            </TextBlock>
+            <TextBlock
+              Style="{ThemeResource CaptionTextBlockStyle}"
+              Foreground="{ThemeResource TextFillColorSecondary}">
+              Because the game is usually on top of captured Windows and the
+              game gets all real mouse input, this option is only useful for
+              niche cases.
+            </TextBlock>
           </StackPanel>
         </Expander.Content>
       </Expander>

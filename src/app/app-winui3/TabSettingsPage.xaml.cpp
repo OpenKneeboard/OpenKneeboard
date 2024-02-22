@@ -724,6 +724,16 @@ void WindowCaptureTabUIData::ExecutablePathPattern(hstring pattern) {
   GetTab()->SetMatchSpecification(spec);
 }
 
+hstring WindowCaptureTabUIData::WindowClass() const {
+  return to_hstring(GetTab()->GetMatchSpecification().mWindowClass);
+}
+
+void WindowCaptureTabUIData::WindowClass(hstring value) {
+  auto spec = GetTab()->GetMatchSpecification();
+  spec.mWindowClass = to_string(value);
+  GetTab()->SetMatchSpecification(spec);
+}
+
 std::shared_ptr<WindowCaptureTab> WindowCaptureTabUIData::GetTab() const {
   auto tab = mTab.lock();
   if (!tab) {

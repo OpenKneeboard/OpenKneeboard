@@ -25,6 +25,7 @@ namespace OpenKneeboardApp {
   WindowCaptureTabUIData();
   String WindowTitle; 
   String ExecutablePathPattern;
+  String WindowClass;
   Boolean MatchWindowClass;
   Boolean IsInputEnabled;
   UInt8 MatchWindowTitle;
