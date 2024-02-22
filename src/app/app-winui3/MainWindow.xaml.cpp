@@ -635,7 +635,7 @@ winrt::fire_and_forget MainWindow::final_release(
     __debugbreak();
   } catch (...) {
     __debugbreak();
-    }
+  }
   self->mDXR = nullptr;
 }
 
@@ -990,7 +990,6 @@ LRESULT MainWindow::SubclassProc(
   DWORD_PTR dwRefData) {
   if (uMsg == WM_SIZE || uMsg == WM_MOVE) {
     reinterpret_cast<MainWindow*>(dwRefData)->SaveWindowPosition();
-    return TRUE;
   }
   return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
