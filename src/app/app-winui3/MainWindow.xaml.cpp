@@ -278,7 +278,10 @@ winrt::fire_and_forget MainWindow::ShowWarningIfElevated(DWORD pid) {
   dialog.PrimaryButtonText(_(L"OK"));
   dialog.DefaultButton(ContentDialogButton::Primary);
 
-  dprintf("Showing game elevation warning dialog for PID {}", pid);
+  dprintf(
+    "Showing game elevation warning dialog for PID {} ({})",
+    pid,
+    path.filename().string());
   co_await dialog.ShowAsync();
   dprint("Game elevation warning dialog closed.");
 }

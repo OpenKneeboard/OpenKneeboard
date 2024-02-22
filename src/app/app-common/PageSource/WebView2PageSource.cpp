@@ -258,8 +258,12 @@ void WebView2PageSource::CreateBrowserWindow() {
     GetModuleHandle(nullptr),
     nullptr)};
   if (!mBrowserWindow) {
-    auto e = std::system_category().default_error_condition(GetLastError());
-    dprintf("Failed to create browser window: {} - {}", e.value(), e.message());
+    const auto code = GetLastError();
+    auto e = std::system_category().default_error_condition(code);
+    dprintf(
+      "Failed to create browser window: {:#x} - {}",
+      std::bit_cast<uint32_t>(code),
+      e.message());
     OPENKNEEBOARD_BREAK;
   }
 }

@@ -86,9 +86,14 @@ class GameInjector final : public EventReceiver,
   std::filesystem::path mOverlayOculusD3D12Dll;
 
   struct ProcessCacheEntry {
+    enum class AllAccessState {
+      NotTried,
+      AllAccess,
+      Failed,
+    };
     winrt::handle mHandle {};
     std::filesystem::path mPath;
-    bool mHaveAllAccess = false;
+    AllAccessState mAllAccessState {AllAccessState::NotTried};
     InjectedDlls mInjectedDlls {InjectedDlls::None};
   };
   std::unordered_map<DWORD, ProcessCacheEntry> mProcessCache;

@@ -229,15 +229,27 @@ void GameInjector::CheckProcess(
       to_json(overlayAPI, game->mOverlayAPI);
 
       dprintf(
-        "Current game changed to {}, PID {}, configured rendering API {}, {}",
+        "Current game changed to {}, PID {}, configured rendering API {}",
         fullPath.string(),
         processID,
-        overlayAPI.dump(),
-        IsElevated(processHandle) ? "elevated" : "not elevated");
+        overlayAPI.dump());
+      const auto elevated = IsElevated(processHandle);
+      if (IsElevated() != elevated) {
+        dprintf(
+          "WARNING: OpenKneeboard {} elevated, but PID {} {} elevated.",
+          IsElevated() ? "is" : "is not",
+          processID,
+          elevated ? "is" : "is not");
+      }
       this->evGameChangedEvent.Emit(processID, fullPath, game);
     }
 
     auto& process = mProcessCache.at(processID);
+
+    using AllAccessState = ProcessCacheEntry::AllAccessState;
+    if (process.mAllAccessState == AllAccessState::Failed) {
+      continue;
+    }
 
     auto& currentDlls = process.mInjectedDlls;
     const auto missingDlls = wantedDlls & ~currentDlls;
@@ -246,19 +258,25 @@ void GameInjector::CheckProcess(
     }
 
     dprintf("Injecting DLLs into PID {} ({})", processID, fullPath.string());
-    if (!process.mHaveAllAccess) {
+    if (process.mAllAccessState == AllAccessState::NotTried) {
       dprintf("Reopening PID {} with PROCESS_ALL_ACCESS", processID);
       processHandle = OpenProcess(PROCESS_ALL_ACCESS, false, processID);
       if (!processHandle) {
+        const auto code = GetLastError();
+        const auto message
+          = std::system_category().default_error_condition(code).message();
         dprintf(
-          L"Failed to OpenProcess(PROCESS_ALL_ACCESS) for PID {} ({}): {:#x}",
+          "ERROR: Failed to OpenProcess(PROCESS_ALL_ACCESS) for PID {} ({}): "
+          "{:#x} ({})",
           processID,
-          exeBaseName,
-          std::bit_cast<uint32_t>(GetLastError()));
-        return;
+          winrt::to_string(exeBaseName),
+          std::bit_cast<uint32_t>(code),
+          message);
+        process.mAllAccessState = AllAccessState::Failed;
+        continue;
       }
       process.mHandle = winrt::handle {processHandle};
-      process.mHaveAllAccess = true;
+      process.mAllAccessState = AllAccessState::AllAccess;
     }
     DebugPrivileges privileges;
 
