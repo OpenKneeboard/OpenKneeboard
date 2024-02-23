@@ -169,8 +169,24 @@ winrt::fire_and_forget PDFFilePageSource::ReloadRenderer() {
       }
     }
 
-    auto file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
-    auto document = co_await PdfDocument::LoadFromFileAsync(file);
+    StorageFile file {nullptr};
+    PdfDocument document {nullptr};
+    try {
+      // Windows 11 print-to-pdf tends to quickly create then delete/expand
+      // PDFs, which give us a race condition
+      //
+      // Deal with it by catching these exceptions
+      file = co_await StorageFile::GetFileFromPathAsync(path.wstring());
+      document = co_await PdfDocument::LoadFromFileAsync(file);
+    } catch (const winrt::hresult_error& e) {
+      auto what = e.message();
+      dprintf(
+        "Failed to open {} for render: {}",
+        path.string(),
+        winrt::to_string(what));
+      co_return;
+    }
+    dprintf("Opened PDF file {} for render", path.string());
 
     {
       std::unique_lock lock(p->mMutex);
