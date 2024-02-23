@@ -445,6 +445,8 @@ class TestViewerWindow final : private D3D11Resources {
     }
     OPENKNEEBOARD_TraceLoggingScope("Viewer::InitSwapChain()");
 
+    this->OnResize(clientSize);
+
     mWindowTexture = nullptr;
     mWindowRenderTargetView = nullptr;
     mWindowBitmap = nullptr;
@@ -537,8 +539,6 @@ class TestViewerWindow final : private D3D11Resources {
     }
 
     dprintf("Resized to {}x{}", size.width, size.height);
-
-    this->PaintNow();
   }
 
   void CaptureScreenshot() {
@@ -961,12 +961,6 @@ LRESULT CALLBACK TestViewerWindow::WindowProc(
       return 0;
     case WM_TIMER:
       gInstance->CheckForUpdate();
-      return 0;
-    case WM_SIZE:
-      gInstance->OnResize({
-        .width = LOWORD(lParam),
-        .height = HIWORD(lParam),
-      });
       return 0;
     case WM_DPICHANGED: {
       gInstance->SetDPI(static_cast<UINT>(LOWORD(wParam)));
