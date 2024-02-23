@@ -87,7 +87,7 @@ class FlyoutMenuUILayer final
   winrt::com_ptr<ID2D1SolidColorBrush> mMenuFGBrush;
   winrt::com_ptr<ID2D1SolidColorBrush> mMenuDisabledFGBrush;
 
-  std::optional<D2D1_RECT_F> mLastRenderRect;
+  std::optional<PixelRect> mLastRenderRect;
 
   std::shared_ptr<IUILayer> mPrevious;
 
@@ -105,7 +105,7 @@ class FlyoutMenuUILayer final
   };
 
   struct Menu {
-    FLOAT mMargin {};
+    uint32_t mMargin {};
     D2D1_RECT_F mRect {};
     std::shared_ptr<CursorClickableRegions<MenuItem>> mCursorImpl;
     std::vector<D2D1_RECT_F> mSeparatorRects;
@@ -114,7 +114,7 @@ class FlyoutMenuUILayer final
   };
   std::optional<Menu> mMenu;
 
-  void UpdateLayout(ID2D1DeviceContext*, const D2D1_RECT_F&);
+  void UpdateLayout(ID2D1DeviceContext*, const PixelRect&);
   void OnClick(const MenuItem&);
 
   bool mRecursiveCall = false;

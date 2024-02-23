@@ -105,8 +105,10 @@ void FlyoutMenuUILayer::PostCursorEvent(
   }
 
   CursorEvent menuEvent {cursorEvent};
-  menuEvent.mX *= (mLastRenderRect->right - mLastRenderRect->left);
-  menuEvent.mY *= (mLastRenderRect->bottom - mLastRenderRect->top);
+  menuEvent.mX *= mLastRenderRect->Width();
+  menuEvent.mY *= mLastRenderRect->Height();
+  menuEvent.mX += mLastRenderRect->Left();
+  menuEvent.mY += mLastRenderRect->Top();
   mMenu->mCursorImpl->PostCursorEvent(eventContext, menuEvent);
 
   evNeedsRepaintEvent.Emit();
@@ -239,22 +241,19 @@ void FlyoutMenuUILayer::Render(
 
 void FlyoutMenuUILayer::UpdateLayout(
   ID2D1DeviceContext* d2d,
-  const D2D1_RECT_F& renderRect) {
+  const PixelRect& renderRect) {
   mLastRenderRect = renderRect;
-  const D2D1_SIZE_F canvasSize = {
-    renderRect.right - renderRect.left,
-    renderRect.bottom - renderRect.top,
-  };
-  const D2D1_SIZE_F maxMenuSize = {
-    canvasSize.width / 2,
-    canvasSize.height,
+  const auto& canvasSize = renderRect.mSize;
+  const PixelSize maxMenuSize = {
+    canvasSize.mWidth / 2,
+    canvasSize.mHeight,
   };
 
   // 1. How much space do we need?
 
-  const auto selectableItemHeight
-    = canvasSize.height * 0.5f * (HeaderPercent / 100.0f);
-  const auto textHeight = selectableItemHeight * 0.67f;
+  const auto selectableItemHeight = static_cast<uint32_t>(
+    std::lround(canvasSize.mHeight * 0.5f * (HeaderPercent / 100.0f)));
+  const auto textHeight = std::lround(selectableItemHeight * 0.67f);
   const auto separatorHeight = selectableItemHeight;
 
   FLOAT dpix, dpiy;
@@ -288,8 +287,8 @@ void FlyoutMenuUILayer::UpdateLayout(
   glyphFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
   glyphFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 
-  float totalHeight = 0;
-  float maxTextWidth = 0;
+  uint32_t totalHeight = 0;
+  uint32_t maxTextWidth = 0;
   bool haveChevron = false;
   bool haveGlyphOrCheck = false;
 
@@ -330,7 +329,7 @@ void FlyoutMenuUILayer::UpdateLayout(
       label.data(), label.size(), textFormat.get(), inf, inf, layout.put()));
     DWRITE_TEXT_METRICS metrics {};
     winrt::check_hresult(layout->GetMetrics(&metrics));
-    auto width = metrics.width;
+    auto width = static_cast<uint32_t>(std::lround(metrics.width));
     if (width > maxTextWidth) {
       maxTextWidth = width;
     }
@@ -345,13 +344,13 @@ void FlyoutMenuUILayer::UpdateLayout(
     maxItemWidth += selectableItemHeight;
   }
 
-  maxItemWidth = std::min(maxItemWidth, maxMenuSize.width);
+  maxItemWidth = std::min(maxItemWidth, maxMenuSize.mWidth);
   maxTextWidth = maxItemWidth;
-  float leftMargin = margin;
+  uint32_t leftMargin = margin;
   if (haveGlyphOrCheck) {
     leftMargin += selectableItemHeight;
   }
-  float rightMargin = margin;
+  uint32_t rightMargin = margin;
   if (haveChevron) {
     rightMargin += selectableItemHeight;
   }
@@ -363,37 +362,43 @@ void FlyoutMenuUILayer::UpdateLayout(
   // 2. Where can we put it?
 
   const D2D1_POINT_2F topLeft {
-    std::max(margin, mPreferredTopLeft01.x * canvasSize.width),
-    mPreferredTopLeft01.y * canvasSize.height,
+    renderRect.Left()
+      + std::max<FLOAT>(margin, mPreferredTopLeft01.x * canvasSize.mWidth),
+    renderRect.Top() + (mPreferredTopLeft01.y * canvasSize.mHeight),
   };
   const D2D1_POINT_2F topRight {
-    std::min(
-      (mPreferredTopRight01.x * canvasSize.width) - maxItemWidth,
-      canvasSize.width - margin),
-    mPreferredTopRight01.y * canvasSize.height,
+    renderRect.Left()
+      + std::min<FLOAT>(
+        (mPreferredTopRight01.x * canvasSize.mWidth) - maxItemWidth,
+        canvasSize.mWidth - margin),
+    renderRect.Top() + (mPreferredTopRight01.y * canvasSize.mHeight),
   };
   const auto preferred
     = (mPreferredAnchor == Corner::TopLeft) ? topLeft : topRight;
   const auto fallback
     = (mPreferredAnchor == Corner::TopLeft) ? topRight : topLeft;
   D2D1_POINT_2F origin = preferred;
-  if (origin.x < 0 || (origin.x + maxItemWidth) > canvasSize.width) {
+  if (
+    origin.x < renderRect.Left()
+    || (origin.x + maxItemWidth) > renderRect.Right()) {
     origin = fallback;
   }
-  if (origin.x < 0 || (origin.x + maxItemWidth) > canvasSize.width) {
-    origin = {0, 0};
+  if (
+    origin.x < renderRect.Left()
+    || (origin.x + maxItemWidth) > renderRect.Right()) {
+    origin = renderRect.TopLeft();
   }
 
-  if (origin.y + totalHeight > canvasSize.height) {
-    origin.y = 0;
+  if (origin.y + totalHeight > renderRect.Height()) {
+    origin.y = renderRect.Top<float>();
     // might not be enough; that's fine, just truncate
   }
 
   const D2D1_RECT_F menuRect {
-    renderRect.left + origin.x,
-    renderRect.top + origin.y,
-    renderRect.left + origin.x + maxItemWidth,
-    renderRect.top + origin.y + totalHeight + (2 * margin),
+    origin.x,
+    origin.y,
+    origin.x + maxItemWidth,
+    origin.y + totalHeight + (2 * margin),
   };
 
   origin = {menuRect.left, menuRect.top + margin};
@@ -531,18 +536,23 @@ void FlyoutMenuUILayer::OnClick(const MenuItem& item) {
   }
 
   auto rect = item.mRect;
-  const D2D1_SIZE_F renderSize = {
-    mLastRenderRect->right - mLastRenderRect->left,
-    mLastRenderRect->bottom - mLastRenderRect->top,
-  };
+  const auto& renderSize = mLastRenderRect->mSize;
 
   auto subMenu = FlyoutMenuUILayer::Create(
     mDXResources,
     flyout->GetSubItems(),
-    {(rect.right - mMenu->mMargin) / renderSize.width,
-     rect.top / renderSize.height},// Put top-left corner here
-    {(rect.left + mMenu->mMargin) / renderSize.width,
-     rect.top / renderSize.height},// Put top-right corner here
+    {
+      // Top-left anchor point
+      (rect.right - (mLastRenderRect->Left() + mMenu->mMargin))
+        / renderSize.Width<float>(),
+      (rect.top - mLastRenderRect->Top()) / renderSize.Height<float>(),
+    },
+    {
+      // Top-right anchor point
+      (rect.left + mMenu->mMargin - mLastRenderRect->Left())
+        / renderSize.Width<float>(),
+      (rect.top - mLastRenderRect->Top()) / renderSize.Height<float>(),
+    },
     mPreferredAnchor);
   AddEventListener(
     subMenu->evCloseMenuRequestedEvent, this->evCloseMenuRequestedEvent);
