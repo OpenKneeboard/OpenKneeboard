@@ -197,7 +197,7 @@ fire_and_forget TabSettingsPage::ShowDebugInfo(
   DebugInfoText().Text(to_hstring(info));
 
   DebugInfoDialog().Title(winrt::box_value(
-    to_hstring(std::format("'{}' Tab Information", tab->GetTitle()))));
+    to_hstring(std::format("'{}' - Debug Information", tab->GetTitle()))));
   co_await DebugInfoDialog().ShowAsync();
 }
 
